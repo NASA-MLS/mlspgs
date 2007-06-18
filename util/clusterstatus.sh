@@ -8,6 +8,7 @@
 # -C names      create status for clusters in names
 #                (e.g., "lightspeed speedracer")
 # -Cf file      choose clusters named in file
+# -cf file      get expected compute times from file
 # -D d1,d2,     ignore jobs in directories d1, d2 (declared "legally dead")
 # -Df file,     jobs in directories named in file are declared "legally dead"
 # -debug        print lots of extra stuff
@@ -77,18 +78,25 @@ MAILER="/home/pwagner/bin/mailtome.sh"
 # These next will be routinely overriden by command-line options
 RECIPIENTS="pwagner David.T.Cuddy@jpl.nasa.gov sysadmin@sdsio.jpl.nasa.gov bsaha@sdsio-mail.jpl.nasa.gov rbarrios@sdsio-mail.jpl.nasa.gov cvuu@mls.jpl.nasa.gov Brian.W.Knosp@jpl.nasa.gov"
 clusternames="lightspeed scramjet speedracer"
+computetimes=""
 corpses=""
 corpsefile=""
 debug="no"
-me="$0"
-my_name=clusterstatus
 I=clusterstatus
 dryrun=""
 mail="no"
+me="$0"
+my_name=clusterstatus
 scp="no"
 sort="yes"
 temp="no"
 versions="(none)"
+
+options="-c -bug -x"
+pvmfailedoptions="-fail"
+#runningoptions="-c -full -t"
+runningoptions="-c -full -finish -d"
+
 more_opts="yes"
 while [ "$more_opts" = "yes" ] ; do
 
@@ -102,16 +110,29 @@ while [ "$more_opts" = "yes" ] ; do
     -Cf )
 	    shift
        clusternames=`cat $1 | uniq | read_file_into_array`
+       runningoptions="$runningoptions -Cf $1"
+       shift
+       ;;
+    -cf )
+	    shift
+       computetimes=`cat $1 | uniq | read_file_into_array`
+       runningoptions="$runningoptions -cf $1"
        shift
        ;;
     -D )
 	    shift
        corpses="$1"
+       options="$options -D $1"
+       runningoptions="$runningoptions -D $1"
+       pvmfailedoptions="$pvmfailedoptions -D $1"
        shift
        ;;
     -Df )
 	    shift
        corpsefile="$1"
+       options="$options -Df $1"
+       runningoptions="$runningoptions -Df $1"
+       pvmfailedoptions="$pvmfailedoptions -Df $1"
        shift
        ;;
     -dryrun )
@@ -204,10 +225,6 @@ then
     mv "$OUTPUT" "$OUTPUT.1"
   fi
 fi
-options="-c -bug -x"
-#runningoptions="-c -full -t"
-runningoptions="-c -full -finish -d"
-pvmfailedoptions="-fail"
 
 if [ "$debug" = "yes" ]
 then
@@ -222,22 +239,11 @@ then
   echo "pvmfailedoptions $pvmfailedoptions"
   echo "versions $versions"
   echo "clusternames $clusternames"
+  echo "computetimes $computetimes"
   echo "corpses $corpses"
   echo "corpsefile $corpsefile"
   echo "MAILER $MAILER"
   echo "RECIPIENTS $RECIPIENTS"
-fi
-
-if [ "$corpses" != "" ]
-then
-  options="$options -D $corpses"
-  runningoptions="$runningoptions -D $corpses"
-  pvmfailedoptions="$pvmfailedoptions -D $corpses"
-elif [ "$corpsefile" != "" ]
-then
-  options="$options -Df $corpsefile"
-  runningoptions="$runningoptions -Df $corpsefile"
-  pvmfailedoptions="$pvmfailedoptions -Df $corpsefile"
 fi
 
 if [ "$mustrun" = "yes" ]
@@ -335,6 +341,9 @@ else
 fi
 exit 0
 # $Log$
+# Revision 1.11  2007/01/18 23:30:54  pwagner
+# Displays finish time instead of start time for running jobs
+#
 # Revision 1.10  2006/07/29 00:18:06  pwagner
 # Fixed bug preventing running jobs showing start time
 #
