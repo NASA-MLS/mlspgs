@@ -69,6 +69,7 @@ program COMPARE
   integer :: Status
   real(rk) :: STDEV(2), STDEVR(2), STDEVA(2)
   logical :: Verbose = .false.
+  real(rk) :: VMAX           ! Maximum value in R1 or R2
   logical :: Zero = .false.  ! If ( all ), show zero differences, too.
 
   read ( (/("NaN", i = 1, 10 ) /), * ) AbsAtRmaxG, RelAtAmaxG, avgsr, avgsa, &
@@ -124,8 +125,8 @@ program COMPARE
   end if
 
   if ( all ) then
-    print *, '  Max Abs           Rel at Max  Max Rel           Abs at Max'
-    print *, '  Diff         At   Abs Diff    Diff         At   Rel Diff'
+    print *, '  Max Abs     Max Abs           Rel at Max  Max Rel           Abs at Max'
+    print *, '  Value       Diff         At   Abs Diff    Diff         At   Rel Diff'
   end if
 
   do
@@ -205,6 +206,7 @@ program COMPARE
     lamax = maxloc(ad,1)
     amax = ad(lamax)
     if ( amax > 0.0 .or. all .and. zero .or. doStats ) then
+      vmax = max(maxval(abs(r1)), maxval(abs(r2)))
       rd = abs(r1 + r2)
       m = rd > 0.0
       rd = 2.0 * ad / rd
@@ -218,7 +220,7 @@ program COMPARE
       rmaxe = rmax / eps
       if ( .not. ( rmaxe <= 0.0 .or. rmaxe >= 0.0 ) ) anyNaN(3) = .true.
       if ( all ) then
-        print '(1p,g12.5,i6,g12.5,g12.5,i6,g12.5,1x,a)', &
+        print '(1p,2g12.5,i6,g12.5,g12.5,i6,g12.5,1x,a)', vmax, &
           & amax, lamax, 2.0 * abs(r1(lamax)-r2(lamax)) / abs(r1(lamax)+r2(lamax)), &
           & rmax, lrmax, 2.0 * abs(r1(lrmax)-r2(lrmax)), trim(line1)
       end if
@@ -319,6 +321,9 @@ contains
 end program
 
 ! $Log$
+! Revision 1.15  2007/06/08 22:46:03  vsnyder
+! Revise output format
+!
 ! Revision 1.14  2006/09/11 21:06:55  vsnyder
 ! In "all" format, print rel diff at max abs diff, abs diff at max rel diff
 !
