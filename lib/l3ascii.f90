@@ -125,7 +125,7 @@ contains
     end if
 
     !    nullify(tmpaxis)
-    end_of_file = .TRUE.	! Terminate loops based around this on error
+    end_of_file = .TRUE. ! Terminate loops based around this on error
 
     write(unit=unitstring,fmt="(i3)") unit ! For use in error reporting
     inquire(unit=unit,opened=opened)
@@ -542,7 +542,7 @@ binsearch: do
       call announce_error ( 0, &
         & "in make_log_axis: inline, <" // trim(inline)//">, too short" )
     end if
-	
+
     !Count words in inline. 
     nwords = 1
     do j = 2, len(inline)
@@ -555,7 +555,7 @@ binsearch: do
     if ( nsections < 1 ) then
       call announce_error ( 0, "in make_log_axis: nsections < 1" )
     end if
-	
+
     allocate ( n_levs_in_sec(1:nsections),n_levs_per_dec(1:nsections),&
       &  axints(1:nsections*2) )
     read ( unit=inline, fmt=* ) linetype, axistype, basepressure, axints
@@ -567,7 +567,7 @@ binsearch: do
     if ( axis_len < 1 ) then
       call announce_error ( 0, "in make_log_axis: axis_len < 1" )
     end if
-	
+
     call allocate_test (axis, axis_len, 'axis', moduleName )
     axis(1) = -log10(basepressure)
     stind = 0
@@ -788,7 +788,7 @@ itemsloop:do
    ! the output module knows when to use the toolkit and when not
    
    ! Arguments
-	
+
     integer, intent(in)    :: lcf_where
     character(LEN=*), intent(in)    :: full_message
     logical, intent(in), optional :: use_toolkit
@@ -860,6 +860,9 @@ end module L3ascii
 
 !
 ! $Log$
+! Revision 2.31  2007/06/21 00:49:52  vsnyder
+! Remove tabs, which are not part of the Fortran standard
+!
 ! Revision 2.30  2007/03/07 01:22:46  pwagner
 ! Side-step another log of non-positive args case lf6.2 caught
 !
