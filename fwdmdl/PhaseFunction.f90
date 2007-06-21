@@ -18,8 +18,8 @@ module PhaseFunction
 
    use MLSCommon, only: r8
    USE MLSMessageModule, only: MLSMessage, MLSMSG_Error
-	implicit none
-	Private
+   implicit none
+   Private
    Public :: pfsetup
 
 !---------------------------- RCS Module Info ------------------------------
@@ -30,41 +30,41 @@ module PhaseFunction
       
 contains
 
-	subroutine pfsetup(n, p, dp, u, nu)
+  subroutine pfsetup(n, p, dp, u, nu)
 
    ! Arguments
 
    integer, intent(in)   :: n     ! Maximum number of a, b terms for Mie Cal.  
    integer, intent(in)   :: nu    ! Number of scattering angles
-	real(r8), intent(in)  :: u(nu)    ! Cosine of scattering angle
-	real(r8), intent(out) :: p(n,nu)  ! Legendre polynomials
-	real(r8), intent(out) :: dp(n,nu) ! delta p
+   real(r8), intent(in)  :: u(nu)    ! Cosine of scattering angle
+   real(r8), intent(out) :: p(n,nu)  ! Legendre polynomials
+   real(r8), intent(out) :: dp(n,nu) ! delta p
    ! Local variables
-	integer :: i, j
-	real(r8) :: w1, w2, v1, v2, us
+   integer :: i, j
+   real(r8) :: w1, w2, v1, v2, us
 
    ! Executable
    if ( n < 3) &
      CALL MLSMessage(MLSMSG_Error, ModuleName, &
              & ' n too small to set up phase functions ')
    outer_loop: do i=1, nu
-	  us = sqrt(1-u(i)*u(i))
-	  w1 = us
-	  w2 = 3*u(i)*w1
-	  p(1,i)=w1
-	  p(2,i)=w2
-	  v1 = u(i)
-	  v2 = 6*u(i)*u(i) - 3
-	  dp(1,i)=v1
-	  dp(2,i)=v2
+          us = sqrt(1-u(i)*u(i))
+          w1 = us
+          w2 = 3*u(i)*w1
+          p(1,i)=w1
+          p(2,i)=w2
+          v1 = u(i)
+          v2 = 6*u(i)*u(i) - 3
+          dp(1,i)=v1
+          dp(2,i)=v2
      do j=3, n
-	    p(j,i)=(2.*j-1.)/(j-1.)*w2*u(i) - j/(j-1.)*w1
-	    dp(j,i)=(2*j-1.)/(j-1.)*(u(i)*v2-w2*us)-j/(j-1.)*v1
-	    w1 = w2
-	    w2 = p(j,i)
-	    v1 = v2
-	    v2 = dp(j,i)
-	  enddo
+            p(j,i)=(2.*j-1.)/(j-1.)*w2*u(i) - j/(j-1.)*w1
+            dp(j,i)=(2*j-1.)/(j-1.)*(u(i)*v2-w2*us)-j/(j-1.)*v1
+            w1 = w2
+            w2 = p(j,i)
+            v1 = v2
+            v2 = dp(j,i)
+     enddo
    end do outer_loop
 
   END SUBROUTINE PFSETUP
@@ -81,6 +81,9 @@ contains
 end module PhaseFunction
 
 ! $Log$
+! Revision 2.4  2007/06/21 00:52:54  vsnyder
+! Remove tabs, which are not part of the Fortran standard
+!
 ! Revision 2.3  2005/06/22 18:08:19  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
