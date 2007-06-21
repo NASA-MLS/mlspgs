@@ -517,7 +517,7 @@ contains
     character (LEN=*), parameter      :: UNASSIGNEDFILENAME = '*'
     character (LEN=BareFNLen), dimension(:), allocatable &
      &                                :: unsortedArray
-	 integer                       ::     version, returnStatus
+    integer                           :: version, returnStatus
 
    ! Executable
    if(.not. UseSDPToolkit) then
@@ -787,7 +787,7 @@ contains
     logical, parameter :: DEFAULT_PRINT_EVERY_OPEN=.false.
     integer, parameter :: FH_ON_ERROR=-99
     integer, parameter :: DEFAULTRECLEN=0
-    integer, parameter :: KEYWORDLEN=12			! Max length of keywords in OPEN(...)
+    integer, parameter :: KEYWORDLEN=12 ! Max length of keywords in OPEN(...)
     character (LEN=MAXFILENAMELENGTH) :: myName
     integer(i4) :: myPC
     integer                       :: version, returnStatus, your_version
@@ -846,7 +846,7 @@ contains
       ! if(LowerCase(toolbox_mode(1:2)) == 'pg') then
       if(mode == l_tkgen) then
         myPC = GetPCFromRef(trim(FileName), PCBottom, PCTop, &
-          &	 caseSensitive, returnStatus, your_version, &
+          & caseSensitive, returnStatus, your_version, &
           & debugOption=debugOption)
       endif
 
@@ -1211,7 +1211,7 @@ contains
     logical, parameter :: DEFAULT_PRINT_EVERY_OPEN=.false.
     integer, parameter :: FH_ON_ERROR=-99
     integer, parameter :: DEFAULTRECLEN=0
-    integer, parameter :: KEYWORDLEN=12			! Max length of keywords in OPEN(...)
+    integer, parameter :: KEYWORDLEN=12   ! Max length of keywords in OPEN(...)
     integer                       :: version, returnStatus
     character (LEN=KEYWORDLEN) :: access, action, form, position, status
     integer                       :: record_length
@@ -1519,7 +1519,7 @@ contains
 
     ! case('cl')
     case(l_ascii) ! (l_ascii, l_close)
-      close(unit=theFileHandle, iostat=ErrType)		
+      close(unit=theFileHandle, iostat=ErrType)
 
       if(ErrType /= 0 .or. PRINT_EVERY_CLOSE) then
         call output( 'Fortran closing unit ', advance='no')
@@ -1598,7 +1598,7 @@ contains
 
     ! case('ascii', 'binary')
     case(l_ascii, l_binary)
-      close(unit=MLSFile%FileId%f_id, iostat=ErrType)		
+      close(unit=MLSFile%FileId%f_id, iostat=ErrType)
 
       if(ErrType /= 0) then
         call output( 'Fortran closing unit ', advance='no')
@@ -2701,6 +2701,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.78  2007/06/21 00:49:51  vsnyder
+! Remove tabs, which are not part of the Fortran standard
+!
 ! Revision 2.77  2007/04/06 16:23:17  pwagner
 ! Added 1st 1-parameter function, readnchars
 !
