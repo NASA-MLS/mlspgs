@@ -297,7 +297,7 @@ PRINT *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
 
     LOGICAL :: TPisDig = .FALSE.
 
-    INTEGER, PARAMETER :: MinCalDif = 500   ! Minimum calibration dif (T - S)
+    INTEGER, PARAMETER :: MinCalDif = 300   ! Minimum calibration dif (T - S)
 
     CurMAFdata => CalWin%MAFdata(CalWin%current)
 
@@ -972,6 +972,9 @@ END MODULE SortQualify
 !=============================================================================
 
 ! $Log$
+! Revision 2.24  2007/06/21 21:05:02  perun
+! Change mininum calibration dif to 300
+!
 ! Revision 2.23  2006/09/26 16:03:04  perun
 ! Increase Wall size to 3 MAFs and determine when filter bank is in OFF state
 !
