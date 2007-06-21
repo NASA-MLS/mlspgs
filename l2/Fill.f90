@@ -2348,9 +2348,11 @@ contains ! =====     Public Procedures     =============================
       if ( quadrature ) then
         do mif = 1, quantity%template%noSurfs
           do chan = 1, quantity%template%noChans
-            if ( .not. dontMask .and. associated(baselineQuantity%mask) ) then
+            if ( .not. dontMask .and. &
+              & ( associated(baselineQuantity%mask) .or. &
+              &   associated(quantity%mask) )) then
               do i=1, numProfs
-                skipMe = .not. dontMask .and. &
+                skipMe = isVectorQtyMasked(Quantity, chan, i) .or. &
                   &  isVectorQtyMasked(baselineQuantity, chan, i)
                 if ( .not. skipMe )  &
                 & quantity%values ( ind, i ) = sqrt ( &
@@ -2367,9 +2369,11 @@ contains ! =====     Public Procedures     =============================
       else
         do mif = 1, quantity%template%noSurfs
           do chan = 1, quantity%template%noChans
-            if ( .not. dontMask .and. associated(baselineQuantity%mask) ) then
+            if ( .not. dontMask .and. &
+              & ( associated(baselineQuantity%mask) .or. &
+              &   associated(quantity%mask) )) then
               do i=1, numProfs
-                skipMe = .not. dontMask .and. &
+                skipMe = isVectorQtyMasked(Quantity, chan, i) .or. &
                   &  isVectorQtyMasked(baselineQuantity, chan, i)
                 if ( .not. skipMe )  &
                 & quantity%values ( ind, i ) = &
@@ -5826,12 +5830,18 @@ contains ! =====     Public Procedures     =============================
             call outputNamedValue( 'shape(BO_stat)', shape(BO_stat%intField) )
             call outputNamedValue( 'noMAFs', noMAFs )
             call outputNamedValue( 'maxMIFs', maxMIFs )
+            call outputNamedValue( 'noChans', quantity%template%noChans )
+          endif
+          if ( switchDetail(switches, 'glob') > 1 ) then ! e.g., 'glob2'
+            call dump( l1bData%dpField(1,:,:), '(Before applying bright object mask)' )
           endif
           do channel = 1, quantity%template%noChans
           l1bData%dpField(channel,:,:) = &
             & NegativeIfBitPatternSet( l1bData%dpField(channel,:,:), &
             & BO_stat%intField(1, 1:maxMIFs, 1:noMAFs), myBOMask )
           enddo
+          if ( switchDetail(switches, 'glob') > 1 ) &
+            & call dump( l1bData%dpField(1,:,:), '(After applying bright object mask)' )
           call DeallocateL1BData(BO_stat)
         end if
 
@@ -8099,6 +8109,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.351  2007/06/21 22:34:32  pwagner
+! Fixed inconsequential bug in adding baseline when quantity was masked
+!
 ! Revision 2.350  2007/03/23 00:26:09  pwagner
 ! More unused debugging; skips filling covariance matrix if skipping retrievals
 !
