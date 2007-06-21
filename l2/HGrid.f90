@@ -622,32 +622,32 @@ contains ! =====     Public Procedures     =============================
       if ( interpolationFactor == 1.0 ) then
         interpolatedField = defaultField
       else
-	! Interpolations are performed based on MAF index and periodic variables
-	! like lon, solartime, losAngle are handled specially so that it can cope
-	! with the period jump between two adjacent MAFs. The range of the periods
-	! of these variable must be specified, i.e., (lower, upper) bounds. 
+        ! Interpolations are performed based on MAF index and periodic variables
+        ! like lon, solartime, losAngle are handled specially so that it can cope
+        ! with the period jump between two adjacent MAFs. The range of the periods
+        ! of these variable must be specified, i.e., (lower, upper) bounds. 
 
-	! create index of the old and new hGrid indices
-	do maf=1,noMAFs
-		defaultIndex(maf)=maf*1.0_rk 
-	end do
-	do maf=1,hGrid%noProfs 
-		interpolatedIndex(maf)=maf/interpolationFactor
-	end do
+        ! create index of the old and new hGrid indices
+        do maf=1,noMAFs
+          defaultIndex(maf)=maf*1.0_rk 
+        end do
+        do maf=1,hGrid%noProfs 
+          interpolatedIndex(maf)=maf/interpolationFactor
+        end do
 
-      	select case ( l1bItem )
+        select case ( l1bItem )
         case ( l1b_tpLon )
-	  call InterpolateValues(defaultIndex,defaultField,interpolatedIndex,&
-		interpolatedField,method='Linear',rangeofPeriod=(/-180.0_rk,180.0_rk/))
+          call InterpolateValues(defaultIndex,defaultField,interpolatedIndex,&
+                interpolatedField,method='Linear',rangeofPeriod=(/-180.0_rk,180.0_rk/))
         case ( l1b_tpSolarTime )
-	  call InterpolateValues(defaultIndex,defaultField,interpolatedIndex,&
-		interpolatedField,method='Linear',rangeofPeriod=(/0.0_rk,24.0_rk/))
+          call InterpolateValues(defaultIndex,defaultField,interpolatedIndex,&
+                interpolatedField,method='Linear',rangeofPeriod=(/0.0_rk,24.0_rk/))
         case ( l1b_tpLosAngle )
-	  call InterpolateValues(defaultIndex,defaultField,interpolatedIndex,&
-		interpolatedField,method='Linear',rangeofPeriod=(/0.0_rk,360.0_rk/))
-	case default
-	  call InterpolateValues(defaultIndex,defaultField,interpolatedIndex,&
-		interpolatedField,method='Linear')
+          call InterpolateValues(defaultIndex,defaultField,interpolatedIndex,&
+                interpolatedField,method='Linear',rangeofPeriod=(/0.0_rk,360.0_rk/))
+        case default
+          call InterpolateValues(defaultIndex,defaultField,interpolatedIndex,&
+                interpolatedField,method='Linear')
         end select
 
       end if
@@ -2338,6 +2338,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.91  2007/06/21 00:54:07  vsnyder
+! Remove tabs, which are not part of the Fortran standard
+!
 ! Revision 2.90  2006/07/12 20:42:30  pwagner
 ! 0 profiles in an HGrid will stop unless computing offsets
 !
