@@ -78,18 +78,18 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
   integer :: num_section_times ! = NumStringElements(section_names, countEmpty)
   integer :: num_retrieval_times ! = NumStringElements(retrieval_names, countEmpty)
 
-  character*(*), parameter           :: section_names = &
+  character(len=*), parameter        :: section_names = &
     & 'main,open_init,global_settings,signals,spectroscopy,' // &
     & 'read_apriori,merge_grids,chunk_divide,construct,fill,retrieve,join,' // &
     & 'directwrite,algebra,output'
 
-  character*(*), parameter           :: retrieval_names = &
+  character(len=*), parameter        :: retrieval_names = &
     & 'newton_solver,cholesky_factor,cholesky_solver,cholesky_invert,' // &
     & 'baseline,hybrid,polar_linear,switching_mirror,' // &
     & 'full_fwm,fullcloud_fwm,scan_fwm,twod_scan_fwm,linear_fwm,' // &
     & 'low_cloud,high_cloud,sids,form_normeq,tikh_reg'
 
-  character*(*), parameter           :: directwrite_names = &
+  character(len=*), parameter        :: directwrite_names = &
     & 'writing,waiting'
   ! This should be the number of elements in the above ----------------
   integer, parameter                 :: num_directwrite_times = 2  ! <--|
@@ -873,6 +873,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.37  2007/06/21 00:54:08  vsnyder
+! Remove tabs, which are not part of the Fortran standard
+!
 ! Revision 2.36  2007/06/04 23:24:46  pwagner
 ! Global TRUE skipDirectWrite, skipRetrievals not overriden by phase settings
 !
