@@ -310,7 +310,7 @@ module Hdf
   integer, parameter :: DFNT_NUINT8              =  4117
   integer, parameter :: DFNT_NINT16              =  4118
   integer, parameter :: DFNT_NUINT16             =  4119
-  integer, parameter :: DFNT_NINT32	          =  4120
+  integer, parameter :: DFNT_NINT32              =  4120
   integer, parameter :: DFNT_NUINT32             =  4121
   integer, parameter :: DFNT_NINT64              =  4122
   integer, parameter :: DFNT_NUINT64             =  4123
@@ -454,8 +454,8 @@ module Hdf
   ! SPECIAL CODES 
   !--------------
 
-  integer, parameter :: SPECIAL_LINKED 	 =     1
-  integer, parameter :: SPECIAL_EXT 	         =     2
+  integer, parameter :: SPECIAL_LINKED           =     1
+  integer, parameter :: SPECIAL_EXT              =     2
 
   !-----------
   ! PARAMETERS 
@@ -475,7 +475,7 @@ module Hdf
   !----------------------
 
   integer, parameter :: SUCCEED                  =     0 
-  integer, parameter :: FAIL     	         =    -1
+  integer, parameter :: FAIL                     =    -1
 
   !------------------
   ! Compression Types 
@@ -505,7 +505,7 @@ module Hdf
   integer, parameter :: MFGR_INTERLACE_LINE      =     1
   integer, parameter :: MFGR_INTERLACE_COMPONENT =     2
 
-  integer, parameter :: FULL_INTERLACE	         =     0 
+  integer, parameter :: FULL_INTERLACE           =     0 
   integer, parameter :: NO_INTERLACE             =     1
 
   !---------------------------
@@ -684,6 +684,9 @@ contains ! ============================= Local wrappers ======================
 end module Hdf
 
 ! $Log$
+! Revision 2.16  2007/06/21 00:49:51  vsnyder
+! Remove tabs, which are not part of the Fortran standard
+!
 ! Revision 2.15  2005/06/22 17:25:49  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
