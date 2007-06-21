@@ -224,14 +224,14 @@ contains ! =====     Public Procedures     =============================
 
         l1bFlag = 0
         call ReadL1BAttribute(l1bFile, OrbNum, 'OrbitNumber', &
-	       & l1bFlag)
+          & l1bFlag)
         if (l1bFlag == -1) then
            GlobalAttributes%OrbNum = -1
         else
            GlobalAttributes%OrbNum = OrbNum
         end if
         call ReadL1BAttribute(l1bFile, OrbPeriod, 'OrbitPeriod', &
-	       & l1bFlag)
+          & l1bFlag)
         if (l1bFlag == -1) then
            GlobalAttributes%OrbPeriod = -1.0
         else
@@ -286,39 +286,39 @@ contains ! =====     Public Procedures     =============================
     if ( returnstatus /= PGS_S_SUCCESS ) then
       call announce_error ( 0, "Missing pcf param: output version" )
     end if
-	
+
     returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_Cycle, l2pcf%cycle)
 
     if ( returnstatus /= PGS_S_SUCCESS ) then
       call announce_error ( 0, "Missing pcf param: cycle" )
     end if
-	
+
     returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_col_spec_keys, col_species_keys)
 
     if ( returnstatus /= PGS_S_SUCCESS ) then
       call announce_error ( 0, "Missing pcf param: col_spec_keys", &
         & forgiveable=.true. )
     end if
-	
+
     returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_col_spec_hash, col_species_hash)
 
     if ( returnstatus /= PGS_S_SUCCESS ) then
       call announce_error ( 0, "Missing pcf param: col_spec_hash", &
         & forgiveable=.true. )
     end if
-	
+
     returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_spec_keys, l2pcf%spec_keys)
 
     if ( returnstatus /= PGS_S_SUCCESS ) then
       call announce_error ( 0, "Missing pcf param: spec_keys" )
     end if
-	
+
     returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_spec_hash, l2pcf%spec_hash)
 
     if ( returnstatus /= PGS_S_SUCCESS ) then
       call announce_error ( 0, "Missing pcf param: spec_hash" )
     end if
-	
+
     if ( .NOT. MCFCASESENSITIVE ) then
       l2pcf%spec_hash = LowerCase(l2pcf%spec_hash)
       l2pcf%spec_keys = LowerCase(l2pcf%spec_keys)
@@ -334,7 +334,7 @@ contains ! =====     Public Procedures     =============================
       if ( returnstatus == PGS_S_SUCCESS .and. extra_switches /= ' ' ) &
         & switches = catLists(trim(switches), trim(extra_switches))
     end if
-	
+
 ! Get the name of the log file from the PCF
 
     version = 1
@@ -447,7 +447,7 @@ contains ! =====     Public Procedures     =============================
     character(len=CCSDSlen) CCSDSStartTime
     type (TAI93_Range_T) :: processingRange ! Data processing range
     integer, intent(in) :: Details
-	
+
     ! Local
 
     integer :: i, NoMAFs, IERR
@@ -478,13 +478,13 @@ contains ! =====     Public Procedures     =============================
       L1BFile => filedatabase(i)
       if ( L1BFile%content == 'l1brad' ) then
          call output ( 'PCF id:   ' )                                       
-    	   call output ( L1BFile%PCFID, advance='yes' )
-  	      call output ( 'fileid:   ' )
-	      call output ( L1BFile%FileID%f_id, advance='yes' )
+         call output ( L1BFile%PCFID, advance='yes' )
+         call output ( 'fileid:   ' )
+         call output ( L1BFile%FileID%f_id, advance='yes' )
          call output ( 'name:   ' )                                       
-    	   call output ( TRIM(L1BFile%name), advance='yes' )
+         call output ( TRIM(L1BFile%name), advance='yes' )
          call output ( 'hdf version:   ' )                                       
-    	   call output ( L1BFile%hdfVersion, advance='yes' )
+         call output ( L1BFile%hdfVersion, advance='yes' )
          if ( Details > -2 .and. hdfVersion == HDFVERSION_4 ) then
            l1bItemName = AssembleL1BQtyName ( l1b_quant_name, hdfVersion, .false. )
            call ReadL1BData ( L1BFile, l1bItemname, L1bDataSet, &
@@ -659,6 +659,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.95  2007/06/21 00:54:08  vsnyder
+! Remove tabs, which are not part of the Fortran standard
+!
 ! Revision 2.94  2006/09/21 18:50:33  pwagner
 ! Uncertain why or whether this was necessary but did it anyway
 !
