@@ -103,11 +103,13 @@ CONTAINS
 
     ! Write TPz Annotations and Close L1BRADD file
 
-       CALL H5gOpen_f (L1BFileInfo%RADDid, '/', grp_id, returnStatus)
-       CALL MakeHDF5Attribute (grp_id, 'TPz', TPz, .TRUE.)
-       CALL MLS_closeFile (L1BFileInfo%RADDid, HDFversion=HDFversion)
-       CALL MLSMessage (MLSMSG_Info, ModuleName, &
-            & 'Closed L1BRAD D file: '//L1BFileInfo%RADDFileName)
+       IF (L1BFileInfo%RADDid /= 0) THEN
+          CALL H5gOpen_f (L1BFileInfo%RADDid, '/', grp_id, returnStatus)
+          CALL MakeHDF5Attribute (grp_id, 'TPz', TPz, .TRUE.)
+          CALL MLS_closeFile (L1BFileInfo%RADDid, HDFversion=HDFversion)
+          CALL MLSMessage (MLSMSG_Info, ModuleName, &
+               & 'Closed L1BRAD D file: '//L1BFileInfo%RADDFileName)
+       ENDIF
 
        RETURN
 
@@ -156,15 +158,16 @@ CONTAINS
 
     ENDIF
 
-
-    CALL OutputL1B_Chi2 (L1BFileInfo%RADDid)   ! Write default Chi2
+    IF (L1BFileInfo%RADDid /= 0) THEN
+       CALL OutputL1B_Chi2 (L1BFileInfo%RADDid)   ! Write default Chi2
 
     ! Write Hdr Annotations and Close L1RAD D file
 
-    CALL WriteHdrAnnots (L1BFileInfo%RADDFileName, HDFversion)
-    CALL MLS_closeFile (L1BFileInfo%RADDid, HDFversion=HDFversion)
-    CALL MLSMessage (MLSMSG_Info, ModuleName, &
-         & 'Closed L1BRAD D file: '//L1BFileInfo%RADDFileName)
+       CALL WriteHdrAnnots (L1BFileInfo%RADDFileName, HDFversion)
+       CALL MLS_closeFile (L1BFileInfo%RADDid, HDFversion=HDFversion)
+       CALL MLSMessage (MLSMSG_Info, ModuleName, &
+            & 'Closed L1BRAD D file: '//L1BFileInfo%RADDFileName)
+    ENDIF
 
     CALL OutputL1B_Chi2 (L1BFileInfo%RADGid)   ! Write default Chi2
 
@@ -238,6 +241,9 @@ CONTAINS
 END MODULE Close_files
 !=============================================================================
 ! $Log$
+! Revision 2.21  2007/06/21 20:58:46  perun
+! Only write to RADD file if DACS calibration is enabled
+!
 ! Revision 2.20  2006/08/02 18:52:46  perun
 ! Write TPz Annotations to RADD file
 !
