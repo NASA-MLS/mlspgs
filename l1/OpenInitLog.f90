@@ -390,25 +390,28 @@ CONTAINS
 
     ! Open L1BRADD File
 
-    version = 1
-    returnStatus = PGS_PC_getReference (mlspcf_l1b_radd_start, version, &
-     PhysicalFilename)
+    IF (L1Config%Calib%CalibDACS) THEN
 
-    IF (returnStatus == PGS_S_SUCCESS) THEN
+       version = 1
+       returnStatus = PGS_PC_getReference (mlspcf_l1b_radd_start, version, &
+            PhysicalFilename)
 
-       ! Open the HDF file and initialize the SD interface
+       IF (returnStatus == PGS_S_SUCCESS) THEN
 
-       CALL MLS_openFile (PhysicalFilename, 'create', sd_id, hdfVersion)
-       CALL MLSMessage (MLSMSG_Info, &
-            & ModuleName, "Opened L1BRADD file: "//PhysicalFilename)
-       L1BFileInfo%RADDID = sd_id
-       L1BFileInfo%RADDFileName = PhysicalFilename
+          ! Open the HDF file and initialize the SD interface
 
-    ELSE
+          CALL MLS_openFile (PhysicalFilename, 'create', sd_id, hdfVersion)
+          CALL MLSMessage (MLSMSG_Info, &
+               & ModuleName, "Opened L1BRADD file: "//PhysicalFilename)
+          L1BFileInfo%RADDID = sd_id
+          L1BFileInfo%RADDFileName = PhysicalFilename
 
-       CALL MLSMessage (MLSMSG_Error, ModuleName, &
-            & "Could not find L1BRADD file entry")
+       ELSE
+          
+          CALL MLSMessage (MLSMSG_Error, ModuleName, &
+               & "Could not find L1BRADD file entry")
 
+       ENDIF
     ENDIF
 
   END SUBROUTINE OpenAndInitializeLog
@@ -467,6 +470,9 @@ END MODULE OpenInitLog
 !=============================================================================
 
 ! $Log$
+! Revision 2.8  2007/06/21 21:04:05  perun
+! Only create RADD file if DACS calibration is enabled
+!
 ! Revision 2.7  2006/08/02 18:56:35  perun
 ! Added creation of RADD file in anticipation of writing TPz attribute
 !
