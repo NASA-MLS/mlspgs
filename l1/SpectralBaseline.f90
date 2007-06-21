@@ -574,12 +574,13 @@ PRINT *, 'Updating baselines...'
 
        CALL ReadL1BData (sd_id, name, L1BData, noMAFs, Flag, &
             NeverFail=.TRUE., HDFversion=5)
-       rad = L1BData%DpField
+       rad(1:noChans,:,:) = L1BData%DpField
        CALL DeallocateL1BData (L1BData)
 
        CALL ReadL1BData (sd_id, TRIM(name)//' precision', L1BData, noMAFs, &
             Flag, NeverFail=.TRUE., HDFversion=5)
-       prec = L1BData%DpField
+
+       prec(1:noChans,:,:) = L1BData%DpField
        CALL DeallocateL1BData (L1BData)
 
        DO mindx = 1, noMAFs   ! calculate and output baselines
@@ -742,6 +743,9 @@ PRINT *, 'Updating baselines...'
 END MODULE SpectralBaseline
 !=============================================================================
 ! $Log$
+! Revision 2.10  2007/06/21 21:05:24  perun
+! Correct rad and prec assignments
+!
 ! Revision 2.9  2007/02/09 15:06:51  perun
 ! Test DACS precisions again minimum DC_avg of -2.0
 !
