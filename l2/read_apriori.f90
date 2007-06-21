@@ -457,7 +457,7 @@ contains ! =====     Public Procedures     =============================
           call decorate ( key, gridIndex )
           if ( returnStatus == PGS_S_SUCCESS) then
             call readGriddedData ( GriddedFile, son, description, &
-	           & v_is_pressure, GriddedDatabase(gridIndex), returnStatus, &
+              & v_is_pressure, GriddedDatabase(gridIndex), returnStatus, &
               & dimListString, TRIM(fieldNameString), missingValue )
           else
             call SetupNewGriddedData ( GriddedDatabase(gridIndex), empty=.true. )
@@ -951,6 +951,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.72  2007/06/21 00:54:08  vsnyder
+! Remove tabs, which are not part of the Fortran standard
+!
 ! Revision 2.71  2007/03/02 18:14:02  pwagner
 ! Fixed bugs introduced 2 versions ago
 !
