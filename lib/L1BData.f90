@@ -125,7 +125,7 @@ module L1BData
 
   interface ReadL1BAttribute
     module procedure ReadL1BAttribute_intarr1, &
-	& ReadL1BAttribute_dblarr1
+      & ReadL1BAttribute_dblarr1
   end interface
 
   interface ReadL1BData
@@ -1177,28 +1177,28 @@ contains ! ============================ MODULE PROCEDURES ======================
     if ( myhdfVersion == HDFVERSION_4 ) then
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & 'Not implemented in hdf4 l1boa file', MLSFile=L1bFile)
-	    Flag = -1
+        Flag = -1
     else 
-	   call h5gOpen_f (L1BFile%FileID%f_id,'/', aID, status)
+      call h5gOpen_f (L1BFile%FileID%f_id,'/', aID, status)
       if ( status /= 0 ) then
-	    call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'Unable to open group attribute in l1boa file', MLSFile=L1BFile )
-	   Flag = -1
-	   end if  
-     	if ( .not. IsHDF5AttributePresent(aID, AttrName) ) then
-     	  Flag = -1
+        Flag = -1
+      end if  
+      if ( .not. IsHDF5AttributePresent(aID, AttrName) ) then
+        Flag = -1
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'Failed to find attribute in l1boa file'//AttrName, MLSFile=L1bFile)
-	   else 
+      else 
         call output ('get attribute', advance='no')
         call output (AttrName, advance='yes')
         call GetHDF5Attribute(aID, AttrName, value)
-    	end if
-	   call h5gClose_f (aID, status)
+      end if
+      call h5gClose_f (aID, status)
       if ( status /= 0 ) then
-	       call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'Unable to close group attribute in l1boa file', MLSFile=L1bFile )
-	   end if 
+      end if 
     end if
     if ( .not. alreadyOpen ) &
       & call mls_closeFile(L1BFile, status)
@@ -1230,30 +1230,30 @@ contains ! ============================ MODULE PROCEDURES ======================
     Flag = 0
 
     if ( myhdfVersion == HDFVERSION_4 ) then
-        call MLSMessage ( MLSMSG_Warning, ModuleName, &
-        & 'Not implemented in hdf4 l1boa file', MLSFile=L1bFile)
-	    Flag = -1
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      & 'Not implemented in hdf4 l1boa file', MLSFile=L1bFile)
+      Flag = -1
     else 
-	   call h5gOpen_f (L1BFile%FileID%f_id,'/', aID, status)
+      call h5gOpen_f (L1BFile%FileID%f_id,'/', aID, status)
       if ( status /= 0 ) then
-	    call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'Unable to open group attribute in l1boa file', MLSFile=L1BFile )
-	   Flag = -1
-	   end if  
-     	if ( .not. IsHDF5AttributePresent(aID, AttrName) ) then
-     	  Flag = -1
+        Flag = -1
+      end if  
+      if ( .not. IsHDF5AttributePresent(aID, AttrName) ) then
+        Flag = -1
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'Failed to find attribute in l1boa file'//AttrName, MLSFile=L1bFile)
-	   else 
+      else 
         call output ('get attribute', advance='no')
         call output (AttrName, advance='yes')
         call GetHDF5Attribute(aID, AttrName, value)
-    	end if
-	   call h5gClose_f (aID, status)
+      end if
+      call h5gClose_f (aID, status)
       if ( status /= 0 ) then
-	       call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'Unable to close group attribute in l1boa file', MLSFile=L1bFile )
-	   end if 
+      end if 
     end if
     if ( .not. alreadyOpen ) &
       & call mls_closeFile(L1BFile, status)
@@ -3179,6 +3179,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.74  2007/06/21 00:49:51  vsnyder
+! Remove tabs, which are not part of the Fortran standard
+!
 ! Revision 2.73  2007/02/07 20:56:38  pwagner
 ! Avoid opening hdf5-type groups in hdf4 files
 !
