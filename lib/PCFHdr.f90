@@ -295,7 +295,7 @@ CONTAINS
 !------------------------------------------------------------
 
     use HDFEOS5, only: HE5T_NATIVE_INT, &
-	& HE5T_NATIVE_DOUBLE, MLS_charType
+      & HE5T_NATIVE_DOUBLE, MLS_charType
     use MLSHDFEOS, only: he5_EHwrglatt, mls_EHwrglatt
 ! Brief description of subroutine
 ! This subroutine writes the global attributes for an hdf-eos5 file
@@ -310,12 +310,12 @@ CONTAINS
 ! Executable
       if (present(dayNum)) then
          status = he5_EHwrglatt(fileID, &
-       	    & 'OrbitNumber', HE5T_NATIVE_INT, max_orbits, &
+            & 'OrbitNumber', HE5T_NATIVE_INT, max_orbits, &
             &  GlobalAttributes%OrbNumDays(:,dayNum))
          status = he5_EHwrglatt(fileID, &
             & 'OrbitPeriod', HE5T_NATIVE_DOUBLE, max_orbits, &
             &  GlobalAttributes%OrbPeriodDays(:,dayNum))
-      else	
+      else
          status = he5_EHwrglatt(fileID, &
             & 'OrbitNumber', HE5T_NATIVE_INT, max_orbits, &
             &  GlobalAttributes%OrbNum)
@@ -943,21 +943,21 @@ CONTAINS
       firstChar = 1
 
       do
-	lastChar = min(firstChar-1+maxheadersize, size(anText))
-	! i1 is for PCF filesize < 400,000 
-	write( blockChar, '(i1)') blockNumber
+        lastChar = min(firstChar-1+maxheadersize, size(anText))
+        ! i1 is for PCF filesize < 400,000 
+        write( blockChar, '(i1)') blockNumber
 
         status = he5_EHwrglatt(fileID, 'PCF'//TRIM(ADJUSTL(blockChar)), &
-		& MLS_CHARTYPE, lastChar-firstChar+1, &
-		& anText(firstChar:lastChar))
+                & MLS_CHARTYPE, lastChar-firstChar+1, &
+                & anText(firstChar:lastChar))
         if ( status /= PGS_S_SUCCESS) then
            CALL MLSMessage(MLSMSG_Error, ModuleName, &
                 & 'Error annotating with PCF')
-	   return
-	end if
-	blockNumber = blockNumber + 1
-	firstChar = firstChar + maxheadersize
-	if ( firstChar > size(anText)) return
+           return
+        end if
+        blockNumber = blockNumber + 1
+        firstChar = firstChar + maxheadersize
+        if ( firstChar > size(anText)) return
       end do
 
 !-----------------------------
@@ -1080,6 +1080,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.41  2007/06/21 00:49:52  vsnyder
+!# Remove tabs, which are not part of the Fortran standard
+!#
 !# Revision 2.40  2007/01/12 00:27:10  pwagner
 !# New HostName global attribute written to product files
 !#
