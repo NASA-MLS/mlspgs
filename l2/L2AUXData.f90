@@ -394,10 +394,10 @@ contains ! =====     Public Procedures     =============================
       call announce_error ( 0, 'Failed to open l2aux ' // &
       &  trim(File1) )
     end if
-	 call h5gOpen_f (sdfid1,'/', grpID, status)
+      call h5gOpen_f (sdfid1,'/', grpID, status)
     if ( status /= 0 ) then
-	   call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          	& 'Unable to open group to read attribute in l2aux file' )
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+           & 'Unable to open group to read attribute in l2aux file' )
     end if
     sdfId2 = mls_sfstart(trim(file2), file_access, &
               & hdfVersion=hdfVersion)
@@ -414,9 +414,9 @@ contains ! =====     Public Procedures     =============================
     do i = 1, noSds
       call GetStringElement (trim(mysdList), sdName, i, countEmpty )
       ! Allocate and fill l2aux
-	   call h5dOpen_f (grpid,trim(sdName), sd_ID, status)
+      call h5dOpen_f (grpid,trim(sdName), sd_ID, status)
       if ( status /= 0 ) then
-	     call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
               & 'Unable to open sd to read attribute in l2aux file' )
       end if
       ! Get QuantityType attribute--unfortunately they're all 0; what gives?
@@ -425,9 +425,9 @@ contains ! =====     Public Procedures     =============================
       else
         call GetHDF5Attribute ( sd_id, 'QuantityType', QuantityType )
       end if
-	   call h5dClose_f (sd_ID, status)
+      call h5dClose_f (sd_ID, status)
       if ( status /= 0 ) then
-	     call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
               & 'Unable to close sd to read attribute in l2aux file' )
       end if
       if ( QuantityType < 1 ) then
@@ -446,16 +446,16 @@ contains ! =====     Public Procedures     =============================
       ! Deallocate memory used by the l2aux
       call DestroyL2AUXContents ( l2aux )
     end do
-	 call h5gClose_f (grpID, status)
+    call h5gClose_f (grpID, status)
     if ( status /= 0 ) then
-	   call MLSMessage ( MLSMSG_Warning, ModuleName, &
+    call MLSMessage ( MLSMSG_Warning, ModuleName, &
        & 'Unable to close group in l2aux file: ' // trim(File1) // ' after cping' )
     end if
-	 status = mls_sfend(sdfid1, hdfVersion=the_hdfVersion)
+    status = mls_sfend(sdfid1, hdfVersion=the_hdfVersion)
     if ( status /= 0 ) &
       call MLSMessage ( MLSMSG_Error, ModuleName, &
        & "Unable to close L2aux file: " // trim(File1) // ' after cping')
-	 status = mls_sfend(sdfid2, hdfVersion=the_hdfVersion)
+    status = mls_sfend(sdfid2, hdfVersion=the_hdfVersion)
     if ( status /= 0 ) &
       call MLSMessage ( MLSMSG_Error, ModuleName, &
        & "Unable to close L2aux file: " // trim(File2) // ' after cping')
@@ -903,7 +903,7 @@ contains ! =====     Public Procedures     =============================
       &field:'
     integer, parameter :: MAXRANK = 3
     integer, parameter :: MAXDIMSIZES = 300
-    logical            :: myCHECKDIMNAMES	! .TRUE. only for actual l2auxfiles
+    logical            :: myCHECKDIMNAMES ! .TRUE. only for actual l2auxfiles
 
     ! Functions
 
@@ -962,7 +962,7 @@ contains ! =====     Public Procedures     =============================
 
     do dim=1, rank
       write(dim_char, '(I1)') dim
-      dim_id = sfdimid(sds_id, dim-1)		! dim starts from 0
+      dim_id = sfdimid(sds_id, dim-1)  ! dim starts from 0
       if(dim_id == -1) then
         msr = 'Failed to get dim_id for dim index number ' // dim_char
         call MLSMessage(MLSMSG_Error, ModuleName, msr, MLSFile=L2AUXFile)
@@ -1229,7 +1229,7 @@ contains ! =====     Public Procedures     =============================
         & 'File not opened' , MLSFile=L2AUXFile )
     
     if ( .not. associated ( l2aux%values ) ) then
-	   call announce_error (0,&
+      call announce_error (0,&
         & "l2aux values not associated yet ", L2AUXFile=L2AUXFile )
       returnStatus = 1
     else
@@ -1392,22 +1392,22 @@ contains ! =====     Public Procedures     =============================
         ! Write dimension name
         status=SFSDMName(dimID,TRIM(dimName))
         if ( status /= 0 ) then
-		  		call output("dim name: ")
-		  		call output(TRIM(dimName), advance='yes')
-		  		call announce_error (  0, &
+          call output("dim name: ")
+          call output(TRIM(dimName), advance='yes')
+          call announce_error (  0, &
           & "Error setting dimension name to SDS l2aux file:", L2AUXFile=L2AUXFile)
-	     end if
+        end if
         ! Write dimension scale
         status=SFSDScale(dimID, dimSizes(dimensionInFile+1), DFNT_FLOAT32, &
           & l2aux%dimensions(dimensionInData)%values)
         if ( status /= 0 ) then
-		  		call output("dimID: ")
-		  		call output(dimID, advance='yes')
-		  		call output("dim name: ")
-		  		call output(TRIM(dimName), advance='yes')
-		      call announce_error ( 0, &
+          call output("dimID: ")
+          call output(dimID, advance='yes')
+          call output("dim name: ")
+          call output(TRIM(dimName), advance='yes')
+          call announce_error ( 0, &
           & "Error writing dimension scale in l2auxFile:", L2AUXFile=L2AUXFile )
-	     end if
+        end if
         dimensionInFile=dimensionInFile+1
       end if
     end do
@@ -1419,7 +1419,7 @@ contains ! =====     Public Procedures     =============================
       & stride(1:noDimensionsUsed), dimSizes, real ( &
       & max ( -hugeR4, min ( hugeR4, l2aux%values ) ) ) )
     if ( status /= 0 ) then
-	   call announce_error (0, &
+      call announce_error (0, &
       & "Error writing SDS data to  l2aux file:  ", L2AUXFile=L2AUXFile )
     end if
 
@@ -1428,7 +1428,7 @@ contains ! =====     Public Procedures     =============================
     ! Terminate access to sd
     status = sfendacc(sdId)      ! 
     if ( status /= 0 ) then
-	   call announce_error (0,&
+      call announce_error (0,&
       & "Error ending access to the sd  ", L2AUXFile=L2AUXFile )
     end if
     returnStatus = error
@@ -1452,7 +1452,7 @@ contains ! =====     Public Procedures     =============================
     status= SFWDATA_F90(sdId, (/ 0 /), &
       & (/ 1 /) , dimSizes, CounterMAF)
     if ( status /= 0 ) then
-	   call announce_error (0,&
+      call announce_error (0,&
       & "Error writing counterMAF data to  l2aux file:  ", L2AUXFile=L2AUXFile )
     end if
     call Deallocate_Test(dimSizes,"dimSizes",ModuleName)
@@ -1461,7 +1461,7 @@ contains ! =====     Public Procedures     =============================
     ! Terminate access to sd
     status = sfendacc(sdId)
     if ( status /= 0 ) then
-	   call announce_error (0,&
+      call announce_error (0,&
       & "Error ending access to the sd  ", L2AUXFile=L2AUXFile )
     end if
     returnStatus = error
@@ -1958,7 +1958,7 @@ contains ! =====     Public Procedures     =============================
   subroutine ANNOUNCE_ERROR ( WHERE, full_message, CODE, L2AUXFile )
   use MLSFiles, only: dump
     integer, intent(in) :: WHERE   ! Tree node where error was noticed
-	character(LEN=*), intent(in)    :: full_message
+    character(LEN=*), intent(in)    :: full_message
     integer, intent(in), optional :: CODE    ! Code for error message
     type(MLSFile_T), optional :: L2AUXFile
 
@@ -1999,6 +1999,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.81  2007/06/21 00:54:08  vsnyder
+! Remove tabs, which are not part of the Fortran standard
+!
 ! Revision 2.80  2006/05/19 22:49:15  pwagner
 ! May rename copied SDs
 !
