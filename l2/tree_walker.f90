@@ -322,9 +322,9 @@ contains ! ====     Public Procedures     ==============================
             ! This is one of the skipped sections
           end select
           ! print the timing for FullForwardModel, the following return
-	  ! if fmt1 or fmt2 is true
+          ! if fmt1 or fmt2 is true
           if ( switchDetail(switches, 'fmt') > -1 .and. &
-	     & associated(forwardModelConfigDatabase)) then
+            & associated(forwardModelConfigDatabase)) then
                   call printForwardModelTiming ( forwardModelConfigDatabase )
           end if
           canWriteL2PC = .true.
@@ -379,13 +379,13 @@ subtrees:   do while ( j <= howmany )
                   call MLSL2Fill ( son, filedatabase, griddedDataBase, &
                   & vectorTemplates, vectors, qtyTemplates, matrices, &
                   & l2gpDatabase, l2auxDatabase, forwardModelConfigDatabase, &
-		            & chunks, chunkNo )
-		          end if
+                  & chunks, chunkNo )
+                end if
                 call add_to_section_timing ( 'fill', t1, now_stop )
               case ( z_join )
                 call MLSL2Join ( son, vectors, l2gpDatabase, &
                   & l2auxDatabase, DirectDatabase, chunkNo, chunks, &
-		            & forwardModelConfigDatabase, fileDatabase, HGrids )
+                  & forwardModelConfigDatabase, fileDatabase, HGrids )
                 call add_to_section_timing ( 'join', t1, now_stop )
               case ( z_retrieve )
                 if ( .not. checkPaths) &
@@ -467,7 +467,7 @@ subtrees:   do while ( j <= howmany )
         call resumeOutput ! In case the last phase was  silent
         if ( .not. parallel%slave ) then
           call Output_Close ( son, l2gpDatabase, l2auxDatabase, DirectDatabase, &
-	         & matrices, vectors, fileDataBase, chunks, processingRange, &
+            & matrices, vectors, fileDataBase, chunks, processingRange, &
             & canWriteL2PC )
         end if
 
@@ -603,6 +603,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.156  2007/06/07 20:41:07  pwagner
+! Avoid read_ and Merge_apriori if master task
+!
 ! Revision 2.155  2007/04/03 17:36:44  vsnyder
 ! Allocate Vectors with zero size so others don't need to check whether
 ! it's associated; indeed, they don't need the pointer attribute.

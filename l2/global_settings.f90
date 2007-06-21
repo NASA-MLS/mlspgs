@@ -714,10 +714,10 @@ contains
         do i = 1, size(filedatabase)
          L1BFile => filedatabase(i)
          if ( L1BFile%content == 'l1brad' ) then
-  	        call output ( 'fileid:   ' )
+           call output ( 'fileid:   ' )
            call output ( L1BFile%FileID%f_id, advance='yes' )
            call output ( 'name:   ' )
-    	     call output ( TRIM(L1BFile%name), advance='yes' )
+           call output ( TRIM(L1BFile%name), advance='yes' )
            if ( details > -2 ) then
              l1b_quant_name = BASE_QUANT_NAME
              l1bItemName = AssembleL1BQtyName ( l1b_quant_name, hdfVersion, .false. )
@@ -966,6 +966,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.123  2007/03/26 18:06:59  pwagner
+! Extra debuggung statements; may be useful if get 'Filesize limit exceeded'
+!
 ! Revision 2.122  2007/01/12 00:36:41  pwagner
 ! New but unused option to skip check for correct month l2pc files
 !
