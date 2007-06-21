@@ -230,7 +230,7 @@ contains ! =====     Public Procedures     =============================
             call DirectWriteCommand ( son, ticket, vectors, &
               & DirectdataBase, fileDatabase,  &
               & chunkNo, chunks, FWModelConfig, HGrids, makeRequest=.true., &
-	           & NoExtraWrites=noExtraWrites)
+              & NoExtraWrites=noExtraWrites)
             noDirectWrites = noDirectWrites + noExtraWrites
           else
             ! On the later passes we do the actual direct write we've been
@@ -243,7 +243,7 @@ contains ! =====     Public Procedures     =============================
               call DirectWriteCommand ( son, ticket, vectors, &
                 & DirectdataBase, filedatabase, &
                 & chunkNo, chunks, FWModelConfig, HGrids, create=createFile, &
-		          & theFile=theFile )
+                & theFile=theFile )
               call time_now(dwt22)
               if ( dwt22-dwt2 > timeReasonable .and. &
                 & switchDetail(switches,'dwreq') > -1 ) then
@@ -2050,6 +2050,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.131  2007/06/21 00:54:08  vsnyder
+! Remove tabs, which are not part of the Fortran standard
+!
 ! Revision 2.130  2006/10/11 22:58:00  pwagner
 ! Will write convergence ratio as another quality-like field of l2gp
 !
