@@ -655,7 +655,7 @@ contains
     character (len=*), optional, intent(in) :: extrapolate ! See comments above
     real(rk), optional, intent(in) :: badValue
     real(rk), dimension(:), optional, intent(out) :: dyByDx
-    real(rk), dimension(2), optional, intent(in) :: rangeofperiod	  ! for periodic data
+    real(rk), dimension(2), optional, intent(in) :: rangeofperiod   ! for periodic data
     logical, optional, intent(in) :: missingRegions ! Allow missing regions
     logical, optional, intent(in) :: SKIPNEWY ! Don't compute newY
     real(rk), dimension(:), optional, intent(out) :: IntYdX ! Antiderivative
@@ -681,7 +681,7 @@ contains
     real(rk), optional, intent(in) :: badValue
     logical, optional, intent(in) :: missingRegions ! Allow missing regions
     real(rk), dimension(:), optional, intent(out) :: dyByDx
-    real(rk), dimension(2), optional, intent(in) :: rangeofperiod	  ! for periodic data
+    real(rk), dimension(2), optional, intent(in) :: rangeofperiod   ! for periodic data
     logical, optional, intent(in) :: SKIPNEWY ! Don't compute newY
     real(rk), dimension(:), optional, intent(out) :: IntYdX ! Antiderivative
                                               ! of Y at X
@@ -1204,6 +1204,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.50  2007/06/21 00:49:52  vsnyder
+! Remove tabs, which are not part of the Fortran standard
+!
 ! Revision 2.49  2007/04/02 22:53:26  pwagner
 ! Added Battleship integer rootfinder
 !
