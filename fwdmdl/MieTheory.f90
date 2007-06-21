@@ -19,7 +19,7 @@ module MieTheory
    use MLSCommon, only: r8
    USE MLSMessageModule, only: MLSMessage, MLSMSG_Error
    use RefractiveIndex, only: UKSUB, UKISUB
-	implicit none
+   implicit none
 
    Private
    Public :: MieCoeff
@@ -32,7 +32,7 @@ module MieTheory
       
 contains
 
-	SUBROUTINE MieCoeff(ISPI, f, t, nr, r, a, b, nab, nabr, bc)
+        SUBROUTINE MieCoeff(ISPI, f, t, nr, r, a, b, nab, nabr, bc)
 
         real :: pi
         parameter (pi=3.1415926)
@@ -42,28 +42,28 @@ contains
         parameter (nu0=128)
           
    ! Arguments
-        integer, intent(in) :: ISPI	       ! cloud type (1=ICE, 2=WATER)
-	real(r8), intent(in) :: f 	       ! frequency in GHz
-	real(r8), intent(in) :: t 	       ! Temperature in K 
-        integer, intent(in) :: nr	       ! no of particle size
-	integer, intent(in) :: nab	       ! no of a/b terms
-	real(r8), intent(in) :: r(nr)	       ! particle radius
-	integer, intent(out) :: nabr(nr)       ! truncation number for a and b
-				               ! 10um ---> 5; 2000 um ---> 20.
-	complex(r8), intent(out) :: a(nr,nab),b(nr,nab)	! Mie coefficients
-	real(r8), intent(out) :: bc(3,nr)      ! single particle Mie 
+        integer, intent(in) :: ISPI            ! cloud type (1=ICE, 2=WATER)
+        real(r8), intent(in) :: f              ! frequency in GHz
+        real(r8), intent(in) :: t              ! Temperature in K 
+        integer, intent(in) :: nr              ! no of particle size
+        integer, intent(in) :: nab             ! no of a/b terms
+        real(r8), intent(in) :: r(nr)          ! particle radius
+        integer, intent(out) :: nabr(nr)       ! truncation number for a and b
+                                               ! 10um ---> 5; 2000 um ---> 20.
+        complex(r8), intent(out) :: a(nr,nab),b(nr,nab) ! Mie coefficients
+        real(r8), intent(out) :: bc(3,nr)      ! single particle Mie 
    ! Internal variables                          efficiencies (abs,scat,ext)
-	real(r8) :: wl 	                       ! wavelength in meters
-	complex(r8) :: m		       ! refractive index
+        real(r8) :: wl                         ! wavelength in meters
+        complex(r8) :: m                       ! refractive index
    complex(r8) :: a0,a1,w9,w0,w1,p1,p2,mx,mx1
    real(r8) :: x, x1
-	real(r8) :: ab_err	               ! relative error in Mie efficiency
-	parameter(ab_err = 1.e-3)
-	real(r8) :: dab1, dab2	               ! a/b contribution to bc at i term
+        real(r8) :: ab_err                     ! relative error in Mie efficiency
+        parameter(ab_err = 1.e-3)
+        real(r8) :: dab1, dab2                 ! a/b contribution to bc at i term
    ! These are legal values of ispi
         integer, parameter :: ice = 1
         integer, parameter :: water = ice + 1
-	integer :: i,j
+        integer :: i,j
 
 !... initialization
         wl=0.3_r8/f
@@ -73,7 +73,7 @@ contains
              b(i,j)=cmplx(0.0)
           end do
         end do
-	   
+   
         part_size_loop: do j=1, nr
 
          if(ISPI == ice) then
@@ -85,17 +85,17 @@ contains
              & ' Unrecognized ispi parameter--ice==1, water==2 ')
          endif
 
-	      x=real(2.*pi*r(j)/wl)*1.d-6                                           
-	
-	      bc(2,j) =0.                                                           
-	      bc(3,j) =0.                                                           
+              x=real(2.*pi*r(j)/wl)*1.d-6                                           
+
+              bc(2,j) =0.                                                           
+              bc(3,j) =0.                                                           
 
          !... default of nabr is nab, the largest possible                     
          nabr(j)=nab                                                      
                                                                                
          !... x1 is 1/x                                                        
-	      x1=real(0.5*wl/pi/r(j))*1.d6                                          
-	      mx=cmplx(m)*x                                                         
+              x1=real(0.5*wl/pi/r(j))*1.d6                                          
+              mx=cmplx(m)*x                                                         
          mx1=1.0/mx                                                       
 
          ! ....... for CGI     !JJ                                             
@@ -104,7 +104,7 @@ contains
          !        a0=cdcos(mx)/cdsin(mx)                                       
 
          ! ....   for f95                                                  
-	      w9=cmplx(cos(x),-sin(x))                                              
+              w9=cmplx(cos(x),-sin(x))                                              
               w0=cmplx(sin(x),cos(x))                                               
               a0=cos(mx)/sin(mx)                                                    
 
@@ -120,24 +120,24 @@ contains
 
            ! ... the factor of 2./x^2 is left out in dab since nabr is usually 
            !  important for large x. For x<0.1, usually, nabr=2 is enough.     
-	        dab1=(2.*i+1.)*((abs(a(j,i)))**2+(abs(b(j,i)))**2)                  
-	        dab2=(2.*i+1.)*real(a(j,i)+b(j,i))                                  
-	        bc(2,j)=bc(2,j)+dab1                                                
-	        bc(3,j)=bc(3,j)+dab2                                                
+                dab1=(2.*i+1.)*((abs(a(j,i)))**2+(abs(b(j,i)))**2)                  
+                dab2=(2.*i+1.)*real(a(j,i)+b(j,i))                                  
+                bc(2,j)=bc(2,j)+dab1                                                
+                bc(3,j)=bc(3,j)+dab2                                                
 
            ! ... determine cutoff no. for higher order terms                   
-	        if(i .ge. 2 ) then                                                  
-	          dab1=dab1/bc(2,j)                                                 
-	          dab2=dab2/bc(3,j)                                                 
-	          if(abs(dab1) .lt. ab_err .and. abs(dab2) .lt. ab_err) then        
-	             nabr(j) = i                                                    
-	             exit ! goto 11     ! stop looping and use i as nabr                   
-	          endif                                                             
-	        endif                                                               
+                if(i .ge. 2 ) then                                                  
+                  dab1=dab1/bc(2,j)                                                 
+                  dab2=dab2/bc(3,j)                                                 
+                  if(abs(dab1) .lt. ab_err .and. abs(dab2) .lt. ab_err) then        
+                     nabr(j) = i                                                    
+                     exit ! goto 11     ! stop looping and use i as nabr                   
+                  endif                                                             
+                endif                                                               
 
            a0=a1                                                               
-	        w9=w0                                                               
-	        w0=w1                                                               
+           w9=w0                                                               
+           w0=w1                                                               
 
           enddo                                                                
          ! 11   bc(2,j)=bc(2,j)*2/x/x                                            
@@ -160,6 +160,9 @@ contains
 end module MieTheory
 
 ! $Log$
+! Revision 2.5  2007/06/21 00:52:54  vsnyder
+! Remove tabs, which are not part of the Fortran standard
+!
 ! Revision 2.4  2005/06/22 18:08:19  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
