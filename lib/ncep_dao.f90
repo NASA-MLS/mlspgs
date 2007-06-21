@@ -219,7 +219,7 @@ contains
     character (len=MAXLISTLENGTH), dimension(1) :: dimlists
     character (len=16), dimension(NENTRIESMAX) :: dimNames
     character (len=MAXLISTLENGTH) :: fieldlist
-    integer, parameter :: MAXNAMELENGTH=NameLen		! Max length of grid name
+    integer, parameter :: MAXNAMELENGTH=NameLen         ! Max length of grid name
     character (len=MAXNAMELENGTH) :: gridname, actual_field_name
     integer, dimension(NENTRIESMAX) :: dims, rank, numberTypes
     integer                        :: our_rank, numberType
@@ -530,7 +530,7 @@ contains
     character (len=MAXLISTLENGTH), dimension(1) :: dimlists
     character (len=16), dimension(NENTRIESMAX) :: dimNames
     character (len=MAXLISTLENGTH) :: fieldlist
-    integer, parameter :: MAXNAMELENGTH=NameLen		! Max length of grid name
+    integer, parameter :: MAXNAMELENGTH=NameLen         ! Max length of grid name
     character (len=MAXNAMELENGTH) :: gridname, actual_field_name
     integer, dimension(NENTRIESMAX) :: dims, rank, numberTypes
     integer                        :: our_rank, numberType
@@ -826,7 +826,7 @@ contains
     character (len=MAXLISTLENGTH) :: fieldlist
     character (len=MAXLISTLENGTH) :: gridlist
     character (len=MAXLISTLENGTH) :: dimlist
-    integer, parameter :: MAXNAMELENGTH=NameLen		! Max length of grid name
+    integer, parameter :: MAXNAMELENGTH=NameLen         ! Max length of grid name
     character (len=MAXNAMELENGTH) :: actual_field_name
     integer, dimension(NENTRIESMAX) :: dims, rank, numberTypes
     integer                        :: our_rank, numberType
@@ -1166,7 +1166,7 @@ contains
     character (len=16), dimension(NENTRIESMAX) :: dimNames
     character (len=MAXLISTLENGTH), dimension(2) :: names
     character (len=MAXLISTLENGTH) :: fieldlist
-    integer, parameter :: MAXNAMELENGTH=NameLen		! Max length of grid name
+    integer, parameter :: MAXNAMELENGTH=NameLen         ! Max length of grid name
     character (len=MAXNAMELENGTH) :: actual_field_name
     integer, dimension(NENTRIESMAX) :: dims, rank, numberTypes
     integer                        :: our_rank, numberType
@@ -1203,7 +1203,7 @@ contains
     inq_success = he5_gdinqgrid(NCEPFile%name, gridlist, strbufsize)
     if (inq_success < 0) then
       call announce_error(lcf_where, &
-	     & "Could not inquire gridlist "// trim(NCEPFile%name))
+        & "Could not inquire gridlist "// trim(NCEPFile%name))
     elseif ( strbufsize > MAXLISTLENGTH ) then
        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'list size too big in Read_ncep ' // trim(NCEPFile%name), MLSFile=NCEPFile )
@@ -1225,10 +1225,10 @@ contains
       call announce_error(lcf_where, "NumStringElements of gridlist <= 0")
     elseif(ngrids /= inq_success) then
       call announce_error(lcf_where, &
-	& "NumStringElements of gridlist /= inq_success")
+        & "NumStringElements of gridlist /= inq_success")
     elseif(ngrids < GRIDORDER) then
       call announce_error(lcf_where, &
-	& "NumStringElements of gridlist < GRIDORDER")
+        & "NumStringElements of gridlist < GRIDORDER")
     endif
 
     !if ( present(gridName) ) then
@@ -1237,20 +1237,20 @@ contains
       !call GetStringElement(gridlist, mygridname, GRIDORDER, COUNTEMPTY)
     !endif
     do i=1, ngrids
-      	call GetStringElement(gridlist, names(i), i, COUNTEMPTY)
-      	if (DEEBUG) print *,'name = ', trim(names(i))
+      call GetStringElement(gridlist, names(i), i, COUNTEMPTY)
+      if (DEEBUG) print *,'name = ', trim(names(i))
         gd_id(i) = he5_gdattach(file_id, trim(names(i)))
-    	if (gd_id(i) < 0) then
-      	   !call announce_error(lcf_where,"Could not attach "//trim(mygridname))
-      	   call MLSMessage (MLSMSG_Warning, ModuleName, & 
-         	& "Could not attach "//trim(names(i)))
+      if (gd_id(i) < 0) then
+          !call announce_error(lcf_where,"Could not attach "//trim(mygridname))
+        call MLSMessage (MLSMSG_Warning, ModuleName, & 
+          & "Could not attach "//trim(names(i)))
            exit 
-	endif
+      endif
         !Now find dimsize(), dimname(), etc.
         nentries = he5_gdnentries(gd_id(i), HE5_HDFE_NENTDIM, strbufsize)
 
         if(nentries <= 0) then
-      	   call announce_error(lcf_where, "nentries of gd_id <= 0")
+          call announce_error(lcf_where, "nentries of gd_id <= 0")
         elseif(nentries > NENTRIESMAX) then
            call announce_error(lcf_where, "nentries of gd_id > NENTRIESMAX")
         endif
@@ -1293,7 +1293,7 @@ contains
 
         ! Now find the rank of our field
         inq_success = he5_gdfldinfo(gd_id(i), trim(actual_field_name), & 
-	   & our_rank, dims, numbertype, dimlists(1), maxdimlists(1))
+          & our_rank, dims, numbertype, dimlists(1), maxdimlists(1))
 
         dimlist = trim(dimlists(1))
         dims_temp(1:our_rank,i) = dims(1:our_rank)
@@ -1335,9 +1335,9 @@ contains
 
     do i=1, ngrids
        if (gd_id(i) < 0) then
-      	   call MLSMessage (MLSMSG_Warning, ModuleName, & 
-         	& "Could not attach "//trim(names(i)))
-           exit 
+         call MLSMessage (MLSMSG_Warning, ModuleName, & 
+           & "Could not attach "//trim(names(i)))
+         exit 
        endif
 
        dims(1) = dims_temp(1,i)
@@ -1351,7 +1351,7 @@ contains
        if ( status /= 0 ) &
           & call announce_error(lcf_where, "failed to allocate field_data")
        status = he5_gdgridinfo(gd_id(i), xdimsize, ydimsize, upleftpt, &
-		& lowrightpt)
+          & lowrightpt)
        start = 0
        stride = 1
        !edge = dims(1:3)
@@ -1366,7 +1366,7 @@ contains
        if(DEEBUG) print *, 'ydimsize ', ydimsize
 
        status = he5_gdrdfld(gd_id(i), trim(actual_field_name), start, stride, &
-	   & edge, all_the_fields)
+         & edge, all_the_fields)
        if(status /= 0) &
           & call announce_error(lcf_where, "failed to read field " &
           & //trim(actual_field_name))
@@ -1374,7 +1374,7 @@ contains
        ! The actual dimlist is this                    XDim,YDim,Height
        ! Need to reshape it so that the order becomes: Height,YDim,XDim
        if ( DEEBUG) then
-      	  print *, 'Before reshaping'
+         print *, 'Before reshaping'
           call dump(all_the_fields(:,1,1), 'x-slice')
           call dump(all_the_fields(1,:,1), 'y-slice')
           call dump(all_the_fields(1,1,:), 'p-slice')
@@ -1390,12 +1390,12 @@ contains
           call dump(t_all_fields(1:65,1,fdims3), 'x-slice')
           call dump(t_all_fields(1,1:65,fdims3), 'y-slice')
           call dump(t_all_fields(1,1,fdims3:nlev), 'p-slice')
-	endif
+       endif
 
         ! Close grid
         status = he5_gddetach(gd_id(i))
         if(status /= 0) &
-      	   & call announce_error(lcf_where, "failed to detach from grid " &
+           & call announce_error(lcf_where, "failed to detach from grid " &
            & //trim(names(i)))
         deallocate(all_the_fields)
     enddo
@@ -1640,12 +1640,12 @@ contains
     ! Local
     integer, parameter :: version=1
     character (LEN=FileNameLen)            :: fname   ! Physical file name
-    character (LEN=FileNameLen)            :: path	   ! Physical path
+    character (LEN=FileNameLen)            :: path    ! Physical path
 
     ! These determine how much extra to output
     logical, parameter :: debug=.false.
-    logical, parameter :: ECHO_GRIDDED_QUANTITIES=.false.	! echo_data overrides
-    logical, parameter :: DUMP_GRIDDED_QUANTITIES=.false.	! dump_data overrides
+    logical, parameter :: ECHO_GRIDDED_QUANTITIES=.false. ! echo_data overrides
+    logical, parameter :: DUMP_GRIDDED_QUANTITIES=.false. ! dump_data overrides
 
     logical :: end_of_file
     type (GriddedData_T)        :: gddata 
@@ -1695,7 +1695,7 @@ contains
       ! use Fortran open
       if(debug) call output('opening ' // fname, advance = 'yes')
       CliUnit = mls_io_gen_openF ( l_ascii, .true., ErrType, &
-	& record_length, PGSd_IO_Gen_RSeqFrm, FileName=fname)
+        & record_length, PGSd_IO_Gen_RSeqFrm, FileName=fname)
     endif
 
     if(debug) then
@@ -1758,7 +1758,7 @@ contains
       ! ok, done with this file and unit number
       if( use_PCF ) then
         ErrType = Pgs_io_gen_CloseF ( CliUnit )
-	! use Fortran close
+        ! use Fortran close
       else
         if(debug) call output('closing ' // fname, advance = 'yes')
         ErrType = mls_io_gen_CloseF (l_ascii, CliUnit )
@@ -1886,6 +1886,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.46  2007/06/21 00:49:52  vsnyder
+! Remove tabs, which are not part of the Fortran standard
+!
 ! Revision 2.45  2006/11/01 20:30:11  pwagner
 ! More unused debugging prints
 !
