@@ -401,6 +401,8 @@ CONTAINS
 
   SUBROUTINE WriteMetaData (IsTHz)
 
+    USE MLSL1Config, ONLY: L1Config
+
     LOGICAL, OPTIONAL :: IsTHz
 
     IF (PRESENT (IsTHz)) THEN
@@ -414,7 +416,9 @@ CONTAINS
 
     CALL populate_metadata_l1 (mlspcf_l1b_radf_start, mlspcf_mcf_l1bradf_start)
 
-    CALL populate_metadata_l1 (mlspcf_l1b_radd_start, mlspcf_mcf_l1bradd_start)
+    IF (L1Config%Calib%CalibDACS) &
+         CALL populate_metadata_l1 (mlspcf_l1b_radd_start, &
+         mlspcf_mcf_l1bradd_start)
 
     CALL populate_metadata_l1 (mlspcf_l1b_oa_start, mlspcf_mcf_l1boa_start)
 
@@ -431,6 +435,9 @@ CONTAINS
 END MODULE WriteMetaL1 
 
 ! $Log$
+! Revision 2.19  2007/06/21 21:06:20  perun
+! Only output to RADD file if DACS calibration is enabled
+!
 ! Revision 2.18  2006/04/05 18:09:52  perun
 ! Remove unused variables
 !
