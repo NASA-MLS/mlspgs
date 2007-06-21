@@ -273,11 +273,11 @@ contains
                   tmp1(j) = 1._r8/nz*(j-1._r8)
                   tmp2(j) = slope%values(ich+nFreqs*(mif-1),maf)* &
                      & (1._r8 - 0.2_r8* tmp1(j)**5) ! correction term (see ATBD)
-!		            if(j > 1) then
-!			            if(tmp2(j) > tmp2(j-1)) n1=j
-!		            end if
+!                           if(j > 1) then
+!                                   if(tmp2(j) > tmp2(j-1)) n1=j
+!                           end if
                 end do
-!		          if(n1 < nz/2) print*,'sensitivity too low for mif=',mif
+!                           if(n1 < nz/2) print*,'sensitivity too low for mif=',mif
                      
                 y = Tcir%values(ich+nFreqs*(mif-1),maf)
 
@@ -774,7 +774,7 @@ contains
       outLosSD%values = outLosSD%values**2
       xLosVar%values = 1._r8/xLosVar%values  ! xLosVar is the inverted variance
       
-   	call LOS2Grid(xExtPtr,outExtSD,xExtvar,xLosPtr,outLosSD,xLosVar,Ptan,Re,p_lowcut)
+      call LOS2Grid(xExtPtr,outExtSD,xExtvar,xLosPtr,outLosSD,xLosVar,Ptan,Re,p_lowcut)
 
     ! output SD
       outLosSD%values = sqrt(outLosSD%values)
@@ -953,6 +953,9 @@ contains
   end function not_used_here
 end module CloudRetrievalModule
 ! $Log$
+! Revision 2.10  2007/06/21 00:54:07  vsnyder
+! Remove tabs, which are not part of the Fortran standard
+!
 ! Revision 2.9  2005/06/22 18:57:01  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
