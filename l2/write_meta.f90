@@ -117,7 +117,7 @@ module WriteMetadata ! Populate metadata and write it out
 
     character (len=fileNameLen) :: spec_keys
 
-    ! the following is a comma-delimited list of possible 	
+    ! the following is a comma-delimited list of possible
     ! mcf file name parts that may be the corresponding hash
 
     character (len=fileNameLen) :: spec_hash
@@ -768,7 +768,7 @@ contains
       & "Error: failed to find PCF ref for MCF_FILE in populate_metadata_std.") 
       return
     end if
-		
+
     version = 1
     returnStatus = PGS_PC_GetReference (HDF_FILE, version , physical_filename)
 
@@ -777,7 +777,7 @@ contains
       & "Error: failed to find PCF ref for HDF_FILE in populate_metadata_std.") 
       return
     end if
-		
+
     call first_grouping(HDF_FILE, MCF_FILE, groups)
     call measured_parameter (HDF_FILE, field_name, groups, 1)
     call third_grouping (HDF_FILE, hdf_sdid, groups, &
@@ -807,7 +807,7 @@ contains
     ! Annotate the file with the PCF
 
     if ( ANNOTATEWITHPCF ) then
-	call writePCF2Hdr(physical_filename, l2pcf%anText, &
+      call writePCF2Hdr(physical_filename, l2pcf%anText, &
      & hdfVersion, filetype=filetype)
     end if
 
@@ -882,7 +882,7 @@ contains
     else
       returnStatus = PGSPC_W_NO_REFERENCE_FOUND
     end if
-	
+
     if ( returnStatus /= PGS_S_SUCCESS ) then
       call announce_error ( 0, &
       & "Error: failed to find PCF ref for MCF_FILE in populate_metadata_oth.") 
@@ -933,7 +933,7 @@ contains
 ! Annotate the file with the PCF
 
     if ( ANNOTATEWITHPCF ) then
-	call writePCF2Hdr(physical_filename, l2pcf%anText, &
+      call writePCF2Hdr(physical_filename, l2pcf%anText, &
       & hdfVersion, filetype=filetype)
       ! & hdfVersion, isHDFEOS)
     end if
@@ -980,7 +980,7 @@ contains
     character (len=1), parameter :: Species_delimiter = '_'
     character (len=4), parameter :: L2gp = 'l2gp'
     logical, parameter :: DEBUG = .false.
-	
+
     ! Begin
 
     if(.NOT. TOOLKIT) then
@@ -1014,15 +1014,15 @@ contains
       do i=mlspcf_mcf_l2gp_start, mlspcf_mcf_l2gp_end
 
         if ( present(version) ) then
-	        myVersion=version
+          myVersion=version
         else
-	        myVersion = 1
+          myVersion = 1
         end if
 
         returnStatus = PGS_PC_GetReference(i, myVersion , mcf_full)
 
         if ( returnStatus == PGS_S_SUCCESS ) then 
-	        exit
+          exit
         end if
 
       end do
@@ -1040,7 +1040,7 @@ contains
       ! Split full_file_names into path+name
 
       call split_path_name ( mcf_full, mcf_path, mcf_name )
-	
+
       ! If   text matching not case sensitive, shift to lower case
       if ( .NOT. MCFCASESENSITIVE ) then
         sd_full = LowerCase(file_base)
@@ -1078,7 +1078,7 @@ contains
         mcf=0
         return
       end if
-	
+
       if ( MCFFORL2GPOPTION == 3 ) then
 
         ! get mcfspecies name from associative array
@@ -1365,6 +1365,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.62  2007/06/21 00:54:08  vsnyder
+! Remove tabs, which are not part of the Fortran standard
+!
 ! Revision 2.61  2006/03/15 23:52:24  pwagner
 ! Removed InputVersion component from PCF, l2cf
 !
