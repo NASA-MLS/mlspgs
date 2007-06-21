@@ -262,7 +262,7 @@ contains
     outList = BLANK
     nElems = size(inArray)
     if ( nElems <= 0 ) return
-	 listElem = 1
+      listElem = 1
     DO
       if (.not. present(ordering) ) then
         arrayElem = ListElem
@@ -694,7 +694,7 @@ contains
   ! --------------------------------------------------  ExtractSubString  -----
   subroutine ExtractSubString (instr, outstr, sub1, sub2, how, no_trim)
     ! Takes a string and extracts what is sandwiched between sub1 and sub2
-	 ! Defaults to choosing only the first occurrence of sub1 and sub2
+    ! Defaults to choosing only the first occurrence of sub1 and sub2
     ! But if how == 'greedy' chooses last occurrence of sub2
     ! or if how == 'stingy' chooses last occurrence of sub1
     ! Note that, depending on how, we extract:
@@ -846,7 +846,7 @@ contains
     ! Dummy arguments
     CHARACTER (LEN=*), INTENT(IN)   :: inList
     CHARACTER (LEN=*), INTENT(OUT)  :: outElement
-    INTEGER(i4), INTENT(IN)         :: nElement 	! Entry number to return
+    INTEGER(i4), INTENT(IN)         :: nElement ! Entry number to return
     LOGICAL, INTENT(IN)   :: countEmpty
     character (len=*), optional, intent(in)       :: inseparator
 
@@ -858,59 +858,59 @@ contains
     ! Executable code
 
     IF(PRESENT(inseparator)) THEN
-	     separator = inseparator
-	 ELSE
-	     separator = COMMA
-	 ENDIF
+      separator = inseparator
+    ELSE
+      separator = COMMA
+    ENDIF
 
-	 IF(nElement.LE.0) THEN
-	     outElement = separator
-	 ELSEIF(LEN(inList) < nElement) THEN
-	     outElement = separator
+    IF(nElement.LE.0) THEN
+      outElement = separator
+    ELSEIF(LEN(inList) < nElement) THEN
+      outElement = separator
     ENDIF
     i = 1
-	 elem = 1
+    elem = 1
     DO
-	     nextseparator = i - 1 + INDEX(inList(i:), separator)
+      nextseparator = i - 1 + INDEX(inList(i:), separator)
 
-	! No more separators
-		  IF(nextseparator == i - 1) THEN
-		      IF(elem >= nElement) THEN
-				    outElement = inList(i:)
-			    ELSE
-				    outElement = separator
-			    ENDIF
-				 RETURN
+      ! No more separators
+      IF(nextseparator == i - 1) THEN
+        IF(elem >= nElement) THEN
+          outElement = inList(i:)
+        ELSE
+          outElement = separator
+        ENDIF
+        RETURN
 
-	! Next separator is the adjacent char
-			ELSEIF(nextseparator == i) THEN
-				IF(countEmpty) THEN
-		     	 IF(elem >= nElement) THEN
-				    	outElement = BLANK
-						RETURN
-			   	 ELSE
-					 	elem = elem+1
-			    	ENDIF
-				ENDIF
+        ! Next separator is the adjacent char
+      ELSEIF(nextseparator == i) THEN
+        IF(countEmpty) THEN
+          IF(elem >= nElement) THEN
+            outElement = BLANK
+            RETURN
+          ELSE
+            elem = elem+1
+          ENDIF
+        ENDIF
 
-	! Until next separator is the next element
-			ELSE
-		      IF(elem >= nElement) THEN
-				    IF(i < nextseparator) THEN
-				       outElement = inList(i:nextseparator-1)
-						ELSE
-				       outElement = separator
-						ENDIF
-   				 RETURN
-			    ELSEIF(nextseparator >= LEN(inList)) THEN
-				    outElement = separator
-				    RETURN
-			    ELSE
-					 elem = elem+1
-			    ENDIF
-			ENDIF
-			i = nextseparator+1
-	 ENDDO
+        ! Until next separator is the next element
+        ELSE
+          IF(elem >= nElement) THEN
+            IF(i < nextseparator) THEN
+              outElement = inList(i:nextseparator-1)
+            ELSE
+              outElement = separator
+            ENDIF
+            RETURN
+          ELSEIF(nextseparator >= LEN(inList)) THEN
+            outElement = separator
+            RETURN
+          ELSE
+            elem = elem+1
+          ENDIF
+        ENDIF
+        i = nextseparator+1
+      ENDDO
 
   end subroutine GetStringElement
 
@@ -943,18 +943,18 @@ contains
     ! Executable code
 
     if(present(inseparator)) then
-	     separator = inseparator
-	 else
-	     separator = comma
-	 endif
+      separator = inseparator
+    else
+      separator = comma
+    endif
     value = KEYNOTFOUND
-	 elem = StringElementNum(keys, key, countEmpty, inseparator, part_match)
-	 if( elem <= 0 ) then
-	 elseif( elem > size(values) ) then
+    elem = StringElementNum(keys, key, countEmpty, inseparator, part_match)
+    if( elem <= 0 ) then
+    elseif( elem > size(values) ) then
       value = KEYBEYONDHASHSIZE
-	 else
+    else
       value = values(elem)
-	 endif
+    endif
 
   end subroutine GetHashElement_int
 
@@ -982,18 +982,18 @@ contains
     ! Executable code
 
     IF(PRESENT(inseparator)) THEN
-	     separator = inseparator
-	 ELSE
-	     separator = COMMA
-	 ENDIF
+      separator = inseparator
+    ELSE
+      separator = COMMA
+    ENDIF
     value = .FALSE.
-	 elem = StringElementNum(keys, key, countEmpty, inseparator, part_match)
-	 if( elem <= 0 ) then
-	 elseif( elem > size(values) ) then
+    elem = StringElementNum(keys, key, countEmpty, inseparator, part_match)
+    if( elem <= 0 ) then
+    elseif( elem > size(values) ) then
       value = .false.
-	 else
+    else
       value = values(elem)
-	 endif
+    endif
 
   end subroutine GetHashElement_log
 
@@ -1041,18 +1041,18 @@ contains
     ! Executable code
 
     IF(PRESENT(inseparator)) THEN
-	     separator = inseparator
-	 ELSE
-	     separator = COMMA
-	 ENDIF
+      separator = inseparator
+    ELSE
+      separator = COMMA
+    ENDIF
 
-	elem = StringElementNum(keyList, key, countEmpty, inseparator, part_match)
-	IF(elem <= 0) THEN
-		outElement = separator
-	ELSE
-		CALL GetStringElement(hashList, outElement, elem, &
+    elem = StringElementNum(keyList, key, countEmpty, inseparator, part_match)
+    IF(elem <= 0) THEN
+      outElement = separator
+    ELSE
+      CALL GetStringElement(hashList, outElement, elem, &
         & countEmpty, inseparator)
-	ENDIF
+    ENDIF
 
   end subroutine GetHashElement_str
 
@@ -1456,20 +1456,20 @@ contains
     ! Executable code
 
     IF(PRESENT(inseparator)) THEN
-	     separator = inseparator
-	 ELSE
-	     separator = COMMA
-	 ENDIF
+      separator = inseparator
+    ELSE
+      separator = COMMA
+    ENDIF
 
     IF(PRESENT(IgnoreLeadingSpaces)) THEN
-	     myIgnoreLeadingSpaces = IgnoreLeadingSpaces
-	 ELSE
-	     myIgnoreLeadingSpaces = .false.
-	 ENDIF
+      myIgnoreLeadingSpaces = IgnoreLeadingSpaces
+    ELSE
+      myIgnoreLeadingSpaces = .false.
+    ENDIF
 
     if ( size(outArray) <= 0 ) return
     outArray = BLANK
-	 elem = 1
+    elem = 1
     nElems = NumStringElements(inList, countEmpty, inseparator)
     if ( nElems <= 0 ) return
     DO
@@ -1477,7 +1477,7 @@ contains
       if ( myIgnoreLeadingSpaces ) outArray(elem) = adjustl(outArray(elem))
       elem = elem + 1
       if ( elem > min(nElems, size(outArray)) ) return
-	 ENDDO
+    ENDDO
 
   end subroutine List2Array
 
@@ -1503,50 +1503,50 @@ contains
     ! Dummy arguments
     CHARACTER (LEN=*), INTENT(IN)             :: inList
     LOGICAL, INTENT(IN)                       :: countEmpty
-	 INTEGER                                   :: nElements
+    INTEGER                                   :: nElements
     character (len=*), optional, intent(in)       :: inseparator
     INTEGER, OPTIONAL, INTENT(OUT)            :: LongestLen  ! Length of longest
 
     ! Local variables
     INTEGER :: i, sinceLastseparated           ! Loop counters
-	 LOGICAL :: lastWasNotseparated
+    LOGICAL :: lastWasNotseparated
 
     CHARACTER (LEN=1)               :: separator
     ! Executable code
 
     IF(PRESENT(inseparator)) THEN
-	     separator = inseparator
-	 ELSE
-	     separator = COMMA
-	 ENDIF
+      separator = inseparator
+    ELSE
+      separator = COMMA
+    ENDIF
 
-	! Count the number of separators
+   ! Count the number of separators
    if ( present(LongestLen) ) &
      & LongestLen =0
-	! nElements-1 = number of separators
-	IF(LEN_TRIM(inList) <= 0) THEN
-		nElements=0
+   ! nElements-1 = number of separators
+   IF(LEN_TRIM(inList) <= 0) THEN
+     nElements=0
       if ( present(LongestLen) ) LongestLen = 0
-		RETURN
-	ENDIF
-	
-	lastWasNotseparated = .FALSE.
-	nElements = 1
+      RETURN
+   ENDIF
+
+   lastWasNotseparated = .FALSE.
+   nElements = 1
    sinceLastseparated = 0
-	DO i=1, LEN_TRIM(inList)
-		IF(inList(i:i) == separator) THEN
-			IF(countEmpty .OR. lastWasNotseparated) THEN
-				nElements = nElements+1
+   DO i=1, LEN_TRIM(inList)
+     IF(inList(i:i) == separator) THEN
+       IF(countEmpty .OR. lastWasNotseparated) THEN
+         nElements = nElements+1
             if ( present(LongestLen) ) &
              & LongestLen = max(LongestLen, sinceLastseparated)
-			ENDIF
-			lastWasNotseparated = .FALSE.
-         sinceLastseparated = 0
-		ELSE
-			lastWasNotseparated = .TRUE.
-         sinceLastseparated = sinceLastseparated + 1
-		ENDIF
-	ENDDO
+       ENDIF
+       lastWasNotseparated = .FALSE.
+       sinceLastseparated = 0
+     ELSE
+       lastWasNotseparated = .TRUE.
+       sinceLastseparated = sinceLastseparated + 1
+     ENDIF
+   ENDDO
    if ( present(LongestLen) ) &
      & LongestLen = max(LongestLen, sinceLastseparated)
 
@@ -1577,22 +1577,22 @@ contains
     ! Executable code
 
     if(present(inseparator)) then
-	     separator = inseparator
-	 else
-	     separator = comma
-	 endif
+      separator = inseparator
+    else
+      separator = comma
+    endif
 
-	 num = StringElementNum(keys, key, countEmpty, inseparator, part_match)
-	 if( num > 0 .and. num <= size(values) ) then
+    num = StringElementNum(keys, key, countEmpty, inseparator, part_match)
+    if( num > 0 .and. num <= size(values) ) then
       values(num) = value
     elseif( num > size(values) ) then
       ! Can't handle arrays this big
-	 else
+    else
       ! key not found :: must add to keys, values
       N = NumStringElements(keys, countEmpty)
       keys = catlists(keys, key)
       values(N+1) = value
-	endif
+    endif
 
   end subroutine PutHashElement_int
 
@@ -1615,22 +1615,22 @@ contains
     ! Executable code
 
     if(present(inseparator)) then
-	     separator = inseparator
-	 else
-	     separator = comma
-	 endif
+      separator = inseparator
+    else
+      separator = comma
+    endif
 
-	 num = StringElementNum(keys, key, countEmpty, inseparator, part_match)
-	 if( num > 0 .and. num <= size(values) ) then
+    num = StringElementNum(keys, key, countEmpty, inseparator, part_match)
+    if( num > 0 .and. num <= size(values) ) then
       values(num) = value
     elseif( num > size(values) ) then
       ! Can't handle arrays this big
-	 else
+    else
       ! key not found :: must add to keys, values
       N = NumStringElements(keys, countEmpty)
       keys = catlists(keys, key)
       values(N+1) = value
-	endif
+    endif
 
   end subroutine PutHashElement_log
 
@@ -1678,28 +1678,28 @@ contains
     ! Executable code
 
     IF(PRESENT(inseparator)) THEN
-	     separator = inseparator
-	 ELSE
-	     separator = COMMA
-	 ENDIF
+      separator = inseparator
+    ELSE
+      separator = COMMA
+    ENDIF
 
-	num = StringElementNum(keyList, key, countEmpty, inseparator, part_match)
-	if( num > 0) then
-		call RemoveNumFromList( keyList, keys, num, inseparator )
-		call RemoveNumFromList( hashList, hash, num, inseparator )
-	else
-		keys = keyList
+    num = StringElementNum(keyList, key, countEmpty, inseparator, part_match)
+    if( num > 0) then
+      call RemoveNumFromList( keyList, keys, num, inseparator )
+      call RemoveNumFromList( hashList, hash, num, inseparator )
+    else
+      keys = keyList
       hash = hashList
-	endif
-   keyList = catLists(keys, key)
-   hashList = catLists(hash, elem)
+    endif
+    keyList = catLists(keys, key)
+    hashList = catLists(hash, elem)
 
   end subroutine PutHashElement_str
 
   ! --------------------------------------------------  RemoveElemFromList  -----
   subroutine RemoveElemFromList (inList, outList, elem, inseparator)
     ! Takes a list and removes all occurrence(s) of elem
-	 ! E.g., given 'a,b,c,d,..,z' and asked to remove 'c' returns 'a,b,d,..z'
+    ! E.g., given 'a,b,c,d,..,z' and asked to remove 'c' returns 'a,b,d,..z'
     !--------Argument--------!
     CHARACTER (LEN=*), INTENT(IN) :: inList
     CHARACTER (LEN=*), INTENT(IN) :: elem
@@ -1739,7 +1739,7 @@ contains
   subroutine RemoveListFromList (inList, outList, exclude, inseparator)
     ! Takes one list and removes from it all occurrence(s) 
     ! of each elem in another list called "exclude"
-	 ! E.g., given 'a,b,c,d,..,z' and asked to remove 'c,a' returns 'b,d,..z'
+    ! E.g., given 'a,b,c,d,..,z' and asked to remove 'c,a' returns 'b,d,..z'
     !--------Argument--------!
     CHARACTER (LEN=*), INTENT(IN) :: inList
     CHARACTER (LEN=*), INTENT(IN) :: exclude ! What to exclude
@@ -1771,7 +1771,7 @@ contains
   ! --------------------------------------------------  RemoveNumFromList  -----
   subroutine RemoveNumFromList (inList, outList, nElement, inseparator)
     ! Removes a numbered element from a list
-	 ! E.g., given 'a,b,c,d,..,z' and asked to remove number 3 returns 'a,b,d,..z'
+    ! E.g., given 'a,b,c,d,..,z' and asked to remove number 3 returns 'a,b,d,..z'
     !--------Argument--------!
     character (len=*), intent(in) :: inlist
     integer          , intent(in) :: nElement
@@ -1809,7 +1809,7 @@ contains
   ! --------------------------------------------------  ReplaceSubString  -----
   subroutine ReplaceSubString (str, outstr, sub1, sub2, which, no_trim)
     ! Takes a string and replaces occurrence(s) of sub1 with sub2
-	 ! Defaults to replacing only the first
+    ! Defaults to replacing only the first
     ! But if which == 'all' replaces all
     ! or if which == 'last' replaces last
     ! Note that, depending on no_trim, 'all' does the following:
@@ -2006,12 +2006,12 @@ contains
   ! --------------------------------------------------  ReverseList  -----
   function ReverseList (str, inseparator) RESULT (outstr)
     ! takes a string list, usually comma-separated,
-	 ! and returns one with elements in reversed order
+    ! and returns one with elements in reversed order
 
-	 ! E.g., given "alpha, beta, gamma" => "gamma, beta, alpha"
+    ! E.g., given "alpha, beta, gamma" => "gamma, beta, alpha"
 
-	 ! Limitation:
-	 ! No element may be longer than MAXWORDLENGTH
+    ! Limitation:
+    ! No element may be longer than MAXWORDLENGTH
     !--------Argument--------!
     CHARACTER (LEN=*), INTENT(IN) :: str
     CHARACTER (LEN=LEN(str)) :: outstr
@@ -2024,61 +2024,61 @@ contains
     CHARACTER (LEN=1), DIMENSION(:), ALLOCATABLE :: charBuf
     CHARACTER (LEN=MAXWORDLENGTH) :: word
 ! Treat consecutive separators as if enclosing an empty element
-	LOGICAL, PARAMETER :: countEmpty = .TRUE.    
+    LOGICAL, PARAMETER :: countEmpty = .TRUE.    
 
     !----------Executable part----------!
     IF(PRESENT(inseparator)) THEN
-	     separator = inseparator
-	 ELSE
-	     separator = COMMA
-	 ENDIF
+      separator = inseparator
+    ELSE
+      separator = COMMA
+    ENDIF
 
 !  Special case--only one element of str
     outstr = str
     IF(LEN(str) == 1 .OR. INDEX(str, separator) == 0) RETURN
-	 
+ 
 ! General case
-	 ALLOCATE(charBuf(LEN(str)+1), STAT=istr)
+    ALLOCATE(charBuf(LEN(str)+1), STAT=istr)
     IF (istr /= 0) THEN
-	 	CALL MLSMessage(MLSMSG_Error,ModuleName, &
+      CALL MLSMessage(MLSMSG_Error,ModuleName, &
          & MLSMSG_Allocate//"charBuf")
-		RETURN
-	ENDIF
+      RETURN
+    ENDIF
 
     outstr = ' '
 
 ! Loop over elements
-	elem = 1
-	iBuf=0
-	DO
-		CALL GetStringElement(str, word, elem, countEmpty, separator)
-		IF(word == separator) THEN
-			EXIT
-		ELSEIF(iBuf > LEN(str)) THEN
-			EXIT
-		ELSE
-			istr = MAX(LEN_TRIM(word), 1)
-			word = Reverse(word(:istr))
-			DO i=1, istr
-				iBuf=iBuf+1
-				charBuf(iBuf) = word(i:i)
-			ENDDO
-			iBuf=iBuf+1
-			charBuf(iBuf) = separator
-			elem = elem+1
-		ENDIF
-	ENDDO
-	
-	IF(charBuf(iBuf) == separator) THEN
-		iBuf = iBuf-1
-	ENDIF
-	
-	DO i=1, iBuf
-		irev = iBuf - i + 1
-		outstr(irev:irev) = charBuf(i)
-	ENDDO
+    elem = 1
+    iBuf=0
+    DO
+      CALL GetStringElement(str, word, elem, countEmpty, separator)
+        IF(word == separator) THEN
+          EXIT
+        ELSEIF(iBuf > LEN(str)) THEN
+          EXIT
+        ELSE
+          istr = MAX(LEN_TRIM(word), 1)
+          word = Reverse(word(:istr))
+        DO i=1, istr
+          iBuf=iBuf+1
+          charBuf(iBuf) = word(i:i)
+        ENDDO
+        iBuf=iBuf+1
+        charBuf(iBuf) = separator
+        elem = elem+1
+      ENDIF
+    ENDDO
 
-	DEALLOCATE(charBuf)
+    IF(charBuf(iBuf) == separator) THEN
+      iBuf = iBuf-1
+    ENDIF
+
+    DO i=1, iBuf
+      irev = iBuf - i + 1
+      outstr(irev:irev) = charBuf(i)
+    ENDDO
+
+    DEALLOCATE(charBuf)
 
   end function ReverseList
 
@@ -2155,15 +2155,15 @@ contains
 
     ! Executable code
     IF(PRESENT(shorterFirst)) THEN
-	     myshorterFirst = shorterFirst
-	 ELSE
-	     myshorterFirst = .false.
-	 ENDIF
+      myshorterFirst = shorterFirst
+    ELSE
+      myshorterFirst = .false.
+    ENDIF
     IF(PRESENT(leftRight)) THEN
-	     myleftRight = Capitalize(leftRight)
-	 ELSE
-	     myleftRight = "L"
-	 ENDIF
+      myleftRight = Capitalize(leftRight)
+    ELSE
+      myleftRight = "L"
+    ENDIF
 
     nElems = size(inStrArray)
     if ( size(outIntArray) <= 0 .or. nElems <= 0 ) then
@@ -2267,7 +2267,7 @@ contains
         enddo
       enddo
       if ( numBins >= min(nElems, size(outIntArray)) ) exit
-	 ENDDO
+    ENDDO
     if ( DEEBUG ) then
       print *, 'Final number of bins: ', numBins
       print *, 'Sorting order: ', (outIntArray(i), i=1, nElems)
@@ -2402,16 +2402,16 @@ contains
     logical, parameter              :: DeeBUG = .false.
     ! Executable code
     IF(PRESENT(inseparator)) THEN
-	     separator = inseparator
-	 ELSE
-	     separator = COMMA
-	 ENDIF
+      separator = inseparator
+    ELSE
+      separator = COMMA
+    ENDIF
 
     IF(PRESENT(leftRight)) THEN
-	     myleftRight = Capitalize(leftRight)
-	 ELSE
-	     myleftRight = "L"
-	 ENDIF
+      myleftRight = Capitalize(leftRight)
+    ELSE
+      myleftRight = "L"
+    ENDIF
 
     if ( DEEBUG ) then
        print *, 'Entered SortList'
@@ -2466,7 +2466,7 @@ contains
     & result(outElement)
     ! Dummy arguments
     CHARACTER (LEN=*), INTENT(IN)   :: inList
-    INTEGER(i4), INTENT(IN)         :: nElement 	! Entry number to return
+    INTEGER(i4), INTENT(IN)         :: nElement  ! Entry number to return
     LOGICAL, INTENT(IN)   :: countEmpty
     character (len=*), optional, intent(in)       :: inseparator
     CHARACTER (LEN=len(inList))  :: outElement
@@ -2479,10 +2479,10 @@ contains
 
     ! Executable code
     IF(PRESENT(inseparator)) THEN
-	     separator = inseparator
-	 ELSE
-	     separator = COMMA
-	 ENDIF
+      separator = inseparator
+    ELSE
+      separator = COMMA
+    ENDIF
     call GetStringElement(inList, outElement, nElement, countEmpty, inseparator)
     if ( outElement == separator ) outElement = ' '
   end function StringElement
@@ -2528,7 +2528,7 @@ contains
     CHARACTER (LEN=*), INTENT(IN)             :: inList
     CHARACTER (LEN=*), INTENT(IN)             :: test_string
     LOGICAL, INTENT(IN)                       :: countEmpty
-	 INTEGER                                   :: elem
+    INTEGER                                   :: elem
     character (len=*), optional, intent(in)       :: inseparator
     LOGICAL, OPTIONAL, INTENT(IN)             :: part_match
 
@@ -2540,27 +2540,27 @@ contains
     logical ::                                    match
     ! Executable code
 
-	nElements = NumStringElements(inList, countEmpty, inseparator)
-	
-	IF(nElements <= 0) THEN
-		elem = 0
-		RETURN
-	ENDIF
-   match = .false.
-   if ( present(part_match) ) match = part_match
+    nElements = NumStringElements(inList, countEmpty, inseparator)
 
-	! Check for matches--snipping off any leading blanks
-	DO elem=1, nElements
-		CALL GetStringElement(inList, listElement, elem, countEmpty, inseparator)
+    IF(nElements <= 0) THEN
+      elem = 0
+      RETURN
+    ENDIF
+    match = .false.
+    if ( present(part_match) ) match = part_match
+
+    ! Check for matches--snipping off any leading blanks
+    DO elem=1, nElements
+      CALL GetStringElement(inList, listElement, elem, countEmpty, inseparator)
       if ( match ) then
         if (trim(listElement) /= ' ' .and. &
           & index(trim(test_string), trim(listElement)) > 0) RETURN
       else
-  	     IF(adjustl(listElement) == adjustl(test_string)) RETURN
+        IF(adjustl(listElement) == adjustl(test_string)) RETURN
       endif
-	ENDDO
-	
-	elem = 0
+    ENDDO
+
+    elem = 0
 
   end function StringElementNum
 
@@ -2606,20 +2606,20 @@ contains
     if ( present(options) ) myOptions = lowercase(options)
     detail = -1
 
-	nElements = NumStringElements(inList, countEmpty)
-	
-	IF ( nElements <= 0 .or. test_switch == "" ) Return
-   
-   if ( index(myOptions, 'c') > 0 ) then
-     switch = lowercase(test_switch)
-   else
-     switch = test_switch
-   endif
+    nElements = NumStringElements(inList, countEmpty)
 
-	! Check for matches--snipping off any leading blanks
+    IF ( nElements <= 0 .or. test_switch == "" ) Return
+
+    if ( index(myOptions, 'c') > 0 ) then
+      switch = lowercase(test_switch)
+    else
+      switch = test_switch
+    endif
+
+   ! Check for matches--snipping off any leading blanks
    ! (That means 'f' is by default on, contradicting notes above)
-	DO elem=1, nElements
-		CALL GetStringElement(inList, listElement, elem, countEmpty)
+    DO elem=1, nElements
+      CALL GetStringElement(inList, listElement, elem, countEmpty)
       if ( index(myOptions, 'c') > 0 ) listElement = lowercase(listElement)
       if (trim(listElement) /= ' ' .and. &
           & index(trim(listElement), trim(switch)) > 0) then
@@ -2628,9 +2628,9 @@ contains
         call ReadIntsFromChars(trim(listElement), detail, ignore="*?")
         return
       endif
-	ENDDO
+    ENDDO
 
-  	if ( index(myOptions, 'w') > 0 .and. index(inList, '*') > 0 ) &
+    if ( index(myOptions, 'w') > 0 .and. index(inList, '*') > 0 ) &
      & detail = max(detail, 0)
 
   end function SwitchDetail
@@ -2868,6 +2868,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.27  2007/06/21 00:49:52  vsnyder
+! Remove tabs, which are not part of the Fortran standard
+!
 ! Revision 2.26  2007/05/22 20:56:02  vsnyder
 ! Don't use list-directed write to internal files
 !
