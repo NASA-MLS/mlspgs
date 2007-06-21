@@ -92,7 +92,7 @@ contains
       TEMPC=t-273.15_r8
 
    select case (ISPI)
-!	if(ISPI .eq. 1) then    
+!       if(ISPI .eq. 1) then    
 !            goto 1000
 !        else if(ISPI .eq. 2) then
 !            goto 2000
@@ -105,23 +105,23 @@ contains
      !     ICE PARTICLES
      !========================
 
-	  dr0   = 1._r8
-	  sum   = 0._r8
+          dr0   = 1._r8
+          sum   = 0._r8
      bin_loop: do i=1, nr
        !  do 1300 i=1,nr
 
-	    j1=1
-	    if(i.gt.1) j1=int((r(i-1)+r(i))*.5/dr0)
-	    if(i.lt.nr)j2=int((r(i+1)+r(i))*.5/dr0)
-	    if(i.eq.nr)j2=int((3*r(i)-r(i-1))*.5/dr0)
-	       
-	    rn(i)=0.
+            j1=1
+            if(i.gt.1) j1=int((r(i-1)+r(i))*.5/dr0)
+            if(i.lt.nr)j2=int((r(i+1)+r(i))*.5/dr0)
+            if(i.eq.nr)j2=int((3*r(i)-r(i-1))*.5/dr0)
+       
+            rn(i)=0.
 
        diameter_loop: do j=j1, j2
          !  do 1200 j=j1,j2
-	      diam=2.*j*dr0     
+              diam=2.*j*dr0     
 
-	      rn0 = 0.          
+              rn0 = 0.          
 
          select case (ipsd)
          case (mh_sd)
@@ -173,7 +173,7 @@ contains
           ! ELSE IF(IPSD .EQ. 1100) THEN   ! LIU-CURRY DISTRIBUTION 
 
             dmm = 750. + 10*tempc
-	         rn0 = exp(-5.*(diam-100.)/(dmm+500.)**0.75)
+            rn0 = exp(-5.*(diam-100.)/(dmm+500.)**0.75)
 
          case (knollenberg_sd)
           ! ELSE IF(IPSD .EQ. 4000) THEN   ! KNOLLENBERG DISTRIBUTION 
@@ -190,8 +190,8 @@ contains
          end select
           ! ENDIF
 
-	      rn(i)=rn(i)+rn0*2*dr0
-	      sum=sum+raoi*rn0*diam**3*3.1416/6*1e-12*2*dr0
+         rn(i)=rn(i)+rn0*2*dr0
+         sum=sum+raoi*rn0*diam**3*3.1416/6*1e-12*2*dr0
 
        end do diameter_loop
      end do bin_loop
@@ -199,10 +199,10 @@ contains
      !1300 continue
 
      !... converted to meters
-	  do i=1,nr
-	    rn(i)=rn(i)/1.e-12
-	  enddo
-	  sum = sum/1.e-12
+          do i=1,nr
+            rn(i)=rn(i)/1.e-12
+          enddo
+          sum = sum/1.e-12
 
      !... normalized by iwc
      do i=1,nr                             
@@ -230,20 +230,20 @@ contains
         itp=1
 
       !... cumulus
-	   if(itp .eq. 1) then
-	      rc = 20.
-	      c1 = 5.
-	      c2 = 1.
-	   endif
+           if(itp .eq. 1) then
+              rc = 20.
+              c1 = 5.
+              c2 = 1.
+           endif
       !... stratus
-	   if(itp .eq. 2) then
-	      rc = 10.
-	      c1 = 6.
-	      c2 = 1.
-	   endif
+           if(itp .eq. 2) then
+              rc = 10.
+              c1 = 6.
+              c2 = 1.
+           endif
 
-		b = c1/(c2*rc**c2)
-		A=1.e12*(3*CWC*c2*b**((c1+4)/c2))/((4*3.14*gamma((c1+4)/c2)*1.e6))
+           b = c1/(c2*rc**c2)
+           A=1.e12*(3*CWC*c2*b**((c1+4)/c2))/((4*3.14*gamma((c1+4)/c2)*1.e6))
 
       dr0     = 0.1  !JJ
       sum     = 0.
@@ -263,12 +263,12 @@ contains
         do j=j1,j2
           diam=2.*j*dr0
           rn0=A*diam**c1*exp(-b*diam**c2)
-	       rn(i)=rn(i)+rn0*2*dr0
+               rn(i)=rn(i)+rn0*2*dr0
                sum=sum+rn0*diam**3*3.1416/6*1e-12*2*dr0
-	 enddo
+        enddo
 
       enddo bin_loop_water
-      !2300	continue
+      !2300    continue
 
       !... normalized by LWC
       do i=1,nr
@@ -304,6 +304,9 @@ contains
 end module SizeDistribution
 
 ! $Log$
+! Revision 2.6  2007/06/21 00:52:54  vsnyder
+! Remove tabs, which are not part of the Fortran standard
+!
 ! Revision 2.5  2005/06/22 18:08:20  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
