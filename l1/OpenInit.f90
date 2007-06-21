@@ -807,7 +807,7 @@ CONTAINS
     USE MLSHDF5, ONLY: MLS_h5open, GetHDF5Attribute
     USE HDF5, ONLY: H5gOpen_f, H5gClose_f
     USE L1BData, ONLY: L1BData_T, ReadL1BData, DeallocateL1BData
-    USE MLSL1Config, ONLY: MIFsTHz
+    USE MLSL1Config, ONLY: MIFsTHz, L1Config
     USE BrightObjects_m, ONLY: THz_BO_stat
     USE DACsUtils, ONLY: TPz
 
@@ -960,30 +960,32 @@ CONTAINS
 
     ! Open L1BRADD File
 
-    version = 1
-    returnStatus = PGS_PC_getReference (mlspcf_l1b_radd_start, version, &
-     PhysicalFilename)
+    IF (L1Config%Calib%CalibDACS) THEN
+       version = 1
+       returnStatus = PGS_PC_getReference (mlspcf_l1b_radd_start, version, &
+            PhysicalFilename)
 
-    IF (returnStatus == PGS_S_SUCCESS) THEN
+       IF (returnStatus == PGS_S_SUCCESS) THEN
 
-       ! Open the HDF file and initialize the SD interface
+          ! Open the HDF file and initialize the SD interface
 
-       CALL MLS_openFile (PhysicalFilename, 'update', sd_id, hdfVersion)
-       CALL MLSMessage (MLSMSG_Info, &
-            & ModuleName, "Opened L1BRADD file: "//PhysicalFilename)
-       L1BFileInfo%RADDID = sd_id
-       L1BFileInfo%RADDFileName = PhysicalFilename
+          CALL MLS_openFile (PhysicalFilename, 'update', sd_id, hdfVersion)
+          CALL MLSMessage (MLSMSG_Info, &
+               & ModuleName, "Opened L1BRADD file: "//PhysicalFilename)
+          L1BFileInfo%RADDID = sd_id
+          L1BFileInfo%RADDFileName = PhysicalFilename
 
-       ! Get TPz attribute:
+          ! Get TPz attribute:
 
-       CALL H5gOpen_f (sd_id, '/', grp_id, returnStatus)
-       CALL GetHDF5Attribute (grp_id, 'TPz', TPz)
-       CALL H5gClose_f (grp_id, returnStatus )
-    ELSE
+          CALL H5gOpen_f (sd_id, '/', grp_id, returnStatus)
+          CALL GetHDF5Attribute (grp_id, 'TPz', TPz)
+          CALL H5gClose_f (grp_id, returnStatus )
+       ELSE
 
-       CALL MLSMessage (MLSMSG_Error, ModuleName, &
-            & "Could not find L1BRADD file entry")
+          CALL MLSMessage (MLSMSG_Error, ModuleName, &
+               & "Could not find L1BRADD file entry")
 
+       ENDIF
     ENDIF
 
     ! Open L1BRADG File
@@ -1136,6 +1138,9 @@ END MODULE OpenInit
 !=============================================================================
 
 ! $Log$
+! Revision 2.30  2007/06/21 21:03:34  perun
+! Only open RADD file if DACS calibration is enabled
+!
 ! Revision 2.29  2006/08/02 18:56:04  perun
 ! Open RADD file in update mode and get TPz attribute from it
 !
