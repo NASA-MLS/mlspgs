@@ -47,19 +47,21 @@ CONTAINS
     USE DACsUtils, ONLY: TPz
     USE L1LogUtils, ONLY: MAF_dur
 
-    INTEGER :: i, ios, sci_MAFno, n, ngood, sum_S, sum_T
+    INTEGER :: i, ios, sci_MAFno, n, sum_S, sum_T
     INTEGER :: EngMAF_unit, SciMAF_unit, MAF_data_unit
-    INTEGER :: mindx(0:(MaxMIFs-1))
+    INTEGER :: mindx(0:(MaxMIFs-1)), ngood(DACSnum)
     INTEGER, PARAMETER :: GHz_sw_indx(0:(MaxMIFs-1)) = (/ (i, i=1,MaxMIFs) /)
     CHARACTER(len=1) :: GHz_sw_pos(0:(MaxMIFs-1))
     CHARACTER(len=70) :: PLL_DN(0:(MaxMIFs-1)), PLL_dflt_DN(0:(MaxMIFs-1))
     REAL :: LLO_EU(16,0:(MaxMIFs-1)), LLO_dflt_EU(16,0:(MaxMIFs-1))
     INTEGER, PARAMETER :: MaxMIFno = (MaxMIFs - 1)
     REAL :: swFac(0:MaxMIFno)
-    REAL(r8) :: TP_ana(0:MaxMIFno), TP_dig(0:MaxMIFno), engTAI, sciTAI
+    REAL(r8) :: TP_ana(0:MaxMIFno,DACSnum), TP_dig(0:MaxMIFno,DACSnum), &
+         engTAI, sciTAI
     REAL(r8) :: Sum_ana(DACSnum) = 0.0, Sum_dig(DACSnum) = 0.0, &
          Sum_dig_dig(DACSnum) = 0.0, Sum_dig_ana(DACSnum) = 0.0
     CHARACTER(len=1), PARAMETER :: discard = "D"
+    REAL :: TP_dig_max = 4.0     ! Maximum allowable TP digital
 
     TYPE Sci_pos_T
        REAL :: APE(2,0:(MaxMIFs-1))
@@ -174,18 +176,25 @@ CONTAINS
 
 ! Accumulate DACS TPs to calculate daily TP zeros:
 
-       swFac = 1.0        ! init to non-discard MIFs
+       swFac = 1.0        ! init switch factor to non-discard MIFs
        WHERE (SciMAF%GHz_sw_pos == discard)   ! Don't use discards
           swFac = 0.0
        ENDWHERE
-       ngood = ngood + COUNT (swFac == 1.0)
+!       ngood = ngood + COUNT (swFac == 1.0)
        DO n = 1, DACSNUM
-          TP_ana = SciMAF%TP(n) * swFac
-          TP_dig = (SciMAF%TPdigP(n) + SciMAF%TPdigN(n)) * swFac
-          Sum_dig(n) = Sum_dig(n) + SUM (TP_dig)
-          Sum_ana(n) = Sum_ana(n) + SUM (TP_ana)
-          Sum_dig_dig(n) = Sum_dig_dig(n) + SUM (TP_dig*TP_dig)
-          Sum_dig_ana(n) = Sum_dig_ana(n) + SUM (TP_dig*TP_ana)
+          TP_ana(:,n) = SciMAF%TP(n) * swFac
+          TP_dig(:,n) = (SciMAF%TPdigP(n) + SciMAF%TPdigN(n)) * swFac
+          WHERE (TP_dig(:,n) > TP_dig_max)
+             TP_dig(:,n) = 0.0
+             TP_ana(:,n) = 0.0
+          ENDWHERE
+          ngood(n) = ngood(n) + COUNT (TP_dig(:,n) /= 0.0)
+       ENDDO
+       DO n = 1, DACSNUM
+          Sum_dig(n) = Sum_dig(n) + SUM (TP_dig(:,n))
+          Sum_ana(n) = Sum_ana(n) + SUM (TP_ana(:,n))
+          Sum_dig_dig(n) = Sum_dig_dig(n) + SUM (TP_dig(:,n)*TP_dig(:,n))
+          Sum_dig_ana(n) = Sum_dig_ana(n) + SUM (TP_dig(:,n)*TP_ana(:,n))
        ENDDO
 
 ! Reset scAngles to be used for L1BOA
@@ -229,9 +238,9 @@ PRINT *, 'flags: ', WeightsFlags(i)
 ! Calculate TPz values to pass on the MLSL1G program:
 
     DO i = 1, DACSNUM
-       TPz(i) = ((Sum_dig_dig(i) / ngood * Sum_ana(i) / ngood) - &
-            (SUM_dig_ana(i) / ngood * SUM_dig(i) / ngood)) / &
-            (SUM_dig_dig(i) / ngood - (SUM_dig(i) / ngood)**2)
+       TPz(i) = ((Sum_dig_dig(i) / ngood(i) * Sum_ana(i) / ngood(i)) - &
+            (Sum_dig_ana(i) / ngood(i) * Sum_dig(i) / ngood(i))) / &
+            (Sum_dig_dig(i) / ngood(i) - (Sum_dig(i) / ngood(i))**2)
     ENDDO
 
   END SUBROUTINE ProcessMAFdata
@@ -268,6 +277,9 @@ PRINT *, 'flags: ', WeightsFlags(i)
 END MODULE CalibWeightsFlags
 !=============================================================================
 ! $Log$
+! Revision 2.9  2007/06/21 20:57:53  perun
+! Exclude TP_dig greater than 4.0 in calculating TPz
+!
 ! Revision 2.8  2006/09/26 16:01:33  perun
 ! Correct testing to insure alignment of Eng and Sci data
 !
