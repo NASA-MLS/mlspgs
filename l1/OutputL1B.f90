@@ -396,9 +396,9 @@ CONTAINS
     dataset%name      = 'counterMAF        '
     dataset%data_type = 'integer           '
     dataset%Dimensions(1) = 'MAF'
-    IF (sdId%RADDID /= 0) THEN
-       CALL Build_MLSAuxData (sdId%RADDID, dataset, counterMAF, &
-            fill_value=INT_FILL, lastIndex=noMAF)
+    IF (sdId%RADGID /= 0) THEN
+       IF (sdId%RADDID /= 0) CALL Build_MLSAuxData (sdId%RADDID, dataset, &
+            counterMAF, fill_value=INT_FILL, lastIndex=noMAF)
        CALL Build_MLSAuxData (sdId%RADGID, dataset, counterMAF, &
             fill_value=INT_FILL, lastIndex=noMAF)
     ELSE
@@ -411,9 +411,9 @@ CONTAINS
     dataset%name      = 'MAFStartTimeGIRD  '
     dataset%data_type = 'double            '
     dataset%Dimensions(1) = 'MAF'
-    IF (sdId%RADDID /= 0) THEN
-       CALL Build_MLSAuxData (sdId%RADDID, dataset, MAFStartTimeGIRD, &
-            fill_value=-1.0d0, lastIndex=noMAF)
+    IF (sdId%RADGID /= 0) THEN
+       IF (sdId%RADDID /= 0) CALL Build_MLSAuxData (sdId%RADDID, dataset, &
+            MAFStartTimeGIRD, fill_value=-1.0d0, lastIndex=noMAF)
        CALL Build_MLSAuxData (sdId%RADGID, dataset, MAFStartTimeGIRD, &
             fill_value=-1.0d0, lastIndex=noMAF)
     ELSE
@@ -425,23 +425,23 @@ CONTAINS
 
     dataset%data_type = 'real              '
     dataset%name      = 'Pri_Reflec        '
-    IF (sdId%RADDID /= 0) THEN
-       CALL Build_MLSAuxData (sdId%RADDID, dataset, Reflec%Pri, &
-            fill_value=RAD_ERR_FILL, lastIndex=noMAF)
+    IF (sdId%RADGID /= 0) THEN
+       IF (sdId%RADDID /= 0) CALL Build_MLSAuxData (sdId%RADDID, dataset, &
+            Reflec%Pri, fill_value=RAD_ERR_FILL, lastIndex=noMAF)
        CALL Build_MLSAuxData (sdId%RADGID, dataset, Reflec%Pri, &
             fill_value=RAD_ERR_FILL, lastIndex=noMAF)
     ENDIF
     dataset%name      = 'Sec_Reflec        '
-    IF (sdId%RADDID /= 0) THEN
-       CALL Build_MLSAuxData (sdId%RADDID, dataset, Reflec%Sec, &
-            fill_value=RAD_ERR_FILL, lastIndex=noMAF)
+    IF (sdId%RADGID /= 0) THEN
+       IF (sdId%RADDID /= 0) CALL Build_MLSAuxData (sdId%RADDID, dataset, &
+            Reflec%Sec, fill_value=RAD_ERR_FILL, lastIndex=noMAF)
        CALL Build_MLSAuxData (sdId%RADGID, dataset, Reflec%Sec, &
             fill_value=RAD_ERR_FILL, lastIndex=noMAF)
     ENDIF
     dataset%name      = 'Ter_Reflec        '
-    IF (sdId%RADDID /= 0) THEN
-       CALL Build_MLSAuxData (sdId%RADDID, dataset, Reflec%Ter, &
-            fill_value=RAD_ERR_FILL, lastIndex=noMAF)
+    IF (sdId%RADGID /= 0) THEN
+       IF (sdId%RADDID /= 0) CALL Build_MLSAuxData (sdId%RADDID, dataset, &
+            Reflec%Ter, fill_value=RAD_ERR_FILL, lastIndex=noMAF)
        CALL Build_MLSAuxData (sdId%RADGID, dataset, Reflec%Ter, &
             fill_value=RAD_ERR_FILL, lastIndex=noMAF)
     ENDIF
@@ -839,7 +839,7 @@ CONTAINS
 
 !=============================================================================
   SUBROUTINE OutputL1B_diagsT (sd_Id, MAFno, counterMAF, MAFStartTimeTAI, &
-       nvBounds, OrbNo, Chisq, dLlo, yTsys, ColdCnts, HotCnts)
+       nvBounds, OrbNo, Chisq, dLlo, yTsys, ColdCnts, HotCnts, LLO_Bias)
 !=============================================================================
 
     USE MLSL1Common, ONLY: THzchans, THzNum
@@ -849,6 +849,7 @@ CONTAINS
     REAL(r8), INTENT (IN), OPTIONAL :: MAFStartTimeTAI
     REAL(r8), DIMENSION(:,:), INTENT (IN), OPTIONAL :: Chisq, dLlo, yTsys
     REAL, DIMENSION(:,:), INTENT (IN), OPTIONAL :: ColdCnts, HotCnts
+    REAL, DIMENSION(:), INTENT (IN), OPTIONAL :: LLO_Bias
 
     INTEGER :: dims(3), status
     TYPE (DataProducts_T) :: dataset
@@ -920,6 +921,18 @@ CONTAINS
 
     ENDIF
 
+    IF (PRESENT (LLO_Bias) .AND. PRESENT (MAFno)) THEN
+
+       DEALLOCATE (dataset%Dimensions, stat=status)
+       ALLOCATE (dataset%Dimensions(3), stat=status)
+       dataset%name      = 'LLO_Bias          '
+       dataset%data_type = 'real              '
+       dataset%Dimensions(1) = 'MIFno'
+       dataset%Dimensions(2) = 'MAF'
+       CALL Build_MLSAuxData (sd_Id, dataset, LLO_Bias(1:148), &
+            lastIndex=MAFno, dims=(/148, 1/))
+
+    ENDIF
 
     IF (PRESENT (Chisq) .AND. PRESENT (OrbNo)) THEN
 
@@ -998,6 +1011,9 @@ END MODULE OutputL1B
 !=============================================================================
 
 ! $Log$
+! Revision 2.26  2007/06/21 21:04:31  perun
+! Only output to RADD file if DACS calibration is enabled and output LLO_Bias
+!
 ! Revision 2.25  2006/09/28 16:16:36  perun
 ! Output ModelOffset and Poffset as just one value per MAF for the MLSL1G program
 !
