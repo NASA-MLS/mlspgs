@@ -154,7 +154,8 @@ PRINT *, "Outputting rad for MAFno: ", MAFindex
 
        CALL OutputL1B_DiagsT (L1BFileInfo%DiagTid, MAFno=MAFindex, &
             counterMAF=counterMAF, MAFStartTimeTAI=TAI, nvBounds=nvBounds(nv), &
-            ColdCnts=ColdCnts(:,:,nv), HotCnts=HotCnts(:,:,nv))
+            ColdCnts=ColdCnts(:,:,nv), HotCnts=HotCnts(:,:,nv), &
+            LLO_Bias=CalBuf%MAFdata(mafno)%SciMIF%LLO_Bias)
        nv = nv + 1
        IF (counterMAF >= last_OA_counterMAF) EXIT
 
@@ -175,6 +176,9 @@ END MODULE THzRadiances
 !=============================================================================
 
 ! $Log$
+! Revision 2.15  2007/06/21 21:05:53  perun
+! Save LLO_Bias for outputting as diagnostics
+!
 ! Revision 2.14  2006/09/11 19:41:37  perun
 ! Check for ENG counterMAF less than OA counterMAF for proper alignment
 !
