@@ -56,17 +56,17 @@ program chunktimes ! Reads chunk times from l2aux file(s)
   type options_T
     logical            :: verbose = .false.
     logical            :: merge = .false.           ! Merge data from files
-    logical            :: tabulate = .false.        ! tabulate
     logical            :: showFailed = .false.      ! show howmany, which failed
     logical            :: showStats = .true.        ! show max, min, mean, etc.
     logical            :: showQManager = .false.    ! show QManager performance
     logical            :: guessFinalPhase = .true.  ! guess how many phases
     character(len=255) :: DSName= 'phase timing'    ! Dataset name
     character(len=255) :: binopts= ' '              ! 'nbins,X1,X2'
+    character(len=3)   :: convert= ' '              ! 's2h', 'h2s', ''
     character(len=255) :: details= ' '              ! prnt only detailed params
                                                     ! E.g., 'NumCompletedChunks'
     character(len=255) :: phaseNames= ' '           ! E.g., 'core,core+r3,..'
-    character(len=3)   :: convert= ' '              ! 's2h', 'h2s', ''
+    character(len=8)   :: tabulate = 'no'           ! tabulate
     integer            :: hdfVersion = HDFVERSION_5
     integer            :: finalPhase = 12           ! phase number ~ total
     integer            :: nHosts = 0                ! number of hosts
@@ -210,7 +210,7 @@ program chunktimes ! Reads chunk times from l2aux file(s)
           end where
         end select
         timings = l2auxValue(1, options%finalPhase, :)
-        if ( options%tabulate ) then
+        if ( options%tabulate /= 'no' ) then
           fileID = mls_sfstart ( trim(filenames(1)), fileAccess, &
              &                               hdfVersion=options%hdfVersion )
           call h5gopen_f(fileID, '/', fromgrpid, status)
@@ -221,7 +221,8 @@ program chunktimes ! Reads chunk times from l2aux file(s)
           else
            if ( options%verbose ) call output(' attribute not found', advance='yes')
           endif
-          call tabulate(l2auxValue(1, 1:options%finalPhase, :), options%phaseNames)
+          call tabulate(l2auxValue( 1, 1:options%finalPhase, :), &
+            & options%phaseNames, options%tabulate )
         endif
         if ( options%showQManager ) &
           & alltimings(1:dims(3), i) = timings
@@ -327,7 +328,10 @@ contains
         options%showFailed = .true.
         exit
       elseif ( filename(1:2) == '-t' ) then
-        options%tabulate = .true.
+        options%tabulate = 'yes'
+        exit
+      elseif ( filename(1:2) == '-tf' ) then
+        options%tabulate = 'full'
         exit
       elseif ( filename(1:3) == '-v ' ) then
         options%verbose = .true.
@@ -457,30 +461,32 @@ contains
       & '(Defaults shown in ())'
       write (*,*) &
       & ' If no filenames supplied, you will be prompted to supply one'
-      write (*,*) ' Options: -d DSname   => read DSName from list of filenames'
-      write (*,*) '                         ("phase timing")'
-      write (*,*) '          -b "binning options" ("")'
-      write (*,*) '                         in form "nbins,X1,X2", where'
-      write (*,*) '                         nbins  => number of bins'
-      write (*,*) '                         X1,X2  => lower,upper bounds'
-      write (*,*) '                         the first bin will contain chunks < X1'
-      write (*,*) '                         the last bin will contain chunks > X2'
-      write (*,*) '          -details "details" ("")'
-      write (*,*) '                         in form "param1,param2,..", where'
-      write (*,*) '                         print only the value[s] of param1[..]'
-      write (*,*) '          -hdf m      => hdfVersion is m (5)'
-      write (*,*) '          -l t        => show chunks that took longer than t'
-      write (*,*) '          -n n        => use phase number n (12)'
-      write (*,*) '          -nstat      => skip showing statistics'
-      write (*,*) '          -s2h        => convert from sec to hours; or'
-      write (*,*) '          -h2s        => convert from hours to sec'
-      write (*,*) '          -q n        => show queue managers hypothetical'
-      write (*,*) '                         performance with n hosts (dont)'
-      write (*,*) '          -v          => switch on verbose mode (off)'
-      write (*,*) '          -m[erge]    => merge data from all files (dont)'
-      write (*,*) '          -fail       => show failed chunks (dont)'
-      write (*,*) '          -t[abulate] => print data in tables (dont)'
-      write (*,*) '          -h          => print brief help'
+      write (*,*) ' Options: '
+      write (*,*) '-d DSname   => read DSName from list of filenames'
+      write (*,*) '                      ("phase timing")'
+      write (*,*) '-b "binning options" ("")'
+      write (*,*) '               in form "nbins,X1,X2", where'
+      write (*,*) '               nbins  => number of bins'
+      write (*,*) '               X1,X2  => lower,upper bounds'
+      write (*,*) '               the first bin will contain chunks < X1'
+      write (*,*) '               the last bin will contain chunks > X2'
+      write (*,*) '-details "details" ("")'
+      write (*,*) '               in form "param1,param2,..", where'
+      write (*,*) '               print only the value[s] of param1[..]'
+      write (*,*) '-hdf m      => hdfVersion is m (5)'
+      write (*,*) '-l t        => show chunks that took longer than t'
+      write (*,*) '-n n        => use phase number n (12)'
+      write (*,*) '-nstat      => skip showing statistics'
+      write (*,*) '-s2h        => convert from sec to hours; or'
+      write (*,*) '-h2s        => convert from hours to sec'
+      write (*,*) '-q n        => show queue managers hypothetical'
+      write (*,*) '               performance with n hosts (dont)'
+      write (*,*) '-v          => switch on verbose mode (off)'
+      write (*,*) '-m[erge]    => merge data from all files (dont)'
+      write (*,*) '-fail       => show failed chunks (dont)'
+      write (*,*) '-t[abulate] => tabulate data as chunk vs. total time (dont)'
+      write (*,*) '-tf         => print full tables showing time for each phase'
+      write (*,*) '-h          => print brief help'
       stop
   end subroutine print_help
 
@@ -631,25 +637,29 @@ contains
   end subroutine SayTime
 
 !------------------------- tabulate ---------------------
-  subroutine tabulate ( table, phases )
+  subroutine tabulate ( table, phases, tabulateHow )
     ! Args
     real(r4), dimension(:,:), intent(in) :: table
-    character(len=*), optional, intent(in) :: phases
+    character(len=*), intent(in) :: phases
+    character(len=*), intent(in) :: tabulateHow
     ! Internal variables
     integer :: chunk
     character(len=32) :: myPhase
-    character(len=255) :: myPhaseNames
     integer :: numPhases
     integer :: phase
     ! Executable
-    myPhaseNames = ' '
-    if ( present(phases) ) myPhaseNames = phases
-    numPhases = size(table, 1)
+    if ( tabulateHow == 'full' ) then
+      numPhases = size(table, 1)
+    else
+      numPhases = 1
+    endif
     call blanks(30, fillchar='*', advance='yes')
     call output('chunk', advance='no')
     call blanks(3)
     do phase=1, numPhases
-      if ( myPhaseNames /= ' ' ) then
+      if ( tabulateHow /= 'full' ) then
+        call output('total', advance='no')
+      elseif ( phases /= ' ' ) then
         call GetStringElement( phases, myPhase, phase, .FALSE.)
         call output(trim(myPhase), advance='no')
         call blanks(3)
@@ -664,7 +674,11 @@ contains
       if ( any(table(:, chunk) /= UNDEFINEDVALUE) ) then
         call output(chunk, advance='no')
         call blanks(1)
-        call output(table(:, chunk), advance='no')
+        if ( tabulateHow /= 'full' ) then
+          call output( table(size(table, 1), chunk), advance='no' )
+        else
+          call output(table(:, chunk), advance='no')
+        endif
         call newline
       endif
     enddo
@@ -675,6 +689,9 @@ end program chunktimes
 !==================
 
 ! $Log$
+! Revision 1.15  2007/06/14 21:47:01  pwagner
+! Should not guessFinalPhase if told so explicitly with -n option
+!
 ! Revision 1.14  2007/03/26 22:55:25  pwagner
 ! Prints actual Phase Names as column headers when tabulating
 !
