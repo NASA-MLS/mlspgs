@@ -21,7 +21,7 @@ module RefractiveIndex
 !==================================================================
 
          use MLSCommon, only: r8
- 	 implicit none
+         implicit none
 
          Private :: COMX
          Public :: UKSUB, UKISUB
@@ -40,8 +40,8 @@ contains
          COMPLEX(r8) :: E,M
          CALL COMX('W',T,F,E)
          M=SQRT(E)
-	 
-	 END SUBROUTINE UKSUB
+ 
+         END SUBROUTINE UKSUB
 
          SUBROUTINE UKISUB(F,T,M)
          ! ----------------------
@@ -50,15 +50,15 @@ contains
          CALL COMX('I',T,F,E)
          M=SQRT(E)
 
-	 END SUBROUTINE UKISUB
+         END SUBROUTINE UKISUB
 
           subroutine comx(wi,t,f,e) 
 
           complex(r8) :: e,c
-          character*1 wi
+          character(1) wi
           real(r8) :: t, f, th, fp, fs, e0, e1, e2, x, y
           real(r8) :: a, b
-		  
+  
           th=300./t
 !          wl=30./f
           if ( wi .eq. 'W') then                                          
@@ -74,15 +74,15 @@ contains
         endif
 
         fp=20.09-142.4*(th-1.)+294*(th-1.)**2
-	fs=590.-1500.*(th-1.)
-	e0=77.66+103.3*(th-1.)
-	e1=5.48
-	e2=3.51
-	x=(e0-e1)/(1+(f/fp)**2)+(e1-e2)/(1+(f/fs)**2)+e2
-	y=(e0-e1)*f/fp/(1+(f/fp)**2)+(e1-e2)*f/fs/(1+(f/fs)**2)
-	
+        fs=590.-1500.*(th-1.)
+        e0=77.66+103.3*(th-1.)
+        e1=5.48
+        e2=3.51
+        x=(e0-e1)/(1+(f/fp)**2)+(e1-e2)/(1+(f/fs)**2)+e2
+        y=(e0-e1)*f/fp/(1+(f/fp)**2)+(e1-e2)*f/fs/(1+(f/fs)**2)
+
 !..Lu          C=T-273.16 
-!	  IF(C.LT.-50.) C=-50.
+!          IF(C.LT.-50.) C=-50.
 !  100     E0=5.27137+0.0216474*C-0.00131198*C*C                            
 !          A=-16.8129/(C+273.)+0.0609265                                    
 !          S=12.5664E+08                                                   
@@ -107,15 +107,15 @@ contains
 
 !... from Hufford (1991) model
 
-  200	a=(50.4+62.*(th-1))*1.e-4*exp(-22.1*(th-1.))
-	b=(0.633/th-0.131)*1e-4+(7.36e-4*th/(th-0.9927))**2
+  200   a=(50.4+62.*(th-1))*1.e-4*exp(-22.1*(th-1.))
+        b=(0.633/th-0.131)*1e-4+(7.36e-4*th/(th-0.9927))**2
 
 !... additional term from Mishima
-	c=1.16e-11_r8
+        c=1.16e-11_r8
 
-	x=3.15
+        x=3.15
 !        y=a/f+b*f
-	y=a/f+b*f+c*f**3
+        y=a/f+b*f+c*f**3
 !        write(*,*)y,f,t
 
         e=x*(1.0,0.0)+y*(0.0,-1.0)
@@ -135,6 +135,9 @@ contains
 end module RefractiveIndex
 
 ! $Log$
+! Revision 2.3  2007/06/21 00:52:54  vsnyder
+! Remove tabs, which are not part of the Fortran standard
+!
 ! Revision 2.2  2005/06/22 18:08:19  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
