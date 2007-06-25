@@ -140,7 +140,7 @@ module ForwardModelConfig
     integer :: No_cloud_species       ! No of Cloud Species '2'
     integer :: No_model_surfs         ! No of Model surfaces '640'
     integer :: NoUsedChannels         ! Total in all signals
-    integer :: Ntimes = 0	      ! Number of times calling FullForwardModel
+    integer :: Ntimes = 0             ! Number of times calling FullForwardModel
     integer :: Num_ab_terms           ! No of AB terms '50'
     integer :: Num_azimuth_angles     ! No of azmuth angles '8'
     integer :: Num_scattering_angles  ! No of scattering angles '16'
@@ -176,7 +176,7 @@ module ForwardModelConfig
     ! Now the reals
     real (r8) :: PhiWindow            ! Window size for examining stuff
     real (r8) :: Tolerance            ! Accuracy desired when choosing approximations
-    real :: sum_DeltaTime = 0.0	      ! sum of delta time calling FullForwardModel 
+    real :: sum_DeltaTime = 0.0       ! sum of delta time calling FullForwardModel 
     real :: sum_squareDeltaTime = 0.0 ! sum of the square of delta times calling FullForwardModel 
     ! Now the arrays
     integer, dimension(:), pointer :: BinSelectors=>NULL() ! List of relevant bin selectors
@@ -1362,6 +1362,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.96  2006/11/30 23:32:17  vsnyder
+! Use SIZE() instead of ASSOCIATED for spectroscopy derivative stuff
+!
 ! Revision 2.95  2006/07/21 00:17:39  vsnyder
 ! Remove unused declarations and USEs
 !
