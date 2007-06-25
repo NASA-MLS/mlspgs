@@ -141,7 +141,7 @@ contains
 !                                         of radiance wrt to Chi_out
     real(r8), optional, intent(out), target :: Rad_FFT_out(:) ! Temp derivs need it
 
-    integer :: I
+    integer :: I, J
     real(r8), dimension(no_fft), target :: My_rad_FFT
     real(r8), dimension(no_fft) :: rad_fft1
     real(r8), dimension(:), pointer :: rad_fft
@@ -153,28 +153,30 @@ contains
 
     call interpolateValues ( convolve_support%coeffs_1, &
       & convolve_support%del_chi_in, rad_in, &
-      & convolve_support%angles(ffth:no_fft), rad_fft(ffth:no_fft), &
+      & convolve_support%angles(ffth:no_fft), rad_fft(1:ffth+1), &
       & METHOD='S', EXTRAPOLATE='C' )
 
-    ! mirror reflect this
+    ! might need this if the signs coming out wrong is a problem
 
-    rad_fft(1:ffth-1) = rad_fft(no_fft-1:no_fft-ffth+1:-1)
+    rad_fft(1:ffth+1) = rad_fft(ffth+1:1:-1)
 
-    ! I don't know if this step is truly necessary but it rephases the
-    ! radiances identically to the prototype code
+    ! take cosine transform of interpolated input array
+    ! For DTCST the coefficients come out in order, and they're
+    ! twice the coefficients from DRFT1
 
-    rad_fft = cshift(rad_fft,-1)
-
-    ! take fft of interpolated input array
-
-    call drft1_t ( rad_fft, 'a' )
+    call dtcst_t ( rad_fft(1:ffth+1), 'a' )
+    rad_fft(1:ffth+1) = 0.5 * rad_fft(1:ffth+1)
 
     ! apply convolution theorem
 
-    rad_fft1(1:2) = rad_fft(1:2) * convolve_support%p(1:2)
+    ! Handle first and last coefficients first
+    rad_fft1(1) = rad_fft(1) * convolve_support%p(1)
+    rad_fft1(2) = rad_fft(ffth+1) * convolve_support%p(2)
+    j = 1
     do i = 3, no_fft - 1, 2
-      rad_fft1(i)   = rad_fft(i) * convolve_support%p(i)
-      rad_fft1(i+1) = rad_fft(i) * convolve_support%p(i+1)
+      j = j + 1
+      rad_fft1(i)   = rad_fft(j) * convolve_support%p(i)
+      rad_fft1(i+1) = rad_fft(j) * convolve_support%p(i+1)
     end do
 
     call drft1_t ( rad_fft1, 's' )
@@ -276,7 +278,7 @@ contains
 
     type(coefficients) :: Coeffs_t ! for chi_in-init_angle -> angles(ffth+zero_out_s+1:no_fft)
     integer :: AAAPN, I, J, K, N_Coeffs, Zero_out_s, Zero_out_t
-    real(r8), dimension(no_fft) :: dp, rad_fft1, rad_fft2
+    real(r8), dimension(no_fft) :: dp, rad_fft1, rad_fft2, rad_fft3
     real(r8) :: drad_dT_temp(size(convolve_support%del_chi_out))
 
     ! Set up for interpolations.  First find the surface dimension
@@ -304,9 +306,11 @@ contains
     ! dp are really complex numbers masquerading as real ones
 
     rad_fft1(1:2) = 0.0_rp
+    j = 1
     do i = 3, no_fft-1, 2
-      rad_fft1(i)   = rad_fft(i) * dp(i)
-      rad_fft1(i+1) = rad_fft(i) * dp(i+1)
+      j = j + 1
+      rad_fft1(i)   = rad_fft(j) * dp(i)
+      rad_fft1(i+1) = rad_fft(j) * dp(i+1)
     end do
 
     call drft1_t ( rad_fft1, 's' )
@@ -340,7 +344,6 @@ contains
 
       rad_fft2(ffth:ffth+zero_out_s) = 0.0_rp
 
-
     ! add in di_dT part
 
       call interpolateValues ( convolve_support%coeffs_1, &
@@ -354,18 +357,28 @@ contains
 
       rad_fft2(ffth+zero_out_t + 1:no_fft) = 0.0_rp
 
+      if ( any(rad_fft2(ffth+zero_out_s+1:ffth+zero_out_t) /= 0.0) ) then
+
     ! resymetrize
 
-      rad_fft2(1:ffth-1) = rad_fft2(no_fft-1:no_fft-ffth+1:-1)
+        rad_fft2(1:ffth-1) = rad_fft2(no_fft-1:no_fft-ffth+1:-1)
 
     ! I don't know if this step is truly necessary but it rephases the radiances
     ! identically to the prototype code
 
-      rad_fft2 = cshift(rad_fft2,-1)
+        rad_fft2 = cshift(rad_fft2,-1)
 
-    ! take fft of rad_in * ddx_dxdT + di_dT array
+    ! take cosine transform of rad_in * ddx_dxdT + di_dT array
+    ! Coefficients from DTCST come out in order, and are twice the
+    ! coefficients from DRFT1
 
-      call drft1_t ( rad_fft2, 'a' )
+        call dtcst_t ( rad_fft2(1:ffth+1), 'a' )
+
+      else
+
+        rad_fft2(1:ffth+1) = 0.0
+
+      end if
 
     ! do the rad_in * dx_dT term
 
@@ -389,29 +402,35 @@ contains
 
     ! take fft of rad_in * ddx_dxdT + di_dT + rad_in * dx_dT array
 
-      call drft1_t ( rad_fft1, 'a' )
+      call dtcst_t ( rad_fft1(1:ffth+1), 'a' )
+
+    ! Rearrange rad_fft2 from dtcst order to drft1 order
+
 
     ! apply convolution theorem
 
-      rad_fft2(1:2) = rad_fft2(1:2) * convolve_support%p(1:2)
+      rad_fft3(1) = 0.5 * rad_fft2(1) * convolve_support%p(1)
+      rad_fft3(2) = 0.5 * rad_fft2(ffth+1) * convolve_support%p(2)
+      k = 1
       do j = 3, no_fft-1, 2
-        rad_fft2(j+1) = rad_fft2(j) * convolve_support%p(j+1) - rad_fft1(j) * dp(j+1)
-        rad_fft2(j)   = rad_fft2(j) * convolve_support%p(j)   - rad_fft1(j) * dp(j)
+        k = k + 1
+        rad_fft3(j+1) = 0.5 * ( rad_fft2(k) * convolve_support%p(j+1) - rad_fft1(k) * dp(j+1) )
+        rad_fft3(j)   = 0.5 * ( rad_fft2(k) * convolve_support%p(j)   - rad_fft1(k) * dp(j)   )
       end do
 
     ! interplolate to chi_out
 
-      call drft1_t ( rad_fft2, 's' )
+      call drft1_t ( rad_fft3, 's' )
 
       if ( associated(MIF_Times) ) then
         call scanAverage ( MIF_Times, deadTime(1,1), &
           & real(convolve_support%angles(ffth-1:no_fft-1),rp), &
-          & convolve_support%del_chi_out, real(rad_fft2(ffth:no_fft),rp), &
+          & convolve_support%del_chi_out, real(rad_fft3(ffth:no_fft),rp), &
           & drad_dT_out(:, i) )
       else
         call interpolateValues ( convolve_support%coeffs_2, &
           & convolve_support%angles(ffth-1:no_fft-1), &
-          & rad_fft2(ffth:no_fft), convolve_support%del_chi_out, drad_dT_out(:, i), &
+          & rad_fft3(ffth:no_fft), convolve_support%del_chi_out, drad_dT_out(:, i), &
           & METHOD='S', EXTRAPOLATE='C' )
       end if
 
@@ -459,6 +478,23 @@ contains
     end if
   end subroutine DRFT1_T
 
+  subroutine DTCST_T ( A, Mode )
+  ! Call DTCST and test its status flag
+    use DFFT_M, only: DTCST
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use SineTables_m, only: CreateSineTable, DestroySineTable, &
+      & LogSize_SineTable_R8, SineTable_R8
+    real(r8), intent(inout) :: A(:)
+    character, intent(in) :: Mode
+    integer, parameter :: DTCST_SIZE(1) = (/ pwr - 1 /) ! Avoid a run-time temp
+    call createSineTable ( pwr - 2 )
+    call dtcst ( a, 'C', mode, dtcst_size, 1, logSize_SineTable_R8, sineTable_R8 )
+    if ( logSize_SineTable_R8 == -2 ) then
+      call DestroySineTable
+      call MLSMessage ( MLSMSG_Error, ModuleName, "Error in dtcst" )
+    end if
+  end subroutine DTCST_T
+
   ! ----------------------------------------------  not_used_here  -----
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
@@ -472,6 +508,9 @@ contains
 end module FOV_Convolve_m
 
 ! $Log$
+! Revision 2.6  2007/06/25 20:34:15  vsnyder
+! Use DTCST instead of DFFT for even transforms
+!
 ! Revision 2.5  2007/05/23 22:39:03  vsnyder
 ! Make sure drad_df_out gets defined
 !
