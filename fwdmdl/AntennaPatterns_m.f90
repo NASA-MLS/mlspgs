@@ -30,6 +30,14 @@ module AntennaPatterns_m
 
   type, public :: AntennaPattern_T
     real(r8) :: Lambda
+!     ! FFTW_*_Plan are actually places for FFTW to stash C pointers
+!     real(r8) :: FFTW_Forward_Plan, FFTW_Backward_Plan
+!     ! Aaap, DD1aap and D2aap are produced by Math77 DRFT1.
+!     ! The first two elements are the real parts of the first and last
+!     ! Fourier coefficients, for which the imaginary parts are zero.
+!     ! Remaining pairs of elements are real and imaginary parts of
+!     ! subsequent coefficients.  So (3:4) are the real and imaginary
+!     ! parts of the second coefficient, (5:6) for the third, etc.
     real(r8), dimension(:), pointer :: Aaap => NULL()
     real(r8), dimension(:), pointer :: D1aap => NULL()
     real(r8), dimension(:), pointer :: D2aap => NULL()
@@ -80,6 +88,21 @@ contains
 
     integer, intent(in) :: Lun               ! Logical unit number to read it
 
+!     ! Parameters for FFTW
+!     integer, parameter :: FFTW_Forward = -1, FFTW_Backward = 1
+!     integer, parameter :: FFTW_Measure = 1
+! 
+!     ! Interface for RFFTW_f77_create_plan
+!     interface
+!       subroutine RFFTW_f77_create_plan ( Plan, NT, Dir, Flags )
+!         use MLSCommon, only: R8
+!         real(r8), intent(out) :: Plan ! Actually a C pointer
+!         integer , intent(in) :: NT    ! Number of points
+!         integer , intent(in) :: Dir   ! Direction, forward or backward
+!         integer , intent(in) :: Flags ! FFTW input flags
+!       end subroutine RFFTW_f77_create_plan
+!     end interface
+
     real(r8), parameter :: Pi2 = 2.0_r8 * Pi
 
     logical, dimension(:), pointer :: CHANNELS ! From Parse Signal
@@ -88,15 +111,15 @@ contains
     integer :: HowManySignals(3*size(signals)) ! for each pattern
     integer :: HowManySignalLines(3*size(signals)) ! for each pattern
     integer :: I, J, K, L                    ! Loop inductors, subscripts
-    integer :: power2                   ! Power 2 size of antenna pattern
+    integer :: power2                        ! Power 2 size of antenna pattern
     real(r8) :: Lambda
     real(r8) :: LambdaX2Pi                   ! 2 * Pi * Lambda
     real(r8) :: Q                            ! Factor used to scale derivatives
-    real(r8) :: Log2                    ! Log 2 of array size
+    real(r8) :: Log2                         ! Log 2 of array size
     character(len=MaxSigLen) :: SigName      ! Signal Name
     integer :: SIDEBAND                      ! From parse_signal
     integer :: Status                        ! From read or allocate
-    integer :: DummyInt                 ! Dummy integer to read
+    integer :: DummyInt                      ! Dummy integer to read
     integer, dimension(:), pointer :: SIGINDS ! From parseSignal
     integer :: SignalCount
     integer, pointer, dimension(:) :: Signal_Indices => NULL() ! From Parse_Signal, q.v.
@@ -174,6 +197,21 @@ outer1: do
       antennaPatterns(i)%d1aap = 0.0
       antennaPatterns(i)%d2aap = 0.0
 
+!       ! Find FFTW plans for the current size, or create new ones
+!       do j = 1, i-1
+!         if ( size(antennaPatterns(i)%aaap) == size(antennaPatterns(j)%aaap) ) exit
+!       end do
+! 
+!       if ( j < i ) then
+!         antennaPatterns(i)%FFTW_Forward_Plan = antennaPatterns(j)%FFTW_Forward_Plan
+!         antennaPatterns(i)%FFTW_Backward_Plan = antennaPatterns(j)%FFTW_Backward_Plan
+!       else
+!         call rfftw_f77_create_plan ( antennaPatterns(i)%FFTW_Forward_Plan, &
+!           & size(antennaPatterns(i)%aaap), FFTW_Forward, FFTW_Measure )
+!         call rfftw_f77_create_plan ( antennaPatterns(i)%FFTW_Backward_Plan, &
+!           & size(antennaPatterns(i)%aaap), FFTW_Backward, FFTW_Measure )
+!       end if
+
       k = 1
       do j = 1, howManySignalLines(i)
         read ( lun, '(a)', err=99, iostat=status ) SigName
@@ -240,8 +278,30 @@ outer1: do
   ! ---------------------------------  Destroy_Ant_Patterns_Database  -----
   subroutine Destroy_Ant_Patterns_Database
     use Allocate_Deallocate, only: Deallocate_Test
+
+!     interface
+!       subroutine RFFTW_f77_destroy_plan ( Plan )
+!         use MLSCommon, only: R8
+!         real(r8), intent(inout) :: Plan
+!       end subroutine RFFTW_f77_destroy_plan
+!     end interface
+
     integer :: I, J, Status
+
     if (.not. associated(AntennaPatterns) ) return
+
+!     ! Destroy FFTW plans
+!     do i = 1, size(AntennaPatterns)
+!       do j = 1, i-1
+!         if ( size(antennaPatterns(i)%aaap) == size(antennaPatterns(j)%aaap) ) exit
+!       end do
+!       if ( j >= i ) then
+!         call rfftw_f77_destroy_plan ( antennaPatterns(i)%FFTW_forward_plan )
+!         call rfftw_f77_destroy_plan ( antennaPatterns(i)%FFTW_backward_plan )
+!       end if
+!     end do
+
+    ! Destroy the rest of the database
     do i = 1, size(AntennaPatterns)
       do j = 1, size(AntennaPatterns(i)%signals)
         if (associated(AntennaPatterns(i)%signals(j)%channels)) then
@@ -262,6 +322,7 @@ outer1: do
     deallocate ( AntennaPatterns, stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
       MLSMSG_DeAllocate // "AntennaPatterns" )
+
   end subroutine Destroy_Ant_Patterns_Database
 
   ! --------------------------------  Dump_Antenna_Patterns_Database  -----
@@ -308,6 +369,9 @@ outer1: do
 end module AntennaPatterns_m
 
 ! $Log$
+! Revision 2.10  2005/06/22 18:08:18  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.9  2004/05/29 02:49:29  vsnyder
 ! Simplifications from using DisplaySignalName
 !
