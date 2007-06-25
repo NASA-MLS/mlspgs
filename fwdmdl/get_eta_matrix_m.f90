@@ -17,15 +17,18 @@ module Get_Eta_Matrix_m
 
   private
   public :: Eta_Func, Eta_Func_1d, Eta_Func_2d
-  public :: Get_Eta_Sparse
+  public :: Get_Eta_Column_Sparse, Get_Eta_Column_Sparse_fl_nz, Get_Eta_Sparse
   public :: Get_Eta_Sparse_1d, Get_Eta_Sparse_1d_fl, Get_Eta_Sparse_1d_nz
   public :: Get_Eta_Sparse_2d, Get_Eta_Sparse_2d_fl_nz, Get_Eta_Sparse_2d_nz
+  public :: Multiply_Eta_Column_Sparse
+  public :: Select_NZ_List
 
   interface Eta_Func
     module procedure Eta_Func_1d, Eta_Func_2d
   end interface Eta_Func
 
   interface Get_Eta_Sparse
+    module procedure Get_Eta_Column_Sparse, Get_Eta_Column_Sparse_fl_nz
     module procedure Get_Eta_Sparse_1d, Get_Eta_Sparse_1d_fl, Get_Eta_Sparse_1d_nz
     module procedure Get_Eta_Sparse_2d, Get_Eta_Sparse_2d_fl_nz
     module procedure Get_Eta_Sparse_2d_nz
@@ -693,6 +696,363 @@ contains
 
   end subroutine Get_Eta_Sparse_2d_nz
 
+! ----------------------------------------  Get_Eta_Column_Sparse  -----
+  subroutine Get_Eta_Column_Sparse ( Basis, Grid, Eta, Row1, RowN, NZ, NNZ, Update )
+
+  ! Compute rows Row1 to RowN of the eta matrix.  Basis is assumed to be
+  ! sorted.  Rows Row1 to RowN of Grid are assumed to be sorted.  Row1 > RowN
+  ! is allowed.  If Update is false, set nonzero elements of Eta to zero.
+  ! It is assumed that Eta has initially been set to zero by the caller.
+
+    use Sort_m, only: Sort
+
+    real(rp), intent(in) :: Basis(:) ! basis break points
+    real(rp), intent(in) :: Grid(:)  ! grid values
+    real(rp), intent(inout) :: Eta(:,:)
+    integer, intent(in) :: Row1, RowN
+    integer, intent(inout) :: NZ(:,:) ! Locations of nonzeros in columns of Eta
+    integer, intent(inout) :: NNZ(:)  ! Numbers of nonzeros in columns of Eta
+    logical, intent(in) :: Update
+
+    real(rp) :: Del_basis
+    integer :: I, J, N_Coeffs
+
+    if ( .not. update ) then
+      do i = 1, size(eta,2)
+        eta(nz(:nnz(i),i),i) = 0.0
+        nnz(i) = 0
+      end do
+    end if
+
+    n_coeffs = size(basis)
+    if ( n_coeffs <= 0 ) return
+
+    if ( row1 <= rowN ) then
+
+      ! First basis calculation
+
+      do i = row1, rowN
+        if ( grid(i) > basis(1) ) exit
+        eta(i,1) = 1.0_rp
+        nnz(1) = nnz(1) + 1
+        nz(nnz(1),1) = i
+      end do
+
+      ! Normal triangular function for j=2 to j=n_coeffs-1.  Both Basis and
+      ! Grid are sorted, so we don't need to start from i=row1.
+
+      do j = 2, n_coeffs
+        del_basis = 1.0_rp / ( basis(j) - basis(j-1) )
+        do while ( i <= rowN )
+          if ( grid(i) > basis(j) ) exit
+          eta(i,j-1) = (basis(j) - grid(i)) * del_basis
+          eta(i,j  ) = (grid(i) - basis(j-1)) * del_basis
+          nnz(j-1) = nnz(j-1) + 1
+          nz(nnz(j-1),j-1) = i
+          nnz(j) = nnz(j) + 1
+          nz(nnz(j),j) = i
+          i = i + 1
+        end do
+      end do
+
+      ! last basis calculation
+
+      do i = i, rowN
+        if ( basis(n_coeffs) >= grid(i) ) exit
+        eta(i,n_coeffs) = 1.0_rp
+        nnz(n_coeffs) = nnz(n_coeffs) + 1
+        nz(nnz(n_coeffs),n_coeffs) = i
+      end do
+
+    else
+
+      ! First basis calculation
+      do i = row1, rowN, -1
+        if ( grid(i) > basis(1) ) exit
+        eta(i,1) = 1.0_rp
+        nnz(1) = nnz(1) + 1
+        nz(nnz(1),1) = i
+      end do
+
+      ! Normal triangular function for j=2 to j=n_coeffs-1.  Both Basis and
+      ! Grid are sorted, so we don't need to start from i=row1.
+
+      do j = 2, n_coeffs
+        del_basis = 1.0_rp / ( basis(j) - basis(j-1) )
+        do while ( i >= rowN )
+          if ( grid(i) > basis(j) ) exit
+          eta(i,j-1) = (basis(j) - grid(i)) * del_basis
+          eta(i,j  ) = (grid(i) - basis(j-1)) * del_basis
+          nnz(j-1) = nnz(j-1) + 1
+          nz(nnz(j-1),j-1) = i
+          nnz(j) = nnz(j) + 1
+          nz(nnz(j),j) = i
+          i = i - 1
+        end do
+      end do
+
+      ! last basis calculation
+
+      do i = i, rowN, -1
+        if ( basis(n_coeffs) >= grid(i) ) exit
+        eta(i,n_coeffs) = 1.0_rp
+        nnz(n_coeffs) = nnz(n_coeffs) + 1
+        nz(nnz(n_coeffs),n_coeffs) = i
+      end do
+
+      ! Indices of nonzeros have come out in reverse order.
+      ! If we are updating they're appended to those that were
+      ! created in forward order.  It's simplest to sort them.
+      do j = 1, n_coeffs
+        call sort ( nz(:,j), 1, nnz(j) )
+      end do
+
+    end if
+
+  end subroutine Get_Eta_Column_Sparse
+  
+! ----------------------------------  Get_Eta_Column_Sparse_fl_nz  -----
+  subroutine Get_Eta_Column_Sparse_fl_nz ( Basis, Grid, Eta, Row1, RowN, &
+    & NZ, NNZ, First, Last, Not_Zero )
+
+  ! Compute rows Row1 to RowN of the eta matrix.  Basis is assumed to be
+  ! sorted.  Rows Row1 to RowN of Grid are assumed to be sorted.  Row1 > RowN
+  ! is allowed.   It is assumed that Eta has initially been set to zero by the
+  ! caller.
+
+    use Sort_m, only: Sort
+
+    real(rp), intent(in) :: Basis(:) ! basis break points
+    real(rp), intent(in) :: Grid(:)  ! grid values
+    real(rp), intent(inout) :: Eta(:,:)
+    integer, intent(in) :: Row1, RowN
+    integer, intent(inout) :: NZ(:,:) ! Locations of nonzeros in columns of Eta
+    integer, intent(inout) :: NNZ(:)  ! Numbers of nonzeros in columns of Eta
+    integer, intent(out) :: First(:)  ! First nonzero in each row of Eta
+    integer, intent(out) :: Last(:)   ! Last nonzero in each row of Eta
+    logical, intent(inout) :: Not_zero(:,:) ! where Eta is not zero
+
+    real(rp) :: Del_basis
+    integer :: I, J, N_Coeffs
+
+    do i = 1, size(eta,2)
+      eta(nz(:nnz(i),i),i) = 0.0
+      not_zero(nz(:nnz(i),i),i) = .true.
+      nnz(i) = 0
+    end do
+
+    n_coeffs = size(basis)
+    if ( n_coeffs <= 0 ) return
+
+    if ( row1 <= rowN ) then
+
+      ! First basis calculation
+
+      do i = row1, rowN
+        if ( grid(i) > basis(1) ) exit
+        eta(i,1) = 1.0_rp
+        nnz(1) = nnz(1) + 1
+        nz(nnz(1),1) = i
+        not_zero(i,1) = .true.
+        first(i) = 1
+        last(i) = 1
+      end do
+
+      ! Normal triangular function for j=2 to j=n_coeffs-1.  Both Basis and
+      ! Grid are sorted, so we don't need to start from i=row1.
+
+      do j = 2, n_coeffs
+        del_basis = 1.0_rp / ( basis(j) - basis(j-1) )
+        do while ( i <= rowN )
+          if ( grid(i) > basis(j) ) exit
+          eta(i,j-1) = (basis(j) - grid(i)) * del_basis
+          eta(i,j  ) = (grid(i) - basis(j-1)) * del_basis
+          nnz(j-1) = nnz(j-1) + 1
+          nz(nnz(j-1),j-1) = i
+          nnz(j) = nnz(j) + 1
+          nz(nnz(j),j) = i
+          not_zero(i,j-1) = .true.
+          not_zero(i,j) = .true.
+          first(i) = j - 1
+          last(i) = j
+          i = i + 1
+        end do
+      end do
+
+      ! last basis calculation
+
+      do i = i, rowN
+        if ( basis(n_coeffs) >= grid(i) ) exit
+        eta(i,n_coeffs) = 1.0_rp
+        nnz(n_coeffs) = nnz(n_coeffs) + 1
+        nz(nnz(n_coeffs),n_coeffs) = i
+        not_zero(i,n_coeffs) = .true.
+        first(i) = n_coeffs
+        last(i) = n_coeffs
+      end do
+
+    else
+
+      ! First basis calculation
+      do i = row1, rowN, -1
+        if ( grid(i) > basis(1) ) exit
+        eta(i,1) = 1.0_rp
+        nnz(1) = nnz(1) + 1
+        nz(nnz(1),1) = i
+        not_zero(i,1) = .true.
+        first(i) = 1
+        last(i) = 1
+      end do
+
+      ! Normal triangular function for j=2 to j=n_coeffs-1.  Both Basis and
+      ! Grid are sorted, so we don't need to start from i=row1.
+
+      do j = 2, n_coeffs
+        del_basis = 1.0_rp / ( basis(j) - basis(j-1) )
+        do while ( i >= rowN )
+          if ( grid(i) > basis(j) ) exit
+          eta(i,j-1) = (basis(j) - grid(i)) * del_basis
+          eta(i,j  ) = (grid(i) - basis(j-1)) * del_basis
+          nnz(j-1) = nnz(j-1) + 1
+          nz(nnz(j-1),j-1) = i
+          nnz(j) = nnz(j) + 1
+          nz(nnz(j),j) = i
+          not_zero(i,j-1) = .true.
+          not_zero(i,j) = .true.
+          first(i) = j - 1
+          last(i) = j
+          i = i - 1
+        end do
+      end do
+
+      ! last basis calculation
+
+      do i = i, rowN, -1
+        if ( basis(n_coeffs) >= grid(i) ) exit
+        eta(i,n_coeffs) = 1.0_rp
+        nnz(n_coeffs) = nnz(n_coeffs) + 1
+        nz(nnz(n_coeffs),n_coeffs) = i
+        not_zero(i,n_coeffs) = .true.
+        first(i) = n_coeffs
+        last(i) = n_coeffs
+      end do
+
+      ! Indices of nonzeros have come out in reverse order.
+      ! It's simplest to sort them.
+      do j = 1, n_coeffs
+        call sort ( nz(:,j), 1, nnz(j) )
+      end do
+
+    end if
+
+  end subroutine Get_Eta_Column_Sparse_fl_nz
+
+! -----------------------------------  Multiply_Eta_Column_Sparse  -----
+  subroutine Multiply_Eta_Column_Sparse (Eta_1, NZ_1, NNZ_1, Eta_2, NZ_2, NNZ_2, &
+    & Eta_P, NZ_P, NNZ_P, Not_Zero_P )
+
+  ! Multiply each column of Eta_1 by every column of Eta_2, each product
+  ! giving a column of Eta_P, so that the number of columns of Eta_P is
+  ! the product of the numbers of columns of Eta_1 and Eta_2.  Columns of
+  ! Eta_1 are stepped more rapidly than columns of Eta_2.
+
+  ! It is assumed that NNZ_P(i) and NZ_P(:NNZ_P(i),i) have defined
+  ! values for each I from 1 to size(Eta_P,2).
+
+    real(rp), intent(in) :: Eta_1(:,:), Eta_2(:,:) ! Values
+    integer, intent(in) :: NZ_1(:,:), NZ_2(:,:)    ! Nonzero elements of Eta_*
+    integer, intent(in) :: NNZ_1(:), NNZ_2(:)      ! Numbers of nonzeros
+    real(rp), intent(inout) :: Eta_P(:,:)   ! Only the nonzeros are replaced
+    integer, intent(inout) :: NZ_P(:,:)     ! Nonzero elements of Eta_P
+    integer, intent(inout) :: NNZ_P(:)      ! Numbers of nonzeros
+    logical, intent(inout), optional :: Not_Zero_P(:,:) ! Nonzero elements of Eta_P
+
+    integer :: I1, I2, I3, J1, J2, K
+
+    ! First remove nonzero elements from Eta_P
+    if ( present(not_zero_p) ) then
+      do k = 1, size(eta_p,2)
+        not_zero_p(nz_p(:nnz_p(k),k),k) = .false.
+      end do
+    end if
+
+    do k = 1, size(eta_p,2)
+      eta_p(nz_p(:nnz_p(k),k),k) = 0.0
+      nnz_p(k) = 0
+    end do
+
+    ! Multiply nonzero elements of Eta_1 and Eta_2
+    ! Assume elements of each column of NZ_1 and NZ_2 are in order.
+    k = 0
+
+    do j2 = 1, size(eta_2,2)
+      do j1 = 1, size(eta_1,2)
+        k = k + 1
+        i1 = 1
+        i2 = 1
+        do
+          if ( i1 > nnz_1(j1) ) exit
+          if ( i2 > nnz_2(j2) ) exit
+          if ( nz_1(i1,j1) < nz_2(i2,j2) ) then
+            i1 = i1 + 1
+          else if ( nz_1(i1,j1) > nz_2(i2,j2) ) then
+            i2 = i2 + 1
+          else ! Both columns have nonzero in the same row
+            i3 = nz_1(i1,j1)
+            nnz_p(k) = nnz_p(k) + 1
+            nz_p(nnz_p(k),k) = i3
+            eta_p(i3,k) = eta_1(i3,j1) * eta_2(i3,j2)
+            i1 = i1 + 1
+            i2 = i2 + 1
+          end if
+        end do
+      end do
+    end do
+
+    ! Note where nonzeros are
+    if ( present(not_zero_p) ) then
+      do k = 1, size(eta_p,2)
+        not_zero_p(nz_p(:nnz_p(k),k),k) = .true.
+      end do
+    end if
+
+  end subroutine Multiply_Eta_Column_Sparse
+
+! -----------------------------------------------  Select_NZ_List  -----
+  subroutine Select_NZ_List ( NZ_1, NNZ_1, List, NZ_2, NNZ_2 )
+  ! Select the nonzeros from NZ_1 that are in List and put their indices
+  ! in List into NZ_2.
+    integer, intent(in) :: NZ_1(:,:)
+    integer, intent(in) :: NNZ_1(:)
+    integer, intent(in) :: List(:)
+    integer, intent(out) :: NZ_2(:,:)
+    integer, intent(out) :: NNZ_2(:)
+
+    integer :: J
+    integer :: I1, I2
+
+    nnz_2 = 0
+    ! This is just a merge
+    do j = 1, size(nz_1,2)
+      i1 = 1
+      i2 = 1
+      do
+        if ( i1 > nnz_1(j) .or. i2 > size(list) ) exit
+        if ( nz_1(i1,j) < list(i2) ) then
+          i1 = i1 + 1
+        else if ( nz_1(i1,j) > list(i2) ) then
+          i2 = i2 + 1
+        else
+          nnz_2(j) = nnz_2(j) + 1
+          nz_2(nnz_2(j),j) = i2
+          i1 = i1 + 1
+          i2 = i2 + 1
+        end if
+      end do
+    end do ! j
+
+  end subroutine Select_NZ_List
+
 !=========================================================================
 
   logical function not_used_here()
@@ -707,6 +1067,9 @@ contains
 end module Get_Eta_Matrix_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.16  2007/06/06 01:15:43  vsnyder
+! Use the PI variable instead of P(I)
+!
 ! Revision 2.15  2007/01/20 01:06:39  vsnyder
 ! Add Get_Eta_Sparse_2d_fl_nz
 !
