@@ -42,35 +42,35 @@ program COMPARE
   integer, parameter :: RK = kind(0.0d0) ! kind for calculations
   integer, parameter :: RS = kind(0.0e0) ! kind for * output
   real(rk), allocatable, dimension(:) :: AD      ! Absolute difference of R1, R2
-  logical :: All = .false.   ! Show nonzero differences for all quantities
-  real(rk) :: AMAX               ! Maximum absolute difference for one R1, R2 pair
-  real(rk) :: AMAXG = 0.0        ! Global maximum of all values of AMAX
-  real(rk) :: AbsAtRmaxG         ! Absolute error at maximum relative error
-  logical :: AnyNaN(3) = .false. ! R1, R2 or a relative difference has a NaN
+  logical :: All = .false.        ! Show nonzero differences for all quantities
+  real(rk) :: AMAX                ! Maximum absolute difference for one R1, R2 pair
+  real(rk) :: AMAXG = 0.0         ! Global maximum of all values of AMAX
+  real(rk) :: AbsAtRmaxG          ! Absolute error at maximum relative error
+  logical :: AnyNaN(3) = .false.  ! R1, R2 or a relative difference has a NaN
   real(rk) :: AVG(2), AVGSR(2), AVGSA(2)
-  logical :: CONT = .false.  ! Continue even if control lines differ
-  logical :: DoStats = .false. ! -s option specified
+  logical :: CONT = .false.       ! Continue even if control lines differ
+  logical :: DoStats = .false.    ! -s option specified
   logical :: END
-  real(rk), parameter :: EPS = epsilon(1.0_rs)
   character(127) :: File1, File2
   integer :: I, I1, I2, J
-  logical :: Same = .false.  ! Print "Identical" if files are the same
-  integer :: LAMAX, LRMAX    ! Locations of absolute, relative max. diffs.
-  logical :: LOUD = .true.   ! Messages about unequal file lengths etc.
+  logical :: Same = .false.       ! Print "Identical" if files are the same
+  integer :: LAMAX, LRMAX         ! Locations of absolute, relative max. diffs.
+  logical :: LOUD = .true.        ! Messages about unequal file lengths etc.
   character(127) :: Line1, line2
   logical, allocatable, dimension(:) :: M    ! abs(r1+r2) > 0.0
   integer :: N
   real(rk), allocatable, dimension(:) :: R1, R2  ! Inputs
   real(rk), allocatable, dimension(:) :: RD      ! Relative difference of R1, R2
   real(rk) :: RelAtAmaxG
-  real(rk) :: RMAX               ! Maximum relative difference for one R1, R2 pair
-  real(rk) :: RMAXE = -huge(0.0) ! RMAX in units of epsilon
-  real(rk) :: RMAXG = -huge(0.0) ! Global maximum of all values of RMAX
+  real(rk) :: RMAX = -huge(0.0)   ! Maximum relative difference for one R1, R2 pair
+  real(rk) :: RMAXG = -huge(0.0)  ! Global maximum of all values of RMAX
+  real(rk) :: RMAXV = -huge(0.0)  ! Difference relative to VMAX
+  real(rk) :: RMAXVG = -huge(0.0) ! Global maximum of all values of RMAXV
   integer :: Status
   real(rk) :: STDEV(2), STDEVR(2), STDEVA(2)
   logical :: Verbose = .false.
-  real(rk) :: VMAX           ! Maximum value in R1 or R2
-  logical :: Zero = .false.  ! If ( all ), show zero differences, too.
+  real(rk) :: VMAX                ! Maximum absolute value in R1 or R2
+  logical :: Zero = .false.       ! If ( all ), show zero differences, too.
 
   read ( (/("NaN", i = 1, 10 ) /), * ) AbsAtRmaxG, RelAtAmaxG, avgsr, avgsa, &
     & stdevr, stdeva
@@ -217,8 +217,14 @@ program COMPARE
         lrmax = -1
         rmax = 0.0
       end if
-      rmaxe = rmax / eps
-      if ( .not. ( rmaxe <= 0.0 .or. rmaxe >= 0.0 ) ) anyNaN(3) = .true.
+      if ( vmax > 0.0 ) then
+        rmaxv = amax / vmax
+      else if ( amax > 0.0 ) then
+        rmaxv = -huge(0.0)
+      else
+        rmaxv = 0.0
+      end if
+      if ( .not. ( rmax <= 0.0 .or. rmax >= 0.0 ) ) anyNaN(3) = .true.
       if ( all ) then
         print '(1p,2g12.5,i6,g12.5,g12.5,i6,g12.5,1x,a)', vmax, &
           & amax, lamax, 2.0 * abs(r1(lamax)-r2(lamax)) / abs(r1(lamax)+r2(lamax)), &
@@ -230,8 +236,8 @@ program COMPARE
         if ( all ) print '(a,1p,2g14.7,a,2g14.7)', 'Averages =', avg, ' Std. Devs. =', stdev
       end if
     end if
-    if ( rmaxe > rmaxg ) then
-      rmaxg = rmaxe
+    if ( rmax > rmaxg ) then
+      rmaxg = rmax
       absAtRmaxG = amax
       if ( doStats ) then
         avgsr = avg
@@ -240,31 +246,22 @@ program COMPARE
     end if
     if ( amax > amaxg ) then
       amaxg = amax
-      relAtAmaxG = rmaxe
+      relAtAmaxG = rmax
       if ( doStats ) then
         avgsa = avg
         stdeva = stdev
       end if
     end if
+    rmaxvg = max(rmaxvg, rmaxv)
 
     deallocate ( ad, r1, r2, rd, m )
 
   end do
 
   if ( rmaxg > 0.0 .or. zero .or. anyNan(3) ) then
-!     print *, 'MaxRel =', real(rmaxg,rs), &
-!       & 'epsilons =', real(rmaxg*eps,rs), &
-!       & 'where MaxAbs =', real(absAtRmaxG,rs)
-!     if ( doStats ) print '(1x,2(a,1p,2g10.3))', 'Avgs =', real(avgsr,rs), &
-!       & ' Std. Devs. =', real(stdevr,rs)
-!     print *, 'MaxAbs =', real(amaxg,rs), &
-!       & 'where MaxRel =', real(relAtAmaxG,rs), 'epsilons =', &
-!       & real(relAtAmaxG*eps,rs)
-!     if ( doStats ) print '(1x,2(a,1p,2g10.3))', 'Avgs =', real(avgsa,rs), &
-!       & ' Std. Devs. =', real(stdeva,rs)
     print '(a/1p,6g13.6)', &
-      & " MaxRel       epsilons     where MaxAbs MaxAbs       where MaxRel epsilons", &
-      & rmaxg*eps, rmaxg, absAtRmaxG, amaxG, relAtAmaxG*eps, relAtAmaxG
+      & " RelMaxVal    MaxRel       where MaxAbs MaxAbs       where MaxRel", &
+      & rmaxvg, rmaxg, absAtRmaxG, amaxG, relAtAmaxG
     if ( doStats ) &
       & print '(a/1p,8g13.6)', &
       & " Avg Rel                   Std Dev Rel               Avg Abs                   Std Dev Abs", &
@@ -321,6 +318,9 @@ contains
 end program
 
 ! $Log$
+! Revision 1.16  2007/06/19 00:29:39  vsnyder
+! Print Max Abs Value if -a
+!
 ! Revision 1.15  2007/06/08 22:46:03  vsnyder
 ! Revise output format
 !
