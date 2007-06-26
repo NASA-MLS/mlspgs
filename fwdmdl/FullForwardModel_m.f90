@@ -257,6 +257,7 @@ contains
     use AntennaPatterns_m, only: ANTENNAPATTERNS
     use Comp_Eta_Docalc_No_Frq_m, only: Comp_Eta_Docalc_No_Frq
     use Comp_Sps_Path_Frq_m, only: Comp_Sps_Path, Comp_Sps_Path_Frq, &
+    ! & Comp_Sps_Path_Frq_nz, &
       & Comp_Sps_Path_No_Frq, Comp_1_Sps_Path_No_Frq
     use Compute_GL_Grid_m, only: Compute_GL_Grid
     use D_Hunt_m, only: Hunt
@@ -270,6 +271,7 @@ contains
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use Freq_Avg_m, only: Freq_Avg, Freq_Avg_DACS
     use Geometry, only: Earth_Axis_Ratio_Squared_m1, EarthRadA, MaxRefraction
+    use Get_Eta_Matrix_m, only: Select_NZ_List
     use Get_Chi_Angles_m, only: Get_Chi_Angles
     use GLnp, only: GW, GX, NG, NGP1
     use Intrinsic, only: L_A, L_BOUNDARYPRESSURE, L_CLEAR, &
@@ -438,23 +440,6 @@ contains
                                   ! nz_d_delta_df
     integer :: Vert_Inds(max_f)   ! Height indices of fine path in H_Glgrid etc.
 
-    logical :: DO_GL(max_c)       ! GL indicator
-    logical :: T_der_path_flags(s_t*max_f) ! a flag that tells where an
-      ! absorption coefficient is needed for a temperature derivative.
-      ! Only useful when subsetting temperature derivatives.
-
-    ! 'Avoid zeros' indicators
-    logical :: DO_CALC_FZP(max_f, size(grids_f%values))
-    logical :: DO_CALC_HYD(max_f, sv_t_len)
-    logical :: DO_CALC_HYD_C(max_c, sv_t_len)  ! DO_CALC_HYD on coarse grid
-    logical :: DO_CALC_N(max_f, size(grids_n%values) ) ! on entire grid
-    logical :: DO_CALC_T(max_f, sv_t_len)
-    logical :: DO_CALC_T_C(max_c, sv_t_len)    ! DO_CALC_T on coarse grid
-    logical :: DO_CALC_T_F(max_f, sv_t_len)    ! DO_CALC_T on fine grid
-    logical :: DO_CALC_V(max_f, size(grids_v%values) ) ! on entire grid
-    logical :: DO_CALC_W(max_f, size(grids_w%values) ) ! on entire grid
-    logical :: DO_CALC_ZP(max_f, grids_f%p_len)
-
     logical, pointer :: DO_CALC_Tscat(:,:)    ! 'Avoid zeros' indicator
     logical, pointer :: DO_CALC_Salb(:,:)     ! 'Avoid zeros' indicator
     logical, pointer :: DO_CALC_cext(:,:)     ! 'Avoid zeros' indicator
@@ -604,6 +589,33 @@ contains
     real(r4) :: K_SPECT_DW(noUsedChannels,no_tan_hts,s_lw*size(grids_w%values))
     real(r4) :: K_TEMP(noUsedChannels,no_tan_hts,s_t*sv_t_len)
 
+    logical :: DO_GL(max_c)       ! GL indicator
+    logical :: T_der_path_flags(s_t*max_f) ! a flag that tells where an
+      ! absorption coefficient is needed for a temperature derivative.
+      ! Only useful when subsetting temperature derivatives.
+
+    ! 'Avoid zeros' indicators
+    logical :: DO_CALC_FZP(max_f, size(grids_f%values))
+    logical :: DO_CALC_HYD(max_f, sv_t_len)
+    logical :: DO_CALC_HYD_C(max_c, sv_t_len)  ! DO_CALC_HYD on coarse grid
+    logical :: DO_CALC_N(max_f, size(grids_n%values) ) ! on entire grid
+    logical :: DO_CALC_T(max_f, sv_t_len)
+    logical :: DO_CALC_T_C(max_c, sv_t_len)    ! DO_CALC_T on coarse grid
+    logical :: DO_CALC_T_F(max_f, sv_t_len)    ! DO_CALC_T on fine grid
+    logical :: DO_CALC_V(max_f, size(grids_v%values) ) ! on entire grid
+    logical :: DO_CALC_W(max_f, size(grids_w%values) ) ! on entire grid
+    logical :: DO_CALC_ZP(size(eta_zp,1),size(eta_zp,2))
+
+    integer :: NZ_ZP(size(eta_zp,1),size(eta_zp,2)) ! same shape as eta_zp
+    integer :: NNZ_ZP(size(eta_zp,2))               ! number of columns of eta_zp
+!     integer :: NZ_FZP(max_f,size(grids_f%values))   ! same shape as eta_fzp
+!     integer :: NNZ_FZP(size(grids_f%values))        ! number of columns of eta_fzp
+
+    integer :: NZ_ZXP_T(max_f,s_t*sv_t_len)         ! same shape as Eta_zxp_t
+    integer :: NNZ_ZXP_T(s_t*sv_t_len)              ! number of columns of Eta_zxp_t
+    integer :: NZ_ZXP_T_C(max_c,s_t*sv_t_len)       ! same shape as Eta_zxp_t_c
+    integer :: NNZ_ZXP_T_C(s_t*sv_t_len)            ! number of columns of Eta_zxp_t
+
     integer, pointer :: C_INDS(:)   ! Indices on coarse grid
     integer, pointer :: GL_INDS(:)  ! Index of GL points -- subset of f_inds
     integer, pointer :: LineCenter_IX(:) ! Where are line center offsets?
@@ -730,7 +742,7 @@ contains
 
     ! Set flags from command-line switches
     clean = index(switches, 'clean') /= 0
-    do_zmin = index(switches, 'dozm') /= 0 ! Do minimum zeta unless told otherwise
+    do_zmin = index(switches, 'dozm') /= 0 ! Do minimum zeta only if requested
     print_more_points = index(switches, 'ZMOR' ) /= 0
     do_more_points = index(switches, 'zmor') /= 0
     print_Mag = index(switches, 'mag') /= 0
@@ -745,12 +757,14 @@ contains
     ! them, they're undefined, i.e., junk that might be mistaken for
     ! associated.
 
-    nullify ( cext_path, do_calc_Cext, do_calc_Cext_zp, do_calc_Salb, &
-      & do_calc_Salb_zp, do_calc_tscat, do_calc_tscat_zp, eta_cext,   &
-      & eta_cext_zp, eta_salb, eta_salb_zp, eta_tscat, eta_tscat_zp,  &
-      & frequencies, inc_rad_path, k_atmos_frq, k_spect_dn_frq,       &
-      & k_spect_dv_frq, k_spect_dw_frq, k_temp_frq, RadV, salb_path,  &
+    nullify ( cext_path, eta_cext_zp, eta_salb_zp, eta_tscat_zp,       &
+      & frequencies, inc_rad_path, k_atmos_frq, k_spect_dn_frq,        &
+      & k_spect_dv_frq, k_spect_dw_frq, k_temp_frq, RadV, salb_path,   &
       & tscat_path, t_script_lbl, vmr )
+
+    nullify ( do_calc_Cext, do_calc_Cext_zp, do_calc_Salb, &
+      &       do_calc_Salb_zp, do_calc_tscat, do_calc_tscat_zp, &
+      &       eta_cext, eta_salb, eta_tscat )
 
     ! Nullify pointers that are used to control whether calculations get done
     nullify ( linecenter_ix, linewidth_ix, linewidth_tdep_ix )
@@ -762,6 +776,30 @@ contains
 
     d_delta_df = 0.0
     nnz_d_delta_df = 0
+
+    ! Put zeros into eta_zp so that comp_eta_docalc_no_frq doesn't do it in
+    ! every call.  Most of its time is spent doing this.  Instead, when
+    ! eta_zp is computed, the nonzeros (encoded by nz_zp and nnz_zp) are
+    ! first replaced by zeros.
+
+    eta_zp = 0.0
+    nnz_zp = 0
+
+    ! Put zeros into eta_fzp so that comp_sps_path_frq_nz doesn't do it in
+    ! every call.  Instead, when eta_fzp is computed, the nonzeros (encoded
+    ! by nz_fzp and nnz_fzp) are first replaced by zeros.
+
+!     eta_fzp = 0.0
+!     nnz_fzp = 0
+
+    ! Put zeros into eta_zxp_t so that metrics doesn't do it in every call. 
+    ! Instead, when eta_zp is computed, the nonzeros (encoded by nz_zp and
+    ! nnz_zp) are first replaced by zeros.  Metrics doesn't spend much time
+    ! doing this. We want this representation for dt_script_dt.
+
+    eta_zxp_t = 0.0
+    nnz_zxp_t = 0
+    do_calc_t = .false.
 
     call both_sidebands_setup
 
@@ -1001,9 +1039,13 @@ contains
             &  t_path(1:npf), dhdz_path(1:npf) )
           ! Compute refractive index on the path.
           if ( h2o_ind > 0 ) then
-            ! Compute eta_zp & do_calc_zp (Zeta & Phi only) for water
+            ! Compute eta_zp & do_calc_zp (Zeta & Phi only) for water.
+            ! It is important to send all of eta_zp, do_calc_zp, nz_zp and
+            ! nnz_zp so that nonzeros from previous invocations can be
+            ! cleared without violating array bounds.
             call comp_eta_docalc_no_frq ( Grids_f, z_path(1:npf), &
-              &  phi_path(1:npf), eta_zp(1:npf,:), do_calc_zp(1:npf,:), tan_pt=tan_pt_f )
+              &  phi_path(1:npf), eta_zp, do_calc_zp, tan_pt=tan_pt_f, &
+              &  nz_zp=nz_zp, nnz_zp=nnz_zp )
             call comp_1_sps_path_no_frq ( Grids_f, h2o_ind, eta_zp(1:npf,:), &
               & sps_path(1:npf,h2o_ind) )
             call refractive_index ( p_path(1:npf), t_path(1:npf), &
@@ -1033,11 +1075,13 @@ contains
             &  Z_BASIS = Grids_tmp%zet_basis, Z_REF=z_glgrid,              &
             &  DDHTDHTDTL0 = tan_d2h_dhdt, DHITDTLM = dh_dt_path(1:npf,:), &
             &  DHTDTL0 = tan_dh_dt, DO_CALC_HYD = do_calc_hyd(1:npf,:),    &
-            &  DO_CALC_T = do_calc_t(1:npf,:), ETA_ZXP = eta_zxp_t(1:npf,:) )
+            &  DO_CALC_T = do_calc_t, ETA_ZXP = eta_zxp_t,                 &
+            &  NZ_ZXP = nz_zxp_t, NNZ_ZXP = nnz_zxp_t )
           dh_dt_path_c(1:npc,:) = dh_dt_path(c_inds,:)
           do_calc_hyd_c(1:npc,:) = do_calc_hyd(c_inds,:)
           do_calc_t_c(1:npc,:) = do_calc_t(c_inds,:)
           eta_zxp_t_c(1:npc,:) = eta_zxp_t(c_inds,:)
+          call select_nz_list ( nz_zxp_t, nnz_zxp_t, c_inds, nz_zxp_t_c, nnz_zxp_t_c )
           t_der_path_flags(1:npf) = any(do_calc_t(1:npf,:),2)
         else
           call more_metrics ( tan_ind_f, tan_pt_f, Grids_tmp%phi_basis,    &
@@ -1054,18 +1098,29 @@ contains
 
         ! Compute the eta_zp & do_calc_zp (for Zeta & Phi only)
 
+        ! It is important to send all of eta_zp, do_calc_zp, nz_zp and
+        ! nnz_zp so that nonzeros from previous invocations can be
+        ! cleared without violating array bounds.
         call comp_eta_docalc_no_frq ( Grids_f, z_path(1:npf), &
-          &  phi_path(1:npf), eta_zp(1:npf,:), do_calc_zp(1:npf,:), tan_pt=tan_pt_f )
+          &  phi_path(1:npf), eta_zp, do_calc_zp, tan_pt=tan_pt_f, &
+          &  nz_zp=nz_zp, nnz_zp=nnz_zp )
 
         ! Compute sps_path with a FAKE frequency, mainly to get the
         ! WATER (H2O) contribution for refraction calculations, but also
         ! to compute sps_path for all those with no frequency component
 
       ! Frq = 0.0_r8
-        call comp_sps_path_frq ( Grids_f, firstSignal%lo, thisSideband, &
+        call comp_sps_path_frq ( Grids_f,           &
           & 0.0_r8, eta_zp(1:npf,:),                &
           & do_calc_zp(1:npf,:), sps_path(1:npf,:), &
           & do_calc_fzp(1:npf,:), eta_fzp(1:npf,:) )
+!         ! Send all of eta_zp so comp_sps_path_frq_nz doesn't get an array
+!         ! bounds error when it's clearing parts indexed by nz_zp.
+! I don't know why this doesn't work
+!         call comp_sps_path_frq_nz ( Grids_f,                         &
+!           & 0.0_r8, eta_zp, nz_zp, nnz_zp,                           &
+!           & do_calc_zp(1:npf,:), sps_path(1:npf,:),                  &
+!           & do_calc_fzp(1:npf,:), eta_fzp(1:npf,:), nz_fzp, nnz_fzp )
 
         if ( h2o_ind > 0 ) then
           ! Even if we did the refractive correction we need to do this,
@@ -1334,11 +1389,10 @@ contains
         if ( FwdModelConf%anyLBL(sx) ) then
           call frequency_loop ( alpha_path_c(:npc), beta_path_c(:npc,:), c_inds,  &
             & del_s(:npc), del_zeta(:npc),do_calc_fzp(:npf,:),                    &
-            & do_calc_zp(:npf,:), do_GL(:npc),                   &
-            & eta_zp(:npf,:), frequencies, h_path_c, incoptdepth(:npc),           &
-            & p_path(:npf), pfaFalse, ref_corr(:npc), sps_path(:npf,:),           &
-            & tau_lbl, t_path_c(:npc), t_script_lbl(:npc,:), tanh1_c(:npc),       &
-            & tt_path_c(:s_i*npc), w0_path_c(:s_i*npc), z_path(:npf) )
+            & do_calc_zp(:npf,:), do_GL(:npc), frequencies, h_path_c,             &
+            & incoptdepth(:npc), p_path(:npf), pfaFalse, ref_corr(:npc),          &
+            & sps_path(:npf,:), tau_lbl, t_path_c(:npc), t_script_lbl(:npc,:),    &
+            & tanh1_c(:npc), tt_path_c(:s_i*npc), w0_path_c(:s_i*npc), z_path(:npf) )
           if ( print_TauL ) then
             call output ( thisSideband, before='Sideband ' )
             call output ( ptg_i, before=' Pointing ' )
@@ -1359,11 +1413,10 @@ contains
           end if
           call frequency_loop ( alpha_path_c(:npc), beta_path_c(:npc,:), c_inds, &
             & del_s(:npc), del_zeta(:npc), do_calc_fzp(:npf,:),                  &
-            & do_calc_zp(:npf,:), do_GL(:npc),                  &
-            & eta_zp(:npf,:), channelCenters, h_path_c, incoptdepth(:npc),       &
-            & p_path(:npf), pfaTrue, ref_corr(:npc), sps_path(:npf,:),           &
-            & tau_pfa, t_path_c(:npc), t_script_pfa(:npc,:), tanh1_c(:npc),      &
-            & tt_path_c(:s_i*npc), w0_path_c(:s_i*npc), z_path(:npf) )
+            & do_calc_zp(:npf,:), do_GL(:npc), channelCenters, h_path_c,         &
+            & incoptdepth(:npc), p_path(:npf), pfaTrue, ref_corr(:npc),          &
+            & sps_path(:npf,:), tau_pfa, t_path_c(:npc), t_script_pfa(:npc,:),   &
+            & tanh1_c(:npc), tt_path_c(:s_i*npc), w0_path_c(:s_i*npc), z_path(:npf) )
           if ( print_TauP ) then
             call output ( thisSideband, before='Sideband ' )
             call output ( ptg_i, before=' Pointing ' )
@@ -2242,7 +2295,7 @@ contains
 
   ! .............................................  Frequency_Loop  .....
     subroutine Frequency_Loop ( Alpha_Path_c, Beta_Path_c, C_Inds, Del_S,    &
-      & Del_Zeta, Do_Calc_fzp, Do_Calc_zp, Do_GL, Eta_zp,           &
+      & Del_Zeta, Do_Calc_fzp, Do_Calc_zp, Do_GL,                            &
       & Frequencies, H_Path_C, IncOptDepth, P_Path, PFA, Ref_Corr, Sps_Path, &
       & Tau, T_Path_c, T_Script, Tanh1_c, TT_Path_c, W0_Path_c, Z_Path )
 
@@ -2271,7 +2324,6 @@ contains
       logical, intent(inout) :: Do_Calc_fzp(:,:) ! 'Avoid zeros' indicator
       logical, intent(in) :: Do_Calc_zp(:,:) ! 'Avoid zeros' indicator
       logical, intent(out) :: Do_GL(:)    ! Where to do GL correction
-      real(rp), intent(in) :: Eta_zp(:,:) ! path x (Eta_z x Eta_p)
       real(r8), intent(in) :: Frequencies(:)  ! The frequency grid
       real(rp), intent(in) :: H_Path_C(:) ! Heights on coarse path
       real(rp), intent(out) :: IncOptDepth(:)  ! Incremental optical depth
@@ -2327,8 +2379,17 @@ contains
         ! Set up path quantities --------------------------------------
 
         ! Compute the sps_path for this Frequency
-        call comp_sps_path_frq ( Grids_f, firstSignal%lo, thisSideband, &
-          & Frq, eta_zp, do_calc_zp, sps_path, do_calc_fzp, eta_fzp(:npf,:) )
+        call comp_sps_path_frq ( Grids_f, Frq, eta_zp(:npf,:), &
+          & do_calc_zp, sps_path,                              &
+          & do_calc_fzp, eta_fzp(:npf,:),                      &
+          & firstSignal%lo, thisSideband )
+!         ! Send all of eta_zp so comp_sps_path_frq_nz doesn't get an array
+!         ! bounds error when it's clearing parts indexed by nz_zp.
+! I don't know why this doesn't work
+!         call comp_sps_path_frq_nz ( Grids_f, Frq, eta_zp, nz_zp, nnz_zp, &
+!           & do_calc_zp, sps_path,                                        &
+!           & do_calc_fzp, eta_fzp(:npf,:), nz_fzp, nnz_fzp,               &
+!           & firstSignal%lo, thisSideband )
 
         if ( pfa ) then
           call get_beta_path_PFA ( frq, frq_i, z_path, c_inds, t_path_c,  &
@@ -2388,10 +2449,14 @@ contains
             &  do_calc_tscat_zp(1:npf,:), tan_pt=tan_pt_f )
 
         ! Frq=0.0
-          call comp_sps_path_frq ( Grids_tscat, firstSignal%lo, thisSideband, &
-            & 0.0_r8, eta_tscat_zp(1:npf,:),                               &
-            & do_calc_tscat_zp(1:npf,:), tscat_path(1:npf,:),              &
+          call comp_sps_path_frq ( Grids_tscat,                &
+            & 0.0_r8, eta_tscat_zp(1:npf,:),                   &
+            & do_calc_tscat_zp(1:npf,:), tscat_path(1:npf,:),  &
             & do_calc_tscat(1:npf,:), eta_tscat(1:npf,:) )
+
+! I don't know why this doesn't work
+!           call comp_sps_path_no_frq ( Grids_tscat, eta_tscat_zp(1:npf,:), &
+!             & tscat_path(1:npf,:) )
 
           ! project Tscat onto LOS
           call interp_tscat ( tscat_path(1:npf,:), Scat_ang(:), &
@@ -2416,14 +2481,14 @@ contains
 
             call allocate_test (do_calc_salb, npf, size(grids_salb%values),'do_calc_salb',moduleName)
             call allocate_test (do_calc_salb_zp, npf, grids_salb%p_len,               &
-                               & 'do_calc_salb_zp', moduleName )
+                              & 'do_calc_salb_zp', moduleName )
             call allocate_test (eta_salb,    npf, size(grids_salb%values), 'eta_salb', moduleName)
             call allocate_test (eta_salb_zp, npf, grids_salb%p_len, 'eta_salb_zp', moduleName)
             call allocate_test ( salb_path,  npf, 1, 'salb_path', moduleName )
 
             call allocate_test (do_calc_cext,npf,size(grids_cext%values),'do_calc_cext',moduleName)
             call allocate_test (do_calc_cext_zp, npf, grids_cext%p_len,               &
-                               & 'do_calc_cext_zp', moduleName )
+                              & 'do_calc_cext_zp', moduleName )
             call allocate_test (eta_cext,    npf, size(grids_cext%values), 'eta_cext', moduleName)
             call allocate_test (eta_cext_zp, npf, grids_cext%p_len,  'eta_cext_zp', moduleName)
             call allocate_test (cext_path,   npf, 1, 'cext_path', moduleName)
@@ -2433,20 +2498,28 @@ contains
               &  do_calc_salb_zp(1:npf,:), tan_pt=tan_pt_f )
 
           ! Frq=0.0
-            call comp_sps_path_frq ( Grids_salb, firstSignal%lo, thisSideband, &
-              & 0.0_r8, eta_salb_zp(1:npf,:),                                  &
-              & do_calc_salb_zp(1:npf,:), salb_path(1:npf,:),                  &
+            call comp_sps_path_frq ( Grids_salb,               &
+              & 0.0_r8, eta_salb_zp(1:npf,:),                  &
+              & do_calc_salb_zp(1:npf,:), salb_path(1:npf,:),  &
               & do_calc_salb(1:npf,:), eta_salb(1:npf,:) )
+
+! I don't know why this doesn't work
+!             call comp_sps_path_no_frq ( Grids_salb, eta_salb_zp(1:npf,:), &
+!               & salb_path(1:npf,:) )
 
             call comp_eta_docalc_no_frq ( Grids_cext, z_path(1:npf), &
               &  phi_path(1:npf), eta_cext_zp(1:npf,:),              &
               &  do_calc_cext_zp(1:npf,:), tan_pt=tan_pt_f )
 
           ! Frq=0.0
-            call comp_sps_path_frq ( Grids_cext, firstSignal%lo, thisSideband, &
-              & 0.0_r8, eta_cext_zp(1:npf,:),                                  &
-              & do_calc_cext_zp(1:npf,:), cext_path(1:npf,:),                  &
+            call comp_sps_path_frq ( Grids_cext,               &
+              & 0.0_r8, eta_cext_zp(1:npf,:),                  &
+              & do_calc_cext_zp(1:npf,:), cext_path(1:npf,:),  &
               & do_calc_cext(1:npf,:), eta_cext(1:npf,:) )
+
+! I don't know why this doesn't work
+!             call comp_sps_path_no_frq ( Grids_cext,  eta_cext_zp(1:npf,:), &
+!               & cext_path(1:npf,:) )
 
             call convert_grid ( salb_path(1:npf,:), cext_path(1:npf,:),  & 
                               & tt_path(1:npf,:), c_inds,                & 
@@ -2474,8 +2547,8 @@ contains
           call deallocate_test ( eta_salb_zp,      'eta_salb_zp',      moduleName )
           call deallocate_test ( salb_path,        'salb_path',        moduleName )
 
-          call deallocate_test ( do_calc_cext,     'do_calc_salb',     moduleName )
-          call deallocate_test ( do_calc_cext_zp,  'do_calc_salb_zp',  moduleName )
+          call deallocate_test ( do_calc_cext,     'do_calc_cext',     moduleName )
+          call deallocate_test ( do_calc_cext_zp,  'do_calc_cext_zp',  moduleName )
           call deallocate_test ( eta_cext,         'eta_cext',         moduleName )
           call deallocate_test ( eta_cext_zp,      'eta_cext_zp',      moduleName )
           call deallocate_test ( cext_path,        'cext_path',        moduleName )
@@ -2754,7 +2827,7 @@ contains
 
           ! get d Delta B / d T * d T / eta
           call dt_script_dt ( t_path_c, B(:npc), eta_zxp_t_c(1:npc,:), &
-                            & frq, d_t_scr_dt(1:npc,:) )
+                            & nz_zxp_t_c, nnz_zxp_t_c, frq, d_t_scr_dt(1:npc,:) )
 
           dh_dt_path_f(:ngl,:) = dh_dt_path(gl_inds,:)
           do_calc_t_f(:ngl,:) = do_calc_t(gl_inds,:)
@@ -3152,6 +3225,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.281  2007/06/08 22:05:33  vsnyder
+! Faster d_delta_df = 0, metrics stuff
+!
 ! Revision 2.280  2007/02/01 02:53:47  vsnyder
 ! Stuff for min zeta and more intersections, plus cannonball polishing
 !
