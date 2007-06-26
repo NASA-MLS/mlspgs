@@ -28,10 +28,11 @@ contains
 ! ---------------------------------------  Comp_Eta_Docalc_No_Frq  -----
 
   subroutine Comp_Eta_Docalc_No_Frq ( Grids_x, path_zeta, path_phi, &
-                                  &   eta_zp, do_calc_zp, sps, tan_pt )
+                                  &   eta_zp, do_calc_zp, sps, tan_pt, &
+                                  &   nz_zp, nnz_zp )
 
     use MLSCommon, only: RP, IP
-    use Get_Eta_Matrix_m, only: Get_Eta_Sparse
+    use Get_Eta_Matrix_m, only: Get_Eta_Sparse, Multiply_Eta_Column_Sparse
     use Load_Sps_Data_m, only: Grids_T
 
 ! Input:
@@ -45,35 +46,53 @@ contains
     integer, intent(in), optional :: SPS ! Only do this species if present
     integer, intent(in), optional :: Tan_Pt ! Tangent point; path_zeta is sorted
 !                           before and after tangent point
-! output:
+
+! Inout:
+
+    logical, intent(inout), optional :: do_calc_zp(:,:) ! Indicates whether there
+!                           is a contribution for this state vector element.
+!                           This is the same length as values.
+    integer, intent(inout), optional :: NZ_ZP(:,:) ! Nonzeros in eta_zp
+    integer, intent(inout), optional :: NNZ_ZP(:)  ! Number of nonzeros in eta_zp
+
+! Output:
 
     real(rp), intent(out) :: eta_zp(:,:) ! Eta_z * Eta_phi for each state
 !                           vector element. This is the same length as values.
-    logical, intent(out), optional :: do_calc_zp(:,:) ! Indicates whether there
-!                           is a contribution for this state vector element.
-!                           This is the same length as values.
 ! Notes:
 ! units of z_basis must be same as zeta_path (usually -log(P)) and units of
 ! phi_basis must be the same as phi_path (either radians or degrees).
 
 ! Internal declarations:
 
-    integer(ip) :: N_p, N_z
+    integer(ip) :: N_p, N_z, N_v
     integer(ip) :: Sps_1, Sps_n, Sps_i, Sv_z, Sv_p
-    integer(ip) :: P_inda, Z_inda, V_inda, P_indb, Z_indb
+    integer(ip) :: My_Tan, P_inda, V_Inda, V_Indb, Z_inda, P_indb, Z_indb
 
-    real(rp) :: Eta_p(1:size(path_zeta),1:Grids_x%l_p(ubound(Grids_x%l_p,1)))
-    real(rp) :: Eta_z(1:size(path_zeta),1:Grids_x%l_z(ubound(Grids_x%l_z,1)))
-    logical :: Not_zero_p(1:size(path_zeta),1:Grids_x%l_p(ubound(Grids_x%l_p,1)))
-    logical :: Not_zero_z(1:size(path_zeta),1:Grids_x%l_z(ubound(Grids_x%l_z,1)))
+    real(rp) :: Eta_p(1:size(path_zeta), & ! == size(path_zeta)
+      & maxval(Grids_x%l_p(1:ubound(Grids_x%l_p,1))-Grids_x%l_p(0:ubound(Grids_x%l_p,1)-1)))
+    real(rp) :: Eta_z(1:size(path_zeta), & ! == size(path_zeta)
+      & maxval(Grids_x%l_z(1:ubound(Grids_x%l_z,1))-Grids_x%l_z(0:ubound(Grids_x%l_z,1)-1)))
+    integer :: NZ_P(1:size(Eta_p,1),1:size(Eta_p,2))
+    integer :: NZ_Z(1:size(Eta_z,1),1:size(Eta_z,2))
+    integer :: NNZ_P(1:size(Eta_p,2))
+    integer :: NNZ_Z(1:size(Eta_z,2))
+    integer :: MY_NZ_ZP(size(eta_zp,1),size(eta_p,2)*size(eta_z,2))
+    integer :: MY_NNZ_ZP(size(eta_p,2)*size(eta_z,2))
 
 ! Begin executable code:
 
-    eta_zp = 0.0
+    if ( .not. present(nz_zp) ) then
+      eta_zp = 0.0
+      if ( present(do_calc_zp) ) do_calc_zp = .false.
+      my_nnz_zp = 0
+    end if
 
-    p_inda = 0
-    v_inda = 0
-    z_inda = 0
+    nnz_z = 0
+    nnz_p = 0
+
+    my_tan = size(path_zeta) / 2
+    if ( present(tan_pt) ) my_tan = tan_pt
 
     sps_1 = 1
     sps_n = ubound(Grids_x%l_z,1)
@@ -82,61 +101,59 @@ contains
       sps_n = sps
     end if
 
-    do sps_i = sps_1, sps_n ! Number of molecules
+    p_indb = Grids_x%l_p(sps_1-1)
+    z_indb = Grids_x%l_z(sps_1-1)
+    v_indb = 0
+
+    do sps_i = sps_1, sps_n
+
+      p_inda = p_indb
+      z_inda = z_indb
+      v_inda = v_indb
 
       p_indb = Grids_x%l_p(sps_i)
       z_indb = Grids_x%l_z(sps_i)
 
       n_z = z_indb - z_inda
       n_p = p_indb - p_inda
+      n_v = n_z * n_p
 
-! There are two ways to do this (slow and easy vs quick but difficult)
-! For ease let's do the slow and easy (and certainly more reliable)
+      v_indb = v_inda + n_v
 
-! Compute etas
-
-      if ( present(do_calc_zp) ) then
-        if ( present(tan_pt) ) then
-          call get_eta_sparse ( Grids_x%zet_basis(z_inda+1:z_indb), &
-                           &    path_zeta(tan_pt:1:-1), eta_z(tan_pt:1:-1,:), &
-                           &    not_zero_z(tan_pt:1:-1,:), sorted=.true. )
-          call get_eta_sparse ( Grids_x%zet_basis(z_inda+1:z_indb), &
-                           &    path_zeta(tan_pt+1:), eta_z(tan_pt+1:,:), &
-                           &    not_zero_z(tan_pt+1:,:), sorted=.true. )
+      call get_eta_sparse ( Grids_x%zet_basis(z_inda+1:z_indb), path_zeta, &
+      &    eta_z, my_tan, 1, nz_z, nnz_z, .false. )
+      call get_eta_sparse ( Grids_x%zet_basis(z_inda+1:z_indb), path_zeta, &
+      &    eta_z, my_tan+1, size(path_zeta), nz_z, nnz_z, .true. )
+      call get_eta_sparse ( Grids_x%phi_basis(p_inda+1:p_indb), path_phi,  &
+      &    eta_p, 1, size(path_phi), nz_p, nnz_p, .false. )
+      if ( present(nz_zp) ) then
+        if ( present(do_calc_zp) ) then
+          call multiply_eta_column_sparse ( &
+            & eta_z(:,:n_z), nz_z(:,:n_z), nnz_z(:n_z), &
+            & eta_p(:,:n_p), nz_p(:,:n_p), nnz_p(:n_p), &
+            & eta_zp(:,v_inda+1:v_indb), nz_zp(:,v_inda+1:v_indb), &
+            & nnz_zp(v_inda+1:v_indb), do_calc_zp(:,v_inda+1:v_indb) )
         else
-          call get_eta_sparse ( Grids_x%zet_basis(z_inda+1:z_indb), path_zeta, &
-                           &    eta_z, not_zero_z )
+          call multiply_eta_column_sparse ( &
+            & eta_z(:,:n_z), nz_z(:,:n_z), nnz_z(:n_z), &
+            & eta_p(:,:n_p), nz_p(:,:n_p), nnz_p(:n_p), &
+            & eta_zp(:,v_inda+1:v_indb), nz_zp(:,v_inda+1:v_indb), &
+            & nnz_zp(v_inda+1:v_indb) )
         end if
-        call get_eta_sparse ( Grids_x%phi_basis(p_inda+1:p_indb), path_phi,  &
-                         &    eta_p, not_zero_p, sorted=.true. )
       else
-        if ( present(tan_pt) ) then
-          call get_eta_sparse ( Grids_x%zet_basis(z_inda+1:z_indb), &
-                           &    path_zeta(tan_pt:1:-1), eta_z(tan_pt:1:-1,:), &
-                           &    sorted=.true. )
-          call get_eta_sparse ( Grids_x%zet_basis(z_inda+1:z_indb), &
-                           &    path_zeta(tan_pt+1:), eta_z(tan_pt+1:,:), &
-                           &    sorted=.true. )
+        if ( present(do_calc_zp) ) then
+          call multiply_eta_column_sparse ( &
+            & eta_z(:,:n_z), nz_z(:,:n_z), nnz_z(:n_z), &
+            & eta_p(:,:n_p), nz_p(:,:n_p), nnz_p(:n_p), &
+            & eta_zp(:,v_inda+1:v_indb), my_nz_zp(:,:n_v), my_nnz_zp(:n_v), &
+            & do_calc_zp(:,v_inda+1:v_indb) )
         else
-          call get_eta_sparse ( Grids_x%zet_basis(z_inda+1:z_indb), path_zeta, &
-                           &    eta_z )
+          call multiply_eta_column_sparse ( &
+            & eta_z(:,:n_z), nz_z(:,:n_z), nnz_z(:n_z), &
+            & eta_p(:,:n_p), nz_p(:,:n_p), nnz_p(:n_p), &
+            & eta_zp(:,v_inda+1:v_indb), my_nz_zp(:,:n_v), my_nnz_zp(:n_v) )
         end if
-        call get_eta_sparse ( Grids_x%phi_basis(p_inda+1:p_indb), path_phi,  &
-                         &    eta_p, sorted=.true. )
       end if
-
-      do sv_p = 0, n_p - 1
-        do sv_z = 0, n_z - 1
-          v_inda = v_inda + 1
-          if ( present(do_calc_zp) ) &
-          & do_calc_zp(:,v_inda) = not_zero_z(:,sv_z+1) .and. not_zero_p(:,sv_p+1)
-          ! removed "where ( do_calc_zp(:,v_inda) )" because a multiply is cheaper
-          eta_zp(:,v_inda) = eta_z(:,sv_z+1) * eta_p(:,sv_p+1)
-        end do
-      end do
-
-      z_inda = z_indb
-      p_inda = p_indb
 
     end do
 
@@ -154,6 +171,9 @@ contains
 end module Comp_Eta_Docalc_No_Frq_m
 
 ! $Log$
+! Revision 2.10  2007/06/26 00:37:01  vsnyder
+! Use column-sparse eta
+!
 ! Revision 2.9  2007/06/06 01:12:17  vsnyder
 ! Add tangent point optional argument
 !
