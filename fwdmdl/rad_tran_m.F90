@@ -331,8 +331,8 @@ contains
           cycle
         end if
 
-        call get_do_calc_indexed ( do_calc_f(:,sv_i), indices_c, gl_inds, &
-          & do_gl, do_calc, size(do_gl) )
+        call get_do_calc_indexed ( size(do_gl), do_calc_f(:,sv_i), indices_c, &
+          & gl_inds, do_gl, do_calc )
 
 ! find where the non zeros are along the path
 
@@ -851,8 +851,8 @@ contains
 
         d_delta_dx = 0.0_rp
 
-        call get_do_calc_indexed ( do_calc_f(:,sv_i), indices_c, gl_inds, &
-          & do_gl, do_calc, size(do_gl) )
+        call get_do_calc_indexed ( size(do_gl), do_calc_f(:,sv_i), indices_c, &
+          & gl_inds, do_gl, do_calc )
 
 ! find where the non zeros are along the path
 
@@ -959,7 +959,7 @@ contains
 ! =====     Private Procedures     =====================================
 
   ! ----------------------------------------  Get_Do_Calc_Indexed  -----
-  subroutine Get_Do_Calc_Indexed ( Do_Calc_all, C_Inds, F_Inds, Do_GL, Do_Calc, N )
+  subroutine Get_Do_Calc_Indexed ( N, Do_Calc_all, C_Inds, F_Inds, Do_GL, Do_Calc )
 
   ! Set Do_Calc if Do_Calc_All(c_inds) or Do_GL and any of the corresponding
   ! Do_Calc_All(f_inds) flags are set.
@@ -998,9 +998,9 @@ contains
 !     logical :: T_calc(size(f_inds)/ng)
 
 !     do_calc = do_calc_all(c_inds)
-    forall ( i = 1: n ) do_calc(i) = do_calc_all(c_inds(i))
     i = 1 - Ng
     do p_i = 1, n
+      do_calc(p_i) = do_calc_all(c_inds(p_i))
       if ( do_gl(p_i) ) then
         i = i + Ng
         k = f_inds(i)
@@ -1095,6 +1095,9 @@ contains
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.2  2007/06/26 00:40:01  vsnyder
+! Minor improvement in Get_Do_Calc_Indexed
+!
 ! Revision 2.1  2007/06/08 22:05:13  vsnyder
 ! Replacing rad_tran_m.f90 by rad_tran_m.F90
 !
