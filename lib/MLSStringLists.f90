@@ -190,7 +190,7 @@ module MLSStringLists               ! Module to treat string lists
 
   interface ExpandStringRange
     module procedure ExpandStringRange_str, ExpandStringRange_ints, &
-      & ExpandStringRange_log
+      & ExpandStringRange_log, ExpandStringRange_real
   end interface
 
   interface PutHashElement
@@ -607,14 +607,46 @@ contains
     if ( present(highfit) ) highfit = hfit
   end subroutine ExpandStringRange_log
 
+  ! ----------------------------------------  ExpandStringRange_real  -----
+  subroutine ExpandStringRange_real (instr, reals, length)
+    ! Takes a range and returns an array of reals
+    ! E.g., given '1,2.5-3.5+0.5,7' returns (/1.0,2.5,3.0,3.5,7.0/)
+    !--------Argument--------!
+    character (len=*), intent(in) :: instr
+    real, dimension(:), intent(out) :: reals
+    integer, optional, intent(out) :: length  ! number of reals returned
+    ! Internal variables
+    integer :: elem
+    integer :: ErrTyp
+    integer :: nelem
+    character(len=MAXSTRLISTLENGTH) :: expandedstr
+    character(len=16) :: iChar
+    logical, parameter :: countEmpty=.true.
+    ! Executable
+    reals = -999.99
+    if ( present(length) ) length = 0
+    if ( min(len_trim(instr), size(reals)) < 1 ) return
+    call ExpandStringRange_str (instr, expandedstr)
+    nelem = NumStringElements(trim(expandedstr), countEmpty)
+    if ( nelem < 1 ) return
+    do elem = 1, min(nelem, size(reals))
+      call GetStringElement (trim(expandedstr), iChar, elem, countEmpty)
+      read(iChar, *, iostat=ErrTyp) reals(elem)
+    enddo
+    if ( present(length) ) length = min(nelem, size(reals))
+  end subroutine ExpandStringRange_real
+
   ! --------------------------------------------------  ExpandStringRange_str  -----
   subroutine ExpandStringRange_str (instr, outstr)
     ! Takes a string list and expands any ranges found within:
     ! Ranges are marked by patterns
-    ! (simple) 'n-m' integers from n to m inclusive, where m > n
-    ! (stride) 'n-m+s' integers from n to m with stride s, where s > 0
+    ! (1a--simple) 'n-m' integers from n to m inclusive, where m > n
+    ! (1b--stride) 'n-m+s' integers from n to m with stride s, where s > 0
+    ! (2a--simple) 'n-m' reals from n to m inclusive, where m > n
+    ! (2b--stride) 'n-m+s' reals from n to m with stride s, where s > 0
     ! Examples:
     ! '1-10' becomes '1,2,3,4,5,6,7,8,9,10'
+    ! '1-5+0.5' becomes '1,1.5,2,2.5,3,3.5,4,4.5,5'
     ! '2-21+2' bcecomes '2,4,6,8,10,12,14,16,18,20' (missing '21')
 
     ! Errors and limitations:
@@ -625,45 +657,69 @@ contains
     ! Although countEmpty set to .true. below, actual behavior
     ! ignores blank elements; e.g. 
     ! '0,1,,2,,4-6,,' becomes '0,1,2,4,5,6'
+    ! '1.e-3' type notation confuses the range finder, so we will
+    ! go through and replace 
+    ! 'e-' -> 'em'
+    ! 'e+' -> 'ep'
     ! Args
     character (len=*), intent(in) :: instr
     character (len=*), intent(inout) :: outstr
     ! Internal variables
+    character (len=len(outstr)) :: str
     character (len=len(outstr)) :: tempstr
     integer :: dashpos
     integer :: elem
+    character(len=*), parameter :: em     = 'em'
+    character(len=*), parameter :: eminus = 'e-'
+    character(len=*), parameter :: ep     = 'ep'
+    character(len=*), parameter :: eplus  = 'e+'
     integer :: ErrTyp
-    integer :: m
+    integer :: m                    ! if substring is of form 'n-m'
     character (len=16) :: mChar
-    integer :: n
+    integer :: n                    ! substring is '..,n[-..],'
     character (len=16) :: nChar
     integer :: nelem
     integer :: pluspos
-    integer :: s
+    integer :: s                    ! if substring is of form 'n-m+s'
     character (len=16) :: sChar
     integer :: t
     character (len=16) :: tChar
+    ! These are the real counterparts of n, m s
+    real :: rm, rn, rs
+    integer :: ns
     logical, parameter :: countEmpty=.true.
     ! Executable
     outstr = instr
     nelem = NumStringElements(instr, countEmpty)
-    dashpos = index(instr, '-')
+    ! Try to deal with '1.e-(+)..' problem
+    str = lowercase(instr)
+    call ReplaceSubString( str, tempstr, eminus, em, which='all' )
+    call ReplaceSubString( tempstr, str, eminus, em, which='all' )
+    dashpos = index(str, '-')
     if ( nelem < 1 .or. dashpos < 1 ) return
     outstr = ' '
     do elem = 1, nelem
-      call GetStringElement (instr, tempstr, elem, countEmpty)
+      call GetStringElement (str, tempstr, elem, countEmpty)
       dashpos = index(trim(tempstr), '-')
-      if ( dashpos > 0 ) then
+      if ( dashpos < 1 ) then
+        ! Must reverse any '1.e-(+)' substitutions we might have made
+        call ReplaceSubString( tempstr, nChar, ep, eplus, which='first' )
+        call ReplaceSubString( nChar, tempstr, em, eminus, which='first' )
+      else
+        ! The range operator '-' is invoked
         n = -999
         m = -999
         s = 1
         call GetStringElement (trim(tempstr), nChar, 1, countEmpty, &
           & inseparator='-')
         pluspos = index(trim(tempstr), '+')
+        ! print *, 'pluspos: ', pluspos
         if ( pluspos > 0 ) then
           call ExtractSubString (trim(tempstr), mChar, '-', '+')
+          ! print *, 'mChar: ', mChar
           call GetStringElement (trim(tempstr), sChar, 2, countEmpty, &
             & inseparator='+')
+          ! print *, 'sChar: ', sChar
           ! non-simple pattern is 'n-m+s'
         else
           ! simple pattern is 'n-m'
@@ -671,17 +727,41 @@ contains
             & inseparator='-')
           sChar = ''
         endif
-        read(nChar, *, iostat=ErrTyp) n
-        if ( ErrTyp == 0 ) read(mChar, *, iostat=ErrTyp) m
-        if ( ErrTyp == 0 .and. sChar /= '') read(sChar, *, iostat=ErrTyp) s
         ! print *, 'nChar: ', trim(nChar)
         ! print *, 'mChar: ', trim(mChar)
         ! print *, 'sChar: ', trim(sChar)
-        ! print *, 'n, m, s: ', n, m, s
-        tempstr = ''
-        if ( m >= n ) then
-          do t=n, m, s
-            write(tChar, '(i16)') t
+        if ( index(tempstr, '.') < 1 ) then
+          ! print *, 'Case (1a) or (1b)'
+          read(nChar, *, iostat=ErrTyp) n
+          if ( ErrTyp == 0 ) read(mChar, *, iostat=ErrTyp) m
+          if ( ErrTyp == 0 .and. sChar /= '') read(sChar, *, iostat=ErrTyp) s
+          ! print *, 'n, m, s: ', n, m, s
+          tempstr = ''
+          if ( m >= n ) then
+            do t=n, m, s
+              write(tChar, '(i16)') t
+              ! print *, 'tChar: ', trim(tChar)
+              tempstr = catLists(trim(tempstr), adjustl(tChar))
+            enddo
+          endif
+        else
+          ! print *, 'Case (2a) or (2b)'
+          ! Must reverse any '1.e-(+)' substitutions we might have made
+          call ReplaceSubString( nChar, tempstr, em, eminus, which='first' )
+          call ReplaceSubString( tempstr, nChar, ep, eplus, which='first' )
+          read(nChar, *, iostat=ErrTyp) rn
+          call ReplaceSubString( mChar, tempstr, em, eminus, which='first' )
+          call ReplaceSubString( tempstr, mChar, ep, eplus, which='first' )
+          if ( ErrTyp == 0 ) read(mChar, *, iostat=ErrTyp) rm
+          rs = 1.0
+          call ReplaceSubString( sChar, tempstr, em, eminus, which='first' )
+          call ReplaceSubString( tempstr, sChar, ep, eplus, which='first' )
+          if ( ErrTyp == 0 .and. sChar /= '') read(sChar, *, iostat=ErrTyp) rs
+          ! print *, 'n, m, s: ', rn, rm, rs
+          ns = (rm - rn) / rs + 1.1 ! To deal with roundoff
+          tempstr = ''
+          do s=1, ns
+            write(tChar, '(g10.3)') rn + (s-1)*rs
             ! print *, 'tChar: ', trim(tChar)
             tempstr = catLists(trim(tempstr), adjustl(tChar))
           enddo
@@ -736,8 +816,8 @@ contains
     character (len=7) :: my_how
     character(len=1) :: separator
     character(len=*), parameter :: separators =',.$%#{}()'
-    character (len=max(len(str), len(outstr))) :: tmpstr
-    character (len=max(len(str), len(outstr))) :: tmpstr2
+    character (len=max(len(instr), len(outstr))) :: tmpstr
+    character (len=max(len(instr), len(outstr))) :: tmpstr2
     logical :: my_no_trim, trimming
     !----------Executable part----------!
     my_how = 'first'
@@ -2868,6 +2948,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.28  2007/06/26 00:19:21  pwagner
+! Workaround another Intel bug; may expand string range into reals
+!
 ! Revision 2.27  2007/06/21 00:49:52  vsnyder
 ! Remove tabs, which are not part of the Fortran standard
 !
