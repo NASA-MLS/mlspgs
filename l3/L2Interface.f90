@@ -656,7 +656,7 @@ CONTAINS
    
    ! Variables
       
-   CHARACTER (LEN=8000) :: list, templist
+   CHARACTER (LEN=12000) :: list, templist
    CHARACTER (LEN=480) :: msr
    CHARACTER (LEN=FileNameLen) :: prodFiles(numFiles)
    CHARACTER (LEN=GridNameLen) :: swath
@@ -674,7 +674,7 @@ CONTAINS
          CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
          !CYCLE
    ENDIF
- 
+
    DO i = 1, numFiles
       list = templist 
       DO j = 1, ns
@@ -686,6 +686,7 @@ CONTAINS
          ELSE
             swath = list(:indx-1)
             list  = list(indx+1:)
+
          ENDIF
             
          IF ( TRIM(swath) == TRIM(product) ) THEN
@@ -743,6 +744,9 @@ END MODULE L2Interface
 !=====================
 
 !# $Log$
+!# Revision 1.22  2006/05/31 21:05:35  cvuu
+!# Check missing dates that are not in the PCF; Fix orbit number and orbit period for L3DZ
+!#
 !# Revision 1.21  2006/05/24 19:14:30  cvuu
 !# Fix the deallocate problem
 !#
