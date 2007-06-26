@@ -26,7 +26,8 @@ contains
 ! (The 'n' zeta coeff. and the 'p' phi coefficient)
 
   ! -----------------------------------------------  DT_SCRIPT_DT  -----
-  subroutine DT_SCRIPT_DT ( T_PATH, T_SCRIPT, ETA_ZXP, NU, DT_SCR_DT )
+  subroutine DT_SCRIPT_DT ( T_PATH, T_SCRIPT, ETA_ZXP, NZ_ZXP, NNZ_ZXP, &
+    &                       NU, DT_SCR_DT )
 
 !{ \parskip 5pt
 !  Given $T$, $\nu$ and
@@ -63,7 +64,8 @@ contains
     real(rp), intent(in) :: t_path(:)     ! path temperatures K
     real(rp), intent(in) :: t_script(:)   ! B, called "T script" in many notes
     real(rp), intent(in) :: eta_zxp(:,:)  ! path eta functions
-!    logical, intent(in) :: not_zero(:,:) ! where eta is not zero
+    integer, intent(in) :: nz_zxp(:,:)    ! Where eta_zxp is not zero
+    integer, intent(in) :: nnz_zxp(:)     ! Numbers of rows in nz_zxp
     real(r8) :: nu                        ! calculation frequency (MHz)
 
 ! output
@@ -72,27 +74,47 @@ contains
 !                                           derivative
 ! internals
 
-    integer(ip) :: n_path, n_sv, sv_i
+    integer(ip) :: j, n_path, n_sv, p_i, sv_i
 
     real(rp) :: dstdt(1:size(t_path))     ! d "script T" / dT
-    real(rp) :: a, b
+    real(rp) :: dT_x_eta(1:size(t_path),1:size(eta_zxp,2))
 
 ! Do this inefficiently for now because it is quick and easy
 
     n_path = size(t_path)
     n_sv = size(eta_zxp,dim=2)
 
-!   dstdt = 1.0_rp / cosh1(h_o_k * nu / t_path) !{ \frac{a^2}{2 ( \cosh a - 1 )}
-    dstdt = t_script * ( h_o_k * nu + t_script ) / t_path**2
+!   dstdt = 0.5_rp / cosh1(h_o_k * nu / t_path) !{ \frac{a^2}{2 ( \cosh a - 1 )}
+    dstdt = 0.5 * t_script * ( h_o_k * nu + t_script ) / t_path**2
 
-! This part Zvi will hate
+    ! Make sure the elements of dT_x_eta that we use have defined values
+    dT_x_eta(1:2,:) = 0.0
+    dT_x_eta(n_path-1:n_path,:) = 0.0
+    ! Fill other nonzero elements of dT_x_eta
+    do sv_i = 1, n_sv
+      dT_x_eta(nz_zxp(:nnz_zxp(sv_i),sv_i),sv_i) = &
+        & dstdt(nz_zxp(:nnz_zxp(sv_i),sv_i)) * eta_zxp(nz_zxp(:nnz_zxp(sv_i),sv_i),sv_i)
+    end do
 
     do sv_i = 1 , n_sv
-      a = -dstdt(1) * eta_zxp(1,sv_i)
-      b = -dstdt(n_path) * eta_zxp(n_path,sv_i)
-      dt_scr_dt(:,sv_i) = 0.5_rp * (  &
-          &     eoshift(dstdt * eta_zxp(:,sv_i), 1, b) -   &
-          &     eoshift(dstdt * eta_zxp(:,sv_i),-1, a) )
+      dt_scr_dt(1,sv_i) = dT_x_eta(1,sv_i) + dT_x_eta(2,sv_i)
+      dt_scr_dt(n_path,sv_i) = -dT_x_eta(n_path-1,sv_i) - dT_x_eta(n_path,sv_i)
+! This is what would be happening if we didn't pay attention to the nonzeros:
+!     dt_scr_dt(2:n_path-1,sv_i) = dT_x_eta(3:n_path,sv_i) - &
+!         &                        dT_x_eta(1:n_path-2,sv_i)
+! But we pay attention to the nonzeros to improve performance.
+! If we kept track of the nonzeros in dt_scr_dt, we wouldn't neet the next line.
+      dt_scr_dt(2:n_path-1,sv_i) = 0.0
+      ! Now fill the nonzeros in column sv_i
+      do j = 1, nnz_zxp(sv_i)
+        p_i = nz_zxp(j,sv_i)
+        if ( p_i > 2 ) dt_scr_dt(p_i-1,sv_i) = dT_x_eta(p_i,sv_i)
+      end do
+      do j = 1, nnz_zxp(sv_i)
+        p_i = nz_zxp(j,sv_i)
+        if ( p_i >= n_path-1 ) exit
+        dt_scr_dt(p_i+1,sv_i) = dt_scr_dt(p_i+1,sv_i) - dT_x_eta(p_i,sv_i)
+      end do
     end do
 
   end subroutine DT_SCRIPT_DT
@@ -109,6 +131,9 @@ contains
 
 end module D_T_SCRIPT_DTNP_M
 ! $Log$
+! Revision 2.5  2005/11/01 23:02:21  vsnyder
+! PFA Derivatives
+!
 ! Revision 2.4  2005/06/22 18:08:18  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
