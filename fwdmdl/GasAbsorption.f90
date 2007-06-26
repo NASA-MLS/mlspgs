@@ -59,7 +59,7 @@ contains
       REAL(r8) :: VMR_O2                      ! O2 VOLUME MIXING RATIO
       REAL(r8) :: B                           ! BETA (1/m/ppv)
       REAL(r8) :: RH                          ! Relative Humidity if values > 1
-					      ! or H2O vmr if values < 1
+                                              ! or H2O vmr if values < 1
       REAL(r8) :: ABSC                        ! ABSORPTION COEFFICIENT (1/m)
                                               ! 1-O2
                                               ! 2-H2O
@@ -87,7 +87,7 @@ contains
 
 !------------------------------------------------------------------------
 
-      IF(RH .LT. 1._r8) THEN	       ! RH IS WATER VAPOR MIXING RATIO
+      IF(RH .LT. 1._r8) THEN           ! RH IS WATER VAPOR MIXING RATIO
 
          VMR_H2O = RH                  
          VP=VMR_H2O*PB                 ! VP IS VAPOR PRESSURE, PB IS TOTAL
@@ -193,14 +193,14 @@ contains
             TWTH0 = TWTH0/2+SQRT(TWTH0**2/4+DWTH0**2)
 
 !---------------------------------------------------------------
-!	TO SAVE COMPUTING TIME CHECK IF FREQ IS CLOSE TO O3 LINES
+!     TO SAVE COMPUTING TIME CHECK IF FREQ IS CLOSE TO O3 LINES
 !----------------------------------------------------------------
 
             B = B+2.30549e09_r8*10.0**(IST(I)-QRAT+GSE(I)*   &
-     &		(1._r8/300._r8 - 1._r8/T)/1.600386_r8 - ZP) * PI * &
-     &		 MYSHAPE(V01(i),FF,YY,TWTH0) * FF/V01(I) *  &
-     &		(1._r8 - EXP(-V01(i)/(20836.7_r8*T)))/           &
-     &		(1._r8 - EXP(-V01(i)/(20836.7_r8*300.0_r8)))/T 
+     &          (1._r8/300._r8 - 1._r8/T)/1.600386_r8 - ZP) * PI * &
+     &           MYSHAPE(V01(i),FF,YY,TWTH0) * FF/V01(I) *  &
+     &          (1._r8 - EXP(-V01(i)/(20836.7_r8*T)))/           &
+     &          (1._r8 - EXP(-V01(i)/(20836.7_r8*300.0_r8)))/T 
 
          ENDDO   
 
@@ -256,13 +256,13 @@ contains
 !------------------------------------------
       SD = 6.14e-4*P/10.*TT**2
       G0 = 5.6e-3*(1+1.1*VMR_H2O)*P/10.*TT
-      B = SD*F/(G0 * (1.+ (F/G0)**2))		! B is Npp in LIEBE
+      B = SD*F/(G0 * (1.+ (F/G0)**2))           ! B is Npp in LIEBE
       ABSC = ABSC + B*.182*F/4.343              ! CONVERTED TO 1/km 
 
 !----------------------------------------
 !     WET CONTINUUM 
 !----------------------------------------
-!      CONT_1 = 1.28e-15 	! BILL'S VALIDATION PAPER
+!      CONT_1 = 1.28e-15         ! BILL'S VALIDATION PAPER
 !      CONT_1 = 1.37e-15         ! UARS 203GHz  v5 
 
 !      the following cont_1 is adjusted based on bill's 
@@ -295,36 +295,36 @@ contains
 
         real(r8) function myshape(v0,ff,yy,twth0) result (myresult)
 
-	real(r8) ::  voffm		! frequency difference
-	real(r8) ::  voffp		! frequency difference
-	real(r8) ::  ff		        ! frequency in MHz
-	real(r8) ::  v0		        ! line frequency in MHz
-	real(r8) ::  twth0		! line width in MHz/mb
-	real(r8) ::  yy 		! interference coeff.
-	real(r8) ::  twthm, twthp
+        real(r8) ::  voffm              ! frequency difference        
+        real(r8) ::  voffp              ! frequency difference        
+        real(r8) ::  ff                 ! frequency in MHz            
+        real(r8) ::  v0                 ! line frequency in MHz       
+        real(r8) ::  twth0              ! line width in MHz/mb        
+        real(r8) ::  yy                 ! interference coeff.         
+        real(r8) ::  twthm, twthp
 
-	  voffm = 0.0_r8
-	  voffp = 0.0_r8
-	  twthm = 0.0_r8
-	  twthp = 0.0_r8
-          myresult = 0.0_r8
+        voffm = 0.0_r8                      
+        voffp = 0.0_r8                      
+        twthm = 0.0_r8                      
+        twthp = 0.0_r8                      
+        myresult = 0.0_r8                   
 
-	  voffm = v0 - ff
-	  voffp = v0 + ff
-	  twthm = twth0 - voffm*yy*1.
-	  twthp = twth0 - voffp*yy*1.
+        voffm = v0 - ff                     
+        voffp = v0 + ff                     
+        twthm = twth0 - voffm*yy*1.         
+        twthp = twth0 - voffp*yy*1.         
 
 !... Gross function
-!	myshape = 4.*ff*v0*twth0/pi/((voffm*voffp)**2+4*(ff*twthm)**2)
-!	return
+!       myshape = 4.*ff*v0*twth0/pi/((voffm*voffp)**2+4*(ff*twthm)**2)
+!       return
 !... Van Vleck-Weisskopf
-!J 	myshape = twthm/(voffm**2 + twth0**2) + &
+!J      myshape = twthm/(voffm**2 + twth0**2) + &
 !J     &      twthp/(voffp**2 + twth0**2)
-!J 	myshape = myshape * (ff/v0)/pi
+!J      myshape = myshape * (ff/v0)/pi
 
-  	myresult = twthm/(voffm**2 + twth0**2) + &
+        myresult = twthm/(voffm**2 + twth0**2) + &
        &      twthp/(voffp**2 + twth0**2)
- 	 myresult = myresult * (ff/v0)/pi
+        myresult = myresult * (ff/v0)/pi
 
        return
        end function myshape
@@ -341,6 +341,9 @@ contains
 end module GasAbsorption
 
 ! $Log$
+! Revision 2.3  2007/06/26 00:36:03  vsnyder
+! Replace tabs by blanks since tabs are nonstandard
+!
 ! Revision 2.2  2005/06/22 18:08:19  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
