@@ -54,6 +54,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   interface DIFF
     module procedure DiffL2GPData
     module procedure DiffL2GPData_Chunks
+    module procedure DiffL2GPData_Levels
     module procedure DiffL2GPFiles_MLSFile
     module procedure DiffL2GPFiles_Name
   end interface
@@ -2793,7 +2794,6 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------ DiffL2GPData_CHUNKS ------------
 
-
   subroutine DiffL2GPData_CHUNKS ( fullL2gp1, fullL2gp2, Chunks, &
     & Details, wholeArray, stats, rms, ignoreBadChunks, fields, silent, &
     & verbose, numDiffs )
@@ -2851,12 +2851,12 @@ contains ! =====     Public Procedures     =============================
         call output ( chunk, advance='no')
         call output ( ' - - -', advance='yes')
       endif
-      call output( 'irange: ', advance='no' )
-      call output( irange, advance='yes' )
+      ! call output( 'irange: ', advance='no' )
+      ! call output( irange, advance='yes' )
       call ExtractL2GPRecord ( fullL2gp1, l2gp1, rTimes=irange )
       call ExtractL2GPRecord ( fullL2gp2, l2gp2, rTimes=irange )
-      call output( 'nTimes: ', advance='no' )
-      call output( l2gp1%nTimes, advance='yes' )
+      ! call output( 'nTimes: ', advance='no' )
+      ! call output( l2gp1%nTimes, advance='yes' )
       call Diff ( L2gp1, L2gp2, &
         & Details, wholeArray, stats, rms, ignoreBadChunks, fields, &
         & silent=silent, verbose=verbose, numDiffs=numDiffs )
@@ -2864,6 +2864,83 @@ contains ! =====     Public Procedures     =============================
       call DestroyL2GPContents( l2gp2 )
     enddo
   end subroutine DiffL2GPData_CHUNKS
+
+  ! ------------------------------------------ DiffL2GPData_LEVELS ------------
+
+  subroutine DiffL2GPData_LEVELS ( fullL2gp1, fullL2gp2, Pressures, Chunks, &
+    & Details, wholeArray, stats, rms, ignoreBadChunks, fields, silent, &
+    & verbose, numDiffs )
+    ! Dump selected levels of an l2gp
+    ! Dummy arguments
+    type (l2gpData_T), intent(in) ::          FULLL2GP1
+    type (l2gpData_T), intent(in) ::          FULLL2GP2
+    real(rgp), intent(in), dimension(:) :: pressures ! Which levels to dump
+    integer, intent(in), optional, dimension(:) :: Chunks ! Which chunks to dump
+    integer, intent(in), optional :: DETAILS ! <=0 => Don't diff data fields
+    !                                        ! -1 Skip even geolocation fields
+    !                                        ! -2 Skip all but name
+    !                                        ! >0 Diff even data fields
+    !                                        ! Default 1
+    logical, intent(in), optional :: STATS   ! if TRUE, just print stats
+    logical, intent(in), optional :: RMS     ! if TRUE, just print mean, rms
+    logical, intent(in), optional :: WHOLEARRAY   ! if TRUE, print anyway
+    logical, intent(in), optional :: IGNOREBADCHUNKS   ! if TRUE, ignore
+                                                     ! instances where geod bad
+    character(len=*), intent(in), optional :: fields  ! diff only these fields
+    logical, intent(in), optional :: silent  ! don't print anything
+    logical, intent(in), optional :: verbose  ! print something no matter what
+    integer, intent(out), optional :: numDiffs  ! how many diffs
+
+    ! Local variables
+    real(rgp) :: pressure
+    ! logical, parameter :: DEEBUG = .true.
+    integer :: i
+    integer, dimension(2) :: irange
+    type (l2gpData_T) ::          L2GP1, L2gp2
+    logical :: mySilent
+    ! Executable
+    mySilent = .false.
+    if ( present(silent) ) mySilent = silent
+    if ( DEEBUG ) then
+      call output( 'mySilent: ', advance='no' )
+      call output( mySilent, advance='yes' )
+      call output( 'size(pressures): ', advance='no' )
+      call output( size(pressures), advance='yes' )
+      call output( pressures, advance='yes' )
+      call output( 'fullL2gp1%pressures: ', advance='no' )
+      call output( fullL2gp1%pressures, advance='yes' )
+    endif
+    do i=1, size(pressures)
+      pressure = pressures(i)
+      ! The dubious "1.005" factor is to prevent missing a desired level
+      ! due to unlucky roundoff
+      irange(1) = FindFirst( fullL2gp1%pressures <= pressure*1.005 )
+      irange(2) = irange(1)
+      if ( any( irange == 0 ) ) cycle
+      if ( .not. mySilent ) then
+        call output ( ' - - - pressure:', advance='no')
+        call output ( fullL2gp1%pressures(irange(1)), advance='no')
+        call output ( ' - - -', advance='yes')
+      endif
+      ! call output( 'irange: ', advance='no' )
+      ! call output( irange, advance='yes' )
+      call ExtractL2GPRecord ( fullL2gp1, l2gp1, rLevels=irange )
+      call ExtractL2GPRecord ( fullL2gp2, l2gp2, rLevels=irange )
+      ! call output( 'nTimes: ', advance='no' )
+      ! call output( l2gp1%nTimes, advance='yes' )
+      if ( present(chunks) ) then
+        call DiffL2GPData_Chunks ( L2gp1, L2gp2, chunks, &
+          & Details, wholeArray, stats, rms, ignoreBadChunks, fields, &
+          & silent=silent, verbose=verbose, numDiffs=numDiffs )
+      else
+        call Diff ( L2gp1, L2gp2, &
+          & Details, wholeArray, stats, rms, ignoreBadChunks, fields, &
+          & silent=silent, verbose=verbose, numDiffs=numDiffs )
+      endif
+      call DestroyL2GPContents( l2gp1 )
+      call DestroyL2GPContents( l2gp2 )
+    enddo
+  end subroutine DiffL2GPData_LEVELS
 
   ! ---------------------- DiffL2GPData  ---------------------------
   subroutine DiffL2GPData ( L2gp1, L2gp2, &
@@ -3276,7 +3353,7 @@ contains
   end subroutine DiffL2GPData_atlast
     
   ! ------------------------------------------ DiffL2GPFiles_MLSFile ------------
-  subroutine DiffL2GPFiles_MLSFile ( L2GPFile1, L2GPFile2, chunks, &
+  subroutine DiffL2GPFiles_MLSFile ( L2GPFile1, L2GPFile2, pressures, chunks, &
     & Details, wholeArray, stats, rms, ignoreBadChunks, &
     & swList, showMissing, fields, force, swaths1, swaths2, &
     & matchTimes, silent, verbose, numDiffs )
@@ -3284,6 +3361,7 @@ contains
     ! Dummy arguments
     type(MLSFile_T)               :: L2GPfile1 ! file 1
     type(MLSFile_T)               :: L2GPfile2 ! file 2
+    real, intent(in), dimension(:), optional :: pressures ! Which heights to dump
     integer, intent(in), dimension(:), optional :: Chunks ! Which chunks to dump
     integer, intent(in), optional :: DETAILS ! <=0 => Don't diff data fields
     !                                        ! -1 Skip even geolocation fields
@@ -3328,9 +3406,26 @@ contains
         & 'Unable to close l2gp file to diff between', MLSFile=L2GPFile2)
     endif
     
-    if ( present(chunks) ) then
+    if ( present(chunks) .and. present(pressures) ) then
+      call DiffL2GPFiles_Name ( L2GPFile1%Name, L2GPFile2%Name, &
+      & pressures=pressures, &
+      & chunks=chunks, Details=Details, wholeArray=wholeArray, &
+      & stats=stats, rms=rms, ignoreBadChunks=ignoreBadChunks, &
+      & swList=swList, showMissing=showMissing, &
+      & fields=fields, force=force, swaths1=swaths1, swaths2=swaths2, &
+      & matchTimes=matchTimes, silent=silent, verbose=verbose, &
+      & numDiffs=numDiffs )
+    elseif ( present(chunks) ) then
       call DiffL2GPFiles_Name ( L2GPFile1%Name, L2GPFile2%Name, &
       & chunks=chunks, Details=Details, wholeArray=wholeArray, &
+      & stats=stats, rms=rms, ignoreBadChunks=ignoreBadChunks, &
+      & swList=swList, showMissing=showMissing, &
+      & fields=fields, force=force, swaths1=swaths1, swaths2=swaths2, &
+      & matchTimes=matchTimes, silent=silent, verbose=verbose, &
+      & numDiffs=numDiffs )
+    elseif ( present(pressures) ) then
+      call DiffL2GPFiles_Name ( L2GPFile1%Name, L2GPFile2%Name, &
+      & pressures=pressures, Details=Details, wholeArray=wholeArray, &
       & stats=stats, rms=rms, ignoreBadChunks=ignoreBadChunks, &
       & swList=swList, showMissing=showMissing, &
       & fields=fields, force=force, swaths1=swaths1, swaths2=swaths2, &
@@ -3357,7 +3452,7 @@ contains
   end subroutine DiffL2GPFiles_MLSFile
     
   ! ------------------------------------------ DiffL2GPFiles_Name ------------
-  subroutine DiffL2GPFiles_Name ( file1, file2, chunks, &
+  subroutine DiffL2GPFiles_Name ( file1, file2, pressures, chunks, &
     & Details, wholeArray, stats, rms, ignoreBadChunks, &
     & swList, showMissing, fields, force, swaths1, swaths2, matchTimes, &
     & silent, verbose, numDiffs )
@@ -3365,6 +3460,7 @@ contains
     ! Dummy arguments
     character (len=*), intent(in) :: file1 ! Name of file 1
     character (len=*), intent(in) :: file2 ! Name of file 2
+    real, intent(in), dimension(:), optional :: pressures ! Which heights to diff
     integer, intent(in), dimension(:), optional :: Chunks ! Which chunks to diff
     integer, intent(in), optional :: DETAILS ! <=0 => Don't diff data fields
     !                                        ! -1 Skip even geolocation fields
@@ -3536,8 +3632,20 @@ contains
            & hdfVersion=the_hdfVersion1 )
       call ReadL2GPData ( File2Handle, trim(swath2), l2gp2, &
            & hdfVersion=the_hdfVersion2 )
-      if ( present(chunks) ) then
+      if ( present(chunks) .and. present(pressures) ) then
+        call Diff( l2gp1, l2gp2, pressures=pressures, chunks=chunks, &
+        & details=details, wholeArray=wholeArray, rms=rms, stats=stats, &
+        & ignoreBadChunks=ignoreBadChunks, fields=fields, &
+        & silent=silent, verbose=verbose, &
+        & numDiffs=numDiffs )
+      elseif ( present(chunks) ) then
         call Diff( l2gp1, l2gp2, chunks=chunks, &
+        & details=details, wholeArray=wholeArray, rms=rms, stats=stats, &
+        & ignoreBadChunks=ignoreBadChunks, fields=fields, &
+        & silent=silent, verbose=verbose, &
+        & numDiffs=numDiffs )
+      elseif ( present(pressures) ) then
+        call Diff( l2gp1, l2gp2, pressures=pressures, &
         & details=details, wholeArray=wholeArray, rms=rms, stats=stats, &
         & ignoreBadChunks=ignoreBadChunks, fields=fields, &
         & silent=silent, verbose=verbose, &
@@ -4291,6 +4399,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.148  2007/05/30 22:03:41  pwagner
+! HuntRange does not work correctly when list has missing values; workaround employed
+!
 ! Revision 2.147  2007/02/26 23:58:48  pwagner
 ! New optional arg diffs only at matching profile times
 !
