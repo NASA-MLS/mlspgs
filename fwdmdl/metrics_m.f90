@@ -675,14 +675,14 @@ path: do i = i1, i2
           & ddhidhidtl0, dhidtlm, t_deriv_flag, z_basis, z_ref,         &
           ! Optional outputs:
           & ddhtdhtdtl0, dhitdtlm, dhtdtl0, dhtdzt,                     &
-          & do_calc_hyd, do_calc_t, eta_zxp, tan_phi_t )
+          & do_calc_hyd, do_calc_t, eta_zxp, nz_zxp, nnz_zxp, tan_phi_t )
 
     ! This subroutine computes metrics-related things after H_Grid and
     ! P_Grid are computed by Height_Metrics, and then perhaps augmented
     ! with, for example, the minimum Zeta point.
 
     use Dump_0, only: Dump
-    use Get_Eta_Matrix_m, only: Get_Eta_Sparse
+    use Get_Eta_Matrix_m, only: Get_Eta_Sparse, Multiply_Eta_Column_Sparse
     use MLSKinds, only: RP
     use Toggles, only: Switches
     ! inputs:
@@ -735,8 +735,10 @@ path: do i = i1, i2
     !           hydrostatic calculations.  Computed if present(dhidtlm)
     logical, optional, intent(out) :: do_calc_t(:,:) ! nonzero locater for
     !           temperature bases computations.  Computed if present(dhidtlm)
-    real(rp), optional, intent(out) :: eta_zxp(:,:) ! eta matrix for temperature
+    real(rp), optional, intent(inout) :: eta_zxp(:,:) ! eta matrix for temperature
     !           Computed if present(dhidtlm)
+    integer, optional, intent(inout) :: NZ_ZXP(:,:)   ! Nonzeros in Eta_zxp
+    integer, optional, intent(inout) :: NNZ_ZXP(:)    ! Numbers of rows in NZ_ZXP
     real(rp), optional, intent(out) :: tan_phi_t ! temperature at the tangent
 
     ! Local variables.
@@ -750,6 +752,8 @@ path: do i = i1, i2
     logical :: NOT_ZERO_P(size(vert_inds),size(p_basis))
     integer :: col1(size(vert_inds))        ! First nonzero in rows of Eta_P
     integer :: col2(size(vert_inds))        ! Last nonzero in rows of Eta_P
+    integer :: NZ_P(size(vert_inds),size(p_basis)) ! Nonzeros in columns of Eta_P
+    integer :: NNZ_P(size(p_basis))         ! Numbers of rows in NZ_P
 
     real(rp) :: ETA_P(size(vert_inds),size(p_basis))
 
@@ -766,8 +770,11 @@ path: do i = i1, i2
     ! Interpolate Temperature (T_Ref) and the vertical height derivative
     ! (dhidzij) to the path (T_Grid and dhitdzi).
 
-    call get_eta_sparse ( p_basis, p_grid(:n_path), eta_p, &
-      & not_zero = not_zero_p, first=col1, last=col2, sorted=.true. )
+    nnz_p = 0
+    eta_p = 0.0
+    not_zero_p = .false.
+    call get_eta_sparse ( p_basis, p_grid(:n_path), eta_p, 1, n_path, &
+      & nz_p, nnz_p, col1, col2, not_zero_p )
     do i = 1, n_path
       t_grid(i) = dot_product(t_ref(vert_inds(i),col1(i):col2(i)), &
         & eta_p(i,col1(i):col2(i)))
@@ -800,8 +807,10 @@ path: do i = i1, i2
       ! to Z_Basis in the dimensions of automatic variables are only
       ! attempted if Z_Basis is present.
       integer, intent(in) :: N
-      real(rp) :: ETA_T2(size(vert_inds),n)    ! n = size(z_basis) but Intel's
-      logical :: NOT_ZERO_T(size(vert_inds),n)   ! compiler won't allow that
+      real(rp) :: ETA_T2(n_path,n)    ! n = size(z_basis) but Intel's
+      logical :: NOT_ZERO_T(n_path,n)   ! compiler won't allow that
+      integer :: NZ_T2(n_path,n)      ! Nonzeros in Eta_T2
+      integer :: NNZ_T2(n)            ! Numbers of rows in NZ_T2
       integer :: I, J, SV_P, SV_T, SV_Z ! Loop inductors and subscripts
       integer :: P_COEFFS    ! size(p_basis)
       integer :: Z_COEFFS    ! size(z_basis)
@@ -830,28 +839,29 @@ path: do i = i1, i2
                      & (/j/))
 
       ! compute the path temperature noting where the zeros are
-      call get_eta_sparse ( z_basis, z_ref(vert_inds), eta_t2, NOT_ZERO = not_zero_t )
+      nnz_t2 = 0
+      eta_t2 = 0.0
+      call get_eta_sparse ( z_basis, z_ref(vert_inds), eta_t2, &
+        & n_tan, 1, nz_t2, nnz_t2, .false. )
+      call get_eta_sparse ( z_basis, z_ref(vert_inds), eta_t2, &
+        & n_tan+1, size(vert_inds), nz_t2, nnz_t2, .true. )
+
+      call multiply_eta_column_sparse ( eta_t2, nz_t2, nnz_t2, eta_p, nz_p, nnz_p, &
+        & eta_zxp, nz_zxp, nnz_zxp, do_calc_t )
 
       sv_t = 0
       do sv_p = 1 , p_coeffs
         do sv_z = 1 , z_coeffs
           sv_t = sv_t + 1
           if ( t_deriv_flag(sv_t) ) then
-            do_calc_t(:,sv_t) = not_zero_t(:,sv_z) .and. not_zero_p(:,sv_p)
-            ! Don't bother with WHERE here since one multiply is faster
-            eta_zxp(:,sv_t) = eta_t2(:,sv_z) * eta_p(:,sv_p)
-            do_calc_hyd(:,sv_t) = not_zero_p(:,sv_p) .and. &
-              &                   dhidtlm(vert_inds,sv_z,sv_p) > 0.0_rp
-            where ( do_calc_hyd(:,sv_t) )
-              dhitdtlm(:,sv_t) = dhidtlm(vert_inds,sv_z,sv_p) * eta_p(:,sv_p)
-            elsewhere
-              dhitdtlm(:,sv_t) = 0.0
-            end where
+            dhitdtlm(:,sv_t) = max(dhidtlm(vert_inds,sv_z,sv_p),0.0_rp) * eta_p(:,sv_p)
+            do_calc_hyd(:,sv_t) = dhitdtlm(:,sv_t) /= 0.0_rp
           else
-            do_calc_t(:,sv_t) = .false.
-            eta_zxp(:,sv_t) = 0.0
             do_calc_hyd(:,sv_t) = .false.
             dhitdtlm(:,sv_t) = 0.0
+            eta_zxp(nz_zxp(:nnz_zxp(sv_t),sv_t),sv_t) = 0.0
+            do_calc_t(nz_zxp(:nnz_zxp(sv_t),sv_t),sv_t) = .false.
+            nnz_zxp(sv_t) = 0
           end if
         end do
       end do
@@ -984,6 +994,9 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.48  2007/06/08 22:05:48  vsnyder
+! More work on min zeta
+!
 ! Revision 2.47  2007/03/22 23:24:34  vsnyder
 ! Remove irrelevant USE
 !
