@@ -1490,7 +1490,7 @@ CONTAINS
 
 ! Galactic center variables:
 
-    INTEGER, PARAMETER :: Ngal = 9
+    INTEGER, PARAMETER :: Ngal = 14
     REAL(r8) :: FOV_gal(3), thetasum, deltacross, deltadot
 
     REAL(r8), PARAMETER :: ECItogctr(3,3) = RESHAPE ((/ &
@@ -1498,22 +1498,30 @@ CONTAINS
          -0.872758, -0.450355, -0.188358, &
          -0.483540,  0.744601,  0.460174 /), (/ 3, 3 /))
 
-    REAL(r8), PARAMETER :: gal_cone_z = 0.992545 !7° bounding cone TBR
+    REAL(r8), PARAMETER :: gal_cone_z = 0.754680843 ! 41.00250964° bounding cone
+    REAL(r8), PARAMETER :: gal_fan_y = 0.042 ! Gal.Latitude fan half-width,
+                                             ! radians
 
 ! Strawman polygon for galactic core  REC 2005.11.09
 ! x unused:
 ! revised polygon for galactic core  REC 2005.11.18
+! revised polygon for galactic core  REC 2007.06.21 !
 
     REAL(r8), PARAMETER :: gal(2:3,Ngal) = RESHAPE ((/ &
-         -0.077649,  -0.017740, & !0.996823
-         -0.012147,   0.013177, & !0.999839
+         -0.156366,  -0.029666, & !0.987254
+         -0.224942,  -0.008727, & !0.974333
+         -0.139152,   0.017452, & !0.990117
+          0.000000,   0.017452, & !0.999848
           0.045883,   0.024546, & !0.998645
           0.074372,   0.024546, & !0.996928
-          0.121742,  -0.005795, & !0.992545
+          0.095836,   0.013962, & !0.995299
+          0.656034,   0.008727, & !0.754681
+          0.642690,  -0.017452, & !0.765928
+          0.095804,  -0.029666, & !0.994958
           0.086660,  -0.038046, & !0.995511
-         -0.013098,  -0.040886, & !0.999078
-         -0.052093,  -0.028565, & !0.998234
-         -0.077649,  -0.017740  & !0.996823
+          -0.013098, -0.040886, & !0.999078
+          -0.052093, -0.028565, & !0.998234
+          -0.156366, -0.029666  & !0.987254
           /), (/ 2, Ngal /))
 
     ! Functions
@@ -1564,7 +1572,8 @@ CONTAINS
              FOV_gal = MATMUL (ECItogctr, FOV_eci(:,MIF))
              thetasum = 0.0
 
-             IF (FOV_gal(1) > gal_cone_z) THEN ! Look within bounding cone 
+             IF ((FOV_gal(1) > gal_cone_z) .AND. &
+                 (ABS(FOV_gal(3)) < gal_fan_y)) THEN ! Look within bounding cone 
 
                 DO j = 2, Ngal  !  Loop over vertices defining galactic core
                    deltacross = (gal(3,j)-FOV_gal(3))*(gal(2,j-1)-FOV_gal(2)) &
@@ -1611,6 +1620,9 @@ CONTAINS
 END MODULE TkL1B
 
 ! $Log$
+! Revision 2.33  2007/06/27 14:45:30  perun
+! Revised vertices of the galactic center polygon
+!
 ! Revision 2.32  2007/04/05 13:59:27  perun
 ! Protect every ACOS call from crashes
 !
