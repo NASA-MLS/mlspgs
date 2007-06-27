@@ -53,6 +53,7 @@ program l2gpdiff ! show diffs between swaths in two different files
   integer, parameter ::          MAXFIELDSLENGTH = 256
   type options_T
     character(len=MAXFIELDSLENGTH) :: chunks = '*' ! wild card means 'all'
+    character(len=MAXFIELDSLENGTH) :: pressures = '*' ! wild card means 'all'
     integer     :: Details = 1
     character(len=MAXFIELDSLENGTH) :: fields = '*' ! wild card means 'all'
     logical     :: force = .false.
@@ -84,8 +85,10 @@ program l2gpdiff ! show diffs between swaths in two different files
   integer :: listSize
   integer            :: n_filenames
   integer :: nChunks
+  integer :: nPressures
   integer :: numDiffs
   integer :: NUMSWATHSPERFILE
+  real, dimension(MAXNCHUNKS) :: pressures
   character(len=16) :: string
   character(len=MAXSWATHNAMESBUFSIZE) :: swathList1
   character(len=MAXSWATHNAMESBUFSIZE) :: swathList2
@@ -142,8 +145,30 @@ program l2gpdiff ! show diffs between swaths in two different files
       print *, 'diff (1): ', trim(filenames(i-1))
       print *, '     (2): ', trim(filenames(i))
     endif
-    if ( options%chunks == '*' ) then
-      call diff(trim(filenames(i-1)), trim(filenames(i)), &
+    if ( options%chunks == '*' .and. options%pressures == '*' ) then
+      call diff( trim(filenames(i-1)), trim(filenames(i)), &
+      & details=options%Details, stats=options%stats, &
+      & rms=options%rms, ignoreBadChunks=options%ignoreBadChunks, &
+      & showMissing=options%showMissing, fields=options%fields, &
+      & force=options%force, swaths1=options%swaths1, swaths2=options%swaths2, &
+      & matchTimes=options%matchTimes, &
+      & silent=options%silent, verbose=options%verbose, numDiffs=numDiffs )
+    elseif ( options%pressures == '*' ) then
+      call ExpandStringRange(options%chunks, chunks, nchunks)
+      if ( nchunks < 1 ) cycle
+      call diff( trim(filenames(i-1)), trim(filenames(i)), &
+      & chunks=chunks(1:nchunks), &
+      & details=options%Details, stats=options%stats, &
+      & rms=options%rms, ignoreBadChunks=options%ignoreBadChunks, &
+      & showMissing=options%showMissing, fields=options%fields, &
+      & force=options%force, swaths1=options%swaths1, swaths2=options%swaths2, &
+      & matchTimes=options%matchTimes, &
+      & silent=options%silent, verbose=options%verbose, numDiffs=numDiffs )
+    elseif ( options%chunks == '*' ) then
+      call ExpandStringRange(options%pressures, pressures, npressures)
+      if ( npressures < 1 ) cycle
+      call diff( trim(filenames(i-1)), trim(filenames(i)), &
+      & pressures=pressures(1:nPressures), &
       & details=options%Details, stats=options%stats, &
       & rms=options%rms, ignoreBadChunks=options%ignoreBadChunks, &
       & showMissing=options%showMissing, fields=options%fields, &
@@ -153,8 +178,11 @@ program l2gpdiff ! show diffs between swaths in two different files
     else
       call ExpandStringRange(options%chunks, chunks, nchunks)
       if ( nchunks < 1 ) cycle
-      call diff(trim(filenames(i-1)), trim(filenames(i)), &
-      & chunks(1:nchunks), &
+      call ExpandStringRange(options%pressures, pressures, npressures)
+      if ( npressures < 1 ) cycle
+      call diff( trim(filenames(i-1)), trim(filenames(i)), &
+      & pressures(1:nPressures), &
+      & chunks=chunks(1:nchunks), &
       & details=options%Details, stats=options%stats, &
       & rms=options%rms, ignoreBadChunks=options%ignoreBadChunks, &
       & showMissing=options%showMissing, fields=options%fields, &
@@ -199,6 +227,10 @@ contains
         exit
       elseif ( filename(1:6) == '-force' ) then
         options%force = .true.
+        exit
+      else if ( filename(1:6) == '-press' ) then
+        call getarg ( i+1+hp, options%pressures )
+        i = i + 1
         exit
       elseif ( filename(1:8) == '-silent ' ) then
         options%silent = .true.
@@ -271,6 +303,8 @@ contains
       write (*,*) '                      =>   diff only chunks c1, c2,..'
       write (*,*) '          -fields "f1,f2,.."'
       write (*,*) '                      =>   diff only fields f1, f2,..'
+      write (*,*) '          -pressures "p1,p2,.."'
+      write (*,*) '                      =>   diff only at pressures p1,p2,..'
       write (*,*) '          -d details  => level of details to show'
       write (*,*) '          -force      => force diff even if swath names differ'
       write (*,*) '          -s1 "swath1,swath2,.."'
@@ -321,6 +355,9 @@ end program l2gpdiff
 !==================
 
 ! $Log$
+! Revision 1.10  2007/06/14 21:48:41  pwagner
+! Overrides default rmsFormat
+!
 ! Revision 1.9  2007/02/27 00:05:33  pwagner
 ! -matchTimes option diffs only profiles with matching times
 !
