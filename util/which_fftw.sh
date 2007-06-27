@@ -20,8 +20,8 @@
 #                These two libraries must have names matching the patterns
 #                1st library: lib[ sd]rfftw.a
 #                2nd library: lib[ sd]fftw.a
-# FFTW_PREC     if present, either 's' or 'd' specifying which precision
-#                library to choose
+# FFTW_PREC     if present, one of 's' or 'd' specifying which precision
+#                library to choose, or '3' specifying version '3' of fftw
 #                (if absent, the order of preference will be {none, d, s}
 #                in other words if librfftw.a exists, use it
 #                elseif libdrfftw.a exists, use it
@@ -205,7 +205,7 @@ then
   exit
 fi
 
-# single precision (and last chance)
+# single precision (and last chance for version != 3)
 test=`$REECHO $FFTW_ROOT/libsrfftw.a $FFTW_ROOT/libsfftw.a | wc -w`
 if [ $DEEBUG = "on" ]
 then
@@ -215,6 +215,19 @@ if [ `expr "$test"` = 2 -a "$FFTW_PREC" != "d" ]
 then
   echo "Building mlsl3[dm] with single-precision fftw" > fftw_link_message
   echo '-L${FFTW_ROOT} -lsrfftw -lsfftw'
+  exit
+fi
+
+# version 3?
+test=`$REECHO $FFTW_ROOT/libfftw3.a | wc -w`
+if [ $DEEBUG = "on" ]
+then
+   echo "sp test: $test"
+fi
+if [ `expr "$test"` = 1 ]
+then
+  echo "Building mlsl3[dm] with version 3 of fftw" > fftw_link_message
+  echo '-L${FFTW_ROOT} -lfftw3'
   exit
 fi
 
@@ -235,6 +248,9 @@ echo "You probably have to reset FFTW_ROOT in .configure" >> fftw_link_message
 echo "Do that by 'make configure_pvm'" >> fftw_link_message                      
 exit
 # $Log$
+# Revision 1.8  2005/06/23 22:20:46  pwagner
+# Reworded Copyright statement
+#
 # Revision 1.7  2004/03/19 21:56:03  pwagner
 # Should adapt better to arbitrary gcc versions after 3.2
 #
