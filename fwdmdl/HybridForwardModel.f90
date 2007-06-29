@@ -27,14 +27,13 @@ module HybridForwardModel_m
 contains ! =====     Public Procedures     =============================
 
   subroutine HybridForwardModel ( fmConf, FwdModelIn, FwdModelExtra,&
-    & FwdModelOut, Ifm, fmStat, Jacobian, Vectors )
+    & FwdModelOut, fmStat, Jacobian, Vectors )
 
     ! Import stuff
     use VectorsModule, only: VECTOR_T, VECTORVALUE_T, CLONEVECTOR, ADDTOVECTOR, &
       & DESTROYVECTORINFO
     use ForwardModelConfig, only: FORWARDMODELCONFIG_T
-    use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T, &
-      & FORWARDMODELINTERMEDIATE_T
+    use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
     use Intrinsic, only: L_LINEAR, L_FULL
     use FullForwardModel_m, only: FULLFORWARDMODEL
     use LinearizedForwardModel_m, only: LINEARIZEDFORWARDMODEL
@@ -47,7 +46,6 @@ contains ! =====     Public Procedures     =============================
     type(vector_T), intent(in) ::  FWDMODELIN
     type(vector_T), intent(in) ::  FWDMODELEXTRA
     type(vector_T), intent(inout) :: FWDMODELOUT  ! Radiances, etc.
-    type(forwardModelIntermediate_T), intent(inout) :: IFM ! Workspace
     type(forwardModelStatus_t), intent(inout) :: FMSTAT ! Reverse comm. stuff
     type(matrix_T), intent(inout), optional :: JACOBIAN
     type(vector_T), dimension(:), target, optional :: VECTORS
@@ -93,18 +91,18 @@ contains ! =====     Public Procedures     =============================
         if ( sideband == fmConf%linearSideband ) then
           if ( present(jacobian) ) then
             call LinearizedForwardModel ( thisConfig, fwdModelIn, fwdModelExtra, &
-              & linearRadiance, ifm, fmStat, linearJacobian, vectors=vectors )
+              & linearRadiance, fmStat, linearJacobian, vectors=vectors )
           else
             call LinearizedForwardModel ( thisConfig, fwdModelIn, fwdModelExtra, &
-              & linearRadiance, ifm, fmStat, vectors=vectors )
+              & linearRadiance, fmStat, vectors=vectors )
           end if
         else
           if ( present(jacobian) ) then
             call LinearizedForwardModel ( thisConfig, fwdModelIn, fwdModelExtra, &
-              & fwdModelOut, ifm, fmStat, jacobian, vectors )
+              & fwdModelOut, fmStat, jacobian, vectors )
           else
             call LinearizedForwardModel ( thisConfig, fwdModelIn, fwdModelExtra, &
-              & fwdModelOut, ifm, fmStat, vectors=vectors )
+              & fwdModelOut, fmStat, vectors=vectors )
           end if
         end if
       end do                              ! Signal loop
@@ -123,7 +121,7 @@ contains ! =====     Public Procedures     =============================
     thisConfig%sidebandStart = - fmConf%linearSideband
     thisConfig%sidebandStop = - fmConf%linearSideband
     call FullForwardModel ( thisConfig, fwdModelIn, fwdModelExtra, &
-      & fwdModelOut, ifm, fmStat, Jacobian )
+      & fwdModelOut, fmStat, Jacobian )
     ! The sidebands must originally have been marked as folded
     fmConf%signals%sideband = 0
 
@@ -152,6 +150,9 @@ contains ! =====     Public Procedures     =============================
 end module HybridForwardModel_m
 
 ! $Log$
+! Revision 2.8  2007/06/29 19:32:42  vsnyder
+! Make ForwardModelIntermediate_t private to ScanModelModule
+!
 ! Revision 2.7  2007/04/03 17:43:35  vsnyder
 ! Replace pointer attribute on VectorDatabase with target attribute
 !
