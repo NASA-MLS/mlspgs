@@ -39,8 +39,7 @@ contains
       use Chunks_m, only: MLSCHUNK_T
       use ForwardModelConfig, only: ForwardModelConfig_T
       use ForwardModelWrappers, only: ForwardModel
-      use ForwardModelIntermediate, only: ForwardModelIntermediate_T, &
-        & ForwardModelStatus_T
+      use ForwardModelIntermediate, only: ForwardModelStatus_T
       use Init_Tables_Module, only: L_highcloud, L_lowcloud, l_lostransfunc, &
          & l_clear, l_cloudy_110RH_below_top, l_earthradius
       use Intrinsic, only: L_CLOUDINDUCEDRADIANCE, L_CLOUDEXTINCTION,&
@@ -54,6 +53,7 @@ contains
       use MLSMessageModule, only: MLSMessage, MLSMSG_Error, &
                                         & MLSMSG_Warning, MLSMSG_Deallocate
       use MLSSignals_m, only: SIGNAL_T
+      use ScanModelModule, only: DestroyForwardModelIntermediate
       use VectorsModule, only: ClearMask, ClearUnderMask, &
        & ClearVector, CloneVector, CopyVector, CopyVectorMask, CreateMask, &
        & DestroyVectorInfo, DumpMask, GetVectorQuantityByType, &
@@ -92,8 +92,8 @@ contains
       
       integer :: coljBlock     ! Column index for jacobian
       integer :: rowjBlock     ! Row index for jacobian
-      integer :: nMAFs                    ! number of mafs
-      integer :: nFreqs      ! number of frequencies in each block
+      integer :: nMAFs         ! number of mafs
+      integer :: nFreqs        ! number of frequencies in each block
       real(r8) :: badValue
 
       ! ------------------------------------------      
@@ -104,13 +104,13 @@ contains
             call HighCloudRetrieval
       end select
 
+      call DestroyForwardModelIntermediate ! in case scan model got used
 
   contains      
   ! ------------------------------------------  HighCloudRetrieval  -----
     subroutine HighCloudRetrieval
       
       ! Local Variables
-      type (ForwardModelIntermediate_T) :: Fmw     ! Work space for forward model
       type (VectorValue_T), pointer :: xExtPtr        ! pointer of l_cloudExtinction quantity
       type (VectorValue_T), pointer :: xExtVar        ! variance of apriori
       type (VectorValue_T), pointer :: outExtSD        ! SD of output
@@ -237,7 +237,7 @@ contains
       print*,'begin cloud retrieval maf= ',maf,' chunk size=',nMAFs,'type=',doMaf
           fmStat%rows = .false.
           call forwardModel ( configDatabase(configIndices(1)), &
-            & state, fwdModelExtra, FwdModelOut1, fmw, fmStat, jacobian )
+            & state, fwdModelExtra, FwdModelOut1, fmStat, jacobian )
             
           ! get clear sky radiances from forward model for this signal
           Tb0 => GetVectorQuantityByType ( fwdModelOut1,                 &
@@ -328,7 +328,7 @@ contains
 
       call clearMatrix ( jacobian )           ! free the space
       end do ! end of mafs
-      
+
     ! give back the model config value
 !      configDatabase(configIndices(1))%cloud_width=cloudysky
       configDatabase(configIndices(1))%i_saturation=cloudysky
@@ -383,7 +383,6 @@ contains
     subroutine LowCloudRetrieval
       
       ! Local Variables
-      type (ForwardModelIntermediate_T) :: Fmw     ! Work space for forward model
       type (VectorValue_T), pointer :: xLosPtr        ! pointer of l_lostransfunc quantity
       type (VectorValue_T), pointer :: xExtPtr        ! pointer of l_cloudExtinction quantity
       type (VectorValue_T), pointer :: xLosVar        ! variance of apriori
@@ -570,7 +569,7 @@ contains
               
             ! call full cloud model for Jacobian and Sensitivity  
              call forwardModel ( configDatabase(configIndices(imodel)), &
-                & state, fwdModelExtra, FwdModelOut1, fmw, fmStat, jacobian )
+                & state, fwdModelExtra, FwdModelOut1, fmStat, jacobian )
             
             do isignal = 1, nSignal
               ! get signal information for this model. Note: allow only 1 signal 
@@ -953,6 +952,9 @@ contains
   end function not_used_here
 end module CloudRetrievalModule
 ! $Log$
+! Revision 2.11  2007/06/29 19:32:07  vsnyder
+! Make ForwardModelIntermediate_t private to ScanModelModule
+!
 ! Revision 2.10  2007/06/21 00:54:07  vsnyder
 ! Remove tabs, which are not part of the Fortran standard
 !
