@@ -174,7 +174,7 @@ contains
       & CONSTRUCTVECTORTEMPLATE
     use ForwardModelConfig, only: FORWARDMODELCONFIG_T, DESTROYFWMCONFIGDATABASE, &
       & PVMUNPACKFWMCONFIG
-    use ForwardModelIntermediate, only: FORWARDMODELINTERMEDIATE_T, FORWARDMODELSTATUS_T
+    use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
     use L2ParInfo, only: PARALLEL, SIG_FINISHED, SIG_NEWSETUP, SIG_RUNMAF, &
       & SIG_SENDRESULTS, NOTIFYTAG
     use MorePVM, only: PVMUNPACKSTRINGINDEX
@@ -188,6 +188,7 @@ contains
       & DESTROYMATRIX
     use QuantityPVM, only: PVMRECEIVEQUANTITY
     use ForwardModelWrappers, only: FORWARDMODEL
+    use ScanModelModule, only: DestroyForwardModelIntermediate
     use String_table, only: DISPLAY_STRING
     use Output_M, only: OUTPUT
 
@@ -208,7 +209,6 @@ contains
     logical, dimension(2) :: L2         ! Two flags sent by pvm
     integer, dimension(:), pointer :: QTINDS ! Index of relevant quantities
 
-    type (ForwardModelIntermediate_T) :: FMW
     type (ForwardModelStatus_T) :: FMSTAT
     type (QuantityTemplate_T), dimension(:), pointer :: QUANTITIES
     type (VectorTemplate_T), dimension(:), pointer :: VECTORTEMPLATES
@@ -354,8 +354,10 @@ contains
         fmStat%rows = .false.
         do i = 1, size ( fwmConfigs )
           call ForwardModel ( fwmConfigs(i), &
-            & vectors(fwmIn), vectors(fwmExtra), vectors(fwmOut), fmw, fmStat, jacobian )
+            & vectors(fwmIn), vectors(fwmExtra), vectors(fwmOut), fmStat, jacobian )
         end do
+        call DestroyForwardModelIntermediate ! in case scan model got used
+        fmStat%newScanHydros = .true.
 
         ! Pack up our results in anticipation of sending them off
         call PVMFInitSend ( PVMRAW, sendBufferID )
@@ -777,6 +779,9 @@ contains
 end module L2FWMParallel
 
 ! $Log$
+! Revision 2.22  2007/06/29 19:32:07  vsnyder
+! Make ForwardModelIntermediate_t private to ScanModelModule
+!
 ! Revision 2.21  2006/08/05 02:12:27  vsnyder
 ! Add ForWhom argument to ConstructVectorTemplate
 !
