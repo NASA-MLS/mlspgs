@@ -26,12 +26,12 @@ module BaselineForwardModel_m
 contains ! ======================================== BaselineForwardModel ======
 
   subroutine BaselineForwardModel ( FwdModelConf, FwdModelIn, FwdModelExtra, &
-    & FwdModelOut, oldIFM, fmStat, jacobian )
+    & FwdModelOut, fmStat, jacobian )
 
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use Dump_0, only: DUMP
     use ForwardModelConfig, only: FORWARDMODELCONFIG_T
-    use ForwardModelIntermediate, only: FORWARDMODELINTERMEDIATE_T, FORWARDMODELSTATUS_T
+    use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
     use Intrinsic, only: L_BASELINE, L_PTAN, L_NONE, L_RADIANCE, L_INTERMEDIATEFREQUENCY
     use ManipulateVectorQuantities, only: FINDONECLOSESTINSTANCE
     use MatrixModule_0, only: SPARSIFY, MATRIXELEMENT_T, M_ABSENT, M_BANDED, DENSIFY, &
@@ -50,7 +50,6 @@ contains ! ======================================== BaselineForwardModel ======
     type(forwardModelConfig_T), intent(inout) :: fwdModelConf
     type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
     type(vector_T), intent(inout) :: FwdModelOut  ! Radiances, etc.
-    type(forwardModelIntermediate_T), intent(inout) :: oldIfm ! Workspace
     type(forwardModelStatus_t), intent(inout) :: FmStat ! Reverse comm. stuff
     type(matrix_T), intent(inout), optional :: Jacobian
 
@@ -524,6 +523,9 @@ contains ! ======================================== BaselineForwardModel ======
 end module BaselineForwardModel_m
   
 ! $Log$
+! Revision 2.28  2007/06/29 19:32:42  vsnyder
+! Make ForwardModelIntermediate_t private to ScanModelModule
+!
 ! Revision 2.27  2006/01/27 17:23:29  livesey
 ! Embarrassing slip up.
 !
