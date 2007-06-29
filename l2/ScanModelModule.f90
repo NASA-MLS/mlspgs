@@ -25,8 +25,7 @@ module ScanModelModule          ! Scan model and associated calculations
 
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use ForwardModelConfig, only: ForwardModelConfig_T
-  use ForwardModelIntermediate, only: ForwardModelIntermediate_T, &
-    & ForwardModelStatus_T
+  use ForwardModelIntermediate, only:  ForwardModelStatus_T
   use ForwardModelVectorTools, only: GETQUANTITYFORFORWARDMODEL
   use Geometry, only: EARTHRADA, EARTHRADB, EARTHSURFACEGPH, GEODTOGEOCLAT, &
     & G0, GM, J2, J4, OMEGA => W, MAXREFRACTION
@@ -56,8 +55,22 @@ module ScanModelModule          ! Scan model and associated calculations
 
   private
 
-  public :: GetBasisGPH, GetHydrostaticTangentPressure, ScanForwardModel, &
-    & TwoDScanForwardModel, Get2DHydrostaticTangentPressure, GetGPHPrecision
+  public :: DestroyForwardModelIntermediate, GetBasisGPH, GetGPHPrecision, &
+    & GetHydrostaticTangentPressure, Get2DHydrostaticTangentPressure,      &
+    & ScanForwardModel, TwoDScanForwardModel
+
+  type, private :: ForwardModelIntermediate_T
+
+    ! These ones are for the scan model
+    real (r8), dimension(:,:),             pointer :: BasisGph=>NULL()
+    real (r8), dimension(:),               pointer :: R=>NULL()
+    real (r8), dimension(:,:),             pointer :: RT=>NULL()
+    integer :: BelowRef                 ! T. basis at or below refGPH
+
+  end type ForwardModelIntermediate_T
+
+  ! Workspace type stuff for the scan model
+  type (ForwardModelIntermediate_T), private, save :: IFM
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -72,6 +85,19 @@ module ScanModelModule          ! Scan model and associated calculations
   real (r8), parameter :: MAXPRESSURE = 1400.0 ! /mb Don't allow very large pressures
 
 contains ! =============== Subroutines and functions ==========================
+
+  ! -----------------------------  DestroyForwardModelIntemediate  -----
+  subroutine DestroyForwardModelIntermediate
+
+    use Allocate_Deallocate, only: DEALLOCATE_TEST
+
+    ! Exectuable code
+
+    call Deallocate_test ( ifm%basisGPH, 'basisGPH', ModuleName )
+    call Deallocate_test ( ifm%RT, 'RT', ModuleName )
+    call Deallocate_test ( ifm%R, 'R', ModuleName )
+
+  end subroutine DestroyForwardModelIntermediate
 
   ! ----------------------------------------------- GetBasisGPH ---------------
   subroutine GetBasisGPH ( temp, refGPH, gph, R, RT, belowRef )
@@ -434,7 +460,6 @@ contains ! =============== Subroutines and functions ==========================
     type (Matrix_T) :: jacobian         ! dScanresidual/dPtan
 
     type (ForwardModelConfig_T) :: FMCONF
-    type (ForwardModelIntermediate_T) :: IFM
     type (ForwardModelStatus_T) :: FMSTAT
 
     integer :: i                        ! Iteration counter
@@ -509,7 +534,7 @@ contains ! =============== Subroutines and functions ==========================
       ! Get residual for all mafs
       do maf = 1, ptan%template%noInstances
         fmStat%maf = maf
-       call TwoDScanForwardModel ( fmConf, state, extra, residual, ifm, &
+       call TwoDScanForwardModel ( fmConf, state, extra, residual, &
          & fmStat, jacobian, chunkNo )
        state%quantities(1)%values(:,maf) = state%quantities(1)%values(:,maf) - &
          & residual%quantities(1)%values(:,maf) / &
@@ -822,7 +847,7 @@ contains ! =============== Subroutines and functions ==========================
 
   ! ---------------------------------------- ScanForwardModel --------------
   subroutine ScanForwardModel ( fmConf, state, extra, &
-    & fwmOut, ifm, fmStat, jacobian )
+    & fwmOut, fmStat, jacobian )
     ! This is the main `scan model' for the module. It compares altitude reported
     ! geometrically, as converted into geopotential height, with a hydrostatic
     ! equivalent.
@@ -835,7 +860,6 @@ contains ! =============== Subroutines and functions ==========================
     type (Vector_T), intent(in) :: STATE ! The state vector
     type (Vector_T), intent(in) :: EXTRA ! Other stuff in the state vector
     type (Vector_T), intent(inout) :: FWMOUT ! Output vector, residual filled
-    type (ForwardModelIntermediate_T), intent(inout) :: IFM ! Workspace type stuff
     type (ForwardModelStatus_T), intent(inout) :: FMSTAT ! Which maf etc.
     type (Matrix_T), intent(inout), optional :: JACOBIAN ! The derivative matrix
 
@@ -1535,7 +1559,7 @@ contains ! =============== Subroutines and functions ==========================
 
   end subroutine ScanForwardModel
   ! ---------------------------------------- twodScanForwardModel -----------
-  subroutine TwoDScanForwardModel ( fmConf, state, extra, fwmOut, ifm, &
+  subroutine TwoDScanForwardModel ( fmConf, state, extra, fwmOut, &
   & fmStat, jacobian, chunkNo )
 
     use Get_eta_matrix_m, only: Get_eta_sparse
@@ -1551,7 +1575,6 @@ contains ! =============== Subroutines and functions ==========================
   type (Vector_T), intent(in) :: EXTRA ! Other stuff in the state vector
 ! outputs
   type (Vector_T), intent(inout) :: FWMOUT ! Output vector, residual filled
-  type (ForwardModelIntermediate_T), intent(inout) :: IFM ! Workspace type stuff
   type (ForwardModelStatus_T), intent(inout) :: FMSTAT ! Which maf etc.
   type (Matrix_T), intent(inout), optional :: JACOBIAN ! The derivative matrix
   integer, intent(in), optional :: chunkNo
@@ -2158,6 +2181,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.68  2007/06/29 19:32:07  vsnyder
+! Make ForwardModelIntermediate_t private to ScanModelModule
+!
 ! Revision 2.67  2006/12/13 01:33:08  vsnyder
 ! Use slightly faster get_eta_sparse
 !
