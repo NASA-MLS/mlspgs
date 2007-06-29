@@ -27,12 +27,12 @@ module SwitchingMirrorModel_m
 contains ! ====================================== SwitchingMirrorModel =====
 
   subroutine SwitchingMirrorModel ( FwdModelConf, FwdModelIn, FwdModelExtra, &
-    & FwdModelOut, oldIFM, fmStat, jacobian )
+    & FwdModelOut, fmStat, jacobian )
     ! Imports
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use D_STAT_TEMP_M, only: STAT_TEMP
     use ForwardModelConfig, only: FORWARDMODELCONFIG_T
-    use ForwardModelIntermediate, only: FORWARDMODELINTERMEDIATE_T, FORWARDMODELSTATUS_T
+    use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
     use VectorsModule, only: VECTOR_T, VECTORVALUE_T, GETVECTORQUANTITYBYTYPE
     use MatrixModule_1, only: MATRIX_T
     use Intrinsic, only: L_RADIANCE, L_REFLREFL, L_REFLSPILL, L_REFLTEMP, &
@@ -45,7 +45,6 @@ contains ! ====================================== SwitchingMirrorModel =====
     type(forwardModelConfig_T), intent(inout) :: fwdModelConf
     type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
     type(vector_T), intent(inout) :: FwdModelOut  ! Radiances, etc.
-    type(forwardModelIntermediate_T), intent(inout) :: oldIfm ! Workspace
     type(forwardModelStatus_t), intent(inout) :: FmStat ! Reverse comm. stuff
     type(matrix_T), intent(inout), optional :: Jacobian
 
@@ -203,6 +202,9 @@ contains ! ====================================== SwitchingMirrorModel =====
 end module SwitchingMirrorModel_m
 
 ! $Log$
+! Revision 2.5  2007/06/29 19:32:42  vsnyder
+! Make ForwardModelIntermediate_t private to ScanModelModule
+!
 ! Revision 2.4  2005/06/22 18:08:20  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
