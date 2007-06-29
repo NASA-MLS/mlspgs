@@ -32,7 +32,7 @@ contains
   ! -------------------------------------------- FullForwardModel -----
 
   subroutine FullForwardModel ( FwdModelConf, FwdModelIn, FwdModelExtra, &
-                             &  FwdModelOut, oldIfm, FmStat, Jacobian )
+                             &  FwdModelOut, FmStat, Jacobian )
 
   ! This gets a little bit of data and then computes the sizes for quantities
   ! in the full forward model proper, FullForwardModelAuto.
@@ -41,8 +41,7 @@ contains
     use Compute_Z_PSIG_m, only: Compute_Z_PSIG
     use ForwardModelConfig, only: DeriveFromForwardModelConfig, &
       & DestroyForwardModelDerived, ForwardModelConfig_t
-    use ForwardModelIntermediate, only: ForwardModelIntermediate_t, &
-                                        ForwardModelStatus_t
+    use ForwardModelIntermediate, only: ForwardModelStatus_t
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use Get_Species_Data_M, only:  Get_Species_Data
     use GLnp, only: NGP1
@@ -58,7 +57,6 @@ contains
     type(forwardModelConfig_T), intent(inout) :: FwdModelConf
     type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
     type(vector_T), intent(inout) :: FwdModelOut  ! Radiances, etc.
-    type(forwardModelIntermediate_T), intent(inout) :: oldIfm ! Workspace
     type(forwardModelStatus_t), intent(inout) :: FmStat ! Reverse comm. stuff
     type(matrix_T), intent(inout), optional :: Jacobian
 
@@ -867,576 +865,8 @@ contains
 
       ! Loop over pointings --------------------------------------------------
       do ptg_i = 1, no_tan_hts
-        if ( toggle(emit) .and. levels(emit) > 3 ) &
-          & call Trace_Begin ( 'ForwardModel.Pointing ', index=ptg_i )
-
-        if ( FwdModelConf%polarized ) &
-          & mif = minloc(abs(tan_press(ptg_i) - &
-          &                  ptan%values(:ptan%template%nosurfs,maf)),1)
-
-        if ( toggle(emit) .and. levels(emit) > 4 ) &
-          & call Trace_Begin ( 'ForwardModel.MetricsEtc' )
-
-        ! Assume it's not an earth-intersecting ray and min zeta is at
-        ! the tangent point
-        e_rflty = 1.0
-        ! Use the "original" GL-grid arrays -- the ones filled before the
-        ! sideband loop.  These depend only upon the original Zetas
-        ! (Z_PSIG) derived from the L2CF using make_z_grid.
-        ddhidhidtl0 => ddhidhidtl0_o
-        dh_dt_glgrid => dh_dt_glgrid_o
-        dhdz_glgrid => dhdz_glgrid_o
-        h_glgrid => h_glgrid_o
-        t_glgrid => t_glgrid_o
-        z_glgrid => z_glgrid_o
-
-        ! Compute where the tangent is, the equivalent Earth radius, tangent
-        ! height and surface height, and determine whether the ray
-        ! intersects the Earth surface
-        tan_ind_c = max(1,ptg_i-surfaceTangentIndex+1) ! On coarse grid
-        nz_ig = nlvl
-        if ( associated(surfaceHeight) ) then
-          call tangent_metrics ( tan_phi(ptg_i), Grids_tmp%phi_basis, z_psig, &
-            &                    h_glgrid, earthradc_sq,     & ! in
-            &                    tan_ind_c, nz_ig,           & ! inout
-            &                    req, h_surf, h_tan, z_ig,   & ! output
-            &                    surf_height=surfaceHeight%values(1,:) ) ! opt
-        else if ( ptg_i < surfaceTangentIndex ) then
-          call tangent_metrics ( tan_phi(ptg_i), Grids_tmp%phi_basis, z_psig, &
-            &                    h_glgrid, earthradc_sq,     & ! in
-            &                    tan_ind_c, nz_ig,           & ! inout
-            &                    req, h_surf, h_tan, z_ig,   & ! output
-            &                    Tan_Press=tan_press(ptg_i), & ! optional
-            &                    Surf_Temp=temp%values(1,windowstart:windowfinish) )
-        else
-          call tangent_metrics ( tan_phi(ptg_i), Grids_tmp%phi_basis, z_psig, &
-            &                    h_glgrid, earthradc_sq,     & ! in
-            &                    tan_ind_c, nz_ig,           & ! inout
-            &                    req, h_surf, h_tan, z_ig )    ! output
-        end if
-        nz_if = (nz_ig-1) * ngp1 + 1                ! On Z_GLgrid
-        tan_ind_f = (tan_ind_c-1) * ngp1 + 1        ! On Z_GLgrid
-        tan_pt_f = nz_if + 1 - tan_ind_f            ! fine path tangent index
-        tan_pt_c = (tan_pt_f + Ng) / Ngp1           ! coarse path tangent index
-        npc = 2 * tan_pt_c
-        npf = 2 * tan_pt_f
-
-        if ( nz_ig == nlvl ) then
-          z_coarse(:tan_pt_c) = z_psig(nlvl:tan_ind_c:-1)
-          z_coarse(tan_pt_c+1:npc) = z_psig(tan_ind_c:nlvl)
-        end if
-
-        if ( h_tan < 0.0 ) then ! Handle Earth-intersecting ray
-          e_rflty = earthRefl%values(1,1)
-          if ( nz_ig > nlvl ) then ! Added a new zeta
-            z_coarse(:tan_pt_c) = z_ig(nz_ig:tan_ind_c:-1)
-            z_coarse(tan_pt_c+1:npc) = z_ig(tan_ind_c:nz_ig)
-            ! Use the "revised" GL-grid arrays, which depend upon the new zeta.
-            ddhidhidtl0 => ddhidhidtl0_r(:nz_if,:,:)
-            dh_dt_glgrid => dh_dt_glgrid_r(:nz_if,:,:)
-            dhdz_glgrid => dhdz_glgrid_r(:nz_if,:)
-            h_glgrid => h_glgrid_r(:nz_if,:)
-            t_glgrid => t_glgrid_r(:nz_if,:)
-            z_glgrid => z_glgrid_r(:nz_if)
-            call compute_GL_grid ( z_ig(:nz_ig), z_glgrid )
-
-            if ( temp_der ) then
-              call two_d_hydrostatic ( Grids_tmp, &
-                &  (/ (refGPH%template%surfs(1,1), j=windowStart,windowFinish) /), &
-                &  0.001*refGPH%values(1,windowStart:windowFinish), z_glgrid, &
-                &  orbIncline%values(1,maf)*Deg2Rad, t_glgrid, h_glgrid, &
-                &  dhdz_glgrid, dh_dt_glgrid, DDHDHDTL0=ddhidhidtl0 )
-            else
-              call two_d_hydrostatic ( Grids_tmp, &
-                &  (/ (refGPH%template%surfs(1,1), j=windowStart,windowFinish) /), &
-                &  0.001*refGPH%values(1,windowStart:windowFinish), z_glgrid, &
-                &  orbIncline%values(1,maf)*Deg2Rad, t_glgrid, h_glgrid, &
-                &  dhdz_glgrid )
-            end if
-          end if
-        end if
-
-        ! Get H_Path and Phi_Path on the fine grid.
-        call Height_Metrics ( tan_phi(ptg_i), tan_ind_f, Grids_tmp%phi_basis, &
-          &  h_glgrid, req, h_surf, h_tan, &                    ! in
-          &  vert_inds(1:npf), h_path(1:npf), phi_path(1:npf) ) ! out
-
-        tan_ht = h_path(tan_pt_f) ! Includes Earth radius
-
-        if ( do_more_points ) then
-          call more_points ( tan_phi(ptg_i), tan_ind_f, Grids_tmp%phi_basis, &
-            & z_glgrid, h_glgrid, req, h_surf, h_tan, phi_path(1:npf), & ! in
-            & more_z_path, more_h_path, more_phi_path, n_more )
-        else
-          n_more = 0
-        end if
-
-        if ( do_zmin ) then
-          ! Get minimum zeta on the path
-          call Get_Min_Zeta ( Grids_tmp%phi_basis, h_glgrid(tan_ind_f,:), &
-                            & t_glgrid(tan_ind_f,:), z_glgrid(tan_ind_f), &
-                            & phi_path, tan_ind_f, tan_ht,                &
-                            & min_zeta, min_phi, min_index )
-
-          ! Add minimum zeta to the path
-          if ( min_index > 0 ) then ! minimum zeta not at or near tangent point
-            n_more = n_more + 1
-            more_z_path(n_more) = min_zeta
-            more_phi_path(n_more) = min_phi
-            more_h_path(n_more) = (h_tan+req)/cos(min_phi)
-          end if
-        else
-          min_index = 0
-        end if
-
-        call add_points ( more_h_path(:n_more), more_phi_path(:n_more),     &
-          &               more_z_path(:n_more), min_index, z_glgrid, nz_if, &
-          &               z_coarse, h_path, phi_path, vert_inds,            &
-          &               npc, npf, tan_pt_c, tan_pt_f )
-
-        if ( print_more_points .and. n_more > 0 ) then
-          call output ( 'Found more intersections', advance='yes' )
-          call output ( ptg_i, before='tan_phi(' )
-          call output ( tan_phi(ptg_i), before =') = ' )
-          call output ( tan_ind_f, before=', tan_ind_f = ' )
-          call output ( req, before=', req = ', format = '(f7.2)' )
-          call output ( h_surf, before=', h_surf = ', format = '(f7.2)' )
-          call output ( h_tan, before=', h_tan = ', advance='yes' )
-          call dump ( more_h_path(:n_more), name='more_h_path' )
-          call dump ( more_phi_path(:n_more), name='more_phi_path' )
-          call dump ( more_z_path(:n_more), name='more_z_path' )
-          call dump ( h_glgrid+req-h_surf, name='h_glgrid' )
-          call dump ( Grids_tmp%phi_basis, name='phi_basis' )
-          call dump ( h_path(1:npf), name='h_path' )
-          call dump ( phi_path(1:npf), name='phi_path' )
-        end if
-
-        ! Compute Gauss Legendre (GL) grid ----------------------------------
-        call compute_GL_grid ( z_coarse(:tan_pt_c), z_path(:tan_pt_f), &
-          &                    p_path(:tan_pt_f) )
-        call compute_GL_grid ( z_coarse(tan_pt_c+1:npc), z_path(tan_pt_f+1:npf), &
-          &                    p_path(tan_pt_f+1:npf) )
-
-        ! This is not pretty but we need some coarse path extraction indices
-        c_inds => c_inds_b(:npc)
-        c_inds = (/(i*Ngp1-Ng,i=1,tan_pt_c),((i-1)*Ngp1-Ng+1,i=tan_pt_c+1,npc)/)
-        ! And some fine path extraction indices
-        do_gl(1:npc:npc-1) = .false.; do_gl(2:npc-1) = .true.
-        call get_gl_inds ( do_gl(:npc), tan_pt_c, f_inds, cg_inds, nglMax, ncg )
-
-        del_zeta(1:npc:npc-1) = 0.0_rp ! First and last ones
-        del_zeta(2:tan_pt_c) = 0.5_rp * ( z_path(c_inds(1:tan_pt_c-1)) - &
-          &                               z_path(c_inds(2:tan_pt_c)) )
-        del_zeta(tan_pt_c+1:npc-1) = 0.5_rp * ( z_path(c_inds(tan_pt_c+2:npc)) - &
-          &                                     z_path(c_inds(tan_pt_c+1:npc-1)) )
-
-        ! Do phi refractive correction
-        if ( FwdModelConf%refract ) then
-          ! Get t_path (and dhdz_path, which we don't need yet) so we can
-          ! calculate the refractive index
-          call more_metrics ( tan_ind_f, tan_pt_f, Grids_tmp%phi_basis,  &
-            &  vert_inds(1:npf), t_glgrid, dhdz_glgrid, phi_path(1:npf), &
-            &  t_path(1:npf), dhdz_path(1:npf) )
-          ! Compute refractive index on the path.
-          if ( h2o_ind > 0 ) then
-            ! Compute eta_zp & do_calc_zp (Zeta & Phi only) for water.
-            ! It is important to send all of eta_zp, do_calc_zp, nz_zp and
-            ! nnz_zp so that nonzeros from previous invocations can be
-            ! cleared without violating array bounds.
-            call comp_eta_docalc_no_frq ( Grids_f, z_path(1:npf), &
-              &  phi_path(1:npf), eta_zp, do_calc_zp, tan_pt=tan_pt_f, &
-              &  nz_zp=nz_zp, nnz_zp=nnz_zp )
-            call comp_1_sps_path_no_frq ( Grids_f, h2o_ind, eta_zp(1:npf,:), &
-              & sps_path(1:npf,h2o_ind) )
-            call refractive_index ( p_path(1:npf), t_path(1:npf), &
-              &  n_path_f(1:npf),  &
-              &  h2o_path=sps_path(1:npf, h2o_ind) )
-          else
-            call refractive_index ( p_path(1:npf), t_path(1:npf), n_path_f(1:npf) )
-            n_path_c(:npc) = n_path_f(c_inds)
-          end if
-          ! Do the refractive correction.  Use t_path to store the correction,
-          ! since we're going to recompute t_path right away.
-          n_path_f(1:npf) = min ( n_path_f(1:npf), MaxRefraction )
-          call phi_refractive_correction ( tan_pt_f, n_path_f(1:npf), &
-            & h_path(1:npf), t_path(1:npf) )
-          phi_path(:tan_pt_f) = phi_path(:tan_pt_f) - t_path(:tan_pt_f)
-          phi_path(tan_pt_f+1:npf) = phi_path(tan_pt_f+1:npf) + t_path(tan_pt_f+1:npf)
-        end if
-
-        ! Get other metrics-related quantities: t_path, dhdz_path, dh_dt_path...
-        if ( temp_der ) then
-          call more_metrics ( tan_ind_f, tan_pt_f, Grids_tmp%phi_basis,    &
-            &  vert_inds(1:npf), t_glgrid, dhdz_glgrid, phi_path(1:npf),   &
-            &  t_path(1:npf), dhdz_path(1:npf),                            &
-            !  Stuff for temperature derivatives:
-            &  DDHIDHIDTL0 = ddhidhidtl0, DHIDTLM = dh_dt_glgrid,          &
-            &  T_DERIV_FLAG = Grids_tmp%deriv_flags,                       &
-            &  Z_BASIS = Grids_tmp%zet_basis, Z_REF=z_glgrid,              &
-            &  DDHTDHTDTL0 = tan_d2h_dhdt, DHITDTLM = dh_dt_path(1:npf,:), &
-            &  DHTDTL0 = tan_dh_dt, DO_CALC_HYD = do_calc_hyd(1:npf,:),    &
-            &  DO_CALC_T = do_calc_t, ETA_ZXP = eta_zxp_t,                 &
-            &  NZ_ZXP = nz_zxp_t, NNZ_ZXP = nnz_zxp_t )
-          dh_dt_path_c(1:npc,:) = dh_dt_path(c_inds,:)
-          do_calc_hyd_c(1:npc,:) = do_calc_hyd(c_inds,:)
-          do_calc_t_c(1:npc,:) = do_calc_t(c_inds,:)
-          eta_zxp_t_c(1:npc,:) = eta_zxp_t(c_inds,:)
-          call select_nz_list ( nz_zxp_t, nnz_zxp_t, c_inds, nz_zxp_t_c, nnz_zxp_t_c )
-          t_der_path_flags(1:npf) = any(do_calc_t(1:npf,:),2)
-        else
-          call more_metrics ( tan_ind_f, tan_pt_f, Grids_tmp%phi_basis,    &
-            &  vert_inds(1:npf), t_glgrid, dhdz_glgrid, phi_path(1:npf),   &
-            &  t_path(1:npf), dhdz_path(1:npf) )
-        end if
-
-!       dhdz_gw_path(f_inds) = dhdz_path(f_inds) * (/ ( gw, i = 1, nglMax/ng ) /)
-        do i = 1, nglMax, ng ! Avoid a temp for (/ ( gw, i = 1, nglMax/ng ) /)
-          dhdz_gw_path(f_inds(i:i+ng-1)) = dhdz_path(f_inds(i:i+ng-1)) * gw
-        end do
-        h_path_c(1:npc) = h_path(c_inds)
-        t_path_c(1:npc) = t_path(c_inds)
-
-        ! Compute the eta_zp & do_calc_zp (for Zeta & Phi only)
-
-        ! It is important to send all of eta_zp, do_calc_zp, nz_zp and
-        ! nnz_zp so that nonzeros from previous invocations can be
-        ! cleared without violating array bounds.
-        call comp_eta_docalc_no_frq ( Grids_f, z_path(1:npf), &
-          &  phi_path(1:npf), eta_zp, do_calc_zp, tan_pt=tan_pt_f, &
-          &  nz_zp=nz_zp, nnz_zp=nnz_zp )
-
-        ! Compute sps_path with a FAKE frequency, mainly to get the
-        ! WATER (H2O) contribution for refraction calculations, but also
-        ! to compute sps_path for all those with no frequency component
-
-      ! Frq = 0.0_r8
-        call comp_sps_path_frq ( Grids_f,           &
-          & 0.0_r8, eta_zp(1:npf,:),                &
-          & do_calc_zp(1:npf,:), sps_path(1:npf,:), &
-          & do_calc_fzp(1:npf,:), eta_fzp(1:npf,:) )
-!         ! Send all of eta_zp so comp_sps_path_frq_nz doesn't get an array
-!         ! bounds error when it's clearing parts indexed by nz_zp.
-! I don't know why this doesn't work
-!         call comp_sps_path_frq_nz ( Grids_f,                         &
-!           & 0.0_r8, eta_zp, nz_zp, nnz_zp,                           &
-!           & do_calc_zp(1:npf,:), sps_path(1:npf,:),                  &
-!           & do_calc_fzp(1:npf,:), eta_fzp(1:npf,:), nz_fzp, nnz_fzp )
-
-        if ( h2o_ind > 0 ) then
-          ! Even if we did the refractive correction we need to do this,
-          ! because the refractive correction changes phi_path, which
-          ! changes sps_path.
-          call refractive_index ( p_path(c_inds), &
-            &  t_path_c(1:npc), n_path_c(1:npc),  &
-            &  h2o_path=sps_path(c_inds, h2o_ind) )
-        else if ( .not. FwdModelConf%refract ) then
-          ! If we didn't do the refractive correction, we haven't yet
-          ! computed the refractive index.
-          call refractive_index ( p_path(1:npf), t_path(1:npf), n_path_f(1:npf) )
-          n_path_c(:npc) = n_path_f(c_inds)
-        end if
-
-        n_path_c(1:npc) = min ( n_path_c(1:npc), MaxRefraction )
-
-        if ( size(fwdModelConf%lineCenter) > 0 ) then
-          call comp_eta_docalc_no_frq ( grids_v, z_path(1:npf), &
-            & phi_path(1:npf), eta_zxp_v(1:npf,:), do_calc_v(1:npf,:), tan_pt=tan_pt_f )
-          call comp_sps_path_no_frq ( grids_v, eta_zxp_v(1:npf,:), &
-            & spect_v_path(1:npf,:) )
-          lineCenter_ix => beta_group%lbl(sx)%spect_der_ix(lineCenter)
-        end if
-        if ( size(fwdModelConf%lineWidth) > 0 ) then
-          call comp_eta_docalc_no_frq ( grids_w, z_path(1:npf), &
-            & phi_path(1:npf), eta_zxp_w(1:npf,:), do_calc_w(1:npf,:), tan_pt=tan_pt_f )
-          call comp_sps_path_no_frq ( grids_w, eta_zxp_w(1:npf,:), &
-            & spect_w_path(1:npf,:) )
-          lineWidth_ix => beta_group%lbl(sx)%spect_der_ix(lineWidth)
-        end if
-        if ( size(fwdModelConf%lineWidth_TDep) > 0 ) then
-          call comp_eta_docalc_no_frq ( grids_n, z_path(1:npf), &
-            & phi_path(1:npf), eta_zxp_n(1:npf,:), do_calc_n(1:npf,:), tan_pt=tan_pt_f )
-          call comp_sps_path_no_frq ( grids_n, eta_zxp_n(1:npf,:), &
-            & spect_n_path(1:npf,:) )
-          lineWidth_TDep_ix => beta_group%lbl(sx)%spect_der_ix(lineWidth_TDep)
-        end if
-
-        ! Special path quantities for cloud model
-        if ( fwdModelConf%Incl_Cld ) then ! s_i == 1 here
-
-          !set cloud parameters to zero
-          iwc_path(1:npf,1) = 0.
-          WC(1,1:npf)=iwc_path(1:npf,1)
-          WC(2,1:npf)=0.
-          IPSD(1:npf)=1000
-
-          call comp_eta_docalc_no_frq ( Grids_Iwc, z_path(1:npf), &
-            &  phi_path(1:npf), eta_iwc_zp(1:npf,:), tan_pt=tan_pt_f )
-
-          ! Compute IWC_PATH
-          call comp_sps_path_no_frq ( Grids_iwc, eta_iwc_zp(1:npf,:), &
-            & iwc_path(1:npf,:) )
-          WC(1,1:npf)=iwc_path(1:npf,1)
-        end if
-
-        ! Special path quantities for Polarized (magnetic) model
-        if ( FwdModelConf%polarized ) then
-
-          call comp_eta_docalc_no_frq ( Grids_Mag, z_path(1:npf), &
-            &  phi_path(1:npf), eta_mag_zp(1:npf,:), tan_pt=tan_pt_f )
-
-          ! Compute the first three components of MAG_PATH
-          call comp_sps_path ( Grids_mag, 1, eta_mag_zp(1:npf,:), &
-            & mag_path(1:npf,1:3) )
-
-          rot = reshape(ECRtoFOV%values(9*mif-8:9*mif,maf), (/3,3/))
-
-          do j = 1, npf
-            ! Rotate mag_path from ECR to IFOVPP (R1A) coordinates.  Use
-            ! the rotation matrix for the MIF nearest to the current
-            ! pointing angle instead of interpolating.  They are nearly
-            ! identical anyway.
-            mag_path(j,1:3) = matmul ( rot, mag_path(j,1:3) )
-            ! Put the magnitude of mag_path(j,1:3) in mag_path(j,4)
-            mag_path(j,4) = sqrt(sum(mag_path(j,1:3)**2))
-            ! Normalize mag_path(j,1:3).
-            if ( mag_path(j,4) /= 0.0_rp ) then
-              mag_path(j,1:3) = mag_path(j,1:3) / mag_path(j,4)
-            else
-              mag_path(j,1:3) = 0.0_rp
-              mag_path(j,3) = 1.0_rp !arbitrarily, theta=0 for zero field
-            end if
-          end do
-
-          ct => mag_path(1:npf,3)   ! cos(theta)
-          stcp => mag_path(1:npf,1) ! sin(theta) cos(phi)
-          stsp => mag_path(1:npf,2) ! sin(theta) sin(phi)
-          h => mag_path(1:npf,4)    ! magnitude of magnetic field
-
-          if ( print_Mag ) then
-            call dump ( h, 'H', clean=clean )
-            call dump ( ct, 'Cos(theta)', clean=clean )
-            call dump ( stcp, 'Sin(theta) Cos(phi)', clean=clean )
-            call dump ( stsp, 'Sin(theta) Sin(phi)', clean=clean )
-          end if
-
-        end if
-
-        if ( temp_der ) then
-         ! Ext_SCgeocAlt is in meters, but Get_Chi_Angles wants it in km.
-          call get_chi_angles ( 0.001*est_scGeocAlt(ptg_i), n_path_c(tan_pt_c),&
-             & tan_ht-Req, tan_phi(ptg_i), Req, 0.0_rp, ptg_angles(ptg_i),      &
-             & r, 1.0_rp, tan_dh_dt, tan_d2h_dhdt,       &
-             & dx_dt(ptg_i,:), d2x_dxdt(ptg_i,:) )
-        else
-          call get_chi_angles ( 0.001*est_scGeocAlt(ptg_i), n_path_c(tan_pt_c),&
-             & tan_ht-Req, tan_phi(ptg_i), Req, 0.0_rp, ptg_angles(ptg_i),      &
-             & r, 1.0_rp )
-        end if
-
-        n_path_c(1:npc) = n_path_c(1:npc) + 1.0_rp
-
-        call comp_refcor ( tan_pt_c, h_path_c(:npc), n_path_c(:npc), &
-                      &    tan_ht, del_s(:npc), ref_corr(:npc), ier )
-        if ( ier /= 0 ) fmStat%flags = ior(fmStat%flags,b_refraction)
-
-        ! We need path_dsdh on the fine grid for Gauss-Legendre or Gauss-
-        ! Lobatto quadrature, and on the coarse grid except at the tangent
-        ! point for trapezoidal quadrature and Gauss-Lobatto quadrature, so
-        ! compute it everywhere except at the tangent point.  Besides, it's
-        ! probably faster not to use a vector subscript to restrict it to
-        ! the fine grid.
-
-        path_dsdh(:tan_pt_f-1) = h_path(:tan_pt_f-1) / &
-          & ( sqrt(h_path(:tan_pt_f-1)**2 - tan_ht**2 ) )
-        path_dsdh(tan_pt_f+2:npf) = h_path(tan_pt_f+2:npf) / &
-          & ( sqrt(h_path(tan_pt_f+2:npf)**2 - tan_ht**2 ) )
-        path_dsdh(tan_pt_f:tan_pt_f+1) = 0.0
-
-        dsdz_gw_path(f_inds(:nglMax)) = path_dsdh(f_inds(:nglMax)) * &
-          & dhdz_gw_path(f_inds(:nglMax))
-
-        ! We need dsdz = ds/dh * dh/dz, not multiplied by GW, for
-        ! trapezoidal quadrature on the coarse grid.
-        dsdz_c(:npc) = path_dsdh(c_inds) * dhdz_path(c_inds)
-
-        ! Compute ALL the slabs_prep entities over the path's GL grid for this
-        ! pointing & mmaf:
-        if ( temp_der ) then
-          call get_gl_slabs_arrays ( p_path(1:npf), t_path(1:npf), &
-            &  est_los_vel(ptg_i), gl_slabs(1:npf,:), fwdModelConf%Do_1D, &
-            &  spect_v_path, lineCenter_ix, &
-            &  spect_w_path, lineWidth_ix, &
-            &  spect_n_path, lineWidth_TDep_ix, &
-            &  t_der_path_flags(1:npf) )
-        else
-          call get_gl_slabs_arrays ( p_path(1:npf), t_path(1:npf), &
-            &  est_los_vel(ptg_i), gl_slabs(1:npf,:), fwdModelConf%Do_1D, &
-            &  spect_v_path, lineCenter_ix, &
-            &  spect_w_path, lineWidth_ix, &
-            &  spect_n_path, lineWidth_TDep_ix )
-        end if
-
-        ! If we're doing frequency averaging, get the frequencies we need for
-        ! this pointing.
-
-        if ( FwdModelConf%do_freq_avg .and. fwdModelConf%anyLBL(sx) ) &
-          & call frequency_setup_2 ( vel_cor * &
-          & PointingGrids(whichPointingGrid)%oneGrid(grids(ptg_i))%frequencies )
-
-        if ( toggle(emit) .and. levels(emit) > 4 ) &
-          & call Trace_End ( 'ForwardModel.MetricsEtc' )
-
-!{{\bfseries Notations}
-! 
-! $N_f$ is the number of points in the pointing frequency grid.\\
-! $n$ is an index in the pointing frequency grid.\\
-! $N_p$ is the number of points in the line-of-sight path.\\
-! $i$ is an index in the line-of-sight path.  $c$ is a channel index.\\
-! $s$ indicates a strong-line (LBL) result.
-!   $w$ indicates a weak-line (PFA) result.\\
-! $\delta I^\sigma_{iq} = \Delta B_{iq} \tau^\sigma_{iq}$ is the incremental
-!  radiance contribution at the $i^{\text{th}}$ point along the line-of-sight
-!  path, for $\sigma$ either $s$  or $w$ and $q$ either $c$ or $n$.
-!
-! There are four possible combinations of LBL, PFA and
-! frequency-averaging.
-
-!{{\bfseries Frequency averaged, LBL only}
-!      \begin{equation*}\begin{split}
-!       I^s_c = \sum_{n=1}^{N_f} \phi_{nc} \Delta\nu_{nc}
-!             \sum_{i=1}^{N_p} \delta I^s_{in}
-!       \text{\phantom{xxxx}}
-! %
-!       \frac{\partial I^s_n}{\partial x_k} =& 
-!        \sum_{i=1}^{N_p}
-!         \tau^s_{in} \frac{\partial \Delta B_{in}}{\partial x_k}
-!         - \delta I^s_{in}
-!          \sum_{j=1}^i \frac{\partial \delta^s_{jn}}{\partial x_k}\\
-! %
-!       \frac{\partial I_c}{\partial x_k} =&
-!       \frac{\partial I^s_c}{\partial x_k} =
-!        \sum_{n=1}^{N_f} \phi_{nc} \Delta\nu_{nc}
-!        \frac{\partial I^s_n}{\partial x_k}
-!      \end{split}\end{equation*}
-
-!{{\bfseries Monochromatic, LBL only}
-!      \begin{equation*}
-!       I^s_c = \sum_{i=1}^{N_p} \delta I^s_{ic}
-!       \text{\phantom{xxxx}}
-! %
-!       \frac{\partial I^s_c}{\partial x_k} =
-!        \sum_{i=1}^{N_p}
-!         \tau^s_{ic} \frac{\partial \Delta B_{ic}}{\partial x_k}
-!         - \delta I^s_{ic}
-!          \sum_{j=1}^i \frac{\partial \delta^s_{jc}}{\partial x_k}
-!       \text{\phantom{xxxx}}
-! %
-!       \frac{\partial I_c}{\partial x_k} =
-!       \frac{\partial I^s_c}{\partial x_k}
-!      \end{equation*}
-
-!{{\bfseries Frequency averaged, PFA only}
-!      \begin{equation*}
-!       I_c = \sum_{i=1}^{N_p} \delta I^w_{ic}
-!       \text{\phantom{xxxx}}
-! %
-!       \frac{\partial I_c}{\partial x_k} =
-!        \sum_{i=1}^{N_p}
-!         \tau^w_{ic} \frac{\partial \Delta B_{ic}}{\partial x_k}
-!           - \delta I^w_{ic}
-!            \sum_{j=1}^i \frac{\partial \delta^w_{jc}}{\partial x_k}
-!       \text{\phantom{xxxx}}
-!      \end{equation*}
-
-!{{\bfseries Frequency averaged, LBL and PFA}
-!      \begin{equation*}
-! %
-!       \overline{\delta I^s_{ic}} =
-!        \sum_{n=1}^{N_f} \phi_{nc} \Delta\nu_{nc} \delta I^s_{in}
-!       \text{\phantom{xxxx}}
-! %
-!       I_{ic} = \overline{\delta I^s_{ic}} \tau^w_{ic}
-!       \text{\phantom{xxxx}}
-! %
-!       I_c = \sum_{i=1}^{N_p} I_{ic}
-!       \text{\phantom{xxxx}}
-! %
-!       \frac{\partial I_c}{\partial x_k} =
-!       \frac{\partial I^s_c}{\partial x_k}
-!        - \sum_{i=1}^{N_p} I_{ic}
-!          \sum_{j=1}^i \frac{\partial \delta^w_{jc}}{\partial x_k}
-!      \end{equation*}
-
-!{{\bfseries Program variables}
-! 
-! \begin{tabular}{llll}
-! $\Delta B_{in}$ is {\tt T\_Script\_LBL} &
-! $\Delta B_{ic}$ is {\tt T\_Script\_PFA} &
-! $\tau^s_{in}$ is {\tt Tau\_LBL} &
-! $\tau^w_{ic}$ is {\tt Tau\_PFA}
-! \\
-! $\delta I^\sigma_{iq}$ is {\tt Inc\_Rad\_Path} &
-! $\overline{\delta I^s_{ic}}$ is {\tt Rad\_Avg\_Path} & 
-! $I_{ic}$ is also {\tt Rad\_Avg\_Path} &
-! \\
-! $\sum_{i=1}^{N_p} \delta I^\sigma_{iq}$ is {\tt RadV} & 
-! $I_c$ or $I^s_c$ is {\tt Radiances} &
-! $\frac{\partial I^\sigma_q}{\partial x_k}$ is {\tt K\_}$x${\tt\_FRQ} &
-! $\frac{\partial I_c}{\partial x_k}$ is {\tt K\_}$x$
-! \\
-! \end{tabular}
-
-        if ( FwdModelConf%anyLBL(sx) ) then
-          call frequency_loop ( alpha_path_c(:npc), beta_path_c(:npc,:), c_inds,  &
-            & del_s(:npc), del_zeta(:npc),do_calc_fzp(:npf,:),                    &
-            & do_calc_zp(:npf,:), do_GL(:npc), frequencies, h_path_c,             &
-            & incoptdepth(:npc), p_path(:npf), pfaFalse, ref_corr(:npc),          &
-            & sps_path(:npf,:), tau_lbl, t_path_c(:npc), t_script_lbl(:npc,:),    &
-            & tanh1_c(:npc), tt_path_c(:s_i*npc), w0_path_c(:s_i*npc), z_path(:npf) )
-          if ( print_TauL ) then
-            call output ( thisSideband, before='Sideband ' )
-            call output ( ptg_i, before=' Pointing ' )
-            call dump ( tau_lbl, noFreqs, ' Tau_LBL:' )
-            call dump ( t_script_lbl(:npc,:noFreqs), 'T_Script_LBL' )
-          end if
-        end if
-
-        ! Handle PFA molecules
-        if ( FwdModelConf%anyPFA(sx) ) then
-          if ( frq_avg_sel == 15 ) then ! FRQ_avg + LBL + PFA + Derivs
-            ! For every channel, frequency average the incremental radiance at
-            ! every point along the path, giving Rad_Avg_Path for every channel
-            ! and every point along the path.  Multiply by Tau_PFA to combine
-            ! PFA contribution in Frequency_Loop.
-            call frequency_avg_rad_path
-            call frequency_average_derivatives ( .false. )
-          end if
-          call frequency_loop ( alpha_path_c(:npc), beta_path_c(:npc,:), c_inds, &
-            & del_s(:npc), del_zeta(:npc), do_calc_fzp(:npf,:),                  &
-            & do_calc_zp(:npf,:), do_GL(:npc), channelCenters, h_path_c,         &
-            & incoptdepth(:npc), p_path(:npf), pfaTrue, ref_corr(:npc),          &
-            & sps_path(:npf,:), tau_pfa, t_path_c(:npc), t_script_pfa(:npc,:),   &
-            & tanh1_c(:npc), tt_path_c(:s_i*npc), w0_path_c(:s_i*npc), z_path(:npf) )
-          if ( print_TauP ) then
-            call output ( thisSideband, before='Sideband ' )
-            call output ( ptg_i, before=' Pointing ' )
-            call dump ( tau_pfa, noUsedChannels, ' Tau_PFA:' )
-            call dump ( t_script_pfa(:npc,:), 'T_Script_PFA' )
-          end if
-
-        end if
-
-        call frequency_average ! or maybe just store
-
-        ! If we're doing frequency averaging, there's a different frequency
-        ! grid for each pointing, but we don't need to deallocate it here
-        ! because the allocate_test in frequency_setup_2 will deallocate it.
-
-        if ( toggle(emit) .and. levels(emit) > 3 ) &
-          & call trace_end ( 'ForwardModel.Pointing ', index=ptg_i )
-
-        ! End of pointing loop -------------------------------------------------
-      end do
+        call one_pointing
+      end do ! ptg_i
 
       if ( toggle(emit) .and. levels(emit) > 2 ) &
         & call Trace_End ( 'ForwardModel.PointingLoop' )
@@ -3118,6 +2548,582 @@ contains
 
     end subroutine Get_Channel_Centers
 
+  ! ...............................................  One_Pointing  .....
+    subroutine One_Pointing
+      if ( toggle(emit) .and. levels(emit) > 3 ) &
+        & call Trace_Begin ( 'ForwardModel.Pointing ', index=ptg_i )
+
+      if ( FwdModelConf%polarized ) &
+        & mif = minloc(abs(tan_press(ptg_i) - &
+        &                  ptan%values(:ptan%template%nosurfs,maf)),1)
+
+      if ( toggle(emit) .and. levels(emit) > 4 ) &
+        & call Trace_Begin ( 'ForwardModel.MetricsEtc' )
+
+      ! Assume it's not an earth-intersecting ray and min zeta is at
+      ! the tangent point
+      e_rflty = 1.0
+      ! Use the "original" GL-grid arrays -- the ones filled before the
+      ! sideband loop.  These depend only upon the original Zetas
+      ! (Z_PSIG) derived from the L2CF using make_z_grid.
+      ddhidhidtl0 => ddhidhidtl0_o
+      dh_dt_glgrid => dh_dt_glgrid_o
+      dhdz_glgrid => dhdz_glgrid_o
+      h_glgrid => h_glgrid_o
+      t_glgrid => t_glgrid_o
+      z_glgrid => z_glgrid_o
+
+      ! Compute where the tangent is, the equivalent Earth radius, tangent
+      ! height and surface height, and determine whether the ray
+      ! intersects the Earth surface
+      tan_ind_c = max(1,ptg_i-surfaceTangentIndex+1) ! On coarse grid
+      nz_ig = nlvl
+      if ( associated(surfaceHeight) ) then
+        call tangent_metrics ( tan_phi(ptg_i), Grids_tmp%phi_basis, z_psig, &
+          &                    h_glgrid, earthradc_sq,     & ! in
+          &                    tan_ind_c, nz_ig,           & ! inout
+          &                    req, h_surf, h_tan, z_ig,   & ! output
+          &                    surf_height=surfaceHeight%values(1,:) ) ! opt
+      else if ( ptg_i < surfaceTangentIndex ) then
+        call tangent_metrics ( tan_phi(ptg_i), Grids_tmp%phi_basis, z_psig, &
+          &                    h_glgrid, earthradc_sq,     & ! in
+          &                    tan_ind_c, nz_ig,           & ! inout
+          &                    req, h_surf, h_tan, z_ig,   & ! output
+          &                    Tan_Press=tan_press(ptg_i), & ! optional
+          &                    Surf_Temp=temp%values(1,windowstart:windowfinish) )
+      else
+        call tangent_metrics ( tan_phi(ptg_i), Grids_tmp%phi_basis, z_psig, &
+          &                    h_glgrid, earthradc_sq,     & ! in
+          &                    tan_ind_c, nz_ig,           & ! inout
+          &                    req, h_surf, h_tan, z_ig )    ! output
+      end if
+      nz_if = (nz_ig-1) * ngp1 + 1                ! On Z_GLgrid
+      tan_ind_f = (tan_ind_c-1) * ngp1 + 1        ! On Z_GLgrid
+      tan_pt_f = nz_if + 1 - tan_ind_f            ! fine path tangent index
+      tan_pt_c = (tan_pt_f + Ng) / Ngp1           ! coarse path tangent index
+      npc = 2 * tan_pt_c
+      npf = 2 * tan_pt_f
+
+      if ( nz_ig == nlvl ) then
+        z_coarse(:tan_pt_c) = z_psig(nlvl:tan_ind_c:-1)
+        z_coarse(tan_pt_c+1:npc) = z_psig(tan_ind_c:nlvl)
+      end if
+
+      if ( h_tan < 0.0 ) then ! Handle Earth-intersecting ray
+        e_rflty = earthRefl%values(1,1)
+        if ( nz_ig > nlvl ) then ! Added a new zeta
+          z_coarse(:tan_pt_c) = z_ig(nz_ig:tan_ind_c:-1)
+          z_coarse(tan_pt_c+1:npc) = z_ig(tan_ind_c:nz_ig)
+          ! Use the "revised" GL-grid arrays, which depend upon the new zeta.
+          ddhidhidtl0 => ddhidhidtl0_r(:nz_if,:,:)
+          dh_dt_glgrid => dh_dt_glgrid_r(:nz_if,:,:)
+          dhdz_glgrid => dhdz_glgrid_r(:nz_if,:)
+          h_glgrid => h_glgrid_r(:nz_if,:)
+          t_glgrid => t_glgrid_r(:nz_if,:)
+          z_glgrid => z_glgrid_r(:nz_if)
+          call compute_GL_grid ( z_ig(:nz_ig), z_glgrid )
+
+          if ( temp_der ) then
+            call two_d_hydrostatic ( Grids_tmp, &
+              &  (/ (refGPH%template%surfs(1,1), j=windowStart,windowFinish) /), &
+              &  0.001*refGPH%values(1,windowStart:windowFinish), z_glgrid, &
+              &  orbIncline%values(1,maf)*Deg2Rad, t_glgrid, h_glgrid, &
+              &  dhdz_glgrid, dh_dt_glgrid, DDHDHDTL0=ddhidhidtl0 )
+          else
+            call two_d_hydrostatic ( Grids_tmp, &
+              &  (/ (refGPH%template%surfs(1,1), j=windowStart,windowFinish) /), &
+              &  0.001*refGPH%values(1,windowStart:windowFinish), z_glgrid, &
+              &  orbIncline%values(1,maf)*Deg2Rad, t_glgrid, h_glgrid, &
+              &  dhdz_glgrid )
+          end if
+        end if
+      end if
+
+      ! Get H_Path and Phi_Path on the fine grid.
+      call Height_Metrics ( tan_phi(ptg_i), tan_ind_f, Grids_tmp%phi_basis, &
+        &  h_glgrid, req, h_surf, h_tan, &                    ! in
+        &  vert_inds(1:npf), h_path(1:npf), phi_path(1:npf) ) ! out
+
+      tan_ht = h_path(tan_pt_f) ! Includes Earth radius
+
+      if ( do_more_points ) then
+        ! Look for path crossings at zetas below the tangent point.
+        ! These can only happen if the minimum zeta isn't at the tangent.
+        call more_points ( tan_phi(ptg_i), tan_ind_f, Grids_tmp%phi_basis, &
+          & z_glgrid, h_glgrid, req, h_surf, h_tan, phi_path(1:npf), & ! in
+          & more_z_path, more_h_path, more_phi_path, n_more )
+      else
+        n_more = 0
+      end if
+
+      if ( do_zmin ) then
+        ! Get minimum zeta on the path
+        call Get_Min_Zeta ( Grids_tmp%phi_basis, h_glgrid(tan_ind_f,:), &
+                          & t_glgrid(tan_ind_f,:), z_glgrid(tan_ind_f), &
+                          & phi_path, tan_ind_f, tan_ht,                &
+                          & min_zeta, min_phi, min_index )
+
+        ! Add minimum zeta to the path
+        if ( min_index > 0 ) then ! minimum zeta not at or near tangent point
+          n_more = n_more + 1
+          more_z_path(n_more) = min_zeta
+          more_phi_path(n_more) = min_phi
+          more_h_path(n_more) = (h_tan+req)/cos(min_phi)
+        end if
+      else
+        min_index = 0
+      end if
+
+      call add_points ( more_h_path(:n_more), more_phi_path(:n_more),     &
+        &               more_z_path(:n_more), min_index, z_glgrid, nz_if, &
+        &               z_coarse, h_path, phi_path, vert_inds,            &
+        &               npc, npf, tan_pt_c, tan_pt_f )
+
+      if ( print_more_points .and. n_more > 0 ) then
+        call output ( 'Found more intersections', advance='yes' )
+        call output ( ptg_i, before='tan_phi(' )
+        call output ( tan_phi(ptg_i), before =') = ' )
+        call output ( tan_ind_f, before=', tan_ind_f = ' )
+        call output ( req, before=', req = ', format = '(f7.2)' )
+        call output ( h_surf, before=', h_surf = ', format = '(f7.2)' )
+        call output ( h_tan, before=', h_tan = ', advance='yes' )
+        call dump ( more_h_path(:n_more), name='more_h_path' )
+        call dump ( more_phi_path(:n_more), name='more_phi_path' )
+        call dump ( more_z_path(:n_more), name='more_z_path' )
+        call dump ( h_glgrid+req-h_surf, name='h_glgrid' )
+        call dump ( Grids_tmp%phi_basis, name='phi_basis' )
+        call dump ( h_path(1:npf), name='h_path' )
+        call dump ( phi_path(1:npf), name='phi_path' )
+      end if
+
+      ! Compute Gauss Legendre (GL) grid ----------------------------------
+      call compute_GL_grid ( z_coarse(:tan_pt_c), z_path(:tan_pt_f), &
+        &                    p_path(:tan_pt_f) )
+      call compute_GL_grid ( z_coarse(tan_pt_c+1:npc), z_path(tan_pt_f+1:npf), &
+        &                    p_path(tan_pt_f+1:npf) )
+
+      ! This is not pretty but we need some coarse path extraction indices
+      c_inds => c_inds_b(:npc)
+      c_inds = (/(i*Ngp1-Ng,i=1,tan_pt_c),((i-1)*Ngp1-Ng+1,i=tan_pt_c+1,npc)/)
+      ! And some fine path extraction indices
+      do_gl(1:npc:npc-1) = .false.; do_gl(2:npc-1) = .true.
+      call get_gl_inds ( do_gl(:npc), tan_pt_c, f_inds, cg_inds, nglMax, ncg )
+
+      del_zeta(1:npc:npc-1) = 0.0_rp ! First and last ones
+      del_zeta(2:tan_pt_c) = 0.5_rp * ( z_path(c_inds(1:tan_pt_c-1)) - &
+        &                               z_path(c_inds(2:tan_pt_c)) )
+      del_zeta(tan_pt_c+1:npc-1) = 0.5_rp * ( z_path(c_inds(tan_pt_c+2:npc)) - &
+        &                                     z_path(c_inds(tan_pt_c+1:npc-1)) )
+
+      ! Do phi refractive correction
+      if ( FwdModelConf%refract ) then
+        ! Get t_path (and dhdz_path, which we don't need yet) so we can
+        ! calculate the refractive index
+        call more_metrics ( tan_ind_f, tan_pt_f, Grids_tmp%phi_basis,  &
+          &  vert_inds(1:npf), t_glgrid, dhdz_glgrid, phi_path(1:npf), &
+          &  t_path(1:npf), dhdz_path(1:npf) )
+        ! Compute refractive index on the path.
+        if ( h2o_ind > 0 ) then
+          ! Compute eta_zp & do_calc_zp (Zeta & Phi only) for water.
+          ! It is important to send all of eta_zp, do_calc_zp, nz_zp and
+          ! nnz_zp so that nonzeros from previous invocations can be
+          ! cleared without violating array bounds.
+          call comp_eta_docalc_no_frq ( Grids_f, z_path(1:npf), &
+            &  phi_path(1:npf), eta_zp, do_calc_zp, tan_pt=tan_pt_f, &
+            &  nz_zp=nz_zp, nnz_zp=nnz_zp )
+          call comp_1_sps_path_no_frq ( Grids_f, h2o_ind, eta_zp(1:npf,:), &
+            & sps_path(1:npf,h2o_ind) )
+          call refractive_index ( p_path(1:npf), t_path(1:npf), &
+            &  n_path_f(1:npf),  &
+            &  h2o_path=sps_path(1:npf, h2o_ind) )
+        else
+          call refractive_index ( p_path(1:npf), t_path(1:npf), n_path_f(1:npf) )
+          n_path_c(:npc) = n_path_f(c_inds)
+        end if
+        ! Do the refractive correction.  Use t_path to store the correction,
+        ! since we're going to recompute t_path right away.
+        n_path_f(1:npf) = min ( n_path_f(1:npf), MaxRefraction )
+        call phi_refractive_correction ( tan_pt_f, n_path_f(1:npf), &
+          & h_path(1:npf), t_path(1:npf) )
+        phi_path(:tan_pt_f) = phi_path(:tan_pt_f) - t_path(:tan_pt_f)
+        phi_path(tan_pt_f+1:npf) = phi_path(tan_pt_f+1:npf) + t_path(tan_pt_f+1:npf)
+      end if
+
+      ! Get other metrics-related quantities: t_path, dhdz_path, dh_dt_path...
+      if ( temp_der ) then
+        call more_metrics ( tan_ind_f, tan_pt_f, Grids_tmp%phi_basis,    &
+          &  vert_inds(1:npf), t_glgrid, dhdz_glgrid, phi_path(1:npf),   &
+          &  t_path(1:npf), dhdz_path(1:npf),                            &
+          !  Stuff for temperature derivatives:
+          &  DDHIDHIDTL0 = ddhidhidtl0, DHIDTLM = dh_dt_glgrid,          &
+          &  T_DERIV_FLAG = Grids_tmp%deriv_flags,                       &
+          &  Z_BASIS = Grids_tmp%zet_basis, Z_REF=z_glgrid,              &
+          &  DDHTDHTDTL0 = tan_d2h_dhdt, DHITDTLM = dh_dt_path(1:npf,:), &
+          &  DHTDTL0 = tan_dh_dt, DO_CALC_HYD = do_calc_hyd(1:npf,:),    &
+          &  DO_CALC_T = do_calc_t, ETA_ZXP = eta_zxp_t,                 &
+          &  NZ_ZXP = nz_zxp_t, NNZ_ZXP = nnz_zxp_t )
+        dh_dt_path_c(1:npc,:) = dh_dt_path(c_inds,:)
+        do_calc_hyd_c(1:npc,:) = do_calc_hyd(c_inds,:)
+        do_calc_t_c(1:npc,:) = do_calc_t(c_inds,:)
+        eta_zxp_t_c(1:npc,:) = eta_zxp_t(c_inds,:)
+        call select_nz_list ( nz_zxp_t, nnz_zxp_t, c_inds, nz_zxp_t_c, nnz_zxp_t_c )
+        t_der_path_flags(1:npf) = any(do_calc_t(1:npf,:),2)
+      else
+        call more_metrics ( tan_ind_f, tan_pt_f, Grids_tmp%phi_basis,    &
+          &  vert_inds(1:npf), t_glgrid, dhdz_glgrid, phi_path(1:npf),   &
+          &  t_path(1:npf), dhdz_path(1:npf) )
+      end if
+
+!   dhdz_gw_path(f_inds) = dhdz_path(f_inds) * (/ ( gw, i = 1, nglMax/ng ) /)
+      do i = 1, nglMax, ng ! Avoid a temp for (/ ( gw, i = 1, nglMax/ng ) /)
+        dhdz_gw_path(f_inds(i:i+ng-1)) = dhdz_path(f_inds(i:i+ng-1)) * gw
+      end do
+      h_path_c(1:npc) = h_path(c_inds)
+      t_path_c(1:npc) = t_path(c_inds)
+
+      ! Compute eta_zp & do_calc_zp (for Zeta & Phi only)
+
+      ! It is important to send all of eta_zp, do_calc_zp, nz_zp and
+      ! nnz_zp so that nonzeros from previous invocations can be
+      ! cleared without violating array bounds.
+      call comp_eta_docalc_no_frq ( Grids_f, z_path(1:npf), &
+        &  phi_path(1:npf), eta_zp, do_calc_zp, tan_pt=tan_pt_f, &
+        &  nz_zp=nz_zp, nnz_zp=nnz_zp )
+
+      ! Compute sps_path with a FAKE frequency, mainly to get the
+      ! WATER (H2O) contribution for refraction calculations, but also
+      ! to compute sps_path for all those with no frequency component
+
+    ! Frq = 0.0_r8
+      call comp_sps_path_frq ( Grids_f,           &
+        & 0.0_r8, eta_zp(1:npf,:),                &
+        & do_calc_zp(1:npf,:), sps_path(1:npf,:), &
+        & do_calc_fzp(1:npf,:), eta_fzp(1:npf,:) )
+!       ! Send all of eta_zp so comp_sps_path_frq_nz doesn't get an array
+!       ! bounds error when it's clearing parts indexed by nz_zp.
+! I don't know why this doesn't work
+!       call comp_sps_path_frq_nz ( Grids_f,                         &
+!         & 0.0_r8, eta_zp, nz_zp, nnz_zp,                           &
+!         & do_calc_zp(1:npf,:), sps_path(1:npf,:),                  &
+!         & do_calc_fzp(1:npf,:), eta_fzp(1:npf,:), nz_fzp, nnz_fzp )
+
+      if ( h2o_ind > 0 ) then
+        ! Even if we did the refractive correction we need to do this,
+        ! because the refractive correction changes phi_path, which
+        ! changes sps_path.
+        call refractive_index ( p_path(c_inds), &
+          &  t_path_c(1:npc), n_path_c(1:npc),  &
+          &  h2o_path=sps_path(c_inds, h2o_ind) )
+      else if ( .not. FwdModelConf%refract ) then
+        ! If we didn't do the refractive correction, we haven't yet
+        ! computed the refractive index.
+        call refractive_index ( p_path(1:npf), t_path(1:npf), n_path_f(1:npf) )
+        n_path_c(:npc) = n_path_f(c_inds)
+      end if
+
+      n_path_c(1:npc) = min ( n_path_c(1:npc), MaxRefraction )
+
+      ! Special path quantities for spectroscopy derivatives
+      if ( size(fwdModelConf%lineCenter) > 0 ) then
+        call comp_eta_docalc_no_frq ( grids_v, z_path(1:npf), &
+          & phi_path(1:npf), eta_zxp_v(1:npf,:), do_calc_v(1:npf,:), tan_pt=tan_pt_f )
+        call comp_sps_path_no_frq ( grids_v, eta_zxp_v(1:npf,:), &
+          & spect_v_path(1:npf,:) )
+        lineCenter_ix => beta_group%lbl(sx)%spect_der_ix(lineCenter)
+      end if
+      if ( size(fwdModelConf%lineWidth) > 0 ) then
+        call comp_eta_docalc_no_frq ( grids_w, z_path(1:npf), &
+          & phi_path(1:npf), eta_zxp_w(1:npf,:), do_calc_w(1:npf,:), tan_pt=tan_pt_f )
+        call comp_sps_path_no_frq ( grids_w, eta_zxp_w(1:npf,:), &
+          & spect_w_path(1:npf,:) )
+        lineWidth_ix => beta_group%lbl(sx)%spect_der_ix(lineWidth)
+      end if
+      if ( size(fwdModelConf%lineWidth_TDep) > 0 ) then
+        call comp_eta_docalc_no_frq ( grids_n, z_path(1:npf), &
+          & phi_path(1:npf), eta_zxp_n(1:npf,:), do_calc_n(1:npf,:), tan_pt=tan_pt_f )
+        call comp_sps_path_no_frq ( grids_n, eta_zxp_n(1:npf,:), &
+          & spect_n_path(1:npf,:) )
+        lineWidth_TDep_ix => beta_group%lbl(sx)%spect_der_ix(lineWidth_TDep)
+      end if
+
+      ! Special path quantities for cloud model
+      if ( fwdModelConf%Incl_Cld ) then ! s_i == 1 here
+
+        !set cloud parameters to zero
+        iwc_path(1:npf,1) = 0.
+        WC(1,1:npf)=iwc_path(1:npf,1)
+        WC(2,1:npf)=0.
+        IPSD(1:npf)=1000
+
+        call comp_eta_docalc_no_frq ( Grids_Iwc, z_path(1:npf), &
+          &  phi_path(1:npf), eta_iwc_zp(1:npf,:), tan_pt=tan_pt_f )
+
+        ! Compute IWC_PATH
+        call comp_sps_path_no_frq ( Grids_iwc, eta_iwc_zp(1:npf,:), &
+          & iwc_path(1:npf,:) )
+        WC(1,1:npf)=iwc_path(1:npf,1)
+      end if
+
+      ! Special path quantities for Polarized (magnetic) model
+      if ( FwdModelConf%polarized ) then
+
+        call comp_eta_docalc_no_frq ( Grids_Mag, z_path(1:npf), &
+          &  phi_path(1:npf), eta_mag_zp(1:npf,:), tan_pt=tan_pt_f )
+
+        ! Compute the first three components of MAG_PATH
+        call comp_sps_path ( Grids_mag, 1, eta_mag_zp(1:npf,:), &
+          & mag_path(1:npf,1:3) )
+
+        rot = reshape(ECRtoFOV%values(9*mif-8:9*mif,maf), (/3,3/))
+
+        do j = 1, npf
+          ! Rotate mag_path from ECR to IFOVPP (R1A) coordinates.  Use
+          ! the rotation matrix for the MIF nearest to the current
+          ! pointing angle instead of interpolating.  They are nearly
+          ! identical anyway.
+          mag_path(j,1:3) = matmul ( rot, mag_path(j,1:3) )
+          ! Put the magnitude of mag_path(j,1:3) in mag_path(j,4)
+          mag_path(j,4) = sqrt(sum(mag_path(j,1:3)**2))
+          ! Normalize mag_path(j,1:3).
+          if ( mag_path(j,4) /= 0.0_rp ) then
+            mag_path(j,1:3) = mag_path(j,1:3) / mag_path(j,4)
+          else
+            mag_path(j,1:3) = 0.0_rp
+            mag_path(j,3) = 1.0_rp !arbitrarily, theta=0 for zero field
+          end if
+        end do
+
+        ct => mag_path(1:npf,3)   ! cos(theta)
+        stcp => mag_path(1:npf,1) ! sin(theta) cos(phi)
+        stsp => mag_path(1:npf,2) ! sin(theta) sin(phi)
+        h => mag_path(1:npf,4)    ! magnitude of magnetic field
+
+        if ( print_Mag ) then
+          call dump ( h, 'H', clean=clean )
+          call dump ( ct, 'Cos(theta)', clean=clean )
+          call dump ( stcp, 'Sin(theta) Cos(phi)', clean=clean )
+          call dump ( stsp, 'Sin(theta) Sin(phi)', clean=clean )
+        end if
+
+      end if
+
+      if ( temp_der ) then
+        ! Ext_SCgeocAlt is in meters, but Get_Chi_Angles wants it in km.
+        call get_chi_angles ( 0.001*est_scGeocAlt(ptg_i), n_path_c(tan_pt_c),&
+           & tan_ht-Req, tan_phi(ptg_i), Req, 0.0_rp, ptg_angles(ptg_i),      &
+           & r, 1.0_rp, tan_dh_dt, tan_d2h_dhdt,       &
+           & dx_dt(ptg_i,:), d2x_dxdt(ptg_i,:) )
+      else
+        call get_chi_angles ( 0.001*est_scGeocAlt(ptg_i), n_path_c(tan_pt_c),&
+           & tan_ht-Req, tan_phi(ptg_i), Req, 0.0_rp, ptg_angles(ptg_i),      &
+           & r, 1.0_rp )
+      end if
+
+      n_path_c(1:npc) = n_path_c(1:npc) + 1.0_rp
+
+      call comp_refcor ( tan_pt_c, h_path_c(:npc), n_path_c(:npc), &
+                    &    tan_ht, del_s(:npc), ref_corr(:npc), ier )
+      if ( ier /= 0 ) fmStat%flags = ior(fmStat%flags,b_refraction)
+
+      ! We need path_dsdh on the fine grid for Gauss-Legendre or Gauss-
+      ! Lobatto quadrature, and on the coarse grid except at the tangent
+      ! point for trapezoidal quadrature and Gauss-Lobatto quadrature, so
+      ! compute it everywhere except at the tangent point.  Besides, it's
+      ! probably faster not to use a vector subscript to restrict it to
+      ! the fine grid.
+
+      path_dsdh(:tan_pt_f-1) = h_path(:tan_pt_f-1) / &
+        & ( sqrt(h_path(:tan_pt_f-1)**2 - tan_ht**2 ) )
+      path_dsdh(tan_pt_f+2:npf) = h_path(tan_pt_f+2:npf) / &
+        & ( sqrt(h_path(tan_pt_f+2:npf)**2 - tan_ht**2 ) )
+      path_dsdh(tan_pt_f:tan_pt_f+1) = 0.0
+
+      dsdz_gw_path(f_inds(:nglMax)) = path_dsdh(f_inds(:nglMax)) * &
+        & dhdz_gw_path(f_inds(:nglMax))
+
+      ! We need dsdz = ds/dh * dh/dz, not multiplied by GW, for
+      ! trapezoidal quadrature on the coarse grid.
+      dsdz_c(:npc) = path_dsdh(c_inds) * dhdz_path(c_inds)
+
+      ! Compute ALL the slabs_prep entities over the path's GL grid for this
+      ! pointing & mmaf:
+      if ( temp_der ) then
+        call get_gl_slabs_arrays ( p_path(1:npf), t_path(1:npf), &
+          &  est_los_vel(ptg_i), gl_slabs(1:npf,:), fwdModelConf%Do_1D, &
+          &  spect_v_path, lineCenter_ix, &
+          &  spect_w_path, lineWidth_ix, &
+          &  spect_n_path, lineWidth_TDep_ix, &
+          &  t_der_path_flags(1:npf) )
+      else
+        call get_gl_slabs_arrays ( p_path(1:npf), t_path(1:npf), &
+          &  est_los_vel(ptg_i), gl_slabs(1:npf,:), fwdModelConf%Do_1D, &
+          &  spect_v_path, lineCenter_ix, &
+          &  spect_w_path, lineWidth_ix, &
+          &  spect_n_path, lineWidth_TDep_ix )
+      end if
+
+      ! If we're doing frequency averaging, get the frequencies we need for
+      ! this pointing.
+
+      if ( FwdModelConf%do_freq_avg .and. fwdModelConf%anyLBL(sx) ) &
+        & call frequency_setup_2 ( vel_cor * &
+        & PointingGrids(whichPointingGrid)%oneGrid(grids(ptg_i))%frequencies )
+
+      if ( toggle(emit) .and. levels(emit) > 4 ) &
+        & call Trace_End ( 'ForwardModel.MetricsEtc' )
+
+!{{\bfseries Notations}
+! 
+! $N_f$ is the number of points in the pointing frequency grid.\\
+! $n$ is an index in the pointing frequency grid.\\
+! $N_p$ is the number of points in the line-of-sight path.\\
+! $i$ is an index in the line-of-sight path.  $c$ is a channel index.\\
+! $s$ indicates a strong-line (LBL) result.
+!   $w$ indicates a weak-line (PFA) result.\\
+! $\delta I^\sigma_{iq} = \Delta B_{iq} \tau^\sigma_{iq}$ is the incremental
+!  radiance contribution at the $i^{\text{th}}$ point along the line-of-sight
+!  path, for $\sigma$ either $s$  or $w$ and $q$ either $c$ or $n$.
+!
+! There are four possible combinations of LBL, PFA and
+! frequency-averaging.
+
+!{{\bfseries Frequency averaged, LBL only}
+!      \begin{equation*}\begin{split}
+!       I^s_c = \sum_{n=1}^{N_f} \phi_{nc} \Delta\nu_{nc}
+!             \sum_{i=1}^{N_p} \delta I^s_{in}
+!       \text{\phantom{xxxx}}
+! %
+!       \frac{\partial I^s_n}{\partial x_k} =& 
+!        \sum_{i=1}^{N_p}
+!         \tau^s_{in} \frac{\partial \Delta B_{in}}{\partial x_k}
+!         - \delta I^s_{in}
+!          \sum_{j=1}^i \frac{\partial \delta^s_{jn}}{\partial x_k}\\
+! %
+!       \frac{\partial I_c}{\partial x_k} =&
+!       \frac{\partial I^s_c}{\partial x_k} =
+!        \sum_{n=1}^{N_f} \phi_{nc} \Delta\nu_{nc}
+!        \frac{\partial I^s_n}{\partial x_k}
+!      \end{split}\end{equation*}
+
+!{{\bfseries Monochromatic, LBL only}
+!      \begin{equation*}
+!       I^s_c = \sum_{i=1}^{N_p} \delta I^s_{ic}
+!       \text{\phantom{xxxx}}
+! %
+!       \frac{\partial I^s_c}{\partial x_k} =
+!        \sum_{i=1}^{N_p}
+!         \tau^s_{ic} \frac{\partial \Delta B_{ic}}{\partial x_k}
+!         - \delta I^s_{ic}
+!          \sum_{j=1}^i \frac{\partial \delta^s_{jc}}{\partial x_k}
+!       \text{\phantom{xxxx}}
+! %
+!       \frac{\partial I_c}{\partial x_k} =
+!       \frac{\partial I^s_c}{\partial x_k}
+!      \end{equation*}
+
+!{{\bfseries Frequency averaged, PFA only}
+!      \begin{equation*}
+!       I_c = \sum_{i=1}^{N_p} \delta I^w_{ic}
+!       \text{\phantom{xxxx}}
+! %
+!       \frac{\partial I_c}{\partial x_k} =
+!        \sum_{i=1}^{N_p}
+!         \tau^w_{ic} \frac{\partial \Delta B_{ic}}{\partial x_k}
+!           - \delta I^w_{ic}
+!            \sum_{j=1}^i \frac{\partial \delta^w_{jc}}{\partial x_k}
+!       \text{\phantom{xxxx}}
+!      \end{equation*}
+
+!{{\bfseries Frequency averaged, LBL and PFA}
+!      \begin{equation*}
+! %
+!       \overline{\delta I^s_{ic}} =
+!        \sum_{n=1}^{N_f} \phi_{nc} \Delta\nu_{nc} \delta I^s_{in}
+!       \text{\phantom{xxxx}}
+! %
+!       I_{ic} = \overline{\delta I^s_{ic}} \tau^w_{ic}
+!       \text{\phantom{xxxx}}
+! %
+!       I_c = \sum_{i=1}^{N_p} I_{ic}
+!       \text{\phantom{xxxx}}
+! %
+!       \frac{\partial I_c}{\partial x_k} =
+!       \frac{\partial I^s_c}{\partial x_k}
+!        - \sum_{i=1}^{N_p} I_{ic}
+!          \sum_{j=1}^i \frac{\partial \delta^w_{jc}}{\partial x_k}
+!      \end{equation*}
+
+!{{\bfseries Program variables}
+! 
+! \begin{tabular}{llll}
+! $\Delta B_{in}$ is {\tt T\_Script\_LBL} &
+! $\Delta B_{ic}$ is {\tt T\_Script\_PFA} &
+! $\tau^s_{in}$ is {\tt Tau\_LBL} &
+! $\tau^w_{ic}$ is {\tt Tau\_PFA}
+! \\
+! $\delta I^\sigma_{iq}$ is {\tt Inc\_Rad\_Path} &
+! $\overline{\delta I^s_{ic}}$ is {\tt Rad\_Avg\_Path} & 
+! $I_{ic}$ is also {\tt Rad\_Avg\_Path} &
+! \\
+! $\sum_{i=1}^{N_p} \delta I^\sigma_{iq}$ is {\tt RadV} & 
+! $I_c$ or $I^s_c$ is {\tt Radiances} &
+! $\frac{\partial I^\sigma_q}{\partial x_k}$ is {\tt K\_}$x${\tt\_FRQ} &
+! $\frac{\partial I_c}{\partial x_k}$ is {\tt K\_}$x$
+! \\
+! \end{tabular}
+
+      if ( FwdModelConf%anyLBL(sx) ) then
+        call frequency_loop ( alpha_path_c(:npc), beta_path_c(:npc,:), c_inds,  &
+          & del_s(:npc), del_zeta(:npc),do_calc_fzp(:npf,:),                    &
+          & do_calc_zp(:npf,:), do_GL(:npc), frequencies, h_path_c,             &
+          & incoptdepth(:npc), p_path(:npf), pfaFalse, ref_corr(:npc),          &
+          & sps_path(:npf,:), tau_lbl, t_path_c(:npc), t_script_lbl(:npc,:),    &
+          & tanh1_c(:npc), tt_path_c(:s_i*npc), w0_path_c(:s_i*npc), z_path(:npf) )
+        if ( print_TauL ) then
+          call output ( thisSideband, before='Sideband ' )
+          call output ( ptg_i, before=' Pointing ' )
+          call dump ( tau_lbl, noFreqs, ' Tau_LBL:' )
+          call dump ( t_script_lbl(:npc,:noFreqs), 'T_Script_LBL' )
+        end if
+      end if
+
+      ! Handle PFA molecules
+      if ( FwdModelConf%anyPFA(sx) ) then
+        if ( frq_avg_sel == 15 ) then ! FRQ_avg + LBL + PFA + Derivs
+          ! For every channel, frequency average the incremental radiance at
+          ! every point along the path, giving Rad_Avg_Path for every channel
+          ! and every point along the path.  Multiply by Tau_PFA to combine
+          ! PFA contribution in Frequency_Loop.
+          call frequency_avg_rad_path
+          call frequency_average_derivatives ( .false. )
+        end if
+        call frequency_loop ( alpha_path_c(:npc), beta_path_c(:npc,:), c_inds, &
+          & del_s(:npc), del_zeta(:npc), do_calc_fzp(:npf,:),                  &
+          & do_calc_zp(:npf,:), do_GL(:npc), channelCenters, h_path_c,         &
+          & incoptdepth(:npc), p_path(:npf), pfaTrue, ref_corr(:npc),          &
+          & sps_path(:npf,:), tau_pfa, t_path_c(:npc), t_script_pfa(:npc,:),   &
+          & tanh1_c(:npc), tt_path_c(:s_i*npc), w0_path_c(:s_i*npc), z_path(:npf) )
+        if ( print_TauP ) then
+          call output ( thisSideband, before='Sideband ' )
+          call output ( ptg_i, before=' Pointing ' )
+          call dump ( tau_pfa, noUsedChannels, ' Tau_PFA:' )
+          call dump ( t_script_pfa(:npc,:), 'T_Script_PFA' )
+        end if
+
+      end if
+
+      call frequency_average ! or maybe just store
+
+      ! If we're doing frequency averaging, there's a different frequency
+      ! grid for each pointing, but we don't need to deallocate it here
+      ! because the allocate_test in frequency_setup_2 will deallocate it.
+
+      if ( toggle(emit) .and. levels(emit) > 3 ) &
+        & call trace_end ( 'ForwardModel.Pointing ', index=ptg_i )
+
+      ! End of pointing loop -------------------------------------------------
+    end subroutine One_Pointing
+
   end subroutine FullForwardModelAuto
 
 ! =====     Private procedures     =====================================
@@ -3225,6 +3231,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.282  2007/06/26 01:05:02  vsnyder
+! Use column-sparse eta
+!
 ! Revision 2.281  2007/06/08 22:05:33  vsnyder
 ! Faster d_delta_df = 0, metrics stuff
 !
