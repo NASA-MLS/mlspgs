@@ -33,8 +33,7 @@ contains
     use Expr_M, only: EXPR
     use ForwardModelConfig, only: ForwardModelConfig_T
     use ForwardModelWrappers, only: ForwardModel
-    use ForwardModelIntermediate, only: ForwardModelIntermediate_T,&
-      & ForwardModelStatus_T, DestroyForwardModelIntermediate
+    use ForwardModelIntermediate, only: ForwardModelStatus_T
     use Init_Tables_Module, only: f_destroyjacobian, f_forwardModel, f_fwdModelIn, &
       f_fwdModelExtra, f_fwdModelOut, f_jacobian, f_perturbation, f_singleMAF
     use Intrinsic, only: PHYQ_DIMENSIONLESS
@@ -48,6 +47,7 @@ contains
     use MLSL2Timings, only: add_to_retrieval_timing
     use MoreTree, only: Get_Field_Id, Get_Boolean
     use Output_M, only: Output
+    use ScanModelModule, only: DestroyForwardModelIntermediate
     use Time_M, only: Time_Now
     use Toggles, only: Gen, Toggle
     use Trace_M, only: Trace_begin, Trace_end
@@ -97,7 +97,6 @@ contains
     real ::    T1
     type (MatrixElement_T), pointer :: M0 ! A block from the jacobian
 
-    type (ForwardModelIntermediate_T) :: ifm ! Work space for forward model
     type (ForwardModelStatus_T) :: fmStat ! Status for forward model
 
     real (r8) :: THISPTB                ! A scalar perturbation
@@ -242,11 +241,11 @@ contains
             if ( ixJacobian > 0 .and. .not. associated(perturbation)) then
               call forwardModel ( configDatabase(configs(config)), &
                 & FwdModelIn, FwdModelExtra, &
-                & FwdModelOut, ifm, fmStat, Jacobian, vectorDatabase )
+                & FwdModelOut, fmStat, Jacobian, vectorDatabase )
             else
               call forwardModel ( configDatabase(configs(config)), &
                 & FwdModelIn, FwdModelExtra, &
-                & FwdModelOut, ifm, fmStat, vectors=vectorDatabase )
+                & FwdModelOut, fmStat, vectors=vectorDatabase )
             end if
           end do                        ! MAF loop
 
@@ -262,7 +261,8 @@ contains
 
         ! Tidy up the intermediate/status stuff from the model
         call deallocate_test ( fmStat%rows, 'FmStat%rows', moduleName )
-        call DestroyForwardModelIntermediate ( ifm )
+        call DestroyForwardModelIntermediate ! in case scan model got used
+        fmStat%newScanHydros = .true.
         
         ! Place the numerical derivative result into Jacobian if needed
         if ( associated ( perturbation ) ) then
@@ -367,6 +367,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.51  2007/06/29 19:32:07  vsnyder
+! Make ForwardModelIntermediate_t private to ScanModelModule
+!
 ! Revision 2.50  2007/04/03 17:39:36  vsnyder
 ! Replace pointer attribute on VectorDatabase with target attribute
 !
