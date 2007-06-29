@@ -29,15 +29,14 @@ module PolarLinearModel_m
 contains ! =====     Public Procedures     =============================
 
   subroutine PolarLinearModel ( fmConf, FwdModelIn, FwdModelExtra,&
-    & FwdModelOut, Ifm, fmStat, Jacobian, vectors )
+    & FwdModelOut, fmStat, Jacobian, vectors )
 
     ! Import stuff
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use VectorsModule, only: VECTOR_T, VECTORVALUE_T, ADDTOVECTOR, &
       & CLEARVECTOR, DESTROYVECTORINFO, GETVECTORQUANTITYBYTYPE, CLONEVECTOR
     use ForwardModelConfig, only: FORWARDMODELCONFIG_T
-    use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T, &
-      & FORWARDMODELINTERMEDIATE_T
+    use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
     use Intrinsic, only: L_RADIANCE, L_FIELDAZIMUTH, L_OPTICALDEPTH
     use L2PC_m, only: DEFAULTSELECTOR_FIELDAZIMUTH
     use LinearizedForwardModel_m, only: LINEARIZEDFORWARDMODEL
@@ -54,7 +53,6 @@ contains ! =====     Public Procedures     =============================
     type(vector_T), intent(in) ::  FWDMODELIN
     type(vector_T), intent(in) ::  FWDMODELEXTRA
     type(vector_T), intent(inout) :: FWDMODELOUT  ! Radiances, etc.
-    type(forwardModelIntermediate_T), intent(inout) :: IFM ! Workspace
     type(forwardModelStatus_t), intent(inout) :: FMSTAT ! Reverse comm. stuff
     type(matrix_T), intent(inout), optional :: JACOBIAN
     type(vector_T), dimension(:), target, optional :: VECTORS
@@ -159,10 +157,10 @@ contains ! =====     Public Procedures     =============================
       if ( present ( jacobian ) ) then
         call ClearMatrix ( jacobianContribution )
         call LinearizedForwardModel ( thisConfig, fwdModelIn, fwdModelExtra, &
-          & radianceContribution, ifm, fmStat, jacobianContribution, vectors )
+          & radianceContribution, fmStat, jacobianContribution, vectors )
       else
         call LinearizedForwardModel ( thisConfig, fwdModelIn, fwdModelExtra, &
-          & radianceContribution, ifm, fmStat, vectors=vectors )
+          & radianceContribution, fmStat, vectors=vectors )
       end if
       call AddToVector ( fwdModelOut, radianceContribution, scaling )
       if ( present ( jacobian ) ) &
