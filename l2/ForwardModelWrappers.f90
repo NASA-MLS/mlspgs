@@ -29,13 +29,12 @@ contains ! ============= Public Procedures ==========================
 
   !----------------------------------------- ForwardModel -----------
   subroutine ForwardModel ( Config, FwdModelIn, FwdModelExtra, &
-    FwdModelOut, Ifm, fmStat, Jacobian, vectors )
+    FwdModelOut, fmStat, Jacobian, vectors )
 
     use BaselineForwardModel_m, only: BASELINEFORWARDMODEL
     use HybridForwardModel_m, only: HYBRIDFORWARDMODEL
     use ForwardModelConfig, only: ForwardModelConfig_T
-    use ForwardModelIntermediate, only: FORWARDMODELINTERMEDIATE_T, &
-      & FORWARDMODELSTATUS_T
+    use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
     use FullCloudForwardModel, only: FULLCLOUDFORWARDMODELWRAPPER
     use FullForwardModel_m, only: FULLFORWARDMODEL
     use Init_tables_module, only: L_LINEAR, L_SCAN, L_SCAN2D, L_FULL, L_CLOUDFULL, &
@@ -56,7 +55,6 @@ contains ! ============= Public Procedures ==========================
     type(ForwardModelConfig_T), intent(inout) :: CONFIG
     type(vector_T), intent(in) ::  FWDMODELIN, FwdModelExtra
     type(vector_T), intent(inout) :: FWDMODELOUT  ! Radiances, etc.
-    type(forwardModelIntermediate_T), intent(inout) :: IFM ! Workspace
     type(forwardModelStatus_t), intent(inout) :: FMSTAT ! Reverse comm. stuff
     type(matrix_T), intent(inout), optional :: JACOBIAN
     type(Vector_t), dimension(:), target, optional :: VECTORS ! Vectors database
@@ -86,49 +84,49 @@ contains ! ============= Public Procedures ==========================
     select case (config%fwmType)
     case ( l_baseline )
       call BaselineForwardModel ( config, FwdModelIn, FwdModelExtra, &
-        FwdModelOut, Ifm, fmStat, Jacobian )
+        FwdModelOut, fmStat, Jacobian )
       call add_to_retrieval_timing( 'baseline' )
     case ( l_full )
       call FullForwardModel ( config, FwdModelIn, FwdModelExtra, &
-        FwdModelOut, Ifm, fmStat, Jacobian )
+        FwdModelOut, fmStat, Jacobian )
       call add_to_retrieval_timing( 'full_fwm' )
     case ( l_linear )
       call LinearizedForwardModel ( config, FwdModelIn, FwdModelExtra, &
-        FwdModelOut, Ifm, fmStat, Jacobian, vectors )
+        FwdModelOut, fmStat, Jacobian, vectors )
       call add_to_retrieval_timing( 'linear_fwm' )
     case ( l_hybrid )
       call HybridForwardModel ( config, FwdModelIn, FwdModelExtra, &
-        FwdModelOut, Ifm, fmStat, Jacobian, vectors )
+        FwdModelOut, fmStat, Jacobian, vectors )
       call add_to_retrieval_timing( 'hybrid' )
     case ( l_polarLinear )
       call PolarLinearModel ( config, FwdModelIn, FwdModelExtra, &
-        FwdModelOut, Ifm, fmStat, Jacobian, vectors )
+        FwdModelOut, fmStat, Jacobian, vectors )
       call add_to_retrieval_timing( 'polar_linear' )
     case ( l_scan )
       call ScanForwardModel ( config, FwdModelIn, FwdModelExtra, &
-        FwdModelOut, Ifm, fmStat, Jacobian )
+        FwdModelOut, fmStat, Jacobian )
       call add_to_retrieval_timing( 'scan_fwm' )
     case ( l_scan2d )
       call TwoDScanForwardModel ( config, FwdModelIn, FwdModelExtra, &
-        FwdModelOut, Ifm, fmStat, Jacobian )
+        FwdModelOut, fmStat, Jacobian )
       call add_to_retrieval_timing( 'twod_scan_fwm' )
     case ( l_cloudFull )
       call FullCloudForwardModelWrapper ( config, FwdModelIn, FwdModelExtra, &
-        FwdModelOut, Ifm, fmStat, Jacobian )
+        FwdModelOut, fmStat, Jacobian )
       call add_to_retrieval_timing( 'fullcloud_fwm' )
     case ( l_switchingMirror )
       call SwitchingMirrorModel ( config, FwdModelIn, FwdModelExtra, &
-        FwdModelOut, Ifm, fmStat, Jacobian )
+        FwdModelOut, fmStat, Jacobian )
       call add_to_retrieval_timing( 'switching_mirror' )
     case default ! Shouldn't get here if parser etc. worked
     end select
     
     if ( radianceModel ) then
       call BaselineForwardModel ( config, FwdModelIn, FwdModelExtra, &
-        FwdModelOut, Ifm, fmStat, Jacobian )
+        FwdModelOut, fmStat, Jacobian )
       call add_to_retrieval_timing( 'baseline' )
       call SwitchingMirrorModel ( config, FwdModelIn, FwdModelExtra, &
-        FwdModelOut, Ifm, fmStat, Jacobian )
+        FwdModelOut, fmStat, Jacobian )
       call add_to_retrieval_timing( 'switching_mirror' )
     end if
 
@@ -160,6 +158,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.27  2007/06/29 19:32:07  vsnyder
+! Make ForwardModelIntermediate_t private to ScanModelModule
+!
 ! Revision 2.26  2007/04/03 17:46:12  vsnyder
 ! Replace pointer attribute on VectorDatabase with target attribute
 !
