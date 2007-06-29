@@ -1236,8 +1236,9 @@ contains
       use DNWT_clone, only: ALT_NWT, ALT_NWTA, ALT_NWTOP ! Simple
       use Dump_0, only: Dump
       use ForwardModelWrappers, only: ForwardModel
-      use ForwardModelIntermediate, only: ForwardModelIntermediate_T, &
-        & ForwardModelStatus_T
+      use ForwardModelIntermediate, only: ForwardModelStatus_T
+      use L2FWMParallel, only: SETUPFWMSLAVES, TRIGGERSLAVERUN, &
+        & REQUESTSLAVESOUTPUT, RECEIVESLAVESOUTPUT
       use MatrixModule_0, only: Dump ! The one from MatrixModule_1 ought to work ???
       use MatrixModule_1, only: AddToMatrix, CholeskyFactor, ClearMatrix, &
         & ColumnScale, CopyMatrixValue, CreateEmptyMatrix, &
@@ -1248,13 +1249,12 @@ contains
         & MultiplyMatrix_XY,  MultiplyMatrix_XY_T,  &
         & RowScale, ScaleMatrix, SolveCholesky, UpdateDiagonal
       use Regularization, only: Regularize
+      use ScanModelModule, only: DestroyForwardModelIntermediate
       use Symbol_Table, only: ENTER_TERMINAL
       use Symbol_Types, only: T_IDENTIFIER
       use VectorsModule, only: AddToVector, DestroyVectorInfo, &
         & Dump, Multiply, operator(.DOT.), operator(.MDOT.), operator(-), &
         & ScaleVector, SubtractFromVector
-      use L2FWMParallel, only: SETUPFWMSLAVES, TRIGGERSLAVERUN, &
-        & REQUESTSLAVESOUTPUT, RECEIVESLAVESOUTPUT
 
       ! Local Variables
       logical :: Abandoned              ! Flag to indicate numerical problems
@@ -1296,7 +1296,6 @@ contains
 
       type(matrix_Cholesky_T) :: Factored ! Cholesky-factored normal equations
       type (ForwardModelStatus_T) :: FmStat ! Status for forward model
-      type (ForwardModelIntermediate_T) :: Fmw ! Work space for forward model
       logical :: FoundBetterState       ! Set if we ever got an nf_best
       type(vector_T) :: FuzzState       ! Random numbers to fuzz the state
       integer :: J, K                   ! Loop inductors and subscripts
@@ -1791,7 +1790,7 @@ NEWT: do ! Newtonian iteration
               ! Otherwise, we call the forward model as ususal
               do k = 1, size(configIndices)
                 call forwardModel ( configDatabase(configIndices(k)), &
-                  & v(x), fwdModelExtra, v(f_rowScaled), fmw, fmStat, jacobian, vectorDatabase )
+                  & v(x), fwdModelExtra, v(f_rowScaled), fmStat, jacobian, vectorDatabase )
               end do ! k
               ! Forward model calls add_to_retrieval_timing
             end if
@@ -1849,6 +1848,8 @@ NEWT: do ! Newtonian iteration
                   & 'Sparseness structure of Jacobian blocks:' )
             call clearMatrix ( jacobian )  ! free the space
           end do ! mafs
+          call DestroyForwardModelIntermediate ! in case scan model got used
+          fmStat%newScanHydros = .true.
 
           ! In the case where we're forming a regular averaging kernel
           ! (not extended), we need to add this MAFs worth of kTk into the
@@ -2692,6 +2693,9 @@ NEWT: do ! Newtonian iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.290  2007/06/29 19:32:07  vsnyder
+! Make ForwardModelIntermediate_t private to ScanModelModule
+!
 ! Revision 2.289  2007/04/03 17:47:14  vsnyder
 ! Replace pointer attribute on VectorDatabase with target attribute
 !
