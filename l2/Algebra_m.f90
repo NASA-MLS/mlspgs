@@ -1280,9 +1280,10 @@ contains
 
       ! Imports
       use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+      use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
       use ForwardModelWrappers, only: FORWARDMODEL
       use MatrixModule_1, only: MULTIPLYMATRIX_XTY, CLEARMATRIX, DUMP_STRUCT, ROWSCALE
-      use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T, FORWARDMODELINTERMEDIATE_T
+      use ScanModelModule, only: DestroyForwardModelIntermediate
       use VectorsModule, only: COPYVECTOR, SUBTRACTFROMVECTOR, CLONEVECTOR, MULTIPLY
       ! Dummy arguments
       type (Matrix_T), intent(inout) :: MATRIX ! Normal equation matrix
@@ -1300,7 +1301,6 @@ contains
       integer :: NOMAFS                 ! Number of major frames
       integer :: MAF                    ! Major frame number
       type (ForwardModelStatus_T) :: FMSTAT ! Mainly maf counter
-      type (ForwardModelIntermediate_T) :: IFM ! Forward model workspace
       type (Matrix_T) :: Kt             ! Truth Jacobian matrix
       type (Matrix_T) :: Kr             ! Retrieval Jacobian matrix
       integer, dimension(:), pointer :: TRUTHCONFIGS ! Indices of forward model configs
@@ -1358,11 +1358,11 @@ contains
         ! Invoke both sets of forward models
         do config = 1, noRetrievalConfigs
           call ForwardModel ( configDatabase(retrievalConfigs(config)), &
-            & retrievalIn, retrievalExtra, fwdModelOut, ifm, fmStat, Kr )
+            & retrievalIn, retrievalExtra, fwdModelOut, fmStat, Kr )
         end do
         do config = 1, noTruthConfigs
           call ForwardModel ( configDatabase(truthConfigs(config)), &
-            & truthIn, truthExtra, fwdModelOut, ifm, fmStat, Kt )
+            & truthIn, truthExtra, fwdModelOut, fmStat, Kt )
         end do
         ! Do any row scaling for the jacobians
         call rowScale ( weight, Kr )
@@ -1372,12 +1372,13 @@ contains
         ! Now clear the jacobian matrix
         call ClearMatrix ( Kr )
         call ClearMatrix ( Kt )
-      enddo
+      end do
 
       ! Tidy up
       call deallocate_test ( fmStat%rows, 'FmStat%rows', moduleName )
       call deallocate_test ( retrievalConfigs, 'retrievalConfigs', ModuleName )
       call deallocate_test ( truthConfigs, 'truthConfigs', ModuleName )
+      call DestroyForwardModelIntermediate ! in case scan model got used
       call DestroyVectorInfo ( weight )
       call DestroyMatrix ( Kr )
       call DestroyMatrix ( Kt )
@@ -1390,9 +1391,10 @@ contains
       & measurements, measurementSD, chunk, configDatabase, residualSupplied )
       ! Imports
       use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+      use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
       use ForwardModelWrappers, only: FORWARDMODEL
       use MatrixModule_1, only: NORMALEQUATIONS, CLEARMATRIX, DUMP_STRUCT, ROWSCALE
-      use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T, FORWARDMODELINTERMEDIATE_T
+      use ScanModelModule, only: DestroyForwardModelIntermediate
       use VectorsModule, only: COPYVECTOR, SUBTRACTFROMVECTOR, CLONEVECTOR, MULTIPLY
       ! Dummy arguments
       type (Matrix_SPD_T), intent(inout) :: MATRIX ! Normal equation matrix
@@ -1411,7 +1413,6 @@ contains
       integer :: NOMAFS                 ! Number of major frames
       integer :: MAF                    ! Major frame number
       type (ForwardModelStatus_T) :: FMSTAT ! Mainly maf counter
-      type (ForwardModelIntermediate_T) :: IFM ! Forward model workspace
       type (Matrix_T) :: jacobian       ! Jacobian matrix
       integer, dimension(:), pointer :: CONFIGS ! Indices of forward model configs
       integer :: CONFIG                 ! Index into configs
@@ -1455,7 +1456,7 @@ contains
         fmStat%maf = maf
         do config = 1, noConfigs
           call ForwardModel ( configDatabase(configs(config)), &
-            & fwdModelIn, fwdModelExtra, fwdModelOut, ifm, fmStat, jacobian )
+            & fwdModelIn, fwdModelExtra, fwdModelOut, fmStat, jacobian )
         end do
         ! Compute difference
         call cloneVector ( delta, fwdModelOut )
@@ -1495,6 +1496,7 @@ contains
       ! Tidy up
       call deallocate_test ( fmStat%rows, 'FmStat%rows', moduleName )
       call deallocate_test ( configs, 'configs', ModuleName )
+      call DestroyForwardModelIntermediate ! in case scan model got used
       call destroyVectorInfo ( delta )
       call destroyVectorInfo ( weight )
       call destroyMatrix ( jacobian )
@@ -1515,6 +1517,9 @@ contains
 end module ALGEBRA_M
 
 ! $Log$
+! Revision 2.24  2007/06/29 19:32:06  vsnyder
+! Make ForwardModelIntermediate_t private to ScanModelModule
+!
 ! Revision 2.23  2007/01/11 20:48:30  vsnyder
 ! Add SurfaceHeight to gridded data, vector quantities, allow dump in ReadApriori
 !
