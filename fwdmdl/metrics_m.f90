@@ -11,6 +11,8 @@
 
 module Metrics_m
 
+  use MLSKinds, only: RP
+
   implicit NONE
   private
   public :: Height_Metrics, More_Metrics, Solve_H_Phi, Tangent_Metrics
@@ -29,6 +31,7 @@ module Metrics_m
 !---------------------------------------------------------------------------
 
   ! Private stuff
+  real(rp), parameter :: DefaultTol = 0.001_rp ! km, for Solve_h_phi
   ! To control debugging
   logical, parameter :: Debug = .false.
   logical, parameter :: NewtonDetails = .true. .and. debug
@@ -294,7 +297,7 @@ contains
     n_tan = n_path / 2
     n_vert = size(h_ref,1)
 
-    my_h_tol = 0.001_rp ! kilometers
+    my_h_tol = defaultTol ! kilometers
     if ( present(h_tol) ) my_h_tol = h_tol ! H_Tol is in kilometers
     p_coeffs = size(p_basis)
 
@@ -588,7 +591,7 @@ path: do i = i1, i2
                 &  ( (h-h_ref(1))*(h-h_ref(2)) <= 0.0 .or. &
                ! or the difference in reference heights is within tolerance and
                ! the current H is outside the bounds by less than tolerance
-          &    abs(b) < 0.001 .and. &
+          &    abs(b) < tol .and. &
           &    ( abs(h-h_ref(1)) < tol .or. &
           &      abs(h-h_ref(2)) < tol ) ) ) then
           ! Not extrapolating in phi
@@ -899,7 +902,7 @@ path: do i = i1, i2
     real(rp), intent(in) :: p_grid(:)  ! From Height_Metrics
 
     ! outputs:
-    real(rp), intent(out) :: z_new(:)  ! computed zetas
+    real(rp), intent(out) :: z_new(:)  ! computed addional zetas
     real(rp), intent(out) :: h_new(:)  ! computed heights, referenced to Earth center
     real(rp), intent(out) :: p_new(:)  ! computed phis
     integer, intent(out) :: n_new      ! How many points put into h_new, p_new
@@ -921,7 +924,7 @@ path: do i = i1, i2
     real(rp) :: REQ_S     ! Req - H_Surf
     integer :: Stat
 
-    my_h_tol = 0.001_rp ! kilometers
+    my_h_tol = defaultTol ! kilometers
     if ( present(h_tol) ) my_h_tol = h_tol ! H_Tol is in kilometers
     hTan_r = H_Tan + Req
     p_coeffs = size(p_basis)
@@ -994,6 +997,9 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.49  2007/06/26 00:35:39  vsnyder
+! Use column-sparse eta, make *_zxp arguments
+!
 ! Revision 2.48  2007/06/08 22:05:48  vsnyder
 ! More work on min zeta
 !
