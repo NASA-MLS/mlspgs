@@ -561,7 +561,7 @@ contains
       call outputNamedValue( 'number hosts dead', count(.not. hosts%OK) )
     endif
     if ( all(hosts%OK) ) return    
-    if ( .not. silent .and. present(selectedHosts) ) &
+    if ( .not. mySilent .and. present(selectedHosts) ) &
       & call dump( selectedHosts, 'selectedHosts' )
     call GetMachineNames ( machineNames )
     if ( .not. associated(machineNames) ) &
@@ -2332,6 +2332,9 @@ contains
 end program L2Q
 
 ! $Log$
+! Revision 1.19  2007/05/18 23:50:15  pwagner
+! Now can successfully revive dead hosts
+!
 ! Revision 1.18  2007/02/09 21:24:22  pwagner
 ! Fixed an error only NAG caught
 !
