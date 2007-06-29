@@ -156,28 +156,30 @@ contains ! =================================== Public procedures
 !         v => VGrids ( decoration ( decoration ( value ) ) )
       end select
     end do
-    call output( 'Have T, P grids', advance='yes' )
+    if ( DEEBUG ) call output( 'Have T, P grids', advance='yes' )
     newGrid%empty = .true.
-    call outputNamedValue( 'size(griddedDataBase)', size(griddedDataBase) )
+    if ( DEEBUG ) call outputNamedValue( 'size(griddedDataBase)', size(griddedDataBase) )
     if ( size(griddedDataBase) < 2 ) call leaveUs
-    call output( 'About to check on a, b', advance='yes' )
-    call outputNamedValue( 'associated(a)', associated(a) )
-    call outputNamedValue( 'associated(b)', associated(b) )
-    call outputNamedValue( 'a%empty', a%empty )
-    call outputNamedValue( 'b%empty', b%empty )
+    if ( DEEBUG ) then
+      call output( 'About to check on a, b', advance='yes' )
+      call outputNamedValue( 'associated(a)', associated(a) )
+      call outputNamedValue( 'associated(b)', associated(b) )
+      call outputNamedValue( 'a%empty', a%empty )
+      call outputNamedValue( 'b%empty', b%empty )
+    endif
     if ( a%empty .or. b%empty ) call leaveUs
     newGrid%empty = .false.
     if ( DEEBUG ) then
-    call output( 'a grid', advance='yes' )
-    call dump( a, details=0 )
-    call output( 'b grid', advance='yes' )
-    call dump( b, details=0 )
-    call output( 'v grid', advance='yes' )
-    call dump( v, details=0 )
+      call output( 'a grid', advance='yes' )
+      call dump( a, details=0 )
+      call output( 'b grid', advance='yes' )
+      call dump( b, details=0 )
+      call output( 'v grid', advance='yes' )
+      call dump( v, details=0 )
+      call output( 'about to convert from eta level grids', advance='yes' )
     endif
-    call output( 'about to convert from eta level grids', advance='yes' )
     call ConvertFromEtaLevelGrids ( a, b, V, newGrid )
-    call output( 'done converting from eta level grids', advance='yes' )
+    if ( DEEBUG ) call output( 'done converting from eta level grids', advance='yes' )
     newGrid%sourceFileName      = a%sourceFileName
     newGrid%quantityName        = a%quantityName
     newGrid%description         = a%description
@@ -928,6 +930,9 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.31  2007/06/29 21:01:14  pwagner
+! Should print less unless debugging
+!
 ! Revision 2.30  2007/06/07 21:56:00  pwagner
 ! Prevents another cause of crashing; extra debugging
 !
