@@ -42,13 +42,12 @@ contains ! =====     Public Procedures     =============================
 
   ! -------------------------------------  LinearizedForwardModel  -----
   subroutine LinearizedForwardModel ( fmConf, FwdModelIn, FwdModelExtra,&
-    & FwdModelOut, Ifm, fmStat, Jacobian, vectors )
+    & FwdModelOut, fmStat, Jacobian, vectors )
 
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use Dump_0, only: DUMP
     use ForwardModelConfig, only: FORWARDMODELCONFIG_T
-    use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T, &
-      & FORWARDMODELINTERMEDIATE_T
+    use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use Intrinsic, only: L_RADIANCE, L_TEMPERATURE, L_PTAN, L_VMR, &
       & L_LIMBSIDEBANDFRACTION, L_ZETA, L_OPTICALDEPTH, L_LATITUDE, L_FIELDSTRENGTH, &
@@ -85,7 +84,6 @@ contains ! =====     Public Procedures     =============================
     type(vector_T), intent(in), target ::  FWDMODELIN
     type(vector_T), intent(in), target ::  FWDMODELEXTRA
     type(vector_T), intent(inout) :: FWDMODELOUT  ! Radiances, etc.
-    type(forwardModelIntermediate_T), intent(inout) :: IFM ! Workspace
     type(forwardModelStatus_t), intent(inout) :: FMSTAT ! Reverse comm. stuff
     type(matrix_T), intent(inout), optional :: JACOBIAN
     type(vector_t), dimension(:), target, optional :: VECTORS ! Vectors database
@@ -1148,6 +1146,10 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.63  2007/04/03 17:45:10  vsnyder
+! Add target attribute to FwdModelIn and FwdModelExtra, replace pointer
+! attribute on Vectors with Target attribute.
+!
 ! Revision 2.62  2006/07/19 22:33:02  vsnyder
 ! Cannonball polishing
 !

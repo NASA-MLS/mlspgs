@@ -22,20 +22,10 @@ module ForwardModelIntermediate
   implicit none
   private
 
-  type, public :: ForwardModelIntermediate_T
-
-    ! These ones are for the scan model
-    real (r8), dimension(:,:),             pointer :: BasisGph=>NULL()
-    real (r8), dimension(:),               pointer :: R=>NULL()
-    real (r8), dimension(:,:),             pointer :: RT=>NULL()
-    integer :: BelowRef                 ! T. basis at or below refGPH
-
-  end type ForwardModelIntermediate_T
-
   type, public :: ForwardModelStatus_T
     integer :: Flags                    ! Bits indicate problems.  See B_...
     integer :: Maf                      ! The MAF to process
-    logical :: NewScanHydros            ! Scan model needs to recompute hydrostatic
+    logical :: NewScanHydros = .true.   ! Scan model needs to recompute hydrostatic
     logical, dimension(:), pointer :: Rows=>NULL() ! Flag to indicate this row has non zeros
   end type ForwardModelStatus_T
 
@@ -45,8 +35,6 @@ module ForwardModelIntermediate
   integer, public, parameter :: B_Refraction = 2*b_ptg_angles ! Computation of
     ! refraction coefficient failed or was not as accurate as desired.
 
-  public :: DestroyForwardModelIntermediate
-
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
@@ -54,21 +42,6 @@ module ForwardModelIntermediate
 !---------------------------------------------------------------------------
 
 contains
-
-  ! -----------------------------  DestroyForwardModelIntemediate  -----
-  subroutine DestroyForwardModelIntermediate ( ifm )
-
-    use Allocate_Deallocate, only: DEALLOCATE_TEST
-
-    type (ForwardModelIntermediate_T), intent(inout) :: ifm
-
-    ! Exectuable code
-
-    call Deallocate_test ( ifm%basisGPH, 'basisGPH', ModuleName )
-    call Deallocate_test ( ifm%RT, 'RT', ModuleName )
-    call Deallocate_test ( ifm%R, 'R', ModuleName )
-
-  end subroutine DestroyForwardModelIntermediate
 
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
@@ -82,6 +55,9 @@ contains
 end module ForwardModelIntermediate
 
 ! $Log$
+! Revision 2.7  2006/12/19 02:53:49  vsnyder
+! Get rid of B_Metrics flag, which nobody uses any more
+!
 ! Revision 2.6  2005/06/22 18:08:18  pwagner
 ! Reworded Copyright statement, moved rcs id
 !

@@ -37,15 +37,14 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
   !----------------------------------------  FullCloudForwardModelWrapper  -----
   subroutine FullCloudForwardModelWrapper ( ForwardModelConfig, FwdModelIn,  &
-                                            FwdModelExtra, FwdModelOut, Ifm, &
+                                            FwdModelExtra, FwdModelOut,      &
                                             fmStat, Jacobian                 )  
 
     use Allocate_deallocate,        only: Allocate_test, Deallocate_test
     use AntennaPatterns_m,          only: ANTENNAPATTERNS
     use CloudySkyModule,            only: CLOUD_MODEL
     use CloudySkyRadianceModel,     only: CloudForwardModel
-    use ForwardModelIntermediate,   only: FORWARDMODELINTERMEDIATE_T, &
-                                        & FORWARDMODELSTATUS_T
+    use ForwardModelIntermediate,   only: FORWARDMODELSTATUS_T
     use ManipulateVectorQuantities, only: FindClosestInstances
     use MatrixModule_0,             only: MATRIXELEMENT_T, &
                                         & M_FULL, CREATEBLOCK
@@ -106,7 +105,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     type(forwardModelConfig_T),       intent(inout) :: FORWARDMODELCONFIG
     type(vector_T),                   intent(in)    :: FWDMODELIN, FwdModelExtra
     type(vector_T),                   intent(inout) :: FWDMODELOUT             ! Radiances, etc.
-    type(forwardModelIntermediate_T), intent(inout) :: IFM                     ! Workspace
     type(forwardModelStatus_t),       intent(inout) :: FMSTAT                  ! Reverse comm. stuff
     type(matrix_T),                   intent(inout), optional :: JACOBIAN
 
@@ -1125,6 +1123,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.136  2005/06/22 18:27:38  pwagner
+! Cant have access declared outside module scope
+!
 ! Revision 1.135  2004/11/04 03:41:05  vsnyder
 ! Index spectroscopy catalog by molecule instead of searching
 !
