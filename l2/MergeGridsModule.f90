@@ -159,7 +159,7 @@ contains ! =================================== Public procedures
     if ( DEEBUG ) call output( 'Have T, P grids', advance='yes' )
     newGrid%empty = .true.
     if ( DEEBUG ) call outputNamedValue( 'size(griddedDataBase)', size(griddedDataBase) )
-    if ( size(griddedDataBase) < 2 ) call leaveUs
+    if ( size(griddedDataBase) < 2 ) go to 9
     if ( DEEBUG ) then
       call output( 'About to check on a, b', advance='yes' )
       call outputNamedValue( 'associated(a)', associated(a) )
@@ -167,7 +167,7 @@ contains ! =================================== Public procedures
       call outputNamedValue( 'a%empty', a%empty )
       call outputNamedValue( 'b%empty', b%empty )
     endif
-    if ( a%empty .or. b%empty ) call leaveUs
+    if ( a%empty .or. b%empty ) go to 9
     newGrid%empty = .false.
     if ( DEEBUG ) then
       call output( 'a grid', advance='yes' )
@@ -186,11 +186,7 @@ contains ! =================================== Public procedures
     newGrid%units               = a%units
     newGrid%verticalCoordinate  = v%verticalCoordinate
     newGrid%missingValue        = a%missingValue
-    call leaveUs
-    contains
-    subroutine LeaveUs
-      if ( toggle(gen) ) call trace_end ( "ConvertEtaToP" )
-    end subroutine LeaveUs
+9   if ( toggle(gen) ) call trace_end ( "ConvertEtaToP" )
 
   end function ConvertEtaToP
 
@@ -931,6 +927,9 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.33  2007/07/04 01:44:15  vsnyder
+! Actually leave early from ConvertEtaToP
+!
 ! Revision 2.32  2007/07/04 01:08:43  pwagner
 ! trace_begin and _end rebalanced in ConvertEtaToP
 !
