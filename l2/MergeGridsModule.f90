@@ -186,6 +186,7 @@ contains ! =================================== Public procedures
     newGrid%units               = a%units
     newGrid%verticalCoordinate  = v%verticalCoordinate
     newGrid%missingValue        = a%missingValue
+    call leaveUs
     contains
     subroutine LeaveUs
       if ( toggle(gen) ) call trace_end ( "ConvertEtaToP" )
@@ -930,6 +931,9 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.32  2007/07/04 01:08:43  pwagner
+! trace_begin and _end rebalanced in ConvertEtaToP
+!
 ! Revision 2.31  2007/06/29 21:01:14  pwagner
 ! Should print less unless debugging
 !
