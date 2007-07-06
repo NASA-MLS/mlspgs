@@ -2348,11 +2348,9 @@ contains ! =====     Public Procedures     =============================
       if ( quadrature ) then
         do mif = 1, quantity%template%noSurfs
           do chan = 1, quantity%template%noChans
-            if ( .not. dontMask .and. &
-              & ( associated(baselineQuantity%mask) .or. &
-              &   associated(quantity%mask) )) then
+            if ( .not. dontMask .and. associated(baselineQuantity%mask) ) then
               do i=1, numProfs
-                skipMe = isVectorQtyMasked(Quantity, chan, i) .or. &
+                skipMe = .not. dontMask .and. &
                   &  isVectorQtyMasked(baselineQuantity, chan, i)
                 if ( .not. skipMe )  &
                 & quantity%values ( ind, i ) = sqrt ( &
@@ -2369,11 +2367,9 @@ contains ! =====     Public Procedures     =============================
       else
         do mif = 1, quantity%template%noSurfs
           do chan = 1, quantity%template%noChans
-            if ( .not. dontMask .and. &
-              & ( associated(baselineQuantity%mask) .or. &
-              &   associated(quantity%mask) )) then
+            if ( .not. dontMask .and. associated(baselineQuantity%mask) ) then
               do i=1, numProfs
-                skipMe = isVectorQtyMasked(Quantity, chan, i) .or. &
+                skipMe = .not. dontMask .and. &
                   &  isVectorQtyMasked(baselineQuantity, chan, i)
                 if ( .not. skipMe )  &
                 & quantity%values ( ind, i ) = &
@@ -8109,6 +8105,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.352  2007/07/06 17:09:16  pwagner
+! Reverted to former ApplyBaseline
+!
 ! Revision 2.351  2007/06/21 22:34:32  pwagner
 ! Fixed inconsequential bug in adding baseline when quantity was masked
 !
