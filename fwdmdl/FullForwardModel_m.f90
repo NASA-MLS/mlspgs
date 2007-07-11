@@ -364,6 +364,7 @@ contains
     ! alphabetically
 
     integer :: CHANNEL            ! A Loop counter
+    integer :: Dump_Rad_Pol       ! Dump intermediate values in Rad_Tran_Pol
     integer :: Frq_Avg_Sel        ! Summarizes combinations of PFA, LBL,
                                   ! Frequency averaging and derivatives.
                                   ! See Frequency_Average below.
@@ -741,14 +742,19 @@ contains
     ! Set flags from command-line switches
     clean = index(switches, 'clean') /= 0
     do_zmin = index(switches, 'dozm') /= 0 ! Do minimum zeta only if requested
-    print_more_points = index(switches, 'ZMOR' ) /= 0
-    do_more_points = index(switches, 'zmor') /= 0
+    dump_rad_pol = 0 ! Dump rad_tran_pol intermediates
+    if ( index(switches, 'dpri') /= 0 ) dump_rad_pol = 1 ! Dump if overflow
+    if ( index(switches, 'Dpri') /= 0 ) dump_rad_pol = 2 ! Dump all
+    if ( index(switches, 'DPRI') /= 0 ) dump_rad_pol = 3 ! Dump first and stop
+    dump_rad_pol = index(switches, 'dpri')
     print_Mag = index(switches, 'mag') /= 0
     print_Ptg = index(switches,'ptg') /= 0
     print_Rad = index(switches, 'rad') /= 0
     print_Seez = index(switches, 'seez') /= 0
     print_TauL = index(switches, 'taul') /= 0
     print_TauP = index(switches, 'taup') /= 0
+    print_more_points = index(switches, 'ZMOR' ) /= 0
+    do_more_points = index(switches, 'zmor') /= 0
 
     ! Nullify all our pointers that are allocated because the first thing
     ! Allocate_Test does is ask if they're associated.  If we don't nullify
@@ -971,6 +977,25 @@ contains
 
   contains
 
+  ! .............................................  Announce_Error  .....
+    subroutine Announce_Error ( Message )
+    ! Announce Message using MLSMessage.  Include the configuration name
+    ! in the message
+      use String_Table, only: Get_String, String_Length
+      character(len=*), intent(in) :: Message
+      integer, parameter :: C = len('With config(')
+      integer :: L
+      character(511) :: Work ! Should be plenty of room
+      l = string_length(fwdModelConf%name)
+      work(:c) = 'With config('
+      call get_string ( fwdModelConf%name, work(c+1:c+l) )
+      l = c + l + 1
+      work(l:l+3) = '): '
+      l = l + 3
+      work(l+1:l+len_trim(message)) = message
+      call MLSMessage ( MLSMSG_Error, moduleName, work(:l+len_trim(message)) )
+    end subroutine Announce_Error
+
   ! .......................................  Both_Sidebands_Setup  .....
     subroutine Both_Sidebands_Setup
     ! All of the setup stuff done for both sidebands.
@@ -1056,8 +1081,8 @@ contains
 
       ! Check that RefGPH and Temp have the same hGrid.  This is not checked in
       ! Construct or when the config is created.
-      if ( .not. doHGridsMatch ( refGPH, temp ) ) call MLSMessage ( MLSMSG_Error, &
-        & ModuleName, 'Different horizontal grids for refGPH and temperature' )
+      if ( .not. doHGridsMatch ( refGPH, temp ) ) call Announce_Error ( &
+        & 'Different horizontal grids for refGPH and temperature' )
 
       ! Check that we have radiances for the channels that are used
       do sigInd = 1, size(fwdModelConf%signals)
@@ -1380,7 +1405,7 @@ contains
               whichPattern = j
             end if
           end do
-          if ( whichPattern < 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          if ( whichPattern < 0 ) call Announce_Error ( &
             & "No matching antenna patterns." )
 
           call fov_convolve_setup ( antennaPatterns(whichPattern), ptg_angles, &
@@ -2189,7 +2214,7 @@ contains
           call rad_tran_pol ( tan_pt_c, gl_inds, cg_inds(1:ncg), e_rflty, del_zeta, &
             & alpha_path_polarized(:,1:npc), ref_corr, incoptdepth_pol(:,:,1:npc),  &
             & deltau_pol(:,:,1:npc), alpha_path_polarized_f(:,1:ngl), dsdz_gw_path, &
-            & ct, stcp, stsp, t_script(:,frq_i), prod_pol(:,:,1:npc),               &
+            & ct, stcp, stsp, t_script(:,frq_i), dump_rad_pol, prod_pol(:,:,1:npc), &
             & tau_pol(:,:,1:npc), rad_pol, p_stop )
 
           if ( p_stop < 0 ) then ! exp(incoptdepth_pol(:,:,-p_stop)) failed
@@ -2200,8 +2225,11 @@ contains
             call output ( 'thisSideband = ' ); call output ( thisSideband )
             call output ( ', ptg_i = ' ); call output ( ptg_i )
             call output ( ', frq_i = ' ); call output ( frq_i, advance='true' )
-            call MLSMessage ( MLSMSG_Error, moduleName, &
-              & 'exp(incoptdepth_pol) failed' )
+            call dump ( t_path_c(:npc), name='T_Path' )
+            call dump ( ref_corr(:npc), name='Ref_Corr' )
+            call dump ( n_path_c(:npc), name='N_Path' )
+            call dump ( h_path_c(:npc), name='H_Path' )
+            call Announce_Error ( 'exp(incoptdepth_pol) failed' )
           end if
 
           if ( radiometers(firstSignal%radiometer)%polarization == l_a ) then
@@ -2346,10 +2374,10 @@ contains
         if ( spect_der ) then
 
           if ( fwdModelConf%polarized ) then
-            call MLSMessage ( MLSMSG_Error, ModuleName, &
+            call Announce_Error ( &
               & "Spectroscopic derivatives for Polarized species not implemented yet." )
           else if ( pfa ) then
-            call MLSMessage ( MLSMSG_Error, ModuleName, &
+            call Announce_Error ( &
               & "Spectroscopic derivatives for PFA not implemented yet." )
           else
 
@@ -2421,7 +2449,7 @@ contains
             whichPointingGrid = i
           end if
         end do
-        if ( whichPointingGrid < 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+        if ( whichPointingGrid < 0 ) call Announce_Error ( &
                & "No matching pointing frequency grids." )
 
         ! Now we've identified the pointing grids.  Locate the tangent grid
@@ -2530,11 +2558,10 @@ contains
       select case ( thisSideband )
       case ( -1, +1 ) ! OK
       case ( 0 )
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
+        call Announce_Error ( &
           & 'Folded signal requested in non-frequency-averaged forward model' )
       case default
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Bad value of signal%sideband' )
+        call Announce_Error ( 'Bad value of signal%sideband' )
       end select
 
       dir = thisSideband
@@ -3231,6 +3258,10 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.283  2007/06/29 19:33:59  vsnyder
+! Put the pointing loop body into an internal subroutine
+! Make ForwardModelIntermediate_t private to ScanModelModule
+!
 ! Revision 2.282  2007/06/26 01:05:02  vsnyder
 ! Use column-sparse eta
 !
