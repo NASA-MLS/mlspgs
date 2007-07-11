@@ -247,15 +247,50 @@ contains
 
   subroutine Comp_refcor ( tan_pt, h_path, n_path, ht, del_s, ref_corr, status )
 
-  ! This routine computes the integral described in Eqn. 10.12 of the
-  ! 19 August 2004 MLS ATBD, pg. 45, using the Gauss-Legendre method.
+  !{ This routine computes the integral
+  !
+  ! \begin{equation*}
+  ! I = \Delta s^{\text{refr}}_{i\rightarrow i-1} =
+  ! \int_{H_{i-1}}^{H_i} \frac{\mathcal{N}(H) H}
+  !                           {\sqrt{\mathcal{N}(H)^2 H^2 - \mathcal{N}_t^2 H_t^2}}
+  !                      \,\text{d} H\,,
+  ! \end{equation*}
+  !
+  ! which is described in Eqn. 10.12 of the 19 August 2004 MLS ATBD, pg. 45,
+  ! using the Gauss-Legendre method.
+  !
+  ! Substitute $x = \sqrt{\mathcal{N}(H)^2 H^2 - \mathcal{N}_t^2 H_t^2}$
+  ! to remove the singularity, giving
+  ! $I = \int_{x_{i-1}}^{x_i}
+  !       \frac{\text{d}x}
+  !            {N(h)+h\frac{\text{d}}{\text{d}h}N(h)}
+  !    = \int_{x_{i-1}}^{x_i}
+  !       \frac{\text{d}x}{\frac{\text{d}}{\text{d}h} h N(h)}$,
+  ! where $h$ is the solution of $h N(h) = \sqrt{H_t^2 \mathcal{N}_t^2 + x^2}$.
+  !
+  ! Assume $\mathcal{N}(h) = 1+E$, where $E = n_{i-1} \exp(\epsilon (h-H_{i-1}))$,
+  ! $\epsilon = \frac1{H_i-H_{i-1}} \log \frac{n_i}{n{_i-1}}$, and
+  ! $n_i = \mathcal{N}(H_i)-1$.
+  !
+  ! If $\mathcal{N}(H_{i-1}) = \mathcal{N}(H_i)$ the integral is evaluable as
+  ! $\left.\frac1{\mathcal{N}(H_i)} \sqrt{\mathcal{N}(H_i) H - \mathcal{N}_t H_t}
+  ! \right|_{H=H_{i-1}}^{H_i}$.
+  !
+  ! If the refractive correction is not in the interval [1.0,1.3], or if
+  ! $\frac{\text{d}}{\text{d}h} h N(h)$ changes sign, use the trapezoidal
+  ! rule instead.  On the ends of the interval, $h=H_i$ and $E=n_i$, so
+  ! $\mathcal{N}(H_i) = \mathcal{N}_i$, giving $I=\frac{x_i-x_{i-1}}2
+  ! (f_{i-1}+f_i)$ where the integrand $f_i = \frac1{1+n_i(1+\epsilon H_i)}$.
 
   ! For derivation of the code below, please see: "FWD Model" paper,
   ! Page 16, Eqn. 26 & 27
 
-    use MLSCommon, only: RP, IP
+    use Dump_0, only: Dump
     use GLNP, only: NG, GX=>gx_all, GW=>gw_all
+    use MLSKinds, only: RP, IP
     use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
+    use Output_m, only: Output
+    use Toggles, only: Switches
 
     integer, intent(in) :: Tan_pt      ! Tangent point index in H_Path etc.
     real(rp), intent(in) :: H_PATH(:)
@@ -269,16 +304,20 @@ contains
     integer, intent(out) :: Status ! 0 = OK, 1 = failed to bracket root,
                                    ! 2 = too many iterations
 
+    logical :: Bad ! Ref_Corr < 1 or Ref_corr > 1.3 somewhere
+    integer(ip) :: HNDP ! "Solve_Hn Detail Printing"
     integer(ip) :: j, j1, j2, k, m, no_ele, stat
 
     real(rp) :: INTEGRAND_GL(Ng)
 
-    real(rp) :: q, htan2, Nt2Ht2
-    real(rp) :: dndh, eps, H, h1, h2, N, n1, n2, x1, x2, xm, ym, ys
+    real(rp) :: q, htan2, NH, Nt2Ht2
+    real(rp) :: dndh, eps, H, h1, h2, N, n1, n2, t1, t2, x1, x2, xm, ym, ys
 
+    real(rp), parameter :: Htol = 1.0e-3_rp
     real(rp), parameter :: Tiny = 1.0e-8_rp
 
     status = 0
+    hndp = index(switches,'hndp')
 
     no_ele = size(n_path)
 
@@ -291,6 +330,7 @@ contains
     htan2 = ht * ht
     Nt2Ht2 = (n_path(tan_pt)*ht)**2
 
+    bad = .false.
 
     j1 = 1
     j2 = tan_pt
@@ -319,31 +359,72 @@ jl:   do j = j1+1, j2
         if ( abs(q) < tiny) q = 0.0_rp
         n2 = n2 - 1.0_rp
 
-        if ( q < 0.0_rp .or. n1*n2 <= 0.0_rp ) then
-          ref_corr(j) = ref_corr(j-1)
+        if ( q < 0.0_rp ) then
+          ref_corr(j) = 100.0
+          bad = .true.
           cycle
         end if
 
         x2 = sqrt(q)
 
-        eps = log(n2/n1)/(h2-h1)
-        xm = 0.5_rp *(x1 + x2)      ! Midpoint of the interval
-        ym = ys *(x1 - x2)          ! Half of the interval length
-        do k = 1, ng
-          q = xm + ym * gx(k)       ! Gauss abscissa
-          ! Solve h*(1+n1*exp(eps*(h-h1))) = sqrt(q*q + nt2ht2) for h
-          call solve_hn ( sqrt(q*q + nt2ht2) )
-          status = max(status,stat)
-          if ( stat == 1 ) then
-            ref_corr(j) = ref_corr(j-1+2*m)
-            cycle jl
+        if ( abs(n2-n1) <= 1.0e-3*(n2+n1) ) then
+          ! Where N is essentially constant, the integral is easy
+          ref_corr(j) = abs( sqrt((n_path(j)*h2)**2-nt2ht2) - &
+            &                sqrt((n_path(j)*h1)**2-nt2ht2) ) / &
+            &           ( n_path(j) * del_s(j) )
+        else if ( n1 <= 0.0 .or. n2 <= 0.0 ) then
+          ! Force trapezoidal rule on untransformed integral because
+          ! we can't compute eps to do the transformation
+          t1 = (1.0 + n1) * h1
+          t2 = (1.0 + n2) * h2
+          ref_corr(j) = 0.5 * abs( ( h2 - h1 ) * &
+            & (t1/sqrt(t1**2-nt2ht2) + t2/sqrt(t2**2-nt2ht2)) ) / Del_s(j)
+        else
+          if ( hndp > 0 ) write ( *, '("Solving for H for Ref_Corr(",i0,")")' ) j
+          eps = log(n2/n1)/(h2-h1)
+          xm = 0.5_rp *(x1 + x2)      ! Midpoint of the interval
+          ym = ys *(x1 - x2)          ! Half of the interval length
+          do k = 1, ng
+            q = xm + ym * gx(k)       ! Gauss abscissa
+            NH = sqrt(q*q + nt2ht2)
+            ! Solve h*(1+n1*exp(eps*(h-h1))) = sqrt(q*q + nt2ht2) for h
+            call solve_hn
+            status = max(status,stat)
+            if ( stat == 1 ) then
+!               ref_corr(j) = ref_corr(j-1+2*m) ! Why did I do this?
+!               ref_corr(j) = ref_corr(j-1)
+!               cycle jl
+              ! Force a different approximation
+              integrand_gl = 100.0 * Del_s(j) / ym
+              exit
+            end if
+            integrand_gl(k) = 1.0_rp/(n+h*dndh) ! = 1 / d(nh)/dh
+          end do ! k
+          ! And Finally - define the refraction correction:
+
+          ref_corr(j) = dot_product(integrand_gl,gw) * ym / Del_s(j)
+        end if
+
+        ! If ref_corr(j) is unphysical, use the trapezoidal rule instead
+
+        if ( ref_corr(j) < 1.0 .or. ref_corr(j) > 1.3 ) then
+          t1 = 1.0 / (1.0 + n1*(1.0 + eps*h1))
+          t2 = 1.0 / (1.0 + n2*(1.0 + eps*h2))
+          if ( t1 * t2 > 0.0 ) then
+            ! Use trapezoidal rule on transformed integral
+            ref_corr(j) = ym * ( t1 + t2 ) / Del_s(j)
+          else
+            ! Derivative has a discontinuity in the interval, so
+            ! the transformation doesn't work.  Use the trapezoidal
+            ! rule on the untransformed integral.
+            t1 = (1.0 + n1) * h1
+            t2 = (1.0 + n2) * h2
+            ref_corr(j) = 0.5 * abs( ( h2 - h1 ) * &
+              & (t1/sqrt(t1**2-nt2ht2) + t2/sqrt(t2**2-nt2ht2)) ) / Del_s(j)
           end if
-          integrand_gl(k) = 1.0_rp/(n+h*dndh) ! = 1 / d(nh)/dh
-        end do ! k
+        end if
 
-    ! And Finally - define the refraction correction:
-
-        ref_corr(j) = dot_product(integrand_gl,gw) * ym / Del_s(j)
+        bad = bad .or. ref_corr(j) < 1.0 .or. ref_corr(j) > 1.3
 
       end do jl ! j
 
@@ -351,6 +432,17 @@ jl:   do j = j1+1, j2
       j2 = no_ele - 1
       ys = -0.5_rp
     end do ! m
+
+    if ( bad ) then
+      ! Things are still haywire.  For unphysical ref_corr replace by the
+      ! average of adjacent panels, bounded by 1.0 ... 1.3.
+      do j = 2, no_ele-1
+        if ( ref_corr(j) < 1.0 .or. ref_corr(j) > 1.3 ) &
+          & ref_corr(j) = 0.5 * ( max(1.0_rp,min(1.3_rp,ref_corr(j-1))) + &
+                                & max(1.0_rp,min(1.3_rp,ref_corr(j+1))) )
+      end do
+      call MLSMessage ( MLSMSG_Warning, moduleName, 'Drastic Ref_Corr fixup needed' )
+    end if
 
   contains
 
@@ -360,13 +452,14 @@ jl:   do j = j1+1, j2
   !    N(h) = n1*Exp(eps*(h-h1)), for h,
   ! using a Newton iteration
 
-    subroutine Solve_Hn ( NH )
-
-      real(rp), intent(in) :: NH
+    subroutine Solve_Hn
 
       integer :: iter
       real(rp) :: E ! N1 * exp(eps * (h-h1))
       real(rp) :: h_old, f1, f2, dh, hpos, hneg
+      logical :: Head ! Need debug stuff heading
+
+      real(rp), parameter :: H_tol = 0.001 ! km
 
       character(LEN=*), parameter :: Msg1 = &
         & 'From Solve_Hn routine: Could not bracket the root'
@@ -375,22 +468,38 @@ jl:   do j = j1+1, j2
       character(LEN=*), parameter :: Msg2 = &
         & 'From Solve_Hn routine: Did not converge within 20 iterations'
 
+      character(len=*), parameter :: Msg3 = &
+        & 'Solution is within range even though not initially bracketed'
+
+      character(max(len(msg1),len(msg2))+10) :: Msg
+
       stat = 0 ! Assume it will work
       f1 = h1 * (1.0_rp + n1) - NH ! residual at H = H1
       f2 = h2 * (1.0_rp + n2) - NH ! residual at H = H2
 
       if ( f1*f2 > 0.0_rp ) then ! start in the middle
-        call MLSMessage ( MLSMSG_Warning, ModuleName, Msg1)
         stat = 1
-        h = 0.5 * ( h1 + h2 )
+        msg = msg1
+        write ( msg(len(msg1)+1:), '(" at ", i0)' ) j
+        call MLSMessage ( MLSMSG_Warning, ModuleName, trim(msg) )
+        call dumpDiags ( NH, f1, f2 )
+        h = h1 + 0.5*(1.0+gx(k)) * ( h2 - h1 )
+!        h = 0.5 * ( h1 + h2 )
       else ! start at the mean of the ends weighted by the other's residuals
         h = (h1 * abs(f2) + h2 * abs(f1)) / (abs(f1) + abs(f2))
       end if
-      hneg = h1
-      hpos = h2
+      hneg = min(h1,h2)
+      hpos = max(h1,h2)
 
       iter = 1
 
+      if ( hndp > 0 ) then
+        write ( *, '(7(3x,a2,9x)/3g14.7,1p,3g14.6,g20.12)' ) &
+          & 'h1', 'h2', 'h ', 'f1', 'f2', 'Q ', 'NH', &
+          &  h1,   h2,   h,    f1,   f2,  q,     NH
+        head = .true. ! Need the heading for each iteration
+      end if
+      
       do
 
         h_old = h
@@ -399,26 +508,57 @@ jl:   do j = j1+1, j2
         f2 = h * (1.0_rp + e ) - NH
         if ( abs(f2) < tiny ) exit ! Are we near a zero?
 
+!         This is probably a bad idea in that it prevents correcting from
+!         overshooting
+!         if ( f2 < 0.0_rp ) then
+!           hneg = h
+!         else
+!           hpos = h
+!         end if
+
         dh = f2 / ( 1.0_rp + e * ( 1.0_rp + eps * h ) ) ! f2 / (d f2 / dh)
 
         h = h_old - dh ! Take the Newton move
 
-        if ( abs(dh) < tiny ) exit ! Is the Newton move tiny?
-
-        if ( (h-hneg)*(h-hpos) > 0.01 * (hpos-hneg)**2 ) &
-!         if ( h < min(hpos,hneg) .OR. h > max(hpos,hneg) ) &
-            &  h = 0.5_rp * (hneg + hpos) ! Keep H in bounds
-
-        if ( iter >= max_iter ) then
-          call MLSMessage ( MLSMSG_Warning, ModuleName, Msg2 )
-          stat = 2
-          exit
+        if ( hndp > 0 ) then
+          if ( head ) &
+            & write ( *, '(6(3x,a2,9x))' ) 'H-','H+','H ','dH','e ','f2'
+          head = .false.
+          write ( *, '(3g14.7,1p,3g14.6)' ) hneg, hpos, h, dh, e, f2
         end if
 
-        if ( f2 < 0.0_rp ) then
-          hneg = h
-        else
-          hpos = h
+        if ( abs(dh) < htol ) exit ! Is the Newton move tiny?
+
+        if ( (h-hneg)*(h-hpos) > 0.0 ) then
+!         if ( h < min(hpos,hneg) .OR. h > max(hpos,hneg) ) &
+!           h = 0.5_rp * (hneg + hpos) ! Keep H in bounds
+          if ( h > hpos ) then
+            if ( f2 < 0.0 ) then
+              h = hneg
+            else
+              h = hpos
+            end if
+          else
+            if ( f2 > 0.0 ) then
+              h = hpos
+            else
+              h = hneg
+            end if
+          end if
+!           h = min(hpos,max(hneg,h))
+          if ( hndp > 0 ) write ( *, '(28x,1pg14.7,44x,"H was out of bounds")' ) h
+          if ( abs(hpos-hneg) <= h_tol ) exit
+        end if
+
+        if ( abs(hpos-hneg) <= h_tol ) exit
+
+        if ( iter >= max_iter ) then
+          stat = 2
+          msg = msg2
+          write ( msg(len(msg2)+1:), '(" at ", i0)' ) j
+          call MLSMessage ( MLSMSG_Warning, ModuleName, trim(msg) )
+          call dumpDiags ( NH, f1, f2 )
+          exit
         end if
 
         iter = iter + 1
@@ -428,13 +568,40 @@ jl:   do j = j1+1, j2
       if ( stat == 1 ) then
         ! Maybe the solution is good even though we couldn't initially
         ! bracket it
-        if ( (h-h1)*(h-h2) <= 0.0 ) stat = 0
+        if ( (h-h1)*(h-h2) <= 0.0 ) then
+          stat = 0
+          call MLSMessage ( MLSMSG_Warning, ModuleName, msg3 )
+        end if
       end if
 
       N = 1.0_rp + e
       dndh = eps * e
 
     end subroutine Solve_Hn
+
+    subroutine DumpDiags ( NH, F1, F2 )
+
+      real(rp), intent(in), optional :: NH, F1, F2
+
+      if ( max(index(switches,'drfc'),index(switches,'DRFC')) == 0 ) return
+      call output ( tan_pt, before='Tan_PT = ' )
+      call output ( ht, before=', Ht = ' )
+      if ( present(NH) ) then
+        call output ( stat, before=', stat = ', advance='yes' )
+        call output ( n1, before='n1 = ' )
+        call output ( n2, before=', n2 = ' )
+        call output ( h1, format='(f8.3)', before=', h1 = ' )
+        call output ( h2, format='(f8.3)', before=', h2 = ', advance='yes' )
+        call output ( nh, format='(f8.3)', before='NH = ' )
+        call output ( f1, before=', f1 = ' )
+        call output ( f2, before=', f2 = ', advance='yes' )
+      else
+        call output ( bad, before=', bad = ', advance='yes' )
+        call dump ( h_path, name='H_Path' )
+        call dump ( n_path, name='N_Path' )
+      end if
+      if ( index(switches,'DRFC') > 0 ) stop
+    end subroutine DumpDiags
 
   end subroutine Comp_refcor
 
@@ -452,6 +619,9 @@ jl:   do j = j1+1, j2
 end module REFRACTION_M
 
 ! $Log$
+! Revision 2.28  2007/02/02 00:22:44  vsnyder
+! Don't bracket the Newton move so tightly
+!
 ! Revision 2.27  2007/02/01 02:51:07  vsnyder
 ! Improve Newton iteration in Solve_HN
 !
