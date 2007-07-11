@@ -645,17 +645,17 @@ contains
          CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,TAU0,RS,TS,&
               &     FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
               &     UI,UA,TT0,0,RE)                          !CLEAR-SKY
-         TT  = TT0	   ! so that dTcir=0
+         TT  = TT0         ! so that dTcir=0
        case ( l_clear_110RH_below_top )
          CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,tau_wetCld,RS,TS,&
               &     FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
               &     UI,UA,TT0,0,RE)                          !CLEAR-SKY
-         TT  = TT0	   ! so that dTcir=0
+         TT  = TT0         ! so that dTcir=0
        case ( l_clear_0RH )
          CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,tau_dry,RS,TS,&
               &     FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
               &     UI,UA,TT0,0,RE)                          !CLEAR-SKY
-         TT  = TT0	   ! so that dTcir=0
+         TT  = TT0         ! so that dTcir=0
        case ( l_clear_lowest_0_110RH )
          CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,tau_dry,RS,TS,&
               &     FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
@@ -664,7 +664,7 @@ contains
               &     FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
               &     UI,UA,TT,0,RE)                          !CLEAR-SKY
          TT0 = min(TT, TT0)
-         TT  = TT0	   ! so that dTcir=0
+         TT  = TT0         ! so that dTcir=0
 
        case (l_cloudy_110RH_in_cloud)
          ! this is for the sids/retrieval calculations (saturation only inside clouds)
@@ -674,7 +674,7 @@ contains
          CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,TAU0,RS,TS,&
               &     FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
               &     UI,UA,TT0,0,RE)                          !CLEAR-SKY
-         TT  = TT0	   ! so that dTcir=0
+         TT  = TT0         ! so that dTcir=0
          ELSE
          CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,tau_clear,&
               &   RS,TS,FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
@@ -691,7 +691,7 @@ contains
          CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,TAU0,RS,TS,&
               &     FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
               &     UI,UA,TT0,0,RE)                          !CLEAR-SKY
-         TT  = TT0	   ! so that dTcir=0
+         TT  = TT0         ! so that dTcir=0
          ELSE
          CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,tau_clear,&
               &   RS,TS,FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
@@ -708,7 +708,7 @@ contains
          CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,TAU0,RS,TS,&
               &     FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
               &     UI,UA,TT0,0,RE)                          !CLEAR-SKY
-         TT  = TT0	   ! so that dTcir=0
+         TT  = TT0         ! so that dTcir=0
          ELSE
          CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,tau_clear,&
               &   RS,TS,FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
@@ -762,17 +762,17 @@ contains
          END DO
     
 !---------------------------------------------------------------------------
-!	 FIRST COMPUTE THE POINTING ANGLES (ptg_angle) 
+!        FIRST COMPUTE THE POINTING ANGLES (ptg_angle) 
 !---------------------------------------------------------------------------
-!	 Rs_eq = h_obs + 38.9014 * Sin(2.0*(phi_tan - 51.6814 * deg2rad)) 
+!        Rs_eq = h_obs + 38.9014 * Sin(2.0*(phi_tan - 51.6814 * deg2rad)) 
 
-	 Rs_eq = h_obs
+         Rs_eq = h_obs
 
          schi = 0.0_r8
          RT = 0.0_r8
          ptg_angle = 0.0_r8
 
-  	    DO I = 1, Multi
+            DO I = 1, Multi
             
             If (ZZT1(I) .LT. 0._r8) then
                RT= ( ZZT1(I) + RE )
@@ -781,16 +781,16 @@ contains
                schi = (1+znt1(I)) * (ZZT1(I) + RE) / Rs_eq 
             Endif
 
-   	    IF(ABS(schi) > 1.0) THEN
+            IF(ABS(schi) > 1.0) THEN
               call MLSMessage ( MLSMSG_Error, ModuleName, &
                    & 'Pointing angle computation error: arg > 1.0 in ArcSin(arg)' )
             END IF
-    	    ptg_angle(i) = Asin(schi) + elev_offset
+            ptg_angle(i) = Asin(schi) + elev_offset
 
-  	    END DO
+            END DO
 
 ! ----------------------------------------------------------------
-! 	 THEN DO THE FIELD OF VIEW AVERAGING
+!        THEN DO THE FIELD OF VIEW AVERAGING
 ! ----------------------------------------------------------------
 
          RAD0=0.0_r8
@@ -881,6 +881,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.68  2005/08/03 18:10:17  vsnyder
+! Changes induced by scan averaging, which is not done here yet
+!
 ! Revision 1.67  2005/07/06 02:17:43  vsnyder
 ! Use new antenna convolution module
 !
