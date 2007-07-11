@@ -71,7 +71,7 @@ module DUMP_0
 ! in the above, a string list is a string of elements (usu. comma-separated)
 ! === (end of api) ===
 
-  public :: DIFF, DUMP, dumpNamedValues, SELFDIFF
+  public :: DIFF, DUMP, DUMP_2x2xN, dumpNamedValues, SELFDIFF
 
   interface DIFF        ! dump diffs between pair of n-d arrays of numeric type
     module procedure DIFF_1D_DOUBLE, DIFF_1D_INTEGER, DIFF_1D_REAL
@@ -86,8 +86,11 @@ module DUMP_0
     module procedure DUMP_2D_DOUBLE, DUMP_2D_INTEGER
     module procedure DUMP_2D_LOGICAL, DUMP_2D_REAL
     module procedure DUMP_3D_CHAR, DUMP_3D_DOUBLE, DUMP_3D_INTEGER
-    module procedure DUMP_3D_REAL
+    module procedure DUMP_3D_REAL, DUMP_3D_COMPLEX, DUMP_3D_DCOMPLEX
     module procedure DUMP_HASH_LOG, DUMP_HASH_STR, DUMP_STRLIST
+  end interface
+  interface DUMP_2x2xN ! For polarized incremental optical depth
+    module procedure DUMP_2x2xN_COMPLEX, DUMP_2x2xN_DCOMPLEX
   end interface
   interface dumpNamedValues   ! dump name-value pairs, names in string list
     module procedure dumpNamedValues_DOUBLE, dumpNamedValues_INTEGER
@@ -786,19 +789,22 @@ contains
   end subroutine DUMP_2D_CHAR
 
   ! --------------------------------------------  DUMP_2D_COMPLEX  -----
-  subroutine DUMP_2D_COMPLEX ( ARRAY, NAME, CLEAN, WIDTH, FORMAT )
+  subroutine DUMP_2D_COMPLEX ( ARRAY, NAME, CLEAN, WIDTH, FORMAT, FILLVALUE, &
+    & TRANSPOSE )
     integer, parameter :: RK = kind(0.0e0)
     complex(rk), intent(in) :: ARRAY(:,:)
     character(len=*), intent(in), optional :: NAME
     logical, intent(in), optional :: CLEAN
     integer, intent(in), optional :: WIDTH ! How many per line?
     character(len=*), optional :: FORMAT
+    real, intent(in), optional :: FillValue
+    logical, intent(in), optional :: TRANSPOSE
 
-    logical :: myClean
+    logical :: myClean, myTranspose
     integer :: I, J, K
     integer :: myWidth
     integer :: NumZeroRows
-    real(rk), parameter :: MyFillValue = 0.0_rk
+    real :: MyFillValue
     character(len=64) :: MyFormat
 
     myClean = .false.
@@ -810,6 +816,12 @@ contains
     myFormat = sdFormatDefaultCmplx
     if ( present(format) ) myFormat = format
 
+    myFillValue = 0.0_rk
+    if ( present(fillValue) ) myFillValue = fillValue
+
+    myTranspose = .not.(size(array,2) >= min(5,size(array,1)) .or. myClean)
+    if ( present(transpose) ) myTranspose = transpose
+    
     numZeroRows = 0
     if ( size(array) == 0 ) then
       call empty ( name )
@@ -820,7 +832,7 @@ contains
       call dump ( array(:,1), name, clean=clean, format=myFormat )
     else 
       call name_and_size ( name, myClean, size(array) )
-      if ( size(array,2) >= min(5,size(array,1)) .or. myClean ) then
+      if ( .not. myTranspose ) then
         if ( present(name) ) call output ( '', advance='yes' )
         do i = 1, size(array,1)
           do j = 1, size(array,2), myWidth
@@ -864,19 +876,22 @@ contains
   end subroutine DUMP_2D_COMPLEX
 
   ! --------------------------------------------  DUMP_2D_COMPLEX  -----
-  subroutine DUMP_2D_DCOMPLEX ( ARRAY, NAME, CLEAN, WIDTH, FORMAT )
+  subroutine DUMP_2D_DCOMPLEX ( ARRAY, NAME, CLEAN, WIDTH, FORMAT, FILLVALUE, &
+    & TRANSPOSE )
     integer, parameter :: RK = kind(0.0d0)
     complex(rk), intent(in) :: ARRAY(:,:)
     character(len=*), intent(in), optional :: NAME
     logical, intent(in), optional :: CLEAN
     integer, intent(in), optional :: WIDTH ! How many per line?
     character(len=*), optional :: FORMAT
+    real(rk), intent(in), optional :: FillValue
+    logical, intent(in), optional :: TRANSPOSE
 
-    logical :: myClean
+    logical :: myClean, myTranspose
     integer :: I, J, K
     integer :: myWidth
     integer :: NumZeroRows
-    real(rk), parameter :: MyFillValue = 0.0_rk
+    real(rk) :: MyFillValue
     character(len=64) :: MyFormat
 
     myClean = .false.
@@ -888,6 +903,12 @@ contains
     myFormat = sdFormatDefaultCmplx
     if ( present(format) ) myFormat = format
 
+    myFillValue = 0.0_rk
+    if ( present(fillValue) ) myFillValue = fillValue
+
+    myTranspose = .not.(size(array,2) >= min(5,size(array,1)) .or. myClean)
+    if ( present(transpose) ) myTranspose = transpose
+
     numZeroRows = 0
     if ( size(array) == 0 ) then
       call empty ( name )
@@ -898,7 +919,7 @@ contains
       call dump ( array(:,1), name, clean=clean, format=myFormat )
     else 
       call name_and_size ( name, myClean, size(array) )
-      if ( size(array,2) >= min(5,size(array,1)) .or. myClean ) then
+      if ( .not. myTranspose ) then
         if ( present(name) ) call output ( '', advance='yes' )
         do i = 1, size(array,1)
           do j = 1, size(array,2), myWidth
@@ -943,7 +964,8 @@ contains
 
   ! ---------------------------------------------  DUMP_2D_DOUBLE  -----
   subroutine DUMP_2D_DOUBLE ( ARRAY, NAME, &
-    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND, &
+    & TRANSPOSE )
     double precision, intent(in) :: ARRAY(:,:)
     character(len=*), intent(in), optional :: NAME
     double precision, intent(in), optional :: FILLVALUE
@@ -954,8 +976,9 @@ contains
     logical, optional, intent(in) :: STATS
     logical, intent(in), optional :: RMS
     integer, intent(in), optional :: LBOUND
+    logical, intent(in), optional :: TRANSPOSE
 
-    logical :: myClean
+    logical :: myClean, myTranspose
     integer :: I, J, K
     integer :: NumZeroRows
     double precision :: myFillValue
@@ -971,6 +994,9 @@ contains
     myFormat = sdFormatDefault
     if ( present(format) ) myFormat = format
 
+    myTranspose = .not.(size(array,2) >= min(5,size(array,1)) .or. myClean)
+    if ( present(transpose) ) myTranspose = transpose
+
     numZeroRows = 0
     if ( size(array) == 0 ) then
       call empty ( name )
@@ -981,7 +1007,7 @@ contains
       call dump ( array(:,1), name, clean=clean )
     else
       call name_and_size ( name, myClean, size(array) )
-      if ( size(array,2) >= min(5,size(array,1)) .or. myClean ) then
+      if ( .not. myTranspose ) then
         if ( present(name) ) call output ( '', advance='yes' )
         do i = 1, size(array,1)
           do j = 1, size(array,2), 5
@@ -1137,7 +1163,8 @@ contains
 
   ! -----------------------------------------------  DUMP_2D_REAL  -----
   subroutine DUMP_2D_REAL ( ARRAY, NAME, &
-    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND, &
+    & TRANSPOSE )
     real, intent(in) :: ARRAY(:,:)
     character(len=*), intent(in), optional :: NAME
     real, intent(in), optional :: FILLVALUE
@@ -1148,8 +1175,9 @@ contains
     logical, optional, intent(in) :: STATS
     logical, intent(in), optional :: RMS
     integer, intent(in), optional :: LBOUND
+    logical, intent(in), optional :: TRANSPOSE
 
-    logical :: myClean
+    logical :: myClean, myTranspose
     integer :: I, J, K
     integer :: NumZeroRows
     real :: myFillValue
@@ -1165,6 +1193,9 @@ contains
     myFormat = sdFormatDefault
     if ( present(format) ) myFormat = format
 
+    myTranspose = .not.(size(array,2) >= min(5,size(array,1)) .or. myClean)
+    if ( present(transpose) ) myTranspose = transpose
+
     numZeroRows = 0
     if ( size(array) == 0 ) then
       call empty ( name )
@@ -1175,7 +1206,7 @@ contains
       call dump ( array(:,1), name, clean=clean )
     else
       call name_and_size ( name, myClean, size(array) )
-      if ( size(array,2) >= min(5,size(array,1)) .or. myClean ) then
+      if ( .not. myTranspose ) then
         if ( present(name) ) call output ( '', advance='yes' )
         do i = 1, size(array,1)
           do j = 1, size(array,2), 5
@@ -1221,6 +1252,80 @@ contains
         & numZeroRows, myFillValue )
     end if
   end subroutine DUMP_2D_REAL
+
+  ! -----------------------------------------  DUMP_2x2xN_COMPLEX  -----
+  subroutine DUMP_2x2xN_COMPLEX ( ARRAY, NAME, CLEAN, FORMAT )
+  ! This is for dumping polarized incremental optical depth
+    integer, parameter :: RK = kind(0.0e0)
+    complex(rk), intent(in) :: ARRAY(:,:,:) ! Better be 2x2xn
+    character(len=*), intent(in), optional :: NAME
+    logical, intent(in), optional :: CLEAN
+    character(len=*), intent(in), optional :: FORMAT
+
+    logical :: MyClean
+    integer :: J, K
+    character(len=64) :: MyFormat
+
+    myClean = .false.
+    if ( present(clean) ) myClean = clean
+    myFormat = sdFormatDefaultCmplx
+    if ( present(format) ) myFormat = format
+
+    if ( size(array) == 0 ) then
+      call empty ( name )
+    else
+      call name_and_size ( name, myClean, size(array) )
+      if ( present(name) ) call output ( '', advance='yes' )
+      do j = 1, size(array,3)
+        if (.not. myClean) then
+          call output ( j, max(3,ilog10(size(array))+1) )
+          call output ( afterSub )
+        end if
+        call output ( array(1,1,j), myFormat )
+        call output ( array(1,2,j), myFormat, advance='yes' )
+        call blanks ( max(3,ilog10(size(array))+1) + len(afterSub) )
+        call output ( array(2,1,j), myFormat )
+        call output ( array(2,2,j), myFormat, advance='yes' )
+      end do
+    end if
+  end subroutine DUMP_2x2xN_COMPLEX
+
+  ! ----------------------------------------  DUMP_2x2xN_DCOMPLEX  -----
+  subroutine DUMP_2x2xN_DCOMPLEX ( ARRAY, NAME, CLEAN, FORMAT )
+  ! This is for dumping polarized incremental optical depth
+    integer, parameter :: RK = kind(0.0d0)
+    complex(rk), intent(in) :: ARRAY(:,:,:) ! Better be 2x2xn
+    character(len=*), intent(in), optional :: NAME
+    logical, intent(in), optional :: CLEAN
+    character(len=*), intent(in), optional :: FORMAT
+
+    logical :: MyClean
+    integer :: J, K
+    character(len=64) :: MyFormat
+
+    myClean = .false.
+    if ( present(clean) ) myClean = clean
+    myFormat = sdFormatDefaultCmplx
+    if ( present(format) ) myFormat = format
+
+    if ( size(array) == 0 ) then
+      call empty ( name )
+    else
+      call name_and_size ( name, myClean, size(array) )
+      if ( present(name) ) call output ( '', advance='yes' )
+      do j = 1, size(array,3)
+        if (.not. myClean) then
+          call output ( j, max(3,ilog10(size(array))+1) )
+          call output ( afterSub )
+        end if
+        call output ( array(1,1,j), myFormat )
+        call output ( array(1,2,j), myFormat, advance='yes' )
+        call blanks ( max(3,ilog10(size(array))+1) + len(afterSub) )
+        call output ( array(2,1,j), myFormat )
+        call output ( array(2,2,j), myFormat, advance='yes' )
+      end do
+    end if
+  end subroutine DUMP_2x2xN_DCOMPLEX
 
   ! -----------------------------------------------  DUMP_3D_CHAR  -----
   subroutine DUMP_3D_CHAR ( ARRAY, NAME, FILLVALUE, CLEAN, TRIM, MAXLON )
@@ -1292,6 +1397,141 @@ contains
         & k-10, size(array,3) /), numZeroRows, myFillValue )
     end if
   end subroutine DUMP_3D_CHAR
+
+  ! --------------------------------------------  DUMP_3D_COMPLEX  -----
+  subroutine DUMP_3D_COMPLEX ( ARRAY, NAME, &
+    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    complex, intent(in) :: ARRAY(:,:,:)
+    character(len=*), intent(in), optional :: NAME
+    real, intent(in), optional :: FILLVALUE
+    logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    logical, intent(in), optional :: WHOLEARRAY
+    logical, optional, intent(in) :: STATS
+    logical, intent(in), optional :: RMS
+    integer, intent(in), optional :: LBOUND
+
+    logical :: myClean
+    integer :: I, J, K, L
+    integer :: NumZeroRows
+    real    :: myFillValue
+    character(len=64) :: MyFormat
+
+    ! Executable
+    myFillValue = 0.
+    if ( present(FillValue) ) myFillValue=FillValue
+    myClean = .false.
+    if ( present(clean) ) myClean = clean
+
+    myFormat = sdFormatDefaultCmplx
+    if ( present(format) ) myFormat = format
+
+    numZeroRows = 0
+    if ( size(array) == 0 ) then
+      call empty ( name )
+    else if ( size(array) == 1 ) then
+      call name_and_size ( name, myClean, 1 )
+      call output ( array(1,1,1), myFormat, advance='yes' )
+    else if ( size(array,2) == 1 .and. size(array,3) == 1 ) then
+      call dump ( array(:,1,1), name, clean=clean )
+    else if ( size(array,3) == 1 ) then
+      call dump ( array(:,:,1), name, fillValue=fillValue, clean=clean )
+    else
+      call name_and_size ( name, myClean, size(array) )
+      if ( present(name) ) call output ( '', advance='yes' )
+      do i = 1, size(array,1)
+        do j = 1, size(array,2)
+          do k = 1, size(array,3), 5
+            if (.not. myClean) then
+              if ( any(array(i,j,k:min(k+4, size(array,3))) /= myFillValue) ) then
+                call say_fill ( (/ i, size(array,1), j-1, size(array,2), &
+                  & k, size(array,3) /), numZeroRows, myFillValue, inc=3 )
+              else
+                numZeroRows = numZeroRows + 1
+              end if
+            end if
+            if ( myClean .or. any(array(i,j,k:min(k+4, size(array,3))) /= myFillValue) ) then
+              do l = k, min(k+4, size(array,3))
+                call output ( array(i,j,l), myFormat )
+              end do
+              call output ( '', advance='yes' )
+            endif
+          end do
+        end do
+      end do
+      call say_fill ( (/ i-1, size(array,1), j-1, size(array,2), &
+        & k-5, size(array,3) /), numZeroRows, myFillValue )
+   end if
+  end subroutine DUMP_3D_COMPLEX
+
+  ! -------------------------------------------  DUMP_3D_DCOMPLEX  -----
+  subroutine DUMP_3D_DCOMPLEX ( ARRAY, NAME, &
+    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    integer, parameter :: RK = kind(0.0d0)
+    complex(rk), intent(in) :: ARRAY(:,:,:)
+    character(len=*), intent(in), optional :: NAME
+    real(rk), intent(in), optional :: FILLVALUE
+    logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    logical, intent(in), optional :: WHOLEARRAY
+    logical, optional, intent(in) :: STATS
+    logical, intent(in), optional :: RMS
+    integer, intent(in), optional :: LBOUND
+
+    logical :: myClean
+    integer :: I, J, K, L
+    integer :: NumZeroRows
+    real(rk)    :: myFillValue
+    character(len=64) :: MyFormat
+
+    ! Executable
+    myFillValue = 0.
+    if ( present(FillValue) ) myFillValue=FillValue
+    myClean = .false.
+    if ( present(clean) ) myClean = clean
+
+    myFormat = sdFormatDefaultCmplx
+    if ( present(format) ) myFormat = format
+
+    numZeroRows = 0
+    if ( size(array) == 0 ) then
+      call empty ( name )
+    else if ( size(array) == 1 ) then
+      call name_and_size ( name, myClean, 1 )
+      call output ( array(1,1,1), myFormat, advance='yes' )
+    else if ( size(array,2) == 1 .and. size(array,3) == 1 ) then
+      call dump ( array(:,1,1), name, clean=clean )
+    else if ( size(array,3) == 1 ) then
+      call dump ( array(:,:,1), name, fillValue=fillValue, clean=clean )
+    else
+      call name_and_size ( name, myClean, size(array) )
+      if ( present(name) ) call output ( '', advance='yes' )
+      do i = 1, size(array,1)
+        do j = 1, size(array,2)
+          do k = 1, size(array,3), 5
+            if (.not. myClean) then
+              if ( any(array(i,j,k:min(k+4, size(array,3))) /= myFillValue) ) then
+                call say_fill ( (/ i, size(array,1), j-1, size(array,2), &
+                  & k, size(array,3) /), numZeroRows, myFillValue, inc=3 )
+              else
+                numZeroRows = numZeroRows + 1
+              end if
+            end if
+            if ( myClean .or. any(array(i,j,k:min(k+4, size(array,3))) /= myFillValue) ) then
+              do l = k, min(k+4, size(array,3))
+                call output ( array(i,j,l), myFormat )
+              end do
+              call output ( '', advance='yes' )
+            endif
+          end do
+        end do
+      end do
+      call say_fill ( (/ i-1, size(array,1), j-1, size(array,2), &
+        & k-5, size(array,3) /), numZeroRows, myFillValue )
+   end if
+  end subroutine DUMP_3D_DCOMPLEX
 
   ! ---------------------------------------------  DUMP_3D_DOUBLE  -----
   subroutine DUMP_3D_DOUBLE ( ARRAY, NAME, &
@@ -2118,6 +2358,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.70  2007/07/11 22:29:23  vsnyder
+! Add more dumps for complex, add 2x2xN dumps
+!
 ! Revision 2.69  2007/06/14 18:38:36  pwagner
 ! Allow separate rmsFormat to be set at class level
 !
