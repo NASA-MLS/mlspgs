@@ -118,12 +118,13 @@ contains
   subroutine Rad_tran_Pol ( tan_pt, gl_inds, more_inds, e_rflty, del_zeta, &
                      &  alpha_path_c, ref_cor, incoptdepth_pol, deltau_pol, &
                      &  alpha_path_gl, ds_dz_gw, ct, stcp, stsp, t_script, &
-                     &  prod_pol, tau_pol, rad_pol, p_stop )
+                     &  do_dumps, prod_pol, tau_pol, rad_pol, p_stop )
 
     ! Polarized radiative transfer.  Radiances only, no derivatives.
 
     use CS_Expmat_m, only: CS_Expmat
     use DO_DELTA_M, ONLY: POLARIZED_PATH_OPACITY
+    use Dump_0, only: Dump, Dump_2x2xN
     use GLNP, ONLY: Ng
     use MCRT_M, ONLY: MCRT
     use MLSKinds, only: RP, IP
@@ -157,6 +158,7 @@ contains
     real(rp), intent(in) :: STSP(:)          ! Sin theta Sin Phi  for Mag field
     real(rp), intent(in) :: T_script(:)      ! differential temperatures (K)
       !              on coarse path.
+    integer, intent(in) :: Do_Dumps          ! Dump intermediate results if > 0
 
   ! outputs
 
@@ -198,6 +200,16 @@ contains
       incoptdepth_pol(:,:,more_inds) = incoptdepth_pol(:,:,more_inds) - &
         & incoptdepth_pol_gl
 
+      if ( do_dumps > 1 ) then
+        call dump ( more_inds, name='More_Inds' )
+        call dump ( gl_inds, name='GL_Inds' )
+        call dump ( gl_delta_polarized, name='GL_Delta_Polarized', width=3, &
+          & transpose=.true. )
+        call Dump_2x2xN ( incoptdepth_pol_gl, name='IncoptDepth_Pol_GL' )
+        call Dump_2x2xN ( incoptdepth_pol, name='Incoptdepth_Pol' )
+        call dump ( ref_cor, name='Ref_Cor' )
+        if ( do_dumps > 2 ) stop
+      end if
     end if
 
     ! At this point, incoptdepth_pol(:,:,1:tan_pt_c) should be nearly
@@ -225,7 +237,16 @@ contains
     return
 
   ! Error exit if cs_expmat detected an overflow
-  99 p_stop = - p_stop - 1
+ 99 if ( do_dumps > 0 ) then
+      call dump ( more_inds, name='More_Inds' )
+      call dump ( gl_inds, name='GL_Inds' )
+      call dump ( gl_delta_polarized, name='GL_Delta_Polarized', width=3 )
+      call Dump_2x2xN ( incoptdepth_pol_gl, name='IncoptDepth_Pol_GL' )
+      call Dump_2x2xN ( incoptdepth_pol(:,:,:p_stop), name='Incoptdepth_Pol' )
+      call dump ( ref_cor, name='Ref_Cor' )
+      if ( do_dumps > 2 ) stop
+    end if
+    p_stop = - p_stop - 1
 
   end subroutine Rad_tran_Pol
 
@@ -1095,6 +1116,9 @@ contains
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.3  2007/07/11 22:26:45  vsnyder
+! Dumps
+!
 ! Revision 2.2  2007/06/26 00:40:01  vsnyder
 ! Minor improvement in Get_Do_Calc_Indexed
 !
