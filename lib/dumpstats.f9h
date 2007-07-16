@@ -15,11 +15,11 @@
 ! $Id$
 ! $RCSfile$
 
-    myStats = .false.
+    myStats = theDefault('stats') ! .false.
     if ( present(stats) ) myStats = stats
-    myRMS = .false.
+    myRMS = theDefault('rms') ! .false.
     if ( present(RMS) ) myRMS = RMS
-    myWholeArray = .not. (myStats .or. myRMS)
+    myWholeArray = .not. (myStats .or. myRMS) .or. theDefault('wholearray')
     if ( present(wholeArray) ) myWholeArray = wholeArray
     if ( myRMS ) then
       if ( .not. all(isfinite(array)) ) then
@@ -72,6 +72,9 @@
       end if
     end if
 ! $Log$
+! Revision 2.13  2007/07/16 23:33:28  pwagner
+! May automatically set certain options by default
+!
 ! Revision 2.12  2007/04/03 02:48:47  vsnyder
 ! More of not looking at non-present dummy arguments
 !
