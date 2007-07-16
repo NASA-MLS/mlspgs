@@ -32,9 +32,21 @@
     ! This is terrible: don't use lengths of optional args
     ! character(len(name1) + len(name2) + 8) :: DiffName
     character(len=64) :: DiffName
-    integer :: nEqual, nUnEqual
-
+    integer :: i, nEqual, nUnEqual
+    double precision :: tmax
+    real(kind(array1)), dimension(2) :: exvalues
+    real(kind(array1)), dimension(2) :: exratios
+    real(kind(array1))               :: minratio
+    real(kind(array1))               :: maxratio
+    real(kind(array1))               :: meanratio
+    real(kind(array1))               :: stddevratio
+    real(kind(array1))               :: rmsratio
+    real(kind(array1))               :: medianratio
+    logical, parameter               :: PRINTREFERENCEVALUES = .false.
+    logical, parameter               :: PRINTMINMAXWITHRMS = .true.
+    logical, parameter               :: DEBUG = .false.
     ! Executable
+    thisIsADiff = .true.  ! For special dumps
     alreadySbtrcted = .false.
     myStats = .false.
     if ( present(stats) ) myStats = stats
@@ -48,6 +60,11 @@
     endif
 
     myWholeArray = .not. (myStats .or. myRMS)
+    if ( DEBUG ) then
+      call outputNamedValue( 'myStats', myStats )
+      call outputNamedValue( 'myRMS', myRMS )
+      call outputNamedValue( 'myWholeArray', myWholeArray )
+    endif
     if ( myWholeArray ) then
       call dump(array1-array2, trim(DiffName), &
       & real(0.,kind(array1)), CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
@@ -78,6 +95,7 @@
     if ( myRMS ) then
       if( present(FillValue) ) then
         ! We want to make sure we remove values from both arrays where either is fill
+        if ( DEBUG ) call outputNamedValue( 'filtering FillValue', FillValue )
         filtered1 = reshape( array1, (/ product(shape(array1)) /) )
         filtered2 = reshape( array2, (/ product(shape(array2)) /) )
         where (filtered1 == FillValue)
@@ -93,11 +111,17 @@
           & addedData=.false., min=refmin, max=refmax, rms=refrms)
         call allstats(filtered2(1:numNonFill), &
           & addedData=.true., min=refmin, max=refmax, rms=refrms)
-        call printRMSetc ( 'Reference values', refmin, refmax, refrms )
+        if ( PRINTREFERENCEVALUES ) &
+          & call printRMSetc ( 'Reference values', refmin, refmax, refrms )
         ! call dump ( filtered1, 'filtered1', fillvalue=fillvalue )
         ! call dump ( filtered2, 'filtered2', fillvalue=fillvalue )
+        ! Prepare to find abs, relative differences
         ! Avoid another automatic array
-        filtered1 = filtered1 - filtered2
+        do i=1, size(filtered1)
+          tmax = max( abs(filtered1(i)), abs(filtered2(i)) )
+          filtered1(i) = filtered1(i) - filtered2(i)
+          filtered2(i) = tmax
+        enddo
         ! call dump ( filtered1, 'filtered1-filtered2', fillvalue=real(0.,kind(array1)) )
         ! call outputNamedValue( 'num /= fill value', numNonFill )
         alreadySbtrcted = .true.
@@ -110,6 +134,8 @@
             & trim(DiffName), real(0.,kind(array1)), CLEAN, WIDTH, FORMAT, &
             & WHOLEARRAY, STATS, RMS, LBOUND )
         endif
+        if ( DEBUG ) call output( 'DoneWithDiff', advance='yes' )
+        call doneWithDiff
         return
       else
         call allstats(filtered1, &
@@ -117,13 +143,52 @@
         call allstats(filtered2, &
           & addedData=.true., min=refmin, max=refmax, rms=refrms)
       endif
-      call printRMSetc ( 'Reference values', refmin, refmax, refrms )
+      if ( PRINTREFERENCEVALUES ) &
+        & call printRMSetc ( 'Reference values', refmin, refmax, refrms )
     endif
-    if ( .not. alreadySbtrcted ) filtered1 = filtered1 - filtered2
+    if ( .not. alreadySbtrcted ) then
+      ! Prepare to find abs, relative differences
+      ! Avoid another automatic array
+      do i=1, size(filtered1)
+        tmax = max( abs(filtered1(i)), abs(filtered2(i)) )
+        filtered1(i) = filtered1(i) - filtered2(i)
+        filtered2(i) = tmax
+      enddo
+    endif
     call dump(filtered1, trim(DiffName), &
       & real(0.,kind(array1)), CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    call doneWithDiff
+    if ( DEBUG ) call output( 'DoneWithDiff', advance='yes' )
+  contains
+    subroutine doneWithDiff
+      character(len=16) :: originalSDFormat
+      !
+      originalSDFormat = outputOptions%sdFormatDefault
+      outputOptions%sdFormatDefault = rmsFormat
+      thisIsADiff = .false.   ! Reset
+      if ( .not. PRINTMINMAXWITHRMS ) return
+      originalSDFormat = outputOptions%sdFormatDefault
+      outputOptions%sdFormatDefault = rmsFormat
+      call ratios( filtered1, filtered2, exvalues, exratios, &
+        & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio )
+      call output( 'Maximum difference: ', advance='no' )
+      call output( exvalues(1), advance='no' )
+      call output( '  ( as ratio:  ', advance='no' )
+      call output( exratios(1), advance='no' )
+      call output( ' )', advance='yes' )
+      call output( 'Maximum ratio: ', advance='no' )
+      call output( exratios(2), advance='no' )
+      call output( '  ( as difference:  ', advance='no' )
+      call output( exvalues(2), advance='no' )
+      call output( ' )', advance='yes' )
+      call printRMSetc( 'ratio', minratio, maxratio, rmsratio, meanratio )
+      outputOptions%sdFormatDefault = originalSDFormat
+    end subroutine doneWithDiff
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.9  2007/07/16 23:32:33  pwagner
+! Improved rms-type diffs to concentrate on ratios
+!
 ! Revision 2.8  2007/06/07 20:31:52  pwagner
 ! Avoid using lengths of optional args
 !
