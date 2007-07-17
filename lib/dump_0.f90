@@ -22,9 +22,10 @@ module DUMP_0
   use MLSFillValues, only : FilterValues, IsFinite, &
     & ReorderFillValues, ReplaceFillValues
   use MLSSets, only: FindAll
-  use MLSStats1, only: ALLSTATS, FILLVALUERELATION, &
+  use MLSStats1, only: ALLSTATS, RATIOS, FILLVALUERELATION, &
     & MLSMAX, MLSMEAN, MLSMIN, MLSSTDDEV
   use MLSStringLists, only: catLists, GetStringElement, NumStringElements
+  use MLSStrings, only: lowercase
   use OUTPUT_M, only: outputOptions, &
     & BLANKS, NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
 
@@ -35,15 +36,20 @@ module DUMP_0
 !     - - - - - - - -
 
 !     (parameters)
-! AfterSub                 character printed between row, col id and data
+! AFTERSUB                 character printed between row, col id and data
+! DEFAULTDIFFOPTIONS       switches to set default DIFF values for CLEAN, TRIM, etc.
+! DEFAULTDUMPOPTIONS       same as above, but for DUMP
+! DIFFRMSMEANSRMS          print abs min, max, etc. when DIFF has RMS set TRUE
 ! DONTDUMPIFALLEQUAL       don't dump every element of a constant array
 ! FILTERFILLSFROMRMS       exclude fill values when calculating rms, etc.
+! RMSFORMAT                use this format to print min, max, rms, etc.
+! SDFORMATDEFAULT          use this format to print s.p., d.p. by default
 ! STATSONONELINE           stats, rms each printed on a single line
 
 !     (subroutines and functions)
 ! DIFF                     dump diffs between pair of arrays of numeric type
 ! DUMP                     dump an array to output
-! dumpNamedValues          dump an array of paired names and values
+! DUMPNAMEDVALUES          dump an array of paired names and values
 ! SELFDIFF                 dump increments between successive array values
 ! === (end of toc) ===
 
@@ -67,11 +73,22 @@ module DUMP_0
 !      [[log clean], [char* format, [int width]] ) 
 !       where values can be a 1d array of ints or reals, and
 !       names is a string list of corresponding names
+! selfdiff ( array, char* name,
+!      [fillvalue], [log clean], [int width], [char* format],
+!      [log wholearray], [log stats], [log rms], [int lbound] ) 
+
+! Note that most of the optional parameters have default values
+! logically set to FALSE or 0 or '*' where appropriate
+
+! An exception is the behavior of wholearray:
+! if both {rms, stats} are FALSE or unset, the whole array is dumped (or diffed)
+! if either or both is TRUE the whole array will be dumped only if
+! wholearray is set to TRUE
 
 ! in the above, a string list is a string of elements (usu. comma-separated)
 ! === (end of api) ===
 
-  public :: DIFF, DUMP, DUMP_2x2xN, dumpNamedValues, SELFDIFF
+  public :: DIFF, DUMP,DUMP_2x2xN,  DUMPNAMEDVALUES, SELFDIFF
 
   interface DIFF        ! dump diffs between pair of n-d arrays of numeric type
     module procedure DIFF_1D_DOUBLE, DIFF_1D_INTEGER, DIFF_1D_REAL
@@ -92,9 +109,9 @@ module DUMP_0
   interface DUMP_2x2xN ! For polarized incremental optical depth
     module procedure DUMP_2x2xN_COMPLEX, DUMP_2x2xN_DCOMPLEX
   end interface
-  interface dumpNamedValues   ! dump name-value pairs, names in string list
-    module procedure dumpNamedValues_DOUBLE, dumpNamedValues_INTEGER
-    module procedure dumpNamedValues_REAL
+  interface DUMPNAMEDVALUES   ! dump name-value pairs, names in string list
+    module procedure DUMPNAMEDVALUES_DOUBLE, DUMPNAMEDVALUES_INTEGER
+    module procedure DUMPNAMEDVALUES_REAL
   end interface
   interface SELFDIFF       ! dump increments between successive array values
     module procedure SELFDIFF_INTEGER
@@ -104,8 +121,8 @@ module DUMP_0
   interface printRMSetc
     module procedure printRMSetc_DOUBLE, printRMSetc_INT, printRMSetc_REAL
   end interface
-  interface SAY_FILL
-    module procedure SAY_FILL_CHAR, SAY_FILL_DOUBLE, SAY_FILL_INT, SAY_FILL_REAL
+  interface say_fill
+    module procedure say_fill_char, say_fill_double, say_fill_int, say_fill_real
   end interface
 
 !---------------------------- RCS Module Info ------------------------------
@@ -115,19 +132,38 @@ module DUMP_0
 !---------------------------------------------------------------------------
 
   ! These public parameters can be reconfigured outside the module
-  character, public, parameter :: AfterSub = '#'
-  logical, public, save ::   DONTDUMPIFALLEQUAL = .true.
-  logical, public, save ::   STATSONONELINE = .true.
-  logical, public, save ::   FILTERFILLSFROMRMS = .false.
+  ! --------------------------------------------------------------------------
+  character, public, parameter :: AFTERSUB = '#'
 
+  ! The following character strings can include one or more options to:
+  ! option             effect
+  ! ------             ------
+  !  c             clean = TRUE
+  !  r             rms = TRUE
+  !  s             stats = TRUE
+  !  t             trim = TRUE
+  !  w             wholearray = TRUE
+  !
+  ! E.g., '-crt' turns on CLEAN, RMS, and TRIM
+  character(len=8), public, save :: DEFAULTDIFFOPTIONS = ' '
+  character(len=8), public, save :: DEFAULTDUMPOPTIONS = ' '
+  logical, public, save ::   DIFFRMSMEANSRMS = .false.
+  logical, public, save ::   DONTDUMPIFALLEQUAL = .true.
+  logical, public, save ::   FILTERFILLSFROMRMS = .false.
+  logical, public, save ::   STATSONONELINE = .true.
+
+  ! These determine how dumped numerical data (s.p. or d.p.) will be formatted
+  character(len=16), public, save :: RMSFORMAT = '*' ! * means default format
+  character(len=16), public, save :: SDFORMATDEFAULT = '(1pg14.6)'
+  character(*), parameter :: sdFormatDefaultCmplx = &
+    & '(1x,"(",1pg13.6,",",1pg13.6,")")'
+  ! --------------------------------------------------------------------------
+
+  ! These are private variables declared module-wide purely for convenience
   logical, parameter ::   DEEBUG = .false.
   logical :: myStats, myRMS, myWholeArray
   integer :: numNonFill, numFill
-
-  character(len=16), public, save :: rmsFormat = '*' ! * means default format
-  character(len=16), public, save :: sdFormatDefault = '(1pg14.6)'
-  character(*), parameter :: sdFormatDefaultCmplx = &
-    & '(1x,"(",1pg13.6,",",1pg13.6,")")'
+  logical, save :: thisIsADiff = .false.
 
 contains
 
@@ -321,7 +357,7 @@ contains
     myFillValue = 0
     if ( present(FillValue) ) myFillValue = FillValue
 
-    myClean = .false.
+    myClean = theDefault('clean') ! .false.
     if ( present(clean) ) myClean = clean
     NumBitNames = NumStringElements( bitNames, countEmpty=.true. )
     if ( NumBitNames < 1 ) NumBitNames = MAXBITNUMBER+1
@@ -375,9 +411,9 @@ contains
     myFillValue = ' '
     if ( present(FillValue) ) myFillValue = FillValue
 
-    myClean = .false.
+    myClean = theDefault('clean') ! .false.
     if ( present(clean) ) myClean = clean
-    myTrim = .false.
+    myTrim = theDefault('trim') ! .false.
     if ( present(trim) ) myTrim = trim
     lon = len(array(1))
     if ( myTrim ) lon = maxval(len_trim(array))
@@ -424,7 +460,7 @@ contains
     integer :: J, K, MyWidth
     character(len=64) :: MyFormat
 
-    myClean = .false.
+    myClean = theDefault('clean') ! .false.
     if ( present(clean) ) myClean = clean
     myWidth = 3
     if ( present(width) ) myWidth = width
@@ -465,7 +501,7 @@ contains
     integer :: J, K, MyWidth
     character(len=64) :: MyFormat
 
-    myClean = .false.
+    myClean = theDefault('clean') ! .false.
     if ( present(clean) ) myClean = clean
     myWidth = 3
     if ( present(width) ) myWidth = width
@@ -519,7 +555,7 @@ contains
     myFillValue = 0.d0
     if ( present(FillValue) ) myFillValue=FillValue
     include 'dumpstats.f9h'
-    myClean = .false.
+    myClean = theDefault('clean') ! .false.
     if ( present(clean) ) myClean = clean
     myWidth = defaultWidth
     if ( present(width) ) myWidth = width
@@ -587,7 +623,7 @@ contains
     myFillValue = 0
     if ( present(FillValue) ) myFillValue=FillValue
     include 'dumpstats.f9h'
-    myClean = .false.
+    myClean = theDefault('clean') ! .false.
     if ( present(clean) ) myClean = clean
     myWidth = 10
     if ( present(width) ) myWidth = width
@@ -639,7 +675,7 @@ contains
     base = 0
     if ( present(lbound) ) base = lbound - 1
 
-    myClean = .false.
+    myClean = theDefault('clean') ! .false.
     if ( present(clean) ) myClean = clean
 
     if ( size(array) == 0 ) then
@@ -690,7 +726,7 @@ contains
     if ( present(FillValue) ) myFillValue=FillValue
     include 'dumpstats.f9h'
 
-    myClean = .false.
+    myClean = theDefault('clean') ! .false.
     if ( present(clean) ) myClean = clean
     myWidth = defaultWidth
     if ( present(width) ) myWidth = width
@@ -746,9 +782,9 @@ contains
     myFillValue = ' '
     if ( present(FillValue) ) myFillValue = FillValue
 
-    myClean = .false.
+    myClean = theDefault('clean') ! .false.
     if ( present(clean) ) myClean = clean
-    myTrim = .false.
+    myTrim = theDefault('trim') ! .false.
     if ( present(trim) ) myTrim = trim
     lon = len(array(1,1))
     if ( myTrim ) lon = maxval(len_trim(array))
@@ -807,7 +843,7 @@ contains
     real :: MyFillValue
     character(len=64) :: MyFormat
 
-    myClean = .false.
+    myClean = theDefault('clean') ! .false.
     if ( present(clean) ) myClean = clean
 
     myWidth = 3
@@ -894,7 +930,7 @@ contains
     real(rk) :: MyFillValue
     character(len=64) :: MyFormat
 
-    myClean = .false.
+    myClean = theDefault('clean') ! .false.
     if ( present(clean) ) myClean = clean
 
     myWidth = 3
@@ -984,7 +1020,7 @@ contains
     double precision :: myFillValue
     character(len=64) :: MyFormat
 
-    myClean = .false.
+    myClean = theDefault('clean') ! .false.
     if ( present(clean) ) myClean = clean
 
     myFillValue = 0.0d0
@@ -1078,7 +1114,7 @@ contains
     myFillValue = 0
     if ( present(FillValue) ) myFillValue = FillValue
     include 'dumpstats.f9h'
-    myClean = .false.
+    myClean = theDefault('clean') ! .false.
     if ( present(clean) ) myClean = clean
     myWidth = 10
     if ( present(width) ) myWidth = width
@@ -1132,7 +1168,7 @@ contains
     logical :: MyClean
     integer, parameter :: MyWidth = 34
 
-    myClean = .false.
+    myClean = theDefault('clean') ! .false.
     if ( present(clean) ) myClean = clean
 
     if ( size(array) == 0 ) then
@@ -1183,7 +1219,7 @@ contains
     real :: myFillValue
     character(len=64) :: MyFormat
 
-    myClean = .false.
+    myClean = theDefault('clean') ! .false.
     if ( present(clean) ) myClean = clean
 
     myFillValue = 0.0e0
@@ -1348,9 +1384,9 @@ contains
     myFillValue = ' '
     if ( present(FillValue) ) myFillValue = FillValue
 
-    myClean = .false.
+    myClean = theDefault('clean') ! .false.
     if ( present(clean) ) myClean = clean
-    myTrim = .false.
+    myTrim = theDefault('trim') ! .false.
     if ( present(trim) ) myTrim = trim
     lon = len(array(1,1,1))
     if ( myTrim ) lon = maxval(len_trim(array))
@@ -1558,7 +1594,7 @@ contains
     if ( present(FillValue) ) myFillValue=FillValue
     include 'dumpstats.f9h'
 
-    myClean = .false.
+    myClean = theDefault('clean') ! .false.
     if ( present(clean) ) myClean = clean
     myFormat = sdFormatDefault
     if ( present(format) ) myFormat = format
@@ -1627,7 +1663,7 @@ contains
     myFillValue = 0
     if ( present(FillValue) ) myFillValue=FillValue
     include 'dumpstats.f9h'
-    myClean = .false.
+    myClean = theDefault('clean') ! .false.
     if ( present(clean) ) myClean = clean
     myWidth = 10
     if ( present(width) ) myWidth = width
@@ -1701,7 +1737,7 @@ contains
     ! Executable
     myFillValue = 0.
     if ( present(FillValue) ) myFillValue=FillValue
-    myClean = .false.
+    myClean = theDefault('clean') ! .false.
     if ( present(clean) ) myClean = clean
     include 'dumpstats.f9h'
 
@@ -1847,7 +1883,7 @@ contains
     myFillValue = ' '
     if ( present(FillValue) ) myFillValue = FillValue
 
-    myClean = .false.
+    myClean = theDefault('clean') ! .false.
     if ( present(clean) ) myClean = clean
     
     SEPARATOR = ','
@@ -1885,7 +1921,7 @@ contains
     logical :: MyClean
     integer :: MyWidth
     character(len=24) :: myName
-    myClean = .false.
+    myClean = theDefault('clean') ! .false.
     if ( present(clean) ) myClean = clean
     MyWidth = 1
     if ( present(width) ) myWidth = max(width, 1)
@@ -1924,7 +1960,7 @@ contains
     logical :: MyClean
     integer :: MyWidth
     character(len=24) :: myName
-    myClean = .false.
+    myClean = theDefault('clean') ! .false.
     if ( present(clean) ) myClean = clean
     MyWidth = 1
     if ( present(width) ) myWidth = max(width, 1)
@@ -1963,7 +1999,7 @@ contains
     logical :: MyClean
     integer :: MyWidth
     character(len=24) :: myName
-    myClean = .false.
+    myClean = theDefault('clean') ! .false.
     if ( present(clean) ) myClean = clean
     MyWidth = 1
     if ( present(width) ) myWidth = max(width, 1)
@@ -2162,31 +2198,7 @@ contains
     !
     originalSDFormat = outputOptions%sdFormatDefault
     outputOptions%sdFormatDefault = rmsFormat
-    if ( STATSONONELINE ) then
-      if ( present(name) ) call output ( trim(name), advance='no' )
-      call output ( ' min : max, rms: ', advance='no' )
-      if ( present(mean) ) call output ( ' mean: ', advance='no' )
-      call output(min, advance='no')
-      call output(' : ', advance='no')
-      call output(max, advance='no')
-      call output(', ', advance='no')
-      call output(rms, advance='no')
-      if ( present(mean) ) then
-        call output ( ': ', advance='no' )
-        call output ( mean, advance='no' )
-      end if
-      call newline
-    else
-      if ( present(name) ) call output ( trim(name), advance='no' )
-      call output ( ' min      max        rms', advance='no' )
-      if ( present(mean) ) call output ( '       mean ', advance='no' )
-      call newline
-      call output(min, advance='no')
-      call output(max, advance='no')
-      call output(rms, advance='no')
-      if ( present(mean) ) call output ( mean, advance='no' )
-      call newline
-    end if
+    include 'printRMSetc.f9h'
     outputOptions%sdFormatDefault = originalSDFormat
   end subroutine printRMSetc_double
 
@@ -2200,31 +2212,7 @@ contains
     !
     originalSDFormat = outputOptions%sdFormatDefault
     outputOptions%sdFormatDefault = rmsFormat
-    if ( STATSONONELINE ) then
-      if ( present(name) ) call output ( trim(name), advance='no' )
-      call output ( ' min : max, rms: ', advance='no' )
-      if ( present(mean) ) call output ( ' mean: ', advance='no' )
-      call output(min, advance='no')
-      call output(' : ', advance='no')
-      call output(max, advance='no')
-      call output(', ', advance='no')
-      call output(rms, advance='no')
-      if ( present(mean) ) then
-        call output ( ': ', advance='no' )
-        call output ( mean, advance='no' )
-      end if
-      call newline
-    else
-      if ( present(name) ) call output ( trim(name), advance='no' )
-      call output ( ' min      max        rms', advance='no' )
-      if ( present(mean) ) call output ( '       mean ', advance='no' )
-      call newline
-      call output(min, advance='no')
-      call output(max, advance='no')
-      call output(rms, advance='no')
-      if ( present(mean) ) call output ( mean, advance='no' )
-      call newline
-    end if
+    include 'printRMSetc.f9h'
     outputOptions%sdFormatDefault = originalSDFormat
   end subroutine printRMSetc_real
 
@@ -2234,31 +2222,7 @@ contains
     integer, intent(in) :: max
     real, intent(in) :: rms
     real, intent(in), optional :: mean
-    if ( STATSONONELINE ) then
-      if ( present(name) ) call output ( trim(name), advance='no' )
-      call output ( ' min : max, rms: ', advance='no' )
-      if ( present(mean) ) call output ( ' mean: ', advance='no' )
-      call output(min, advance='no')
-      call output(' : ', advance='no')
-      call output(max, advance='no')
-      call output(', ', advance='no')
-      call output(rms, advance='no')
-      if ( present(mean) ) then
-        call output ( ': ', advance='no' )
-        call output ( mean, advance='no' )
-      end if
-      call newline
-    else
-      if ( present(name) ) call output ( trim(name), advance='no' )
-      call output ( ' min      max        rms', advance='no' )
-      if ( present(mean) ) call output ( '       mean ', advance='no' )
-      call newline
-      call output(min, advance='no')
-      call output(max, advance='no')
-      call output(rms, advance='no')
-      if ( present(mean) ) call output ( mean, advance='no' )
-      call newline
-    end if
+    include 'printRMSetc.f9h'
   end subroutine printRMSetc_int
 
   ! ----------------------------------------------  Say_Fill_Char  -----
@@ -2346,6 +2310,35 @@ contains
     call output ( afterSub )
   end subroutine Say_Subs_Only
 
+  function theDefault( code ) result ( isit )
+    ! Return the default value for a given code, e.g. 'clean'
+    ! Args
+    character(len=*), intent(in)    :: code
+    logical                         :: isit
+    !
+    character(len=8) :: defaultString
+    ! Executable
+    if ( thisIsADiff ) then
+      defaultString = DEFAULTDIFFOPTIONS
+    else
+      defaultString = DEFAULTDUMPOPTIONS
+    endif
+    select case ( lowercase(code) )
+    case ('clean')
+      isit = index( defaultstring, 'c' ) > 0
+    case ('rms')
+      isit = index( defaultstring, 'r' ) > 0
+    case ('stat')
+      isit = index( defaultstring, 's' ) > 0
+    case ('trim')
+      isit = index( defaultstring, 't' ) > 0
+    case ('wholearray')
+      isit = index( defaultstring, 'w' ) > 0
+    case default
+      isit = .false.
+    end select
+  end function theDefault
+
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -2358,6 +2351,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.71  2007/07/17 00:21:58  pwagner
+! diff stats when rms concentrate on showing ratios
+!
 ! Revision 2.70  2007/07/11 22:29:23  vsnyder
 ! Add more dumps for complex, add 2x2xN dumps
 !
