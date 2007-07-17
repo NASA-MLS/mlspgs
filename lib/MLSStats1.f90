@@ -23,12 +23,83 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
   use SORT_M, only: sort
 
   implicit none
+! === (start of toc) ===
+!     c o n t e n t s
+!     - - - - - - - -
+
+!     (data types and parameters)
+! STAT_T                          Basic user-defined data type
+! FILLVALUERELATION               Whether to use '=' (default) or '<', '>'
+
+!     (subroutines and functions)
+! ALLSTATS                        Computes some or all standard statistics
+! DUMP                            Prints a STAT_T
+! MLSMIN                          Finds min of an array
+!                                   (excluding FillValues or negative precisions)
+! MLSMAX, MLSMEAN, MLSMEDIAN,
+!    MLSSTDDEV, MLSRMS            Similar to MLSMIN for other statistics
+! PDF                             Finds the pdf for a sample x given a STAT_T
+!                                   or with x1, x2 its integral over [x1, x2]
+! RATIOS                          Statistics of ratio between 2 arrays;
+!                                    can be used to track changes to a reference
+!                                    array "gold" standard (Why is this here?)
+! RESET                           Resets a STAT_T
+! STATFUNCTION                    Given a set of values it returns a STAT_T
+! STATISTICS                      Similar to STATFUNCTION, but may accumulate
+!                                   statistics in STAT_T over multiple calls
+! === (end of toc) ===
+
+! === (start of api) ===
+!     (user-defined types)
+! STAT_T 
+!             (
+!             int   count, 
+!             int   fillcount, 
+!             r8    max   ,
+!             r8    mean  ,
+!             r8    median,
+!             r8    min   ,
+!             r8    stddev,
+!             r8    rms   ,
+!             int   nbins, 
+!             r8    bounds(2)  ,
+!             *int  bincount(:)
+!             ) 
+
+!     (subroutines and functions)
+! allstats( values, &
+!      & [int nbins], [*bounds(2)], [log addedData], [fillValue], [precision], &
+!      & [int count], [int fillcount], &
+!      & [min], [max], [mean], [stddev], [rms], [median], [int bincount], &
+!      & [log doDump] )
+! dump( stat_t statistic, [char which] )
+! type(values) mls$fun( values, [fillvalue] )
+! r8 pdf( r8 x, stat_t statistic )
+! r8 pdf( r8 x1, r8 x2, stat_t statistic )
+! ratios( array1, array2, type(array1) exvalues, type(array1) exratios, &
+!      & type(array1) minratio, type(array1) maxratio, type(array1) meanratio, &
+!      & type(array1) stddevratio, type(array1) rmsratio, &
+!      & type(array1) medianratio, &
+!      & [fillValue], [char op] )
+! reset( stat_t statistic )
+! stat_t statFunction( r8 values(:), [r8 fillValue], [r8 precision(:) )
+! statistics( r8 values(:), stat_t statistic, [r8 fillValue], [r8 precision(:) )
+!
+! Notes:
+! (1) Unless specified explicitly, 'values', 'precision',
+! 'array1', and 'array2' may be any numerically typed array with
+! 0 < rank < 4 except complex
+! (2) 'fillvalue', 'min', 'max', 'mean', 'stddev', 'rms', and 'median'
+! are scalars with the same numerical type as 'values'
+! (3) The $fun in mls$fun can be any of the names in (2) beginning with 'min'
+! === (end of api) ===
   private
   
   public :: STAT_T             ! The data type
-  public :: ALLSTATS, DUMP, STATISTICS  ! subroutines
+  public :: ALLSTATS, DUMP, RATIOS, STATISTICS  ! subroutines
   public :: MLSMIN, MLSMAX, MLSMEAN, MLSMEDIAN, MLSSTDDEV, MLSRMS ! functions
   public :: pdf
+  public :: RESET
   public :: STATFUNCTION
   
 !---------------------------- RCS Module Info ------------------------------
@@ -40,7 +111,7 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
   ! The functions and subroutines are based on
   ! (1) The MATH77 library subroutine; and
   ! (2) optionally filtering out fill values from array entries
-  ! Optionally, instead of filtering fill values, an array of precisions,
+  ! (3) Optionally, instead of filtering fill values, an array of precisions,
   ! with the same shape and numeric type as the original values,
   ! can be supplied. In this case, values for which the corresponding
   ! precisions < 0 will be filtered out.
@@ -73,7 +144,8 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
   ! Except, in this case, medians are not found correctly
   ! (hard to fix this bug; perhaps why median not part of original MATH77)
 
-  ! This is the main datatype, a stat.
+  ! This is the main datatype, a statistic type that both holds
+  ! and can progressively accumulate info
   ! (Would making fillValue a component makes sense?)
 
   type Stat_T
@@ -115,6 +187,12 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
     module procedure dump_if_selected_int_scalar
     module procedure dump_if_selected_r8_array
     module procedure dump_if_selected_r8_scalar
+  end interface
+  
+  interface ratios
+    module procedure ratios_d1int, ratios_d2int, ratios_d3int
+    module procedure ratios_d1r4, ratios_d2r4, ratios_d3r4
+    module procedure ratios_d1r8, ratios_d2r8, ratios_d3r8
   end interface
   
   interface filterValues
@@ -225,7 +303,7 @@ contains
         ! Internal variables
         integer, dimension(2)                          :: shp
         ! Executable
-        shp =shape(values)
+        shp = shape(values)
         if ( .not. present(precision) ) then
           call allstats_d1r4(reshape(values, (/shp(1)*shp(2)/)), &
             & nbins, bounds, addedData, fillValue, &
@@ -1092,6 +1170,273 @@ contains
         call deallocate_test(xbins, 'xbins', moduleName)
       end function pdf_2
       
+      ! ------------------- RATIOS -----------------------
+      ! This family of routines finds both the absolute and relative RATIOS
+      ! of one array w.r.t. another 'weighting' array (ignoring signs in both)
+      ! E.g. let
+      ! array1 = (/ 1,  -0.5, 2, +100 /)
+      ! array2 = (/ 10, 0.5, 10, 1000 /)
+      ! Then
+      ! max value is 100 (corresponding ratio is 0.100) which is the 4th element
+      ! max ratio is 1.0 (corresponding value is 0.5)   which is the 2nd element
+      ! Thus we return
+      ! exvalues = (/ 100,   0.5 /)
+      ! exratios = (/ 0.100, 1.0 /)
+      
+      ! This may be useful in checking for non-negligible differences
+      ! between two arrays representing results from two different analyses
+      ! or noting the magnitude of changes to a "gold" standard
+      !
+      ! If array2 is all 0, ratios, which would be undefined, are
+      ! all set to -1.0
+      
+      ! optionally, first operates on array1 and array2, replacing them with
+      ! op     replace array1 with               replace array2 with
+      ! ---    -------------------               -------------------
+      ! '-'      array1 - array2             max( abs(array1), abs(array2) )
+      ! '+'      array1 + array2             max( abs(array1), abs(array2) )
+      ! '*' min( abs(array1), abs(array2) )  max( abs(array1), abs(array2) )
+      !
+      ! Couldn't we have thought of a better name than "RATIOS"?
+      subroutine ratios_d1int( array1, array2, exvalues, exratios, &
+        & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
+        & fillValue, op )
+        integer, parameter                             :: KINDVALUE = r4
+        ! Args
+        integer, dimension(:), intent(in)      :: array1, array2
+        integer, dimension(2), intent(out)     :: exvalues
+        integer, dimension(2), intent(out)     :: exratios
+        integer, optional, intent(out)         :: minratio
+        integer, optional, intent(out)         :: maxratio
+        integer, optional, intent(out)         :: meanratio
+        integer, optional, intent(out)         :: stddevratio
+        integer, optional, intent(out)         :: rmsratio
+        integer, optional, intent(out)         :: medianratio
+        integer, optional                      :: FillValue
+        character, optional, intent(in)        :: op
+        ! Internal variables
+        real(r4), dimension(2) :: rvalues
+        real(r4), dimension(2) :: rratios
+        real(KINDVALUE)        :: rmin, rmax, rmean, rstddev, rrms, rmedian
+        call ratios_d1r4( real(array1, KINDVALUE), real(array2, KINDVALUE), &
+          & rvalues, rratios, &
+          & rmin, rmax, rmean, rstddev, rrms, rmedian, &
+          & real(fillValue, KINDVALUE) )
+        exvalues = rvalues
+        exratios = rratios
+        if ( present(minratio   ) ) minratio    = rmin
+        if ( present(maxratio   ) ) maxratio    = rmax
+        if ( present(meanratio  ) ) meanratio   = rmean
+        if ( present(stddevratio) ) stddevratio = rstddev
+        if ( present(rmsratio   ) ) rmsratio    = rrms
+        if ( present(medianratio) ) medianratio = rmedian
+      end subroutine ratios_d1int
+
+      subroutine ratios_d2int( array1, array2, exvalues, exratios, &
+        & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
+        & fillValue, op )
+        integer, parameter                             :: KINDVALUE = r4
+        ! Args
+        integer, dimension(:,:), intent(in)    :: array1, array2
+        integer, dimension(2), intent(out)     :: exvalues
+        integer, dimension(2), intent(out)     :: exratios
+        integer, optional, intent(out)         :: minratio
+        integer, optional, intent(out)         :: maxratio
+        integer, optional, intent(out)         :: meanratio
+        integer, optional, intent(out)         :: stddevratio
+        integer, optional, intent(out)         :: rmsratio
+        integer, optional, intent(out)         :: medianratio
+        integer, optional                      :: FillValue
+        character, optional, intent(in)        :: op
+        ! Internal variables
+        real(r4), dimension(2) :: rvalues
+        real(r4), dimension(2) :: rratios
+        real(KINDVALUE)        :: rmin, rmax, rmean, rstddev, rrms, rmedian
+        call ratios_d2r4( real(array1, KINDVALUE), real(array2, KINDVALUE), &
+          & rvalues, rratios, &
+          & rmin, rmax, rmean, rstddev, rrms, rmedian, &
+          & real(fillValue, KINDVALUE) )
+        exvalues = rvalues
+        exratios = rratios
+        if ( present(minratio   ) ) minratio    = rmin
+        if ( present(maxratio   ) ) maxratio    = rmax
+        if ( present(meanratio  ) ) meanratio   = rmean
+        if ( present(stddevratio) ) stddevratio = rstddev
+        if ( present(rmsratio   ) ) rmsratio    = rrms
+        if ( present(medianratio) ) medianratio = rmedian
+      end subroutine ratios_d2int
+
+      subroutine ratios_d3int( array1, array2, exvalues, exratios, &
+        & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
+        & fillValue, op )
+        integer, parameter                             :: KINDVALUE = r4
+        ! Args
+        integer, dimension(:,:,:), intent(in)  :: array1, array2
+        integer, dimension(2), intent(out)     :: exvalues
+        integer, dimension(2), intent(out)     :: exratios
+        integer, optional, intent(out)         :: minratio
+        integer, optional, intent(out)         :: maxratio
+        integer, optional, intent(out)         :: meanratio
+        integer, optional, intent(out)         :: stddevratio
+        integer, optional, intent(out)         :: rmsratio
+        integer, optional, intent(out)         :: medianratio
+        integer, optional                      :: FillValue
+        character, optional, intent(in)        :: op
+        ! Internal variables
+        real(r4), dimension(2) :: rvalues
+        real(r4), dimension(2) :: rratios
+        real(KINDVALUE)        :: rmin, rmax, rmean, rstddev, rrms, rmedian
+        call ratios_d3r4( real(array1, KINDVALUE), real(array2, KINDVALUE), &
+          & rvalues, rratios, &
+          & rmin, rmax, rmean, rstddev, rrms, rmedian, &
+          & real(fillValue, KINDVALUE) )
+        exvalues = rvalues
+        exratios = rratios
+        if ( present(minratio   ) ) minratio    = rmin
+        if ( present(maxratio   ) ) maxratio    = rmax
+        if ( present(meanratio  ) ) meanratio   = rmean
+        if ( present(stddevratio) ) stddevratio = rstddev
+        if ( present(rmsratio   ) ) rmsratio    = rrms
+        if ( present(medianratio) ) medianratio = rmedian
+      end subroutine ratios_d3int
+
+      subroutine ratios_d1r4( array1, array2, exvalues, exratios, &
+        & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
+        & fillValue, op )
+        integer, parameter                             :: KINDVALUE = r4
+        ! Args
+        include 'ratios.f9h'
+      end subroutine ratios_d1r4
+
+      subroutine ratios_d1r8( array1, array2, exvalues, exratios, &
+        & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
+        & fillValue, op )
+        integer, parameter                             :: KINDVALUE = r8
+        ! Args
+        include 'ratios.f9h'
+      end subroutine ratios_d1r8
+
+      subroutine ratios_d2r4( array1, array2, exvalues, exratios, &
+        & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
+        & fillValue, op )
+        integer, parameter                             :: KINDVALUE = r4
+        ! Args
+        real(KINDVALUE), dimension(:,:), intent(in)    :: array1, array2
+        real(KINDVALUE), dimension(2), intent(out)     :: exvalues
+        real(KINDVALUE), dimension(2), intent(out)     :: exratios
+        real(KINDVALUE), optional, intent(out)         :: minratio
+        real(KINDVALUE), optional, intent(out)         :: maxratio
+        real(KINDVALUE), optional, intent(out)         :: meanratio
+        real(KINDVALUE), optional, intent(out)         :: stddevratio
+        real(KINDVALUE), optional, intent(out)         :: rmsratio
+        real(KINDVALUE), optional, intent(out)         :: medianratio
+        real(KINDVALUE), optional                      :: FillValue
+        character, optional, intent(in)        :: op
+        ! Internal variables
+        integer, dimension(2)                          :: shp
+        ! Executable
+        shp = shape(array1)
+        call ratios( reshape(array1, (/shp(1)*shp(2)/)), &
+          & reshape(array2, (/shp(1)*shp(2)/)), &
+          & exvalues, exratios, &
+          & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
+          & fillValue, op )
+      end subroutine ratios_d2r4
+
+      subroutine ratios_d2r8( array1, array2, exvalues, exratios, &
+        & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
+        & fillValue, op )
+        integer, parameter                             :: KINDVALUE = r8
+        ! Args
+        real(KINDVALUE), dimension(:,:), intent(in)    :: array1, array2
+        real(KINDVALUE), dimension(2), intent(out)     :: exvalues
+        real(KINDVALUE), dimension(2), intent(out)     :: exratios
+        real(KINDVALUE), optional, intent(out)         :: minratio
+        real(KINDVALUE), optional, intent(out)         :: maxratio
+        real(KINDVALUE), optional, intent(out)         :: meanratio
+        real(KINDVALUE), optional, intent(out)         :: stddevratio
+        real(KINDVALUE), optional, intent(out)         :: rmsratio
+        real(KINDVALUE), optional, intent(out)         :: medianratio
+        real(KINDVALUE), optional                      :: FillValue
+        character, optional, intent(in)        :: op
+        ! Internal variables
+        integer, dimension(2)                          :: shp
+        ! Executable
+        shp = shape(array1)
+        call ratios( reshape(array1, (/shp(1)*shp(2)/)), &
+          & reshape(array2, (/shp(1)*shp(2)/)), &
+          & exvalues, exratios, &
+          & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
+          & fillValue, op )
+      end subroutine ratios_d2r8
+
+      subroutine ratios_d3r4( array1, array2, exvalues, exratios, &
+        & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
+        & fillValue, op )
+        integer, parameter                             :: KINDVALUE = r4
+        ! Args
+        real(KINDVALUE), dimension(:,:,:), intent(in)  :: array1, array2
+        real(KINDVALUE), dimension(2), intent(out)     :: exvalues
+        real(KINDVALUE), dimension(2), intent(out)     :: exratios
+        real(KINDVALUE), optional, intent(out)         :: minratio
+        real(KINDVALUE), optional, intent(out)         :: maxratio
+        real(KINDVALUE), optional, intent(out)         :: meanratio
+        real(KINDVALUE), optional, intent(out)         :: stddevratio
+        real(KINDVALUE), optional, intent(out)         :: rmsratio
+        real(KINDVALUE), optional, intent(out)         :: medianratio
+        real(KINDVALUE), optional                      :: FillValue
+        character, optional, intent(in)        :: op
+        ! Internal variables
+        integer, dimension(3)                          :: shp
+        ! Executable
+        shp = shape(array1)
+        call ratios( reshape(array1, (/shp(1)*shp(2)*shp(3)/)), &
+          & reshape(array2, (/shp(1)*shp(2)*shp(3)/)), &
+          & exvalues, exratios, &
+          & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
+          & fillValue, op )
+      end subroutine ratios_d3r4
+
+      subroutine ratios_d3r8( array1, array2, exvalues, exratios, &
+        & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
+        & fillValue, op )
+        integer, parameter                             :: KINDVALUE = r8
+        ! Args
+        real(KINDVALUE), dimension(:,:,:), intent(in)  :: array1, array2
+        real(KINDVALUE), dimension(2), intent(out)     :: exvalues
+        real(KINDVALUE), dimension(2), intent(out)     :: exratios
+        real(KINDVALUE), optional, intent(out)         :: minratio
+        real(KINDVALUE), optional, intent(out)         :: maxratio
+        real(KINDVALUE), optional, intent(out)         :: meanratio
+        real(KINDVALUE), optional, intent(out)         :: stddevratio
+        real(KINDVALUE), optional, intent(out)         :: rmsratio
+        real(KINDVALUE), optional, intent(out)         :: medianratio
+        real(KINDVALUE), optional                      :: FillValue
+        character, optional, intent(in)        :: op
+        ! Internal variables
+        integer, dimension(3)                          :: shp
+        ! Executable
+        shp = shape(array1)
+        call ratios( reshape(array1, (/shp(1)*shp(2)*shp(3)/)), &
+          & reshape(array2, (/shp(1)*shp(2)*shp(3)/)), &
+          & exvalues, exratios, &
+          & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
+          & fillValue, op )
+      end subroutine ratios_d3r8
+      
+      ! ------------------ reset -------------------------
+      ! resets a stat_t by setting counters to zero and deallocating a pointer
+      subroutine reset( statistic )
+        ! Arg
+        type(stat_t) :: statistic
+        ! Executable
+        statistic%count = 0
+        statistic%fillcount = 0
+        statistic%nbins = 0
+        if ( associated(statistic%bincount) ) &
+          & call deallocate_test( statistic%bincount, 'xbins', moduleName )
+      end subroutine reset
+
       ! ------------------- statFunction -----------------------
       function statFunction(values, fillValue, precision) result(statistic)
         ! Given a 1-d set of dbl prec values, returns a Stat_t typed result
@@ -1483,6 +1828,9 @@ end module MLSStats1
 
 !
 ! $Log$
+! Revision 2.14  2007/07/17 00:25:07  pwagner
+! Added ratios, reset
+!
 ! Revision 2.13  2007/03/07 21:03:45  pwagner
 ! Avoiding isFillValue in filterValues (did not fix bug in isFillValue yet)
 !
