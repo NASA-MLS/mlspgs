@@ -193,7 +193,8 @@ module L1BData
   integer, public, parameter :: FIRSTMAFNOTFOUND =   NODATASETRANK + 1
   integer, public, parameter :: LASTMAFNOTFOUND =    FIRSTMAFNOTFOUND + 1
   integer, public, parameter :: CANTREADCOUNTERMAF = LASTMAFNOTFOUND + 1
-  integer, public, parameter :: CANTALLOCATECHARS =  CANTREADCOUNTERMAF + 1
+  integer, public, parameter :: CANTREADSCALARDS   = CANTREADCOUNTERMAF + 1
+  integer, public, parameter :: CANTALLOCATECHARS =  CANTREADSCALARDS + 1
   integer, public, parameter :: CANTREAD3DFIELD =    CANTALLOCATECHARS + 1
   integer, public, parameter :: UNKNOWNDATATYPE =    CANTREAD3DFIELD + 1
   integer, public, parameter :: CANTENDCOUNTERMAF =  UNKNOWNDATATYPE + 1
@@ -523,6 +524,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     logical :: mySilent
     logical :: prntAssocStatus  ! Whether to remark on association status
                                 !  of multidimensional arrays
+    logical, parameter :: DEBUG = .false.
     ! Executable code
     myDetails = 1
     if ( present(details) ) myDetails = details
@@ -547,6 +549,10 @@ contains ! ============================ MODULE PROCEDURES ======================
     
     mySilent = .false.
     if ( present(silent) ) mySilent = silent
+    if ( DEBUG ) then
+      call outputNamedValue( 'myDetails', myDetails )
+      call outputNamedValue( 'mySilent', mysilent )
+    endif
     if ( mySilent ) call suspendOutput
     
     myNumDiffs = 0
@@ -635,6 +641,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     end if
 
     if ( myDetails < 1 ) then
+      if ( DEBUG ) call output( ' Done here', advance='yes' )
       call doneHere
       return
     endif
@@ -667,6 +674,10 @@ contains ! ============================ MODULE PROCEDURES ======================
       ! if ( any(l1bData1%dpField /= l1bData2%dpField) ) &
       l1b1NotFinite = .not. any(ieee_is_finite(l1bData1%dpField))
       l1b2NotFinite = .not. any(ieee_is_finite(l1bData2%dpField))
+      if ( DEBUG ) then
+        call outputNamedValue( 'l1b1NotFinite', l1b1NotFinite )
+        call outputNamedValue( 'l1b2NotFinite', l1b2NotFinite )
+      endif
       if ( l1b1NotFinite .and. l1b2NotFinite ) then
           call output('both dpField arrays all NaNs', advance='yes')
       elseif ( l1b1NotFinite ) then
@@ -675,9 +686,10 @@ contains ! ============================ MODULE PROCEDURES ======================
           call output('l1bData2%dpField array all NaNs', advance='yes')
       elseif ( .not. EssentiallyEqual(l1bData1%dpField, l1bData2%dpField, &
         & FillValue=REAL(DEFAULTUNDEFINEDVALUE, R8)) ) then
+          if ( DEBUG ) call output( 'Calling diff', advance='yes' )
           call diff ( &
-        & l1bData1%dpField(:,:,mafStart1:mafEnd1), 'l1bData%dpField', &
-        & l1bData2%dpField(:,:,mafStart2:mafEnd2), 'l1bData%dpField', &
+        & l1bData1%dpField(:,:,mafStart1:mafEnd1), '(1)', &
+        & l1bData2%dpField(:,:,mafStart2:mafEnd2), '(2)', &
         & FillValue=REAL(DEFAULTUNDEFINEDVALUE, R8), &
         & stats=stats, rms=rms )
         myNumDiffs = myNumDiffs + count(l1bData1%dpField /= l1bData2%dpField)
@@ -1882,6 +1894,14 @@ contains ! ============================ MODULE PROCEDURES ======================
     ! Find Qtype, rank and dimensions of QuantityName
     ! print*, ' Find Qtype, rank and dimensions of QuantityName ', trim(QuantityName)
     call GetHDF5DSRank(L1FileHandle, QuantityName, rank)
+    ! Note yet able to read scalar datasets (a bug or a feature?)
+    if ( rank < 1 ) then
+      flag = CANTREADSCALARDS
+      if ( MyNeverFail ) return
+      dummy = 'Not yet able to read apparently scalar quantity "' // trim(quantityName) // &
+        & '" data set.'
+      call MLSMessage ( MLSMSG_Error, ModuleName, dummy )
+    endif
     l1bData%TrueRank = rank
     allocate ( dims(rank), maxDims(rank) )
     call GetHDF5DSDims(L1FileHandle, QuantityName, dims, maxDims)
@@ -3179,6 +3199,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.75  2007/07/17 00:25:50  pwagner
+! Deal more gracefully with attempt to read rank 0 datasets
+!
 ! Revision 2.74  2007/06/21 00:49:51  vsnyder
 ! Remove tabs, which are not part of the Fortran standard
 !
