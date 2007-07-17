@@ -203,16 +203,18 @@ module OUTPUT_M
   
   type(stampOptions_T), public, save :: stampOptions ! Could leave this private
 
-  ! integer, save, public :: MLSMSG_Level = MLSMSG_Info ! What level if logging
-  logical, save, private:: SILENTRUNNING = .false. ! Suspend all further output
-  ! logical, save, public :: SKIPMLSMSGLOGGING = .false.
-  ! character(len=8), save, public :: TIMESTAMPSTYLE = 'post' ! 'pre' or 'post'
   ! Private parameters
+  logical, save, private:: SILENTRUNNING = .false. ! Suspend all further output
   integer, save, private :: ATCOLUMNNUMBER = 1  ! Where we'll print next
   logical, save, private :: ATLINESTART = .true.  ! Whether to stamp if notpost
   integer, save, private :: LINESSINCELASTSTAMP = 0
-  
   logical, private, parameter :: LOGEXTRABLANKS = .false.
+  ! For certain numerical values we will use list directed '*' format
+  ! unless optional FORMAT specifier supplied
+  double precision, parameter, dimension(3) :: DPREFERDEFAULTFORMAT = &
+    & (/ -1.d0, 0.d0, 1.d0 /)  ! For which values to use default format '*'
+  real, parameter, dimension(3) :: RPREFERDEFAULTFORMAT = &
+    & (/ -1., 0., 1. /)  ! For which values to use default format '*'
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -761,6 +763,7 @@ contains
 
     line = ' '
     FormatSpec = outputOptions%sdFormatDefault
+    if ( any( value == DPREFERDEFAULTFORMAT ) ) FormatSpec = '*'
     if ( present(Format)  ) FormatSpec = Format
     ! if ( .not. present(Format)  ) then
     if ( FormatSpec == '*' ) then
@@ -942,6 +945,7 @@ contains
 
     line = ' '
     FormatSpec = outputOptions%sdFormatDefault
+    if ( any( value == RPREFERDEFAULTFORMAT ) ) FormatSpec = '*'
     if ( present(Format)  ) FormatSpec = Format
     ! if ( .not. present(Format)  ) then
     if ( FormatSpec == '*' ) then
@@ -1497,6 +1501,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.59  2007/07/17 00:24:18  pwagner
+! Treat certain numbers with default list-directed format
+!
 ! Revision 2.58  2007/06/14 18:40:04  pwagner
 ! Allow sdFormatDefault to be set at class level
 !
