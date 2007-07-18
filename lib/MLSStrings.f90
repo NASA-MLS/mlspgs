@@ -52,6 +52,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! Replace            Replaces every instance of oldChar with newChar
 ! Reverse            Turns 'a string' -> 'gnirts a'
 ! Reverse_trim       (Reverses after trimming its argument)
+! Rot13              Like ROT13 but for general integer nn
 ! size_trim          Returns len_trim of equivalent character scalar for array
 ! SplitNest          Splits 'part 1 (part 2) part 3' -> 'part 1', 'part 2', 'part 3'
 ! SplitWords         Splits 'first, the, rest, last' -> 'first', 'the, rest', 'last'
@@ -82,6 +83,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! char* Replace (char* str, char oldChar, char newChar)
 ! char* Reverse (char* str)
 ! char* Reverse_trim (char* str)
+! char* Rot13 ( char* str, [int nn], [char* otp], [log inverse] )
 ! int size_trim ( char* str(:) )
 ! SplitNest ( char *str, char* part1, char* part2, char* part3, [char* parens] )
 ! SplitWords (char *line, char* first, char* rest, [char* last], &
@@ -142,7 +144,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
    & indexes, ints2Strings, IsRepeat, &
    & LinearSearchStringArray, LowerCase, NAppearances, NCopies, &
    & ReadCompleteLineWithoutComments, readIntsFromChars, &
-   & Replace, Reverse, Reverse_trim, &
+   & Replace, Reverse, Reverse_trim, Rot13, &
    & size_trim, SplitNest, SplitWords, streq, strings2Ints, trim_safe, &
    & writeIntsToChars
 
@@ -1101,6 +1103,78 @@ contains
 
   end function Reverse_trim
 
+   ! --------------------------------------------------  Rot13  -----
+  function Rot13 ( str, nn, otp, inverse ) result (outstr)
+    ! performs generalized ROT13 on the input str
+    ! E.g., given 
+    ! 'Look, a cryptic message!' Rot13 returns 'Ybbx, n pelcgvp zrffntr!'
+    ! Rot13 is self-inverting
+    ! ROT(nn) is more general shift by nn, 0 < nn < 26
+    ! If ROT(nn) and ROT(mm) are inverses, then nn + mm = 26
+    
+    ! The optional arg "inverse" if TRUE performs the inverse shift
+    
+    ! In principle use of a one-time pad makes an encrypted message
+    ! unbreakable. The string of characters in otp will be used one-by-one
+    ! to shift the input str
+    !--------Argument--------!
+    character (len=*), intent(in) :: str
+    integer, optional, intent(in)         :: nn
+    logical, optional, intent(in)         :: inverse
+    character (len=*), optional, intent(in) :: otp
+    character (len=max(len_trim(str), 1)) :: outstr
+
+    !----------local vars----------!
+    integer :: i, it, nprime, o, oprime
+	 logical :: inv
+    !----------executable part----------!
+    outstr = ' '
+    if(len_trim(str) < 1) return
+    nprime = 13
+    if ( present(nn) ) nprime = nn
+    inv = .false.
+    if ( present(inverse) ) inv = inverse
+    if ( inv ) nprime = 26 - nprime
+    do i = 1, len_trim(str)
+       o = iachar( str(i:i) )
+       ! Leave non-printing characters alone
+       if ( o < 32 ) then
+         oprime = o
+       elseif ( present(otp) ) then
+         if ( len_trim(otp) < i ) then
+           it = mod( i-1, len_trim(otp) ) + 1
+           nprime = iachar( otp(it:it) )
+         else
+           nprime = iachar( otp(i:i) )
+         endif
+         if ( nprime < 32 ) nprime = 32 + nprime
+         if ( .not. inv ) then
+           oprime = 32 + mod(o-32 + nprime-32, 95)
+         else
+           oprime = 32 + mod(o-32 - nprime+32+95, 95)
+         endif
+       elseif ( 64 < o ) then
+         if ( o < 91 - nprime ) then
+           oprime = o + nprime
+         elseif ( o < 91 ) then
+           oprime = o + nprime - 26
+         elseif ( o < 97 ) then
+           oprime = o
+         elseif ( o < 123 - nprime ) then
+           oprime = o + nprime
+         elseif ( o < 123 ) then
+           oprime = o + nprime - 26
+         else
+           oprime = o
+         endif
+       else
+         oprime = o
+       endif
+		 outstr(i:i) = achar(oprime)
+    end do
+
+  end function Rot13
+
   ! ------------------------------------------------  size_trim  -----
   function size_trim ( strs, safe ) result (length)
     ! This performs len_trim of character scalar equivalent to 
@@ -1711,6 +1785,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.67  2007/07/18 00:06:46  pwagner
+! Added Rot13 function
+!
 ! Revision 2.66  2007/05/22 20:57:18  vsnyder
 ! Don't use the length of one automatic variable to specify the length of
 ! another one: Intel ifort 10.0.023 crashes at run time on this.
