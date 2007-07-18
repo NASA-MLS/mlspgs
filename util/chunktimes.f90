@@ -60,6 +60,7 @@ program chunktimes ! Reads chunk times from l2aux file(s)
     logical            :: showStats = .true.        ! show max, min, mean, etc.
     logical            :: showQManager = .false.    ! show QManager performance
     logical            :: guessFinalPhase = .true.  ! guess how many phases
+    logical            :: showWhereFailed = .false. ! show where chunks failed
     character(len=255) :: DSName= 'phase timing'    ! Dataset name
     character(len=255) :: binopts= ' '              ! 'nbins,X1,X2'
     character(len=3)   :: convert= ' '              ! 's2h', 'h2s', ''
@@ -159,9 +160,12 @@ program chunktimes ! Reads chunk times from l2aux file(s)
     if ( options%showQManager ) then
       allocate(alltimings(MAXCHUNKS, n_filenames), stat=status)
       alltimings = UNDEFINEDVALUE
+    else
+      allocate(alltimings(MAXCHUNKS, MAXPHASES), stat=status)
+      alltimings = UNDEFINEDVALUE
     endif
     call time_now ( t1 )
-    if ( options%verbose ) print *, 'Reading chunk times'
+    if ( options%verbose ) print *, 'Reading chunk l2aux file(s)'
     do i=1, n_filenames
       call time_now ( tFile )
       if ( options%verbose ) then
@@ -175,7 +179,16 @@ program chunktimes ! Reads chunk times from l2aux file(s)
       fileID = mls_sfstart ( trim(filenames(i)), fileAccess, &
            &                               hdfVersion=options%hdfVersion )
       call GetHDF5DSDims(fileID, trim(options%DSname), dims, maxDims)
-      if ( showTimings ) then
+      call h5gopen_f(fileID, '/', fromgrpid, status)
+      if ( IsHDF5AttributePresent(fromgrpID, 'Phase Names') ) then
+        call GetHDF5Attribute (fromgrpID, 'Phase Names', options%phaseNames)
+        if ( options%verbose ) &
+          & call output(' Phase Names: ' // trim(options%phaseNames), advance='yes')
+      else
+        if ( options%verbose ) call output(' attribute not found', advance='yes')
+      endif
+      call h5gclose_f(fromgrpid, status)
+      if ( showTimings .or. options%showWhereFailed ) then
         ! print *, 'dims ', dims
         ! print *, 'maxdims ', maxdims
         ! stop
@@ -184,7 +197,7 @@ program chunktimes ! Reads chunk times from l2aux file(s)
         l2auxValue = UNDEFINEDVALUE
         call LoadFromHDF5DS (fileID, trim(options%DSname), l2auxValue)
         ! New special feature:
-        ! Try to guess how phases there were by scanning
+        ! Try to guess how many phases there were by scanning
         ! data for lasst phase with values > 0
         if ( options%guessFinalPhase ) then
           ! print *, 'dims: ', dims
@@ -211,21 +224,19 @@ program chunktimes ! Reads chunk times from l2aux file(s)
         end select
         timings = l2auxValue(1, options%finalPhase, :)
         if ( options%tabulate /= 'no' ) then
-          fileID = mls_sfstart ( trim(filenames(1)), fileAccess, &
-             &                               hdfVersion=options%hdfVersion )
-          call h5gopen_f(fileID, '/', fromgrpid, status)
-          if ( IsHDF5AttributePresent(fromgrpID, 'Phase Names') ) then
-           call GetHDF5Attribute (fromgrpID, 'Phase Names', options%phaseNames)
-           if ( options%verbose ) &
-             & call output(' Phase Names: ' // trim(options%phaseNames), advance='yes')
-          else
-           if ( options%verbose ) call output(' attribute not found', advance='yes')
-          endif
+          ! fileID = mls_sfstart ( trim(filenames(1)), fileAccess, &
+          !   &                               hdfVersion=options%hdfVersion )
           call tabulate(l2auxValue( 1, 1:options%finalPhase, :), &
             & options%phaseNames, options%tabulate )
         endif
-        if ( options%showQManager ) &
-          & alltimings(1:dims(3), i) = timings
+        ! print *, 'shape(alltimings): ', shape(alltimings)
+        ! print *, 'shape(l2auxValue): ', shape(l2auxValue)
+        if ( options%showQManager ) then
+          alltimings(1:dims(3), i) = timings
+        else
+          alltimings(1:size(l2auxvalue,3), 1:size(l2auxvalue,2)) = &
+            & transpose( l2auxValue(1, :, :) )
+        endif
         if ( .not. options%merge ) statistic%count=0
         call statistics(real(timings, r8), statistic, real(UNDEFINEDVALUE, r8))
         if ( options%longChunks > 0._r4 ) then
@@ -235,7 +246,7 @@ program chunktimes ! Reads chunk times from l2aux file(s)
             call GetUniqueList(tempChunkList, longChunkList, how_many, COUNTEMPTY)
           endif
         endif
-        if ( .not. options%merge ) then
+        if ( showTimings .and. .not. options%merge ) then
           if ( options%showStats ) call dumpstat(statistic)
           if ( options%longChunks > 0._r4 ) &
             & call dump(longChunkList, 'list of long chunks')
@@ -260,9 +271,9 @@ program chunktimes ! Reads chunk times from l2aux file(s)
     if ( options%verbose ) call sayTime('reading all files')
     if ( options%showQManager ) then
       call QManager(alltimings, options%nHosts, options%verbose)
-      deallocate(alltimings, stat=status)
     endif
   endif
+  deallocate(alltimings, stat=status)
   if ( showTimings .and. SHOWDATEANDTIME ) call output_date_and_time(msg='ending chunktimes', &
     & dateFormat='yyyydoy', timeFormat='HH:mm:ss')
   call mls_h5close(error)
@@ -341,6 +352,10 @@ contains
         options%showQManager = .true.
         read(filename, *) options%nHosts
         i = i + 1
+      elseif ( filename(1:5) == '-wher' ) then
+        options%showFailed = .true.
+        options%showWhereFailed = .true.
+        exit
       else
         call print_help
       end if
@@ -379,22 +394,49 @@ contains
     endif
   end subroutine deduceFailedChunks
 
+!------------------------- deduceWhereChunksFailed ---------------------
+  subroutine deduceWhereChunksFailed( number, whereFailed )
+    ! Deduce where chunks failed
+    ! Based on timings == UNDEFINEDVALUE
+    ! Args
+    integer, intent(in) :: number
+    integer, dimension(:), intent(inout) :: whereFailed
+    ! Internal variables
+    integer :: chunk
+    integer :: total
+    integer :: which
+    ! Executable
+    if ( .not. any(alltimings == UNDEFINEDVALUE) ) return
+    total = 0
+    do chunk=1, MAXCHUNKS
+      which = FindFirst( alltimings(chunk,:), UNDEFINEDVALUE )
+      if ( which > 0 .and. which <= options%finalPhase ) then
+        total = total + 1
+        if ( total > number ) return
+        whereFailed(total) = which
+      endif
+    enddo
+  end subroutine deduceWhereChunksFailed
+
 !------------------------- dumpFailedChunks ---------------------
   subroutine dumpFailedChunks(fileID)
   ! Print info on chunks that failed
   ! Args
   integer, intent(in)         :: fileID
   ! Internal variables
+  integer                     :: failure
   integer                     :: grp_id
   integer                     :: number
   integer                     :: returnStatus
   character(len=4096)         :: failedChunks
+  character(len=32) :: myPhase
   character(len=*), parameter :: NUMCOMPLETEATTRIBUTENAME = 'NumCompletedChunks'
   character(len=*), parameter :: NUMFAILATTRIBUTENAME = 'NumFailedChunks'
   character(len=*), parameter :: FAILATTRIBUTENAME = 'FailedChunks'
   character(len=*), parameter :: MACHATTRIBUTENAME = 'FailedMachines'
   logical :: showAll
   logical :: showThis
+  integer, dimension(MAXCHUNKS) :: whereFailed
   ! Executable
   showAll = (options%details == ' ')
   number = -1
@@ -442,12 +484,28 @@ contains
   endif
 
   call h5gclose_f(grp_id, returnStatus)
-  if ( number > -1 ) return
-  call deduceFailedChunks(number, FailedChunks)
-  call output(NUMFAILATTRIBUTENAME, advance='no')
-  call blanks(4)
-  call output(number, advance='yes')
-  call dump(trim(failedChunks), FAILATTRIBUTENAME)
+  if ( number < 0 ) then
+    call deduceFailedChunks(number, FailedChunks)
+    call output(NUMFAILATTRIBUTENAME, advance='no')
+    call blanks(4)
+    call output(number, advance='yes')
+    call dump(trim(failedChunks), FAILATTRIBUTENAME)
+  endif
+  
+  if ( options%showWhereFailed .and. number > 0 ) then
+    whereFailed = -1
+    call deduceWhereChunksFailed( number, whereFailed )
+    call output( 'chunk    phase         phase name', advance='yes' )
+    do failure=1, number
+      call GetStringElement( failedChunks, myPhase, failure, .FALSE. )
+      call output( trim(myPhase), advance='no' )
+      call blanks(4)
+      call output( whereFailed(failure), advance='no' )
+      call GetStringElement( options%phaseNames, myPhase, whereFailed(failure), .FALSE. )
+      call blanks(4)
+      call output( trim(myPhase), advance='yes' )
+    enddo
+  endif
   end subroutine dumpFailedChunks
 
 !------------------------- print_help ---------------------
@@ -486,6 +544,7 @@ contains
       write (*,*) '-fail       => show failed chunks (dont)'
       write (*,*) '-t[abulate] => tabulate data as chunk vs. total time (dont)'
       write (*,*) '-tf         => print full tables showing time for each phase'
+      write (*,*) '-where      => show where chunks failed (dont)'
       write (*,*) '-h          => print brief help'
       stop
   end subroutine print_help
@@ -689,6 +748,9 @@ end program chunktimes
 !==================
 
 ! $Log$
+! Revision 1.16  2007/06/21 22:10:59  pwagner
+! -t[abulate] tabulates only total time, not all phases
+!
 ! Revision 1.15  2007/06/14 21:47:01  pwagner
 ! Should not guessFinalPhase if told so explicitly with -n option
 !
