@@ -13,7 +13,7 @@
 program l1bdiff ! diffs two l1b or L2AUX files
 !=================================
 
-   use Dump_0, only: DUMP
+   use Dump_0, only: DIFFRMSMEANSRMS, rmsFormat, DIFF, DUMP
    use Hdf, only: DFACC_CREATE, DFACC_READ
    use HDF5, only: h5fis_hdf5_f, &
      & H5GCLOSE_F, H5GOPEN_F, H5DOPEN_F, H5DCLOSE_F, h5gcreate_f
@@ -30,7 +30,7 @@ program l1bdiff ! diffs two l1b or L2AUX files
      & MLSMessage
    use MLSStringLists, only: GetStringElement, NumStringElements
    use MLSStrings, only: WriteIntsToChars
-   use output_m, only: resumeOutput, suspendOutput, output
+   use output_m, only: resumeOutput, suspendOutput, output, outputNamedValue
    use Time_M, only: Time_Now, time_config
    
    implicit none
@@ -78,6 +78,7 @@ program l1bdiff ! diffs two l1b or L2AUX files
   integer            :: n_filenames
   integer     ::  i, status, error ! Counting indices & Error flags
   logical     :: is_hdf5
+  integer :: maf1, maf2
   character (len=MAXSDNAMESBUFSIZE) :: mySdList
   character(len=16) :: string
   real        :: t1
@@ -87,6 +88,7 @@ program l1bdiff ! diffs two l1b or L2AUX files
   MLSMessageConfig%useToolkit = .false.
   MLSMessageConfig%logFileUnit = -1
   time_config%use_wall_clock = .true.
+  DIFFRMSMEANSRMS = .true.
   CALL mls_h5open(error)
   n_filenames = 0
   do      ! Loop over filenames
@@ -111,6 +113,7 @@ program l1bdiff ! diffs two l1b or L2AUX files
     options%referenceFileName = filenames(n_filenames)
     n_filenames = n_filenames - 1
   endif
+  if ( options%rms ) rmsFormat = '(1pe9.2)'
   if ( options%silent ) call suspendOutput
   call time_now ( t1 )
   if ( options%verbose .and. .not. options%list ) &
@@ -354,7 +357,7 @@ contains
       call GetStringElement (trim(mysdList), sdName, i, countEmpty )
       ! if ( sdName /= 'R1A:118.B32W:PT.S0.WF4-1' ) cycle
       ! Allocate and fill l2aux
-      if ( options%verbose ) print *, 'About to read ', trim(sdName)
+      ! if ( options%verbose ) print *, 'About to read ', trim(sdName)
         call ReadL1BData ( sdfid1, trim(sdName), L1bData, NoMAFs, status, &
           & hdfVersion=the_hdfVersion, NEVERFAIL=.true. )
         if ( status /= 0 ) then
@@ -373,7 +376,12 @@ contains
           call DeallocateL1BData ( l1bData2 )
           cycle
         endif
-      ! if ( options%verbose ) print *, 'About to diff'
+        maf1 = 1
+        if ( options%maf1 > 0 ) maf1 = options%maf1
+        maf2 = NoMAFs
+        if ( options%maf2 > 0 ) maf2 = options%maf2
+        ! if ( options%verbose ) print *, 'About to diff'
+        if ( .not. options%silent ) print *, 'About to diff ', trim(sdName)
         if ( options%direct .or. .not. associated(L1bData%dpField) ) then
           ! print *, 'About to do it direct'
           call diff(L1bData, L1bData2, &
@@ -384,20 +392,39 @@ contains
           call diff(L1bData, L1bData2, details=0, &
             & stats=options%stats, rms=options%rms, &
             & silent=options%silent, numDiffs=numDiffs )
+          ! print *, 'done diffing'
           
           numDiffs = numDiffs + count( L1bData%dpField /= L1bData2%dpField )
-          L1bData%dpField = L1bData%dpField - L1bData2%dpField(:,:,1+options%moff:)
-          if ( options%silent ) then
-          elseif ( options%maf1 /= 0 .and. options%maf2 /= 0 ) then
-            ! print *, shape( L1bData%dpField(:,:,options%maf1:options%maf2) )
-            call dump( L1bData%dpField(:,:,options%maf1:options%maf2), &
-              & 'l1bData%dpField', &
+          if ( .true. .and. associated(L1bData%dpField) .and. &
+            & associated(L1bData2%dpField)) then
+!             call outputNamedValue( 'maf1', maf1 )
+!             call outputNamedValue( 'maf2', maf2 )
+!             call outputNamedValue( 'options%moff', options%moff )
+!             print *, shape(L1bData%dpField(:,:,maf1:maf2))
+!             print *, shape(L1bData2%dpField(:,:,maf1+options%moff:maf2+options%moff))
+!             print *, L1bData%dpField(1,1,maf1)
+!             print *, L1bData%dpField(1,1,maf2)
+!             print *, L1bData2%dpField(1,1,maf1+options%moff)
+!             print *, L1bData2%dpField(1,1,maf2+options%moff)
+            call diff( L1bData%dpField(:,:,maf1:maf2), &
+              & '(1)', &
+              & L1bData2%dpField(:,:,maf1+options%moff:maf2+options%moff), &
+              & '(2)', &
               & stats=options%stats, rms=options%rms )
           else
-            ! print *, shape( L1bData%dpField )
-            call dump( L1bData%dpField, &
-              & 'l1bData%dpField', &
-              & stats=options%stats, rms=options%rms )
+            L1bData%dpField = L1bData%dpField - L1bData2%dpField(:,:,1+options%moff:)
+            if ( options%silent ) then
+            elseif ( options%maf1 /= 0 .and. options%maf2 /= 0 ) then
+              ! print *, shape( L1bData%dpField(:,:,options%maf1:options%maf2) )
+              call dump( L1bData%dpField(:,:,options%maf1:options%maf2), &
+                & 'l1bData%dpField', &
+                & stats=options%stats, rms=options%rms )
+            else
+              ! print *, shape( L1bData%dpField )
+              call dump( L1bData%dpField, &
+                & 'l1bData%dpField', &
+                & stats=options%stats, rms=options%rms )
+            endif
           endif
         endif
         call DeallocateL1BData ( l1bData )
@@ -430,6 +457,9 @@ end program l1bdiff
 !==================
 
 ! $Log$
+! Revision 1.6  2006/11/22 18:33:10  pwagner
+! New optional args to diff l1b files with different number MAFs
+!
 ! Revision 1.5  2006/06/14 16:42:38  pwagner
 ! Should not run out of memory unless direct reset to TRUE
 !
