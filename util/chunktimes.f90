@@ -229,8 +229,6 @@ program chunktimes ! Reads chunk times from l2aux file(s)
           call tabulate(l2auxValue( 1, 1:options%finalPhase, :), &
             & options%phaseNames, options%tabulate )
         endif
-        ! print *, 'shape(alltimings): ', shape(alltimings)
-        ! print *, 'shape(l2auxValue): ', shape(l2auxValue)
         if ( options%showQManager ) then
           alltimings(1:dims(3), i) = timings
         else
@@ -338,10 +336,10 @@ contains
       elseif ( filename(1:5) == '-fail' ) then
         options%showFailed = .true.
         exit
-      elseif ( filename(1:2) == '-t' ) then
+      elseif ( filename(1:3) == '-t' ) then
         options%tabulate = 'yes'
         exit
-      elseif ( filename(1:2) == '-tf' ) then
+      elseif ( filename(1:3) == '-tf' ) then
         options%tabulate = 'full'
         exit
       elseif ( filename(1:3) == '-v ' ) then
@@ -748,6 +746,9 @@ end program chunktimes
 !==================
 
 ! $Log$
+! Revision 1.17  2007/07/18 00:13:35  pwagner
+! -where option to show where chunks crashed
+!
 ! Revision 1.16  2007/06/21 22:10:59  pwagner
 ! -t[abulate] tabulates only total time, not all phases
 !
