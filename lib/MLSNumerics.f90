@@ -134,6 +134,10 @@ module MLSNumerics              ! Some low level numerical stuff
 !                            reversing role of (table, xtable) => function^(-1)
 ! UseLookUpTable           Use LookUpTable to approximate function
 
+  interface Battleship
+    module procedure Battleship_int, Battleship_log
+  end interface
+
   interface Dump
     module procedure DumpCoefficients_r4, DumpCoefficients_r8
   end interface
@@ -865,7 +869,14 @@ contains
   !    -x               root where f(root) crosses 0 (or b)
   !                      (assumes (fun(n)-b) changes sign at n=root)
 
-  subroutine Battleship( fun, root, n1, maxPhase1, ns, b, options )
+  ! It can also be used with a logical-valued function
+  ! in this case we shoot until we encounter TRUE
+  ! similar to integer-value version if we make the mapping
+  ! 0 -> FALSE
+  ! 1 -> TRUE
+  ! -r option or b can be used to reverse the sense
+
+  subroutine Battleship_int( fun, root, n1, maxPhase1, ns, b, options )
     ! Args
     integer, external                          :: fun
     integer, optional, intent(in)              :: n1 ! 1st circle
@@ -985,7 +996,130 @@ contains
         endif
       endif
     enddo
-  end subroutine Battleship
+  end subroutine Battleship_int
+
+  subroutine Battleship_log( fun, root, n1, maxPhase1, ns, b, options )
+    ! Args
+    logical, external                          :: fun
+    integer, optional, intent(in)              :: n1 ! 1st circle
+    integer, optional, intent(in)              :: maxPhase1 ! max phase1 shots
+    integer, optional, dimension(:), intent(in):: ns ! array of phase1 shots
+    integer, intent(out)                       :: root ! root
+    logical, optional, intent(in)              :: b ! is short
+    character(len=*), optional, intent(in)     :: options
+    ! Internal variables
+    logical :: flast
+    logical :: fnext
+    logical :: isShort
+    character(len=8) :: myOptions
+    integer :: shot
+    integer :: x0
+    integer :: x1
+    integer :: x2
+    ! Executable
+    isShort = .FALSE.
+    if ( present(b) ) isShort = b
+    myOptions = '-s'
+    if ( present(options) ) myOptions = options
+    root = -1 ! in case we can't find root
+    ! Phase 1
+    ! Some error checks
+    if ( present(maxPhase1) ) then
+      if ( (index(myOptions, 's') > 0 .and. ( fun(n1) .neqv. isShort) ) ) return
+      if ( (index(myOptions, 'r') > 0 .and. ( fun(n1) .eqv. isShort) ) ) return
+      if ( maxPhase1 < 1 ) return
+      if ( .not. present(n1) ) return
+      x2 = n1 ! Initialize things
+      fnext = fun(x2)
+      do shot = 1, maxPhase1
+        x1 = x2
+        x2 = 2*x1
+        flast = fnext
+        fnext = fun(x2)
+        if ( index(myOptions, 's') > 0 ) then
+          if ( fnext .neqv. isShort ) exit
+        elseif ( index(myOptions, 'r') > 0 ) then
+          if ( fnext .eqv. isShort ) exit
+        else
+          if ( fnext .neqv. flast ) exit
+        endif
+      enddo
+      if ( shot > maxPhase1 ) return ! No shot was long enough
+    else
+      if ( .not. present(ns) ) return
+      x2 = ns(1) ! Initialize things
+      fnext = fun(x2)
+      if ( (index(myOptions, 's') > 0 .and. ( fnext .neqv. isShort ) ) ) return
+      if ( (index(myOptions, 'r') > 0 .and. ( fnext .eqv. isShort) ) ) return
+      do shot = 2, size(ns)
+        x1 = x2
+        x2 = ns(shot)
+        flast = fnext
+        fnext = fun(x2)
+        if ( index(myOptions, 's') > 0 ) then
+          if ( fnext .neqv. isShort ) exit
+        elseif ( index(myOptions, 'r') > 0 ) then
+          if ( fnext .eqv. isShort ) exit
+        else
+          if ( fnext .neqv. flast ) exit
+        endif
+      enddo
+      if ( shot > size(ns) ) return ! No shot was long enough
+    endif
+    ! Phase 2
+    ! Narrow the spashes, always keeping root between x0 and x2
+    x0 = x1
+    do
+      x1 = (x0 + x2) / 2
+      ! This test should prevent us from looping endlessly
+      if ( x1 == x0 ) then
+        ! apparently x0 = x2 - 1, so we've found our root
+        if ( index(myOptions, 's') > 0 .or. index(myOptions, 'r') > 0 ) then
+          root = x1
+        else
+          if ( fun(x1) .eqv. isShort ) then
+            root = x1
+          elseif ( fun(x2) .eqv. isShort ) then
+            root = x2
+          else
+            root = -1
+          endif
+        endif
+        return
+      endif
+      if ( index(myOptions, 's') > 0 ) then
+        if ( fun(x1) .eqv. isShort ) then
+          x0 = x1
+          ! x2 = x2
+        else
+          ! x0 = x0
+          x2 = x1
+        endif
+      elseif ( index(myOptions, 'r') > 0 ) then
+        if ( fun(x1) .eqv. isShort ) then
+          ! x0 = x0
+          x2 = x1
+        else
+          x0 = x1
+          ! x2 = x2
+        endif
+      else
+        if ( (fun(x2) .eqv. isShort) .or. (fun(x1) .eqv. isShort) ) then
+          if ( fun(x2) .eqv. isShort ) then
+            root = x2
+          else
+            root = x1
+          endif
+          return
+        elseif ( fun(x2) .neqv. fun(x1) ) then
+          x0 = x1
+        else
+          x2 = x1
+        endif
+      endif
+    enddo
+  end subroutine Battleship_log
+
 ! -------------------------------------------------  FillLookUpTable  -----
 
   ! This family of routines fills a table with evaluations of a function
@@ -1204,6 +1338,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.51  2007/07/23 23:18:26  pwagner
+! Battleship may be used with logical-valued function
+!
 ! Revision 2.50  2007/06/21 00:49:52  vsnyder
 ! Remove tabs, which are not part of the Fortran standard
 !
