@@ -33,7 +33,6 @@ contains
 !-----------------------------------------------------------------------
       INCLUDE 'spectra.f9h'
       INCLUDE 'data.f9h'
-      REAL(r8) ::  QQ(3)
       INTEGER :: I, J
 
 ! ----------------------------------------------------------------------
@@ -234,6 +233,9 @@ contains
 end module SpectraLines
 
 ! $Log$
+! Revision 2.3  2007/07/25 20:20:08  vsnyder
+! Delete declarations for unused variables
+!
 ! Revision 2.2  2005/06/22 18:08:20  pwagner
 ! Reworded Copyright statement, moved rcs id
 !

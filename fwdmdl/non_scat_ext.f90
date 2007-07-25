@@ -14,7 +14,6 @@ module Non_scat_ext
   use GasAbsorption, only: GET_BETA
   use MLSCommon, only: r8
   use SpectraLines, only: SETUP_SPECTRA
-  use SpectroscopyCatalog_m, only: CATALOG_T
   
 
   IMPLICIT NONE
@@ -48,7 +47,6 @@ contains
 ! local variables
 
       REAL(r8) :: VMR_H2O
-      REAL(r8) :: Beta
       REAL(r8) :: VMR1(NS-1)
       integer :: I
       integer :: J
@@ -97,6 +95,9 @@ contains
 end module Non_scat_ext
 
 ! $Log$
+! Revision 2.3  2007/07/25 20:21:33  vsnyder
+! Delete USE for unreferenced entities and declarations for unused variables
+!
 ! Revision 2.2  2005/06/22 18:08:19  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
