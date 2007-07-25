@@ -16,7 +16,6 @@ module ModelOutput
 ! OUTPUT CLOUD EXTINCTION, EFFECTIVE OPTICAL DEPTH, AND RADIANCE SENSITIVITY
 ! ---------------------------------------------------------------------------
 
-      use Interpack, only: LOCATE
       use MLSCommon, only: r8
       use MLSNumerics, only: INTERPOLATEVALUES
       IMPLICIT NONE
@@ -64,10 +63,10 @@ contains
       REAL(r8) :: DDZ(NH-1)                         ! MODEL LEYER THICKNESS
       REAL(r8) :: DZ(NZ-1)                          ! L2 LAYER THICKNESS
 
-      REAL(r8) :: RE, xout, sum
+      REAL(r8) :: RE, sum
       REAL(r8) :: HT,C_EXT,A_EXT,TGT,DS,DTAU,A_COL
       REAL(r8) :: ZH(NH-1),ZA(NZ-1), S(2*NH)
-      INTEGER :: I,K,J,iflag, JM
+      INTEGER :: I,K,J,iflag
 !-----------------------------------------------------------------------------
 
 !===============================================================
@@ -225,6 +224,9 @@ contains
 end module ModelOutput
 
 ! $Log$
+! Revision 1.18  2005/06/22 18:27:38  pwagner
+! Cant have access declared outside module scope
+!
 ! Revision 1.17  2003/05/14 23:33:33  dwu
 ! fix a dimension problem with ddm
 !
