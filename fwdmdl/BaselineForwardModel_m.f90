@@ -29,7 +29,6 @@ contains ! ======================================== BaselineForwardModel ======
     & FwdModelOut, fmStat, jacobian )
 
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-    use Dump_0, only: DUMP
     use ForwardModelConfig, only: FORWARDMODELCONFIG_T
     use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
     use Intrinsic, only: L_BASELINE, L_PTAN, L_NONE, L_RADIANCE, L_INTERMEDIATEFREQUENCY
@@ -39,8 +38,8 @@ contains ! ======================================== BaselineForwardModel ======
     use MatrixModule_1, only: MATRIX_T, FINDBLOCK, CREATEBLOCK
     use MLSCommon, only: RP, RM
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, &
-      & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE
-    use MLSSignals_m, only: SIGNALS, SIGNAL_T
+      & MLSMSG_ALLOCATE
+    use MLSSignals_m, only: SIGNAL_T
     use VectorsModule, only: VECTOR_T, VECTORVALUE_T, GETVECTORQUANTITYBYTYPE, &
       & VALIDATEVECTORQUANTITY
     use ForwardModelVectorTools, only: GETQUANTITYFORFORWARDMODEL
@@ -523,6 +522,9 @@ contains ! ======================================== BaselineForwardModel ======
 end module BaselineForwardModel_m
   
 ! $Log$
+! Revision 2.29  2007/07/25 20:10:44  vsnyder
+! Delete USE for unreferenced entities
+!
 ! Revision 2.28  2007/06/29 19:32:42  vsnyder
 ! Make ForwardModelIntermediate_t private to ScanModelModule
 !
