@@ -38,7 +38,7 @@ contains ! ====================================== SwitchingMirrorModel =====
     use Intrinsic, only: L_RADIANCE, L_REFLREFL, L_REFLSPILL, L_REFLTEMP, &
       & L_REFLTRANS, L_STRAYRADIANCE, L_PRIMARY, L_SECONDARY, L_TERTIARY, L_COMPLETE, &
       & L_CALSIDEBANDFRACTION, L_THZ, LIT_INDICES
-    use MLSSignals_m, only: SIGNALS, SIGNAL_T, GETSIDEBANDLOOP, MODULES
+    use MLSSignals_m, only: SIGNAL_T, GETSIDEBANDLOOP, MODULES
     use MLSCommon, only: R8
 
     ! Dummy arguments
@@ -63,7 +63,6 @@ contains ! ====================================== SwitchingMirrorModel =====
     integer :: SIDEBANDSTART            ! Loop start
     integer :: SIDEBANDSTOP             ! Loop end
     integer :: SIDEBANDSTEP             ! Loop step
-    integer :: THZMODULE                ! Index of THz module
 
     real(r8), dimension(:,:), pointer :: ACLPRODUCT ! An intermediate term in the calculation
     real(r8), dimension(:), pointer :: OFFSET ! The offset to add for each channel
@@ -202,6 +201,9 @@ contains ! ====================================== SwitchingMirrorModel =====
 end module SwitchingMirrorModel_m
 
 ! $Log$
+! Revision 2.6  2007/07/25 20:20:28  vsnyder
+! Delete USE for unreferenced entities and declarations for unused variables
+!
 ! Revision 2.5  2007/06/29 19:32:42  vsnyder
 ! Make ForwardModelIntermediate_t private to ScanModelModule
 !
