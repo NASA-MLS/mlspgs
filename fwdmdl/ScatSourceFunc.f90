@@ -61,27 +61,21 @@ contains
       real(rk), parameter :: FIRST = 250._rk ! FIRST GUESS OF UPWELLING TB
       real(rk), parameter :: Pi2 = 0.5 * Pi
 
-      real(rk) :: CHK(size(TEMP_AIR))
       real(rk) :: CLD_EXT
-      real(rk) :: D1
-      real(rk) :: D2
       real(rk) :: DELTA                   ! DELTA TB FOR CONVERGENCE CHECK
       real(rk) :: dTAU( size(temp_air) )  ! Optical depth increment at each layer 
       real(rk) :: ext_air( size(temp_air) )
       real(rk) :: DU(NU)                  ! DELTA U
-      real(rk) :: DY
       real(rk) :: ITS0                    ! NO. OF MAXIMUM ITERATIONS
       real(rk) :: JJ0
       real(rk) :: PHH( NU, size(TEMP_AIR) )
       real(rk) :: PHI(NUA)                ! SCATTERING AZIMUTH ANGLES
-      real(rk) :: RSAVG
       real(rk) :: RS( NU/2 )
       real(rk) :: TAVG                    ! TB AVERAGED OVER PHI AT A GIVEN U
       real(rk) :: TB( NU, size(TEMP_AIR) )! TB IN FLAT PLANE GEOMETRY
                                           ! 1->NU/2 UPWELLING, NU/2->NU DOWNWELLING
       real(rk) :: TB0 ( NU )   ! TB AT THE SURFACE
       real(rk) :: TEMP( size(temp_air) )  ! BRIGHTNESS TEMPERATURE FROM TEMP_AIR
-      real(rk) :: TGT
       real(rk) :: THETAI(NU,NU,NUA) ! ANGLES FOR INCIDENT TB
       real(rk) , intent(inout) :: THETA(:)    ! SCATTERING ANGLES
       real(rk) :: TSCAT(NU,size(Z))
@@ -90,19 +84,13 @@ contains
       real(rk) :: TS                      ! SURFACE TEMPERATURE (K)
       real(rk) :: U1(NU)
       real(rk) :: UA(NUA)                 ! COSINES OF SCATTERING AZIMUTH ANGLES
-      real(rk) :: UAVE(size(temp_air),size(temp_air)) ! INCIDENT ANGLES FOR EACH TANGENT HT
       real(rk) :: UEFF                    ! EFFECTIVE U BETWEEN K AND K+1
       real(rk) :: UI(NU,NU,NUA) ! COSINES OF THETAI
       real(rk) :: U(NU)        ! COSINES OF THETA
-      real(rk) :: UU
       real(rk) :: W0( size(temp_air) )
       real(rk) :: WC(2, size(temp_air) )
       real(rk) :: WK
-      real(rk) :: WK1
       real(rk) :: WW0
-      real(rk) :: Wwk
-      real(rk) :: Wwk1
-      real(rk) :: Www0
       real(rk) :: X2
       real(rk) :: XTB(size(TEMP_AIR))
 
@@ -110,10 +98,8 @@ contains
       real(rk) :: D_mid_Z(size(Z)-2)
 
       integer :: I
-      integer :: ICON                     ! CONTROL SWITCH
                                           ! 3 = NEAR SIDE CLOUD ONLY
-      integer :: IH, IND, IP, ISPI, ITS, ITT, J, JM, K, K1, L
-      integer :: LMIN( size(temp_air) )   ! LOWEST LAYER REACHED BY A TANGENT HT
+      integer :: IH, IND, IP, ITS, J, JM, K, K1, L
 
 !-------------------------------------------------------------------------------------
 
@@ -322,8 +308,6 @@ contains
 
       use Interpack,           only: LOCATE
       use MLSCommon,           only: RK => R8 ! working REAL kind
-      use Physics,             only: H_OVER_K ! h/k in Kelvin/MHz
-      use ScatteringAngle,     only: Angle
       use Units,               only: Pi
 
     ! Arguments
@@ -332,7 +316,7 @@ contains
       real(rk), intent(in) :: PHI_angle(:)   ! Phi Angles
       real(rk), intent(inout) :: TT_scat(:,:)! 
       real(rk) :: PHI_90(size(PHI_angle))
-      real(rk) :: WK, eta
+      real(rk) :: eta
       INTEGER :: I, JM, No_ele, No_ang
 !-----------------------------------------------------------------------------
 
@@ -401,6 +385,9 @@ contains
 end module ScatSourceFunc
 
 ! $Log$
+! Revision 2.13  2005/06/22 18:08:19  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.12  2004/08/05 18:58:45  vsnyder
 ! Remove unused USE names in Convert_Grid
 !
