@@ -21,7 +21,6 @@ module MLSNumerics              ! Some low level numerical stuff
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use MLSSets, only: FindFirst, FindLast
   use MLSStrings, only: Capitalize
-  use Output_M, only: Output
 
   implicit none
 
@@ -1338,6 +1337,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.52  2007/07/25 20:09:25  vsnyder
+! Delete USE for unused entity
+!
 ! Revision 2.51  2007/07/23 23:18:26  pwagner
 ! Battleship may be used with logical-valued function
 !
