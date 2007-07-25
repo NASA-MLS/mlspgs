@@ -13,7 +13,7 @@
 module MLSSpecialFunctions              ! Some special functions
 !=============================================================================
 
-  USE ERMSG_M, ONLY: DERM1, DERV1, ERFIN, ERMSG, SERM1, SERV1
+  USE ERMSG_M, ONLY: DERM1, SERM1
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
 
   implicit none
@@ -2134,6 +2134,9 @@ end module MLSSpecialFunctions
 
 !
 ! $Log$
+! Revision 2.4  2007/07/25 20:09:42  vsnyder
+! Delete USE for unused entity
+!
 ! Revision 2.3  2007/05/17 17:25:17  pwagner
 ! error function stuff from l1/MathUtils.f90 moved here
 !
