@@ -17,8 +17,6 @@ module ForwardModelIntermediate
   ! It contains hydrostatic information and so on, and is remembered by the
   ! calling code.
 
-  use MLSCommon, only: R8
-
   implicit none
   private
 
@@ -55,6 +53,9 @@ contains
 end module ForwardModelIntermediate
 
 ! $Log$
+! Revision 2.8  2007/06/29 19:32:42  vsnyder
+! Make ForwardModelIntermediate_t private to ScanModelModule
+!
 ! Revision 2.7  2006/12/19 02:53:49  vsnyder
 ! Get rid of B_Metrics flag, which nobody uses any more
 !
