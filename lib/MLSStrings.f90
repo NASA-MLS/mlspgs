@@ -529,9 +529,9 @@ contains
   subroutine Ints2Strings ( ints, strs )
     ! takes an array of integers and returns string array
     ! using "char"
-	 ! Useful due to bug in toolbox swrfld
-	 !
-	 ! See also strings2Ints
+    ! Useful due to bug in toolbox swrfld
+    !
+    ! See also strings2Ints
     !--------Argument--------!
     !    dimensions are (len(strs(1)), size(strs(:)))
     integer, intent(in), dimension(:,:) ::          ints
@@ -906,7 +906,7 @@ contains
     ! Limitation: you're unable to "escape" a * so you'll have to
     ! preprocess the * away if you really want to read a string which has
     ! a * in it somewhere
-	 !
+    !
     !--------Argument--------!
     CHARACTER (LEN=*), INTENT(in) ::   str
     integer, intent(out)          ::   int
@@ -987,8 +987,8 @@ contains
     ! using Fortran "read"
     ! If any element of string array is blank or contains one of forbiddens
     ! the corresponding element of ints is left undefined
-	 ! Not useful yet
-	 !
+    ! Not useful yet
+    !
     !--------Argument--------!
     !    dimensions are (len(strs(1)), size(strs(:)))
     CHARACTER (LEN=*), INTENT(in), dimension(:) ::   strs
@@ -1016,7 +1016,7 @@ contains
   function Replace (str, oldChar, newchar) RESULT (outstr)
     ! takes a string and returns one with oldChar replaced by newChar
     ! E.g., to replace every char(0), which is the NUL character, with a blank
-	 ! arg = Replace( arg, char(0), char(32) )
+    ! arg = Replace( arg, char(0), char(32) )
     character(len=*), intent(in) :: str
     character(len=1), intent(in) :: oldChar
     character(len=1), intent(in) :: newChar
@@ -1033,46 +1033,45 @@ contains
     enddo
   end function Replace
 
-	 !
    ! --------------------------------------------------  Reverse  -----
   elemental function Reverse (str) RESULT (outstr)
     ! takes a string and returns one with chars in reversed order
-	 ! Useful in certain contexts:
-	 ! e.g., to remove leading blanks
-	 ! arg = Reverse(TRIM(Reverse(arg)))
-	 !
-	 ! See also Reverse_trim, ReverseList
+    ! Useful in certain contexts:
+    ! e.g., to remove leading blanks
+    ! arg = Reverse(TRIM(Reverse(arg)))
+    !
+    ! See also Reverse_trim, ReverseList
     !--------Argument--------!
     CHARACTER (LEN=*), INTENT(IN) :: str
     CHARACTER (LEN=LEN(str)) :: outstr
 
     !----------Local vars----------!
     INTEGER :: i, istr, irev
-	 CHARACTER (LEN=1) :: strChar
+    CHARACTER (LEN=1) :: strChar
     !----------Executable part----------!
     outstr=str
     IF(LEN(str) == 1) RETURN
 
     DO i = 1, LEN(str)-1, 2
-       istr = 1 + (i-1)/2				! 1, 2, ..
-       irev = LEN(str) - (i-1)/2		! N, N-1, ..
+       istr = 1 + (i-1)/2                       ! 1, 2, ..
+       irev = LEN(str) - (i-1)/2                ! N, N-1, ..
        strChar = str(istr:istr)
-		 outstr(istr:istr) = str(irev:irev)
-		 outstr(irev:irev) = strChar
+       outstr(istr:istr) = str(irev:irev)
+       outstr(irev:irev) = strChar
     END DO
 
 ! Special case: str contains odd number of chars
     IF(MOD(LEN(str), 2) == 1) THEN
-       istr = 1 + (LEN(str)-1)/2				! 1, 2, ..
+       istr = 1 + (LEN(str)-1)/2                ! 1, 2, ..
         outstr(istr:istr) = str(istr:istr)
-	ENDIF
+    ENDIF
 
   end function Reverse
 
    ! --------------------------------------------------  Reverse_trim  -----
   function Reverse_trim (str) RESULT (outstr)
     ! takes a string, trims it then returns one with chars in reversed order
-	 ! See also Reverse which omits the trim step
+    ! See also Reverse which omits the trim step
     !
     ! E.g., given 'A string    ' reverse_trim returns 'gnirst A   ' while
     ! a simple Reverse returns '   gnirst A'
@@ -1082,24 +1081,24 @@ contains
 
     !----------Local vars----------!
     INTEGER :: i, istr, irev
-	 CHARACTER (LEN=1) :: strChar
+    CHARACTER (LEN=1) :: strChar
     !----------Executable part----------!
     outstr=str
     IF(LEN_TRIM(str) <= 1) RETURN
 
     DO i = 1, LEN_TRIM(str)-1, 2
-       istr = 1 + (i-1)/2				! 1, 2, ..
-       irev = LEN_TRIM(str) - (i-1)/2		! N, N-1, ..
+       istr = 1 + (i-1)/2                       ! 1, 2, ..
+       irev = LEN_TRIM(str) - (i-1)/2           ! N, N-1, ..
        strChar = str(istr:istr)
-		 outstr(istr:istr) = str(irev:irev)
-		 outstr(irev:irev) = strChar
+       outstr(istr:istr) = str(irev:irev)
+       outstr(irev:irev) = strChar
     END DO
 
 ! Special case: str contains odd number of chars
     IF(MOD(LEN_TRIM(str), 2) == 1) THEN
-       istr = 1 + (LEN_TRIM(str)-1)/2				! 1, 2, ..
+       istr = 1 + (LEN_TRIM(str)-1)/2           ! 1, 2, ..
         outstr(istr:istr) = str(istr:istr)
-	ENDIF
+    ENDIF
 
   end function Reverse_trim
 
@@ -1126,7 +1125,7 @@ contains
 
     !----------local vars----------!
     integer :: i, it, nprime, o, oprime
-	 logical :: inv
+    logical :: inv
     !----------executable part----------!
     outstr = ' '
     if(len_trim(str) < 1) return
@@ -1170,7 +1169,7 @@ contains
        else
          oprime = o
        endif
-		 outstr(i:i) = achar(oprime)
+       outstr(i:i) = achar(oprime)
     end do
 
   end function Rot13
@@ -1576,9 +1575,9 @@ contains
   SUBROUTINE strings2Ints (strs, ints)
     ! takes an array of strings and returns integer array
     ! using "ichar"
-	 ! Useful due to bug in toolbox swrfld
-	 !
-	 ! See also ints2Strings
+    ! Useful due to bug in toolbox swrfld
+    !
+    ! See also ints2Strings
     !--------Argument--------!
     !    dimensions are (len(strs(1)), size(strs(:)))
     CHARACTER (LEN=*), INTENT(in), dimension(:) ::   strs
@@ -1627,9 +1626,9 @@ contains
     ! Unless integer is one of specialInts, in which case
     ! we return corresponding one of specialChars
     ! (So that we can treat -1 as "unlimited' or -999 as 'FillValue')
-	 ! We'll just assume both special arrays are of same size
-	 ! Not useful yet
-	 !
+    ! We'll just assume both special arrays are of same size
+    ! Not useful yet
+    !
     !--------Argument--------!
     !    dimensions are (len(strs(1)), size(strs(:)))
     integer, intent(in)                                    ::   int
@@ -1665,8 +1664,8 @@ contains
   SUBROUTINE writeIntArrayToChars (ints, strs, fmt, specialInts, specialChars)
     ! takes an array of integers and returns string array
     ! using Fortran "write"
-	 ! Not useful yet
-	 !
+    ! Not useful yet
+    !
     !--------Argument--------!
     !    dimensions are (len(strs(1)), size(strs(:)))
     integer, intent(in), dimension(:)            ::   ints
@@ -1785,6 +1784,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.68  2007/07/25 21:58:16  vsnyder
+! Replace tabs by spaces because tabs are not standard
+!
 ! Revision 2.67  2007/07/18 00:06:46  pwagner
 ! Added Rot13 function
 !
