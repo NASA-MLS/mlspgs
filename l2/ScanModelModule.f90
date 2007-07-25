@@ -268,7 +268,6 @@ contains ! =============== Subroutines and functions ==========================
     real (r8), dimension(tempPrec%template%noSurfs) :: MODIFIEDBASIS ! noSurfs
 !   real (r8), dimension(tempPrec%template%noInstances) :: CURRENTREFGPH ! From 1st calc
 !   real (r8), dimension(tempPrec%template%noInstances) :: CORRECTION ! To apply to gph
-    real (r8), dimension(tempPrec%template%noInstances) :: DELTAGEOPOT ! noInstances
 
     ! The derivatives are effectively 1D at each instance
     real (r8), dimension(tempPrec%template%noSurfs, &
@@ -2181,6 +2180,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.69  2007/07/25 20:08:46  vsnyder
+! Delete declaration for unused variable
+!
 ! Revision 2.68  2007/06/29 19:32:07  vsnyder
 ! Make ForwardModelIntermediate_t private to ScanModelModule
 !
