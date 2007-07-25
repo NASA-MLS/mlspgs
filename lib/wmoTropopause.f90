@@ -88,7 +88,7 @@ logical, intent(in)                       :: dofill
 real,intent(out),dimension(nlon,nlat)     :: tp
 integer,intent(out)                       :: tperr
 
-integer                                   :: i, j, invert, ifil
+integer                                   :: i, invert, ifil
 integer                                   :: lon, lat
 real,dimension(nlev)                      :: t
 real,dimension(nlev)                      :: p
@@ -431,6 +431,9 @@ end subroutine fill
 end module wmoTropopause
 
 ! $Log$
+! Revision 2.3  2007/07/25 20:10:07  vsnyder
+! Delete declaration for unused variable
+!
 ! Revision 2.2  2006/02/10 21:20:25  pwagner
 ! Added ExtraTropics function
 !
