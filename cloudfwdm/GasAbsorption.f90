@@ -16,8 +16,6 @@ module GasAbsorption
 ! -------------------------------------------------------------------------
 
       use MLSCommon, only: r8 
-      use WaterVapor, only: RHtoEV
-      use RHIFromH2O, only: RHIFromH2O_Factor
       IMPLICIT NONE
       Private
       Public :: GET_BETA
@@ -41,6 +39,9 @@ contains
 !      CALCULATE CLEAR-SKY ABSORPTION COEFFICIENT AT F AND T
 !      LATEST UPDATE: J.JIANG, MAY 18, 2001
 !==============================================================
+
+      use RHIFromH2O, only: RHIFromH2O_Factor
+!      use WaterVapor, only: RHtoEV
 
       INCLUDE 'spectra.f9h' 
 
@@ -341,6 +342,9 @@ contains
 end module GasAbsorption
 
 ! $Log$
+! Revision 1.24  2005/06/22 18:27:38  pwagner
+! Cant have access declared outside module scope
+!
 ! Revision 1.23  2003/05/07 23:25:36  jonathan
 ! fix a bug
 !
