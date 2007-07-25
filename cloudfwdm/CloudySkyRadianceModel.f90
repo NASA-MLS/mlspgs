@@ -162,7 +162,7 @@ contains
       use ScatteringAngle,         only: ANGLE
       use SpectroscopyCatalog_m,   only: CATALOG_T
       use Tmp,                     only: GET_TAN_PRESS
-      use Toggles,                 only: Emit, Levels, Switches, Toggle
+      use Toggles,                 only: Emit, Levels, Toggle
       use Trace_M,                 only: Trace_begin, Trace_end
 
 !---------------------------------------
@@ -881,6 +881,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.69  2007/07/11 22:28:36  vsnyder
+! Replace tabs with spaces because tabs aren't standard
+!
 ! Revision 1.68  2005/08/03 18:10:17  vsnyder
 ! Changes induced by scan averaging, which is not done here yet
 !

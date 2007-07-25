@@ -143,7 +143,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     type (VectorValue_T), pointer :: UPPERSIDEBANDFRACTION         ! From the state vector
 
     type (catalog_T), dimension(:,:), pointer :: MY_CATALOG 
-    type (catalog_T), pointer :: thisCatalogEntry
     type (line_T),    pointer :: thisLine
 
     ! for jacobian
@@ -1123,6 +1122,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.137  2007/06/29 19:35:06  vsnyder
+! Make ForwardModelIntermediate_t private to ScanModelModule
+!
 ! Revision 1.136  2005/06/22 18:27:38  pwagner
 ! Cant have access declared outside module scope
 !
