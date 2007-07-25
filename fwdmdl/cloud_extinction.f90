@@ -28,7 +28,7 @@ contains
                           &  CLD_EXT, CLD_W0, CLD_PHH          )
 
     use CloudySkyModule,         only: CLOUDY_SKY
-    use MLSCommon,               only: r8, rp
+    use MLSCommon,               only: r8
     use ScatteringAngle,         only: ANGLE
 
 !--------------------------------INPUT PARAMETERS----------------------------------
@@ -144,6 +144,9 @@ contains
 end module Cloud_Extinction
 
 ! $Log$
+! Revision 2.7  2007/07/25 20:20:49  vsnyder
+! Delete USE for unreferenced entities
+!
 ! Revision 2.6  2005/06/22 18:08:18  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
