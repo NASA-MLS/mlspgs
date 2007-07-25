@@ -178,8 +178,7 @@ contains
 !  J.JIANG -05/18/2001                                                    C
 !          -10/05/2001, MODIFIED TO FIT CLOUD RETREVIAL REQUIREMENTS      C
 !=========================================================================C
-      use MLSMessageModule, only: MLSMessage, MLSMSG_Error, &
-                                        & MLSMSG_Warning, MLSMSG_Deallocate
+      use MLSMessageModule, only: MLSMessage, MLSMSG_Error
       use MLSCommon, only: r8      
 
       CHARACTER :: ITYPE
@@ -335,6 +334,9 @@ contains
 end module CloudySkyModule
 
 ! $Log$
+! Revision 2.6  2007/07/25 20:11:00  vsnyder
+! Delete USE for unreferenced entities
+!
 ! Revision 2.5  2005/06/22 18:08:18  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
