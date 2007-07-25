@@ -17,7 +17,6 @@ module RadiativeTransferModule
 
       use Blackbody, only: planck
       use Interpack, only: LOCATE
-      use MLSCommon, only: r8 
       use Units     
       IMPLICIT NONE
       Private
@@ -398,7 +397,7 @@ contains
 
 !---------------------------------------------------------------------
       DO K=1,L
-   	TT(NT+1,K)=TB(NU,K)              ! OUTPUT ZENITH LOOKING TB 
+        TT(NT+1,K)=TB(NU,K)              ! OUTPUT ZENITH LOOKING TB 
       ENDDO
 
       do i=1,nt+1
@@ -420,6 +419,9 @@ contains
 end module RadiativeTransferModule
 
 ! $Log$
+! Revision 1.17  2005/06/22 18:27:38  pwagner
+! Cant have access declared outside module scope
+!
 ! Revision 1.16  2004/01/07 21:09:05  jonathan
 ! initialize many working parameters
 !
