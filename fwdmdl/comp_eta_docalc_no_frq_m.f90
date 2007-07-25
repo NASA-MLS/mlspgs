@@ -66,7 +66,7 @@ contains
 ! Internal declarations:
 
     integer(ip) :: N_p, N_z, N_v
-    integer(ip) :: Sps_1, Sps_n, Sps_i, Sv_z, Sv_p
+    integer(ip) :: Sps_1, Sps_n, Sps_i
     integer(ip) :: My_Tan, P_inda, V_Inda, V_Indb, Z_inda, P_indb, Z_indb
 
     real(rp) :: Eta_p(1:size(path_zeta), & ! == size(path_zeta)
@@ -171,6 +171,9 @@ contains
 end module Comp_Eta_Docalc_No_Frq_m
 
 ! $Log$
+! Revision 2.11  2007/07/25 20:21:10  vsnyder
+! Delete declarations for unused variables
+!
 ! Revision 2.10  2007/06/26 00:37:01  vsnyder
 ! Use column-sparse eta
 !
