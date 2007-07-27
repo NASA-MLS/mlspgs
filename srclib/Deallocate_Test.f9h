@@ -20,13 +20,16 @@
     real :: S
     if ( associated(To_Deallocate) ) then
       if ( trackallocates > 0 ) call trackDeAllocate ( to_deAllocate, itsName, moduleName )
-      s = (eSize/MEMORY_UNITS) * size(to_deallocate)
+      s = (eSize * size(to_deallocate)) / MEMORY_UNITS
       deallocate ( To_Deallocate, stat=status )
       call test_deallocate ( status, moduleName, itsName, s )
       nullify ( to_Deallocate ) ! in case of nonzero status
     end if
 
 ! $Log$
+! Revision 1.3  2006/07/31 20:02:03  vsnyder
+! Tracking for leak checker
+!
 ! Revision 1.2  2005/10/03 18:03:45  pwagner
 ! Allocated memory now tracked in units of MEMORY_UNITS
 !
