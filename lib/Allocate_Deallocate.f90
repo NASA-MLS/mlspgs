@@ -187,10 +187,12 @@ contains
 
     if ( status /= 0 .or. present(elementSize) .and. trackAllocates >= 2 ) then
       ! print *, 'status ', status
-      write ( bounds, '("(",i0,":",i0, 2(:",",i0,":",i0))' ) &
+      write ( bounds, '("(",i0,":",i0, 6(:",",i0,":",i0))' ) &
         & ( lBounds(i), uBounds(i), i = 1, size(lBounds) )
       l = len_trim(bounds)+1
       bounds(l:l)= ')'
+      write ( bounds(l+1:), '(", status = ", i0)' ) status
+      l = len_trim(bounds)
       if ( status /= 0 ) &
         & call MLSMessage ( MLSMSG_Error, moduleNameIn, &
           & MLSMSG_Allocate // ItsName  // bounds(:l) )
@@ -229,9 +231,12 @@ contains
     character(len=*), intent(in) :: ModuleNameIn, ItsName
     real, intent(in), optional :: Size ! in MEMORY_UNITS, <= 0 for no tracking
 
+    character(31) :: Line
+
     if ( status /= 0 ) then
+      write ( line, '(", status = ", i0)' ) status
       call MLSMessage ( MLSMSG_Warning, moduleNameIn, &
-        & MLSMSG_DeAllocate // itsName )
+        & MLSMSG_DeAllocate // itsName // trim(line) )
       dealloc_status = max(dealloc_status, status)
     else if ( collect_garbage_each_time ) then
       call mls_gc_now
@@ -658,7 +663,7 @@ contains
     integer, intent(in)               :: elementSize
     real                              :: p
     !
-    p = ( elementSize / MEMORY_UNITS ) * product(real(dimensions))
+    p = ( real(elementSize) / MEMORY_UNITS ) * product(real(dimensions))
     ! print *, 'p ', p
   end function memproduct
 
@@ -675,6 +680,9 @@ contains
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.33  2007/07/27 00:19:30  vsnyder
+! Better printing in Test_[De]Allocate, work on memory tracking
+!
 ! Revision 2.32  2006/08/05 02:36:57  vsnyder
 ! Pass bounds argument of ReportAllocateDeallocate_ints forward
 !
