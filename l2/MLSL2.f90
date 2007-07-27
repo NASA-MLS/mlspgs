@@ -994,12 +994,18 @@ contains
   ! Show current run-time settings resulting from
   ! command-line, MLSL2Options, etc.
     character(len=1), parameter :: fillChar = '1' ! fill blanks with '. .'
+    character(len=255) :: Command ! Command that executed the program
     character(len=8) :: string
-    call output(' mlsl2 called with command line options: ', advance='no')
-    call output(trim(command_line), advance='yes')
-    call output(' l2cf file:', advance='no')  
-    call blanks(4, advance='no')                                     
-    call output(trim(MLSL2CF%name), advance='yes')                            
+    call getarg ( 0, command )
+    if ( command /= '' ) then
+      call output ( ' mlsl2 invoked as: ', advance='no' )
+      call output ( trim(command), advance='yes' )
+    end if
+    call output ( ' mlsl2 called with command line options: ', advance='no' )
+    call output ( trim(command_line), advance='yes' )
+    call output ( ' l2cf file:', advance='no' )  
+    call blanks ( 4, advance='no' )                                     
+    call output ( trim(MLSL2CF%name), advance='yes' )
     if( SwitchDetail(switches, 'opt1') > 0 .or. showDefaults ) then                                 
       call blanks(70, fillChar='-', advance='yes')
       call output(' -------------- Summary of run time options'      , advance='no')
@@ -1117,6 +1123,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.165  2007/07/27 00:18:20  vsnyder
+! Print the command that invoked MLSL2
+!
 ! Revision 2.164  2007/06/07 20:38:45  pwagner
 ! Should prevent unit collisions (not as good as get_lun)
 !
