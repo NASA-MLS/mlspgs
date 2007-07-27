@@ -66,7 +66,7 @@ contains ! ====     Public Procedures     ==============================
       clockStack(depth+1) = 0.0
       memory(depth) = NoBytesAllocated
     end if
-    call dumpsize ( memory_units * nobytesallocated, before = 'Memory', &
+    call dumpsize ( memory_units * nobytesallocated, before = 'Memory ', &
       & advance='yes' )
     depth = depth + 1
   end subroutine TRACE_BEGIN
@@ -80,11 +80,12 @@ contains ! ====     Public Procedures     ==============================
 
     character(len=*), intent(in) :: NAME
     integer, intent(in), optional :: INDEX
+    double precision :: Delta ! memory
     integer :: I              ! Loop inductor
     character(len=10) :: Now  ! For Date_and_time
     integer :: Values(8)      ! For Date_and_time
     real :: T                 ! For timing
-    double precision :: Delta ! memory
+    character(12) :: Used     ! For timing
     depth = depth - 1
     if ( depth < 0 ) call output ( depth, before='***** Why is depth = ', &
       & after=' negative?', advance='yes' )
@@ -101,15 +102,16 @@ contains ! ====     Public Procedures     ==============================
       clockStack(depth) = t - clockStack(depth)
 !     call output ( clockStack(depth) - clockStack(depth+1), &
 !       & format='(g10.3)', before=' used ' )
-      call output ( clockStack(depth), format='(g10.3)', before=' used ' )
+      write ( used, '(g10.3)' ) clockStack(depth)
+      call output ( ' used ' // trim(adjustl(used)) // ' cpu' )
       if ( memory(depth) /= noBytesAllocated ) then
         delta = memory_units * (noBytesAllocated-memory(depth))
         if ( abs(delta) < huge(1) ) then
-          call dumpSize ( int(delta), before=' Memory changed by ' )
+          call dumpSize ( int(delta), before=', Memory changed by ' )
         else
-          call dumpSize ( delta, before=' Memory changed by ' )
+          call dumpSize ( delta, before=', Memory changed by ' )
         end if
-        call dumpsize ( memory_units * nobytesallocated, before = 'to' )
+        call dumpSize ( memory_units * nobytesallocated, before = 'to ' )
         memory(depth) = nobytesallocated
       end if
     end if
@@ -128,6 +130,9 @@ contains ! ====     Public Procedures     ==============================
 end module TRACE_M
 
 ! $Log$
+! Revision 2.15  2007/07/27 00:20:51  vsnyder
+! Spiff up printing, work on memory tracking
+!
 ! Revision 2.14  2006/07/28 01:59:42  vsnyder
 ! Correct bug in memory reporting, plus cannonball polishing
 !
