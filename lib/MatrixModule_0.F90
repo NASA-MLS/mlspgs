@@ -1993,8 +1993,14 @@ contains ! =====     Public Procedures     =============================
     if ( present(subtract) ) my_sub = subtract
     s = 1.0_rm
     if ( my_sub ) s = -1.0_rm
-    if ( present(xmask) ) xm => xmask
-    if ( present(ymask) ) ym => ymask
+!     if ( present(xmask) ) xm => xmask
+    if ( present(xmask) ) then ! Work around Intel 10.0.025 bug
+      if ( associated(xmask) ) xm => xmask
+    end if
+!     if ( present(ymask) ) ym => ymask
+    if ( present(ymask) ) then ! Work around Intel 10.0.025 bug
+      if ( associated(ymask) ) ym => ymask
+    end if
     my_upper = .false.
     if ( present(upper) ) my_upper = upper
 
@@ -3551,6 +3557,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.2  2007/07/27 00:23:05  vsnyder
+! Work around bug in Intel 10.0.025 with -check pointer
+!
 ! Revision 2.1  2007/06/08 22:09:19  vsnyder
 ! Replace MatrixModule_0.f90 with MatrixModule_0.F90
 !]
