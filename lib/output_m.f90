@@ -393,6 +393,7 @@ contains
     real, parameter :: GB = MB * 1024.0
     real, parameter :: TB = GB * 1024.0
     double precision :: Amount ! N * MyUnits
+    character(len=8) :: HowMuch
     real             :: myUnits
     character(len=6) :: Suffix
     ! Make a 'nice' output
@@ -425,10 +426,11 @@ contains
     elseif ( amount > 999999 ) then ! I6 format limits this
       call output( '(HUGE)' )
     elseif ( amount == int(amount) ) then
-      call output ( int(amount), format='(i6)' )
+      write ( howMuch, '(i6)' ) int(amount)
     else
-      call output ( amount, format='(f6.1)' )
+      write ( howMuch, '(f6.1)' ) amount
     end if
+    call output ( trim(adjustl(howMuch)) )
     call output ( trim(suffix) )
     if ( present(after) ) call output ( after )
     call output ( '', advance=advance )
@@ -1501,6 +1503,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.60  2007/07/27 00:21:59  vsnyder
+! Spiff up printing in DumpSize
+!
 ! Revision 2.59  2007/07/17 00:24:18  pwagner
 ! Treat certain numbers with default list-directed format
 !
