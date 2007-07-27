@@ -436,12 +436,23 @@ jl:   do j = j1+1, j2
     if ( bad ) then
       ! Things are still haywire.  For unphysical ref_corr replace by the
       ! average of adjacent panels, bounded by 1.0 ... 1.3.
+      call MLSMessage ( MLSMSG_Warning, moduleName, 'Drastic Ref_Corr fixup needed' )
+      if ( max(index(switches,'drcx'),index(switches,'DRCX')) /= 0 ) then
+        call output ( tan_pt, before='Tan_Pt = ' )
+        call output ( ht, before=', Ht = ', advance='yes' )
+        call dump ( h_path, name='H_Path', format='(f14.4)' )
+        call dump ( n_path-1.0, name='N_Path' )
+        call dump ( ref_corr, name='Ref_Corr' )
+      end if
       do j = 2, no_ele-1
         if ( ref_corr(j) < 1.0 .or. ref_corr(j) > 1.3 ) &
           & ref_corr(j) = 0.5 * ( max(1.0_rp,min(1.3_rp,ref_corr(j-1))) + &
                                 & max(1.0_rp,min(1.3_rp,ref_corr(j+1))) )
       end do
-      call MLSMessage ( MLSMSG_Warning, moduleName, 'Drastic Ref_Corr fixup needed' )
+      if ( max(index(switches,'drcx'),index(switches,'DRCX')) /= 0 ) then
+        call dump ( ref_corr, name='Ref_Corr after fixup' )
+        if ( index(switches,'DRCX') /= 0 ) stop
+      end if
     end if
 
   contains
@@ -598,7 +609,7 @@ jl:   do j = j1+1, j2
       else
         call output ( bad, before=', bad = ', advance='yes' )
         call dump ( h_path, name='H_Path' )
-        call dump ( n_path, name='N_Path' )
+        call dump ( n_path-1.0, name='N_Path' )
       end if
       if ( index(switches,'DRFC') > 0 ) stop
     end subroutine DumpDiags
@@ -619,6 +630,9 @@ jl:   do j = j1+1, j2
 end module REFRACTION_M
 
 ! $Log$
+! Revision 2.29  2007/07/11 22:27:39  vsnyder
+! More robust integration in Comp_Refcor
+!
 ! Revision 2.28  2007/02/02 00:22:44  vsnyder
 ! Don't bracket the Newton move so tightly
 !
