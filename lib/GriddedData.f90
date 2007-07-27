@@ -11,7 +11,7 @@
 
 module GriddedData ! Contains the derived TYPE GriddedData_T
 
-  use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST, E_Def, E_Dp
   use Dump_0, only: dump
   use intrinsic, only: L_GEODALTITUDE, L_GPH, L_ETA, L_PRESSURE, &
     & L_THETA
@@ -672,6 +672,7 @@ contains
   ! This first routine sets up a new quantity template according to the user
   ! input.  This may be based on a previously supplied template (with possible
   ! modifications), or created from scratch.
+    use Allocate_Deallocate, only: Test_Allocate
     ! Dummy arguments
     type (GriddedData_T) :: QTY ! Result
     type (GriddedData_T), optional, intent(in) :: SOURCE ! Template
@@ -684,7 +685,7 @@ contains
     ! Local parameters
     real(rgr), parameter :: DefaultMissingValue = DEFAULTUNDEFINEDVALUE ! -999.99
     ! Local variables
-    integer :: status           ! Status from allocates etc.
+    integer :: status                   ! Status from allocates etc.
     logical :: myEmpty                  ! Copy of empty possibly
 
     ! Executable code
@@ -764,8 +765,9 @@ contains
     ! Now the data itself
     allocate(qty%field(qty%noHeights, qty%noLats, qty%noLons,  &
       qty%noLsts, qty%noSzas, qty%noDates), STAT=status)
-    if ( status /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate//'qty%field')
+    call test_allocate ( status, moduleName, 'qty%field', (/1,1,1,1,1,1/), &
+      & (/ qty%noHeights, qty%noLats, qty%noLons, qty%noLsts, qty%noSzas, &
+      &    qty%noDates /), merge(e_dp,e_def,rgr==r8) )
   
   end subroutine SetupNewGriddedData
 
@@ -1161,6 +1163,7 @@ contains
     ! Given a grid, possibly add extra points in longitude beyond +/-180
     ! and in solar time beyond 0..24 to aid in interpolations.
     ! Dummy arguments
+    use Allocate_Deallocate, only: Test_Allocate
     type ( GriddedData_T ), intent(inout) :: GRID
     ! Local variables
     real (rgr), dimension(:), pointer :: NEWLONS
@@ -1224,8 +1227,11 @@ contains
       & grid%noLons + lowerLon + upperLon, &
       & grid%noLsts + lowerLst + upperLst, &
       & grid%noSzas, grid%noDates ), STAT=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate//'newField' )
+    call test_allocate ( status, moduleName, 'newField', (/1,1,1,1,1,1/), &
+      & (/ grid%noHeights, grid%noLats, &
+      &    grid%noLons + lowerLon + upperLon, &
+      &    grid%noLsts + lowerLst + upperLst, &
+      &    grid%noSzas, grid%noDates /), merge(e_dp,e_def,rgr==r8) )
 
     ! Fill the 'central' part of the fields
     newLons ( 1+lowerLon : lowerLon+grid%noLons ) = grid%lons
@@ -1284,6 +1290,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.47  2007/07/27 00:23:57  vsnyder
+! Use Test_Allocate after allocations
+!
 ! Revision 2.46  2007/06/07 20:26:16  pwagner
 ! Prevents some crashes, writing non-ascii chars to stdout
 !
