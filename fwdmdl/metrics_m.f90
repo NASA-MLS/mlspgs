@@ -211,7 +211,7 @@ contains
 
                             ! Inputs:
   subroutine Height_Metrics (  phi_t, tan_ind, p_basis, h_ref, req, h_surf, &
-                            &  h_tan,                                       &
+                            &  h_tan, z_ref,                                &
                             ! Outputs:
                             &  vert_inds, h_grid, p_grid,                   &
                             ! Optional inputs:
@@ -224,8 +224,9 @@ contains
     !  by consecutive elements of each row of {\tt H\_ref}.
 
     use Dump_0, only: Dump
+    use Get_Eta_Matrix_m, only: Get_Eta_Sparse
     use MLSKinds, only: RP
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use Output_m, only: OUTPUT
     use Toggles, only: Switches
 
@@ -241,6 +242,9 @@ contains
     real(rp), intent(in) :: H_Surf     ! Height at the Earth surface
     real(rp), intent(in) :: H_Tan      ! Tangent height above H_Surf -- negative
     !                                     for Earth-intersecting ray
+    real(rp), intent(in) :: Z_ref(:)   ! -log pressures (zetas) for which
+    !                                     heights/temps are needed.  Only used
+    !                                     where H/Phi iteration fails.
 
     ! outputs:
     integer, intent(out) :: Vert_Inds(:) ! What to use in h_ref, 1:n_path
@@ -277,6 +281,7 @@ contains
     real(rp) :: P          ! Tentative solution for phi
     real(rp) :: REQ_S      ! Req - H_Surf
 
+    real(rp) :: ETA_T(size(p_basis)) ! Interpolating coefficients
     real(rp) :: PHI_OFFSET(size(vert_inds)) ! PHI_T or a function of NEG_H_TAN
     real(rp) :: PHI_SIGN(size(vert_inds))   ! +/- 1.0
 
@@ -315,19 +320,12 @@ contains
     req_s = req - h_surf
     htan_r = h_tan + req
 
-    if ( h_phi_dump > 0 ) then
-      call dump ( p_basis, name='p_basis', format='(1pg14.6)', clean=clean )
-      call output ( phi_t, before='phi_t = ', format='(1pg14.6)' )
-      call output ( h_surf, format='(f7.2)', before =', h_surf = ' )
-      call output ( tan_ind, before=', tan_ind = ' )
-      call output ( req, format='(f7.2)', before=', req = ', advance='yes' )
-      call dump ( phi_offset, name='phi_offset', clean=clean )
-      call dump ( h_ref(tan_ind:n_vert,:)+req_s, name='h_ref+req_s', format='(f14.3)',clean=clean )
-    end if
+    if ( h_phi_dump > 0 ) call dumpInput ( tan_ind )
 
       if ( debug ) &
-        & print '(2a,f9.3,a,f7.3)', '   I J    phi  H(TAYLOR)',&
-          & '  HREF(I,J) HREF(I,J+1)  H(TRIG)    H-HREF      N   Diffs'
+        & print '(a)', &
+        & '   I J   K                HREF(K,J) HREF(K,J+1)    A        B    phi sign    C', &
+        & '          phi    H_GRID   HREF(K,J) HREF(K,J+1)  H(TRIG)    D           N   Diffs'
 
     ! Only use the parts of the reference grids that are germane to the
     ! present path
@@ -421,7 +419,6 @@ phi:do j = 1, p_coeffs-1
 path: do i = i1, i2
         if ( stat(i) == good ) cycle ! probably the tangent point
         k = vert_inds(i)
-        k = vert_inds(i)
         b = -(h_ref(k,j+1) - h_ref(k,j)) ! h_surf cancels here
         c = -(h_ref(k,j)-h_surf)   * dpj1 &
           & +(h_ref(k,j+1)-h_surf) * dpj0 &
@@ -478,8 +475,78 @@ path: do i = i1, i2
             print "(i4,'#',10(1x,a:))", i, nStat(stat(i:min(size(stat),i+9)))
           end do
         end if
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-       & "Height_Metrics failed to find H/Phi solution for some path segment" )
+      call dumpInput ( 1 )
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & "Height_Metrics failed to find H/Phi solution for some path segment" )
+      if ( index(switches,'MHPX') /= 0 ) then
+        call dump ( stat, 'STAT' )
+        call dump ( h_grid, 'H_Grid before 1d fixup' )
+        call dump ( p_grid, 'P_Grid before 1d fixup' )
+      end if
+      ! We shouldn't get here at all, so don't worry about efficiency
+      if ( stat(1) /= good .and. stat(1) /= grid .or. &
+        &  stat(n_path) /= good .and. stat(n_path) /= grid ) then
+        call MLSMessage ( MLSMSG_Warning, moduleName, 'Resorting to 1d' )
+        call get_eta_sparse ( p_basis, phi_t, eta_t )
+        do i1 = 1, n_path
+          if ( stat(i1) /= good .and. stat(i1) /= grid ) then
+            h_grid(i1) = dot_product(h_ref(vert_inds(i1),:),eta_t)
+          end if
+        end do
+        ! Make sure H is monotone increasing away from the tangent point
+        i1 = n_tan - 1
+        i2 = 1
+        do k = -1, 1, 2
+          do j = i1, i2, k
+            if ( h_grid(j) <= h_grid(j-k) ) then
+              do i = j-1, 1, -1
+                if ( h_grid(j-k) < h_grid(i) ) exit
+              end do
+              if ( i < 1 ) then
+                h_grid(j) = h_grid(j-k) + 1.0 ! use SWAG method
+              else
+                h_grid(j) = h_grid(j-k) + (h_grid(i)-h_grid(j-k)) * &
+                  & ( z_ref(vert_inds(j)) - z_ref(vert_inds(j-k))) / &
+                  & ( z_ref(vert_inds(i)) - z_ref(vert_inds(j-k)))
+              end if
+            end if
+          end do
+          i1 = n_tan + 2
+          i2 = n_path
+        end do
+      else
+        do j = n_tan-1, 1, -1
+          do i2 = j, 1, -1
+            if ( stat(i2) == good .or. stat(i2) == grid ) exit
+          end do
+          do i1 = j, n_tan
+            if ( stat(i1) == good .or. stat(i1) == grid ) exit
+          end do
+          h_grid(j) = h_grid(i1) + (h_grid(i2)-h_grid(i1)) * &
+            & ( z_ref(vert_inds(j)) - z_ref(vert_inds(i1))) / &
+            & ( z_ref(vert_inds(i2)) - z_ref(vert_inds(i1)))
+        end do
+        do j = n_tan+2, n_path
+          do i2 = j, n_path
+            if ( stat(i2) == good .or. stat(i2) == grid ) exit
+          end do
+          do i1 = j, n_tan+1, -1
+            if ( stat(i1) == good .or. stat(i1) == grid ) exit
+          end do
+          h_grid(j) = h_grid(i1) + (h_grid(i2)-h_grid(i1)) * &
+            & ( z_ref(vert_inds(j)) - z_ref(vert_inds(i1))) / &
+            & ( z_ref(vert_inds(i2)) - z_ref(vert_inds(i1)))
+        end do
+      end if
+      do i = 1, n_path
+        if ( stat(i) /= good .and. stat(i) /= grid ) &
+          & p_grid(i) = acos(h_grid(n_tan)/h_grid(i))
+      end do
+      if ( index(switches,'MHPX') /= 0 ) then
+        call dump ( h_grid, name='H_Grid after 1d fixup' )
+        call dump ( p_grid, name='P_Grid after 1d fixup' )
+        call MLSMessage ( MLSMSG_Error, moduleName, 'Halt requested by MHPX' )
+      end if
     end if
 
     ! Since we have solved for the intersection of sec(phi) with the heights
@@ -494,6 +561,20 @@ path: do i = i1, i2
       call dump ( h_grid(:n_path), name='h_grid', format='(1pg14.6)', clean=clean )
       if ( dump_stop > 0 ) stop
     end if
+
+  contains
+
+    subroutine DumpInput ( FirstRow )
+      integer, intent(in) :: FirstRow
+      call output ( h_tan, before='h_tan = ' )
+      call output ( req, before=', req = ', advance='yes' )
+      call dump ( p_basis, name='p_basis', format='(f14.8)', clean=clean )
+      call output ( phi_t, before='phi_t = ', format='(f14.8)' )
+      call output ( h_surf, before =', h_surf = ' )
+      call output ( tan_ind, before=', tan_ind = ', advance='yes' )
+      call dump ( phi_offset, name='phi_offset', clean=clean )
+      call dump ( h_ref(firstRow:n_vert,:)+req_s, name='h_ref+req_s', format='(f14.7)',clean=clean )
+    end subroutine DumpInput
 
   end subroutine Height_Metrics
 
@@ -558,7 +639,7 @@ path: do i = i1, i2
     real(rp), parameter :: D7 = 8*c8
 
     ! For debugging output
-    real(rp) :: DD(merge(10,0,debug))
+    real(rp) :: DD(10)
 
     outside = .false.
     d = b*b - 2.0 * a * c ! Actually b^2-4ac, since a is actually 2*A
@@ -811,7 +892,6 @@ path: do i = i1, i2
       ! attempted if Z_Basis is present.
       integer, intent(in) :: N
       real(rp) :: ETA_T2(n_path,n)    ! n = size(z_basis) but Intel's
-      logical :: NOT_ZERO_T(n_path,n)   ! compiler won't allow that
       integer :: NZ_T2(n_path,n)      ! Nonzeros in Eta_T2
       integer :: NNZ_T2(n)            ! Numbers of rows in NZ_T2
       integer :: I, J, SV_P, SV_T, SV_Z ! Loop inductors and subscripts
@@ -997,6 +1077,9 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.50  2007/06/29 19:34:40  vsnyder
+! Make the default h/phi convergence tolerance a parameter
+!
 ! Revision 2.49  2007/06/26 00:35:39  vsnyder
 ! Use column-sparse eta, make *_zxp arguments
 !
