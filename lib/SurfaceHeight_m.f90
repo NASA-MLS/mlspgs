@@ -37,10 +37,9 @@ contains
 
     type(MLSFile_T), intent(inout) :: TheFile ! Created by InitializeMLSFile
 
-    character :: C ! Used to compute record length
     integer :: Recl, I
 
-    inquire ( iolength=recl ) (c, i=1, 360*6 * 180*6 * 2 ) ! 10' grid X 2 bytes
+    inquire ( iolength=recl ) ('x', i=1, 360*6 * 180*6 * 2 ) ! 10' grid X 2 bytes
     call open_MLSFile ( theFile, inp_rec_length=recl )
 
   end subroutine Open_Surface_Height_File
@@ -138,6 +137,9 @@ contains
 end module SurfaceHeight_m
 
 ! $Log$
+! Revision 2.2  2007/07/31 23:40:40  vsnyder
+! Use constant to avoid undefined variable reference
+!
 ! Revision 2.1  2007/01/11 20:30:10  vsnyder
 ! Initial commit
 !
