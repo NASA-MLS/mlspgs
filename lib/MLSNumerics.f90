@@ -25,6 +25,79 @@ module MLSNumerics              ! Some low level numerical stuff
   implicit none
 
   private
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+  ! This module contains some low level numerical stuff, hunting, interpolating
+  ! etc.
+! === (start of toc) ===
+!     c o n t e n t s
+!     - - - - - - - -
+
+!     (parameters and datatypes)
+! Coefficients_nprec       Coefficients to speed up interpolation
+!                            (See InterpolateArraySetup)
+
+!         Functions, operations, routines
+! ClosestElement           Find index(es) in array closest to test value
+!                           (array may be multidimensional, non-monotonic)
+! Dump                     Dump coefficients structure
+! EssentiallyEqual         Returns true if two real arguments 'close enough'
+!                            (See comments below for interpretation
+!                             of array versions)
+! Hunt                     Finds index of item(s) in list closest to prey
+!                           (list must be monotonic)
+! HuntRange                Finds index range between which
+!                           all item(s) in list lie within range of values
+! InterpolateArraySetup    Compute coefficients for InterpolateUsingSetup
+! InterpolateArrayTeardown Deallocate tables created by InterpolateArraySetup
+! InterpolateValues        Interpolate for new y value(s):
+!                            given old (x,y), new (x), method
+! Battleship               By wise-ranging evaluations find integer root
+! FillLookUpTable          Fill table with evaluations at regularly-spaced args
+!                            to be used in place of later, frequent evaluations;
+!                            reversing role of (table, xtable) => function^(-1)
+! UseLookUpTable           Use LookUpTable to approximate function
+!                            (or its derivatives or integral)
+! === (end of toc) ===
+
+! === (start of api) ===
+! Battleship( int extern fun, int root, [int n1], [int maxPhase1], [int ns(:)], &
+!    [int b], [char* options] )
+! Battleship( log extern fun, int root, [int n1], [int maxPhase1], [int ns(:)], &
+!    [log b], [char* options] )
+! ClosestElement ( nprec test, nprec array, int indices, [char* options] )
+! Dump ( coefficients_nprec Coeffs )
+! log EssentiallyEqual ( nprec A, nprec B, &
+!   [nprec FillValue], [nprec Precision] )
+! FillLookUpTable ( nprec extern fun, nprec table(:), nprec x1, nprec x2, &
+!   [int N], [nprec xtable(:)] )
+! Hunt ( nprec list, nprec values, int indices(:), &
+!   [int start], [log allowTopValue], [log allowBelowValue], &
+!   [log nearest], [log logSpace], [log fail] )
+! HuntRange ( num list(:), num vrange(2), int irange(2) )
+! InterpolateValues ( nprec oldX(:), nprec oldY(:), &
+!   nprec newX(:), nprec newY(:), char* method, [char* extrapolate], &
+!   [nprec badValue], [nprec rangeofperiod(2)], [log missingRegions], &
+!   [nprec dyByDx(:), log skipNewY], [nprec IntYdX(:)] )
+! InterpolateValues ( nprec oldX(:), nprec oldY(:,:), &
+!   nprec newX(:), nprec newY(:,:), char* method, [char* extrapolate], &
+!   [nprec badValue], [log missingRegions], [nprec dyByDx(:,:)], &
+!   [MatrixElement_T dNewByDOld], [log skipNewY], [nprec IntYdX(:,:)] )
+! InterpolateArraySetup ( nprec OldX(:), nprec NewX(:), char* Method, &
+!   coefficients_nprec Coeffs, &[log Extrapolate], [int Width], [log DyByDx], 
+!   [matrixElement_T dNewByDOld], [log IntYdX] )
+! InterpolateArrayTeardown ( Coefficients_nprec Coeffs )
+! nprec UseLookUpTable_r4 ( nprec x, nprec table(:), [nprec x1], [nprec x2], &
+!    [nprec xtable(:), [nprec missingValue], [char* options] )
+! In the above types, "nprec" can be either r4 or r8. num can be any of
+! int, r4, or r8. A, B, Precision, and array can be any 
+! multidimensional arrays up to rank 3. In a scalar context A and B may be scalars
+! === (end of api) ===
+
   public :: Battleship
   public :: ClosestElement
   public :: Dump, EssentiallyEqual, Hunt, HuntRange, InterpolateArraySetup
@@ -98,40 +171,6 @@ module MLSNumerics              ! Some low level numerical stuff
     ! Stuff for extrapolation == "B"ad
     logical, pointer :: BadValue(:) => NULL()
   end type Coefficients_R8
-
-!---------------------------- RCS Module Info ------------------------------
-  character (len=*), private, parameter :: ModuleName= &
-       "$RCSfile$"
-  private :: not_used_here 
-!---------------------------------------------------------------------------
-
-  ! This module contains some low level numerical stuff, hunting, interpolating
-  ! etc.
-!     c o n t e n t s
-!     - - - - - - - -
-
-!         Functions, operations, routines
-! ClosestElement           Find index(es) in array closest to test value
-!                           (array may be multidimensional, non-monotonic)
-! Dump                     Dump coefficients structure
-! EssentiallyEqual         Returns true if two real arguments 'close enough'
-!                            (See comments below for interpretation
-!                             of array versions)
-! Hunt                     Finds index of item(s) in list closest to prey
-!                           (list must be monotonic)
-! HuntArray                Hunts for multiple items
-! HuntScalar               Hunts for just one
-! HuntRange                Finds index range between which
-!                           all item(s) in list lie within range of values
-! InterpolateArraySetup    Compute coefficients for InterpolateUsingSetup
-! InterpolateArrayTeardown Deallocate tables created by InterpolateArraySetup
-! InterpolateValues        Interpolate for new y value(s):
-!                            given old (x,y), new (x), method
-! Battleship               By wise-ranging evaluations find integer root
-! FillLookUpTable          Fill table with evaluations at regularly-spaced args
-!                            to be used in place of later, frequent evaluations;
-!                            reversing role of (table, xtable) => function^(-1)
-! UseLookUpTable           Use LookUpTable to approximate function
 
   interface Battleship
     module procedure Battleship_int, Battleship_log
@@ -1157,6 +1196,10 @@ contains
   ! l        always choose lower of two closest x's in xtable
   ! u        always choose upper of two closest x's in xtable
   ! i        interpolate among two closest, but never extrapolate
+  ! 1        return 1st derivative instead
+  ! 2        return 2nd derivative (at nearest pt)
+  ! S        return definite integral from x1 to x
+  ! C        return definite integral from x to x2
   
   function UseLookUpTable_r4 ( x, table, x1, x2, xtable, &
     & missingValue, options ) result(value)
@@ -1337,6 +1380,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.53  2007/07/31 22:48:27  pwagner
+! UseLookUpTable can now differentiate, integrate
+!
 ! Revision 2.52  2007/07/25 20:09:25  vsnyder
 ! Delete USE for unused entity
 !
