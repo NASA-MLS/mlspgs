@@ -2668,7 +2668,7 @@ contains
 
       ! Get H_Path and Phi_Path on the fine grid.
       call Height_Metrics ( tan_phi(ptg_i), tan_ind_f, Grids_tmp%phi_basis, &
-        &  h_glgrid, req, h_surf, h_tan, &                    ! in
+        &  h_glgrid, req, h_surf, h_tan, z_ig, &              ! in
         &  vert_inds(1:npf), h_path(1:npf), phi_path(1:npf) ) ! out
 
       tan_ht = h_path(tan_pt_f) ! Includes Earth radius
@@ -3258,6 +3258,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.284  2007/07/11 22:26:32  vsnyder
+! More dumps, change some error handling
+!
 ! Revision 2.283  2007/06/29 19:33:59  vsnyder
 ! Put the pointing loop body into an internal subroutine
 ! Make ForwardModelIntermediate_t private to ScanModelModule
