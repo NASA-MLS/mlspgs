@@ -29,10 +29,10 @@
   real(rk), optional, intent(in)              :: missingValue
   real(rk)                                    :: value
   ! Internal variables
-  real(r8) :: eps
+  real(r8) :: dfdx, d2fdx2, dx, eps, S, T, wi, xp, xq, xr
   integer :: i
   integer, dimension(2) :: indices
-  integer :: lower, upper
+  integer :: lower, upper, p, q, r
   character(len=8) :: myOptions
   real(rk), dimension(size(table))            :: myXTable
   integer :: nSize
@@ -60,7 +60,105 @@
       return
     endif
   endif
-  if ( index(myOptions, 'l') > 0 ) then
+  if ( index(myOptions, 'S') > 0 .or. index(myOptions, 'C') > 0) then
+    ! To calculate integrals we use trapezoidal rule
+    ! S{f(x) dx, x1 < x < xN} = deltax/2 * ( 
+    !          f(x0) + f(xN) + 2 Sigma{f(xi), i=1 .. x(n_1)} )
+    S = 0. ! This will be integrated over all the intervals
+    T = 0. ! Only up to x
+    dx = myXTable(2) - myXTable(1)
+    ! A trick! we start iterations with 2nd point
+    ! (so interval is always  [i-1, i])
+    S = (dx/2)*table(1)
+    T = (dx/2)*table(1)
+    ! Special case: if x <= x1, set T = 0
+    if ( x <= myXTable(1) ) T = 0.
+    do i=2, nSize
+      if ( i == nSize ) then
+        wi = dx/2
+      else
+        wi = dx
+      endif
+      S = S + wi*table(i)
+      if ( x > myXTable(i) ) then
+        ! x is to the right of the interval
+        T = T + wi*table(i)
+      elseif ( x > myXTable(i-1) ) then
+        ! x is inside the interval
+        ! 1st: interpolate to value of f(x)
+        eps = ( x - myXTable(i-1) ) / dx
+        value = eps*table(i) + (1-eps)*table(i-1)
+        ! 2nd: subtract back off 1/2 the contribution
+        ! made in the last iteration
+        T = T - (dx/2)*table(i-1)
+        ! 3rd: add the partial contribution from this interval
+        T = T + ( table(i-1) + table(i) )*( x  - myXTable(i-1) ) / 2
+      ! else
+      endif
+    enddo
+    ! Special case: if x >= x2, set T = S
+    if ( x >= myXTable(nSize) ) T = S
+    ! print *, S, T
+    if ( index(myOptions, 'C') > 0 ) then
+      value = S - T
+    else
+      value = T
+    endif
+  elseif ( index(myOptions, '1') > 0 .or. index(myOptions, '2') > 0) then
+    ! To calculate derivatives, we will assume x values in table
+    ! are evenly spaced
+    ! In the following xp, xq and xr are the 3 points closest to x
+    ! xp        xq  x      xr
+    ! Then we use the following facts
+    ! f'(xq)  = ( f(xr) - f(xp) ) / ( xr - xp )
+    ! f''(xq) = ( f(xr) + f(xp) - 2 f(xq) ) / ( xr - xq )^2
+    call ClosestElement ( x, myXTable, indices, 'l' )
+    indices(1) = max( indices(1), 1 )
+    lower = max(indices(1), 1)
+    call ClosestElement ( x, myXTable, indices, 'u' )
+    upper = max(indices(1), 1)
+    if ( upper == lower ) then
+      ! We need to move either upper or lower
+      if ( upper < nSize ) then
+        upper = upper + 1
+      elseif ( lower > 1 ) then
+        lower = lower - 1
+      else
+        return
+      endif
+    endif
+    ! Which is closer, lower or upper?
+    if ( myXTable(upper) - x < x - myXTable(lower) ) then
+      p = lower
+      q = upper
+      r = upper + (upper-lower)
+      r = max( r, 1 )
+      r = min( r, size(table) )
+    else
+      q = lower
+      r = upper
+      p = lower - (upper-lower)
+      p = max( p, 1 )
+      p = min( p, size(table) )
+    endif
+    ! print *, p, q, r
+    xp = myXTable(p)
+    xq = myXTable(q)
+    xr = myXTable(r)
+    ! print *, xp, xq, xr
+    dfdx = ( table(r) - table(p) ) / ( xr - xp )
+    ! The following formula only works if p != q != r
+    d2fdx2 = ( table(r) + table(p) - 2*table(q) ) / ( (.5*(xr - xp) )**2 )
+    if ( p == q .or. q == r ) then
+      d2fdx2 = 0.
+      print *, 'Zeroed 2nd derivative'
+    endif
+    if ( index(myOptions, '2') > 0 ) then
+      value = d2fdx2
+    else
+      value = dfdx + (x-xq)*d2fdx2
+    endif
+  elseif ( index(myOptions, 'l') > 0 ) then
     call ClosestElement ( x, myXTable, indices, 'l' )
     indices(1) = max( indices(1), 1 )
     indices(1) = min( indices(1), nSize )
@@ -98,6 +196,9 @@
   endif
   ! end subroutine UseLookUpTable_r4
 ! $Log$
+! Revision 1.2  2007/03/14 23:57:16  pwagner
+! Improved precision when interpolating
+!
 ! Revision 1.1  2007/03/02 18:17:57  pwagner
 ! First commit
 !
