@@ -311,7 +311,7 @@ contains
     real(rp) :: INTEGRAND_GL(Ng)
 
     real(rp) :: q, htan2, NH, Nt2Ht2
-    real(rp) :: dndh, eps, H, h1, h2, N, n1, n2, t1, t2, x1, x2, xm, ym, ys
+    real(rp) :: dndh, eps, H, h1, h2, N, n1, n2, t1, t2, x1, x2, xm, ym
 
     real(rp), parameter :: Htol = 1.0e-3_rp
     real(rp), parameter :: Tiny = 1.0e-8_rp
@@ -332,34 +332,36 @@ contains
 
     bad = .false.
 
-    j1 = 1
-    j2 = tan_pt
-    ys = 0.5_rp
-    do m = 0, 1
-      h2 = h_path(j1+m)
-      n2 = n_path(j1+m)
+    j1 = tan_pt
+    j2 = 2
+    do m = -1, 1, 2
+      h2 = h_path(j1)
+      n2 = n_path(j1)
 
       q = (h2 * n2)**2 - nt2ht2
       if ( abs(q) < tiny ) q = 0.0_rp
       n2 = n2 - 1.0_rp
       x2 = sqrt(abs(q))
 
-jl:   do j = j1+1, j2
+jl:   do j = j1, j2, m
 
         x1 = x2
-        h1 = h2
         n1 = n2
+        h1 = h2
+        n2 = n_path(j+m)
         h2 = h_path(j+m)
 
         del_s(j) = abs(sqrt(abs(h1**2-htan2)) - sqrt(abs(h2**2-htan2)))
-
-        n2 = n_path(j+m)
 
         q = (h2 * n2)**2 - nt2ht2
         if ( abs(q) < tiny) q = 0.0_rp
         n2 = n2 - 1.0_rp
 
         if ( q < 0.0_rp ) then
+          if ( hndp > 0 ) then
+            write ( *, '("q < 0 for Ref_Corr(",i0,"), q = ",1pg15.7)' ) j, q
+            write ( *, * ) "n2, h2, nt2ht2 = ", n2+1.0, h2, nt2ht2
+          end if
           ref_corr(j) = 100.0
           bad = .true.
           cycle
@@ -369,12 +371,14 @@ jl:   do j = j1+1, j2
 
         if ( abs(n2-n1) <= 1.0e-3*(n2+n1) ) then
           ! Where N is essentially constant, the integral is easy
+          if ( hndp > 0 ) write ( *, '("N essentially constant for Ref_Corr(",i0,")")' ) j
           ref_corr(j) = abs( sqrt((n_path(j)*h2)**2-nt2ht2) - &
             &                sqrt((n_path(j)*h1)**2-nt2ht2) ) / &
             &           ( n_path(j) * del_s(j) )
         else if ( n1 <= 0.0 .or. n2 <= 0.0 ) then
           ! Force trapezoidal rule on untransformed integral because
           ! we can't compute eps to do the transformation
+          if ( hndp > 0 ) write ( *, '("Trapezoidal for Ref_Corr(",i0,")")' ) j
           t1 = (1.0 + n1) * h1
           t2 = (1.0 + n2) * h2
           ref_corr(j) = 0.5 * abs( ( h2 - h1 ) * &
@@ -382,8 +386,8 @@ jl:   do j = j1+1, j2
         else
           if ( hndp > 0 ) write ( *, '("Solving for H for Ref_Corr(",i0,")")' ) j
           eps = log(n2/n1)/(h2-h1)
-          xm = 0.5_rp *(x1 + x2)      ! Midpoint of the interval
-          ym = ys *(x1 - x2)          ! Half of the interval length
+          xm = 0.5_rp *(x2 + x1)      ! Midpoint of the interval
+          ym = 0.5_rp *(x2 - x1)      ! Half of the interval length
           do k = 1, ng
             q = xm + ym * gx(k)       ! Gauss abscissa
             NH = sqrt(q*q + nt2ht2)
@@ -428,9 +432,8 @@ jl:   do j = j1+1, j2
 
       end do jl ! j
 
-      j1 = tan_pt
+      j1 = tan_pt + 1
       j2 = no_ele - 1
-      ys = -0.5_rp
     end do ! m
 
     if ( bad ) then
@@ -630,6 +633,11 @@ jl:   do j = j1+1, j2
 end module REFRACTION_M
 
 ! $Log$
+! Revision 2.30  2007/07/27 00:17:41  vsnyder
+! Print enough to run Comp_Refcor off line if "Drastic correction" message
+! is produced, and switch drcx or DRCX is set.  Stop after printing if
+! DRCX is set.
+!
 ! Revision 2.29  2007/07/11 22:27:39  vsnyder
 ! More robust integration in Comp_Refcor
 !
