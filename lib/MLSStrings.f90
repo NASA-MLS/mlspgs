@@ -29,6 +29,9 @@ MODULE MLSStrings               ! Some low level string handling stuff
 !     c o n t e n t s
 !     - - - - - - - -
 
+!     (parameters and data)
+! STRINGOPTIONS      Default options string
+
 !     (subroutines and functions)
 ! Capitalize         tr[a-z] -> [A-Z]
 ! CatStrings         Concatenate strings with a specified separator
@@ -103,12 +106,13 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! w    Wildcard * which allows 'a*' to equal 'abcd'
 ! c    case insensitive which allows 'ABCD' to equal 'abcd'
 ! f    flush left which allows 'abcd' to equal '  abcd'
+! n    reverse sense of match (where appropriate)
 ! (These are different in streq_array1, however--either redo that function
 ! to make it conform, or rename the options flag there to prevent
 ! unnecessary confusion)
 
-! The above is to replace the countEmpty, caseSensitive, etc. that are
-! separate optional args to many of the current module procedures
+! We hope eventually that options will replace the countEmpty, caseSensitive, 
+! etc. separate optional args to many of the current module procedures
 
 ! Warnings: 
 ! (1) in the routine LinearSearchStringArray
@@ -160,12 +164,18 @@ MODULE MLSStrings               ! Some low level string handling stuff
     module procedure writeAnIntToChars, writeIntArrayToChars
   end interface
 
+  ! Public data
+  character(len=16), public, save :: STRINGOPTIONS = ' '
+
   ! hhmmss_value
   integer, public, parameter :: INVALIDHHMMSSSTRING = 1
   ! readAnIntFromChars
   integer, public, parameter :: STRINGCONTAINSFORBIDDENS=-999
   ! strings2Ints
   integer, public, parameter :: LENORSIZETOOSMALL=-999
+
+  logical, private, save          :: caseSensitive       
+  logical, private, save          :: ignoreLeadingSpaces 
   
 contains
 
@@ -920,7 +930,7 @@ contains
     character(len=40)                           ::   myIgnore
     character(len=len(str))                     ::   myStr
     !----------Executable part----------!
-
+   status = 0
    ! Check that all is well (if not returns STRINGCONTAINSFORBIDDENS)
    int = STRINGCONTAINSFORBIDDENS
    if ( present(forbiddens) ) then
@@ -1415,10 +1425,12 @@ contains
     ! (1) Wildcard * (off by default) which allows 'a*' to equal 'abcd'
     ! (2) case insensitive (off by default) which allows 'ABCD' to equal 'abcd'
     ! (3) flush left (off by default) which allows 'abcd' to equal '  abcd'
+    ! (4) reverse sense ("Are two strings unequal?")
     !
     ! Defaults to standard (str1 == str2), but options broaden cases of TRUE
     ! To turn options on, supply optional arg options which is a character
-    ! string containing: 'w' => turns on (1); 'c' => turns on (2); 'f' => (3)
+    ! string containing: 
+    ! 'w' => turns on (1); 'c' => (2); 'f' => (3); 'n' => (4)
     ! e.g., streq('Ab*', 'abcd', '-wc') is TRUE
     !
     ! Notes:
@@ -1441,6 +1453,7 @@ contains
     integer, dimension(MAXNUMWILDCARDS) :: istars
     character(len=8) :: myOptions
     integer :: nstars
+    logical :: reverseSense
     integer :: spos
     ! If len(str) is used for ptrn and substrs, Intel Fortran 10.0.023 crashes
     character(len=max(len(str1), len(str2))) :: str
@@ -1455,6 +1468,7 @@ contains
     wildcard = (index(myoptions, 'w') > 0)
     ignorecase = (index(myoptions, 'c') > 0)
     flushleft  = (index(myoptions, 'f') > 0)
+    reverseSense  = (index(myoptions, 'n') > 0)
     ! Now the wildcard(s) should be in ptrn
     if ( index(str1, star) > 0 ) then
       str = str2
@@ -1469,16 +1483,16 @@ contains
     ! Special cases: emptry strings or a bare vanilla match
     if ( len_trim(str1 // str2) < 1 ) then
       relation = .true.
-      return
+      goto 90 ! return
     elseif ( len_trim(str1) < 1 ) then
       relation = ( str2 == star .and. wildcard ) 
-      return
+      goto 90 ! return
     elseif ( len_trim(str2) < 1 ) then
       relation = ( str1 == star .and. wildcard ) 
-      return
+      goto 90 ! return
     elseif ( str2 == str1 ) then
       relation = .true.
-      return
+      goto 90 ! return
     endif
 
     if ( .not. wildcard ) then
@@ -1494,7 +1508,7 @@ contains
         ! else plain vanilla case already handled as special case above
         endif    
       endif    
-      return
+      goto 90 ! return
     endif    
 
     ! How to handle the wildcard? Use it to split ptrn into sub-patterns
@@ -1509,10 +1523,10 @@ contains
     if ( deebug ) print *, 'str: ', trim(str), '  ptrn: ', trim(ptrn)
     if ( ptrn == star ) then
       relation = .true.
-      return
+      goto 90 ! return
     elseif ( isRepeat(ptrn, star) ) then
       relation = .true.
-      return
+      goto 90 ! return
     endif
 
     ! 1st -- how many stars?
@@ -1550,7 +1564,7 @@ contains
       endif
       if ( index(str, trim(substrs(1))) /= 1 ) then
         relation = .false.
-        return
+        goto 90 ! return
       endif
     endif
     if ( deebug ) print *, 'passed 1st sub-test'
@@ -1559,16 +1573,18 @@ contains
       if ( index(Reverse_trim(str), Reverse_trim(substrs(nstars+1))) /= 1 ) then
         relation = .false.
         ! if ( deebug ) print *, 'failed 2nd sub-test: ', Reverse_trim(str), Reverse_trim(substrs(nstars+1))
-        return
+        goto 90 ! return
       endif
     endif
     ! lastSSindex = nstars
     if ( deebug ) print *, 'passed 2nd sub-test'
-    if ( nstars < 2 ) return
+    if ( nstars < 2 ) goto 90 ! return
     ! Now find the indexes of these sub-patterns according to mode='wrap'
     istars(1:nstars-1) = indexes(str, substrs(2:nstars), mode='wrap')
     ! What we want to do is to check that no istars < 1
     relation = all ( istars(1:nstars-1) > 0 )
+    ! Do the options instruct us to reverse the sense?
+90  if ( reverseSense ) relation = .not. relation
   end function streq_scalar
 
   ! --------------------------------------------------  strings2Ints  -----
@@ -1692,6 +1708,26 @@ contains
   END SUBROUTINE writeIntArrayToChars
 
   ! Private procedures and functions
+!============================ Private ==============================
+  subroutine prepOptions( options )
+    ! Process options into separate optional args
+    ! You should call this at the start of every procedure
+    ! that uses options to set countEmpty, etc.
+    ! Args:
+    character(len=*), intent(in), optional  :: options
+    ! Internal variables
+    integer :: sepIndex
+    character(len=16) :: myOptions
+    ! Executable
+    caseSensitive       = .true.
+    ignoreLeadingSpaces = .false.
+    myOptions = STRINGOPTIONS
+    if ( present(options) ) myOptions = options
+    if ( len_trim(myOptions) > 0 ) then
+      caseSensitive       = ( index(myOptions, 'c') < 1 )
+      ignoreLeadingSpaces = ( index(myOptions, 'f') > 0 )
+    endif
+  end subroutine prepOptions
   !
   ! ---------------------------------------------------  isAlphabet  -----
   function isAlphabet(arg, inputcase) result(itIs)
@@ -1784,6 +1820,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.69  2007/07/31 22:46:08  pwagner
+! undefined status now defined in readAnIntFromChars ;'n' option added to streq
+!
 ! Revision 2.68  2007/07/25 21:58:16  vsnyder
 ! Replace tabs by spaces because tabs are not standard
 !
