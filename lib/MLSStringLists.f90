@@ -38,7 +38,8 @@ module MLSStringLists               ! Module to treat string lists
 !     c o n t e n t s
 !     - - - - - - - -
 
-!     (parameters)
+!     (parameters and data)
+! STRINGLISTOPTIONS  Default options string
 ! KEYNOTFOUND        key not found among keyList
 ! KEYBEYONDHASHSIZE  index of key in keyList > size(hash array)
 ! LENORSIZETOOSMALL  Either charsize of strs or size(ints) too small
@@ -57,6 +58,7 @@ module MLSStringLists               ! Module to treat string lists
 ! Intersection       Return the intersection of two stringlists; may return blank
 ! IsInList           Is string in list? options may expand criteria
 ! List2Array         Converts a single string list to an array of strings
+! listMatches        Return list of matches for string in a list
 ! NumStringElements  Returns number of elements in string list
 ! PutHashElement     puts value into hash list corresponding to key string
 ! RemoveElemFromList removes occurrence(s) of elem from a string list
@@ -94,6 +96,7 @@ module MLSStringLists               ! Module to treat string lists
 ! log IsInList(strlist stringList, char* string, [char* options])
 ! List2Array (strlist inList, char* outArray(:), log countEmpty,
 !   [char inseparator], [log IgnoreLeadingSpaces])
+! char* listMatches (strlist stringList, char* string, [char* options] )
 ! int NumStringElements(strlist inList, log countEmpty, &
 !   & [char inseparator], [int LongestLen])
 ! PutHashElement (hash {keys = values}, char* key, 
@@ -135,9 +138,11 @@ module MLSStringLists               ! Module to treat string lists
 ! c    case insensitive which allows 'ABCD' to equal 'abcd'
 ! f    flush left which allows 'abcd' to equal '  abcd'
 ! e    count consecutive separators as enclosing an empty element
+! n    reverse sense of match (where appropriate)
+! s{.} use character between braces (here a ".") instead of "," as separator
 
-! The above is to replace the countEmpty, caseSensitive, etc. that are
-! separate optional args to many of the current module procedures
+! We hope eventually that options will replace the countEmpty, caseSensitive, 
+! etc. separate optional args to many of the current module procedures
 
 ! An argument can be made that countEmpty should be TRUE by default 
 ! rather than FALSE
@@ -168,7 +173,7 @@ module MLSStringLists               ! Module to treat string lists
    & ExpandStringRange, ExtractSubString, &
    & GetHashElement, GetStringElement, &
    & GetUniqueInts, GetUniqueStrings, GetUniqueList, Intersection, IsInList, &
-   & List2Array, PutHashElement, NumStringElements, &
+   & List2Array, listMatches, PutHashElement, NumStringElements, &
    & RemoveElemFromList, RemoveListFromList, RemoveNumFromList, &
    & ReplaceSubString, ReverseList, &
    & SortArray, SortList, StringElement, StringElementNum, SwitchDetail, &
@@ -203,6 +208,9 @@ module MLSStringLists               ! Module to treat string lists
     module procedure PutHashElement_str
   end interface
 
+  ! Public data
+  character(len=16), public, save :: STRINGLISTOPTIONS = ' '
+
   ! Error return values from:
   ! GetHashElement (int args)
   integer, public, parameter :: KEYNOTFOUND=-1
@@ -216,6 +224,12 @@ module MLSStringLists               ! Module to treat string lists
 
   character (len=1), parameter    :: COMMA = ','
   character (len=1), parameter    :: BLANK = ' '   ! Returned for any element empty
+
+  logical, private, save          :: countEmpty          
+  logical, private, save          :: caseSensitive       
+  logical, private, save          :: ignoreLeadingSpaces 
+  character(len=1), private, save :: separator           
+  
 contains
 
   ! ---------------------------------------------  Array2List  -----
@@ -1560,6 +1574,47 @@ contains
     ENDDO
 
   end subroutine List2Array
+
+  ! ---------------------------------------------  listMatches  -----
+
+  ! Return list of matches for string in the stringList. 
+  ! options may expand criteria
+  ! See notes above about options
+  ! options
+  ! Warning: wildcard may be found in either stringList or string
+  ! which may or may not be what you intended
+  ! E.g.
+  ! stringList = 'abcd,a*,bcd,cd,d' and string='acd' with options = '-w'
+  !              returns 'a*' because 'a*' matches 'acd'
+  ! Special cases:
+  ! string == ' '      => always ' '
+  ! stringList == ' '  => always ' '
+  function listMatches( stringList, string, options ) result(matches)
+    ! Dummy arguments
+    character (len=*), intent(in)                 :: stringlist
+    character (len=*), intent(in)                 :: string
+    character (len=*), optional, intent(in)       :: options
+    character (len=len(stringList))               :: matches
+    ! Internal variables
+    ! logical, parameter :: countEmpty = .true.
+    integer :: i
+    logical :: itMatches
+    integer :: n
+    character(len=max(len(stringList), len(string))) :: element
+    ! Executable
+    call prepOptions( options )
+    matches = ' '
+    if ( len_trim(stringList) < 1 .or. len_trim(string) < 1 ) return
+    n = NumStringElements( stringList, countEmpty )
+    do i=1, n
+      call GetStringElement( stringList, element, i, countEmpty )
+      if ( element == ' ' ) cycle
+      itMatches = streq( trim(element), trim(string), options )
+      if ( itMatches ) then
+        matches = catLists( matches, element )
+      endif
+    enddo
+  end function listMatches
 
   ! ---------------------------------------------  NumStringElements  -----
 
@@ -2934,7 +2989,44 @@ contains
       
   end function unquote
 
-!=============================================================================
+!============================ Private ==============================
+  subroutine prepOptions( options )
+    ! Process options into separate optional args
+    ! You should call this at the start of every procedure
+    ! that uses options to set countEmpty, etc.
+    ! Args:
+    character(len=*), intent(in), optional  :: options
+    ! Internal variables
+    integer :: sepIndex
+    character(len=16) :: myOptions
+    ! Executable
+    countEmpty          = .false.
+    caseSensitive       = .true.
+    ignoreLeadingSpaces = .false.
+    separator           = ','
+    myOptions = STRINGLISTOPTIONS
+    if ( present(options) ) myOptions = options
+    if ( len_trim(myOptions) > 0 ) then
+      countEmpty          = ( index(myOptions, 'e') > 0 )
+      caseSensitive       = ( index(myOptions, 'c') < 1 )
+      ignoreLeadingSpaces = ( index(myOptions, 'f') > 0 )
+      sepIndex = index(myOptions, 's')
+      if ( sepIndex > 0 ) then
+        sepIndex = sepIndex + 1
+        if ( len_trim(myOptions) > sepIndex + 1 ) then
+          if ( myOptions(sepIndex:sepIndex) == '{' ) &
+            & separator = myOptions(sepIndex+1:sepIndex+1)
+        elseif ( len_trim(myOptions) == sepIndex ) then
+          separator = myOptions(sepIndex:sepIndex)
+        endif
+      else
+        sepIndex = index(myOptions, '{')
+        if ( sepIndex > 0 .and. len_trim(myOptions) > sepIndex ) &
+          & separator = myOptions(sepIndex+1:sepIndex+1)
+      endif
+    endif
+  end subroutine prepOptions
+
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -2948,6 +3040,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.29  2007/07/31 22:46:51  pwagner
+! Added listMatches
+!
 ! Revision 2.28  2007/06/26 00:19:21  pwagner
 ! Workaround another Intel bug; may expand string range into reals
 !
