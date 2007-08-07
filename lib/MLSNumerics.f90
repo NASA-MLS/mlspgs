@@ -16,11 +16,12 @@ module MLSNumerics              ! Some low level numerical stuff
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use DUMP_0, only : DUMP, SELFDIFF
   use MatrixModule_0, only: CreateBlock, M_Absent, MatrixElement_T, Sparsify
-  use MLSCommon, only : R4, R8, Rm
+  use MLSCommon, only : DEFAULTUNDEFINEDVALUE, R4, R8, Rm
   use MLSFillValues, only: filterValues, IsFillValue
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use MLSSets, only: FindFirst, FindLast
-  use MLSStrings, only: Capitalize
+  use MLSStrings, only: Capitalize, trim_safe
+  use OUTPUT_M, only: blanks, output, outputNamedValue
 
   implicit none
 
@@ -40,26 +41,36 @@ module MLSNumerics              ! Some low level numerical stuff
 !     (parameters and datatypes)
 ! Coefficients_nprec       Coefficients to speed up interpolation
 !                            (See InterpolateArraySetup)
+! UnifDiscreteFn_nprec    Uniformly discretized function
+!                            y(x[i]) where x[i+1] - x[i] = constant
 
 !         Functions, operations, routines
+! Battleship               By wise-ranging evaluations find integer root
 ! ClosestElement           Find index(es) in array closest to test value
 !                           (array may be multidimensional, non-monotonic)
-! Dump                     Dump coefficients structure
+! Destroy                  Deallocate y values in UnifDiscreteFn
+! d2Fdx2Approximate        Compute 2nd derivative using UnifDiscreteFn
+! dFdxApproximate          Compute derivative using UnifDiscreteFn
+! Dump                     Dump Coefficients structure
+! Dump                     Dump uniform discrete function structure
 ! EssentiallyEqual         Returns true if two real arguments 'close enough'
 !                            (See comments below for interpretation
 !                             of array versions)
+! FApproximate             Use Uniformly Discretized Fn as an approximation
+! FInvApproximate          Use it to invert a function (may not be unique)
+! FillLookUpTable          Fill table with evaluations at regularly-spaced args
+!                            to be used in place of later, frequent evaluations;
+!                            reversing role of (table, xtable) => function^(-1)
 ! Hunt                     Finds index of item(s) in list closest to prey
 !                           (list must be monotonic)
 ! HuntRange                Finds index range between which
 !                           all item(s) in list lie within range of values
+! IFApproximate            Compute integral using UnifDiscreteFn
 ! InterpolateArraySetup    Compute coefficients for InterpolateUsingSetup
 ! InterpolateArrayTeardown Deallocate tables created by InterpolateArraySetup
 ! InterpolateValues        Interpolate for new y value(s):
 !                            given old (x,y), new (x), method
-! Battleship               By wise-ranging evaluations find integer root
-! FillLookUpTable          Fill table with evaluations at regularly-spaced args
-!                            to be used in place of later, frequent evaluations;
-!                            reversing role of (table, xtable) => function^(-1)
+! Setup                    Fill y values in UniDiscFunction
 ! UseLookUpTable           Use LookUpTable to approximate function
 !                            (or its derivatives or integral)
 ! === (end of toc) ===
@@ -70,15 +81,24 @@ module MLSNumerics              ! Some low level numerical stuff
 ! Battleship( log extern fun, int root, [int n1], [int maxPhase1], [int ns(:)], &
 !    [log b], [char* options] )
 ! ClosestElement ( nprec test, nprec array, int indices, [char* options] )
+! Destroy ( UnifDiscreteFn_nprec UDF )
+! nprec  dFdxApproximate ( nprec x, UnifDiscreteFn_nprec UDF )
+! nprec  d2Fdx2Approximate ( nprec x, UnifDiscreteFn_nprec UDF )
 ! Dump ( coefficients_nprec Coeffs )
+! Dump ( UnifDiscreteFn_nprec UDF, [int Details] )
 ! log EssentiallyEqual ( nprec A, nprec B, &
 !   [nprec FillValue], [nprec Precision] )
+! nprec  FApproximate ( nprec x, UnifDiscreteFn_nprec UDF )
+! nprec  FInvApproximate ( nprec y, UnifDiscreteFn_nprec UDF, &
+!     [nprec xS], [nprec xE] )
 ! FillLookUpTable ( nprec extern fun, nprec table(:), nprec x1, nprec x2, &
 !   [int N], [nprec xtable(:)] )
 ! Hunt ( nprec list, nprec values, int indices(:), &
 !   [int start], [log allowTopValue], [log allowBelowValue], &
 !   [log nearest], [log logSpace], [log fail] )
 ! HuntRange ( num list(:), num vrange(2), int irange(2) )
+! nprec  IFApproximate ( UnifDiscreteFn_nprec UDF, &
+!     [nprec xS], [nprec xE] )
 ! InterpolateValues ( nprec oldX(:), nprec oldY(:), &
 !   nprec newX(:), nprec newY(:), char* method, [char* extrapolate], &
 !   [nprec badValue], [nprec rangeofperiod(2)], [log missingRegions], &
@@ -91,8 +111,11 @@ module MLSNumerics              ! Some low level numerical stuff
 !   coefficients_nprec Coeffs, &[log Extrapolate], [int Width], [log DyByDx], 
 !   [matrixElement_T dNewByDOld], [log IntYdX] )
 ! InterpolateArrayTeardown ( Coefficients_nprec Coeffs )
-! nprec UseLookUpTable_r4 ( nprec x, nprec table(:), [nprec x1], [nprec x2], &
-!    [nprec xtable(:), [nprec missingValue], [char* options] )
+! Setup ( UnifDiscreteFn_nprec UDF, int N, nprec x1, nprec x2, [ nprec y(:)], &
+!    [char* BC], [nprec yLeft], [nprec yRight], [extern nprec fun] ) )
+! nprec UseLookUpTable ( nprec x, nprec table(:), [nprec x1], [nprec x2], &
+!    [nprec xtable(:), [nprec missingValue], [char* options], &
+!    [nprec xS], [nprec xE] )
 ! In the above types, "nprec" can be either r4 or r8. num can be any of
 ! int, r4, or r8. A, B, Precision, and array can be any 
 ! multidimensional arrays up to rank 3. In a scalar context A and B may be scalars
@@ -100,9 +123,13 @@ module MLSNumerics              ! Some low level numerical stuff
 
   public :: Battleship
   public :: ClosestElement
-  public :: Dump, EssentiallyEqual, Hunt, HuntRange, InterpolateArraySetup
-  public :: InterpolateArrayTeardown, InterpolateValues
+  public :: dFdxApproximate, d2Fdx2Approximate
+  public :: FApproximate, FInvApproximate, IFApproximate
+  public :: Destroy, Dump, EssentiallyEqual, Hunt, HuntRange
+  public :: InterpolateArraySetup, InterpolateArrayTeardown, InterpolateValues
   public :: FillLookUpTable, UseLookUpTable
+  public :: SetUp
+  public :: UnifDiscreteFn_r4, UnifDiscreteFn_r8
 
   type, public :: Coefficients_R4
     private
@@ -172,12 +199,105 @@ module MLSNumerics              ! Some low level numerical stuff
     logical, pointer :: BadValue(:) => NULL()
   end type Coefficients_R8
 
+  ! This is a family of datatypes, the uniformly discretized function:
+  ! a list of function values y[i]
+  ! evaluated over uniformly-spaced x-values x[i] ( = x1 + (i-1) dx )
+  ! called sometimes a look up table
+  ! (although that name unfairly limits its suggested use)
+  
+  ! By default when we use one of these datatypes to approximate the
+  ! actual function at some x we 
+  ! choose the corresponding y at the xi closest to x
+  ! This behavior may be modified by the "method" field which may be one of
+  ! ' '   choose whichever xi is closest to x          (default)
+  ! 'l'   choose the lower of two xis closest to x
+  ! 'u'   choose the upper of two xis closest to x
+  ! 'i'   interpolate between two xis closest to x
+  ! 'q'   quadratic interpolation (Simpson's rule)
+  ! 's'   (cubic) splines (not efficiently implemented)
+  
+  ! Note that points outside the range of xi (i.e. less than the smallest
+  ! or greater than the largest) are treated according to "BC" which may be
+  ! 'clamped'   use y at the nearest xi                (default)                        
+  ! 'cyclic'    assume y is cyclic with period (x2-x1) (how would we know?)          
+  ! 'scyclic'   assume y is signed cyclic 
+  !                    with half period (x2-x1)        (same question)          
+  ! 'express'   use yLeft or yRight                    (of doubtful utility)                
+
+  ! In cases where a conflict seems to arise between the actions
+  ! dictated by "method" and "BC", "BC" will prevail
+
+  ! Another family of datatypes may someday be implemented,
+  ! which would utilize non-uniformly spaced x values
+  
+  type UnifDiscreteFn_r4
+    integer :: N = 0                               ! The number of values xi
+    character(len=8) :: BC = 'clamped'             ! boundary conditions
+    character(len=1) :: method = ' '               ! which of closest xi to use
+    real(r4) :: x1                                 ! x1 <= xi <= x2
+    real(r4) :: x2
+    real(r4) :: yLeft  = 0.                        ! Assume all y < x1 are this
+    real(r4) :: yRight= 0.                         ! Assume all y > x2 are this
+    real(r4), dimension(:), pointer :: y => null() ! y(xi)
+    ! type(Coefficients_R8) :: Coeffs                ! in case we'll use splines
+  end type UnifDiscreteFn_r4
+  
+  type UnifDiscreteFn_r8
+    integer :: N = 0                               ! The number of values xi
+    character(len=8) :: BC = 'clamped'             ! boundary conditions
+    character(len=1) :: method = ' '               ! which of closest xi to use
+    real(r8) :: x1                                 ! x1 <= xi <= x2
+    real(r8) :: x2
+    real(r8) :: yLeft  = 0.                        ! Assume all y < x1 are this
+    real(r8) :: yRight= 0.                         ! Assume all y > x2 are this
+    real(r8), dimension(:), pointer :: y => null() ! y(xi)
+    ! type(Coefficients_R8) :: Coeffs                ! in case we'll use splines
+  end type UnifDiscreteFn_r8
+  
+  ! No use for a class member of this datatype yet
+  ! type(UnifDiscreteFn_r8), save :: MLSUDF
+  
   interface Battleship
     module procedure Battleship_int, Battleship_log
   end interface
 
+  interface ClosestElement
+    module procedure ClosestElement_r4_1d, ClosestElement_r8_1d
+    module procedure ClosestElement_r4_2d, ClosestElement_r8_2d
+    module procedure ClosestElement_r4_3d, ClosestElement_r8_3d
+  end interface
+
+  interface CreateXArray
+    module procedure CreateXArray_r4, CreateXArray_r8
+  end interface
+
+  interface Destroy
+    module procedure destroyUnifDiscreteFn_r4, destroyUnifDiscreteFn_r8
+  end interface
+
+  interface d2Fdx2Approximate
+    module procedure d2Fdx2Approximate_r4, d2Fdx2Approximate_r8
+  end interface
+
+  interface dFdxApproximate
+    module procedure dFdxApproximate_r4, dFdxApproximate_r8
+  end interface
+
   interface Dump
     module procedure DumpCoefficients_r4, DumpCoefficients_r8
+    module procedure DumpUnifDiscreteFn_r4, DumpUnifDiscreteFn_r8
+  end interface
+
+  interface FApproximate
+    module procedure FApproximate_r4, FApproximate_r8
+  end interface
+
+  interface FInvApproximate
+    module procedure FInvApproximate_r4, FInvApproximate_r8
+  end interface
+
+  interface FillLookUpTable
+    module procedure FillLookUpTable_r4, FillLookUpTable_r8
   end interface
 
   interface EssentiallyEqual
@@ -196,6 +316,10 @@ module MLSNumerics              ! Some low level numerical stuff
     module procedure HuntRange_int, HuntRange_r4, HuntRange_r8
   end interface
 
+  interface IFApproximate
+    module procedure IFApproximate_r4, IFApproximate_r8
+  end interface
+
   interface InterpolateArraySetup
     module procedure InterpolateArraySetup_r4, InterpolateArraySetup_r8
   end interface
@@ -212,21 +336,575 @@ module MLSNumerics              ! Some low level numerical stuff
     module procedure Interp_Bilinear_2d_1d_r4, Interp_Bilinear_2d_1d_r8
   end interface
 
-  interface ClosestElement
-    module procedure ClosestElement_r4_1d, ClosestElement_r8_1d
-    module procedure ClosestElement_r4_2d, ClosestElement_r8_2d
-    module procedure ClosestElement_r4_3d, ClosestElement_r8_3d
+  interface psimpsons
+    module procedure psimpsons_r4, psimpsons_r8
   end interface
 
-  interface FillLookUpTable
-    module procedure FillLookUpTable_r4, FillLookUpTable_r8
+  interface reposit
+    module procedure reposit_r4, reposit_r8
+  end interface
+
+  interface SetUp
+    module procedure InterpolateArraySetup_r4, InterpolateArraySetup_r8
+    module procedure setUpUnifDiscreteFn_r4, setUpUnifDiscreteFn_r8
+  end interface
+
+  interface simpsons
+    module procedure simpsons_r4, simpsons_r8
   end interface
 
   interface UseLookUpTable
     module procedure UseLookUpTable_r4, UseLookUpTable_r8
   end interface
 
+  ! These are arrays in name only used when implementing cubic splines
+  real(r4), private, dimension(1) :: newYr4, newdYr4
+  real(r8), private, dimension(1) :: newYr8, newdYr8
+
 contains
+
+! -------------------------------------------------  Battleship  -----
+
+  ! This family of routines finds an integer root of a function
+  ! by evaluating it. Each evaluation is a "shot". A returned value
+  ! of "0" (or the optional parameter b) is short. Any other value is long.
+  ! The root is the longest argument that is still short.
+  ! (If you instead wish the shortest argument still long just add 1
+  ! or utilize the options string)
+
+  ! Example: a direct-access read of n chars from a file where the iostatus
+  ! is 0 if we don't try to read too many chars, but non-zero if we do
+  ! Create your own function that takes the number of chars to be read
+  ! as its sole argument and that returns the iostat as its value
+  ! Battleship will then calculate the exact number characters in the file
+  ! (which NAG cares about; Lahey doesn't care)
+  
+  ! We take shots during 2 phases:
+  ! (1) outbound: ever-widening circles of radius 1 2 4 8 .. (n) (2n) ..
+  !     or else prescribed shots in array ns[:]
+  ! (2) inbound: once root is crossed, ever narowing circles around it
+  !     (until "You sank my battleship!")
+  
+  ! The options string (if supplied) modifies how this search operates
+  !  options            search goal
+  !  -------            -----------
+  !    -s (default)     largest root for which fun(root) = 0 (or b)
+  !                      (useful for io status)
+  !    -r               reverse of "-s"
+  !                       i.e., all tests return non-zero below root
+  !    -x               root where f(root) crosses 0 (or b)
+  !                      (assumes (fun(n)-b) changes sign at n=root)
+
+  ! It can also be used with a logical-valued function
+  ! in this case we shoot until we encounter TRUE
+  ! similar to integer-value version if we make the mapping
+  ! 0 -> FALSE
+  ! 1 -> TRUE
+  ! -r option or b can be used to reverse the sense
+
+  subroutine Battleship_int( fun, root, n1, maxPhase1, ns, b, options )
+    ! Args
+    integer, external                          :: fun
+    integer, optional, intent(in)              :: n1 ! 1st circle
+    integer, optional, intent(in)              :: maxPhase1 ! max phase1 shots
+    integer, optional, dimension(:), intent(in):: ns ! array of phase1 shots
+    integer, intent(out)                       :: root ! root
+    integer, optional, intent(in)              :: b ! is short
+    character(len=*), optional, intent(in)     :: options
+    ! Internal variables
+    integer :: flast
+    integer :: fnext
+    integer :: isShort
+    character(len=8) :: myOptions
+    integer :: shot
+    integer :: x0
+    integer :: x1
+    integer :: x2
+    ! Executable
+    isShort = 0
+    if ( present(b) ) isShort = b
+    myOptions = '-s'
+    if ( present(options) ) myOptions = options
+    root = -1 ! in case we can't find root
+    ! Phase 1
+    ! Some error checks
+    if ( present(maxPhase1) ) then
+      if ( (index(myOptions, 's') > 0 .and. fun(n1) /= isShort) ) return
+      if ( (index(myOptions, 'r') > 0 .and. fun(n1) == isShort) ) return
+      if ( maxPhase1 < 1 ) return
+      if ( .not. present(n1) ) return
+      x2 = n1 ! Initialize things
+      fnext = fun(x2)
+      do shot = 1, maxPhase1
+        x1 = x2
+        x2 = 2*x1
+        flast = fnext
+        fnext = fun(x2)
+        if ( index(myOptions, 's') > 0 ) then
+          if ( fnext /= isShort ) exit
+        elseif ( index(myOptions, 'r') > 0 ) then
+          if ( fnext == isShort ) exit
+        else
+          if ( (fnext-isShort)*(flast-isShort) <= 0 ) exit
+        endif
+      enddo
+      if ( shot > maxPhase1 ) return ! No shot was long enough
+    else
+      if ( .not. present(ns) ) return
+      x2 = ns(1) ! Initialize things
+      fnext = fun(x2)
+      if ( (index(myOptions, 's') > 0 .and. fnext /= isShort) ) return
+      if ( (index(myOptions, 'r') > 0 .and. fnext == isShort) ) return
+      do shot = 2, size(ns)
+        x1 = x2
+        x2 = ns(shot)
+        flast = fnext
+        fnext = fun(x2)
+        if ( index(myOptions, 's') > 0 ) then
+          if ( fnext /= isShort ) exit
+        elseif ( index(myOptions, 'r') > 0 ) then
+          if ( fnext == isShort ) exit
+        else
+          if ( (fnext-isShort)*(flast-isShort) <= 0 ) exit
+        endif
+      enddo
+      if ( shot > size(ns) ) return ! No shot was long enough
+    endif
+    ! Phase 2
+    ! Narrow the spashes, always keeping root between x0 and x2
+    x0 = x1
+    do
+      x1 = (x0 + x2) / 2
+      ! This test should prevent us from looping endlessly
+      if ( x1 == x0 ) then
+        ! apparently x0 = x2 - 1, so we've found our root
+        if ( index(myOptions, 's') > 0 .or. index(myOptions, 'r') > 0 ) then
+          root = x1
+        else
+          if ( fun(x1) == isShort ) then
+            root = x1
+          elseif ( fun(x2) == isShort ) then
+            root = x2
+          else
+            root = -1
+          endif
+        endif
+        return
+      endif
+      if ( index(myOptions, 's') > 0 ) then
+        if ( fun(x1) == isShort ) then
+          x0 = x1
+          ! x2 = x2
+        else
+          ! x0 = x0
+          x2 = x1
+        endif
+      elseif ( index(myOptions, 'r') > 0 ) then
+        if ( fun(x1) == isShort ) then
+          ! x0 = x0
+          x2 = x1
+        else
+          x0 = x1
+          ! x2 = x2
+        endif
+      else
+        if ( (fun(x2)-isShort)*(fun(x1)-isShort) == 0 ) then
+          if ( fun(x2) == isShort ) then
+            root = x2
+          else
+            root = x1
+          endif
+          return
+        elseif ( (fun(x2)-isShort)*(fun(x1)-isShort) < 0 ) then
+          x0 = x1
+        else
+          x2 = x1
+        endif
+      endif
+    enddo
+  end subroutine Battleship_int
+
+  subroutine Battleship_log( fun, root, n1, maxPhase1, ns, b, options )
+    ! Args
+    logical, external                          :: fun
+    integer, optional, intent(in)              :: n1 ! 1st circle
+    integer, optional, intent(in)              :: maxPhase1 ! max phase1 shots
+    integer, optional, dimension(:), intent(in):: ns ! array of phase1 shots
+    integer, intent(out)                       :: root ! root
+    logical, optional, intent(in)              :: b ! is short
+    character(len=*), optional, intent(in)     :: options
+    ! Internal variables
+    logical :: flast
+    logical :: fnext
+    logical :: isShort
+    character(len=8) :: myOptions
+    integer :: shot
+    integer :: x0
+    integer :: x1
+    integer :: x2
+    ! Executable
+    isShort = .FALSE.
+    if ( present(b) ) isShort = b
+    myOptions = '-s'
+    if ( present(options) ) myOptions = options
+    root = -1 ! in case we can't find root
+    ! Phase 1
+    ! Some error checks
+    if ( present(maxPhase1) ) then
+      if ( (index(myOptions, 's') > 0 .and. ( fun(n1) .neqv. isShort) ) ) return
+      if ( (index(myOptions, 'r') > 0 .and. ( fun(n1) .eqv. isShort) ) ) return
+      if ( maxPhase1 < 1 ) return
+      if ( .not. present(n1) ) return
+      x2 = n1 ! Initialize things
+      fnext = fun(x2)
+      do shot = 1, maxPhase1
+        x1 = x2
+        x2 = 2*x1
+        flast = fnext
+        fnext = fun(x2)
+        if ( index(myOptions, 's') > 0 ) then
+          if ( fnext .neqv. isShort ) exit
+        elseif ( index(myOptions, 'r') > 0 ) then
+          if ( fnext .eqv. isShort ) exit
+        else
+          if ( fnext .neqv. flast ) exit
+        endif
+      enddo
+      if ( shot > maxPhase1 ) return ! No shot was long enough
+    else
+      if ( .not. present(ns) ) return
+      x2 = ns(1) ! Initialize things
+      fnext = fun(x2)
+      if ( (index(myOptions, 's') > 0 .and. ( fnext .neqv. isShort ) ) ) return
+      if ( (index(myOptions, 'r') > 0 .and. ( fnext .eqv. isShort) ) ) return
+      do shot = 2, size(ns)
+        x1 = x2
+        x2 = ns(shot)
+        flast = fnext
+        fnext = fun(x2)
+        if ( index(myOptions, 's') > 0 ) then
+          if ( fnext .neqv. isShort ) exit
+        elseif ( index(myOptions, 'r') > 0 ) then
+          if ( fnext .eqv. isShort ) exit
+        else
+          if ( fnext .neqv. flast ) exit
+        endif
+      enddo
+      if ( shot > size(ns) ) return ! No shot was long enough
+    endif
+    ! Phase 2
+    ! Narrow the spashes, always keeping root between x0 and x2
+    x0 = x1
+    do
+      x1 = (x0 + x2) / 2
+      ! This test should prevent us from looping endlessly
+      if ( x1 == x0 ) then
+        ! apparently x0 = x2 - 1, so we've found our root
+        if ( index(myOptions, 's') > 0 .or. index(myOptions, 'r') > 0 ) then
+          root = x1
+        else
+          if ( fun(x1) .eqv. isShort ) then
+            root = x1
+          elseif ( fun(x2) .eqv. isShort ) then
+            root = x2
+          else
+            root = -1
+          endif
+        endif
+        return
+      endif
+      if ( index(myOptions, 's') > 0 ) then
+        if ( fun(x1) .eqv. isShort ) then
+          x0 = x1
+          ! x2 = x2
+        else
+          ! x0 = x0
+          x2 = x1
+        endif
+      elseif ( index(myOptions, 'r') > 0 ) then
+        if ( fun(x1) .eqv. isShort ) then
+          ! x0 = x0
+          x2 = x1
+        else
+          x0 = x1
+          ! x2 = x2
+        endif
+      else
+        if ( (fun(x2) .eqv. isShort) .or. (fun(x1) .eqv. isShort) ) then
+          if ( fun(x2) .eqv. isShort ) then
+            root = x2
+          else
+            root = x1
+          endif
+          return
+        elseif ( fun(x2) .neqv. fun(x1) ) then
+          x0 = x1
+        else
+          x2 = x1
+        endif
+      endif
+    enddo
+  end subroutine Battleship_log
+
+! -------------------------------------------------  ClosestElement  -----
+
+  ! This family of routines finds the element within a multidimensional
+  ! array nearest a test value
+  ! The array of indices locate that nearest element
+  ! The following options really make sense only for 1-d searches
+  ! and so are ignored for arrays of rank 2 or higher
+  
+  ! options  none, one, or more of the following:
+  ! (default)   choose pt in array closest to x
+  !   l         always choose lower of two closest x's in array
+  !   u         always choose upper of two closest x's in array
+  !   p         assume array is presorted so array[i] < array[i+1]
+  !              (greatly speeds up search)
+
+  subroutine ClosestElement_r4_1d ( test, array, indices, options )
+    integer, parameter :: RK = R4
+
+    ! Dummy arguments
+    real(rk), intent(in)               :: test
+    real(rk), dimension(:), intent(in) :: array
+    integer, dimension(:), intent(out) :: indices ! Result
+    character(len=*), optional, intent(in)      :: options
+    include "ClosestElement.f9h"
+
+  end subroutine ClosestElement_r4_1d
+
+  subroutine ClosestElement_r8_1d ( test, array, indices, options )
+    integer, parameter :: RK = R8
+
+    ! Dummy arguments
+    real(rk), intent(in)               :: test
+    real(rk), dimension(:), intent(in) :: array
+    integer, dimension(:), intent(out) :: indices ! Result
+    character(len=*), optional, intent(in)      :: options
+    include "ClosestElement.f9h"
+
+  end subroutine ClosestElement_r8_1d
+
+  subroutine ClosestElement_r4_2d ( test, array, indices, options )
+    integer, parameter :: RK = R4
+
+    ! Dummy arguments
+    real(rk), intent(in)               :: test
+    real(rk), dimension(:,:), intent(in) :: array
+    integer, dimension(:), intent(out) :: indices ! Result
+    character(len=*), optional, intent(in)      :: options
+    integer, dimension(1)              :: indices_1d ! Result
+    call ClosestElement( test, &
+      & reshape(array, (/ size(array,1)*size(array,2) /) ), &
+      & indices_1d )
+    call rerank( indices_1d(1), shape(array), indices )
+  end subroutine ClosestElement_r4_2d
+
+  subroutine ClosestElement_r8_2d ( test, array, indices, options )
+    integer, parameter :: RK = R8
+
+    ! Dummy arguments
+    real(rk), intent(in)               :: test
+    real(rk), dimension(:,:), intent(in) :: array
+    integer, dimension(:), intent(out) :: indices ! Result
+    character(len=*), optional, intent(in)      :: options
+    integer, dimension(1)              :: indices_1d ! Result
+    call ClosestElement( test, &
+      & reshape(array, (/ size(array,1)*size(array,2) /) ), &
+      & indices_1d )
+    call rerank( indices_1d(1), shape(array), indices )
+  end subroutine ClosestElement_r8_2d
+
+  subroutine ClosestElement_r4_3d ( test, array, indices, options )
+    integer, parameter :: RK = R4
+
+    ! Dummy arguments
+    real(rk), intent(in)               :: test
+    real(rk), dimension(:,:,:), intent(in) :: array
+    integer, dimension(:), intent(out) :: indices ! Result
+    character(len=*), optional, intent(in)      :: options
+    integer, dimension(1)              :: indices_1d ! Result
+    call ClosestElement( test, &
+      & reshape(array, (/ size(array,1)*size(array,2)*size(array,3) /) ), &
+      & indices_1d )
+    call rerank( indices_1d(1), shape(array), indices )
+  end subroutine ClosestElement_r4_3d
+
+  subroutine ClosestElement_r8_3d ( test, array, indices, options )
+    integer, parameter :: RK = R8
+
+    ! Dummy arguments
+    real(rk), intent(in)               :: test
+    real(rk), dimension(:,:,:), intent(in) :: array
+    integer, dimension(:), intent(out) :: indices ! Result
+    character(len=*), optional, intent(in)      :: options
+    integer, dimension(1)              :: indices_1d ! Result
+    call ClosestElement( test, &
+      & reshape(array, (/ size(array,1)*size(array,2)*size(array,3) /) ), &
+      & indices_1d )
+    call rerank( indices_1d(1), shape(array), indices )
+  end subroutine ClosestElement_r8_3d
+
+! -------------------------------------------------  Destroy  -----
+
+  ! This family of routines sets up a uniDiscFunction of the appropriate type
+  subroutine destroyUnifDiscreteFn_r4 ( UDF )
+    ! Args
+    type(UnifDiscreteFn_r4) :: UDF ! Intent(out) would clobber retainable values
+    ! Executable
+    UDF%N       = 0
+    call deallocate_test ( UDF%y, "UDF%y", ModuleName )
+  end subroutine destroyUnifDiscreteFn_r4
+
+  subroutine destroyUnifDiscreteFn_r8 ( UDF )
+    ! Args
+    type(UnifDiscreteFn_r8) :: UDF ! Intent(out) would clobber retainable values
+    ! Executable
+    UDF%N       = 0
+    call deallocate_test ( UDF%y, "UDF%y", ModuleName )
+  end subroutine destroyUnifDiscreteFn_r8
+
+! -------------------------------------------------  d2Fdx2Approximate  -----
+
+  ! This family of routines use a uniDiscFunction to approximate a 
+  ! function's 2nd derivative
+  
+  ! Args: (* means optional)
+  ! x        pt at which to evaluate
+  ! UDF      the uniformly discretized function type
+  
+  function d2Fdx2Approximate_r4 ( x, UDF ) result(value)
+    integer, parameter :: RK = R4
+    ! Args
+    real(rk), intent(in)                 :: x
+    type(UnifDiscreteFn_r4), intent(in)       :: UDF
+    real(rk)                             :: value
+    ! Internal variables
+    real(rk) :: arg
+    integer  :: itsSign
+    character :: options
+    real(rk), dimension(:), pointer      :: xArray => null()
+    ! Executable
+    call reposit( x, UDF, arg, itsSign )
+    options = UDF%method
+    if ( options == 'q' ) options = '2'
+    if ( arg < UDF%x1 ) then
+      value = 0.
+    elseif ( arg > UDF%x2 ) then
+      value = 0.
+    elseif ( options == '/s/' ) then ! How to calculate spline's 2nd der?
+      call createXArray( xArray, UDF )
+      call InterpolateValues( xArray, UDF%y, (/arg/), newYr4, dyByDx=newdYr4, &
+        & method='S' )
+      value = newdYr4(1)
+      call deallocate_test( xArray, 'xArray (r4)', ModuleName )
+    else
+      value = UseLookUpTable ( arg, UDF%y, UDF%x1, UDF%x2, options=options // '2' )
+    endif
+    value = itsSign*value
+  end function d2Fdx2Approximate_r4
+
+  function d2Fdx2Approximate_r8 ( x, UDF ) result(value)
+    integer, parameter :: RK = R8
+    ! Args
+    real(rk), intent(in)                 :: x
+    type(UnifDiscreteFn_r8), intent(in)       :: UDF
+    real(rk)                             :: value
+    ! Internal variables
+    real(rk) :: arg
+    integer  :: itsSign
+    character :: options
+    real(rk), dimension(:), pointer      :: xArray => null()
+    ! Executable
+    call reposit( x, UDF, arg, itsSign )
+    options = UDF%method
+    if ( options == 'q' ) options = '2'
+    if ( arg < UDF%x1 ) then
+      value = 0.
+    elseif ( arg > UDF%x2 ) then
+      value = 0.
+    elseif ( options == '/s/' ) then ! How to calculate spline's 2nd der?
+      call createXArray( xArray, UDF )
+      call InterpolateValues( xArray, UDF%y, (/arg/), newYr8, dyByDx=newdYr8, &
+        & method='S' )
+      value = newdYr8(1)
+      call deallocate_test( xArray, 'xArray (r8)', ModuleName )
+    else
+      value = UseLookUpTable ( arg, UDF%y, UDF%x1, UDF%x2, options=options // '2' )
+    endif
+    value = itsSign*value
+  end function d2Fdx2Approximate_r8
+
+! -------------------------------------------------  dFdxApproximate  -----
+
+  ! This family of routines use a uniDiscFunction to approximate a 
+  ! function's derivative
+  
+  ! Args: (* means optional)
+  ! x        pt at which to evaluate
+  ! UDF      the uniformly discretized function type
+  
+  function dFdxApproximate_r4 ( x, UDF ) result(value)
+    integer, parameter :: RK = R4
+    ! Args
+    real(rk), intent(in)                 :: x
+    type(UnifDiscreteFn_r4), intent(in)       :: UDF
+    real(rk)                             :: value
+    ! Internal variables
+    real(rk) :: arg
+    integer  :: itsSign
+    character :: options
+    real(rk), dimension(:), pointer      :: xArray => null()
+    ! Executable
+    call reposit( x, UDF, arg, itsSign )
+    options = UDF%method
+    if ( options == 'q' ) options = '1'
+    if ( arg < UDF%x1 ) then
+      value = 0.
+    elseif ( arg > UDF%x2 ) then
+      value = 0.
+    elseif ( options == 's' ) then
+      call createXArray( xArray, UDF )
+      call InterpolateValues( xArray, UDF%y, (/arg/), newYr4, dyByDx=newdYr4, &
+        & method='S' )
+      value = newdYr4(1)
+      call deallocate_test( xArray, 'xArray (r4)', ModuleName )
+    else
+      value = UseLookUpTable ( arg, UDF%y, UDF%x1, UDF%x2, options=options // '1' )
+    endif
+    value = itsSign*value
+  end function dFdxApproximate_r4
+
+  function dFdxApproximate_r8 ( x, UDF ) result(value)
+    integer, parameter :: RK = R8
+    ! Args
+    real(rk), intent(in)                 :: x
+    type(UnifDiscreteFn_r8), intent(in)       :: UDF
+    real(rk)                             :: value
+    ! Internal variables
+    real(rk) :: arg
+    integer  :: itsSign
+    character :: options
+    real(rk), dimension(:), pointer      :: xArray => null()
+    ! Executable
+    call reposit( x, UDF, arg, itsSign )
+    options = UDF%method
+    if ( options == 'q' ) options = '1'
+    if ( arg < UDF%x1 ) then
+      value = 0.
+    elseif ( arg > UDF%x2 ) then
+      value = 0.
+    elseif ( options == 's' ) then
+      call createXArray( xArray, UDF )
+      call InterpolateValues( xArray, UDF%y, (/arg/), newYr8, dyByDx=newdYr8, &
+        & method='S' )
+      value = newdYr8(1)
+      call deallocate_test( xArray, 'xArray (r8)', ModuleName )
+    else
+      value = UseLookUpTable ( arg, UDF%y, UDF%x1, UDF%x2, options=options // '1' )
+    endif
+    value = itsSign*value
+  end function dFdxApproximate_r8
 
 ! ---------------------------------------------------------  Dump  -----
   subroutine DumpCoefficients_r4 ( Coeffs )
@@ -240,6 +918,70 @@ contains
     type(coefficients_r8), intent(in) :: Coeffs
     include 'DumpCoefficients.f9h'
   end subroutine DumpCoefficients_r8
+
+  subroutine DumpUnifDiscreteFn_r4 ( UDF, name, details )
+    ! Args
+    type(UnifDiscreteFn_r4) :: UDF ! Intent(out) would clobber retainable values
+    character(len=*), optional, intent(in) :: name
+    integer, optional, intent(in) :: details
+    ! Internal variables
+    integer :: myDetails
+    ! Executable
+    myDetails = 0
+    if ( present(details) ) myDetails = details
+    if ( present(name) ) call output( trim(name) // ' ', advance='no' )
+    call output( 'uniform discrete function (r4)', advance='yes' )
+    call blanks( 32, fillchar='-', advance='yes' )
+    call outputNamedValue( 'N           ', UDF%N             )
+    call outputNamedValue( 'x1          ', UDF%x1            )
+    call outputNamedValue( 'x2          ', UDF%x2            )
+    call outputNamedValue( 'BC          ', UDF%BC            )
+    call outputNamedValue( 'method      ', UDF%method        )
+    call outputNamedValue( 'yLeft       ', UDF%yLeft         )
+    call outputNamedValue( 'yRight      ', UDF%yRight        )
+    if ( .not. associated(UDF%y) ) then
+      call output( '(y values not associated)', advance='yes' )
+      return
+    endif
+    if ( myDetails < 1 ) then
+      call outputNamedValue( 'min(y)           ', minval(UDF%y) )
+      call outputNamedValue( 'max(y)           ', maxval(UDF%y) )
+      return
+    endif
+    call dump ( UDF%y, name='y' )
+  end subroutine DumpUnifDiscreteFn_r4
+
+  subroutine DumpUnifDiscreteFn_r8 ( UDF, name, details )
+    ! Args
+    type(UnifDiscreteFn_r8) :: UDF ! Intent(out) would clobber retainable values
+    character(len=*), optional, intent(in) :: name
+    integer, optional, intent(in) :: details
+    ! Internal variables
+    integer :: myDetails
+    ! Executable
+    myDetails = 0
+    if ( present(details) ) myDetails = details
+    if ( present(name) ) call output( trim(name) // ' ', advance='no' )
+    call output( 'uniform discrete function (r8)', advance='yes' )
+    call blanks( 32, fillchar='-', advance='yes' )
+    call outputNamedValue( 'N           ', UDF%N             )
+    call outputNamedValue( 'x1          ', UDF%x1            )
+    call outputNamedValue( 'x2          ', UDF%x2            )
+    call outputNamedValue( 'BC          ', UDF%BC            )
+    call outputNamedValue( 'method      ', UDF%method        )
+    call outputNamedValue( 'yLeft       ', UDF%yLeft         )
+    call outputNamedValue( 'yRight      ', UDF%yRight        )
+    if ( .not. associated(UDF%y) ) then
+      call output( '(y values not associated)', advance='yes' )
+      return
+    endif
+    if ( myDetails < 1 ) then
+      call outputNamedValue( 'min(y)           ', minval(UDF%y) )
+      call outputNamedValue( 'max(y)           ', maxval(UDF%y) )
+      return
+    endif
+    call dump ( UDF%y, name='y' )
+  end subroutine DumpUnifDiscreteFn_r8
 
 ! ---------------------------------------------  EssentiallyEqual  -----
 
@@ -408,6 +1150,158 @@ contains
       
   end function EssentiallyEqual_r8_3d
 
+! -------------------------------------------------  FApproximate  -----
+
+  ! This family of routines use a uniDiscFunction to approximate a 
+  ! (costly-to-evaluate) function based on its values at a set of points
+  
+  ! Args: (* means optional)
+  ! x        pt at which to evaluate
+  ! UDF      the uniformly discretized function type
+  
+  function FApproximate_r4 ( x, UDF ) result(value)
+    integer, parameter :: RK = R4
+    ! Args
+    real(rk), intent(in)                 :: x
+    type(UnifDiscreteFn_r4), intent(in)       :: UDF
+    real(rk)                             :: value
+    ! Internal variables
+    real(rk) :: arg
+    integer  :: itsSign
+    character :: options
+    real(rk), dimension(:), pointer      :: xArray => null()
+    ! Executable
+    call reposit( x, UDF, arg, itsSign )
+    ! call outputNamedValue( 'x', x )
+    ! call outputNamedValue( 'arg', arg )
+    ! call outputNamedValue( 'itsSign', itsSign )
+    options = UDF%method
+    if ( options == 'q' ) options = '0'
+    if ( arg < UDF%x1 ) then
+      value = UDF%yLeft
+    elseif ( arg == UDF%x1 ) then
+      value = UDF%y(1)
+    elseif ( arg == UDF%x2 ) then
+      value = UDF%y(UDF%N)
+    elseif ( arg > UDF%x2 ) then
+      value = UDF%yRight
+    elseif ( options == 's' ) then
+      call createXArray( xArray, UDF )
+      call InterpolateValues( xArray, UDF%y, (/arg/), newYr4, method='S' )
+      value = newYr4(1)
+      call deallocate_test( xArray, 'xArray (r4)', ModuleName )
+    else
+      ! call outputNamedValue( 'options', options )
+      value = UseLookUpTable ( arg, UDF%y, UDF%x1, UDF%x2, options=options )
+    endif
+    value = itsSign*value
+  end function FApproximate_r4
+
+  function FApproximate_r8 ( x, UDF ) result(value)
+    integer, parameter :: RK = R8
+    ! Args
+    real(rk), intent(in)                 :: x
+    type(UnifDiscreteFn_r8), intent(in)       :: UDF
+    real(rk)                             :: value
+    ! Internal variables
+    real(rk) :: arg
+    integer  :: itsSign
+    character :: options
+    real(rk), dimension(:), pointer      :: xArray => null()
+    ! Executable
+    call reposit( x, UDF, arg, itsSign )
+    ! call outputNamedValue( 'x', x )
+    ! call outputNamedValue( 'arg', arg )
+    ! call outputNamedValue( 'itsSign', itsSign )
+    options = UDF%method
+    if ( options == 'q' ) options = '0'
+    if ( arg < UDF%x1 ) then
+      value = UDF%yLeft
+    elseif ( arg == UDF%x1 ) then
+      value = UDF%y(1)
+    elseif ( arg == UDF%x2 ) then
+      value = UDF%y(UDF%N)
+    elseif ( arg > UDF%x2 ) then
+      value = UDF%yRight
+    elseif ( options == 's' ) then
+      call createXArray( xArray, UDF )
+      call InterpolateValues( xArray, UDF%y, (/arg/), newYr8, method='S' )
+      value = newYr8(1)
+      call deallocate_test( xArray, 'xArray (r8)', ModuleName )
+    else
+      ! call outputNamedValue( 'options', options )
+      value = UseLookUpTable ( arg, UDF%y, UDF%x1, UDF%x2, options=options )
+    endif
+    value = itsSign*value
+  end function FApproximate_r8
+
+! -------------------------------------------------  FInvApproximate  -----
+
+  ! This family of routines use a uniDiscFunction to approximately invert 
+  ! a function possibly restricting the search to a range [xS, xE]
+  
+  ! Args: (* means optional)
+  ! y        y value to invert
+  ! UDF      the uniformly discretized function type
+  ! [xS,xE]  range in which to search (otherwise [UDF%x1, UDF%x2])
+  
+  ! Will return x such that y[x] is approximately y
+  
+  function FInvApproximate_r4 ( y, UDF, xS, xE ) result(x)
+    integer, parameter :: RK = R4
+    ! Args
+    real(rk), intent(in)                 :: y
+    type(UnifDiscreteFn_r4), intent(in)  :: UDF
+    real(rk), optional, intent(in)       :: xS
+    real(rk), optional, intent(in)       :: xE
+    real(rk)                             :: x
+    ! Internal variables
+    real(rk), dimension(:), pointer      :: xArray => null()
+    ! Executable
+    call createXArray( xArray, UDF )
+    x = UseLookUpTable( y, xArray, xtable=UDF%y, yBottom=xS, yTop=xE )
+    call deallocate_test( xArray, 'xArray (r4)', ModuleName )
+  end function FInvApproximate_r4
+
+  function FInvApproximate_r8 ( y, UDF, xS, xE ) result(x)
+    integer, parameter :: RK = R8
+    ! Args
+    real(rk), intent(in)                 :: y
+    type(UnifDiscreteFn_r8), intent(in)  :: UDF
+    real(rk), optional, intent(in)       :: xS
+    real(rk), optional, intent(in)       :: xE
+    real(rk)                             :: x
+    ! Internal variables
+    real(rk), dimension(:), pointer      :: xArray => null()
+    ! Executable
+    call createXArray( xArray, UDF )
+    x = UseLookUpTable( y, xArray, xtable=UDF%y, yBottom=xS, yTop=xE )
+    call deallocate_test( xArray, 'xArray (r8)', ModuleName )
+  end function FInvApproximate_r8
+
+! -------------------------------------------------  FillLookUpTable  -----
+
+  ! This family of routines fills a table with evaluations of a function
+  ! at regularly-spaced points
+  ! Subsequently, instead of evaluating the function you can address the
+  ! array at the index of its closest element
+  
+  ! This only makes sense if you're going to evaluate the function many more
+  ! times than takes to fill the table and you're willing 
+  ! to accept whatever error may result from using the ClosestValue
+  ! Of course that error could be large if you will evaluate the function
+  ! outside the range [x1, x2]
+
+  subroutine FillLookUpTable_r4 ( fun, table, x1, x2, N, xtable )
+    integer, parameter :: RK = R4
+    include 'FillLookUpTable.f9h'
+  end subroutine FillLookUpTable_r4 
+
+  subroutine FillLookUpTable_r8 ( fun, table, x1, x2, N, xtable )
+    integer, parameter :: RK = R8
+    include 'FillLookUpTable.f9h'
+  end subroutine FillLookUpTable_r8
+
 ! -------------------------------------------------  HuntArray_r4  -----
 
   ! This routine does the classic hunt the value kind of thing.  This does the
@@ -539,6 +1433,83 @@ contains
     real(rk), dimension(2) :: vrange
     include 'HuntRange.f9h'
   end subroutine HuntRange_r8
+
+! -------------------------------------------------  IFApproximate  -----
+
+  ! This family of routines use a uniDiscFunction to approximate a 
+  ! function's integral
+  
+  ! Args: (* means optional)
+  ! UDF      the uniformly discretized function type
+  ! [xS,xE]  range over which to integrate (otherwise [UDF%x1, UDF%x2])
+  
+  function IFApproximate_r4 ( UDF, xS, xE ) result(value)
+    integer, parameter :: RK = R4
+    ! Args
+    type(UnifDiscreteFn_r4), intent(in)  :: UDF
+    real(rk), optional, intent(in)       :: xS
+    real(rk), optional, intent(in)       :: xE
+    real(rk)                             :: value
+    ! Internal variables
+    character :: options
+    real(rk), dimension(:), pointer      :: xArray => null()
+    real(rk) :: x1, x2
+    ! Executable
+    x1 = UDF%x1
+    x2 = UDF%x2
+    if ( present(xS) ) x1 = xS
+    if ( present(xE) ) x2 = xE
+    options = UDF%method
+    if ( options == 'q' ) options = 'S'
+    if ( x2 < UDF%x1 ) then
+      value = 0.
+    elseif ( x1 > UDF%x2 ) then
+      value = 0.
+    elseif ( options == '/s/' ) then ! We'll just use our standard integration
+      call createXArray( xArray, UDF )
+      call MLSMessage &
+      & ( MLSMSG_Warning, ModuleName, "Unable to integrate with cubic spline")
+      call deallocate_test( xArray, 'xArray (r4)', ModuleName )
+    else
+      value = UseLookUpTable ( x2, UDF%y, UDF%x1, UDF%x2, options=options // 'S' ) &
+           & - &
+           &  UseLookUpTable ( x1, UDF%y, UDF%x1, UDF%x2, options=options // 'S' )
+    endif
+  end function IFApproximate_r4
+
+  function IFApproximate_r8 ( UDF, xS, xE ) result(value)
+    integer, parameter :: RK = r8
+    ! Args
+    type(UnifDiscreteFn_r8), intent(in)  :: UDF
+    real(rk), optional, intent(in)       :: xS
+    real(rk), optional, intent(in)       :: xE
+    real(rk)                             :: value
+    ! Internal variables
+    character :: options
+    real(rk), dimension(:), pointer      :: xArray => null()
+    real(rk) :: x1, x2
+    ! Executable
+    x1 = UDF%x1
+    x2 = UDF%x2
+    if ( present(xS) ) x1 = xS
+    if ( present(xE) ) x2 = xE
+    options = UDF%method
+    if ( options == 'q' ) options = 'S'
+    if ( x2 < UDF%x1 ) then
+      value = 0.
+    elseif ( x1 > UDF%x2 ) then
+      value = 0.
+    elseif ( options == '/s/' ) then ! We'll just use our standard integration
+      call createXArray( xArray, UDF )
+      call MLSMessage &
+      & ( MLSMSG_Warning, ModuleName, "Unable to integrate with cubic spline")
+      call deallocate_test( xArray, 'xArray (r8)', ModuleName )
+    else
+      value = UseLookUpTable ( x2, UDF%y, UDF%x1, UDF%x2, options=options // 'S' ) &
+           & - &
+           &  UseLookUpTable ( x1, UDF%y, UDF%x1, UDF%x2, options=options // 'S' )
+    endif
+  end function IFApproximate_r8
 
 ! ------------------------------------------  InterpolateArray_r4  -----
 
@@ -875,439 +1846,306 @@ contains
 
   end subroutine Interp_Bilinear_2d_1d_r8
 
-! -------------------------------------------------  Battleship  -----
+! -------------------------------------------------  SetUp  -----
 
-  ! This family of routines finds an integer root of a function
-  ! by evaluating it. Each evaluation is a "shot". A returned value
-  ! of "0" (or the optional parameter b) is short. Any other value is long.
-  ! The root is the longest argument that is still short.
-  ! (If you instead wish the shortest argument still long just add 1
-  ! or utilize the options string)
-
-  ! Example: a direct-access read of n chars from a file where the iostatus
-  ! is 0 if we don't try to read too many chars, but non-zero if we do
-  ! Create your own function that takes the number of chars to be read
-  ! as its sole argument and that returns the iostat as its value
-  ! Battleship will then calculate the exact number characters in the file
-  ! (which NAG cares about; Lahey doesn't care)
-  
-  ! We take shots during 2 phases:
-  ! (1) outbound: ever-widening circles of radius 1 2 4 8 .. (n) (2n) ..
-  !     or else prescribed shots in array ns[:]
-  ! (2) inbound: once root is crossed, ever narowing circles around it
-  !     (until "You sank my battleship!")
-  
-  ! The options string (if supplied) modifies how this search operates
-  !  options            search goal
-  !  -------            -----------
-  !    -s (default)     largest root for which fun(root) = 0 (or b)
-  !                      (useful for io status)
-  !    -r               reverse of "-s"
-  !                       i.e., all tests return non-zero below root
-  !    -x               root where f(root) crosses 0 (or b)
-  !                      (assumes (fun(n)-b) changes sign at n=root)
-
-  ! It can also be used with a logical-valued function
-  ! in this case we shoot until we encounter TRUE
-  ! similar to integer-value version if we make the mapping
-  ! 0 -> FALSE
-  ! 1 -> TRUE
-  ! -r option or b can be used to reverse the sense
-
-  subroutine Battleship_int( fun, root, n1, maxPhase1, ns, b, options )
-    ! Args
-    integer, external                          :: fun
-    integer, optional, intent(in)              :: n1 ! 1st circle
-    integer, optional, intent(in)              :: maxPhase1 ! max phase1 shots
-    integer, optional, dimension(:), intent(in):: ns ! array of phase1 shots
-    integer, intent(out)                       :: root ! root
-    integer, optional, intent(in)              :: b ! is short
-    character(len=*), optional, intent(in)     :: options
-    ! Internal variables
-    integer :: flast
-    integer :: fnext
-    integer :: isShort
-    character(len=8) :: myOptions
-    integer :: shot
-    integer :: x0
-    integer :: x1
-    integer :: x2
-    ! Executable
-    isShort = 0
-    if ( present(b) ) isShort = b
-    myOptions = '-s'
-    if ( present(options) ) myOptions = options
-    root = -1 ! in case we can't find root
-    ! Phase 1
-    ! Some error checks
-    if ( present(maxPhase1) ) then
-      if ( (index(myOptions, 's') > 0 .and. fun(n1) /= isShort) ) return
-      if ( (index(myOptions, 'r') > 0 .and. fun(n1) == isShort) ) return
-      if ( maxPhase1 < 1 ) return
-      if ( .not. present(n1) ) return
-      x2 = n1 ! Initialize things
-      fnext = fun(x2)
-      do shot = 1, maxPhase1
-        x1 = x2
-        x2 = 2*x1
-        flast = fnext
-        fnext = fun(x2)
-        if ( index(myOptions, 's') > 0 ) then
-          if ( fnext /= isShort ) exit
-        elseif ( index(myOptions, 'r') > 0 ) then
-          if ( fnext == isShort ) exit
-        else
-          if ( (fnext-isShort)*(flast-isShort) <= 0 ) exit
-        endif
-      enddo
-      if ( shot > maxPhase1 ) return ! No shot was long enough
-    else
-      if ( .not. present(ns) ) return
-      x2 = ns(1) ! Initialize things
-      fnext = fun(x2)
-      if ( (index(myOptions, 's') > 0 .and. fnext /= isShort) ) return
-      if ( (index(myOptions, 'r') > 0 .and. fnext == isShort) ) return
-      do shot = 2, size(ns)
-        x1 = x2
-        x2 = ns(shot)
-        flast = fnext
-        fnext = fun(x2)
-        if ( index(myOptions, 's') > 0 ) then
-          if ( fnext /= isShort ) exit
-        elseif ( index(myOptions, 'r') > 0 ) then
-          if ( fnext == isShort ) exit
-        else
-          if ( (fnext-isShort)*(flast-isShort) <= 0 ) exit
-        endif
-      enddo
-      if ( shot > size(ns) ) return ! No shot was long enough
-    endif
-    ! Phase 2
-    ! Narrow the spashes, always keeping root between x0 and x2
-    x0 = x1
-    do
-      x1 = (x0 + x2) / 2
-      ! This test should prevent us from looping endlessly
-      if ( x1 == x0 ) then
-        ! apparently x0 = x2 - 1, so we've found our root
-        if ( index(myOptions, 's') > 0 .or. index(myOptions, 'r') > 0 ) then
-          root = x1
-        else
-          if ( fun(x1) == isShort ) then
-            root = x1
-          elseif ( fun(x2) == isShort ) then
-            root = x2
-          else
-            root = -1
-          endif
-        endif
-        return
-      endif
-      if ( index(myOptions, 's') > 0 ) then
-        if ( fun(x1) == isShort ) then
-          x0 = x1
-          ! x2 = x2
-        else
-          ! x0 = x0
-          x2 = x1
-        endif
-      elseif ( index(myOptions, 'r') > 0 ) then
-        if ( fun(x1) == isShort ) then
-          ! x0 = x0
-          x2 = x1
-        else
-          x0 = x1
-          ! x2 = x2
-        endif
-      else
-        if ( (fun(x2)-isShort)*(fun(x1)-isShort) == 0 ) then
-          if ( fun(x2) == isShort ) then
-            root = x2
-          else
-            root = x1
-          endif
-          return
-        elseif ( (fun(x2)-isShort)*(fun(x1)-isShort) < 0 ) then
-          x0 = x1
-        else
-          x2 = x1
-        endif
-      endif
-    enddo
-  end subroutine Battleship_int
-
-  subroutine Battleship_log( fun, root, n1, maxPhase1, ns, b, options )
-    ! Args
-    logical, external                          :: fun
-    integer, optional, intent(in)              :: n1 ! 1st circle
-    integer, optional, intent(in)              :: maxPhase1 ! max phase1 shots
-    integer, optional, dimension(:), intent(in):: ns ! array of phase1 shots
-    integer, intent(out)                       :: root ! root
-    logical, optional, intent(in)              :: b ! is short
-    character(len=*), optional, intent(in)     :: options
-    ! Internal variables
-    logical :: flast
-    logical :: fnext
-    logical :: isShort
-    character(len=8) :: myOptions
-    integer :: shot
-    integer :: x0
-    integer :: x1
-    integer :: x2
-    ! Executable
-    isShort = .FALSE.
-    if ( present(b) ) isShort = b
-    myOptions = '-s'
-    if ( present(options) ) myOptions = options
-    root = -1 ! in case we can't find root
-    ! Phase 1
-    ! Some error checks
-    if ( present(maxPhase1) ) then
-      if ( (index(myOptions, 's') > 0 .and. ( fun(n1) .neqv. isShort) ) ) return
-      if ( (index(myOptions, 'r') > 0 .and. ( fun(n1) .eqv. isShort) ) ) return
-      if ( maxPhase1 < 1 ) return
-      if ( .not. present(n1) ) return
-      x2 = n1 ! Initialize things
-      fnext = fun(x2)
-      do shot = 1, maxPhase1
-        x1 = x2
-        x2 = 2*x1
-        flast = fnext
-        fnext = fun(x2)
-        if ( index(myOptions, 's') > 0 ) then
-          if ( fnext .neqv. isShort ) exit
-        elseif ( index(myOptions, 'r') > 0 ) then
-          if ( fnext .eqv. isShort ) exit
-        else
-          if ( fnext .neqv. flast ) exit
-        endif
-      enddo
-      if ( shot > maxPhase1 ) return ! No shot was long enough
-    else
-      if ( .not. present(ns) ) return
-      x2 = ns(1) ! Initialize things
-      fnext = fun(x2)
-      if ( (index(myOptions, 's') > 0 .and. ( fnext .neqv. isShort ) ) ) return
-      if ( (index(myOptions, 'r') > 0 .and. ( fnext .eqv. isShort) ) ) return
-      do shot = 2, size(ns)
-        x1 = x2
-        x2 = ns(shot)
-        flast = fnext
-        fnext = fun(x2)
-        if ( index(myOptions, 's') > 0 ) then
-          if ( fnext .neqv. isShort ) exit
-        elseif ( index(myOptions, 'r') > 0 ) then
-          if ( fnext .eqv. isShort ) exit
-        else
-          if ( fnext .neqv. flast ) exit
-        endif
-      enddo
-      if ( shot > size(ns) ) return ! No shot was long enough
-    endif
-    ! Phase 2
-    ! Narrow the spashes, always keeping root between x0 and x2
-    x0 = x1
-    do
-      x1 = (x0 + x2) / 2
-      ! This test should prevent us from looping endlessly
-      if ( x1 == x0 ) then
-        ! apparently x0 = x2 - 1, so we've found our root
-        if ( index(myOptions, 's') > 0 .or. index(myOptions, 'r') > 0 ) then
-          root = x1
-        else
-          if ( fun(x1) .eqv. isShort ) then
-            root = x1
-          elseif ( fun(x2) .eqv. isShort ) then
-            root = x2
-          else
-            root = -1
-          endif
-        endif
-        return
-      endif
-      if ( index(myOptions, 's') > 0 ) then
-        if ( fun(x1) .eqv. isShort ) then
-          x0 = x1
-          ! x2 = x2
-        else
-          ! x0 = x0
-          x2 = x1
-        endif
-      elseif ( index(myOptions, 'r') > 0 ) then
-        if ( fun(x1) .eqv. isShort ) then
-          ! x0 = x0
-          x2 = x1
-        else
-          x0 = x1
-          ! x2 = x2
-        endif
-      else
-        if ( (fun(x2) .eqv. isShort) .or. (fun(x1) .eqv. isShort) ) then
-          if ( fun(x2) .eqv. isShort ) then
-            root = x2
-          else
-            root = x1
-          endif
-          return
-        elseif ( fun(x2) .neqv. fun(x1) ) then
-          x0 = x1
-        else
-          x2 = x1
-        endif
-      endif
-    enddo
-  end subroutine Battleship_log
-
-! -------------------------------------------------  FillLookUpTable  -----
-
-  ! This family of routines fills a table with evaluations of a function
-  ! at regularly-spaced points
-  ! Subsequently, instead of evaluating the function you can address the
-  ! array at the index of its closest element
-  
-  ! This only makes sense if you're going to evaluate the function many more
-  ! times than takes to fill the table and you're willing 
-  ! to accept whatever error may result from using the ClosestValue
-  ! Of course that error could be large if you will evaluate the function
-  ! outside the range [x1, x2]
-
-  subroutine FillLookUpTable_r4 ( fun, table, x1, x2, N, xtable )
+  ! This family of routines sets up a uniDiscFunction of the appropriate type
+  subroutine setUpUnifDiscreteFn_r4 ( UDF, N, x1, x2, &
+    & y, BC, method, yLeft, yRight, fun )
     integer, parameter :: RK = R4
-    include 'FillLookUpTable.f9h'
-  end subroutine FillLookUpTable_r4 
+    ! Args
+    type(UnifDiscreteFn_r4) :: UDF ! Intent(out) would clobber defaults
+    integer, intent(in)  :: N
+    real(rk), intent(in) :: x1
+    real(rk), intent(in) :: x2
+    real(rk), dimension(:), optional, intent(in) :: y
+    character(len=*), optional, intent(in) :: BC
+    character(len=*), optional, intent(in) :: method
+    real(rk), optional, intent(in) :: yLeft
+    real(rk), optional, intent(in) :: yRight
+    real(rk), optional, external :: fun
+    ! Internal args
+    integer :: i
+    ! Executable
+    UDF%N       = N
+    UDF%x1      = x1
+    UDF%x2      = x2
+    call allocate_test ( UDF%y, N, "UDF%y", ModuleName )
+    if ( present(y        ) ) UDF%y           = y
+    if ( present(BC       ) ) UDF%BC          = BC
+    if ( present(method   ) ) UDF%method      = method
+    if ( present(yLeft    ) ) UDF%yLeft       = yLeft
+    if ( present(yRight   ) ) UDF%yRight      = yRight
+    if ( .not. present(fun) ) return
+    do i=1, N
+      UDF%y(i) = fun( x1 + (i-1)*(x2-x1)/(N-1) )
+    enddo
+  end subroutine setUpUnifDiscreteFn_r4
 
-  subroutine FillLookUpTable_r8 ( fun, table, x1, x2, N, xtable )
+  subroutine setUpUnifDiscreteFn_r8 ( UDF, N, x1, x2, &
+    & y, BC, method, yLeft, yRight, fun )
     integer, parameter :: RK = R8
-    include 'FillLookUpTable.f9h'
-  end subroutine FillLookUpTable_r8
+    ! Args
+    type(UnifDiscreteFn_r8) :: UDF ! Intent(out) would clobber defaults
+    integer, intent(in)  :: N
+    real(rk), intent(in) :: x1
+    real(rk), intent(in) :: x2
+    real(rk), dimension(:), optional, intent(in) :: y
+    character(len=*), optional, intent(in) :: BC
+    character(len=*), optional, intent(in) :: method
+    real(rk), optional, intent(in) :: yLeft
+    real(rk), optional, intent(in) :: yRight
+    real(rk), optional, external :: fun
+    ! Internal args
+    integer :: i
+    ! Executable
+    UDF%N       = N
+    UDF%x1      = x1
+    UDF%x2      = x2
+    call allocate_test ( UDF%y, N, "UDF%y", ModuleName )
+    if ( present(y        ) ) UDF%y           = y
+    if ( present(BC       ) ) UDF%BC          = BC
+    if ( present(method   ) ) UDF%method      = method
+    if ( present(yLeft    ) ) UDF%yLeft       = yLeft
+    if ( present(yRight   ) ) UDF%yRight      = yRight
+    if ( .not. present(fun) ) return
+    do i=1, N
+      UDF%y(i) = fun( x1 + (i-1)*(x2-x1)/(N-1) )
+    enddo
+  end subroutine setUpUnifDiscreteFn_r8
 
 ! -------------------------------------------------  UseLookUpTable  -----
 
   ! This family of routines use a LookUpTable to approximate a costly-to-evaluate
   ! function based on its values at a set of points
   
-  ! Args: (* means optional)
-  ! x        pt at which to evaluate
-  ! table    table of function values
-  ! x1,x2    * range of equally-spaced argument values represented in table
-  ! xtable   * table of argument values
-  ! options  * none, one, or more of the following:
-  ! (none)   choose pt in xtable closest to x
-  ! l        always choose lower of two closest x's in xtable
-  ! u        always choose upper of two closest x's in xtable
-  ! i        interpolate among two closest, but never extrapolate
-  ! 1        return 1st derivative instead
-  ! 2        return 2nd derivative (at nearest pt)
-  ! S        return definite integral from x1 to x
-  ! C        return definite integral from x to x2
+  ! Args:       (* means optional)
+  ! x              pt at which to evaluate
+  ! table          table of function values
+  ! x1,x2          * range of equally-spaced argument values represented in table
+  ! xtable         * table of argument values
+  ! xS,xE          * range of x-values in which to search
+  ! yBottom, yTop  * range of y-values in which to search
+  !                 (ignored if xtable is sorted)
   
+  ! options  * none, one, or more of the following:
+  ! (default)   choose pt in xtable closest to x
+  !    p        xtable is sorted (necessary for the other options)
+  !    l        always choose lower of two closest x's in xtable
+  !    u        always choose upper of two closest x's in xtable
+  !    i        interpolate among two closest, but never extrapolate
+  !    0        use quadratic interpolation
+  !    1        return 1st derivative instead
+  !    2        return 2nd derivative (at nearest pt)
+  !    S        return definite integral from x1 to x
+  !    C        return definite integral from x to x2
+  
+  ! notes:
+  ! (1) You should supply either xtable or the range (x1,x2)
+  !      (but not both)
+  ! (2) If you supply xtable, and that xtable is sorted so that
+  !     xtable[i] < xtable[i+1] include 'p' among the options
+  ! (3) If you supply (x1,x2) the resulting x values will be automatically
+  !     sorted, so you may omit 'p' from among the options
+  ! (4) An unsorted xtable is incompatible with any of the options
+  !      i.e., you may not integrate, differentiate, interpolate, etc.
+  ! (5) The range yBottom, yTop is incompatible with a sorted xtable
+
   function UseLookUpTable_r4 ( x, table, x1, x2, xtable, &
-    & missingValue, options ) result(value)
+    & missingValue, options, xS, xE, yBottom, yTop ) result(value)
     integer, parameter :: RK = R4
     include 'UseLookUpTable.f9h'
   end function UseLookUpTable_r4 
 
   function UseLookUpTable_r8 ( x, table, x1, x2, xtable, &
-    & missingValue, options ) result(value)
+    & missingValue, options, xS, xE, yBottom, yTop ) result(value)
     integer, parameter :: RK = R8
     include 'UseLookUpTable.f9h'
   end function UseLookUpTable_r8 
 
-! -------------------------------------------------  ClosestElement  -----
-
-  ! This family of routines finds the element within a multidimensional
-  ! array nearest a test value
-  ! The array of indices locate that nearest element
-  ! options  none, one, or more of the following:
-  ! (none)   choose pt in array closest to x
-  ! l        always choose lower of two closest x's in array
-  ! u        always choose upper of two closest x's in array
-
-  subroutine ClosestElement_r4_1d ( test, array, indices, options )
-    integer, parameter :: RK = R4
-
-    ! Dummy arguments
-    real(rk), intent(in)               :: test
-    real(rk), dimension(:), intent(in) :: array
-    integer, dimension(:), intent(out) :: indices ! Result
-    character(len=*), optional, intent(in)      :: options
-    include "ClosestElement.f9h"
-
-  end subroutine ClosestElement_r4_1d
-
-  subroutine ClosestElement_r8_1d ( test, array, indices, options )
-    integer, parameter :: RK = R8
-
-    ! Dummy arguments
-    real(rk), intent(in)               :: test
-    real(rk), dimension(:), intent(in) :: array
-    integer, dimension(:), intent(out) :: indices ! Result
-    character(len=*), optional, intent(in)      :: options
-    include "ClosestElement.f9h"
-
-  end subroutine ClosestElement_r8_1d
-
-  subroutine ClosestElement_r4_2d ( test, array, indices, options )
-    integer, parameter :: RK = R4
-
-    ! Dummy arguments
-    real(rk), intent(in)               :: test
-    real(rk), dimension(:,:), intent(in) :: array
-    integer, dimension(:), intent(out) :: indices ! Result
-    character(len=*), optional, intent(in)      :: options
-    integer, dimension(1)              :: indices_1d ! Result
-    call ClosestElement( test, &
-      & reshape(array, (/ size(array,1)*size(array,2) /) ), &
-      & indices_1d )
-    call rerank( indices_1d(1), shape(array), indices )
-  end subroutine ClosestElement_r4_2d
-
-  subroutine ClosestElement_r8_2d ( test, array, indices, options )
-    integer, parameter :: RK = R8
-
-    ! Dummy arguments
-    real(rk), intent(in)               :: test
-    real(rk), dimension(:,:), intent(in) :: array
-    integer, dimension(:), intent(out) :: indices ! Result
-    character(len=*), optional, intent(in)      :: options
-    integer, dimension(1)              :: indices_1d ! Result
-    call ClosestElement( test, &
-      & reshape(array, (/ size(array,1)*size(array,2) /) ), &
-      & indices_1d )
-    call rerank( indices_1d(1), shape(array), indices )
-  end subroutine ClosestElement_r8_2d
-
-  subroutine ClosestElement_r4_3d ( test, array, indices, options )
-    integer, parameter :: RK = R4
-
-    ! Dummy arguments
-    real(rk), intent(in)               :: test
-    real(rk), dimension(:,:,:), intent(in) :: array
-    integer, dimension(:), intent(out) :: indices ! Result
-    character(len=*), optional, intent(in)      :: options
-    integer, dimension(1)              :: indices_1d ! Result
-    call ClosestElement( test, &
-      & reshape(array, (/ size(array,1)*size(array,2)*size(array,3) /) ), &
-      & indices_1d )
-    call rerank( indices_1d(1), shape(array), indices )
-  end subroutine ClosestElement_r4_3d
-
-  subroutine ClosestElement_r8_3d ( test, array, indices, options )
-    integer, parameter :: RK = R8
-
-    ! Dummy arguments
-    real(rk), intent(in)               :: test
-    real(rk), dimension(:,:,:), intent(in) :: array
-    integer, dimension(:), intent(out) :: indices ! Result
-    character(len=*), optional, intent(in)      :: options
-    integer, dimension(1)              :: indices_1d ! Result
-    call ClosestElement( test, &
-      & reshape(array, (/ size(array,1)*size(array,2)*size(array,3) /) ), &
-      & indices_1d )
-    call rerank( indices_1d(1), shape(array), indices )
-  end subroutine ClosestElement_r8_3d
-
 !-------------------- Private Procedures -----------------------------------
+
+  ! This family creates an array of x values appropriate
+  ! for the UDF
+  subroutine createXArray_r4( xArray, UDF )
+    integer, parameter :: RK = R4
+    ! Args
+    real(rk), dimension(:), pointer      :: xArray
+    type(UnifDiscreteFn_r4), intent(in)       :: UDF
+    ! Internal variables
+    integer :: i
+    ! Executable
+    call allocate_test( xArray, UDF%N, 'xArray (r4)', ModuleName )
+    do i=1, UDF%N
+      xArray(i) = UDF%x1 + (i-1)*(UDF%x2-UDF%x1)/(UDF%N-1)
+    enddo
+  end subroutine createXArray_r4
+
+  subroutine createXArray_r8( xArray, UDF )
+    integer, parameter :: RK = R8
+    ! Args
+    real(rk), dimension(:), pointer      :: xArray
+    type(UnifDiscreteFn_r8), intent(in)       :: UDF
+    ! Internal variables
+    integer :: i
+    ! Executable
+    call allocate_test( xArray, UDF%N, 'xArray (r8)', ModuleName )
+    do i=1, UDF%N
+      xArray(i) = UDF%x1 + (i-1)*(UDF%x2-UDF%x1)/(UDF%N-1)
+    enddo
+  end subroutine createXArray_r8
+
+  ! This family of functions performs a part of asimpson's rule integration
+  ! from x1 to x
+  function psimpsons_r4( x, x1, x2, h, y ) result (sum)
+    integer, parameter :: RK = R4
+    ! Args
+    real(rk), intent(in)               :: x
+    real(rk), intent(in)               :: x1
+    real(rk), intent(in)               :: x2
+    real(rk), intent(in)               :: h
+    real(rk), dimension(:), intent(in) :: y
+    real(rk)                           :: sum
+    ! Internal variables
+    integer :: i
+    integer, dimension(2) :: indices
+    integer :: n
+    real(rk), dimension(size(y))      :: xArray
+    real(rk)                           :: yofx
+    ! Executable
+    sum = 0.
+    if ( size(y) < 2 ) return
+    n = (x2 - x1) / h + 1.5
+    do i=1, n
+      xArray(i) = x1 + (i-1)*h
+    enddo
+    ! 1st--we need to find how many intervals, n, are to the left of x
+    call ClosestElement( x, xArray, indices, 'l' )
+    n = indices(1)
+    sum = simpsons( n, h, y )
+    yofx = UseLookUpTable ( x, y, x1, x2, xArray )
+    ! Now integrate over the distance from x[n] to x
+    ! using, less accurately, a trapezoidal quadrature
+    sum = sum + ( (x - xArray(n))/2 * ( y(n) + yofx ) )
+  end function psimpsons_r4
+
+  function psimpsons_r8( x, x1, x2, h, y ) result (sum)
+    integer, parameter :: RK = R8
+    ! Args
+    real(rk), intent(in)               :: x
+    real(rk), intent(in)               :: x1
+    real(rk), intent(in)               :: x2
+    real(rk), intent(in)               :: h
+    real(rk), dimension(:), intent(in) :: y
+    real(rk)                           :: sum
+    ! Internal variables
+    integer :: i
+    integer, dimension(2) :: indices
+    integer :: n
+    real(rk), dimension(size(y))      :: xArray
+    real(rk)                           :: yofx
+    ! Executable
+    sum = 0.
+    if ( size(y) < 2 ) return
+    n = (x2 - x1) / h + 1.5
+    do i=1, n
+      xArray(i) = x1 + (i-1)*h
+    enddo
+    ! 1st--we need to find how many intervals, n, are to the left of x
+    call ClosestElement( x, xArray, indices, 'l' )
+    n = indices(1)
+    sum = simpsons( n, h, y )
+    yofx = UseLookUpTable ( x, y, x1, x2, xArray )
+    ! Now integrate over the distance from x[n] to x
+    ! using, less accurately, a trapezoidal quadrature
+    sum = sum + ( (x - xArray(n))/2 * ( y(n) + yofx ) )
+  end function psimpsons_r8
+
+  ! This family repositions x if it is outside [x1, x2]
+  ! considering the type of BC determined by the UDF
+  subroutine reposit_r4( x, UDF, p, itsSign )
+    integer, parameter :: RK = R4
+    ! Args
+    real(rk), intent(in)                 :: x ! Given this x
+    type(UnifDiscreteFn_r4), intent(in)       :: UDF
+    real(rk), intent(out)                :: p ! reposition it here
+    integer, intent(out)                 :: itsSign
+    ! Internal variables
+    real(rk) :: d
+    real(rk) :: Period ! The "period"
+    integer :: k ! How many periods between home and x
+    ! Executable
+    p = x
+    itsSign = 1
+    if (  UDF%x1 <= x .and. x <= UDF%x2 ) return
+    select case ( UDF%BC )
+    case ( 'cyclic', 'scyclic' )
+      ! How far from "home" are we?
+      ! We'll attempt to write this as k*Period + p
+      d = max( UDF%x1 - x, x - UDF%x2 )
+      Period = UDF%x2 - UDF%x1
+      k = d / Period + 0.9999
+      if ( x < UDF%x1 ) then
+        p = x + k*Period
+      else
+        p = x - k*Period
+      endif
+      ! Now if signed cyclic (any non-trig examples of such a beast?)
+      ! we also need to know if k is even or odd
+      ! if even, we're still the same sign as home
+      ! if odd, need to reverse sign
+      k = abs(k)
+      if ( mod(k, 2) /= 0 .and. UDF%BC == 'scyclic' ) itsSign = -1
+    case ( 'express' )
+      ! The caller will utilize UDF%y(Left)(Right)
+    case default
+    ! case ( 'clamped' )
+      p = max( p, UDF%x1 )
+      p = min( p, UDF%x2 )
+    end select
+  end subroutine reposit_r4
+
+  subroutine reposit_r8( x, UDF, p, itsSign )
+    integer, parameter :: RK = R8
+    ! Args
+    real(rk), intent(in)                 :: x ! Given this x
+    type(UnifDiscreteFn_r8), intent(in)       :: UDF
+    real(rk), intent(out)                :: p ! reposition it here
+    integer, intent(out)                 :: itsSign
+    ! Internal variables
+    real(rk) :: d
+    real(rk) :: Period ! The "period"
+    integer :: k ! How many periods between home and x
+    ! Executable
+    p = x
+    itsSign = 1
+    if (  UDF%x1 <= x .and. x <= UDF%x2 ) return
+    select case ( UDF%BC )
+    case ( 'cyclic', 'scyclic' )
+      ! How far from "home" are we?
+      ! We'll attempt to write this as k*Period + p
+      d = max( UDF%x1 - x, x - UDF%x2 )
+      Period = UDF%x2 - UDF%x1
+      k = d / Period + 0.9999
+      if ( x < UDF%x1 ) then
+        p = x + k*Period
+      else
+        p = x - k*Period
+      endif
+      ! Now if signed cyclic (any non-trig examples of such a beast?)
+      ! we also need to know if k is even or odd
+      ! if even, we're still the same sign as home
+      ! if odd, need to reverse sign
+      k = abs(k)
+      if ( mod(k, 2) /= 0 .and. UDF%BC == 'scyclic' ) itsSign = -1
+    case ( 'express' )
+      ! The caller will utilize UDF%y(Left)(Right)
+    case default
+    ! case ( 'clamped' )
+      p = max( p, UDF%x1 )
+      p = min( p, UDF%x2 )
+    end select
+  end subroutine reposit_r8
+
   subroutine rerank( address, shp, indices )
     ! Find multidimensional set of indices in an array
     ! with shape shp corresponding to 1-d address
@@ -1365,6 +2203,74 @@ contains
     enddo
     indices = indices + OFFSET ! Converting to Fortran-style, beginning with 1
   end subroutine rerank
+  
+  ! This family of functions performs simpson's rule integrations
+  ! for either even or odd n
+  function simpsons_r4( n, h, y ) result (sum)
+    integer, parameter :: RK = R4
+    ! Args
+    integer, intent(in)                :: n
+    real(rk), intent(in)               :: h
+    real(rk), dimension(:), intent(in) :: y
+    real(rk)                           :: sum
+    ! Internal variables
+    integer :: i
+    integer :: n1
+    ! Executable
+    sum = 0.
+    if ( n < 2 .or. size(y) < 2 ) return ! Sorry, too few points
+    if ( n == 3 ) then
+      ! Still too few for anything better than trapezoid
+      sum = (h/2)*( y(1) + y(2) )
+      return
+    endif
+    ! Do we have an even number of intervals, or odd?
+    if ( mod(n-1, 2) == 1 ) then
+      ! Odd--therefore start with Simpson's 3/8 rule
+      ! (See Abramowitz and Stegun 25.4.13)
+      sum = (3*h/8) * ( y(1) + 3*y(2) + 3*y(3) + y(4) )
+      n1 = 4
+    else
+      ! Even--therefore stick with Simpson's
+      n1 = 1
+    endif
+    do i=n1, n-2, 2
+      sum = sum + (h/3)*( y(i) + 4*y(i+1) + y(i+2) )
+    enddo
+  end function simpsons_r4
+
+  function simpsons_r8( n, h, y ) result (sum)
+    integer, parameter :: RK = R8
+    ! Args
+    integer, intent(in)                :: n
+    real(rk), intent(in)               :: h
+    real(rk), dimension(:), intent(in) :: y
+    real(rk)                           :: sum
+    ! Internal variables
+    integer :: i
+    integer :: n1
+    ! Executable
+    sum = 0.
+    if ( n < 2 .or. size(y) < 2 ) return ! Sorry, too few points
+    if ( n == 3 ) then
+      ! Still too few for anything better than trapezoid
+      sum = (h/2)*( y(1) + y(2) )
+      return
+    endif
+    ! Do we have an even number of intervals, or odd?
+    if ( mod(n-1, 2) == 1 ) then
+      ! Odd--therefore start with Simpson's 3/8 rule
+      ! (See Abramowitz and Stegun 25.4.13)
+      sum = (3*h/8) * ( y(1) + 3*y(2) + 3*y(3) + y(4) )
+      n1 = 4
+    else
+      ! Even--therefore stick with Simpson's
+      n1 = 1
+    endif
+    do i=n1, n-2, 2
+      sum = sum + (h/3)*( y(i) + 4*y(i+1) + y(i+2) )
+    enddo
+  end function simpsons_r8
 
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
@@ -1380,6 +2286,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.54  2007/08/07 23:55:02  pwagner
+! Added new data type, functions for approximating
+!
 ! Revision 2.53  2007/07/31 22:48:27  pwagner
 ! UseLookUpTable can now differentiate, integrate
 !
