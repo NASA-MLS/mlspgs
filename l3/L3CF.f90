@@ -84,6 +84,12 @@ MODULE L3CF
 
      REAL(r8), DIMENSION(2) :: desPresLvl ! min, max descending pressure levels
 
+     REAL(r8) :: qual        ! quality 
+
+     REAL(r8) :: conv            ! convergence 
+
+     REAL(r8) :: prec       	 ! precision 
+
      INTEGER :: nWave		! number of waves to be outputed 
 
      INTEGER :: nLons		! number of points in longitude grid
@@ -401,6 +407,27 @@ CONTAINS
      l3cf(i)%nWave = & 
      	  & cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
   
+     indx = LinearSearchStringArray( &
+          & cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'qual')
+     IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, & 
+          & 'Missing keyword QUALITY in the Standard section of the l3cf.')
+     l3cf(i)%qual = & 
+     	  & cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
+
+     indx = LinearSearchStringArray( &
+          & cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'conv')
+     IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, & 
+          & 'Missing keyword CONVERGENCE in the Standard section of the l3cf.')
+     l3cf(i)%conv = & 
+     	  & cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
+
+     indx = LinearSearchStringArray( &
+          & cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'prec')
+     IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, & 
+          & 'Missing keyword PRECISION in the Standard section of the l3cf.')
+     l3cf(i)%prec = & 
+     	  & cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
+
      ! Find the label in the Standard section
   
      indx = LinearSearchStringArray( &
@@ -467,6 +494,9 @@ END MODULE L3CF
 !==============
 
 ! $Log$
+! Revision 1.22  2005/06/23 19:07:38  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 1.21  2004/05/13 20:19:20  ybj
 ! *** empty log message ***
 !
