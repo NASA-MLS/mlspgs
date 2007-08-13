@@ -47,7 +47,7 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
   use MLSCommon, only: R8, R4, DEFAULTUNDEFINEDVALUE, MLSFile_T
   use MLSL2Options, only: DEFAULT_HDFVERSION_READ, DEFAULT_HDFVERSION_WRITE
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
-    & MLSMSG_ERROR, MLSMSG_WARNING
+    & MLSMSG_ERROR, MLSMSG_WARNING, MLSMessageCalls
   use MLSSignals_m, only: GETMODULENAME, MODULES
   use MLSStrings, only: LowerCase
   use MLSStringLists, only: Array2List, GetStringElement, List2Array, &
@@ -851,6 +851,7 @@ contains ! =====     Public Procedures     =============================
     logical :: alreadyOpen
     integer :: returnStatus
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='ReadL2AUXData_MLSFile' )
     returnStatus = 0
     alreadyOpen = L2AUXFile%stillOpen
     if ( L2AUXFile%access == DFACC_CREATE ) then
@@ -876,6 +877,7 @@ contains ! =====     Public Procedures     =============================
 
     L2AUXFile%errorCode = returnStatus
     L2AUXFile%lastOperation = 'read'
+    call MLSMessageCalls( 'pop' )
   end subroutine ReadL2AUXData_MLSFile
 
   ! -----------------------------------------  ReadL2AUXData_MF_hdf4  -----
@@ -1150,6 +1152,7 @@ contains ! =====     Public Procedures     =============================
     ! Local variables
     logical :: alreadyOpen
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='WriteL2AUXData_MLSFile' )
     alreadyOpen = L2AUXFile%stillOpen
     if ( .not. alreadyOpen ) then
       call mls_openFile(L2AUXFile, returnStatus)
@@ -1174,6 +1177,7 @@ contains ! =====     Public Procedures     =============================
     if ( .not. alreadyOpen )  call mls_closeFile(L2AUXFile, returnStatus)
     L2AUXFile%errorCode = returnStatus
     L2AUXFile%lastOperation = 'write'
+    call MLSMessageCalls( 'pop' )
   end subroutine WriteL2AUXData_MLSFile
 
   ! ----------------------------------------  WriteL2AUXData_MF_hdf5  -----
@@ -1999,6 +2003,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.82  2007/08/13 17:39:42  pwagner
+! Push some procedures onto new MLSCallStack
+!
 ! Revision 2.81  2007/06/21 00:54:08  vsnyder
 ! Remove tabs, which are not part of the Fortran standard
 !
