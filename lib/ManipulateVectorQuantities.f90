@@ -13,8 +13,9 @@ module ManipulateVectorQuantities ! Various routines for manipulating vectors
 
   ! This modules contains routines needed for manipulating vectors.
 
-  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
-  use MLSCommon, only: R8, RV
+  use MLSMessageModule, only: MLSMSG_Error, &
+    & MLSMessage, MLSMessageCalls
+  use MLSCommon, only: R8, RV, MLSFile_T
   use MLSNumerics, only: HUNT
   use VectorsModule, only: VECTORVALUE_T, VECTOR_T
   use Intrinsic, only: L_PHITAN, L_CHANNEL, L_NONE, PHYQ_ANGLE, PHYQ_PROFILES
@@ -153,7 +154,7 @@ contains
     logical :: MYUSEVALUE
     real (r8), dimension(:,:), pointer :: SEEK ! The thing to look for
 
-    ! Executable code
+    ! Executable:
     ! We'll skip the error checking we could do at this point, for speed.
 
     ! First we'll do a hunt to get ourselves in the right area.  Might as
@@ -188,12 +189,12 @@ contains
     integer, intent(in) :: WINDOWUNITS
     integer, intent(out) :: WINDOWSTART ! Output window start
     integer, intent(out) :: WINDOWFINISH ! Output window finish
-
-    ! Local variables
+    ! Internal variables
     integer :: CLOSESTINSTANCE
     real(r8) :: PHIMIN, PHIMAX           ! Limiting values of phi for this MAF
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='FindInstanceWindow' )
     if ( phiWindow == 0.0 ) then
       ! Just return closest instances
       closestInstance = FindOneClosestInstance ( quantity, phiTan, maf, &
@@ -220,6 +221,7 @@ contains
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Invalid units for window specification' )
     end if
+    call MLSMessageCalls( 'pop' )
   end subroutine FindInstanceWindow
 
   ! -------------------------------------- FillWithCombinedChannels ----------
@@ -506,6 +508,9 @@ contains
 end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.32  2007/08/13 17:37:42  pwagner
+! Push some procedures onto new MLSCallStack
+!
 ! Revision 2.31  2006/03/03 23:05:50  pwagner
 ! Changed interface to AnyGoodDataInQty
 !
