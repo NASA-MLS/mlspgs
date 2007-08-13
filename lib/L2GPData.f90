@@ -23,8 +23,9 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
     & DUMP, INITIALIZEMLSFILE, MLS_closeFile, MLS_EXISTS, mls_openFile, &
     & MLS_HDF_VERSION, MLS_INQSWATH, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
   use MLSFillValues, only: ExtractArray, IsFillValue, ReplaceFillValues
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
-    & MLSMSG_Error, MLSMSG_Warning
+  use MLSMessageModule, only: MLSMSG_Allocate, MLSMSG_DeAllocate, MLSMSG_Error, &
+    & MLSMSG_L1BREAD, MLSMSG_Warning, &
+    & MLSMessage, MLSMessageCalls
   use MLSNumerics, only: HuntRange
   use MLSSets, only: FindFirst, FindIntersection, FindLast
   use MLSStrings, only: Capitalize, lowercase
@@ -959,7 +960,8 @@ contains ! =====     Public Procedures     =============================
     logical :: ReadingConvergence
     logical :: ReadingStatus
     logical :: deeBugHere
-
+    ! Executable code
+    call MLSMessageCalls( 'push', constantName= 'ReadL2GPData_MF_hdf' )
     deeBugHere = DEEBUG     ! .or. .true.
     nullify ( realFreq, realSurf, realProf, real3 )
     hdfVersion = L2GPFile%hdfVersion
@@ -1252,8 +1254,7 @@ contains ! =====     Public Procedures     =============================
     !  firstprof,lastprof,myNumProfs
     ! Set numProfs if wanted
     if (present(numProfs)) numProfs=myNumProfs
-
-
+    call MLSMessageCalls( 'pop' )
     !-----------------------------
   end subroutine ReadL2GPData_MF_hdf
   !-----------------------------
@@ -2103,6 +2104,7 @@ contains ! =====     Public Procedures     =============================
     integer :: status
     ! Executable code
 
+    call MLSMessageCalls( 'push', constantName='writeL2GPData_MLSFile' )
     status = 0
     alreadyOpen = L2GPFile%stillOpen
     if ( .not. alreadyOpen ) then
@@ -2130,6 +2132,7 @@ contains ! =====     Public Procedures     =============================
     if ( .not. alreadyOpen )  call mls_closeFile(L2GPFile, Status)
     L2GPFile%errorCode = status
     L2GPFile%lastOperation = 'write'
+    call MLSMessageCalls( 'pop' )
   end subroutine writeL2GPData_MLSFile
   !-------------------------------------------------------------
 
@@ -2302,6 +2305,7 @@ contains ! =====     Public Procedures     =============================
     character (len=L2GPNameLen) :: myswathName
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='AppendL2GPData_MLSFile' )
     status = 0
 
     if (present(lastProfile)) then
@@ -2406,6 +2410,7 @@ contains ! =====     Public Procedures     =============================
     if ( .not. alreadyOpen )  call mls_closeFile(L2GPFile, Status)
     L2GPFile%errorCode = status
     L2GPFile%lastOperation = 'append'
+    call MLSMessageCalls( 'pop' )
   end subroutine AppendL2GPData_MLSFile
 
   ! ---------------------- cpL2GPData_fileID  ---------------------------
@@ -4399,6 +4404,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.149  2007/06/26 00:20:14  pwagner
+! May specify pressure levels on which to show diffs
+!
 ! Revision 2.148  2007/05/30 22:03:41  pwagner
 ! HuntRange does not work correctly when list has missing values; workaround employed
 !
