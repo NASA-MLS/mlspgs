@@ -18,7 +18,8 @@ module MLSNumerics              ! Some low level numerical stuff
   use MatrixModule_0, only: CreateBlock, M_Absent, MatrixElement_T, Sparsify
   use MLSCommon, only : DEFAULTUNDEFINEDVALUE, R4, R8, Rm
   use MLSFillValues, only: filterValues, IsFillValue
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+  use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
+    & MLSMessage, MLSMessageCalls
   use MLSSets, only: FindFirst, FindLast
   use MLSStrings, only: Capitalize, trim_safe
   use OUTPUT_M, only: blanks, output, outputNamedValue
@@ -96,7 +97,7 @@ module MLSNumerics              ! Some low level numerical stuff
 ! Hunt ( nprec list, nprec values, int indices(:), &
 !   [int start], [log allowTopValue], [log allowBelowValue], &
 !   [log nearest], [log logSpace], [log fail] )
-! HuntRange ( num list(:), num vrange(2), int irange(2) )
+! HuntRange ( num list(:), num vrange(2), int irange(2), options )
 ! nprec  IFApproximate ( UnifDiscreteFn_nprec UDF, &
 !     [nprec xS], [nprec xE] )
 ! InterpolateValues ( nprec oldX(:), nprec oldY(:), &
@@ -1410,7 +1411,7 @@ contains
 ! if vrange(1) == vrange(2), any values of list also == vrange
 ! are within that range
 ! As with other Hunts, list must be monotonic
-  subroutine HuntRange_int ( list, vrange, irange )
+  subroutine HuntRange_int ( list, vrange, irange, options )
     integer, parameter :: RK = R4
     ! Dummy args
     integer, dimension(:) :: list
@@ -1418,7 +1419,7 @@ contains
     include 'HuntRange.f9h'
   end subroutine HuntRange_int
 
-  subroutine HuntRange_r4 ( list, vrange, irange )
+  subroutine HuntRange_r4 ( list, vrange, irange, options )
     integer, parameter :: RK = R4
     ! Dummy args
     real(rk), dimension(:) :: list
@@ -1426,7 +1427,7 @@ contains
     include 'HuntRange.f9h'
   end subroutine HuntRange_r4
 
-  subroutine HuntRange_r8 ( list, vrange, irange )
+  subroutine HuntRange_r8 ( list, vrange, irange, options )
     integer, parameter :: RK = R8
     ! Dummy args
     real(rk), dimension(:) :: list
@@ -2286,6 +2287,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.55  2007/08/13 17:28:46  pwagner
+! Fixed obvious bugs in HuntRange
+!
 ! Revision 2.54  2007/08/07 23:55:02  pwagner
 ! Added new data type, functions for approximating
 !
