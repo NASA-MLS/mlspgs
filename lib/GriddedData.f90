@@ -18,8 +18,8 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
   use MLSCommon, only: RGR=>R4, R8, LINELEN, NAMELEN, DEFAULTUNDEFINEDVALUE
   ! r4 corresponds to sing. prec. :: same as stored in files
   ! (except for dao dimensions)
-  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR, &
-    & MLSMSG_DEALLOCATE, MLSMSG_Warning
+  use MLSMessageModule, only: MLSMSG_Allocate, MLSMSG_DeAllocate, MLSMSG_Error, &
+    & MLSMSG_Warning, MLSMessage, MLSMessageCalls
   use MLSStrings, only: LOWERCASE
   use Output_m, only: BLANKS, OUTPUT, outputNamedValue
 
@@ -854,6 +854,7 @@ contains
     real(r8), dimension(size(heights)) :: subSlice
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='SliceGriddedData' )
     myMissingValue = grid%missingValue
     if ( present ( missingValue ) ) myMissingValue = missingValue
     ! Get size of problem and check things out
@@ -1156,6 +1157,7 @@ contains
     if ( DEEBUG ) call dump ( slice(:,1:10,1,:,1,1), &
         & '    sliced field values (1st longitude) =' , &
         & FillValue=Grid%MissingValue )
+    call MLSMessageCalls( 'pop' )
   end subroutine SliceGriddedData
 
   ! -------------------------------------------- WrapGriddedData ---
@@ -1277,6 +1279,7 @@ contains
     grid%field => newField
   end subroutine WrapGriddedData
 
+  ! -------- Private ---------------
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -1290,6 +1293,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.48  2007/08/13 17:35:24  pwagner
+! Push SliceGriddedData onto new MLSSCallStack
+!
 ! Revision 2.47  2007/07/27 00:23:57  vsnyder
 ! Use Test_Allocate after allocations
 !
