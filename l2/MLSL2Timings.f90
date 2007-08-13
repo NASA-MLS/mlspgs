@@ -24,7 +24,8 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
     & SECTIONTIMINGUNITS, SKIPDIRECTWRITES, SKIPDIRECTWRITESORIGINAL, &
     & SKIPRETRIEVAL, SKIPRETRIEVALORIGINAL, &
     & STOPAFTERSECTION
-  USE MLSMessageModule, only: MLSMessage, MLSMessageReset, MLSMSG_Error
+  USE MLSMessageModule, only: MLSMessageConfig, &
+    & MLSMessage, MLSMessageReset, MLSMSG_Error
   USE MLSStrings, only: LowerCase 
   USE MLSStringLists, only: BooleanValue, catLists, GetStringElement, &
     & NumStringElements, StringElementNum, SwitchDetail
@@ -339,7 +340,10 @@ contains ! =====     Public Procedures     =============================
     end do
     call get_string(name, phaseString)
     call add_to_phase_timing( trim(phaseString) )
-    if ( RESTARTWARNINGS ) call MLSMessageReset(Warnings=.true.)
+    if ( RESTARTWARNINGS ) call MLSMessageReset( Warnings=.true. )
+    ! This will cause Warnings and Errors to print the phase name
+    ! where they occurred
+    MLSMessageConfig%Info = phaseString
     if ( silent ) then
       call suspendOutput
     else
@@ -873,6 +877,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.38  2007/08/13 17:40:55  pwagner
+! Warnings and Errors automatically print phase where they occur
+!
 ! Revision 2.37  2007/06/21 00:54:08  vsnyder
 ! Remove tabs, which are not part of the Fortran standard
 !
