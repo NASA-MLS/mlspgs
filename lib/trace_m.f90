@@ -32,6 +32,7 @@ contains ! ====     Public Procedures     ==============================
   ! front.  Increment DEPTH.
 
     use Allocate_Deallocate, only: Memory_Units, NoBytesAllocated
+    use MLSMessageModule, only: MLSMessageCalls
     use OUTPUT_M, only: DumpSize, OUTPUT
     use TIME_M, only: TIME_NOW
     use TREE, only: DUMP_TREE_NODE
@@ -69,12 +70,14 @@ contains ! ====     Public Procedures     ==============================
     call dumpsize ( memory_units * nobytesallocated, before = 'Memory ', &
       & advance='yes' )
     depth = depth + 1
+    call MLSMessageCalls( 'push', constantName=Name )
   end subroutine TRACE_BEGIN
 ! --------------------------------------------------    TRACE_END  -----
   subroutine TRACE_END ( NAME, INDEX )
   ! Decrement DEPTH.  Print "EXIT NAME" with DEPTH dots in front.
 
     use Allocate_Deallocate, only: Memory_Units, NoBytesAllocated
+    use MLSMessageModule, only: MLSMessageCalls
     use OUTPUT_M, only: DumpSize, NewLine, OUTPUT
     use TIME_M, only: TIME_NOW
 
@@ -116,6 +119,7 @@ contains ! ====     Public Procedures     ==============================
       end if
     end if
     call newLine
+    call MLSMessageCalls( 'pop' )
   end subroutine TRACE_END
 
   logical function not_used_here()
@@ -130,6 +134,9 @@ contains ! ====     Public Procedures     ==============================
 end module TRACE_M
 
 ! $Log$
+! Revision 2.16  2007/08/13 17:38:42  pwagner
+! Push named procedures automatically onto new MLSCallStack
+!
 ! Revision 2.15  2007/07/27 00:20:51  vsnyder
 ! Spiff up printing, work on memory tracking
 !
