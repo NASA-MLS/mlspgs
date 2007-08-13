@@ -27,8 +27,9 @@ module L1BData
   use MLSFiles, only: FILENOTFOUND, HDFVERSION_4, HDFVERSION_5, &
     & addFileToDatabase, InitializeMLSFile, MLS_HDF_VERSION, &
     & mls_openFile, mls_closeFile
-  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR, &
-    & MLSMSG_WARNING, MLSMSG_L1BREAD, MLSMSG_WARNING, MLSMSG_DEALLOCATE
+  use MLSMessageModule, only: MLSMSG_Allocate, MLSMSG_DeAllocate, MLSMSG_Error, &
+    & MLSMSG_L1BREAD, MLSMSG_Warning, &
+    & MLSMessage, MLSMessageCalls
   use MLSStrings, only: CompressString, streq
   use MLSStringLists, only: NumStringElements
   use MoreTree, only: Get_Field_ID
@@ -817,9 +818,9 @@ contains ! ============================ MODULE PROCEDURES ======================
     character(len=8) :: myOptions
     character(len=1) :: openedCode ! What type of object did we open? s,g,f
     integer :: returnStatus
-
     ! Executable code
     ! DEEBUG = (fieldname=='DACsDeconvolved')
+    call MLSMessageCalls( 'push', constantName='GetL1BFile' )
     nullify(item)
     myOptions = '-d' ! By default, search for sd names
     if (present(options)) myOptions = options
@@ -873,6 +874,7 @@ contains ! ============================ MODULE PROCEDURES ======================
             item => filedatabase(i)
             if ( .not. alreadyOpen ) &
               & call mls_closeFile(filedatabase(i), returnStatus)
+            call MLSMessageCalls( 'pop' )
             return
           end if
         else
@@ -897,12 +899,14 @@ contains ! ============================ MODULE PROCEDURES ======================
             & ) then
             item => filedatabase(i)
             if ( .not. alreadyOpen ) call closeEverything(filedatabase(i))
+            call MLSMessageCalls( 'pop' )
             return
           end if
         end if
         if ( .not. alreadyOpen ) call closeEverything(filedatabase(i))
       end if
     end do
+    call MLSMessageCalls( 'pop' )
     ! if ( DEEBUG ) stop
   contains
     subroutine closeEverything(L1BFile)
@@ -940,6 +944,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     integer :: myhdfVersion
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='FindL1BData' )
     if ( present(hdfVersion) ) then
       myhdfVersion = hdfVersion
     else
@@ -966,6 +971,7 @@ contains ! ============================ MODULE PROCEDURES ======================
         end if
       end if
     end do
+    call MLSMessageCalls( 'pop' )
   end function FindL1BData
 
   ! ------------------------------------------------  FindMaxMAF  -----
@@ -1870,6 +1876,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     logical :: isL2AUX
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='ReadL1BData_FH_hdf5' )
     if ( present(FirstMAF) ) then
       MAFoffset = max(0, FirstMAF)   ! Never let this be < 0
     endif
@@ -2168,6 +2175,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     
     ! Avoid memory leaks
     deallocate(dims, maxDims)
+    call MLSMessageCalls( 'pop' )
   end subroutine ReadL1BData_FH_hdf5
 
   !-------------------------------------------------  ReadL1BData_MLSFile  -----
@@ -3199,6 +3207,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.76  2007/08/13 17:36:13  pwagner
+! Push some procedures onto new MLSCallStack
+!
 ! Revision 2.75  2007/07/17 00:25:50  pwagner
 ! Deal more gracefully with attempt to read rank 0 datasets
 !
