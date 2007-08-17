@@ -94,7 +94,8 @@ contains
     use MLSL2Options, only: CHECKPATHS, LEVEL1_HDFVERSION, SPECIALDUMPFILE, &
       & STOPAFTERSECTION, Toolkit
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+    use MLSMessageModule, only: MLSMessage, MLSMessageCalls, &
+      & MLSMSG_Error, MLSMSG_Warning
     use MLSPCF2, only: mlspcf_l2gp_start, mlspcf_l2gp_end, &
       & mlspcf_l2dgm_start, mlspcf_l2dgm_end, mlspcf_l2fwm_full_start, &
       & mlspcf_l2fwm_full_end, &
@@ -187,18 +188,25 @@ contains
     stopTimeIsAbsolute = .false.
     LeapSecFileName = ''
 
-    if ( toggle(gen) ) call trace_begin ( 'SET_GLOBAL_SETTINGS', root )
-
-    i = index(switches, 'glo')
-    if ( i /= 0 ) then
-      if ( switches(i+3:i+3) >= '0' .and. switches(i+3:i+3) <= '9' ) then
-        details = iachar(switches(i+3:i+3)) - iachar('0') - 2
-      else
-        details = -3
-      end if
+    if ( toggle(gen) ) then
+      call trace_begin ( 'SET_GLOBAL_SETTINGS', root )
     else
-      details = -4
-    end if
+      call MLSMessageCalls( 'push', constantName=ModuleName )
+    endif
+
+! The following tries to convert a switch like glo[n]
+! into the numerical value (n-3)
+!     i = index(switches, 'glo')
+!     if ( i /= 0 ) then
+!       if ( switches(i+3:i+3) >= '0' .and. switches(i+3:i+3) <= '9' ) then
+!         details = iachar(switches(i+3:i+3)) - iachar('0') - 2
+!       else
+!         details = -3
+!       end if
+!     else
+!       details = -4
+!     end if
+    Details = switchDetail(switches, 'glo') - 3
 
     DetailReduction = switchDetail(switches, 'red')
     if ( DetailReduction < 0 ) then ! The 'red' switch is absent
@@ -333,7 +341,7 @@ contains
         case ( s_l1boa )
           the_hdf_version = LEVEL1_HDFVERSION
           call l1boaSetup ( son, filedatabase, F_FILE, hdfVersion=the_hdf_version )
-          if ( index(switches, 'pro') /= 0 ) then  
+          if( switchDetail(switches, 'pro') > -1 ) then                            
             sub_rosa_index = sub_rosa(subtree(2,subtree(2, son)))
             call get_string ( sub_rosa_index, FilenameString, strip=.true. )
             call proclaim(FilenameString, 'l1boa', &                   
@@ -368,7 +376,7 @@ contains
             & hdfVersion=the_hdf_version )
           sub_rosa_index = sub_rosa(subtree(2,subtree(2, son)))
           call get_string ( sub_rosa_index, FilenameString, strip=.true. )
-          if ( index(switches, 'pro') /= 0 ) then  
+          if( switchDetail(switches, 'pro') > -1 ) then                            
             call proclaim(FilenameString, 'l1brad', &                   
             & hdfVersion=the_hdf_version) 
           end if
@@ -382,7 +390,7 @@ contains
           sub_rosa_index = sub_rosa(subtree(2,subtree(2, son)))
           call get_string ( sub_rosa_index, FilenameString, strip=.true. )
           parallel%stagingFile = FilenameString
-          if ( index(switches, 'pro') /= 0 ) then  
+          if( switchDetail(switches, 'pro') > -1 ) then                            
             call proclaim(FilenameString, 'l2 parallel staging file') 
           end if
         case ( s_makePFA )
@@ -569,6 +577,8 @@ contains
       & call revertOutput
     if ( toggle(gen) ) then
       call trace_end ( 'SET_GLOBAL_SETTINGS' )
+    else
+      call MLSMessageCalls( 'pop' )
     end if
     if ( timing ) call sayTime
 
@@ -966,6 +976,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.124  2007/06/21 00:55:22  vsnyder
+! Remove tabs, which are not part of the Fortran standard
+!
 ! Revision 2.123  2007/03/26 18:06:59  pwagner
 ! Extra debuggung statements; may be useful if get 'Filesize limit exceeded'
 !
