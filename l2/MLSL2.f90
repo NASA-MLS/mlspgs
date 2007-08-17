@@ -24,7 +24,7 @@ program MLSL2
   use LeakCheck_m, only: LeakCheck
   use LEXER_CORE, only: INIT_LEXER
   use LEXER_M, only: CapIdentifiers
-  use MACHINE, only: GETARG, HP, IO_ERROR, NEVERCRASH
+  use MACHINE, only: GETARG, HP, IO_ERROR
   use MLSCOMMON, only: MLSFile_T
   use MLSFiles, only: FILESTRINGTABLE, &
     & HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, &
@@ -216,7 +216,6 @@ program MLSL2
   else
     ! SCF_VERSION
     switches='0sl'
-    NeverCrash = .false.
   end if
   time_config%use_wall_clock = SIPS_VERSION
 ! Initialize the lexer, symbol table, and tree checker's tables:
@@ -303,8 +302,6 @@ program MLSL2
         call getarg ( i, line )
         command_line = trim(command_line) // ' ' // trim(line)
         specialDumpFile = trim(line)
-      else if ( lowercase(line(3+n:8+n)) == 'evercr' ) then
-        neverCrash = .not. switch ! Because "neverCrash" makes NEVERCRASH TRUE
       else if ( lowercase(line(3+n:14+n)) == 'fwmparallel ' ) then
         parallel%fwmParallel = .true.
       else if ( lowercase(line(3+n:7+n)) == 'host ' ) then
@@ -660,6 +657,12 @@ program MLSL2
     & switchDetail(switches, 'help') > -1 ) then
    call switch_usage
   end if
+  
+  ! Are any switches inappropriate for master or for slave?
+    if ( parallel%master ) &
+      & removeSwitches = catLists( trim(removeSwitches), 'bool' )
+    if ( parallel%slave ) &
+      & removeSwitches = catLists( trim(removeSwitches), 'chu,chu1,l2q,mas,slv' )
   ! Remove any quote marks from RemoveSwitches array
   tempSwitches = unquote(removeSwitches, quotes=quotes, stripany=.true.)
   call GetUniqueList(tempSwitches, removeSwitches, numSwitches, countEmpty=.true., &
@@ -1087,8 +1090,6 @@ contains
         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
       call outputNamedValue ( 'Crash on any error?', MLSMessageConfig%crashOnAnyError, advance='yes', &
         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
-      call outputNamedValue ( 'Ever crash?', .not. neverCrash, advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
       call outputNamedValue ( 'Suppress identical warnings after', MLSMessageConfig%limitWarnings, advance='yes', &
         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
       call outputNamedValue ( 'Restart counting warnings at each phase?', restartWarnings, advance='yes', &
@@ -1123,6 +1124,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.166  2007/08/17 00:36:29  pwagner
+! Removed now-redundant [n]everCrash option
+!
 ! Revision 2.165  2007/07/27 00:18:20  vsnyder
 ! Print the command that invoked MLSL2
 !
