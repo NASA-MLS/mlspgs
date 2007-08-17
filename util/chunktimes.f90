@@ -16,18 +16,20 @@ program chunktimes ! Reads chunk times from l2aux file(s)
    use dump_0, only: dump
    use Hdf, only: DFACC_CREATE, DFACC_RDWR, DFACC_RDONLY, DFACC_READ
    use HDF5, only: HSIZE_T, h5fis_hdf5_f, h5gclose_f, h5gopen_f
+   use L1BData, only: NAME_LEN
    use MACHINE, only: FILSEP, HP, IO_ERROR, GETARG
    use MLSCommon, only: R4, R8
    use MLSFiles, only: mls_exists, MLS_SFSTART, MLS_SFEND, &
      & HDFVERSION_4, HDFVERSION_5
-   use MLSHDF5, only: CpHDF5Attribute, GetHDF5Attribute, GetHDF5DSDims, &
+   use MLSHDF5, only: CpHDF5Attribute, &
+     & GetAllHDF5DSNames, GetHDF5Attribute, GetHDF5DSDims, &
      & IsHDF5AttributePresent, LoadFromHDF5DS, mls_h5open, mls_h5close
    use MLSMessageModule, only: MLSMessageConfig
    use MLSSets, only: FindAll, FindFirst, FindLast, FindNext
    use MLSStats1, only: STAT_T, &
      & ALLSTATS, DUMPSTAT=>DUMP, MLSMIN, MLSMAX, MLSMEAN, MLSSTDDEV, MLSRMS, STATISTICS
    use MLSStringLists, only: catLists, GetStringElement, GetUniqueList, &
-     & NumStringElements, StringElementNum
+     & NumStringElements, StringElement, StringElementNum
    use MLSStrings, only: lowercase
    use output_m, only: blanks, newline, output, output_date_and_time
    use PCFHdr, only: GlobalAttributes
@@ -165,7 +167,7 @@ program chunktimes ! Reads chunk times from l2aux file(s)
       alltimings = UNDEFINEDVALUE
     endif
     call time_now ( t1 )
-    if ( options%verbose ) print *, 'Reading chunk l2aux file(s)'
+    ! if ( options%verbose ) print *, 'Reading chunk l2aux file(s)'
     do i=1, n_filenames
       call time_now ( tFile )
       if ( options%verbose ) then
@@ -182,13 +184,13 @@ program chunktimes ! Reads chunk times from l2aux file(s)
       call h5gopen_f(fileID, '/', fromgrpid, status)
       if ( IsHDF5AttributePresent(fromgrpID, 'Phase Names') ) then
         call GetHDF5Attribute (fromgrpID, 'Phase Names', options%phaseNames)
-        if ( options%verbose ) &
-          & call output(' Phase Names: ' // trim(options%phaseNames), advance='yes')
+        ! if ( options%verbose ) &
+        !   & call output(' Phase Names: ' // trim(options%phaseNames), advance='yes')
       else
         if ( options%verbose ) call output(' attribute not found', advance='yes')
       endif
       call h5gclose_f(fromgrpid, status)
-      if ( showTimings .or. options%showWhereFailed ) then
+      if ( showTimings ) then
         ! print *, 'dims ', dims
         ! print *, 'maxdims ', maxdims
         ! stop
@@ -393,24 +395,72 @@ contains
   end subroutine deduceFailedChunks
 
 !------------------------- deduceWhereChunksFailed ---------------------
-  subroutine deduceWhereChunksFailed( number, whereFailed )
+  subroutine deduceWhereChunksFailed( fileID, numberComplete, numberFailed, &
+    & whereFailed )
     ! Deduce where chunks failed
-    ! Based on timings == UNDEFINEDVALUE
+    ! Based on dnwt-chiSqRatio-${PhaseName}
     ! Args
-    integer, intent(in) :: number
+    integer, intent(in) :: fileID
+    integer, intent(in) :: numberComplete
+    integer, intent(in) :: numberFailed
     integer, dimension(:), intent(inout) :: whereFailed
     ! Internal variables
     integer :: chunk
+    integer(kind=hSize_t), dimension(3) :: dims, maxDims
+    integer :: i
+    integer :: numPhases
+    integer :: phase
+    integer :: phaseNum
     integer :: total
     integer :: which
+    real(r4), dimension(:,:,:), pointer   :: l2auxValue => NULL()
+    integer, parameter ::          MAXDS = 1024 ! 500
+    integer, parameter ::          MAXSDNAMESBUFSIZE = MAXDS*NAME_LEN
+    character(len=NAME_LEN) :: DSName
+    character (len=MAXSDNAMESBUFSIZE) :: mySdList
+    character (len=MAXSDNAMESBUFSIZE) :: subList
+    real(r4), dimension(MAXCHUNKS, MAXPHASES) :: dcsr
     ! Executable
-    if ( .not. any(alltimings == UNDEFINEDVALUE) ) return
+    call GetAllHDF5DSNames (fileID, '/', mysdList)
+    numPhases = NumStringElements( trim(options%phaseNames),  countEmpty )
+    subList = ' '
+    do i =1,  NumStringElements( trim(mySdList),  countEmpty )
+      DSName = StringElement( mySdList, i, countEmpty )
+      if ( index( DSName, 'dnwt-chiSqRatio-' ) > 0 ) then
+        subList = catLists( subList, DSName )
+      endif
+    enddo
+    ! print *, trim(sublist)
+    DSName = StringElement( subList, phase, countEmpty )
+    call GetHDF5DSDims(fileID, trim(DSname), dims, maxDims)
+    ! print *, 'dims: ', dims
+    allocate(l2auxValue(dims(1), dims(2), dims(3)), stat=status)
+    dcsr= 0.
+    do phase=1, NumStringElements( trim(subList),  countEmpty )
+      DSName = StringElement( subList, phase, countEmpty )
+      do phaseNum=1, numPhases
+        if ( lowercase(DSName) == 'dnwt-chisqratio-' // &
+        & trim( &
+        & StringElement( lowercase(options%phaseNames), phaseNum, countEmpty ) &
+        & ) &
+        & ) exit
+      enddo
+      if ( phaseNum  > numPhases ) phaseNum = 0
+      l2auxValue = 0.
+      if ( phaseNum > 0 ) &
+        & call LoadFromHDF5DS ( fileID, trim(DSname), l2auxValue )
+      ! print *, phase, phaseNum, trim(DSName), maxval(l2auxValue), minval(l2auxValue), &
+      ! & shape(l2auxValue)
+      if ( phaseNum > 0 ) dcsr(:dims(3), PhaseNum) = l2auxValue(1, 1, :)
+    enddo
+    ! call dump( dcsr(:dims(3),:numPhases), 'dnwt-chi^2 Ratio' )
     total = 0
     do chunk=1, MAXCHUNKS
-      which = FindFirst( alltimings(chunk,:), UNDEFINEDVALUE )
+      which = FindFirst( dcsr(chunk,:), UNDEFINEDVALUE )
       if ( which > 0 .and. which <= options%finalPhase ) then
         total = total + 1
-        if ( total > number ) return
+        ! print *, total, chunk, which, trim( StringElement( options%phaseNames, which, countEmpty ) )
+        if ( total > numberFailed ) return
         whereFailed(total) = which
       endif
     enddo
@@ -425,8 +475,11 @@ contains
   integer                     :: failure
   integer                     :: grp_id
   integer                     :: number
+  integer                     :: numberComplete
+  integer                     :: numberFailed
   integer                     :: returnStatus
   character(len=4096)         :: failedChunks
+  character(len=4096)         :: failedMachines
   character(len=32) :: myPhase
   character(len=*), parameter :: NUMCOMPLETEATTRIBUTENAME = 'NumCompletedChunks'
   character(len=*), parameter :: NUMFAILATTRIBUTENAME = 'NumFailedChunks'
@@ -438,6 +491,8 @@ contains
   ! Executable
   showAll = (options%details == ' ')
   number = -1
+  numberComplete = -1
+  numberFailed = -1
   call h5gopen_f(fileId, '/', grp_id, returnStatus)
   showThis = showAll .or. &
     & StringElementNum(options%details, NUMCOMPLETEATTRIBUTENAME, COUNTEMPTY) > 0
@@ -446,6 +501,7 @@ contains
     call GetHDF5Attribute (grp_ID, NUMCOMPLETEATTRIBUTENAME, number)
     if ( showThis ) call blanks(4)
     if ( showThis ) call output(number, advance='yes')
+    numberComplete = number
   else
     if ( showThis ) call output(' attribute not found', advance='yes')
   endif
@@ -457,6 +513,7 @@ contains
     call GetHDF5Attribute (grp_ID, NUMFAILATTRIBUTENAME, number)
     if ( showThis ) call blanks(4)
     if ( showThis ) call output(number, advance='yes')
+    numberFailed = number
   else
     if ( showThis ) call output(' attribute not found', advance='yes')
   endif
@@ -474,8 +531,8 @@ contains
   showThis = showAll .or. &
     & StringElementNum(options%details, MACHATTRIBUTENAME, COUNTEMPTY) > 0
   if ( IsHDF5AttributePresent(grp_id, MACHATTRIBUTENAME) ) then
-    call GetHDF5Attribute (grp_ID, MACHATTRIBUTENAME, failedChunks)
-    if ( showThis ) call dump(trim(failedChunks), MACHATTRIBUTENAME)
+    call GetHDF5Attribute (grp_ID, MACHATTRIBUTENAME, failedMachines)
+    if ( showThis ) call dump(trim(failedMachines), MACHATTRIBUTENAME)
   else
     if ( showThis ) call output(MACHATTRIBUTENAME, advance='no')
     if ( showThis ) call output(' attribute not found', advance='yes')
@@ -488,19 +545,20 @@ contains
     call blanks(4)
     call output(number, advance='yes')
     call dump(trim(failedChunks), FAILATTRIBUTENAME)
+    numberFailed = number
   endif
   
-  if ( options%showWhereFailed .and. number > 0 ) then
+  if ( options%showWhereFailed .and. numberFailed > 0 ) then
     whereFailed = -1
-    call deduceWhereChunksFailed( number, whereFailed )
+    call deduceWhereChunksFailed( fileID, numberComplete, numberFailed, whereFailed )
     call output( 'chunk    phase         phase name', advance='yes' )
-    do failure=1, number
+    do failure=1, numberFailed
       call GetStringElement( failedChunks, myPhase, failure, .FALSE. )
       call output( trim(myPhase), advance='no' )
-      call blanks(4)
+      call blanks(6)
       call output( whereFailed(failure), advance='no' )
       call GetStringElement( options%phaseNames, myPhase, whereFailed(failure), .FALSE. )
-      call blanks(4)
+      call blanks(8)
       call output( trim(myPhase), advance='yes' )
     enddo
   endif
@@ -746,6 +804,9 @@ end program chunktimes
 !==================
 
 ! $Log$
+! Revision 1.18  2007/07/19 00:28:54  pwagner
+! Restored ability to print full table of chunks/phases
+!
 ! Revision 1.17  2007/07/18 00:13:35  pwagner
 ! -where option to show where chunks crashed
 !
