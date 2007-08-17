@@ -44,7 +44,8 @@ module MLSHDFEOS
   use MLSCommon, only: MLSFile_T
   use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, &
     & mls_hdf_version
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+  use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
+    & MLSMessage, MLSMessageCalls
   use MLSStringLists, only: GetStringElement, NumStringElements, StringElementNum
   use SWAPI_DOUBLE, only: SWRDFLD_DOUBLE, SWRDFLD_DOUBLE_2D, SWRDFLD_DOUBLE_3D, &
     &                     SWWRFLD_DOUBLE, SWWRFLD_DOUBLE_2D, SWWRFLD_DOUBLE_3D
@@ -205,6 +206,7 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in) :: COUNT   ! How many
     character(len=*), intent(in) :: BUFFER  ! Buffer for write
     !
+    call MLSMessageCalls( 'push', constantName='MLS_EHWRGLATT' )
     if ( len_trim(buffer) > 0 ) then
       MLS_EHWRGLATT = he5_ehwrglatt_character_scalar( FILEID, &
       & ATTRNAME, DATATYPE, max(COUNT, len_trim(BUFFER)), BUFFER )
@@ -212,6 +214,7 @@ contains ! ======================= Public Procedures =========================
       MLS_EHWRGLATT = he5_ehwrglatt_character_scalar( FILEID, &
       & ATTRNAME, DATATYPE, 1, BLANK )
     endif
+    call MLSMessageCalls( 'pop' )
 
   end function MLS_EHWRGLATT
 
@@ -227,12 +230,14 @@ contains ! ======================= Public Procedures =========================
     integer :: fileID
     integer :: status
     !
+    call MLSMessageCalls( 'push', constantName='MLS_ISGLATT_FN' )
     isThere = .false.
     fileID = he5_swopen(trim(fileName), HE5F_ACC_RDONLY)
     if ( fileID > 0 ) then
       isThere = MLS_ISGLATT ( fileID, ATTRNAME )
       status = he5_swclose( fileID )
     endif
+    call MLSMessageCalls( 'pop' )
   end function MLS_ISGLATT_FN
 
   ! ---------------------------------------------  MLS_ISGLATT_FID  -----
@@ -275,6 +280,7 @@ contains ! ======================= Public Procedures =========================
     integer :: myHdfVersion
     logical :: needsFileName
     logical, parameter :: MUSTCREATE = .true.
+    call MLSMessageCalls( 'push', constantName='MLS_GDCREATE' )
     MLS_GDCREATE = 0
     ! All necessary input supplied?
     needsFileName = (.not. present(hdfVersion))
@@ -318,10 +324,11 @@ contains ! ======================= Public Procedures =========================
     case default
       MLS_GDCREATE = -1
     end select
-    if ( MLS_GDCREATE /= -1 ) return
-    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+    if ( MLS_GDCREATE == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Failed to create grid name ' // trim(GRIDNAME) )
 
+    call MLSMessageCalls( 'pop' )
   end function MLS_GDCREATE
 
   ! ---------------------------------------------  mls_gdwrattr  -----
@@ -333,6 +340,7 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in) :: COUNT   ! How many
     character(len=*), intent(in) :: BUFFER  ! Buffer for write
     integer, external ::   he5_GDwrattr
+    call MLSMessageCalls( 'push', constantName='mls_gdwrattr' )
     if ( len_trim(buffer) > 0 ) then
       mls_gdwrattr = HE5_GDWRATTR( GRIDID, &
       & ATTRNAME, DATATYPE, max(COUNT, len_trim(BUFFER)), BUFFER )
@@ -341,6 +349,7 @@ contains ! ======================= Public Procedures =========================
       & ATTRNAME, DATATYPE, 1, BLANK )
     endif
 
+    call MLSMessageCalls( 'pop' )
   end function mls_gdwrattr
 
   ! ---------------------------------------------  MLS_SWATTACH_ID  -----
@@ -356,7 +365,7 @@ contains ! ======================= Public Procedures =========================
     logical :: myDontFail
     integer :: myHdfVersion
     logical :: needsFileName
-    if (Deebug) print *, 'swattaching ', trim(SWATHNAME)
+    call MLSMessageCalls( 'push', constantName='mls_swattach_id' )
     MLS_SWATTACH = 0
     myDontFail = .false.
     if ( present(DontFail) ) myDontFail = DontFail
@@ -389,20 +398,16 @@ contains ! ======================= Public Procedures =========================
     end select
     if (Deebug) print *, ' (swath id is ', MLS_SWATTACH, ')'
     if ( MLS_SWATTACH /= -1 ) then
+      call MLSMessageCalls( 'pop' )
       return
     elseif ( myDontFail ) then
-      if ( present(hdfVersion) ) print *, 'hdfVersion: ', hdfVersion
-      print *, 'myhdfVersion: ', myhdfVersion
-      if ( present(FileName) ) print *, 'FileName: ', trim(FileName)
       CALL MLSMessage ( MLSMSG_Warning, moduleName,  &
           & 'Failed to attach swath name ' // trim(swathname) )
     else
-      if ( present(hdfVersion) ) print *, 'hdfVersion: ', hdfVersion
-      print *, 'myhdfVersion: ', myhdfVersion
-      if ( present(FileName) ) print *, 'FileName: ', trim(FileName)
       CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Failed to attach swath name ' // trim(swathname) )
     endif
+    call MLSMessageCalls( 'pop' )
   end function MLS_SWATTACH_ID
 
   ! ---------------------------------------------  MLS_SWATTACH_MF  -----
@@ -414,7 +419,7 @@ contains ! ======================= Public Procedures =========================
     ! Internal variables
     integer :: MLS_SWATTACH
     logical :: myDontFail
-    if (Deebug) print *, 'swattaching ', trim(SWATHNAME)
+    call MLSMessageCalls( 'push', constantName='mls_swattach_mf' )
     MLS_SWATTACH = 0
     myDontFail = .false.
     if ( present(DontFail) ) myDontFail = DontFail
@@ -427,8 +432,8 @@ contains ! ======================= Public Procedures =========================
     case default
       MLS_SWATTACH = -1
     end select
-    if (Deebug) print *, ' (swath id is ', MLS_SWATTACH, ')'
     if ( MLS_SWATTACH /= -1 ) then
+      call MLSMessageCalls( 'pop' )
       return
     elseif ( myDontFail ) then
       CALL MLSMessage ( MLSMSG_Warning, moduleName,  &
@@ -439,6 +444,7 @@ contains ! ======================= Public Procedures =========================
           & 'Failed to attach swath name ' // trim(swathname), &
           & MLSFile=MLSFile )
     endif
+    call MLSMessageCalls( 'pop' )
   end function MLS_SWATTACH_MF
 
   ! ---------------------------------------------  MLS_SWCREATE_MF  -----
@@ -453,6 +459,7 @@ contains ! ======================= Public Procedures =========================
     integer :: status
     logical, parameter :: ALWAYSTRYSWATTACH = .true.
     logical, parameter :: MUSTCREATE = .true.
+    call MLSMessageCalls( 'push', constantName='mls_swcreate_mf' )
     MLS_SWCREATE = 0
     ! All necessary input supplied?
     select case (MLSFile%HdfVersion)
@@ -503,10 +510,11 @@ contains ! ======================= Public Procedures =========================
     case default
       MLS_SWCREATE = -1
     end select
-    if ( MLS_SWCREATE /= -1 ) return
-    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+    if ( MLS_SWCREATE == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Failed to create swath name ' // trim(swathname), &
           & MLSFile=MLSFile )
+    call MLSMessageCalls( 'pop' )
 
   end function MLS_SWCREATE_MF
 
@@ -526,6 +534,7 @@ contains ! ======================= Public Procedures =========================
     integer :: status
     logical, parameter :: ALWAYSTRYSWATTACH = .true.
     logical, parameter :: MUSTCREATE = .true.
+    call MLSMessageCalls( 'push', constantName='mls_swcreate_id' )
     MLS_SWCREATE = 0
     ! All necessary input supplied?
     needsFileName = (.not. present(hdfVersion))
@@ -585,9 +594,10 @@ contains ! ======================= Public Procedures =========================
     case default
       MLS_SWCREATE = -1
     end select
-    if ( MLS_SWCREATE /= -1 ) return
-    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+    if ( MLS_SWCREATE == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Failed to create swath name ' // trim(swathname) )
+    call MLSMessageCalls( 'pop' )
 
   end function MLS_SWCREATE_ID
 
@@ -605,6 +615,7 @@ contains ! ======================= Public Procedures =========================
     logical :: myDontFail
     integer :: myHdfVersion
     logical :: needsFileName
+    call MLSMessageCalls( 'push', constantName='mls_swdefdim' )
     MLS_SWdefdim = 0
     myDontFail = .false.
     if ( present(DontFail) ) myDontFail = DontFail
@@ -634,9 +645,10 @@ contains ! ======================= Public Procedures =========================
     case default
       MLS_SWdefdim = -1
     end select
-    if ( myDontFail .or. MLS_SWdefdim /= -1 ) return
-    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+    if ( .not. myDontFail .and. MLS_SWdefdim == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Failed to define dimension ' // trim(dimname) )
+    call MLSMessageCalls( 'pop' )
 
   end function MLS_SWdefdim
 
@@ -648,7 +660,8 @@ contains ! ======================= Public Procedures =========================
     ! Internal variables
     integer :: myHdfVersion
     logical :: needsFileName
-    if (Deebug) print *, 'swattaching ', swathid
+    call MLSMessageCalls( 'push', constantName='mls_swdetach' )
+    if (Deebug) print *, 'swdetaching ', swathid
     MLS_SWDETACH = 0
     ! All necessary input supplied?
     needsFileName = (.not. present(hdfVersion))
@@ -672,9 +685,10 @@ contains ! ======================= Public Procedures =========================
     case default
       MLS_SWDETACH = -1
     end select
-    if ( MLS_SWDETACH /= -1 ) return
-    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+    if ( MLS_SWDETACH == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Failed to detach swath id ' )
+    call MLSMessageCalls( 'pop' )
 
   end function MLS_SWDETACH
 
@@ -691,6 +705,7 @@ contains ! ======================= Public Procedures =========================
     logical :: myDontFail
     integer :: myHdfVersion
     logical :: needsFileName
+    call MLSMessageCalls( 'push', constantName='mls_swdiminfo' )
     MLS_SWdiminfo = 0
     myDontFail = .false.
     if ( present(DontFail) ) myDontFail = DontFail
@@ -705,6 +720,7 @@ contains ! ======================= Public Procedures =========================
         CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Missing needed arg FILENAME from call to MLS_SWdiminfo' )
       endif
+      call MLSMessageCalls( 'pop' )
       return
     endif
     if ( needsFileName ) then
@@ -720,9 +736,10 @@ contains ! ======================= Public Procedures =========================
     case default
       MLS_SWdiminfo = -1
     end select
-    if ( myDontFail .or. MLS_SWdiminfo /= -1 ) return
-    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+    if ( .not. myDontFail .and. MLS_SWdiminfo == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Failed to get info on dimension ' // trim(dimname) )
+    call MLSMessageCalls( 'pop' )
 
   end function MLS_SWdiminfo
 
@@ -749,6 +766,7 @@ contains ! ======================= Public Procedures =========================
     logical :: myDontFail
     integer :: myHdfVersion
     logical :: needsFileName
+    call MLSMessageCalls( 'push', constantName='mls_dfldsetup' )
     mls_dfldsetup = 0
     myDontFail = .false.
     if ( present(DontFail) ) myDontFail = DontFail
@@ -763,6 +781,7 @@ contains ! ======================= Public Procedures =========================
         CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Missing needed arg FILENAME from call to mls_dfldsetup' )
       endif
+      call MLSMessageCalls( 'pop' )
       return
     endif
     if ( needsFileName ) then
@@ -795,9 +814,10 @@ contains ! ======================= Public Procedures =========================
     case default
       mls_dfldsetup = -1
     end select
-    if ( myDontFail .or. mls_dfldsetup /= -1 ) return
-    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+    if ( .not. myDontFail .and. mls_dfldsetup == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Failed to set up data field ' // trim(fieldname) )
+    call MLSMessageCalls( 'pop' )
 
   end function MLS_dfldsetUP
 
@@ -824,6 +844,7 @@ contains ! ======================= Public Procedures =========================
     logical :: myDontFail
     integer :: myHdfVersion
     logical :: needsFileName
+    call MLSMessageCalls( 'push', constantName='mls_gfldsetup' )
     mls_gfldsetup = 0
     myDontFail = .false.
     if ( present(DontFail) ) myDontFail = DontFail
@@ -838,6 +859,7 @@ contains ! ======================= Public Procedures =========================
         CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Missing needed arg FILENAME from call to mls_gfldsetup' )
       endif
+      call MLSMessageCalls( 'pop' )
       return
     endif
     if ( needsFileName ) then
@@ -872,9 +894,10 @@ contains ! ======================= Public Procedures =========================
       mls_gfldsetup = -1
     end select
    ! print *, 'mls_gfldsetup returns: ', mls_gfldsetup
-    if ( myDontFail .or. mls_gfldsetup /= -1 ) return
-    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+    if ( .not. myDontFail .and. mls_gfldsetup == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Failed to set up geoloc field ' // trim(fieldname) )
+    call MLSMessageCalls( 'pop' )
 
   end function MLS_GFLDSETUP
 
@@ -2015,6 +2038,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDFEOS
 
 ! $Log$
+! Revision 2.30  2007/08/17 00:27:48  pwagner
+! push more procedures onto MLSCallStack
+!
 ! Revision 2.29  2005/11/15 00:18:20  pwagner
 ! present a poor choice for argument name; esp when optional args exist
 !
