@@ -30,7 +30,8 @@ module ReadAPriori
     & mls_openFile, SPLIT_PATH_NAME
   use MLSL2Options, only: DEFAULT_HDFVERSION_READ, SPECIALDUMPFILE, TOOLKIT
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+  use MLSMessageModule, only: MLSMessage, MLSMessageCalls, &
+    & MLSMSG_Error, MLSMSG_Warning
   use MLSPCF2, only: &
     & mlspcf_l2apriori_start, mlspcf_l2apriori_end, &
     & mlspcf_l2clim_start, mlspcf_l2clim_end, &
@@ -38,7 +39,7 @@ module ReadAPriori
     & mlspcf_l2geos5_start, mlspcf_l2geos5_end, &
     & mlspcf_l2ncep_start, mlspcf_l2ncep_end, &
     & mlspcf_surfaceHeight_start, mlspcf_surfaceHeight_end
-  use MLSStringLists, only: catLists
+  use MLSStringLists, only: catLists, SWITCHDETAIL
   use MLSStrings, only: lowercase
   use MoreTree, only: Get_Spec_ID
   use OUTPUT_M, only: BLANKS, OUTPUT, outputNamedValue, &
@@ -175,23 +176,19 @@ contains ! =====     Public Procedures     =============================
     character(len=MAXSWATHNAMESBUFSIZE) :: ALLSWATHNAMES ! Buffer to get info back.
     character(len=8) :: description
 
-    if ( toggle (gen) ) call trace_begin ( "read_apriori", root )
+    if ( toggle(gen) ) then
+      call trace_begin ( "read_apriori", root )
+    else
+      call MLSMessageCalls( 'push', constantName=ModuleName )
+    endif
 
     timing = section_times
     if ( timing ) call time_now ( t1 )
     error = 0
 
     ! Will we be dumping info? To what level of detail?
-    if ( index(switches, 'apr3') /= 0 ) then
-      Details = 1
-    elseif ( index(switches, 'apr2') /= 0 ) then
-      Details = 0
-    elseif ( index(switches, 'apr1') /= 0 ) then
-      Details = -1
-    else
-      Details = -2
-    endif
-    if( index(switches, 'apr') /= 0 ) &     
+    Details = switchDetail(switches, 'apr') - 2
+    if( Details > -3 ) &     
     & call output ( '============ Read APriori ============', advance='yes' )    
     allswathnames = ' '
     LastAprioriPCF = mlspcf_l2apriori_start - 1
@@ -348,7 +345,7 @@ contains ! =====     Public Procedures     =============================
           call ReadL2GPData ( L2GPFile, swathNameString, l2gp )
         endif
 
-        if( index(switches, 'apr') /= 0 ) then
+        if( Details > -3 ) then
           if ( specialDumpFile /= ' ' ) &
             & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
           call dump( l2gp, details=details )
@@ -356,7 +353,7 @@ contains ! =====     Public Procedures     =============================
             & call revertOutput
         endif
 
-        if(index(switches, 'pro') /= 0) then                            
+        if( switchDetail(switches, 'pro') > -1 ) then                            
            call announce_success(FilenameString, 'l2gp', &                    
            & swathNameString, MLSFile=L2GPFile)    
         end if
@@ -408,7 +405,8 @@ contains ! =====     Public Procedures     =============================
           & L2AUXDatabase(l2Index), &
           & checkDimNames=.false. )
 
-        if( index(switches, 'apr') /= 0 ) then
+        ! if( index(switches, 'apr') /= 0 ) then
+        if( Details > -3 ) then
           if ( specialDumpFile /= ' ' ) &
             & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
           call dump( L2AUXDatabase(l2Index), details )
@@ -421,7 +419,7 @@ contains ! =====     Public Procedures     =============================
 !           call announce_error ( son, &
 !             & 'Failed to close l2aux file ' // trim(FileNameString) )
 !         elseif(index(switches, 'pro') /= 0) then                            
-        if(index(switches, 'pro') /= 0) then                            
+        if( switchDetail(switches, 'pro') > -1 ) then                            
            call announce_success(FilenameString, 'l2aux', &                    
            & sdNameString, MLSFile=L2AUXFile)    
         end if
@@ -463,7 +461,7 @@ contains ! =====     Public Procedures     =============================
             call SetupNewGriddedData ( GriddedDatabase(gridIndex), empty=.true. )
           endif
           if ( returnStatus == 0 ) then
-            if(index(switches, 'pro') /= 0) &
+            if( switchDetail(switches, 'pro') > -1 ) &                            
               & call announce_success(FilenameString, 'ncep', &                    
                & fieldNameString, MLSFile=GriddedFile)
             apriorifiles%ncep = catlists(apriorifiles%ncep, trim(FilenameString))
@@ -508,7 +506,7 @@ contains ! =====     Public Procedures     =============================
             call SetupNewGriddedData ( GriddedDatabase(gridIndex), empty=.true. )
           endif
           if ( returnStatus == 0 ) then
-            if(index(switches, 'pro') /= 0) &
+            if( switchDetail(switches, 'pro') > -1 ) &                            
               & call announce_success(FilenameString, 'dao', &                    
                & fieldNameString, MLSFile=GriddedFile)    
             if ( description == 'dao' ) then
@@ -559,7 +557,7 @@ contains ! =====     Public Procedures     =============================
             call SetupNewGriddedData ( GriddedDatabase(gridIndex), empty=.true. )
           endif
           if ( returnStatus == 0 ) then
-            if(index(switches, 'pro') /= 0) &
+            if( switchDetail(switches, 'pro') > -1 ) &                            
               & call announce_success(FilenameString, 'geos5', &                    
                & fieldNameString, MLSFile=GriddedFile)    
             if ( description == 'dao' ) then
@@ -590,7 +588,7 @@ contains ! =====     Public Procedures     =============================
           call decorate ( key, &
             & AddGriddedDataToDatabase ( griddedDatabase, &
             & ReadGloriaFile ( GriddedFile ) ) )
-          if(index(switches, 'pro') /= 0) then                            
+          if( switchDetail(switches, 'pro') > -1 ) then                            
             call announce_success(FilenameString, 'Gloria', &                    
              & '', MLSFile=GriddedFile)    
           endif
@@ -637,7 +635,7 @@ contains ! =====     Public Procedures     =============================
 
           if ( gridIndex <= size(griddedDatabase) ) then
             call decorate ( key, gridIndex )
-            if(index(switches, 'pro') /= 0) then                          
+            if( switchDetail(switches, 'pro') > -1 ) then                            
               call announce_success(FilenameString, 'climatology', &                  
                & fieldNameString, MLSFile=GriddedFile)
             end if
@@ -666,14 +664,14 @@ contains ! =====     Public Procedures     =============================
             & AddGriddedDataToDatabase ( griddedDatabase, &
             & read_surface_height_file ( GriddedFile ) ) )
           call close_surface_height_file ( GriddedFile )
-          if(index(switches, 'pro') /= 0) then                            
+          if( switchDetail(switches, 'pro') > -1 ) then                            
             call announce_success(FilenameString, 'SurfaceHeight', &                    
              & '', MLSFile=GriddedFile)    
           end if
         case default ! Can't get here if tree_checker worked correctly
         end select   ! origins of gridded data
 
-        if( index(switches, 'apr') /= 0 ) then
+        if( Details > -3 ) then
           if ( specialDumpFile /= ' ' ) &
             & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
           call dump( GriddedDatabase(gridIndex), details )
@@ -690,7 +688,11 @@ contains ! =====     Public Procedures     =============================
         & 'Problem with read_apriori section')
     end if
     
-    if ( toggle(gen) ) call trace_end("read_apriori")
+    if ( toggle(gen) ) then
+      call trace_end("read_apriori")
+    else
+      call MLSMessageCalls( 'pop' )
+    endif
   
     if ( timing ) call sayTime
     return
@@ -869,7 +871,7 @@ contains ! =====     Public Procedures     =============================
     call output ( 'quantity', advance='yes')           
     call blanks(5)                                        
     call output ( trim(quantityName), advance='yes')      
-    if ( present(MLSFile) .and. index(switches, 'apr') /= 0 ) &
+    if ( present(MLSFile) .and. switchdetail(switches, 'apr' ) > -1 ) &
       & call dump(MLSFile)
   end subroutine announce_success
 
@@ -951,6 +953,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.73  2007/08/17 00:35:30  pwagner
+! Unneeded changes
+!
 ! Revision 2.72  2007/06/21 00:54:08  vsnyder
 ! Remove tabs, which are not part of the Fortran standard
 !
