@@ -57,7 +57,8 @@ module MLSHDF5
     & H5SGET_SIMPLE_EXTENT_DIMS_F, H5SSELECT_HYPERSLAB_F, &
     & H5TCLOSE_F, H5TCOPY_F, H5TEQUAL_F, H5TGET_CLASS_F, H5TGET_SIZE_F, &
     & H5TSET_SIZE_F
-  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
+  use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, &
+    & MLSMESSAGE, MLSMESSAGECALLS
   use MLSStringLists, only: catLists, IsInList
   use output_m, only: output, outputNamedValue
 
@@ -301,6 +302,7 @@ contains ! ======================= Public Procedures =========================
     character (len=2000) :: value1
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='CpHDF5Attribute_string' )
     my_skip = .false.
     if ( present(skip_if_already_there) ) my_skip = skip_if_already_there
     is_present = IsHDF5AttributePresent_in_DSID(fromitemID, name)
@@ -311,6 +313,7 @@ contains ! ======================= Public Procedures =========================
     call GetHDF5Attribute ( fromitemID, name, value1 )
     call MakeHDF5Attribute ( toitemID, name, trim(value1), &
       & skip_if_already_there )
+    call MLSMessageCalls( 'pop' )
   end subroutine CpHDF5Attribute_string
 
   ! -----------------------------------  CpHDF5GlAttribute_string  -----
@@ -329,6 +332,7 @@ contains ! ======================= Public Procedures =========================
     integer :: togrpID
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='CpHDFGlAttribute_string' )
     call h5fopen_f ( trim(fromFilename), H5F_ACC_RDONLY_F, fromFileID, status )
     call h5fopen_f ( trim(toFilename), H5F_ACC_RDWR_F, toFileID, status )
     call h5gopen_f ( fromFileID, '/', fromgrpid, status )
@@ -339,6 +343,7 @@ contains ! ======================= Public Procedures =========================
     call h5gclose_f ( togrpid, status )
     call h5fclose_f ( fromFileID, status )
     call h5fclose_f ( toFileID, status )
+    call MLSMessageCalls( 'pop' )
   end subroutine CpHDF5GlAttribute_string
 
   ! -------------------------------  DumpHDF5Attributes  -----
@@ -373,6 +378,7 @@ contains ! ======================= Public Procedures =========================
     integer :: type_id
     integer :: type_size
     ! Executable
+    call MLSMessageCalls( 'push', constantName='DumpHDF5Attributes' )
     myNames = '*' ! Wildcard means 'all'
     if ( present(names) ) myNames = names
     if ( present(groupName) ) then
@@ -465,6 +471,7 @@ contains ! ======================= Public Procedures =========================
         & 'Unable to open dataset' // trim(DSName) // &
         & ' while dumping its attributes' )
     endif
+    call MLSMessageCalls( 'pop' )
   end subroutine DumpHDF5Attributes
   
   ! -------------------------------  DumpHDF5DS  -----
@@ -500,6 +507,7 @@ contains ! ======================= Public Procedures =========================
     integer :: type_id
     integer :: type_size
     ! Executable
+    call MLSMessageCalls( 'push', constantName='DumpHDF5DS' )
     myNames = '*' ! Wildcard means 'all'
     if ( present(names) ) myNames = names
     if ( myNames == '*' ) call GetAllHDF5DSNames ( locID, groupName, myNames )
@@ -640,6 +648,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close group' // trim(groupName) // &
       & ' while dumping its datasets' )
+    call MLSMessageCalls( 'pop' )
   end subroutine DumpHDF5DS
 
   ! -------------------------------  GetAllHDF5AttrNames  -----
@@ -663,6 +672,7 @@ contains ! ======================= Public Procedures =========================
     character(len=len(names)) :: tempnames
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='GetAllHDF5AttrNames' )
     namelength = len(name)
     call h5eSet_auto_f ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -714,6 +724,7 @@ contains ! ======================= Public Procedures =========================
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for all attr names' )
+    call MLSMessageCalls( 'pop' )
   end subroutine GetAllHDF5AttrNames
   
   ! -----------------------------------  GetAllHDF5DSNames_fileID  -----
@@ -731,6 +742,7 @@ contains ! ======================= Public Procedures =========================
     type(MLSDataInfo_T) :: dataset_info
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='GetAllHDF5DSNames_fileID' )
     omitSlash = .true.
     if ( present(andSlash) ) omitSlash = .not. andSlash
     ! Initializing values returned if there was trouble
@@ -767,6 +779,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after getting DSNames' )
     call deallocate_test ( dataset_info%name, 'dataset_info%name', moduleName )
+    call MLSMessageCalls( 'pop' )
   end subroutine GetAllHDF5DSNames_fileID
 
   ! ---------------------------------  GetAllHDF5DSNames_filename  -----
@@ -781,6 +794,7 @@ contains ! ======================= Public Procedures =========================
     integer :: STATUS                   ! Flag
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='GetAllHDF5DSNames_filename' )
     call h5eSet_auto_f ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages off before getting DSNames ' // trim(filename) )
@@ -799,6 +813,7 @@ contains ! ======================= Public Procedures =========================
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after getting DSNames ' // trim(filename) )
+    call MLSMessageCalls( 'pop' )
   end subroutine GetAllHDF5DSNames_filename
 
   ! --------------------------------------  MakeHDF5Attribute_dbl  -----
@@ -815,6 +830,7 @@ contains ! ======================= Public Procedures =========================
     integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='MakeHDF5Attribute_dbl' )
     ! (Maybe) create the attribute
     if ( startMakeAttrib ( itemId, name, H5T_NATIVE_DOUBLE, dsID, attrID &
       &, skip_if_already_there ) ) then
@@ -822,6 +838,7 @@ contains ! ======================= Public Procedures =========================
       call h5aWrite_f ( attrID, H5T_NATIVE_DOUBLE, value, ones, status )
       call finishMakeAttrib ( name, status, attrID, dsID )
     end if
+    call MLSMessageCalls( 'pop' )
   end subroutine MakeHDF5Attribute_dbl
 
   ! -------------------------------------  MakeHDF5Attribute_sngl  -----
@@ -838,6 +855,7 @@ contains ! ======================= Public Procedures =========================
     integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='MakeHDF5Attribute_sngl' )
     ! (Maybe) create the attribute
     if ( startMakeAttrib ( itemId, name, H5T_NATIVE_REAL, dsID, attrID, &
       & skip_if_already_there ) ) then
@@ -845,6 +863,7 @@ contains ! ======================= Public Procedures =========================
       call h5aWrite_f ( attrID, H5T_NATIVE_REAL, value, ones, status )
       call finishMakeAttrib ( name, status, attrID, dsID )
     end if
+    call MLSMessageCalls( 'pop' )
   end subroutine MakeHDF5Attribute_sngl
 
   ! --------------------------------------  MakeHDF5Attribute_int  -----
@@ -861,6 +880,7 @@ contains ! ======================= Public Procedures =========================
     integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='MakeHDF5Attribute_int' )
     ! (Maybe) create the attribute
     if ( startMakeAttrib ( itemId, name, H5T_NATIVE_INTEGER, dsID, attrID, &
       & skip_if_already_there ) ) then
@@ -868,6 +888,7 @@ contains ! ======================= Public Procedures =========================
       call h5aWrite_f ( attrID, H5T_NATIVE_INTEGER, value, ones, status )
       call finishMakeAttrib ( name, status, attrID, dsID )
     end if
+    call MLSMessageCalls( 'pop' )
   end subroutine MakeHDF5Attribute_int
 
   ! ----------------------------------  MakeHDF5Attribute_logical  -----
@@ -882,9 +903,11 @@ contains ! ======================= Public Procedures =========================
     integer :: IVALUE                   ! Value as integer
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='MakeHDF5Attribute_logical' )
     iValue = 0
     if ( value ) iValue = 1
     call MakeHDF5Attribute ( itemID, name, iValue, skip_if_already_there )
+    call MLSMessageCalls( 'pop' )
   end subroutine MakeHDF5Attribute_logical
 
   ! ------------------------------  MakeHDF5Attribute_logicalarr1  -----
@@ -899,12 +922,14 @@ contains ! ======================= Public Procedures =========================
     integer :: IValue(size(value))      ! 1 for true, 0 for false
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='MakeHDF5Attribute_logicalarr1' )
     where ( value )
       iValue = 1
     elsewhere
       iValue = 0
     end where
     call MakeHDF5Attribute ( itemID, name, iValue, skip_if_already_there )
+    call MLSMessageCalls( 'pop' )
   end subroutine MakeHDF5Attribute_logicalarr1
 
   ! -----------------------------------  MakeHDF5Attribute_string  -----
@@ -927,6 +952,7 @@ contains ! ======================= Public Procedures =========================
     logical, parameter :: NEVERDELETE = .true.
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='MakeHDF5Attribute_string' )
     my_skip = .false.
     if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
     my_dont_trim = .false.
@@ -991,6 +1017,7 @@ contains ! ======================= Public Procedures =========================
     call h5tClose_f ( stringtype, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close stringtype ' // trim(name) )
+    call MLSMessageCalls( 'pop' )
   end subroutine MakeHDF5Attribute_string
 
   ! -------------------------------  MakeHDF5Attribute_stringarr1  -----
@@ -1010,6 +1037,7 @@ contains ! ======================= Public Procedures =========================
     integer(kind=hsize_t), dimension(1) :: SHP        ! Shape
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='MakeHDF5Attribute_stringarr1' )
     my_skip = .false.
     if ( present(skip_if_already_there) ) my_skip = skip_if_already_there
     if ( my_skip ) then
@@ -1036,6 +1064,7 @@ contains ! ======================= Public Procedures =========================
     call h5aWrite_f ( attrID, stringtype, value, &
       & ones, status )
     call finishMakeAttrib ( name, status, attrID, dsID, stringType )
+    call MLSMessageCalls( 'pop' )
   end subroutine MakeHDF5Attribute_stringarr1
 
   ! ---------------------------------  MakeHDF5Attribute_snglarr1  -----
@@ -1053,6 +1082,7 @@ contains ! ======================= Public Procedures =========================
     integer(kind=hsize_t), dimension(1) :: SHP        ! Shape
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='MakeHDF5Attribute_snglarr1' )
     ! (Maybe) create the attribute
     shp = shape(value)
     if ( startMakeAttrib ( itemId, name, H5T_NATIVE_REAL, spaceID, &
@@ -1062,6 +1092,7 @@ contains ! ======================= Public Procedures =========================
         & int ( (/ shp, ones(1:6) /), hsize_t ), status )
       call finishMakeAttrib ( name, status, attrID, spaceID )
     end if
+    call MLSMessageCalls( 'pop' )
   end subroutine MakeHDF5Attribute_snglarr1
 
   ! ----------------------------------  MakeHDF5Attribute_dblarr1  -----
@@ -1079,6 +1110,7 @@ contains ! ======================= Public Procedures =========================
     integer(kind=hsize_t), dimension(1) :: SHP        ! Shape
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='MakeHDF5Attribute_dblarr1' )
     ! (Maybe) create the attribute
     shp = shape(value)
     if ( startMakeAttrib ( itemId, name, H5T_NATIVE_DOUBLE, spaceID, &
@@ -1088,6 +1120,7 @@ contains ! ======================= Public Procedures =========================
         & int ( (/ shp, ones(1:6) /), hsize_t ), status )
       call finishMakeAttrib ( name, status, attrID, spaceID )
     end if
+    call MLSMessageCalls( 'pop' )
   end subroutine MakeHDF5Attribute_dblarr1
 
   ! ----------------------------------  MakeHDF5Attribute_intarr1  -----
@@ -1105,6 +1138,7 @@ contains ! ======================= Public Procedures =========================
     integer(kind=hsize_t), dimension(1) :: SHP        ! Shape
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='MakeHDF5Attribute_intarr1' )
     ! (Maybe) create the attribute
     shp = shape(value)
     if ( startMakeAttrib ( itemId, name, H5T_NATIVE_INTEGER, spaceID, &
@@ -1114,6 +1148,7 @@ contains ! ======================= Public Procedures =========================
         & int ( (/ shp, ones(1:6) /), hsize_t ), status )
       call finishMakeAttrib ( name, status, attrID, spaceID )
     end if
+    call MLSMessageCalls( 'pop' )
   end subroutine MakeHDF5Attribute_intarr1
 
   ! -----------------------------------  MakeHDF5AttributeDSN_int  -----
@@ -1131,6 +1166,7 @@ contains ! ======================= Public Procedures =========================
     logical :: my_skip
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='MakeHDF5AttributeDSN_int' )
     my_skip = .false.
     if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
     if ( my_skip ) then
@@ -1142,6 +1178,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close data ' // trim(dataName) )
 
+    call MLSMessageCalls( 'pop' )
   end subroutine MakeHDF5AttributeDSN_int
 
   ! -------------------------------  MakeHDF5AttributeDSN_logical  -----
@@ -1162,6 +1199,7 @@ contains ! ======================= Public Procedures =========================
     logical :: my_skip
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='MakeHDF5AttributeDSN_logical' )
     my_skip = .false.
     if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
     if ( my_skip ) then
@@ -1173,6 +1211,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close data ' // trim(dataName) )
 
+    call MLSMessageCalls( 'pop' )
   end subroutine MakeHDF5AttributeDSN_logical
 
   ! --------------------------------  MakeHDF5AttributeDSN_string  -----
@@ -1190,6 +1229,7 @@ contains ! ======================= Public Procedures =========================
     logical :: my_skip
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='MakeHDF5AttributeDSN_string' )
     my_skip = .false.
     if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
     if ( my_skip ) then
@@ -1207,6 +1247,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close data ' // trim(dataName) )
 
+    call MLSMessageCalls( 'pop' )
   end subroutine MakeHDF5AttributeDSN_string
 
   ! -------------------------------  MakeHDF5AttributeDSN_st_arr1  -----
@@ -1224,6 +1265,7 @@ contains ! ======================= Public Procedures =========================
     logical :: my_skip
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='MakeHDF5AttributeDSN_st_arr1' )
     my_skip = .false.
     if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
     if ( my_skip ) then
@@ -1235,6 +1277,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close data ' // trim(dataName) )
 
+    call MLSMessageCalls( 'pop' )
   end subroutine MakeHDF5AttributeDSN_st_arr1
 
   ! ------------------------------  MakeHDF5AttributeDSN_snglarr1  -----
@@ -1252,6 +1295,7 @@ contains ! ======================= Public Procedures =========================
     logical :: my_skip
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='MakeHDF5AttributeDSN_snglarr1' )
     my_skip = .false.
     if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
     if ( my_skip ) then
@@ -1262,6 +1306,7 @@ contains ! ======================= Public Procedures =========================
     call h5dclose_f ( dataID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close data ' // trim(dataName) )
+    call MLSMessageCalls( 'pop' )
 
   end subroutine MakeHDF5AttributeDSN_snglarr1
 
@@ -1280,6 +1325,7 @@ contains ! ======================= Public Procedures =========================
     logical :: my_skip
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='MakeHDF5AttributeDSN_dblarr1' )
     my_skip = .false.
     if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
     if ( my_skip ) then
@@ -1290,6 +1336,7 @@ contains ! ======================= Public Procedures =========================
     call h5dclose_f ( dataID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close data ' // trim(dataName) )
+    call MLSMessageCalls( 'pop' )
 
   end subroutine MakeHDF5AttributeDSN_dblarr1
 
@@ -1304,6 +1351,7 @@ contains ! ======================= Public Procedures =========================
     integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='GetHDF5Attribute_int' )
     if ( MLSFile%fileID%sd_ID > 0 ) then
       call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
     elseif ( MLSFile%fileID%grp_ID > 0 ) then
@@ -1327,6 +1375,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close attribute ' // trim(name), &
       & MLSFile=MLSFile )
+    call MLSMessageCalls( 'pop' )
   end subroutine GetHDF5Attribute_int
 
   ! -----------------------------------  GetHDF5Attribute_intarr1  -----
@@ -1341,6 +1390,7 @@ contains ! ======================= Public Procedures =========================
     integer(kind=hsize_t), dimension(1) :: SHP        ! Shape
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='GetHDF5Attribute_intarr1' )
     shp = shape(value)
     if ( MLSFile%fileID%sd_ID > 0 ) then
       call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
@@ -1366,6 +1416,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close attribute ' // trim(name), &
       & MLSFile=MLSFile )
+    call MLSMessageCalls( 'pop' )
   end subroutine GetHDF5Attribute_intarr1
 
   ! ------------------------------------  GetHDF5Attribute_string  -----
@@ -1381,6 +1432,7 @@ contains ! ======================= Public Procedures =========================
     integer :: STRINGSIZE               ! String size
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='GetHDF5Attribute_string' )
     if ( MLSFile%fileID%sd_ID > 0 ) then
       call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
     elseif ( MLSFile%fileID%grp_ID > 0 ) then
@@ -1418,6 +1470,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close string type for attribute ' // trim(name), &
       & MLSFile=MLSFile )
+    call MLSMessageCalls( 'pop' )
   end subroutine GetHDF5Attribute_string
 
   ! --------------------------------  GetHDF5Attribute_stringarr1  -----
@@ -1434,6 +1487,7 @@ contains ! ======================= Public Procedures =========================
     integer(kind=hsize_t), dimension(1) :: SHP        ! Shape
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='GetHDF5Attribute_stringarr1' )
     shp = shape(value)
     if ( MLSFile%fileID%sd_ID > 0 ) then
       call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
@@ -1474,6 +1528,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close string type for attribute ' // trim(name), &
       & MLSFile=MLSFile )
+    call MLSMessageCalls( 'pop' )
   end subroutine GetHDF5Attribute_stringarr1
 
   ! -----------------------------------  GetHDF5Attribute_logical  -----
@@ -1486,6 +1541,7 @@ contains ! ======================= Public Procedures =========================
     integer :: IVALUE                     ! Value as integer
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='GetHDF5Attribute_logical' )
     if ( MLSFile%fileID%sd_ID > 0 ) then
       call GetHDF5Attribute ( MLSFile%fileID%sd_ID, name, iValue )
       if ( DEEBUG ) call outputNamedValue( 'MLSFile%fileID%sd_ID', MLSFile%fileID%sd_ID )
@@ -1500,6 +1556,7 @@ contains ! ======================= Public Procedures =========================
 
     if ( DEEBUG ) call outputNamedValue( 'ivalue', ivalue )
     value = ( iValue == 1 )
+    call MLSMessageCalls( 'pop' )
   end subroutine GetHDF5Attribute_logical
 
   ! -------------------------------  GetHDF5Attribute_logicalarr1  -----
@@ -1512,6 +1569,7 @@ contains ! ======================= Public Procedures =========================
     integer :: IVALUE(size(VALUE,1))      ! Value as integer
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='GetHDF5Attribute_logicalarr1' )
     if ( MLSFile%fileID%sd_ID > 0 ) then
       call GetHDF5Attribute ( MLSFile%fileID%sd_ID, name, iValue )
     elseif ( MLSFile%fileID%grp_ID > 0 ) then
@@ -1522,6 +1580,7 @@ contains ! ======================= Public Procedures =========================
       return
     endif
     value = ( iValue == 1 )
+    call MLSMessageCalls( 'pop' )
   end subroutine GetHDF5Attribute_logicalarr1
 
   ! ----------------------------------  GetHDF5Attribute_snglarr1  -----
@@ -1536,6 +1595,7 @@ contains ! ======================= Public Procedures =========================
     integer(kind=hsize_t), dimension(1) :: SHP        ! Shape
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='GetHDF5Attribute_snglarr1' )
     shp = shape(value)
     if ( MLSFile%fileID%sd_ID > 0 ) then
       call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
@@ -1561,6 +1621,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close 1d attribute array  ' // trim(name), &
       & MLSFile=MLSFile )
+    call MLSMessageCalls( 'pop' )
   end subroutine GetHDF5Attribute_snglarr1
 
   ! --------------------------------------  GetHDF5Attribute_sngl  -----
@@ -1574,6 +1635,7 @@ contains ! ======================= Public Procedures =========================
     integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='GetHDF5Attribute_sngl' )
     if ( MLSFile%fileID%sd_ID > 0 ) then
       call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
     elseif ( MLSFile%fileID%grp_ID > 0 ) then
@@ -1597,6 +1659,7 @@ contains ! ======================= Public Procedures =========================
     call h5aClose_f ( attrID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close sngl attribute  ' // trim(name) )
+    call MLSMessageCalls( 'pop' )
   end subroutine GetHDF5Attribute_sngl
 
   ! ---------------------------------------  GetHDF5Attribute_dbl  -----
@@ -1610,6 +1673,7 @@ contains ! ======================= Public Procedures =========================
     integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='GetHDF5Attribute_dbl' )
     if ( MLSFile%fileID%sd_ID > 0 ) then
       call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
     elseif ( MLSFile%fileID%grp_ID > 0 ) then
@@ -1633,6 +1697,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close dble attribute  ' // trim(name), &
       & MLSFile=MLSFile )
+    call MLSMessageCalls( 'pop' )
   end subroutine GetHDF5Attribute_dbl
 
   ! -----------------------------------  GetHDF5Attribute_dblarr1  -----
@@ -1647,6 +1712,7 @@ contains ! ======================= Public Procedures =========================
     integer(kind=hsize_t), dimension(1) :: SHP        ! Shape
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='GetHDF5Attribute_dblarr1' )
     shp = shape(value)
     if ( MLSFile%fileID%sd_ID > 0 ) then
       call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
@@ -1672,6 +1738,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close dblarr1 attribute  ' // trim(name), &
       & MLSFile=MLSFile )
+    call MLSMessageCalls( 'pop' )
   end subroutine GetHDF5Attribute_dblarr1
 
   ! ---------------------------------------  GetHDF5Attr_ID_int  -----
@@ -1685,11 +1752,13 @@ contains ! ======================= Public Procedures =========================
     type (MLSFile_T)   :: MLSFile
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='GetHDF5Attr_ID_int' )
     status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
       & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
     MLSFile%fileID%sd_id = itemID
     MLSFile%stillOpen = .true.
     call GetHDF5Attribute ( MLSFile, name, value )
+    call MLSMessageCalls( 'pop' )
   end subroutine GetHDF5Attr_ID_int
 
   ! -----------------------------------  GetHDF5Attr_ID_intarr1  -----
@@ -1703,11 +1772,13 @@ contains ! ======================= Public Procedures =========================
     type (MLSFile_T)   :: MLSFile
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='GetHDF5Attr_ID_intarr1' )
     status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
       & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
     MLSFile%fileID%sd_id = itemID
     MLSFile%stillOpen = .true.
     call GetHDF5Attribute ( MLSFile, name, value )
+    call MLSMessageCalls( 'pop' )
   end subroutine GetHDF5Attr_ID_intarr1
 
   ! ------------------------------------  GetHDF5Attr_ID_string  -----
@@ -1721,11 +1792,13 @@ contains ! ======================= Public Procedures =========================
     type (MLSFile_T)   :: MLSFile
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='GetHDF5Attr_ID_string' )
     status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
       & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
     MLSFile%fileID%sd_id = itemID
     MLSFile%stillOpen = .true.
     call GetHDF5Attribute ( MLSFile, name, value )
+    call MLSMessageCalls( 'pop' )
   end subroutine GetHDF5Attr_ID_string
 
   ! --------------------------------  GetHDF5Attr_ID_stringarr1  -----
@@ -1739,11 +1812,13 @@ contains ! ======================= Public Procedures =========================
     type (MLSFile_T)   :: MLSFile
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='GetHDF5Attr_ID_stringarr1' )
     status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
       & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
     MLSFile%fileID%sd_id = itemID
     MLSFile%stillOpen = .true.
     call GetHDF5Attribute ( MLSFile, name, value )
+    call MLSMessageCalls( 'pop' )
   end subroutine GetHDF5Attr_ID_stringarr1
 
   ! -----------------------------------  GetHDF5Attr_ID_logical  -----
@@ -1757,11 +1832,13 @@ contains ! ======================= Public Procedures =========================
     type (MLSFile_T)   :: MLSFile
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='GetHDF5Attr_ID_logical' )
     status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
       & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
     MLSFile%fileID%sd_id = itemID
     MLSFile%stillOpen = .true.
     call GetHDF5Attribute ( MLSFile, name, value )
+    call MLSMessageCalls( 'pop' )
   end subroutine GetHDF5Attr_ID_logical
 
   ! -------------------------------  GetHDF5Attr_ID_logicalarr1  -----
@@ -1775,11 +1852,13 @@ contains ! ======================= Public Procedures =========================
     type (MLSFile_T)   :: MLSFile
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='GetHDF5Attr_ID_logicalarr1' )
     status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
       & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
     MLSFile%fileID%sd_id = itemID
     MLSFile%stillOpen = .true.
     call GetHDF5Attribute ( MLSFile, name, value )
+    call MLSMessageCalls( 'pop' )
   end subroutine GetHDF5Attr_ID_logicalarr1
 
   ! ----------------------------------  GetHDF5Attr_ID_snglarr1  -----
@@ -1793,11 +1872,13 @@ contains ! ======================= Public Procedures =========================
     type (MLSFile_T)   :: MLSFile
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='GetHDF5Attr_ID_snglarr1' )
     status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
       & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
     MLSFile%fileID%sd_id = itemID
     MLSFile%stillOpen = .true.
     call GetHDF5Attribute ( MLSFile, name, value )
+    call MLSMessageCalls( 'pop' )
   end subroutine GetHDF5Attr_ID_snglarr1
 
   ! --------------------------------------  GetHDF5Attr_ID_sngl  -----
@@ -1811,11 +1892,13 @@ contains ! ======================= Public Procedures =========================
     type (MLSFile_T)   :: MLSFile
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='GetHDF5Attr_ID_sngl' )
     status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
       & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
     MLSFile%fileID%sd_id = itemID
     MLSFile%stillOpen = .true.
     call GetHDF5Attribute ( MLSFile, name, value )
+    call MLSMessageCalls( 'pop' )
   end subroutine GetHDF5Attr_ID_sngl
 
   ! ---------------------------------------  GetHDF5Attr_ID_dbl  -----
@@ -1829,11 +1912,13 @@ contains ! ======================= Public Procedures =========================
     type (MLSFile_T)   :: MLSFile
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='GetHDF5Attr_ID_dbl' )
     status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
       & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
     MLSFile%fileID%sd_id = itemID
     MLSFile%stillOpen = .true.
     call GetHDF5Attribute ( MLSFile, name, value )
+    call MLSMessageCalls( 'pop' )
   end subroutine GetHDF5Attr_ID_dbl
 
   ! -----------------------------------  GetHDF5Attr_ID_dblarr1  -----
@@ -1847,11 +1932,13 @@ contains ! ======================= Public Procedures =========================
     type (MLSFile_T)   :: MLSFile
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='GetHDF5Attr_ID_dblarr1' )
     status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
       & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
     MLSFile%fileID%sd_id = itemID
     MLSFile%stillOpen = .true.
     call GetHDF5Attribute ( MLSFile, name, value )
+    call MLSMessageCalls( 'pop' )
   end subroutine GetHDF5Attr_ID_dblarr1
 
   ! --------------------------------  GetHDF5AttributePtr_intarr1  -----
@@ -1870,6 +1957,7 @@ contains ! ======================= Public Procedures =========================
     integer(kind=hSize_t), dimension(1) :: MaxShp, SHP  ! Shape
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='GetHDF5AttributePtr_intarr1' )
     lb = 1
     if ( present(lowBound) ) lb = lowBound
     call GetHDF5AttrDims ( itemID, trim(name), shp, maxShp )
@@ -1887,6 +1975,7 @@ contains ! ======================= Public Procedures =========================
     call h5aClose_f ( attrID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close attribute ' // trim(name) )
+    call MLSMessageCalls( 'pop' )
   end subroutine GetHDF5AttributePtr_intarr1
 
   ! -----------------------------  GetHDF5AttributePtr_stringarr1  -----
@@ -1907,6 +1996,7 @@ contains ! ======================= Public Procedures =========================
     integer(kind=hSize_t), dimension(1) :: MaxShp, SHP ! Shape
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='GetHDF5AttributePtr_stringarr1' )
     lb = 1
     if ( present(lowBound) ) lb = lowBound
     call GetHDF5AttrDims ( itemID, trim(name), shp, maxShp )
@@ -1935,6 +2025,7 @@ contains ! ======================= Public Procedures =========================
     call h5tClose_f ( stringType, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close string type for attribute ' // trim(name) )
+    call MLSMessageCalls( 'pop' )
   end subroutine GetHDF5AttributePtr_stringarr1
 
   ! ----------------------------  GetHDF5AttributePtr_logicalarr1  -----
@@ -1949,10 +2040,12 @@ contains ! ======================= Public Procedures =========================
     integer, pointer :: IVALUE(:)         ! Value as integer
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='GetHDF5AttributePtr_logicalarr1' )
     nullify ( ivalue )
     call GetHDF5AttributePtr ( itemID, name, iValue, lowBound )
     value = ( iValue == 1 )
     call deallocate_test ( ivalue, 'IValue', moduleName )
+    call MLSMessageCalls( 'pop' )
   end subroutine GetHDF5AttributePtr_logicalarr1
 
   ! -------------------------------  GetHDF5AttributePtr_snglarr1  -----
@@ -1971,6 +2064,7 @@ contains ! ======================= Public Procedures =========================
     integer(kind=hSize_t), dimension(1) :: MaxShp, SHP  ! Shape
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='GetHDF5AttributePtr_snglarr1' )
     lb = 1
     if ( present(lowBound) ) lb = lowBound
     call GetHDF5AttrDims ( itemID, trim(name), shp, maxShp )
@@ -1988,6 +2082,7 @@ contains ! ======================= Public Procedures =========================
     call h5aClose_f ( attrID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close 1d attribute array  ' // trim(name) )
+    call MLSMessageCalls( 'pop' )
   end subroutine GetHDF5AttributePtr_snglarr1
 
   ! ---------------------------------  GetHDF5AttributePtr_dblarr1  -----
@@ -2006,6 +2101,7 @@ contains ! ======================= Public Procedures =========================
     integer(kind=hSize_t), dimension(1) :: MaxShp, SHP  ! Shape
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='GetHDF5AttributePtr_dblarr1' )
     lb = 1
     if ( present(lowBound) ) lb = lowBound
     call GetHDF5AttrDims ( itemID, trim(name), shp, maxShp )
@@ -2023,6 +2119,7 @@ contains ! ======================= Public Procedures =========================
     call h5aClose_f ( attrID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close dblarr1 attribute  ' // trim(name) )
+    call MLSMessageCalls( 'pop' )
   end subroutine GetHDF5AttributePtr_dblarr1
 
   ! --------------------------------------------  GetHDF5AttrDims  -----
@@ -2040,6 +2137,7 @@ contains ! ======================= Public Procedures =========================
     integer :: STATUS                   ! Flag
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='GetHDF5AttrDims' )
     ! Initializing values returned if there was trouble
     dims = -1
     if ( present(maxDims)) maxDims = -1
@@ -2061,6 +2159,7 @@ contains ! ======================= Public Procedures =========================
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after getting dims of ' // trim(name) )
+    call MLSMessageCalls( 'pop' )
   end subroutine GetHDF5AttrDims
 
   ! ----------------------------------------------  GetHDF5DSDims  -----
@@ -2078,6 +2177,7 @@ contains ! ======================= Public Procedures =========================
     integer :: STATUS                   ! Flag
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='GetHDF5DSDims' )
     ! Initializing values returned if there was trouble
     dims = -1
     if ( present(maxDims)) maxDims = -1
@@ -2099,6 +2199,7 @@ contains ! ======================= Public Procedures =========================
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after getting dims ' // trim(name) )
+    call MLSMessageCalls( 'pop' )
   end subroutine GetHDF5DSDims
 
   ! ----------------------------------------------  GetHDF5DSRank  -----
@@ -2113,6 +2214,7 @@ contains ! ======================= Public Procedures =========================
     integer :: STATUS                   ! Flag
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='GetHDF5DSRank' )
     rank = -1                           ! means trouble
     call h5eSet_auto_f ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -2124,6 +2226,7 @@ contains ! ======================= Public Procedures =========================
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after getting rank ' // trim(name) )
+    call MLSMessageCalls( 'pop' )
   end subroutine GetHDF5DSRank
 
   ! ---------------------------------------------  GetHDF5DSQType  -----
@@ -2138,6 +2241,7 @@ contains ! ======================= Public Procedures =========================
     integer :: STATUS                   ! Flag
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='GetHDF5DSQType' )
     Qtype = 'unknown'                   ! means trouble
     call h5eSet_auto_f ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -2149,6 +2253,7 @@ contains ! ======================= Public Procedures =========================
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after getting rank ' // trim(name))
+    call MLSMessageCalls( 'pop' )
   end subroutine GetHDF5DSQType
 
   ! --------------------------------------  IsHDF5AttributeInFile_DS  -----
@@ -2168,6 +2273,7 @@ contains ! ======================= Public Procedures =========================
     integer :: STATUS                   ! Flag
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='IsHDF5AttributeInFile_DS' )
     SooDesu = .false.
     call h5eSet_auto_f ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -2188,6 +2294,7 @@ contains ! ======================= Public Procedures =========================
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for attribute ' // trim(name) )
+    call MLSMessageCalls( 'pop' )
   end function IsHDF5AttributeInFile_DS
 
   ! --------------------------------------  IsHDF5AttributeInFile_Grp  -----
@@ -2207,6 +2314,7 @@ contains ! ======================= Public Procedures =========================
     integer :: STATUS                   ! Flag
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='IsHDF5AttributeInFile_Grp' )
     SooDesu = .false.
     call h5eSet_auto_f ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -2227,6 +2335,7 @@ contains ! ======================= Public Procedures =========================
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for attribute ' // trim(name) )
+    call MLSMessageCalls( 'pop' )
   end function IsHDF5AttributeInFile_Grp
 
   ! ---------------------------------------------  IsHDF5DSInFile  -----
@@ -2240,6 +2349,7 @@ contains ! ======================= Public Procedures =========================
     integer :: STATUS                   ! Flag
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='IsHDF5DSInFile' )
     IsHDF5DSInFile = .false.
     call h5eSet_auto_f ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -2256,6 +2366,7 @@ contains ! ======================= Public Procedures =========================
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for DS ' // trim(name) )
+    call MLSMessageCalls( 'pop' )
   end function IsHDF5DSInFile
 
   ! -----------------------------  IsHDF5AttributePresent_in_DSID  -----
@@ -2268,6 +2379,7 @@ contains ! ======================= Public Procedures =========================
     integer :: STATUS                   ! Flag
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='IsHDF5AttributePresent_in_DSID' )
     call h5eSet_auto_f ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages off before looking for attribute ' // trim(name) )
@@ -2281,6 +2393,7 @@ contains ! ======================= Public Procedures =========================
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for attribute ' // trim(name) )
+    call MLSMessageCalls( 'pop' )
   end function IsHDF5AttributePresent_in_DSID
 
   ! ------------------------------  IsHDF5AttributePresent_in_fID  -----
@@ -2299,6 +2412,7 @@ contains ! ======================= Public Procedures =========================
     logical :: my_grpattr
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='IsHDF5AttributePresent_in_fID' )
     my_grpattr = .false.
     if ( present(is_grpattr) ) my_grpattr = is_grpattr
     if ( my_grpattr ) then
@@ -2325,6 +2439,7 @@ contains ! ======================= Public Procedures =========================
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for attribute ' // trim(name) )
+    call MLSMessageCalls( 'pop' )
   end function IsHDF5AttributePresent_in_fID
 
   ! ------------------------------  IsHDF5AttributePresent_in_grp  -----
@@ -2339,6 +2454,7 @@ contains ! ======================= Public Procedures =========================
     integer :: STATUS                   ! Flag
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='IsHDF5AttributePresent_in_grp' )
     call h5eSet_auto_f ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages off before looking for attribute ' // trim(name) )
@@ -2358,6 +2474,7 @@ contains ! ======================= Public Procedures =========================
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for attribute ' // trim(name) )
+    call MLSMessageCalls( 'pop' )
   end function IsHDF5AttributePresent_in_grp
 
   ! --------------------------------------------  IsHDF5DSPresent  -----
@@ -2374,6 +2491,7 @@ contains ! ======================= Public Procedures =========================
     integer :: STATUS                   ! Flag
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='IsHDF5DSPresent' )
     myOptions = ' ' ! By default, match name exactly
     if (present(options)) myOptions = options
     call h5eSet_auto_f ( 0, status )
@@ -2393,6 +2511,7 @@ contains ! ======================= Public Procedures =========================
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for DS ' // trim(name) )
+    call MLSMessageCalls( 'pop' )
   end function IsHDF5DSPresent
 
   ! -----------------------------------------  IsHDF5GroupPresent  -----
@@ -2405,6 +2524,7 @@ contains ! ======================= Public Procedures =========================
     integer :: STATUS                   ! Flag
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='IsHDF5GroupPresent' )
     call h5eSet_auto_f ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages off before looking for Group ' // trim(name) )
@@ -2414,6 +2534,7 @@ contains ! ======================= Public Procedures =========================
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for Group ' // trim(name) )
+    call MLSMessageCalls( 'pop' )
   end function IsHDF5GroupPresent
 
   ! --------------------------------------------  IsHDF5ItemPresent  -----
@@ -2432,6 +2553,7 @@ contains ! ======================= Public Procedures =========================
     integer :: STATUS                   ! Flag
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='IsHDF5ItemPresent' )
     myOptions = ' ' ! By default, match name exactly, search for sd names
     if (present(options)) myOptions = options
     call h5eSet_auto_f ( 0, status )
@@ -2455,6 +2577,7 @@ contains ! ======================= Public Procedures =========================
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for item ' // trim(name) )
+    call MLSMessageCalls( 'pop' )
   end function IsHDF5ItemPresent
 
   ! --------------------------------------  SaveAsHDF5DS_charsclr  -----
@@ -2473,6 +2596,7 @@ contains ! ======================= Public Procedures =========================
     integer(hid_t) :: type_id
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='SaveAsHDF5DS_charsclr' )
     ! Create the dataspace
     shp = 1
     call h5sCreate_simple_f ( 1, int(shp,hSize_T), spaceID, status )
@@ -2490,6 +2614,7 @@ contains ! ======================= Public Procedures =========================
     call h5dWrite_f ( setID, s_type_id, value, &
       & int ( (/ shp, ones(1:6) /), hsize_t ), status )
     call finishSaveDS ( name, status, setID, spaceID )
+    call MLSMessageCalls( 'pop' )
   end subroutine SaveAsHDF5DS_charsclr
 
   ! --------------------------------------  SaveAsHDF5DS_chararr1  -----
@@ -2511,6 +2636,7 @@ contains ! ======================= Public Procedures =========================
     integer :: STRINGTYPE               ! Type for string
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='SaveAsHDF5DS_chararr1' )
     shp = shape(value)
     maxdims = shp
     if ( present(finalShape) ) maxdims = finalShape
@@ -2522,23 +2648,6 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to set size for stringtype ' // trim(name) )
     ! Create the dataspace
- !    call h5sCreate_simple_f ( 1, int(maxdims,hSize_T), spaceID, status )
- !    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
- !      & 'Unable to create dataspace for 1D char array ' // trim(name) )
- !      ! Create the dataset
- !    if ( present(fillValue) ) then
- !      call h5pcreate_f(H5P_DATASET_CREATE_F, cparms, status)
- !      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
- !        & 'Unable to create property list for 1D char array ' // trim(name) )
- !      call h5pset_fill_value_f (cparms, H5T_NATIVE_CHARACTER, fillValue, status)
- !      if ( status /= 0) call MLSMessage (MLSMSG_Error, ModuleName, &
- !        &  "Unable to set Fill value for 1D char array " // trim (name))
- !      call h5dCreate_f ( locID, trim(name), stringtype, spaceID, setID, &
- !        & status, cparms )
- !    else
- !      call h5dCreate_f ( locID, trim(name), stringtype, spaceID, setID, &
- !        & status )
- !    end if
     call createSpaceSet ( locID, name, maxdims, stringtype, &
       & spaceID, setID, status, adding_to, cFill=FillValue)
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -2547,6 +2656,7 @@ contains ! ======================= Public Procedures =========================
     call h5dWrite_f ( setID, stringtype, value, &
       & int ( (/ shp, ones(1:6) /), hsize_t ), status )
     call finishSaveDS ( name, status, setID, spaceID, stringType )
+    call MLSMessageCalls( 'pop' )
   end subroutine SaveAsHDF5DS_chararr1
 
   ! --------------------------------------  SaveAsHDF5DS_chararr2  -----
@@ -2568,6 +2678,7 @@ contains ! ======================= Public Procedures =========================
     integer :: STRINGTYPE               ! Type for string
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='SaveAsHDF5DS_chararr2' )
     shp = shape(value)
     maxdims = shp
     if ( present(finalShape) ) maxdims = finalShape
@@ -2579,23 +2690,6 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to set size for stringtype ' // trim(name) )
     ! Create the dataspace
- !    call h5sCreate_simple_f ( 2, int(maxdims,hSize_T), spaceID, status )
- !    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
- !      & 'Unable to create dataspace for 2D char array ' // trim(name) )
- !    ! Create the dataset
- !    if ( present(fillValue) ) then
- !      call h5pcreate_f(H5P_DATASET_CREATE_F, cparms, status)
- !      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
- !        & 'Unable to create property list for 2D char array ' // trim(name) )
- !      call h5pset_fill_value_f (cparms, H5T_NATIVE_CHARACTER, fillValue, status)
- !      if ( status /= 0) call MLSMessage (MLSMSG_Error, ModuleName, &
- !        &  "Unable to set Fill value for 2D charr array " // trim (name))
- !      call h5dCreate_f ( locID, trim(name), stringtype, spaceID, setID, &
- !        & status, cparms )
- !    else
- !      call h5dCreate_f ( locID, trim(name), stringtype, spaceID, setID, &
- !        & status )
- !    end if
     call createSpaceSet ( locID, name, maxdims, stringtype, &
       & spaceID, setID, status, adding_to, cFill=fillValue)
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -2604,6 +2698,7 @@ contains ! ======================= Public Procedures =========================
     call h5dWrite_f ( setID, stringtype, value, &
       & int ( (/ shp, ones(1:5) /), hsize_t ), status )
     call finishSaveDS ( name, status, setID, spaceID, stringType )
+    call MLSMessageCalls( 'pop' )
   end subroutine SaveAsHDF5DS_chararr2
 
   ! ---------------------------------------  SaveAsHDF5DS_intarr1  -----
@@ -2624,6 +2719,7 @@ contains ! ======================= Public Procedures =========================
     integer(kind=hsize_t), dimension(1) :: SHP, MAXDIMS        ! Shape
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='SaveAsHDF5DS_intarr1' )
     shp = shape(value)
     maxdims = shp
     if ( present(finalShape) ) maxdims = finalShape
@@ -2636,6 +2732,7 @@ contains ! ======================= Public Procedures =========================
     call h5dWrite_f ( setID, H5T_NATIVE_INTEGER, value, &
       & int ( (/ shp, ones(1:6) /), hsize_t ), status )
     call finishSaveDS ( name, status, setID, spaceID )
+    call MLSMessageCalls( 'pop' )
   end subroutine SaveAsHDF5DS_intarr1
 
   ! ---------------------------------------  SaveAsHDF5DS_intarr2  -----
@@ -2656,6 +2753,7 @@ contains ! ======================= Public Procedures =========================
     integer(kind=hsize_t), dimension(2) :: SHP, MAXDIMS        ! Shape
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='SaveAsHDF5DS_intarr2' )
     shp = shape(value)
     maxdims = shp
     if ( present(finalShape) ) maxdims = finalShape
@@ -2668,6 +2766,7 @@ contains ! ======================= Public Procedures =========================
     call h5dWrite_f ( setID, H5T_NATIVE_INTEGER, value, &
       & int ( (/ shp, ones(1:5) /), hsize_t ), status )
     call finishSaveDS ( name, status, setID, spaceID )
+    call MLSMessageCalls( 'pop' )
   end subroutine SaveAsHDF5DS_intarr2
 
   ! ---------------------------------------  SaveAsHDF5DS_intarr3  -----
@@ -2688,6 +2787,7 @@ contains ! ======================= Public Procedures =========================
     integer(kind=hsize_t), dimension(3) :: SHP, MAXDIMS        ! Shape
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='SaveAsHDF5DS_intarr3' )
     shp = shape(value)
     maxdims = shp
     if ( present(finalShape) ) maxdims = finalShape
@@ -2700,6 +2800,7 @@ contains ! ======================= Public Procedures =========================
     call h5dWrite_f ( setID, H5T_NATIVE_INTEGER, value, &
       & int ( (/ shp, ones(1:4) /), hsize_t ), status )
     call finishSaveDS ( name, status, setID, spaceID )
+    call MLSMessageCalls( 'pop' )
   end subroutine SaveAsHDF5DS_intarr3
 
   ! ---------------------------------------  SaveAsHDF5DS_logarr1  -----
@@ -2718,6 +2819,7 @@ contains ! ======================= Public Procedures =========================
     character :: MyFillValue, MyValue(size(value))   ! T = true, F = false
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='SaveAsHDF5DS_logarr1' )
     ! Turn fillValue into a character
     myFillValue = 'F'
     if ( present(fillValue) ) then
@@ -2729,6 +2831,7 @@ contains ! ======================= Public Procedures =========================
       if ( value(i) ) myValue(i) = 'T'
     end do
     call saveAsHDF5DS ( locID, name, myValue, finalShape, myFillValue, adding_to )
+    call MLSMessageCalls( 'pop' )
   end subroutine SaveAsHDF5DS_logarr1
 
   ! ---------------------------------------  SaveAsHDF5DS_dblarr1  -----
@@ -2749,6 +2852,7 @@ contains ! ======================= Public Procedures =========================
     integer(kind=hsize_t), dimension(1) :: SHP, MAXDIMS        ! Shape
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='SaveAsHDF5DS_dblarr1' )
     shp = shape(value)
     maxdims = shp
     if ( present(finalShape) ) maxdims = finalShape
@@ -2761,6 +2865,7 @@ contains ! ======================= Public Procedures =========================
     call h5dWrite_f ( setID, H5T_NATIVE_DOUBLE, value, &
       & int ( (/ shp, ones(1:6) /), hsize_t ), status )
     call finishSaveDS ( name, status, setID, spaceID )
+    call MLSMessageCalls( 'pop' )
   end subroutine SaveAsHDF5DS_dblarr1
 
   ! ---------------------------------------  SaveAsHDF5DS_dblarr2  -----
@@ -2781,6 +2886,7 @@ contains ! ======================= Public Procedures =========================
     integer(kind=hsize_t), dimension(2) :: SHP, MAXDIMS        ! Shape
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='SaveAsHDF5DS_dblarr2' )
     shp = shape(value)
     maxdims = shp
     if ( present(finalShape) ) maxdims = finalShape
@@ -2793,6 +2899,7 @@ contains ! ======================= Public Procedures =========================
     call h5dWrite_f ( setID, H5T_NATIVE_DOUBLE, value, &
       & int ( (/ shp, ones(1:5) /), hsize_t ), status )
     call finishSaveDS ( name, status, setID, spaceID )
+    call MLSMessageCalls( 'pop' )
   end subroutine SaveAsHDF5DS_dblarr2
 
   ! ---------------------------------------  SaveAsHDF5DS_dblarr3  -----
@@ -2813,6 +2920,7 @@ contains ! ======================= Public Procedures =========================
     integer(kind=hsize_t), dimension(3) :: SHP, MAXDIMS        ! Shape
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='SaveAsHDF5DS_dblarr3' )
     shp = shape(value)
     maxdims = shp
     if ( present(finalShape) ) maxdims = finalShape
@@ -2825,6 +2933,7 @@ contains ! ======================= Public Procedures =========================
     call h5dWrite_f ( setID, H5T_NATIVE_DOUBLE, value, &
       & int ( (/ shp, ones(1:4) /), hsize_t ), status )
     call finishSaveDS ( name, status, setID, spaceID )
+    call MLSMessageCalls( 'pop' )
   end subroutine SaveAsHDF5DS_dblarr3
 
   ! --------------------------------------  SaveAsHDF5DS_snglarr1  -----
@@ -2845,6 +2954,7 @@ contains ! ======================= Public Procedures =========================
     integer(kind=hsize_t), dimension(1) :: SHP, MAXDIMS        ! Shape
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='SaveAsHDF5DS_snglarr1' )
     shp = shape(value)
     maxdims=shp
     if ( present(finalShape) ) maxdims = finalShape
@@ -2857,6 +2967,7 @@ contains ! ======================= Public Procedures =========================
     call h5dWrite_f ( setID, H5T_NATIVE_REAL, value, &
       & int ( (/ shp, ones(1:6) /), hsize_t ), status )
     call finishSaveDS ( name, status, setID, spaceID )
+    call MLSMessageCalls( 'pop' )
   end subroutine SaveAsHDF5DS_snglarr1
 
   ! --------------------------------------  SaveAsHDF5DS_snglarr2  -----
@@ -2889,12 +3000,9 @@ contains ! ======================= Public Procedures =========================
     integer :: status                   ! Flag from HDF5
     integer(kind=hsize_t), dimension(2) :: SHP        ! Shape
     integer :: style   ! fixed static (0), dynamic 1st (1), adding to (2)
-    ! integer :: test_rank
-    ! integer(hsize_t), dimension(7) :: test_dims, test_maxdims
-    ! integer(hssize_t), dimension(7) :: test_offset
-    ! logical :: test_issimple
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='SaveAsHDF5DS_snglarr2' )
     style = 0  ! The default
     if ( present(may_add_to) ) then
       if ( may_add_to ) style = 1
@@ -2980,24 +3088,6 @@ contains ! ======================= Public Procedures =========================
       call h5dget_space_f ( setID, spaceID, status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to get dataspace for 2D real array ' // trim(name) )
-     ! print *, 'spaceID:   ', spaceID
-      ! call h5sget_simple_extent_ndims_f ( spaceID, test_rank, status )
-      ! if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      !  & 'Unable to get space rank for 2D real array ' // trim(name) )
-     ! print *, 'rank:   ', test_rank
-      ! call h5sget_simple_extent_dims_f ( spaceID, test_dims(1:test_rank), &
-      ! &  test_maxdims(1:test_rank), status )
-      ! if ( status /= test_rank ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      ! & 'Unable to get dims for datset ' // trim(name) )
-     ! print *, 'status                  : ', status
-     ! print *, 'dims (before extending) : ', test_dims(1:test_rank)
-     ! print *, 'max_dims                : ', test_maxdims(1:test_rank)
-      ! Can't test on status--it's set to the test_rank
-      ! test_dims(2) = test_dims(2) + shp(2)
-     ! print *, 'dims (sfter extending)  : ', test_dims(1:test_rank)
-      ! call h5dextend_f( setID, test_dims, status)
-      ! if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      !  & 'Unable to extend dims for 2D real array ' // trim(name) )
       if ( .not. present(start) ) &
         & call mls_extend ( setID, shp )
       memspaceID = spaceID
@@ -3011,37 +3101,8 @@ contains ! ======================= Public Procedures =========================
       call mls_extend ( setID, int(Count, hsize_T), start, filespaceID )
       call mls_hyperslab_save ( filespaceID, start, count, stride, block )
 !     Check before actually writing
-     ! print *, 'About to write'
-      ! space defined for data
-     ! print *, 'We received mem space (defined for data)', memspaceID
       if ( style == 2 ) &
         & call h5screate_simple_f(2, dims, memspaceID, status, maxdims)
-     ! call h5sis_simple_f ( memspaceID, test_issimple, status )
-     ! call h5sget_simple_extent_ndims_f ( memspaceID, test_rank, status )
-     ! call h5sget_simple_extent_dims_f ( memspaceID, test_dims(1:test_rank), &
-     !   &  test_maxdims(1:test_rank), status )
-     ! if ( status /= test_rank ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-     !   & 'Unable to get dims for datset ' // trim(name) )
-     ! call h5soffset_simple_f( memspaceID, test_offset(1:test_rank), status)
-     ! print *, 'Is simple? ', test_issimple
-     ! print *, 'rank    : ', test_rank
-     ! print *, 'dims    : ', test_dims(1:test_rank)
-     ! print *, 'max_dims: ', test_maxdims(1:test_rank)
-     ! print *, 'offsets : ', test_offset(1:test_rank)
-      ! space defined for file
-     ! print *, 'We received file space', spaceID
-     ! call h5sis_simple_f ( spaceID, test_issimple, status )
-     ! call h5sget_simple_extent_ndims_f ( spaceID, test_rank, status )
-     ! call h5sget_simple_extent_dims_f ( spaceID, test_dims(1:test_rank), &
-     !   &  test_maxdims(1:test_rank), status )
-     ! if ( status /= test_rank ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-     !   & 'Unable to get dims for datset ' // trim(name) )
-     ! call h5soffset_simple_f( spaceID, test_offset(1:test_rank), status)
-     ! print *, 'Is simple? ', test_issimple
-     ! print *, 'rank    : ', test_rank
-     ! print *, 'dims    : ', test_dims(1:test_rank)
-     ! print *, 'max_dims: ', test_maxdims(1:test_rank)
-     ! print *, 'offsets : ', test_offset(1:test_rank)
       call h5dWrite_f ( setID, H5T_NATIVE_REAL, value, &
         & int ( (/ shp, ones(1:5) /), hsize_t ), status, &
         & memspaceID, filespaceID )
@@ -3057,6 +3118,7 @@ contains ! ======================= Public Procedures =========================
     else
       call finishSaveDS ( name, status, setID, spaceID )
     end if
+    call MLSMessageCalls( 'pop' )
   end subroutine SaveAsHDF5DS_snglarr2
 
   ! --------------------------------------  SaveAsHDF5DS_snglarr3  -----
@@ -3089,12 +3151,9 @@ contains ! ======================= Public Procedures =========================
     integer :: status                   ! Flag from HDF5
     integer(kind=hsize_t), dimension(3) :: SHP        ! Shape
     integer :: style   ! fixed static (0), dynamic 1st (1), adding to (2)
-    ! integer :: test_rank
-    ! integer(hsize_t), dimension(7) :: test_dims, test_maxdims
-    ! integer(hssize_t), dimension(7) :: test_offset
-    ! logical :: test_issimple
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='SaveAsHDF5DS_snglarr3' )
     style = 0  ! The default
     if ( present(may_add_to) ) then
       if ( may_add_to ) style = 1
@@ -3140,9 +3199,6 @@ contains ! ======================= Public Procedures =========================
       if ( DEEBUG ) print *, 'maxdims ', maxdims
       if ( DEEBUG ) print *, 'dims ', dims
       if ( DEEBUG ) print *, 'chunk_dims ', chunk_dims
-      ! call h5screate_simple_f(3, dims, filespaceID, status, maxdims)
-      ! if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      !  & 'Unable to create filespace for 3D real array ' // trim(name) )
       call h5screate_simple_f ( 3, dims, memspaceID, status, maxdims )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to create memspace for 3D real array ' // trim(name) )
@@ -3178,18 +3234,6 @@ contains ! ======================= Public Procedures =========================
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to open dataset for 3D real array ' // trim(name) )
       call h5dget_space_f ( setID, spaceID, status)
-      ! if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      !   & 'Unable to get dataspace for 3D real array ' // trim(name) )
-      ! call h5sget_simple_extent_ndims_f ( spaceID, test_rank, status )
-      ! if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      !   & 'Unable to get space rank for 3D real array ' // trim(name) )
-      ! call h5sget_simple_extent_dims_f ( spaceID, test_dims(1:test_rank), &
-      !  &  test_maxdims(1:test_rank), status )
-      ! Can't test on status--it's set to the test_rank
-      ! test_dims(test_rank) = test_dims(test_rank) + shp(test_rank)
-      ! call h5dextend_f( setID, test_dims, status)
-      ! if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      !   & 'Unable to extend dims for 3D real array ' // trim(name) )
       if ( .not. present(start) ) &
         & call mls_extend ( setID, shp )
       memspaceID = spaceID
@@ -3224,6 +3268,7 @@ contains ! ======================= Public Procedures =========================
     else
       call finishSaveDS ( name, status, setID, spaceID )
     end if
+    call MLSMessageCalls( 'pop' )
   end subroutine SaveAsHDF5DS_snglarr3
 
   ! --------------------------------------  SaveAsHDF5DS_snglarr4  -----
@@ -3258,6 +3303,7 @@ contains ! ======================= Public Procedures =========================
     integer :: style   ! fixed static (0), dynamic 1st (1), adding to (2)
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='SaveAsHDF5DS_snglarr4' )
     style = 0  ! The default
     if ( present(may_add_to) ) then
       if ( may_add_to ) style = 1
@@ -3371,6 +3417,7 @@ contains ! ======================= Public Procedures =========================
     else
       call finishSaveDS ( name, status, setID, spaceID )
     end if
+    call MLSMessageCalls( 'pop' )
   end subroutine SaveAsHDF5DS_snglarr4
 
   ! ------------------------------------  LdFrmHDF5DS_ID_chararr1  -----
@@ -3394,12 +3441,14 @@ contains ! ======================= Public Procedures =========================
     type (MLSFile_T)   :: MLSFile
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='LdFromHDF5DS_ID_chararr1' )
     status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
       & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
     MLSFile%fileID%sd_id = locID
     MLSFile%stillOpen = .true.
     call LoadFromHDF5DS ( MLSFile, name, value, &
     & start, count, stride, block )
+    call MLSMessageCalls( 'pop' )
   end subroutine LdFrmHDF5DS_ID_chararr1
 
   ! ------------------------------------  LdFrmHDF5DS_ID_chararr2  -----
@@ -3423,12 +3472,14 @@ contains ! ======================= Public Procedures =========================
     type (MLSFile_T)   :: MLSFile
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='LdFromHDF5DS_ID_chararr12' )
     status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
       & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
     MLSFile%fileID%sd_id = locID
     MLSFile%stillOpen = .true.
     call LoadFromHDF5DS ( MLSFile, name, value, &
     & start, count, stride, block )
+    call MLSMessageCalls( 'pop' )
   end subroutine LdFrmHDF5DS_ID_chararr2
 
   ! -------------------------------------  LdFrmHDF5DS_ID_intarr1  -----
@@ -3452,12 +3503,14 @@ contains ! ======================= Public Procedures =========================
     type (MLSFile_T)   :: MLSFile
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='LdFromHDF5DS_ID_intarr1' )
     status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
       & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
     MLSFile%fileID%sd_id = locID
     MLSFile%stillOpen = .true.
     call LoadFromHDF5DS ( MLSFile, name, value, &
     & start, count, stride, block )
+    call MLSMessageCalls( 'pop' )
   end subroutine LdFrmHDF5DS_ID_intarr1
 
   ! -------------------------------------  LdFrmHDF5DS_ID_intarr2  -----
@@ -3480,12 +3533,14 @@ contains ! ======================= Public Procedures =========================
     type (MLSFile_T)   :: MLSFile
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='LdFromHDF5DS_ID_intarr2' )
     status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
       & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
     MLSFile%fileID%sd_id = locID
     MLSFile%stillOpen = .true.
     call LoadFromHDF5DS ( MLSFile, name, value, &
     & start, count, stride, block )
+    call MLSMessageCalls( 'pop' )
   end subroutine LdFrmHDF5DS_ID_intarr2
 
   ! -------------------------------------  LdFrmHDF5DS_ID_intarr3  -----
@@ -3508,12 +3563,14 @@ contains ! ======================= Public Procedures =========================
     type (MLSFile_T)   :: MLSFile
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='LdFromHDF5DS_ID_intarr3' )
     status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
       & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
     MLSFile%fileID%sd_id = locID
     MLSFile%stillOpen = .true.
     call LoadFromHDF5DS ( MLSFile, name, value, &
     & start, count, stride, block )
+    call MLSMessageCalls( 'pop' )
   end subroutine LdFrmHDF5DS_ID_intarr3
 
   ! -------------------------------------  LdFrmHDF5DS_ID_logarr1  -----
@@ -3535,8 +3592,10 @@ contains ! ======================= Public Procedures =========================
     character :: MyValue(size(value))   ! 'F' = false, 'T' = true
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='LdFromHDF5DS_ID_logarr1' )
     call LoadFromHDF5DS ( locID, name, myValue, start, count, stride, block )
     value = myValue == 'T'
+    call MLSMessageCalls( 'pop' )
   end subroutine LdFrmHDF5DS_ID_logarr1
 
   ! -------------------------------------  LdFrmHDF5DS_ID_dblarr1  -----
@@ -3560,12 +3619,14 @@ contains ! ======================= Public Procedures =========================
     type (MLSFile_T)   :: MLSFile
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='LdFromHDF5DS_ID_dblarr1' )
     status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
       & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
     MLSFile%fileID%sd_id = locID
     MLSFile%stillOpen = .true.
     call LoadFromHDF5DS ( MLSFile, name, value, &
     & start, count, stride, block )
+    call MLSMessageCalls( 'pop' )
   end subroutine LdFrmHDF5DS_ID_dblarr1
 
   ! -------------------------------------  LdFrmHDF5DS_ID_dblarr2  -----
@@ -3589,12 +3650,14 @@ contains ! ======================= Public Procedures =========================
     type (MLSFile_T)   :: MLSFile
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='LdFromHDF5DS_ID_dblarr2' )
     status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
       & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
     MLSFile%fileID%sd_id = locID
     MLSFile%stillOpen = .true.
     call LoadFromHDF5DS ( MLSFile, name, value, &
     & start, count, stride, block )
+    call MLSMessageCalls( 'pop' )
   end subroutine LdFrmHDF5DS_ID_dblarr2
 
   ! -------------------------------------  LdFrmHDF5DS_ID_dblarr3  -----
@@ -3618,12 +3681,14 @@ contains ! ======================= Public Procedures =========================
     type (MLSFile_T)   :: MLSFile
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='LdFromHDF5DS_ID_dblarr3' )
     status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
       & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
     MLSFile%fileID%sd_id = locID
     MLSFile%stillOpen = .true.
     call LoadFromHDF5DS ( MLSFile, name, value, &
     & start, count, stride, block )
+    call MLSMessageCalls( 'pop' )
   end subroutine LdFrmHDF5DS_ID_dblarr3
 
   ! ------------------------------------  LdFrmHDF5DS_ID_snglarr1  -----
@@ -3647,12 +3712,14 @@ contains ! ======================= Public Procedures =========================
     type (MLSFile_T)   :: MLSFile
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='LdFromHDF5DS_ID_snglarr1' )
     status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
       & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
     MLSFile%fileID%sd_id = locID
     MLSFile%stillOpen = .true.
     call LoadFromHDF5DS ( MLSFile, name, value, &
     & start, count, stride, block )
+    call MLSMessageCalls( 'pop' )
   end subroutine LdFrmHDF5DS_ID_snglarr1
 
   ! ------------------------------------  LdFrmHDF5DS_ID_snglarr2  -----
@@ -3676,12 +3743,14 @@ contains ! ======================= Public Procedures =========================
     type (MLSFile_T)   :: MLSFile
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='LdFromHDF5DS_ID_snglarr2' )
     status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
       & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
     MLSFile%fileID%sd_id = locID
     MLSFile%stillOpen = .true.
     call LoadFromHDF5DS ( MLSFile, name, value, &
     & start, count, stride, block )
+    call MLSMessageCalls( 'pop' )
   end subroutine LdFrmHDF5DS_ID_snglarr2
 
   ! ------------------------------------  LdFrmHDF5DS_ID_snglarr3  -----
@@ -3705,12 +3774,14 @@ contains ! ======================= Public Procedures =========================
     type (MLSFile_T)   :: MLSFile
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='LdFromHDF5DS_ID_snglarr3' )
     status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
       & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
     MLSFile%fileID%sd_id = locID
     MLSFile%stillOpen = .true.
     call LoadFromHDF5DS ( MLSFile, name, value, &
     & start, count, stride, block )
+    call MLSMessageCalls( 'pop' )
   end subroutine LdFrmHDF5DS_ID_snglarr3
 
   ! ------------------------------------  LdFrmHDF5DS_ID_snglarr4  -----
@@ -3734,12 +3805,14 @@ contains ! ======================= Public Procedures =========================
     type (MLSFile_T)   :: MLSFile
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='LdFromHDF5DS_ID_snglarr4' )
     status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
       & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
     MLSFile%fileID%sd_id = locID
     MLSFile%stillOpen = .true.
     call LoadFromHDF5DS ( MLSFile, name, value, &
     & start, count, stride, block )
+    call MLSMessageCalls( 'pop' )
   end subroutine LdFrmHDF5DS_ID_snglarr4
 
   ! ------------------------------------  LoadFromHDF5DS_chararr1  -----
@@ -3768,6 +3841,7 @@ contains ! ======================= Public Procedures =========================
     integer :: STRINGSIZE               ! String size
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='LoadFromHDF5DS_chararr1' )
     shp = shape ( value )
     call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -3801,6 +3875,7 @@ contains ! ======================= Public Procedures =========================
       call finishLoad ( name, status, spaceID, setID, &
         & stringType=stringType, MLSFile=MLSFile )
     end if
+    call MLSMessageCalls( 'pop' )
   end subroutine LoadFromHDF5DS_chararr1
 
   ! ------------------------------------  LoadFromHDF5DS_chararr2  -----
@@ -3829,6 +3904,7 @@ contains ! ======================= Public Procedures =========================
     integer :: STRINGSIZE               ! String size
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='LoadFromHDF5DS_chararr2' )
     shp = shape ( value )
     call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -3862,6 +3938,7 @@ contains ! ======================= Public Procedures =========================
       call finishLoad ( name, status, spaceID, setID, &
         & stringType=stringType, MLSFile=MLSFile )
     end if
+    call MLSMessageCalls( 'pop' )
   end subroutine LoadFromHDF5DS_chararr2
 
   ! -------------------------------------  LoadFromHDF5DS_intarr1  -----
@@ -3888,6 +3965,7 @@ contains ! ======================= Public Procedures =========================
     integer :: SETID                    ! ID of dataset
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='LoadFromHDF5DS_intarr1' )
     shp = shape ( value )
     call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -3909,6 +3987,7 @@ contains ! ======================= Public Procedures =========================
         & (/ shp, ones(1:6) /), status )
       call finishLoad ( name, status, spaceID, setID, MLSFile=MLSFile )
     end if
+    call MLSMessageCalls( 'pop' )
   end subroutine LoadFromHDF5DS_intarr1
 
   ! -------------------------------------  LoadFromHDF5DS_intarr2  -----
@@ -3934,6 +4013,7 @@ contains ! ======================= Public Procedures =========================
     integer :: SETID                    ! ID of dataset
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='LoadFromHDF5DS_intarr2' )
     shp = shape ( value )
     call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -3955,6 +4035,7 @@ contains ! ======================= Public Procedures =========================
         & (/ shp, ones(1:5) /), status )
       call finishLoad ( name, status, spaceID, setID, MLSFile=MLSFile )
     end if
+    call MLSMessageCalls( 'pop' )
   end subroutine LoadFromHDF5DS_intarr2
 
   ! -------------------------------------  LoadFromHDF5DS_intarr3  -----
@@ -3980,6 +4061,7 @@ contains ! ======================= Public Procedures =========================
     integer :: SETID                    ! ID of dataset
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='LoadFromHDF5DS_intarr3' )
     shp = shape ( value )
     call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -4001,6 +4083,7 @@ contains ! ======================= Public Procedures =========================
         & (/ shp, ones(1:4) /), status )
       call finishLoad ( name, status, spaceID, setID, MLSFile=MLSFile )
     end if
+    call MLSMessageCalls( 'pop' )
   end subroutine LoadFromHDF5DS_intarr3
 
   ! -------------------------------------  LoadFromHDF5DS_logarr1  -----
@@ -4022,8 +4105,10 @@ contains ! ======================= Public Procedures =========================
     character :: MyValue(size(value))   ! 'F' = false, 'T' = true
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='LoadFromHDF5DS_logarr1' )
     call LoadFromHDF5DS ( MLSFile, name, myValue, start, count, stride, block )
     value = myValue == 'T'
+    call MLSMessageCalls( 'pop' )
   end subroutine LoadFromHDF5DS_logarr1
 
   ! -------------------------------------  LoadFromHDF5DS_dblarr1  -----
@@ -4050,6 +4135,7 @@ contains ! ======================= Public Procedures =========================
     integer :: SETID                    ! ID of dataset
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='LoadFromHDF5DS_dblarr1' )
     shp = shape ( value )
     call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -4071,6 +4157,7 @@ contains ! ======================= Public Procedures =========================
         & (/ shp, ones(1:6) /), status )
       call finishLoad ( name, status, spaceID, setID, MLSFile=MLSFile )
     end if
+    call MLSMessageCalls( 'pop' )
   end subroutine LoadFromHDF5DS_dblarr1
 
   ! -------------------------------------  LoadFromHDF5DS_dblarr2  -----
@@ -4097,6 +4184,7 @@ contains ! ======================= Public Procedures =========================
     integer :: SETID                    ! ID of dataset
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='LoadFromHDF5DS_dblarr2' )
     shp = shape ( value )
     call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -4118,6 +4206,7 @@ contains ! ======================= Public Procedures =========================
         & (/ shp, ones(1:5) /), status )
       call finishLoad ( name, status, spaceID, setID, MLSFile=MLSFile )
     end if
+    call MLSMessageCalls( 'pop' )
   end subroutine LoadFromHDF5DS_dblarr2
 
   ! -------------------------------------  LoadFromHDF5DS_dblarr3  -----
@@ -4144,6 +4233,7 @@ contains ! ======================= Public Procedures =========================
     integer :: SETID                    ! ID of dataset
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='LoadFromHDF5DS_dblarr3' )
     shp = shape ( value )
     call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -4165,6 +4255,7 @@ contains ! ======================= Public Procedures =========================
         & (/ shp, ones(1:4) /), status )
       call finishLoad ( name, status, spaceID, setID, MLSFile=MLSFile )
     end if
+    call MLSMessageCalls( 'pop' )
   end subroutine LoadFromHDF5DS_dblarr3
 
   ! ------------------------------------  LoadFromHDF5DS_snglarr1  -----
@@ -4191,6 +4282,7 @@ contains ! ======================= Public Procedures =========================
     integer :: SETID                    ! ID of dataset
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='LoadFromHDF5DS_snglarr1' )
     shp = shape ( value )
     call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -4212,6 +4304,7 @@ contains ! ======================= Public Procedures =========================
         & (/ shp, ones(1:6) /), status )
       call finishLoad ( name, status, spaceID, setID, MLSFile=MLSFile )
     end if
+    call MLSMessageCalls( 'pop' )
   end subroutine LoadFromHDF5DS_snglarr1
 
   ! ------------------------------------  LoadFromHDF5DS_snglarr2  -----
@@ -4238,6 +4331,7 @@ contains ! ======================= Public Procedures =========================
     integer :: SETID                    ! ID of dataset
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='LoadFromHDF5DS_snglarr2' )
     shp = shape ( value )
     call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -4259,6 +4353,7 @@ contains ! ======================= Public Procedures =========================
         & (/ shp, ones(1:5) /), status )
       call finishLoad ( name, status, spaceID, setID, MLSFile=MLSFile )
     end if
+    call MLSMessageCalls( 'pop' )
   end subroutine LoadFromHDF5DS_snglarr2
 
   ! ------------------------------------  LoadFromHDF5DS_snglarr3  -----
@@ -4285,6 +4380,7 @@ contains ! ======================= Public Procedures =========================
     integer :: SETID                    ! ID of dataset
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='LoadFromHDF5DS_snglarr3' )
     shp = shape ( value )
     call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -4306,6 +4402,7 @@ contains ! ======================= Public Procedures =========================
         & (/ shp, ones(1:4) /), status )
       call finishLoad ( name, status, spaceID, setID, MLSFile=MLSFile )
     end if
+    call MLSMessageCalls( 'pop' )
   end subroutine LoadFromHDF5DS_snglarr3
 
   ! ------------------------------------  LoadFromHDF5DS_snglarr4  -----
@@ -4332,6 +4429,7 @@ contains ! ======================= Public Procedures =========================
     integer :: SETID                    ! ID of dataset
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='LoadFromHDF5DS_snglarr4' )
     shp = shape ( value )
     call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -4353,6 +4451,7 @@ contains ! ======================= Public Procedures =========================
         & (/ shp, ones(1:3) /), status )
       call finishLoad ( name, status, spaceID, setID, MLSFile=MLSFile )
     end if
+    call MLSMessageCalls( 'pop' )
   end subroutine LoadFromHDF5DS_snglarr4
 
   ! ---------------------------------  LoadPtrFromHDF5DS_chararr1  -----
@@ -4374,6 +4473,7 @@ contains ! ======================= Public Procedures =========================
     integer :: LB, UB
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='LoadPtrFromHDF5DS_chararr1' )
     call h5dOpen_f ( locID, name, setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open dataset ' // trim(name) )
@@ -4395,6 +4495,7 @@ contains ! ======================= Public Procedures =========================
     call allocate_test ( value, ub, 'Value', moduleName, lowBound=lb )
     call h5dread_f ( setID, stringtype, value, (/ shp(1), ones(1:6) /), status )
     call finishLoad ( name, status, spaceID, setID, stringType=stringType )
+    call MLSMessageCalls( 'pop' )
   end subroutine LoadPtrFromHDF5DS_chararr1
 
   ! ---------------------------------  LoadPtrFromHDF5DS_chararr2  -----
@@ -4414,6 +4515,7 @@ contains ! ======================= Public Procedures =========================
     integer :: STRINGSIZE               ! String size
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='LoadPtrFromHDF5DS_chararr2' )
     call h5dOpen_f ( locID, name, setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open dataset ' // trim(name) )
@@ -4432,6 +4534,7 @@ contains ! ======================= Public Procedures =========================
    call allocate_test ( value, int(shp(1)), int(shp(2)), 'Value', moduleName )
    call h5dread_f ( setID, stringtype, value, (/ shp, ones(1:5) /), status )
    call finishLoad ( name, status, spaceID, setID, stringType=stringType )
+    call MLSMessageCalls( 'pop' )
   end subroutine LoadPtrFromHDF5DS_chararr2
 
   ! ----------------------------------  LoadPtrFromHDF5DS_intarr1  -----
@@ -4451,6 +4554,7 @@ contains ! ======================= Public Procedures =========================
     integer :: LB, UB
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='LoadPtrFromHDF5DS_intarr1' )
     call h5dOpen_f ( locID, name, setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open dataset ' // trim(name) )
@@ -4465,6 +4569,7 @@ contains ! ======================= Public Procedures =========================
     call h5dread_f ( setID, H5T_NATIVE_INTEGER, value, &
       & (/ shp, ones(1:6) /), status )
     call finishLoad ( name, status, spaceID, setID )
+    call MLSMessageCalls( 'pop' )
   end subroutine LoadPtrFromHDF5DS_intarr1
 
   ! ----------------------------------  LoadPtrFromHDF5DS_intarr2  -----
@@ -4482,6 +4587,7 @@ contains ! ======================= Public Procedures =========================
     integer :: SETID                    ! ID of dataset
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='LoadPtrFromHDF5DS_intarr2' )
     call h5dOpen_f ( locID, name, setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open dataset ' // trim(name) )
@@ -4493,6 +4599,7 @@ contains ! ======================= Public Procedures =========================
     call h5dread_f ( setID, H5T_NATIVE_INTEGER, value, &
       & (/ shp, ones(1:5) /), status )
     call finishLoad ( name, status, spaceID, setID )
+    call MLSMessageCalls( 'pop' )
   end subroutine LoadPtrFromHDF5DS_intarr2
 
   ! ----------------------------------  LoadPtrFromHDF5DS_logarr1  -----
@@ -4509,6 +4616,7 @@ contains ! ======================= Public Procedures =========================
     integer :: LB, UB
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='LoadPtrFromHDF5DS_logarr1' )
     nullify ( myValue )
     call LoadPtrFromHDF5DS ( locID, name, myValue )
     lb = 1
@@ -4517,6 +4625,7 @@ contains ! ======================= Public Procedures =========================
     call allocate_test ( value, ub, 'Value', moduleName, lowBound=lb )
     value = myValue == 'T'
     call deallocate_test ( myValue, 'myValue', moduleName )
+    call MLSMessageCalls( 'pop' )
   end subroutine LoadPtrFromHDF5DS_logarr1
 
   ! ----------------------------------  LoadPtrFromHDF5DS_dblarr1  -----
@@ -4536,6 +4645,7 @@ contains ! ======================= Public Procedures =========================
     integer :: LB, UB
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='LoadPtrFromHDF5DS_dblarr1' )
     call h5dOpen_f ( locID, name, setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open dataset ' // trim(name) )
@@ -4550,6 +4660,7 @@ contains ! ======================= Public Procedures =========================
     call h5dread_f ( setID, H5T_NATIVE_DOUBLE, value, &
       & (/ shp, ones(1:6) /), status )
     call finishLoad ( name, status, spaceID, setID )
+    call MLSMessageCalls( 'pop' )
   end subroutine LoadPtrFromHDF5DS_dblarr1
 
   ! ----------------------------------  LoadPtrFromHDF5DS_dblarr2  -----
@@ -4567,6 +4678,7 @@ contains ! ======================= Public Procedures =========================
     integer :: SETID                    ! ID of dataset
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='LoadPtrFromHDF5DS_dblarr2' )
     call h5dOpen_f ( locID, name, setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open dataset ' // trim(name) )
@@ -4578,6 +4690,7 @@ contains ! ======================= Public Procedures =========================
     call h5dread_f ( setID, H5T_NATIVE_DOUBLE, value, &
       & (/ shp, ones(1:5) /), status )
     call finishLoad ( name, status, spaceID, setID )
+    call MLSMessageCalls( 'pop' )
   end subroutine LoadPtrFromHDF5DS_dblarr2
 
   ! ----------------------------------  LoadPtrFromHDF5DS_dblarr3  -----
@@ -4595,6 +4708,7 @@ contains ! ======================= Public Procedures =========================
     integer :: SETID                    ! ID of dataset
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='LoadPtrFromHDF5DS_dblarr3' )
     call h5dOpen_f ( locID, name, setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open dataset ' // trim(name) )
@@ -4607,6 +4721,7 @@ contains ! ======================= Public Procedures =========================
     call h5dread_f ( setID, H5T_NATIVE_DOUBLE, value, &
       & (/ shp, ones(1:4) /), status )
     call finishLoad ( name, status, spaceID, setID )
+    call MLSMessageCalls( 'pop' )
   end subroutine LoadPtrFromHDF5DS_dblarr3
 
   ! ---------------------------------  LoadPtrFromHDF5DS_snglarr1  -----
@@ -4626,6 +4741,7 @@ contains ! ======================= Public Procedures =========================
     integer :: LB, UB
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='LoadPtrFromHDF5DS_snglarr1' )
     call h5dOpen_f ( locID, name, setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open dataset ' // trim(name) )
@@ -4640,6 +4756,7 @@ contains ! ======================= Public Procedures =========================
     call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
       & (/ shp, ones(1:6) /), status )
     call finishLoad ( name, status, spaceID, setID )
+    call MLSMessageCalls( 'pop' )
   end subroutine LoadPtrFromHDF5DS_snglarr1
 
   ! ---------------------------------  LoadPtrFromHDF5DS_snglarr2  -----
@@ -4657,6 +4774,7 @@ contains ! ======================= Public Procedures =========================
     integer :: SETID                    ! ID of dataset
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='LoadPtrFromHDF5DS_snglarr2' )
     call h5dOpen_f ( locID, name, setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open dataset ' // trim(name) )
@@ -4668,6 +4786,7 @@ contains ! ======================= Public Procedures =========================
     call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
       & (/ shp, ones(1:5) /), status )
     call finishLoad ( name, status, spaceID, setID )
+    call MLSMessageCalls( 'pop' )
   end subroutine LoadPtrFromHDF5DS_snglarr2
 
   ! ---------------------------------  LoadPtrFromHDF5DS_snglarr3  -----
@@ -4685,6 +4804,7 @@ contains ! ======================= Public Procedures =========================
     integer :: SETID                    ! ID of dataset
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='LoadPtrFromHDF5DS_snglarr3' )
     call h5dOpen_f ( locID, name, setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open dataset ' // trim(name) )
@@ -4697,6 +4817,7 @@ contains ! ======================= Public Procedures =========================
     call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
       & (/ shp, ones(1:4) /), status )
     call finishLoad ( name, status, spaceID, setID )
+    call MLSMessageCalls( 'pop' )
   end subroutine LoadPtrFromHDF5DS_snglarr3
 
   ! ---------------------------------  LoadPtrFromHDF5DS_snglarr4  -----
@@ -4714,6 +4835,7 @@ contains ! ======================= Public Procedures =========================
     integer :: SETID                    ! ID of dataset
 
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='LoadPtrFromHDF5DS_snglarr4' )
     call h5dOpen_f ( locID, name, setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open dataset ' // trim(name) )
@@ -4727,6 +4849,7 @@ contains ! ======================= Public Procedures =========================
     call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
       & (/ shp, ones(1:3) /), status )
     call finishLoad ( name, status, spaceID, setID )
+    call MLSMessageCalls( 'pop' )
   end subroutine LoadPtrFromHDF5DS_snglarr4
 
   ! -----------------------------------  ReadLitIndexFromHDF5Attr  -----
@@ -4740,6 +4863,7 @@ contains ! ======================= Public Procedures =========================
     character (len=1024) :: LINE
     integer :: L
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='ReadLitIndexFromHDF5Attr' )
     call GetHDF5Attribute ( itemID, name, line )
     l = len_trim(line)
     if ( l > 0 ) then
@@ -4747,6 +4871,7 @@ contains ! ======================= Public Procedures =========================
     else
       index = 0
     end if
+    call MLSMessageCalls( 'pop' )
   end subroutine ReadLitIndexFromHDF5Attr
 
   ! --------------------------------  ReadStringIndexFromHDF5Attr  -----
@@ -4759,12 +4884,14 @@ contains ! ======================= Public Procedures =========================
     ! Local variables
     character (len=1024) :: LINE
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='ReadStringIndexFromHDF5Attr' )
     call GetHDF5Attribute ( itemID, name, line )
     if ( len_trim ( line ) > 0 ) then
       index = GetStringIndexFromString ( trim(line) )
     else
       index = 0
     end if
+    call MLSMessageCalls( 'pop' )
   end subroutine ReadStringIndexFromHDF5Attr
 
   ! -------------------------------  WriteLitIndexAsHDF5Attribute  -----
@@ -4774,11 +4901,13 @@ contains ! ======================= Public Procedures =========================
     character(len=*), intent(in) :: NAME ! Name of attribute
     integer, intent(in) :: INDEX         ! String index
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='WriteLitIndexAsHDF5Attribute' )
     if ( index == 0 ) then
       call MakeHDF5Attribute ( itemID, name, '' )
     else
       call WriteStringIndexAsHDF5Attribute ( itemID, name, lit_indices ( index ) )
     end if
+    call MLSMessageCalls( 'pop' )
   end subroutine WriteLitIndexAsHDF5Attribute
 
   ! ----------------------------  WriteStringIndexAsHDF5Attribute  -----
@@ -4790,12 +4919,14 @@ contains ! ======================= Public Procedures =========================
     ! Local variables
     character(len=1024) :: LINE
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='WriteStringIndexAsHDF5Attribute' )
     if ( index == 0 ) then
       call MakeHDF5Attribute ( itemID, name, '' )
     else
       call get_string ( index, line, strip=.true., noError=.true. )
       call MakeHDF5Attribute ( itemID, name, trim(line) )
     end if
+    call MLSMessageCalls( 'pop' )
   end subroutine WriteStringIndexAsHDF5Attribute
 
 ! ======================= Private Procedures ===========================
@@ -4822,7 +4953,7 @@ contains ! ======================= Public Procedures =========================
     integer                           :: i
     call get_ds_shape ( spaceID, dims, name )
     if ( any ( dims > value_dims ) ) &
-      & call my_message ( MLSMSG_Error, ModuleName, &
+      & call my_message ( MLSMSG_Error, ModuleName // '%Check_for_fit', &
       & 'Dataspace too large for destination value of ' // trim(name) , &
       & 'dims(space), dims(value)', (/ (int(dims(i)), int(value_dims(i)), i=1, size(dims)) /), &
       & no_pairs=.true. )
@@ -4855,6 +4986,7 @@ contains ! ======================= Public Procedures =========================
     integer :: iFilled
     real :: rFilled
     ! Executable
+    call MLSMessageCalls( 'push', constantName='CreateSpaceSet' )
     my_adding_to = .false.
     if ( present(adding_to) ) my_adding_to = adding_to
     my_chunkdims = maxdims
@@ -4940,6 +5072,7 @@ contains ! ======================= Public Procedures =========================
           & status )
       end if
     end if
+    call MLSMessageCalls( 'pop' )
   end subroutine CreateSpaceSet
 
 ! ---------------------------------------------------  Dump_space  -----
@@ -4976,6 +5109,8 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in), optional :: MemspaceID ! dataspace ID
     integer, intent(in), optional :: StringType ! stringtype ID
     type (MLSFile_T), optional   :: MLSFile
+    ! Executable
+    call MLSMessageCalls( 'push', constantName='FinishLoad' )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to read dataset ' // trim(name), &
       & MLSFile=MLSFile )
@@ -4999,6 +5134,7 @@ contains ! ======================= Public Procedures =========================
         & 'Unable to close string type for ' // trim(name), &
         & MLSFile=MLSFile )
     end if
+    call MLSMessageCalls( 'pop' )
   end subroutine FinishLoad
 
 ! ---------------------------------------------  FinishMakeAttrib  -----
@@ -5009,6 +5145,8 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in) :: AttrID               ! attrib ID
     integer, intent(in) :: DSID                 ! dataset ID
     integer, intent(in), optional :: StringType ! stringType ID
+    ! Executable
+    call MLSMessageCalls( 'push', constantName='FinishMakeHDF5Attrib' )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to write attribute ' // trim(name) )
     ! Finish off
@@ -5023,6 +5161,7 @@ contains ! ======================= Public Procedures =========================
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to close stringType ' // trim(name) )
     end if
+    call MLSMessageCalls( 'pop' )
   end subroutine FinishMakeAttrib
 
 ! -------------------------------------------------  FinishSaveDS  -----
@@ -5035,6 +5174,8 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in) :: SpaceID              ! dataspace ID
     integer, intent(in), optional :: StringType ! stringtype ID
     integer, intent(in), optional :: MemspaceID ! arrayspace ID
+    ! Executable
+    call MLSMessageCalls( 'push', constantName='FinishSaveDS' )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to write to dataset for ' // trim(name) )
     ! Close things
@@ -5054,6 +5195,7 @@ contains ! ======================= Public Procedures =========================
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to close stringtype for ' // trim(name) )
     end if
+    call MLSMessageCalls( 'pop' )
   end subroutine FinishSaveDS
 
 ! -------------------------------------------------  Get_DS_Shape  -----
@@ -5067,6 +5209,8 @@ contains ! ======================= Public Procedures =========================
     integer                           :: value_rank
     integer(hsize_t)                  :: maxdims(size(dims))
     integer                           :: status
+    ! Executable
+    call MLSMessageCalls( 'push', constantName='Get_DS_Shape' )
     value_rank = size(dims)
     call h5sget_simple_extent_ndims_f ( spaceID, rank, status )
     if ( status /= 0 )  call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -5078,6 +5222,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= rank ) call my_message ( MLSMSG_Error, ModuleName, &
       & 'Unable to get dimension information for dataset ' // trim(name) , &
       & 'rank(space), h5s status', (/rank, status/) )
+    call MLSMessageCalls( 'pop' )
   end subroutine Get_DS_Shape
 
 ! ---------------------------------------------------  MLS_extend  -----
@@ -5099,6 +5244,7 @@ contains ! ======================= Public Procedures =========================
     logical                           :: itFits
     logical                           :: is_simple
   ! Executable code
+    call MLSMessageCalls( 'push', constantName='MLS_extend' )
     my_start = 0
     dims = 0
     if ( present(start) ) my_start(1:size(start)) = start
@@ -5146,6 +5292,7 @@ contains ! ======================= Public Procedures =========================
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to get return dataspaceID in mls_extend' )
     end if
+    call MLSMessageCalls( 'pop' )
   end subroutine MLS_extend
 
 ! ------------------------------------------------  MLS_hyperslab  -----
@@ -5173,6 +5320,7 @@ contains ! ======================= Public Procedures =========================
     integer                           :: status
 
     ! Begin execution
+    call MLSMessageCalls( 'push', constantName='MLS_hyperslab' )
     ! Check that pattern 1 or pattern 2 is satisfied
     status = 0
     if ( present(start) ) status = status + 1
@@ -5215,6 +5363,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to set hyperslab for dataset ' // trim(name) )
     if ( DEEBUG ) print *, 'Returning memspaceID ', memspaceID
+    call MLSMessageCalls( 'pop' )
   end subroutine MLS_hyperslab
 
 ! -------------------------------------------  MLS_hyperslab_save  -----
@@ -5239,6 +5388,7 @@ contains ! ======================= Public Procedures =========================
     character(len=*), parameter :: name = 'mls_hyperslab_save'
 
     ! Begin execution
+    call MLSMessageCalls( 'push', constantName='MLS_hyperslab_save' )
     ! Check that pattern 1 or pattern 2 is satisfied
     status = 0
     if ( present(start) ) status = status + 1
@@ -5272,6 +5422,7 @@ contains ! ======================= Public Procedures =========================
     end if
     if ( status /= 0) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to set hyperslab for dataset ' // trim(name) )
+    call MLSMessageCalls( 'pop' )
   end subroutine MLS_hyperslab_save
 
 ! ---------------------------------------------------  My_message  -----
@@ -5395,6 +5546,8 @@ contains ! ======================= Public Procedures =========================
     ! Local variables
     logical :: my_skip
     integer :: STATUS                   ! Flag from HDF5
+    ! Executable
+    call MLSMessageCalls( 'push', constantName='StartMakeAttrib' )
     startMakeAttrib = .false.
     my_skip = .false.
     if ( present(skip_if_already_there) ) my_skip = skip_if_already_there
@@ -5413,6 +5566,7 @@ contains ! ======================= Public Procedures =========================
     call h5aCreate_f ( itemID, trim(name), type, spaceID, attrID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to create attribute ' // trim(name) )
+    call MLSMessageCalls( 'pop' )
   end function StartMakeAttrib
 
 ! --------------------------------------------  WhatTypeAmI  -----
@@ -5454,6 +5608,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.73  2007/08/17 00:27:48  pwagner
+! push more procedures onto MLSCallStack
+!
 ! Revision 2.72  2007/01/31 00:07:23  pwagner
 ! Compatible with renamed dumpNamedValues
 !
