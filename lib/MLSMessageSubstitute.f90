@@ -253,10 +253,16 @@ contains
   ! 'print'   print its contents as a single line
   ! 'dump'    print a walkback, one name per line, top to bottom
   ! 'rdump'   print a walkback, one name per line, bottom to top
+  ! 'depth'   return the number of elements on the stack
+  ! 'length'  return the total length taken by the elements on the stack
+  ! 'remain'  return the total length remaining before the stack is full
   
-  ! Every command except 'print' and 'clear' change the stack
+  ! Every command except 'print', '[r]dump', 'depth', 'length',
+  ! and 'remain' change the stack
   ! '[r]push' requires name as an input arg
-  ! '[r]pop', and '[r]dump' produce name as an output arg
+  ! '[r]pop', and '[r]dump' produce the topmost name as an output arg
+  ! 'depth', 'length', and 'remain' produce coded a integer name as output arg
+  ! e.g, '1249'
 
   ! If name is omitted, it will be lost or assumed blank, as appropriate
 
@@ -327,8 +333,6 @@ contains
       if ( present(name) ) name = myName
     case ( 'dump' )
       m = 0
-      ind = index( MLSCallStack, comma )
-      m =   index( MLSCallStack(ind+1:), comma )
       call MLSMessage ( MLSMSG_Info, ModuleName, 'Calling stack (bottom-up)' )
       do
         ind = m + 1
@@ -342,6 +346,24 @@ contains
     case ( 'print' )
       if ( len_trim(MLSCallStack) > 0 ) &
         & call MLSMessage ( MLSMSG_Info, ModuleName, trim(MLSCallStack) )
+    case ( 'depth' )
+      m = 0
+      if ( len_trim(MLSCallStack) > 0 ) then
+        m = 1
+        do ind = 1, len_trim(MLSCallStack)
+          if ( MLSCallStack(ind:ind) == comma ) m = m + 1
+        enddo
+      endif
+      write( myName, '(i8)' ) m
+      if ( present(name) ) name = myName
+    case ( 'length' )
+      write( myName, '(i8)' ) len_trim(MLSCallStack)
+      if ( present(name) ) name = myName
+    case ( 'remain' )
+      write( myName, '(i8)' ) len(MLSCallStack) - len_trim(MLSCallStack)
+      if ( present(name) ) name = myName
+    case default
+      ! Unrecognized command--we'll ignore it
     end select
   end subroutine MLSMessageCalls
 
@@ -524,6 +546,7 @@ contains
     ! Internal variables
     character(len=32) :: name
     ! Executable
+    name = ' '
     if ( len_trim(MLSCallStack) > 0 ) call MLSMessageCalls( 'dump', name )
     if ( len_trim(name) < 1 ) name = ModuleName
     call MLSMessageStd( MLSMSG_Error, name, Message, MLSFile=MLSFile )
@@ -809,6 +832,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.4  2007/08/17 00:29:32  pwagner
+! MLSMessageCalls commands include 'depth', 'length', 'remain'
+!
 ! Revision 2.3  2007/08/13 17:11:07  pwagner
 ! Implement MLSCallStack for printing walkback
 !
