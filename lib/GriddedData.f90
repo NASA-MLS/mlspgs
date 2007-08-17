@@ -144,6 +144,7 @@ contains
     ! Local variables
     logical, parameter :: DEEBUG = .false.
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='ConcatenateGriddedData_2' )
     ! First, check that the grids A and B are conformable.
     if ( a%verticalCoordinate /= b%verticalCoordinate .or. &
       & a%equivalentLatitude .neqv. b%equivalentLatitude .or. &
@@ -204,6 +205,7 @@ contains
 
     x%field ( :, :, :, :, :, 1:a%noDates ) = a%field
     x%field ( :, :, :, :, :, a%noDates+1:x%noDates ) = b%field
+    call MLSMessageCalls( 'pop' )
   end subroutine ConcatenateGriddedData_2
 
   subroutine ConcatenateGriddedData_array ( Database, indices, X )
@@ -222,6 +224,7 @@ contains
     integer :: index1
     integer :: noDates
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='ConcatenateGriddedData_array' )
     call DestroyGriddedData ( X )
     if ( size(indices) < 1 .or. size(database) < 1 ) return
     index1 = indices(1)
@@ -290,6 +293,7 @@ contains
       x%dateEnds(i1(i):i2(i)) = Database(index1)%dateEnds
       x%field ( :, :, :, :, :, i1(i):i2(i) ) = Database(index1)%field
     enddo
+    call MLSMessageCalls( 'pop' )
   end subroutine ConcatenateGriddedData_array
 
   ! ---------------------------------------- ConvertFromEtaLevelGrids ------------------
@@ -309,6 +313,7 @@ contains
     ! Executable code
     nullify( pEta )
     ! GriddedData must match
+    call MLSMessageCalls( 'push', constantName='ConvertFromEtaLevelGrids' )
     if ( .not. DoGriddeddataMatch( PGrid, TGrid ) ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Gridded T,P data must match' )
@@ -383,6 +388,7 @@ contains
       stop
     endif
     call deallocate_test( pEta,   'pEta', moduleName )
+    call MLSMessageCalls( 'pop' )
   end subroutine ConvertFromEtaLevelGrids
 
   ! ---------------------------------------- CopyGrid ------------------
@@ -689,6 +695,7 @@ contains
     logical :: myEmpty                  ! Copy of empty possibly
 
     ! Executable code
+    qty%description    = '(unknown)'
     qty%sourceFileName = '(unknown)'
     qty%quantityName   = '(unknown)'
     qty%units          = '(unknown)'
@@ -1177,6 +1184,7 @@ contains
     integer :: UPPERLST
     integer :: STATUS
     ! Executable code
+    call MLSMessageCalls( 'push', constantName='WrapGriddedData' )
     ! Don't bother with quantities that have no lon or lst variation.
     if ( grid%noLons <= 1 .and. grid%noLsts <= 1 ) return
 
@@ -1277,6 +1285,7 @@ contains
     grid%lons => newLons
     grid%lsts => newLsts
     grid%field => newField
+    call MLSMessageCalls( 'pop' )
   end subroutine WrapGriddedData
 
   ! -------- Private ---------------
@@ -1293,6 +1302,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.49  2007/08/17 00:27:23  pwagner
+! push more procedures onto MLSCallStack
+!
 ! Revision 2.48  2007/08/13 17:35:24  pwagner
 ! Push SliceGriddedData onto new MLSSCallStack
 !
