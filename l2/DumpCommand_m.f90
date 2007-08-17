@@ -53,7 +53,7 @@ contains
       & S_VectorTemplate
     use Intrinsic, only: PHYQ_Dimensionless
     use MLSL2Options, only: runTimeValues
-!   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSMessageModule, only: MLSMessageCalls
     use MLSSignals_m, only: Dump, Signals
     use MLSStrings, only: lowerCase
     use MLSStringLists, only: BooleanValue, SWITCHDETAIL
@@ -122,8 +122,11 @@ contains
     integer, parameter :: Stop = numeric + 1
     integer, parameter :: Unknown = stop + 1 ! Unknown template
 
-    if ( toggle(gen) ) call trace_begin ( 'DumpCommand', root )
-
+    if ( toggle(gen) ) then
+      call trace_begin ( 'DumpCommand', root )
+    else
+      call MLSMessageCalls( 'push', constantName=ModuleName )
+    endif
     haveQuantityTemplatesDB = present(quantityTemplatesDB)
     if ( haveQuantityTemplatesDB ) &
       & haveQuantityTemplatesDB = associated(quantityTemplatesDB)
@@ -488,7 +491,11 @@ contains
       end select
     end do
 
-    if ( toggle(gen) ) call trace_end ( 'DumpCommand' )
+    if ( toggle(gen) ) then
+      call trace_end ( 'DumpCommand' )
+    else
+      call MLSMessageCalls( 'pop' )
+    endif
 
   contains
 
@@ -547,6 +554,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.36  2007/08/17 00:32:16  pwagner
+! Unneeded changes
+!
 ! Revision 2.35  2007/04/03 17:37:17  vsnyder
 ! Check Vectors for zero size instead of associated
 !
