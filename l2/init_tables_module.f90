@@ -1440,8 +1440,8 @@ contains ! =====     Public procedures     =============================
              s+s_tGrid, s+s_time, s+s_vGrid, s+s_writePFA, n+n_section, &
       begin, z+z_readapriori, s+s_time, s+s_dump, s+s_gridded, s+s_l2gp, &
              s+s_l2aux, s+s_snoop, n+n_section, &
-      begin, z+z_mergegrids, s+s_time, s+s_merge, s+s_concatenate, s+s_delete, &
-             s+s_ConvertEtaToP, s+s_vgrid, s+s_wmoTrop, &
+      begin, z+z_mergegrids, s+s_time, s+s_merge, s+s_concatenate, &
+             s+s_ConvertEtaToP, s+s_delete, s+s_dump, s+s_vgrid, s+s_wmoTrop, &
              n+n_section /) )
     call make_tree ( (/ &
       begin, z+z_chunkdivide, &
@@ -1499,6 +1499,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.454  2007/08/17 00:34:58  pwagner
+! MergeGrids section may now dump
+!
 ! Revision 2.453  2007/01/11 20:48:30  vsnyder
 ! Add SurfaceHeight to gridded data, vector quantities, allow dump in ReadApriori
 !
