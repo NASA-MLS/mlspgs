@@ -10,11 +10,11 @@
 ! foreign countries or providing access to foreign persons.
 
 !=================================
-PROGRAM dateconverter
+program dateconverter
 !=================================
 
-   use dates_module, ONLY: addhourstoutc, &
-     & dai_to_yyyymmdd, reFormatDate, yyyymmdd_to_dai
+   use dates_module, ONLY: adddaystoutc, addhourstoutc, addsecondstoutc, &
+     & dai_to_yyyymmdd, dateForm, reFormatDate, splitDateTime
    use MACHINE, only: FILSEP, HP, IO_ERROR, GETARG
    use MLSStringLists, ONLY: StringElement
    use MLSStrings, ONLY: lowerCase, readIntsFromChars
@@ -38,6 +38,8 @@ PROGRAM dateconverter
   type options_T
     integer     :: offset = 0                  ! How many days to add/subtract
     integer     :: hoursOffset = 0             ! How many hours to add/subtract
+    double precision :: secondsOffset = 0.d0   ! How many seconds to add/subtract
+    logical     :: utcFormat = .false.
     logical     :: verbose = .false.
     character(len=255) :: outputFormat= ' '    ! output format
     character(len=255) :: inputFormat= ' '     ! input format
@@ -54,35 +56,23 @@ PROGRAM dateconverter
 
 ! Variables
 
-   ! The following arrays contains the maximum permissible day for each month
-   ! where month=-1 means the whole year, month=1..12 means Jan, .., Dec
-   integer, dimension(-1:12), parameter :: DAYMAXLY = (/ &
-     & 366, 0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 &
-     & /)
-   integer, dimension(-1:12), parameter :: DAYMAXNY = (/ &
-     & 365, 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 &
-     & /)
-  character(len=*), dimension(12), parameter :: MONTHNAME = (/ &
-    & 'January  ', 'February ', 'March    ', 'April    ', 'May      ', &
-    & 'June     ', 'July     ', 'August   ', 'September', 'October  ', &
-    & 'November ', 'December '/)
-
    integer, parameter :: MAXLISTLENGTH=24
    integer, parameter ::          MAXDATES = 100
    character (LEN=MAXLISTLENGTH) :: converted_date
    character (LEN=MAXLISTLENGTH) :: converted_time
    character (LEN=MAXLISTLENGTH) :: date
-   character (LEN=MAXLISTLENGTH) :: intermediate_date
+   integer                       :: dai
    character(len=MAXLISTLENGTH), dimension(MAXDATES) :: dates
+   character(len=*), parameter   :: DOYFORMAT = 'yyyy-doy'
+   integer :: ErrTyp
    character (LEN=MAXLISTLENGTH) :: fromForm
+   integer                       :: i
+   character (LEN=MAXLISTLENGTH) :: intermediate_date
    character (LEN=*), parameter  :: intermediateForm = 'yyyymmdd'
+   character(len=*), parameter   :: MFORMAT = 'yyyy M dd'
+   integer                       :: n_dates = 0
    character (LEN=MAXLISTLENGTH) :: time
    character (LEN=MAXLISTLENGTH) :: toForm
-   character(len=*), parameter   :: MFORMAT = 'yyyy M dd'
-   character(len=*), parameter   :: DOYFORMAT = 'yyyy-doy'
-   integer                       :: dai
-   integer                       :: i
-   integer                       :: n_dates = 0
   ! Executable
   do      ! Loop over options
      call get_date(date, n_dates, options)
@@ -97,12 +87,19 @@ PROGRAM dateconverter
      n_dates = n_dates + 1
      dates(n_dates) = date
   enddo
+  time = options%inputTime
+  if ( options%inputTime == ' ' ) time = '00:00:00'
+  converted_time = time
   do i=1, n_dates
     date = dates(i)
     fromForm = options%inputFormat
     if ( len_trim(options%inputFormat) < 1 ) fromForm = dateForm(date)
     ! Figure out logical format to convert it to
-    if ( options%outputFormat /= ' ' ) then
+    if ( index(lowercase(options%outputFormat), 'utc' ) > 0 ) then
+      toForm = 'yyyy-Doy'
+      if ( index(lowercase(options%outputFormat), 'b' ) > 0 ) toForm = 'yyyy-mm-dd'
+      options%utcFormat = .true.
+    elseif ( options%outputFormat /= ' ' ) then
       toForm = options%outputFormat
     elseif ( index(lowercase(fromForm), 'doy') > 0 ) then
       toForm = MFORMAT
@@ -116,185 +113,64 @@ PROGRAM dateconverter
       print *, 'input time is ', trim(options%inputTime)
       print *, 'Offset days is ', options%offset
       print *, 'Offset hours is ', options%hoursoffset
+      print *, 'Offset seconds is ', options%secondsoffset
     endif
     
     ! Process date
     if ( options%offset /= 0 ) then
-      intermediate_date = reFormatDate(date, &
-        & fromForm=trim(fromForm), toForm=intermediateForm)
-      ! print *, 'intermediate_date', intermediate_date
-      call yyyymmdd_to_dai(intermediate_date, dai)
-      ! print *, 'dai', dai
-      dai = dai + options%offset
-      call dai_to_yyyymmdd(dai, intermediate_date)
+      converted_date = reFormatDate( date, &
+        & fromForm=trim(fromForm), toForm='yyyy-mm-dd' )
+      intermediate_date = trim(converted_date) // 'T' // &
+        & adjustl(Time)
+      ! if ( options%verbose ) print *, 'intermediate_date', intermediate_date
+      converted_date = adddaystoutc( intermediate_date, options%offset )
+      ! if ( options%verbose ) print *, 'intermediate_date (advanced)', converted_date
+      call splitDateTime( converted_date, ErrTyp, intermediate_date, converted_time )
       converted_date = reFormatDate(intermediate_date, &
-        fromForm=intermediateForm, toForm=trim(toForm))
+        fromForm='yyyy-mm-dd', toForm=trim(toForm))
     elseif ( options%hoursoffset /= 0 ) then
       converted_date = reFormatDate( date, &
         & fromForm=trim(fromForm), toForm='yyyy-mm-dd' )
       ! if ( options%verbose ) print *, '1st date: ', trim(converted_date)
-      if ( options%inputTime == ' ' ) options%inputTime = '00:00:00'
+      ! if ( options%inputTime == ' ' ) options%inputTime = '00:00:00'
       ! Mash date and time together in unholy union
       intermediate_date = trim(converted_date) // 'T' // &
-        & adjustl(options%inputTime)
+        & adjustl(Time)
       ! if ( options%verbose ) print *, 'mash date: ', trim(intermediate_date)
       converted_date = addhourstoutc( intermediate_date, options%hoursoffset )
       if ( options%verbose ) print *, 'advanced date: ', trim(converted_date)
       ! Now split them asunder
-      intermediate_date = StringElement( converted_date, 1, countEmpty=.true., &
-        & inseparator='T' )
-      converted_time = StringElement( converted_date, 2, countEmpty=.true., &
-        & inseparator='T' )
+      call splitDateTime( converted_date, ErrTyp, intermediate_date, converted_time )
+      converted_date = reFormatDate(intermediate_date, &
+        fromForm='yyyy-mm-dd', toForm=trim(toForm))
+    elseif ( options%secondsoffset /= 0 ) then
+      converted_date = reFormatDate( date, &
+        & fromForm=trim(fromForm), toForm='yyyy-mm-dd' )
+      ! if ( options%verbose ) print *, '1st date: ', trim(converted_date)
+      ! if ( options%inputTime == ' ' ) options%inputTime = '00:00:00'
+      ! Mash date and time together in unholy union
+      intermediate_date = trim(converted_date) // 'T' // &
+        & adjustl(Time)
+      ! if ( options%verbose ) print *, 'mash date: ', trim(intermediate_date)
+      converted_date = addsecondstoutc( intermediate_date, options%secondsoffset )
+      if ( options%verbose ) print *, 'advanced date: ', trim(converted_date)
+      ! Now split them asunder
+      call splitDateTime( converted_date, ErrTyp, intermediate_date, converted_time )
       converted_date = reFormatDate(intermediate_date, &
         fromForm='yyyy-mm-dd', toForm=trim(toForm))
     else
       converted_date = reFormatDate(date, &
         & fromForm=trim(fromForm), toForm=trim(toForm))
     endif
-    if ( options%inputTime /= ' ' ) then
+    if ( options%utcFormat ) then
+      call print_string( trim(converted_date) // 'T' // trim(converted_time) // 'Z' )
+    elseif ( options%inputTime /= ' ' ) then
       call print_string( trim(converted_date) // ' ' // trim(converted_time) )
     else
       call print_string( trim(converted_date) )
     endif
    enddo
 contains
-  subroutine advance ( values, dvalues )
-    integer, dimension(8), intent(inout) :: values
-    integer, dimension(8), intent(in)    :: dvalues
-    integer, dimension(8), parameter     :: lolimits = &
-      & (/1,     1,  1, 0,  0, 0,   0,  0/)
-    integer, dimension(8), parameter     :: uplimits = &
-      & (/2000, 12, -1, 0, 23, 59, 59, 999/)
-    integer :: hindx
-    integer :: indx
-    integer :: limit
-    integer, dimension(-1:12) :: DAYMAX
-    if ( leapyear(values(1)) ) then
-      DAYMAX = DAYMAXLY
-    else
-      DAYMAX = DAYMAXNY
-    endif
-    values = values + dvalues
-    do indx = 8, 2, -1
-      limit = uplimits(indx)
-      if ( limit == 0 ) cycle
-      if ( uplimits(indx-1) > 0 ) then
-        hindx = indx-1
-      else
-        hindx = indx-2
-      endif
-      if ( limit < 0 ) then
-        limit = DAYMAX(values(2))
-      endif
-      if ( values(indx) > limit ) then
-        values(hindx) = values(hindx) + 1
-        values(indx) = values(indx) - (limit+1) + lolimits(indx)
-      endif
-    enddo
-  end subroutine advance
-  logical function leapyear(year)
-    integer,intent(in) :: year
-     ! This is to capture rule that centuries are leap only
-     ! if divisible by 400
-     ! Otherwise, as prehaps you knew, leapyears are those years divisible by 4
-     if ( 100 * (year/100) >= year ) then
-       leapyear = ( 400 * (year/400) >= year )
-     else
-       leapyear = ( 4 * (year/4) >= year )
-     endif
-  end function leapyear
-  
-  function dateForm(date) result(form)
-    ! Determine what format the date is in
-    ! E.g., given '2004-d271' returns 'yyyy-doy'
-    ! Args
-    character(len=*), intent(in) :: date
-    character(len=len(date)+8) :: form
-    ! Internal variables
-    integer :: i
-    integer :: j
-    integer :: month
-    character(len=1)            :: s  ! The expected date field
-    character(len=1), parameter :: y = 'y'
-    character(len=1), parameter :: m = 'm'
-    character(len=1), parameter :: d = 'd'
-    ! Executable
-    form = 'unknown format'
-    if ( len_trim(date) < 1 ) return
-    form = ' '
-    s = 'y'
-    i = 0
-    j = 0
-    do
-      if ( j >= len_trim(date) ) exit
-      i = i + 1
-      j = j + 1
-      select case (date(j:j))
-      case ('d')
-        form(i:i+2) = 'doy'
-        i = i + 3
-        j = j + 3
-        ! print *, 'After d field: ', form
-      case ('J', 'F', 'M', 'A', 'S', 'O', 'N', 'D')
-        month = monthNameToNumber(date(j:))
-        if ( month < 1 .or. month > 12 ) then
-          form = 'month name uncrecognized in ' // trim(date(j:))
-          return
-        endif
-        j = j + len_trim(MONTHNAME(month)) - 1
-        form(i:i) = 'M'
-        s = 'd'
-        ! write(tempFormat(5:6),'(i2.2)') month
-        ! print *, 'After M field: ', form
-      case ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9')
-        select case (s)
-        case ('m')
-          ! Was yyyy, now mm
-          form(i:i+1) = 'mm'
-          s = 'd'
-          i = i + 1
-          j = j + 1
-          ! print *, 'After 0-9  m field: ', form
-        case ('d')
-          ! Was mm, now dd
-          form(i:i+1) = 'dd'
-          s = ' '
-          i = i + 1
-          j = j + 1
-          ! print *, 'After 0-9  d field: ', form
-        case ('y')
-          ! yyyy
-          form(i:i+3) = 'yyyy'
-          s = 'm'
-          i = i + 3
-          j = j + 3
-          ! print *, 'After 0-9  y field: ', form
-        case default
-          ! Huh? Already finished with dd
-          if ( options%verbose ) print *, 'Unexpected digit in dateForm'
-        end select
-      case default
-        form(i:i) = date(j:j)
-        ! print *, 'After default field: ', form
-      end select
-    enddo
-  end function dateForm
-  function monthNameToNumber(name) result(number)
-    ! Convert month name to corresponding number
-    ! E.g., given 'March', returns 3
-    ! As a courtesy, name may be case-insensitive
-    ! As a further courtesy, name may be followed by any junk you like
-    ! Thus 'March 23, 2004 01:59:59.999' still returns 3
-    ! If no such month is found, returns -1
-    ! Args
-    character(len=*), intent(in)             :: name
-    integer                                  :: number
-    do number=1, size(MONTHNAME)
-      if ( index(lowerCase(name), lowercase(trim(MONTHNAME(number)))) > 0 ) return
-    enddo
-    number = -1
-  end function monthNameToNumber
-
 !------------------------- get_date ---------------------
     subroutine get_date(date, n_dates, options)
     ! Added for command-line processing
@@ -305,7 +181,7 @@ contains
      character(LEN=255) ::              arg
      integer ::                         error = 1
      integer, save ::                   i = 1
-  ! Get inputfile name, process command-line args
+  ! Get date, process command-line args
   ! (which always start with -)
     do
       call getarg ( i+hp, date )
@@ -323,6 +199,17 @@ contains
       elseif ( date(1:3) == '+H ' ) then
         call getarg ( i+1+hp, arg )
         call readIntsFromChars(arg, options%hoursOffset)
+        i = i + 1
+        exit
+      elseif ( date(1:3) == '-S ' ) then
+        call getarg ( i+1+hp, arg )
+        read(arg, * ) options%secondsOffset
+        options%secondsOffset = - options%secondsOffset ! Because we will subtract
+        i = i + 1
+        exit
+      elseif ( date(1:3) == '+S ' ) then
+        call getarg ( i+1+hp, arg )
+        read(arg, * ) options%secondsOffset
         i = i + 1
         exit
       elseif ( date(1:3) == '-i ' ) then
@@ -372,6 +259,8 @@ contains
       write (*,*) ' Options: -o format   => output format to use (e.g. yyyymmdd)'
       write (*,*) '                        by default output will complement input'
       write (*,*) '                        e.g., "2004 October 01" <=> 2004-d275'
+      write (*,*) '                        a special code "utc" fuses date and time'
+      write (*,*) '                        e.g., "2007-274T23:59:59.9999Z'
       write (*,*) '          -i format   => input format'
       write (*,*) '                        by default attempt to auto-recognize'
       write (*,*) '          -t time     => optional time-of-day (military-style)'
@@ -380,6 +269,8 @@ contains
       write (*,*) '          +number     => add "number" days'
       write (*,*) '          -H number   => subtract "number" hours'
       write (*,*) '          +H number   => add "number" hours'
+      write (*,*) '          -S number   => subtract "number" seconds'
+      write (*,*) '          +S number   => add "number" seconds'
       write (*,*) '          -v          => switch on verbose mode'
       write (*,*) '          -h          => print brief help'
       stop
@@ -395,6 +286,9 @@ END PROGRAM dateconverter
 !==================
 
 ! $Log$
+! Revision 1.2  2007/05/10 23:41:42  pwagner
+! Fixed error in declared char size of date; now assumed shape
+!
 ! Revision 1.1  2007/01/18 23:36:04  pwagner
 ! Moved here from sandbox
 !
