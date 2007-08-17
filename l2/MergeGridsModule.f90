@@ -33,15 +33,16 @@ contains ! =================================== Public procedures
 
   subroutine MergeGrids ( root, griddedDataBase, l2gpDatabase )
 
+    use DumpCommand_m, only: DumpCommand
     use GriddedData, only: GRIDDEDDATA_T, RGR, &
       & ADDGRIDDEDDATATODATABASE, &
       & CONCATENATEGRIDDEDDATA, CONVERTFROMETALEVELGRIDS, COPYGRID, &
       & NULLIFYGRIDDEDDATA, SETUPNEWGRIDDEDDATA, WRAPGRIDDEDDATA
     use Init_tables_module, only: S_CONCATENATE, S_CONVERTETATOP, &
-      & S_DELETE, S_MERGE, S_WMOTROP
+      & S_DELETE, S_DUMP, S_MERGE, S_WMOTROP
     use L2GPData, only: L2GPDATA_T
     use MLSCommon, only: R8
-    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMESSAGECALLS
     use MoreTree, only: GET_SPEC_ID
     use Trace_M, only: TRACE_BEGIN, TRACE_END
     use Tree, only: NSONS, SUBTREE, DECORATE, DECORATION, NODE_ID, SUB_ROSA
@@ -62,7 +63,12 @@ contains ! =================================== Public procedures
     integer :: NAME                     ! Index into string table
 
     ! excutable code
-    if ( toggle(gen) ) call trace_begin ( "MergeGrids", root )
+    if ( toggle(gen) ) then
+      call trace_begin ( "MergeGrids", root )
+    else
+      call MLSMessageCalls( 'push', constantName=ModuleName )
+    endif
+    
     do i = 2, nsons(root) - 1           ! Skip the begin and end stuff
       son = subtree ( i, root )
       if ( node_id(son) == n_named ) then ! Is spec labed?
@@ -87,13 +93,20 @@ contains ! =================================== Public procedures
       case ( s_wmoTrop )
         call decorate ( key, AddgriddedDataToDatabase ( griddedDataBase, &
           & wmoTropFromGrid ( key, griddedDataBase ) ) )
+      case ( s_dump )
+        call dumpCommand ( key, griddedDataBase=griddedDataBase )
       case default
         ! Shouldn't get here is parser worked?
         call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'Unrecognized command in MergeGrids section' )
       end select
     end do
-    if ( toggle(gen) ) call trace_end ( "MergeGrids" )
+    if ( toggle(gen) ) then
+      call trace_end ( "MergeGrids" )
+    else
+      call MLSMessageCalls( 'pop' )
+    endif
+    
 
   end subroutine MergeGrids
 
@@ -927,6 +940,9 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.34  2007/08/17 00:33:59  pwagner
+! May now dump, stop, under control of l2cf
+!
 ! Revision 2.33  2007/07/04 01:44:15  vsnyder
 ! Actually leave early from ConvertEtaToP
 !
