@@ -73,7 +73,7 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
   type ( options_T ) :: options
 
 
-  integer, parameter ::          MAXDS = 500
+  integer, parameter ::          MAXDS = 1024 ! 500
   integer, parameter ::          MAXSDNAMESBUFSIZE = MAXDS*NAME_LEN
   integer, parameter ::          MAXFILES = 100
   integer, parameter ::          hdfVersion = HDFVERSION_5
@@ -506,6 +506,9 @@ end program l2auxdump
 !==================
 
 ! $Log$
+! Revision 1.4  2007/02/06 23:20:19  pwagner
+! -radiances options dumps only radiances
+!
 ! Revision 1.3  2006/07/13 18:11:01  pwagner
 ! May set fillValue and -relation for rms, pctage
 !
