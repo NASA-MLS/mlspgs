@@ -191,7 +191,9 @@ then
 fi
 
 masterIdent="none"
-otheropts="-g -S'slv,opt1,log,pro,time'"
+otheropts="-g"
+switches="-S'slv,opt1,log,pro,time,glob1'"
+# otheropts="-g -S'slv,opt1,log,pro,time,glob1'"
 # otheropts="$OTHEROPTS"
 echo "otheropts starting as $otheropts" 2>&1 | tee -a "$LOGFILE"
 more_opts="yes"
@@ -271,8 +273,13 @@ while [ "$more_opts" = "yes" ] ; do
        echo "Skipping unknown argument: $1" >> $LOGFILE
        shift
        ;;
+#    -S* )
+#       echo "Skipping switch-setting argument: $1" >> $LOGFILE
+#       shift
+#       ;;
     -S* )
-       echo "Skipping switch-setting argument: $1" >> $LOGFILE
+       switches="$switches $1"
+       echo "Appending switch-setting argument: $1" >> $LOGFILE
        shift
        ;;
     -* )
@@ -285,6 +292,8 @@ while [ "$more_opts" = "yes" ] ; do
        ;;
     esac
 done
+
+otheropts="$otheropts $switches"
 
 echo "PGS_PC_INFO_FILE: $PGS_PC_INFO_FILE" 2>&1 | tee -a "$LOGFILE"
 echo "masterTid: $masterTid" 2>&1 | tee -a "$LOGFILE"
@@ -345,6 +354,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.14  2007/05/10 23:40:12  pwagner
+# Used ulimit to increase tiny stacksize so Intel-built mlsl2 can finish
+#
 # Revision 1.13  2007/02/09 21:31:07  pwagner
 # Sets environmental variable as work-around to Lahey 6.2 bug; accepts --delay --stdout opts
 #
