@@ -43,6 +43,7 @@ contains ! ============= Public Procedures ==========================
     use PolarLinearModel_m, only: POLARLINEARMODEL
     use MatrixModule_1, only: MATRIX_T
     use MLSL2Timings, only: Add_to_retrieval_timing
+    use MLSMessageModule, only: MLSMessageCalls
     use ScanModelModule, only: SCANFORWARDMODEL, TWODSCANFORWARDMODEL
     use SwitchingMirrorModel_m, only: SWITCHINGMIRRORMODEL
     use VectorsModule, only: VECTOR_T
@@ -75,6 +76,8 @@ contains ! ============= Public Procedures ==========================
       call trace_begin ( 'Forward model config: ' // trim(thisName) )
     end if
 
+    call MLSMessageCalls( 'push', &
+      & constantName='ForwardModel' // ' ' // trim(thisName) )
     ! Setup the timing
     call time_now (time_start)
 
@@ -83,50 +86,64 @@ contains ! ============= Public Procedures ==========================
       & (/ l_full, l_linear, l_polarLinear, l_hybrid, l_cloudFull /) )
     select case (config%fwmType)
     case ( l_baseline )
+      call MLSMessageCalls( 'push', constantName='BaselineForwardModel' )
       call BaselineForwardModel ( config, FwdModelIn, FwdModelExtra, &
         FwdModelOut, fmStat, Jacobian )
       call add_to_retrieval_timing( 'baseline' )
     case ( l_full )
+      call MLSMessageCalls( 'push', constantName='FullForwardModel' )
       call FullForwardModel ( config, FwdModelIn, FwdModelExtra, &
         FwdModelOut, fmStat, Jacobian )
       call add_to_retrieval_timing( 'full_fwm' )
     case ( l_linear )
+      call MLSMessageCalls( 'push', constantName='LinearizedForwardModel' )
       call LinearizedForwardModel ( config, FwdModelIn, FwdModelExtra, &
         FwdModelOut, fmStat, Jacobian, vectors )
       call add_to_retrieval_timing( 'linear_fwm' )
     case ( l_hybrid )
+      call MLSMessageCalls( 'push', constantName='HybridForwardModel' )
       call HybridForwardModel ( config, FwdModelIn, FwdModelExtra, &
         FwdModelOut, fmStat, Jacobian, vectors )
       call add_to_retrieval_timing( 'hybrid' )
     case ( l_polarLinear )
+      call MLSMessageCalls( 'push', constantName='PolarForwardModel' )
       call PolarLinearModel ( config, FwdModelIn, FwdModelExtra, &
         FwdModelOut, fmStat, Jacobian, vectors )
       call add_to_retrieval_timing( 'polar_linear' )
     case ( l_scan )
+      call MLSMessageCalls( 'push', constantName='ScanForwardModel' )
       call ScanForwardModel ( config, FwdModelIn, FwdModelExtra, &
         FwdModelOut, fmStat, Jacobian )
       call add_to_retrieval_timing( 'scan_fwm' )
     case ( l_scan2d )
+      call MLSMessageCalls( 'push', constantName='TwoDForwardModel' )
       call TwoDScanForwardModel ( config, FwdModelIn, FwdModelExtra, &
         FwdModelOut, fmStat, Jacobian )
       call add_to_retrieval_timing( 'twod_scan_fwm' )
     case ( l_cloudFull )
+      call MLSMessageCalls( 'push', constantName='CloudForwardModel' )
       call FullCloudForwardModelWrapper ( config, FwdModelIn, FwdModelExtra, &
         FwdModelOut, fmStat, Jacobian )
       call add_to_retrieval_timing( 'fullcloud_fwm' )
     case ( l_switchingMirror )
+      call MLSMessageCalls( 'push', constantName='SwitchingForwardModel' )
       call SwitchingMirrorModel ( config, FwdModelIn, FwdModelExtra, &
         FwdModelOut, fmStat, Jacobian )
       call add_to_retrieval_timing( 'switching_mirror' )
     case default ! Shouldn't get here if parser etc. worked
     end select
+    call MLSMessageCalls( 'pop' )
     
     if ( radianceModel ) then
+      call MLSMessageCalls( 'push', constantName='BaselinForwardModel' )
       call BaselineForwardModel ( config, FwdModelIn, FwdModelExtra, &
         FwdModelOut, fmStat, Jacobian )
+      call MLSMessageCalls( 'pop' )
       call add_to_retrieval_timing( 'baseline' )
+      call MLSMessageCalls( 'push', constantName='SwitchingForwardModel' )
       call SwitchingMirrorModel ( config, FwdModelIn, FwdModelExtra, &
         FwdModelOut, fmStat, Jacobian )
+      call MLSMessageCalls( 'pop' )
       call add_to_retrieval_timing( 'switching_mirror' )
     end if
 
@@ -158,6 +175,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.28  2007/08/20 22:05:06  pwagner
+! Many procedures now push their names onto MLSCallStack
+!
 ! Revision 2.27  2007/06/29 19:32:07  vsnyder
 ! Make ForwardModelIntermediate_t private to ScanModelModule
 !
