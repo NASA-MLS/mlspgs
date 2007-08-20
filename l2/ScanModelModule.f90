@@ -40,7 +40,8 @@ module ScanModelModule          ! Scan model and associated calculations
   use MatrixModule_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T, &
     & CREATEEMPTYMATRIX, DESTROYMATRIX, CLEARMATRIX
   use MLSCommon, ONLY: R8, rp, rv
-  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
+  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING, &
+    & MLSMessageCalls
   use MLSNumerics, only : HUNT, INTERPOLATEVALUES
   use Molecules, only: L_H2O
   use Refraction_m, only: Refractive_index, RefrAterm, RefrBterm
@@ -143,6 +144,7 @@ contains ! =============== Subroutines and functions ==========================
     real (r8) :: REFLOGP                ! Log p of pressure reference surface
     real (r8) :: BASISGAP               ! Space between adjacent surfaces
 
+    call MLSMessageCalls( 'push', constantName='GetBasisGPH' )
     nullify ( myR, myRT )
     ! Check that we get the right kinds of quantities
     if ( ( .not. ValidateVectorQuantity( temp,&
@@ -233,6 +235,7 @@ contains ! =============== Subroutines and functions ==========================
 
     if ( present(belowRef) ) belowRef = myBelowRef
          
+    call MLSMessageCalls( 'pop' )
     ! That's it  
   end subroutine GetBasisGPH
 
@@ -302,6 +305,7 @@ contains ! =============== Subroutines and functions ==========================
     integer, dimension( size(GPHPREC, 1), size(GPHPREC, 2) ) &
       &       :: ITSSIGN                ! < 0 if tempprec or refgphprec are
 
+    call MLSMessageCalls( 'push', constantName='GepGPHPrecision' )
     ! Check that we get the right kinds of quantities
     if ( ( .not. ValidateVectorQuantity( tempPrec,&
       &            coherent=.true., &
@@ -417,6 +421,7 @@ contains ! =============== Subroutines and functions ==========================
     end do
     GPHPrec = ITSSIGN * sqrt ( GPHPrec2 )
      
+    call MLSMessageCalls( 'pop' )
     ! That's it  
   end subroutine GetGPHPrecision
 
@@ -2180,6 +2185,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.70  2007/08/20 22:06:08  pwagner
+! Two procedures now push their names onto MLSCallStack
+!
 ! Revision 2.69  2007/07/25 20:08:46  vsnyder
 ! Delete declaration for unused variable
 !
