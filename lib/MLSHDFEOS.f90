@@ -921,6 +921,7 @@ contains ! ======================= Public Procedures =========================
     ! Declare these as externals to try to fool hdfeos(5)
     integer, external :: swrdfld
     integer, external :: he5_swrdfld
+    call MLSMessageCalls( 'push', constantName='MLS_SWRDFLD_CHAR_1D' )
     mls_swrdfld_CHAR_1D = 0
     myDontFail = .false.
     if ( present(DontFail) ) myDontFail = DontFail
@@ -964,9 +965,10 @@ contains ! ======================= Public Procedures =========================
     case default
       mls_swrdfld_CHAR_1D = -1
     end select
-    if ( myDontFail .or. mls_swrdfld_CHAR_1D /= -1 ) return
-    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+    if ( .not. myDontFail .and. mls_swrdfld_CHAR_1D == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Failed to read 1-d char field ' // trim(fieldname) )
+    call MLSMessageCalls( 'pop' )
 
   end function MLS_SWRDFLD_CHAR_1D
 
@@ -987,6 +989,7 @@ contains ! ======================= Public Procedures =========================
     logical :: myDontFail
     integer :: myHdfVersion
     logical :: needsFileName
+    call MLSMessageCalls( 'push', constantName='MLS_SWRDFLD_DOUBLE_1D' )
     mls_swrdfld_double_1d = 0
     myDontFail = .false.
     if ( present(DontFail) ) myDontFail = DontFail
@@ -1018,9 +1021,10 @@ contains ! ======================= Public Procedures =========================
     case default
       mls_swrdfld_double_1d = -1
     end select
-    if ( myDontFail .or. mls_swrdfld_double_1d /= -1 ) return
-    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+    if ( .not. myDontFail .and. mls_swrdfld_double_1d == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Failed to read 1d double field ' // trim(fieldname) )
+    call MLSMessageCalls( 'pop' )
 
   end function MLS_SWRDFLD_DOUBLE_1D
 
@@ -1041,6 +1045,7 @@ contains ! ======================= Public Procedures =========================
     logical :: myDontFail
     integer :: myHdfVersion
     logical :: needsFileName
+    call MLSMessageCalls( 'push', constantName='MLS_SWRDFLD_DOUBLE_2D' )
     mls_swrdfld_double_2d = 0
     myDontFail = .false.
     if ( present(DontFail) ) myDontFail = DontFail
@@ -1072,9 +1077,10 @@ contains ! ======================= Public Procedures =========================
     case default
       mls_swrdfld_double_2d = -1
     end select
-    if ( myDontFail .or. mls_swrdfld_double_2d /= -1 ) return
-    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+    if ( .not. myDontFail .and. mls_swrdfld_double_2d == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Failed to read 2-d double field ' // trim(fieldname) )
+    call MLSMessageCalls( 'pop' )
 
   end function MLS_SWRDFLD_DOUBLE_2d
 
@@ -1095,6 +1101,7 @@ contains ! ======================= Public Procedures =========================
     logical :: myDontFail
     integer :: myHdfVersion
     logical :: needsFileName
+    call MLSMessageCalls( 'push', constantName='MLS_SWRDFLD_DOUBLE_3D' )
     mls_swrdfld_double_3d = 0
     myDontFail = .false.
     if ( present(DontFail) ) myDontFail = DontFail
@@ -1126,9 +1133,10 @@ contains ! ======================= Public Procedures =========================
     case default
       mls_swrdfld_double_3d = -1
     end select
-    if ( myDontFail .or. mls_swrdfld_double_3d /= -1 ) return
-    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+    if ( .not. myDontFail .and. mls_swrdfld_double_3d == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Failed to read 3d double field ' // trim(fieldname) )
+    call MLSMessageCalls( 'pop' )
 
   end function MLS_SWRDFLD_DOUBLE_3d
 
@@ -1149,6 +1157,7 @@ contains ! ======================= Public Procedures =========================
     logical :: myDontFail
     integer :: myHdfVersion
     logical :: needsFileName
+    call MLSMessageCalls( 'push', constantName='MLS_SWRDFLD_INTEGER' )
     mls_swrdfld_integer = 0
     myDontFail = .false.
     if ( present(DontFail) ) myDontFail = DontFail
@@ -1180,9 +1189,10 @@ contains ! ======================= Public Procedures =========================
     case default
       mls_swrdfld_integer = -1
     end select
-    if ( myDontFail .or. mls_swrdfld_integer /= -1 ) return
-    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+    if ( .not. myDontFail .and. mls_swrdfld_integer == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Failed to read integer field ' // trim(fieldname) )
+    call MLSMessageCalls( 'pop' )
 
   end function MLS_SWRDFLD_INTEGER
 
@@ -1203,6 +1213,7 @@ contains ! ======================= Public Procedures =========================
     logical :: myDontFail
     integer :: myHdfVersion
     logical :: needsFileName
+    call MLSMessageCalls( 'push', constantName='MLS_SWRDFLD_REAL_1D' )
     mls_swrdfld_REAL_1d = 0
     myDontFail = .false.
     if ( present(DontFail) ) myDontFail = DontFail
@@ -1234,9 +1245,10 @@ contains ! ======================= Public Procedures =========================
     case default
       mls_swrdfld_REAL_1d = -1
     end select
-    if ( myDontFail .or. mls_swrdfld_REAL_1d /= -1 ) return
-    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+    if ( .not. myDontFail .and. mls_swrdfld_REAL_1d == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Failed to read 1d real field ' // trim(fieldname) )
+    call MLSMessageCalls( 'pop' )
 
   end function MLS_SWRDFLD_REAL_1D
 
@@ -1257,6 +1269,7 @@ contains ! ======================= Public Procedures =========================
     logical :: myDontFail
     integer :: myHdfVersion
     logical :: needsFileName
+    call MLSMessageCalls( 'push', constantName='MLS_SWRDFLD_REAL_2D' )
     mls_swrdfld_REAL_2d = 0
     myDontFail = .false.
     if ( present(DontFail) ) myDontFail = DontFail
@@ -1288,9 +1301,10 @@ contains ! ======================= Public Procedures =========================
     case default
       mls_swrdfld_REAL_2d = -1
     end select
-    if ( myDontFail .or. mls_swrdfld_REAL_2d /= -1 ) return
-    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+    if ( .not. myDontFail .and. mls_swrdfld_REAL_2d == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Failed to read 2-d REAL field ' // trim(fieldname) )
+    call MLSMessageCalls( 'pop' )
 
   end function MLS_SWRDFLD_REAL_2d
 
@@ -1311,6 +1325,7 @@ contains ! ======================= Public Procedures =========================
     logical :: myDontFail
     integer :: myHdfVersion
     logical :: needsFileName
+    call MLSMessageCalls( 'push', constantName='MLS_SWRDFLD_REAL_3D' )
     mls_swrdfld_REAL_3d = 0
     myDontFail = .false.
     if ( present(DontFail) ) myDontFail = DontFail
@@ -1342,9 +1357,10 @@ contains ! ======================= Public Procedures =========================
     case default
       mls_swrdfld_REAL_3d = -1
     end select
-    if ( myDontFail .or. mls_swrdfld_REAL_3d /= -1 ) return
-    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+    if ( .not. myDontFail .and. mls_swrdfld_REAL_3d == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Failed to read 3d real field ' // trim(fieldname) )
+    call MLSMessageCalls( 'pop' )
 
   end function MLS_SWRDFLD_REAL_3d
 
@@ -1356,6 +1372,7 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in) :: DATATYPE    ! E.g., MLS_CHARTYPE
     integer, intent(in) :: COUNT   ! How many
     character(len=*), intent(in) :: BUFFER  ! Buffer for write
+    call MLSMessageCalls( 'push', constantName='mls_swwrattr' )
     if ( len_trim(buffer) > 0 ) then
       mls_swwrattr = HE5_SWWRATTR( SWATHID, &
       & ATTRNAME, DATATYPE, max(COUNT, len_trim(BUFFER)), BUFFER )
@@ -1363,6 +1380,7 @@ contains ! ======================= Public Procedures =========================
       mls_swwrattr = HE5_SWWRATTR( SWATHID, &
       & ATTRNAME, DATATYPE, 1, BLANK )
     endif
+    call MLSMessageCalls( 'pop' )
 
   end function mls_swwrattr
 
@@ -1376,6 +1394,7 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in) :: COUNT   ! How many
     character(len=*), intent(in) :: BUFFER  ! Buffer for write
     !
+    call MLSMessageCalls( 'push', constantName='mls_swwrlattr' )
     if ( len_trim(buffer) > 0 ) then
       mls_swwrlattr = HE5_SWWRLATTR( SWATHID, FIELDNAME, &
       & ATTRNAME, DATATYPE, max(COUNT, len_trim(BUFFER)), BUFFER )
@@ -1383,6 +1402,7 @@ contains ! ======================= Public Procedures =========================
       mls_swwrlattr = HE5_SWWRLATTR( SWATHID, FIELDNAME, &
       & ATTRNAME, DATATYPE, 1, BLANK )
     endif
+    call MLSMessageCalls( 'pop' )
 
   end function mls_swwrlattr
 
@@ -1411,6 +1431,7 @@ contains ! ======================= Public Procedures =========================
     character(len=80)      :: fieldlist
     integer                :: nflds
     ! begin execution
+    call MLSMessageCalls( 'push', constantName='mls_SWWRFLD_CHAR_1D' )
     mls_SWWRFLD_CHAR_1D = 0
     myDontFail = .false.
     if ( present(DontFail) ) myDontFail = DontFail
@@ -1445,9 +1466,10 @@ contains ! ======================= Public Procedures =========================
     needsFileName = is_swath_datatype_right(swathid, fieldname, DFNT_CHAR8, &
       & myHdfVersion, rank_out=dfrank, numbertype_out=numbertype, &
       & fieldlist_out=fieldlist, nflds_out=nflds)
-    if ( myDontFail .or. mls_SWWRFLD_CHAR_1D /= -1 ) return
-    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+    if ( .not. myDontFail .and. mls_SWWRFLD_CHAR_1D == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Failed to write 1d char field ' // trim(fieldname) )
+    call MLSMessageCalls( 'pop' )
 
   end function MLS_SWWRFLD_CHAR_1D
 
@@ -1468,6 +1490,7 @@ contains ! ======================= Public Procedures =========================
     logical :: myDontFail
     integer :: myHdfVersion
     logical :: needsFileName
+    call MLSMessageCalls( 'push', constantName='mls_SWWRFLD_DOUBLE_1D' )
     mls_SWWRFLD_double_1d = 0
     myDontFail = .false.
     if ( present(DontFail) ) myDontFail = DontFail
@@ -1499,9 +1522,10 @@ contains ! ======================= Public Procedures =========================
     case default
       mls_SWWRFLD_double_1d = -1
     end select
-    if ( myDontFail .or. mls_SWWRFLD_double_1d /= -1 ) return
-    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+    if ( .not. myDontFail .and. mls_SWWRFLD_double_1d == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Failed to write 1d double field ' // trim(fieldname) )
+    call MLSMessageCalls( 'pop' )
 
   end function MLS_SWWRFLD_DOUBLE_1D
 
@@ -1522,6 +1546,7 @@ contains ! ======================= Public Procedures =========================
     logical :: myDontFail
     integer :: myHdfVersion
     logical :: needsFileName
+    call MLSMessageCalls( 'push', constantName='mls_SWWRFLD_DOUBLE_2D' )
     mls_SWWRFLD_double_2d = 0
     myDontFail = .false.
     if ( present(DontFail) ) myDontFail = DontFail
@@ -1553,9 +1578,10 @@ contains ! ======================= Public Procedures =========================
     case default
       mls_SWWRFLD_double_2d = -1
     end select
-    if ( myDontFail .or. mls_SWWRFLD_double_2d /= -1 ) return
-    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+    if ( .not. myDontFail .and. mls_SWWRFLD_double_2d == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Failed to write 2-d double field ' // trim(fieldname) )
+    call MLSMessageCalls( 'pop' )
 
   end function MLS_SWWRFLD_DOUBLE_2d
 
@@ -1576,6 +1602,7 @@ contains ! ======================= Public Procedures =========================
     logical :: myDontFail
     integer :: myHdfVersion
     logical :: needsFileName
+    call MLSMessageCalls( 'push', constantName='mls_SWWRFLD_DOUBLE_3D' )
     mls_SWWRFLD_double_3d = 0
     myDontFail = .false.
     if ( present(DontFail) ) myDontFail = DontFail
@@ -1607,9 +1634,10 @@ contains ! ======================= Public Procedures =========================
     case default
       mls_SWWRFLD_double_3d = -1
     end select
-    if ( myDontFail .or. mls_SWWRFLD_double_3d /= -1 ) return
-    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+    if ( .not. myDontFail .and. mls_SWWRFLD_double_3d == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Failed to write 3d double field ' // trim(fieldname) )
+    call MLSMessageCalls( 'pop' )
 
   end function MLS_SWWRFLD_DOUBLE_3d
 
@@ -1630,6 +1658,7 @@ contains ! ======================= Public Procedures =========================
     logical :: myDontFail
     integer :: myHdfVersion
     logical :: needsFileName
+    call MLSMessageCalls( 'push', constantName='mls_SWWRFLD_INTEGER' )
     mls_SWWRFLD_integer = 0
     myDontFail = .false.
     if ( present(DontFail) ) myDontFail = DontFail
@@ -1661,9 +1690,10 @@ contains ! ======================= Public Procedures =========================
     case default
       mls_SWWRFLD_integer = -1
     end select
-    if ( myDontFail .or. mls_SWWRFLD_integer /= -1 ) return
-    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+    if ( .not. myDontFail .and. mls_SWWRFLD_integer == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Failed to write integer field ' // trim(fieldname) )
+    call MLSMessageCalls( 'pop' )
 
   end function MLS_SWWRFLD_INTEGER
 
@@ -1684,6 +1714,7 @@ contains ! ======================= Public Procedures =========================
     logical :: myDontFail
     integer :: myHdfVersion
     logical :: needsFileName
+    call MLSMessageCalls( 'push', constantName='mls_SWWRFLD_REAL_1D' )
     mls_SWWRFLD_REAL_1d = 0
     myDontFail = .false.
     if ( present(DontFail) ) myDontFail = DontFail
@@ -1715,9 +1746,10 @@ contains ! ======================= Public Procedures =========================
     case default
       mls_SWWRFLD_REAL_1d = -1
     end select
-    if ( myDontFail .or. mls_SWWRFLD_REAL_1d /= -1 ) return
-    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+    if ( .not. myDontFail .and. mls_SWWRFLD_REAL_1d == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Failed to write 1d real field ' // trim(fieldname) )
+    call MLSMessageCalls( 'pop' )
 
   end function MLS_SWWRFLD_REAL_1D
 
@@ -1738,6 +1770,7 @@ contains ! ======================= Public Procedures =========================
     logical :: myDontFail
     integer :: myHdfVersion
     logical :: needsFileName
+    call MLSMessageCalls( 'push', constantName='mls_SWWRFLD_REAL_2D' )
     mls_SWWRFLD_REAL_2d = 0
     myDontFail = .false.
     if ( present(DontFail) ) myDontFail = DontFail
@@ -1776,9 +1809,10 @@ contains ! ======================= Public Procedures =========================
     case default
       mls_SWWRFLD_REAL_2d = -1
     end select
-    if ( myDontFail .or. mls_SWWRFLD_REAL_2d /= -1 ) return
-    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+    if ( .not. myDontFail .and. mls_SWWRFLD_REAL_2d == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Failed to write 2-d REAL field ' // trim(fieldname) )
+    call MLSMessageCalls( 'pop' )
 
   end function MLS_SWWRFLD_REAL_2d
 
@@ -1799,6 +1833,7 @@ contains ! ======================= Public Procedures =========================
     logical :: myDontFail
     integer :: myHdfVersion
     logical :: needsFileName
+    call MLSMessageCalls( 'push', constantName='mls_SWWRFLD_REAL_3D' )
     mls_SWWRFLD_REAL_3d = 0
     myDontFail = .false.
     if ( present(DontFail) ) myDontFail = DontFail
@@ -1830,9 +1865,10 @@ contains ! ======================= Public Procedures =========================
     case default
       mls_SWWRFLD_REAL_3d = -1
     end select
-    if ( myDontFail .or. mls_SWWRFLD_REAL_3d /= -1 ) return
-    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+    if ( .not. myDontFail .and. mls_SWWRFLD_REAL_3d == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Failed to write 3d real field ' // trim(fieldname) )
+    call MLSMessageCalls( 'pop' )
 
   end function MLS_SWWRFLD_REAL_3d
 
@@ -1849,6 +1885,7 @@ contains ! ======================= Public Procedures =========================
     integer                          :: nswaths
     ! Begin execution
     ! print*,'Scalar version'
+    call MLSMessageCalls( 'push', constantName='mls_swath_in_file_sca' )
     nswaths = 0
     mls_swath_in_file_sca = .false.
     fieldlist = ''
@@ -1868,6 +1905,7 @@ contains ! ======================= Public Procedures =========================
     endif
     mls_swath_in_file_sca = &
       & ( StringElementNum(fieldlist, trim(swath), .true.) > 0 )
+    call MLSMessageCalls( 'pop' )
   end function mls_swath_in_file_sca
 
   ! ---------------------------------------------  mls_swath_in_file_arr  -----
@@ -1885,6 +1923,7 @@ contains ! ======================= Public Procedures =========================
     integer                          :: nswaths
     integer                          :: i
     ! Begin execution
+    call MLSMessageCalls( 'push', constantName='mls_swath_in_file_arr' )
     nswaths = 0
     mls_swath_in_file_arr = .false.
     which = .false.
@@ -1914,6 +1953,7 @@ contains ! ======================= Public Procedures =========================
       & ( StringElementNum(fieldlist, trim(swaths(i)), .true.) > 0 )
     enddo
     mls_swath_in_file_arr = any( which )
+    call MLSMessageCalls( 'pop' )
   end function mls_swath_in_file_arr
 
 ! ======================= Private Procedures =========================  
@@ -2038,6 +2078,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDFEOS
 
 ! $Log$
+! Revision 2.31  2007/08/20 22:00:47  pwagner
+! More procedures push their names onto MLSCallStack
+!
 ! Revision 2.30  2007/08/17 00:27:48  pwagner
 ! push more procedures onto MLSCallStack
 !
