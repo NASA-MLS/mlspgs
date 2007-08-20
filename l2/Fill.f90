@@ -168,7 +168,7 @@ contains ! =====     Public Procedures     =============================
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, &
       & addPhaseToPhaseNames, fillTimings, finishTimings
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, &
-      & MLSMSG_Allocate, MLSMSG_Deallocate
+      & MLSMSG_Allocate, MLSMSG_Deallocate, MLSMessageCalls
     use MLSNumerics, only: InterpolateValues, Hunt
     use MLSRandomNumber, only: drang, mls_random_seed, MATH77_RAN_PACK
     use MLSSets, only: FindFirst, FindLast
@@ -2714,6 +2714,7 @@ contains ! =====     Public Procedures     =============================
       real (r8), dimension(quantity%template%noSurfs) :: outZeta
       real (r4), dimension(:,:,:), pointer :: SOURCE
 
+      call MLSMessageCalls( 'push', constantName='FillVectorQuantityFromL2GP' )
       errorCode=0
       ! Make sure this quantity is appropriate
       if ( .not. ValidateVectorQuantity(quantity, coherent=.TRUE., stacked=.TRUE., &
@@ -2841,13 +2842,13 @@ contains ! =====     Public Procedures     =============================
         end do
         call InterpolateArrayTeardown ( coeffs )
       end if
+      call MLSMessageCalls( 'pop' )
 
     end subroutine FillVectorQuantityFromL2GP
 
     ! -------------------------------------- FillVectorQuantityFromProfile --
     subroutine FillVectorQtyFromProfile ( quantity, valuesNode, &
       & instancesNode, globalUnit, dontMask, logSpace )
-      use MLSNumerics, only: HUNT
       ! This fill is slightly complicated.  Given a values array along
       ! the lines of [ 1000mb : 1.0K, 100mb : 1.0K,  10mb : 2.0K] etc. it
       ! does the linear interpolation appropriate to perform the fill.
@@ -2881,6 +2882,7 @@ contains ! =====     Public Procedures     =============================
       integer, dimension(:), pointer :: ININDS ! Indices
 
       ! Executable code
+      call MLSMessageCalls( 'push', constantName='FillVectorQtyFromProfile' )
 
       ! Check the quantity is amenable to this type of fill
       if ( .not. ValidateVectorQuantity ( quantity, &
@@ -3015,6 +3017,7 @@ contains ! =====     Public Procedures     =============================
       call Deallocate_test ( duplicated, 'duplicated', ModuleName )
       call Deallocate_test ( outValues, 'outValues', ModuleName )
       call Deallocate_test ( instances, 'instances', ModuleName )
+      call MLSMessageCalls( 'pop' )
     end subroutine FillVectorQtyFromProfile
 
     ! ------------------------------------------- FillLOSVelocity ---
@@ -4036,7 +4039,6 @@ contains ! =====     Public Procedures     =============================
       use Geometry, only: EarthRadA, EarthRadB, GEODTOGEOCLAT
       use Hydrostatic_M, only: HYDROSTATIC
       use MLSKinds, only: RP
-      use MLSNumerics, only: InterpolateValues
       use Phi_Refractive_Correction_m, only: Phi_Refractive_Correction_Up
       use Refraction_m, only: REFRACTIVE_INDEX
       use Units, only: DEG2RAD, RAD2DEG
@@ -4056,6 +4058,7 @@ contains ! =====     Public Procedures     =============================
       integer :: I, J ! Subscripts, loop inductors
 
       ! Executable code
+      call MLSMessageCalls( 'push', constantName='FillPhiTanWithRefraction' )
       ! More sanity checks
       if ( quantity%template%instrumentModule /= ptan%template%instrumentModule ) &
         & call Announce_Error ( key, No_Error_Code, &
@@ -4129,6 +4132,7 @@ contains ! =====     Public Procedures     =============================
           &                      phiCorrs, quantity%values(:,j), update=.true. )
       end do ! j
 
+      call MLSMessageCalls( 'pop' )
     end subroutine FillPhiTanWithRefraction
 
       ! ------------------------------------- FillIWCFromExtinction ----
@@ -4148,6 +4152,7 @@ contains ! =====     Public Procedures     =============================
       real (r8), dimension(Temperaturequantity%template%noInstances) :: x1, y1
       integer :: i
 
+      call MLSMessageCalls( 'push', constantName='FillIWCFromExtinction' )
       if ( .not. (quantity%template%coherent .and. sourceQuantity%template%coherent &
          .and. Temperaturequantity%template%coherent)) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -4200,6 +4205,7 @@ contains ! =====     Public Procedures     =============================
 
         quantity%values(:,i) = iwc0*Ez
       end do
+      call MLSMessageCalls( 'pop' )
 
     end subroutine FillIWCFromExtinction
 
@@ -4274,6 +4280,7 @@ contains ! =====     Public Procedures     =============================
       real (r8), dimension(sourceQuantity%template%noSurfs) :: &
        &                                  zetaH2o, oldH2o
       ! Executable statements
+      call MLSMessageCalls( 'push', constantName='FillRHIFromH2O' )
       ! Let any undefined values be so marked (but not necessarily masked)
       if ( markUndefinedValues ) Quantity%values = UNDEFINED_VALUE
       ! Will we convert %RHI to vmr?
@@ -4473,6 +4480,7 @@ contains ! =====     Public Procedures     =============================
           call dump(Quantity%values(:,1), 'RHI(%)')
         end if
       end if
+      call MLSMessageCalls( 'pop' )
     end subroutine FillRHIFromH2O
 !MJF
     ! ------------------------------------- FillNoRadsPerMIF -----
@@ -4593,6 +4601,7 @@ contains ! =====     Public Procedures     =============================
       real (r8), dimension(sourceQuantity%template%noSurfs) :: &
        &                                  zetaH2o, oldH2o
       ! Executable statements
+      call MLSMessageCalls( 'push', constantName='FillRHIPrecisionFromH2O' )
       ! Let any undefined values be so marked (but not necessarily masked)
       if ( markUndefinedValues ) Quantity%values = UNDEFINED_VALUE
       ! Will we convert %RHI to vmr?
@@ -4860,6 +4869,7 @@ contains ! =====     Public Procedures     =============================
           call dump(Quantity%values(:,1), 'RHI(%)')
         end if
       end if
+      call MLSMessageCalls( 'pop' )
     end subroutine FillRHIPrecisionFromH2O
 !MJF
     ! ---------------------------------- FillVectorQuantityWithEsimatedNoise ---
@@ -5992,6 +6002,7 @@ contains ! =====     Public Procedures     =============================
       logical :: mySurfs, myNewValues
 
       ! Executable code
+      call MLSMessageCalls( 'push', constantName='FillQtyFromInterpolatedQty' )
       if ( .not. DoQtysDescribeSameThing ( qty, source ) .and. .not. force ) then
         call Announce_error ( key, no_error_code, &
           & 'Mismatch in quantities' )
@@ -6091,6 +6102,7 @@ contains ! =====     Public Procedures     =============================
           quantity%values = sourceQuantity%values
         end if
       end if
+      call MLSMessageCalls( 'pop' )
 
     end subroutine FillQtyFromInterpolatedQty
 
@@ -7128,7 +7140,6 @@ contains ! =====     Public Procedures     =============================
     subroutine FillQtyWithWMOTropopause ( tpPres, temperature, refGPH, grid )
       use Geometry, only: GEODTOGEOCLAT
       use Hydrostatic_M, only: HYDROSTATIC
-      use MLSNumerics, only: HUNT
       use VGridsDatabase, only: VGRID_T
 
       type (VectorValue_T), intent(inout) :: TPPRES ! Result
@@ -7184,6 +7195,7 @@ contains ! =====     Public Procedures     =============================
       ! (ie describe the right quantities, and all on the same horizontal
       ! grid).
 
+      call MLSMessageCalls( 'push', constantName='FillQtyWithWMOTropopause' )
       ! Loop over the instances
       tpPres%values = 0.0
       instanceLoop: do i = 1, temperature%template%noInstances
@@ -7267,6 +7279,7 @@ contains ! =====     Public Procedures     =============================
           tpPres%values(1,i) = 10.0 ** ( - grid%surfs(s,1) )
         end if
       end do instanceLoop
+      call MLSMessageCalls( 'pop' )
     end subroutine FillQtyWithWMOTropopause
 
     ! -------------------------------------------- FillWithBinResults -----
@@ -7296,6 +7309,7 @@ contains ! =====     Public Procedures     =============================
       integer :: MYCHANNEL              ! Channel or 1
 
       ! Executable code
+      call MLSMessageCalls( 'push', constantName='FillWithBinResults' )
 
       ! Check the output quantity
       if ( .not. ValidateVectorQuantity ( quantity, &
@@ -7446,6 +7460,7 @@ contains ! =====     Public Procedures     =============================
       call Deallocate_test ( insts, 'insts', ModuleName )
       if ( associated ( ptanQuantity ) .and. sourceQuantity%template%minorFrame ) &
         & call Deallocate_test ( sourceHeights, 'sourceHeights', ModuleName )
+      call MLSMessageCalls( 'pop' )
     end subroutine FillWithBinResults
 
     ! --------------------------------------------- FillWithBoxcarAvergage  ----
@@ -7524,6 +7539,7 @@ contains ! =====     Public Procedures     =============================
       real(r8) :: HEIGHT                ! The height to consider
       integer :: SURFACE                ! Surface index
       ! Executable code
+      call MLSMessageCalls( 'push', constantName='FillStatusQuantity' )
       ! Do some sanity checking
       if ( quantity%template%quantityType /= l_status ) call Announce_error ( key, no_error_code, &
         & 'Quality quantity must be quality' )
@@ -7550,6 +7566,7 @@ contains ! =====     Public Procedures     =============================
       where ( sourceQuantity%values(surface,:) > maxValue .or. sourceQuantity%values(surface,:) < minValue )
         quantity%values(1,:) = ior ( nint ( quantity%values(1,:) ), statusValue )
       end where
+      call MLSMessageCalls( 'pop' )
     end subroutine FillStatusQuantity
 
     ! -------------------------------------------- FillQualityFromChisq --------
@@ -7565,6 +7582,7 @@ contains ! =====     Public Procedures     =============================
       real(r8) :: HEIGHT                ! The height to consider
       integer :: SURFACE                ! Surface index
       ! Executable code
+      call MLSMessageCalls( 'push', constantName='FillQualityFromChisq' )
       ! Do some sanity checking
       if ( quantity%template%quantityType /= l_quality ) call Announce_error ( key, no_error_code, &
         & 'Quality quantity must be quality' )
@@ -7590,6 +7608,7 @@ contains ! =====     Public Procedures     =============================
       where ( sourceQuantity%values(surface,:) /= 0.0_r8 )
         quantity%values(1,:) = scale / sourceQuantity%values(surface,:)
       end where
+      call MLSMessageCalls( 'pop' )
     end subroutine FillQualityFromChisq
 
     ! -------------------------------------------- FillConvergenceFromChisq --------
@@ -8105,6 +8124,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.353  2007/08/20 22:04:48  pwagner
+! Many procedures now push their names onto MLSCallStack
+!
 ! Revision 2.352  2007/07/06 17:09:16  pwagner
 ! Reverted to former ApplyBaseline
 !
