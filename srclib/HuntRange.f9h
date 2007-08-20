@@ -54,6 +54,13 @@
     if ( .not. increasing ) then
       slist = -list
       svrange = -vrange
+    elseif ( any(isFillValue(list)) .and. .false. ) then
+      ! I'm not happy with this idea--missing values are exactly that: missing
+      slist = list
+      call ReplaceFillValues( slist, &
+        & real(DEFAULTUNDEFINEDVALUE, kind(slist)), &
+        & options='-i' )
+      svrange = vrange
     else
       slist = list
       svrange = vrange
@@ -71,10 +78,11 @@
     ! Now find last slist s.t. slist(last) < svrange(2)
     irange(2) = FindLast( slist < nearest(svrange(2), s) .and. &
       & slist > nearest(svrange(1), -s) )
+    irange(1) = min( irange(1), irange(2) )
     if ( all(irange == 0 ) ) then
       ! This is as it should be when none of list are within range
     elseif ( any(irange == 0 ) ) then
-      ! This should be impossible
+      ! This should be impossible, unless we're simply unlucky
       call dump(list, 'list')
       call dump(vrange, 'vrange')
       call dump(irange, 'irange')
@@ -85,6 +93,9 @@
     endif
         
 ! $Log$
+! Revision 1.2  2007/08/13 17:29:16  pwagner
+! Fixed obvious bugs in HuntRange
+!
 ! Revision 1.1  2006/01/14 00:48:25  pwagner
 ! First commit
 !
