@@ -82,7 +82,8 @@ contains
     use MLSL2Options, only: SKIPRETRIEVAL, SPECIALDUMPFILE, &
       & STATEFILLEDBYSKIPPEDRETRIEVALS
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, Add_To_Retrieval_Timing
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, &
+      & MLSMessageCalls
     use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
     use Output_m, only: BLANKS, OUTPUT, revertoutput, switchOutput
     use PFAData_m, only: Flush_PFAData
@@ -1085,6 +1086,7 @@ contains
       integer :: Latest
       type(vectorValue_T), pointer :: Diag_Qty    ! A quantity in the
                                         ! Diagnostics vector
+      call MLSMessageCalls( 'push', constantName='FillDiagQty' )
       diag_qty => GetVectorQuantityByType ( diagnostics, &
         & quantityType=QuantityIndex, noError=.true. )
       if ( associated(diag_qty) ) then
@@ -1108,6 +1110,7 @@ contains
           end if
         end if
       end if
+      call MLSMessageCalls( 'pop' )
     end subroutine FillDiagQty
 
     ! ----------------------------------------------  FillDiagVec ------
@@ -1123,6 +1126,7 @@ contains
       integer, intent(in), optional :: JACOBIAN_ROWS
       integer, intent(in), optional :: JACOBIAN_COLS
 
+      call MLSMessageCalls( 'push', constantName='FillDiagVec' )
       call fillDiagQty ( diagnostics,  l_dnwt_ajn, aj%ajn )
       call fillDiagQty ( diagnostics,  l_dnwt_axmax, aj%axmax )
       call fillDiagQty ( diagnostics,  l_dnwt_cait, aj%cait )
@@ -1152,6 +1156,7 @@ contains
         & call fillDiagQty ( diagnostics,  l_jacobian_rows, real(jacobian_rows,rv) )
       if ( present ( jacobian_cols ) ) &
         & call fillDiagQty ( diagnostics,  l_jacobian_cols, real(jacobian_cols,rv) )
+      call MLSMessageCalls( 'pop' )
     end subroutine FillDiagVec
     
     ! ----------------------------------------------  GetInBounds  -----
@@ -1343,6 +1348,7 @@ contains
       character(len=10) :: TheFlagName  ! Name of NWTA's flag argument
       integer :: TikhonovRows           ! How many rows of Tiknonov regularization?
 
+      call MLSMessageCalls( 'push', constantName='NewtonoanSolver' )
       ! Set flags from mySwitches
       d_atb = index ( mySwitches, 'atb' ) /= 0
       d_col = index(mySwitches,'col') /= 0
@@ -2663,7 +2669,8 @@ NEWT: do ! Newtonian iteration
       call destroyMatrix ( factored%m )
       call destroyVectorInfo ( q )
       call deallocate_test ( fmStat%rows, 'FmStat%rows', moduleName )
-        call add_to_retrieval_timing( 'newton_solver', t1 )
+      call add_to_retrieval_timing( 'newton_solver', t1 )
+      call MLSMessageCalls( 'pop' )
     end subroutine NewtonianSolver
 
     ! --------------------------------------------------  SayTime  -----
@@ -2693,6 +2700,9 @@ NEWT: do ! Newtonian iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.291  2007/08/20 22:05:30  pwagner
+! Many procedures now push their names onto MLSCallStack
+!
 ! Revision 2.290  2007/06/29 19:32:07  vsnyder
 ! Make ForwardModelIntermediate_t private to ScanModelModule
 !
