@@ -77,7 +77,8 @@ contains ! =====     Public Procedures     =============================
       & F_B, F_BADRANGE, F_BASELINEQUANTITY, F_BIN, F_BOUNDARYPRESSURE, &
       & F_BOXCARMETHOD, &
       & F_C, F_CENTERVERTICALLY, F_CHANNEL, F_COLUMNS, &
-      & F_DESTINATION, F_DIAGONAL, F_DONTMASK,&
+      & F_DESTINATION, F_DIAGONAL, &
+      & F_DONTMASK, F_DONTSUMHEIGHTS, F_DONTSUMINSTANCES, &
       & F_ECRTOFOV, F_EARTHRADIUS, F_EXCLUDEBELOWBOTTOM, F_EXPLICITVALUES, &
       & F_EXTINCTION, F_FIELDECR, F_FILE, F_FLAGS, F_FORCE, &
       & F_FRACTION, F_FROMPRECISION, F_GEOCALTITUDEQUANTITY, F_GPHQUANTITY, &
@@ -174,6 +175,7 @@ contains ! =====     Public Procedures     =============================
     use MLSSets, only: FindFirst, FindLast
     use MLSSignals_m, only: GetFirstChannel, GetSignalName, GetModuleName, IsModuleSpacecraft, &
       & GetSignal, Signal_T
+    use MLSStats1, only: MLSMIN, MLSMAX, MLSMEAN, MLSMEDIAN, MLSRMS, MLSSTDDEV
     use MLSStringLists, only: catLists, GetHashElement, GetStringElement, &
       & NumStringElements, PutHashElement, &
       & ReplaceSubString, StringElement, StringElementNum, switchDetail
@@ -351,6 +353,8 @@ contains ! =====     Public Procedures     =============================
     integer :: Diagonal                 ! Index of diagonal vector in database
     !                                     -- for FillCovariance
     logical :: DONTMASK                 ! Use even masked values if TRUE
+    logical :: DONTSUMHEIGHTS
+    logical :: DONTSUMINSTANCES
     integer :: ECRTOFOVQUANTITYINDEX    ! Rotation matrix
     integer :: ECRTOFOVVECTORINDEX      ! Rotation matirx
     integer :: ERRORCODE                ! 0 unless error; returned by called routines
@@ -551,6 +555,8 @@ contains ! =====     Public Procedures     =============================
       channel = 0
       colmabunits = l_molcm2 ! default units for column abundances
       dontMask = .false.
+      dontSumHeights = .false.
+      dontSumInstances = .false.
       excludeBelowBottom = .false.
       extinction = .false.
       centerVertically = .false.
@@ -862,6 +868,10 @@ contains ! =====     Public Procedures     =============================
             h2oPrecisionQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_dontMask )
             dontMask = get_boolean ( gson )
+          case ( f_dontSumHeights )
+            dontSumHeights = get_boolean ( gson )
+          case ( f_dontSumInstances )
+            dontSumInstances = get_boolean ( gson )
           case ( f_ignoreZero )
             ignoreZero = get_boolean ( gson )
           case ( f_ignoreGeolocation ) ! For l2gp etc. fill
@@ -1539,7 +1549,7 @@ contains ! =====     Public Procedures     =============================
             nullify ( bQuantity )
           end if
           call FillQuantityByManipulation ( quantity, aQuantity, bQuantity, &
-            & manipulation, key, force, c )
+            & manipulation, key, force, dontSumHeights, dontSumInstances, c )
 
         case ( l_magAzEl ) ! -- Magnetic Explicit from stren, azim, elev --
           if ( .not. got(f_explicitValues) ) &
@@ -6276,7 +6286,7 @@ contains ! =====     Public Procedures     =============================
 
     ! --------------------------------------------- FillQuantityByManipulation ---
     subroutine FillQuantityByManipulation ( quantity, a, b, manipulation, &
-      & key, force, c )
+      & key, force, dontSumHeights, dontSumInstances, c )
       use String_table, only: GET_STRING
       type (VectorValue_T), intent(inout) :: QUANTITY
       type (VectorValue_T), pointer :: A
@@ -6284,6 +6294,8 @@ contains ! =====     Public Procedures     =============================
       integer, intent(in) :: MANIPULATION
       integer, intent(in) :: KEY        ! Tree node
       logical, intent(in) :: FORCE      ! If set throw caution to the wind
+      logical, intent(in) :: dontSumHeights   ! When doing statistics
+      logical, intent(in) :: dontSumInstances ! When doing statistics
       real(rv) :: C                     ! constant "c" in manipulation
       ! Local parameters
       integer, parameter :: NO2WAYMANIPULATIONS = 8
@@ -6296,27 +6308,38 @@ contains ! =====     Public Procedures     =============================
         & 'a<b     ', &
         & 'a|b     ', &
         & 'a/b     ' /)
-      integer, parameter :: NO1WAYMANIPULATIONS = 7
+      integer, parameter :: NO1WAYMANIPULATIONS = 13
       character(len=*), parameter :: VALID1WAYMANIPULATIONS ( NO1WAYMANIPULATIONS ) = (/ &
-        & '-a      ', &
-        & '1/a     ', &
-        & 'abs(a)  ', &
-        & 'sign(a) ', &
-        & 'exp(a)  ', &
-        & 'log(a)  ', &
-        & 'log10(a)' /)
+        & '-a         ', &
+        & '1/a        ', &
+        & 'abs(a)     ', &
+        & 'sign(a)    ', &
+        & 'exp(a)     ', &
+        & 'log(a)     ', &
+        & 'log10(a)   ', &
+        & 'min(a)     ', &
+        & 'max(a)     ', &
+        & 'mean(a)    ', &
+        & 'median(a)  ', &
+        & 'rms(a)     ', &
+        & 'stddev(a)  ' /)
       ! Local variables
       character (len=128) :: MSTR
       character (len=1) :: ABNAME
       logical :: OKSOFAR
       logical :: OneWay
       logical :: TwoWay
+      logical :: StatisticalFunction
       logical :: USESC
-      integer :: I
+      integer :: I, ICHAN, INSTANCE, ISURF
       logical :: NEEDSB
+      integer :: NoChans
+      integer :: NoInstances
+      integer :: NoSurfs
       integer :: NUMWAYS ! 1 or 2
       type (VectorValue_T), pointer :: AORB
       ! Executable code
+      call MLSMessageCalls( 'push', constantName='FillQuantityByManipulation' )
 
       ! Currently we have a rather brain dead approach to this, so
       ! check that what the user has asked for, we can supply.
@@ -6327,6 +6350,7 @@ contains ! =====     Public Procedures     =============================
       TwoWay = any ( mstr == valid2WayManipulations )
       usesc  = .not. ( OneWay .or. TwoWay ) .and. &
         & index(mstr, 'c') > 0
+      StatisticalFunction = ( FindFirst( valid1WayManipulations, mstr ) > 7 )
       if ( .not. ( OneWay .or. TwoWay .or. usesc ) ) then
         call Announce_Error ( key, no_error_code, 'Invalid manipulation' )
         return
@@ -6362,7 +6386,9 @@ contains ! =====     Public Procedures     =============================
         end if
 
         ! For minor frame quantities, check that we're on the same page
-        if ( .not. force ) then
+        if ( StatisticalFunction ) then
+          ! We don't check for anything
+        elseif ( .not. force ) then
           if ( quantity%template%minorFrame ) then
             okSoFar = okSoFar .and. aorb%template%minorFrame .and. &
               & quantity%template%signal == aorb%template%signal .and. &
@@ -6392,7 +6418,52 @@ contains ! =====     Public Procedures     =============================
       end do
 
       ! OK do the simple work for now
-      ! Later we'll do fancy stuff to parse the manipulation.
+      ! Below we'll do fancy stuff to parse the more general manipulations
+      if ( StatisticalFunction) then
+        NoChans     = a%template%NoChans
+        NoInstances = a%template%NoInstances
+        NoSurfs     = a%template%NoSurfs
+        if ( dontSumHeights .and. dontSumInstances ) then
+          do instance = 1, NoInstances
+            do iSurf = 1, NoSurfs
+              call doStatFun( quantity%values(iSurf, instance), mstr, &
+                & a%values(1+(iSurf-1)*NoChans:iSurf*NoChans, instance) )
+            enddo
+          enddo
+        elseif ( dontSumInstances ) then
+          do instance = 1, NoInstances
+            call doStatFun( quantity%values(1, instance), mstr, &
+              & a%values(:, instance) )
+          enddo
+        elseif ( dontSumHeights ) then
+          do iSurf = 1, NoSurfs
+            call doStatFun( quantity%values(iSurf, 1), mstr, &
+              & a%values(iSurf, :) )
+          enddo
+        else
+          ! Sum over both heights and instances
+          select case ( mstr )
+          case ( 'min(a)' )
+            quantity%values(1, 1) = mlsmin( a%values )
+          case ( 'max(a)' )
+            quantity%values(1, 1) = mlsmax( a%values )
+          case ( 'mean(a)' )
+            quantity%values(1, 1) = mlsmean( a%values )
+          case ( 'median(a)' )
+            quantity%values(1, 1) = mlsmedian( a%values )
+          case ( 'rms(a)' )
+            quantity%values(1, 1) = mlsrms( a%values )
+          case ( 'stddev(a)' )
+            quantity%values(1, 1) = mlsstddev( a%values )
+          case default
+            ! Should not have come here
+          end select
+        endif
+        call MLSMessageCalls( 'pop' )
+        if ( SwitchDetail(switches, 'stat') > -1 ) &
+          & call dump( quantity%values, mstr )
+        return
+      endif
       select case ( mstr )
       ! The binary manipulations
       case ( 'a+b' )
@@ -6535,8 +6606,31 @@ contains ! =====     Public Procedures     =============================
         ! This should be one of the cases which use the constant "c"
         call SimpleExprWithC( quantity, a, b, c, mstr )
       end select
+      call MLSMessageCalls( 'pop' )
 
     end subroutine FillQuantityByManipulation
+
+      subroutine doStatFun( qvalue, name, avalues )
+        real(rv), intent(out) :: qvalue
+        character(len=*), intent(in) :: name ! of the statistical function
+        real(rv), dimension(:), intent(in) :: avalues
+          select case ( name )
+          case ( 'min(a)' )
+            qvalue = mlsmin( avalues )
+          case ( 'max(a)' )
+            qvalue = mlsmax( avalues )
+          case ( 'mean(a)' )
+            qvalue = mlsmean( avalues )
+          case ( 'median(a)' )
+            qvalue = mlsmedian( avalues )
+          case ( 'rms(a)' )
+            qvalue = mlsrms( avalues )
+          case ( 'stddev(a)' )
+            qvalue = mlsstddev( avalues )
+          case default
+            ! Should not have come here
+          end select
+      end subroutine doStatFun
 
       subroutine SimpleExprWithC( quantity, a, b, c, mstr )
       type (VectorValue_T), intent(inout) :: QUANTITY
@@ -8124,6 +8218,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.354  2007/08/23 22:17:05  pwagner
+! manipulation Fills can now use statistical functions
+!
 ! Revision 2.353  2007/08/20 22:04:48  pwagner
 ! Many procedures now push their names onto MLSCallStack
 !
