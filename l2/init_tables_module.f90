@@ -817,6 +817,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_centerVertically, t+t_boolean, n+n_field_type/) )
     call make_tree ( (/ & ! Continuing for s_fill...
              begin, f+f_dontMask, t+t_boolean, n+n_field_type, &
+             begin, f+f_dontSumInstances, t+t_boolean, n+n_field_type, &
+             begin, f+f_dontSumHeights, t+t_boolean, n+n_field_type, &
              begin, f+f_earthRadius, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
              begin, f+f_ECRtoFOV, s+s_vector, f+f_template, f+f_quantities, &
@@ -1499,6 +1501,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.455  2007/08/23 22:17:05  pwagner
+! manipulation Fills can now use statistical functions
+!
 ! Revision 2.454  2007/08/17 00:34:58  pwagner
 ! MergeGrids section may now dump
 !
