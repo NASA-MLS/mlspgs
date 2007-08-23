@@ -44,7 +44,8 @@ program MLSL2
   use MLSL2Timings, only: RUN_START_TIME, SECTION_TIMES, TOTAL_TIMES, &
     & ADD_TO_SECTION_TIMING, DUMP_SECTION_TIMINGS
   use MLSMessageModule, only: MLSMessage, MLSMessageConfig, MLSMSG_Debug, &
-    & MLSMSG_Error, MLSMSG_Severity_to_quit, MLSMSG_Warning, MLSMessageExit
+    & MLSMSG_Error, MLSMSG_Severity_to_quit, MLSMSG_Severity_to_walkback, &
+    & MLSMSG_Warning, MLSMessageExit
   use MLSPCF2, only: MLSPCF_L2CF_START
   use MLSStrings, only: lowerCase, readIntsFromChars, trim_safe
   use MLSStringLists, only: catLists, ExpandStringRange, &
@@ -660,7 +661,7 @@ program MLSL2
   
   ! Are any switches inappropriate for master or for slave?
     if ( parallel%master ) &
-      & removeSwitches = catLists( trim(removeSwitches), 'bool' )
+      & removeSwitches = catLists( trim(removeSwitches), 'bool,walk' )
     if ( parallel%slave ) &
       & removeSwitches = catLists( trim(removeSwitches), 'chu,chu1,l2q,mas,slv' )
   ! Remove any quote marks from RemoveSwitches array
@@ -677,11 +678,9 @@ program MLSL2
     call RemoveElemFromList(switches, tempSwitches, trim(aSwitch))
     switches = tempSwitches
   end do
-  if ( parallel%slave ) then
-  ! Don't dump all the chunks again and again for each slave's chunk
-    call RemoveElemFromList(switches, tempSwitches, 'chu')
-    switches = tempSwitches
-  end if
+
+  if ( switchDetail(switches, 'walk') > -1 ) &
+    & MLSMSG_Severity_to_walkback = MLSMSG_Warning
   ! The following no longer does anything
   call Set_garbage_collection(garbage_collection_by_dt)
 
@@ -1124,6 +1123,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.167  2007/08/23 22:18:35  pwagner
+! 'walk' switch prints walkback fo calling stack even for warnings
+!
 ! Revision 2.166  2007/08/17 00:36:29  pwagner
 ! Removed now-redundant [n]everCrash option
 !
