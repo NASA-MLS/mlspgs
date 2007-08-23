@@ -21,8 +21,11 @@ module Metrics_m
   ! Values for stat argument to/from Solve_H_Phi:
   integer, parameter, public :: No_sol = 0  ! No solution
   integer, parameter, public :: Complex = 1 ! Complex start for Newton iteration
+                                            ! Good, Grid1, Grid2 must be last three
   integer, parameter, public :: Good = 2    ! Newton converged, tangent point, extrapolated
-  integer, parameter, public :: Grid = 3    ! Close to a grid point
+                                            ! Grid1 and Grid2 have to be the last two
+  integer, parameter, public :: Grid1 = 3   ! Close to left grid point
+  integer, parameter, public :: Grid2 = 4   ! Close to right grid point
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -286,8 +289,8 @@ contains
     real(rp) :: PHI_SIGN(size(vert_inds))   ! +/- 1.0
 
     ! For debugging
-    character(4), parameter :: nStat(no_sol:grid) = &
-      & (/ 'none', 'cplx', 'good', 'grid' /)
+    character(5), parameter :: nStat(no_sol:grid2) = &
+      & (/ 'none ', 'cmplx', 'good ', 'grid1', 'grid2' /)
 
 !   It would be nice to do this the first time only, but the
 !   retrieve command in the L2CF can now change switches
@@ -417,7 +420,8 @@ phi:do j = 1, p_coeffs-1
       dpj1 = p_basis(j+1)-phi_t
       dpj0 = p_basis(j)-phi_t
 path: do i = i1, i2
-        if ( stat(i) == good ) cycle ! probably the tangent point
+        if ( stat(i) == good ) cycle  ! probably the tangent point
+        if ( stat(i) == grid1 ) cycle ! can't possibly be in this column
         k = vert_inds(i)
         b = -(h_ref(k,j+1) - h_ref(k,j)) ! h_surf cancels here
         c = -(h_ref(k,j)-h_surf)   * dpj1 &
@@ -427,7 +431,7 @@ path: do i = i1, i2
             & print 120, i, j, k, h_ref(k,j)+req_s, h_ref(k,j+1)+req_s, &
             & a, b, int(phi_sign(i)), c
           120 format ( i4, i2, i4, 14x, f11.3,f12.3, f9.3, 1p,g14.6, i3, g14.6 )
-        if ( stat(i) == grid ) then
+        if ( stat(i) >= grid1 ) then
           no_grid_fits = no_grid_fits - 1
           no_bad_fits = no_bad_fits + 1
         end if
@@ -437,7 +441,7 @@ path: do i = i1, i2
           &                h_grid(i), p_grid(i), stat(i), outside )
         if ( stat(i) == good ) then
           no_bad_fits = no_bad_fits - 1
-        else if ( stat(i) == grid ) then
+        else if ( stat(i) >= grid1 ) then
           no_grid_fits = no_grid_fits + 1
           no_bad_fits = no_bad_fits - 1
         end if
@@ -449,7 +453,8 @@ path: do i = i1, i2
           ibad = i2
           exit
         end if
-        if ( stat(i) == good ) cycle ! Newton iteration ended successfully
+        if ( stat(i) == good ) cycle  ! Newton iteration ended successfully
+        if ( stat(i) == grid1 ) cycle ! Can't be further to the right
         ibad=min(i,ibad)
         if ( (debug .or. complexDebug) .and. stat(i) == complex ) then ! Complex solution
             if ( debug ) &
@@ -484,12 +489,11 @@ path: do i = i1, i2
         call dump ( p_grid, 'P_Grid before 1d fixup' )
       end if
       ! We shouldn't get here at all, so don't worry about efficiency
-      if ( stat(1) /= good .and. stat(1) /= grid .or. &
-        &  stat(n_path) /= good .and. stat(n_path) /= grid ) then
+      if ( stat(1) < good .or. stat(n_path) < good ) then
         call MLSMessage ( MLSMSG_Warning, moduleName, 'Resorting to 1d' )
         call get_eta_sparse ( p_basis, phi_t, eta_t )
         do i1 = 1, n_path
-          if ( stat(i1) /= good .and. stat(i1) /= grid ) then
+          if ( stat(i1) < good ) then
             h_grid(i1) = dot_product(h_ref(vert_inds(i1),:),eta_t)
           end if
         end do
@@ -517,10 +521,10 @@ path: do i = i1, i2
       else
         do j = n_tan-1, 1, -1
           do i2 = j, 1, -1
-            if ( stat(i2) == good .or. stat(i2) == grid ) exit
+            if ( stat(i2) >= good ) exit
           end do
           do i1 = j, n_tan
-            if ( stat(i1) == good .or. stat(i1) == grid ) exit
+            if ( stat(i1) >= good ) exit
           end do
           h_grid(j) = h_grid(i1) + (h_grid(i2)-h_grid(i1)) * &
             & ( z_ref(vert_inds(j)) - z_ref(vert_inds(i1))) / &
@@ -528,10 +532,10 @@ path: do i = i1, i2
         end do
         do j = n_tan+2, n_path
           do i2 = j, n_path
-            if ( stat(i2) == good .or. stat(i2) == grid ) exit
+            if ( stat(i2) >= good ) exit
           end do
           do i1 = j, n_tan+1, -1
-            if ( stat(i1) == good .or. stat(i1) == grid ) exit
+            if ( stat(i1) >= good ) exit
           end do
           h_grid(j) = h_grid(i1) + (h_grid(i2)-h_grid(i1)) * &
             & ( z_ref(vert_inds(j)) - z_ref(vert_inds(i1))) / &
@@ -539,8 +543,7 @@ path: do i = i1, i2
         end do
       end if
       do i = 1, n_path
-        if ( stat(i) /= good .and. stat(i) /= grid ) &
-          & p_grid(i) = acos(h_grid(n_tan)/h_grid(i))
+        if ( stat(i) < good ) p_grid(i) = acos(h_grid(n_tan)/h_grid(i))
       end do
       if ( index(switches,'MHPX') /= 0 ) then
         call dump ( h_grid, name='H_Grid after 1d fixup' )
@@ -594,7 +597,7 @@ path: do i = i1, i2
     &                      p_basis, phi_offset, phi_sign, h_ref, a, b, c, &
     &                      htan_r, req_s, tol, inside, &
                              ! outputs and inouts
-    &                      h_grid, p_grid, stat, outside )
+    &                      h_grid, phi, stat, outside )
 
     use MLSKinds, only: RP
     use Output_m, only: OUTPUT
@@ -618,18 +621,19 @@ path: do i = i1, i2
     real(rp), intent(in) :: Tol        ! Height tolerance for Newton convergence
     logical, intent(in) :: Inside      ! P_Basis(2) is not the last one in the grid
     real(rp), intent(inout) :: H_Grid  ! H solution, inout in case there is none
-    real(rp), intent(out) :: P_Grid    ! Phi solution
+    real(rp), intent(out) :: Phi       ! Phi solution
     integer, intent(inout) :: Stat     ! "good" or "grid" or "complex" or unchanged
     logical, intent(out) :: Outside    ! Newton iteration converged to a point
                                        ! outside p_basis(1:2)
 
-    real(rp) :: D     ! B^2 - 4 a c
-    real(rp) :: H     ! htan_r * ( 1.0_rp + secM1 ) - req_s,
-                      ! ~ htan_r * sec(p) - req + h_surf
-    integer :: N      ! Newton iteration counter
+    real(rp) :: D      ! B^2 - 4 a c
+    real(rp) :: H      ! htan_r * ( 1.0_rp + secM1 ) - req_s,
+                       ! ~ htan_r * sec(p) - req + h_surf
+    integer :: N       ! Newton iteration counter
     integer, parameter :: NMax = 10 ! Maximum number of Newton iterations
-    real(rp) :: P, P2 ! Candidate solution, p^2
-    real(rp) :: Secm1 ! Sec(phi) - 1
+    real(rp) :: P, P2  ! Candidate solution, p^2
+    real(rp) :: P_Grid ! Candidate phi solution
+    real(rp) :: Secm1  ! Sec(phi) - 1
 
     ! Coefficients in expansion of Sec(phi)-1 = c2*phi^2 + c4*phi^4 ...
     real(rp), parameter :: C2 = 0.5_rp, C4 = 5.0_rp/24, C6 = 61.0_rp/720.0
@@ -647,7 +651,8 @@ path: do i = i1, i2
       ! Pretend D is zero
       p = -b/a
       p = min(max(p,p_basis(1)-phi_offset),p_basis(2)-phi_offset)
-      stat = complex ! In case Newton iteration doesn't converge
+      if ( stat < good ) &
+        & stat = complex ! In case Newton iteration doesn't converge
         if ( debug ) call output ( p + phi_offset, format='(f15.5)', &
           & after='  Complex starting point', advance='yes' )
     else
@@ -679,6 +684,7 @@ path: do i = i1, i2
           h_grid = h + req_s
           stat = good
           if ( debug ) call debug1 ( 1, n )
+          phi = p_grid
           return
         end if
         if ( p_grid > p_basis(2) .and. abs(h-h_ref(2)) > abs(d) &
@@ -704,24 +710,26 @@ path: do i = i1, i2
     ! result is very near to it.  We'll probably find it in the next
     ! panel, but just in case....
       if ( debug ) then
-        if ( stat /= good .and. .not. outside ) then
+        if ( .not. outside ) then
           h_grid = h + req_s
           call debug1 ( max(n-3,1), n-1, merge('BOUNDS  ', 'CONVERGE', abs(d) < tol) )
         else
           call debug1 ( max(n-3,1), n-1 )
         end if
       end if
-    if ( stat /= grid ) then
+    if ( stat < grid1 ) then
       if ( abs(h-h_ref(1)) <  0.1 .and. &
         & abs(p_grid-p_basis(1)) < abs(p_grid-p_basis(2)) ) then
         h_grid = h_ref(1)+req_s
-        p_grid = p_basis(1)
-        stat = grid
+        phi = p_basis(1)
+        stat = grid1
+        if ( debug ) call debug1 ( 1, 0, 'GRID 1' )
       else if ( abs(h-h_ref(2)) <  0.1 .and. &
         & abs(p_grid-p_basis(2)) < abs(p_grid-p_basis(1)) ) then
         h_grid = h_ref(2)+req_s
-        p_grid = p_basis(2)
-        stat = grid
+        phi = p_basis(2)
+        stat = grid2
+        if ( debug ) call debug1 ( 1, 0, 'GRID 2' )
       end if
     end if
     if ( p_grid > p_basis(2) .and. inside ) then
@@ -1035,14 +1043,14 @@ path: do i = i1, i2
           &                h_ref(i,j-1:j), a, b, c, &
           &                htan_r, req_s, my_h_tol, i /= tan_ind .or. j /= p_coeffs, &
           &                h_new(n_new), p_new(n_new), stat, outside )
-          if ( stat == grid ) then
+          if ( stat >= grid1 ) then
             if ( minval(abs(h_new(n_new)- h_ref(i,j-1:j))) > my_h_tol ) then
               stat = no_sol
               n_new = n_new - 1
               cycle
             end if
           end if
-          if ( stat == no_sol .or. stat == complex .or. outside ) then
+          if ( stat < good .or. outside ) then
             ! What's going on?
             n_new = n_new - 1
           else
@@ -1077,6 +1085,9 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.51  2007/07/31 23:48:57  vsnyder
+! Try to recover from failure of H/Phi convergence
+!
 ! Revision 2.50  2007/06/29 19:34:40  vsnyder
 ! Make the default h/phi convergence tolerance a parameter
 !
