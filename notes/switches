@@ -105,6 +105,7 @@ Switches (set by -S option in mlsl2's command line):
   tps =>    Test_Parse_Signals
   vir =>    Dump 'virgin' matrix (before forming KTK)
   xvec =>   'X' vector during Newton iteration
+  walk =>   trace walkback on every warning message
 ========================= end mlsl2 =========================
 
 The general pattern is to use upper-case letters for single-letter ones,
@@ -160,6 +161,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.66  2007/03/23 00:06:40  pwagner
+ Mentions desstroy switch
+
  Revision 1.65  2006/09/21 18:52:52  pwagner
  red[n] switch reduces details level of some dumps (turning some off altogether)
 
