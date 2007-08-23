@@ -75,6 +75,8 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
 ! MLSMSG_ERROR             quits after printing
 ! MLSMSG_CRASH             should give traceback before quitting
 ! MLSMSG_Severity_to_quit  severity level needed to quit
+! MLSMSG_Severity_to_walkback
+!                          severity level needed to print callstack
 ! MLSMSG_Allocate          mesg prefix for this type of error
 ! MLSMSG_Fileopen          mesg prefix for this type of error
 ! MLSMSG_Keyword           mesg prefix for this type of error
@@ -128,9 +130,10 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
   ! See also MLSMessageConfig%crashOnAnyError
   integer, public, parameter :: MLSMSG_Crash   = MLSMSG_Error + 1
 
-  ! MLSMSG_Severity_to_quit can be reset in a main program to cause us
+  ! MLSMSG_Severity_to_* can be reset in a main program to cause us
   ! to become more lenient (set it higher) or strict (set it lower )
-  integer, public            :: MLSMSG_Severity_to_quit = MLSMSG_Error
+  integer, public, save      :: MLSMSG_Severity_to_quit = MLSMSG_Error
+  integer, public, save      :: MLSMSG_Severity_to_walkback = MLSMSG_Error
 
   private :: SeverityNames
   character (len=*), dimension(MLSMSG_Success:MLSMSG_Crash), parameter :: &
@@ -243,13 +246,20 @@ contains
     !                                 or 'n'
     type(MLSFile_T), intent(in), optional :: MLSFile
     ! Executable
-    if ( severity /= MLSMSG_Error ) then
+    if ( .not. any ( severity >= &
+      & (/ MLSMSG_Severity_to_quit, MLSMSG_Severity_to_walkback /) ) ) then
       ! For warnings and so on, just pass args to MLSMessageStd
       call MLSMessageStd( severity, ModuleNameIn,  Message, Advance )
       return
     endif
     call MLSMessageCalls( 'push', constantName=ModuleNameIn )
-    call StopWithErrorMsg( Message, MLSFile )
+    if ( severity >= MLSMSG_Severity_to_quit ) then
+      call StopWithErrorMsg( Message, MLSFile )
+    else
+      call MLSMessageCalls( 'dump' )
+      call MLSMessageStd( severity, ModuleNameIn, Message, MLSFile=MLSFile )
+    endif
+    call MLSMessageCalls( 'pop' )
   end subroutine MLSMessage_
 
   ! --------------------------------------------  MLSMessageCalls  -----
@@ -286,10 +296,10 @@ contains
     character(len=*), optional, intent(inout) :: name
     character(len=*), optional, intent(in)    :: constantName
     ! Internal variables
-    character(len=1), parameter :: comma = '?' ! ','
+    character(len=1), parameter :: comma = achar(0) ! '?' ! ','
     integer :: ind
     integer :: m
-    character(len=32) :: myName
+    character(len=64) :: myName
     ! Executable
     myName = ' '
     if ( index( command, 'push' ) > 0 ) then
@@ -345,6 +355,7 @@ contains
       if ( present(name) ) name = myName
     case ( 'dump' )
       m = 0
+      call MLSMessage ( MLSMSG_Info, ModuleName, trim(MLSCallStack) )
       call MLSMessage ( MLSMSG_Info, ModuleName, 'Calling stack (bottom-up)' )
       do
         ind = m + 1
@@ -901,6 +912,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.34  2007/08/23 22:13:55  pwagner
+! Fixed small bugs; add MLSMSG_Severity_to_walkback
+!
 ! Revision 2.33  2007/08/17 00:29:32  pwagner
 ! MLSMessageCalls commands include 'depth', 'length', 'remain'
 !
