@@ -1548,8 +1548,9 @@ contains ! =====     Public Procedures     =============================
           else
             nullify ( bQuantity )
           end if
-          call FillQuantityByManipulation ( quantity, aQuantity, bQuantity, &
-            & manipulation, key, force, dontSumHeights, dontSumInstances, c )
+          call FillQuantityByManipulation ( quantity, aQuantity, bQuantity, c, &
+            & manipulation, key, &
+            & force, spreadflag, dontSumHeights, dontSumInstances )
 
         case ( l_magAzEl ) ! -- Magnetic Explicit from stren, azim, elev --
           if ( .not. got(f_explicitValues) ) &
@@ -6285,18 +6286,21 @@ contains ! =====     Public Procedures     =============================
     end subroutine FillQuantityFromLosGrid
 
     ! --------------------------------------------- FillQuantityByManipulation ---
-    subroutine FillQuantityByManipulation ( quantity, a, b, manipulation, &
-      & key, force, dontSumHeights, dontSumInstances, c )
+    subroutine FillQuantityByManipulation ( quantity, a, b, c, &
+      & manipulation, key, &
+      & force, spreadflag, dontSumHeights, dontSumInstances )
       use String_table, only: GET_STRING
       type (VectorValue_T), intent(inout) :: QUANTITY
       type (VectorValue_T), pointer :: A
       type (VectorValue_T), pointer :: B
+      real(rv) :: C                     ! constant "c" in manipulation
       integer, intent(in) :: MANIPULATION
       integer, intent(in) :: KEY        ! Tree node
       logical, intent(in) :: FORCE      ! If set throw caution to the wind
-      logical, intent(in) :: dontSumHeights   ! When doing statistics
-      logical, intent(in) :: dontSumInstances ! When doing statistics
-      real(rv) :: C                     ! constant "c" in manipulation
+      ! The following args are important only for statistical functions
+      logical, intent(in) :: SPREADFLAG ! If set spread across summed dimension
+      logical, intent(in) :: DONTSUMHEIGHTS
+      logical, intent(in) :: DONTSUMINSTANCES
       ! Local parameters
       integer, parameter :: NO2WAYMANIPULATIONS = 8
       character(len=*), parameter :: VALID2WAYMANIPULATIONS ( NO2WAYMANIPULATIONS ) = (/ &
@@ -6338,6 +6342,7 @@ contains ! =====     Public Procedures     =============================
       integer :: NoSurfs
       integer :: NUMWAYS ! 1 or 2
       type (VectorValue_T), pointer :: AORB
+      real(rv) :: qvalue
       ! Executable code
       call MLSMessageCalls( 'push', constantName='FillQuantityByManipulation' )
 
@@ -6432,32 +6437,47 @@ contains ! =====     Public Procedures     =============================
           enddo
         elseif ( dontSumInstances ) then
           do instance = 1, NoInstances
-            call doStatFun( quantity%values(1, instance), mstr, &
+            call doStatFun( qvalue, mstr, &
               & a%values(:, instance) )
+            if ( spreadFlag ) then
+              quantity%values(:, instance) = qvalue
+            else
+              quantity%values(1, instance) = qvalue
+            endif
           enddo
         elseif ( dontSumHeights ) then
           do iSurf = 1, NoSurfs
-            call doStatFun( quantity%values(iSurf, 1), mstr, &
+            call doStatFun( qvalue, mstr, &
               & a%values(iSurf, :) )
+            if ( spreadFlag ) then
+              quantity%values(iSurf, :) = qvalue
+            else
+              quantity%values(iSurf, 1) = qvalue
+            endif
           enddo
         else
           ! Sum over both heights and instances
           select case ( mstr )
           case ( 'min(a)' )
-            quantity%values(1, 1) = mlsmin( a%values )
+            qvalue = mlsmin( a%values )
           case ( 'max(a)' )
-            quantity%values(1, 1) = mlsmax( a%values )
+            qvalue = mlsmax( a%values )
           case ( 'mean(a)' )
-            quantity%values(1, 1) = mlsmean( a%values )
+            qvalue = mlsmean( a%values )
           case ( 'median(a)' )
-            quantity%values(1, 1) = mlsmedian( a%values )
+            qvalue = mlsmedian( a%values )
           case ( 'rms(a)' )
-            quantity%values(1, 1) = mlsrms( a%values )
+            qvalue = mlsrms( a%values )
           case ( 'stddev(a)' )
-            quantity%values(1, 1) = mlsstddev( a%values )
+            qvalue = mlsstddev( a%values )
           case default
             ! Should not have come here
           end select
+          if ( spreadFlag ) then
+            quantity%values = qvalue
+          else
+            quantity%values(1, 1) = qvalue
+          endif
         endif
         call MLSMessageCalls( 'pop' )
         if ( SwitchDetail(switches, 'stat') > -1 ) &
@@ -8218,6 +8238,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.355  2007/08/27 23:56:34  pwagner
+! /spread flag now affects statistical manipulation Fills
+!
 ! Revision 2.354  2007/08/23 22:17:05  pwagner
 ! manipulation Fills can now use statistical functions
 !
