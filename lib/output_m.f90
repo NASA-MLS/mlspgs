@@ -15,8 +15,10 @@ module OUTPUT_M
   use MLSCommon, only: FileNameLen
   use MLSMessageModule, only: MLSMessage, MLSMessageInternalFile, &
     & MLSMSG_Info, MLSMSG_Error
+  use MLSSets, only: FindFirst
+  use MLSStringLists, only: ExpandStringRange
   use MLSStrings, only: lowerCase
-  implicit NONE
+  implicit none
   private
 
 ! === (start of toc) ===
@@ -39,6 +41,7 @@ module OUTPUT_M
 
 !     (subroutines and functions)
 ! blanks                   "print" specified number of blanks [or fill chars]
+! blanksToColumn           "print" blanks [or fill chars] out to specified column
 ! dump                     dump output or stamp options
 ! dumpsize                 print a nicely-formatted memory size 
 ! getStamp                 get stamp being added to every output
@@ -50,14 +53,17 @@ module OUTPUT_M
 !                           if you will revert, keepOldUnitOpen when switching
 ! resumeOutput             resume output
 ! setStamp                 set stamp to be added to every output
+! setTabs                  set tab stops (to be used by tab)
 ! suspendOutput            suspend output
 ! switchOutput             switch output to a new named file
+! tab                      move to next tab stop
 ! timestamp                print argument with a timestamp
 !                            (both stdout and logged output)
 ! === (end of toc) ===
 
 ! === (start of api) ===
 ! blanks ( int n_blanks, [char fillChar], [char* advance] )
+! blanksToColumn ( int column, [char fillChar], [char* advance] )
 ! Dump ( options )
 ! DumpSize ( n, [char* advance], [units] )
 !       where n can be an int or a real, and 
@@ -81,8 +87,10 @@ module OUTPUT_M
 ! revertOutput
 ! setStamp ( [char* textCode], [log post], [int interval],
 !          [log showTime], [char* dateFormat], [char* timeFormat] )
+! setTabs ( [char* Range], [int tabs(:)] )
 ! suspendOutput
-! switchOutput( char* filename, [int unit] )
+! switchOutput ( char* filename, [int unit] )
+! tab ( [int tabn] )
 ! timeStamp ( char* chars, [char* advance], [char* from_where], 
 !          [log dont_log], [char* log_chars], [char* insteadOfBlank],
 !          [char*8 style], [log date] )
@@ -107,7 +115,7 @@ module OUTPUT_M
   integer, save, public :: LINE_WIDTH = 120 ! Not used here, but a convenient
                                          ! place to store it
   ! Where to output?
-!  integer, save, public :: PRUNIT = -1   ! Unit for output.  
+!  integer, save, public :: PRUNIT = -1  ! Unit for output.  
                                          ! -1 means "printer" unit, *
                                          ! -2 means MLSMessage if 
                                          ! < -2, both printer and MLSMSG
@@ -116,10 +124,11 @@ module OUTPUT_M
   integer, save, private :: OLDUNIT = -1 ! Previous Unit for output.
   logical, save, private :: OLDUNITSTILLOPEN = .TRUE.
 
-  public :: BLANKS, DUMP, DUMPSIZE, GETSTAMP, NEWLINE, &
-    & OUTPUT, OUTPUT_DATE_AND_TIME, outputNamedValue, &
-    & RESUMEOUTPUT, revertOutput, &
-    & SETSTAMP, SUSPENDOUTPUT, switchOutput, TIMESTAMP
+  public :: BLANKS, BLANKSTOCOLUMN, DUMP, DUMPSIZE, GETSTAMP, &
+    & NEXTCOLUMN, NEXTTAB, NEWLINE, &
+    & OUTPUT, OUTPUT_DATE_AND_TIME, OUTPUTNAMEDVALUE, &
+    & RESUMEOUTPUT, REVERTOUTPUT, &
+    & SETSTAMP, SETTABS, SUSPENDOUTPUT, SWITCHOUTPUT, TAB, TIMESTAMP
 
   public :: outputOptions_T
   public :: stampOptions_T
@@ -159,7 +168,11 @@ module OUTPUT_M
   ! This is the type for configuring how to automatically format
   ! lines and whether they should be sent to stdout or elsewhere
   type outputOptions_T
-    integer :: PRUNIT = -1
+    integer :: PRUNIT = -1               ! Unit for output.  
+                                         ! -1 means "printer" unit, *
+                                         ! -2 means MLSMessage if 
+                                         ! < -2, both printer and MLSMSG
+                                         ! > 0, actual unit number
     integer :: MLSMSG_Level = MLSMSG_Info ! What level if logging
     logical :: BUFFERED = .true.
     logical :: OPENED = .false.
@@ -209,6 +222,10 @@ module OUTPUT_M
   logical, save, private :: ATLINESTART = .true.  ! Whether to stamp if notpost
   integer, save, private :: LINESSINCELASTSTAMP = 0
   logical, private, parameter :: LOGEXTRABLANKS = .false.
+  integer, private, parameter :: MAXNUMTABSTOPS = 24
+  integer, dimension(MAXNUMTABSTOPS), save, private :: TABSTOPS = &
+    & (/ 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, &
+    &   65, 70, 75, 80, 85, 90, 95,100,105,110,115,120 /)
   ! For certain numerical values we will use list directed '*' format
   ! unless optional FORMAT specifier supplied
   double precision, parameter, dimension(3) :: DPREFERDEFAULTFORMAT = &
@@ -289,51 +306,38 @@ contains
     call pr_blanks ( n_blanks, fillChar=fillChar, advance=advance, dont_stamp=dont_stamp )
   end subroutine BLANKS
 
-  ! -----------------------------------------------------  PR_BLANKS  -----
-  subroutine PR_BLANKS ( N_BLANKS, FILLCHAR, ADVANCE, DONT_STAMP )
-  ! Output N_BLANKS blanks to PRUNIT.
+  ! -----------------------------------------------------  BLANKSTOCOLUMN  -----
+  subroutine BLANKSTOCOLUMN ( COLUMN, FILLCHAR, ADVANCE, DONT_STAMP )
+  ! Output N_BLANKS blanks to PRUNIT out to column COLUMN.
   ! (or optionally that many copies of fillChar)
-    integer, intent(in) :: N_BLANKS
+    integer, intent(in) :: COLUMN
     character(len=*), intent(in), optional :: ADVANCE
     character(len=1), intent(in), optional :: FILLCHAR  ! default is ' '
     logical, intent(in), optional          :: DONT_STAMP ! Prevent double-stamping
-    character(len=3) :: ADV
     character(len=*), parameter :: BLANKSPACE = &
     '                                                                    '
-    character(len=len(BlankSpace)) :: b
     integer :: I    ! Blanks to write in next WRITE statement
-    integer :: N    ! Blanks remaining to write
-    character(len=3) :: MY_ADV
+    logical :: lineup
+    integer :: ntimes
+    integer :: numSoFar
+    character(len=16) :: pattern
+    integer :: patternLength
+    integer :: patternNum
+    integer :: theRest
     ! Executable
-    my_adv = Advance_is_yes_or_no(advance)
-    if ( n_blanks < 1 ) then
-      if ( my_adv == 'yes' ) &
-        & call output ( '', advance='yes', dont_stamp=dont_stamp )
-      return
-    end if
-    n = max(n_blanks, 1)
-    if ( present(fillChar)  ) then
-      do i=1, min(n, len(BlankSpace))
-        b(i:i) = fillChar
-      end do
-    else
-      b = BLANKSPACE
-    end if
-    adv = 'no'
-    do
-      i = min(n,len(b))
-      n = n - i
-      if ( n == 0 ) adv = my_adv
-      call output ( b(:i), advance=adv )
-      if ( n < 1 ) exit   ! was if n == 0, but this should be safer
-    end do
-  end subroutine PR_BLANKS
+    if ( ATCOLUMNNUMBER >= COLUMN ) return
+    call blanks( COLUMN-ATCOLUMNNUMBER, fillChar, advance, dont_stamp )
+  end subroutine BLANKSTOCOLUMN
 
   ! ---------------------------------------------- DumpOuputOptions -----
   subroutine DumpOutputOptions(options)
     ! Show output options
     type(outputOptions_T), intent(in) :: options
-    character(len=1), parameter :: fillChar = '1' ! fill blanks with '. .'
+    ! Internal variables
+    character(len=1), parameter :: fillChar = '.' ! fill blanks with '. .'
+    character(len=10), parameter :: decade = '1234567890'
+    integer :: i
+    ! Executable
     call blanks(70, fillChar='-', advance='yes')
     call output(' -------------- Summary of output options'      , advance='no')
     call output(' -------------- ', advance='yes')
@@ -353,6 +357,23 @@ contains
       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
     call outputNamedValue ( 'lineup fills', trim(options%lineupFillChars), advance='yes', &
       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+    call outputNamedValue ( 'tab stops', tabstops, advance='yes', &
+      & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+    do i=1, MAXNUMTABSTOPS
+      call tab( fillChar=fillChar )
+      call output( '^', advance='no' )
+    enddo
+    call newline
+    do i=1, MAXNUMTABSTOPS
+      call blanksToColumn( tabStops(i), fillChar=fillChar )
+      call output( '^', advance='no' )
+    enddo
+    call newline
+    do
+      call output( decade, advance='no' )
+      if ( atColumnNumber > 132 ) exit
+    enddo
+    call newline
     call blanks(70, fillChar='-', advance='yes')
   end subroutine DumpOutputOptions
 
@@ -483,6 +504,25 @@ contains
   subroutine NewLine
     call output ( '', advance='yes' )
   end subroutine NewLine
+
+  ! ----------------------------------------------------  NextColumn  -----
+  function NextColumn() result(Column)
+    ! Args
+    integer :: Column
+    Column = atColumnNumber
+  end function NextColumn
+
+  ! ----------------------------------------------------  NextTab  -----
+  function NextTab() result(Column)
+    ! Args
+    integer :: Column
+    ! Internal variables
+    integer :: nTab
+    ! Executable
+    Column = 0
+    nTab = findFirst( tabStops > atColumnNumber )
+    if ( nTab > 0 ) Column = max( tabStops(nTab), atColumnNumber )
+  end function NextTab
 
   ! ------------------------------------------------  OUTPUT_CHAR  -----
   subroutine OUTPUT_CHAR ( CHARS, &
@@ -1158,6 +1198,30 @@ contains
     if ( present(interval) )   stampOptions%interval   = interval
   end subroutine setStamp
 
+  ! ----------------------------------------------  setTabs  -----
+  subroutine setTabs ( RANGE, TABS )
+    ! Set tabstops
+    ! Methods:
+    ! (1) a string range; e.g., "8, 32-100+8"
+    !     is converterd to "8, 32, 40, 48, 56, 64, 72, 80, 88, 96"
+    ! (2) an arrays of ints; e.g., (/ 4, 9, 12, 18, 22, 30, 35, 40 /)
+    ! (3) reset back to the defaults (equiv to "5-120+5")
+    ! Args
+    character(len=*), optional, intent(in)         :: Range
+    integer, dimension(:), optional, intent(in)    :: Tabs
+    ! Internal variables
+    integer :: n
+    ! Executable
+    if ( present(range) ) then
+      call ExpandStringRange ( range, TABSTOPS )
+    elseif ( present(tabs) ) then
+      n = min( MAXNUMTABSTOPS, size(tabs) )
+      tabStops(1:n) = tabs(1:n) 
+    else
+      call ExpandStringRange ( '5-120+5', TABSTOPS )
+    endif
+  end subroutine setTabs
+
   ! ----------------------------------------------  suspendOutput  -----
   subroutine suspendOutput 
   ! suspend outputting to PRUNIT.
@@ -1206,6 +1270,27 @@ contains
     outputOptions%prunit = SwitchUnit
     NeedToAppend = .true.
   end subroutine switchOutput
+
+  ! ------------------------------------------------  tab  -----
+  ! Print blanks out to next tabstop
+  ! (or else to tabstop number tabn)
+  subroutine tab ( tabn, fillChar )
+    ! Args
+    integer, optional, intent(in) :: TABN
+    character(len=1), intent(in), optional :: FILLCHAR  ! default is ' '
+    ! Internal variables
+    integer :: nTab
+    ! Executable
+    if ( present(tabn) ) then
+      if ( tabn < 1 .or. tabn > MAXNUMTABSTOPS ) return
+      if ( atColumnNumber < tabStops(tabn) ) &
+        & call blanksToColumn( tabStops(tabn), fillChar )
+    else
+      nTab = findFirst( tabStops > atColumnNumber )
+      if ( nTab > 0 ) &
+        & call blanksToColumn( tabStops(nTab), fillChar )
+    endif
+  end subroutine tab
 
   ! ------------------------------------------------  timeStamp  -----
   ! time-stamp output:
@@ -1452,6 +1537,46 @@ contains
     end if
   end subroutine ourReplaceSubString
 
+  ! -----------------------------------------------------  PR_BLANKS  -----
+  subroutine PR_BLANKS ( N_BLANKS, FILLCHAR, ADVANCE, DONT_STAMP )
+  ! Output N_BLANKS blanks to PRUNIT.
+  ! (or optionally that many copies of fillChar)
+    integer, intent(in) :: N_BLANKS
+    character(len=*), intent(in), optional :: ADVANCE
+    character(len=1), intent(in), optional :: FILLCHAR  ! default is ' '
+    logical, intent(in), optional          :: DONT_STAMP ! Prevent double-stamping
+    character(len=3) :: ADV
+    character(len=*), parameter :: BLANKSPACE = &
+    '                                                                    '
+    character(len=len(BlankSpace)) :: b
+    integer :: I    ! Blanks to write in next WRITE statement
+    integer :: N    ! Blanks remaining to write
+    character(len=3) :: MY_ADV
+    ! Executable
+    my_adv = Advance_is_yes_or_no(advance)
+    if ( n_blanks < 1 ) then
+      if ( my_adv == 'yes' ) &
+        & call output ( '', advance='yes', dont_stamp=dont_stamp )
+      return
+    end if
+    n = max(n_blanks, 1)
+    if ( present(fillChar)  ) then
+      do i=1, min(n, len(BlankSpace))
+        b(i:i) = fillChar
+      end do
+    else
+      b = BLANKSPACE
+    end if
+    adv = 'no'
+    do
+      i = min(n,len(b))
+      n = n - i
+      if ( n == 0 ) adv = my_adv
+      call output ( b(:i), advance=adv )
+      if ( n < 1 ) exit   ! was if n == 0, but this should be safer
+    end do
+  end subroutine PR_BLANKS
+
   ! ----------------------------------------------  stamp  -----
   function stamp( chars )
   ! stamp input chars before outputting to PRUNIT.
@@ -1503,6 +1628,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.61  2007/08/27 23:55:01  pwagner
+! Added many tabstop-related procedures
+!
 ! Revision 2.60  2007/07/27 00:21:59  vsnyder
 ! Spiff up printing in DumpSize
 !
