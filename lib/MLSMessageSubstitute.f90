@@ -15,6 +15,7 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
 
   use MACHINE, only: CRASH_BURN, EXIT_WITH_STATUS, NEVERCRASH
   use MLSCommon, only: MLSFile_T
+  use MLSStrings, only: asciify
   implicit none
   private
 
@@ -131,7 +132,11 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
     case ( 0 :  )
       write ( UNIT=max(MLSMessageConfig%logFileUnit,1), FMT=* ) TRIM(line)
     case ( -1  )
-      write ( UNIT=*, FMT=* ) TRIM(line)
+      if ( USEDEFAULTFORMATSTDOUT ) then
+        write ( UNIT=*, FMT=* ) TRIM(line)
+      else
+        write ( UNIT=*, FMT='(a)' ) TRIM(line)
+      endif
     case default
     end select
 
@@ -152,6 +157,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.7  2007/08/29 19:51:30  pwagner
+! Worked around Intel quirk that wraps stdout when 'FMT=*'
+!
 ! Revision 2.6  2007/08/27 23:53:37  pwagner
 ! Fixed many small bugs; now used MLSMessage.f9h
 !
