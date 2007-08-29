@@ -118,6 +118,10 @@
      & "Deallocation failed: "
   character (len=*), public, parameter :: MLSMSG_PVM = &
      & "PVM Error: "
+
+  ! We add the following because the Intel compiler wraps stdout at 80 columns
+  ! when 'FMT=*' but lets it "all hang out" if FMT='(a)'
+  logical, private, parameter :: USEDEFAULTFORMATSTDOUT = .false. ! Use FMT=*
   ! This datatype describes the configuration of the messaging suite
 
   integer, private, parameter :: MLSMSG_PrefixLen = 32
@@ -154,7 +158,12 @@
   type (MLSMessageConfig_T), public, save :: MLSMessageConfig
   
   ! The following can be used to help trace the sequence of calls that led
-  ! to an error; it will be dumped (if non-blank) on calling StopWithErrorMsg
+  ! to an error; 
+  
+  ! it will be dumped (if non-blank) on calls to
+  ! (1) StopWithErrorMsg
+  ! (2) MLSMessage, if MLSMSG_Severity_to_walkback is set appropriately
+  ! (3) MLSMessageCalls('dump')
   ! You may push a name onto it, pop a name off, or clear it by
   ! appropriate commands sent with subroutine MLSMessageCalls
   
@@ -360,7 +369,7 @@ contains
       end do
     case ( 'print' )
       if ( len_trim(MLSCallStack) > 0 ) &
-        & call printItOut ( trim(MLSCallStack), MLSMSG_info )
+        & call printItOut ( trim(asciify(MLSCallStack, 'mnemonic')), MLSMSG_info )
     case ( 'depth' )
       m = 0
       if ( len_trim(MLSCallStack) > 0 ) then
@@ -717,6 +726,9 @@ contains
   
 !
 ! $Log$
+! Revision 2.2  2007/08/29 19:51:02  pwagner
+! Worked around Intel quirk that wraps stdout when 'FMT=*'
+!
 ! Revision 2.1  2007/08/27 23:52:14  pwagner
 ! First commit
 !
