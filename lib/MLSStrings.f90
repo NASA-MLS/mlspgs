@@ -33,6 +33,8 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! STRINGOPTIONS      Default options string
 
 !     (subroutines and functions)
+! asciify            purify chars to be within printing range [32,126]
+!                      (no binary)
 ! Capitalize         tr[a-z] -> [A-Z]
 ! CatStrings         Concatenate strings with a specified separator
 ! CompressString     Removes all leading and embedded blanks
@@ -67,6 +69,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! === (end of toc) ===
 
 ! === (start of api) ===
+! char* asciify (char* str)
 ! char* Capitalize (char* str)
 ! char* CompressString (char* str)
 ! int count_words (char* str)
@@ -143,7 +146,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! streq                     
 ! === (end of api) ===
 
-  public :: Capitalize, CatStrings, CompressString, count_words, &
+  public :: asciify, Capitalize, CatStrings, CompressString, count_words, &
    & depunctuate, FlushArrayLeft, hhmmss_value, &
    & indexes, ints2Strings, IsRepeat, &
    & LinearSearchStringArray, LowerCase, NAppearances, NCopies, &
@@ -176,8 +179,114 @@ MODULE MLSStrings               ! Some low level string handling stuff
 
   logical, private, save          :: caseSensitive       
   logical, private, save          :: ignoreLeadingSpaces 
+  character(len=*), dimension(33), private, parameter :: MNEMONICCODES = (/ &
+   & 'nul', &
+   & 'soh', &
+   & 'stx', &
+   & 'etx', &
+   & 'eot', &
+   & 'enq', &
+   & 'ack', &
+   & 'bel', &
+   & 'bs ', &
+   & 'ht ', &
+   & '1f ', &
+   & 'vt ', &
+   & 'ff ', &
+   & 'cr ', &
+   & 'so ', &
+   & 'si ', &
+   & 'dle', &
+   & 'dcl', &
+   & 'dc2', &
+   & 'dc3', &
+   & 'dc4', &
+   & 'nak', &
+   & 'syn', &
+   & 'etb', &
+   & 'can', &
+   & 'em ', &
+   & 'sub', &
+   & 'esc', &
+   & 'fs ', &
+   & 'gs ', &
+   & 'rs ', &
+   & 'us ', &
+   & 'del' /)
   
 contains
+
+  ! -------------------------------------------------  ASCIIFY  -----
+  function ASCIIFY (STR, HOW) result (OUTSTR)
+    ! takes input string and replaces any non-printing characters
+    ! with ones in range [32,126]
+    ! leaving other chars alone
+    !
+    ! How the replacement is done is according to the optional arg
+    !    how         meaning
+    !    ---         -------
+    !  'shift'       shift to the character with matching modulus (default)
+    !                  (a poor choice for default, in my opinion)
+    !  'snip'        remove the offending character (shortening the string)
+    !  'decimal'     return <nnn> where nnn is the decimal value (e.g. 0)
+    !  'octal'       return <nnn> where nnn is the octal value (e.g. 000)
+    !  'mnemonic'    return <ID> where ID is the mnemonic code (e.g. NUL)
+    !  '*'           replace with whatever character how was (e.g., '*')
+    ! Note that these last 3 options may output a longer string than the input
+    !--------Argument--------!
+    character (len=*), intent(in)           :: STR
+    character (len=5*len(str))              :: OUTSTR
+    character (len=*), optional, intent(in) :: HOW
+
+    !----------Local vars----------!
+    integer :: I, K
+    character(len=5) :: insert
+    character(len=1), dimension(len(str)) :: mold
+    character(len=8) :: myHow
+    !----------Executable part----------!
+    outstr=str
+    myHow = 'shift'
+    if ( present(how) ) myHow = how
+    mold = transfer(str,mold,size=len(str))
+    if ( all(isAscii(mold)) ) return
+    outstr = ' '
+    select case (myHow)
+    case ('shift')
+      do i=1, len(str)
+        if ( isAscii(str(i:i)) ) cycle
+        outstr(i:i) = ShiftChar(str(i:i))
+      end do
+    case ('snip')
+      k = 1
+      do i=1, len(str)
+        if ( isAscii(str(i:i)) ) then
+          outstr(k:k) = str(i:i)
+          k = k + 1
+        endif
+      end do
+    case default
+    ! case ('decimal', 'octal', 'mnemonic')
+      k = 1
+      do i=1, len(str)
+        if ( isAscii(str(i:i)) ) then
+          outstr(k:k) = str(i:i)
+          k = k + 1
+        else
+          if ( myHow == 'decimal' ) then
+            insert = decimalCode( str(i:i) )
+          elseif ( myHow == 'octal' ) then
+            insert = octalCode( str(i:i) )
+          elseif ( myHow == 'mnemonic' ) then
+            insert = mnemonicCode( str(i:i) )
+          else
+            insert = myHow(1:1)
+          endif
+          outstr(k:) = insert
+          k = k + len_trim(insert)
+        endif
+      end do
+    end select
+  end function ASCIIFY
 
   ! -------------------------------------------------  CAPITALIZE  -----
   elemental function Capitalize (STR) result (OUTSTR)
@@ -1360,7 +1469,6 @@ contains
     ! 'p' is partial match (STR2 is replaced by '*' // STR2 // '*'
     ! 's' returns TRUE only in element corresponding to shortest STR1
     ! 'l' returns TRUE only in element corresponding to longest STR1
-    use MLSSets, only: findFirst
     character (len=*), dimension(:), intent(in) :: STR1
     character (len=*), intent(in)               :: STR2
     character (len=*), intent(in), optional     :: OPTIONS
@@ -1763,6 +1871,21 @@ contains
     end select    
   end function isAlphabet
 
+  ! ---------------------------------------------------  isAscii  -----
+  elemental function isAscii(arg) result(itIs)
+    ! Returns TRUE if arg is in range of printing chars [32,126]
+    ! Args
+    character(len=1), intent(in) :: arg
+    logical                      :: itIs
+    ! Internal variables
+    integer, parameter :: pcMin = iachar(' ')
+    integer, parameter :: pcMax = iachar('~')
+    integer :: icode
+    ! Executable
+    icode = iachar(arg)
+    itis = .not. ( icode < pcMin .or. icode > pcMax )
+  end function isAscii
+
   ! ---------------------------------------------------  isDigit  -----
   function isDigit(arg) result(itIs)
     ! Returns TRUE if arg is one of {'1', '2', ..}
@@ -1785,6 +1908,80 @@ contains
      if ( strlen < 1 ) return
      lastchar = str(strlen:strlen)
   end function lastchar
+
+  ! ---------------------------------------------------  octalCode  -----
+  function octalCode(arg) result(theCode)
+    character(len=1), intent(in) :: arg
+    character(len=5) :: theCode
+    ! Returns '<nnn>' where nnn is the octal code of arg
+    character(len=3) :: nnn
+    write(nnn,'(o3.3)') iachar(arg)
+    theCode = '<' // nnn // '>'
+  end function octalCode
+
+  ! ---------------------------------------------------  decimalCode  -----
+  function decimalCode(arg) result(theCode)
+    character(len=1), intent(in) :: arg
+    character(len=5) :: theCode
+    ! Returns '<n>' where n is iachar(arg)
+    character(len=3) :: n
+    write(n,'(i3)') iachar(arg)
+    theCode = '<' // trim(adjustl(n)) // '>'
+  end function decimalCode
+
+  ! ---------------------------------------------------  mnemonicCode  -----
+  function mnemonicCode(arg) result(theCode)
+    character(len=1), intent(in) :: arg
+    character(len=5) :: theCode
+    ! Returns '<mnc>' where mnc is a mnemonic code like NUL
+    integer :: icode
+    theCode = arg
+    if ( isAscii(arg) ) return
+    icode = iachar(arg) + 1
+    icode = min(icode, size(MNEMONICCODES))
+    
+    theCode = '<' // trim( MNEMONICCODES(icode) ) // '>'
+  end function mnemonicCode
+
+  ! ---------------------------------------------------  shiftChar  -----
+  elemental character function shiftChar( arg, char1, char2 )
+    character(len=1), intent(in)           :: arg
+    character(len=1), optional, intent(in) :: char1
+    character(len=1), optional, intent(in) :: char2
+    ! shift the character so its value lies in the range [char1,char2]
+    ! (by default char1 = ' ', char2 = '~')
+    integer :: m1, m2
+    integer :: icode
+    integer :: resultcode
+    ! Executable
+    m1 = iachar(' ')
+    if ( present(char1) ) m1 = iachar(char1)
+    m2 = iachar('~')
+    if ( present(char2) ) m2 = iachar(char2)
+    icode = iachar(arg)
+    shiftChar = arg
+    resultcode = -1 ! This means the character did not need shifting
+    if ( icode < m1 ) then
+      resultcode = m1 + mod( icode+256, m2-m1 )
+    elseif ( icode > m2 ) then
+      resultcode = m1 + mod( icode, m2-m1 )
+    endif
+    if ( resultcode > -1 ) shiftChar = achar(resultcode)
+  end function shiftChar
+
+  ! -------------------------------------------  FindFirst  -----
+  ! We were forced to put a redundant copy here to avoid circular make dependence
+  ! that resulted when this module used MLSSets
+  integer function FindFirst ( condition )
+    ! Find the first logical in the array that is true
+    logical, dimension(:), intent(in) :: CONDITION
+
+    ! Executable code
+    do FindFirst = 1, size(condition)
+      if ( condition(FindFirst) ) return
+    end do
+    FindFirst = 0
+  end function FindFirst
 
   ! ---------------------------------------------------  firstsubstr  -----
   elemental function firstsubstr(str, star) result(substr)
@@ -1820,6 +2017,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.70  2007/08/29 19:52:18  pwagner
+! Added asciify function
+!
 ! Revision 2.69  2007/07/31 22:46:08  pwagner
 ! undefined status now defined in readAnIntFromChars ;'n' option added to streq
 !
