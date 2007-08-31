@@ -12,20 +12,20 @@
 program L2Q
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use dates_module, only: DATEFORM, REFORMATDATE
-  use L2PARINFO, only: PARALLEL, INITPARALLEL, ACCUMULATESLAVEARGUMENTS
+  use L2PARINFO, only: PARALLEL, INITPARALLEL
   use L2ParInfo, only: MACHINE_T, PARALLEL, &
     & PETITIONTAG, GIVEUPTAG, GRANTEDTAG, NOTIFYTAG, &
     & SIG_FINISHED, SIG_REGISTER, SIG_SWEARALLEGIANCE, SIG_SWITCHALLEGIANCE, &
     & SIG_HOSTDIED, SIG_RELEASEHOST, SIG_REQUESTHOST, SIG_THANKSHOST, &
     & MACHINENAMELEN, GETMACHINENAMES, &
-    & DW_INVALID, DUMP, ADDMACHINETODATABASE
+    & DUMP, ADDMACHINETODATABASE
   use MACHINE ! At least HP for command lines, and maybe GETARG, too
   use MLSCOMMON, only: FILENAMELEN
   use MLSL2Options, only: CURRENT_VERSION_ID
   use MLSMessageModule, only: MLSMessage, MLSMessageConfig, MLSMessageExit, &
     & MLSMSG_Allocate, MLSMSG_DeAllocate, MLSMSG_Debug, MLSMSG_Error, &
     & MLSMSG_Info, MLSMSG_Success, MLSMSG_Warning, PVMERRORMESSAGE
-  use MLSSETS, only: FINDFIRST, FINDALL
+  use MLSSETS, only: FINDFIRST
   use MLSSTRINGLISTS, only: CATLISTS, GETSTRINGELEMENT, NUMSTRINGELEMENTS, &
     & STRINGELEMENTNUM
   use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS, STREQ
@@ -33,14 +33,14 @@ program L2Q
     & OUTPUT, OUTPUT_DATE_AND_TIME, outputNamedValue, OutputOptions, &
     & TIMESTAMP
   use PVM, only: PVMOK, &
-    & ClearPVMArgs, FreePVMArgs, GETMACHINENAMEFROMTID, &
+    & ClearPVMArgs, GETMACHINENAMEFROMTID, &
     & PVMDATADEFAULT, PVMFINITSEND, PVMF90PACK, PVMFKILL, PVMFMYTID, &
     & PVMF90UNPACK, PVMFPSTAT, &
-    & PVMFCATCHOUT, PVMFSEND, PVMFNOTIFY, PVMTASKEXIT, &
+    & PVMFSEND, PVMFNOTIFY, PVMTASKEXIT, &
     & PVMFFREEBUF
   use Sort_M, only: SORT
   use Time_M, only: Time_Now, time_config
-  use TOGGLES, only: CON, GEN, LEVELS, PAR, SYN, TAB, &
+  use TOGGLES, only: GEN, LEVELS, &
     & TOGGLE
 
   ! === (start of toc) ===
@@ -72,7 +72,6 @@ program L2Q
 
   implicit none
 
-  character(len=1) :: arg_rhs       ! 'n' part of 'arg=n'
   integer :: BUFFERID
   character(len=2048) :: command_line ! All the opts
   logical, parameter :: COUNTEMPTY = .true.
@@ -88,7 +87,6 @@ program L2Q
   integer, parameter :: MAXNUMMASTERS = 100 ! Mas num running simultaneously
   integer, parameter :: MAXNUMMULTIPROCS = 8 ! For some architectures > 1000 
   integer :: RECL = 10000          ! Record length for list
-  integer :: RECORD_LENGTH
   integer :: STATUS                ! From OPEN
   logical :: SWITCH                ! "First letter after -- was not n"
   real :: T0, T1, T2, T_CONVERSION ! For timing
@@ -647,7 +645,6 @@ contains
   ! ---------------------------------------------  dump_Master  -----
   subroutine dump_Master(Master)
     ! dump data type
-    integer :: i
     type(Master_T), intent(in) :: Master
     call output('machine name: ', advance = 'no')
     call output(trim(Master%name), advance = 'yes')
@@ -745,7 +742,6 @@ contains
     ! or responding to commands sent by a fraternal l2q launched with
     ! "-c command" option
     integer :: bufferIDRcv
-    integer :: BUFFERIDSND              ! From PVM
     integer :: BYTES                    ! Dummy from PVMFBufInfo
     logical :: CHECKREVIVEDHOSTS
     logical :: CLEANMASTERDB
@@ -754,7 +750,6 @@ contains
     integer :: grandMastersID           ! index into database of an older master
     integer :: host
     integer :: hostsID                  ! index into database of a host
-    integer :: i
     integer, dimension(MAXNUMMASTERS) :: IDs
     integer :: INFO                     ! From PVM
     character(len=MachineNameLen)  :: MACHINENAME
@@ -763,10 +758,8 @@ contains
     logical :: mayAssignAHost
     integer :: MSGTAG                   ! Dummy from PVMFBufInfo
     integer :: nextFree
-    integer :: NTIDS
     integer :: numHosts
     integer :: numMasters
-    integer :: oldPrUnit
     logical :: opened
     integer :: SIGNAL                   ! From a master
     character(len=16) :: SIGNALSTRING
@@ -775,7 +768,6 @@ contains
     integer :: STATUS
     character(len=FileNameLen)  :: tempfile
     integer :: TID
-    integer, dimension(MAXNUMMULTIPROCS) :: TIDS
     real    :: tLastHDBDump
     real    :: tLastMDBDump
     type(master_t) :: aMaster
@@ -1981,7 +1973,6 @@ contains
     type(Master_T), dimension(:), pointer :: Masters
     ! Internal variables
     type(master_t) :: aMaster
-    character(len=128) :: machineName
     integer :: numMasters
     integer :: status
     ! Executable
@@ -2069,15 +2060,19 @@ contains
     character(len=FILENAMELEN)             :: oldPrName
     integer                                :: oldPrUnit
     integer :: status
+    logical :: switched
     ! Executable
+    switched = .false.
     status = 0
     ! call timeStamp( 'dumping Hosts DB', advance='yes' )
     if ( tempfile /= '<STDIN>' ) then
       if ( options%dump_file /= '<STDIN>' ) then
+        switched = .true.
         oldPrName = OutputOptions%name
         close(outputOptions%prunit)
         OutputOptions%opened = .false.
         OutputOptions%name = tempFile
+        ! print *, 'switching to ', trim(tempFile)
       endif
       oldPrUnit = OutputOptions%prunit
       OutputOptions%prunit = tempUnit
@@ -2096,16 +2091,17 @@ contains
     endif
     if ( tempfile /= '<STDIN>' ) then
       close(OutputOptions%prunit)
-      if ( options%dump_file /= '<STDIN>' ) then
+      if ( switched ) then
         OutputOptions%name = oldPrName
         OutputOptions%opened = .true.
-        open( OutputOptions%prunit, file=trim(options%dump_file), &
+        open( oldPrUnit, file=trim(options%dump_file), &
           & position='append', &
           & status='old', form='formatted', iostat=status )
+        ! print *, 'switching back to ', trim(options%dump_file)
       endif
       OutputOptions%prunit = oldPrUnit
     endif
-    if ( options%dump_file /= '<STDIN>' ) &
+    if ( options%dump_file /= '<STDIN>' .and. DEEBUG ) &
     & call timeStamp( 'Reverting to ' // trim(options%dump_file), advance='yes' )
   end subroutine reDumpHosts
 
@@ -2118,15 +2114,19 @@ contains
     character(len=FILENAMELEN)             :: oldPrName
     integer                                :: oldPrUnit
     integer :: status
+    logical :: switched
     ! Executable
+    switched = .false.
     ! call timeStamp( 'Dumping masters DB', advance='yes' )
     status = 0
     if ( tempfile /= '<STDIN>' ) then
       if ( options%dump_file /= '<STDIN>' ) then
+        switched = .true.
         oldPrName = OutputOptions%name
         close(outputOptions%prunit)
         OutputOptions%opened = .false.
         OutputOptions%name = tempFile
+        ! print *, 'switching to ', trim(tempFile)
       endif
       oldPrUnit = OutputOptions%prunit
       OutputOptions%prunit = tempUnit
@@ -2145,16 +2145,17 @@ contains
     endif
     if ( tempfile /= '<STDIN>' ) then
       close(OutputOptions%prunit)
-      if ( options%dump_file /= '<STDIN>' ) then
+      if ( switched ) then
         OutputOptions%name = oldPrName
         OutputOptions%opened = .true.
-        open( OutputOptions%prunit, file=trim(options%dump_file), &
+        open( oldPrUnit, file=trim(options%dump_file), &
           & position='append', &
           & status='old', form='formatted', iostat=status )
+        ! print *, 'switching back to ', trim(options%dump_file)
       endif
       OutputOptions%prunit = oldPrUnit
     endif
-    if ( options%dump_file /= '<STDIN>' ) &
+    if ( options%dump_file /= '<STDIN>' .and. DEEBUG ) &
     & call timeStamp( 'Reverting to ' // trim(options%dump_file), advance='yes' )
   end subroutine reDumpMasters
 
@@ -2167,6 +2168,7 @@ contains
     integer :: hcid
     integer, dimension(:), pointer :: tempHosts
     integer :: i, status
+    integer, parameter :: FIXDELAYFORSLAVETOFINISH   = 15000000 ! 15 sec
     ! Executable
     if ( options%debug ) &
       & call output( 'Releasing ' // trim(host%name) // '   ', advance='yes')
@@ -2213,6 +2215,7 @@ contains
       if ( status == PVMOK ) then
         call pvmfkill(host%tid, status)
         if ( status /= 0 ) then
+          call usleep( FIXDELAYFORSLAVETOFINISH )
           call proclaim('Failed to kill running task', &
             & trim(host%name), signal=host%tid)
         endif
@@ -2332,6 +2335,9 @@ contains
 end program L2Q
 
 ! $Log$
+! Revision 1.20  2007/06/29 21:00:21  pwagner
+! Fixed bug causing crashes when checking for revivals
+!
 ! Revision 1.19  2007/05/18 23:50:15  pwagner
 ! Now can successfully revive dead hosts
 !
