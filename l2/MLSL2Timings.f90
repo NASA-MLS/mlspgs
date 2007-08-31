@@ -280,6 +280,7 @@ contains ! =====     Public Procedures     =============================
     integer :: keyNo
     character(len=80) :: PHASESTRING    ! E.g., 'Core'
     character(len=80) :: BOOLEANSTRING  ! E.g., 'BAND13_OK'
+    character(len=8)  :: CHUNKSTRING  ! E.g., '257'
     logical :: silent
     integer :: son
     logical :: stamp
@@ -343,7 +344,14 @@ contains ! =====     Public Procedures     =============================
     if ( RESTARTWARNINGS ) call MLSMessageReset( Warnings=.true. )
     ! This will cause Warnings and Errors to print the phase name
     ! where they occurred
-    MLSMessageConfig%Info = phaseString
+    ! and, if we're a slave, the Chunk number
+    if ( parallel%slave .and. .not. parallel%fwmParallel ) then
+      write(chunkString, '(i3)') parallel%ChunkNo
+      MLSMessageConfig%Info = trim(phaseString) // ' (' // &
+        & trim(adjustl(chunkString)) // ') ' // phaseString
+    else
+      MLSMessageConfig%Info = phaseString
+    endif
     if ( silent ) then
       call suspendOutput
     else
@@ -877,6 +885,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.39  2007/08/31 00:04:06  pwagner
+! Make chunk number part of Warning string
+!
 ! Revision 2.38  2007/08/13 17:40:55  pwagner
 ! Warnings and Errors automatically print phase where they occur
 !
