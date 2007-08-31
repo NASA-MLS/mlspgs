@@ -71,7 +71,7 @@ contains ! ====     Public Procedures     ==============================
     use MLSL2Options, only: CHECKPATHS, &
       & SKIPRETRIEVAL, SPECIALDUMPFILE, STOPAFTERSECTION
     use MLSMessageModule, only: MLSMSG_Allocate, MLSMessage, MLSMSG_Info, &
-      & MLSMSG_Error
+      & MLSMSG_Error, SummarizeWarnings
     use MLSSignals_M, only: Bands, DestroyBandDatabase, DestroyModuleDatabase, &
       & DestroyRadiometerDatabase, DestroySignalDatabase, &
       & DestroySpectrometerTypeDatabase, MLSSignals, Modules, Radiometers, &
@@ -542,6 +542,7 @@ subtrees:   do while ( j <= howmany )
       if ( present(early) ) myEarly = early
       numChunks = 0
       if ( associated(Chunks) ) numChunks = size(Chunks)
+      call SummarizeWarnings
       call CloseParallel(numChunks, early)
       if ( .not. (myEarly .or. skipRetrieval) ) then
         call destroyChunkDatabase ( chunks )
@@ -603,6 +604,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.157  2007/06/21 00:54:08  vsnyder
+! Remove tabs, which are not part of the Fortran standard
+!
 ! Revision 2.156  2007/06/07 20:41:07  pwagner
 ! Avoid read_ and Merge_apriori if master task
 !
