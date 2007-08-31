@@ -45,6 +45,7 @@
 ! PVMErrorMessage          log a PVM error
 ! ReportTKStatus           converts SDP status to severity, prints if needed
 ! StopWithErrorMsg         report error msg, dump calling stack, stop
+! SummarizeWarnings        show summary of how many warnings received
 
 ! === (end of toc) ===
 
@@ -62,6 +63,7 @@
 ! ReportTKStatus( int status, char* ModuleNameIn, char* Message, 
 !      [int Threshold] )
 ! StopWithErrorMsg ( char* Message, [MLSFile_T MLSFile] )
+! SummarizeWarnings
 ! === (end of api) ===
   ! ---------------------------------------------------------------------------
 
@@ -102,6 +104,7 @@
     &                   warningmessages = ' '
   integer, dimension(MAXNUMWARNINGS), save :: timeswarned = 0
   integer, save :: numwarnings = 0
+  integer, save :: totalnumwarnings = 0
   ! This set of parameters are simple prefixes for common messages
 
   character (len=*), public, parameter :: MLSMSG_Allocate = &
@@ -178,7 +181,7 @@
   public :: MLSMessageExit, MLSMessageInternalFile
   public :: MLSMessageReset, PVMErrorMessage
   public :: ReportTKStatus
-  public :: MLSMessageCalls, StopWithErrorMsg
+  public :: MLSMessageCalls, StopWithErrorMsg, SummarizeWarnings
 
   interface MLSMessage
     module procedure MLSMessage_
@@ -211,6 +214,7 @@ contains
     ! This is the smaller of the actual length and what we can check for repeats
     msgLength = min(len(message), WARNINGMESSLENGTH)
     ! Here's where we suppress warning messages beyond a limit for each
+    if ( severity == MLSMSG_Warning ) totalnumwarnings = totalnumwarnings + 1
     nosubsequentwarnings = .false.
     if ( severity == MLSMSG_Warning .and. MLSMessageConfig%limitWarnings > -1 &
       & .and. numwarnings <= MAXNUMWARNINGS .and. message /= ' ' ) then
@@ -518,7 +522,12 @@ contains
     end if
     if ( present(CrashOnAnyError) ) MLSMessageConfig%CrashOnAnyError = CrashOnAnyError
     if ( present(Warnings) ) then
+      if ( totalNumWarnings > 0 ) then
+        call SummarizeWarnings
+        call PrintItOut( 'Forgetting old Warnings', MLSMSG_Info )
+      endif
       numwarnings = 0
+      totalnumwarnings = 0
       timeswarned = 0
       warningmessages = ' '
     end if
@@ -551,6 +560,28 @@ contains
     call MLSMessageStd( MLSMSG_Error, name, Message, MLSFile=MLSFile )
   end subroutine StopWithErrorMsg
 
+  ! ------------ SummarizeWarnings ------------
+  subroutine SummarizeWarnings
+    ! Print summary of warnings received
+    ! Internal variables
+    character(len=32) :: name
+    character(len=16) :: number
+    integer :: i
+    ! Executable
+    call PrintItOut( ' Warnings Summary', MLSMSG_Info )
+    write(number, '(i10)') totalnumwarnings
+    call PrintItOut( 'Grand total' // ' ' // adjustl(number), MLSMSG_Info )
+    write(number, '(i10)') numwarnings
+    call PrintItOut( 'Different' // ' ' // adjustl(number), MLSMSG_Info )
+    if ( numwarnings < 1 ) return
+    call PrintItOut( 'number             message', MLSMSG_Info )
+    do i=1, numwarnings
+      write(number, '(i10)') timeswarned(i) - 1
+      call PrintItOut( number // ' ' // trim(warningmessages(i)), MLSMSG_Info )
+    enddo
+  end subroutine SummarizeWarnings
+
+  ! Private procedures
   ! --------------------------------------------  dumpFile  -----
   subroutine dumpFile ( MLSFile  )
     ! Show everything about it
@@ -726,6 +757,9 @@ contains
   
 !
 ! $Log$
+! Revision 2.3  2007/08/31 00:02:28  pwagner
+! Added procedure to summarize warnings
+!
 ! Revision 2.2  2007/08/29 19:51:02  pwagner
 ! Worked around Intel quirk that wraps stdout when 'FMT=*'
 !
