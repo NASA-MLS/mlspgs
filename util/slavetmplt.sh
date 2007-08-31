@@ -205,6 +205,12 @@ while [ "$more_opts" = "yes" ] ; do
        shift
        shift
        ;;
+    --crash* )
+       otheropts=`add_option "$otheropts" $1`
+       echo "Adding argument to crash on any error: $1" >> $LOGFILE
+       echo "$otheropts" >> $LOGFILE
+       shift
+       ;;
     --delay )
        echo "Skipping argument to change master delay: $1 $2" >> $LOGFILE
        echo "$otheropts" >> $LOGFILE
@@ -282,6 +288,15 @@ while [ "$more_opts" = "yes" ] ; do
        echo "Appending switch-setting argument: $1" >> $LOGFILE
        shift
        ;;
+    -f* )
+       otheropts=`add_option "$otheropts" $1`
+       echo "Adding argument to trace forward model: $1" >> $LOGFILE
+       shift
+       ;;
+    -g* )
+       echo "Skipping superfluous argument to trace execution: $1" >> $LOGFILE
+       shift
+       ;;
     -* )
        echo "Skipping unknown argument: $1" >> $LOGFILE
        shift
@@ -354,6 +369,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.15  2007/08/17 00:42:02  pwagner
+# Passes switches from master task to slave
+#
 # Revision 1.14  2007/05/10 23:40:12  pwagner
 # Used ulimit to increase tiny stacksize so Intel-built mlsl2 can finish
 #
