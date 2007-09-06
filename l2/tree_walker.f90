@@ -69,7 +69,7 @@ contains ! ====     Public Procedures     ==============================
     use MergeGridsModule, only: MergeGrids
     use MLSCommon, only: TAI93_RANGE_T, MLSFile_T
     use MLSL2Options, only: CHECKPATHS, &
-      & SKIPRETRIEVAL, SPECIALDUMPFILE, STOPAFTERSECTION
+      & SKIPRETRIEVAL, SLAVESDOOWNCLEANUP, SPECIALDUMPFILE, STOPAFTERSECTION
     use MLSMessageModule, only: MLSMSG_Allocate, MLSMessage, MLSMSG_Info, &
       & MLSMSG_Error, SummarizeWarnings
     use MLSSignals_M, only: Bands, DestroyBandDatabase, DestroyModuleDatabase, &
@@ -465,7 +465,9 @@ subtrees:   do while ( j <= howmany )
       skipDirectwrites = skipDirectwritesOriginal
       case ( z_output ) ! Write out the data
         call resumeOutput ! In case the last phase was  silent
-        if ( .not. parallel%slave ) then
+        if ( parallel%slave .and. .not. SLAVESDOOWNCLEANUP ) then
+          exit
+        elseif ( .not. parallel%slave ) then
           call Output_Close ( son, l2gpDatabase, l2auxDatabase, DirectDatabase, &
             & matrices, vectors, fileDataBase, chunks, processingRange, &
             & canWriteL2PC )
@@ -544,6 +546,7 @@ subtrees:   do while ( j <= howmany )
       if ( associated(Chunks) ) numChunks = size(Chunks)
       call SummarizeWarnings
       call CloseParallel(numChunks, early)
+      if ( parallel%slave .and. .not. SLAVESDOOWNCLEANUP ) return
       if ( .not. (myEarly .or. skipRetrieval) ) then
         call destroyChunkDatabase ( chunks )
         call destroy_Ant_Patterns_database
@@ -604,6 +607,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.158  2007/08/31 00:03:26  pwagner
+! Summarizes warnings at end
+!
 ! Revision 2.157  2007/06/21 00:54:08  vsnyder
 ! Remove tabs, which are not part of the Fortran standard
 !
