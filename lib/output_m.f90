@@ -42,6 +42,7 @@ module OUTPUT_M
 !     (subroutines and functions)
 ! blanks                   "print" specified number of blanks [or fill chars]
 ! blanksToColumn           "print" blanks [or fill chars] out to specified column
+! blanksToTab              "print" blanks [or fill chars] out to next tab stop
 ! dump                     dump output or stamp options
 ! dumpsize                 print a nicely-formatted memory size 
 ! getStamp                 get stamp being added to every output
@@ -64,6 +65,7 @@ module OUTPUT_M
 ! === (start of api) ===
 ! blanks ( int n_blanks, [char fillChar], [char* advance] )
 ! blanksToColumn ( int column, [char fillChar], [char* advance] )
+! blanksToTab ( [int tabn], [char* fillChar] )
 ! Dump ( options )
 ! DumpSize ( n, [char* advance], [units] )
 !       where n can be an int or a real, and 
@@ -90,7 +92,7 @@ module OUTPUT_M
 ! setTabs ( [char* Range], [int tabs(:)] )
 ! suspendOutput
 ! switchOutput ( char* filename, [int unit] )
-! tab ( [int tabn] )
+! tab ( [int tabn], [char* fillChar] )
 ! timeStamp ( char* chars, [char* advance], [char* from_where], 
 !          [log dont_log], [char* log_chars], [char* insteadOfBlank],
 !          [char*8 style], [log date] )
@@ -124,7 +126,7 @@ module OUTPUT_M
   integer, save, private :: OLDUNIT = -1 ! Previous Unit for output.
   logical, save, private :: OLDUNITSTILLOPEN = .TRUE.
 
-  public :: BLANKS, BLANKSTOCOLUMN, DUMP, DUMPSIZE, GETSTAMP, &
+  public :: BLANKS, BLANKSTOCOLUMN, BLANKSTOTAB, DUMP, DUMPSIZE, GETSTAMP, &
     & NEXTCOLUMN, NEXTTAB, NEWLINE, &
     & OUTPUT, OUTPUT_DATE_AND_TIME, OUTPUTNAMEDVALUE, &
     & RESUMEOUTPUT, REVERTOUTPUT, &
@@ -161,6 +163,10 @@ module OUTPUT_M
     module procedure output_nvp_single
   end interface
 
+  interface TAB
+    module procedure blanksToTab
+  end interface
+  
   interface TIMESTAMP
     module procedure timestamp_char, timestamp_integer, timestamp_logical
   end interface
@@ -223,6 +229,9 @@ module OUTPUT_M
   integer, save, private :: LINESSINCELASTSTAMP = 0
   logical, private, parameter :: LOGEXTRABLANKS = .false.
   integer, private, parameter :: MAXNUMTABSTOPS = 24
+  ! These next tab stops can be reset using the procedure setTabs
+  ! the default values correspond to range coded '5-120+5'
+  ! (read as from 5 to 120 in intervals of 5)
   integer, dimension(MAXNUMTABSTOPS), save, private :: TABSTOPS = &
     & (/ 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, &
     &   65, 70, 75, 80, 85, 90, 95,100,105,110,115,120 /)
@@ -328,6 +337,27 @@ contains
     if ( ATCOLUMNNUMBER >= COLUMN ) return
     call blanks( COLUMN-ATCOLUMNNUMBER, fillChar, advance, dont_stamp )
   end subroutine BLANKSTOCOLUMN
+
+  ! ------------------------------------------------  blanksToTab  -----
+  ! Print blanks out to next tabstop
+  ! (or else to tabstop number tabn)
+  subroutine blanksToTab ( tabn, fillChar )
+    ! Args
+    integer, optional, intent(in) :: TABN
+    character(len=1), intent(in), optional :: FILLCHAR  ! default is ' '
+    ! Internal variables
+    integer :: nTab
+    ! Executable
+    if ( present(tabn) ) then
+      if ( tabn < 1 .or. tabn > MAXNUMTABSTOPS ) return
+      if ( atColumnNumber < tabStops(tabn) ) &
+        & call blanksToColumn( tabStops(tabn), fillChar )
+    else
+      nTab = findFirst( tabStops > atColumnNumber )
+      if ( nTab > 0 ) &
+        & call blanksToColumn( tabStops(nTab), fillChar )
+    endif
+  end subroutine blanksToTab
 
   ! ---------------------------------------------- DumpOuputOptions -----
   subroutine DumpOutputOptions(options)
@@ -1271,27 +1301,6 @@ contains
     NeedToAppend = .true.
   end subroutine switchOutput
 
-  ! ------------------------------------------------  tab  -----
-  ! Print blanks out to next tabstop
-  ! (or else to tabstop number tabn)
-  subroutine tab ( tabn, fillChar )
-    ! Args
-    integer, optional, intent(in) :: TABN
-    character(len=1), intent(in), optional :: FILLCHAR  ! default is ' '
-    ! Internal variables
-    integer :: nTab
-    ! Executable
-    if ( present(tabn) ) then
-      if ( tabn < 1 .or. tabn > MAXNUMTABSTOPS ) return
-      if ( atColumnNumber < tabStops(tabn) ) &
-        & call blanksToColumn( tabStops(tabn), fillChar )
-    else
-      nTab = findFirst( tabStops > atColumnNumber )
-      if ( nTab > 0 ) &
-        & call blanksToColumn( tabStops(nTab), fillChar )
-    endif
-  end subroutine tab
-
   ! ------------------------------------------------  timeStamp  -----
   ! time-stamp output:
   ! Either in style pre or post
@@ -1628,6 +1637,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.62  2007/09/06 22:27:06  pwagner
+! Renamed TAB to blanksToTab to avoid conflict with TOGGLES constant
+!
 ! Revision 2.61  2007/08/27 23:55:01  pwagner
 ! Added many tabstop-related procedures
 !
