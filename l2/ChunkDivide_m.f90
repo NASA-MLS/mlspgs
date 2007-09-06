@@ -1538,6 +1538,7 @@ contains ! ===================================== Public Procedures =====
       integer :: swLevel ! How much extra debugging info to print (-1 means none)
       logical :: this_maf_valid
       logical, dimension(:), pointer  :: valids_buffer
+      integer, parameter :: VERBOSETHRESHOLD = 1 ! was 0; turn on extra debugging
       ! Won't check if there are no radiances
       if ( .not. associated(filedatabase) ) return
       swlevel = SwitchDetail(switches, 'chu')
@@ -1572,15 +1573,15 @@ contains ! ===================================== Public Procedures =====
         choseCriticalSignals = .true.
       endif
       do signalIndex=1, size(signals)
-        if ( swLevel > -1 ) call dump( signals(signalIndex) )
+        if ( swLevel >= VERBOSETHRESHOLD ) call dump( signals(signalIndex) )
         call get_string( lit_indices(ChunkDivideConfig%criticalModules), signal_full, &
           & strip=.true. )
         critical_module_str = lowercase(signal_full)
-        if ( swLevel > -1 ) call outputNamedValue( 'critical module', critical_module_str )
+        if ( swLevel >= VERBOSETHRESHOLD ) call outputNamedValue( 'critical module', critical_module_str )
         call get_string( modules(signals(signalIndex)%instrumentModule)%name, signal_full, &
           & strip=.true. )
         module_str = lowercase(signal_full)
-        if ( swLevel > -1 ) call outputNamedValue( 'module', module_str )
+        if ( swLevel >= VERBOSETHRESHOLD ) call outputNamedValue( 'module', module_str )
         if ( ChunkDivideConfig%criticalModules == l_none ) then
           ! No module is critical for signal data being good
         elseif ( module_str /= critical_module_str ) then
@@ -1604,7 +1605,7 @@ contains ! ===================================== Public Procedures =====
           enddo
         endif
       enddo
-      if ( swlevel > 0 ) call dump ( signals_buffer, 'signals_buffer' )
+      if ( swlevel >= VERBOSETHRESHOLD ) call dump ( signals_buffer, 'signals_buffer' )
 
       ! Task (1a): Find mafs where there is at least one signal which
       ! changes from either nogood to good or from good to nogood
@@ -1670,7 +1671,7 @@ contains ! ===================================== Public Procedures =====
           & 'or_valids_buffer', ModuleName)
         ! 
         valids_buffer = .not. choseCriticalSignals ! .true.
-        if ( SwLevel > -1 ) then
+        if ( SwLevel >= VERBOSETHRESHOLD ) then
           call output ( 'Checking for critical signals: ')
           do critical_index=1, size(criticalSignals)
             call output ( trim(criticalSignals(critical_index)), &
@@ -1691,7 +1692,7 @@ contains ! ===================================== Public Procedures =====
             nullify(Signal_Indices)
             call Parse_signal(signal_str, signal_indices)
             if ( .not. associated(Signal_Indices) ) exit
-            if ( SwLevel > -1 ) then
+            if ( SwLevel >= VERBOSETHRESHOLD ) then
               call output ( 'Signal_Indices: ')
               call output ( Signal_Indices, advance='yes')
               do i=1, size(Signal_Indices)
@@ -1726,7 +1727,7 @@ contains ! ===================================== Public Procedures =====
               & valids_buffer .and. or_valids_buffer
           endif
         enddo
-        if ( swLevel > 0 ) call dump ( valids_buffer, 'valids_buffer' )
+        if ( swLevel >= VERBOSETHRESHOLD ) call dump ( valids_buffer, 'valids_buffer' )
         if ( swLevel > -1 ) then
         call outputNamedValue ( 'count(valids_buffer)', count(valids_buffer), advance='yes')
         call output ( 'Before converting valids to obstructions', advance='yes' )
@@ -2481,6 +2482,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.82  2007/09/06 22:31:50  pwagner
+! Raise switch threshold for dumpings signals
+!
 ! Revision 2.81  2007/06/08 22:00:23  vsnyder
 ! Quit gracefully if no L1BOA files
 !
