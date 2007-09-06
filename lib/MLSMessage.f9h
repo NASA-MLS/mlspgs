@@ -103,8 +103,10 @@
   character(len=WARNINGMESSLENGTH), dimension(MAXNUMWARNINGS), save :: &
     &                   warningmessages = ' '
   integer, dimension(MAXNUMWARNINGS), save :: timeswarned = 0
+  integer, parameter :: TOTALNUMWARNINGSMAX = 10000000
   integer, save :: numwarnings = 0
   integer, save :: totalnumwarnings = 0
+  integer, parameter :: MAXMESSLENGTH = 255 ! Max length on one line
   ! This set of parameters are simple prefixes for common messages
 
   character (len=*), public, parameter :: MLSMSG_Allocate = &
@@ -194,7 +196,9 @@ contains
   ! This first routine is the main `messaging' code.
 
   subroutine MLSMessage_( severity, ModuleNameIn,  Message, Advance, MLSFile )
-    ! A wraparound subroutine so we can intercept calls 
+    ! A wraparound subroutine so we can 
+    ! (1) prevent excessively repeated warning messages
+    ! (2) intercept calls 
     ! when the severity is MLSMSG_Error
     ! allowing us to push ModuleNameIn onto the calling stack
     integer, intent(in) :: Severity ! e.g. MLSMSG_Error
@@ -205,16 +209,31 @@ contains
     !                                 or 'n'
     type(MLSFile_T), intent(in), optional :: MLSFile
     ! Internal variables
-    integer :: msgLength                  
+    integer :: msgLength                  ! length to be printed
     logical :: nosubsequentwarnings
     logical :: newwarning
     integer :: warning_index
+    integer :: warningLength              ! length to be checked for repeats    
+    character(len=len(Message)+len(WARNINGSSUPPRESSED)) :: &
+      & msgPlusNotice                     ! actual message printed
     ! Executable
+    msgPlusNotice = message
 
+    ! This is the smaller of the actual length and what we allow to be printed
+    msgLength = min( len(message), MAXMESSLENGTH )
+    msgLength = max( msgLength, 1 )
     ! This is the smaller of the actual length and what we can check for repeats
-    msgLength = min(len(message), WARNINGMESSLENGTH)
-    ! Here's where we suppress warning messages beyond a limit for each
-    if ( severity == MLSMSG_Warning ) totalnumwarnings = totalnumwarnings + 1
+    warningLength = min( len(message), WARNINGMESSLENGTH )
+    warningLength = max( warningLength, 1 )
+    ! Here's where we suppress warning messages beyond a limit for each and all
+    if ( severity == MLSMSG_Warning ) &
+      & totalnumwarnings = min( TOTALNUMWARNINGSMAX, totalnumwarnings + 1 )
+    if ( totalnumwarnings > TOTALNUMWARNINGSMAX - 1 ) then
+      return
+    elseif ( totalnumwarnings > TOTALNUMWARNINGSMAX - 2 ) then
+      msgPlusNotice = '(Max Warnings reached)' // message
+      msgLength = min(warningLength+len('(Max Warnings reached)'), MAXMESSLENGTH)
+    endif
     nosubsequentwarnings = .false.
     if ( severity == MLSMSG_Warning .and. MLSMessageConfig%limitWarnings > -1 &
       & .and. numwarnings <= MAXNUMWARNINGS .and. message /= ' ' ) then
@@ -222,7 +241,7 @@ contains
       newwarning = .true.
       do warning_index = 1, numwarnings
         newwarning = newwarning .and. &
-          & ( warningmessages(warning_index) /= trim(message(1:msgLength)) )
+          & ( warningmessages(warning_index) /= trim(message(1:warningLength)) )
       enddo
       if ( newwarning .and. numwarnings >= MAXNUMWARNINGS ) then
       else if ( newwarning .or. &
@@ -237,22 +256,29 @@ contains
           & (timeswarned(numwarnings) > MLSMessageConfig%limitWarnings)
       else
         do warning_index = 1, numwarnings
-          if ( warningmessages(warning_index) == message(1:msgLength) ) exit
+          if ( warningmessages(warning_index) == message(1:warningLength) ) exit
         end do
         if ( warning_index > numwarnings ) return
-        if ( timeswarned(warning_index) > MLSMessageConfig%limitWarnings ) return
+        ! Now we assure that the times warned array contains all
+        ! the times we were called, not just the times we printed
         timeswarned(warning_index) = min(timeswarned(warning_index) + 1, &
-          & MLSMessageConfig%limitWarnings + 1 )
+          & TOTALNUMWARNINGSMAX )
+        if ( timeswarned(warning_index) > MLSMessageConfig%limitWarnings + 1 ) &
+          & return
         nosubsequentwarnings = &
           & (timeswarned(warning_index) > MLSMessageConfig%limitWarnings)
       end if
     end if
 
+    if ( nosubsequentwarnings ) then
+      msgPlusNotice = WARNINGSSUPPRESSED // msgPlusNotice
+      msgLength = min(msgLength+len(WARNINGSSUPPRESSED), MAXMESSLENGTH)
+    endif
     if ( .not. any ( severity >= &
       & (/ MLSMSG_Severity_to_quit, MLSMSG_Severity_to_walkback /) ) ) then
-      ! For warnings and so on, just pass args to MLSMessageStd
-      call MLSMessageStd( severity, ModuleNameIn,  Message, &
-        & nosubsequentwarnings, Advance )
+      ! Unless special treatment, just pass args to MLSMessageStd
+      call MLSMessageStd( severity, ModuleNameIn, msgPlusNotice(1:msgLength), &
+        & Advance )
       return
     endif
     call MLSMessageCalls( 'push', constantName=ModuleNameIn )
@@ -260,8 +286,8 @@ contains
       call StopWithErrorMsg( Message, MLSFile )
     else
       call MLSMessageCalls( 'dump' )
-      call MLSMessageStd( severity, ModuleNameIn, Message, &
-        & nosubsequentwarnings, Advance, MLSFile=MLSFile )
+      call MLSMessageStd( severity, ModuleNameIn, msgPlusNotice(1:msgLength), &
+        & Advance, MLSFile=MLSFile )
     endif
     call MLSMessageCalls( 'pop' )
   end subroutine MLSMessage_
@@ -406,8 +432,7 @@ contains
     ! Executable
     Line_len = 0
     line = ' '
-    call assembleFullLine( Severity, ModuleNameIn, Message, line, line_len, &
-      & .false. )
+    call assembleFullLine( Severity, ModuleNameIn, Message, line, line_len )
   end function MLSMessageInternalFile
 
   ! --------------------------------------------  MLSMessageSetup  -----
@@ -568,7 +593,8 @@ contains
     character(len=16) :: number
     integer :: i
     ! Executable
-    call PrintItOut( ' Warnings Summary', MLSMSG_Info )
+    call PrintItOut( '=========== Warnings Summary (' // &
+      & trim(MLSMessageConfig%Info) // ') ==============', MLSMSG_Info )
     write(number, '(i10)') totalnumwarnings
     call PrintItOut( 'Grand total' // ' ' // adjustl(number), MLSMSG_Info )
     write(number, '(i10)') numwarnings
@@ -610,13 +636,12 @@ contains
 
   !-----------------------------------------  assembleFullLine  -----
   subroutine assembleFullLine( Severity, ModuleNameIn, Message, &
-    & line, line_len, nosubsequentwarnings )
+    & line, line_len )
     integer, intent(in)           :: Severity ! e.g. MLSMSG_Error
     character (len=*), intent(in) :: ModuleNameIn ! Name of module (see below)
     character (len=*), intent(in) :: Message ! Line of text
     character(len=*) ::              Line
     integer                       :: line_len
-    logical, intent(in)           :: nosubsequentwarnings
     ! Assemble a full message line
 
     if ( line_len == 0 ) then
@@ -637,15 +662,10 @@ contains
       line_len = len_trim(line) + 3
       line(line_len-2:line_len-1) = '):'
     end if
-    if ( nosubsequentwarnings ) then
-      line(line_len+1:) = WARNINGSSUPPRESSED // message
-      line_len = line_len + len(WARNINGSSUPPRESSED) + len_trim(message)
-    else
-      line(line_len+1:) = message
-      line_len = line_len + len(message) ! Not len-trim, so we can get
-      ! trailing blanks into a part of a message.  If there are trailing
-      ! blanks remaining when my_adv is true, they'll be trimmed off.
-    end if
+    line(line_len+1:) = message
+    line_len = line_len + len(message) ! Not len-trim, so we can get
+    ! trailing blanks into a part of a message.  If there are trailing
+    ! blanks remaining when my_adv is true, they'll be trimmed off.
   end subroutine assembleFullLine
 
   ! --------------------------------------------  dump  -----
@@ -673,13 +693,12 @@ contains
   end subroutine dump
 
   subroutine MLSMessageStd ( Severity, ModuleNameIn, Message, &
-    & nosubsequentwarningsIn, Advance, MLSFile )
+    & Advance, MLSFile )
 
     ! Dummy arguments
     integer, intent(in) :: Severity ! e.g. MLSMSG_Error
     character (len=*), intent(in) :: ModuleNameIn ! Name of module (see below)
     character (len=*), intent(in) :: Message ! Line of text
-    logical, optional, intent(in) :: nosubsequentwarningsIn
     character (len=*), intent(in), optional :: Advance ! Do not advance
     !                                 if present and the first character is 'N'
     !                                 or 'n'
@@ -690,21 +709,15 @@ contains
     character (len=512), save :: Line   ! Line to output, should be long enough
     integer, save :: Line_len=0         ! Number of saved characters in line.
     logical :: My_adv
-    logical :: nosubsequentwarnings
 
     ! Executable code
-    nosubsequentwarnings = .false.
-    if ( present(nosubsequentwarningsIn) ) &
-      & nosubsequentwarnings = nosubsequentwarningsIn
     my_adv = .true.
     if ( present(advance) ) &
       & my_adv = advance(1:1) /= 'n' .and. advance(1:1) /= 'N'
 
     if ( (.not. MLSMessageConfig%suppressDebugs).OR. &
          & (severity /= MLSMSG_Debug) ) then
-      call assembleFullLine( Severity, ModuleNameIn, Message, line, line_len, &
-        & nosubsequentwarnings )
-
+      call assembleFullLine( Severity, ModuleNameIn, Message, line, line_len )
        ! Log the message using the toolkit routine
        ! (or its substitute )
        ! if either using toolkit or severity is sufficient to
@@ -757,6 +770,9 @@ contains
   
 !
 ! $Log$
+! Revision 2.4  2007/09/06 22:29:55  pwagner
+! Impose limit on total warnings
+!
 ! Revision 2.3  2007/08/31 00:02:28  pwagner
 ! Added procedure to summarize warnings
 !
