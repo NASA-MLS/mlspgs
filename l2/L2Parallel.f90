@@ -87,10 +87,7 @@ module L2Parallel
   integer, parameter :: HDFNAMELEN = 132 ! Max length of name of swath/sd
   character(len=*), parameter :: GROUPNAME = "mlsl2" ! Set by l2q
   logical, parameter :: NOTFORGOTTEN = .false. ! Note the death of forgottens
-  ! integer, parameter :: MAXCHUNK = 10000
-
-  integer :: counterStart
-  parameter ( counterStart = 2 * (huge (0) / 4 ) )
+  integer, parameter :: FIXDELAYFORSLAVETOFINISH   = 1500000 ! 15000000 ! 15 sec
 
   ! Private types
   type StoredResult_T
@@ -185,7 +182,6 @@ contains ! ================================ Procedures ======================
     integer :: BITS
     integer :: BUFFERID                 ! ID for buffer for receive
     integer :: CHUNK                    ! Loop counter
-    ! character(len=16) :: CHUNKSTR
     integer :: INFO                     ! Flag from PVM
     integer :: STATUS                   ! From allocate
     integer :: NOCHUNKS                 ! Size.
@@ -208,10 +204,6 @@ contains ! ================================ Procedures ======================
       & call PVMErrorMessage ( info, 'unpacking chunkInfo header')
     noChunks = header(1)
     chunkNo = header(2)
-!     write(chunkStr, *) chunkNo
-!     if ( ChunkNo > MAXCHUNK ) &
-!       & call MLSMessage ( MLSMSG_Error, ModuleName, &
-!       & 'chunk number too great: ' // trim(chunkStr) )
     
     allocate ( chunks ( noChunks ), STAT=status)
     if ( status /= 0 ) &
@@ -343,9 +335,6 @@ contains ! ================================ Procedures ======================
     logical, dimension(maxDirectWriteFiles) :: DIRECTWRITEFILEBUSY
     integer, dimension(maxDirectWriteFiles) :: NODIRECTWRITECHUNKS
 
-    ! logical, dimension(:), pointer :: MACHINEFREE ! Is this machine busy
-    ! logical, dimension(:), pointer :: MACHINEOK ! Is this machine working?
-    ! integer, dimension(:), pointer :: JOBSMACHINEKILLED ! Counts failures per machine.
     logical, dimension(size(chunks)) :: CHUNKSCOMPLETED ! Chunks completed
     logical, dimension(size(chunks)) :: CHUNKSSTARTED ! Chunks being processed
     logical, dimension(size(chunks)) :: CHUNKSABANDONED ! Chunks kept failing
@@ -387,9 +376,6 @@ contains ! ================================ Procedures ======================
     nullify ( joinedQuantities, joinedVectorTemplates, joinedVectors, &
       & machines, storedResults, &
       & directWriteRequests )
-    ! nullify ( joinedQuantities, joinedVectorTemplates, joinedVectors, &
-    !  & machineNames, machineFree, storedResults, machineOK, jobsMachineKilled, &
-    !  & directWriteRequests )
     noDirectWriteRequests = 0
     directWriteFileNames = 0
     noDirectWriteChunks = 0
@@ -466,10 +452,7 @@ contains ! ================================ Procedures ======================
       ! In the first part, we look to see if there are any chunks still to be
       ! started done, and any vacant machines to do them.
       ! --------------------------------------------------------- Start new jobs? --
-      ! do while ( (.not. all(chunksStarted .or. chunksAbandoned)) .and. &
-      !  & ( any(machineFree .and. machineOK) .or. usingSubmit ) )
       do while ( chunkAndMachineReady() ) ! (nextChunk, machine) )
-        ! nextChunk = FindFirst ( (.not. chunksStarted) .and. (.not. chunksAbandoned) )
         if ( nextChunk < 1 ) then
           ! Should have returned false
           call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -493,7 +476,6 @@ contains ! ================================ Procedures ======================
           ! Just go on; should have returned .false. anyway
           exit
         else ! ------------------------------------- Start job using pvmspawn
-          ! machine = FindFirst(machineFree .and. machineOK)
           commandLine = trim(parallel%pgeName)   ! was 'mlsl2'
           if ( switchDetail(switches,'slv') > -1 ) then
             call PVMFCatchOut ( 1, info )
@@ -781,7 +763,8 @@ contains ! ================================ Procedures ======================
           ! Send news back to l2 queue manager
           if ( usingL2Q ) then
             call TellL2QMachineFinished( &
-              & trim(machines(machine)%name), machines(machine)%tid, L2Qtid )
+              & trim(machines(machine)%name), machines(machine)%tid, L2Qtid, &
+              & FIXDELAYFORSLAVETOFINISH )
           endif
 
         case default
@@ -1160,9 +1143,9 @@ contains ! ================================ Procedures ======================
 
     if ( switchDetail(switches,'l2q') > -1 ) then
       call TimeStamp ( '   Finished', advance='yes' )
-      call dump(chunkNiceTids, 'chunkNiceTids', trim=.true.)
-      call dump(chunkTids, 'chunkTids')
-      call dump(machines%tid, 'machines%Tid')
+      call dump( chunkNiceTids, 'chunkNiceTids', trim=.true. )
+      call dump( chunkTids, 'chunkTids' )
+      call dump( machines%tid, 'machines%Tid', format='(i8)' )
     endif
     ! First kill any children still running (only if we got a give up message).
     do chunk = 1, noChunks
@@ -1171,7 +1154,7 @@ contains ! ================================ Procedures ======================
         if ( usingL2Q ) then
           machine = chunkMachines(chunk)
           call TellL2QMachineFinished( &
-            & trim(machines(machine)%name), machines(machine)%tid, L2Qtid )
+            & trim(machines(machine)%name), machines(machine)%tid, L2Qtid, 0 )
           if ( switchDetail(switches,'l2q') > -1 ) then
             call output( 'tid: ', advance='no' )
             call output( machines(machine)%tid, advance='no' )
@@ -1189,7 +1172,7 @@ contains ! ================================ Procedures ======================
     end do
 
     if ( usingL2Q ) then
-      call usleep ( 500*parallel%delay )
+      ! call usleep ( 500*parallel%delay )
       call TellL2QMasterFinished(L2Qtid)
       if ( switchDetail(switches,'mas') > -1 ) &
         & call TimeStamp ( 'Telling l2q we are finished', &
@@ -1831,14 +1814,17 @@ contains ! ================================ Procedures ======================
     endif
   end subroutine TellL2QMachineDied
 
-  subroutine TellL2QMachineFinished(machineName, tid, L2Qtid)
+  subroutine TellL2QMachineFinished(machineName, tid, L2Qtid, delay)
     character(len=*), intent(in)                        :: MACHINENAME
     integer, intent(in)                                 :: tid
     integer, intent(in)                                 :: L2Qtid
+    integer, intent(in)                                 :: delay
     !
     integer :: BUFFERID                 ! From PVM
     integer :: INFO                     ! From PVM
     !
+    ! If slave finished normally, give it enough time to deconstruct gracefully
+    call usleep( delay )
     if ( switchDetail(switches,'l2q') > -1 ) then
       call output( 'Releasing ' )
       call output( tid )
@@ -1924,6 +1910,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.84  2007/09/06 23:34:06  pwagner
+! Delays a bit to prevent l2q from killing finishing slave
+!
 ! Revision 2.83  2007/02/27 00:01:46  pwagner
 ! Change log message so grep -i died gives number died, not 2x
 !
