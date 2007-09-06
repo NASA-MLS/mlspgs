@@ -348,7 +348,7 @@ contains ! =====     Public Procedures     =============================
     if ( parallel%slave .and. .not. parallel%fwmParallel ) then
       write(chunkString, '(i3)') parallel%ChunkNo
       MLSMessageConfig%Info = trim(phaseString) // ' (' // &
-        & trim(adjustl(chunkString)) // ') ' // phaseString
+        & trim(adjustl(chunkString)) // ') '
     else
       MLSMessageConfig%Info = phaseString
     endif
@@ -885,6 +885,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.40  2007/09/06 23:32:47  pwagner
+! Fixed repeated phase name bug in Info component of MLSMessageConfig
+!
 ! Revision 2.39  2007/08/31 00:04:06  pwagner
 ! Make chunk number part of Warning string
 !
