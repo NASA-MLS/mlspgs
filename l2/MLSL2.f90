@@ -36,7 +36,7 @@ program MLSL2
     & LEVEL1_HDFVERSION, NORMAL_EXIT_STATUS, OUTPUT_PRINT_UNIT, &
     & PATCH, PENALTY_FOR_NO_METADATA, QUIT_ERROR_THRESHOLD, RESTARTWARNINGS, &
     & SECTIONTIMINGUNITS, SIPS_VERSION, &
-    & SKIPDIRECTWRITES, SKIPDIRECTWRITESORIGINAL, &
+    & SKIPDIRECTWRITES, SKIPDIRECTWRITESORIGINAL, SLAVESDOOWNCLEANUP, &
     & SKIPRETRIEVAL, SKIPRETRIEVALORIGINAL, &
     & SPECIALDUMPFILE, STATEFILLEDBYSKIPPEDRETRIEVALS, &
     & STOPAFTERSECTION, STOPWITHERROR, &
@@ -900,39 +900,41 @@ program MLSL2
     call dump_section_timings
   endif
   !---------------- Task (8) ------------------
-  call destroy_char_table
-  call output('Destroyed char table', advance='yes')
-  call destroy_hash_table
-  call output('Destroyed hash table', advance='yes')
-  call destroy_string_table
-  call output('Destroyed string table', advance='yes')
-  call destroy_symbol_table
-  call output('Destroyed symbol table', advance='yes')
-  call deallocate_decl
-  call output('Deallocated decl', advance='yes')
-  call deallocate_tree
-  call output('Deallocated tree', advance='yes')
-  call FreePVMArgs
-  call output('Freed PVM args', advance='yes')
-  if ( parallel%slave .and. &
-    & (SKIPDIRECTWRITES .or. SKIPRETRIEVAL .or. sectionsToSkip /= ' ' ) ) then
-    ! call mls_h5close(error)
-    ! call MLSMessageExit 
-  else if ( error == 0 ) then
-    call Deallocate_filedatabase(filedatabase)
-    call output('Deallocated filedatabase', advance='yes')
-    if ( .not. parallel%slave) then
-      call mls_h5close(error)
-      call output('Closed hdf5 library', advance='yes')
-    else
-      call MLSMessage ( MLSMSG_Warning, moduleName, &
-        & "We are a slave, thus unable to mls_close in this version" )
-    endif
-    if (error /= 0) then
-       call MLSMessage ( MLSMSG_Error, moduleName, &
-        & "Unable to mls_close" )
-    end if    
-  end if    
+  if ( .not. parallel%slave .or. SLAVESDOOWNCLEANUP ) then
+    call destroy_char_table
+    call output('Destroyed char table', advance='yes')
+    call destroy_hash_table
+    call output('Destroyed hash table', advance='yes')
+    call destroy_string_table
+    call output('Destroyed string table', advance='yes')
+    call destroy_symbol_table
+    call output('Destroyed symbol table', advance='yes')
+    call deallocate_decl
+    call output('Deallocated decl', advance='yes')
+    call deallocate_tree
+    call output('Deallocated tree', advance='yes')
+    call FreePVMArgs
+    call output('Freed PVM args', advance='yes')
+    if ( parallel%slave .and. &
+      & (SKIPDIRECTWRITES .or. SKIPRETRIEVAL .or. sectionsToSkip /= ' ' ) ) then
+      ! call mls_h5close(error)
+      ! call MLSMessageExit 
+    else if ( error == 0 ) then
+      call Deallocate_filedatabase(filedatabase)
+      call output('Deallocated filedatabase', advance='yes')
+      if ( .not. parallel%slave) then
+        call mls_h5close(error)
+        call output('Closed hdf5 library', advance='yes')
+      else
+        call MLSMessage ( MLSMSG_Warning, moduleName, &
+          & "We are a slave, thus unable to mls_close in this version" )
+      endif
+      if (error /= 0) then
+         call MLSMessage ( MLSMSG_Error, moduleName, &
+          & "Unable to mls_close" )
+      end if    
+    end if
+  end if
   if ( timing ) call sayTime ( 'Closing and deallocating' )
   call add_to_section_timing( 'main', t0 )
   if ( trackAllocates > 0 ) call ReportLeaks ( "At end of program execution..." )
@@ -1123,6 +1125,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.168  2007/09/06 23:35:16  pwagner
+! slaves need not do own cleanup
+!
 ! Revision 2.167  2007/08/23 22:18:35  pwagner
 ! 'walk' switch prints walkback fo calling stack even for warnings
 !
