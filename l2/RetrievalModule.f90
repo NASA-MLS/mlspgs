@@ -2033,7 +2033,16 @@ NEWT: do ! Newtonian iteration
               call dump ( v(x), name='Current state', details=9 )
               if ( got(f_lowBound) ) call dump ( lowBound, name='Low Bound', details=9 )
               if ( got(f_highBound) ) call dump ( highBound, name='High Bound', details=9 )
+            else
+              call dump ( normalEquations%m%block(matrixStatus(1),matrixStatus(1)), &
+                & name='Offending block', details=0 )
             end if
+            call output ( 'Consider applying or increasing the weight of Tikhonov regularization for the' )
+            if ( normalEquations%m%col%vec%quantities(matrixStatus(1))%template%name /= 0 ) &
+              & call display_string ( &
+                & normalEquations%m%col%vec%quantities(matrixStatus(1))%template%name, &
+                & advance='yes', before=' ' )
+            call output ( ' block', advance='yes' )
             call MLSMessage ( MLSMSG_Warning, ModuleName, &
               & 'Retrieval abandoned due to problem factoring normalEquations in evalJ' )
             exit NEWT
@@ -2700,6 +2709,9 @@ NEWT: do ! Newtonian iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.292  2007/09/06 00:36:51  vsnyder
+! More information about failed Cholesky
+!
 ! Revision 2.291  2007/08/20 22:05:30  pwagner
 ! Many procedures now push their names onto MLSCallStack
 !
