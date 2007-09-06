@@ -96,6 +96,11 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! Whether to skip doing the retrieval--a pre-flight checkout of paths, etc.
   logical            :: SKIPRETRIEVAL = .false.
   logical            :: SKIPRETRIEVALORIGINAL = .false. ! May skip for some phases
+  ! Whether each slave deallocates all its arrays, pointers, etc.
+  ! Sometimes slaves die or take too long to finish cleaning up
+  ! But if system fails to reclaim memory properly, subsequent slaves
+  ! may not find enough available and therefore crash
+  logical            :: SLAVESDOOWNCLEANUP = .false. ! Let system do it
   ! In case special dumps are to go to a special dumpfile
   character(len=255) :: SPECIALDUMPFILE = ' '
   ! What to fill state, outputSD with if skipping retrieval
@@ -144,6 +149,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.42  2007/09/06 22:42:28  pwagner
+! Added SLAVESDOOWNCLEANUP
+!
 ! Revision 2.41  2007/06/21 22:35:22  pwagner
 ! Updated version string to v2.22
 !
