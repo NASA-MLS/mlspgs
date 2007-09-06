@@ -2168,7 +2168,6 @@ contains
     integer :: hcid
     integer, dimension(:), pointer :: tempHosts
     integer :: i, status
-    integer, parameter :: FIXDELAYFORSLAVETOFINISH   = 15000000 ! 15 sec
     ! Executable
     if ( options%debug ) &
       & call output( 'Releasing ' // trim(host%name) // '   ', advance='yes')
@@ -2215,9 +2214,10 @@ contains
       if ( status == PVMOK ) then
         call pvmfkill(host%tid, status)
         if ( status /= 0 ) then
-          call usleep( FIXDELAYFORSLAVETOFINISH )
           call proclaim('Failed to kill running task', &
             & trim(host%name), signal=host%tid)
+        elseif ( options%debug ) then
+          call timeStamp( 'Forcibly killed task ' // trim(host%name), advance='yes' )
         endif
       endif
     endif
@@ -2335,6 +2335,9 @@ contains
 end program L2Q
 
 ! $Log$
+! Revision 1.21  2007/08/31 00:05:26  pwagner
+! Fixed bugs preventing mesgs after event_loop from going to stdout
+!
 ! Revision 1.20  2007/06/29 21:00:21  pwagner
 ! Fixed bug causing crashes when checking for revivals
 !
