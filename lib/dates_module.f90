@@ -41,6 +41,11 @@ module dates_module
   ! EUDTF is Extended UDTF -- Y2K compliant variant of UDTF
   ! EUDTF is an integer of form yyyyddd with yyyy==year and ddd==day of year
   ! (I (HCP) invented this, it isn't a standard)
+  
+  ! utc is a combined dateTime string in one of two forms also
+  ! described below under CCSDS
+  ! (a) yyy-doyThh:mm:ss.ssssZ
+  ! (b) yyy-mm-ddThh:mm:ss.ssssZ
 
   ! See reformatDate below for extra options to describe
   ! input and output formats
@@ -68,6 +73,8 @@ module dates_module
 ! eudtf2daysince     eudtf -> days since starting date
 ! hoursbetween2utcs  How many hours between 2 date-times
 ! lastday            How many days in leap month
+! nextMoon           utc date, time of next (new) moon 
+!                     (or next after input date); less accurate than toolkit AA
 ! ReformatDate       Turns 'yyyymmdd' -> 'yyyy-mm-dd'; or more general format
 ! ReformatTime       Turns 'hhmmss.sss' -> 'hh:mm:ss'
 ! secondsbetween2utcs 
@@ -95,6 +102,7 @@ module dates_module
 ! char* dayOfWeek (char* date, [char* fromForm])
 ! int daysbetween2utcs (char* utc1, char* utc2)
 ! int hoursbetween2utcs (char* utc1, char* utc2)
+! char* nextMoon ([char* date], [phase])
 ! char* ReformatDate (char* date, [char* fromForm], [char* toForm])
 ! char* ReformatTime (char* time, [char* form])
 ! dble secondsbetween2utcs (char* utc1, char* utc2)
@@ -171,7 +179,7 @@ module dates_module
   public:: daysince2eudtf,ccsds2tai,ccsds2eudtf,days_in_year
   public :: dai_to_yyyymmdd
   public :: utc_to_date, utc_to_time, utc_to_yyyymmdd, yyyymmdd_to_dai
-  public :: dateForm, dayOfWeek, reformatDate, reformatTime
+  public :: dateForm, dayOfWeek, nextMoon, reformatDate, reformatTime
   public :: splitDateTime, timeForm, utcForm
 
   interface dai_to_yyyymmdd
@@ -226,8 +234,18 @@ module dates_module
   character(len=*), dimension(7), parameter :: DAYSOFWEEK = (/ &
     & 'Sunday   ', 'Monday   ', 'Tuesday  ', 'Wednesday', 'Thursday ', &
     & 'Friday   ', 'Saturday '/)
+
+  ! This is the utc for the first (new) moon of 2001
+  ! We assume that the moon's phase repeats perfectly; it would be 
+  ! more accurate to use the toolkit's AA (Astronimcal Almanac) components
+  ! As it is we may be off by as much as one day
+  character(len=*), parameter :: FIRSTNEWMOON = &
+    & '2001-024T13:07:00.0000Z'
+  double precision, parameter :: LUNARPERIOD = 60.d0*(44 + 60.d0*( &
+    & 12 + 24.d0*29 ) ) ! 29d 12h 44m
+
   ! This is a private type to be used internally
-  ! Note we don't bother with leapsseconds
+  ! Note we don't bother with leap seconds
   ! which rather limits its accuracy and usefulness
   type MLSDATE_TIME_T
     integer :: dai = 0                  ! days after 1 Jan 2001
@@ -416,8 +434,8 @@ contains
     type(MLSDate_time_T), intent(in)         :: datetime
     character(len=*), optional, intent(in)   :: name
     ! Internal variables
-    character(len=16)                         :: daiStr
-    character(len=16)                         :: secondsStr
+    character(len=32)                         :: daiStr
+    character(len=32)                         :: secondsStr
     ! Executable
     print *, "MLSDate_Time: "
     if ( present(name) ) then
@@ -939,6 +957,72 @@ contains
     enddo
   end function dateForm
 
+  ! ------------------ nextMoon -------------------
+  function nextMoon( date, phase ) result( next )
+    ! Determine when the next (new) moon will occur
+    ! or the next one after optional date
+    ! or the occurrence of optional phase where phase may be
+    ! 'full'    full moon
+    ! 'new'     new moon (default)
+    ! 'first'   first quarter
+    ! 'last'    last quarter
+    
+    ! Note:
+    ! We assume that the phases repeat every LUNARPERIOD
+    ! This is inaccurate
+    ! The toolkit has AA component functions/procedures that could
+    ! be used to give this information much better
+
+    ! Args
+    character(len=*), optional, intent(in) :: date
+    character(len=*), optional, intent(in) :: phase
+    character(len=32) :: next
+    ! Internal variables
+    character(len=*), parameter :: dateFormat = 'yyyy-doy'
+    character(len=*), parameter :: timeFormat = 'hh:mm:ss'
+    character(len=32) :: myDate
+    character(len=8)  :: myPhase
+    character(len=16) :: dateString
+    type(MLSDATE_TIME_T)  :: datetime
+    double precision :: s, sfirst, snext, sPrev
+    character(len=16) :: timeString
+    ! Executable
+    if ( .not. present(date) ) then
+      call date_and_time ( date=dateString, time=timeString )
+      dateString = reFormatDate( trim(dateString), toForm=dateFormat )
+      timeString = reFormatTime( trim(timeString), timeFormat )
+      myDate = trim(dateString) // 'T' // timeString
+    else
+      myDate = date
+    endif
+    myPhase = 'new'
+    if ( present(phase) ) myPhase = phase
+    sFirst = abs(secondsbetween2utcs( '2001-001T00:00:00Z', FIRSTNEWMOON ))
+    ! How many seconds since first moon of 2001?
+    s = abs(secondsbetween2utcs( FIRSTNEWMOON, myDate ))
+    ! When was last new moon? (They recur every LUNARPERIOD)
+    sPrev = LUNARPERIOD * int( (s-1.d-3)/LUNARPERIOD )
+    select case (myPhase)
+    case ('first')
+      sNext = sPrev + 0.25*LUNARPERIOD
+    case ('full')
+      sNext = sPrev + 0.5*LUNARPERIOD
+    case ('last')
+      sNext = sPrev + 0.75*LUNARPERIOD
+    case default
+      sNext = sPrev + LUNARPERIOD
+    end select
+    if ( sNext < s ) sNext = sNext + LUNARPERIOD
+    datetime%dai = 0
+    datetime%seconds = sFirst + sNext
+    ! call dumpDateTime( dateTime, 'Before reducing' )
+    call reducedatetime(datetime)
+    ! call dumpDateTime( dateTime, 'After reducing' )
+    next = datetime2utc(datetime)
+    ! print *, 'days before next phase ', daysbetween2utcs( date, next )
+    ! print *, 'hours before next phase ', hoursbetween2utcs( date, next )
+  end function nextMoon
+
   ! ---------------------------------------------  reducedatetime  -----
   subroutine reducedatetime(datetime)
     ! Reduces the seconds field of a datetime to a permissible value
@@ -1392,7 +1476,7 @@ contains
     character(len=1), parameter :: dash='-'
     logical :: mystrict
     character(len=1) :: utc_format        ! 'a' or 'b'
-    character(len=*), parameter :: chars_0z = 'T00:00:00Z'
+    integer :: zpos
     !----------Executable part----------!
 
    if(present(strict)) then
@@ -1411,13 +1495,19 @@ contains
    endif
    
    ErrTyp=INVALIDUTCSTRING
-   ! Snip off time fields from date fields
+   ! Separate off time fields from date fields
    call GetStringElement(lowercase(str), time, 2, &
      & countEmpty=.true., inseparator='t')
    if ( time == 't' ) then
      if ( .not. mystrict) Errtyp = 0
      time = ' '
      return
+   endif
+
+   ! Snip off terminal 'Z' (and everything beyond)
+   zpos = index(time, 'z')
+   if ( zpos > 0 ) then
+     time(zpos:) = ' '
    endif
    ErrTyp=0
    
@@ -1973,6 +2063,9 @@ contains
 
 end module dates_module
 ! $Log$
+! Revision 2.13  2007/07/23 23:19:53  pwagner
+! Added many new procedures
+!
 ! Revision 2.12  2007/01/18 19:37:38  pwagner
 ! New addDaysToUTC and addHoursToUTC functions
 !
