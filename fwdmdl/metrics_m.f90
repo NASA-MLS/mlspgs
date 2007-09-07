@@ -260,7 +260,6 @@ contains
 
     ! Local variables.
     integer :: Do_Dumps    ! 0 = no dump, >0 = dump
-    integer :: Dump_Stop   ! 0 = no dump, >0 = dump/stop
     integer :: H_Phi_Dump  ! 0 = no dump, >0 = dump
     integer :: H_Phi_Stop  ! 0 = no dump, >0 = dump/stop
     integer :: I, I1, I2, IBAD, J, K
@@ -295,8 +294,7 @@ contains
 !   It would be nice to do this the first time only, but the
 !   retrieve command in the L2CF can now change switches
 !   if ( do_dumps < 0 ) then ! First time only
-      dump_stop = index(switches,'metD')
-      do_dumps = max(dump_stop,index(switches,'metd'))
+      do_dumps = max(index(switches,'metD'),index(switches,'metd'))
       h_phi_stop = index(switches,'hphI')
       h_phi_dump = max(h_phi_stop,index(switches,'hphi'))
 !   end if
@@ -561,8 +559,9 @@ path: do i = i1, i2
       call output ( req, before=', req = ', advance='yes' )
       call dump ( p_grid(:n_path), name='p_grid before refractive correction', &
         & format='(1pg14.6)', clean=clean )
+      if ( h_phi_dump == 0 ) &
+        & call dump ( p_basis, name='p_basis', format='(f14.8)', clean=clean )
       call dump ( h_grid(:n_path), name='h_grid', format='(1pg14.6)', clean=clean )
-      if ( dump_stop > 0 ) stop
     end if
 
   contains
@@ -774,6 +773,7 @@ path: do i = i1, i2
     ! with, for example, the minimum Zeta point.
 
     use Dump_0, only: Dump
+    use Dump_NZ_m, only: Dump_NZ
     use Get_Eta_Matrix_m, only: Get_Eta_Sparse, Multiply_Eta_Column_Sparse
     use MLSKinds, only: RP
     use Toggles, only: Switches
@@ -887,8 +887,13 @@ path: do i = i1, i2
     if ( present(dhidtlm) ) call Tangent_Temperature_Derivatives ( size(z_basis) )
 
     if ( do_dumps > 0 ) then
+      call dump ( t_ref, name='t_ref', format='(1pg14.6)', clean=clean )
       call dump ( t_grid(:n_path), name='t_grid', format='(1pg14.6)', clean=clean )
       call dump ( dhitdzi(:n_path), name='dhitdzi', format='(1pg14.6)', clean=clean )
+      call dump ( eta_p, name='eta_p', format='(1pg14.6)', clean=clean )
+      call dump ( col1, name='col1', clean=clean )
+      call dump ( col2, name='col2', clean=clean )
+      call dump_nz ( nz_p, nnz_p, what=' in More_Metrics' )
       if ( dump_stop > 0 ) stop
     end if
 
@@ -899,7 +904,7 @@ path: do i = i1, i2
       ! to Z_Basis in the dimensions of automatic variables are only
       ! attempted if Z_Basis is present.
       integer, intent(in) :: N
-      real(rp) :: ETA_T2(n_path,n)    ! n = size(z_basis) but Intel's
+      real(rp) :: ETA_T2(n_path,n)    ! n = size(z_basis)
       integer :: NZ_T2(n_path,n)      ! Nonzeros in Eta_T2
       integer :: NNZ_T2(n)            ! Numbers of rows in NZ_T2
       integer :: I, J, SV_P, SV_T, SV_Z ! Loop inductors and subscripts
@@ -1085,6 +1090,12 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.52  2007/08/23 20:41:07  vsnyder
+! Don't clobber "grid" status with "cplx" status on next panel
+! Don't clobber "grid" phi with failed iteration value on next panel
+! Separate "grid" into "grid1" and "grid2"; don't bother to look for
+! intersection on next panel after "grid1" solution.
+!
 ! Revision 2.51  2007/07/31 23:48:57  vsnyder
 ! Try to recover from failure of H/Phi convergence
 !
