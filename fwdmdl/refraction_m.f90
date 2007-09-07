@@ -306,16 +306,15 @@ contains
                                    ! 4 = failed to bracket root,
                                    ! 5 = discontinuity, 6 = improper usage
 
-    logical :: Bad  ! Ref_Corr < 1 or Ref_corr > rmax somewhere
-    logical :: Repl ! Replace fancy estimate by trapezoid
-    integer(ip) :: DRCX ! "Drastic Ref_Cor fiXup printing"
+    logical :: Bad      ! Ref_Corr < 1 somewhere
     integer(ip) :: HNDP ! "Solve_Hn Detail Printing"
-    integer(ip) :: j, j1, j2, k, m, no_ele, stat
+    integer(ip) :: RCFX ! "Ref_Cor FiXup printing"
+    integer(ip) :: j, j1, j2, k, m, no_ele, panel_stat, stat
 
     real(rp) :: INTEGRAND_GL(Ng)
 
     real(rp) :: q, htan2, NH, Nt2Ht2
-    real(rp) :: dndh, eps, H, h1, h2, N, n1, n2, t1, t2, tv, x1, x2, xm, ym
+    real(rp) :: dndh, eps, H, h1, h2, N, n1, n2, t1, t2, x1, x2, xm, ym
 
     real(rp), parameter :: Htol = 1.0e-3_rp
     real(rp), parameter :: Tiny = 1.0e-8_rp
@@ -326,9 +325,9 @@ contains
     if ( index(switches,'hndp') /= 0 ) hndp = hndp + 1 ! Dump the arrays if trouble
     if ( index(switches,'Hndp') /= 0 ) hndp = hndp + 2 ! Dump the arrays and stop
     if ( index(switches,'HNDP') /= 0 ) hndp = hndp + 4 ! Dump the iterates
-    drcx = 0
-    if ( index(switches,'drcx') /= 0 ) drcx = 1
-    if ( index(switches,'DRCX') /= 0 ) drcx = 2
+    rcfx = 0
+    if ( index(switches,'rcfx') /= 0 ) rcfx = 1
+    if ( index(switches,'RCFX') /= 0 ) rcfx = 2
 
     no_ele = size(n_path)
 
@@ -354,7 +353,7 @@ contains
       n2 = n2 - 1.0_rp
       x2 = sqrt(abs(q))
 
-jl:   do j = j1, j2, m
+      do j = j1, j2, m
 
         x1 = x2
         n1 = n2
@@ -381,10 +380,11 @@ jl:   do j = j1, j2, m
         x2 = sqrt(q)
 
         if ( abs(n2-n1) <= 1.0e-3*(n2+n1) ) then
-          ! Where N is essentially constant, the integral is easy
+          ! Where N is essentially constant, the integral is easy, and probably
+          ! almost exactly 1.0.
           if ( hndp > 0 ) write ( *, '("N essentially constant for Ref_Corr(",i0,")")' ) j
-          ref_corr(j) = abs( sqrt((n_path(j)*h2)**2-nt2ht2) - &
-            &                sqrt((n_path(j)*h1)**2-nt2ht2) ) / &
+          ref_corr(j) = abs( sqrt((n_path(j+m)*h2)**2-nt2ht2) - &
+            &                sqrt((n_path(j  )*h1)**2-nt2ht2) ) / &
             &           ( n_path(j) * del_s(j) )
         else if ( n1 <= 0.0 .or. n2 <= 0.0 ) then
           ! Force trapezoidal rule on untransformed integral because
@@ -396,6 +396,7 @@ jl:   do j = j1, j2, m
             & (t1/sqrt(t1**2-nt2ht2) + t2/sqrt(t2**2-nt2ht2)) ) / Del_s(j)
         else
           if ( hndp > 0 ) write ( *, '("Solving for H for Ref_Corr(",i0,")")' ) j
+          panel_stat = 0
           eps = log(n2/n1)/(h2-h1)
           xm = 0.5_rp *(x2 + x1)      ! Midpoint of the interval
           ym = 0.5_rp *(x2 - x1)      ! Half of the interval length
@@ -404,80 +405,50 @@ jl:   do j = j1, j2, m
             NH = sqrt(q*q + nt2ht2)
             ! Solve h*(1+n1*exp(eps*(h-h1))) = sqrt(q*q + nt2ht2) for h
             call solve_hn
-            status = max(status,stat)
-            if ( stat > 1 ) then
-              ! Force a different approximation
-              integrand_gl = 100.0 * Del_s(j) / ym
-              exit
-            end if
+            panel_stat = max(panel_stat,stat)
+            if ( stat > 1 ) exit
             integrand_gl(k) = 1.0_rp/(n+h*dndh) ! = 1 / d(nh)/dh
           end do ! k
+          status = max(status,panel_stat)
+
           ! And Finally - define the refraction correction:
 
-          ref_corr(j) = dot_product(integrand_gl,gw) * ym / Del_s(j)
+          if ( panel_stat < 2 ) then
+            ref_corr(j) = dot_product(integrand_gl,gw) * ym / Del_s(j)
+          else
+            ref_corr(j) = -1.0 ! To be corrected later
+          end if
         end if
 
         ! If ref_corr(j) is unphysical, use the trapezoidal rule instead
 
-        if ( ref_corr(j) < 1.0 .or. ref_corr(j) > rmax ) then
-          t1 = 1.0 / (1.0 + n1*(1.0 + eps*h1))
-          t2 = 1.0 / (1.0 + n2*(1.0 + eps*h2))
-          if ( t1 * t2 > 0.0 ) then
-            ! Use trapezoidal rule on transformed integral
-!print *, 'Trapezoid used on transformed integral, ref_corr(',j,') =', ref_corr(j)
-            tv = ym * ( t1 + t2 ) / Del_s(j)
-          else
-            ! Derivative has a discontinuity in the interval, so
-            ! the transformation doesn't work.  Use the trapezoidal
-            ! rule on the untransformed integral.
-!print *, 'Trapezoid used on untransformed integral, ref_corr(',j,') =', ref_corr(j)
-            t1 = (1.0 + n1) * h1
-            t2 = (1.0 + n2) * h2
-            tv = 0.5 * abs( ( h2 - h1 ) * &
-              & (t1/sqrt(t1**2-nt2ht2) + t2/sqrt(t2**2-nt2ht2)) ) / Del_s(j)
-          end if
-          if ( ref_corr(j) < 1.0 ) then
-            repl = tv >= 1.0
-          else
-            repl = tv <= rmax
-          end if
-          if ( repl ) then
-            if ( drcx /= 0 ) then
-              call output ( j, before='In Comp_Refcor, trapezoidal estimate used at ' )
-              call output ( ref_corr(j), before=' to replace ' )
-              call output ( tv, before=' by ' )
-              call output ( no_ele, before=', path length = ', advance='yes' )
-            end if
-            ref_corr(j) = tv
-          end if
-        end if
+        bad = bad .or. ref_corr(j) < 1.0
 
-        bad = bad .or. ref_corr(j) < 1.0 .or. ref_corr(j) > rmax
-
-      end do jl ! j
+      end do ! j
 
       j1 = tan_pt + 1
       j2 = no_ele - 1
     end do ! m
 
     if ( bad ) then
-      ! Things are still haywire.  For unphysical ref_corr replace by the
-      ! average of adjacent panels, bounded by 1.0 ... rmax.
-      call MLSMessage ( MLSMSG_Warning, moduleName, 'Drastic Ref_Corr fixup needed' )
+      ! Things are unphysical somewhere.  Replace ref_corr by 1.0
+      ! wherever it's less than 1.0.  Alternatively, the average
+      ! of neighbors, or a value interpolated from neighbors could be used.
+      call MLSMessage ( MLSMSG_Warning, moduleName, 'Ref_Corr fixup needed' )
       call dumpArrays
       call output ( 'Ref_Corr fixed at' )
       do j = 2, no_ele-1
-        if ( ref_corr(j) < 1.0 .or. ref_corr(j) > rmax ) then
-          tv = 0.5 * ( max(1.0_rp,min(rmax,ref_corr(j-1))) + &
-                     & max(1.0_rp,min(rmax,ref_corr(j+1))) )
-          if ( drcx /= 0 ) call output ( j, before=' ' )
-          ref_corr(j) = tv
+        if ( ref_corr(j) < 1.0 ) then
+          ref_corr(j) = 1.0
+!           ref_corr(j) = 0.5 * ( max(1.0_rp,min(rmax,ref_corr(j-1))) + &
+!                      & max(1.0_rp,min(rmax,ref_corr(j+1))) )
+          if ( rcfx /= 0 ) call output ( j, before=' ' )
         end if
       end do
-      if ( drcx /= 0 ) then
+      if ( rcfx /= 0 ) then
         call output ( '', advance='yes' )
         call dump ( ref_corr, name='Ref_Corr after fixup' )
-        if ( drcx > 1 ) stop
+        if ( rcfx > 1 ) stop
       end if
     end if
 
@@ -586,7 +557,7 @@ jl:   do j = j1, j2, m
 
     subroutine DumpArrays
 
-      if ( drcx /= 0 ) then
+      if ( rcfx /= 0 ) then
         call output ( tan_pt, before='Tan_Pt = ' )
         call output ( ht, before=', Ht = ', advance='yes' )
         call dump ( h_path, name='H_Path', format='(f14.4)' )
@@ -637,6 +608,9 @@ jl:   do j = j1, j2, m
 end module REFRACTION_M
 
 ! $Log$
+! Revision 2.32  2007/09/07 03:00:32  vsnyder
+! Use Math 77 zero finder
+!
 ! Revision 2.31  2007/07/31 23:48:10  vsnyder
 ! Integrate away from tangent point to handle singularity correctly
 !
