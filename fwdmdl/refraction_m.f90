@@ -245,7 +245,8 @@ contains
 
 ! --------------------------------------------------  Comp_refcor  -----
 
-  subroutine Comp_refcor ( tan_pt, h_path, n_path, ht, del_s, ref_corr, status )
+  subroutine Comp_refcor ( tan_pt, h_path, n_path, ht, del_s, ref_corr, &
+                         & status )
 
   !{ This routine computes the integral
   !
@@ -276,7 +277,7 @@ contains
   ! $\left.\frac1{\mathcal{N}(H_i)} \sqrt{\mathcal{N}(H_i) H - \mathcal{N}_t H_t}
   ! \right|_{H=H_{i-1}}^{H_i}$.
   !
-  ! If the refractive correction is not in the interval [1.0,1.3], or if
+  ! If the refractive correction is not in the interval [1.0,rmax], or if
   ! $\frac{\text{d}}{\text{d}h} h N(h)$ changes sign, use the trapezoidal
   ! rule instead.  On the ends of the interval, $h=H_i$ and $E=n_i$, so
   ! $\mathcal{N}(H_i) = \mathcal{N}_i$, giving $I=\frac{x_i-x_{i-1}}2
@@ -288,7 +289,7 @@ contains
     use Dump_0, only: Dump
     use GLNP, only: NG, GX=>gx_all, GW=>gw_all
     use MLSKinds, only: RP, IP
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use Output_m, only: Output
     use Toggles, only: Switches
 
@@ -301,23 +302,33 @@ contains
     real(rp), intent(out) :: Del_s(:)
     real(rp), intent(out) :: REF_CORR(:)
 
-    integer, intent(out) :: Status ! 0 = OK, 1 = failed to bracket root,
-                                   ! 2 = too many iterations
+    integer, intent(out) :: Status ! 0 = OK, 1 = too many iterations,
+                                   ! 4 = failed to bracket root,
+                                   ! 5 = discontinuity, 6 = improper usage
 
-    logical :: Bad ! Ref_Corr < 1 or Ref_corr > 1.3 somewhere
+    logical :: Bad  ! Ref_Corr < 1 or Ref_corr > rmax somewhere
+    logical :: Repl ! Replace fancy estimate by trapezoid
+    integer(ip) :: DRCX ! "Drastic Ref_Cor fiXup printing"
     integer(ip) :: HNDP ! "Solve_Hn Detail Printing"
     integer(ip) :: j, j1, j2, k, m, no_ele, stat
 
     real(rp) :: INTEGRAND_GL(Ng)
 
     real(rp) :: q, htan2, NH, Nt2Ht2
-    real(rp) :: dndh, eps, H, h1, h2, N, n1, n2, t1, t2, x1, x2, xm, ym
+    real(rp) :: dndh, eps, H, h1, h2, N, n1, n2, t1, t2, tv, x1, x2, xm, ym
 
     real(rp), parameter :: Htol = 1.0e-3_rp
     real(rp), parameter :: Tiny = 1.0e-8_rp
+    real(rp), parameter :: Rmax = 1.3_rp
 
     status = 0
-    hndp = index(switches,'hndp')
+    hndp = 0
+    if ( index(switches,'hndp') /= 0 ) hndp = hndp + 1 ! Dump the arrays if trouble
+    if ( index(switches,'Hndp') /= 0 ) hndp = hndp + 2 ! Dump the arrays and stop
+    if ( index(switches,'HNDP') /= 0 ) hndp = hndp + 4 ! Dump the iterates
+    drcx = 0
+    if ( index(switches,'drcx') /= 0 ) drcx = 1
+    if ( index(switches,'DRCX') /= 0 ) drcx = 2
 
     no_ele = size(n_path)
 
@@ -394,10 +405,7 @@ jl:   do j = j1, j2, m
             ! Solve h*(1+n1*exp(eps*(h-h1))) = sqrt(q*q + nt2ht2) for h
             call solve_hn
             status = max(status,stat)
-            if ( stat == 1 ) then
-!               ref_corr(j) = ref_corr(j-1+2*m) ! Why did I do this?
-!               ref_corr(j) = ref_corr(j-1)
-!               cycle jl
+            if ( stat > 1 ) then
               ! Force a different approximation
               integrand_gl = 100.0 * Del_s(j) / ym
               exit
@@ -411,24 +419,40 @@ jl:   do j = j1, j2, m
 
         ! If ref_corr(j) is unphysical, use the trapezoidal rule instead
 
-        if ( ref_corr(j) < 1.0 .or. ref_corr(j) > 1.3 ) then
+        if ( ref_corr(j) < 1.0 .or. ref_corr(j) > rmax ) then
           t1 = 1.0 / (1.0 + n1*(1.0 + eps*h1))
           t2 = 1.0 / (1.0 + n2*(1.0 + eps*h2))
           if ( t1 * t2 > 0.0 ) then
             ! Use trapezoidal rule on transformed integral
-            ref_corr(j) = ym * ( t1 + t2 ) / Del_s(j)
+!print *, 'Trapezoid used on transformed integral, ref_corr(',j,') =', ref_corr(j)
+            tv = ym * ( t1 + t2 ) / Del_s(j)
           else
             ! Derivative has a discontinuity in the interval, so
             ! the transformation doesn't work.  Use the trapezoidal
             ! rule on the untransformed integral.
+!print *, 'Trapezoid used on untransformed integral, ref_corr(',j,') =', ref_corr(j)
             t1 = (1.0 + n1) * h1
             t2 = (1.0 + n2) * h2
-            ref_corr(j) = 0.5 * abs( ( h2 - h1 ) * &
+            tv = 0.5 * abs( ( h2 - h1 ) * &
               & (t1/sqrt(t1**2-nt2ht2) + t2/sqrt(t2**2-nt2ht2)) ) / Del_s(j)
+          end if
+          if ( ref_corr(j) < 1.0 ) then
+            repl = tv >= 1.0
+          else
+            repl = tv <= rmax
+          end if
+          if ( repl ) then
+            if ( drcx /= 0 ) then
+              call output ( j, before='In Comp_Refcor, trapezoidal estimate used at ' )
+              call output ( ref_corr(j), before=' to replace ' )
+              call output ( tv, before=' by ' )
+              call output ( no_ele, before=', path length = ', advance='yes' )
+            end if
+            ref_corr(j) = tv
           end if
         end if
 
-        bad = bad .or. ref_corr(j) < 1.0 .or. ref_corr(j) > 1.3
+        bad = bad .or. ref_corr(j) < 1.0 .or. ref_corr(j) > rmax
 
       end do jl ! j
 
@@ -438,24 +462,29 @@ jl:   do j = j1, j2, m
 
     if ( bad ) then
       ! Things are still haywire.  For unphysical ref_corr replace by the
-      ! average of adjacent panels, bounded by 1.0 ... 1.3.
+      ! average of adjacent panels, bounded by 1.0 ... rmax.
       call MLSMessage ( MLSMSG_Warning, moduleName, 'Drastic Ref_Corr fixup needed' )
-      if ( max(index(switches,'drcx'),index(switches,'DRCX')) /= 0 ) then
-        call output ( tan_pt, before='Tan_Pt = ' )
-        call output ( ht, before=', Ht = ', advance='yes' )
-        call dump ( h_path, name='H_Path', format='(f14.4)' )
-        call dump ( n_path-1.0, name='N_Path' )
-        call dump ( ref_corr, name='Ref_Corr' )
-      end if
+      call dumpArrays
+      call output ( 'Ref_Corr fixed at' )
       do j = 2, no_ele-1
-        if ( ref_corr(j) < 1.0 .or. ref_corr(j) > 1.3 ) &
-          & ref_corr(j) = 0.5 * ( max(1.0_rp,min(1.3_rp,ref_corr(j-1))) + &
-                                & max(1.0_rp,min(1.3_rp,ref_corr(j+1))) )
+        if ( ref_corr(j) < 1.0 .or. ref_corr(j) > rmax ) then
+          tv = 0.5 * ( max(1.0_rp,min(rmax,ref_corr(j-1))) + &
+                     & max(1.0_rp,min(rmax,ref_corr(j+1))) )
+          if ( drcx /= 0 ) call output ( j, before=' ' )
+          ref_corr(j) = tv
+        end if
       end do
-      if ( max(index(switches,'drcx'),index(switches,'DRCX')) /= 0 ) then
+      if ( drcx /= 0 ) then
+        call output ( '', advance='yes' )
         call dump ( ref_corr, name='Ref_Corr after fixup' )
-        if ( index(switches,'DRCX') /= 0 ) stop
+        if ( drcx > 1 ) stop
       end if
+    end if
+
+    if ( status > 0 ) then ! Solve_Hn didn't converge somewhere
+      call dumpArrays
+      if ( iand(hndp,3) /= 0 ) call dumpArrays
+      if ( iand(hndp,2) /= 0 ) stop
     end if
 
   contains
@@ -464,134 +493,108 @@ jl:   do j = j1, j2, m
 
   ! Solve the equation h*(1.0+N(h)) = N*H, where N(h) is an exponential:
   !    N(h) = n1*Exp(eps*(h-h1)), for h,
-  ! using a Newton iteration
 
     subroutine Solve_Hn
 
+      ! Stat = 0 => all OK, = 1 => too many iterations,
+      !      = 4 => Could not bracket root (no solution),
+      !      = 5 => Discontinuity (no solution),
+      !      = 6 => improper usage (ought to stop).
+      use Zero_m, only: Zero
+
       integer :: iter
       real(rp) :: E ! N1 * exp(eps * (h-h1))
-      real(rp) :: h_old, f1, f2, dh, hpos, hneg
+      real(rp) :: f1, f2, x1, x2
       logical :: Head ! Need debug stuff heading
 
       real(rp), parameter :: H_tol = 0.001 ! km
 
-      character(LEN=*), parameter :: Msg1 = &
-        & 'From Solve_Hn routine: Could not bracket the root'
-
       integer,  parameter :: Max_Iter = 20
-      character(LEN=*), parameter :: Msg2 = &
+      character(LEN=*), parameter :: Msg1 = &
         & 'From Solve_Hn routine: Did not converge within 20 iterations'
 
-      character(len=*), parameter :: Msg3 = &
-        & 'Solution is within range even though not initially bracketed'
+      character(LEN=*), parameter :: Msg2 = &
+        & 'From Solve_Hn routine: Zero finder thinks F has a discontinuity'
 
-      character(max(len(msg1),len(msg2))+10) :: Msg
+      character(LEN=*), parameter :: Msg3 = &
+        & 'From Solve_Hn routine: Could not bracket the root'
 
-      stat = 0 ! Assume it will work
-      f1 = h1 * (1.0_rp + n1) - NH ! residual at H = H1
-      f2 = h2 * (1.0_rp + n2) - NH ! residual at H = H2
+      character(LEN=*), parameter :: Msg4 = &
+        & 'From Solve_Hn routine: Improper usage of zero finder'
 
-      if ( f1*f2 > 0.0_rp ) then ! start in the middle
-        stat = 1
+      character(max(len(msg1),len(msg2),len(msg3))+10) :: Msg
+
+      iter = 1
+
+      x1 = h1
+      x2 = h2
+      e = n1 * exp(eps*(x2-h1))
+      f2 = x2 * (1.0_rp + e ) - NH
+
+      head = .true.
+      stat = 0
+      do while ( iter < max_iter )
+
+        iter = iter + 1
+        e = n1 * exp(eps*(x1-h1))
+        f1 = x1 * (1.0_rp + e ) - NH
+        if ( hndp > 0 ) then
+          if ( head ) then
+            write ( *, '(5(3x,a2,9x)/2g14.7,1p,2g14.6,g20.12)' ) &
+            & 'x1', 'x2', 'f1', 'f2', 'NH', &
+            &  h1,   h2,   f1,   f2,   NH
+          else
+            write ( *, '(g14.7,14x,1pg14.6)') x1, f1
+          end if
+          head = .false.
+        end if
+        call zero ( x1, f1, x2, f2, stat, h_tol )
+        if ( stat /= 1 ) exit
+
+      end do
+
+      select case ( stat )
+      case ( 1 ) ! Too many iterations
         msg = msg1
         write ( msg(len(msg1)+1:), '(" at ", i0)' ) j
         call MLSMessage ( MLSMSG_Warning, ModuleName, trim(msg) )
         call dumpDiags ( NH, f1, f2 )
-        h = h1 + 0.5*(1.0+gx(k)) * ( h2 - h1 )
-!        h = 0.5 * ( h1 + h2 )
-      else ! start at the mean of the ends weighted by the other's residuals
-        h = (h1 * abs(f2) + h2 * abs(f1)) / (abs(f1) + abs(f2))
-      end if
-      hneg = min(h1,h2)
-      hpos = max(h1,h2)
-
-      iter = 1
-
-      if ( hndp > 0 ) then
-        write ( *, '(7(3x,a2,9x)/3g14.7,1p,3g14.6,g20.12)' ) &
-          & 'h1', 'h2', 'h ', 'f1', 'f2', 'Q ', 'NH', &
-          &  h1,   h2,   h,    f1,   f2,  q,     NH
-        head = .true. ! Need the heading for each iteration
-      end if
-      
-      do
-
-        h_old = h
-
-        e = n1 * exp(eps*(h-h1))
-        f2 = h * (1.0_rp + e ) - NH
-        if ( abs(f2) < tiny ) exit ! Are we near a zero?
-
-!         This is probably a bad idea in that it prevents correcting from
-!         overshooting
-!         if ( f2 < 0.0_rp ) then
-!           hneg = h
-!         else
-!           hpos = h
-!         end if
-
-        dh = f2 / ( 1.0_rp + e * ( 1.0_rp + eps * h ) ) ! f2 / (d f2 / dh)
-
-        h = h_old - dh ! Take the Newton move
-
-        if ( hndp > 0 ) then
-          if ( head ) &
-            & write ( *, '(6(3x,a2,9x))' ) 'H-','H+','H ','dH','e ','f2'
-          head = .false.
-          write ( *, '(3g14.7,1p,3g14.6)' ) hneg, hpos, h, dh, e, f2
-        end if
-
-        if ( abs(dh) < htol ) exit ! Is the Newton move tiny?
-
-        if ( (h-hneg)*(h-hpos) > 0.0 ) then
-!         if ( h < min(hpos,hneg) .OR. h > max(hpos,hneg) ) &
-!           h = 0.5_rp * (hneg + hpos) ! Keep H in bounds
-          if ( h > hpos ) then
-            if ( f2 < 0.0 ) then
-              h = hneg
-            else
-              h = hpos
-            end if
-          else
-            if ( f2 > 0.0 ) then
-              h = hpos
-            else
-              h = hneg
-            end if
-          end if
-!           h = min(hpos,max(hneg,h))
-          if ( hndp > 0 ) write ( *, '(28x,1pg14.7,44x,"H was out of bounds")' ) h
-          if ( abs(hpos-hneg) <= h_tol ) exit
-        end if
-
-        if ( abs(hpos-hneg) <= h_tol ) exit
-
-        if ( iter >= max_iter ) then
-          stat = 2
-          msg = msg2
-          write ( msg(len(msg2)+1:), '(" at ", i0)' ) j
-          call MLSMessage ( MLSMSG_Warning, ModuleName, trim(msg) )
-          call dumpDiags ( NH, f1, f2 )
-          exit
-        end if
-
-        iter = iter + 1
-
-      end do
-
-      if ( stat == 1 ) then
-        ! Maybe the solution is good even though we couldn't initially
-        ! bracket it
-        if ( (h-h1)*(h-h2) <= 0.0 ) then
-          stat = 0
-          call MLSMessage ( MLSMSG_Warning, ModuleName, msg3 )
-        end if
-      end if
+      case ( 2, 3 ) ! Normal termination, tolerance is/is not satisfied
+        stat = 0 ! Worked OK
+        e = n1 * exp(eps*(x1-h1))
+        h = x1
+      case ( 4 ) ! F has a discontinuity -- no solution
+        msg = msg2
+        write ( msg(len(msg2)+1:), '(" at ", i0)' ) j
+        call MLSMessage ( MLSMSG_Warning, ModuleName, trim(msg) )
+        call dumpDiags ( NH, f1, f2 )
+      case ( 5 ) ! Couldn't bracket root -- no solution
+        msg = msg3
+        write ( msg(len(msg3)+1:), '(" at ", i0)' ) j
+        call MLSMessage ( MLSMSG_Warning, ModuleName, trim(msg) )
+        call dumpDiags ( NH, f1, f2 )
+      case ( 6 ) ! Improper usage
+        msg = msg4
+        write ( msg(len(msg4)+1:), '(" at ", i0)' ) j
+        call MLSMessage ( MLSMSG_Error, ModuleName, trim(msg) )
+      end select
 
       N = 1.0_rp + e
       dndh = eps * e
 
     end subroutine Solve_Hn
+
+    subroutine DumpArrays
+
+      if ( drcx /= 0 ) then
+        call output ( tan_pt, before='Tan_Pt = ' )
+        call output ( ht, before=', Ht = ', advance='yes' )
+        call dump ( h_path, name='H_Path', format='(f14.4)' )
+        call dump ( n_path-1.0, name='N_Path' )
+        call dump ( ref_corr, name='Ref_Corr' )
+      end if
+
+    end subroutine DumpArrays
 
     subroutine DumpDiags ( NH, F1, F2 )
 
@@ -615,6 +618,7 @@ jl:   do j = j1, j2, m
         call dump ( n_path-1.0, name='N_Path' )
       end if
       if ( index(switches,'DRFC') > 0 ) stop
+
     end subroutine DumpDiags
 
   end subroutine Comp_refcor
@@ -633,6 +637,9 @@ jl:   do j = j1, j2, m
 end module REFRACTION_M
 
 ! $Log$
+! Revision 2.31  2007/07/31 23:48:10  vsnyder
+! Integrate away from tangent point to handle singularity correctly
+!
 ! Revision 2.30  2007/07/27 00:17:41  vsnyder
 ! Print enough to run Comp_Refcor off line if "Drastic correction" message
 ! is produced, and switch drcx or DRCX is set.  Stop after printing if
