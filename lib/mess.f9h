@@ -1,0 +1,394 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! --------------------------------------------------------  *MESS  -----
+!      subroutine *MESS (MACT, TEXT, IDAT, FDAT)
+!     .  Copyright (C) 1991, California Institute of Technology.
+!     .  All rights reserved.  U. S. Government sponsorship under
+!     .  NASA contract NAS7-918 is acknowledged.
+!>> 2006-04-07 SMESS Krogh  Major rewrite of code for F.Pt. format.
+!>> 2006-04-04 SMESS Krogh  Fixes in C code for vectors & matrices.
+!>> 2006-04-02 SMESS Krogh  Added code for output of sparse vector.
+!>> 2005-07-10 SMESS Krogh  Small adjustment for last correction.
+!>> 2005-05-26 SMESS Krogh  Fixed "*****" output in boundary case.
+!>> 2002-05-16 SMESS Krogh  Added way for user to get error count.
+!>> 2002-03-27 SMESS Krogh  Fixed crash when number is -INF.
+!>> 2001-06-08 SMESS Krogh  Eliminated Hollerith in formats.
+!>> 2001-05-25 SMESS Krogh  Added a couple of commas in formats.
+!>> 1997-06-17 SMESS Krogh  In C code made messxc, static.
+!>> 1996-07-12 SMESS Krogh  Changes to use .C. and C%%.
+!>> 1996-03-30 SMESS Krogh  Added external statement.
+!>> 1994-10-20 SMESS Krogh  Changes to use M77CON
+!>> 1994-09-21 SMESS Krogh  Added CHGTYP code.
+!>> 1994-09-08 SMESS Krogh  Added new matrix/vector capabilities.
+!>> 1994-08-17 SMESS Krogh  Removed duplicate save statement.
+!>> 1994-04-19 SMESS Krogh  Removed blank line from SMESS.
+!>> 1993-05-14 SMESS Krogh  Changed TEXT to array of character strings.
+!>> 1993-04-14 SMESS Krogh  Fixes for conversion to C. (C%% comments.)
+!>> 1992-07-12 SMESS Krogh  Fixed so negative KDFDEF works.
+!>> 1992-05-27 SMESS Krogh  Initialized LDFDEF in a data statement.
+!>> 1992-05-14 SMESS Krogh  Put common blocks in save statement.
+!>> 1992-04-28 SMESS Krogh  Corrected minor error in floating pt. format
+!>> 1992-02-28 SMESS Krogh  Initial Code.
+!
+!--S replaces "?": ?MESS
+!
+! Processes Messages -- Actions are controlled by MACT().  See
+! comment is subroutine MESS.  This program is for the extra
+! argument of type real.
+!
+! BUF    In common CMESSC, see MESS.
+! DOLS   In common for intitialization, not used here.  See MESS.
+! EUNIT  In common for intitialization, not used here.  See MESS.
+! FDAT   Formal argument -- gives floating point data to print.
+! FBIG   Largest magnitude of floating point number to output.
+! FSMA   Smalles magnitude floating point number to be printed.
+! FMTF   In common CMESSC, format for printing floating point number.
+! FMTG   In common CMESSC, user format to use in place of FMTF.
+! FMTSP  Format for printing sparse vectors.
+! FOUT   Floating point number to be output.
+! FSMA   Smallest postitive floating point number.
+! ICOL   In common CMESSI, see MESS.
+! ID     Number of decimal digits for floating point format statement.
+! IDAT   Integer data -- passed to MESS.
+! IVAR   In common CMESSI, see MESS.
+! IWF    In common CMESSI, see MESS.
+! IWG    In common CMESSI, see MESS.
+! J      Temporary index.
+! K      Temporary index.
+! KSMA   Number of leading 0's in "F" format.  If < 0, -KSMA gives the
+!    number of extra digits to the left of the decimal point.
+!    KSMA depends on abs(smallest number printed).
+! KBIG   Number of extra digits before the decimal point required by the
+!    largest number to be printed if "F" format is used.
+! KDF    In common CMESSI, see MESS.
+! KDFDEF In common CMESSI, see MESS.
+! KDIAG  In common CMESSI, not used here, see MESS.
+! KEXE   Extra space required for E format.
+! KF     In common CMESSI, see MESS.
+! KLINE  In common CMESSI, see MESS.
+! KSCRN  In common CMESSI, see MESS.
+! KRES1  In common CMESSI, see MESS.
+! KSPEC  In common CMESSI, see MESS.
+! LASTER In common CMESSI, not used here, see MESS.
+! LASTI  In common CMESSI, see MESS.
+! LBUF   In common CMESSI, see MESS.
+! LDFDEF Value of KDFDEF for this routine.  (Saved)
+! LENBUF In common CMESSI, see MESS.
+! LENLIN In common CMESSI, not used here, see MESS.
+! LENTRY In common CMESSI, see MESS.
+! LHEAD  In common CMESSI, not used here, see MESS.
+! LINERR In common CMESSI, not used here, see MESS.
+! LINMSG In common CMESSI, not used here, see MESS.
+! LOCBEG In common CMESSI, see MESS.
+! LPRINT In common CMESSI, not used here, see MESS.
+! LSTOP  In common CMESSI, not used here, see MESS.
+! LSTRT  In common CMESSI, see MESS.
+! MACT   Formal argument, see MESS.
+! MDAT   In common CMESSI, not used here, see MESS.
+! MEMDA5 In common CMESSI, see MESS.
+! MESS   Program called for most of the message processing.
+! MPT    In common CMESSI, see MESS.
+! MUNIT  In common CMESSI, not used here, see MESS.
+! NCOL   In common CMESSI, see MESS.
+! NDIM   In common CMESSI, see MESS.
+! NEG    1 if any number is < 0, else it is 0.
+! NFDAT  In common CMESSI, see MESS.
+! NIDAT  In common CMESSI, not used here, see MESS.
+! NMDAT  In common CMESSI, not used here, see MESS.
+! NTEXT  In common CMESSI, not used here, see MESS.
+! OUNIT  In common CMESSI, not used here, see MESS.
+! SUNIT  In common CMESSI, not used here, see MESS.
+! TEXT   Formal argument, passed to MESS, see there.
+! XARGOK In common CMESSI, see MESS.
+!
+!%% static void messxc(long int);
+!
+      integer          MACT(*), IDAT(*)
+      real(rk)         FDAT(*)
+      character        TEXT(*)*(*)
+      character        FMTSP*29
+      integer          ICOL, ID, J, K, KSMA, KBIG, KEXE, LDFDEF, NEG
+      real(rk)         FBIG, FOUT, FSMA
+      save LDFDEF, FMTSP
+!++ CODE for .C. is inactive
+!      integer  kciwid, kccwid, kcrwid, lbeg, lend, lfprec, lgprec
+!      common /MESSCC/ kciwid,kccwid,kcrwid,lbeg,lend,lfprec,lgprec
+!++ END
+!
+      data LDFDEF / 0 /
+!graph display lbuf now or when in smess_
+ 
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile$"
+!---------------------------------------------------------------------------
+
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), save :: UnitId = idParm
+!---------------------------------------------------------------------------
+
+! ************************* Start of Executable Code *******************
+!
+      XARGOK = .true.
+      if (LDFDEF .eq. 0) then
+         LDFDEF = 1 - int(log10(radix(1.0_rk)*epsilon(1.0_rk)))
+      end if
+      KDFDEF = LDFDEF
+      KDF = KDFDEF
+   10 call MESS (MACT, TEXT, IDAT)
+!             4    5    6    7    8    9   10   11
+      go to (20, 100, 100, 200, 300, 400, 100, 500), LENTRY-3
+      XARGOK = .false.
+      LDFDEF = KDFDEF
+      return
+!                                      Print from FDAT
+   20 J = LBUF + 1
+      FOUT = FDAT(NFDAT)
+      NFDAT = NFDAT + 1
+      if (KSPEC .ge. 8) then
+         LBUF = LBUF + IWG
+!%% messcc.lend = cmessi.lbuf;
+!%% cmessc.buf[messcc.lend] = ' ';
+!%% if ((j > 1) && (cmessc.buf[j-2] >= '0') &&
+!%%    (cmessc.buf[j-2] <= '9')) cmessc.buf[j++ - 1] = ' ';
+!%% sprintf(&cmessc.buf[j-1], cmessc.fmtg, cmessi.iwg,
+!%%    messcc.lgprec, fout);
+!%% if (cmessc.buf[messcc.lend] != 0) {messcc.lbeg=j; messxc(kexe);}
+         write (BUF(J:LBUF), FMTG) FOUT
+         go to 10
+      end if
+ 
+      NEG = 0
+      if (FOUT .lt. 0.E0) NEG = 1
+      FBIG = abs(FOUT)
+      FSMA = FBIG
+      IWF = 2
+!                                      Get the format.
+   40 continue
+      if (KDF .eq. 0) KDF = KDFDEF
+      KEXE = 0
+      if (FBIG .ne. 0.E0) then
+        if (FSMA .eq. 0.E0) FSMA = 1.E0
+        IWF = IWF + NEG
+        if (KDF .lt. 0) then
+          KSMA = 0
+        else
+          KSMA = -log10(FSMA)
+          if (FSMA .lt. 1.E0) KSMA = KSMA + 1
+        end if
+        KBIG = log10(FBIG)
+        if (FBIG .lt. 1.E0) then
+          KBIG = KBIG - 1
+          if (FBIG .gt. 1.E0 - .1E0**abs(KDF-1)) KBIG = 0
+        end if
+        if (max(KBIG, 0) + max(KSMA,0) .ge. 4) then
+!               Want to use an "E" format
+          KEXE = 3 + max(0, int(log10(real(max(KBIG,abs(KSMA))+1.E-5))))
+          if (KDF .lt. 0) then
+            ID = -KDF
+          else
+            ID = KDF - 1
+          end if
+          IWF = IWF + ID + KEXE
+!++ CODE for ~.C. is active
+          if (LENTRY .eq. 10) IWF = IWF - 1
+          write (FMTF, '(''(1P,99(E'',I2,''.'',I2,''E'',I1,'',1X))'')') &
+     &      IWF, ID, KEXE - 2
+!++ CODE for .C. is inactive
+!c WATCOM C and others (?) man need an extra 1 here??
+!%%    strcpy(cmessc.fmtf, "%*.*E ");
+!      lfprec = id
+!++ END
+          go to 60
+        end if
+      else
+        KSMA = 1
+        KBIG = -1
+      end if
+!               Want to use an "F" format
+      if (KDF .lt. 0) then
+        ID = -KDF
+      else
+        ID = KDF + KSMA - 1
+      end if
+!++ CODE for ~.C. is active
+      IWF = IWF + ID + max(KBIG, -1)
+      write (FMTF, '(''(0P,99(F'',I2,''.'',I2,'',1X))'')') IWF,ID
+!++ CODE for .C. is inactive
+!      IWF = IWF + ID + max(KBIG, 0)
+!%%    strcpy(cmessc.fmtf, "%*.*f ");
+!      lfprec = id
+!++ END
+   60 if (LENTRY .ne. 4) then
+        IWF = IWF + 1
+        if (LENTRY .ne. 10) go to 10
+!               Take care of setup for sparse vector
+        IMAG = 0
+        do 70 J = LOCBEG, LASTI
+          IMAG = max(abs(IMAG), IDAT(J))
+ 70     continue
+        call MESSFI
+!  Format forms:     12345678901234567890   123456789012345678  1234567
+!                    (1P,99(Edd.ddEd,1X))   (0P,99(Fxx.xx,1X))  (99Idd)
+!++ CODE for ~.C. is active
+        if (FMTF(8:8) .eq. 'F') then
+          FMTSP= '(99(' // FMTI(4:6) // ''') '',0P,' // FMTF(8:18)
+        else
+          FMTSP= '(99(' // FMTI(4:6) // ''')'' ,1P,' // FMTF(8:20)
+        end if
+!++ CODE for .C. is inactive
+!c Using cmessc.fmtf in place of fmtsp
+!%%      if (cmessc.fmtf[4] == 'f') {
+!%%      strcpy(cmessc.fmtf, "%*ld) %*.*f ");
+!%%      kexe = 0;
+!%%      }
+!%%      else strcpy(cmessc.fmtf, "%*ld) %*.*E ");
+!%%      cmessi.iwf++;
+!++ END
+        IWF = IWF + KDI + 1
+        go to 10
+      end if
+!
+      LBUF = LBUF + IWF
+!%% messcc.lend = cmessi.lbuf;
+!%% cmessc.buf[messcc.lend] = ' ';
+!%% if ((j > 1) && (cmessc.buf[j-2] >= '0') &&
+!%%    (cmessc.buf[j-2] <= '9')) cmessc.buf[j++ - 1] = ' ';
+!%% sprintf(&cmessc.buf[j-1], cmessc.fmtf, cmessi.iwf,
+!%%    messcc.lfprec, fout);
+!%% if (cmessc.buf[messcc.lend] != 0) {messcc.lbeg=j; messxc(kexe);}
+      write (BUF(J:LBUF),FMTF) FOUT
+      go to 10
+!                                     Get format for a vector or matrix
+  100 ICOL = 1
+      NEG = 0
+      if (FDAT(LOCBEG) .lt. 0.E0) NEG = 1
+      FBIG = abs(FDAT(LOCBEG))
+      FSMA = FBIG
+  110 do 120 J = LOCBEG, LASTI, INC
+        if (FDAT(J) .lt. 0.E0) NEG = 1
+        if (FDAT(J) .ne. 0.E0) FSMA = min(FSMA, abs(FDAT(J)))
+        FBIG = max(FBIG, abs(FDAT(J)))
+  120 continue
+      if (NCOL .ne. 0) then
+         ICOL = ICOL + 1
+         LOCBEG = LOCBEG + NDIM
+         LASTI = LASTI + NDIM
+         if (ICOL .le. NCOL) go to 110
+      end if
+      IWF = 2
+      go to 40
+!                                    Floating point vector output
+  200 continue
+!%% messcc.lend = cmessi.lstrt-1;
+!%% neg = 0;
+!%% for (j=cmessi.mpt; j<cmessi.mpt+cmessi.kline; j++){
+!%%   messcc.lbeg = messcc.lend;
+!%%   messcc.lend = messcc.lend + cmessi.iwf;
+!%%   if (kexe) {
+!%%     if (kexe == 5)
+!%%        neg = ((fabs(fdat[cmessi.inc*j-1]) < 1.e100)) ? -1: 0;
+!%%     else if (kexe ==3) neg = 1;
+!%%   }
+!%%   sprintf(&cmessc.buf[messcc.lbeg], cmessc.fmtf,
+!%%    cmessi.iwf+neg, messcc.lfprec, fdat[cmessi.inc*j-1]);
+!%%   if ((kexe == 3) || ((kexe == 5) && neg)) messxc(kexe); }
+      write(BUF(LSTRT:LBUF),FMTF)(FDAT(K),K=MPT,MPT+INC*(KLINE-1),INC)
+ 
+ 
+!      print '(/A/)', BUF(1:LBUF)
+ 
+      MPT = MPT + KLINE * INC
+      go to 10
+!                                    Floating point matrix output
+  300 continue
+!%% messcc.lend = cmessi.lstrt-1;
+!%% neg = 0;
+!%% for (j=cmessi.mpt; j<=cmessi.lasti; j+=cmessi.ndim){
+!%%    messcc.lbeg = messcc.lend;
+!%%    messcc.lend = messcc.lend + cmessi.iwf;
+!%%   if (kexe) {
+!%%     if (kexe == 5) neg = ((fabs(fdat[j-1]) < 1.e100)) ? -1: 0;
+!%%     else if (kexe ==3) neg = 1;
+!%%   }
+!C%%    if ((messcc.lbeg > 1) && (cmessc.buf[messcc.lbeg-1] >= '0') &&
+!C%%       (cmessc.buf[messcc.lbeg-1] <= '9'))
+!C%%       cmessc.buf[messcc.lbeg++] = ' ';
+!%%    sprintf(&cmessc.buf[messcc.lbeg],
+!%%       cmessc.fmtf, cmessi.iwf+neg, messcc.lfprec, fdat[j-1]);
+!%%    if ((kexe == 3) || ((kexe == 5) && neg)) messxc(kexe); }
+      write (BUF(LSTRT:LBUF), FMTF) (FDAT(K), K = MPT, LASTI, NDIM)
+      go to 10
+!                                    Table output
+  400 continue
+!%% messcc.lend = cmessi.lstrt-1;
+!%% neg=0;
+!%% for (j=cmessi.mpt; j<cmessi.mpt+cmessi.kline; j++){
+!%%    messcc.lbeg = messcc.lend;
+!%%    messcc.lend = messcc.lend + cmessi.iwf;
+!C%%    if ((messcc.lbeg > 1) && (cmessc.buf[messcc.lbeg-1] >= '0') &&
+!C%%       (cmessc.buf[messcc.lbeg-1] <= '9'))
+!C%%       cmessc.buf[messcc.lbeg++] = ' ';
+!%%    sprintf(&cmessc.buf[messcc.lbeg], cmessc.fmtf,
+!%%       cmessi.iwf+neg, messcc.lfprec, fdat[j-1]); }
+      write (BUF(LSTRT:LBUF), FMTF) (FDAT(K), K = MPT, MPT+KLINE-1)
+      go to 10
+ 
+ 
+!                                   Sparse vector output
+ 500  continue
+!%%  messcc.lend = -1;
+!%%  neg = 0;
+!%%  for (j=cmessi.mpt; j<cmessi.mpt+cmessi.kline; j++) {
+!%%    messcc.lbeg = messcc.lend + 1;
+!%%     messcc.lend = messcc.lend + cmessi.iwf;
+!%%   if (kexe) {
+!%%     if (kexe == 5) neg = ((fabs(fdat[j-1]) < 1.e100)) ? -1: 0;
+!%%     else if (kexe == 3) neg = 1;
+!%%   }
+!%%   sprintf(&cmessc.buf[messcc.lbeg], cmessc.fmtf, cmessi.kdi,
+!%%     idat[j-1],cmessi.iwf-cmessi.kdi-2+neg,messcc.lfprec,fdat[j-1]);
+!%%     if ((kexe == 3) || ((kexe == 5) && neg)) messxc(kexe); }
+      write (BUF(1:LBUF), FMTSP) (IDAT(K),FDAT(K),K=MPT,MPT+KLINE-1)
+      MPT = MPT + KLINE
+      go to 10
+ 
+!     end subroutine *MESS
+ 
+!%%  static void messxc(long int kexe)
+!%%{
+!%%  /* Adjust for lack of control on digits in exponent */
+!%%  char c;
+!%% if (cmessc.fmtf[4] == 'f') return;
+!%% if (kexe == 4) return;
+!%% if (kexe == 3) { // Should only be one digit in the exponent
+!%%   cmessc.buf[messcc.lend-1] = cmessc.buf[messcc.lend];
+!%%   cmessc.buf[messcc.lend] = ' ';
+!%% }
+!%% else { // Should be at least 3 digits in the exponent.
+!%%   c =cmessc.buf[messcc.lend-4];
+!%%   if ((c < '0') || (c > '9')) {
+!%%     cmessc.buf[messcc.lend-1] = cmessc.buf[messcc.lend-2];
+!%%     cmessc.buf[messcc.lend-2] = cmessc.buf[messcc.lend-3];
+!%%     cmessc.buf[messcc.lend-3] = '0';
+!%%     cmessc.buf[messcc.lend] = ' ';
+!%%   }
+!%% }
+!%% return;
+!%%} /* end of function */
+
+! $Log$
+! Revision 2.1  2007/09/07 01:34:36  vsnyder
+! Initial commit
+!
