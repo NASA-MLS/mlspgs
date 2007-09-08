@@ -2038,10 +2038,12 @@ NEWT: do ! Newtonian iteration
                 & name='Offending block', details=0 )
             end if
             call output ( 'Consider applying or increasing the weight of Tikhonov regularization for the' )
-            if ( normalEquations%m%col%vec%quantities(matrixStatus(1))%template%name /= 0 ) &
-              & call display_string ( &
-                & normalEquations%m%col%vec%quantities(matrixStatus(1))%template%name, &
-                & advance='yes', before=' ' )
+            if ( associated(normalEquations%m%col%vec%quantities) ) then
+              if ( normalEquations%m%col%vec%quantities(matrixStatus(1))%template%name > 0 ) &
+                & call display_string ( &
+                  & normalEquations%m%col%vec%quantities(matrixStatus(1))%template%name, &
+                  & advance='yes', before=' ' )
+            end if
             call output ( ' block', advance='yes' )
             call MLSMessage ( MLSMSG_Warning, ModuleName, &
               & 'Retrieval abandoned due to problem factoring normalEquations in evalJ' )
@@ -2709,6 +2711,9 @@ NEWT: do ! Newtonian iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.293  2007/09/08 00:31:49  vsnyder
+! Be more careful before printing name of failed Cholesky block
+!
 ! Revision 2.292  2007/09/06 00:36:51  vsnyder
 ! More information about failed Cholesky
 !
