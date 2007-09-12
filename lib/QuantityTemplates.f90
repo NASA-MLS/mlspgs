@@ -46,7 +46,7 @@ module QuantityTemplates         ! Quantities within vectors
 
     ! Some administrative stuff
 
-    integer :: name            ! Sub-rosa index of quantity name
+    integer :: name = 0        ! Sub-rosa index of quantity name
 
     ! This integer is of an enumerated type describing what kind of
     ! quantity this is -- one of the l_lits of type t_quantityType
@@ -953,6 +953,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.48  2007/03/23 00:11:52  pwagner
+! qtmp switch now warns while destroying quantitytemplates
+!
 ! Revision 2.47  2006/08/04 20:54:09  pwagner
 ! get_string for quantity name only if positive
 !
