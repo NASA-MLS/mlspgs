@@ -52,8 +52,8 @@ module FilterShapes_m
   type, public :: DACSFilterShape_T
   ! DACS-specific filter shape stuff
     integer :: LogApod, LogFilter, LogNorm
-    real(r8), dimension(:), pointer :: LO_Apod(:) => NULL()  ! Apodization, ditto
-    real(r8), dimension(:), pointer :: CH_Norm(:) => NULL()  ! Normalization, 2**logNorm+1
+    real(r8), dimension(:), pointer :: LO_Apod => NULL()  ! Apodization, ditto
+    real(r8), dimension(:), pointer :: CH_Norm => NULL()  ! Normalization, 2**logNorm+1
   ! Ordinary filter shape stuff
     type(filterShape_T) :: Filter
   end type DACSFilterShape_T
@@ -550,6 +550,9 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 2.21  2006/04/25 23:25:36  vsnyder
+! Revise DACS filter shape data structure
+!
 ! Revision 2.20  2005/06/22 18:08:18  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
