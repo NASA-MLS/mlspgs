@@ -85,7 +85,7 @@ contains
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, &
       & MLSMessageCalls
     use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
-    use Output_m, only: BLANKS, OUTPUT, revertoutput, switchOutput
+    use Output_m, only: BLANKS, NewLine, OUTPUT, revertoutput, switchOutput
     use PFAData_m, only: Flush_PFAData
     use SidsModule, only: SIDS
     use SnoopMLSL2, only: SNOOP
@@ -2037,14 +2037,9 @@ NEWT: do ! Newtonian iteration
               call dump ( normalEquations%m%block(matrixStatus(1),matrixStatus(1)), &
                 & name='Offending block', details=0 )
             end if
-            call output ( 'Consider applying or increasing the weight of Tikhonov regularization for the' )
-            if ( associated(normalEquations%m%col%vec%quantities) ) then
-              if ( normalEquations%m%col%vec%quantities(matrixStatus(1))%template%name > 0 ) &
-                & call display_string ( &
-                  & normalEquations%m%col%vec%quantities(matrixStatus(1))%template%name, &
-                  & advance='yes', before=' ' )
-            end if
-            call output ( ' block', advance='yes' )
+            call output ( &
+              & 'Consider applying or increasing the weight of Tikhonov regularization for the block', &
+              & advance='yes' )
             call MLSMessage ( MLSMSG_Warning, ModuleName, &
               & 'Retrieval abandoned due to problem factoring normalEquations in evalJ' )
             exit NEWT
@@ -2711,6 +2706,9 @@ NEWT: do ! Newtonian iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.294  2007/09/12 00:17:05  vsnyder
+! Simplify printing when Cholesky fails
+!
 ! Revision 2.293  2007/09/08 00:31:49  vsnyder
 ! Be more careful before printing name of failed Cholesky block
 !
