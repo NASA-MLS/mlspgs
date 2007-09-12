@@ -1413,23 +1413,38 @@ contains ! =====     Public Procedures     =============================
     ! Print the row and column indices of a block and 
     ! identify which quantity/instance they are.
     type(Matrix_T), intent(in) :: MATRIX
-    integer,intent(in) :: ROW         ! Row index
-    integer,intent(in) :: COL         ! Column index
+    integer, intent(in), optional :: ROW         ! Row index
+    integer, intent(in), optional :: COL         ! Column index
     ! Executable code
     call output ( '[ ' )
-    call output ( row )
-    call output ( ', ' )
-    call output ( col )
+    if ( present(row) .and. present(col) ) then
+      call output ( row )
+      call output ( col, before=', ' )
+    else if ( present(row) ) then
+      call output ( row, before='row ' )
+    else if ( present(col) ) then
+      call output ( col, before ='col ' )
+    else
+      call output ( 'row and column not specified' )
+    end if
     call output ( ' ] ( ' )
-    call display_string ( matrix%row%vec%quantities ( &
-      & matrix%row%quant(row) )%template%name )
-    call output ( '[' )
-    call output ( matrix%row%inst(row) )
-    call output ( '], ' )
-    call display_string ( matrix%col%vec%quantities ( &
-      & matrix%col%quant(col) )%template%name )
-    call output ( '[' )
-    call output ( matrix%col%inst(col) )
+    if ( present(row) .and. present(col) ) then
+      call display_string ( matrix%row%vec%quantities ( &
+        & matrix%row%quant(row) )%template%name )
+      call output ( matrix%row%inst(row), before='[' )
+      call display_string ( matrix%col%vec%quantities ( &
+        & matrix%col%quant(col) )%template%name, before='], ' )
+      call output ( matrix%col%inst(col), before='[' )
+    else if ( present(row) ) then
+      call display_string ( matrix%row%vec%quantities ( &
+        & matrix%row%quant(row) )%template%name, before='row ' )
+      call output ( matrix%row%inst(row), before='[' )
+      call output ( ']' )
+    else if ( present(col) ) then
+      call display_string ( matrix%col%vec%quantities ( &
+        & matrix%col%quant(col) )%template%name, before='col ' )
+      call output ( matrix%col%inst(col), before='[' )
+    end if
     call output ( '] )', advance='yes' )       
   end subroutine DescribeBlock
 
@@ -2621,6 +2636,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.112  2007/09/12 00:16:37  vsnyder
+! Spiff up DescribeBlock routine
+!
 ! Revision 2.111  2006/08/01 03:18:27  vsnyder
 ! Add ForWhom argument to CreateBlock for leak checking
 !
