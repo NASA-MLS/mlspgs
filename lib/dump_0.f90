@@ -22,8 +22,8 @@ module DUMP_0
   use MLSFillValues, only : FilterValues, IsFinite, &
     & ReorderFillValues, ReplaceFillValues
   use MLSSets, only: FindAll
-  use MLSStats1, only: ALLSTATS, RATIOS, FILLVALUERELATION, &
-    & MLSMAX, MLSMEAN, MLSMIN, MLSSTDDEV
+  use MLSStats1, only: ALLSTATS, FILLVALUERELATION, HOWNEAR, &
+    & MLSMAX, MLSMEAN, MLSMIN, MLSSTDDEV, RATIOS
   use MLSStringLists, only: catLists, GetStringElement, NumStringElements
   use MLSStrings, only: lowercase
   use OUTPUT_M, only: outputOptions, &
@@ -2351,6 +2351,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.72  2007/09/13 21:09:57  pwagner
+! -rms and -s combined add new info about & how near
+!
 ! Revision 2.71  2007/07/17 00:21:58  pwagner
 ! diff stats when rms concentrate on showing ratios
 !
