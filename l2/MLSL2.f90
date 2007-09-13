@@ -213,7 +213,7 @@ program MLSL2
     removeSwitches='slv' ! Since slave output already saved to separate files
     switches='red'  ! Usually won't want to dump things looked for in testing
     DEFAULT_HDFVERSION_WRITE = HDFVERSION_5
-    MLSMessageConfig%limitWarnings = 50 ! Why print all that stuff?
+    MLSMessageConfig%limitWarnings = 4 ! 50 ! Why print all that stuff?
   else
     ! SCF_VERSION
     switches='0sl'
@@ -1125,6 +1125,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.169  2007/09/13 21:52:22  pwagner
+! Reduced sips limitwarnings to 4
+!
 ! Revision 2.168  2007/09/06 23:35:16  pwagner
 ! slaves need not do own cleanup
 !
