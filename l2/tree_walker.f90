@@ -536,7 +536,8 @@ subtrees:   do while ( j <= howmany )
 
   contains
     subroutine FinishUp ( Early )
-      use FilterShapes_m, only: Destroy_Filter_Shapes_Database
+      use FilterShapes_m, only: Destroy_Filter_Shapes_Database, &
+        & destroy_DACS_Filter_Database
       logical, intent(in), optional :: Early
       logical :: myEarly
       integer :: numChunks
@@ -550,14 +551,11 @@ subtrees:   do while ( j <= howmany )
       if ( .not. (myEarly .or. skipRetrieval) ) then
         call destroyChunkDatabase ( chunks )
         call destroy_Ant_Patterns_database
-!??? Inscrutably, destroying these databases causes memory management crashes
-!??? Someday we should find out why
-!        call destroy_DACS_Filter_Database
-!        call destroy_Filter_Shapes_Database
+        call destroy_DACS_Filter_Database
+        call destroy_Filter_Shapes_Database
         call destroyBinSelectorDatabase
-!        call destroyL2PCDatabase
-!        call output('Destroyed l2pc db', advance='yes')
-        call destroy_filter_shapes_database
+        call destroyL2PCDatabase
+        call output('Destroyed l2pc db', advance='yes')
         call destroyFWMConfigDatabase ( forwardModelConfigDatabase )
         call destroy_line_database
         call destroy_pointing_grid_database
@@ -607,6 +605,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.159  2007/09/06 23:35:16  pwagner
+! slaves need not do own cleanup
+!
 ! Revision 2.158  2007/08/31 00:03:26  pwagner
 ! Summarizes warnings at end
 !
