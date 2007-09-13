@@ -36,15 +36,22 @@
     double precision :: tmax
     real(kind(array1)), dimension(2) :: exvalues
     real(kind(array1)), dimension(2) :: exratios
+    real(kind(array1)), dimension(10):: gaps
+    real(kind(array1)), dimension(10):: gapratios
     real(kind(array1))               :: minratio
     real(kind(array1))               :: maxratio
-    real(kind(array1))               :: meanratio
-    real(kind(array1))               :: stddevratio
-    real(kind(array1))               :: rmsratio
     real(kind(array1))               :: medianratio
+    real(kind(array1))               :: meanratio
+    real(kind(array1))               :: rmsratio
+    real(kind(array1))               :: stddev
+    real(kind(array1))               :: stddevratio
     logical, parameter               :: PRINTREFERENCEVALUES = .false.
     logical, parameter               :: PRINTMINMAXWITHRMS = .true.
     logical, parameter               :: DEBUG = .false.
+    real, dimension(10), parameter :: PCTFACTORS = &
+      & (/ .01, .02, .05, .1, .2, .5, 1., 2., 5., 10. /)
+    real(kind(array1)), dimension(10) :: pcts
+    real(kind(array1)), dimension(10) :: pctratios
     ! Executable
     thisIsADiff = .true.  ! For special dumps
     alreadySbtrcted = .false.
@@ -115,6 +122,13 @@
           & call printRMSetc ( 'Reference values', refmin, refmax, refrms )
         ! call dump ( filtered1, 'filtered1', fillvalue=fillvalue )
         ! call dump ( filtered2, 'filtered2', fillvalue=fillvalue )
+        stddev = mlsstddev( filtered1-filtered2 )
+        gaps = PCTFACTORS*stddev
+        call hownear( filtered1, filtered2, pcts, gaps=gaps )
+        call ratios( filtered1, filtered2, exvalues, exratios, &
+          & stddevratio=stddevratio, op='-' )
+        gapratios = pctFactors*stddevratio
+        call hownear( filtered1, filtered2, pctratios, gapratios=gapratios )
         ! Prepare to find abs, relative differences
         ! Avoid another automatic array
         do i=1, size(filtered1)
@@ -147,6 +161,13 @@
         & call printRMSetc ( 'Reference values', refmin, refmax, refrms )
     endif
     if ( .not. alreadySbtrcted ) then
+      stddev = mlsstddev( filtered1-filtered2 )
+      gaps = PCTFACTORS*stddev
+      call hownear( filtered1, filtered2, pcts, gaps=gaps )
+      call ratios( filtered1, filtered2, exvalues, exratios, &
+        & stddevratio=stddevratio, op='-' )
+      gapratios = pctFactors*stddevratio
+      call hownear( filtered1, filtered2, pctratios, gapratios=gapratios )
       ! Prepare to find abs, relative differences
       ! Avoid another automatic array
       do i=1, size(filtered1)
@@ -161,6 +182,7 @@
     if ( DEBUG ) call output( 'DoneWithDiff', advance='yes' )
   contains
     subroutine doneWithDiff
+      ! Internal variables
       character(len=16) :: originalSDFormat
       !
       originalSDFormat = outputOptions%sdFormatDefault
@@ -182,10 +204,26 @@
       call output( exvalues(2), advance='no' )
       call output( ' )', advance='yes' )
       call printRMSetc( 'ratio', minratio, maxratio, rmsratio, meanratio )
+      if ( myStats ) then
+        ! Now to show how near the two arrays are
+        call output( '% of arrays nearer than', advance='yes' )
+        call output( '(abs diff) ', advance='no' )
+        call output( gaps, advance='yes' )
+        call output( '%          ', advance='no' )
+        call output( pcts, advance='yes' )
+        call output( '(ratio diff) ', advance='no' )
+        call output( gapratios, advance='yes' )
+        call output( '%            ', advance='no' )
+        call output( pctratios, advance='yes' )
+      endif
       outputOptions%sdFormatDefault = originalSDFormat
+      
     end subroutine doneWithDiff
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.10  2007/09/13 21:08:57  pwagner
+! -rms and -s combined add new info about & how near
+!
 ! Revision 2.9  2007/07/16 23:32:33  pwagner
 ! Improved rms-type diffs to concentrate on ratios
 !
