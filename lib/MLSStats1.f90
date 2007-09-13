@@ -38,6 +38,7 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
 !                                   (excluding FillValues or negative precisions)
 ! MLSMAX, MLSMEAN, MLSMEDIAN,
 !    MLSSTDDEV, MLSRMS            Similar to MLSMIN for other statistics
+! HOWNEAR                         Finds how near 2 arrays are in %
 ! PDF                             Finds the pdf for a sample x given a STAT_T
 !                                   or with x1, x2 its integral over [x1, x2]
 ! RATIOS                          Statistics of ratio between 2 arrays;
@@ -74,6 +75,7 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
 !      & [log doDump] )
 ! dump( stat_t statistic, [char which] )
 ! type(values) mls$fun( values, [fillvalue] )
+! hownear( array1, array2, pct, [type(array1) gaps(:)], [type(array1) gapratios(:)] )
 ! r8 pdf( r8 x, stat_t statistic )
 ! r8 pdf( r8 x1, r8 x2, stat_t statistic )
 ! ratios( array1, array2, type(array1) exvalues, type(array1) exratios, &
@@ -96,9 +98,9 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
   private
   
   public :: STAT_T             ! The data type
-  public :: ALLSTATS, DUMP, RATIOS, STATISTICS  ! subroutines
+  public :: ALLSTATS, DUMP, HOWNEAR, RATIOS, STATISTICS  ! subroutines
   public :: MLSMIN, MLSMAX, MLSMEAN, MLSMEDIAN, MLSSTDDEV, MLSRMS ! functions
-  public :: pdf
+  public :: PDF
   public :: RESET
   public :: STATFUNCTION
   
@@ -187,6 +189,12 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
     module procedure dump_if_selected_int_scalar
     module procedure dump_if_selected_r8_array
     module procedure dump_if_selected_r8_scalar
+  end interface
+  
+  interface hownear
+    module procedure hownear_d1int, hownear_d2int, hownear_d3int
+    module procedure hownear_d1r4, hownear_d2r4, hownear_d3r4
+    module procedure hownear_d1r8, hownear_d2r8, hownear_d3r8
   end interface
   
   interface ratios
@@ -1040,6 +1048,112 @@ contains
         include 'stats0.f9h'
       end function mlsrms_d3r8
       
+      ! ------------------- hownear -----------------------
+      ! This family of routines finds the percentages of points
+      ! in two arrays "near" each other in value
+      ! where nearness is defined as within a gap either
+      ! of absolute value
+      ! or of relative value
+      ! i.e., if absolute gap
+      ! | array1(i) - array2(i) | < gap
+      ! if relative gap
+      ! | array1(i) - array2(i) | < gap * max( abs(array1(i)), abs(array2(i)) )
+      subroutine hownear_d1int( array1, array2, pct, gaps, gapratios )
+        integer, parameter                             :: KINDVALUE = r4
+        integer, dimension(:), intent(in)                   :: array1, array2
+        real(KINDVALUE), dimension(:), intent(out)          :: pct
+        real(KINDVALUE), dimension(:), optional, intent(in) :: gaps
+        real(KINDVALUE), dimension(:), optional, intent(in) :: gapratios
+        call hownear_d1r4( real(array1, KINDVALUE), real(array2, KINDVALUE), &
+          & pct, gaps, gapratios )
+      end subroutine hownear_d1int
+
+      subroutine hownear_d2int( array1, array2, pct, gaps, gapratios )
+        integer, parameter                             :: KINDVALUE = r4
+        integer, dimension(:,:), intent(in)                 :: array1, array2
+        real(KINDVALUE), dimension(:), intent(out)          :: pct
+        real(KINDVALUE), dimension(:), optional, intent(in) :: gaps
+        real(KINDVALUE), dimension(:), optional, intent(in) :: gapratios
+        call hownear_d2r4( real(array1, KINDVALUE), real(array2, KINDVALUE), &
+          & pct, gaps, gapratios )
+      end subroutine hownear_d2int
+
+      subroutine hownear_d3int( array1, array2, pct, gaps, gapratios )
+        integer, parameter                             :: KINDVALUE = r4
+        integer, dimension(:,:,:), intent(in)               :: array1, array2
+        real(KINDVALUE), dimension(:), intent(out)          :: pct
+        real(KINDVALUE), dimension(:), optional, intent(in) :: gaps
+        real(KINDVALUE), dimension(:), optional, intent(in) :: gapratios
+        call hownear_d3r4( real(array1, KINDVALUE), real(array2, KINDVALUE), &
+          & pct, gaps, gapratios )
+      end subroutine hownear_d3int
+
+      subroutine hownear_d1r4( array1, array2, pct, gaps, gapratios )
+        integer, parameter                             :: KINDVALUE = r4
+        include 'hownear.f9h'
+      end subroutine hownear_d1r4
+
+      subroutine hownear_d2r4( array1, array2, pct, gaps, gapratios )
+        integer, parameter                             :: KINDVALUE = r4
+        real(KINDVALUE), dimension(:,:), intent(in)         :: array1, array2
+        real(KINDVALUE), dimension(:), intent(out)          :: pct
+        real(KINDVALUE), dimension(:), optional, intent(in) :: gaps
+        real(KINDVALUE), dimension(:), optional, intent(in) :: gapratios
+        integer, dimension(2)                          :: shp
+        ! Executable
+        shp = shape(array1)
+        call hownear( reshape(array1, (/shp(1)*shp(2)/)), &
+          & reshape(array2, (/shp(1)*shp(2)/)), &
+          & pct, gaps, gapratios )
+      end subroutine hownear_d2r4
+
+      subroutine hownear_d3r4( array1, array2, pct, gaps, gapratios )
+        integer, parameter                             :: KINDVALUE = r4
+        real(KINDVALUE), dimension(:,:,:), intent(in)       :: array1, array2
+        real(KINDVALUE), dimension(:), intent(out)          :: pct
+        real(KINDVALUE), dimension(:), optional, intent(in) :: gaps
+        real(KINDVALUE), dimension(:), optional, intent(in) :: gapratios
+        integer, dimension(3)                          :: shp
+        ! Executable
+        shp = shape(array1)
+        call hownear( reshape(array1, (/shp(1)*shp(2)*shp(3)/)), &
+          & reshape(array2, (/shp(1)*shp(2)*shp(3)/)), &
+          & pct, gaps, gapratios )
+      end subroutine hownear_d3r4
+
+      subroutine hownear_d1r8( array1, array2, pct, gaps, gapratios )
+        integer, parameter                             :: KINDVALUE = r8
+        include 'hownear.f9h'
+      end subroutine hownear_d1r8
+
+      subroutine hownear_d2r8( array1, array2, pct, gaps, gapratios )
+        integer, parameter                             :: KINDVALUE = r8
+        real(KINDVALUE), dimension(:,:), intent(in)         :: array1, array2
+        real(KINDVALUE), dimension(:), intent(out)          :: pct
+        real(KINDVALUE), dimension(:), optional, intent(in) :: gaps
+        real(KINDVALUE), dimension(:), optional, intent(in) :: gapratios
+        integer, dimension(2)                          :: shp
+        ! Executable
+        shp = shape(array1)
+        call hownear( reshape(array1, (/shp(1)*shp(2)/)), &
+          & reshape(array2, (/shp(1)*shp(2)/)), &
+          & pct, gaps, gapratios )
+      end subroutine hownear_d2r8
+
+      subroutine hownear_d3r8( array1, array2, pct, gaps, gapratios )
+        integer, parameter                             :: KINDVALUE = r8
+        real(KINDVALUE), dimension(:,:,:), intent(in)       :: array1, array2
+        real(KINDVALUE), dimension(:), intent(out)          :: pct
+        real(KINDVALUE), dimension(:), optional, intent(in) :: gaps
+        real(KINDVALUE), dimension(:), optional, intent(in) :: gapratios
+        integer, dimension(3)                          :: shp
+        ! Executable
+        shp = shape(array1)
+        call hownear( reshape(array1, (/shp(1)*shp(2)*shp(3)/)), &
+          & reshape(array2, (/shp(1)*shp(2)*shp(3)/)), &
+          & pct, gaps, gapratios )
+      end subroutine hownear_d3r8
+
       ! ------------------- pdf -----------------------
       ! This family of functions finds the probability density function
       ! for distribution of values saved in the data type statistic
@@ -1828,6 +1942,9 @@ end module MLSStats1
 
 !
 ! $Log$
+! Revision 2.15  2007/09/13 21:07:44  pwagner
+! Added hownear
+!
 ! Revision 2.14  2007/07/17 00:25:07  pwagner
 ! Added ratios, reset
 !
