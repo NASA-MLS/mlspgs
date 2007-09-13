@@ -164,7 +164,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
   end interface
 
   interface writeIntsToChars
-    module procedure writeAnIntToChars, writeIntArrayToChars
+    module procedure writeAnIntToChars, writeIntsToChars_1d, writeIntsToChars_2d
   end interface
 
   ! Public data
@@ -1744,17 +1744,16 @@ contains
   end function trim_safe
 
   ! --------------------------------------------------  writeAnIntToChars  -----
+  ! takes an integer and returns a string
+  ! using Fortran "write"
+  ! Unless integer is one of specialInts, in which case
+  ! we return corresponding one of specialChars
+  ! (So that we can treat -1 as "unlimited' or -999 as 'FillValue')
+  ! We'll just assume both special arrays are of same size
+  ! and, in case of array versions of 
   SUBROUTINE writeAnIntToChars (int, str, fmt, specialInts, specialChars)
-    ! takes an integer and returns a string
-    ! using Fortran "write"
-    ! Unless integer is one of specialInts, in which case
-    ! we return corresponding one of specialChars
-    ! (So that we can treat -1 as "unlimited' or -999 as 'FillValue')
-    ! We'll just assume both special arrays are of same size
     ! Not useful yet
     !
-    !--------Argument--------!
-    !    dimensions are (len(strs(1)), size(strs(:)))
     integer, intent(in)                                    ::   int
     character (LEN=*), intent(out)                         ::   str
     character (LEN=*), optional, intent(in)                ::   fmt
@@ -1784,14 +1783,8 @@ contains
 
   END SUBROUTINE writeAnIntToChars
 
-  ! --------------------------------------------------  writeIntArrayToChars  -----
-  SUBROUTINE writeIntArrayToChars (ints, strs, fmt, specialInts, specialChars)
+  SUBROUTINE writeIntsToChars_1d (ints, strs, fmt, specialInts, specialChars)
     ! takes an array of integers and returns string array
-    ! using Fortran "write"
-    ! Not useful yet
-    !
-    !--------Argument--------!
-    !    dimensions are (len(strs(1)), size(strs(:)))
     integer, intent(in), dimension(:)            ::   ints
     character (LEN=*), intent(out), dimension(:) ::   strs
     character (LEN=*), intent(in), optional      ::   fmt
@@ -1799,8 +1792,7 @@ contains
     character (LEN=*), intent(in), dimension(:), optional  ::   specialChars
 
     !----------Local vars----------!
-    integer :: i, j, arrSize
-    logical :: leave_undef
+    integer :: i, arrSize
     !----------Executable part----------!
 
    ! Check that all is well (if not returns blanks)
@@ -1813,7 +1805,33 @@ contains
       call writeAnIntToChars(ints(i), strs(i), fmt, specialInts, specialChars)
    enddo
 
-  END SUBROUTINE writeIntArrayToChars
+  END SUBROUTINE writeIntsToChars_1d
+
+  SUBROUTINE writeIntsToChars_2d (ints, strs, fmt, specialInts, specialChars)
+    integer, intent(in), dimension(:,:)            ::   ints
+    character (LEN=*), intent(out), dimension(:,:) ::   strs
+    character (LEN=*), intent(in), optional      ::   fmt
+    integer, intent(in), dimension(:), optional  ::   specialInts
+    character (LEN=*), intent(in), dimension(:), optional  ::   specialChars
+
+    !----------Local vars----------!
+    integer :: i, j, shp(2)
+    !----------Executable part----------!
+
+   ! Check that all is well (if not returns blanks)
+   shp = shape(ints)
+   if ( any(shp <= 0) ) then
+     strs = ' '
+     return
+   endif
+   do j=1, shp(2)
+     do i=1, shp(1)
+       call writeAnIntToChars(ints(i,j), strs(i,j), &
+         & fmt, specialInts, specialChars)
+     enddo
+   enddo
+
+  END SUBROUTINE writeIntsToChars_2d
 
   ! Private procedures and functions
 !============================ Private ==============================
@@ -2017,6 +2035,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.71  2007/09/13 21:06:25  pwagner
+! Added 2-d array interface for writeIntsToChars
+!
 ! Revision 2.70  2007/08/29 19:52:18  pwagner
 ! Added asciify function
 !
