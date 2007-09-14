@@ -11,13 +11,15 @@
 
 module OUTPUT_M
 
-  use dates_module, only:  reformatDate, reformatTime
+  use dates_module, only:  buildCalendar, &
+    & reformatDate, reformatTime, utc_to_yyyymmdd
   use MLSCommon, only: FileNameLen
   use MLSMessageModule, only: MLSMessage, MLSMessageInternalFile, &
     & MLSMSG_Info, MLSMSG_Error
   use MLSSets, only: FindFirst
-  use MLSStringLists, only: ExpandStringRange
-  use MLSStrings, only: lowerCase
+  use MLSStringLists, only: ExpandStringRange, getStringElement, &
+    & NumStringElements
+  use MLSStrings, only: lowerCase, writeIntsToChars
   implicit none
   private
 
@@ -40,6 +42,7 @@ module OUTPUT_M
 !                            (only for timeStamp)
 
 !     (subroutines and functions)
+! alignToFit               align printed argument to fit column range
 ! blanks                   "print" specified number of blanks [or fill chars]
 ! blanksToColumn           "print" blanks [or fill chars] out to specified column
 ! blanksToTab              "print" blanks [or fill chars] out to next tab stop
@@ -48,6 +51,7 @@ module OUTPUT_M
 ! getStamp                 get stamp being added to every output
 ! newline                  print a newline
 ! output                   print argument
+! outputCalendar           output nicely-formatted calendar page
 ! output_date_and_time     print nicely formatted date and time
 ! outputNamedValue         print nicely formatted name and value
 ! revertOutput             revert output to file used before switchOutput
@@ -63,6 +67,7 @@ module OUTPUT_M
 ! === (end of toc) ===
 
 ! === (start of api) ===
+! alignToFit ( char* chars, int columnRange(2), char alignment, [int skips] )
 ! blanks ( int n_blanks, [char fillChar], [char* advance] )
 ! blanksToColumn ( int column, [char fillChar], [char* advance] )
 ! blanksToTab ( [int tabn], [char* fillChar] )
@@ -82,6 +87,7 @@ module OUTPUT_M
 !       where value can be any numerical type, either scalar or 1-d array
 ! output_date_and_time ( [log date], [log time], [char* from_where], 
 !          [char* msg], [char* dateFormat], [char* timeFormat], [char* advance] )
+! outputCalendar ( [char* date], [char* notes(:,:)] )
 ! outputNamedValue ( char* name, value, [char* advance],
 !          [char colon], [char fillChar], [char* Before], [char* After], 
 !          [integer tabn], [integer tabc], [integer taba], log dont_stamp] )
@@ -126,9 +132,9 @@ module OUTPUT_M
   integer, save, private :: OLDUNIT = -1 ! Previous Unit for output.
   logical, save, private :: OLDUNITSTILLOPEN = .TRUE.
 
-  public :: BLANKS, BLANKSTOCOLUMN, BLANKSTOTAB, DUMP, DUMPSIZE, GETSTAMP, &
-    & NEXTCOLUMN, NEXTTAB, NEWLINE, &
-    & OUTPUT, OUTPUT_DATE_AND_TIME, OUTPUTNAMEDVALUE, &
+  public :: ALIGNTOFIT, BLANKS, BLANKSTOCOLUMN, BLANKSTOTAB, DUMP, DUMPSIZE, &
+    & GETSTAMP, NEXTCOLUMN, NEXTTAB, NEWLINE, &
+    & OUTPUT, OUTPUT_DATE_AND_TIME, OUTPUTCALENDAR, OUTPUTNAMEDVALUE, &
     & RESUMEOUTPUT, REVERTOUTPUT, &
     & SETSTAMP, SETTABS, SUSPENDOUTPUT, SWITCHOUTPUT, TAB, TIMESTAMP
 
@@ -249,6 +255,79 @@ module OUTPUT_M
 !---------------------------------------------------------------------------
 
 contains
+
+  ! -----------------------------------------------------  ALIGNTOFIT  -----
+  subroutine ALIGNTOFIT ( CHARS, COLUMNRANGE, ALIGNMENT, SKIPS )
+  ! Align chars to fit within column range
+  ! Alignment controls whether the chars are
+  ! L    Flushed left
+  ! R    Flushed right
+  ! C    Centered
+  ! J    Justified (padding spaces to any existing spaces)
+    character(len=*), intent(in)      :: CHARS
+    ! If columnRange(1) < 1, just use starting columns; otherwise move to
+    integer, dimension(2), intent(in) :: COLUMNRANGE
+    character(len=1), intent(in)      :: ALIGNMENT ! L, R, C, or J
+    integer, optional, intent(in)     :: SKIPS ! How many spaces between chars
+    !
+    ! Internal variables
+    character(len=max(len(chars), abs(columnRange(2)-columnRange(1)))) :: &
+      & ALLCHARS
+    integer :: char1
+    integer :: char2
+    integer :: firstSpace
+    integer :: m
+    integer :: nc
+    integer :: padLeft
+    integer :: padRight
+    integer :: spaces
+    ! Executable
+    allChars = chars
+    if ( present(skips) ) then
+      if ( skips > 0 .and. len_trim(chars) > 0 ) then
+        allChars = stretch(chars, skips)
+      endif
+    endif
+    if ( columnRange(1) > 0 ) then
+      spaces = columnRange(2) - max( columnRange(1), atColumnNumber )
+      if ( spaces < 1 ) return
+      if ( columnRange(1) > atColumnNumber ) &
+        & call blanks( columnRange(1) - atColumnNumber )
+    else
+      spaces = columnRange(2) - columnRange(1)
+    endif
+    firstSpace = 0
+    nc = max( len_trim(allchars), 1 )
+    select case (lowercase(alignment))
+    case ('l')
+      char1    = 1
+      padLeft  = 0
+      char2    = min( nc, spaces )
+      padRight = spaces - char2
+    case ('r')
+      char1    = max(1, nc-spaces+1)
+      char2    = nc
+      padLeft  = spaces - (char2-char1+1)
+      padRight = 0
+    case ('c', 'j')
+      m = (spaces - nc) / 2
+      padLeft  = max( m, 0 )
+      padRight = max( spaces - nc - m, 0 )
+      char1 = max(1-m, 1)
+      char2 = min(nc+m, nc)
+      if ( lowercase(alignment) == 'j' .and. padRight > 0 ) &
+        & firstSpace = index( allChars, ' ' )
+    end select
+    if ( firstSpace > 1 ) then
+      call output( allChars(char1:firstSpace-1) )
+      call blanks( padRight+padLeft+1 )
+      if ( firstSpace+1 < char2 ) call output( allChars(firstSpace+1:char2) )
+    else
+      call blanks( padLeft )
+      call output( allChars(char1:char2) )
+      call blanks( padRight )
+    endif
+  end subroutine ALIGNTOFIT
 
   ! -----------------------------------------------------  BLANKS  -----
   subroutine BLANKS ( N_BLANKS, FILLCHAR, ADVANCE, DONT_STAMP )
@@ -553,6 +632,132 @@ contains
     nTab = findFirst( tabStops > atColumnNumber )
     if ( nTab > 0 ) Column = max( tabStops(nTab), atColumnNumber )
   end function NextTab
+
+  ! ---------------------------------------  OUTPUTCALENDAR  -----
+  subroutine OUTPUTCALENDAR ( date, notes )
+    ! output a nicely-formatted calendar of current month with
+    ! today's date in "bold"
+    ! Args
+    character(len=*), intent(in), optional :: date ! date instead of current one
+    ! Notes, if present, is a 6x7 array of stringLists
+    ! Each string list contains either a blank for a date, meaning
+    ! nothing will be printed in the calendar square for that date,
+    ! or else it contains '/'-separated lines of text, each of
+    ! which will be printed on a separate line within the square
+    character(len=*), dimension(:,:), optional :: notes
+    ! Internal variables
+    ! This should be modified for internationalization; e.g. with
+    ! an include statement or suchlike
+    character(len=*), dimension(12), parameter :: MONTHNAME = (/ &
+      & 'January  ', 'February ', 'March    ', 'April    ', 'May      ', &
+      & 'June     ', 'July     ', 'August   ', 'September', 'October  ', &
+      & 'November ', 'December '/)
+
+    character(len=*), dimension(7), parameter :: DAYSOFWEEK = (/ &
+      & 'Sunday   ', 'Monday   ', 'Tuesday  ', 'Wednesday', 'Thursday ', &
+      & 'Friday   ', 'Saturday '/)
+    logical, parameter :: countEmpty = .true.
+    character(len=1), parameter :: inseparator = '/'
+    character(len=*), parameter :: utcformat = 'yyyy-mm-dd' ! 'yyyy-Doy'
+    integer :: col1
+    integer :: col2
+    character(len=16) :: date2, dateString
+    integer :: day
+    integer, dimension(6,7) :: days, daysOfYear
+    integer :: ErrTyp
+    integer :: iwk
+    integer :: month
+    character(len=10) :: noteString
+    integer :: numRows
+    integer :: numWeeks
+    integer :: row
+    logical :: today
+    integer :: wkdy
+    integer :: year
+    ! Executable
+    if ( present(date) ) then
+      dateString = date
+    else
+      call date_and_time ( date=dateString )
+    endif
+    date2 = reformatDate( dateString, fromForm='*', toForm=utcformat )
+    call utc_to_yyyymmdd( date2, ErrTyp, year, month, day )
+    call buildCalendar( year, month, days, daysOfYear )
+    ! Temporary use of   w i d e  tabstops
+    call settabs( '14-210+14' )
+    call newline
+    call alignToFit( trim(monthName(month)), (/ 1, 100 /), 'c', skips=1 )
+    call newline
+    col2 = 0
+    do wkdy=1, 7
+      col1 = col2 + 1
+      col2 = tabStops(wkdy)
+      call alignToFit( trim(daysOfWeek(wkdy)), (/ col1, col2 /), 'c' )
+    enddo
+    call newline
+    numWeeks = 4
+    if ( any( days(5,:) /= 0 ) ) numWeeks = 5
+    if ( any( days(6,:) /= 0 ) ) numWeeks = 6
+    ! How many rows will we need?
+    numRows = 4
+    if ( present(notes) ) then
+      do iwk=1, numWeeks
+        do wkdy=1, 7
+          numRows = max( numRows, &
+            & NumStringElements( notes(iwk, wkdy), &
+            & countEmpty, inseparator ) &
+            & )
+        enddo
+      enddo
+    endif
+    do iwk = 1, numWeeks
+      ! Start with horizontal line
+      call blanksToTab( 7, fillChar='-' )
+      call newline
+      do row=1, numRows
+        col2 = 0
+        do wkdy=1, 7
+          col1 = col2 + 1
+          col2 = tabStops(wkdy)
+          today = ( days(iwk, wkdy) == day )
+          if ( today ) then
+            call output('||')
+          else
+            call output('|')
+          endif
+          if ( row == 1 ) then
+            if ( days(iwk, wkdy) > 0 ) then
+              call writeIntsToChars( days(iwk, wkdy), dateString )
+              dateString = adjustl(dateString)
+              call alignToFit( trim(dateString), (/ col1, col2-1 /), 'r' )
+            endif
+          elseif( row == 10 ) then
+            call writeIntsToChars( daysOfYear(iwk, wkdy), dateString )
+            dateString = adjustl(dateString)
+            call alignToFit( 'd' // trim(dateString), (/ col1, col2-1 /), 'r' )
+          elseif( present(notes) ) then
+            call GetStringElement ( notes(iwk, wkdy), noteString, &
+              & row-1, countEmpty, inseparator )
+            if ( noteString == inseparator ) noteString = ' '
+            call output( noteString )
+          endif
+          if ( today ) then
+            call blanksToColumn(col2-1)
+            call output('|')
+          else
+            call blanksToTab
+          endif
+        enddo ! wkdy
+        call output('|')
+        call newline
+      enddo ! row
+      ! begin with 
+    enddo ! week
+    call blanksToTab( 7, fillChar='-' )
+    call newline
+    ! Restore tabstops
+    call settabs( '5-120+5' )
+  end subroutine OUTPUTCALENDAR
 
   ! ------------------------------------------------  OUTPUT_CHAR  -----
   subroutine OUTPUT_CHAR ( CHARS, &
@@ -1586,6 +1791,26 @@ contains
     end do
   end subroutine PR_BLANKS
 
+  ! ----------------------------------------------  stretch  -----
+  function stretch( arg, skips ) result(chars)
+  ! stretch input arg by inserting skips number of spaces
+  ! between each pair of consecutive characters
+  ! Args
+    character(len=*), intent(in)      :: arg
+    integer, intent(in)               :: skips
+    character(len=(1+skips)*len(arg)) :: chars
+    ! Internal variables
+    integer :: i, k
+    ! Executable
+    chars = ' '
+    if ( len_trim(arg) < 1 ) return
+    do i=1, len_trim(arg)
+      ! E.g., if skips==1, k ~ 1 3 5 7 ..
+      k = 1 + (skips+1)*(i-1)
+      chars(k:k) = arg(i:i)
+    enddo
+  end function stretch
+
   ! ----------------------------------------------  stamp  -----
   function stamp( chars )
   ! stamp input chars before outputting to PRUNIT.
@@ -1637,6 +1862,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.63  2007/09/14 00:15:42  pwagner
+! Added alignToFit and outputCalendar
+!
 ! Revision 2.62  2007/09/06 22:27:06  pwagner
 ! Renamed TAB to blanksToTab to avoid conflict with TOGGLES constant
 !
