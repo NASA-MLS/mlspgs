@@ -58,6 +58,8 @@ module dates_module
 ! adddaystoutc       add specified number of days to a utc date-time format
 ! addhourstoutc      add specified number of hours to a utc date-time format
 ! addsecondstoutc    add specified number of seconds to a utc date-time format
+! buildCalendar      builds a calendar page; 6x7 array of ints or chars
+!                      columns are Sunday-Saturday, rows are individual weeks
 ! cal2eudtf          cal date -> yyyyddd
 ! ccsds2tai          ccsds -> tai (days, not s)
 ! ccsds2eudtf        ccsds -> eudtf
@@ -96,6 +98,7 @@ module dates_module
 ! char* adddaystoutc (char* utc, int days)
 ! char* addhourstoutc (char* utc, int hours)
 ! char* addsecondstoutc (char* utc, dble hours)
+! buildCalendar ( int year, int month, int days(6, 7), [int daysOfYear(6,7)] )
 ! dai_to_yyyymmdd (int dai, int yyyy, int mm, int dd, [char* startingDate])
 ! dai_to_yyyymmdd (int dai, char* str, [char* startingDate])
 ! char* dateForm( char* date )
@@ -173,7 +176,8 @@ module dates_module
 
   !Here are the provided functions 
   public:: adddaystoutc, addhourstoutc, addsecondstoutc
-  public:: daysbetween2utcs, hoursbetween2utcs, secondsbetween2utcs
+  public :: buildCalendar
+  public :: daysbetween2utcs, hoursbetween2utcs, secondsbetween2utcs
   ! public:: dump
   public:: eudtf2cal,cal2eudtf,lastday,ccsdsa2b,ccsdsb2a,eudtf2daysince
   public:: daysince2eudtf,ccsds2tai,ccsds2eudtf,days_in_year
@@ -181,6 +185,10 @@ module dates_module
   public :: utc_to_date, utc_to_time, utc_to_yyyymmdd, yyyymmdd_to_dai
   public :: dateForm, dayOfWeek, nextMoon, reformatDate, reformatTime
   public :: splitDateTime, timeForm, utcForm
+
+ interface buildCalendar
+    module procedure buildCalendar_ints, buildCalendar_str
+  end interface
 
   interface dai_to_yyyymmdd
     module procedure dai_to_yyyymmdd_str, dai_to_yyyymmdd_ints
@@ -376,6 +384,74 @@ contains
     endif
     utc = trim(utc) // 'T' // adjustl(hhmmss)
   end function datetime2utc
+
+  ! --------------------------------------------- buildCalendar ---
+  ! Build a calendar page (a 6x7 array)
+  ! each entry is a day-of-month, or else 0
+  ! E.g., for Sept 2007
+  !( S  M  T  W  T  F  S )
+  !  0  0  0  0  0  0  1
+  !  2  3  4  5  6  7  8
+  !    .   .   .
+  ! 23 24 25 26 27 28 29
+  ! 30  0  0  0  0  0  0
+
+  ! So each column represents a day-of-week, 
+  ! and each row represents a week
+  subroutine buildCalendar_ints ( year, month, days, daysOfYear )
+    ! Args
+    integer, intent(in)                  :: year
+    integer, intent(in)                  :: month
+    integer, dimension(:,:), intent(out) :: days
+    integer, dimension(:,:), optional, intent(out) :: daysOfYear
+    ! Internal variables
+    integer :: daiFirst, daiLast
+    integer :: day
+    integer :: dayOfYear
+    integer :: wkdy
+    integer :: last
+    integer :: row
+    ! Executable
+    days = 0
+    if ( present(daysOfYear) ) daysOfYear = 0
+    if ( size(days,1) < 6 ) return ! Too few rows
+    if ( size(days,2) < 7 ) return ! Too few columns
+    if ( month < 1 .or. month > 12 ) return ! Illegal month
+    ! What is last day of the month?
+    if ( leapyear(year) ) then
+      last = DAYMAXLY(month)
+    else
+      last = DAYMAXNY(month)
+    endif
+    call yyyymmdd_to_dai_ints(year, month, 1, daiFirst )
+    call yyyymmdd_to_dai_ints(year, month, last, daiLast )
+    call yyyymmdd_to_doy_ints( year, month, 1, dayOfYear )
+    row = 1
+    ! print *, 'last day of month ', last
+    ! print *, 'week day of 1st   ', DayNumberOfWeek( daiFirst )
+    ! print *, 'week day of last  ', DayNumberOfWeek( daiLast )
+    do day=1, last
+      wkdy = DayNumberOfWeek( daiFirst + day - 1 )
+      days(row, wkdy) = day
+      if ( present(daysOfYear) ) DaysOfYear(row, wkdy) = dayOfYear
+      dayOfYear = dayOfYear + 1
+      if ( wkdy > 6 ) row = row + 1 ! Tomorrow will begin a new week
+    enddo    
+  end subroutine buildCalendar_ints
+
+  subroutine buildCalendar_str ( year, month, strdays )
+    ! Args
+    integer, intent(in)                    :: year
+    integer, intent(in)                    :: month
+    character, dimension(:,:), intent(out) :: strdays
+    ! Internal variables
+    integer, dimension(size(strdays,1),size(strdays,1)) :: days
+    ! Executable
+    strdays = ' '
+    call buildCalendar( year, month, days)
+    call writeIntsToChars( days, strdays, &
+      & specialInts = (/ 0 /), specialChars = (/ ' ' /) )
+  end subroutine buildCalendar_str
 
   ! ---------------------------------------------  dayOfWeek  -----
   function dayOfWeek_int(dai) result(day)
@@ -1717,11 +1793,11 @@ contains
     ! Executable
     which = 'u'
     call utc_to_date(utc, ErrTyp, date, strict= .true.)
-    print *, 'ErrTyp: ', ErrTyp
+    ! print *, 'ErrTyp: ', ErrTyp
     if ( ErrTyp /= 0 ) return
     numDashes = -1 + &
       &  NumStringElements( trim(date), countEmpty=.true., inseparator=dash )
-    print *, 'numDashes: ', numDashes
+    ! print *, 'numDashes: ', numDashes
     select case (numDashes)
     case (0)
       which = 'n'
@@ -2063,6 +2139,9 @@ contains
 
 end module dates_module
 ! $Log$
+! Revision 2.14  2007/09/06 22:27:59  pwagner
+! Added nextMoon
+!
 ! Revision 2.13  2007/07/23 23:19:53  pwagner
 ! Added many new procedures
 !
