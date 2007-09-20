@@ -22,6 +22,7 @@ module MLSSets
   interface FindFirst
     module procedure FindFirstInteger, FindFirstLogical, FindFirstCharacter
     module procedure FindFirstReal, FindFirstDouble, FindFirstLogical2D
+    module procedure FindFirstSubString
   end interface
 
   interface FindIntersection
@@ -32,10 +33,12 @@ module MLSSets
   interface FindLast
     module procedure FindLastInteger, FindLastLogical, FindLastCharacter
     module procedure FindLastLogical2D
+    module procedure FindLastSubString
   end interface
 
   interface FindNext
     module procedure FindNextInteger, FindNextLogical, FindNextCharacter
+    module procedure FindNextSubString
   end interface
 
   interface FindAll
@@ -81,14 +84,17 @@ module MLSSets
 ! int FindFirstNumType (numtype set(:), numtype probe, [numtype tol])
 !     (where numtype can be an int, real, or dble)
 ! int FindFirstLogical (log condition(:))      
+! int FindFirstSubString (char* set, char* probe, [log reverse])      
 ! FindIntersection ( set1(:), set2(:), int which1(:), int which2(:),
 !      [int how_many] )
 ! int FindLastCharacter (char* set(:), char* probe)      
 ! int FindLastInteger (int set(:), int probe)      
 ! int FindLastLogical (log condition(:))      
-! int FindNextCharacter (char* set(:), char* probe, int current, {log wrap}, {log repeat})      
-! int FindNextInteger (int set(:), int probe, int current, {log wrap}, {log repeat})      
-! int FindNextLogical (log condition(:), int current, {log wrap}, {log repeat})
+! int FindLastSubString (char* set, char* probe, [log reverse])      
+! int FindNextCharacter (char* set(:), char* probe, int current, [log wrap], [log repeat])
+! int FindNextInteger (int set(:), int probe, int current, [log wrap], [log repeat]) 
+! int FindNextLogical (log condition(:), int current, [log wrap], [log repeat])
+! int FindNextSubString (char* set, char* probe, [log wrap], [log repeat], [log reverse])
 ! Note:
 ! In the following functions a set is represented either
 ! as an array of integers or an array of characters
@@ -262,6 +268,43 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine FindAllLogical
 
+  ! ---------------------------------------------  FindAllSubString  -----
+  subroutine FindAllSubString ( SET, IT, WHICH, HOW_MANY, RE_MAINDER, WHICH_NOT )
+    ! Return which substring i of set[i:i] = it
+    ! Formal arguments
+    character(len=*), intent(in)                 :: set
+    character(len=1), intent(in)                 :: it
+    integer, intent(out), dimension(:)           :: which
+    integer, intent(out), optional               :: how_many
+    character(len=*), intent(out), optional :: re_mainder
+    integer, intent(out), dimension(:), optional :: which_not
+
+    ! local variables
+    integer :: i, i_which, i_re_mainder
+    
+    if ( len(set) < 1 .or. size(which) < 1 ) then
+      if ( present(how_many) ) how_many = 0
+      if ( present(re_mainder) ) re_mainder = ''
+      return
+    end if
+    i_which = 0
+    i_re_mainder = 0
+    do i=1, len(set)
+      if ( set(i:i) == it ) then
+        i_which = i_which+1
+        which(min(size(which), i_which)) = i
+      else
+        i_re_mainder = i_re_mainder+1
+        if ( present(which_not) ) &
+          & which_not(min(size(which_not), i_re_mainder)) = i
+        if ( present(re_mainder) ) &
+          & re_mainder(i_re_mainder:i_re_mainder) = set(i:i)
+      end if
+    end do
+    if ( present(how_many) ) how_many = i_which
+
+  end subroutine FindAllSubString
+
   ! -------------------------------------------  FindFirstCharacter  -----
   integer function FindFirstCharacter ( Set, Probe )
     ! Find the first element in the array Set that is equal to Probe
@@ -382,6 +425,31 @@ contains ! =====     Public Procedures     =============================
     FindFirstLogical2D = 0
   end function FindFirstLogical2D
 
+  ! -------------------------------------------  FindFirstSubString  -----
+  integer function FindFirstSubString ( Set, Probe, reverse )
+    ! Find the first sub-string in the string Set that is (not) equal to Probe
+    ! Along with FindLastSubstring, does no more than intrinsic index function
+    ! except for optional arg reverse which allows us to return index of
+    ! substring (actually only a single char) that does *not* match
+    character(len=*), intent(in) :: Set
+    character(len=1), intent(in) :: Probe
+    logical, optional, intent(in) :: reverse
+    ! Internal variables
+    logical :: myReverse
+
+    ! Executable code
+    myReverse = .false.
+    if ( present(reverse) ) myReverse = reverse
+    do FindFirstSubString = 1, len(set)
+      if ( myReverse ) then
+        if ( set(FindFirstSubString:FindFirstSubString) /= probe ) return
+      else
+        if ( set(FindFirstSubString:FindFirstSubString) == probe ) return
+      endif
+    end do
+    FindFirstSubString = 0
+  end function FindFirstSubString
+
   ! These next could be done by reversing the list order and
   ! calling findFirst
   ! -------------------------------------------  FindLastCharacter  -----
@@ -465,6 +533,28 @@ contains ! =====     Public Procedures     =============================
     end select
     FindLastLogical2D = 0
   end function FindLastLogical2D
+
+  ! -------------------------------------------  FindLastSubString  -----
+  integer function FindLastSubString ( Set, Probe, reverse )
+    ! Find the last substing in the string Set that is (not) equal to Probe
+    character(len=*), intent(in) :: Set
+    character(len=*), intent(in) :: Probe
+    logical, optional, intent(in) :: reverse
+    ! Internal variables
+    logical :: myReverse
+
+    ! Executable code
+    myReverse = .false.
+    if ( present(reverse) ) myReverse = reverse
+    do FindLastSubString = len(set), 1, -1
+      if ( myReverse ) then
+        if ( set(FindLastSubString:FindLastSubString) /= probe ) return
+      else
+        if ( set(FindLastSubString:FindLastSubString) == probe ) return
+      endif
+    end do
+    FindLastSubString = 0
+  end function FindLastSubString
 
   ! --------------------------------------------  FindNextCharacter  -----
   integer function FindNextCharacter ( Set, Probe, Current, Wrap, Repeat )
@@ -599,6 +689,63 @@ contains ! =====     Public Procedures     =============================
       FindNextLogical = current
     end if
   end function FindNextLogical
+
+  ! --------------------------------------------  FindNextSubString  -----
+  integer function FindNextSubString ( Set, Probe, Current, &
+    & Wrap, Repeat, Reverse )
+    ! Find the next substring in the string Set that is equal to Probe after the
+    ! current one
+    ! May optionally wrap or repeat
+    ! e.g., if wrap is true and current is last true, return first true
+    ! e.g., if repeat is true and current is also last true, return current
+    ! wrap takes priority over repeat if both are present and true
+    character(len=*), intent(in) :: Set
+    character(len=1), intent(in) :: Probe
+    integer, intent(in) :: Current
+    logical, optional, intent(in) :: Wrap
+    logical, optional, intent(in) :: Repeat
+    logical, optional, intent(in) :: reverse
+
+    ! Local variables
+    integer :: I                        ! Loop counter
+    logical :: myWrap
+    logical :: myRepeat
+    logical :: myReverse
+
+    ! Executable code
+    myWrap = .false.
+    if ( present(wrap) ) myWrap = wrap
+    myRepeat = .false.
+    if ( present(repeat) ) myRepeat = repeat
+    myReverse = .false.
+    if ( present(reverse) ) myReverse = reverse
+    FindNextSubString = 0
+    ! We'll assume you gave us valid args; otherwise return 0
+    if ( current < 1 .or. current > len(set)) return
+    if ( (set(current:current) == probe) .eqv. myReverse ) return
+    ! Now check for current already at end of array
+    if ( current < len(set) ) then
+      do i = current+1, len(set)
+        if ( myReverse ) then
+          if ( set(i:i) /= probe ) then
+            FindNextSubString = i
+            return
+          end if
+        else
+          if ( set(i:i) == probe ) then
+            FindNextSubString = i
+            return
+          end if
+        end if
+      end do
+    end if
+    ! Uh-oh, this means current is last true
+    if ( myWrap ) then
+      FindNextSubString = FindFirst(set,probe,reverse)
+    else if ( myRepeat ) then
+      FindNextSubString = current
+    end if
+  end function FindNextSubString
 
   ! --------------------------------------------------  Intersect  -----
   logical function Intersect ( A, B )
@@ -898,6 +1045,9 @@ contains ! =====     Public Procedures     =============================
 end module MLSSets
 
 ! $Log$
+! Revision 2.15  2007/09/20 18:38:31  pwagner
+! Added substring versions of of Find(-First, Last, Next)
+!
 ! Revision 2.14  2007/02/26 23:54:39  pwagner
 ! Added FindIntersection; FindFirst can search through arrays of any numerical type
 !
