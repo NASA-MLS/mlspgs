@@ -11,14 +11,14 @@
 
 module OUTPUT_M
 
-  use dates_module, only:  buildCalendar, &
+  use dates_module, only:  buildCalendar, daysInMonth, &
     & reformatDate, reformatTime, utc_to_yyyymmdd
   use MLSCommon, only: FileNameLen
   use MLSMessageModule, only: MLSMessage, MLSMessageInternalFile, &
     & MLSMSG_Info, MLSMSG_Error
   use MLSSets, only: FindFirst
   use MLSStringLists, only: ExpandStringRange, getStringElement, &
-    & NumStringElements
+    & NumStringElements, wrap
   use MLSStrings, only: lowerCase, writeIntsToChars
   implicit none
   private
@@ -87,7 +87,8 @@ module OUTPUT_M
 !       where value can be any numerical type, either scalar or 1-d array
 ! output_date_and_time ( [log date], [log time], [char* from_where], 
 !          [char* msg], [char* dateFormat], [char* timeFormat], [char* advance] )
-! outputCalendar ( [char* date], [char* notes(:,:)] )
+! outputCalendar ( [char* date], [char* datenote], [char* notes(:)], 
+!          [dontwrap] )
 ! outputNamedValue ( char* name, value, [char* advance],
 !          [char colon], [char fillChar], [char* Before], [char* After], 
 !          [integer tabn], [integer tabc], [integer taba], log dont_stamp] )
@@ -216,6 +217,7 @@ module OUTPUT_M
   ! they will appear alone as page headers
   ! (As an alternative, use timeStamp to stamp only individual lines)
   type stampOptions_T
+    logical :: neverStamp = .false.  ! if true, forget about automatic stamping
     logical :: post = .true.      ! Put stamp at end of line?
     logical :: showTime = .false. ! Don't show date or time unless TRUE
     character(len=24) :: textCode = ' '
@@ -404,14 +406,6 @@ contains
     logical, intent(in), optional          :: DONT_STAMP ! Prevent double-stamping
     character(len=*), parameter :: BLANKSPACE = &
     '                                                                    '
-    integer :: I    ! Blanks to write in next WRITE statement
-    logical :: lineup
-    integer :: ntimes
-    integer :: numSoFar
-    character(len=16) :: pattern
-    integer :: patternLength
-    integer :: patternNum
-    integer :: theRest
     ! Executable
     if ( ATCOLUMNNUMBER >= COLUMN ) return
     call blanks( COLUMN-ATCOLUMNNUMBER, fillChar, advance, dont_stamp )
@@ -634,18 +628,22 @@ contains
   end function NextTab
 
   ! ---------------------------------------  OUTPUTCALENDAR  -----
-  subroutine OUTPUTCALENDAR ( date, notes )
+  subroutine OUTPUTCALENDAR ( date, datenote, notes, dontWrap )
     ! output a nicely-formatted calendar of current month with
     ! today's date in "bold"
     ! Args
     character(len=*), intent(in), optional :: date ! date instead of current one
-    ! Notes, if present, is a 6x7 array of stringLists
+    ! dateNote, (notes), if present, is (an array of)
+    ! stringLists, (one per day in the month,)
+    character(len=*), optional :: dateNote ! Note for the current date
     ! Each string list contains either a blank for a date, meaning
     ! nothing will be printed in the calendar square for that date,
     ! or else it contains '/'-separated lines of text, each of
     ! which will be printed on a separate line within the square
-    character(len=*), dimension(:,:), optional :: notes
+    character(len=*), dimension(:), optional :: notes
+    logical, optional                        :: dontWrap ! Dont wrap notes to fit
     ! Internal variables
+    integer, parameter :: MAXNOTELENGTH = 256
     ! This should be modified for internationalization; e.g. with
     ! an include statement or suchlike
     character(len=*), dimension(12), parameter :: MONTHNAME = (/ &
@@ -659,6 +657,7 @@ contains
     logical, parameter :: countEmpty = .true.
     character(len=1), parameter :: inseparator = '/'
     character(len=*), parameter :: utcformat = 'yyyy-mm-dd' ! 'yyyy-Doy'
+    integer :: aday
     integer :: col1
     integer :: col2
     character(len=16) :: date2, dateString
@@ -667,14 +666,18 @@ contains
     integer :: ErrTyp
     integer :: iwk
     integer :: month
+    logical :: myDontWrap
     character(len=10) :: noteString
     integer :: numRows
     integer :: numWeeks
     integer :: row
     logical :: today
     integer :: wkdy
+    character(len=MAXNOTELENGTH) :: wrappedNote
     integer :: year
     ! Executable
+    myDontWrap = .false.
+    if ( present(dontWrap) ) myDontWrap = dontWrap
     if ( present(date) ) then
       dateString = date
     else
@@ -700,14 +703,25 @@ contains
     if ( any( days(6,:) /= 0 ) ) numWeeks = 6
     ! How many rows will we need?
     numRows = 4
-    if ( present(notes) ) then
-      do iwk=1, numWeeks
-        do wkdy=1, 7
-          numRows = max( numRows, &
-            & NumStringElements( notes(iwk, wkdy), &
-            & countEmpty, inseparator ) &
-            & )
-        enddo
+    if ( present(dateNote) ) then
+      if ( myDontWrap ) then
+        wrappedNote = dateNote
+      else
+        call wrap( dateNote, wrappedNote, 10, '/' )
+      endif
+      numRows = max( numRows, &
+        & NumStringElements( wrappedNote, countEmpty, inseparator ) + 2 &
+        & )
+    elseif ( present(notes) ) then
+      do aday=1, min( size(notes), daysInMonth( month, year ) )
+        if ( myDontWrap ) then
+          wrappedNote = notes(aday)
+        else
+          call wrap( notes(aday), wrappedNote, 10, '/' )
+        endif
+        numRows = max( numRows, &
+          & NumStringElements( wrappedNote, countEmpty, inseparator ) + 2 &
+          & )
       enddo
     endif
     do iwk = 1, numWeeks
@@ -725,21 +739,38 @@ contains
           else
             call output('|')
           endif
-          if ( row == 1 ) then
-            if ( days(iwk, wkdy) > 0 ) then
-              call writeIntsToChars( days(iwk, wkdy), dateString )
-              dateString = adjustl(dateString)
-              call alignToFit( trim(dateString), (/ col1, col2-1 /), 'r' )
-            endif
-          elseif( row == 10 ) then
+          if ( days(iwk, wkdy) < 1 ) then
+            ! Don't write notes or anything else in "empty" days
+          elseif ( row == 1 ) then
+            call writeIntsToChars( days(iwk, wkdy), dateString )
+            dateString = adjustl(dateString)
+            call alignToFit( trim(dateString), (/ col1, col2-1 /), 'r' )
+          elseif( row == numRows ) then
             call writeIntsToChars( daysOfYear(iwk, wkdy), dateString )
             dateString = adjustl(dateString)
             call alignToFit( 'd' // trim(dateString), (/ col1, col2-1 /), 'r' )
-          elseif( present(notes) ) then
-            call GetStringElement ( notes(iwk, wkdy), noteString, &
+          elseif( present(dateNote) .and. today ) then
+            if ( myDontWrap ) then
+              wrappedNote = dateNote
+            else
+              call wrap( dateNote, wrappedNote, 10, '/' )
+            endif
+            call GetStringElement ( wrappedNote, noteString, &
               & row-1, countEmpty, inseparator )
             if ( noteString == inseparator ) noteString = ' '
             call output( noteString )
+          elseif( present(notes) ) then
+            if ( days(iwk, wkdy) <= size(notes) ) then
+              if ( myDontWrap ) then
+                wrappedNote = notes(days(iwk, wkdy))
+              else
+                call wrap( notes(days(iwk, wkdy)), wrappedNote, 10, '/' )
+              endif
+              call GetStringElement ( wrappedNote, noteString, &
+                & row-1, countEmpty, inseparator )
+              if ( noteString == inseparator ) noteString = ' '
+              call output( noteString )
+            endif
           endif
           if ( today ) then
             call blanksToColumn(col2-1)
@@ -785,7 +816,7 @@ contains
     !
     if ( SILENTRUNNING ) return
     my_adv = Advance_is_yes_or_no(advance)
-    my_dont_stamp = .false.
+    my_dont_stamp = stampOptions%neverStamp ! .false.
     if ( present(dont_stamp) ) my_dont_stamp = dont_stamp
     my_dont_stamp = ( my_dont_stamp .or. &
       & linesSinceLastStamp < (stampOptions%interval - 1) )
@@ -1862,6 +1893,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.64  2007/09/20 17:38:09  pwagner
+! improved outputCalendar; neverStamp field added to stampOptions
+!
 ! Revision 2.63  2007/09/14 00:15:42  pwagner
 ! Added alignToFit and outputCalendar
 !
