@@ -72,6 +72,8 @@ module MLSStringLists               ! Module to treat string lists
 ! StringElementNum   Returns element number of test string in string list
 ! SwitchDetail       Returns detail level of switch in list of switches
 ! unquote            Removes surrounding [quotes]
+! wrap               Wrap a string to fit within prescribed width
+!                      using separator as newline
 ! === (end of toc) ===
 
 ! === (start of api) ===
@@ -121,6 +123,7 @@ module MLSStringLists               ! Module to treat string lists
 !    & [char inseparator], [log part_match])
 ! int SwitchDetail(strlist inList, char* test_switch, [char* options])
 ! char* unquote (char* str, [char* quotes], [char* cquotes], [log strict])
+! wrap ( char* str, char* outstr, int width, [char inseparator] )
 
 ! in the above, a string list is a string of elements (usu. comma-separated)
 ! e.g., units='cm,m,in,ft'
@@ -177,7 +180,7 @@ module MLSStringLists               ! Module to treat string lists
    & RemoveElemFromList, RemoveListFromList, RemoveNumFromList, &
    & ReplaceSubString, ReverseList, &
    & SortArray, SortList, StringElement, StringElementNum, SwitchDetail, &
-   & unquote
+   & unquote, wrap
 
   interface catLists
     module procedure catLists_str, catLists_int, catLists_intarray
@@ -2989,6 +2992,67 @@ contains
       
   end function unquote
 
+  ! ---------------------wrap ---------------
+  subroutine wrap( str, outstr, width, inseparator )
+    ! Wrap str by putting separators as line feed so no
+    ! line exceeds width
+    ! Args
+    character (len=*), intent(in)                 :: str
+    character (len=*), intent(out)                :: outstr
+    integer, intent(in)                           :: width
+    character (len=*), optional, intent(in)       :: inseparator
+    ! Internal variables
+    character (len=1)               :: separator
+    integer :: dsnext
+    integer :: dsp
+    integer :: ko
+    integer :: nextwidth
+    integer :: so
+    integer :: sp
+    ! Executable
+    if(present(inseparator)) then
+      separator = inseparator
+    else
+      separator = comma
+    end if
+    outstr = str
+    if ( len_trim(str) <= width ) return
+    ! print *, 'str ', str
+    ! print *, 'len_trim(str) ', len_trim(str)
+    so = 1 ! this is the current character number of str
+    ko = 1 ! this is the current character number of outstr
+    do
+      ! how big is next width?
+      nextwidth = min(width, len_trim(str) - so + 1)
+      ! print *, 'nextwidth ', nextwidth
+      if ( nextwidth < 1 ) exit
+      ! Does the rest of str fit within nextwidth?
+      if ( nextwidth >= len_trim(str) - so + 1 ) then
+        outstr(ko:ko + nextwidth - 1) = str(so:so + nextwidth - 1)
+        exit
+      endif
+      ! Do we have any breakable spaces in next width?
+      dsp = index( str(so:so+nextwidth-1), ' ', back=.true. )
+      ! print *, 'so, ko ', so, ko
+      ! print *, 'dsp ', dsp
+      if ( dsp > 0 ) then
+        ! Yes, so we break there
+        sp = so - 1 + dsp
+        outstr(ko:ko+dsp-1) = str(so:sp-1) // separator
+        ko = ko + dsp
+        ! Now treat possibility that next chars might be spaces, too
+        dsnext = findFirst( str(sp:), ' ', reverse=.true. )
+        if ( dsnext < 1 ) exit
+        so = sp + dsnext - 1
+      else
+        ! No, so we hyphenate
+        outstr(ko:ko+nextwidth-1) = str(so:so+nextwidth-3) // '-' // separator
+        ko = ko + nextwidth
+        so = so + nextwidth - 2
+      endif
+    enddo
+  end subroutine wrap
+
 !============================ Private ==============================
   subroutine prepOptions( options )
     ! Process options into separate optional args
@@ -3040,6 +3104,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.30  2007/09/20 17:39:59  pwagner
+! Added wrap procedure
+!
 ! Revision 2.29  2007/07/31 22:46:51  pwagner
 ! Added listMatches
 !
