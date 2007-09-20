@@ -26,7 +26,7 @@ module DUMP_0
     & MLSMAX, MLSMEAN, MLSMIN, MLSSTDDEV, RATIOS
   use MLSStringLists, only: catLists, GetStringElement, NumStringElements
   use MLSStrings, only: lowercase
-  use OUTPUT_M, only: outputOptions, &
+  use OUTPUT_M, only: outputOptions, stampOptions, &
     & BLANKS, NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
 
   implicit none
@@ -354,6 +354,7 @@ contains
     integer :: NumZeroRows
     integer, dimension(MAXBITNUMBER+1) :: set
     ! Executable
+    call theDumpBegins
     myFillValue = 0
     if ( present(FillValue) ) myFillValue = FillValue
 
@@ -390,6 +391,7 @@ contains
         endif
       enddo
     endif
+    call theDumpEnds
   end subroutine DUMP_1D_BIT
 
   ! -----------------------------------------------  DUMP_1D_CHAR  -----
@@ -408,6 +410,7 @@ contains
     integer :: NumZeroRows
     character(len=len(array)) :: myFillValue
 
+    call theDumpBegins
     myFillValue = ' '
     if ( present(FillValue) ) myFillValue = FillValue
 
@@ -445,6 +448,7 @@ contains
       end do ! j
       call say_fill ( (/ j-10, size(array) /), numZeroRows, myFillValue )
     end if
+    call theDumpEnds
   end subroutine DUMP_1D_CHAR
 
   ! --------------------------------------------  DUMP_1D_COMPLEX  -----
@@ -460,6 +464,7 @@ contains
     integer :: J, K, MyWidth
     character(len=64) :: MyFormat
 
+    call theDumpBegins
     myClean = theDefault('clean') ! .false.
     if ( present(clean) ) myClean = clean
     myWidth = 3
@@ -486,6 +491,7 @@ contains
         call output ( '', advance='yes' )
       end do
     end if
+    call theDumpEnds
   end subroutine DUMP_1D_COMPLEX
 
   ! -------------------------------------------  DUMP_1D_DCOMPLEX  -----
@@ -501,6 +507,7 @@ contains
     integer :: J, K, MyWidth
     character(len=64) :: MyFormat
 
+    call theDumpBegins
     myClean = theDefault('clean') ! .false.
     if ( present(clean) ) myClean = clean
     myWidth = 3
@@ -527,6 +534,7 @@ contains
         call output ( '', advance='yes' )
       end do
     end if
+    call theDumpEnds
   end subroutine DUMP_1D_DCOMPLEX
 
  ! ---------------------------------------------  DUMP_1D_DOUBLE  -----
@@ -552,6 +560,7 @@ contains
     integer :: NumZeroRows
 
     ! Executable
+    call theDumpBegins
     myFillValue = 0.d0
     if ( present(FillValue) ) myFillValue=FillValue
     include 'dumpstats.f9h'
@@ -597,6 +606,7 @@ contains
       end do
       call say_fill ( (/ j-myWidth, size(array) /), numZeroRows, myFillValue )
     end if
+    call theDumpEnds
   end subroutine DUMP_1D_DOUBLE
 
   ! --------------------------------------------  DUMP_1D_INTEGER  -----
@@ -620,6 +630,7 @@ contains
 
     integer :: myFillValue
     ! Executable
+    call theDumpBegins
     myFillValue = 0
     if ( present(FillValue) ) myFillValue=FillValue
     include 'dumpstats.f9h'
@@ -660,6 +671,7 @@ contains
       end do ! j
       call say_fill ( (/ j-myWidth, size(array) /), numZeroRows, myFillValue )
     end if
+    call theDumpEnds
   end subroutine DUMP_1D_INTEGER
 
   ! ----------------------------------------------  DUMP_1D_LOGICAL ----
@@ -672,6 +684,7 @@ contains
     integer :: Base, J, K
     logical :: myClean
 
+    call theDumpBegins
     base = 0
     if ( present(lbound) ) base = lbound - 1
 
@@ -697,6 +710,7 @@ contains
         call output ( '', advance='yes' )
       end do
     end if
+    call theDumpEnds
   end subroutine DUMP_1D_LOGICAL
 
   ! -----------------------------------------------  DUMP_1D_REAL  -----
@@ -722,6 +736,7 @@ contains
 
     real :: myFillValue
     ! Executable
+    call theDumpBegins
     myFillValue = 0.
     if ( present(FillValue) ) myFillValue=FillValue
     include 'dumpstats.f9h'
@@ -761,6 +776,7 @@ contains
       end do
       call say_fill ( (/ j-myWidth, size(array) /), numZeroRows, myFillValue )
     end if
+    call theDumpEnds
   end subroutine DUMP_1D_REAL
 
   ! -----------------------------------------------  DUMP_2D_CHAR  -----
@@ -779,6 +795,7 @@ contains
     integer :: NumZeroRows
     character(len=len(array)) :: myFillValue
 
+    call theDumpBegins
     myFillValue = ' '
     if ( present(FillValue) ) myFillValue = FillValue
 
@@ -822,6 +839,7 @@ contains
       call say_fill ( (/ i-1, size(array,1), j-10, size(array,2) /), &
         & numZeroRows, myFillValue )
     end if
+    call theDumpEnds
   end subroutine DUMP_2D_CHAR
 
   ! --------------------------------------------  DUMP_2D_COMPLEX  -----
@@ -843,6 +861,7 @@ contains
     real :: MyFillValue
     character(len=64) :: MyFormat
 
+    call theDumpBegins
     myClean = theDefault('clean') ! .false.
     if ( present(clean) ) myClean = clean
 
@@ -909,6 +928,7 @@ contains
         end do
       end if
     end if
+    call theDumpEnds
   end subroutine DUMP_2D_COMPLEX
 
   ! --------------------------------------------  DUMP_2D_COMPLEX  -----
@@ -930,6 +950,7 @@ contains
     real(rk) :: MyFillValue
     character(len=64) :: MyFormat
 
+    call theDumpBegins
     myClean = theDefault('clean') ! .false.
     if ( present(clean) ) myClean = clean
 
@@ -996,6 +1017,7 @@ contains
         end do
       end if
     end if
+    call theDumpEnds
   end subroutine DUMP_2D_DCOMPLEX
 
   ! ---------------------------------------------  DUMP_2D_DOUBLE  -----
@@ -1020,6 +1042,7 @@ contains
     double precision :: myFillValue
     character(len=64) :: MyFormat
 
+    call theDumpBegins
     myClean = theDefault('clean') ! .false.
     if ( present(clean) ) myClean = clean
 
@@ -1088,6 +1111,7 @@ contains
       call say_fill ( (/ i-5, size(array,1), j-1, size(array,2) /), &
         & numZeroRows, myFillValue )
     end if
+    call theDumpEnds
   end subroutine DUMP_2D_DOUBLE
 
   ! --------------------------------------------  DUMP_2D_INTEGER  -----
@@ -1111,6 +1135,7 @@ contains
     integer :: myFillValue
     character(len=64) :: MyFormat
     ! Executable
+    call theDumpBegins
     myFillValue = 0
     if ( present(FillValue) ) myFillValue = FillValue
     include 'dumpstats.f9h'
@@ -1156,6 +1181,7 @@ contains
       call say_fill ( (/ i-1, size(array,1), j-myWidth, size(array,2) /), &
         & numZeroRows, myFillValue )
     end if
+    call theDumpEnds
   end subroutine DUMP_2D_INTEGER
 
   ! --------------------------------------------  DUMP_2D_LOGICAL  -----
@@ -1168,6 +1194,7 @@ contains
     logical :: MyClean
     integer, parameter :: MyWidth = 34
 
+    call theDumpBegins
     myClean = theDefault('clean') ! .false.
     if ( present(clean) ) myClean = clean
 
@@ -1195,6 +1222,7 @@ contains
         end do ! j
       end do ! i
     end if
+    call theDumpEnds
   end subroutine DUMP_2D_LOGICAL
 
   ! -----------------------------------------------  DUMP_2D_REAL  -----
@@ -1219,6 +1247,7 @@ contains
     real :: myFillValue
     character(len=64) :: MyFormat
 
+    call theDumpBegins
     myClean = theDefault('clean') ! .false.
     if ( present(clean) ) myClean = clean
 
@@ -1287,6 +1316,7 @@ contains
       call say_fill ( (/ i-5, size(array,1), j-1, size(array,2) /), &
         & numZeroRows, myFillValue )
     end if
+    call theDumpEnds
   end subroutine DUMP_2D_REAL
 
   ! -----------------------------------------  DUMP_2x2xN_COMPLEX  -----
@@ -1302,6 +1332,7 @@ contains
     integer :: J, K
     character(len=64) :: MyFormat
 
+    call theDumpBegins
     myClean = .false.
     if ( present(clean) ) myClean = clean
     myFormat = sdFormatDefaultCmplx
@@ -1324,6 +1355,7 @@ contains
         call output ( array(2,2,j), myFormat, advance='yes' )
       end do
     end if
+    call theDumpEnds
   end subroutine DUMP_2x2xN_COMPLEX
 
   ! ----------------------------------------  DUMP_2x2xN_DCOMPLEX  -----
@@ -1339,6 +1371,7 @@ contains
     integer :: J, K
     character(len=64) :: MyFormat
 
+    call theDumpBegins
     myClean = .false.
     if ( present(clean) ) myClean = clean
     myFormat = sdFormatDefaultCmplx
@@ -1361,6 +1394,7 @@ contains
         call output ( array(2,2,j), myFormat, advance='yes' )
       end do
     end if
+    call theDumpEnds
   end subroutine DUMP_2x2xN_DCOMPLEX
 
   ! -----------------------------------------------  DUMP_3D_CHAR  -----
@@ -1381,6 +1415,7 @@ contains
     integer :: how_many
     character(len=len(array)) :: myFillValue
 
+    call theDumpBegins
     myFillValue = ' '
     if ( present(FillValue) ) myFillValue = FillValue
 
@@ -1432,6 +1467,7 @@ contains
       call say_fill ( (/ i-1, size(array,1), j-1, size(array,2), &
         & k-10, size(array,3) /), numZeroRows, myFillValue )
     end if
+    call theDumpEnds
   end subroutine DUMP_3D_CHAR
 
   ! --------------------------------------------  DUMP_3D_COMPLEX  -----
@@ -1455,6 +1491,7 @@ contains
     character(len=64) :: MyFormat
 
     ! Executable
+    call theDumpBegins
     myFillValue = 0.
     if ( present(FillValue) ) myFillValue=FillValue
     myClean = .false.
@@ -1499,6 +1536,7 @@ contains
       call say_fill ( (/ i-1, size(array,1), j-1, size(array,2), &
         & k-5, size(array,3) /), numZeroRows, myFillValue )
    end if
+    call theDumpEnds
   end subroutine DUMP_3D_COMPLEX
 
   ! -------------------------------------------  DUMP_3D_DCOMPLEX  -----
@@ -1523,6 +1561,7 @@ contains
     character(len=64) :: MyFormat
 
     ! Executable
+    call theDumpBegins
     myFillValue = 0.
     if ( present(FillValue) ) myFillValue=FillValue
     myClean = .false.
@@ -1567,6 +1606,7 @@ contains
       call say_fill ( (/ i-1, size(array,1), j-1, size(array,2), &
         & k-5, size(array,3) /), numZeroRows, myFillValue )
    end if
+    call theDumpEnds
   end subroutine DUMP_3D_DCOMPLEX
 
   ! ---------------------------------------------  DUMP_3D_DOUBLE  -----
@@ -1590,6 +1630,7 @@ contains
     character(len=64) :: myFormat
 
     ! Executable
+    call theDumpBegins
     myFillValue = 0.d0
     if ( present(FillValue) ) myFillValue=FillValue
     include 'dumpstats.f9h'
@@ -1635,6 +1676,7 @@ contains
       call say_fill ( (/ i-1, size(array,1), j-1, size(array,2), &
         & k-5, size(array,3) /), numZeroRows, myFillValue )
    end if
+    call theDumpEnds
   end subroutine DUMP_3D_DOUBLE
 
   ! --------------------------------------------  DUMP_3D_INTEGER  -----
@@ -1660,6 +1702,7 @@ contains
 
     integer :: myFillValue
     ! Executable
+    call theDumpBegins
     myFillValue = 0
     if ( present(FillValue) ) myFillValue=FillValue
     include 'dumpstats.f9h'
@@ -1712,6 +1755,7 @@ contains
       call say_fill ( (/ i-1, size(array,1), j-1, size(array,2), &
         & k-myWidth, size(array,3) /), numZeroRows, myFillValue )
     end if
+    call theDumpEnds
   end subroutine DUMP_3D_INTEGER
 
   ! ---------------------------------------------  DUMP_3D_REAL  -----
@@ -1735,6 +1779,7 @@ contains
     character(len=64) :: MyFormat
 
     ! Executable
+    call theDumpBegins
     myFillValue = 0.
     if ( present(FillValue) ) myFillValue=FillValue
     myClean = theDefault('clean') ! .false.
@@ -1780,6 +1825,7 @@ contains
       call say_fill ( (/ i-1, size(array,1), j-1, size(array,2), &
         & k-5, size(array,3) /), numZeroRows, myFillValue )
    end if
+    call theDumpEnds
   end subroutine DUMP_3D_REAL
 
   ! -----------------------------------------------  DUMP_HASH_STR  -----
@@ -1797,6 +1843,7 @@ contains
     character(len=1) :: mySeparator
     character(len=*), parameter :: COMMA = ','
 
+    call theDumpBegins
     mySeparator = COMMA
     if ( present(SEPARATOR) ) mySeparator = SEPARATOR
 
@@ -1816,6 +1863,7 @@ contains
         call output ( trim(element), advance='yes' )
       end do ! j
     end if
+    call theDumpEnds
   end subroutine DUMP_HASH_STR
 
   ! -----------------------------------------------  DUMP_HASH_LOG  -----
@@ -1833,6 +1881,7 @@ contains
     character(len=1) :: mySeparator
     character(len=*), parameter :: COMMA = ','
 
+    call theDumpBegins
     mySeparator = COMMA
     if ( present(SEPARATOR) ) mySeparator = SEPARATOR
 
@@ -1851,6 +1900,7 @@ contains
         call output ( values(j), advance='yes' )
       end do ! j
     end if
+    call theDumpEnds
   end subroutine DUMP_HASH_LOG
 
   ! -----------------------------------------------  DUMP_STRLIST  -----
@@ -1880,6 +1930,7 @@ contains
       return
     endif
 
+    call theDumpBegins
     myFillValue = ' '
     if ( present(FillValue) ) myFillValue = FillValue
 
@@ -1904,6 +1955,7 @@ contains
         call output ( trim(myFillValue), advance='yes' )
       end do ! j
     end if
+    call theDumpEnds
   end subroutine DUMP_STRLIST
 
   ! -----------------------------------  dumpNamedValues  -----
@@ -1921,6 +1973,7 @@ contains
     logical :: MyClean
     integer :: MyWidth
     character(len=24) :: myName
+    call theDumpBegins
     myClean = theDefault('clean') ! .false.
     if ( present(clean) ) myClean = clean
     MyWidth = 1
@@ -1945,6 +1998,7 @@ contains
       end do
       call output(' ', advance='yes')
     end do
+    call theDumpEnds
 
   end subroutine dumpNamedValues_DOUBLE
 
@@ -1960,6 +2014,7 @@ contains
     logical :: MyClean
     integer :: MyWidth
     character(len=24) :: myName
+    call theDumpBegins
     myClean = theDefault('clean') ! .false.
     if ( present(clean) ) myClean = clean
     MyWidth = 1
@@ -1984,6 +2039,7 @@ contains
       end do
       call output(' ', advance='yes')
     end do
+    call theDumpEnds
 
   end subroutine dumpNamedValues_INTEGER
 
@@ -1999,6 +2055,7 @@ contains
     logical :: MyClean
     integer :: MyWidth
     character(len=24) :: myName
+    call theDumpBegins
     myClean = theDefault('clean') ! .false.
     if ( present(clean) ) myClean = clean
     MyWidth = 1
@@ -2023,6 +2080,7 @@ contains
       end do
       call output(' ', advance='yes')
     end do
+    call theDumpEnds
 
   end subroutine dumpNamedValues_REAL
 
@@ -2309,6 +2367,14 @@ contains
     end do
     call output ( afterSub )
   end subroutine Say_Subs_Only
+  
+  subroutine theDumpBegins
+    stampOptions%neverStamp = .true. ! So we don't interrupt tables of numbers
+  end subroutine theDumpBegins
+
+  subroutine theDumpEnds
+    stampOptions%neverStamp = .false.
+  end subroutine theDumpEnds
 
   function theDefault( code ) result ( isit )
     ! Return the default value for a given code, e.g. 'clean'
@@ -2351,6 +2417,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.73  2007/09/20 18:39:37  pwagner
+! Dont interrupt tables of dumped numbers with stamping
+!
 ! Revision 2.72  2007/09/13 21:09:57  pwagner
 ! -rms and -s combined add new info about & how near
 !
