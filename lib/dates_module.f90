@@ -69,6 +69,7 @@ module dates_module
 ! dateForm           Determines what format a date is in; e.g. 'yyyy-doy'
 ! daysbetween2utcs   How many days between 2 date-times
 ! dayOfWeek          Determines what day of the week a date is; e.g. 'Monday'
+! daysInMonth        Determines how many days in given month in given year
 ! daysince2eudtf     days since starting date -> eudtf
 ! days_in_year       how many days in (leap, normal) year
 ! eudtf2cal          yyyyddd -> cal date
@@ -104,6 +105,7 @@ module dates_module
 ! char* dateForm( char* date )
 ! char* dayOfWeek (char* date, [char* fromForm])
 ! int daysbetween2utcs (char* utc1, char* utc2)
+! int daysInMonth (int month, int year)
 ! int hoursbetween2utcs (char* utc1, char* utc2)
 ! char* nextMoon ([char* date], [phase])
 ! char* ReformatDate (char* date, [char* fromForm], [char* toForm])
@@ -175,16 +177,14 @@ module dates_module
 ! === (end of api) ===
 
   !Here are the provided functions 
-  public:: adddaystoutc, addhourstoutc, addsecondstoutc
-  public :: buildCalendar
-  public :: daysbetween2utcs, hoursbetween2utcs, secondsbetween2utcs
-  ! public:: dump
-  public:: eudtf2cal,cal2eudtf,lastday,ccsdsa2b,ccsdsb2a,eudtf2daysince
-  public:: daysince2eudtf,ccsds2tai,ccsds2eudtf,days_in_year
-  public :: dai_to_yyyymmdd
-  public :: utc_to_date, utc_to_time, utc_to_yyyymmdd, yyyymmdd_to_dai
-  public :: dateForm, dayOfWeek, nextMoon, reformatDate, reformatTime
-  public :: splitDateTime, timeForm, utcForm
+  public :: adddaystoutc, addhourstoutc, addsecondstoutc, buildCalendar, &
+    & cal2eudtf, ccsds2tai, ccsds2eudtf, ccsdsa2b, ccsdsb2a, &
+    & dai_to_yyyymmdd, dateForm, dayOfWeek, daysbetween2utcs, daysInMonth, &
+    & daysince2eudtf, days_in_year, &
+    & eudtf2cal, eudtf2daysince, hoursbetween2utcs, &
+    & lastday, nextMoon, reformatDate, reformatTime, &
+    & secondsbetween2utcs, splitDateTime, timeForm, &
+    & utcForm, utc_to_date, utc_to_time, utc_to_yyyymmdd, yyyymmdd_to_dai
 
  interface buildCalendar
     module procedure buildCalendar_ints, buildCalendar_str
@@ -503,6 +503,21 @@ contains
     datetime2 = utc2datetime(utc2)
     days = datetime2%dai - datetime1%dai
   end function daysbetween2utcs
+
+  ! ---------------------------------------------  daysInMonth  -----
+  elemental function daysInMonth( month, year ) result(days)
+    ! Given a month, year, return the number of days in the month
+    ! Args
+    integer, intent(in) :: month
+    integer, intent(in) :: year
+    integer                      :: days
+    ! Executable
+    if ( leapyear(year) ) then
+       days = DAYMAXLY(month)
+    else
+       days = DAYMAXNY(month)
+    endif
+  end function daysInMonth
 
   subroutine dumpDateTime( dateTime, name )
     ! Dump an MLSDate_Time_T
@@ -2018,7 +2033,7 @@ contains
   end function DayNumberOfWeek
 
   ! ---------------------------------------------------  Leapyear  -----
-  logical function leapyear(year)
+  elemental logical function leapyear(year)
     integer,intent(in) :: year
      ! This is to capture the rule that centuries are leap only
      ! if divisible by 400
@@ -2139,6 +2154,9 @@ contains
 
 end module dates_module
 ! $Log$
+! Revision 2.15  2007/09/14 00:14:50  pwagner
+! Added buildCalendar
+!
 ! Revision 2.14  2007/09/06 22:27:59  pwagner
 ! Added nextMoon
 !
