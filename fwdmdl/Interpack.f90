@@ -30,15 +30,15 @@ contains
       integer :: jl,ju,n,np,jm,j
       real(r8) :: XX(NP),x
 
-	if(x .le. xx(1)) then
-	j = 1
-	return
-	endif
+      if(x .le. xx(1)) then
+      j = 1
+      return
+      endif
 
-	if(x .ge. xx(n) ) then
-	j = n-1
-	return
-	endif
+      if(x .ge. xx(n) ) then
+      j = n-1
+      return
+      endif
 
       JL=0
       JU=N+1
@@ -67,6 +67,9 @@ contains
 end module Interpack
 
 ! $Log$
+! Revision 2.2  2005/06/22 18:08:19  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.1  2003/05/05 23:00:25  livesey
 ! Merged in feb03 newfwm branch
 !

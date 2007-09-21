@@ -30,15 +30,15 @@ contains
       integer :: jl,ju,n,np,jm,j
       real(r8) :: XX(NP),x
 
-	if(x .le. xx(1)) then
-	j = 1
-	return
-	endif
+      if(x .le. xx(1)) then
+      j = 1
+      return
+      endif
 
-	if(x .ge. xx(n) ) then
-	j = n-1
-	return
-	endif
+      if(x .ge. xx(n) ) then
+      j = n-1
+      return
+      endif
 
       JL=0
       JU=N+1
@@ -67,6 +67,9 @@ contains
 end module Interpack
 
 ! $Log$
+! Revision 1.4  2005/06/22 18:27:38  pwagner
+! Cant have access declared outside module scope
+!
 ! Revision 1.3  2002/10/08 17:08:07  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
