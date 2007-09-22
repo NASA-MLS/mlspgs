@@ -1009,10 +1009,10 @@ contains
     character(len=4), parameter :: LABL(2) = (/ '(I) ', 'NOPT' /)
     ! ??? Defaults aren't what comments say
     real(rk),save :: VALUES(9) = (/ 0.1_rk, epsilon(values), epsilon(values), &
-                                    huge(values), 0.01_rk, 0.0_rk, 0.0_rk, &
+                                    0.1*huge(values), 0.01_rk, 0.0_rk, 0.0_rk, &
                                     0.0_rk, 0.0_rk /)
     real(rk),save :: VALNOM(9) = (/ 0.1_rk, epsilon(values), epsilon(values), &
-                                    huge(values), 0.01_rk, 0.0_rk, 0.0_rk, &
+                                    0.1*huge(values), 0.01_rk, 0.0_rk, 0.0_rk, &
                                     0.0_rk, 0.0_rk /)
     integer :: IVAL(2) ! for error messages
 
@@ -1373,6 +1373,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.48  2007/09/22 00:25:16  vsnyder
+! Initialize DXMAXI to 0.1*huge() so as not to get overflow
+!
 ! Revision 2.47  2007/01/11 20:46:33  vsnyder
 ! Correct a comment
 !
