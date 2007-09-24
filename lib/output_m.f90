@@ -683,8 +683,15 @@ contains
     else
       call date_and_time ( date=dateString )
     endif
-    date2 = reformatDate( dateString, fromForm='*', toForm=utcformat )
+    col1 = index(lowercase(dateString), 't')
+    if ( col1 > 0 ) then
+      date2 = reformatDate( dateString(1:col1-1), fromForm='yyyy-Doy', toForm=utcformat )
+    else
+      date2 = reformatDate( dateString, fromForm='*', toForm=utcformat )
+    endif
     call utc_to_yyyymmdd( date2, ErrTyp, year, month, day )
+    if ( month < 0 ) then
+    endif
     call buildCalendar( year, month, days, daysOfYear )
     ! Temporary use of   w i d e  tabstops
     call settabs( '14-210+14' )
@@ -712,7 +719,8 @@ contains
       numRows = max( numRows, &
         & NumStringElements( wrappedNote, countEmpty, inseparator ) + 2 &
         & )
-    elseif ( present(notes) ) then
+    endif
+    if ( present(notes) ) then
       do aday=1, min( size(notes), daysInMonth( month, year ) )
         if ( myDontWrap ) then
           wrappedNote = notes(aday)
@@ -1893,6 +1901,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.65  2007/09/24 20:22:08  pwagner
+! Improved outputCalendar
+!
 ! Revision 2.64  2007/09/20 17:38:09  pwagner
 ! improved outputCalendar; neverStamp field added to stampOptions
 !
