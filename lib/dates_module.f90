@@ -82,7 +82,7 @@ module dates_module
 ! ReformatTime       Turns 'hhmmss.sss' -> 'hh:mm:ss'
 ! secondsbetween2utcs 
 !                    How many seconds between 2 date-times
-! aplitDateTime      Splits dateTtime
+! splitDateTime      Splits dateTtime
 ! timeForm           Determines what format time is in
 ! utc_to_date        Returns date portion from dateTtime; e.g. yyyy-dddThh:mm:ss
 ! utc_to_time        Returns time portion from dateTtime; e.g. yyyy-dddThh:mm:ss
@@ -91,7 +91,9 @@ module dates_module
 !                     (a) yyyy-mm-ddThh:mm:ss.sss
 !                     (b) yyyy-dddThh:mm:ss.sss
 !                     (n) yyyydddThh:mm:ss.sss (no-dash)
+! yyyyDoy_to_mmdd    Converts yyyy and day-of-year to month and day
 ! yyyymmdd_to_dai    Converts yyyymmdd to days after Jan 1, 2001
+! yyyymmdd_to_Doy    Converts yyyy, mont, and day to day-of-year
 
 ! === (end of toc) ===
 
@@ -116,8 +118,10 @@ module dates_module
 ! char utcForm (char* utc)
 ! utc_to_date(char* utc, int ErrTyp, char* date, [log strict], [char* utcAt0z])
 ! utc_to_time(char* utc, int ErrTyp, char* time, [log strict])
+! yyyyDoy_to_mmdd (int yyyy, int mm, int dd, int Doy)
 ! yyyymmdd_to_dai (int yyyy, int mm, int dd, int dai, [char* startingDate])
 ! yyyymmdd_to_dai (char* str, int dai, [char* startingDate])
+! yyyymmdd_to_Doy (int yyyy, int mm, int dd, int Doy)
 
 ! Note: in fromForm and in toForm the following rules are in effect
 ! non-alphabetic symbols like '-', '/', and ' ' take their own values
@@ -184,7 +188,8 @@ module dates_module
     & eudtf2cal, eudtf2daysince, hoursbetween2utcs, &
     & lastday, nextMoon, reformatDate, reformatTime, &
     & secondsbetween2utcs, splitDateTime, timeForm, &
-    & utcForm, utc_to_date, utc_to_time, utc_to_yyyymmdd, yyyymmdd_to_dai
+    & utcForm, utc_to_date, utc_to_time, utc_to_yyyymmdd, &
+    & yyyyDoy_to_mmdd, yyyymmdd_to_dai, yyyymmdd_to_Doy
 
  interface buildCalendar
     module procedure buildCalendar_ints, buildCalendar_str
@@ -206,8 +211,16 @@ module dates_module
     module procedure utc_to_yyyymmdd_strs, utc_to_yyyymmdd_ints
   end interface
 
+  interface yyyyDoy_to_mmdd
+    module procedure yyyyDoy_to_mmdd_ints
+  end interface
+
   interface yyyymmdd_to_dai
     module procedure yyyymmdd_to_dai_str, yyyymmdd_to_dai_ints
+  end interface
+
+  interface yyyymmdd_to_Doy
+    module procedure yyyymmdd_to_doy_ints
   end interface
 
   ! utc_to_yyyymmdd
@@ -1631,6 +1644,7 @@ contains
     logical, intent(in), optional :: strict
     logical, intent(in), optional :: nodash   ! No dash separating date fields
     !----------Local vars----------!
+    logical, parameter :: countEmpty = .false.
     character(len=1), parameter :: dash='-'
     character(len=NameLen) :: date
     character(len=NameLen) :: yyyy
@@ -1675,14 +1689,14 @@ contains
      dd = date(7:8)
      utc_format = 'n'
    else
-     call GetStringElement(trim(date), yyyy, 1, countEmpty=.true., inseparator=dash)
+     call GetStringElement(trim(date), yyyy, 1, countEmpty=countEmpty, inseparator=dash)
      if ( &
-       & NumStringElements(trim(date), countEmpty=.true., inseparator=dash) == 2) then
-       call GetStringElement(trim(date), dd, 2, countEmpty=.true., inseparator=dash)
+       & NumStringElements(trim(date), countEmpty=countEmpty, inseparator=dash) == 2) then
+       call GetStringElement(trim(date), dd, 2, countEmpty=countEmpty, inseparator=dash)
        utc_format = 'b'
      else
-       call GetStringElement(trim(date), mm, 2, countEmpty=.true., inseparator=dash)
-       call GetStringElement(trim(date), dd, 3, countEmpty=.true., inseparator=dash)
+       call GetStringElement(trim(date), mm, 2, countEmpty=countEmpty, inseparator=dash)
+       call GetStringElement(trim(date), dd, 3, countEmpty=countEmpty, inseparator=dash)
        utc_format = 'a'
      endif
    endif
@@ -2020,6 +2034,38 @@ contains
      write(yyyymmdd,'(I4.4, 2i2.2)') year, m, day
   end subroutine yeardoy_to_yyyymmdd_ints
 
+  ! ---------------------------------------------  yyyyDoy_to_mmdd_ints  -----
+  subroutine yyyyDoy_to_mmdd_ints(year, month, day, doy)
+    ! Routine that converts the number of days 
+    ! after the year's start, input as yyyy and doy,
+    ! into the month and day of that month
+    !--------Argument--------!
+    integer,intent(in)           :: year
+    integer,intent(in)           :: doy
+    integer,intent(out)          :: month
+    integer,intent(out)          :: day
+    !----------Local vars----------!
+    integer :: daysum
+    integer, dimension(-1:12) :: DAYMAX
+    !----------Executable part----------!
+     month = 0
+     day = 0
+     daysum = 0
+     if ( leapyear(year) ) then
+       DAYMAX = DAYMAXLY
+     else
+       DAYMAX = DAYMAXNY
+     endif
+     do month=1, 12
+       if ( daysum + DAYMAX(month) >= doy ) exit
+       daysum = daysum + DAYMAX(month)
+     enddo
+     if ( month > 12 ) then
+       return
+     endif
+     day = doy - daysum
+  end subroutine yyyyDoy_to_mmdd_ints
+
   ! ---------------------------------------------------  DayNumberOfWeek  -----
   integer function DayNumberOfWeek(dai)
     integer,intent(in) :: dai
@@ -2154,6 +2200,9 @@ contains
 
 end module dates_module
 ! $Log$
+! Revision 2.16  2007/09/20 17:39:15  pwagner
+! Added daysInMonth
+!
 ! Revision 2.15  2007/09/14 00:14:50  pwagner
 ! Added buildCalendar
 !
