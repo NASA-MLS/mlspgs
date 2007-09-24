@@ -46,6 +46,8 @@ module GLOBAL_SETTINGS
 
   ! Do we check for the correct month's l2pc files during checkPaths preflight?
   logical, parameter :: CHECKL2PCMONTHCORRECT = .true.
+  ! Do we output this month's calendar
+  logical, parameter :: OUTPUTTHISMONTHSCAL = .true.
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
@@ -59,6 +61,7 @@ contains
   subroutine SET_GLOBAL_SETTINGS ( ROOT, ForwardModelConfigDatabase, &
     & FGrids, l2gpDatabase, DirectDatabase, processingRange, filedatabase )
 
+    use BitStuff, only: isBitSet
     use dates_module, only: utc_to_yyyymmdd
     use DirectWrite_m, only: DirectData_T, &
       & AddDirectToDatabase, Dump, SetupNewDirect
@@ -100,11 +103,12 @@ contains
       & mlspcf_l2dgm_start, mlspcf_l2dgm_end, mlspcf_l2fwm_full_start, &
       & mlspcf_l2fwm_full_end, &
       & mlspcf_l2dgg_start, mlspcf_l2dgg_end
-    use MLSStrings, only: hhmmss_value, lowerCase
+    use MLSStrings, only: hhmmss_value, lowerCase, trim_safe
     use MLSStringLists, only: Array2List, catLists, SWITCHDETAIL
     use MLSSignals_m, only: INSTRUMENT
     use MoreTree, only: GET_FIELD_ID, GET_SPEC_ID
-    use OUTPUT_M, only: BLANKS, OUTPUT, revertoutput, switchOutput
+    use OUTPUT_M, only: BLANKS, OUTPUT, outputCalendar, &
+      & revertoutput, switchOutput
     use PFAData_m, only: Get_PFAdata_from_l2cf, Flush_PFAData, Make_PFAData, &
       & Read_PFAData, Write_PFAData
     use PFADataBase_m, only: Process_PFA_File
@@ -138,6 +142,8 @@ contains
 
     ! Local variables
     character(len=BO_NAMELEN), dimension(BO_NAMEDIMS) :: BO_names
+    type (l1bData_T)                      :: BO_stat
+    character(len=BONAMELISTLEN) :: BO_today
     logical, parameter :: DEEBUG = .false.
     integer :: DetailReduction
     integer :: Details             ! How much info about l1b files to dump
@@ -550,15 +556,37 @@ contains
       call GetHDF5Attribute( L1BFile, 'BO_name', BO_names )
       call Array2List ( BO_names, BrightObjects )
       call h5gclose_f ( L1BFile%fileID%grp_id, ReturnStatus )
+      ! Now were any bright objects visible today?
+      call ReadL1BData ( L1BFile,'/GHz/BO_stat', BO_stat, noMAFs, &
+        & l1bflag, NeverFail= .true. )
+      BO_today = ' '
+      do i=0, size(BO_names)
+        if ( len_trim(BO_names( max(i,1) )) < 1 ) cycle
+        if ( any( isBitSet( BO_stat%intField(1, :, :), i ) ) ) then
+          if ( i == 0 ) then
+            BO_today = catLists( BO_today, 'moon(sp.port)', inseparator=' ')
+          else
+            BO_today = catLists( BO_today, trim(BO_names(i)), inseparator=' ')
+          endif
+        endif
+      enddo
       if ( .not. wasAlreadyOpen ) call mls_CloseFile(L1BFile)
+      call DeallocateL1BData ( BO_stat )
+      if ( OUTPUTTHISMONTHSCAL ) then
+        call outputCalendar( l2pcf%startutc, dateNote=BO_today )
+      else
+        call output ( 'Bright objects today:', advance='yes' )
+        call output ( 'trim_safe(BO_today)', advance='yes' )
+      endif
     endif
 
     if ( specialDumpFile /= ' ' ) &
       & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
     ! Perhaps dump global settings
     if ( details > -4 ) &
-      & call dump_global_settings( processingRange, filedatabase, DirectDatabase, &
-      & ForwardModelConfigDatabase, LeapSecFileName, details-detailReduction )
+      & call dump_global_settings( processingRange, filedatabase, &
+      & DirectDatabase, ForwardModelConfigDatabase, &
+      & LeapSecFileName, details-detailReduction )
 
     if ( APrioriFiles%dao // AprioriFiles%ncep // AprioriFiles%geos5 &
       &  == ' ' ) then
@@ -686,12 +714,12 @@ contains
       type(ForwardModelConfig_T), dimension(:), pointer :: &
         & ForwardModelConfigDatabase
 
-      ! The following dtermines the level of detail to expose:
+      character(len=*), intent(in) :: LeapSecFileName
+      ! The following determines the level of detail to expose:
       ! -1 Skip even counterMAF
       ! -2 Skip all but name (default)
       ! >0 Dump even multi-dim arrays
       integer, intent(in) :: details
-      character(len=*) LeapSecFileName
 
       ! Local
       logical, parameter :: countEmpty = .true.
@@ -976,6 +1004,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.125  2007/08/17 00:32:41  pwagner
+! Unneeded changes
+!
 ! Revision 2.124  2007/06/21 00:55:22  vsnyder
 ! Remove tabs, which are not part of the Fortran standard
 !
