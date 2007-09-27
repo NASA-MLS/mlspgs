@@ -74,8 +74,8 @@ if ( field%noYear ) then
 end if
 if ( any(field%heights <= 0._rgr) ) then
   tmpalt = field%missingValue
-  call output( 'Warning--interpolating grid ' // trim(field%description) // &
-    & ' contains negative or 0 values', advance='yes' )
+    call MLSMessage ( MLSMSG_Warning, ModuleName, 'interpolating grid ' // &
+      & trim(field%description) // ' contains negative or 0 values' )
 else
   tmpalt = -log10(field%heights)
 endif
@@ -199,6 +199,9 @@ call deallocate_test ( tmpdate, 'tmpdate', moduleName )
 call deallocate_test ( tmpalt, 'tmpalt', moduleName )
 deallocate ( hcube )
 ! $Log$
+! Revision 2.6  2007/09/27 21:53:59  pwagner
+! Uses MLSMessage to warn instead of output
+!
 ! Revision 2.5  2007/03/07 01:22:46  pwagner
 ! Side-step another log of non-positive args case lf6.2 caught
 !
