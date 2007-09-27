@@ -18,6 +18,7 @@ module L3ascii ! Collections of Hugh's subroutines to handle TYPE GriddedData_T
     & V_is_altitude, V_is_GPH, V_is_theta, RGR
   use LEXER_CORE, only: PRINT_SOURCE
   USE MLSCommon, only: R4, R8, LineLen, NameLen, DEFAULTUNDEFINEDVALUE
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
   USE MLSStrings, only: Capitalize, &
     & Count_words, ReadCompleteLineWithoutComments
   USE output_m, only: output, outputNamedValue
@@ -860,6 +861,9 @@ end module L3ascii
 
 !
 ! $Log$
+! Revision 2.32  2007/09/27 21:57:26  pwagner
+! Uses MLSMessage to warn instead of output
+!
 ! Revision 2.31  2007/06/21 00:49:52  vsnyder
 ! Remove tabs, which are not part of the Fortran standard
 !
