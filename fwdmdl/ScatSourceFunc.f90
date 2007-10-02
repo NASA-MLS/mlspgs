@@ -224,10 +224,10 @@ contains
 !     COMPUTE TB AT ANGLES U
 !     INTEGRATION FROM TOP TO BOTTOM
 !------------------------------------
-      DO 1100 I=NU/2+1,NU
+      DO I=NU/2+1,NU
          X2 = U(I)*U(I)
          UEFF = ABS(U(I))
-         DO 1100 K=L-1,1,-1
+         DO K=L-1,1,-1
             WK=0._rk
             WW0=0._rk
                WK=WK+TSCAT(I,K)*W0(K)
@@ -237,8 +237,8 @@ contains
 
             TB(I,K)=TB(I,K+1)*EXP(-dTAU(K)/UEFF)+           &
      &              (1._rk-EXP(-dTAU(K)/UEFF))*tsource
-
- 1100 CONTINUE
+         END DO
+      END DO
 
 !-----------------------------------------------------------------------
 !     DETERMINE SURFACE REFLECTION 
@@ -255,10 +255,10 @@ contains
 !     COMPUTE TB AT ANGLES U
 !     INTEGRATION FROM BOTTOM TO TOP
 !------------------------------------
-      DO 1200 I=1,NU/2
+      DO I=1,NU/2
         X2 = U(I)*U(I)
         UEFF = ABS(U(I))
-        DO 1200 K=1,L-1
+        DO K=1,L-1
           WK=0._rk
            WW0=0._rk
               WK=WK+TSCAT(I,K)*W0(K)
@@ -268,8 +268,8 @@ contains
 
            TB(I,K+1)=TB(I,K)*EXP(-dTAU(K)/UEFF)+      &
      &               (1._rk-EXP(-dTAU(K)/UEFF))*tsource
-
- 1200 CONTINUE
+        END DO
+      END DO
 
 !------------------------------------
 !     CHECK CONVERGENCE
@@ -385,6 +385,9 @@ contains
 end module ScatSourceFunc
 
 ! $Log$
+! Revision 2.14  2007/07/25 20:19:42  vsnyder
+! Delete USE for unreferenced entities and declarations for unused variables
+!
 ! Revision 2.13  2005/06/22 18:08:19  pwagner
 ! Reworded Copyright statement, moved rcs id
 !

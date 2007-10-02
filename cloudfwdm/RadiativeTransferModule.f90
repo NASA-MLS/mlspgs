@@ -249,10 +249,10 @@ contains
 !     COMPUTE TB AT ANGLES U
 !     INTEGRATION FROM TOP TO BOTTOM
 !------------------------------------
-      DO 1100 I=NU/2+1,NU
+      DO I=NU/2+1,NU
          X2 = U(I)*U(I)
          UEFF = ABS(U(I))
-         DO 1100 K=L,1,-1
+         DO K=L,1,-1
             WK=0._r8
             WW0=0._r8
             DO ISPI=1,N
@@ -264,8 +264,8 @@ contains
 
             TB(I,K)=TB(I,K+1)*EXP(-dTAU(K)/UEFF)+           &
       &             (1._r8-EXP(-dTAU(K)/UEFF))*tsource
-
- 1100 CONTINUE
+        END DO
+      END DO 
 
 !-----------------------------------------------------------------------
 !     DETERMINE SURFACE REFLECTION 
@@ -279,10 +279,10 @@ contains
 !     COMPUTE TB AT ANGLES U
 !     INTEGRATION FROM BOTTOM TO TOP
 !------------------------------------
-      DO 1200 I=1,NU/2
+      DO I=1,NU/2
         X2 = U(I)*U(I)
         UEFF = ABS(U(I))
-        DO 1200 K=1,L
+        DO K=1,L
            WK=0._r8
            WW0=0._r8
            DO ISPI=1,N
@@ -294,23 +294,21 @@ contains
 
            TB(I,K+1)=TB(I,K)*EXP(-dTAU(K)/UEFF)+      &
       &              (1._r8-EXP(-dTAU(K)/UEFF))*tsource
-
- 1200 CONTINUE
+        END DO
+      END DO
 
 !------------------------------------
 !     CHECK CONVERGENCE
 !------------------------------------
       IND=0
-      X2=0._r8
+      X2=0.0_r8
       DO J=1,NU/2
          X2=X2+(XTB(J)-TB(J,L))**2/NU
          IF (ABS(XTB(J)-TB(J,L)) .GT. DELTA) IND=1
       ENDDO
  
       IF (IND.NE.0 .AND. ITS.LT.ITS0) THEN
-      DO J=1,NU
-         XTB(J)=TB(J,L)
-      ENDDO
+         XTB(1:NU)=TB(1:NU,L)
          IF (ITS .GT. 1) THEN
 !            WRITE(*,*)'ITERATION=',ITS-1,'  EPS. AT TOP OF ATMOS=',X2
          ELSE
@@ -325,34 +323,34 @@ contains
 !     BY PROJECTING TB AT EACH TANGENT HEIGHT ZT
 !     INTEGRATION FROM TOP TO BOTTOM
 !-----------------------------------------------------------
-      DO 2000 ITT=1,NT
-      DO 2000 K=1,L-LMIN(ITT)
-         K1=L-K
-         UU=UAVE(ITT,K1)                 ! INCIDENT ANGLE AT ZT(ITT) 
-         CALL LOCATE(U1,NU/2,NU,-UU,JM)  ! INTERPOLATE TSCAT ONTO UU
-         WK=0._r8
-         WW0=0._r8
-         DO ISPI=1,N
-            WK1=W0(ISPI,K1)*( (TSCAT(ISPI,JM+NU/2+1,K1)*(UU-U(JM))+  &
-      &         TSCAT(ISPI,JM+NU/2,K1)*(U(JM+1)-UU))/                &
-      &         (U(JM+1)-U(JM)) )
-            WK=WK+WK1
-            WW0=WW0+W0(ISPI,K1)
-         END DO
+      DO ITT=1,NT
+        DO K=1,L-LMIN(ITT)
+          K1=L-K
+          UU=UAVE(ITT,K1)                 ! INCIDENT ANGLE AT ZT(ITT)  
+          CALL LOCATE(U1,NU/2,NU,-UU,JM)  ! INTERPOLATE TSCAT ONTO UU
+          WK=0._r8
+          WW0=0._r8
+          DO ISPI=1,N
+             WK1=W0(ISPI,K1)*( (TSCAT(ISPI,JM+NU/2+1,K1)*(UU-U(JM))+  &
+      &          TSCAT(ISPI,JM+NU/2,K1)*(U(JM+1)-UU))/                &
+      &          (U(JM+1)-U(JM)) )
+             WK=WK+WK1
+             WW0=WW0+W0(ISPI,K1)
+          END DO
 
-         D1= TEMP(K1)
+          D1= TEMP(K1)
 ! The second term takes into account temperature slope  (causing error < 0.1K)
-         D2= (TEMP(K1+1)-TEMP(K1))*dTau(K1)/UU/2
-         tsource=(1._r8-WW0)*D1+WK 
+          D2= (TEMP(K1+1)-TEMP(K1))*dTau(K1)/UU/2
+          tsource=(1._r8-WW0)*D1+WK 
 
-         IF (ICON .eq. 3) THEN
-            tsource=D1 ! NO CLOUD AFTER TANGENT POINT
-         ENDIF
+          IF (ICON .eq. 3) THEN
+             tsource=D1 ! NO CLOUD AFTER TANGENT POINT
+          ENDIF
 
-         TT(ITT,K1)=TT(ITT,K1+1)*EXP(-dTAU(K1)/UU)+  &
-      &        (1._r8-EXP(-dTAU(K1)/UU))*tsource - D2*(1._r8-WW0)
-
- 2000 CONTINUE
+          TT(ITT,K1)=TT(ITT,K1+1)*EXP(-dTAU(K1)/UU)+  &
+      &         (1._r8-EXP(-dTAU(K1)/UU))*tsource - D2*(1._r8-WW0)
+        END DO
+      END DO
  
 !---------------------------------------------
 !     DETERMINE SURFACE REFLECTION 
@@ -360,7 +358,7 @@ contains
 !     TT(ITT,LMIN(ITT)) IS PASSED ALONG
 !----------------------------------------------
 
-      DO 2500 ITT=1,NT
+      DO ITT=1,NT
          IF(LMIN(ITT).EQ.1) THEN
             CALL LOCATE(U1,NU/2,NU,-UAVE(ITT,1),JM) 
             RSAVG=(RS(JM+1)*(UAVE(ITT,1)-U(JM)) +                 &
@@ -368,41 +366,37 @@ contains
             TT(ITT,1)=(TB0(JM+1)*(UAVE(ITT,1)-U(JM)) +            &
       &               TB0(JM)*(U(JM+1)-UAVE(ITT,1)))/(U(JM+1)-U(JM))
          ENDIF
- 2500 CONTINUE
+      END DO
 
 !-----------------------------------------
 !     NOW INTEGRATION TT FROM BOTTOM UP
 !-----------------------------------------
-      DO 3000 ITT=1,NT
-      DO 3000 K=LMIN(ITT),L
-         UU=UAVE(ITT,K)
-         CALL LOCATE(U1,NU/2,NU,UU,JM)      ! INTERPOLATE TSCAT ONTO UU
-         WK=0._r8
-         WW0=0._r8
-         DO ISPI=1,N
-            WK1=W0(ISPI,K)*(TSCAT(ISPI,JM+1,K)*(UU-U(JM))+     &
-      &         TSCAT(ISPI,JM,K)*(U(JM+1)-UU))/(U(JM+1)-U(JM)) 
-            WK=WK+WK1
-            WW0=WW0+W0(ISPI,K)
-         END DO
+      DO ITT=1,NT
+        DO K=LMIN(ITT),L
+          UU=UAVE(ITT,K)
+          CALL LOCATE(U1,NU/2,NU,UU,JM)      ! INTERPOLATE TSCAT ONTO UU
+          WK=0._r8
+          WW0=0._r8
+          DO ISPI=1,N
+             WK1=W0(ISPI,K)*(TSCAT(ISPI,JM+1,K)*(UU-U(JM))+     &
+      &          TSCAT(ISPI,JM,K)*(U(JM+1)-UU))/(U(JM+1)-U(JM)) 
+             WK=WK+WK1
+             WW0=WW0+W0(ISPI,K)
+          END DO
 
-         D1= TEMP(K)
+          D1= TEMP(K)
 ! The second term takes into account temperature slope (causing error < 0.1K)
-         D2= (TEMP(K+1)-TEMP(K))*dTau(K1)/UU/2
-         tsource=(1._r8-WW0)*D1+WK 
-         TT(ITT,K+1)=TT(ITT,K)*EXP(-dTAU(K)/UU)+  &
-      &        (1._r8-EXP(-dTAU(K)/UU))*tsource - D2*(1._r8-WW0)
-
- 3000 CONTINUE
+          D2= (TEMP(K+1)-TEMP(K))*dTau(K1)/UU/2
+          tsource=(1._r8-WW0)*D1+WK 
+          TT(ITT,K+1)=TT(ITT,K)*EXP(-dTAU(K)/UU)+  &
+      &         (1._r8-EXP(-dTAU(K)/UU))*tsource - D2*(1._r8-WW0)
+        END DO
+      END DO
 
 !---------------------------------------------------------------------
-      DO K=1,L
-        TT(NT+1,K)=TB(NU,K)              ! OUTPUT ZENITH LOOKING TB 
-      ENDDO
+      TT(NT+1,1:L)=TB(NU,1:L)              ! OUTPUT ZENITH LOOKING TB 
 
-      do i=1,nt+1
-        tt(i,L+1)=tt(i,L)
-      enddo
+      tt(1:nt+1,L+1)=tt(1:nt+1,L)
 !---------------------------------------------------------------------
  
       END SUBROUTINE RADXFER
@@ -419,6 +413,9 @@ contains
 end module RadiativeTransferModule
 
 ! $Log$
+! Revision 1.18  2007/07/25 21:50:34  vsnyder
+! Replace tabs by spaces because tabs are not standard
+!
 ! Revision 1.17  2005/06/22 18:27:38  pwagner
 ! Cant have access declared outside module scope
 !
