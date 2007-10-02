@@ -1199,8 +1199,7 @@ contains
     if ( present(skipPFA) ) dumpPFA = .not. skipPFA
 
     s1 = (config%sidebandStart+3)/2; s2 = (config%sidebandStop+3)/2
-    call output ( '  Forward Model Config Name: ' )
-    call display_string ( config%name )
+    call display_string ( config%name, before='  Forward Model Config Name: ' )
     if ( config%where /= null_tree ) then
       call output ( ' defined at ' )
       call print_source ( source_ref(config%where) )
@@ -1362,6 +1361,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.97  2007/06/25 20:34:46  vsnyder
+! Replace tabs by spaces, since tabs are nonstandard
+!
 ! Revision 2.96  2006/11/30 23:32:17  vsnyder
 ! Use SIZE() instead of ASSOCIATED for spectroscopy derivative stuff
 !

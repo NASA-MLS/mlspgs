@@ -434,9 +434,10 @@ contains
       ! Things are unphysical somewhere.  Replace ref_corr by 1.0
       ! wherever it's less than 1.0.  Alternatively, the average
       ! of neighbors, or a value interpolated from neighbors could be used.
-      call MLSMessage ( MLSMSG_Warning, moduleName, 'Ref_Corr fixup needed' )
+      call MLSMessage ( MLSMSG_Warning, moduleName, &
+        & 'Ref_Corr fixup needed.  Re-run with -Srcfx to see details.' )
       call dumpArrays
-      call output ( 'Ref_Corr fixed at' )
+      if ( rcfx /= 0 ) call output ( 'Ref_Corr fixed at' )
       do j = 2, no_ele-1
         if ( ref_corr(j) < 1.0 ) then
           ref_corr(j) = 1.0
@@ -608,6 +609,9 @@ contains
 end module REFRACTION_M
 
 ! $Log$
+! Revision 2.33  2007/09/07 22:13:00  vsnyder
+! Don't put an upper bound on the refractive correction
+!
 ! Revision 2.32  2007/09/07 03:00:32  vsnyder
 ! Use Math 77 zero finder
 !
