@@ -28,6 +28,9 @@ Switches (set by -S option in mlsl2's command line):
   fac =>    L_infty norms of blocks of factors of normal equations during Newton iterations
   FAC =>    Factors of normal equations during Newton iterations
   filt =>   Dump filter shapes after reading them
+  fmnan =>  Check forward model output for NaN
+  fmNaN =>  Check forward model output for NaN and print if so
+  FMNAN =>  Check forward model output for NaN and print and stop if so
   fmt2 =>   mean & standard deviation for timing FullForwardModel at each chunk
   fmt1 =>   mean & standard deviation for timing FullForwardModel at last chunk
   fnorm =>  Dump the individual contributions to fnorm
@@ -85,6 +88,7 @@ Switches (set by -S option in mlsl2's command line):
   ptg =>    Dump full forward model pointing angles
   qtmp =>   Quantity templates being constructed, destroyed
   rad =>    Radiances in ForwardModelInterface
+  rcfx =>   Print RefCor fixup details
   red[n] => Reduce dumpCommand details level by n (n=2 by default)
   reg =>    Dump regularization matrix
   rtv =>    Dump retrieval configuration
@@ -98,6 +102,7 @@ Switches (set by -S option in mlsl2's command line):
   spa =>    Sparsity structure of fac, jac, neq
   spec =>   Spectroscopy catalog
   sps =>    Species data in Get_Species_Data
+  strb =>   Dump state vector if retriever sees trouble
   svec =>   Final state vector after Newton iteration
   taul =>   Print LBL Tau in FullForwardModel
   taup =>   Print PFA Tau in FullForwardModel
@@ -161,6 +166,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.67  2007/08/23 22:19:06  pwagner
+ 'walk' switch prints walkback fo calling stack even for warnings
+
  Revision 1.66  2007/03/23 00:06:40  pwagner
  Mentions desstroy switch
 
