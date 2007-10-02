@@ -119,7 +119,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_APRIORI            = s_anygoodvalues + 1
   integer, parameter :: S_BINSELECTOR        = s_apriori + 1
   integer, parameter :: S_BOOLEAN            = s_binSelector + 1
-  integer, parameter :: S_CHUNKDIVIDE        = s_boolean + 1
+  integer, parameter :: S_CHECKPOINT         = s_boolean + 1
+  integer, parameter :: S_CHUNKDIVIDE        = s_checkpoint + 1
   integer, parameter :: S_COLUMNSCALE        = s_chunkDivide + 1
   integer, parameter :: S_COMBINECHANNELS    = s_columnScale + 1
   integer, parameter :: S_CONCATENATE        = s_combineChannels + 1
@@ -332,6 +333,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_apriori) =              add_ident ( 'apriori' )
     spec_indices(s_binSelector) =          add_ident ( 'binSelector' )
     spec_indices(s_Boolean) =              add_ident ( 'boolean' )
+    spec_indices(s_checkpoint) =           add_ident ( 'checkpoint' )
     spec_indices(s_chunkDivide) =          add_ident ( 'chunkDivide' )
     spec_indices(s_columnScale) =          add_ident ( 'columnScale' )
     spec_indices(s_combineChannels) =      add_ident ( 'combineChannels' )
@@ -1216,6 +1218,11 @@ contains ! =====     Public procedures     =============================
              begin, f+f_xStar, s+s_vector, n+n_field_spec, &
              begin, f+f_yStar, s+s_vector, n+n_field_spec, &
              ndp+n_spec_def /), continue=.true. )
+    call make_tree ( (/ & ! Must be AFTER s_vector
+      begin, s+s_checkpoint, &
+             begin, f+f_fileName, t+t_string, nr+n_field_type, &
+             begin, f+f_vectors, s+s_vector, nr+n_field_spec, &
+             ndp+n_spec_def /) )
     call make_tree ( (/ & ! Must be AFTER s_forwardModel, s_hGrid, s_pfaData,
                           ! s_makePFA, s_vector, s_vectorTemplate, etc.
       begin, s+s_dump, &
@@ -1287,6 +1294,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_aprioriFraction, s+s_vector, n+n_field_spec, &
              begin, f+f_aprioriScale, t+t_numeric, n+n_field_type, &
              begin, f+f_average, s+s_matrix, n+n_field_spec, &
+             begin, f+f_checkpoint, t+t_boolean, n+n_field_type, &
              begin, f+f_columnScale, t+t_scale, n+n_field_type, &
              begin, f+f_covariance, s+s_matrix, n+n_field_spec, &
              begin, f+f_covSansReg, t+t_boolean, n+n_field_type, &
@@ -1470,9 +1478,10 @@ contains ! =====     Public procedures     =============================
              s+s_load, s+s_matrix, s+s_negativePrecision, s+s_phase, &
              s+s_populateL2PCBin, s+s_restrictRange, s+s_snoop, s+s_subset, &
              s+s_time, s+s_transfer, s+s_updateMask, s+s_vector, n+n_section, &
-      begin, z+z_retrieve, s+s_dump, s+s_dumpBlocks, s+s_flagCloud, s+s_flushPFA, &
-             s+s_leakcheck, s+s_matrix, s+s_restrictRange, s+s_retrieve, &
-             s+s_sids, s+s_snoop, s+s_subset, s+s_time, s+s_updateMask, &
+      begin, z+z_retrieve, s+s_checkpoint, s+s_dump, s+s_dumpBlocks, &
+             s+s_flagCloud, s+s_flushPFA, s+s_leakcheck, s+s_matrix, &
+             s+s_restrictRange, s+s_retrieve, s+s_sids, s+s_snoop, &
+             s+s_subset, s+s_time, s+s_updateMask, &
              n+n_section, &
       begin, z+z_join, s+s_time, s+s_label, s+s_l2gp, s+s_l2aux, &
                        s+s_directWrite, n+n_section, &
@@ -1501,6 +1510,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.456  2007/10/02 22:51:54  vsnyder
+! Add checkpoint stuff
+!
 ! Revision 2.455  2007/08/23 22:17:05  pwagner
 ! manipulation Fills can now use statistical functions
 !
