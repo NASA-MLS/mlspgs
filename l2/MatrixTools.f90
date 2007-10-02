@@ -112,6 +112,7 @@ contains ! =====  Public procedures  ===================================
     integer, dimension(:), pointer :: RowQIs  ! Which row quantities?
 
     logical :: AllMatrices   ! Dump all matrices
+    logical :: Fail          ! No matrix to get from database
     logical :: Stru          ! Dump sparsity structure instead of values
 
     type (VectorValue_T), pointer :: COLQ ! Row quantity
@@ -228,7 +229,12 @@ contains ! =====  Public procedures  ===================================
 
     do matrixIndex = matrix1, matrixEnd
       ! Identify the matrix
-      call GetFromMatrixDatabase ( matrices(matrixIndex), matrix )
+      call GetFromMatrixDatabase ( matrices(matrixIndex), matrix, fail )
+      if ( fail ) then
+        call output ( matrixIndex, &
+          & before='No matrix to get from database at index ', advance='yes' )
+        cycle
+      end if
       call output ( 'Dump of ' )
       if ( diagonal ) call output ( 'diagonal of ' )
       call display_string ( matrix%name, advance='yes' )
@@ -765,6 +771,9 @@ contains ! =====  Public procedures  ===================================
 end module MatrixTools
 
 ! $Log$
+! Revision 1.24  2006/09/21 18:48:07  pwagner
+! Reduce level of dumps in SIDS version
+!
 ! Revision 1.23  2006/09/20 00:43:21  vsnyder
 ! Cannonball polishing
 !
