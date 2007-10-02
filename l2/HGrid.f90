@@ -72,7 +72,7 @@ contains ! =====     Public Procedures     =============================
     use MLSStringLists, only: SwitchDetail
     use MoreTree, only: GET_BOOLEAN
     use STRING_TABLE, only: GET_STRING
-    use TOGGLES, only: GEN, TOGGLE, SWITCHES
+    use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
 
@@ -145,7 +145,8 @@ contains ! =====     Public Procedures     =============================
     call nullifyHGrid ( hgrid ) ! for Sun's rubbish compiler
     
     hGrid%name = name
-    if ( toggle(gen) ) call trace_begin ( "CreateHGridFromMLSCFInfo", root )
+    if ( toggle(gen) .and. levels(gen) > 1 ) &
+      & call trace_begin ( "CreateHGridFromMLSCFInfo", root )
 
     got_field = .false.
     interpolationFactor = 1.0
@@ -298,12 +299,13 @@ contains ! =====     Public Procedures     =============================
 
       call deallocateL1BData ( l1bField ) ! Avoid memory leaks
     end select
-    
-    if ( toggle(gen) ) call trace_end ( "CreateHGridFromMLSCFInfo" )
 
     if ( switchDetail(switches, 'geom') >= 0 .and. .not. mySuppressGeometryDump ) &
       & call DumpChunkHGridGeometry ( hGrid, chunk, &
       & trim(instrumentModuleName), filedatabase )
+
+    if ( toggle(gen) .and. levels(gen) > 1 ) &
+      & call trace_end ( "CreateHGridFromMLSCFInfo" )
 
   end function CreateHGridFromMLSCFInfo
 
@@ -2177,11 +2179,9 @@ contains ! =====     Public Procedures     =============================
       end do
     endif
 
-   call deAllocate_Test ( LowerOverlaps, &
-     & 'LowerOverlaps', ModuleName )
-    if ( specialDumpFile /= ' ' ) &
-      & call revertOutput
-    if ( toggle(gen) ) call trace_end ( "MLSL2Fill" )
+    call deAllocate_Test ( LowerOverlaps, 'LowerOverlaps', ModuleName )
+    if ( specialDumpFile /= ' ' ) call revertOutput
+    if ( toggle(gen) ) call trace_end ( "ComputeAllHGridOffsets" )
   end subroutine ComputeAllHGridOffsets
 
   ! ------------------------------------- ComputeNextChunksHGridOffsets --
@@ -2338,6 +2338,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.92  2007/10/02 22:40:51  vsnyder
+! Increase trace level for CreateHGridFromMLSCFInfo
+!
 ! Revision 2.91  2007/06/21 00:54:07  vsnyder
 ! Remove tabs, which are not part of the Fortran standard
 !
