@@ -175,7 +175,6 @@ contains
     type(matrix_SPD_T), target :: MyCovariance    ! for OutputCovariance to point at
     type(matrix_T), target :: MyJacobian          ! for Jacobian to point at
     real(rv) :: MuMin                   ! Smallest shrinking of dx before change direction
-    character(len=2*len(switches)) :: MySwitches
     logical :: NegateSD                 ! Flip output error negative for poor information
     type(matrix_T), pointer :: OutputAverage      ! Averaging Kernel
     type(matrix_SPD_T), pointer :: OutputCovariance    ! Covariance of the sol'n
@@ -191,6 +190,8 @@ contains
     integer :: Spec                     ! s_matrix, s_subset or s_retrieve ... 
     type(vector_T), pointer :: State    ! The state vector
     integer :: Status
+    integer :: SwitchLen                ! LEN_TRIM(Switches) on entry
+    integer :: SwitchLenCur             ! LEN_TRIM(Switches) after command processing
     real :: T0, T1, T2, T3              ! for timing
     type(matrix_T) :: Tikhonov          ! Matrix for Tikhonov regularization
     logical :: TikhonovApriori          ! Regularization is to apriori, not
@@ -268,6 +269,9 @@ contains
     snoopComment = ' '           ! Ditto
     snoopKey = 0
     snoopLevel = 1               ! Ditto
+    switchLen = len_trim(switches)
+    switchLenCur = switchLen + 1
+    switches(switchLenCur:switchLenCur) = ','
     timing = section_times
     do j = firstVec, lastVec ! Make the vectors in the database initially empty
       nullify ( v(j)%quantities, v(j)%template%quantities )
@@ -344,7 +348,6 @@ contains
         maxJacobians = defaultMaxJ
         method = defaultMethod
         muMin = defaultMuMin
-        mySwitches = ''
         negateSD = .false.
         precisionFactor = 0.5_rv
         toleranceA = defaultToleranceA
@@ -439,7 +442,9 @@ contains
           case ( f_state )
             state => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_switches )
-            call get_string ( sub_rosa(subtree(2,son)), mySwitches, strip=.true. )
+            call get_string ( sub_rosa(subtree(2,son)), switches(switchLenCur+1:), strip=.true. )
+            switchLenCur = len_trim(switches) + 1
+            switches(switchLenCur:switchLenCur) = ','
           case ( f_aprioriScale, f_fuzz, f_lambda, f_maxJ, f_muMin, &
             &    f_toleranceA, f_toleranceF, f_toleranceR )
             call expr ( subtree(2,son), units, value, type )
@@ -497,7 +502,6 @@ contains
           cycle
         endif
 
-        mySwitches = trim(mySwitches) // ',' // switches
         if ( got(f_apriori) .neqv. got(f_covariance) ) &
           & call announceError ( bothOrNeither, f_apriori, f_covariance )
         if ( diagonal .and. .not. got(f_covariance) ) &
@@ -554,7 +558,7 @@ contains
         end if
         if ( error == 0 ) then
 
-          if ( index ( mySwitches, 'rtv' ) /= 0 ) call DumpRetrievalConfig
+          if ( index ( switches, 'rtv' ) /= 0 ) call DumpRetrievalConfig
 
           ! Create the Jacobian matrix
           if ( got(f_jacobian) ) then
@@ -712,8 +716,10 @@ contains
       end do
 
     end do ! i_sons = 2, nsons(root) - 1
-    if ( specialDumpFile /= ' ' ) &
-      & call revertOutput
+
+    if ( specialDumpFile /= ' ' ) call revertOutput
+
+    switches(switchLen+1:) = '' ! Clobber switches from retrieve command
     if ( toggle(gen) ) call trace_end ( "Retrieve" )
     if ( timing ) call sayTime
 
@@ -1295,6 +1301,7 @@ contains
       logical :: D_Reg    ! 'reg' Tikhonov regularization
       logical :: D_Sca    ! 'sca' Newton method's scalars
       logical :: D_Spa    ! 'spa' Sparsity structure of matrices
+      logical :: D_Strb   ! 'strb' State vector iff we get into trouble
       logical :: D_Svec   ! 'svec' Final state vector
       logical :: D_Vir    ! 'vir' Virgin matrix, before KTK
       logical :: D_Xvec   ! 'xvec' Current state vector
@@ -1349,33 +1356,34 @@ contains
       integer :: TikhonovRows           ! How many rows of Tiknonov regularization?
 
       call MLSMessageCalls( 'push', constantName='NewtonoanSolver' )
-      ! Set flags from mySwitches
-      d_atb = index ( mySwitches, 'atb' ) /= 0
-      d_col = index(mySwitches,'col') /= 0
-      d_cov = index(mySwitches,'cov') /= 0
-      d_diag = index(mySwitches,'diag') /= 0
-      d_dvec = index(mySwitches,'dvec') /= 0
-      d_fac_f = index(mySwitches,'FAC') /= 0
-      d_fac_n = index(mySwitches,'fac') /= 0
-      d_fnorm = index ( mySwitches, 'fnorm' ) /= 0
-      d_gvec = index(mySwitches,'gvec') /= 0
-      d_jac_f = index(mySwitches,'JAC') /= 0
-      d_jac_n = index(mySwitches,'jac') /= 0
-      d_mas = index ( mySwitches, 'mas' ) /= 0
-      d_mst = index(mySwitches,'mst') /= 0
-      d_ndb_0 = index(mySwitches,'ndb') /= 0
-      d_ndb_1 = index(mySwitches,'Ndb') /= 0
-      d_ndb_2 = index(mySwitches,'NDB') /= 0
-      d_neq_f = index(mySwitches,'NEQ') /= 0
-      d_neq_n = index(mySwitches,'neq') /= 0
-      d_nin = index(mySwitches,'nin') /= 0
-      d_nwt = index(mySwitches,'nwt') /= 0
-      d_reg = index(mySwitches,'reg') /= 0
-      d_sca = index(mySwitches,'sca') /= 0
-      d_spa = index(mySwitches,'spa') /= 0
-      d_svec = index(mySwitches,'svec') /= 0
-      d_vir = index(mySwitches,'vir') /=0
-      d_xvec = index(mySwitches,'xvec') /= 0
+      ! Set flags from switches
+      d_atb = index ( switches, 'atb' ) /= 0
+      d_col = index(switches,'col') /= 0
+      d_cov = index(switches,'cov') /= 0
+      d_diag = index(switches,'diag') /= 0
+      d_dvec = index(switches,'dvec') /= 0
+      d_fac_f = index(switches,'FAC') /= 0
+      d_fac_n = index(switches,'fac') /= 0
+      d_fnorm = index ( switches, 'fnorm' ) /= 0
+      d_gvec = index(switches,'gvec') /= 0
+      d_jac_f = index(switches,'JAC') /= 0
+      d_jac_n = index(switches,'jac') /= 0
+      d_mas = index ( switches, 'mas' ) /= 0
+      d_mst = index(switches,'mst') /= 0
+      d_ndb_0 = index(switches,'ndb') /= 0
+      d_ndb_1 = index(switches,'Ndb') /= 0
+      d_ndb_2 = index(switches,'NDB') /= 0
+      d_neq_f = index(switches,'NEQ') /= 0
+      d_neq_n = index(switches,'neq') /= 0
+      d_nin = index(switches,'nin') /= 0
+      d_nwt = index(switches,'nwt') /= 0
+      d_reg = index(switches,'reg') /= 0
+      d_sca = index(switches,'sca') /= 0
+      d_spa = index(switches,'spa') /= 0
+      d_strb = index(switches,'strb') /= 0
+      d_svec = index(switches,'svec') /= 0
+      d_vir = index(switches,'vir') /=0
+      d_xvec = index(switches,'xvec') /= 0
 
       call time_now ( t1 )
       call allocate_test ( fmStat%rows, jacobian%row%nb, 'fmStat%rows', &
@@ -2027,8 +2035,12 @@ NEWT: do ! Newtonian iteration
             abandoned = .true.
             call dump ( matrixStatus, 'matrixStatus [block, row in trouble] = ' )
             if ( d_mst ) then
-              call dump ( normalEquations%m%block(matrixStatus(1),matrixStatus(1)), &
-              & name='Offending block', details=9 )
+              ! Dump the structure if we haven't done so already
+              if ( .not. d_spa ) call dump_struct ( normalEquations%m, &
+                  & 'Sparseness structure of Normal equations blocks:' )
+!               call dump ( normalEquations%m%block(matrixStatus(1),matrixStatus(1)), &
+!               & name='Offending block', details=9 )
+              call dump ( normalEquations%m, name='Normal equations', details=9 )
               call dump ( v(columnScaleVector), name='Column scale', details=9 )
               call dump ( v(x), name='Current state', details=9 )
               if ( got(f_lowBound) ) call dump ( lowBound, name='Low Bound', details=9 )
@@ -2040,6 +2052,7 @@ NEWT: do ! Newtonian iteration
             call output ( &
               & 'Consider applying or increasing the weight of Tikhonov regularization for the block', &
               & advance='yes' )
+            call output ( 'Re-run with -Smst to see more details', advance='yes' )
             call MLSMessage ( MLSMSG_Warning, ModuleName, &
               & 'Retrieval abandoned due to problem factoring normalEquations in evalJ' )
             exit NEWT
@@ -2238,6 +2251,7 @@ NEWT: do ! Newtonian iteration
 
           if ( ieee_is_nan ( aj%fnorm ) ) then
             abandoned = .true.
+            if ( d_strb ) call dump ( v(x), name='Current state', details=9 )
             call MLSMessage ( MLSMSG_Warning, ModuleName, &
               & 'Retrieval abandoned due to numerical problems (with radiances?)' )
             exit
@@ -2251,6 +2265,7 @@ NEWT: do ! Newtonian iteration
 
           if ( ieee_is_nan ( aj%fnmin ) ) then
             abandoned = .true.
+            if ( d_strb ) call dump ( v(x), name='Current state', details=9 )
             call MLSMessage ( MLSMSG_Warning, ModuleName, &
               & 'Retrieval abandoned due to numerical problems (with derivatives?)' )
             exit
@@ -2706,6 +2721,10 @@ NEWT: do ! Newtonian iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.295  2007/10/02 22:51:27  vsnyder
+! Put switches field value into global switches variable so the models can
+! see them, then clear them at the end so they don't stick around.
+!
 ! Revision 2.294  2007/09/12 00:17:05  vsnyder
 ! Simplify printing when Cholesky fails
 !
