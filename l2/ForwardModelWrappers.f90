@@ -32,25 +32,25 @@ contains ! ============= Public Procedures ==========================
     FwdModelOut, fmStat, Jacobian, vectors )
 
     use BaselineForwardModel_m, only: BASELINEFORWARDMODEL
-    use HybridForwardModel_m, only: HYBRIDFORWARDMODEL
     use ForwardModelConfig, only: ForwardModelConfig_T
     use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
     use FullCloudForwardModel, only: FULLCLOUDFORWARDMODELWRAPPER
     use FullForwardModel_m, only: FULLFORWARDMODEL
+    use HybridForwardModel_m, only: HYBRIDFORWARDMODEL
     use Init_tables_module, only: L_LINEAR, L_SCAN, L_SCAN2D, L_FULL, L_CLOUDFULL, &
       & L_SWITCHINGMIRROR, L_HYBRID, L_POLARLINEAR, L_BASELINE
     use LinearizedForwardModel_m, only: LINEARIZEDFORWARDMODEL
-    use PolarLinearModel_m, only: POLARLINEARMODEL
     use MatrixModule_1, only: MATRIX_T
     use MLSL2Timings, only: Add_to_retrieval_timing
-    use MLSMessageModule, only: MLSMessageCalls
+    use MLSMessageModule, only: MLSMessage, MLSMessageCalls, MLSMSG_Error, MLSMSG_Warning
+    use PolarLinearModel_m, only: POLARLINEARMODEL
     use ScanModelModule, only: SCANFORWARDMODEL, TWODSCANFORWARDMODEL
+    use String_table, only: Display_String, GET_STRING
     use SwitchingMirrorModel_m, only: SWITCHINGMIRRORMODEL
-    use VectorsModule, only: VECTOR_T
     use Time_M, only: Time_Now
-    use String_table, only: GET_STRING
+    use Toggles, only: Emit, Switches, Toggle
     use Trace_M, only: TRACE_BEGIN, TRACE_END
-    use Toggles, only: Emit, Toggle
+    use VectorsModule, only: CheckNaN, Dump, VECTOR_T
 
     ! Dummy arguments
     type(ForwardModelConfig_T), intent(inout) :: CONFIG
@@ -61,6 +61,7 @@ contains ! ============= Public Procedures ==========================
     type(Vector_t), dimension(:), target, optional :: VECTORS ! Vectors database
 
     ! Local variables
+    integer :: K
     real :: time_start, time_end, deltaTime  
     character(len=132) :: THISNAME
     logical :: radianceModel
@@ -147,6 +148,31 @@ contains ! ============= Public Procedures ==========================
       call add_to_retrieval_timing( 'switching_mirror' )
     end if
 
+    k = 0
+    if ( index(switches,'FMNAN') > 0 ) then
+      k = 3 ! Check, print and stop if any
+    else if ( index(switches,'fmNaN') > 0 ) then
+      k = 2 ! Check, print if any
+    else if ( index(switches,'fmnan') > 0 ) then
+      k = 1 ! Check, print name if any
+    end if
+    if ( k > 0 ) then
+      if ( checkNaN(fwdModelOut, k-1, 'ForwardModelOut') ) then
+        if ( k > 1 ) then
+          call dump ( fwdModelIn, k-1, 'ForwardModelIn' )
+          call dump ( fwdModelExtra, k-1, 'ForwardModelExtra' )
+        end if
+        call display_string ( config%name, &
+          & before='Forward model config name: ', advance='yes' )
+        if ( k > 2 ) then
+          k = MLSMSG_Error
+        else
+          k = MLSMSG_Warning
+        end if
+        call MLSMessage ( k, ModuleName, 'NaNs found in forward model output' )
+      end if
+    end if
+
     ! Report we're finished
     if ( toggle(emit) ) then
       call trace_end ( 'Forward model config: ' // trim(thisName) )
@@ -175,6 +201,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.29  2007/10/02 22:38:19  vsnyder
+! Add code to check for NaNs in forward models' output
+!
 ! Revision 2.28  2007/08/20 22:05:06  pwagner
 ! Many procedures now push their names onto MLSCallStack
 !
