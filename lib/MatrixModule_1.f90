@@ -1349,11 +1349,13 @@ contains ! =====     Public Procedures     =============================
   end function GetMatrixElement_1
 
   ! --------------------------------------  GetMatrixFromDatabase  -----
-  subroutine GetMatrixFromDatabase ( DatabaseElement, Matrix )
+  subroutine GetMatrixFromDatabase ( DatabaseElement, Matrix, Fail )
   ! Get a POINTER to a matrix object from DatabaseElement.
     use MLSMessageModule, only: MLSMSG_Crash
     type(matrix_Database_T), intent(in) :: DatabaseElement
     type(matrix_T), pointer :: Matrix
+    logical, intent(out), optional :: Fail ! "No matrix to get from database"
+    if ( present(fail) ) fail = .false.    ! Assume it will work
     matrix => databaseElement%matrix
     if ( associated(matrix) ) return
     if ( associated(databaseElement%Cholesky) ) matrix => databaseElement%Cholesky%m
@@ -1362,7 +1364,9 @@ contains ! =====     Public Procedures     =============================
     if ( associated(matrix) ) return
     if ( associated(databaseElement%SPD) ) matrix => databaseElement%SPD%m
     if ( associated(matrix) ) return
-    call MLSMessage ( MLSMSG_Crash, moduleName, "No matrix to get from database" )
+    if ( .not. present(fail) ) call MLSMessage ( MLSMSG_Crash, moduleName, &
+      & "No matrix to get from database" )
+    fail = .true.
   end subroutine GetMatrixFromDatabase
 
   ! -----------------------------------------  GetSPDFromDatabase  -----
@@ -2636,6 +2640,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.113  2007/10/02 22:48:06  vsnyder
+! Add a FAIL flag to GetMatrixFromDatabase
+!
 ! Revision 2.112  2007/09/12 00:16:37  vsnyder
 ! Spiff up DescribeBlock routine
 !
