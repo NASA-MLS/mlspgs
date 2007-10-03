@@ -135,7 +135,7 @@ contains ! =====     Public Procedures     =============================
             & get_field_id(son), filedatabase, MLSFile, &
             & 'Antenna Patterns File not found in PCF' )
           call open_antenna_patterns_file ( fileName, lun )
-          call read_antenna_patterns_file ( lun )
+          call read_antenna_patterns_file ( lun, subtree(j,son) )
           call close_antenna_patterns_file ( lun )
         end do
       case ( f_DACSfilterShapes )
@@ -144,7 +144,7 @@ contains ! =====     Public Procedures     =============================
             & get_field_id(son), filedatabase, MLSFile, &
             & 'DACS Filter Shapes File not found in PCF' )
           call open_filter_shapes_file ( fileName, lun, fileIndex )
-          call read_DACS_filter_shapes_file ( lun, fileIndex )
+          call read_DACS_filter_shapes_file ( lun, fileIndex, subtree(j,son) )
           call close_filter_shapes_file ( lun )
         end do
       case ( f_filterShapes )
@@ -153,7 +153,7 @@ contains ! =====     Public Procedures     =============================
             & get_field_id(son), filedatabase, MLSFile, &
             & 'Filter Shapes File not found in PCF' )
           call open_filter_shapes_file ( fileName, lun, fileIndex )
-          call read_filter_shapes_file ( lun, fileIndex )
+          call read_filter_shapes_file ( lun, fileIndex, subtree(j,son) )
           call close_filter_shapes_file ( lun )
         end do
       case ( f_l2pc )
@@ -164,11 +164,11 @@ contains ! =====     Public Procedures     =============================
             & 'L2PC File not found in PCF', mlspcf_l2pc_end )
           if ( index ( fileName, '.txt' ) /= 0 ) then
             call open_l2pc_file ( fileName, lun)
-            call read_l2pc_file ( lun )
+            call read_l2pc_file ( lun, subtree(j,son) )
             call close_l2pc_file ( lun )
           else
             ! call ReadCompleteHDF5L2PCFile ( fileName )
-            call ReadCompleteHDF5L2PCFile ( MLSFile )
+            call ReadCompleteHDF5L2PCFile ( MLSFile, subtree(j,son) )
           end if
         end do
       case ( f_PFAFiles )
@@ -179,7 +179,7 @@ contains ! =====     Public Procedures     =============================
             & 'PFA File not found in PCF', mlspcf_pfa_end )
           if ( index ( fileName, '.h5' ) /= 0 ) then
             if ( process_PFA_File ( filename, &
-            & source_ref(subtree(j,son)) ) /= 0 ) continue
+            & subtree(j,son) ) /= 0 ) continue
           endif
         end do
       case ( f_pointingGrids )
@@ -188,7 +188,7 @@ contains ! =====     Public Procedures     =============================
             & get_field_id(son), filedatabase, MLSFile, &
             & 'Pointing Grids File not found in PCF' )
           call open_pointing_grid_file ( fileName, lun )
-          call read_pointing_grid_file ( lun )
+          call read_pointing_grid_file ( lun, subtree(j,son) )
           call close_pointing_grid_file ( lun )
         end do
       case default
@@ -1356,6 +1356,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.135  2007/10/03 23:59:04  vsnyder
+! Add 'where' for tracing
+!
 ! Revision 2.134  2006/11/29 01:08:58  vsnyder
 ! Allocate spectroscopy derivative stuff with zero size if not used
 !
