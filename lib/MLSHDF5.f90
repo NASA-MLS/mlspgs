@@ -309,11 +309,11 @@ contains ! ======================= Public Procedures =========================
     if ( .not. is_present ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to cp: attribute not found ' // trim(name) )
     is_present = IsHDF5AttributePresent_in_DSID(toitemID, name)
-    if ( my_skip .and. is_present ) return
+    if ( my_skip .and. is_present ) go to 9
     call GetHDF5Attribute ( fromitemID, name, value1 )
     call MakeHDF5Attribute ( toitemID, name, trim(value1), &
       & skip_if_already_there )
-    call MLSMessageCalls( 'pop' )
+  9 call MLSMessageCalls( 'pop' )
   end subroutine CpHDF5Attribute_string
 
   ! -----------------------------------  CpHDF5GlAttribute_string  -----
@@ -695,7 +695,7 @@ contains ! ======================= Public Procedures =========================
     Names = ' '
     ! call output( 'About to read num of attributes', advance='yes' )
     call h5aget_num_attrs_f( itemID, num, status )
-    if ( status /= 0 ) return
+    if ( status /= 0 ) go to 9
     ! call outputNamedValue( 'num ', num )
     do i=1, num
       call h5aopen_idx_f( itemid, i-1, attr_id, status )
@@ -724,9 +724,9 @@ contains ! ======================= Public Procedures =========================
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for all attr names' )
-    call MLSMessageCalls( 'pop' )
+  9 call MLSMessageCalls( 'pop' )
   end subroutine GetAllHDF5AttrNames
-  
+
   ! -----------------------------------  GetAllHDF5DSNames_fileID  -----
   subroutine GetAllHDF5DSNames_fileID ( FileID, gname, DSNames, andSlash )
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
@@ -958,7 +958,7 @@ contains ! ======================= Public Procedures =========================
     my_dont_trim = .false.
     if ( present(DONT_TRIM) ) my_dont_trim=DONT_TRIM
     is_present = IsHDF5AttributePresent_in_DSID(itemID, name)
-    if ( my_skip .and. is_present ) return
+    if ( my_skip .and. is_present ) go to 9
     ! Setup
     ! Create a data type for this string
     call h5tcopy_f ( H5T_NATIVE_CHARACTER, stringtype, status )
@@ -1017,7 +1017,7 @@ contains ! ======================= Public Procedures =========================
     call h5tClose_f ( stringtype, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close stringtype ' // trim(name) )
-    call MLSMessageCalls( 'pop' )
+  9 call MLSMessageCalls( 'pop' )
   end subroutine MakeHDF5Attribute_string
 
   ! -------------------------------  MakeHDF5Attribute_stringarr1  -----
@@ -1041,7 +1041,7 @@ contains ! ======================= Public Procedures =========================
     my_skip = .false.
     if ( present(skip_if_already_there) ) my_skip = skip_if_already_there
     if ( my_skip ) then
-      if ( IsHDF5AttributePresent_in_DSID(itemID, name) ) return
+      if ( IsHDF5AttributePresent_in_DSID(itemID, name) ) go to 9
     end if
     ! Setup
     shp = shape(value)
@@ -1064,7 +1064,7 @@ contains ! ======================= Public Procedures =========================
     call h5aWrite_f ( attrID, stringtype, value, &
       & ones, status )
     call finishMakeAttrib ( name, status, attrID, dsID, stringType )
-    call MLSMessageCalls( 'pop' )
+  9 call MLSMessageCalls( 'pop' )
   end subroutine MakeHDF5Attribute_stringarr1
 
   ! ---------------------------------  MakeHDF5Attribute_snglarr1  -----
@@ -1170,7 +1170,7 @@ contains ! ======================= Public Procedures =========================
     my_skip = .false.
     if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
     if ( my_skip ) then
-      if ( IsHDF5AttributePresent_in_fID( fileID, dataName, attrName ) ) return
+      if ( IsHDF5AttributePresent_in_fID( fileID, dataName, attrName ) ) go to 9
     end if
     dataID = name_to_dataID( fileID, dataName )
     call MakeHDF5Attribute_int ( dataID, attrName, value )
@@ -1178,7 +1178,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close data ' // trim(dataName) )
 
-    call MLSMessageCalls( 'pop' )
+  9 call MLSMessageCalls( 'pop' )
   end subroutine MakeHDF5AttributeDSN_int
 
   ! -------------------------------  MakeHDF5AttributeDSN_logical  -----
@@ -1203,7 +1203,7 @@ contains ! ======================= Public Procedures =========================
     my_skip = .false.
     if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
     if ( my_skip ) then
-      if ( IsHDF5AttributePresent_in_fID( fileID, dataName, attrName ) ) return
+      if ( IsHDF5AttributePresent_in_fID( fileID, dataName, attrName ) ) go to 9
     end if
     dataID = name_to_dataID( fileID, dataName)
     call MakeHDF5Attribute_logical ( dataID, attrName, value )
@@ -1211,7 +1211,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close data ' // trim(dataName) )
 
-    call MLSMessageCalls( 'pop' )
+  9 call MLSMessageCalls( 'pop' )
   end subroutine MakeHDF5AttributeDSN_logical
 
   ! --------------------------------  MakeHDF5AttributeDSN_string  -----
@@ -1233,7 +1233,7 @@ contains ! ======================= Public Procedures =========================
     my_skip = .false.
     if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
     if ( my_skip ) then
-      if ( IsHDF5AttributePresent_in_fID( fileID, dataName, attrName ) ) return
+      if ( IsHDF5AttributePresent_in_fID( fileID, dataName, attrName ) ) go to 9
     end if
     dataID = name_to_dataID( fileID, dataName)
     if ( my_skip ) then
@@ -1247,7 +1247,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close data ' // trim(dataName) )
 
-    call MLSMessageCalls( 'pop' )
+  9 call MLSMessageCalls( 'pop' )
   end subroutine MakeHDF5AttributeDSN_string
 
   ! -------------------------------  MakeHDF5AttributeDSN_st_arr1  -----
@@ -1269,7 +1269,7 @@ contains ! ======================= Public Procedures =========================
     my_skip = .false.
     if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
     if ( my_skip ) then
-      if ( IsHDF5AttributePresent_in_fID( fileID, dataName, attrName ) ) return
+      if ( IsHDF5AttributePresent_in_fID( fileID, dataName, attrName ) ) go to 9
     end if
     dataID = name_to_dataID( fileID, dataName)
     call MakeHDF5Attribute ( dataID, attrName, value )
@@ -1277,7 +1277,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close data ' // trim(dataName) )
 
-    call MLSMessageCalls( 'pop' )
+  9 call MLSMessageCalls( 'pop' )
   end subroutine MakeHDF5AttributeDSN_st_arr1
 
   ! ------------------------------  MakeHDF5AttributeDSN_snglarr1  -----
@@ -1299,14 +1299,14 @@ contains ! ======================= Public Procedures =========================
     my_skip = .false.
     if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
     if ( my_skip ) then
-      if ( IsHDF5AttributePresent_in_fID( fileID, dataName, attrName ) ) return
+      if ( IsHDF5AttributePresent_in_fID( fileID, dataName, attrName ) ) go to 9
     end if
     dataID = name_to_dataID( fileID, dataName)
     call MakeHDF5Attribute ( dataID, attrName, value )
     call h5dclose_f ( dataID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close data ' // trim(dataName) )
-    call MLSMessageCalls( 'pop' )
+ 9  call MLSMessageCalls( 'pop' )
 
   end subroutine MakeHDF5AttributeDSN_snglarr1
 
@@ -1329,14 +1329,14 @@ contains ! ======================= Public Procedures =========================
     my_skip = .false.
     if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
     if ( my_skip ) then
-      if ( IsHDF5AttributePresent_in_fID( fileID, dataName, attrName ) ) return
+      if ( IsHDF5AttributePresent_in_fID( fileID, dataName, attrName ) ) go to 9
     end if
     dataID = name_to_dataID( fileID, dataName)
     call MakeHDF5Attribute ( dataID, attrName, value )
     call h5dclose_f ( dataID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close data ' // trim(dataName) )
-    call MLSMessageCalls( 'pop' )
+  9 call MLSMessageCalls( 'pop' )
 
   end subroutine MakeHDF5AttributeDSN_dblarr1
 
@@ -1359,7 +1359,7 @@ contains ! ======================= Public Procedures =========================
     else
       call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'no valid sd_id or grp_id to get attribute', MLSFile=MLSFile)
-      return
+      go to 9
     endif
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open attribute ' // trim(name), &
@@ -1375,7 +1375,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close attribute ' // trim(name), &
       & MLSFile=MLSFile )
-    call MLSMessageCalls( 'pop' )
+  9 call MLSMessageCalls( 'pop' )
   end subroutine GetHDF5Attribute_int
 
   ! -----------------------------------  GetHDF5Attribute_intarr1  -----
@@ -1399,7 +1399,7 @@ contains ! ======================= Public Procedures =========================
     else
       call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'no valid sd_id or grp_id to get attribute', MLSFile=MLSFile)
-      return
+      go to 9
     endif
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open attribute ' // trim(name), &
@@ -1416,7 +1416,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close attribute ' // trim(name), &
       & MLSFile=MLSFile )
-    call MLSMessageCalls( 'pop' )
+  9 call MLSMessageCalls( 'pop' )
   end subroutine GetHDF5Attribute_intarr1
 
   ! ------------------------------------  GetHDF5Attribute_string  -----
@@ -1440,7 +1440,7 @@ contains ! ======================= Public Procedures =========================
     else
       call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'no valid sd_id or grp_id to get attribute', MLSFile=MLSFile)
-      return
+      go to 9
     endif
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open attribute ' // trim(name), &
@@ -1470,7 +1470,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close string type for attribute ' // trim(name), &
       & MLSFile=MLSFile )
-    call MLSMessageCalls( 'pop' )
+  9 call MLSMessageCalls( 'pop' )
   end subroutine GetHDF5Attribute_string
 
   ! --------------------------------  GetHDF5Attribute_stringarr1  -----
@@ -1496,7 +1496,7 @@ contains ! ======================= Public Procedures =========================
     else
       call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'no valid sd_id or grp_id to get attribute', MLSFile=MLSFile)
-      return
+      go to 9
     endif
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open attribute ' // trim(name), &
@@ -1528,7 +1528,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close string type for attribute ' // trim(name), &
       & MLSFile=MLSFile )
-    call MLSMessageCalls( 'pop' )
+  9 call MLSMessageCalls( 'pop' )
   end subroutine GetHDF5Attribute_stringarr1
 
   ! -----------------------------------  GetHDF5Attribute_logical  -----
@@ -1551,12 +1551,12 @@ contains ! ======================= Public Procedures =========================
     else
       call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'no valid sd_id or grp_id to get attribute', MLSFile=MLSFile)
-      return
+      go to 9
     endif
 
     if ( DEEBUG ) call outputNamedValue( 'ivalue', ivalue )
     value = ( iValue == 1 )
-    call MLSMessageCalls( 'pop' )
+  9 call MLSMessageCalls( 'pop' )
   end subroutine GetHDF5Attribute_logical
 
   ! -------------------------------  GetHDF5Attribute_logicalarr1  -----
@@ -1577,10 +1577,10 @@ contains ! ======================= Public Procedures =========================
     else
       call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'no valid sd_id or grp_id to get attribute', MLSFile=MLSFile)
-      return
+      go to 9
     endif
     value = ( iValue == 1 )
-    call MLSMessageCalls( 'pop' )
+  9 call MLSMessageCalls( 'pop' )
   end subroutine GetHDF5Attribute_logicalarr1
 
   ! ----------------------------------  GetHDF5Attribute_snglarr1  -----
@@ -1604,7 +1604,7 @@ contains ! ======================= Public Procedures =========================
     else
       call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'no valid sd_id or grp_id to get attribute', MLSFile=MLSFile)
-      return
+      go to 9
     endif
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open attribute ' // trim(name), &
@@ -1621,7 +1621,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close 1d attribute array  ' // trim(name), &
       & MLSFile=MLSFile )
-    call MLSMessageCalls( 'pop' )
+  9 call MLSMessageCalls( 'pop' )
   end subroutine GetHDF5Attribute_snglarr1
 
   ! --------------------------------------  GetHDF5Attribute_sngl  -----
@@ -1643,7 +1643,7 @@ contains ! ======================= Public Procedures =========================
     else
       call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'no valid sd_id or grp_id to get attribute', MLSFile=MLSFile)
-      return
+      go to 9
     endif
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open attribute ' // trim(name), &
@@ -1659,7 +1659,7 @@ contains ! ======================= Public Procedures =========================
     call h5aClose_f ( attrID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close sngl attribute  ' // trim(name) )
-    call MLSMessageCalls( 'pop' )
+  9 call MLSMessageCalls( 'pop' )
   end subroutine GetHDF5Attribute_sngl
 
   ! ---------------------------------------  GetHDF5Attribute_dbl  -----
@@ -1681,7 +1681,7 @@ contains ! ======================= Public Procedures =========================
     else
       call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'no valid sd_id or grp_id to get attribute', MLSFile=MLSFile)
-      return
+      go to 9
     endif
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open attribute ' // trim(name), &
@@ -1697,7 +1697,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close dble attribute  ' // trim(name), &
       & MLSFile=MLSFile )
-    call MLSMessageCalls( 'pop' )
+  9 call MLSMessageCalls( 'pop' )
   end subroutine GetHDF5Attribute_dbl
 
   ! -----------------------------------  GetHDF5Attribute_dblarr1  -----
@@ -1721,7 +1721,7 @@ contains ! ======================= Public Procedures =========================
     else
       call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'no valid sd_id or grp_id to get attribute', MLSFile=MLSFile)
-      return
+      go to 9
     endif
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open attribute ' // trim(name), &
@@ -1738,7 +1738,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close dblarr1 attribute  ' // trim(name), &
       & MLSFile=MLSFile )
-    call MLSMessageCalls( 'pop' )
+  9 call MLSMessageCalls( 'pop' )
   end subroutine GetHDF5Attribute_dblarr1
 
   ! ---------------------------------------  GetHDF5Attr_ID_int  -----
@@ -2418,7 +2418,7 @@ contains ! ======================= Public Procedures =========================
     if ( my_grpattr ) then
       IsHDF5AttributePresent_in_fID = IsHDF5AttributePresent_in_grp ( &
         & DSname, fileID, name)
-      return
+      go to 9
     end if
     call h5eSet_auto_f ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -2439,7 +2439,7 @@ contains ! ======================= Public Procedures =========================
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for attribute ' // trim(name) )
-    call MLSMessageCalls( 'pop' )
+  9 call MLSMessageCalls( 'pop' )
   end function IsHDF5AttributePresent_in_fID
 
   ! ------------------------------  IsHDF5AttributePresent_in_grp  -----
@@ -5281,7 +5281,7 @@ contains ! ======================= Public Procedures =========================
         dims(i) = my_start(i) + newCount(i)
       end if
     enddo
-    if ( itFits ) return
+    if ( itFits ) go to 9
     if ( DEEBUG ) print *, 'Need to extend dataset'
     if ( DEEBUG ) print *, '(New dims) ', dims
     call h5dextend_f ( setID, dims, status )
@@ -5292,7 +5292,7 @@ contains ! ======================= Public Procedures =========================
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to get return dataspaceID in mls_extend' )
     end if
-    call MLSMessageCalls( 'pop' )
+  9 call MLSMessageCalls( 'pop' )
   end subroutine MLS_extend
 
 ! ------------------------------------------------  MLS_hyperslab  -----
@@ -5552,7 +5552,7 @@ contains ! ======================= Public Procedures =========================
     my_skip = .false.
     if ( present(skip_if_already_there) ) my_skip = skip_if_already_there
     if ( my_skip ) then
-      if ( IsHDF5AttributePresent_in_dsID(itemID, name) ) return
+      if ( IsHDF5AttributePresent_in_dsID(itemID, name) ) go to 9
     end if
     startMakeAttrib = .true.
     if ( present(shp) ) then
@@ -5566,7 +5566,7 @@ contains ! ======================= Public Procedures =========================
     call h5aCreate_f ( itemID, trim(name), type, spaceID, attrID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to create attribute ' // trim(name) )
-    call MLSMessageCalls( 'pop' )
+  9 call MLSMessageCalls( 'pop' )
   end function StartMakeAttrib
 
 ! --------------------------------------------  WhatTypeAmI  -----
@@ -5608,6 +5608,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.74  2007/10/03 23:51:53  vsnyder
+! Don't overflow MLSCallStack
+!
 ! Revision 2.73  2007/08/17 00:27:48  pwagner
 ! push more procedures onto MLSCallStack
 !
