@@ -53,7 +53,7 @@ contains
       & S_VectorTemplate
     use Intrinsic, only: PHYQ_Dimensionless
     use MLSL2Options, only: runTimeValues
-    use MLSMessageModule, only: MLSMessageCalls
+    use MLSMessageModule, only: MLSMessage, MLSMessageCalls, MLSMSG_error
     use MLSSignals_m, only: Dump, Signals
     use MLSStrings, only: lowerCase
     use MLSStringLists, only: BooleanValue, SWITCHDETAIL
@@ -264,6 +264,9 @@ contains
             call dump_pointing_grid_database ( son )
           case ( f_stop )
             call announceError ( son, stop )
+            if ( index(switches,'erh') > 0 ) &
+              & call mlsmessage (MLSMSG_Error, moduleName, &
+                & "Program stopped by /stop field on DUMP statement." )
             stop
           end select
         end if
@@ -554,6 +557,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.37  2007/10/03 23:53:05  vsnyder
+! Stop with error if /stop and switch 'erh' is set
+!
 ! Revision 2.36  2007/08/17 00:32:16  pwagner
 ! Unneeded changes
 !
