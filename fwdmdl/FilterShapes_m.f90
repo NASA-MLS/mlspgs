@@ -96,7 +96,7 @@ contains
   end subroutine Open_Filter_Shapes_File
 
   ! ------------------------------------  Read_Filter_Shapes_File  -----
-  subroutine Read_Filter_Shapes_File ( Lun, FileIndex )
+  subroutine Read_Filter_Shapes_File ( Lun, FileIndex, Where )
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Machine, only: IO_Error
     use Parse_Signal_m, only: Parse_Signal
@@ -105,6 +105,7 @@ contains
 
     integer, intent(in) :: Lun          ! Logical unit number to read it
     integer, intent(in) :: FileIndex    ! In the string table
+    integer, intent(in) :: Where        ! In the L2CF tree, for tracing
 
     real(r8) :: DX                      ! To compute FilterGrid
     real(r8) :: LHS, RHS                ! For computing grid
@@ -124,7 +125,7 @@ contains
 
     namelist /Filter/ lhs, rhs, number_in_shape
 
-    if ( toggle(gen) ) call trace_begin ( "Read_Filter_Shapes_File" )
+    if ( toggle(gen) ) call trace_begin ( "Read_Filter_Shapes_File", where )
 
     ! Determine the size of the created or expanded FilterShapes array
     offset = 0
@@ -210,7 +211,7 @@ contains
   end subroutine Read_Filter_Shapes_File
 
   ! -------------------------------  Read_DACS_Filter_Shapes_File  -----
-  subroutine Read_DACS_Filter_Shapes_File ( Lun, FileIndex )
+  subroutine Read_DACS_Filter_Shapes_File ( Lun, FileIndex, Where )
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Machine, only: IO_Error
     use Parse_Signal_m, only: Parse_Signal
@@ -219,6 +220,7 @@ contains
 
     integer, intent(in) :: Lun          ! Logical unit number to read it
     integer, intent(in) :: FileIndex    ! In the string table
+    integer, intent(in) :: Where        ! In the L2CF tree, for tracing
 
     real(r8) :: DX                      ! To compute FilterGrid
     real(r8) :: LHS, RHS                ! For computing grid
@@ -244,7 +246,7 @@ contains
 
     namelist /Filter/ lhs, rhs, logApod, logFilt, logNorm
 
-    if ( toggle(gen) ) call trace_begin ( "Read_DACS_Filter_Shapes_File" )
+    if ( toggle(gen) ) call trace_begin ( "Read_DACS_Filter_Shapes_File", where )
 
     ! Determine the size of the created or expanded DACSfilterShapes array
     offset = 0
@@ -550,6 +552,9 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 2.22  2007/09/12 00:52:45  vsnyder
+! Remove redundant dimension spec in DACSFilterShape_T components
+!
 ! Revision 2.21  2006/04/25 23:25:36  vsnyder
 ! Revise DACS filter shape data structure
 !

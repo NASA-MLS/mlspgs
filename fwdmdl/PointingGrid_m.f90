@@ -74,13 +74,14 @@ contains
   end subroutine Open_Pointing_Grid_File
 
   ! ------------------------------------  Read_Pointing_Grid_File  -----
-  subroutine Read_Pointing_Grid_File ( Lun )
+  subroutine Read_Pointing_Grid_File ( Lun, Where )
     use Machine, only: IO_Error
     use Parse_Signal_m, only: Parse_Signal
     use Toggles, only: Gen, Levels, Switches, Toggle
     use Trace_M, only: Trace_begin, Trace_end
 
     integer, intent(in) :: Lun               ! Logical unit number to read it
+    integer, intent(in) :: Where             ! In the L2CF tree, for tracing
 
     logical, pointer, dimension(:) :: Channels ! Specified in a signal
     real(r8) :: Frequency                    ! Center frequency for the grid.
@@ -100,7 +101,7 @@ contains
     integer, pointer, dimension(:) :: Signal_Indices   ! From Parse_Signal, q.v.
 
     if ( toggle(gen) .and. levels(gen) > 0 ) &
-      & call trace_begin ( "Read_Pointing_Grid_File" )
+      & call trace_begin ( "Read_Pointing_Grid_File", where )
 
     if ( associated(pointingGrids) ) call destroy_pointing_grid_database
 
@@ -310,6 +311,9 @@ outer2: do
 end module PointingGrid_m
 
 ! $Log$
+! Revision 2.9  2007/05/23 22:40:20  vsnyder
+! Change tracing level of Read_Pointing_Grid_File from zero to one
+!
 ! Revision 2.8  2005/06/22 18:08:19  pwagner
 ! Reworded Copyright statement, moved rcs id
 !

@@ -78,7 +78,7 @@ contains
   end subroutine Open_Antenna_Patterns_File
 
   ! ------------------------------------  Read_Antenna_Patterns_File  -----
-  subroutine Read_Antenna_Patterns_File ( Lun )
+  subroutine Read_Antenna_Patterns_File ( Lun, Where )
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Machine, only: IO_Error
     use Parse_Signal_m, only: Parse_Signal
@@ -87,6 +87,7 @@ contains
     use Units, only: Pi
 
     integer, intent(in) :: Lun               ! Logical unit number to read it
+    integer, intent(in) :: Where             ! In the L2CF tree, for tracing
 
 !     ! Parameters for FFTW
 !     integer, parameter :: FFTW_Forward = -1, FFTW_Backward = 1
@@ -127,7 +128,7 @@ contains
     !                                          the "only_count_em" argument
     real(r8) :: V(2)                         ! To read a line from the file
 
-    if ( toggle(gen) ) call trace_begin ( "Read_Antenna_Patterns_File" )
+    if ( toggle(gen) ) call trace_begin ( "Read_Antenna_Patterns_File", where )
 
     if ( associated(AntennaPatterns) ) call destroy_ant_patterns_database
 
@@ -369,6 +370,9 @@ outer1: do
 end module AntennaPatterns_m
 
 ! $Log$
+! Revision 2.11  2007/06/25 20:33:02  vsnyder
+! Add FFTW plans, as comments, in case we ever need them
+!
 ! Revision 2.10  2005/06/22 18:08:18  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
