@@ -452,11 +452,12 @@ contains ! ============= Public Procedures ==========================
   end subroutine OutputHDF5L2PC
 
   ! ------------------------------------- Read_l2pc_file ------
-  subroutine Read_l2pc_file ( Lun )
+  subroutine Read_l2pc_file ( Lun, Where )
     use Trace_M, only: Trace_begin, Trace_end
     use Toggles, only: Toggle, gen
     ! Read all the bins in an l2pc file
     integer, intent(in) :: lun
+    integer, intent(in) :: Where ! In the L2CF tree, for tracing
 
     ! Local variables
     type (Matrix_T) :: L2pc
@@ -464,7 +465,7 @@ contains ! ============= Public Procedures ==========================
     logical :: Eof
 
     ! Executable code
-    if ( toggle (gen) ) call trace_begin ( "Read_l2pc_file" )
+    if ( toggle (gen) ) call trace_begin ( "Read_l2pc_file", where )
     eof = .false.
     do while (.not. eof )
       call ReadOneASCIIL2PC ( l2pc, lun, eof )
@@ -1218,9 +1219,12 @@ contains ! ============= Public Procedures ==========================
 
   ! --------------------------------------- ReadCompleteHDF5L2PC -------
   ! subroutine ReadCompleteHDF5L2PCFile ( filename )
-  subroutine ReadCompleteHDF5L2PCFile ( MLSFile )
-  use HDF5, only: H5F_ACC_RDONLY_F, h5fopen_f, H5GN_MEMBERS_F
+  subroutine ReadCompleteHDF5L2PCFile ( MLSFile, Where )
+    use HDF5, only: H5F_ACC_RDONLY_F, h5fopen_f, H5GN_MEMBERS_F
+    use Trace_M, only: Trace_begin, Trace_end
+    use Toggles, only: Toggle, gen
     type (MLSFile_T), pointer   :: MLSFile
+    integer, intent(in) :: Where ! In the L2CF tree, for tracing
     ! character (len=*), intent(in) :: FILENAME
 
     ! Local variables
@@ -1234,6 +1238,7 @@ contains ! ============= Public Procedures ==========================
 
     ! Executable code
 
+    if ( toggle (gen) ) call trace_begin ( "ReadCompleteHDF5L2PC", where )
     call h5fopen_f ( MLSFile%name, H5F_ACC_RDONLY_F, fileID, status )
     MLSFile%FileID%f_id = fileID
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1271,6 +1276,7 @@ contains ! ============= Public Procedures ==========================
     end do
     
     ! Don't close the file, we're keeping it open to read blocks from it later
+    if ( toggle (gen) ) call trace_end ( "ReadCompleteHDF5L2PC" )
   end subroutine ReadCompleteHDF5L2PCFile
 
   ! --------------------------------------- ReadOneHDF5L2PC ------------
@@ -1820,6 +1826,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.80  2007/10/03 23:58:46  vsnyder
+! Add 'where' for tracing
+!
 ! Revision 2.79  2007/04/26 20:30:32  pwagner
 ! Bugfix for way ifc writes ints to strings
 !
