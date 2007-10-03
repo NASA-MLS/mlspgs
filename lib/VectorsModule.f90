@@ -34,6 +34,9 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 ! CheckIntegrity_Vector
 ! CheckIntegrity_VectorTemplate
 ! CheckIntegrity_VectorValue
+! CheckNaN
+! CheckVectorForNaN
+! CheckVectorQuantityForNaN
 ! ClearMask                    Clear bits of MASK according to TO_CLEAR
 ! ClearUnderMask               Clear elements of z corresponding to MASK
 ! ClearVector                  Clear elements of z
@@ -109,7 +112,9 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   public :: operator (*), operator ( .DOT. ), operator ( .MDOT. )
   ! Specifics
   public :: AddToVector, AddVectors, AddVectorTemplateToDatabase
-  public :: AddVectorToDatabase, AssignVector, AXPY, CheckIntegrity, ClearMask
+  public :: AddVectorToDatabase, AssignVector, AXPY, CheckIntegrity
+  public :: CheckNaN, CheckVectorForNaN, CheckVectorQuantityForNaN
+  public :: ClearMask
   public :: ClearUnderMask, ClearVector, CloneVector, ConstantXVector
   public :: ConstructVectorTemplate, CopyVector, CopyVectorMask, CreateMaskArray
   public :: CreateMask, CreateVector, DestroyVectorDatabase, DestroyVectorInfo
@@ -140,6 +145,10 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   interface CheckIntegrity
     module procedure CheckIntegrity_VectorValue, CheckIntegrity_VectorTemplate, &
       & CheckIntegrity_Vector
+  end interface
+
+  interface CheckNaN
+    module procedure CheckVectorForNaN, CheckVectorQuantityForNaN
   end interface
 
   interface DUMP
@@ -377,7 +386,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------ CheckIntegrity_Vector -----------
   logical function CheckIntegrity_Vector ( vector, noError )
-    type ( Vector_T), intent(in) :: VECTOR
+    type ( Vector_T ), intent(in) :: VECTOR
     logical, optional, intent(in) :: NOERROR
 
     ! Local variables
@@ -544,6 +553,48 @@ contains ! =====     Public Procedures     =============================
     end if
 
   end function CheckIntegrity_VectorValue
+
+  ! ------------------------------------------  CheckVectorForNaN  -----
+  logical function CheckVectorForNaN ( Vector, Print, Name )
+  ! Check whether a vector has any NaNs in any of its VALUES, returning
+  ! TRUE if so.
+  ! This doesn't check the quantity templates.
+    type (Vector_t), intent(in) :: Vector
+    integer, intent(in) :: Print ! <= 0 => No printing
+                                 !  > 0 => Call dump with details = print - 1
+                                 !         on offending vector quantities
+    character(len=*), intent(in), optional :: Name
+
+    integer :: I
+
+    CheckVectorForNaN = .false.
+    if ( .not. associated(vector%quantities) ) return
+    do i = 1, size(vector%quantities)
+      CheckVectorForNaN = CheckVectorForNaN .or. &
+        & checkNaN(vector%quantities(i), print,name,vector)
+    end do
+  end function CheckVectorForNaN
+
+  ! -----------------------------------  CheckVectorQuantityForNaN  -----
+  logical function CheckVectorQuantityForNaN ( VectorQuantity, Print, Name, Vector )
+  ! Check whether a vector quantity has any NaNs in any of its VALUES, returning
+  ! TRUE if so.
+  ! This doesn't check the quantity templates.
+    use IEEE_Arithmetic, only: IEEE_Is_NaN
+    type (VectorValue_t), intent(in) :: VectorQuantity
+    integer, intent(in) :: Print ! <= 0 => No printing
+                                 !  > 0 => Call dump with details = print - 1
+    character(len=*), intent(in), optional :: Name
+    type (Vector_t), intent(in), optional :: Vector ! to get its name in case of dump
+
+    CheckVectorQuantityForNaN = .false.
+    if ( .not. associated(vectorQuantity%values) ) return
+    CheckVectorQuantityForNaN = any(ieee_is_nan(vectorQuantity%values))
+    if ( CheckVectorQuantityForNaN ) then
+      if ( print > 0 ) &
+        & call dump ( vectorQuantity, details=print-1, name=name, vector=vector )
+    end if
+  end function CheckVectorQuantityForNaN
 
   ! --------------------------------------------------  ClearMask  -----
   subroutine ClearMask ( MASK, TO_CLEAR, WHAT )
@@ -2492,6 +2543,10 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.127  2007/04/03 17:41:58  vsnyder
+! Revise how allocation status is tested.  Reallocate VectorsDatabase with
+! zero size after destroying it.
+!
 ! Revision 2.126  2006/08/05 02:11:58  vsnyder
 ! Add ForWhom argument to ConstructVectorTemplate
 !
