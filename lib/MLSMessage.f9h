@@ -173,10 +173,14 @@
   ! appropriate commands sent with subroutine MLSMessageCalls
   
   ! Note the following limitations:
-  ! Each name must be shorter than 65 chars, may not contain a '<null>' 
-  ! character  (such a name will be split at the '<null>')
-  ! strung together, all the names must not exceed 2048 characters in length
-  character(len=2048), public, save :: MLSCallStack = ' '
+  ! Each name must be shorter than 65 chars.
+  ! Strung together, all the names must not exceed 2048 characters in length
+  type, public :: MLSCallStack_t
+    character(len=2048) :: Txt ! All the names, strung together
+    integer :: Ind(0:100) = 0  ! Ind(i) is end of ith name
+    integer :: Top = 0         ! Top of the stack, index into Ind
+  end type MLSCallStack_t
+  type(MLSCallStack_t), public, save :: MLSCallStack
   
   ! Public procedures
   public :: MLSMessage, MLSMessage_, MLSMessageSetup, MLSMessageClose
@@ -299,12 +303,9 @@ contains
   ! possible commands are 
   ! 'push'    push a new name onto MLSCallStack
   ! 'pop'     pop the last name off
-  ! 'rpush'   push a new name underneath
-  ! 'rpop'    pop the first name out from underneath
   ! 'clear'   clear the stack
   ! 'print'   print its contents as a single line
   ! 'dump'    print a walkback, one name per line, top to bottom
-  ! 'rdump'   print a walkback, one name per line, bottom to top
   ! 'depth'   return the number of elements on the stack
   ! 'length'  return the total length taken by the elements on the stack
   ! 'remain'  return the total length remaining before the stack is full
@@ -333,92 +334,92 @@ contains
     logical, parameter  :: nosubsequentwarnings = .false.
     ! Executable
     myName = ' '
-    if ( index( command, 'push' ) > 0 ) then
+    select case( command )
+    case ( 'push' )
+      MLSCallStack%top = MLSCallStack%Top + 1
       if ( present(name) ) myName = name
       if ( present(constantName) ) myName = constantName
       myName = snipRCSFrom ( myName )
-    endif
-    ind = index( MLSCallStack, comma, back=.true. )
-    m = len_trim(MLSCallStack)
-    select case( command )
-    case ( 'push' )
-      if ( m < 1 ) then
-        MLSCallStack = myName
-      else
-        MLSCallStack = trim(myName) // comma // MLSCallStack
-      endif
+      m = len_trim(myName)
+      if ( MLSCallStack%Top > ubound(MLSCallStack%ind,1) ) then
+        call dumpStack ( adjustl(myName(:m)) )
+        return
+      end if
+      MLSCallStack%ind(MLSCallStack%top) = MLSCallStack%ind(MLSCallStack%top-1) + m
+      MLSCallStack%txt(MLSCallStack%ind(MLSCallStack%top-1)+1:) = myName(:m) ! clear the rest
     case ( 'pop' )
-      ind = index( MLSCallStack, comma )
-      if ( ind < 1 ) then
-        myName = MLSCallStack
-        MLSCallStack = ' '
-      else
-        myName = MLSCallStack( 1 : ind-1 )
-        MLSCallStack = MLSCallStack( ind+1 : )
-      endif
-      if ( present(name) ) name = myName
-    case ( 'rpush' )
-      if ( m < 1 ) then
-        MLSCallStack = myName
-      else
-        MLSCallStack = trim(MLSCallStack) // comma // myName
-      endif
-    case ( 'rpop' )
-      if ( ind < 1 ) then
-        myName = MLSCallStack
-        MLSCallStack = ' '
-      else
-        myName = MLSCallStack( ind+1 : m )
-        MLSCallStack = MLSCallStack( 1 : ind-1 )
-      endif
-      if ( present(name) ) name = myName
+      if ( present(name) ) then
+        if ( MLSCallStack%top < 0 ) then
+          name = "Stack underflow"
+        else if ( MLSCallStack%top >= ubound(MLSCallStack%ind,1) ) then
+          name = "Stack overflow"
+        else
+          name = MLSCallStack%txt(MLSCallStack%ind(MLSCallStack%top)+1: &
+                                  MLSCallStack%ind(MLSCallStack%top+1))
+        end if
+      end if
+      MLSCallStack%top = MLSCallStack%top - 1
     case ( 'clear' )
-      MLSCallStack = ' '
-    case ( 'rdump' )
-      call printItOut ( 'Calling stack (top-down)', MLSMSG_info )
-      do
-        if ( m <= ind ) exit
-        myName = MLSCallStack( ind+1 : m )
-        call PrintItOut ( '.. ' // myName, MLSMSG_info )
-        m = ind - 1
-        ind = index( MLSCallStack(1:max(m,1)), comma, back=.true. )
-      end do
-      if ( present(name) ) name = myName
+      MLSCallStack%txt = ' '
+      MLSCallStack%top = 0
     case ( 'dump' )
-      m = 0
-      ! call printItOut ( trim(MLSCallStack), MLSMSG_info )
-      call printItOut ( 'Calling stack (bottom-up)', MLSMSG_info )
-      do
-        ind = m + 1
-        m =   ind - 1 + index( MLSCallStack(ind:), comma )
-        if ( m < ind + 1 ) m = max( len_trim(MLSCallStack), ind ) + 1
-        myName = MLSCallStack( ind : m - 1 )
-        call printItOut ( '.. ' // myName, MLSMSG_info )
-        if ( present(name) .and. ind == 1 ) name = myName
-        if ( m > len_trim(MLSCallStack) - 1 ) exit
-      end do
+      call dumpStack
     case ( 'print' )
-      if ( len_trim(MLSCallStack) > 0 ) &
-        & call printItOut ( trim(asciify(MLSCallStack, 'mnemonic')), MLSMSG_info )
+      if ( MLSCallStack%top < 0 ) then
+        call printItOut ( '.. Stack Underflow', MLSMSG_info )
+      else if ( MLSCallStack%top == 0 ) then
+        call printItOut ( '.. Stack Empty', MLSMSG_info )
+      else if ( MLSCallStack%top > ubound(MLSCallStack%ind,1) ) then
+        call printItOut ( '.. Stack Overflow', MLSMSG_info )
+      end if
+      call printItOut ( MLSCallStack%txt(: &
+        & MLSCallStack%ind(min(MLSCallStack%top,ubound(MLSCallStack%ind,1)))), MLSMSG_info )
     case ( 'depth' )
-      m = 0
-      if ( len_trim(MLSCallStack) > 0 ) then
-        m = 1
-        do ind = 1, len_trim(MLSCallStack)
-          if ( MLSCallStack(ind:ind) == comma ) m = m + 1
-        enddo
-      endif
-      write( myName, '(i8)' ) m
+      write( myName, '(i8)' ) MLSCallStack%top
       if ( present(name) ) name = myName
     case ( 'length' )
-      write( myName, '(i8)' ) len_trim(MLSCallStack)
+      write( myName, '(i8)' ) MLSCallStack%ind(min(MLSCallStack%top,ubound(MLSCallStack%ind,1)))
       if ( present(name) ) name = myName
     case ( 'remain' )
-      write( myName, '(i8)' ) len(MLSCallStack) - len_trim(MLSCallStack)
+      write( myName, '(i8)' ) len(MLSCallStack%txt) - &
+        & MLSCallStack%ind(min(MLSCallStack%top,ubound(MLSCallStack%ind,1)))
       if ( present(name) ) name = myName
     case default
       ! Unrecognized command--we'll ignore it
+      if ( present(name) ) name = "What?"
     end select
+
+  contains
+    subroutine DumpStack ( What )
+      character(len=*), intent(in), optional :: What
+      ! call printItOut ( trim(MLSCallStack), MLSMSG_info )
+      if ( present(name) ) name = '' ! In case the stack is weird
+      call printItOut ( 'Calling stack (bottom-up)', MLSMSG_info )
+      if ( MLSCallStack%top < 0 ) then
+        call printItOut ( '.. Stack Underflow', MLSMSG_info )
+      else if ( MLSCallStack%top == 0 ) then
+        call printItOut ( '.. Stack Empty', MLSMSG_info )
+      else
+        do m = 1, min(MLSCallStack%top,ubound(MLSCallStack%ind,1))
+          call printItOut ( '.. ' // &
+            & MLSCallStack%txt(MLSCallStack%ind(m-1)+1: &
+                               MLSCallStack%ind(m)), MLSMSG_info )
+        end do
+        if ( MLSCallStack%top > ubound(MLSCallStack%ind,1) ) then
+          if ( present(what) ) then
+            call printItOut ( '.. Stack Overflow when pushing ' // what, &
+            & MLSMSG_info )
+          else
+            write (myName(:12), '(i12)') MLSCallStack%top
+            call printItOut ( '.. Stack Overflow, top=' // trim(adjustl(myName(:12))), &
+              & MLSMSG_info )
+          end if
+        end if
+        if ( present(name) ) &
+          & name = MLSCallStack%txt(MLSCallStack%ind(m-2)+1: &
+                                    MLSCallStack%ind(m-1))
+      end if
+    end subroutine DumpStack
   end subroutine MLSMessageCalls
 
   !-----------------------------------------  MLSMessageInternalFile  -----
@@ -580,7 +581,7 @@ contains
     character(len=32) :: name
     ! Executable
     name = ' '
-    if ( len_trim(MLSCallStack) > 0 ) call MLSMessageCalls( 'dump', name )
+    call MLSMessageCalls( 'dump', name )
     if ( len_trim(name) < 1 ) name = ModuleName
     call MLSMessageStd( MLSMSG_Error, name, Message, MLSFile=MLSFile )
   end subroutine StopWithErrorMsg
@@ -770,6 +771,9 @@ contains
   
 !
 ! $Log$
+! Revision 2.5  2007/10/03 23:59:46  vsnyder
+! Simplify call stack
+!
 ! Revision 2.4  2007/09/06 22:29:55  pwagner
 ! Impose limit on total warnings
 !
