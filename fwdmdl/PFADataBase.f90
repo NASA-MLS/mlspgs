@@ -625,6 +625,9 @@ contains ! =====     Public Procedures     =============================
     use Parse_Signal_m, only: Parse_Signal
     ! HDF5 intentionally last to avoid long LF95 compiles
     use HDF5, only: H5GClose_f, H5GOpen_F
+    use Toggles, only: Gen, Toggle
+    use Trace_M, only: Trace_begin, Trace_end
+    use Tree, only: Source_Ref
 
     type(PFAFile_t) :: PFAFileDatum
     integer, intent(in) :: Where  ! Source_ref field, for error messages
@@ -640,16 +643,18 @@ contains ! =====     Public Procedures     =============================
     integer, pointer :: SignalIndices(:)
     integer :: STAT                    ! From HDF5 open or read, or allocate
 
+
+    if ( toggle(gen) ) call trace_begin ( "Process_PFA_File_datum", where )
     ! Open the file
 
-    call OpenPFAFile ( PFAFileDatum, where )
+    call OpenPFAFile ( PFAFileDatum, source_ref(where) )
 
     ! Open the Index group and read the Molecules and Signals data sets
     call h5gOpen_f ( PFAFileDatum%HDF5_fileID, 'Index', groupID, stat )
     if ( stat /= 0 ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to open HDF5 PFA Index group in %s at %l', &
-        & (/PFAFileDatum%fileName,where/) )
+        & (/PFAFileDatum%fileName,source_ref(where)/) )
     nullify ( myMolecules, mySignalStrings )
     call loadPtrFromHDF5DS ( groupID, 'Molecules', myMolecules )
     call loadPtrFromHDF5DS ( groupID, 'Signals', mySignalStrings )
@@ -707,6 +712,7 @@ contains ! =====     Public Procedures     =============================
       & 'Errors while hooking up and finding PFA tables' )
 
     Process_PFA_File_datum = f
+    if ( toggle(gen) ) call trace_end ( "Process_PFA_File_datum" )
 
   end function Process_PFA_File_datum
 
@@ -1314,6 +1320,9 @@ contains ! =====     Public Procedures     =============================
 end module PFADataBase_m
 
 ! $Log$
+! Revision 2.36  2007/10/03 23:58:26  vsnyder
+! Add 'where' for tracing
+!
 ! Revision 2.35  2006/04/22 01:30:46  vsnyder
 ! Get channel number into signal read by read_PFADatum_H5
 !
