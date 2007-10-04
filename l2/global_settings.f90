@@ -576,7 +576,7 @@ contains
         call outputCalendar( l2pcf%startutc, dateNote=BO_today )
       else
         call output ( 'Bright objects today:', advance='yes' )
-        call output ( 'trim_safe(BO_today)', advance='yes' )
+        call output ( trim_safe(BO_today), advance='yes' )
       endif
     endif
 
@@ -1004,6 +1004,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.126  2007/09/24 20:26:03  pwagner
+! Prints this months calendar and shows todays bright objects
+!
 ! Revision 2.125  2007/08/17 00:32:41  pwagner
 ! Unneeded changes
 !
