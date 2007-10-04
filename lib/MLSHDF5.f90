@@ -5576,8 +5576,6 @@ contains ! ======================= Public Procedures =========================
     ! E.g., 'character', 'real', 'double', or 'integer'
     integer, intent(in) :: me
     character(len=16)   :: Qtype
-    ! Local variables
-    integer :: status
     ! Initialize in case something goes wrong with hdf5 routines
     Qtype = 'unknown'
     if ( AreThe2TypesEqual(me, H5T_NATIVE_INTEGER) .or. &
@@ -5608,6 +5606,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.75  2007/10/04 20:43:36  vsnyder
+! Remove unused symbols
+!
 ! Revision 2.74  2007/10/03 23:51:53  vsnyder
 ! Don't overflow MLSCallStack
 !
