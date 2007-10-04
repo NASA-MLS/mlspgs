@@ -226,12 +226,12 @@ contains
     ! Executable code
     call MLSMessageCalls( 'push', constantName='ConcatenateGriddedData_array' )
     call DestroyGriddedData ( X )
-    if ( size(indices) < 1 .or. size(database) < 1 ) return
+    if ( size(indices) < 1 .or. size(database) < 1 ) go to 9
     index1 = indices(1)
-    if ( index1 < 1 .or. index1 > size(Database) ) return
+    if ( index1 < 1 .or. index1 > size(Database) ) go to 9
     if ( size(indices) < 2 ) then
       call CopyGrid ( X, Database(index1) )
-      return
+      go to 9
     endif
     noDates = 0
     do i=1, size(indices)
@@ -293,7 +293,7 @@ contains
       x%dateEnds(i1(i):i2(i)) = Database(index1)%dateEnds
       x%field ( :, :, :, :, :, i1(i):i2(i) ) = Database(index1)%field
     enddo
-    call MLSMessageCalls( 'pop' )
+  9 call MLSMessageCalls( 'pop' )
   end subroutine ConcatenateGriddedData_array
 
   ! ---------------------------------------- ConvertFromEtaLevelGrids ------------------
@@ -324,14 +324,14 @@ contains
     if ( PGrid%empty .or. TGrid%empty) then
       call MLSMessage ( MLSMSG_Warning, moduleName, &
         & 'Temperatures or Pressures grid was empty' )
-      return
+      go to 9
     endif
     if ( size(OutGrid%heights) /= size(NGrid%heights) ) then
       call outputNamedValue('num heights(outGrid)', size(OutGrid%heights), advance='yes' )
       call outputNamedValue('num heights(NGrid)', size(NGrid%heights), advance='yes' )
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & 'Grid shapes do not conform' )
-      return
+      go to 9
     endif
     call allocate_test( pEta, TGrid%noHeights, 'pEta', moduleName )
     OutGrid%heights(1:OutGrid%noHeights) = NGrid%heights(1:OutGrid%noHeights)
@@ -388,7 +388,7 @@ contains
       stop
     endif
     call deallocate_test( pEta,   'pEta', moduleName )
-    call MLSMessageCalls( 'pop' )
+  9 call MLSMessageCalls( 'pop' )
   end subroutine ConvertFromEtaLevelGrids
 
   ! ---------------------------------------- CopyGrid ------------------
@@ -1186,7 +1186,7 @@ contains
     ! Executable code
     call MLSMessageCalls( 'push', constantName='WrapGriddedData' )
     ! Don't bother with quantities that have no lon or lst variation.
-    if ( grid%noLons <= 1 .and. grid%noLsts <= 1 ) return
+    if ( grid%noLons <= 1 .and. grid%noLsts <= 1 ) go to 9
 
     ! Check that this field is appropriate
     ! These integers are the number of points at or beyond our boundaries
@@ -1225,7 +1225,7 @@ contains
 
     ! If these are all zero then there's nothing to do so we might
     ! as well quit and save time
-    if ( all ( (/ lowerLon, upperLon, lowerLst, upperLst /) == 0 ) ) return
+    if ( all ( (/ lowerLon, upperLon, lowerLst, upperLst /) == 0 ) ) go to 9
 
     ! Create new arrays
     nullify ( newLons, newLSTs, newField )
@@ -1285,7 +1285,7 @@ contains
     grid%lons => newLons
     grid%lsts => newLsts
     grid%field => newField
-    call MLSMessageCalls( 'pop' )
+  9 call MLSMessageCalls( 'pop' )
   end subroutine WrapGriddedData
 
   ! -------- Private ---------------
@@ -1302,6 +1302,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.50  2007/10/04 01:49:14  vsnyder
+! Don't overflow the call stack
+!
 ! Revision 2.49  2007/08/17 00:27:23  pwagner
 ! push more procedures onto MLSCallStack
 !
