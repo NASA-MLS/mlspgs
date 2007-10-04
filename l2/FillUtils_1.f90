@@ -3196,7 +3196,7 @@ contains ! =====     Public Procedures     =============================
       logical :: TwoWay
       logical :: StatisticalFunction
       logical :: USESC
-      integer :: I, ICHAN, INSTANCE, ISURF
+      integer :: I, INSTANCE, ISURF
       logical :: NEEDSB
       integer :: NoChans
       integer :: NoInstances
@@ -6167,6 +6167,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.2  2007/10/04 20:43:12  vsnyder
+! Remove unused symbols
+!
 ! Revision 2.1  2007/09/27 21:59:00  pwagner
 ! First commit
 !
