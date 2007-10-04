@@ -77,7 +77,6 @@ contains ! =====     Public Procedures     =============================
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
     use MLSPCF2, only: MLSPCF_L1B_OA_START, MLSPCF_L1B_RAD_END, &
       &                MLSPCF_L1B_RAD_START, &
-      &                MLSPCF_L2_param_InputVersion, &
       &                MLSPCF_L2_param_PGEVersion, &
       &                MLSPCF_L2_param_Cycle, &
       &                MLSPCF_L2_param_CCSDSStartId, &
@@ -435,7 +434,7 @@ contains ! =====     Public Procedures     =============================
       & AssembleL1BQtyName, DeallocateL1BData, Dump, ReadL1BData
     use L2AUXData, only: MAXSDNAMESBUFSIZE
     use L2GPData, only: col_species_keys, col_species_hash
-    use MLSL2Options, only: TOOLKIT, PENALTY_FOR_NO_METADATA, SPECIALDUMPFILE
+    use MLSL2Options, only: SPECIALDUMPFILE
     use MLSFiles, only: HDFVERSION_4       
     use MLSHDF5, only: GetAllHDF5DSNames
     use output_m, only: revertoutput, switchOutput
@@ -659,6 +658,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.96  2007/10/04 20:43:12  vsnyder
+! Remove unused symbols
+!
 ! Revision 2.95  2007/06/21 00:54:08  vsnyder
 ! Remove tabs, which are not part of the Fortran standard
 !
