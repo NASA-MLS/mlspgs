@@ -28,17 +28,17 @@ module Blackbody
       
 contains
 
-	subroutine planck(temp,freq,tb)
-	real(r8) :: temp,tb,freq
-	real(r8) :: h
-	real(r8) :: k
+      subroutine planck(temp,freq,tb)
+        real(r8) :: temp,tb,freq
+        real(r8) :: h
+        real(r8) :: k
 
-	h = 6.6256
-	k = 1.3805
+        h = 6.6256
+        k = 1.3805
 
         tb=h*freq*1.e-2_r8/(exp(h*freq*1.e-2_r8/k/temp)-1.)/k
 
-	end subroutine planck
+      end subroutine planck
 
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
@@ -52,6 +52,9 @@ contains
 end module Blackbody
 
 ! $Log$
+! Revision 1.4  2005/06/22 18:27:38  pwagner
+! Cant have access declared outside module scope
+!
 ! Revision 1.3  2002/10/08 17:08:07  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !

@@ -46,19 +46,19 @@ contains
         !        Not used, else
 
         integer :: np,n,i
-	real(r8) :: X(NP)	! scattering angles
-	real(r8) :: RH(NP)	! reflectivity for horizontal polarization
-	real(r8) :: RV(NP)	! reflectivity for vertical polarization
+        real(r8) :: X(NP)       ! scattering angles
+        real(r8) :: RH(NP)      ! reflectivity for horizontal polarization
+        real(r8) :: RV(NP)      ! reflectivity for vertical polarization
         real(r8) :: F, TS, S, W
         integer :: IS
 
        if (IS.eq.0) then
 !         call ASSEA1(F,TS,S,W,X,N,NP,RH,RV)
 !... simple model
-	 do i=1,np
-	 rh(i) = 0.05
-	 rv(i) = 0.05
-	 enddo
+        do i=1,np
+         rh(i) = 0.05
+         rv(i) = 0.05
+       enddo
        else if(IS.lt.4 .and. IS.gt.0) then
          call ASSEAN(F,TS,IS,S,X,N,NP,RH,RV)
        else
@@ -254,6 +254,9 @@ contains
 end module SurfaceModel
 
 ! $Log$
+! Revision 1.5  2005/06/22 18:27:38  pwagner
+! Cant have access declared outside module scope
+!
 ! Revision 1.4  2002/10/08 17:08:08  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
