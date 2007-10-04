@@ -1355,7 +1355,7 @@ contains
       character(len=10) :: TheFlagName  ! Name of NWTA's flag argument
       integer :: TikhonovRows           ! How many rows of Tiknonov regularization?
 
-      call MLSMessageCalls( 'push', constantName='NewtonoanSolver' )
+      call MLSMessageCalls( 'push', constantName='NewtonianSolver' )
       ! Set flags from switches
       d_atb = index ( switches, 'atb' ) /= 0
       d_col = index(switches,'col') /= 0
@@ -2721,6 +2721,9 @@ NEWT: do ! Newtonian iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.296  2007/10/04 01:49:42  vsnyder
+! Correct a string's misspelling
+!
 ! Revision 2.295  2007/10/02 22:51:27  vsnyder
 ! Put switches field value into global switches variable so the models can
 ! see them, then clear them at the end so they don't stick around.
