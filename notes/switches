@@ -6,8 +6,8 @@ Switches (set by -S option in mlsl2's command line):
   (where [n] appears, you may optionally suffix an integer specifying how
    detailed you want the extra printing to be: higher the n, more the info)
   0sl =>    Warn about no lines or continuua, else it's an error
-  ant =>    Antenna patterns
-  apr[n] => apriori file info 
+  ant =>    Dump antenna patterns
+  apr[n] => Dump apriori file info 
   atb =>    Dump ATb vector during Newton iteration
   binsel => L2PC bin selection motivation
   bool[n]=> Dump runtime Boolean flags
@@ -16,15 +16,16 @@ Switches (set by -S option in mlsl2's command line):
   cho =>    How good was the Cholesky decomposition?
   chu =>    Enslaved chunk processing
   clean =>  Some dumps in the forward model use this to turn on the CLEAN option
-  col =>    Column scale vector for Newton iteration
+  col =>    Dump column scale vector for Newton iteration
   column => Extra diagnostics while integrating column abundances
   cov =>    Report details of a posteriori covariance calculation
   dacsfil => Dump DACS filter shapes after reading them
-  destroy => Warn beffore each destroy
-  diag =>   diagonal of factored normal equations
-  dvec =>   'DX' vector during Newton iteration
+  destroy => Warn before each destroy
+  diag =>   Dump diagonal of factored normal equations
+  dvec =>   Dump 'DX' vector during Newton iteration
   dwreq[n] => Dump directwrite requests processed by master
                *Warning--may use more memory
+  erh =>    Stop with error if dump,/stop
   fac =>    L_infty norms of blocks of factors of normal equations during Newton iterations
   FAC =>    Factors of normal equations during Newton iterations
   filt =>   Dump filter shapes after reading them
@@ -41,9 +42,9 @@ Switches (set by -S option in mlsl2's command line):
   fwmG =>   Dump Forward model config after Get_Species_Data finishes, then stop
   geom =>   Show geometry of chunks/hGrids
   glo[n] => Global settings, info on l1b files 
-  gridd =>  Gridded data quantities
+  gridd =>  Dump gridded data quantities
   grids =>  Dump Forward Model grids
-  gvec =>   Gradient vector during Newton iteration
+  gvec =>   Dump gradient vector during Newton iteration
   help =>   Display this screen (or "?")
   hgrid =>  Information on HGrid construction (at least for regular)
   hphi =>   Trace H/Phi iteration in metrics
@@ -166,6 +167,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.68  2007/10/02 22:38:47  vsnyder
+ Add FMNAN etc
+
  Revision 1.67  2007/08/23 22:19:06  pwagner
  'walk' switch prints walkback fo calling stack even for warnings
 
