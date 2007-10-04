@@ -68,17 +68,17 @@ contains ! ============= Public Procedures ==========================
 
     ! Executable code
     ! Report we're starting
-    if ( toggle(emit) ) then
-      if ( config%name /= 0 ) then
-        call get_string ( config%name, thisName )
-      else
-        thisName = '[unnamed]'
-      end if
-      call trace_begin ( 'Forward model config: ' // trim(thisName) )
+    if ( config%name /= 0 ) then
+      call get_string ( config%name, thisName )
+    else
+      thisName = '[unnamed]'
     end if
 
-    call MLSMessageCalls( 'push', &
-      & constantName='ForwardModel' // ' ' // trim(thisName) )
+    if ( toggle(emit) ) then
+      call trace_begin ( 'ForwardModel ' // trim(thisName) )
+    else
+      call MLSMessageCalls( 'push', constantName='ForwardModel ' // trim(thisName) )
+    end if
     ! Setup the timing
     call time_now (time_start)
 
@@ -133,8 +133,8 @@ contains ! ============= Public Procedures ==========================
       call add_to_retrieval_timing( 'switching_mirror' )
     case default ! Shouldn't get here if parser etc. worked
     end select
-    call MLSMessageCalls( 'pop' )
-    
+    call MLSMessageCalls( 'pop' ) ! for all the cases
+
     if ( radianceModel ) then
       call MLSMessageCalls( 'push', constantName='BaselinForwardModel' )
       call BaselineForwardModel ( config, FwdModelIn, FwdModelExtra, &
@@ -173,11 +173,6 @@ contains ! ============= Public Procedures ==========================
       end if
     end if
 
-    ! Report we're finished
-    if ( toggle(emit) ) then
-      call trace_end ( 'Forward model config: ' // trim(thisName) )
-    end if
-
     ! Do the timing stuff
     call time_now (time_end)
     deltaTime = time_end - time_start
@@ -186,7 +181,14 @@ contains ! ============= Public Procedures ==========================
       & config%sum_DeltaTime + deltaTime
     config%sum_squareDeltaTime = &
       & config%sum_squareDeltaTime + (deltaTime * deltaTime)
-    
+
+    ! Report we're finished
+    if ( toggle(emit) ) then
+      call trace_end ( 'ForwardModel ' // trim(thisName) )
+    else
+      call MLSMessageCalls( 'pop' )
+    end if
+
   end subroutine ForwardModel
 
   logical function not_used_here()
@@ -201,6 +203,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.30  2007/10/04 01:48:30  vsnyder
+! Make sure thisName has a value, handle call stack properly
+!
 ! Revision 2.29  2007/10/02 22:38:19  vsnyder
 ! Add code to check for NaNs in forward models' output
 !
