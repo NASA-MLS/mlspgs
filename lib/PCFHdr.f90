@@ -18,14 +18,14 @@ MODULE PCFHdr
 ! It might have been better named PCFHdrAndGlobalAttributes
 ! or split off global attribute stuff into a separate module
    USE Hdf, only: DFACC_RDWR, DFACC_WRITE, AN_FILE_DESC
-   USE INTRINSIC, only: L_GRID, L_HDF, L_HDFEOS, L_SWATH
+   USE INTRINSIC, only: L_GRID, L_HDF, L_SWATH
 !  USE Hdf, only: hOpen, afStart, afFCreate, afWriteAnn, afEndAccess, &
 !    & afEnd, hClose
-   USE MLSCommon, only: i4, r4, r8, FileNameLen, NameLen
+   USE MLSCommon, only: r8, FileNameLen, NameLen
    USE MLSFiles, only: GetPCFromRef, HDFVERSION_4, HDFVERSION_5, &
      & MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
    USE MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
-     & MLSMSG_Warning, MLSMSG_DeAllocate, MLSMSG_FILEOPEN,MLSMSG_Info
+     & MLSMSG_Warning, MLSMSG_DeAllocate, MLSMSG_FILEOPEN
    use MLSStrings, only: lowerCase
    use dates_module, only: utc_to_date, utc_to_yyyymmdd
    USE SDPToolkit, only: PGSD_PC_UREF_LENGTH_MAX, PGS_S_SUCCESS, &
@@ -915,7 +915,7 @@ CONTAINS
 !----------------------------------------
 
       use HDFEOS5, only: MLS_charType
-      use MLSHDFEOS, only: he5_EHwrglatt, mls_EHwrglatt
+      use MLSHDFEOS, only: he5_EHwrglatt
 ! Brief description of subroutine
 ! This subroutine writes the PCF into an HDF-EOS5 file as an attribute.
 ! It does so as file level attributes
@@ -1080,6 +1080,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.42  2007/10/04 20:43:36  vsnyder
+!# Remove unused symbols
+!#
 !# Revision 2.41  2007/06/21 00:49:52  vsnyder
 !# Remove tabs, which are not part of the Fortran standard
 !#
