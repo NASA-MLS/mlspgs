@@ -85,7 +85,7 @@ contains
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, &
       & MLSMessageCalls
     use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
-    use Output_m, only: BLANKS, NewLine, OUTPUT, revertoutput, switchOutput
+    use Output_m, only: BLANKS, OUTPUT, revertoutput, switchOutput
     use PFAData_m, only: Flush_PFAData
     use SidsModule, only: SIDS
     use SnoopMLSL2, only: SNOOP
@@ -2721,6 +2721,9 @@ NEWT: do ! Newtonian iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.297  2007/10/04 20:43:12  vsnyder
+! Remove unused symbols
+!
 ! Revision 2.296  2007/10/04 01:49:42  vsnyder
 ! Correct a string's misspelling
 !
