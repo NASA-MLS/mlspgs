@@ -571,7 +571,9 @@ contains ! =====  Public procedures  ===================================
       call fillIndicesArray ( node, num, inds )
 
       call output ( text )
-      if ( size(inds) == 1 ) then
+      if ( size(inds) == 0 ) then
+        call output ( '(none)', advance='yes' )
+      else if ( size(inds) == 1 ) then
         call output ( inds(1), advance='yes' )
       else if ( any(inds(2:)-inds(1:size(inds)-1) /= 1) ) then
         call newLine
@@ -771,6 +773,9 @@ contains ! =====  Public procedures  ===================================
 end module MatrixTools
 
 ! $Log$
+! Revision 1.25  2007/10/02 22:41:27  vsnyder
+! Don't crash if a matrix can't be dumped
+!
 ! Revision 1.24  2006/09/21 18:48:07  pwagner
 ! Reduce level of dumps in SIDS version
 !
