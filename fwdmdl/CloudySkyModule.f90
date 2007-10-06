@@ -37,8 +37,8 @@ contains
 !     LATEST UPDATE: J.JIANG, MAY 20, 2001
 !=======================================================
 
-      use MieTheory, only: MieCoeff
-      use MLSCommon, only: r8      
+      use MieTheory, only: MieCoeff, Ice, Water
+      use MLSKinds, only: r8      
       use PhaseFunction, only: PFsetup
       use SizeDistribution, only: DRP_SIZE
       use Units, only: Pi
@@ -50,7 +50,7 @@ contains
 !     CLOUD PARAMETERS
 !---------------------------------------
 
-      INTEGER :: ISPI                          ! CLOUD TYPE (1:ICE,2:WATER)
+      INTEGER :: ISPI                          ! CLOUD TYPE (ICE,WATER)
 
       INTEGER :: IPSD                          ! SIZE-DISTRIBUTION FLAG
                                                ! IILL     (I=ICE, L=LIQUID)
@@ -100,13 +100,13 @@ contains
 
       WL=0.3/F
       
-      IF (ISPI .EQ. 1) THEN
+      IF (ISPI == ice) THEN
 
         ! DEFINE SIZE BINS FOR ICE CLOUD
           DD=(2000._r8/NR**2)/(F/200._r8)  
 !          DD=2000._r8/NR**2
 
-      ELSE IF (ISPI .EQ. 2) THEN
+      ELSE IF (ISPI == water) THEN
 
         ! DEFINE SIZE BINS FOR WATER CLOUD
           DD=200._r8/NR**2/(F/200._r8)                    
@@ -334,6 +334,9 @@ contains
 end module CloudySkyModule
 
 ! $Log$
+! Revision 2.7  2007/10/06 00:00:38  vsnyder
+! Use new Water, Ice named constants from MieTheory
+!
 ! Revision 2.6  2007/07/25 20:11:00  vsnyder
 ! Delete USE for unreferenced entities
 !
