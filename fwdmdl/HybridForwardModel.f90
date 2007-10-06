@@ -30,15 +30,15 @@ contains ! =====     Public Procedures     =============================
     & FwdModelOut, fmStat, Jacobian, Vectors )
 
     ! Import stuff
-    use VectorsModule, only: VECTOR_T, VECTORVALUE_T, CLONEVECTOR, ADDTOVECTOR, &
+    use VectorsModule, only: VECTOR_T, CLONEVECTOR, ADDTOVECTOR, &
       & DESTROYVECTORINFO
     use ForwardModelConfig, only: FORWARDMODELCONFIG_T
     use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
     use Intrinsic, only: L_LINEAR, L_FULL
     use FullForwardModel_m, only: FULLFORWARDMODEL
     use LinearizedForwardModel_m, only: LINEARIZEDFORWARDMODEL
-    use MatrixModule_1, only: MATRIX_T, COPYMATRIX, ADDTOMATRIX, CLEARMATRIX, &
-      & CREATEEMPTYMATRIX, DESTROYMATRIX
+    use MatrixModule_1, only: MATRIX_T, ADDTOMATRIX, CREATEEMPTYMATRIX, &
+      & DESTROYMATRIX
     use MLSSignals_M, only: SIGNAL_T
 
     ! Dummy arguments
@@ -150,6 +150,9 @@ contains ! =====     Public Procedures     =============================
 end module HybridForwardModel_m
 
 ! $Log$
+! Revision 2.9  2007/10/06 00:01:01  vsnyder
+! Delete unused symbols
+!
 ! Revision 2.8  2007/06/29 19:32:42  vsnyder
 ! Make ForwardModelIntermediate_t private to ScanModelModule
 !
