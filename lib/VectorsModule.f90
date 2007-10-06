@@ -1856,7 +1856,7 @@ contains ! =====     Public Procedures     =============================
     use MLSSignals_m, only: GetRadiometerName
 
     ! Dummy arguments
-    type (Vector_T), intent(in), target :: VECTOR
+    type (Vector_T), intent(in) :: VECTOR
     integer, intent(in) :: QUANTITYTYPE ! Quantity type index (l_...)
     integer, intent(in), optional :: MOLECULE     ! Molecule index (l_...)
     integer, intent(in), optional :: INSTRUMENTMODULE ! Module index
@@ -2543,6 +2543,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.128  2007/10/03 20:51:18  vsnyder
+! Add CheckVectorQuantityForNaN
+!
 ! Revision 2.127  2007/04/03 17:41:58  vsnyder
 ! Revise how allocation status is tested.  Reallocate VectorsDatabase with
 ! zero size after destroying it.
