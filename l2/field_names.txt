@@ -426,6 +426,7 @@ usbPFAMolecules
 
 values
 vector
+vectorMask
 vectors
 velLin # Velocity linearization
 versionRange
@@ -446,6 +447,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.177  2007/10/09 00:32:05  pwagner
+# Added ability to dump masks of quantities, vectors
+#
 # Revision 2.176  2007/10/02 22:51:54  vsnyder
 # Add checkpoint stuff
 #
