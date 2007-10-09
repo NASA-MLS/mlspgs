@@ -548,7 +548,7 @@ subtrees:   do while ( j <= howmany )
       call SummarizeWarnings
       call CloseParallel(numChunks, early)
       if ( parallel%slave .and. .not. SLAVESDOOWNCLEANUP ) return
-      if ( .not. (myEarly .or. skipRetrieval) ) then
+      if ( .not. (myEarly .or. skipRetrieval .or. checkPaths) ) then
         call destroyChunkDatabase ( chunks )
         call destroy_Ant_Patterns_database
         call destroy_DACS_Filter_Database
@@ -605,6 +605,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.160  2007/09/13 21:51:39  pwagner
+! Resumed destroying dbs (unless slave)
+!
 ! Revision 2.159  2007/09/06 23:35:16  pwagner
 ! slaves need not do own cleanup
 !
