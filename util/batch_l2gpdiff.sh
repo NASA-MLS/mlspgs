@@ -223,7 +223,7 @@ while [ "$more_strs" = "yes" ] ; do
        else
 	       l2gpdiff_opts="$l2gpdiff_opts $1"
        fi
-       opt_takes_args=`echo "-d,-f,-chunks,-fields,-s1,-s2" | grep -e "$1"`
+       opt_takes_args=`echo "-d,-f,-chunks,-fields,-pressures,-s1,-s2" | grep -e "$1"`
        # if [ "$1" = "-d" -o "$1" = "-f" ]
        echo opt_takes_args: $opt_takes_args
        if [ "$opt_takes_args" != "" ]
@@ -393,6 +393,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.8  2007/06/01 16:48:58  pwagner
+# Tiny changes, defaults to not keeping temp files
+#
 # Revision 1.7  2006/11/22 18:31:13  pwagner
 # Special cycle number 'none' for file names lacking 'cnn' string
 #
