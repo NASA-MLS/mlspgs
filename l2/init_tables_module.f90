@@ -1251,6 +1251,8 @@ contains ! =====     Public procedures     =============================
     call make_tree ( (/ & ! Continuing for s_dump...
              begin, f+f_lines, s+s_line, n+n_field_spec, &
              begin, f+f_mark, t+t_boolean, n+n_field_type, &
+             begin, f+f_mask, s+s_vector, f+f_template, &
+                    f+f_quantities, n+n_dot, &
              begin, f+f_pfaData, s+s_makePFA, s+s_pfaData, s+s_readPFA, &
                     n+n_field_spec, &
              begin, f+f_pfaFiles, t+t_boolean, n+n_field_type, &
@@ -1266,6 +1268,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_text, t+t_string, n+n_field_type, &
              begin, f+f_tGrid, s+s_tGrid, n+n_field_spec, &
              begin, f+f_vector, s+s_vector, n+n_field_spec, &
+             begin, f+f_vectorMask, s+s_vector, n+n_field_spec, &
              begin, f+f_vGrid, s+s_vGrid, n+n_field_spec, &
              np+n_spec_def/), continue=.true. )
     call make_tree ( (/ &
@@ -1510,6 +1513,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.457  2007/10/09 00:32:05  pwagner
+! Added ability to dump masks of quantities, vectors
+!
 ! Revision 2.456  2007/10/02 22:51:54  vsnyder
 ! Add checkpoint stuff
 !
