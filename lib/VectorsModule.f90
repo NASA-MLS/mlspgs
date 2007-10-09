@@ -90,6 +90,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   ! --------------------------------------------------------------------------
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, Test_Deallocate
+  use BitStuff, only: IsBitSet
   use DUMP_0, only: DUMP
   use Intrinsic, only: LIT_INDICES, PHYQ_INVALID, L_VMR
   use MLSCommon, only: R8, RV
@@ -98,7 +99,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   use MLSSets, only: FINDFIRST
   use MLSSignals_m, only: MODULES, SIGNALS, GETSIGNALNAME
   use Molecules, only: L_EXTINCTION
-  use OUTPUT_M, only: NEWLINE, OUTPUT
+  use OUTPUT_M, only: NEWLINE, OUTPUT, outputNamedValue
   use QuantityTemplates, only: QuantityTemplate_T, CheckIntegrity, &
     & NullifyQuantityTemplate
   use STRING_TABLE, only: DISPLAY_STRING, GET_STRING, STRING_LENGTH
@@ -1293,16 +1294,23 @@ contains ! =====     Public Procedures     =============================
   end subroutine DumpNiceMaskSummary
 
   ! -----------------------------------------  DumpQuantityMask  -----
-  subroutine DumpQuantityMask ( VectorQuantity )
+  subroutine DumpQuantityMask ( VectorQuantity, DETAILS )
     type (VectorValue_T), intent(in) :: VectorQuantity
+    integer, intent(in), optional :: DETAILS ! if < 0 just dump summary
 
     ! Local variables
+    integer :: bitNum                   ! bit number; e.g., 0 is m_linAlg
     integer :: c                        ! Channel index
     integer :: i                        ! Instance index
     integer :: j                        ! Element index
+    logical :: myDetails
+    integer :: n
     integer :: s                        ! Surface index
     integer :: w                        ! Line width used so far
-
+    ! Executable
+    myDetails = 0
+    if ( present(details) ) myDetails = details
+    bitNum = 0
     call output ( 'Quantity ' )
     call display_string ( vectorQuantity%template%name )
 
@@ -1312,6 +1320,9 @@ contains ! =====     Public Procedures     =============================
 
     if ( .not. associated ( vectorQuantity%mask ) ) then
       call output ( ' has no mask.', advance='yes' )
+    elseif( myDetails < 0 ) then
+      n = count( isBitSet( ichar(vectorQuantity%mask), bitNum ) )
+      call outputNamedValue( 'Num mask bits set: ', n )
     else
       call newLine
       do i = 1, vectorQuantity%template%noInstances
@@ -1341,8 +1352,9 @@ contains ! =====     Public Procedures     =============================
   end subroutine DumpQuantityMask
 
   ! ---------------------------------------------  DumpVectorMask  -----
-  subroutine DumpVectorMask ( VECTOR )
+  subroutine DumpVectorMask ( VECTOR, DETAILS )
     type (Vector_T), intent(in) :: VECTOR
+    integer, intent(in), optional :: DETAILS ! if < 0 just dump summar
 
     ! Local variables
     integer :: q                        ! Quantity index
@@ -1352,7 +1364,7 @@ contains ! =====     Public Procedures     =============================
     call display_string ( vector%name, advance='yes' )
 
     do q = 1, size(vector%quantities)
-      call dumpMask ( vector%quantities(q) )
+      call dumpMask ( vector%quantities(q), details )
     end do                              ! Loop over quantities
   end subroutine DumpVectorMask
 
@@ -2543,6 +2555,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.129  2007/10/06 00:01:28  vsnyder
+! Remove unnecessary target attribute
+!
 ! Revision 2.128  2007/10/03 20:51:18  vsnyder
 ! Add CheckVectorQuantityForNaN
 !
