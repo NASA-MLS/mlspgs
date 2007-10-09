@@ -15,7 +15,7 @@ module MLSSets
 
   implicit NONE
   private
-  public :: FindAll, FindFirst, FindLast, FindNext, &
+  public :: FindAll, FindFirst, FindLast, FindLongestRange, FindNext, &
     & Intersect, Intersection, FindIntersection, &
     & Union, UnionSize
 
@@ -36,6 +36,11 @@ module MLSSets
     module procedure FindLastSubString
   end interface
 
+  interface FindLongestRange
+    module procedure FindLongestInteger, FindLongestLogical, FindLongestCharacter
+    module procedure FindLongestSubString
+  end interface
+
   interface FindNext
     module procedure FindNextInteger, FindNextLogical, FindNextCharacter
     module procedure FindNextSubString
@@ -43,6 +48,7 @@ module MLSSets
 
   interface FindAll
     module procedure FindAllInteger, FindAllLogical, FindAllCharacter
+    module procedure FindAllSubString
   end interface
 
   interface Intersection
@@ -59,12 +65,14 @@ module MLSSets
 
 !     (subroutines and functions)
 ! FindAll       Find all logicals in the array that are true, or all the
-!               integers in the array equal to the probe
+!               integers in the array equal to the probe, "matches"
 ! FindFirst     Find the first logical in the array that is true, or the
 !               first [integer,real,double] in the array equal to the probe
 ! FindIntersection  
 !               Compute indices of elements in intersection of two sets
 ! FindLast      Find the last instead
+! FindLongestRange
+!                 Find the longest stretch of consecutive matches
 ! FindNext      Find the next instead
 ! Intersect     Return true if two sets represented by arrays of integers have
 !               a common element
@@ -87,10 +95,14 @@ module MLSSets
 ! int FindFirstSubString (char* set, char* probe, [log reverse])      
 ! FindIntersection ( set1(:), set2(:), int which1(:), int which2(:),
 !      [int how_many] )
-! int FindLastCharacter (char* set(:), char* probe)      
+! int FindLastCharacter (char* set(:), char* probe)
 ! int FindLastInteger (int set(:), int probe)      
 ! int FindLastLogical (log condition(:))      
 ! int FindLastSubString (char* set, char* probe, [log reverse])      
+! FindLongestCharacter (char* set(:), char* probe, int range(2))
+! FindLongestInteger (int set(:), int probe, int range(2))
+! FindLongestLogical (log condition(:), int range(2))
+! FindLongestSubString (char* set, char* probe, int range(2), [log reverse])
 ! int FindNextCharacter (char* set(:), char* probe, int current, [log wrap], [log repeat])
 ! int FindNextInteger (int set(:), int probe, int current, [log wrap], [log repeat]) 
 ! int FindNextLogical (log condition(:), int current, [log wrap], [log repeat])
@@ -555,6 +567,84 @@ contains ! =====     Public Procedures     =============================
     end do
     FindLastSubString = 0
   end function FindLastSubString
+
+  ! -------------------------------------------  FindLongest  -----
+  ! Find the Longest stretch of consecutive elements in the array Set
+  ! (equal to Probe)
+  subroutine FindLongestCharacter ( Set, Probe, Range )
+    ! (case-sensitive, ignores trailing blanks, but alert to leading blanks)
+    character(len=*), dimension(:), intent(in) :: Set
+    character(len=*), intent(in) :: Probe
+    integer, dimension(2), intent(out) :: range
+    ! Internal variables
+    integer, dimension(size(set)) :: which
+    integer :: how_many
+
+    ! Executable code
+    range = 0
+    call FindAll( set, probe, which, how_many )
+    call FindLongestStretch( which, how_many, range )
+  end subroutine FindLongestCharacter
+
+  subroutine FindLongestInteger ( Set, Probe, Range )
+    ! Find the Longest stretch of consecutive elements in the array Set
+    ! equal to Probe
+    ! (case-sensitive, ignores trailing blanks, but alert to leading blanks)
+    integer, dimension(:), intent(in) :: Set
+    integer, intent(in) :: Probe
+    integer, dimension(2), intent(out) :: range
+    ! Internal variables
+    integer, dimension(size(set)) :: which
+    integer :: how_many
+
+    ! Executable code
+    range = 0
+    call FindAll( set, probe, which, how_many )
+    call FindLongestStretch( which, how_many, range )
+  end subroutine FindLongestInteger
+
+  subroutine FindLongestLogical ( Set, Probe, Range )
+    ! Find the Longest stretch of consecutive elements in the array Set
+    ! equal to Probe
+    ! (case-sensitive, ignores trailing blanks, but alert to leading blanks)
+    logical, dimension(:), intent(in) :: Set
+    logical, intent(in) :: Probe
+    integer, dimension(2), intent(out) :: range
+    ! Internal variables
+    integer, dimension(size(set)) :: which
+    integer :: how_many
+
+    ! Executable code
+    range = 0
+    call FindAll( set, which, how_many )
+    call FindLongestStretch( which, how_many, range )
+  end subroutine FindLongestLogical
+
+  subroutine FindLongestSubString ( Set, Probe, Range, reverse )
+    ! Find the Longest stretch of consecutive elements in the array Set
+    ! equal to Probe
+    ! (case-sensitive, ignores trailing blanks, but alert to leading blanks)
+    character(len=*), intent(in)                 :: set
+    character(len=1), intent(in)                 :: probe
+    integer, dimension(2), intent(out) :: range
+    logical, optional, intent(in) :: reverse
+    ! Internal variables
+    integer, dimension(len(set)) :: which
+    integer, dimension(len(set)) :: which_not
+    integer :: how_many
+    logical :: myReverse
+
+    ! Executable code
+    myReverse = .false.
+    if ( present(reverse) ) myReverse = reverse
+    range = 0
+    call FindAll( set, probe, which, how_many, which_not=which_not )
+    if ( myReverse ) then
+      how_many = len(set) - how_many
+      which = which_not
+    endif
+    call FindLongestStretch( which, how_many, range )
+  end subroutine FindLongestSubString
 
   ! --------------------------------------------  FindNextCharacter  -----
   integer function FindNextCharacter ( Set, Probe, Current, Wrap, Repeat )
@@ -1033,6 +1123,57 @@ contains ! =====     Public Procedures     =============================
 
 ! =====     Private Procedures     =====================================
 
+  subroutine FindLongestStretch( which, how_many, range )
+    ! Given an array of integers, return the longest
+    ! stretch of consecutive ones
+    integer, dimension(:), intent(in)  :: which
+    integer, intent(in)                :: how_many
+    integer, dimension(2), intent(out) :: range
+    ! Internal variables
+    integer :: firstWhich
+    integer :: i
+    logical :: inSequence
+    integer :: lastWhich
+    integer :: stretch
+    ! Executable
+    range = 0
+    if ( how_many < 1 ) return
+    range = which(1)
+    if ( how_many < 2 ) return
+    stretch = 1
+    firstWhich = which(1)
+    lastWhich = which(1)
+    do i=2, how_many
+      ! Are we still in sequence?
+      if ( (which(i)-lastWhich) > 1 ) then
+        ! Nope--our sequence ended with lastWhich
+        ! How does it compare with the previous record-holder?
+        inSequence = .false.
+        if ( lastWhich - firstWhich + 1 > stretch ) then
+          ! It is longer so it becomes our best bet
+          range(1) = firstWhich
+          range(2) = lastWhich
+          stretch = lastWhich - firstWhich + 1
+        ! else
+          ! Not longer, so we forget about it
+        endif
+        firstWhich = which(i)
+      else
+        ! Yes, we have extended our sequence
+        lastWhich = which(i)
+        inSequence = .true.
+      endif
+    enddo
+    ! Did we end the loop still in sequence?
+    if ( inSequence ) then
+      if ( lastWhich - firstWhich + 1 > stretch ) then
+        ! It is longer so it becomes our new winner
+        range(1) = firstWhich
+        range(2) = lastWhich
+      endif
+    endif
+  end subroutine FindLongestStretch
+
   logical function not_used_here()
   !---------------------------- RCS Ident Info -------------------------------
     character (len=*), parameter :: IdParm = &
@@ -1045,6 +1186,9 @@ contains ! =====     Public Procedures     =============================
 end module MLSSets
 
 ! $Log$
+! Revision 2.16  2007/10/09 00:30:50  pwagner
+! Added FindLongestRange procedures
+!
 ! Revision 2.15  2007/09/20 18:38:31  pwagner
 ! Added substring versions of of Find(-First, Last, Next)
 !
