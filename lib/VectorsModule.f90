@@ -1303,7 +1303,7 @@ contains ! =====     Public Procedures     =============================
     integer :: c                        ! Channel index
     integer :: i                        ! Instance index
     integer :: j                        ! Element index
-    logical :: myDetails
+    integer :: myDetails
     integer :: n
     integer :: s                        ! Surface index
     integer :: w                        ! Line width used so far
@@ -2555,6 +2555,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.130  2007/10/09 00:29:42  pwagner
+! Added optional DETAILS arg to some dumps
+!
 ! Revision 2.129  2007/10/06 00:01:28  vsnyder
 ! Remove unnecessary target attribute
 !
