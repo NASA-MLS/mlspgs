@@ -47,10 +47,11 @@ contains
       & F_AllVectors, F_AllVectorTemplates, F_AllVGrids, F_AntennaPatterns, &
       & F_Boolean, F_Clean, F_Details, F_DACSFilterShapes, &
       & F_FilterShapes, F_ForwardModel, F_GRID, &
-      & F_HGrid, F_Lines, F_Mark, F_PfaData, F_PfaFiles, F_PFANum, F_PFAStru, &
-      & F_PointingGrids, F_Quantity, F_Signals,  F_Spectroscopy, F_Stop, &
-      & F_Template, F_Text, F_TGrid, F_Vector, F_VGrid, S_Quantity, &
-      & S_VectorTemplate
+      & F_HGrid, F_Lines, F_Mark, F_Mask, &
+      & F_PfaData, F_PfaFiles, F_PFANum, F_PFAStru, F_PointingGrids, &
+      & F_Quantity, F_Signals,  F_Spectroscopy, F_Stop, &
+      & F_Template, F_Text, F_TGrid, &
+      & F_Vector, F_VectorMask, F_VGrid, S_Quantity, S_VectorTemplate
     use Intrinsic, only: PHYQ_Dimensionless
     use MLSL2Options, only: runTimeValues
     use MLSMessageModule, only: MLSMessage, MLSMessageCalls, MLSMSG_error
@@ -69,7 +70,7 @@ contains
     use Trace_m, only: Trace_begin, Trace_end
     use Tree, only: Decoration, Node_Id, Nsons, Source_Ref, Sub_rosa, Subtree
     use Tree_Types, only: N_Spec_Args
-    use VectorsModule, only: Dump, & ! for vectors, vector quantities and templates
+    use VectorsModule, only: Dump, DumpQuantityMask, DumpVectorMask, & ! for vectors, vector quantities and templates
       & GetVectorQtyByTemplateIndex, Vector_T, VectorTemplate_T
     use VGridsDatabase, only: Dump, VGrids
 
@@ -336,15 +337,20 @@ contains
           if ( type /= num_value ) call announceError ( subtree(i,son), numeric )
           call dump ( pfaData(nint(values(1))), details, nint(values(1)) )
         end do
-      case ( f_quantity ) ! Dump vector quantities
+      case ( f_mask, f_quantity ) ! Dump vector quantities
         if ( details < -1 ) cycle
         do i = 2, nsons(son)
           gson = subtree(i,son)
           vectorIndex = decoration(decoration(subtree(1,gson)))
           quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
-          call dump ( GetVectorQtyByTemplateIndex( &
-            & vectors(vectorIndex), quantityIndex), details=details, &
-            & vector=vectors(vectorIndex), clean=clean )
+          if ( fieldIndex == f_mask ) then
+            call dumpQuantityMask ( GetVectorQtyByTemplateIndex( &
+              & vectors(vectorIndex), quantityIndex), details=details )
+          else
+            call dump ( GetVectorQtyByTemplateIndex( &
+              & vectors(vectorIndex), quantityIndex), details=details, &
+              & vector=vectors(vectorIndex), clean=clean )
+          endif
         end do
       case ( f_signals )
         do i = 2, nsons(son)
@@ -474,13 +480,18 @@ contains
           call output ( ' TGrid ' )
           call dump ( vGRids(decoration(decoration(subtree(i,son)))), details=details )
         end do
-      case ( f_vector ) ! Dump entire vectors
+      case ( f_vectormask, f_vector ) ! Dump entire vectors
         if ( details < -1 ) cycle
         if ( haveVectors ) then
           do i = 2, nsons(son)
             call output ( ' Vector ' )
-            call dump ( vectors(decoration(decoration(subtree(i,son)))), &
-              & details=details, clean=clean )
+            if ( fieldIndex == f_vectormask ) then
+              call dumpVectorMask ( vectors(decoration(decoration(subtree(i,son)))), &
+                & details=details )
+            else
+              call dump ( vectors(decoration(decoration(subtree(i,son)))), &
+                & details=details, clean=clean )
+            endif
           end do
         else
           call announceError ( gson, noVectors )
@@ -557,6 +568,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.38  2007/10/09 00:32:05  pwagner
+! Added ability to dump masks of quantities, vectors
+!
 ! Revision 2.37  2007/10/03 23:53:05  vsnyder
 ! Stop with error if /stop and switch 'erh' is set
 !
