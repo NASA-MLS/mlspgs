@@ -3817,7 +3817,7 @@ contains
     myFields = ' '
     if ( present(fields) ) then
       myFields = fields
-      myDetails = 2
+      if ( .not. present(details) ) myDetails = 2
     endif
     
     if( present(ColumnsOnly)) then
@@ -4404,6 +4404,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.150  2007/08/13 17:36:38  pwagner
+! Push some procedures onto new MLSCallStack
+!
 ! Revision 2.149  2007/06/26 00:20:14  pwagner
 ! May specify pressure levels on which to show diffs
 !
