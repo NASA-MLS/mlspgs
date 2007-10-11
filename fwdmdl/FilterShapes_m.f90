@@ -429,7 +429,7 @@ contains
     use Allocate_Deallocate, only: Deallocate_Test
     integer :: I, Status
     if ( .not. associated(DACSfilterShapes) ) return
-    do i = 1, size(filterShapes)
+    do i = 1, size(DACSfilterShapes)
       call deallocate_test ( DACSfilterShapes(i)%filter%filterGrid, &
         & "DACSFilterShapes(?)%filter%filterGrid", moduleName )
       call deallocate_test ( DACSfilterShapes(i)%filter%filterShape, &
@@ -552,6 +552,9 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 2.23  2007/10/03 23:58:26  vsnyder
+! Add 'where' for tracing
+!
 ! Revision 2.22  2007/09/12 00:52:45  vsnyder
 ! Remove redundant dimension spec in DACSFilterShape_T components
 !
