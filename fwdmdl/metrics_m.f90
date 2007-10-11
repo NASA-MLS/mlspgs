@@ -229,6 +229,7 @@ contains
 
     use Dump_0, only: Dump
     use Get_Eta_Matrix_m, only: Get_Eta_Sparse
+    use IEEE_Arithmetic, only: IEEE_Is_NaN
     use MLSKinds, only: RP
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use Output_m, only: OUTPUT
@@ -284,8 +285,6 @@ contains
     real(rp) :: HTAN_R     ! H_Tan + req
     real(rp) :: My_H_Tol   ! Tolerance in kilometers for height convergence
     real(rp) :: P          ! Tentative solution for phi
-    real(rp) :: P_Prev     ! Previous phi.  Phi's are monotone, so next one
-                           ! cannot be less.
     real(rp) :: REQ_S      ! Req - H_Surf
 
     real(rp) :: ETA_T(size(p_basis)) ! Interpolating coefficients
@@ -351,14 +350,12 @@ contains
 
     ! Get solutions outside of p_basis, if any, assuming constant H
     ! outside of p_basis.
-    p_prev = -0.5 * huge(0.0_rp)
     do i1 = 1, n_path
       if ( stat(i1) == good ) cycle ! Skip the tangent point
       k = vert_inds(i1)
       h = max(htan_r,h_ref(k,1)+req_s)
       p = acos(htan_r/h) * phi_sign(i1) + phi_offset(i1)
       if ( p >= p_basis(1) ) exit ! phi is monotone
-      p_prev = p
       p_grid(i1) = p
       h_grid(i1) = h
       no_bad_fits = no_bad_fits - 1
@@ -448,7 +445,12 @@ path: do i = i1, i2
           &                h_ref(k,j:j+1), a, b, c, &
           &                htan_r, req_s, my_h_tol, i /= i2 .or. j /= p_coeffs-1, &
           &                h_grid(i), p_grid(i), stat(i), outside )
-        if ( p_grid(i) < p_prev ) stat(i) = no_sol
+        if ( IEEE_Is_NaN(p_grid(i)) ) stat(i) = no_sol
+        if ( i > 1 .and. stat(i) >= good ) then
+          if ( p_grid(i) < p_grid(i-1) ) then ! Phi out of order, can't be right
+            stat(i) = no_sol
+          end if
+        end if
         if ( stat(i) == good ) then
           no_bad_fits = no_bad_fits - 1
         else if ( stat(i) >= grid1 ) then
@@ -463,10 +465,7 @@ path: do i = i1, i2
           ibad = i2
           exit
         end if
-        if ( stat(i) == good ) then  ! Newton iteration ended successfully
-          p_prev = p_grid(i)
-          cycle
-        end if
+        if ( stat(i) >= good ) cycle  ! Newton iteration ended successfully
 !        Don't do this; it causes trouble:
 !        if ( stat(i) == grid1 ) cycle ! Can't be further to the right
         ibad=min(i,ibad)
@@ -487,13 +486,13 @@ path: do i = i1, i2
       end do path ! i
     end do phi ! j
 
+      if ( debug ) then
+        print *, 'no_bad_fits =', no_bad_fits, ', no_grid+fits =', no_grid_fits
+        do i = 1, size(stat), 10
+          print "(i4,'#',10(1x,a:))", i, nStat(stat(i:min(size(stat),i+9)))
+        end do
+      end if
     if ( no_bad_fits > 0 ) then
-        if ( debug ) then
-          print *, 'no_bad_fits =', no_bad_fits, ', no_grid+fits =', no_grid_fits
-          do i = 1, size(stat), 10
-            print "(i4,'#',10(1x,a:))", i, nStat(stat(i:min(size(stat),i+9)))
-          end do
-        end if
       call dumpInput ( 1 )
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & "Height_Metrics failed to find H/Phi solution for some path segment" )
@@ -1108,6 +1107,9 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.54  2007/10/03 20:54:10  vsnyder
+! Require phi to be monotone
+!
 ! Revision 2.53  2007/09/07 01:37:23  vsnyder
 ! Spiff up some dumps
 !
