@@ -16,15 +16,13 @@ PROGRAM L2GPDump ! dumps L2GPData files
    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
    use BitStuff, only: ISBITSET
    use dump_0, only: dump
-   use Hdf, only: DFACC_CREATE, DFACC_RDWR, DFACC_READ
-   use HDF5, only: h5fopen_f, h5fclose_f, h5gopen_f, h5gclose_f, h5fis_hdf5_f   
-   use HDFEOS5, only: HE5T_NATIVE_CHAR
+   use Hdf, only: DFACC_READ
+   use HDF5, only: h5fclose_f, h5gopen_f, h5gclose_f, h5fis_hdf5_f   
    use intrinsic, only: l_swath
    use L2GPData, only: Dump, L2GPData_T, ReadL2GPData, DestroyL2GPContents, &
      & L2GPNameLen, MAXSWATHNAMESBUFSIZE, RGP
-   use MACHINE, only: FILSEP, HP, IO_ERROR, GETARG
-   use MLSCommon, only: R8
-   use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, MLS_INQSWATH, &
+   use MACHINE, only: HP, GETARG
+   use MLSFiles, only: HDFVERSION_5, MLS_INQSWATH, &
      & mls_io_gen_closeF, mls_io_gen_openF, split_path_name
    use MLSHDF5, only: mls_h5open, mls_h5close
    use MLSMessageModule, only: MLSMessageConfig, MLSMSG_Error, MLSMSG_Warning, &
@@ -34,7 +32,6 @@ PROGRAM L2GPDump ! dumps L2GPData files
      & stringElement, stringElementNum
    use OUTPUT_M, only: blanks, newline, OUTPUT, outputNamedValue, &
      & resumeOutput, suspendOutput
-   use PCFHdr, only: GlobalAttributes
    
    implicit none
 
@@ -80,11 +77,13 @@ PROGRAM L2GPDump ! dumps L2GPData files
   type ( options_T ) :: options
   character(LEN=255) :: filename          ! filename
   integer            :: n_filenames
-  integer     ::  i, status, error ! Counting indices & Error flags
+  integer     ::  error ! Counting indices & Error flags
   logical     :: is_hdf5
   logical     :: is_present
   integer, save                   :: numGood = 0
   integer, save                   :: numGoodPrec = 0
+  integer, save                   :: numNotUseable = 0
+  integer, save                   :: numOddStatus = 0
   real, dimension(3), save        :: numTest = 0.
   integer, parameter              :: MAXNUMBITSUSED = 8
   integer, dimension(MAXNUMBITSUSED), parameter :: bitNumber = &
@@ -132,6 +131,7 @@ PROGRAM L2GPDump ! dumps L2GPData files
       & call showPercentages( numTest(3), numGoodPrec, 'precision', &
       & options%PrecisionCutOff, 'above' )
     if ( options%statusBits ) call showStatusPct
+    call ShowSummary
   endif
   call mls_h5close(error)
 contains
@@ -411,6 +411,7 @@ contains
      integer, dimension(MAXNCHUNKS) :: chunks
      integer :: nChunks
      logical, dimension(:), pointer  :: negativePrec => null() ! true if all prec < 0
+     logical, dimension(:), pointer  :: oddStatus => null() ! true if all status odd
      ! Executable
      alreadyDumped = .false.
      if ( options%verbose ) print *, 'swath: ', trim(swath)
@@ -418,11 +419,17 @@ contains
        bitCounts = 0
        numGood = 0
        numGoodPrec = 0
+       numNotUseable = 0
+       numOddStatus = 0
        numTest = 0.
      endif
      call allocate_test( negativePrec, l2gp%nTimes, 'negativePrec', ModuleName )
+     call allocate_test( oddStatus, l2gp%nTimes, 'oddStatus', ModuleName )
      do i=1, l2gp%nTimes
        negativePrec(i) = all( l2gp%l2GPPrecision(:,:,i) < 0._rgp )
+     enddo
+     do i=1, l2gp%nTimes
+       oddStatus(i) = mod(l2gp%status(i), 2) > 0
      enddo
      numGood = numGood + count( .not. ( negativePrec .or. &
        & (mod(l2gp%status, 2) > 0) ) )
@@ -462,6 +469,8 @@ contains
      endif
      ! numGood = count( .not. ( negativePrec .or. &
      !   & (mod(l2gp%status, 2) > 0) ) )
+     numNotUseable = numNotUseable + count ( negativePrec .or. oddStatus )
+     numOddStatus = numOddStatus + count( oddStatus )
      if ( options%statusBits ) then
        alreadyDumped = .true.
        ! Bits 0 and 8 are special
@@ -482,18 +491,24 @@ contains
            & (mod(l2gp%status, 2) > 0) ) .and. &
            & isBitSet( l2gp%status, bitNumber(bitindex) ) )
        enddo
-       if ( .not. options%merge ) call showStatusPct
+       if ( .not. options%merge ) then
+         call showStatusPct
+         call showSummary
+       endif
      endif
      call deallocate_test( negativePrec, 'negativePrec', ModuleName )
+     call deallocate_test( oddStatus, 'oddStatus', ModuleName )
      if ( alreadyDumped ) return
      ! Dump the actual swath
      if ( options%chunks == '*' ) then
        call dump(l2gp, options%columnsOnly, options%details, options%fields)
+       call showSummary
      else
        call ExpandStringRange(options%chunks, chunks, nchunks)
        if ( nchunks < 1 ) return
        call dump(l2gp, chunks(1:nChunks), &
          & options%columnsOnly, options%details, options%fields)
+       call showSummary
      endif
    end subroutine myDump
 
@@ -562,11 +577,22 @@ contains
        call newline
      enddo
    end subroutine showStatusPct
+
+   subroutine showSummary
+     ! output number good, unuseable profiles
+     call outputNamedValue( 'Number of good profiles', numGood )
+     call outputNamedValue( 'Number of unuseable profiles', numNotUseable )
+     call outputNamedValue( 'Number with odd status set', numOddStatus )
+   end subroutine showSummary
+
 !==================
 end program L2GPDump
 !==================
 
 ! $Log$
+! Revision 1.3  2007/06/14 21:45:42  pwagner
+! Many bugs corrected regarding percentages
+!
 ! Revision 1.2  2007/02/06 23:19:06  pwagner
 ! Can show percentages with thresholds in convergence, status, prec.
 !
