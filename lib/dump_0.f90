@@ -22,8 +22,9 @@ module DUMP_0
   use MLSFillValues, only : FilterValues, IsFinite, &
     & ReorderFillValues, ReplaceFillValues
   use MLSSets, only: FindAll
-  use MLSStats1, only: ALLSTATS, FILLVALUERELATION, HOWNEAR, &
-    & MLSMAX, MLSMEAN, MLSMIN, MLSSTDDEV, RATIOS
+  use MLSStats1, only: STAT_T, &
+    & ALLSTATS, FILLVALUERELATION, HOWFAR, HOWNEAR, &
+    & MLSMAX, MLSMEAN, MLSMIN, MLSSTDDEV, RATIOS, RESET
   use MLSStringLists, only: catLists, GetStringElement, NumStringElements
   use MLSStrings, only: lowercase
   use OUTPUT_M, only: outputOptions, stampOptions, &
@@ -2417,6 +2418,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.74  2007/10/12 23:34:49  pwagner
+! Using new howfar procedure to summarize diffs after peeling away outliers
+!
 ! Revision 2.73  2007/09/20 18:39:37  pwagner
 ! Dont interrupt tables of dumped numbers with stamping
 !
