@@ -14,7 +14,6 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
 !=============================================================================
   use Allocate_Deallocate, only: allocate_Test, Deallocate_Test
   use MLSCommon, only: r4, r8
-  use MLSFillValues, only: isFillValue
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSSets, only: findAll, findFirst, findLast
   use MLSStringLists, only: catLists
@@ -39,6 +38,8 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
 ! MLSMAX, MLSMEAN, MLSMEDIAN,
 !    MLSSTDDEV, MLSRMS            Similar to MLSMIN for other statistics
 ! HOWNEAR                         Finds how near 2 arrays are in %
+! HOWFAR                          Inverse of hownear--given a % finds stats of 
+!                                   diffs of nearest %
 ! PDF                             Finds the pdf for a sample x given a STAT_T
 !                                   or with x1, x2 its integral over [x1, x2]
 ! RATIOS                          Statistics of ratio between 2 arrays;
@@ -75,6 +76,7 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
 !      & [log doDump] )
 ! dump( stat_t statistic, [char which] )
 ! type(values) mls$fun( values, [fillvalue] )
+! howfar( array1, array2, pct(:), stat_t gaps, char * mode )
 ! hownear( array1, array2, pct, [type(array1) gaps(:)], [type(array1) gapratios(:)] )
 ! r8 pdf( r8 x, stat_t statistic )
 ! r8 pdf( r8 x1, r8 x2, stat_t statistic )
@@ -98,7 +100,7 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
   private
   
   public :: STAT_T             ! The data type
-  public :: ALLSTATS, DUMP, HOWNEAR, RATIOS, STATISTICS  ! subroutines
+  public :: ALLSTATS, DUMP, HOWFAR, HOWNEAR, RATIOS, STATISTICS  ! subroutines
   public :: MLSMIN, MLSMAX, MLSMEAN, MLSMEDIAN, MLSSTDDEV, MLSRMS ! functions
   public :: PDF
   public :: RESET
@@ -189,6 +191,12 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
     module procedure dump_if_selected_int_scalar
     module procedure dump_if_selected_r8_array
     module procedure dump_if_selected_r8_scalar
+  end interface
+  
+  interface howfar
+    module procedure howfar_d1int, howfar_d2int, howfar_d3int
+    module procedure howfar_d1r4, howfar_d2r4, howfar_d3r4
+    module procedure howfar_d1r8, howfar_d2r8, howfar_d3r8
   end interface
   
   interface hownear
@@ -1048,6 +1056,118 @@ contains
         include 'stats0.f9h'
       end function mlsrms_d3r8
       
+      ! ------------------- howfar -----------------------
+      ! This family of routines, keeping a given percentage of points
+      ! in two arrays "near" each other in value,
+      ! Returns the statistics of the remaining differences
+      ! where nearness is defined as within a gap either
+      ! of absolute value
+      ! or of relative value
+      ! i.e., if absolute gap
+      ! | array1(i) - array2(i) | < gap
+      ! if relative gap
+      ! | array1(i) - array2(i) | < gap * max( abs(array1(i)), abs(array2(i)) )
+      
+      ! An inverse, in a sense, of the hownear procedures
+      
+      ! Note that the statistic returned is inout--otherwise
+      ! we would clobber nbins, bounds, bincount, etc.
+      subroutine howfar_d1int( array1, array2, pct, gaps, mode )
+        integer, parameter                             :: KINDVALUE = r4
+        integer, dimension(:), intent(in)                   :: array1, array2
+        real(KINDVALUE), dimension(:), intent(in)           :: pct
+        type(Stat_T), dimension(:), intent(inout)           :: gaps
+        character(len=*), intent(in)              :: mode ! 'rel' or 'abs'          
+        call howfar_d1r4( real(array1, KINDVALUE), real(array2, KINDVALUE), &
+          & pct, gaps, mode )
+      end subroutine howfar_d1int
+
+      subroutine howfar_d2int( array1, array2, pct, gaps, mode )
+        integer, parameter                             :: KINDVALUE = r4
+        integer, dimension(:,:), intent(in)                 :: array1, array2
+        real(KINDVALUE), dimension(:), intent(in)           :: pct
+        type(Stat_T), dimension(:), intent(inout)           :: gaps
+        character(len=*), intent(in)              :: mode ! 'rel' or 'abs'          
+        call howfar_d2r4( real(array1, KINDVALUE), real(array2, KINDVALUE), &
+          & pct, gaps, mode )
+      end subroutine howfar_d2int
+
+      subroutine howfar_d3int( array1, array2, pct, gaps, mode )
+        integer, parameter                             :: KINDVALUE = r4
+        integer, dimension(:,:,:), intent(in)               :: array1, array2
+        real(KINDVALUE), dimension(:), intent(in)           :: pct
+        type(Stat_T), dimension(:), intent(inout)           :: gaps
+        character(len=*), intent(in)              :: mode ! 'rel' or 'abs'          
+        call howfar_d3r4( real(array1, KINDVALUE), real(array2, KINDVALUE), &
+          & pct, gaps, mode )
+      end subroutine howfar_d3int
+
+      subroutine howfar_d1r4( array1, array2, pct, gaps, mode )
+        integer, parameter                             :: KINDVALUE = r4
+        include 'howfar.f9h'
+      end subroutine howfar_d1r4
+
+      subroutine howfar_d2r4( array1, array2, pct, gaps, mode )
+        integer, parameter                             :: KINDVALUE = r4
+        real(KINDVALUE), dimension(:,:), intent(in)         :: array1, array2
+        real(KINDVALUE), dimension(:), intent(in)           :: pct
+        type(Stat_T), dimension(:), intent(inout)           :: gaps
+        character(len=*), intent(in)              :: mode ! 'rel' or 'abs'          
+        integer, dimension(2)                          :: shp
+        ! Executable
+        shp = shape(array1)
+        call howfar( reshape(array1, (/shp(1)*shp(2)/)), &
+          & reshape(array2, (/shp(1)*shp(2)/)), &
+          & pct, gaps, mode )
+      end subroutine howfar_d2r4
+
+      subroutine howfar_d3r4( array1, array2, pct, gaps, mode )
+        integer, parameter                             :: KINDVALUE = r4
+        real(KINDVALUE), dimension(:,:,:), intent(in)       :: array1, array2
+        real(KINDVALUE), dimension(:), intent(in)           :: pct
+        type(Stat_T), dimension(:), intent(inout)           :: gaps
+        character(len=*), intent(in)              :: mode ! 'rel' or 'abs'          
+        integer, dimension(3)                          :: shp
+        ! Executable
+        shp = shape(array1)
+        call howfar( reshape(array1, (/shp(1)*shp(2)*shp(3)/)), &
+          & reshape(array2, (/shp(1)*shp(2)*shp(3)/)), &
+          & pct, gaps, mode )
+      end subroutine howfar_d3r4
+
+      subroutine howfar_d1r8( array1, array2, pct, gaps, mode )
+        integer, parameter                             :: KINDVALUE = r8
+        include 'howfar.f9h'
+      end subroutine howfar_d1r8
+
+      subroutine howfar_d2r8( array1, array2, pct, gaps, mode )
+        integer, parameter                             :: KINDVALUE = r8
+        real(KINDVALUE), dimension(:,:), intent(in)         :: array1, array2
+        real(KINDVALUE), dimension(:), intent(in)           :: pct
+        type(Stat_T), dimension(:), intent(inout)           :: gaps
+        character(len=*), intent(in)              :: mode ! 'rel' or 'abs'          
+        integer, dimension(2)                          :: shp
+        ! Executable
+        shp = shape(array1)
+        call howfar( reshape(array1, (/shp(1)*shp(2)/)), &
+          & reshape(array2, (/shp(1)*shp(2)/)), &
+          & pct, gaps, mode )
+      end subroutine howfar_d2r8
+
+      subroutine howfar_d3r8( array1, array2, pct, gaps, mode )
+        integer, parameter                             :: KINDVALUE = r8
+        real(KINDVALUE), dimension(:,:,:), intent(in)       :: array1, array2
+        real(KINDVALUE), dimension(:), intent(in)           :: pct
+        type(Stat_T), dimension(:), intent(inout)           :: gaps
+        character(len=*), intent(in)              :: mode ! 'rel' or 'abs'          
+        integer, dimension(3)                          :: shp
+        ! Executable
+        shp = shape(array1)
+        call howfar( reshape(array1, (/shp(1)*shp(2)*shp(3)/)), &
+          & reshape(array2, (/shp(1)*shp(2)*shp(3)/)), &
+          & pct, gaps, mode )
+      end subroutine howfar_d3r8
+
       ! ------------------- hownear -----------------------
       ! This family of routines finds the percentages of points
       ! in two arrays "near" each other in value
@@ -1942,6 +2062,9 @@ end module MLSStats1
 
 !
 ! $Log$
+! Revision 2.16  2007/10/12 23:36:16  pwagner
+! Added howfar procedures for comparing two arrays
+!
 ! Revision 2.15  2007/09/13 21:07:44  pwagner
 ! Added hownear
 !
