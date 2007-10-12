@@ -14,23 +14,14 @@ program l2gpdiff ! show diffs between swaths in two different files
 !=================================
 
    use dump_0, only: rmsFormat
-   use Hdf, only: DFACC_CREATE, DFACC_RDWR, DFACC_READ
-   use HDF5, only: h5fopen_f, h5fclose_f, h5fis_hdf5_f   
-   use HDFEOS5, only: HE5T_NATIVE_CHAR
-   use L2GPData, only: L2GPData_T, &
-     & Diff, &
-     & L2GPNameLen, MAXSWATHNAMESBUFSIZE
-   use MACHINE, only: FILSEP, HP, IO_ERROR, GETARG
-   use MLSCommon, only: R8
-   use MLSFiles, only: mls_exists, &
-     & HDFVERSION_4, HDFVERSION_5, MLS_INQSWATH
+   use L2GPData, only: Diff, MAXSWATHNAMESBUFSIZE
+   use MACHINE, only: HP, GETARG
+   use MLSFiles, only: mls_exists, HDFVERSION_5, MLS_INQSWATH
    use MLSHDF5, only: mls_h5open, mls_h5close
    use MLSMessageModule, only: MLSMessageConfig
-   use MLSStringLists, only: ExpandStringRange, &
-     & GetStringElement, NumStringElements
+   use MLSStringLists, only: ExpandStringRange
    use MLSStrings, only: WriteIntsToChars
    use output_m, only: resumeOutput, suspendOutput, output
-   use PCFHdr, only: GlobalAttributes
    use Time_M, only: Time_Now, time_config
    
    implicit none
@@ -75,13 +66,9 @@ program l2gpdiff ! show diffs between swaths in two different files
   integer, parameter :: MAXNCHUNKS = 50
 
   integer, dimension(MAXNCHUNKS) :: chunks
-  character(len=10) :: column_name
   character(len=255) :: filename          ! input filename
   character(len=255), dimension(MAXFILES) :: filenames
   integer     ::  i, error ! Counting indices & Error flags
-  integer     ::  hdfversion1
-  integer     ::  hdfversion2
-  logical     :: is_hdf5
   integer :: listSize
   integer            :: n_filenames
   integer :: nChunks
@@ -91,8 +78,6 @@ program l2gpdiff ! show diffs between swaths in two different files
   real, dimension(MAXNCHUNKS) :: pressures
   character(len=16) :: string
   character(len=MAXSWATHNAMESBUFSIZE) :: swathList1
-  character(len=MAXSWATHNAMESBUFSIZE) :: swathList2
-  character(len=10) :: swath_name
   character(len=*), parameter :: SWATHPREFIX='R3:240.B25D:CO.S1.DACS-1 chisqBinned Core'
   real        :: t1
   real        :: t2
@@ -105,7 +90,7 @@ program l2gpdiff ! show diffs between swaths in two different files
   CALL mls_h5open(error)
   n_filenames = 0
   do      ! Loop over filenames
-     call get_filename(filename, n_filenames, options)
+     call get_filename(filename, options)
      if ( filename(1:1) == '-' ) cycle
      if ( filename == ' ' ) exit
      if ( mls_exists(trim(filename)) /= 0 ) then
@@ -203,10 +188,9 @@ program l2gpdiff ! show diffs between swaths in two different files
   call mls_h5close(error)
 contains
 !------------------------- get_filenames ---------------------
-    subroutine get_filename(filename, n_filenames, options)
+    subroutine get_filename(filename, options)
     ! Added for command-line processing
      character(LEN=255), intent(out) :: filename          ! filename
-     integer, intent(in)             :: n_filenames
      type ( options_T ), intent(inout) :: options
      ! Local variables
      integer ::                         error = 1
@@ -355,6 +339,9 @@ end program l2gpdiff
 !==================
 
 ! $Log$
+! Revision 1.11  2007/06/27 19:30:59  pwagner
+! -pressures option added
+!
 ! Revision 1.10  2007/06/14 21:48:41  pwagner
 ! Overrides default rmsFormat
 !
