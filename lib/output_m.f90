@@ -50,6 +50,7 @@ module OUTPUT_M
 ! dumpsize                 print a nicely-formatted memory size 
 ! getStamp                 get stamp being added to every output
 ! newline                  print a newline
+! numToChars               return what would be printed by output
 ! output                   print argument
 ! outputCalendar           output nicely-formatted calendar page
 ! output_date_and_time     print nicely formatted date and time
@@ -78,6 +79,7 @@ module OUTPUT_M
 ! getStamp ( [char* textCode], [log post], [int interval],
 !          [log showTime], [char* dateFormat], [char* timeFormat] )
 ! NewLine
+! char* numToChars ( value, [char* format] )
 ! output ( char* chars, [char* advance], [char* from_where], 
 !          [log dont_log], [char* log_chars], [char* insteadOfBlank] )
 ! output ( char* chars(:), [char* advance],
@@ -134,7 +136,7 @@ module OUTPUT_M
   logical, save, private :: OLDUNITSTILLOPEN = .TRUE.
 
   public :: ALIGNTOFIT, BLANKS, BLANKSTOCOLUMN, BLANKSTOTAB, DUMP, DUMPSIZE, &
-    & GETSTAMP, NEXTCOLUMN, NEXTTAB, NEWLINE, &
+    & GETSTAMP, NEXTCOLUMN, NEXTTAB, NEWLINE, NUMTOCHARS, &
     & OUTPUT, OUTPUT_DATE_AND_TIME, OUTPUTCALENDAR, OUTPUTNAMEDVALUE, &
     & RESUMEOUTPUT, REVERTOUTPUT, &
     & SETSTAMP, SETTABS, SUSPENDOUTPUT, SWITCHOUTPUT, TAB, TIMESTAMP
@@ -142,12 +144,21 @@ module OUTPUT_M
   public :: outputOptions_T
   public :: stampOptions_T
 
+  interface aligntofit
+    module procedure aligntofit_chars, aligntofit_double, aligntofit_single
+    module procedure aligntofit_integer
+  end interface
+
   interface DUMP
     module procedure DUMPOUTPUTOPTIONS, DUMPSTAMPOPTIONS
   end interface
 
   interface DUMPSIZE
     module procedure DUMPSIZE_DOUBLE, DUMPSIZE_INTEGER, DUMPSIZE_REAL
+  end interface
+
+  interface NUMTOCHARS
+    module procedure numtochars_double, numtochars_integer, numtochars_single
   end interface
 
   interface OUTPUT
@@ -259,13 +270,13 @@ module OUTPUT_M
 contains
 
   ! -----------------------------------------------------  ALIGNTOFIT  -----
-  subroutine ALIGNTOFIT ( CHARS, COLUMNRANGE, ALIGNMENT, SKIPS )
   ! Align chars to fit within column range
   ! Alignment controls whether the chars are
   ! L    Flushed left
   ! R    Flushed right
   ! C    Centered
   ! J    Justified (padding spaces to any existing spaces)
+  subroutine ALIGNTOFIT_CHARS ( CHARS, COLUMNRANGE, ALIGNMENT, SKIPS )
     character(len=*), intent(in)      :: CHARS
     ! If columnRange(1) < 1, just use starting columns; otherwise move to
     integer, dimension(2), intent(in) :: COLUMNRANGE
@@ -329,7 +340,49 @@ contains
       call output( allChars(char1:char2) )
       call blanks( padRight )
     endif
-  end subroutine ALIGNTOFIT
+  end subroutine ALIGNTOFIT_CHARS
+
+  subroutine ALIGNTOFIT_DOUBLE ( value, COLUMNRANGE, ALIGNMENT, FORMAT )
+    double precision, intent(in)      :: value
+    ! If columnRange(1) < 1, just use starting columns; otherwise move to
+    integer, dimension(2), intent(in) :: COLUMNRANGE
+    character(len=1), intent(in)      :: ALIGNMENT ! L, R, C, or J
+    character(len=*), optional, intent(in)     :: FORMAT
+    !
+    ! Internal variables
+    character(len=30) :: line
+    ! Executable
+    line = numToChars( value, format )
+    call alignToFit( trim(line), columnRange, alignment )
+  end subroutine ALIGNTOFIT_DOUBLE
+
+  subroutine ALIGNTOFIT_INTEGER ( value, COLUMNRANGE, ALIGNMENT, FORMAT )
+    integer, intent(in)               :: value
+    ! If columnRange(1) < 1, just use starting columns; otherwise move to
+    integer, dimension(2), intent(in) :: COLUMNRANGE
+    character(len=1), intent(in)      :: ALIGNMENT ! L, R, C, or J
+    character(len=*), optional, intent(in)     :: FORMAT
+    !
+    ! Internal variables
+    character(len=30) :: line
+    ! Executable
+    line = numToChars( value, format )
+    call alignToFit( trim(line), columnRange, alignment )
+  end subroutine ALIGNTOFIT_INTEGER
+
+  subroutine ALIGNTOFIT_SINGLE ( value, COLUMNRANGE, ALIGNMENT, FORMAT )
+    real, intent(in)      :: value
+    ! If columnRange(1) < 1, just use starting columns; otherwise move to
+    integer, dimension(2), intent(in) :: COLUMNRANGE
+    character(len=1), intent(in)      :: ALIGNMENT ! L, R, C, or J
+    character(len=*), optional, intent(in)     :: FORMAT
+    !
+    ! Internal variables
+    character(len=30) :: line
+    ! Executable
+    line = numToChars( value, format )
+    call alignToFit( trim(line), columnRange, alignment )
+  end subroutine ALIGNTOFIT_SINGLE
 
   ! -----------------------------------------------------  BLANKS  -----
   subroutine BLANKS ( N_BLANKS, FILLCHAR, ADVANCE, DONT_STAMP )
@@ -626,6 +679,58 @@ contains
     nTab = findFirst( tabStops > atColumnNumber )
     if ( nTab > 0 ) Column = max( tabStops(nTab), atColumnNumber )
   end function NextTab
+
+  ! ----------------------------------------------------  numToChars  -----
+  ! This family of functions return what would otherwise be printed by output
+  function numToChars_double( value, format ) result ( line )
+    ! Args
+    double precision, intent(in) :: VALUE
+    character(len=*), intent(in), optional :: Format    ! How to print
+    character(len=30) :: line
+    ! Internal variables
+    character(len=30) :: FormatSpec
+    integer :: I, J, K
+    ! Executable
+    FormatSpec = outputOptions%sdFormatDefault
+    if ( any( value == DPREFERDEFAULTFORMAT ) ) FormatSpec = '*'
+    if ( present(Format)  ) then
+      if ( format /= '*' ) FormatSpec = Format
+    endif
+    include 'numToChars.f9h'
+  end function numToChars_double
+
+  function numToChars_integer( value, format ) result ( line )
+    ! Args
+    integer, intent(in) :: VALUE
+    character(len=*), intent(in), optional :: Format    ! How to print
+    character(len=30) :: line
+    ! Internal variables
+    integer :: I, J, K
+    ! Executable
+    if ( present(Format)  ) then
+      write( line, Format ) value
+    else
+      write( line, * ) value
+    endif
+    line = adjustl(line)
+  end function numToChars_integer
+
+  function numToChars_single( value, format ) result ( line )
+    ! Args
+    real, intent(in) :: VALUE
+    character(len=*), intent(in), optional :: Format    ! How to print
+    character(len=30) :: line
+    ! Internal variables
+    character(len=30) :: FormatSpec
+    integer :: I, J, K
+    ! Executable
+    FormatSpec = outputOptions%sdFormatDefault
+    if ( any( value == DPREFERDEFAULTFORMAT ) ) FormatSpec = '*'
+    if ( present(Format)  ) then
+      if ( format /= '*' ) FormatSpec = Format
+    endif
+    include 'numToChars.f9h'
+  end function numToChars_single
 
   ! ---------------------------------------  OUTPUTCALENDAR  -----
   subroutine OUTPUTCALENDAR ( date, datenote, notes, dontWrap )
@@ -1077,42 +1182,10 @@ contains
     integer :: I, J, K
     character(len=30) :: LINE, LOG_CHARS, FormatSpec
 
-    line = ' '
     FormatSpec = outputOptions%sdFormatDefault
     if ( any( value == DPREFERDEFAULTFORMAT ) ) FormatSpec = '*'
     if ( present(Format)  ) FormatSpec = Format
-    ! if ( .not. present(Format)  ) then
-    if ( FormatSpec == '*' ) then
-   ! No optional formats: use default char-by-char accretion
-      write ( line, * ) value
-      if ( scan(line,'123456789') == 0  ) then
-        line = '0'
-      else
-        i = index(line,'.')
-        j = scan(line(i:),'DdEe ') + i - 1
-        if ( i /= 0  ) then
-          if ( j == i ) j = len(line)
-          i = i + 1
-          k = j
-          do while ( j > i )
-            j = j - 1
-            if ( line(j:j) /= '0' .and. line(j:j) /= ' ') exit
-          end do
-          line(j+1:) = line(k:)
-        end if
-        line = adjustl(line)
-      end if
-      k = len_trim(line)
-    ! Use one or both optional formats
-    else
-      line = ' '
-      ! write ( line, Format ) value
-      ! k = nCharsinFormat(Format)
-      write ( line, FormatSpec ) value
-      k = nCharsinFormat(FormatSpec)
-      if ( k==0 ) k = len_trim(line)
-    end if
-
+    include 'numToChars.f9h'
     log_chars = line
     if ( present(LogFormat)  ) then
       write ( log_chars, LogFormat ) value
@@ -1259,41 +1332,10 @@ contains
     integer :: I, J, K
     character(len=30) :: LINE, LOG_CHARS, FormatSpec
 
-    line = ' '
     FormatSpec = outputOptions%sdFormatDefault
     if ( any( value == RPREFERDEFAULTFORMAT ) ) FormatSpec = '*'
     if ( present(Format)  ) FormatSpec = Format
-    ! if ( .not. present(Format)  ) then
-    if ( FormatSpec == '*' ) then
-   ! No optional formats: use default char-by-char accretion
-      write ( line, * ) value
-      if ( scan(line,'123456789') == 0  ) then
-        line = '0'
-      else
-        i = index(line,'.')
-        j = scan(line(i:),'DdEe ') + i - 1
-        if ( i /= 0  ) then
-          if ( j == i ) j = len(line)
-          i = i + 1
-          k = j
-          do while ( j > i )
-            j = j - 1
-            if ( line(j:j) /= '0' .and. line(j:j) /= ' ') exit
-          end do
-          line(j+1:) = line(k:)
-        end if
-        line = adjustl(line)
-      end if
-      k = len_trim(line)
-    ! Use one or both optional formats
-    else
-      line = ' '
-      ! write ( line, Format ) value
-      ! k = nCharsinFormat(Format)
-      write ( line, FormatSpec ) value
-      k = nCharsinFormat(FormatSpec)
-      if ( k==0 ) k = len_trim(line)
-    end if
+    include 'numToChars.f9h'
 
     log_chars = line
     if ( present(LogFormat)  ) then
@@ -1901,6 +1943,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.66  2007/10/18 23:39:46  pwagner
+! Added numToChars and alignToFit intercaes for numeric types
+!
 ! Revision 2.65  2007/09/24 20:22:08  pwagner
 ! Improved outputCalendar
 !
