@@ -28,7 +28,7 @@ module DUMP_0
   use MLSStringLists, only: catLists, GetStringElement, NumStringElements
   use MLSStrings, only: lowercase
   use OUTPUT_M, only: outputOptions, stampOptions, &
-    & BLANKS, NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
+    & ALIGNTOFIT, BLANKS, NEWLINE, NUMTOCHARS, OUTPUT, OUTPUTNAMEDVALUE
 
   implicit none
   private
@@ -42,6 +42,7 @@ module DUMP_0
 ! DEFAULTDUMPOPTIONS       same as above, but for DUMP
 ! DIFFRMSMEANSRMS          print abs min, max, etc. when DIFF has RMS set TRUE
 ! DONTDUMPIFALLEQUAL       don't dump every element of a constant array
+! DUMPTABLESIDE            what side to place headers when dumping tables
 ! FILTERFILLSFROMRMS       exclude fill values when calculating rms, etc.
 ! RMSFORMAT                use this format to print min, max, rms, etc.
 ! SDFORMATDEFAULT          use this format to print s.p., d.p. by default
@@ -51,6 +52,7 @@ module DUMP_0
 ! DIFF                     dump diffs between pair of arrays of numeric type
 ! DUMP                     dump an array to output
 ! DUMPNAMEDVALUES          dump an array of paired names and values
+! DUMPTABLE                dump a 2-d table of values with headers
 ! SELFDIFF                 dump increments between successive array values
 ! === (end of toc) ===
 
@@ -71,9 +73,15 @@ module DUMP_0
 ! dump ( log countEmpty, strlist keys, strlist values, char* name, 
 !       [char* separator] )
 ! dumpNamedValues ( values, strlist names,
-!      [[log clean], [char* format, [int width]] ) 
+!      [log clean], [char* format, [int width] ) 
 !       where values can be a 1d array of ints or reals, and
 !       names is a string list of corresponding names
+! dumpTable ( values, headers, char* headside
+!      [char* format, [char* formats(:)] ) 
+!       where values can be a 2d array of ints or reals, and
+!       headers is an array the same size as the 2nd index of values
+!       format optioanally overrides the default format for the numeric type
+!       formats allows you to specify a format separately column-by-column
 ! selfdiff ( array, char* name,
 !      [fillvalue], [log clean], [int width], [char* format],
 !      [log wholearray], [log stats], [log rms], [int lbound] ) 
@@ -89,7 +97,7 @@ module DUMP_0
 ! in the above, a string list is a string of elements (usu. comma-separated)
 ! === (end of api) ===
 
-  public :: DIFF, DUMP,DUMP_2x2xN,  DUMPNAMEDVALUES, SELFDIFF
+  public :: DIFF, DUMP, DUMP_2x2xN, DUMPNAMEDVALUES, DUMPTABLE, SELFDIFF
 
   interface DIFF        ! dump diffs between pair of n-d arrays of numeric type
     module procedure DIFF_1D_DOUBLE, DIFF_1D_INTEGER, DIFF_1D_REAL
@@ -113,6 +121,10 @@ module DUMP_0
   interface DUMPNAMEDVALUES   ! dump name-value pairs, names in string list
     module procedure DUMPNAMEDVALUES_DOUBLE, DUMPNAMEDVALUES_INTEGER
     module procedure DUMPNAMEDVALUES_REAL
+  end interface
+  interface DUMPTABLE   ! dump table of values, headers
+    module procedure DUMPTABLE_DOUBLE, DUMPTABLE_INTEGER
+    module procedure DUMPTABLE_REAL
   end interface
   interface SELFDIFF       ! dump increments between successive array values
     module procedure SELFDIFF_INTEGER
@@ -148,6 +160,7 @@ module DUMP_0
   ! E.g., '-crt' turns on CLEAN, RMS, and TRIM
   character(len=8), public, save :: DEFAULTDIFFOPTIONS = ' '
   character(len=8), public, save :: DEFAULTDUMPOPTIONS = ' '
+  character(len=8), public, save :: DUMPTABLESIDE      = 'top'
   logical, public, save ::   DIFFRMSMEANSRMS = .false.
   logical, public, save ::   DONTDUMPIFALLEQUAL = .true.
   logical, public, save ::   FILTERFILLSFROMRMS = .false.
@@ -347,10 +360,8 @@ contains
 
     integer :: howMany, J, K
     integer, dimension(MAXBITNUMBER) :: ints
-    integer :: LON
     logical :: MyClean
     integer :: myFillValue
-    integer :: MyWidth
     integer :: NumBitNames
     integer :: NumZeroRows
     integer, dimension(MAXBITNUMBER+1) :: set
@@ -2085,6 +2096,37 @@ contains
 
   end subroutine dumpNamedValues_REAL
 
+  ! -----------------------------------  dumpTable  -----
+  ! This family of routines dumps a table of values and headers
+  ! The headside determines on which of the 4 sides 
+  ! ('top', 'left', 'right', 'bottom') we place the headers
+  subroutine dumpTable_DOUBLE ( VALUES, HEADERS, HEADSIDE, FORMAT, FORMATS )
+    double precision, dimension(:,:), intent(in) :: values
+    character(len=*), dimension(:), intent(in)   :: HEADERS
+    character(len=*), intent(in)                 :: HEADSIDE
+    character(len=*), intent(in), optional       :: FORMAT
+    character(len=*), dimension(:), intent(in), optional :: FORMATS
+    include 'dumpTable.f9h'
+  end subroutine dumpTable_DOUBLE
+
+  subroutine dumpTable_INTEGER ( VALUES, HEADERS, HEADSIDE, FORMAT, FORMATS )
+    integer, dimension(:,:), intent(in)          :: values
+    character(len=*), dimension(:), intent(in)   :: HEADERS
+    character(len=*), intent(in)                 :: HEADSIDE
+    character(len=*), intent(in), optional       :: FORMAT
+    character(len=*), dimension(:), intent(in), optional :: FORMATS
+    include 'dumpTable.f9h'
+  end subroutine dumpTable_INTEGER
+
+  subroutine dumpTable_REAL ( VALUES, HEADERS, HEADSIDE, FORMAT, FORMATS )
+    real, dimension(:,:), intent(in)             :: values
+    character(len=*), dimension(:), intent(in)   :: HEADERS
+    character(len=*), intent(in)                 :: HEADSIDE
+    character(len=*), intent(in), optional       :: FORMAT
+    character(len=*), dimension(:), intent(in), optional :: FORMATS
+    include 'dumpTable.f9h'
+  end subroutine dumpTable_REAL
+
  ! ---------------------------------------------  SELFDIFF_DOUBLE  -----
   subroutine SELFDIFF_DOUBLE ( ARRAY, NAME, &
     & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
@@ -2418,6 +2460,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.75  2007/10/18 23:37:41  pwagner
+! Added dumpTable
+!
 ! Revision 2.74  2007/10/12 23:34:49  pwagner
 ! Using new howfar procedure to summarize diffs after peeling away outliers
 !
