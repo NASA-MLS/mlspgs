@@ -33,7 +33,7 @@
     ! This is terrible: don't use lengths of optional args
     ! character(len(name1) + len(name2) + 8) :: DiffName
     character(len=64) :: DiffName
-    integer :: i, nEqual, nUnEqual
+    integer :: i
     double precision :: tmax
     real(kind(array1)), dimension(2)      :: exvalues
     real(kind(array1)), dimension(2)      :: exratios
@@ -50,6 +50,8 @@
     real(kind(array1))               :: stddevratio
     logical, parameter               :: PRINTREFERENCEVALUES = .false.
     logical, parameter               :: PRINTMINMAXWITHRMS = .true.
+    logical, parameter               :: USEDUMPTABLE = .true.
+    ! character(len=*), parameter      :: HEADSIDE = 'top'
     logical, parameter               :: DEBUG = .false.
     real(kind(array1)), dimension(MAXPCTS), parameter :: PCTAGES = &
       & (/ 99.9, 99.8, 99.7, 99.5, 99., 98., 97., 95., 90., 80. /)
@@ -61,6 +63,7 @@
     real(kind(array1)), dimension(MAXPCTS) :: pctMeanGaps
     real(kind(array1)), dimension(MAXPCTS) :: pctMaxRatios
     real(kind(array1)), dimension(MAXPCTS) :: pctMeanRatios
+    real(kind(array1)), dimension(MAXPCTS,5) :: table
     ! Executable
     thisIsADiff = .true.  ! For special dumps
     alreadySbtrcted = .false.
@@ -182,6 +185,7 @@
   contains
     subroutine doneWithDiff
       ! Internal variables
+      character(len=12), dimension(5) :: formats
       character(len=16) :: originalSDFormat
       !
       originalSDFormat = outputOptions%sdFormatDefault
@@ -203,7 +207,36 @@
       call output( exvalues(2), advance='no' )
       call output( ' )', advance='yes' )
       call printRMSetc( 'ratio', minratio, maxratio, rmsratio, meanratio )
-      if ( myStats ) then
+      if ( myStats .and. USEDUMPTABLE ) then
+        call output( '% of arrays nearer than', advance='yes' )
+        table(:,1) = gaps
+        table(:,2) = pcts
+        table(:,3) = gapratios
+        table(:,4) = pctratios
+        formats(1:3:2) = rmsFormat
+        formats(2:4:2) = '(0pf6.1)'
+        call dumpTable ( table(:,1:4), &
+          & (/ 'abs diff', &
+          &    '%       ', &
+          &    'as ratio', &
+          &    '%       ' /), &
+          & headside=dumpTableSide, formats=formats(1:4) )
+        call output( 'By keeping the closest % of arrays', advance='yes' )
+        table(:,1) = pctAges
+        table(:,2) = pctMaxGaps
+        table(:,3) = pctMeanGaps
+        table(:,4) = pctMaxRatios
+        table(:,5) = pctMeanRatios
+        formats(2:5) = rmsFormat
+        formats(1) = '(0pf6.1)'
+        call dumpTable ( table, &
+          & (/ '%          ', &
+          &    'max diffs  ', &
+          &    'mean diffs ', &
+          &    'max ratios ', &
+          &    'mean ratios' /), &
+          & headside=dumpTableSide, formats=formats )
+      elseif ( myStats ) then
         ! Now to show how near the two arrays are
         call output( '% of arrays nearer than', advance='yes' )
         call output( '(abs diff) ', advance='no' )
@@ -260,6 +293,9 @@
 
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.12  2007/10/18 23:38:29  pwagner
+! May use dumpTable for nicer formatting
+!
 ! Revision 2.11  2007/10/12 23:34:49  pwagner
 ! Using new howfar procedure to summarize diffs after peeling away outliers
 !
