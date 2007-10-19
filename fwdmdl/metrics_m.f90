@@ -735,15 +735,19 @@ path: do i = i1, i2
       if ( abs(h-h_ref(1)) <  0.1 .and. &
         & abs(p_grid-p_basis(1)) < abs(p_grid-p_basis(2)) ) then
         h_grid = h_ref(1)+req_s
-        phi = p_basis(1)
-        stat = grid1
-        if ( debug ) call debug1 ( 1, 0, 'GRID 1' )
+        if ( h_grid > htan_r ) then
+          phi = p_basis(1)
+          stat = grid1
+          if ( debug ) call debug1 ( 1, 0, 'GRID 1' )
+        end if
       else if ( abs(h-h_ref(2)) <  0.1 .and. &
         & abs(p_grid-p_basis(2)) < abs(p_grid-p_basis(1)) ) then
         h_grid = h_ref(2)+req_s
-        phi = p_basis(2)
-        stat = grid2
-        if ( debug ) call debug1 ( 1, 0, 'GRID 2' )
+        if ( h_grid > htan_r ) then
+          phi = p_basis(2)
+          stat = grid2
+          if ( debug ) call debug1 ( 1, 0, 'GRID 2' )
+        end if
       end if
     end if
     if ( p_grid > p_basis(2) .and. inside ) then
@@ -1050,7 +1054,7 @@ path: do i = i1, i2
           phi_offset = phi_t
         end if
         h1 = h2
-        h2 = hTan_r / cos(p_basis(j) - phi_offset) - req_s
+        h2 = hTan_r / cos(p_basis(j) - phi_offset) - req
         if ( j == 1 ) cycle ! It takes two to tango
         if ( (h1-h_ref(i,j-1)) * (h2-h_ref(i,j)) < 0.0 ) then
           ! Line of sight intersects constant-zeta surface.  Solve for where.
@@ -1060,6 +1064,10 @@ path: do i = i1, i2
           c = -(h_ref(i,j-1)-h_surf)*(p_basis(j  )-phi_t) &
             & +(h_ref(i,j  )-h_surf)*(p_basis(j-1)-phi_t) &
             & +(p_basis(j)-p_basis(j-1)) * h_tan
+          if ( debug ) &
+            & print 120, j, i, h_ref(i,j)+req_s, h_ref(i,j+1)+req_s, &
+            & a, b, c
+          120 format ( 4x, i2, i4, 14x, f11.3,f12.3, f9.3, 1p,g14.6, 3x, g14.6 )
           stat = no_sol
           call Solve_H_Phi ( p_basis(j-1:j), phi_offset, sign(1.0_rp,phi_t-p_basis(j-1)), &
           &                h_ref(i,j-1:j), a, b, c, &
@@ -1107,6 +1115,9 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.55  2007/10/11 20:17:35  vsnyder
+! Accept grid solutions more readily
+!
 ! Revision 2.54  2007/10/03 20:54:10  vsnyder
 ! Require phi to be monotone
 !
