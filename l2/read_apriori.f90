@@ -25,9 +25,9 @@ module ReadAPriori
   use MLSFiles, only: FILENOTFOUND, &
     & HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, &
     & AddFileToDataBase, Dump, GetPCFromRef, InitializeMLSFile, &
-    & mls_closeFile, MLS_HDF_VERSION, &
+    & MLS_HDF_VERSION, &
     & MLS_INQSWATH, mls_io_gen_closeF, mls_io_gen_openF, &
-    & mls_openFile, SPLIT_PATH_NAME
+    & SPLIT_PATH_NAME
   use MLSL2Options, only: DEFAULT_HDFVERSION_READ, SPECIALDUMPFILE, TOOLKIT
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
   use MLSMessageModule, only: MLSMessage, MLSMessageCalls, &
@@ -42,9 +42,9 @@ module ReadAPriori
   use MLSStringLists, only: catLists, SWITCHDETAIL
   use MLSStrings, only: lowercase
   use MoreTree, only: Get_Spec_ID
-  use OUTPUT_M, only: BLANKS, OUTPUT, outputNamedValue, &
+  use OUTPUT_M, only: BLANKS, OUTPUT, &
     & revertoutput, switchOutput
-  use SDPToolkit, only: Pgs_pc_getReference, PGS_S_SUCCESS
+  use SDPToolkit, only: PGS_S_SUCCESS
   use String_Table, only: GET_STRING
   use Time_M, only: Time_Now
   use TOGGLES, only: GEN, SWITCHES, TOGGLE
@@ -156,7 +156,6 @@ contains ! =====     Public Procedures     =============================
     real(rgr) ::    missingValue = 0.
     integer :: NOSWATHS                 ! In an input file
     character(len=FileNameLen) :: path   ! path of actual literal file name
-    integer :: pcf_indx            ! loop index of climatology pcf numbers
     integer :: QUANTITYTYPE             ! Lit index of quantity type
     integer :: ReturnStatus
     character(len=FileNameLen) :: ShortFileName
@@ -953,6 +952,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.74  2007/10/24 00:16:59  pwagner
+! Removed unused declarations
+!
 ! Revision 2.73  2007/08/17 00:35:30  pwagner
 ! Unneeded changes
 !
