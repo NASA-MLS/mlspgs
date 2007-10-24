@@ -34,22 +34,17 @@ contains ! =================================== Public procedures
   subroutine MergeGrids ( root, griddedDataBase, l2gpDatabase )
 
     use DumpCommand_m, only: DumpCommand
-    use GriddedData, only: GRIDDEDDATA_T, RGR, &
-      & ADDGRIDDEDDATATODATABASE, &
-      & CONCATENATEGRIDDEDDATA, CONVERTFROMETALEVELGRIDS, COPYGRID, &
-      & NULLIFYGRIDDEDDATA, SETUPNEWGRIDDEDDATA, WRAPGRIDDEDDATA
+    use GriddedData, only: GRIDDEDDATA_T, &
+      & ADDGRIDDEDDATATODATABASE
     use Init_tables_module, only: S_CONCATENATE, S_CONVERTETATOP, &
       & S_DELETE, S_DUMP, S_MERGE, S_WMOTROP
     use L2GPData, only: L2GPDATA_T
-    use MLSCommon, only: R8
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMESSAGECALLS
     use MoreTree, only: GET_SPEC_ID
     use Trace_M, only: TRACE_BEGIN, TRACE_END
-    use Tree, only: NSONS, SUBTREE, DECORATE, DECORATION, NODE_ID, SUB_ROSA
+    use Tree, only: NSONS, SUBTREE, DECORATE, NODE_ID, SUB_ROSA
     use Tree_Types, only: N_NAMED
     use Toggles, only: GEN, TOGGLE
-    use VGridsDatabase, only: AddVGridToDatabase, VGrid_T, VGrids
-    use VGrid, only: CREATEVGRIDFROMMLSCFINFO
 
     integer, intent(in) :: ROOT         ! Tree root
     type (griddedData_T), dimension(:), pointer :: griddedDataBase ! Database
@@ -57,7 +52,6 @@ contains ! =================================== Public procedures
 
     ! Local variables
     integer :: I                        ! Loop counter
-    integer :: returnStatus
     integer :: SON                      ! Tree node
     integer :: KEY                      ! Another node
     integer :: NAME                     ! Index into string table
@@ -359,7 +353,6 @@ contains ! =================================== Public procedures
     use Init_tables_module, only: F_CLIMATOLOGY, F_HEIGHT, F_OPERATIONAL, &
       & F_SCALE
     use Intrinsic, only: PHYQ_Length, PHYQ_Pressure
-    use L3ASCII, only: L3ASCII_INTERP_FIELD
     use MLSCommon, only: R8
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE
     use MLSNumerics, only: ESSENTIALLYEQUAL
@@ -641,17 +634,17 @@ contains ! =================================== Public procedures
     & result ( newGrid )
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use dump_0, only: dump
-    use GriddedData, only: GRIDDEDDATA_T, DUMP, RGR, V_IS_PRESSURE, V_IS_ETA, &
-      & COPYGRID, NULLIFYGRIDDEDDATA, &
+    use GriddedData, only: GRIDDEDDATA_T, DUMP, V_IS_PRESSURE, V_IS_ETA, &
+      & NULLIFYGRIDDEDDATA, &
       & DOGRIDDEDDATAMATCH, &
-      & SETUPNEWGRIDDEDDATA, SLICEGRIDDEDDATA, WRAPGRIDDEDDATA
+      & SETUPNEWGRIDDEDDATA
     use Init_tables_module, only: F_A, F_B, F_GRID
     use MLSCommon, only: DEFAULTUNDEFINEDVALUE
     use MLSFillValues, only: IsFillValue, RemoveFillValues
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
     use MLSStats1, only: MLSMIN, MLSMAX, MLSMEAN
     use MLSStrings, only: LOWERCASE
-    use output_m, only: output, outputNamedValue
+    use output_m, only: output
     use Toggles, only: GEN, TOGGLE
     use Trace_M, only: TRACE_BEGIN, TRACE_END
     use Tree, only: NSONS, SUBTREE, DECORATION
@@ -940,6 +933,9 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.35  2007/10/24 00:17:22  pwagner
+! Removed unused declarations
+!
 ! Revision 2.34  2007/08/17 00:33:59  pwagner
 ! May now dump, stop, under control of l2cf
 !
