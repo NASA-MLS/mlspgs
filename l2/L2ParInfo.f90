@@ -17,7 +17,7 @@ module L2ParInfo
   use dump_0, only: DUMP
   use IO_Stuff, only: Get_Lun
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_Allocate, &
-    & MLSMSG_Deallocate, MLSMSG_INFO, PVMERRORMESSAGE
+    & MLSMSG_Deallocate, PVMERRORMESSAGE
   use MLSSets, only: FINDFIRST
   use MLSStats1, only: ALLSTATS
   use MLSStrings, only: LowerCase
@@ -497,24 +497,21 @@ contains ! ==================================================================
     character(len=MachineNameLen), dimension(:), pointer :: MACHINENAMES
 
     ! Local variables
-    character(len=MachineNameLen) :: LINE ! A line from the file
-    character(len=MachineNameLen) :: ORIGINAL ! A line from the file
     character(len=MachineNameLen) :: ARCH ! A line from the file
-    logical :: EXIST                    ! Flag from inquire
-    logical :: GOTFIRSTLAST             ! Got a range
-    logical :: OPENED                   ! Flag from inquire
-
     integer :: DTID                     ! From PVMFConfig
     integer :: FIRST                    ! First machine in file to use
     integer :: FIRSTCOLONPOS            ! Position in string
+    logical :: GOTFIRSTLAST             ! Got a range
     integer :: I                        ! Loop inductor
     integer :: INFO                     ! From PVMFConfig
     integer :: LAST                     ! Last machine in file to use
+    character(len=MachineNameLen) :: LINE ! A line from the file
     integer :: LUN                      ! Logical unit number
     integer :: MACHINE                  ! Counter
     integer :: NARCH                    ! From PVMFConfig
     integer :: NOLINES                  ! Number of lines in file
     integer :: NOMACHINES               ! Array size
+    character(len=MachineNameLen) :: ORIGINAL ! A line from the file
     integer :: SECONDCOLONPOS           ! Position in string
     integer :: SPEED                    ! From PVMFConfig
     integer :: STAT                     ! Status flag from read
@@ -621,7 +618,6 @@ contains ! ==================================================================
     ! Local variables
     integer :: noMachines, stat
     character(len=MachineNameLen), dimension(:), pointer :: MACHINENAMES
-    type(machine_t) :: MACHINE
     ! Executable
     nullify(machineNames, machines)
     call GetMachineNames(machineNames)
@@ -657,7 +653,6 @@ contains ! ==================================================================
     ! Local variables
     integer :: BUFFERID                 ! From PVM
     integer :: INFO                     ! From PVM
-    integer :: SIGNAL                   ! From Master
 
     ! External (C) function
     external :: Usleep
@@ -691,7 +686,6 @@ contains ! ==================================================================
     ! Local variables
     integer :: BUFFERID                 ! From PVM
     integer :: INFO                     ! From PVM
-    integer :: SIGNAL                   ! From Master
 
     ! External (C) function
     external :: Usleep
@@ -729,7 +723,6 @@ contains ! ==================================================================
     integer :: BUFFERID                 ! From PVM
     integer :: INFO                     ! From PVM
     integer :: SIGNAL                   ! The signal from the master
-    integer :: CREATE                   ! Integer version of createFile
     integer :: I4(4)                    ! Information from master
     ! Executable code
     call PVMFRecv ( parallel%masterTid, InfoTag, bufferID )
@@ -817,6 +810,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.50  2007/10/24 00:16:38  pwagner
+! Removed unused declarations
+!
 ! Revision 2.49  2007/04/03 20:55:22  pwagner
 ! Uses get_lun from lib/io_stuff instead of internal function
 !
