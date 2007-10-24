@@ -12,8 +12,8 @@
 ! $Id$
 !   subroutine allstats*( values, &
 !        & nbins, bounds, addedData, fillValue, precision, &
-!        & count, fillcount, min, max, mean, stddev, rms, median, bincount, &
-!        & doDump )
+!        & count, fillcount, min, max, mean, stddev, rms, median, &
+!        & bincount, mindexes, doDump )
         ! Args
         real(rk), dimension(:), intent(in)             :: values
         integer, optional, intent(in)                  :: nbins
@@ -30,6 +30,7 @@
         real(rk), optional, intent(out)                :: rms
         real(rk), optional, intent(out)                :: median
         integer, dimension(:), optional, intent(out)   :: bincount
+        integer, dimension(3), optional, intent(out)   :: mindexes
         logical , optional, intent(in)                 :: doDump
         ! Internal variables
         character(len=64)                              :: fields
@@ -45,7 +46,7 @@
         real(rk), dimension(:), pointer                :: xmed1 => null()
         real(rk), dimension(:), pointer                :: xmed2 => null()
         real(rk)                                       :: absMu, sigma
-        ! logical, parameter :: DEEBUG = .true.
+!        logical, parameter :: DEEBUG = .true.
         ! Executable
         myDump = .false.
         if ( present(doDump) ) myDump = doDump
@@ -123,20 +124,27 @@
           call output( 'stats: ', advance='no' )
           call output( stats, advance='yes' )
         endif
-!         call output('n: ')
-!         call output(n, advance='yes')
-!         call output('absMu: ')
-!         call output(absMu, advance='yes')
-!         call output('sigma: ')
-!         call output(sigma, advance='yes')
-!         call output('rms: ')
-!         call output(myRMS, advance='yes')
         MLSStat%count  = stats(1)
         MLSStat%min    = stats(2)
         MLSStat%max    = stats(3)
         MLSStat%mean   = stats(4)
         MLSStat%stddev = stats(5)
         MLSStat%rms    = myRMS
+        if ( .not. myAddedData ) then
+          if ( DEEBUG ) then
+            call output( 'shape(values) ', advance='no' )
+            call output( shape(values), advance='yes' )
+            call output( 'shape(mindexes) ', advance='no' )
+            call output( shape(MLSStat%mindexes), advance='yes' )
+          endif
+          MLSStat%mindexes(1) = FindFirst( values == stats(3) )
+          MLSStat%mindexes(2) = FindFirst( values == stats(2) )
+          MLSStat%mindexes(3) = FindFirst( values == real(MLSStat%median,rk) )
+          if ( DEEBUG ) then
+            call output( 'locations of max, min, median: ', advance='no' )
+            call output( MLSStat%mindexes, advance='yes' )
+          endif
+        endif
         if ( present(count ) ) count  = stats(1)
         if ( present(fillcount) ) fillcount = MLSStat%fillcount
         if ( present(min   ) ) min    = stats(2)
@@ -145,6 +153,7 @@
         if ( present(stddev) ) stddev = stats(5)
         if ( present(rms   ) ) rms    = myRMS
         if ( present(median) ) median = MLSStat%median
+        if ( present(mindexes) ) mindexes = MLSStat%mindexes
         ! Have we been asked to dump the calculated stats?
         if ( .not. myDump ) return
         call output('Combined statistics')
@@ -167,6 +176,7 @@
         if ( present(rms   ) ) fields = catLists(fields, 'rms  ')
         if ( present(median) ) fields = catLists(fields, 'median')
         if ( present(bincount) ) fields = catLists(fields, 'bin')
+        if ( present(mindexes) ) fields = catLists(fields, 'mindexes')
         if ( present(fillcount) ) fields = catLists(fields, 'fillcount')
         ! call output('fields: ' // trim(fields), advance='yes')
         call dump( MLSStat, fields )
@@ -258,6 +268,9 @@ contains
 ! end subroutine sllstats*
 
 ! $Log$
+! Revision 1.8  2007/08/23 22:15:40  pwagner
+! Fixed another bug in median computation
+!
 ! Revision 1.7  2007/07/18 00:07:46  pwagner
 ! Fixed bug afflicting median when array has length 1
 !
