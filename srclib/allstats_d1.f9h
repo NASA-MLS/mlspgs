@@ -13,7 +13,7 @@
 !   subroutine allstats*( values, &
 !        & nbins, bounds, addedData, fillValue, precision, &
 !        & count, fillcount, min, max, mean, stddev, rms, median, &
-!        & bincount, mindexes, doDump )
+!        & bincount, indexing, doDump )
         ! Args
         real(rk), dimension(:), intent(in)             :: values
         integer, optional, intent(in)                  :: nbins
@@ -30,7 +30,7 @@
         real(rk), optional, intent(out)                :: rms
         real(rk), optional, intent(out)                :: median
         integer, dimension(:), optional, intent(out)   :: bincount
-        integer, dimension(3), optional, intent(out)   :: mindexes
+        integer, dimension(3), optional, intent(out)   :: indexing
         logical , optional, intent(in)                 :: doDump
         ! Internal variables
         character(len=64)                              :: fields
@@ -134,15 +134,15 @@
           if ( DEEBUG ) then
             call output( 'shape(values) ', advance='no' )
             call output( shape(values), advance='yes' )
-            call output( 'shape(mindexes) ', advance='no' )
-            call output( shape(MLSStat%mindexes), advance='yes' )
+            call output( 'shape(indexing) ', advance='no' )
+            call output( shape(MLSStat%indexing), advance='yes' )
           endif
-          MLSStat%mindexes(1) = FindFirst( values == stats(3) )
-          MLSStat%mindexes(2) = FindFirst( values == stats(2) )
-          MLSStat%mindexes(3) = FindFirst( values == real(MLSStat%median,rk) )
+          MLSStat%indexing(1) = FindFirst( values == stats(3) )
+          MLSStat%indexing(2) = FindFirst( values == stats(2) )
+          MLSStat%indexing(3) = FindFirst( values == real(MLSStat%median,rk) )
           if ( DEEBUG ) then
             call output( 'locations of max, min, median: ', advance='no' )
-            call output( MLSStat%mindexes, advance='yes' )
+            call output( MLSStat%indexing, advance='yes' )
           endif
         endif
         if ( present(count ) ) count  = stats(1)
@@ -153,7 +153,7 @@
         if ( present(stddev) ) stddev = stats(5)
         if ( present(rms   ) ) rms    = myRMS
         if ( present(median) ) median = MLSStat%median
-        if ( present(mindexes) ) mindexes = MLSStat%mindexes
+        if ( present(indexing) ) indexing = MLSStat%indexing
         ! Have we been asked to dump the calculated stats?
         if ( .not. myDump ) return
         call output('Combined statistics')
@@ -176,7 +176,7 @@
         if ( present(rms   ) ) fields = catLists(fields, 'rms  ')
         if ( present(median) ) fields = catLists(fields, 'median')
         if ( present(bincount) ) fields = catLists(fields, 'bin')
-        if ( present(mindexes) ) fields = catLists(fields, 'mindexes')
+        if ( present(indexing) ) fields = catLists(fields, 'indexing')
         if ( present(fillcount) ) fields = catLists(fields, 'fillcount')
         ! call output('fields: ' // trim(fields), advance='yes')
         call dump( MLSStat, fields )
@@ -268,6 +268,9 @@ contains
 ! end subroutine sllstats*
 
 ! $Log$
+! Revision 1.9  2007/10/24 00:19:06  pwagner
+! Added mindexes component to MLSStat to hold index of max, min, median
+!
 ! Revision 1.8  2007/08/23 22:15:40  pwagner
 ! Fixed another bug in median computation
 !
