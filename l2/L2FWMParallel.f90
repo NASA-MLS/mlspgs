@@ -50,14 +50,13 @@ contains
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_test
     use Chunks_m, only: MLSChunk_T
     use L2ParInfo, only: PARALLEL, GETMACHINENAMES, MACHINENAMELEN, &
-      & SLAVEARGUMENTS, SIG_REGISTER, NOTIFYTAG, GETNICETIDSTRING
-    use Machine, only: SHELL_COMMAND
+      & SIG_REGISTER, NOTIFYTAG, GETNICETIDSTRING
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, PVMERRORMESSAGE
     use MLSSets, only: FINDFIRST
     use Output_m, only: Output
     use PVM, only: INFOTAG, MYPVMSPAWN, PVMFCATCHOUT, &
-      & PVMFBUFINFO, PVMF90UNPACK, PVMFINITSEND, PVMFSEND, PVMF90PACK, &
-      & PVMTASKHOST, PVMTASKEXIT, PVMRAW
+      & PVMFBUFINFO, PVMF90UNPACK, &
+      & PVMTASKHOST, PVMTASKEXIT
     use Toggles, only: SWITCHES
     ! Dummy arguments
     type (MLSChunk_T), intent(in) :: CHUNK ! The chunk we're processing
@@ -165,7 +164,6 @@ contains
   ! ------------------------------------------------ L2FWMSlaveTask -----
   subroutine L2FWMSlaveTask ( mifGeolocation )
     ! This is the core routine for the 'slave mode' of the L2Fwm parallel stuff
-    use Dump_0, only: Dump
     use Allocate_Deallocate, only: ALLOCATE_TEST
     use QuantityTemplates, only: QUANTITYTEMPLATE_T, DESTROYQUANTITYTEMPLATEDATABASE, &
       & INFLATEQUANTITYTEMPLATEDATABASE
@@ -176,20 +174,19 @@ contains
       & PVMUNPACKFWMCONFIG
     use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
     use L2ParInfo, only: PARALLEL, SIG_FINISHED, SIG_NEWSETUP, SIG_RUNMAF, &
-      & SIG_SENDRESULTS, NOTIFYTAG
+      & SIG_SENDRESULTS
     use MorePVM, only: PVMUNPACKSTRINGINDEX
     use PVM, only: INFOTAG, PVMFINITSEND, &
       & PVMF90UNPACK, PVMRAW, PVMFFREEBUF
     use PVMIDL, only: PVMIDLUNPACK, PVMIDLPACK
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate, &
       & PVMERRORMESSAGE
-    use MatrixModule_0, only: M_Absent, M_Banded, M_Column_Sparse, M_Full, MatrixElement_T
+    use MatrixModule_0, only: M_Absent, M_Banded, M_Column_Sparse, MatrixElement_T
     use MatrixModule_1, only: Matrix_T, CREATEEMPTYMATRIX, CLEARMATRIX, &
       & DESTROYMATRIX
     use QuantityPVM, only: PVMRECEIVEQUANTITY
     use ForwardModelWrappers, only: FORWARDMODEL
     use ScanModelModule, only: DestroyForwardModelIntermediate
-    use String_table, only: DISPLAY_STRING
     use Output_M, only: OUTPUT
 
     ! Dummy argument
@@ -519,7 +516,7 @@ contains
     use MLSMessageModule, only: PVMERRORMESSAGE
     use PVM, only: INFOTAG, PVMFINITSEND, PVMF90PACK, PVMFSEND, &
       & PVMRAW
-    use L2ParInfo, only: PARALLEL, SIG_SENDRESULTS, GETNICETIDSTRING
+    use L2ParInfo, only: SIG_SENDRESULTS, GETNICETIDSTRING
     use Toggles, only: SWITCHES
     use Output_m, only: OUTPUT
     integer, intent(in) :: MAF
@@ -545,13 +542,13 @@ contains
   subroutine SetupFWMSlaves ( configs, inVector, extraVector, outVector, jacobian )
     ! The master uses this routine to send the core information on the
     ! state vector layout etc. to each forward model slave.
-    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use Allocate_Deallocate, only: ALLOCATE_TEST
     use ForwardModelConfig, only: FORWARDMODELCONFIG_T, PVMPACKFWMCONFIG
     use VectorsModule, only: VECTOR_T
     use MLSMessageModule, only: PVMERRORMESSAGE
     use PVM, only: INFOTAG, PVMFINITSEND, PVMF90PACK, &
       & PVMFBCAST, PVMRAW, PVMFFREEBUF
-    use PVMIDL, only: PVMIDLPACK, PVMIDLUNPACK
+    use PVMIDL, only: PVMIDLPACK
     use L2ParInfo, only: SIG_NEWSETUP, FWMSLAVEGROUP
     use QuantityPVM, only: PVMSENDQUANTITY
     use MorePVM, only: PVMPACKSTRINGINDEX
@@ -746,7 +743,6 @@ contains
   subroutine IntelligentPVMFRecv ( tid, tag, bufferID )
     use L2PARINFO, only: NOTIFYTAG
     use MLSMessageModule, only: MLSMSG_ERROR, MLSMESSAGE, PVMERRORMESSAGE
-    use PVM, only: PVMFRECV
     ! Dummy arguments
     integer, intent(in) :: TID
     integer, intent(in) :: TAG
@@ -779,6 +775,9 @@ contains
 end module L2FWMParallel
 
 ! $Log$
+! Revision 2.23  2007/10/24 00:16:12  pwagner
+! Removed unused declarations
+!
 ! Revision 2.22  2007/06/29 19:32:07  vsnyder
 ! Make ForwardModelIntermediate_t private to ScanModelModule
 !
