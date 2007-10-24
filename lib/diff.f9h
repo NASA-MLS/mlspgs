@@ -60,10 +60,12 @@
     real(kind(array1)), dimension(MAXPCTS) :: pcts
     real(kind(array1)), dimension(MAXPCTS) :: pctratios
     real(kind(array1)), dimension(MAXPCTS) :: pctMaxGaps
+    real(kind(array1)), dimension(MAXPCTS) :: pctMaxGapAsRatios
     real(kind(array1)), dimension(MAXPCTS) :: pctMeanGaps
     real(kind(array1)), dimension(MAXPCTS) :: pctMaxRatios
+    real(kind(array1)), dimension(MAXPCTS) :: pctMaxRatioAsGaps
     real(kind(array1)), dimension(MAXPCTS) :: pctMeanRatios
-    real(kind(array1)), dimension(MAXPCTS,5) :: table
+    real(kind(array1)), dimension(MAXPCTS,7) :: table
     ! Executable
     thisIsADiff = .true.  ! For special dumps
     alreadySbtrcted = .false.
@@ -185,7 +187,7 @@
   contains
     subroutine doneWithDiff
       ! Internal variables
-      character(len=12), dimension(5) :: formats
+      character(len=12), dimension(7) :: formats
       character(len=16) :: originalSDFormat
       !
       originalSDFormat = outputOptions%sdFormatDefault
@@ -224,16 +226,20 @@
         call output( 'By keeping the closest % of arrays', advance='yes' )
         table(:,1) = pctAges
         table(:,2) = pctMaxGaps
-        table(:,3) = pctMeanGaps
-        table(:,4) = pctMaxRatios
-        table(:,5) = pctMeanRatios
-        formats(2:5) = rmsFormat
+        table(:,3) = pctMaxGapAsRatios
+        table(:,4) = pctMeanGaps
+        table(:,5) = pctMaxRatios
+        table(:,6) = pctMaxRatioAsGaps
+        table(:,7) = pctMeanRatios
+        formats(2:7) = rmsFormat
         formats(1) = '(0pf6.1)'
         call dumpTable ( table, &
           & (/ '%          ', &
           &    'max diffs  ', &
+          &    '(as ratio) ', &
           &    'mean diffs ', &
           &    'max ratios ', &
+          &    '(as abs)   ', &
           &    'mean ratios' /), &
           & headside=dumpTableSide, formats=formats )
       elseif ( myStats ) then
@@ -275,7 +281,8 @@
 
     subroutine usePcts
       ! Internal variables
-      integer :: i
+      integer :: i, n
+      real(kind(array1)) :: absdiff
       ! Executable
       do i=1, MAXPCTS
         call reset(gapstat(i))
@@ -289,10 +296,22 @@
       pctMeanGaps = gapStat%mean
       pctMaxRatios = gapRatioStat%max
       pctMeanRatios = gapRatioStat%mean
+      do i=1, MAXPCTS
+        n = gapStat(i)%indexing(1)
+        pctMaxGapAsRatios(i) = 0.
+        absdiff = abs( filtered1(n) - filtered2(n) )
+        if ( absdiff > real(0.,kind(array1)) ) pctMaxGapAsRatios(i) = &
+          &  absdiff / max( abs(filtered1(n)), abs(filtered2(n)) )
+        n = gapRatioStat(i)%indexing(1)
+        pctMaxRatioAsGaps(i) = abs( filtered1(n) - filtered2(n) )
+      enddo
     end subroutine usePcts
 
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.13  2007/10/24 23:58:49  pwagner
+! pct summaries now include columns '(as ratio)', '(as abs)'
+!
 ! Revision 2.12  2007/10/18 23:38:29  pwagner
 ! May use dumpTable for nicer formatting
 !
