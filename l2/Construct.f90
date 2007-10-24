@@ -38,7 +38,7 @@ contains ! =====     Public Procedures     =============================
     use Chunks_m, only: MLSCHUNK_T
     use Dump_0, only: Dump
     use INIT_TABLES_MODULE, only: F_SIGNAL, F_Boolean
-    use MLSCommon, only: r8, MLSFile_T
+    use MLSCommon, only: MLSFile_T
     use MLSL2Options, only: runTimeValues
     use MLSSignals_m, only: GetSignalName, &
       & SIGNALS
@@ -49,7 +49,7 @@ contains ! =====     Public Procedures     =============================
     use Parse_signal_m, only: Parse_signal
     use String_Table, only: get_string
     use TOGGLES, only: SWITCHES
-    use TREE, only: DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE
+    use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
     ! Dummy args
     ! integer, intent(in) :: name
     integer, intent(in) :: root
@@ -61,7 +61,6 @@ contains ! =====     Public Procedures     =============================
     integer :: field
     integer :: field_index
     integer :: fieldValue
-    character(len=255) :: formula
     integer :: keyNo
     character(len=32) :: nameString
     integer :: s
@@ -135,18 +134,17 @@ contains ! =====     Public Procedures     =============================
   ! ------------------------------------- BooleanFromAnyGoodValues --
   function BooleanFromAnyGoodValues ( root, vectors ) result(size)
     use Dump_0, only: Dump
-    use Expr_M, only: EXPR
     use INIT_TABLES_MODULE, only: F_PRECISION, F_QUALITY, &
       & F_QUANTITY, F_Boolean, F_STATUS
     use ManipulateVectorQuantities, only: AnyGoodDataInQty
-    use MLSCommon, only: r8, rv
+    use MLSCommon, only: rv
     use MLSL2Options, only: runTimeValues
-    use MLSStringLists, only: BooleanValue, NumStringElements, PutHashElement, &
+    use MLSStringLists, only: NumStringElements, PutHashElement, &
       & SwitchDetail
     use MLSStrings, only: lowerCase
     use String_Table, only: get_string
     use TOGGLES, only: SWITCHES
-    use TREE, only: DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE
+    use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
     use VectorsModule, only: Vector_T, VectorValue_T, &
       & GetVectorQtyByTemplateIndex
     ! Dummy args
@@ -159,7 +157,6 @@ contains ! =====     Public Procedures     =============================
     integer :: field
     integer :: field_index
     integer :: fieldValue
-    character(len=255) :: formula
     integer :: keyNo
     character(len=32) :: nameString
     type (vectorValue_T), pointer :: PRECISIONQUANTITY
@@ -243,7 +240,7 @@ contains ! =====     Public Procedures     =============================
     use MLSStrings, only: lowerCase
     use String_Table, only: get_string
     use TOGGLES, only: SWITCHES
-    use TREE, only: DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE
+    use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
     ! Dummy args
     integer, intent(in) :: name
     integer, intent(in) :: root
@@ -365,11 +362,11 @@ contains ! =====     Public Procedures     =============================
       & S_PHASE, S_QUANTITY, S_REEVALUATE, S_TIME, S_VECTORTEMPLATE
     use L2GPData, only: L2GPDATA_T
     use MLSCommon, only: MLSFile_T, TAI93_Range_T
-    use MLSL2Options, only: RESTARTWARNINGS, SPECIALDUMPFILE
+    use MLSL2Options, only: SPECIALDUMPFILE
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, addPhaseToPhaseNames
     use MoreTree, only: Get_Spec_ID
-    use OUTPUT_M, only: BLANKS, OUTPUT, RESUMEOUTPUT, &
-      & revertoutput, SUSPENDOUTPUT, switchOutput
+    use OUTPUT_M, only: BLANKS, OUTPUT, &
+      & revertoutput, switchOutput
     use QuantityTemplates, only: AddQuantityTemplateToDatabase, &
       & QuantityTemplate_T
     use Time_M, only: Time_Now
@@ -544,6 +541,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.60  2007/10/24 00:14:58  pwagner
+! Removed unused declarations
+!
 ! Revision 2.59  2007/03/23 00:24:12  pwagner
 ! Switch destroy warns when destroying dbs
 !
