@@ -63,6 +63,7 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
 !             r8    min   ,
 !             r8    stddev,
 !             r8    rms   ,
+!             int   mindexes(3),
 !             int   nbins, 
 !             r8    bounds(2)  ,
 !             *int  bincount(:)
@@ -72,8 +73,9 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
 ! allstats( values, &
 !      & [int nbins], [*bounds(2)], [log addedData], [fillValue], [precision], &
 !      & [int count], [int fillcount], &
-!      & [min], [max], [mean], [stddev], [rms], [median], [int bincount], &
-!      & [log doDump] )
+!      & [min], [max], [mean], [stddev], [rms], [median], [int mindexes(3)], &
+!      & [int bincount], [log doDump] )
+!      
 ! dump( stat_t statistic, [char which] )
 ! type(values) mls$fun( values, [fillvalue] )
 ! howfar( array1, array2, pct(:), stat_t gaps, char * mode )
@@ -150,6 +152,11 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
 
   ! This is the main datatype, a statistic type that both holds
   ! and can progressively accumulate info
+  
+  ! However, accumulating data is inconsistent with obtaining correct
+  ! values for the median and for the indexes of the max, mean, and medians
+  ! stored in the mindexes array
+  
   ! (Would making fillValue a component makes sense?)
 
   type Stat_T
@@ -161,6 +168,7 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
     real(r8) :: min
     real(r8) :: stddev
     real(r8) :: rms
+    integer, dimension(3) :: mindexes = 0  !index of  (/ max, median, min /)
     ! The next 3 deal with histogramming data
     integer :: nbins = 0  !NCELLS; put > 2 if histogramming
     real(r8), dimension(2) :: bounds = 1.d0 ! X1, X2; put X2 > X1
@@ -279,8 +287,8 @@ contains
       ! ------------------- allstats_d1r4 -----------------------
       subroutine allstats_d1r4( values, &
         & nbins, bounds, addedData, fillValue, precision, &
-        & count, fillcount, min, max, mean, stddev, rms, median, bincount, &
-        & doDump )
+        & count, fillcount, min, max, mean, stddev, rms, median, &
+        & bincount, mindexes, doDump )
         integer, parameter :: rk = r4
         include 'allstats_d1.f9h'
       end subroutine allstats_d1r4
@@ -288,8 +296,8 @@ contains
       ! ------------------- allstats_d1r8 -----------------------
       subroutine allstats_d1r8( values, &
         & nbins, bounds, addedData, fillValue, precision, &
-        & count, fillcount, min, max, mean, stddev, rms, median, bincount, &
-        & doDump )
+        & count, fillcount, min, max, mean, stddev, rms, median, &
+        & bincount, mindexes, doDump )
         integer, parameter :: rk = r8
         include 'allstats_d1.f9h'
       end subroutine allstats_d1r8
@@ -297,8 +305,8 @@ contains
       ! ------------------- allstats_d2r4 -----------------------
       subroutine allstats_d2r4( values, &
         & nbins, bounds, addedData, fillValue, precision, &
-        & count, fillcount, min, max, mean, stddev, rms, median, bincount, &
-        & doDump )
+        & count, fillcount, min, max, mean, stddev, rms, median, &
+        & bincount, mindexes, doDump )
         ! Args
         real(r4), dimension(:,:), intent(in)           :: values
         integer, optional, intent(in)                  :: nbins
@@ -315,6 +323,7 @@ contains
         real(r4), optional, intent(out)                :: rms
         real(r4), optional, intent(out)                :: median
         integer, dimension(:), optional, intent(out)   :: bincount
+        integer, dimension(3), optional, intent(out)   :: mindexes
         logical , optional, intent(in)                 :: doDump
         ! Internal variables
         integer, dimension(2)                          :: shp
@@ -325,22 +334,22 @@ contains
             & nbins, bounds, addedData, fillValue, &
             & count=count, fillcount=fillcount, min=min, max=max, mean=mean, &
             & stddev=stddev, rms=rms, median=median, bincount=bincount, &
-            & doDump=doDump)
+            & mindexes=mindexes, doDump=doDump)
         else
           call allstats_d1r4(reshape(values, (/shp(1)*shp(2)/)), &
             & nbins, bounds, addedData, fillValue, &
             & reshape(precision, (/shp(1)*shp(2)/)),&
             & count=count, fillcount=fillcount, min=min, max=max, mean=mean, &
             & stddev=stddev, rms=rms, median=median, bincount=bincount, &
-            & doDump=doDump)
+            & mindexes=mindexes, doDump=doDump)
         endif
       end subroutine allstats_d2r4
 
       ! ------------------- allstats_d2r8 -----------------------
       subroutine allstats_d2r8( values, &
         & nbins, bounds, addedData, fillValue, precision, &
-        & count, fillcount, min, max, mean, stddev, rms, median, bincount, &
-        & doDump )
+        & count, fillcount, min, max, mean, stddev, rms, median, &
+        & bincount, mindexes, doDump )
         ! Args
         real(r8), dimension(:,:), intent(in)           :: values
         integer, optional, intent(in)                  :: nbins
@@ -357,6 +366,7 @@ contains
         real(r8), optional, intent(out)                :: rms
         real(r8), optional, intent(out)                :: median
         integer, dimension(:), optional, intent(out)   :: bincount
+        integer, dimension(3), optional, intent(out)   :: mindexes
         logical , optional, intent(in)                 :: doDump
         ! Internal variables
         integer, dimension(2)                          :: shp
@@ -367,22 +377,22 @@ contains
             & nbins, bounds, addedData, fillValue, &
             & count=count, fillcount=fillcount, min=min, max=max, mean=mean, &
             & stddev=stddev, rms=rms, median=median, bincount=bincount, &
-            & doDump=doDump)
+            & mindexes=mindexes, doDump=doDump)
         else
           call allstats_d1r8(reshape(values, (/shp(1)*shp(2)/)), &
             & nbins, bounds, addedData, fillValue, &
             & reshape(precision, (/shp(1)*shp(2)/)),&
             & count=count, fillcount=fillcount, min=min, max=max, mean=mean, &
             & stddev=stddev, rms=rms, median=median, bincount=bincount, &
-            & doDump=doDump)
+            & mindexes=mindexes, doDump=doDump)
         endif
       end subroutine allstats_d2r8
 
       ! ------------------- allstats_d3r4 -----------------------
       subroutine allstats_d3r4( values, &
         & nbins, bounds, addedData, fillValue, precision, &
-        & count, fillcount, min, max, mean, stddev, rms, median, bincount, &
-        & doDump )
+        & count, fillcount, min, max, mean, stddev, rms, median, &
+        & bincount, mindexes, doDump )
         ! Args
         real(r4), dimension(:,:,:), intent(in)         :: values
         integer, optional, intent(in)                  :: nbins
@@ -399,6 +409,7 @@ contains
         real(r4), optional, intent(out)                :: rms
         real(r4), optional, intent(out)                :: median
         integer, dimension(:), optional, intent(out)   :: bincount
+        integer, dimension(3), optional, intent(out)   :: mindexes
         logical , optional, intent(in)                 :: doDump
         ! Internal variables
         integer, dimension(3)                          :: shp
@@ -409,22 +420,22 @@ contains
             & nbins, bounds, addedData, fillValue, &
             & count=count, fillcount=fillcount, min=min, max=max, mean=mean, &
             & stddev=stddev, rms=rms, median=median, bincount=bincount, &
-            & doDump=doDump)
+            & mindexes=mindexes, doDump=doDump)
         else
           call allstats_d1r4(reshape(values, (/shp(1)*shp(2)*shp(3)/)), &
             & nbins, bounds, addedData, fillValue, &
             & reshape(precision, (/shp(1)*shp(2)/)),&
             & count=count, fillcount=fillcount, min=min, max=max, mean=mean, &
             & stddev=stddev, rms=rms, median=median, bincount=bincount, &
-            & doDump=doDump)
+            & mindexes=mindexes, doDump=doDump)
         endif
       end subroutine allstats_d3r4
 
       ! ------------------- allstats_d3r8 -----------------------
       subroutine allstats_d3r8( values, &
         & nbins, bounds, addedData, fillValue, precision, &
-        & count, fillcount, min, max, mean, stddev, rms, median, bincount, &
-        & doDump )
+        & count, fillcount, min, max, mean, stddev, rms, median, &
+        & bincount, mindexes, doDump )
         ! Args
         real(r8), dimension(:,:,:), intent(in)         :: values
         integer, optional, intent(in)                  :: nbins
@@ -441,6 +452,7 @@ contains
         real(r8), optional, intent(out)                :: rms
         real(r8), optional, intent(out)                :: median
         integer, dimension(:), optional, intent(out)   :: bincount
+        integer, dimension(3), optional, intent(out)   :: mindexes
         logical , optional, intent(in)                 :: doDump
         ! Internal variables
         integer, dimension(3)                          :: shp
@@ -451,14 +463,14 @@ contains
             & nbins, bounds, addedData, fillValue, &
             & count=count, fillcount=fillcount, min=min, max=max, mean=mean, &
             & stddev=stddev, rms=rms, median=median, bincount=bincount, &
-            & doDump=doDump)
+            & mindexes=mindexes, doDump=doDump)
         else
           call allstats_d1r8(reshape(values, (/shp(1)*shp(2)*shp(3)/)), &
             & nbins, bounds, addedData, fillValue, &
             & reshape(precision, (/shp(1)*shp(2)/)),&
             & count=count, fillcount=fillcount, min=min, max=max, mean=mean, &
             & stddev=stddev, rms=rms, median=median, bincount=bincount, &
-            & doDump=doDump)
+            & mindexes=mindexes, doDump=doDump)
         endif
       end subroutine allstats_d3r8
 
@@ -1717,13 +1729,14 @@ contains
             & statistic%count, statistic%fillcount, &
             & statistic%min, statistic%max, statistic%mean, &
             & statistic%stddev, statistic%rms, statistic%median, &
-            & statistic%bincount)
+            & statistic%bincount, statistic%mindexes)
         else
-          call allstats(values, &
+          call allstats( values, &
             & nbins, bounds, addeddata, fillValue, precision, &
             & count=statistic%count, min=statistic%min, max=statistic%max, &
             & mean=statistic%mean, &
-            & stddev=statistic%stddev, rms=statistic%rms, median=statistic%median )
+            & stddev=statistic%stddev, rms=statistic%rms, &
+            & median=statistic%median, mindexes=statistic%mindexes )
         endif
       end subroutine statistics
       
@@ -1753,6 +1766,18 @@ contains
         call output('rms:    ')
         call output(statistic%rms)
         call newline
+        if ( any(statistic%mindexes /= 0) ) then
+          call output('(locations)  ')
+          call output('max:    ')
+          call output(statistic%mindexes(1))
+          call blanks(4)
+          call output('min:    ')
+          call output(statistic%mindexes(2))
+          call blanks(4)
+          call output('median:    ')
+          call output(statistic%mindexes(3))
+          call newline
+        endif
         if ( statistic%nbins > 2 ) then
           call output('x1,x2: ')
           call output(statistic%bounds)
@@ -1789,6 +1814,7 @@ contains
         call dump_if_selected( statistic%stddev, which, 'stddev', 'no' )
         call dump_if_selected( statistic%rms, which, 'rms', 'no' )
         call newline
+        call dump_if_selected( statistic%rms, which, 'mindexs', 'yes' )
         if ( statistic%nbins < 3 .or. index(which, 'bin') < 1 ) return
         call output('x1,x2: ')
         call output(statistic%bounds)
@@ -2062,6 +2088,9 @@ end module MLSStats1
 
 !
 ! $Log$
+! Revision 2.17  2007/10/24 00:19:35  pwagner
+! Added mindexes component to MLSStat to hold index of max, min, median
+!
 ! Revision 2.16  2007/10/12 23:36:16  pwagner
 ! Added howfar procedures for comparing two arrays
 !
