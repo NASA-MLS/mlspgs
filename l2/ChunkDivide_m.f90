@@ -1489,7 +1489,7 @@ contains ! ===================================== Public Procedures =====
       use MLSStringLists, only: NumStringElements, GetStringElement
       use MLSStrings, only: lowercase
       use Parse_signal_m, only: Parse_signal
-      use String_table, only: GET_STRING, DISPLAY_STRING
+      use String_table, only: GET_STRING
       ! This routine notes any lack of good data for one of the
       ! signals, and, depending on sensitivity,
       ! augments the database of obstructions
@@ -1773,7 +1773,7 @@ contains ! ===================================== Public Procedures =====
       use MLSSignals_m, only: GetSignalName, SIGNALS
       use MLSStringLists, only: catLists, List2Array
       use MLSStrings, only: lowercase
-      use String_table, only: GET_STRING, DISPLAY_STRING
+      use String_table, only: GET_STRING
       ! Args
       character(len=160), dimension(:), pointer :: criticalSignals
       ! Internal variables
@@ -2015,7 +2015,6 @@ contains ! ===================================== Public Procedures =====
     subroutine SurveyL1BData ( processingRange, filedatabase, mafRange )
       ! This goes through the L1B data files and tries to spot possible
       ! obstructions.
-      use L1BData, only: DUMP
       use MLSMessageModule, only: MLSMessage, MLSMSG_Error
       type (TAI93_Range_T), intent(in) :: PROCESSINGRANGE
       type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
@@ -2194,16 +2193,13 @@ contains ! ===================================== Public Procedures =====
   ! -------------------------------------------- Dump_config -----
   subroutine Dump_config(config)
 
-    use Intrinsic, only: LIT_INDICES, phyq_indices, &
-      & PHYQ_MAFS, PHYQ_ANGLE, PHYQ_TIME, PHYQ_INVALID
-    use Output_M, only: BLANKS, OUTPUT
-    use String_table, only: GET_STRING, DISPLAY_STRING
+    use Intrinsic, only: LIT_INDICES, phyq_indices
+    use Output_M, only: OUTPUT
+    use String_table, only: DISPLAY_STRING
 
     ! Args
     type(ChunkDivideConfig_T), intent(in) :: Config
 
-    ! Local variables
-    integer :: i                        ! Loop counter
     ! Executable code
     call output ( 'method ' )
     call display_string ( lit_indices(Config%method), &
@@ -2482,6 +2478,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.83  2007/10/24 00:14:58  pwagner
+! Removed unused declarations
+!
 ! Revision 2.82  2007/09/06 22:31:50  pwagner
 ! Raise switch threshold for dumpings signals
 !

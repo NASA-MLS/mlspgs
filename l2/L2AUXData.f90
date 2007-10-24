@@ -194,12 +194,9 @@ contains ! =====     Public Procedures     =============================
 
   subroutine cpL2AUXData_MLSFile(L2AUXFile1, L2AUXFile2, &
     & create2, sdList, rename, options)
-    use Hdf, only: DFACC_READ, DFACC_CREATE, DFACC_RDWR
-    use HDF5, only: H5GCLOSE_F, H5GOPEN_F, H5DOPEN_F, H5DCLOSE_F
-    use MLSFILES, only: FILENOTFOUND, WILDCARDHDFVERSION, &
-      & AreTheSameFile, mls_exists, mls_hdf_version, mls_sfstart, mls_sfend
-    use MLSHDF5, only: GetAllHDF5DSNames, GetHDF5Attribute, &
-      & IsHDF5AttributePresent
+    use Hdf, only: DFACC_CREATE
+    use MLSFILES, only: AreTheSameFile
+    use MLSHDF5, only: GetAllHDF5DSNames
     !-------------------------------------------------------------------
 
     ! Given file names file1 and file2,
@@ -335,7 +332,6 @@ contains ! =====     Public Procedures     =============================
     integer :: sdfid1
     integer :: sdfid2
     character (len=80) :: sdName
-    character (len=80) :: sdNameNew
     integer :: status
     integer :: the_hdfVersion
     logical :: verbose
@@ -797,7 +793,7 @@ contains ! =====     Public Procedures     =============================
   subroutine ReadL2AUXData_FileHandle(sd_id, quantityname, quantityType, l2aux, firstProf, lastProf, &
     & checkDimNames, hdfVersion)
 
-  use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, INITIALIZEMLSFILE
+  use MLSFiles, only: INITIALIZEMLSFILE
 
     ! This routine reads an l2aux file, returning a filled data structure
     ! and the number of profiles read.
@@ -1039,7 +1035,6 @@ contains ! =====     Public Procedures     =============================
   subroutine ReadL2AUXData_MF_hdf5(L2AUXFile, quantityname, quantityType, l2aux, firstProf, lastProf, &
     & checkDimNames)
     use L1BData, only: L1BDATA_T, READL1BDATA
-    use MLSFiles, only: HDFVERSION_5
 
     ! This routine reads an l2aux file, returning a filled data structure and the !
     ! number of profiles read.
@@ -1094,7 +1089,7 @@ contains ! =====     Public Procedures     =============================
   subroutine WriteL2AUXData_FileHandle(l2aux, sd_id, returnStatus, sdName, &
     & NoMAFS, WriteCounterMAF, DimNames, Reuse_dimNames, hdfVersion)
 
-  use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, INITIALIZEMLSFILE
+  use MLSFiles, only: INITIALIZEMLSFILE
 
   ! Write l2aux to the file with l2FileHandle
   ! Optionally, write a bogus CounterMAF sd so the
@@ -2003,6 +1998,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.83  2007/10/24 00:15:53  pwagner
+! Removed unused declarations
+!
 ! Revision 2.82  2007/08/13 17:39:42  pwagner
 ! Push some procedures onto new MLSCallStack
 !
