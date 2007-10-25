@@ -18,9 +18,14 @@
       type(Stat_T), dimension(:), intent(inout) :: gaps
       character(len=*), intent(in)              :: mode ! 'rel' or 'abs'          
       ! Internal variables
+      logical, parameter                        :: DEEBUG = .false.
       real(KINDVALUE)                           :: denominator                    
-      integer                                   :: i, n, nkeep                    
-      real(r8), dimension(size(array1))         :: diffs                          
+      integer                                   :: i, j, n, nkeep                    
+      real(r8), dimension(size(array1))         :: diffs, sdiffs
+      ! permutation p and its inverse ip map diffs as follows:
+      ! diffs(p)   -> sorted   sdiffs (i.e. sdiffs[i-1] < sdiffs[i])
+      ! sdiffs(ip) -> presorted diffs
+      integer, dimension(size(array1))          :: ip, p
       ! Executable
       ! call output( 'sizes of array1, array2', advance='yes' )
       ! call output( (/ size(array1), size(array2) /), advance='yes' )
@@ -34,7 +39,7 @@
       case ('abs')
         ! 1st--deal with absolute differences
         diffs = abs(array1-array2)
-        call sort( diffs, 1, n )
+        call sortp( diffs, 1, n, p )
       case ('rel')
         ! 2nd--deal with relative differences
         diffs = 0.
@@ -43,18 +48,47 @@
           if ( denominator == real(0., KINDVALUE) ) cycle
           diffs(i) = abs(array1(i) - array2(i)) / denominator
         enddo
-        call sort( diffs, 1, n )
+        call sortp( diffs, 1, n, p )
       case default
         return
       end select
+      do i=1, n
+        sdiffs(i) = diffs(p(i))
+        ip(p(i)) = i
+      enddo
       do i=1, min( size(pct), size(gaps) )
         nkeep = (pct(i)*n)/100
         ! Always keep at least one point (is this best?)
         nkeep = max(nkeep, 1)
         nkeep = min(nkeep, n) ! Even if pct > 100 wasn't caught by test above
-        call statistics( diffs(:nkeep), gaps(i) )
+        call statistics( sdiffs(:nkeep), gaps(i) )
+        if ( DEEBUG ) then
+          call newline
+          call output( 'max, min, median using sorted indexing: ' )
+          call output( (/ sdiffs(gaps(i)%indexing(1)), &
+            & sdiffs(gaps(i)%indexing(2)), &
+            & sdiffs(gaps(i)%indexing(3)) /), advance='yes' )
+          call dump( gaps(i) )
+        endif
+        ! Map indexing back to original array1 indexing (pre-sorting order)
+        if ( all( gaps(i)%indexing > 0 ) ) then
+          do j=1, 3
+            gaps(i)%indexing(j) = p( gaps(i)%indexing(j) )
+          enddo
+        endif
+        if ( DEEBUG ) then
+          call dump( gaps(i), which='indexing' )
+          call newline
+          call output( 'max, min, median using presorted indexing: ' )
+          call output( (/ diffs(gaps(i)%indexing(1)), &
+            & diffs(gaps(i)%indexing(2)), &
+            & diffs(gaps(i)%indexing(3)) /), advance='yes' )
+        endif
       enddo
 ! $Log$
+! Revision 2.2  2007/10/25 00:00:01  pwagner
+! Returns correct indexing to presorted array
+!
 ! Revision 2.1  2007/10/12 23:36:16  pwagner
 ! Added howfar procedures for comparing two arrays
 !
