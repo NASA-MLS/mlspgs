@@ -395,7 +395,7 @@ contains
           ref_corr(j) = 0.5 * abs( ( h2 - h1 ) * &
             & (t1/sqrt(t1**2-nt2ht2) + t2/sqrt(t2**2-nt2ht2)) ) / Del_s(j)
         else
-          if ( hndp > 0 ) write ( *, '("Solving for H for Ref_Corr(",i0,")")' ) j
+          if ( hndp > 3 ) write ( *, '("Solving for H for Ref_Corr(",i0,")")' ) j
           panel_stat = 0
           eps = log(n2/n1)/(h2-h1)
           xm = 0.5_rp *(x2 + x1)      ! Midpoint of the interval
@@ -510,7 +510,7 @@ contains
         iter = iter + 1
         e = n1 * exp(eps*(x1-h1))
         f1 = x1 * (1.0_rp + e ) - NH
-        if ( hndp > 0 ) then
+        if ( hndp > 3 ) then
           if ( head ) then
             write ( *, '(5(3x,a2,9x)/2g14.7,1p,2g14.6,g20.12)' ) &
             & 'x1', 'x2', 'f1', 'f2', 'NH', &
@@ -609,6 +609,9 @@ contains
 end module REFRACTION_M
 
 ! $Log$
+! Revision 2.34  2007/10/02 22:35:17  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.33  2007/09/07 22:13:00  vsnyder
 ! Don't put an upper bound on the refractive correction
 !
