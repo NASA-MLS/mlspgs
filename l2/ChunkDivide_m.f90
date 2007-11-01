@@ -1539,8 +1539,10 @@ contains ! ===================================== Public Procedures =====
       logical :: this_maf_valid
       logical, dimension(:), pointer  :: valids_buffer
       integer, parameter :: VERBOSETHRESHOLD = 1 ! was 0; turn on extra debugging
-      ! Won't check if there are no radiances
+      ! Won't check if there are no files at all
       if ( .not. associated(filedatabase) ) return
+      ! Won't check if there are no radiance files
+      if ( .not. any(filedatabase%content == 'l1brad') ) return
       swlevel = SwitchDetail(switches, 'chu')
       nmafs = mafRange%Expanded(2) - mafRange%Expanded(1) + 1
       choseCriticalSignals = .false.
@@ -2478,6 +2480,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.84  2007/11/01 23:30:48  pwagner
+! Should permit us to make sids files, i.e. omit l1brad
+!
 ! Revision 2.83  2007/10/24 00:14:58  pwagner
 ! Removed unused declarations
 !
