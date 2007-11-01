@@ -103,6 +103,7 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
   
   public :: STAT_T             ! The data type
   public :: ALLSTATS, DUMP, HOWFAR, HOWNEAR, RATIOS, STATISTICS  ! subroutines
+  public :: MLSCOUNT ! Another function
   public :: MLSMIN, MLSMAX, MLSMEAN, MLSMEDIAN, MLSSTDDEV, MLSRMS ! functions
   public :: PDF
   public :: RESET
@@ -260,6 +261,12 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
     module procedure mlsrms_d1r8, mlsrms_d2r8, mlsrms_d3r8
   end interface
   
+  interface mlscount
+    module procedure mlscount_d1int
+    module procedure mlscount_d1r4
+    module procedure mlscount_d1r8
+  end interface
+  
   interface pdf
     module procedure pdf_1, pdf_2
   end interface
@@ -276,12 +283,15 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
   logical, parameter :: DEEBUG = .false.
   ! Function names
   ! Stored using sequence of integers
-  integer, parameter              :: FN_MIN = 1
-  integer, parameter              :: FN_MAX = FN_MIN + 1
-  integer, parameter              :: FN_MEAN = FN_MAX + 1
-  integer, parameter              :: FN_STDDEV = FN_MEAN + 1
-  integer, parameter              :: FN_RMS = FN_STDDEV + 1
-  integer, parameter              :: FN_MEDIAN = FN_RMS + 1
+  integer, parameter              :: FN_MIN       = 1
+  integer, parameter              :: FN_MAX       = FN_MIN + 1
+  integer, parameter              :: FN_MEAN      = FN_MAX + 1
+  integer, parameter              :: FN_STDDEV    = FN_MEAN + 1
+  integer, parameter              :: FN_RMS       = FN_STDDEV + 1
+  integer, parameter              :: FN_MEDIAN    = FN_RMS + 1
+  integer, parameter              :: FN_COUNT     = FN_MEDIAN + 1
+  integer, parameter              :: FN_FILLCOUNT = FN_COUNT + 1
+  integer, parameter              :: FN_COUNT_TOT = FN_FILLCOUNT + 1
 
 contains
       ! ------------------- allstats_d1r4 -----------------------
@@ -473,6 +483,78 @@ contains
             & indexing=indexing, doDump=doDump)
         endif
       end subroutine allstats_d3r8
+
+      ! ------------------- mlscount -----------------------
+      ! This family of functions returns the count of values that are
+      ! (depending on method)
+      ! 'non-fill'   /= fillValue (default)
+      ! 'fill'        = fillValue
+      ! 'total'       independent of FillValue (same as size(values))
+      ! By intention and by design 'total' = 'non-fill' + 'fill'
+      ! If fillValue is absent, then 'non-fill' and 'total' will return
+      ! identical values while 'fill' will return 0
+      function mlscount_d1int(values, fillValue, method) result(iValue)
+        integer, parameter                             :: KINDVALUE = r4
+        character(len=*), optional, intent(in)         :: method
+        ! Args
+        integer, dimension(:), intent(in)      :: values
+        integer                                :: iValue
+        integer, optional                      :: FillValue
+        if ( present(fillValue) ) then
+          iValue = mlscount( real(values, KINDVALUE), &
+            & fillValue=real(fillValue, KINDVALUE), &
+            & method=method )
+        else
+          iValue = mlscount( real(values, KINDVALUE), &
+            & method=method )
+        endif
+      end function mlscount_d1int
+
+      function mlscount_d1r4(values, fillValue, method) result(iValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_COUNT ! unused
+        character(len=*), optional, intent(in)         :: method
+        character(len=8)                               :: myMethod
+        ! Args
+        real(KINDVALUE), dimension(:), intent(in)      :: values
+        integer                                :: iValue
+        include 'stats0.f9h'
+        myMethod = 'non-fill'
+        if ( present(method) ) myMethod = method
+        select case( lowercase(myMethod(1:1)) )
+        case ('n')
+          iValue = count
+        case ('f')
+          iValue = fillcount
+        case ('t')
+          iValue = count + fillcount
+        case default
+          iValue = count
+        end select
+      end function mlscount_d1r4
+
+      function mlscount_d1r8(values, fillValue, method) result(iValue)
+        integer, parameter                             :: KINDVALUE = r8
+        integer, parameter                             :: FN = FN_COUNT ! unused
+        character(len=*), optional, intent(in)         :: method
+        character(len=8)                               :: myMethod
+        ! Args
+        real(KINDVALUE), dimension(:), intent(in)      :: values
+        integer                                :: iValue
+        include 'stats0.f9h'
+        myMethod = 'non-fill'
+        if ( present(method) ) myMethod = method
+        select case( lowercase(myMethod(1:1)) )
+        case ('n')
+          iValue = count
+        case ('f')
+          iValue = fillcount
+        case ('t')
+          iValue = count + fillcount
+        case default
+          iValue = count
+        end select
+      end function mlscount_d1r8
 
       ! ------------------- mlsmin_d1int -----------------------
       function mlsmin_d1int(values, fillValue) result(iValue)
@@ -2088,6 +2170,9 @@ end module MLSStats1
 
 !
 ! $Log$
+! Revision 2.19  2007/11/01 23:28:42  pwagner
+! Added mlscount function
+!
 ! Revision 2.18  2007/10/24 23:56:58  pwagner
 ! Changed name of component to 'indexing'
 !
