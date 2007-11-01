@@ -13,7 +13,6 @@
 module FillUtils_1                     ! Procedures used by Fill
   !=============================================================================
 
-  ! We need many things from Init_Tables_Module.  First the fields:
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use Chunks_m, only: MLSChunk_T
   use Expr_M, only: EXPR, EXPR_CHECK, GetIndexFlagsFromList
@@ -57,11 +56,7 @@ module FillUtils_1                     ! Procedures used by Fill
   use ManipulateVectorQuantities, only: DOFGRIDSMATCH, DOHGRIDSMATCH, &
     & DOVGRIDSMATCH, DOQTYSDESCRIBESAMETHING
   use MatrixModule_0, only: Sparsify, MatrixInversion
-  use MatrixModule_1, only: &
-    & Dump, &
-    & FindBlock, &
-    & Matrix_SPD_T, &
-    & UpdateDiagonal
+  use MatrixModule_1, only: Dump, FindBlock, Matrix_SPD_T, UpdateDiagonal
   ! NOTE: If you ever want to include defined assignment for matrices, please
   ! carefully check out the code around the call to snoop.
   use MLSCommon, only: MLSFile_T, R4, R8, RM, RV, &
@@ -78,7 +73,7 @@ module FillUtils_1                     ! Procedures used by Fill
   use MLSStringLists, only: catLists, GetStringElement, &
     & NumStringElements, &
     & ReplaceSubString, switchDetail
-  use MLSStrings, only: lowerCase, SplitNest
+  use MLSStrings, only: indexes, lowerCase, SplitNest
   use Molecules, only: L_H2O
   use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, outputNamedValue
   use QuantityTemplates, only: Epoch, QuantityTemplate_T
@@ -3163,6 +3158,21 @@ contains ! =====     Public Procedures     =============================
       logical, intent(in) :: DONTSUMHEIGHTS
       logical, intent(in) :: DONTSUMINSTANCES
       ! Local parameters
+
+      ! The following 1 and 2-way manipulations must be entered exactly as shown
+      ! Other more general manipulations require the use of the constant
+      ! "c". E.g., 'a/b+b/a' could be 'a/b+c*b/a' and set c=1
+
+      ! "More general" means free use of '+', '-', '*', '/' and appropriate
+      ! nesting between '(' and ')' where appropriate. It does not permit
+      ! use of the functions 'abs', 'sign', etc. within the manipulation
+      ! Perhaps a future rewrite might permit this freedom, but for now
+      ! you must use intermediate fills and temporary quantities.
+      
+      ! Correction: working on this rewrite now
+      
+      ! Not listed below but also available are the manipulations 
+      ! 'a^c' and 'c^a' (also called 'a**c' and 'c**a')
       integer, parameter :: NO2WAYMANIPULATIONS = 8
       character(len=*), parameter :: VALID2WAYMANIPULATIONS ( NO2WAYMANIPULATIONS ) = (/ &
         & 'a+b     ', &
@@ -3204,6 +3214,7 @@ contains ! =====     Public Procedures     =============================
       integer :: NUMWAYS ! 1 or 2
       type (VectorValue_T), pointer :: AORB
       real(rv) :: qvalue
+      integer, parameter :: MAXSTRLISTLENGTH = 128
       ! Executable code
       call MLSMessageCalls( 'push', constantName='FillQuantityByManipulation' )
 
@@ -3285,7 +3296,7 @@ contains ! =====     Public Procedures     =============================
 
       ! OK do the simple work for now
       ! Below we'll do fancy stuff to parse the more general manipulations
-      if ( StatisticalFunction) then
+      if ( StatisticalFunction ) then
         NoChans     = a%template%NoChans
         NoInstances = a%template%NoInstances
         NoSurfs     = a%template%NoSurfs
@@ -3483,6 +3494,26 @@ contains ! =====     Public Procedures     =============================
             quantity%values = log10(a%values)
           end where
         end if
+      ! Special manipulation with c as exponent or base
+      case ( 'a^c', 'a**c'  )
+        if ( .not. associated ( quantity%mask ) ) then
+          where ( a%values > 0._rv )
+            quantity%values = a%values**c
+          end where
+        else
+          where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 .and. &
+            & ( a%values > 0._rv ) )
+            quantity%values = a%values**c
+          end where
+        end if
+      case ( 'c^a', 'c**a'  )
+        if ( .not. associated ( quantity%mask ) ) then
+          quantity%values = c**a%values
+        else
+          where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 )
+            quantity%values = c**a%values
+          end where
+        end if
       case default
         ! This should be one of the cases which use the constant "c"
         call SimpleExprWithC( quantity, a, b, c, mstr )
@@ -3532,7 +3563,6 @@ contains ! =====     Public Procedures     =============================
         !
         ! Limitations:
         ! Does not check for unmatched parens or other illegal syntax
-        integer, parameter :: MAXSTRLISTLENGTH = 128
         integer, parameter :: MAXNESTINGS=64 ! Max number of '(..)' pairs
         character(len=MAXSTRLISTLENGTH) :: collapsedstr
         integer :: level
@@ -3611,13 +3641,20 @@ contains ! =====     Public Procedures     =============================
             write(vChar, '(i4)') np
           endif
           ! And substitute its value for the spaces it occupied
-          if (  part1 == ' ' ) then
-            collapsedstr = trim(vChar) // ' ' // part3
+          if (  part1 // part3 == ' ' ) then
+            collapsedstr = vChar
+          elseif (  part1 == ' ' ) then
+            ! collapsedstr = trim(vChar) // ' ' // part3
+            collapsedstr = catTwoOperands( trim(vChar), part3 )
           elseif ( part3 == ' ' ) then
-            collapsedstr = trim(part1) // ' ' // vChar
+            ! collapsedstr = trim(part1) // ' ' // vChar
+            collapsedstr = catTwoOperands( trim(part1),  vChar )
           else
-            collapsedstr = trim(part1) // ' ' // trim(vChar) // &
-              & ' ' // part3
+            ! collapsedstr = trim(part1) // ' ' // trim(vChar) // &
+            !   & ' ' // part3
+            collapsedstr = catTwoOperands( &
+              & trim( catTwoOperands( trim(part1),  trim(vChar) ) ), &
+              & part3 )
           endif
           if ( DeeBUG ) then
             print *, 'collapsedstr ', collapsedstr
@@ -3793,6 +3830,7 @@ contains ! =====     Public Procedures     =============================
         ! (1) primitives (e.g., '2')
         ! (2) unary operators ('-')
         ! (3) binary operators {'+', '-', '*', '/','<','>'}
+        ! (4) recognized functions {'map:', 'exp:', ..}
         ! Dummy args
         character(len=*)                :: str
         integer                         :: value
@@ -3800,18 +3838,28 @@ contains ! =====     Public Procedures     =============================
         type (VectorValue_T), pointer   :: B
         real(rv) :: C                     ! constant "c" in manipulation
         ! Internal variables
+        logical, parameter              :: DEEBUG = .false.
         logical                         :: done
+        ! fun is blank unless a prior one left us "hungry" for an arg
+        character(len=8)                :: fun ! {'exp', 'log', etc.}
         integer                         :: elem
         logical                         :: hit
+        integer                         :: ind
+        integer                         :: instance
+        integer                         :: isurf
         character(len=3)                :: lastOp ! {'+', '-', '*', '/'}
         integer                         :: n
         logical                         :: negating
+        type (arrayTemp_T)              :: newone
+        integer                         :: NoChans
+        integer                         :: NoInstances
+        integer                         :: NoSurfs
+        character(len=8)                :: op
+        type (arrayTemp_T)              :: part
         integer                         :: partID
+        real(rv)                        :: qvalue
         integer, dimension(2)           :: shp
         character(len=32)               :: variable
-        type (arrayTemp_T)              :: newone
-        type (arrayTemp_T)              :: part
-        logical, parameter              :: DEEBUG = .false.
         ! Executable
         shp = shape(a%values)
         call allocate_test( newone%values, shp(1), shp(2), &
@@ -3831,9 +3879,10 @@ contains ! =====     Public Procedures     =============================
         newone%values = 0.
         n = NumStringElements( trim(str), countEmpty=.false., &
           & inseparator=' ' )
-          if ( DeeBUG ) then
-            print *, n, ' str: ', trim(str)
-          endif
+        if ( DeeBUG ) then
+          print *, n, ' str: ', trim(str)
+        endif
+        fun = ' '
         do
           ! go through the elements, re-evaluating every time we "hit" a primitive
           ! Otherwise revising our lastOp or negating status
@@ -3881,28 +3930,36 @@ contains ! =====     Public Procedures     =============================
             lastOp = '>'
             hit = .false.
           case default
-            read( variable, * ) partID
-            if ( partID < 1 ) then
-              print *, 'partID: ', partID
-              call Announce_Error ( key, no_error_code, 'partID too small' )
-              return
-            elseif( partID > size(primitives) ) then
-              print *, 'partID: ', partID
-              call Announce_Error ( key, no_error_code, 'partID too big' )
-              return
-            endif
-            part%values = primitives(partID)%values
-            hit = .true.
-            if ( deeBug ) then
-              print *, 'part"s values after ' // trim(lastOp) // trim(variable)
-              call dumpAPrimitive(part)
-              print *, 'based on'
-              call dumpAPrimitive(primitives(partID))
+            ind = index(variable, ':')
+            if ( ind > 1 ) then
+              fun = variable(1:ind-1)
+              hit = .false.
+            else
+              read( variable, * ) partID
+              if ( partID < 1 ) then
+                print *, 'partID: ', partID
+                call Announce_Error ( key, no_error_code, 'partID too small' )
+                return
+              elseif( partID > size(primitives) ) then
+                print *, 'partID: ', partID
+                call Announce_Error ( key, no_error_code, 'partID too big' )
+                return
+              endif
+              part%values = primitives(partID)%values
+              hit = .true.
+              if ( deeBug ) then
+                print *, 'part"s values after ' // trim(lastOp) // trim(variable)
+                call dumpAPrimitive(part)
+                print *, 'based on'
+                call dumpAPrimitive(primitives(partID))
+              endif
             endif
           end select
           if ( hit ) then
             if ( negating ) part%values = -part%values
-            select case(lastOp)
+            op = lastOp
+            if ( fun /= ' ' ) op = fun
+            select case(op)
             case ('nul')
                 newone%values = part%values
             case ('+')
@@ -3919,11 +3976,96 @@ contains ! =====     Public Procedures     =============================
                 newone%values = min( newone%values, part%values )
             case ('>')
                 newone%values = max( newone%values, part%values )
+            ! Now the functions
+            case ('abs')
+                newone%values = abs( part%values )
+            case ('sign')
+                where ( part%values /= 0._rv )
+                  newone%values = sign(1._rv, part%values)
+                end where
+            case ('exp')
+                newone%values = exp( part%values )
+            case ('log')
+                where ( part%values > 0._rv )
+                  newone%values = log(part%values)
+                end where
+            case ('log10')
+                where ( part%values > 0._rv )
+                  newone%values = log10(part%values)
+                end where
+            ! map is a no-op currently
+            case ('map')
+                newone%values = part%values
+                call output( 'Calling function map', advance='yes' )
+            ! statistical function cases
+            case ( 'min', 'max', 'mean', 'median', 'rms', 'stddev' )
+              ! These are harder--we must interpret how to gather
+              ! or "sum" the data
+              ! By default we sum over heights, channels and instances
+              ! but optional flags may cuase us to pick out
+              ! a statistic at each height (dontSumHeights)
+              ! or at each instance (dontSumInstances)
+              NoChans     = a%template%NoChans
+              NoInstances = a%template%NoInstances
+              NoSurfs     = a%template%NoSurfs
+              if ( dontSumHeights .and. dontSumInstances ) then
+                do instance = 1, NoInstances
+                  do iSurf = 1, NoSurfs
+                    call doStatFun( newone%values(iSurf, instance), &
+                      & trim(op) // '(a)', &
+                      & part%values(1+(iSurf-1)*NoChans:iSurf*NoChans, instance) )
+                  enddo
+                enddo
+              elseif ( dontSumInstances ) then
+                do instance = 1, NoInstances
+                  call doStatFun( qvalue, trim(op) // '(a)', &
+                    & part%values(:, instance) )
+                  if ( spreadFlag ) then
+                    newone%values(:, instance) = qvalue
+                  else
+                    newone%values(1, instance) = qvalue
+                  endif
+                enddo
+              elseif ( dontSumHeights ) then
+                do iSurf = 1, NoSurfs
+                  call doStatFun( qvalue, trim(op) // '(a)', &
+                    & part%values(iSurf, :) )
+                  if ( spreadFlag ) then
+                    newone%values(iSurf, :) = qvalue
+                  else
+                    newone%values(iSurf, 1) = qvalue
+                  endif
+                enddo
+              else
+                ! Sum over both heights and instances
+                select case ( op )
+                case ( 'min' )
+                  qvalue = mlsmin( part%values )
+                case ( 'max' )
+                  qvalue = mlsmax( part%values )
+                case ( 'mean' )
+                  qvalue = mlsmean( part%values )
+                case ( 'median' )
+                  qvalue = mlsmedian( part%values )
+                case ( 'rms' )
+                  qvalue = mlsrms( part%values )
+                case ( 'stddev' )
+                  qvalue = mlsstddev( part%values )
+                case default
+                  ! Should not have come here
+                end select
+                if ( spreadFlag ) then
+                  newone%values = qvalue
+                else
+                  newone%values(1, 1) = qvalue
+                endif
+              endif
             case default
               ! How could this happen?
                 call MLSMessage( MLSMSG_Error, ModuleName, &
-                  & lastOp // ' not a legal binary op in evaluatePrimitive' )
+                  & op // ' not a legal binary op in evaluatePrimitive' )
             end select
+            fun = ' '
             negating = .false.
             if ( deeBug ) then
               print *, 'newone"s values after ' // trim(lastOp) // trim(variable)
@@ -3953,6 +4095,48 @@ contains ! =====     Public Procedures     =============================
         print *, 'values stored in db '
         call dumpAPrimitive(primitives(value))
       end function evaluatePrimitive
+      
+      function catTwoOperands( part1, part2 ) result ( str )
+        ! cat together part1 and part2 with a space between them
+        ! unless the last non-blank character of part1
+        ! and the 1st non-blank character of part2 aren't operators
+        ! in which case put a colon ':' between them
+        ! E.g., if 
+        ! part1 = 'a + b'
+        ! and part2 = '/ c' then str = 'a + b / c'
+        ! but if part1 = 'map'
+        ! and part2 = 'c - a' then str = 'map: c - a'
+        ! args
+        character(len=*), intent(in)           :: part1
+        character(len=*), intent(in)           :: part2
+        character(len=MAXSTRLISTLENGTH)        :: str
+        ! internal variables
+        character(len=1), dimension(6), parameter :: ops = &
+          &          (/ '+', '-', '*', '/' , '(', ')' /)
+        character(len=1) :: part1Tail, part2Head
+        integer :: maxind
+        integer :: n
+        integer, dimension(4) :: inds
+        ! Executable
+        n = max(1, len_trim(part1))
+        part1Tail = part1(n:n)
+        part2Head = adjustl(part2)
+        if ( all( indexes(part1Tail // part2Head, ops) == 0 ) ) then
+          ! Mark this as a function "hungry" for an arg
+          ! str = trim(part1) // ': ' // adjustl(part2)
+          ! Must also check if part 1 contains an embedded operator
+          inds = indexes( part1, (/ '+', '-', '*', '/' /), mode='last' )
+          maxind = maxval(inds)
+          if ( maxind < 1 ) then
+            str = '(' // trim(part1) // ': ' // trim(adjustl(part2) ) // ')'
+          else
+            str = part1(:maxind) // '(' // trim(part1(maxind+1:)) &
+              & // ': ' // trim(adjustl(part2) ) // ')'
+          endif
+        else
+          str = trim(part1) // ' ' // adjustl(part2)
+        endif
+      end function catTwoOperands
     end subroutine FillQuantityByManipulation
 
     ! ----------------------------------------- FillVectorQuantityFromL1B ----
@@ -6167,6 +6351,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.3  2007/11/01 23:33:59  pwagner
+! rewrite to permit functions and algebra in same manipulation; needs more testing
+!
 ! Revision 2.2  2007/10/04 20:43:12  vsnyder
 ! Remove unused symbols
 !
