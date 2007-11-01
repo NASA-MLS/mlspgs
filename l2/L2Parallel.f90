@@ -529,7 +529,11 @@ contains ! ================================ Procedures ======================
             if ( switchDetail(switches,'mas') > -1 ) then
               call output ( 'Unable to start slave task on ' // &
                 & trim(machines(machine)%Name) // ' info=' )
-              if ( info < 0 ) then
+              if ( info == -6 ) then
+                call TimeStamp ( '(pvm demon dispirited)', advance='yes' )
+              elseif ( info == -7 ) then
+                call TimeStamp ( '(file system problem)', advance='yes' )
+              elseif ( info < 0 ) then
                 call TimeStamp ( info, advance='yes' )
               else
                 call TimeStamp ( tidArr(1), advance='yes' )
@@ -1910,6 +1914,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.85  2007/11/01 23:31:47  pwagner
+! Print clearer msgs when unable to launch slave
+!
 ! Revision 2.84  2007/09/06 23:34:06  pwagner
 ! Delays a bit to prevent l2q from killing finishing slave
 !
