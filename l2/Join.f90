@@ -46,10 +46,13 @@ contains ! =====     Public Procedures     =============================
   subroutine MLSL2Join ( root, vectors, l2gpDatabase, l2auxDatabase, &
     & DirectDataBase, chunkNo, chunks, FWModelConfig, filedatabase, HGrids )
     ! Imports
+    use Allocate_Deallocate, only: Test_Allocate
     use Chunks_m, only: MLSChunk_T
     use DirectWrite_m, only: DirectData_T
+    use DumpCommand_m, only: DumpCommand, Skip
     use HGridsDatabase, only: HGrid_T
-    use Init_Tables_Module, only: S_L2GP, S_L2AUX, S_TIME, S_DIRECTWRITE, S_LABEL
+    use Init_Tables_Module, only: S_L2GP, S_L2AUX, S_TIME, S_DIRECTWRITE, &
+      & S_DUMP, S_LABEL, S_SKIP
     use ForwardModelConfig, only: ForwardModelConfig_T
     use L2GPData, only: L2GPDATA_T
     use L2AUXData, only: L2AUXDATA_T
@@ -101,6 +104,7 @@ contains ! =====     Public Procedures     =============================
     integer :: PASS                     ! Loop counter
     integer :: SON                      ! Tree node
     integer :: SPECID                   ! Type of l2cf line this is
+    integer :: STATUS
     integer :: TICKET                   ! Direct write permission ticket
     ! integer :: THEFILE                  ! Direct write permission on file
     character(len=4096) :: THEFILE  ! Which file permission granted for
@@ -170,6 +174,16 @@ contains ! =====     Public Procedures     =============================
         end if
         specId = get_spec_id ( key )
         select case ( specId )
+        case ( s_dump ) ! ============================== Dump ==========
+          ! Handle disassociated pointers by allocating them with zero size
+          status = 0
+          if ( .not. associated(vectors) ) allocate ( vectors(0), stat=status )
+          call test_allocate ( status, moduleName, 'Vectors', (/0/), (/0/) )
+          call dumpCommand ( key, vectors=vectors, HGrids=HGrids, &
+            & ForwardModelConfigs=FWModelConfig )
+        case ( s_skip ) ! ============================== Skip ==========
+          ! We'll skip the rest of the section if the Boolean cond'n is TRUE
+          if ( Skip(key) ) exit
         case ( s_time )
           ! Only say the time the first time round
           if ( pass == 1 ) then
@@ -2050,6 +2064,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.132  2007/11/05 18:37:19  pwagner
+! May Skip remaining lines in Fill, Join, Retrieve sections depending on Boolean
+!
 ! Revision 2.131  2007/06/21 00:54:08  vsnyder
 ! Remove tabs, which are not part of the Fortran standard
 !
