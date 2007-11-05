@@ -11,12 +11,12 @@
 
 module DumpCommand_M
 
-! Process a "dump" command.
+! Process a "dump" command. Or say whether to "skip" remainder of section
 
   implicit NONE
   private
 
-  public :: DumpCommand
+  public :: DumpCommand, Skip
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -275,7 +275,7 @@ contains
         call get_string ( sub_rosa(gson), booleanString, strip=.true. )
         booleanString = lowerCase(booleanString)
         call output( trim(booleanString) // ' = ', advance='no' )
-        tvalue = BooleanValue ( lowercase(booleanString), &
+        tvalue = BooleanValue ( booleanString, &
           & runTimeValues%lkeys, runTimeValues%lvalues)
         call output( tvalue, advance='yes' )
       case ( f_clean )
@@ -553,6 +553,58 @@ contains
     end subroutine AnnounceError
 
   end subroutine DumpCommand
+  
+  logical function Skip ( Root )
+    ! Returns value of Boolean field;
+    ! If TRUE should skip rest of section in which SKIP command appears
+    use Init_Tables_Module, only: F_Boolean
+    use MLSL2Options, only: runTimeValues
+    use MLSMessageModule, only: MLSMessage, MLSMessageCalls, MLSMSG_error
+    use MLSStringLists, only: BooleanValue, SWITCHDETAIL
+    use MLSStrings, only: lowerCase
+    use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
+    use Output_M, only: Output
+    use String_Table, only: Get_String
+    use Toggles, only: Gen, Switches, Toggle
+    use Trace_m, only: Trace_begin, Trace_end
+    use Tree, only: Decoration, Node_Id, Nsons, Source_Ref, Sub_rosa, Subtree
+    integer, intent(in) :: Root ! Root of the parse tree for the dump command
+    ! Internal variables
+    character(len=80) :: BOOLEANSTRING  ! E.g., 'BAND13_OK'
+    integer :: GSON, J
+    integer :: FieldIndex
+    integer :: Son
+    ! Executable
+    if ( toggle(gen) ) then
+      call trace_begin ( 'DumpCommand', root )
+    else
+      call MLSMessageCalls( 'push', constantName=ModuleName )
+    endif
+    do j = 2, nsons(root)
+      son = subtree(j,root) ! The argument
+      fieldIndex = get_field_id(son)
+      gson = son
+      if (nsons(son) > 1) gson = subtree(2,son) ! Now value of said argument
+      select case ( fieldIndex )
+      case (f_Boolean)
+        call get_string ( sub_rosa(gson), booleanString, strip=.true. )
+        booleanString = lowerCase(booleanString)
+        call output( trim(booleanString) // ' = ', advance='no' )
+        skip = BooleanValue ( booleanString, &
+          & runTimeValues%lkeys, runTimeValues%lvalues)
+        call output( skip, advance='yes' )
+        if ( skip ) &
+          & call output( '(Skipping rest of this section)', advance='yes' )
+      case default
+        ! Should not have got here if parser worked correctly
+      end select
+      if ( toggle(gen) ) then
+        call trace_end ( 'DumpCommand' )
+      else
+        call MLSMessageCalls( 'pop' )
+      endif
+    enddo
+  end function Skip
 
 ! =====     Private Procedures     =====================================
 
@@ -568,6 +620,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.39  2007/11/05 18:36:44  pwagner
+! May Skip remaining lines in Fill, Join, Retrieve sections depending on Boolean
+!
 ! Revision 2.38  2007/10/09 00:32:05  pwagner
 ! Added ability to dump masks of quantities, vectors
 !
