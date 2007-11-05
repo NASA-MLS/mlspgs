@@ -41,7 +41,7 @@ contains
     use BitStuff, only: CountBits
     use Chunks_m, only: MLSChunk_T
     use CloudRetrievalModule, only: CloudRetrieval
-    use DumpCommand_m, only: DumpCommand
+    use DumpCommand_m, only: DumpCommand, Skip
     use IEEE_Arithmetic, only: IEEE_IS_NAN
     use Expr_M, only: Expr
     use ForwardModelConfig, only: ForwardModelConfig_T
@@ -69,8 +69,8 @@ contains
       & L_lowcloud, L_newtonian, L_none, L_norm, &
       & L_NumGrad, L_numJ, L_NumNewt, l_Simple, &
       & S_dump, S_dumpBlocks, S_flagCloud, S_flushPFA, S_LeakCheck, S_matrix, &
-      & S_restrictRange, S_retrieve, S_sids, S_snoop, S_subset, S_time, &
-      & S_updateMask
+      & S_restrictRange, S_retrieve, S_sids, S_SKIP, S_snoop, S_subset, &
+      & S_time, S_updateMask
     use Intrinsic, only: PHYQ_Dimensionless
     use L2ParInfo, only: PARALLEL
     use MatrixModule_1, only: AddToMatrixDatabase, CopyMatrix, CreateEmptyMatrix, &
@@ -673,6 +673,9 @@ contains
         if ( SKIPRETRIEVAL ) cycle
         call time_now ( t1 )
         call sids ( key, VectorDatabase, MatrixDatabase, configDatabase, chunk)
+      case ( s_skip ) ! ============================== Skip ==========
+        ! We'll skip the rest of the section if the Boolean cond'n is TRUE
+        if ( Skip(key) ) exit
       case ( s_snoop )
         snoopKey = key
         do i_key = 2, nsons(key)
@@ -2721,6 +2724,9 @@ NEWT: do ! Newtonian iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.298  2007/11/05 18:37:19  pwagner
+! May Skip remaining lines in Fill, Join, Retrieve sections depending on Boolean
+!
 ! Revision 2.297  2007/10/04 20:43:12  vsnyder
 ! Remove unused symbols
 !
