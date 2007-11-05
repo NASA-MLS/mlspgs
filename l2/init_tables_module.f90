@@ -174,7 +174,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_RETRIEVE           = s_restrictRange + 1
   integer, parameter :: S_ROWSCALE           = s_retrieve + 1
   integer, parameter :: S_SIDS               = s_rowscale + 1
-  integer, parameter :: S_SNOOP              = s_sids + 1
+  integer, parameter :: S_SKIP               = s_sids + 1
+  integer, parameter :: S_SNOOP              = s_skip + 1
   integer, parameter :: S_SUBSET             = s_snoop + 1
   integer, parameter :: S_TEMPLATE           = s_subset + 1
   integer, parameter :: S_TGRID              = s_template + 1
@@ -388,6 +389,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_retrieve) =             add_ident ( 'retrieve' )
     spec_indices(s_rowScale) =             add_ident ( 'rowScale' )
     spec_indices(s_sids) =                 add_ident ( 'sids' )
+    spec_indices(s_skip) =                 add_ident ( 'skip' )
     spec_indices(s_snoop) =                add_ident ( 'snoop' )
     spec_indices(s_subset) =               add_ident ( 'subset' )
     spec_indices(s_template) =             add_ident ( 'template' )
@@ -1223,6 +1225,10 @@ contains ! =====     Public procedures     =============================
              begin, f+f_fileName, t+t_string, nr+n_field_type, &
              begin, f+f_vectors, s+s_vector, nr+n_field_spec, &
              ndp+n_spec_def /) )
+    call make_tree ( (/ & ! Must be AFTER s_Boolean
+      begin, s+s_skip, &
+             begin, f+f_Boolean, s+s_Boolean, n+n_field_spec, &
+             ndp+n_spec_def /) )
     call make_tree ( (/ & ! Must be AFTER s_forwardModel, s_hGrid, s_pfaData,
                           ! s_makePFA, s_vector, s_vectorTemplate, etc.
       begin, s+s_dump, &
@@ -1479,15 +1485,15 @@ contains ! =====     Public procedures     =============================
              s+s_destroy, s+s_dump, s+s_fill, s+s_fillCovariance, &
              s+s_fillDiagonal, s+s_flagcloud, s+s_flushL2PCBins, s+s_flushPFA, &
              s+s_load, s+s_matrix, s+s_negativePrecision, s+s_phase, &
-             s+s_populateL2PCBin, s+s_restrictRange, s+s_snoop, s+s_subset, &
+             s+s_populateL2PCBin, s+s_restrictRange, s+s_skip, s+s_snoop, s+s_subset, &
              s+s_time, s+s_transfer, s+s_updateMask, s+s_vector, n+n_section, &
       begin, z+z_retrieve, s+s_checkpoint, s+s_dump, s+s_dumpBlocks, &
              s+s_flagCloud, s+s_flushPFA, s+s_leakcheck, s+s_matrix, &
-             s+s_restrictRange, s+s_retrieve, s+s_sids, s+s_snoop, &
+             s+s_restrictRange, s+s_retrieve, s+s_sids, s+s_skip, s+s_snoop, &
              s+s_subset, s+s_time, s+s_updateMask, &
              n+n_section, &
       begin, z+z_join, s+s_time, s+s_label, s+s_l2gp, s+s_l2aux, &
-                       s+s_directWrite, n+n_section, &
+                       s+s_directWrite, s+s_dump, s+s_skip, n+n_section, &
       begin, z+z_algebra, s+s_columnScale, s+s_combineChannels, s+s_cyclicJacobi, &
              s+s_disjointEquations, s+s_normalEquations, s+s_reflect, &
              s+s_regularization, s+s_rowScale, n+n_section+d*no_check_eq, &
@@ -1513,6 +1519,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.458  2007/11/05 18:36:07  pwagner
+! May Skip remaining lines in Fill, Join, Retrieve sections depending on Boolean
+!
 ! Revision 2.457  2007/10/09 00:32:05  pwagner
 ! Added ability to dump masks of quantities, vectors
 !
