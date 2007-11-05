@@ -30,18 +30,19 @@ begin ReadApriori
      !define(geos5TFileN,{})!define(geos5PFileN,{})},
     {
     !ifdef(geos5Version,{},{!define(geos5Version,{GEOS501})})
+    !ifdef(geos5Head,{},{!define(geos5Head,{DAS.ops.gzip.asm.tavg3d})})
     !define(geos5Day1,!ccsdsbtodao(!day))
     !define(geos5Day2,!ccsdsbtodao(!ccsdsbadd(!day,1)))
-    !define(geos5TFile1,{, file='!inpathgeos5d/DAS.ops.asm.tavg3d_dyn_v.!geos5Version.!geos5Day1_0000.V01.hdf'})
-    !define(geos5TFile2,{, file='!inpathgeos5d/DAS.ops.asm.tavg3d_dyn_v.!geos5Version.!geos5Day1_0600.V01.hdf'})
-    !define(geos5TFile3,{, file='!inpathgeos5d/DAS.ops.asm.tavg3d_dyn_v.!geos5Version.!geos5Day1_1200.V01.hdf'})
-    !define(geos5TFile4,{, file='!inpathgeos5d/DAS.ops.asm.tavg3d_dyn_v.!geos5Version.!geos5Day1_1800.V01.hdf'})
-    !define(geos5TFileN,{, file='!inpathgeos5d/DAS.ops.asm.tavg3d_dyn_v.!geos5Version.!geos5Day2_0000.V01.hdf'})
-    !define(geos5PFile1,{, file='!inpathgeos5p/DAS.ops.asm.tavg3d_prs_v.!geos5Version.!geos5Day1_0000.V01.hdf'})
-    !define(geos5PFile2,{, file='!inpathgeos5p/DAS.ops.asm.tavg3d_prs_v.!geos5Version.!geos5Day1_0600.V01.hdf'})
-    !define(geos5PFile3,{, file='!inpathgeos5p/DAS.ops.asm.tavg3d_prs_v.!geos5Version.!geos5Day1_1200.V01.hdf'})
-    !define(geos5PFile4,{, file='!inpathgeos5p/DAS.ops.asm.tavg3d_prs_v.!geos5Version.!geos5Day1_1800.V01.hdf'})
-    !define(geos5PFileN,{, file='!inpathgeos5p/DAS.ops.asm.tavg3d_prs_v.!geos5Version.!geos5Day2_0000.V01.hdf'})})
+    !define(geos5TFile1,{, file='!inpathgeos5dd/!geos5Head_dyn_v.!geos5Version.!geos5Day1_0000.V01.hdf'})
+    !define(geos5TFile2,{, file='!inpathgeos5dd/!geos5Head_dyn_v.!geos5Version.!geos5Day1_0600.V01.hdf'})
+    !define(geos5TFile3,{, file='!inpathgeos5dd/!geos5Head_dyn_v.!geos5Version.!geos5Day1_1200.V01.hdf'})
+    !define(geos5TFile4,{, file='!inpathgeos5dd/!geos5Head_dyn_v.!geos5Version.!geos5Day1_1800.V01.hdf'})
+    !define(geos5TFileN,{, file='!inpathgeos5dn/!geos5Head_dyn_v.!geos5Version.!geos5Day2_0000.V01.hdf'})
+    !define(geos5PFile1,{, file='!inpathgeos5pd/!geos5Head_prs_v.!geos5Version.!geos5Day1_0000.V01.hdf'})
+    !define(geos5PFile2,{, file='!inpathgeos5pd/!geos5Head_prs_v.!geos5Version.!geos5Day1_0600.V01.hdf'})
+    !define(geos5PFile3,{, file='!inpathgeos5pd/!geos5Head_prs_v.!geos5Version.!geos5Day1_1200.V01.hdf'})
+    !define(geos5PFile4,{, file='!inpathgeos5pd/!geos5Head_prs_v.!geos5Version.!geos5Day1_1800.V01.hdf'})
+    !define(geos5PFileN,{, file='!inpathgeos5pn/!geos5Head_prs_v.!geos5Version.!geos5Day2_0000.V01.hdf'})})
 
   geos5TemperatureInput1: gridded, origin=geos5, field='T', $
     dimList='XDim,YDim,Height,Time' !geos5TFile1
