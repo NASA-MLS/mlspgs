@@ -48,7 +48,7 @@ contains ! =====     Public Procedures     =============================
   !---------------------------------------------------  MLSL2Fill  -----
 
   subroutine MLSL2Fill ( Root, filedatabase, GriddedDataBase, VectorTemplates, &
-    & Vectors, QtyTemplates , Matrices, L2GPDatabase, L2AUXDatabase, &
+    & Vectors, QtyTemplates, Matrices, L2GPDatabase, L2AUXDatabase, &
     & FWModelConfig, Chunks, ChunkNo )
 
     ! This is the main routine for the module.  It parses the relevant lines
@@ -57,7 +57,7 @@ contains ! =====     Public Procedures     =============================
     use Allocate_Deallocate, only: Test_Allocate
     use Chunks_m, only: MLSChunk_T
     use DestroyCommand_m, only: DestroyCommand
-    use DumpCommand_m, only: DumpCommand
+    use DumpCommand_m, only: DumpCommand, Skip
     use Expr_M, only: EXPR, EXPR_CHECK
     use FillUtils_1, only: fillError, &
       & addGaussianNoise, ApplyBaseline, &
@@ -151,7 +151,7 @@ contains ! =====     Public Procedures     =============================
     ! Now the specifications:
     use INIT_TABLES_MODULE, only: S_LOAD, S_DESTROY, S_DUMP, S_FILL, S_FILLCOVARIANCE, &
       & S_FILLDIAGONAL, S_FLUSHL2PCBINS, S_FLUSHPFA, S_MATRIX,  S_NEGATIVEPRECISION, &
-      & S_PHASE, S_POPULATEL2PCBIN, S_SNOOP, S_TIME, &
+      & S_PHASE, S_POPULATEL2PCBIN, S_SKIP, S_SNOOP, S_TIME, &
       & S_TRANSFER, S_VECTOR, S_SUBSET, S_FLAGCLOUD, S_RESTRICTRANGE, S_UPDATEMASK
     ! Now some arrays
     use Intrinsic, only: lit_indices, &
@@ -453,7 +453,7 @@ contains ! =====     Public Procedures     =============================
     integer :: PROFILE                  ! A single profile
     integer :: PTANVECTORINDEX          ! In the vector database
     integer :: PTANQUANTITYINDEX        ! In the quantities database
-    logical :: QUADRATURE               ! Apply baseline in quadarture
+    logical :: QUADRATURE               ! Apply baseline in quadrature
     integer :: QUANTITYINDEX            ! Within the vector
     integer :: RADIANCEQUANTITYINDEX    ! For radiance quantity
     integer :: RADIANCEVECTORINDEX      ! For radiance quantity
@@ -647,6 +647,9 @@ contains ! =====     Public Procedures     =============================
         call dumpCommand ( key, qtyTemplates, vectorTemplates, vectors, &
           & GriddedDataBase=GriddedDataBase )
 
+      case ( s_skip ) ! ============================== Skip ==========
+        ! We'll skip the rest of the section if the Boolean cond'n is TRUE
+        if ( Skip(key) ) exit
       case ( s_matrix ) ! ===============================  Matrix  =====
         got = .false.
         matrixType = l_plain
@@ -1734,9 +1737,16 @@ contains ! =====     Public Procedures     =============================
         else
           nullify ( bQuantity )
         end if
-        call FillQuantityByManipulation ( quantity, aQuantity, bQuantity, c, &
-          & manipulation, key, &
-          & force, spreadflag, dontSumHeights, dontSumInstances )
+        if ( got(f_c) ) then
+          call FillQuantityByManipulation ( quantity, aQuantity, bQuantity, &
+            & manipulation, key, &
+            & force, spreadflag, dontSumHeights, dontSumInstances, &
+            & c )
+        else
+          call FillQuantityByManipulation ( quantity, aQuantity, bQuantity, &
+            & manipulation, key, &
+            & force, spreadflag, dontSumHeights, dontSumInstances )
+        endif
 
       case ( l_magAzEl ) ! -- Magnetic Explicit from stren, azim, elev --
         if ( .not. got(f_explicitValues) ) &
@@ -2265,6 +2275,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.357  2007/11/05 18:38:09  pwagner
+! May Skip remaining lines in Fill, Join, Retrieve sections depending on Boolean
+!
 ! Revision 2.356  2007/09/27 22:00:45  pwagner
 ! Much moved into new FillUtils_1 module; Intel compiler can now optimize
 !
