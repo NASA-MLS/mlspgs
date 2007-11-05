@@ -3142,14 +3142,15 @@ contains ! =====     Public Procedures     =============================
     end subroutine FillQuantityFromLosGrid
 
     ! --------------------------------------------- FillQuantityByManipulation ---
-    subroutine FillQuantityByManipulation ( quantity, a, b, c, &
+    subroutine FillQuantityByManipulation ( quantity, a, b, &
       & manipulation, key, &
-      & force, spreadflag, dontSumHeights, dontSumInstances )
+      & force, spreadflag, dontSumHeights, dontSumInstances, &
+      & c )
       use String_table, only: GET_STRING
       type (VectorValue_T), intent(inout) :: QUANTITY
       type (VectorValue_T), pointer :: A
       type (VectorValue_T), pointer :: B
-      real(rv) :: C                     ! constant "c" in manipulation
+      real(rv), optional            :: C  ! constant "c" in manipulation
       integer, intent(in) :: MANIPULATION
       integer, intent(in) :: KEY        ! Tree node
       logical, intent(in) :: FORCE      ! If set throw caution to the wind
@@ -3225,8 +3226,9 @@ contains ! =====     Public Procedures     =============================
       
       OneWay = any ( mstr == valid1WayManipulations )
       TwoWay = any ( mstr == valid2WayManipulations )
-      usesc  = .not. ( OneWay .or. TwoWay ) .and. &
-        & index(mstr, 'c') > 0
+      ! usesc  = .not. ( OneWay .or. TwoWay ) .and. &
+      !  & index(mstr, 'c') > 0
+      usesc = present(c)
       StatisticalFunction = ( FindFirst( valid1WayManipulations, mstr ) > 7 )
       if ( .not. ( OneWay .or. TwoWay .or. usesc ) ) then
         call Announce_Error ( key, no_error_code, 'Invalid manipulation' )
@@ -3516,6 +3518,12 @@ contains ! =====     Public Procedures     =============================
         end if
       case default
         ! This should be one of the cases which use the constant "c"
+        if ( .not. present(c) ) then
+          ! How did we get here?
+          call Announce_Error ( key, no_error_code, &
+            & 'trim(mstr) manipulation but no c supplied' )
+          return
+        endif
         call SimpleExprWithC( quantity, a, b, c, mstr )
       end select
       call MLSMessageCalls( 'pop' )
@@ -3618,6 +3626,11 @@ contains ! =====     Public Procedures     =============================
         call ReplaceSubString( mstr, collapsedstr, '>', ' & ', &
           & which='all', no_trim=.true. )
         call ReplaceSubString( collapsedstr, mstr, '&', '>', &
+          & which='all', no_trim=.false. )
+
+        call ReplaceSubString( mstr, collapsedstr, '^', ' & ', &
+          & which='all', no_trim=.true. )
+        call ReplaceSubString( collapsedstr, mstr, '&', '^', &
           & which='all', no_trim=.false. )
 
         collapsedstr = lowerCase(mstr)
@@ -3733,7 +3746,8 @@ contains ! =====     Public Procedures     =============================
           call GetStringElement ( temp, element, i, countEmpty, inseparator='+' )
           ! Surround term with parentheses if it's a product or quotient
           ! but not if it's not simple
-          if ( ( index(element, '*') > 0 .or. index(element, '/') > 0 ) .and. &
+          if ( ( index(element, '*') > 0 .or. index(element, '/') > 0 .or. &
+            & index(element, '^') > 0 ) .and. &
             & index(element, ')')  < 1 ) then
             element = '(' // trim(element) // ')'
           endif
@@ -3914,6 +3928,9 @@ contains ! =====     Public Procedures     =============================
           case ('/')
             lastOp = '/'
             hit = .false.
+          case ('^')
+            lastOp = '^'
+            hit = .false.
           case ('-') ! could be unary or binary; how do we tell?
             if ( hit ) then ! already have a primitive; looking for an op
               lastOp = '-'
@@ -3972,6 +3989,12 @@ contains ! =====     Public Procedures     =============================
               where ( part%values /= 0._rv )
                 newone%values = newone%values / part%values
               end where
+            case ('^')
+              where ( newone%values > 0._rv )
+                newone%values = newone%values ** part%values
+              elsewhere
+                newone%values = 0.
+              end where
             case ('<')
                 newone%values = min( newone%values, part%values )
             case ('>')
@@ -3988,15 +4011,19 @@ contains ! =====     Public Procedures     =============================
             case ('log')
                 where ( part%values > 0._rv )
                   newone%values = log(part%values)
+                elsewhere
+                  newone%values = 0.
                 end where
             case ('log10')
                 where ( part%values > 0._rv )
                   newone%values = log10(part%values)
+                elsewhere
+                  newone%values = 0.
                 end where
             ! map is a no-op currently
             case ('map')
                 newone%values = part%values
-                call output( 'Calling function map', advance='yes' )
+                ! call output( 'Calling function map', advance='yes' )
             ! statistical function cases
             case ( 'min', 'max', 'mean', 'median', 'rms', 'stddev' )
               ! These are harder--we must interpret how to gather
@@ -4111,8 +4138,8 @@ contains ! =====     Public Procedures     =============================
         character(len=*), intent(in)           :: part2
         character(len=MAXSTRLISTLENGTH)        :: str
         ! internal variables
-        character(len=1), dimension(6), parameter :: ops = &
-          &          (/ '+', '-', '*', '/' , '(', ')' /)
+        character(len=1), dimension(7), parameter :: ops = &
+          &          (/ '+', '-', '*', '/' , '(', ')', '^' /)
         character(len=1) :: part1Tail, part2Head
         integer :: maxind
         integer :: n
@@ -6351,6 +6378,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.4  2007/11/05 18:41:20  pwagner
+! expr with 'c' unambiguous (I hope); '^' power op added to expr
+!
 ! Revision 2.3  2007/11/01 23:33:59  pwagner
 ! rewrite to permit functions and algebra in same manipulation; needs more testing
 !
