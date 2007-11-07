@@ -23,7 +23,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   use DUMP_0, only: DUMP
   use Gemm_M, only: GEMM
   use Gemv_M, only: GEMV
-  use MLSCommon, only: RM, RV, R4, R8
+  use MLSKinds, only: RM, RV, R4, R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use OUTPUT_M, only: OUTPUT
   use VectorsModule, only: M_LinAlg
@@ -3557,6 +3557,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.3  2007/11/07 21:33:08  vsnyder
+! Get kinds from MLSKinds instead of MLSCommon
+!
 ! Revision 2.2  2007/07/27 00:23:05  vsnyder
 ! Work around bug in Intel 10.0.025 with -check pointer
 !
