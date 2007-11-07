@@ -392,10 +392,10 @@ contains ! =====     Public Procedures     =============================
       & F_LSBLBLMOLECULES, F_LSBPFAMOLECULES, F_MODULE, F_MOLECULES, &
       & F_MOLECULEDERIVATIVES, F_NABTERMS, F_NAZIMUTHANGLES, &
       & F_NCLOUDSPECIES, F_NMODELSURFS, F_NO_DUP_MOL, F_NSCATTERINGANGLES, &
-      & F_NSIZEBINS, F_PHIWINDOW, F_POLARIZED, F_REFRACT, F_SCANAVERAGE, &
-      & F_SIGNALS, F_SKIPOVERLAPS, F_SPECIFICQUANTITIES, F_SPECT_DER, &
-      & F_SWITCHINGMIRROR, F_TANGENTGRID, &
-      & F_TEMP_DER, F_TOLERANCE, F_TYPE, F_USBLBLMOLECULES, F_USBPFAMOLECULES, &
+      & F_NSIZEBINS, F_PATHNORM, F_PHIWINDOW, F_POLARIZED, F_REFRACT, &
+      & F_SCANAVERAGE, F_SIGNALS, F_SKIPOVERLAPS, F_SPECIFICQUANTITIES, &
+      & F_SPECT_DER, F_SWITCHINGMIRROR, F_TANGENTGRID, F_TEMP_DER, &
+      & F_TOLERANCE, F_TYPE, F_USBLBLMOLECULES, F_USBPFAMOLECULES, &
       & F_XSTAR, F_YSTAR
     use Intrinsic, only: L_NONE, L_CLEAR, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, &
       & PHYQ_PROFILES, PHYQ_TEMPERATURE
@@ -476,6 +476,7 @@ contains ! =====     Public Procedures     =============================
     info%do_baseline = .false.
     info%do_conv = .false.
     info%do_freq_avg = .false.
+    info%do_path_norm = .false.
     info%forceFoldedOutput = .false.
     info%forceSidebandFraction = .false.
     info%globalConfig = global
@@ -541,6 +542,8 @@ contains ! =====     Public Procedures     =============================
         info%do_conv = get_boolean(son)
       case ( f_do_freq_avg )
         info%do_freq_avg = get_boolean(son)
+      case ( f_pathNorm )
+        info%do_path_norm = get_boolean(son)
       case ( f_do_1d )
         info%do_1d = get_boolean(son)
       case ( f_forceSidebandFraction )
@@ -1356,6 +1359,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.136  2007/11/07 03:10:48  vsnyder
+! Add pathNorm field to forward model config
+!
 ! Revision 2.135  2007/10/03 23:59:04  vsnyder
 ! Add 'where' for tracing
 !
