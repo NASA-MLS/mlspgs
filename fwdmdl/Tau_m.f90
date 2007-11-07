@@ -39,7 +39,7 @@ contains
                      &  alpha_path_gl, ds_dz_gw, tau )
 
   ! Update IncOptDepth with its GL corrections.  Multiply it by the
-  ! refraction correction Ref_Cor.  Compute Tau = exp(indefinite sum of
+  ! refractive correction Ref_Cor.  Compute Tau = exp(indefinite sum of
   ! IncOptDepth).  The half-path point is a zero-thickness layer that
   ! doesn't have any IncOptDepth.  Instead, multiply tau(tan_pt) by
   ! e_rflty to get tau(tan_pt+1).
@@ -199,6 +199,9 @@ contains
 end module Tau_M
 
 ! $Log$
+! Revision 2.8  2007/11/07 02:34:32  vsnyder
+! Correct a comment
+!
 ! Revision 2.7  2006/12/13 02:32:03  vsnyder
 ! Drag the tangent point around instead of assuming it's the middle one
 !
