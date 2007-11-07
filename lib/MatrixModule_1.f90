@@ -27,7 +27,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
     & MultiplyMatrix_XY_T, MultiplyMatrixVectorNoT, NullifyMatrix, operator(+), &              
     & ReflectMatrix, RowScale, ScaleBlock, SolveCholesky, &     
     & Sparsify, Spill, TransposeMatrix, UpdateDiagonal                                    
-  use MLSCommon, only: RM, RV, R8, R4
+  use MLSKinds, only: RM, RV, R8, R4
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
   use OUTPUT_M, only: BLANKS, OUTPUT, DUMPSIZE
@@ -2640,6 +2640,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.114  2007/11/07 21:33:08  vsnyder
+! Get kinds from MLSKinds instead of MLSCommon
+!
 ! Revision 2.113  2007/10/02 22:48:06  vsnyder
 ! Add a FAIL flag to GetMatrixFromDatabase
 !
