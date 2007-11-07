@@ -161,6 +161,7 @@ module ForwardModelConfig
     logical :: Do_baseline            ! Do a baseline computation
     logical :: Do_conv                ! Do convolution
     logical :: Do_freq_avg            ! Do Frequency averaging
+    logical :: Do_Path_Norm           ! Do path normalization
     logical :: ForceFoldedOutput      ! Output to folded sideband even if signal is other (linear only)
     logical :: ForceSidebandFraction  ! If set mult. by SBfrac even if single sideband
     logical :: GlobalConfig           ! If set is shared between all chunks
@@ -1223,6 +1224,7 @@ contains
     call output ( config%do_Baseline, before='  Do_Baseline: ', advance='yes' )
     call output ( config%do_conv, before='  Do_conv: ', advance='yes' )
     call output ( config%do_freq_avg, before='  Do_freq_avg: ', advance='yes' )
+    call output ( config%do_path_norm, before='  Do_path_norm: ', advance='yes' )
     call output ( config%forceFoldedOutput, before='  ForceFoldedOutput: ', advance='yes' )
     call output ( config%forceSidebandFraction, before='  ForceSidebandFraction: ', advance='yes' )
     call output ( config%globalConfig, before='  GlobalConfig: ', advance='yes' )
@@ -1361,6 +1363,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.98  2007/10/02 22:34:49  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.97  2007/06/25 20:34:46  vsnyder
 ! Replace tabs by spaces, since tabs are nonstandard
 !
