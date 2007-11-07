@@ -1201,6 +1201,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_no_dup_mol, t+t_boolean, n+n_field_type, &
              begin, f+f_nscatteringangles, t+t_numeric, n+n_field_type, &
              begin, f+f_nsizebins, t+t_numeric, n+n_field_type, &
+             begin, f+f_pathNorm, t+t_boolean, n+n_field_type, &
              begin, f+f_phiWindow, t+t_numeric, n+n_field_type, &
              begin, f+f_polarized, t+t_boolean, n+n_field_type, &
              begin, f+f_refract, t+t_boolean, n+n_field_type /) )
@@ -1519,6 +1520,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.459  2007/11/07 03:10:48  vsnyder
+! Add pathNorm field to forward model config
+!
 ! Revision 2.458  2007/11/05 18:36:07  pwagner
 ! May Skip remaining lines in Fill, Join, Retrieve sections depending on Boolean
 !
