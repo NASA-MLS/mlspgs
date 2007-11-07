@@ -283,6 +283,7 @@ overlaps
 oversample # oversampling factor for filter grid for PFA generation
 
 packed
+pathNorm # Normalize path length in the full forward model
 perturbation
 pfaData
 pfaFiles
@@ -447,6 +448,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.178  2007/11/07 03:10:48  vsnyder
+# Add pathNorm field to forward model config
+#
 # Revision 2.177  2007/10/09 00:32:05  pwagner
 # Added ability to dump masks of quantities, vectors
 #
