@@ -1338,6 +1338,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_serial, t+t_boolean, n+n_field_type, &
              begin, f+f_sparseQuantities, s+s_quantity, n+n_field_spec, &
              begin, f+f_state, s+s_vector, nr+n_field_spec, &
+             begin, f+f_stateMax, s+s_vector, n+n_field_spec, &
+             begin, f+f_stateMin, s+s_vector, n+n_field_spec, &
              begin, f+f_switches, t+t_string, n+n_field_type, &
              begin, f+f_toleranceA, t+t_numeric, n+n_field_type, &
              begin, f+f_toleranceF, t+t_numeric, n+n_field_type, &
@@ -1520,6 +1522,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.460  2007/11/08 03:24:39  vsnyder
+! Add stateMax and stateMin
+!
 ! Revision 2.459  2007/11/07 03:10:48  vsnyder
 ! Add pathNorm field to forward model config
 !
