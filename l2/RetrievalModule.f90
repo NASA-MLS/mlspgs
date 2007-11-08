@@ -56,8 +56,8 @@ contains
       & F_outputCovariance, F_outputSD, &
       & F_phaseName, F_precisionFactor, &
       & F_regAfter, F_regApriori, F_serial, F_SparseQuantities, &
-      & F_state, F_switches, F_toleranceA, F_toleranceF, &
-      & F_toleranceR, f_vRegOrders, f_vRegQuants, &
+      & F_state, F_stateMax, F_stateMin, F_switches, &
+      & F_toleranceA, F_toleranceF, F_toleranceR, f_vRegOrders, f_vRegQuants, &
       & f_vRegWeights, f_vRegWeightVec, Field_first, Field_last, &
       & L_apriori, L_covariance, &
       & L_dnwt_ajn,  L_dnwt_axmax,  L_dnwt_cait, L_dnwt_chiSqMinNorm, L_dnwt_chiSqNorm, &
@@ -189,6 +189,8 @@ contains
     integer, dimension(:), pointer :: SparseQuantities ! Which jacobian blocks to sparsify
     integer :: Spec                     ! s_matrix, s_subset or s_retrieve ... 
     type(vector_T), pointer :: State    ! The state vector
+    type(vector_T), pointer :: StateMax ! Maximum state vector over all iterations
+    type(vector_T), pointer :: StateMin ! Minimum state vector over all iterations
     integer :: Status
     integer :: SwitchLen                ! LEN_TRIM(Switches) on entry
     integer :: SwitchLenCur             ! LEN_TRIM(Switches) after command processing
@@ -264,7 +266,8 @@ contains
 
     error = 0
     nullify ( apriori, aprioriFraction, configIndices, covariance, fwdModelOut )
-    nullify ( measurements, measurementSD, state, outputSD, sparseQuantities )
+    nullify ( measurements, measurementSD, outputSD, sparseQuantities )
+    nullify ( state, stateMax, stateMin )
     phaseName = ' '              ! Default in case there's no field
     snoopComment = ' '           ! Ditto
     snoopKey = 0
@@ -441,6 +444,16 @@ contains
             end do
           case ( f_state )
             state => vectorDatabase(decoration(decoration(subtree(2,son))))
+          case ( f_stateMax )
+            stateMax => vectorDatabase(decoration(decoration(subtree(2,son))))
+            do k = 1, size(stateMax%quantities)
+              stateMax%quantities(k)%values = -huge(0.0_rv)
+            end do
+          case ( f_stateMin )
+            stateMin => vectorDatabase(decoration(decoration(subtree(2,son))))
+            do k = 1, size(stateMin%quantities)
+              stateMin%quantities(k)%values = huge(0.0_rv)
+            end do
           case ( f_switches )
             call get_string ( sub_rosa(subtree(2,son)), switches(switchLenCur+1:), strip=.true. )
             switchLenCur = len_trim(switches) + 1
@@ -534,6 +547,15 @@ contains
             if ( apriori%template%name /= state%template%name ) &
               & call announceError ( inconsistent, f_apriori, f_state )
           end if
+          if ( got(f_aprioriFraction) ) then
+            if ( aprioriFraction%template%name /= state%template%name ) &
+              & call announceError ( inconsistent, f_aprioriFraction, f_state )
+          end if
+          if ( associated(covariance) ) then
+            if ( covariance%m%row%vec%template%name /= state%template%name .or. &
+              &  covariance%m%col%vec%template%name /= state%template%name ) &
+              &  call announceError ( inconsistent, f_covariance, f_state )
+          end if
           if ( got(f_highBound) ) then
             if ( highBound%template%name /= state%template%name ) &
               & call announceError ( inconsistent, f_highBound, f_state )
@@ -542,18 +564,17 @@ contains
             if ( lowBound%template%name /= state%template%name ) &
               & call announceError ( inconsistent, f_lowBound, f_state )
           end if
-          if ( associated(covariance) ) then
-            if ( covariance%m%row%vec%template%name /= state%template%name .or. &
-              &  covariance%m%col%vec%template%name /= state%template%name ) &
-              &  call announceError ( inconsistent, f_covariance, f_state )
-          end if
           if ( got(f_measurementSD) ) then
             if ( measurementSD%template%name /= measurements%template%name ) &
               & call announceError ( inconsistent, f_measurementSD, f_measurements )
           end if
-          if ( got(f_aprioriFraction) ) then
-            if ( aprioriFraction%template%name /= state%template%name ) &
-              & call announceError ( inconsistent, f_aprioriFraction, f_state )
+          if ( got(f_stateMax) ) then
+            if ( stateMax%template%name /= state%template%name ) &
+              & call announceError ( inconsistent, f_stateMax, f_state )
+          end if
+          if ( got(f_stateMin) ) then
+            if ( stateMin%template%name /= state%template%name ) &
+              & call announceError ( inconsistent, f_stateMin, f_state )
           end if
         end if
         if ( error == 0 ) then
@@ -2366,6 +2387,18 @@ NEWT: do ! Newtonian iteration
           if ( mu < 1.0_rv ) call scaleVector ( v(dxUnscaled), mu )
           call addToVector ( v(x), v(dxUnScaled) ) ! x = x + dxUnScaled
             if ( d_dvec ) call dump ( v(dxUnScaled), name='dX Unscaled' )
+          if ( got(f_stateMax) ) then
+            do j = 1, size(v(x)%quantities)
+              stateMax%quantities(j)%values = max(stateMax%quantities(j)%values, &
+                &                                 v(x)%quantities(j)%values)
+            end do
+          end if
+          if ( got(f_stateMin) ) then
+            do j = 1, size(v(x)%quantities)
+              stateMin%quantities(j)%values = min(stateMin%quantities(j)%values, &
+                &                                 v(x)%quantities(j)%values)
+            end do
+          end if
           aj%axmax = 0.0
           aj%big = .false.
           do j = 1, size(v(x)%quantities)
@@ -2724,6 +2757,9 @@ NEWT: do ! Newtonian iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.299  2007/11/08 03:24:39  vsnyder
+! Add stateMax and stateMin
+!
 ! Revision 2.298  2007/11/05 18:37:19  pwagner
 ! May Skip remaining lines in Fill, Join, Retrieve sections depending on Boolean
 !
