@@ -15,7 +15,6 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
 
   use MACHINE, only: CRASH_BURN, EXIT_WITH_STATUS, NEVERCRASH
   use MLSCommon, only: MLSFile_T
-  use MLSStrings, only: asciify
   implicit none
   private
 
@@ -157,6 +156,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.8  2007/11/08 00:02:08  pwagner
+! asciify not used any more; removed
+!
 ! Revision 2.7  2007/08/29 19:51:30  pwagner
 ! Worked around Intel quirk that wraps stdout when 'FMT=*'
 !
