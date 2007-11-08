@@ -387,6 +387,8 @@ spect_der  # spectroscopy derivatives
 spread
 stamp
 state
+stateMax # for the state vector during retrieval
+stateMin # for the state vector during retrieval
 status
 # step already in MLSSignals field set, so can't put it here, too
 stop
@@ -448,6 +450,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.179  2007/11/08 03:24:39  vsnyder
+# Add stateMax and stateMin
+#
 # Revision 2.178  2007/11/07 03:10:48  vsnyder
 # Add pathNorm field to forward model config
 #
