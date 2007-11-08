@@ -23,7 +23,7 @@ module Get_D_Deltau_Pol_M
 contains
 
 ! ------------------------------------------  Get_D_Deltau_Pol_DF  -----
-  subroutine Get_D_Deltau_Pol_DF ( CT, STCP, STSP, indices_c, del_zeta, Grids_f, &
+  subroutine Get_D_Deltau_Pol_DF ( CT, STCP, STSP, indices_c, Grids_f, &
                &  beta_path_pol, tanh1_c, eta_zxp_f, do_calc_f, sps_path, &
                &  Del_S, incoptdepth, ref_cor, &
                &  d_delta_df, D_Deltau_Pol_DF  )
@@ -44,9 +44,6 @@ contains
       ! (IFOVPP) X axis.
     real(rp), intent(in) :: STSP(:)         ! Sin(Theta) Sin(Phi)
     integer(ip), intent(in) :: indices_c(:) ! coarse grid indicies
-    real(rp), intent(in) :: del_zeta(:)     ! path -log(P) differences on the
-      !              main grid.  This is for the whole coarse path, not just
-      !              the part up to the black-out
     type (Grids_T), intent(in) :: Grids_f    ! All the coordinates
     complex(rp), intent(in) :: beta_path_pol(:,:,:) ! -1:1 x path x species.
 !                                              cross section for each species
@@ -519,6 +516,9 @@ contains
 end module Get_D_Deltau_Pol_M
 
 ! $Log$
+! Revision 2.38  2007/11/08 02:02:40  vsnyder
+! Remove unused dummy argument
+!
 ! Revision 2.37  2006/12/13 02:32:02  vsnyder
 ! Drag the tangent point around instead of assuming it's the middle one
 !
