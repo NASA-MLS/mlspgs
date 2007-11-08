@@ -1054,7 +1054,7 @@ path: do i = i1, i2
           phi_offset = phi_t
         end if
         h1 = h2
-        h2 = hTan_r / cos(p_basis(j) - phi_offset) - req
+        h2 = hTan_r / cos(p_basis(j) - phi_offset) - req_s
         if ( j == 1 ) cycle ! It takes two to tango
         if ( (h1-h_ref(i,j-1)) * (h2-h_ref(i,j)) < 0.0 ) then
           ! Line of sight intersects constant-zeta surface.  Solve for where.
@@ -1115,6 +1115,9 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.56  2007/10/19 23:28:30  vsnyder
+! Don't accept grid solutions less than Ht
+!
 ! Revision 2.55  2007/10/11 20:17:35  vsnyder
 ! Accept grid solutions more readily
 !
