@@ -16,7 +16,6 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
   use HDF, only: DFACC_CREATE, DFACC_RDONLY, DFACC_RDWR
   use MACHINE, only: CRASH_BURN, EXIT_WITH_STATUS, NEVERCRASH
   use MLSCommon, only: MLSFile_T
-  use MLSStrings, only: asciify
   use PVM, only: InfoTag, &
     & PVMDATADEFAULT, PVMFInitSend, PVMF90Pack, SIG_AboutToDie
   use SDPToolkit, only: PGS_S_SUCCESS, &
@@ -231,6 +230,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.37  2007/11/08 00:02:08  pwagner
+! asciify not used any more; removed
+!
 ! Revision 2.36  2007/08/29 19:51:23  pwagner
 ! Worked around Intel quirk that wraps stdout when 'FMT=*'
 !
