@@ -428,7 +428,7 @@ contains
     character (len=127) :: SigName      ! Name of a Signal
 
     integer, target :: C_INDS_B(max_c)  ! Base array for C_INDS
-    integer :: CG_INDS(max_c)     ! Indices on coarse grid where GL needed
+    integer, target :: CG_INDS_B(max_c) ! Base array for CG_INDS
     integer :: F_INDS(max_f)      ! Indices on fine grid
     integer, target :: GL_INDS_B(max_f) ! Base array for GL_INDS
     integer :: GRIDS(no_tan_hts)  ! Heights in ptgGrid for each tangent
@@ -456,11 +456,14 @@ contains
     real(r8), target :: ChannelCenters(noUsedChannels) ! for PFA or non-frequency-averaging
     real(rp) :: DALPHA_DT_PATH_C(max_c)   ! dAlpha/dT on coarse grid
     real(rp) :: DALPHA_DT_PATH_F(max_f)   ! dAlpha/dT on fine grid
-    real(rp) :: DEL_S(max_c)          ! Integration lengths along path
+    real(rp) :: DEL_S(max_c)          ! Integration lengths along coarse path,
+                                      !  (2:npc-1)
     real(rp) :: DEL_ZETA(max_c)       ! Integration lengths in Zeta coords
-    real(rp) :: DHDZ_PATH(max_f)      ! dH/dZ on path
-    real(rp) :: DHDZ_GW_PATH(max_f)   ! dH/dZ * GW on path
-    real(rp) :: DSDZ_C(max_c)         ! ds/dH * dH/dZ on coarse path
+                                      !  along coarse path, (2:npc-1)
+    real(rp) :: DHDZ_PATH(max_f)      ! dH/dZ on fine path (1:npf)
+    real(rp) :: DHDZ_GW_PATH(max_f)   ! dH/dZ * GW on fine path (1:npf)
+    real(rp) :: DSDH_PATH(max_f)      ! dS/dH on fine path (1:tan_pt_f-1,tan_pt_f+2:npf)
+    real(rp) :: DSDZ_C(max_c)         ! ds/dH * dH/dZ on coarse path (1:tan_pt_c-1,tan_pt_c+2:npc)
     real(rp) :: DSDZ_GW_PATH(max_f)   ! ds/dH * dH/dZ * GW on path
     real(rp) :: DTanh_DT_C(max_c)     ! 1/tanh1_c d/dT tanh1_c
     real(rp) :: DTanh_DT_F(max_f)     ! 1/tanh1_f d/dT tanh1_f
@@ -471,7 +474,6 @@ contains
     real(rp) :: More_H_Path(max_new), More_Phi_Path(max_new), More_Z_Path(max_new)
     real(rp) :: N_PATH_C(max_c)       ! Refractive index - 1 on coarse path
     real(rp) :: N_PATH_F(max_f)       ! Refractive index - 1 on fine path
-    real(rp) :: PATH_DSDH(max_f)      ! dS/dH on path
     real(rp) :: PHI_PATH(max_f)       ! Phi's on path, Radians
     real(rp) :: P_PATH(max_f)         ! Pressure on path
     real(rp) :: PTG_ANGLES(no_tan_hts)
@@ -616,6 +618,7 @@ contains
     integer :: NNZ_ZXP_T_C(s_t*sv_t_len)            ! number of columns of Eta_zxp_t
 
     integer, pointer :: C_INDS(:)   ! Indices on coarse grid
+    integer, pointer :: CG_INDS(:)  ! Indices on coarse grid where GL needed
     integer, pointer :: GL_INDS(:)  ! Index of GL points -- subset of f_inds
     integer, pointer :: LineCenter_IX(:) ! Where are line center offsets?
     integer, pointer :: LineWidth_IX(:)  ! Where are line width offsets?
@@ -2105,20 +2108,22 @@ contains
         !
         ! Where we do GL, the second integral is approximated using GL (in
         ! {\tt Get\_Tau}).  Where we don't do GL, approximate it using the
-        ! trapezoid rule (here).
+        ! trapezoid rule (here).  There is already a factor of 0.5 in
+        ! {\tt del_zeta}, to compensate for the GL weights summing to 2.0.
 
         do j = 2, tan_pt_c
           if ( .not. do_gl(j) ) &
             & incoptdepth(j) = incoptdepth(j) + &
-              & 0.5 * ( alpha_path_c(j-1) - alpha_path_c(j) ) * dsdz_c(j-1)*del_zeta(j)
+              & ( alpha_path_c(j-1) - alpha_path_c(j) ) * dsdz_c(j-1)*del_zeta(j)
         end do
         do j = tan_pt_c+1, npc-1
           if ( .not. do_gl(j) ) &
             & incoptdepth(j) = incoptdepth(j) + &
-              & 0.5 * ( alpha_path_c(j+1) - alpha_path_c(j) ) * dsdz_c(j+1)*del_zeta(j)
+              & ( alpha_path_c(j+1) - alpha_path_c(j) ) * dsdz_c(j+1)*del_zeta(j)
         end do
 
-        call get_GL_inds ( do_gl, tan_pt_c, gl_inds_b, cg_inds, ngl, ncg )
+        call get_GL_inds ( do_gl, tan_pt_c, gl_inds_b, cg_inds_b, ngl, ncg )
+        cg_inds => cg_inds_b(:ncg)
         gl_inds => gl_inds_b(:ngl)
         ! ngl is ng * count(do_gl)
         t_path_f(:ngl) = t_path(gl_inds)
@@ -2160,8 +2165,8 @@ contains
 
         ! Compute SCALAR radiative transfer --------------------------
 
-          call get_tau ( frq_i, gl_inds, cg_inds(1:ncg), e_rflty, del_zeta, &
-            & alpha_path_c, ref_corr, incoptdepth, tan_pt_c,                &
+          call get_tau ( frq_i, gl_inds, cg_inds, e_rflty, del_zeta, &
+            & alpha_path_c, ref_corr, incoptdepth, tan_pt_c,         &
             & alpha_path_f(1:ngl), dsdz_gw_path, tau )
             i_stop = tau%i_stop(frq_i)
 
@@ -2211,7 +2216,7 @@ contains
               & 0.25 * alpha_path_f(j)
           end do
 
-          call rad_tran_pol ( tan_pt_c, gl_inds, cg_inds(1:ncg), e_rflty, del_zeta, &
+          call rad_tran_pol ( tan_pt_c, gl_inds, cg_inds, e_rflty, del_zeta,        &
             & alpha_path_polarized(:,1:npc), ref_corr, incoptdepth_pol(:,:,1:npc),  &
             & deltau_pol(:,:,1:npc), alpha_path_polarized_f(:,1:ngl), dsdz_gw_path, &
             & ct, stcp, stsp, t_script(:,frq_i), dump_rad_pol, prod_pol(:,:,1:npc), &
@@ -2258,10 +2263,10 @@ contains
             ! VMR derivatives for polarized radiance.
             ! Compute DE / Df from D Incoptdepth_pol / Df and put
             ! into DE_DF.
-            call Get_D_Deltau_Pol_DF ( ct, stcp, stsp, c_inds(1:p_stop),   &
-              &  del_zeta, Grids_f, beta_path_polarized(:,1:p_stop,:),     &
-              &  tanh1_c(:npc), eta_fzp(:npf,:), do_calc_fzp, sps_path, del_s,     &
-              &  incoptdepth_pol(:,:,1:p_stop), ref_corr(1:p_stop),        &
+            call Get_D_Deltau_Pol_DF ( ct, stcp, stsp, c_inds(1:p_stop),    &
+              &  Grids_f, beta_path_polarized(:,1:p_stop,:), tanh1_c(:npc), &
+              &  eta_fzp(:npf,:), do_calc_fzp, sps_path, del_s,             &
+              &  incoptdepth_pol(:,:,1:p_stop), ref_corr(1:p_stop),         &
               &  d_delta_df(1:npc,:), de_df(:,:,1:p_stop,:) )
 
             ! Compute D radiance / Df from Tau, Prod, T_Script
@@ -2306,7 +2311,7 @@ contains
               & do_gl, gl_inds, h_path_f(:ngl), t_path_f(:ngl),              &
               & dh_dt_path_f(:ngl,:), alpha_path_f(1:ngl),                   &
               & dAlpha_dT_path_f(:ngl), eta_zxp_t_f(:ngl,:),                 &
-              & do_calc_t_f(:ngl,:), path_dsdh, dhdz_gw_path, dsdz_gw_path,  &
+              & do_calc_t_f(:ngl,:), dsdh_path, dhdz_gw_path, dsdz_gw_path,  &
               & d_t_scr_dt(1:npc,:), tau%tau(:npc,frq_i),                    &
               & inc_rad_path_slice, tan_pt_c, i_stop, grids_tmp%deriv_flags, &
               & pfa .and. frq_avg_sel == 15, k_temp_frq(frq_i,:) )
@@ -2345,7 +2350,7 @@ contains
               & dAlpha_dT_polarized_path_c, dAlpha_dT_polarized_path_f,     &
               & eta_zxp_t_c(1:p_stop,:), eta_zxp_t_f(:ngl,:), del_s,        &
               & gl_inds, del_zeta, do_calc_t_c(1:p_stop,:),                 &
-              & do_calc_t_f(:ngl,:), do_gl(1:p_stop), path_dsdh,            &
+              & do_calc_t_f(:ngl,:), do_gl(1:p_stop), dsdh_path,            &
               & dhdz_gw_path, dsdz_gw_path, incoptdepth_pol(:,:,1:p_stop),  &
               & ref_corr(1:p_stop), h_path_c, h_path_f(:ngl),               &
               & dh_dt_path_c(1:p_stop,:),dh_dt_path_f(:ngl,:),              &
@@ -2673,29 +2678,59 @@ contains
 
       tan_ht = h_path(tan_pt_f) ! Includes Earth radius
 
-      if ( do_more_points ) then
-        ! Look for path crossings at zetas below the tangent point.
-        ! These can only happen if the minimum zeta isn't at the tangent.
-        call more_points ( tan_phi(ptg_i), tan_ind_f, Grids_tmp%phi_basis, &
-          & z_glgrid, h_glgrid, req, h_surf, h_tan, phi_path(1:npf), & ! in
-          & more_z_path, more_h_path, more_phi_path, n_more )
-      else
+      ! Look for path crossings at zetas below the tangent point.
+      ! These can only happen if the minimum zeta isn't at the tangent.
+      call more_points ( tan_phi(ptg_i), tan_ind_f, Grids_tmp%phi_basis, &
+        & z_glgrid, h_glgrid, req, h_surf, h_tan, phi_path(1:npf), & ! in
+        & more_z_path, more_h_path, more_phi_path, n_more )
+      if ( n_more > 0 .and. .not. do_more_points ) then
+        if ( print_more_points ) then
+          call output ( n_more, before='Want to add ', after=' more points', advance='yes' )
+          call dump ( more_h_path(:n_more), name='more_h_path', format='(f14.7)' )
+          call dump ( more_phi_path(:n_more), name='more_phi_path', format='(f14.8)' )
+          call dump ( more_z_path(:n_more), name='more_z_path' )
+          call output ( ptg_i, before='tan_phi(' )
+          call output ( tan_phi(ptg_i), before=') = ', format='(f12.6)' )
+          call output ( tan_ind_f, before=', tan_ind_f = ' )
+          call output ( tan_pt_f, before=', tan_pt_f = ' )
+          call output ( req, before=', req = ', format='(f12.6)', advance='yes' )
+          call output ( h_surf, before='h_surf = ', format='(f12.6)' )
+          call output ( h_tan, before=', h_tan = ', format='(f12.6)', advance='yes' )
+          call dump ( Grids_tmp%phi_basis, name='phi_basis', format='(f14.8)' )
+          call dump ( h_glgrid, name='h_glgrid', format='(f14.7)' )
+          call dump ( h_path(1:npf), name='h_path', format='(f14.7)' )
+          call dump ( phi_path(1:npf), name='phi_path', format='(f14.8)' )
+        end if
         n_more = 0
       end if
 
-      if ( do_zmin ) then
-        ! Get minimum zeta on the path
-        call Get_Min_Zeta ( Grids_tmp%phi_basis, h_glgrid(tan_ind_f,:), &
-                          & t_glgrid(tan_ind_f,:), z_glgrid(tan_ind_f), &
-                          & phi_path, tan_ind_f, tan_ht,                &
-                          & min_zeta, min_phi, min_index )
+      ! Get minimum zeta on the path
+      call Get_Min_Zeta ( Grids_tmp%phi_basis, h_glgrid(tan_ind_f,:), &
+                        & t_glgrid(tan_ind_f,:), z_glgrid(tan_ind_f), &
+                        & phi_path, tan_ind_f, tan_ht,                &
+                        & min_zeta, min_phi, min_index )
 
-        ! Add minimum zeta to the path
-        if ( min_index > 0 ) then ! minimum zeta not at or near tangent point
+      ! Add minimum zeta to the path
+      if ( min_index > 0 ) then ! minimum zeta not at or near tangent point
+        if ( do_zmin ) then
           n_more = n_more + 1
           more_z_path(n_more) = min_zeta
           more_phi_path(n_more) = min_phi
           more_h_path(n_more) = (h_tan+req)/cos(min_phi)
+        else
+          if ( index(switches,'zdet') /= 0 ) then
+            call output ( min_index, before='Want to add minimum zeta at ' )
+            call output ( tan_ind_f, before=' (tan_ind_f = ' )
+            call output ( min_phi, before=') where phi = ' )
+            call output ( min_zeta, before=' and zeta = ', advance='yes' )
+            call dump ( Grids_tmp%phi_basis, name='phi_basis' )
+            call dump ( h_glgrid(tan_ind_f,:), 'h_glgrid' )
+            call dump ( t_glgrid(tan_ind_f,:), 't_glgrid' )
+            call dump ( phi_path, name='phi_path' )
+            call output ( z_glgrid(tan_ind_f), before='z_glgrid = ' )
+            call output ( tan_ind_f, before=', tan_ind_f =' )
+            call output ( tan_ht, before=', tan_ht = ', advance='yes' )
+          end if
         end if
       else
         min_index = 0
@@ -2707,17 +2742,6 @@ contains
         &               npc, npf, tan_pt_c, tan_pt_f )
 
       if ( print_more_points .and. n_more > 0 ) then
-        call output ( 'Found more intersections', advance='yes' )
-        call output ( ptg_i, before='tan_phi(' )
-        call output ( tan_phi(ptg_i), before =') = ' )
-        call output ( tan_ind_f, before=', tan_ind_f = ' )
-        call output ( req, before=', req = ', format = '(f7.2)' )
-        call output ( h_surf, before=', h_surf = ', format = '(f7.2)' )
-        call output ( h_tan, before=', h_tan = ', advance='yes' )
-        call dump ( more_h_path(:n_more), name='more_h_path' )
-        call dump ( more_phi_path(:n_more), name='more_phi_path' )
-        call dump ( more_z_path(:n_more), name='more_z_path' )
-        call dump ( h_glgrid+req-h_surf, name='h_glgrid' )
         call dump ( Grids_tmp%phi_basis, name='phi_basis' )
         call dump ( h_path(1:npf), name='h_path' )
         call dump ( phi_path(1:npf), name='phi_path' )
@@ -2734,8 +2758,10 @@ contains
       c_inds = (/(i*Ngp1-Ng,i=1,tan_pt_c),((i-1)*Ngp1-Ng+1,i=tan_pt_c+1,npc)/)
       ! And some fine path extraction indices
       do_gl(1:npc:npc-1) = .false.; do_gl(2:npc-1) = .true.
-      call get_gl_inds ( do_gl(:npc), tan_pt_c, f_inds, cg_inds, nglMax, ncg )
+      call get_gl_inds ( do_gl(:npc), tan_pt_c, f_inds, cg_inds_b, nglMax, ncg )
+      cg_inds => cg_inds_b(:ncg) ! Should be the whole thing here; probably not used
 
+      ! The 0.5 factor is to compensate for the GL weights adding up to 2.0.
       del_zeta(1:npc:npc-1) = 0.0_rp ! First and last ones
       del_zeta(2:tan_pt_c) = 0.5_rp * ( z_path(c_inds(1:tan_pt_c-1)) - &
         &                               z_path(c_inds(2:tan_pt_c)) )
@@ -2801,10 +2827,6 @@ contains
           &  t_path(1:npf), dhdz_path(1:npf) )
       end if
 
-!   dhdz_gw_path(f_inds) = dhdz_path(f_inds) * (/ ( gw, i = 1, nglMax/ng ) /)
-      do i = 1, nglMax, ng ! Avoid a temp for (/ ( gw, i = 1, nglMax/ng ) /)
-        dhdz_gw_path(f_inds(i:i+ng-1)) = dhdz_path(f_inds(i:i+ng-1)) * gw
-      end do
       h_path_c(1:npc) = h_path(c_inds)
       t_path_c(1:npc) = t_path(c_inds)
 
@@ -2952,25 +2974,41 @@ contains
                     &    tan_ht, del_s(:npc), ref_corr(:npc), ier )
       if ( ier /= 0 ) fmStat%flags = ior(fmStat%flags,b_refraction)
 
-      ! We need path_dsdh on the fine grid for Gauss-Legendre or Gauss-
+      ! We need dsdh_path on the fine grid for Gauss-Legendre or Gauss-
       ! Lobatto quadrature, and on the coarse grid except at the tangent
       ! point for trapezoidal quadrature and Gauss-Lobatto quadrature, so
       ! compute it everywhere except at the tangent point.  Besides, it's
       ! probably faster not to use a vector subscript to restrict it to
       ! the fine grid.
 
-      path_dsdh(:tan_pt_f-1) = h_path(:tan_pt_f-1) / &
+      dsdh_path(:tan_pt_f-1) = h_path(:tan_pt_f-1) / &
         & ( sqrt(h_path(:tan_pt_f-1)**2 - tan_ht**2 ) )
-      path_dsdh(tan_pt_f+2:npf) = h_path(tan_pt_f+2:npf) / &
+      dsdh_path(tan_pt_f+2:npf) = h_path(tan_pt_f+2:npf) / &
         & ( sqrt(h_path(tan_pt_f+2:npf)**2 - tan_ht**2 ) )
-      path_dsdh(tan_pt_f:tan_pt_f+1) = 0.0
+      dsdh_path(tan_pt_f:tan_pt_f+1) = 0.0
 
-      dsdz_gw_path(f_inds(:nglMax)) = path_dsdh(f_inds(:nglMax)) * &
-        & dhdz_gw_path(f_inds(:nglMax))
+      do i = 1, 2
+        do j = 1, nglMax, ng ! Avoid a temp for (/ ( gw, j = 1, nglMax/ng ) /)
+          dhdz_gw_path(f_inds(j:j+ng-1)) = dhdz_path(f_inds(j:j+ng-1)) * gw
+        end do
 
-      ! We need dsdz = ds/dh * dh/dz, not multiplied by GW, for
-      ! trapezoidal quadrature on the coarse grid.
-      dsdz_c(:npc) = path_dsdh(c_inds) * dhdz_path(c_inds)
+        dsdz_gw_path(f_inds(:nglMax)) = dsdh_path(f_inds(:nglMax)) * &
+          & dhdz_gw_path(f_inds(:nglMax))
+
+        ! We need dsdz = ds/dh * dh/dz, not multiplied by GW, for
+        ! trapezoidal quadrature on the coarse grid.
+        dsdz_c(:npc) = dsdh_path(c_inds) * dhdz_path(c_inds)
+
+        ! Multiply dhdz_path by ds / ( sum( ds/dh dh/dz gw ) d zeta ) =
+        ! del_s / ( sum (dsdz_gw_path) * del_zeta ), which ought to be 1.0
+
+        if ( i == 2 .or. .not. fwdModelConf%do_path_norm ) exit
+        do j = 1, ncg ! ncg = npc-2 here (do_gl is always false at the ends)
+          dhdz_path(f_inds((j-1)*ng+1:j*ng)) = &
+            & dhdz_path(f_inds((j-1)*ng+1:j*ng)) * del_s(j+1) / &
+            & (sum(dsdz_gw_path(f_inds((j-1)*ng+1:j*ng)))*del_zeta(j+1))
+        end do
+      end do
 
       ! Compute ALL the slabs_prep entities over the path's GL grid for this
       ! pointing & mmaf:
@@ -3258,6 +3296,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.285  2007/07/31 23:49:21  vsnyder
+! Add an argument metrics needs for H/Phi failure recovery
+!
 ! Revision 2.284  2007/07/11 22:26:32  vsnyder
 ! More dumps, change some error handling
 !
@@ -3325,7 +3366,7 @@ end module FullForwardModel_m
 ! Changes due to metrics handling only one tangent
 !
 ! Revision 2.263  2006/06/19 19:26:56  vsnyder
-! OOPS, out of bounds subscript possible in path_dsdh
+! OOPS, out of bounds subscript possible in dsdh_path
 !
 ! Revision 2.262  2006/06/16 20:32:30  vsnyder
 ! Define NGP1 in glnp
