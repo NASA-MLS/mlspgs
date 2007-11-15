@@ -57,7 +57,9 @@ contains ! =====     Public Procedures     =============================
     use Allocate_Deallocate, only: Test_Allocate
     use Chunks_m, only: MLSChunk_T
     use DestroyCommand_m, only: DestroyCommand
-    use DumpCommand_m, only: DumpCommand, Skip
+    use DumpCommand_m, only: BooleanFromAnyGoodRadiances, &
+      & BooleanFromAnyGoodValues, BooleanFromComparingQtys, BooleanFromFormula, &
+      & DumpCommand, Skip
     use Expr_M, only: EXPR, EXPR_CHECK
     use FillUtils_1, only: fillError, &
       & addGaussianNoise, ApplyBaseline, &
@@ -149,10 +151,12 @@ contains ! =====     Public Procedures     =============================
       & L_TNGTGEOCALT, L_VECTOR, L_VGRID, L_VMR, L_WMOTROPOPAUSE, &
       & L_ZETA
     ! Now the specifications:
-    use INIT_TABLES_MODULE, only: S_LOAD, S_DESTROY, S_DUMP, S_FILL, S_FILLCOVARIANCE, &
-      & S_FILLDIAGONAL, S_FLUSHL2PCBINS, S_FLUSHPFA, S_MATRIX,  S_NEGATIVEPRECISION, &
-      & S_PHASE, S_POPULATEL2PCBIN, S_SKIP, S_SNOOP, S_TIME, &
-      & S_TRANSFER, S_VECTOR, S_SUBSET, S_FLAGCLOUD, S_RESTRICTRANGE, S_UPDATEMASK
+    use INIT_TABLES_MODULE, only: S_ANYGOODVALUES, S_ANYGOODRADIANCES, &
+      & S_COMPARE, S_DESTROY, S_DUMP, S_FILL, S_FILLCOVARIANCE, &
+      & S_FILLDIAGONAL, S_FLAGCLOUD, S_FLUSHL2PCBINS, S_FLUSHPFA, &
+      & S_LOAD, S_MATRIX,  S_NEGATIVEPRECISION, S_PHASE, S_POPULATEL2PCBIN, &
+      & S_REEVALUATE, S_RESTRICTRANGE, S_SKIP, S_SNOOP, &
+      & S_SUBSET, S_TIME, S_TRANSFER, S_UPDATEMASK, S_VECTOR
     ! Now some arrays
     use Intrinsic, only: lit_indices, &
       & PHYQ_Dimensionless, PHYQ_Invalid, PHYQ_Temperature, &
@@ -634,6 +638,17 @@ contains ! =====     Public Procedures     =============================
           & where=source_ref(key) ) ) )
 
         ! That's the end of the create operation
+
+      case ( s_anygoodvalues )
+        call decorate ( key, &
+          & BooleanFromAnyGoodValues ( key, vectors ) )
+      case ( s_anygoodradiances )
+        call decorate ( key, &
+          & BooleanFromAnyGoodRadiances ( key, chunks(chunkNo), filedatabase ) )
+      case ( s_compare )
+        call decorate ( key,  BooleanFromComparingQtys ( key, vectors ) )
+      case ( s_Reevaluate )
+        call decorate ( key,  BooleanFromFormula ( 0, key ) )
 
       case ( s_dump ) ! ============================== Dump ==========
         ! Handle disassociated pointers by allocating them with zero size
@@ -2275,6 +2290,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.358  2007/11/15 22:53:16  pwagner
+! May set runtimeBooleans by anyGood.., Compare, Reevaluate commands
+!
 ! Revision 2.357  2007/11/05 18:38:09  pwagner
 ! May Skip remaining lines in Fill, Join, Retrieve sections depending on Boolean
 !
