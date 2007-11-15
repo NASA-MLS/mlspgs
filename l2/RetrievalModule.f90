@@ -41,7 +41,9 @@ contains
     use BitStuff, only: CountBits
     use Chunks_m, only: MLSChunk_T
     use CloudRetrievalModule, only: CloudRetrieval
-    use DumpCommand_m, only: DumpCommand, Skip
+    use DumpCommand_m, only: &
+      & BooleanFromAnyGoodValues, BooleanFromComparingQtys, BooleanFromFormula, &
+      & DumpCommand, Skip
     use IEEE_Arithmetic, only: IEEE_IS_NAN
     use Expr_M, only: Expr
     use ForwardModelConfig, only: ForwardModelConfig_T
@@ -68,9 +70,10 @@ contains
       & L_highcloud, L_Jacobian_Cols, L_Jacobian_Rows, &
       & L_lowcloud, L_newtonian, L_none, L_norm, &
       & L_NumGrad, L_numJ, L_NumNewt, l_Simple, &
+      & S_ANYGOODVALUES, S_Compare, &
       & S_dump, S_dumpBlocks, S_flagCloud, S_flushPFA, S_LeakCheck, S_matrix, &
-      & S_restrictRange, S_retrieve, S_sids, S_SKIP, S_snoop, S_subset, &
-      & S_time, S_updateMask
+      & S_REEVALUATE, S_restrictRange, S_retrieve, &
+      & S_sids, S_SKIP, S_snoop, S_subset, S_time, S_updateMask
     use Intrinsic, only: PHYQ_Dimensionless
     use L2ParInfo, only: PARALLEL
     use MatrixModule_1, only: AddToMatrixDatabase, CopyMatrix, CreateEmptyMatrix, &
@@ -300,6 +303,11 @@ contains
       spec = get_spec_id(key)
 
       select case ( spec )
+      case ( s_anygoodvalues )
+        call decorate ( key, &
+          & BooleanFromAnyGoodValues ( key, vectorDatabase ) )
+      case ( s_compare )
+        call decorate ( key,  BooleanFromComparingQtys ( key, vectorDatabase ) )
       case ( s_dump )
         if ( .not. SKIPRETRIEVAL ) &
           & call dumpCommand ( key, forwardModelConfigs=configDatabase, &
@@ -336,6 +344,8 @@ contains
         call RestrictRange ( key, vectorDatabase )
         if ( toggle(gen) .and. levels(gen) > 0 ) &
           & call trace_end ( "Retrieve.RestrictRange" )
+      case ( s_Reevaluate )
+        call decorate ( key,  BooleanFromFormula ( 0, key ) )
       case ( s_retrieve )
         if ( SKIPRETRIEVAL .and. STATEFILLEDBYSKIPPEDRETRIEVALS == 0. ) cycle
         if ( toggle(gen) ) call trace_begin ( "Retrieve.retrieve", root )
@@ -2757,6 +2767,9 @@ NEWT: do ! Newtonian iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.300  2007/11/15 22:53:16  pwagner
+! May set runtimeBooleans by anyGood.., Compare, Reevaluate commands
+!
 ! Revision 2.299  2007/11/08 03:24:39  vsnyder
 ! Add stateMax and stateMin
 !
