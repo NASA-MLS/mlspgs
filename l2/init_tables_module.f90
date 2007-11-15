@@ -123,7 +123,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_CHUNKDIVIDE        = s_checkpoint + 1
   integer, parameter :: S_COLUMNSCALE        = s_chunkDivide + 1
   integer, parameter :: S_COMBINECHANNELS    = s_columnScale + 1
-  integer, parameter :: S_CONCATENATE        = s_combineChannels + 1
+  integer, parameter :: S_COMPARE            = s_combinechannels + 1
+  integer, parameter :: S_CONCATENATE        = s_compare + 1
   integer, parameter :: S_CONVERTETATOP      = s_concatenate + 1
   integer, parameter :: S_COPY               = s_ConvertEtaToP + 1
   integer, parameter :: S_CYCLICJACOBI       = s_copy + 1
@@ -167,7 +168,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_POPULATEL2PCBIN    = s_phase + 1
   integer, parameter :: S_QUANTITY           = s_populateL2pcBin + 1
   integer, parameter :: S_READPFA            = s_quantity + 1
-  integer, parameter :: S_reevaluate         = s_readPFA + 1
+  integer, parameter :: S_REEVALUATE         = s_readPFA + 1
   integer, parameter :: S_REFLECT            = s_reevaluate + 1
   integer, parameter :: S_REGULARIZATION     = s_reflect + 1
   integer, parameter :: S_RESTRICTRANGE      = s_regularization + 1
@@ -338,6 +339,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_chunkDivide) =          add_ident ( 'chunkDivide' )
     spec_indices(s_columnScale) =          add_ident ( 'columnScale' )
     spec_indices(s_combineChannels) =      add_ident ( 'combineChannels' )
+    spec_indices(s_compare) =              add_ident ( 'compare' )
     spec_indices(s_concatenate) =          add_ident ( 'concatenate' )
     spec_indices(s_ConvertEtaToP) =        add_ident ( 'ConvertEtaToP' )
     spec_indices(s_copy)   =               add_ident ( 'copy' )
@@ -988,6 +990,15 @@ contains ! =====     Public procedures     =============================
              np+n_spec_def /) )
 
     call make_tree( (/ &
+      begin, s+s_compare, &
+             begin, f+f_a, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
+             begin, f+f_b, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
+             begin, f+f_c, t+t_numeric, n+n_field_type, &
+             begin, f+f_formula, t+t_string, nr+n_field_type, &
+             begin, f+f_Boolean, s+s_Boolean, nr+n_field_spec, &
+             np+n_spec_def /) )
+
+    call make_tree( (/ &
       begin, s+s_anyGoodRadiances, &
              begin, f+f_signal, t+t_string, nr+n_field_type, &
              begin, f+f_Boolean, s+s_Boolean, nr+n_field_spec, &
@@ -1480,20 +1491,23 @@ contains ! =====     Public procedures     =============================
              begin, p+p_scan_upper_limit, t+t_numeric_range, n+n_name_def, &
              s+s_time, s+s_chunkDivide, n+n_section, &
       begin, z+z_construct, s+s_anyGoodRadiances, s+s_anyGoodValues, &
-             s+s_Boolean, s+s_dump, s+s_forge, s+s_forwardModel, s+s_hgrid, &
-             s+s_phase, s+s_quantity, s+s_reevaluate, s+s_snoop, &
+             s+s_Boolean, s+s_compare, s+s_dump, s+s_forge, s+s_forwardModel, &
+             s+s_hgrid, s+s_phase, s+s_quantity, s+s_reevaluate, s+s_snoop, &
              s+s_time, s+s_vectortemplate, &
              n+n_section, &
       begin, z+z_fill, &
-             s+s_destroy, s+s_dump, s+s_fill, s+s_fillCovariance, &
+             s+s_anyGoodRadiances, s+s_anyGoodValues, &
+             s+s_compare, s+s_destroy, s+s_dump, s+s_fill, s+s_fillCovariance, &
              s+s_fillDiagonal, s+s_flagcloud, s+s_flushL2PCBins, s+s_flushPFA, &
              s+s_load, s+s_matrix, s+s_negativePrecision, s+s_phase, &
-             s+s_populateL2PCBin, s+s_restrictRange, s+s_skip, s+s_snoop, s+s_subset, &
+             s+s_populateL2PCBin, s+s_reevaluate, s+s_restrictRange, &
+             s+s_skip, s+s_snoop, s+s_subset, &
              s+s_time, s+s_transfer, s+s_updateMask, s+s_vector, n+n_section, &
-      begin, z+z_retrieve, s+s_checkpoint, s+s_dump, s+s_dumpBlocks, &
+      begin, z+z_retrieve, s+s_anyGoodValues, &
+             s+s_checkpoint, s+s_compare, s+s_dump, s+s_dumpBlocks, &
              s+s_flagCloud, s+s_flushPFA, s+s_leakcheck, s+s_matrix, &
-             s+s_restrictRange, s+s_retrieve, s+s_sids, s+s_skip, s+s_snoop, &
-             s+s_subset, s+s_time, s+s_updateMask, &
+             s+s_reevaluate, s+s_restrictRange, s+s_retrieve, &
+             s+s_sids, s+s_skip, s+s_snoop, s+s_subset, s+s_time, s+s_updateMask, &
              n+n_section, &
       begin, z+z_join, s+s_time, s+s_label, s+s_l2gp, s+s_l2aux, &
                        s+s_directWrite, s+s_dump, s+s_skip, n+n_section, &
@@ -1522,6 +1536,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.461  2007/11/15 22:06:08  pwagner
+! New Compare command, and others giving value to runtimeBooleans, now in Join, Retrieve sections
+!
 ! Revision 2.460  2007/11/08 03:24:39  vsnyder
 ! Add stateMax and stateMin
 !
