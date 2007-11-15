@@ -11,11 +11,17 @@
 
 module DumpCommand_M
 
-! Process a "dump" command. Or say whether to "skip" remainder of section
+! Process a "dump" command. Or say whether to "skip" remainder of section.
+! Or functions to set a run-time Boolean flag.
+! (Should these latter functions be moved into a special module?)
 
   implicit NONE
   private
 
+  public :: BooleanFromAnyGoodRadiances
+  public :: BooleanFromAnyGoodValues
+  public :: BooleanFromComparingQtys
+  public :: BooleanFromFormula
   public :: DumpCommand, Skip
 
 !---------------------------- RCS Ident Info -------------------------------
@@ -26,6 +32,499 @@ module DumpCommand_M
 
 contains
 
+  ! ------------------------------------- BooleanFromAnyGoodRadiances --
+  function BooleanFromAnyGoodRadiances ( root, chunk, filedatabase ) &
+    & result(hashsize)
+    use Allocate_Deallocate, only: DEALLOCATE_TEST
+    use ConstructQuantityTemplates, only: AnyGoodSignalData
+    use Chunks_m, only: MLSCHUNK_T
+    use Dump_0, only: Dump
+    use INIT_TABLES_MODULE, only: F_SIGNAL, F_Boolean
+    use MLSCommon, only: MLSFile_T
+    use MLSL2Options, only: runTimeValues
+    use MLSSignals_m, only: GetSignalName, &
+      & SIGNALS
+    use MLSStringLists, only: NumStringElements, PutHashElement, &
+      & SwitchDetail
+    use MLSStrings, only: lowerCase
+    use output_m, only: output
+    use Parse_signal_m, only: Parse_signal
+    use String_Table, only: get_string
+    use TOGGLES, only: SWITCHES
+    use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
+    ! Dummy args
+    ! integer, intent(in) :: name
+    integer, intent(in) :: root
+    type (MLSChunk_T), intent(in) :: chunk
+    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+    integer             :: hashsize
+    ! Internal variables
+    logical, parameter :: countEmpty = .true.
+    integer :: field
+    integer :: field_index
+    integer :: fieldValue
+    integer :: keyNo
+    character(len=32) :: nameString
+    integer :: s
+    integer :: signalIndex
+    integer, pointer :: Signal_Indices(:)         ! Indices in the signals
+    character(len=32) :: signalString
+    integer :: son
+    character(len=32) :: subSignalString
+    logical :: tvalue
+    ! Executable
+    nullify(Signal_Indices)
+    ! call get_string(name, nameString)
+    ! nameString = lowerCase(nameString)
+    signalString = ' '
+    do keyNo = 2, nsons(root)
+      son = subtree(keyNo,root)
+      field = subtree(1,son)
+      if ( nsons(son) > 1 ) then
+        fieldValue = decoration(subtree(2,son)) ! The field's value
+      else
+        fieldValue = son
+      end if
+      field_index = decoration(field)
+
+      select case ( field_index )
+      case ( f_Boolean )
+        call get_string( sub_rosa(subtree(2,son)), nameString )
+      case ( f_signal )
+        call get_string( sub_rosa(subtree(2,son)), signalString, strip=.true. )
+      case default ! Can't get here if tree_checker works correctly
+      end select
+    end do
+
+    if ( signalString /= ' ' ) then
+      if ( switchDetail(switches, 'bool') > 0 ) &
+        & call output( 'signal: ' // trim(signalString), advance='yes' )
+      call Parse_signal(signalString, signal_indices)
+      tvalue = .false.
+      ! Loop over signals, or-ing them until we get TRUE
+      do s=1, size(signal_indices)
+        signalIndex = signal_indices(s)
+        if ( switchDetail(switches, 'bool') > 0 ) then
+          call GetSignalName ( signalIndex, subSignalString, &                   
+            & sideband=signals(signalIndex)%sideband, noChannels=.TRUE. )
+          call output( 'sub-signal: ' // trim(subSignalString), advance='yes' )
+        endif
+        tvalue = tvalue .or. &
+          & AnyGoodSignalData ( signalIndex, signals(signalIndex)%sideband, &
+          & filedatabase, chunk )
+        if ( tvalue ) then
+          if ( switchDetail(switches, 'bool') > 0 ) then
+            call output( 'good signal data found: ' &
+              & // trim(subSignalString), advance='yes' )
+          endif
+          exit
+        endif
+      enddo
+      call deallocate_test(Signal_Indices, 'Signal_Indices', ModuleName)
+    else
+      print *, 'Sorry-unable to parse ', trim(signalString)
+      tvalue = .false.
+    endif
+    call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
+      & lowercase(trim(nameString)), tvalue, countEmpty=countEmpty )
+    hashsize = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty )
+    if ( switchDetail(switches, 'bool') > 0 ) &
+      & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
+      & 'Run-time Boolean flags' )
+  end function BooleanFromAnyGoodRadiances
+
+  ! ------------------------------------- BooleanFromAnyGoodValues --
+  function BooleanFromAnyGoodValues ( root, vectors ) result(thesize)
+    use Dump_0, only: Dump
+    use INIT_TABLES_MODULE, only: F_PRECISION, F_QUALITY, &
+      & F_QUANTITY, F_Boolean, F_STATUS
+    use ManipulateVectorQuantities, only: AnyGoodDataInQty
+    use MLSCommon, only: rv
+    use MLSL2Options, only: runTimeValues
+    use MLSStringLists, only: NumStringElements, PutHashElement, &
+      & SwitchDetail
+    use MLSStrings, only: lowerCase
+    use String_Table, only: get_string
+    use TOGGLES, only: SWITCHES
+    use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
+    use VectorsModule, only: Vector_T, VectorValue_T, &
+      & GetVectorQtyByTemplateIndex
+    ! Dummy args
+    ! integer, intent(in) :: name
+    integer, intent(in) :: root
+    type (vector_T), dimension(:) :: Vectors
+    integer             :: thesize
+    ! Internal variables
+    logical, parameter :: countEmpty = .true.
+    integer :: field
+    integer :: field_index
+    integer :: fieldValue
+    integer :: keyNo
+    character(len=32) :: nameString
+    type (vectorValue_T), pointer :: PRECISIONQUANTITY
+    integer :: QUANTITYINDEX
+    real(rv) :: QUALITY_MIN
+    type (vectorValue_T), pointer :: QUALITYQUANTITY
+    type (vectorValue_T), pointer :: Quantity
+    integer :: son
+    integer :: source
+    type (vectorValue_T), pointer :: STATUSQUANTITY
+    logical :: tvalue
+    integer :: VECTORINDEX
+    ! Executable
+    nullify( precisionquantity, qualityquantity, Quantity, statusquantity )
+    ! call get_string(name, nameString)
+    ! nameString = lowerCase(nameString)
+    do keyNo = 2, nsons(root)
+      son = subtree(keyNo,root)
+      field = subtree(1,son)
+      if ( nsons(son) > 1 ) then
+        fieldValue = decoration(subtree(2,son)) ! The field's value
+      else
+        fieldValue = son
+      end if
+      field_index = decoration(field)
+      source = subtree(2,son) ! required to be an n_dot vertex
+
+      select case ( field_index )
+      case ( f_Boolean )
+        call get_string( sub_rosa(subtree(2,son)), nameString )
+      case ( f_precision )
+        VectorIndex = decoration(decoration(subtree(1,source)))
+        QuantityIndex = decoration(decoration(decoration(subtree(2,source))))
+        precisionQuantity => GetVectorQtyByTemplateIndex( &
+          & vectors(VectorIndex), QuantityIndex )
+      case ( f_quality )
+        VectorIndex = decoration(decoration(subtree(1,source)))
+        QuantityIndex = decoration(decoration(decoration(subtree(2,source))))
+        qualityQuantity => GetVectorQtyByTemplateIndex( &
+          & vectors(VectorIndex), QuantityIndex )
+      case ( f_quantity )
+        VectorIndex = decoration(decoration(subtree(1,source)))
+        QuantityIndex = decoration(decoration(decoration(subtree(2,source))))
+        Quantity => GetVectorQtyByTemplateIndex( &
+          & vectors(VectorIndex), QuantityIndex )
+      case ( f_status )
+        VectorIndex = decoration(decoration(subtree(1,source)))
+        QuantityIndex = decoration(decoration(decoration(subtree(2,source))))
+        statusQuantity => GetVectorQtyByTemplateIndex( &
+          & vectors(VectorIndex), QuantityIndex )
+      case default ! Can't get here if tree_checker works correctly
+      end select
+    end do
+    tvalue = AnyGoodDataInQty ( a=Quantity, &
+      & precision=precisionQuantity, quality=qualityQuantity, &
+      & status=statusQuantity, quality_min=quality_min )
+    call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
+      & lowercase(trim(nameString)), tvalue, countEmpty=countEmpty )
+    thesize = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty )
+    if ( switchDetail(switches, 'bool') > 0 ) &
+      & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
+      & 'Run-time Boolean flags' )
+  end function BooleanFromAnyGoodValues
+
+  ! ------------------------------------- BooleanFromComparingQtys --
+  function BooleanFromComparingQtys ( root, vectors ) result(thesize)
+    use Dump_0, only: Dump
+    use Expr_M, only: EXPR
+    use INIT_TABLES_MODULE, only: F_A, F_B, F_C, F_Boolean, F_FORMULA
+    use MLSCommon, only: r8, rv, DEFAULTUNDEFINEDVALUE
+    use MLSL2Options, only: runTimeValues
+    use MLSMessageModule, only: MLSMessage, MLSMessageCalls, MLSMSG_error
+    use MLSStats1, only: mlsmax, mlsmin, mlsmean, mlsmedian
+    use MLSStringLists, only: GetStringElement, NumStringElements, PutHashElement, &
+      & ReplaceSubString, SwitchDetail
+    use MLSStrings, only: lowerCase
+    use String_Table, only: get_string
+    use TOGGLES, only: SWITCHES
+    use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
+    use VectorsModule, only: Vector_T, VectorValue_T, M_Fill, &
+      & GetVectorQtyByTemplateIndex
+    ! Dummy args
+    ! Called to endow Boolean with result from comparing
+    ! (1) Two quantities (a and b), or
+    ! (2) A quantity and a constant (a and c)
+    ! The comparison op may be one of "<", ">", or "='
+    ! and the "flattening" to be taken may be one of
+    ! "any", "all", "min", "max", "mean", or "median"
+    ! E.g., to compare a=a.qty and b=b.qty, returning true if 
+    ! all(a.qty%values > b.qty%values)
+    ! formula = "all a > b"
+
+    ! in general we will parse formula as being made up by
+    ! "flattening a op [b][c]"
+    
+    ! Compare, a=a.qty, [b=b.qty], [c=c], formula="formula", Boolean="name"
+    integer, intent(in) :: root
+    type (vector_T), dimension(:) :: Vectors
+    integer             :: thesize
+    ! Internal variables
+    type (vectorValue_T), pointer :: AQUANTITY
+    type (vectorValue_T), pointer :: BQUANTITY
+    real(rv) :: A, B, C                       ! constant "c" in formula
+    logical, parameter :: countEmpty = .true.
+    integer :: field
+    integer :: field_index
+    integer :: fieldValue
+    character(len=8) :: flattening, arg(2), op
+    character(len=255) :: formula
+    character(len=255) :: formulaTemp
+    integer :: keyNo
+    character(len=32) :: nameString
+    integer :: QUANTITYINDEX
+    integer :: son
+    integer :: source
+    logical :: tvalue
+    integer, dimension(2) :: UNITASARRAY ! From expr
+    real(r8), dimension(2) :: VALUEASARRAY ! From expr
+    integer :: VECTORINDEX
+    ! Executable
+    call MLSMessageCalls( 'push', constantName=ModuleName//'%BooleanFromComparingQtys' )
+    nullify( aQuantity, bQuantity )
+    do keyNo = 2, nsons(root)
+      son = subtree(keyNo,root)
+      field = subtree(1,son)
+      if ( nsons(son) > 1 ) then
+        fieldValue = decoration(subtree(2,son)) ! The field's value
+      else
+        fieldValue = son
+      end if
+      field_index = decoration(field)
+      source = subtree(2,son) ! required to be an n_dot vertex
+
+      select case ( field_index )
+      case ( f_Boolean )
+        call get_string( sub_rosa(subtree(2,son)), nameString )
+      case ( f_a )
+        VectorIndex = decoration(decoration(subtree(1,source)))
+        QuantityIndex = decoration(decoration(decoration(subtree(2,source))))
+        aQuantity => GetVectorQtyByTemplateIndex( &
+          & vectors(VectorIndex), QuantityIndex )
+      case ( f_b )
+        VectorIndex = decoration(decoration(subtree(1,source)))
+        QuantityIndex = decoration(decoration(decoration(subtree(2,source))))
+        bQuantity => GetVectorQtyByTemplateIndex( &
+          & vectors(VectorIndex), QuantityIndex )
+      case(f_c)
+        call expr ( source, unitAsArray, valueAsArray )
+        c = valueAsArray(1)
+      case ( f_formula )
+        call get_string ( sub_rosa(subtree(2,son)), formula, strip=.true. )
+      case default ! Can't get here if tree_checker works correctly
+      end select
+    end do
+    ! What kind of flattening, relationship, and is the last arg b or c?
+    ! 1st--let's separate args and ops neatly
+    call ReplaceSubString( formula, formulaTemp, '(', ' & ', &
+      & which='all', no_trim=.true. )
+    call ReplaceSubString( formulaTemp, formula, '&', '(', &
+      & which='all', no_trim=.false. )
+    call ReplaceSubString( formula, formulaTemp, ')', ' & ', &
+      & which='all', no_trim=.true. )
+    call ReplaceSubString( formulaTemp, formula, '&', ')', &
+      & which='all', no_trim=.false. )
+    call ReplaceSubString( formula, formulaTemp, '==', ' = ', &
+      & which='first', no_trim=.true. )
+    call ReplaceSubString( formulaTemp, formula, '=', ' = ', &
+      & which='first', no_trim=.true. )
+    call ReplaceSubString( formula, formulaTemp, '>', ' > ', &
+      & which='first', no_trim=.true. )
+    call ReplaceSubString( formulaTemp, formula, '<', ' < ', &
+      & which='first', no_trim=.true. )
+    ! 2nd--go through the elements
+    call GetStringElement ( trim(formula), flattening, 1, &
+            & countEmpty=.false., inseparator=' ' )
+    call GetStringElement ( trim(formula), arg(1), 2, &
+            & countEmpty=.false., inseparator=' ' )
+    call GetStringElement ( trim(formula), op, 3, &
+            & countEmpty=.false., inseparator=' ' )
+    call GetStringElement ( trim(formula), arg(2), 4, &
+            & countEmpty=.false., inseparator=' ' )
+    flattening = lowerCase(flattening)
+    arg(1) = lowerCase(arg(1))
+    arg(2) = lowerCase(arg(2))
+    if ( arg(1) /= 'a' ) then
+      call mlsmessage (MLSMSG_Error, moduleName, &
+        & 'Formula in compare must be "flattening a op [b][c]".' )
+    elseif( index('<>=', trim(op)) < 1 ) then
+      call mlsmessage (MLSMSG_Error, moduleName, &
+        & 'Formula in compare found unrecognized relation: ' // trim(op) )
+    endif
+    ! What kind of flattening?
+    select case (flattening)
+    case ('all')
+      if ( .not. associated ( aQuantity%mask ) ) then
+        tvalue = all ( isRelation( trim(op), aQuantity%values, c ) )
+        if ( arg(2) == 'b' ) &
+          & tvalue = all ( isRelation( trim(op), aQuantity%values, bQuantity%values ) )
+      else
+        tvalue = all ( isRelation( trim(op), aQuantity%values, c ) .or. &
+          & iand ( ichar(aQuantity%mask(:,:)), m_fill ) /= 0 )
+        if ( arg(2) == 'b' ) &
+        tvalue = all ( isRelation( trim(op), aQuantity%values, bQuantity%values ) .or. &
+          & iand ( ichar(aQuantity%mask(:,:)), m_fill ) /= 0 )
+      endif
+    case ('any')
+      if ( .not. associated ( aQuantity%mask ) ) then
+        tvalue = any ( isRelation( trim(op), aQuantity%values, c ) )
+        if ( arg(2) == 'b' ) &
+          & tvalue = any ( isRelation( trim(op), aQuantity%values, bQuantity%values ) )
+      else
+        tvalue = any ( isRelation( trim(op), aQuantity%values, c ) .and. &
+          & iand ( ichar(aQuantity%mask(:,:)), m_fill ) == 0 )
+        if ( arg(2) == 'b' ) &
+        tvalue = any ( isRelation( trim(op), aQuantity%values, bQuantity%values ) .and. &
+          & iand ( ichar(aQuantity%mask(:,:)), m_fill ) == 0 )
+      endif
+    case ('max', 'min', 'mean', 'median')
+      a = statFun( trim(flattening), aQuantity%values, aQuantity%mask )
+      b = c
+      if ( arg(2) == 'b' ) &
+        & b = statFun( trim(flattening), bQuantity%values, aQuantity%mask )
+      tvalue = isRelation( trim(op), a, b )
+    case default
+      call mlsmessage (MLSMSG_Error, moduleName, &
+        & 'Formula in compare found unrecognized op: ' // trim(op) )
+    end select
+    call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
+      & lowercase(trim(nameString)), tvalue, countEmpty=countEmpty )
+    thesize = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty )
+    if ( switchDetail(switches, 'bool') > 0 ) &
+      & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
+      & 'Run-time Boolean flags' )
+    call MLSMessageCalls( 'pop' )
+  contains
+    elemental logical function isRelation( relation, a, b )
+      ! Do inputs a and b stand in relation ('>', '<', '=') ?
+      ! Args
+      character(len=*), intent(in) :: relation ! ('>', '<', '=')
+      real(rv), intent(in) :: a, b
+      ! Executable
+      select case (trim(relation))
+      case ('<')
+        isRelation = (a < b )
+      case ('>')
+        isRelation = (a > b )
+      case ('=')
+        isRelation = (a == b )
+      case default
+        ! We should never have reached here
+        isRelation = .false.
+      end select
+    end function isRelation
+    
+    function statFun ( name, values, mask )
+      ! Evaluate statistical function name of values
+      ! masking if appropriate
+      ! Args
+      character(len=*), intent(in)         :: name ! 'min', etc.
+      real(rv), dimension(:,:), intent(in) :: values
+      character, dimension(:,:), pointer :: MASK
+      real(rv) :: statFun
+      ! Internal variables
+      real(rv), dimension(size(values,1),size(values,2)) :: array
+      real(rv) :: FillValue
+      ! Executable
+      FillValue = DEFAULTUNDEFINEDVALUE
+      if ( associated(mask) ) then
+        array = DEFAULTUNDEFINEDVALUE
+        where ( iand ( ichar(mask(:,:)), m_Fill ) == 0 )
+          array(:,:) = values(:,:)
+        end where
+      else
+        array = values
+      endif
+      select case (trim(name))
+      case ('max')
+        statFun = mlsmax( array, FillValue=FillValue )
+      case ('min')
+        statFun = mlsmin( array, FillValue=FillValue )
+      case ('mean')
+        statFun = mlsmean( array, FillValue=FillValue )
+      case ('median')
+        statFun = mlsmedian( array, FillValue=FillValue )
+      case default
+        ! Should not have got here
+        statFun = mlsmedian( array, FillValue=FillValue )
+      end select
+    end function statFun
+  end function BooleanFromComparingQtys
+
+  ! ------------------------------------- BooleanFromFormula --
+  function BooleanFromFormula ( name, root ) result(size)
+    ! Called either when a Boolean is first declared
+    ! syntax: 
+    ! name: Boolean, formula="formula"
+    !
+    ! or when it is reevaluated
+    ! syntax: 
+    ! Reevaluate, formula="formula", Boolean="name"
+    use Dump_0, only: Dump
+    use Expr_M, only: EXPR
+    use INIT_TABLES_MODULE, only: F_BOOLEAN, F_FORMULA, F_VALUES
+    use MLSCommon, only: r8
+    use MLSL2Options, only: runTimeValues
+    use MLSStringLists, only: BooleanValue, NumStringElements, PutHashElement, &
+      & SwitchDetail
+    use MLSStrings, only: lowerCase
+    use String_Table, only: get_string
+    use TOGGLES, only: SWITCHES
+    use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
+    ! Dummy args
+    integer, intent(in) :: name
+    integer, intent(in) :: root
+    integer             :: size
+    ! Internal variables
+    logical, parameter :: countEmpty = .true.
+    integer :: field
+    integer :: field_index
+    integer :: fieldValue
+    character(len=255) :: formula
+    integer :: keyNo
+    character(len=32) :: nameString
+    integer :: son
+    logical :: tvalue
+    integer, dimension(2) :: UNITASARRAY ! From expr
+    real(r8), dimension(2) :: VALUEASARRAY ! From expr
+    ! Executable
+    tvalue= .false.
+    if ( name > 0 ) then
+      call get_string(name, nameString)
+      nameString = lowerCase(nameString)
+    endif
+    do keyNo = 2, nsons(root)
+      son = subtree(keyNo,root)
+      field = subtree(1,son)
+      if ( nsons(son) > 1 ) then
+        fieldValue = decoration(subtree(2,son)) ! The field's value
+      else
+        fieldValue = son
+      end if
+      field_index = decoration(field)
+
+      select case ( field_index )
+      case ( f_Boolean )
+        call get_string ( sub_rosa(subtree(2,son)), nameString, strip=.true. )
+        nameString = lowerCase(nameString)
+      case ( f_formula )
+        call get_string ( sub_rosa(subtree(2,son)), formula, strip=.true. )
+        tvalue = BooleanValue (formula, runTimeValues%lkeys, runTimeValues%lvalues)
+      case ( f_values )
+        call expr ( son , unitAsArray, valueAsArray )
+        tvalue = ( valueAsArray(1) /= 0 )
+        ! badRange = valueAsArray
+      case default ! Can't get here if tree_checker works correctly
+      end select
+    end do
+    call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
+      & lowercase(trim(nameString)), tvalue, countEmpty=countEmpty )
+    size = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty )
+    if ( switchDetail(switches, 'bool') > 0 ) &
+      & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
+      & 'Run-time Boolean flags' )
+  end function BooleanFromFormula
+
+  ! ------------------------- DumpCommand ------------------------
   subroutine DumpCommand ( Root, QuantityTemplatesDB, &
     & VectorTemplates, Vectors, ForwardModelConfigs, HGrids, griddedDataBase )
 
@@ -559,15 +1058,15 @@ contains
     ! If TRUE should skip rest of section in which SKIP command appears
     use Init_Tables_Module, only: F_Boolean
     use MLSL2Options, only: runTimeValues
-    use MLSMessageModule, only: MLSMessage, MLSMessageCalls, MLSMSG_error
-    use MLSStringLists, only: BooleanValue, SWITCHDETAIL
+    use MLSMessageModule, only: MLSMessageCalls
+    use MLSStringLists, only: BooleanValue
     use MLSStrings, only: lowerCase
-    use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
+    use MoreTree, only: Get_Field_ID
     use Output_M, only: Output
     use String_Table, only: Get_String
-    use Toggles, only: Gen, Switches, Toggle
+    use Toggles, only: Gen, Toggle
     use Trace_m, only: Trace_begin, Trace_end
-    use Tree, only: Decoration, Node_Id, Nsons, Source_Ref, Sub_rosa, Subtree
+    use Tree, only: Nsons, Sub_rosa, Subtree
     integer, intent(in) :: Root ! Root of the parse tree for the dump command
     ! Internal variables
     character(len=80) :: BOOLEANSTRING  ! E.g., 'BAND13_OK'
@@ -620,6 +1119,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.40  2007/11/15 22:54:51  pwagner
+! Functions to set runtimeBooleans moved here
+!
 ! Revision 2.39  2007/11/05 18:36:44  pwagner
 ! May Skip remaining lines in Fill, Join, Retrieve sections depending on Boolean
 !
