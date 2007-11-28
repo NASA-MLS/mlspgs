@@ -13,7 +13,7 @@
 program l2gpdiff ! show diffs between swaths in two different files
 !=================================
 
-   use dump_0, only: rmsFormat
+   use dump_0, only: dumpTableSide, rmsFormat
    use L2GPData, only: Diff, MAXSWATHNAMESBUFSIZE
    use MACHINE, only: HP, GETARG
    use MLSFiles, only: mls_exists, HDFVERSION_5, MLS_INQSWATH
@@ -53,6 +53,7 @@ program l2gpdiff ! show diffs between swaths in two different files
     logical     :: rms = .false.
     logical     :: showMissing = .false.
     logical     :: stats = .false.
+    character(len=8) :: HEADSIDE = 'left' ! on which side stats headers printed
     character(len=MAXSWATHNAMESBUFSIZE) :: swaths1 = '*'
     character(len=MAXSWATHNAMESBUFSIZE) :: swaths2 = '*'
     logical     :: silent = .false.
@@ -89,7 +90,7 @@ program l2gpdiff ! show diffs between swaths in two different files
   time_config%use_wall_clock = .true.
   CALL mls_h5open(error)
   n_filenames = 0
-  do      ! Loop over filenames
+  do      ! Loop over filenames, options
      call get_filename(filename, options)
      if ( filename(1:1) == '-' ) cycle
      if ( filename == ' ' ) exit
@@ -100,6 +101,7 @@ program l2gpdiff ! show diffs between swaths in two different files
      n_filenames = n_filenames + 1
      filenames(n_filenames) = filename
   enddo
+  dumpTableSide = options%headSide ! 'left'
   if ( n_filenames < 2 ) then
     if ( options%verbose ) print *, 'Sorry -- need at least 2 input files to diff'
     stop
@@ -245,6 +247,10 @@ contains
       else if ( filename(1:5) == '-rms ' ) then
         options%rms = .true.
         exit
+      else if ( filename(1:5) == '-side' ) then
+        call getarg ( i+1+hp, options%headSide )
+        i = i + 1
+        exit
       else if ( filename(1:3) == '-s ' ) then
         options%stats = .true.
         exit
@@ -303,6 +309,8 @@ contains
       write (*,*) '          -matchTimes => only matching profile times'
       write (*,*) '          -rms        => just print mean, rms'
       write (*,*) '          -s          => just show statistics'
+      write (*,*) '          -side "s"   => print stat headers on one of'
+      write (*,*) '                          {"top", "left", "right", "bottom"}'
       write (*,*) '          -miss       => just show which swaths are missing'
       write (*,*) '          -h          => print brief help'
       write (*,*) '    (Notes)'
@@ -339,6 +347,9 @@ end program l2gpdiff
 !==================
 
 ! $Log$
+! Revision 1.12  2007/10/12 23:37:31  pwagner
+! Removed much unused stuff
+!
 ! Revision 1.11  2007/06/27 19:30:59  pwagner
 ! -pressures option added
 !
