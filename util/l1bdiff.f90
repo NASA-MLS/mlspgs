@@ -59,6 +59,7 @@ program l1bdiff ! diffs two l1b or L2AUX files
     logical     :: stats = .false.
     logical     :: rms = .false.
     logical     :: direct = .false.
+    logical     :: l2aux = .false.
     integer     :: maf1 = 0
     integer     :: maf2 = 0
     integer     :: moff = 0
@@ -182,6 +183,9 @@ contains
       elseif ( filename(1:3) == '-v ' ) then
         options%verbose = .true.
         exit
+      elseif ( filename(1:7) == '-l2aux ' ) then
+        options%l2aux = .true.
+        exit
       elseif ( filename(1:3) == '-l ' ) then
         options%list = .true.
         exit
@@ -221,7 +225,7 @@ contains
       & ' If no filenames supplied, you will be prompted to supply one'
       write (*,*) ' Options: -f filename     => add filename to list of filenames'
       write (*,*) '                           (can do the same w/o the -f)'
-      ! write (*,*) '          -r reffile      => compare sds to reffile'
+      write (*,*) '          -l2aux          => the files are l2aux, not l1b'
       write (*,*) '          -v              => switch on verbose mode'
       write (*,*) '          -silent         => switch on silent mode'
       write (*,*) '                            (printing only if diffs found)'
@@ -353,13 +357,16 @@ contains
       endif
     endif
     ! Loop over sdNames in file 1
+    ! (But skip PCF and HDFEOS INFORMATION/coremetadata.0)
     do i = 1, noSds
       call GetStringElement (trim(mysdList), sdName, i, countEmpty )
-      ! if ( sdName /= 'R1A:118.B32W:PT.S0.WF4-1' ) cycle
+      if ( sdName == 'PCF' .or. &
+        &  sdName == 'HDFEOS INFORMATION/coremetadata.0' .or. &
+        &  sdName == 'l2cf' ) cycle
       ! Allocate and fill l2aux
       ! if ( options%verbose ) print *, 'About to read ', trim(sdName)
         call ReadL1BData ( sdfid1, trim(sdName), L1bData, NoMAFs, status, &
-          & hdfVersion=the_hdfVersion, NEVERFAIL=.true. )
+          & hdfVersion=the_hdfVersion, NEVERFAIL=.true., l2aux=options%l2aux )
         if ( status /= 0 ) then
 	       call MLSMessage ( MLSMSG_Warning, ModuleName, &
           	& 'Unable to find ' // trim(sdName) // ' in ' // trim(File1) )
@@ -368,7 +375,7 @@ contains
         endif
       ! if ( options%verbose ) print *, 'About to read ', trim(sdName), ' (2nd)'
         call ReadL1BData ( sdfid2, trim(sdName), L1bData2, NoMAFs, status, &
-          & hdfVersion=the_hdfVersion, NEVERFAIL=.true. )
+          & hdfVersion=the_hdfVersion, NEVERFAIL=.true., l2aux=options%l2aux )
         if ( status /= 0 ) then
 	       call MLSMessage ( MLSMSG_Warning, ModuleName, &
           	& 'Unable to find ' // trim(sdName) // ' in ' // trim(File1) )
@@ -457,6 +464,9 @@ end program l1bdiff
 !==================
 
 ! $Log$
+! Revision 1.7  2007/07/18 00:15:25  pwagner
+! -rms outputs fractional diffs more clearly
+!
 ! Revision 1.6  2006/11/22 18:33:10  pwagner
 ! New optional args to diff l1b files with different number MAFs
 !
