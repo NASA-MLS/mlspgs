@@ -2,6 +2,7 @@
 #which_fftw.sh
 
 # --------------- which_fftw.sh help
+# A "Swiss-Army" shell script
 # Use (1):
 # Creates fftw_link_line to build mlspgs level 3d program (default)
 # Use (2):
@@ -65,9 +66,16 @@
 #****************************************************************
 me="$0"
 my_name=which_fftw.sh
+# Where we put the spare pieces Lahey might need to build
+# a static executable
+# (If we don't have these, we can't build statically with Lahey)
+STOB_PATH="/users/pwagner/lib/lf95"
 # What to echo as need object for building static executable
 # (if Lahey compiler < v6.2 and Red Hat > v8 )
-my_stobject="/users/pwagner/lib/lf95/ctype-info.o"
+# (even more if CentOS 5)
+my_stobject="$STOB_PATH/ctype-info.o"
+more_stobjects="$STOB_PATH/ctype-info.o $STOB_PATH/unwind-dw2.o \
+ $STOB_PATH/unwind-dw2-fde-glibc.o $STOB_PATH/unwind-c.o"
 DEEBUG=off
 USE="1"
 
@@ -122,20 +130,6 @@ then
    elif [ "$test_296" != "" ]
    then
      gcc_version="2.96"
-  #elif [ "$test_31" != "" ]
-  #then
-  #  gcc_version="3.1"
-  #elif [ "$test_322" != "" ]
-  #then
-  #  gcc_version="3.2.2"
-  #  stobject="$my_stobject"
-  #elif [ "$test_323" != "" ]
-  #then
-  #  gcc_version="3.2.3"
-  #  stobject="$my_stobject"
-  #elif [ "$test_32" != "" ]
-  #then
-  #  gcc_version="3.2"
    else
      gcc_version=`gcc -dumpversion`
      #exit 1
@@ -151,6 +145,9 @@ then
         ;;
         3.2.3)
         stobject="$my_stobject"
+        ;;
+        4.1.1)
+        stobject="$more_stobjects"
         ;;
         *)
         stobject="$my_stobject"
@@ -248,6 +245,9 @@ echo "You probably have to reset FFTW_ROOT in .configure" >> fftw_link_message
 echo "Do that by 'make configure_pvm'" >> fftw_link_message                      
 exit
 # $Log$
+# Revision 1.9  2007/06/27 19:36:05  pwagner
+# Can handle version 3 of fftw
+#
 # Revision 1.8  2005/06/23 22:20:46  pwagner
 # Reworded Copyright statement
 #
