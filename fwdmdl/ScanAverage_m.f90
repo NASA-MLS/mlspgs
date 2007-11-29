@@ -28,7 +28,7 @@ module ScanAverage_m
   end interface
 
   integer, parameter :: NG = 8 ! Order of Gauss quadrature
-  real(rp), parameter :: GX(ng) = (/ & ! Gauss abscissae
+  real(rp), parameter :: GX(ng) = (/ &          ! Gauss abscissae
     & -.960289856497536231684_rp, -.796666477413626739592_rp, &
     & -.525532409916328985818_rp, -.183434642495649804939_rp, &
     & 0.183434642495649804939_rp, 0.525532409916328985818_rp, &
@@ -91,7 +91,7 @@ contains
 
   end subroutine ScanAverage_1d
 
-  ! ---------------------------------------------  ScanAverage_1d  -----
+  ! ---------------------------------------------  ScanAverage_2d  -----
   subroutine ScanAverage_2d ( MIF_Times, DeadTime, Chi_In, Chi_Out, Y_in, &
     &                         Y_Out, Pos1P, DY_DX_Out )
     ! Average over each MIF.  Assume linear motion during the MIF.
@@ -230,6 +230,9 @@ contains
 end module ScanAverage_m
 
 ! $Log$
+! Revision 2.4  2007/11/29 23:28:22  vsnyder
+! Repair some comments
+!
 ! Revision 2.3  2005/09/03 01:21:59  vsnyder
 ! Completely revised
 !
