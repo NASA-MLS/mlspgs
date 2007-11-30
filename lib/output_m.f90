@@ -19,7 +19,7 @@ module OUTPUT_M
   use MLSSets, only: FindFirst
   use MLSStringLists, only: ExpandStringRange, getStringElement, &
     & NumStringElements, wrap
-  use MLSStrings, only: lowerCase, writeIntsToChars
+  use MLSStrings, only: lowerCase, nCopies, writeIntsToChars
   implicit none
   private
 
@@ -790,7 +790,9 @@ contains
     endif
     col1 = index(lowercase(dateString), 't')
     if ( col1 > 0 ) then
-      date2 = reformatDate( dateString(1:col1-1), fromForm='yyyy-Doy', toForm=utcformat )
+      date2 = dateString(1:col1-1)
+       if ( nCopies(dateString(:col1-1), '-') < 2 ) &
+        & date2 = reformatDate( dateString(1:col1-1), fromForm='yyyy-Doy', toForm=utcformat )
     else
       date2 = reformatDate( dateString, fromForm='*', toForm=utcformat )
     endif
@@ -1943,6 +1945,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.67  2007/11/30 18:19:48  pwagner
+! outputCalendar handles yyyy-mm-dd formatted date
+!
 ! Revision 2.66  2007/10/18 23:39:46  pwagner
 ! Added numToChars and alignToFit intercaes for numeric types
 !
