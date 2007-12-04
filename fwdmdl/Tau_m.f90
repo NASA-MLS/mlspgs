@@ -16,7 +16,7 @@ module Tau_M
   implicit NONE
   private
 
-  public :: Destroy_Tau, Dump, Dump_Tau, Get_Tau
+  public :: Destroy_Tau, Dump, Dump_Tau, Get_Tau, Black_Out
 
   type, public :: Tau_T
     real(rp), pointer :: Tau(:,:) => NULL() ! Path X Frequencies
@@ -24,6 +24,8 @@ module Tau_M
   end type Tau_T
 
   interface Dump; module procedure Dump_Tau; end interface Dump
+
+  real(rp), parameter :: black_out = -15.0_rp ! underflow for exp, roughly
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -81,7 +83,6 @@ contains
 
     integer :: A, AA, I, I_Stop, N_Path
     real(rp) :: total_opacity
-    real(rp), parameter :: black_out = -15.0_rp
 
   ! Begin code
 
@@ -199,6 +200,9 @@ contains
 end module Tau_M
 
 ! $Log$
+! Revision 2.9  2007/12/04 23:39:19  vsnyder
+! Make black_out public
+!
 ! Revision 2.8  2007/11/07 02:34:32  vsnyder
 ! Correct a comment
 !
