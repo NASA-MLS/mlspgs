@@ -125,6 +125,7 @@ contains
       slabs%s%yi = 0.0_r8
       slabs%s%slabs1 = 0.0_r8
       slabs%s%dslabs1_dv0 = 0.0_r8
+      slabs%s%polarized = .false.
       if ( myDer ) then
         slabs%d%dv0s_dT = 0.0_r8
         slabs%d%dx1_dT = 0.0_r8
@@ -728,7 +729,7 @@ contains
 
     do l = 1, size(slabs%s)
 
-      if ( noPolarized .and. slabs%catalog%polarized(l) ) cycle
+      if ( noPolarized .and. slabs%s(l)%polarized ) cycle
 
       nu0s = slabs%s(l)%v0s
       x1 = slabs%s(l)%x1
@@ -1002,7 +1003,7 @@ contains
       end do
     else
       do l = 1, size(slabs%s)
-        if ( slabs%catalog%polarized(l) ) cycle
+        if ( slabs%s(l)%polarized ) cycle
         v0s = slabs%s(l)%v0s
         x1 = slabs%s(l)%x1
         y = slabs%s(l)%y
@@ -1140,7 +1141,7 @@ contains
       dTh = dTanh_dT(j)
       do l = 1, size(slabs(k)%s) ! == size(slabs(k)%d) == size(slabs(k)%catalog%lines)
 
-        if ( noPolarized .and. slabs(k)%catalog%polarized(l) ) cycle
+        if ( noPolarized .and. slabs(k)%s(l)%polarized ) cycle
 
         v0s = slabs(k)%s(l)%v0s
         x1 = slabs(k)%s(l)%x1
@@ -1235,7 +1236,7 @@ contains
 
     do l = 1, size(slabs%s)
 
-      if ( noPolarized .and. slabs%catalog%polarized(l) ) cycle
+      if ( noPolarized .and. slabs%s(l)%polarized ) cycle
 
       dslabs1_dNu0 = slabs%s(l)%dslabs1_dv0
       dv0s_dT = slabs%d(l)%dv0s_dT
@@ -1639,7 +1640,7 @@ contains
 
     beta = 0.0_rp
     do l = 1, size(slabs%s)
-      if ( noPolarized .and. slabs%catalog%polarized(l) ) cycle
+      if ( noPolarized .and. slabs%s(l)%polarized ) cycle
       v0s = slabs%s(l)%v0s
       x1 = slabs%s(l)%x1
       y = slabs%s(l)%y
@@ -1712,7 +1713,7 @@ contains
     dBeta_dT = 0.0_rp
     do l = 1, size(slabs%s)
 
-      if ( noPolarized .and. slabs%catalog%polarized(l) ) cycle
+      if ( noPolarized .and. slabs%s(l)%polarized ) cycle
 
       v0s = slabs%s(l)%v0s
       x1 = slabs%s(l)%x1
@@ -1797,7 +1798,7 @@ contains
 
     do l = 1, size(slabs%s)
 
-      if ( noPolarized .and. slabs%catalog%polarized(l) ) cycle
+      if ( noPolarized .and. slabs%s(l)%polarized ) cycle
 
       nu0s = slabs%s(l)%v0s
       x1 = slabs%s(l)%x1
@@ -1925,7 +1926,7 @@ contains
 
     do l = 1, size(slabs%s)
 
-      if ( noPolarized .and. slabs%catalog%polarized(l) ) cycle
+      if ( noPolarized .and. slabs%s(l)%polarized ) cycle
 
       dslabs1_dNu0 = slabs%s(l)%dslabs1_dv0
       dv0s_dT = slabs%d(l)%dv0s_dT
@@ -2299,7 +2300,8 @@ contains
       l = catalog%lines(i)
       slabs%useYi = slabs%useYi .or. lines(l)%useYi
       slabs%s(i)%v0 = lines(l)%v0
-      slabs%s(i)%polarized = slabs%catalog%polarized(i)
+      if ( associated(slabs%catalog%polarized) ) &
+        & slabs%s(i)%polarized = slabs%catalog%polarized(i)
       if ( derivs ) then
         call slabs_prep_dT ( t, catalog%mass, &
           & lines(l)%v0, lines(l)%el, lines(l)%w, lines(l)%ps, p, &
@@ -2751,6 +2753,10 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.55  2007/05/23 22:41:49  vsnyder
+! Change line data from struct of arrays to array of structs to improve
+! cache locality.
+!
 ! Revision 2.54  2006/12/04 21:17:28  vsnyder
 ! Reorganize FullForwardModel to use automatic arrays instead of allocating
 ! pointer arrays.  Requires testing for zero size instead of testing for
