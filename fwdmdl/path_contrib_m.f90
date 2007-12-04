@@ -36,6 +36,7 @@ contains
   subroutine Path_Contrib_Scalar ( incoptdepth, tan_pt, e_rflty, tol, do_gl )
 
     use MLSCommon, only: RK => RP, IP
+    use Tau_m, only: Black_Out
 
   ! inputs
 
@@ -51,9 +52,10 @@ contains
 
   ! Internal stuff
 
-    real(rk) :: dtaudn(size(incoptdepth))  ! path derivative of the
-                                           ! transmission function
-    integer(ip) :: i, n_path
+    real(rk) :: dtaudn(size(incoptdepth))  ! optical depth (delta) at first,
+                                           ! then path derivative of the
+                                           ! transmission function (tau)
+    integer(ip) :: i, n_path, last
 
     real(rk) :: MyTol
     real(rk), parameter :: temp = 250.0_rk
@@ -63,6 +65,7 @@ contains
   ! start code
 
     n_path = size(incoptdepth)
+    last = n_path
     myTol = - tolScale * tol ! Negative because we're summing -incoptdepth
 
   ! Compute the indefinite sum of (-incoptdepth).
@@ -70,25 +73,36 @@ contains
     dtaudn(1) = 0.0_rk
     do i = 2 , tan_pt
       dtaudn(i) = dtaudn(i-1) - incoptdepth(i)
+      if ( dtaudn(i) < black_out ) then
+        last = i
+        go to 9
+      end if
     end do
 
     dtaudn(tan_pt+1) = dtaudn(tan_pt)
 
     do i = tan_pt+2, n_path
       dtaudn(i) = dtaudn(i-1) - incoptdepth(i-1)
+      if ( dtaudn(i) < black_out ) then
+        last = i
+        go to 9
+      end if
     end do
 
-  ! compute the tau path derivative ~ exp(Tau) dTau/ds.
+9   continue
 
-    dtaudn = (eoshift(dtaudn,1,dtaudn(n_path)) -             &
-              eoshift(dtaudn,-1,dtaudn(1))) * exp(dtaudn)
+  ! compute the tau path derivative dTau/ds ~ exp(delta) d delta/ds.
 
-    dtaudn(tan_pt+1:n_path) = dtaudn(tan_pt+1:n_path) * e_rflty
+    dtaudn(:last) = (eoshift(dtaudn(:last),1,dtaudn(last)) -             &
+                     eoshift(dtaudn(:last),-1,dtaudn(1))) * exp(dtaudn(:last))
 
-  ! find where the tau derivative is large.  Remember, we've
-  ! been subtracting, so "large" means "large and negative."
+    dtaudn(tan_pt+1:last) = dtaudn(tan_pt+1:last) * e_rflty
 
-    where ( dtaudn < myTol ) do_gl = .true.
+  ! find where the tau derivative is large.  Remember, tau is monotone
+  ! decreasing, so "large" means "large and negative."
+
+    where ( dtaudn(:last) < myTol ) do_gl(:last) = .true.
+    do_gl(last+1:) = .false. ! Tau is blacked out, so no point in doing GL
 
   end subroutine Path_Contrib_Scalar
 
@@ -236,6 +250,9 @@ contains
 end module Path_Contrib_M
 
 ! $Log$
+! Revision 2.20  2006/12/13 02:32:03  vsnyder
+! Drag the tangent point around instead of assuming it's the middle one
+!
 ! Revision 2.19  2006/06/16 20:32:31  vsnyder
 ! Define NGP1 in glnp
 !
