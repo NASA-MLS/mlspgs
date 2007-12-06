@@ -14,17 +14,11 @@ module UNITS
 ! Provide several units and unit conversion constants.
 ! Initialize the declaration table with the unit names and scales.
 
-  use MLSCommon, only: RP, R8
+  use Constants, only: LN10, Pi, Deg2Rad, Rad2Deg, Sqrtln2, SqrtPi
+  use MLSKinds, only: R8
 
   implicit NONE
   public
-
-  real(r8), parameter :: Ln10 = 2.302585092994045684017991454684364207601_r8
-  real(r8), parameter :: Pi = 3.141592653589793238462643383279502884197_r8
-  real(r8), parameter :: Deg2Rad = Pi/180.0_r8 ! Degrees-to-Radians
-  real(r8), parameter :: Rad2Deg = 180.0_r8/Pi ! Radians-to-Degrees
-  real(r8), parameter :: Sqrtln2 = 0.8325546111576977563531646448952010476306_r8
-  real(r8), parameter :: SqrtPi = 1.772453850905516027298167483341145182798_r8
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -141,6 +135,10 @@ contains ! =====     Public procedures     =============================
 end module UNITS
 
 ! $Log$
+! Revision 2.29  2007/12/06 20:37:57  vsnyder
+! Move constants to Constants module to avoid sucking the parser infrastructure
+! into off-line stuff that doesn't need it.
+!
 ! Revision 2.28  2006/01/26 00:30:35  pwagner
 ! DU synonym for DobsonUnits
 !
