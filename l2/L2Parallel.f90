@@ -643,7 +643,7 @@ contains ! ================================ Procedures ======================
         case ( sig_tojoin ) ! --------------- Got a join request ---------
           call StoreSlaveQuantity( joinedQuantities, &
             & joinedVectorTemplates, joinedVectors, &
-            & storedResults, chunk, noChunks, slaveTid, noQuantitiesAccumulated, &
+            & storedResults, chunk, noChunks, noQuantitiesAccumulated, &
             & stageFileID )
 
         case ( sig_RequestDirectWrite ) ! ------- Direct write permission --
@@ -1249,7 +1249,7 @@ contains ! ================================ Procedures ======================
               & nameString=trim(storedResults(resInd)%hdfName))
           case ( s_l2aux )
             call JoinL2AuxQuantities ( storedResults(resInd)%key, hdfNameIndex, &
-              & qty, l2auxDatabase, chunk, chunks )
+              & qty, l2auxDatabase, chunks )
             ! Ignore timing and direct writes
           end select
 
@@ -1341,7 +1341,7 @@ contains ! ================================ Procedures ======================
           & (.not. chunksStarted) .and. (.not. chunksAbandoned) )
         chunkAndMachineReady = .not. machineRequestQueued
         if ( .not. chunkAndMachineReady ) then
-          call ReceiveMachineFromL2Q(L2Qtid, machineName)
+          call ReceiveMachineFromL2Q(machineName)
         else
           call RequestMachineFromL2Q(L2Qtid, nextChunk, machineName)
         endif
@@ -1454,7 +1454,7 @@ contains ! ================================ Procedures ======================
 
   ! -------------------------------------- StoreSlaveQuantity --------------
   subroutine StoreSlaveQuantity ( joinedQuantities, joinedVectorTemplates, &
-    & joinedVectors, storedResults, chunk, noChunks, tid, noQuantitiesAccumulated,&
+    & joinedVectors, storedResults, chunk, noChunks, noQuantitiesAccumulated,&
     & stageFileID )
     use VectorHDF5, only: WRITEVECTORASHDF5
     ! This routine reads a vector from a slave and stores it in
@@ -1466,7 +1466,6 @@ contains ! ================================ Procedures ======================
     type (StoredResult_T), dimension(:), pointer :: STOREDRESULTS
     integer, intent(in) :: CHUNK        ! Index of chunk
     integer, intent(in) :: NOCHUNKS     ! Number of chunks
-    integer, intent(in) :: TID          ! Slave tid
     integer, intent(inout) :: NOQUANTITIESACCUMULATED ! Running counter /index
     integer, intent(in) :: STAGEFILEID  ! For using staging file
 
@@ -1729,13 +1728,12 @@ contains ! ================================ Procedures ======================
     call PVMFSend ( L2Qtid, petitionTag, info )
     if ( info /= 0 ) &
       & call PVMErrorMessage ( info, 'sending finish packet' )
-    call ReceiveMachineFromL2Q(L2Qtid, machineName)
+    call ReceiveMachineFromL2Q(machineName)
   end subroutine requestMachineFromL2Q
 
-  subroutine ReceiveMachineFromL2Q(L2Qtid, machineName)
+  subroutine ReceiveMachineFromL2Q(machineName)
     !
     ! request a free host from the l2 queue manager
-    integer, intent(in)                               :: L2Qtid
     character(len=MACHINENAMELEN), intent(out)        :: MACHINENAME
     !
     integer :: BEAT
@@ -1914,6 +1912,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.86  2007/12/07 01:51:08  pwagner
+! Removed unused dummy variables, etc.
+!
 ! Revision 2.85  2007/11/01 23:31:47  pwagner
 ! Print clearer msgs when unable to launch slave
 !
