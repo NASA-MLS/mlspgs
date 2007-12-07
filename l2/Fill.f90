@@ -58,7 +58,8 @@ contains ! =====     Public Procedures     =============================
     use Chunks_m, only: MLSChunk_T
     use DestroyCommand_m, only: DestroyCommand
     use DumpCommand_m, only: BooleanFromAnyGoodRadiances, &
-      & BooleanFromAnyGoodValues, BooleanFromComparingQtys, BooleanFromFormula, &
+      & BooleanFromAnyGoodValues, &
+      & BooleanFromCatchWarning, BooleanFromComparingQtys, BooleanFromFormula, &
       & DumpCommand, Skip
     use Expr_M, only: EXPR, EXPR_CHECK
     use FillUtils_1, only: fillError, &
@@ -152,7 +153,7 @@ contains ! =====     Public Procedures     =============================
       & L_ZETA
     ! Now the specifications:
     use INIT_TABLES_MODULE, only: S_ANYGOODVALUES, S_ANYGOODRADIANCES, &
-      & S_COMPARE, S_DESTROY, S_DUMP, S_FILL, S_FILLCOVARIANCE, &
+      & S_CATCHWARNING, S_COMPARE, S_DESTROY, S_DUMP, S_FILL, S_FILLCOVARIANCE, &
       & S_FILLDIAGONAL, S_FLAGCLOUD, S_FLUSHL2PCBINS, S_FLUSHPFA, &
       & S_LOAD, S_MATRIX,  S_NEGATIVEPRECISION, S_PHASE, S_POPULATEL2PCBIN, &
       & S_REEVALUATE, S_RESTRICTRANGE, S_SKIP, S_SNOOP, &
@@ -177,8 +178,8 @@ contains ! =====     Public Procedures     =============================
     use MLSL2Options, only: SKIPRETRIEVAL, SPECIALDUMPFILE
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, &
       & addPhaseToPhaseNames, fillTimings, finishTimings
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, &
-      & MLSMSG_Allocate, MLSMSG_Deallocate
+    use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
+      & MLSMSG_Allocate, MLSMSG_Deallocate, MLSMessage, MLSMessageReset
     use MLSRandomNumber, only: mls_random_seed, MATH77_RAN_PACK
     use MLSStringLists, only: catLists, GetHashElement, &
       & NumStringElements, PutHashElement, &
@@ -600,6 +601,8 @@ contains ! =====     Public Procedures     =============================
 
       ! Node_id(key) is now n_spec_args.
 
+      if ( get_spec_id(key) /= s_catchWarning ) &
+        & call MLSMessageReset( clearLastWarning=.true. )
       select case( get_spec_id(key) )
       case ( s_vector ) ! ===============================  Vector  =====
         got = .false.
@@ -645,6 +648,8 @@ contains ! =====     Public Procedures     =============================
       case ( s_anygoodradiances )
         call decorate ( key, &
           & BooleanFromAnyGoodRadiances ( key, chunks(chunkNo), filedatabase ) )
+      case ( s_catchWarning )
+        call decorate ( key,  BooleanFromCatchWarning ( key ) )
       case ( s_compare )
         call decorate ( key,  BooleanFromComparingQtys ( key, vectors ) )
       case ( s_Reevaluate )
@@ -967,7 +972,7 @@ contains ! =====     Public Procedures     =============================
 
       case default ! Can't get here if tree_checker worked correctly
       end select
-    end do
+    end do ! End of loop of specs
 
     if ( fillError /= 0 ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, 'Problem with Fill section' )
@@ -2290,6 +2295,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.359  2007/12/07 01:13:39  pwagner
+! Lets us catch warnings and assign to runtime Booleans
+!
 ! Revision 2.358  2007/11/15 22:53:16  pwagner
 ! May set runtimeBooleans by anyGood.., Compare, Reevaluate commands
 !
