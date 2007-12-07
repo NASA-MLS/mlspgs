@@ -119,7 +119,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_APRIORI            = s_anygoodvalues + 1
   integer, parameter :: S_BINSELECTOR        = s_apriori + 1
   integer, parameter :: S_BOOLEAN            = s_binSelector + 1
-  integer, parameter :: S_CHECKPOINT         = s_boolean + 1
+  integer, parameter :: S_CATCHWARNING       = s_boolean + 1
+  integer, parameter :: S_CHECKPOINT         = s_catchwarning + 1
   integer, parameter :: S_CHUNKDIVIDE        = s_checkpoint + 1
   integer, parameter :: S_COLUMNSCALE        = s_chunkDivide + 1
   integer, parameter :: S_COMBINECHANNELS    = s_columnScale + 1
@@ -335,6 +336,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_apriori) =              add_ident ( 'apriori' )
     spec_indices(s_binSelector) =          add_ident ( 'binSelector' )
     spec_indices(s_Boolean) =              add_ident ( 'boolean' )
+    spec_indices(s_catchwarning) =         add_ident ( 'catchwarning' )
     spec_indices(s_checkpoint) =           add_ident ( 'checkpoint' )
     spec_indices(s_chunkDivide) =          add_ident ( 'chunkDivide' )
     spec_indices(s_columnScale) =          add_ident ( 'columnScale' )
@@ -990,6 +992,12 @@ contains ! =====     Public procedures     =============================
              np+n_spec_def /) )
 
     call make_tree( (/ &
+      begin, s+s_catchwarning, &
+             begin, f+f_message, t+t_string, n+n_field_type, &
+             begin, f+f_Boolean, s+s_Boolean, nr+n_field_spec, &
+             np+n_spec_def /) )
+
+    call make_tree( (/ &
       begin, s+s_compare, &
              begin, f+f_a, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
              begin, f+f_b, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
@@ -1491,19 +1499,19 @@ contains ! =====     Public procedures     =============================
              begin, p+p_scan_upper_limit, t+t_numeric_range, n+n_name_def, &
              s+s_time, s+s_chunkDivide, n+n_section, &
       begin, z+z_construct, s+s_anyGoodRadiances, s+s_anyGoodValues, &
-             s+s_Boolean, s+s_compare, s+s_dump, s+s_forge, s+s_forwardModel, &
-             s+s_hgrid, s+s_phase, s+s_quantity, s+s_reevaluate, s+s_snoop, &
-             s+s_time, s+s_vectortemplate, &
+             s+s_Boolean, s+s_catchWarning, s+s_compare, s+s_dump, &
+             s+s_forge, s+s_forwardModel, s+s_hgrid, s+s_phase, s+s_quantity, &
+             s+s_reevaluate, s+s_snoop, s+s_time, s+s_vectortemplate, &
              n+n_section, &
       begin, z+z_fill, &
-             s+s_anyGoodRadiances, s+s_anyGoodValues, &
+             s+s_anyGoodRadiances, s+s_anyGoodValues, s+s_catchWarning, &
              s+s_compare, s+s_destroy, s+s_dump, s+s_fill, s+s_fillCovariance, &
              s+s_fillDiagonal, s+s_flagcloud, s+s_flushL2PCBins, s+s_flushPFA, &
              s+s_load, s+s_matrix, s+s_negativePrecision, s+s_phase, &
              s+s_populateL2PCBin, s+s_reevaluate, s+s_restrictRange, &
              s+s_skip, s+s_snoop, s+s_subset, &
              s+s_time, s+s_transfer, s+s_updateMask, s+s_vector, n+n_section, &
-      begin, z+z_retrieve, s+s_anyGoodValues, &
+      begin, z+z_retrieve, s+s_anyGoodValues, s+s_catchWarning, &
              s+s_checkpoint, s+s_compare, s+s_dump, s+s_dumpBlocks, &
              s+s_flagCloud, s+s_flushPFA, s+s_leakcheck, s+s_matrix, &
              s+s_reevaluate, s+s_restrictRange, s+s_retrieve, &
@@ -1536,6 +1544,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.462  2007/12/07 01:12:14  pwagner
+! Lets us catch warnings and assign to runtime Booleans
+!
 ! Revision 2.461  2007/11/15 22:06:08  pwagner
 ! New Compare command, and others giving value to runtimeBooleans, now in Join, Retrieve sections
 !
