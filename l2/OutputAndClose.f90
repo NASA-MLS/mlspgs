@@ -561,7 +561,7 @@ contains ! =====     Public Procedures     =============================
         ! Otherwise--normal output commands
         select case ( output_type )
         case ( l_l2cf ) ! ------------------------------ Writing l2cf file ---
-          call OutputL2CF ( key, file_base, DEBUG, filedatabase )
+          call OutputL2CF ( file_base, DEBUG, filedatabase )
           cycle
 
         case ( l_l2gp ) ! --------------------- Writing l2gp files -----
@@ -1126,13 +1126,12 @@ contains ! =====     Public Procedures     =============================
   end subroutine OutputL2AUX
 
   ! ---------------------------------------------  OutputL2CF  -----
-  subroutine OutputL2CF ( key, fileName, DEBUG, filedatabase )
+  subroutine OutputL2CF ( fileName, DEBUG, filedatabase )
     ! Do the work of outputting the l2cf to a named file
-    ! use dump_0, only: dump
     use Intrinsic, only: l_hdf, l_ascii
     use MLSCommon, only: MLSFile_T, FileNameLen
     use MLSL2Options, only: checkPaths, TOOLKIT
-    use MLSFiles, only: AddInitializeMLSFile, Dump, &
+    use MLSFiles, only: AddInitializeMLSFile, &
       & GetMLSFileByName, GetMLSFileByType, GetPCFromRef, &
       & mls_closeFile, mls_openFile, &
       & readnchars, reserve_MLSFile, split_path_name
@@ -1141,7 +1140,6 @@ contains ! =====     Public Procedures     =============================
     use MLSHDF5, only: SaveAsHDF5DS
     use MLSPCF2, only: mlspcf_l2dgm_start, mlspcf_l2dgm_end
     ! Args
-    integer, intent(in)                     :: key ! tree node
     character(len=*), intent(inout)         :: fileName ! according to l2cf
     logical, intent(in)                     :: DEBUG ! Print lots?
     type(MLSFile_T), dimension(:), pointer  :: filedatabase
@@ -1159,7 +1157,6 @@ contains ! =====     Public Procedures     =============================
     character(len=8) :: OUTPUTTYPESTR   ! 'l2gp', 'l2aux', etc.
     character (len=132) :: path
     integer :: ReturnStatus
-    integer :: SON                      ! Of Root -- spec_args or named node
     integer :: textLength
     logical, parameter :: useExactTextLength = .true. ! NAG demands TRUE
     integer :: Version
@@ -1171,15 +1168,12 @@ contains ! =====     Public Procedures     =============================
         & 'Unable to write dataset--no entry in filedatabase for l2cf' )
       return
     endif
-    ! call dump(MLSL2CF, details=1)
     if ( MLSL2CF%stillOpen ) call mls_closeFile( MLSL2CF, status )
     if ( MLSL2CF%name == '<STDIN>' ) then
       call MLSMessage(MLSMSG_Warning, ModuleName, &
         & 'Unable to write dataset--stdin has been used for l2cf' )
       return
     endif
-    !call mls_openFile(MLSL2CF, status)
-    !call dump(MLSL2CF, details=1)
     textLength = 2000000
     l2cftext = ' '
     if ( useExactTextLength ) then
@@ -1203,13 +1197,8 @@ contains ! =====     Public Procedures     =============================
     endif
     ! Unfortunately, a lot of null characters sneak into this
     l2cftext = Replace( l2cftext, char(0), char(32) ) ! Replace null with space
-    !call mls_closeFile(MLSL2CF, status)
     close( UNIT=MLSL2CF%FileID%f_id, iostat=status )
     length = len_trim(l2cftext)
-    ! print *, 'Length: ', length
-    ! print *, '1st char: ', l2cftext(1:1), ichar( l2cftext(1:1) )
-    ! print *, 'last char: ', l2cftext(length:length), ichar( l2cftext(length:length) )
-    ! call dump( transfer(l2cftext, l2cfarray) )
 
     Version = 1
     OUTPUTTYPESTR = 'l2aux'
@@ -1695,6 +1684,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.131  2007/12/07 01:51:40  pwagner
+! Removed unused dummy variables, etc.
+!
 ! Revision 2.130  2007/05/30 22:30:29  pwagner
 ! Tries to avoid accessing components of unassociated pointers
 !
