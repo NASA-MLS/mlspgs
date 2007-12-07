@@ -41,7 +41,8 @@ contains ! =====     Public Procedures     =============================
     use QuantityTemplates, only: QUANTITYTEMPLATE_T
     use MLSCommon, only: MLSFile_T
     use MLSSignals_m, only: MODULES
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
+    use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Allocate, &
+      & MLSMessage
 
     type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
@@ -84,7 +85,8 @@ contains ! =====     Public Procedures     =============================
       & CreateQtyTemplateFromMLSCfInfo, ForgeMinorFrames
     use ConstructVectorTemplates, only: CreateVecTemplateFromMLSCfInfo
     use DumpCommand_m, only: BooleanFromAnyGoodRadiances, &
-      & BooleanFromAnyGoodValues, BooleanFromComparingQtys, BooleanFromFormula, &
+      & BooleanFromAnyGoodValues, &
+      & BooleanFromCatchWarning, BooleanFromComparingQtys, BooleanFromFormula, &
       & DumpCommand
     use FGrid, only: FGrid_T
     use ForwardModelConfig, only: AddForwardModelConfigToDatabase, &
@@ -94,13 +96,14 @@ contains ! =====     Public Procedures     =============================
     use HGridsDatabase, only: ADDHGRIDTODATABASE, HGRID_T
     use HGrid, only: CREATEHGRIDFROMMLSCFINFO
     use INIT_TABLES_MODULE, only: S_ANYGOODVALUES, S_ANYGOODRADIANCES, &
-      & S_BOOLEAN, S_COMPARE, S_DUMP, &
+      & S_BOOLEAN, S_CATCHWARNING, S_COMPARE, S_DUMP, &
       & S_FORGE, S_FORWARDMODEL, S_HGRID, &
       & S_PHASE, S_QUANTITY, S_REEVALUATE, S_TIME, S_VECTORTEMPLATE
     use L2GPData, only: L2GPDATA_T
     use MLSCommon, only: MLSFile_T, TAI93_Range_T
     use MLSL2Options, only: SPECIALDUMPFILE
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, addPhaseToPhaseNames
+    use MLSMessageModule, only: MLSMessageReset
     use MoreTree, only: Get_Spec_ID
     use OUTPUT_M, only: BLANKS, OUTPUT, &
       & revertoutput, switchOutput
@@ -164,6 +167,8 @@ contains ! =====     Public Procedures     =============================
 
       ! Node_id(key) is now n_spec_args.
 
+      if ( get_spec_id(key) /= s_catchWarning ) &
+        & call MLSMessageReset( clearLastWarning=.true. )
       select case( get_spec_id(key) )
       case ( s_anygoodvalues )
         call decorate ( key, &
@@ -171,6 +176,8 @@ contains ! =====     Public Procedures     =============================
       case ( s_anygoodradiances )
         call decorate ( key, &
           & BooleanFromAnyGoodRadiances ( key, chunk, filedatabase ) )
+      case ( s_catchWarning )
+        call decorate ( key,  BooleanFromCatchWarning ( key ) )
       case ( s_compare )
         call decorate ( key,  BooleanFromComparingQtys ( key, vectors ) )
       case ( s_dump )
@@ -280,6 +287,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.62  2007/12/07 01:13:18  pwagner
+! Lets us catch warnings and assign to runtime Booleans
+!
 ! Revision 2.61  2007/11/15 22:51:10  pwagner
 ! Boolean functions moved to DumpCommand
 !
