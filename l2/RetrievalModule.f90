@@ -42,7 +42,8 @@ contains
     use Chunks_m, only: MLSChunk_T
     use CloudRetrievalModule, only: CloudRetrieval
     use DumpCommand_m, only: &
-      & BooleanFromAnyGoodValues, BooleanFromComparingQtys, BooleanFromFormula, &
+      & BooleanFromAnyGoodValues, &
+      & BooleanFromCatchWarning, BooleanFromComparingQtys, BooleanFromFormula, &
       & DumpCommand, Skip
     use IEEE_Arithmetic, only: IEEE_IS_NAN
     use Expr_M, only: Expr
@@ -70,7 +71,7 @@ contains
       & L_highcloud, L_Jacobian_Cols, L_Jacobian_Rows, &
       & L_lowcloud, L_newtonian, L_none, L_norm, &
       & L_NumGrad, L_numJ, L_NumNewt, l_Simple, &
-      & S_ANYGOODVALUES, S_Compare, &
+      & S_ANYGOODVALUES, S_CATCHWARNING, S_Compare, &
       & S_dump, S_dumpBlocks, S_flagCloud, S_flushPFA, S_LeakCheck, S_matrix, &
       & S_REEVALUATE, S_restrictRange, S_retrieve, &
       & S_sids, S_SKIP, S_snoop, S_subset, S_time, S_updateMask
@@ -85,8 +86,8 @@ contains
     use MLSL2Options, only: SKIPRETRIEVAL, SPECIALDUMPFILE, &
       & STATEFILLEDBYSKIPPEDRETRIEVALS
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, Add_To_Retrieval_Timing
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, &
-      & MLSMessageCalls
+    use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
+      & MLSMessage, MLSMessageCalls, MLSMessageReset
     use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
     use Output_m, only: BLANKS, OUTPUT, revertoutput, switchOutput
     use PFAData_m, only: Flush_PFAData
@@ -299,6 +300,9 @@ contains
       ! "Key" now indexes an n_spec_args vertex.  See "Configuration file
       ! parser users' guide" for pictures of the trees being analyzed.
 
+      if ( get_spec_id(key) /= s_catchWarning ) &
+        & call MLSMessageReset( clearLastWarning=.true. )
+
       got = .false.
       spec = get_spec_id(key)
 
@@ -306,6 +310,8 @@ contains
       case ( s_anygoodvalues )
         call decorate ( key, &
           & BooleanFromAnyGoodValues ( key, vectorDatabase ) )
+      case ( s_catchWarning )
+        call decorate ( key,  BooleanFromCatchWarning ( key ) )
       case ( s_compare )
         call decorate ( key,  BooleanFromComparingQtys ( key, vectorDatabase ) )
       case ( s_dump )
@@ -2767,6 +2773,9 @@ NEWT: do ! Newtonian iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.301  2007/12/07 01:14:03  pwagner
+! Lets us catch warnings and assign to runtime Booleans
+!
 ! Revision 2.300  2007/11/15 22:53:16  pwagner
 ! May set runtimeBooleans by anyGood.., Compare, Reevaluate commands
 !
