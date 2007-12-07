@@ -40,12 +40,14 @@
 ! MLSMessageCalls          manage calling stack 
 ! MLSMessageClose          close MLSMessage log file; but see MLSMessageExit
 ! MLSMessageExit           recommended way to finish main program
+! MLSMessageInquire        Returns the requested info
 ! MLSMessageInternalFile   Returns the complete text that would be printed
 ! MLSMessageReset          reset flags, counters, etc. during runtime
 ! PVMErrorMessage          log a PVM error
 ! ReportTKStatus           converts SDP status to severity, prints if needed
 ! StopWithErrorMsg         report error msg, dump calling stack, stop
 ! SummarizeWarnings        show summary of how many warnings received
+! WasLastWarning           Returns TRUE if last warning matches string
 
 ! === (end of toc) ===
 
@@ -56,28 +58,35 @@
 ! MLSMessageSetup ( [log SuppressDebugs], [int LogFileUnit], [char* Prefix],
 !      [log useToolkit], [log CrashOnAnyError] )
 ! MLSMessageExit ( [int status], [char* farewell] )
+! MLSMessageInquire ( [char* Warning_msg], [int timesWarned], &
+!    [int totalnumwarnings], [char* LastWarningMsg]  )
 ! char* MLSMessageInternalFile ( int Severity, char* ModuleNameIn, char* Message, 
 !      [char* Advance], [MLSFile_T MLSFile] ) 
-! MLSMessageReset ( [int logFileUnit], [log CrashOnAnyError], [log Warnings] )
+! MLSMessageReset ( [int logFileUnit], [log CrashOnAnyError], [log Warnings], &
+!       [log clearLastWarning] )
 ! PVMErrorMessage ( int INFO, char* PLACE  )
 ! ReportTKStatus( int status, char* ModuleNameIn, char* Message, 
 !      [int Threshold] )
 ! StopWithErrorMsg ( char* Message, [MLSFile_T MLSFile] )
 ! SummarizeWarnings
+! log WasLastWarning ( char* str, char* opts )
 ! === (end of api) ===
   ! ---------------------------------------------------------------------------
 
   ! Define some low level parameters.  These are used by the calling code to
   ! indicate the severity or otherwise of the messages.
+  ! Normally, we treat any severity of Error or worse as reason to stop.
+  ! Any Warning is worth recording, and suppressed when too numerous.
+  ! Info may be customized to show, phase name, chunk number, etc.
+  ! Be advised, Crash may not properly close files opened by your run.
+  ! Use it only for specific debugging where you need a walkback.
+  ! See also MLSMessageConfig%crashOnAnyError
 
   integer, public, parameter :: MLSMSG_Success = PGS_S_SUCCESS ! == 0
   integer, public, parameter :: MLSMSG_Debug   = MLSMSG_Success + 1
   integer, public, parameter :: MLSMSG_Info    = MLSMSG_Debug + 1
   integer, public, parameter :: MLSMSG_Warning = MLSMSG_Info + 1
   integer, public, parameter :: MLSMSG_Error   = MLSMSG_Warning + 1
-  ! Warning--a Crash may not properly close files opened by your run
-  ! Use it only for specific debugging where you need a walkback
-  ! See also MLSMessageConfig%crashOnAnyError
   integer, public, parameter :: MLSMSG_Crash   = MLSMSG_Error + 1
 
   ! MLSMSG_Severity_to_* can be reset in a main program to cause us
@@ -100,13 +109,22 @@
   character(len=*), parameter :: WARNINGSSUPPRESSED = '(No more warnings of this)'
   integer, parameter :: MAXNUMWARNINGS = 40 ! was 80, but most tests < 10
   integer, parameter :: WARNINGMESSLENGTH = 80
-  character(len=WARNINGMESSLENGTH), dimension(MAXNUMWARNINGS), save :: &
-    &                   warningmessages = ' '
-  integer, dimension(MAXNUMWARNINGS), save :: timeswarned = 0
   integer, parameter :: TOTALNUMWARNINGSMAX = 10000000
-  integer, save :: numwarnings = 0
-  integer, save :: totalnumwarnings = 0
+
+  type :: MLSMSGWarnings_T
+    character(len=WARNINGMESSLENGTH), dimension(MAXNUMWARNINGS) :: &
+      &                   warningmessages = ' '
+    integer, dimension(MAXNUMWARNINGS) :: timeswarned = 0
+    integer :: numwarnings = 0
+    integer :: totalnumwarnings = 0
+    character(len=128) :: lastWarningMsg = ' '
+  end type MLSMSGWarnings_T
+
   integer, parameter :: MAXMESSLENGTH = 255 ! Max length on one line
+
+  ! This variable describes all the warnings we've recorded
+  type (MLSMSGWarnings_T), save :: MLSMSGWarnings
+
   ! This set of parameters are simple prefixes for common messages
 
   character (len=*), public, parameter :: MLSMSG_Allocate = &
@@ -159,7 +177,6 @@
   end type MLSMessageConfig_T
 
   ! This variable describes the configuration
-
   type (MLSMessageConfig_T), public, save :: MLSMessageConfig
   
   ! The following can be used to help trace the sequence of calls that led
@@ -184,7 +201,7 @@
   
   ! Public procedures
   public :: MLSMessage, MLSMessage_, MLSMessageSetup, MLSMessageClose
-  public :: MLSMessageExit, MLSMessageInternalFile
+  public :: MLSMessageExit, MLSMessageInquire, MLSMessageInternalFile
   public :: MLSMessageReset, PVMErrorMessage
   public :: ReportTKStatus
   public :: MLSMessageCalls, StopWithErrorMsg, SummarizeWarnings
@@ -231,46 +248,57 @@ contains
     warningLength = max( warningLength, 1 )
     ! Here's where we suppress warning messages beyond a limit for each and all
     if ( severity == MLSMSG_Warning ) &
-      & totalnumwarnings = min( TOTALNUMWARNINGSMAX, totalnumwarnings + 1 )
-    if ( totalnumwarnings > TOTALNUMWARNINGSMAX - 1 ) then
+      & MLSMSGWarnings%totalnumwarnings = &
+      & min( TOTALNUMWARNINGSMAX, MLSMSGWarnings%totalnumwarnings + 1 )
+    if ( MLSMSGWarnings%totalnumwarnings > TOTALNUMWARNINGSMAX - 1 ) then
       return
-    elseif ( totalnumwarnings > TOTALNUMWARNINGSMAX - 2 ) then
+    elseif ( MLSMSGWarnings%totalnumwarnings > TOTALNUMWARNINGSMAX - 2 ) then
       msgPlusNotice = '(Max Warnings reached)' // message
       msgLength = min(warningLength+len('(Max Warnings reached)'), MAXMESSLENGTH)
     endif
+    if ( severity == MLSMSG_Warning ) MLSMSGWarnings%lastWarningMsg = message
     nosubsequentwarnings = .false.
     if ( severity == MLSMSG_Warning .and. MLSMessageConfig%limitWarnings > -1 &
-      & .and. numwarnings <= MAXNUMWARNINGS .and. message /= ' ' ) then
+      & .and. MLSMSGWarnings%numwarnings <= MAXNUMWARNINGS .and. message /= ' ' ) then
       ! See if we have seen this message before
       newwarning = .true.
-      do warning_index = 1, numwarnings
+      do warning_index = 1, MLSMSGWarnings%numwarnings
         newwarning = newwarning .and. &
-          & ( warningmessages(warning_index) /= trim(message(1:warningLength)) )
+          & ( MLSMSGWarnings%warningmessages(warning_index) /= &
+          &   trim(message(1:warningLength)) )
       enddo
-      if ( newwarning .and. numwarnings >= MAXNUMWARNINGS ) then
+      if ( newwarning .and. MLSMSGWarnings%numwarnings >= MAXNUMWARNINGS ) then
       else if ( newwarning .or. &
-        & numwarnings < 1 ) then
-        numwarnings = numwarnings + 1
-        warningmessages(numwarnings) = message
-        timeswarned(numwarnings) = timeswarned(numwarnings) + 1
-        if ( timeswarned(numwarnings) > MLSMessageConfig%limitWarnings ) return
-        timeswarned(numwarnings) = min(timeswarned(numwarnings) + 1, &
+        & MLSMSGWarnings%numwarnings < 1 ) then
+        MLSMSGWarnings%numwarnings = MLSMSGWarnings%numwarnings + 1
+        MLSMSGWarnings%warningmessages(MLSMSGWarnings%numwarnings) = message
+        MLSMSGWarnings%timeswarned(MLSMSGWarnings%numwarnings) = &
+          & MLSMSGWarnings%timeswarned(MLSMSGWarnings%numwarnings) + 1
+        if ( MLSMSGWarnings%timeswarned(MLSMSGWarnings%numwarnings) > &
+          & MLSMessageConfig%limitWarnings ) return
+        MLSMSGWarnings%timeswarned(MLSMSGWarnings%numwarnings) = &
+          & min(MLSMSGWarnings%timeswarned(MLSMSGWarnings%numwarnings) + 1, &
           & MLSMessageConfig%limitWarnings + 1 )
         nosubsequentwarnings = &
-          & (timeswarned(numwarnings) > MLSMessageConfig%limitWarnings)
+          & (MLSMSGWarnings%timeswarned(MLSMSGWarnings%numwarnings) > &
+          & MLSMessageConfig%limitWarnings)
       else
-        do warning_index = 1, numwarnings
-          if ( warningmessages(warning_index) == message(1:warningLength) ) exit
+        do warning_index = 1, MLSMSGWarnings%numwarnings
+          if ( MLSMSGWarnings%warningmessages(warning_index) == &
+            & message(1:warningLength) ) exit
         end do
-        if ( warning_index > numwarnings ) return
+        if ( warning_index > MLSMSGWarnings%numwarnings ) return
         ! Now we assure that the times warned array contains all
         ! the times we were called, not just the times we printed
-        timeswarned(warning_index) = min(timeswarned(warning_index) + 1, &
+        MLSMSGWarnings%timeswarned(warning_index) = &
+          & min(MLSMSGWarnings%timeswarned(warning_index) + 1, &
           & TOTALNUMWARNINGSMAX )
-        if ( timeswarned(warning_index) > MLSMessageConfig%limitWarnings + 1 ) &
+        if ( MLSMSGWarnings%timeswarned(warning_index) > &
+          & MLSMessageConfig%limitWarnings + 1 ) &
           & return
         nosubsequentwarnings = &
-          & (timeswarned(warning_index) > MLSMessageConfig%limitWarnings)
+          & (MLSMSGWarnings%timeswarned(warning_index) > &
+          & MLSMessageConfig%limitWarnings)
       end if
     end if
 
@@ -328,7 +356,6 @@ contains
     character(len=*), optional, intent(in)    :: constantName
     ! Internal variables
     character(len=1), parameter :: comma = achar(0) ! '?' ! ','
-    integer :: ind
     integer :: m
     character(len=64) :: myName
     logical, parameter  :: nosubsequentwarnings = .false.
@@ -421,6 +448,35 @@ contains
       end if
     end subroutine DumpStack
   end subroutine MLSMessageCalls
+
+  ! --------------------------------------------  MLSMessageInquire  -----
+
+  ! This routine returns requested info about MLSMessages
+
+  subroutine MLSMessageInquire( Warning_msg, timesWarned, &
+    &  totalnumwarnings, LastWarningMsg  )
+    ! Args
+    integer, optional, intent(out)          :: timesWarned ! how many times 
+    character(len=*), optional, intent(in)  :: Warning_msg ! this happened
+    integer, optional, intent(out)          :: totalnumwarnings ! grand total
+    character(len=*), optional, intent(out) :: LastWarningMsg ! Unless cleared
+    ! Internal variables
+    integer :: warning_index
+    ! Executable code
+    if ( present(Warning_msg) ) then
+      timesWarned = 0
+      do warning_index = 1, MLSMSGWarnings%numwarnings
+        if ( index( lowercase(MLSMSGWarnings%warningmessages(warning_index)), &
+          & trim(lowercase(Warning_msg)) &
+          & ) > 0 ) &
+          & timesWarned = timesWarned + MLSMSGWarnings%timeswarned(warning_index)
+      enddo
+    endif
+    if ( present(totalnumwarnings) ) &
+      & totalnumwarnings = MLSMSGWarnings%totalNumWarnings
+    if ( present(LastWarningMsg) ) &
+      & LastWarningMsg = MLSMSGWarnings%LastWarningMsg
+  end subroutine MLSMessageInquire
 
   !-----------------------------------------  MLSMessageInternalFile  -----
   function MLSMessageInternalFile( Severity, ModuleNameIn, Message ) result(line)
@@ -527,11 +583,27 @@ contains
 
   ! This routine allows you to reset flags, counters, etc. during runtime
 
-  subroutine MLSMessageReset ( logFileUnit, CrashOnAnyError, Warnings )
+  subroutine MLSMessageReset ( logFileUnit, CrashOnAnyError, Warnings, &
+    & clearLastWarning )
+    ! Various uses:
+    !   (if logFileUnit supplied)
+    ! (1) Close current log file and (re-)open logFileUnit for logging
+    !
+    !   (if CrashOnAnyError supplied)
+    ! (2) Set option so that any call with MLSMSG_Err will result in crash
+    !
+    !   (if Warnings supplied)
+    ! (3) Print summary of past warnings; clear records, rezero totals, etc.
+    !
+    !   (if clearLastWarning supplied)
+    ! (4) Clear last Warning Msg
+    !
+    ! (Would it be better to have 4 different routines?)
     ! Args
     integer, intent(in), optional :: logFileUnit
     logical, intent(in), optional :: CrashOnAnyError
     logical, intent(in), optional :: Warnings
+    logical, intent(in), optional :: clearLastWarning
     character(len=6) :: logname
     ! Executable code
     if ( present(logFileUnit) ) then
@@ -548,15 +620,16 @@ contains
     end if
     if ( present(CrashOnAnyError) ) MLSMessageConfig%CrashOnAnyError = CrashOnAnyError
     if ( present(Warnings) ) then
-      if ( totalNumWarnings > 0 ) then
+      if ( MLSMSGWarnings%totalNumWarnings > 0 ) then
         call SummarizeWarnings
         call PrintItOut( 'Forgetting old Warnings', MLSMSG_Info )
       endif
-      numwarnings = 0
-      totalnumwarnings = 0
-      timeswarned = 0
-      warningmessages = ' '
+      MLSMSGWarnings%numwarnings = 0
+      MLSMSGWarnings%totalnumwarnings = 0
+      MLSMSGWarnings%timeswarned = 0
+      MLSMSGWarnings%warningmessages = ' '
     end if
+    if ( present(clearLastWarning) ) MLSMSGWarnings%lastWarningMsg = ' '
   end subroutine MLSMessageReset
 
   ! --------------------------------------------  PVMERRORMESSAGE  -----
@@ -590,21 +663,23 @@ contains
   subroutine SummarizeWarnings
     ! Print summary of warnings received
     ! Internal variables
-    character(len=32) :: name
     character(len=16) :: number
     integer :: i
     ! Executable
     call PrintItOut( '=========== Warnings Summary (' // &
       & trim(MLSMessageConfig%Info) // ') ==============', MLSMSG_Info )
-    write(number, '(i10)') totalnumwarnings
+    write(number, '(i10)') MLSMSGWarnings%totalnumwarnings
     call PrintItOut( 'Grand total' // ' ' // adjustl(number), MLSMSG_Info )
-    write(number, '(i10)') numwarnings
+    write(number, '(i10)') MLSMSGWarnings%numwarnings
     call PrintItOut( 'Different' // ' ' // adjustl(number), MLSMSG_Info )
-    if ( numwarnings < 1 ) return
+    if ( MLSMSGWarnings%numwarnings < 1 ) return
     call PrintItOut( 'number             message', MLSMSG_Info )
-    do i=1, numwarnings
-      write(number, '(i10)') timeswarned(i) - 1
-      call PrintItOut( number // ' ' // trim(warningmessages(i)), MLSMSG_Info )
+    do i=1, MLSMSGWarnings%numwarnings
+      write(number, '(i10)') MLSMSGWarnings%timeswarned(i) - 1
+      ! So grep can quickly spot the summarized warnings by, e.g.
+      ! grep '##' mlsl2.log
+      call PrintItOut( trim(number) // ' ## ' &
+        &  // trim(MLSMSGWarnings%warningmessages(i)), MLSMSG_Info )
     enddo
   end subroutine SummarizeWarnings
 
@@ -693,6 +768,28 @@ contains
     call printitout(trim(line), MLSMSG_Error)
   end subroutine dump
 
+  function LowerCase (str) result (outstr)
+    ! takes A-Z  and replaces with a-z
+    ! leaving other chars alone
+    !--------Argument--------!
+    character (len=*), intent(in) :: STR
+    character (len=len(str))      :: OUTSTR
+
+    !----------Local vars----------!
+    integer            :: i, icode
+    integer, parameter :: offset=IACHAR("a")-IACHAR("A")
+    !----------Executable part----------!
+    outstr=str
+
+    DO i = 1, LEN(str)
+       icode=IACHAR(outstr(i:i))
+       IF ( icode >=IACHAR("A") .AND. icode <= IACHAR("Z")) THEN
+          outstr(i:i)=achar(icode+offset)
+       END IF
+    END DO
+
+  END FUNCTION LowerCase
+
   subroutine MLSMessageStd ( Severity, ModuleNameIn, Message, &
     & Advance, MLSFile )
 
@@ -771,6 +868,9 @@ contains
   
 !
 ! $Log$
+! Revision 2.6  2007/12/07 01:10:36  pwagner
+! Keeps track of and permits inquiries about warnings better
+!
 ! Revision 2.5  2007/10/03 23:59:46  vsnyder
 ! Simplify call stack
 !
