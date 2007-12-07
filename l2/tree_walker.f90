@@ -240,7 +240,7 @@ contains ! ====     Public Procedures     ==============================
         end if
       case ( z_mergeGrids )
         if ( .not. ( stopBeforeChunkLoop .or. checkPaths .or. parallel%master ) ) &
-          & call mergeGrids ( son, griddedDataBase, l2gpDatabase )
+          & call mergeGrids ( son, griddedDataBase )
 
         ! --------------------------------------------------------- Chunk divide
         ! Chunk divide can be a special one, in slave mode, we just listen out
@@ -605,6 +605,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.161  2007/10/09 00:34:21  pwagner
+! ifort was crashing in destroy_DACS_Filter_Database during checkPaths; we now skip
+!
 ! Revision 2.160  2007/09/13 21:51:39  pwagner
 ! Resumed destroying dbs (unless slave)
 !
