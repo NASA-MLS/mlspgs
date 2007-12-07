@@ -31,14 +31,13 @@ contains ! =================================== Public procedures
 
   ! ----------------------------------------- MergeGrid
 
-  subroutine MergeGrids ( root, griddedDataBase, l2gpDatabase )
+  subroutine MergeGrids ( root, griddedDataBase )
 
     use DumpCommand_m, only: DumpCommand
     use GriddedData, only: GRIDDEDDATA_T, &
       & ADDGRIDDEDDATATODATABASE
     use Init_tables_module, only: S_CONCATENATE, S_CONVERTETATOP, &
       & S_DELETE, S_DUMP, S_MERGE, S_WMOTROP
-    use L2GPData, only: L2GPDATA_T
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMESSAGECALLS
     use MoreTree, only: GET_SPEC_ID
     use Trace_M, only: TRACE_BEGIN, TRACE_END
@@ -48,7 +47,6 @@ contains ! =================================== Public procedures
 
     integer, intent(in) :: ROOT         ! Tree root
     type (griddedData_T), dimension(:), pointer :: griddedDataBase ! Database
-    type ( l2gpData_T), dimension(:), pointer :: L2GPDATABASE
 
     ! Local variables
     integer :: I                        ! Loop counter
@@ -933,6 +931,9 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.36  2007/12/07 01:15:01  pwagner
+! Removed unused dummp varaibles, etc.
+!
 ! Revision 2.35  2007/10/24 00:17:22  pwagner
 ! Removed unused declarations
 !
