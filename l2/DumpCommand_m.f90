@@ -20,6 +20,7 @@ module DumpCommand_M
 
   public :: BooleanFromAnyGoodRadiances
   public :: BooleanFromAnyGoodValues
+  public :: BooleanFromCatchWarning
   public :: BooleanFromComparingQtys
   public :: BooleanFromFormula
   public :: DumpCommand, Skip
@@ -222,6 +223,81 @@ contains
       & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
       & 'Run-time Boolean flags' )
   end function BooleanFromAnyGoodValues
+
+  ! ------------------------------------- BooleanFromCatchWarning --
+  function BooleanFromCatchWarning ( root ) result(size)
+    ! Called to check if the last command resulted in a warning
+    ! (either printed or suppressed)
+    ! and optionally if the warning matches a supplied message string
+    ! syntax: 
+    ! CatchWarning, [message='string'], Boolean="name"
+    use Dump_0, only: Dump
+    use INIT_TABLES_MODULE, only: F_BOOLEAN, F_MESSAGE
+    use MLSL2Options, only: runTimeValues
+    use MLSMessageModule, only: MLSMessageInquire
+    use MLSStringLists, only: NumStringElements, PutHashElement, &
+      & SwitchDetail
+    use MLSStrings, only: lowerCase
+    use OUTPUT_M, only: outputNamedValue
+    use String_Table, only: get_string
+    use TOGGLES, only: SWITCHES
+    use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
+    ! Dummy args
+    integer, intent(in) :: root
+    integer             :: size
+    ! Internal variables
+    logical, parameter :: countEmpty = .true.
+    integer :: field
+    integer :: field_index
+    integer :: fieldValue
+    character(len=255) :: LastWarningMsg
+    character(len=255) :: message
+    integer :: keyNo
+    character(len=32) :: nameString
+    integer :: son
+    logical :: tvalue
+    ! Executable
+    tvalue= .false.
+    message = ' '
+    do keyNo = 2, nsons(root)
+      son = subtree(keyNo,root)
+      field = subtree(1,son)
+      if ( nsons(son) > 1 ) then
+        fieldValue = decoration(subtree(2,son)) ! The field's value
+      else
+        fieldValue = son
+      end if
+      field_index = decoration(field)
+
+      select case ( field_index )
+      case ( f_Boolean )
+        call get_string ( sub_rosa(subtree(2,son)), nameString, strip=.true. )
+        nameString = lowerCase(nameString)
+      case ( f_message )
+        call get_string ( sub_rosa(subtree(2,son)), message, strip=.true. )
+      case default ! Can't get here if tree_checker works correctly
+      end select
+    end do
+    call MLSMessageInquire( LastWarningMsg=LastWarningMsg )
+    call outputNamedValue( 'message to match', message )
+    call outputNamedValue( 'LastWarningMsg', LastWarningMsg )
+    if ( len_trim(LastWarningMsg) < 1 ) then
+      tvalue = .false.
+    elseif ( len_trim(message) < 1 ) then
+      tvalue = .true.
+    else
+      ! tvalue = streq( message, LastWarningMsg, '-wcf' )
+      ! This allows partial matches, case-insensitive
+      tvalue = &
+        & index( lowerCase(LastWarningMsg), lowerCase(trim(adjustl(message))) ) > 0
+    endif
+    call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
+      & lowercase(trim(nameString)), tvalue, countEmpty=countEmpty )
+    size = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty )
+    if ( switchDetail(switches, 'bool') > -1 ) &
+      & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
+      & 'Run-time Boolean flags' )
+  end function BooleanFromCatchWarning
 
   ! ------------------------------------- BooleanFromComparingQtys --
   function BooleanFromComparingQtys ( root, vectors ) result(thesize)
@@ -1119,6 +1195,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.41  2007/12/07 01:12:43  pwagner
+! Lets us catch warnings and assign to runtime Booleans
+!
 ! Revision 2.40  2007/11/15 22:54:51  pwagner
 ! Functions to set runtimeBooleans moved here
 !
