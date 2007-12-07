@@ -1554,7 +1554,7 @@ contains ! =====     Public Procedures     =============================
             & ModuleName, 'This quantity should be joined as an l2aux')
         end if
         call JoinL2AUXQuantities ( key, hdfNameIndex, quantity, &
-          & l2auxDatabase, chunkNo, chunks )
+          & l2auxDatabase, chunks )
       end if
     end if
 
@@ -1746,7 +1746,7 @@ contains ! =====     Public Procedures     =============================
   ! are destined to go in L2AUX quantities.
 
   subroutine JoinL2AUXQuantities ( key, name, quantity, l2auxDatabase, &
-   & chunkNo, chunks, firstInstance, lastInstance )
+   & chunks, firstInstance, lastInstance )
 
     use Chunks_m, only: MLSChunk_T
     use intrinsic, only: L_GEODANGLE, L_MAF
@@ -1766,7 +1766,6 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: NAME    ! for the sd
     type (VectorValue_T), intent(in) :: quantity
     type (L2AUXData_T), dimension(:), pointer :: l2auxDatabase
-    integer, intent(in) :: chunkNo
     type (MLSChunk_T), dimension(:), intent(in) :: chunks
     integer, intent(in), optional :: firstInstance, lastInstance
     ! The last two are set if only part (e.g. overlap regions) of the quantity
@@ -2064,6 +2063,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.133  2007/12/07 01:50:52  pwagner
+! Removed unused dummy variables, etc.
+!
 ! Revision 2.132  2007/11/05 18:37:19  pwagner
 ! May Skip remaining lines in Fill, Join, Retrieve sections depending on Boolean
 !
