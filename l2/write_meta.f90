@@ -14,23 +14,18 @@ module WriteMetadata ! Populate metadata and write it out
 ! -------------------------------------------------------
 
   use Hdf, only: DFACC_RDWR
-  use HDFEOS5, only: HE5_SWATTACH, HE5_SWDETACH, &
-    & HE5_SWCLOSE
-  use INTRINSIC, only: L_GRID, L_HDF, L_HDFEOS, L_SWATH
+  use INTRINSIC, only: L_SWATH
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: FileNameLen, NameLen, R8
-  use MLSFiles, only: GetPCFromRef, mls_sfstart, mls_sfend, Split_path_name, &
-   &  mls_hdf_version, HDFVERSION_5, mls_io_gen_openF
+  use MLSFiles, only: GetPCFromRef, mls_sfstart, mls_sfend, Split_path_name
   use MLSL2Options, only: PENALTY_FOR_NO_METADATA, TOOLKIT
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
   use MLSPCF2, only: Mlspcf_mcf_l2gp_end, Mlspcf_mcf_l2gp_start, &
     & Mlspcf_mcf_l2log_start
   use MLSStrings, only: LowerCase
   use MLSStringLists, only: GetHashElement, ExtractSubString
   use Output_m, only: Output, blanks
-  use PCFHdr, only: INPUTPTR_STRING_LENGTH, &
-    & InputInputPointer, WriteInputPointer, WritePCF2Hdr, &
-    & GlobalAttributes
+  use PCFHdr, only: WriteInputPointer, WritePCF2Hdr, GlobalAttributes
   use SDPToolkit, only: PGSd_MET_GROUP_NAME_L, &
     & PGSd_MET_NUM_OF_GROUPS, PGSd_PC_FILE_PATH_MAX, PGS_PC_GetReference, &
     & PGSPC_W_NO_REFERENCE_FOUND, PGS_S_SUCCESS, PGSMET_W_METADATA_NOT_SET
@@ -185,7 +180,7 @@ contains
 
     ! Externals
 
-    integer, external :: PGS_MET_init, PGS_MET_setattr_d, &
+    integer, external :: PGS_MET_init, &
       &  PGS_MET_setAttr_s
     ! Executable code
 
@@ -285,13 +280,12 @@ contains
     character (len=PGSd_PC_FILE_PATH_MAX) :: Physical_filename
     integer :: ReturnStatus
     character (len=PGSd_PC_FILE_PATH_MAX) :: Sval
-    integer :: record_length, file_id, sw_id
     integer :: Version
     integer, parameter :: FILEACCESSTYPE = DFACC_RDWR
 
     ! Externals
 
-    integer, external :: PGS_MET_setattr_d, &
+    integer, external :: &
       &  PGS_MET_setAttr_s, PGS_MET_SETATTR_I
 
     !Executable code
@@ -389,13 +383,11 @@ contains
     ! PGEVersion
     !
 
-    !    USE InitPCFs, ONLY: L2PCF
 
     ! Arguments
 
     integer :: HDF_FILE
     integer :: hdf_sdid
-    ! type(PCFData_T) :: l2pcf
 
     ! the group have to be defined as 49 characters long. The C interface is 50.
     ! The cfortran.h mallocs an extra 1 byte for the null character '\0/1, 
@@ -404,7 +396,6 @@ contains
 
     character (len = PGSd_MET_GROUP_NAME_L) :: groups(PGSd_MET_NUM_OF_GROUPS)
     integer, optional, intent(in) :: hdfVersion
-    ! character(len=*), optional, intent(in)  :: filetype  ! 'sw' or 'hdf'
     integer, optional, intent(in)  :: filetype  ! 'sw' or 'hdf'
 
     !Local Variables
@@ -417,9 +408,7 @@ contains
     character (len=PGSd_PC_FILE_PATH_MAX) :: physical_filename
     character (len=PGSd_PC_FILE_PATH_MAX) :: sval
     character (len=132) :: attrname
-    integer :: version, indx, i
-    CHARACTER (LEN=INPUTPTR_STRING_LENGTH) :: inpt(31)
-    ! CHARACTER (LEN=6) :: inptptr_filetype
+    integer :: version, indx
     integer :: inptptr_filetype
     character (len=*), parameter :: METAWR_ERR = &
       & 'Error writing metadata attribute '
@@ -520,14 +509,9 @@ contains
 
     attrName = 'InputPointer'
     if ( SETINPUTPOINTER ) then
-!       call InputInputPointer(inpt, &
-!         & (/ L2pcf%L1BOAPCFId, L2pcf%L1BRADPCFIds(:) /) )
-!       returnStatus = WriteInputPointer(groups(INVENTORY), attrName, inpt)
       call announce_error ( 0, &
       & "Invalid method of writing InputPointer attribute.") 
     else
-      ! returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
-      !     INPUTPOINTERMESG)
       returnStatus = WriteInputPointer(groups(INVENTORY), attrName, &
         & filetype=inptptr_filetype)
     endif
@@ -698,7 +682,6 @@ contains
   subroutine Populate_metadata_std ( HDF_FILE, MCF_FILE, &
     & Field_name, hdfVersion, Metadata_error, &
     & filetype )
-    ! & isHDFEOS )
 
     ! This is the standard way to write meta data
     ! It should work unchanged for the standard l2gp files (e.g. BrO)
@@ -714,21 +697,16 @@ contains
     !Arguments
 
     integer                        :: HDF_FILE, MCF_FILE
-    ! type(PCFData_T)                :: L2pcf
     character (len=*)              :: Field_name
     integer, optional, intent(in)  :: hdfVersion
     integer, optional, intent(out) :: Metadata_error
-    ! character(len=*), optional, intent(in)  :: filetype  ! 'sw' or 'hdf'
     integer, optional, intent(in)  :: filetype  ! 'sw' or 'hdf'
-    ! logical, optional, intent(in)  :: isHDFEOS
 
     !Local Variables
 
     integer :: hdfReturn
     integer :: returnStatus
     integer :: sdid, hdf_sdid
-    character (len=132) :: attrname, errmsg
-    CHARACTER (LEN=98) :: inpt(31)
 
     integer, parameter :: INVENTORY=2, ARCHIVE=1
     character (len=PGSd_PC_FILE_PATH_MAX) :: physical_filename
@@ -746,9 +724,7 @@ contains
 
     ! Externals
 
-    integer, external :: PGS_MET_setattr_d, &
-      &  PGS_MET_setAttr_s, &
-      &  PGS_MET_write, PGS_MET_remove
+    integer, external :: PGS_MET_remove
 
     !Executable code
 
@@ -848,7 +824,6 @@ contains
     integer :: HdfReturn
     integer :: ReturnStatus
     integer :: Sdid, hdf_sdid
-    character (len=132) :: Attrname, Errmsg
 
     integer, parameter :: INVENTORY=2, ARCHIVE=1
     character (len=PGSd_PC_FILE_PATH_MAX) :: physical_filename
@@ -866,9 +841,7 @@ contains
 
     ! Externals
 
-    integer, external :: PGS_MET_setattr_d, &
-      &  PGS_MET_setAttr_s, &
-      &  PGS_MET_write, PGS_MET_remove
+    integer, external :: PGS_MET_remove
 
     !Executable code
 
@@ -1145,7 +1118,7 @@ contains
 
     ! Functions
 
-    integer, external :: PGS_MET_init, PGS_MET_remove, PGS_MET_setattr_d
+    integer, external :: PGS_MET_init, PGS_MET_remove
     integer, external :: PGS_MET_setattr_s, PGS_MET_write
     integer, external :: PGS_PC_getconfigdata
 
@@ -1365,6 +1338,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.63  2007/12/07 01:50:32  pwagner
+! Removed unused dummy variables, etc.
+!
 ! Revision 2.62  2007/06/21 00:54:08  vsnyder
 ! Remove tabs, which are not part of the Fortran standard
 !
