@@ -235,6 +235,7 @@ maxUpperOverlap
 maxValue
 measurements
 measurementSD
+message
 metaDataOnly
 metaName
 method
@@ -450,6 +451,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.180  2007/12/07 01:12:14  pwagner
+# Lets us catch warnings and assign to runtime Booleans
+#
 # Revision 2.179  2007/11/08 03:24:39  vsnyder
 # Add stateMax and stateMin
 #
