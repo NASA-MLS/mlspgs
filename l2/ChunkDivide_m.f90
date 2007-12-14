@@ -1871,8 +1871,11 @@ contains ! ===================================== Public Procedures =====
                 newObs%mafs(1) = obstructions(i)%mafs(1)
                 newObs%mafs(2) = &
                   & max ( obstructions(i)%mafs(2), obstructions(j)%mafs(2) )
-                call DeleteObstruction ( obstructions, i )
+                ! Must delete these in order: otherwise
+                ! if deleted i first where i < j, index would
+                ! no longer be "j" afterwards
                 call DeleteObstruction ( obstructions, j )
+                call DeleteObstruction ( obstructions, i )
                 call AddObstructionToDatabase ( obstructions, newObs )
                 call SortObstructions ( obstructions )
                 foundOne = .true.
@@ -2480,6 +2483,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.85  2007/12/14 01:55:28  pwagner
+! Must delete obstructions observing proper order for indexing
+!
 ! Revision 2.84  2007/11/01 23:30:48  pwagner
 ! Should permit us to make sids files, i.e. omit l1brad
 !
