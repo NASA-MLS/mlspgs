@@ -559,6 +559,9 @@ contains
       ! Now were any bright objects visible today?
       call ReadL1BData ( L1BFile,'/GHz/BO_stat', BO_stat, noMAFs, &
         & l1bflag, NeverFail= .true. )
+      ! We will pay no mind to "Fill" values
+      ! meaning we must zero them out
+      BO_stat%intField = max( 0, BO_stat%intField )
       BO_today = ' '
       do i=0, size(BO_names)
         if ( len_trim(BO_names( max(i,1) )) < 1 ) cycle
@@ -1004,6 +1007,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.127  2007/10/04 20:43:12  vsnyder
+! Remove unused symbols
+!
 ! Revision 2.126  2007/09/24 20:26:03  pwagner
 ! Prints this months calendar and shows todays bright objects
 !
