@@ -146,7 +146,7 @@ then
         3.2.3)
         stobject="$my_stobject"
         ;;
-        4.1.1)
+        4.1*)
         stobject="$more_stobjects"
         ;;
         *)
@@ -245,6 +245,9 @@ echo "You probably have to reset FFTW_ROOT in .configure" >> fftw_link_message
 echo "Do that by 'make configure_pvm'" >> fftw_link_message                      
 exit
 # $Log$
+# Revision 1.10  2007/11/28 18:56:23  pwagner
+# CentOS 5 and Lahey6.1 needed more pieces for statoc build
+#
 # Revision 1.9  2007/06/27 19:36:05  pwagner
 # Can handle version 3 of fftw
 #
