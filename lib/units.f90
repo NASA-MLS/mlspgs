@@ -14,6 +14,9 @@ module UNITS
 ! Provide several units and unit conversion constants.
 ! Initialize the declaration table with the unit names and scales.
 
+  ! The names imported from Constants are imported here because they
+  ! were at one time declared here, and several program units access
+  ! them from here.
   use Constants, only: LN10, Pi, Deg2Rad, Rad2Deg, Sqrtln2, SqrtPi
   use MLSKinds, only: R8
 
@@ -135,6 +138,9 @@ contains ! =====     Public procedures     =============================
 end module UNITS
 
 ! $Log$
+! Revision 2.30  2007/12/19 03:59:14  vsnyder
+! Add a comment explaining why unused names are imported from Constants
+!
 ! Revision 2.29  2007/12/06 20:37:57  vsnyder
 ! Move constants to Constants module to avoid sucking the parser infrastructure
 ! into off-line stuff that doesn't need it.
