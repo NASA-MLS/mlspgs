@@ -15,8 +15,9 @@ module MLSSets
 
   implicit NONE
   private
-  public :: FindAll, FindFirst, FindLast, FindLongestRange, FindNext, &
-    & Intersect, Intersection, FindIntersection, &
+  public :: FindAll, FindFirst, FindIntersection, FindLast, FindLongestRange, &
+    & FindNext, FindUnique,&
+    & Intersect, Intersection, &
     & Union, UnionSize
 
   interface FindFirst
@@ -51,6 +52,11 @@ module MLSSets
     module procedure FindAllSubString
   end interface
 
+  interface FindUnique
+    module procedure FindUniqueInteger, FindUniqueCharacter
+    module procedure FindUniqueCharacterSubString
+  end interface
+
   interface Intersection
     module procedure IntersectionInteger, IntersectionCharacter
   end interface
@@ -72,8 +78,10 @@ module MLSSets
 !               Compute indices of elements in intersection of two sets
 ! FindLast      Find the last instead
 ! FindLongestRange
-!                 Find the longest stretch of consecutive matches
+!               Find the longest stretch of consecutive matches
 ! FindNext      Find the next instead
+! FindUnique    Return only the unique elements of a set;
+!                 formally, a set contains only unique elements
 ! Intersect     Return true if two sets represented by arrays of integers have
 !               a common element
 ! Intersection  Compute intersection of two sets
@@ -107,6 +115,9 @@ module MLSSets
 ! int FindNextInteger (int set(:), int probe, int current, [log wrap], [log repeat]) 
 ! int FindNextLogical (log condition(:), int current, [log wrap], [log repeat])
 ! int FindNextSubString (char* set, char* probe, [log wrap], [log repeat], [log reverse])
+! FindUniqueCharacter (char* set(:), char* unique(:), [int nUnique], [int(:) counts])
+! FindUniqueCharacterSubString (char* set, char* unique, [int nUnique], [int(:) counts])
+! FindUniqueInteger (int set(:), int unique(:), [int nUnique], [int(:) counts])
 ! Note:
 ! In the following functions a set is represented either
 ! as an array of integers or an array of characters
@@ -462,6 +473,71 @@ contains ! =====     Public Procedures     =============================
     FindFirstSubString = 0
   end function FindFirstSubString
 
+  ! ---------------------------------------------  FindIntersection  -----
+  ! This family of routines finds the indices of the intersection between
+  ! two similarly montonic sets
+  ! e.g. given set1 = /(1, 3, 5, 7 )/, set2 = /(1, 2, 3, 4, 5)/
+  ! produces which1 = /(1, 2, 3)/, 
+  !      which2 = /(1, 3, 5)/, 
+  ! and the optional arg      how_many = 3
+  
+  ! Note that which1 and which2 are arrays of array indices
+  ! and that they will be monotonically increasing
+  subroutine FindIntersectionInteger ( set1, set2, WHICH1, which2, &
+    & HOW_MANY )
+    ! Formal arguments
+    integer, dimension(:), intent(in)     :: set1
+    integer, dimension(:), intent(in)     :: set2
+    integer, dimension(:), intent(out)    :: which1
+    integer, dimension(:), intent(out)    :: which2
+    integer, optional, intent(out)        :: how_many
+    ! Internal variables
+    integer                               :: myTol
+    integer :: i1, i2
+    integer :: my_how_many
+    ! Executable
+    myTol = 0
+    include 'FindIntersection.f9h'
+  end subroutine FindIntersectionInteger
+
+  subroutine FindIntersectionReal ( set1, set2, WHICH1, which2, &
+    & HOW_MANY, tol )
+    ! Formal arguments
+    real, dimension(:), intent(in)        :: set1
+    real, dimension(:), intent(in)        :: set2
+    integer, dimension(:), intent(out)    :: which1
+    integer, dimension(:), intent(out)    :: which2
+    integer, optional, intent(out)        :: how_many
+    real, intent(in), optional            :: Tol
+    ! Internal variables
+    real                                  :: myTol
+    integer :: i1, i2
+    integer :: my_how_many
+    ! Executable
+    myTol = 0.
+    if ( present(tol) ) myTol = tol
+    include 'FindIntersection.f9h'
+  end subroutine FindIntersectionReal
+
+  subroutine FindIntersectionDouble ( set1, set2, WHICH1, which2, &
+    & HOW_MANY, tol )
+    ! Formal arguments
+    double precision, dimension(:), intent(in)   :: set1
+    double precision, dimension(:), intent(in)   :: set2
+    integer, dimension(:), intent(out)           :: which1
+    integer, dimension(:), intent(out)           :: which2
+    integer, optional, intent(out)               :: how_many
+    double precision, intent(in), optional       :: Tol
+    ! Internal variables
+    double precision                             :: myTol
+    integer :: i1, i2
+    integer :: my_how_many
+    ! Executable
+    myTol = 0.d0
+    if ( present(tol) ) myTol = tol
+    include 'FindIntersection.f9h'
+  end subroutine FindIntersectionDouble
+
   ! These next could be done by reversing the list order and
   ! calling findFirst
   ! -------------------------------------------  FindLastCharacter  -----
@@ -612,12 +688,17 @@ contains ! =====     Public Procedures     =============================
     integer, dimension(2), intent(out) :: range
     ! Internal variables
     integer, dimension(size(set)) :: which
+    integer, dimension(size(set)) :: which_not
     integer :: how_many
 
     ! Executable code
     range = 0
-    call FindAll( set, which, how_many )
-    call FindLongestStretch( which, how_many, range )
+    call FindAll( set, which, how_many, which_not )
+    if ( probe ) then
+      call FindLongestStretch( which, how_many, range )
+    else
+      call FindLongestStretch( which_not, how_many, range )
+    endif
   end subroutine FindLongestLogical
 
   subroutine FindLongestSubString ( Set, Probe, Range, reverse )
@@ -837,6 +918,148 @@ contains ! =====     Public Procedures     =============================
     end if
   end function FindNextSubString
 
+  ! --------------------------------------------  FindUnique ------------------
+  subroutine FindUniqueInteger ( Set, Unique, nUnique,counts )
+    ! Find all unique elements in the array Set
+    integer, dimension(:), intent(in)            :: Set
+    integer, dimension(:), intent(out)           :: Unique  ! array of unique elements
+    integer, optional, intent(out)               :: nUnique ! num of unique elements
+    integer, dimension(:), optional, intent(out) :: counts  ! how often each appears
+
+    ! Local variables
+    integer :: i                        ! Loop counter
+    integer :: myCounts(size(Set))
+    integer :: myUnique(size(Set))
+    integer :: num
+    integer :: prev
+
+    ! Executable code
+    num = 0
+    myCounts = 0
+    if ( present(nUnique) ) nUnique = 0
+    if ( size(Unique) < 1 ) return
+    if ( size(Set) < 1 ) then
+      return
+    elseif ( size(Set) < 2 ) then
+      Unique = Set(1)
+      if ( present(nUnique) ) nUnique = 1
+      if ( present(counts) ) counts = 1
+      return
+    endif
+    num = 1
+    myUnique(1) = Set(1)
+    myCounts(1) = 1
+    do i=2, size(Set)
+      prev = FindFirst( myUnique(1:num), Set(i) )
+      if ( prev > 0 ) then
+        myCounts(prev) = myCounts(prev) + 1
+      else
+        num = num + 1
+        myUnique(num) = Set(i)
+        myCounts(num) = 1
+      endif
+    enddo
+    if ( present(nUnique) ) nUnique = num
+    num = min( num, size(Unique) )
+    Unique = 0
+    Unique(1:num) = myUnique(1:num)
+    if ( present(counts) ) counts(1:num) = myCounts(1:num)
+  end subroutine FindUniqueInteger
+
+  subroutine FindUniqueCharacter ( Set, Unique, nUnique, counts )
+    ! Find all unique elements in the array Set
+    character(len=*), dimension(:), intent(in)  :: Set
+    character(len=*), dimension(:), intent(out) :: Unique   ! array of unique elements
+    integer, optional,          intent(out)     :: nUnique  ! num of unique elements
+    integer, dimension(:), optional, intent(out) :: counts  ! how often each appears
+
+    ! Local variables
+    integer :: i                        ! Loop counter
+    integer :: myCounts(size(Set))
+    character(len=len(Set)) :: myUnique(size(Set))
+    integer :: num
+    integer :: prev
+
+    ! Executable code
+    num = 0
+    myCounts = 0
+    if ( present(nUnique) ) nUnique = 0
+    if ( size(Unique) < 1 ) return
+    if ( size(Set) < 1 ) then
+      return
+    elseif ( size(Set) < 2 ) then
+      Unique = Set(1)
+      if ( present(nUnique) ) nUnique = 1
+      if ( present(counts) ) counts = 1
+      return
+    endif
+    num = 1
+    myUnique(1) = Set(1)
+    myCounts(1) = 1
+    do i=2, size(Set)
+      prev = FindFirst( myUnique(1:num), Set(i) )
+      if ( prev > 0 ) then
+        myCounts(prev) = myCounts(prev) + 1
+      else
+        num = num + 1
+        myUnique(num) = Set(i)
+        myCounts(num) = 1
+      endif
+    enddo
+    if ( present(nUnique) ) nUnique = num
+    num = min( num, size(Unique) )
+    Unique = ' '
+    Unique(1:num) = myUnique(1:num)
+    if ( present(counts) ) counts(1:num) = myCounts(1:num)
+  end subroutine FindUniqueCharacter
+
+  subroutine FindUniqueCharacterSubString ( Set, Unique, nUnique, counts )
+    ! Find all unique substrings in the character Set
+    character(len=*), intent(in)  :: Set
+    character(len=*), intent(out) :: Unique   ! composed of unique subvstrings
+    integer, optional,          intent(out)     :: nUnique  ! num of unique elements
+    integer, dimension(:), optional, intent(out) :: counts  ! how often each appears
+
+    ! Local variables
+    integer :: i                        ! Loop counter
+    integer :: myCounts(len(Set))
+    character(len=len(Set)) :: myUnique
+    integer :: num
+    integer :: prev
+
+    ! Executable code
+    num = 0
+    myCounts = 0
+    if ( present(nUnique) ) nUnique = 0
+    if ( len(Unique) < 1 ) return
+    if ( len(Set) < 1 ) then
+      return
+    elseif ( len(Set) < 2 ) then
+      Unique = Set
+      if ( present(nUnique) ) nUnique = 1
+      if ( present(counts) ) counts = 1
+      return
+    endif
+    num = 1
+    myUnique(1:1) = Set(1:1)
+    myCounts(1) = 1
+    do i=2, len(Set)
+      prev = FindFirst( myUnique(1:num), Set(i:i) )
+      if ( prev > 0 ) then
+        myCounts(prev) = myCounts(prev) + 1
+      else
+        num = num + 1
+        myUnique(num:num) = Set(i:i)
+        myCounts(num) = 1
+      endif
+    enddo
+    if ( present(nUnique) ) nUnique = num
+    num = min( num, len(Unique) )
+    Unique = ' '
+    Unique(1:num) = myUnique(1:num)
+    if ( present(counts) ) counts(1:num) = myCounts(1:num)
+  end subroutine FindUniqueCharacterSubString
+
   ! --------------------------------------------------  Intersect  -----
   logical function Intersect ( A, B )
   ! Return true if the integer arrays A and B have a common element
@@ -943,71 +1166,6 @@ contains ! =====     Public Procedures     =============================
       MLSMSG_Allocate // 'C in IntersectionCharacter' )
     c = tc(:size_c)
   end function IntersectionCharacter
-
-  ! ---------------------------------------------  FindIntersection  -----
-  ! This family of routines finds the indices of the intersection between
-  ! two similarly montonic sets
-  ! e.g. given set1 = /(1, 3, 5, 7 )/, set2 = /(1, 2, 3, 4, 5)/
-  ! produces which1 = /(1, 2, 3)/, 
-  !      which2 = /(1, 3, 5)/, 
-  ! and the optional arg      how_many = 3
-  
-  ! Note that which1 and which2 are arrays of array indices
-  ! and that they will be monotonically increasing
-  subroutine FindIntersectionInteger ( set1, set2, WHICH1, which2, &
-    & HOW_MANY )
-    ! Formal arguments
-    integer, dimension(:), intent(in)     :: set1
-    integer, dimension(:), intent(in)     :: set2
-    integer, dimension(:), intent(out)    :: which1
-    integer, dimension(:), intent(out)    :: which2
-    integer, optional, intent(out)        :: how_many
-    ! Internal variables
-    integer                               :: myTol
-    integer :: i1, i2
-    integer :: my_how_many
-    ! Executable
-    myTol = 0
-    include 'FindIntersection.f9h'
-  end subroutine FindIntersectionInteger
-
-  subroutine FindIntersectionReal ( set1, set2, WHICH1, which2, &
-    & HOW_MANY, tol )
-    ! Formal arguments
-    real, dimension(:), intent(in)        :: set1
-    real, dimension(:), intent(in)        :: set2
-    integer, dimension(:), intent(out)    :: which1
-    integer, dimension(:), intent(out)    :: which2
-    integer, optional, intent(out)        :: how_many
-    real, intent(in), optional            :: Tol
-    ! Internal variables
-    real                                  :: myTol
-    integer :: i1, i2
-    integer :: my_how_many
-    ! Executable
-    myTol = 0.
-    if ( present(tol) ) myTol = tol
-    include 'FindIntersection.f9h'
-  end subroutine FindIntersectionReal
-
-  subroutine FindIntersectionDouble ( set1, set2, WHICH1, which2, &
-    & HOW_MANY, tol )
-    ! Formal arguments
-    double precision, dimension(:), intent(in)   :: set1
-    double precision, dimension(:), intent(in)   :: set2
-    integer, dimension(:), intent(out)           :: which1
-    integer, dimension(:), intent(out)           :: which2
-    integer, optional, intent(out)               :: how_many
-    double precision, intent(in), optional       :: Tol
-    ! Internal variables
-    double precision                             :: myTol
-    integer :: i1, i2
-    integer :: my_how_many
-    ! Executable
-    myTol = 0.d0
-    if ( present(tol) ) myTol = tol
-    include 'FindIntersection.f9h'
-  end subroutine FindIntersectionDouble
 
   ! ------------------------------------------------------  Union  -----
   ! Compute the union C of the sets A and B, each represented by
@@ -1186,6 +1344,9 @@ contains ! =====     Public Procedures     =============================
 end module MLSSets
 
 ! $Log$
+! Revision 2.17  2007/12/19 01:27:42  pwagner
+! Added FindUnique to reduce input Set to its unique members
+!
 ! Revision 2.16  2007/10/09 00:30:50  pwagner
 ! Added FindLongestRange procedures
 !
