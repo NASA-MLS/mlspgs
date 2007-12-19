@@ -12,7 +12,7 @@
 module PHYSICS
 ! Physical constants
   use MLSCommon, only: R8, RP
-  use Units, only: LN10
+  use Constants, only: LN10
   implicit NONE
   public
 
@@ -48,6 +48,9 @@ contains
 
 end module PHYSICS
 ! $Log$
+! Revision 2.5  2005/06/22 17:25:50  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.4  2004/04/02 18:23:36  vsnyder
 ! Changed a few comments
 !
