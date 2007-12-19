@@ -15,7 +15,7 @@ module MLSStringLists               ! Module to treat string lists
 
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, &
     & MLSMSG_Allocate, MLSMSG_DeAllocate
-  use MLSCommon, only: i4, NameLen, BareFNLen
+  use MLSCommon, only: i4, BareFNLen
   use MLSSets, only: FindFirst
   use MLSStrings, only: Capitalize, lowerCase, &
     & ReadIntsFromChars, reverse, SplitNest, streq, writeIntsToChars
@@ -2610,9 +2610,6 @@ contains
     CHARACTER (LEN=len(inList))  :: outElement
 
     ! Local variables
-    INTEGER(i4) :: i           ! Loop counters
-    INTEGER(i4) :: elem, nextseparator
-
     CHARACTER (LEN=1)               :: separator
 
     ! Executable code
@@ -3104,6 +3101,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.31  2007/12/19 01:28:29  pwagner
+! Removed unused variables
+!
 ! Revision 2.30  2007/09/20 17:39:59  pwagner
 ! Added wrap procedure
 !
