@@ -704,8 +704,6 @@ contains
     integer, intent(in) :: VALUE
     character(len=*), intent(in), optional :: Format    ! How to print
     character(len=30) :: line
-    ! Internal variables
-    integer :: I, J, K
     ! Executable
     if ( present(Format)  ) then
       write( line, Format ) value
@@ -1945,6 +1943,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.68  2007/12/19 01:29:05  pwagner
+! Removed unused variables
+!
 ! Revision 2.67  2007/11/30 18:19:48  pwagner
 ! outputCalendar handles yyyy-mm-dd formatted date
 !
