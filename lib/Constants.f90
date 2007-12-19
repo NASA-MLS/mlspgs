@@ -24,6 +24,7 @@ module Constants
   real(r8), parameter :: Rad2Deg = 180.0_r8/Pi ! Radians-to-Degrees
   real(r8), parameter :: Sqrtln2 = 0.8325546111576977563531646448952010476306_r8
   real(r8), parameter :: SqrtPi = 1.772453850905516027298167483341145182798_r8
+  real(r8), parameter :: Sqrt2 = 1.414213562373095048801688724209698078569_r8
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -45,6 +46,9 @@ contains
 end module Constants
 
 ! $Log$
+! Revision 2.2  2007/12/19 03:58:48  vsnyder
+! Add Sqrt2
+!
 ! Revision 2.1  2007/12/06 20:36:27  vsnyder
 ! Initial commit
 !
