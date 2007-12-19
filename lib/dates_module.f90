@@ -22,7 +22,7 @@ module dates_module
   use MLSStringLists, only: GetStringElement, NumStringElements
   use MLSStrings, only: capitalize, depunctuate, indexes, lowerCase, &
     & writeIntsToChars
-  use MLSMessageModule, only: MLSMSG_Info, MLSMSG_Warning, MLSMessage
+  use MLSMessageModule, only: MLSMSG_Warning, MLSMessage
 
   implicit none
   private
@@ -378,11 +378,7 @@ contains
     type(MLSDATE_TIME_T), intent(in)  :: datetime
     character(len=MAXUTCSTRLENGTH)    :: utc
     ! Internal
-    character(len=8)             :: day
-    integer                      :: ErrTyp
     character(len=16)            :: hhmmss
-    character(len=8)             :: month
-    character(len=8)             :: year
     character(len=16)            :: yyyymmdd
     ! Executable
     call reducedatetime(datetime)
@@ -1370,9 +1366,7 @@ contains
     ! Internal variables
     character(len=2) :: hh
     integer          :: i, j
-    character(len=2) :: mm
     character(len=2) :: s
-    character(len=2) :: ss
     ! Executable
     form = ' '
     if ( len_trim(time) < 1 ) return
@@ -1458,7 +1452,6 @@ contains
     !----------Local vars----------!
     character(len=1), parameter :: dash='-'
     logical :: mystrict
-    character(len=1) :: utc_format        ! 'a' or 'b'
     character(len=*), parameter :: chars_0z = 'T00:00:00Z'
     !----------Executable part----------!
 
@@ -1530,7 +1523,6 @@ contains
     !----------Local vars----------!
     character(len=1), parameter :: dash='-'
     logical :: mystrict
-    character(len=1) :: utc_format        ! 'a' or 'b'
     character(len=*), parameter :: chars_0z = 'T00:00:00Z'
     !----------Executable part----------!
 
@@ -1579,7 +1571,6 @@ contains
     !----------Local vars----------!
     character(len=1), parameter :: dash='-'
     logical :: mystrict
-    character(len=1) :: utc_format        ! 'a' or 'b'
     integer :: zpos
     !----------Executable part----------!
 
@@ -1969,7 +1960,6 @@ contains
     integer,intent(out) :: doy
     !----------Local vars----------!
     integer :: year, month, day
-    integer :: ErrTyp
     !----------Executable part----------!
      ! call utc_to_yyyymmdd_ints(str, ErrTyp, year, month, day, nodash=.true.)
      doy = -1
@@ -1991,7 +1981,7 @@ contains
     character(len=*),intent(in) :: doy ! w/o the letter 'd'
     character(len=*),intent(out) :: yyyymmdd
     !----------Local vars----------!
-    integer :: year, month, day, doynum
+    integer :: year, doynum
     !----------Executable part----------!
      read(yyyy, *) year
      read(doy, *) doynum
@@ -2176,7 +2166,6 @@ contains
     character(len=16)            :: hhmmss
     integer             :: month
     integer             :: year
-    character(len=16)            :: yyyymmdd
     ! Executable
     ! print *, 'utc: ', trim(utc)
     call utc_to_yyyymmdd_ints( utc, ErrTyp, year, month, day )
@@ -2200,6 +2189,9 @@ contains
 
 end module dates_module
 ! $Log$
+! Revision 2.17  2007/09/24 20:23:32  pwagner
+! Added new procedures converting to/from yyyyDoy
+!
 ! Revision 2.16  2007/09/20 17:39:15  pwagner
 ! Added daysInMonth
 !
