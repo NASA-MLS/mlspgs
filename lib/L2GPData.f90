@@ -24,9 +24,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
     & MLS_HDF_VERSION, MLS_INQSWATH, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
   use MLSFillValues, only: ExtractArray, IsFillValue, ReplaceFillValues
   use MLSMessageModule, only: MLSMSG_Allocate, MLSMSG_DeAllocate, MLSMSG_Error, &
-    & MLSMSG_L1BREAD, MLSMSG_Warning, &
-    & MLSMessage, MLSMessageCalls
-  use MLSNumerics, only: HuntRange
+    & MLSMSG_Warning, MLSMessage, MLSMessageCalls
   use MLSSets, only: FindFirst, FindIntersection, FindLast
   use MLSStrings, only: Capitalize, lowercase
   use MLSStringLists, only: ExtractSubString, &
@@ -823,7 +821,7 @@ contains ! =====     Public Procedures     =============================
        & "Unable to open L2gp file: " // trim(FileName) // ' for reading')
     call ReadL2GPData_fileID(L2FileHandle, swathname, l2gp, numProfs=numProfs, &
        & firstProf=firstProf, lastProf=lastProf, hdfVersion=the_hdfVersion, &
-       & hmot=hmot)
+       & hmot=hmot, ReadStatus=ReadStatus)
     status = mls_io_gen_closeF(l_swath, L2FileHandle, FileName=FileName, &
       & hdfVersion=hdfVersion)
     if ( status /= 0 ) &
@@ -1262,7 +1260,7 @@ contains ! =====     Public Procedures     =============================
   !----------------------------------------  writeL2GPData_fileID  -----
   ! This subroutine is an amalgamation of the last three
   ! Should be renamed CreateAndWriteL2GPData
-  subroutine writeL2GPData_fileID(l2gp, l2FileHandle, swathName, filename, hdfVersion, &
+  subroutine writeL2GPData_fileID(l2gp, l2FileHandle, swathName, hdfVersion, &
     & notUnlimited)
 
     ! Arguments
@@ -1270,7 +1268,6 @@ contains ! =====     Public Procedures     =============================
     integer, intent(IN) :: l2FileHandle ! From swopen
     type (L2GPData_T), intent(INOUT) :: l2gp
     character (LEN=*), optional, intent(IN) ::swathName!default->l2gp%swathName
-    character (LEN=*), optional, intent(IN) ::fileName
     integer, optional, intent(in) :: hdfVersion
     logical, optional, intent(in) :: notUnlimited
     ! Exectuable code
@@ -1301,7 +1298,7 @@ contains ! =====     Public Procedures     =============================
     & swathName, nLevels, notUnlimited, compressTimes)
 
   use HDFEOS5, only: HE5S_UNLIMITED_F
-  use MLSHDFEOS, only: mls_swattach, mls_swdetach, &
+  use MLSHDFEOS, only: mls_swdetach, &
     & mls_swcreate, mls_dfldsetup, mls_gfldsetup, mls_swdefdim
     ! Brief description of subroutine
     ! This subroutine sets up the structural definitions in an empty L2GP file.
@@ -1336,8 +1333,6 @@ contains ! =====     Public Procedures     =============================
     integer :: SWID, STATUS
     logical :: myNotUnlimited
     logical :: mycompressTimes
-    integer, external :: he5_SWgetfill
-    ! integer, external :: he5_swsetfill
 
     if (present(swathName)) then
        name=swathName
@@ -2137,7 +2132,7 @@ contains ! =====     Public Procedures     =============================
   !-------------------------------------------------------------
 
   subroutine AppendL2GPData_fileID(l2gp, l2FileHandle, &
-    & swathName, filename, offset, lastProfile, TotNumProfs, hdfVersion, &
+    & swathName, offset, lastProfile, TotNumProfs, hdfVersion, &
     & createSwath)
     ! sticks l2gp into the swath swathName in the file pointed at by
     ! l2FileHandle,starting at the profile number "offset" (First profile
@@ -2155,7 +2150,6 @@ contains ! =====     Public Procedures     =============================
     ! This is the name the swath is given in the file. By default it is
     ! the name contained in l2gp
     character (LEN=*), optional, intent(IN) ::swathName!default->l2gp%swathName
-    character (LEN=*), optional, intent(IN) ::fileName
     ! This (offset) is the point in the swath at which the data is written. 
     ! First profile in the file has offset==0. If the swath in the file is 
     ! shorter than offset + ( num of profiles in l2gp) then it grows by magic
@@ -2252,7 +2246,7 @@ contains ! =====     Public Procedures     =============================
       call MLSMessage ( MLSMSG_Error, ModuleName, &
        & "Unable to open L2gp file: " // trim(FileName) // ' for appending')
     call AppendL2GPData_fileID(l2gp, L2FileHandle, swathname, &
-      & FileName, offset, lastProfile=lastProfile, totNumProfs=totNumProfs, &
+      & offset, lastProfile=lastProfile, totNumProfs=totNumProfs, &
       & hdfVersion=the_hdfVersion)
     status = mls_io_gen_closeF(l_swath, L2FileHandle, FileName=FileName, &
       & hdfVersion=the_hdfVersion)
@@ -2368,7 +2362,7 @@ contains ! =====     Public Procedures     =============================
           & notUnlimited=(avoidUnlimitedDims .and. present(totNumProfs)) )
       case default
         call MLSMessage ( MLSMSG_Error, ModuleName, &
-         & 'Illegal hdf version in AppendL2GPData_fileID', MLSFile=L2GPFile)
+         & 'Illegal hdf version in AppendL2GPData_MLSFile', MLSFile=L2GPFile)
       end select
       ! l2gp%nTimes = actual_ntimes
     endif
@@ -4404,6 +4398,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.151  2007/10/10 00:00:51  pwagner
+! DumpL2GPData ought not to override optional parameter details if supplied
+!
 ! Revision 2.150  2007/08/13 17:36:38  pwagner
 ! Push some procedures onto new MLSCallStack
 !
