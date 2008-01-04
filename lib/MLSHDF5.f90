@@ -28,7 +28,9 @@ module MLSHDF5
   use MLSDataInfo, only: MLSDataInfo_T, Query_MLSData
   use MLSFiles, only: HDFVERSION_5, INITIALIZEMLSFILE
   use MLSKinds, only: r8
-  use MLSStringLists, only: GetStringElement, NumStringElements, StringElement
+  use MLSStringLists, only: catLists, IsInList, &
+    & GetStringElement, NumStringElements, StringElement
+  use MLSStrings, only: indexes
   ! To switch to/from hdfeos5.1.6(+) uncomment next line
   use H5LIB, ONLY: h5open_f, h5close_f
   ! Lets break down our use, parameters first
@@ -59,7 +61,6 @@ module MLSHDF5
     & H5TSET_SIZE_F
   use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, &
     & MLSMESSAGE, MLSMESSAGECALLS
-  use MLSStringLists, only: catLists, IsInList
   use output_m, only: output, outputNamedValue
 
   implicit NONE
@@ -220,13 +221,13 @@ module MLSHDF5
       & LdFrmHDF5DS_ID_dblarr1, LdFrmHDF5DS_ID_dblarr2, LdFrmHDF5DS_ID_dblarr3, &
       & LdFrmHDF5DS_ID_snglarr1, LdFrmHDF5DS_ID_snglarr2, &
       & LdFrmHDF5DS_ID_snglarr3, LdFrmHDF5DS_ID_snglarr4, &
-      & LdFrmHDF5DS_ID_chararr1, LdFrmHDF5DS_ID_chararr2
+      & LdFrmHDF5DS_ID_chararr1, LdFrmHDF5DS_ID_chararr2, LdFrmHDF5DS_ID_chararr3
     module procedure LoadFromHDF5DS_intarr1, LoadFromHDF5DS_intarr2, &
       & LoadFromHDF5DS_intarr3, LoadFromHDF5DS_logarr1, &
       & LoadFromHDF5DS_dblarr1, LoadFromHDF5DS_dblarr2, LoadFromHDF5DS_dblarr3, &
       & LoadFromHDF5DS_snglarr1, LoadFromHDF5DS_snglarr2, &
       & LoadFromHDF5DS_snglarr3, LoadFromHDF5DS_snglarr4, &
-      & LoadFromHDF5DS_chararr1, LoadFromHDF5DS_chararr2
+      & LoadFromHDF5DS_chararr1, LoadFromHDF5DS_chararr2, LoadFromHDF5DS_chararr3
   end interface
 
   interface LoadPtrFromHDF5DS
@@ -267,6 +268,8 @@ module MLSHDF5
   integer, parameter :: MAXNUMWARNS = 40
   integer, parameter :: MAXNDSNAMES = 1000   ! max number of DS names in a file
   integer, parameter :: MAXCHFIELDLENGTH = 2000000 ! max number of chars in l2cf
+  character(len=*), dimension(1), parameter :: DONTDUMPTHESEDSNAMES = (/ &
+    & 'coremetadata' /)
   ! Local variables
   integer(hid_t) :: cparms
 
@@ -368,7 +371,7 @@ contains ! ======================= Public Procedures =========================
     integer :: i
     integer :: itemID
     integer, dimension(1024) :: iValue
-    character(len=1024) :: myNames
+    character(len=MAXNDSNAMES*32) :: myNames
     character(len=128) :: name
     integer :: numAttrs
     character(len=16) :: Qtype
@@ -488,6 +491,7 @@ contains ! ======================= Public Procedures =========================
     ! Local variables
     integer :: classID
     character(len=MAXCHFIELDLENGTH), dimension(1) :: chValue
+    character(len=MAXCHFIELDLENGTH), dimension(:), pointer :: ch1dArray
     character(len=1), dimension(:,:,:), pointer :: chArray
     ! logical, parameter :: DEEBUG = .false.
     integer, dimension(7) :: dims
@@ -497,17 +501,22 @@ contains ! ======================= Public Procedures =========================
     integer :: i
     integer :: ItemID
     integer, dimension(:,:,:), pointer :: iValue => null()
-    character(len=1024) :: myNames
+    character(len=MAXNDSNAMES*32) :: myNames
     character(len=128) :: name
     integer :: numDS
     character(len=16) :: Qtype
     integer :: rank
+    logical :: skipCharValues
     integer :: spaceID
     integer :: status
+    integer, dimension(size(DONTDUMPTHESEDSNAMES) ) :: theIndexes
     integer :: type_id
     integer :: type_size
     ! Executable
     call MLSMessageCalls( 'push', constantName='DumpHDF5DS' )
+    skipCharValues = .false.
+    if ( present(rms) ) skipCharValues = skipCharValues .or. rms
+    if ( present(stats) ) skipCharValues = skipCharValues .or. stats
     myNames = '*' ! Wildcard means 'all'
     if ( present(names) ) myNames = names
     if ( myNames == '*' ) call GetAllHDF5DSNames ( locID, groupName, myNames )
@@ -518,6 +527,9 @@ contains ! ======================= Public Procedures =========================
       & ' while dumping its datasets' )
     do i = 1, numDS
       name = StringElement(myNames, i, countEmpty)
+      if ( name == ',' .or. len_trim(name) < 1 ) cycle
+      theIndexes = indexes( name, DONTDUMPTHESEDSNAMES )
+      if ( any( theIndexes > 0 ) ) cycle
       call h5dopen_f ( groupID, trim(name), ItemID, status )
       if ( status /= 0 ) then
         call output ( trim(name), advance='no' )
@@ -549,6 +561,7 @@ contains ! ======================= Public Procedures =========================
         call outputNamedValue ( 'dims', dims )
         call outputNamedValue ( 'Qtype', Qtype )
       endif
+      if ( QType == 'character' .and. skipCharValues ) cycle
       select case ( QType )
       case ( 'integer' )
         select case ( rank )
@@ -613,12 +626,12 @@ contains ! ======================= Public Procedures =========================
       case ( 'character' )
         select case ( rank )
         case ( 3 )
-          call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & 'Unable to dump 3d character-valued DS ' // trim(name) )
-          !call allocate_test( chArray, dims(1), dims(2), dims(3), 'chArray', ModuleName )
-          !call LoadFromHDF5DS ( groupID, name, chArray )
-          !call dump ( chArray, trim(name) )
-          !call deallocate_test( chArray, 'chArray', ModuleName )
+          !call MLSMessage ( MLSMSG_Error, ModuleName, &
+          !   & 'Unable to dump 3d character-valued DS ' // trim(name) )
+          call allocate_test( chArray, dims(1), dims(2), dims(3), 'chArray', ModuleName )
+          call LoadFromHDF5DS ( groupID, name, chArray )
+          call dump ( chArray, trim(name) )
+          call deallocate_test( chArray, 'chArray', ModuleName )
         case ( 2 )
           call allocate_test( chArray, dims(1), dims(2), 1, 'chArray', ModuleName )
           call LoadFromHDF5DS ( groupID, name, chArray(:,:,1) )
@@ -632,10 +645,10 @@ contains ! ======================= Public Procedures =========================
             call output( 'name: ' // trim(name), advance='yes' )
             call output( trim(chValue(1)), advance='yes' )
           else
-            call allocate_test( chArray, dims(1), 1, 1, 'chArray', ModuleName )
-            call LoadFromHDF5DS ( groupID, name, chArray(:,1,1) )
-            call dump ( chArray(:,1,1), trim(name) )
-            call deallocate_test( chArray, 'chArray', ModuleName )
+            call allocate_test( ch1dArray, dims(1), 'ch1dArray', ModuleName )
+            call LoadFromHDF5DS ( groupID, name, ch1dArray )
+            call dump ( ch1dArray, trim(name) )
+            call deallocate_test( ch1dArray, 'ch1dArray', ModuleName )
           endif
          end select
       case default
@@ -3482,6 +3495,37 @@ contains ! ======================= Public Procedures =========================
     call MLSMessageCalls( 'pop' )
   end subroutine LdFrmHDF5DS_ID_chararr2
 
+  ! ------------------------------------  LdFrmHDF5DS_ID_chararr3  -----
+  subroutine LdFrmHDF5DS_ID_chararr3 ( locID, name, value, &
+    & start, count, stride, block )
+    ! This routine loads a predefined array with values from a DS
+    integer, intent(in) :: LOCID          ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    character (len=*), intent(out) :: VALUE(:,:,:)    ! The array itself
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    type (MLSFile_T)   :: MLSFile
+
+    ! Executable code
+    call MLSMessageCalls( 'push', constantName='LdFromHDF5DS_ID_chararr3' )
+    status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
+      & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
+    MLSFile%fileID%sd_id = locID
+    MLSFile%stillOpen = .true.
+    call LoadFromHDF5DS ( MLSFile, name, value, &
+    & start, count, stride, block )
+    call MLSMessageCalls( 'pop' )
+  end subroutine LdFrmHDF5DS_ID_chararr3
+
   ! -------------------------------------  LdFrmHDF5DS_ID_intarr1  -----
   subroutine LdFrmHDF5DS_ID_intarr1 ( locID, name, value, &
     & start, count, stride, block )
@@ -3940,6 +3984,69 @@ contains ! ======================= Public Procedures =========================
     end if
     call MLSMessageCalls( 'pop' )
   end subroutine LoadFromHDF5DS_chararr2
+
+  ! ------------------------------------  LoadFromHDF5DS_chararr3  -----
+  subroutine LoadFromHDF5DS_chararr3 ( MLSFile, name, value, &
+    & start, count, stride, block )
+    ! This routine loads a predefined array with values from a DS
+    type (MLSFile_T)   :: MLSFile
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    character (len=*), intent(out) :: VALUE(:,:,:)    ! The array itself
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    integer(kind=hsize_t), dimension(3) :: SHP        ! Shape of value
+    integer :: SPACEID                  ! ID of dataspace
+    integer :: MEMSPACEID               ! ID of dataspace
+    integer :: SETID                    ! ID of dataset
+    integer :: STRINGTYPE               ! String type
+    integer :: STRINGSIZE               ! String size
+
+    ! Executable code
+    call MLSMessageCalls( 'push', constantName='LoadFromHDF5DS_chararr3' )
+    shp = shape ( value )
+    call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataset ' // trim(name), &
+      & MLSFile=MLSFile )
+    call h5dGet_type_f ( setID, stringType, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to get type for 3D char array ' // trim(name), &
+      & MLSFile=MLSFile )
+    call h5tGet_size_f ( stringType, stringSize, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to get size for 3D char array ' // trim(name), &
+      & MLSFile=MLSFile )
+    if ( stringSize > len(value) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Value too long to fit in space given for 3D char array ' // trim(name), &
+      & MLSFile=MLSFile )
+    call h5dget_space_f ( setID, spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataspace for dataset ' // trim(name), &
+      & MLSFile=MLSFile )
+    if ( present(start) ) then
+      call mls_hyperslab ( spaceID, shp, name, memspaceID, &
+        & start, count, stride, block )
+      call h5dread_f ( setID, stringtype, value, &
+        & (/ shp, ones(1:4) /), status, memspaceID, spaceID )
+      call finishLoad ( name, status, spaceID, setID, &
+        & memspaceID, stringType, MLSFile=MLSFile )
+    else
+      call check_for_fit ( spaceID, shp, name )
+      call h5dread_f ( setID, stringtype, value, (/ shp, ones(1:4) /), status )
+      call finishLoad ( name, status, spaceID, setID, &
+        & stringType=stringType, MLSFile=MLSFile )
+    end if
+    call MLSMessageCalls( 'pop' )
+  end subroutine LoadFromHDF5DS_chararr3
 
   ! -------------------------------------  LoadFromHDF5DS_intarr1  -----
   subroutine LoadFromHDF5DS_intarr1 ( MLSFile, name, value, &
@@ -5606,6 +5713,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.76  2008/01/04 01:00:13  pwagner
+! More successful at dumping l1b files
+!
 ! Revision 2.75  2007/10/04 20:43:36  vsnyder
 ! Remove unused symbols
 !
