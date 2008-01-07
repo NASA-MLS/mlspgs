@@ -23,7 +23,7 @@ module L1BData
   use intrinsic, only: l_hdf
   use Lexer_Core, only: PRINT_SOURCE
   use MLSCommon, only: MLSFile_T, &
-    & R4, R8, DEFAULTUNDEFINEDVALUE, FILENAMELEN
+    & R4, R8, undefinedValue, FILENAMELEN
   use MLSFiles, only: FILENOTFOUND, HDFVERSION_4, HDFVERSION_5, &
     & addFileToDatabase, InitializeMLSFile, MLS_HDF_VERSION, &
     & mls_openFile, mls_closeFile
@@ -138,8 +138,7 @@ module L1BData
   integer, parameter :: NAME_LEN = 64  ! Max len of SDS array name
   ! suffix of sd precision; check against 'grep -i precision l1/OutputL1B.f90'
   character  (len=*), parameter :: PRECISIONSUFFIX = ' precision'
-  ! The following should be same as l2/Fill
-  real, parameter ::    UNDEFINED_VALUE = DEFAULTUNDEFINEDVALUE ! -999.99 
+
   ! If TRUE, treats l1brad and l2aux files the same
   ! Among other things, this means forgiving absence of counterMAF
   ! so we may read l2aux and l1brad files alike
@@ -260,7 +259,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     endif
     call allocate_test ( l1bData%counterMAF, noMAFs, 'l1bData%counterMAF', &
       & ModuleName )
-    l1bData%counterMAF = int(DEFAULTUNDEFINEDVALUE)
+    l1bData%counterMAF = int(undefinedValue)
     l1bdata%data_type = myDataType
     l1bdata%noMAFs = noMAFs
     select case( myDataType(1:1) )
@@ -271,11 +270,11 @@ contains ! ============================ MODULE PROCEDURES ======================
     case ( 'i' ) ! integer
       call allocate_test ( l1bData%intField, dims(1), dims(2), dims(3), &
         & 'l1bData%intField', ModuleName )
-      l1bData%intField = int(DEFAULTUNDEFINEDVALUE)
+      l1bData%intField = int(undefinedValue)
     case ( 'd', 'r' ) ! double
       call allocate_test ( l1bData%dpField, dims(1), dims(2), dims(3), &
         & 'l1bData%dpField', ModuleName )
-      l1bData%dpField = DEFAULTUNDEFINEDVALUE
+      l1bData%dpField = undefinedValue
     case default
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'datatype not recognized in allocating l1bdata field' )
@@ -686,12 +685,12 @@ contains ! ============================ MODULE PROCEDURES ======================
       elseif ( l1b2NotFinite ) then
           call output('l1bData2%dpField array all NaNs', advance='yes')
       elseif ( .not. EssentiallyEqual(l1bData1%dpField, l1bData2%dpField, &
-        & FillValue=REAL(DEFAULTUNDEFINEDVALUE, R8)) ) then
+        & FillValue=REAL(undefinedValue, R8)) ) then
           if ( DEBUG ) call output( 'Calling diff', advance='yes' )
           call diff ( &
         & l1bData1%dpField(:,:,mafStart1:mafEnd1), '(1)', &
         & l1bData2%dpField(:,:,mafStart2:mafEnd2), '(2)', &
-        & FillValue=REAL(DEFAULTUNDEFINEDVALUE, R8), &
+        & FillValue=REAL(undefinedValue, R8), &
         & stats=stats, rms=rms )
         myNumDiffs = myNumDiffs + count(l1bData1%dpField /= l1bData2%dpField)
       endif
@@ -759,14 +758,14 @@ contains ! ============================ MODULE PROCEDURES ======================
 
     if ( associated(l1bData%intField) ) then
       call dump ( l1bData%intField, 'l1bData%intField', &
-        & fillValue = int(DEFAULTUNDEFINEDVALUE) )
+        & fillValue = int(undefinedValue) )
     else
       call output('(intField array not associated)', advance='yes')
     end if
 
     if ( associated(l1bData%dpField) ) then
       call dump ( l1bData%dpField, 'l1bData%dpField', &
-        & fillValue=DEFAULTUNDEFINEDVALUE*1.d0 )
+        & fillValue=undefinedValue*1.d0 )
     else
       call output('(dpField array not associated)', advance='yes')
     end if
@@ -1327,7 +1326,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     do maf=1, NoMAFs
       l1bDataOut%counterMAF(maf) = FirstMAF - 1 + maf
     enddo
-    call zeroField(l1bdataOut, 1, DEFAULTUNDEFINEDVALUE, m=NoMAFs)
+    call zeroField(l1bdataOut, 1, undefinedValue, m=NoMAFs)
     call cpField(l1bdataIn, 1, l1bdataOut, 1, m=oldSize)
   end subroutine PadL1BData
 
@@ -1431,9 +1430,9 @@ contains ! ============================ MODULE PROCEDURES ======================
         ! fill the gap with undefined
         do i=1, gap
           l1bDataOut%counterMAF(indexOut+i) = maf-1+i
-          call zeroField(l1bdataOut, indexOut+i, DEFAULTUNDEFINEDVALUE)
+          call zeroField(l1bdataOut, indexOut+i, undefinedValue)
           if ( present(PrecisionOut) ) &
-            & call zeroField(PrecisionOut, indexOut+i, DEFAULTUNDEFINEDVALUE)
+            & call zeroField(PrecisionOut, indexOut+i, undefinedValue)
         enddo
         if ( DEEBug ) print *, 'Now treat current normally ', current
         ! Now treat current normally
@@ -1451,9 +1450,9 @@ contains ! ============================ MODULE PROCEDURES ======================
     if ( DEEBug ) print *, 'Apparently, we end too soon, so must pad ', gap, indexOut
     do i=1, gap
       l1bDataOut%counterMAF(indexOut+i) = maf-1+i
-      call zeroField(l1bdataOut, indexOut+i, DEFAULTUNDEFINEDVALUE)
+      call zeroField(l1bdataOut, indexOut+i, undefinedValue)
       if ( present(PrecisionOut) ) &
-        & call zeroField(PrecisionOut, indexOut+i, DEFAULTUNDEFINEDVALUE)
+        & call zeroField(PrecisionOut, indexOut+i, undefinedValue)
     enddo
   end subroutine BadPadL1BData
 
@@ -3207,6 +3206,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.77  2008/01/07 21:37:05  pwagner
+! Replace DEFAULTUNDEFINEDVALUE with user-settable undefinedValue
+!
 ! Revision 2.76  2007/08/13 17:36:13  pwagner
 ! Push some procedures onto new MLSCallStack
 !
