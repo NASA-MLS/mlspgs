@@ -18,9 +18,9 @@ module DUMP_0
 
   use BitStuff, only: MAXBITNUMBER, WhichBitsAreSet
   use ieee_arithmetic, only: ieee_is_finite
-  use MLSCommon, only: DEFAULTUNDEFINEDVALUE
-  use MLSFillValues, only : FilterValues, IsFinite, &
-    & ReorderFillValues, ReplaceFillValues
+  use MLSCommon, only: undefinedValue
+  use MLSFillValues, only : FilterValues, IsFinite, IsInfinite, IsNaN, &
+    & InfFunction, NaNFunction, ReorderFillValues, ReplaceFillValues
   use MLSSets, only: FindAll
   use MLSStats1, only: STAT_T, &
     & ALLSTATS, FILLVALUERELATION, HOWFAR, HOWNEAR, &
@@ -238,7 +238,7 @@ contains
     if ( present(iFillValue) ) then
       fillValue = iFillValue
     else
-      fillValue = int(DEFAULTUNDEFINEDVALUE)
+      fillValue = int(undefinedValue)
     endif
     call DIFF ( ARRAY1, NAME1, ARRAY2, NAME2, &
       & FILLVALUE=FILLVALUE, CLEAN=CLEAN, WIDTH=WIDTH, FORMAT=FORMAT, &
@@ -2460,6 +2460,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.76  2008/01/07 21:37:57  pwagner
+! Replace DEFAULTUNDEFINEDVALUE with user-settable undefinedValue
+!
 ! Revision 2.75  2007/10/18 23:37:41  pwagner
 ! Added dumpTable
 !
