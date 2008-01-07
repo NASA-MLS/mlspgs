@@ -13,6 +13,7 @@
 module MLSCommon                ! Common definitions for the MLS software
 !=============================================================================
 
+  use ieee_arithmetic, only: ieee_is_finite, ieee_is_nan
   use MLSKinds ! Everything
 
   implicit none
@@ -36,8 +37,12 @@ module MLSCommon                ! Common definitions for the MLS software
 ! L1BInfo_T     L1B data file names, etc.
 
 !     (subroutines and functions)
+! inRange       does an argument lie with a specified range
+! is_what_ieee  is an argument a specified ieee type
 ! === (end of toc) ===                                                   
 ! === (start of api) ===
+! log inRange( int arg, Range_T range )
+! log is_what_ieee( int what, num arg )
 ! === (end of api) ===
 
 !---------------------------- RCS Module Info ------------------------------
@@ -49,8 +54,10 @@ module MLSCommon                ! Common definitions for the MLS software
   ! This module contains simple definitions that are common to all the MLS PGS
   ! f90 software.
 
-  public :: FileIDs_T
   public :: InRange
+  public :: is_what_ieee
+
+  public :: FileIDs_T
   public :: MLSFile_T
   public :: L1BInfo_T
   public :: Range_T
@@ -67,7 +74,18 @@ module MLSCommon                ! Common definitions for the MLS software
   public :: rp
   public :: ip
   public :: rv
+  
+  ! The following are integer flags 'signalling' what kind of ieee number
+  ! we would want to test for, e.g. in a multi-purpose procedure
+  integer, public, parameter :: FINITE_SIGNAL = 0
+  integer, public, parameter :: INF_SIGNAL    = FINITE_SIGNAL + 1
+  integer, public, parameter :: NAN_SIGNAL    = INF_SIGNAL + 1
+  integer, public, parameter :: FILL_SIGNAL   = NAN_SIGNAL + 1
 
+  interface is_what_ieee
+    module procedure is_what_ieee_REAL, is_what_ieee_DOUBLE
+  end interface
+  
   ! Because we'd like not to always drag the SDPToolkit with us
   ! everywhere we go
   integer, private, parameter :: PGSd_PC_FILE_PATH_MAX = 1024
@@ -80,6 +98,10 @@ module MLSCommon                ! Common definitions for the MLS software
   integer, public, parameter :: BareFNLen=64      ! Bare file name length (w/o path)
 
   real, public, parameter ::    DEFAULTUNDEFINEDVALUE = -999.99 ! Try to use in lib, l2
+  real, public, parameter ::    UNDEFINEDTOLERANCE = 0.2 ! Poss. could make it 1
+
+  ! This can be set to a different value if that would be more convenient
+  real, public, save      ::    UNDEFINEDVALUE = DEFAULTUNDEFINEDVALUE
   ! --------------------------------------------------------------------------
   
   ! A type to hold the hdf ids
@@ -152,6 +174,68 @@ module MLSCommon                ! Common definitions for the MLS software
     relation = (arg < (range%top + 1)) .and. (arg > (range%bottom - 1))
   end function inRange
 
+  elemental function is_what_ieee_DOUBLE( what, arg ) result( itIs )
+    ! Args
+    integer, intent(in)                       :: what ! a signal flag
+    double precision, intent(in)              :: arg
+    logical                                   :: itIs
+    ! Executable
+    select case (what)
+    case (finite_signal)
+      itIs = ieee_is_finite(arg)
+    case (inf_signal)
+      itIs = .not. ( ieee_is_finite(arg) .or. ieee_is_nan(arg) )
+    case (nan_signal)
+      itIs = ieee_is_nan(arg)
+    case (fill_signal)
+      itIs = abs(arg - undefinedValue) < &
+        & max( Real(undefinedTolerance, r8), abs(undefinedValue/100000._r8) )
+    case default
+      itIs = .false. ! what signal flag did you mean? not recognized
+    end select
+  end function is_what_ieee_DOUBLE
+
+  elemental function is_what_ieee_REAL( what, arg ) result( itIs )
+    ! Args
+    integer, intent(in)                       :: what ! a signal flag
+    real, intent(in)                          :: arg
+    logical                                   :: itIs
+    ! Executable
+    select case (what)
+    case (finite_signal)
+      itIs = ieee_is_finite(arg)
+    case (inf_signal)
+      itIs = .not. ( ieee_is_finite(arg) .or. ieee_is_nan(arg) )
+    case (nan_signal)
+      itIs = ieee_is_nan(arg)
+    case (fill_signal)
+      itIs = ( abs(arg-int(undefinedvalue)) < &
+        & max(undefinedTolerance, abs(undefinedvalue/100000)) )
+    case default
+      itIs = .false. ! what signal flag did you mean? not recognized
+    end select
+  end function is_what_ieee_REAL
+
+  elemental function is_what_ieee_integer( what, arg ) result( itIs )
+    ! Args
+    integer, intent(in)                       :: what ! a signal flag
+    integer, intent(in)                       :: arg
+    logical                                   :: itIs
+    ! Executable
+    select case (what)
+    case (finite_signal)
+      itIs = .true. ! ieee_is_finite(arg)
+    case (inf_signal)
+      itIs = .false. ! .not. ( ieee_is_finite(arg) .or. ieee_is_nan(arg) )
+    case (nan_signal)
+      itIs = .false. ! ieee_is_nan(arg)
+    case (fill_signal)
+      itIs = ( abs(arg-int(undefinedvalue)) < 1 )
+    case default
+      itIs = .false. ! what signal flag did you mean? not recognized
+    end select
+  end function is_what_ieee_integer
+
 !=============================================================================
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
@@ -167,6 +251,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.30  2008/01/07 21:33:19  pwagner
+! Added ieee signal defs and id-ing functions
+!
 ! Revision 2.29  2007/01/12 00:24:38  pwagner
 ! Tore ourselves loose from SDPToolkit, hoping we left no shreds of flesh
 !
