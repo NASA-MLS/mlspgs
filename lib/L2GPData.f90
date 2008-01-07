@@ -17,7 +17,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   use Hdf, only: DFACC_RDONLY, DFACC_READ, DFACC_CREATE, DFACC_RDWR, &
     & DFNT_FLOAT32, DFNT_INT32, DFNT_FLOAT64
   use Intrinsic ! "units" type literals, beginning with L_
-  use MLSCommon, only: I4, R4, R8, DEFAULTUNDEFINEDVALUE, MLSFile_T
+  use MLSCommon, only: I4, R4, R8, defaultUndefinedValue, MLSFile_T
   use MLSFiles, only: FILENOTFOUND, &
     & HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, WRONGHDFVERSION, &
     & DUMP, INITIALIZEMLSFILE, MLS_closeFile, MLS_EXISTS, mls_openFile, &
@@ -140,7 +140,6 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   logical, public            :: AVOIDUNLIMITEDDIMS = .true.
 
   integer, parameter :: CHARATTRLEN = 255   ! was GA_VALUE_LENGTH
-  real, parameter    :: UNDEFINED_VALUE = DEFAULTUNDEFINEDVALUE !-999.99 ! Same as %template%badvalue
   integer, parameter :: L2GPNameLen = 80
   integer, parameter :: NumDataFields = 5
   integer, parameter :: NumGeolocFields = 10
@@ -276,7 +275,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
      ! All the above dimensioned (nTimes)
 
      ! These are the fill/missing values for all arrays except status
-     real (rgp)                        :: MissingValue = UNDEFINED_VALUE
+     real (rgp)                        :: MissingValue = DefaultUndefinedValue
      integer(i4)                       :: MissingStatus = 513 ! 512 + 1
     ! Vertical coordinate
     character(len=8) :: verticalCoordinate ! E.g. 'Pressure', or 'Theta'
@@ -4398,6 +4397,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.152  2007/12/19 01:29:37  pwagner
+! Removed unused args
+!
 ! Revision 2.151  2007/10/10 00:00:51  pwagner
 ! DumpL2GPData ought not to override optional parameter details if supplied
 !

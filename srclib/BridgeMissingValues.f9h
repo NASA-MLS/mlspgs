@@ -25,7 +25,7 @@
     integer :: i2
     integer :: ib
     ! Executable
-    myMissingValue = DEFAULTUNDEFINEDVALUE
+    myMissingValue = undefinedValue
     if ( present(MissingValue) ) myMissingValue = missingValue
     if ( .not. any(IsFillValue(values, myMissingValue) ) ) return
     x1 = myMissingValue
@@ -53,3 +53,6 @@
 !  end subroutine BridgeMissingValues_1dr4
 
 ! $Log$
+! Revision 1.1  2005/08/05 20:31:22  pwagner
+! First commit
+!

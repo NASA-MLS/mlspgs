@@ -58,7 +58,7 @@
       ! I'm not happy with this idea--missing values are exactly that: missing
       slist = list
       call ReplaceFillValues( slist, &
-        & real(DEFAULTUNDEFINEDVALUE, kind(slist)), &
+        & real(undefinedValue, kind(slist)), &
         & options='-i' )
       svrange = vrange
     else
@@ -93,6 +93,9 @@
     endif
         
 ! $Log$
+! Revision 1.3  2007/08/20 22:02:52  pwagner
+! Fixed another bug in HuntRange
+!
 ! Revision 1.2  2007/08/13 17:29:16  pwagner
 ! Fixed obvious bugs in HuntRange
 !
