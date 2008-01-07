@@ -245,10 +245,11 @@ contains ! =====     Public Procedures     =============================
     end subroutine addGaussianNoise
 
     ! ---------------------------------------------  ANNOUNCE_ERROR  -----
-    subroutine ANNOUNCE_ERROR ( where, CODE , ExtraMessage, ExtraInfo )
+    subroutine ANNOUNCE_ERROR ( where, CODE, ExtraMessage, ExtraInfo )
 
       use Dump_0, only: Dump
       use Intrinsic, only: Field_indices, PHYQ_Indices
+      use MLSMessageModule, only: MLSMSG_Warning, MLSMessage
       use MoreTree, only: Get_Field_Id, StartErrorMessage
       use String_Table, only: Display_String
 
@@ -260,6 +261,13 @@ contains ! =====     Public Procedures     =============================
       integer :: I
 
       fillerror = max(fillerror,1)
+      if ( present(extraMessage) ) then
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & trim(extraMessage) )
+      else
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'Calling ANNOUNCE_ERROR' )
+      endif
       call StartErrorMessage ( where )
       if ( code  > no_Error_Code ) call output ( 'The' );
 
@@ -3254,6 +3262,12 @@ contains ! =====     Public Procedures     =============================
         end if
       end if
 
+      if ( DEEBUG ) then
+        call outputNamedValue( 'mstr', mstr )
+        call outputNamedValue( 'numWays', numWays )
+        call outputNamedValue( 'StatisticalFunction', StatisticalFunction )
+        call outputNamedValue( 'usesc', usesc )
+      endif
       okSoFar = .true.
       do i = 1, numWays ! 2
         if ( i == 1 ) then
@@ -3634,6 +3648,7 @@ contains ! =====     Public Procedures     =============================
           & which='all', no_trim=.false. )
 
         collapsedstr = lowerCase(mstr)
+        if ( DEEBUG ) call outputNamedValue( 'collapsedstr', collapsedstr )
         ! Collapse every sub-formula nested within parentheses
         do level =1, MAXNESTINGS ! To prevent endlessly looping if ill-formed
           if ( index( collapsedstr, '(' ) < 1 ) exit
@@ -4138,8 +4153,8 @@ contains ! =====     Public Procedures     =============================
         character(len=*), intent(in)           :: part2
         character(len=MAXSTRLISTLENGTH)        :: str
         ! internal variables
-        character(len=1), dimension(7), parameter :: ops = &
-          &          (/ '+', '-', '*', '/' , '(', ')', '^' /)
+        character(len=1), dimension(9), parameter :: ops = &
+          &          (/ '+', '-', '*', '/' , '(', ')', '^', '<', '>' /)
         character(len=1) :: part1Tail, part2Head
         integer :: maxind
         integer :: n
@@ -6378,6 +6393,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.5  2008/01/07 21:43:03  pwagner
+! Fixed bug regarding unrecognized ops '<' and '>' in catTwoOperands
+!
 ! Revision 2.4  2007/11/05 18:41:20  pwagner
 ! expr with 'c' unambiguous (I hope); '^' power op added to expr
 !
