@@ -13,8 +13,9 @@
 module MLSFillValues              ! Some FillValue-related stuff
 !=============================================================================
 
-  use ieee_arithmetic, only: ieee_is_finite
-  use MLSCommon, only: r4, r8, DEFAULTUNDEFINEDVALUE
+  use ieee_arithmetic, only: ieee_is_finite, ieee_is_nan
+  use MLSCommon, only: fill_signal, inf_signal, nan_signal, undefinedvalue, &
+    & is_what_ieee
   use MLSKinds ! Everything
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSSets, only: findFirst, findLast
@@ -25,11 +26,13 @@ module MLSFillValues              ! Some FillValue-related stuff
   private
 
   public :: EmbedArray, ExtractArray
+  public :: FillFunction, InfFunction, NaNFunction
   public :: FilterValues
   public :: IsFillValue
-  public :: IsFinite
+  public :: IsFinite, IsInfinite, IsNaN
   public :: IsMonotonic, Monotonize
   public :: RemoveFillValues, ReorderFillValues, ReplaceFillValues
+  public :: WhereAreTheFills, WhereAreTheNaNs, WhereAreTheInfs
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -41,7 +44,9 @@ module MLSFillValues              ! Some FillValue-related stuff
 ! (1) fill values
 ! (2) embedding/extracting blocs of elements
 ! (3) monotonic increasing or decreasing arrays
+! (4) Some miscellaneous procedures identifying Finite, Nan, or Inf, quantities
 ! (All but (1) should perhaps be relocated into other modules)
+! === (start of toc) ===                                                 
 !     c o n t e n t s
 !     - - - - - - - -
 
@@ -50,15 +55,24 @@ module MLSFillValues              ! Some FillValue-related stuff
 !                              with the smaller
 ! ExtractArray                 Extract a bloc of elements from the larger array
 !                               (optionally allocates bloc first)
+! FillFunction                 Returns the Fill value
+! InfFunction                  Returns the Infinite value
+! NaNFunction                  Returns the NaN value
 ! FilterValues                 Filters entries in two arrays
 ! IsFillValue                  Returns true if argument is FillValue
 ! IsFinite                     Returns true if argument is finite
+! IsInfinite                   Returns true if argument is infinite
+! IsNaN                        Returns true if argument is NaN
 ! IsMonotonic                  Returns true if array is monotonic
 ! Monotonize                   Replace any non-monotonic elements
 ! RemoveFillValues             Removes FillValues from an array
 !                                returning a new array smaller in size
 ! ReorderFillValues            Reorders FillValue entries at the end of an array
 ! ReplaceFillValues            Replaces FillValue entries in an array
+! WhereAreTheFills             Find which array elements are Fill values
+! WhereAreTheInfs              Find which array elements are Inf
+! WhereAreTheNans              Find which array elements are NaN
+! === (end of toc) ===                                                   
 
   interface BridgeMissingValues
     module procedure BridgeMissingValues_1dr4, BridgeMissingValues_1dr8, BridgeMissingValues_1dint
@@ -80,6 +94,18 @@ module MLSFillValues              ! Some FillValue-related stuff
     module procedure ExtractArray_1d_int
   end interface
 
+  interface FillFunction
+    module procedure FillFunction_REAL, FillFunction_DOUBLE
+  end interface
+
+  interface InfFunction
+    module procedure InfFunction_REAL, InfFunction_DOUBLE
+  end interface
+
+  interface NaNFunction
+    module procedure NaNFunction_REAL, NaNFunction_DOUBLE
+  end interface
+
   interface FilterValues
     module procedure FilterValues_REAL, FilterValues_DOUBLE
     module procedure FilterValues_REAL_2d, FilterValues_DOUBLE_2d
@@ -92,6 +118,14 @@ module MLSFillValues              ! Some FillValue-related stuff
 
   interface IsFinite
     module procedure IsFinite_REAL, IsFinite_DOUBLE, IsFinite_INTEGER
+  end interface
+  
+  interface IsInfinite
+    module procedure IsInfinite_REAL, IsInfinite_DOUBLE, IsInfinite_INTEGER
+  end interface
+  
+  interface IsNaN
+    module procedure IsNaN_REAL, IsNaN_DOUBLE, IsNaN_INTEGER
   end interface
   
   interface output
@@ -129,14 +163,40 @@ module MLSFillValues              ! Some FillValue-related stuff
     module procedure swap_int, swap_r4, swap_r8
   end interface
 
+  interface WhereAreTheFills
+    module procedure WhereAreTheFills_REAL, WhereAreTheFills_DOUBLE
+    module procedure WhereAreTheFills_REAL_2d, WhereAreTheFills_DOUBLE_2d
+    module procedure WhereAreTheFills_REAL_3d, WhereAreTheFills_DOUBLE_3d
+  end interface
+  
+  interface WhereAreTheInfs
+    module procedure WhereAreTheInfs_REAL, WhereAreTheInfs_DOUBLE
+    module procedure WhereAreTheInfs_REAL_2d, WhereAreTheInfs_DOUBLE_2d
+    module procedure WhereAreTheInfs_REAL_3d, WhereAreTheInfs_DOUBLE_3d
+  end interface
+  
+  interface WhereAreTheNaNs
+    module procedure WhereAreTheNaNs_REAL, WhereAreTheNaNs_DOUBLE
+    module procedure WhereAreTheNaNs_REAL_2d, WhereAreTheNaNs_DOUBLE_2d
+    module procedure WhereAreTheNaNs_REAL_3d, WhereAreTheNaNs_DOUBLE_3d
+  end interface
+  
+  interface WhereAreThey
+    module procedure WhereAreThey_REAL, WhereAreThey_DOUBLE
+    module procedure WhereAreThey_REAL_2d, WhereAreThey_DOUBLE_2d
+    module procedure WhereAreThey_REAL_3d, WhereAreThey_DOUBLE_3d
+  end interface
+  
   ! This tolerance won't work w/o a little fudging 
   ! when fill values get really huge; e.g. gmao use 1.e15, gloria 1.e12
-  ! The fidging will take the form of
+  ! The fudging will take the form of
   ! max( FILLVALUETOLERANCE, abs(FILLVALUE/100000) )
   ! where obviously 100000 is an arbitrary number
   ! Should we study this more carefully?
   real, parameter, private :: FILLVALUETOLERANCE = 0.2 ! Poss. could make it 1
 
+  character(len=3), save :: NaNString = 'NaN'
+  character(len=3), save :: InfString = 'Inf'
   logical, parameter ::   DEEBUG = .false.
 
 contains
@@ -274,6 +334,48 @@ contains
     include 'EmbedExtract_3d.f9h'
   end subroutine ExtractArray_3d_r8
 
+! -------------------------------------------------  FillFunction  -----
+! Returns the fillValue
+  function FillFunction_DOUBLE(arg) result(value)
+    double precision, intent(in) :: arg
+    real                         :: value
+    value = UndefinedValue
+  end function FillFunction_DOUBLE
+
+  function FillFunction_REAL(arg) result(value)
+    real, intent(in)        :: arg
+    real                    :: value
+    value = UndefinedValue
+  end function FillFunction_REAL
+
+! -------------------------------------------------  InfFunction  -----
+! Returns the Inf Value
+  function InfFunction_DOUBLE(arg) result(value)
+    double precision, intent(in) :: arg
+    real                         :: value
+    read ( InfString, * ) value
+  end function InfFunction_DOUBLE
+
+  function InfFunction_REAL(arg) result(value)
+    real, intent(in)        :: arg
+    real                    :: value
+    read ( InfString, * ) value
+  end function InfFunction_REAL
+
+! -------------------------------------------------  NaNFunction  -----
+! Returns the NaN Value
+  function NaNFunction_DOUBLE(arg) result(value)
+    double precision, intent(in) :: arg
+    real                         :: value
+    read ( NaNString, * ) value
+  end function NaNFunction_DOUBLE
+
+  function NaNFunction_REAL(arg) result(value)
+    real, intent(in)        :: arg
+    real                    :: value
+    read ( NaNString, * ) value
+  end function NaNFunction_REAL
+
 ! -------------------------------------------------  FilterValues  -----
   subroutine filterValues_REAL ( a, ATAB, b, BTAB, warn, fillValue, precision )
     ! Return arrays filtered
@@ -365,7 +467,7 @@ contains
     integer, intent(in) :: A
     integer, intent(in), optional :: FILLVALUE
     integer  :: MYFILLVALUE
-    myFillValue = int(DEFAULTUNDEFINEDVALUE)
+    myFillValue = int(undefinedValue)
     if ( present(fillValue) ) myFillValue = fillValue
     IsFillValue_int = &
       & abs(a - myFillValue) < 1 ! FILLVALUETOLERANCE
@@ -375,7 +477,7 @@ contains
     real(r4), intent(in) :: A
     real(r4), intent(in), optional :: FILLVALUE
     real(r4)  :: MYFILLVALUE
-    myFillValue = DEFAULTUNDEFINEDVALUE
+    myFillValue = undefinedValue
     if ( present(fillValue) ) myFillValue = fillValue
     IsFillValue_r4 = &
       & abs(a - myFillValue) < max( FILLVALUETOLERANCE, abs(myFillValue/100000) )
@@ -385,7 +487,7 @@ contains
     real(r8), intent(in) :: A
     real(r8), intent(in), optional :: FILLVALUE
     real(r8)  :: MYFILLVALUE
-    myFillValue = DEFAULTUNDEFINEDVALUE
+    myFillValue = undefinedValue
     if ( present(fillValue) ) myFillValue = fillValue
     IsFillValue_r8 = &
       & abs(a - myFillValue) < &
@@ -407,6 +509,38 @@ contains
     integer, intent(in) :: A
     finite = .true.
   end function isfinite_INTEGER
+
+! ------------------------------------------------- IsInfinite ---
+
+  ! This family of routines checks to see if an arg is Infinite
+  elemental logical function IsInfinite_REAL ( A ) result( Infinite )
+    real, intent(in) :: A
+    Infinite = .not. ( ieee_is_finite(a) .or. ieee_is_nan(a) )
+  end function isInfinite_real
+  elemental logical function IsInfinite_DOUBLE ( A ) result( Infinite )
+    double precision, intent(in) :: A
+    Infinite = .not. ( ieee_is_finite(a) .or. ieee_is_nan(a) )
+  end function isInfinite_DOUBLE
+  elemental logical function IsInfinite_INTEGER ( A ) result( Infinite )
+    integer, intent(in) :: A
+    Infinite = .false.
+  end function isInfinite_INTEGER
+
+! ------------------------------------------------- IsNaN ---
+
+  ! This family of routines checks to see if an arg is NaN
+  elemental logical function IsNaN_REAL ( A ) result( NaN )
+    real, intent(in) :: A
+    NaN = ieee_is_NaN(a)
+  end function isNaN_real
+  elemental logical function IsNaN_DOUBLE ( A ) result( NaN )
+    double precision, intent(in) :: A
+    NaN = ieee_is_NaN(a)
+  end function isNaN_DOUBLE
+  elemental logical function IsNaN_INTEGER ( A ) result( NaN )
+    integer, intent(in) :: A
+    NaN = .false.
+  end function isNaN_INTEGER
 
 ! -------------------------------------  RemoveFillValues  -----
 
@@ -1074,6 +1208,168 @@ contains
     enddo
   end subroutine Monotonize_3dr8
 
+  ! ----------------------------------  WhereAreTheFills  -----
+  ! This family of procedures finds which array elements are Fills
+  subroutine WhereAreTheFills_DOUBLE ( array, which, howMany )
+    ! Args
+    double precision, dimension(:), intent(in)   :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    call WhereAreThey( Fill_signal, array, which, howMany )
+  end subroutine WhereAreTheFills_DOUBLE
+
+  subroutine WhereAreTheFills_REAL ( array, which, howMany )
+    ! Args
+    real, dimension(:), intent(in)               :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    call WhereAreThey( Fill_signal, array, which, howMany )
+  end subroutine WhereAreTheFills_REAL
+
+  subroutine WhereAreTheFills_DOUBLE_2d ( array, which, howMany, mode )
+    ! Args
+    double precision, dimension(:,:), intent(in) :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+    call WhereAreThey( Fill_signal, array, which, howMany, mode )
+  end subroutine WhereAreTheFills_DOUBLE_2d
+
+  subroutine WhereAreTheFills_REAL_2d ( array, which, howMany, mode )
+    ! Args
+    real, dimension(:,:), intent(in)             :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+    call WhereAreThey( Fill_signal, array, which, howMany, mode )
+  end subroutine WhereAreTheFills_REAL_2d
+
+  subroutine WhereAreTheFills_DOUBLE_3d ( array, which, howMany, mode )
+    ! Args
+    double precision, dimension(:,:,:), intent(in) :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+    call WhereAreThey( Fill_signal, array, which, howMany, mode )
+  end subroutine WhereAreTheFills_DOUBLE_3d
+
+  subroutine WhereAreTheFills_REAL_3d ( array, which, howMany, mode )
+    ! Args
+    real, dimension(:,:,:), intent(in)           :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+    call WhereAreThey( Fill_signal, array, which, howMany, mode )
+  end subroutine WhereAreTheFills_REAL_3d
+
+  ! ----------------------------------  WhereAreTheInfs  -----
+  ! This family of procedures finds which array elements are Infs
+  subroutine WhereAreTheInfs_DOUBLE ( array, which, howMany )
+    ! Args
+    double precision, dimension(:), intent(in)   :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    call WhereAreThey( inf_signal, array, which, howMany )
+  end subroutine WhereAreTheInfs_DOUBLE
+
+  subroutine WhereAreTheInfs_REAL ( array, which, howMany )
+    ! Args
+    real, dimension(:), intent(in)               :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    call WhereAreThey( inf_signal, array, which, howMany )
+  end subroutine WhereAreTheInfs_REAL
+
+  subroutine WhereAreTheInfs_DOUBLE_2d ( array, which, howMany, mode )
+    ! Args
+    double precision, dimension(:,:), intent(in) :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+    call WhereAreThey( inf_signal, array, which, howMany, mode )
+  end subroutine WhereAreTheInfs_DOUBLE_2d
+
+  subroutine WhereAreTheInfs_REAL_2d ( array, which, howMany, mode )
+    ! Args
+    real, dimension(:,:), intent(in)             :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+    call WhereAreThey( inf_signal, array, which, howMany, mode )
+  end subroutine WhereAreTheInfs_REAL_2d
+
+  subroutine WhereAreTheInfs_DOUBLE_3d ( array, which, howMany, mode )
+    ! Args
+    double precision, dimension(:,:,:), intent(in) :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+    call WhereAreThey( inf_signal, array, which, howMany, mode )
+  end subroutine WhereAreTheInfs_DOUBLE_3d
+
+  subroutine WhereAreTheInfs_REAL_3d ( array, which, howMany, mode )
+    ! Args
+    real, dimension(:,:,:), intent(in)           :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+    call WhereAreThey( inf_signal, array, which, howMany, mode )
+  end subroutine WhereAreTheInfs_REAL_3d
+
+  ! ----------------------------------  WhereAreTheNaNs  -----
+  ! This family of procedures finds which array elements are NaNs
+  subroutine WhereAreTheNaNs_DOUBLE ( array, which, howMany )
+    ! Args
+    double precision, dimension(:), intent(in)   :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    call WhereAreThey( NaN_signal, array, which, howMany )
+  end subroutine WhereAreTheNaNs_DOUBLE
+
+  subroutine WhereAreTheNaNs_REAL ( array, which, howMany )
+    ! Args
+    real, dimension(:), intent(in)               :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    call WhereAreThey( NaN_signal, array, which, howMany )
+  end subroutine WhereAreTheNaNs_REAL
+
+  subroutine WhereAreTheNaNs_DOUBLE_2d ( array, which, howMany, mode )
+    ! Args
+    double precision, dimension(:,:), intent(in)   :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+    call WhereAreThey( NaN_signal, array, which, howMany, mode )
+  end subroutine WhereAreTheNaNs_DOUBLE_2d
+
+  subroutine WhereAreTheNaNs_REAL_2d ( array, which, howMany, mode )
+    ! Args
+    real, dimension(:,:), intent(in)             :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+    call WhereAreThey( NaN_signal, array, which, howMany, mode )
+  end subroutine WhereAreTheNaNs_REAL_2d
+
+  subroutine WhereAreTheNaNs_DOUBLE_3d ( array, which, howMany, mode )
+    ! Args
+    double precision, dimension(:,:,:), intent(in)   :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+    call WhereAreThey( NaN_signal, array, which, howMany, mode )
+  end subroutine WhereAreTheNaNs_DOUBLE_3d
+
+  subroutine WhereAreTheNaNs_REAL_3d ( array, which, howMany, mode )
+    ! Args
+    real, dimension(:,:,:), intent(in)           :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+    call WhereAreThey( NaN_signal, array, which, howMany, mode )
+  end subroutine WhereAreTheNaNs_REAL_3d
+
   ! ----------------------------------  private procedures  -----
   subroutine announce_error(message, int1, int2, dontstop)
     character(len=*), intent(in) :: message
@@ -1186,6 +1482,217 @@ contains
     second = temp
   end subroutine swap_r8
 
+  ! ----------------------------------  WhereAreThey  -----
+  ! This family of procedures finds which array elements are whats
+  ! where what is one of our ieee signalling flags
+  subroutine WhereAreThey_DOUBLE ( what, array, which, howMany )
+    ! Args
+    integer, intent(in)                          :: what ! a signal flag
+    double precision, dimension(:), intent(in)   :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    ! Internal variables
+    integer :: i
+    integer :: n
+    integer :: nWhich ! size(which);  > 0 only if which is present
+    ! Executable
+    nWhich = 0
+    if ( present(which) ) nWhich = size(which)
+    if ( nWhich > 0 ) which = 0
+    if ( present(howMany) ) howMany = 0
+    if ( size(array) < 1 ) return
+    n = 0
+    do i=1, size(array)
+      if ( is_what_ieee(what, array(i)) ) then
+        n = n + 1
+        if ( n <= nWhich ) which(n) = i
+      endif
+    enddo
+    if ( present(howMany) ) howMany = n
+  end subroutine WhereAreThey_DOUBLE
+
+  subroutine WhereAreThey_REAL ( what, array, which, howMany )
+    ! Args
+    integer, intent(in)                          :: what ! a signal flag
+    real, dimension(:), intent(in)               :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    ! Internal variables
+    integer :: i
+    integer :: n
+    integer :: nWhich ! size(which);  > 0 only if which is present
+    ! Executable
+    nWhich = 0
+    if ( present(which) ) nWhich = size(which)
+    if ( nWhich > 0 ) which = 0
+    if ( present(howMany) ) howMany = 0
+    if ( size(array) < 1 ) return
+    n = 0
+    do i=1, size(array)
+      if ( is_what_ieee(what, array(i)) ) then
+        n = n + 1
+        if ( n <= nWhich ) which(n) = i
+      endif
+    enddo
+    if ( present(howMany) ) howMany = n
+  end subroutine WhereAreThey_REAL
+
+  subroutine WhereAreThey_DOUBLE_2d ( what, array, which, howMany, mode )
+    ! Args
+    integer, intent(in)                          :: what ! a signal flag
+    double precision, dimension(:,:), intent(in) :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+    ! Internal variables
+    integer :: i
+    character(len=3) :: myMode
+    integer :: n
+    integer :: nWhich ! size(which);  > 0 only if which is present
+    logical :: yes
+    ! Executable
+    nWhich = 0
+    if ( present(which) ) nWhich = size(which)
+    if ( nWhich > 0 ) which = 0
+    if ( present(howMany) ) howMany = 0
+    if ( size(array,2) < 1 ) return
+    myMode = 'any'
+    if ( present(mode) ) myMode = mode
+    n = 0
+    do i=1, size(array, 2)
+      select case( lowercase(myMode(1:3)) )
+      case ( 'any' )
+        yes = any( is_what_ieee(what, array(:,i)) )
+      case ( 'all' )
+        yes = all( is_what_ieee(what, array(:,i)) )
+      case default ! unrecognized mode; sorry
+        yes = .false.
+      end select
+      if ( yes ) then
+        n = n + 1
+        if ( n <= nWhich ) which(n) = i
+      endif
+    enddo
+    if ( present(howMany) ) howMany = n
+  end subroutine WhereAreThey_DOUBLE_2d
+
+  subroutine WhereAreThey_REAL_2d ( what, array, which, howMany, mode )
+    ! Args
+    integer, intent(in)                          :: what ! a signal flag
+    real, dimension(:,:), intent(in)             :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+    ! Internal variables
+    integer :: i
+    character(len=3) :: myMode
+    integer :: n
+    integer :: nWhich ! size(which);  > 0 only if which is present
+    logical :: yes
+    ! Executable
+    nWhich = 0
+    if ( present(which) ) nWhich = size(which)
+    if ( nWhich > 0 ) which = 0
+    if ( present(howMany) ) howMany = 0
+    if ( size(array,2) < 1 ) return
+    myMode = 'any'
+    if ( present(mode) ) myMode = mode
+    n = 0
+    do i=1, size(array, 2)
+      select case( lowercase(myMode(1:3)) )
+      case ( 'any' )
+        yes = any( is_what_ieee(what, array(:,i)) )
+      case ( 'all' )
+        yes = all( is_what_ieee(what, array(:,i)) )
+      case default ! unrecognized mode; sorry
+        yes = .false.
+      end select
+      if ( yes ) then
+        n = n + 1
+        if ( n <= nWhich ) which(n) = i
+      endif
+    enddo
+    if ( present(howMany) ) howMany = n
+  end subroutine WhereAreThey_REAL_2d
+
+  subroutine WhereAreThey_DOUBLE_3d ( what, array, which, howMany, mode )
+    ! Args
+    integer, intent(in)                          :: what ! a signal flag
+    double precision, dimension(:,:,:), intent(in) :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+    ! Internal variables
+    integer :: i
+    character(len=3) :: myMode
+    integer :: n
+    integer :: nWhich ! size(which);  > 0 only if which is present
+    logical :: yes
+    ! Executable
+    nWhich = 0
+    if ( present(which) ) nWhich = size(which)
+    if ( nWhich > 0 ) which = 0
+    if ( present(howMany) ) howMany = 0
+    if ( size(array,3) < 1 ) return
+    myMode = 'any'
+    if ( present(mode) ) myMode = mode
+    n = 0
+    do i=1, size(array, 3)
+      select case( lowercase(myMode(1:3)) )
+      case ( 'any' )
+        yes = any( is_what_ieee(what, array(:,:,i)) )
+      case ( 'all' )
+        yes = all( is_what_ieee(what, array(:,:,i)) )
+      case default ! unrecognized mode; sorry
+        yes = .false.
+      end select
+      if ( yes ) then
+        n = n + 1
+        if ( n <= nWhich ) which(n) = i
+      endif
+    enddo
+    if ( present(howMany) ) howMany = n
+  end subroutine WhereAreThey_DOUBLE_3d
+
+  subroutine WhereAreThey_REAL_3d ( what, array, which, howMany, mode )
+    ! Args
+    integer, intent(in)                          :: what ! a signal flag
+    real, dimension(:,:,:), intent(in)           :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+    ! Internal variables
+    integer :: i
+    character(len=3) :: myMode
+    integer :: n
+    integer :: nWhich ! size(which);  > 0 only if which is present
+    logical :: yes
+    ! Executable
+    nWhich = 0
+    if ( present(which) ) nWhich = size(which)
+    if ( nWhich > 0 ) which = 0
+    if ( present(howMany) ) howMany = 0
+    if ( size(array,3) < 1 ) return
+    myMode = 'any'
+    if ( present(mode) ) myMode = mode
+    n = 0
+    do i=1, size(array, 3)
+      select case( lowercase(myMode(1:3)) )
+      case ( 'any' )
+        yes = any( is_what_ieee(what, array(:,:,i)) )
+      case ( 'all' )
+        yes = all( is_what_ieee(what, array(:,:,i)) )
+      case default ! unrecognized mode; sorry
+        yes = .false.
+      end select
+      if ( yes ) then
+        n = n + 1
+        if ( n <= nWhich ) which(n) = i
+      endif
+    enddo
+    if ( present(howMany) ) howMany = n
+  end subroutine WhereAreThey_REAL_3d
+
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -1200,6 +1707,9 @@ end module MLSFillValues
 
 !
 ! $Log$
+! Revision 2.10  2008/01/07 21:34:41  pwagner
+! Added new functions to id and return ieee signals; WhereAreThe.. procedures
+!
 ! Revision 2.9  2006/06/15 17:31:30  pwagner
 ! Added ReorderFillValues
 !
