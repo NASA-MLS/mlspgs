@@ -58,7 +58,31 @@
 
     ! Avoid dumping the entire array if all its elements are equal
     if ( DONTDUMPIFALLEQUAL .and. size(array) > 5 ) then
-      if ( minval(array) == maxval(array) ) then
+      if ( all(isInfinite(array)) ) then
+        if ( present(name) ) then
+          call output( trim(name), advance='no' )
+        else
+          call output( 'array', advance='no' )
+        end if
+        call output( ': all ', advance='no' )
+        call output( trim(arrayShapeToString(shape(array))), advance='no' )
+        call output( ' values are ', advance='no' )
+        call output( InfFunction(1.), FORMAT=SDFORMATDEFAULT, advance='yes' )
+        return
+      elseif ( all(isNaN(array)) ) then
+        if ( present(name) ) then
+          call output( trim(name), advance='no' )
+        else
+          call output( 'array', advance='no' )
+        end if
+        call output( ': all ', advance='no' )
+        call output( trim(arrayShapeToString(shape(array))), advance='no' )
+        call output( ' values are ', advance='no' )
+        call output( NaNFunction(1.), FORMAT=SDFORMATDEFAULT, advance='yes' )
+        return
+      elseif ( .not. all(isFinite(array)) ) then
+        ! we'll need to dump to see where the NaNs and Infs are
+      elseif ( minval(array) == maxval(array) ) then
         if ( present(name) ) then
           call output( trim(name), advance='no' )
         else
@@ -72,6 +96,9 @@
       end if
     end if
 ! $Log$
+! Revision 2.14  2008/01/07 21:39:36  pwagner
+! Fixed bug reegarding NaNs and Infs in array not being dumped
+!
 ! Revision 2.13  2007/07/16 23:33:28  pwagner
 ! May automatically set certain options by default
 !
