@@ -17,7 +17,7 @@ module L3ascii ! Collections of Hugh's subroutines to handle TYPE GriddedData_T
   use GriddedData, only: DestroyGriddedData, GriddedData_T, V_is_pressure, &
     & V_is_altitude, V_is_GPH, V_is_theta, RGR
   use LEXER_CORE, only: PRINT_SOURCE
-  USE MLSCommon, only: R4, R8, LineLen, NameLen, DEFAULTUNDEFINEDVALUE
+  USE MLSCommon, only: R4, R8, LineLen, NameLen, undefinedValue
   use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
   USE MLSStrings, only: Capitalize, &
     & Count_words, ReadCompleteLineWithoutComments
@@ -112,7 +112,7 @@ contains
     integer,parameter :: maxNoDates = 30
     real(kind=r8), allocatable, dimension(:,:,:,:,:,:) :: tmpfield
     logical :: noYearStart, noYearEnd
-    real(rgr), parameter :: DefaultMissingValue = DEFAULTUNDEFINEDVALUE !-999.99
+    ! real(rgr), parameter :: DefaultMissingValue = undefinedValue !-999.99
 
     !---- Executable statements ----! 
 
@@ -140,7 +140,7 @@ contains
     ! unit for use in error messages.
 
     field%sourceFileName = filename
-    field%missingValue = defaultMissingValue
+    field%missingValue = undefinedValue ! defaultMissingValue
     field%empty = .false.
 
     ! Fix axis arrays: set to default values with length 1 and a sensible 
@@ -861,6 +861,9 @@ end module L3ascii
 
 !
 ! $Log$
+! Revision 2.33  2008/01/07 21:36:33  pwagner
+! Replace DEFAULTUNDEFINEDVALUE with user-settable undefinedValue
+!
 ! Revision 2.32  2007/09/27 21:57:26  pwagner
 ! Uses MLSMessage to warn instead of output
 !
