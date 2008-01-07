@@ -15,7 +15,7 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
   use Dump_0, only: dump
   use intrinsic, only: L_GEODALTITUDE, L_GPH, L_ETA, L_PRESSURE, &
     & L_THETA
-  use MLSCommon, only: RGR=>R4, R8, LINELEN, NAMELEN, DEFAULTUNDEFINEDVALUE
+  use MLSCommon, only: RGR=>R4, R8, LINELEN, NAMELEN, undefinedValue
   ! r4 corresponds to sing. prec. :: same as stored in files
   ! (except for dao dimensions)
   use MLSMessageModule, only: MLSMSG_Allocate, MLSMSG_DeAllocate, MLSMSG_Error, &
@@ -689,7 +689,7 @@ contains
     logical, optional, intent(in) :: EMPTY
     real(rgr), optional, intent(in) :: missingValue
     ! Local parameters
-    real(rgr), parameter :: DefaultMissingValue = DEFAULTUNDEFINEDVALUE ! -999.99
+    ! real(rgr), parameter :: DefaultMissingValue = undefinedValue ! -999.99
     ! Local variables
     integer :: status                   ! Status from allocates etc.
     logical :: myEmpty                  ! Copy of empty possibly
@@ -739,7 +739,7 @@ contains
         qty%noDates = 1
         qty%equivalentLatitude = .false.
         qty%noYear = .false.
-        qty%missingValue = defaultMissingValue
+        qty%missingValue = undefinedValue ! defaultMissingValue
         qty%verticalCoordinate = -1
         qty%units = '(unknown)'
         qty%heightsUnits = '(unknown)'
@@ -1302,6 +1302,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.51  2008/01/07 21:36:33  pwagner
+! Replace DEFAULTUNDEFINEDVALUE with user-settable undefinedValue
+!
 ! Revision 2.50  2007/10/04 01:49:14  vsnyder
 ! Don't overflow the call stack
 !
