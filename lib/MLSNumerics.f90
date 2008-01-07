@@ -16,7 +16,7 @@ module MLSNumerics              ! Some low level numerical stuff
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use DUMP_0, only : DUMP, SELFDIFF
   use MatrixModule_0, only: CreateBlock, M_Absent, MatrixElement_T, Sparsify
-  use MLSCommon, only : DEFAULTUNDEFINEDVALUE, R4, R8, Rm
+  use MLSCommon, only : undefinedValue, R4, R8, Rm
   use MLSFillValues, only: filterValues, IsFillValue, ReplaceFillValues
   use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
     & MLSMessage, MLSMessageCalls
@@ -2287,6 +2287,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.57  2008/01/07 21:36:33  pwagner
+! Replace DEFAULTUNDEFINEDVALUE with user-settable undefinedValue
+!
 ! Revision 2.56  2007/08/20 22:03:31  pwagner
 ! Fixed another bug in HuntRange
 !
