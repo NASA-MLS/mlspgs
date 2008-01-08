@@ -259,6 +259,10 @@ while [ "$more_opts" = "yes" ] ; do
        shift
        shift
        ;;
+    --share* )
+       otheropts=`add_option "$otheropts" --sharedPCF`
+       shift
+       ;;
     --tk )
        otheropts=`add_option "$otheropts" --tk`
        shift
@@ -369,6 +373,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.16  2007/08/31 00:06:43  pwagner
+# Passes -f, --crash options to slaves
+#
 # Revision 1.15  2007/08/17 00:42:02  pwagner
 # Passes switches from master task to slave
 #
