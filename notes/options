@@ -89,6 +89,7 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
   --recl[ ]<number>: set the max record length size for l2cf to <number>
       (In case the default value, 20000, is too small for some l2cfs).
       This has effect only if the l2cf is not coming from standard input.
+  --[n]shar[edPCF]: Do [not] move PCFids so levels 1 and 2 can shared same PCF
   --[n]skipDir[ectWrites]: Do [not] skip all the directWrites; speedy snooping
   --[n]skipRetr[ieval]: Do [not] skip all the Retrievals; a pre-flight checkout
   --skipSec[tions] 'list': Skip all the sections in list (e.g, 'Join,Output')
@@ -141,6 +142,9 @@ by the equal-signs -- stuff outside that space, like these
 comments, will not be printed in response to mlsl2 -?)
 
  $Log$
+ Revision 1.48  2007/08/17 00:31:14  pwagner
+ Eliminated now redundant [n]everCrash
+
  Revision 1.47  2007/01/12 00:32:03  pwagner
  May set host name; may specifiy unbuffered stdout
 
