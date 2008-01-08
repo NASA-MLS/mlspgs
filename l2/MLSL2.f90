@@ -35,7 +35,7 @@ program MLSL2
     & DEFAULT_HDFVERSION_READ, DEFAULT_HDFVERSION_WRITE, &
     & LEVEL1_HDFVERSION, NORMAL_EXIT_STATUS, OUTPUT_PRINT_UNIT, &
     & PATCH, PENALTY_FOR_NO_METADATA, QUIT_ERROR_THRESHOLD, RESTARTWARNINGS, &
-    & SECTIONTIMINGUNITS, SIPS_VERSION, &
+    & SECTIONTIMINGUNITS, SHAREDPCF, SIPS_VERSION, &
     & SKIPDIRECTWRITES, SKIPDIRECTWRITESORIGINAL, SLAVESDOOWNCLEANUP, &
     & SKIPRETRIEVAL, SKIPRETRIEVALORIGINAL, &
     & SPECIALDUMPFILE, STATEFILLEDBYSKIPPEDRETRIEVALS, &
@@ -46,7 +46,7 @@ program MLSL2
   use MLSMessageModule, only: MLSMessage, MLSMessageConfig, MLSMSG_Debug, &
     & MLSMSG_Error, MLSMSG_Severity_to_quit, MLSMSG_Severity_to_walkback, &
     & MLSMSG_Warning, MLSMessageExit
-  use MLSPCF2, only: MLSPCF_L2CF_START
+  use MLSPCF2 ! Everything
   use MLSStrings, only: lowerCase, readIntsFromChars, trim_safe
   use MLSStringLists, only: catLists, ExpandStringRange, &
     & GetStringElement, GetUniqueList, &
@@ -439,6 +439,8 @@ program MLSL2
           call io_error ( "After --recl option", status, line )
           stop
         end if
+      else if ( line(3+n:6+n) == 'shar' ) then
+        SHAREDPCF = switch
       else if ( lowercase(line(3+n:9+n))  == 'skipdir' ) then
         SKIPDIRECTWRITES = switch
       else if ( lowercase(line(3+n:10+n)) == 'skipretr' ) then
@@ -727,6 +729,9 @@ program MLSL2
   else
     iChunks = 0
   endif
+
+  ! If sharing a single PCF with level 1, we need to move any "mobile" PCF ids
+  if ( sharedPCF ) call MovePCFIDs
   ! Setup the parallel stuff.  Register our presence with the master if we're a
   ! slave.
   if ( parallel%master .and. parallel%myTid <= 0 ) &
@@ -1026,6 +1031,8 @@ contains
         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
       call outputNamedValue ( 'Default hdfeos version on writes', default_hdfversion_write, advance='yes', &
         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+      call outputNamedValue ( 'PCF shared with level 1?', SHAREDPCF, advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
       call outputNamedValue ( 'Range of chunks', trim_safe(parallel%chunkRange), advance='yes', &
         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
       call outputNamedValue ( 'Avoiding unlimited dimensions in directwrites?', &
@@ -1107,6 +1114,15 @@ contains
     end if
   end subroutine Dump_settings
 
+  ! ---------------------------------------------  MovePCFIDs  -----
+  subroutine MovePCFIDs
+    ! We need to move any "mobile" PCFids
+    include 'sharedpcf2.f9h'
+    print *, 'Moved PCFIds'
+    print *, 'mlspcf_l2cf_start: ', mlspcf_l2cf_start
+    
+  end subroutine MovePCFIDs
+
   ! ---------------------------------------------  announce_success  -----
   subroutine announce_success ( Name, unit_number )
     character(LEN=*), intent(in)   :: Name
@@ -1125,6 +1141,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.170  2008/01/08 00:22:02  pwagner
+! Levels 1 and 2 can use same shared PCF now if --shared option set
+!
 ! Revision 2.169  2007/09/13 21:52:22  pwagner
 ! Reduced sips limitwarnings to 4
 !
