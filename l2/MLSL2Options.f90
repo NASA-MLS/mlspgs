@@ -42,6 +42,11 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! Set the following to TRUE before delivering level 2 to sips
   logical, parameter :: SIPS_VERSION =  .false. 
 
+  ! The following should be TRUE if run with level 1 as a single PGE
+  ! sharing a single PCF
+  ! (in which case we need to move some of the "mobile" PCF ids)
+  logical :: SHAREDPCF =  .false. 
+
   ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
   ! Update these lines before delivery to sips     
@@ -149,6 +154,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.43  2008/01/08 00:16:29  pwagner
+! Added SHAREDPCF so levels 1 and 2 can use same PCF
+!
 ! Revision 2.42  2007/09/06 22:42:28  pwagner
 ! Added SLAVESDOOWNCLEANUP
 !
