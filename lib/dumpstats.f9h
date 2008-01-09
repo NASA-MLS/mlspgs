@@ -22,12 +22,22 @@
     myWholeArray = .not. (myStats .or. myRMS) .or. theDefault('wholearray')
     if ( present(wholeArray) ) myWholeArray = wholeArray
     if ( myRMS ) then
-      if ( .not. all(isfinite(array)) ) then
+      if ( .not. any(isfinite(array)) ) then
         if ( present(name) ) call output ( trim(name) //'   ' )
-        call output ('(NaNs found in array--skipped) ', advance='yes')
-      else if ( filterFillsFromRMS ) then
+        call output ('(no finite values found in array--skipped) ', advance='yes')
+      elseif ( .not. all(isfinite(array)) ) then
         if ( present(name) ) call output ( trim(name) //'   ' )
-        call output ('(NaNs found in array--skipped) ', advance='yes')
+        call output ('(non-finite values found in array--skipped) ', advance='yes')
+        call WhereAreTheInfs ( array, which, how_many )
+        if ( how_many > 0 ) then
+          call outputNamedValue( 'num(Infs)', how_many )
+          if ( how_many < 50 ) call outputNamedValue( 'which', which(1:how_many) )
+        endif
+        call WhereAreTheNaNs ( array, which, how_many )
+        if ( how_many > 0 ) then
+          call outputNamedValue( 'num(NaNs)', how_many )
+          if ( how_many < 50 ) call outputNamedValue( 'which', which(1:how_many) )
+        endif
       else if ( present(fillValue) ) then
         call printRMSetc ( Name, mlsmin(array, fillValue), &
           & mlsmax(array, fillValue), &
@@ -96,6 +106,9 @@
       end if
     end if
 ! $Log$
+! Revision 2.15  2008/01/09 20:53:43  pwagner
+! When NaNs short-circuit dump or diff, print how many and where
+!
 ! Revision 2.14  2008/01/07 21:39:36  pwagner
 ! Fixed bug reegarding NaNs and Infs in array not being dumped
 !
