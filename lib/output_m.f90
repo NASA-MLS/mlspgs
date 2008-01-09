@@ -13,7 +13,7 @@ module OUTPUT_M
 
   use dates_module, only:  buildCalendar, daysInMonth, &
     & reformatDate, reformatTime, utc_to_yyyymmdd
-  use MLSCommon, only: FileNameLen
+  use MLSCommon, only: FileNameLen, finite_signal, is_what_ieee
   use MLSMessageModule, only: MLSMessage, MLSMessageInternalFile, &
     & MLSMSG_Info, MLSMSG_Error
   use MLSSets, only: FindFirst
@@ -260,6 +260,7 @@ module OUTPUT_M
     & (/ -1.d0, 0.d0, 1.d0 /)  ! For which values to use default format '*'
   real, parameter, dimension(3) :: RPREFERDEFAULTFORMAT = &
     & (/ -1., 0., 1. /)  ! For which values to use default format '*'
+  character(len=16), private, save :: NONFINITEFORMAT = '(1pg14.6)' ! 'NaN, Inf'
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -1183,7 +1184,8 @@ contains
     character(len=30) :: LINE, LOG_CHARS, FormatSpec
 
     FormatSpec = outputOptions%sdFormatDefault
-    if ( any( value == DPREFERDEFAULTFORMAT ) ) FormatSpec = '*'
+    if ( any( value == DPREFERDEFAULTFORMAT ) )  FormatSpec = '*'
+    if ( .not. is_what_ieee(finite_signal, value) ) FormatSpec = NONFINITEFORMAT
     if ( present(Format)  ) FormatSpec = Format
     include 'numToChars.f9h'
     log_chars = line
@@ -1333,7 +1335,8 @@ contains
     character(len=30) :: LINE, LOG_CHARS, FormatSpec
 
     FormatSpec = outputOptions%sdFormatDefault
-    if ( any( value == RPREFERDEFAULTFORMAT ) ) FormatSpec = '*'
+    if ( any( value == RPREFERDEFAULTFORMAT ) )  FormatSpec = '*'
+    if ( .not. is_what_ieee(finite_signal, value) ) FormatSpec = NONFINITEFORMAT
     if ( present(Format)  ) FormatSpec = Format
     include 'numToChars.f9h'
 
@@ -1943,6 +1946,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.69  2008/01/09 20:52:03  pwagner
+! call output(NaN) now prints 'NaN'; same with Inf
+!
 ! Revision 2.68  2007/12/19 01:29:05  pwagner
 ! Removed unused variables
 !
