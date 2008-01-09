@@ -83,7 +83,7 @@ module MLSCommon                ! Common definitions for the MLS software
   integer, public, parameter :: FILL_SIGNAL   = NAN_SIGNAL + 1
 
   interface is_what_ieee
-    module procedure is_what_ieee_REAL, is_what_ieee_DOUBLE
+    module procedure is_what_ieee_REAL, is_what_ieee_DOUBLE, is_what_ieee_INTEGER
   end interface
   
   ! Because we'd like not to always drag the SDPToolkit with us
@@ -251,6 +251,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.31  2008/01/09 20:50:01  pwagner
+! is_what_ieee supports integer args
+!
 ! Revision 2.30  2008/01/07 21:33:19  pwagner
 ! Added ieee signal defs and id-ing functions
 !
