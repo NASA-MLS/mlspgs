@@ -94,17 +94,52 @@
     if ( present(wholeArray) ) myWholeArray = wholeArray
     
     NaNsIn1 = any(.not. ieee_is_finite(array1))
+    if ( NaNsIn1 ) then
+      if ( .not. any(ieee_is_finite(array1)) ) then
+        call output( &
+          & '*** skipping: no finite values found in ' // trim(name1), advance='yes')
+        return
+      endif
+      call output( &
+        & '*** non-finite values found in ' // trim(name1), advance='yes')
+      call WhereAreTheInfs ( array1, which, how_many )
+      if ( how_many > 0 ) then
+        call outputNamedValue( 'num(Infs)', how_many )
+        if ( how_many < 50 ) call outputNamedValue( 'which', which(1:how_many) )
+      endif
+      call WhereAreTheNaNs ( array1, which, how_many )
+      if ( how_many > 0 ) then
+        call outputNamedValue( 'num(NaNs)', how_many )
+        if ( how_many < 50 ) call outputNamedValue( 'which', which(1:how_many) )
+      endif
+    endif
+
     NaNsIn2 = any(.not. ieee_is_finite(array2))
+    if ( NaNsIn2 ) then
+      if ( .not. any(ieee_is_finite(array2)) ) then
+        call output( &
+          & '*** skipping: no finite values found in ' // trim(name2), advance='yes')
+        return
+      endif
+      call output( &
+        & '*** non-finite values found in ' // trim(name2), advance='yes')
+      call WhereAreTheInfs ( array2, which, how_many )
+      if ( how_many > 0 ) then
+        call outputNamedValue( 'num(Infs)', how_many )
+        if ( how_many < 50 ) call outputNamedValue( 'which', which(1:how_many) )
+      endif
+      call WhereAreTheNaNs ( array2, which, how_many )
+      if ( how_many > 0 ) then
+        call outputNamedValue( 'num(NaNs)', how_many )
+        if ( how_many < 50 ) call outputNamedValue( 'which', which(1:how_many) )
+      endif
+    endif
 
     call filterValues(reshape( array1, (/ product(shape(array1)) /) ), &
       & filtered1, &
       & reshape( array2, (/ product(shape(array2)) /) ), &
       & filtered2, &
       & warn, FillValue)
-    if ( NaNsIn1 ) call output( &
-      & '*** NaNs found in ' // trim(name1), advance='yes')
-    if ( NaNsIn2 ) call output( &
-      & '*** NaNs found in ' // trim(name2), advance='yes')
     if ( warn ) call output( &
       & '*** non-matched NaNs diffing ' // trim(DiffName), &
       & advance='yes')
@@ -309,6 +344,9 @@
 
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.14  2008/01/09 20:54:03  pwagner
+! When NaNs short-circuit dump or diff, print how many and where
+!
 ! Revision 2.13  2007/10/24 23:58:49  pwagner
 ! pct summaries now include columns '(as ratio)', '(as abs)'
 !
