@@ -20,7 +20,8 @@ module DUMP_0
   use ieee_arithmetic, only: ieee_is_finite
   use MLSCommon, only: undefinedValue
   use MLSFillValues, only : FilterValues, IsFinite, IsInfinite, IsNaN, &
-    & InfFunction, NaNFunction, ReorderFillValues, ReplaceFillValues
+    & InfFunction, NaNFunction, ReorderFillValues, ReplaceFillValues, &
+    & WhereAreTheInfs, WhereAreTheNaNs
   use MLSSets, only: FindAll
   use MLSStats1, only: STAT_T, &
     & ALLSTATS, FILLVALUERELATION, HOWFAR, HOWNEAR, &
@@ -44,6 +45,7 @@ module DUMP_0
 ! DONTDUMPIFALLEQUAL       don't dump every element of a constant array
 ! DUMPTABLESIDE            what side to place headers when dumping tables
 ! FILTERFILLSFROMRMS       exclude fill values when calculating rms, etc.
+!                           (not implemented yet)
 ! RMSFORMAT                use this format to print min, max, rms, etc.
 ! SDFORMATDEFAULT          use this format to print s.p., d.p. by default
 ! STATSONONELINE           stats, rms each printed on a single line
@@ -178,6 +180,8 @@ module DUMP_0
   logical :: myStats, myRMS, myWholeArray
   integer :: numNonFill, numFill
   logical, save :: thisIsADiff = .false.
+  integer :: how_many
+  integer, dimension(1024) :: which
 
 contains
 
@@ -2460,6 +2464,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.77  2008/01/09 20:53:22  pwagner
+! When NaNs short-circuit dump or diff, print how many and where
+!
 ! Revision 2.76  2008/01/07 21:37:57  pwagner
 ! Replace DEFAULTUNDEFINEDVALUE with user-settable undefinedValue
 !
