@@ -18,8 +18,8 @@ module MLSFiles               ! Utility file routines
   use HDFEOS5, only: he5_swclose, he5_swopen, he5_swinqswath, &
     & he5_gdopen, he5_gdclose, &
     & HE5F_ACC_TRUNC, HE5F_ACC_RDONLY, HE5F_ACC_RDWR
-  use intrinsic, only: l_ascii, l_binary, l_create, l_grid, l_hdf, l_open, &
-    & l_rdonly, l_rdwrite, l_swath, l_tkgen, l_zonalavg, lit_indices
+  use intrinsic, only: l_ascii, l_binary, l_grid, l_hdf, l_open, &
+    & l_swath, l_tkgen, l_zonalavg, lit_indices
   use IO_STUFF, only: get_lun
   use machine, only: io_error
   use MLSCommon, only: i4, BareFNLen, FileNameLen,  MLSFile_T, Range_T, &
@@ -27,7 +27,7 @@ module MLSFiles               ! Utility file routines
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Crash, MLSMSG_Error, MLSMSG_Warning
   use MLSSets, only: findFirst
-  use MLSStrings, only: Capitalize, LowerCase, streq
+  use MLSStrings, only: Capitalize, LowerCase
   use MLSStringLists, only: ExtractSubString, &
     & ReplaceSubString, SortArray
   use output_m, only: blanks, output
@@ -296,6 +296,7 @@ module MLSFiles               ! Utility file routines
     character (len=*), parameter :: types = 'ascii,hdf,swath,grid,zonalavg,binary,tkgen'
 
   type(MLSFile_T), save :: MLSFile_save
+  logical, parameter :: DeeBug = .false.
 
 contains
 
@@ -651,10 +652,10 @@ contains
   type(MLSFile_T), pointer               :: item
   logical, optional, intent(in)          :: ignore_paths
   !
-  ! logical, dimension(size(database)) :: doTheyMatch
+  integer :: i
   integer :: indx
   logical :: myignore_paths
-  ! character(len=8) :: streqOptions
+  character(len=len(name)) :: barename
   !
   nullify(item)
   if ( .not. associated(database) ) return
@@ -666,7 +667,15 @@ contains
   else
     ! streqOptions = '-ps' ! Enabling partial match, and returning the shortest
     ! doTheyMatch = streq(database%name, name, streqOptions)
-    indx = findFirst( strip_path(database%name) == strip_path(name) )
+    indx = findFirst( strip_path(database%name), strip_path(name) )
+    if ( indx < 1 .and. DeeBug ) then
+      barename = strip_path(name)
+      call output( 'barename: ' // trim(barename), advance='yes' )
+      do i=1, size(database)
+        barename = strip_path(database(i)%name)
+        call output( 'barename(db(i): ' // trim(barename), advance='yes' )
+      enddo
+    endif
   endif
   if ( indx > 0 ) item => database(indx)
   end function GetMLSFileByName
@@ -2518,8 +2527,6 @@ contains
     integer :: ioerror
     integer :: PCBottom
     integer :: PCTop
-    integer :: record_length
-    character(len=8) :: toolbox_mode
     integer :: version
     !
     version = 1
@@ -2701,6 +2708,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.79  2008/01/14 23:47:16  pwagner
+! GetMLSFileByName sometimes failed to match; fixed
+!
 ! Revision 2.78  2007/06/21 00:49:51  vsnyder
 ! Remove tabs, which are not part of the Fortran standard
 !
