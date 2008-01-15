@@ -118,8 +118,12 @@ MODULE SciUtils ! L0 science utilities
     ELSE
 
        PRINT *, 'sci_type: ', sci_type   !! Not correct type!
-       OK = .FALSE.
-       RETURN
+       !OK = .FALSE.
+       !RETURN
+       READ (UNIT=l0_sci1, FMT=sci1_T1_fmt, iostat=ios) sci1_T1
+       READ (UNIT=l0_sci2, FMT=sci2_T1_fmt, iostat=ios) sci2_T1
+       tindex = 1
+       CALL MLSMessage (MLSMSG_Info, ModuleName, "Incorrect sci type!")
 
     ENDIF
 
@@ -879,6 +883,9 @@ MODULE SciUtils ! L0 science utilities
 END MODULE SciUtils
 
 ! $Log$
+! Revision 2.17  2008/01/15 19:56:31  perun
+! Allow unrecognized format type to pass through with a warning.
+!
 ! Revision 2.16  2006/08/02 18:57:51  perun
 ! Allow MAF buffer to fill without all expected MIFs and fillin MIF 0 time data, if necessary
 !
@@ -922,6 +929,9 @@ END MODULE SciUtils
 ! moved parameter statement to data statement for LF/NAG compatitibility
 !
 ! $Log$
+! Revision 2.17  2008/01/15 19:56:31  perun
+! Allow unrecognized format type to pass through with a warning.
+!
 ! Revision 2.16  2006/08/02 18:57:51  perun
 ! Allow MAF buffer to fill without all expected MIFs and fillin MIF 0 time data, if necessary
 !
