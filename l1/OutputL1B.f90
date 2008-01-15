@@ -465,6 +465,8 @@ CONTAINS
 
        bandno = rad(i)%bandno
 
+       IF (L1Config%Output%DisableRadOut(bandno)) CYCLE   ! skip to next bandno
+
        CALL GetFullMLSSignalName(rad(i)%signal, name) ! Concatenate SD names
        prec = TRIM(name) // ' precision'
        ! Set parameters based on input data dimensions
@@ -1011,6 +1013,9 @@ END MODULE OutputL1B
 !=============================================================================
 
 ! $Log$
+! Revision 2.27  2008/01/15 19:55:24  perun
+! Add DisableRadOut flag to stop outputting unwanted bands.
+!
 ! Revision 2.26  2007/06/21 21:04:31  perun
 ! Only output to RADD file if DACS calibration is enabled and output LLO_Bias
 !
