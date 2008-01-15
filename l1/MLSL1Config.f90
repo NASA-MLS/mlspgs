@@ -68,6 +68,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
   TYPE Output_T
      LOGICAL :: RemoveBaseline = .TRUE.             ! For GHz Baseline removal
      LOGICAL :: DeconvolveDACS = .FALSE.            ! For DACS deconvolution
+     LOGICAL :: DisableRadOut(NumBands) = .FALSE.   ! To output band radiances
      LOGICAL :: SubtractBinnedBaseline(NumBands) = .FALSE. ! To adjust baseline
      LOGICAL :: EnableChi2Err(NumBands) = .FALSE.   ! For RadErr calculation
   END TYPE Output_T
@@ -263,7 +264,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
 
       USE EXPR_M, ONLY: Expr
       USE INIT_TABLES_MODULE, ONLY: p_removebaseline, p_deconvolveDACS, &
-           s_chi2err, f_bandno, s_subtractbinnedbaseline
+           s_chi2err, f_bandno, s_subtractbinnedbaseline, s_disableradout
       USE TREE, ONLY: Decoration, Nsons, Subtree, Node_id
       USE TREE_TYPES
       USE MoreTree, ONLY: Get_Boolean
@@ -271,9 +272,6 @@ MODULE MLSL1Config  ! Level 1 Configuration
       INTEGER :: root, i, j, k, son, key, spec
       INTEGER :: expr_units(2)
       DOUBLE PRECISION :: expr_value(2)
-      LOGICAL :: chi2entry
-
-      chi2entry = .FALSE.   ! initialize to no entry yet
 
       DO i = 2, Nsons (root) - 1
 
@@ -304,13 +302,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
 
             SELECT CASE (spec)
 
-            CASE (s_chi2err, s_subtractbinnedbaseline)
-
-               IF (spec == s_chi2err) THEN
-                  chi2entry = .TRUE.
-               ELSE
-                  chi2entry = .FALSE.
-               ENDIF
+            CASE (s_chi2err, s_subtractbinnedbaseline, s_disableradout)
 
                DO j = 2, nsons (key)
 
@@ -327,10 +319,13 @@ MODULE MLSL1Config  ! Level 1 Configuration
                            CALL MLSMessage (MLSMSG_Error, ModuleName, &
                             'Input band number out of range!')
                         ENDIF
-                        IF (chi2entry) THEN
+                        IF (spec == s_chi2err) THEN
                            L1Config%Output%EnableChi2Err(INT(expr_value(1)): &
                             INT(expr_value(2))) = .TRUE.
-                        ELSE
+                        ELSE IF (spec == s_disableradout) THEN
+                           L1Config%Output%DisableRadOut(INT(expr_value(1)): &
+                            INT(expr_value(2))) = .TRUE.
+                        ELSE IF (spec == s_subtractbinnedbaseline) THEN
                            L1Config%Output%SubtractBinnedBaseline &
                             (INT(expr_value(1)): INT(expr_value(2))) = .TRUE.
                         ENDIF
@@ -346,7 +341,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
 
       ENDDO
 
-      IF (chi2entry) THEN
+      IF (ANY(L1Config%Output%EnableChi2Err)) THEN
          CALL MLSMessage (MLSMSG_Info, ModuleName, &
               'Chi2 adjustments to Radiance precisions are ENABLED.')
       ELSE
@@ -811,6 +806,9 @@ MODULE MLSL1Config  ! Level 1 Configuration
 END MODULE MLSL1Config
 
 ! $Log$
+! Revision 2.29  2008/01/15 19:54:35  perun
+! Add DisableRadOut to disable outputting unwanted bands.
+!
 ! Revision 2.28  2007/02/09 15:05:24  perun
 ! Add Do_Slimb flag
 !
