@@ -76,7 +76,8 @@ MODULE INIT_TABLES_MODULE
   INTEGER, PARAMETER :: S_DISCARDMIFS = s_limbMIFs + 1
   INTEGER, PARAMETER :: S_CHI2ERR = s_discardMIFs + 1
   INTEGER, PARAMETER :: S_MARKCHANBAD = s_chi2err + 1
-  INTEGER, PARAMETER :: S_SUBTRACTBINNEDBASELINE = s_markchanbad + 1
+  INTEGER, PARAMETER :: S_DISABLERADOUT = s_markchanbad + 1
+  INTEGER, PARAMETER :: S_SUBTRACTBINNEDBASELINE = s_disableradout + 1
   INTEGER, PARAMETER :: SPEC_LAST = s_subtractbinnedbaseline
 
 ! Parameter names:
@@ -208,6 +209,7 @@ CONTAINS ! =====     Public procedures     =============================
     spec_indices(s_discardMIFs) =             add_ident ( 'discardMIFs' )
     spec_indices(s_chi2err) =                 add_ident ( 'EnableChi2Err' )
     spec_indices(s_markchanbad) =             add_ident ( 'MarkChanBad' )
+    spec_indices(s_disableradout) =           add_ident ( 'DisableRadOut' )
     spec_indices(s_subtractbinnedbaseline) =  &
          add_ident ( 'SubtractBinnedBaseline' )
 
@@ -304,6 +306,11 @@ CONTAINS ! =====     Public procedures     =============================
              nadp+n_spec_def /) )
 
     CALL make_tree ( (/ &
+      begin, s+s_disableradout, &
+             begin, f+f_bandno, t+t_numeric_range, t+t_numeric, &
+             n+n_field_type, nadp+n_spec_def /) )
+
+    CALL make_tree ( (/ &
       begin, s+s_subtractbinnedbaseline, &
              begin, f+f_bandno, t+t_numeric, n+n_field_type, &
              nadp+n_spec_def /) )
@@ -352,7 +359,8 @@ CONTAINS ! =====     Public procedures     =============================
       begin, z+z_output, &
              begin, p+p_removebaseline, t+t_boolean, n+n_name_def, &
              begin, p+p_DeconvolveDACS, t+t_boolean, n+n_name_def, &
-             s+s_subtractbinnedbaseline, s+s_chi2err, n+n_section/) )
+             s+s_subtractbinnedbaseline, s+s_chi2err, s+s_disableradout, &
+             n+n_section/) )
 
   END SUBROUTINE INIT_TABLES
     
@@ -370,6 +378,12 @@ CONTAINS ! =====     Public procedures     =============================
 END MODULE INIT_TABLES_MODULE
   
 ! $Log$
+! Revision 2.31  2008/01/15 19:53:33  perun
+! Add DisableRadOut to disable outputting unwanted bands.
+!
+! Revision 1.1  2008/01/15 19:49:11  perun
+! Initial revision
+!
 ! Revision 2.30  2007/02/09 15:04:26  perun
 ! Added Do_Slimb flag
 !
