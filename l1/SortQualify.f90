@@ -469,8 +469,8 @@ PRINT *, 'Data:', CurMAFdata%SciPkt%GHz_sw_pos
           BankWallCnt%FB(i) = BankWallSize
        ENDIF
     ENDDO
-
-PRINT *, 'Sort:', CurMAFdata%ChanType(0:149)%FB(1,1)
+    CurMAFdata%SciPkt%GHz_sw_pos = CurMAFdata%ChanType(0:MaxMIFs-1)%FB(1,1)
+PRINT *, 'Sort:', CurMAFdata%SciPkt%GHz_sw_pos
 
 ! Scale DACS data based on appropriate TP values:
 
@@ -972,6 +972,9 @@ END MODULE SortQualify
 !=============================================================================
 
 ! $Log$
+! Revision 2.25  2008/01/16 19:11:45  perun
+! Corrected saving the sorted GHz_sw_pos
+!
 ! Revision 2.24  2007/06/21 21:05:02  perun
 ! Change mininum calibration dif to 300
 !
