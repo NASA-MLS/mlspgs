@@ -10,6 +10,7 @@
 ! foreign countries or providing access to foreign persons.
 
 module MACHINE
+  use IFPORT
   implicit none
 
   character(LEN=2) :: END_LINE = ' ' // char(10)
@@ -120,12 +121,17 @@ contains
                                         ! such a concept, else zero
 
     integer :: MyError, MyStatus
-    print*,"system not done yet for IFC"
-    !call system ( command, myStatus, myError)
-    !if ( present(error) ) error = myError
-    !if ( present(status) ) status = myStatus
-    if ( present(error) ) error = 0
-    if ( present(status) ) status = 0
+    ! print*,"system not done yet for IFC"
+    MyStatus = system( Command )
+    if ( MyStatus == -1 ) then
+      MyStatus = 0
+      MyError = ierrno( )
+    else
+      MyStatus = 0
+      MyError = 0
+    endif
+    if ( present(error) ) error = MyError
+    if ( present(status) ) status = MyStatus
   end subroutine SHELL_COMMAND
 
  ! NAG call interfaces to f90_gc
@@ -182,6 +188,9 @@ contains
 end module MACHINE
 
 ! $Log$
+! Revision 1.7  2007/05/22 20:58:17  vsnyder
+! Set ERROR and STATUS to avoid warning messages
+!
 ! Revision 1.6  2007/04/24 22:30:27  pwagner
 ! Updated to include new ifc support for calls to exit, system
 !
@@ -199,21 +208,3 @@ end module MACHINE
 !
 ! Revision 1.1  2001/09/17 10:45:18  pumphrey
 ! Added machine.f90 file for Intel ifc fortran
-!
-! Revision 1.3  2001/07/25 19:36:18  vsnyder
-! Added an interface for GETARG
-!
-! Revision 1.2  2001/05/04 23:25:10  vsnyder
-! Added Exit_With_Status routine
-!
-! Revision 1.1  2001/01/13 00:29:44  pwagner
-! moved to lib/machines/MLSCONFG/machine.f90
-!
-! Revision 1.1  2000/10/19 17:41:17  pwagner
-! first commit
-!
-! Revision 2.1  2000/10/09 22:16:14  vsnyder
-! Moved machine.f90 from l2 to lib
-!
-! Revision 2.0  2000/09/05 18:57:42  ahanzel
-! Changing file revision to 2.0.
