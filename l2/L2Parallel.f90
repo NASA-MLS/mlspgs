@@ -43,8 +43,9 @@ module L2Parallel
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE, &
     & MLSMSG_Deallocate, MLSMSG_WARNING, PVMERRORMESSAGE
   use MLSSets, only: FINDFIRST
-  use MLSStringLists, only: catLists, ExpandStringRange, ReplaceSubString, &
-    & switchDetail
+  use MLSStringLists, only: catLists, ExpandStringRange, RemoveNumFromList, &
+    & ReplaceSubString, switchDetail
+  use MLSStrings, only: lowerCase
   use MorePVM, only: PVMUNPACKSTRINGINDEX, PVMPACKSTRINGINDEX
   use MLSStrings, only: NAppearances
   use MoreTree, only: Get_Spec_ID
@@ -320,6 +321,8 @@ contains ! ================================ Procedures ======================
     integer :: REQUESTINDEXA(1)         ! Result of minloc
     integer :: RESIND                   ! Loop counter
     integer :: RETURNEDTICKET           ! Ticket for completed direct write
+    character ( len=256 ) :: sbmtdSlaveArg1, sbmtdSlaveArg2
+    character ( len=2048 ) :: sbmtdSlaveArguments ! To remove --chunks if present
     integer :: SIGNAL                   ! From slave
     integer :: SLAVETID                 ! One slave
     integer :: STAGEFILEID              ! From HDF5
@@ -458,12 +461,26 @@ contains ! ================================ Procedures ======================
           call MLSMessage ( MLSMSG_Error, ModuleName, &
             & 'Illegal chunk number' )
         elseif ( USINGOLDSUBMIT ) then ! -- Using a batch system
+          ! We must remove any --chunk chunkRange from slaveArguments
+          info = index(lowerCase(slaveArguments), '--chunk')
+          if ( info > 0 ) then
+            if ( info == 1 ) then
+              sbmtdSlaveArg1 = ' '
+            else
+              sbmtdSlaveArg1 = slaveArguments(1:info-1)
+            endif
+            call RemoveNumFromList( slaveArguments(info:), sbmtdSlaveArguments, 1, ' ' )
+            call RemoveNumFromList( sbmtdSlaveArguments, sbmtdSlaveArg2, 1, ' ' )
+            sbmtdSlaveArguments = trim(sbmtdSlaveArg1) // ' ' // sbmtdSlaveArg2
+          else
+            sbmtdSlaveArguments = slaveArguments
+          endif
           write ( chunkNoStr, '(i0)' ) nextChunk
           commandLine = &
             & trim(parallel%submit) // ' ' // &
             & trim(parallel%executable) // ' ' // &
             & ' --chunk ' // trim(chunkNoStr) // ' ' // &
-            & trim(slaveArguments)
+            & trim(sbmtdSlaveArguments)
           call shell_command ( trim(commandLine) )
           chunksStarted(nextChunk) = .true.
           skipDeathWatch = .true.
@@ -1912,6 +1929,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.87  2008/01/23 21:26:01  pwagner
+! filters --chunks from slaveArguments
+!
 ! Revision 2.86  2007/12/07 01:51:08  pwagner
 ! Removed unused dummy variables, etc.
 !
