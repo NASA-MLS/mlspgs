@@ -1940,7 +1940,7 @@ contains
       call GetStringElement(inList, elem, i, &
         & countEmpty=.true., inSeparator=inSeparator )
       temp_list = outList
-      outList = catLists( outList, trim(elem) )
+      outList = catLists( outList, trim(elem), inseparator )
     enddo
   end subroutine RemoveNumFromList
 
@@ -3101,6 +3101,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.32  2008/01/23 21:24:43  pwagner
+! RemoveNumFromList works with inseparator correctly
+!
 ! Revision 2.31  2007/12/19 01:28:29  pwagner
 ! Removed unused variables
 !
