@@ -2989,9 +2989,16 @@ contains ! =====     Public Procedures     =============================
       call FindIntersection( l2gp1%time, l2gp2%time, which1, which2, how_many, &
         & tol=1.d-1 )
       if ( how_many == 0 ) then
+        ! 2nd chance--try to match Geod. Ang. to within 1/2 deg.
         if ( .not. mySilent ) call output( &
           & 'No matching times found in l2gp1, l2gp2', advance='yes' )
-        return
+        call FindIntersection( l2gp1%GeodAngle, l2gp2%GeodAngle, which1, which2, how_many, &
+          & tol=0.5 )
+        if ( how_many == 0 ) then
+          if ( .not. mySilent ) call output( &
+            & 'No matching geod. angs found in l2gp1, l2gp2', advance='yes' )
+          return
+        endif
       endif
       call SetupNewL2GPRecord ( tl2gp1, proto=l2gp1, which=which1(1:how_many) )
       call SetupNewL2GPRecord ( tl2gp2, proto=l2gp2, which=which2(1:how_many) )
@@ -4397,6 +4404,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.153  2008/01/07 21:37:23  pwagner
+! Replace DEFAULTUNDEFINEDVALUE with user-settable undefinedValue
+!
 ! Revision 2.152  2007/12/19 01:29:37  pwagner
 ! Removed unused args
 !
