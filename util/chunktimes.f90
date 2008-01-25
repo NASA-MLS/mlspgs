@@ -14,25 +14,24 @@ program chunktimes ! Reads chunk times from l2aux file(s)
 !=================================
 
    use dump_0, only: dump
-   use Hdf, only: DFACC_CREATE, DFACC_RDWR, DFACC_RDONLY, DFACC_READ
+   use Hdf, only: DFACC_RDONLY
    use HDF5, only: HSIZE_T, h5fis_hdf5_f, h5gclose_f, h5gopen_f
    use L1BData, only: NAME_LEN
-   use MACHINE, only: FILSEP, HP, IO_ERROR, GETARG
+   use MACHINE, only: HP, GETARG
    use MLSCommon, only: R4, R8
    use MLSFiles, only: mls_exists, MLS_SFSTART, MLS_SFEND, &
      & HDFVERSION_4, HDFVERSION_5
-   use MLSHDF5, only: CpHDF5Attribute, &
+   use MLSHDF5, only: &
      & GetAllHDF5DSNames, GetHDF5Attribute, GetHDF5DSDims, &
      & IsHDF5AttributePresent, LoadFromHDF5DS, mls_h5open, mls_h5close
    use MLSMessageModule, only: MLSMessageConfig
    use MLSSets, only: FindAll, FindFirst, FindLast, FindNext
    use MLSStats1, only: STAT_T, &
-     & ALLSTATS, DUMPSTAT=>DUMP, MLSMIN, MLSMAX, MLSMEAN, MLSSTDDEV, MLSRMS, STATISTICS
+     & DUMPSTAT=>DUMP, STATISTICS
    use MLSStringLists, only: catLists, GetStringElement, GetUniqueList, &
      & NumStringElements, StringElement, StringElementNum
    use MLSStrings, only: lowercase
    use output_m, only: blanks, newline, output, output_date_and_time
-   use PCFHdr, only: GlobalAttributes
    use Time_M, only: Time_Now, time_config
    
    implicit none
@@ -81,18 +80,18 @@ program chunktimes ! Reads chunk times from l2aux file(s)
 
   logical, parameter ::          COUNTEMPTY = .true.
   logical, parameter ::          SHOWDATEANDTIME = .false.
-  integer, parameter ::          MAXFILES = 100
-  integer, parameter ::          MAXPHASES = 100
-  integer, parameter ::          MAXCHUNKS = 360
+  integer, parameter ::          MAXFILES = 2000
+  integer, parameter ::          MAXPHASES = 50
+  integer, parameter ::          MAXCHUNKS = 600
   character(len=255) :: filename          ! input filename
   character(len=4096):: longChunkList = ''
   character(len=4096):: tempChunkList = ''
   character(len=255), dimension(MAXFILES) :: filenames
   integer            :: n_filenames
-  integer     ::  how_many, i, count, status, error ! Counting indices & Error flags
+  integer     ::  how_many, i, status, error ! Counting indices & Error flags
   integer(kind=hSize_t), dimension(3) :: dims, maxDims
-  integer     ::  fileID, oldfileID
-  integer     ::  togrpID, fromgrpID
+  integer     ::  fileID
+  integer     ::  fromgrpID
   integer     ::  fileAccess
   real(r4), dimension(:,:,:), pointer   :: l2auxValue => NULL()
   real(r4), dimension(:), pointer     :: timings => NULL()
@@ -395,13 +394,12 @@ contains
   end subroutine deduceFailedChunks
 
 !------------------------- deduceWhereChunksFailed ---------------------
-  subroutine deduceWhereChunksFailed( fileID, numberComplete, numberFailed, &
+  subroutine deduceWhereChunksFailed( fileID, numberFailed, &
     & whereFailed )
     ! Deduce where chunks failed
     ! Based on dnwt-chiSqRatio-${PhaseName}
     ! Args
     integer, intent(in) :: fileID
-    integer, intent(in) :: numberComplete
     integer, intent(in) :: numberFailed
     integer, dimension(:), intent(inout) :: whereFailed
     ! Internal variables
@@ -550,7 +548,7 @@ contains
   
   if ( options%showWhereFailed .and. numberFailed > 0 ) then
     whereFailed = -1
-    call deduceWhereChunksFailed( fileID, numberComplete, numberFailed, whereFailed )
+    call deduceWhereChunksFailed( fileID, numberFailed, whereFailed )
     call output( 'chunk    phase         phase name', advance='yes' )
     do failure=1, numberFailed
       call GetStringElement( failedChunks, myPhase, failure, .FALSE. )
@@ -804,6 +802,9 @@ end program chunktimes
 !==================
 
 ! $Log$
+! Revision 1.19  2007/08/17 00:45:58  pwagner
+! Can successfully deduce where chunks failed
+!
 ! Revision 1.18  2007/07/19 00:28:54  pwagner
 ! Restored ability to print full table of chunks/phases
 !
