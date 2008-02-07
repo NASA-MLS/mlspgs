@@ -45,6 +45,8 @@ MODULE MLSStrings               ! Some low level string handling stuff
 !                    (See also PGS_TD_UTCtoTAI and mls_UTCtoTAI)
 ! Indexes            Indexes an array of substrings of a string into an array
 ! Ints2Strings       Converts an array of integers to strings using "char" ftn
+! IsAllAscii         Is a string composed entirely of ascii, i.e. non-binary
+! IsAscii            Is each array element ascii, i.e. non-binary
 ! IsRepeat           Is a string composed entirely of one substring repeated?
 ! LinearSearchStringArray     
 !                    Finds string index of substring in array of strings
@@ -79,6 +81,8 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! ints2Strings (int ints(:,:), char* strs(:))
 ! int LinearSearchStringArray (char* list(:), char* string, 
 !   [log caseInsensitive, [log testSubstring], [log listInString])
+! log(:) isAllAscii( char* arg(:) )
+! log(:) isAscii( char arg(:) )
 ! log IsRepeat ( char* str, [char* ssubtring] )
 ! char* LowerCase (char* str)
 ! int(:) NAppearances (char* string, char* substrings)
@@ -148,12 +152,16 @@ MODULE MLSStrings               ! Some low level string handling stuff
 
   public :: asciify, Capitalize, CatStrings, CompressString, count_words, &
    & depunctuate, FlushArrayLeft, hhmmss_value, &
-   & indexes, ints2Strings, IsRepeat, &
+   & indexes, ints2Strings, isAllAscii, IsAscii, IsRepeat, &
    & LinearSearchStringArray, LowerCase, NAppearances, NCopies, &
    & ReadCompleteLineWithoutComments, readIntsFromChars, &
    & Replace, Reverse, Reverse_trim, Rot13, &
    & size_trim, SplitNest, SplitWords, streq, strings2Ints, trim_safe, &
    & writeIntsToChars
+
+  interface asciify
+    module procedure asciify_scalar, asciify_1d, asciify_2d, asciify_3d
+  end interface
 
   interface readIntsFromChars
     module procedure readAnIntFromChars, readIntArrayFromChars
@@ -217,7 +225,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 contains
 
   ! -------------------------------------------------  ASCIIFY  -----
-  function ASCIIFY (STR, HOW) result (OUTSTR)
+  function ASCIIFY_scalar (STR, HOW) result (OUTSTR)
     ! takes input string and replaces any non-printing characters
     ! with ones in range [32,126]
     ! leaving other chars alone
@@ -286,7 +294,38 @@ contains
         endif
       end do
     end select
-  end function ASCIIFY
+  end function ASCIIFY_scalar
+
+  function ASCIIFY_1d (STR, HOW) result (OUTSTR)
+    character (len=*), dimension(:), intent(in)           :: STR
+    character (len=5*len(str)), dimension(size(str))      :: OUTSTR
+    character (len=*), optional, intent(in) :: HOW
+    integer :: i
+    do i=1, size(str)
+      outstr(i) = asciify( str(i), how )
+    enddo
+  end function ASCIIFY_1d
+
+  function ASCIIFY_2d (STR, HOW) result (OUTSTR)
+    character (len=*), dimension(:,:), intent(in)                  :: STR
+    character (len=5*len(str)), dimension(size(str,1),size(str,2)) :: OUTSTR
+    character (len=*), optional, intent(in) :: HOW
+    integer :: i
+    do i=1, size(str,2)
+      outstr(:,i) = asciify( str(:,i), how )
+    enddo
+  end function ASCIIFY_2d
+
+  function ASCIIFY_3d (STR, HOW) result (OUTSTR)
+    character (len=*), dimension(:,:,:), intent(in)                  :: STR
+    character (len=5*len(str)), dimension(size(str,1),size(str,2),size(str,3))&
+      &  :: OUTSTR
+    character (len=*), optional, intent(in) :: HOW
+    integer :: i
+    do i=1, size(str,3)
+      outstr(:,:,i) = asciify( str(:,:,i), how )
+    enddo
+  end function ASCIIFY_3d
 
   ! -------------------------------------------------  CAPITALIZE  -----
   elemental function Capitalize (STR) result (OUTSTR)
@@ -1889,6 +1928,24 @@ contains
     end select    
   end function isAlphabet
 
+  ! ---------------------------------------------------  isAllAscii  -----
+  elemental function isAllAscii(arg) result(itIs)
+    ! Returns TRUE if each substring of arg is in range of printing chars [32,126]
+    ! Args
+    character(len=*), intent(in) :: arg
+    logical                      :: itIs
+    ! Internal variables
+    integer, parameter :: pcMin = iachar(' ')
+    integer, parameter :: pcMax = iachar('~')
+    integer :: i
+    ! Executable
+    itIs = isAscii(arg(1:1))
+    if ( len(arg) < 2 .or. .not. itIs ) return
+    do i=2, len(arg)
+      itis = itIs .and. isAscii(arg(i:i))
+    enddo
+  end function isAllAscii
+
   ! ---------------------------------------------------  isAscii  -----
   elemental function isAscii(arg) result(itIs)
     ! Returns TRUE if arg is in range of printing chars [32,126]
@@ -2035,6 +2092,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.72  2008/02/07 18:46:55  pwagner
+! isAllAscii, isAscii now public; asciify generic
+!
 ! Revision 2.71  2007/09/13 21:06:25  pwagner
 ! Added 2-d array interface for writeIntsToChars
 !
