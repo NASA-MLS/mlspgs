@@ -30,7 +30,7 @@ module L1BData
   use MLSMessageModule, only: MLSMSG_Allocate, MLSMSG_DeAllocate, MLSMSG_Error, &
     & MLSMSG_L1BREAD, MLSMSG_Warning, &
     & MLSMessage, MLSMessageCalls
-  use MLSStrings, only: CompressString, streq
+  use MLSStrings, only: asciify, CompressString, isAllAscii, streq
   use MLSStringLists, only: NumStringElements
   use MoreTree, only: Get_Field_ID
   use Output_M, only: Output, outputnamedValue, resumeOutput, suspendOutput
@@ -648,9 +648,15 @@ contains ! ============================ MODULE PROCEDURES ======================
     if ( associated(l1bData1%charField) .and. &
       & associated(l1bData2%charField)) then
       if ( any(l1bData1%charField /= l1bData2%charField) ) then
+        myNumDiffs = myNumDiffs + count(l1bData1%charField /= l1bData2%charField)
+        where ( .not. isAllAscii(l1bData1%CharField) )
+          l1bData1%CharField = asciify( l1bData1%CharField, 'snip') 
+        end where
+        where ( .not. isAllAscii(l1bData2%CharField) )
+          l1bData2%CharField = asciify( l1bData2%CharField, 'snip') 
+        end where
         call dump ( l1bData1%CharField, 'l1bData1%CharField' )
         call dump ( l1bData2%CharField, 'l1bData2%CharField' )
-        myNumDiffs = myNumDiffs + count(l1bData1%charField /= l1bData2%charField)
       end if
     else
       if ( prntAssocStatus ) &
@@ -3206,6 +3212,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.78  2008/02/07 18:48:16  pwagner
+! Prevent appearance of non-ascii when diffing char valued l1bdata
+!
 ! Revision 2.77  2008/01/07 21:37:05  pwagner
 ! Replace DEFAULTUNDEFINEDVALUE with user-settable undefinedValue
 !
