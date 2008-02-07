@@ -148,6 +148,10 @@
       call ReplaceFillValues( filtered1, FillValue, newFill=real(0., kind(FillValue)) )
       call ReplaceFillValues( filtered2, FillValue, newFill=real(0., kind(FillValue)) )
     endif
+    if ( all(filtered1 == filtered2) ) then
+      call output( '(The two arrays are exactly equal)', advance='yes' )
+      return
+    endif
     if ( myRMS ) then
       if( present(FillValue) ) then
         ! We want to make sure we remove values from both arrays where either is fill
@@ -344,6 +348,9 @@
 
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.15  2008/02/07 18:45:21  pwagner
+! Will not go through rms, stats, etc. if diffs all zero
+!
 ! Revision 2.14  2008/01/09 20:54:03  pwagner
 ! When NaNs short-circuit dump or diff, print how many and where
 !
