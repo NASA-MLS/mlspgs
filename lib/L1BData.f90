@@ -15,7 +15,7 @@ module L1BData
 
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use Dump_0, only: DIFF, DUMP
-  use Hdf, only: DFACC_RDONLY, DFACC_READ, SFSTART, SFGINFO, SFN2INDEX, SFSELECT, &
+  use Hdf, only: DFACC_RDONLY, SFGINFO, SFN2INDEX, SFSELECT, &
     & SFRDATA_f90, &
     & SFRCDATA, SFENDACC, DFNT_CHAR8, DFNT_INT32, DFNT_FLOAT64, &
     & DFNT_FLOAT32
@@ -25,16 +25,15 @@ module L1BData
   use MLSCommon, only: MLSFile_T, &
     & R4, R8, undefinedValue, FILENAMELEN
   use MLSFiles, only: FILENOTFOUND, HDFVERSION_4, HDFVERSION_5, &
-    & addFileToDatabase, InitializeMLSFile, MLS_HDF_VERSION, &
+    & addFileToDatabase, InitializeMLSFile, &
     & mls_openFile, mls_closeFile
-  use MLSMessageModule, only: MLSMSG_Allocate, MLSMSG_DeAllocate, MLSMSG_Error, &
+  use MLSMessageModule, only: MLSMSG_Allocate, MLSMSG_Error, &
     & MLSMSG_L1BREAD, MLSMSG_Warning, &
     & MLSMessage, MLSMessageCalls
-  use MLSStrings, only: asciify, CompressString, isAllAscii, streq
+  use MLSStrings, only: streq
   use MLSStringLists, only: NumStringElements
   use MoreTree, only: Get_Field_ID
   use Output_M, only: Output, outputnamedValue, resumeOutput, suspendOutput
-  use SDPToolkit, only: max_orbits
   use String_Table, only: Get_String
   use TREE, only: NSONS, SUB_ROSA, SUBTREE, DUMP_TREE_NODE, SOURCE_REF
 
@@ -294,6 +293,7 @@ contains ! ============================ MODULE PROCEDURES ======================
   function AssembleL1BQtyName ( name, hdfVersion, isTngtQty, &
     & InstrumentName, dont_compress_name) &
     & result(QtyName)
+    use MLSStrings, only: CompressString
     ! Returns a QtyName to be found in the L1b file
     ! If given InstrumentName, name should be a fragment:
     ! e.g., name='VelECI' and InstrumentName='sc'
@@ -499,6 +499,7 @@ contains ! ============================ MODULE PROCEDURES ======================
   subroutine DiffL1BData ( l1bData1, l1bData2, &
     & details, stats, rms, silent, numDiffs, mafStart, mafEnd )
   use MLSNumerics, only: EssentiallyEqual
+  use MLSStrings, only: asciify, isAllAscii
     ! Diff two l1brad quantities
     type( L1BData_T ), intent(inout) :: L1bData1
     type( L1BData_T ), intent(inout) :: L1bData2
@@ -515,6 +516,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     ! If either of stats or rms is present and TRUE, print much less
 
     ! Local variables
+    integer :: i,j,k
     logical :: hideAssocStatus
     logical :: l1b1NotFinite
     logical :: l1b2NotFinite
@@ -649,12 +651,28 @@ contains ! ============================ MODULE PROCEDURES ======================
       & associated(l1bData2%charField)) then
       if ( any(l1bData1%charField /= l1bData2%charField) ) then
         myNumDiffs = myNumDiffs + count(l1bData1%charField /= l1bData2%charField)
-        where ( .not. isAllAscii(l1bData1%CharField) )
-          l1bData1%CharField = asciify( l1bData1%CharField, 'snip') 
-        end where
-        where ( .not. isAllAscii(l1bData2%CharField) )
-          l1bData2%CharField = asciify( l1bData2%CharField, 'snip') 
-        end where
+        ! where ( .not. isAllAscii(l1bData1%CharField) )
+        !  l1bData1%CharField = asciify( l1bData1%CharField, 'snip') 
+        ! end where
+        do k=1, size(l1bData1%CharField, 3)
+          do j=1, size(l1bData1%CharField, 2)
+            do i=1, size(l1bData1%CharField, 1)
+              if ( .not. isAllAscii(l1bData1%CharField(i,j,k) ) ) &
+              l1bData1%CharField(i,j,k) = asciify( l1bData1%CharField(i,j,k), 'snip') 
+            enddo
+          enddo
+        enddo
+        ! where ( .not. isAllAscii(l1bData2%CharField) )
+        !  l1bData2%CharField = asciify( l1bData2%CharField, 'snip') 
+        ! end where
+        do k=1, size(l1bData1%CharField, 3)
+          do j=1, size(l1bData1%CharField, 2)
+            do i=1, size(l1bData1%CharField, 1)
+              if ( .not. isAllAscii(l1bData2%CharField(i,j,k) ) ) &
+              l1bData2%CharField(i,j,k) = asciify( l1bData2%CharField(i,j,k), 'snip') 
+            enddo
+          enddo
+        enddo
         call dump ( l1bData1%CharField, 'l1bData1%CharField' )
         call dump ( l1bData2%CharField, 'l1bData2%CharField' )
       end if
@@ -801,7 +819,7 @@ contains ! ============================ MODULE PROCEDURES ======================
   ! Afterwards we atempt to cleanup, closing the ds.
     use MLSHDF5, only: IsHDF5ItemPresent
     use MLSFiles, only: dump
-    use HDF5, only: h5dclose_f, h5dopen_f, h5gclose_f, h5gopen_f
+    use HDF5, only: h5dopen_f, h5gclose_f, h5gopen_f
 
     type (MLSFile_T), dimension(:), pointer :: FILEDATABASE
     character (len=*), intent(in)           :: fieldName ! Name of field
@@ -1144,7 +1162,6 @@ contains ! ============================ MODULE PROCEDURES ======================
     integer :: numFiles
     integer :: returnStatus
     integer :: SON                      ! Some subtree of root.
-    integer :: STATUS                   ! Flag
 
     type(MLSFile_T) :: L1BFile
 
@@ -1368,7 +1385,6 @@ contains ! ============================ MODULE PROCEDURES ======================
     integer :: cmindex
     integer :: current
     integer :: maf
-    integer :: maxMAF
     integer :: rank
     logical, parameter :: DEEBug = .false.
     ! Executable
@@ -1855,7 +1871,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     character (len=*), parameter :: INPUT_ERR = 'Error in input argument '
     ! integer, parameter :: MAX_NOMAFS = 7000     ! Expect ~3500 in one day
     integer, parameter :: SD_NO_COUNTERMAF = -2
-    integer, dimension(:), pointer :: cm_array
+    ! integer, dimension(:), pointer :: cm_array
 
     ! Local Variables
 
@@ -2589,7 +2605,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     character (len=*), parameter :: INPUT_ERR = 'Error in input argument '
     ! integer, parameter :: MAX_NOMAFS = 7000     ! Expect ~3500 in one day
     integer, parameter :: SD_NO_COUNTERMAF = -2
-    integer, dimension(:), pointer :: cm_array
+    ! integer, dimension(:), pointer :: cm_array
 
     ! Local Variables
 
@@ -3212,6 +3228,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.79  2008/02/08 00:00:04  pwagner
+! Coded around another Intel compiler bug
+!
 ! Revision 2.78  2008/02/07 18:48:16  pwagner
 ! Prevent appearance of non-ascii when diffing char valued l1bdata
 !
