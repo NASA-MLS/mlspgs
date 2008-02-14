@@ -1,4 +1,4 @@
-! Copyright 2006, by the California Institute of Technology. ALL
+! Copyright 2008, by the California Institute of Technology. ALL
 ! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 ! commercial use must be negotiated with the Office of Technology Transfer
 ! at the California Institute of Technology.
@@ -166,7 +166,7 @@ CONTAINS
     LOGICAL :: more_data, data_OK
 
     INTEGER :: i, n, returnStatus, MAF(6), version
-    REAL(r8) :: TAI93, engtime
+    REAL(r8) :: TAI93(6), engtime
     INTEGER :: IDN(128), ret_len
     LOGICAL :: EOD
     CHARACTER(len=27) :: asciiUTC
@@ -181,18 +181,17 @@ CONTAINS
     more_data = .TRUE.
     data_OK = .TRUE.
     MAF = -1
+    TAI93 = -1.0     ! Init all times to less than engtime
+    engtime = 0.0    ! No engtime, yet
     i = 1   ! start with eng packet #1
     DO
 
-       DO
+       IF (TAI93(i) < engtime) THEN
 
           ret_len = ReadL0Packet (L0FileInfo%eng_unit(i), LEN(engpkt(i)), &
-               engpkt(i), TAI93, EOD)
+               engpkt(i), TAI93(i), EOD)
 
-          IF (i == 1) THEN
-             engtime = TAI93 ! Save time from packet #1 for comparisons
-             MAFtime = engtime
-          ENDIF
+          IF (engtime == 0.0) engtime = TAI93(i)
 
           IF (EOD) THEN    ! May need to do this elsewhere or pass flag here
 
@@ -216,26 +215,17 @@ CONTAINS
                   L0FileInfo%EngFilename(i), "Engineering")
           ENDIF
 
-         IF (TAI93 >= engtime) EXIT  ! Put in time order for packets 1-6
-
-       ENDDO
+       ENDIF
 
        MAF(i) = BigEndianStr (EngPkt(i)(MAF_offset(i):MAF_offset(i)+1))
 
-       IF (i == 1) THEN
-          DO n = (i+1), 6
-             IF (MAF(n) /= MAF(n-1)) EXIT
-          ENDDO
-       ELSE
-          IF (MAF(i) == MAF(1)) THEN
-             DO n = (i+1), 6
-                IF (MAF(n) /= MAF(n-1)) EXIT
-             ENDDO
-          ELSE
-             n = 1    ! Start with the next MAF
-          ENDIF
+       If (TAI93(i) > engtime) THEN
+          engtime = TAI93(i)              ! consider "new" time to match
+          i = 1                           ! start with packet #1 again
+       ELSEIF (TAI93(i) == engtime) THEN
+          i = i + 1                       ! try next packet
        ENDIF
-       i = n
+
        IF (i > 6) EXIT
 
     ENDDO
@@ -243,6 +233,7 @@ CONTAINS
     MIFsPerMAF = BigEndianStr (EngPkt(6)(244:245))
     TotalMAF = BigEndianStr (EngPkt(6)(246:249))
     MAFno = MAF(1)
+    MAFtime = engtime
 
 ! Test checksum value
 
@@ -296,6 +287,9 @@ END MODULE L0Utils
 !=============================================================================
 
 ! $Log$
+! Revision 2.11  2008/02/14 15:00:05  perun
+! Changed ReadL0Eng to accommodate missing APID data.
+!
 ! Revision 2.10  2006/08/02 18:54:58  perun
 ! Warn if science packet of incorrect length is read and continue processing
 !
