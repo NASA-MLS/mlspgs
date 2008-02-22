@@ -19,8 +19,6 @@ MODULE PCFHdr
 ! or split off global attribute stuff into a separate module
    USE Hdf, only: DFACC_RDWR, DFACC_WRITE, AN_FILE_DESC
    USE INTRINSIC, only: L_GRID, L_HDF, L_SWATH
-!  USE Hdf, only: hOpen, afStart, afFCreate, afWriteAnn, afEndAccess, &
-!    & afEnd, hClose
    USE MLSCommon, only: r8, FileNameLen, NameLen
    USE MLSFiles, only: GetPCFromRef, HDFVERSION_4, HDFVERSION_5, &
      & MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
@@ -28,9 +26,10 @@ MODULE PCFHdr
      & MLSMSG_Warning, MLSMSG_DeAllocate, MLSMSG_FILEOPEN
    use MLSStrings, only: lowerCase
    use dates_module, only: utc_to_date, utc_to_yyyymmdd
+   use output_m, only: outputNamedValue
    USE SDPToolkit, only: PGSD_PC_UREF_LENGTH_MAX, PGS_S_SUCCESS, &
      & PGSD_MET_GROUP_NAME_L, PGS_IO_GEN_CLOSEF, PGS_IO_GEN_OPENF, &
-     & PGSD_IO_GEN_RDIRUNF, &
+     & PGSD_IO_GEN_RDIRUNF, Pgs_pc_getReference, &
      & PGS_TD_ASCIITIME_ATOB, PGS_TD_ASCIITIME_BTOA, &
      & UseSDPToolkit, max_orbits
    IMPLICIT NONE
@@ -38,8 +37,9 @@ MODULE PCFHdr
      & FillTAI93Attribute, &
      & CreatePCFAnnotation,  &
      & h5_writeglobalattr, he5_writeglobalattr, he5_readglobalattr, &
-     & InputInputPointer, &
-     & WritePCF2Hdr, WriteInputPointer
+     & InputInputPointer, WriteInputPointer, &
+     & WriteLeapSecHDFEOSAttr, WriteLeapSecHDF5DS, WritePCF2Hdr, &
+     & WriteutcPoleHDFEOSAttr, WriteutcPoleHDF5DS
    private
 
 !---------------------------- RCS Module Info ------------------------------
@@ -104,7 +104,7 @@ MODULE PCFHdr
   type (GlobalAttributes_T), public, save :: GlobalAttributes
   ! Use this in case hdfVersion omitted from call to WritePCF2Hdr
   ! E.g., in level 3 prior to conversion
-  integer, public, save            :: PCFHDR_DEFAULT_HDFVERSION = HDFVERSION_4
+  integer, public, save            :: PCFHDR_DEFAULT_HDFVERSION = HDFVERSION_5
 
 CONTAINS
 
@@ -674,6 +674,60 @@ CONTAINS
    END FUNCTION WriteInputPointer
 !------------------------------------
 
+   subroutine WriteLeapSecHDFEOSAttr (fileID)
+     ! Write contents of leapsec file as hdfeos5 attribute to file
+    use MLSHDFEOS, only: mls_EHwrglatt
+     ! Args
+     integer, intent(in) :: fileID
+     ! Internal variables
+     character(len=FileNameLen) :: LeapSecFile
+     integer, parameter :: PCFid = 10301
+     integer :: status
+     integer :: version
+     ! Executable
+     version = 1
+     Status = Pgs_pc_getReference( PCFid, version, &
+       & LeapSecFile )
+     if ( Status /= PGS_S_SUCCESS ) then
+       call outputNamedValue( 'status', status )
+       CALL MLSMessage( MLSMSG_Warning, ModuleName, &
+         & 'Unable to get path, file name for Leap sec file using PCFid' )
+       return
+     end if
+     status = MLS_EHWRGLATT ( trim(leapSecFile), FILEID, &
+       & 'leap seconds' )
+     if ( Status /= PGS_S_SUCCESS ) then
+       CALL MLSMessage( MLSMSG_Warning, ModuleName, &
+         & 'Unable to write leap seconds as global attribute' )
+     end if
+     
+   end subroutine WriteLeapSecHDFEOSAttr
+
+   subroutine WriteLeapSecHDF5DS (fileID)
+     ! Write contents of leapsec file as hdf5 dataset to file
+    use MLSHDF5, only: SaveAsHDF5DS
+     ! Args
+     integer, intent(in) :: fileID
+     ! Internal variables
+     character(len=FileNameLen) :: LeapSecFile
+     integer, parameter :: PCFid = 10301
+     integer :: status
+     integer :: version
+     ! Executable
+     version = 1
+     Status = Pgs_pc_getReference( PCFid, version, &
+       & LeapSecFile )
+     if ( Status /= PGS_S_SUCCESS ) then
+       call outputNamedValue( 'status', status )
+       CALL MLSMessage( MLSMSG_Warning, ModuleName, &
+         & 'Unable to get path, file name for Leap sec file using PCFid' )
+       return
+     end if
+     call SaveAsHDF5DS ( trim(leapSecFile), FILEID, &
+       & 'leap seconds' )
+     
+   end subroutine WriteLeapSecHDF5DS
+
 !----------------------------------------
    SUBROUTINE WritePCF2Hdr (file, anText, hdfVersion, fileType, name)
 !----------------------------------------
@@ -705,8 +759,6 @@ CONTAINS
 ! Executable
       my_hdfVersion = PCFHDR_DEFAULT_HDFVERSION
       if ( present(hdfVersion) ) my_hdfVersion = hdfVersion
-      ! myisHDFEOS = .false.
-      ! if ( present(isHDFEOS) ) myisHDFEOS = isHDFEOS
       the_type = l_hdf
       if ( present(fileType) ) the_type = fileType
       select case(my_hdfVersion)
@@ -714,7 +766,6 @@ CONTAINS
         call WritePCF2Hdr_hdf4 (file, anText)
       case (HDFVERSION_5)
         if ( the_type == l_swath ) then
-          ! fileID = mls_io_gen_openF('swopen', .TRUE., status, &
           fileID = mls_io_gen_openF(l_swath, .TRUE., status, &
            & record_length, DFACC_RDWR, FileName=trim(file), &
            & hdfVersion=hdfVersion, debugOption=.false. )
@@ -722,14 +773,12 @@ CONTAINS
             & CALL MLSMessage(MLSMSG_Error, ModuleName, &
             & 'Error opening hdfeos5 swath file for annotating with PCF' )
           call WritePCF2Hdr_hdfeos5 (fileID, anText)
-          ! status = mls_io_gen_closeF('swclose', fileID, &
           status = mls_io_gen_closeF(l_swath, fileID, &
             & hdfVersion=hdfVersion)
           if ( status /= PGS_S_SUCCESS) &
             & CALL MLSMessage(MLSMSG_Error, ModuleName, &
             & 'Error closing hdfeos5 swath file for annotating with PCF' )
         elseif ( the_type == l_grid ) then
-          ! fileID = mls_io_gen_openF('gdopen', .TRUE., status, &
           fileID = mls_io_gen_openF(l_grid, .TRUE., status, &
            & record_length, DFACC_RDWR, FileName=trim(file), &
            & hdfVersion=hdfVersion, debugOption=.false. )
@@ -737,7 +786,6 @@ CONTAINS
             & CALL MLSMessage(MLSMSG_Error, ModuleName, &
             & 'Error opening hdfeos5 grid file for annotating with PCF' )
           call WritePCF2Hdr_hdfeos5 (fileID, anText)
-          ! status = mls_io_gen_closeF('gdclose', fileID, &
           status = mls_io_gen_closeF(l_grid, fileID, &
             & hdfVersion=hdfVersion)
           if ( status /= PGS_S_SUCCESS) &
@@ -748,7 +796,6 @@ CONTAINS
           if ( status /= PGS_S_SUCCESS) &
             & CALL MLSMessage(MLSMSG_Error, ModuleName, &
             & 'Error opening hdf5 file for annotating with PCF' )
-          ! call WritePCF2Hdr_hdf5 (file, anText)
           call WritePCF2Hdr_hdf5 (fileID, anText, name)
           call h5fclose_f(fileID, status)
           if ( status /= PGS_S_SUCCESS) &
@@ -964,6 +1011,83 @@ CONTAINS
    END SUBROUTINE WritePCF2Hdr_hdfeos5
 !-----------------------------
 
+   subroutine WriteutcPoleHDFEOSAttr (fileID)
+     ! Write contents of utcPole file as hdfeos5 attribute to file
+    use MLSFiles, only: textFile_to_chars
+    use MLSHDFEOS, only: he5_EHwrglatt, mls_EHwrglatt
+    use MLSHDF5, only: MAXCHFIELDLENGTH
+    use HDFEOS5, only: MLS_charType
+     ! Args
+     integer, intent(in) :: fileID
+     ! Internal variables
+     integer, parameter :: maxheadersize = 40000
+     character (LEN=3) :: blockChar 
+     character(len=MAXCHFIELDLENGTH) :: BUFFER  ! Buffer to hold contents
+     integer :: firstChar, lastChar, blockNumber
+     character(len=FileNameLen) :: utcPoleFile
+     integer, parameter :: PCFid = 10401
+     integer :: status
+     integer :: version
+     ! Executable
+     version = 1
+     Status = Pgs_pc_getReference( PCFid, version, &
+       & utcPoleFile )
+     if ( Status /= PGS_S_SUCCESS ) then
+       call outputNamedValue( 'status', status )
+       CALL MLSMessage( MLSMSG_Warning, ModuleName, &
+         & 'Unable to get path, file name for utc pole file using PCFid' )
+       return
+     end if
+     ! status = MLS_EHWRGLATT ( trim(utcPoleFile), FILEID, &
+     !   & 'utc pole' )
+     call textFile_to_Chars ( utcPoleFile, buffer )
+     blockNumber = 1
+     firstChar = 1
+
+     do
+       lastChar = min( firstChar-1+maxheadersize, len_trim(buffer) )
+       ! i1 is for PCF filesize < 400,000 
+       write( blockChar, '(i1)') blockNumber
+
+       status = he5_EHwrglatt( fileID, 'utcPole'//TRIM(ADJUSTL(blockChar)), &
+               & MLS_CHARTYPE, lastChar-firstChar+1, &
+               & buffer(firstChar:lastChar) )
+       if ( Status /= PGS_S_SUCCESS ) then
+         CALL MLSMessage( MLSMSG_Warning, ModuleName, &
+         & 'Unable to write utc pole as global attribute' )
+       end if
+       blockNumber = blockNumber + 1
+       firstChar = firstChar + maxheadersize
+       if ( firstChar > len_trim(buffer) ) return
+     enddo
+   end subroutine WriteutcPoleHDFEOSAttr
+
+   subroutine WriteutcPoleHDF5DS (fileID)
+     ! Write contents of leapsec file as hdf5 dataset to file
+    use MLSHDF5, only: SaveAsHDF5DS
+     ! Args
+     integer, intent(in) :: fileID
+     ! Internal variables
+     character(len=FileNameLen) :: utcPoleFile
+     integer, parameter :: PCFid = 10401
+     integer :: status
+     integer :: version
+     ! Executable
+     version = 1
+     Status = Pgs_pc_getReference( PCFid, version, &
+       & utcPoleFile )
+     if ( Status /= PGS_S_SUCCESS ) then
+       call outputNamedValue( 'status', status )
+       CALL MLSMessage( MLSMSG_Warning, ModuleName, &
+         & 'Unable to get path, file name for utc pole file using PCFid' )
+       return
+     end if
+     call SaveAsHDF5DS ( trim(utcPoleFile), FILEID, &
+       & 'utc pole' )
+     
+   end subroutine WriteutcPoleHDF5DS
+
+!----------- Internal Procedures --------------
   function GranuleDayOfYear_fun () result (dayOfYear)
     ! Arguments
     integer :: month
@@ -1080,6 +1204,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.43  2008/02/22 21:32:43  pwagner
+!# Can now write leapsecfile, utcpole files as attrs, DS
+!#
 !# Revision 2.42  2007/10/04 20:43:36  vsnyder
 !# Remove unused symbols
 !#
