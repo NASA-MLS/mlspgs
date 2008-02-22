@@ -33,7 +33,8 @@ module OutputAndClose ! outputs all data from the Join module to the
 
   ! -----     Private declarations     ---------------------------------
 
-  ! Should we get this from MLSL2Options?
+  ! Should we get any of this from MLSL2Options?
+  logical, parameter :: DGGFILEISHYBRID = .false.      ! may write PCF as DS?
   logical, parameter :: LOGFILEGETSMETADATA = .false.  ! metadata to log file?
   logical, parameter :: FAKEPARALLELMASTER =  .false.  ! make up fake stuff?
   integer, parameter:: MAXQUANTITIESPERFILE=10000
@@ -1359,6 +1360,119 @@ contains ! =====     Public Procedures     =============================
     end if
   end subroutine OutputL2GP
 
+  ! ---------------------------------------------  OutputTextFile  -----
+  subroutine OutputTextFile ( textFile, fileName, DEBUG, filedatabase )
+    ! Do the work of outputting a named text file to a named l2aux file
+    use Intrinsic, only: l_hdf, l_ascii
+    use MLSCommon, only: MLSFile_T, FileNameLen
+    use MLSL2Options, only: checkPaths, TOOLKIT
+    use MLSFiles, only: AddInitializeMLSFile, &
+      & GetMLSFileByName, GetMLSFileByType, GetPCFromRef, &
+      & mls_closeFile, mls_openFile, &
+      & readnchars, reserve_MLSFile, split_path_name
+    use MLSNumerics, only: Battleship
+    use MLSStrings, only: Replace
+    use MLSHDF5, only: SaveAsHDF5DS
+    use MLSPCF2, only: mlspcf_l2dgm_start, mlspcf_l2dgm_end
+    ! Args
+    character(len=*), intent(inout)         :: textFile ! take as input
+    character(len=*), intent(inout)         :: fileName ! output
+    logical, intent(in)                     :: DEBUG ! Print lots?
+    type(MLSFile_T), dimension(:), pointer  :: filedatabase
+    ! Internal variables
+    integer, parameter                      :: MAXTEXTSIZE = 2000000
+    character(LEN=MAXTEXTSIZE)              :: TEXT
+    type(MLSFile_T), pointer                :: MLSTEXT
+    integer                                 :: status
+    integer :: FileHandle
+    character (len=FileNameLen) :: FullFilename
+    integer :: hdfVersion               ! 4 or 5 (corresp. to hdf4 or hdf5)
+    integer :: length
+    type(MLSFile_T), pointer :: outputFile
+    character(len=8) :: OUTPUTTYPESTR   ! 'l2gp', 'l2aux', etc.
+    character (len=132) :: path
+    integer :: ReturnStatus
+    integer :: textLength
+    logical, parameter :: useExactTextLength = .true. ! NAG demands TRUE
+    integer :: Version
+    ! Executable
+    nullify ( MLSTEXT )
+    MLSTEXT => GetMLSFileByName( filedatabase, textFile )
+    if ( .not. associated(MLSTEXT) ) then
+      MLSText => AddInitializeMLSFile( filedatabase, l_ascii, &
+        & DFACC_RDONLY, 'text', textFile )
+    endif
+    if ( .not. associated(MLSTEXT) ) then
+      call MLSMessage(MLSMSG_Warning, ModuleName, &
+        & 'Unable to write dataset--failed to find/create ' // trim(textFile) )
+      return
+    endif
+    if ( MLSTEXT%stillOpen ) call mls_closeFile( MLSTEXT, status )
+    if ( MLSTEXT%name == '<STDIN>' ) then
+      call MLSMessage(MLSMSG_Warning, ModuleName, &
+        & 'Unable to write dataset--stdin has been used for textfile' )
+      return
+    endif
+    textLength = 2000000
+    text = ' '
+    if ( useExactTextLength ) then
+      call reserve_MLSFile ( MLSTEXT%name, type=l_ascii )
+      if ( readnchars(1024) /= readnchars(2000000) ) &
+        & call Battleship( readnchars, textLength, &
+        & ns = (/ 1024, 100000, 2000000 /) )
+    endif
+    open(UNIT=MLSTEXT%FileID%f_id, access='direct', recl=textLength, &
+      & file=trim(MLSTEXT%name), status='old', iostat=status )
+    if ( status /= 0 ) then
+      call MLSMessage(MLSMSG_Warning, ModuleName, &
+        & 'Unable to write dataset--failed to open textfile' )
+      return
+    endif
+    read(UNIT=MLSTEXT%FileID%f_id, REC=1, IOSTAT=status) text(:textLength)
+    if ( status /= 0 ) then
+      call MLSMessage(MLSMSG_Warning, ModuleName, &
+        & 'Unable to read textfile' )
+      return
+    endif
+    ! Unfortunately, a lot of null characters sneak into this
+    text = Replace( text, char(0), char(32) ) ! Replace null with space
+    close( UNIT=MLSTEXT%FileID%f_id, iostat=status )
+    length = len_trim(text)
+
+    Version = 1
+    OUTPUTTYPESTR = 'l2aux'
+    ! Get the l2gp file name from the PCF
+
+    if ( TOOLKIT ) then
+      call split_path_name(fileName, path, fileName)
+
+      FileHandle = GetPCFromRef(fileName, mlspcf_l2dgm_start, &
+        & mlspcf_l2dgm_end, &
+        & TOOLKIT, returnStatus, Version, DEBUG, &
+        & exactName=FullFilename)
+    else
+      FullFilename = fileName
+      returnStatus = 0
+    end if
+
+    if ( returnStatus == 0 .and. .not. checkPaths ) then
+      ! Open the HDF file and write l2cf
+      outputFile => GetMLSFileByName(filedatabase, FullFilename)
+      if ( .not. associated(outputFile) ) then
+        if(DEBUG) call MLSMessage(MLSMSG_Warning, ModuleName, &
+          & 'No entry in filedatabase for ' // trim(FullFilename) )
+        outputFile => AddInitializeMLSFile(filedatabase, &
+          & content=outputTypeStr, &
+          & name=FullFilename, shortName=fileName, &
+          & type=l_hdf, access=DFACC_RDWR, HDFVersion=hdfVersion, &
+          & PCBottom=mlspcf_l2dgm_start, PCTop=mlspcf_l2dgm_end)
+      endif
+      if ( .not. outputFile%stillOpen ) call mls_openFile( outputFile, status )
+      call SaveAsHDF5DS ( outputFile%FileID%f_id, trim(textFile), text )
+      call mls_closeFile( outputFile, status )
+    endif
+  end subroutine OutputTextFile
+
   ! ---------------------------------------------  writeHGridComponents  -----
   subroutine writeHGridComponents ( fileName, HGrid )
     use HDFEOS5, only: he5_swclose, he5_swopen, &
@@ -1442,17 +1556,19 @@ contains ! =====     Public Procedures     =============================
     use MLSCommon, only: I4, MLSFile_T, FileNameLen
     use MLSFiles, only: HDFVERSION_5, &
       & AddInitializeMLSFile, GetMLSFileByName, GetPCFromRef, mls_exists, &
-      & MLS_SFSTART, MLS_SFEND, &
+      & MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, MLS_SFSTART, MLS_SFEND, &
       & unSplitName
     use MLSHDF5, only: CpHDF5GlAttribute, MakeHDF5Attribute
     use MLSL2Options, only: CHECKPATHS, &
-      & SKIPDIRECTWRITES, TOOLKIT
+      & SIPS_VERSION, SKIPDIRECTWRITES, TOOLKIT
     use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, &
       & mlspcf_l2dgg_start, mlspcf_l2dgg_end
     use MLSSets, only: FindFirst, FindNext
     use MLSStringLists, only: Array2List, switchDetail
     use MLSStrings, only: trim_safe
     use OUTPUT_M, only: blanks, OUTPUT
+    use PCFHdr, only: WriteLeapSecHDFEOSAttr, WriteLeapSecHDF5DS, &
+      & WriteutcPoleHDFEOSAttr, WriteutcPoleHDF5DS
     use readAPriori, only: writeAPrioriAttributes
     use TOGGLES, only: Switches
     ! Arguments
@@ -1464,6 +1580,7 @@ contains ! =====     Public Procedures     =============================
     logical :: create2
     integer :: DB_index
     character (len=FileNameLen) :: FILE_BASE    ! From the FILE= field
+    integer :: FILEID
     integer :: GRP_ID
     type(MLSFile_T), pointer :: inputFile
     character (len=FileNameLen) :: L2auxPhysicalFilename
@@ -1471,6 +1588,7 @@ contains ! =====     Public Procedures     =============================
     character (len=FileNameLen) :: L2gpPhysicalFilename
     logical :: madeFile
     type(MLSFile_T), pointer :: outputFile
+    integer :: Record_Length
     integer :: ReturnStatus
     integer(i4) :: SDFID                ! File handle
     character (len=MAXSWATHNAMESBUFSIZE) :: sdList
@@ -1542,6 +1660,23 @@ contains ! =====     Public Procedures     =============================
          & name=l2gpPhysicalFilename, shortName='DGG', &
          & type=l_swath, access=DFACC_RDWR, HDFVersion=HDFVERSION_5, &
          & PCBottom=mlspcf_l2dgg_start, PCTop=mlspcf_l2dgg_end)
+        FileID = mls_io_gen_openF( l_swath, .TRUE., ReturnStatus, &
+        & record_length, DFACC_RDWR, FileName=l2gpPhysicalFilename, &
+        & hdfVersion=HDFVERSION_5 )
+        call WriteLeapSecHDFEOSAttr (fileID)
+        if ( .not. DGGFILEISHYBRID ) call WriteutcPoleHDFEOSAttr (fileID)
+        ReturnStatus = mls_io_gen_closeF( l_swath, FileID, &
+        & hdfVersion=HDFVERSION_5, debugOption=.false. )
+        if ( DGGFILEISHYBRID ) then
+          ! The utcpole is too large to be stored as an HDFEOS attribute
+          ! Note:
+          ! The dgg file up to v2.22 was already a "hybrid" file because
+          ! the PCF was stored as a dataset instead of an attribute
+          FileID = mls_sfstart( l2gpPhysicalFilename, DFACC_RDWR, &
+              & hdfVersion=HDFVERSION_5 )
+          call WriteutcPoleHDF5DS ( fileID )
+          ReturnStatus = mls_sfend( fileID, hdfVersion=HDFVERSION_5 )
+        endif
       end if
     end if
     ! Next we would do the same for any split dgm direct write files
@@ -1646,6 +1781,8 @@ contains ! =====     Public Procedures     =============================
         & madeFile .and. l2auxPhysicalFilename /= ' ' ) then
         sdfId = mls_sfstart(l2auxPhysicalFilename, DFACC_RDWR, &
             & hdfVersion=HDFVERSION_5)
+        call WriteLeapSecHDF5DS (sdfId)
+        call WriteutcPoleHDF5DS (sdfId)
         call h5gopen_f(sdfId, '/', grp_id, returnStatus)
         if ( .not. parallel%master .and. FAKEPARALLELMASTER ) then
           parallel%numCompletedChunks = 347
@@ -1684,6 +1821,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.132  2008/02/22 21:36:41  pwagner
+! DGG file was hybrid by default; now it will be pure HDFEOS
+!
 ! Revision 2.131  2007/12/07 01:51:40  pwagner
 ! Removed unused dummy variables, etc.
 !
