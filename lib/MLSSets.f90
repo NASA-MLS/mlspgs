@@ -97,7 +97,8 @@ module MLSSets
 ! FindAllLogical (log set(:), int which(:), [int how_many], &
 !                  [int which_not(:)])      
 ! int FindFirstCharacter (char* set(:), char* probe)      
-! int FindFirstNumType (numtype set(:), numtype probe, [numtype tol])
+! int FindFirstNumType (numtype set(:), numtype probe, [numtype tol], &
+!      [numtype Period])
 !     (where numtype can be an int, real, or dble)
 ! int FindFirstLogical (log condition(:))      
 ! int FindFirstSubString (char* set, char* probe, [log reverse])      
@@ -343,50 +344,87 @@ contains ! =====     Public Procedures     =============================
   end function FindFirstCharacter
 
   ! ----------------------  FindFirst[Integer,real,double]  -----
-  function FindFirstInteger ( Set, Probe, Tol ) Result( theFirst )
+  function FindFirstInteger ( Set, Probe, Tol, Period ) Result( theFirst )
     ! Find the first element in the array Set that is equal to Probe
     integer, dimension(:), intent(in) :: Set
     integer, intent(in)               :: Probe
     integer, intent(in), optional     :: Tol  ! Ignored; purely for consistency
+    integer, intent(in), optional     :: Period  ! 
     integer                           :: theFirst
 
     ! Executable code
+    if ( present(Period) ) then
+      ! If we're checking for coincidences allowing for a periodic function
+      ! then we want to allow the differences to be close within an
+      ! integer multiple of the period
+      do theFirst = 1, size(set)
+        if ( mod( set(theFirst) - probe, period ) == 0 ) return
+      enddo
+      theFirst = 0
+      return
+    endif
     do theFirst = 1, size(set)
       if ( set(theFirst) == probe ) return
     end do
     theFirst = 0
   end function FindFirstInteger
 
-  function FindFirstReal ( Set, Probe, Tol ) Result( theFirst )
+  function FindFirstReal ( Set, Probe, Tol, Period ) Result( theFirst )
     ! Find the first element in the array Set that is equal to Probe
     ! Or whose difference < Tol
     real, dimension(:), intent(in) :: Set
     real, intent(in) :: Probe
     real, intent(in), optional :: Tol
+    real, intent(in), optional :: Period
     integer             :: theFirst
     real                :: myTol
+    real                :: q
 
     ! Executable code
     myTol = 0.
     if ( present(tol) ) myTol = abs(tol)
+    if ( present(Period) ) then
+      ! If we're checking for coincidences allowing for a periodic function
+      ! then we want to allow the differences to be close within an
+      ! integer multiple of the period
+      do theFirst = 1, size(set)
+        q = abs( set(theFirst) - probe ) / Period
+        if ( q - int(q) <= myTol/Period ) return
+      enddo
+      theFirst = 0
+      return
+    endif
     do theFirst = 1, size(set)
       if ( abs( set(theFirst) - probe) <= myTol ) return
     end do
     theFirst = 0
   end function FindFirstReal
 
-  function FindFirstDouble ( Set, Probe, Tol ) Result( theFirst )
+  function FindFirstDouble ( Set, Probe, Tol, Period ) Result( theFirst )
     ! Find the first element in the array Set that is equal to Probe
     ! Or whose difference < Tol
     double precision, dimension(:), intent(in) :: Set
     double precision, intent(in) :: Probe
     double precision, intent(in), optional :: Tol
+    double precision, intent(in), optional :: Period
     integer             :: theFirst
     double precision                :: myTol
+    double precision                :: q
 
     ! Executable code
     myTol = 0.d0
     if ( present(tol) ) myTol = abs(tol)
+    if ( present(Period) ) then
+      ! If we're checking for coincidences allowing for a periodic function
+      ! then we want to allow the differences to be close within an
+      ! integer multiple of the period
+      do theFirst = 1, size(set)
+        q = abs( set(theFirst) - probe ) / Period
+        if ( q - int(q) <= myTol/Period ) return
+      enddo
+      theFirst = 0
+      return
+    endif
     do theFirst = 1, size(set)
       if ( abs( set(theFirst) - probe) <= myTol ) return
     end do
@@ -1344,6 +1382,9 @@ contains ! =====     Public Procedures     =============================
 end module MLSSets
 
 ! $Log$
+! Revision 2.18  2008/02/22 21:25:53  pwagner
+! FindFirst can handle periods
+!
 ! Revision 2.17  2007/12/19 01:27:42  pwagner
 ! Added FindUnique to reduce input Set to its unique members
 !
