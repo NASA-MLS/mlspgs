@@ -41,12 +41,14 @@ module MLSHDFEOS
   use HE5_SWAPI_REAL, only: HE5_EHWRGLATT_REAL, HE5_EHRDGLATT_REAL, &
     & HE5_SWRDFLD_REAL, HE5_SWRDFLD_REAL_2D, HE5_SWRDFLD_REAL_3D, &
     & HE5_SWWRFLD_REAL, HE5_SWWRFLD_REAL_2D, HE5_SWWRFLD_REAL_3D
+  use IO_STUFF, only: get_lun
   use MLSCommon, only: MLSFile_T
   use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, &
     & mls_hdf_version
   use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
     & MLSMessage, MLSMessageCalls
   use MLSStringLists, only: GetStringElement, NumStringElements, StringElementNum
+  use MLSStrings, only: Replace
   use SWAPI_DOUBLE, only: SWRDFLD_DOUBLE, SWRDFLD_DOUBLE_2D, SWRDFLD_DOUBLE_3D, &
     &                     SWWRFLD_DOUBLE, SWWRFLD_DOUBLE_2D, SWWRFLD_DOUBLE_3D
   use SWAPI_INTEGER, only: SWRDFLD_INTEGER, SWRDFLD_INTEGER_2D, SWRDFLD_INTEGER_3D, &
@@ -152,6 +154,10 @@ module MLSHDFEOS
     HE5_EHRDGLATT_INTEGER, HE5_EHRDGLATT_REAL, HE5_EHRDGLATT_CHARACTER_ARRAY
   end interface
 
+  interface MLS_EHWRGLATT
+    module procedure MLS_EHWRGLATT_char, MLS_EHWRGLATT_textfile
+  end interface
+
   interface MLS_ISGLATT
     module procedure MLS_ISGLATT_FID, &
       & MLS_ISGLATT_FN
@@ -198,7 +204,7 @@ module MLSHDFEOS
 contains ! ======================= Public Procedures =========================
 
   ! ---------------------------------------------  MLS_EHWRGLATT  -----
-  integer function MLS_EHWRGLATT ( FILEID, &
+  integer function MLS_EHWRGLATT_char ( FILEID, &
     & ATTRNAME, DATATYPE, COUNT, BUFFER )
     integer, intent(in) :: FILEID      ! File ID
     character(len=*), intent(in) :: ATTRNAME     ! Attribute name
@@ -206,17 +212,62 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in) :: COUNT   ! How many
     character(len=*), intent(in) :: BUFFER  ! Buffer for write
     !
-    call MLSMessageCalls( 'push', constantName='MLS_EHWRGLATT' )
+    call MLSMessageCalls( 'push', constantName='MLS_EHWRGLATT_char' )
     if ( len_trim(buffer) > 0 ) then
-      MLS_EHWRGLATT = he5_ehwrglatt_character_scalar( FILEID, &
+      MLS_EHWRGLATT_char = he5_ehwrglatt_character_scalar( FILEID, &
       & ATTRNAME, DATATYPE, max(COUNT, len_trim(BUFFER)), BUFFER )
     else
-      MLS_EHWRGLATT = he5_ehwrglatt_character_scalar( FILEID, &
+      MLS_EHWRGLATT_char = he5_ehwrglatt_character_scalar( FILEID, &
       & ATTRNAME, DATATYPE, 1, BLANK )
     endif
     call MLSMessageCalls( 'pop' )
 
-  end function MLS_EHWRGLATT
+  end function MLS_EHWRGLATT_char
+
+  integer function MLS_EHWRGLATT_textfile ( textFile, FILEID, &
+    & ATTRNAME )
+    ! Write contents of text file as global attribute
+    ! E.g., may wish to include leap sec file or utc pole
+    use MLSHDF5, only: MAXCHFIELDLENGTH
+
+    character (len=*), intent(in) :: TEXTFILE ! name of textfile
+    integer, intent(in) :: FILEID      ! File ID
+    character(len=*), intent(in) :: ATTRNAME     ! Attribute name
+    ! Internal variables
+    character(len=MAXCHFIELDLENGTH) :: BUFFER  ! Buffer to hold contents
+    integer, parameter :: DATATYPE = MLS_CHARTYPE
+    integer :: lun
+    integer :: status
+    !
+    call MLSMessageCalls( 'push', constantName='MLS_EHWRGLATT_textfile' )
+    ! Try to read the textfile
+    call GET_LUN ( LUN )
+    open(UNIT=lun, access='direct', recl=MAXCHFIELDLENGTH, &
+      & file=trim(textFile), status='old', iostat=status )
+    if ( status /= 0 ) then
+      call MLSMessage(MLSMSG_Warning, ModuleName, &
+        & 'Unable to write attribute--failed to open textfile' )
+      return
+    endif
+    read(UNIT=lun, REC=1, IOSTAT=status) BUFFER
+    if ( status /= 0 ) then
+      call MLSMessage(MLSMSG_Warning, ModuleName, &
+        & 'Unable to write attribute--failed to read textfile' )
+      return
+    endif
+    ! Unfortunately, a lot of null characters sneak into this
+    BUFFER = Replace( BUFFER, char(0), char(32) ) ! Replace null with space
+    close( UNIT=lun, iostat=status )
+    if ( len_trim(buffer) > 0 ) then
+      MLS_EHWRGLATT_textfile = he5_ehwrglatt_character_scalar( FILEID, &
+      & ATTRNAME, DATATYPE, max(1, len_trim(BUFFER)), BUFFER )
+    else
+      MLS_EHWRGLATT_textfile = he5_ehwrglatt_character_scalar( FILEID, &
+      & ATTRNAME, DATATYPE, 1, BLANK )
+    endif
+    call MLSMessageCalls( 'pop' )
+
+  end function MLS_EHWRGLATT_textfile
 
   ! ---------------------------------------------  MLS_ISGLATT_FN  -----
   function MLS_ISGLATT_FN ( FILENAME, ATTRNAME ) result(isThere)
@@ -2078,6 +2129,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDFEOS
 
 ! $Log$
+! Revision 2.32  2008/02/22 21:30:18  pwagner
+! Can now save entire textfile as global attribute
+!
 ! Revision 2.31  2007/08/20 22:00:47  pwagner
 ! More procedures push their names onto MLSCallStack
 !
