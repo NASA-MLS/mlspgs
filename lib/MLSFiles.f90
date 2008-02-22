@@ -27,7 +27,7 @@ module MLSFiles               ! Utility file routines
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Crash, MLSMSG_Error, MLSMSG_Warning
   use MLSSets, only: findFirst
-  use MLSStrings, only: Capitalize, LowerCase
+  use MLSStrings, only: Capitalize, LowerCase, Replace
   use MLSStringLists, only: ExtractSubString, &
     & ReplaceSubString, SortArray
   use output_m, only: blanks, output
@@ -63,7 +63,7 @@ module MLSFiles               ! Utility file routines
   & mls_openFile, mls_sfstart, mls_sfend, &
   & open_MLSFile, &
   & readnchars, release_MLSFile, reserve_MLSFile, &
-  & RmFileFromDataBase, split_path_name, &
+  & RmFileFromDataBase, split_path_name, TextFile_to_chars, &
   & transfer_MLSFile, unMaskName, unSplitName
 
 !---------------------------- RCS Module Info ------------------------------
@@ -123,8 +123,9 @@ module MLSFiles               ! Utility file routines
 ! reserve_MLSFile    initializes an mls file 
 !                      (to be operated on by single-argument functions)
 ! RmFileFromDataBase Removes a FileName, id, etc. from the database
-! transfer_MLSFile   Changes the path of an mlsFile
 ! split_path_name    splits the input path/name into path and name
+! TextFile_to_chars  reads a text file into a single character string
+! transfer_MLSFile   Changes the path of an mlsFile
 ! unmaskname         Recover file name from maskzed form
 ! unsplitname        Split File name -> catenated: '..DGG13..' -> 'DGG'
 ! === (end of toc) ===
@@ -1848,6 +1849,37 @@ contains
 
   end subroutine split_path_name
 
+  ! --------------------------------------------  textFile_to_Chars  -----
+
+  ! read the contents of a text file into a single character string
+
+  subroutine textFile_to_Chars ( textFile, value )
+    ! Args
+    character(len=*), intent(in)  :: textFile ! path and name of text file
+    character(len=*), intent(out) :: value    ! its contents
+    ! Internal variables
+    integer :: lun
+    integer :: status
+    ! Try to read the textfile
+    call GET_LUN ( LUN )
+    open(UNIT=lun, access='direct', recl=len(value), &
+      & file=trim(textFile), status='old', iostat=status )
+    if ( status /= 0 ) then
+      call MLSMessage(MLSMSG_Warning, ModuleName, &
+        & 'Unable to textfile to chars--failed to open textfile' )
+      return
+    endif
+    read(UNIT=lun, REC=1, IOSTAT=status) value
+    if ( status /= 0 ) then
+      call MLSMessage(MLSMSG_Warning, ModuleName, &
+        & 'Unable to textfile to chars--failed to read textfile' )
+      return
+    endif
+    ! Unfortunately, a lot of null characters sneak into this
+    value = Replace( value, char(0), char(32) ) ! Replace null with space
+    close( UNIT=lun, iostat=status )
+  end subroutine textFile_to_Chars
+
   ! --------------------------------------------  release_MLSFile  -----
 
   ! This routine releases an MLSFile
@@ -2708,6 +2740,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.80  2008/02/22 21:27:15  pwagner
+! Added textFile_to_Chars
+!
 ! Revision 2.79  2008/01/14 23:47:16  pwagner
 ! GetMLSFileByName sometimes failed to match; fixed
 !
