@@ -248,6 +248,7 @@ module OUTPUT_M
   integer, save, private :: LINESSINCELASTSTAMP = 0
   logical, private, parameter :: LOGEXTRABLANKS = .false.
   integer, private, parameter :: MAXNUMTABSTOPS = 24
+  integer, private, parameter :: RECLMAX = 1024  ! This is NAG's limit
   ! These next tab stops can be reset using the procedure setTabs
   ! the default values correspond to range coded '5-120+5'
   ! (read as from 5 to 120 in intervals of 5)
@@ -916,16 +917,19 @@ contains
     character(len=*), intent(in), optional :: INSTEADOFBLANK ! What to output
     logical, intent(in), optional          :: DONT_STAMP ! Prevent double-stamping
     !
+    integer :: i1, i2
+    integer :: IOBloc
+    integer :: nIOBlocs
     character(len=max(16,len(chars)+1)) :: my_chars
     character(len=len(chars)+64) :: stamped_chars ! What to print to stdout
     character(len=max(16,len(chars)+1)) :: the_chars
     logical :: my_dont_log
     logical :: my_dont_stamp
-    integer :: n_chars
     character(len=3) :: MY_ADV
+    integer :: n_chars
     integer :: n_stamp ! How much of stamped_chars to print
-    logical :: stamped
     logical :: stamp_header
+    logical :: stamped
     integer :: status
     !
     if ( SILENTRUNNING ) return
@@ -983,8 +987,20 @@ contains
     ! Special case: if chars is blank (chars are blank?)
     ! we'll want to print anyway
     if ( len_trim(chars) < 1 ) n_stamp = max(n_stamp, 1)
-    if ( (outputOptions%prunit == -1 .or. outputOptions%prunit < -2) .and. n_stamp > 0 ) &
-      & write ( *, '(a)', advance=my_adv ) stamped_chars(1:n_stamp)
+    if ( (outputOptions%prunit == -1 .or. outputOptions%prunit < -2) .and. &
+      &  n_stamp > RECLMAX ) then
+      nIOBlocs = 1 + (n_stamp-1)/RECLMAX
+      i2 = 0
+      do IOBloc=1, nIOBlocs
+        i1 = i2 + 1
+        i2 = min(i2+RECLMAX, n_stamp)
+        write ( *, '(a)', advance='no' ) stamped_chars(i1:i2)
+      enddo
+      if ( my_adv == 'yes' ) write ( *, '(a)', advance=my_adv ) ' '
+    elseif ( (outputOptions%prunit == -1 .or. outputOptions%prunit < -2) .and. &
+      &  n_stamp > 0 ) then
+      write ( *, '(a)', advance=my_adv ) stamped_chars(1:n_stamp)
+    endif
     if ( outputOptions%prunit < -1 .and. .not. my_dont_log  ) then
       the_chars = chars // ' '
       if (LOGEXTRABLANKS) n_chars = max(len(chars), 1)
@@ -1946,6 +1962,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.70  2008/02/22 21:24:14  pwagner
+! Lets NAG-built tools dump PCF, L2CF
+!
 ! Revision 2.69  2008/01/09 20:52:03  pwagner
 ! call output(NaN) now prints 'NaN'; same with Inf
 !
