@@ -24,13 +24,14 @@ module MLSHDF5
   use DUMP_0, only: DUMP, dumpNamedValues
   use hdf, only: DFACC_RDONLY
   use intrinsic, only: l_hdf
+  use IO_STUFF, only: get_lun
   use MLSCommon, only: MLSFile_T
   use MLSDataInfo, only: MLSDataInfo_T, Query_MLSData
   use MLSFiles, only: HDFVERSION_5, INITIALIZEMLSFILE
   use MLSKinds, only: r8
   use MLSStringLists, only: catLists, IsInList, &
     & GetStringElement, NumStringElements, StringElement
-  use MLSStrings, only: indexes
+  use MLSStrings, only: indexes, Replace
   ! To switch to/from hdfeos5.1.6(+) uncomment next line
   use H5LIB, ONLY: h5open_f, h5close_f
   ! Lets break down our use, parameters first
@@ -247,7 +248,8 @@ module MLSHDF5
       & MakeHDF5Attribute_dblarr1, MakeHDF5Attribute_stringarr1, &
       & MakeHDF5Attribute_intarr1, MakeHDF5AttributeDSN_int, &
       & MakeHDF5AttributeDSN_string, MakeHDF5AttributeDSN_snglarr1, &
-      & MakeHDF5AttributeDSN_st_arr1, MakeHDF5AttributeDSN_dblarr1
+      & MakeHDF5AttributeDSN_st_arr1, MakeHDF5AttributeDSN_dblarr1, &
+      & MakeHDF5Attribute_textFile
   end interface
 
   interface SaveAsHDF5DS
@@ -257,8 +259,11 @@ module MLSHDF5
       & SaveAsHDF5DS_dblarr1, SaveAsHDF5DS_dblarr2, SaveAsHDF5DS_dblarr3, &
       & SaveAsHDF5DS_snglarr1, SaveAsHDF5DS_snglarr2, SaveAsHDF5DS_snglarr3, &
       & SaveAsHDF5DS_snglarr4, &
-      & SaveAsHDF5DS_charsclr, SaveAsHDF5DS_chararr1, SaveAsHDF5DS_chararr2
+      & SaveAsHDF5DS_charsclr, SaveAsHDF5DS_chararr1, SaveAsHDF5DS_chararr2, &
+      & SaveAsHDF5DS_textfile
   end interface
+
+  integer, public, parameter :: MAXCHFIELDLENGTH = 2000000 ! max number of chars in l2cf
 
   ! Local parameters
   integer(kind=hsize_t), dimension(7) :: ones = (/1,1,1,1,1,1,1/)
@@ -267,7 +272,7 @@ module MLSHDF5
   integer, save :: cantGetDataspaceDims = 0
   integer, parameter :: MAXNUMWARNS = 40
   integer, parameter :: MAXNDSNAMES = 1000   ! max number of DS names in a file
-  integer, parameter :: MAXCHFIELDLENGTH = 2000000 ! max number of chars in l2cf
+  integer, parameter                      :: MAXTEXTSIZE = 2000000
   character(len=*), dimension(1), parameter :: DONTDUMPTHESEDSNAMES = (/ &
     & 'coremetadata' /)
   ! Local variables
@@ -364,13 +369,14 @@ contains ! ======================= Public Procedures =========================
     integer :: attrID
     integer :: classID
     character(len=MAXCHFIELDLENGTH) :: chValue ! 1024; len may become MAXCHFIELDLENGTH
-    ! logical, parameter :: DEEBUG = .true.
+    logical, parameter :: DEEBUG = .true.
     integer, dimension(7) :: dims
     double precision, dimension(1024) :: dValue
     integer(kind=hSize_t), dimension(7) :: hdims
     integer :: i
     integer :: itemID
     integer, dimension(1024) :: iValue
+    integer(kind=hSize_t), dimension(:), pointer :: maxdims_ptr
     character(len=MAXNDSNAMES*32) :: myNames
     character(len=128) :: name
     integer :: numAttrs
@@ -427,6 +433,13 @@ contains ! ======================= Public Procedures =========================
       call h5tget_class_f ( type_id, classID, status )
       call h5aget_space_f ( attrID, spaceID, status )
       call h5sget_simple_extent_ndims_f ( spaceID, rank, status )
+      allocate ( maxdims_ptr(rank) )
+      call h5sget_simple_extent_dims_f ( spaceID, hdims(1:rank), &
+           maxdims_ptr, status )
+      if ( status /= rank ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to get dims for attr ' // trim(name) )
+      hdims(1:rank) = maxdims_ptr
+      deallocate ( maxdims_ptr )
       if ( DEEBUG ) then
         call outputNamedValue ( 'name', name )
         call outputNamedValue ( 'attrID', attrID )
@@ -436,17 +449,18 @@ contains ! ======================= Public Procedures =========================
         call outputNamedValue ( 'H5T_STRING_F', H5T_STRING_F )
         call outputNamedValue ( 'spaceID', spaceID )
         call outputNamedValue ( 'rank', rank )
+        call outputNamedValue ( 'hdims', int(hdims, kind(status)) )
       endif
       call h5aClose_f ( attrID, status )
-      call GetHDF5AttrDims ( ItemID, name, hdims )
+      call GetHDF5AttrDims ( itemID, name, hdims )
       dims = hdims
-      dims(1) = max(dims(1), 1)
       Qtype = WhatTypeAmI ( type_id )
       if ( Qtype == 'unknown' .and. classID == H5T_STRING_F ) QType='character'
       if ( DEEBUG ) then
         call outputNamedValue ( 'dims', dims )
         call outputNamedValue ( 'Qtype', Qtype )
       endif
+      dims(1) = max(dims(1), 1)
       select case ( QType )
       case ( 'integer' )
         call GetHDF5Attribute ( itemID, name, iValue(1:dims(1)) )
@@ -624,6 +638,8 @@ contains ! ======================= Public Procedures =========================
           call deallocate_test( dValue, 'dValue', ModuleName )
          end select
       case ( 'character' )
+        ! call outputNamedValue( 'type', QType )
+        ! call outputNamedValue( 'rank', rank )
         select case ( rank )
         case ( 3 )
           !call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -640,7 +656,12 @@ contains ! ======================= Public Procedures =========================
         case default
           if ( dims(1) < 2 ) then
             ! In case we have a very long dataset, e.g. the l2cf
+            chvalue = ' ' ! 
             call LoadFromHDF5DS ( groupID, Name, chvalue )
+            ! call outputNamedValue ( 'len before replacing nulls', len_trim(chvalue(1)) )
+            ! Unfortunately, a lot of null characters sneak into this
+            ! chValue(1) = Replace( chValue(1), char(0), char(32) ) ! Replace null with space
+            ! call outputNamedValue ( 'len after replacing nulls', len_trim(chvalue(1)) )
             ! call dump ( trim(chValue(1)), trim(name) )
             call output( 'name: ' // trim(name), advance='yes' )
             call output( trim(chValue(1)), advance='yes' )
@@ -1032,6 +1053,104 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to close stringtype ' // trim(name) )
   9 call MLSMessageCalls( 'pop' )
   end subroutine MakeHDF5Attribute_string
+
+  ! -----------------------------------  MakeHDF5Attribute_textFile  -----
+  subroutine MakeHDF5Attribute_textFile ( textFile, itemID, name , &
+   & skip_if_already_there )
+    integer, intent(in) :: ITEMID       ! Group etc. to make attr to.
+    character (len=*), intent(in) :: NAME ! Name of attribute
+    character (len=*), intent(in) :: TEXTFILE ! name of textfile
+    logical, intent(in), optional :: SKIP_IF_ALREADY_THERE
+
+    ! Local variables
+    integer :: ATTRID                   ! ID for attribute
+    integer :: DSID                     ! ID for dataspace
+    integer :: STATUS                   ! Flag from HDF5
+    integer :: STRINGTYPE               ! Type for string
+    logical :: my_skip
+    logical :: is_present
+    logical, parameter :: NEVERDELETE = .true.
+    character(LEN=MAXTEXTSIZE)              :: value
+    integer :: lun
+
+    ! Executable code
+    call MLSMessageCalls( 'push', constantName='MakeHDF5Attribute_textFile' )
+    ! Try to read the textfile
+    call GET_LUN ( LUN )
+    open(UNIT=lun, access='direct', recl=MAXTEXTSIZE, &
+      & file=trim(textFile), status='old', iostat=status )
+    if ( status /= 0 ) then
+      call MLSMessage(MLSMSG_Warning, ModuleName, &
+        & 'Unable to write attribute--failed to open textfile' )
+      return
+    endif
+    read(UNIT=lun, REC=1, IOSTAT=status) value
+    if ( status /= 0 ) then
+      call MLSMessage(MLSMSG_Warning, ModuleName, &
+        & 'Unable to write attribute--failed to read textfile' )
+      return
+    endif
+    ! Unfortunately, a lot of null characters sneak into this
+    value = Replace( value, char(0), char(32) ) ! Replace null with space
+    close( UNIT=lun, iostat=status )
+
+    my_skip = .false.
+    if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
+    is_present = IsHDF5AttributePresent_in_DSID(itemID, name)
+    if ( my_skip .and. is_present ) go to 9
+    ! Setup
+    ! Create a data type for this string
+    call h5tcopy_f ( H5T_NATIVE_CHARACTER, stringtype, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create stringtype ' // trim(name) )
+    call h5tset_size_f(stringtype, max(len_trim(value), 1), status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to set size for stringtype ' // trim(name) )
+    ! Create dataspace and attribute
+    if ( is_present .and. .not. NEVERDELETE ) then
+      print *, 'Deleting ' // trim(name)
+      call h5adelete_f(itemID, trim(name), status)
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to delete ' )
+    end if
+    call h5sCreate_F ( h5s_scalar_f, dsID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create dataspace for attribute ' // trim(name) )
+    ! print *, 'itemID: ', itemID
+    ! print *, 'stringtype: ', stringtype
+    ! print *, 'dsID: ', dsID
+    ! print *, 'name: ', trim(name)
+    ! print *, 'was there: ', is_present
+    ! print *, 'value: ', trim(value)
+    if ( .not. ( is_present .and. NEVERDELETE ) ) then
+      call h5aCreate_f ( itemID, trim(name), stringtype, dsID, attrID, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to create attribute ' // trim(name) )
+    else
+      call h5aopen_name_f ( itemID, trim(name), attrID, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to open attribute ' // trim(name) )
+    endif
+    ! print *, 'attrID: ', attrID
+    ! print *, 'status: ', status
+    ! Write
+    call h5aWrite_f ( attrID, stringtype, trim(value), ones, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to write attribute ' // trim(name) )
+    ! Finish off
+    call h5aClose_f ( attrID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close attribute ' // trim(name) )
+    if ( .not. is_present .or. .true. ) then
+      call h5sClose_f ( dsID, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to close attribute dataspace ' // trim(name) )
+    end if
+    call h5tClose_f ( stringtype, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close stringtype ' // trim(name) )
+  9 call MLSMessageCalls( 'pop' )
+  end subroutine MakeHDF5Attribute_textFile
 
   ! -------------------------------  MakeHDF5Attribute_stringarr1  -----
   subroutine MakeHDF5Attribute_stringarr1 ( itemID, name, value , &
@@ -2143,11 +2262,15 @@ contains ! ======================= Public Procedures =========================
     integer(kind=hSize_t), dimension(:), optional, intent(out) :: MAXDIMS ! max Values
 
     ! Local variables
+    logical, parameter :: DEEBUG = .true.
     integer :: dspace_id                ! spaceID for Attr
     integer(kind=hSize_t), dimension(:), pointer :: maxdims_ptr
     integer :: my_rank, rank
     integer :: AttrID                   ! ID for Attr
+    integer :: classID
     integer :: STATUS                   ! Flag
+    integer :: type_id
+    integer :: type_size
 
     ! Executable code
     call MLSMessageCalls( 'push', constantName='GetHDF5AttrDims' )
@@ -2158,6 +2281,9 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages off before getting dims of ' // trim(name) )
     call h5aOpen_name_f ( itemID, trim(name), attrID, status )
+    call h5aGet_type_f ( attrID, type_id, status )
+    call h5tGet_size_f ( type_id, type_size, status )
+    call h5tget_class_f ( type_id, classID, status )
     call h5dget_space_f ( attrID, dspace_id, status )
     call h5sget_simple_extent_ndims_f ( dspace_id, rank, status )
     my_rank = min(rank, size(dims))
@@ -2165,7 +2291,19 @@ contains ! ======================= Public Procedures =========================
     call h5sget_simple_extent_dims_f ( dspace_id, dims(1:my_rank), &
          maxdims_ptr, status )
     if ( status /= my_rank ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to get dims for datset ' // trim(name) )
+      & 'Unable to get dims for attr ' // trim(name) )
+    if ( DEEBUG ) then
+      call outputNamedValue ( 'name', name )
+      call outputNamedValue ( 'attrID', attrID )
+      call outputNamedValue ( 'type_id', type_id )
+      call outputNamedValue ( 'type_size', type_size )
+      call outputNamedValue ( 'classID', classID )
+      call outputNamedValue ( 'dspaceID', dspace_ID )
+      call outputNamedValue ( 'rank', rank )
+      call outputNamedValue ( 'my_rank', my_rank )
+      call outputNamedValue ( 'dims', int(dims, kind(status)) )
+      call outputNamedValue ( 'maxdims_ptr', int(maxdims_ptr, kind(status)) )
+    endif
     call h5aClose_f ( attrID, status )
     if ( present(maxDims) ) maxdims = maxdims_ptr(1:my_rank)
     deallocate ( maxdims_ptr )
@@ -2713,6 +2851,64 @@ contains ! ======================= Public Procedures =========================
     call finishSaveDS ( name, status, setID, spaceID, stringType )
     call MLSMessageCalls( 'pop' )
   end subroutine SaveAsHDF5DS_chararr2
+
+  ! --------------------------------------  SaveAsHDF5DS_textFile  -----
+  subroutine SaveAsHDF5DS_textFile ( textFile, locID, name )
+    ! This routine writes the contents of a textfile as a char-valued dataset
+    integer, intent(in) :: LOCID           ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME  ! Name for this dataset
+    character (len=*), intent(in) :: textFile ! Name of the textfile
+
+    ! Local variables
+    integer :: spaceID                  ! ID for dataspace
+    integer (HID_T) :: setID            ! ID for dataset
+    integer :: status                   ! Flag from HDF5
+    integer(kind=hsize_t), dimension(1) :: SHP        ! Shape
+    integer(hid_t) :: s_type_id
+    integer(hid_t) :: type_id
+    character(LEN=MAXTEXTSIZE)              :: value
+    integer :: lun
+
+    ! Executable code
+    call MLSMessageCalls( 'push', constantName='SaveAsHDF5DS_textFile' )
+    ! Try to read the textfile
+    call GET_LUN ( LUN )
+    open(UNIT=lun, access='direct', recl=MAXTEXTSIZE, &
+      & file=trim(textFile), status='old', iostat=status )
+    if ( status /= 0 ) then
+      call MLSMessage(MLSMSG_Warning, ModuleName, &
+        & 'Unable to write dataset--failed to open textfile' )
+      return
+    endif
+    read(UNIT=lun, REC=1, IOSTAT=status) value
+    if ( status /= 0 ) then
+      call MLSMessage(MLSMSG_Warning, ModuleName, &
+        & 'Unable to read textfile' )
+      return
+    endif
+    ! Unfortunately, a lot of null characters sneak into this
+    value = Replace( value, char(0), char(32) ) ! Replace null with space
+    close( UNIT=lun, iostat=status )
+    
+    ! Create the dataspace
+    shp = 1
+    call h5sCreate_simple_f ( 1, int(shp,hSize_T), spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create dataspace for scalar character ' // trim(name) )
+    type_id = H5T_NATIVE_CHARACTER
+    call h5tcopy_f ( type_id, s_type_id, status )
+    call h5tset_size_f ( s_type_id, len_trim(value), status )
+    ! Create the dataset
+    call h5dCreate_f ( locID, trim(name), s_type_id, spaceID, setID, &
+      & status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create dataset for scalar character ' // trim(name) )
+    ! Write the data
+    call h5dWrite_f ( setID, s_type_id, trim(value), &
+      & int ( (/ shp, ones(1:6) /), hsize_t ), status )
+    call finishSaveDS ( name, status, setID, spaceID )
+    call MLSMessageCalls( 'pop' )
+  end subroutine SaveAsHDF5DS_textFile
 
   ! ---------------------------------------  SaveAsHDF5DS_intarr1  -----
   subroutine SaveAsHDF5DS_intarr1 ( locID, name, value, &
@@ -5713,6 +5909,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.77  2008/02/22 21:29:13  pwagner
+! Can now save entire textfile as attribute or dataset
+!
 ! Revision 2.76  2008/01/04 01:00:13  pwagner
 ! More successful at dumping l1b files
 !
