@@ -14,7 +14,7 @@ module WriteMetadata ! Populate metadata and write it out
 ! -------------------------------------------------------
 
   use Hdf, only: DFACC_RDWR
-  use INTRINSIC, only: L_SWATH
+  use INIT_TABLES_MODULE, only: l_l2aux, l_l2dgg, l_l2gp, l_hdf, L_SWATH
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: FileNameLen, NameLen, R8
   use MLSFiles, only: GetPCFromRef, mls_sfstart, mls_sfend, Split_path_name
@@ -783,8 +783,7 @@ contains
     ! Annotate the file with the PCF
 
     if ( ANNOTATEWITHPCF ) then
-      call writePCF2Hdr(physical_filename, l2pcf%anText, &
-     & hdfVersion, filetype=filetype)
+      call PCF2Hdr( physical_filename, hdfVersion, filetype=filetype )
     end if
 
     returnStatus = pgs_met_remove() 
@@ -906,8 +905,7 @@ contains
 ! Annotate the file with the PCF
 
     if ( ANNOTATEWITHPCF ) then
-      call writePCF2Hdr(physical_filename, l2pcf%anText, &
-      & hdfVersion, filetype=filetype)
+      call PCF2Hdr( physical_filename, hdfVersion, filetype=filetype )
       ! & hdfVersion, isHDFEOS)
     end if
 
@@ -1252,6 +1250,33 @@ contains
     ! nullify ( p%L1BRADPCFIds )
   end subroutine NullifyPCFData
 
+  ! ---------------------------------------- PCF2Hdr -----
+  ! Make sure file type will be recognized
+  ! before calling writePCF2Hdr
+  ! (which only knows l_hdf, l_grid, l_swath)
+  subroutine PCF2Hdr( filename, hdfVersion, filetype )
+    ! Args
+    character(len=*), intent(in)  :: filename
+    integer, optional, intent(in) :: hdfVersion
+    integer, optional, intent(in) :: fileType
+    ! Internal variables
+    integer :: myType
+    ! Executable
+    if ( .not. associated(l2pcf%anText) ) return
+    myType = l_hdf
+    if ( present(filetype) ) then
+      myType = filetype
+      select case(filetype)
+      case (l_l2dgg,l_l2gp)
+        myType = l_swath
+      ! case default
+        ! myType = filetype
+      end select
+    endif
+    call writePCF2Hdr( filename, l2pcf%anText, hdfVersion, myType )
+
+  end subroutine PCF2Hdr
+
   ! ---------------------------------------------  announce_success  -----
   subroutine announce_success ( Name, mcf, l2_type )
     character(LEN=*), intent(in) :: Name
@@ -1338,6 +1363,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.64  2008/02/22 21:37:05  pwagner
+! DGG file was hybrid by default; now it will be pure HDFEOS
+!
 ! Revision 2.63  2007/12/07 01:50:32  pwagner
 ! Removed unused dummy variables, etc.
 !
