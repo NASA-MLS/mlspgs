@@ -35,6 +35,7 @@
 ! MLSMessageConfig         configuration controlling where to print, etc.
 
 !     (subroutines and functions)
+! dumpConfig               dump configuration
 ! MLSMessage               main messaging routine
 ! MLSMessageSetup          routine interface to change some parts of MLSMessageConfig
 ! MLSMessageCalls          manage calling stack 
@@ -52,6 +53,7 @@
 ! === (end of toc) ===
 
 ! === (start of api) ===
+! dumpConfig ( [MLSMessageConfig_T config] )
 ! MLSMessage ( int Severity, char* ModuleNameIn, char* Message, 
 !      [char* Advance], [MLSFile_T MLSFile] )
 ! MLSMessageCalls ( char* command, [char* name] )
@@ -200,6 +202,7 @@
   type(MLSCallStack_t), public, save :: MLSCallStack
   
   ! Public procedures
+  public :: dumpConfig
   public :: MLSMessage, MLSMessage_, MLSMessageSetup, MLSMessageClose
   public :: MLSMessageExit, MLSMessageInquire, MLSMessageInternalFile
   public :: MLSMessageReset, PVMErrorMessage
@@ -211,6 +214,43 @@
   end interface
 
 contains
+
+  ! ------------------------------------------------  dumpConfig  -----
+
+  ! dump the configuration
+
+  subroutine dumpConfig( config )
+    ! arg
+    type(MLSMessageConfig_T), optional, intent(in) :: config
+    ! Internal args
+    type(MLSMessageConfig_T) :: myConfig
+    ! Executable
+    if ( present(config) ) then
+      myConfig = config
+    else
+      myConfig = MLSMessageConfig
+    endif
+    call dump ( 'dumping ', charValue='MLS Message Config' )
+    call dump ( ': ', charValue=':::::::::::::::::::::::::' )
+    call dump ( 'logFileUnit        ', intValue= myConfig%logFileUnit       )
+    call dump ( 'limitWarnings      ', intValue= myConfig%limitWarnings     )
+    call dump ( 'masterTID          ', intValue= myConfig%masterTID         )
+    call dump ( 'prefix             ', charValue=myConfig%prefix            )
+    call dump ( 'Info               ', charValue=myConfig%Info              )
+    call dump ( 'useToolkit         ', logValue= myConfig%useToolkit        )
+    call dump ( 'CrashOnAnyError    ', logValue= myConfig%CrashOnAnyError   )
+    call dump ( 'SendErrMsgToMaster ', logValue= myConfig%SendErrMsgToMaster)
+    
+    call dump ( 'Status values      ', charValue=' '                        )
+    call dump ( '  Success          ', intValue=MLSMSG_Success              )
+    call dump ( '  Debug            ', intValue=MLSMSG_Debug                )
+    call dump ( '  Info             ', intValue=MLSMSG_Info                 )
+    call dump ( '  Warning          ', intValue=MLSMSG_Warning              )
+    call dump ( '  Error            ', intValue=MLSMSG_Error                )
+    call dump ( '  Crash            ', intValue=MLSMSG_Crash                )
+    call dump ( 'Severity to quit   ', intValue=MLSMSG_Severity_to_quit     )
+    call dump ( 'Severity to crash  ', intValue=MLSMSG_Severity_to_walkback )
+  end subroutine dumpConfig
 
   ! ------------------------------------------------  MLSMessage_  -----
 
@@ -868,6 +908,9 @@ contains
   
 !
 ! $Log$
+! Revision 2.7  2008/02/22 21:31:38  pwagner
+! Can now dump messaging configuration
+!
 ! Revision 2.6  2007/12/07 01:10:36  pwagner
 ! Keeps track of and permits inquiries about warnings better
 !
