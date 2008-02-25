@@ -184,10 +184,6 @@ CONTAINS
           first = .FALSE.
        ENDIF
 
-! Save data for further processing:
-
-       WRITE (L1BFileInfo%SciMAF_unit) SciMAF
-
 ! Check for data gaps:
 
        MAF_dif = INT ((SciMAF(0)%secTAI - last_TAI) / MAF_dur + 0.1)
@@ -212,8 +208,17 @@ CONTAINS
              PGS_stat = PGS_TD_TAItoUTC (SciMAF(0)%secTAI+MIF_dur*i,asciiUTC(2))
              WRITE (unit, *) 'UTC: ', asciiUTC(2)
              WRITE (unit, *) ''
+             SciMAF(i)%CRC_good = .FALSE.   ! Mark as bad
+             SciMAF(i)%FB = 0.0             ! clear the counts
+             SciMAF(i)%MB = 0.0
+             SciMAF(i)%WF = 0.0
+             SciMAF(i)%DACS = 0.0
           ENDIF
        ENDDO
+
+! Save data for further processing:
+
+       WRITE (L1BFileInfo%SciMAF_unit) SciMAF
 
        last_TAI = SciMAF(0)%secTAI
 
@@ -559,6 +564,9 @@ END MODULE L1LogUtils
 !=============================================================================
 
 ! $Log$
+! Revision 2.16  2008/02/25 17:18:40  perun
+! Clear counts for missing MIF and mark flag as bad.
+!
 ! Revision 2.15  2006/09/26 16:02:00  perun
 ! Make MAF_dur and MIF_dur public
 !
