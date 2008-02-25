@@ -43,13 +43,17 @@ CONTAINS
     USE HDF5, ONLY: H5gClose_f, H5gOpen_f
     USE MLSHDF5, ONLY: MakeHDF5Attribute, MLS_h5close
     USE Orbit, ONLY: OrbitNumber, OrbPeriod
-    USE PCFHdr, ONLY: h5_writeglobalattr
+    USE PCFHdr, ONLY: h5_writeglobalattr, CreatePCFAnnotation, WritePCF2Hdr
     USE BrightObjects_m, ONLY: BO_name, BO_Angle_GHz, BO_Angle_THz
     USE DACsUtils, ONLY: TPz
+    USE INTRINSIC, ONLY: l_hdf
 
     CHARACTER(LEN=132) :: filename
     INTEGER :: i, returnStatus, error, grp_id
     LOGICAL :: opened
+
+    CHARACTER (LEN=1), POINTER :: leapsecText(:), utcpoleText(:)
+    INTEGER, PARAMETER :: leapsec_pcf = 10301, utcpole_pcf = 10401
 
     INTEGER, EXTERNAL :: PGS_IO_L0_Close
 
@@ -180,8 +184,20 @@ CONTAINS
 
     ! Write Hdr Annotations and Close L1BOA file
 
+    !! Get annotation from leapsec and utcpole files
+
+    CALL CreatePCFAnnotation (leapsec_pcf, leapsecText)
+
+    CALL CreatePCFAnnotation (utcpole_pcf, utcpoleText)
+
     CALL H5gOpen_f (L1BFileInfo%OAid, '/', grp_id, returnStatus)
 
+    CALL WritePCF2Hdr (L1BFileInfo%OAFileName, leapsecText, &
+         hdfVersion=HDFversion, fileType=l_hdf, name='/leapsec')
+
+    CALL WritePCF2Hdr (L1BFileInfo%OAFileName, utcpoleText, &
+         hdfVersion=HDFversion, fileType=l_hdf, name='/utcpole')
+ 
     ! Orbit attributes:
 
     CALL MakeHDF5Attribute (grp_id, 'OrbitNumber', OrbitNumber, .TRUE.)
@@ -241,6 +257,9 @@ CONTAINS
 END MODULE Close_files
 !=============================================================================
 ! $Log$
+! Revision 2.22  2008/02/25 20:11:38  perun
+! Added leapsec and utcpole file contents to L1BOA output file.
+!
 ! Revision 2.21  2007/06/21 20:58:46  perun
 ! Only write to RADD file if DACS calibration is enabled
 !
