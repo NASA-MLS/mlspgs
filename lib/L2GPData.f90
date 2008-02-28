@@ -31,7 +31,8 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
     & GetHashElement, GetStringElement, GetUniqueList, &
     & list2array, NumStringElements, RemoveListFromList, ReplaceSubString, &
     & StringElementNum, SwitchDetail
-  use Output_M, only: blanks, Output, resumeOutput, suspendOutput
+  use Output_M, only: blanks, Output, outputNamedValue, &
+    & resumeOutput, suspendOutput
   use STRING_TABLE, only: DISPLAY_STRING
 
   implicit none
@@ -133,6 +134,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   integer, public, parameter :: rgp = r4
 
   ! How long may the list of swath names grow (~80 x max num. of swaths/file)
+  integer, private, parameter :: MAXCHUNKTIMES = 120
   integer, public, parameter :: MAXNUMSWATHPERFILE = 300
   integer, public, parameter :: MAXSWATHNAMESBUFSIZE = 80*MAXNUMSWATHPERFILE
 
@@ -614,7 +616,64 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine DestroyL2GPContents
 
+  !-------------------------------------- ExpandL2GPDataInFile ---
+  
+  subroutine ExpandL2GPDataInFile( L2GPFile, swathName, l2gp )
+    ! Repeated rewrite swathname until its numProfs >= l2gp%nTimes
+    ! Args
+    type(MLSFile_T) :: L2GPFile
+    character(len=*), intent(in) :: swathName
+    type (L2GPData_T), intent(inout) :: l2gp
+    ! Internal variables
+    logical :: done
+    integer :: M
+    integer :: ReadM
+    integer, parameter :: MAXPASSES = 40
+    integer, parameter :: METHOD = 1
+    integer :: numProfs
+    integer :: passes
+    type (L2GPData_T) :: smallerl2gp, readl2gp
+    ! Executable
+    if ( L2GPFile%hdfVersion /= HDFVERSION_5 ) return
+    M = l2gp%nTimes
+    if ( M < 2 ) return
+    if ( method == 1 ) then
+      call ReadL2GPData( L2GPFile, swathName, readl2gp, numProfs )
+      ReadM = readl2gp%nTimes
+      if(DEEBUG) call outputNamedValue( 'numProfs', numProfs )
+      if(DEEBUG) call outputNamedValue( 'readl2gp%nTimes', readl2gp%nTimes )
+      call DestroyL2GPContents ( readl2gp )
+      if ( ReadM >= M ) return
+      call ExtractL2GPRecord ( l2gp, smallerl2gp, rTimes=(/ M, M /) )
+      call OutputL2GP_writeGeo_MF ( smallerl2gp, l2GPFile, &
+        & swathName, offset=M-1 )
+      call OutputL2GP_writeData_MF ( smallerl2gp, l2GPFile, &
+        & swathName, offset=M-1 )
+      call DestroyL2GPContents ( smallerl2gp )
+      return
+    endif
+    done = .false.
+    do passes=1, MAXPASSES
+      call ReadL2GPData( L2GPFile, swathName, readl2gp, numProfs )
+      ReadM = readl2gp%nTimes
+      if(DEEBUG) call outputNamedValue( 'numProfs', numProfs )
+      if(DEEBUG) call outputNamedValue( 'readl2gp%nTimes', readl2gp%nTimes )
+      done = ( ReadM >= M )
+      call DestroyL2GPContents ( readl2gp )
+      if ( done ) return
+      call ExtractL2GPRecord ( l2gp, smallerl2gp, rTimes=(/ ReadM+1, M /) )
+      call OutputL2GP_writeGeo_MF ( smallerl2gp, l2GPFile, &
+        & swathName, offset=ReadM )
+      call OutputL2GP_writeData_MF ( smallerl2gp, l2GPFile, &
+        & swathName, offset=ReadM )
+      call DestroyL2GPContents ( smallerl2gp )
+    enddo
+    call MLSMessage ( MLSMSG_Error, ModuleName // '/ExpandL2GPDataInFile', &
+      & "Failed to fit l2gp in file", MLSFile=L2GPFile )
+  end subroutine ExpandL2GPDataInFile
+  
   !---------------------------------------  ExpandL2GPDataInPlace  -----
+  
   subroutine ExpandL2GPDataInPlace ( l2gp, newNTimes )
 
     ! This subroutine expands an L2GPData_T in place allowing the user to 
@@ -1009,13 +1068,9 @@ contains ! =====     Public Procedures     =============================
       & trim(swathname), MLSFile=L2GPFile)
     if ( index(list,'nLevels') /= 0 ) lev = 1
     if ( index(list,'Freq') /= 0 ) freq = 1
-!    if ( index(list,'Unlim') /= 0 ) then 
-!      timeIsUnlim = .TRUE.
-!    else
-!      timeIsUnlim = .FALSE.
-!    endif
 
     size = mls_swdiminfo(swid, 'nTimes', hdfVersion=hdfVersion)
+    if ( deeBugHere ) print *, 'size--1st try: ', size
     if ( hdfVersion == HDFVERSION_5 ) then
       ! This will be wrong if timeIsUnlim .eq. .TRUE. . 
       ! HE5_SWdiminfo returns 1 instead of the right answer.
@@ -1024,6 +1079,9 @@ contains ! =====     Public Procedures     =============================
       call GetHashElement (dimlist, &
        & maxdimlist, 'nTimes', &
        & maxDimName, .false.)
+      if ( deeBugHere ) print *, 'flddims: ', flddims
+      if ( deeBugHere ) print *, 'dimlist: ', trim(dimlist)
+      if ( deeBugHere ) print *, 'maxdimlist: ', trim(maxdimlist)
       if ( maxDimName == 'Unlim' ) then
         status = StringElementNum(dimlist, 'nTimes', .false.)
         if ( status > 0 .and. status <= rank ) size = max(size, flddims(status))
@@ -1332,7 +1390,9 @@ contains ! =====     Public Procedures     =============================
     integer :: SWID, STATUS
     logical :: myNotUnlimited
     logical :: mycompressTimes
-
+    logical :: deebughere
+    ! Executable
+    deebughere = DEEBUG ! .or. .TRUE.
     if (present(swathName)) then
        name=swathName
     else
@@ -1346,9 +1406,9 @@ contains ! =====     Public Procedures     =============================
     
     ! Work out the chunking
     if ( myNotUnlimited ) then
-      chunkTimes = max ( min ( 120, l2gp%nTimes ), 1 )
+      chunkTimes = max ( min ( MAXCHUNKTIMES, l2gp%nTimes ), 1 )
     else
-      chunktimes = 120      ! was 1
+      chunktimes = MAXCHUNKTIMES      ! was 1
     endif
     chunkfreqs = max ( l2gp%nFreqs, 1)
     if(present(nLevels))then
@@ -1360,7 +1420,8 @@ contains ! =====     Public Procedures     =============================
     
     ! Create the swath within the file
 
-    if ( DEEBUG )  print *, 'About to sw_create ', TRIM(name)
+    if ( deebughere )  print *, 'About to sw_create ', TRIM(name)
+    if ( deebughere )  print *, 'myNotUnlimited ', myNotUnlimited
     ! swid = mls_SWcreate(L2GPFile%FileID%f_id, trim(name), &
     swid = mls_SWcreate(L2GPFile, trim(name) )
     if ( swid == -1 ) then
@@ -1421,6 +1482,7 @@ contains ! =====     Public Procedures     =============================
     chunk_rank=1
     chunk_dims=1
     chunk_dims(1)=CHUNKTIMES
+    if ( deebughere )  print *, 'chunk_dims ', chunk_dims(1:chunk_rank)
     status = mls_gfldsetup(swid, 'Latitude', 'nTimes', MYDIM1, &
       & DFNT_FLOAT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
       & hdfVersion=hdfVersion, rFill=l2gp%MissingValue)
@@ -1513,8 +1575,10 @@ contains ! =====     Public Procedures     =============================
 
     end if
 
+    if ( deebughere )  print *, 'chunk_dims ', chunk_dims(1:chunk_rank)
     chunk_rank=1
     chunk_dims(1)=CHUNKTIMES
+    if ( deebughere )  print *, 'chunk_dims ', chunk_dims(1:chunk_rank)
     status = mls_dfldsetup(swid, 'Status', 'nTimes', &
     & MYDIM1, &
     & DFNT_INT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
@@ -1522,6 +1586,7 @@ contains ! =====     Public Procedures     =============================
 
     chunk_rank=1
     chunk_dims(1)=CHUNKTIMES
+    if ( deebughere )  print *, 'chunk_dims ', chunk_dims(1:chunk_rank)
     status = mls_dfldsetup(swid, 'Quality', 'nTimes', &
     & MYDIM1, &
     & DFNT_FLOAT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
@@ -1529,6 +1594,7 @@ contains ! =====     Public Procedures     =============================
 
     chunk_rank=1
     chunk_dims(1)=CHUNKTIMES
+    if ( deebughere )  print *, 'chunk_dims ', chunk_dims(1:chunk_rank)
     status = mls_dfldsetup(swid, 'Convergence', 'nTimes', &
     & MYDIM1, &
     & DFNT_FLOAT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
@@ -1597,6 +1663,12 @@ contains ! =====     Public Procedures     =============================
     stride = 1
     start = myOffset ! Please do not set to zero
     edge(1) = l2gp%nTimes
+
+    if (DEEBUG) then
+      call output( 'Writing geolocations', advance='yes' )
+      call outputNamedValue( 'stride, start, edge', (/ stride(1), start(1), edge(1) /) )
+      call outputNamedValue( 'shape(Geod. Angle', shape(l2gp%geodAngle) )
+    endif
 
     status = mls_SWwrfld(swid, 'Latitude', start, stride, edge, &
          real(l2gp%latitude), hdfVersion=hdfVersion)
@@ -1697,6 +1769,11 @@ contains ! =====     Public Procedures     =============================
     edge(1) = l2gp%nFreqs
     edge(2) = l2gp%nLevels
     edge(3) = l2gp%nTimes
+    if (DEEBUG) then
+      call output( 'Writing data now', advance='yes' )
+      call outputNamedValue( 'stride, start, edge', (/ stride(3), start(3), edge(3) /) )
+      call outputNamedValue( 'shape(Geod. Angle', shape(l2gp%geodAngle) )
+    endif
     swid = mls_SWattach (L2GPFile, name)
     if ( l2gp%nFreqs > 0 ) then
        ! Value and Precision are 3-D fields
@@ -2291,11 +2368,13 @@ contains ! =====     Public Procedures     =============================
     ! Local
     integer :: actual_ntimes
     logical :: alreadyOpen
+    integer :: numProfs
     integer :: status
     logical :: swath_exists
     integer :: swathid
     integer :: myLastProfile
     character (len=L2GPNameLen) :: myswathName
+    type (L2GPData_T) :: totall2gp
 
     ! Executable code
     call MLSMessageCalls( 'push', constantName='AppendL2GPData_MLSFile' )
@@ -2338,6 +2417,17 @@ contains ! =====     Public Procedures     =============================
 
     if ( swath_exists ) then
       if(DEEBUG) print *, 'OK, swath already exists'
+      ! We must guard against a bug in HDF-EOS that prevents appending more
+      ! profiles to a swath than already exist
+      call ReadL2GPData( L2GPFile, myswathName, totall2gp, numProfs )
+      if ( l2gp%nTimes > numProfs ) then
+        if(DEEBUG) call outputNamedValue( 'current', totall2gp%nTimes )
+        if(DEEBUG) call outputNamedValue( 'needed', l2gp%nTimes )
+        call ExpandL2GPDataInPlace( totall2gp, l2gp%nTimes )
+        if(DEEBUG) call outputNamedValue( 'expanded', totall2gp%nTimes )
+        call ExpandL2GPDataInFile( L2GPFile, myswathName, totall2gp )
+      endif
+      call DestroyL2GPContents ( totall2gp )
     else
       ! Must create swath in file w/o disturbing other swaths
       if(DEEBUG) print *, 'Must create swath'
@@ -2382,10 +2472,23 @@ contains ! =====     Public Procedures     =============================
     else
       ! actual_ntimes = l2gp%nTimes
       ! l2gp%nTimes = max(myLastProfile - offset + 1, 1)
-      call OutputL2GP_writeGeo_MF (l2gp, l2GPFile, &
-        & myswathName, offset)
-      call OutputL2GP_writeData_MF (l2gp, l2GPFile, &
-        & myswathName, offset)
+      if ( .not. swath_exists ) then
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & "You already wrote when you created a swath in AppendL2GPData" )
+      else
+        call OutputL2GP_writeGeo_MF (l2gp, l2GPFile, &
+          & myswathName, offset)
+        call OutputL2GP_writeData_MF (l2gp, l2GPFile, &
+          & myswathName, offset)
+        ! Write the swath all over again if we
+        ! expect the HDFEOS bug to take effect
+        !if ( l2gp%nTimes > numProfs ) then
+        !  call OutputL2GP_writeGeo_MF (l2gp, l2GPFile, &
+        !    & myswathName, offset)
+        !  call OutputL2GP_writeData_MF (l2gp, l2GPFile, &
+        !    & myswathName, offset)
+        !endif
+      endif
       select case ( L2GPFile%HDFVersion )
       case ( HDFVERSION_4 )
       case ( HDFVERSION_5 )
@@ -2399,6 +2502,13 @@ contains ! =====     Public Procedures     =============================
       end select
       ! l2gp%nTimes = actual_ntimes
     end if
+    
+    if (DEEBUG) then
+      call ReadL2GPData( L2GPFile, myswathName, totall2gp, numProfs )
+      call outputNamedValue( 'numProfs', numProfs )
+      call outputNamedValue( 'total numProfs', totall2gp%nTimes )
+      call DestroyL2GPContents ( totall2gp )
+    endif
 
     if ( .not. alreadyOpen )  call mls_closeFile(L2GPFile, Status)
     L2GPFile%errorCode = status
@@ -4404,6 +4514,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.154  2008/01/24 23:33:04  pwagner
+! when diffing, matchtimes will try to match either times or geod. angle
+!
 ! Revision 2.153  2008/01/07 21:37:23  pwagner
 ! Replace DEFAULTUNDEFINEDVALUE with user-settable undefinedValue
 !
