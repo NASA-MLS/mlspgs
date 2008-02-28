@@ -13,17 +13,21 @@
 program l2gpcat ! catenates split L2GPData files, e.g. dgg
 !=================================
 
+   use dump_0, only: DUMP
    use Hdf, only: DFACC_CREATE, DFACC_RDWR, DFACC_READ
    use HDF5, only: h5fopen_f, h5fclose_f, h5fis_hdf5_f   
    use HDFEOS5, only: HE5T_NATIVE_CHAR
-   use L2GPData, only: cpL2GPData, L2GPData_T, ReadL2GPData, DestroyL2GPContents, &
-     & L2GPNameLen, MAXSWATHNAMESBUFSIZE
+   use Intrinsic, only: l_swath
+   use L2GPData, only: L2GPData_T, L2GPNameLen, MAXSWATHNAMESBUFSIZE, RGP, &
+     & AppendL2GPData, cpL2GPData, DestroyL2GPContents, ExtractL2GPRecord, &
+     & ReadL2GPData, WriteL2GPData
    use MACHINE, only: FILSEP, HP, IO_ERROR, GETARG
-   use MLSCommon, only: R8
+   use MLSCommon, only: MLSFile_t, R8
    use MLSFiles, only: mls_exists, &
-     & HDFVERSION_4, HDFVERSION_5, MLS_INQSWATH
+     & HDFVERSION_4, HDFVERSION_5, MLS_INQSWATH, InitializeMLSFile
    use MLSHDF5, only: mls_h5open, mls_h5close
    use MLSMessageModule, only: MLSMessageConfig
+   use MLSSets, only: FindFirst
    use MLSStringLists, only: catLists, GetStringElement, GetUniqueList, &
      & Intersection, NumStringElements, RemoveElemFromList, &
      & StringElement, StringElementNum
@@ -55,11 +59,13 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
   type options_T
     logical     :: verbose = .false.
     character(len=255) ::    outputFile= 'default.he5'  ! output filename       
+    logical ::               catenate = .false.         ! catenate swaths with same name
     logical ::               columnsOnly = .false.
     logical ::               noDupSwaths = .false.      ! cp 1st, ignore rest   
     character(len=3) ::      convert= ' '               ! e.g., '425'
     character(len=255) ::    swathNames = ' '           ! which swaths to copy
     character(len=255) ::    rename = ' '               ! how to rename them
+    integer            ::    overlap = 4                ! how many profiles
     integer, dimension(2) :: freqs = 0                  ! Keep range of freqs   
     integer, dimension(2) :: levels = 0                 ! Keep range of levels   
     integer, dimension(2) :: profiles = 0               ! Keep range of profiles   
@@ -70,7 +76,7 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
   integer, parameter ::          MAXFILES = 100
   logical, parameter ::          countEmpty = .true.
   logical     :: createdYet
-  logical, parameter ::          DEEBUG = .false.
+  logical, parameter ::          DEEBUG = .true.
   ! logical ::          columnsOnly
   character(len=255) :: filename          ! input filename
   ! character(len=255) :: outputFile= 'default.he5'        ! output filename
@@ -99,20 +105,6 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
   time_config%use_wall_clock = .true.
   CALL mls_h5open(error)
   n_filenames = 0
-!   do      ! Loop over input
-!     read (*, '(a)') swathList
-!     if ( swathList == 'stop' ) stop
-!     read (*, '(a)') swathList1
-!     swathListAll = catLists(swathList, swathList1)
-!     swathList = swathListAll
-!     call GetUniqueList(swathList, swathListAll, &
-!       & i, countEmpty)
-!     print *, 'no unique: ', i
-!     print *, 'unique: ', trim(swathListAll)
-!     read (*, '(a)') swath
-!     call RemoveElemFromList (swathListAll, swathList, trim(swath))
-!     print *, 'After removing: ', trim(swathList)
-!   enddo
   do      ! Loop over filenames
      call get_filename(filename, n_filenames, options)
      if ( filename(1:1) == '-' ) cycle
@@ -161,8 +153,138 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
      end select
     enddo
     call time_now ( t1 )
+
     swathListAll = ''
     numswathssofar = 0
+    if ( options%catenate ) then
+      call catenate_swaths
+    else
+      call copy_swaths
+    endif
+  endif
+  call mls_h5close(error)
+contains
+!------------------------- catenate_swaths ---------------------
+! Identify and trim overlaps as follows:
+! let {a1 a2 .. aN} be an array of geodetic angles in one
+! swath while {b1 b2 .. bM} is an array in the next swath
+! where a and b overlap by a certain number of profiles which we will discover:
+! let k be the 1st b s.t. (b - a[N]) > eps
+! Then keeping the a array values in the overlap region will result in
+!
+! a[1]   ..  a[N] b[k] b[k+1] .. b[M]
+! <---   N   --->  <---   M-k+1  --->
+
+  subroutine catenate_swaths
+    ! Internal variables
+    integer :: j
+    integer :: jj
+    integer :: k
+    integer :: p
+    type(L2GPData_T) :: l2gp
+    type( MLSFile_T ) :: l2gpFile
+    real(rgp) :: lastGeodAngle
+    integer, parameter :: MAXNUMPROFS = 3500
+    integer :: numProfs
+    integer :: numTotProfs
+    type(L2GPData_T) :: ol2gp
+    integer :: time1
+    real(rgp), dimension(MAXNUMPROFS) :: a
+    real(rgp), dimension(MAXNUMPROFS) :: b
+    integer :: N ! size of a
+    integer :: M ! size of b
+    real(rgp), parameter :: eps = 0.01_rgp
+    ! Executable
+    a = 0.
+    b = 0.
+    if ( options%verbose ) print *, 'Catenate l2gp data to: ', &
+      & trim(options%outputFile)
+    numswathssofar = mls_InqSwath ( filenames(1), SwathList, listSize, &
+           & hdfVersion=HDFVERSION_5)
+    if ( options%swathNames /= ' ' ) then
+      swathList1 = swathList
+      swathList = Intersection( options%swathNames, swathList1 )
+    endif
+    call GetStringElement( swathList, swath, 1, countEmpty )
+    numTotProfs = 0
+    do jj=1, NumStringElements( swathList, countEmpty )
+      call GetStringElement( swathList, swath, jj, countEmpty )
+      call time_now ( tFile )
+      if ( options%verbose ) print *, 'Catenating swath: ', trim(swath)
+      N = 0
+      M = 0
+      time1 = 1
+      do i=1, n_filenames
+        if ( options%verbose ) print *, 'Reading from: ', trim(filenames(i))
+        call ReadL2GPData( trim(filenames(i)), swath, ol2gp, numProfs )
+        if ( i == 1 ) then
+          status = InitializeMLSFile( l2gpFile, type=l_swath, access=DFACC_CREATE, &
+            & content='l2gp', name='unknown', hdfVersion=HDFVERSION_5 )
+          l2gpFile%name = options%outputFile
+          l2gpFile%stillOpen = .false.
+          call WriteL2GPData ( ol2gp, l2gpFile, swath )
+          N = ol2gp%nTimes
+          a(1:N) = ol2gp%GeodAngle
+          if ( options%verbose ) call dump( a(1:N), '1st a' )
+          call DestroyL2GPContents( ol2gp )
+          numTotProfs = numTotProfs + N
+          cycle
+        endif
+        M = ol2gp%nTimes
+        b(1:M) = ol2gp%GeodAngle
+        ! 1st, is there nearly 360 deg offset between a, and b?
+        ! (If so, we'll assume a periodic wrap occurred)
+        if ( abs(b(1)-a(N)) > 300._rgp ) then
+          ! add or subtract the requsite 360 deg from a
+          j = int( sign(1.01_rgp, b(1)-a(N)) )
+          a(1:N) = a(1:N) + j*360._rgp
+        endif
+        ! Find k
+        k = FindFirst( (b(1:M) - a(N)) > eps )
+        ! Are our overlaps uniform?
+        if ( k < 2 ) then
+          if ( options%verbose ) print *, 'Warning--overlaps not found', k, N, M
+          if ( options%verbose ) call dump( a(1:N), 'a' )
+          if ( options%verbose ) call dump( b(1:M), 'b' )
+          call AppendL2GPData ( ol2gp, options%outputFile, &
+          & swath, offset=max(0,numTotProfs) )
+          ! Could this be a bug in the HDFEOS library?
+          !if ( i > 1 .and. ol2gp%nTimes > numTotProfs ) &
+          !  & call AppendL2GPData ( ol2gp, options%outputFile, &
+          !  & swath, offset=max(0,numTotProfs) )
+          numTotProfs = numTotProfs + M
+        else
+          call ExtractL2GPRecord ( ol2gp, l2gp, rTimes=(/ k, M /) )
+          ! print *, 'should be writing'
+          if ( options%verbose ) call dump( l2gp%GeodAngle, 'appended Geod. angle' )
+          call AppendL2GPData ( l2gp, options%outputFile, &
+          & swath, offset=max(0,numTotProfs) )
+          ! Could this be a bug in the HDFEOS library?
+          !if ( i > 1 .and. l2gp%nTimes > numTotProfs .and. .false. ) &
+          !  & call AppendL2GPData ( l2gp, options%outputFile, &
+          !  & swath, offset=max(0,numTotProfs) )
+          call DestroyL2GPContents( l2gp )
+          numTotProfs = numTotProfs + M - k + 1
+          ! print *, 'k,N,M,total', k, N, M, numTotProfs
+        endif
+        call DestroyL2GPContents( ol2gp )
+        ! Next time what was "b" will serve as "a"
+        a = b
+        N = M
+        if ( DEEBUG ) then
+          call ReadL2GPData( options%outputFile, swath, ol2gp )
+          ! print *, 'nTimes(total): ', ol2gp%nTimes
+          if ( options%verbose ) call dump( ol2gp%GeodAngle, 'stored Geod. angle' )
+          call DestroyL2GPContents( ol2gp )
+        endif
+      enddo
+      call sayTime('catenating this swath', tFile)
+    enddo
+    call sayTime('catenating all swaths')
+  end subroutine catenate_swaths
+
+!------------------------- copy_swaths ---------------------
+  subroutine copy_swaths
     if ( options%verbose ) print *, 'Copy l2gp data to: ', trim(options%outputFile)
     do i=1, n_filenames
       call time_now ( tFile )
@@ -244,9 +366,7 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
       createdYet = .true.
     enddo
     call sayTime('copying all files')
-  endif
-  call mls_h5close(error)
-contains
+  end subroutine copy_swaths
 !------------------------- get_filename ---------------------
     subroutine get_filename(filename, n_filenames, options)
     ! Added for command-line processing
@@ -280,6 +400,9 @@ contains
       elseif ( filename(1:3) == '-v ' ) then
         options%verbose = .true.
         exit
+      elseif ( filename(1:4) == '-cat' ) then
+        options%catenate = .true.
+        exit
       elseif ( filename(1:3) == '-no' ) then
         options%noDupSwaths = .true.
         exit
@@ -305,6 +428,10 @@ contains
         call igetarg ( i+1+hp, options%levels(1) )
         i = i + 1
         call igetarg ( i+1+hp, options%levels(2) )
+        i = i + 1
+        exit
+      elseif ( filename(1:5) == '-over' ) then
+        call igetarg ( i+1+hp, options%overlap )
         i = i + 1
         exit
       elseif ( filename(1:5) == '-prof' ) then
@@ -344,6 +471,7 @@ contains
       write (*,*) '          -425          => convert from hdf4 to hdf5'
       write (*,*) '          -524          => convert from hdf5 to hdf4'
       write (*,*) '          -v            => switch on verbose mode'
+      write (*,*) '          -cat          => catenate swaths with same name'
       write (*,*) '          -nodup        => if dup swath names, cp 1st only'
       write (*,*) '          -freqs m n    => keep only freqs in range m n'
       write (*,*) '          -levels m n   => keep only levels in range m n'
@@ -352,6 +480,7 @@ contains
       write (*,*) '             => copy only swaths so named; otherwise all'
       write (*,*) '          -r rename1,rename2,..'
       write (*,*) '             => if and how to rename the copied swaths'
+      write (*,*) '          -overlap n    => assume n profile overlaps'
       write (*,*) '          -h            => print brief help'
       stop
   end subroutine print_help
@@ -383,6 +512,9 @@ end program L2GPcat
 !==================
 
 ! $Log$
+! Revision 1.10  2006/05/19 22:47:40  pwagner
+! Fixed bug stopping us from creating -o file if first input file not copied
+!
 ! Revision 1.9  2006/05/19 20:55:36  pwagner
 ! May rename copied swaths
 !
