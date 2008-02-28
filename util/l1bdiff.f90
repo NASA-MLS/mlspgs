@@ -60,6 +60,7 @@ program l1bdiff ! diffs two l1b or L2AUX files
     logical     :: rms = .false.
     logical     :: direct = .false.
     logical     :: l2aux = .false.
+    logical     :: ascii = .false. ! If true, diff even character fields
     integer     :: maf1 = 0
     integer     :: maf2 = 0
     integer     :: moff = 0
@@ -183,6 +184,9 @@ contains
       elseif ( filename(1:3) == '-v ' ) then
         options%verbose = .true.
         exit
+      elseif ( filename(1:7) == '-ascii ' ) then
+        options%ascii = .true.
+        exit
       elseif ( filename(1:7) == '-l2aux ' ) then
         options%l2aux = .true.
         exit
@@ -225,6 +229,7 @@ contains
       & ' If no filenames supplied, you will be prompted to supply one'
       write (*,*) ' Options: -f filename     => add filename to list of filenames'
       write (*,*) '                           (can do the same w/o the -f)'
+      write (*,*) '          -ascii          => diff even character-valued fields'
       write (*,*) '          -l2aux          => the files are l2aux, not l1b'
       write (*,*) '          -v              => switch on verbose mode'
       write (*,*) '          -silent         => switch on silent mode'
@@ -383,6 +388,13 @@ contains
           call DeallocateL1BData ( l1bData2 )
           cycle
         endif
+        if ( associated(L1bData%charField) .and. .not. options%ascii ) then
+	       call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          	& 'Skipping diff of char-valued ' // trim(sdName) )
+          call DeallocateL1BData ( l1bData )
+          call DeallocateL1BData ( l1bData2 )
+          cycle
+        endif
         maf1 = 1
         if ( options%maf1 > 0 ) maf1 = options%maf1
         maf2 = NoMAFs
@@ -413,14 +425,24 @@ contains
 !             print *, L1bData%dpField(1,1,maf2)
 !             print *, L1bData2%dpField(1,1,maf1+options%moff)
 !             print *, L1bData2%dpField(1,1,maf2+options%moff)
-            call diff( L1bData%dpField(:,:,maf1:maf2), &
-              & '(1)', &
-              & L1bData2%dpField(:,:,maf1+options%moff:maf2+options%moff), &
-              & '(2)', &
-              & stats=options%stats, rms=options%rms )
+            if ( options%silent ) then
+            elseif ( .false. .and. all(L1bData%dpField(:,:,maf1:maf2) == &
+              & L1bData2%dpField(:,:,maf1+options%moff:maf2+options%moff)) ) then
+              print *, '(The two fields are exactly equal)'
+            else
+              ! print *, 'About to diff dpFields'
+              call diff( L1bData%dpField(:,:,maf1:maf2), &
+                & '(1)', &
+                & L1bData2%dpField(:,:,maf1+options%moff:maf2+options%moff), &
+                & '(2)', &
+                & stats=options%stats, rms=options%rms )
+            endif
           else
+            ! print *, 'About to form dpField = dpField1 - dpField2'
             L1bData%dpField = L1bData%dpField - L1bData2%dpField(:,:,1+options%moff:)
             if ( options%silent ) then
+            elseif ( .false. .and. all(L1bData%dpField == 0.d0) ) then
+              print *, '(The two fields are exactly equal)'
             elseif ( options%maf1 /= 0 .and. options%maf2 /= 0 ) then
               ! print *, shape( L1bData%dpField(:,:,options%maf1:options%maf2) )
               call dump( L1bData%dpField(:,:,options%maf1:options%maf2), &
@@ -464,6 +486,9 @@ end program l1bdiff
 !==================
 
 ! $Log$
+! Revision 1.8  2007/11/28 19:35:21  pwagner
+! May specify that files are l2aux
+!
 ! Revision 1.7  2007/07/18 00:15:25  pwagner
 ! -rms outputs fractional diffs more clearly
 !
