@@ -11,7 +11,7 @@
 
 module Voigt_M
 
-  use MLSCommon, only: RP
+  use MLSKinds, only: RP
   use Units, only: Pi, SqrtPi
 
   implicit NONE
@@ -137,10 +137,10 @@ contains
 
     if ( y + TwoThirds*xa > 100.0_rp ) then
 
-      ! Here x is sqrt(ln2)*delnu / wd and y is sqrt(ln2)*wc / wd
-      ! u = rlorentz ( x, y )
-      ! This is the first term of the asymptotic expansion
-      !{ $w(z) \sim \frac{i}{\sqrt{\pi}z}
+      !{ Here x is sqrt(ln2)*delnu / wd and y is sqrt(ln2)*wc / wd
+      !  u = rlorentz ( x, y )
+      !  This is the first term of the asymptotic expansion
+      !  $w(z) \sim \frac{i}{\sqrt{\pi}z}
       !   \left(1 + \sum_{m=1}^\infty \frac{1 \cdot 3 \dots (2m-1)}{(2z^2)^m}\right)$.
 
       u = OneOvSPi * y / (y2 + x*x)
@@ -1402,6 +1402,9 @@ contains
 end module Voigt_M
 
 ! $Log$
+! Revision 2.10  2008/02/29 01:57:19  vsnyder
+! Use MLSKinds instead of MLSCommon
+!
 ! Revision 2.9  2007/05/23 22:38:01  vsnyder
 ! Specialize and inline Simple_Voigt instead of calling it
 !
