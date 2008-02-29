@@ -36,7 +36,8 @@ contains
   subroutine Get_Beta_Path_Scalar ( frq, p_path, t_path, tanh_path, &
         & beta_group, SX, NoPolarized, gl_slabs, path_inds,         &
         & beta_path, t_der_path_flags, dTanh_dT, VelCor,            &
-        & dBeta_dt_path, dBeta_dw_path, dBeta_dn_path, dBeta_dv_path )
+        & dBeta_dt_path, dBeta_dw_path, dBeta_dn_path, dBeta_dv_path, &
+        & Sps_Path )
 
     use Dump_0, only: Dump
     use ForwardModelConfig, only: Beta_Group_T, LineCenter, LineWidth, LineWidth_TDep
@@ -70,6 +71,9 @@ contains
 
 ! Input for spectroscopy derivatives
     real(rp), intent(in) :: VelCor
+
+! Input for H2O continuum.  Optional so PFA table generation can leave it off.
+    real(rp), intent(in), optional :: Sps_Path(:,:) ! Mixing ratios, Path X Species
 
 ! Outputs
 
@@ -130,11 +134,21 @@ contains
       end if
 
       do n = 1, size(beta_group(i)%lbl(sx)%cat_index)
-        call create_beta_path ( path_inds, p_path, t_path, frq,             &
-          & beta_group(i)%lbl(sx)%ratio(n),                                 &
-          & gl_slabs(:,beta_group(i)%lbl(sx)%cat_index(n)),                 &
-          & tanh_path, noPolarized, velCor,                                 &
-          & beta_path(:,i), dTanh_dT, t_der_path_flags, dBdT, dBdw, dBdn, dBdv )
+        if ( present(sps_path) ) then
+          call create_beta_path ( path_inds, p_path, t_path, frq,   &
+            & beta_group(i)%lbl(sx)%ratio(n),                       &
+            & gl_slabs(:,beta_group(i)%lbl(sx)%cat_index(n)),       &
+            & tanh_path, noPolarized, velCor,                       &
+            & beta_path(:,i), dTanh_dT, t_der_path_flags,           &
+            & dBdT, dBdw, dBdn, dBdv, sps_path(:,i) )
+        else
+          call create_beta_path ( path_inds, p_path, t_path, frq,   &
+            & beta_group(i)%lbl(sx)%ratio(n),                       &
+            & gl_slabs(:,beta_group(i)%lbl(sx)%cat_index(n)),       &
+            & tanh_path, noPolarized, velCor,                       &
+            & beta_path(:,i), dTanh_dT, t_der_path_flags,           &
+            & dBdT, dBdw, dBdn, dBdv )
+        end if
 
         if ( dumpBeta ) then
           call display_string ( lit_indices(beta_group(i)%lbl(sx)%molecules(1:n)), &
@@ -464,8 +478,8 @@ contains
 ! ----------------------------------------------  Create_beta  ---------
 
   subroutine Create_beta ( pressure, Temp, Fgr, slabs_0, tanh1, &
-         &                 Beta_Value, NoPolarized, dTanh_dT,     &
-         &                 dBeta_dT, dBeta_dw, dBeta_dn, dBeta_dv )
+         &                 Beta_Value, NoPolarized, dTanh_dT,   &
+         &                 dBeta_dT, dBeta_dw, dBeta_dn, dBeta_dv, Sps )
 
 !  For a given frequency and height, compute beta_value function.
 !  This routine should be called for primary and image separately.
@@ -479,7 +493,7 @@ contains
 !  forward model.
 
     use MLSCommon, only: RP, R8, IP
-    use Molecules, only: L_N2, L_Extinction, L_O2
+    use Molecules, only: L_N2, L_Extinction, L_H2O, L_O2
     use SLABS_SW_M, only: DVOIGT_SPECTRAL, VOIGT_LORENTZ, &
       & SLABS_LINES, SLABS_LINES_DT, &
       & SLABSWINT_LINES, SLABSWINT_LINES_DT
@@ -515,6 +529,8 @@ contains
     real(rp), optional, intent(out) :: DBETA_DW ! line width derivative
     real(rp), optional, intent(out) :: DBETA_DN ! temperature dependence deriv
     real(rp), optional, intent(out) :: DBETA_DV ! line position derivative
+! Optional input for H2O -- Optional so PFA table generation can ignore it
+    real(rp), optional, intent(in) :: SPS       ! Mixing ratio
 
 ! -----     Local variables     ----------------------------------------
 
@@ -562,6 +578,15 @@ contains
         call abs_cs_o2_cont_dT ( cont, temp, pressure, fgr, beta_value, dBeta_dT )
       else
         beta_value = abs_cs_o2_cont(cont,Temp,Pressure,Fgr)
+      end if
+
+    case ( l_h2o ) ! ..............................................  H2O
+
+      if ( present(dBeta_dT) ) then
+        call abs_cs_h2o_cont_dT ( cont, temp, pressure, fgr, sps, &
+          & beta_value, dBeta_dT )
+      else
+        beta_value = abs_cs_h2o_cont(cont,Temp,Pressure,Fgr,sps)
       end if
 
     case default ! ..............................................  Other
@@ -642,16 +667,17 @@ contains
 ! -----------------------------------------  Create_beta_path  ---------
 
   pure &
-  subroutine Create_beta_path ( Path_inds, Pressure, Temp, Fgr, Ratio, &
-         &   Slabs_0, Tanh1, NoPolarized, VelCor, Beta_value, dTanh_dT,     &
-         &   Path_flags, dBeta_dT, dBeta_dw, dBeta_dn, dBeta_dv )
+  subroutine Create_beta_path ( Path_inds, Pressure, Temp, Fgr, Ratio,  &
+         &   Slabs_0, Tanh1, NoPolarized, VelCor, Beta_value, dTanh_dT, &
+         &   Path_flags, dBeta_dT, dBeta_dw, dBeta_dn, dBeta_dv,        &
+         &   Sps_Path )
 
 !  For a given frequency and height, compute beta_value function. This routine
 !  should be called for primary and image separately. Compute dBeta_dT if it's
 !  associated.  Compute dBeta_dw, dBeta_dn, dBeta_dv if they're associated. 
 
     use MLSCommon, only: RP, R8
-    use Molecules, only: L_N2, L_Extinction, L_O2
+    use Molecules, only: L_N2, L_Extinction, L_H2O, L_O2
     use Slabs_SW_m, only: SLABS_STRUCT, &
       & SLABS_LINES, SLABS_LINES_DAll, SLABS_LINES_DSpectral, SLABS_LINES_DT, &
       & SLABSWINT_LINES, &
@@ -693,6 +719,9 @@ contains
     real(rp), pointer :: dBeta_dw(:) ! line width derivative
     real(rp), pointer :: dBeta_dn(:) ! temperature dependence deriv
     real(rp), pointer :: dBeta_dv(:) ! line position derivative
+
+! Optional inputs for H2O -- optional so PFA table generation can ignore it
+    real(rp), intent(in), optional :: Sps_Path(:) ! Mixing ratios
 
 ! -----     Local variables     ----------------------------------------
 
@@ -753,6 +782,31 @@ contains
         else
           beta_value(j) = beta_value(j) + ratio * &
             & abs_cs_o2_cont(slabs_0(k)%catalog%continuum,Temp(j),Pressure(k),Fgr)
+        end if
+
+      case ( l_h2o ) ! ..............................................  H2O
+
+        if ( present(sps_path) ) then
+          if ( temp_der ) then
+            call abs_cs_h2o_cont_dT ( slabs_0(k)%catalog%continuum, temp(j), &
+              & pressure(k), fgr, sps_path(k), bv, dBdT )
+            beta_value(j) = beta_value(j) + ratio * bv
+            dBeta_dT(j) = dBeta_dT(j) + ratio * dBdT
+          else
+            beta_value(j) = beta_value(j) + ratio * &
+              & abs_cs_h2o_cont(slabs_0(k)%catalog%continuum,Temp(j), &
+              & Pressure(k),Fgr,sps_path(k))
+          end if
+        else ! Same as case default
+          if ( temp_der ) then
+            call abs_cs_cont_dT ( slabs_0(k)%catalog%continuum, temp(j), &
+              & pressure(k), fgr, bv, dBdT )
+            beta_value(j) = beta_value(j) + ratio * bv
+            dBeta_dT(j) = dBeta_dT(j) + ratio * dBdT
+          else
+            beta_value(j) = beta_value(j) + ratio * &
+              & abs_cs_cont(slabs_0(k)%catalog%continuum,Temp(j),Pressure(k),Fgr)
+          end if
         end if
 
       case default ! ..............................................  Other
@@ -1008,7 +1062,7 @@ contains
 
 !     =====     Private Procedures     =================================
 
-  ! ----------------------------------------------  Abs_CS_Cont  -----
+  ! ------------------------------------------------  Abs_CS_Cont  -----
 
   ! Compute the general continuum contribution
   pure function Abs_CS_Cont ( Cont, Temperature, Pressure, Frequency ) &
@@ -1027,7 +1081,7 @@ contains
 
   end function Abs_CS_Cont
 
-  ! -------------------------------------------  Abs_CS_Cont_dT  -----
+  ! ---------------------------------------------  Abs_CS_Cont_dT  -----
 
   ! Compute the general continuum contribution and its temperature derivative
   pure subroutine Abs_CS_Cont_dT ( Cont, Temperature, Pressure, Frequency, &
@@ -1055,7 +1109,75 @@ contains
 
   end subroutine Abs_CS_Cont_dT
 
-  ! -------------------------------------------  Abs_CS_N2_Cont  -----
+  ! --------------------------------------------  Abs_CS_H2O_Cont  -----
+
+  ! Compute the general continuum contribution
+  pure function Abs_CS_H2O_Cont ( Cont, Temperature, Pressure, Frequency, Sps ) &
+    & result(Abs_CS_H2O_Cont_r)
+  ! real(rp) function Abs_CS_Cont ( Cont, Temperature, Pressure, Frequency )
+    use MLSCommon, only: RP
+
+    real(rp), intent(in) :: CONT(:)     ! continuum parameters
+    real(rp), intent(in) :: TEMPERATURE ! in Kelvin
+    real(rp), intent(in) :: PRESSURE    ! in mbar
+    real(rp), intent(in) :: FREQUENCY   ! in MegaHertz
+    real(rp), intent(in), optional :: SPS ! Mixing ratio
+    real(rp) :: Abs_CS_H2O_Cont_r
+    real(rp) :: Psq, Fsq                ! pressure**2, frequency**2
+    real(rp) :: Temp_Ratio              ! 300/T
+
+    psq = pressure*pressure
+    fsq = frequency*frequency
+    temp_ratio = 300.0_rp / temperature
+    Abs_CS_H2O_Cont_r = &
+      & cont(1) * psq * fsq * ( temp_ratio**cont(2) )
+    if ( present(sps) ) Abs_CS_H2O_Cont_r = Abs_CS_H2O_Cont_r + &
+      & cont(3) * psq * fsq * ( temp_ratio**cont(4) ) * sps
+
+  end function Abs_CS_H2O_Cont
+
+  ! -----------------------------------------  Abs_CS_H2O_Cont_dT  -----
+
+  ! Compute the general continuum contribution and its temperature derivative
+  pure subroutine Abs_CS_H2O_Cont_dT ( Cont, Temperature, Pressure, Frequency, &
+    & SPS, Beta, dBeta_dT, dBeta_df )
+    use MLSCommon, only: RP
+
+    real(rp), intent(in) :: CONT(:)     ! continuum parameters
+    real(rp), intent(in) :: TEMPERATURE ! in Kelvin
+    real(rp), intent(in) :: PRESSURE    ! in mbar
+    real(rp), intent(in) :: FREQUENCY   ! in MegaHertz
+    real(rp), intent(in), optional :: SPS ! Mixing ratio
+    real(rp), intent(out) :: Beta, dBeta_dT
+    real(rp), intent(out), optional :: dBeta_df ! Derivative w.r.t SPS
+
+    real(rp) :: dBdf                    ! Derivative of beta w.r.t SPS
+    real(rp) :: Onedt                   ! 1/T
+    real(rp) :: Psq, Fsq                ! pressure**2, frequency**2
+    real(rp) :: Temp_Ratio              ! 300/T
+
+!{ Let $\theta = \frac{300}T$.  Then the general continuum contribution is
+!  $\beta = c_1 p^2 \nu^2 \theta^{c_2}$.  Noticing that
+!  $\frac{\partial \theta}{\partial T} = -\frac{\theta}T$, we have
+!  $\frac{\partial \beta}{\partial T} = -\beta \frac{c_2}T$.
+
+    psq = pressure*pressure
+    fsq = frequency*frequency
+    onedt = 1.0 / temperature
+    temp_ratio = 300.0 * onedt
+    beta = cont(1) * psq * fsq * ( temp_ratio**cont(2) )
+    dBeta_dT = cont(2)
+    if ( present(sps) ) then
+      dBdf = cont(3) * psq * fsq * ( temp_ratio**cont(4) )
+      if ( present(dBeta_df) ) dBeta_df = dBdf
+      beta = beta + dBdf * sps
+      dBeta_dT = dBeta_dT + cont(4)
+    end if
+    dBeta_dT = - dBeta_dT * beta * onedt
+
+  end subroutine Abs_CS_H2O_Cont_dT
+
+  ! ---------------------------------------------  Abs_CS_N2_Cont  -----
 
   ! Compute the N2 continuum contribution
   pure function Abs_CS_N2_Cont ( Cont, Temperature, Pressure, Frequency ) &
@@ -1081,7 +1203,7 @@ contains
 
   end function Abs_CS_N2_Cont
 
-  ! ----------------------------------------  Abs_CS_N2_Cont_dT  -----
+  ! ------------------------------------------  Abs_CS_N2_Cont_dT  -----
 
   ! Compute the N2 continuum contribution and its temperature derivative
   pure subroutine Abs_CS_N2_Cont_dT ( Cont, Temperature, Pressure, Frequency, &
@@ -1120,7 +1242,7 @@ contains
 
   end subroutine Abs_CS_N2_Cont_dT
 
-  ! -------------------------------------------  Abs_CS_O2_Cont  -----
+  ! ---------------------------------------------  Abs_CS_O2_Cont  -----
 
   ! Compute the O2 continuum contribution
   pure function Abs_CS_O2_Cont ( Cont, Temperature, Pressure, Frequency ) &
@@ -1143,7 +1265,7 @@ contains
 
   end function Abs_CS_O2_Cont
 
-  ! ----------------------------------------  Abs_CS_O2_Cont_dT  -----
+  ! ------------------------------------------  Abs_CS_O2_Cont_dT  -----
 
   ! Compute the O2 continuum contribution
   pure subroutine Abs_CS_O2_Cont_dT ( Cont, Temperature, Pressure, Frequency, &
@@ -1191,6 +1313,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.91  2007/05/23 22:44:24  vsnyder
+! New slabs structure
+!
 ! Revision 2.90  2006/12/04 21:17:28  vsnyder
 ! Reorganize FullForwardModel to use automatic arrays instead of allocating
 ! pointer arrays.  Requires testing for zero size instead of testing for

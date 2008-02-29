@@ -1862,7 +1862,8 @@ contains
           call get_beta_path ( Frq, p_path, t_path_c, tanh1_c,                &
             &  beta_group, sx, fwdModelConf%polarized, gl_slabs, c_inds,      &
             &  beta_path_c, t_der_path_flags, dTanh_dT_c, vel_rel,            &
-            &  dbeta_dT_path_c, dbeta_dw_path_c, dbeta_dn_path_c, dbeta_dv_path_c )
+            &  dbeta_dT_path_c, dbeta_dw_path_c, dbeta_dn_path_c,             &
+            &  dbeta_dv_path_c, sps_path )
         end if
 
         if ( FwdModelConf%incl_cld .and. .not. pfa ) then
@@ -2148,10 +2149,10 @@ contains
           ! different set of optional arguments.
 
           call get_beta_path ( Frq, p_path, t_path_f(:ngl), tanh1_f(1:ngl),    &
-            & beta_group, sx, fwdModelConf%polarized, gl_slabs,                &
-            & gl_inds, beta_path_f(:ngl,:), t_der_path_flags, dTanh_dT_f,      &
-            & vel_rel, &
-            & dbeta_dT_path_f, dbeta_dw_path_f, dbeta_dn_path_f, dbeta_dv_path_f )
+            & beta_group, sx, fwdModelConf%polarized, gl_slabs, gl_inds,       &
+            & beta_path_f(:ngl,:), t_der_path_flags, dTanh_dT_f, vel_rel,      &
+            & dbeta_dT_path_f, dbeta_dw_path_f, dbeta_dn_path_f,               &
+            & dbeta_dv_path_f, sps_path )
 
         end if ! .not. pfa
 
@@ -3296,6 +3297,11 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.286  2007/11/08 02:02:19  vsnyder
+! Change name of path_dsdh to dsdh_path for consistency with other names.
+! Add do_path_norm switch.  Rearrange printing if switches set to show
+! desires to add points but not to add them.
+!
 ! Revision 2.285  2007/07/31 23:49:21  vsnyder
 ! Add an argument metrics needs for H/Phi failure recovery
 !
