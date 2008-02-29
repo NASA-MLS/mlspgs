@@ -77,25 +77,44 @@ contains
 
   subroutine UKISUB ( F, T, M )  ! For Ice
     ! ----------------------
+    use Constants, only: Pi
     use MLSKinds, only: r8
     real(r8), intent(in) :: F, T
     complex(r8), intent(out) :: M
     real(r8) :: a, b, th, x, y           ! Hufford
-    real(r8), parameter :: c=1.16e-11_r8 ! Mishima
+!    real(r8), parameter :: c=1.16e-11_r8 ! Mishima
+    real(r8), parameter :: c = 1.11e-6/(30.0**3*2*pi) ! Dong Wu
 
     th = 300.0/t
 
-!... from Hufford (1991) model
+    x = 3.15
+
+!{ from George Hufford, \emph{A model for the complex permittivity if
+!  ice at frequencies below 1 THz}, {\bf International Journal of
+!  Infrared and Millimeter Waves 12}, 7 (1991):\\
+!  $\beta(T) = (0.445 \times 10^{-4} + 0.00211 \times 10^{-4} T )
+!            + 0.585 \times 10^{-4} / ( 1 - T / 29.1 )^2$ GHz$^{-1}$
+!  (T in degrees Celsius) =
+!             $0.00211 \times 10^{-4} T - 0.131 \times 10^{-4}
+!            + \frac{0.04947229919}{(302.2061046 - T)^2}$ (T in degrees Kelvin).
+!  In terms of $\theta = 300/T$
+!  (T in degrees Kelvin):
+!  $\beta(T) = \frac{0.633 \times 10^{-4}} \theta - 0.131 \times 10^{-4}
+!            + \left(\frac{7.36 \times 10^{-4} \theta}
+!                         {\theta - 0.9927} \right)^2$.
 
     a = (50.4 + 62.*(th-1)) * 1.0e-4*exp(-22.1*(th-1.))
-    b = (0.633/th-0.131)*1e-4 + (7.36e-4*th/(th-0.9927))**2
-    x = 3.15
+!    b = 0.633e-4/th-0.131e-4 + (7.36e-4*th/(th-0.9927))**2
+    b = 0.00211e-4 * t - 0.131e-4 + 0.04947229919/(302.2061046 - t)**2
 !    y = -( a/f+b*f )
 
-!... additional term from Mishima
+!... additional term from Mishima, as derived by Jonathan Jiang
 
-    y = -( a/f + b*f + c*f**3 )
-!    write(*,*)y,f,t
+!    y = -( a/f + f*(b + c*f*f) )
+
+!... and then modified by Dong Wu (2007-12-05)
+
+    y = -( a/f + f*(b + c*sqrt(x)*f*f) )
 
     m=sqrt(cmplx(x,y))
 
@@ -113,6 +132,9 @@ contains
 end module RefractiveIndex
 
 ! $Log$
+! Revision 2.5  2008/02/29 01:59:11  vsnyder
+! Added a sqrt(x) term
+!
 ! Revision 2.4  2007/10/05 23:59:54  vsnyder
 ! Move water part of private COMX into UKSUB, ice part into UKISUB. then
 ! delete COMX.  Polish up formatting.
