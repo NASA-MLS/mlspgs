@@ -13,7 +13,7 @@ module SLABS_SW_M
 
   ! Single-Line Absorption Software
 
-  use MLSCommon, only: R8, RP
+  use MLSKinds, only: R8, RP
   use SpectroscopyCatalog_m, only: Catalog_T
   use Units, only: SqrtPi
 
@@ -2753,6 +2753,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.56  2007/12/04 23:40:12  vsnyder
+! Don't look for polarized if it's not allocated
+!
 ! Revision 2.55  2007/05/23 22:41:49  vsnyder
 ! Change line data from struct of arrays to array of structs to improve
 ! cache locality.
