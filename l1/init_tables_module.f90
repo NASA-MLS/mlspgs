@@ -52,7 +52,8 @@ MODULE INIT_TABLES_MODULE
   INTEGER, PARAMETER :: F_SECONDARY = f_use + 1
   INTEGER, PARAMETER :: F_BANDNO = f_secondary + 1
   INTEGER, PARAMETER :: F_CHAN = f_bandno + 1
-  INTEGER, PARAMETER :: FIELD_LAST = f_chan + 1
+  INTEGER, PARAMETER :: F_YRDOY = f_chan + 1
+  INTEGER, PARAMETER :: FIELD_LAST = f_yrdoy + 1
 
 ! Enumeration literals:
 
@@ -166,6 +167,7 @@ CONTAINS ! =====     Public procedures     =============================
     field_indices(f_secondary) =            add_ident ( 'secondary' )
     field_indices(f_bandno) =               add_ident ( 'bandno' )
     field_indices(f_chan) =                 add_ident ( 'chan' )
+    field_indices(f_yrdoy) =                add_ident ( 'yrdoy' )
  
     ! Put parameter names into the symbol table
 
@@ -301,9 +303,10 @@ CONTAINS ! =====     Public procedures     =============================
 
     CALL make_tree ( (/ &
       begin, s+s_markchanbad, &
-             begin, f+f_chan, t+t_numeric, n+n_field_type, &
-             begin, f+f_bandno, t+t_numeric, n+n_field_type, &
-             nadp+n_spec_def /) )
+             begin, f+f_chan, t+t_numeric, nr+n_field_type, &
+             begin, f+f_bandno, t+t_numeric, nr+n_field_type, &
+             begin, f+f_yrdoy, t+t_numeric, n+n_field_type, &
+             ndp+n_spec_def /) )
 
     CALL make_tree ( (/ &
       begin, s+s_disableradout, &
@@ -378,6 +381,9 @@ CONTAINS ! =====     Public procedures     =============================
 END MODULE INIT_TABLES_MODULE
   
 ! $Log$
+! Revision 2.32  2008/03/04 19:59:55  perun
+! Add optional YRDOY field to MarkChanBad entry.
+!
 ! Revision 2.31  2008/01/15 19:53:33  perun
 ! Add DisableRadOut to disable outputting unwanted bands.
 !
