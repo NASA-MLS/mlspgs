@@ -363,7 +363,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
            p_mif_dead_time, p_mifspermaf, p_calibDACS, p_THzMaxBias, &
            p_thzspaceangle, f_bandno, f_chan, s_markchanbad, p_thzcoldcal, &
            p_MoonToSpaceAngle, p_DACSwindow, p_UseAntOffsets, p_MinSpaceLimbs, &
-           p_MAFexpandNum, p_TPdigital, p_Do_Slimb
+           p_MAFexpandNum, p_TPdigital, p_Do_Slimb, f_yrdoy
       USE BrightObjects_m, ONLY: s_BrightObject, f_angle, f_name, f_negate, &
            l_mercury, BO_Angle_GHz, BO_Angle_THz, BO_NumGHz, BO_NumTHz, &
            BO_Index_GHz, BO_Index_THz, BO_Negate_GHz, BO_Negate_THz
@@ -372,16 +372,19 @@ MODULE MLSL1Config  ! Level 1 Configuration
       USE TREE, ONLY: Decoration, Nsons, Subtree, Sub_rosa, Node_id
       USE TREE_TYPES
       USE MoreTree, ONLY: Get_Boolean
+      USE InitPCFs, ONLY: L1PCF
+      USE SDPToolkit, ONLY: PGS_S_SUCCESS
 
       INTEGER :: root
 
       CHARACTER(LEN=1), POINTER, DIMENSION(:) :: scan_seq
       CHARACTER(LEN=1), POINTER :: scan_use
       CHARACTER(LEN=80) :: identifier
-      INTEGER :: i, j, k, son, key, spec, bandno, channo
+      CHARACTER(LEN=17) :: chanbad_UTC = '20YY-DOYT00:00:00'
+      INTEGER :: i, j, k, son, key, spec, stat, bandno, channo, yrdoy
       INTEGER :: expr_units(2), BO_index
       REAL :: BO_angle
-      DOUBLE PRECISION :: expr_value(2)
+      DOUBLE PRECISION :: expr_value(2), start_TAI, chanbad_TAI
       LOGICAL :: GHz_mod, sec_tgt, Negate
 
       TYPE Scan_T
@@ -393,6 +396,12 @@ MODULE MLSL1Config  ! Level 1 Configuration
       TYPE (Scan_T) :: scan
 
       CHARACTER(LEN=1), PARAMETER :: ignore = "I", unknown = "U", overlap = "O"
+
+      INTEGER, EXTERNAL :: PGS_TD_UTCtoTAI
+
+! Current input time for comparisons:
+
+      stat = PGS_TD_UTCtoTAI (L1PCF%startUTC, start_TAI)
 
 ! Initialize desired scan sequences
 
@@ -690,6 +699,8 @@ MODULE MLSL1Config  ! Level 1 Configuration
 
             CASE (s_markchanbad)
 
+               chanbad_TAI = 0.0d00   ! No current bad time
+
                DO j = 2, nsons (key)
 
                   son = subtree (j, key)
@@ -705,7 +716,19 @@ MODULE MLSL1Config  ! Level 1 Configuration
                      CALL Expr (subtree (2, son), expr_units, expr_value)
                      bandno = expr_value(1)
 
-                  END SELECT
+                  CASE (f_yrdoy)
+
+                     CALL Expr (subtree (2, son), expr_units, expr_value)
+                     yrdoy = expr_value(1)
+                     write (chanbad_UTC(3:4), '(I2.2)') (yrdoy / 1000)
+                     write (chanbad_UTC(6:8), '(I3.3)') MOD (yrdoy, 1000)
+                     stat = PGS_TD_UTCtoTAI (chanbad_UTC, chanbad_TAI)
+                     IF (stat /= PGS_S_SUCCESS) THEN
+                        CALL MLSMessage (MLSMSG_Error, ModuleName, &
+                             'MarkChanBad YRDOY input field is incorrect!')
+                     ENDIF
+
+                   END SELECT
 
                ENDDO
 
@@ -717,7 +740,9 @@ MODULE MLSL1Config  ! Level 1 Configuration
                   CALL MLSMessage (MLSMSG_Error, ModuleName, &
                        'ChanNo number out of range!')
                ENDIF
-               BandChanBad%Sign(bandno,channo) = -1.0  ! Mark as "Bad"
+
+               IF (start_TAI >= chanbad_TAI) &
+                    BandChanBad%Sign(bandno,channo) = -1.0  ! Mark as "Bad"
 
             CASE (s_BrightObject)   ! Bright Objects
 
@@ -806,6 +831,9 @@ MODULE MLSL1Config  ! Level 1 Configuration
 END MODULE MLSL1Config
 
 ! $Log$
+! Revision 2.30  2008/03/04 20:01:54  perun
+! Use optional YRDOY field in MarkChanBad entry to determine when to mark channel data bad.
+!
 ! Revision 2.29  2008/01/15 19:54:35  perun
 ! Add DisableRadOut to disable outputting unwanted bands.
 !
