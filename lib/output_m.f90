@@ -173,12 +173,10 @@ module OUTPUT_M
   interface outputNamedValue
     module procedure output_nvp_character
     module procedure output_nvp_complex
-    module procedure output_nvp_double
-    module procedure output_nvp_integer
-    module procedure output_nvp_int_array
-    module procedure output_nvp_logical
-    module procedure output_nvp_log_array
-    module procedure output_nvp_single
+    module procedure output_nvp_dbl_array, output_nvp_double
+    module procedure output_nvp_int_array, output_nvp_integer
+    module procedure output_nvp_log_array, output_nvp_logical
+    module procedure output_nvp_sngl_array, output_nvp_single
   end interface
 
   interface TAB
@@ -1451,6 +1449,13 @@ contains
     include 'output_name_value_pair.f9h'
   end subroutine output_nvp_double
 
+  subroutine output_nvp_dbl_array ( name, value, &
+   & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP )
+    character(len=*), intent(in)          :: name
+    double precision, dimension(:), intent(in)     :: value
+    include 'output_name_value_pair.f9h'
+  end subroutine output_nvp_dbl_array
+
   subroutine output_nvp_int_array ( name, value, &
    & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP )
     character(len=*), intent(in)          :: name
@@ -1485,6 +1490,13 @@ contains
     real, intent(in)                      :: value
     include 'output_name_value_pair.f9h'
   end subroutine output_nvp_single
+
+  subroutine output_nvp_sngl_array ( name, value, &
+   & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP )
+    character(len=*), intent(in)          :: name
+    real, dimension(:), intent(in)     :: value
+    include 'output_name_value_pair.f9h'
+  end subroutine output_nvp_sngl_array
 
   ! ----------------------------------------------  resumeOutput  -----
   subroutine resumeOutput 
@@ -1962,6 +1974,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.71  2008/03/07 01:34:57  pwagner
+! Added f.p. array versions of generic outputNamedValue
+!
 ! Revision 2.70  2008/02/22 21:24:14  pwagner
 ! Lets NAG-built tools dump PCF, L2CF
 !
