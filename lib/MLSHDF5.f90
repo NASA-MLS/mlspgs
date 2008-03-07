@@ -264,6 +264,7 @@ module MLSHDF5
   end interface
 
   integer, public, parameter :: MAXCHFIELDLENGTH = 2000000 ! max number of chars in l2cf
+  integer, public, parameter :: MAXCHATTRLENGTH  =   40000 ! max number in attr
 
   ! Local parameters
   integer(kind=hsize_t), dimension(7) :: ones = (/1,1,1,1,1,1,1/)
@@ -272,7 +273,8 @@ module MLSHDF5
   integer, save :: cantGetDataspaceDims = 0
   integer, parameter :: MAXNUMWARNS = 40
   integer, parameter :: MAXNDSNAMES = 1000   ! max number of DS names in a file
-  integer, parameter                      :: MAXTEXTSIZE = 2000000
+  integer, parameter                      :: MAXATTRIBUTESIZE =   40000
+  integer, parameter                      :: MAXTEXTSIZE      = 2000000
   character(len=*), dimension(1), parameter :: DONTDUMPTHESEDSNAMES = (/ &
     & 'coremetadata' /)
   ! Local variables
@@ -1065,6 +1067,10 @@ contains ! ======================= Public Procedures =========================
     ! Local variables
     integer :: ATTRID                   ! ID for attribute
     integer :: DSID                     ! ID for dataspace
+    integer :: firstChar, lastChar
+    integer :: iblock, nblocks
+    character(len=3) :: blockChar
+    character(len=len(name)+3) :: newname
     integer :: STATUS                   ! Flag from HDF5
     integer :: STRINGTYPE               ! Type for string
     logical :: my_skip
@@ -1093,6 +1099,21 @@ contains ! ======================= Public Procedures =========================
     ! Unfortunately, a lot of null characters sneak into this
     value = Replace( value, char(0), char(32) ) ! Replace null with space
     close( UNIT=lun, iostat=status )
+    
+    ! Be careful lest the attribute is too large
+    if ( len_trim(value) > MAXATTRIBUTESIZE ) then
+      nblocks = 1 + ( len_trim(value) - 1 ) / MAXATTRIBUTESIZE
+      lastChar = 0
+      do iblock=1, nblocks
+        firstChar = lastChar + 1
+        lastChar  = min( lastChar + MAXATTRIBUTESIZE, len_trim(value) )
+        write(blockChar, '(i1)' ) iblock
+        if ( iblock > 9 ) write(blockChar, '(i2)' ) iblock
+        newName = trim(name) // adjustl(blockChar)
+        call MakeHDF5Attribute( itemID, newName, value(firstChar:lastChar) )
+      enddo
+      return
+    endif
 
     my_skip = .false.
     if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
@@ -5909,6 +5930,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.78  2008/03/07 01:35:47  pwagner
+! Will subdivide attributes into blocks if too large
+!
 ! Revision 2.77  2008/02/22 21:29:13  pwagner
 ! Can now save entire textfile as attribute or dataset
 !
