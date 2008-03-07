@@ -10,11 +10,19 @@
 ! foreign countries or providing access to foreign persons.
 
 ! $Id$
-!  subroutine Monotonize_1dr4(values)
-!     ! Make values montonically increasing by putting MissingValues
-!     ! Wherever values are < max(previous values)
+!  subroutine Monotonize_1dr4( values, Period )
+!     Make values montonically increasing by interpolating to next higher value
+!     Wherever values are < max(previous values)
+!     If you wish to make values monotonically decreasing, create
+!     a new array negvalues = - values
+!     and pass negvalues in as the arg
+!     The optional arg Period is used in cases like angles
+!     where the values may "wrap" around by + or - 360
+!     Note that abs(Period) must be larger than twice the expected proper
+!     increment for it to be treated sensibly
 !     ! Args
 !     real(r4), dimension(:), intent(inout) :: values
+!     real(r4), optional, intent(in) :: Period
 !     ! Internal variables
 !     real(r4) :: x1
     logical :: stillTooLow
@@ -22,7 +30,17 @@
     integer :: i1
     integer :: i2
     integer :: ib
+    integer :: n ! Number of Periods separating successive values
     ! Executable
+    if ( present(Period) .and. size(values) > 1 ) then
+      do i=2, size(values)
+        if ( 2*abs(values(i) - values(i-1)) > Period ) then
+          ! Next value is too far away--we'll subtract n*Period to it
+          n = roundUpOrDown( (values(i) - values(i-1)) / ( Period*1.d0 ) )
+          values(i) = values(i) - n*Period
+        endif
+      enddo
+    endif
     x1 = minval(values)
     stillTooLow = .false.
     do i=1, size(values)
@@ -48,6 +66,9 @@
 !  end subroutine Monotonize_1dr4
 
 ! $Log$
+! Revision 1.1  2005/08/15 20:36:16  pwagner
+! First commit
+!
 ! Revision 1.1  2005/08/05 20:31:22  pwagner
 ! First commit
 !
