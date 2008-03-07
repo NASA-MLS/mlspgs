@@ -32,6 +32,7 @@ module MLSFillValues              ! Some FillValue-related stuff
   public :: IsFinite, IsInfinite, IsNaN
   public :: IsMonotonic, Monotonize
   public :: RemoveFillValues, ReorderFillValues, ReplaceFillValues
+  public :: roundUpOrDown
   public :: WhereAreTheFills, WhereAreTheNaNs, WhereAreTheInfs
 
 !---------------------------- RCS Module Info ------------------------------
@@ -69,6 +70,7 @@ module MLSFillValues              ! Some FillValue-related stuff
 !                                returning a new array smaller in size
 ! ReorderFillValues            Reorders FillValue entries at the end of an array
 ! ReplaceFillValues            Replaces FillValue entries in an array
+! RoundUpOrDown                Rounds an arg up or down depending on fraction
 ! WhereAreTheFills             Find which array elements are Fill values
 ! WhereAreTheInfs              Find which array elements are Inf
 ! WhereAreTheNans              Find which array elements are NaN
@@ -149,6 +151,10 @@ module MLSFillValues              ! Some FillValue-related stuff
     module procedure ReplaceFill3d_r4, ReplaceFill3d_r8, ReplaceFill3d_int
   end interface
 
+  interface roundUpOrDown
+    module procedure roundUpOrDown_r4, roundUpOrDown_r8, roundUpOrDown_int
+  end interface
+  
   interface IsMonotonic
     module procedure IsMonotonic_r4, IsMonotonic_r8, IsMonotonic_int
   end interface
@@ -1120,9 +1126,10 @@ contains
   end subroutine BridgeMissingValues_3dr8
 
   ! This family of subroutines makes arrays of values monotonically (increasing)
-  subroutine Monotonize_1dint(values)
+  subroutine Monotonize_1dint( values, Period )
     ! Args
     integer, dimension(:), intent(inout) :: values
+    integer, optional, intent(in) :: Period
     ! Internal variables
     integer :: dx
     integer :: x1
@@ -1130,9 +1137,10 @@ contains
     include 'Monotonize.f9h'
   end subroutine Monotonize_1dint
 
-  subroutine Monotonize_1dr4(values)
+  subroutine Monotonize_1dr4( values, Period )
     ! Args
     real(r4), dimension(:), intent(inout) :: values
+    real(r4), optional, intent(in) :: Period
     ! Internal variables
     real(r4) :: dx
     real(r4) :: x1
@@ -1140,9 +1148,10 @@ contains
     include 'Monotonize.f9h'
   end subroutine Monotonize_1dr4
 
-  subroutine Monotonize_1dr8(values)
+  subroutine Monotonize_1dr8( values, Period )
     ! Args
     real(r8), dimension(:), intent(inout) :: values
+    real(r8), optional, intent(in) :: Period
     ! Internal variables
     real(r8) :: dx
     real(r8) :: x1
@@ -1215,6 +1224,63 @@ contains
       enddo
     enddo
   end subroutine Monotonize_3dr8
+
+  ! ----------------------------------  roundUpOrDown  -----
+  ! This family of functions returns a result rounded up if
+  ! the fractional part > .5
+  ! otherwise rounded down
+  elemental function roundUpOrDown_r4( value ) result ( rounded )
+    integer, parameter :: RK = R4
+    ! Args
+    real(rk), intent(in) :: value
+    real(rk) :: rounded
+    ! Internal variables
+    real(rk) :: frac
+    integer :: sgn
+    ! Executable
+    rounded = int( value )
+    sgn = sign(1._rk, value )
+    ! The following just gives frac = sgn * ( value - rounded )
+    !select case (sgn)
+    !case (1)
+    !  frac = value - rounded
+    !case (-1)
+    !  frac = -( value - rounded )
+    !end select
+    frac = sgn * ( value - rounded )
+    if ( frac > 0.5_rk ) rounded = rounded + sgn
+  end function roundUpOrDown_r4
+
+  elemental function roundUpOrDown_r8( value ) result ( rounded )
+    integer, parameter :: RK = R8
+    ! Args
+    real(rk), intent(in) :: value
+    real(rk) :: rounded
+    ! Internal variables
+    real(rk) :: frac
+    integer :: sgn
+    ! Executable
+    rounded = int( value )
+    sgn = sign(1._rk, value )
+    ! The following just gives frac = sgn * ( value - rounded )
+    !select case (sgn)
+    !case (1)
+    !  frac = value - rounded
+    !case (-1)
+    !  frac = -( value - rounded )
+    !end select
+    frac = sgn * ( value - rounded )
+    if ( frac > 0.5_rk ) rounded = rounded + sgn
+  end function roundUpOrDown_r8
+
+  elemental function roundUpOrDown_int( value ) result ( rounded )
+    ! Trivial; supplied just to satisfy other generic functions
+    ! Args
+    integer, intent(in) :: value
+    integer :: rounded
+    ! Executable
+    rounded = value
+  end function roundUpOrDown_int
 
   ! ----------------------------------  WhereAreTheFills  -----
   ! This family of procedures finds which array elements are Fills
@@ -1897,6 +1963,9 @@ end module MLSFillValues
 
 !
 ! $Log$
+! Revision 2.12  2008/03/07 01:33:47  pwagner
+! Added optional arg Period to Monotonize
+!
 ! Revision 2.11  2008/01/09 20:50:47  pwagner
 ! WhereAreThe.. support integer arrays
 !
