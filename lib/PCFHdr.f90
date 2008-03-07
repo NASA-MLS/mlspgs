@@ -676,7 +676,10 @@ CONTAINS
 
    subroutine WriteLeapSecHDFEOSAttr (fileID)
      ! Write contents of leapsec file as hdfeos5 attribute to file
-    use MLSHDFEOS, only: mls_EHwrglatt
+    use MLSHDFEOS, only: he5_EHwrglatt, mls_EHwrglatt
+    use MLSSets, only: FindFirst
+    use MLSHDF5, only: MAXCHFIELDLENGTH
+    use HDFEOS5, only: MLS_charType
      ! Args
      integer, intent(in) :: fileID
      ! Internal variables
@@ -696,11 +699,6 @@ CONTAINS
      end if
      status = MLS_EHWRGLATT ( trim(leapSecFile), FILEID, &
        & 'leap seconds' )
-     if ( Status /= PGS_S_SUCCESS ) then
-       CALL MLSMessage( MLSMSG_Warning, ModuleName, &
-         & 'Unable to write leap seconds as global attribute' )
-     end if
-     
    end subroutine WriteLeapSecHDFEOSAttr
 
    subroutine WriteLeapSecHDF5DS (fileID)
@@ -992,7 +990,8 @@ CONTAINS
       do
         lastChar = min(firstChar-1+maxheadersize, size(anText))
         ! i1 is for PCF filesize < 400,000 
-        write( blockChar, '(i1)') blockNumber
+       write( blockChar, '(i1)') blockNumber
+       if ( blockNumber > 9 ) write( blockChar, '(i2)') blockNumber
 
         status = he5_EHwrglatt(fileID, 'PCF'//TRIM(ADJUSTL(blockChar)), &
                 & MLS_CHARTYPE, lastChar-firstChar+1, &
@@ -1013,17 +1012,14 @@ CONTAINS
 
    subroutine WriteutcPoleHDFEOSAttr (fileID)
      ! Write contents of utcPole file as hdfeos5 attribute to file
-    use MLSFiles, only: textFile_to_chars
     use MLSHDFEOS, only: he5_EHwrglatt, mls_EHwrglatt
+    use MLSSets, only: FindFirst
     use MLSHDF5, only: MAXCHFIELDLENGTH
     use HDFEOS5, only: MLS_charType
      ! Args
      integer, intent(in) :: fileID
      ! Internal variables
      integer, parameter :: maxheadersize = 40000
-     character (LEN=3) :: blockChar 
-     character(len=MAXCHFIELDLENGTH) :: BUFFER  ! Buffer to hold contents
-     integer :: firstChar, lastChar, blockNumber
      character(len=FileNameLen) :: utcPoleFile
      integer, parameter :: PCFid = 10401
      integer :: status
@@ -1038,28 +1034,8 @@ CONTAINS
          & 'Unable to get path, file name for utc pole file using PCFid' )
        return
      end if
-     ! status = MLS_EHWRGLATT ( trim(utcPoleFile), FILEID, &
-     !   & 'utc pole' )
-     call textFile_to_Chars ( utcPoleFile, buffer )
-     blockNumber = 1
-     firstChar = 1
-
-     do
-       lastChar = min( firstChar-1+maxheadersize, len_trim(buffer) )
-       ! i1 is for PCF filesize < 400,000 
-       write( blockChar, '(i1)') blockNumber
-
-       status = he5_EHwrglatt( fileID, 'utcPole'//TRIM(ADJUSTL(blockChar)), &
-               & MLS_CHARTYPE, lastChar-firstChar+1, &
-               & buffer(firstChar:lastChar) )
-       if ( Status /= PGS_S_SUCCESS ) then
-         CALL MLSMessage( MLSMSG_Warning, ModuleName, &
-         & 'Unable to write utc pole as global attribute' )
-       end if
-       blockNumber = blockNumber + 1
-       firstChar = firstChar + maxheadersize
-       if ( firstChar > len_trim(buffer) ) return
-     enddo
+     status = MLS_EHWRGLATT ( trim(utcPoleFile), FILEID, &
+       & 'utc pole' )
    end subroutine WriteutcPoleHDFEOSAttr
 
    subroutine WriteutcPoleHDF5DS (fileID)
@@ -1204,6 +1180,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.44  2008/03/07 01:37:36  pwagner
+!# Relies on MLSHDFEOS to subdivide long textfiles into attributes
+!#
 !# Revision 2.43  2008/02/22 21:32:43  pwagner
 !# Can now write leapsecfile, utcpole files as attrs, DS
 !#
