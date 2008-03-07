@@ -228,13 +228,17 @@ contains ! ======================= Public Procedures =========================
     & ATTRNAME )
     ! Write contents of text file as global attribute
     ! E.g., may wish to include leap sec file or utc pole
-    use MLSHDF5, only: MAXCHFIELDLENGTH
+    use MLSHDF5, only: MAXCHATTRLENGTH, MAXCHFIELDLENGTH
 
     character (len=*), intent(in) :: TEXTFILE ! name of textfile
     integer, intent(in) :: FILEID      ! File ID
     character(len=*), intent(in) :: ATTRNAME     ! Attribute name
     ! Internal variables
     character(len=MAXCHFIELDLENGTH) :: BUFFER  ! Buffer to hold contents
+    integer :: firstChar, lastChar
+    integer :: iblock, nblocks
+    character(len=3) :: blockChar
+    character(len=len(attrname)+3) :: newname
     integer, parameter :: DATATYPE = MLS_CHARTYPE
     integer :: lun
     integer :: status
@@ -258,7 +262,22 @@ contains ! ======================= Public Procedures =========================
     ! Unfortunately, a lot of null characters sneak into this
     BUFFER = Replace( BUFFER, char(0), char(32) ) ! Replace null with space
     close( UNIT=lun, iostat=status )
-    if ( len_trim(buffer) > 0 ) then
+    ! Be careful lest the attribute is too large
+    if ( len_trim(buffer) > MAXCHATTRLENGTH ) then
+      nblocks = 1 + ( len_trim(buffer) - 1 ) / MAXCHATTRLENGTH
+      lastChar = 0
+      do iblock=1, nblocks
+        firstChar = lastChar + 1
+        lastChar  = min( lastChar + MAXCHATTRLENGTH, len_trim(buffer) )
+        write(blockChar, '(i1)' ) iblock
+        if ( iblock > 9 ) write(blockChar, '(i2)' ) iblock
+        newName = trim(attrname) // adjustl(blockChar)
+        MLS_EHWRGLATT_textfile = &
+          & MLS_EHWRGLATT_char( fileID, newName, &
+          & MLS_CHARTYPE, lastChar-firstChar+1, buffer(firstChar:lastChar) )
+      enddo
+      return
+    elseif ( len_trim(buffer) > 0 ) then
       MLS_EHWRGLATT_textfile = he5_ehwrglatt_character_scalar( FILEID, &
       & ATTRNAME, DATATYPE, max(1, len_trim(BUFFER)), BUFFER )
     else
@@ -2129,6 +2148,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDFEOS
 
 ! $Log$
+! Revision 2.33  2008/03/07 01:36:08  pwagner
+! Will subdivide attributes into blocks if too large
+!
 ! Revision 2.32  2008/02/22 21:30:18  pwagner
 ! Can now save entire textfile as global attribute
 !
