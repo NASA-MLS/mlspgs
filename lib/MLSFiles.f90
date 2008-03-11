@@ -20,7 +20,7 @@ module MLSFiles               ! Utility file routines
     & HE5F_ACC_TRUNC, HE5F_ACC_RDONLY, HE5F_ACC_RDWR
   use intrinsic, only: l_ascii, l_binary, l_grid, l_hdf, l_open, &
     & l_swath, l_tkgen, l_zonalavg, lit_indices
-  use IO_STUFF, only: get_lun
+  use IO_STUFF, only: get_lun, read_textFile
   use machine, only: io_error
   use MLSCommon, only: i4, BareFNLen, FileNameLen,  MLSFile_T, Range_T, &
     & inRange
@@ -1861,23 +1861,7 @@ contains
     integer :: lun
     integer :: status
     ! Try to read the textfile
-    call GET_LUN ( LUN )
-    open(UNIT=lun, access='direct', recl=len(value), &
-      & file=trim(textFile), status='old', iostat=status )
-    if ( status /= 0 ) then
-      call MLSMessage(MLSMSG_Warning, ModuleName, &
-        & 'Unable to textfile to chars--failed to open textfile' )
-      return
-    endif
-    read(UNIT=lun, REC=1, IOSTAT=status) value
-    if ( status /= 0 ) then
-      call MLSMessage(MLSMSG_Warning, ModuleName, &
-        & 'Unable to textfile to chars--failed to read textfile' )
-      return
-    endif
-    ! Unfortunately, a lot of null characters sneak into this
-    value = Replace( value, char(0), char(32) ) ! Replace null with space
-    close( UNIT=lun, iostat=status )
+    call read_textFile( textFile, value )
   end subroutine textFile_to_Chars
 
   ! --------------------------------------------  release_MLSFile  -----
@@ -2740,6 +2724,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.81  2008/03/11 00:09:54  pwagner
+! Uses read_textFile from io_stuff
+!
 ! Revision 2.80  2008/02/22 21:27:15  pwagner
 ! Added textFile_to_Chars
 !
