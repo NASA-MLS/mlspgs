@@ -16,7 +16,8 @@ module IO_STUFF
   implicit NONE
 
   private
-  public GET_LUN
+  public :: GET_LUN
+  public :: READ_TEXTFILE
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -45,6 +46,33 @@ contains
     return
   end subroutine GET_LUN
 
+  subroutine READ_TEXTFILE ( File, string )
+  ! read a textfile into string
+    character(len=*), intent(in)  :: File ! its path and name
+    character(len=*), intent(out) :: string    ! its contents
+    ! Internal variables
+    integer :: lun
+    integer :: recrd
+    integer :: status
+    character(len=len(string)) :: tempStr
+    ! Try to read the textfile
+    string = " "
+    call GET_LUN ( LUN )
+    open(UNIT=lun, form='formatted', &
+      & file=trim(File), status='old', iostat=status )
+    if ( status /= 0 ) then
+      write(*,*) 'IO_STUFF%READ_TEXTFILE-E- Unable to open textfile'
+      return
+    endif
+    read( UNIT=lun, IOSTAT=status ) string
+    do
+      read( UNIT=lun, IOSTAT=status ) tempStr
+      if ( status /= 0 ) exit
+      string = trim(string) // achar(13) // tempStr
+    enddo
+    close( UNIT=lun, iostat=status )
+  end subroutine READ_TEXTFILE
+
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -57,6 +85,9 @@ contains
 end module IO_STUFF
 
 ! $Log$
+! Revision 2.6  2008/03/11 00:09:11  pwagner
+! Added read_textfile; should work for more compilers
+!
 ! Revision 2.5  2005/06/22 17:25:49  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
