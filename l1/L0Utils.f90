@@ -86,14 +86,13 @@ CONTAINS
 
     INTEGER :: returnStatus, version
     REAL(r8) :: TAI93(2)
-    INTEGER :: ret_len, sindx, MIF(2)
+    INTEGER :: ret_len, sindx
     LOGICAL :: EOD
     CHARACTER(len=132) :: filename
 
     INTEGER, PARAMETER :: SciLen = 1024
     INTEGER, EXTERNAL :: PGS_IO_L0_Close
 
-    MIF = -1
     TAI93 = 0.0
     sindx = 1
     DO
@@ -135,9 +134,7 @@ CONTAINS
           CYCLE                      ! try again
        ENDIF
 
-       MIF(sindx) = ICHAR (SciPkt(sindx)(17:17))
-
-       IF (MIF(1) == MIF(2)) EXIT
+       IF (TAI93(1) == TAI93(2)) EXIT  ! Same packet time, so done for now
 
        IF (TAI93(2) < TAI93(1)) THEN
           sindx = 2
@@ -287,6 +284,9 @@ END MODULE L0Utils
 !=============================================================================
 
 ! $Log$
+! Revision 2.12  2008/03/18 17:20:14  perun
+! Align Sci packets based on time, not MIF number.
+!
 ! Revision 2.11  2008/02/14 15:00:05  perun
 ! Changed ReadL0Eng to accommodate missing APID data.
 !
