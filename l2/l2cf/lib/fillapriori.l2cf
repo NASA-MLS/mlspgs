@@ -364,7 +364,7 @@ begin Fill
   Fill, quantity=lowBound.ptanTHz, method=explicit, explicitValues= -20, /spread
   Fill, quantity=highBound.ptanTHz, method=explicit, explicitValues= 20, /spread
 
-  Fill, quantity=lowBound.temperature, method=explicit, explicitValues=50K, /spread
+  Fill, quantity=lowBound.temperature, method=explicit, explicitValues=100K, /spread
   Fill, quantity=highBound.temperature, method=explicit, explicitValues=550K, /spread
 
   Fill, quantity=lowBound.h2o, method=explicit, explicitValues=0.1ppmv, /spread
@@ -605,6 +605,9 @@ begin Join
 end Join
   })
 ;$Log$
+;Revision 1.129  2006/10/26 19:30:02  lambert
+;vReg.HCl set to 1ppbv
+;
 ;Revision 1.128  2006/10/10 20:14:39  lambert
 ;changes to aprioriprecision.n2o and vReg.temperature_hr
 ;
