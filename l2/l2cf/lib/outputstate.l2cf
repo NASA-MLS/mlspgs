@@ -35,11 +35,10 @@ Output, quantities=[joined_iwc, joined_iwp], type=l2gp, $
 ;; Some are stored accompanied by a column abundance: ColumnStdProds
 ;; Some are stored w/o a column abundance: NonColumnStdProds
 !define(HiResStdProds,{H2O, Temperature, RHI, GPH})!dnl
-;;  !define(ColumnStdProds,{O3,CO,SO2,HNO3,H2O,HCN,CH3CN,BrO,ClO,HCl,HO2,HOCl,N2O,OH})!dnl
 ;; We're planning on only O3 accompanying its column
-!define(ColumnStdProds,{O3})!dnl
+!ifdef(ColumnStdProds,{},{!define(ColumnStdProds,{O3})})!dnl
 ;; (IWC will be handled separately)
-!define(NonColumnStdProds,{BrO,CH3CN,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2O,OH,SO2,Temperature,GPH,RHI})!dnl
+!ifdef(NonColumnStdProds,{},{!define(NonColumnStdProds,{BrO,CH3CN,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2O,OH,SO2,Temperature,GPH,RHI})})!dnl
 
 !ifdef(flagCopyStandardProducts,{
 
@@ -53,6 +52,23 @@ Output, quantities=[joined_iwc, joined_iwp], type=l2gp, $
 ;; Otherwise, Output will complain "Swath not found"
 ;; and the run will stop
 ;;
+
+!define(copyStandardProductWithoutColumn, {!dnl
+!define(StdProductPhase,{$1-!phase$1})!dnl
+Copy, $
+!ifdef(flagNRT,
+{  type=l2gp, hdfVersion=5, $
+    inputFile='!DGGFileName', swath='!StdProductPhase', inputtype=l2dgg, $
+    file='!l2gpFileName($1)', rename='$1', $
+    /create
+},
+{  type=l2gp, hdfVersion=5, $
+    inputFile='!DGGFileName', swath='$1-StdProd', inputtype=l2dgg, $
+    file='!l2gpFileName($1)', rename='$1', $
+    /create
+})!dnl
+})
+!forall(copyStandardProductWithoutColumn,!NonColumnStdProds)
 
 !define(copyStandardProductWithColumn, {Copy, $
   type=l2gp, hdfVersion=5, $
@@ -68,30 +84,25 @@ Output, quantities=[joined_iwc, joined_iwp], type=l2gp, $
     file='!l2gpFileName($1)', rename='$1 column-MLS,$1 column-GEOS5,$1', $
     /create
 })
+
+!ifdef(flagNRT,{
+!forall(copyStandardProductWithoutColumn,!ColumnStdProds)
+},{
 !ifdef(flagUseGEOS5PTrop,{!dnl
 !forall(copyStandardProductWith2Columns,!ColumnStdProds)
 },{!dnl
 !forall(copyStandardProductWithColumn,!ColumnStdProds)
 })
-
-!define(copyStandardProductWithoutColumn, {Copy, $
-  type=l2gp, hdfVersion=5, $
-    inputFile='!DGGFileName', swath='$1-StdProd', inputtype=l2dgg, $
-    file='!l2gpFileName($1)', rename='$1', $
-    /create
 })
-!forall(copyStandardProductWithoutColumn,!NonColumnStdProds)
 
+!ifdef(flagNRT,{},
+{
 ;; --------------------------------- Other files ---
 ;; The IWC file is a somewhat special case
 Copy, type=l2gp, hdfVersion=!hdfVersion, $
     inputFile='!DGGFileName', swath='IWC-StdProd', inputtype=l2dgg, $
     file='!l2gpFileName(IWC)', rename='IWC', $
     /create
-
-;;;Copy, type=l2gp, hdfVersion=!hdfVersion, $
-;;;    inputFile='!DGGFileName', swath='IWC3-StdProd', inputtype=l2dgg, $
-;;;    file='!l2gpFileName(IWC)', rename='IWC3'
 
 Copy, type=l2gp, hdfVersion=!hdfVersion, $
     inputFile='!DGGFileName', swath='IWP-StdProd', inputtype=l2dgg, $
@@ -110,6 +121,7 @@ Copy, type=l2gp, hdfVersion=!hdfVersion, $
     inputFile='!DGGFileName', swath='WMOTPPressure-StdProd', inputtype=l2dgg, $
     file='!l2gpFileName(Temperature)', rename='WMOTPPressure'
 
+})
 })
 })
 
