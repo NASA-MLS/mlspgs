@@ -1,0 +1,22 @@
+!divert(-1)
+; $Id$
+
+; ----------- Phase name vs. retrieval name
+; Some phase(s) may not have Retrieve sections
+; and so we'll need to know the last one
+!define(retrophase,{!phase})
+
+!divert!dnl
+; This l2cf fragment does all the quality flagging for the Core+R3
+; products.
+
+begin Fill
+  ;; ------------------------------------ O3-QuickB7B33
+  !define(flaggingBands,{7,24,33})
+  !define(flaggingRadiometers,{R3})!dnl
+  !makeQualityForOneProduct(product=O3,chisqScale=1.0,minRads=500,cloudMax=30K,cloudMin= -999K)
+  !define(phaseO3,{QuickB7B33})
+
+end Fill
+
+; $Log$
