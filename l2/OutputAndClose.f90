@@ -1047,7 +1047,7 @@ contains ! =====     Public Procedures     =============================
     ! Executable
     Version = 1
     OUTPUTTYPESTR = 'l2aux'
-    ! Get the l2gp file name from the PCF
+    ! Get the l2aux file name from the PCF
 
     if ( TOOLKIT ) then
       call split_path_name(fileName, path, fileName)
@@ -1135,7 +1135,7 @@ contains ! =====     Public Procedures     =============================
     use MLSFiles, only: AddInitializeMLSFile, &
       & GetMLSFileByName, GetMLSFileByType, GetPCFromRef, &
       & mls_closeFile, mls_openFile, &
-      & readnchars, reserve_MLSFile, split_path_name
+      & readnchars, reserve_MLSFile, split_path_name, textFile_to_chars
     use MLSNumerics, only: Battleship
     use MLSStrings, only: Replace
     use MLSHDF5, only: SaveAsHDF5DS
@@ -1175,30 +1175,8 @@ contains ! =====     Public Procedures     =============================
         & 'Unable to write dataset--stdin has been used for l2cf' )
       return
     endif
-    textLength = 2000000
-    l2cftext = ' '
-    if ( useExactTextLength ) then
-      call reserve_MLSFile ( MLSL2CF%name, type=l_ascii )
-      if ( readnchars(1024) /= readnchars(2000000) ) &
-        & call Battleship( readnchars, textLength, &
-        & ns = (/ 1024, 100000, 2000000 /) )
-    endif
-    open(UNIT=MLSL2CF%FileID%f_id, access='direct', recl=textLength, &
-      & file=trim(MLSL2CF%name), status='old', iostat=status )
-    if ( status /= 0 ) then
-      call MLSMessage(MLSMSG_Warning, ModuleName, &
-        & 'Unable to write dataset--failed to open l2cf' )
-      return
-    endif
-    read(UNIT=MLSL2CF%FileID%f_id, REC=1, IOSTAT=status) l2cftext(:textLength)
-    if ( status /= 0 ) then
-      call MLSMessage(MLSMSG_Warning, ModuleName, &
-        & 'Unable to read l2cf' )
-      return
-    endif
-    ! Unfortunately, a lot of null characters sneak into this
-    l2cftext = Replace( l2cftext, char(0), char(32) ) ! Replace null with space
-    close( UNIT=MLSL2CF%FileID%f_id, iostat=status )
+    ! Use the textFile_to_chars subroutine
+    call textFile_to_chars( MLSL2CF%name, l2cftext )
     length = len_trim(l2cftext)
 
     Version = 1
@@ -1359,119 +1337,6 @@ contains ! =====     Public Procedures     =============================
         & ' file matching:  ' //fileName, returnStatus)
     end if
   end subroutine OutputL2GP
-
-  ! ---------------------------------------------  OutputTextFile  -----
-  subroutine OutputTextFile ( textFile, fileName, DEBUG, filedatabase )
-    ! Do the work of outputting a named text file to a named l2aux file
-    use Intrinsic, only: l_hdf, l_ascii
-    use MLSCommon, only: MLSFile_T, FileNameLen
-    use MLSL2Options, only: checkPaths, TOOLKIT
-    use MLSFiles, only: AddInitializeMLSFile, &
-      & GetMLSFileByName, GetMLSFileByType, GetPCFromRef, &
-      & mls_closeFile, mls_openFile, &
-      & readnchars, reserve_MLSFile, split_path_name
-    use MLSNumerics, only: Battleship
-    use MLSStrings, only: Replace
-    use MLSHDF5, only: SaveAsHDF5DS
-    use MLSPCF2, only: mlspcf_l2dgm_start, mlspcf_l2dgm_end
-    ! Args
-    character(len=*), intent(inout)         :: textFile ! take as input
-    character(len=*), intent(inout)         :: fileName ! output
-    logical, intent(in)                     :: DEBUG ! Print lots?
-    type(MLSFile_T), dimension(:), pointer  :: filedatabase
-    ! Internal variables
-    integer, parameter                      :: MAXTEXTSIZE = 2000000
-    character(LEN=MAXTEXTSIZE)              :: TEXT
-    type(MLSFile_T), pointer                :: MLSTEXT
-    integer                                 :: status
-    integer :: FileHandle
-    character (len=FileNameLen) :: FullFilename
-    integer :: hdfVersion               ! 4 or 5 (corresp. to hdf4 or hdf5)
-    integer :: length
-    type(MLSFile_T), pointer :: outputFile
-    character(len=8) :: OUTPUTTYPESTR   ! 'l2gp', 'l2aux', etc.
-    character (len=132) :: path
-    integer :: ReturnStatus
-    integer :: textLength
-    logical, parameter :: useExactTextLength = .true. ! NAG demands TRUE
-    integer :: Version
-    ! Executable
-    nullify ( MLSTEXT )
-    MLSTEXT => GetMLSFileByName( filedatabase, textFile )
-    if ( .not. associated(MLSTEXT) ) then
-      MLSText => AddInitializeMLSFile( filedatabase, l_ascii, &
-        & DFACC_RDONLY, 'text', textFile )
-    endif
-    if ( .not. associated(MLSTEXT) ) then
-      call MLSMessage(MLSMSG_Warning, ModuleName, &
-        & 'Unable to write dataset--failed to find/create ' // trim(textFile) )
-      return
-    endif
-    if ( MLSTEXT%stillOpen ) call mls_closeFile( MLSTEXT, status )
-    if ( MLSTEXT%name == '<STDIN>' ) then
-      call MLSMessage(MLSMSG_Warning, ModuleName, &
-        & 'Unable to write dataset--stdin has been used for textfile' )
-      return
-    endif
-    textLength = 2000000
-    text = ' '
-    if ( useExactTextLength ) then
-      call reserve_MLSFile ( MLSTEXT%name, type=l_ascii )
-      if ( readnchars(1024) /= readnchars(2000000) ) &
-        & call Battleship( readnchars, textLength, &
-        & ns = (/ 1024, 100000, 2000000 /) )
-    endif
-    open(UNIT=MLSTEXT%FileID%f_id, access='direct', recl=textLength, &
-      & file=trim(MLSTEXT%name), status='old', iostat=status )
-    if ( status /= 0 ) then
-      call MLSMessage(MLSMSG_Warning, ModuleName, &
-        & 'Unable to write dataset--failed to open textfile' )
-      return
-    endif
-    read(UNIT=MLSTEXT%FileID%f_id, REC=1, IOSTAT=status) text(:textLength)
-    if ( status /= 0 ) then
-      call MLSMessage(MLSMSG_Warning, ModuleName, &
-        & 'Unable to read textfile' )
-      return
-    endif
-    ! Unfortunately, a lot of null characters sneak into this
-    text = Replace( text, char(0), char(32) ) ! Replace null with space
-    close( UNIT=MLSTEXT%FileID%f_id, iostat=status )
-    length = len_trim(text)
-
-    Version = 1
-    OUTPUTTYPESTR = 'l2aux'
-    ! Get the l2gp file name from the PCF
-
-    if ( TOOLKIT ) then
-      call split_path_name(fileName, path, fileName)
-
-      FileHandle = GetPCFromRef(fileName, mlspcf_l2dgm_start, &
-        & mlspcf_l2dgm_end, &
-        & TOOLKIT, returnStatus, Version, DEBUG, &
-        & exactName=FullFilename)
-    else
-      FullFilename = fileName
-      returnStatus = 0
-    end if
-
-    if ( returnStatus == 0 .and. .not. checkPaths ) then
-      ! Open the HDF file and write l2cf
-      outputFile => GetMLSFileByName(filedatabase, FullFilename)
-      if ( .not. associated(outputFile) ) then
-        if(DEBUG) call MLSMessage(MLSMSG_Warning, ModuleName, &
-          & 'No entry in filedatabase for ' // trim(FullFilename) )
-        outputFile => AddInitializeMLSFile(filedatabase, &
-          & content=outputTypeStr, &
-          & name=FullFilename, shortName=fileName, &
-          & type=l_hdf, access=DFACC_RDWR, HDFVersion=hdfVersion, &
-          & PCBottom=mlspcf_l2dgm_start, PCTop=mlspcf_l2dgm_end)
-      endif
-      if ( .not. outputFile%stillOpen ) call mls_openFile( outputFile, status )
-      call SaveAsHDF5DS ( outputFile%FileID%f_id, trim(textFile), text )
-      call mls_closeFile( outputFile, status )
-    endif
-  end subroutine OutputTextFile
 
   ! ---------------------------------------------  writeHGridComponents  -----
   subroutine writeHGridComponents ( fileName, HGrid )
@@ -1821,6 +1686,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.133  2008/03/24 17:07:02  pwagner
+! Removed unused procedures
+!
 ! Revision 2.132  2008/02/22 21:36:41  pwagner
 ! DGG file was hybrid by default; now it will be pure HDFEOS
 !
