@@ -506,53 +506,56 @@ PRINT *, 'Sort:', CurMAFdata%SciPkt%GHz_sw_pos
 
 ! Check if bank is "OFF", i.e. Space and Target cnts close together:
 
-   DO bankno = 1, GHzNum
-      CalDif = CurMAFdata%SciPkt(tMIF)%FB(13,bankno) - &
-           CurMAFdata%SciPkt(sMIF)%FB(13,bankno)
-      IF (ABS (CalDif) < MinCalDif) THEN
-         DO MIF = 0, MaxMIFno
-            CurMAFdata%ChanType(MIF)%FB(:,bankno) = discard ! Clear channels
-            CurMAFdata%SciPkt(MIF)%FB(:,bankno) = 0
-         ENDDO
-         CurMAFdata%BankWall%FB(bankno) = .TRUE.
-      ENDIF
-   ENDDO
+   IF (sMIF >= 0 .AND. tMIF >= 0) THEN
 
-   DO bankno = 1, MBnum
-      CalDif = CurMAFdata%SciPkt(tMIF)%MB(5,bankno) - &
-           CurMAFdata%SciPkt(sMIF)%MB(5,bankno)
-      IF (ABS (CalDif) < MinCalDif) THEN
-         DO MIF = 0, MaxMIFno
-            CurMAFdata%ChanType(MIF)%MB(:,bankno) = discard ! Clear channels
-            CurMAFdata%SciPkt(MIF)%MB(:,bankno) = 0
-         ENDDO
-         CurMAFdata%BankWall%MB(bankno) = .TRUE.
-      ENDIF
-   ENDDO
+      DO bankno = 1, GHzNum
+         CalDif = CurMAFdata%SciPkt(tMIF)%FB(13,bankno) - &
+              CurMAFdata%SciPkt(sMIF)%FB(13,bankno)
+         IF (ABS (CalDif) < MinCalDif) THEN
+            DO MIF = 0, MaxMIFno
+               CurMAFdata%ChanType(MIF)%FB(:,bankno) = discard ! Clear channels
+               CurMAFdata%SciPkt(MIF)%FB(:,bankno) = 0
+            ENDDO
+            CurMAFdata%BankWall%FB(bankno) = .TRUE.
+         ENDIF
+      ENDDO
 
-   DO bankno = 1, WFnum
-      CalDif = CurMAFdata%SciPkt(tMIF)%WF(2,bankno) - &
-           CurMAFdata%SciPkt(sMIF)%WF(2,bankno)
-      IF (ABS (CalDif) < MinCalDif) THEN
-         DO MIF = 0, MaxMIFno
-            CurMAFdata%ChanType(MIF)%WF(:,bankno) = discard ! Clear channels
-            CurMAFdata%SciPkt(MIF)%WF(:,bankno) = 0
-         ENDDO
-         CurMAFdata%BankWall%WF(bankno) = .TRUE.
-      ENDIF
-   ENDDO
+      DO bankno = 1, MBnum
+         CalDif = CurMAFdata%SciPkt(tMIF)%MB(5,bankno) - &
+              CurMAFdata%SciPkt(sMIF)%MB(5,bankno)
+         IF (ABS (CalDif) < MinCalDif) THEN
+            DO MIF = 0, MaxMIFno
+               CurMAFdata%ChanType(MIF)%MB(:,bankno) = discard ! Clear channels
+               CurMAFdata%SciPkt(MIF)%MB(:,bankno) = 0
+            ENDDO
+            CurMAFdata%BankWall%MB(bankno) = .TRUE.
+         ENDIF
+      ENDDO
 
-   DO bankno = 1, DACSnum
-      CalDif = CurMAFdata%SciPkt(tMIF)%DACS(1,bankno) - &
-           CurMAFdata%SciPkt(sMIF)%DACS(1,bankno)
-      IF (ABS (CalDif) < MinCalDif) THEN
-         DO MIF = 0, MaxMIFno
-            CurMAFdata%ChanType(MIF)%DACS(:,bankno) = discard ! Clear channels
-            CurMAFdata%SciPkt(MIF)%DACS(:,bankno) = 0
-         ENDDO
-         CurMAFdata%BankWall%DACS(bankno) = .TRUE.
-      ENDIF
-   ENDDO
+      DO bankno = 1, WFnum
+         CalDif = CurMAFdata%SciPkt(tMIF)%WF(2,bankno) - &
+              CurMAFdata%SciPkt(sMIF)%WF(2,bankno)
+         IF (ABS (CalDif) < MinCalDif) THEN
+            DO MIF = 0, MaxMIFno
+               CurMAFdata%ChanType(MIF)%WF(:,bankno) = discard ! Clear channels
+               CurMAFdata%SciPkt(MIF)%WF(:,bankno) = 0
+            ENDDO
+            CurMAFdata%BankWall%WF(bankno) = .TRUE.
+         ENDIF
+      ENDDO
+
+      DO bankno = 1, DACSnum
+         CalDif = CurMAFdata%SciPkt(tMIF)%DACS(1,bankno) - &
+              CurMAFdata%SciPkt(sMIF)%DACS(1,bankno)
+         IF (ABS (CalDif) < MinCalDif) THEN
+            DO MIF = 0, MaxMIFno
+               CurMAFdata%ChanType(MIF)%DACS(:,bankno) = discard ! Clear channels
+               CurMAFdata%SciPkt(MIF)%DACS(:,bankno) = 0
+            ENDDO
+            CurMAFdata%BankWall%DACS(bankno) = .TRUE.
+         ENDIF
+      ENDDO
+   ENDIF
 
 !! Check for bright objects in Space FOV
 !! Will decide later how to handle Space Temperature
@@ -766,7 +769,7 @@ PRINT *, 'switch MAF: ', CurMAFdata%SciPkt(0)%MAFno
        END WHERE
 
        IF (ANY (wallindx(1:current) /= 0)) THEN
-
+if (bank == 1) write (99,*) wallindx(1:current)
           minwall = MINVAL (wallindx(1:current), &
                CalWin%MAFdata%BankWall%FB(bank))
           maxwall = MAXVAL (wallindx(1:current), &
@@ -783,11 +786,14 @@ PRINT *, 'switch MAF: ', CurMAFdata%SciPkt(0)%MAFno
              CalWin%MAFdata(central)%BankCalInd%FB(bank) = (/ cal_range(1), &
                   (CalWin%MAFdata(minwall-1)%end_index + &
                   CalWin%MAFdata(minwall)%WallMIF%FB(bank)) /)
+if (bank == 1) write (99,*) 'min> ', CalWin%MAFdata(central)%BankCalInd%FB(bank)
           ELSE IF (maxwall < current) THEN
              CalWin%MAFdata(central)%BankCalInd%FB(bank) = (/ &
                   CalWin%MAFdata(maxwall+1)%start_index, &
                   CalWin%MAFdata(current)%end_index /)
+if (bank == 1) write (99,*) 'max< ', CalWin%MAFdata(central)%BankCalInd%FB(bank)
           ELSE
+if (bank == 1) write (99,*) '0, 0'
              CalWin%MAFdata(central)%BankCalInd%FB(bank) = (/ 0, 0 /)
           ENDIF
 PRINT *, 'bank, wall: ', bank, CalWin%MAFdata%BankWall%FB(bank)
@@ -972,6 +978,9 @@ END MODULE SortQualify
 !=============================================================================
 
 ! $Log$
+! Revision 2.26  2008/03/27 14:40:50  perun
+! Calculate calibration dif only when there are both space and target MIFs
+!
 ! Revision 2.25  2008/01/16 19:11:45  perun
 ! Corrected saving the sorted GHz_sw_pos
 !
