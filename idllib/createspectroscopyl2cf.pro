@@ -11,6 +11,12 @@ pro CreateSpectroscopyL2CF, $
                             defsOnlyName=defsOnlyName, $
                             threshold=threshold, $
                             l2cfForPFAFwm=l2cfForPFAFwm
+; 1. make full spectroscopy
+; CreateSpectroscopyL2CF,molName='$HOME/mlspgs/tables/mol_data_table.tex',lineName=/users/bill/mlspgs/tables/line_data_table.tex',crossrefname='$HOME/mlspgs/tables/sps_cross_ref_table.txt',outname='$HOME/tables/MLS-Aura_L2Cal-Spectroscopy_v3-0-0_0000d000.l2cf'
+; 2 make file with all PFA molecules stripped out (assuming default
+; locations for standard files.
+; CreateSpectroscopyL2CF,outname='$HOME/mlspgs/tables/MLS-Aura_L2Cal-Spectroscopy-PFA_v3-0-0_0000d000.l2cf',/l2cfForPFAFwm
+
 
 if n_elements(maxExtinctions) eq 0 then maxExtinctions = 1
 if n_elements(instrument) eq 0 then instrument='emls'
@@ -30,7 +36,8 @@ if n_elements(crossRefName) eq 0 then $
   crossRefName = getenv('HOME') + '/mlspgs/tables/sps_cross_ref_table.txt'
 
 if keyword_set ( fastRead ) then begin
-    lineName = getenv('HOME') +  '/mlspgs/tables/line_data_table.sav'
+    IF STRLEN(BYTE(fastread)) GT 1 THEN lineName = fastread ELSE $
+      lineName = getenv('HOME') +  '/mlspgs/tables/line_data_table.sav'
     restore, lineName
     data = sps_data
     lineID = 'Restored from saveset'
