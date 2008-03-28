@@ -769,7 +769,6 @@ PRINT *, 'switch MAF: ', CurMAFdata%SciPkt(0)%MAFno
        END WHERE
 
        IF (ANY (wallindx(1:current) /= 0)) THEN
-if (bank == 1) write (99,*) wallindx(1:current)
           minwall = MINVAL (wallindx(1:current), &
                CalWin%MAFdata%BankWall%FB(bank))
           maxwall = MAXVAL (wallindx(1:current), &
@@ -786,14 +785,11 @@ if (bank == 1) write (99,*) wallindx(1:current)
              CalWin%MAFdata(central)%BankCalInd%FB(bank) = (/ cal_range(1), &
                   (CalWin%MAFdata(minwall-1)%end_index + &
                   CalWin%MAFdata(minwall)%WallMIF%FB(bank)) /)
-if (bank == 1) write (99,*) 'min> ', CalWin%MAFdata(central)%BankCalInd%FB(bank)
           ELSE IF (maxwall < current) THEN
              CalWin%MAFdata(central)%BankCalInd%FB(bank) = (/ &
                   CalWin%MAFdata(maxwall+1)%start_index, &
                   CalWin%MAFdata(current)%end_index /)
-if (bank == 1) write (99,*) 'max< ', CalWin%MAFdata(central)%BankCalInd%FB(bank)
           ELSE
-if (bank == 1) write (99,*) '0, 0'
              CalWin%MAFdata(central)%BankCalInd%FB(bank) = (/ 0, 0 /)
           ENDIF
 PRINT *, 'bank, wall: ', bank, CalWin%MAFdata%BankWall%FB(bank)
@@ -978,6 +974,9 @@ END MODULE SortQualify
 !=============================================================================
 
 ! $Log$
+! Revision 2.27  2008/03/28 18:21:22  perun
+! Remove debug write statements.
+!
 ! Revision 2.26  2008/03/27 14:40:50  perun
 ! Calculate calibration dif only when there are both space and target MIFs
 !
