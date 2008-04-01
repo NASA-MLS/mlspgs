@@ -72,13 +72,14 @@ contains ! ====     Public Procedures     ==============================
       & SKIPRETRIEVAL, SLAVESDOOWNCLEANUP, SPECIALDUMPFILE, STOPAFTERSECTION
     use MLSMessageModule, only: MLSMSG_Allocate, MLSMessage, MLSMSG_Info, &
       & MLSMSG_Error, SummarizeWarnings
+    use MLSPCF2, only: mlspcf_spectroscopy_end
     use MLSSignals_M, only: Bands, DestroyBandDatabase, DestroyModuleDatabase, &
       & DestroyRadiometerDatabase, DestroySignalDatabase, &
       & DestroySpectrometerTypeDatabase, MLSSignals, Modules, Radiometers, &
       & Signals, SpectrometerTypes
     use MLSStringLists, only: ExpandStringRange, isInList, SwitchDetail
     use MLSStrings, only: lowerCase
-    use MLSL2Options, only: SKIPDIRECTWRITES, SKIPDIRECTWRITESORIGINAL
+    use MLSL2Options, only: SKIPDIRECTWRITES, SKIPDIRECTWRITESORIGINAL, TOOLKIT
     use MLSL2Timings, only: add_to_section_timing, TOTAL_TIMES
     use Open_Init, only: OpenAndInitialize
     use OutputAndClose, only: Output_Close
@@ -202,7 +203,7 @@ contains ! ====     Public Procedures     ==============================
       ! First those involved in 'preprocessing'
       select case ( section_index )
 
-        ! --------------------------------------------------------- Init sections
+        ! -------------------------------------------------------- Init sections
       case ( z_globalsettings )
         call set_global_settings ( son, forwardModelConfigDatabase, fGrids, &
           & l2gpDatabase, DirectDatabase, processingRange, filedatabase )
@@ -224,14 +225,16 @@ contains ! ====     Public Procedures     ==============================
           return
         end if
       case ( z_spectroscopy )
-        call spectroscopy ( son )
+        call spectroscopy ( son, &
+          & TOOLKIT, mlspcf_spectroscopy_end, fileDatabase )
         call add_to_section_timing ( 'spectroscopy', t1, now_stop )
         if ( now_stop ) then
           call finishUp(.true.)
           return
         end if
       case ( z_readapriori )
-        if ( .not. ( stopBeforeChunkLoop .or. parallel%master ) ) call read_apriori ( son , &
+        if ( .not. ( stopBeforeChunkLoop .or. parallel%master ) ) &
+          & call read_apriori ( son , &
           & l2gpDatabase, l2auxDatabase, griddedDataBase, fileDataBase )
         call add_to_section_timing ( 'read_apriori', t1, now_stop )
         if ( now_stop ) then
@@ -239,10 +242,11 @@ contains ! ====     Public Procedures     ==============================
           return
         end if
       case ( z_mergeGrids )
-        if ( .not. ( stopBeforeChunkLoop .or. checkPaths .or. parallel%master ) ) &
-          & call mergeGrids ( son, griddedDataBase )
+        if ( .not. &
+          & ( stopBeforeChunkLoop .or. checkPaths .or. parallel%master ) &
+          & ) call mergeGrids ( son, griddedDataBase )
 
-        ! --------------------------------------------------------- Chunk divide
+        ! ------------------------------------------------------- Chunk divide
         ! Chunk divide can be a special one, in slave mode, we just listen out
         ! for instructions.
         call add_to_section_timing ( 'merge_grids', t1, now_stop )
@@ -281,8 +285,9 @@ contains ! ====     Public Procedures     ==============================
           return
         end if
       case ( z_algebra )
-        call algebra ( son, vectors, matrices, chunks(1), forwardModelConfigDatabase )
-        ! --------------------------------------------------------- Chunk processing
+        call algebra ( son, vectors, matrices, chunks(1), &
+          & forwardModelConfigDatabase )
+        ! ---------------------------------------------------- Chunk processing
         ! Now construct, fill, join and retrieve live inside the 'chunk loop'
       case ( z_construct, z_fill, z_join, z_retrieve )
         ! Do special stuff in some parallel cases, or where there are
@@ -605,6 +610,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.162  2007/12/07 01:15:01  pwagner
+! Removed unused dummp varaibles, etc.
+!
 ! Revision 2.161  2007/10/09 00:34:21  pwagner
 ! ifort was crashing in destroy_DACS_Filter_Database during checkPaths; we now skip
 !

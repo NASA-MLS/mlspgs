@@ -14,7 +14,9 @@ module SpectroscopyCatalog_m
 ! Process the Spectroscopy section.  Read the "old format" spectroscopy catalog
 
   use Intrinsic, only: L_none
-  use MLSCommon, only: R8
+  use MLSCommon, only: R8, MLSFile_T
+  use MLSFiles, only: HDFVERSION_5, &
+    & AddInitializeMLSFile, GetPCFromRef, split_path_name
   use Molecules, only: First_Molecule, Last_Molecule
 
   ! More USEs below in each procedure.
@@ -99,7 +101,7 @@ module SpectroscopyCatalog_m
 contains ! =====  Public Procedures  ===================================
 
   ! -----------------------------------------------  Spectroscopy  -----
-  subroutine Spectroscopy ( Root )
+  subroutine Spectroscopy ( Root, TOOLKIT, pcfID, fileDatabase )
   ! Process the spectroscopy section.
     ! We need a lot of names from Init_Spectroscopy_Module.  First, the spec
     ! ID's:
@@ -128,14 +130,18 @@ contains ! =====  Public Procedures  ===================================
 
     ! Dummy argument
     integer, intent(in) :: Root         ! Of the AST for the section
+    logical, intent(in) :: toolkit      ! Do we use the toolkit panoply
+    integer, intent(in) :: pcfID        ! What pcfid if we do
+    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
 
     ! Local Variables
     integer :: Error                    ! /= 0 => An error occured
-    character(len=1023) :: FileName     ! For WriteSpectroscopy
+    ! character(len=1023) :: FileName     ! For WriteSpectroscopy
     character(len=31) :: FileType
     logical :: GotLines, GotMass        ! Got a "lines" or "mass" field
     integer :: I, J, K, L               ! Loop inductors, Subscripts
     integer :: Key                      ! Index of spec_arg
+    type (MLSFile_T), pointer   :: MLSFile
     integer :: Molecule                 ! Molecule for which the catalog applies
     integer :: Name                     ! Index of name in string table
     integer :: NOSIGNALS                ! For the bands part
@@ -331,8 +337,11 @@ contains ! =====  Public Procedures  ===================================
           j = subtree(1,j)
         end if
         spectroscopyFile = sub_rosa(j)
-        call get_string ( spectroscopyFile, fileName, strip=.true. )
-        call Read_Spectroscopy ( j, fileName, fileType )
+        ! call get_string ( spectroscopyFile, fileName, strip=.true. )
+        call get_file_name ( pcfID, &
+          & spectroscopyFile, filedatabase, MLSFile, toolkit, &
+          & 'Spectroscopy File not found in PCF' )
+        call Read_Spectroscopy ( j, MLSFile%Name, fileType )
       case ( s_spectra ) ! .............................  SPECTRA  .....
         ! Get the molecule
         do j = 2, nsons(key)
@@ -400,8 +409,11 @@ contains ! =====  Public Procedures  ===================================
           call get_string ( sub_rosa(subtree(2,j)), fileType, strip=.true. )
           j = subtree(1,j)
         end if
-        call get_string ( sub_rosa(j), fileName, strip=.true. )
-        call Write_Spectroscopy ( j, fileName, fileType )
+        ! call get_string ( sub_rosa(j), fileName, strip=.true. )
+        call get_file_name ( pcfID, &
+          & spectroscopyFile, filedatabase, MLSFile, toolkit, &
+          & 'Spectroscopy File not found in PCF' )
+        call Write_Spectroscopy ( j, MLSFile%Name, fileType )
       end select
     end do ! i
 
@@ -419,7 +431,7 @@ contains ! =====  Public Procedures  ===================================
       & 'Error(s) in input for spectroscopy database' )
   contains
     ! ...........................................  Announce_Error  .....
-    subroutine Announce_Error ( Where, Code, More )
+    subroutine Announce_Error ( Where, Code, More, MSG )
       use Intrinsic, only: Field_Indices, Lit_Indices, Phyq_Indices
       use MoreTree, only: StartErrorMessage
       use Output_m, only: Output
@@ -427,9 +439,10 @@ contains ! =====  Public Procedures  ===================================
       integer, intent(in) :: Where      ! In the tree
       integer, intent(in) :: Code       ! The error code
       integer, intent(in), optional :: More  ! In case some error messages need
+      character(len=*), intent(in), optional :: MSG
 
       error = max(error, 1)
-      call startErrorMessage ( where )
+      if ( where > 0 ) call startErrorMessage ( where )
       call output ( ' Spectroscopy complained: ' )
       select case ( code )
       case ( dupSpectra )
@@ -459,7 +472,10 @@ contains ! =====  Public Procedures  ===================================
       case ( wrongUnits )
         call output ( "The field's units ought to be " )
         call display_string ( phyq_indices(more), advance='yes' )
+      case default
+        call output ( "An unspecified error " )
       end select
+      if ( present(msg) ) call output ( msg, advance='yes' )
     end subroutine Announce_Error
 
     ! ...............................................  Expr_Check  .....
@@ -725,6 +741,67 @@ contains ! =====  Public Procedures  ===================================
       call Dump ( catalog(sideband,:), name, sideband, details )
     end do
   end subroutine Dump_SpectCat_Database_2d
+
+  ! ............................................  Get_File_Name  .....
+  subroutine Get_File_Name ( pcfCode, &
+    & spectroscopyFile, fileDataBase, MLSFile, toolkit, MSG, pcfEndCode )
+    use hdf, only: dfacc_rdonly
+    use intrinsic, only: l_ascii, l_hdf
+    use MLSCommon, only: MLSFile_T
+    use MLSFiles, only: HDFVERSION_5, &
+      & AddInitializeMLSFile, GetPCFromRef, split_path_name
+    use output_m, only: output
+    use SDPToolkit, only: Pgs_pc_getReference
+    use String_Table, only: Get_String
+    ! Dummy args
+    integer, intent(in) :: pcfCode
+    integer, intent(in) :: spectroscopyFile ! parser id
+    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+    type (MLSFile_T), pointer   :: MLSFile
+    logical, intent(in) :: toolkit
+    character(len=*), intent(in) :: MSG ! in case of error
+    integer, intent(in), optional :: pcfEndCode
+    ! Internal variables
+    logical, parameter :: DEBUG = .false.
+    character(len=1023) :: FileName     ! For WriteSpectroscopy
+    character(len=255) :: fileTypeStr, PCFFileName, path, shortName
+    integer :: lun
+    integer :: mypcfEndCode
+    integer :: returnStatus             ! non-zero means trouble
+    integer :: version
+    ! Executable
+    mypcfEndCode = 0
+    lun = 0
+    version = 1
+    call get_string ( spectroscopyFile, shortName, strip=.true. )
+    fileName = shortName
+    if ( TOOLKIT ) then
+      mypcfEndCode = pcfCode
+      if ( present(pcfEndCode) ) mypcfEndCode = pcfEndCode
+      if ( fileName == ' ' ) then
+        returnStatus = Pgs_pc_getReference(pcfCode, version, &
+          & fileName)
+        lun = pcfCode
+      else
+        PCFFileName = fileName
+        call split_path_name ( PCFFileName, path, fileName )
+        lun = GetPCFromRef(fileName, pcfCode, &
+          & mypcfEndCode, &
+          & TOOLKIT, returnStatus, Version, DEBUG, &
+          & exactName=PCFFileName)
+        if ( returnStatus /= 0 ) then
+          call output( MSG, advance='yes' )
+        else
+          fileName = PCFFileName
+        end if
+      end if
+    end if
+    MLSFile => AddInitializeMLSFile( filedatabase, &
+      & content='spectroscopy', &
+      & name=Filename, shortName=shortName, &
+      & type=l_hdf, access=dfacc_rdonly, HDFVersion=HDFVERSION_5 )
+    MLSFile%PCFId = lun
+  end subroutine Get_File_Name
 
 ! --------------------------------------------  Read_Spectroscopy  -----
   subroutine Read_Spectroscopy ( Where, FileName, FileType )
@@ -1388,6 +1465,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.43  2006/07/21 00:17:01  vsnyder
+! Plug a memory leak
+!
 ! Revision 2.42  2006/02/03 01:54:04  vsnyder
 ! Don't crash while trying to write error message
 !
