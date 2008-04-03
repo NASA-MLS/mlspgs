@@ -643,6 +643,26 @@ contains ! ================================ Procedures ======================
           ! Note, we'll ignore the slave MAFNumber sent for fwmParallel stuff
           if ( USINGOLDSUBMIT ) then
             ! We only really care about this message if we're using submit
+            
+            ! A crude hack to fix a sometimes mlssubmit/pvm error
+            ! in which multiple jobs are submitted for the same chunk
+            ! (Why??)
+            ! No time to explore, we're in the middle of v3 development
+            !
+            ! What to do?
+            
+            ! Kill the excess slave and continue
+            ! (You're a cruel one, paw)
+            if ( chunkTids(chunk) > 0 ) then
+              call pvmfkill ( slaveTid, info )
+              if ( info /= 0 ) &
+                & call PVMErrorMessage ( info, 'killing slave' )
+              call output ( 'Killed off excess slave ' // &
+                & trim(GetNiceTidString(slaveTid)) // &
+                & ' running chunk ' )
+              call TimeStamp ( chunk, advance='yes' )
+              cycle
+            endif
             chunkTids(chunk) = slaveTid
             call GetMachineNameFromTid ( slaveTid, thisName, info )
             if ( info == -1 ) & 
@@ -1929,6 +1949,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.88  2008/04/03 00:13:39  pwagner
+! Not the nicest way to fix mlssubmit/pvm launching multiple instances of same slave
+!
 ! Revision 2.87  2008/01/23 21:26:01  pwagner
 ! filters --chunks from slaveArguments
 !
