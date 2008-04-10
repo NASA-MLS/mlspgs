@@ -54,6 +54,7 @@ program l1bdiff ! diffs two l1b or L2AUX files
 
   type options_T
     logical     :: silent = .false.
+    logical     :: timing = .false.
     logical     :: verbose = .false.
     logical     :: list = .false.
     logical     :: stats = .false.
@@ -65,6 +66,8 @@ program l1bdiff ! diffs two l1b or L2AUX files
     integer     :: maf2 = 0
     integer     :: moff = 0
     integer     :: numDiffs = 0
+    character(len=255) :: sdList= '*'  ! what SDs to diff
+    character(len=255) :: skipList= ''  ! what SDs to skip
     character(len=255) :: referenceFileName= 'default.h5'  ! reference filename
   end type options_T
   
@@ -94,7 +97,7 @@ program l1bdiff ! diffs two l1b or L2AUX files
   CALL mls_h5open(error)
   n_filenames = 0
   do      ! Loop over filenames
-     call get_filename(filename, n_filenames, options)
+     call get_options(filename, n_filenames, options)
      if ( filename(1:1) == '-' ) cycle
      if ( filename == ' ' ) exit
      call h5fis_hdf5_f(trim(filename), is_hdf5, error)
@@ -133,10 +136,10 @@ program l1bdiff ! diffs two l1b or L2AUX files
       call myDiff(trim(filenames(i)), &
       & trim(options%referenceFileName), (i==1), &
       & HDFVERSION_5, options)
-      call sayTime('diffing this file', tFile)
+      if ( options%timing ) call sayTime('diffing this file', tFile)
     endif
   enddo
-  if ( .not. options%list) call sayTime('diffing all files')
+  if ( options%timing ) call sayTime('diffing all files')
   call resumeOutput
   if ( options%silent .and. options%numDiffs > 0 ) then
     ! write(string, '(i)') options%numDiffs
@@ -145,12 +148,12 @@ program l1bdiff ! diffs two l1b or L2AUX files
   endif
   call mls_h5close(error)
 contains
-!------------------------- get_filename ---------------------
-    subroutine get_filename(filename, n_filenames, options)
-    ! Added for command-line processing
+!------------------------- get_options ---------------------
+    subroutine get_options( filename, n_filenames, options )
+    ! Added for command-line processing of options, filenames
      character(LEN=255), intent(out)       :: filename          ! filename
      integer, intent(in)                   :: n_filenames
-     type ( options_T ), intent(inout) :: options
+     type ( options_T ), intent(inout)     :: options
      ! Local variables
      integer ::                         error = 1
      integer, save ::                   i = 1
@@ -172,6 +175,10 @@ contains
       elseif ( filename(1:6) == '-moff ' ) then
         call getarg ( i+1+hp, number )
         read(number, *) options%moff
+        i = i + 1
+        exit
+      elseif ( filename(1:3) == '-d ' ) then
+        call getarg ( i+1+hp, options%sdList )
         i = i + 1
         exit
       elseif ( filename(1:3) == '-r ' ) then
@@ -199,6 +206,10 @@ contains
       else if ( filename(1:3) == '-s ' ) then
         options%stats = .true.
         exit
+      elseif ( filename(1:6) == '-skip ' ) then
+        call getarg ( i+1+hp, options%skipList )
+        i = i + 1
+        exit
       else if ( filename(1:3) == '-f ' ) then
         call getarg ( i+1+hp, filename )
         i = i + 1
@@ -219,7 +230,7 @@ contains
       read(*,'(a)') filename
     endif
     
-  end subroutine get_filename
+  end subroutine get_options
 !------------------------- print_help ---------------------
   subroutine print_help
   ! Print brief but helpful message
@@ -229,6 +240,7 @@ contains
       & ' If no filenames supplied, you will be prompted to supply one'
       write (*,*) ' Options: -f filename     => add filename to list of filenames'
       write (*,*) '                           (can do the same w/o the -f)'
+      write (*,*) '          -d list         => just diff the SDs in list'
       write (*,*) '          -ascii          => diff even character-valued fields'
       write (*,*) '          -l2aux          => the files are l2aux, not l1b'
       write (*,*) '          -v              => switch on verbose mode'
@@ -239,6 +251,7 @@ contains
       write (*,*) '          -moff offset    => 2nd data set starts after 1st'
       write (*,*) '          -rms            => just print mean, rms'
       write (*,*) '          -s              => just show statistics'
+      write (*,*) '          -skip list      => skip diffing the SDs in list'
       write (*,*) '          -h              => print brief help'
       stop
   end subroutine print_help
@@ -258,7 +271,7 @@ contains
   end subroutine SayTime
 
   ! ---------------------- myDiff  ---------------------------
-  subroutine myDiff(file1, file2, create2, hdfVersion, options)
+  subroutine myDiff( file1, file2, create2, hdfVersion, options )
   !------------------------------------------------------------------------
 
     ! Given file names file1 and file2,
@@ -319,6 +332,11 @@ contains
     else
       if ( options%verbose ) call dump(mysdList, 'DS names')
     endif
+    if ( options%sdList /= '*' ) then
+      call output( ' Selected SDs to diff', advance='yes' )
+      mySDList = options%sdList
+      call dump(mysdList, 'DS names')
+    endif
 
     isl1boa = (index(trim(mysdList), '/GHz') > 0)
     file_access = DFACC_READ
@@ -367,7 +385,8 @@ contains
       call GetStringElement (trim(mysdList), sdName, i, countEmpty )
       if ( sdName == 'PCF' .or. &
         &  sdName == 'HDFEOS INFORMATION/coremetadata.0' .or. &
-        &  sdName == 'l2cf' ) cycle
+        &  sdName == 'l2cf' .or. &
+        &  index(options%skipList, trim(sdName)) > 0 ) cycle
       ! Allocate and fill l2aux
       ! if ( options%verbose ) print *, 'About to read ', trim(sdName)
         call ReadL1BData ( sdfid1, trim(sdName), L1bData, NoMAFs, status, &
@@ -429,11 +448,17 @@ contains
             elseif ( .false. .and. all(L1bData%dpField(:,:,maf1:maf2) == &
               & L1bData2%dpField(:,:,maf1+options%moff:maf2+options%moff)) ) then
               print *, '(The two fields are exactly equal)'
-            else
+            elseif( options%moff /= 0 .or. options%maf1 > 0 ) then
               ! print *, 'About to diff dpFields'
               call diff( L1bData%dpField(:,:,maf1:maf2), &
                 & '(1)', &
                 & L1bData2%dpField(:,:,maf1+options%moff:maf2+options%moff), &
+                & '(2)', &
+                & stats=options%stats, rms=options%rms )
+            else
+              call diff( L1bData%dpField, &
+                & '(1)', &
+                & L1bData2%dpField, &
                 & '(2)', &
                 & stats=options%stats, rms=options%rms )
             endif
@@ -486,6 +511,9 @@ end program l1bdiff
 !==================
 
 ! $Log$
+! Revision 1.9  2008/02/28 01:34:07  pwagner
+! Normally should skip diffing character-valued fields
+!
 ! Revision 1.8  2007/11/28 19:35:21  pwagner
 ! May specify that files are l2aux
 !

@@ -57,6 +57,7 @@ program l2gpdiff ! show diffs between swaths in two different files
     character(len=MAXSWATHNAMESBUFSIZE) :: swaths1 = '*'
     character(len=MAXSWATHNAMESBUFSIZE) :: swaths2 = '*'
     logical     :: silent = .false.
+    logical     :: timing = .false.
     logical     :: verbose = .false.
     integer     :: numDiffs = 0
   end type options_T
@@ -178,10 +179,10 @@ program l2gpdiff ! show diffs between swaths in two different files
       & silent=options%silent, verbose=options%verbose, numDiffs=numDiffs )
     endif
     options%numDiffs = options%numDiffs + numDiffs
-    call sayTime('diff these files: ' // trim(filenames(i-1)) // &
+    if ( options%timing ) call sayTime('diff these files: ' // trim(filenames(i-1)) // &
       & ' and ' // trim(filenames(i)), tFile)
   enddo
-  call sayTime('diffing all files')
+  if ( options%timing ) call sayTime('diffing all files')
   call resumeOutput
   if ( options%silent .and. options%numDiffs > 0 ) then
     call WriteIntsToChars ( options%numDiffs, string )
@@ -347,6 +348,9 @@ end program l2gpdiff
 !==================
 
 ! $Log$
+! Revision 1.13  2007/11/28 18:59:58  pwagner
+! May choose where to print stat headers
+!
 ! Revision 1.12  2007/10/12 23:37:31  pwagner
 ! Removed much unused stuff
 !
