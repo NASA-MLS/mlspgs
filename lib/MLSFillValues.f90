@@ -1126,10 +1126,11 @@ contains
   end subroutine BridgeMissingValues_3dr8
 
   ! This family of subroutines makes arrays of values monotonically (increasing)
-  subroutine Monotonize_1dint( values, Period )
+  subroutine Monotonize_1dint( values, Period, FillValue )
     ! Args
     integer, dimension(:), intent(inout) :: values
     integer, optional, intent(in) :: Period
+    integer, optional, intent(in) :: FillValue
     ! Internal variables
     integer :: dx
     integer :: x1
@@ -1137,10 +1138,11 @@ contains
     include 'Monotonize.f9h'
   end subroutine Monotonize_1dint
 
-  subroutine Monotonize_1dr4( values, Period )
+  subroutine Monotonize_1dr4( values, Period, FillValue )
     ! Args
     real(r4), dimension(:), intent(inout) :: values
     real(r4), optional, intent(in) :: Period
+    real(r4), optional, intent(in) :: FillValue
     ! Internal variables
     real(r4) :: dx
     real(r4) :: x1
@@ -1148,10 +1150,11 @@ contains
     include 'Monotonize.f9h'
   end subroutine Monotonize_1dr4
 
-  subroutine Monotonize_1dr8( values, Period )
+  subroutine Monotonize_1dr8( values, Period, FillValue )
     ! Args
     real(r8), dimension(:), intent(inout) :: values
     real(r8), optional, intent(in) :: Period
+    real(r8), optional, intent(in) :: FillValue
     ! Internal variables
     real(r8) :: dx
     real(r8) :: x1
@@ -1159,6 +1162,7 @@ contains
     include 'Monotonize.f9h'
   end subroutine Monotonize_1dr8
 
+  ! (But what about Period and FillValue? Don't you want them, too?)
   subroutine Monotonize_2dint(values)
     ! Args
     integer, dimension(:,:), intent(inout) :: values
@@ -1963,6 +1967,9 @@ end module MLSFillValues
 
 !
 ! $Log$
+! Revision 2.13  2008/04/10 20:25:50  pwagner
+! Montonize can take optional arg FillValue
+!
 ! Revision 2.12  2008/03/07 01:33:47  pwagner
 ! Added optional arg Period to Monotonize
 !
