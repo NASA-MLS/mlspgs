@@ -186,7 +186,8 @@ module FillUtils_1                     ! Procedures used by Fill
       & FillQtyWithWMOTropopause, FillWithBinResults, FillWithBoxcarFunction, &
       & FillStatusQuantity, FillQualityFromChisq, FillConvergenceFromChisq, &
       & FillUsingLeastSquares, OffsetRadianceQuantity, ResetUnusedRadiances, &
-      & ScaleOverlaps, SpreadChannelFill, TransferVectors, ANNOUNCE_ERROR
+      & ScaleOverlaps, SpreadChannelFill, TransferVectors, UncompressRadiance, &
+      & ANNOUNCE_ERROR
 contains ! =====     Public Procedures     =============================
 
     ! ------------------------------------------- addGaussianNoise ---
@@ -6270,6 +6271,41 @@ contains ! =====     Public Procedures     =============================
       end do
     end subroutine TransferVectors
 
+    ! ---------------------------------------------- TransferVectors -----
+    subroutine UncompressRadiance ( key, quantity, termsNode )
+      integer, intent(in) :: KEY        ! Tree node for messages
+      type (VectorValue_T), intent(inout) :: QUANTITY ! The quantity to mess with
+      integer, intent(in) :: TERMSNODE
+
+      ! Local parameters
+      integer, parameter :: NOTERMS=4
+
+      ! Local variables
+      integer :: I
+      real(rv), dimension(noTerms) :: myTerms
+      integer, DIMENSION(2) :: UNITASARRAY ! Unit for value given
+      real (r8), DIMENSION(2) :: VALUEASARRAY ! Value give
+
+      ! Exectuable code
+      if ( quantity%template%quantityType /= l_radiance ) &
+        & call Announce_Error ( key, no_error_code, &
+        & 'Inappropriate quantity for uncompressRadiance fill' )
+      if ( nsons ( termsNode ) /= noTerms - 1 ) &
+        & call Announce_Error ( key, no_error_code, &
+        & 'Wrong number of terms for uncompressRadiance fill' )
+      
+      do i = 1, noTerms
+        call expr_check ( subtree(i+1,termsNode), unitAsArray, valueAsArray, &
+          & (/PHYQ_Dimensionless/), unitsError )
+        if ( unitsError ) call Announce_error ( termsNode, wrongUnits, &
+          & extraInfo=(/unitAsArray(1), PHYQ_Temperature/) )
+        myTerms(i) = valueAsArray(1)
+      end do
+
+      ! Radiances are in quantity%values [ chans * pointings, mafs ], do your messing here
+
+    end subroutine UncompressRadiance
+
   ! -- Private procedures ----------
 
     ! ------------------------------------------- FillableChiSq ---
@@ -6393,6 +6429,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.6  2008/04/11 01:17:09  livesey
+! Added uncompressRadiance fill
+!
 ! Revision 2.5  2008/01/07 21:43:03  pwagner
 ! Fixed bug regarding unrecognized ops '<' and '>' in catTwoOperands
 !
