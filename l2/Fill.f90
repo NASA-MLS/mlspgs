@@ -80,7 +80,8 @@ contains ! =====     Public Procedures     =============================
       & FillQtyWithWMOTropopause, FillWithBinResults, FillWithBoxcarFunction, &
       & FillStatusQuantity, FillQualityFromChisq, FillConvergenceFromChisq, &
       & FillUsingLeastSquares, OffsetRadianceQuantity, ResetUnusedRadiances, &
-      & ScaleOverlaps, SpreadChannelFill, TransferVectors, ANNOUNCE_ERROR
+      & ScaleOverlaps, SpreadChannelFill, TransferVectors, UncompressRadiance, &
+      & ANNOUNCE_ERROR
     use ForwardModelConfig, only: ForwardModelConfig_T
     use ForwardModelSupport, only: FillFwdModelTimings
     use GLOBAL_SETTINGS, only: BrightObjects
@@ -149,7 +150,7 @@ contains ! =====     Public Procedures     =============================
       & L_SPD, L_SPECIAL, L_SPREADCHANNEL, &
       & L_SPLITSIDEBAND, L_STATUS, &
       & L_TEMPERATURE, L_TNGTGEODALT, &
-      & L_TNGTGEOCALT, L_VECTOR, L_VGRID, L_VMR, L_WMOTROPOPAUSE, &
+      & L_TNGTGEOCALT, L_UNCOMPRESSRADIANCE, L_VECTOR, L_VGRID, L_VMR, L_WMOTROPOPAUSE, &
       & L_ZETA
     ! Now the specifications:
     use INIT_TABLES_MODULE, only: S_ANYGOODVALUES, S_ANYGOODRADIANCES, &
@@ -2204,6 +2205,9 @@ contains ! =====     Public Procedures     =============================
           end if
         end if
 
+      case ( l_uncompressRadiance )
+        call UncompressRadiance ( key, quantity, termsNode )
+
       case ( l_vGrid ) ! ---------------------  Fill from vGrid  -----
         select case ( quantity%template%quantityType )
         case ( l_ptan )
@@ -2295,6 +2299,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.360  2008/04/11 01:17:22  livesey
+! Added uncompressRadiance fill
+!
 ! Revision 2.359  2007/12/07 01:13:39  pwagner
 ! Lets us catch warnings and assign to runtime Booleans
 !
