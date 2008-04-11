@@ -456,7 +456,7 @@ contains ! =====     Public procedures     =============================
              l+l_scaleOverlaps, l+l_special, l+l_splitSideband, &
              l+l_status, l+l_resetUnusedRadiances, &
              l+l_RHIFromH2O, l+l_RHIPrecisionFromH2O, l+l_spreadChannel, &
-             l+l_H2OFromRHI, l+l_fold, l+l_rectanglefromlos, l+l_vGrid, &
+             l+l_H2OFromRHI, l+l_fold, l+l_rectanglefromlos, l+l_uncompressRadiance, l+l_vGrid, &
              l+l_wmoTropopause, n+n_dt_def, &
       begin, t+t_fwmType, l+l_baseline, l+l_linear, l+l_full, l+l_scan, l+l_scan2d, &
              l+l_cloudFull, l+l_hybrid, l+l_switchingMirror, &
@@ -1544,6 +1544,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.463  2008/04/11 01:17:00  livesey
+! Added uncompressRadiance fill
+!
 ! Revision 2.462  2007/12/07 01:12:14  pwagner
 ! Lets us catch warnings and assign to runtime Booleans
 !
