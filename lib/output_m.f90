@@ -11,12 +11,15 @@
 
 module OUTPUT_M
 
+  ! Very high level printing and formatting
+  ! see also dump_0 and MLSMessageModule
+  
   use dates_module, only:  buildCalendar, daysInMonth, &
     & reformatDate, reformatTime, utc_to_yyyymmdd
   use MLSCommon, only: FileNameLen, finite_signal, is_what_ieee
   use MLSMessageModule, only: MLSMessage, MLSMessageInternalFile, &
     & MLSMSG_Info, MLSMSG_Error
-  use MLSSets, only: FindFirst
+  use MLSSets, only: FindAll, FindFirst
   use MLSStringLists, only: ExpandStringRange, getStringElement, &
     & NumStringElements, wrap
   use MLSStrings, only: lowerCase, nCopies, writeIntsToChars
@@ -36,7 +39,7 @@ module OUTPUT_M
 !                          < -2 :: both
 !                          > 0 :: print to Fortran unit number PrUnit
 ! skipMLSMSGLogging        whether to skip MLSMessage by default
-! stampOptions             whether and how to stamp each output to stdout
+! stampOptions             whether and how to stamp each output automatically
 ! (some components)
 ! timeStampStyle           'pre' (at linestart) or 'post' (at end-of-line)
 !                            (only for timeStamp)
@@ -58,12 +61,12 @@ module OUTPUT_M
 ! revertOutput             revert output to file used before switchOutput
 !                           if you will revert, keepOldUnitOpen when switching
 ! resumeOutput             resume output
-! setStamp                 set stamp to be added to every output
+! setStamp                 set stamp to be added to every output automatically
 ! setTabs                  set tab stops (to be used by tab)
 ! suspendOutput            suspend output
 ! switchOutput             switch output to a new named file
 ! tab                      move to next tab stop
-! timestamp                print argument with a timestamp
+! timestamp                print argument with a timestamp manually
 !                            (both stdout and logged output)
 ! === (end of toc) ===
 
@@ -81,9 +84,10 @@ module OUTPUT_M
 ! NewLine
 ! char* numToChars ( value, [char* format] )
 ! output ( char* chars, [char* advance], [char* from_where], 
-!          [log dont_log], [char* log_chars], [char* insteadOfBlank] )
+!          [log dont_log], [char* log_chars], [char* insteadOfBlank],
+!          [log dont_stamp], [int newlineval] )
 ! output ( char* chars(:), [char* advance],
-!          [char* insteadOfBlank] )
+!          [char* insteadOfBlank], [int newlineval] )
 ! output ( value, [char* format], [char* advance],
 !          [char* Before], [char* After] )
 !       where value can be any numerical type, either scalar or 1-d array
@@ -126,12 +130,6 @@ module OUTPUT_M
   integer, save, public :: LINE_WIDTH = 120 ! Not used here, but a convenient
                                          ! place to store it
   ! Where to output?
-!  integer, save, public :: PRUNIT = -1  ! Unit for output.  
-                                         ! -1 means "printer" unit, *
-                                         ! -2 means MLSMessage if 
-                                         ! < -2, both printer and MLSMSG
-                                         ! > 0, actual unit number
-                                         !
   integer, save, private :: OLDUNIT = -1 ! Previous Unit for output.
   logical, save, private :: OLDUNITSTILLOPEN = .TRUE.
 
@@ -170,6 +168,11 @@ module OUTPUT_M
     module procedure output_string
   end interface
 
+  ! Don't filter for <cr>
+  interface OUTPUT_
+    module procedure OUTPUT_CHAR_NOCR
+  end interface
+
   interface outputNamedValue
     module procedure output_nvp_character
     module procedure output_nvp_complex
@@ -196,6 +199,7 @@ module OUTPUT_M
                                          ! < -2, both printer and MLSMSG
                                          ! > 0, actual unit number
     integer :: MLSMSG_Level = MLSMSG_Info ! What level if logging
+    integer :: newLineVal = 13 ! 13 means <cr> becomes new line; -999 means ignore
     logical :: BUFFERED = .true.
     logical :: OPENED = .false.
     logical :: SKIPMLSMSGLOGGING = .false.
@@ -332,12 +336,12 @@ contains
         & firstSpace = index( allChars, ' ' )
     end select
     if ( firstSpace > 1 ) then
-      call output( allChars(char1:firstSpace-1) )
+      call output_( allChars(char1:firstSpace-1) )
       call blanks( padRight+padLeft+1 )
-      if ( firstSpace+1 < char2 ) call output( allChars(firstSpace+1:char2) )
+      if ( firstSpace+1 < char2 ) call output_( allChars(firstSpace+1:char2) )
     else
       call blanks( padLeft )
-      call output( allChars(char1:char2) )
+      call output_( allChars(char1:char2) )
       call blanks( padRight )
     endif
   end subroutine ALIGNTOFIT_CHARS
@@ -437,7 +441,7 @@ contains
           numSoFar = 1
         end if
         do i=1, ntimes
-          call output ( pattern(2:patternLength+1), advance='no' )
+          call output_ ( pattern(2:patternLength+1), advance='no' )
           ! if ( xtraBlanks > 0 ) call pr_blanks ( xtraBlanks, advance='no' )
           numSoFar = numSoFar + patternLength
         enddo
@@ -495,8 +499,8 @@ contains
     integer :: i
     ! Executable
     call blanks(70, fillChar='-', advance='yes')
-    call output(' -------------- Summary of output options'      , advance='no')
-    call output(' -------------- ', advance='yes')
+    call output_(' -------------- Summary of output options'      , advance='no')
+    call output_(' -------------- ', advance='yes')
     call outputNamedValue ( 'unit number', options%prUnit, advance='yes', &
       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
     call outputNamedValue ( 'file name', trim(options%name), advance='yes', &
@@ -517,16 +521,16 @@ contains
       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
     do i=1, MAXNUMTABSTOPS
       call tab( fillChar=fillChar )
-      call output( '^', advance='no' )
+      call output_( '^', advance='no' )
     enddo
     call newline
     do i=1, MAXNUMTABSTOPS
       call blanksToColumn( tabStops(i), fillChar=fillChar )
-      call output( '^', advance='no' )
+      call output_( '^', advance='no' )
     enddo
     call newline
     do
-      call output( decade, advance='no' )
+      call output_( decade, advance='no' )
       if ( atColumnNumber > 132 ) exit
     enddo
     call newline
@@ -539,8 +543,8 @@ contains
     type(StampOptions_T), intent(in) :: options
     character(len=1), parameter :: fillChar = '1' ! fill blanks with '. .'
      call blanks(70, fillChar='-', advance='yes')
-     call output(' -------------- Summary of stamp options'      , advance='no')
-     call output(' -------------- ', advance='yes')
+     call output_(' -------------- Summary of stamp options'      , advance='no')
+     call output_(' -------------- ', advance='yes')
      call outputNamedValue ( 'stamp end of line', options%post, advance='yes', &
        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
      call outputNamedValue ( 'show time', options%showTime, advance='yes', &
@@ -574,12 +578,12 @@ contains
     real             :: myUnits
     character(len=6) :: Suffix
     ! Make a 'nice' output
-    if ( present(before) ) call output ( before )
+    if ( present(before) ) call output_ ( before )
     myUnits = 1.0
     if ( present(units) ) myUnits = units
     if ( myUnits == 0.0 ) then
       call output ( n, format='(e12.1)' )
-      call output ( ' (illegal units)', advance=advance )
+      call output_ ( ' (illegal units)', advance=advance )
       return
     end if
     amount = n*myUnits
@@ -599,18 +603,18 @@ contains
       suffix = ' TB'
     end if
     if ( amount < -99999 ) then     ! I6 format limits this
-      call output( '(-HUGE)' )
+      call output_( '(-HUGE)' )
     elseif ( amount > 999999 ) then ! I6 format limits this
-      call output( '(HUGE)' )
+      call output_( '(HUGE)' )
     elseif ( amount == int(amount) ) then
       write ( howMuch, '(i6)' ) int(amount)
     else
       write ( howMuch, '(f6.1)' ) amount
     end if
-    call output ( trim(adjustl(howMuch)) )
-    call output ( trim(suffix) )
-    if ( present(after) ) call output ( after )
-    call output ( '', advance=advance )
+    call output_ ( trim(adjustl(howMuch)) )
+    call output_ ( trim(suffix) )
+    if ( present(after) ) call output_ ( after )
+    call output_ ( '', advance=advance )
   end subroutine DumpSize_double
 
   ! --------------------------------------------- DumpSize_integer -----
@@ -658,7 +662,7 @@ contains
 
   ! ----------------------------------------------------  NewLine  -----
   subroutine NewLine
-    call output ( '', advance='yes' )
+    call output_ ( '', advance='yes' )
   end subroutine NewLine
 
   ! ----------------------------------------------------  NextColumn  -----
@@ -848,9 +852,9 @@ contains
           col2 = tabStops(wkdy)
           today = ( days(iwk, wkdy) == day )
           if ( today ) then
-            call output('||')
+            call output_('||')
           else
-            call output('|')
+            call output_('|')
           endif
           if ( days(iwk, wkdy) < 1 ) then
             ! Don't write notes or anything else in "empty" days
@@ -871,7 +875,7 @@ contains
             call GetStringElement ( wrappedNote, noteString, &
               & row-1, countEmpty, inseparator )
             if ( noteString == inseparator ) noteString = ' '
-            call output( noteString )
+            call output_( noteString )
           elseif( present(notes) ) then
             if ( days(iwk, wkdy) <= size(notes) ) then
               if ( myDontWrap ) then
@@ -882,17 +886,17 @@ contains
               call GetStringElement ( wrappedNote, noteString, &
                 & row-1, countEmpty, inseparator )
               if ( noteString == inseparator ) noteString = ' '
-              call output( noteString )
+              call output_( noteString )
             endif
           endif
           if ( today ) then
             call blanksToColumn(col2-1)
-            call output('|')
+            call output_('|')
           else
             call blanksToTab
           endif
         enddo ! wkdy
-        call output('|')
+        call output_('|')
         call newline
       enddo ! row
       ! begin with 
@@ -904,9 +908,67 @@ contains
   end subroutine OUTPUTCALENDAR
 
   ! ------------------------------------------------  OUTPUT_CHAR  -----
-  subroutine OUTPUT_CHAR ( CHARS, &
-    & ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS, INSTEADOFBLANK, DONT_STAMP )
   ! Output CHARS to PRUNIT.
+  subroutine OUTPUT_CHAR ( CHARS, &
+    & ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS, INSTEADOFBLANK, DONT_STAMP, &
+    & NEWLINEVAL )
+    ! We will 1st check to see whether any internal characters are
+    ! codes for newlines
+    ! If any are, we will call newLine in place of printing
+    ! them
+    ! (This is a new default behavior; you can restore
+    ! the old by passing an impossible value for NewLineVal, e.g. -999)
+    character(len=*), intent(in) :: CHARS
+    character(len=*), intent(in), optional :: ADVANCE
+    character(len=*), intent(in), optional :: FROM_WHERE
+    logical, intent(in), optional          :: DONT_LOG ! Prevent double-logging
+    character(len=*), intent(in), optional :: LOG_CHARS
+    character(len=*), intent(in), optional :: INSTEADOFBLANK ! What to output
+    logical, intent(in), optional          :: DONT_STAMP ! Prevent double-stamping
+    integer, intent(in), optional :: NEWLINEVAL ! What char val to treat as <cr>
+    ! Internal variables
+    integer :: how_many
+    integer :: I ! loop inductor
+    integer :: lastCR
+    integer :: myNewLineVal
+    integer, dimension(len(chars)) :: which
+    ! Executable
+    myNewLineVal = outputOptions%newlineVal
+    if ( present(newLineVal) ) myNewLineVal = newLineVal
+    call FindAll( chars, achar(myNewLineVal), which, how_many=how_many )
+    ! print *, 'how many? ', how_many
+    ! print *, 'which? ', (which(i), i=1, how_many)
+    if ( how_many < 1 ) then
+      call OUTPUT_CHAR_NOCR ( CHARS, &
+        & ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS, INSTEADOFBLANK, DONT_STAMP )
+    else
+      ! Yes, this complicated (more work needed to simplify)
+      ! Find which locations are <cr>
+      ! Then call output for the stretches of chars in between
+      ! Instead of printing <cr>, call newLine
+      
+      ! A much simpler alternative would simply loop over all the chars, calling
+      ! output_char unless the char in question was a <cr> when
+      ! we would instead call newLine
+      
+      ! We may switch to this alternative
+      ! One advantage: we would not need the automatic array 'which'
+      lastCR = 0
+      do i=1, how_many
+        if ( which(i) > lastCR+1 .and. which(i) < len(chars)+1 ) then
+          call OUTPUT_CHAR_NOCR ( CHARS(lastCR+1:which(i)-1), &
+        & ADVANCE='no', FROM_WHERE=FROM_WHERE, DONT_LOG=DONT_LOG, &
+        & LOG_CHARS=LOG_CHARS, INSTEADOFBLANK=INSTEADOFBLANK, &
+        & DONT_STAMP=DONT_STAMP )
+        endif
+        call newLine
+        lastCR = which(i)
+      enddo
+    endif
+  end subroutine OUTPUT_CHAR
+
+  subroutine OUTPUT_CHAR_NOCR ( CHARS, &
+    & ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS, INSTEADOFBLANK, DONT_STAMP )
     character(len=*), intent(in) :: CHARS
     character(len=*), intent(in), optional :: ADVANCE
     character(len=*), intent(in), optional :: FROM_WHERE
@@ -1063,20 +1125,24 @@ contains
     end if
     atColumnNumber = atColumnNumber + n_chars
     if ( atLineStart ) atColumnNumber = 1
-  end subroutine OUTPUT_CHAR
+  end subroutine OUTPUT_CHAR_NOCR
 
   ! ------------------------------------------  OUTPUT_CHAR_ARRAY  -----
-  subroutine OUTPUT_CHAR_ARRAY ( CHARS, ADVANCE, INSTEADOFBLANK )
+  subroutine OUTPUT_CHAR_ARRAY ( CHARS, ADVANCE, INSTEADOFBLANK, NEWLINEVAL )
   ! Output CHARS to PRUNIT.
     character(len=*), intent(in) :: CHARS(:)
     character(len=*), intent(in), optional :: ADVANCE
     character(len=*), intent(in), optional :: INSTEADOFBLANK ! What to output
+    integer, intent(in), optional :: NEWLINEVAL ! What char val to treat as <cr>
+    ! Internal variables
     integer :: I ! loop inductor
+    ! Executable
     do i = 1, size(chars)
-      call output ( chars(i), insteadofblank=insteadofblank )
+      call output ( chars(i), &
+        & insteadofblank=insteadofblank, newLineVal=newLineVal )
     end do
     if ( present(advance)  ) then
-      call output ( '', advance=advance )
+      call output_ ( '', advance=advance )
     end if
   end subroutine OUTPUT_CHAR_ARRAY
 
@@ -1094,13 +1160,13 @@ contains
     else
       write ( line, '("(",1pg15.7,",",1pg15.7,")")' ) value
     end if
-    if ( present(before) ) call output ( before, dont_log = .true. )
+    if ( present(before) ) call output_ ( before, dont_log = .true. )
     if ( present(after)  ) then
-      call output ( trim(line), dont_log = .true. )
-      call output ( after, advance=advance, dont_log = .true., &
+      call output_ ( trim(line), dont_log = .true. )
+      call output_ ( after, advance=advance, dont_log = .true., &
         & dont_stamp=dont_stamp )
     else
-      call output ( trim(line), advance=advance, dont_log = .true., &
+      call output_ ( trim(line), advance=advance, dont_log = .true., &
         & dont_stamp=dont_stamp )
     end if
   end subroutine OUTPUT_COMPLEX
@@ -1140,23 +1206,23 @@ contains
     dateString = reFormatDate(trim(dateString), toForm=dateFormat)
     timeString = reFormatTime(trim(timeString), timeFormat)
     if ( myDate .and. myTime ) then
-      call output ( trim(dateString), from_where=from_where, advance='no', &
+      call output_ ( trim(dateString), from_where=from_where, advance='no', &
         & DONT_STAMP=DONT_STAMP )
       call blanks(3)
-      call output ( trim(timeString), from_where=from_where, advance=my_adv, &
+      call output_ ( trim(timeString), from_where=from_where, advance=my_adv, &
         & DONT_STAMP=DONT_STAMP )
     else if ( myDate ) then
-      call output ( trim(dateString), from_where=from_where, advance=my_adv, &
+      call output_ ( trim(dateString), from_where=from_where, advance=my_adv, &
         & DONT_STAMP=DONT_STAMP )
     else if ( myTime ) then
-      call output ( trim(TimeString), from_where=from_where, advance=my_adv, &
+      call output_ ( trim(TimeString), from_where=from_where, advance=my_adv, &
         & DONT_STAMP=DONT_STAMP )
     end if
     if ( .not. present(msg) ) return
     my_adv = 'yes'
     if ( present(advance) ) my_adv = advance
     call blanks ( 3 )
-    call output ( trim(msg), from_where=from_where, advance=my_adv, &
+    call output_ ( trim(msg), from_where=from_where, advance=my_adv, &
       & DONT_STAMP=DONT_STAMP )
   end subroutine OUTPUT_DATE_AND_TIME
 
@@ -1174,12 +1240,12 @@ contains
     else
       write ( line, '("(",1pg22.14,",",1pg22.14,")")' ) value
     end if
-    if ( present(before) ) call output ( before, dont_log = .true. )
+    if ( present(before) ) call output_ ( before, dont_log = .true. )
     if ( present(after)  ) then
-      call output ( trim(line), dont_log = .true. )
-      call output ( after, advance=advance, dont_log = .true. )
+      call output_ ( trim(line), dont_log = .true. )
+      call output_ ( after, advance=advance, dont_log = .true. )
     else
-      call output ( trim(line), advance=advance, dont_log = .true. )
+      call output_ ( trim(line), advance=advance, dont_log = .true. )
     end if
   end subroutine OUTPUT_DCOMPLEX
 
@@ -1206,12 +1272,12 @@ contains
     if ( present(LogFormat)  ) then
       write ( log_chars, LogFormat ) value
     end if
-    if ( present(before) ) call output ( before )
+    if ( present(before) ) call output_ ( before )
     if ( present(after)  ) then
-      call output ( line(:k), log_chars=log_chars )
-      call output ( after, advance=advance, dont_stamp=dont_stamp )
+      call output_ ( line(:k), log_chars=log_chars )
+      call output_ ( after, advance=advance, dont_stamp=dont_stamp )
     else
-      call output ( line(:k), advance=advance, log_chars=log_chars, &
+      call output_ ( line(:k), advance=advance, log_chars=log_chars, &
         & dont_stamp=dont_stamp )
     end if
 
@@ -1233,7 +1299,7 @@ contains
       call blanks ( 3, advance='no' )
     end do
     if ( present(advance)  ) then
-      call output ( '', advance=advance, DONT_STAMP=DONT_STAMP )
+      call output_ ( '', advance=advance, DONT_STAMP=DONT_STAMP )
     end if
   end subroutine OUTPUT_DOUBLE_ARRAY
 
@@ -1273,12 +1339,12 @@ contains
       i = max( 1, min(len(line)+1-my_places, index(line,' ',back=.true.)+1) )
       j = len(line)
     end if
-    if ( present(before) ) call output ( before )
+    if ( present(before) ) call output_ ( before )
     if ( present(after)  ) then
-      call output ( line(i:j), DONT_STAMP=DONT_STAMP )
-      call output ( after, advance=advance, DONT_STAMP=DONT_STAMP )
+      call output_ ( line(i:j), DONT_STAMP=DONT_STAMP )
+      call output_ ( after, advance=advance, DONT_STAMP=DONT_STAMP )
     else
-      call output ( line(i:j), advance=advance, DONT_STAMP=DONT_STAMP )
+      call output_ ( line(i:j), advance=advance, DONT_STAMP=DONT_STAMP )
     end if
   end subroutine OUTPUT_INTEGER
 
@@ -1297,7 +1363,7 @@ contains
       call blanks ( 3, advance='no' )
     end do
     if ( present(advance)  ) then
-      call output ( '', advance=advance, DONT_STAMP=DONT_STAMP )
+      call output_ ( '', advance=advance, DONT_STAMP=DONT_STAMP )
     end if
   end subroutine OUTPUT_INTEGER_ARRAY
 
@@ -1314,8 +1380,8 @@ contains
     else
       line=' F'
     end if
-    if ( present(before) ) call output ( before, DONT_STAMP=DONT_STAMP )
-    call output ( line, advance=advance, DONT_STAMP=DONT_STAMP )
+    if ( present(before) ) call output_ ( before, DONT_STAMP=DONT_STAMP )
+    call output_ ( line, advance=advance, DONT_STAMP=DONT_STAMP )
   end subroutine OUTPUT_LOGICAL
 
   ! ---------------------------------------------  OUTPUT_LOGICAL  -----
@@ -1326,12 +1392,12 @@ contains
     character(len=*), intent(in), optional :: BEFORE
     logical, optional, intent(in) :: DONT_STAMP
     integer :: I ! loop inductor
-    if ( present(before) ) call output ( before, DONT_STAMP=DONT_STAMP )
+    if ( present(before) ) call output_ ( before, DONT_STAMP=DONT_STAMP )
     do i = 1, size(logs)
       call output ( logs(i), advance='no' )
       call blanks ( 3, advance='no' )
     end do
-    if ( present(advance) ) call output ( '', advance=advance, DONT_STAMP=DONT_STAMP )
+    if ( present(advance) ) call output_ ( '', advance=advance, DONT_STAMP=DONT_STAMP )
   end subroutine OUTPUT_LOGICAL_ARRAY
 
   ! ----------------------------------------------  OUTPUT_SINGLE  -----
@@ -1358,12 +1424,12 @@ contains
     if ( present(LogFormat)  ) then
       write ( log_chars, LogFormat ) value
     end if
-    if ( present(before) ) call output ( before, DONT_STAMP=DONT_STAMP )
+    if ( present(before) ) call output_ ( before, DONT_STAMP=DONT_STAMP )
     if ( present(after)  ) then
-      call output ( line(:k), log_chars=log_chars, DONT_STAMP=DONT_STAMP )
-      call output ( after, advance=advance, DONT_STAMP=DONT_STAMP )
+      call output_ ( line(:k), log_chars=log_chars, DONT_STAMP=DONT_STAMP )
+      call output_ ( after, advance=advance, DONT_STAMP=DONT_STAMP )
     else
-      call output ( line(:k), advance=advance, log_chars=log_chars, &
+      call output_ ( line(:k), advance=advance, log_chars=log_chars, &
         & DONT_STAMP=DONT_STAMP )
     end if
   end subroutine OUTPUT_SINGLE
@@ -1384,7 +1450,7 @@ contains
       call blanks ( 3, advance='no' )
     end do
     if ( present(advance)  ) then
-      call output ( '', advance=advance, DONT_STAMP=DONT_STAMP )
+      call output_ ( '', advance=advance, DONT_STAMP=DONT_STAMP )
     end if
   end subroutine OUTPUT_SINGLE_ARRAY
 
@@ -1404,9 +1470,9 @@ contains
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Bad string arg in OUTPUT_STRING' )
     else if ( len_trim(string) < 1 .or. LENSTRING < 1  ) then
-      call output ( '', advance )
+      call output_ ( '', advance )
     else
-      call output ( string(:n_chars), advance, from_where, dont_log, log_chars )
+      call output_ ( string(:n_chars), advance, from_where, dont_log, log_chars )
     end if
   end subroutine OUTPUT_STRING
 
@@ -1512,10 +1578,10 @@ contains
     ! Executable
     call resumeOutput
     if ( .not. OLDUNITSTILLOPEN ) then
-      call output( 'Unable to Revert output--old unit not open', advance='yes' )
+      call output_( 'Unable to Revert output--old unit not open', advance='yes' )
       return
     end if
-    call output( 'Reverting output to unit: ', advance='no' )
+    call output_( 'Reverting output to unit: ', advance='no' )
     call output( OLDUNIT, advance='yes' )
     if ( outputOptions%prunit > 0 ) then
       inquire( unit=outputOptions%prunit, opened=itsOpen )
@@ -1594,14 +1660,14 @@ contains
     switchUnit = DEFAULTSWITCHUNIT
     call resumeOutput
     if ( present(unit) ) then
-      call output('Switching further output to: ', advance='no')
-      call output(trim(filename), advance='yes')
-      call output('using unit number: ', advance='no')
+      call output_('Switching further output to: ', advance='no')
+      call output_(trim(filename), advance='yes')
+      call output_('using unit number: ', advance='no')
       call output(unit, advance='yes')
       switchUnit = unit
     else
-      call output('Switching further output to: ', advance='no')
-      call output(trim(filename), advance='yes')
+      call output_('Switching further output to: ', advance='no')
+      call output_(trim(filename), advance='yes')
       ! if ( PRUNIT > 0 ) switchUnit = PRUNIT
     end if
     if ( outputOptions%prunit > 0 .and. .not. dontCloseOldUnit ) then
@@ -1650,21 +1716,21 @@ contains
     myDate = .false.
     if ( present(date) ) myDate = date
     if ( my_style == 'post' ) then
-      call output_char( CHARS, &
+      call output_( CHARS, &
         & ADVANCE='no', FROM_WHERE=FROM_WHERE, DONT_LOG=DONT_LOG, &
         & LOG_CHARS=LOG_CHARS, INSTEADOFBLANK=INSTEADOFBLANK, DONT_STAMP=DONT_STAMP )
       if ( my_adv=='yes' ) then
-        call output_char(' (', ADVANCE='no', DONT_LOG=DONT_LOG, DONT_STAMP=DONT_STAMP)
+        call output_(' (', ADVANCE='no', DONT_LOG=DONT_LOG, DONT_STAMP=DONT_STAMP)
         call OUTPUT_DATE_AND_TIME(date=myDate, advance='no')
-        call output_char(')', ADVANCE='yes', DONT_LOG=DONT_LOG, DONT_STAMP=DONT_STAMP)
+        call output_(')', ADVANCE='yes', DONT_LOG=DONT_LOG, DONT_STAMP=DONT_STAMP)
       end if
     else
       if ( ATLINESTART ) then
-        call output_char('(', ADVANCE='no', DONT_LOG=DONT_LOG, DONT_STAMP=DONT_STAMP)
+        call output_('(', ADVANCE='no', DONT_LOG=DONT_LOG, DONT_STAMP=DONT_STAMP)
         call OUTPUT_DATE_AND_TIME(date=myDate, advance='no')
-        call output_char(')', ADVANCE='no', DONT_LOG=DONT_LOG, DONT_STAMP=DONT_STAMP)
+        call output_(')', ADVANCE='no', DONT_LOG=DONT_LOG, DONT_STAMP=DONT_STAMP)
       end if
-      call output_char( CHARS, &
+      call output_( CHARS, &
         & ADVANCE, FROM_WHERE, DONT_LOG, &
         & LOG_CHARS, INSTEADOFBLANK, DONT_STAMP=DONT_STAMP )
     end if
@@ -1696,15 +1762,15 @@ contains
         & ADVANCE='no', FILL=FILL, FORMAT=FORMAT, BEFORE=BEFORE, AFTER=AFTER, &
         & DONT_STAMP=DONT_STAMP )
       if ( my_adv=='yes' ) then
-        call output_char(' (', ADVANCE='no', DONT_STAMP=DONT_STAMP )
+        call output_(' (', ADVANCE='no', DONT_STAMP=DONT_STAMP )
         call OUTPUT_DATE_AND_TIME(date=myDate, advance='no')
-        call output_char(')', ADVANCE='yes', DONT_STAMP=DONT_STAMP)
+        call output_(')', ADVANCE='yes', DONT_STAMP=DONT_STAMP)
       end if
     else
       if ( ATLINESTART ) then
-        call output_char('(', ADVANCE='no', DONT_STAMP=DONT_STAMP)
+        call output_('(', ADVANCE='no', DONT_STAMP=DONT_STAMP)
         call OUTPUT_DATE_AND_TIME(date=myDate, advance='no')
-        call output_char(')', ADVANCE='no', DONT_STAMP=DONT_STAMP)
+        call output_(')', ADVANCE='no', DONT_STAMP=DONT_STAMP)
       end if
       call output_integer( INT, PLACES, &
         & ADVANCE, FILL, FORMAT, BEFORE, AFTER, DONT_STAMP=DONT_STAMP )
@@ -1882,7 +1948,7 @@ contains
     my_adv = Advance_is_yes_or_no(advance)
     if ( n_blanks < 1 ) then
       if ( my_adv == 'yes' ) &
-        & call output ( '', advance='yes', dont_stamp=dont_stamp )
+        & call output_ ( '', advance='yes', dont_stamp=dont_stamp )
       return
     end if
     n = max(n_blanks, 1)
@@ -1898,7 +1964,7 @@ contains
       i = min(n,len(b))
       n = n - i
       if ( n == 0 ) adv = my_adv
-      call output ( b(:i), advance=adv )
+      call output_ ( b(:i), advance=adv )
       if ( n < 1 ) exit   ! was if n == 0, but this should be safer
     end do
   end subroutine PR_BLANKS
@@ -1974,6 +2040,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.72  2008/04/18 16:34:37  pwagner
+! achar(13) among chars by default now triggers newLine
+!
 ! Revision 2.71  2008/03/07 01:34:57  pwagner
 ! Added f.p. array versions of generic outputNamedValue
 !
