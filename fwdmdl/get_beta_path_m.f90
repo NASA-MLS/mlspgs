@@ -92,6 +92,7 @@ contains
 
     real(rp), pointer :: dBdn(:), dBdT(:), dBdv(:), dBdw(:) ! slices of dBeta_d*_path
     real(rp) :: ES(size(t_path)) ! Used for RHi calculation
+    real(rp) :: Sps(size(t_path))
     integer(ip) :: I, N, NP
     logical, save :: Clean, DumpAll, DumpBeta, DumpStop
     logical, save :: First = .true. ! Fist-time flag
@@ -133,6 +134,23 @@ contains
         dBdT = 0.0_rp
       end if
 
+      if ( present(sps_path) ) sps = sps_path(path_inds,i)
+      if ( beta_group(i)%molecule == l_rhi ) then
+        !{ Get ready for RHi conversion
+        ! \begin{equation}\begin{split}
+        ! e_s =\,& \frac1P \exp\left(19.6783-\frac{6140.4}T\right)\\
+        ! \beta^{\text{RHi}} =\,& \beta^{\text{H}_2\text{O}} e_s\\
+        ! \frac{\partial \beta^{\text{RHi}}}{\partial T} =\,&
+        !  e_s \frac{\partial \beta^{\text{H}_2\text{O}}}{\partial T} +
+        !  \frac{6140.4}{T^2} \beta^{\text{RHi}}
+        ! \end{split}\end{equation}
+        es = exp(RHa - RHb/t_path) / p_path(path_inds)
+        if ( present(sps_path) ) then
+          sps = es * sps
+          where ( p_path(path_inds) < 50.0 ) sps = 0.0
+        end if
+      end if
+
       do n = 1, size(beta_group(i)%lbl(sx)%cat_index)
         if ( present(sps_path) ) then
           call create_beta_path ( path_inds, p_path, t_path, frq,   &
@@ -140,7 +158,7 @@ contains
             & gl_slabs(:,beta_group(i)%lbl(sx)%cat_index(n)),       &
             & tanh_path, noPolarized, velCor,                       &
             & beta_path(:,i), dTanh_dT, t_der_path_flags,           &
-            & dBdT, dBdw, dBdn, dBdv, sps_path(:,i) )
+            & dBdT, dBdw, dBdn, dBdv, sps )
         else
           call create_beta_path ( path_inds, p_path, t_path, frq,   &
             & beta_group(i)%lbl(sx)%ratio(n),                       &
@@ -159,9 +177,8 @@ contains
         end if
       end do
 
-      ! Convert specific humidity to relative humidity?
       if ( beta_group(i)%molecule == l_rhi ) then
-        es = exp(RHa - RHb/t_path) / p_path(path_inds)
+        ! Convert specific humidity to relative humidity?
         beta_path(:,i) = beta_path(:,i) * es
         if ( associated(dBdT) ) &
           & dBdT = es * dBdT + RHb / t_path**2 * beta_path(:,i)
@@ -283,8 +300,15 @@ contains
         end if
       end do ! n = 1, size(beta_group(i)%pfa(sx)%molecules)
 
-      ! Convert specific humidity to relative humidity?
       if ( beta_group(i)%molecule == l_rhi ) then
+        !{ Convert specific humidity to relative humidity
+        ! \begin{equation}\begin{split}
+        ! e_s =\,& \frac1P \exp\left(19.6783-\frac{6140.4}T\right)\\
+        ! \beta^{\text{RHi}} =\,& \beta^{\text{H}_2\text{O}} e_s\\
+        ! \frac{\partial \beta^{\text{RHi}}}{\partial T} =\,&
+        !  e_s \frac{\partial \beta^{\text{H}_2\text{O}}}{\partial T} +
+        !  \frac{6140.4}{T^2} \beta^{\text{RHi}}
+        ! \end{split}\end{equation}
         es = exp(RHa - RHb/t_path) / p_path(path_inds)
         beta_path(:,i) = beta_path(:,i) * es
         if ( associated(dBdT) ) &
@@ -721,7 +745,9 @@ contains
     real(rp), pointer :: dBeta_dv(:) ! line position derivative
 
 ! Optional inputs for H2O -- optional so PFA table generation can ignore it
-    real(rp), intent(in), optional :: Sps_Path(:) ! Mixing ratios
+    real(rp), intent(in), optional :: Sps_Path(:) ! Mixing ratios on the
+                                     ! current part of the path -- as for
+                                     ! temperature, not pressure
 
 ! -----     Local variables     ----------------------------------------
 
@@ -789,15 +815,15 @@ contains
         if ( present(sps_path) ) then
           if ( temp_der ) then
             call abs_cs_h2o_cont_dT ( slabs_0(k)%catalog%continuum, temp(j), &
-              & pressure(k), fgr, sps_path(k), bv, dBdT )
+              & pressure(k), fgr, ratio*sps_path(j), bv, dBdT )
             beta_value(j) = beta_value(j) + ratio * bv
             dBeta_dT(j) = dBeta_dT(j) + ratio * dBdT
           else
             beta_value(j) = beta_value(j) + ratio * &
               & abs_cs_h2o_cont(slabs_0(k)%catalog%continuum,Temp(j), &
-              & Pressure(k),Fgr,sps_path(k))
+              & Pressure(k),Fgr,ratio*sps_path(j))
           end if
-        else ! Same as case default
+        else ! Same as case default for slabs_0(k)%catalog%molecule
           if ( temp_der ) then
             call abs_cs_cont_dT ( slabs_0(k)%catalog%continuum, temp(j), &
               & pressure(k), fgr, bv, dBdT )
@@ -1166,14 +1192,15 @@ contains
     onedt = 1.0 / temperature
     temp_ratio = 300.0 * onedt
     beta = cont(1) * psq * fsq * ( temp_ratio**cont(2) )
-    dBeta_dT = cont(2)
+    dBeta_dT = cont(2) * beta
     if ( present(sps) ) then
       dBdf = cont(3) * psq * fsq * ( temp_ratio**cont(4) )
       if ( present(dBeta_df) ) dBeta_df = dBdf
-      beta = beta + dBdf * sps
-      dBeta_dT = dBeta_dT + cont(4)
+      dBdf = dBdf * sps
+      beta = beta + dBdf
+      dBeta_dT = dBeta_dT + cont(4) * dBdf
     end if
-    dBeta_dT = - dBeta_dT * beta * onedt
+    dBeta_dT = - dBeta_dT * onedt
 
   end subroutine Abs_CS_H2O_Cont_dT
 
@@ -1313,6 +1340,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.92  2008/02/29 01:59:39  vsnyder
+! Added a separate H2O continuum routine
+!
 ! Revision 2.91  2007/05/23 22:44:24  vsnyder
 ! New slabs structure
 !
