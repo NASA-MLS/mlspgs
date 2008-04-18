@@ -1059,12 +1059,14 @@ contains ! ======================= Public Procedures =========================
   ! -----------------------------------  MakeHDF5Attribute_textFile  -----
   subroutine MakeHDF5Attribute_textFile ( textFile, itemID, name , &
    & skip_if_already_there )
+    use MLSFiles, only: textFile_to_Chars
     integer, intent(in) :: ITEMID       ! Group etc. to make attr to.
     character (len=*), intent(in) :: NAME ! Name of attribute
     character (len=*), intent(in) :: TEXTFILE ! name of textfile
     logical, intent(in), optional :: SKIP_IF_ALREADY_THERE
 
     ! Local variables
+    logical, parameter :: USINGDIRECTACCESS = .false.
     integer :: ATTRID                   ! ID for attribute
     integer :: DSID                     ! ID for dataspace
     integer :: firstChar, lastChar
@@ -1082,15 +1084,20 @@ contains ! ======================= Public Procedures =========================
     ! Executable code
     call MLSMessageCalls( 'push', constantName='MakeHDF5Attribute_textFile' )
     ! Try to read the textfile
-    call GET_LUN ( LUN )
-    open(UNIT=lun, access='direct', recl=MAXTEXTSIZE, &
-      & file=trim(textFile), status='old', iostat=status )
-    if ( status /= 0 ) then
-      call MLSMessage(MLSMSG_Warning, ModuleName, &
-        & 'Unable to write attribute--failed to open textfile' )
-      return
+    if ( USINGDIRECTACCESS ) then
+      call GET_LUN ( LUN )
+      open(UNIT=lun, access='direct', recl=MAXTEXTSIZE, &
+        & file=trim(textFile), status='old', iostat=status )
+      if ( status /= 0 ) then
+        call MLSMessage(MLSMSG_Warning, ModuleName, &
+          & 'Unable to write attribute--failed to open textfile' )
+        return
+      endif
+      read(UNIT=lun, REC=1, IOSTAT=status) value
+    else
+      call textFile_to_Chars( trim(textFile), value )
+      status = 0
     endif
-    read(UNIT=lun, REC=1, IOSTAT=status) value
     if ( status /= 0 ) then
       call MLSMessage(MLSMSG_Warning, ModuleName, &
         & 'Unable to write attribute--failed to read textfile' )
@@ -2875,12 +2882,14 @@ contains ! ======================= Public Procedures =========================
 
   ! --------------------------------------  SaveAsHDF5DS_textFile  -----
   subroutine SaveAsHDF5DS_textFile ( textFile, locID, name )
+    use MLSFiles, only: textFile_to_Chars
     ! This routine writes the contents of a textfile as a char-valued dataset
     integer, intent(in) :: LOCID           ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME  ! Name for this dataset
     character (len=*), intent(in) :: textFile ! Name of the textfile
 
     ! Local variables
+    logical, parameter :: USINGDIRECTACCESS = .false.
     integer :: spaceID                  ! ID for dataspace
     integer (HID_T) :: setID            ! ID for dataset
     integer :: status                   ! Flag from HDF5
@@ -2893,15 +2902,20 @@ contains ! ======================= Public Procedures =========================
     ! Executable code
     call MLSMessageCalls( 'push', constantName='SaveAsHDF5DS_textFile' )
     ! Try to read the textfile
-    call GET_LUN ( LUN )
-    open(UNIT=lun, access='direct', recl=MAXTEXTSIZE, &
-      & file=trim(textFile), status='old', iostat=status )
-    if ( status /= 0 ) then
-      call MLSMessage(MLSMSG_Warning, ModuleName, &
-        & 'Unable to write dataset--failed to open textfile' )
-      return
+    if ( USINGDIRECTACCESS ) then
+      call GET_LUN ( LUN )
+      open(UNIT=lun, access='direct', recl=MAXTEXTSIZE, &
+        & file=trim(textFile), status='old', iostat=status )
+      if ( status /= 0 ) then
+        call MLSMessage(MLSMSG_Warning, ModuleName, &
+          & 'Unable to write dataset--failed to open textfile' )
+        return
+      endif
+      read(UNIT=lun, REC=1, IOSTAT=status) value
+    else
+      call textFile_to_Chars( trim(textFile), value )
+      status = 0
     endif
-    read(UNIT=lun, REC=1, IOSTAT=status) value
     if ( status /= 0 ) then
       call MLSMessage(MLSMSG_Warning, ModuleName, &
         & 'Unable to read textfile' )
@@ -5930,6 +5944,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.79  2008/04/18 16:29:06  pwagner
+! Now works properly with NAG, Lahey, and Intel
+!
 ! Revision 2.78  2008/03/07 01:35:47  pwagner
 ! Will subdivide attributes into blocks if too large
 !
