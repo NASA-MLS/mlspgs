@@ -2470,25 +2470,10 @@ contains ! =====     Public Procedures     =============================
         & "No profiles in this chunk", MLSFile=L2GPFile )
 
     else
-      ! actual_ntimes = l2gp%nTimes
-      ! l2gp%nTimes = max(myLastProfile - offset + 1, 1)
-      if ( .not. swath_exists ) then
-        call MLSMessage ( MLSMSG_Warning, ModuleName, &
-            & "You already wrote when you created a swath in AppendL2GPData" )
-      else
-        call OutputL2GP_writeGeo_MF (l2gp, l2GPFile, &
-          & myswathName, offset)
-        call OutputL2GP_writeData_MF (l2gp, l2GPFile, &
-          & myswathName, offset)
-        ! Write the swath all over again if we
-        ! expect the HDFEOS bug to take effect
-        !if ( l2gp%nTimes > numProfs ) then
-        !  call OutputL2GP_writeGeo_MF (l2gp, l2GPFile, &
-        !    & myswathName, offset)
-        !  call OutputL2GP_writeData_MF (l2gp, l2GPFile, &
-        !    & myswathName, offset)
-        !endif
-      endif
+      call OutputL2GP_writeGeo_MF (l2gp, l2GPFile, &
+        & myswathName, offset)
+      call OutputL2GP_writeData_MF (l2gp, l2GPFile, &
+        & myswathName, offset)
       select case ( L2GPFile%HDFVersion )
       case ( HDFVERSION_4 )
       case ( HDFVERSION_5 )
@@ -4514,6 +4499,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.155  2008/02/28 01:27:06  pwagner
+! Worked around an apparent bug in HDFEOS5 when adding to swath fields
+!
 ! Revision 2.154  2008/01/24 23:33:04  pwagner
 ! when diffing, matchtimes will try to match either times or geod. angle
 !
