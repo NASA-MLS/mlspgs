@@ -124,9 +124,9 @@ module MLSFiles               ! Utility file routines
 !                      (to be operated on by single-argument functions)
 ! RmFileFromDataBase Removes a FileName, id, etc. from the database
 ! split_path_name    splits the input path/name into path and name
-! TextFile_to_chars  reads a text file into a single character string
+! TextFile_to_chars  reads a text file into a character string or array
 ! transfer_MLSFile   Changes the path of an mlsFile
-! unmaskname         Recover file name from maskzed form
+! unmaskname         Recover file name from masked form
 ! unsplitname        Split File name -> catenated: '..DGG13..' -> 'DGG'
 ! === (end of toc) ===
 
@@ -289,12 +289,16 @@ module MLSFiles               ! Utility file routines
     module procedure mls_openFileType
   end interface
 
-    character (len=*), parameter :: accesses = 'rdonly,write,rdwrite,create,nonhdf'
-    integer, dimension(5), parameter :: accessTypes = &
-      & (/ DFACC_RDONLY, DFACC_RDWR, DFACC_RDWR, DFACC_CREATE, PGSd_IO_Gen_RSeqFrm/)
-    character (len=*), parameter :: hdfmodes = 'hg,sw,gd,za'
-    character (len=*), parameter :: modes = 'op,hg,sw,gd,za,bin,pg'
-    character (len=*), parameter :: types = 'ascii,hdf,swath,grid,zonalavg,binary,tkgen'
+  interface textFile_to_Chars
+    module procedure textFile_to_Chars_arr, textFile_to_Chars_sca
+  end interface
+
+  character (len=*), parameter :: accesses = 'rdonly,write,rdwrite,create,nonhdf'
+  integer, dimension(5), parameter :: accessTypes = &
+    & (/ DFACC_RDONLY, DFACC_RDWR, DFACC_RDWR, DFACC_CREATE, PGSd_IO_Gen_RSeqFrm/)
+  character (len=*), parameter :: hdfmodes = 'hg,sw,gd,za'
+  character (len=*), parameter :: modes = 'op,hg,sw,gd,za,bin,pg'
+  character (len=*), parameter :: types = 'ascii,hdf,swath,grid,zonalavg,binary,tkgen'
 
   type(MLSFile_T), save :: MLSFile_save
   logical, parameter :: DeeBug = .false.
@@ -399,8 +403,7 @@ contains
   function AreTheSameFile ( File1, File2 ) &
     & result(SooDesu)
 
-  ! This routine initializes an MLSFile, and adds it to database
-  ! returning a pointer to the new entry
+  ! This routine checks whether the two inputs name the same file
 
     ! Dummy arguments
     type (MLSFile_T), intent(in) :: File1
@@ -721,6 +724,8 @@ contains
 ! ---------------------------------------------- maskName ------
 
 ! This function returns the name plus a masking portion
+! We do this to fool the parser into thinking it's not seen
+! this name before. Otherwise the parser may not preserve its case.
 
   function maskName(inName) result(outName)
   character(len=*), intent(in)     :: inName        ! Name to be masked
@@ -1851,18 +1856,32 @@ contains
 
   ! --------------------------------------------  textFile_to_Chars  -----
 
-  ! read the contents of a text file into a single character string
+  ! read the contents of a text file into a character string or array
 
-  subroutine textFile_to_Chars ( textFile, value )
+  subroutine textFile_to_Chars_arr ( textFile, value, nLines, maxLineLen )
     ! Args
     character(len=*), intent(in)  :: textFile ! path and name of text file
-    character(len=*), intent(out) :: value    ! its contents
+    character(len=*), dimension(:), intent(inout) :: value    ! its contents
+    integer, optional, intent(out) :: nLines
+    integer, optional, intent(in) :: maxLineLen
     ! Internal variables
     integer :: lun
     integer :: status
     ! Try to read the textfile
-    call read_textFile( textFile, value )
-  end subroutine textFile_to_Chars
+    call read_textFile( textFile, value, nLines, maxLineLen )
+  end subroutine textFile_to_Chars_arr
+
+  subroutine textFile_to_Chars_sca ( textFile, value, maxLineLen )
+    ! Args
+    character(len=*), intent(in)  :: textFile ! path and name of text file
+    character(len=*), intent(out) :: value    ! its contents
+    integer, optional, intent(in) :: maxLineLen
+    ! Internal variables
+    integer :: lun
+    integer :: status
+    ! Try to read the textfile
+    call read_textFile( textFile, value, maxLineLen )
+  end subroutine textFile_to_Chars_sca
 
   ! --------------------------------------------  release_MLSFile  -----
 
@@ -2608,6 +2627,8 @@ contains
 ! ---------------------------------------------- unMaskName ------
 
 ! This function returns the name minus its masking portion
+! We do this to fool the parser into thinking it's not seen
+! this name before. Otherwise the parser may not preserve its case.
 
   function unMaskName(inName) result(outName)
   character(len=*), intent(in)     :: inName        ! Name to be unmasked
@@ -2724,6 +2745,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.82  2008/04/18 16:32:30  pwagner
+! read_textFile can return value array; optional arg maxLineLen added
+!
 ! Revision 2.81  2008/03/11 00:09:54  pwagner
 ! Uses read_textFile from io_stuff
 !
