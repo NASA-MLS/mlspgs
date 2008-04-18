@@ -228,12 +228,14 @@ contains ! ======================= Public Procedures =========================
     & ATTRNAME )
     ! Write contents of text file as global attribute
     ! E.g., may wish to include leap sec file or utc pole
+    use MLSFiles, only: textFile_to_Chars
     use MLSHDF5, only: MAXCHATTRLENGTH, MAXCHFIELDLENGTH
 
     character (len=*), intent(in) :: TEXTFILE ! name of textfile
     integer, intent(in) :: FILEID      ! File ID
     character(len=*), intent(in) :: ATTRNAME     ! Attribute name
     ! Internal variables
+    logical, parameter :: USINGDIRECTACCESS = .false.
     character(len=MAXCHFIELDLENGTH) :: BUFFER  ! Buffer to hold contents
     integer :: firstChar, lastChar
     integer :: iblock, nblocks
@@ -245,15 +247,20 @@ contains ! ======================= Public Procedures =========================
     !
     call MLSMessageCalls( 'push', constantName='MLS_EHWRGLATT_textfile' )
     ! Try to read the textfile
-    call GET_LUN ( LUN )
-    open(UNIT=lun, access='direct', recl=MAXCHFIELDLENGTH, &
-      & file=trim(textFile), status='old', iostat=status )
-    if ( status /= 0 ) then
-      call MLSMessage(MLSMSG_Warning, ModuleName, &
-        & 'Unable to write attribute--failed to open textfile' )
-      return
+    if ( USINGDIRECTACCESS ) then
+      call GET_LUN ( LUN )
+      open(UNIT=lun, access='direct', recl=MAXCHFIELDLENGTH, &
+        & file=trim(textFile), status='old', iostat=status )
+      if ( status /= 0 ) then
+        call MLSMessage(MLSMSG_Warning, ModuleName, &
+          & 'Unable to write attribute--failed to open textfile' )
+        return
+      endif
+      read(UNIT=lun, REC=1, IOSTAT=status) BUFFER
+    else
+      call textFile_to_Chars( trim(textFile), BUFFER )
+      status = 0
     endif
-    read(UNIT=lun, REC=1, IOSTAT=status) BUFFER
     if ( status /= 0 ) then
       call MLSMessage(MLSMSG_Warning, ModuleName, &
         & 'Unable to write attribute--failed to read textfile' )
@@ -2148,6 +2155,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDFEOS
 
 ! $Log$
+! Revision 2.34  2008/04/18 16:29:30  pwagner
+! Now works properly with NAG, Lahey, and Intel
+!
 ! Revision 2.33  2008/03/07 01:36:08  pwagner
 ! Will subdivide attributes into blocks if too large
 !
