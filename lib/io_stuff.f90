@@ -25,6 +25,10 @@ module IO_STUFF
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
+  interface read_textfile
+    module procedure read_textfile_arr, read_textfile_sca
+  end interface
+
 contains
 
 ! ================================================     GET_LUN     =====
@@ -46,32 +50,88 @@ contains
     return
   end subroutine GET_LUN
 
-  subroutine READ_TEXTFILE ( File, string )
-  ! read a textfile into string
+  !------------------ read_textfile
+  ! Notes and limitations:
+  ! formatted io
+  ! No line should be longer than 512 characters
+  ! (To get around that limitation supply optional arg maxLineLen)
+  subroutine READ_TEXTFILE_arr ( File, string, nLines, maxLineLen )
+  ! read a textfile into string array, one line per element
     character(len=*), intent(in)  :: File ! its path and name
-    character(len=*), intent(out) :: string    ! its contents
+    character(len=*), dimension(:), intent(inout) :: string    ! its contents
+    integer, optional, intent(out) :: nLines ! num lines read
+    integer, optional, intent(in) :: maxLineLen
     ! Internal variables
     integer :: lun
     integer :: recrd
     integer :: status
     character(len=len(string)) :: tempStr
+    character(len=8) :: xfmt
+    character(len=6) :: xlen
+    ! What format do we use for reading each line?
+    xfmt = '(a512)' ! This is the default; if lines are larger supply maxLineLen
+    if ( present(maxLineLen) ) then
+     write( xlen, '(i6)' ) maxLineLen
+     if ( len(string) < maxLineLen ) write( xlen, '(i6)' ) len(string)
+     if ( index(xlen, '*') < 1 ) xfmt = '(a' // trim(adjustl(xlen)) // ')'
+    endif
+    ! Try to read the textfile
+    ! Don't change unread elements
+    ! string = " " 
+    if ( present(nLines) ) nLines = 0
+    call GET_LUN ( LUN )
+    open(UNIT=lun, form='formatted', &
+      & file=trim(File), status='old', iostat=status )
+    if ( status /= 0 ) then
+      write(*,*) 'IO_STUFF%READ_TEXTFILE_ARR-E- Unable to open textfile'
+      return
+    endif
+    recrd = 0
+    do
+      read( UNIT=lun, fmt=xfmt, IOSTAT=status ) tempStr
+      if ( status /= 0 ) exit
+      recrd = recrd + 1
+      string(recrd) = tempStr
+    enddo
+    if ( present(nLines) ) nLines = recrd
+    close( UNIT=lun, iostat=status )
+  end subroutine READ_TEXTFILE_arr
+
+  subroutine READ_TEXTFILE_sca ( File, string, maxLineLen )
+  ! read a textfile into sa single tring
+    character(len=*), intent(in)  :: File ! its path and name
+    character(len=*), intent(out) :: string    ! its contents
+    integer, optional, intent(in) :: maxLineLen
+    ! Internal variables
+    integer :: lun
+    integer :: recrd
+    integer :: status
+    character(len=len(string)) :: tempStr
+    character(len=8) :: xfmt
+    character(len=6) :: xlen
+    ! What format do we use for reading each line?
+    xfmt = '(a512)' ! This is the default; if lines are larger supply maxLineLen
+    if ( present(maxLineLen) ) then
+     write( xlen, '(i6)' ) maxLineLen
+     if ( index(xlen, '*') < 1 ) xfmt = '(a' // trim(adjustl(xlen)) // ')'
+    endif
     ! Try to read the textfile
     string = " "
     call GET_LUN ( LUN )
     open(UNIT=lun, form='formatted', &
       & file=trim(File), status='old', iostat=status )
     if ( status /= 0 ) then
-      write(*,*) 'IO_STUFF%READ_TEXTFILE-E- Unable to open textfile'
+      write(*,*) 'IO_STUFF%READ_TEXTFILE_SCA-E- Unable to open textfile'
       return
     endif
-    read( UNIT=lun, IOSTAT=status ) string
+    read( UNIT=lun, fmt=xfmt, IOSTAT=status ) string
     do
-      read( UNIT=lun, IOSTAT=status ) tempStr
+      read( UNIT=lun, fmt=xfmt, IOSTAT=status ) tempStr
       if ( status /= 0 ) exit
       string = trim(string) // achar(13) // tempStr
     enddo
     close( UNIT=lun, iostat=status )
-  end subroutine READ_TEXTFILE
+  end subroutine READ_TEXTFILE_sca
 
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
@@ -85,6 +145,9 @@ contains
 end module IO_STUFF
 
 ! $Log$
+! Revision 2.7  2008/04/18 16:28:26  pwagner
+! Now works properly with NAG, Lahey, and Intel
+!
 ! Revision 2.6  2008/03/11 00:09:11  pwagner
 ! Added read_textfile; should work for more compilers
 !
