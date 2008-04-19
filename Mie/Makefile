@@ -20,16 +20,16 @@ PLAT=   IFC.Linux
 .SUFFIXES:
 .SUFFIXES: .o .dbg.o .f90 .f .c
 
-vpath %.f math77/ $(MATH77)/
+vpath %.f $(MATH77)/
 
-.f.o:
+%.o: %.f
 	$(FC) -c -o $@ $(FOPTS) $<
 
 all: Mie_Tables
 
 # amach has a test that is subverted by optimization
-amach.o: math77/amach.f
-	$(FC) -c -g math77/amach.f
+amach.o: $(MATH77)/amach.f
+	$(FC) -c -g $(MATH77)/amach.f
 
 ice_size_distribution.mod Ice_Size_Distribution.o: Ice_Size_Distribution.f90
 	$(FC) -c $(FOPTS) Ice_Size_Distribution.f90 -I $(HOME)/mlspgs/lib/$(PLAT)
@@ -70,8 +70,9 @@ Mie_Tables: Mie_Tables.o Mie_Efficiencies_m.o \
               $(HOME)/mlspgs/fwdmdl/$(PLAT)/RefractiveIndex.o 
 
 clean:
-	rm -f Mie_Efficiencies_m.o Mie_Efficiencies_m.o Mie_Tables.o \
-              amach.o dint1.o dinta.o dintdl.o dintdu.o dintf.o dintm.o \
+	rm -f Mie_Efficiencies_m.o Mie_Tables.o \
+              amach.o dcopy.o \
+              dint1.o dinta.o dintdl.o dintdu.o dintf.o dintm.o \
               dintma.o dintns.o dinto.o dintop.o dintsm.o dmess.o mess.o \
               Ice_Size_Distribution.o ice_size_distribution.mod \
               mie_efficiencies_m.mod Phase_m.o phase_m.mod P1_m.o p1_m.mod \
@@ -93,6 +94,9 @@ dmess.o: $(MATH77)/dmess.f
 mess.o: $(MATH77)/mess.f
 
 # $Log$
+# Revision 1.2  2008/04/19 01:37:27  vsnyder
+# Removed test harness makes
+#
 # Revision 1.1  2008/04/19 01:15:26  vsnyder
 # Initial commit
 #
