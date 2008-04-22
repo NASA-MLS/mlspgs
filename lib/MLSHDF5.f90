@@ -371,7 +371,7 @@ contains ! ======================= Public Procedures =========================
     integer :: attrID
     integer :: classID
     character(len=MAXCHFIELDLENGTH) :: chValue ! 1024; len may become MAXCHFIELDLENGTH
-    logical, parameter :: DEEBUG = .true.
+    ! logical, parameter :: DEEBUG = .false.
     integer, dimension(7) :: dims
     double precision, dimension(1024) :: dValue
     integer(kind=hSize_t), dimension(7) :: hdims
@@ -5944,6 +5944,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.80  2008/04/22 17:17:38  pwagner
+! Should not print extra debugging stuff
+!
 ! Revision 2.79  2008/04/18 16:29:06  pwagner
 ! Now works properly with NAG, Lahey, and Intel
 !
