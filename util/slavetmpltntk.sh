@@ -128,18 +128,9 @@ then
 . $HOME/.bashrc
 fi
 
-#This only works at the scf--change it when copying to the sips
-LASTDITCHPGSBIN="/software/toolkit/LF6.1/toolkit/bin/linux"
 #LOGFILE=${HOME}/slave.log
 PGE_ROOT=ppggeerroott
 #echo $PGE_ROOT > $LOGFILE
-if [ -r "${HOME}/mlspgs/util/tkreset.sh"  ]
-then
-#echo ${HOME}/mlspgs/util/tkreset.sh >> $LOGFILE
-#echo ". ${HOME}/mlspgs/util/tkreset.sh"  >> $LOGFILE
-#. ${HOME}/mlspgs/util/tkreset.sh  >> $LOGFILE
-. ${HOME}/mlspgs/util/tkreset.sh
-fi
 #env >> $LOGFILE
 PGSBIN=ppggssbbiinn
 #echo $PGSBIN >> $LOGFILE
@@ -149,9 +140,6 @@ then
 elif [ -r "$PGSBIN/pgs-env.ksh" ]
 then
 . $PGSBIN/pgs-env.ksh
-else
-#Last ditch--if this doesn't work we're outta here
-. $LASTDITCHPGSBIN/pgs-env.ksh
 fi
 export
 PGSMEM_USESHM=ppggssmmeemmuusseesshhmm
@@ -162,10 +150,7 @@ JOBDIR=jjoobbddiirr
 export PGSMEM_USESHM
 export FLIB_DVT_BUFFER=0
 
-# The following choice puts the outputs of all the slaves into a single file
-#LOGFILE="${JOBDIR}/pvmlog/mlsl2.log"
-
-# The next choice, in contrast, puts each slave's output into its own unique file
+# Puts each slave's output into its own unique file
 temp_file_name=`get_unique_name log -reverse`
 #OLDLOGFILE=$LOGFILE
 LOGFILE="${JOBDIR}/pvmlog/$temp_file_name"
@@ -368,3 +353,6 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.1  2008/04/04 20:51:22  pwagner
+# first commit
+#
