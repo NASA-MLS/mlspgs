@@ -209,18 +209,6 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
           $(RECFG)
 
 depends:
-ifdef CASCADE
-	temp_name_1=`${UNIQUE_NAME} 1` ;\
-	$(MLSBIN)/makemakedep.sh -nodep -p $$temp_name_1 $(OMIT_PREFXD) ; \
-     mv $$temp_name_1 Makefile.nodep
-	temp_name_1=`${UNIQUE_NAME} 1` ;\
-	$(MLSBIN)/makemakedep.sh -p $$temp_name_1 $(OMIT_PREFXD) ; \
-     mv $$temp_name_1 Makefile.dep
-else
-	$(MAKE) depends--mod
-endif
-
-depends--mod:
 	$(MLSBIN)/makemakedep.sh -p $(PLATFORMS)/$(MLSCONFG)/Makefile.dep \
    $(OMIT_PREFXD) $(UP_OR_LOW)
 
@@ -283,6 +271,9 @@ targ:
 	$(TAR) hcvzf ../libmlspack.tgz * --exclude \*.o --exclude \*.mod
 
 # $Log$
+# Revision 1.11  2007/05/31 18:31:02  pwagner
+# Added Absoft to list of tested compilers
+#
 # Revision 1.10  2007/04/13 20:15:18  pwagner
 # Changes in line with Intel v9.1
 #
