@@ -306,14 +306,6 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
           $(RECFG)
 
 depends:
-ifdef CASCADE
-	$(MLSBIN)/makemakedep.sh -nodep -p Makefile.nodep $(OMIT_PREFXD)
-	$(MLSBIN)/makemakedep.sh $(OMIT_PREFXD) $(depends_where) 
-else
-	$(MAKE) depends--mod
-endif
-
-depends--mod:
 	$(MLSBIN)/makemakedep.sh -p $(PLATFORMS)/$(MLSCONFG)/Makefile.dep \
    $(OMIT_PREFXD) $(UP_OR_LOW) \
    $(CUSTOM_PREFXD) $(depends_where)
@@ -376,6 +368,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.69  2008/04/22 17:18:03  pwagner
+# CASCADE no longer affects where Makefile.dep goes
+#
 # Revision 2.68  2007/06/08 22:01:17  vsnyder
 # Stuff for .F90 files
 #
