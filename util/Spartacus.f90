@@ -456,6 +456,10 @@ program Spartacus
           call TimeStamp ( CmdID, advance='yes')
         endif
 
+        ! Send news back to l2 queue manager
+        call TellL2QMachineFinished( &
+          & trim(machines(machine)%name), machines(machine)%tid, L2Qtid, &
+          & FIXDELAYFORSLAVETOFINISH )
         ! Now update our information
         CmdsCompleted(CmdID) = .true.
         CmdTids(CmdID) = 0
@@ -466,10 +470,6 @@ program Spartacus
         if ( options%verbose ) then
           call printMasterStatus
         end if
-        ! Send news back to l2 queue manager
-        call TellL2QMachineFinished( &
-          & trim(machines(machine)%name), machines(machine)%tid, L2Qtid, &
-          & FIXDELAYFORSLAVETOFINISH )
       end if
 
     else if ( bufferIDRcv < 0 ) then
@@ -1154,3 +1154,6 @@ contains
 end program Spartacus
 
 ! $Log$
+! Revision 1.1  2008/04/09 17:13:54  pwagner
+! First commit
+!
