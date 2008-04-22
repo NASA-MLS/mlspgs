@@ -609,8 +609,9 @@ install:
            echo "enter  make install L2PARALLEL=yes" ;\
 			else \
            echo "Installing level 2 parallel executables into $(INSTALLDIR)"; \
-           cp -a $(MLSBIN)/jobstat-sips.sh $(MLSBIN)/mlsl2p.sh \
-            $(MLSBIN)/slavetmplt.sh $(MLSBIN)/../scripts/mlsqlog-scan-sips.py \
+           cp -a $(MLSBIN)/jobstat-sips.sh $(MLSBIN)/../scripts/mlsqlog-scan-sips.py \
+            $(MLSBIN)/mlsl2p.sh $(MLSBIN)/slavetmplt.sh \
+            $(MLSBIN)/mlsl2pntk.sh $(MLSBIN)/slavetmpltntk.sh \
             $(INSTALLDIR); \
            chmod a+x $(INSTALLDIR)/*.sh $(INSTALLDIR)/*.py; \
            echo "(Don't forget to scp them to your cluster)"; \
@@ -1166,6 +1167,9 @@ tools: chunktimes checkpvmup compare dateconverter heconvert h5subset h5cat hl \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.108  2008/04/10 20:21:05  pwagner
+# Can build Spartacus
+#
 # Revision 1.107  2007/03/23 22:30:55  pwagner
 # Fixed inadvertant commenting-out of utctotai_sources
 #
