@@ -251,13 +251,7 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
 
 depends:
 	if [ "$(PREPRO)" != "" ] ; then make $(PREPRO) ; fi
-ifdef CASCADE
-	$(MLSBIN)/makemakedep.sh -p Makefile.nodep -nodep $(OMIT_PREFXD)
-	$(MLSBIN)/makemakedep.sh $(OMIT_PREFXD) \
-     ./machines/$(MLSCONFG) $(srclib) $(libblas_sources)
-else
 	$(MAKE) depends--mod
-endif
 	if [ "$(PREPRO)" != "" ] ; then \
         temp=""; \
         for f in $(PREPRO); do temp="$$temp -e s/$$f/`basename $$f .f90`.F90/"; \
@@ -329,6 +323,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.55  2008/04/22 17:16:45  pwagner
+# CASCADE no longer affects where Makefile.dep goes
+#
 # Revision 2.54  2007/05/31 18:31:03  pwagner
 # Added Absoft to list of tested compilers
 #

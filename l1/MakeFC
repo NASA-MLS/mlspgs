@@ -242,16 +242,6 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
           $(RECFG)
 
 depends:
-ifdef CASCADE
-	$(MLSBIN)/makemakedep.sh -nodep -p Makefile.nodep \
-      $(OMIT_PREFXD) $(DRIVERS_PREFXD)
-	$(MLSBIN)/makemakedep.sh $(OMIT_PREFXD) $(DRIVERS_PREFXD) \
-      $(libmls_sources) $(srclib) 
-else
-	$(MAKE) depends--mod
-endif
-
-depends--mod:
 	$(MLSBIN)/makemakedep.sh -p $(PLATFORMS)/$(MLSCONFG)/Makefile.dep \
     $(OMIT_PREFXD) $(DRIVERS_PREFXD) $(UP_OR_LOW) $(CUSTOM_PREFXD) \
 	    $(libmls_sources) $(srclib)
@@ -317,6 +307,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl1
 
 # $Log$
+# Revision 2.55  2008/04/22 17:20:21  pwagner
+# CASCADE no longer affects where Makefile.dep goes
+#
 # Revision 2.54  2007/05/31 18:31:02  pwagner
 # Added Absoft to list of tested compilers
 #
