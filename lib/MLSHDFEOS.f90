@@ -41,18 +41,17 @@ module MLSHDFEOS
   use HE5_SWAPI_REAL, only: HE5_EHWRGLATT_REAL, HE5_EHRDGLATT_REAL, &
     & HE5_SWRDFLD_REAL, HE5_SWRDFLD_REAL_2D, HE5_SWRDFLD_REAL_3D, &
     & HE5_SWWRFLD_REAL, HE5_SWWRFLD_REAL_2D, HE5_SWWRFLD_REAL_3D
-  use IO_STUFF, only: get_lun
   use MLSCommon, only: MLSFile_T
   use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, &
     & mls_hdf_version
   use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
     & MLSMessage, MLSMessageCalls
-  use MLSStringLists, only: GetStringElement, NumStringElements, StringElementNum
+  use MLSStringLists, only: StringElementNum
   use MLSStrings, only: Replace
   use SWAPI_DOUBLE, only: SWRDFLD_DOUBLE, SWRDFLD_DOUBLE_2D, SWRDFLD_DOUBLE_3D, &
     &                     SWWRFLD_DOUBLE, SWWRFLD_DOUBLE_2D, SWWRFLD_DOUBLE_3D
-  use SWAPI_INTEGER, only: SWRDFLD_INTEGER, SWRDFLD_INTEGER_2D, SWRDFLD_INTEGER_3D, &
-    &                      SWWRFLD_INTEGER, SWWRFLD_INTEGER_2D, SWWRFLD_INTEGER_3D
+  use SWAPI_INTEGER, only: SWRDFLD_INTEGER, &
+    &                      SWWRFLD_INTEGER
   use SWAPI_REAL, only: SWRDFLD_REAL, SWRDFLD_REAL_2D, SWRDFLD_REAL_3D, &
     &                   SWWRFLD_REAL, SWWRFLD_REAL_2D, SWWRFLD_REAL_3D
 
@@ -225,7 +224,7 @@ contains ! ======================= Public Procedures =========================
   end function MLS_EHWRGLATT_char
 
   integer function MLS_EHWRGLATT_textfile ( textFile, FILEID, &
-    & ATTRNAME )
+    & ATTRNAME, maxLineLen )
     ! Write contents of text file as global attribute
     ! E.g., may wish to include leap sec file or utc pole
     use MLSFiles, only: textFile_to_Chars
@@ -234,8 +233,8 @@ contains ! ======================= Public Procedures =========================
     character (len=*), intent(in) :: TEXTFILE ! name of textfile
     integer, intent(in) :: FILEID      ! File ID
     character(len=*), intent(in) :: ATTRNAME     ! Attribute name
+    integer, optional, intent(in) :: maxLineLen
     ! Internal variables
-    logical, parameter :: USINGDIRECTACCESS = .false.
     character(len=MAXCHFIELDLENGTH) :: BUFFER  ! Buffer to hold contents
     integer :: firstChar, lastChar
     integer :: iblock, nblocks
@@ -247,20 +246,8 @@ contains ! ======================= Public Procedures =========================
     !
     call MLSMessageCalls( 'push', constantName='MLS_EHWRGLATT_textfile' )
     ! Try to read the textfile
-    if ( USINGDIRECTACCESS ) then
-      call GET_LUN ( LUN )
-      open(UNIT=lun, access='direct', recl=MAXCHFIELDLENGTH, &
-        & file=trim(textFile), status='old', iostat=status )
-      if ( status /= 0 ) then
-        call MLSMessage(MLSMSG_Warning, ModuleName, &
-          & 'Unable to write attribute--failed to open textfile' )
-        return
-      endif
-      read(UNIT=lun, REC=1, IOSTAT=status) BUFFER
-    else
-      call textFile_to_Chars( trim(textFile), BUFFER )
-      status = 0
-    endif
+    call textFile_to_Chars( trim(textFile), BUFFER, maxLineLen )
+    status = 0
     if ( status /= 0 ) then
       call MLSMessage(MLSMSG_Warning, ModuleName, &
         & 'Unable to write attribute--failed to read textfile' )
@@ -2155,6 +2142,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDFEOS
 
 ! $Log$
+! Revision 2.35  2008/04/25 22:51:44  pwagner
+! Passes optional arg maxLineLen through to textFile_to_Chars
+!
 ! Revision 2.34  2008/04/18 16:29:30  pwagner
 ! Now works properly with NAG, Lahey, and Intel
 !
