@@ -676,10 +676,7 @@ CONTAINS
 
    subroutine WriteLeapSecHDFEOSAttr (fileID)
      ! Write contents of leapsec file as hdfeos5 attribute to file
-    use MLSHDFEOS, only: he5_EHwrglatt, mls_EHwrglatt
-    use MLSSets, only: FindFirst
-    use MLSHDF5, only: MAXCHFIELDLENGTH
-    use HDFEOS5, only: MLS_charType
+    use MLSHDFEOS, only: mls_EHwrglatt
      ! Args
      integer, intent(in) :: fileID
      ! Internal variables
@@ -1012,10 +1009,7 @@ CONTAINS
 
    subroutine WriteutcPoleHDFEOSAttr (fileID)
      ! Write contents of utcPole file as hdfeos5 attribute to file
-    use MLSHDFEOS, only: he5_EHwrglatt, mls_EHwrglatt
-    use MLSSets, only: FindFirst
-    use MLSHDF5, only: MAXCHFIELDLENGTH
-    use HDFEOS5, only: MLS_charType
+    use MLSHDFEOS, only: mls_EHwrglatt
      ! Args
      integer, intent(in) :: fileID
      ! Internal variables
@@ -1180,6 +1174,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.45  2008/04/25 22:52:47  pwagner
+!# Remove unused 'use ..'
+!#
 !# Revision 2.44  2008/03/07 01:37:36  pwagner
 !# Relies on MLSHDFEOS to subdivide long textfiles into attributes
 !#
