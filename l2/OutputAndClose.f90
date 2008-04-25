@@ -1129,15 +1129,13 @@ contains ! =====     Public Procedures     =============================
   ! ---------------------------------------------  OutputL2CF  -----
   subroutine OutputL2CF ( fileName, DEBUG, filedatabase )
     ! Do the work of outputting the l2cf to a named file
-    use Intrinsic, only: l_hdf, l_ascii
+    use Intrinsic, only: l_hdf
     use MLSCommon, only: MLSFile_T, FileNameLen
     use MLSL2Options, only: checkPaths, TOOLKIT
     use MLSFiles, only: AddInitializeMLSFile, &
       & GetMLSFileByName, GetMLSFileByType, GetPCFromRef, &
       & mls_closeFile, mls_openFile, &
-      & readnchars, reserve_MLSFile, split_path_name, textFile_to_chars
-    use MLSNumerics, only: Battleship
-    use MLSStrings, only: Replace
+      & split_path_name
     use MLSHDF5, only: SaveAsHDF5DS
     use MLSPCF2, only: mlspcf_l2dgm_start, mlspcf_l2dgm_end
     ! Args
@@ -1145,21 +1143,15 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in)                     :: DEBUG ! Print lots?
     type(MLSFile_T), dimension(:), pointer  :: filedatabase
     ! Internal variables
-    integer, parameter                      :: MAXL2CFSIZE = 2000000
-    character(LEN=MAXL2CFSIZE)              :: L2CFTEXT
-    ! character(len=1), dimension(MAXL2CFSIZE) :: l2cfarray
     type(MLSFile_T), pointer                :: MLSL2CF
     integer                                 :: status
     integer :: FileHandle
     character (len=FileNameLen) :: FullFilename
     integer :: hdfVersion               ! 4 or 5 (corresp. to hdf4 or hdf5)
-    integer :: length
     type(MLSFile_T), pointer :: outputFile
     character(len=8) :: OUTPUTTYPESTR   ! 'l2gp', 'l2aux', etc.
     character (len=132) :: path
     integer :: ReturnStatus
-    integer :: textLength
-    logical, parameter :: useExactTextLength = .true. ! NAG demands TRUE
     integer :: Version
     ! Executable
     nullify ( MLSL2CF )
@@ -1175,13 +1167,9 @@ contains ! =====     Public Procedures     =============================
         & 'Unable to write dataset--stdin has been used for l2cf' )
       return
     endif
-    ! Use the textFile_to_chars subroutine
-    call textFile_to_chars( MLSL2CF%name, l2cftext )
-    length = len_trim(l2cftext)
-
     Version = 1
     OUTPUTTYPESTR = 'l2aux'
-    ! Get the l2gp file name from the PCF
+    ! Get the l2aux file name from the PCF
 
     if ( TOOLKIT ) then
       call split_path_name(fileName, path, fileName)
@@ -1208,7 +1196,8 @@ contains ! =====     Public Procedures     =============================
           & PCBottom=mlspcf_l2dgm_start, PCTop=mlspcf_l2dgm_end)
       endif
       if ( .not. outputFile%stillOpen ) call mls_openFile( outputFile, status )
-      call SaveAsHDF5DS ( outputFile%FileID%f_id, 'l2cf', l2cftext )
+      call SaveAsHDF5DS ( MLSL2CF%name, outputFile%FileID%f_id, 'l2cf', &
+        & maxLineLen=4096 )
       call mls_closeFile( outputFile, status )
     endif
   end subroutine OutputL2CF
@@ -1425,7 +1414,7 @@ contains ! =====     Public Procedures     =============================
       & unSplitName
     use MLSHDF5, only: CpHDF5GlAttribute, MakeHDF5Attribute
     use MLSL2Options, only: CHECKPATHS, &
-      & SIPS_VERSION, SKIPDIRECTWRITES, TOOLKIT
+      & SKIPDIRECTWRITES, TOOLKIT
     use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, &
       & mlspcf_l2dgg_start, mlspcf_l2dgg_end
     use MLSSets, only: FindFirst, FindNext
@@ -1686,6 +1675,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.134  2008/04/25 22:55:29  pwagner
+! Exploits ability of SaveAsHDF5DS to take textfile as arg
+!
 ! Revision 2.133  2008/03/24 17:07:02  pwagner
 ! Removed unused procedures
 !
