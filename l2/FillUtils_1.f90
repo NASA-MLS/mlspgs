@@ -19,7 +19,7 @@ module FillUtils_1                     ! Procedures used by Fill
   use GriddedData, only: GriddedData_T, WrapGriddedData
   ! Now the literals:
   use INIT_TABLES_MODULE, only: &
-    & L_BINMAX, L_BINMEAN, L_BINMIN, L_BINTOTAL, &
+    & L_BASELINE, L_BINMAX, L_BINMEAN, L_BINMIN, L_BINTOTAL, &
     & L_BOUNDARYPRESSURE, L_CHISQBINNED, L_CHISQCHAN, &
     & L_CHISQMMAF, L_CHISQMMIF, &
     & L_CLOUDINDUCEDRADIANCE, &
@@ -43,7 +43,7 @@ module FillUtils_1                     ! Procedures used by Fill
     & L_SINGLECHANNELRADIANCE, &
     & L_STATUS, L_SYSTEMTEMPERATURE, &
     & L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, &
-    & L_TNGTGEOCALT, L_VMR, &
+    & L_TNGTGEOCALT, L_TOTALPOWERWEIGHT, L_VMR, &
     & L_XYZ, L_ZETA
   use Intrinsic, only: &
     & PHYQ_Dimensionless, PHYQ_Invalid, PHYQ_Temperature, &
@@ -169,7 +169,7 @@ module FillUtils_1                     ! Procedures used by Fill
 
   logical :: UNITSERROR               ! From expr
 
-  public :: addGaussianNoise, ApplyBaseline, DeallocateStuff, &
+  public :: addGaussianNoise, ApplyBaseline, ComputeTotalPower, DeallocateStuff, &
       & ExtractSingleChannel, FillCovariance, FillVectorQuantityFromGrid, &
       & FillVectorQuantityFromL2GP, FillVectorQtyFromProfile, FillLOSVelocity, &
       & FillChiSqChan, FillChiSqMMaf, FillChiSqMMif, FillChiSqRatio, &
@@ -611,6 +611,79 @@ contains ! =====     Public Procedures     =============================
       call Deallocate_test ( values, 'values', ModuleName )
 
     end subroutine ExplicitFillVectorQuantity
+
+    ! ------------------------------------------- ComputeTotalPower
+    subroutine ComputeTotalPower ( key, vectors )
+      use MoreTree, only: Get_Field_Id
+      use Init_tables_module, only: F_MEASUREMENTS, F_TOTALPOWERVECTOR, F_WEIGHTSVECTOR
+      use Tree, only: DECORATION, SUBTREE
+      use VectorsModule, only: GETVECTORQUANTITYBYTYPE
+
+      ! Arguments
+      integer, intent(in) :: KEY        ! Tree node
+      type (Vector_T), pointer, dimension(:) :: vectors
+
+      ! Local variables
+      integer :: J                      ! Tree index
+      integer :: FIELD                  ! Entry in tree
+      integer :: SON                    ! Tree node
+      integer :: I                      ! Loop counter
+      integer :: K                      ! Loop counter
+      integer :: S                      ! Signal loop counter
+      integer :: SIGNAL                 ! the signal we're looking for
+
+      type (Vector_T), pointer :: MEASUREMENTS ! The measurement vector to compute total power for
+      type (Vector_T), pointer :: TOTALPOWERVECTOR ! The total power vector to fill
+      type (Vector_T), pointer :: WEIGHTSVECTOR ! The vector of weights to use
+
+      type (VectorValue_T), pointer :: RADIANCES ! The radiances for this band
+      type (VectorValue_T), pointer :: THISRESULT ! The total power quantity to fill
+      type (VectorValue_T), pointer :: WEIGHTSQUANTITY ! The total power quantity to fill
+
+      real(rv) :: TOTALWEIGHT
+      
+      ! Executable code
+      do j = 2, nsons(key)
+        son = subtree(i,key)
+        field = get_field_id(son)
+        select case ( field )
+        case ( f_measurements )
+          measurements => vectors(decoration(decoration(subtree(2,son))))
+        case ( f_totalPowerVector )
+          totalPowerVector => vectors(decoration(decoration(subtree(2,son))))
+        case ( f_weightsVector )
+          weightsVector => vectors(decoration(decoration(subtree(2,son))))
+        end select
+      end do ! i = 2, nsons(key)
+
+      ! Loop over the quantities in the total power vector
+
+      do i = 1, totalPowerVector%template%noQuantities
+        if ( totalPowerVector%quantities(i)%template%quantityType /= l_baseline .or. &
+          & .not. totalPowerVector%quantities(i)%template%minorFrame ) then
+          call Announce_Error ( key, no_error_code, 'Total power quantity must be minor frame baseline' )
+        end if
+        thisResult => totalPowerVector%quantities(i)
+        thisResult%values = 0.0_rv
+        ! Now go through all the bands in the measurement vector that are in this radiometer
+        do j = 1, measurements%template%noQuantities
+          if ( measurements%quantities(j)%template%quantityType /= l_radiance ) cycle
+          if ( measurements%quantities(j)%template%radiometer /= thisResult%template%radiometer ) cycle
+          radiances => measurements%quantities(j)
+          signal = measurements%quantities(j)%template%signal
+          ! Now look for the weights for this band
+          weightsQuantity => GetVectorQuantityByType ( weightsVector, quantityType=l_totalPowerWeight, &
+            & signal=signal )
+          do k = 1, radiances%template%noChans
+            thisResult%values(:,:) = thisResult%values(:,:) + &
+              & weightsQuantity%values(k,1) * &
+              &   radiances%values(k:radiances%template%instanceLen:radiances%template%noChans,:)
+            totalWeight = totalWeight + weightsQuantity%values(k,1)
+          end do                        ! End loop over channels
+        end do                          ! End loop over bands
+        thisResult%values = thisResult%values / totalWeight
+      end do                            ! End loop over (effectively) radiometers
+    end subroutine ComputeTotalPower
 
     ! ------------------------------------------- ExtractSingleChannel ---
     subroutine ExtractSingleChannel ( key, quantity, sourceQuantity, channel )
@@ -6272,9 +6345,12 @@ contains ! =====     Public Procedures     =============================
     end subroutine TransferVectors
 
     ! ---------------------------------------------- TransferVectors -----
-    subroutine UncompressRadiance ( key, quantity, termsNode )
+    subroutine UncompressRadiance ( key, quantity, totalPowerQuantity, &
+      & systemTemperatureQuantity, termsNode )
       integer, intent(in) :: KEY        ! Tree node for messages
       type (VectorValue_T), intent(inout) :: QUANTITY ! The quantity to mess with
+      type (VectorValue_T), intent(inout) :: TOTALPOWERQUANTITY ! The total power
+      type (VectorValue_T), intent(inout) :: SYSTEMTEMPERATUREQUANTITY ! The system temperature
       integer, intent(in) :: TERMSNODE
 
       ! Local parameters
@@ -6290,6 +6366,13 @@ contains ! =====     Public Procedures     =============================
       if ( quantity%template%quantityType /= l_radiance ) &
         & call Announce_Error ( key, no_error_code, &
         & 'Inappropriate quantity for uncompressRadiance fill' )
+      if ( totalPowerQuantity%template%quantityType /= l_baseline .or. &
+        &  .not. totalPowerQuantity%template%minorFrame &
+        &  .or. totalPowerQuantity%template%radiometer /= quantity%template%radiometer ) &
+        & call Announce_Error ( key, no_error_code, &
+        & 'Inappropriate quantity for total power quantity in uncompressRadiance' // &
+        & ' (should be MIF baseline for the right radiometer)' )
+
       if ( nsons ( termsNode ) /= noTerms - 1 ) &
         & call Announce_Error ( key, no_error_code, &
         & 'Wrong number of terms for uncompressRadiance fill' )
@@ -6303,6 +6386,11 @@ contains ! =====     Public Procedures     =============================
       end do
 
       ! Radiances are in quantity%values [ chans * pointings, mafs ], do your messing here
+      ! Total power are in totalPowerQuantity%values [ pointings, mafs ]
+      ! System temperature is in systemTemperatureQuantity%values%values[1,1]
+      ! The terms supplied are in myTerms(:)
+
+      ! YOUR CODE HERE
 
     end subroutine UncompressRadiance
 
@@ -6429,6 +6517,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.7  2008/04/26 00:39:56  livesey
+! Added total power stuff
+!
 ! Revision 2.6  2008/04/11 01:17:09  livesey
 ! Added uncompressRadiance fill
 !
