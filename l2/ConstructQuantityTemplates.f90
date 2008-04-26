@@ -1051,7 +1051,7 @@ contains ! ============= Public procedures ===================================
       L_SCVELECR, L_SCGEOCALT, L_SPACERADIANCE, L_STATUS, &
       L_STRAYRADIANCE, L_SurfaceHeight, L_SURFACETYPE, L_SYSTEMTEMPERATURE, &
       L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, L_TNGTGEOCALT, &
-      L_VMR
+      L_TOTALPOWERWEIGHT, L_VMR
     use Init_Tables_Module, only: PHYQ_EXTINCTION, PHYQ_FREQUENCY,&
       & PHYQ_GAUSS, PHYQ_IceDensity, PHYQ_LENGTH, &
       & PHYQ_PRESSURE, PHYQ_TEMPERATURE, PHYQ_TIME, PHYQ_VELOCITY, &
@@ -1182,6 +1182,7 @@ contains ! ============= Public procedures ===================================
       l_surfaceType, phyq_dimensionless, p_hGrid, next, & 
       l_systemTemperature, phyq_temperature, p_signal, next, &
       l_temperature, phyq_temperature, p_hGrid, p_vGrid, p_mustbezeta, next, &
+      l_totalPowerWeight, phyq_dimensionless, p_signal, next, &
       l_tngtECI, phyq_length, p_minorFrame, p_module, p_xyz, next, &
       l_tngtGeocAlt, phyq_length, p_minorFrame, p_module, next, &
       l_tngtGeodAlt, phyq_length, p_minorFrame, p_module, next, &
@@ -1298,6 +1299,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.140  2008/04/26 00:39:46  livesey
+! Added total power stuff
+!
 ! Revision 2.139  2007/03/08 01:33:33  pwagner
 ! We should never use undefined values for surfs even if no vgrid
 !
