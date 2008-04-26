@@ -125,7 +125,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_COLUMNSCALE        = s_chunkDivide + 1
   integer, parameter :: S_COMBINECHANNELS    = s_columnScale + 1
   integer, parameter :: S_COMPARE            = s_combinechannels + 1
-  integer, parameter :: S_CONCATENATE        = s_compare + 1
+  integer, parameter :: S_COMPUTETOTALPOWER  = s_compare + 1
+  integer, parameter :: S_CONCATENATE        = s_computeTotalPower + 1
   integer, parameter :: S_CONVERTETATOP      = s_concatenate + 1
   integer, parameter :: S_COPY               = s_ConvertEtaToP + 1
   integer, parameter :: S_CYCLICJACOBI       = s_copy + 1
@@ -518,7 +519,7 @@ contains ! =====     Public procedures     =============================
              l+l_spaceRadiance, l+l_status, l+l_strayRadiance, l+l_surfaceHeight, &
              l+l_surfacetype, l+l_systemTemperature, &
              l+l_temperature, l+l_tngtECI, l+l_tngtGeodAlt, l+l_tngtGeocAlt, &
-             l+l_totalExtinction, l+l_vmr, n+n_dt_def /) )
+             l+l_totalExtinction, l+l_totalPowerWeight, l+l_vmr, n+n_dt_def /) )
     call make_tree ( (/ &
       begin, t+t_scale, l+l_apriori, & ! l+l_covariance, & !??? Later !???
              l+l_none, l+l_norm, n+n_dt_def, &
@@ -945,12 +946,14 @@ contains ! =====     Public procedures     =============================
                     f+f_quantities, n+n_dot /), &
              continue = .true. )
     call make_tree ( (/ & ! STILL Continuing for s_fill...
-             begin, f+f_tngtECI, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
              begin, f+f_temperatureQuantity, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
              begin, f+f_tempPrecisionQuantity, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
              begin, f+f_terms, t+t_numeric, n+n_field_type, &
+             begin, f+f_totalPowerQuantity, s+s_vector, f+f_template, &
+                    f+f_quantities, n+n_dot, &
+             begin, f+f_tngtECI, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
              begin, f+f_unit, t+t_units, n+n_field_type, &
              begin, f+f_usb, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
@@ -1245,6 +1248,12 @@ contains ! =====     Public procedures     =============================
              begin, f+f_fileName, t+t_string, nr+n_field_type, &
              begin, f+f_vectors, s+s_vector, nr+n_field_spec, &
              ndp+n_spec_def /) )
+    call make_tree ( (/ &
+      begin, s+s_computetotalpower, &
+             begin, f+f_measurements, s+s_vector, n+n_field_spec, &
+             begin, f+f_weightsVector, s+s_vector, n+n_field_spec, &
+             begin, f+f_totalPowerVector, s+s_vector, n+n_field_spec, &
+             nadp+n_spec_def /) )
     call make_tree ( (/ & ! Must be AFTER s_Boolean
       begin, s+s_skip, &
              begin, f+f_Boolean, s+s_Boolean, n+n_field_spec, &
@@ -1502,10 +1511,12 @@ contains ! =====     Public procedures     =============================
              s+s_Boolean, s+s_catchWarning, s+s_compare, s+s_dump, &
              s+s_forge, s+s_forwardModel, s+s_hgrid, s+s_phase, s+s_quantity, &
              s+s_reevaluate, s+s_snoop, s+s_time, s+s_vectortemplate, &
-             n+n_section, &
+             n+n_section /) )
+    call make_tree ( (/ &
       begin, z+z_fill, &
              s+s_anyGoodRadiances, s+s_anyGoodValues, s+s_catchWarning, &
-             s+s_compare, s+s_destroy, s+s_dump, s+s_fill, s+s_fillCovariance, &
+             s+s_compare, s+s_computeTotalPower, s+s_destroy, &
+             s+s_dump, s+s_fill, s+s_fillCovariance, &
              s+s_fillDiagonal, s+s_flagcloud, s+s_flushL2PCBins, s+s_flushPFA, &
              s+s_load, s+s_matrix, s+s_negativePrecision, s+s_phase, &
              s+s_populateL2PCBin, s+s_reevaluate, s+s_restrictRange, &
@@ -1544,6 +1555,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.464  2008/04/26 00:39:16  livesey
+! Added total power stuff
+!
 ! Revision 2.463  2008/04/11 01:17:00  livesey
 ! Added uncompressRadiance fill
 !
