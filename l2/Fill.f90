@@ -63,7 +63,7 @@ contains ! =====     Public Procedures     =============================
       & DumpCommand, Skip
     use Expr_M, only: EXPR, EXPR_CHECK
     use FillUtils_1, only: fillError, &
-      & addGaussianNoise, ApplyBaseline, &
+      & addGaussianNoise, ApplyBaseline, ComputeTotalPower, &
       & ExtractSingleChannel, FillCovariance, FillVectorQuantityFromGrid, &
       & FillVectorQuantityFromL2GP, FillVectorQtyFromProfile, FillLOSVelocity, &
       & FillChiSqChan, FillChiSqMMaf, FillChiSqMMif, FillChiSqRatio, &
@@ -116,7 +116,7 @@ contains ! =====     Public Procedures     =============================
       & F_SOURCE, F_SOURCEGRID, F_SOURCEL2AUX, F_SOURCEL2GP, &
       & F_SOURCEQUANTITY, F_SOURCEVGRID, F_SPREAD, F_STATUS, F_SUFFIX, F_SUPERDIAGONAL, &
       & F_SYSTEMTEMPERATURE, F_TEMPERATUREQUANTITY, F_TEMPPRECISIONQUANTITY, &
-      & F_TEMPLATE, F_TNGTECI, F_TERMS, &
+      & F_TEMPLATE, F_TNGTECI, F_TERMS, F_TOTALPOWERQUANTITY, &
       & F_TYPE, F_UNIT, F_USB, F_USBFRACTION, F_VECTOR, F_VMRQUANTITY, &
       & F_WHEREFILL, F_WHERENOTFILL, F_WIDTH, &
       & FIELD_FIRST, FIELD_LAST
@@ -154,7 +154,8 @@ contains ! =====     Public Procedures     =============================
       & L_ZETA
     ! Now the specifications:
     use INIT_TABLES_MODULE, only: S_ANYGOODVALUES, S_ANYGOODRADIANCES, &
-      & S_CATCHWARNING, S_COMPARE, S_DESTROY, S_DUMP, S_FILL, S_FILLCOVARIANCE, &
+      & S_CATCHWARNING, S_COMPARE, S_COMPUTETOTALPOWER, S_DESTROY, &
+      & S_DUMP, S_FILL, S_FILLCOVARIANCE, &
       & S_FILLDIAGONAL, S_FLAGCLOUD, S_FLUSHL2PCBINS, S_FLUSHPFA, &
       & S_LOAD, S_MATRIX,  S_NEGATIVEPRECISION, S_PHASE, S_POPULATEL2PCBIN, &
       & S_REEVALUATE, S_RESTRICTRANGE, S_SKIP, S_SNOOP, &
@@ -312,6 +313,7 @@ contains ! =====     Public Procedures     =============================
     type (vectorValue_T), pointer :: SYSTEMPQUANTITY
     type (vectorValue_T), pointer :: TEMPERATUREQUANTITY
     type (vectorValue_T), pointer :: TEMPPRECISIONQUANTITY
+    type (vectorValue_T), pointer :: TOTALPOWERQUANTITY
     type (vectorValue_T), pointer :: TNGTECIQUANTITY
     type (vectorValue_T), pointer :: PHITANQUANTITY
     type (vectorValue_T), pointer :: PTANQUANTITY
@@ -507,6 +509,8 @@ contains ! =====     Public Procedures     =============================
     logical :: TIMING
     integer :: TNGTECIQUANTITYINDEX     ! In the quantities database
     integer :: TNGTECIVECTORINDEX       ! In the vector database
+    integer :: TOTALPOWERQUANTITYINDEX    ! In the quantities database
+    integer :: TOTALPOWERVECTORINDEX      ! In the vector database
     integer, dimension(2) :: UNITASARRAY ! From expr
     logical :: UNITSERROR               ! From expr
     integer :: USBVECTORINDEX           ! Inddex in vector database
@@ -653,6 +657,8 @@ contains ! =====     Public Procedures     =============================
         call decorate ( key,  BooleanFromCatchWarning ( key ) )
       case ( s_compare )
         call decorate ( key,  BooleanFromComparingQtys ( key, vectors ) )
+      case ( s_computeTotalPower )
+        call ComputeTotalPower ( key, vectors )
       case ( s_Reevaluate )
         call decorate ( key,  BooleanFromFormula ( 0, key ) )
 
@@ -1301,6 +1307,9 @@ contains ! =====     Public Procedures     =============================
           tempPrecisionQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
         case ( f_terms )
           termsNode = subtree(j,key)
+        case ( f_totalPowerQuantity )
+          totalpowerVectorIndex = decoration(decoration(subtree(1,gson)))
+          totalpowerQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
         case ( f_unit ) ! For folding
           colmabunits = decoration(gson) ! decoration(subtree(2,gson))
         case ( f_usb ) ! For folding
@@ -2206,7 +2215,21 @@ contains ! =====     Public Procedures     =============================
         end if
 
       case ( l_uncompressRadiance )
-        call UncompressRadiance ( key, quantity, termsNode )
+        if ( .not. got(f_systemTemperature) ) &
+          & call Announce_Error ( key, No_Error_Code, &
+          & 'Missing a systemTemperature field for uncompress radiance fill' )
+        if ( .not. got(f_totalPowerQuantity) ) &
+          & call Announce_Error ( key, No_Error_Code, &
+          & 'Missing a totalPowerQuantity field for uncompress radiance fill' )
+        if ( .not. got(f_terms) ) &
+          & call Announce_Error ( key, No_Error_Code, &
+          & 'Missing a terms field for uncompress radiance fill' )
+
+        sysTempQuantity => GetVectorQtyByTemplateIndex( &
+          & vectors(sysTempVectorIndex), sysTempQuantityIndex )
+        totalpowerQuantity => GetVectorQtyByTemplateIndex ( &
+          & vectors(totalpowerVectorIndex), totalpowerQuantityIndex )
+        call UncompressRadiance ( key, quantity, totalPowerQuantity, sysTempQuantity, termsNode )
 
       case ( l_vGrid ) ! ---------------------  Fill from vGrid  -----
         select case ( quantity%template%quantityType )
@@ -2299,6 +2322,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.361  2008/04/26 00:40:07  livesey
+! Added total power stuff
+!
 ! Revision 2.360  2008/04/11 01:17:22  livesey
 ! Added uncompressRadiance fill
 !
