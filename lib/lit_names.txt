@@ -208,6 +208,7 @@ tngteci
 tngtgeocalt
 tngtgeodalt
 totalExtinction
+totalPowerWeight
 true
 
 uncompressRadiance
@@ -223,6 +224,9 @@ zeta
 zonalavg
 
 # $Log$
+# Revision 2.49  2008/04/26 00:38:10  livesey
+# Added totalPowerWeight
+#
 # Revision 2.48  2008/04/11 01:16:42  livesey
 # Added uncompressRadiance
 #
