@@ -416,6 +416,8 @@ tolerance
 toleranceA Atolerance
 toleranceF Ftolerance
 toleranceR Rtolerance
+totalPowerVector
+totalPowerQuantity
 truthExtra
 truthForwardModel
 truthIn
@@ -441,6 +443,7 @@ vRegQuants
 vRegWeights
 vRegWeightVec
 
+weightsVector
 where
 whereFill
 whereNotFill
@@ -451,6 +454,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.181  2008/04/26 00:39:31  livesey
+# Added total power stuff
+#
 # Revision 2.180  2007/12/07 01:12:14  pwagner
 # Lets us catch warnings and assign to runtime Booleans
 #
