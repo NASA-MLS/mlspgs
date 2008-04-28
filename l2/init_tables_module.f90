@@ -343,6 +343,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_columnScale) =          add_ident ( 'columnScale' )
     spec_indices(s_combineChannels) =      add_ident ( 'combineChannels' )
     spec_indices(s_compare) =              add_ident ( 'compare' )
+    spec_indices(s_computetotalpower) =    add_ident ( 'computeTotalPower' )
     spec_indices(s_concatenate) =          add_ident ( 'concatenate' )
     spec_indices(s_ConvertEtaToP) =        add_ident ( 'ConvertEtaToP' )
     spec_indices(s_copy)   =               add_ident ( 'copy' )
@@ -1555,6 +1556,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.465  2008/04/28 21:46:34  pwagner
+! Needed to add ident of new total power fill command
+!
 ! Revision 2.464  2008/04/26 00:39:16  livesey
 ! Added total power stuff
 !
