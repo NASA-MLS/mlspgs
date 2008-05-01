@@ -66,9 +66,11 @@ contains
 
 ! Calculate size of z_all and allocate it
 
-    z_all_size = temp%template%nosurfs + 2 + &
-      & Size(FwdModelConf%integrationGrid%surfs)
-    if ( associated(FwdModelConf%tangentGrid) ) &
+    z_all_size = temp%template%nosurfs + 2
+    if ( associated(FwdModelConf%integrationGrid) ) &
+      & z_all_size = z_all_size + FwdModelConf%integrationGrid%nosurfs
+    if ( associated(FwdModelConf%tangentGrid) .and. .not. &
+      & associated(FwdModelConf%integrationGrid,FwdModelConf%tangentGrid) ) &
       & z_all_size = z_all_size + FwdModelConf%tangentGrid%nosurfs
     do sps_i = 1 , size(qtys)
       z_all_size = z_all_size + qtys(sps_i)%qty%template%nosurfs
@@ -83,15 +85,17 @@ contains
     z_all(2:z_all_prev-1) = temp%template%surfs(:,1)
     z_all(z_all_prev) = 4.000_rp
 
-    ! Add the original Integration Grid:
-    if ( associated(FwdModelConf%integrationGrid%surfs) ) then
-      z_all_size = z_all_prev + Size(FwdModelConf%integrationGrid%surfs)
+    if ( associated(FwdModelConf%integrationGrid) ) then
+      ! Add the original Integration Grid
+      z_all_size = z_all_prev + FwdModelConf%integrationGrid%nosurfs
       z_all(z_all_prev+1:z_all_size) = FwdModelConf%integrationGrid%surfs(:,1)
       z_all_prev = z_all_size
     end if
 
-    if ( associated(FwdModelConf%tangentGrid) ) then
-      ! if pointing grid is associated concatenate it to the state vector
+    if ( associated(FwdModelConf%tangentGrid) .and. .not. &
+      & associated(FwdModelConf%integrationGrid,FwdModelConf%tangentGrid) ) then
+      ! if pointing grid is associated and not the same as the integration
+      ! grid concatenate it to the state vector
       z_all_size = z_all_prev + FwdModelConf%tangentGrid%nosurfs
       z_all(z_all_prev+1:z_all_size) = FwdModelConf%tangentGrid%surfs(:,1)
       z_all_prev = z_all_size
@@ -144,6 +148,10 @@ contains
 end module Compute_Z_PSIG_m
 
 ! $Log$
+! Revision 2.4  2008/05/01 01:57:51  vsnyder
+! Make sure integrationGrid is associated is associated before asking its size
+! Don't add both integrationGrid and tangentGrid if they're the same grid
+!
 ! Revision 2.3  2007/01/17 23:48:43  vsnyder
 ! Don't look at FwdModelConf%tangentGrid if it's not associated
 !
