@@ -959,11 +959,13 @@ op:     do j = 2, nsons(theTree)
 
       ! Ensure that points in tangentGrid at and above the surface are a subset
       ! of integration grid
-      do tangent = info%surfaceTangentIndex, info%tangentGrid%noSurfs
-        if ( .not. any ( abs( info%tangentGrid%surfs(tangent,1) - &
-          & info%integrationGrid%surfs(:,1) ) < 1e-4 ) ) &
-          & call AnnounceError ( TangentNotSubset, root )
-      end do
+      if ( .not. associated(info%tangentGrid,info%integrationGrid) ) then
+        do tangent = info%surfaceTangentIndex, info%tangentGrid%noSurfs
+          if ( all ( abs( info%tangentGrid%surfs(tangent,1) - &
+            & info%integrationGrid%surfs(:,1) ) > 1.0e-4 ) ) &
+            & call AnnounceError ( TangentNotSubset, root )
+        end do
+      end if
 
       ! Make sure signal specifications make sense; get sideband Start/Stop
       call validateSignals
@@ -1359,6 +1361,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.137  2008/05/01 01:56:33  vsnyder
+! Don't check grids subset if they're associated
+!
 ! Revision 2.136  2007/11/07 03:10:48  vsnyder
 ! Add pathNorm field to forward model config
 !
