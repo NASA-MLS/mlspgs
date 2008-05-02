@@ -270,6 +270,7 @@ module MLSHDF5
   logical, parameter    :: countEmpty = .true.
   logical, parameter    :: DEEBUG = .false.
   integer, save :: cantGetDataspaceDims = 0
+  integer, parameter :: DFLTMAXLINELENGTH = 1024
   integer, parameter :: MAXNUMWARNS = 40
   integer, parameter :: MAXNDSNAMES = 1000   ! max number of DS names in a file
   integer, parameter                      :: MAXATTRIBUTESIZE =   40000
@@ -1058,7 +1059,7 @@ contains ! ======================= Public Procedures =========================
   ! -----------------------------------  MakeHDF5Attribute_textFile  -----
   subroutine MakeHDF5Attribute_textFile ( textFile, itemID, name , &
    & skip_if_already_there, maxLineLen )
-    use MLSFiles, only: textFile_to_Chars
+    use IO_STUFF, only: get_lun, read_textFile
     integer, intent(in) :: ITEMID       ! Group etc. to make attr to.
     character (len=*), intent(in) :: NAME ! Name of attribute
     character (len=*), intent(in) :: TEXTFILE ! name of textfile
@@ -1066,24 +1067,28 @@ contains ! ======================= Public Procedures =========================
     integer, optional, intent(in) :: maxLineLen
 
     ! Local variables
+    logical, parameter :: NEVERDELETE = .true.
     integer :: ATTRID                   ! ID for attribute
+    character(len=3) :: blockChar
     integer :: DSID                     ! ID for dataspace
     integer :: firstChar, lastChar
     integer :: iblock, nblocks
-    character(len=3) :: blockChar
+    logical :: is_present
+    integer :: lun
+    integer :: myMaxLineLen
     character(len=len(name)+3) :: newname
     integer :: STATUS                   ! Flag from HDF5
     integer :: STRINGTYPE               ! Type for string
     logical :: my_skip
-    logical :: is_present
-    logical, parameter :: NEVERDELETE = .true.
     character(LEN=MAXTEXTSIZE)              :: value
-    integer :: lun
 
     ! Executable code
     call MLSMessageCalls( 'push', constantName='MakeHDF5Attribute_textFile' )
+    myMaxLineLen = DFLTMAXLINELENGTH
+    if ( present(maxLineLen) ) myMaxLineLen = maxLineLen
     ! Try to read the textfile
-    call textFile_to_Chars( trim(textFile), value, maxLineLen )
+    value = ' '
+    call read_textFile( trim(textFile), value, myMaxLineLen )
     status = 0
     if ( status /= 0 ) then
       call MLSMessage(MLSMSG_Warning, ModuleName, &
@@ -2869,7 +2874,7 @@ contains ! ======================= Public Procedures =========================
 
   ! --------------------------------------  SaveAsHDF5DS_textFile  -----
   subroutine SaveAsHDF5DS_textFile ( textFile, locID, name, maxLineLen )
-    use MLSFiles, only: textFile_to_Chars
+    use IO_STUFF, only: get_lun, read_textFile
     ! This routine writes the contents of a textfile as a char-valued dataset
     integer, intent(in) :: LOCID           ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME  ! Name for this dataset
@@ -2877,6 +2882,8 @@ contains ! ======================= Public Procedures =========================
     integer, optional, intent(in) :: maxLineLen
 
     ! Local variables
+    integer :: lun
+    integer :: myMaxLineLen
     integer :: spaceID                  ! ID for dataspace
     integer (HID_T) :: setID            ! ID for dataset
     integer :: status                   ! Flag from HDF5
@@ -2884,12 +2891,14 @@ contains ! ======================= Public Procedures =========================
     integer(hid_t) :: s_type_id
     integer(hid_t) :: type_id
     character(LEN=MAXTEXTSIZE)              :: value
-    integer :: lun
 
     ! Executable code
     call MLSMessageCalls( 'push', constantName='SaveAsHDF5DS_textFile' )
+    myMaxLineLen = DFLTMAXLINELENGTH
+    if ( present(maxLineLen) ) myMaxLineLen = maxLineLen
     ! Try to read the textfile
-    call textFile_to_Chars( trim(textFile), value, maxLineLen )
+    value = ' '
+    call read_textFile( trim(textFile), value, myMaxLineLen )
     ! Unfortunately, a lot of null characters sneak into this
     value = Replace( value, char(0), char(32) ) ! Replace null with space
     close( UNIT=lun, iostat=status )
@@ -5913,6 +5922,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.82  2008/05/02 00:05:19  pwagner
+! Reads textFile using io stuff
+!
 ! Revision 2.81  2008/04/25 22:51:23  pwagner
 ! Passes optional arg maxLineLen through to textFile_to_Chars
 !
