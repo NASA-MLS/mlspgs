@@ -19,7 +19,7 @@ module MLSNumerics              ! Some low level numerical stuff
   use MLSCommon, only : undefinedValue, R4, R8, Rm
   use MLSFillValues, only: filterValues, IsFillValue, ReplaceFillValues
   use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
-    & MLSMessage, MLSMessageCalls
+    & MLSMessage
   use MLSSets, only: FindFirst, FindLast
   use MLSStrings, only: Capitalize, trim_safe
   use OUTPUT_M, only: blanks, output, outputNamedValue
@@ -2287,6 +2287,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.58  2008/05/02 00:41:42  vsnyder
+! Delete unused symbol
+!
 ! Revision 2.57  2008/01/07 21:36:33  pwagner
 ! Replace DEFAULTUNDEFINEDVALUE with user-settable undefinedValue
 !
