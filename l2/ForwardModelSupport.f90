@@ -92,7 +92,7 @@ contains ! =====     Public Procedures     =============================
       & Open_Pointing_Grid_File, Read_Pointing_Grid_File
     use Toggles, only: Gen, Levels, Toggle
     use Trace_M, only: Trace_begin, Trace_end
-    use Tree, only: Nsons, Source_Ref, Sub_Rosa, Subtree
+    use Tree, only: Nsons, Sub_Rosa, Subtree
 
     integer, intent(in) :: Root         ! of the forwardModel specification.
     !                                     Indexes a "spec_args" vertex.
@@ -1361,6 +1361,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.138  2008/05/02 00:33:30  vsnyder
+! Delete unused symbol
+!
 ! Revision 2.137  2008/05/01 01:56:33  vsnyder
 ! Don't check grids subset if they're associated
 !
