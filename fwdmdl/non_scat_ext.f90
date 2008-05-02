@@ -46,8 +46,6 @@ contains
 
 ! local variables
 
-      REAL(r8) :: VMR_H2O
-      REAL(r8) :: VMR1(NS-1)
       integer :: I
       integer :: J
 !-------------------------------------------------------------------------
@@ -63,19 +61,13 @@ contains
       GAMMA = 0.0_r8
       N2    = 0.0_r8
 
-        CALL SETUP_SPECTRA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,      &
-                    &      GAMMA,N2,MOL,NMOL,NCNT)
+      CALL SETUP_SPECTRA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,      &
+                  &      GAMMA,N2,MOL,NMOL,NCNT)
 
       DO I=1,L
 
-        VMR_H2O = VMR(1,I)
-        do J=2,NS
-          VMR1(J-1) = VMR(J,I)
-        enddo 
-!        print*, VMR_H2O,VMR1(1), VMR1(2), T(I), P(I)
-        CALL GET_BETA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,GAMMA,N2,  &
-                    &        NMOL,NCNT,T(I),P(I),F,VMR_H2O,VMR1,Ext_coeff(I),NS )   
-!        print*, Ext_Coeff(I), T(I), P(I), Z(I), VMR_H2O, VMR1(1), VMR1(2)
+        CALL GET_BETA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,GAMMA,N2,NMOL,NCNT,  &
+          &           T(I),P(I),F,VMR(1,I),VMR(:NS-1,I),Ext_coeff(I),NS )   
 
       ENDDO
 
@@ -95,6 +87,9 @@ contains
 end module Non_scat_ext
 
 ! $Log$
+! Revision 2.4  2008/05/02 23:42:34  vsnyder
+! Simplify, remove array copies
+!
 ! Revision 2.3  2007/07/25 20:21:33  vsnyder
 ! Delete USE for unreferenced entities and declarations for unused variables
 !
