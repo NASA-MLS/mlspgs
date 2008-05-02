@@ -964,6 +964,11 @@ contains
         call newLine
         lastCR = which(i)
       enddo
+      if ( lastCR < len(chars) ) &
+        & call OUTPUT_CHAR_NOCR ( CHARS(lastCR+1:), &
+        & ADVANCE=ADVANCE, FROM_WHERE=FROM_WHERE, DONT_LOG=DONT_LOG, &
+        & LOG_CHARS=LOG_CHARS, INSTEADOFBLANK=INSTEADOFBLANK, &
+        & DONT_STAMP=DONT_STAMP )
     endif
   end subroutine OUTPUT_CHAR
 
@@ -1057,6 +1062,9 @@ contains
         write ( *, '(a)', advance='no' ) stamped_chars(i1:i2)
       enddo
       if ( my_adv == 'yes' ) write ( *, '(a)', advance=my_adv ) ' '
+    elseif ( (outputOptions%prunit == -1 .or. outputOptions%prunit < -2) .and. &
+      &  len(chars) < 1 .and. my_adv == 'yes' ) then
+      write ( *, '(a)', advance=my_adv )
     elseif ( (outputOptions%prunit == -1 .or. outputOptions%prunit < -2) .and. &
       &  n_stamp > 0 ) then
       write ( *, '(a)', advance=my_adv ) stamped_chars(1:n_stamp)
@@ -2040,6 +2048,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.73  2008/05/02 00:07:20  pwagner
+! Correctly handles some rare cases, newLine wont add extra space
+!
 ! Revision 2.72  2008/04/18 16:34:37  pwagner
 ! achar(13) among chars by default now triggers newLine
 !
