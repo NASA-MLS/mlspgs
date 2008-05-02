@@ -63,7 +63,7 @@ module MLSFiles               ! Utility file routines
   & mls_openFile, mls_sfstart, mls_sfend, &
   & open_MLSFile, &
   & readnchars, release_MLSFile, reserve_MLSFile, &
-  & RmFileFromDataBase, split_path_name, TextFile_to_chars, &
+  & RmFileFromDataBase, split_path_name, &
   & transfer_MLSFile, unMaskName, unSplitName
 
 !---------------------------- RCS Module Info ------------------------------
@@ -124,7 +124,6 @@ module MLSFiles               ! Utility file routines
 !                      (to be operated on by single-argument functions)
 ! RmFileFromDataBase Removes a FileName, id, etc. from the database
 ! split_path_name    splits the input path/name into path and name
-! TextFile_to_chars  reads a text file into a character string or array
 ! transfer_MLSFile   Changes the path of an mlsFile
 ! unmaskname         Recover file name from masked form
 ! unsplitname        Split File name -> catenated: '..DGG13..' -> 'DGG'
@@ -287,10 +286,6 @@ module MLSFiles               ! Utility file routines
   interface mls_openFile
     module procedure mls_openFileName
     module procedure mls_openFileType
-  end interface
-
-  interface textFile_to_Chars
-    module procedure textFile_to_Chars_arr, textFile_to_Chars_sca
   end interface
 
   character (len=*), parameter :: accesses = 'rdonly,write,rdwrite,create,nonhdf'
@@ -1854,35 +1849,6 @@ contains
 
   end subroutine split_path_name
 
-  ! --------------------------------------------  textFile_to_Chars  -----
-
-  ! read the contents of a text file into a character string or array
-
-  subroutine textFile_to_Chars_arr ( textFile, value, nLines, maxLineLen )
-    ! Args
-    character(len=*), intent(in)  :: textFile ! path and name of text file
-    character(len=*), dimension(:), intent(inout) :: value    ! its contents
-    integer, optional, intent(out) :: nLines
-    integer, optional, intent(in) :: maxLineLen
-    ! Internal variables
-    integer :: lun
-    integer :: status
-    ! Try to read the textfile
-    call read_textFile( textFile, value, nLines, maxLineLen )
-  end subroutine textFile_to_Chars_arr
-
-  subroutine textFile_to_Chars_sca ( textFile, value, maxLineLen )
-    ! Args
-    character(len=*), intent(in)  :: textFile ! path and name of text file
-    character(len=*), intent(out) :: value    ! its contents
-    integer, optional, intent(in) :: maxLineLen
-    ! Internal variables
-    integer :: lun
-    integer :: status
-    ! Try to read the textfile
-    call read_textFile( textFile, value, maxLineLen )
-  end subroutine textFile_to_Chars_sca
-
   ! --------------------------------------------  release_MLSFile  -----
 
   ! This routine releases an MLSFile
@@ -2745,6 +2711,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.83  2008/05/02 00:03:33  pwagner
+! Removed redundant procedures
+!
 ! Revision 2.82  2008/04/18 16:32:30  pwagner
 ! read_textFile can return value array; optional arg maxLineLen added
 !
