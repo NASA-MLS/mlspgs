@@ -14,7 +14,7 @@ module WriteMetadata ! Populate metadata and write it out
 ! -------------------------------------------------------
 
   use Hdf, only: DFACC_RDWR
-  use INIT_TABLES_MODULE, only: l_l2aux, l_l2dgg, l_l2gp, l_hdf, L_SWATH
+  use INIT_TABLES_MODULE, only: l_l2dgg, l_l2gp, l_hdf, L_SWATH
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: FileNameLen, NameLen, R8
   use MLSFiles, only: GetPCFromRef, mls_sfstart, mls_sfend, Split_path_name
@@ -1363,6 +1363,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.65  2008/05/02 00:33:53  vsnyder
+! Delete unused symbol
+!
 ! Revision 2.64  2008/02/22 21:37:05  pwagner
 ! DGG file was hybrid by default; now it will be pure HDFEOS
 !
