@@ -1,3 +1,4 @@
+
 ! Copyright 2005, by the California Institute of Technology. ALL
 ! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 ! commercial use must be negotiated with the Office of Technology Transfer
@@ -44,41 +45,16 @@ contains ! =====     Public Procedures     =============================
   subroutine LinearizedForwardModel ( fmConf, FwdModelIn, FwdModelExtra,&
     & FwdModelOut, fmStat, Jacobian, vectors )
 
-    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-    use Dump_0, only: DUMP
     use ForwardModelConfig, only: FORWARDMODELCONFIG_T
     use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
-    use ForwardModelVectorTools, only: GetQuantityForForwardModel
-    use Intrinsic, only: L_RADIANCE, L_TEMPERATURE, L_PTAN, L_VMR, &
-      & L_LIMBSIDEBANDFRACTION, L_ZETA, L_OPTICALDEPTH, L_LATITUDE, L_FIELDSTRENGTH, &
-      & L_FIELDELEVATION, L_FIELDAZIMUTH
-    use L2PC_m, only: L2PCDATABASE, POPULATEL2PCBIN
-    use ManipulateVectorQuantities, only: FINDONECLOSESTINSTANCE, &
-      & DOHGRIDSMATCH, DOVGRIDSMATCH, DOFGRIDSMATCH
-    use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
-      & MATRIXELEMENT_T, CREATEBLOCK, DENSIFY, CHECKFORSIMPLEBANDEDLAYOUT
-    use MatrixModule_1, only: MATRIX_T, MULTIPLYMATRIXVECTORNOT, DUMP, &
-      & FINDBLOCK, CREATEBLOCK
-    use MLSCommon, only: r8, rm
-    use MLSSignals_m, only: Signal_T, GetSidebandLoop, GetSignalName
-    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, &
-      & MLSMSG_Allocate
-    use MLSNumerics, only: HUNT, INTERPOLATEVALUES
-    use Molecules, only: L_EXTINCTION
-    use Output_m, only: Output
-    use QuantityTemplates, only: QuantityTemplate_T
-    use String_Table, only: Display_String, Get_String
-    use Toggles, only: Emit, Levels, Toggle
-    use Trace_m, only: Trace_begin, Trace_end
-    use VectorsModule, only: assignment(=), OPERATOR(-), OPERATOR(+), &
-      & CLONEVECTOR,&
-      & DESTROYVECTORINFO, GETVECTORQUANTITYBYTYPE, VECTOR_T, &
-      & VECTORVALUE_T, DUMP, &
-      & VALIDATEVECTORQUANTITY, M_LINALG, GETVECTORQUANTITYINDEXBYNAME
-    use Sort_m, only: SORTP
+    use Intrinsic, only: L_RADIANCE, L_OPTICALDEPTH
+    use MatrixModule_1, only: MATRIX_T
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
+    use MLSSignals_m, only: Signal_T
+    use VectorsModule, only: GETVECTORQUANTITYBYTYPE, VECTOR_T, VECTORVALUE_T
 
     ! Dummy arguments
-    type(forwardModelConfig_T), intent(inout) :: FMCONF
+    type(forwardModelConfig_T), intent(in) :: FMCONF
     ! target attribute prevents STATEQ from being undefined when
     ! FindMatchForL2PCQ returns:
     type(vector_T), intent(in), target ::  FWDMODELIN
@@ -88,115 +64,18 @@ contains ! =====     Public Procedures     =============================
     type(matrix_T), intent(inout), optional :: JACOBIAN
     type(vector_t), dimension(:), target, optional :: VECTORS ! Vectors database
 
-    ! Local variables
-    integer :: CENTER                   ! Center instance of l2pc
-    integer :: CHAN                     ! Loop counter
-    integer :: CLOSESTINSTANCE          ! A closest profile to this MAF
-    integer :: COLJBLOCK                ! Column index in jacobian
-    integer :: COLLBLOCK                ! Column index in l2pc
-    integer :: DELTAINSTANCE            ! Instance offset between center an current
-    integer :: I                        ! Array index
-    integer :: INSTANCELEN              ! For the state quantity
-    integer :: LOWER                    ! Array index
-    integer :: MAF                      ! Major frame to do
-    integer :: MIF                      ! Minor frame loop counter
     integer :: NOCHANS                  ! Dimension
     integer :: NOMIFS                   ! Number of minor frames
-    integer :: NOPOINTINGS              ! Number of pointings in the l2pc file
-    integer :: QTYIND                   ! Loop index for main loop
-    integer :: ROWJBLOCK                ! Row index in jacobian
-    integer :: ROWLBLOCK                ! Row index in l2pc
-    integer :: SIDEBAND                 ! Loop index
-    integer :: SIDEBANDSTART            ! For sideband loop
-    integer :: SIDEBANDSTEP             ! For sideband loop
-    integer :: SIDEBANDSTOP             ! For sideband loop
-    integer :: UPPER                    ! Array index
-    integer :: XINSTANCE                ! Instance in x corresponding to xStarInstance
-    integer :: XSTARINSTANCE            ! Loop counter
-
-    logical :: ANYBLOCKS                ! Flag for checking derivatives
-    logical :: DODERIVATIVES            ! Flag
-    logical :: DOELEMENT                ! Flag
-    logical :: FOUNDINFIRST             ! Flag for state quantities
-    logical :: PTANINFIRST              ! PTan was found in the first vector
-
-    integer, dimension(-1:1) :: L2PCBINS ! Which l2pc to use
-    integer, dimension(:), pointer :: mifPointingsLower ! Result of a hunt
-    integer, dimension(:), pointer :: mifPointingsUpper ! mifPointingsLower+1
-    integer, dimension(:), pointer :: ptanOrder ! Ordering for ptan
-
-    logical, dimension(:), pointer :: doChannel ! Do this channel?
-
-    real (r8) :: DELTAPHI               ! Difference in geod Angle in l2pc
-
-    character (len=80) :: WORD          ! A word to output
-
-    ! The `prime' quantities are important.
-    ! - yPrime (yP) is contains one maf of the relevant radiances, but on the
-    !   l2pc's vertical coordinates
-    ! - xPrime (xP) is like xStar but contains state values
-    ! - kPrime is the jacobian for these two.
-
-    real (r8), dimension(:), pointer :: lowerWeight ! For interpolation
-    real (r8), dimension(:), pointer :: upperWeight ! For interpolation
-    real (r8), dimension(:), pointer :: tangentTemperature ! For optical depth
-    real (r8), dimension(:), pointer :: thisFraction ! Sideband fraction values
-    real (r8), dimension(:), pointer :: deltaPtan ! Change of ptan between x and supplied xStar
-    real (r8), dimension(:), pointer :: sortedPtan ! supplied ptan in ascending order
-
-    real (r8), dimension(:,:), pointer :: yPmapped ! Remapped values of yP
-    real (r8), dimension(:,:), pointer :: resultMapped ! Remapped values of result
-    real (r8), dimension(:,:), pointer :: dyByDX ! Raw dRad/dPtan
-    real (rm), dimension(:,:), pointer :: dense  ! Densified matrix from l2pc
-    real (rm), dimension(:,:), pointer :: kBit ! Remapped values of l2pc
-    real (r8), dimension(:,:), pointer :: dYStarByDPtan ! Remapped values of l2pc
-    real (r8), dimension(:,:), pointer :: sortedDYStarByDPtan ! Remapped values of l2pc
-    real (r8), dimension(:,:), pointer :: yStarMapped ! Remapped values of l2pc
-    real (r8), dimension(:,:), pointer :: sortedYStarMapped ! Remapped values of l2pc
-    real (r8), dimension(:,:), pointer :: dummy ! Workspace
-
-    type(vector_T) :: XP                ! Same form as xStar, contents as x
-    type(vector_T) :: YP                ! Same form as yStar,=kstar*(xp-xStar)
-    type(vector_T) :: DELTAX            ! xp-xStar
-    type(Signal_T) :: signal            ! A signal
-
-    type(Matrix_T), pointer :: L2PC     ! The l2pc to use
-    type(MatrixElement_T), pointer :: L2PCBLOCK  ! A block from the l2pc
-    type(MatrixElement_T), pointer :: JBLOCK     ! A block from the jacobian
-
+    integer :: NOMIFSJ                  ! Dimension, 0 if no Jacobian
     type(VectorValue_T), pointer :: RADIANCE ! The radiance quantity to fill
-    type(VectorValue_T), pointer :: RADINL2PC ! The relevant radiance part of yStar
-    type(VectorValue_T), pointer :: STATEQ ! A state vector quantity
-    type(VectorValue_T), pointer :: PTAN ! Tangent pressure quantity
-    type(VectorValue_T), pointer :: TEMP ! Temperature quantity
-    type(VectorValue_T), pointer :: XSTARPTAN ! Tangent pressure in l2pc
-    type(VectorValue_T), pointer :: L2PCQ ! A quantity in the l2pc
-    type(VectorValue_T), pointer :: SIDEBANDFRACTION ! From the state vector
-    type(VectorValue_T), pointer :: LOWERSIDEBANDFRACTION ! From the state vector
-    type(VectorValue_T), pointer :: UPPERSIDEBANDFRACTION ! From the state vector
-    type(VectorValue_T), pointer :: THISXSTARQ ! Quantitiy from supplied XStar vector
-    type(VectorValue_T), pointer :: THISYSTARQ ! Quantitiy from supplied YStar vector
-
-    ! Executable code
-
-    ! Identify the band/maf we're looking for
-
-    maf = fmStat%maf
-
-    if ( toggle(emit) ) &
-      & call trace_begin ( 'LinearizedForwardModel, MAF=', index=maf )
-
-    nullify ( yPmapped, resultMapped, dyByDX )
-    nullify ( dense, mifPointingsLower, mifPointingsUpper )
-    nullify ( lowerWeight, upperWeight )
-    nullify ( thisFraction, doChannel )
-    nullify ( tangentTemperature )
+    integer :: SIDEBAND
+    type(Signal_T), pointer :: SIGNAL   ! Signal from the configuration
 
     if ( size ( fmConf%signals ) /= 1 ) call MLSMessage ( &
       & MLSMSG_Error, ModuleName, &
       & 'Can only have one signal for linearized models')
 
-    signal = fmConf%signals(1)
+    signal => fmConf%signals(1)
     ! Probably access the sideband associated with the signal ...
     sideband = signal%sideband
     ! ... but in certain rare circumstances (when we're called by the hybrid model)
@@ -207,10 +86,9 @@ contains ! =====     Public Procedures     =============================
 
     ! Now, it's possible we're really being asked to deal with optical depth, not
     ! radiance.
-    if ( .not. associated ( radiance ) ) then
-      radiance => GetVectorQuantityByType (fwdModelOut, quantityType=l_opticalDepth, &
+    if ( .not. associated ( radiance ) ) &
+      & radiance => GetVectorQuantityByType (fwdModelOut, quantityType=l_opticalDepth, &
         & signal=signal%index, sideband=sideband, noError=.true. )
-    end if
 
     ! Now, some possible error messages
     if ( .not. associated ( radiance ) ) call MLSMessage ( &
@@ -234,9 +112,151 @@ contains ! =====     Public Procedures     =============================
     ! Set some dimensions
     noChans = radiance%template%noChans
     noMIFs = radiance%template%noSurfs
+    noMifsJ = noMifs
+    if ( .not. present(jacobian) ) noMifsJ = 0
 
-    call allocate_test ( thisFraction, noChans, 'thisFraction', ModuleName )
-    call allocate_test ( doChannel, noChans, 'doChannel', ModuleName )
+    call LinearizedForwardModelAuto ( fmConf, FwdModelIn, FwdModelExtra,&
+    & fmStat, radiance, noChans, noMifs, noMifsJ, Jacobian, vectors )
+
+  end subroutine LinearizedForwardModel
+
+  ! ---------------------------------  LinearizedForwardModelAuto  -----
+  subroutine LinearizedForwardModelAuto ( fmConf, FwdModelIn, FwdModelExtra,&
+    & fmStat, radiance, noChans, noMifs, noMifsJ, Jacobian, vectors )
+
+    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use Dump_0, only: DUMP
+    use ForwardModelConfig, only: FORWARDMODELCONFIG_T
+    use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
+    use ForwardModelVectorTools, only: GetQuantityForForwardModel
+    use Intrinsic, only: L_RADIANCE, L_TEMPERATURE, L_PTAN, L_VMR, &
+      & L_LIMBSIDEBANDFRACTION, L_ZETA, L_OPTICALDEPTH, L_LATITUDE, L_FIELDSTRENGTH, &
+      & L_FIELDELEVATION, L_FIELDAZIMUTH
+    use L2PC_m, only: L2PCDATABASE, POPULATEL2PCBIN
+    use ManipulateVectorQuantities, only: FINDONECLOSESTINSTANCE, &
+      & DOHGRIDSMATCH, DOVGRIDSMATCH, DOFGRIDSMATCH
+    use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
+      & MATRIXELEMENT_T, CREATEBLOCK, DENSIFY, CHECKFORSIMPLEBANDEDLAYOUT
+    use MatrixModule_1, only: MATRIX_T, MULTIPLYMATRIXVECTORNOT, DUMP, &
+      & FINDBLOCK, CREATEBLOCK
+    use MLSCommon, only: r8, rm
+    use MLSSignals_m, only: Signal_T, GetSidebandLoop, GetSignalName
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
+    use MLSNumerics, only: HUNT, INTERPOLATEVALUES
+    use Molecules, only: L_EXTINCTION
+    use Output_m, only: Output
+    use QuantityTemplates, only: QuantityTemplate_T
+    use String_Table, only: Display_String, Get_String
+    use Toggles, only: Emit, Levels, Toggle
+    use Trace_m, only: Trace_begin, Trace_end
+    use VectorsModule, only: assignment(=), OPERATOR(-), OPERATOR(+), &
+      & CLONEVECTOR, &
+      & DESTROYVECTORINFO, GETVECTORQUANTITYBYTYPE, VECTOR_T, &
+      & VECTORVALUE_T, DUMP, &
+      & VALIDATEVECTORQUANTITY, M_LINALG, GETVECTORQUANTITYINDEXBYNAME
+    use Sort_m, only: SORTP
+
+    ! Dummy arguments
+    type(forwardModelConfig_T), intent(in) :: FMCONF
+    ! target attribute prevents STATEQ from being undefined when
+    ! FindMatchForL2PCQ returns:
+    type(vector_T), intent(in), target ::  FWDMODELIN
+    type(vector_T), intent(in), target ::  FWDMODELEXTRA
+    type(forwardModelStatus_t), intent(inout) :: FMSTAT ! Reverse comm. stuff
+    type(VectorValue_T), intent(inout) :: RADIANCE ! The radiance quantity to fill
+    integer, intent(in) :: NoChans, NoMifs, NoMifsJ ! Dimensions
+    type(matrix_T), intent(inout), optional :: JACOBIAN
+    type(vector_t), dimension(:), target, optional :: VECTORS ! Vectors database
+
+    ! Local variables
+    integer :: CENTER                   ! Center instance of l2pc
+    integer :: CHAN                     ! Loop counter
+    integer :: CLOSESTINSTANCE          ! A closest profile to this MAF
+    integer :: COLJBLOCK                ! Column index in jacobian
+    integer :: COLLBLOCK                ! Column index in l2pc
+    integer :: DELTAINSTANCE            ! Instance offset between center an current
+    integer :: I                        ! Array index
+    integer :: INSTANCELEN              ! For the state quantity
+    integer :: LOWER                    ! Array index
+    integer :: MAF                      ! Major frame to do
+    integer :: MIF                      ! Minor frame loop counter
+    integer :: NOPOINTINGS              ! Number of pointings in the l2pc file
+    integer :: QTYIND                   ! Loop index for main loop
+    integer :: ROWJBLOCK                ! Row index in jacobian
+    integer :: ROWLBLOCK                ! Row index in l2pc
+    integer :: SIDEBAND                 ! Loop index
+    integer :: SIDEBANDSTART            ! For sideband loop
+    integer :: SIDEBANDSTEP             ! For sideband loop
+    integer :: SIDEBANDSTOP             ! For sideband loop
+    integer :: UPPER                    ! Array index
+    integer :: XINSTANCE                ! Instance in x corresponding to xStarInstance
+    integer :: XSTARINSTANCE            ! Loop counter
+
+    logical :: ANYBLOCKS                ! Flag for checking derivatives
+    logical :: DODERIVATIVES            ! Flag
+    logical :: DOELEMENT                ! Flag
+    logical :: FOUNDINFIRST             ! Flag for state quantities
+    logical :: PTANINFIRST              ! PTan was found in the first vector
+
+    integer, dimension(-1:1) :: L2PCBINS ! Which l2pc to use
+    integer, dimension(noMifsJ) :: mifPointingsLower ! Result of a hunt
+    integer, dimension(noMifsJ) :: mifPointingsUpper ! mifPointingsLower+1
+
+    logical, dimension(noChans) :: doChannel ! Do this channel?
+
+    real (r8) :: DELTAPHI               ! Difference in geod Angle in l2pc
+
+    character (len=80) :: WORD          ! A word to output
+
+    ! The `prime' quantities are important.
+    ! - yPrime (yP) is contains one maf of the relevant radiances, but on the
+    !   l2pc's vertical coordinates
+    ! - xPrime (xP) is like xStar but contains state values
+    ! - kPrime is the jacobian for these two.
+
+    real (r8), dimension(noMifsJ) :: lowerWeight ! For interpolation
+    real (r8), dimension(noMifsJ) :: upperWeight ! For interpolation
+    real (r8), dimension(noMIFs) :: tangentTemperature ! For optical depth
+    real (r8), dimension(noChans) :: thisFraction ! Sideband fraction values
+
+    real (r8), dimension(:,:), pointer :: yPmapped ! Remapped values of yP
+    real (r8), dimension(noMIFs,noChans) :: resultMapped ! Remapped values of result
+    real (r8), dimension(noMIFs,noChans) :: dyByDX ! Raw dRad/dPtan
+    real (rm), dimension(:,:), pointer :: dense  ! Densified matrix from l2pc
+    real (rm), dimension(:,:), pointer :: kBit ! Remapped values of l2pc
+
+    type(vector_T) :: XP                ! Same form as xStar, contents as x
+    type(vector_T) :: YP                ! Same form as yStar,=kstar*(xp-xStar)
+    type(vector_T) :: DELTAX            ! xp-xStar
+    type(Signal_T), pointer :: signal   ! Signal from the configuration
+
+    type(Matrix_T), pointer :: L2PC     ! The l2pc to use
+    type(MatrixElement_T), pointer :: L2PCBLOCK  ! A block from the l2pc
+    type(MatrixElement_T), pointer :: JBLOCK     ! A block from the jacobian
+
+    type(VectorValue_T), pointer :: RADINL2PC ! The relevant radiance part of yStar
+    type(VectorValue_T), pointer :: STATEQ ! A state vector quantity
+    type(VectorValue_T), pointer :: PTAN ! Tangent pressure quantity
+    type(VectorValue_T), pointer :: TEMP ! Temperature quantity
+    type(VectorValue_T), pointer :: XSTARPTAN ! Tangent pressure in l2pc
+    type(VectorValue_T), pointer :: L2PCQ ! A quantity in the l2pc
+    type(VectorValue_T), pointer :: SIDEBANDFRACTION ! From the state vector
+    type(VectorValue_T), pointer :: LOWERSIDEBANDFRACTION ! From the state vector
+    type(VectorValue_T), pointer :: UPPERSIDEBANDFRACTION ! From the state vector
+    type(VectorValue_T), pointer :: THISXSTARQ ! Quantitiy from supplied XStar vector
+
+    ! Executable code
+
+    ! Identify the band/maf we're looking for
+
+    maf = fmStat%maf
+
+    if ( toggle(emit) ) &
+      & call trace_begin ( 'LinearizedForwardModel, MAF=', index=maf )
+
+    nullify ( dense, yPmapped )
+
+    signal => fmConf%signals(1)
 
     doChannel = .true.
     if ( associated ( signal%channels ) ) doChannel = signal%channels
@@ -263,18 +283,6 @@ contains ! =====     Public Procedures     =============================
         &   associated ( upperSidebandFraction ) ) ) &
         & call MLSMessage(MLSMSG_Error,ModuleName, &
         & "No sideband fraction supplied")
-    end if
-
-    ! Now, if we need any derivatives, we need to setup some arrays
-    if ( present(jacobian) ) then
-      call allocate_test ( mifPointingsLower, noMIFs, &
-        & 'mifPointingsLower', ModuleName )
-      call allocate_test ( mifPointingsUpper, noMIFs, &
-        & 'mifPointingsUpper', ModuleName )
-      call allocate_test ( lowerWeight, noMIFs, &
-        & 'lowerWeight', ModuleName )
-      call allocate_test ( upperWeight, noMIFs, &
-        & 'upperWeight', ModuleName )
     end if
 
     ! --------- Loop over sidebands ------------------------------------------------
@@ -390,7 +398,7 @@ contains ! =====     Public Procedures     =============================
             & advance='yes' )
         end if
 
-        ! OK, we're legit, lets get going.
+        ! OK, we're legit, let's get going.
         instanceLen = l2pcQ%template%instanceLen
         closestInstance = FindOneClosestInstance ( stateQ, radiance, maf )
 
@@ -561,10 +569,6 @@ contains ! =====     Public Procedures     =============================
       ! Now we interpolate yP to ptan
       call allocate_test( ypMapped, radInL2PC%template%noSurfs, &
         & noChans, 'ypMapped', ModuleName )
-      call allocate_test( resultMapped, radiance%template%noSurfs, &
-        & noChans, 'resultMapped', ModuleName )
-      call allocate_test( dyByDx, radiance%template%noSurfs, &
-        & noChans, 'dyByDX', ModuleName )
 
       yPmapped = transpose ( &
         & reshape ( yp%quantities(1)%values(:,1), &
@@ -645,8 +649,6 @@ contains ! =====     Public Procedures     =============================
         temp => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
           & quantityType=l_temperature, config=fmConf )
         closestInstance = FindOneClosestInstance ( temp, radiance, maf )
-        call Allocate_test ( tangentTemperature, noMIFs, &
-          & 'tangentTemperature', ModuleName )
         call InterpolateValues ( &
           & temp%template%surfs(:,1), &
           & temp%values(:,closestInstance), &
@@ -667,8 +669,6 @@ contains ! =====     Public Procedures     =============================
       call DestroyVectorInfo ( xP )
       call DestroyVectorInfo ( deltaX )
       call DestroyVectorInfo ( yP )
-      call Deallocate_test ( dyByDx, 'dyByDx', ModuleName)
-      call Deallocate_test ( resultMapped, 'resultMapped', ModuleName )
       call Deallocate_test ( ypMapped, 'ypMapped', ModuleName )
 
     end do                                ! End of sideband loop
@@ -676,22 +676,34 @@ contains ! =====     Public Procedures     =============================
     ! If a yStar has been supplied, we need to add that on.
     ! We also need to add on the impact of any perturbation in tangent pressure
     ! in the xStar/yStar supplied case too
-    if ( fmConf%yStar /= 0 ) then
-      ! Setup arrays etc.
-      nullify ( deltaPtan, dummy, dyStarByDPtan, ptanOrder, sortedPtan, sorteddYStarByDPtan, &
-        & sortedyStarMapped, yStarMapped )
-      call Allocate_test ( deltaPtan, noMIFs, 'deltaPtan', ModuleName )
-      call Allocate_test ( dummy, noMIFs, noChans, 'dummy', ModuleName )
-      call Allocate_test ( dyStarByDptan, noMIFs, noChans, 'dyStarByDPtan', ModuleName )
-      call Allocate_test ( ptanOrder, noMIFs, 'ptanOrder', ModuleName )
-      call Allocate_test ( sortedPtan, noMIFs, 'sortedPtan', ModuleName )
-      call Allocate_test ( sorteddyStarByDptan, noMIFs, noChans, 'sorteddyStarByDPtan', ModuleName )
-      call Allocate_test ( sortedyStarMapped, noMIFs, noChans, 'sortedyStarMapped', ModuleName )
-      call Allocate_test ( yStarMapped, noMIFs, noChans, 'yStarMapped', ModuleName )
+    if ( fmConf%yStar /= 0 ) call Add_y_Star
+
+    if ( toggle(emit) ) call trace_end ( 'LinearizedForwardModel' )
+
+  contains
+
+    ! ======================================== Internal procedures =====
+
+    ! -----------------------------------------------  Add_y_Star  -----
+    subroutine Add_y_Star
+    ! If a yStar has been supplied, we need to add that on.
+    ! We also need to add on the impact of any perturbation in tangent pressure
+    ! in the xStar/yStar supplied case too
+
+      real (r8), dimension(noMIFs) :: deltaPtan ! Change of ptan between x and supplied xStar
+      real (r8), dimension(noMIFs, noChans) :: dummy ! Workspace
+      real (r8), dimension(noMIFs, noChans) :: dYStarByDPtan ! Remapped values of l2pc
+      integer, dimension(noMIFs) :: ptanOrder ! Ordering for ptan
+      real (r8), dimension(noMIFs) :: sortedPtan ! supplied ptan in ascending order
+      real (r8), dimension(noMIFs, noChans) :: sortedDYStarByDPtan ! Remapped values of l2pc
+      real (r8), dimension(noMIFs, noChans) :: sortedYStarMapped ! Remapped values of l2pc
+      real (r8), dimension(noMIFs, noChans) :: yStarMapped ! Remapped values of l2pc
+
+      type(VectorValue_T), pointer :: THISYSTARQ ! Quantitiy from supplied YStar vector
 
       ! Identify the radiance in the supplied yStar vector
-      thisYStarQ => GetVectorQuantityByType ( vectors(fmConf%yStar), quantityType=l_radiance, &
-        & signal=signal%index, sideband=signal%sideband )
+      thisYStarQ => GetVectorQuantityByType ( vectors(fmConf%yStar), &
+        & quantityType=l_radiance, signal=signal%index, sideband=signal%sideband )
 
       ! We're going to interpolate this in ptan.  Extract it and make
       ! sure ptan is in ascending order.
@@ -753,30 +765,9 @@ contains ! =====     Public Procedures     =============================
         end do                        ! Channels
       end if
 
-      ! Extra tidying up in the supplied xStar/yStar case
-      call Deallocate_test ( deltaPtan, 'deltaPtan', ModuleName )
-      call Deallocate_test ( dummy, 'dummy', ModuleName )
-      call Deallocate_test ( dyStarByDptan, 'dyStarByDPtan', ModuleName )
-      call Deallocate_test ( ptanOrder, 'ptanOrder', ModuleName )
-      call Deallocate_test ( sortedPtan, 'sortedPtan', ModuleName )
-      call Deallocate_test ( sorteddyStarByDptan, 'sorteddyStarByDPtan', ModuleName )
-      call Deallocate_test ( sortedyStarMapped, 'sortedyStarMapped', ModuleName )
-      call Deallocate_test ( yStarMapped, 'yStarMapped', ModuleName )
-    end if
+    end subroutine Add_y_Star
 
-    if ( present (jacobian) ) then         ! Destroy working arrays
-      call deallocate_test ( mifPointingsLower, 'mifPointingsLower', ModuleName )
-      call deallocate_test ( mifPointingsUpper, 'mifPointingsUpper', ModuleName )
-      call deallocate_test ( lowerWeight, 'lowerWeight', ModuleName )
-      call deallocate_test ( upperWeight, 'upperWeight', ModuleName )
-    end if
-
-    if ( toggle(emit) ) call trace_end ( 'LinearizedForwardModel' )
-
-  contains
-    ! ======================================== Internal procedures =====
-
-    ! ------------------------------------------ FindMatchForL2PCQ ---
+    ! ----------------------------------------  FindMatchForL2PCQ  -----
     subroutine FindMatchForL2PCQ ( l2pcQ, fmConf, FwdModelIn, FwdModelExtra, &
       & stateQ, foundInFirst )
       type (VectorValue_T), intent(in) :: L2PCQ ! Quantity to search for
@@ -901,15 +892,14 @@ contains ! =====     Public Procedures     =============================
       integer :: SELECTOR               ! Bin selector index
       integer :: SIGNAL                 ! Signal index
       integer :: STATEINSTANCE          ! Instance index
-      integer :: STATUS                 ! Flag
       integer :: tmpSideband            ! Loop counter
       logical :: SPLIT                  ! Need a split calculation
       logical :: FOUNDINFIRST           ! Flag, not used
       real(r8) :: THISCOST              ! Interim cost
 
       integer, dimension(1) :: S1, S2   ! Results of minloc
-      logical, dimension(:,:), pointer :: POSSIBLE ! Flags for each bin
-      real(r8), dimension(:), pointer :: COST ! Cost of each bin
+      logical, dimension(-1:1,size(l2pcDatabase)) :: POSSIBLE ! Flags for each bin
+      real(r8), dimension(size(l2pcDatabase)) :: COST ! Cost of each bin
       real(r8), dimension(-1:1) :: BESTCOST
       type (QuantityTemplate_T), pointer :: BINRAD ! Quantity template
       type (BinSelector_T), pointer :: SEL ! One bin selector
@@ -922,12 +912,9 @@ contains ! =====     Public Procedures     =============================
 
       ! Now special code for dealing with the locked bins case
       if ( fmConf%lockBins ) then
-        if ( .not. associated ( lockedBins ) ) then
-          allocate ( lockedBins ( -1:1, size(signals) ), STAT=status )
-          if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & MLSMSG_Allocate//'lockedBins' )
-          lockedBins = 0
-        end if
+        if ( .not. associated ( lockedBins ) ) &
+          & call allocate_test ( lockedBins, 1, size(signals), 'lockedBins', &
+            & moduleName, low1=-1, fill=0 )
         if ( any ( lockedBins ( :, signal ) /= 0 ) ) then
           l2pcBins = lockedBins ( :, signal )
           ! If got folded, use that by preference (3rd argument below).
@@ -945,11 +932,6 @@ contains ! =====     Public Procedures     =============================
       ! Setup the arrays we need, possible is a flag to indicate (for
       ! each sideband) whether a bin is even worth considering, cost is
       ! the associated cost.
-      nullify ( possible, cost )
-      allocate ( possible ( -1:1, nobins ), STAT=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_Allocate//'possible' )
-      call Allocate_test ( cost, noBins, 'cost', ModuleName )
 
       ! Get a first cut at the 'possible' flag
       possible = .false.
@@ -1126,13 +1108,9 @@ contains ! =====     Public Procedures     =============================
       ! Record this in the 'locked bins' information
       if ( fmConf%lockBins ) lockedBins ( :, signal ) = l2pcBins
 
-      ! Tidy up
-      call Deallocate_test ( cost, 'cost', ModuleName )
-      deallocate ( possible )
-
     end subroutine SelectL2PCBins
 
-  end subroutine LinearizedForwardModel
+  end subroutine LinearizedForwardModelAuto
 
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
@@ -1146,6 +1124,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.64  2007/06/29 19:32:42  vsnyder
+! Make ForwardModelIntermediate_t private to ScanModelModule
+!
 ! Revision 2.63  2007/04/03 17:45:10  vsnyder
 ! Add target attribute to FwdModelIn and FwdModelExtra, replace pointer
 ! attribute on Vectors with Target attribute.
