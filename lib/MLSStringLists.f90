@@ -2990,19 +2990,24 @@ contains
   end function unquote
 
   ! ---------------------wrap ---------------
-  subroutine wrap( str, outstr, width, inseparator )
+  subroutine wrap( str, outstr, width, inseparator, break, mode )
     ! Wrap str by putting separators as line feed so no
     ! line exceeds width
     ! Args
     character (len=*), intent(in)                 :: str
     character (len=*), intent(out)                :: outstr
     integer, intent(in)                           :: width
-    character (len=*), optional, intent(in)       :: inseparator
+    character (len=*), optional, intent(in)       :: inseparator ! if not ','
+    character (len=*), optional, intent(in)       :: break ! if not ' '
+    character (len=*), optional, intent(in)       :: mode ! if not 'hard'
     ! Internal variables
-    character (len=1)               :: separator
+    character (len=4)               :: separator
     integer :: dsnext
     integer :: dsp
     integer :: ko
+    integer :: kp
+    character(len=1) :: myBreak
+    character(len=1) :: myMode
     integer :: nextwidth
     integer :: so
     integer :: sp
@@ -3012,6 +3017,10 @@ contains
     else
       separator = comma
     end if
+    myBreak = ' '
+    if ( present(break) ) myBreak = break
+    myMode = 'h' ! hard
+    if ( present(mode) ) myMode = mode
     outstr = str
     if ( len_trim(str) <= width ) return
     ! print *, 'str ', str
@@ -3028,25 +3037,75 @@ contains
         outstr(ko:ko + nextwidth - 1) = str(so:so + nextwidth - 1)
         exit
       endif
-      ! Do we have any breakable spaces in next width?
-      dsp = index( str(so:so+nextwidth-1), ' ', back=.true. )
-      ! print *, 'so, ko ', so, ko
-      ! print *, 'dsp ', dsp
-      if ( dsp > 0 ) then
-        ! Yes, so we break there
-        sp = so - 1 + dsp
-        outstr(ko:ko+dsp-1) = str(so:sp-1) // separator
-        ko = ko + dsp
-        ! Now treat possibility that next chars might be spaces, too
-        dsnext = findFirst( str(sp:), ' ', reverse=.true. )
-        if ( dsnext < 1 ) exit
-        so = sp + dsnext - 1
-      else
-        ! No, so we hyphenate
-        outstr(ko:ko+nextwidth-1) = str(so:so+nextwidth-3) // '-' // separator
-        ko = ko + nextwidth
-        so = so + nextwidth - 2
-      endif
+      select case (lowerCase(myMode))
+      case ('h')
+        ! 'hard' wrap
+        ! we will wrap to exactly width or less, even if we have to hyphenate
+        ! Do we have any breakable spaces in next width?
+        ! dsp = index( str(so:so+nextwidth-1), ' ', back=.true. )
+        dsp = index( str(so:so+nextwidth-1), myBreak, back=.true. )
+        ! print *, 'so, ko ', so, ko
+        ! print *, 'dsp ', dsp
+        if ( dsp > 0 ) then
+          ! Yes, so we break there
+          sp = so - 1 + dsp
+          kp = ko + dsp - 2 + len_trim(separator)
+          outstr(ko:kp) = str(so:sp-1) // trim(separator)
+          ko = ko + dsp + len_trim(separator) - 1
+          ! Now treat possibility that next chars might be spaces, too
+          if ( len_trim(myBreak) > 0 ) sp = sp + 1
+          dsnext = findFirst( str(sp:), ' ', reverse=.true. )
+          if ( dsnext < 1 ) exit
+          so = sp + dsnext - 1
+        else
+          ! No, so we hyphenate
+          kp = ko + nextwidth - 2 + len_trim(separator)
+          outstr(ko:kp) = str(so:so+nextwidth-3) // '-' // trim(separator)
+          ko = ko + nextwidth
+          so = so + nextwidth - 2
+        endif
+      case ('s')
+        ! 'soft' wrap
+        ! We will find the next break and wrap to that
+        ! even though the resulting width may be slightly greater than planned
+        ! 1st: try to wrap within width
+        dsp = index( str(so:so+nextwidth-1), myBreak, back=.true. )
+        if ( dsp > 0 ) then
+          ! Yes, so we break there
+          sp = so - 1 + dsp
+          kp = ko + dsp - 2 + len_trim(separator)
+          outstr(ko:kp) = str(so:sp-1) // trim(separator)
+          ko = ko + dsp + len_trim(separator) - 1
+          ! Now treat possibility that next chars might be spaces, too
+          if ( len_trim(myBreak) > 0 ) sp = sp + 1
+          dsnext = findFirst( str(sp:), ' ', reverse=.true. )
+          if ( dsnext < 1 ) exit
+          so = sp + dsnext - 1
+        else
+          ! Look for next break starting with width
+          dsp = index( str(so+nextwidth-1:), myBreak )
+          if ( dsp > 0 ) then
+            ! Yes, so we break there
+            dsp = dsp + nextwidth - 1
+            sp = so - 1 + dsp
+            kp = ko + dsp - 2 + len_trim(separator)
+            outstr(ko:kp) = str(so:sp-1) // trim(separator)
+            ko = ko + dsp + len_trim(separator) - 1
+            ! Now treat possibility that next chars might be spaces, too
+            if ( len_trim(myBreak) > 0 ) sp = sp + 1
+            dsnext = findFirst( str(sp:), ' ', reverse=.true. )
+            if ( dsnext < 1 ) exit
+            so = sp + dsnext - 1
+          else
+            ! No, so we must give up any further wrapping
+            dsnext = min( len(str) - so, len(outstr) - ko )
+            outstr(ko:ko+dsnext) = str(so:so+dsnext)
+            exit
+          endif
+        endif
+      case default
+        ! What were you thinking? 'h' or 's' are the only modes we coded
+      end select
     enddo
   end subroutine wrap
 
@@ -3101,6 +3160,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.33  2008/05/02 00:08:13  pwagner
+! wrap subroutine may now operate in soft mode
+!
 ! Revision 2.32  2008/01/23 21:24:43  pwagner
 ! RemoveNumFromList works with inseparator correctly
 !
