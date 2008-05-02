@@ -43,7 +43,7 @@ contains
 
   ! ---------------------------------------------  ScanAverage_1d  -----
   subroutine ScanAverage_1d ( MIF_Times, DeadTime, Chi_In, Chi_Out, Y_in, &
-    &                         Y_Out, Pos1P, DY_DX_Out )
+    &                         Y_Out, DY_DX_Out )
     ! Average over each MIF.  Assume linear motion during the MIF.
     ! Assume the MIFs begin at MIF_Times + deadTime.
 
@@ -58,9 +58,6 @@ contains
                                         ! size(Chi_in)
     real(rp), intent(out) :: Y_Out(:)   ! Scan averaged quantity
                                         ! size(Chi_out)
-    real(rp), intent(in), optional :: Pos1P(:) ! Positions (Chi) at MIF_Times.
-                                        ! If present, Chi_Out is assumed to be
-                                        ! Pos2P
     real(rp), intent(out), optional :: DY_DX_Out(:)
 
     integer :: I ! Subscript and loop inductor
@@ -93,7 +90,7 @@ contains
 
   ! ---------------------------------------------  ScanAverage_2d  -----
   subroutine ScanAverage_2d ( MIF_Times, DeadTime, Chi_In, Chi_Out, Y_in, &
-    &                         Y_Out, Pos1P, DY_DX_Out )
+    &                         Y_Out, DY_DX_Out )
     ! Average over each MIF.  Assume linear motion during the MIF.
     ! Assume MIF_Times are midway between T1 and T2-deadTime, where T1 and
     ! T2 are the beginning and ending times for MIF integration.
@@ -110,9 +107,6 @@ contains
                                         ! size(Chi_in) x ???
     real(rp), intent(out) :: Y_Out(:,:) ! Scan averaged quantity
                                         ! size(Chi_out) x size(Y_in,2)
-    real(rp), intent(in), optional :: Pos1P(:) ! Positions (Chi) at MIF_Times.
-                                        ! If present, Chi_Out is assumed to be
-                                        ! Pos2P
     real(rp), intent(out), optional :: DY_DX_Out(:,:)
 
     type(coefficients) :: Coeffs        ! to interpolate from Chi_In to X
@@ -230,6 +224,9 @@ contains
 end module ScanAverage_m
 
 ! $Log$
+! Revision 2.5  2008/05/02 00:46:56  vsnyder
+! Remove unused symbols
+!
 ! Revision 2.4  2007/11/29 23:28:22  vsnyder
 ! Repair some comments
 !
