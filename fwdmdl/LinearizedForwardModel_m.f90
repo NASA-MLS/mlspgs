@@ -66,7 +66,6 @@ contains ! =====     Public Procedures     =============================
 
     integer :: NOCHANS                  ! Dimension
     integer :: NOMIFS                   ! Number of minor frames
-    integer :: NOMIFSJ                  ! Dimension, 0 if no Jacobian
     type(VectorValue_T), pointer :: RADIANCE ! The radiance quantity to fill
     integer :: SIDEBAND
     type(Signal_T), pointer :: SIGNAL   ! Signal from the configuration
@@ -112,17 +111,15 @@ contains ! =====     Public Procedures     =============================
     ! Set some dimensions
     noChans = radiance%template%noChans
     noMIFs = radiance%template%noSurfs
-    noMifsJ = noMifs
-    if ( .not. present(jacobian) ) noMifsJ = 0
 
     call LinearizedForwardModelAuto ( fmConf, FwdModelIn, FwdModelExtra,&
-    & fmStat, radiance, noChans, noMifs, noMifsJ, Jacobian, vectors )
+    & fmStat, radiance, noChans, noMifs, Jacobian, vectors )
 
   end subroutine LinearizedForwardModel
 
   ! ---------------------------------  LinearizedForwardModelAuto  -----
   subroutine LinearizedForwardModelAuto ( fmConf, FwdModelIn, FwdModelExtra,&
-    & fmStat, radiance, noChans, noMifs, noMifsJ, Jacobian, vectors )
+    & fmStat, radiance, noChans, noMifs, Jacobian, vectors )
 
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use Dump_0, only: DUMP
@@ -164,7 +161,7 @@ contains ! =====     Public Procedures     =============================
     type(vector_T), intent(in), target ::  FWDMODELEXTRA
     type(forwardModelStatus_t), intent(inout) :: FMSTAT ! Reverse comm. stuff
     type(VectorValue_T), intent(inout) :: RADIANCE ! The radiance quantity to fill
-    integer, intent(in) :: NoChans, NoMifs, NoMifsJ ! Dimensions
+    integer, intent(in) :: NoChans, NoMifs ! Dimensions
     type(matrix_T), intent(inout), optional :: JACOBIAN
     type(vector_t), dimension(:), target, optional :: VECTORS ! Vectors database
 
@@ -199,8 +196,8 @@ contains ! =====     Public Procedures     =============================
     logical :: PTANINFIRST              ! PTan was found in the first vector
 
     integer, dimension(-1:1) :: L2PCBINS ! Which l2pc to use
-    integer, dimension(noMifsJ) :: mifPointingsLower ! Result of a hunt
-    integer, dimension(noMifsJ) :: mifPointingsUpper ! mifPointingsLower+1
+    integer, dimension(merge(noMifs,0,present(jacobian))) :: mifPointingsLower ! Result of a hunt
+    integer, dimension(merge(noMifs,0,present(jacobian))) :: mifPointingsUpper ! mifPointingsLower+1
 
     logical, dimension(noChans) :: doChannel ! Do this channel?
 
@@ -214,9 +211,9 @@ contains ! =====     Public Procedures     =============================
     ! - xPrime (xP) is like xStar but contains state values
     ! - kPrime is the jacobian for these two.
 
-    real (r8), dimension(noMifsJ) :: lowerWeight ! For interpolation
-    real (r8), dimension(noMifsJ) :: upperWeight ! For interpolation
-    real (r8), dimension(noMIFs) :: tangentTemperature ! For optical depth
+    real (r8), dimension(merge(noMifs,0,present(jacobian))) :: lowerWeight ! For interpolation
+    real (r8), dimension(merge(noMifs,0,present(jacobian))) :: upperWeight ! For interpolation
+    real (r8), dimension(merge(noMifs,0,radiance%template%quantityType==l_opticalDepth)) :: tangentTemperature ! For optical depth
     real (r8), dimension(noChans) :: thisFraction ! Sideband fraction values
 
     real (r8), dimension(:,:), pointer :: yPmapped ! Remapped values of yP
@@ -1124,6 +1121,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.65  2008/05/02 19:44:39  vsnyder
+! Cure three memory leaks, plus some reorg
+!
 ! Revision 2.64  2007/06/29 19:32:42  vsnyder
 ! Make ForwardModelIntermediate_t private to ScanModelModule
 !
