@@ -195,6 +195,8 @@ module MLSHDFEOS
 
   integer, public, parameter :: MAXNODFIELDS = 1000
   integer, public, parameter :: MAXDLISTLENGTH = 400000
+  integer, parameter         :: DFLTMAXLINELENGTH = 1024
+  ! integer, parameter         :: DFLTMAXLINES = 200000
 
   ! Print debugging stuff?
   logical, parameter :: DEEBUG = .false.  
@@ -227,7 +229,7 @@ contains ! ======================= Public Procedures =========================
     & ATTRNAME, maxLineLen )
     ! Write contents of text file as global attribute
     ! E.g., may wish to include leap sec file or utc pole
-    use MLSFiles, only: textFile_to_Chars
+    use IO_STUFF, only: get_lun, read_textFile
     use MLSHDF5, only: MAXCHATTRLENGTH, MAXCHFIELDLENGTH
 
     character (len=*), intent(in) :: TEXTFILE ! name of textfile
@@ -235,18 +237,22 @@ contains ! ======================= Public Procedures =========================
     character(len=*), intent(in) :: ATTRNAME     ! Attribute name
     integer, optional, intent(in) :: maxLineLen
     ! Internal variables
+    integer, parameter :: DATATYPE = MLS_CHARTYPE
+    character(len=3) :: blockChar
     character(len=MAXCHFIELDLENGTH) :: BUFFER  ! Buffer to hold contents
     integer :: firstChar, lastChar
     integer :: iblock, nblocks
-    character(len=3) :: blockChar
-    character(len=len(attrname)+3) :: newname
-    integer, parameter :: DATATYPE = MLS_CHARTYPE
     integer :: lun
+    integer :: myMaxLineLen
+    character(len=len(attrname)+3) :: newname
     integer :: status
     !
     call MLSMessageCalls( 'push', constantName='MLS_EHWRGLATT_textfile' )
+    myMaxLineLen = DFLTMAXLINELENGTH
+    if ( present(maxLineLen) ) myMaxLineLen = maxLineLen
     ! Try to read the textfile
-    call textFile_to_Chars( trim(textFile), BUFFER, maxLineLen )
+    BUFFER = ' '
+    call read_textFile( trim(textFile), BUFFER, myMaxLineLen )
     status = 0
     if ( status /= 0 ) then
       call MLSMessage(MLSMSG_Warning, ModuleName, &
@@ -2142,6 +2148,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDFEOS
 
 ! $Log$
+! Revision 2.36  2008/05/02 00:05:36  pwagner
+! Reads textFile using io stuff
+!
 ! Revision 2.35  2008/04/25 22:51:44  pwagner
 ! Passes optional arg maxLineLen through to textFile_to_Chars
 !
