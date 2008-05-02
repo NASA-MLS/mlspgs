@@ -214,8 +214,6 @@ contains
     type (Matrix_T) :: JACOBIAN
     type (MatrixElement_T), pointer :: B ! A block from the jacobian matrix
 
-    type (Vector_T), pointer :: V
-
     ! Executable code
 
     ! If the finished flag is set (by an earlier call to this routine) exit
@@ -284,7 +282,6 @@ contains
 
         ! Now get the three vector templates and vectors
         do i = 1, noVectors
-          v => vectors ( i )
           call PVMIDLUnpack ( noQuantitiesInVector, info )
           if ( info /= 0 ) call PVMErrorMessage ( info, 'noQuantitiesInVector' )
           call Allocate_Test ( qtInds, noQuantitiesInVector, 'qtInds', ModuleName )
@@ -775,6 +772,9 @@ contains
 end module L2FWMParallel
 
 ! $Log$
+! Revision 2.24  2008/05/02 00:34:35  vsnyder
+! Delete unused symbol
+!
 ! Revision 2.23  2007/10/24 00:16:12  pwagner
 ! Removed unused declarations
 !
