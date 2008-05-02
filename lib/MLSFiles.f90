@@ -27,7 +27,7 @@ module MLSFiles               ! Utility file routines
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Crash, MLSMSG_Error, MLSMSG_Warning
   use MLSSets, only: findFirst
-  use MLSStrings, only: Capitalize, LowerCase, Replace
+  use MLSStrings, only: Capitalize, LowerCase
   use MLSStringLists, only: ExtractSubString, &
     & ReplaceSubString, SortArray
   use output_m, only: blanks, output
@@ -2711,6 +2711,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.84  2008/05/02 00:41:09  vsnyder
+! Delete unused symbol
+!
 ! Revision 2.83  2008/05/02 00:03:33  pwagner
 ! Removed redundant procedures
 !
