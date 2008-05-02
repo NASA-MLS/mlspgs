@@ -295,14 +295,10 @@ contains ! =========== Public procedures ===================================
     ! Given a hGrid, nullify all the pointers associated with it
     type ( HGrid_T ), intent(out) :: H
 
-    ! Executable code
-    nullify ( h%phi )
-    nullify ( h%geodLat )
-    nullify ( h%lon )
-    nullify ( h%time )
-    nullify ( h%solarTime )
-    nullify ( h%solarZenith )
-    nullify ( h%losAngle )
+    ! Executable code.  Nothing is needed since intent(out) causes
+    ! default initialization, which nullifies the pointers because
+    ! they all have default initialization => NULL()
+
   end subroutine NullifyHGrid
 
   logical function not_used_here()
@@ -317,6 +313,9 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.8  2008/05/02 00:38:48  vsnyder
+! Simplify NullifyHGrid
+!
 ! Revision 2.7  2005/09/21 23:11:54  pwagner
 ! Unnecessary changes
 !
