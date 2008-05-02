@@ -15,8 +15,6 @@ module SpectroscopyCatalog_m
 
   use Intrinsic, only: L_none
   use MLSCommon, only: R8, MLSFile_T
-  use MLSFiles, only: HDFVERSION_5, &
-    & AddInitializeMLSFile, GetPCFromRef, split_path_name
   use Molecules, only: First_Molecule, Last_Molecule
 
   ! More USEs below in each procedure.
@@ -746,7 +744,7 @@ contains ! =====  Public Procedures  ===================================
   subroutine Get_File_Name ( pcfCode, &
     & spectroscopyFile, fileDataBase, MLSFile, toolkit, MSG, pcfEndCode )
     use hdf, only: dfacc_rdonly
-    use intrinsic, only: l_ascii, l_hdf
+    use intrinsic, only: l_hdf
     use MLSCommon, only: MLSFile_T
     use MLSFiles, only: HDFVERSION_5, &
       & AddInitializeMLSFile, GetPCFromRef, split_path_name
@@ -764,7 +762,7 @@ contains ! =====  Public Procedures  ===================================
     ! Internal variables
     logical, parameter :: DEBUG = .false.
     character(len=1023) :: FileName     ! For WriteSpectroscopy
-    character(len=255) :: fileTypeStr, PCFFileName, path, shortName
+    character(len=255) :: PCFFileName, path, shortName
     integer :: lun
     integer :: mypcfEndCode
     integer :: returnStatus             ! non-zero means trouble
@@ -1465,6 +1463,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.44  2008/04/01 16:59:17  pwagner
+! Can get hdf5 spectroscopy file path/name from PCF
+!
 ! Revision 2.43  2006/07/21 00:17:01  vsnyder
 ! Plug a memory leak
 !
