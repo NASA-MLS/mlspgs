@@ -26,7 +26,7 @@ module IO_STUFF
 !---------------------------------------------------------------------------
 
   interface read_textfile
-    module procedure read_textfile_arr, read_textfile_sca
+    module procedure read_textfile_arr, read_textfile_arr2d, read_textfile_sca
   end interface
 
 contains
@@ -52,32 +52,37 @@ contains
 
   !------------------ read_textfile
   ! Notes and limitations:
+  ! Won't change unread elements (so you can prefill with nulls)
   ! formatted io
-  ! No line should be longer than 512 characters
+  ! No line should be longer than len(string)
   ! (To get around that limitation supply optional arg maxLineLen)
-  subroutine READ_TEXTFILE_arr ( File, string, nLines, maxLineLen )
+  subroutine READ_TEXTFILE_arr ( File, string, maxLineLen, nLines )
   ! read a textfile into string array, one line per element
     character(len=*), intent(in)  :: File ! its path and name
     character(len=*), dimension(:), intent(inout) :: string    ! its contents
-    integer, optional, intent(out) :: nLines ! num lines read
     integer, optional, intent(in) :: maxLineLen
+    integer, optional, intent(out) :: nLines ! num lines read
     ! Internal variables
     integer :: lun
+    integer :: pos
     integer :: recrd
     integer :: status
-    character(len=len(string)) :: tempStr
-    character(len=8) :: xfmt
-    character(len=6) :: xlen
+    character(len=1), dimension(len(string)) :: cArray
+    character(len=1), dimension(len(string)) :: nullArray
+    character(len=12) :: xfmt
+    character(len=8) :: xlen
+    ! print *, 'Name of textfile: ', trim(File)
     ! What format do we use for reading each line?
-    xfmt = '(a512)' ! This is the default; if lines are larger supply maxLineLen
+    xfmt = '(128a1)' ! This is the default; if lines are larger supply maxLineLen
     if ( present(maxLineLen) ) then
-     write( xlen, '(i6)' ) maxLineLen
-     if ( len(string) < maxLineLen ) write( xlen, '(i6)' ) len(string)
-     if ( index(xlen, '*') < 1 ) xfmt = '(a' // trim(adjustl(xlen)) // ')'
+     write( xlen, '(i8)' ) maxLineLen
+     if ( len(string) < maxLineLen ) write( xlen, '(i8)' ) len(string)
+     if ( index(xlen, '*') < 1 ) xfmt = '(' // trim(adjustl(xlen)) // 'a1)'
+    else
+     write( xlen, '(i8)' ) len(string)
+     if ( index(xlen, '*') < 1 ) xfmt = '(' // trim(adjustl(xlen)) // 'a1)'
     endif
     ! Try to read the textfile
-    ! Don't change unread elements
-    ! string = " " 
     if ( present(nLines) ) nLines = 0
     call GET_LUN ( LUN )
     open(UNIT=lun, form='formatted', &
@@ -87,51 +92,173 @@ contains
       return
     endif
     recrd = 0
+    ! print *, 'xfmt: ', xfmt
     do
-      read( UNIT=lun, fmt=xfmt, IOSTAT=status ) tempStr
-      if ( status /= 0 ) exit
-      recrd = recrd + 1
-      string(recrd) = tempStr
+      status = 0
+      call null_fill_1d( nullArray )
+      cArray = string( min(recrd+1, size(string)) )
+      read( UNIT=lun, fmt=xfmt, eor=50, end=500, err=50, advance='no' ) nullArray
+500   status = -1
+50    if ( status /= 0 ) exit
+      do pos=1, len(string) - 1
+        if ( any(nullArray(pos:pos+1) == achar(0)) ) exit
+      enddo
+      pos = max(pos, 2)
+      cArray(1:pos-1) = nullArray(1:pos-1)
+      ! print *, cArray
+      recrd = min(recrd+1, size(string))
+      string(recrd) = transfer( cArray, string(recrd) )
     enddo
     if ( present(nLines) ) nLines = recrd
     close( UNIT=lun, iostat=status )
   end subroutine READ_TEXTFILE_arr
 
-  subroutine READ_TEXTFILE_sca ( File, string, maxLineLen )
-  ! read a textfile into sa single tring
+  subroutine READ_TEXTFILE_arr2d ( File, chars, LineLen, nLines )
+  ! read a textfile into a 2d char array, one line per row
+  ! leaving unread elements unchanged
+  ! (So you can prefill with nulls)
     character(len=*), intent(in)  :: File ! its path and name
-    character(len=*), intent(out) :: string    ! its contents
-    integer, optional, intent(in) :: maxLineLen
+    character(len=1), dimension(:,:), intent(inout) :: chars    ! its contents
+    integer, optional, intent(out) :: LineLen ! max line length read
+    integer, optional, intent(out) :: nLines ! num lines read
     ! Internal variables
+    character(len=1), dimension(size(chars,2)) :: cArray
     integer :: lun
+    integer :: N ! max line length so far
+    integer :: col
     integer :: recrd
     integer :: status
-    character(len=len(string)) :: tempStr
-    character(len=8) :: xfmt
-    character(len=6) :: xlen
+    character(len=12) :: xfmt
+    character(len=8) :: xlen
+    N = 0
+    ! print *, 'Name of textfile: ', trim(File)
     ! What format do we use for reading each line?
-    xfmt = '(a512)' ! This is the default; if lines are larger supply maxLineLen
-    if ( present(maxLineLen) ) then
-     write( xlen, '(i6)' ) maxLineLen
-     if ( index(xlen, '*') < 1 ) xfmt = '(a' // trim(adjustl(xlen)) // ')'
-    endif
+    xfmt = '(128a1)' ! This is the default
+    write( xlen, '(i8)' ) size(chars,2)
+    if ( index(xlen, '*') < 1 ) xfmt = '(' // trim(adjustl(xlen)) // 'a1)'
     ! Try to read the textfile
-    string = " "
+    if ( present(nLines) ) nLines = 0
     call GET_LUN ( LUN )
     open(UNIT=lun, form='formatted', &
       & file=trim(File), status='old', iostat=status )
     if ( status /= 0 ) then
-      write(*,*) 'IO_STUFF%READ_TEXTFILE_SCA-E- Unable to open textfile'
+      write(*,*) 'IO_STUFF%READ_TEXTFILE_ARR2D-E- Unable to open textfile'
       return
     endif
-    read( UNIT=lun, fmt=xfmt, IOSTAT=status ) string
+    recrd = 1
+    ! print *, 'xfmt: ', xfmt
     do
-      read( UNIT=lun, fmt=xfmt, IOSTAT=status ) tempStr
-      if ( status /= 0 ) exit
-      string = trim(string) // achar(13) // tempStr
+      status = 0
+      call null_fill_1d( cArray )
+      read( UNIT=lun, fmt=xfmt, eor=50, end=500, err=50, advance='no' ) cArray
+500   status = -1
+50    if ( status /= 0 ) exit
+      do col=1, size(chars, 2)
+        if( cArray(col) == achar(0) ) then
+          N = max(N, col-1)
+          exit
+        else
+          chars(recrd, col) = cArray(col)
+        endif
+      enddo
+      if ( col > size(chars, 2) ) N = size(chars, 2)
+      recrd = min(recrd + 1, size(chars, 1))
     enddo
+    if ( present(nLines) ) nLines = recrd
+    if ( present(LineLen) ) LineLen = N
     close( UNIT=lun, iostat=status )
+  end subroutine READ_TEXTFILE_arr2d
+
+  subroutine READ_TEXTFILE_sca ( File, string, maxLineLen, nLines )
+  ! read a textfile into a single string
+    character(len=*), intent(in)  :: File ! its path and name
+    character(len=*), intent(out) :: string    ! its contents
+    integer, optional, intent(in) :: maxLineLen
+    integer, optional, intent(out) :: nLines ! num lines read
+    ! Internal variables
+    character(len=1), dimension(len(string)) :: cArray
+    integer :: i
+    integer :: lun
+    integer :: lines
+    integer :: pos
+    integer :: recrd
+    integer :: status
+    character(len=12) :: xfmt
+    character(len=8) :: xlen
+    ! Executable
+    ! What format do we use for reading each line?
+    xfmt = '(128a1)' ! This is the default; if lines are larger supply maxLineLen
+    if ( present(maxLineLen) ) then
+     write( xlen, '(i8)' ) maxLineLen
+     if ( len(string) < maxLineLen ) write( xlen, '(i8)' ) len(string)
+     if ( index(xlen, '*') < 1 ) xfmt = '(' // trim(adjustl(xlen)) // 'a1)'
+    else
+     write( xlen, '(i8)' ) len(string)
+     if ( index(xlen, '*') < 1 ) xfmt = '(' // trim(adjustl(xlen)) // 'a1)'
+    endif
+    ! Try to read the textfile
+    if ( present(nLines) ) nLines = 0
+    call GET_LUN ( LUN )
+    open(UNIT=lun, form='formatted', &
+      & file=trim(File), status='old', iostat=status )
+    if ( status /= 0 ) then
+      write(*,*) 'IO_STUFF%READ_TEXTFILE_ARR-E- Unable to open textfile'
+      return
+    endif
+    recrd = 0
+    ! print *, 'xfmt: ', xfmt
+    i = 0
+    do
+      status = 0
+      call null_fill_1d( carray )
+      read( UNIT=lun, fmt=xfmt, eor=50, end=500, err=50, advance='no' ) cArray
+500   status = -1
+50    if ( status /= 0 ) exit
+      ! print *, cArray
+      recrd = recrd + 1
+      oneLine: do pos=1, len(string) - 1
+        if ( any(carray(pos:pos+1) == achar(0)) ) exit oneLine
+        i = min(i + 1, len(string))
+        string(i:i) = carray(pos)
+       enddo oneLine
+      i = min(i + 1, len(string))
+      string(i:i) = achar(13)
+    enddo
+    if ( present(nLines) ) nLines = recrd
   end subroutine READ_TEXTFILE_sca
+  
+!------------ Private procedures
+  subroutine null_fill_1d( array, nullChar )
+    ! Fill array with null chars
+    ! Args
+    character(len=*), dimension(:), intent(out) :: array
+    character(len=1), optional, intent(in)      :: nullChar
+    ! Internal variables
+    character(len=1) :: myNull
+    integer :: col
+    integer :: pos
+    ! Executable
+    myNull = achar(0)
+    if ( present(nullChar) ) myNull = nullChar
+    do col=1, size(array)
+      do pos=1, len(array(1))
+        array(col)(pos:pos) = myNull
+      enddo
+    enddo
+  end subroutine null_fill_1d
+
+  subroutine null_fill_2d( array, nullChar )
+    ! Fill array with null chars
+    ! Args
+    character(len=*), dimension(:,:), intent(out) :: array
+    character(len=1), optional, intent(in)      :: nullChar
+    ! Internal variables
+    integer :: col
+    ! Executable
+    do col=1, size(array,2)
+      call null_fill_1d( array(:, col), nullChar )
+    enddo
+  end subroutine null_fill_2d
 
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
@@ -145,6 +272,9 @@ contains
 end module IO_STUFF
 
 ! $Log$
+! Revision 2.8  2008/05/02 00:02:47  pwagner
+! Less efficient but more failthful
+!
 ! Revision 2.7  2008/04/18 16:28:26  pwagner
 ! Now works properly with NAG, Lahey, and Intel
 !
