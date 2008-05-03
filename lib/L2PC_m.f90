@@ -944,7 +944,7 @@ contains ! ============= Public Procedures ==========================
 
   end subroutine PopulateL2PCBin
 
-  ! --------------------------------------- WriteL2PC ---------------
+  ! -------------------------------------------  ReadOneASCIIL2PC  -----
   subroutine ReadOneASCIIL2PC ( L2pc, Unit, Eof )
     ! This subroutine writes an l2pc to a file
     ! Currently this file is ascii, later it will be
@@ -1826,6 +1826,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.81  2008/05/03 01:49:55  vsnyder
+! Repair a comment
+!
 ! Revision 2.80  2007/10/03 23:58:46  vsnyder
 ! Add 'where' for tracing
 !
