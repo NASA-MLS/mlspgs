@@ -315,10 +315,12 @@ CONTAINS
 
     CHARACTER(len=1), SAVE :: ASE_Side = "A", GSM_Side = "A"
 
-    CALL ReadL0Eng (EngPkt, EngMAF%MAFno, EngMAF%TotalMAF, &
-         EngMAF%MIFsPerMAF, EngMAF%secTAI, data_OK, more_data)
-
-    IF (.NOT. more_data) RETURN   ! nothing more to do
+    DO
+       CALL ReadL0Eng (EngPkt, EngMAF%MAFno, EngMAF%TotalMAF, &
+            EngMAF%MIFsPerMAF, EngMAF%secTAI, data_OK, more_data)
+       IF (.NOT. more_data) RETURN   ! nothing more to do
+       IF (data_OK) EXIT
+    ENDDO
 
     EngMAF%secTAI = EngMAF%secTAI - 0.25   ! actual time to line up with SCI
 
@@ -375,6 +377,9 @@ END MODULE EngUtils
 !=============================================================================
 
 ! $Log$
+! Revision 2.12  2008/05/06 15:56:44  perun
+! Read eng packets until data good.
+!
 ! Revision 2.11  2006/08/02 18:53:41  perun
 ! Define default A/B side reading and use if none available during reading
 !
