@@ -52,7 +52,10 @@ MODULE MLSPCF2
    INTEGER, PARAMETER :: mlspcf_ptggrids_end = 20004
    !
    INTEGER, PARAMETER :: mlspcf_pfa_start = 20005
-   INTEGER, PARAMETER :: mlspcf_pfa_end = 20032
+   INTEGER, PARAMETER :: mlspcf_pfa_end = 20031
+   !
+   INTEGER, PARAMETER :: mlspcf_MieTables_start = 20032
+   INTEGER, PARAMETER :: mlspcf_MieTables_end = 20032
    !
    INTEGER, PARAMETER :: mlspcf_spectroscopy_start = 20033
    INTEGER, PARAMETER :: mlspcf_spectroscopy_end = 20033
@@ -125,6 +128,9 @@ contains
 END MODULE MLSPCF2
 
 ! $Log$
+! Revision 2.22  2008/05/08 19:18:22  pwagner
+! added Mie Tables entries
+!
 ! Revision 2.21  2008/01/08 00:18:48  pwagner
 ! Levels 1 and 2 can use same shared PCF now
 !
