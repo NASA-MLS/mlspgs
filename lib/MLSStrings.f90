@@ -620,6 +620,7 @@ contains
     ! Notes:
     ! mode='wrap' does not return true middle value yet--do we care?
     ! we trim each element of the sub-strings--should we allow an option not to?
+    ! (Probably)
      integer :: i
      integer :: ipos
      integer :: lpos
@@ -861,9 +862,10 @@ contains
   END FUNCTION LowerCase
 
   ! ---------------------------------------------------  NAppearances  -----
-  function NAppearances(str, substrings) result(array)
+  function NAppearances( str, substrings, dontTrim ) result(array)
     character(len=*), intent(in) :: str
     character(len=*), intent(in), dimension(:) :: substrings
+    logical, optional, intent(in) :: dontTrim
     integer, dimension(size(substrings)) :: array
     character(len=len(str)) :: substr
     ! Returns the array of the number of times each element of substrings
@@ -873,20 +875,28 @@ contains
     !      ------
     !   (/7, 6, 3, 6/)
     !
-    ! Note:
-    !     these are distinct, non-overlapping occurrences of each sub-string
-    !
     ! Method:
     ! Use indexes function to find successive indexes of a single substring
+    !
+    ! Note:
+    !     these are distinct, non-overlapping occurrences of each sub-string
+    !     the dontTrim option not yet passed to indexes
     ! Internal variables
     integer, dimension(len(str)) :: tmpArray
     character(len=len(substrings)), dimension(len(str)) :: tmpSubs
     integer :: i
+    logical :: myDontTrim
     ! Executable
+    myDontTrim = .false.
+    if ( present(dontTrim) ) myDontTrim = dontTrim
     do i=1, size(substrings)
       tmpArray = 0
       tmpSubs = substrings(i)
-      tmpArray = indexes(str, tmpSubs, 'left')
+      if ( myDontTrim ) then
+        tmpArray = indexes( str, tmpSubs, 'left' )
+      else
+        tmpArray = indexes( trim_safe(str), tmpSubs, 'left' )
+      endif
       array(i) = count( tmpArray > 0 )
     enddo
   end function NAppearances
@@ -2092,6 +2102,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.73  2008/05/09 00:22:37  pwagner
+! Nappearances has new optional arg to not trim substrings
+!
 ! Revision 2.72  2008/02/07 18:46:55  pwagner
 ! isAllAscii, isAscii now public; asciify generic
 !
