@@ -266,7 +266,8 @@ module MLSHDF5
   integer, public, parameter :: MAXCHATTRLENGTH  =   40000 ! max number in attr
 
   ! Local parameters
-  integer(kind=hsize_t), dimension(7) :: ones = (/1,1,1,1,1,1,1/)
+  character, parameter :: Digits(7) = (/ '1', '2', '3', '4', '5', '6', '7' /)
+  integer(hsize_t), dimension(7) :: ones = (/1,1,1,1,1,1,1/)
   logical, parameter    :: countEmpty = .true.
   logical, parameter    :: DEEBUG = .false.
   integer, save :: cantGetDataspaceDims = 0
@@ -1059,7 +1060,7 @@ contains ! ======================= Public Procedures =========================
   ! -----------------------------------  MakeHDF5Attribute_textFile  -----
   subroutine MakeHDF5Attribute_textFile ( textFile, itemID, name , &
    & skip_if_already_there, maxLineLen )
-    use IO_STUFF, only: get_lun, read_textFile
+    use IO_STUFF, only: read_textFile
     integer, intent(in) :: ITEMID       ! Group etc. to make attr to.
     character (len=*), intent(in) :: NAME ! Name of attribute
     character (len=*), intent(in) :: TEXTFILE ! name of textfile
@@ -2799,35 +2800,8 @@ contains ! ======================= Public Procedures =========================
     integer, dimension(1), optional, intent(in) :: FINALSHAPE
     logical, optional, intent(in)     :: adding_to
 
-    ! Local variables
-    integer :: spaceID                  ! ID for dataspace
-    integer (HID_T) :: setID            ! ID for dataset
-    integer :: status                   ! Flag from HDF5
-    integer(kind=hsize_t), dimension(1) :: SHP, MAXDIMS        ! Shape
-    integer :: STRINGTYPE               ! Type for string
+    include 'SaveAsHDF5DS_chararr.f9h'
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='SaveAsHDF5DS_chararr1' )
-    shp = shape(value)
-    maxdims = shp
-    if ( present(finalShape) ) maxdims = finalShape
-    ! Create a data type for this string
-    call h5tcopy_f ( H5T_NATIVE_CHARACTER, stringtype, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to create stringtype for array' // trim(name) )
-    call h5tset_size_f ( stringtype, max(len(value(1)), 1), status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to set size for stringtype ' // trim(name) )
-    ! Create the dataspace
-    call createSpaceSet ( locID, name, maxdims, stringtype, &
-      & spaceID, setID, status, adding_to, cFill=FillValue)
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to create dataset for 1D char array ' // trim(name) )
-    ! Write the data
-    call h5dWrite_f ( setID, stringtype, value, &
-      & int ( (/ shp, ones(1:6) /), hsize_t ), status )
-    call finishSaveDS ( name, status, setID, spaceID, stringType )
-    call MLSMessageCalls( 'pop' )
   end subroutine SaveAsHDF5DS_chararr1
 
   ! --------------------------------------  SaveAsHDF5DS_chararr2  -----
@@ -2841,40 +2815,13 @@ contains ! ======================= Public Procedures =========================
     integer, dimension(2), optional, intent(in) :: FINALSHAPE
     logical, optional, intent(in)     :: adding_to
 
-    ! Local variables
-    integer :: spaceID                  ! ID for dataspace
-    integer (HID_T) :: setID            ! ID for dataset
-    integer :: status                   ! Flag from HDF5
-    integer(kind=hsize_t), dimension(2) :: SHP, MAXDIMS        ! Shape
-    integer :: STRINGTYPE               ! Type for string
+    include 'SaveAsHDF5DS_chararr.f9h'
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='SaveAsHDF5DS_chararr2' )
-    shp = shape(value)
-    maxdims = shp
-    if ( present(finalShape) ) maxdims = finalShape
-    ! Create a data type for this string
-    call h5tcopy_f ( H5T_NATIVE_CHARACTER, stringtype, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to create stringtype for array' // trim(name) )
-    call h5tset_size_f ( stringtype, max(len(value(1,1)), 1), status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to set size for stringtype ' // trim(name) )
-    ! Create the dataspace
-    call createSpaceSet ( locID, name, maxdims, stringtype, &
-      & spaceID, setID, status, adding_to, cFill=fillValue)
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to create dataset for 2D char array ' // trim(name) )
-    ! Write the data
-    call h5dWrite_f ( setID, stringtype, value, &
-      & int ( (/ shp, ones(1:5) /), hsize_t ), status )
-    call finishSaveDS ( name, status, setID, spaceID, stringType )
-    call MLSMessageCalls( 'pop' )
   end subroutine SaveAsHDF5DS_chararr2
 
   ! --------------------------------------  SaveAsHDF5DS_textFile  -----
   subroutine SaveAsHDF5DS_textFile ( textFile, locID, name, maxLineLen )
-    use IO_STUFF, only: get_lun, read_textFile
+    use IO_STUFF, only: read_textFile
     ! This routine writes the contents of a textfile as a char-valued dataset
     integer, intent(in) :: LOCID           ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME  ! Name for this dataset
@@ -2934,27 +2881,8 @@ contains ! ======================= Public Procedures =========================
     integer, dimension(1), optional, intent(in) :: FINALSHAPE
     logical, optional, intent(in)     :: adding_to
 
-    ! Local variables
-    integer :: spaceID                  ! ID for dataspace
-    integer (HID_T) :: setID            ! ID for dataset
-    integer :: status                   ! Flag from HDF5
-    integer(kind=hsize_t), dimension(1) :: SHP, MAXDIMS        ! Shape
+    include 'SaveAsHDF5DS_intarr.f9h'
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='SaveAsHDF5DS_intarr1' )
-    shp = shape(value)
-    maxdims = shp
-    if ( present(finalShape) ) maxdims = finalShape
-    ! Create the dataspace
-    call createSpaceSet ( locID, name, maxdims, H5T_NATIVE_INTEGER, &
-      & spaceID, setID, status, adding_to, iFill=fillValue)
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to create dataset for 1D integer array ' // trim(name) )
-    ! Write the data
-    call h5dWrite_f ( setID, H5T_NATIVE_INTEGER, value, &
-      & int ( (/ shp, ones(1:6) /), hsize_t ), status )
-    call finishSaveDS ( name, status, setID, spaceID )
-    call MLSMessageCalls( 'pop' )
   end subroutine SaveAsHDF5DS_intarr1
 
   ! ---------------------------------------  SaveAsHDF5DS_intarr2  -----
@@ -2968,27 +2896,8 @@ contains ! ======================= Public Procedures =========================
     integer, dimension(2), optional, intent(in) :: FINALSHAPE
     logical, optional, intent(in)     :: adding_to
 
-    ! Local variables
-    integer :: spaceID                  ! ID for dataspace
-    integer (HID_T) :: setID            ! ID for dataset
-    integer :: status                   ! Flag from HDF5
-    integer(kind=hsize_t), dimension(2) :: SHP, MAXDIMS        ! Shape
+    include 'SaveAsHDF5DS_intarr.f9h'
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='SaveAsHDF5DS_intarr2' )
-    shp = shape(value)
-    maxdims = shp
-    if ( present(finalShape) ) maxdims = finalShape
-    ! Create the dataspace
-    call createSpaceSet ( locID, name, maxdims, H5T_NATIVE_INTEGER, &
-      & spaceID, setID, status, adding_to, iFill=fillValue)
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to create dataset for 2D integer array ' // trim(name) )
-    ! Write the data
-    call h5dWrite_f ( setID, H5T_NATIVE_INTEGER, value, &
-      & int ( (/ shp, ones(1:5) /), hsize_t ), status )
-    call finishSaveDS ( name, status, setID, spaceID )
-    call MLSMessageCalls( 'pop' )
   end subroutine SaveAsHDF5DS_intarr2
 
   ! ---------------------------------------  SaveAsHDF5DS_intarr3  -----
@@ -3002,27 +2911,8 @@ contains ! ======================= Public Procedures =========================
     integer, dimension(3), optional, intent(in) :: FINALSHAPE
     logical, optional, intent(in)     :: adding_to
 
-    ! Local variables
-    integer :: spaceID                  ! ID for dataspace
-    integer (HID_T) :: setID            ! ID for dataset
-    integer :: status                   ! Flag from HDF5
-    integer(kind=hsize_t), dimension(3) :: SHP, MAXDIMS        ! Shape
+    include 'SaveAsHDF5DS_intarr.f9h'
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='SaveAsHDF5DS_intarr3' )
-    shp = shape(value)
-    maxdims = shp
-    if ( present(finalShape) ) maxdims = finalShape
-    ! Create the dataspace
-    call createSpaceSet ( locID, name, maxdims, H5T_NATIVE_INTEGER, &
-      & spaceID, setID, status, adding_to, iFill=fillValue )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to create dataset for 3D integer array ' // trim(name) )
-    ! Write the data
-    call h5dWrite_f ( setID, H5T_NATIVE_INTEGER, value, &
-      & int ( (/ shp, ones(1:4) /), hsize_t ), status )
-    call finishSaveDS ( name, status, setID, spaceID )
-    call MLSMessageCalls( 'pop' )
   end subroutine SaveAsHDF5DS_intarr3
 
   ! ---------------------------------------  SaveAsHDF5DS_logarr1  -----
@@ -3048,10 +2938,7 @@ contains ! ======================= Public Procedures =========================
       if ( fillValue ) myFillValue = 'T'
     end if
     ! Turn value into a character
-    do i = 1, size(value)
-      myValue(i) = 'F'
-      if ( value(i) ) myValue(i) = 'T'
-    end do
+    write ( myValue, '(L1)' ) value
     call saveAsHDF5DS ( locID, name, myValue, finalShape, myFillValue, adding_to )
     call MLSMessageCalls( 'pop' )
   end subroutine SaveAsHDF5DS_logarr1
@@ -3067,27 +2954,8 @@ contains ! ======================= Public Procedures =========================
     integer, dimension(1), optional, intent(in) :: FINALSHAPE
     logical, optional, intent(in)     :: adding_to
 
-    ! Local variables
-    integer :: spaceID                  ! ID for dataspace
-    integer (HID_T) :: setID            ! ID for dataset
-    integer :: status                   ! Flag from HDF5
-    integer(kind=hsize_t), dimension(1) :: SHP, MAXDIMS        ! Shape
+    include 'SaveAsHDF5DS_dblarr.f9h'
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='SaveAsHDF5DS_dblarr1' )
-    shp = shape(value)
-    maxdims = shp
-    if ( present(finalShape) ) maxdims = finalShape
-    ! Create the dataspace
-    call createSpaceSet ( locID, name, maxdims, H5T_NATIVE_DOUBLE, &
-      & spaceID, setID, status, adding_to, dFill=fillValue )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to create dataset for 1D double array ' // trim(name) )
-    ! Write the data
-    call h5dWrite_f ( setID, H5T_NATIVE_DOUBLE, value, &
-      & int ( (/ shp, ones(1:6) /), hsize_t ), status )
-    call finishSaveDS ( name, status, setID, spaceID )
-    call MLSMessageCalls( 'pop' )
   end subroutine SaveAsHDF5DS_dblarr1
 
   ! ---------------------------------------  SaveAsHDF5DS_dblarr2  -----
@@ -3101,27 +2969,8 @@ contains ! ======================= Public Procedures =========================
     integer, dimension(2), optional, intent(in) :: FINALSHAPE
     logical, optional, intent(in)     :: adding_to
 
-    ! Local variables
-    integer :: spaceID                  ! ID for dataspace
-    integer (HID_T) :: setID            ! ID for dataset
-    integer :: status                   ! Flag from HDF5
-    integer(kind=hsize_t), dimension(2) :: SHP, MAXDIMS        ! Shape
+    include 'SaveAsHDF5DS_dblarr.f9h'
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='SaveAsHDF5DS_dblarr2' )
-    shp = shape(value)
-    maxdims = shp
-    if ( present(finalShape) ) maxdims = finalShape
-    ! Create the dataspace
-    call createSpaceSet ( locID, name, maxdims, H5T_NATIVE_DOUBLE, &
-      & spaceID, setID, status, adding_to, dFill=fillValue )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to create dataset for 2D double array ' // trim(name) )
-    ! Write the data
-    call h5dWrite_f ( setID, H5T_NATIVE_DOUBLE, value, &
-      & int ( (/ shp, ones(1:5) /), hsize_t ), status )
-    call finishSaveDS ( name, status, setID, spaceID )
-    call MLSMessageCalls( 'pop' )
   end subroutine SaveAsHDF5DS_dblarr2
 
   ! ---------------------------------------  SaveAsHDF5DS_dblarr3  -----
@@ -3135,27 +2984,8 @@ contains ! ======================= Public Procedures =========================
     integer, dimension(3), optional, intent(in) :: FINALSHAPE
     logical, optional, intent(in)     :: adding_to
 
-    ! Local variables
-    integer :: spaceID                  ! ID for dataspace
-    integer (HID_T) :: setID            ! ID for dataset
-    integer :: status                   ! Flag from HDF5
-    integer(kind=hsize_t), dimension(3) :: SHP, MAXDIMS        ! Shape
+    include 'SaveAsHDF5DS_dblarr.f9h'
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='SaveAsHDF5DS_dblarr3' )
-    shp = shape(value)
-    maxdims = shp
-    if ( present(finalShape) ) maxdims = finalShape
-    ! Create the dataspace
-    call createSpaceSet ( locID, name, maxdims, H5T_NATIVE_DOUBLE, &
-      & spaceID, setID, status, adding_to, dFill=fillValue )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to create dataset for 3D double array ' // trim(name) )
-    ! Write the data
-    call h5dWrite_f ( setID, H5T_NATIVE_DOUBLE, value, &
-      & int ( (/ shp, ones(1:4) /), hsize_t ), status )
-    call finishSaveDS ( name, status, setID, spaceID )
-    call MLSMessageCalls( 'pop' )
   end subroutine SaveAsHDF5DS_dblarr3
 
   ! --------------------------------------  SaveAsHDF5DS_snglarr1  -----
@@ -3164,7 +2994,7 @@ contains ! ======================= Public Procedures =========================
     ! This routine does the initial work of creating a dataset
     integer, intent(in) :: LOCID        ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
-    real, intent(in) :: VALUE(:)     ! The array itself
+    real, intent(in) :: VALUE(:)        ! The array itself
     real, optional, intent(in) :: FILLVALUE
     integer, dimension(1), optional, intent(in) :: FINALSHAPE
     logical, optional, intent(in)     :: adding_to
@@ -3184,7 +3014,7 @@ contains ! ======================= Public Procedures =========================
     call createSpaceSet ( locID, name, maxdims, H5T_NATIVE_REAL, &
       & spaceID, setID, status, adding_to, rFill=fillValue )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to create dataset for 1D double array ' // trim(name) )
+      & 'Unable to create dataset for 1D real array ' // trim(name) )
     ! Write the data
     call h5dWrite_f ( setID, H5T_NATIVE_REAL, value, &
       & int ( (/ shp, ones(1:6) /), hsize_t ), status )
@@ -3213,134 +3043,9 @@ contains ! ======================= Public Procedures =========================
                                  ! May call again to add to same dataset
     logical, optional, intent(in)               :: adding_to
                                  ! Calling again to add to same dataset
-    ! Local variables
-    integer(hsize_t), dimension(2) :: chunk_dims, dims, maxdims
-    integer :: spaceID                  ! ID for filespace
-    integer :: memSpaceID               ! ID for arrayspace
-    integer :: filespaceID              ! ID for filespace
-    integer (HID_T) :: setID            ! ID for dataset
-    integer :: status                   ! Flag from HDF5
-    integer(kind=hsize_t), dimension(2) :: SHP        ! Shape
-    integer :: style   ! fixed static (0), dynamic 1st (1), adding to (2)
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='SaveAsHDF5DS_snglarr2' )
-    style = 0  ! The default
-    if ( present(may_add_to) ) then
-      if ( may_add_to ) style = 1
-    end if
-    if ( present(adding_to) ) then
-      if ( adding_to ) style = 2
-    end if
-    if ( DEEBUG ) print *, 'style:   ', style
+    include 'SaveAsHDF5DS_snglarr.f9h'
 
-    ! Create the dataspace
-    shp = shape(value)
-    maxdims = shp
-    dims = shp
-    chunk_dims = shp
-    ! Create the dataset
-    if ( style == 0 ) then
-     ! print *, 'Creating a static data space'
-      call h5sCreate_simple_f ( 2, int(shp,hSize_T), spaceID, status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to create dataspace for 2D real array ' // trim(name) )
-      if ( present(fillValue) ) then
-        call h5pcreate_f(H5P_DATASET_CREATE_F, cparms, status)
-        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Unable to create property list for 2D real array ' // trim(name) )
-        call h5pset_fill_value_f (cparms, H5T_NATIVE_REAL, fillValue, status)
-        if ( status /= 0) call MLSMessage (MLSMSG_Error, ModuleName, &
-          &  "Unable to set Fill value for 2D real array " // trim (name))
-        call h5dCreate_f ( locID, trim(name), H5T_NATIVE_REAL, spaceID, setID, &
-          & status, cparms )
-      else
-        call h5dCreate_f ( locID, trim(name), H5T_NATIVE_REAL, spaceID, setID, &
-          & status )
-      end if
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to create dataset for 2D real array ' // trim(name) )
-      memspaceID = spaceID
-      filespaceID = spaceID
-    else if ( style == 1 ) then
-     ! print *, 'Creating a dynamic data space'
-      maxdims(2) = H5S_UNLIMITED_F
-      dims(2) = max(int(1, hsize_T), shp(2))
-      chunk_dims(2) = 1
-      if ( DEEBUG ) print *, 'shape ', shp
-      if ( DEEBUG ) print *, 'maxdims ', maxdims
-      if ( DEEBUG ) print *, 'dims ', dims
-      if ( DEEBUG ) print *, 'chunk_dims ', chunk_dims
-      call h5screate_simple_f ( 2, dims, memspaceID, status, maxdims )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to create memspace for 2D real array ' // trim(name) )
-      spaceID = memspaceID
-      call h5pcreate_f(H5P_DATASET_CREATE_F, cparms, status)
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to create property list for 2D real array ' // trim(name) )
-      call h5pset_chunk_f(cparms, 2, chunk_dims, status)
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to set chunking 2D real array ' // trim(name) )
-      if ( present(fillValue) ) then
-        call h5pset_fill_value_f (cparms, H5T_NATIVE_REAL, fillValue, status)
-        if ( status /= 0) call MLSMessage (MLSMSG_Error, ModuleName, &
-          &  "Unable to set Fill value for 2D real array " // trim (name))
-      end if
-      call h5dCreate_f ( locID, trim(name), H5T_NATIVE_REAL, spaceID, setID, &
-        & status, cparms )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to create dataset for 2D real array ' // trim(name) )
-      call h5dextend_f ( setID, dims, status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to extend dataset creating 2D real array ' // trim(name) )
-      call h5dget_space_f(setID, filespaceID, status)
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to get filespaceID creating 2D real array ' // trim(name) )
-      if ( DEEBUG ) print *, 'filespaceID ', filespaceID
-      if ( DEEBUG ) print *, 'memspaceID ', memspaceID
-      if ( DEEBUG ) print *, 'cparms ', cparms
-      if ( DEEBUG ) print *, 'locID ', locID
-      if ( DEEBUG ) print *, 'setID ', setID
-    else
-     ! print *, 'Reopening/extending a dynamic data space'
-      call h5dopen_f ( locID, trim(name), setID, status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to open dataset for 2D real array ' // trim(name) )
-     ! print *, 'setID:   ', setID
-      call h5dget_space_f ( setID, spaceID, status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to get dataspace for 2D real array ' // trim(name) )
-      if ( .not. present(start) ) &
-        & call mls_extend ( setID, shp )
-      memspaceID = spaceID
-      call h5dget_space_f( setID, filespaceID, status)
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to get dataspace for 2D real array ' // trim(name) )
-     ! print *, 'new spaceID             : ', spaceID
-    end if
-    if ( present(start) ) then
-     ! print *, 'start ', start
-      call mls_extend ( setID, int(Count, hsize_T), start, filespaceID )
-      call mls_hyperslab_save ( filespaceID, start, count, stride, block )
-!     Check before actually writing
-      if ( style == 2 ) &
-        & call h5screate_simple_f(2, dims, memspaceID, status, maxdims)
-      call h5dWrite_f ( setID, H5T_NATIVE_REAL, value, &
-        & int ( (/ shp, ones(1:5) /), hsize_t ), status, &
-        & memspaceID, filespaceID )
-     ! print *, 'After writing mem space ', memspaceID
-      spaceID = filespaceID
-    else
-      ! Write the data
-      call h5dWrite_f ( setID, H5T_NATIVE_REAL, value, &
-        & int ( (/ shp, ones(1:5) /), hsize_t ), status )
-    end if
-    if ( present(start) ) then
-      call finishSaveDS ( name, status, setID, spaceID, memspaceID=memspaceID )
-    else
-      call finishSaveDS ( name, status, setID, spaceID )
-    end if
-    call MLSMessageCalls( 'pop' )
   end subroutine SaveAsHDF5DS_snglarr2
 
   ! --------------------------------------  SaveAsHDF5DS_snglarr3  -----
@@ -3364,133 +3069,8 @@ contains ! ======================= Public Procedures =========================
     logical, optional, intent(in)               :: adding_to
                                  ! Calling again to add to same dataset
 
-    ! Local variables
-    integer(hsize_t), dimension(3) :: chunk_dims, dims, maxdims
-    integer :: spaceID                  ! ID for filespace
-    integer :: filespaceID              ! ID for filespace
-    integer :: memSpaceID               ! ID for arrayspace
-    integer (HID_T) :: setID            ! ID for dataset
-    integer :: status                   ! Flag from HDF5
-    integer(kind=hsize_t), dimension(3) :: SHP        ! Shape
-    integer :: style   ! fixed static (0), dynamic 1st (1), adding to (2)
+    include 'SaveAsHDF5DS_snglarr.f9h'
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='SaveAsHDF5DS_snglarr3' )
-    style = 0  ! The default
-    if ( present(may_add_to) ) then
-      if ( may_add_to ) style = 1
-    end if
-    if ( present(adding_to) ) then
-      if ( adding_to ) style = 2
-    end if
-
-    if ( DEEBUG ) print *, 'style:   ', style
-    ! Create the dataspace
-    shp = shape(value)
-    maxdims = shp
-    dims = shp
-    chunk_dims = shp
-    ! Create the dataset
-    if ( style == 0 ) then
-      call h5sCreate_simple_f ( 3, int(shp,hSize_T), spaceID, status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to create dataspace for 3D real array ' // trim(name) )
-      ! Create the dataset
-      if ( present(fillValue) ) then
-        call h5pcreate_f ( H5P_DATASET_CREATE_F, cparms, status )
-        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Unable to create property list for 3D real array ' // trim(name) )
-        call h5pset_fill_value_f ( cparms, H5T_NATIVE_REAL, fillValue, status)
-        if ( status /= 0 ) call MLSMessage (MLSMSG_Error, ModuleName, &
-          &  "Unable to set Fill value for 3D real array " // trim (name))
-        call h5dCreate_f ( locID, trim(name), H5T_NATIVE_REAL, spaceID, setID, &
-          & status, cparms )
-      else
-        call h5dCreate_f ( locID, trim(name), H5T_NATIVE_REAL, spaceID, setID, &
-          & status )
-      end if
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to create dataset for 3D real array ' // trim(name) )
-      memspaceID = spaceID
-      filespaceID = spaceID
-    else if ( style == 1 ) then
-      maxdims(3) = H5S_UNLIMITED_F
-      dims(3) = max(int(1, hsize_T), shp(3))
-      chunk_dims(3) = 1
-      if ( DEEBUG ) print *, 'shape ', shp
-      if ( DEEBUG ) print *, 'maxdims ', maxdims
-      if ( DEEBUG ) print *, 'dims ', dims
-      if ( DEEBUG ) print *, 'chunk_dims ', chunk_dims
-      call h5screate_simple_f ( 3, dims, memspaceID, status, maxdims )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to create memspace for 3D real array ' // trim(name) )
-      spaceID = memspaceID
-      call h5pcreate_f ( H5P_DATASET_CREATE_F, cparms, status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to create property list for 3D real array ' // trim(name) )
-      call h5pset_chunk_f(cparms, 3, chunk_dims, status)
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to set chunking 3D real array ' // trim(name) )
-      if ( present(fillValue) ) then
-        call h5pset_fill_value_f ( cparms, H5T_NATIVE_REAL, fillValue, status )
-        if ( status /= 0) call MLSMessage (MLSMSG_Error, ModuleName, &
-          &  "Unable to set Fill value for 3D real array " // trim (name))
-      end if
-      call h5dCreate_f ( locID, trim(name), H5T_NATIVE_REAL, spaceID, &
-        & setID, status, cparms )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to create dataset for 3D real array ' // trim(name) )
-      call h5dextend_f ( setID, dims, status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to extend dataset creating 3D real array ' // trim(name) )
-      call h5dget_space_f(setID, filespaceID, status)
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to get filespaceID creating 3D real array ' // trim(name) )
-      if ( DEEBUG ) print *, 'filespaceID ', filespaceID
-      if ( DEEBUG ) print *, 'memspaceID ', memspaceID
-      if ( DEEBUG ) print *, 'cparms ', cparms
-      if ( DEEBUG ) print *, 'locID ', locID
-      if ( DEEBUG ) print *, 'setID ', setID
-    else
-      call h5dopen_f ( locID, trim(name), setID, status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to open dataset for 3D real array ' // trim(name) )
-      call h5dget_space_f ( setID, spaceID, status)
-      if ( .not. present(start) ) &
-        & call mls_extend ( setID, shp )
-      memspaceID = spaceID
-      call h5dget_space_f ( setID, filespaceID, status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to get dataspace for 3D real array ' // trim(name) )
-    end if
-    if ( present(start) ) then
-      if ( DEEBUG ) print *, 'name ', name
-      if ( DEEBUG ) print *, 'shape(value) ', shp
-      if ( DEEBUG ) print *, 'start ', start
-      if ( DEEBUG ) print *, 'count ', count
-      call mls_extend ( setID, int(Count, hsize_T), start, filespaceID )
-      call mls_hyperslab_save ( filespaceID, start, count, stride, block )
-      if ( style == 2 ) &
-        & call h5screate_simple_f(3, dims, memspaceID, status, maxdims)
-      if ( DEEBUG ) print *, 'filespaceID ', filespaceID
-      call dump_space(filespaceID)
-      if ( DEEBUG ) print *, 'memspaceID ', memspaceID
-      call dump_space(memspaceID)
-      call h5dWrite_f ( setID, H5T_NATIVE_REAL, value, &
-        & int ( (/ shp, ones(1:4) /), hsize_t ), status, &
-        & memspaceID, filespaceID )
-      spaceID = filespaceID
-    else
-      ! Write the data
-      call h5dWrite_f ( setID, H5T_NATIVE_REAL, value, &
-        & int ( (/ shp, ones(1:4) /), hsize_t ), status )
-    end if
-    if ( present(start) ) then
-      call finishSaveDS ( name, status, setID, spaceID, memspaceID=memspaceID )
-    else
-      call finishSaveDS ( name, status, setID, spaceID )
-    end if
-    call MLSMessageCalls( 'pop' )
   end subroutine SaveAsHDF5DS_snglarr3
 
   ! --------------------------------------  SaveAsHDF5DS_snglarr4  -----
@@ -3514,132 +3094,8 @@ contains ! ======================= Public Procedures =========================
     logical, optional, intent(in)               :: adding_to
                                  ! Calling again to add to same dataset
 
-    ! Local variables
-    integer(hsize_t), dimension(4) :: chunk_dims, dims, maxdims
-    integer :: spaceID                  ! ID for filespace
-    integer :: filespaceID              ! ID for filespace
-    integer :: memSpaceID               ! ID for arrayspace
-    integer (HID_T) :: setID            ! ID for dataset
-    integer :: status                   ! Flag from HDF5
-    integer(kind=hsize_t), dimension(4) :: SHP        ! Shape
-    integer :: style   ! fixed static (0), dynamic 1st (1), adding to (2)
+    include 'SaveAsHDF5DS_snglarr.f9h'
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='SaveAsHDF5DS_snglarr4' )
-    style = 0  ! The default
-    if ( present(may_add_to) ) then
-      if ( may_add_to ) style = 1
-    end if
-    if ( present(adding_to) ) then
-      if ( adding_to ) style = 2
-    end if
-
-    if ( DEEBUG ) print *, 'style:   ', style
-    ! Create the dataspace
-    shp = shape(value)
-    maxdims = shp
-    dims = shp
-    chunk_dims = shp
-    ! Create the dataset
-    if ( style == 0 ) then
-      call h5sCreate_simple_f ( 4, int(shp,hSize_T), spaceID, status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to create dataspace for 4D real array ' // trim(name) )
-      ! Create the dataset
-      if ( present(fillValue) ) then
-        call h5pcreate_f ( H5P_DATASET_CREATE_F, cparms, status )
-        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Unable to create property list for 4D real array ' // trim(name) )
-        call h5pset_fill_value_f ( cparms, H5T_NATIVE_REAL, fillValue, status )
-        if ( status /= 0) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          &  "Unable to set Fill value for 4D real array " // trim (name) )
-        call h5dCreate_f ( locID, trim(name), H5T_NATIVE_REAL, spaceID, setID, &
-          & status, cparms )
-      else
-        call h5dCreate_f ( locID, trim(name), H5T_NATIVE_REAL, spaceID, setID, &
-        & status )
-      end if
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to create dataset for 4D real array ' // trim(name) )
-      memspaceID = spaceID
-      filespaceID = spaceID
-    else if ( style == 1 ) then
-      maxdims(4) = H5S_UNLIMITED_F
-      dims(4) = max(int(1, hsize_T), shp(4))
-      chunk_dims(4) = 1
-      if ( DEEBUG ) print *, 'shape ', shp
-      if ( DEEBUG ) print *, 'maxdims ', maxdims
-      if ( DEEBUG ) print *, 'dims ', dims
-      if ( DEEBUG ) print *, 'chunk_dims ', chunk_dims
-      call h5screate_simple_f ( 4, dims, memspaceID, status, maxdims )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to create memspace for 4D real array ' // trim(name) )
-      spaceID = memspaceID
-      call h5pcreate_f ( H5P_DATASET_CREATE_F, cparms, status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to create property list for 4D real array ' // trim(name) )
-      call h5pset_chunk_f ( cparms, 4, chunk_dims, status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to set chunking 4D real array ' // trim(name) )
-      if ( present(fillValue) ) then
-        call h5pset_fill_value_f ( cparms, H5T_NATIVE_REAL, fillValue, status )
-        if ( status /= 0) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          &  "Unable to set Fill value for 4D real array " // trim (name) )
-      end if
-      call h5dCreate_f ( locID, trim(name), H5T_NATIVE_REAL, spaceID, &
-        & setID, status, cparms )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to create dataset for 4D real array ' // trim(name) )
-      call h5dextend_f ( setID, dims, status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to extend dataset creating 4D real array ' // trim(name) )
-      call h5dget_space_f ( setID, filespaceID, status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to get filespaceID creating 4D real array ' // trim(name) )
-      if ( DEEBUG ) print *, 'filespaceID ', filespaceID
-      if ( DEEBUG ) print *, 'memspaceID ', memspaceID
-      if ( DEEBUG ) print *, 'cparms ', cparms
-      if ( DEEBUG ) print *, 'locID ', locID
-      if ( DEEBUG ) print *, 'setID ', setID
-    else
-      call h5dopen_f ( locID, trim(name), setID, status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to open dataset for 4D real array ' // trim(name) )
-      call h5dget_space_f ( setID, spaceID, status )
-      if ( .not. present(start) ) call mls_extend ( setID, shp )
-      memspaceID = spaceID
-      call h5dget_space_f ( setID, filespaceID, status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to get dataspace for 4D real array ' // trim(name) )
-    end if
-    if ( present(start) ) then
-      if ( DEEBUG ) print *, 'name ', name
-      if ( DEEBUG ) print *, 'shape(value) ', shp
-      if ( DEEBUG ) print *, 'start ', start
-      if ( DEEBUG ) print *, 'count ', count
-      call mls_extend ( setID, int(Count, hsize_T), start, filespaceID )
-      call mls_hyperslab_save ( filespaceID, start, count, stride, block )
-      if ( style == 2 ) &
-        & call h5screate_simple_f(4, dims, memspaceID, status, maxdims)
-      if ( DEEBUG ) print *, 'filespaceID ', filespaceID
-      call dump_space ( filespaceID )
-      if ( DEEBUG ) print *, 'memspaceID ', memspaceID
-      call dump_space ( memspaceID )
-      call h5dWrite_f ( setID, H5T_NATIVE_REAL, value, &
-        & int ( (/ shp, ones(1:3) /), hsize_t ), status, &
-        & memspaceID, filespaceID )
-      spaceID = filespaceID
-    else
-      ! Write the data
-      call h5dWrite_f ( setID, H5T_NATIVE_REAL, value, &
-        & int ( (/ shp, ones(1:3) /), hsize_t ), status )
-    end if
-    if ( present(start) ) then
-      call finishSaveDS ( name, status, setID, spaceID, memspaceID=memspaceID )
-    else
-      call finishSaveDS ( name, status, setID, spaceID )
-    end if
-    call MLSMessageCalls( 'pop' )
   end subroutine SaveAsHDF5DS_snglarr4
 
   ! ------------------------------------  LdFrmHDF5DS_ID_chararr1  -----
@@ -3658,19 +3114,10 @@ contains ! ======================= Public Procedures =========================
     integer, dimension(:), optional, intent(in) :: block
                                  ! Size of element block
 
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    type (MLSFile_T)   :: MLSFile
+    character(len=*), parameter :: Sfx = 'chararr1'
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='LdFromHDF5DS_ID_chararr1' )
-    status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
-      & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
-    MLSFile%fileID%sd_id = locID
-    MLSFile%stillOpen = .true.
-    call LoadFromHDF5DS ( MLSFile, name, value, &
-    & start, count, stride, block )
-    call MLSMessageCalls( 'pop' )
+    include 'LdFrmHDF5DS_ID.f9h'
+
   end subroutine LdFrmHDF5DS_ID_chararr1
 
   ! ------------------------------------  LdFrmHDF5DS_ID_chararr2  -----
@@ -3689,19 +3136,10 @@ contains ! ======================= Public Procedures =========================
     integer, dimension(:), optional, intent(in) :: block
                                  ! Size of element block
 
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    type (MLSFile_T)   :: MLSFile
+    character(len=*), parameter :: Sfx = 'chararr2'
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='LdFromHDF5DS_ID_chararr12' )
-    status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
-      & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
-    MLSFile%fileID%sd_id = locID
-    MLSFile%stillOpen = .true.
-    call LoadFromHDF5DS ( MLSFile, name, value, &
-    & start, count, stride, block )
-    call MLSMessageCalls( 'pop' )
+    include 'LdFrmHDF5DS_ID.f9h'
+
   end subroutine LdFrmHDF5DS_ID_chararr2
 
   ! ------------------------------------  LdFrmHDF5DS_ID_chararr3  -----
@@ -3720,19 +3158,10 @@ contains ! ======================= Public Procedures =========================
     integer, dimension(:), optional, intent(in) :: block
                                  ! Size of element block
 
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    type (MLSFile_T)   :: MLSFile
+    character(len=*), parameter :: Sfx = 'chararr3'
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='LdFromHDF5DS_ID_chararr3' )
-    status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
-      & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
-    MLSFile%fileID%sd_id = locID
-    MLSFile%stillOpen = .true.
-    call LoadFromHDF5DS ( MLSFile, name, value, &
-    & start, count, stride, block )
-    call MLSMessageCalls( 'pop' )
+    include 'LdFrmHDF5DS_ID.f9h'
+
   end subroutine LdFrmHDF5DS_ID_chararr3
 
   ! -------------------------------------  LdFrmHDF5DS_ID_intarr1  -----
@@ -3751,19 +3180,10 @@ contains ! ======================= Public Procedures =========================
     integer, dimension(:), optional, intent(in) :: block
                                  ! Size of element block
 
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    type (MLSFile_T)   :: MLSFile
+    character(len=*), parameter :: Sfx = 'intarr1'
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='LdFromHDF5DS_ID_intarr1' )
-    status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
-      & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
-    MLSFile%fileID%sd_id = locID
-    MLSFile%stillOpen = .true.
-    call LoadFromHDF5DS ( MLSFile, name, value, &
-    & start, count, stride, block )
-    call MLSMessageCalls( 'pop' )
+    include 'LdFrmHDF5DS_ID.f9h'
+
   end subroutine LdFrmHDF5DS_ID_intarr1
 
   ! -------------------------------------  LdFrmHDF5DS_ID_intarr2  -----
@@ -3781,19 +3201,11 @@ contains ! ======================= Public Procedures =========================
                                  ! How many elements to move in each direction
     integer, dimension(:), optional, intent(in) :: block
                                  ! Size of element block
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    type (MLSFile_T)   :: MLSFile
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='LdFromHDF5DS_ID_intarr2' )
-    status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
-      & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
-    MLSFile%fileID%sd_id = locID
-    MLSFile%stillOpen = .true.
-    call LoadFromHDF5DS ( MLSFile, name, value, &
-    & start, count, stride, block )
-    call MLSMessageCalls( 'pop' )
+    character(len=*), parameter :: Sfx = 'intarr2'
+
+    include 'LdFrmHDF5DS_ID.f9h'
+
   end subroutine LdFrmHDF5DS_ID_intarr2
 
   ! -------------------------------------  LdFrmHDF5DS_ID_intarr3  -----
@@ -3811,19 +3223,11 @@ contains ! ======================= Public Procedures =========================
                                  ! How many elements to move in each direction
     integer, dimension(:), optional, intent(in) :: block
                                  ! Size of element block
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    type (MLSFile_T)   :: MLSFile
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='LdFromHDF5DS_ID_intarr3' )
-    status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
-      & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
-    MLSFile%fileID%sd_id = locID
-    MLSFile%stillOpen = .true.
-    call LoadFromHDF5DS ( MLSFile, name, value, &
-    & start, count, stride, block )
-    call MLSMessageCalls( 'pop' )
+    character(len=*), parameter :: Sfx = 'intarr3'
+
+    include 'LdFrmHDF5DS_ID.f9h'
+
   end subroutine LdFrmHDF5DS_ID_intarr3
 
   ! -------------------------------------  LdFrmHDF5DS_ID_logarr1  -----
@@ -3867,19 +3271,10 @@ contains ! ======================= Public Procedures =========================
     integer, dimension(:), optional, intent(in) :: block
                                  ! Size of element block
 
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    type (MLSFile_T)   :: MLSFile
+    character(len=*), parameter :: Sfx = 'dblarr1'
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='LdFromHDF5DS_ID_dblarr1' )
-    status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
-      & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
-    MLSFile%fileID%sd_id = locID
-    MLSFile%stillOpen = .true.
-    call LoadFromHDF5DS ( MLSFile, name, value, &
-    & start, count, stride, block )
-    call MLSMessageCalls( 'pop' )
+    include 'LdFrmHDF5DS_ID.f9h'
+
   end subroutine LdFrmHDF5DS_ID_dblarr1
 
   ! -------------------------------------  LdFrmHDF5DS_ID_dblarr2  -----
@@ -3898,19 +3293,10 @@ contains ! ======================= Public Procedures =========================
     integer, dimension(:), optional, intent(in) :: block
                                  ! Size of element block
 
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    type (MLSFile_T)   :: MLSFile
+    character(len=*), parameter :: Sfx = 'dblarr2'
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='LdFromHDF5DS_ID_dblarr2' )
-    status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
-      & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
-    MLSFile%fileID%sd_id = locID
-    MLSFile%stillOpen = .true.
-    call LoadFromHDF5DS ( MLSFile, name, value, &
-    & start, count, stride, block )
-    call MLSMessageCalls( 'pop' )
+    include 'LdFrmHDF5DS_ID.f9h'
+
   end subroutine LdFrmHDF5DS_ID_dblarr2
 
   ! -------------------------------------  LdFrmHDF5DS_ID_dblarr3  -----
@@ -3929,19 +3315,10 @@ contains ! ======================= Public Procedures =========================
     integer, dimension(:), optional, intent(in) :: block
                                  ! Size of element block
 
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    type (MLSFile_T)   :: MLSFile
+    character(len=*), parameter :: Sfx = 'dblarr3'
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='LdFromHDF5DS_ID_dblarr3' )
-    status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
-      & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
-    MLSFile%fileID%sd_id = locID
-    MLSFile%stillOpen = .true.
-    call LoadFromHDF5DS ( MLSFile, name, value, &
-    & start, count, stride, block )
-    call MLSMessageCalls( 'pop' )
+    include 'LdFrmHDF5DS_ID.f9h'
+
   end subroutine LdFrmHDF5DS_ID_dblarr3
 
   ! ------------------------------------  LdFrmHDF5DS_ID_snglarr1  -----
@@ -3960,19 +3337,10 @@ contains ! ======================= Public Procedures =========================
     integer, dimension(:), optional, intent(in) :: block
                                  ! Size of element block
 
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    type (MLSFile_T)   :: MLSFile
+    character(len=*), parameter :: Sfx = 'snglarr1'
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='LdFromHDF5DS_ID_snglarr1' )
-    status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
-      & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
-    MLSFile%fileID%sd_id = locID
-    MLSFile%stillOpen = .true.
-    call LoadFromHDF5DS ( MLSFile, name, value, &
-    & start, count, stride, block )
-    call MLSMessageCalls( 'pop' )
+    include 'LdFrmHDF5DS_ID.f9h'
+
   end subroutine LdFrmHDF5DS_ID_snglarr1
 
   ! ------------------------------------  LdFrmHDF5DS_ID_snglarr2  -----
@@ -3991,19 +3359,10 @@ contains ! ======================= Public Procedures =========================
     integer, dimension(:), optional, intent(in) :: block
                                  ! Size of element block
 
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    type (MLSFile_T)   :: MLSFile
+    character(len=*), parameter :: Sfx = 'snglarr2'
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='LdFromHDF5DS_ID_snglarr2' )
-    status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
-      & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
-    MLSFile%fileID%sd_id = locID
-    MLSFile%stillOpen = .true.
-    call LoadFromHDF5DS ( MLSFile, name, value, &
-    & start, count, stride, block )
-    call MLSMessageCalls( 'pop' )
+    include 'LdFrmHDF5DS_ID.f9h'
+
   end subroutine LdFrmHDF5DS_ID_snglarr2
 
   ! ------------------------------------  LdFrmHDF5DS_ID_snglarr3  -----
@@ -4022,19 +3381,10 @@ contains ! ======================= Public Procedures =========================
     integer, dimension(:), optional, intent(in) :: block
                                  ! Size of element block
 
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    type (MLSFile_T)   :: MLSFile
+    character(len=*), parameter :: Sfx = 'snglarr3'
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='LdFromHDF5DS_ID_snglarr3' )
-    status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
-      & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
-    MLSFile%fileID%sd_id = locID
-    MLSFile%stillOpen = .true.
-    call LoadFromHDF5DS ( MLSFile, name, value, &
-    & start, count, stride, block )
-    call MLSMessageCalls( 'pop' )
+    include 'LdFrmHDF5DS_ID.f9h'
+
   end subroutine LdFrmHDF5DS_ID_snglarr3
 
   ! ------------------------------------  LdFrmHDF5DS_ID_snglarr4  -----
@@ -4053,19 +3403,10 @@ contains ! ======================= Public Procedures =========================
     integer, dimension(:), optional, intent(in) :: block
                                  ! Size of element block
 
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    type (MLSFile_T)   :: MLSFile
+    character(len=*), parameter :: Sfx = 'snglarr4'
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='LdFromHDF5DS_ID_snglarr4' )
-    status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
-      & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
-    MLSFile%fileID%sd_id = locID
-    MLSFile%stillOpen = .true.
-    call LoadFromHDF5DS ( MLSFile, name, value, &
-    & start, count, stride, block )
-    call MLSMessageCalls( 'pop' )
+    include 'LdFrmHDF5DS_ID.f9h'
+
   end subroutine LdFrmHDF5DS_ID_snglarr4
 
   ! ------------------------------------  LoadFromHDF5DS_chararr1  -----
@@ -4084,51 +3425,8 @@ contains ! ======================= Public Procedures =========================
     integer, dimension(:), optional, intent(in) :: block
                                  ! Size of element block
 
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    integer(kind=hsize_t), dimension(1) :: SHP        ! Shape of value
-    integer :: SPACEID                  ! ID of dataspace
-    integer :: MEMSPACEID               ! ID of dataspace
-    integer :: SETID                    ! ID of dataset
-    integer :: STRINGTYPE               ! String type
-    integer :: STRINGSIZE               ! String size
+    include 'LoadFromHDF5DS_chararr.f9h'
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='LoadFromHDF5DS_chararr1' )
-    shp = shape ( value )
-    call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataset ' // trim(name), &
-      & MLSFile=MLSFile )
-    call h5dGet_type_f ( setID, stringType, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to get type for 1D char array ' // trim(name), &
-      & MLSFile=MLSFile )
-    call h5tGet_size_f ( stringType, stringSize, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to get size for 1D char array ' // trim(name), &
-      & MLSFile=MLSFile )
-    if ( stringSize > len(value) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Value too long to fit in space given for 1D char array ' // trim(name), &
-      & MLSFile=MLSFile )
-    call h5dget_space_f ( setID, spaceID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataspace for dataset ' // trim(name), &
-      & MLSFile=MLSFile )
-    if ( present(start) ) then
-      call mls_hyperslab ( spaceID, shp, name, memspaceID, &
-        & start, count, stride, block )
-      call h5dread_f ( setID, stringtype, value, &
-        & (/ shp, ones(1:6) /), status, memspaceID, spaceID )
-      call finishLoad ( name, status, spaceID, setID, &
-        & memspaceID, stringType, MLSFile=MLSFile )
-    else
-      call check_for_fit ( spaceID, shp, name )
-      call h5dread_f ( setID, stringtype, value, (/ shp, ones(1:6) /), status )
-      call finishLoad ( name, status, spaceID, setID, &
-        & stringType=stringType, MLSFile=MLSFile )
-    end if
-    call MLSMessageCalls( 'pop' )
   end subroutine LoadFromHDF5DS_chararr1
 
   ! ------------------------------------  LoadFromHDF5DS_chararr2  -----
@@ -4147,51 +3445,8 @@ contains ! ======================= Public Procedures =========================
     integer, dimension(:), optional, intent(in) :: block
                                  ! Size of element block
 
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    integer(kind=hsize_t), dimension(2) :: SHP        ! Shape of value
-    integer :: SPACEID                  ! ID of dataspace
-    integer :: MEMSPACEID               ! ID of dataspace
-    integer :: SETID                    ! ID of dataset
-    integer :: STRINGTYPE               ! String type
-    integer :: STRINGSIZE               ! String size
+    include 'LoadFromHDF5DS_chararr.f9h'
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='LoadFromHDF5DS_chararr2' )
-    shp = shape ( value )
-    call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataset ' // trim(name), &
-      & MLSFile=MLSFile )
-    call h5dGet_type_f ( setID, stringType, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to get type for 2D char array ' // trim(name), &
-      & MLSFile=MLSFile )
-    call h5tGet_size_f ( stringType, stringSize, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to get size for 2D char array ' // trim(name), &
-      & MLSFile=MLSFile )
-    if ( stringSize > len(value) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Value too long to fit in space given for 2D char array ' // trim(name), &
-      & MLSFile=MLSFile )
-    call h5dget_space_f ( setID, spaceID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataspace for dataset ' // trim(name), &
-      & MLSFile=MLSFile )
-    if ( present(start) ) then
-      call mls_hyperslab ( spaceID, shp, name, memspaceID, &
-        & start, count, stride, block )
-      call h5dread_f ( setID, stringtype, value, &
-        & (/ shp, ones(1:5) /), status, memspaceID, spaceID )
-      call finishLoad ( name, status, spaceID, setID, &
-        & memspaceID, stringType, MLSFile=MLSFile )
-    else
-      call check_for_fit ( spaceID, shp, name )
-      call h5dread_f ( setID, stringtype, value, (/ shp, ones(1:5) /), status )
-      call finishLoad ( name, status, spaceID, setID, &
-        & stringType=stringType, MLSFile=MLSFile )
-    end if
-    call MLSMessageCalls( 'pop' )
   end subroutine LoadFromHDF5DS_chararr2
 
   ! ------------------------------------  LoadFromHDF5DS_chararr3  -----
@@ -4210,57 +3465,15 @@ contains ! ======================= Public Procedures =========================
     integer, dimension(:), optional, intent(in) :: block
                                  ! Size of element block
 
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    integer(kind=hsize_t), dimension(3) :: SHP        ! Shape of value
-    integer :: SPACEID                  ! ID of dataspace
-    integer :: MEMSPACEID               ! ID of dataspace
-    integer :: SETID                    ! ID of dataset
-    integer :: STRINGTYPE               ! String type
-    integer :: STRINGSIZE               ! String size
+    include 'LoadFromHDF5DS_chararr.f9h'
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='LoadFromHDF5DS_chararr3' )
-    shp = shape ( value )
-    call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataset ' // trim(name), &
-      & MLSFile=MLSFile )
-    call h5dGet_type_f ( setID, stringType, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to get type for 3D char array ' // trim(name), &
-      & MLSFile=MLSFile )
-    call h5tGet_size_f ( stringType, stringSize, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to get size for 3D char array ' // trim(name), &
-      & MLSFile=MLSFile )
-    if ( stringSize > len(value) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Value too long to fit in space given for 3D char array ' // trim(name), &
-      & MLSFile=MLSFile )
-    call h5dget_space_f ( setID, spaceID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataspace for dataset ' // trim(name), &
-      & MLSFile=MLSFile )
-    if ( present(start) ) then
-      call mls_hyperslab ( spaceID, shp, name, memspaceID, &
-        & start, count, stride, block )
-      call h5dread_f ( setID, stringtype, value, &
-        & (/ shp, ones(1:4) /), status, memspaceID, spaceID )
-      call finishLoad ( name, status, spaceID, setID, &
-        & memspaceID, stringType, MLSFile=MLSFile )
-    else
-      call check_for_fit ( spaceID, shp, name )
-      call h5dread_f ( setID, stringtype, value, (/ shp, ones(1:4) /), status )
-      call finishLoad ( name, status, spaceID, setID, &
-        & stringType=stringType, MLSFile=MLSFile )
-    end if
-    call MLSMessageCalls( 'pop' )
   end subroutine LoadFromHDF5DS_chararr3
 
   ! -------------------------------------  LoadFromHDF5DS_intarr1  -----
   subroutine LoadFromHDF5DS_intarr1 ( MLSFile, name, value, &
     & start, count, stride, block )
     ! This routine loads a predefined array with values from a DS
+    use HDF5, only: H5T => H5T_NATIVE_INTEGER ! HDF type
     type (MLSFile_T)   :: MLSFile
     character (len=*), intent(in) :: NAME ! Name for this dataset
     integer, intent(out) :: VALUE(:)      ! The array itself
@@ -4273,43 +3486,17 @@ contains ! ======================= Public Procedures =========================
     integer, dimension(:), optional, intent(in) :: block
                                  ! Size of element block
 
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    integer(kind=hsize_t), dimension(1) :: SHP        ! Shape of value
-    integer :: SPACEID                  ! ID of dataspace
-    integer :: MEMSPACEID               ! ID of dataspace
-    integer :: SETID                    ! ID of dataset
+    character(len=*), parameter :: Sfx = 'intarr1' ! Type and rank in subr name
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='LoadFromHDF5DS_intarr1' )
-    shp = shape ( value )
-    call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataset ' // trim(name), &
-      & MLSFile=MLSFile )
-    call h5dget_space_f ( setID, spaceID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataspace for dataset ' // trim(name), &
-      & MLSFile=MLSFile )
-    if ( present(start) ) then
-      call mls_hyperslab ( spaceID, shp, name, memspaceID, &
-        & start, count, stride, block )
-      call h5dread_f ( setID, H5T_NATIVE_INTEGER, value, &
-        & (/ shp, ones(1:6) /), status, memspaceID, spaceID )
-      call finishLoad ( name, status, spaceID, setID, memspaceID, MLSFile=MLSFile )
-    else
-      call check_for_fit ( spaceID, shp, name )
-      call h5dread_f ( setID, H5T_NATIVE_INTEGER, value, &
-        & (/ shp, ones(1:6) /), status )
-      call finishLoad ( name, status, spaceID, setID, MLSFile=MLSFile )
-    end if
-    call MLSMessageCalls( 'pop' )
+    include 'LoadFromHDF5DS.f9h'
+
   end subroutine LoadFromHDF5DS_intarr1
 
   ! -------------------------------------  LoadFromHDF5DS_intarr2  -----
   subroutine LoadFromHDF5DS_intarr2 ( MLSFile, name, value, &
     & start, count, stride, block )
     ! This routine loads a predefined array with values from a DS
+    use HDF5, only: H5T => H5T_NATIVE_INTEGER ! HDF type
     type (MLSFile_T)   :: MLSFile
     character (len=*), intent(in) :: NAME ! Name for this dataset
     integer, intent(out) :: VALUE(:,:)    ! The array itself
@@ -4321,43 +3508,18 @@ contains ! ======================= Public Procedures =========================
                                  ! How many elements to move in each direction
     integer, dimension(:), optional, intent(in) :: block
                                  ! Size of element block
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    integer(kind=hsize_t), dimension(2) :: SHP        ! Shape of value
-    integer :: SPACEID                  ! ID of dataspace
-    integer :: MEMSPACEID               ! ID of dataspace
-    integer :: SETID                    ! ID of dataset
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='LoadFromHDF5DS_intarr2' )
-    shp = shape ( value )
-    call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataset ' // trim(name), &
-      & MLSFile=MLSFile )
-    call h5dget_space_f ( setID, spaceID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataspace for dataset ' // trim(name), &
-      & MLSFile=MLSFile )
-    if ( present(start) ) then
-      call mls_hyperslab ( spaceID, shp, name, memspaceID, &
-        & start, count, stride, block )
-      call h5dread_f ( setID, H5T_NATIVE_INTEGER, value, &
-        & (/ shp, ones(1:5) /), status, memspaceID, spaceID )
-      call finishLoad ( name, status, spaceID, setID, memspaceID, MLSFile=MLSFile )
-    else
-      call check_for_fit ( spaceID, shp, name )
-      call h5dread_f ( setID, H5T_NATIVE_INTEGER, value, &
-        & (/ shp, ones(1:5) /), status )
-      call finishLoad ( name, status, spaceID, setID, MLSFile=MLSFile )
-    end if
-    call MLSMessageCalls( 'pop' )
+    character(len=*), parameter :: Sfx = 'intarr2' ! Type and rank in subr name
+
+    include 'LoadFromHDF5DS.f9h'
+
   end subroutine LoadFromHDF5DS_intarr2
 
   ! -------------------------------------  LoadFromHDF5DS_intarr3  -----
   subroutine LoadFromHDF5DS_intarr3 ( MLSFile, name, value, &
     & start, count, stride, block )
     ! This routine loads a predefined array with values from a DS
+    use HDF5, only: H5T => H5T_NATIVE_INTEGER ! HDF type
     type (MLSFile_T)   :: MLSFile
     character (len=*), intent(in) :: NAME ! Name for this dataset
     integer, intent(out) :: VALUE(:,:,:)    ! The array itself
@@ -4369,37 +3531,11 @@ contains ! ======================= Public Procedures =========================
                                  ! How many elements to move in each direction
     integer, dimension(:), optional, intent(in) :: block
                                  ! Size of element block
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    integer(kind=hsize_t), dimension(3) :: SHP        ! Shape of value
-    integer :: SPACEID                  ! ID of dataspace
-    integer :: MEMSPACEID               ! ID of dataspace
-    integer :: SETID                    ! ID of dataset
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='LoadFromHDF5DS_intarr3' )
-    shp = shape ( value )
-    call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataset ' // trim(name), &
-      & MLSFile=MLSFile )
-    call h5dget_space_f ( setID, spaceID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataspace for dataset ' // trim(name), &
-      & MLSFile=MLSFile )
-    if ( present(start) ) then
-      call mls_hyperslab ( spaceID, shp, name, memspaceID, &
-        & start, count, stride, block )
-      call h5dread_f ( setID, H5T_NATIVE_INTEGER, value, &
-        & (/ shp, ones(1:4) /), status, memspaceID, spaceID )
-      call finishLoad ( name, status, spaceID, setID, memspaceID, MLSFile=MLSFile )
-    else
-      call check_for_fit ( spaceID, shp, name )
-      call h5dread_f ( setID, H5T_NATIVE_INTEGER, value, &
-        & (/ shp, ones(1:4) /), status )
-      call finishLoad ( name, status, spaceID, setID, MLSFile=MLSFile )
-    end if
-    call MLSMessageCalls( 'pop' )
+    character(len=*), parameter :: Sfx = 'intarr3' ! Type and rank in subr name
+
+    include 'LoadFromHDF5DS.f9h'
+
   end subroutine LoadFromHDF5DS_intarr3
 
   ! -------------------------------------  LoadFromHDF5DS_logarr1  -----
@@ -4431,6 +3567,7 @@ contains ! ======================= Public Procedures =========================
   subroutine LoadFromHDF5DS_dblarr1 ( MLSFile, name, value, &
     & start, count, stride, block )
     ! This routine loads a predefined array with values from a DS
+    use HDF5, only: H5T => H5T_NATIVE_DOUBLE ! HDF type
     type (MLSFile_T)   :: MLSFile
     character (len=*), intent(in) :: NAME     ! Name for this dataset
     double precision, intent(out) :: VALUE(:) ! The array itself
@@ -4443,43 +3580,17 @@ contains ! ======================= Public Procedures =========================
     integer, dimension(:), optional, intent(in) :: block
                                  ! Size of element block
 
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    integer(kind=hsize_t), dimension(1) :: SHP        ! Shape of value
-    integer :: SPACEID                  ! ID of dataspace
-    integer :: MEMSPACEID               ! ID of dataspace
-    integer :: SETID                    ! ID of dataset
+    character(len=*), parameter :: Sfx = 'dblarr1' ! Type and rank in subr name
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='LoadFromHDF5DS_dblarr1' )
-    shp = shape ( value )
-    call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataset ' // trim(name), &
-      & MLSFile=MLSFile )
-    call h5dget_space_f ( setID, spaceID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataspace for dataset ' // trim(name), &
-      & MLSFile=MLSFile )
-    if ( present(start) ) then
-      call mls_hyperslab ( spaceID, shp, name, memspaceID, &
-        & start, count, stride, block )
-      call h5dread_f(setID, H5T_NATIVE_DOUBLE, value, &
-        & (/ shp, ones(1:6) /), status, memspaceID, spaceID )
-      call finishLoad ( name, status, spaceID, setID, memspaceID, MLSFile=MLSFile )
-    else
-      call check_for_fit ( spaceID, shp, name )
-      call h5dread_f ( setID, H5T_NATIVE_DOUBLE, value, &
-        & (/ shp, ones(1:6) /), status )
-      call finishLoad ( name, status, spaceID, setID, MLSFile=MLSFile )
-    end if
-    call MLSMessageCalls( 'pop' )
+    include 'LoadFromHDF5DS.f9h'
+
   end subroutine LoadFromHDF5DS_dblarr1
 
   ! -------------------------------------  LoadFromHDF5DS_dblarr2  -----
   subroutine LoadFromHDF5DS_dblarr2 ( MLSFile, name, value, &
     & start, count, stride, block )
     ! This routine loads a predefined array with values from a DS
+    use HDF5, only: H5T => H5T_NATIVE_DOUBLE ! HDF type
     type (MLSFile_T)   :: MLSFile
     character (len=*), intent(in) :: NAME       ! Name for this dataset
     double precision, intent(out) :: VALUE(:,:) ! The array itself
@@ -4492,43 +3603,17 @@ contains ! ======================= Public Procedures =========================
     integer, dimension(:), optional, intent(in) :: block
                                  ! Size of element block
 
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    integer(kind=hsize_t), dimension(2) :: SHP        ! Shape of value
-    integer :: SPACEID                  ! ID of dataspace
-    integer :: MEMSPACEID               ! ID of dataspace
-    integer :: SETID                    ! ID of dataset
+    character(len=*), parameter :: Sfx = 'dblarr2' ! Type and rank in subr name
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='LoadFromHDF5DS_dblarr2' )
-    shp = shape ( value )
-    call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataset ' // trim(name), &
-      & MLSFile=MLSFile )
-    call h5dget_space_f ( setID, spaceID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataspace for dataset ' // trim(name), &
-      & MLSFile=MLSFile )
-    if ( present(start) ) then
-      call mls_hyperslab ( spaceID, shp, name, memspaceID, &
-        & start, count, stride, block )
-      call h5dread_f ( setID, H5T_NATIVE_DOUBLE, value, &
-        & (/ shp, ones(1:5) /), status, memspaceID, spaceID )
-      call finishLoad ( name, status, spaceID, setID, memspaceID, MLSFile=MLSFile )
-    else
-      call check_for_fit ( spaceID, shp, name )
-      call h5dread_f ( setID, H5T_NATIVE_DOUBLE, value, &
-        & (/ shp, ones(1:5) /), status )
-      call finishLoad ( name, status, spaceID, setID, MLSFile=MLSFile )
-    end if
-    call MLSMessageCalls( 'pop' )
+    include 'LoadFromHDF5DS.f9h'
+
   end subroutine LoadFromHDF5DS_dblarr2
 
   ! -------------------------------------  LoadFromHDF5DS_dblarr3  -----
   subroutine LoadFromHDF5DS_dblarr3 ( MLSFile, name, value, &
     & start, count, stride, block )
     ! This routine loads a predefined array with values from a DS
+    use HDF5, only: H5T => H5T_NATIVE_DOUBLE ! HDF type
     type (MLSFile_T)   :: MLSFile
     character (len=*), intent(in) :: NAME ! Name for this dataset
     double precision, intent(out) :: VALUE(:,:,:) ! The array itself
@@ -4541,43 +3626,17 @@ contains ! ======================= Public Procedures =========================
     integer, dimension(:), optional, intent(in) :: block
                                  ! Size of element block
 
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    integer(kind=hsize_t), dimension(3) :: SHP        ! Shape of value
-    integer :: SPACEID                  ! ID of dataspace
-    integer :: MEMSPACEID               ! ID of dataspace
-    integer :: SETID                    ! ID of dataset
+    character(len=*), parameter :: Sfx = 'dblarr3' ! Type and rank in subr name
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='LoadFromHDF5DS_dblarr3' )
-    shp = shape ( value )
-    call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataset ' // trim(name), &
-      & MLSFile=MLSFile )
-    call h5dget_space_f ( setID, spaceID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataspace for dataset ' // trim(name), &
-      & MLSFile=MLSFile )
-    if ( present(start) ) then
-      call mls_hyperslab ( spaceID, shp, name, memspaceID, &
-        & start, count, stride, block )
-      call h5dread_f ( setID, H5T_NATIVE_DOUBLE, value, &
-        & (/ shp, ones(1:4) /), status, memspaceID, spaceID )
-      call finishLoad ( name, status, spaceID, setID, memspaceID, MLSFile=MLSFile )
-    else
-      call check_for_fit ( spaceID, shp, name )
-      call h5dread_f ( setID, H5T_NATIVE_DOUBLE, value, &
-        & (/ shp, ones(1:4) /), status )
-      call finishLoad ( name, status, spaceID, setID, MLSFile=MLSFile )
-    end if
-    call MLSMessageCalls( 'pop' )
+    include 'LoadFromHDF5DS.f9h'
+
   end subroutine LoadFromHDF5DS_dblarr3
 
   ! ------------------------------------  LoadFromHDF5DS_snglarr1  -----
   subroutine LoadFromHDF5DS_snglarr1 ( MLSFile, name, value, &
     & start, count, stride, block )
     ! This routine loads a predefined array with values from a DS
+    use HDF5, only: H5T => H5T_NATIVE_REAL ! HDF type
     type (MLSFile_T)   :: MLSFile
     character (len=*), intent(in) :: NAME ! Name for this dataset
     real, intent(out) :: VALUE(:)         ! The array itself
@@ -4589,44 +3648,19 @@ contains ! ======================= Public Procedures =========================
                                  ! How many elements to move in each direction
     integer, dimension(:), optional, intent(in) :: block
                                  ! Size of element block
+                                 ! Size of element block
 
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    integer(kind=hsize_t), dimension(1) :: SHP        ! Shape of value
-    integer :: SPACEID                  ! ID of dataspace
-    integer :: MEMSPACEID               ! ID of dataspace
-    integer :: SETID                    ! ID of dataset
+    character(len=*), parameter :: Sfx = 'snglarr1' ! Type and rank in subr name
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='LoadFromHDF5DS_snglarr1' )
-    shp = shape ( value )
-    call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataset ' // trim(name), &
-      & MLSFile=MLSFile )
-    call h5dget_space_f ( setID, spaceID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataspace for dataset ' // trim(name), &
-      & MLSFile=MLSFile )
-    if ( present(start) ) then
-      call mls_hyperslab ( spaceID, shp, name, memspaceID, &
-        & start, count, stride, block )
-      call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
-        & (/ shp, ones(1:6) /), status, memspaceID, spaceID )
-      call finishLoad ( name, status, spaceID, setID, memspaceID, MLSFile=MLSFile )
-    else
-      call check_for_fit ( spaceID, shp, name )
-      call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
-        & (/ shp, ones(1:6) /), status )
-      call finishLoad ( name, status, spaceID, setID, MLSFile=MLSFile )
-    end if
-    call MLSMessageCalls( 'pop' )
+    include 'LoadFromHDF5DS.f9h'
+
   end subroutine LoadFromHDF5DS_snglarr1
 
   ! ------------------------------------  LoadFromHDF5DS_snglarr2  -----
   subroutine LoadFromHDF5DS_snglarr2 ( MLSFile, name, value, &
     & start, count, stride, block )
     ! This routine loads a predefined array with values from a DS
+    use HDF5, only: H5T => H5T_NATIVE_REAL ! HDF type
     type (MLSFile_T)   :: MLSFile
     character (len=*), intent(in) :: NAME ! Name for this dataset
     real, intent(out) :: VALUE(:,:)       ! The array itself
@@ -4639,43 +3673,17 @@ contains ! ======================= Public Procedures =========================
     integer, dimension(:), optional, intent(in) :: block
                                  ! Size of element block
 
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    integer(kind=hsize_t), dimension(2) :: SHP        ! Shape of value
-    integer :: SPACEID                  ! ID of dataspace
-    integer :: MEMSPACEID               ! ID of dataspace
-    integer :: SETID                    ! ID of dataset
+    character(len=*), parameter :: Sfx = 'snglarr2' ! Type and rank in subr name
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='LoadFromHDF5DS_snglarr2' )
-    shp = shape ( value )
-    call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataset ' // trim(name), &
-      & MLSFile=MLSFile )
-    call h5dget_space_f ( setID, spaceID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataspace for dataset ' // trim(name), &
-      & MLSFile=MLSFile )
-    if ( present(start) ) then
-      call mls_hyperslab ( spaceID, shp, name, memspaceID, &
-        & start, count, stride, block )
-      call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
-        & (/ shp, ones(1:5) /), status, memspaceID, spaceID )
-      call finishLoad ( name, status, spaceID, setID, memspaceID, MLSFile=MLSFile )
-    else
-      call check_for_fit ( spaceID, shp, name )
-      call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
-        & (/ shp, ones(1:5) /), status )
-      call finishLoad ( name, status, spaceID, setID, MLSFile=MLSFile )
-    end if
-    call MLSMessageCalls( 'pop' )
+    include 'LoadFromHDF5DS.f9h'
+
   end subroutine LoadFromHDF5DS_snglarr2
 
   ! ------------------------------------  LoadFromHDF5DS_snglarr3  -----
   subroutine LoadFromHDF5DS_snglarr3 ( MLSFile, name, value, &
     & start, count, stride, block )
     ! This routine loads a predefined array with values from a DS
+    use HDF5, only: H5T => H5T_NATIVE_REAL ! HDF type
     type (MLSFile_T)   :: MLSFile
     character (len=*), intent(in) :: NAME ! Name for this dataset
     real, intent(out) :: VALUE(:,:,:)     ! The array itself
@@ -4688,43 +3696,17 @@ contains ! ======================= Public Procedures =========================
     integer, dimension(:), optional, intent(in) :: block
                                  ! Size of element block
 
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    integer(kind=hsize_t), dimension(3) :: SHP        ! Shape of value
-    integer :: SPACEID                  ! ID of dataspace
-    integer :: MEMSPACEID               ! ID of dataspace
-    integer :: SETID                    ! ID of dataset
+    character(len=*), parameter :: Sfx = 'snglarr3' ! Type and rank in subr name
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='LoadFromHDF5DS_snglarr3' )
-    shp = shape ( value )
-    call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataset ' // trim(name), &
-      & MLSFile=MLSFile )
-    call h5dget_space_f ( setID, spaceID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataspace for dataset ' // trim(name), &
-      & MLSFile=MLSFile )
-    if ( present(start) ) then
-      call mls_hyperslab ( spaceID, shp, name, memspaceID, &
-        & start, count, stride, block )
-      call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
-        & (/ shp, ones(1:4) /), status, memspaceID, spaceID )
-      call finishLoad ( name, status, spaceID, setID, memspaceID, MLSFile=MLSFile )
-    else
-      call check_for_fit ( spaceID, shp, name )
-      call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
-        & (/ shp, ones(1:4) /), status )
-      call finishLoad ( name, status, spaceID, setID, MLSFile=MLSFile )
-    end if
-    call MLSMessageCalls( 'pop' )
+    include 'LoadFromHDF5DS.f9h'
+
   end subroutine LoadFromHDF5DS_snglarr3
 
   ! ------------------------------------  LoadFromHDF5DS_snglarr4  -----
   subroutine LoadFromHDF5DS_snglarr4 ( MLSFile, name, value, &
     & start, count, stride, block )
     ! This routine loads a predefined array with values from a DS
+    use HDF5, only: H5T => H5T_NATIVE_REAL ! HDF type
     type (MLSFile_T)   :: MLSFile
     character (len=*), intent(in) :: NAME ! Name for this dataset
     real, intent(out) :: VALUE(:,:,:,:)   ! The array itself
@@ -4737,37 +3719,10 @@ contains ! ======================= Public Procedures =========================
     integer, dimension(:), optional, intent(in) :: block
                                  ! Size of element block
 
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    integer(kind=hsize_t), dimension(4) :: SHP        ! Shape of value
-    integer :: SPACEID                  ! ID of dataspace
-    integer :: MEMSPACEID               ! ID of dataspace
-    integer :: SETID                    ! ID of dataset
+    character(len=*), parameter :: Sfx = 'snglarr4' ! Type and rank in subr name
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='LoadFromHDF5DS_snglarr4' )
-    shp = shape ( value )
-    call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataset ' // trim(name), &
-      & MLSFile=MLSFile )
-    call h5dget_space_f ( setID, spaceID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataspace for dataset ' // trim(name), &
-      & MLSFile=MLSFile )
-    if ( present(start) ) then
-      call mls_hyperslab ( spaceID, shp, name, memspaceID, &
-        & start, count, stride, block )
-      call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
-        & (/ shp, ones(1:3) /), status, memspaceID, spaceID )
-      call finishLoad ( name, status, spaceID, setID, memspaceID, MLSFile=MLSFile )
-    else
-      call check_for_fit ( spaceID, shp, name )
-      call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
-        & (/ shp, ones(1:3) /), status )
-      call finishLoad ( name, status, spaceID, setID, MLSFile=MLSFile )
-    end if
-    call MLSMessageCalls( 'pop' )
+    include 'LoadFromHDF5DS.f9h'
+
   end subroutine LoadFromHDF5DS_snglarr4
 
   ! ---------------------------------  LoadPtrFromHDF5DS_chararr1  -----
@@ -4846,10 +3801,10 @@ contains ! ======================= Public Procedures =========================
     call h5dget_space_f ( setID, spaceID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open dataspace for dataset ' // trim(name) )
-   call get_DS_shape ( spaceID, shp, name )
-   call allocate_test ( value, int(shp(1)), int(shp(2)), 'Value', moduleName )
-   call h5dread_f ( setID, stringtype, value, (/ shp, ones(1:5) /), status )
-   call finishLoad ( name, status, spaceID, setID, stringType=stringType )
+    call get_DS_shape ( spaceID, shp, name )
+    call allocate_test ( value, int(shp(1)), int(shp(2)), 'Value', moduleName )
+    call h5dread_f ( setID, stringtype, value, (/ shp, ones(1:5) /), status )
+    call finishLoad ( name, status, spaceID, setID, stringType=stringType )
     call MLSMessageCalls( 'pop' )
   end subroutine LoadPtrFromHDF5DS_chararr2
 
@@ -5922,6 +4877,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.83  2008/05/10 01:14:04  vsnyder
+! Use includes to generate multiple-rank routines
+!
 ! Revision 2.82  2008/05/02 00:05:19  pwagner
 ! Reads textFile using io stuff
 !
