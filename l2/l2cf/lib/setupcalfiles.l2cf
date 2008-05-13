@@ -1,3 +1,4 @@
+!divert(-1)
 ;$Id$
 
 ; The first are l2cfs for an include, so unquoted
@@ -43,10 +44,10 @@
 !define(signalsL2cf, {!signalsPath/MLS-Aura_L2Cal-Signals_v1-5-0_0000d000.l2cf})
 })
 !ifdef(spectroscopyL2cf, {}, {
-!define(spectroscopyL2cf, {!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy-PFA_v2-0-6_0000d000.l2cf})
+!define(spectroscopyL2cf, {!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy-PFA_v3-0-0_0000d000.l2cf})
 })
 !ifdef(spectroscopyFullL2cf, {}, {
-!define(spectroscopyFullL2cf, {!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy_v2-0-6_0000d000.l2cf})
+!define(spectroscopyFullL2cf, {!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy_v3-0-0_0000d000.l2cf})
 })
 !ifdef(spectroscopyRtvlL2cf, {}, {
 !define(spectroscopyRtvlL2cf,{!spectroscopyL2cf})
@@ -81,6 +82,9 @@
   'R5H',$
   'R5V',$
   'DACS']})
+  !define(spectroscopyHDF,{Spectroscopy})
+  !define(spectroscopyFullHDF,{Spectroscopy})
+  !define(spectroscopyRtvlHDF,{Spectroscopy})
 },{
   !ifdef(antennaFile, {}, {
   !define(antennaFile, {'!antennaPath/MLS-Aura_L2Cal-AAAP_v2-0-0_0000d000.txt'})
@@ -102,17 +106,23 @@
   })
   !ifdef(pfaFiles, {}, {
   !define(pfaFiles, 
-  {['/users/vsnyder/mlspgs/tables/PFAData_R5V_v2-0-6-2007-11-29.h5', $
-    '/users/vsnyder/mlspgs/tables/PFAData_R5H_v2-0-6-2007-11-29.h5', $
-    '/users/vsnyder/mlspgs/tables/PFAData_R4_v2-0-6-2007-11-29.h5 ', $
-    '/users/vsnyder/mlspgs/tables/PFAData_R3_v2-0-6-2007-11-29.h5 ', $
-    '/users/vsnyder/mlspgs/tables/PFAData_R2_v2-0-6-2007-11-29.h5 ', $
-    '/users/vsnyder/mlspgs/tables/PFAData_R1B_v2-0-6-2007-11-29.h5',$
-    '/users/vsnyder/mlspgs/tables/PFAData_R1A_v2-0-6-2007-11-29.h5',$
-    '!pfaPath/PFAData_DACS_v2-0-5.h5']})
+  {['!pfaPath/PFA_R5V_FS-03.h5', $
+    '!pfaPath/PFA_R5H_FS-03.h5', $
+    '!pfaPath/PFA_R4_FS-03.h5 ', $
+    '!pfaPath/PFA_R3_FS-03.h5 ', $
+    '!pfaPath/PFA_R2_FS-03.h5 ', $
+    '!pfaPath/PFA_R1B_FS-03.h5',$
+    '!pfaPath/PFA_R1A_FS-03.h5',$
+    '!pfaPath/PFA_DACS_FS-03.h5']})
   })
+  !define(spectroscopyHDF,{!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy-PFA_v3-0-0_0000d000.h5})
+  !define(spectroscopyFullHDF,{!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy_v3-0-0_0000d000.h5})
+  !define(spectroscopyRtvlHDF,{!spectroscopyHDF})
 })
 ;$Log$
+;Revision 1.36  2008/03/11 18:24:55  pwagner
+;The version used for FS-03-003 test
+;
 ;Revision 1.35  2006/06/09 20:48:42  pwagner
 ;Fixed bug when using PCF, PFAfiles
 ;
@@ -137,3 +147,4 @@
 ;Revision 1.28  2006/05/17 00:22:02  lambert
 ;added PFAData_DACS_v2-0-5.h5 to PFA file list
 ;
+!divert!dnl
