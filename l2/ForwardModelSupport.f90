@@ -76,7 +76,7 @@ contains ! =====     Public Procedures     =============================
       & READ_FILTER_SHAPES_FILE, READ_DACS_FILTER_SHAPES_FILE, &
       & CLOSE_FILTER_SHAPES_FILE
     use Init_Tables_Module, only: F_ANTENNAPATTERNS, F_DACSFILTERSHAPES, &
-      & F_FILTERSHAPES, F_L2PC, F_PFAFILES, F_POINTINGGRIDS
+      & F_FILTERSHAPES, F_L2PC, F_MieTables, F_PFAFILES, F_POINTINGGRIDS
     use intrinsic, only: l_ascii, l_hdf
     use L2ParInfo, only: PARALLEL
     use L2PC_m, only: OPEN_L2PC_FILE, CLOSE_L2PC_FILE, READ_L2PC_FILE, &
@@ -85,11 +85,13 @@ contains ! =====     Public Procedures     =============================
     use MLSPCF2, only: MLSPCF_antpats_start, MLSPCF_filtshps_start, &
       &          mlspcf_dacsfltsh_start, MLSPCF_ptggrids_start, &
       &          mlspcf_l2pc_start, mlspcf_l2pc_end, &
+      &          mlspcf_MieTables_start, &
       &          mlspcf_pfa_start, mlspcf_pfa_end
     use MoreTree, only: Get_Field_ID
     use PFADataBase_m, only: Process_PFA_File
     use PointingGrid_m, only: Close_Pointing_Grid_File, &
       & Open_Pointing_Grid_File, Read_Pointing_Grid_File
+    use Read_Mie_m, only: Read_Mie
     use Toggles, only: Gen, Levels, Toggle
     use Trace_M, only: Trace_begin, Trace_end
     use Tree, only: Nsons, Sub_Rosa, Subtree
@@ -170,6 +172,13 @@ contains ! =====     Public Procedures     =============================
             ! call ReadCompleteHDF5L2PCFile ( fileName )
             call ReadCompleteHDF5L2PCFile ( MLSFile, subtree(j,son) )
           end if
+        end do
+      case ( f_MieTables )
+        do j = 2, nsons(son)
+          call get_file_name ( mlspcf_MieTables_start, &
+            & get_field_id(son), filedatabase, MLSFile, &
+            & 'Mie tables File not found in PCF' )
+          call read_mie ( fileName )
         end do
       case ( f_PFAFiles )
         last_pfa = last_pfa + 1
@@ -479,6 +488,7 @@ contains ! =====     Public Procedures     =============================
     info%do_path_norm = .false.
     info%forceFoldedOutput = .false.
     info%forceSidebandFraction = .false.
+    info%generateTScat = .false.
     info%globalConfig = global
     info%incl_cld = .false.
     info%instrumentModule = 0
@@ -1361,6 +1371,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.139  2008/05/20 00:28:06  vsnyder
+! Process MieTables field from ForwardModelGlobal
+!
 ! Revision 2.138  2008/05/02 00:33:30  vsnyder
 ! Delete unused symbol
 !
