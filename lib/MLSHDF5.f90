@@ -218,13 +218,15 @@ module MLSHDF5
   interface LoadFromHDF5DS
     module procedure LdFrmHDF5DS_ID_intarr1, LdFrmHDF5DS_ID_intarr2, &
       & LdFrmHDF5DS_ID_intarr3, LdFrmHDF5DS_ID_logarr1, &
-      & LdFrmHDF5DS_ID_dblarr1, LdFrmHDF5DS_ID_dblarr2, LdFrmHDF5DS_ID_dblarr3, &
+      & LdFrmHDF5DS_ID_dblarr1, LdFrmHDF5DS_ID_dblarr2, &
+      & LdFrmHDF5DS_ID_dblarr3, LdFrmHDF5DS_ID_dblarr4, &
       & LdFrmHDF5DS_ID_snglarr1, LdFrmHDF5DS_ID_snglarr2, &
       & LdFrmHDF5DS_ID_snglarr3, LdFrmHDF5DS_ID_snglarr4, &
       & LdFrmHDF5DS_ID_chararr1, LdFrmHDF5DS_ID_chararr2, LdFrmHDF5DS_ID_chararr3
     module procedure LoadFromHDF5DS_intarr1, LoadFromHDF5DS_intarr2, &
       & LoadFromHDF5DS_intarr3, LoadFromHDF5DS_logarr1, &
-      & LoadFromHDF5DS_dblarr1, LoadFromHDF5DS_dblarr2, LoadFromHDF5DS_dblarr3, &
+      & LoadFromHDF5DS_dblarr1, LoadFromHDF5DS_dblarr2, &
+      & LoadFromHDF5DS_dblarr3, LoadFromHDF5DS_dblarr4, &
       & LoadFromHDF5DS_snglarr1, LoadFromHDF5DS_snglarr2, &
       & LoadFromHDF5DS_snglarr3, LoadFromHDF5DS_snglarr4, &
       & LoadFromHDF5DS_chararr1, LoadFromHDF5DS_chararr2, LoadFromHDF5DS_chararr3
@@ -256,6 +258,7 @@ module MLSHDF5
       & SaveAsHDF5DS_intarr1, SaveAsHDF5DS_intarr2, SaveAsHDF5DS_intarr3, &
       & SaveAsHDF5DS_logarr1, &
       & SaveAsHDF5DS_dblarr1, SaveAsHDF5DS_dblarr2, SaveAsHDF5DS_dblarr3, &
+      & SaveAsHDF5DS_dblarr4, &
       & SaveAsHDF5DS_snglarr1, SaveAsHDF5DS_snglarr2, SaveAsHDF5DS_snglarr3, &
       & SaveAsHDF5DS_snglarr4, &
       & SaveAsHDF5DS_charsclr, SaveAsHDF5DS_chararr1, SaveAsHDF5DS_chararr2, &
@@ -2988,6 +2991,21 @@ contains ! ======================= Public Procedures =========================
 
   end subroutine SaveAsHDF5DS_dblarr3
 
+  ! ---------------------------------------  SaveAsHDF5DS_dblarr4  -----
+  subroutine SaveAsHDF5DS_dblarr4 ( locID, name, value, &
+    & finalShape, fillValue, adding_to )
+    ! This routine does the initial work of creating a dataset
+    integer, intent(in) :: LOCID          ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    double precision, intent(in) :: VALUE(:,:,:,:)  ! The array itself
+    double precision, optional, intent(in) :: FILLVALUE
+    integer, dimension(4), optional, intent(in) :: FINALSHAPE
+    logical, optional, intent(in)     :: adding_to
+
+    include 'SaveAsHDF5DS_dblarr.f9h'
+
+  end subroutine SaveAsHDF5DS_dblarr4
+
   ! --------------------------------------  SaveAsHDF5DS_snglarr1  -----
   subroutine SaveAsHDF5DS_snglarr1 ( locID, name, value, &
     & finalShape, fillValue, adding_to )
@@ -3321,6 +3339,28 @@ contains ! ======================= Public Procedures =========================
 
   end subroutine LdFrmHDF5DS_ID_dblarr3
 
+  ! -------------------------------------  LdFrmHDF5DS_ID_dblarr4  -----
+  subroutine LdFrmHDF5DS_ID_dblarr4 ( locID, name, value, &
+    & start, count, stride, block )
+    ! This routine loads a predefined array with values from a DS
+    integer, intent(in) :: LOCID          ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    double precision, intent(out) :: VALUE(:,:,:,:) ! The array itself
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+
+    character(len=*), parameter :: Sfx = 'dblarr4'
+
+    include 'LdFrmHDF5DS_ID.f9h'
+
+  end subroutine LdFrmHDF5DS_ID_dblarr4
+
   ! ------------------------------------  LdFrmHDF5DS_ID_snglarr1  -----
   subroutine LdFrmHDF5DS_ID_snglarr1 ( locID, name, value, &
     & start, count, stride, block )
@@ -3631,6 +3671,29 @@ contains ! ======================= Public Procedures =========================
     include 'LoadFromHDF5DS.f9h'
 
   end subroutine LoadFromHDF5DS_dblarr3
+
+  ! -------------------------------------  LoadFromHDF5DS_dblarr4  -----
+  subroutine LoadFromHDF5DS_dblarr4 ( MLSFile, name, value, &
+    & start, count, stride, block )
+    ! This routine loads a predefined array with values from a DS
+    use HDF5, only: H5T => H5T_NATIVE_DOUBLE ! HDF type
+    type (MLSFile_T)   :: MLSFile
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    double precision, intent(out) :: VALUE(:,:,:,:) ! The array itself
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+
+    character(len=*), parameter :: Sfx = 'dblarr4' ! Type and rank in subr name
+
+    include 'LoadFromHDF5DS.f9h'
+
+  end subroutine LoadFromHDF5DS_dblarr4
 
   ! ------------------------------------  LoadFromHDF5DS_snglarr1  -----
   subroutine LoadFromHDF5DS_snglarr1 ( MLSFile, name, value, &
@@ -3994,6 +4057,37 @@ contains ! ======================= Public Procedures =========================
     call finishLoad ( name, status, spaceID, setID )
     call MLSMessageCalls( 'pop' )
   end subroutine LoadPtrFromHDF5DS_dblarr3
+
+  ! ----------------------------------  LoadPtrFromHDF5DS_dblarr4  -----
+  subroutine LoadPtrFromHDF5DS_dblarr4 ( locID, name, value )
+    ! This routine allocates an array and loads it with values from a DS
+    use Allocate_Deallocate, only: Allocate_Test
+    integer, intent(in) :: LOCID          ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    double precision, pointer :: VALUE(:,:,:,:) ! The array itself
+
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    integer(hsize_t) :: SHP(4)          ! Shape of value
+    integer :: SPACEID                  ! ID of dataspace
+    integer :: SETID                    ! ID of dataset
+
+    ! Executable code
+    call MLSMessageCalls( 'push', constantName='LoadPtrFromHDF5DS_dblarr3' )
+    call h5dOpen_f ( locID, name, setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataset ' // trim(name) )
+    call h5dget_space_f ( setID, spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataspace for dataset ' // trim(name) )
+    call get_ds_shape ( spaceID, shp, name )
+    call allocate_test ( value, int(shp(1)), int(shp(2)), int(shp(3)), int(shp(4)), 'Value', &
+      & moduleName )
+    call h5dread_f ( setID, H5T_NATIVE_DOUBLE, value, &
+      & (/ shp, ones(1:4) /), status )
+    call finishLoad ( name, status, spaceID, setID )
+    call MLSMessageCalls( 'pop' )
+  end subroutine LoadPtrFromHDF5DS_dblarr4
 
   ! ---------------------------------  LoadPtrFromHDF5DS_snglarr1  -----
   subroutine LoadPtrFromHDF5DS_snglarr1 ( locID, name, value, lowBound )
@@ -4877,6 +4971,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.84  2008/05/20 01:59:28  vsnyder
+! Add 4d integer, real, double
+!
 ! Revision 2.83  2008/05/10 01:14:04  vsnyder
 ! Use includes to generate multiple-rank routines
 !
