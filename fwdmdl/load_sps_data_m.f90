@@ -215,7 +215,7 @@ contains
     type (ForwardModelConfig_T) ,intent(in) :: FWDMODELCONF
     type (Grids_T), intent(inout) :: GRIDS_F   ! All the vmrs
     integer, intent(in) :: H2O_IND             ! Where is H2O in Grids_f?
-    type (Grids_T), intent(inout) :: GRIDS_TMP ! All the temperatures
+    type (Grids_T), intent(in) :: GRIDS_TMP    ! All the temperatures
     type (VectorValue_T), intent(in) :: BOUNDARYPRESSURE
 
     integer :: KF, KZ, KP
@@ -563,6 +563,11 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.68  2006/12/04 21:17:28  vsnyder
+! Reorganize FullForwardModel to use automatic arrays instead of allocating
+! pointer arrays.  Requires testing for zero size instead of testing for
+! associated in several subsidiary procedures.
+!
 ! Revision 2.67  2006/07/21 00:18:09  vsnyder
 ! Remove unused USEs
 !
