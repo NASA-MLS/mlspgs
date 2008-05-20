@@ -25,7 +25,6 @@ module TREE_WALKER
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
-
 contains ! ====     Public Procedures     ==============================
   ! -------------------------------------  WALK_TREE_TO_DO_MLS_L2  -----
   subroutine WALK_TREE_TO_DO_MLS_L2 ( ROOT, ERROR_FLAG, FIRST_SECTION, &
@@ -160,7 +159,7 @@ contains ! ====     Public Procedures     ==============================
     if ( error_flag /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate // 'vectors' )
 
-    nullify(chunksSkipped)
+    nullify ( chunksSkipped )
     warnOnDestroy = ( switchDetail(switches, 'destroy' ) > -1 )
     canWriteL2PC = .false.
     stopBeforeChunkLoop          = ( &
@@ -173,14 +172,14 @@ contains ! ====     Public Procedures     ==============================
     do i=section_first, section_last
       call get_string ( section_indices(i), section_name, strip=.true. )
       skipSections(i) = isInList( sectionstoskip, section_name, '-fc' )
-    enddo
+    end do
     if ( toggle(gen) ) call trace_begin ( 'WALK_TREE_TO_DO_MLS_L2', &
       & subtree(first_section,root) )
     call time_now ( t1 )
     call OpenAndInitialize ( processingRange, filedatabase )
     call add_to_section_timing ( 'open_init', t1, now_stop )
     if ( now_stop ) then
-      call finishUp(.true.)
+      call finishUp ( .true. )
       return
     end if
     i = first_section
@@ -199,7 +198,7 @@ contains ! ====     Public Procedures     ==============================
         & section_index < SECTION_LAST + 1 ) then
         if( skipSections(section_index) ) &
           & section_index = SECTION_FIRST - 1 ! skip
-      endif
+      end if
       ! First those involved in 'preprocessing'
       select case ( section_index )
 
@@ -298,7 +297,7 @@ contains ! ====     Public Procedures     ==============================
             & 'unable to allocate chunks' )
           firstChunk = 1
           lastChunk = size(chunks)
-        endif
+        end if
         if ( ( size(chunks) < 1 ) .or. &
           & ( parallel%master .and. .not. parallel%fwmParallel ) .or. &
           & ( parallel%slave .and. parallel%fwmParallel ) ) then
@@ -341,7 +340,7 @@ contains ! ====     Public Procedures     ==============================
             chunksSkipped = .true.
             call ExpandStringRange(trim(parallel%chunkRange), chunksSkipped, &
               & sense=.false.)
-          endif  
+          end if  
           canWriteL2PC = ( count(.not. chunksSkipped) < 2 )
           if ( .not. associated(chunks) ) then
             allocate(chunks(1), stat=error_flag)
@@ -349,7 +348,8 @@ contains ! ====     Public Procedures     ==============================
               & 'unable to allocate chunks' )
             firstChunk = 1
             lastChunk = size(chunks)
-          endif
+          end if
+          j = i + 1 ! In case no chunks get processed
           do chunkNo = firstChunk, lastChunk ! --------------------- Chunk loop
             call resumeOutput ! In case the last phase was  silent
             if ( chunksSkipped(chunkNo) ) cycle
@@ -459,20 +459,21 @@ subtrees:   do while ( j <= howmany )
           i = j - 1 ! one gets added back in at the end of the outer loop
         end if
 
+        ! If we're stamping stdout with phase, times, etc.
+        ! we'll want to show the last phase is over
+        call getStamp( textcode=textcode, showTime=showTime )
+        if ( showTime .or. textCode /= ' ' ) then
+          call setStamp( textCode="Output" )
+        end if
+        ! And resume directwrites
+        skipDirectwrites = skipDirectwritesOriginal
+
         ! ------------------------------------------- Output section
-      ! If we're stamping stdout with phase, times, etc.
-      ! we'll want to show the last phase is over
-      call getStamp( textcode=textcode, showTime=showTime )
-      if ( showTime .or. textCode /= ' ' ) then
-        call setStamp( textCode="Output" )
-      endif
-      ! And resume directwrites
-      skipDirectwrites = skipDirectwritesOriginal
       case ( z_output ) ! Write out the data
         call resumeOutput ! In case the last phase was  silent
         if ( parallel%slave .and. .not. SLAVESDOOWNCLEANUP ) then
           exit
-        elseif ( .not. parallel%slave ) then
+        else if ( .not. parallel%slave ) then
           call Output_Close ( son, l2gpDatabase, l2auxDatabase, DirectDatabase, &
             & matrices, vectors, fileDataBase, chunks, processingRange, &
             & canWriteL2PC )
@@ -488,7 +489,7 @@ subtrees:   do while ( j <= howmany )
           call DestroyVectorDatabase ( vectors )
           if ( warnOnDestroy ) call output('About to destroy matrix db', advance='yes' )
           call DestroyMatrixDatabase ( matrices )
-        endif
+        end if
 
         if ( specialDumpFile /= ' ' ) &
           & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
@@ -502,7 +503,7 @@ subtrees:   do while ( j <= howmany )
         call DestroyGriddedDataDatabase ( griddedDataBase )
         if ( switchDetail(switches,'l2gp') > -1 .and. .not. parallel%slave) then
           call Dump(l2gpDatabase)
-        elseif ( switchDetail(switches,'cab') > -1 .and. .not. parallel%slave) then
+        else if ( switchDetail(switches,'cab') > -1 .and. .not. parallel%slave) then
           call Dump(l2gpDatabase, ColumnsOnly=.true.)
         end if
         if ( warnOnDestroy ) call output('About to destroy l2gp db', advance='yes' )
@@ -531,7 +532,7 @@ subtrees:   do while ( j <= howmany )
         if ( .not. parallel%master ) then
           call output('Skipping ', advance='no')
           call output(trim(section_name), advance='yes')
-        endif
+        end if
       end select
       i = i + 1
     end do
@@ -540,6 +541,7 @@ subtrees:   do while ( j <= howmany )
     call finishUp
 
   contains
+
     subroutine FinishUp ( Early )
       use FilterShapes_m, only: Destroy_Filter_Shapes_Database, &
         & destroy_DACS_Filter_Database
@@ -610,6 +612,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.163  2008/04/01 17:00:15  pwagner
+! Can get hdf5 spectroscopy file path/name from PCF
+!
 ! Revision 2.162  2007/12/07 01:15:01  pwagner
 ! Removed unused dummp varaibles, etc.
 !
