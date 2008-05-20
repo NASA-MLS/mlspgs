@@ -1313,6 +1313,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_DACSfilterShapes, t+t_string, n+n_field_type, &
              begin, f+f_filterShapes, t+t_string, n+n_field_type, &
              begin, f+f_l2pc, t+t_string, n+n_field_type, &
+             begin, f+f_MieTables, t+t_string, n+n_field_type, &
              begin, f+f_PFAFiles, t+t_string, n+n_field_type, &
              begin, f+f_pointingGrids, t+t_string, n+n_field_type, &
              np+n_spec_def /) )
@@ -1556,6 +1557,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.466  2008/05/20 00:25:05  vsnyder
+! Add MieTables field for ForwardModelGlobal
+!
 ! Revision 2.465  2008/04/28 21:46:34  pwagner
 ! Needed to add ident of new total power fill command
 !
