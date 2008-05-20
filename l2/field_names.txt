@@ -240,6 +240,7 @@ metaDataOnly
 metaName
 method
 model
+MieTables
 mif
 minChannels
 minNormQty
@@ -454,6 +455,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.182  2008/05/20 00:25:05  vsnyder
+# Add MieTables field for ForwardModelGlobal
+#
 # Revision 2.181  2008/04/26 00:39:31  livesey
 # Added total power stuff
 #
