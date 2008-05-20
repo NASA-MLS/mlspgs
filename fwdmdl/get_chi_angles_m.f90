@@ -16,6 +16,11 @@ module Get_Chi_Angles_m
   private
   public :: Get_Chi_Angles
 
+  interface Get_Chi_Angles
+    module procedure Get_Chi_Angles_All, Get_Chi_Angles_Simple
+    module procedure Get_Chi_Angles_Simple_Deriv
+  end interface
+
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
@@ -24,8 +29,8 @@ module Get_Chi_Angles_m
 contains
 !---------------------------------------------------------------------------
 
-  ! ---------------------------------------------  Get_Chi_Angles  -----
-  subroutine Get_Chi_Angles ( sc_geoc_alt, tan_index_refr, tan_ht, &
+  ! -----------------------------------------  Get_Chi_Angles_All  -----
+  subroutine Get_Chi_Angles_All ( sc_geoc_alt, tan_index_refr, tan_ht, &
              & phi_tan, Req, elev_offset, ptg_angle, dx_dh, dh_dz, tan_dh_dt, &
              & tan_d2h_dhdt, dx_dt, d2x_dxdt )
 
@@ -136,9 +141,193 @@ contains
       d2x_dxdt = tp * dx_dt + tan_d2h_dhdt
     end if
 
-    return
+  end subroutine Get_Chi_Angles_All
 
-  end subroutine Get_Chi_Angles
+  ! --------------------------------------  Get_Chi_Angles_Simple  -----
+  subroutine Get_Chi_Angles_Simple ( sc_geoc_alt, tan_index_refr, tan_ht, &
+             & phi_tan, Req, elev_offset, ptg_angle )
+
+  ! Set up array of pointing angles
+
+    use Units, only: Deg2Rad, Ln10
+    use MLSCommon, only: RP
+
+  ! inputs
+
+    real(rp), intent(in) :: SC_geoc_alt ! geocentric spacecraft(observer)
+                                        ! altitude in km
+    real(rp), intent(in) :: Tan_index_refr ! tangent index of refraction
+    real(rp), intent(in) :: Tan_ht      ! tangent height relative to Req
+    real(rp), intent(in) :: Phi_tan     ! tangent orbit plane projected
+                                        ! geodetic angle in radians
+    real(rp), intent(in) :: Req         ! equivalent earth radius in km
+    real(rp), intent(in) :: Elev_offset ! radiometer pointing offset in radians
+!                                         positive is towards the earth,
+!                                         negative is towards space.
+
+  ! outputs
+
+    real(rp), intent(out) :: Ptg_angle  ! pointing angle in radians
+
+  !  ----------------
+  !  Local variables:
+  !  ----------------
+
+    real(rp), parameter :: ampl = 38.9014
+    real(rp), parameter :: phas = 51.6814 * Deg2Rad
+
+    real(rp) :: hs, ht, Np1, q, sinChi, x
+
+  ! Start code:
+
+    ht = Req + tan_ht
+    Np1 = 1.0_rp + tan_index_refr
+
+    !{ Empirical formula: $H_s = R_s + 38.9014\, \sin 2(\phi_t-51^{\circ}.6814 )$
+
+    hs = sc_geoc_alt + ampl * sin(2.0*(phi_tan-phas))
+    x = min ( Np1 * ht / hs, 1.0_rp )
+
+    !{ $\sin \chi^{\text{refr}}_{\text{eq}} =
+    !    \frac{\mathcal{N}_t}{\mathcal{N}_s} \frac{H_t}{H_s}
+    !    \frac{ \text{min} ( H_t, H^{\oplus} ) }{H^{\oplus}}$,
+    !  where $\mathcal{N}_s$ is the index of refraction at the spacecraft,
+    !  which is 1.0, and therefore need not be written explicitly.
+
+    ! ptg_angle = asin(x * min(ht,Req)/Req) - elev_offset
+
+    if ( tan_ht >= 0.0_rp ) then      ! min(ht,Req)/Req = 1
+
+      !{ $H_t \geq H^{\oplus}: ~~
+      !  \sin \chi^{\text{refr}}_{\text{eq}} = N_t \frac{ H_t }{ H_s }; ~~
+      !  \frac{ \text{d} \chi^{\text{refr}}_{\text{eq}} }{ \text{d} H_t}
+      !    \cos \chi^{\text{refr}}_{\text{eq}} =\frac{1}{H_s} \left ( N_t +
+      !    \frac{ \text{d} N_t }{ \text{d} \zeta_t }
+      !      \frac{ \text{d} \zeta_t }{ \text{d} H_t } H_t \right )$ \\ ~\\
+      !  $N_t = 1 + a\, e^{-\zeta_t \ln 10} ~\Rightarrow~ 
+      !    \frac{ \text{d} N_t }{ \text{d} \zeta_t } = - \ln 10 ( N_t - 1 )$
+
+      sinChi = x
+      q = Np1 - ht * tan_index_refr * Ln10 ! / dh_dz assumed to be 1.0
+    else                              ! min(ht,Req)/Req = ht/Req
+
+      !{ $H_t < H^{\oplus}: ~~
+      !  \sin \chi^{\text{refr}}_{\text{eq}} = 
+      !    N_t \frac{ H_t^2 }{ H_s H^{\oplus} }; ~~
+      !  \frac{ \text{d} N_t }{ \text{d} H_t} = 0 ~~
+      !  \Rightarrow ~~
+      !  \frac{ \text{d} \chi^{\text{refr}}_{\text{eq}} }{ \text{d} H_t}
+      !    \cos \chi^{\text{refr}}_{\text{eq}} =
+      !    2 \frac{ N_t H_t }{ H_s H^{\oplus} }$
+
+      sinChi = x*ht/Req
+      q = 2.0_rp * ht * Np1 / Req
+    end if
+
+    ptg_angle = ASIN(sinChi) - elev_offset
+
+  end subroutine Get_Chi_Angles_Simple
+
+  ! --------------------------------  Get_Chi_Angles_Simple_Deriv  -----
+  subroutine Get_Chi_Angles_Simple_Deriv ( sc_geoc_alt, tan_index_refr, tan_ht, &
+             & phi_tan, Req, elev_offset, ptg_angle, &
+             & tan_dh_dt, tan_d2h_dhdt, dx_dt, d2x_dxdt )
+
+  ! Set up array of pointing angles
+
+    use Units, only: Deg2Rad, Ln10
+    use MLSCommon, only: RP
+
+  ! inputs
+
+    real(rp), intent(in) :: SC_geoc_alt ! geocentric spacecraft(observer)
+                                        ! altitude in km
+    real(rp), intent(in) :: Tan_index_refr ! tangent index of refraction
+    real(rp), intent(in) :: Tan_ht      ! tangent height relative to Req
+    real(rp), intent(in) :: Phi_tan     ! tangent orbit plane projected
+                                        ! geodetic angle in radians
+    real(rp), intent(in) :: Req         ! equivalent earth radius in km
+    real(rp), intent(in) :: Elev_offset ! radiometer pointing offset in radians
+!                                         positive is towards the earth,
+!                                         negative is towards space.
+    real(rp), intent(in) :: Tan_dh_dt(:) ! derivative of tangent
+                                         ! height wrt temperature
+    real(rp), intent(in) :: Tan_d2h_dhdt(:) ! 2nd derivative of
+                                        ! tangent height wrt temperature & height
+  ! outputs
+
+    real(rp), intent(out) :: Ptg_angle  ! pointing angle in radians
+    real(rp), optional, intent(out) :: dx_dt(:) ! derivative of pointing angle
+                                                ! wrt temperature
+    real(rp), optional, intent(out) :: d2x_dxdt(:) ! second derivative of
+                                        ! tangent wrt temperature, pointing angle
+
+  !  ----------------
+  !  Local variables:
+  !  ----------------
+
+    real(rp), parameter :: ampl = 38.9014
+    real(rp), parameter :: phas = 51.6814 * Deg2Rad
+
+    real(rp) :: hs, ht, Np1, q, sinChi, tp, x
+
+  ! Start code:
+
+    ht = Req + tan_ht
+    Np1 = 1.0_rp + tan_index_refr
+
+    !{ Empirical formula: $H_s = R_s + 38.9014\, \sin 2(\phi_t-51^{\circ}.6814 )$
+
+    hs = sc_geoc_alt + ampl * sin(2.0*(phi_tan-phas))
+    x = min ( Np1 * ht / hs, 1.0_rp )
+
+    !{ $\sin \chi^{\text{refr}}_{\text{eq}} =
+    !    \frac{\mathcal{N}_t}{\mathcal{N}_s} \frac{H_t}{H_s}
+    !    \frac{ \text{min} ( H_t, H^{\oplus} ) }{H^{\oplus}}$,
+    !  where $\mathcal{N}_s$ is the index of refraction at the spacecraft,
+    !  which is 1.0, and therefore need not be written explicitly.
+
+    ! ptg_angle = asin(x * min(ht,Req)/Req) - elev_offset
+
+    if ( tan_ht >= 0.0_rp ) then      ! min(ht,Req)/Req = 1
+
+      !{ $H_t \geq H^{\oplus}: ~~
+      !  \sin \chi^{\text{refr}}_{\text{eq}} = N_t \frac{ H_t }{ H_s }; ~~
+      !  \frac{ \text{d} \chi^{\text{refr}}_{\text{eq}} }{ \text{d} H_t}
+      !    \cos \chi^{\text{refr}}_{\text{eq}} =\frac{1}{H_s} \left ( N_t +
+      !    \frac{ \text{d} N_t }{ \text{d} \zeta_t }
+      !      \frac{ \text{d} \zeta_t }{ \text{d} H_t } H_t \right )$ \\ ~\\
+      !  $N_t = 1 + a\, e^{-\zeta_t \ln 10} ~\Rightarrow~ 
+      !    \frac{ \text{d} N_t }{ \text{d} \zeta_t } = - \ln 10 ( N_t - 1 )$
+
+      sinChi = x
+      q = Np1 - ht * tan_index_refr * Ln10 ! / dh_dz assumed to be 1.0
+    else                              ! min(ht,Req)/Req = ht/Req
+
+      !{ $H_t < H^{\oplus}: ~~
+      !  \sin \chi^{\text{refr}}_{\text{eq}} = 
+      !    N_t \frac{ H_t^2 }{ H_s H^{\oplus} }; ~~
+      !  \frac{ \text{d} N_t }{ \text{d} H_t} = 0 ~~
+      !  \Rightarrow ~~
+      !  \frac{ \text{d} \chi^{\text{refr}}_{\text{eq}} }{ \text{d} H_t}
+      !    \cos \chi^{\text{refr}}_{\text{eq}} =
+      !    2 \frac{ N_t H_t }{ H_s H^{\oplus} }$
+
+      sinChi = x*ht/Req
+      q = 2.0_rp * ht * Np1 / Req
+    end if
+
+    ptg_angle = ASIN(sinChi) - elev_offset
+
+  ! Do temperature stuff
+  ! Set up: dx_dt, d2x_dxdt arrays for temperature derivative computations
+  ! (NOTE: These entities have NO PHI dimension, so take the center Phi in dh_dt)
+
+    tp = tan(ptg_angle)
+    dx_dt = tp * tan_dh_dt / ht
+    d2x_dxdt = tp * dx_dt + tan_d2h_dhdt
+
+  end subroutine Get_Chi_Angles_Simple_Deriv
 
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
@@ -151,6 +340,9 @@ contains
 
 end module Get_Chi_Angles_m
 ! $Log$
+! Revision 2.17  2005/12/07 00:32:58  vsnyder
+! Add some TeXnicalities
+!
 ! Revision 2.16  2005/06/22 18:08:19  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
