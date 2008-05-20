@@ -25,7 +25,7 @@ contains
 
   subroutine Compute_Z_PSIG ( FwdModelConf, Temp, Qtys, &
     &                         Nlvl, No_Tan_Hts, SurfaceTangentIndex, &
-    &                         Z_PSIG, Tan_Press )
+    &                         Z_PSIG, Tan_Press, Observer )
 
   ! Compute the preselected integration zeta grid.  Compute Tan_Press
   ! because it depends on z_psig.
@@ -41,23 +41,26 @@ contains
     type (vectorValue_T), intent(in) :: TEMP      ! Temperature component of state vector
     type (qtyStuff_t), intent(in) :: Qtys(:)      ! Array of pointers to Qty's.
 
-  ! Outputs
+  ! Outputs:
     integer, intent(out) :: Nlvl                  ! Levels in coarse grid
     integer, intent(out) :: No_Tan_Hts            ! Number of tangent heights
     integer, intent(out) :: SurfaceTangentIndex   ! First or surface tangent index
 
   ! Would be intent(out) if they weren't pointers.  First thing here
   ! is to nullify them.
-    real(rp), dimension(:), pointer :: Z_psig ! recommended PSIG for
+    real(rp), pointer :: Z_psig(:) ! recommended PSIG for
       !                                  radiative transfer calculations
       ! THIS VARIABLE REPLACES FwdModelConf%integrationGrid%surfs
-    real(rp), dimension(:), pointer :: Tan_Press  ! Pressures at tangent points in z_psig
+    real(rp), pointer :: Tan_Press(:)  ! Pressures at tangent points in z_psig
 
-  ! Local variables
+  ! Optional inputs:
+    real(rp), optional, intent(in) :: Observer(:) ! Zetas for observers-in-atmosphere
+
+  ! Local variables:
     integer :: SPS_I
     integer :: Z_All_Prev, Z_All_Size
-    real(rp), dimension(:), pointer :: Z_all  ! mass storage of representation
-      !                                  bases for z_grid determination
+    real(rp), pointer :: Z_all(:)  ! consolidated storage of representation
+      !                              bases for z_grid determination
 
     nullify ( tan_press, z_all, z_psig )
 
@@ -75,6 +78,7 @@ contains
     do sps_i = 1 , size(qtys)
       z_all_size = z_all_size + qtys(sps_i)%qty%template%nosurfs
     end do
+    if ( present(observer) ) z_all_size = z_all_size + size(observer)
     call allocate_test ( z_all, z_all_size, 'z_all', moduleName )
 
 ! Fill in z_all
@@ -106,6 +110,12 @@ contains
       z_all(z_all_prev+1:z_all_size) = qtys(sps_i)%qty%template%surfs(:,1)
       z_all_prev = z_all_size
     end do
+
+    if ( present(observer) ) then
+      z_all_size = z_all_prev + size(observer)
+      z_all(z_all_prev+1:z_all_size) = observer
+      z_all_prev = z_all_size
+    end if
 
 ! Now, create the final grid and discard the temporary array:
 
@@ -148,8 +158,11 @@ contains
 end module Compute_Z_PSIG_m
 
 ! $Log$
+! Revision 2.5  2008/05/20 00:18:07  vsnyder
+! Add Observers dummy argument
+!
 ! Revision 2.4  2008/05/01 01:57:51  vsnyder
-! Make sure integrationGrid is associated is associated before asking its size
+! Make sure integrationGrid is associated before asking its size
 ! Don't add both integrationGrid and tangentGrid if they're the same grid
 !
 ! Revision 2.3  2007/01/17 23:48:43  vsnyder
