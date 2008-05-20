@@ -164,6 +164,7 @@ module ForwardModelConfig
     logical :: Do_Path_Norm           ! Do path normalization
     logical :: ForceFoldedOutput      ! Output to folded sideband even if signal is other (linear only)
     logical :: ForceSidebandFraction  ! If set mult. by SBfrac even if single sideband
+    logical :: GenerateTScat          ! Generate TScat tables
     logical :: GlobalConfig           ! If set is shared between all chunks
     logical :: Incl_cld ! Include cloud extinction calculation in Bill's forward model
     logical :: LockBins               ! Use same l2pc bin for whole chunk
@@ -1363,6 +1364,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.99  2007/11/07 03:07:42  vsnyder
+! Add Do_Path_Norm switch
+!
 ! Revision 2.98  2007/10/02 22:34:49  vsnyder
 ! Cannonball polishing
 !
