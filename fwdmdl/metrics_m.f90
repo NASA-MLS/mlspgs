@@ -151,7 +151,7 @@ contains
     ! This is Equation (5.3) in the 19 August 2004 ATBD JPL D-18130.
     !
     ! $R^\oplus_{\text{eq}} \equiv H^\oplus_t =
-    ! N(\phi_t) \sqrt{\sin^\phi_t + \frac{c^4}{a^4}\cos^2 \phi_t} + h_{\text{surf}} =
+    ! N(\phi_t) \sqrt{\sin^2 \phi_t + \frac{c^4}{a^4}\cos^2 \phi_t} + h_{\text{surf}} =
     ! \sqrt{\frac{a^4 \sin^2 \phi_t + c^4 \cos^2 \phi_t}
     !            {a^2 \cos^2 \phi_t + c^2 \sin^2 \phi_t}} + h_{\text{surf}}$
     !
@@ -1115,6 +1115,9 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.57  2007/11/08 01:49:39  vsnyder
+! Req should be Req_s in one place in More_Points
+!
 ! Revision 2.56  2007/10/19 23:28:30  vsnyder
 ! Don't accept grid solutions less than Ht
 !
