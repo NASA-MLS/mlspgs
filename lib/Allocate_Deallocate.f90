@@ -51,13 +51,13 @@ module Allocate_Deallocate
     module procedure ALLOCATE_TEST_DCOMPLEX_2D
     module procedure ALLOCATE_TEST_DCOMPLEX_3D
     module procedure ALLOCATE_TEST_INTEGER_1D, ALLOCATE_TEST_INTEGER_2D
-    module procedure ALLOCATE_TEST_INTEGER_3D
+    module procedure ALLOCATE_TEST_INTEGER_3D, ALLOCATE_TEST_INTEGER_4D
     module procedure ALLOCATE_TEST_LOGICAL_1D, ALLOCATE_TEST_LOGICAL_2D
     module procedure ALLOCATE_TEST_LOGICAL_3D
     module procedure ALLOCATE_TEST_REALR4_1D, ALLOCATE_TEST_REALR4_2D
-    module procedure ALLOCATE_TEST_REALR4_3D
+    module procedure ALLOCATE_TEST_REALR4_3D, ALLOCATE_TEST_REALR4_4D
     module procedure ALLOCATE_TEST_REALR8_1D, ALLOCATE_TEST_REALR8_2D
-    module procedure ALLOCATE_TEST_REALR8_3D
+    module procedure ALLOCATE_TEST_REALR8_3D, ALLOCATE_TEST_REALR8_4D
   end interface
 
   interface DEALLOCATE_TEST
@@ -71,13 +71,13 @@ module Allocate_Deallocate
     module procedure DEALLOCATE_TEST_DCOMPLEX_2D
     module procedure DEALLOCATE_TEST_DCOMPLEX_3D
     module procedure DEALLOCATE_TEST_INTEGER_1D, DEALLOCATE_TEST_INTEGER_2D
-    module procedure DEALLOCATE_TEST_INTEGER_3D
+    module procedure DEALLOCATE_TEST_INTEGER_3D, DEALLOCATE_TEST_INTEGER_4D
     module procedure DEALLOCATE_TEST_LOGICAL_1D, DEALLOCATE_TEST_LOGICAL_2D
     module procedure DEALLOCATE_TEST_LOGICAL_3D
     module procedure DEALLOCATE_TEST_REALR4_1D, DEALLOCATE_TEST_REALR4_2D
-    module procedure DEALLOCATE_TEST_REALR4_3D
+    module procedure DEALLOCATE_TEST_REALR4_3D, DEALLOCATE_TEST_REALR4_4D
     module procedure DEALLOCATE_TEST_REALR8_1D, DEALLOCATE_TEST_REALR8_2D
-    module procedure DEALLOCATE_TEST_REALR8_3D
+    module procedure DEALLOCATE_TEST_REALR8_3D, DEALLOCATE_TEST_REALR8_4D
   end interface
 
   integer, save :: DEALLOC_STATUS = 0
@@ -410,6 +410,21 @@ contains
     integer, parameter :: ESize = E_dp
     include "Allocate_Test_3D.f9h"
   end subroutine Allocate_Test_RealR8_3d
+  ! ------------------------------------  Allocate_Test_RealR8_4d  -----
+  subroutine Allocate_Test_RealR8_4d ( To_Allocate, Dim1, Dim2, Dim3, Dim4, &
+    & ItsName, ModuleName, Low1, Low2, Low3, Low4, Fill )
+    double precision, pointer, dimension(:,:,:,:) :: To_Allocate
+    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
+    integer, intent(in) :: Dim2    ! Upper bound of second dim. of To_Allocate
+    integer, intent(in) :: Dim3    ! Upper bound of third dim. of To_Allocate
+    integer, intent(in) :: Dim4    ! Upper bound of fourth dim. of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: Low1, Low2, Low3, Low4 ! Low bounds for dimensions
+    double precision, intent(in), optional :: Fill
+    double precision, parameter :: Default = 0.0d0
+    integer, parameter :: ESize = E_dp
+    include "Allocate_Test_4D.f9h"
+  end subroutine Allocate_Test_RealR8_4d
   ! -----------------------------------  Allocate_Test_Integer_1d  -----
   subroutine Allocate_Test_Integer_1d ( To_Allocate, Dim1, &
     & ItsName, ModuleName, LowBound, Fill )
@@ -449,6 +464,21 @@ contains
     integer, parameter :: ESize = E_def
     include "Allocate_Test_3D.f9h"
   end subroutine Allocate_Test_Integer_3d
+  ! -----------------------------------  Allocate_Test_Integer_4d  -----
+  subroutine Allocate_Test_Integer_4d ( To_Allocate, Dim1, Dim2, Dim3, Dim4, &
+    & ItsName, ModuleName, Low1, Low2, Low3, Low4, Fill )
+    integer, pointer, dimension(:,:,:,:) :: To_Allocate
+    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
+    integer, intent(in) :: Dim2    ! Upper bound of second dim. of To_Allocate
+    integer, intent(in) :: Dim3    ! Upper bound of third dim. of To_Allocate
+    integer, intent(in) :: Dim4    ! Upper bound of fourth dim. of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: Low1, Low2, Low3, Low4 ! default 1
+    integer, intent(in), optional :: Fill ! To fill allocated array
+    integer, parameter :: Default = 0
+    integer, parameter :: ESize = E_def
+    include "Allocate_Test_4D.f9h"
+  end subroutine Allocate_Test_Integer_4d
   ! -----------------------------------  Allocate_Test_Logical_1d  -----
   subroutine Allocate_Test_Logical_1d ( To_Allocate, Dim1, &
     & ItsName, ModuleName, LowBound, Fill )
@@ -527,6 +557,21 @@ contains
     integer, parameter :: ESize = e_def
     include "Allocate_Test_3D.f9h"
   end subroutine Allocate_Test_RealR4_3d
+  ! ------------------------------------  Allocate_Test_RealR4_4d  -----
+  subroutine Allocate_Test_RealR4_4d ( To_Allocate, Dim1, Dim2, Dim3, Dim4, &
+    & ItsName, ModuleName, Low1, Low2, Low3, Low4, Fill )
+    real, pointer, dimension(:,:,:,:) :: To_Allocate
+    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
+    integer, intent(in) :: Dim2    ! Upper bound of second dim. of To_Allocate
+    integer, intent(in) :: Dim3    ! Upper bound of third dim. of To_Allocate
+    integer, intent(in) :: Dim4    ! Upper bound of fourth dim. of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: Low1, Low2, Low3, Low4 ! Low bounds for dimensions
+    real, intent(in), optional :: Fill
+    real, parameter :: Default = 0.0
+    integer, parameter :: ESize = e_def
+    include "Allocate_Test_4D.f9h"
+  end subroutine Allocate_Test_RealR4_4d
   ! -------------------------------  Deallocate_Test_Character_1d  -----
   subroutine Deallocate_Test_Character_1d ( To_Deallocate, ItsName, ModuleName )
     character(len=*), pointer, dimension(:) :: To_Deallocate
@@ -599,6 +644,12 @@ contains
     integer, parameter :: ESize = e_dp
     include "Deallocate_Test.f9h"
   end subroutine Deallocate_Test_RealR8_3d
+  ! ----------------------------------  Deallocate_Test_RealR8_4d  -----
+  subroutine Deallocate_Test_RealR8_4d ( To_Deallocate, ItsName, ModuleName )
+    double precision, pointer, dimension(:,:,:,:) :: To_Deallocate
+    integer, parameter :: ESize = e_dp
+    include "Deallocate_Test.f9h"
+  end subroutine Deallocate_Test_RealR8_4d
   ! ---------------------------------  Deallocate_Test_Integer_1d  -----
   subroutine Deallocate_Test_Integer_1d ( To_Deallocate, ItsName, ModuleName )
     integer, pointer, dimension(:) :: To_Deallocate
@@ -617,6 +668,12 @@ contains
     integer, parameter :: ESize = e_def
     include "Deallocate_Test.f9h"
   end subroutine Deallocate_Test_Integer_3d
+  ! ---------------------------------  Deallocate_Test_Integer_4d  -----
+  subroutine Deallocate_Test_Integer_4d ( To_Deallocate, ItsName, ModuleName )
+    integer, pointer, dimension(:,:,:,:) :: To_Deallocate
+    integer, parameter :: ESize = e_def
+    include "Deallocate_Test.f9h"
+  end subroutine Deallocate_Test_Integer_4d
   ! ---------------------------------  Deallocate_Test_Logical_1d  -----
   subroutine Deallocate_Test_Logical_1d ( To_Deallocate, ItsName, ModuleName )
     logical, pointer, dimension(:) :: To_Deallocate
@@ -653,6 +710,12 @@ contains
     integer, parameter :: ESize = e_def
     include "Deallocate_Test.f9h"
   end subroutine Deallocate_Test_RealR4_3d
+  ! ----------------------------------  Deallocate_Test_RealR4_4d  -----
+  subroutine Deallocate_Test_RealR4_4d ( To_Deallocate, ItsName, ModuleName )
+    real, pointer, dimension(:,:,:,:) :: To_Deallocate
+    integer, parameter :: ESize = e_def
+    include "Deallocate_Test.f9h"
+  end subroutine Deallocate_Test_RealR4_4d
 
   ! ----------------------------------  memproduct  -----
   function memproduct ( elementSize, dimensions ) result( p )
@@ -680,6 +743,9 @@ contains
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.34  2008/05/20 01:59:28  vsnyder
+! Add 4d integer, real, double
+!
 ! Revision 2.33  2007/07/27 00:19:30  vsnyder
 ! Better printing in Test_[De]Allocate, work on memory tracking
 !
