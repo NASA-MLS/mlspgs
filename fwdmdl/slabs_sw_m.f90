@@ -2617,18 +2617,17 @@ contains
   ! ----------------------------------------  Get_GL_Slabs_Arrays  -----
   !ocl disjoint
   pure &
-  subroutine Get_GL_Slabs_Arrays ( P_path, T_path, Vel_z, GL_Slabs, &
+  subroutine Get_GL_Slabs_Arrays ( P_path, T_path, Vel_Rel, GL_Slabs, &
     & Do_1D, LineCenter, LineCenter_ix, LineWidth, LineWidth_ix, &
     & LineWidth_TDep, LineWidth_TDep_ix, T_der_flags )
 
     use Molecules, only: L_Extinction
-    use Physics, only: SpeedOfLight
     use SpectroscopyCatalog_m, only: Lines
 
     real(rp), intent(in) :: p_path(:) ! Pressure in hPa or mbar
     real(rp), intent(in) :: t_path(:)
 
-    real(rp), intent(in) :: vel_z     ! Meters per second
+    real(rp), intent(in) :: Vel_Rel   ! Vel_Z / speedOfLight
 
     ! GL_Slabs needs to have been created by AllocateSlabs
     type (slabs_struct), intent(inout) :: GL_Slabs(:,:)
@@ -2672,7 +2671,7 @@ contains
     if ( Do_1D ) n = n / 2
 
     ! opposite sign convention here from ATBD
-    Vel_z_correction = 1.0_rp - vel_z / speedOfLight
+    Vel_z_correction = 1.0_rp - vel_rel
 
     do i = 1, n_sps
 
@@ -2753,6 +2752,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.57  2008/02/29 01:57:37  vsnyder
+! Use MLSKinds instead of MLSCommon
+!
 ! Revision 2.56  2007/12/04 23:40:12  vsnyder
 ! Don't look for polarized if it's not allocated
 !
