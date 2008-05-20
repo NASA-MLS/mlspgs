@@ -30,12 +30,15 @@ module Track_m
     module procedure TrackAllocate_I1
     module procedure TrackAllocate_I2
     module procedure TrackAllocate_I3
+    module procedure TrackAllocate_I4
     module procedure TrackAllocate_R1
     module procedure TrackAllocate_R2
     module procedure TrackAllocate_R3
+    module procedure TrackAllocate_R4
     module procedure TrackAllocate_D1
     module procedure TrackAllocate_D2
     module procedure TrackAllocate_D3
+    module procedure TrackAllocate_D4
     module procedure TrackAllocate_L1
     module procedure TrackAllocate_L2
     module procedure TrackAllocate_L3
@@ -54,12 +57,15 @@ module Track_m
     module procedure TrackDeallocate_I1
     module procedure TrackDeallocate_I2
     module procedure TrackDeallocate_I3
+    module procedure TrackDeallocate_I4
     module procedure TrackDeallocate_R1
     module procedure TrackDeallocate_R2
     module procedure TrackDeallocate_R3
+    module procedure TrackDeallocate_R4
     module procedure TrackDeallocate_D1
     module procedure TrackDeallocate_D2
     module procedure TrackDeallocate_D3
+    module procedure TrackDeallocate_D4
     module procedure TrackDeallocate_L1
     module procedure TrackDeallocate_L2
     module procedure TrackDeallocate_L3
@@ -115,6 +121,10 @@ module Track_m
     integer, pointer :: P(:,:,:) => NULL()
     character(len=whereLen) :: Where
   end type Track_I3_t
+  type :: Track_I4_t
+    integer, pointer :: P(:,:,:,:) => NULL()
+    character(len=whereLen) :: Where
+  end type Track_I4_t
   type :: Track_R1_t
     real, pointer :: P(:) => NULL()
     character(len=whereLen) :: Where
@@ -127,6 +137,10 @@ module Track_m
     real, pointer :: P(:,:,:) => NULL()
     character(len=whereLen) :: Where
   end type Track_R3_t
+  type :: Track_R4_t
+    real, pointer :: P(:,:,:,:) => NULL()
+    character(len=whereLen) :: Where
+  end type Track_R4_t
   type :: Track_D1_t
     double precision, pointer :: P(:) => NULL()
     character(len=whereLen) :: Where
@@ -139,6 +153,10 @@ module Track_m
     double precision, pointer :: P(:,:,:) => NULL()
     character(len=whereLen) :: Where
   end type Track_D3_t
+  type :: Track_D4_t
+    double precision, pointer :: P(:,:,:,:) => NULL()
+    character(len=whereLen) :: Where
+  end type Track_D4_t
   type :: Track_L1_t
     logical, pointer :: P(:) => NULL()
     character(len=whereLen) :: Where
@@ -164,12 +182,15 @@ module Track_m
   type(Track_I1_t), pointer, save :: Track_I1(:) => NULL()
   type(Track_I2_t), pointer, save :: Track_I2(:) => NULL()
   type(Track_I3_t), pointer, save :: Track_I3(:) => NULL()
+  type(Track_I4_t), pointer, save :: Track_I4(:) => NULL()
   type(Track_R1_t), pointer, save :: Track_R1(:) => NULL()
   type(Track_R2_t), pointer, save :: Track_R2(:) => NULL()
   type(Track_R3_t), pointer, save :: Track_R3(:) => NULL()
+  type(Track_R4_t), pointer, save :: Track_R4(:) => NULL()
   type(Track_D1_t), pointer, save :: Track_D1(:) => NULL()
   type(Track_D2_t), pointer, save :: Track_D2(:) => NULL()
   type(Track_D3_t), pointer, save :: Track_D3(:) => NULL()
+  type(Track_D4_t), pointer, save :: Track_D4(:) => NULL()
   type(Track_L1_t), pointer, save :: Track_L1(:) => NULL()
   type(Track_L2_t), pointer, save :: Track_L2(:) => NULL()
   type(Track_L3_t), pointer, save :: Track_L3(:) => NULL()
@@ -186,12 +207,15 @@ module Track_m
   integer, save :: Num_I1 = 0
   integer, save :: Num_I2 = 0
   integer, save :: Num_I3 = 0
+  integer, save :: Num_I4 = 0
   integer, save :: Num_R1 = 0
   integer, save :: Num_R2 = 0
   integer, save :: Num_R3 = 0
+  integer, save :: Num_R4 = 0
   integer, save :: Num_D1 = 0
   integer, save :: Num_D2 = 0
   integer, save :: Num_D3 = 0
+  integer, save :: Num_D4 = 0
   integer, save :: Num_L1 = 0
   integer, save :: Num_L2 = 0
   integer, save :: Num_L3 = 0
@@ -417,7 +441,7 @@ contains
       track_i1(:size(temp)) = temp
       deallocate ( temp )
     end if
-9   track_i1(i)%p => what(:)
+9   track_i1(i)%p => what
     track_i1(i)%where = trim(where) // "@" // trimModule(module)
     num_i1 = max(num_i1,i)
   end subroutine TrackAllocate_I1
@@ -438,7 +462,7 @@ contains
       track_i2(:size(temp)) = temp
       deallocate ( temp )
     end if
-9   track_i2(i)%p => what(:,:)
+9   track_i2(i)%p => what
     track_i2(i)%where = trim(where) // "@" // trimModule(module)
     num_i2 = max(num_i2,i)
   end subroutine TrackAllocate_I2
@@ -459,10 +483,31 @@ contains
       track_i3(:size(temp)) = temp
       deallocate ( temp )
     end if
-9   track_i3(i)%p => what(:,:,:)
+9   track_i3(i)%p => what
     track_i3(i)%where = trim(where) // "@" // trimModule(module)
     num_i3 = max(num_i3,i)
   end subroutine TrackAllocate_I3
+  subroutine TrackAllocate_I4 ( What, Where, Module )
+    integer, pointer :: What(:,:,:,:)
+    character(len=*), intent(in) :: Where, Module
+    integer :: I
+    type(track_i4_t), pointer :: temp(:)
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
+    do i = 1, num_i4
+      if ( .not. associated(track_i4(i)%p) ) go to 9 ! Found empty one
+    end do
+    if ( .not. associated(track_i4) ) then
+      allocate(track_i4(initSize))
+    else if ( i > size(track_i4) ) then
+      temp => track_i4
+      allocate ( track_i4(2*size(temp)) )
+      track_i4(:size(temp)) = temp
+      deallocate ( temp )
+    end if
+9   track_i4(i)%p => what
+    track_i4(i)%where = trim(where) // "@" // trimModule(module)
+    num_i4 = max(num_i4,i)
+  end subroutine TrackAllocate_I4
 
   subroutine TrackAllocate_R1 ( What, Where, Module )
     real, pointer :: What(:)
@@ -481,7 +526,7 @@ contains
       track_r1(:size(temp)) = temp
       deallocate ( temp )
     end if
-9   track_r1(i)%p => what(:)
+9   track_r1(i)%p => what
     track_r1(i)%where = trim(where) // "@" // trimModule(module)
     num_r1 = max(num_r1,i)
   end subroutine TrackAllocate_R1
@@ -502,7 +547,7 @@ contains
       track_r2(:size(temp)) = temp
       deallocate ( temp )
     end if
-9   track_r2(i)%p => what(:,:)
+9   track_r2(i)%p => what
     track_r2(i)%where = trim(where) // "@" // trimModule(module)
     num_r2 = max(num_r2,i)
   end subroutine TrackAllocate_R2
@@ -523,10 +568,31 @@ contains
       track_r3(:size(temp)) = temp
       deallocate ( temp )
     end if
-9   track_r3(i)%p => what(:,:,:)
+9   track_r3(i)%p => what
     track_r3(i)%where = trim(where) // "@" // trimModule(module)
     num_r3 = max(num_r3,i)
   end subroutine TrackAllocate_R3
+  subroutine TrackAllocate_R4 ( What, Where, Module )
+    real, pointer :: What(:,:,:,:)
+    character(len=*), intent(in) :: Where, Module
+    integer :: I
+    type(track_r4_t), pointer :: temp(:)
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
+    do i = 1, num_r4
+      if ( .not. associated(track_r4(i)%p) ) go to 9 ! Found empty one
+    end do
+    if ( .not. associated(track_r4) ) then
+      allocate(track_r4(initSize))
+    else if ( i > size(track_r4) ) then
+      temp => track_r4
+      allocate ( track_r4(2*size(temp)) )
+      track_r4(:size(temp)) = temp
+      deallocate ( temp )
+    end if
+9   track_r4(i)%p => what
+    track_r4(i)%where = trim(where) // "@" // trimModule(module)
+    num_r4 = max(num_r4,i)
+  end subroutine TrackAllocate_R4
 
   subroutine TrackAllocate_D1 ( What, Where, Module )
     double precision, pointer :: What(:)
@@ -545,7 +611,7 @@ contains
       track_d1(:size(temp)) = temp
       deallocate ( temp )
     end if
-9   track_d1(i)%p => what(:)
+9   track_d1(i)%p => what
     track_d1(i)%where = trim(where) // "@" // trimModule(module)
     num_d1 = max(num_d1,i)
   end subroutine TrackAllocate_D1
@@ -566,7 +632,7 @@ contains
       track_d2(:size(temp)) = temp
       deallocate ( temp )
     end if
-9   track_d2(i)%p => what(:,:)
+9   track_d2(i)%p => what
     track_d2(i)%where = trim(where) // "@" // trimModule(module)
     num_d2 = max(num_d2,i)
   end subroutine TrackAllocate_D2
@@ -587,10 +653,31 @@ contains
       track_d3(:size(temp)) = temp
       deallocate ( temp )
     end if
-9   track_d3(i)%p => what(:,:,:)
+9   track_d3(i)%p => what
     track_d3(i)%where = trim(where) // "@" // trimModule(module)
     num_d3 = max(num_d3,i)
   end subroutine TrackAllocate_D3
+  subroutine TrackAllocate_D4 ( What, Where, Module )
+    double precision, pointer :: What(:,:,:,:)
+    character(len=*), intent(in) :: Where, Module
+    integer :: I
+    type(track_d4_t), pointer :: temp(:)
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
+    do i = 1, num_d4
+      if ( .not. associated(track_d4(i)%p) ) go to 9 ! Found empty one
+    end do
+    if ( .not. associated(track_d4) ) then
+      allocate(track_d4(initSize))
+    else if ( i > size(track_d4) ) then
+      temp => track_d4
+      allocate ( track_d4(2*size(temp)) )
+      track_d4(:size(temp)) = temp
+      deallocate ( temp )
+    end if
+9   track_d4(i)%p => what
+    track_d4(i)%where = trim(where) // "@" // trimModule(module)
+    num_d4 = max(num_d4,i)
+  end subroutine TrackAllocate_D4
 
   subroutine TrackAllocate_L1 ( What, Where, Module )
     logical, pointer :: What(:)
@@ -851,6 +938,22 @@ contains
     end do
     write ( *, '("No allocation found for ", a, " in ", a)' ) trim(where), trim(trimModule(module))
   end subroutine TrackDeallocate_I3
+  subroutine TrackDeallocate_I4 ( What, Where, Module )
+    integer, pointer :: What(:,:,:,:)
+    character(len=*), intent(in) :: Where, Module
+    integer :: I
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
+    do i = 1, num_i4
+      if ( associated(track_i4(i)%p, what) ) then
+        nullify ( track_i4(i)%p )  ! Mark it free
+        do num_i4 = num_i4, 1, -1  ! Reduce count to speed searches
+          if ( associated(track_i4(num_i4)%p) ) return
+        end do
+        return
+      end if
+    end do
+    write ( *, '("No allocation found for ", a, " in ", a)' ) trim(where), trim(trimModule(module))
+  end subroutine TrackDeallocate_I4
 
   subroutine TrackDeallocate_R1 ( What, Where, Module )
     real, pointer :: What(:)
@@ -900,6 +1003,22 @@ contains
     end do
     write ( *, '("No allocation found for ", a, " in ", a)' ) trim(where), trim(trimModule(module))
   end subroutine TrackDeallocate_R3
+  subroutine TrackDeallocate_R4 ( What, Where, Module )
+    real, pointer :: What(:,:,:,:)
+    character(len=*), intent(in) :: Where, Module
+    integer :: I
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
+    do i = 1, num_r4
+      if ( associated(track_r4(i)%p, what) ) then
+        nullify ( track_r4(i)%p )  ! Mark it free
+        do num_r4 = num_r4, 1, -1  ! Reduce count to speed searches
+          if ( associated(track_r4(num_r4)%p) ) return
+        end do
+        return
+      end if
+    end do
+    write ( *, '("No allocation found for ", a, " in ", a)' ) trim(where), trim(trimModule(module))
+  end subroutine TrackDeallocate_R4
 
   subroutine TrackDeallocate_D1 ( What, Where, Module )
     double precision, pointer :: What(:)
@@ -949,6 +1068,22 @@ contains
     end do
     write ( *, '("No allocation found for ", a, " in ", a)' ) trim(where), trim(trimModule(module))
   end subroutine TrackDeallocate_D3
+  subroutine TrackDeallocate_D4 ( What, Where, Module )
+    double precision, pointer :: What(:,:,:,:)
+    character(len=*), intent(in) :: Where, Module
+    integer :: I
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
+    do i = 1, num_d4
+      if ( associated(track_d4(i)%p, what) ) then
+        nullify ( track_d4(i)%p )  ! Mark it free
+        do num_d4 = num_d4, 1, -1  ! Reduce count to speed searches
+          if ( associated(track_d4(num_d4)%p) ) return
+        end do
+        return
+      end if
+    end do
+    write ( *, '("No allocation found for ", a, " in ", a)' ) trim(where), trim(trimModule(module))
+  end subroutine TrackDeallocate_D4
 
   subroutine TrackDeallocate_L1 ( What, Where, Module )
     logical, pointer :: What(:)
@@ -1020,12 +1155,15 @@ contains
     call reportLeaks_i1 ( total )
     call reportLeaks_i2 ( total )
     call reportLeaks_i3 ( total )
+    call reportLeaks_i4 ( total )
     call reportLeaks_r1 ( total )
     call reportLeaks_r2 ( total )
     call reportLeaks_r3 ( total )
+    call reportLeaks_r4 ( total )
     call reportLeaks_d1 ( total )
     call reportLeaks_d2 ( total )
     call reportLeaks_d3 ( total )
+    call reportLeaks_d4 ( total )
     call reportLeaks_l1 ( total )
     call reportLeaks_l2 ( total )
     call reportLeaks_l3 ( total )
@@ -1168,6 +1306,17 @@ contains
       end if
     end do
   end subroutine ReportLeaks_i3
+  subroutine ReportLeaks_i4 ( Total )
+    double precision, intent(inout) :: Total
+    integer :: I
+    do i = 1, num_i4
+      if ( associated(track_i4(i)%p) ) then
+        write ( *, '(a," Still allocated with ", i0, " elements")' ) &
+          & track_i4(i)%where, size(track_i4(i)%p)
+        total = total + charsPerInt * size(track_i4(i)%p)
+      end if
+    end do
+  end subroutine ReportLeaks_i4
 
   subroutine ReportLeaks_r1 ( Total )
     double precision, intent(inout) :: Total
@@ -1202,6 +1351,17 @@ contains
       end if
     end do
   end subroutine ReportLeaks_r3
+  subroutine ReportLeaks_r4 ( Total )
+    double precision, intent(inout) :: Total
+    integer :: I
+    do i = 1, num_r4
+      if ( associated(track_r4(i)%p) ) then
+        write ( *, '(a," Still allocated with ", i0, " elements")' ) &
+          & track_r4(i)%where, size(track_r4(i)%p)
+        total = total + charsPerInt * size(track_r4(i)%p)
+      end if
+    end do
+  end subroutine ReportLeaks_r4
 
   subroutine ReportLeaks_d1 ( Total )
     double precision, intent(inout) :: Total
@@ -1236,6 +1396,17 @@ contains
       end if
     end do
   end subroutine ReportLeaks_d3
+  subroutine ReportLeaks_d4 ( Total )
+    double precision, intent(inout) :: Total
+    integer :: I
+    do i = 1, num_d4
+      if ( associated(track_d4(i)%p) ) then
+        write ( *, '(a," Still allocated with ", i0, " elements")' ) &
+          & track_d4(i)%where, size(track_d4(i)%p)
+        total = total + 2 * charsPerInt * size(track_d4(i)%p)
+      end if
+    end do
+  end subroutine ReportLeaks_d4
 
   subroutine ReportLeaks_l1 ( Total )
     double precision, intent(inout) :: Total
@@ -1294,6 +1465,9 @@ contains
 end module Track_m
 
 ! $Log$
+! Revision 2.5  2008/05/20 01:59:29  vsnyder
+! Add 4d integer, real, double
+!
 ! Revision 2.4  2007/04/14 00:35:34  vsnyder
 ! Remove declarations for unused variables
 !
