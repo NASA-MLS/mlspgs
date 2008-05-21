@@ -3114,6 +3114,7 @@ contains
     if ( len_trim(str) <= width ) return
     ! print *, 'str ', str
     ! print *, 'len_trim(str) ', len_trim(str)
+    ! print *, 'len(outstr) ', len(outstr)
     so = 1 ! this is the current character number of str
     ko = 1 ! this is the current character number of outstr
     myLastPos = ko + myOffset
@@ -3145,7 +3146,7 @@ contains
           kp = ko + dsp - 2 + len_trim(separator)
           outstr(ko:kp) = str(so:sp-1) // trim(separator)
           ko = ko + dsp + len_trim(separator) - 1
-          addedLines = addedLines + 1
+          if ( present(addedLines) ) addedLines = addedLines + 1
           ! Now treat possibility that next chars might be spaces, too
           if ( len_trim(myBreak) > 0 ) sp = sp + 1
           dsnext = findFirst( trim_safe(str(sp:)), ' ', reverse=.true. )
@@ -3155,10 +3156,12 @@ contains
           ! No, so we hyphenate
           myLastPos = 1
           kp = ko + nextwidth - 2 + len_trim(separator)
+          ! print *, 'ko, kp ', ko, kp
+          ! print *, 'so, so+nextwidth-3 ', so, so+nextwidth-3
           outstr(ko:kp) = str(so:so+nextwidth-3) // '-' // trim(separator)
           ko = ko + nextwidth
           so = so + nextwidth - 2
-          addedLines = addedLines + 1
+          if ( present(addedLines) ) addedLines = addedLines + 1
         endif
       case ('s')
         ! 'soft' wrap
@@ -3173,7 +3176,7 @@ contains
           kp = ko + dsp - 2 + len_trim(separator)
           outstr(ko:kp) = str(so:sp-1) // trim(separator)
           ko = ko + dsp + len_trim(separator) - 1
-          addedLines= addedLines + 1
+          if ( present(addedLines) ) addedLines = addedLines + 1
           ! Now treat possibility that next chars might be spaces, too
           if ( len_trim(myBreak) > 0 ) sp = sp + 1
           dsnext = findFirst( trim_safe(str(sp:)), ' ', reverse=.true. )
@@ -3190,7 +3193,7 @@ contains
             kp = ko + dsp - 2 + len_trim(separator)
             outstr(ko:kp) = str(so:sp-1) // trim(separator)
             ko = ko + dsp + len_trim(separator) - 1
-            addedLines= addedLines + 1
+            if ( present(addedLines) ) addedLines = addedLines + 1
             ! Now treat possibility that next chars might be spaces, too
             if ( len_trim(myBreak) > 0 ) sp = sp + 1
             dsnext = findFirst( trim_safe(str(sp:)), ' ', reverse=.true. )
@@ -3262,6 +3265,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.35  2008/05/21 20:00:19  pwagner
+! Must not increment optional arg unless present
+!
 ! Revision 2.34  2008/05/09 00:24:08  pwagner
 ! New features added to wrap; useful for wrapLines and l2cf
 !
