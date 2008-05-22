@@ -964,8 +964,7 @@ contains ! =====     Public Procedures     =============================
     if ( .not. associated(pfaData) ) call MLSMessage ( MLSMSG_Error, moduleName, &
       & 'No PFA Data to write' )
 !   if ( capitalize(fileType) == 'HDF5' ) then ! open HDF5 file here
-      call H5FCreate_F ( trim(fileName), H5F_ACC_TRUNC_F, fileID, &
-        & iostat )
+      call H5FCreate_F ( trim(fileName), H5F_ACC_TRUNC_F, fileID, iostat )
       if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
         & 'Unable to open hdf5 PFA file ' // trim(fileName) // ' for output.' )
       ! Make the Index group
@@ -1320,6 +1319,9 @@ contains ! =====     Public Procedures     =============================
 end module PFADataBase_m
 
 ! $Log$
+! Revision 2.37  2008/05/22 01:07:22  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.36  2007/10/03 23:58:26  vsnyder
 ! Add 'where' for tracing
 !
