@@ -217,14 +217,16 @@ module MLSHDF5
 
   interface LoadFromHDF5DS
     module procedure LdFrmHDF5DS_ID_intarr1, LdFrmHDF5DS_ID_intarr2, &
-      & LdFrmHDF5DS_ID_intarr3, LdFrmHDF5DS_ID_logarr1, &
+      & LdFrmHDF5DS_ID_intarr3, LdFrmHDF5DS_ID_intarr4, &
+      & LdFrmHDF5DS_ID_logarr1, &
       & LdFrmHDF5DS_ID_dblarr1, LdFrmHDF5DS_ID_dblarr2, &
       & LdFrmHDF5DS_ID_dblarr3, LdFrmHDF5DS_ID_dblarr4, &
       & LdFrmHDF5DS_ID_snglarr1, LdFrmHDF5DS_ID_snglarr2, &
       & LdFrmHDF5DS_ID_snglarr3, LdFrmHDF5DS_ID_snglarr4, &
       & LdFrmHDF5DS_ID_chararr1, LdFrmHDF5DS_ID_chararr2, LdFrmHDF5DS_ID_chararr3
     module procedure LoadFromHDF5DS_intarr1, LoadFromHDF5DS_intarr2, &
-      & LoadFromHDF5DS_intarr3, LoadFromHDF5DS_logarr1, &
+      & LoadFromHDF5DS_intarr3, LoadFromHDF5DS_intarr4, &
+      & LoadFromHDF5DS_logarr1, &
       & LoadFromHDF5DS_dblarr1, LoadFromHDF5DS_dblarr2, &
       & LoadFromHDF5DS_dblarr3, LoadFromHDF5DS_dblarr4, &
       & LoadFromHDF5DS_snglarr1, LoadFromHDF5DS_snglarr2, &
@@ -235,8 +237,10 @@ module MLSHDF5
   interface LoadPtrFromHDF5DS
     module procedure LoadPtrFromHDF5DS_chararr1, LoadPtrFromHDF5DS_chararr2, &
       & LoadPtrFromHDF5DS_intarr1, LoadPtrFromHDF5DS_intarr2, &
-      & LoadPtrFromHDF5DS_logarr1, LoadPtrFromHDF5DS_dblarr1, &
-      & LoadPtrFromHDF5DS_dblarr2, LoadPtrFromHDF5DS_dblarr3, &
+      & LoadPtrFromHDF5DS_intarr3, LoadPtrFromHDF5DS_intarr4, &
+      & LoadPtrFromHDF5DS_logarr1, &
+      & LoadPtrFromHDF5DS_dblarr1, LoadPtrFromHDF5DS_dblarr2, &
+      & LoadPtrFromHDF5DS_dblarr3, LoadPtrFromHDF5DS_dblarr4, &
       & LoadPtrFromHDF5DS_snglarr1, LoadPtrFromHDF5DS_snglarr2, &
       & LoadPtrFromHDF5DS_snglarr3, LoadPtrFromHDF5DS_snglarr4
   end interface
@@ -256,6 +260,7 @@ module MLSHDF5
   interface SaveAsHDF5DS
     module procedure &
       & SaveAsHDF5DS_intarr1, SaveAsHDF5DS_intarr2, SaveAsHDF5DS_intarr3, &
+      & SaveAsHDF5DS_intarr4, &
       & SaveAsHDF5DS_logarr1, &
       & SaveAsHDF5DS_dblarr1, SaveAsHDF5DS_dblarr2, SaveAsHDF5DS_dblarr3, &
       & SaveAsHDF5DS_dblarr4, &
@@ -2918,6 +2923,21 @@ contains ! ======================= Public Procedures =========================
 
   end subroutine SaveAsHDF5DS_intarr3
 
+  ! ---------------------------------------  SaveAsHDF5DS_intarr4  -----
+  subroutine SaveAsHDF5DS_intarr4 ( locID, name, value, &
+    & finalShape, fillValue, adding_to )
+    ! This routine does the initial work of creating a dataset
+    integer, intent(in) :: LOCID        ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    integer, intent(in) :: VALUE(:,:,:,:) ! The array itself
+    integer, optional, intent(in) :: FILLVALUE
+    integer, dimension(4), optional, intent(in) :: FINALSHAPE
+    logical, optional, intent(in)     :: adding_to
+
+    include 'SaveAsHDF5DS_intarr.f9h'
+
+  end subroutine SaveAsHDF5DS_intarr4
+
   ! ---------------------------------------  SaveAsHDF5DS_logarr1  -----
   subroutine SaveAsHDF5DS_logarr1 ( locID, name, value, &
     & finalShape, fillValue, adding_to )
@@ -3247,6 +3267,28 @@ contains ! ======================= Public Procedures =========================
     include 'LdFrmHDF5DS_ID.f9h'
 
   end subroutine LdFrmHDF5DS_ID_intarr3
+
+  ! -------------------------------------  LdFrmHDF5DS_ID_intarr4  -----
+  subroutine LdFrmHDF5DS_ID_intarr4 ( locID, name, value, &
+    & start, count, stride, block )
+    ! This routine loads a predefined array with values from a DS
+    integer, intent(in) :: LOCID           ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME  ! Name for this dataset
+    integer, intent(out) :: VALUE(:,:,:,:) ! The array itself
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+
+    character(len=*), parameter :: Sfx = 'intarr4'
+
+    include 'LdFrmHDF5DS_ID.f9h'
+
+  end subroutine LdFrmHDF5DS_ID_intarr4
 
   ! -------------------------------------  LdFrmHDF5DS_ID_logarr1  -----
   subroutine LdFrmHDF5DS_ID_logarr1 ( locID, name, value, &
@@ -3578,6 +3620,29 @@ contains ! ======================= Public Procedures =========================
 
   end subroutine LoadFromHDF5DS_intarr3
 
+  ! -------------------------------------  LoadFromHDF5DS_intarr4  -----
+  subroutine LoadFromHDF5DS_intarr4 ( MLSFile, name, value, &
+    & start, count, stride, block )
+    ! This routine loads a predefined array with values from a DS
+    use HDF5, only: H5T => H5T_NATIVE_INTEGER ! HDF type
+    type (MLSFile_T)   :: MLSFile
+    character (len=*), intent(in) :: NAME  ! Name for this dataset
+    integer, intent(out) :: VALUE(:,:,:,:) ! The array itself
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+
+    character(len=*), parameter :: Sfx = 'intarr4' ! Type and rank in subr name
+
+    include 'LoadFromHDF5DS.f9h'
+
+  end subroutine LoadFromHDF5DS_intarr4
+
   ! -------------------------------------  LoadFromHDF5DS_logarr1  -----
   subroutine LoadFromHDF5DS_logarr1 ( MLSFile, name, value, &
     & start, count, stride, block )
@@ -3908,33 +3973,45 @@ contains ! ======================= Public Procedures =========================
 
   ! ----------------------------------  LoadPtrFromHDF5DS_intarr2  -----
   subroutine LoadPtrFromHDF5DS_intarr2 ( locID, name, value )
-    ! This routine allocates an array and loads it with values from a DS
+    ! This routine allocates a pointer array and loads it with values from a DS
     use Allocate_Deallocate, only: Allocate_Test
+    use HDF5, only: H5T => H5T_NATIVE_INTEGER ! HDF type
     integer, intent(in) :: LOCID          ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
     integer, pointer :: VALUE(:,:)        ! The array itself
+    character(len=*), parameter :: Sfx = 'intarr2'
 
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    integer(hsize_t) :: SHP(2)          ! Shape of value
-    integer :: SPACEID                  ! ID of dataspace
-    integer :: SETID                    ! ID of dataset
+    include 'LoadPtrFromHDF5DS.f9h'
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='LoadPtrFromHDF5DS_intarr2' )
-    call h5dOpen_f ( locID, name, setID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataset ' // trim(name) )
-    call h5dget_space_f ( setID, spaceID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataspace for dataset ' // trim(name) )
-    call get_ds_shape ( spaceID, shp, name )
-    call allocate_test ( value, int(shp(1)), int(shp(2)), 'Value', moduleName )
-    call h5dread_f ( setID, H5T_NATIVE_INTEGER, value, &
-      & (/ shp, ones(1:5) /), status )
-    call finishLoad ( name, status, spaceID, setID )
-    call MLSMessageCalls( 'pop' )
   end subroutine LoadPtrFromHDF5DS_intarr2
+
+  ! ----------------------------------  LoadPtrFromHDF5DS_intarr3  -----
+  subroutine LoadPtrFromHDF5DS_intarr3 ( locID, name, value )
+    ! This routine allocates a pointer array and loads it with values from a DS
+    use Allocate_Deallocate, only: Allocate_Test
+    use HDF5, only: H5T => H5T_NATIVE_INTEGER ! HDF type
+    integer, intent(in) :: LOCID          ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    integer, pointer :: VALUE(:,:,:)      ! The array itself
+    character(len=*), parameter :: Sfx = 'intarr3'
+
+    include 'LoadPtrFromHDF5DS.f9h'
+
+  end subroutine LoadPtrFromHDF5DS_intarr3
+
+  ! ----------------------------------  LoadPtrFromHDF5DS_intarr4  -----
+  subroutine LoadPtrFromHDF5DS_intarr4 ( locID, name, value )
+    ! This routine allocates a pointer array and loads it with values from a DS
+    use Allocate_Deallocate, only: Allocate_Test
+    use HDF5, only: H5T => H5T_NATIVE_INTEGER ! HDF type
+    integer, intent(in) :: LOCID          ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    integer, pointer :: VALUE(:,:,:,:)    ! The array itself
+    character(len=*), parameter :: Sfx = 'intarr4'
+
+    include 'LoadPtrFromHDF5DS.f9h'
+
+  end subroutine LoadPtrFromHDF5DS_intarr4
 
   ! ----------------------------------  LoadPtrFromHDF5DS_logarr1  -----
   subroutine LoadPtrFromHDF5DS_logarr1 ( locID, name, value, lowBound )
@@ -3999,94 +4076,44 @@ contains ! ======================= Public Procedures =========================
 
   ! ----------------------------------  LoadPtrFromHDF5DS_dblarr2  -----
   subroutine LoadPtrFromHDF5DS_dblarr2 ( locID, name, value )
-    ! This routine allocates an array and loads it with values from a DS
+    ! This routine allocates a pointer array and loads it with values from a DS
     use Allocate_Deallocate, only: Allocate_Test
+    use HDF5, only: H5T => H5T_NATIVE_DOUBLE ! HDF type
     integer, intent(in) :: LOCID          ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
     double precision, pointer :: VALUE(:,:) ! The array itself
+    character(len=*), parameter :: Sfx = 'dblarr2'
 
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    integer(hsize_t) :: SHP(2)          ! Shape of value
-    integer :: SPACEID                  ! ID of dataspace
-    integer :: SETID                    ! ID of dataset
+    include 'LoadPtrFromHDF5DS.f9h'
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='LoadPtrFromHDF5DS_dblarr2' )
-    call h5dOpen_f ( locID, name, setID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataset ' // trim(name) )
-    call h5dget_space_f ( setID, spaceID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataspace for dataset ' // trim(name) )
-    call get_ds_shape ( spaceID, shp, name )
-    call allocate_test ( value, int(shp(1)), int(shp(2)), 'Value', moduleName )
-    call h5dread_f ( setID, H5T_NATIVE_DOUBLE, value, &
-      & (/ shp, ones(1:5) /), status )
-    call finishLoad ( name, status, spaceID, setID )
-    call MLSMessageCalls( 'pop' )
   end subroutine LoadPtrFromHDF5DS_dblarr2
 
   ! ----------------------------------  LoadPtrFromHDF5DS_dblarr3  -----
   subroutine LoadPtrFromHDF5DS_dblarr3 ( locID, name, value )
-    ! This routine allocates an array and loads it with values from a DS
+    ! This routine allocates a pointer array and loads it with values from a DS
     use Allocate_Deallocate, only: Allocate_Test
+    use HDF5, only: H5T => H5T_NATIVE_DOUBLE ! HDF type
     integer, intent(in) :: LOCID          ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
     double precision, pointer :: VALUE(:,:,:) ! The array itself
+    character(len=*), parameter :: Sfx = 'dblarr3'
 
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    integer(hsize_t) :: SHP(3)          ! Shape of value
-    integer :: SPACEID                  ! ID of dataspace
-    integer :: SETID                    ! ID of dataset
+    include 'LoadPtrFromHDF5DS.f9h'
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='LoadPtrFromHDF5DS_dblarr3' )
-    call h5dOpen_f ( locID, name, setID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataset ' // trim(name) )
-    call h5dget_space_f ( setID, spaceID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataspace for dataset ' // trim(name) )
-    call get_ds_shape ( spaceID, shp, name )
-    call allocate_test ( value, int(shp(1)), int(shp(2)), int(shp(3)), 'Value', &
-      & moduleName )
-    call h5dread_f ( setID, H5T_NATIVE_DOUBLE, value, &
-      & (/ shp, ones(1:4) /), status )
-    call finishLoad ( name, status, spaceID, setID )
-    call MLSMessageCalls( 'pop' )
   end subroutine LoadPtrFromHDF5DS_dblarr3
 
   ! ----------------------------------  LoadPtrFromHDF5DS_dblarr4  -----
   subroutine LoadPtrFromHDF5DS_dblarr4 ( locID, name, value )
-    ! This routine allocates an array and loads it with values from a DS
+    ! This routine allocates a pointer array and loads it with values from a DS
     use Allocate_Deallocate, only: Allocate_Test
+    use HDF5, only: H5T => H5T_NATIVE_DOUBLE ! HDF type
     integer, intent(in) :: LOCID          ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
     double precision, pointer :: VALUE(:,:,:,:) ! The array itself
+    character(len=*), parameter :: Sfx = 'dblarr4'
 
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    integer(hsize_t) :: SHP(4)          ! Shape of value
-    integer :: SPACEID                  ! ID of dataspace
-    integer :: SETID                    ! ID of dataset
+    include 'LoadPtrFromHDF5DS.f9h'
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='LoadPtrFromHDF5DS_dblarr3' )
-    call h5dOpen_f ( locID, name, setID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataset ' // trim(name) )
-    call h5dget_space_f ( setID, spaceID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataspace for dataset ' // trim(name) )
-    call get_ds_shape ( spaceID, shp, name )
-    call allocate_test ( value, int(shp(1)), int(shp(2)), int(shp(3)), int(shp(4)), 'Value', &
-      & moduleName )
-    call h5dread_f ( setID, H5T_NATIVE_DOUBLE, value, &
-      & (/ shp, ones(1:4) /), status )
-    call finishLoad ( name, status, spaceID, setID )
-    call MLSMessageCalls( 'pop' )
   end subroutine LoadPtrFromHDF5DS_dblarr4
 
   ! ---------------------------------  LoadPtrFromHDF5DS_snglarr1  -----
@@ -4126,95 +4153,44 @@ contains ! ======================= Public Procedures =========================
 
   ! ---------------------------------  LoadPtrFromHDF5DS_snglarr2  -----
   subroutine LoadPtrFromHDF5DS_snglarr2 ( locID, name, value )
-    ! This routine allocates an array and loads it with values from a DS
+    ! This routine allocates a pointer array and loads it with values from a DS
     use Allocate_Deallocate, only: Allocate_Test
+    use HDF5, only: H5T => H5T_NATIVE_REAL ! HDF type
     integer, intent(in) :: LOCID          ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
     real, pointer :: VALUE(:,:)           ! The array itself
+    character(len=*), parameter :: Sfx = 'snglarr2'
 
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    integer(hsize_t) :: SHP(2)          ! Shape of value
-    integer :: SPACEID                  ! ID of dataspace
-    integer :: SETID                    ! ID of dataset
+    include 'LoadPtrFromHDF5DS.f9h'
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='LoadPtrFromHDF5DS_snglarr2' )
-    call h5dOpen_f ( locID, name, setID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataset ' // trim(name) )
-    call h5dget_space_f ( setID, spaceID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataspace for dataset ' // trim(name) )
-    call get_ds_shape ( spaceID, shp, name )
-    call allocate_test ( value, int(shp(1)), int(shp(2)), 'Value', moduleName )
-    call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
-      & (/ shp, ones(1:5) /), status )
-    call finishLoad ( name, status, spaceID, setID )
-    call MLSMessageCalls( 'pop' )
   end subroutine LoadPtrFromHDF5DS_snglarr2
 
   ! ---------------------------------  LoadPtrFromHDF5DS_snglarr3  -----
   subroutine LoadPtrFromHDF5DS_snglarr3 ( locID, name, value )
-    ! This routine allocates an array and loads it with values from a DS
+    ! This routine allocates a pointer array and loads it with values from a DS
     use Allocate_Deallocate, only: Allocate_Test
+    use HDF5, only: H5T => H5T_NATIVE_REAL ! HDF type
     integer, intent(in) :: LOCID          ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
     real, pointer :: VALUE(:,:,:)         ! The array itself
+    character(len=*), parameter :: Sfx = 'snglarr3'
 
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    integer(hsize_t) :: SHP(3)          ! Shape of value
-    integer :: SPACEID                  ! ID of dataspace
-    integer :: SETID                    ! ID of dataset
+    include 'LoadPtrFromHDF5DS.f9h'
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='LoadPtrFromHDF5DS_snglarr3' )
-    call h5dOpen_f ( locID, name, setID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataset ' // trim(name) )
-    call h5dget_space_f ( setID, spaceID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataspace for dataset ' // trim(name) )
-    call get_ds_shape ( spaceID, shp, name )
-    call allocate_test ( value, int(shp(1)), int(shp(2)), int(shp(3)), 'Value', &
-      & moduleName )
-    call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
-      & (/ shp, ones(1:4) /), status )
-    call finishLoad ( name, status, spaceID, setID )
-    call MLSMessageCalls( 'pop' )
   end subroutine LoadPtrFromHDF5DS_snglarr3
 
   ! ---------------------------------  LoadPtrFromHDF5DS_snglarr4  -----
   subroutine LoadPtrFromHDF5DS_snglarr4 ( locID, name, value )
-    ! This routine allocates an array and loads it with values from a DS
-    use MLSMessageModule, only: MLSMSG_Allocate
+    ! This routine allocates a pointer array and loads it with values from a DS
+    use Allocate_Deallocate, only: Allocate_Test
+    use HDF5, only: H5T => H5T_NATIVE_REAL ! HDF type
     integer, intent(in) :: LOCID          ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
     real, pointer :: VALUE(:,:,:,:)       ! The array itself
+    character(len=*), parameter :: Sfx = 'snglarr4'
 
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    integer(hsize_t) :: SHP(4)          ! Shape of value
-    integer :: SPACEID                  ! ID of dataspace
-    integer :: SETID                    ! ID of dataset
+    include 'LoadPtrFromHDF5DS.f9h'
 
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='LoadPtrFromHDF5DS_snglarr4' )
-    call h5dOpen_f ( locID, name, setID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataset ' // trim(name) )
-    call h5dget_space_f ( setID, spaceID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataspace for dataset ' // trim(name) )
-    call get_ds_shape ( spaceID, shp, name )
-    allocate ( value(shp(1),shp(2),shp(3),shp(4)), stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      & MLSMSG_Allocate // 'Value' )
-    call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
-      & (/ shp, ones(1:3) /), status )
-    call finishLoad ( name, status, spaceID, setID )
-    call MLSMessageCalls( 'pop' )
   end subroutine LoadPtrFromHDF5DS_snglarr4
 
   ! -----------------------------------  ReadLitIndexFromHDF5Attr  -----
@@ -4971,6 +4947,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.85  2008/05/22 01:06:42  vsnyder
+! Use new allocate_test to simplify LoadPtrFromDS_*
+!
 ! Revision 2.84  2008/05/20 01:59:28  vsnyder
 ! Add 4d integer, real, double
 !
