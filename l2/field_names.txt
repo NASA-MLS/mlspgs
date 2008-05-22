@@ -95,6 +95,7 @@ covariance
 covSansReg # Compute covariance matrix without regularization
 create
 criteria
+criticalBands
 criticalModules
 criticalSignals
 
@@ -455,6 +456,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.183  2008/05/22 00:25:43  pwagner
+# Added criticalBands to Chunk Divide
+#
 # Revision 2.182  2008/05/20 00:25:05  vsnyder
 # Add MieTables field for ForwardModelGlobal
 #
