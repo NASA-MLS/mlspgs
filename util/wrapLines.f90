@@ -1,0 +1,291 @@
+! Copyright 2008, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+program wrapLines
+   use MACHINE, only: HP, GETARG
+   use MLSStringLists, only: List2Array, wrap
+   use MLSStrings, only: NAppearances
+   use OUTPUT_M, only: OUTPUT
+   implicit none
+
+!------------------- RCS Ident Info -----------------------
+   CHARACTER(LEN=130) :: Id = &                                                    
+   "$Id$"
+   CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile$"
+!----------------------------------------------------------
+  ! wrap lines in stdin
+  ! so they do not exceed (by much) 128 chars in length
+  
+  ! Suggested use:
+  ! After m4, pipe l2cf through me before saving as *.l2cf
+  ! Then you'll be able to read the resulting l2cf more comfortably
+  
+  ! Notes and limitations
+  ! Input line must not exceed MAXLINELEN (24000) chars
+  ! (bug in NAG makes it even less (1000), so .. don't build with NAG)
+
+  ! Lines will be split at a BREAK (','), neglecting to check whether the comma
+  ! may be embedded within quotes
+  ! which could be trouble if you have directory/file names with commas
+  ! in them.
+  
+  ! E.g., a line with 
+  !  ForwardModelGlobal, l2pc='/data/emls/l2cal/l2pc039,not,a,good,idea,to,use,commas,here/MLS-Aura_L2Cal-L2PC-band2-LATSCALARHIRES_v1-7-0-l2pc039_m01.h5'
+  ! would be erroneously split thus:
+  !  ForwardModelGlobal, l2pc='/data/emls/l2cal/l2pc039,not,a,good,idea,to,use,commas, $
+  !  here/MLS-Aura_L2Cal-L2PC-band2-LATSCALARHIRES_v1-7-0-l2pc039_m01.h5'
+
+  type options_T
+    logical             :: verbose            = .false.
+    logical             :: summarize          = .false.
+    logical             :: keepTrailingSpaces = .true. ! Less efficient if true
+    logical             :: wrapAllLines       = .false. ! Even with quoted strs
+    integer             :: width              = 128
+    character(len=1)    :: BREAK              = ','
+    character(len=1)    :: comment            = ';'
+    character(len=1)    :: MODE               = 's'
+    character(len=3)    :: eol                = ', $'
+    character(len=3)    :: quotes             = '''"'
+  end type options_T
+  
+  type ( options_T ) :: options
+
+  ! variables
+  ! logical, parameter :: DONTKEEPTRAILINGSPACES = .false. ! More efficient if true
+  integer, parameter :: MAXLINELEN = 24000
+  ! integer, parameter :: WIDTH = 128
+  ! character(len=1), parameter :: BREAK = ','
+  ! character(len=1), parameter :: MODE = 's'
+  ! character(len=*), parameter :: eol = ', $'
+  integer :: addedLines
+  character(len=3) :: advance
+  character(len=1) :: c
+  character(len=1), dimension(MAXLINELEN) :: cArray
+  logical :: containsQuotes
+  integer :: i
+  character(len=MAXLINELEN) :: lineIn
+  character(len=MAXLINELEN) :: lineOut
+  integer :: LineLengthRead ! Max encountered
+  integer :: nCommentsRead  ! number read
+  integer :: nLinesRead     ! number read
+  integer :: nQuotesRead    ! number read
+  integer :: pos
+  character(len=1), dimension(3) :: qArray ! array of quote chars
+  integer :: status
+  integer :: totalLinesAdded
+  integer :: totalLinesNeedWrapping
+  character(len=12) :: xfmt
+  character(len=8) :: xlen
+  ! Executable
+  call get_options (options)
+  ! What format do we use for reading each line?
+  xfmt = '(128a1)' ! This is the default
+  write( xlen, '(i8)' ) len(lineIn)
+  if ( index(xlen, '*') < 1 ) xfmt = '(' // trim(adjustl(xlen)) // 'a1)'
+  advance = 'yes'
+  if ( .not. options%keepTrailingSpaces ) advance = 'no'
+  c = options%comment
+  if ( options%verbose ) call dumpSettings( options )
+  LineLengthRead         = 0  
+  nCommentsRead          = 0  
+  nLinesRead             = 0  
+  nQuotesRead            = 0  
+  totalLinesAdded        = 0  
+  totalLinesNeedWrapping = 0
+  do
+    if ( .not. options%keepTrailingSpaces ) then
+      read( *, '(a)', iostat=status ) lineIn
+      LineLengthRead = max( LineLengthRead, len_trim(lineIn) )
+    else
+      i = 0
+      lineIn = ' '
+      status = 0
+      call null_fill_1d( carray )
+      read( *, fmt=xfmt, eor=50, end=500, err=50, advance='no' ) cArray
+500   status = -1
+50    if ( status /= 0 ) exit
+      oneLine: do pos=1, len(lineIn) - 1
+        if ( any(carray(pos:pos+1) == achar(0)) ) exit oneLine
+        i = min(i + 1, len(lineIn))
+        lineIn(i:i) = carray(pos)
+      enddo oneLine
+      LineLengthRead = max( LineLengthRead, pos-1 )
+      i = min(i + 1, len(lineIn))
+      lineIn(i:i) = achar(13)
+    endif
+    if ( status /= 0 ) exit
+    nLinesRead = nLinesRead + 1
+    addedLines = 0
+    containsQuotes = .false.
+    if ( len_trim(options%quotes) > 0 ) then
+      qArray = transfer( options%quotes, qArray )
+      containsQuotes = any( &
+        & NAppearances( trim(lineIn), qArray(1:len_trim(options%quotes)) ) > 0 &
+        & )
+    endif
+    if ( containsQuotes ) nQuotesRead = nQuotesRead + 1
+    if ( index(trim(lineIn), c) > 0 ) then
+      lineOut = lineIn
+      nCommentsRead = nCommentsRead + 1
+    elseif ( .not. options%wrapAllLines .and. containsQuotes ) then
+      lineOut = lineIn
+    elseif ( len_trim(options%quotes) < 1 ) then
+      call wrap( lineIn, lineOut, options%width, &
+        & inseparator=trim(options%eol) // achar(13), &
+        & break=options%break, mode=options%mode, &
+        & addedLines=addedLines )
+    else
+      call wrap( lineIn, lineOut, options%width, &
+        & inseparator=trim(options%eol) // achar(13), &
+        & break=options%break, mode=options%mode, &
+        & quotes=trim(options%quotes), addedLines=addedLines )
+    endif
+    call output( trim(lineOut), advance='yes' )
+    totalLinesAdded = totalLinesAdded + addedLines
+    if ( addedLines > 0 ) totalLinesNeedWrapping = totalLinesNeedWrapping + 1
+  enddo
+  if ( options%verbose .or. options%summarize ) then
+     print *, c // ' ( I n p u t   f i l e   s u m m a r y )'
+     print *, c // 'lines read               ', nLinesRead
+     print *, c // 'longest line read        ', LineLengthRead
+     print *, c // 'lines with comments      ', nCommentsRead
+     print *, c // 'lines with quotes        ', nQuotesRead
+     print *, c // 'lines needed wrapping    ', totalLinesNeedWrapping
+     print *, c // 'lines added by wrapping  ', totalLinesAdded
+  endif
+contains
+  subroutine null_fill_1d( array, nullChar )
+    ! Fill array with null chars
+    ! Args
+    character(len=*), dimension(:), intent(out) :: array
+    character(len=1), optional, intent(in)      :: nullChar
+    ! Internal variables
+    character(len=1) :: myNull
+    integer :: col
+    integer :: pos
+    ! Executable
+    myNull = achar(0)
+    if ( present(nullChar) ) myNull = nullChar
+    do col=1, size(array)
+      do pos=1, len(array(1))
+        array(col)(pos:pos) = myNull
+      enddo
+    enddo
+  end subroutine null_fill_1d
+
+!------------------------- dumpSettings ---------------------
+    subroutine dumpSettings( options )
+    ! Added for command-line processing
+     type ( options_T ), intent(in)   :: options
+     ! Local variables
+     print *, c // 'verbose?                 ', options%verbose
+     print *, c // 'summarize?               ', options%summarize
+     print *, c // 'keep trailing spaces  ?  ', options%keepTrailingSpaces
+     print *, c // 'width                    ', options%width
+     print *, c // 'break                    ', options%break
+     print *, c // 'comment                  ', options%comment
+     print *, c // 'mode                     ', options%mode 
+     print *, c // 'eol                      ', options%eol  
+     print *, c // 'quotes                   ', options%quotes
+     print *, c // 'xfmt                     ', xfmt
+     print *, c // 'advance                  ', advance
+    end subroutine dumpSettings
+
+!------------------------- get_options  ---------------------
+    subroutine get_options ( options )
+    ! Added for command-line processing
+     type ( options_T ), intent(inout) :: options
+     ! Local variables
+     integer ::                         error = 1
+     character(LEN=255)       :: filename
+     integer, save ::                   i = 1
+     character(LEN=16)       :: number
+  ! Get inputfile name, process command-line args
+  ! (which always start with -)
+    do
+      call getarg ( i+hp, filename )
+      ! print *, i, ' th Arg: ', trim(filename)
+      error = 0
+      if ( filename(1:1) /= '-' ) exit
+      if ( filename(1:3) == '-h ' ) then
+        call print_help
+      else if ( filename(1:2) == '-b' ) then
+        call getarg ( i+1+hp, options%break )
+        options%break = adjustl(options%break)
+        i = i + 1
+      else if ( filename(1:2) == '-c' ) then
+        call getarg ( i+1+hp, options%comment )
+        options%comment = adjustl(options%comment)
+        i = i + 1
+      else if ( filename(1:5) == '-eol ' ) then
+        call getarg ( i+1+hp, options%eol )
+        options%eol = adjustl(options%eol)
+        i = i + 1
+      else if ( filename(1:2) == '-q' ) then
+        call getarg ( i+1+hp, options%quotes )
+        options%quotes = adjustl(options%quotes)
+        i = i + 1
+      else if ( filename(1:6) == '-mode ' ) then
+        call getarg ( i+1+hp, options%mode )
+        options%mode = adjustl(options%mode)
+        i = i + 1
+      else if ( filename(1:7) == '-width ' ) then
+        call getarg ( i+1+hp, number )
+        read(number, *) options%width
+        i = i + 1
+      elseif ( filename(1:5) == '-keep' ) then
+        options%keepTrailingSpaces = .true.
+      elseif ( filename(1:6) == '-nkeep' ) then
+        options%keepTrailingSpaces = .false.
+      elseif ( filename(1:2) == '-s' ) then
+        options%summarize = .true.
+      elseif ( filename(1:3) == '-v ' ) then
+        options%verbose = .true.
+      else
+        call print_help
+      end if
+      i = i + 1
+    end do
+    if ( error /= 0 ) then
+      call print_help
+    endif
+    i = i + 1
+    
+  end subroutine get_options 
+!------------------------- print_help ---------------------
+  subroutine print_help
+  ! Print brief but helpful message
+      write (*,*) &
+      & 'Usage:wrapLines [options] [filenames]'
+      write (*,*) &
+      & ' If no filenames supplied, you will be prompted to supply one'
+      write (*,*) ' Options: -v            => switch on verbose mode'  
+      write (*,*) '          -s            => print num of lines, longest'     
+      write (*,*) '                            at end of stdout'
+      write (*,*) '          -b char       => break lines at char'     
+      write (*,*) '                          (default is ",")'         
+      write (*,*) '          -c char       => treat char as comment'     
+      write (*,*) '                          (default is ";")'         
+      write (*,*) '          -eol chars    => glue chars to end of broken lines'
+      write (*,*) '                            (default is ", $")'
+      write (*,*) '          -[n]keep      => do [not] keep trailing spaces'     
+      write (*,*) '                            (default is to keep them)'
+      write (*,*) '          -q chars      => let chars delimit quoted strings'     
+      write (*,*) '                          (defaults are ''")'         
+      write (*,*) '          -mode mode    => set wrap mode'
+      write (*,*) '                            (default is "s" for soft)'
+      write (*,*) '          -width width  => wrap lines longer than width'
+      write (*,*) '                            (default is 128)'
+      write (*,*) '          -h            => print brief help'
+      stop
+  end subroutine print_help
+end program wrapLines
+! $Log$
