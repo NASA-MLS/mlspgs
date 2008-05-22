@@ -71,9 +71,8 @@ program Mie_Tables
   integer :: N_Theta = 2
 
   real(r8), parameter :: C = 1.0e-3 * speedOfLight ! km/s
-  real(r8) :: F_min = 240.0, F_max = 240.0
   integer :: N_f = 1
-  real(r8) :: F, dF             ! Frequency, GHz
+  real(r8) :: F                 ! Frequency, GHz
   real(r8), parameter :: PI2 = 2.0*pi
 
   ! Integration bounds
@@ -144,7 +143,8 @@ program Mie_Tables
   equivalence ( IOPT(6), NFUSE )
   integer :: NFMAX                    ! Maximum integrands per integral
   equivalence ( IOPT(8), NFMAX )
-  real(r8), allocatable :: F_s(:)     ! Frequencies
+  integer, parameter :: NF_s = 100    ! Maximum number of frequencies
+  real(r8) :: F_s(nf_s)               ! Frequencies
   real(r8) :: IWC                     ! Ice water content, g/m^3
   real(r8), allocatable :: IWC_s(:)   ! log10(iwc's)
   integer :: MACT(3) = (/ 21, 9, 51 /)
@@ -181,6 +181,7 @@ program Mie_Tables
   real(r8), allocatable :: e_dP_dT(:,:,:,:)    ! Phase, Temperature X IWC X Theta X F
 
   ! For output
+  logical :: HDF = .true.   ! "Output HDF else output Fortran unformatted"
   logical :: Norm = .false. ! Report quantities / total IWC too
   character(7) :: String    ! Internal write for theta
   integer :: N              ! len_trim(adjustl(string))
@@ -188,13 +189,13 @@ program Mie_Tables
   real(r8) :: T0, T1        ! for timing of progress
   real(r8) :: OT0, OT1      ! For timing for each input request.
   logical :: Warn = .false. ! Warnings from DINT
-  character(len=1023) :: File = '' ! Written as unformatted if not blank
+  character(len=1023) :: File = '' ! Output to this file if not blank; see HDF
 
   integer :: I_Beta, I_IWC, I_T, I_Theta, I_F
 
   namelist / in / IWC_Min, IWC_Max, N_IWC, T_Min, T_Max, N_T, &
-    &             F_Min, F_Max, N_F, R_Min, R_Max, &
-    &             Theta_Min, Theta_Max, N_Theta, N_Cut, File, &
+    &             F_s, N_F, R_Min, R_Max, &
+    &             Theta_Min, Theta_Max, N_Theta, N_Cut, File, HDF, &
     &             IOPT, NFMAX, Derivs, Details, Diffs, Norm, Progress, Warn
 
   ! Compute diameter cutoff parameters related to machine arithmetic
@@ -204,11 +205,17 @@ program Mie_Tables
 
   call cpu_time ( ot0 )
   do
+    file = '' ! Can't write more than one data set to a single file
     read ( *, in, end=9 )
+
+    if ( n_f > nf_s ) then
+      write ( *, * ) 'Too many frequencies, N_F =', n_f, ' >', nf_s
+      cycle
+    end if
 
     if ( allocated(beta) ) then
       if ( any(shape(p) /= (/ n_t, n_iwc, n_theta, n_f /)) .or. size(a) /= n_cut ) then
-        deallocate ( IWC_s, T_s, theta_s, F_s, beta, eest, eestI, maxOrd, maxOrdI, &
+        deallocate ( IWC_s, T_s, theta_s, beta, eest, eestI, maxOrd, maxOrdI, &
           & maxOrdP, nFunc, nfuncI, nfuncP, a, b, c1, c2, w, p1, p, iwc_tot, e_P )
         if ( derivs ) &
           & deallocate ( dBeta_dT, dBeta_dIWC, e_dBeta_dT, e_dBeta_dIWC, &
@@ -218,7 +225,7 @@ program Mie_Tables
     end if
 
     if ( .not. allocated(beta) ) then
-      allocate ( IWC_s(n_iwc), T_s(n_t), theta_s(n_theta), F_s(n_f), &
+      allocate ( IWC_s(n_iwc), T_s(n_t), theta_s(n_theta), &
         &        beta(n_t, n_iwc, n_f, 2), eest(n_t, n_iwc, n_f, 2), &
         &        eestI(n_t, n_iwc), maxOrd(n_t, n_iwc, n_f, 6), &
         &        maxOrdI(n_t, n_iwc), maxOrdP(n_t, n_iwc, n_theta, n_f, 3), &
@@ -266,11 +273,6 @@ program Mie_Tables
     else
       dTheta = 0.0
     end if
-    if ( n_F > 1 ) then
-      dF = (F_max - F_min) / (n_F-1)
-    else
-      dF = 0.0
-    end if
 
     ! Compute coordinate arrays.
     do i_iwc = 1, n_iwc
@@ -281,9 +283,6 @@ program Mie_Tables
     end do
     do i_theta = 1, n_theta
       theta_s(i_theta) = theta_min * deg2Rad + (i_theta-1) * dTheta
-    end do
-    do i_F = 1, n_F
-      F_s(i_f) = F_min + (i_F - 1) * dF
     end do
 
     ! Compute Legendre functions
@@ -390,14 +389,16 @@ program Mie_Tables
 
 ! Report the results
 
-1   format ( 'F = ', f6.1, ' GHz : ', f6.1, ' (', i0, &
-           & ') T = ', f5.0, ' : ', f5.0, ' (', i0, &
+    write ( *, 1 ) f_s(:n_f)
+1   format ( 'Frequencies ', 8f6.1, (10f6.1) )
+
+    write ( *, 2 ) t_min, t_max, n_t, iwc_min, iwc_max, n_iwc, &
+      &            r_min, r_max, theta_min, theta_max, n_theta, n_cut
+2   format ( 'T = ', f5.0, ' : ', f5.0, ' (', i0, &
            & ') Log10 IWC = ', f6.2, ' : ', f6.2, ' (', i0, ')' / &
            & 'R = ', f6.1, ' : ', f6.1, ' Theta = ', f7.3, ' : ', f7.3, &
            & ' (', i0, ')', ' N_Cut = ', i0 )
 
-    write ( *, 1 ) f_min, f_max, n_f, t_min, t_max, n_t, iwc_min, iwc_max, n_iwc, &
-      &            r_min, r_max, theta_min, theta_max, n_theta, n_cut
     call report_2 ( 'IWC_total', iwc_tot, .false., eestI, nFuncI )
     call report ( 'Beta(c_e)', beta(:,:,:,i_c_e), norm, eest(:,:,:,i_c_e), &
       & nFunc(:,:,:,:,i_c_e), maxOrd(:,:,:,i_c_e) )
@@ -463,26 +464,32 @@ program Mie_Tables
     end do ! Theta
 
     if ( file /= '' ) then
-      open ( 10, file=trim(file), form='unformatted' )
-      write ( 10 ) n_f, n_iwc, n_t, n_theta, r_min, r_max, n_cut, derivs
-      write ( 10 ) iwc_s, t_s, theta_s, f_s
-      write ( 10 ) beta(:,:,:,i_c_e), eest(:,:,:,i_c_e), nFunc(:,:,:,:,i_c_e), maxOrd(:,:,:,i_c_e)
-      write ( 10 ) beta(:,:,:,i_c_s), eest(:,:,:,i_c_s), nFunc(:,:,:,:,i_c_s), maxOrd(:,:,:,i_c_s)
-      write ( 10 ) p, e_p, nFuncP(:,:,:,:,:,1), maxOrdP(:,:,:,:,1)
-      if ( derivs ) then
-        write ( 10 ) dBeta_dIWC(:,:,:,i_c_e),  e_dBeta_dIWC(:,:,:,i_c_e), nFunc(:,:,:,:,3), maxOrd(:,:,:,3)
-        write ( 10 ) dBeta_dIWC(:,:,:,i_c_s),  e_dBeta_dIWC(:,:,:,i_c_s), nFunc(:,:,:,:,4), maxOrd(:,:,:,4)
-        write ( 10 ) dBeta_dT(:,:,:,i_c_e),  e_dBeta_dT(:,:,:,i_c_e), nFunc(:,:,:,:,5), maxOrd(:,:,:,5)
-        write ( 10 ) dBeta_dT(:,:,:,i_c_s),  e_dBeta_dT(:,:,:,i_c_s), nFunc(:,:,:,:,6), maxOrd(:,:,:,6)
-        write ( 10 ) dP_dIWC, e_dP_dIWC, nFuncP(:,:,:,:,:,2), maxOrdP(:,:,:,:,2)
-        write ( 10 ) dP_dT, e_dP_dT, nFuncP(:,:,:,:,:,3), maxOrdP(:,:,:,:,3)
+      if ( hdf ) then
+        call writeHDF
+      else
+        open ( 10, file=trim(file), form='unformatted' )
+        write ( 10 ) n_f, n_iwc, n_t, n_theta, r_min, r_max, n_cut, derivs
+        write ( 10 ) iwc_s, t_s, theta_s, f_s
+        write ( 10 ) beta(:,:,:,i_c_e), eest(:,:,:,i_c_e), nFunc(:,:,:,:,i_c_e), maxOrd(:,:,:,i_c_e)
+        write ( 10 ) beta(:,:,:,i_c_s), eest(:,:,:,i_c_s), nFunc(:,:,:,:,i_c_s), maxOrd(:,:,:,i_c_s)
+        write ( 10 ) p, e_p, nFuncP(:,:,:,:,:,1), maxOrdP(:,:,:,:,1)
+        if ( derivs ) then
+          write ( 10 ) dBeta_dIWC(:,:,:,i_c_e),  e_dBeta_dIWC(:,:,:,i_c_e), nFunc(:,:,:,:,3), maxOrd(:,:,:,3)
+          write ( 10 ) dBeta_dIWC(:,:,:,i_c_s),  e_dBeta_dIWC(:,:,:,i_c_s), nFunc(:,:,:,:,4), maxOrd(:,:,:,4)
+          write ( 10 ) dBeta_dT(:,:,:,i_c_e),  e_dBeta_dT(:,:,:,i_c_e), nFunc(:,:,:,:,5), maxOrd(:,:,:,5)
+          write ( 10 ) dBeta_dT(:,:,:,i_c_s),  e_dBeta_dT(:,:,:,i_c_s), nFunc(:,:,:,:,6), maxOrd(:,:,:,6)
+          write ( 10 ) dP_dIWC, e_dP_dIWC, nFuncP(:,:,:,:,:,2), maxOrdP(:,:,:,:,2)
+          write ( 10 ) dP_dT, e_dP_dT, nFuncP(:,:,:,:,:,3), maxOrdP(:,:,:,:,3)
+        end if
+        close ( 10 )
       end if
-      close ( 10 )
     end if
+
     call cpu_time ( ot1 )
-    write ( *, 2 ) ot1 - ot0
-2   format ( 'Used ', f9.2, ' CPU seconds' )
+    write ( *, 7 ) ot1 - ot0
+7   format ( 'Used ', f9.2, ' CPU seconds' )
     ot0 = ot1
+
   end do ! input
 9 continue
 
@@ -946,6 +953,93 @@ contains
     end if
   end subroutine Report
 
+  subroutine WriteHDF
+    ! Write the tables as HDF5 datasets
+    use HDF5, only: H5FCreate_F, H5FClose_F, H5F_ACC_TRUNC_F
+    use MLSHDF5, only: MakeHDF5Attribute, SaveAsHDF5DS
+
+    integer :: FileID, IOStat
+
+    ! Create the HDF5 output file
+    call H5FCreate_F ( trim(file), H5F_ACC_TRUNC_F, fileID, iostat )
+    if ( iostat /= 0 ) then
+      write ( *, * ) 'Unable to create HDF5 Mie file ', trim(file), ', iostat =', &
+        & iostat
+      return
+    end if
+
+    ! Save some scalars as attributes
+    call makeHDF5Attribute ( fileID, 'R_Max', r_max )
+    call makeHDF5Attribute ( fileID, 'R_Min', r_min )
+    call makeHDF5Attribute ( fileID, 'N_Cut', n_cut )
+
+    ! Save the index arrays
+    call saveAsHDF5DS ( fileID, 'IWC_s', iwc_s )
+    call saveAsHDF5DS ( fileID, 'T_s', T_s )
+    call saveAsHDF5DS ( fileID, 'THETA_s', theta_s )
+    call saveAsHDF5DS ( fileID, 'F_s', f_s )
+
+    ! Save the betas
+    call saveAsHDF5DS ( fileID, 'Beta_c_e', beta(:,:,:,i_c_e) )
+    call saveAsHDF5DS ( fileID, 'Beta_c_s', beta(:,:,:,i_c_s) )
+    call saveAsHDF5DS ( fileID, 'Beta_c_e_err_est', eest(:,:,:,i_c_e) )
+    call saveAsHDF5DS ( fileID, 'Beta_c_s_err_est', eest(:,:,:,i_c_s) )
+    call saveAsHDF5DS ( fileID, 'Beta_c_e_nfunc', nFunc(:,:,:,:,i_c_e) )
+    call saveAsHDF5DS ( fileID, 'Beta_c_s_nfunc', nFunc(:,:,:,:,i_c_s) )
+    call saveAsHDF5DS ( fileID, 'Beta_c_e_max_ord', maxOrd(:,:,:,i_c_e) )
+    call saveAsHDF5DS ( fileID, 'Beta_c_s_max_ord', maxOrd(:,:,:,i_c_s) )
+
+    ! Save the phase function
+    call saveAsHDF5DS ( fileID, 'P', p )
+    call saveAsHDF5DS ( fileID, 'P_err_est', e_p )
+    call saveAsHDF5DS ( fileID, 'P_nfunc', nFuncP(1,:,:,:,:,1) )
+    call saveAsHDF5DS ( fileID, 'P_iflag', nFuncP(2,:,:,:,:,1) )
+    call saveAsHDF5DS ( fileID, 'P_max_ord', maxOrdP(:,:,:,:,1) )
+
+    if ( derivs ) then
+      ! Save the Beta IWC derivatives
+      call saveAsHDF5DS ( fileID, 'dBeta_dIWC_c_e', dBeta_dIWC(:,:,:,i_c_e) )
+      call saveAsHDF5DS ( fileID, 'dBeta_dIWC_c_s', dBeta_dIWC(:,:,:,i_c_s) )
+      call saveAsHDF5DS ( fileID, 'dBeta_dIWC_c_e_err_est', e_dBeta_dIWC(:,:,:,i_c_e) )
+      call saveAsHDF5DS ( fileID, 'dBeta_dIWC_c_s_err_est', e_dBeta_dIWC(:,:,:,i_c_s) )
+      call saveAsHDF5DS ( fileID, 'dBeta_dIWC_c_e_nfunc', nFunc(:,:,:,:,3) )
+      call saveAsHDF5DS ( fileID, 'dBeta_dIWC_c_s_nfunc', nFunc(:,:,:,:,4) )
+      call saveAsHDF5DS ( fileID, 'dBeta_dIWC_c_e_max_ord', maxOrd(:,:,:,3) )
+      call saveAsHDF5DS ( fileID, 'dBeta_dIWC_c_s_max_ord', maxOrd(:,:,:,4) )
+
+      ! Save the Beta T derivatives
+      call saveAsHDF5DS ( fileID, 'dBeta_dT_c_e', dBeta_dT(:,:,:,i_c_e) )
+      call saveAsHDF5DS ( fileID, 'dBeta_dT_c_s', dBeta_dT(:,:,:,i_c_s) )
+      call saveAsHDF5DS ( fileID, 'dBeta_dT_c_e_err_est', e_dBeta_dT(:,:,:,i_c_e) )
+      call saveAsHDF5DS ( fileID, 'dBeta_dT_c_s_err_est', e_dBeta_dT(:,:,:,i_c_s) )
+      call saveAsHDF5DS ( fileID, 'dBeta_dT_c_e_nfunc', nFunc(:,:,:,:,5) )
+      call saveAsHDF5DS ( fileID, 'dBeta_dT_c_s_nfunc', nFunc(:,:,:,:,6) )
+      call saveAsHDF5DS ( fileID, 'dBeta_dT_c_e_max_ord', maxOrd(:,:,:,5) )
+      call saveAsHDF5DS ( fileID, 'dBeta_dT_c_s_max_ord', maxOrd(:,:,:,6) )
+
+      ! Save the P IWC derivatives
+      call saveAsHDF5DS ( fileID, 'dP_dIWC', dP_dIWC )
+      call saveAsHDF5DS ( fileID, 'dP_dIWC_err_est', e_dP_dIWC )
+      call saveAsHDF5DS ( fileID, 'dP_dIWC_nfunc', nFuncP(1,:,:,:,:,2) )
+      call saveAsHDF5DS ( fileID, 'dP_dIWC_iflag', nFuncP(2,:,:,:,:,2) )
+      call saveAsHDF5DS ( fileID, 'dP_dIWC_maxord', maxOrdP(:,:,:,:,2) )
+
+      ! Save the P T derivatives
+      call saveAsHDF5DS ( fileID, 'dP_dT', dP_dT )
+      call saveAsHDF5DS ( fileID, 'dP_dT_err_est', e_dP_dT )
+      call saveAsHDF5DS ( fileID, 'dP_dT_nfunc', nFuncP(1,:,:,:,:,3) )
+      call saveAsHDF5DS ( fileID, 'dP_dT_iflag', nFuncP(2,:,:,:,:,3) )
+      call saveAsHDF5DS ( fileID, 'dP_dT_maxord', maxOrdP(:,:,:,:,3) )
+
+    end if ! derivs
+
+    ! Close the HDF5 output file
+    call H5FClose_F ( fileID, iostat )
+    if ( iostat /= 0 ) write ( *, * ) 'Unable to close HDF5 Mie file ', &
+      trim(file), ', iostat =', iostat
+
+  end subroutine WriteHDF
+
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -958,3 +1052,6 @@ contains
 end program Mie_Tables
 
 ! $Log$
+! Revision 1.1  2008/04/19 01:15:27  vsnyder
+! Initial commit
+!
