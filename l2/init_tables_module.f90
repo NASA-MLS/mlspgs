@@ -654,6 +654,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_homeGeodAngle, t+t_numeric, n+n_field_type, &
              begin, f+f_scanLowerLimit, t+t_numeric_range, n+n_field_type, &
              begin, f+f_scanUpperLimit, t+t_numeric_range, n+n_field_type, &
+             begin, f+f_criticalBands, t+t_string, n+n_field_type, &
              begin, f+f_criticalModules, t+t_criticalModule, n+n_field_type, &
              begin, f+f_criticalSignals, t+t_string, n+n_field_type, &
              begin, f+f_maxGap, t+t_numeric, n+n_field_type, &
@@ -1557,6 +1558,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.467  2008/05/22 00:26:01  pwagner
+! Added criticalBands to Chunk Divide
+!
 ! Revision 2.466  2008/05/20 00:25:05  vsnyder
 ! Add MieTables field for ForwardModelGlobal
 !
