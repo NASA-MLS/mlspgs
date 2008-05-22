@@ -12,10 +12,20 @@
 # "$Id$"
 
 FC=     ifort
-FOPTS= 
-LDOPTS=
-MATH77 = math77
+FOPTS=  
+LDOPTS= -Wl,-noinhibit-exec
+MATH77= math77
 PLAT=   IFC.Linux
+
+# Paths
+
+TK=/users/pwagner/apps/test/ifc10
+HDFLIB=  ${TK}/HDF4.2r1a/lib
+HDF5=    ${TK}/hdf5-1.6.5-post5/lib
+HDFEOS=  ${TK}/hdfeos/lib/linux
+HDFEOS5= ${TK}/hdfeos5/lib/linux
+PGSTK=   ${TK}/toolkit5.2.14/lib/linux
+PVM_ROOT=${TK}/pvm3
 
 .SUFFIXES:
 .SUFFIXES: .o .dbg.o .f90 .f .c
@@ -40,7 +50,7 @@ mie_efficiencies_m.mod Mie_Efficiencies_m.o: Mie_Efficiencies_m.f90 sphbess.mod
 Mie_Tables.o: Mie_Tables.f90 ice_size_distribution.mod \
               mie_efficiencies_m.mod phase_m.mod p1_m.mod
 	$(FC) -c $(FOPTS) Mie_Tables.f90 -I $(HOME)/mlspgs/fwdmdl/$(PLAT) \
-              -I $(HOME)/mlspgs/lib/$(PLAT)
+              -I $(HOME)/mlspgs/lib/$(PLAT) -I $(HDF5)
 
 p1_m.mod P1_m.o: P1_m.f90
 	$(FC) -c $(FOPTS) P1_m.f90 -I $(HOME)/mlspgs/lib/$(PLAT)
@@ -63,11 +73,17 @@ Mie_Tables: Mie_Tables.o Mie_Efficiencies_m.o \
               dint1.o dinta.o dintdl.o dintdu.o dintf.o \
               dintm.o dintma.o  dintns.o dinto.o dintop.o dintsm.o \
               dmess.o mess.o \
+              $(HOME)/mlspgs/fwdmdl/$(PLAT)/RefractiveIndex.o \
               Ice_Size_Distribution.o Phase_m.o P1_m.o sphbes.o \
-              $(HOME)/mlspgs/lib/$(PLAT)/Constants.o \
-              $(HOME)/mlspgs/lib/$(PLAT)/MLSKinds.o \
-              $(HOME)/mlspgs/lib/$(PLAT)/physics.o \
-              $(HOME)/mlspgs/fwdmdl/$(PLAT)/RefractiveIndex.o 
+              -L $(HOME)/mlspgs/lib/$(PLAT) -lmls \
+              -L $(PGSTK) -lPGSTK \
+              -L $(HDFEOS) -lhdfeos \
+              -L $(HDFEOS5) -lhe5_hdfeos \
+              -L $(HDF5) -lhdf5_fortran -lhdf5 \
+              -L $(HDFLIB) -lmfhdf \
+              -ldf -lz -ljpeg -lsz \
+              -lGctp \
+              -L $(PVM_ROOT)/lib/LINUX -lfpvm3 -lgpvm3 -lpvm3
 
 clean:
 	rm -f Mie_Efficiencies_m.o Mie_Tables.o \
@@ -94,6 +110,9 @@ dmess.o: $(MATH77)/dmess.f
 mess.o: $(MATH77)/mess.f
 
 # $Log$
+# Revision 1.3  2008/04/19 02:36:40  vsnyder
+# Corrected path for amach
+#
 # Revision 1.2  2008/04/19 01:37:27  vsnyder
 # Removed test harness makes
 #
