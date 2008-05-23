@@ -173,6 +173,7 @@
     logical :: useToolkit                      = .true.
     logical :: CrashOnAnyError                 = .false. ! See crash warning
     logical :: SendErrMsgToMaster              = .false. ! Whether to send last
+    logical :: StackTrace            = .false. ! Trace calls to MLSMessageCalls
     ! Track the last file we were reading/writing if an error occurs and
     ! that file isn't passed in the call statement
     type(MLSFile_T) :: MLSFile ! which file were we reading/writing last?
@@ -400,12 +401,22 @@ contains
     character(len=64) :: myName
     logical, parameter  :: nosubsequentwarnings = .false.
     ! Executable
+    if ( MLSMessageConfig%stackTrace ) then
+      if ( present(name) ) myName = name
+      if ( present(constantName) ) myName = constantName
+      if ( present(name) .or. present(constantName) ) then
+        call printItOut ( 'MLSMessageCalls("' // trim(command) // '","' &
+          & // trim(myName) // '")', MLSMSG_info )
+      else
+        call printItOut ( 'MLSMessageCalls("' // trim(command) // '")', MLSMSG_info )
+      end if
+    end if
     myName = ' '
     select case( command )
     case ( 'push' )
-      MLSCallStack%top = MLSCallStack%Top + 1
       if ( present(name) ) myName = name
       if ( present(constantName) ) myName = constantName
+      MLSCallStack%top = MLSCallStack%Top + 1
       myName = snipRCSFrom ( myName )
       m = len_trim(myName)
       if ( MLSCallStack%Top > ubound(MLSCallStack%ind,1) ) then
@@ -908,6 +919,9 @@ contains
   
 !
 ! $Log$
+! Revision 2.8  2008/05/23 23:16:22  vsnyder
+! Added tracing of call stack operations
+!
 ! Revision 2.7  2008/02/22 21:31:38  pwagner
 ! Can now dump messaging configuration
 !
