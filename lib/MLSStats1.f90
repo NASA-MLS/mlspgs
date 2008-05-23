@@ -181,6 +181,8 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
   ! consider whether one of {"=" (default), "<", ">"}
   ! when calculating %ages (and possibly rms, etc.)
   character(len=1), public, save :: fillValueRelation = '='
+  logical, public, save          :: showIndexing = .false. ! show where max, min
+  logical, public, save          :: statsOnOneLine = .false.
 
   ! Which of two medianmethods to utilize
   integer, private, save         :: medianMethod = 2 ! 1 is too slow
@@ -1823,10 +1825,15 @@ contains
       end subroutine statistics
       
       ! ------------------- dump_all -----------------------
-      subroutine dump_all(statistic)
+      subroutine dump_all( statistic, oneLine )
         ! Dumps all details of statistic
         type(stat_T), intent(in)         :: statistic
+        logical, optional, intent(in)    :: oneLine
         ! 
+        logical :: myOneLine
+        !
+        myOneLine = statsOnOneLine
+        if ( present(oneLine) ) myOneLine = oneLine
         call output('count:  ')
         call output(statistic%count)
         call blanks(4)
@@ -1838,7 +1845,11 @@ contains
         call blanks(4)
         call output('median:    ')
         call output(statistic%median)
-        call newline
+        if ( .not. myOneLine ) then
+          call newline
+        else
+          call blanks(4)
+        endif
         call output('mean:   ')
         call output(statistic%mean)
         call blanks(4)
@@ -1847,8 +1858,9 @@ contains
         call blanks(4)
         call output('rms:    ')
         call output(statistic%rms)
+        if ( myOneLine ) return
         call newline
-        if ( any(statistic%indexing /= 0) ) then
+        if ( any(statistic%indexing /= 0) .and. showIndexing ) then
           call output('(locations)  ')
           call output('max:    ')
           call output(statistic%indexing(1))
@@ -1882,21 +1894,33 @@ contains
       end subroutine dump_all
       
       ! ------------------- dump_selected -----------------------
-      subroutine dump_selected( statistic, which )
+      subroutine dump_selected( statistic, which, oneLine )
         ! Dumps selected details of statistic
         type(stat_T), intent(in)         :: statistic
         character(len=*), intent(in)     :: which ! E.g., 'max,min'; '*' means all
+        logical, optional, intent(in)    :: oneLine
         ! 
+        logical :: myOneLine
+        !
+        myOneLine = statsOnOneLine
+        if ( present(oneLine) ) myOneLine = oneLine
         call dump_if_selected( statistic%count, which, 'count', 'no' )
         call dump_if_selected( statistic%max, which, 'max', 'no' )
         call dump_if_selected( statistic%min, which, 'min', 'no' )
         call dump_if_selected( statistic%mean, which, 'mean', 'no' )
         call dump_if_selected( statistic%median, which, 'median', 'no' )
-        call newline
+        if ( .not. myOneLine ) then
+          call newline
+        else
+          call blanks(4)
+        endif
         call dump_if_selected( statistic%stddev, which, 'stddev', 'no' )
         call dump_if_selected( statistic%rms, which, 'rms', 'no' )
-        call newline
-        call dump_if_selected( statistic%indexing, which, 'indexing' )
+        if ( myOneLine ) return
+        if ( showIndexing ) then
+          call newline
+          call dump_if_selected( statistic%indexing, which, 'indexing' )
+        endif
         if ( statistic%nbins < 3 .or. index(which, 'bin') < 1 ) return
         call output('x1,x2: ')
         call output(statistic%bounds)
@@ -2170,6 +2194,9 @@ end module MLSStats1
 
 !
 ! $Log$
+! Revision 2.20  2008/05/23 01:15:29  pwagner
+! New public variables to control dumps; e.g. statsOnOneLine
+!
 ! Revision 2.19  2007/11/01 23:28:42  pwagner
 ! Added mlscount function
 !
