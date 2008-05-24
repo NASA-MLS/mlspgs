@@ -1083,7 +1083,6 @@ contains ! ======================= Public Procedures =========================
     integer :: firstChar, lastChar
     integer :: iblock, nblocks
     logical :: is_present
-    integer :: lun
     integer :: myMaxLineLen
     character(len=len(name)+3) :: newname
     integer :: STATUS                   ! Flag from HDF5
@@ -1106,7 +1105,6 @@ contains ! ======================= Public Procedures =========================
     endif
     ! Unfortunately, a lot of null characters sneak into this
     value = Replace( value, char(0), char(32) ) ! Replace null with space
-    close( UNIT=lun, iostat=status )
     
     ! Be careful lest the attribute is too large
     if ( len_trim(value) > MAXATTRIBUTESIZE ) then
@@ -2837,7 +2835,6 @@ contains ! ======================= Public Procedures =========================
     integer, optional, intent(in) :: maxLineLen
 
     ! Local variables
-    integer :: lun
     integer :: myMaxLineLen
     integer :: spaceID                  ! ID for dataspace
     integer (HID_T) :: setID            ! ID for dataset
@@ -2856,7 +2853,6 @@ contains ! ======================= Public Procedures =========================
     call read_textFile( trim(textFile), value, myMaxLineLen )
     ! Unfortunately, a lot of null characters sneak into this
     value = Replace( value, char(0), char(32) ) ! Replace null with space
-    close( UNIT=lun, iostat=status )
     
     ! Create the dataspace
     shp = 1
@@ -4947,6 +4943,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.86  2008/05/24 00:34:05  pwagner
+! Removed scraps from older reading of text files
+!
 ! Revision 2.85  2008/05/22 01:06:42  vsnyder
 ! Use new allocate_test to simplify LoadPtrFromDS_*
 !
