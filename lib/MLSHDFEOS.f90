@@ -229,7 +229,7 @@ contains ! ======================= Public Procedures =========================
     & ATTRNAME, maxLineLen )
     ! Write contents of text file as global attribute
     ! E.g., may wish to include leap sec file or utc pole
-    use IO_STUFF, only: get_lun, read_textFile
+    use IO_STUFF, only: read_textFile
     use MLSHDF5, only: MAXCHATTRLENGTH, MAXCHFIELDLENGTH
 
     character (len=*), intent(in) :: TEXTFILE ! name of textfile
@@ -242,7 +242,6 @@ contains ! ======================= Public Procedures =========================
     character(len=MAXCHFIELDLENGTH) :: BUFFER  ! Buffer to hold contents
     integer :: firstChar, lastChar
     integer :: iblock, nblocks
-    integer :: lun
     integer :: myMaxLineLen
     character(len=len(attrname)+3) :: newname
     integer :: status
@@ -261,7 +260,6 @@ contains ! ======================= Public Procedures =========================
     endif
     ! Unfortunately, a lot of null characters sneak into this
     BUFFER = Replace( BUFFER, char(0), char(32) ) ! Replace null with space
-    close( UNIT=lun, iostat=status )
     ! Be careful lest the attribute is too large
     if ( len_trim(buffer) > MAXCHATTRLENGTH ) then
       nblocks = 1 + ( len_trim(buffer) - 1 ) / MAXCHATTRLENGTH
@@ -2148,6 +2146,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDFEOS
 
 ! $Log$
+! Revision 2.37  2008/05/24 00:54:46  vsnyder
+! Remove unused declarations
+!
 ! Revision 2.36  2008/05/02 00:05:36  pwagner
 ! Reads textFile using io stuff
 !
