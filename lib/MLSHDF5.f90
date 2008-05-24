@@ -2946,7 +2946,6 @@ contains ! ======================= Public Procedures =========================
     logical, optional, intent(in)     :: adding_to
 
     ! Local variables
-    integer :: I
     character :: MyFillValue, MyValue(size(value))   ! T = true, F = false
 
     ! Executable code
@@ -4943,6 +4942,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.87  2008/05/24 00:54:46  vsnyder
+! Remove unused declarations
+!
 ! Revision 2.86  2008/05/24 00:34:05  pwagner
 ! Removed scraps from older reading of text files
 !
