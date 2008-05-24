@@ -20,7 +20,7 @@ module MLSFiles               ! Utility file routines
     & HE5F_ACC_TRUNC, HE5F_ACC_RDONLY, HE5F_ACC_RDWR
   use intrinsic, only: l_ascii, l_binary, l_grid, l_hdf, l_open, &
     & l_swath, l_tkgen, l_zonalavg, lit_indices
-  use IO_STUFF, only: get_lun, read_textFile
+  use IO_STUFF, only: get_lun
   use machine, only: io_error
   use MLSCommon, only: i4, BareFNLen, FileNameLen,  MLSFile_T, Range_T, &
     & inRange
@@ -2711,6 +2711,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.85  2008/05/24 00:54:46  vsnyder
+! Remove unused declarations
+!
 ! Revision 2.84  2008/05/02 00:41:09  vsnyder
 ! Delete unused symbol
 !
