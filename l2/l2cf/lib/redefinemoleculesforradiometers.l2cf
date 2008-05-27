@@ -60,20 +60,29 @@
 !define(moleculeFamiliesForR2U,{[ CH3CN, CH3COCH3, CH3OH, CLO, $
   EXTINCTION, H2O, H2O2, HNO3, HO2, N2, N2O, O2, O3, OCS, SO2 ]})
 
-!define(moleculesForR3L,{[ [ CO, CO ], EXTINCTION, [ H2O, H2O, H2O_R3 ], $
+!define(moleculesForR3L,{[ [ CH2CHCN, CH2CHCN ], [ CH3CH2CN, CH3CH2CN ], $
+  [ CH3CH2OH, CH3CH2OH ], [ CH3CL, CH3CL_37 ], [ CH3COCH3, CH3COCH3 ], $
+  [ CH3OH, CH3OH ], [ CH3OOH, CH3OOH ], [ CO, CO ], EXTINCTION, [ H2O, H2O, H2O_R3 ], $
   [ HNO3, HNO3 ], [ N2, N2 ], [ O2, O2, O_18_O ], [ O3, O3, O3_R3, $
     O3_V1_3, O3_V2, O3_ASYM_O_18, O3_SYM_O_18 ], [ SO2, S_32_O2 ] ]})
-!define(moleculeFamiliesForR3L,{[ CO, EXTINCTION, H2O, HNO3, N2, O2, O3, $
+!define(moleculeFamiliesForR3L,{[ CH2CHCN, CH3CH2CN, CH3CH2OH, CH3CL, $
+  CH3COCH3, CH3OH, CH3OOH, CO, EXTINCTION, H2O, HNO3, N2, O2, O3, $
   SO2 ]})
-!define(moleculesForR3,{[ [ CO, CO ], EXTINCTION, [ H2O, H2O, H2O_R3 ], $
+!define(moleculesForR3,{[ [ CH2CHCN, CH2CHCN ], $
+  [ CH3CH2CN, CH3CH2CN ], [ CH3CH2OH, CH3CH2OH ], [ CH3CL, CH3CL_37 ], $
+  [ CH3COCH3, CH3COCH3 ], [ CH3OH, CH3OH ], [ CH3OOH, CH3OOH ], [ CO, CO ], EXTINCTION, [ H2O, H2O, H2O_R3 ], $
   [ HNO3, HNO3 ], [ N2, N2 ], [ O2, O2, O_18_O ], [ O3, O3, O3_R3, $
     O3_V1_3, O3_V2, O3_ASYM_O_18, O3_SYM_O_18 ], [ SO2, S_32_O2 ] ]})
-!define(moleculeFamiliesForR3,{[ CO, EXTINCTION, H2O, HNO3, N2, O2, O3, $
+!define(moleculeFamiliesForR3,{[ CH2CHCN, CH3CH2CN, CH3CH2OH, CH3CL, $
+  CH3COCH3, CH3OH, CH3OOH, CO, EXTINCTION, H2O, HNO3, N2, O2, O3, $
   SO2 ]})
-!define(moleculesForR3U,{[ EXTINCTION, [ H2O, H2O, H2O_R3 ], [ HNO3, $
+!define(moleculesForR3U,{[ [ CH2CHCN, CH2CHCN ], $
+  [ CH3CH2CN, CH3CH2CN ], [ CH3CH2OH, CH3CH2OH ], [ CH3COCH3, CH3COCH3 ], $
+  [ CH3OH, CH3OH ], [ CH3OOH, CH3OOH ], EXTINCTION, [ H2O, H2O, H2O_R3 ], [ HNO3, $
     HNO3 ], [ N2, N2 ], [ O2, O2 ], [ O3, O3, O3_R3, O3_V1_3, O3_V2, $
     O3_ASYM_O_18, O3_SYM_O_18 ], [ SO2, S_32_O2 ] ]})
-!define(moleculeFamiliesForR3U,{[ EXTINCTION, H2O, HNO3, N2, O2, O3, SO2 ]})
+!define(moleculeFamiliesForR3U,{[ CH2CHCN, CH3CH2CN, CH3CH2OH, $
+  CH3COCH3, CH3OH, CH3OOH, EXTINCTION, H2O, HNO3, N2, O2, O3, SO2 ]})
 
 !define(moleculesForR4L,{[ [ BRO, BR_81_O ], [ CH3CL, CH3CL_35, CH3CL_37 ], $
   [ CH3CN, CH3CN ], [ CH3COCH3, CH3COCH3 ], [ CH3OH, CH3OH ], EXTINCTION, $

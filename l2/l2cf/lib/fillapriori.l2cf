@@ -184,6 +184,10 @@ begin Fill
   Fill, quantity=aprioriPrecision.ch3cn,method=explicit, /spread, explicitValues= 2 ppbv
   ;; CH3CN was 500 pptv
   Fill, quantity=aprioriPrecision.clo,  method=explicit, /spread, explicitValues= 3 ppbv
+;; CH3CL
+  Fill, quantity=aprioriPrecision.ch3cl,method=explicit, /spread, explicitValues= 500 pptv
+  Fill, quantity=aprioriPrecision.ch3oh,method=explicit, /spread, explicitValues= 1 ppbv
+  Fill, quantity=aprioriPrecision.ch3coch3,method=explicit, /spread, explicitValues= 500 pptv
 
 
   Fill, quantity=aprioriPrecision.co,   method=profile, $
@@ -459,6 +463,12 @@ begin Fill
     profileValues= [ 146mb:500pptv, 100mb:30pptv, 1mb:30pptv, 0.68mb:0pptv ]
   Fill, quantity=vReg.clo, method=profile, $
     profileValues= [ 1mb:0.3ppbv, 0.68mb:0ppbv ]
+  Fill, quantity=vReg.ch3cl, method=profile, $
+    profileValues= [ 1mb:0.1ppbv, 0.68mb:0ppbv ]
+  Fill, quantity=vReg.ch3oh, method=profile, $
+    profileValues= [ 1mb:0.1ppbv, 0.68mb:0ppbv ]
+  Fill, quantity=vReg.ch3coch3, method=profile, $
+    profileValues= [ 1mb:0.1ppbv, 0.68mb:0ppbv ]
   Fill, quantity=vReg.co, method=profile, profileValues= $
     [ 10mb:30ppbv, 1mb:300ppbv, 0.1mb:3ppmv, 0.046mb:0ppmv ] 
   Fill, quantity=vReg.co_hr, method=profile, profileValues= $
@@ -531,6 +541,12 @@ begin Fill
     profileValues= [ 146mb:500pptv, 100mb:30pptv, 1mb:30pptv, 0.68mb:0pptv ]
   Fill, quantity=hReg.clo, method=profile, $
     profileValues= [  1mb:0.1ppbv, 0.68:0pptv ]
+  Fill, quantity=hReg.ch3cl, method=profile, $
+    profileValues= [  1mb:0.1ppbv, 0.68:0pptv ]
+  Fill, quantity=hReg.ch3oh, method=profile, $
+    profileValues= [  1mb:0.05ppbv, 0.68:0pptv ]
+  Fill, quantity=hReg.ch3coch3, method=profile, $
+    profileValues= [  1mb:0.05ppbv, 0.68:0pptv ]
   Fill, quantity=hReg.co, method=profile, profileValues= $
     [ 10mb:10ppbv, 1mb:100ppbv, 0.1mb:1ppmv, 0.01mb:3ppmv, 0.0068mb:0ppmv ] 
   Fill, quantity=hReg.co_hr, method=profile, profileValues= $
@@ -605,6 +621,9 @@ begin Join
 end Join
   })
 ;$Log$
+;Revision 1.130  2008/03/20 18:34:20  pwagner
+;Consistent with what we use beginning with v2.22
+;
 ;Revision 1.129  2006/10/26 19:30:02  lambert
 ;vReg.HCl set to 1ppbv
 ;
