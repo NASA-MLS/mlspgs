@@ -445,7 +445,7 @@ contains ! =====     Public procedures     =============================
       begin, t+t_fGridCoord, l+l_channel, l+l_frequency, l+l_LSBFrequency, l+l_USBFrequency, &
              l+l_IntermediateFrequency, n+n_dt_def, &
       begin, t+t_fillMethod, l+l_applyBaseline, l+l_asciiFile, l+l_binMax, l+l_binMean, &
-             l+l_binMin, l+l_binTotal, l+l_chiSqRatio, l+l_convergenceRatio, &
+             l+l_binMin, l+l_binTotal, l+l_chiSqRatio, l+l_geoLocation, l+l_convergenceRatio, &
              l+l_boxcar, l+l_combineChannels, l+l_gridded, l+l_estimatedNoise, l+l_explicit, &
              l+l_extractChannel, l+l_gphPrecision, l+l_hydrostatic, l+l_addnoise, l+l_refract, &
              l+l_isotope, l+l_iwcfromextinction, l+l_l1b, l+l_l2aux, l+l_l2gp, &
@@ -512,7 +512,7 @@ contains ! =====     Public procedures     =============================
              l+l_numGrad, l+l_numJ, l+l_numNewt, &
              l+l_opticalDepth, l+l_orbitInclination, &
              l+l_phaseTiming, l+l_phiTan, l+l_ptan, &
-             l+l_quality, l+l_radiance, l+l_earthradius,&
+             l+l_quality, l+l_radiance, l+l_earthradius, l+l_geolocation, &
              l+l_refGPH, l+l_refltemp, l+l_refltrans, l+l_reflrefl, l+l_reflspill, &
              l+l_rhi, l+l_singleChannelRadiance, l+l_sizedistribution, &
              l+l_scanResidual, l+l_scECI, l+l_scVel, l+l_scVelECI, &
@@ -1558,6 +1558,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.468  2008/05/28 21:55:34  pwagner
+! geo location Fill method to fill chunk numbers[maf]
+!
 ! Revision 2.467  2008/05/22 00:26:01  pwagner
 ! Added criticalBands to Chunk Divide
 !
