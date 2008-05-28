@@ -80,6 +80,7 @@ fractional
 full_derivatives
 
 geos5
+geoLocation
 gloria
 gridded
 gphPrecision
@@ -168,6 +169,9 @@ weighted
 wmoTropopause
 
 # $Log$
+# Revision 2.61  2008/05/28 21:03:19  pwagner
+# New quantity type to hold chunk number[maf]
+#
 # Revision 2.60  2006/10/02 23:05:03  pwagner
 # May Fill chi^2 ratio to measure convergence
 #
