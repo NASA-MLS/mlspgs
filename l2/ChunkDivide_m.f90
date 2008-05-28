@@ -68,8 +68,9 @@ module ChunkDivide_m
     real(rp), dimension(2) :: scanLowerLimit ! Range for bottom of scan
     real(rp), dimension(2) :: scanUpperLimit ! Range for top of scan
     real(rp) :: maxOrbY = -1.0                 ! Maximum out of plane distance allowed <=0.0 default
+    character(len=128) :: criticalBands = ' ' ! Which bands must be scanning
     integer   :: criticalModules = l_none ! Which modules must be scanning
-    logical   :: chooseCriticalSignals = .true. ! Whether to use criticalModules
+    logical   :: chooseCriticalSignals = .true. ! Use criticalModules, Bands?
     character(len=160), dimension(:), pointer &
       & :: criticalSignals => null() ! Which signals must be on
     real(rp)  :: maxGap = 0.0           ! Length of time/MAFs/orbits allowed for gap
@@ -180,7 +181,8 @@ contains ! ===================================== Public Procedures =====
     use Chunks_m, only: DUMP, MLSCHUNK_T
     use Dump_0, only: DUMP
     use EXPR_M, only: EXPR
-    use Init_Tables_Module, only: F_CRITICALMODULES, F_CRITICALSIGNALS, &
+    use Init_Tables_Module, only: F_CRITICALBANDS, F_CRITICALMODULES, &
+      & F_CRITICALSIGNALS, &
       & F_EXCLUDEPOSTOVERLAPS, F_EXCLUDEPRIOROVERLAPS, &
       & F_HOMEMODULE, F_HOMEGEODANGLE, &
       & F_MAXLENGTH, F_MAXORBY, F_METHOD, F_NOCHUNKS, F_NOSLAVES, &
@@ -646,8 +648,10 @@ contains ! ===================================== Public Procedures =====
       type (MLSFile_T), pointer             :: L1BFile
       ! Executable code
 
-      if ( index ( switches, 'chu' ) /= 0 ) &
-        & call output('Entering Orbital Chunk Divide', advance='yes')
+      if ( index ( switches, 'chu' ) /= 0 ) then
+        call output('Entering Orbital Chunk Divide', advance='yes')
+        call dump( obstructions )
+      endif
       ! Read in the data we're going to need
       call get_string ( lit_indices(ChunkDivideConfig%homeModule), modNameStr, strip=.true. )
       L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
@@ -1110,6 +1114,11 @@ contains ! ===================================== Public Procedures =====
             & call AnnounceError ( root, BadUnits, fieldIndex )
           ChunkDivideConfig%scanUpperLimit = value
           ChunkDivideConfig%scanULSet = .true.
+        case ( f_criticalBands )
+          call get_string ( sub_rosa ( gson ), &
+              & ChunkDivideConfig%criticalBands, strip=.true. )
+          call output ( 'reading critical bands ' )
+          call output ( trim(ChunkDivideConfig%criticalBands), advance='yes' )
         case ( f_criticalModules )
           ChunkDivideConfig%criticalModules = decoration ( gson )
         case ( f_criticalSignals )
@@ -1787,18 +1796,42 @@ contains ! ===================================== Public Procedures =====
       character(len=40) :: signal_full
       integer :: signalIndex
       ! Executable
-      if ( ChunkDivideConfig%criticalModules == l_none ) return
-      call get_string( lit_indices(ChunkDivideConfig%criticalModules), signal_full, &
-        & strip=.true. )
-      critical_module_str = lowercase(signal_full)
-      if ( critical_module_str /= 'ghz' ) return
+      if ( ChunkDivideConfig%criticalModules == l_none .and. &
+        & len_trim(ChunkDivideConfig%criticalBands) < 1 ) return
+      critical_module_str = ' '
+      if ( ChunkDivideConfig%criticalModules /= l_none ) then
+        call get_string( lit_indices(ChunkDivideConfig%criticalModules), signal_full, &
+          & strip=.true. )
+        critical_module_str = lowercase(signal_full)
+        if ( critical_module_str /= 'ghz' ) return
+      endif
       criticalSignalStr = ' '
       numCriticalSignals = 0
+      if ( switchDetail(switches, 'chu') > -1 ) &
+        & call outputNamedValue( 'critical module', critical_module_str )
+      if ( switchDetail(switches, 'chu') > -1 ) &
+        & call outputNamedValue( 'critical bands', ChunkDivideConfig%criticalBands )
       do signalIndex=1, size(signals)
-        call get_string( modules(signals(signalIndex)%instrumentModule)%name, signal_full, &
-          & strip=.true. )
-        module_str = lowercase(signal_full)
-        if ( module_str /= critical_module_str ) cycle
+        if ( switchDetail(switches, 'chu') > -1 ) then
+          call outputNamedValue( 'signal index', signalIndex )
+          call GetSignalName( signalIndex, signal_full )
+          call outputNamedValue( 'signal', signal_full )
+          call outputNamedValue( 'band', signals(signalIndex)%Band )
+          call outputNamedValue( 'critical?', &
+            & .not. isNotACriticalBand( signals(signalIndex)%Band ) )
+          call get_string( modules(signals(signalIndex)%instrumentModule)%name, module_str, &
+            & strip=.true. )
+          call outputNamedValue( 'module', module_str )
+        endif
+        if ( len_trim(ChunkDivideConfig%criticalBands) > 0 ) then
+          ! See if the band is one of the critical bands
+          if ( isNotACriticalBand( signals(signalIndex)%Band ) ) cycle
+        elseif ( len_trim(critical_module_str) > 0 ) then
+          call get_string( modules(signals(signalIndex)%instrumentModule)%name, signal_full, &
+            & strip=.true. )
+          module_str = lowercase(signal_full)
+          if ( module_str /= critical_module_str ) cycle
+        endif
         numCriticalSignals = numCriticalSignals + 1
         call GetSignalName( signalIndex, signal_full )
         criticalSignalStr = catLists( criticalSignalStr, signal_full )
@@ -1808,7 +1841,7 @@ contains ! ===================================== Public Procedures =====
         & ModuleName )
       call List2Array (criticalSignalStr, criticalSignals,  countEmpty=.true. )
       if ( switchDetail(switches, 'chu') > -1 ) &
-        & call dump( criticalSignals, 'critical Signals', trim=.true. )
+        & call dump( criticalSignals, 'critical Signals chosen', trim=.true. )
     end subroutine ChooseCriticalSignals
 
     ! ----------------------------------------- PruneChunks -----------
@@ -2020,6 +2053,7 @@ contains ! ===================================== Public Procedures =====
     subroutine SurveyL1BData ( processingRange, filedatabase, mafRange )
       ! This goes through the L1B data files and tries to spot possible
       ! obstructions.
+      use MLSL2Options, only: SharedPCF
       use MLSMessageModule, only: MLSMessage, MLSMSG_Error
       type (TAI93_Range_T), intent(in) :: PROCESSINGRANGE
       type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
@@ -2103,6 +2137,7 @@ contains ! ===================================== Public Procedures =====
         mafRange%Expanded(2) = min( mafRange%L1BCover(2), &
           & mafRange%L2Cover(2) + nint(ChunkDivideConfig%upperOverlap) )
       endif
+      if ( sharedPCF ) return
       noMAFS = mafRange%Expanded(2) - mafRange%Expanded(1) + 1
       ! Now look through the L1B data, first look for scan problems
       if ( ChunkDivideConfig%criticalModules /= l_none ) then
@@ -2255,6 +2290,8 @@ contains ! ===================================== Public Procedures =====
     call output ( 'critical modules ' )
     call display_string ( lit_indices(Config%criticalModules), &
       &             strip=.true., advance='yes' )
+    call output ( 'critical bands ' )
+    call output ( trim(config%criticalBands), advance='yes' )
     call output ( 'use critical modules to choose critical signals?' )
     call output ( config%chooseCriticalSignals, advance='yes' )
     call output ( 'max gap ' )
@@ -2433,6 +2470,25 @@ contains ! ===================================== Public Procedures =====
 
   end function ANY_GOOD_SIGNALDATA
 
+  logical function isNotACriticalBand( band )
+    use MLSStringLists, only: NumStringElements, StringElement
+    use MLSStrings, only: readIntsFromChars
+    ! Args
+    integer, intent(in) :: band
+    ! Internal variables
+    logical, parameter :: countEmpty = .true.
+    integer :: i
+    integer :: n
+    ! Executable
+    isNotACriticalBand = .true.
+    do i=1, NumStringElements( trim(ChunkDivideConfig%criticalBands), countEmpty )
+      call readIntsFromChars( trim(&
+        & StringElement( ChunkDivideConfig%criticalBands, i, countEmpty ) &
+        & ), n, ignore='*' )
+      isNotACriticalBand = isNotACriticalBand .and. (band /= n)
+    enddo
+  end function isNotACriticalBand
+
   subroutine smoothOutDroppedMAFs(field, wasSmoothed, monotonize)
     ! detect any fillValues--replace them with nearest neighbor values
     ! or, optionally, detect and correct any departures from monotone growth
@@ -2483,6 +2539,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.86  2008/05/28 21:51:43  pwagner
+! May choose critical band(s)
+!
 ! Revision 2.85  2007/12/14 01:55:28  pwagner
 ! Must delete obstructions observing proper order for indexing
 !
