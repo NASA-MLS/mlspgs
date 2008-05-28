@@ -129,7 +129,7 @@ contains ! =====     Public Procedures     =============================
       & L_COMBINECHANNELS, L_COLUMNABUNDANCE, L_CONVERGENCERATIO, &
       & L_DOBSONUNITS, L_DU, &
       & L_ESTIMATEDNOISE, L_EXPLICIT, L_EXTRACTCHANNEL, L_FOLD, &
-      & L_FWDMODELTIMING, L_FWDMODELMEAN, L_FWDMODELSTDDEV, &
+      & L_FWDMODELTIMING, L_FWDMODELMEAN, L_FWDMODELSTDDEV, L_GEOLOCATION, &
       & L_GEOCALTITUDE, L_GEODALTITUDE, L_GPHPRECISION, L_GRIDDED, L_H2OFROMRHI, &
       & L_HYDROSTATIC, L_ISOTOPE, &
       & L_IWCFROMEXTINCTION, L_KRONECKER, &
@@ -390,6 +390,7 @@ contains ! =====     Public Procedures     =============================
     integer :: H2OPRECISIONVECTORINDEX           ! In the vector database
     integer :: I, J                     ! Loop indices for section, spec, expr
     integer :: GLOBALUNIT               ! To go into the vector
+    character(len=16) :: GLStr          ! geo. loc. in manipulation='..'
     integer :: IBO
     logical :: IGNOREZERO               ! Don't sum chi^2 at values of noise = 0
     logical :: IGNORENEGATIVE           ! Don't sum chi^2 at values of noise < 0
@@ -1564,6 +1565,41 @@ contains ! =====     Public Procedures     =============================
         call FillFwdModelTimings (quantity%values(:,1), FWModelConfig, 'mean')
       case ( l_fwdModelStdDev ) ! --- Fill std_dev for forward model  -----
         call FillFwdModelTimings (quantity%values(:,1), FWModelConfig, 'stdDev')
+      case ( l_geoLocation )
+        ! otherwise hard-to-obtain geo location data, settings, switches, etc.
+        if ( .not. got ( f_manipulation ) ) &
+          & call Announce_error ( key, no_Error_Code,'manipulation not supplied' )
+        call get_string ( manipulation, GLStr, strip=.true. )
+        select case (lowercase( trim(GLStr) ))
+        ! Things about our chunk
+        case ( 'chunk' )
+          quantity%values = ChunkNo
+        case ( '1stmaf' )
+          quantity%values = Chunks(ChunkNo)%firstMAFIndex
+        ! Things about our Quantity template
+        case ( 'frequencies' )
+          quantity%values(:,1) = quantity%template%frequencies
+        case ( 'geodlat' )
+          quantity%values = quantity%template%geodLat
+        case ( 'lon' )
+          quantity%values = quantity%template%lon
+        case ( 'losangle' )
+          quantity%values = quantity%template%losangle
+        case ( 'phi' )
+          quantity%values = quantity%template%phi
+        case ( 'solartime' )
+          quantity%values = quantity%template%solartime
+        case ( 'solarzenith' )
+          quantity%values = quantity%template%solarzenith
+        case ( 'surfs' )
+          quantity%values = quantity%template%surfs
+        case ( 'time' )
+          quantity%values = quantity%template%time
+        case default
+          call Announce_error ( key, no_Error_Code, trim(GLStr) // &
+            & 'manipulation not recognized' )
+        end select
+
       case ( l_gphPrecision) ! -------------  GPH precision  -----
         ! Need a tempPrecision and a refgphPrecision quantity
         if ( .not.all(got( (/ f_refGPHPrecisionQuantity, f_tempPrecisionQuantity /))) ) &
@@ -2322,6 +2358,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.362  2008/05/28 21:52:48  pwagner
+! geo location Fill method to fill chunk numbers[maf]
+!
 ! Revision 2.361  2008/04/26 00:40:07  livesey
 ! Added total power stuff
 !
