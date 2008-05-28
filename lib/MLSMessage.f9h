@@ -241,6 +241,7 @@ contains
     call dump ( 'useToolkit         ', logValue= myConfig%useToolkit        )
     call dump ( 'CrashOnAnyError    ', logValue= myConfig%CrashOnAnyError   )
     call dump ( 'SendErrMsgToMaster ', logValue= myConfig%SendErrMsgToMaster)
+    call dump ( 'Trace calls        ', logValue= myConfig%StackTrace        )
     
     call dump ( 'Status values      ', charValue=' '                        )
     call dump ( '  Success          ', intValue=MLSMSG_Success              )
@@ -692,8 +693,8 @@ contains
     character (LEN=132) :: LINE
 
     write (line, * ) info
-    call MLSMessage ( MLSMSG_Error, Place, MLSMSG_PVM // &
-      & ' Info='//trim(adjustl(line)))
+    call printitout(  MLSMSG_PVM // &
+    & ' Info='//trim(adjustl(line)), MLSMSG_Error )
   end subroutine PVMErrorMessage
 
   ! ------------ StopWithErrorMsg ------------
@@ -919,6 +920,9 @@ contains
   
 !
 ! $Log$
+! Revision 2.9  2008/05/28 21:01:48  pwagner
+! Break endless cycling between PVMErrorMessage and MLSMessage
+!
 ! Revision 2.8  2008/05/23 23:16:22  vsnyder
 ! Added tracing of call stack operations
 !
