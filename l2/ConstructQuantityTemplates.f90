@@ -1035,7 +1035,7 @@ contains ! ============= Public procedures ===================================
       L_EARTHRADIUS, L_EARTHREFL, L_ECRTOFOV, L_EFFECTIVEOPTICALDEPTH, &
       L_ELEVOFFSET, L_EXTINCTION, &
       L_FIELDAZIMUTH, L_FIELDELEVATION, L_FIELDSTRENGTH, &
-      L_GPH, L_HEIGHTOFFSET, &
+      L_GEOLOCATION, L_GPH, L_HEIGHTOFFSET, &
       L_ISOTOPERATIO, L_JACOBIAN_COLS, L_JACOBIAN_ROWS, &
       L_L1BMAFBASELINE, L_L1BMIF_TAI, L_LIMBSIDEBANDFRACTION, &
       L_LineCenter, L_LineWidth, L_LineWidth_TDep, &
@@ -1115,6 +1115,7 @@ contains ! ============= Public procedures ===================================
       l_dnwt_gradn, phyq_dimensionless, p_vGrid, next, &
       l_dnwt_sq, phyq_dimensionless, p_vGrid, next, &
       l_dnwt_sqt, phyq_dimensionless, p_vGrid, next, &
+      l_geolocation, phyq_dimensionless, p_majorframe, p_module, next, &
       l_earthRadius, phyq_length, p_hGrid, next, &
       l_earthRefl, phyq_dimensionless, none /) )
 
@@ -1299,6 +1300,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.141  2008/05/28 21:03:58  pwagner
+! New quantity type to hold chunk number[maf]
+!
 ! Revision 2.140  2008/04/26 00:39:46  livesey
 ! Added total power stuff
 !
