@@ -81,8 +81,11 @@ begin Construct
     vGrid=vGridPhases
   sectionTiming: quantity, type=phaseTiming,  $
     vGrid=vGridPhases
+  chunkNumMMAF: quantity, type=geolocation, module= GHz
+  geodLatMMAF: quantity, type=geolocation, module= GHz
+  solarZenithMMAF: quantity, type=geolocation, module= GHz
   timingTemplate: VectorTemplate, quantities = [ $
-    phaseTiming, sectionTiming $
+    phaseTiming, sectionTiming, chunkNumMMAF, geodLatMMAF, solarZenithMMAF $
     ]
 
 end Construct
@@ -90,13 +93,20 @@ begin Fill
   timing: Vector, template=timingTemplate
   Fill, quantity=timing.phaseTiming, method=phaseTiming
   Fill, quantity=timing.sectionTiming, method=sectionTiming
+  Fill, quantity=timing.chunkNumMMAF,    method=geoLocation, manipulation='chunk'
+  Fill, quantity=timing.geodLatMMAF,     method=geoLocation, manipulation='geodlat'
+  Fill, quantity=timing.solarZenithMMAF, method=geoLocation, manipulation='solarzenith'
 end Fill
 begin Join
-  Label, quantity=timing.phaseTiming, label='phase timing'
-  Label, quantity=timing.sectionTiming, label='section timing'
-  !DirectWriteDGMCommand, hdfVersion=!hdfVersion, $
+  Label, quantity=timing.phaseTiming,     label='phase timing'
+  Label, quantity=timing.sectionTiming,   label='section timing'
+  Label, quantity=timing.chunkNumMMAF,    label='chunk number'
+  Label, quantity=timing.geodLatMMAF,     label='geod lat'
+  Label, quantity=timing.solarZenithMMAF, label='solar zenith'
+  DirectWrite, hdfVersion=5, $
   type=l2aux, $
-    source=timing.phaseTiming, source=timing.sectionTiming
+    source=timing.phaseTiming, source=timing.sectionTiming, $
+    source=timing.chunkNumMMAF, source=timing.geodLatMMAF, source=timing.solarZenithMMAF
   
 end Join
 })
