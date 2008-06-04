@@ -477,30 +477,57 @@ contains
 ! ------------------------------------------------- IsFillValue ---
 
   ! This family of routines checks to see if an arg is a fillValue
-  elemental logical function IsFillValue_int ( A, FILLVALUE )
+  elemental logical function IsFillValue_int ( A, FILLVALUE, STRICT )
     integer, intent(in) :: A
     integer, intent(in), optional :: FILLVALUE
+    logical, optional, intent(in) :: STRICT
     integer  :: MYFILLVALUE
+    ! Executable
+    ! The following somewhat confusing business short-circuits
+    ! checking the arg if we are strict but FillValue is not present
+    IsFillValue_int = .true.
+    if ( present(strict) ) IsFillValue_int = .not. ( &
+      & strict .and. present(FillValue) &
+      & )
+    if ( .not. IsFillValue_int ) return
     myFillValue = int(undefinedValue)
     if ( present(fillValue) ) myFillValue = fillValue
     IsFillValue_int = &
       & abs(a - myFillValue) < 1 ! FILLVALUETOLERANCE
   end function IsFillValue_int
 
-  elemental logical function IsFillValue_r4 ( A, FILLVALUE )
+  elemental logical function IsFillValue_r4 ( A, FILLVALUE, STRICT )
     real(r4), intent(in) :: A
     real(r4), intent(in), optional :: FILLVALUE
+    logical, optional, intent(in) :: STRICT
     real(r4)  :: MYFILLVALUE
+    ! Executable
+    ! The following somewhat confusing business short-circuits
+    ! checking the arg if we are strict but FillValue is not present
+    IsFillValue_r4 = .true.
+    if ( present(strict) ) IsFillValue_r4 = .not. ( &
+      & strict .and. present(FillValue) &
+      & )
+    if ( .not. IsFillValue_r4 ) return
     myFillValue = undefinedValue
     if ( present(fillValue) ) myFillValue = fillValue
     IsFillValue_r4 = &
       & abs(a - myFillValue) < max( FILLVALUETOLERANCE, abs(myFillValue/100000) )
   end function IsFillValue_r4
 
-  elemental logical function IsFillValue_r8 ( A, FILLVALUE )
+  elemental logical function IsFillValue_r8 ( A, FILLVALUE, STRICT )
     real(r8), intent(in) :: A
     real(r8), intent(in), optional :: FILLVALUE
+    logical, optional, intent(in) :: STRICT
     real(r8)  :: MYFILLVALUE
+    ! Executable
+    ! The following somewhat confusing business short-circuits
+    ! checking the arg if we are strict but FillValue is not present
+    IsFillValue_r8 = .true.
+    if ( present(strict) ) IsFillValue_r8 = .not. ( &
+      & strict .and. present(FillValue) &
+      & )
+    if ( .not. IsFillValue_r8 ) return
     myFillValue = undefinedValue
     if ( present(fillValue) ) myFillValue = fillValue
     IsFillValue_r8 = &
@@ -1126,43 +1153,57 @@ contains
   end subroutine BridgeMissingValues_3dr8
 
   ! This family of subroutines makes arrays of values monotonically (increasing)
-  subroutine Monotonize_1dint( values, Period, FillValue )
+  ! May be used instead of BridgeMissing Values
+  ! if Fill Values are -999.99
+  ! Will also handle Periodic arrays, e.g. angles
+  ! optional arg strict will insist that values[i] < valies[i+1]
+  subroutine Monotonize_1dint( values, Period, FillValue, strict )
     ! Args
     integer, dimension(:), intent(inout) :: values
     integer, optional, intent(in) :: Period
     integer, optional, intent(in) :: FillValue
+    logical, optional, intent(in) :: strict
     ! Internal variables
     integer :: dx
+    integer :: dxmin
     integer :: x1
     integer :: x2
     include 'Monotonize.f9h'
   end subroutine Monotonize_1dint
 
-  subroutine Monotonize_1dr4( values, Period, FillValue )
+  subroutine Monotonize_1dr4( values, Period, FillValue, strict )
     ! Args
     real(r4), dimension(:), intent(inout) :: values
     real(r4), optional, intent(in) :: Period
     real(r4), optional, intent(in) :: FillValue
+    logical, optional, intent(in) :: strict
     ! Internal variables
     real(r4) :: dx
+    real(r4) :: dxmin
     real(r4) :: x1
     real(r4) :: x2
     include 'Monotonize.f9h'
   end subroutine Monotonize_1dr4
 
-  subroutine Monotonize_1dr8( values, Period, FillValue )
+  subroutine Monotonize_1dr8( values, Period, FillValue, strict )
     ! Args
     real(r8), dimension(:), intent(inout) :: values
     real(r8), optional, intent(in) :: Period
     real(r8), optional, intent(in) :: FillValue
+    logical, optional, intent(in) :: strict
     ! Internal variables
     real(r8) :: dx
+    real(r8) :: dxmin
     real(r8) :: x1
     real(r8) :: x2
     include 'Monotonize.f9h'
   end subroutine Monotonize_1dr8
 
   ! (But what about Period and FillValue? Don't you want them, too?)
+
+  ! Actually, what doess it mean to be monotonic in 2d or 3d?
+  ! The gradient is a vector, do you want to constrain it?
+  ! Where will you need this? Will you ever need this?
   subroutine Monotonize_2dint(values)
     ! Args
     integer, dimension(:,:), intent(inout) :: values
@@ -1967,6 +2008,9 @@ end module MLSFillValues
 
 !
 ! $Log$
+! Revision 2.14  2008/06/04 21:42:56  pwagner
+! Monotonize now takes optional arg strict
+!
 ! Revision 2.13  2008/04/10 20:25:50  pwagner
 ! Montonize can take optional arg FillValue
 !
