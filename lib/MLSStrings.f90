@@ -48,6 +48,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! IsAllAscii         Is a string composed entirely of ascii, i.e. non-binary
 ! IsAscii            Is each array element ascii, i.e. non-binary
 ! IsRepeat           Is a string composed entirely of one substring repeated?
+! lenTrimToAscii     len_trim of string ignoring all non-ascii chars
 ! LinearSearchStringArray     
 !                    Finds string index of substring in array of strings
 ! LowerCase          tr[A-Z] -> [a-z]
@@ -57,6 +58,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 !                    Knits continuations, snips comments
 ! ReadIntsFromChars  Converts an array of strings to ints using Fortran read
 ! Replace            Replaces every instance of oldChar with newChar
+! ReplaceNonAscii    Replaces every non-ascii char with newChar
 ! Reverse            Turns 'a string' -> 'gnirts a'
 ! Reverse_trim       (Reverses after trimming its argument)
 ! Rot13              Like ROT13 but for general integer nn
@@ -73,24 +75,27 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! === (start of api) ===
 ! char* asciify (char* str)
 ! char* Capitalize (char* str)
+! CatStrings ( char* strings(:), char* sep, char* stringsCat, int L )
 ! char* CompressString (char* str)
 ! int count_words (char* str)
 ! char* depunctuate (char* str)
 ! FlushArrayLeft ( char* a(:), char* b(:), [char* options] )
 ! int(:) indexes (char* string, char* substrings, [char* mode])
 ! ints2Strings (int ints(:,:), char* strs(:))
-! int LinearSearchStringArray (char* list(:), char* string, 
-!   [log caseInsensitive, [log testSubstring], [log listInString])
 ! log(:) isAllAscii( char* arg(:) )
 ! log(:) isAscii( char arg(:) )
 ! log IsRepeat ( char* str, [char* ssubtring] )
+! int lenTrimToAscii (char* str)
+! int LinearSearchStringArray (char* list(:), char* string, 
+!   [log caseInsensitive, [log testSubstring], [log listInString])
 ! char* LowerCase (char* str)
 ! int(:) NAppearances (char* string, char* substrings)
 ! int NCopies (char* str, char* substring, [log overlap])
-! readIntsFromChars (char* strs(:), int ints(:), char* forbiddens)
 ! ReadCompleteLineWithoutComments (int unit, char* fullLine, [log eof], &
 !       & [char commentChar], [char continuationChar])
+! readIntsFromChars (char* strs(:), int ints(:), char* forbiddens)
 ! char* Replace (char* str, char oldChar, char newChar)
+! char* ReplaceNonAscii (char* str, char newChar)
 ! char* Reverse (char* str)
 ! char* Reverse_trim (char* str)
 ! char* Rot13 ( char* str, [int nn], [char* otp], [log inverse] )
@@ -153,9 +158,9 @@ MODULE MLSStrings               ! Some low level string handling stuff
   public :: asciify, Capitalize, CatStrings, CompressString, count_words, &
    & depunctuate, FlushArrayLeft, hhmmss_value, &
    & indexes, ints2Strings, isAllAscii, IsAscii, IsRepeat, &
-   & LinearSearchStringArray, LowerCase, NAppearances, NCopies, &
+   & LenTrimToAscii, LinearSearchStringArray, LowerCase, NAppearances, NCopies, &
    & ReadCompleteLineWithoutComments, readIntsFromChars, &
-   & Replace, Reverse, Reverse_trim, Rot13, &
+   & Replace, ReplaceNonAscii, Reverse, Reverse_trim, Rot13, &
    & size_trim, SplitNest, SplitWords, streq, strings2Ints, trim_safe, &
    & writeIntsToChars
 
@@ -225,22 +230,24 @@ MODULE MLSStrings               ! Some low level string handling stuff
 contains
 
   ! -------------------------------------------------  ASCIIFY  -----
+  ! takes input string and replaces any non-printing characters
+  ! with corresponding ones in range [32,126]
+  ! leaving other chars alone
+  !
+  ! How the replacement is done is according to the optional arg
+  !    how         meaning
+  !    ---         -------
+  !  'shift'       shift to the character with matching modulus (default)
+  !                  (a poor choice for default, in my opinion)
+  !  'snip'        remove the offending character (shortening the string)
+  !  'decimal'     return <nnn> where nnn is the decimal value (e.g. 0)
+  !  'octal'       return <nnn> where nnn is the octal value (e.g. 000)
+  !  'mnemonic'    return <ID> where ID is the mnemonic code (e.g. NUL)
+  !  '*'           replace with whatever character how was (e.g., '*')
+  ! Note that these last 3 options may output a longer string than the input
+
+  ! (see also ReplaceNonAscii)
   function ASCIIFY_scalar (STR, HOW) result (OUTSTR)
-    ! takes input string and replaces any non-printing characters
-    ! with ones in range [32,126]
-    ! leaving other chars alone
-    !
-    ! How the replacement is done is according to the optional arg
-    !    how         meaning
-    !    ---         -------
-    !  'shift'       shift to the character with matching modulus (default)
-    !                  (a poor choice for default, in my opinion)
-    !  'snip'        remove the offending character (shortening the string)
-    !  'decimal'     return <nnn> where nnn is the decimal value (e.g. 0)
-    !  'octal'       return <nnn> where nnn is the octal value (e.g. 000)
-    !  'mnemonic'    return <ID> where ID is the mnemonic code (e.g. NUL)
-    !  '*'           replace with whatever character how was (e.g., '*')
-    ! Note that these last 3 options may output a longer string than the input
     !--------Argument--------!
     character (len=*), intent(in)           :: STR
     character (len=5*len(str))              :: OUTSTR
@@ -743,6 +750,23 @@ contains
      isRepeat = (ncopies(trim(str), aChar) >= strlen)
   end function isRepeat
 
+  ! ------------------------------------------------  lenTrimToAscii  -----
+  function lenTrimToAscii (str) result (trimmedLength)
+    ! Return the len_trim of a string treating all non-Ascii as blanks
+    ! for our purposes, words consist of any non-space characters
+    ! and are separated by one or more spaces
+    ! -----added by hcp-------- 
+    !--------argument--------!
+    character (len=*), intent(in) :: str
+    !---------result---------!
+    integer :: trimmedLength
+    !-----local-variables------!
+    character(len=len(str)) :: newStr
+    !-------executable-code----!
+    newStr = ReplaceNonAscii( str, char(32) )
+    trimmedLength = len_trim( newStr )
+  end function lenTrimToAscii
+
   ! ------------------------------------  LinearSearchStringArray  -----
 
   ! This routine does a simple linear search for a string in an array.
@@ -1200,6 +1224,29 @@ contains
       if ( str(i:i) == oldChar ) outstr(i:i) = newChar
     enddo
   end function Replace
+
+   ! --------------------------------------------------  ReplaceNonAscii  -----
+  function ReplaceNonAscii (str, newchar) RESULT (outstr)
+    ! takes a string and returns one with non-ascii chars replaced by newChar
+    ! E.g., to replace every char(0), which is the NUL character, 
+    ! and a trailing char(13), which is a line feed,
+    ! with blanks, which is char(32)
+    ! arg = ReplaceNonAscii( arg, char(32) )
+    
+    ! (see also asciify)
+    character(len=*), intent(in) :: str
+    character(len=1), intent(in) :: newChar
+    character(len=len(str))      :: outstr
+    ! Internal variables
+    integer :: i, n
+    ! Executable
+    outstr = str
+    if ( len(str) < 1 ) return
+    n = len(str)
+    do i=1, n
+      if ( .not. isAscii(str(i:i)) ) outstr(i:i) = newChar
+    enddo
+  end function ReplaceNonAscii
 
    ! --------------------------------------------------  Reverse  -----
   elemental function Reverse (str) RESULT (outstr)
@@ -2102,6 +2149,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.74  2008/06/04 21:44:43  pwagner
+! Added lenTrimToAscii and ReplaceNonAscii
+!
 ! Revision 2.73  2008/05/09 00:22:37  pwagner
 ! Nappearances has new optional arg to not trim substrings
 !
