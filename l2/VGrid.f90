@@ -21,7 +21,7 @@ module vGrid                    ! Definitions for vGrids in vector quantities
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  private :: not_used_here
 !---------------------------------------------------------------------------
 
 ! -----     Private declarations     ---------------------------------
@@ -31,7 +31,8 @@ module vGrid                    ! Definitions for vGrids in vector quantities
 ! Error codes for "announce_error"
   integer, private, parameter :: ExtraIf = 1
   integer, private, parameter :: InconsistentUnits = ExtraIf + 1
-  integer, private, parameter :: NeedBoth = InconsistentUnits + 1
+  integer, private, parameter :: MoreUnits = InconsistentUnits + 1
+  integer, private, parameter :: NeedBoth = MoreUnits + 1
   integer, private, parameter :: NoL2GP = NeedBoth + 1
   integer, private, parameter :: NoStep = NoL2GP + 1
   integer, private, parameter :: NotPositive = NoStep + 1
@@ -61,10 +62,11 @@ contains ! =====     Public Procedures     =============================
     use INIT_TABLES_MODULE, only: F_COORDINATE, F_FORMULA, F_NUMBER, &
       & F_RESOLUTION, F_SOURCEL2GP, F_START, F_STEP, F_STOP, F_TYPE, &
       & F_VALUES, FIELD_FIRST, FIELD_LAST, &
-      & L_ANGLE, L_EXPLICIT, L_GEODALTITUDE, L_GPH, L_INTEGER, L_L2GP, &
-      & L_LINEAR, L_LOGARITHMIC, L_NONE, L_PRESSURE, L_THETA, L_ZETA, &
-      & PHYQ_Angle, PHYQ_Dimensionless, PHYQ_Length, PHYQ_Pressure, &
-      & PHYQ_Temperature, S_VGRID
+      & L_ANGLE, L_DIMENSIONLESS, L_DIMLESS, L_EXPLICIT, &
+      & L_GEODALTITUDE, L_GPH, L_ICEDENSITY, L_INTEGER, L_L2GP, L_LINEAR, &
+      & L_LOGARITHMIC, L_NONE, L_PRESSURE, L_THETA, L_ZETA, &
+      & PHYQ_Angle, PHYQ_Dimensionless, PHYQ_ICEDENSITY, PHYQ_Length, &
+      & PHYQ_Pressure, PHYQ_Temperature, S_VGRID
     use L2GPData, only: L2GPDATA_T
     use MoreTree, only: Get_Spec_ID
     use TOGGLES, only: GEN, TOGGLE
@@ -227,6 +229,18 @@ contains ! =====     Public Procedures     =============================
         & call announce_error ( subtree(1,start), unitsPressure )
 
       select case ( vGrid%verticalCoordinate )
+      case (l_angle)
+        if ( prev_units /= PHYQ_Angle) &
+          & call announce_error ( coordIndex, wrongUnits, f_type, phyq_angle )
+      case (l_dimensionless,l_dimless,l_integer)
+        if ( prev_units /= PHYQ_Dimensionless) &
+          & call announce_error ( coordIndex, wrongUnits, f_type, phyq_dimensionless )
+      case (l_geodAltitude)
+        if ( prev_units /= PHYQ_Length) &
+          & call announce_error ( coordIndex, wrongUnits, f_type, phyq_length )
+      case (l_gph)
+        if ( prev_units /= PHYQ_Length) &
+          & call announce_error ( coordIndex, wrongUnits, f_type, phyq_length )
       case (l_none)
         if ( coordType /= l_explicit ) &
           & call announce_error ( root, requireExplicit )
@@ -236,29 +250,22 @@ contains ! =====     Public Procedures     =============================
       case (l_pressure)
         if ( prev_units /= PHYQ_Pressure) &
           & call announce_error ( coordIndex, wrongUnits, f_type, phyq_pressure )
+      case (l_theta)
+        if ( prev_units /= PHYQ_Temperature) &
+          & call announce_error ( coordIndex, wrongUnits, f_type, phyq_temperature )
+      case (l_icedensity)
+        if ( prev_units /= PHYQ_Icedensity ) &
+          & call announce_error ( coordIndex, wrongUnits, f_type, &
+            & phyq_icedensity )
       case (l_zeta)
         select case ( prev_units )
         case ( PHYQ_Dimensionless )     ! OK, do nothing
         case ( PHYQ_Pressure )          ! Need to take log
           vgrid%surfs= -LOG10(vgrid%surfs)
         case default
-          call announce_error ( coordIndex, wrongUnits )
+          call announce_error ( coordIndex, wrongUnits, f_type, phyq_dimensionless )
+          call announce_error ( coordIndex, moreUnits, lit_index=phyq_pressure )
         end select
-      case (l_geodAltitude)
-        if ( prev_units /= PHYQ_Length) &
-          & call announce_error ( coordIndex, wrongUnits, f_type, phyq_length )
-      case (l_gph)
-        if ( prev_units /= PHYQ_Length) &
-          & call announce_error ( coordIndex, wrongUnits, f_type, phyq_length )
-      case (l_theta)
-        if ( prev_units /= PHYQ_Temperature) &
-          & call announce_error ( coordIndex, wrongUnits, f_type, phyq_temperature )
-      case (l_angle)
-        if ( prev_units /= PHYQ_Angle) &
-          & call announce_error ( coordIndex, wrongUnits, f_type, phyq_angle )
-      case (l_integer)
-        if ( prev_units /= PHYQ_Dimensionless) &
-          & call announce_error ( coordIndex, wrongUnits, f_type, phyq_angle )
       end select
 
     else ! must be a tGrid
@@ -351,6 +358,10 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: CODE    ! Code for error message
     integer, intent(in), optional :: FIELD_INDEX, LIT_INDEX ! Extra stuff
 
+    if ( code == moreUnits ) then
+      call display_string ( phyq_indices(lit_index), before=' or ', advance='yes' )
+      return
+    end if
     error = max(error,1)
     call startErrorMessage ( where )
     select case ( code )
@@ -411,10 +422,8 @@ contains ! =====     Public Procedures     =============================
       call output ( "The " )
       call display_string ( field_indices(field_index) )
       call output ( " field has incorrect units.", advance='yes' )
-      if ( present(lit_index) ) then
-        call output ( 'Units should be ' )
-        call display_string ( phyq_indices(lit_index), advance='yes' )
-      end if
+      if ( present(lit_index) ) call display_string ( phyq_indices(lit_index), &
+        before='Units should be ', advance='yes' )
     end select
     end subroutine ANNOUNCE_ERROR
 
@@ -488,6 +497,9 @@ end module vGrid
 
 !
 ! $Log$
+! Revision 2.24  2008/06/05 02:18:49  vsnyder
+! Added dimensionless, dimless and iceDensity coordinates, spiffed error handler
+!
 ! Revision 2.23  2005/06/22 18:57:02  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
@@ -565,4 +577,3 @@ end module vGrid
 ! Revision 1.1  2000/09/02 02:05:04  vsnyder
 ! Initial entry
 !
-
