@@ -161,6 +161,7 @@ strat
 switchingMirror
 
 tikhonov
+TScat
 
 vector
 vGrid
@@ -169,6 +170,9 @@ weighted
 wmoTropopause
 
 # $Log$
+# Revision 2.62  2008/06/05 02:06:36  vsnyder
+# Added TScat
+#
 # Revision 2.61  2008/05/28 21:03:19  pwagner
 # New quantity type to hold chunk number[maf]
 #
