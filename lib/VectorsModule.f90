@@ -213,11 +213,12 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 
   type VectorValue_T
     type (QuantityTemplate_T) :: TEMPLATE ! Template for this quantity.
-    integer :: index                    ! Index of this quantity into vector
+    integer :: index            ! Index of this quantity into vector database
     real(rv), dimension(:,:), pointer :: VALUES => NULL() ! The dimensions of
-    ! VALUES are Frequencies (or 1) * Vertical Coordinates (or 1), and
-    ! Horizontal Instances (scan or profile or 1).  These are taken from
-    ! (template%noChans * template%noSurfs, template%noInstances).
+    ! VALUES are Auxiliar coordinates (or 1) * Frequencies (or 1) * Vertical
+    ! Coordinates (or 1), and Horizontal Instances (scan or profile or 1). 
+    ! These are taken from (template%noAux * template%noChans *
+    ! template%noSurfs, template%noInstances).
     character, dimension(:,:), pointer :: MASK => NULL() ! MASK is used to
     ! control whether elements of vectors are of interest. If MASK is not
     ! associated, every element is of interest.  Otherwise,the dimensions of
@@ -225,8 +226,8 @@ module VectorsModule            ! Vectors in the MLS PGS suite
     ! what is not interesting.  Zero means something about VALUES(i,j) is
     ! interesting, and one means it is not.  The low-order bit is used for
     ! linear algebra.  Other bits can be used for other purposes.
-    integer :: label = 0                ! An optional label for this to be used
-    ! as for example a swath name.  Often used in conjunction with the 'batch'
+    integer :: label = 0        ! An optional label for this to be used as for
+    ! example a swath name.  Often used in conjunction with the 'batch'
     ! approach to direct writes.
   end type VectorValue_T
 
@@ -2555,6 +2556,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.131  2007/10/09 16:45:02  pwagner
+! Corrected declaration of myDetails
+!
 ! Revision 2.130  2007/10/09 00:29:42  pwagner
 ! Added optional DETAILS arg to some dumps
 !
