@@ -59,6 +59,9 @@ module QuantityTemplates         ! Quantities within vectors
     integer :: noInstances     ! Number of horizontal instances in this quantity
     integer :: noSurfs         ! Number of surfaces per instance
     integer :: noChans         ! Number of channels
+    integer :: noAux           ! Number of auxiliary coordinates.  The types
+                               ! of auxiliary coordinates are not constrained,
+                               ! but they are all specified by vGrids.
 
     ! Flags describing the quantity
 
@@ -103,10 +106,10 @@ module QuantityTemplates         ! Quantities within vectors
     real(r8), dimension(:,:), pointer :: surfs => NULL()
 
     ! This is dimensioned (noSurfs,1) for coherent quantities and
-    ! (noSurfs, noInstances) for incoherent ones.  Pretending the values
-    ! are dimensioned (noChans, noSurfs, noInstances), the SURFS coordinate
-    ! for the (:,i,j) values is surfs(i,1) for a coherent quantity or surfs(i,j)
-    ! for an incoherent one.
+    ! (noSurfs, noInstances) for incoherent ones.  Pretending the values are
+    ! dimensioned (noAux*noChans, noSurfs, noInstances), the SURFS coordinate
+    ! for the (:,i,j) values is surfs(i,1) for a coherent quantity or
+    ! surfs(i,j) for an incoherent one.
 
     ! Horizontal coordinates
     logical :: sharedHGrid              ! Set if horiz coords a pointer not a copy
@@ -143,6 +146,13 @@ module QuantityTemplates         ! Quantities within vectors
     real(r8) :: lo                      ! Local oscillator
     integer :: signal                   ! Index into signals database
     integer :: sideband                 ! Associated sideband -1, 0, +1
+
+    ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    ! Auxiliary coordinates
+    ! These are specified by vGrids.  noAux is the product of the sizes of
+    ! the vGrids.
+
+    integer, pointer :: AuxGrids(:) => NULL() ! vGrid indices
 
     ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     ! Some families of quantities require special additional information.
@@ -444,10 +454,11 @@ contains ! =====     Public Procedures     =============================
     call DestroyQuantityTemplateContents ( z )
     ! Setup result
     z%name = a%name
-    call SetupNewquantityTemplate ( z, a%noInstances, a%noSurfs, a%noChans, &
-      & a%coherent, a%stacked, a%regular, a%instanceLen, a%minorFrame, a%majorFrame )
-    ! Copy each other component -- tedious, but can't do a shallow copy
-    ! as would lose newly allocated arrays
+    call SetupNewQuantityTemplate ( z, a%noInstances, a%noSurfs, a%noChans, &
+      & a%coherent, a%stacked, a%regular, a%instanceLen, a%minorFrame, &
+      & a%majorFrame, noAux=a%noAux )
+    ! Copy each other component -- tedious, but a shallow copy
+    ! would lose newly allocated arrays
     z%quantityType = a%quantityType
     z%logBasis = a%logBasis
     z%minValue = a%minValue
@@ -481,6 +492,10 @@ contains ! =====     Public Procedures     =============================
     if ( .not. z%regular ) then
       z%surfIndex = a%surfIndex
       z%chanIndex = a%chanIndex
+    end if
+    if ( associated ( a%auxGrids ) ) then
+      call allocate_test ( z%auxGrids, size(a%auxGrids), 'z%auxGrids', moduleName )
+      z%auxGrids = a%auxGrids
     end if
    
   end subroutine CopyQuantityTemplate
@@ -777,7 +792,7 @@ contains ! =====     Public Procedures     =============================
   ! -----------------------------------  SetupNewQuantityTemplate  -----
   subroutine SetupNewQuantityTemplate ( qty, noInstances, noSurfs, &
     & noChans, coherent, stacked, regular, instanceLen, minorFrame, majorFrame, &
-    & sharedVGrid, sharedHGrid, sharedFGrid )
+    & sharedVGrid, sharedHGrid, sharedFGrid, noAux )
 
   ! Set up a new quantity template according to the user input.  This may
   ! be based on a previously supplied template (with possible
@@ -799,6 +814,7 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in), optional :: sharedVGrid
     logical, intent(in), optional :: sharedHGrid
     logical, intent(in), optional :: sharedFGrid
+    integer, intent(in), optional :: noAux
 
     ! Local variables
     integer :: noSurfsToAllocate        ! For allocations
@@ -814,9 +830,10 @@ contains ! =====     Public Procedures     =============================
     end if
 
     qty%quantityType = 0
+    qty%noAux = 1
+    qty%noChans = 1
     qty%noInstances = 1
     qty%noSurfs = 1
-    qty%noChans = 1
     qty%coherent = .true.
     qty%stacked = .true.
     qty%regular = .true.
@@ -847,9 +864,10 @@ contains ! =====     Public Procedures     =============================
     qty%molecule = 0
 
     ! Now, see if the user asked for modifications to this
+    if ( present ( noAux) )        qty%noAux = noAux
+    if ( present ( noChans) )      qty%noChans = noChans
     if ( present ( noInstances) )  qty%noInstances = noInstances
     if ( present ( noSurfs) )      qty%noSurfs = noSurfs
-    if ( present ( noChans) )      qty%noChans = noChans
     if ( present ( regular) )      qty%regular = regular
     if ( present ( minorFrame) )   qty%minorFrame = minorFrame
     if ( present ( majorFrame) )   qty%majorFrame = majorFrame
@@ -881,7 +899,7 @@ contains ! =====     Public Procedures     =============================
         qty%instanceLen = 0
       end if
     else
-      qty%instanceLen = qty%noSurfs*qty%noChans
+      qty%instanceLen = qty%noSurfs*qty%noChans*qty%noAux
     end if
 
     ! Now we allocate all the arrays we're going to need if necessary
@@ -953,6 +971,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.49  2007/09/12 00:16:12  vsnyder
+! Default initialize name component of QuantityTemplate_T to zero
+!
 ! Revision 2.48  2007/03/23 00:11:52  pwagner
 ! qtmp switch now warns while destroying quantitytemplates
 !
