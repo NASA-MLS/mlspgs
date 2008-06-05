@@ -29,7 +29,8 @@ module ConstructQuantityTemplates
 
   ! The various properties has/can have
   integer, parameter :: NEXT = -1
-  integer, parameter :: P_CHUNKED            = 1
+  integer, parameter :: P_AUXGRID            = 1
+  integer, parameter :: P_CHUNKED            = P_AUXGRID + 1
   integer, parameter :: P_MAJORFRAME         = P_CHUNKED + 1
   integer, parameter :: P_MINORFRAME         = P_MAJORFRAME + 1
   integer, parameter :: P_MUSTBEZETA         = P_MINORFRAME + 1
@@ -71,7 +72,7 @@ contains ! ============= Public procedures ===================================
     use EXPR_M, only: EXPR
     use FGrid, only: fGrid_T
     use HGridsDatabase, only: hGrid_T
-    use INIT_TABLES_MODULE, only:  F_FGRID, F_HGRID, F_IRREGULAR, &
+    use INIT_TABLES_MODULE, only:  F_AUXGRID, F_FGRID, F_HGRID, F_IRREGULAR, &
       & F_LOGBASIS, F_MINVALUE, F_MODULE, F_MOLECULE, F_RADIOMETER, F_SGRID, &
       & F_SIGNAL, F_TYPE, F_VGRID, F_REFLECTOR, FIELD_FIRST, FIELD_LAST, &
       & L_TRUE, L_ZETA, L_XYZ, L_MATRIX3X3, L_CHANNEL, L_LOSTRANSFUNC, L_NONE
@@ -111,6 +112,7 @@ contains ! ============= Public procedures ===================================
     logical, dimension(field_first:field_last) :: GOT ! Fields
     character(len=127) :: SIGNALSTRING
 
+    integer :: AuxGridNode              ! Tree index of AuxGrid field
     integer :: FGRIDINDEX               ! Index of frequency grid
     integer :: FREQUENCYCOORDINATE      ! Literal
     integer :: HGRIDINDEX               ! Index of horizontal grid
@@ -118,6 +120,7 @@ contains ! ============= Public procedures ===================================
     integer :: INSTRUMENTMODULE         ! Database index
     integer :: KEY                      ! Field name, F_...
     integer :: MOLECULE                 ! Literal
+    integer :: NOAUX                    ! Quantity dimension
     integer :: NOCHANS                  ! Quantity dimension
     integer :: NOINSTANCES              ! Quantity dimension
     integer :: NOSURFS                  ! Quantity dimension
@@ -155,6 +158,7 @@ contains ! ============= Public procedures ===================================
     logBasis = .false.
     minValue = -huge ( 0.0_rk )
     molecule = 0
+    noAux = 1
     noChans = 1
     quantitytype = 0
     radiometer = 0
@@ -179,6 +183,8 @@ contains ! ============= Public procedures ===================================
       got ( decoration(key) ) = .true.
 
       select case ( decoration(key) )
+      case ( f_auxGrid )
+        auxGridNode = key ! Might have several sons
       case ( f_fgrid )
         fGridIndex = decoration(value)
       case ( f_hgrid )
@@ -255,7 +261,7 @@ contains ! ============= Public procedures ===================================
       if ( got ( f_vGrid ) .neqv. properties ( p_vGrid ) ) &
         & call Announce_error ( root, trim ( merge ( 'unexpected', 'need      ', &
         & got(f_vGrid) ) ) // ' vGrid for quantity type ', quantityType )
-    endif
+    end if
     if ( got ( f_sGrid ) .neqv. properties ( p_sGrid ) ) &
       & call Announce_error ( root, trim ( merge ( 'unexpected', 'need      ', &
       & got(f_sGrid) ) ) // ' sGrid for quantity type ', quantityType )
@@ -265,6 +271,9 @@ contains ! ============= Public procedures ===================================
     if ( got ( f_Reflector ) .neqv. properties ( p_Reflector ) ) &
       & call Announce_error ( root, trim ( merge ( 'unexpected', 'need      ', &
       & got(f_Reflector) ) ) // ' reflector for quantity type ', quantityType )
+    if ( got ( f_auxGrid ) .neqv. properties ( p_auxGrid ) ) &
+      & call Announce_error ( root, trim ( merge ( 'unexpected', 'need      ', &
+      & got(f_auxGrid) ) ) // ' sGrid for quantity type ', quantityType )
 
     ! These ones need a little more thought
     if ( .not. properties ( p_signalOptional ) ) then
@@ -318,7 +327,7 @@ contains ! ============= Public procedures ===================================
       frequencyCoordinate = l_channel
       noChans = size ( signalInfo%frequencies )
     else if ( got(f_sGrid) ) then
-      ! Uses an sGrid
+      ! Uses an sGrid.  This is faked as frequency, but it's not
       noChans = size ( vGrids(sGridIndex)%surfs )
       frequencyCoordinate = l_losTransFunc
     else
@@ -412,7 +421,7 @@ contains ! ============= Public procedures ===================================
       ! print *, 'qty%sharedFGrid ', qty%sharedFGrid
       ! print *, fGrids(fGridIndex)%values
     end if
-    if ( properties ( p_sGrid ) ) then
+    if ( properties ( p_sGrid ) ) then ! Faked as frequency, but it's not
       qty%sharedFGrid = .false.
       nullify(qty%frequencies) ! Lest we deallocate a database entry
       call Allocate_test ( qty%frequencies, qty%noChans, 'qty%frequencies', &
@@ -421,6 +430,15 @@ contains ! ============= Public procedures ===================================
       qty%frequencies = vGrids(sGridIndex)%surfs(:,1)
       ! print *, 'Resetting: fGridIndex ', qty%fGridIndex
       ! print *, qty%frequencies
+    end if
+
+    ! Aux grid stuff
+    if ( got(f_auxGrid) ) then
+      call allocate_test ( qty%auxGrids, nsons(auxGridNode)-1, 'qty%auxGrids', moduleName )
+      do i = 2, nsons(auxGridNode)
+        qty%auxGrids(i-1) = decoration(subtree(i,auxGridNode))
+        noAux = noAux * vGrids(qty%auxGrids(i-1))%noSurfs
+      end do
     end if
 
     ! Set up the remaining stuff
@@ -460,14 +478,11 @@ contains ! ============= Public procedures ===================================
       else
         call display_string ( qty%Molecule, advance='yes' )
       end if
-      call output ( '   noChans = ' )
-      call output ( qty%noChans, advance='no' )
-      call output ( ' noSurfs = ' )
-      call output ( qty%noSurfs, advance='no' )
-      call output ( ' noInstances = ' )
-      call output ( qty%noInstances, advance='no' )
-      call output ( ' instanceLen = ' )
-      call output ( qty%instanceLen, advance='yes' )
+      call output ( qty%noAux,       before='   noAux',     advance='no' )
+      call output ( qty%noChans,     before=' noChans',     advance='no' )
+      call output ( qty%noSurfs,     before=' noSurfs',     advance='no' )
+      call output ( qty%noInstances, before=' noInstances', advance='no' )
+      call output ( qty%instanceLen, before=' instanceLen', advance='yes' )
       call output ( ' verticalCoordinate = ' )
       call display_string ( lit_indices(qty%verticalCoordinate) )
       call output ( ' frequencyCoordinate = ' )
@@ -1025,7 +1040,7 @@ contains ! ============= Public procedures ===================================
       L_CALSIDEBANDFRACTION, &
       L_CHISQBINNED, L_CHISQCHAN, L_CHISQMMAF, L_CHISQMMIF, L_CLOUDICE, &
       L_CLOUDINDUCEDRADIANCE, L_CLOUDEXTINCTION, L_CLOUDMINMAX, L_CLOUDRADSENSITIVITY, &
-      L_CLOUDWATER, L_COLUMNABUNDANCE, &
+      L_CLOUDTEMPERATURE, L_CLOUDWATER, L_COLUMNABUNDANCE, &
       L_DNWT_AJN, L_DNWT_AXMAX, L_DNWT_CAIT, &
       L_DNWT_CHISQMINNORM, L_DNWT_CHISQNORM, L_DNWT_CHISQRATIO, &
       L_DNWT_DIAG, L_DNWT_DXDX, L_DNWT_DXDXL, &
@@ -1051,7 +1066,7 @@ contains ! ============= Public procedures ===================================
       L_SCVELECR, L_SCGEOCALT, L_SPACERADIANCE, L_STATUS, &
       L_STRAYRADIANCE, L_SurfaceHeight, L_SURFACETYPE, L_SYSTEMTEMPERATURE, &
       L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, L_TNGTGEOCALT, &
-      L_TOTALPOWERWEIGHT, L_VMR
+      L_TOTALPOWERWEIGHT, L_TSCAT, L_VMR
     use Init_Tables_Module, only: PHYQ_EXTINCTION, PHYQ_FREQUENCY,&
       & PHYQ_GAUSS, PHYQ_IceDensity, PHYQ_LENGTH, &
       & PHYQ_PRESSURE, PHYQ_TEMPERATURE, PHYQ_TIME, PHYQ_VELOCITY, &
@@ -1092,6 +1107,7 @@ contains ! ============= Public procedures ===================================
       l_cloudMinMax, phyq_temperature, p_hGrid, p_vGrid, p_mustbezeta, &
                      p_signal, p_suppressChannels, next, &
       l_cloudRadSensitivity, phyq_temperature, p_minorFrame, p_signal, next, &
+      l_cloudTemperature, phyq_temperature, p_hGrid, p_vGrid, p_mustBeZeta, next, &
       l_cloudWater, phyq_dimensionless, p_hGrid, p_vGrid, p_mustBeZeta, next, &
       l_columnAbundance, phyq_colmabundance, p_hGrid, p_molecule, next, &
       l_dnwt_ajn, phyq_dimensionless, p_vGrid, next, &
@@ -1155,6 +1171,7 @@ contains ! ============= Public procedures ===================================
       l_numNewt, phyq_dimensionless, p_vGrid, next, &
       l_opticalDepth, phyq_dimensionless, p_minorFrame, p_signal, next, &
       l_orbitInclination, phyq_angle, p_minorFrame, p_scModule, next, &
+      l_phaseTiming, phyq_dimensionless, p_vGrid, next, &
       l_phiTan, phyq_angle, p_minorFrame, p_module, next, & 
       l_ptan, phyq_zeta, p_minorFrame, p_module, next /) )
 
@@ -1182,16 +1199,16 @@ contains ! ============= Public procedures ===================================
       l_surfaceHeight, phyq_length, p_hGrid, next, &
       l_surfaceType, phyq_dimensionless, p_hGrid, next, & 
       l_systemTemperature, phyq_temperature, p_signal, next, &
-      l_temperature, phyq_temperature, p_hGrid, p_vGrid, p_mustbezeta, next, &
+      l_temperature, phyq_temperature, p_auxGrid, p_hGrid, p_vGrid, &
+                     p_mustbezeta, next, &
       l_totalPowerWeight, phyq_dimensionless, p_signal, next, &
       l_tngtECI, phyq_length, p_minorFrame, p_module, p_xyz, next, &
       l_tngtGeocAlt, phyq_length, p_minorFrame, p_module, next, &
       l_tngtGeodAlt, phyq_length, p_minorFrame, p_module, next, &
-      l_vmr, phyq_vmr, p_hGrid, p_vGrid, p_fGridOptional, p_molecule, &
-             p_radiometerOptional, p_mustbezeta, next /) )
+      l_TScat, phyq_temperature, p_auxGrid, p_fGrid, p_hGrid, p_vGrid, next, &
+      l_vmr, phyq_vmr, p_auxGrid, p_hGrid, p_vGrid, p_fGridOptional, &
+             p_molecule, p_radiometerOptional, p_mustbezeta, next /) )
 
-    call DefineQtyTypes ( (/ & 
-      l_phaseTiming, phyq_dimensionless, p_vGrid, next/) )
     ! Do a bit of checking
     do i = first_lit, last_lit
       valid = .true.
@@ -1232,8 +1249,7 @@ contains ! ============= Public procedures ===================================
       ! Executable code
       qtyType = 0
       i = 1
-      defineLoop: do
-        if ( i > size(info) ) exit defineLoop
+      do while ( i <= size(info) )
         if ( qtyType == 0 ) then
           qtyType = info ( i )
           propertyTable ( :, qtyType ) = .false.
@@ -1249,7 +1265,7 @@ contains ! ============= Public procedures ===================================
           end if
         end if
         i = i + 1
-      end do defineLoop
+      end do
     end subroutine DefineQtyTypes
     
   end subroutine InitQuantityTemplates
@@ -1300,6 +1316,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.142  2008/06/05 02:14:29  vsnyder
+! Added AuxGrid field to Quantity.  Defined CloudTemperature and TScat types.
+!
 ! Revision 2.141  2008/05/28 21:03:58  pwagner
 ! New quantity type to hold chunk number[maf]
 !
