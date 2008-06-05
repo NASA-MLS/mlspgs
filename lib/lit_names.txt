@@ -43,6 +43,7 @@ cloudInducedRadiance
 cloudMinMax
 cloudRadSensitivity
 cloudWater
+cloudTemperature # temperature on a cloud grid
 cloudy_110RH_below_top
 cloudy_110RH_in_cloud
 cloudy_nearside_only
@@ -224,6 +225,9 @@ zeta
 zonalavg
 
 # $Log$
+# Revision 2.50  2008/06/05 02:04:11  vsnyder
+# Add cloudTemperature
+#
 # Revision 2.49  2008/04/26 00:38:10  livesey
 # Added totalPowerWeight
 #
