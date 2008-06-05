@@ -271,9 +271,11 @@ contains ! ============= Public procedures ===================================
     if ( got ( f_Reflector ) .neqv. properties ( p_Reflector ) ) &
       & call Announce_error ( root, trim ( merge ( 'unexpected', 'need      ', &
       & got(f_Reflector) ) ) // ' reflector for quantity type ', quantityType )
-    if ( got ( f_auxGrid ) .neqv. properties ( p_auxGrid ) ) &
-      & call Announce_error ( root, trim ( merge ( 'unexpected', 'need      ', &
-      & got(f_auxGrid) ) ) // ' sGrid for quantity type ', quantityType )
+
+    ! auxGrid is never required, but is sometimes prohibited
+    if ( got ( f_auxGrid ) .and. .not. properties ( p_auxGrid ) ) &
+      & call Announce_error ( root, 'unexpected auxGrid for quantity type ', &
+      & quantityType )
 
     ! These ones need a little more thought
     if ( .not. properties ( p_signalOptional ) ) then
@@ -1316,6 +1318,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.143  2008/06/05 20:00:45  vsnyder
+! auxGrid never required
+!
 ! Revision 2.142  2008/06/05 02:14:29  vsnyder
 ! Added AuxGrid field to Quantity.  Defined CloudTemperature and TScat types.
 !
