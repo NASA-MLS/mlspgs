@@ -87,8 +87,7 @@ program Mie_Tables
   real(r8), allocatable :: Beta(:,:,:,:) ! Temperature X IWC X F X 2
     ! Final dimension: 1 = Beta(c_e), 2 = Beta(c_s)
   integer, parameter :: I_c_e = 1, I_c_s = 2
-  real(r8) :: Chi               ! 2 pi r / lambda
-  real(r8) :: Chi_fac           ! to get chi from r and lambda = 2 * pi / lambda
+  real(r8) :: Chi_fac           ! 2 * pi / lambda
   ! For Eest, the final "2" dimension is Beta(c_e), Beta(c_s)
   real(r8), allocatable :: Eest(:,:,:,:) ! Error estimate: Temperature X IWC X F X 2
   real(r8), allocatable :: EestI(:,:)    ! Error estimate for IWC: Temperature X IWC
@@ -129,13 +128,11 @@ program Mie_Tables
   real(r8), allocatable :: P(:,:,:,:)  ! Phase, Temperature X IWC X Theta X F
 
   ! For DINT
-  real(r8) :: Answer
-  integer :: Details = 0   ! <0 = totals only
-                           ! 0 = separate results for terms of size distribution
+  integer :: Details = 0   ! <0 = Nothing
+                           ! 0 = totals only
                            ! 1 = error estimates and numbers of function values
                            ! 2 = orders of Bessel functions
                            ! 3 = coefficients
-  real(r8) :: Error
   integer :: IOPT(12)
   ! Reverse communication, output, nfunc, nfmax
   data IOPT / 0, 6, 2, 0, 10, 0, 9, 2000000, 0, 0, 0, 0 /
@@ -147,7 +144,6 @@ program Mie_Tables
   real(r8) :: F_s(nf_s)               ! Frequencies
   real(r8) :: IWC                     ! Ice water content, g/m^3
   real(r8), allocatable :: IWC_s(:)   ! log10(iwc's)
-  integer :: MACT(3) = (/ 21, 9, 51 /)
   real(r8) :: R                       ! Particle radius, um
   real(r8) :: T                       ! Temperature, Kelvins
   real(r8), allocatable :: T_s(:)     ! temperatures
@@ -194,7 +190,7 @@ program Mie_Tables
   integer :: I_Beta, I_IWC, I_T, I_Theta, I_F
 
   namelist / in / IWC_Min, IWC_Max, N_IWC, T_Min, T_Max, N_T, &
-    &             F_s, N_F, R_Min, R_Max, &
+    &             F_s, R_Min, R_Max, &
     &             Theta_Min, Theta_Max, N_Theta, N_Cut, File, HDF, &
     &             IOPT, NFMAX, Derivs, Details, Diffs, Norm, Progress, Warn
 
@@ -205,13 +201,13 @@ program Mie_Tables
 
   call cpu_time ( ot0 )
   do
-    file = '' ! Can't write more than one data set to a single file
+    f_s = -1.0 ! Sentinel indicating no more frequencies
+    file = ''  ! Can't write more than one data set to a single file
     read ( *, in, end=9 )
 
-    if ( n_f > nf_s ) then
-      write ( *, * ) 'Too many frequencies, N_F =', n_f, ' >', nf_s
-      cycle
-    end if
+    do n_f = 0, size(f_s)-1
+      if ( f_s(n_f+1) < 0.0 ) exit
+    end do
 
     if ( allocated(beta) ) then
       if ( any(shape(p) /= (/ n_t, n_iwc, n_theta, n_f /)) .or. size(a) /= n_cut ) then
@@ -389,79 +385,7 @@ program Mie_Tables
 
 ! Report the results
 
-    write ( *, 1 ) f_s(:n_f)
-1   format ( 'Frequencies ', 8f6.1, (10f6.1) )
-
-    write ( *, 2 ) t_min, t_max, n_t, iwc_min, iwc_max, n_iwc, &
-      &            r_min, r_max, theta_min, theta_max, n_theta, n_cut
-2   format ( 'T = ', f5.0, ' : ', f5.0, ' (', i0, &
-           & ') Log10 IWC = ', f6.2, ' : ', f6.2, ' (', i0, ')' / &
-           & 'R = ', f6.1, ' : ', f6.1, ' Theta = ', f7.3, ' : ', f7.3, &
-           & ' (', i0, ')', ' N_Cut = ', i0 )
-
-    call report_2 ( 'IWC_total', iwc_tot, .false., eestI, nFuncI )
-    call report ( 'Beta(c_e)', beta(:,:,:,i_c_e), norm, eest(:,:,:,i_c_e), &
-      & nFunc(:,:,:,:,i_c_e), maxOrd(:,:,:,i_c_e) )
-    call report ( 'Beta(c_s)', beta(:,:,:,i_c_s), norm, eest(:,:,:,i_c_s), &
-      & nFunc(:,:,:,:,i_c_s), maxOrd(:,:,:,i_c_s) )
-    if ( derivs ) then  
-      call report ( 'dBeta(c_e)/dIWC', dBeta_dIWC(:,:,:,i_c_e), norm, &
-        & e_dBeta_dIWC(:,:,:,i_c_e), nFunc(:,:,:,:,3), maxOrd(:,:,:,3) )
-      if ( diffs .and. n_iwc > 1 ) then
-        diffX_IWC = beta(:,2:n_iwc,:,i_c_e)-beta(:,:n_iwc-1,:,i_c_e)
-        do i_IWC = 2, n_iwc
-          diffX_IWC(:,i_iwc-1,:) = diffX_IWC(:,i_iwc-1,:) / diffIWC(i_iwc-1)
-        end do
-        call report ( 'Diff Beta(c_e) / diff IWC', diffX_IWC, .false. )
-      end if
-      call report ( 'dBeta(c_s)/dIWC', dBeta_dIWC(:,:,:,i_c_s), norm, &
-        & e_dBeta_dIWC(:,:,:,i_c_s), nFunc(:,:,:,:,4), maxOrd(:,:,:,4) )
-      if ( diffs .and. n_iwc > 1 ) then
-        diffX_IWC = beta(:,2:n_iwc,:,i_c_s)-beta(:,:n_iwc-1,:,i_c_s)
-        do i_IWC = 2, n_iwc
-          diffX_IWC(:,i_iwc-1,:) = diffX_IWC(:,i_iwc-1,:) / diffIWC(i_iwc-1)
-        end do
-        call report ( 'Diff Beta(c_s) / diff IWC', diffX_IWC, .false. )
-      end if
-      call report ( 'dBeta(c_e)/dT', dBeta_dT(:,:,:,i_c_e), norm, &
-        & e_dBeta_dT(:,:,:,i_c_e), nFunc(:,:,:,:,5), maxOrd(:,:,:,5) )
-      if ( diffs .and. n_t > 1 ) call report ( 'Diff Beta(c_e) / Diff T', &
-        & (beta(2:n_t,:,:,i_c_e)-beta(:n_t-1,:,:,i_c_e)) / dT, .false. )
-      call report ( 'dBeta(c_s)/dT', dBeta_dT(:,:,:,i_c_s), norm, &
-        & e_dBeta_dT(:,:,:,i_c_s), nFunc(:,:,:,:,6), maxOrd(:,:,:,6) )
-      if ( diffs .and. n_t > 1 ) call report ( 'Diff Beta(c_s) / Diff T', &
-            & (beta(2:n_t,:,:,i_c_s)-beta(:n_t-1,:,:,i_c_s)) / dT, .false. )
-    end if ! Derivs
-
-    do i_Theta = 1, n_Theta
-      theta = theta_s(i_theta)
-      write ( string, '(f7.3)' ) theta/deg2Rad
-      string = adjustl(string)
-      n = len_trim(string)                     ! trim trailing blanks
-      n = verify(string(:n), '0', back=.true.) ! Trim trailing zeros
-      n = verify(string(:n), '.', back=.true.) ! Trim trailing decimal point
-      call report ( "P(" // string(:n) // ")", &
-        & p(:,:,i_theta,:), norm, e_p(:,:,i_theta,:), nFuncP(:,:,:,i_theta,:,1), &
-        & maxOrdP(:,:,i_theta,:,1) )
-      if ( derivs ) then
-        call report ( "dP(" // string(:n) // ")/dIWC", &
-        & dP_dIWC(:,:,i_theta,:), norm, e_dP_dIWC(:,:,i_theta,:), &
-        & nFuncP(:,:,:,i_theta,:,2), maxOrdP(:,:,i_theta,:,2) )
-        if ( diffs .and. n_iwc > 1 ) then
-          diffX_IWC = p(:,2:n_iwc,i_theta,:) - p(:,:n_iwc-1,i_theta,:)
-          do i_IWC = 2, n_iwc
-            diffX_IWC(:,i_iwc-1,:) = diffX_IWC(:,i_iwc-1,:) / diffIWC(i_iwc-1)
-          end do
-          call report ( "Diff P(" // string(:n) // ")/diff IWC", &
-            & diffX_IWC, .false. )
-        end if
-        call report ( "dP(" // string(:n) // ")/dT", &
-          & dP_dT(:,:,i_theta,:), norm, e_dP_dT(:,:,i_theta,:), &
-          & nFuncP(:,:,:,i_theta,:,3), maxOrdP(:,:,i_theta,:,3) )
-        if ( diffs .and. n_t > 1 ) call report ( "Diff P(" // string(:n) // ")/diff T", &
-              & (p(2:n_t,:,i_theta,:) - p(:n_t-1,:,i_theta,:)) / dT, .false. )
-      end if
-    end do ! Theta
+    if ( details >= 0 ) call printResults
 
     if ( file /= '' ) then
       if ( hdf ) then
@@ -620,7 +544,6 @@ contains
     real(r8), intent(in) :: R_min, R_max
     real(r8), intent(inout) :: Answer
     real(r8), intent(out) :: Error
-    real(r8) :: Numer        ! of outer integral
     ! Start the quadrature
     call dint1 ( r_min, r_max, answer, work, iopt )
     ! Evaluate the integrand
@@ -704,7 +627,7 @@ contains
     real(r8), intent(inout) :: Answer
     real(r8), intent(out) :: Error
     real(r8) :: Numer          ! Error in numerator of answer
-    real(r8) :: P0, dP0_dT, dP_dT
+    real(r8) :: P0, dP0_dT
     real(r8) :: NR, dNR_dIWC, dNR_dT
     ! Start the quadrature
     call dint1 ( r_min, r_max, answer, work, iopt )
@@ -770,6 +693,82 @@ contains
     error = huge(error)
   end subroutine ErrorReport
 
+  subroutine PrintResults
+    write ( *, 1 ) f_s(:n_f)
+1   format ( 'Frequencies = ', 8f7.1, (10f7.1) )
+
+    write ( *, 2 ) t_min, t_max, n_t, iwc_min, iwc_max, n_iwc, &
+      &            r_min, r_max, theta_min, theta_max, n_theta, n_cut
+2   format ( 'T = ', f5.0, ' : ', f5.0, ' (', i0, &
+           & ') Log10 IWC = ', f6.2, ' : ', f6.2, ' (', i0, ')' / &
+           & 'R = ', f6.1, ' : ', f6.1, ' Theta = ', f7.3, ' : ', f7.3, &
+           & ' (', i0, ')', ' N_Cut = ', i0 )
+
+    call report_2 ( 'IWC_total', iwc_tot, .false., eestI, nFuncI )
+    call report ( 'Beta(c_e)', beta(:,:,:,i_c_e), norm, eest(:,:,:,i_c_e), &
+      & nFunc(:,:,:,:,i_c_e), maxOrd(:,:,:,i_c_e) )
+    call report ( 'Beta(c_s)', beta(:,:,:,i_c_s), norm, eest(:,:,:,i_c_s), &
+      & nFunc(:,:,:,:,i_c_s), maxOrd(:,:,:,i_c_s) )
+    if ( derivs ) then  
+      call report ( 'dBeta(c_e)/dIWC', dBeta_dIWC(:,:,:,i_c_e), norm, &
+        & e_dBeta_dIWC(:,:,:,i_c_e), nFunc(:,:,:,:,3), maxOrd(:,:,:,3) )
+      if ( diffs .and. n_iwc > 1 ) then
+        diffX_IWC = beta(:,2:n_iwc,:,i_c_e)-beta(:,:n_iwc-1,:,i_c_e)
+        do i_IWC = 2, n_iwc
+          diffX_IWC(:,i_iwc-1,:) = diffX_IWC(:,i_iwc-1,:) / diffIWC(i_iwc-1)
+        end do
+        call report ( 'Diff Beta(c_e) / diff IWC', diffX_IWC, .false. )
+      end if
+      call report ( 'dBeta(c_s)/dIWC', dBeta_dIWC(:,:,:,i_c_s), norm, &
+        & e_dBeta_dIWC(:,:,:,i_c_s), nFunc(:,:,:,:,4), maxOrd(:,:,:,4) )
+      if ( diffs .and. n_iwc > 1 ) then
+        diffX_IWC = beta(:,2:n_iwc,:,i_c_s)-beta(:,:n_iwc-1,:,i_c_s)
+        do i_IWC = 2, n_iwc
+          diffX_IWC(:,i_iwc-1,:) = diffX_IWC(:,i_iwc-1,:) / diffIWC(i_iwc-1)
+        end do
+        call report ( 'Diff Beta(c_s) / diff IWC', diffX_IWC, .false. )
+      end if
+      call report ( 'dBeta(c_e)/dT', dBeta_dT(:,:,:,i_c_e), norm, &
+        & e_dBeta_dT(:,:,:,i_c_e), nFunc(:,:,:,:,5), maxOrd(:,:,:,5) )
+      if ( diffs .and. n_t > 1 ) call report ( 'Diff Beta(c_e) / Diff T', &
+        & (beta(2:n_t,:,:,i_c_e)-beta(:n_t-1,:,:,i_c_e)) / dT, .false. )
+      call report ( 'dBeta(c_s)/dT', dBeta_dT(:,:,:,i_c_s), norm, &
+        & e_dBeta_dT(:,:,:,i_c_s), nFunc(:,:,:,:,6), maxOrd(:,:,:,6) )
+      if ( diffs .and. n_t > 1 ) call report ( 'Diff Beta(c_s) / Diff T', &
+            & (beta(2:n_t,:,:,i_c_s)-beta(:n_t-1,:,:,i_c_s)) / dT, .false. )
+    end if ! Derivs
+
+    do i_Theta = 1, n_Theta
+      theta = theta_s(i_theta)
+      write ( string, '(f7.3)' ) theta/deg2Rad
+      string = adjustl(string)
+      n = len_trim(string)                     ! trim trailing blanks
+      n = verify(string(:n), '0', back=.true.) ! Trim trailing zeros
+      n = verify(string(:n), '.', back=.true.) ! Trim trailing decimal point
+      call report ( "P(" // string(:n) // ")", &
+        & p(:,:,i_theta,:), norm, e_p(:,:,i_theta,:), nFuncP(:,:,:,i_theta,:,1), &
+        & maxOrdP(:,:,i_theta,:,1) )
+      if ( derivs ) then
+        call report ( "dP(" // string(:n) // ")/dIWC", &
+        & dP_dIWC(:,:,i_theta,:), norm, e_dP_dIWC(:,:,i_theta,:), &
+        & nFuncP(:,:,:,i_theta,:,2), maxOrdP(:,:,i_theta,:,2) )
+        if ( diffs .and. n_iwc > 1 ) then
+          diffX_IWC = p(:,2:n_iwc,i_theta,:) - p(:,:n_iwc-1,i_theta,:)
+          do i_IWC = 2, n_iwc
+            diffX_IWC(:,i_iwc-1,:) = diffX_IWC(:,i_iwc-1,:) / diffIWC(i_iwc-1)
+          end do
+          call report ( "Diff P(" // string(:n) // ")/diff IWC", &
+            & diffX_IWC, .false. )
+        end if
+        call report ( "dP(" // string(:n) // ")/dT", &
+          & dP_dT(:,:,i_theta,:), norm, e_dP_dT(:,:,i_theta,:), &
+          & nFuncP(:,:,:,i_theta,:,3), maxOrdP(:,:,i_theta,:,3) )
+        if ( diffs .and. n_t > 1 ) call report ( "Diff P(" // string(:n) // ")/diff T", &
+              & (p(2:n_t,:,i_theta,:) - p(:n_t-1,:,i_theta,:)) / dT, .false. )
+      end if
+    end do ! Theta
+  end subroutine PrintResults
+
   subroutine Progress_Report ( What, Value, Error, NFunc, Sub3 )
     character(*), intent(in) :: What
     real(r8), intent(in) :: Value
@@ -802,13 +801,13 @@ contains
     real(r8), intent(in) :: Value(:,:)
     logical, intent(in) :: Norm   ! Report also Value/IWC_Tot
     real(r8), intent(in), optional :: EEst(:,:)
-    ! Either both of NFunc and MaxOrd, or neither, is assumed
     integer, intent(in), optional :: NFunc(:,:,:)
-    integer, intent(in), optional :: MaxOrd(:,:)
-    integer :: I
+    integer, intent(in), optional :: MaxOrd(:,:) ! Ignored if NFunc is absent
+    integer :: I, J
 1   format ( a, " \", i0 )
 2   format ( 1p, 10g13.5 )
-3   format ( 10(i8,i5) )
+3   format ( 10(i7,i2,i4) )
+4   format ( 10(i8,i5) )
 
     write ( *, 1 ) title, size(value)
     do i = 1, size(value,2)
@@ -826,12 +825,19 @@ contains
         do i = 1, size(eest,2); write ( *, 2 ) eest(:,i); end do
       end if
       if ( present(nFunc) ) then
-        write ( *, 1 ) &
-          & 'Number of integrands, -flag', &
-          & 2*size(value)
-        do i = 1, size(nFunc,3)
-          write ( *, 3 ) nFunc(:,:,i)
-        end do
+        if ( present(maxOrd) ) then
+          write ( *, 1 ) &
+            & 'Number of integrands, -flag, maximum order of Bessel functions', &
+            &  3*size(value)
+          do i = 1, size(nFunc,3)
+            write ( *, 3 ) ( nFunc(:,j,i), maxOrd(j,i), j = 1, size(nFunc,2) )
+          end do
+        else
+          write ( *, 1 ) 'Number of integrands, -flag', 2*size(value)
+          do i = 1, size(nFunc,3)
+            write ( *, 4 ) nFunc(:,:,i)
+          end do
+        end if
       end if
     end if
   end subroutine Report_2
@@ -955,33 +961,62 @@ contains
 
   subroutine WriteHDF
     ! Write the tables as HDF5 datasets
-    use HDF5, only: H5FCreate_F, H5FClose_F, H5F_ACC_TRUNC_F
-    use MLSHDF5, only: MakeHDF5Attribute, SaveAsHDF5DS
+    use HDF5, only: H5FCreate_F, H5FClose_F, H5F_ACC_TRUNC_F, H5GOpen_F, H5GClose_F
+    use MLSHDF5, only: MakeHDF5Attribute, MLS_H5Open, MLS_H5Close, SaveAsHDF5DS
 
-    integer :: FileID, IOStat
+    integer :: FileID, GroupID, IOStat
+    logical :: Exist
+
+    ! Destroy the file if it exists.  I don't know how to get HDF to
+    ! write a brand new file if there's one there already.
+    inquire ( file=trim(file), exist=exist )
+    if ( exist ) then
+      open ( 42, file=trim(file) )
+      close ( 42, status='delete' )
+    end if
+
+    ! Start up HDF5
+    call MLS_H5Open ( iostat )
+    if ( iostat /= 0 ) then
+      write ( *, * ) 'Unable to start up HDF5, iostat =', iostat
+      return
+    end if
 
     ! Create the HDF5 output file
     call H5FCreate_F ( trim(file), H5F_ACC_TRUNC_F, fileID, iostat )
     if ( iostat /= 0 ) then
-      write ( *, * ) 'Unable to create HDF5 Mie file ', trim(file), ', iostat =', &
+      write ( *, * ) 'Unable to create HDF5 file ', trim(file), ', iostat =', &
         & iostat
       return
     end if
 
-    ! Save some scalars as attributes
-    call makeHDF5Attribute ( fileID, 'R_Max', r_max )
-    call makeHDF5Attribute ( fileID, 'R_Min', r_min )
-    call makeHDF5Attribute ( fileID, 'N_Cut', n_cut )
+    ! Save some scalars as attributes of the '/' group
+    call H5GOpen_F ( fileID, '/', groupID, iostat )
+    if ( iostat /= 0 ) then
+      write ( *, * ) 'Unable to open "/" group in ', trim(file), ', iostat =', &
+        & iostat
+      return
+    end if
+    call makeHDF5Attribute ( groupID, 'R_Max', r_max )
+    call makeHDF5Attribute ( groupID, 'R_Min', r_min )
+    call makeHDF5Attribute ( groupID, 'N_Cut', n_cut )
+    call H5GClose_F ( groupID, iostat )
+    if ( iostat /= 0 ) then
+      write ( *, * ) 'Unable to close "/" group in ', trim(file), ', iostat =', &
+        & iostat
+      return
+    end if
 
     ! Save the index arrays
     call saveAsHDF5DS ( fileID, 'IWC_s', iwc_s )
     call saveAsHDF5DS ( fileID, 'T_s', T_s )
     call saveAsHDF5DS ( fileID, 'THETA_s', theta_s )
-    call saveAsHDF5DS ( fileID, 'F_s', f_s )
+    call saveAsHDF5DS ( fileID, 'F_s', f_s(:n_f) )
 
     ! Save the betas
     call saveAsHDF5DS ( fileID, 'Beta_c_e', beta(:,:,:,i_c_e) )
     call saveAsHDF5DS ( fileID, 'Beta_c_s', beta(:,:,:,i_c_s) )
+    call saveAsHDF5DS ( fileID, 'Beta_c_a', beta(:,:,:,i_c_e) - beta(:,:,:,i_c_s) )
     call saveAsHDF5DS ( fileID, 'Beta_c_e_err_est', eest(:,:,:,i_c_e) )
     call saveAsHDF5DS ( fileID, 'Beta_c_s_err_est', eest(:,:,:,i_c_s) )
     call saveAsHDF5DS ( fileID, 'Beta_c_e_nfunc', nFunc(:,:,:,:,i_c_e) )
@@ -1000,6 +1035,8 @@ contains
       ! Save the Beta IWC derivatives
       call saveAsHDF5DS ( fileID, 'dBeta_dIWC_c_e', dBeta_dIWC(:,:,:,i_c_e) )
       call saveAsHDF5DS ( fileID, 'dBeta_dIWC_c_s', dBeta_dIWC(:,:,:,i_c_s) )
+      call saveAsHDF5DS ( fileID, 'dBeta_dIWC_c_a', dBeta_dIWC(:,:,:,i_c_e) - &
+                                                  & dBeta_dIWC(:,:,:,i_c_s) )
       call saveAsHDF5DS ( fileID, 'dBeta_dIWC_c_e_err_est', e_dBeta_dIWC(:,:,:,i_c_e) )
       call saveAsHDF5DS ( fileID, 'dBeta_dIWC_c_s_err_est', e_dBeta_dIWC(:,:,:,i_c_s) )
       call saveAsHDF5DS ( fileID, 'dBeta_dIWC_c_e_nfunc', nFunc(:,:,:,:,3) )
@@ -1010,6 +1047,8 @@ contains
       ! Save the Beta T derivatives
       call saveAsHDF5DS ( fileID, 'dBeta_dT_c_e', dBeta_dT(:,:,:,i_c_e) )
       call saveAsHDF5DS ( fileID, 'dBeta_dT_c_s', dBeta_dT(:,:,:,i_c_s) )
+      call saveAsHDF5DS ( fileID, 'dBeta_dT_c_a', dBeta_dT(:,:,:,i_c_e) - &
+                                                & dBeta_dT(:,:,:,i_c_s) )
       call saveAsHDF5DS ( fileID, 'dBeta_dT_c_e_err_est', e_dBeta_dT(:,:,:,i_c_e) )
       call saveAsHDF5DS ( fileID, 'dBeta_dT_c_s_err_est', e_dBeta_dT(:,:,:,i_c_s) )
       call saveAsHDF5DS ( fileID, 'dBeta_dT_c_e_nfunc', nFunc(:,:,:,:,5) )
@@ -1035,8 +1074,16 @@ contains
 
     ! Close the HDF5 output file
     call H5FClose_F ( fileID, iostat )
-    if ( iostat /= 0 ) write ( *, * ) 'Unable to close HDF5 Mie file ', &
-      trim(file), ', iostat =', iostat
+    if ( iostat /= 0 ) then
+      write ( *, * ) 'Unable to close HDF5 file ', &
+        trim(file), ', iostat =', iostat
+      return
+    end if
+
+    ! Shut down HDF5
+    call MLS_H5Close ( iostat )
+    if ( iostat /= 0 ) &
+      write ( *, * ) 'Unable to shut down HDF5, iostat =', iostat
 
   end subroutine WriteHDF
 
@@ -1052,6 +1099,9 @@ contains
 end program Mie_Tables
 
 ! $Log$
+! Revision 1.2  2008/05/22 01:56:31  vsnyder
+! List of frequencies, HDF output
+!
 ! Revision 1.1  2008/04/19 01:15:27  vsnyder
 ! Initial commit
 !
