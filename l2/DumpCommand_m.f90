@@ -622,7 +622,7 @@ contains
       & F_AllVectors, F_AllVectorTemplates, F_AllVGrids, F_AntennaPatterns, &
       & F_Boolean, F_Clean, F_Details, F_DACSFilterShapes, &
       & F_FilterShapes, F_ForwardModel, F_GRID, &
-      & F_HGrid, F_Lines, F_Mark, F_Mask, &
+      & F_HGrid, F_Lines, F_Mark, F_Mask, F_MieTables, &
       & F_PfaData, F_PfaFiles, F_PFANum, F_PFAStru, F_PointingGrids, &
       & F_Quantity, F_Signals,  F_Spectroscopy, F_Stop, &
       & F_Template, F_Text, F_TGrid, &
@@ -639,6 +639,7 @@ contains
       & Dump_PFAStructure, PFAData
     use PointingGrid_m, only: Dump_Pointing_Grid_Database
     use QuantityTemplates, only: Dump, QuantityTemplate_T
+    use Read_Mie_m, only: Dump_Mie
     use SpectroscopyCatalog_m, only: Catalog, Dump, Dump_Lines_Database, Lines
     use String_Table, only: Get_String
     use Toggles, only: Gen, Switches, Toggle
@@ -759,8 +760,8 @@ contains
         & f_allHGrids, f_allLines, &
         & f_allPFA, f_allQuantityTemplates, f_allSignals, f_allSpectra, &
         & f_allVectors, f_allVectorTemplates, f_allVGrids, f_antennaPatterns, &
-        & f_DACSfilterShapes, f_filterShapes, f_pfaFiles, f_pfaStru, &
-        & f_pointingGrids, f_stop )
+        & f_DACSfilterShapes, f_filterShapes, f_MieTables, &
+        & f_pfaFiles, f_pfaStru, f_pointingGrids, f_stop )
         if ( get_boolean(son) ) then
           select case ( fieldIndex )
           case ( f_allBooleans )
@@ -832,6 +833,8 @@ contains
             call dump_dacs_filter_database ( son )
           case ( f_filterShapes )
             call dump_filter_shapes_database ( son )
+          case ( f_MieTables )
+            call dump_Mie ( details )
           case ( f_pfaFiles )
             call dump_PFAFileDatabase ( details )
           case ( f_pfaStru )
@@ -900,18 +903,6 @@ contains
         end do
       case ( f_mark )
         if ( get_boolean(son) ) call cpu_time ( cpuTimeBase )
-      case ( f_pfaData )
-        do i = 2, nsons(son)
-          look = decoration(decoration(subtree(i,son)))
-          call dump ( pfaData(look), details, look )
-        end do
-      case ( f_pfaNum )
-        do i = 2, nsons(son)
-          call expr ( subtree(i,son), units, values, type )
-          if ( units(1) /= phyq_dimensionless ) call AnnounceError ( subtree(i,son), dimless )
-          if ( type /= num_value ) call announceError ( subtree(i,son), numeric )
-          call dump ( pfaData(nint(values(1))), details, nint(values(1)) )
-        end do
       case ( f_mask, f_quantity ) ! Dump vector quantities
         if ( details < -1 ) cycle
         do i = 2, nsons(son)
@@ -926,6 +917,18 @@ contains
               & vectors(vectorIndex), quantityIndex), details=details, &
               & vector=vectors(vectorIndex), clean=clean )
           endif
+        end do
+      case ( f_pfaData )
+        do i = 2, nsons(son)
+          look = decoration(decoration(subtree(i,son)))
+          call dump ( pfaData(look), details, look )
+        end do
+      case ( f_pfaNum )
+        do i = 2, nsons(son)
+          call expr ( subtree(i,son), units, values, type )
+          if ( units(1) /= phyq_dimensionless ) call AnnounceError ( subtree(i,son), dimless )
+          if ( type /= num_value ) call announceError ( subtree(i,son), numeric )
+          call dump ( pfaData(nint(values(1))), details, nint(values(1)) )
         end do
       case ( f_signals )
         do i = 2, nsons(son)
@@ -1195,6 +1198,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.42  2008/06/05 02:07:43  vsnyder
+! Dump Mie tables
+!
 ! Revision 2.41  2007/12/07 01:12:43  pwagner
 ! Lets us catch warnings and assign to runtime Booleans
 !
