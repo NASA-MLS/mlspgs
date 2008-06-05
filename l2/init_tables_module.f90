@@ -490,7 +490,7 @@ contains ! =====     Public procedures     =============================
       begin, t+t_quantityType, l+l_adopted, l+l_baseline, l+l_boundarypressure, l+l_calSidebandFraction, &
              l+l_chisqbinned, l+l_chisqchan, l+l_chisqmmaf, l+l_chisqmmif, l+l_cloudIce, &
              l+l_cloudInducedRadiance, l+l_cloudExtinction, l+l_cloudMinMax, l+l_cloudRadSensitivity, &
-             l+l_cloudWater, l+l_columnabundance, &
+             l+l_cloudTemperature, l+l_cloudWater, l+l_columnabundance, &
              l+l_dnwt_ajn, l+l_dnwt_axmax, l+l_dnwt_cait, &
              l+l_dnwt_chiSqMinNorm, l+l_dnwt_chiSqNorm, l+l_dnwt_chiSqRatio, &
              l+l_dnwt_diag, l+l_dnwt_dxdx, l+l_dnwt_dxdxl, &
@@ -520,7 +520,8 @@ contains ! =====     Public procedures     =============================
              l+l_spaceRadiance, l+l_status, l+l_strayRadiance, l+l_surfaceHeight, &
              l+l_surfacetype, l+l_systemTemperature, &
              l+l_temperature, l+l_tngtECI, l+l_tngtGeodAlt, l+l_tngtGeocAlt, &
-             l+l_totalExtinction, l+l_totalPowerWeight, l+l_vmr, n+n_dt_def /) )
+             l+l_totalExtinction, l+l_totalPowerWeight, l+l_TScat, l+l_vmr, &
+             n+n_dt_def /) )
     call make_tree ( (/ &
       begin, t+t_scale, l+l_apriori, & ! l+l_covariance, & !??? Later !???
              l+l_none, l+l_norm, n+n_dt_def, &
@@ -537,8 +538,10 @@ contains ! =====     Public procedures     =============================
              l+l_orbits, l+l_pa, l+l_ppbv, &
              l+l_ppmv, l+l_pptv, l+l_rad, l+l_radians, l+l_s, l+l_seconds, &
              l+l_thz, l+l_vmr, l+l_zeta, n+n_dt_def, &
-      begin, t+t_vgridcoord, l+l_angle, l+l_geocAltitude, l+l_geodAltitude, l+l_gph, l+l_none, &
-             l+l_pressure, l+l_theta, l+l_zeta, l+l_integer, n+n_dt_def, &
+      begin, t+t_vgridcoord, l+l_angle, l+l_dimensionless, l+l_dimless, &
+             l+l_geocAltitude, l+l_geodAltitude, l+l_gph, l+l_icedensity, &
+             l+l_integer, l+l_none, l+l_pressure, l+l_theta, l+l_zeta, &
+             n+n_dt_def, &
       begin, t+t_vgridtype, l+l_explicit, l+l_linear, l+l_logarithmic, &
              l+l_l2gp, n+n_dt_def /) )
 
@@ -626,14 +629,6 @@ contains ! =====     Public procedures     =============================
              begin, f+f_b, s+s_gridded, s+s_concatenate, n+n_field_spec, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
-      begin, s+s_merge, &  ! Must be AFTER S_Gridded
-             begin, f+f_operational, s+s_gridded, s+s_concatenate, &
-             s+s_convertetatop, s+s_vgrid, n+n_field_spec, &
-             begin, f+f_climatology, s+s_gridded, s+s_concatenate, n+n_field_spec, &
-             begin, f+f_height, t+t_numeric, n+n_field_type, &
-             begin, f+f_scale, t+t_numeric, n+n_field_type, &
-             nadp+n_spec_def /) )
-    call make_tree ( (/ &
       begin, s+s_delete, &
              begin, f+f_grid, s+s_gridded, s+s_concatenate, s+s_merge, &
              s+s_ConvertEtaToP, n+n_field_spec, &
@@ -671,7 +666,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_formula, t+t_string, n+n_field_type, &
              begin, f+f_values, t+t_boolean, n+n_field_type, &
              ndp+n_spec_def, &
-      begin, s+s_fgrid, &
+      begin, s+s_fGrid, &
              begin, f+f_coordinate, t+t_fGridCoord, n+n_field_type, &
              begin, f+f_values, t+t_numeric, n+n_field_type, &
              nadp+n_spec_def, &
@@ -682,7 +677,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_step, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
-      begin, s+s_vgrid, &
+      begin, s+s_vGrid, &
              begin, f+f_type, t+t_vGridType, nr+n_field_type, &
              begin, f+f_coordinate, t+t_vGridCoord, n+n_field_type, &
              begin, f+f_formula, t+t_numeric_range, n+n_field_type, &
@@ -693,7 +688,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_values, t+t_numeric, n+n_field_type, &
              begin, f+f_sourceL2GP, s+s_l2gp, n+n_field_spec, &
              ndp+n_spec_def, &
-      begin, s+s_forge, &
+      begin, s+s_forge, &  ! Must be AFTER S_Module and S_VGrid
              begin, f+f_module, s+s_module, nr+n_field_spec, &
              begin, f+f_solarTime, t+t_numeric, n+n_field_type, &
              begin, f+f_solarZenith, t+t_numeric, n+n_field_type, &
@@ -702,7 +697,15 @@ contains ! =====     Public procedures     =============================
              begin, f+f_noMIFs, t+t_numeric, nr+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
-      begin, s+s_makePFA, & ! Must be AFTER s_vGrid
+      begin, s+s_merge, &  ! Must be AFTER S_Gridded and S_VGrid
+             begin, f+f_operational, s+s_gridded, s+s_concatenate, &
+             s+s_convertetatop, s+s_vgrid, n+n_field_spec, &
+             begin, f+f_climatology, s+s_gridded, s+s_concatenate, n+n_field_spec, &
+             begin, f+f_height, t+t_numeric, n+n_field_type, &
+             begin, f+f_scale, t+t_numeric, n+n_field_type, &
+             nadp+n_spec_def /) )
+    call make_tree ( (/ &
+      begin, s+s_makePFA, & ! Must be AFTER s_vGrid and s_tGrid
              begin, f+f_allLinesForRadiometer, t+t_boolean, nd+n_field_type, &
              begin, f+f_allLinesInCatalog, t+t_boolean, nd+n_field_type, &
              begin, f+f_losvel, t+t_numeric, nrs+n_field_type, &
@@ -712,7 +715,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_temperatures, s+s_tGrid, nrs+n_field_spec, &
              begin, f+f_vGrid, s+s_vGrid, nrs+n_field_spec, &
              ndp+n_spec_def, &
-      begin, s+s_pfaData, & ! Must be AFTER s_vGrid
+      begin, s+s_pfaData, & ! Must be AFTER s_vGrid and s_tGrid
              begin, f+f_absorption, t+t_numeric, n+n_field_type, &
              begin, f+f_dAbsDnc, t+t_numeric, n+n_field_type, &
              begin, f+f_dAbsDnu, t+t_numeric, n+n_field_type, &
@@ -750,8 +753,9 @@ contains ! =====     Public procedures     =============================
              ndp+n_spec_def, &
       begin, s+s_quantity, & ! Must be AFTER s_hgrid and s_vgrid
              begin, f+f_irregular, t+t_boolean, n+n_field_type, &
-             begin, f+f_hGrid, s+s_hgrid, n+n_field_spec, &
+             begin, f+f_auxGrid, s+s_vgrid, n+n_field_spec, &
              begin, f+f_fGrid, s+s_fgrid, n+n_field_spec, &
+             begin, f+f_hGrid, s+s_hgrid, n+n_field_spec, &
              begin, f+f_sGrid, s+s_vgrid, n+n_field_spec, &
              begin, f+f_vGrid, s+s_vgrid, n+n_field_spec, &
              begin, f+f_logBasis, t+t_boolean, n+n_field_type, &
@@ -763,7 +767,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_type, t+t_quantityType, n+n_field_type, &
              begin, f+f_unit, t+t_units, n+n_field_type, &
              begin, f+f_minValue, t+t_numeric, n+n_field_type, &
-             np+n_spec_def, &
+             np+n_spec_def /) )
+    call make_tree ( (/ &
       begin, s+s_vectorTemplate, & ! Must be AFTER s_quantity
              begin, f+f_adopt, t+t_string, n+n_field_type, &
              begin, f+f_source, t+t_rowsOrColumns, n+n_field_type, &
@@ -1290,6 +1295,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_mark, t+t_boolean, n+n_field_type, &
              begin, f+f_mask, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
+             begin, f+f_MieTables, t+t_boolean, n+n_field_type, &
              begin, f+f_pfaData, s+s_makePFA, s+s_pfaData, s+s_readPFA, &
                     n+n_field_spec, &
              begin, f+f_pfaFiles, t+t_boolean, n+n_field_type, &
@@ -1558,6 +1564,12 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.469  2008/06/05 02:11:57  vsnyder
+! Added cloudTemperature and TScat to quantityType.
+! Added dimensionless, dimless and iceDensity to vGridCoord.
+! Moved some stuff to satisfy order dependencies on vGrid.
+! Added AuxGrid field to Quantity and MieTables field to Dump.
+!
 ! Revision 2.468  2008/05/28 21:55:34  pwagner
 ! geo location Fill method to fill chunk numbers[maf]
 !
