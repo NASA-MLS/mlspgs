@@ -55,6 +55,7 @@ atmos
 atmos_der
 AuraInstrument
 autofill
+auxGrid
 average
 avoidBrightObjects
 
@@ -456,6 +457,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.184  2008/06/05 02:06:57  vsnyder
+# Added AuxGrid
+#
 # Revision 2.183  2008/05/22 00:25:43  pwagner
 # Added criticalBands to Chunk Divide
 #
