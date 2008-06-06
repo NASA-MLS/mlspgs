@@ -1257,9 +1257,9 @@ contains ! =====     Public procedures     =============================
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_computetotalpower, &
-             begin, f+f_measurements, s+s_vector, n+n_field_spec, &
-             begin, f+f_weightsVector, s+s_vector, n+n_field_spec, &
-             begin, f+f_totalPowerVector, s+s_vector, n+n_field_spec, &
+             begin, f+f_measurements, s+s_vector, nr+n_field_spec, &
+             begin, f+f_weightsVector, s+s_vector, nr+n_field_spec, &
+             begin, f+f_totalPowerVector, s+s_vector, nr+n_field_spec, &
              nadp+n_spec_def /) )
     call make_tree ( (/ & ! Must be AFTER s_Boolean
       begin, s+s_skip, &
@@ -1565,6 +1565,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.471  2008/06/06 21:03:59  michael
+! changes for fill method uncompressradiance
+!
 ! Revision 2.470  2008/06/06 01:57:31  vsnyder
 ! Add ScatteringAngle to QuantityType, add TScat to SIDS
 !
