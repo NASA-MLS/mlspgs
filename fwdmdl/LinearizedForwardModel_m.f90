@@ -865,7 +865,7 @@ contains ! =====     Public Procedures     =============================
       use L2PC_M, only: BINSELECTORS, BINSELECTOR_T
       use Intrinsic, only: L_NAMEFRAGMENT, L_SZA
       use Toggles, only: SWITCHES
-      use MLSNumerics, only: ESSENTIALLYEQUAL
+      use MLSFillValues, only: ESSENTIALLYEQUAL
 
       type (VectorValue_T), intent(in) :: RADIANCE ! The radiance we're after
       integer, intent(in) :: SIDEBAND ! Which sideband (see below)
@@ -1123,6 +1123,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.67  2008/05/07 20:55:32  vsnyder
+! OOPS, can't test optional args in specification exprs
+!
 ! Revision 2.66  2008/05/02 20:14:09  vsnyder
 ! Further simplification using MERGE in dimensions
 !

@@ -209,7 +209,7 @@ contains
     use RHIFromH2O, only: RHIFromH2O_Factor
     use ForwardModelConfig, only: ForwardModelConfig_t
     use VectorsModule, only: VECTORVALUE_T
-    use MLSNumerics, only: ESSENTIALLYEQUAL
+    use MLSFillValues, only: ESSENTIALLYEQUAL
     use Units, only: Deg2Rad
 
     type (ForwardModelConfig_T) ,intent(in) :: FWDMODELCONF
@@ -563,6 +563,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.69  2008/05/20 00:15:07  vsnyder
+! Change GRIDS_TMP to INTENT(IN)
+!
 ! Revision 2.68  2006/12/04 21:17:28  vsnyder
 ! Reorganize FullForwardModel to use automatic arrays instead of allocating
 ! pointer arrays.  Requires testing for zero size instead of testing for
