@@ -1063,7 +1063,7 @@ op:     do j = 2, nsons(theTree)
     ! ..........................................  ValidateSignals  .....
     subroutine ValidateSignals
       use MLSSignals_m, only: GetSidebandStartStop
-      use MLSNumerics, only: EssentiallyEqual
+      use MLSFillValues, only: ESSENTIALLYEQUAL
 
       ! Make sure all the signals we're dealing with are same module,
       ! radiometer and sideband.
@@ -1371,6 +1371,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.140  2008/06/06 22:52:53  pwagner
+! EssentiallyEqual moved to MLSFillValues
+!
 ! Revision 2.139  2008/05/20 00:28:06  vsnyder
 ! Process MieTables field from ForwardModelGlobal
 !
