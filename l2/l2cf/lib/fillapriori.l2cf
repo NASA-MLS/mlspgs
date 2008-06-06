@@ -122,8 +122,12 @@ begin Fill
   !ifdef(flagPrecisionEstimates,{
   ; PEs have read in an apriori reference GPH from climatology
   },{
+!ifdef(flagUseOperationalGPH, {
+Fill, quantity=apriori.refGPH,$
+    method=gridded, sourceGrid=mergedGPH
+},{
     Fill, quantity=apriori.refGPH, method=explicit, $
-      explicitvalues=16 km,/spread
+      explicitvalues=16 km,/spread})
   }) ;; End if precision estimates
 
   ;; Compute non refracted phitans for apriori
@@ -621,6 +625,9 @@ begin Join
 end Join
   })
 ;$Log$
+;Revision 1.131  2008/05/27 16:59:49  pwagner
+;Added new methyl molecules
+;
 ;Revision 1.130  2008/03/20 18:34:20  pwagner
 ;Consistent with what we use beginning with v2.22
 ;
