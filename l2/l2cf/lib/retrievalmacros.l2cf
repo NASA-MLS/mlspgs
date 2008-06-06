@@ -312,6 +312,18 @@ DirectWrite, file='!CloudFilename', hdfVersion=!hdfVersion, $
   file='!l2fwmFileName($1)', $
   hdfVersion=!hdfVersion})})
 
+;; These macros allow output of the uncompreseded radiance vector as if a fwm quantity
+!define(labelOneUncompRad,{label, quantity=measurement.band$1, /prefixSignal, label=' Uncompressed'!nl})
+!define(oneUncompRadTerm,{source=measurement.band$1,})
+
+!ifdef(flagSuppressRegularOutput,
+{!define(directWriteUncompressedRad,{})},
+{!define(directWriteUncompressedRad,{!dnl
+!forall(labelOneUncompRad,!tidyList(!shift($*)))!dnl
+  DirectWrite, !forall(oneUncompRadTerm,!tidyList(!shift($*))) type=l2fwm, $
+  file='!l2fwmFileName($1)', $
+  hdfVersion=!hdfVersion})})
+
 !ifdef(flagSuppressRegularOutput,
 {!define(directWriteScanResidual,{})},
 {!define(directWriteScanResidual,{!dnl
@@ -867,6 +879,9 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
 })})
 
 ; $Log$
+; Revision 1.127  2008/05/27 16:59:49  pwagner
+; Added new methyl molecules
+;
 ; Revision 1.126  2006/10/19 19:41:55  pwagner
 ; Easier to switch Columns and hi-res on/off
 ;
