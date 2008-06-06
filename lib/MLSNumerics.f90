@@ -54,9 +54,6 @@ module MLSNumerics              ! Some low level numerical stuff
 ! dFdxApproximate          Compute derivative using UnifDiscreteFn
 ! Dump                     Dump Coefficients structure
 ! Dump                     Dump uniform discrete function structure
-! EssentiallyEqual         Returns true if two real arguments 'close enough'
-!                            (See comments below for interpretation
-!                             of array versions)
 ! FApproximate             Use Uniformly Discretized Fn as an approximation
 ! FInvApproximate          Use it to invert a function (may not be unique)
 ! FillLookUpTable          Fill table with evaluations at regularly-spaced args
@@ -87,8 +84,6 @@ module MLSNumerics              ! Some low level numerical stuff
 ! nprec  d2Fdx2Approximate ( nprec x, UnifDiscreteFn_nprec UDF )
 ! Dump ( coefficients_nprec Coeffs )
 ! Dump ( UnifDiscreteFn_nprec UDF, [int Details] )
-! log EssentiallyEqual ( nprec A, nprec B, &
-!   [nprec FillValue], [nprec Precision] )
 ! nprec  FApproximate ( nprec x, UnifDiscreteFn_nprec UDF )
 ! nprec  FInvApproximate ( nprec y, UnifDiscreteFn_nprec UDF, &
 !     [nprec xS], [nprec xE] )
@@ -126,7 +121,7 @@ module MLSNumerics              ! Some low level numerical stuff
   public :: ClosestElement
   public :: dFdxApproximate, d2Fdx2Approximate
   public :: FApproximate, FInvApproximate, IFApproximate
-  public :: Destroy, Dump, EssentiallyEqual, Hunt, HuntRange
+  public :: Destroy, Dump, Hunt, HuntRange
   public :: InterpolateArraySetup, InterpolateArrayTeardown, InterpolateValues
   public :: FillLookUpTable, UseLookUpTable
   public :: SetUp
@@ -299,13 +294,6 @@ module MLSNumerics              ! Some low level numerical stuff
 
   interface FillLookUpTable
     module procedure FillLookUpTable_r4, FillLookUpTable_r8
-  end interface
-
-  interface EssentiallyEqual
-    module procedure EssentiallyEqual_r4, EssentiallyEqual_r8
-    module procedure EssentiallyEqual_r4_1d, EssentiallyEqual_r8_1d
-    module procedure EssentiallyEqual_r4_2d, EssentiallyEqual_r8_2d
-    module procedure EssentiallyEqual_r4_3d, EssentiallyEqual_r8_3d
   end interface
 
   interface Hunt
@@ -983,173 +971,6 @@ contains
     endif
     call dump ( UDF%y, name='y' )
   end subroutine DumpUnifDiscreteFn_r8
-
-! ---------------------------------------------  EssentiallyEqual  -----
-
-  ! This family of routines checks to see if two reals are essentially
-  ! the same.
-  elemental logical function EssentiallyEqual_r4 ( A, B )
-    real(r4), intent(in) :: A
-    real(r4) ,intent(in) :: B
-    EssentiallyEqual_r4 = &
-      & a >= nearest ( b, -1.0_r4 ) .and. a <= nearest ( b, 1.0_r4 )
-  end function EssentiallyEqual_r4
-
-  elemental logical function EssentiallyEqual_r8 ( A, B )
-    real(r8), intent(in) :: A
-    real(r8) ,intent(in) :: B
-    EssentiallyEqual_r8 = &
-      & a >= nearest ( b, -1.0_r8 ) .and. a <= nearest ( b, 1.0_r8 )
-  end function EssentiallyEqual_r8
-
-  function EssentiallyEqual_r4_1d ( A, B, FillValue, Precision ) &
-    & result(equal)
-  ! This function is slightly different:
-  ! A scalar logical testing that every element of two arrays are equal
-  ! You may filter out values in either array equal to the FillValue
-  ! or for which the corresponding Precision array is negative
-  ! or where either element is not finite
-  ! Warn if an element of one array is finite while the other is not
-    real(r4), dimension(:), intent(in)             :: A
-    real(r4), dimension(:), intent(in)             :: B
-    real(r4), intent(in)                           :: fillValue
-    real(r4), dimension(:), optional, intent(in)   :: precision
-    logical                                        :: equal
-    real(r4), dimension(size(A))                   :: atab
-    real(r4), dimension(size(B))                   :: btab
-    logical                                        :: warn
-    equal = .false.
-    call filterValues(A, ATAB, B, BTAB, warn, fillValue, precision)
-    if ( .not. warn ) equal = all( &
-      & a >= nearest ( b, -1.0_r4 ) .and. a <= nearest ( b, 1.0_r4 ) &
-      & )
-  end function EssentiallyEqual_r4_1d
-
-  function EssentiallyEqual_r8_1d ( A, B, FillValue, Precision ) &
-    & result(equal)
-  ! This function is slightly different:
-  ! A scalar logical testing that every element of two arrays are equal
-  ! You may filter out values in either array equal to the FillValue
-  ! or for which the corresponding Precision array is negative
-  ! or where either element is not finite
-    real(r8), dimension(:), intent(in)             :: A
-    real(r8), dimension(:), intent(in)             :: B
-    real(r8), intent(in)                           :: fillValue
-    real(r8), dimension(:), optional, intent(in)   :: precision
-    logical                                        :: equal
-    real(r8), dimension(size(A))                   :: atab
-    real(r8), dimension(size(B))                   :: btab
-    logical                                        :: warn
-    equal = .false.
-    call filterValues(A, ATAB, B, BTAB, warn, fillValue, precision)
-    if ( .not. warn ) equal = all( &
-      & a >= nearest ( b, -1.0_r8 ) .and. a <= nearest ( b, 1.0_r8 ) &
-      & )
-  end function EssentiallyEqual_r8_1d
-
-  function EssentiallyEqual_r4_2d ( A, B, FillValue, Precision ) &
-    & result(equal)
-  ! This function is slightly different:
-  ! A scalar logical testing that every element of two arrays are equal
-  ! You may filter out values in either array equal to the FillValue
-  ! or for which the corresponding Precision array is negative
-  ! or where either element is not finite
-    real(r4), dimension(:,:), intent(in)             :: A
-    real(r4), dimension(:,:), intent(in)             :: B
-    real(r4), intent(in)                             :: fillValue
-    real(r4), dimension(:,:), optional, intent(in)   :: precision
-    logical                                        :: equal
-    ! Internal variables
-    integer, dimension(2)                          :: shp
-    shp =shape(a)
-    if ( present(Precision) ) then
-      equal = EssentiallyEqual_r4_1d(reshape(a, (/shp(1)*shp(2)/)), &
-        & reshape(b, (/shp(1)*shp(2)/)), &
-        & FillValue, reshape(Precision, (/shp(1)*shp(2)/)) )
-    else
-      equal = EssentiallyEqual_r4_1d(reshape(a, (/shp(1)*shp(2)/)), &
-        & reshape(b, (/shp(1)*shp(2)/)), FillValue )
-    endif
-      
-  end function EssentiallyEqual_r4_2d
-
-  function EssentiallyEqual_r8_2d ( A, B, FillValue, Precision ) &
-    & result(equal)
-  ! This function is slightly different:
-  ! A scalar logical testing that every element of two arrays are equal
-  ! You may filter out values in either array equal to the FillValue
-  ! or for which the corresponding Precision array is negative
-  ! or where either element is not finite
-    real(r8), dimension(:,:), intent(in)             :: A
-    real(r8), dimension(:,:), intent(in)             :: B
-    real(r8), intent(in)                             :: fillValue
-    real(r8), dimension(:,:), optional, intent(in)   :: precision
-    logical                                        :: equal
-    ! Internal variables
-    integer, dimension(2)                          :: shp
-    shp =shape(a)
-    if ( present(Precision) ) then
-      equal = EssentiallyEqual_r8_1d(reshape(a, (/shp(1)*shp(2)/)), &
-        & reshape(b, (/shp(1)*shp(2)/)), &
-        & FillValue, reshape(Precision, (/shp(1)*shp(2)/)) )
-    else
-      equal = EssentiallyEqual_r8_1d(reshape(a, (/shp(1)*shp(2)/)), &
-        & reshape(b, (/shp(1)*shp(2)/)), FillValue )
-    endif
-      
-  end function EssentiallyEqual_r8_2d
-
-  function EssentiallyEqual_r4_3d ( A, B, FillValue, Precision ) &
-    & result(equal)
-  ! This function is slightly different:
-  ! A scalar logical testing that every element of two arrays are equal
-  ! You may filter out values in either array equal to the FillValue
-  ! or for which the corresponding Precision array is negative
-  ! or where either element is not finite
-    real(r4), dimension(:,:,:), intent(in)             :: A
-    real(r4), dimension(:,:,:), intent(in)             :: B
-    real(r4), intent(in)                               :: fillValue
-    real(r4), dimension(:,:,:), optional, intent(in)   :: precision
-    logical                                        :: equal
-    ! Internal variables
-    integer, dimension(3)                          :: shp
-    shp =shape(a)
-    if ( present(Precision) ) then
-      equal = EssentiallyEqual_r4_1d(reshape(a, (/shp(1)*shp(2)*shp(3)/)), &
-        & reshape(b, (/shp(1)*shp(2)*shp(3)/)), &
-        & FillValue, reshape(Precision, (/shp(1)*shp(2)*shp(3)/)) )
-    else
-      equal = EssentiallyEqual_r4_1d(reshape(a, (/shp(1)*shp(2)*shp(3)/)), &
-        & reshape(b, (/shp(1)*shp(2)*shp(3)/)), FillValue )
-    endif
-      
-  end function EssentiallyEqual_r4_3d
-
-  function EssentiallyEqual_r8_3d ( A, B, FillValue, Precision ) &
-    & result(equal)
-  ! This function is slightly different:
-  ! A scalar logical testing that every element of two arrays are equal
-  ! You may filter out values in either array equal to the FillValue
-  ! or for which the corresponding Precision array is negative
-  ! or where either element is not finite
-    real(r8), dimension(:,:,:), intent(in)             :: A
-    real(r8), dimension(:,:,:), intent(in)             :: B
-    real(r8), intent(in)                               :: fillValue
-    real(r8), dimension(:,:,:), optional, intent(in)   :: precision
-    logical                                        :: equal
-    ! Internal variables
-    integer, dimension(3)                          :: shp
-    shp =shape(a)
-    if ( present(Precision) ) then
-      equal = EssentiallyEqual_r8_1d(reshape(a, (/shp(1)*shp(2)*shp(3)/)), &
-        & reshape(b, (/shp(1)*shp(2)*shp(3)/)), &
-        & FillValue, reshape(Precision, (/shp(1)*shp(2)*shp(3)/)) )
-    else
-      equal = EssentiallyEqual_r8_1d(reshape(a, (/shp(1)*shp(2)*shp(3)/)), &
-        & reshape(b, (/shp(1)*shp(2)*shp(3)/)), FillValue )
-    endif
-      
-  end function EssentiallyEqual_r8_3d
 
 ! -------------------------------------------------  FApproximate  -----
 
@@ -2287,6 +2108,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.59  2008/06/06 22:52:21  pwagner
+! EssentiallyEqual moved to MLSFillValues
+!
 ! Revision 2.58  2008/05/02 00:41:42  vsnyder
 ! Delete unused symbol
 !
