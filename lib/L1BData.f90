@@ -498,7 +498,7 @@ contains ! ============================ MODULE PROCEDURES ======================
   !-------------------------------------------------  DiffL1BData  -----
   subroutine DiffL1BData ( l1bData1, l1bData2, &
     & details, stats, rms, silent, numDiffs, mafStart, mafEnd )
-  use MLSNumerics, only: EssentiallyEqual
+  use MLSFillValues, only: ESSENTIALLYEQUAL
   use MLSStrings, only: asciify, isAllAscii
     ! Diff two l1brad quantities
     type( L1BData_T ), intent(inout) :: L1bData1
@@ -3228,6 +3228,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.80  2008/06/06 22:52:21  pwagner
+! EssentiallyEqual moved to MLSFillValues
+!
 ! Revision 2.79  2008/02/08 00:00:04  pwagner
 ! Coded around another Intel compiler bug
 !
