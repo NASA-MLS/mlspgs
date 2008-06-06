@@ -18,7 +18,7 @@ module VGridsDatabase
     & L_NONE, L_PRESSURE, L_THETA, L_ZETA, &
     & PHYQ_Dimensionless, PHYQ_Pressure, PHYQ_Zeta, PHYQ_Temperature, &
     & PHYQ_Length, PHYQ_Angle, PHYQ_Invalid
-  use MLSCommon, only: RS => R8 ! Real kind for Surfs
+  use MLSKinds, only: RS => R8  ! Real kind for Surfs
   use MLSMessageModule, only: & ! Message logging
     & MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, MLSMSG_Error, &
     & PVMErrorMessage
@@ -454,6 +454,9 @@ contains
 end module VGridsDatabase
 
 ! $Log$
+! Revision 2.23  2008/06/06 01:54:43  vsnyder
+! Get kinds from MLSKinds, not MLSCommon
+!
 ! Revision 2.22  2006/05/02 18:59:50  pwagner
 ! Added ConvertVGrid, though mostly non-functional for now
 !
