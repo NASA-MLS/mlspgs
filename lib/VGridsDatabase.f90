@@ -269,7 +269,7 @@ contains
   ! -------------------------------------------  DoVGridsMatch_VG  -----
   logical function DoVGridsMatch_VG ( A, B, RelErr )
     ! Returns true if A and B are essentially the same VGrid.
-    use MLSNumerics, only: EssentiallyEqual
+    use MLSFillValues, only: ESSENTIALLYEQUAL
     type (vGrid_T), intent(in) :: A
     type (vGrid_T), intent(in) :: B
     real(rs), intent(in), optional :: RelErr ! "essentially equal" means
@@ -454,6 +454,9 @@ contains
 end module VGridsDatabase
 
 ! $Log$
+! Revision 2.24  2008/06/06 22:52:21  pwagner
+! EssentiallyEqual moved to MLSFillValues
+!
 ! Revision 2.23  2008/06/06 01:54:43  vsnyder
 ! Get kinds from MLSKinds, not MLSCommon
 !
