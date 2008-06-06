@@ -415,7 +415,7 @@ contains
   ! ------------------------------------------  DoVGridsMatch_Vec  -----
   logical function DoVGridsMatch_Vec ( A, B )
     ! Returns true if quantities have same vGrid information
-    use MLSNumerics, only: EssentiallyEqual
+    use MLSFillValues, only: ESSENTIALLYEQUAL
     type (vectorValue_T), intent(in) :: A ! First quantity
     type (vectorValue_T), intent(in) :: B ! Second quantity
 
@@ -508,6 +508,9 @@ contains
 end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.33  2008/06/06 22:52:21  pwagner
+! EssentiallyEqual moved to MLSFillValues
+!
 ! Revision 2.32  2007/08/13 17:37:42  pwagner
 ! Push some procedures onto new MLSCallStack
 !
