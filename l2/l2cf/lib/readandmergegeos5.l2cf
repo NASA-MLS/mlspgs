@@ -29,8 +29,8 @@ begin ReadApriori
      !define(geos5PFile1,{})!define(geos5PFile2,{})!define(geos5PFile3,{})!define(geos5PFile4,{})
      !define(geos5TFileN,{})!define(geos5PFileN,{})},
     {
-    !ifdef(geos5Version,{},{!define(geos5Version,{GEOS501})})
-    !ifdef(geos5Head,{},{!define(geos5Head,{DAS.ops.gzip.asm.tavg3d})})
+    !ifdef(geos5Version,{},{!define(geos5Version,{GEOS510})})
+    !ifdef(geos5Head,{},{!define(geos5Head,{DAS.ops.asm.tavg3d})})
     !define(geos5Day1,!ccsdsbtodao(!day))
     !define(geos5Day2,!ccsdsbtodao(!ccsdsbadd(!day,1)))
     !define(geos5TFile1,{, file='!inpathgeos5dd/!geos5Head_dyn_v.!geos5Version.!geos5Day1_0000.V01.hdf'})
@@ -44,6 +44,17 @@ begin ReadApriori
     !define(geos5PFile4,{, file='!inpathgeos5pd/!geos5Head_prs_v.!geos5Version.!geos5Day1_1800.V01.hdf'})
     !define(geos5PFileN,{, file='!inpathgeos5pn/!geos5Head_prs_v.!geos5Version.!geos5Day2_0000.V01.hdf'})})
 
+!ifdef(flagUseOperationalGPH, {
+  geos5GPHInput1: gridded, origin=geos5, field='HGHT', $
+    dimList='XDim,YDim,Height,Time' !geos5TFile1
+  geos5GPHInput2: gridded, origin=geos5, field='HGHT', $
+    dimList='XDim,YDim,Height,Time' !geos5TFile2
+  geos5GPHInput3: gridded, origin=geos5, field='HGHT', $
+    dimList='XDim,YDim,Height,Time' !geos5TFile3
+  geos5GPHInput4: gridded, origin=geos5, field='HGHT', $
+    dimList='XDim,YDim,Height,Time' !geos5TFile4
+  geos5GPHInputNext: gridded, origin=geos5, field='HGHT', $
+    dimList='XDim,YDim,Height,Time' !geos5TFileN})
   geos5TemperatureInput1: gridded, origin=geos5, field='T', $
     dimList='XDim,YDim,Height,Time' !geos5TFile1
   geos5TemperatureInput2: gridded, origin=geos5, field='T', $
@@ -67,12 +78,46 @@ begin ReadApriori
   })
 end ReadApriori
 
+!define(convertEtaToPGPH,{!dnl
+  geos5ConvertedGPH$1: ConvertEtaToP, $
+    a=geos5GPHInput$1, b=geos5PressureInput$1, Grid=gridTemperature
+   delete, grid=geos5GPHInput$1
+})
 !define(convertEtaToP,{!dnl
   geos5Converted$1: ConvertEtaToP, $
     a=geos5TemperatureInput$1, b=geos5PressureInput$1, Grid=gridTemperature
     delete, grid=geos5TemperatureInput$1
     delete, grid=geos5PressureInput$1
 })
+
+!ifdef( flagUseOperationalGPH,{
+begin MergeGrids
+  !ifdef(flagUsingGEOS4,
+  {
+  daoGPHInput: Concatenate, $
+    a=daoGPHInputThis, b=daoGPHInputNext
+  delete, grid=daoGPHInputThis
+  delete, grid=daoGPHInputNext
+  mergedGPH: Merge, operational=daoGPHInput, $
+    climatology=gridGPH, height=1mb, scale=5km
+  delete, grid=daoGPHInput
+  },{    
+  ;; to save memory convert before catenating, not after
+  !forall( convertEtaToPGPH,1,2,3,4,Next)
+
+  mergedGPH: Concatenate, $
+    grid=[geos5ConvertedGPH1, geos5ConvertedGPH2, $
+    geos5ConvertedGPH3, geos5ConvertedGPH4, geos5ConvertedGPHNext]
+  delete, grid=geos5ConvertedGPH1
+  delete, grid=geos5ConvertedGPH2
+  delete, grid=geos5ConvertedGPH3
+  delete, grid=geos5ConvertedGPH4
+  delete, grid=geos5ConvertedGPHNext
+  })
+end MergeGrids })
+
+
+
 begin MergeGrids
   !ifdef(flagUsingGEOS4,
   {
