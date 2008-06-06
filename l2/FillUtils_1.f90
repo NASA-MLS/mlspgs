@@ -160,7 +160,8 @@ module FillUtils_1                     ! Procedures used by Fill
   integer, parameter :: BadREFGPHQuantity = badTemperatureQuantity + 1
   integer, parameter :: NonConformingHydrostatic = badREFGPHQuantity + 1
   integer, parameter :: NoSpecialFill = nonConformingHydrostatic + 1
-  integer, parameter :: BadlosVelFill = noSpecialFill + 1
+  integer, parameter :: NoTotalPower = noSpecialFill + 1
+  integer, parameter :: BadlosVelFill = noTotalPower + 1
   integer, parameter :: NotZetaForGrid = BadLosVelFill + 1
   integer, parameter :: BadEstNoiseFill = NotZetaForGrid + 1
   integer, parameter :: BadRefractFill = BadEstNoiseFill + 1
@@ -340,6 +341,8 @@ contains ! =====     Public Procedures     =============================
         call output ( " L2GP fill requires a sourceL2GP field.", advance='yes' )
       case ( noSpecialFill )
         call output ( " special fill is invalid", advance='yes' )
+      case ( noTotalPower )
+        call output ( " total power weights are zero", advance='yes' )
       case ( notImplemented )
         call output ( extraMessage )
         call output ( " method is not implemented yet.", advance='yes' )
@@ -643,7 +646,7 @@ contains ! =====     Public Procedures     =============================
       real(rv) :: TOTALWEIGHT
       
       ! Executable code
-      do j = 2, nsons(key)
+      do i = 2, nsons(key)
         son = subtree(i,key)
         field = get_field_id(son)
         select case ( field )
@@ -663,6 +666,7 @@ contains ! =====     Public Procedures     =============================
           & .not. totalPowerVector%quantities(i)%template%minorFrame ) then
           call Announce_Error ( key, no_error_code, 'Total power quantity must be minor frame baseline' )
         end if
+        totalWeight = 0.0_rv
         thisResult => totalPowerVector%quantities(i)
         thisResult%values = 0.0_rv
         ! Now go through all the bands in the measurement vector that are in this radiometer
@@ -681,7 +685,16 @@ contains ! =====     Public Procedures     =============================
             totalWeight = totalWeight + weightsQuantity%values(k,1)
           end do                        ! End loop over channels
         end do                          ! End loop over bands
-        thisResult%values = thisResult%values / totalWeight
+
+!debug
+!call dump(thisResult%values, 'beforedivide')
+
+
+        if ( totalWeight == 0 ) then
+          thisResult%values = 0         ! Don't divide by zero
+        else
+          thisResult%values = thisResult%values / totalWeight
+        end if
       end do                            ! End loop over (effectively) radiometers
     end subroutine ComputeTotalPower
 
@@ -6354,26 +6367,41 @@ contains ! =====     Public Procedures     =============================
       integer, intent(in) :: TERMSNODE
 
       ! Local parameters
-      integer, parameter :: NOTERMS=4
+      integer, parameter :: NOTERMS=3
 
       ! Local variables
       integer :: I
+      integer :: J 
+      integer :: K
+      integer :: Nchannels
+      integer :: Npointings
       real(rv), dimension(noTerms) :: myTerms
       integer, DIMENSION(2) :: UNITASARRAY ! Unit for value given
       real (r8), DIMENSION(2) :: VALUEASARRAY ! Value give
+      real(rv) :: b
+      real(rv) :: bTsys
+      real(rv) :: sumCal
+      real(rv) :: bprodCal
 
       ! Exectuable code
       if ( quantity%template%quantityType /= l_radiance ) &
         & call Announce_Error ( key, no_error_code, &
         & 'Inappropriate quantity for uncompressRadiance fill' )
-      if ( totalPowerQuantity%template%quantityType /= l_baseline .or. &
-        &  .not. totalPowerQuantity%template%minorFrame &
-        &  .or. totalPowerQuantity%template%radiometer /= quantity%template%radiometer ) &
+      if ( totalPowerQuantity%template%quantityType /= l_baseline  ) &
         & call Announce_Error ( key, no_error_code, &
         & 'Inappropriate quantity for total power quantity in uncompressRadiance' // &
-        & ' (should be MIF baseline for the right radiometer)' )
+        & ' (should be a baseline)' )
+      if ( .not. totalPowerQuantity%template%minorFrame ) &
+        & call Announce_Error ( key, no_error_code, &
+        & 'Inappropriate quantity for total power quantity in uncompressRadiance' // &
+        & ' (should be MIF baseline)' )
 
-      if ( nsons ( termsNode ) /= noTerms - 1 ) &
+     ! if (totalPowerQuantity%template%radiometer /= quantity%template%radiometer ) &
+     !   & call Announce_Error ( key, no_error_code, &
+     !   & 'Inappropriate quantity for total power quantity in uncompressRadiance' // &
+     !   & ' (should be the right radiometer)' )
+
+      if ( nsons ( termsNode ) /= noTerms + 1 ) &
         & call Announce_Error ( key, no_error_code, &
         & 'Wrong number of terms for uncompressRadiance fill' )
       
@@ -6387,10 +6415,41 @@ contains ! =====     Public Procedures     =============================
 
       ! Radiances are in quantity%values [ chans * pointings, mafs ], do your messing here
       ! Total power are in totalPowerQuantity%values [ pointings, mafs ]
-      ! System temperature is in systemTemperatureQuantity%values%values[1,1]
+      ! System temperature is in systemTemperatureQuantity%values(chans,1)
       ! The terms supplied are in myTerms(:)
 
-      ! YOUR CODE HERE
+      ! YOUR CODE HERE  
+      !
+      !terms needed:
+      !   myTerms(1) == b == gain compression at the cal target, e.g. 0.01 
+      !   myTerms(2) == Tcal == cal target Planckified radiance, e.g. 250 
+      !   myTerms(3) == Tspace == space Planckified radiance,    e.g. 3
+      !
+      ! TA ~= TAhat + b * TAhat *(TAhatbar - Tcal - Tspace - Tsys) +  b * Tcal * Tspace  +  b * Tsys * TAhatbar
+      !
+      Nchannels = size(quantity%values, 1)/ size(totalPowerQuantity%values, 1)
+      !Nchannels = quantity% 
+      Npointings = size(totalPowerQuantity%values, 1)
+      do i = 1, size(quantity%values, 2)  !MAFS
+        
+        do j = 1, Npointings !Pointings
+          if ( totalPowerQuantity%values(j,i) == 0 ) then
+             call Announce_Error ( key, noTotalPower )
+          else
+            do k = 1, Nchannels  !channels
+              b=myTerms(1)/(myTerms(2) +  systemTemperatureQuantity%values(k,1))
+              sumCal = myTerms(2) + myTerms(3) + systemTemperatureQuantity%values(k,1)
+              bprodCal = b * myTerms(2) * myTerms(3) 
+              bTsys= b * systemTemperatureQuantity%values(k,1)
+
+              quantity%values(k + (j - 1)*Nchannels, i) = quantity%values(k + (j - 1)*Nchannels, i) &
+                       &  + b *  quantity%values(k + (j - 1)*Nchannels, i) * (totalPowerQuantity%values(j,i)-sumcal) &
+                       &  + bprodCal  + bTsys * totalPowerQuantity%values(j,i)  
+            end do
+          end if
+        end do
+      end do
+
 
     end subroutine UncompressRadiance
 
@@ -6517,6 +6576,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.8  2008/06/06 21:02:49  michael
+! added fill method uncompressRadiance
+!
 ! Revision 2.7  2008/04/26 00:39:56  livesey
 ! Added total power stuff
 !
