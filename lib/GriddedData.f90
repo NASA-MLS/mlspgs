@@ -137,7 +137,7 @@ contains
   subroutine ConcatenateGriddedData_2 ( A, B, X )
     ! This routine takes two grids A and B, B dated after A and tries
     ! to produce a third grid which is a combination of A and B
-    use MLSNumerics, only: EssentiallyEqual
+    use MLSFillValues, only: ESSENTIALLYEQUAL
     type ( GriddedData_T ), intent(in) :: A
     type ( GriddedData_T ), intent(in) :: B
     type ( GriddedData_T ), intent(inout) :: X ! inout to let us deallocate it
@@ -212,7 +212,7 @@ contains
     ! This routine takes an array of grids and a set of index values
     ! to produce a third grid which is a combination database elements
     ! at the index values
-    use MLSNumerics, only: EssentiallyEqual
+    use MLSFillValues, only: ESSENTIALLYEQUAL
     type ( GriddedData_T ), dimension(:), intent(in) :: database
     integer, dimension(:), intent(in) :: indices ! index values
     type ( GriddedData_T ), intent(inout) :: X ! inout to let us deallocate it
@@ -799,7 +799,8 @@ contains
   subroutine SliceGriddedData ( grid, slice, &
     & heights, lats, lons, lsts, szas, dates, missingValue )
 
-    use MLSNumerics, only: HUNT, ESSENTIALLYEQUAL
+    use MLSFillValues, only: ESSENTIALLYEQUAL
+    use MLSNumerics, only: HUNT
 
     type ( GriddedData_T ), intent(inout) :: GRID ! Input grid
     real(rgr), dimension(:,:,:,:,:,:), intent(out) :: SLICE ! Result
@@ -1302,6 +1303,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.52  2008/06/06 22:52:21  pwagner
+! EssentiallyEqual moved to MLSFillValues
+!
 ! Revision 2.51  2008/01/07 21:36:33  pwagner
 ! Replace DEFAULTUNDEFINEDVALUE with user-settable undefinedValue
 !
