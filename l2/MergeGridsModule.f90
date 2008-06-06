@@ -353,7 +353,7 @@ contains ! =================================== Public procedures
     use Intrinsic, only: PHYQ_Length, PHYQ_Pressure
     use MLSCommon, only: R8
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE
-    use MLSNumerics, only: ESSENTIALLYEQUAL
+    use MLSFillValues, only: ESSENTIALLYEQUAL
     use output_m, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE
     use Toggles, only: GEN, TOGGLE
     use Trace_M, only: TRACE_BEGIN, TRACE_END
@@ -931,6 +931,9 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.37  2008/06/06 22:52:53  pwagner
+! EssentiallyEqual moved to MLSFillValues
+!
 ! Revision 2.36  2007/12/07 01:15:01  pwagner
 ! Removed unused dummp varaibles, etc.
 !
