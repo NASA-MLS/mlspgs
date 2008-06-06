@@ -515,10 +515,10 @@ contains ! =====     Public procedures     =============================
              l+l_quality, l+l_radiance, l+l_earthradius, l+l_geolocation, &
              l+l_refGPH, l+l_refltemp, l+l_refltrans, l+l_reflrefl, l+l_reflspill, &
              l+l_rhi, l+l_singleChannelRadiance, l+l_sizedistribution, &
-             l+l_scanResidual, l+l_scECI, l+l_scVel, l+l_scVelECI, &
-             l+l_scVelECR, l+l_scGeocAlt, &
-             l+l_spaceRadiance, l+l_status, l+l_strayRadiance, l+l_surfaceHeight, &
-             l+l_surfacetype, l+l_systemTemperature, &
+             l+l_scanResidual, l+l_scatteringAngle, l+l_scECI, l+l_scVel, &
+             l+l_scVelECI, l+l_scVelECR, l+l_scGeocAlt, &
+             l+l_spaceRadiance, l+l_status, l+l_strayRadiance, &
+             l+l_surfaceHeight, l+l_surfacetype, l+l_systemTemperature, &
              l+l_temperature, l+l_tngtECI, l+l_tngtGeodAlt, l+l_tngtGeocAlt, &
              l+l_totalExtinction, l+l_totalPowerWeight, l+l_TScat, l+l_vmr, &
              n+n_dt_def /) )
@@ -1394,9 +1394,10 @@ contains ! =====     Public procedures     =============================
              begin, f+f_fwdModelIn, s+s_vector, nr+n_field_spec, &
              begin, f+f_fwdModelOut, s+s_vector, nr+n_field_spec, &
              begin, f+f_destroyJacobian, t+t_boolean, n+n_field_type, &
+             begin, f+f_jacobian, s+s_matrix, n+n_field_spec, &
              begin, f+f_perturbation, s+s_vector, n+n_field_spec, &
              begin, f+f_singleMAF, t+t_numeric, n+n_field_type, &
-             begin, f+f_jacobian, s+s_matrix, n+n_field_spec, &
+             begin, f+f_TScat, t+t_boolean, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree( (/ &
       begin, s+s_disjointEquations, & ! Must be AFTER s_matrix
@@ -1564,6 +1565,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.470  2008/06/06 01:57:31  vsnyder
+! Add ScatteringAngle to QuantityType, add TScat to SIDS
+!
 ! Revision 2.469  2008/06/05 02:11:57  vsnyder
 ! Added cloudTemperature and TScat to quantityType.
 ! Added dimensionless, dimless and iceDensity to vGridCoord.
