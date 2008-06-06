@@ -26,6 +26,7 @@ module QuantityTemplates         ! Quantities within vectors
   use Output_m, only: NEWLINE, Output, outputNamedValue
   use String_Table, only: DISPLAY_STRING, Get_String
   use TOGGLES, only: SWITCHES
+  use VGridsDatabase, only: VGrid_T
 
   implicit none
   public
@@ -152,7 +153,7 @@ module QuantityTemplates         ! Quantities within vectors
     ! These are specified by vGrids.  noAux is the product of the sizes of
     ! the vGrids.
 
-    integer, pointer :: AuxGrids(:) => NULL() ! vGrid indices
+    type(VGrid_T), pointer :: AuxGrids(:) => NULL() ! vGrid indices
 
     ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     ! Some families of quantities require special additional information.
@@ -446,8 +447,10 @@ contains ! =====     Public Procedures     =============================
     ! We don't need to do if often as typically only a shallow copy
     ! is required.  Note that this also follows any 'links' to h/vGrids and expands
     ! them too.
+    use Allocate_Deallocate, only: Test_Allocate
     type (QuantityTemplate_T), intent(inout) :: Z
     type (QuantityTemplate_T), intent(in) :: A
+    integer :: Stat
 
     ! Executable code
     ! Destroy result
@@ -494,7 +497,9 @@ contains ! =====     Public Procedures     =============================
       z%chanIndex = a%chanIndex
     end if
     if ( associated ( a%auxGrids ) ) then
-      call allocate_test ( z%auxGrids, size(a%auxGrids), 'z%auxGrids', moduleName )
+      allocate ( z%auxGrids(size(a%auxGrids)), stat=stat )
+      call test_allocate ( stat, 'QuantityTemplates', 'z%auxGrids', &
+        & (/ 1 /), (/ size(a%auxGrids) /) )
       z%auxGrids = a%auxGrids
     end if
    
@@ -503,17 +508,19 @@ contains ! =====     Public Procedures     =============================
   ! ----------------------------  DestroyQuantityTemplateContents  -----
   subroutine DestroyQuantityTemplateContents ( qty )
     ! Dummy argument
+    use Allocate_Deallocate, only: Test_Deallocate
     type (QuantityTemplate_T), intent(inout) :: QTY
 
+    integer :: Stat
+    logical :: Verbose
     character(63) :: What
-    logical :: verbose
 
     ! Executable code
     verbose = ( switchDetail(switches, 'qtmp' ) > -1 )
     if ( verbose ) then
-        call dump( qty )
-    call output( 'About to destroy this quantity', advance='yes' )
-    endif
+      call dump( qty )
+      call output( 'About to destroy this quantity', advance='yes' )
+    end if
     if ( qty%name == 0 ) then
       what = "qty"
     else
@@ -527,19 +534,19 @@ contains ! =====     Public Procedures     =============================
 
     if ( .not. qty%sharedHGrid ) then
       if ( verbose ) call output( 'About to deallocate phi', advance='yes' )
-      call deallocate_test ( qty%phi, trim(what) // "%phi", ModuleName )
+      call deallocate_test ( qty%phi, trim(what) // '%phi', ModuleName )
       if ( verbose ) call output( 'About to deallocate geosdlat', advance='yes' )
-      call deallocate_test ( qty%geodLat, trim(what) // "%geodLat", ModuleName )
+      call deallocate_test ( qty%geodLat, trim(what) // '%geodLat', ModuleName )
       if ( verbose ) call output( 'About to deallocate lons', advance='yes' )
-      call deallocate_test ( qty%lon, trim(what) // "%lon", ModuleName )
+      call deallocate_test ( qty%lon, trim(what) // '%lon', ModuleName )
       if ( verbose ) call output( 'About to deallocate times', advance='yes' )
-      call deallocate_test ( qty%time, trim(what) // "%time", ModuleName )
+      call deallocate_test ( qty%time, trim(what) // '%time', ModuleName )
       if ( verbose ) call output( 'About to deallocate solartime', advance='yes' )
-      call deallocate_test ( qty%solarTime, trim(what) // "%solarTime", ModuleName )
+      call deallocate_test ( qty%solarTime, trim(what) // '%solarTime', ModuleName )
       if ( verbose ) call output( 'About to deallocate solarzenits', advance='yes' )
-      call deallocate_test ( qty%solarZenith, trim(what) // "%solarZenith", ModuleName )
+      call deallocate_test ( qty%solarZenith, trim(what) // '%solarZenith', ModuleName )
       if ( verbose ) call output( 'About to deallocate losangle', advance='yes' )
-      call deallocate_test ( qty%losAngle, trim(what) // "%losAngle", ModuleName )
+      call deallocate_test ( qty%losAngle, trim(what) // '%losAngle', ModuleName )
     end if
     
     if ( .not. qty%sharedFGrid ) then
@@ -551,8 +558,15 @@ contains ! =====     Public Procedures     =============================
       if ( verbose ) call output( 'About to deallocate surfindex', advance='yes' )
       call deallocate_test ( qty%surfIndex, trim(what) // "%surfIndex", ModuleName )
       if ( verbose ) call output( 'About to deallocate chanindex', advance='yes' )
-      call deallocate_test ( qty%chanIndex, trim(what) // "%chanIndex", ModuleName )
+      call deallocate_test ( qty%chanIndex, trim(what) // '%chanIndex', ModuleName )
     end if
+
+    if ( associated(qty%auxGrids) ) then
+      if ( verbose ) call output( 'About to deallocate auxGrids', advance='yes' )
+      deallocate ( qty%auxGrids, stat=stat )
+      call test_deallocate ( stat, 'QuantityTemplates', trim(what)//'%auxGrids' )
+    end if
+
   end subroutine DestroyQuantityTemplateContents
 
   ! ----------------------------  DestroyQuantityTemplateDatabase  -----
@@ -584,6 +598,7 @@ contains ! =====     Public Procedures     =============================
     use MLSSignals_m, only: Signals, DUMP, GetRadiometerName, GetModuleName
     use Output_m, only: NewLine
     use String_Table, only: Display_String
+    use VGridsDatabase, only: Dump
 
     type(QuantityTemplate_T), intent(in) :: QUANTITY_TEMPLATE
     integer, intent(in), optional :: DETAILS ! <= 0 => Don't dump arrays
@@ -593,6 +608,7 @@ contains ! =====     Public Procedures     =============================
                                              ! Default 1
     logical, intent(in), optional :: NOL2CF  ! if TRUE => Don't dump L2-specific
                                              !  stuff
+    integer :: I ! Loop counter
     integer :: MyDetails
     character (len=80) :: Str
     logical :: myNoL2CF
@@ -663,6 +679,11 @@ contains ! =====     Public Procedures     =============================
       call output ( quantity_template%fGridIndex, advance='yes' )
     else
       call newline
+    end if
+    if ( associated(quantity_template%auxGrids) ) then
+      do i = 1, size(quantity_template%auxGrids)
+        call dump ( quantity_template%auxGrids(i), details )
+      end do
     end if
     if ( quantity_template%radiometer /= 0 .and. .not. myNoL2CF ) then
       call output ( '      Radiometer = ' )
@@ -971,6 +992,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.50  2008/06/05 02:05:53  vsnyder
+! Added Aux grids
+!
 ! Revision 2.49  2007/09/12 00:16:12  vsnyder
 ! Default initialize name component of QuantityTemplate_T to zero
 !
