@@ -34,8 +34,9 @@ contains
     use ForwardModelConfig, only: ForwardModelConfig_T
     use ForwardModelWrappers, only: ForwardModel
     use ForwardModelIntermediate, only: ForwardModelStatus_T
-    use Init_Tables_Module, only: f_destroyjacobian, f_forwardModel, f_fwdModelIn, &
-      f_fwdModelExtra, f_fwdModelOut, f_jacobian, f_perturbation, f_singleMAF
+    use Init_Tables_Module, only: f_destroyjacobian, f_forwardModel, f_fwdModelExtra, &
+      f_fwdModelIn, f_fwdModelOut, f_jacobian, f_perturbation, f_singleMAF, &
+      f_TScat
     use Intrinsic, only: PHYQ_DIMENSIONLESS
     use Lexer_Core, only: Print_Source
     use MLSCommon, only: R8
@@ -78,22 +79,23 @@ contains
     integer :: I                        ! Subscript, loop inductor
     integer :: IxJacobian               ! Index of Jacobian in matrix database
     type(matrix_T), pointer :: Jacobian ! The Jacobian matrix
-    integer :: Son                      ! Of ROOT
-    integer :: QUANTITY                 ! Index
+    integer :: COL                      ! Column in jacobian
+    integer :: ELEMENT                  ! Index
     integer :: INSTANCE                 ! Index
-    integer :: MAF                      ! Index
+    integer :: LOOPEND                  ! Loop limit
     integer :: MAF1                     ! Loop limit
     integer :: MAF2                     ! Loop limit
-    integer :: ELEMENT                  ! Index
+    integer :: MAF                      ! Index
+    integer :: QUANTITY                 ! Index
+    integer :: ROWINSTANCE              ! From jacobian
+    integer :: ROWQUANTITY              ! From jacobian
+    integer :: ROW                      ! Row in jacobian
+    integer :: SINGLEMAF                ! From l2cf
+    integer :: Son                      ! Of ROOT
     integer :: STATUS                   ! Flag
     logical :: DESTROYJACOBIAN          ! Flag
     logical :: DOTHISONE                ! Flag
-    integer :: LOOPEND                  ! Loop limit
-    integer :: COL                      ! Column in jacobian
-    integer :: ROW                      ! Row in jacobian
-    integer :: ROWINSTANCE              ! From jacobian
-    integer :: ROWQUANTITY              ! From jacobian
-    integer :: SINGLEMAF                ! From l2cf
+    logical :: DOTSCAT                  ! Flag
     real ::    T1
     type (MatrixElement_T), pointer :: M0 ! A block from the jacobian
 
@@ -107,12 +109,13 @@ contains
     integer, parameter :: PerturbationNotState = NotPlain + 1 ! Ptb. not same as state
     integer, parameter :: BadSingleMAF = PerturbationNotState + 1 ! Bad units for singleMAF
 
-      if ( toggle(gen) ) call trace_begin ( "SIDS", root )
-      call time_now ( t1 )
+    if ( toggle(gen) ) call trace_begin ( "SIDS", root )
+    call time_now ( t1 )
 
     nullify ( configs, perturbation )
 
     ! Process the fields of the "sids" specification
+    doTScat = .false.
     error = 0
     ixJacobian = 0
     destroyJacobian = .false.
@@ -123,20 +126,6 @@ contains
       son = subtree(i,root)
       field = get_field_id(son)
       select case ( field )
-      case ( f_fwdModelIn )
-        fwdModelIn => vectorDatabase(decoration(decoration(subtree(2,son))))
-      case ( f_fwdModelExtra )
-        fwdModelExtra => vectorDatabase(decoration(decoration(subtree(2,son))))
-      case ( f_fwdModelOut )
-        fwdModelOut => vectorDatabase(decoration(decoration(subtree(2,son))))
-      case ( f_perturbation )
-        perturbation => vectorDatabase(decoration(decoration(subtree(2,son))))
-      case ( f_singleMAF ) 
-        call expr ( subtree(2,son), exprUnits, exprValue )
-        if ( exprUnits(1) /= phyq_dimensionless ) call AnnounceError ( BadSingleMAF )
-        singleMAF = exprValue(1)
-      case ( f_jacobian )
-        ixJacobian = decoration(subtree(2,son)) ! jacobian: matrix vertex
       case ( f_destroyJacobian )
         destroyJacobian = Get_boolean(son)
       case ( f_forwardModel )
@@ -144,6 +133,22 @@ contains
         do config = 2, nsons(son)
           configs(config-1) = decoration(decoration(subtree(config,son)))
         end do
+      case ( f_fwdModelExtra )
+        fwdModelExtra => vectorDatabase(decoration(decoration(subtree(2,son))))
+      case ( f_fwdModelIn )
+        fwdModelIn => vectorDatabase(decoration(decoration(subtree(2,son))))
+      case ( f_fwdModelOut )
+        fwdModelOut => vectorDatabase(decoration(decoration(subtree(2,son))))
+      case ( f_jacobian )
+        ixJacobian = decoration(subtree(2,son)) ! jacobian: matrix vertex
+      case ( f_perturbation )
+        perturbation => vectorDatabase(decoration(decoration(subtree(2,son))))
+      case ( f_singleMAF ) 
+        call expr ( subtree(2,son), exprUnits, exprValue )
+        if ( exprUnits(1) /= phyq_dimensionless ) call AnnounceError ( BadSingleMAF )
+        singleMAF = exprValue(1)
+      case ( f_TScat )
+        doTScat = Get_boolean(son)
       end select
     end do ! i = 2, nsons(root)
 
@@ -181,6 +186,8 @@ contains
       loopEnd = 1
       doThisOne = .true.
     end if
+
+    configDatabase(configs)%generateTScat = doTScat
 
     ! Now have a possible loop over state vector elements, applying corrections.
     do i = 1, loopEnd
@@ -324,10 +331,12 @@ contains
       call DestroyVectorInfo ( deviation )
     end if
 
-      if ( toggle(gen) ) call trace_end ( "SIDS" )
+    configDatabase(configs)%generateTScat = .false.
 
     call deallocate_test ( configs, 'configs', ModuleName )
-      call add_to_retrieval_timing( 'sids', t1 )
+    call add_to_retrieval_timing( 'sids', t1 )
+
+    if ( toggle(gen) ) call trace_end ( "SIDS" )
 
   contains
     ! --------------------------------------------  AnnounceError  -----
@@ -367,6 +376,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.52  2008/06/06 01:59:28  vsnyder
+! Set DoTScat flag in configs, some cannonball polishing
+!
 ! Revision 2.51  2007/06/29 19:32:07  vsnyder
 ! Make ForwardModelIntermediate_t private to ScanModelModule
 !
