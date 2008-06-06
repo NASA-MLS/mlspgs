@@ -66,7 +66,7 @@ contains ! ============= Public procedures ===================================
   type (QuantityTemplate_T) function CreateQtyTemplateFromMLSCFInfo ( &
     & Name, Root, FGrids, HGrids, filedatabase, Chunk, MifGeolocation ) &
     & result ( QTY )
-    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, Test_Allocate
     use Chunks_m, only: MLSChunk_T
 !   use ChunkDivide_m, only: ChunkDivideConfig
     use EXPR_M, only: EXPR
@@ -436,10 +436,12 @@ contains ! ============= Public procedures ===================================
 
     ! Aux grid stuff
     if ( got(f_auxGrid) ) then
-      call allocate_test ( qty%auxGrids, nsons(auxGridNode)-1, 'qty%auxGrids', moduleName )
+      allocate ( qty%auxGrids(nsons(auxGridNode)-1), stat=i )
+      call test_allocate ( i, 'ConstructQuantityTemplates', 'qty%auxGrids', &
+        (/ 1 /), (/ nsons(auxGridNode)-1 /) )
       do i = 2, nsons(auxGridNode)
-        qty%auxGrids(i-1) = decoration(subtree(i,auxGridNode))
-        noAux = noAux * vGrids(qty%auxGrids(i-1))%noSurfs
+        qty%auxGrids(i-1) = vGrids(decoration(subtree(i,auxGridNode)))
+        noAux = noAux * qty%auxGrids(i-1)%noSurfs
       end do
     end if
 
@@ -1064,7 +1066,7 @@ contains ! ============= Public procedures ===================================
       L_PHASETIMING, L_PHITAN, L_PTAN, L_QUALITY, L_RADIANCE, &
       L_REFGPH, L_REFLTEMP, L_REFLTRANS, L_REFLREFL, L_REFLSPILL, &
       L_RHI, L_SINGLECHANNELRADIANCE, L_SIZEDISTRIBUTION, &
-      L_SCANRESIDUAL, L_SCECI, L_SCVEL, L_SCVELECI, &
+      L_SCANRESIDUAL, L_SCATTERINGANGLE, L_SCECI, L_SCVEL, L_SCVELECI, &
       L_SCVELECR, L_SCGEOCALT, L_SPACERADIANCE, L_STATUS, &
       L_STRAYRADIANCE, L_SurfaceHeight, L_SURFACETYPE, L_SYSTEMTEMPERATURE, &
       L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, L_TNGTGEOCALT, &
@@ -1192,6 +1194,7 @@ contains ! ============= Public procedures ===================================
       l_scVelECI, phyq_velocity, p_minorFrame, p_scModule, p_xyz, next, &
       l_scVelECR, phyq_velocity, p_minorFrame, p_scModule, p_xyz, next, &
       l_scanResidual, phyq_length, p_minorFrame, p_module, next, &
+      l_scatteringAngle, phyq_angle, p_vGrid, next, &
       l_singleChannelRadiance, phyq_temperature, p_minorFrame, p_signal, &
                                p_suppressChannels, next, &
       l_sizeDistribution, phyq_dimensionless, p_hGrid, p_vGrid, p_mustBeZeta, next, & 
@@ -1318,6 +1321,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.144  2008/06/06 01:58:31  vsnyder
+! Make Aux grids VGrids, define ScatteringAngle grid type
+!
 ! Revision 2.143  2008/06/05 20:00:45  vsnyder
 ! auxGrid never required
 !
