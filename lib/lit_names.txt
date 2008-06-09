@@ -212,6 +212,7 @@ tngtgeodalt
 totalExtinction
 totalPowerWeight
 true
+TScat
 
 uncompressRadiance
 UMLS
@@ -226,6 +227,9 @@ zeta
 zonalavg
 
 # $Log$
+# Revision 2.52  2008/06/09 20:33:46  vsnyder
+# Move TScat here from l2/lit_names
+#
 # Revision 2.51  2008/06/06 01:55:07  vsnyder
 # Add ScatteringAngle
 #
