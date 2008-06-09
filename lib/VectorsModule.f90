@@ -70,7 +70,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 ! GetVectorQtyByTemplateIndex  Returns pointer to quantity by template in vector
 ! GetVectorQuantityIndexByName Returns index to quantity by name in vector
 ! GetVectorQuantityIndexByType Returns index to quantity by type in vector
-! InflateQuantityTemplateDatabase
+! InflateVectorDatabase
 ! InflateVectorTemplateDatabase
 ! IsVectorQtyMasked            Is the mask for VectorQty set for address
 ! MaskVectorQty                Set the mask for VectorQty for spec. address
@@ -1969,7 +1969,7 @@ contains ! =====     Public Procedures     =============================
 
   end function GetVectorQuantityIndexByType
 
-  ! ------------------------------ InflateQuantityTemplateDatabase -----
+  ! ---------------------------------------- InflateVectorDatabase -----
   integer function InflateVectorDatabase ( database, extra )
     ! Make a vector database bigger by extra
     ! Return index of first new element
@@ -2556,6 +2556,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.132  2008/06/05 02:06:06  vsnyder
+! Comments about Aux grids
+!
 ! Revision 2.131  2007/10/09 16:45:02  pwagner
 ! Corrected declaration of myDetails
 !
