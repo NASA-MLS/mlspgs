@@ -1,0 +1,94 @@
+\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9.2in
+
+\newcommand{\docname}{\bf wvs-042r1}
+\newcommand{\docdate}{12 September 2006}
+
+\usepackage{longtable}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill\\
+Subject: \>$H$--$\phi$ iteration in {\tt metrics}\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+The present version of {\tt metrics} uses $H^{\text{ref}}$ and
+$\phi^{\text{basis}}$ to estimate $H$ and $\phi$ along the limb ray by using
+the following iteration:
+
+Use $H_t$ and $\phi_t$ for initial $H$ and $\phi$ for each $\zeta$ along the
+limb ray\\
+{\bf do}\\
+\hspace*{0.25in} Interpolate in $H^{\text{ref}}$ using $\phi$ and
+  $\phi^{\text{basis}}$ to get a new $H$\\
+\hspace*{0.25in} Compute new $\phi := \cos^{-1} \frac{H_t}H$\\
+{\bf until} $H$ doesn't change much
+
+$H^{\text{ref}}$ is a two-dimensional array, having a number of rows $m$ that
+is the same as the maximum size of $\zeta$ and a number of columns $n$ equal to
+the size of $\phi^{\text{basis}}$.
+
+Fred and I discussed this problem, and observed that since $H \propto \sec
+\phi$, not $\phi$, rather than interpolate in $H^{\text{ref}}$ using $\phi$ and
+$\phi^{\text{basis}}$, a new basis coordinate $H^{\text{basis}} := H_t \sec
+(\phi^{\text{basis}}-\phi_t) \,\text{sign}(\phi^{\text{basis}}-\phi_t)$ should
+be used, because rows of $H^{\text{ref}}$ should be linear in that coordinate. 
+Then observing that $H \approx a \zeta + b$ it makes sense to use $H$ instead
+of $\phi$ for the ``vertical'' coordinate of $H^{\text{ref}}_{^.}$  This results in
+the simpler iteration:
+
+Solve $H^{\text{ref}}_{1,n/2} = a \zeta^{\text{ref}}_1 + b$
+and $H^{\text{ref}}_{m,n/2} = a \zeta^{\text{ref}}_m + b$ for $a$ and $b$\\
+Compute initial $H = a \zeta^{\text{ref}} + b$\\
+{\bf do}\\
+\hspace*{0.25in} Interpolate in $H^{\text{ref}}$ using $H$ and $H^{\text{basis}}$
+to get a new $H$\\
+{\bf until} $H$ doesn't change much\\
+Compute $\phi := \cos^{-1} \frac{H_t}H$
+
+This always converges in one iteration, as is to be expected.
+
+When solving for $a$ and $b$, a least-squares solution, perhaps using all
+columns of $H^{\text{ref}}$ instead of only the middle one, might be better. 
+Perhaps even better would be to compute separate $a$ and $b$ for each row of
+$H^{\text{ref}}$, using the two adjacent rows: the shorter the range, the more
+accurate the assumption that $H$ and $\zeta$ are linearly related.
+
+In the one test I've run so far (one of the ``gold brick'' L2PC runs), the
+computed {\tt h\_grid} is different from the one computed by the old method by
+as much as 70 meters.  Fred has suggested to use higher-order interpolation in
+$H^{\text{ref}}_{^,}$ at least ``one shot,'' to get an idea which method is correct.
+
+\label{lastpage}
+\end{document}
+% $Id$

@@ -1,0 +1,159 @@
+\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9in
+
+\newcommand{\docname}{\bf wvs-068r1}
+\newcommand{\docdate}{17 January 2008}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Dong, Van\\
+Subject: \>Mie phase function, integrated scattering, and derivatives\\
+From: \>Van Snyder\\
+Reference: \>wvs-058, {\tt wvs-066}
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+\renewcommand{\d}{\text{d}}
+
+From the cloud ATBD JPL D-19299 (4 June 2004), the phase function is
+
+\begin{equation}\label{one}
+p(\theta,r) = \frac{p_0(\theta,r)}{C(r)}
+\end{equation}
+
+where
+
+\begin{equation}\begin{split}\label{two}
+p_0(\theta,r) =\,& |S_1(\theta,r)|^2 + |S_2(\theta,r)|^2 =
+  \Re (S_1(\theta,r))^2 + \Im (S_1(\theta,r))^2 +
+  \Re (S_2(\theta,r))^2 + \Im (S_2(\theta,r))^2 \\
+S_1 =\,& \sum_{j=1}^\infty \frac{2j+1}{j(j+1)} \left(
+ a_j(r,T) \frac{\d P_j^1(\cos\theta)}{\d \theta} +
+ b_j(r,T) \frac{P_j^1(\cos\theta)}{\sin\theta} \right) \\
+S_2 =\,& \sum_{j=1}^\infty \frac{2j+1}{j(j+1)} \left(
+ a_j(r,T) \frac{P_j^1(\cos\theta)}{\sin\theta} +
+ b_j(r,T) \frac{\d P_j^1(\cos\theta)}{\d \theta} \right) \\
+C(r) =\,& \frac12 \int_0^\pi p_0(\theta,r) \sin\theta \, \d \theta \,. \\
+\end{split}\end{equation}
+
+$P_j^1(\cos\theta)$ is the associated Legendre function of the first kind,
+which satisfies the following recurrence, from which it can be computed stably:
+
+\begin{equation}
+\frac{P_j^1(\cos\theta)}{\sin\theta} = \left\{
+\begin{array}{ll}
+0 & j = 0 \\
+1 & j = 1 \\
+ \cos\theta\, \frac{2j-1}{j-1} \frac{P_{j-1}^1(\cos\theta)}{\sin\theta} -
+ \frac{j}{j-1} \frac{P_{j-2}^1(\cos\theta)}{\sin\theta} & j > 1\,.\\
+\end{array}\right.
+\end{equation}
+
+The derivatives of $P_j^1(\cos\theta)$ w.r.t.\ $\theta$ can be computed from the
+following relation:
+
+\begin{equation}\begin{split}
+\frac{\d P_j^1(\cos\theta)}{\d\theta}  =\,&
+ j\, \frac{P_{j+1}^1(\cos\theta)}{\sin\theta} -
+ (j+1) \cos\theta\, \frac{P_j^1(\cos\theta)}{\sin\theta} \\
+=\,&
+ j \cos\theta\, \frac{P_j^1(\cos\theta)}{\sin\theta} -
+ (j+1)\, \frac{P_{j-1}^1(\cos\theta)}{\sin\theta}\,. \\
+\end{split}\end{equation}
+
+$\theta$ is independent of $T$ and IWC, and $a_j(r,T)$ and $b_j(r,T)$ are
+independent of IWC, so derivatives of $S_1$ and $S_2$ w.r.t.\ IWC are zero and
+derivatives w.r.t.\ $T$ depend upon derivatives of $a_j(r,T)$ and $b_j(r,T)$
+w.r.t.\ $T$ in an obvious straight-forward way (see {\tt wvs-066} for
+$a_j(r,T)$ and $b_j(r,T)$ and their derivatives w.r.t.\ $T$).
+
+From the definition of the quantity $p_0(\theta,r)$ in Equation (\ref{two}),
+
+\begin{equation}\begin{split}
+\frac{\partial p_0(\theta,r)}{\partial T} = 2 & \left(
+ \Re S_1(\theta,r) \frac{\partial \Re S_1(\theta,r)}{\partial T} +
+ \Im S_1(\theta,r) \frac{\partial \Im S_1(\theta,r)}{\partial T} \right.\, + \\
+  \,& \left. \phantom{ (\,\,\,}
+ \Re S_2(\theta,r) \frac{\partial \Re S_2(\theta,r)}{\partial T} +
+ \Im S_2(\theta,r) \frac{\partial \Im S_2(\theta,r)}{\partial T} \right) \,.
+  \\
+\end{split}\end{equation}
+
+Using this and the definitions of $p(\theta,r)$ and $C(r)$ from Equations
+(\ref{one}) and (\ref{two}),
+
+\begin{equation}\begin{split}
+\frac{\partial p(\theta,r)}{\partial T} =\,&
+ \frac1{C(r)} \left( \frac{\partial p_0(\theta,r)}{\partial T} -
+ p(\theta,r) \frac{\partial C(r)}{\partial T} \right) \\
+=\,& \frac1{C(r)} \left( \frac{\partial p_0(\theta,r)}{\partial T} -
+ \frac{p(\theta,r)}2 \int_0^\pi \frac{\partial p_0(\theta,r)}{\partial T}
+ \sin\theta\, \d \theta \right) .
+\end{split}\end{equation}
+
+Since $a_j(r,T)$ and $b_j(r,T)$ do not depend on IWC, the phase function does
+not depend on IWC.
+
+The integrated phase function is
+
+\begin{equation}
+P(\theta) =
+ \frac{\pi}{\beta_{c\_s}} \int_0^\infty r^2\, n(r)\, \xi_s(r)\, p(\theta,r)\, \d r
+\end{equation}
+
+from which
+
+\begin{equation}\begin{split}
+\frac{\partial P(\theta)}{\partial T} =\,&
+ \frac{\pi}{\beta_{c\_s}} \int_0^\infty r^2\, n(r)\, \xi_s(r)\, p(\theta,r)\,
+ \left( \frac1{n(r)}\, \frac{\partial n(r)}{\partial T} +
+        \frac1{\xi_s(r)}\, \frac{\partial \xi_s(r)}{\partial T} +
+        \frac1{p(\theta,r)}\, \frac{\partial p(\theta,r)}{\partial T}
+ \right) \, \d r \\
+ \,&
+ -\frac{P(\theta)}{\beta_{c\_s}}\, \frac{\partial \beta_{c\_s}}{\partial T} \\
+\end{split}\end{equation}
+and
+\begin{equation}
+ \frac{\partial P(\theta)}{\partial \text{IWC}} =
+ \frac{\pi}{\beta_{c\_s}} \int_0^\infty r^2\,
+  \frac{\partial n(r)}{\partial \text{IWC}} \,
+  \xi_s(r)\, p(\theta,r)\, \d r
+ -\frac{P(\theta)}{\beta_{c\_s}}\,
+  \frac{\partial \beta_{c\_s}}{\partial\text{IWC}}\,.
+\end{equation}
+
+See {\tt wvs-066} for derivatives of $\beta_{c\_s}$ and $n(r)$ w.r.t.\ $T$ and
+IWC, and the derivative of $\xi_s(r)$ w.r.t.\ $T$.
+
+\label{lastpage}
+\end{document}
+% $Id$

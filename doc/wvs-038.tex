@@ -1,0 +1,104 @@
+\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.2in
+\textheight 9.2in
+
+\newcommand{\docname}{\bf wvs-038r1}
+\newcommand{\docdate}{25 September 2006}
+
+\usepackage{longtable}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill\\
+Subject: \>Modification to {\tt metrics\_m}\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+The objective is to add more values to the $\phi$, $\zeta$ and $H$ grids that
+correspond to the horizontal temperature representation basis $\phi_m$.  The
+existing grids, call them $\phi_l$, $\zeta_l$ and $H_l$, are on both sides of
+the line-of-sight path, correspond to the $\zeta$'s at which heights and
+temperatures are desired.
+
+In {\tt metrics}, $\phi_m$ are given by the variable {\tt p\_basis}, while the
+reference $\zeta$'s are given by the variable {\tt z\_ref}.  Presently, the
+sizes of the resulting $\phi_l$, $\zeta_l$ and $H_l$ grids, produced in
+variables {\tt p\_grid}, {\tt z\_grid} and {\tt h\_grid}, are {\tt
+2*size(z\_ref)}.  In the revision, the size of the resulting $\phi_{l+m}$,
+$\zeta_{l+m}$ and $H_{l+m}$ grids will be {\tt 2*size(z\_ref) + size(p\_basis)}.
+
+Given $\phi_m$, compute $H_m = H_t / \cos\phi_m$.  Then compute $i$ such that
+$\phi_i < \phi_m < \phi_{i+1}$.  Insert $\phi_m$ and $H_m$ into the {\tt
+p\_grid} and {\tt h\_grid} arrays between positions $i$ and $i+1$.  Compute
+$\zeta_m$, starting from
+
+\begin{equation}\begin{split}\label{one}
+\int_{H_i}^{H_m} Z \text{d} H =\,&
+ \int_{\zeta_i}^{\zeta_m} (T_i + \Gamma(\zeta-\zeta_i)) \text{d} \zeta =\\
+Z(H_m-H_i) =\,& T_i(\zeta_m-\zeta_i) + \frac12\Gamma (\zeta_m^2-\zeta_i^2)
+  - \Gamma \zeta_i ( \zeta_m-\zeta_i )
+\end{split}\end{equation}
+
+where
+
+\begin{equation}
+\Gamma = \frac{T_{i+1}-T_i}{\zeta_{i+1}-\zeta_i} \text{ and }
+Z = \frac{(T_i+T_{i+1})(\zeta_{i+1}-\zeta_i)}{2(H_{i+1}-H_i)}\,.
+\end{equation}
+
+Solving Equation (\ref{one}) for $\zeta_m$:
+
+\begin{equation}\label{zeta}
+\zeta_m = \frac{\Gamma\zeta_i - T_i + \sqrt{T_i^2 + 2 \Gamma Z (H_m-H_i)}}\Gamma =
+\frac{\Gamma\zeta_i - T_i + \sqrt{T_i^2 + (T_{i+1}^2-T_i^2)\frac{H_m-H_i}{H_{i+1}-H_i}}}\Gamma
+\,.
+\end{equation}
+
+Written to make the interpolations obvious, we have
+
+\begin{equation}\label{interp}
+(T_{i+1}-T_i) \frac{\zeta_m-\zeta_i}{\zeta_{i+1}-\zeta_i} +T_i =
+\sqrt{T_i^2 + (T_{i+1}^2-T_i^2) \frac{H_m-H_i}{H_{i+1}-H_i}}\,,
+\end{equation}
+
+from which it is clear that $\zeta_m=\zeta_i$ when $H_m=H_i$
+and $\zeta_m=\zeta_{i+1}$ when $H_m=H_{i+1}$.
+
+Insert the computed $\zeta_m$ into the {\tt z\_grid} array between positions
+$i$ and $i+1$.
+
+Do these calculations on the coarse path grid.  Then insert the additional GL
+points to construct the fine grid, and run {\tt metrics} again, instructing it
+not to interpose the additional $\phi_m$ etc. values.
+
+\label{lastpage}
+\end{document}
+% $Id$

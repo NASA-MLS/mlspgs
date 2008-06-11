@@ -1,0 +1,124 @@
+\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9.25in
+
+\newcommand{\docname}{\bf wvs-067r1}
+\newcommand{\docdate}{11 February 2008}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Van\\
+Subject: \>Summary of Mie formulae\\
+From: \>Van Snyder\\
+Reference: \>wvs-058
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+\begin{equation}\begin{split}
+\beta_{c\_e} =\,&\, 2 \pi \int_0^\infty r^2 n(r)\, \xi_e(r) \text{d} r \\
+\beta_{c\_s} =\,&\, 2 \pi \int_0^\infty r^2 n(r)\, \xi_s(r) \text{d} r \\
+\end{split}\end{equation}
+%
+\begin{equation}\begin{split}
+n(r) =\,& N_1\, r \exp(-2 \alpha r) +
+      N_2\, \frac1r\, \exp\left(-\frac12 \gamma^2\right) \text{ where }
+\gamma = \frac{\log(2r) - \mu}{\sigma} \\
+I_< =\,& \min\left(I,\, 0.252\, I^{0.837}\right) \text{ and }
+I_> = I - I_< \\
+\alpha =\,& \max\left(0,\,-4.99 \times 10^{-3} - 0.0494 \log_{10} I_< \right) \\
+\mu =\,& 5.2 + 1.3 \times 10^{-3}\, T +
+     ( 0.026 - 1.2 \times 10^{-3}\, T ) \log_{10} I_> \\
+\sigma =\,& 0.47 + 2.1 \times 10^{-3}\, T +
+     ( 0.018 - 2.1 \times 10^{-4}\, T ) \log_{10} I_> \\
+N_1 =\,& \frac{I_< \alpha^5}{4 \pi \rho} \text{ and }
+N_2 = \frac{6 I_>}{\sqrt{2 \pi^3}\, \rho\, \sigma \exp(3 \mu + 4.5 \sigma^2)}
+\end{split}\end{equation}
+%
+\begin{equation}\begin{split}
+\xi_e(r) =\,& \frac2{\chi^2} \sum_{n=1}^\infty ( 2 n + 1 ) ( \Re a_n + \Re b_n ) \\
+\xi_s(r) =\,& \frac2{\chi^2} \sum_{n=1}^\infty ( 2 n + 1 ) ( |a_n|^2 + |b_n|^2 ) \\
+\end{split}\end{equation}
+%
+where $\chi = \frac{2 \pi r}\lambda$.
+%
+\begin{equation}
+A_n = -\frac{n}{m \chi} + \frac{j_{n-1}(m \chi)}{j_n(m \chi)}
+    =  \frac1{2m\chi} + \frac1{j_n(m\chi)}
+             \frac{\partial j_n(m\chi)}{\partial (m\chi)}
+    = -\frac{n}{m \chi} + \left( \frac{n}{m \chi} - A_{n-1} \right)^{-1}
+    \!\!\!\!\!,\,\,\,
+    A_0 = \cot{m \chi}
+\end{equation}
+%
+\begin{equation}\begin{split}
+\frac1{a_n} =\,& \frac{\hat a_n h^{(2)}_n(\chi) - h^{(2)}_{n-1}(\chi)}
+                      {\hat a_n j_n(\chi) - j_{n-1}(\chi)}
+            =    1 - i \frac{\left(n(1-m^2) j_n(m \chi) -
+                                   m \chi j_{n-1} (m \chi) \right) y_n(\chi) +
+                              m^2 \chi j_n(m \chi) y_{n-1}(\chi)}
+                            {\left(n(1-m^2) j_n (m \chi) +
+                                   m \chi j_{n-1}(m \chi) \right) j_n(\chi) +
+                              m^2 \chi j_n(m \chi) j_{n-1}(\chi)}
+\\
+\frac1{b_n} =\,& \frac{\hat b_n h^{(2)}_n(\chi) - h^{(2)}_{n-1}(\chi)}
+                      {\hat b_n j_n(\chi) - j_{n-1}(\chi)}
+            =    1 - i \frac{m\, y_n(\chi) j_{n-1}(m \chi) -
+                             y_{n-1}(\chi) j_n(m \chi)}
+                            {m\, j_n(\chi) j_{n-1}(m \chi) -
+                             j_{n-1}(\chi) j_n(m \chi)}
+            =    1 - i \frac{W(y_n(\chi),j_n(m \chi))}
+                            {W(j_n(\chi),j_n(m \chi))}
+%             =    1 + i \frac{\frac{\partial}{\partial\chi}
+%                              \frac{y_n(\chi)}{j_n(m\chi)}}
+%                             {\frac{\partial}{\partial\chi}
+%                              \frac{j_n(\chi)}{j_n(m\chi)}}
+\\
+\hat b_n =\,& m A_n + \frac{n}\chi = m \frac{j_{n-1}(m \chi)}{j_n(m \chi)} \\
+\hat a_n =\,& \frac{A_n}m +\frac{n}\chi =
+              \frac{\hat b_n}{m^2} + \frac{n(m^2-1)}{m^2 \chi} \\
+\end{split}\end{equation}
+%
+$\lambda$ is wavelength, $T$ is temperature in Celsius, $I$ is ice water content
+in g/m$^3$, $\rho = 0.91$ g/cm$^3$ is ice density, $m$ is the complex index of
+refraction, which depends upon temperature and frequency, and
+
+\begin{equation}
+W(f_1,f_2) = \left|
+             \begin{array}{ll}
+              f_1 & f_2 \\
+              \frac{\partial f_1}{\partial\chi} & \frac{\partial f_2}{\partial\chi}
+             \end{array} \right|
+           = f_2^2 \frac{\partial}{\partial\chi} \left( \frac{f_1}{f_2} \right)
+\text{ is the Wronskian determinant of } f_1 \text{ and } f_2\,.
+\end{equation}
+
+\label{lastpage}
+\end{document}
+% $Id$

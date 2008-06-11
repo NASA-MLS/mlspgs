@@ -1,0 +1,222 @@
+\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9.0in
+
+\newcommand{\docname}{\bf wvs-076r2}
+\newcommand{\docdate}{21 April 2008}
+
+\usepackage{graphicx}
+
+\usepackage{floatflt}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill, Dave, Nathaniel\\
+Subject: \>Organization of changes to Full Forward Model for TSCAT-computation
+mode\\
+From: \>Van Snyder\\
+References: \>wvs-074\\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+\newcommand{\R}{\stackrel*{R^\oplus_{\text{eq}_i}}}
+
+\begin{enumerate}
+
+\setlength{\itemsep}{0pt}
+
+\item The orbit geodetic angle $\phi_i$ for each profile $\Pi_i$ is
+gotten from the {\tt phiTan} quantity of the {\tt Forward\-Model\-In} or
+{\tt Forward\-Model\-Extra} vector in the usual way.  {\tt phiTan} is a
+MIF $\times$ MAF quantity; the $\phi$ values for all MIFs for the
+hypothetical reference MAF should all be set to the same value, probably
+using a {\tt forge} command.  We can assume $\phi_i = 0$.
+
+\item Assuming $\phi_i=0$, then the latitude is input, and the equivalent
+earth radius $\R$ is computed from the latitude in the usual way.
+
+\item The $(\phi_j,\zeta_k)$ co{\"o}rdinates of the observing or
+scattering points $S = \{S_{jk}\}$ at which computations are to be done
+are on a grid that is the Cartesian product $\{\phi_j\} \times
+\{\zeta_k\}$, where $\{\phi_j\}$ and $\{\zeta_k\}$ are taken from {\tt
+hGrid} and {\tt vGrid} fields of the output structure.
+
+\item $\Phi = \{\phi_q\}$ for forward model calculations is the
+temperature basis, which should be centered at $\phi_i$
+
+\item For usual forward model calculations, the set $Z = \{\zeta_r\}$ is
+used to calculate the break points for line-of-sight integration, where
+$\{\zeta_r\}$ is the union of the $\zeta$'s for temperature and all
+species in the configuration.  For TSCAT or observer-in-atmosphere
+calculations, we need $Z = \{\zeta_r\} \cup \{\zeta_k\}$.  If
+$\{\zeta_k\}$ were not included, $S_{jk}$ might not be a breakpoint on
+the line of sight, in which case radiative transfer couldn't stop at
+$S_{jk}$.
+
+\item The height reference grid {\tt h\_GLgrid} is calculated from $Z$,
+$\Phi$, and the temperatures using hydrostatic equilibrium in the usual
+way.
+
+\item Since $S_{jk}$ is a breakpoint, its height $H_{jk}$ is calculated
+by {\tt metrics} in the usual way.
+
+\item For each $\phi_i$ and $\phi_j$ the angle $\phi_{ij} = \phi_j -
+\phi_i$ is the angle between the limb tangent point and the scattering
+point, as seen from the center of the equivalent circular earth tangent to
+the true earth at the surface point below the tangent point.
+
+\item The angles $X = \{\chi_l\}$ between the line of sight and the rays
+scattered to the line of sight are taken from the tables of Mie phase
+functions.
+
+\item For each $\Pi_i$ and each scattering point $S_{jk}$ there is a
+critical angle $\chi^c_{ijk} = \phi_{ij} - \cos^{-1}\left( \R /
+H_{jk} \right)$.
+
+The quantity $\R$ is not precisely the correct value; what is really
+wanted is the radius of the equivalent circular earth at the point of
+reflection of the ray from the earth's surface, which is not necessarily
+the same as the radius to the point on the surface below the limb ray
+tangent point.  For small values of $\phi_{ij}$, $\R$ should be
+sufficiently close to the correct value.  We're ignoring topography
+anyway, so errors in $\R$ are probably of second order.
+
+\item The tangent height for each scattered ray $P_{ijkl}$ from space to
+$S_{jk}$ at angle $\chi_l$ is $H_{ijkl} = H_{jk} \cos( \phi_{ij} -
+\chi_l)$. The tangent point geodetic angle $\phi_{ijkl}$ depends upon the
+relation between $\chi_l$ and $\chi^c_{ijk}$:
+
+\begin{equation*}
+\phi_{ijkl} = \left\{
+\begin{array}{ll}
+\chi_l & \text{if }
+         \chi_l \geq \chi^c_{ijk} \text{ or } \chi_l \leq -\chi^c_{ijk} -\pi \\
+& \\
+\left\{\begin{array}{ll}
+ 2 \theta + \chi_l & \text{if } \chi_l > \phi_{jk} - \pi/2 \\
+ -2 \theta -\chi_l & \text{otherwise} \\
+\end{array}\right.
+&
+\begin{array}{l}
+\text{if } -\chi^c_{ijk} -\pi < \chi_l < \chi^c_{ijk} \\
+\text{(earth intersecting ray)} \\
+\end{array} \\
+
+\end{array}\right.
+\end{equation*}
+%
+where
+%
+\begin{equation*}
+\theta = \cos^{-1} \left| \frac{\cos( \phi_{ij} - \chi_l )}
+                               {\cos( \phi_{ij} - \chi^c_{ijk} )}
+                   \right|
+\end{equation*}
+
+\item\label{xfer} Given a model atmosphere, for each hypothetical profile
+$\Pi_i$, scattering angle $\chi_l$, and scattering point $S_{jk}$,
+radiative transfer is calculated from space to $S_{jk}$ along the ray
+$P_{ijkl}$.  The radiative transfer calculation yields radiance
+$I_{ijkl}$ and its derivatives with respect to species $s$ mixing ratio
+(pretend temperature is a species mixing ratio) $D^s_{ijklqr} =
+\frac{\partial I_{ijkl}} {\partial f^s_{qr}}$ for each point $(q,r)$ such
+that $\eta_q(\phi_p) \neq 0$ and $\eta_r(\zeta_p) \neq 0$ for each point
+$p$ along the ray $P_{ijkl}$.  This is explained in Chapter 10 of the
+ATBD, JPL D-18130 (19 August 2004 revision).  The basis for the output
+grid of derivatives is $\{\phi_q\}\times\{\zeta_r\}$.
+
+\item\label{final} The basis sets of temperatures $T = \{T_m\}$ and ice
+water content values IWC = \{IWC$_n$\} at which the Mie phase functions
+are evaluated are the same at every scattering point $S_{jk}$.  They are
+taken from the tables of Mie phase functions.  At each $S_{jk}$ and for
+each $T_m$, IWC$_n$, and species $s$, the radiances $I_{ijkl}$ and
+derivatives $D^s_{ijklqr}$ calculated in step \ref{xfer} are convolved
+over $X$ with the Mie phase function $P_{mn}(\chi)$, giving arrays of
+scattered radiance $\overline{I}_{ijkmn}$ and derivatives
+$\overline{D}^s_{ijkmnqr}$.  Taking $\chi_0 = 0$, and assuming
+$\{P_{mn}(\chi)\}$ are normalized when they are computed, i.e.,
+$\int_{-\pi}^\pi P_{mn}(\chi)\, d \chi \approx \sum_l P_{mn}(\chi_l)
+\approx 1$, we have
+%
+\begin{equation*}
+\overline{I}_{ijkmn} =
+ {\int_{-\pi}^{\pi} I_{ijk}(\chi) P_{mn}(-\chi)\, d \chi}
+\approx
+ {\sum_l I_{ijkl} P_{mn}(-\chi_l)}
+\end{equation*}
+%
+\begin{equation*}
+\overline{D}^s_{ijkmnqr} =
+ {\int_{-\pi}^{\pi} D^s_{ijkqr}(\chi) P_{mn}(-\chi)\, d \chi}
+\approx
+ {\sum_l D^s_{ijklqr} P_{mn}(-\chi_l)}
+\end{equation*}
+%
+\begin{equation*}
+\frac{\partial \overline{I}_{ijk}}{\partial T_{jkmn}} =
+ {\int_{-\pi}^{\pi} I_{ijk} \frac{\partial P_{mn}(-\chi)}
+                                 {\partial T_{jkmn}}\, d \chi}
+\approx
+ {\sum_l I_{ijkl} \frac{\partial P_{mn}(-\chi_l)}{\partial T_{jkmn}}}
+\end{equation*}
+%
+\begin{equation*}
+\frac{\partial \overline{I}_{ijk}}{\partial \text{IWC}_{jkmn}} =
+ {\int_{-\pi}^{\pi} I_{ijk} \frac{\partial P_{mn}(-\chi)}
+                                 {\partial \text{IWC}_{jkmn}}\, d \chi}
+\approx
+ {\sum_l I_{ijkl} \frac{\partial P_{mn}(-\chi_l)}{\partial \text{IWC}_{jkmn}}}
+\end{equation*}
+%
+Remember that the phase function is symmetric, i.e., $P_{mn}(-\chi_l) =
+P_{mn}(\chi_l)$.
+
+\end{enumerate}
+
+The results calculated in step \ref{final} are probably needed for
+several latitudes and seasons.
+
+What are the sizes of the sets $\{\phi_i\}$, $\{\phi_j\}$, $\{\zeta_k\}$
+$\{T_m\}$, $\{\text{IWC}_n\}$, $\{\phi_q\}$, $\{\zeta_r\}$, and
+\{species\}, that is, how big are the arrays computed in step \ref{final}?
+
+$|\{\phi_i\}| = 1$ probably.  $\{P_{mn}(\chi_l)\}$ was calculated with
+$|\{T_m\}| = 10$, $|\{\text{IWC}_n\}| = 10$, and $|\{\chi_l\}| = 19$, but
+it is easy to repeat this calculation with different size sets.  I assume
+$|\{\phi_j\}| \approx |\{\phi_q\}| \leq 10$.  Will $\{\zeta_k\}| \approx
+|\{\zeta_r\}| \approx 70$?  Assuming these sizes, and $|$\{species\}$|
+\approx 6$,  $|\{\overline{D}^s_{ijkmnqr}\}| \approx 3.5\times 10^8$ or
+roughly 2.8 gigabytes per latitude and season (if we store double
+precision).  The sizes of the other arrays ($\approx$ 4 megabytes each)
+are negligible by comparison.
+
+\label{lastpage}
+\end{document}
+% $Id$

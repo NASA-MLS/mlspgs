@@ -1,0 +1,233 @@
+\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.25in
+
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9.00in
+
+\newcommand{\docname}{\bf wvs-026r2}
+\newcommand{\docdate}{17 October 2005}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill, Nathaniel, Mike\\
+Subject: \>Simplifying assumption to combine line-by-line and PFA\\
+From: \>Van Snyder\\
+Reference: \>wvs-024r2, wvs-025\\
+\end{tabbing}
+
+\parindent 0pt \parskip 3pt
+\vspace{-20pt}
+
+\section{Introduction}
+
+Recall from wvs-024r2 the equations to combine PFA and line-by-line radiances
+for a particular channel $c$
+
+\begin{equation}\label{combined}
+I_c = \int \text{d}\nu\, \phi_c(\nu)
+      \int \text{d} z\, \Delta B(z,\nu) \tau(z,\nu)
+ \approx \sum_{n=1}^{N_f} \phi_{nc} \Delta \nu_{nc}
+               \sum_{i=1}^{N_p} \Delta B_{ic} \tau^s_{in} \tau^w_{ic}
+\end{equation}
+
+and to combine PFA and line-by-line derivatives for that channel
+
+\begin{equation}\label{final}
+\frac{\partial I_c}{\partial x_k}
+\approx \sum_{n=1}^{N_f} \phi_{nc} \Delta \nu_{nc} \sum_{i=1}^{N_p}
+ \left(
+  \frac{\partial \Delta B_{ic}}{\partial x_k} -
+  \Delta B_{ic}
+   \sum_{j=1}^i \left( \frac{\partial \delta^s_{jn}}{\partial x_k} +
+                      \frac{\partial \delta^w_{jc}}{\partial x_k}
+                \right)
+  \right) \tau^s_{in} \tau^w_{ic}\,.
+\end{equation}
+
+This isn't precisely representative because the outer sums are actually
+applications of the Newton 3/8 quadrature rule, and the inner sums are
+evaluated on a different frequency grid from the outer sums (the pointing
+frequency grid), and then interpolated to the grid used for the outer sums.
+
+The forward model actually computes ``raw'' radiances and derivatives on the
+pointing frequency grid
+
+\begin{equation}\begin{split}\label{raw}
+R_n =\,& \sum_{i=1}^{N_p} \Delta B_{in} \tau^s_{in} \tau^w_{ic} \\
+\frac{\partial R_n}{\partial x_k} =\,&
+\sum_{i=1}^{N_p}
+ \left(
+  \frac{\partial \Delta B_{in}}{\partial x_k} -
+  \Delta B_{ic}
+   \sum_{j=1}^i \left( \frac{\partial \delta^s_{jn}}{\partial x_k} +
+                      \frac{\partial \delta^w_{jc}}{\partial x_k}
+                \right)
+  \right) \tau^s_{in} \tau^w_{ic}\,.
+\end{split}\end{equation}
+
+It then interpolates these results to the filter function grid and integrates
+the product of these results and the filter function using the Newton 3/8 rule:
+
+\begin{equation}\begin{split}
+I_c =\,& \sum_{n=1}^{N_f} w_n \phi_{nc} \Delta \nu_{nc} \hat R_n\\
+\frac{\partial I_c}{\partial x_k} =\,&
+ \sum_{n=1}^{N_f} w_n \phi_{nc} \Delta \nu_{nc}
+  \frac{\partial \hat R_n}{\partial x_k}
+\end{split}\end{equation}
+
+where $w_n$ is a weight for the Newton 3/8 rule, the hat indicates quantities
+interpolated from the pointing frequency grid to the filter function grid, and
+$n$ now ranges over the filter grid instead of the pointing frequency grid.
+
+The term $\frac{\partial \delta^s_{jn}}{\partial x_k}$ is a three-dimensional
+array that could, in the worst case, require 6 GB of storage per species.  To
+reduce this requirement, it is proposed to revise the scheme for combining PFA
+and line-by-line radiances and derivatives.
+
+\section{Simplifying assumption for combining line-by-line and PFA
+derivatives}
+
+Expand the sum for $\frac{\partial R_n}{\partial x_k}$ in Equation (\ref{raw}):
+
+\begin{equation}\label{expand}
+\begin{split}
+\frac{\partial R_n}{\partial x_k} =\,& \sum_{i=1}^{N_p}
+ \left(
+  \frac{\partial \Delta B_{in}}{\partial x_k} -
+  \Delta B_{in}
+   \sum_{j=1}^i \left( \frac{\partial \delta^s_{jn}}{\partial x_k} +
+                      \frac{\partial \delta^w_{jc}}{\partial x_k}
+                \right)
+  \right) \tau^s_{in} \tau^w_{ic} = \\
+&\sum_{i=1}^{N_p}
+ \left(
+  \frac{\partial \Delta B_{in}}{\partial x_k} -
+  \Delta B_{in}
+   \sum_{j=1}^i\frac{\partial \delta^s_{jn}}{\partial x_k}
+  \right) \tau^s_{in} \tau^w_{ic} -
+\sum_{i=1}^{N_p} \Delta B_{ic} \sum_{j=1}^i
+ \frac{\partial \delta^w_{jc}}{\partial x_k} \tau^s_{in} \tau^w_{ic}\,.
+\end{split}
+\end{equation}
+
+If the PFA calculations are done first the $\frac{\partial
+\delta^s_{jn}}{\partial x_k}$ quantity need not be represented by an array that
+has a frequency dimension:  The first term in the right-hand side can be
+evaluated separately for each frequency, as is done in the non-PFA case.  This
+requires to store the much smaller array that represents the $\frac{\partial
+\delta^w_{jc}}{\partial x_k}$ quantity for use in the second term in the
+right-hand side.
+
+By using some representative average value $\overline{\tau^w_c}$ instead
+of $\tau^w_{ic}$ in the first term, we have
+
+\begin{equation}\begin{split}\label{simple}
+\frac{\partial I_c}{\partial x_k}
+\approx\,& \overline{\tau^w_c} \sum_{n=1}^{N_f} \phi_{nc} \Delta \nu_{nc} \sum_{i=1}^{N_p}
+ \left(
+  \frac{\partial \Delta B_{in}}{\partial x_k} -
+  \Delta B_{in}
+   \sum_{j=1}^i \frac{\partial \delta^s_{jn}}{\partial x_k}
+  \right) \tau^s_{in}\\
+  \,& -
+ \sum_{n=1}^{N_f} \phi_{nc} \Delta \nu_{nc} \sum_{i=1}^{N_p}
+  \Delta B_{ic} \sum_{j=1}^i\frac{\partial \delta^w_{jc}}{\partial x_k}
+   \tau^s_{in} \tau^w_{ic}\,.
+\end{split}\end{equation}
+
+The first term is simply the line-by-line derivative multiplied by
+$\overline{\tau^w_c}$.  As is done in the non-PFA case, the $\frac{\partial
+\delta^s_{jn}}{\partial x_k}$ quantity can be computed and discarded for each
+frequency in the pointing grid; it need not be saved for use during frequency
+averaging.  This still requires that the PFA calculation be done first, and
+that $\frac{\partial \delta^w_{jc}}{\partial x_k}$ be saved for use in the
+second term.
+
+A further simplification is to approximate $\overline{\tau^w_c} \approx 1$. 
+This allows PFA calculations to be done after line-by-line calculations, and
+therefore allows $\frac{\partial \delta^w_{jc}}{\partial x_k}$ not to have a
+channel dimension.  As is the case for $\frac{\partial \delta^s_{jn}}{\partial
+x_k}$ it can be calculated separately for each channel and then discarded.
+
+This introduces a minor inconsistency between the radiance and its derivatives. 
+Experiments will show whether this confuses the nonlinear solver.
+
+As explained in wvs-025, it is possible to eliminate the frequency dimension
+altogether from array quantities other then the pointing frequency grids
+themselves, while preserving the fidelity of the approximations.
+
+The frequency-averaged radiance due to strong lines, in each channel at each
+point along the path, is
+
+\begin{equation}\label{rad}
+\overline{I^s_{ic}} =
+ \sum_{n=1}^{N_f} \phi_{nc} \Delta \nu_{nc} \Delta B_{in} \tau^s_{in}
+ \approx
+ \Delta B_{ic} \sum_{n=1}^{N_f} \phi_{nc} \Delta \nu_{nc}
+  \tau^s_{in}\,.
+\end{equation}
+
+Since the frequency variation within a channel is very small compared to the
+channel center frequency,  $\Delta B_{ic}$ is very nearly $\Delta B_{in}$, and
+this is therefore a good approximation.
+
+Exchanging the order of summation in the second term in Equation (\ref{simple})
+and substituting $\overline{I^s_{ic}}$,
+
+\begin{equation}
+\frac{\partial I_c}{\partial x_k}
+\approx \sum_{n=1}^{N_f} \phi_{nc} \Delta \nu_{nc} \sum_{i=1}^{N_p}
+ \left(
+  \frac{\partial \Delta B_{in}}{\partial x_k} -
+  \Delta B_{in}
+   \sum_{j=1}^i \frac{\partial \delta^s_{jn}}{\partial x_k}
+  \right) \tau^s_{in}
+ -
+ \sum_{i=1}^{N_p} \overline{I^s_{ic}} \tau^w_{ic}
+  \sum_{j=1}^i\frac{\partial \delta^w_{jc}}{\partial x_k}\,.
+\end{equation}
+
+The first term is now simply the line-by-line derivative, and the second term
+is a PFA correction.  The inner sum within the second term can be evaluated
+within the frequency loop, thereby not needing to provide a $c$ dimension for
+$\frac{\partial \delta^w_{jc}}{\partial x_k}$.
+
+The frequency-averaged radiance, including the contribution from PFA (weak)
+lines can be gotten by exchanging the order of summation in Equation
+(\ref{combined}) and substituting $\overline{I^s_{ic}}$ from Equation
+(\ref{rad}):
+
+\begin{equation}
+I_c \approx \sum_{i=1}^{N_p} \overline{I^s_{ic}} \tau^w_{ic}\,.
+\end{equation}
+
+When PFA is not used, channel radiances can be gotten by assuming $\tau^w_{ic} =
+1$, that is, simply by summing $\overline{I_{ic}}$ for each channel.
+
+\label{lastpage}
+\end{document}
+% $Id$

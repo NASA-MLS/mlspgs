@@ -1,0 +1,71 @@
+\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9.4in
+
+\newcommand{\docname}{\bf wvs-062}
+\newcommand{\docdate}{7 November 2007}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill, Nathaniel, Alyn, Dong, Mike\\
+Subject: \>Minimum and maximum state vector elements during retrieval\\
+From: \>Van Snyder\\
+%Reference: \>wvs-060
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+I've added optional fields {\tt stateMax} and {\tt stateMin} to the {\tt
+retrieve} command.  The field values have to be vectors with the same
+template as the state vector.
+
+When the retriever starts, if {\tt stateMax} is specified, it gets filled
+with -HUGE(0.0).  If {\tt stateMin} is specified, it gets filled
+with HUGE(0.0).
+
+After each Newton move, if {\tt stateMax} is specified it gets replaced
+with max({\tt stateMax}, {\tt state}).  If {\tt stateMin} is specified it
+gets replaced with  min({\tt stateMin}, {\tt state}).  This includes
+rejected moves, so the bounds might be exaggerations of where the solver
+actually went successfully --- but it doesn't reject moves very often. 
+If you want to see when it accepts and rejects Newton moves, set the {\tt
+-Snwt} command-line switch.  If the Newton solver goes too far uphill and
+can't get back down again with another Newton move, it will retreat to
+the best solution it had and take a gradient move.  If you want to see
+the state every time it evaluates the model, set the {\tt -Sxvec}
+command-line switch.
+
+Since the retriever initializes these vectors, if you want to see what
+got put into them during the iteration, the L2CF needs to write them (or
+dump them) after each {\tt retrieve} command that mentions them and
+before the next one that mentions them.
+
+\label{lastpage}
+\end{document}
+% $Id$

@@ -1,0 +1,157 @@
+\documentclass[12pt]{article}
+
+\usepackage[fleqn]{amsmath}\textwidth 6.25in
+\oddsidemargin -0.25in
+\evensidemargin -0.25in
+\topmargin -0.5in
+\textheight 9.00in
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\settowidth{\hW}{\bf wvs-016r2}
+%\settowidth{\hW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    29 April 2004\hfill\parbox[t]{\hW}{{\bf wvs-017}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill\\
+Subject: \>Pre-frequency-averaging\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 3pt
+\vspace{-20pt}
+
+This note expands on and analyzes some aspects of pre-frequency-averaging.
+
+Consider the frequency-averaged radiance from one channel
+
+\begin{equation}
+I \approx\ \sum_{n=1}^{N_f} \phi_n \sum_{i=1}^{2N_p} \Delta B_{in}
+ \tau_{in} \Delta \nu_n \text{ where }
+\tau_{in} =\; \exp\left(-\sum_{j=2}^i \sum_{k=1}^{N_l} \delta_{jkn}\right)\;,
+\end{equation}
+
+$n$ indexes frequencies within the channel, $i$ and $j$ index path positions,
+$k$ indexes spectral lines, and $\phi_n$ is the filter function for the
+$n^\text{th}$ frequency in the channel.  If we divide the transmission $\tau$
+into factors that are due to strong lines and weak lines, and expand the
+exponential function of the incremental transmittance for the weak lines using
+two terms of a Taylor series, we have
+
+\begin{equation}\begin{split}
+I \approx\;& \sum_{n=1}^{N_f} \phi_n \sum_{i=1}^{2N_p} \Delta B_{in}
+ \tau_{in}^s
+ \left(1-\sum_{j=2}^i
+  \sum_{k \in \text{weak}} \delta_{jkn}\right) \Delta \nu_n \text{ where}\\
+\tau_{in}^s =\;& \exp\left(-\sum_{j=2}^i \sum_{k \in \text{strong}}
+ \delta_{jkn}\right)\;.
+\end{split}\end{equation}
+
+Expanding this we have
+
+\begin{equation}\begin{split}\label{split}
+I \approx\;& I_s - \sum_{n=1}^{N_f} \phi_n \sum_{i=1}^{2N_p} \Delta B_{in}
+ \tau_{in}^s
+\sum_{j=2}^i
+  \sum_{k \in \text{weak}} \delta_{jkn} \Delta \nu_n \text{ where}\\
+I_s =\;& \sum_{n=1}^{N_f} \phi_n \sum_{i=1}^{2N_p} \Delta B_{in} \tau_{in}^s \Delta
+  \nu_n\;.
+\end{split}\end{equation}
+
+We would like to average the contributions from strong lines and weak lines
+within the channel separately, giving
+
+\begin{equation}\label{exchanged}
+I \approx\; I_s - \left( \sum_{i=1}^{2N_p} \sum_{n=1}^{N_f} \Delta B_{in} \phi_n
+ \tau_{in}^s \Delta \nu_n \right)
+  \left( \sum_{j=2}^i \sum_{n=1}^{N_f} \phi_n \Delta \nu_n
+  \sum_{k \in \text{weak}} \delta_{jkn} \right)\;.
+\end{equation}
+
+The differential Planck radiation function $\Delta B_{in}$ changes very slowly
+with frequency in our frequency range, so we replace it with a channel average
+$\overline{\Delta B_i}$:
+
+\begin{equation}\label{exchanged2}
+I \approx\; I_s - \sum_{i=1}^{2N_p} \overline{\Delta B_i}
+ \left( \sum_{n=1}^{N_f} \phi_n \tau_{in}^s \Delta \nu_n \right)
+  \left( \sum_{j=2}^i \sum_{n=1}^{N_f} \phi_n \Delta \nu_n
+  \sum_{k \in \text{weak}} \delta_{jkn} \right)\;.
+\end{equation}
+
+We can get some insight into the error introduced by the approximation in
+Equation (\ref{exchanged}) by considering the (normalized) averages
+
+\begin{equation}\label{averages}
+A_1 =\; \frac{\sum_i w_i a_i b_i}{\sum_i w_i},\;
+A_2 =\; \frac{\sum_i w_i a_i}{\sum_i w_i} \text{ and }
+A_3 =\; \frac{\sum_i w_i b_i}{\sum_i w_i}
+\end{equation}
+
+and the answer to the question ``What is $\left|\left(\sum_i w_i \right)^2
+\left(A_1 - A_2 A_3\right)\right|$?''  Since in our case, $0 \leq w_i < 1$ and
+$\sum_i w_i = 1$, we can simplify this to
+
+\begin{equation}\label{eterm}
+\left|A_1 - A_2 A_3\right| =
+\left| \sum_i \sum_{j=1}^{i-1} (a_i-a_j)(b_i-b_j)w_i w_j \right| \leq
+\sum_i \sum_{j=1}^{i-1} |a_i-a_j|\,|b_i-b_j|w_i w_j\;.
+\end{equation}
+
+Thus if $|a_i-a_j|$ and $|b_i-b_j|$ are sufficiently small, the right-hand-side
+of Equation (\ref{eterm}) will be small.  In particular, if
+$|\delta_{jkn_1}-\delta_{jkn_2}|$ is small for all pairs $1 \leq n_1 < n_2 \leq
+N_f$, the error introduced will be small.  If we define ``weak spectral lines''
+in these terms, Equation (\ref{exchanged}) should not be a problem.  Returning
+to Equation (\ref{exchanged2}) and letting
+
+\begin{equation}
+\overline{\tau_i^s} =\; \sum_{n=1}^{N_f} \phi_n \tau_{in}^s \Delta \nu_n
+\text{ and }
+\overline{\delta_i} =\; \sum_{j=2}^i \sum_{n=1}^{N_f} \phi_n
+  \Delta \nu_n \sum_{k \in \text{weak}} \delta_{jkn}
+\end{equation}
+
+we have
+
+\begin{equation}
+I \approx\; I_s - \sum_{i=1}^{2N_p} \overline{\Delta B_i}\,
+         \overline{\tau_i^s}\, \overline{\delta_i}\;.
+\end{equation}
+
+Exchanging the order of summation in the definition of $I_s$ in Equation
+(\ref{split}), applying the same argument to $\Delta B_{in}$, and substituting
+$\overline{\tau_i^s}$, we have
+
+\begin{equation}
+I \approx\; \sum_{i=1}^{2N_p} \overline{\Delta B_i}\, \overline{\tau_i^s}
+  - \sum_{i=1}^{2N_p} \overline{\Delta B_i}\,
+         \overline{\tau_i^s}\, \overline{\delta_i} =
+ \sum_{i=1}^{2N_p} \overline{\Delta B_i}\, \overline{\tau_i^s} ( 1 -
+   \overline{\delta_i} )\;.
+\end{equation}
+
+The quantity $\overline{\Delta B_i}$ can be adequately approximated by
+evaluating $\Delta B_i$ at the channel center frequency.  The quantities
+$\overline{\delta_i}$ can be computed off line, separately for each species,
+pressure and temperature.  The quantities $\overline{\tau_i^s}$ are computed on
+line, from the quantities $\tau_{in}^s$, $\phi_n$ and $\Delta \nu_n$.
+
+\label{lastpage}
+\end{document}
+% $Id$

@@ -1,0 +1,93 @@
+\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.25in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9.00in
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+%\settowidth{\hW}{\bf wvs-023}
+\settowidth{\hW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    2 September 2005\hfill\parbox[t]{\hW}{{\bf wvs-023}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill, Dong, Michael, Nathaniel\\
+Subject: \>Spectral parameter offsets and derivatives\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 3pt
+\vspace{-20pt}
+
+The ability to specify or solve for spectral parameter offsets from the
+catalog has been added to MLSL2.  The parameters that can be offset are
+line center, line width, and line width temperature dependence.
+
+To specify that the forward model is to include the offsets in its
+calculation for a particular molecule, it is necessary so to specify in
+the {\tt ForwardModel} specification in the L2CF.  This is done by using
+three fields, named {\tt LineCenter}, {\tt LineWidth}, and {\tt
+LineWidth\_TDep}.  The value for each of these fields is a list of
+molecules, which must be in the {\tt molecules} list, and not PFA.  These
+specify the molecules for which the parameters are to be offset from
+their catalog values.
+
+It is necessary to have state vector quantities defined for each spectral
+parameter and molecule for which the offsets are to be used.  This is done
+with a {\tt Quantity} specification, e.g.
+
+{\tt\begin{verbatim}
+  lineCenter_O2_V1: Quantity, type=lineCenter, molecule=O2_V1, $
+    hGrid=hGridStandard, vGrid=vGridStandard
+\end{verbatim}}
+
+Once the quantity is established, it is necessary to mention it in the
+definition(s) of vector(s).  It must appear in the vector specified in
+the {\tt FwdModelIn} field of a {\tt SIDS} or the {\tt state} field of a
+{\tt Retrieve} specification, and any necessary vectors isomorphic to
+those.
+
+The quantities must be filled with initial values.  Presumably for a
+retrieval, these will be filled with zeros, e.g.
+
+{\tt\begin{verbatim}
+  Fill, quantity=state.LineCenter_O2_V1, method=explicit, $
+    explicitValues=0Ghz, /spread
+\end{verbatim}}
+
+although for a SIDS run they might be filled with other values for
+experimental purposes.
+
+For line center and line width, the units of the fill value must be
+frequency.  For line width temperature dependence, the units must be
+dimensionless.
+
+Derivatives of radiance with respect to these quantities is caused by the
+presence of a Jacobian matrix.  This is of course required in a {\tt 
+Retrieve} specification using the full forward model.  It can be
+specified in a {\tt sids} specification for an L2PC run.
+
+It is not at present possible to specify these quantities in the
+``Forward Model Extra'' vector, which would cause them to be offset from
+the catalog, but a retrieval would not solve for them.  This would be a
+simple modification if it becomes necessary or desirable to do so.
+
+\label{lastpage}
+\end{document}
+% $Id$

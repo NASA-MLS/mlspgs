@@ -1,0 +1,89 @@
+\documentclass[11pt]{article}
+\textwidth 6.25in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9.00in
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+%\settowidth{\hW}{\bf wvs-006}
+\settowidth{\hW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    4 May 2000\hfill\parbox[t]{\hW}{{\bf wvs-006}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+%\thispagestyle{empty}
+%{\hfill\bf J3/00-103}
+%\pagenumbering{arabic}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Nathaniel\\
+Subject: \>Changes I've made or suggest for the L2CF format, and questions
+ about it\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 5pt
+\vspace{-20pt}
+
+I've changed the syntax of the ``range'' operator from ``..'' to ``:''.
+This simplified the lexical analysis of the input substantially.
+
+I've not implemented the possibility to specify a semi-infinite range by
+``a:'' or ``:b'' because it is ambiguous:  We allow ``name = expr expr
+....'' If the first ``expr'' is ``a:'' and the second is ``b'', this
+could equally well be interpreted as just one expr, ``a : b''.
+
+The interpretation of a specification is not consistent.  In some
+sections, e.g. {\tt Construct}, a specification is introduced by an
+initial name known to the processor e.g. vGrid,, followed by a comma, and
+the identifier of the specification is provided by a phrase of the form
+{\tt name =} \emph{identifier}.  In other sections, e.g. {\tt
+ReadApriori} the initial name (preceeding the comma) is an identifier for
+the specification, chosen by the user, and the name of the specification
+is implied by the section name.
+
+I would like to make the syntax consistent.  This would ease parsing and
+interpretation.  I propose that in a specification, a name followed by a
+comma should always introduces the specification, and the name of the
+specification should be known to the processor, e.g. ``quantity''.  In
+order to give an identifier of the user's choosing to the specification,
+I suggest beginning the specification with a name followed by a colon. 
+Thus the {\tt ReadApriori} and {\tt MergeApriori} sections would have
+specifications of the form
+
+{\tt aprioriGPH: apriori, source=GPH, length=200km, ...} and\\
+{\tt merge, apriori=aprioriGPH, source=NCEP, species=temperature, ...}
+
+while the {\tt Construct} section would have specifications of the form
+
+{\tt VGridHiRes: VGrid, coordinate=pressure, values=log 1000 mb 60 12\\
+temp: quantity, VGrid=VGridHiRes, ...}
+
+Is the set of ``$<$name$>$='' notations for a given specification known
+and fixed, or chosen by the user?  For example, in the {\tt
+ProfileLayout} specification, I see {\tt type=fractional, fraction=0.5}. 
+Are the names {\tt type} and {\tt fractional} known to the program?  If
+so, is there an exhaustive list for each specification?
+
+Are the identifiers that appear after the ``='' in ``$<$name$>$=''
+notations fixed, or chosen by the user?  For example, in the previous
+paragraph, is the name ``{\tt fractional}'' known to the processor?  If
+so, is there an exhaustive list for each notation in each specification?
+
+\label{lastpage}
+\end{document}
+% $Id$

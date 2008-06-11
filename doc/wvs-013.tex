@@ -1,0 +1,100 @@
+\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.25in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.6in
+\textheight 9.30in
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\settowidth{\hW}{\bf wvs-005r1}
+%\settowidth{\hW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    12 June 2001\hfill\parbox[t]{\hW}{{\bf wvs-005r1}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Regina Glover\\
+Subject: \>Continuation of consulting agreement 1202403\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 3pt
+\vspace{-20pt}
+
+This memorandum address the reasons to continue consulting agreement
+1202403 with Dr. Fred T. Krogh.
+
+\section{Project}
+
+Dr. Fred Krogh has been advising the Level 2 software development team
+for the Microwave Limb Sounder instrument on the EOS AURA project
+concerning computational mathematics.
+
+The mathematical problem immanent in the level 2 retrieval is a nonlinear
+least-squares problem.  Nonlinear least-squares problems can be solved by
+iterative methods based on local linearization; they require to solve
+linear problems at each iteration.  In the case of the level 2 problem,
+the linear problem that results has an unusual structure, the exploiting
+of which results in substantial computational economy.
+
+Dr. Krogh has an unique combination of knowledge, skills and talents in
+computational mathematics and mathematical software.  In particular, he
+has written two software packages to solve nonlinear least-squares
+problems.  One of these packages is used by the trajectory planning
+group; it routinely and efficiently solves problems that no other package
+is able to solve at all.
+
+Dr. Krogh also has a deep understanding of the relation between linear
+algebra, software to solve problems in linear algebra, and the solution
+of nonlinear least-squares problems.  In particular,  he has experience
+in developing software to solve linear algebra problems having unusual
+structure, and incorporating such into software to solve nonlinear
+least-squares problems.
+
+Dr. Krogh has already given the team substantial advice on methods and
+software to solve nonlinear least-squares problems, and software and
+algorithms to solve the linear problems that arise in solving nonlinear
+least-squares problems.  In particular, he has given the team software,
+that already has many of the features we need in the level 2 program, to
+solve nonlinear least-squares problems.  His advice has to date been
+critical in the development of the level 2 program.  To the extent that
+past experience is an indication of future expectations, continuing to
+exploit his knowledge, skills and talents should save several work-months
+of effort, and result in software of superior reliability, accuracy and
+performance.
+
+Pursuant to this consulting agreement, Dr. Krogh would provide mathematical
+development, advice on mathematical approaches, advice on computational
+approaches, advice on specialized software organization strategies,
+advice on selection of existing software, and advice on modification of
+existing software.
+
+\section{Availability of specific expertise at JPL}
+
+The specific expretise described above was available at JPL until Dr.
+Krogh was forced to retire prematurely, due to lack of funding.  It is no
+longer available.
+
+\section{Duration of consulting agreement}
+
+This consulting agreement shall expire on 23 September 2002.  The
+agreement shall provide for 20 days of work.  Account 100668-B.B.5 shall
+provide funds.
+
+\label{lastpage}
+\end{document}
+% $Id$
