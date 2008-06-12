@@ -23,6 +23,7 @@ Switches (set by -S option in mlsl2's command line):
   destroy => Warn before each destroy
   diag =>   Dump diagonal of factored normal equations
   dvec =>   Dump 'DX' vector during Newton iteration
+  dwtime => Show how long each directwrite takes
   dwreq[n] => Dump directwrite requests processed by master
                *Warning--may use more memory
   erh =>    Stop with error if dump,/stop
@@ -167,6 +168,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.69  2007/10/04 00:37:42  vsnyder
+ Add erh, some cannonball polishing
+
  Revision 1.68  2007/10/02 22:38:47  vsnyder
  Add FMNAN etc
 
