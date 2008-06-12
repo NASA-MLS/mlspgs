@@ -1,0 +1,74 @@
+
+Each layer in a feed-forward neural net with $N$ layers and inputs
+$\{x^0_{i_0}\}$ has the form
+
+\begin{equation}\label{one}
+x^n_{i_n} = f^n_{i_n}\left(b^n_{i_n} +
+ \sum_{i_{n-1}} W^n_{i_n i_{n-1}} x^{n-1}_{i_{n-1}}\right)
+\end{equation}
+
+where $n$ is the layer index, $1 \leq n \leq N$, $1 \leq i_n \leq
+|\{f_n\}|$ and $1 \leq i_{n-1} \leq |\{x_{n-1}\}|$, and the functions
+$f^n_{i_n}$ are not necessarily all the same function, and are assumed to
+be applied elementally, i.e., $f^n_1\left( b^n_1 + \sum_{i_{n-1}} W^n_{1
+i_{n-1}} x^{n-1}_{i_{n-1}} \right)$, $f^n_2\left( b^n_2 + \sum_{i_{n-1}}
+W^n_{2 i_{n-1}} x^{n-1}_{i_{n-1}} \right)$, \dots.
+
+Denoting $\mathbf{x}^n = x^n_{i_n}$, $\mathbf{W}^n=W^n_{i_n i_{n-1}}$ and
+$\mathbf{F}^{n\prime} = \text{diag } f^{n\prime}_{i_n} = \left.\frac{\text{d}
+f^n_{i_n}(z)}{\text{d} z} \right|_{z=b^n_{i_n} + \sum_{i_{n-1}} W^n_{i_n
+i_{n-1}} x^{n-1}_{i_{n-1}}}$ where $\text{diag }f^{n\prime}_{i_n}$ is a
+diagonal matrix whose diagonal elements are $f^{n\prime}_{i_n}$, and applying
+the chain rule to compute the derivatives we have
+
+\begin{equation}\label{two}\begin{split}
+\mathbf{B}^n_n = \frac{\partial x^n_{i_n}}{\partial b^n_{i_n}} =\,&
+ f^{n\prime}_{i_n} = \mathbf{F}^{n\prime}\\
+\mathbf{\Omega}^n_n = \frac{\partial x^n_{i_n}}{\partial W^n_{i_ni_{n-1}}} =\,&
+  f^{n\prime}_{i_n} x^{n-1}_{i_{n-1}} = \mathbf{F}^{n\prime} {\mathbf{x}^n}^T\\
+\mathbf{X}^n_{n-1} = \frac{\partial x^n_{i_n}}{\partial x^{n-1}_{i_{n-1}}} =\,&
+ f^{n\prime}_{i_n} W^n_{i_n i_{n-1}} = \mathbf{F}^{n\prime}\, \mathbf{W}^n\\
+\mathbf{B}^n_{n-k} =\frac{\partial x^n_{i_n}}{\partial b^{n-k}_{i_{n-k}}} =\,&
+ f^{n\prime}_{i_n} \sum_{i_{n-1}} W^n_{i_n i_{n-1}}
+   \frac{\partial x^{n-1}_{i_{n-1}}}{\partial b^{n-k}_{i_{n-k}}} =
+   \mathbf{F}^{n\prime}\, \mathbf{W}^n \mathbf{B}^{n-1}_{n-k}\\
+\mathbf{\Omega}^n_{n-k} =
+ \frac{\partial x^n_{i_n}}{\partial W^{n-k}_{i_{n-k}, i_{n-k-1}}} =\,&
+  f^{n\prime}_{i_n} \sum_{i_{n-1}} W^n_{i_n i_{n-1}}
+   \frac{\partial x^{n-1}_{i_{n-1}}}{\partial W^{n-k}_{i_{n-k}, i_{n-k-1}}} =
+   \mathbf{F}^{n\prime}\, \mathbf{W}^n \mathbf{\Omega}^{n-1}_{n-k}\\
+\mathbf{X}^n_{n-k-1} = \frac{\partial x^n_{i_n}}{\partial x^{n-k-1}_{i_{n-k-1}}} =\,&
+ f^{n\prime}_{i_n} \sum_{i_{n-1}} W^n_{i_n i_{n-1}}
+   \frac{\partial x^{n-1}_{i_{n-1}}}{\partial x^{n-k-1}_{i_{n-k-1}}} =
+   \mathbf{F}^{n\prime}\, \mathbf{W}^n \mathbf{X}^{n-1}_{n-k-1} \,.\\
+\end{split}\end{equation}
+
+For purposes of training, i.e., to solve for $W$ and $b$, we need
+$\mathbf{\Delta}^N$ where
+\begin{equation}
+\mathbf{\Delta}^1 = \mathbf{F}^{1\prime}
+                      \left[
+                       \begin{array}{c|c}
+                        \mathbf{b}^1 & \mathbf{\Omega}^1_0\\
+                      \end{array} \right] \text{ and }
+\mathbf{\Delta}^{n>1} = \mathbf{F}^{n\prime}
+                     \left[
+                      \begin{array}{c|c|c}
+                       \mathbf{b}^n & \mathbf{\Omega}^n_{n-1} &
+                       \mathbf{W}^n \mathbf{\Delta}^{n-1}\\
+                     \end{array} \right].\\
+\end{equation}
+
+Having $x^N_{i_N}$, $x^0_{i_0}$ and $\mathbf{\Delta}^N$ one can solve for all
+$W$ and $b$ using a Newton method.
+
+To compute a covariance matrix after evaluating the net, we need
+$\mathbf{X}^N_0$ where
+
+\begin{equation}
+ \mathbf{X}^1_0 = \mathbf{F}^{1\prime}\, \mathbf{W}^1
+\text{ and }
+ \mathbf{X}^{n>1}_0 = \mathbf{F}^{n\prime}\, \mathbf{W}^n \mathbf{X}^{n-1}_0\,.
+\end{equation}
+
+% $Id$
