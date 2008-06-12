@@ -336,6 +336,8 @@ contains ! ================================ Procedures ======================
 
     integer, dimension(maxDirectWriteFiles) :: DIRECTWRITEFILENAMES
     logical, dimension(maxDirectWriteFiles) :: DIRECTWRITEFILEBUSY
+    real(r8), dimension(maxDirectWriteFiles) :: TIMEDWFILEBEGAN
+    real(r8), dimension(maxDirectWriteFiles) :: MAXTIMEDWFILETOOK
     integer, dimension(maxDirectWriteFiles) :: NODIRECTWRITECHUNKS
 
     logical, dimension(size(chunks)) :: CHUNKSCOMPLETED ! Chunks completed
@@ -343,6 +345,7 @@ contains ! ================================ Procedures ======================
     logical, dimension(size(chunks)) :: CHUNKSABANDONED ! Chunks kept failing
     integer, dimension(size(chunks)) :: CHUNKFAILURES ! Failure count
     logical, dimension(size(chunks)) :: CHUNKSWRITING ! Which chunks are writing
+    real(r8), dimension(maxDirectWriteFiles) :: MAXTIMECHUNKSPENTWRITING
 
     logical, save :: FINISHED = .false. ! This will be called multiple times
 
@@ -383,6 +386,9 @@ contains ! ================================ Procedures ======================
     directWriteFileNames = 0
     noDirectWriteChunks = 0
     directWriteFileBusy = .false.
+    timeDWFileBegan = 0.d0
+    maxTimeDWFileTook = 0.d0
+    maxTimeChunkSpentWriting = 0.d0
     noDirectWriteFiles = 0
     nextTicket = 1
     noQuantitiesAccumulated = 0
@@ -759,6 +765,11 @@ contains ! ================================ Procedures ======================
             call output ( chunk )
             call output ( ' ticket ' )
             call TimeStamp ( returnedTicket, advance='yes')
+            if ( switchDetail ( switches, 'dwtime' ) > -1 ) then
+              call output ( ' after ' )
+              call output( timeDWHasBeenWriting( fileIndex, chunk ) )
+              call output ( ' (s) ' )
+            endif
             call display_string ( directWriteFilenames(fileIndex), &
               & strip=.true., advance='yes' )
           end if
@@ -966,6 +977,11 @@ contains ! ================================ Procedures ======================
                 call output ( deadChunk )
                 call output ( ' ticket ' )
                 call TimeStamp ( request%ticket, advance='yes')
+                if ( switchDetail ( switches, 'dwtime' ) > -1 ) then
+                  call output ( ' after ' )
+                  call output( timeDWHasBeenWriting( fileIndex, deadChunk ) )
+                  call output ( ' (s) ' )
+                endif
                 call display_string ( directWriteFilenames(request%fileIndex), &
                   & strip=.true., advance='yes' )
               end if
@@ -1098,6 +1114,7 @@ contains ! ================================ Procedures ======================
         call time_now(request%whenGranted)
         fileIndex = request%fileIndex
         directWriteFileBusy ( fileIndex ) = .true.
+        call time_now ( timeDWFileBegan(fileIndex) )
         chunksWriting ( request%chunk ) = .true.
         if ( noDirectWriteChunks(fileIndex) == 0 ) then
           createFile = 1
@@ -1227,6 +1244,11 @@ contains ! ================================ Procedures ======================
     if ( count(chunksCompleted) == 0 ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'No chunks were processed successfully.' )
+
+    if ( switchDetail ( switches, 'dwtime' ) > -1 ) then
+      call dump( maxTimeDWFileTook, 'max time to do direct writes' )
+      call dump( maxTimeChunkSpentWriting, 'max time chunks spent writing' )
+    endif
 
     if ( switchDetail(switches,'mas') > -1 ) then
       call TimeStamp ( 'All chunks processed, starting join task', advance='yes' )
@@ -1434,6 +1456,21 @@ contains ! ================================ Procedures ======================
          call TimeStamp ( ' being avoided.', advance='yes' )
        end if
     end subroutine printMasterStatus
+
+    function timeDWHasBeenWriting ( fileIndex, chunk ) result ( howLong )
+      ! How long has this chunk taken to write to this file?
+      ! Args
+      integer, intent(in) :: fileIndex
+      integer, intent(in) :: chunk
+      real(r8) :: howLong
+      ! Internal variables
+      real(r8) :: t2
+      ! Executable
+      call time_now ( t2 )
+      howLong = t2 - timeDWFileBegan( fileIndex )
+      maxTimeDWFileTook( fileIndex ) = max( howLong, maxTimeDWFileTook( fileIndex ) )
+      maxTimeChunkSpentWriting( chunk ) = max( howLong, maxTimeChunkSpentWriting( chunk ) )
+    end function timeDWHasBeenWriting
 
     subroutine WelcomeSlave ( chunk, tid )
       ! This routine welcomes a slave into the fold and tells it stuff
@@ -1949,6 +1986,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.89  2008/06/12 22:28:27  pwagner
+! Added options to print direct write timings
+!
 ! Revision 2.88  2008/04/03 00:13:39  pwagner
 ! Not the nicest way to fix mlssubmit/pvm launching multiple instances of same slave
 !
