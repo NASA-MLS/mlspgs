@@ -1,0 +1,150 @@
+\documentclass[12pt]{article}
+
+\topmargin -0.5in
+\textheight 9in
+\textwidth 6.5in
+\oddsidemargin 0in
+\evensidemargin 0in
+
+\usepackage{amsmath}
+\usepackage{longtable}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\h[1]{#1 \href{#1.dvi}{dvi} \href{#1.pdf}{pdf}}
+
+\begin{document}
+
+\makeatletter
+\newcommand{\ps@headfoot}{%
+\renewcommand{\@oddhead}{%
+ \hfill \sffamily \bfseries \Large Document Index \hfill}
+\renewcommand{\@evenhead}{%
+ \hfill \sffamily \bfseries \Large Document Index \hfill}
+\renewcommand{\@oddfoot}{%
+ \hfill \thepage \hfill}
+\renewcommand{\@evenfoot}{%
+ \hfill \thepage \hfill}
+}%
+\makeatother
+\pagestyle{headfoot}
+
+\begin{longtable}[l]{l|p{5in}}
+\h{wvs-001} & Observations Concerning Code in the {\tt mlspgs/l2} Directory\\
+\h{wvs-002} & The retrieval iteration in the form of a least-squares problem\\
+\h{wvs-003} & The Forward Model\\
+\h{wvs-004} & Configuration File Parser Users' Guide\\
+\h{wvs-005} & What would Fred Krogh do for the Level 2 Program?\\
+\h{wvs-006} & Changes I've made or suggest for the L2CF format, and questions
+          about it\\
+\h{wvs-007} & Changes in the {\tt MLSCF} module\\
+\h{wvs-008} & Summary of work I asked Fred Krogh to do recently\\
+\h{wvs-009} & Changes in mathematical method for EOS MLS retrieval\\
+\h{wvs-010} & Interfaces for VectorsModule, MatrixModule\_0 and MatrixModule\_1\\
+\h{wvs-011} & More remarks on solving the linear system during retrieval\\
+\h{wvs-012} & Computing the covariance matrix\\
+\h{wvs-013} & Continuation of consulting agreement 1202403\\
+\h{wvs-014} & More remarks on solving the linear system during retrieval\\
+\h{wvs-015} & Exponential of a matrix, and derivative thereof\\
+\h{wvs-016} & Alternative formulation for polarized radiance derivatives\\
+\h{wvs-017} & Pre-frequency-averaging\\
+\h{wvs-018} & Temperature derivatives\\
+\h{wvs-019} & Betas, {\tt slabs\_sw\_m}\\
+\h{wvs-020} & Reading and writing spectroscopy data in MLSL2\\
+\h{wvs-021} & Pre-frequency-averaged radiance calculation\\
+\h{wvs-022} & Spectroscopy derivatives\\
+\h{wvs-023} & Spectral parameter offsets and derivatives\\
+\h{wvs-024} & PFA derivatives\\
+\h{wvs-025} & New frequency averaging scheme for use with PFA\\
+\h{wvs-026} & Simplifying assumption to combine line-by-line and PFA\\
+\h{wvs-027} & Revised method to combine line-by-line and PFA\\
+\h{wvs-028} & Summary of line-by-line and PFA radiance and derivatives\\
+\h{wvs-029} & Refractive correction for $\phi$\\
+\h{wvs-030} & Points on line and surface of oblate spheroid that are nearest
+          to each other\\
+\h{wvs-031} & Relative humidity configuration\\
+\h{wvs-032} & Incoherent-to-coherent fill\\
+\h{wvs-033} & Path integrations\\
+\h{wvs-034} & Equation 11.4 in ATBD\\
+\h{wvs-035} & Alternative to gradient move in DNWT\\
+\h{wvs-036} & Retrieval diagnostic vector quantities\\
+\h{wvs-037} & Updated non-GL correction in forward model\\
+\h{wvs-038} & Modification to {\tt metrics\_m}\\
+\h{wvs-039} & Calculating $H_m$ in modification to {\tt metrics\_m}\\
+\h{wvs-040} & Calculating $\phi$ for $\zeta_{\text{max}}$\\
+\h{wvs-041} & Maximum $\zeta$\\
+\h{wvs-042} & $H$--$\phi$ iteration in {\tt metrics}\\
+\h{wvs-043} & Inverting the $\phi$ refractive correction\\
+\h{wvs-044} & What to do in {\tt metrics\_m}\\
+\h{wvs-045} & What to do in {\tt metrics\_m} to get $\zeta_\text{min}$\\
+\h{wvs-046} & Interesting result concerning $\zeta_{\text{min}}$\\
+\h{wvs-047} & Revised metrics plan\\
+\h{wvs-048} & Different solution for $\phi$--$H$ calculation in {\tt metrics\_m}\\
+\h{wvs-049} & Making PFA tables\\
+\h{wvs-051} & Speeding up MLS Level 2 retrievals, with possible application to
+          SMLS\\
+\h{wvs-052} & ATBD equations\\
+\h{wvs-053} & Alternative minimum $\zeta$ calculation\\
+\h{wvs-054} & A few more ideas for speeding up MLS Level 2 retrievals, with possible application to SMLS\\
+\h{wvs-055} & Summary of changes made to reduce MLSL2 run time\\
+\h{wvs-056} & Refractive correction\\
+\h{wvs-057} & Recurrences for functions related to $J_\nu(z)$, $Y_\nu(z)$\\
+\h{wvs-058} & Mie solution in terms of Bessel functions\\
+\h{wvs-059} & Another look at metrics\\
+\h{wvs-060} & Trouble with GL correction in the forward model\\
+\h{wvs-061} & Trouble with path length in the forward model\\
+\h{wvs-062} & Minimum and maximum state vector elements during retrieval\\
+\h{wvs-064} & Summary of summary of changes made to reduce MLSL2 run time\\
+\h{wvs-065} & Summary of Mie parameters\\
+\h{wvs-066} & Derivatives for Mie $\beta$\\
+\h{wvs-067} & Summary of Mie formulae\\
+\h{wvs-068} & Mie phase function, integrated scattering, and derivatives\\
+\h{wvs-069} & Inverting the radiative transfer equation\\
+\h{wvs-070} & Reducing Mie phase function integrated
+          scattering from double to single integrals \\
+\h{wvs-073} & Summary of ``faster retrieval'' meeting\\
+\h{wvs-074} & Tangent heights and angles for scattering calculations\\
+\h{wvs-075} & Title and abstract for ``Scientific Computation on High Performance
+          Workstations''\\
+\h{wvs-076} & Organization of changes to Full Forward Model for
+          TSCAT-com\-pu\-ta\-tion mode\\
+\h{wvs-077} & Antenna convolution as a Stieltjes integral\\
+\h{wvs-078} & Tasks for cloud forward model\\
+\h{wvs-079} & Logarithm of $2 \times 2$ matrix\\
+\h{wvs-080} & TScat and derivatives\\
+\end{longtable}
+
+\end{document}
+
+% $Id$
+
+% $Log$
