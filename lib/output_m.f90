@@ -40,9 +40,7 @@ module OUTPUT_M
 !                          > 0 :: print to Fortran unit number PrUnit
 ! skipMLSMSGLogging        whether to skip MLSMessage by default
 ! stampOptions             whether and how to stamp each output automatically
-! (some components)
-! timeStampStyle           'pre' (at linestart) or 'post' (at end-of-line)
-!                            (only for timeStamp)
+! timeStampOptions         how to stamp when calling timeStamp
 
 !     (subroutines and functions)
 ! alignToFit               align printed argument to fit column range
@@ -139,8 +137,10 @@ module OUTPUT_M
     & RESUMEOUTPUT, REVERTOUTPUT, &
     & SETSTAMP, SETTABS, SUSPENDOUTPUT, SWITCHOUTPUT, TAB, TIMESTAMP
 
+  ! These types made public because the class instances are public
   public :: outputOptions_T
   public :: stampOptions_T
+  public :: timeStampOptions_T
 
   interface aligntofit
     module procedure aligntofit_chars, aligntofit_double, aligntofit_single
@@ -148,7 +148,7 @@ module OUTPUT_M
   end interface
 
   interface DUMP
-    module procedure DUMPOUTPUTOPTIONS, DUMPSTAMPOPTIONS
+    module procedure DUMPOUTPUTOPTIONS, DUMPSTAMPOPTIONS, DUMPTIMESTAMPOPTIONS
   end interface
 
   interface DUMPSIZE
@@ -242,6 +242,19 @@ module OUTPUT_M
   end type
   
   type(stampOptions_T), public, save :: stampOptions ! Could leave this private
+
+  ! This is the type for configuring how timeStamp stamps only individual lines)
+  type timeStampOptions_T
+    logical :: post = .true.      ! Put stamp at end of line?
+    logical :: showDate = .false. ! Don't show date unless TRUE
+    character(len=24) :: textCode = ' '
+    ! Don't show date unless dateFormat is non-blank
+    character(len=16) :: dateFormat = 'yyyy-mm-dd'
+    character(len=16) :: timeFormat = 'hh:mm:ss'
+    character(len=8) :: TIMESTAMPSTYLE = 'post' ! 'pre' or 'post'
+  end type
+  
+  type(timeStampOptions_T), public, save :: timeStampOptions ! Could leave this private
 
   ! Private parameters
   logical, save, private:: SILENTRUNNING = .false. ! Suspend all further output
@@ -494,8 +507,9 @@ contains
     ! Show output options
     type(outputOptions_T), intent(in) :: options
     ! Internal variables
-    character(len=1), parameter :: fillChar = '.' ! fill blanks with '. .'
+    logical, parameter :: checkingTabbing = .false.
     character(len=10), parameter :: decade = '1234567890'
+    character(len=1), parameter :: fillChar = '.' ! fill blanks with '. .'
     integer :: i
     ! Executable
     call blanks(70, fillChar='-', advance='yes')
@@ -524,11 +538,13 @@ contains
       call output_( '^', advance='no' )
     enddo
     call newline
-    do i=1, MAXNUMTABSTOPS
-      call blanksToColumn( tabStops(i), fillChar=fillChar )
-      call output_( '^', advance='no' )
-    enddo
-    call newline
+    if ( CHECKINGTABBING ) then
+      do i=1, MAXNUMTABSTOPS
+        call blanksToColumn( tabStops(i), fillChar=fillChar )
+        call output_( '^', advance='no' )
+      enddo
+      call newline
+    endif
     do
       call output_( decade, advance='no' )
       if ( atColumnNumber > 132 ) exit
@@ -543,7 +559,7 @@ contains
     type(StampOptions_T), intent(in) :: options
     character(len=1), parameter :: fillChar = '1' ! fill blanks with '. .'
      call blanks(70, fillChar='-', advance='yes')
-     call output_(' -------------- Summary of stamp options'      , advance='no')
+     call output_(' -------------- Summary of automatic stamp options'      , advance='no')
      call output_(' -------------- ', advance='yes')
      call outputNamedValue ( 'stamp end of line', options%post, advance='yes', &
        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
@@ -561,6 +577,29 @@ contains
        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
      call blanks(70, fillChar='-', advance='yes')
   end subroutine DumpStampOptions
+
+  ! ---------------------------------------------- DUMPTIMESTAMPOPTIONS -----
+  subroutine DUMPTIMESTAMPOPTIONS(options)
+    ! Show output options
+    type(TimeStampOptions_T), intent(in) :: options
+    character(len=1), parameter :: fillChar = '1' ! fill blanks with '. .'
+     call blanks(70, fillChar='-', advance='yes')
+     call output_(' -------------- Summary of time stamp options'      , advance='no')
+     call output_(' -------------- ', advance='yes')
+     call outputNamedValue ( 'stamp end of line', options%post, advance='yes', &
+       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+     call outputNamedValue ( 'show date', options%showDate, advance='yes', &
+       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+     call outputNamedValue ( 'extra text', trim(options%textCode), advance='yes', &
+       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+     call outputNamedValue ( 'date format', trim(options%dateFormat), advance='yes', &
+       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+     call outputNamedValue ( 'time format', trim(options%timeFormat), advance='yes', &
+       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+     call outputNamedValue ( 'style of timeStamps', trim(options%timestampstyle), advance='yes', &
+       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+     call blanks(70, fillChar='-', advance='yes')
+  end subroutine DUMPTIMESTAMPOPTIONS
 
   ! ---------------------------------------------- DumpSize_double -----
   subroutine DumpSize_double ( n, advance, units, Before, After )
@@ -1693,7 +1732,7 @@ contains
   end subroutine switchOutput
 
   ! ------------------------------------------------  timeStamp  -----
-  ! time-stamp output:
+  ! time-stamp output on demand, not automatic:
   ! Either in style pre or post
   ! (pre) '(HH:MM:SS) chars'
   ! (post) 'chars (HH:MM:SS)'
@@ -1719,9 +1758,9 @@ contains
     my_adv = Advance_is_yes_or_no(advance)
     my_dont_log = outputOptions%skipmlsmsglogging ! .false.
     if ( present(dont_log) ) my_dont_log = dont_log
-    my_style = stampOptions%Timestampstyle
+    my_style = timeStampOptions%Timestampstyle
     if ( present(style) ) my_style = lowercase(style)
-    myDate = .false.
+    myDate = timeStampOptions%showDate
     if ( present(date) ) myDate = date
     if ( my_style == 'post' ) then
       call output_( CHARS, &
@@ -1729,13 +1768,19 @@ contains
         & LOG_CHARS=LOG_CHARS, INSTEADOFBLANK=INSTEADOFBLANK, DONT_STAMP=DONT_STAMP )
       if ( my_adv=='yes' ) then
         call output_(' (', ADVANCE='no', DONT_LOG=DONT_LOG, DONT_STAMP=DONT_STAMP)
-        call OUTPUT_DATE_AND_TIME(date=myDate, advance='no')
+        call OUTPUT_DATE_AND_TIME( date=myDate, &
+          & dateFormat=timeStampOptions%dateFormat, &
+          & timeFormat=timeStampOptions%timeFormat, &
+          & advance='no')
         call output_(')', ADVANCE='yes', DONT_LOG=DONT_LOG, DONT_STAMP=DONT_STAMP)
       end if
     else
       if ( ATLINESTART ) then
         call output_('(', ADVANCE='no', DONT_LOG=DONT_LOG, DONT_STAMP=DONT_STAMP)
-        call OUTPUT_DATE_AND_TIME(date=myDate, advance='no')
+        call OUTPUT_DATE_AND_TIME( date=myDate, &
+          & dateFormat=timeStampOptions%dateFormat, &
+          & timeFormat=timeStampOptions%timeFormat, &
+          & advance='no')
         call output_(')', ADVANCE='no', DONT_LOG=DONT_LOG, DONT_STAMP=DONT_STAMP)
       end if
       call output_( CHARS, &
@@ -1761,9 +1806,9 @@ contains
     logical  ::         myDate
     !
     my_adv = Advance_is_yes_or_no(advance)
-    my_style = stampOptions%Timestampstyle
+    my_style = timeStampOptions%Timestampstyle
     if ( present(style) ) my_style = lowercase(style)
-    myDate = .false.
+    myDate = timeStampOptions%showDate
     if ( present(date) ) myDate = date
     if ( my_style == 'post' ) then
       call output_integer( INT, PLACES, &
@@ -1771,13 +1816,19 @@ contains
         & DONT_STAMP=DONT_STAMP )
       if ( my_adv=='yes' ) then
         call output_(' (', ADVANCE='no', DONT_STAMP=DONT_STAMP )
-        call OUTPUT_DATE_AND_TIME(date=myDate, advance='no')
+        call OUTPUT_DATE_AND_TIME( date=myDate, &
+          & dateFormat=timeStampOptions%dateFormat, &
+          & timeFormat=timeStampOptions%timeFormat, &
+          & advance='no')
         call output_(')', ADVANCE='yes', DONT_STAMP=DONT_STAMP)
       end if
     else
       if ( ATLINESTART ) then
         call output_('(', ADVANCE='no', DONT_STAMP=DONT_STAMP)
-        call OUTPUT_DATE_AND_TIME(date=myDate, advance='no')
+        call OUTPUT_DATE_AND_TIME( date=myDate, &
+          & dateFormat=timeStampOptions%dateFormat, &
+          & timeFormat=timeStampOptions%timeFormat, &
+          & advance='no')
         call output_(')', ADVANCE='no', DONT_STAMP=DONT_STAMP)
       end if
       call output_integer( INT, PLACES, &
@@ -2048,6 +2099,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.74  2008/06/17 00:01:53  pwagner
+! Separate options for auto and manual time stamping
+!
 ! Revision 2.73  2008/05/02 00:07:20  pwagner
 ! Correctly handles some rare cases, newLine wont add extra space
 !
