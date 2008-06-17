@@ -26,12 +26,13 @@ program chunktimes ! Reads chunk times from l2aux file(s)
      & IsHDF5AttributePresent, LoadFromHDF5DS, mls_h5open, mls_h5close
    use MLSMessageModule, only: MLSMessageConfig
    use MLSSets, only: FindAll, FindFirst, FindLast, FindNext
-   use MLSStats1, only: STAT_T, &
+   use MLSStats1, only: STAT_T, statsOnOneLine, &
      & DUMPSTAT=>DUMP, STATISTICS
    use MLSStringLists, only: catLists, GetStringElement, GetUniqueList, &
      & NumStringElements, StringElement, StringElementNum
    use MLSStrings, only: lowercase
-   use output_m, only: blanks, newline, output, output_date_and_time
+   use output_m, only: outputOptions, &
+     & blanks, newline, output, output_date_and_time
    use Time_M, only: Time_Now, time_config
    
    implicit none
@@ -57,6 +58,7 @@ program chunktimes ! Reads chunk times from l2aux file(s)
   type options_T
     logical            :: verbose = .false.
     logical            :: merge = .false.           ! Merge data from files
+    logical            :: oneLine = .false.         ! Print on one line
     logical            :: showFailed = .false.      ! show howmany, which failed
     logical            :: showStats = .true.        ! show max, min, mean, etc.
     logical            :: showQManager = .false.    ! show QManager performance
@@ -125,6 +127,9 @@ program chunktimes ! Reads chunk times from l2aux file(s)
      filenames(n_filenames) = filename
   enddo
   showTimings = (options%details == ' ')
+  statsOnOneLine = options%oneLine
+  if ( options%convert == 's2h' ) &
+     & outputOptions%sdFormatDefault = '(F11.2)'
   if ( showTimings .and. SHOWDATEANDTIME ) call output_date_and_time(msg='starting chunktimes', &
     & dateFormat='yyyydoy', timeFormat='HH:mm:ss')
   if ( NumStringElements(trim(options%binopts), .true. ) > 0 ) then
@@ -170,8 +175,11 @@ program chunktimes ! Reads chunk times from l2aux file(s)
     do i=1, n_filenames
       call time_now ( tFile )
       if ( options%verbose ) then
-        if ( options%merge) then
+        if ( options%merge ) then
           print *, 'Merging from: ', trim(filenames(i))
+        elseif ( options%oneLine ) then
+          call newLine
+          call output( trim(filenames(i)) // ': ', advance='no' )
         else
           print *, 'Reading from: ', trim(filenames(i))
         endif
@@ -260,7 +268,8 @@ program chunktimes ! Reads chunk times from l2aux file(s)
         deallocate(timings, stat=status)
       endif
       status = mls_sfend( fileID,hdfVersion=options%hdfVersion )
-      if ( options%verbose )  call sayTime('reading this file', tFile)
+      if ( options%verbose .and. .not. options%oneLine ) &
+        &  call sayTime('reading this file', tFile)
     enddo
     if ( options%merge ) then
       if ( options%showStats) call dumpstat(statistic)
@@ -333,6 +342,9 @@ contains
         exit
       elseif ( filename(1:2) == '-m' ) then
         options%merge = .true.
+        exit
+      elseif ( filename(1:4) == '-one' ) then
+        options%oneLine = .true.
         exit
       elseif ( filename(1:5) == '-fail' ) then
         options%showFailed = .true.
@@ -595,6 +607,7 @@ contains
       write (*,*) '               performance with n hosts (dont)'
       write (*,*) '-v          => switch on verbose mode (off)'
       write (*,*) '-m[erge]    => merge data from all files (dont)'
+      write (*,*) '-one        => print statistics on one line (dont)'
       write (*,*) '-fail       => show failed chunks (dont)'
       write (*,*) '-t[abulate] => tabulate data as chunk vs. total time (dont)'
       write (*,*) '-tf         => print full tables showing time for each phase'
@@ -802,6 +815,9 @@ end program chunktimes
 !==================
 
 ! $Log$
+! Revision 1.20  2007/11/28 18:58:03  pwagner
+! Increased limits; should last 5y
+!
 ! Revision 1.19  2007/08/17 00:45:58  pwagner
 ! Can successfully deduce where chunks failed
 !
