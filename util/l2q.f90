@@ -896,6 +896,8 @@ contains
             call timestamp ( 'Unknown host freed by master', advance='yes')
           endif
 
+          ! In case the master's thanks was somehow lost
+          if ( mastersID > 0 ) masters(mastersID)%owes_thanks = .false.
           dumpHosts = .true.
         case ( sig_ThanksHost ) ! -------------- Happy with this host ------
           ! Find master's index into masters array
@@ -1130,7 +1132,9 @@ contains
           else
             call timestamp ( 'killing master ' // &
               & trim(masters(Ids(i))%name), advance='yes' )
+            if ( options%verbose ) call dump(masters(Ids(i)))
             call PVMFSend ( masters(Ids(i))%tid, giveUpTag, info )
+            masters(mastersID)%needs_host = .false. ! So we don't assign it hosts
           endif
         enddo
         dumpMasters = .true.
@@ -2335,6 +2339,9 @@ contains
 end program L2Q
 
 ! $Log$
+! Revision 1.22  2007/09/06 23:37:36  pwagner
+! Delay before forcibly killing slaves is masters responsibility, not ours
+!
 ! Revision 1.21  2007/08/31 00:05:26  pwagner
 ! Fixed bugs preventing mesgs after event_loop from going to stdout
 !
