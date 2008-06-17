@@ -38,7 +38,7 @@
 
 # usage: see (1) above
 
-CHECKPATHS="yes"
+CHECKPATHS="no"
 #           ^^^---- "yes" if extra preflight non-retrieval run to check paths
 
 CHECKIDENTS="yes"
@@ -101,9 +101,9 @@ if [ ! -x "$PGE_BINARY"  ]
 then
   echo "$PGE_BINARY doesn't exist!"
   exit 1
-elif [ ! -r "$PGE_SCRIPT_DIR/slavetmplt.sh"  ]
+elif [ ! -r "$PGE_SCRIPT_DIR/slavetmpltntk.sh"  ]
 then
-  echo "slavetmplt.sh not in $PGE_SCRIPT_DIR"
+  echo "slavetmpltntk.sh not in $PGE_SCRIPT_DIR"
   exit 1
 fi
 
@@ -132,7 +132,7 @@ fi
 
 export FLIB_DVT_BUFFER=0
 
-# Use sed to convert slavetmplt.sh into an executable script
+# Use sed to convert slavetmpltntk.sh into an executable script
 # The resulting script sets some toolkit-savvy environment variables
 # and then launches the regular mlsl2 binary when summoned to do so.
 SLV_SUF=slave
@@ -252,3 +252,6 @@ else
 fi
 
 # $Log$
+# Revision 1.1  2008/04/04 20:51:22  pwagner
+# first commit
+#
