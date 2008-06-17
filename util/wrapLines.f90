@@ -12,7 +12,7 @@
 program wrapLines
    use MACHINE, only: HP, GETARG
    use MLSStringLists, only: List2Array, wrap
-   use MLSStrings, only: NAppearances
+   use MLSStrings, only: lenTrimToAscii, NAppearances
    use OUTPUT_M, only: OUTPUT
    implicit none
 
@@ -48,6 +48,7 @@ program wrapLines
     logical             :: summarize          = .false.
     logical             :: keepTrailingSpaces = .true. ! Less efficient if true
     logical             :: wrapAllLines       = .false. ! Even with quoted strs
+    integer             :: printCBL            = 0 ! How many consecutive bls
     integer             :: width              = 128
     character(len=1)    :: BREAK              = ','
     character(len=1)    :: comment            = ';'
@@ -59,12 +60,7 @@ program wrapLines
   type ( options_T ) :: options
 
   ! variables
-  ! logical, parameter :: DONTKEEPTRAILINGSPACES = .false. ! More efficient if true
   integer, parameter :: MAXLINELEN = 24000
-  ! integer, parameter :: WIDTH = 128
-  ! character(len=1), parameter :: BREAK = ','
-  ! character(len=1), parameter :: MODE = 's'
-  ! character(len=*), parameter :: eol = ', $'
   integer :: addedLines
   character(len=3) :: advance
   character(len=1) :: c
@@ -75,11 +71,13 @@ program wrapLines
   character(len=MAXLINELEN) :: lineOut
   integer :: LineLengthRead ! Max encountered
   integer :: nCommentsRead  ! number read
+  integer :: nConsectiveBlanks  ! number read
   integer :: nLinesRead     ! number read
   integer :: nQuotesRead    ! number read
   integer :: pos
   character(len=1), dimension(3) :: qArray ! array of quote chars
   integer :: status
+  integer :: totalBlankLinesDropped
   integer :: totalLinesAdded
   integer :: totalLinesNeedWrapping
   character(len=12) :: xfmt
@@ -96,8 +94,10 @@ program wrapLines
   if ( options%verbose ) call dumpSettings( options )
   LineLengthRead         = 0  
   nCommentsRead          = 0  
+  nConsectiveBlanks      = 0
   nLinesRead             = 0  
   nQuotesRead            = 0  
+  totalBlankLinesDropped = 0
   totalLinesAdded        = 0  
   totalLinesNeedWrapping = 0
   do
@@ -132,6 +132,15 @@ program wrapLines
         & )
     endif
     if ( containsQuotes ) nQuotesRead = nQuotesRead + 1
+    if ( lenTrimToAscii(lineIn) < 1 ) then
+      nConsectiveBlanks = nConsectiveBlanks + 1
+    else
+      nConsectiveBlanks = 0
+    endif
+    if ( 0 < options%printCBL .and. options%printCBL < nConsectiveBlanks ) then
+      totalBlankLinesDropped = totalBlankLinesDropped + 1
+      cycle
+    endif
     if ( index(trim(lineIn), c) > 0 ) then
       lineOut = lineIn
       nCommentsRead = nCommentsRead + 1
@@ -160,6 +169,7 @@ program wrapLines
      print *, c // 'lines with quotes        ', nQuotesRead
      print *, c // 'lines needed wrapping    ', totalLinesNeedWrapping
      print *, c // 'lines added by wrapping  ', totalLinesAdded
+     print *, c // 'blank lines dropped      ', totalBlankLinesDropped
   endif
 contains
   subroutine null_fill_1d( array, nullChar )
@@ -190,6 +200,7 @@ contains
      print *, c // 'summarize?               ', options%summarize
      print *, c // 'keep trailing spaces  ?  ', options%keepTrailingSpaces
      print *, c // 'width                    ', options%width
+     print *, c // 'print consec blanks      ', options%printCBL
      print *, c // 'break                    ', options%break
      print *, c // 'comment                  ', options%comment
      print *, c // 'mode                     ', options%mode 
@@ -217,6 +228,10 @@ contains
       if ( filename(1:1) /= '-' ) exit
       if ( filename(1:3) == '-h ' ) then
         call print_help
+      else if ( filename(1:6) == '-blank' ) then
+        call getarg ( i+1+hp, number )
+        read(number, *) options%printCBL
+        i = i + 1
       else if ( filename(1:2) == '-b' ) then
         call getarg ( i+1+hp, options%break )
         options%break = adjustl(options%break)
@@ -272,6 +287,8 @@ contains
       write (*,*) '                            at end of stdout'
       write (*,*) '          -b char       => break lines at char'     
       write (*,*) '                          (default is ",")'         
+      write (*,*) '          -blank n      => print no more than n consecutive'
+      write (*,*) '                          blank lines (default is infinite)'         
       write (*,*) '          -c char       => treat char as comment'     
       write (*,*) '                          (default is ";")'         
       write (*,*) '          -eol chars    => glue chars to end of broken lines'
@@ -289,3 +306,6 @@ contains
   end subroutine print_help
 end program wrapLines
 ! $Log$
+! Revision 1.1  2008/05/22 17:39:37  pwagner
+! First commit
+!
