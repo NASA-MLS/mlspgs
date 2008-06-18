@@ -66,6 +66,7 @@
     real(kind(array1)), dimension(MAXPCTS) :: pctMaxRatioAsGaps
     real(kind(array1)), dimension(MAXPCTS) :: pctMeanRatios
     real(kind(array1)), dimension(MAXPCTS,7) :: table
+    logical, parameter :: unique = .false. 
     ! Executable
     thisIsADiff = .true.  ! For special dumps
     alreadySbtrcted = .false.
@@ -88,7 +89,8 @@
     endif
     if ( myWholeArray ) then
       call dump(array1-array2, trim(DiffName), &
-      & real(0.,kind(array1)), CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+      & real(0.,kind(array1)), CLEAN, WIDTH, FORMAT, &
+      & WHOLEARRAY, STATS, RMS, unique, LBOUND )
       return
     endif
     if ( present(wholeArray) ) myWholeArray = wholeArray
@@ -189,12 +191,12 @@
         alreadySbtrcted = .true.
         if ( myWholeArray ) then
           call dump(filtered1, trim(DiffName), &
-          & real(0.,kind(array1)), CLEAN, WIDTH, FORMAT, &
-          & WHOLEARRAY, STATS, RMS, LBOUND )
+            & real(0.,kind(array1)), CLEAN, WIDTH, FORMAT, &
+            & WHOLEARRAY, STATS, RMS, unique, LBOUND )
         else
-          call dump( filtered1(1:numNonFill), &
-            & trim(DiffName), real(0.,kind(array1)), CLEAN, WIDTH, FORMAT, &
-            & WHOLEARRAY, STATS, RMS, LBOUND )
+          call dump( filtered1(1:numNonFill), trim(DiffName), &
+            & real(0.,kind(array1)), CLEAN, WIDTH, FORMAT, &
+            & WHOLEARRAY, STATS, RMS, unique, LBOUND )
         endif
         if ( DEBUG ) call output( 'DoneWithDiff', advance='yes' )
         call doneWithDiff
@@ -220,7 +222,8 @@
       enddo
     endif
     call dump(filtered1, trim(DiffName), &
-      & real(0.,kind(array1)), CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+      & real(0.,kind(array1)), CLEAN, WIDTH, FORMAT, &
+      & WHOLEARRAY, STATS, RMS, unique, LBOUND )
     call doneWithDiff
     if ( DEBUG ) call output( 'DoneWithDiff', advance='yes' )
   contains
@@ -348,6 +351,9 @@
 
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.16  2008/06/18 20:44:30  pwagner
+! dump subroutine has new optonal arg 'unique'
+!
 ! Revision 2.15  2008/02/07 18:45:21  pwagner
 ! Will not go through rms, stats, etc. if diffs all zero
 !
