@@ -55,6 +55,7 @@ module MLSSets
   interface FindUnique
     module procedure FindUniqueInteger, FindUniqueCharacter
     module procedure FindUniqueCharacterSubString
+    module procedure FindUniqueReal, FindUniqueDouble
   end interface
 
   interface Intersection
@@ -965,44 +966,42 @@ contains ! =====     Public Procedures     =============================
     integer, dimension(:), optional, intent(out) :: counts  ! how often each appears
 
     ! Local variables
-    integer :: i                        ! Loop counter
-    integer :: myCounts(size(Set))
     integer :: myUnique(size(Set))
-    integer :: num
-    integer :: prev
-
-    ! Executable code
-    num = 0
-    myCounts = 0
-    if ( present(nUnique) ) nUnique = 0
-    if ( size(Unique) < 1 ) return
-    if ( size(Set) < 1 ) then
-      return
-    elseif ( size(Set) < 2 ) then
-      Unique = Set(1)
-      if ( present(nUnique) ) nUnique = 1
-      if ( present(counts) ) counts = 1
-      return
-    endif
-    num = 1
-    myUnique(1) = Set(1)
-    myCounts(1) = 1
-    do i=2, size(Set)
-      prev = FindFirst( myUnique(1:num), Set(i) )
-      if ( prev > 0 ) then
-        myCounts(prev) = myCounts(prev) + 1
-      else
-        num = num + 1
-        myUnique(num) = Set(i)
-        myCounts(num) = 1
-      endif
-    enddo
-    if ( present(nUnique) ) nUnique = num
-    num = min( num, size(Unique) )
+    include 'findunique.f9h'
     Unique = 0
     Unique(1:num) = myUnique(1:num)
     if ( present(counts) ) counts(1:num) = myCounts(1:num)
   end subroutine FindUniqueInteger
+
+  subroutine FindUniqueReal ( Set, Unique, nUnique,counts )
+    ! Find all unique elements in the array Set
+    real, dimension(:), intent(in)            :: Set
+    real, dimension(:), intent(out)           :: Unique  ! array of unique elements
+    integer, optional, intent(out)               :: nUnique ! num of unique elements
+    integer, dimension(:), optional, intent(out) :: counts  ! how often each appears
+
+    ! Local variables
+    real :: myUnique(size(Set))
+    include 'findunique.f9h'
+    Unique = 0.
+    Unique(1:num) = myUnique(1:num)
+    if ( present(counts) ) counts(1:num) = myCounts(1:num)
+  end subroutine FindUniqueReal
+
+  subroutine FindUniqueDouble ( Set, Unique, nUnique,counts )
+    ! Find all unique elements in the array Set
+    double precision, dimension(:), intent(in)            :: Set
+    double precision, dimension(:), intent(out)           :: Unique  ! array of unique elements
+    integer, optional, intent(out)               :: nUnique ! num of unique elements
+    integer, dimension(:), optional, intent(out) :: counts  ! how often each appears
+
+    ! Local variables
+    double precision :: myUnique(size(Set))
+    include 'findunique.f9h'
+    Unique = 0.d0
+    Unique(1:num) = myUnique(1:num)
+    if ( present(counts) ) counts(1:num) = myCounts(1:num)
+  end subroutine FindUniqueDouble
 
   subroutine FindUniqueCharacter ( Set, Unique, nUnique, counts )
     ! Find all unique elements in the array Set
@@ -1012,40 +1011,8 @@ contains ! =====     Public Procedures     =============================
     integer, dimension(:), optional, intent(out) :: counts  ! how often each appears
 
     ! Local variables
-    integer :: i                        ! Loop counter
-    integer :: myCounts(size(Set))
     character(len=len(Set)) :: myUnique(size(Set))
-    integer :: num
-    integer :: prev
-
-    ! Executable code
-    num = 0
-    myCounts = 0
-    if ( present(nUnique) ) nUnique = 0
-    if ( size(Unique) < 1 ) return
-    if ( size(Set) < 1 ) then
-      return
-    elseif ( size(Set) < 2 ) then
-      Unique = Set(1)
-      if ( present(nUnique) ) nUnique = 1
-      if ( present(counts) ) counts = 1
-      return
-    endif
-    num = 1
-    myUnique(1) = Set(1)
-    myCounts(1) = 1
-    do i=2, size(Set)
-      prev = FindFirst( myUnique(1:num), Set(i) )
-      if ( prev > 0 ) then
-        myCounts(prev) = myCounts(prev) + 1
-      else
-        num = num + 1
-        myUnique(num) = Set(i)
-        myCounts(num) = 1
-      endif
-    enddo
-    if ( present(nUnique) ) nUnique = num
-    num = min( num, size(Unique) )
+    include 'findunique.f9h'
     Unique = ' '
     Unique(1:num) = myUnique(1:num)
     if ( present(counts) ) counts(1:num) = myCounts(1:num)
@@ -1382,6 +1349,9 @@ contains ! =====     Public Procedures     =============================
 end module MLSSets
 
 ! $Log$
+! Revision 2.19  2008/06/18 20:45:25  pwagner
+! FindUnique can now take real, double Sets
+!
 ! Revision 2.18  2008/02/22 21:25:53  pwagner
 ! FindFirst can handle periods
 !
