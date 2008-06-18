@@ -22,7 +22,7 @@ module DUMP_0
   use MLSFillValues, only : FilterValues, IsFinite, IsInfinite, IsNaN, &
     & InfFunction, NaNFunction, ReorderFillValues, ReplaceFillValues, &
     & WhereAreTheInfs, WhereAreTheNaNs
-  use MLSSets, only: FindAll
+  use MLSSets, only: FindAll, FindUnique
   use MLSStats1, only: STAT_T, &
     & ALLSTATS, FILLVALUERELATION, HOWFAR, HOWNEAR, &
     & MLSMAX, MLSMEAN, MLSMIN, MLSSTDDEV, RATIOS, RESET
@@ -67,7 +67,7 @@ module DUMP_0
 !       and fillValue is a scalar of the same type, if present
 ! dump ( array, char* name,
 !      [fillvalue], [log clean], [int width], [char* format],
-!      [log wholearray], [log stats], [log rms], [int lbound] ) 
+!      [log wholearray], [log stats], [log rms], [log unique], [int lbound] ) 
 !       where array can be a 1, 2, or 3d array of
 !       chars, ints, reals, or doubles,
 !       and fillValue is a scalar of the same type, if present
@@ -176,6 +176,7 @@ module DUMP_0
   ! --------------------------------------------------------------------------
 
   ! These are private variables declared module-wide purely for convenience
+  integer, parameter :: MAXNUMELEMENTS = 2000
   logical, parameter ::   DEEBUG = .false.
   logical :: myStats, myRMS, myWholeArray
   integer :: numNonFill, numFill
@@ -355,12 +356,13 @@ contains
   end subroutine DIFF_3D_REAL
 
   ! -----------------------------------------------  DUMP_1D_BIT  -----
-  subroutine DUMP_1D_BIT ( ARRAY, NAME, BITNAMES, FILLVALUE, CLEAN )
+  subroutine DUMP_1D_BIT ( ARRAY, NAME, BITNAMES, FILLVALUE, CLEAN, UNIQUE )
     integer, intent(in) :: ARRAY(:)
     character(len=*), intent(in) :: NAME
     character(len=*), intent(in) :: BITNAMES
     integer, intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
+    logical, intent(in), optional :: UNIQUE
 
     integer :: howMany, J, K
     integer, dimension(MAXBITNUMBER) :: ints
@@ -555,7 +557,7 @@ contains
 
  ! ---------------------------------------------  DUMP_1D_DOUBLE  -----
   subroutine DUMP_1D_DOUBLE ( ARRAY, NAME, &
-    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, UNIQUE, LBOUND )
     double precision, intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
     double precision, intent(in), optional :: FILLVALUE
@@ -565,6 +567,7 @@ contains
     logical, intent(in), optional :: WHOLEARRAY
     logical, intent(in), optional :: STATS
     logical, intent(in), optional :: RMS
+    logical, intent(in), optional :: UNIQUE
     integer, intent(in), optional :: LBOUND ! Low bound for Array
 
     integer :: Base
@@ -572,13 +575,36 @@ contains
     integer :: J, K, MyWidth
     logical :: MyClean
     double precision :: myFillValue
+    integer :: nUnique
+    integer, dimension(MAXNUMELEMENTS) :: counts
+    double precision, dimension(MAXNUMELEMENTS) :: elements
     character(len=64) :: MyFormat
+    logical :: MyUnique
     integer :: NumZeroRows
 
     ! Executable
     call theDumpBegins
     myFillValue = 0.d0
     if ( present(FillValue) ) myFillValue=FillValue
+    myUnique = theDefault('unique')
+    if ( present(unique) ) myUnique = unique
+    if ( myUnique ) then
+      call FindUnique( array, elements, nUnique, counts )
+      if ( nUnique < 2 ) then
+        call output( 'Every value is ', advance='no' )
+        call output( elements(1), advance='yes' )
+      else
+        call output( '    value             counts', advance='yes' )
+        do j=1, nUnique
+          call output( j )
+          call blanks( 3 )
+          call output( elements(j) )
+          call blanks( 3 )
+          call output( counts(j), advance='yes' )
+        enddo
+      endif
+      if ( uniqueonly ( WHOLEARRAY, STATS, RMS ) ) return
+    endif
     include 'dumpstats.f9h'
     myClean = theDefault('clean') ! .false.
     if ( present(clean) ) myClean = clean
@@ -627,7 +653,7 @@ contains
 
   ! --------------------------------------------  DUMP_1D_INTEGER  -----
   subroutine DUMP_1D_INTEGER ( ARRAY, NAME, &
-    & FILLVALUE, CLEAN, FORMAT, WIDTH, WHOLEARRAY, STATS, RMS, LBOUND )
+    & FILLVALUE, CLEAN, FORMAT, WIDTH, WHOLEARRAY, STATS, RMS, UNIQUE, LBOUND )
     integer, intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
     integer, intent(in), optional :: FILLVALUE
@@ -637,18 +663,42 @@ contains
     logical, intent(in), optional :: WHOLEARRAY
     logical, intent(in), optional :: STATS
     logical, intent(in), optional :: RMS
+    logical, intent(in), optional :: UNIQUE
     integer, intent(in), optional :: LBOUND ! Low bound for Array
 
     integer :: Base, J, K
     logical :: MyClean
+    logical :: MyUnique
     integer :: MyWidth
     integer :: NumZeroRows
 
+    integer :: nUnique
+    integer, dimension(MAXNUMELEMENTS) :: counts
+    integer, dimension(MAXNUMELEMENTS) :: elements
     integer :: myFillValue
     ! Executable
     call theDumpBegins
     myFillValue = 0
     if ( present(FillValue) ) myFillValue=FillValue
+    myUnique = theDefault('unique')
+    if ( present(unique) ) myUnique = unique
+    if ( myUnique ) then
+      call FindUnique( array, elements, nUnique, counts )
+      if ( nUnique < 2 ) then
+        call output( 'Every value is ', advance='no' )
+        call output( elements(1), advance='yes' )
+      else
+        call output( '    value             counts', advance='yes' )
+        do j=1, nUnique
+          call output( j )
+          call blanks( 3 )
+          call output( elements(j) )
+          call blanks( 3 )
+          call output( counts(j), advance='yes' )
+        enddo
+      endif
+      if ( uniqueonly ( WHOLEARRAY, STATS, RMS ) ) return
+    endif
     include 'dumpstats.f9h'
     myClean = theDefault('clean') ! .false.
     if ( present(clean) ) myClean = clean
@@ -731,7 +781,7 @@ contains
 
   ! -----------------------------------------------  DUMP_1D_REAL  -----
   subroutine DUMP_1D_REAL ( ARRAY, NAME, &
-    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, UNIQUE, LBOUND )
     real, intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
     real, intent(in), optional :: FILLVALUE
@@ -741,6 +791,7 @@ contains
     logical, intent(in), optional :: WHOLEARRAY
     logical, optional, intent(in) :: STATS
     logical, intent(in), optional :: RMS
+    logical, intent(in), optional :: UNIQUE
     integer, intent(in), optional :: LBOUND ! Low bound for Array
 
     integer :: Base
@@ -751,10 +802,33 @@ contains
     integer :: NumZeroRows
 
     real :: myFillValue
+    logical :: MyUnique
+    integer :: nUnique
+    integer, dimension(MAXNUMELEMENTS) :: counts
+    real, dimension(MAXNUMELEMENTS) :: elements
     ! Executable
     call theDumpBegins
     myFillValue = 0.
     if ( present(FillValue) ) myFillValue=FillValue
+    myUnique = theDefault('unique')
+    if ( present(unique) ) myUnique = unique
+    if ( myUnique ) then
+      call FindUnique( array, elements, nUnique, counts )
+      if ( nUnique < 2 ) then
+        call output( 'Every value is ', advance='no' )
+        call output( elements(1), advance='yes' )
+      else
+        call output( '    value             counts', advance='yes' )
+        do j=1, nUnique
+          call output( j )
+          call blanks( 3 )
+          call output( elements(j) )
+          call blanks( 3 )
+          call output( counts(j), advance='yes' )
+        enddo
+      endif
+      if ( uniqueonly ( WHOLEARRAY, STATS, RMS ) ) return
+    endif
     include 'dumpstats.f9h'
 
     myClean = theDefault('clean') ! .false.
@@ -1038,7 +1112,7 @@ contains
 
   ! ---------------------------------------------  DUMP_2D_DOUBLE  -----
   subroutine DUMP_2D_DOUBLE ( ARRAY, NAME, &
-    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND, &
+    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, UNIQUE, LBOUND, &
     & TRANSPOSE )
     double precision, intent(in) :: ARRAY(:,:)
     character(len=*), intent(in), optional :: NAME
@@ -1049,6 +1123,7 @@ contains
     logical, intent(in), optional :: WHOLEARRAY
     logical, optional, intent(in) :: STATS
     logical, intent(in), optional :: RMS
+    logical, intent(in), optional :: UNIQUE
     integer, intent(in), optional :: LBOUND
     logical, intent(in), optional :: TRANSPOSE
 
@@ -1057,13 +1132,37 @@ contains
     integer :: NumZeroRows
     double precision :: myFillValue
     character(len=64) :: MyFormat
-
+    logical :: MyUnique
+    integer :: nUnique
+    integer, dimension(MAXNUMELEMENTS) :: counts
+    double precision, dimension(MAXNUMELEMENTS) :: elements
+    ! Executable
     call theDumpBegins
     myClean = theDefault('clean') ! .false.
     if ( present(clean) ) myClean = clean
 
     myFillValue = 0.0d0
     if ( present(FillValue) ) myFillValue = FillValue
+    myUnique = theDefault('unique')
+    if ( present(unique) ) myUnique = unique
+    if ( myUnique ) then
+      call FindUnique( reshape( array, (/ product(shape(array)) /) ), &
+        & elements, nUnique, counts )
+      if ( nUnique < 2 ) then
+        call output( 'Every value is ', advance='no' )
+        call output( elements(1), advance='yes' )
+      else
+        call output( '    value             counts', advance='yes' )
+        do j=1, nUnique
+          call output( j )
+          call blanks( 3 )
+          call output( elements(j) )
+          call blanks( 3 )
+          call output( counts(j), advance='yes' )
+        enddo
+      endif
+      if ( uniqueonly ( WHOLEARRAY, STATS, RMS ) ) return
+    endif
     include 'dumpstats.f9h'
 
     myFormat = sdFormatDefault
@@ -1132,7 +1231,7 @@ contains
 
   ! --------------------------------------------  DUMP_2D_INTEGER  -----
   subroutine DUMP_2D_INTEGER ( ARRAY, NAME, &
-    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, UNIQUE, LBOUND )
     integer, intent(in) :: ARRAY(:,:)
     character(len=*), intent(in), optional :: NAME
     integer, intent(in), optional :: FILLVALUE
@@ -1142,6 +1241,7 @@ contains
     logical, intent(in), optional :: WHOLEARRAY
     logical, optional, intent(in) :: STATS
     logical, intent(in), optional :: RMS
+    logical, intent(in), optional :: UNIQUE
     integer, intent(in), optional :: LBOUND
 
     integer :: I, J, K
@@ -1150,10 +1250,34 @@ contains
     integer :: NumZeroRows
     integer :: myFillValue
     character(len=64) :: MyFormat
+    logical :: MyUnique
+    integer :: nUnique
+    integer, dimension(MAXNUMELEMENTS) :: counts
+    integer, dimension(MAXNUMELEMENTS) :: elements
     ! Executable
     call theDumpBegins
     myFillValue = 0
     if ( present(FillValue) ) myFillValue = FillValue
+    myUnique = theDefault('unique')
+    if ( present(unique) ) myUnique = unique
+    if ( myUnique ) then
+      call FindUnique( reshape( array, (/ product(shape(array)) /) ), &
+        & elements, nUnique, counts )
+      if ( nUnique < 2 ) then
+        call output( 'Every value is ', advance='no' )
+        call output( elements(1), advance='yes' )
+      else
+        call output( '    value             counts', advance='yes' )
+        do j=1, nUnique
+          call output( j )
+          call blanks( 3 )
+          call output( elements(j) )
+          call blanks( 3 )
+          call output( counts(j), advance='yes' )
+        enddo
+      endif
+      if ( uniqueonly ( WHOLEARRAY, STATS, RMS ) ) return
+    endif
     include 'dumpstats.f9h'
     myClean = theDefault('clean') ! .false.
     if ( present(clean) ) myClean = clean
@@ -1243,7 +1367,7 @@ contains
 
   ! -----------------------------------------------  DUMP_2D_REAL  -----
   subroutine DUMP_2D_REAL ( ARRAY, NAME, &
-    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND, &
+    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, UNIQUE, LBOUND, &
     & TRANSPOSE )
     real, intent(in) :: ARRAY(:,:)
     character(len=*), intent(in), optional :: NAME
@@ -1254,6 +1378,7 @@ contains
     logical, intent(in), optional :: WHOLEARRAY
     logical, optional, intent(in) :: STATS
     logical, intent(in), optional :: RMS
+    logical, intent(in), optional :: UNIQUE
     integer, intent(in), optional :: LBOUND
     logical, intent(in), optional :: TRANSPOSE
 
@@ -1262,13 +1387,37 @@ contains
     integer :: NumZeroRows
     real :: myFillValue
     character(len=64) :: MyFormat
-
+    logical :: MyUnique
+    integer :: nUnique
+    integer, dimension(MAXNUMELEMENTS) :: counts
+    real, dimension(MAXNUMELEMENTS) :: elements
+    ! Executable
     call theDumpBegins
     myClean = theDefault('clean') ! .false.
     if ( present(clean) ) myClean = clean
 
     myFillValue = 0.0e0
     if ( present(FillValue) ) myFillValue = FillValue
+    myUnique = theDefault('unique')
+    if ( present(unique) ) myUnique = unique
+    if ( myUnique ) then
+      call FindUnique( reshape( array, (/ product(shape(array)) /) ), &
+        & elements, nUnique, counts )
+      if ( nUnique < 2 ) then
+        call output( 'Every value is ', advance='no' )
+        call output( elements(1), advance='yes' )
+      else
+        call output( '    value             counts', advance='yes' )
+        do j=1, nUnique
+          call output( j )
+          call blanks( 3 )
+          call output( elements(j) )
+          call blanks( 3 )
+          call output( counts(j), advance='yes' )
+        enddo
+      endif
+      if ( uniqueonly ( WHOLEARRAY, STATS, RMS ) ) return
+    endif
     include 'dumpstats.f9h'
 
     myFormat = sdFormatDefault
@@ -1627,7 +1776,7 @@ contains
 
   ! ---------------------------------------------  DUMP_3D_DOUBLE  -----
   subroutine DUMP_3D_DOUBLE ( ARRAY, NAME, &
-    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, UNIQUE, LBOUND )
     double precision, intent(in) :: ARRAY(:,:,:)
     character(len=*), intent(in), optional :: NAME
     double precision, intent(in), optional :: FILLVALUE
@@ -1637,6 +1786,7 @@ contains
     logical, intent(in), optional :: WHOLEARRAY
     logical, optional, intent(in) :: STATS
     logical, intent(in), optional :: RMS
+    logical, intent(in), optional :: UNIQUE
     integer, intent(in), optional :: LBOUND
 
     logical :: myClean
@@ -1644,11 +1794,35 @@ contains
     integer :: NumZeroRows
     double precision :: myFillValue
     character(len=64) :: myFormat
+    logical :: MyUnique
+    integer :: nUnique
+    integer, dimension(MAXNUMELEMENTS) :: counts
+    double precision, dimension(MAXNUMELEMENTS) :: elements
 
     ! Executable
     call theDumpBegins
     myFillValue = 0.d0
     if ( present(FillValue) ) myFillValue=FillValue
+    myUnique = theDefault('unique')
+    if ( present(unique) ) myUnique = unique
+    if ( myUnique ) then
+      call FindUnique( reshape( array, (/ product(shape(array)) /) ), &
+        & elements, nUnique, counts )
+      if ( nUnique < 2 ) then
+        call output( 'Every value is ', advance='no' )
+        call output( elements(1), advance='yes' )
+      else
+        call output( '    value             counts', advance='yes' )
+        do j=1, nUnique
+          call output( j )
+          call blanks( 3 )
+          call output( elements(j) )
+          call blanks( 3 )
+          call output( counts(j), advance='yes' )
+        enddo
+      endif
+      if ( uniqueonly ( WHOLEARRAY, STATS, RMS ) ) return
+    endif
     include 'dumpstats.f9h'
 
     myClean = theDefault('clean') ! .false.
@@ -1697,7 +1871,7 @@ contains
 
   ! --------------------------------------------  DUMP_3D_INTEGER  -----
   subroutine DUMP_3D_INTEGER ( ARRAY, NAME, &
-    & FILLVALUE, CLEAN, FORMAT, WIDTH, WHOLEARRAY, STATS, RMS, LBOUND )
+    & FILLVALUE, CLEAN, FORMAT, WIDTH, WHOLEARRAY, STATS, RMS, UNIQUE, LBOUND )
     integer, intent(in) :: ARRAY(:,:,:)
     character(len=*), intent(in), optional :: NAME
     integer, intent(in), optional :: FILLVALUE
@@ -1707,6 +1881,7 @@ contains
     logical, intent(in), optional :: WHOLEARRAY
     logical, intent(in), optional :: STATS
     logical, intent(in), optional :: RMS
+    logical, intent(in), optional :: UNIQUE
     integer, intent(in), optional :: LBOUND ! Low bound for Array
 
     integer :: I, J, K, L
@@ -1717,10 +1892,34 @@ contains
     integer :: how_many
 
     integer :: myFillValue
+    logical :: MyUnique
+    integer :: nUnique
+    integer, dimension(MAXNUMELEMENTS) :: counts
+    integer, dimension(MAXNUMELEMENTS) :: elements
     ! Executable
     call theDumpBegins
     myFillValue = 0
     if ( present(FillValue) ) myFillValue=FillValue
+    myUnique = theDefault('unique')
+    if ( present(unique) ) myUnique = unique
+    if ( myUnique ) then
+      call FindUnique( reshape( array, (/ product(shape(array)) /) ), &
+        & elements, nUnique, counts )
+      if ( nUnique < 2 ) then
+        call output( 'Every value is ', advance='no' )
+        call output( elements(1), advance='yes' )
+      else
+        call output( '    value             counts', advance='yes' )
+        do j=1, nUnique
+          call output( j )
+          call blanks( 3 )
+          call output( elements(j) )
+          call blanks( 3 )
+          call output( counts(j), advance='yes' )
+        enddo
+      endif
+      if ( uniqueonly ( WHOLEARRAY, STATS, RMS ) ) return
+    endif
     include 'dumpstats.f9h'
     myClean = theDefault('clean') ! .false.
     if ( present(clean) ) myClean = clean
@@ -1776,7 +1975,7 @@ contains
 
   ! ---------------------------------------------  DUMP_3D_REAL  -----
   subroutine DUMP_3D_REAL ( ARRAY, NAME, &
-    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, UNIQUE, LBOUND )
     real, intent(in) :: ARRAY(:,:,:)
     character(len=*), intent(in), optional :: NAME
     real, intent(in), optional :: FILLVALUE
@@ -1786,6 +1985,7 @@ contains
     logical, intent(in), optional :: WHOLEARRAY
     logical, optional, intent(in) :: STATS
     logical, intent(in), optional :: RMS
+    logical, intent(in), optional :: UNIQUE
     integer, intent(in), optional :: LBOUND
 
     logical :: myClean
@@ -1793,6 +1993,10 @@ contains
     integer :: NumZeroRows
     real    :: myFillValue
     character(len=64) :: MyFormat
+    logical :: MyUnique
+    integer :: nUnique
+    integer, dimension(MAXNUMELEMENTS) :: counts
+    real, dimension(MAXNUMELEMENTS) :: elements
 
     ! Executable
     call theDumpBegins
@@ -1800,6 +2004,26 @@ contains
     if ( present(FillValue) ) myFillValue=FillValue
     myClean = theDefault('clean') ! .false.
     if ( present(clean) ) myClean = clean
+    myUnique = theDefault('unique')
+    if ( present(unique) ) myUnique = unique
+    if ( myUnique ) then
+      call FindUnique( reshape( array, (/ product(shape(array)) /) ), &
+        & elements, nUnique, counts )
+      if ( nUnique < 2 ) then
+        call output( 'Every value is ', advance='no' )
+        call output( elements(1), advance='yes' )
+      else
+        call output( '    value             counts', advance='yes' )
+        do j=1, nUnique
+          call output( j )
+          call blanks( 3 )
+          call output( elements(j) )
+          call blanks( 3 )
+          call output( counts(j), advance='yes' )
+        enddo
+      endif
+      if ( uniqueonly ( WHOLEARRAY, STATS, RMS ) ) return
+    endif
     include 'dumpstats.f9h'
 
     myFormat = sdFormatDefault
@@ -2145,6 +2369,7 @@ contains
     logical, intent(in), optional :: STATS
     logical, intent(in), optional :: RMS
     integer, intent(in), optional :: LBOUND ! Low bound for Array
+    logical, parameter :: unique = .false. 
     ! Local variables
     integer                                  :: i
     double precision, dimension(size(array)) :: increment
@@ -2154,7 +2379,7 @@ contains
       increment(i-1) = array(i) - array(i-1)
     enddo
     call dump ( increment, NAME, &
-      & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+      & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, unique, LBOUND )
   end subroutine SELFDIFF_DOUBLE
 
  ! ---------------------------------------------  SELFDIFF_INTEGER  -----
@@ -2174,13 +2399,14 @@ contains
     ! Local variables
     integer                                  :: i
     integer, dimension(size(array)) :: increment
+    logical, parameter :: unique = .false. 
     ! Executable
     if ( size(array) < 2 ) return
     do i=2, size(array)
       increment(i-1) = array(i) - array(i-1)
     enddo
     call dump ( increment, NAME, &
-    & FILLVALUE, CLEAN, FORMAT, WIDTH, WHOLEARRAY, STATS, RMS, LBOUND )
+    & FILLVALUE, CLEAN, FORMAT, WIDTH, WHOLEARRAY, STATS, RMS, unique, LBOUND )
   end subroutine SELFDIFF_INTEGER
 
  ! ---------------------------------------------  SELFDIFF_REAL  -----
@@ -2200,13 +2426,14 @@ contains
     ! Local variables
     integer                                  :: i
     real, dimension(size(array)) :: increment
+    logical, parameter :: unique = .false. 
     ! Executable
     if ( size(array) < 2 ) return
     do i=2, size(array)
       increment(i-1) = array(i) - array(i-1)
     enddo
     call dump ( increment, NAME, &
-      & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+      & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, unique, LBOUND )
   end subroutine SELFDIFF_REAL
 
   ! ------------------------------------------------------  Empty  -----
@@ -2451,6 +2678,17 @@ contains
       isit = .false.
     end select
   end function theDefault
+  
+  logical function uniqueonly ( WHOLEARRAY, STATS, RMS )
+    logical, intent(in), optional :: WHOLEARRAY, STATS, RMS
+    logical :: myWHOLEARRAY, mySTATS, myRMS
+    ! Executable
+    uniqueonly = .true.
+    if ( present(wholeArray) ) uniqueonly = .not. wholeArray
+    if ( present(stats) ) uniqueonly = uniqueonly .and. .not. stats
+    if ( present(rms) ) uniqueonly = uniqueonly .and. .not. rms
+
+  end function uniqueonly
 
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
@@ -2464,6 +2702,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.78  2008/06/18 20:56:18  pwagner
+! New optional arg 'unique' dumps print unique elements, counts only
+!
 ! Revision 2.77  2008/01/09 20:53:22  pwagner
 ! When NaNs short-circuit dump or diff, print how many and where
 !
