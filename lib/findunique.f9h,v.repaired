@@ -1,0 +1,64 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id$
+
+!  subroutine FindUniqueInteger ( Set, Unique, nUnique,counts )
+!    ! Find all unique elements in the array Set
+!    integer, dimension(:), intent(in)            :: Set
+!    integer, dimension(:), intent(out)           :: Unique  ! array of unique elements
+!    integer, optional, intent(out)               :: nUnique ! num of unique elements
+!    integer, dimension(:), optional, intent(out) :: counts  ! how often each appears
+! 
+!    ! Local variables
+!    integer :: myUnique(size(Set))
+    integer :: i                        ! Loop counter
+    integer :: myCounts(size(Set))
+    integer :: num
+    integer :: prev
+
+    ! Executable code
+    num = 0
+    myCounts = 0
+    if ( present(nUnique) ) nUnique = 0
+    if ( size(Unique) < 1 ) return
+    if ( size(Set) < 1 ) then
+      return
+    elseif ( size(Set) < 2 ) then
+      Unique = Set(1)
+      if ( present(nUnique) ) nUnique = 1
+      if ( present(counts) ) counts = 1
+      return
+    endif
+    num = 1
+    myUnique(1) = Set(1)
+    myCounts(1) = 1
+    do i=2, size(Set)
+      prev = FindFirst( myUnique(1:num), Set(i) )
+      if ( prev > 0 ) then
+        myCounts(prev) = myCounts(prev) + 1
+      else
+        num = num + 1
+        myUnique(num) = Set(i)
+        myCounts(num) = 1
+      endif
+    enddo
+    if ( present(nUnique) ) nUnique = num
+    num = min( num, size(Unique) )
+!    Unique = 0
+!    Unique(1:num) = myUnique(1:num)
+!    if ( present(counts) ) counts(1:num) = myCounts(1:num)
+!  end subroutine FindUniqueInteger
+
+! $Log$
+! Revision 2.1  2008/06/18 20:43:01  pwagner
+! First commit
+!
