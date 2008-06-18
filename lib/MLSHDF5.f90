@@ -117,7 +117,7 @@ module MLSHDF5
 ! DumpHDF5Attributes (int locID, [char names], [char groupName], [char DSName],
 !    [log stats], [log rms])
 ! DumpHDF5DS (int locID, char groupame, [char names],
-!    [real fillValue], [log stats], [log rms])
+!    [real fillValue], [log stats], [log rms], [log unique])
 ! GetAllHDF5AttrNames (int itemID, char DSNames)
 ! GetAllHDF5DSNames (file, char gname, char DSNames)
 !     file can be one of:
@@ -503,7 +503,7 @@ contains ! ======================= Public Procedures =========================
   end subroutine DumpHDF5Attributes
   
   ! -------------------------------  DumpHDF5DS  -----
-  subroutine DumpHDF5DS ( locID, groupName, names, fillValue, stats, rms )
+  subroutine DumpHDF5DS ( locID, groupName, names, fillValue, stats, rms, unique )
     ! Dump datasets in groupID
     ! All of them or only those in names string list
     integer, intent(in)                     :: locID ! file or groupID
@@ -512,6 +512,7 @@ contains ! ======================= Public Procedures =========================
     real, intent(in), optional              :: fillValue ! Show % = fill
     logical, intent(in), optional           :: stats ! Show % = fill
     logical, intent(in), optional           :: rms ! Show rms, min, max
+    logical, intent(in), optional           :: unique ! Show unique values, count
 
     ! Local variables
     integer :: classID
@@ -594,27 +595,30 @@ contains ! ======================= Public Procedures =========================
           call allocate_test( iValue, dims(1), dims(2), dims(3), 'iValue', ModuleName )
           call LoadFromHDF5DS ( groupID, name, iValue )
           if ( present(fillvalue) ) then
-            call dump ( iValue, trim(name), fillValue=int(fillvalue), stats=stats, rms=rms )
+            call dump ( iValue, trim(name), fillValue=int(fillvalue), &
+              & stats=stats, rms=rms, unique=unique )
           else
-            call dump ( iValue, trim(name), stats=stats, rms=rms )
+            call dump ( iValue, trim(name), stats=stats, rms=rms, unique=unique )
           endif
           call deallocate_test( iValue, 'iValue', ModuleName )
         case ( 2 )
           call allocate_test( iValue, dims(1), dims(2), 1, 'iValue', ModuleName )
           call LoadFromHDF5DS ( groupID, name, iValue(:,:,1) )
           if ( present(fillvalue) ) then
-            call dump ( iValue(:,:,1), trim(name), fillValue=int(fillvalue), stats=stats, rms=rms )
+            call dump ( iValue(:,:,1), trim(name), fillValue=int(fillvalue), &
+              & stats=stats, rms=rms, unique=unique )
           else
-            call dump ( iValue(:,:,1), trim(name), stats=stats, rms=rms )
+            call dump ( iValue(:,:,1), trim(name), stats=stats, rms=rms, unique=unique )
           endif
           call deallocate_test( iValue, 'iValue', ModuleName )
         case default
           call allocate_test( iValue, dims(1), 1, 1, 'iValue', ModuleName )
           call LoadFromHDF5DS ( groupID, name, iValue(:,1,1) )
           if ( present(fillvalue) ) then
-            call dump ( iValue(:,1,1), trim(name), fillValue=int(fillvalue), stats=stats, rms=rms )
+            call dump ( iValue(:,1,1), trim(name), fillValue=int(fillvalue), stats=stats, &
+              & rms=rms, unique=unique )
           else
-            call dump ( iValue(:,1,1), trim(name), stats=stats, rms=rms )
+            call dump ( iValue(:,1,1), trim(name), stats=stats, rms=rms, unique=unique )
           endif
           call deallocate_test( iValue, 'iValue', ModuleName )
          end select
@@ -624,27 +628,30 @@ contains ! ======================= Public Procedures =========================
           call allocate_test( dValue, dims(1), dims(2), dims(3), 'dValue', ModuleName )
           call LoadFromHDF5DS ( groupID, name, dValue )
           if ( present(fillvalue) ) then
-            call dump ( dValue, trim(name), fillValue=real(fillvalue, r8), stats=stats, rms=rms )
+            call dump ( dValue, trim(name), fillValue=real(fillvalue, r8), &
+              & stats=stats, rms=rms, unique=unique )
           else
-            call dump ( dValue, trim(name), stats=stats, rms=rms )
+            call dump ( dValue, trim(name), stats=stats, rms=rms, unique=unique )
           endif
           call deallocate_test( dValue, 'dValue', ModuleName )
         case ( 2 )
           call allocate_test( dValue, dims(1), dims(2), 1, 'dValue', ModuleName )
           call LoadFromHDF5DS ( groupID, name, dValue(:,:,1) )
           if ( present(fillvalue) ) then
-            call dump ( dValue(:,:,1), trim(name), fillValue=real(fillvalue, r8), stats=stats, rms=rms )
+            call dump ( dValue(:,:,1), trim(name), &
+              & fillValue=real(fillvalue, r8), stats=stats, rms=rms, unique=unique )
           else
-            call dump ( dValue(:,:,1), trim(name), stats=stats, rms=rms )
+            call dump ( dValue(:,:,1), trim(name), stats=stats, rms=rms, unique=unique )
           endif
           call deallocate_test( dValue, 'dValue', ModuleName )
         case default
           call allocate_test( dValue, dims(1), 1, 1, 'dValue', ModuleName )
           call LoadFromHDF5DS ( groupID, name, dValue(:,1,1) )
           if ( present(fillvalue) ) then
-            call dump ( dValue(:,1,1), trim(name), fillValue=real(fillvalue, r8), stats=stats, rms=rms )
+            call dump ( dValue(:,1,1), trim(name), fillValue=real(fillvalue, r8), &
+              & stats=stats, rms=rms, unique=unique )
           else
-            call dump ( dValue(:,1,1), trim(name), stats=stats, rms=rms )
+            call dump ( dValue(:,1,1), trim(name), stats=stats, rms=rms, unique=unique )
           endif
           call deallocate_test( dValue, 'dValue', ModuleName )
          end select
@@ -4942,6 +4949,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.88  2008/06/18 20:56:55  pwagner
+! New optional arg 'unique' dumps print unique elements, counts only
+!
 ! Revision 2.87  2008/05/24 00:54:46  vsnyder
 ! Remove unused declarations
 !
