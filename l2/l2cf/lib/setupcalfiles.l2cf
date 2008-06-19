@@ -1,41 +1,80 @@
 !divert(-1)
 ;$Id$
+;; master input paths
+!ifdef(calpath,{},{!define(calpath,!getdir(calpath))})
+!ifdef(includecalpath,{},{!define(includecalpath,!getdir(includecalpath))})
+!ifdef(pfaPath,{},{!define(pfaPath,!getdir(pfaPath))})
+!ifdef(inpathl1boa,{},{!define(inpathl1boa,!getdir(inpathl1boa))})
+!ifdef(inpathl1brad,{},{!define(inpathl1brad,!getdir(inpathl1brad))})
+!ifdef(inpathl2pc,{},{!define(inpathl2pc,!getdir(inpathl2pc))})
+!ifdef(inpathleapsec,{},{!define(inpathleapsec,!getdir(inpathleapsec))})
+!ifdef(inpathcore,{},{!define(inpathcore,!getdir(inpathcore))})
+!ifdef(inpathdao,{},{!define(inpathdao,!getdir(inpathdao))})
+!ifdef(inpathgeos5pd,{},{!define(inpathgeos5pd,!getdir(inpathgeos5pd))})
+!ifdef(inpathgeos5dd,{},{!define(inpathgeos5dd,!getdir(inpathgeos5dd))})
+!ifdef(inpathgeos5pn,{},{!define(inpathgeos5pn,!getdir(inpathgeos5pn))})
+!ifdef(inpathgeos5dn,{},{!define(inpathgeos5dn,!getdir(inpathgeos5dn))})
+!ifdef(inpathcoreptan,{},{!define(inpathcoreptan,!getdir(inpathcoreptan))})
+!ifdef(inpathtruthl2gp,{},{!define(inpathtruthl2gp,!getdir(inpathtruthl2gp))})
 
 ; The first are l2cfs for an include, so unquoted
-!ifdef(includecalpath, {}, {
+!ifdef(signalsPath,{},{!define(signalsPath,!getdir(signalsPath))})
+!ifdef(spectroscopyPath,{},{!define(spectroscopyPath,!getdir(spectroscopyPath))})
+!ifdef(spectroscopyHDFPath,{},{!define(spectroscopyHDFPath,!getdir(spectroscopyHDFPath))})
+!ifdef(sidebandPath,{},{!define(sidebandPath,!getdir(sidebandPath))})
+!ifdef(fovdirPath,{},{!define(fovdirPath,!getdir(fovdirPath))})
+!ifdef(systempPath,{},{!define(systempPath,!getdir(systempPath))})
+!ifdef(nbwPath,{},{!define(nbwPath,!getdir(nbwPath))})
+!ifdef(antennaPath,{},{!define(antennaPath,!getdir(antennaPath))})
+!ifdef(climatologyPath,{},{!define(climatologyPath,!getdir(climatologyPath))})
+!ifdef(filterPath,{},{!define(filterPath,!getdir(filterPath))})
+!ifdef(pfaPath,{},{!define(pfaPath,!getdir(pfaPath))})
+!ifdef(pfgPath,{},{!define(pfgPath,!getdir(pfgPath))})
+
+; ! This may not always be the same as l2pcVersion
+!ifdef(pfaVersion,{},{!define(pfaVersion,!getdir(pfaVersion))})
+!ifelse(!pfaVersion, {}, {
+!define(pfaVersion,{FS-03})
+})
+
+; Just in case the above paths were omitted from your overridepaths.sh file
+!ifelse(!includecalpath, {}, {
 !define(includecalpath,{!calpath})
 })
-!ifdef(signalsPath, {}, {
+!ifelse(!signalsPath, {}, {
 !define(signalsPath,{!includecalpath})
 })
-!ifdef(spectroscopyPath, {}, {
+!ifelse(!spectroscopyPath, {}, {
 !define(spectroscopyPath,{!includecalpath})
 })
-!ifdef(sidebandPath, {}, {
+!ifelse(!spectroscopyHDFPath, {}, {
+!define(spectroscopyHDFPath,{!calpath})
+})
+!ifelse(!sidebandPath, {}, {
 !define(sidebandPath,{!includecalpath})
 })
-!ifdef(fovdirPath, {}, {
+!ifelse(!fovdirPath, {}, {
 !define(fovdirPath,{!includecalpath})
 })
-!ifdef(systempPath, {}, {
+!ifelse(!systempPath, {}, {
 !define(systempPath,{!includecalpath})
 })
-!ifdef(nbwPath, {}, {
+!ifelse(!nbwPath, {}, {
 !define(nbwPath,{!includecalpath})
 })
-!ifdef(antennaPath, {}, {
+!ifelse(!antennaPath, {}, {
 !define(antennaPath,{!calpath})
 })
-!ifdef(climatologyPath, {}, {
+!ifelse(!climatologyPath, {}, {
 !define(climatologyPath,{!calpath})
 })
-!ifdef(filterPath, {}, {
+!ifelse(!filterPath, {}, {
 !define(filterPath,{!calpath})
 })
-!ifdef(pfaPath, {}, {
+!ifelse(!pfaPath, {}, {
 !define(pfaPath,{!calpath})
 })
-!ifdef(pfgPath, {}, {
+!ifelse(!pfgPath, {}, {
 !define(pfgPath,{!calpath})
 })
 
@@ -106,22 +145,31 @@
   })
   !ifdef(pfaFiles, {}, {
   !define(pfaFiles, 
-  {['!pfaPath/PFA_R5V_FS-03.h5', $
-    '!pfaPath/PFA_R5H_FS-03.h5', $
-    '!pfaPath/PFA_R4_FS-03.h5 ', $
-    '!pfaPath/PFA_R3_FS-03.h5 ', $
-    '!pfaPath/PFA_R2_FS-03.h5 ', $
-    '!pfaPath/PFA_R1B_FS-03.h5',$
-    '!pfaPath/PFA_R1A_FS-03.h5',$
-    '!pfaPath/PFA_DACS_FS-03.h5']})
+  {['!pfaPath/PFA_R5V_!pfaVersion.h5', $
+    '!pfaPath/PFA_R5H_!pfaVersion.h5', $
+    '!pfaPath/PFA_R4_!pfaVersion.h5 ', $
+    '!pfaPath/PFA_R3_!pfaVersion.h5 ', $
+    '!pfaPath/PFA_R2_!pfaVersion.h5 ', $
+    '!pfaPath/PFA_R1B_!pfaVersion.h5',$
+    '!pfaPath/PFA_R1A_!pfaVersion.h5',$
+    '!pfaPath/PFA_DACS_!pfaVersion.h5']})
   })
-  !define(spectroscopyHDF,{!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy-PFA_v3-0-0_0000d000.h5})
-  !define(spectroscopyFullHDF,{!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy_v3-0-0_0000d000.h5})
+  !define(spectroscopyHDF,{!spectroscopyHDFPath/MLS-Aura_L2Cal-Spectroscopy-PFA_v3-0-0_0000d000.h5})
+  !define(spectroscopyFullHDF,{!spectroscopyHDFPath/MLS-Aura_L2Cal-Spectroscopy_v3-0-0_0000d000.h5})
   !define(spectroscopyRtvlHDF,{!spectroscopyHDF})
 })
+;; output paths
+!ifdef(outpathl2gp,{},{!define(outpathl2gp,!getdir(outpathl2gp))})
+!ifdef(outpathl2aux,{},{!define(outpathl2aux,!getdir(outpathl2aux))})
+!ifdef(outpathl2fwm,{},{!define(outpathl2fwm,!getdir(outpathl2fwm))})
+!ifdef(outpathl1brad,{},{!define(outpathl1brad,!getdir(outpathl1brad))})
+!ifdef(outpathtmp,{},{!define(outpathtmp,!getdir(outpathtmp))})
 ;$Log$
+;Revision 1.37  2008/05/13 16:48:56  pwagner
+;PFA and Spectroscopy for FS series of v3 development tests
+;
 ;Revision 1.36  2008/03/11 18:24:55  pwagner
-;The version used for FS-03-003 test
+;The version used for !PFAversion-003 test
 ;
 ;Revision 1.35  2006/06/09 20:48:42  pwagner
 ;Fixed bug when using PCF, PFAfiles
