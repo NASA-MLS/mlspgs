@@ -1,0 +1,113 @@
+\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9.0in
+
+\newcommand{\docname}{\bf wvs-081}
+\newcommand{\docdate}{24 June 2008}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[u]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Nathaniel, Bill, Alyn\\
+Subject: \>Variable projection applied to retrieval\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 10pt
+\vspace{-20pt}
+
+The solution of the radiative transfer equation, in quadrature form, after
+integrating by parts, is
+%
+\begin{equation}\label{one}
+I = \sum_i \Delta B_i (T_i)\, \mathcal{T}_i (T_i, f_i^k)\,,
+\end{equation}
+%
+where $I$ is radiance, $i$ is the index of a point on the ray, $B_i$ is the
+Planck function, $T_i$ is temperature, $f_i^k$ is the mixing ratio of the
+$k^{\text{th}}$ species, and $\mathcal{T}_i$ is given by (again in quadrature
+form):
+%
+\begin{equation}\label{two}
+ \mathcal{T}_i (T_i, f_i^k) =
+   \exp \left( - \sum_{j=2}^i \Delta \delta_{j \rightarrow j-1}
+                                           ( T_j, f_j^k) \right )\,,
+\end{equation}
+%
+where $j$ is the index of a point on the ray and $\Delta \delta_{j \rightarrow
+j-1}$ is given by
+%
+\begin{equation}\label{three}
+ \Delta \delta_{j \rightarrow j-1} ( T_j, f_j^k) = \sum_k f_j^k \beta ( T_j )\,,
+\end{equation}
+%
+where $\beta$ is a nonlinear function of $T$.
+
+It is desired to solve for $T_i$ and $f_i^k$.  The solution method consists of
+the following steps.
+
+\begin{enumerate}
+
+\item Given an initial guess for $T_i$, evaluate $\Delta B_i (T_i)$.
+
+\item \label{second}Given values for $I$ at several frequencies and several
+  viewing angles, and $\Delta B_i (T_i)$, solve Equation (\ref{one}) for
+  $\mathcal{T}_i (T_i, f_i^k)$.  This is a linear problem.
+
+\item \label{third}Take the logarithm of Equation (\ref{two}) and solve for
+  $\Delta \delta_{j \rightarrow j-1} ( T_j, f_j^k)$.  This is a linear problem.
+
+\item Solve Equation (\ref{three}) for $f_j^k$ and $T_j$.  This is a
+  \emph{separable} nonlinear problem in which $f_j^k$ appears linearly and
+  $T_j$ appears nonlinearly.  Separable problems are best solved by using the
+  \emph{Variable Projection}\footnote{G. Golub and V. Pereyra, ``Separable
+  nonlinear least squares: the variable projection method and its
+  applications,'' Technical Report SCCM-02-07, Department of Computing Science,
+  Stanford University,  Stanford, CA 94305, USA, July 2002. {\tt
+  http://www-sccm.stanford.edu/pub/sccm/sccm02-07.ps.gz}.} method, which keeps
+  the linear variables $(f_j^k)$ on a solution consistent with the nonlinear
+  variables $(T_j)$ at every iteration, thereby converging much more quickly
+  and reliably.
+
+\item Using the newly-calculated values of $T_i$, evaluate $\Delta B_i (T_i)$
+  and then Equation (\ref{one}).
+
+\item If the new value of $I$ is not sufficiently close to the measured value,
+  repeat from step \ref{second}.
+
+\end{enumerate}
+
+Because of the logarithm in step \ref{third}, the statistics of the solution are
+log-normal instead of normal.  The covariance matrix of the solution has to be
+interpreted in this context.
+
+I have not given any thought to antenna convolution, frequency averaging, or
+sideband folding.  At least the first two of these are linear, so incorporating
+them shouldn't be difficult.
+
+\label{lastpage} \end{document}
+% $Id$
