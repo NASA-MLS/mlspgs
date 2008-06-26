@@ -45,8 +45,8 @@ contains
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use Get_Species_Data_M, only:  Get_Species_Data
     use GLnp, only: NGP1
-    use Intrinsic, only: L_CLOUDICE, L_MAGNETICFIELD, L_PHITAN, L_PTAN, &
-      & L_TEMPERATURE
+    use Intrinsic, only: L_CLOUDICE, L_MAGNETICFIELD, &
+      & L_PHITAN, L_PTAN, L_TEMPERATURE
     use Load_Sps_Data_m, only: DestroyGrids_t, Dump, EmptyGrids_T, Grids_T, &
       & Load_One_Item_Grid, Load_Sps_Data
     use MatrixModule_1, only: MATRIX_T
@@ -175,9 +175,16 @@ contains
 
   ! Compute the preselected integration grid (all surfs from temperature,
   ! tangent grid and species).  Tan_Press is thrown in for free.
-
-    call compute_Z_PSIG ( fwdModelConf, temp, fwdModelConf%beta_group%qty, nlvl, &
-      &                   no_tan_hts, surfaceTangentIndex, z_psig, tan_press )
+    if ( fwdModelConf%generateTScat ) then
+      ! Make sure the observer zeta is in the preselected grid.
+      call compute_Z_PSIG ( fwdModelConf, temp, nlvl, &
+        &                   no_tan_hts, surfaceTangentIndex, z_psig, tan_press, &
+        &                   GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+        &                     quantityType=l_cloudIce, config=fwdModelConf ) )
+    else
+      call compute_Z_PSIG ( fwdModelConf, temp, nlvl, &
+        &                   no_tan_hts, surfaceTangentIndex, z_psig, tan_press )
+    end if
 
     max_c = 2*nlvl + max_new + 1 ! Maximum coarse path length
     maxVert = (nlvl-1) * ngp1 + 1
@@ -278,11 +285,11 @@ contains
     use Get_Chi_Angles_m, only: Get_Chi_Angles
     use GLnp, only: GW, GX, NG, NGP1
     use Intrinsic, only: L_A, L_BOUNDARYPRESSURE, L_CLEAR, &
-      & L_EARTHREFL, L_ECRtoFOV, &
+      & L_CLOUDICE, L_CLOUDTEMPERATURE, L_EARTHREFL, L_ECRtoFOV, &
       & L_ELEVOFFSET, L_GPH, &
       & L_LOSVEL, L_LIMBSIDEBANDFRACTION, &
-      & L_ORBITINCLINATION, L_RADIANCE, L_REFGPH, L_SCGEOCALT, &
-      & L_SPACERADIANCE, L_SurfaceHeight, L_VMR
+      & L_ORBITINCLINATION, L_RADIANCE, L_REFGPH, L_ScatteringAngle, &
+      & L_SCGEOCALT, L_SPACERADIANCE, L_SurfaceHeight, L_TScat, L_VMR
     use Load_Sps_Data_m, only: DestroyGrids_t, Dump, Grids_T, &
       & Load_One_Item_Grid
     use MatrixModule_1, only: MATRIX_T
@@ -300,6 +307,10 @@ contains
     use Phi_Refractive_Correction_m, only: Phi_Refractive_Correction
     use Physics, only: H_OVER_K, SpeedOfLight
     use PointingGrid_m, only: POINTINGGRIDS
+    use Read_Mie_m, only: Beta_c_a, Beta_c_e, Beta_c_s, &
+      & dBeta_dIWC_c_a, dBeta_dIWC_c_e, dBeta_dIWC_c_s, &
+      & dBeta_dT_c_a, dBeta_dT_c_e, dBeta_dT_c_s, dP_dIWC, dP_dT, &
+      & F_s, IWC_s, P, T_s, Theta_s
     use REFRACTION_M, only: REFRACTIVE_INDEX, COMP_REFCOR
     use SLABS_SW_M, only: ALLOCATESLABS, DESTROYCOMPLETESLABS, &
       & GET_GL_SLABS_ARRAYS, SLABS_STRUCT
@@ -628,13 +639,14 @@ contains
                                     ! for our dacs
 
     real(rp) :: E_RFLTY       ! Earth reflectivity at given tan. point
-    real(rp) :: H_Surf, H_Tan ! Height at surface and tangent
+    real(rp) :: H_Surf        ! Height at surface above reference (zeta=-3)
     real(rp) :: Min_Zeta      ! Minimum zeta along the path
     real(rp) :: Min_Phi       ! Phi at which minimum zeta occurs
     real(rp), parameter :: Min_Phi_Tol = 0.25 * gx(1)**2 ! First GL point
-    real(rp) :: TAN_HT        ! Height at the tangent, from equivalent Earth center
-    real(rp) :: REQ           ! Equivalent Earth Radius
+    real(rp) :: R_EQ          ! Equivalent Earth Radius
     real(rp) :: ROT(3,3)      ! ECR-to-FOV rotation matrix
+    real(rp) :: TAN_HT        ! Height at the tangent, from equivalent Earth center
+    real(rp) :: TAN_HT_R      ! Tan_Ht - R_eq
     real(rp) :: Vel_Rel       ! Vel_z / c
 
     real(rp), pointer :: CT(:)           ! Cos(Theta), where theta
@@ -692,6 +704,8 @@ contains
     real(rp) :: earthradc_sq ! earthradc**2
 
     type (VectorValue_T), pointer :: BOUNDARYPRESSURE
+    type (VectorValue_T), pointer :: CloudIce      ! IWC on cloud grid
+    type (VectorValue_T), pointer :: CloudTemp     ! Temperature on cloud grid
     type (VectorValue_T), pointer :: EARTHREFL     ! Earth reflectivity
     type (VectorValue_T), pointer :: ECRtoFOV      ! Rotation matrices
     type (VectorValue_T), pointer :: F             ! An arbitrary species
@@ -699,10 +713,12 @@ contains
     type (VectorValue_T), pointer :: LOSVEL        ! Line of sight velocity
     type (VectorValue_T), pointer :: ORBINCLINE    ! Orbital inclination
     type (VectorValue_T), pointer :: REFGPH        ! Reference geopotential height
+    type (VectorValue_T), pointer :: ScatteringAngles ! for TScat computation
     type (VectorValue_T), pointer :: SCGEOCALT     ! S/C geocentric altitude /m
     type (VectorValue_T), pointer :: SPACERADIANCE ! Emission from space
     type (VectorValue_T), pointer :: SurfaceHeight ! km above mean sea level
     type (VectorValue_T), pointer :: THISRADIANCE  ! A radiance vector quantity
+    type (VectorValue_T), pointer :: TScat         ! Computed TScat, Jacobian row label
 
     type (Signal_T), pointer :: FIRSTSIGNAL        ! The first signal we're dealing with
 
@@ -805,9 +821,12 @@ contains
 
     call both_sidebands_setup
 
-    if ( FwdModelConf%incl_cld ) call cloud_setup
-
-    call convolution_setup
+    if ( FwdModelConf%generateTScat ) then
+      call TScat_setup
+    else
+      if ( FwdModelConf%incl_cld ) call cloud_setup
+      call convolution_setup
+    end if
 
     ! Compute hydrostatic grid -----------------------------------------------
     ! If this is moved into BOTH_SIDEBANDS_SETUP the run time increases by
@@ -868,10 +887,10 @@ contains
 
       call frequency_setup_1
 
+      ! Loop over pointings --------------------------------------------------
       if ( toggle(emit) .and. levels(emit) > 2 ) &
         & call Trace_Begin ( 'ForwardModel.PointingLoop' )
 
-      ! Loop over pointings --------------------------------------------------
       do ptg_i = 1, no_tan_hts
 
         Vel_Rel = est_los_vel(ptg_i) / speedOfLight
@@ -883,21 +902,24 @@ contains
           & call frequency_setup_2 ( (1.0_rp - Vel_Rel) * &
           & PointingGrids(whichPointingGrid)%oneGrid(grids(ptg_i))%frequencies )
 
-        call one_pointing ( est_scGeocAlt(ptg_i), vel_rel, &
-          &                 tan_press(ptg_i), tan_phi(ptg_i) )
+        call one_pointing ( vel_rel, tan_phi(ptg_i), &
+          &                 tan_press(ptg_i), est_scGeocAlt(ptg_i) )
 
       end do ! ptg_i
 
+      ! Do ray tracing at specified scattering angles?
+      if ( FwdModelConf%generateTScat ) call generate_TScat
+
       if ( toggle(emit) .and. levels(emit) > 2 ) &
         & call Trace_End ( 'ForwardModel.PointingLoop' )
+
+      call convolution ! or interpolation to ptan
 
       ! Frequency averaging and any LBL:
       if ( .not. associated(frequencies,channelCenters) ) &
         & call deallocate_test ( frequencies, 'frequencies', moduleName )
       
       call deallocate_test ( inc_rad_path,   'Inc_Rad_Path',   moduleName )
-
-      call convolution ! or interpolation to ptan
 
       ! Deallocate maxNoPtgFreqs-sized stuff
       call deallocate_test ( radv, 'RadV', moduleName )
@@ -1106,9 +1128,10 @@ contains
       call compute_GL_grid ( z_psig, z_glgrid )
 
       ! interpolate tan_phi, scgeocalt and losvel from MIFs to pointings
-      call estimate_tan_phi ( nlvl, maf, phitan, ptan, &
-                            & scgeocalt, losvel, tan_press, tan_phi, est_scgeocalt, &
-                            & est_los_vel )
+      if ( .not. FwdModelConf%generateTScat ) &
+        & call estimate_tan_phi ( nlvl, maf, phitan, ptan, &
+                                & scgeocalt, losvel, tan_press, &
+                                & tan_phi, est_scgeocalt, est_los_vel )
 
       ! Now, allocate other variables we're going to need later --------
 
@@ -1425,7 +1448,7 @@ contains
       if ( toggle(emit)  .and. levels(emit) > 0 ) &
       &  call trace_begin ( 'ForwardModel.Convolution_Setup' )
 
-      !{ Compute equivalent earth radius (REQ)
+      !{ Compute equivalent earth radius (\tt r\_eq})
       ! \begin{equation*}\begin{split}
       ! R_{eq} =\;& \sqrt \frac{R_a^4 \sin^2 \phi + R_c^4 \cos^2 \phi}
       !                       {R_a^2 \cos^2 \phi + R_c^2 \sin^2 \phi}\\
@@ -1436,7 +1459,7 @@ contains
       ! Although this is the same mathematical formula as used in {\tt metrics},
       ! the $\phi$ used here is different: These are on MIFs, not hypothetical
       ! pointings to the desired tangent $\zeta$s.  Therefore, we can't use
-      ! these values in {\tt metrics}, or where its output {\tt req} value is
+      ! these values in {\tt metrics}, or where its output {\tt r\_eq} value is
       ! used.
 
       req_out = (earthrada-earthradc)*(earthrada+earthradc) * &
@@ -2534,6 +2557,18 @@ contains
 
     end subroutine Frequency_Setup_2
 
+  ! .............................................  Generate_TScat  .....
+    subroutine Generate_TScat
+      integer :: phi_i, ptg_i, zeta_i ! Loop inductors and subscripts
+      ! Loop over observer positions and scattering angles
+      do phi_i = 1, cloudIce%template%noInstances
+        do zeta_i = 1, cloudIce%template%noSurfs
+          do ptg_i = 1, scatteringAngles%template%noSurfs
+          end do ! ptg_i
+        end do ! zeta_i
+      end do ! phi_i
+    end subroutine Generate_TScat
+
   ! ........................................  Get_Channel_Centers  .....
     subroutine Get_Channel_Centers ( channelCenters )
       real(r8) :: ChannelCenters(:)
@@ -2563,23 +2598,16 @@ contains
     end subroutine Get_Channel_Centers
 
   ! ...............................................  One_Pointing  .....
-    subroutine One_Pointing ( Est_SCGeocAlt, Vel_Rel, Tan_Press, Tan_Phi )
+    subroutine One_Pointing ( Vel_Rel, Tan_Phi, Tan_Press, Est_SCGeocAlt )
 
-      real(rp), intent(in) :: Est_SCGeocAlt ! Est S/C geocentric altitude /m
-      real(rp), intent(in) :: Vel_Rel       ! Vel_z / speedOfLight
-      real(rp), intent(in) :: Tan_Press
-      real(rp), intent(in) :: Tan_Phi
+      real(rp), intent(in) :: Vel_Rel ! Vel_z / speedOfLight
+      real(rp), intent(in) :: Tan_Phi ! orbit geodetic angle at tangent, radians
+      real(rp), intent(in), optional  :: Tan_Press    ! hPa, not zeta
+      real(rp), intent(in), optional :: Est_SCGeocAlt ! Est S/C geocentric
+        ! altitude /m, used only to compute chi angles for convolution
 
       if ( toggle(emit) .and. levels(emit) > 3 ) &
         & call Trace_Begin ( 'ForwardModel.Pointing ', index=ptg_i )
-
-      ! Find the number of the MIF having ptan nearest to tan_press.
-      if ( FwdModelConf%polarized ) &
-        & mif = minloc(abs(tan_press - &
-        &                  ptan%values(:ptan%template%nosurfs,maf)),1)
-
-      if ( toggle(emit) .and. levels(emit) > 4 ) &
-        & call Trace_Begin ( 'ForwardModel.MetricsEtc' )
 
       ! Assume it's not an earth-intersecting ray and min zeta is at
       ! the tangent point
@@ -2594,6 +2622,9 @@ contains
       t_glgrid => t_glgrid_o
       z_glgrid => z_glgrid_o
 
+      if ( toggle(emit) .and. levels(emit) > 4 ) &
+        & call Trace_Begin ( 'ForwardModel.MetricsEtc' )
+
       ! Compute where the tangent is, the equivalent Earth radius, tangent
       ! height and surface height, and determine whether the ray
       ! intersects the Earth surface
@@ -2601,22 +2632,22 @@ contains
       nz_ig = nlvl
       if ( associated(surfaceHeight) ) then
         call tangent_metrics ( tan_phi, Grids_tmp%phi_basis, z_psig, &
-          &                    h_glgrid, earthradc_sq,     & ! in
-          &                    tan_ind_c, nz_ig,           & ! inout
-          &                    req, h_surf, h_tan, z_ig,   & ! output
+          &                    h_glgrid, earthradc_sq,       & ! in
+          &                    tan_ind_c, nz_ig,             & ! inout
+          &                    r_eq, h_surf, tan_ht_r, z_ig, & ! output
           &                    surf_height=surfaceHeight%values(1,:) ) ! opt
       else if ( ptg_i < surfaceTangentIndex ) then
         call tangent_metrics ( tan_phi, Grids_tmp%phi_basis, z_psig, &
-          &                    h_glgrid, earthradc_sq,     & ! in
-          &                    tan_ind_c, nz_ig,           & ! inout
-          &                    req, h_surf, h_tan, z_ig,   & ! output
-          &                    Tan_Press=tan_press,        & ! optional
+          &                    h_glgrid, earthradc_sq,       & ! in
+          &                    tan_ind_c, nz_ig,             & ! inout
+          &                    r_eq, h_surf, tan_ht_r, z_ig, & ! output
+          &                    Tan_Press=tan_press,          & ! optional
           &                    Surf_Temp=temp%values(1,windowstart:windowfinish) )
       else
         call tangent_metrics ( tan_phi, Grids_tmp%phi_basis, z_psig, &
-          &                    h_glgrid, earthradc_sq,     & ! in
-          &                    tan_ind_c, nz_ig,           & ! inout
-          &                    req, h_surf, h_tan, z_ig )    ! output
+          &                    h_glgrid, earthradc_sq,        & ! in
+          &                    tan_ind_c, nz_ig,              & ! inout
+          &                    r_eq, h_surf, tan_ht_r, z_ig )   ! output
       end if
       nz_if = (nz_ig-1) * ngp1 + 1                ! On Z_GLgrid
       tan_ind_f = (tan_ind_c-1) * ngp1 + 1        ! On Z_GLgrid
@@ -2630,7 +2661,7 @@ contains
         z_coarse(tan_pt_c+1:npc) = z_psig(tan_ind_c:nlvl)
       end if
 
-      if ( h_tan < 0.0 ) then ! Handle Earth-intersecting ray
+      if ( tan_ht_r < 0.0 ) then ! Handle Earth-intersecting ray
         e_rflty = earthRefl%values(1,1)
         if ( nz_ig > nlvl ) then ! Added a new zeta
           z_coarse(:tan_pt_c) = z_ig(nz_ig:tan_ind_c:-1)
@@ -2661,16 +2692,22 @@ contains
       end if
 
       ! Get H_Path and Phi_Path on the fine grid.
-      call Height_Metrics ( tan_phi, tan_ind_f, Grids_tmp%phi_basis, &
-        &  h_glgrid, req, h_surf, h_tan, z_ig, &              ! in
-        &  vert_inds(1:npf), h_path(1:npf), phi_path(1:npf) ) ! out
+      if ( nz_ig > nlvl ) then ! Added a new zeta
+        call Height_Metrics ( tan_phi, tan_ind_f, Grids_tmp%phi_basis, &
+          &  h_glgrid, r_eq, h_surf, tan_ht_r, z_ig, &          ! in
+          &  vert_inds(1:npf), h_path(1:npf), phi_path(1:npf) ) ! out
+      else
+        call Height_Metrics ( tan_phi, tan_ind_f, Grids_tmp%phi_basis, &
+          &  h_glgrid, r_eq, h_surf, tan_ht_r, z_psig, &        ! in
+          &  vert_inds(1:npf), h_path(1:npf), phi_path(1:npf) ) ! out
+      end if
 
       tan_ht = h_path(tan_pt_f) ! Includes Earth radius
 
       ! Look for path crossings at zetas below the tangent point.
       ! These can only happen if the minimum zeta isn't at the tangent.
-      call more_points ( tan_phi, tan_ind_f, Grids_tmp%phi_basis,  &
-        & z_glgrid, h_glgrid, req, h_surf, h_tan, phi_path(1:npf), & ! in
+      call more_points ( tan_phi, tan_ind_f, Grids_tmp%phi_basis,   &
+        & z_glgrid, h_glgrid, r_eq, h_surf, tan_ht_r, phi_path(1:npf), & ! in
         & more_z_path, more_h_path, more_phi_path, n_more )
       if ( n_more > 0 .and. .not. do_more_points ) then
         if ( print_more_points ) then
@@ -2682,9 +2719,9 @@ contains
           call output ( tan_phi, before=') = ', format='(f12.6)' )
           call output ( tan_ind_f, before=', tan_ind_f = ' )
           call output ( tan_pt_f, before=', tan_pt_f = ' )
-          call output ( req, before=', req = ', format='(f12.6)', advance='yes' )
+          call output ( r_eq, before=', r_eq = ', format='(f12.6)', advance='yes' )
           call output ( h_surf, before='h_surf = ', format='(f12.6)' )
-          call output ( h_tan, before=', h_tan = ', format='(f12.6)', advance='yes' )
+          call output ( tan_ht_r, before=', tan_ht_r = ', format='(f12.6)', advance='yes' )
           call dump ( Grids_tmp%phi_basis, name='phi_basis', format='(f14.8)' )
           call dump ( h_glgrid, name='h_glgrid', format='(f14.7)' )
           call dump ( h_path(1:npf), name='h_path', format='(f14.7)' )
@@ -2705,7 +2742,7 @@ contains
           n_more = n_more + 1
           more_z_path(n_more) = min_zeta
           more_phi_path(n_more) = min_phi
-          more_h_path(n_more) = (h_tan+req)/cos(min_phi)
+          more_h_path(n_more) = tan_ht/cos(min_phi)
         else
           if ( index(switches,'zdet') /= 0 ) then
             call output ( min_index, before='Want to add minimum zeta at ' )
@@ -2912,6 +2949,11 @@ contains
         call comp_sps_path ( Grids_mag, 1, eta_mag_zp(1:npf,:), &
           & mag_path(1:npf,1:3) )
 
+        ! Get the rotation matrix for the magnetic field.  Use the
+        ! matrix for the MIF having ptan nearest to tan_press.
+        mif = minloc(abs(tan_press - &
+        &                  ptan%values(:ptan%template%nosurfs,maf)),1)
+
         rot = reshape(ECRtoFOV%values(9*mif-8:9*mif,maf), (/3,3/))
 
         do j = 1, npf
@@ -2945,17 +2987,20 @@ contains
 
       end if
 
-      ! Compute the pointing angles.  These are needed for antenna
-      ! convolution, not for ray tracing.  We can't easily move these
-      ! computations into the convolution code because they need Tan_Ht.
-      if ( temp_der ) then
-        ! Ext_SCgeocAlt is in meters, but Get_Chi_Angles wants it in km.
-        call get_chi_angles ( 0.001*est_scGeocAlt, n_path_c(tan_pt_c), &
-           & tan_ht-Req, tan_phi, Req, 0.0_rp, ptg_angles(ptg_i),      &
-           & tan_dh_dt, tan_d2h_dhdt, dx_dt(ptg_i,:), d2x_dxdt(ptg_i,:) )
-      else
-        call get_chi_angles ( 0.001*est_scGeocAlt, n_path_c(tan_pt_c), &
-           & tan_ht-Req, tan_phi, Req, 0.0_rp, ptg_angles(ptg_i) )
+      if ( present(est_scGeocAlt) ) then
+        ! Compute the pointing angles.  These are needed for antenna
+        ! convolution, not for ray tracing.  We can't easily move these
+        ! computations into the convolution code because they need tan_ht_r
+        ! and R_eq, which are both gotten from Tangent_Metrics.
+        if ( temp_der ) then
+          ! Ext_SCgeocAlt is in meters, but Get_Chi_Angles wants it in km.
+          call get_chi_angles ( 0.001*est_scGeocAlt, n_path_c(tan_pt_c), &
+             & tan_ht_r, tan_phi, R_eq, 0.0_rp, ptg_angles(ptg_i),       &
+             & tan_dh_dt, tan_d2h_dhdt, dx_dt(ptg_i,:), d2x_dxdt(ptg_i,:) )
+        else
+          call get_chi_angles ( 0.001*est_scGeocAlt, n_path_c(tan_pt_c), &
+             & tan_ht_r, tan_phi, R_eq, 0.0_rp, ptg_angles(ptg_i) )
+        end if
       end if
 
       ! Compute refractive correction
@@ -3173,6 +3218,31 @@ contains
       ! End of pointing loop -------------------------------------------------
     end subroutine One_Pointing
 
+  ! ................................................  TScat_Setup  .....
+    subroutine TScat_Setup
+      ! Get ready for TScat computation
+      if ( FwdModelConf%polarized ) call announce_error ( &
+        & 'Cannot compute TScat for the polarized model.' )
+      if ( FwdModelConf%do_conv ) call announce_error ( &
+        & 'Convolution and TScat computation are incompatible.' )
+      if ( .not. associated(F_s) .or. .not. associated(dP_dT) ) &
+        & call announce_error ( 'TScat table computation requires Mie tables.' )
+      if ( .not. present(jacobian) ) &
+        & call announce_error ( 'TScat table computation requires a Jacobian.' )
+      cloudIce => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+        & quantityType=l_cloudIce, config=fwdModelConf )
+      cloudTemp => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+        & quantityType=l_cloudTemperature, config=fwdModelConf )
+      if ( cloudIce%template%vGridIndex /= cloudTemp%template%vGridIndex .or. &
+         & cloudIce%template%hGridIndex /= cloudTemp%template%hGridIndex ) &
+           & call announce_error ( &
+           & 'Cloud Ice and Temperature grids unequal for TScat computation.' )
+      ! These are primarily for subsurface angles, which are messy to specify
+      ! otherwise.
+      scatteringAngles => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+        & quantityType=l_scatteringAngle, config=fwdModelConf, noError=.true. )
+    end subroutine TScat_Setup
+
   end subroutine FullForwardModelAuto
 
 ! =====     Private procedures     =====================================
@@ -3281,6 +3351,12 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.288  2008/05/20 00:23:21  vsnyder
+! Much rearranging to prepare for TScat calculation.
+! Use pointing-interpolated LOS velocity instead of MIF(1) for Doppler
+! correction for pointing frequency grid.
+! Send vel/C instead of vel to slabs_prep.
+!
 ! Revision 2.287  2008/02/29 01:59:39  vsnyder
 ! Added a separate H2O continuum routine
 !
