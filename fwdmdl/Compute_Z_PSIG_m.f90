@@ -23,7 +23,7 @@ module Compute_Z_PSIG_m
 contains
 !------------------------------------------------  Compute_Z_PSIG  -----
 
-  subroutine Compute_Z_PSIG ( FwdModelConf, Temp, Qtys, &
+  subroutine Compute_Z_PSIG ( FwdModelConf, Temp, &
     &                         Nlvl, No_Tan_Hts, SurfaceTangentIndex, &
     &                         Z_PSIG, Tan_Press, Observer )
 
@@ -39,7 +39,6 @@ contains
   ! Inputs:
     type (forwardModelConfig_T), intent(in) :: fwdModelConf
     type (vectorValue_T), intent(in) :: TEMP      ! Temperature component of state vector
-    type (qtyStuff_t), intent(in) :: Qtys(:)      ! Array of pointers to Qty's.
 
   ! Outputs:
     integer, intent(out) :: Nlvl                  ! Levels in coarse grid
@@ -54,15 +53,17 @@ contains
     real(rp), pointer :: Tan_Press(:)  ! Pressures at tangent points in z_psig
 
   ! Optional inputs:
-    real(rp), optional, intent(in) :: Observer(:) ! Zetas for observers-in-atmosphere
+    type (vectorValue_T), optional, intent(in) :: Observer ! Zetas for observers-in-atmosphere
 
   ! Local variables:
+    type (qtyStuff_t), pointer :: Qtys(:)         ! Array of pointers to Qty's.
     integer :: SPS_I
     integer :: Z_All_Prev, Z_All_Size
     real(rp), pointer :: Z_all(:)  ! consolidated storage of representation
       !                              bases for z_grid determination
 
     nullify ( tan_press, z_all, z_psig )
+    qtys => fwdModelConf%beta_group%qty
 
 ! Insert automatic preselected integration gridder here. Need to make a
 ! large concatenated vector of bases and pointings.
@@ -78,7 +79,7 @@ contains
     do sps_i = 1 , size(qtys)
       z_all_size = z_all_size + qtys(sps_i)%qty%template%nosurfs
     end do
-    if ( present(observer) ) z_all_size = z_all_size + size(observer)
+    if ( present(observer) ) z_all_size = z_all_size + observer%template%nosurfs
     call allocate_test ( z_all, z_all_size, 'z_all', moduleName )
 
 ! Fill in z_all
@@ -112,8 +113,8 @@ contains
     end do
 
     if ( present(observer) ) then
-      z_all_size = z_all_prev + size(observer)
-      z_all(z_all_prev+1:z_all_size) = observer
+      z_all_size = z_all_prev + observer%template%nosurfs
+      z_all(z_all_prev+1:z_all_size) = observer%template%surfs(:,1)
       z_all_prev = z_all_size
     end if
 
@@ -158,6 +159,9 @@ contains
 end module Compute_Z_PSIG_m
 
 ! $Log$
+! Revision 2.6  2008/06/26 00:26:30  vsnyder
+! Delete QTYS argument, since the info is in the config argument
+!
 ! Revision 2.5  2008/05/20 00:18:07  vsnyder
 ! Add Observers dummy argument
 !
