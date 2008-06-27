@@ -168,6 +168,7 @@ fi
 # Initialize settings to defaults
 DEEBUG=off
 BUILD=on
+EXTRAOPTS=
 INSTALL=on
 prog_name=test
 target_name=test
@@ -187,7 +188,7 @@ me="$0"
 my_name=build_f90_in_misc.sh
 args_dir=`pwd`
 REECHO="`echo $0 | sed 's/build_f90_in_misc.sh/reecho.sh/'`"
-
+# echo "args: $@"
 arglist=
 
 #
@@ -387,7 +388,7 @@ then
 fi
 
 # The following nonsense is necessary only if your main program is
-# a c language program na,ed main() and you're using Lahey:
+# a c language program named main() and you're using Lahey:
 # Lahey insists then your main be renamed MAIN__()
 # (Why do we permit such behavior?)
 # Anyway, we'll try to rename our main to appease the Lahey monster
@@ -413,6 +414,22 @@ then
    cd $args_dir
 fi
 
+# The following nonsense is necessary only if your main program is
+# a c language program named main() and you're using the Intel compiler:
+# Intel requires that you add the command-line option -nofor-main
+is_ifort=`echo "$MYMAKEOPTS" | grep -i '=IFC'`
+if [ "$main" != "" -a -f "$test_dir_path/$test_dir_name/$main" \
+  -a "$is_ifort" != "" ]
+then
+  EXTRAOPTS="LAFTER=-nofor-main"
+fi
+if [ $DEEBUG = "on" ]
+then
+  echo "MYMAKEOPTS $MYMAKEOPTS"
+  echo "main: $main"
+  echo "is_ifort: $is_ifort"
+  echo "EXTRAOPTS: $EXTRAOPTS"
+fi
 if [ "$EXTRA_PATHS" != "" ]
 then
    repair_subpaths $EXTRA_PATHS
@@ -423,11 +440,11 @@ then
 #      make depends ghostbuster
 #      make EXTRA_PATHS="$EXTRA_PATHS"
       $MYMAKE depends ghostbuster $MYMAKEOPTS
-      $MYMAKE EXTRA_PATHS="$EXTRA_PATHS" $MYMAKEOPTS "$target_name"
+      $MYMAKE EXTRA_PATHS="$EXTRA_PATHS" $EXTRAOPTS $MYMAKEOPTS "$target_name"
    fi
    if [ "$DEEBUG" = "on" ]
    then
-      echo $MYMAKE EXTRA_PATHS="$EXTRA_PATHS" $MYMAKEOPTS "$target_name"
+      echo $MYMAKE EXTRA_PATHS="$EXTRA_PATHS" $EXTRAOPTS $MYMAKEOPTS "$target_name"
    fi
 elif [ "$override_INC_PATHS" = "no" ]
 then
@@ -437,11 +454,11 @@ then
 #      make depends ghostbuster
 #      make
       $MYMAKE depends ghostbuster $MYMAKEOPTS
-      $MYMAKE $MYMAKEOPTS "$target_name"
+      $MYMAKE $EXTRAOPTS  $MYMAKEOPTS "$target_name"
    fi
    if [ "$DEEBUG" = "on" ]
    then
-      echo $MYMAKE $MYMAKEOPTS "$target_name"
+      echo $MYMAKE $EXTRAOPTS  $MYMAKEOPTS "$target_name"
    fi
 else
    repair_subpaths $INC_PATHS
@@ -452,11 +469,11 @@ else
 #      make depends ghostbuster
 #      make INC_PATHS="$INC_PATHS"
       $MYMAKE depends ghostbuster $MYMAKEOPTS
-      $MYMAKE INC_PATHS="$INC_PATHS" $MYMAKEOPTS "$target_name"
+      $MYMAKE INC_PATHS="$INC_PATHS" $EXTRAOPTS $MYMAKEOPTS "$target_name"
    fi
    if [ "$DEEBUG" = "on" ]
    then
-      echo $MYMAKE INC_PATHS="$INC_PATHS" $MYMAKEOPTS "$target_name"
+      echo $MYMAKE INC_PATHS="$INC_PATHS" $EXTRAOPTS $MYMAKEOPTS "$target_name"
    fi
 fi
 
@@ -489,6 +506,9 @@ fi
 exit 0
 
 # $Log$
+# Revision 1.15  2005/06/23 22:20:45  pwagner
+# Reworded Copyright statement
+#
 # Revision 1.14  2003/06/05 16:22:16  pwagner
 # Internal function renamed mkpath()
 #

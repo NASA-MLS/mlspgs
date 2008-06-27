@@ -672,11 +672,10 @@ install-l3m:
 	@$(MAKE) -f $(MakeFName) install LEVELS=l3m
 
 # Build executables out of sources from mlspgs/util directory
-ifeq ($(MLSF95),LF95)
-UTIL_OPTS=-O MLSF95=LF95
-else
-UTIL_OPTS=
-endif
+# Let the build script know if the compiler requires
+# something special when the main program is in c
+UTIL_OPTS=-O MLSF95=${MLSF95}
+
 # unshar the sources for the executables (heconvert so far)
 $(MLSBIN)/convert.c $(MLSBIN)/HE5_HdfEosDef.h: $(MLSBIN)/heconvert.shar
 	@cd $(MLSBIN); \
@@ -1180,6 +1179,9 @@ tools: chunktimes checkpvmup compare dateconverter heconvert h5subset h5cat hl \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.110  2008/05/22 17:36:07  pwagner
+# Added build commands for wrapLines, Mie_Tables
+#
 # Revision 1.109  2008/04/22 17:15:25  pwagner
 # installs ntk versions of l2 parallel scripts
 #
