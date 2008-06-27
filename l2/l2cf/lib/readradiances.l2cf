@@ -18,6 +18,11 @@ begin Fill
   Fill, quantity=measurementNoise.band$1, avoidBrightObjects="GalacticCenter", $
     method=l1b, /isPrecision
   Fill, quantity=measurement.band$1, method=l1b, precision=measurementNoise.band$1
+}, $1,{25}, {!dnl
+; Band 25 affected by the Galactic core, too
+  Fill, quantity=measurementNoise.band$1, avoidBrightObjects="GalacticCenter", $
+    method=l1b, /isPrecision
+  Fill, quantity=measurement.band$1, method=l1b, precision=measurementNoise.band$1
 },{!dnl
 !divert(-1)
 ; All the other bands
@@ -88,6 +93,9 @@ end Construct
 
 
 ; $Log$
+; Revision 1.12  2006/06/15 00:03:29  pwagner
+; Band 9 affected by the Galactic core
+;
 ; Revision 1.11  2006/06/09 20:46:41  pwagner
 ; Defines Boolean flags regarding Band 13 radiances
 ;
