@@ -15,13 +15,18 @@
 !
      PROGRAM MLS_h5ls
 
+     use Hdf, only: DFACC_RDONLY
+     use L1BData, only: L1BData_T, ReadL1BData, deallocateL1BData
      use MLSDataInfo, only: MLSDataInfo_T, Query_MLSData
+     use MLSFiles, only: HDFVERSION_5, mls_sfend, mls_sfstart
+     use MLSFillValues, only: isFinite
      use MLSHDF5, only: mls_h5close, mls_h5open
      use HDF5, only: HID_T, H5F_ACC_RDONLY_F, h5fopen_f, h5fclose_f, &
        & h5fis_hdf5_f   
      use MACHINE, only: FILSEP, HP, IO_ERROR, GETARG
 
      IMPLICIT NONE
+     logical :: checkForNaNs
 
      type(MLSDataInfo_T) :: dataset_info
 
@@ -29,8 +34,12 @@
      integer            :: n_filenames
      INTEGER(HID_T) :: file_id               ! File identifier
      INTEGER     ::  i, count, status, error ! Counting indices & Error flags
-     INTEGER, PARAMETER ::  max_nsds = 1000  ! Maximum number of datasets in file.
+     INTEGER, PARAMETER ::  max_nsds = 10000  ! Maximum number of datasets in file.
      LOGICAL     :: is_hdf5
+     type(l1bdata_t) :: HDFDATA
+     integer :: L1FileHandle
+     integer :: noMAFs
+     logical :: verbose
 
 !---------------------------- RCS Ident Info ------------------------------
   character (len=*), parameter :: ModuleName= &
@@ -44,6 +53,8 @@
 
      CALL mls_h5open(error)
   n_filenames = 0
+  checkForNaNs = .false.
+  verbose = .false.
   do      ! Loop over filenames
      call get_filename(filename, n_filenames)
      if ( filename == ' ' ) exit
@@ -55,7 +66,12 @@
      CALL h5fopen_f(trim(filename), H5F_ACC_RDONLY_F, file_id, error)
 
      IF (error .eq. 0) then  
-
+     if ( verbose ) then
+       write (*, *) ' '
+       write (*, *) '------------------------------------------------------'
+       write (*, *) 'file: ', trim(filename)
+       write (*, *) '------------------------------------------------------'
+     endif
 !
 ! The structure, dataset_info, is initialized below.
 !
@@ -79,6 +95,21 @@
      do i = 1, count
         write(*,102) dataset_info%name(i) 
  102    format(1x,1a64)
+        if ( .not. checkForNaNs ) cycle
+        ! L1FileHandle = mls_sfstart( trim(filename), &
+        !   & DFACC_RDONLY, HDFVERSION_5 )
+        call ReadL1BData ( file_id, trim(dataset_info%name(i)), HDFDATA, &
+          & noMAFs, status, NEVERFAIL=.true., L2AUX=.true. )
+        if ( associated(HDFDATA%DpField) ) then
+          if ( .not. all( isFinite(HDFDATA%DpField) ) ) then
+            write(*, *) '**** NaNs or Infs found in dataset'
+          endif
+        else
+            write(*, *) '           (Unable to check this dataset)'
+        endif
+        call deallocateL1BData( HDFDATA )
+        ! status = mls_sfend( L1FileHandle, HDFVersion_5 )
+        
      end do
 !
 ! Prevent memory leaks.
@@ -119,6 +150,12 @@
       error = 1
       if ( filename(1:3) == '-h ' ) then
         call print_help
+      elseif ( filename(1:6) == '-check' ) then
+        error = 0
+        checkForNaNs = .true.
+      elseif ( filename(1:2) == '-v' ) then
+        error = 0
+        verbose = .true.
       else if ( filename(1:3) == '-f ' ) then
         call getarg ( i+1+hp, filename )
         error = 0
@@ -129,6 +166,7 @@
       end if
       i = i + 1
     end do
+    ! print *, error, ' ', trim(filename)
     if ( error /= 0 ) then
       call print_help
     endif
@@ -156,6 +194,9 @@
 END PROGRAM MLS_h5ls
 
 ! $Log$
+! Revision 1.5  2005/06/22 19:27:33  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 1.4  2004/03/25 18:39:28  pwagner
 ! Uses mls_h5open/close
 !
