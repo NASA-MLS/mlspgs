@@ -289,68 +289,16 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   ! Print debugging stuff?
   logical, parameter :: DEEBUG = .false.  
   logical, parameter ::SWATHLEVELMISSINGVALUE = .false. ! Make it swath attr?
-  logical, parameter ::READINGSTATUSBYDEFAULT = .true.  ! Change if bombing
 
 contains ! =====     Public Procedures     =============================
 
   !-------------------------------------------------------------
 
-  subroutine AppendL2GPData_fileID(l2gp, l2FileHandle, &
-    & swathName, offset, lastProfile, TotNumProfs, hdfVersion, &
-    & createSwath)
-    ! sticks l2gp into the swath swathName in the file pointed at by
-    ! l2FileHandle,starting at the profile number "offset" (First profile
-    ! in the file has offset==0). If this runs off the end of the swath, 
-    ! it is lengthened automagically. 
-    ! This call has been altered recently, so that it can be used to create
-    ! a swath as well as adding to one. 
-
-    ! Arguments
-
-    integer, intent(IN) :: l2FileHandle ! From swopen
-
-    ! This is a L2GPData_T structure containing all the data to be written
-    type (L2GPData_T), intent(INOUT) :: l2gp
-    ! This is the name the swath is given in the file. By default it is
-    ! the name contained in l2gp
-    character (LEN=*), optional, intent(IN) ::swathName!default->l2gp%swathName
-    ! This (offset) is the point in the swath at which the data is written. 
-    ! First profile in the file has offset==0. If the swath in the file is 
-    ! shorter than offset + ( num of profiles in l2gp) then it grows by magic
-    integer, intent(IN), optional::offset
-    ! TotNumProfs is a new argument. It seems only to be used if we are 
-    ! creating a swath, rather than adding to one. In that case I guess
-    ! it is the total number of profiles in the swath created. I also 
-    ! guess that this is done so that we can avoid growing and re-growing 
-    ! the swath.
-    integer, intent(IN), optional::TotNumProfs
-    integer, intent(IN), optional::lastProfile
-    integer, optional, intent(in) :: hdfVersion ! better be 4 or 5!
-    logical, intent(in), optional :: createSwath
-    ! Local
-    integer :: myhdfVersion
-    integer :: status
-    type( MLSFile_T ) :: l2gpFile
-
-    ! Executable code
-    if (present(hdfVersion)) then
-      myhdfVersion = hdfVersion
-    else
-      myhdfVersion = L2GPDEFAULT_HDFVERSION
-    endif
-    status = InitializeMLSFile(l2gpFile, type=l_swath, access=DFACC_RDWR, &
-      & content='l2gp', name='unknown', hdfVersion=myhdfVersion)
-    l2gpFile%FileID%f_id = l2FileHandle
-    l2gpFile%stillOpen = .true.
-    
-    call AppendL2GPData(l2gp, l2gpFile, &
-    & swathName, offset, lastProfile, TotNumProfs, createSwath)
-  end subroutine AppendL2GPData_fileID
-
   ! ---------------------- AppendL2GPData_fileName  ---------------------------
 
-  subroutine AppendL2GPData_fileName(l2gp, fileName, &
-    & swathname, offset, lastProfile, TotNumProfs, hdfVersion)
+  subroutine AppendL2GPData_fileName( l2gp, fileName, &
+    & swathname, offset, lastProfile, TotNumProfs, hdfVersion, &
+    & createSwath, maxchunksize )
     !------------------------------------------------------------------------
 
     ! Given a file name,
@@ -366,6 +314,8 @@ contains ! =====     Public Procedures     =============================
     integer, intent(IN), optional::lastProfile
     integer,intent(IN),optional :: TotNumProfs
     integer, optional, intent(in) :: hdfVersion
+    logical, intent(in), optional :: createSwath
+    integer, optional, intent(in) :: maxchunksize
     ! logical, optional, intent(in) :: clean   ! Not implemented yet
 
     ! Local
@@ -409,9 +359,10 @@ contains ! =====     Public Procedures     =============================
     if ( status /= 0 ) &
       call MLSMessage ( MLSMSG_Error, ModuleName, &
        & "Unable to open L2gp file: " // trim(FileName) // ' for appending')
-    call AppendL2GPData_fileID(l2gp, L2FileHandle, swathname, &
-      & offset, lastProfile=lastProfile, totNumProfs=totNumProfs, &
-      & hdfVersion=the_hdfVersion)
+    call AppendL2GPData_fileID( l2gp, L2FileHandle, swathname, &
+      & FileName, offset, lastProfile=lastProfile, totNumProfs=totNumProfs, &
+      & hdfVersion=the_hdfVersion, createSwath=createSwath, &
+      & maxchunksize=maxchunksize )
     status = mls_io_gen_closeF(l_swath, L2FileHandle, FileName=FileName, &
       & hdfVersion=the_hdfVersion)
     if ( status /= 0 ) &
@@ -419,11 +370,65 @@ contains ! =====     Public Procedures     =============================
        & "Unable to close L2gp file: " // trim(FileName) // ' after appending')
   end subroutine AppendL2GPData_fileName
 
+  subroutine AppendL2GPData_fileID( l2gp, l2FileHandle, &
+    & swathName, filename, offset, lastProfile, TotNumProfs, hdfVersion, &
+    & createSwath, maxchunksize )
+    ! sticks l2gp into the swath swathName in the file pointed at by
+    ! l2FileHandle,starting at the profile number "offset" (First profile
+    ! in the file has offset==0). If this runs off the end of the swath, 
+    ! it is lengthened automagically. 
+    ! This call has been altered recently, so that it can be used to create
+    ! a swath as well as adding to one. 
+
+    ! Arguments
+
+    integer, intent(IN) :: l2FileHandle ! From swopen
+
+    ! This is a L2GPData_T structure containing all the data to be written
+    type (L2GPData_T), intent(INOUT) :: l2gp
+    ! This is the name the swath is given in the file. By default it is
+    ! the name contained in l2gp
+    character (LEN=*), optional, intent(IN) ::swathName!default->l2gp%swathName
+    character (LEN=*), optional, intent(IN) ::fileName
+    ! This (offset) is the point in the swath at which the data is written. 
+    ! First profile in the file has offset==0. If the swath in the file is 
+    ! shorter than offset + ( num of profiles in l2gp) then it grows by magic
+    integer, intent(IN), optional::offset
+    ! TotNumProfs is a new argument. It seems only to be used if we are 
+    ! creating a swath, rather than adding to one. In that case I guess
+    ! it is the total number of profiles in the swath created. I also 
+    ! guess that this is done so that we can avoid growing and re-growing 
+    ! the swath.
+    integer, intent(IN), optional::TotNumProfs
+    integer, intent(IN), optional::lastProfile
+    integer, optional, intent(in) :: hdfVersion ! better be 4 or 5!
+    logical, intent(in), optional :: createSwath
+    integer, optional, intent(in) :: maxchunksize
+    ! Local
+    integer :: myhdfVersion
+    integer :: status
+    type( MLSFile_T ) :: l2gpFile
+
+    ! Executable code
+    if (present(hdfVersion)) then
+      myhdfVersion = hdfVersion
+    else
+      myhdfVersion = L2GPDEFAULT_HDFVERSION
+    endif
+    status = InitializeMLSFile( l2gpFile, type=l_swath, access=DFACC_RDWR, &
+      & content='l2gp', name='unknown', hdfVersion=myhdfVersion )
+    l2gpFile%FileID%f_id = l2FileHandle
+    l2gpFile%stillOpen = .true.
+    
+    call AppendL2GPData( l2gp, l2gpFile, &
+    & swathName, offset, lastProfile, TotNumProfs, createSwath, maxchunksize )
+  end subroutine AppendL2GPData_fileID
+
   ! ---------------------- AppendL2GPData_MLSFile  ---------------------------
 
-  subroutine AppendL2GPData_MLSfile(l2gp, l2gpFile, &
+  subroutine AppendL2GPData_MLSfile( l2gp, l2gpFile, &
     & swathName, offset, lastProfile, TotNumProfs, &
-    & createSwath)
+    & createSwath, maxchunksize )
     ! sticks l2gp into the swath swathName in the file pointed at by
     ! l2FileHandle,starting at the profile number "offset" (First profile
     ! in the file has offset==0). If this runs off the end of the swath, 
@@ -453,15 +458,18 @@ contains ! =====     Public Procedures     =============================
     integer, intent(IN), optional::TotNumProfs
     integer, intent(IN), optional::lastProfile
     logical, intent(in), optional :: createSwath
+    integer, optional, intent(in) :: maxchunksize
     ! Local
     integer :: actual_ntimes
     logical :: alreadyOpen
+    type (L2GPData_T) :: largerl2gp
+    integer :: myLastProfile
+    character (len=L2GPNameLen) :: myswathName
+    logical :: notUnlimited
     integer :: numProfs
     integer :: status
     logical :: swath_exists
     integer :: swathid
-    integer :: myLastProfile
-    character (len=L2GPNameLen) :: myswathName
     type (L2GPData_T) :: totall2gp
 
     ! Executable code
@@ -507,13 +515,17 @@ contains ! =====     Public Procedures     =============================
       if(DEEBUG) print *, 'OK, swath already exists'
       ! We must guard against a bug in HDF-EOS that prevents appending more
       ! profiles to a swath than already exist
-      call ReadL2GPData( L2GPFile, myswathName, totall2gp, numProfs )
+      call ReadL2GPData( L2GPFile, myswathName, totall2gp, numProfs, &
+        & ReadData=.false. )
       if ( l2gp%nTimes > numProfs ) then
         if(DEEBUG) call outputNamedValue( 'current', totall2gp%nTimes )
         if(DEEBUG) call outputNamedValue( 'needed', l2gp%nTimes )
+        call DestroyL2GPContents ( totall2gp )
+        call ReadL2GPData( L2GPFile, myswathName, totall2gp, numProfs )
         call ExpandL2GPDataInPlace( totall2gp, l2gp%nTimes )
         if(DEEBUG) call outputNamedValue( 'expanded', totall2gp%nTimes )
         call ExpandL2GPDataInFile( L2GPFile, myswathName, totall2gp )
+        if(DEEBUG) call outputNamedValue( 'AppendL2GPData expanded', totall2gp%nTimes )
       endif
       call DestroyL2GPContents ( totall2gp )
     else
@@ -533,13 +545,26 @@ contains ! =====     Public Procedures     =============================
       case (HDFVERSION_5)
         ! By default allow limited; 
         ! may force unlimited by setting avoidUnlimitedDims to FALSE
+        notUnlimited = ( avoidUnlimitedDims .and. present(totNumProfs) )
         ! if ( present(TotNumProfs) ) l2gp%nTimes = TotNumProfs
-        call OutputL2GP_createFile_MF (l2gp, L2GPFile, &
-          & myswathName,&
-          & notUnlimited=(avoidUnlimitedDims .and. present(totNumProfs)) )
+        if ( present(maxchunksize) ) then
+          if ( maxchunksize > l2gp%nTimes ) then
+            call SetupNewL2GPRecord ( largerl2gp, proto=l2gp, &
+              & nTimes=maxchunksize )
+            call OutputL2GP_createFile_MF ( largerl2gp, L2GPFile, &
+              & myswathName, notUnlimited=notUnlimited )
+            call DestroyL2GPContents ( largerl2gp )
+          else
+            call OutputL2GP_createFile_MF ( l2gp, L2GPFile, &
+              & myswathName, notUnlimited=notUnlimited )
+          endif
+        else
+          call OutputL2GP_createFile_MF ( l2gp, L2GPFile, &
+            & myswathName, notUnlimited=notUnlimited )
+        endif
       case default
         call MLSMessage ( MLSMSG_Error, ModuleName, &
-         & 'Illegal hdf version in AppendL2GPData_MLSFile', MLSFile=L2GPFile)
+         & 'Illegal hdf version in AppendL2GPData_fileID', MLSFile=L2GPFile)
       end select
       ! l2gp%nTimes = actual_ntimes
     endif
@@ -558,6 +583,8 @@ contains ! =====     Public Procedures     =============================
         & "No profiles in this chunk", MLSFile=L2GPFile )
 
     else
+      ! actual_ntimes = l2gp%nTimes
+      ! l2gp%nTimes = max(myLastProfile - offset + 1, 1)
       call OutputL2GP_writeGeo_MF (l2gp, l2GPFile, &
         & myswathName, offset)
       call OutputL2GP_writeData_MF (l2gp, l2GPFile, &
@@ -575,13 +602,6 @@ contains ! =====     Public Procedures     =============================
       end select
       ! l2gp%nTimes = actual_ntimes
     end if
-    
-    if (DEEBUG) then
-      call ReadL2GPData( L2GPFile, myswathName, totall2gp, numProfs )
-      call outputNamedValue( 'numProfs', numProfs )
-      call outputNamedValue( 'total numProfs', totall2gp%nTimes )
-      call DestroyL2GPContents ( totall2gp )
-    endif
 
     if ( .not. alreadyOpen )  call mls_closeFile(L2GPFile, Status)
     L2GPFile%errorCode = status
@@ -592,7 +612,7 @@ contains ! =====     Public Procedures     =============================
   ! ---------------------- cpL2GPData_fileID  ---------------------------
 
   subroutine cpL2GPData_fileID(file1, file2, swathList, &
-    & hdfVersion1, hdfVersion2, notUnlimited, rename, ReadStatus, &
+    & hdfVersion1, hdfVersion2, notUnlimited, rename, ReadData, &
     & HGrid, rFreqs, rLevels, rTimes, options)
     !------------------------------------------------------------------------
 
@@ -609,7 +629,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in)           :: hdfVersion1
     integer, intent(in)           :: hdfVersion2
     logical, optional, intent(in) :: notUnlimited
-    logical, optional, intent(in) :: ReadStatus
+    logical, optional, intent(in) :: ReadData
     character (len=*), optional, intent(in) :: rename
     type (HGrid_T), optional, intent(in)    :: HGrid
     integer, dimension(2), intent(in), optional :: rFreqs  ! subscript range
@@ -671,7 +691,7 @@ contains ! =====     Public Procedures     =============================
       ! Allocate and fill l2gp
       if ( DEEBUG ) print *, 'Reading swath from file: ', trim(swath)
       call ReadL2GPData ( file1, trim(swath), l2gp, &
-           & hdfVersion=hdfVersion1, ReadStatus=ReadStatus )
+           & hdfVersion=hdfVersion1, ReadData=ReadData )
       if ( DEEBUG ) then
         print *, 'Writing swath to file: ', trim(swath)
         print *, 'l2gp%nFreqs:  ', l2gp%nFreqs
@@ -720,7 +740,7 @@ contains ! =====     Public Procedures     =============================
 
   subroutine cpL2GPData_fileName(file1, file2, &
     & create2, hdfVersion1, hdfVersion2, swathList, rename, exclude, &
-    & notUnlimited, andGlAttributes, ReadStatus, HGrid, &
+    & notUnlimited, andGlAttributes, ReadData, HGrid, &
     & rFreqs, rLevels, rTimes, options)
     !------------------------------------------------------------------------
 
@@ -745,7 +765,7 @@ contains ! =====     Public Procedures     =============================
     character (len=*), optional, intent(in) :: rename ! But rename them these
     character (len=*), optional, intent(in) :: exclude ! Don't copy these
     logical, optional, intent(in)           :: notUnlimited
-    logical, optional, intent(in)           :: ReadStatus
+    logical, optional, intent(in)           :: ReadData
     type (HGrid_T), optional, intent(in)    :: HGrid
     integer, dimension(2), intent(in), optional :: rFreqs  ! subscript range
     integer, dimension(2), intent(in), optional :: rLevels ! subscript range
@@ -873,7 +893,7 @@ contains ! =====     Public Procedures     =============================
     call cpL2GPData_fileID(File1Handle, File2Handle, &
       & mySwathList, the_hdfVersion1, the_hdfVersion2, &
       & notUnlimited=notUnlimited, rename=rename, &
-      & ReadStatus=ReadStatus, HGrid=HGrid, &
+      & ReadData=ReadData, HGrid=HGrid, &
       & rFreqs=rFreqs, rLevels=rlevels, rTimes=rTimes, options=options )
     if ( DEEBUG ) print *, 'About to close File1Handle: ', File1Handle
     status = mls_io_gen_closeF(l_swath, File1Handle, FileName=File1, &
@@ -898,7 +918,7 @@ contains ! =====     Public Procedures     =============================
 
   subroutine cpL2GPData_MLSFile(L2GPfile1, L2GPfile2, &
     & create2, swathList, rename, exclude, &
-    & notUnlimited, andGlAttributes, ReadStatus, HGrid, &
+    & notUnlimited, andGlAttributes, ReadData, HGrid, &
     & rFreqs, rLevels, rTimes, options)
     !------------------------------------------------------------------------
 
@@ -918,7 +938,7 @@ contains ! =====     Public Procedures     =============================
     character (len=*), optional, intent(in) :: rename ! But rename them these
     character (len=*), optional, intent(in) :: exclude ! Don't copy these
     logical, optional, intent(in)           :: notUnlimited
-    logical, optional, intent(in)           :: ReadStatus
+    logical, optional, intent(in)           :: ReadData
     type (HGrid_T), optional, intent(in)    :: HGrid
     integer, dimension(2), intent(in), optional :: rFreqs  ! subscript range
     integer, dimension(2), intent(in), optional :: rLevels ! subscript range
@@ -959,7 +979,7 @@ contains ! =====     Public Procedures     =============================
     call cpL2GPData_fileName(L2GPFile1%Name, L2GPFile2%Name, &
       & create2, L2GPFile1%hdfVersion, L2GPFile2%hdfVersion, &
       & SwathList, rename, exclude, &
-      & notUnlimited, andGLAttributes, ReadStatus, HGrid, &
+      & notUnlimited, andGLAttributes, ReadData, HGrid, &
       & rFreqs, rLevels, rTimes, options)
 
     if ( L1alreadyOpen )  call mls_openFile(L2GPFile1, Status)
@@ -2504,8 +2524,9 @@ contains
     integer, dimension(:), optional, intent(in) :: which ! which profiles to fill from
 
     ! Local variables
-    integer :: useNFreqs, useNLevels, useNTimes, useNTimesTotal
     logical :: myFillIn
+    integer :: nn
+    integer :: useNFreqs, useNLevels, useNTimes, useNTimesTotal
 
     if ( present(nFreqs) ) then
        useNFreqs=nFreqs
@@ -2615,11 +2636,26 @@ contains
       l2gp%quality      = l2gp%MissingValue
       l2gp%convergence  = l2gp%MissingValue
     elseif ( present(proto) ) then
+      nn                = proto%nTimes
       l2gp%MissingStatus= proto%MissingStatus
       l2gp%MissingValue = proto%MissingValue
       l2gp%pressures    = proto%pressures    
       l2gp%frequency    = proto%frequency
-      if ( present( which ) ) then
+      if ( useNTimes > proto%nTimes ) then
+      l2gp%latitude       (1:nn) = proto%latitude     
+      l2gp%longitude      (1:nn) = proto%longitude    
+      l2gp%solarTime      (1:nn) = proto%solarTime    
+      l2gp%solarZenith    (1:nn) = proto%solarZenith  
+      l2gp%losAngle       (1:nn) = proto%losAngle     
+      l2gp%geodAngle      (1:nn) = proto%geodAngle    
+      l2gp%time           (1:nn) = proto%time         
+      l2gp%chunkNumber    (1:nn) = proto%chunkNumber  
+      l2gp%l2gpValue      (:,:,1:nn) = proto%l2gpValue    
+      l2gp%l2gpPrecision  (:,:,1:nn) = proto%l2gpPrecision
+      l2gp%status         (1:nn) = proto%status       
+      l2gp%quality        (1:nn) = proto%quality      
+      l2gp%convergence    (1:nn) = proto%convergence  
+      elseif ( present( which ) ) then
       l2gp%latitude     = proto%latitude     (which)
       l2gp%longitude    = proto%longitude    (which)
       l2gp%solarTime    = proto%solarTime    (which)
@@ -2705,7 +2741,8 @@ contains
     M = l2gp%nTimes
     if ( M < 2 ) return
     if ( method == 1 ) then
-      call ReadL2GPData( L2GPFile, swathName, readl2gp, numProfs )
+      call ReadL2GPData( L2GPFile, swathName, readl2gp, numProfs, &
+        & readData=.false. )
       ReadM = readl2gp%nTimes
       if(DEEBUG) call outputNamedValue( 'numProfs', numProfs )
       if(DEEBUG) call outputNamedValue( 'readl2gp%nTimes', readl2gp%nTimes )
@@ -2861,7 +2898,7 @@ contains
   ! ---------------------- ReadL2GPData_fileID  -----------------------------
 
   subroutine ReadL2GPData_fileID(L2FileHandle, swathname, l2gp, numProfs, &
-       firstProf, lastProf, hdfVersion, HMOT, ReadStatus)
+       firstProf, lastProf, hdfVersion, HMOT, ReadData)
     !------------------------------------------------------------------------
 
     ! Given a file handle,
@@ -2879,7 +2916,7 @@ contains
     integer, intent(out), optional :: numProfs ! Number actually read
     integer, optional, intent(in) :: hdfVersion
     character, optional, intent(in) :: hmot   ! 'H' 'M'(def) 'O' 'T'
-    logical, optional, intent(in) :: ReadStatus
+    logical, optional, intent(in) :: ReadData
 
     ! Local
     integer :: myhdfVersion
@@ -2899,13 +2936,13 @@ contains
     l2gpFile%FileID%f_id = l2FileHandle
     l2gpFile%stillOpen = .true.
     call ReadL2GPData(l2gpFile, swathname, l2gp, numProfs, &
-       firstProf, lastProf, HMOT, ReadStatus)
+       firstProf, lastProf, HMOT, ReadData)
   end subroutine ReadL2GPData_fileID
 
   ! ---------------------- ReadL2GPData_fileName  -----------------------------
 
   subroutine ReadL2GPData_fileName(fileName, swathname, l2gp, numProfs, &
-       firstProf, lastProf, hdfVersion, HMOT, ReadStatus)
+       firstProf, lastProf, hdfVersion, HMOT, ReadData)
     !------------------------------------------------------------------------
 
     ! Given a file name,
@@ -2923,7 +2960,7 @@ contains
     integer, intent(out), optional :: numProfs ! Number actually read
     integer, optional, intent(in) :: hdfVersion
     character, optional, intent(in) :: hmot   ! 'H' 'M'(def) 'O' 'T'
-    logical, optional, intent(in) :: ReadStatus
+    logical, optional, intent(in) :: ReadData
 
     ! Local
     integer :: L2FileHandle
@@ -2946,7 +2983,7 @@ contains
        & "Unable to open L2gp file: " // trim(FileName) // ' for reading')
     call ReadL2GPData_fileID(L2FileHandle, swathname, l2gp, numProfs=numProfs, &
        & firstProf=firstProf, lastProf=lastProf, hdfVersion=the_hdfVersion, &
-       & hmot=hmot, ReadStatus=ReadStatus)
+       & hmot=hmot, ReadData=ReadData)
     status = mls_io_gen_closeF(l_swath, L2FileHandle, FileName=FileName, &
       & hdfVersion=hdfVersion)
     if ( status /= 0 ) &
@@ -2957,7 +2994,7 @@ contains
   ! ---------------------- ReadL2GPData_MLSFile  -----------------------------
 
   subroutine ReadL2GPData_MLSFile(L2GPFile, swathname, l2gp, numProfs, &
-       firstProf, lastProf, HMOT, ReadStatus)
+       firstProf, lastProf, HMOT, ReadData)
     !------------------------------------------------------------------------
 
     ! Given a file,
@@ -2974,7 +3011,7 @@ contains
     type( l2GPData_T ), intent(out) :: l2gp ! Result
     integer, intent(out), optional :: numProfs ! Number actually read
     character, optional, intent(in) :: hmot   ! 'H' 'M'(def) 'O' 'T'
-    logical, optional, intent(in) :: ReadStatus
+    logical, optional, intent(in) :: ReadData
 
     ! Local
     logical :: alreadyOpen
@@ -3009,13 +3046,13 @@ contains
     endif
     if (L2GPFile%hdfVersion == HDFVERSION_4) then
       call ReadL2GPData_MF_hdf(L2GPFile, swathname, l2gp, my_hmot,&
-        & numProfs, firstProf, lastProf, ReadStatus)
+        & numProfs, firstProf, lastProf, ReadData)
     elseif (L2GPFile%hdfVersion /= HDFVERSION_5) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
       & "Unrecognized hdfVersion passed to ReadL2GPData", MLSFile=L2GPFile )
     else
       call ReadL2GPData_MF_hdf(L2GPFile, swathname, l2gp, my_hmot,&
-        & numProfs, firstProf, lastProf, ReadStatus)
+        & numProfs, firstProf, lastProf, ReadData)
     endif
     if ( .not. alreadyOpen )  call mls_closeFile(L2GPFile, Status)
     L2GPFile%errorCode = status
@@ -3025,7 +3062,7 @@ contains
   ! ------------------- ReadL2GPData_MF_hdf ----------------
 
   subroutine ReadL2GPData_MF_hdf(L2GPFile, swathname, l2gp, HMOT, &
-    & numProfs, firstProf, lastProf, ReadStatus)
+    & numProfs, firstProf, lastProf, ReadData)
   use HDFEOS, only: SWINQDIMS
   use HDFEOS5, only: HE5_SWINQDIMS, HE5_SWINQDFLDS, HE5_swfldinfo
   use MLSHDFEOS, only: mls_swattach, mls_swdetach, mls_swdiminfo, mls_swrdfld
@@ -3035,7 +3072,6 @@ contains
     ! This routine reads an L2GP file, returning a filled data structure and the !
     ! number of profiles read.
 
-    ! All the ReadStatus harrumphing is on its way out
     ! All the ReadConvergence harrumphing is because convergence is newly added
     ! (Some older files won't have this field)
     ! Arguments
@@ -3046,7 +3082,7 @@ contains
     type( L2GPData_T ), intent(OUT) :: l2gp ! Result
     character, intent(in) :: HMOT   ! 'H' 'M'(def) 'O' 'T'
     integer, intent(OUT),optional :: numProfs ! Number actually read
-    logical, optional, intent(in) :: ReadStatus
+    logical, optional, intent(in) :: ReadData
 
     ! Local Parameters
     character (LEN=*), parameter :: SZ_ERR = 'Failed to get size of &
@@ -3081,7 +3117,7 @@ contains
     real(r4), pointer, dimension(:,:,:) :: REAL3
     logical :: dontfail
     logical :: ReadingConvergence
-    logical :: ReadingStatus
+    logical :: ReadingData
     logical :: deeBugHere
     ! Executable code
     call MLSMessageCalls( 'push', constantName= 'ReadL2GPData_MF_hdf' )
@@ -3091,8 +3127,8 @@ contains
     ! Don't fail when trying to read an mls-specific field 
     ! if the file is from another Aura instrument
     dontfail = (HMOT /= 'M')
-    ReadingStatus = READINGSTATUSBYDEFAULT ! was .false.
-    if ( present(ReadStatus) ) ReadingStatus = ReadStatus
+    ReadingData = .true.
+    if ( present(ReadData) ) ReadingData = ReadData
     ReadingConvergence = .false.
     ! Attach to the swath for reading
     l2gp%Name = swathname
@@ -3234,6 +3270,16 @@ contains
     call SetupNewL2GPRecord (l2gp, nFreqs=nFreqs, nLevels=nLevels, &
       &  nTimes=mynumProfs, FillIn = .true.)
 
+    ! Skip reading any of the data?
+    if ( .not. readingData ) then
+      status = mls_SWdetach(swid, hdfVersion=hdfVersion)
+      if (status == -1) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+           &detach from swath interface after reading.', MLSFile=L2GPFile)
+      if (present(numProfs)) numProfs=myNumProfs
+      call MLSMessageCalls( 'pop' )
+      if(DEEBUG) call outputNamedValue( 'no data read; nTimes', myNumProfs )
+      return
+    endif
     ! Allocate temporary arrays
 
     nFreqsOr1=max(nFreqs,1)
@@ -3347,8 +3393,7 @@ contains
     ! Read the data fields that are 1-dimensional
 
     l2gp%status = l2gp%MissingStatus ! l2gp%MissingValue ! So it has a value.
-    if ( ReadingStatus ) &
-      & status = mls_swrdfld( swid, 'Status',start(3:3),stride(3:3),edge(3:3),&
+    status = mls_swrdfld( swid, 'Status',start(3:3),stride(3:3),edge(3:3),&
       & l2gp%status, hdfVersion=hdfVersion, dontfail=.true. )
 
     if ( HMOT == 'M' ) then
@@ -4502,6 +4547,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.157  2008/04/22 18:57:33  pwagner
+! Fixed bug in ExtractL2GPData that left quality undefined
+!
 ! Revision 2.156  2008/04/18 21:06:59  pwagner
 ! Fixed error introduced last time
 !
