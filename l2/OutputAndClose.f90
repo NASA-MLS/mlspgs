@@ -440,10 +440,10 @@ contains ! =====     Public Procedures     =============================
           sdList = Intersection( sdList, sdListThere )
           if ( sdList == ' ' ) cycle
           if ( got(f_exclude) .and. .not. repairGeoLocations ) then
-            call cpL2GPData(inputfile, &
+            call cpL2GPData( inputfile, &
               & outputfile, create2=create, &
               & exclude=trim(exclude), &
-              & notUnlimited=avoidUnlimitedDims, ReadStatus=.true.)
+              & notUnlimited=avoidUnlimitedDims )
           elseif ( .not. got(f_exclude) .and. repairGeoLocations ) then
             ! call dump(HGrids(HGridIndex))
             if ( DEBUG ) print *,' size(filedatabse) ', size(filedatabase)
@@ -454,7 +454,7 @@ contains ! =====     Public Procedures     =============================
             call cpL2GPData(inputfile, &
               & outputfile, create2=create, &
               & swathList=trim(sdList), rename=rename, &
-              & notUnlimited=avoidUnlimitedDims, ReadStatus=.true., &
+              & notUnlimited=avoidUnlimitedDims, &
               & HGrid=HGrids(HGridIndex), options="-r")
               ! & HGrid=HGrids(HGridIndex), options="-rv")
           elseif ( got(f_exclude) .and. repairGeoLocations ) then
@@ -462,14 +462,14 @@ contains ! =====     Public Procedures     =============================
               & outputfile, create2=create, &
               & swathList=trim(sdList), rename=rename, &
               & exclude=trim(exclude), &
-              & notUnlimited=avoidUnlimitedDims, ReadStatus=.true., &
+              & notUnlimited=avoidUnlimitedDims, &
               & HGrid=HGrids(HGridIndex), options="-r")
               ! & HGrid=HGrids(HGridIndex), options="-rv")
           else
-            call cpL2GPData(inputfile, &
+            call cpL2GPData( inputfile, &
               & outputfile, create2=create, &
               & swathList=trim(sdList), rename=rename, &
-              & notUnlimited=avoidUnlimitedDims, ReadStatus=.true.)
+              & notUnlimited=avoidUnlimitedDims )
           endif
           ! if ( noGapsHGIndex > 0 ) newHGridp => HGrids(noGapsHGIndex)
           ! print *, 'Before writing attributes'
@@ -1496,9 +1496,9 @@ contains ! =====     Public Procedures     =============================
         endif
         if ( CHECKPATHS ) cycle
         madeFile = .true.
-        call cpL2GPData(inputFile, &
+        call cpL2GPData( inputFile, &
           & outputFile, create2=create2, &
-          & notUnlimited=avoidUnlimitedDims, ReadStatus=.true.)
+          & notUnlimited=avoidUnlimitedDims )
         create2 = .false.
       end do
       if ( TOOLKIT .and. madeFile ) then
@@ -1675,6 +1675,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.135  2008/07/09 16:38:24  pwagner
+! ReadStatus optional arg eliminated
+!
 ! Revision 2.134  2008/04/25 22:55:29  pwagner
 ! Exploits ability of SaveAsHDF5DS to take textfile as arg
 !
