@@ -2357,7 +2357,7 @@ contains
 
  ! ---------------------------------------------  SELFDIFF_DOUBLE  -----
   subroutine SELFDIFF_DOUBLE ( ARRAY, NAME, &
-    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, unique, LBOUND )
     ! dump the running increment == ( array(i) - array(i-1) )
     double precision, intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
@@ -2368,11 +2368,12 @@ contains
     logical, intent(in), optional :: WHOLEARRAY
     logical, intent(in), optional :: STATS
     logical, intent(in), optional :: RMS
+    logical, intent(in), optional :: UNIQUE
     integer, intent(in), optional :: LBOUND ! Low bound for Array
-    logical, parameter :: unique = .false. 
+    ! logical, parameter :: unique = .false. 
     ! Local variables
     integer                                  :: i
-    double precision, dimension(size(array)) :: increment
+    double precision, dimension(size(array)-1) :: increment
     ! Executable
     if ( size(array) < 2 ) return
     do i=2, size(array)
@@ -2384,7 +2385,7 @@ contains
 
  ! ---------------------------------------------  SELFDIFF_INTEGER  -----
   subroutine SELFDIFF_INTEGER ( ARRAY, NAME, &
-    & FILLVALUE, CLEAN, FORMAT, WIDTH, WHOLEARRAY, STATS, RMS, LBOUND )
+    & FILLVALUE, CLEAN, FORMAT, WIDTH, WHOLEARRAY, STATS, RMS, unique, LBOUND )
     ! dump the running increment == ( array(i) - array(i-1) )
     integer, intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
@@ -2395,11 +2396,12 @@ contains
     logical, intent(in), optional :: WHOLEARRAY
     logical, intent(in), optional :: STATS
     logical, intent(in), optional :: RMS
+    logical, intent(in), optional :: UNIQUE
     integer, intent(in), optional :: LBOUND ! Low bound for Array
     ! Local variables
     integer                                  :: i
-    integer, dimension(size(array)) :: increment
-    logical, parameter :: unique = .false. 
+    integer, dimension(size(array)-1) :: increment
+    ! logical, parameter :: unique = .false. 
     ! Executable
     if ( size(array) < 2 ) return
     do i=2, size(array)
@@ -2411,7 +2413,7 @@ contains
 
  ! ---------------------------------------------  SELFDIFF_REAL  -----
   subroutine SELFDIFF_REAL ( ARRAY, NAME, &
-    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, unique, LBOUND )
     ! dump the running increment == ( array(i) - array(i-1) )
     real, intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
@@ -2422,11 +2424,12 @@ contains
     logical, intent(in), optional :: WHOLEARRAY
     logical, intent(in), optional :: STATS
     logical, intent(in), optional :: RMS
+    logical, intent(in), optional :: UNIQUE
     integer, intent(in), optional :: LBOUND ! Low bound for Array
     ! Local variables
     integer                                  :: i
-    real, dimension(size(array)) :: increment
-    logical, parameter :: unique = .false. 
+    real, dimension(size(array)-1) :: increment
+    ! logical, parameter :: unique = .false. 
     ! Executable
     if ( size(array) < 2 ) return
     do i=2, size(array)
@@ -2702,6 +2705,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.79  2008/07/09 16:30:21  pwagner
+! selfdiff can take optional arg unique
+!
 ! Revision 2.78  2008/06/18 20:56:18  pwagner
 ! New optional arg 'unique' dumps print unique elements, counts only
 !
