@@ -19,7 +19,8 @@ module DUMP_0
   use BitStuff, only: MAXBITNUMBER, WhichBitsAreSet
   use ieee_arithmetic, only: ieee_is_finite
   use MLSCommon, only: undefinedValue
-  use MLSFillValues, only : FilterValues, IsFinite, IsInfinite, IsNaN, &
+  use MLSFillValues, only : FilterValues, HalfWaves, &
+    & IsFinite, IsInfinite, IsNaN, &
     & InfFunction, NaNFunction, ReorderFillValues, ReplaceFillValues, &
     & WhereAreTheInfs, WhereAreTheNaNs
   use MLSSets, only: FindAll, FindUnique
@@ -86,7 +87,8 @@ module DUMP_0
 !       formats allows you to specify a format separately column-by-column
 ! selfdiff ( array, char* name,
 !      [fillvalue], [log clean], [int width], [char* format],
-!      [log wholearray], [log stats], [log rms], [int lbound] ) 
+!      [log wholearray], [log stats], [log rms], [log unique],
+!      [log waves], [int lbound] ) 
 
 ! Note that most of the optional parameters have default values
 ! logically set to FALSE or 0 or '*' where appropriate
@@ -2357,7 +2359,8 @@ contains
 
  ! ---------------------------------------------  SELFDIFF_DOUBLE  -----
   subroutine SELFDIFF_DOUBLE ( ARRAY, NAME, &
-    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, unique, LBOUND )
+    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, &
+    & unique, waves, LBOUND )
     ! dump the running increment == ( array(i) - array(i-1) )
     double precision, intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
@@ -2369,23 +2372,37 @@ contains
     logical, intent(in), optional :: STATS
     logical, intent(in), optional :: RMS
     logical, intent(in), optional :: UNIQUE
+    logical, intent(in), optional :: WAVES
     integer, intent(in), optional :: LBOUND ! Low bound for Array
     ! logical, parameter :: unique = .false. 
     ! Local variables
     integer                                  :: i
     double precision, dimension(size(array)-1) :: increment
+    integer, dimension(100) :: lengths
+    logical :: myWaves
+    integer :: nWaves
     ! Executable
+    myWaves = .false.
+    if ( present(waves) ) myWaves = waves
     if ( size(array) < 2 ) return
     do i=2, size(array)
       increment(i-1) = array(i) - array(i-1)
     enddo
+    if ( myWaves ) then
+      call halfWaves( increment, lengths, nWaves )
+      if ( nWaves > 0 ) then
+        call dump( lengths(1:nWaves), 'half-waves of ' // NAME )
+      endif
+      return
+    endif
     call dump ( increment, NAME, &
       & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, unique, LBOUND )
   end subroutine SELFDIFF_DOUBLE
 
  ! ---------------------------------------------  SELFDIFF_INTEGER  -----
   subroutine SELFDIFF_INTEGER ( ARRAY, NAME, &
-    & FILLVALUE, CLEAN, FORMAT, WIDTH, WHOLEARRAY, STATS, RMS, unique, LBOUND )
+    & FILLVALUE, CLEAN, FORMAT, WIDTH, WHOLEARRAY, STATS, RMS, &
+    & unique, waves, LBOUND )
     ! dump the running increment == ( array(i) - array(i-1) )
     integer, intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
@@ -2397,12 +2414,16 @@ contains
     logical, intent(in), optional :: STATS
     logical, intent(in), optional :: RMS
     logical, intent(in), optional :: UNIQUE
+    logical, intent(in), optional :: WAVES
     integer, intent(in), optional :: LBOUND ! Low bound for Array
     ! Local variables
     integer                                  :: i
     integer, dimension(size(array)-1) :: increment
     ! logical, parameter :: unique = .false. 
+    logical :: myWaves
     ! Executable
+    myWaves = .false.
+    if ( present(waves) ) myWaves = waves
     if ( size(array) < 2 ) return
     do i=2, size(array)
       increment(i-1) = array(i) - array(i-1)
@@ -2413,7 +2434,8 @@ contains
 
  ! ---------------------------------------------  SELFDIFF_REAL  -----
   subroutine SELFDIFF_REAL ( ARRAY, NAME, &
-    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, unique, LBOUND )
+    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, &
+    & unique, waves, LBOUND )
     ! dump the running increment == ( array(i) - array(i-1) )
     real, intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
@@ -2425,16 +2447,29 @@ contains
     logical, intent(in), optional :: STATS
     logical, intent(in), optional :: RMS
     logical, intent(in), optional :: UNIQUE
+    logical, intent(in), optional :: WAVES
     integer, intent(in), optional :: LBOUND ! Low bound for Array
     ! Local variables
     integer                                  :: i
     real, dimension(size(array)-1) :: increment
     ! logical, parameter :: unique = .false. 
+    integer, dimension(100) :: lengths
+    logical :: myWaves
+    integer :: nWaves
     ! Executable
+    myWaves = .false.
+    if ( present(waves) ) myWaves = waves
     if ( size(array) < 2 ) return
     do i=2, size(array)
       increment(i-1) = array(i) - array(i-1)
     enddo
+    if ( myWaves ) then
+      call halfWaves( increment, lengths, nWaves )
+      if ( nWaves > 0 ) then
+        call dump( lengths(1:nWaves), 'half-waves of ' // NAME )
+      endif
+      return
+    endif
     call dump ( increment, NAME, &
       & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, unique, LBOUND )
   end subroutine SELFDIFF_REAL
@@ -2705,6 +2740,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.80  2008/07/10 00:13:30  pwagner
+! SelfDiff can now print half wave lengths
+!
 ! Revision 2.79  2008/07/09 16:30:21  pwagner
 ! selfdiff can take optional arg unique
 !
