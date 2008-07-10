@@ -26,8 +26,10 @@ module MLSFillValues              ! Some FillValue-related stuff
   private
 
   public :: EmbedArray, EssentiallyEqual, ExtractArray
+  public :: extremum
   public :: FillFunction, InfFunction, NaNFunction
   public :: FilterValues
+  public :: HalfWaves
   public :: IsFillValue
   public :: IsFinite, IsInfinite, IsNaN
   public :: IsMonotonic, Monotonize
@@ -59,10 +61,12 @@ module MLSFillValues              ! Some FillValue-related stuff
 !                             of array versions)
 ! ExtractArray                 Extract a bloc of elements from the larger array
 !                               (optionally allocates bloc first)
+! Extremum                     Returns the value farther from 0
 ! FillFunction                 Returns the Fill value
 ! InfFunction                  Returns the Infinite value
 ! NaNFunction                  Returns the NaN value
 ! FilterValues                 Filters entries in two arrays
+! HalfWaves                    Count consecutive values with same sign
 ! IsFillValue                  Returns true if argument is FillValue
 ! IsFinite                     Returns true if argument is finite
 ! IsInfinite                   Returns true if argument is infinite
@@ -79,9 +83,30 @@ module MLSFillValues              ! Some FillValue-related stuff
 ! WhereAreTheNans              Find which array elements are NaN
 ! === (end of toc) ===                                                   
 
-! === (start of api) ===                                                 
+! === (start of api) ===
+! EmbedArray ( bloc, array, int range[2], [char* options] )
 ! log EssentiallyEqual ( nprec A, nprec B, &
 !   [nprec FillValue], [nprec Precision] )
+! ExtractArray ( bloc, array, int range[2], [char* options] )
+! nprec Extremum( nprec arg1, nprec arg2 )
+! nprec FillFunction( nprec arg )
+! halfWaves( nprec array[:], int lengths[:], [int nWaves] )
+! nprec InfFunction( nprec arg )
+! nprec NaNFunction( nprec arg )
+! filterValues ( a, atab, b, btab, log warn, [fillValue], [precision] )
+! log IsFillValue ( a, [fillvalue], [log strict] )
+! log IsFinite ( a )
+! log Isinfinite ( a )
+! log IsNaN ( a )
+! RemoveFillValues ( array, FillValue, newArray, [second], [newSecond] )
+! ReorderFillValues ( values, FillValue )
+! ReplaceFillValues ( values, FillValue, [newValues], [newFill], [char* options] )
+! log IsMonotonic ( array, [char* direction] )
+! Monotonize_1dint( values, [Period], [FillValue], [log strict] )
+! nprec roundUpOrDown( nprec value )
+! WhereAreTheFills ( array, which, [int howMany] )
+! WhereAreTheInfs ( array, which, [int howMany] )
+! WhereAreTheNaNs ( array, which, [int howMany] )
 ! === (end of api) ===                                                 
   interface BridgeMissingValues
     module procedure BridgeMissingValues_1dr4, BridgeMissingValues_1dr8, BridgeMissingValues_1dint
@@ -110,8 +135,16 @@ module MLSFillValues              ! Some FillValue-related stuff
     module procedure ExtractArray_1d_int
   end interface
 
+  interface Extremum
+    module procedure Extremum_REAL, Extremum_DOUBLE, Extremum_int
+  end interface
+
   interface FillFunction
     module procedure FillFunction_REAL, FillFunction_DOUBLE
+  end interface
+
+  interface halfWaves
+    module procedure halfWaves_REAL, halfWaves_DOUBLE
   end interface
 
   interface InfFunction
@@ -529,6 +562,38 @@ contains
       
   end function EssentiallyEqual_r8_3d
 
+! -------------------------------------------------  Extremum  -----
+! Returns the fillValue
+  function Extremum_DOUBLE(arg1, arg2) result(value)
+    double precision, intent(in) :: arg1, arg2
+    double precision             :: value
+    if ( abs(arg2) > abs(arg1) ) then
+      value = arg2
+    else
+      value = arg1
+    endif
+  end function Extremum_DOUBLE
+
+  function Extremum_REAL(arg1, arg2) result(value)
+    real, intent(in)        :: arg1, arg2
+    real                    :: value
+    if ( abs(arg2) > abs(arg1) ) then
+      value = arg2
+    else
+      value = arg1
+    endif
+  end function Extremum_REAL
+
+  function Extremum_int(arg1, arg2) result(value)
+    integer, intent(in)        :: arg1, arg2
+    integer                    :: value
+    if ( abs(arg2) > abs(arg1) ) then
+      value = arg2
+    else
+      value = arg1
+    endif
+  end function Extremum_int
+
 ! -------------------------------------------------  FillFunction  -----
 ! Returns the fillValue
   function FillFunction_DOUBLE(arg) result(value)
@@ -542,6 +607,25 @@ contains
     real                    :: value
     value = UndefinedValue
   end function FillFunction_REAL
+
+! -------------------------------------------------  HalfWaves  -----
+! Calculates the half-wave lengths of an array
+! i.e., the number of consecutive pos. or neg. values
+  subroutine halfWaves_DOUBLE( array, lengths, nWaves )
+    real(r8), dimension(:), intent(in)         :: array
+    integer, dimension(:), intent(out)         :: lengths
+    integer, optional, intent(out)             :: nWaves
+    integer, parameter :: RK = R8
+    include 'halfWaves.f9h'
+  end subroutine halfWaves_DOUBLE
+
+  subroutine halfWaves_REAL( array, lengths, nWaves )
+    real(r4), dimension(:), intent(in)         :: array
+    integer, dimension(:), intent(out)         :: lengths
+    integer, optional, intent(out)             :: nWaves
+    integer, parameter :: RK = R4
+    include 'halfWaves.f9h'
+  end subroutine halfWaves_REAL
 
 ! -------------------------------------------------  InfFunction  -----
 ! Returns the Inf Value
@@ -2189,6 +2273,9 @@ end module MLSFillValues
 
 !
 ! $Log$
+! Revision 2.16  2008/07/10 00:12:43  pwagner
+! Added extremum, halfWaves
+!
 ! Revision 2.15  2008/06/06 22:52:21  pwagner
 ! EssentiallyEqual moved to MLSFillValues
 !
