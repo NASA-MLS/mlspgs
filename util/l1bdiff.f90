@@ -13,7 +13,7 @@
 program l1bdiff ! diffs two l1b or L2AUX files
 !=================================
 
-   use Dump_0, only: DIFFRMSMEANSRMS, rmsFormat, DIFF, DUMP
+   use Dump_0, only: DIFFRMSMEANSRMS, rmsFormat, DIFF, DUMP, SELFDIFF
    use Hdf, only: DFACC_CREATE, DFACC_READ
    use HDF5, only: h5fis_hdf5_f, &
      & H5GCLOSE_F, H5GOPEN_F, H5DOPEN_F, H5DCLOSE_F, h5gcreate_f
@@ -53,8 +53,11 @@ program l1bdiff ! diffs two l1b or L2AUX files
 ! LF95.Linux/test [options] [input files]
 
   type options_T
+    logical     :: halfwaves = .false.
+    logical     :: self = .false.
     logical     :: silent = .false.
     logical     :: timing = .false.
+    logical     :: unique = .false.
     logical     :: verbose = .false.
     logical     :: list = .false.
     logical     :: stats = .false.
@@ -114,6 +117,8 @@ program l1bdiff ! diffs two l1b or L2AUX files
   elseif ( options%verbose .and. options%silent ) then
     print *, 'Sorry--either verbose or silent; cant be both'
     stop
+  elseif ( options%self ) then
+    ! We'll do diffs within each file
   elseif ( options%referenceFileName == 'default.h5' ) then
     options%referenceFileName = filenames(n_filenames)
     n_filenames = n_filenames - 1
@@ -129,6 +134,12 @@ program l1bdiff ! diffs two l1b or L2AUX files
       print *, 'DS Names in: ', trim(filenames(i))
       call GetAllHDF5DSNames (trim(filenames(i)), '/', mysdList)
       call dump(mysdList, 'DS names')
+    elseif ( options%self )then
+      if ( options%verbose ) then
+        print *, 'diffing from: ', trim(filenames(i))
+      endif
+      call mySelfDiff(trim(filenames(i)), HDFVERSION_5, options)
+      if ( options%timing ) call sayTime('diffing this file', tFile)
     else 
       if ( options%verbose ) then
         print *, 'diffing from: ', trim(filenames(i))
@@ -185,8 +196,17 @@ contains
         call getarg ( i+1+hp, options%referenceFileName )
         i = i + 1
         exit
+      elseif ( filename(1:5) == '-half' ) then
+        options%halfWaves = .true.
+        exit
+      elseif ( filename(1:6) == '-self ' ) then
+        options%self = .true.
+        exit
       elseif ( filename(1:8) == '-silent ' ) then
         options%silent = .true.
+        exit
+      elseif ( filename(1:8) == '-unique ' ) then
+        options%unique = .true.
         exit
       elseif ( filename(1:3) == '-v ' ) then
         options%verbose = .true.
@@ -244,8 +264,12 @@ contains
       write (*,*) '          -ascii          => diff even character-valued fields'
       write (*,*) '          -l2aux          => the files are l2aux, not l1b'
       write (*,*) '          -v              => switch on verbose mode'
+      write (*,*) '          -self           => dump successive differences'
+      write (*,*) '                             between values in same file'
+      write (*,*) '          -half           => show no. of 1/2 waves'
       write (*,*) '          -silent         => switch on silent mode'
       write (*,*) '                            (printing only if diffs found)'
+      write (*,*) '          -unique         => dump only unique elements'
       write (*,*) '          -l              => just list sd names in files'
       write (*,*) '          -maf m1,m2      => just diff in the range [m1,m2]'
       write (*,*) '          -moff offset    => 2nd data set starts after 1st'
@@ -472,12 +496,12 @@ contains
               ! print *, shape( L1bData%dpField(:,:,options%maf1:options%maf2) )
               call dump( L1bData%dpField(:,:,options%maf1:options%maf2), &
                 & 'l1bData%dpField', &
-                & stats=options%stats, rms=options%rms )
+                & stats=options%stats, rms=options%rms, unique=options%unique )
             else
               ! print *, shape( L1bData%dpField )
               call dump( L1bData%dpField, &
                 & 'l1bData%dpField', &
-                & stats=options%stats, rms=options%rms )
+                & stats=options%stats, rms=options%rms, unique=options%unique )
             endif
           endif
         endif
@@ -500,6 +524,143 @@ contains
        & "Unable to close L2aux file: " // trim(File2) // ' after diffing')
   end subroutine myDiff
 
+  ! ---------------------- mySelfDiff  ---------------------------
+  subroutine mySelfDiff( file1, hdfVersion, options )
+  !------------------------------------------------------------------------
+
+    ! Given file name file1
+    ! This routine prints its selfdiffs
+
+    ! Arguments
+
+    character (len=*), intent(in) :: file1 ! Name of file 1
+    integer, intent(in)           :: hdfVersion
+    type ( options_T )            :: options
+
+    ! Local
+    logical, parameter            :: countEmpty = .true.
+    logical :: file_exists
+    integer :: file_access
+    integer :: grpid
+    integer :: i
+    logical :: isl1boa
+    type(l1bdata_t) :: L1BDATA  ! Result
+    character (len=MAXSDNAMESBUFSIZE) :: mySdList
+    integer :: NoMAFs
+    integer :: noSds
+    integer :: numDiffs
+    integer :: sdfid1
+    character (len=80) :: sdName
+    integer :: status
+    integer :: the_hdfVersion
+    
+    ! Executable code
+    the_hdfVersion = HDFVERSION_5
+    the_hdfVersion = hdfVersion
+    file_exists = ( mls_exists(trim(File1)) == 0 )
+    if ( .not. file_exists ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'File 1 not found; make sure the name and path are correct' &
+        & // trim(file1) )
+    endif
+    if ( the_hdfVersion == WILDCARDHDFVERSION ) then
+      the_hdfVersion = mls_hdf_version(File1, hdfVersion)
+      if ( the_hdfVersion == FILENOTFOUND ) &
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'File 1 not found; make sure the name and path are correct' &
+          & // trim(file1) )
+    endif
+    call GetAllHDF5DSNames (trim(File1), '/', mysdList)
+    if ( options%verbose) then
+      call output ( '============ DS names in ', advance='no' )
+      call output ( trim(file1) //' ============', advance='yes' )
+    endif
+    if ( mysdList == ' ' ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'No way yet to find sdList in ' // trim(File1) )
+      return
+    else
+      if ( options%verbose ) call dump(mysdList, 'DS names')
+    endif
+    if ( options%sdList /= '*' ) then
+      call output( ' Selected SDs to diff', advance='yes' )
+      mySDList = options%sdList
+      call dump(mysdList, 'DS names')
+    endif
+
+    isl1boa = (index(trim(mysdList), '/GHz') > 0)
+    file_access = DFACC_READ
+    sdfid1 = mls_sfstart(File1, DFACC_READ, hdfVersion=hdfVersion)
+    if (sdfid1 == -1 ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      &  'Failed to open l1b file ' // trim(File1) )
+    end if
+	 call h5gOpen_f (sdfid1,'/', grpID, status)
+    if ( status /= 0 ) then
+	   call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          	& 'Unable to open group to read attribute in l2aux file' )
+    endif
+    noSds = NumStringElements(trim(mysdList), countEmpty)
+    if ( noSds < 1 ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'No sdNames cp to file--unable to count sdNames in ' // trim(mysdList) )
+    endif
+    ! Loop over sdNames in file 1
+    ! (But skip PCF and HDFEOS INFORMATION/coremetadata.0)
+    do i = 1, noSds
+      call GetStringElement (trim(mysdList), sdName, i, countEmpty )
+      if ( sdName == 'PCF' .or. &
+        &  sdName == 'HDFEOS INFORMATION/coremetadata.0' .or. &
+        &  sdName == 'l2cf' .or. &
+        &  index(options%skipList, trim(sdName)) > 0 ) cycle
+      ! Allocate and fill l2aux
+      ! if ( options%verbose ) print *, 'About to read ', trim(sdName)
+      call ReadL1BData ( sdfid1, trim(sdName), L1bData, NoMAFs, status, &
+        & hdfVersion=the_hdfVersion, NEVERFAIL=.true., l2aux=options%l2aux )
+      if ( status /= 0 ) then
+	     call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & 'Unable to find ' // trim(sdName) // ' in ' // trim(File1) )
+        call DeallocateL1BData ( l1bData )
+        cycle
+      endif
+      if ( associated(L1bData%charField) ) then
+	     call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & 'Skipping diff of char-valued ' // trim(sdName) )
+      elseif ( associated(L1bData%intField) ) then
+        if ( size(L1bData%intField, 1) > 1 .or. &
+          &  size(L1bData%intField, 2) > 1 ) then
+	       call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'Skipping diff of char-valued ' // trim(sdName) )
+        else
+          call selfdiff( L1bData%intField(1, 1, :), trim(sdName), &
+            & stats=options%stats, rms=options%rms, unique=options%unique, &
+            & waves=options%halfWaves )
+        endif
+      elseif ( associated(L1bData%dpField) ) then
+        if ( size(L1bData%dpField, 1) > 1 .or. &
+          &  size(L1bData%dpField, 2) > 1 ) then
+	       call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'Skipping diff of char-valued ' // trim(sdName) )
+        else
+          call selfdiff( L1bData%dpField(1, 1, :), trim(sdName), &
+            & stats=options%stats, rms=options%rms, unique=options%unique, &
+            & waves=options%halfWaves )
+        endif
+      endif
+      call DeallocateL1BData ( l1bData )
+      cycle
+    enddo
+	 call h5gClose_f (grpID, status)
+    if ( status /= 0 ) then
+	   call MLSMessage ( MLSMSG_Warning, ModuleName, &
+       & 'Unable to close group in l2aux file: ' // trim(File1) // ' after diffing' )
+    endif
+	 status = mls_sfend(sdfid1, hdfVersion=the_hdfVersion)
+    if ( status /= 0 ) &
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+       & "Unable to close L2aux file: " // trim(File1) // ' after diffing')
+  end subroutine mySelfDiff
+
 !------------------------- print_string ---------------------
   subroutine print_string(string)
     character(len=*), intent(in) :: string
@@ -511,6 +672,9 @@ end program l1bdiff
 !==================
 
 ! $Log$
+! Revision 1.10  2008/04/10 20:22:37  pwagner
+! Less voluminous output
+!
 ! Revision 1.9  2008/02/28 01:34:07  pwagner
 ! Normally should skip diffing character-valued fields
 !
