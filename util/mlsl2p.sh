@@ -227,6 +227,14 @@ fi
 if [ -x "$H5REPACK" ]
 then
   files=`echo *L2FWM*.h5 *L2GP-[A-CE-Z]*.he5 *L2GP-DGG_*.he5 *L2AUX-[A-C]*.h5 *L2AUX-DGM_*.h5`
+  if [ "files" = "" ]
+  then
+    if [ -d "outputs" ]
+    then
+      cd "outputs"
+      files=`echo *L2FWM*.h5 *L2GP-[A-CE-Z]*.he5 *L2GP-DGG_*.he5 *L2AUX-[A-C]*.h5 *L2AUX-DGM_*.h5`
+    fi
+  fi
   for file in $files
   do
     if [ -w "$file" ]
@@ -255,6 +263,9 @@ else
 fi
 
 # $Log$
+# Revision 1.16  2007/05/10 23:40:34  pwagner
+# Used ulimit to increase tiny stacksize so Intel-built mlsl2 can finish
+#
 # Revision 1.15  2007/03/23 00:32:00  pwagner
 # By default no longer dumps slave stdouts into masters
 #

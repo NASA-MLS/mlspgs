@@ -224,6 +224,14 @@ fi
 if [ -x "$H5REPACK" ]
 then
   files=`echo *L2FWM*.h5 *L2GP-[A-CE-Z]*.he5 *L2GP-DGG_*.he5 *L2AUX-[A-C]*.h5 *L2AUX-DGM_*.h5`
+  if [ "files" = "" ]
+  then
+    if [ -d "outputs" ]
+    then
+      cd "outputs"
+      files=`echo *L2FWM*.h5 *L2GP-[A-CE-Z]*.he5 *L2GP-DGG_*.he5 *L2AUX-[A-C]*.h5 *L2AUX-DGM_*.h5`
+    fi
+  fi
   for file in $files
   do
     if [ -w "$file" ]
@@ -252,6 +260,9 @@ else
 fi
 
 # $Log$
+# Revision 1.2  2008/06/17 00:04:20  pwagner
+# Fixed, small non-consequential bugs
+#
 # Revision 1.1  2008/04/04 20:51:22  pwagner
 # first commit
 #
