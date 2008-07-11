@@ -38,6 +38,43 @@
 
 # usage: see (1) above
 
+#------------------------------- extant_files ------------
+#
+# Function to return only those files among the args
+# that actually exist
+# Useful when passed something like *.f which may 
+# (1) expand to list of files, returned as extant_files_result, or
+# (2) stay *.f, in which case a blank is returned as extant_files_result 
+#     (unless you have perversely named a file '*.f')
+# usage: extant_files arg1 [arg2] ..
+
+extant_files()
+{
+   extant_files_result=
+   # Trivial case ($# = 0)
+   if [ "$1" != "" ]
+   then
+      for file
+      do
+         if [ -f "$file" ]
+         then
+               extant_files_result="$extant_files_result $file"
+         fi
+      done
+   fi
+   echo $extant_files_result
+}
+
+#------------------------------- Main Program ------------
+
+#****************************************************************
+#                                                               *
+#                  * * * Main Program  * * *                    *
+#                                                               *
+#                                                               *
+#	The entry point where control is given to the script         *
+#****************************************************************
+#
 CHECKPATHS="no"
 #           ^^^---- "yes" if extra preflight non-retrieval run to check paths
 
@@ -223,13 +260,13 @@ fi
 # repack level 2 product files to speed things up
 if [ -x "$H5REPACK" ]
 then
-  files=`echo *L2FWM*.h5 *L2GP-[A-CE-Z]*.he5 *L2GP-DGG_*.he5 *L2AUX-[A-C]*.h5 *L2AUX-DGM_*.h5`
-  if [ "files" = "" ]
+  files=`extant_files *L2FWM*.h5 *L2GP-[A-CE-Z]*.he5 *L2GP-DGG_*.he5 *L2AUX-[A-C]*.h5 *L2AUX-DGM_*.h5`
+  if [ "$files" = "" ]
   then
     if [ -d "outputs" ]
     then
       cd "outputs"
-      files=`echo *L2FWM*.h5 *L2GP-[A-CE-Z]*.he5 *L2GP-DGG_*.he5 *L2AUX-[A-C]*.h5 *L2AUX-DGM_*.h5`
+      files=`extant_files *L2FWM*.h5 *L2GP-[A-CE-Z]*.he5 *L2GP-DGG_*.he5 *L2AUX-[A-C]*.h5 *L2AUX-DGM_*.h5`
     fi
   fi
   for file in $files
@@ -260,6 +297,9 @@ else
 fi
 
 # $Log$
+# Revision 1.3  2008/07/10 17:40:06  pwagner
+# Handle case when product files are in outputs subdirectory
+#
 # Revision 1.2  2008/06/17 00:04:20  pwagner
 # Fixed, small non-consequential bugs
 #
