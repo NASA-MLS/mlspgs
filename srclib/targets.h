@@ -70,6 +70,14 @@ else
    l_specials=-lz -L${gcc_libloc} -lgcc
 endif
 endif
+
+ifeq ($(MLSF95),Sunst)
+   gcc_version=$(shell ${UTILDIR}/which_fftw.sh -gcc)
+   gcc_libloc=$(shell ${REECHO} -d /usr/lib/gcc*/i386-redhat-linux/${gcc_version})
+#  l_specials=-lz -L/usr/lib/gcc-lib/i386-redhat-linux/2.96/ -lgcc
+  l_specials=-lz -L${gcc_libloc} -lgcc
+endif
+
 ifeq ($(MLSF95),IFCold)
    gcc_version=$(shell ${UTILDIR}/which_fftw.sh -gcc)
    gcc_libloc=$(shell ${REECHO} -d /usr/lib/gcc*/i386-redhat-linux/${gcc_version})
@@ -108,6 +116,9 @@ utctotai_linker_line=-L${INSTALLDIR} -lutctotai
 utctotai_message=Building program with toolkitless utc to tai conversion
 
 # $Log$
+# Revision 1.4  2007/04/16 23:04:20  pwagner
+# Changes in line with Intel v9.1
+#
 # Revision 1.3  2005/08/17 17:45:05  pwagner
 # Moved more definitions to srclib/targets.h
 #

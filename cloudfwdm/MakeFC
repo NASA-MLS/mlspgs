@@ -141,7 +141,7 @@ OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
 #if CASCADE, use older .o dependencies, which entail cascades
 #of massive recompilation
 #These are configurations for which I have tested CASCADE-avoidance
-CAN_AVOID="NAG.Linux LF95.Linux NAG.Sun Sun.Sun IFC.Linux Abs.Linux"
+CAN_AVOID="NAG.Linux LF95.Linux NAG.Sun Sun.Sun IFC.Linux Abs.Linux Sunst.Linux"
 #CAN_AVOID=""
 ifndef CASCADE
   WE_CAN := $(shell echo $(CAN_AVOID) | grep $(MLSF95).$(MLSPLAT))
@@ -285,6 +285,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 1.30  2008/04/22 17:20:01  pwagner
+# CASCADE no longer affects where Makefile.dep goes
+#
 # Revision 1.29  2007/05/31 18:31:02  pwagner
 # Added Absoft to list of tested compilers
 #
