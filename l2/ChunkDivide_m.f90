@@ -117,7 +117,7 @@ module ChunkDivide_m
   interface dump
     module procedure DUMP_OBSTRUCTIONS
     module procedure DUMP_CONFIG
-    module procedure DUMP_CRITICALSIGNALS
+    ! module procedure DUMP_CRITICALSIGNALS
   end interface
   
   logical, parameter :: CHECKFORSHAREDMAFS = .true.
@@ -2539,6 +2539,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.87  2008/07/12 00:12:07  pwagner
+! dump_criticalsignals not generic to appease sun studio 12
+!
 ! Revision 2.86  2008/05/28 21:51:43  pwagner
 ! May choose critical band(s)
 !
