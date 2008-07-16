@@ -32,7 +32,7 @@
 # -dryrun             merely echo the command that would be executed
 # -m4 cmd             use cmd instead of m4
 # -o file             store expanded l2cf in file instead of stdout
-# -v                  print lots of debugging-type info
+# -v                  verbose; prints handy summary at end of l2cf
 # -w                  wrap lines in l2cf
 # -example            print brief example of how to use; exit
 # -h[elp]             print brief help message; exit
@@ -59,20 +59,31 @@
 # Example:
 # Assume macros.txt contains the following (without the '#')
 ## start of macros.txt
-# flagUsingPCF
-# flagWriteAPrioriToDGG
-# flagCopyStandardProducts
-# flagWriteL2CFToDGM
-# machine=me
-# day=1
+# M4=$HOME/bin/m4
+# machine=me 
+# day=2008d037
+# flagCopyStandardProducts 
+# flagWriteAPrioriToDGG 
+# flagWriteL2CFToDGM 
+# flagUncompressRadiances
+# V2ID=$TEST-$SUBTEST
 ## end of macros.txt
+# and that env.txt contains the following (without the '#')
+## start of env.txt
+# TEST=GC-01
+# SUBTEST=061
+## end of env.txt
 #
 # Then if you execute this script as
-#  expandl2cf.sh -Df macros.txt -I ~/mlspgs/l2/l2cf/lib -o out.l2cf l2cf.m4
-# the following command will be executed
-#  m4 -I /mlspgs/l2/l2cf/lib -DflagUsingPCF -DflagWriteAPrioriToDGG \
-#   -DflagCopyStandardProducts -DflagWriteL2CFToDGM -Dmachine=me \
-#   -Dday=1 l2cf.m4 > out.l2cf
+#  expandl2cf.sh -Ef env.txt -Df macros.txt -o out.l2cf l2cf.m4
+# the following commands will be executed
+#  export TEST=GC-01
+#  export SUBTEST=061
+#  $HOME/bin/m4 -Dmachine=me -Dday=2008d037 \
+#  -DflagCopyStandardProducts -DflagWriteAPrioriToDGG \
+#  -DflagWriteL2CFToDGM -DflagUncompressRadiances \
+#  -DV2ID=$TEST-$SUBTEST \
+#  l2cf.m4 > out.l2cf
 # --------------- End expandl2cf.sh example
 
 #---------------------------- get_unique_name
@@ -137,6 +148,7 @@ read_file_into_array()
 {
   array_result=''
   while read line; do
+    element=""
     acomment=`echo $line | grep '^#'`
     a=`echo $line | grep [\'\"]`
     if [ "$acomment" != "" ]
@@ -320,8 +332,9 @@ then
       eval $line
       # echo $M4
       # exit
+    else
+      macros="-D${line} $macros"
     fi
-    macros="$macros -D${line}"
   done
 fi
 
@@ -354,8 +367,6 @@ then
   wrapLines -v -blank 1 < $stempl2cf > $templ2cf
   rm $stempl2cf
 fi
-echo ";;; Expanded `date` by expandl2cf.sh" >> $templ2cf
-echo ";;; $cmdline" >> $templ2cf
 
 if [ "$l2cf" = "STDOUT" ]
 then
@@ -365,6 +376,14 @@ then
 else
   mv $templ2cf $l2cf
 fi
+
+if [ "$verbose" != "yes" ]
+then
+  exit 0
+fi
+
+echo ";;; Expanded `date` by expandl2cf.sh" >> $l2cf
+echo ";;; $cmdline" >> $l2cf
 
 if [ -f "$dotfile" ]
 then
@@ -402,3 +421,6 @@ fi
 
 exit 0
 # $Log$
+# Revision 1.1  2008/07/16 21:03:04  pwagner
+# First commit
+#
