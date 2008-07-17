@@ -35,11 +35,12 @@ contains
 
 ! pure function D_STAT_TEMP ( TEMP, FREQ ) result ( STAT_TEMP )
   elemental function D_STAT_TEMP ( TEMP, FREQ ) result ( STAT_TEMP )
-    use MLSCommon, ONLY: R8
+    use MLSKinds, ONLY: R8
     use PHYSICS, only: H_OVER_K
     integer, parameter :: RK = r8
     include 'stat_temp.f9h'
   end function D_STAT_TEMP
+
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -52,6 +53,9 @@ contains
 end module D_STAT_TEMP_M
 
 ! $Log$
+! Revision 2.3  2005/06/22 18:08:18  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.2  2002/10/08 17:08:02  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
