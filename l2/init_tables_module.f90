@@ -1210,6 +1210,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_do_freq_avg, t+t_boolean, n+n_field_type, &
              begin, f+f_do_1d, t+t_boolean, n+n_field_type, &
              begin, f+f_forceSidebandFraction, t+t_boolean, n+n_field_type, &
+             begin, f+f_generateTScat, t+t_boolean, n+n_field_type, &
              begin, f+f_i_saturation, t+t_i_saturation, n+n_field_type,&
              begin, f+f_incl_cld, t+t_boolean, n+n_field_type, &
              begin, f+f_integrationGrid, s+s_vGrid, n+n_field_spec, &
@@ -1231,10 +1232,11 @@ contains ! =====     Public procedures     =============================
              begin, f+f_nscatteringangles, t+t_numeric, n+n_field_type, &
              begin, f+f_nsizebins, t+t_numeric, n+n_field_type, &
              begin, f+f_pathNorm, t+t_boolean, n+n_field_type, &
+             begin, f+f_phaseFrqTol, t+t_numeric, n+n_field_type, &
              begin, f+f_phiWindow, t+t_numeric, n+n_field_type, &
-             begin, f+f_polarized, t+t_boolean, n+n_field_type, &
-             begin, f+f_refract, t+t_boolean, n+n_field_type /) )
+             begin, f+f_polarized, t+t_boolean, n+n_field_type /) )
     call make_tree ( (/ &
+             begin, f+f_refract, t+t_boolean, n+n_field_type, &
              begin, f+f_scanAverage, t+t_boolean, n+n_field_type, &
              begin, f+f_signals, t+t_string, n+n_field_type, &
              begin, f+f_skipOverlaps, t+t_boolean, n+n_field_type, &
@@ -1244,6 +1246,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_tangentGrid, s+s_vGrid, n+n_field_spec, &
              begin, f+f_temp_der, t+t_boolean, n+n_field_type, &
              begin, f+f_tolerance, t+t_numeric, n+n_field_type, &
+             begin, f+f_TScatMIF, t+t_numeric, n+n_field_type, &
              begin, f+f_type, t+t_fwmType, nr+n_field_type, &
              begin, f+f_usbLBLMolecules, t+t_molecule, n+e+n_field_type, &
              begin, f+f_usbPFAMolecules, t+t_molecule, n+e+n_field_type, &
@@ -1565,6 +1568,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.472  2008/07/30 19:08:00  vsnyder
+! Add PhaseFrqTol field to ForwardModel spec
+!
 ! Revision 2.471  2008/06/06 21:03:59  michael
 ! changes for fill method uncompressradiance
 !
