@@ -60,7 +60,9 @@ module ForwardModelSupport
   integer, parameter :: ToleranceNotK          = TangentNotSubset + 1
   integer, parameter :: TooManyCosts           = ToleranceNotK + 1
   integer, parameter :: TooManyHeights         = TooManyCosts + 1
-  integer, parameter :: WrongUnitsForWindow    = TooManyHeights + 1
+  integer, parameter :: TScatMIF               = TooManyHeights + 1
+  integer, parameter :: WrongUnitsForFrqTol    = TScatMIF + 1
+  integer, parameter :: WrongUnitsForWindow    = WrongUnitsForFrqTol + 1
 
   integer :: Error            ! Error level -- 0 = OK
 
@@ -396,18 +398,18 @@ contains ! =====     Public Procedures     =============================
       & F_ATMOS_DER, F_BINSELECTORS, F_CHANNELS, F_CLOUD_DER, &
       & F_DEFAULT_spectroscopy, F_DIFFERENTIALSCAN, F_DO_BASELINE, F_DO_CONV, &
       & F_DO_FREQ_AVG, F_DO_1D, F_FREQUENCY, F_I_SATURATION, F_INCL_CLD, &
-      & F_FORCESIDEBANDFRACTION, F_INTEGRATIONGRID, F_LINEARSIDEBAND, &
-      & F_LINECENTER, F_LINEWIDTH, F_LINEWIDTH_TDEP, F_LOCKBINS, &
-      & F_LSBLBLMOLECULES, F_LSBPFAMOLECULES, F_MODULE, F_MOLECULES, &
-      & F_MOLECULEDERIVATIVES, F_NABTERMS, F_NAZIMUTHANGLES, &
+      & F_FORCESIDEBANDFRACTION, F_GenerateTScat, F_INTEGRATIONGRID, &
+      & F_LINEARSIDEBAND, F_LINECENTER, F_LINEWIDTH, F_LINEWIDTH_TDEP, &
+      & F_LOCKBINS, F_LSBLBLMOLECULES, F_LSBPFAMOLECULES, F_MODULE, &
+      & F_MOLECULES, F_MOLECULEDERIVATIVES, F_NABTERMS, F_NAZIMUTHANGLES, &
       & F_NCLOUDSPECIES, F_NMODELSURFS, F_NO_DUP_MOL, F_NSCATTERINGANGLES, &
-      & F_NSIZEBINS, F_PATHNORM, F_PHIWINDOW, F_POLARIZED, F_REFRACT, &
-      & F_SCANAVERAGE, F_SIGNALS, F_SKIPOVERLAPS, F_SPECIFICQUANTITIES, &
-      & F_SPECT_DER, F_SWITCHINGMIRROR, F_TANGENTGRID, F_TEMP_DER, &
-      & F_TOLERANCE, F_TYPE, F_USBLBLMOLECULES, F_USBPFAMOLECULES, &
-      & F_XSTAR, F_YSTAR
+      & F_NSIZEBINS, F_PATHNORM, F_PHASEFRQTOL, F_PHIWINDOW, F_POLARIZED, &
+      & F_REFRACT, F_SCANAVERAGE, F_SIGNALS, F_SKIPOVERLAPS, &
+      & F_SPECIFICQUANTITIES, F_SPECT_DER, F_SWITCHINGMIRROR, F_TANGENTGRID, &
+      & F_TEMP_DER, F_TOLERANCE, F_TScatMIF, F_TYPE, &
+      & F_USBLBLMOLECULES, F_USBPFAMOLECULES, F_XSTAR, F_YSTAR
     use Intrinsic, only: L_NONE, L_CLEAR, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, &
-      & PHYQ_PROFILES, PHYQ_TEMPERATURE
+      & PHYQ_FREQUENCY, PHYQ_PROFILES, PHYQ_TEMPERATURE
     use L2PC_m, only: BINSELECTORS, DEFAULTSELECTOR_LATITUDE, CREATEDEFAULTBINSELECTORS
     use MLSCommon, only: R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
@@ -502,6 +504,7 @@ contains ! =====     Public Procedures     =============================
     info%num_azimuth_angles = 8
     info%num_scattering_angles = 16
     info%num_size_bins = 40
+    info%phaseFrqTol = 25000.0 ! MHz
     info%phiwindow = 5
     info%polarized = .false.
     info%refract = index(switches,'norf') == 0 ! Default .true.
@@ -512,6 +515,7 @@ contains ! =====     Public Procedures     =============================
     info%spect_der = .false.
     info%switchingMirror= .false.
     info%temp_der = .false.
+    info%TScatMIF = 1
     info%where = root
     info%windowUnits = phyq_profiles
     info%xStar = 0
@@ -552,12 +556,12 @@ contains ! =====     Public Procedures     =============================
         info%do_conv = get_boolean(son)
       case ( f_do_freq_avg )
         info%do_freq_avg = get_boolean(son)
-      case ( f_pathNorm )
-        info%do_path_norm = get_boolean(son)
       case ( f_do_1d )
         info%do_1d = get_boolean(son)
       case ( f_forceSidebandFraction )
         info%forceSidebandFraction = get_boolean(son)
+      case ( f_generateTScat )
+        info%generateTScat = get_boolean(son)
       case ( f_i_saturation )
         info%i_saturation = decoration(subtree(2,son))
       case ( f_incl_cld )
@@ -607,6 +611,13 @@ contains ! =====     Public Procedures     =============================
       case ( f_nsizebins )
         call expr ( subtree(2,son), expr_units, value, type )
         info%NUM_SIZE_BINS = nint( value(1) )
+      case ( f_pathNorm )
+        info%do_path_norm = get_boolean(son)
+      case ( f_phaseFrqTol )
+        call expr ( subtree(2,son), expr_units, value, type )
+        info%phaseFrqTol = value(1)
+        if ( expr_units(1) /= PHYQ_Frequency ) &
+          & call AnnounceError ( WrongUnitsForFrqTol, son )
       case ( f_phiWindow )
         call expr ( subtree(2,son), expr_units, value, type )
         info%phiWindow = value(1)
@@ -682,6 +693,11 @@ contains ! =====     Public Procedures     =============================
         info%tolerance = value(1)
         if ( expr_units(1) /= phyq_temperature ) &
           & call AnnounceError ( toleranceNotK, root )
+      case ( f_TScatMIF )
+        call expr ( subtree(2,son), expr_units, value, type )
+        info%TScatMIF = value(1)
+        if ( expr_units(1) /= phyq_dimensionless ) &
+          & call AnnounceError ( TScatMIF, root )
       case ( f_type )
         info%fwmType = decoration(subtree(2,son))
       case ( f_usbLBLMolecules )
@@ -1345,9 +1361,13 @@ op:     do j = 2, nsons(theTree)
     case ( TooManyHeights )
       call output ( 'Bin Selectors can only refer to one height range', &
         & advance='yes' )
+    case ( TScatMIF )
+      call output ( 'TScatMIF must be dimensionless', advance='yes' )
     case ( TooManyCosts )
       call output ( 'Bin Selectors can only have one cost', &
         & advance='yes' )
+    case ( WrongUnitsForFrqTol )
+      call output ( 'PhaseFrqTol units must be frequency', advance='yes' )
     case ( WrongUnitsForWindow )
       call output ( 'PhiWindow must be in degrees or profiles', &
         & advance='yes' )
@@ -1371,6 +1391,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.141  2008/07/30 19:08:00  vsnyder
+! Add PhaseFrqTol field to ForwardModel spec
+!
 ! Revision 2.140  2008/06/06 22:52:53  pwagner
 ! EssentiallyEqual moved to MLSFillValues
 !
