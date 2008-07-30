@@ -155,6 +155,7 @@ fwdModelExtra
 fwdModelIn
 fwdModelOut
 
+generateTScat
 geocAltitudeQuantity
 geodAngle
 geodAlt
@@ -293,6 +294,7 @@ pfaData
 pfaFiles
 pfaNum # Dump a PFA table given its index in the database, gotten by pfaStru
 pfaStru
+phaseFrqTol # for selecting scattering phase function
 phaseName
 phiTan
 phiWindow
@@ -425,6 +427,7 @@ truthExtra
 truthForwardModel
 truthIn
 TScat
+TScatMIF
 type
 
 unit
@@ -458,6 +461,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.186  2008/07/30 19:08:00  vsnyder
+# Add PhaseFrqTol field to ForwardModel spec
+#
 # Revision 2.185  2008/06/06 01:56:09  vsnyder
 # Add TScat
 #
