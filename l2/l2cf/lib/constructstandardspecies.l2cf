@@ -12,13 +12,15 @@ begin Construct
   !define(allLinearMolecules,{!tidyList( $
     BrO, CH2CHCN, CH3CH2CN, CH3CH2OH, CH3Cl, CH3CN, CH3COCH3, CH3OH, CH3OOH, $
     CO, ClO, H2CO, H2O2, H2S, $
-    HCN, HCl, HNO3, HO2, HOCl, N2, N2O, NO, NO2, O2, O3, OCS, SO2)})
+    HCN, HCl, HNO3, HO2, HOCl, N2, N2O, NO, NO2, O2, OCS, SO2)})
   ;; -- standard log vGrid --
   !define(allLogMolecules,{H2O})
   ;; -- hid-res linear vGrid --
   !define(allLinearHRMolecules,{O3,CO})
   ;; -- hid-res log vGrid --
   !define(allLogHRMolecules,{H2O})
+  ;; -- O3 has its own vGrid --
+  !define(O3Molecule,{O3})
   ;; -- OH has its own vGrid --
   !define(OHMolecule,{OH})
 
@@ -28,7 +30,7 @@ begin Construct
   ;; ----------------------------------------- Derived macros
 
   ;; These are macros derived from above
-  !define(allMolecules,{!allLinearMolecules, !allLogMolecules, !OHMolecule})
+  !define(allMolecules,{!allLinearMolecules, !allLogMolecules, !OHMolecule, !O3Molecule})
   !define(allHiResMolecules,
     {!makelist({},{_HR},!allLinearHRMolecules),!makelist({},{_HR},!allLogHRMolecules)})
 
@@ -56,6 +58,13 @@ begin Construct
   ;; First macros that define individual molecules.
   !define(constructLinearVMR,{$1: Quantity, vGrid=vGridStandard, $
     hGrid=hGridStandard, type=vmr, molecule=$1!nl})
+  !ifdef(flagO3OnHiResVGrid,{
+  !define(O3VGrid,{vGridHiRes})
+  },{
+  !define(O3VGrid,{vGridStandard})
+  })
+  !define(constructLinearVMRO3,{$1: Quantity, vGrid=!O3VGrid, $
+    hGrid=hGridStandard, type=vmr, molecule=$1!nl})
   !define(constructLinearVMROH,{$1: Quantity, vGrid=vGridOH, $
     hGrid=hGridStandard, type=vmr, molecule=$1!nl})
   !define(constructLogVMR,{$1: Quantity, vGrid=vGridStandard, $
@@ -67,6 +76,7 @@ begin Construct
 
   ;; Define the 'standard' vmrs
   !forall( {constructLinearVMR}, !allLinearMolecules )
+  !forall( {constructLinearVMRO3}, !O3Molecule )
   !forall( {constructLinearVMROH}, !OHMolecule )
   !forall( {constructLogVMR}, !allLogMolecules )
 
@@ -96,10 +106,11 @@ begin Construct
     molecule=$1, hGrid=hGridStandard!nl})
 
   !forall( {constructColumn}, !allLinearMolecules )
+  !forall( {constructColumn}, !O3Molecule )
   !forall( {constructColumn}, !OHMolecule )
   !forall( {constructColumn}, !allLogMolecules )
   !define(allColumns,
-    {!makelist({column_},{},!allLinearMolecules),!makelist({column_},{},!allLogMolecules),!makelist({column_},{},!OHMolecule)})
+    {!makelist({column_},{},!allLinearMolecules),!makelist({column_},{},!allLogMolecules),!makelist({column_},{},!O3Molecule),!makelist({column_},{},!OHMolecule)})
 
   ;; ----------------------------------------- Cloud Input/Output
   hGridFine: hGrid, type=regular, spacing=0.5 degrees, origin=0 degrees, $
