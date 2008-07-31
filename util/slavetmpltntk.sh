@@ -206,6 +206,12 @@ while [ "$more_opts" = "yes" ] ; do
        shift
        shift
        ;;
+    --skipDir* )
+       otheropts=`add_option "$otheropts" --skipRetrieval`
+       echo "Adding argument to skip direct writes: $1" >> $LOGFILE
+       echo "$otheropts" >> $LOGFILE
+       shift
+       ;;
     --skipR* )
        otheropts=`add_option "$otheropts" --skipRetrieval`
        echo "Adding argument to skip retrieval: $1" >> $LOGFILE
@@ -353,6 +359,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.2  2008/04/22 18:01:02  pwagner
+# Removed things causing more harm than good
+#
 # Revision 1.1  2008/04/04 20:51:22  pwagner
 # first commit
 #

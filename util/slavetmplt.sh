@@ -207,6 +207,12 @@ while [ "$more_opts" = "yes" ] ; do
        shift
        shift
        ;;
+    --skipDir* )
+       otheropts=`add_option "$otheropts" --skipRetrieval`
+       echo "Adding argument to skip direct writes: $1" >> $LOGFILE
+       echo "$otheropts" >> $LOGFILE
+       shift
+       ;;
     --skipR* )
        otheropts=`add_option "$otheropts" --skipRetrieval`
        echo "Adding argument to skip retrieval: $1" >> $LOGFILE
@@ -358,6 +364,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.18  2008/04/22 18:00:41  pwagner
+# Removed things causing more harm than good
+#
 # Revision 1.17  2008/01/08 18:44:12  pwagner
 # Pass --sharedPCF option to slaves
 #
