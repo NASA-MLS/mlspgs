@@ -13,15 +13,15 @@ module Read_Mie_m
 
   ! Read the Mie tables produced by the Mie_Tables program.
 
-  use MLSKinds, only: R8
+  use MLSKinds, only: R8, RP
 
   implicit NONE
   private
   public :: Destroy_Mie, Dump_Mie, Read_Mie
 
   ! Coordinates
-  real(r8), public, pointer :: F_s(:) => NULL(), IWC_s(:) => NULL()
-  real(r8), public, pointer :: T_s(:) => NULL(), Theta_s(:) => NULL()
+  real(rp), public, pointer :: F_s(:) => NULL(), IWC_s(:) => NULL()
+  real(rp), public, pointer :: T_s(:) => NULL(), Theta_s(:) => NULL()
   ! Betas
   real(r8), public, pointer :: Beta_c_a(:,:,:) => NULL()  ! T X IWC X F
   real(r8), public, pointer :: Beta_c_e(:,:,:) => NULL()  ! T X IWC X F
@@ -329,6 +329,9 @@ contains
 end module Read_Mie_m
 
 ! $Log$
+! Revision 2.3  2008/07/31 18:00:13  vsnyder
+! Change coordinates from R8 to RP
+!
 ! Revision 2.2  2008/06/05 02:15:26  vsnyder
 ! Added HDF, spiffed up dump
 !
