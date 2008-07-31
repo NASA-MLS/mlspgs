@@ -61,9 +61,9 @@ contains
     real(rp), intent(out) :: dx_dh_out(:)   ! d(chi)/dh on the output grid
     real(rp), intent(out) :: dhdz_out(:)    ! dh/dz on the output grid
 
-! Outputs not computed if size zero
-    real(rp), intent(out) :: dxdt_tan(:,:)      ! computed dchi dt.
-    real(rp), intent(out) :: d2xdxdt_tan(:,:)   ! computed d2chi dxdt.
+! Outputs not computed if size(dxdt_tan) is zero
+    real(rp), intent(out), optional :: dxdt_tan(:,:)      ! computed dchi dt.
+    real(rp), intent(out), optional :: d2xdxdt_tan(:,:)   ! computed d2chi dxdt.
 !                                  ! at each phi value representation (km)
 
 
@@ -75,6 +75,8 @@ contains
     integer :: end_p, end_z         ! End of h2o info in grids_f
     integer :: ht_i, n_out, n_t_phi, n_t_zeta
     integer :: sv_p, sv_z
+
+    logical :: Derivs ! Compute dxdt_tan and d2xdxdt_tan
 
     real(rp) :: d2hdhdt_tan(size(zetatan), grids_tmp%l_z(1), grids_tmp%l_p(1))
     real(rp) :: dhdt_tan(size(zetatan), grids_tmp%l_z(1), grids_tmp%l_p(1))
@@ -151,9 +153,11 @@ contains
 
 ! compute output angles to interpolate to
 
-    if ( size(dxdt_tan) > 0 ) then
+    derivs = present(dxdt_tan)
+    if ( derivs ) derivs = size(dxdt_tan) > 0
+    if ( derivs ) then
 
-      dhdt_tan = dhdt_tan  * spread(eta_t,2,n_t_zeta)
+      dhdt_tan = dhdt_tan * spread(eta_t,2,n_t_zeta)
       d2hdhdt_tan = d2hdhdt_tan * spread(eta_t,2,n_t_zeta)
       do ht_i = 1, n_out
         call get_chi_angles ( scgeocalt(ht_i), n_tan_out(ht_i), &
@@ -188,6 +192,9 @@ contains
 end module Get_Chi_Out_m
 
 ! $Log$
+! Revision 2.20  2008/07/31 17:57:54  vsnyder
+! Make some arguments optional
+!
 ! Revision 2.19  2006/11/30 02:06:49  vsnyder
 ! Clean up some surds of ASSOCIATED->SIZE transition
 !
