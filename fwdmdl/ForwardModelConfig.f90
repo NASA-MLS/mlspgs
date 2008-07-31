@@ -147,6 +147,7 @@ module ForwardModelConfig
     integer :: Num_size_bins          ! No of size bins '40'
     integer :: SidebandStart, SidebandStop ! Folded or SSB config?
     integer :: SurfaceTangentIndex    ! Index in Tangentgrid of Earth's surface
+    integer :: TScatMIF               ! Which MIF to use for TEcat LOS VEL and PHITAN
     integer :: xStar                  ! Index of specific vector to use for linearized model
     integer :: yStar                  ! Index of specific vector to use for linearized model
     ! Now the logicals
@@ -176,6 +177,8 @@ module ForwardModelConfig
     logical :: SwitchingMirror        ! Model radiance at the switching mirror
     logical :: Temp_Der               ! Do temperature derivatives
     ! Now the reals
+    real (r8) :: PhaseFrqTol          ! MHz, how close to channel must scattering
+                                      ! phase function be?
     real (r8) :: PhiWindow            ! Window size for examining stuff
     real (r8) :: Tolerance            ! Accuracy desired when choosing approximations
     real :: sum_DeltaTime = 0.0       ! sum of delta time calling FullForwardModel 
@@ -1364,6 +1367,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.100  2008/05/20 00:27:32  vsnyder
+! Add GenerateTScat field
+!
 ! Revision 2.99  2007/11/07 03:07:42  vsnyder
 ! Add Do_Path_Norm switch
 !
