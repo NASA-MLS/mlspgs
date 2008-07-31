@@ -6,8 +6,13 @@
 !ifdef(flagSkipVGridStandard,{},{
 vGridStandard: vGrid, type=Logarithmic, coordinate=Zeta, $
   start=1000mb, formula=[25:6,12:3]})
+!ifdef(flagVGridHiResExtended,{
+vGridHiRes: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=1000mb, formula=[37:12,6:6,12:3]
+},{
 vGridHiRes: vGrid, type=Logarithmic, coordinate=Zeta, $
   start=1000mb, formula=[21:12,14:6,12:3]
+})
 vGridrhisngllyr: vGrid, type=Logarithmic, coordinate=Zeta, $
   start=100mb, formula=[2:6]
 vGridrhiprfl: vGrid, type=Logarithmic, coordinate=Zeta, $
@@ -78,6 +83,9 @@ vGridWMO: VGrid, type=Logarithmic, coordinate=Zeta, $
   start=1000mb, formula=[97:48]
 
 ; $Log$
+; Revision 1.30  2006/05/19 21:59:27  lambert
+; updates for OH
+;
 ; Revision 1.29  2006/05/18 23:19:17  dwu
 ; add vGrid for IWP
 ;
