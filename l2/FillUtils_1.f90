@@ -3782,7 +3782,13 @@ contains ! =====     Public Procedures     =============================
           print *, 'np ', np
           print *, 'size(database) ', size(primitives)
         endif
-        quantity%values = 0.
+        if ( .not. associated ( quantity%mask ) ) then
+          quantity%values = 0.
+        else
+          where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 )
+            quantity%values = 0.
+          end where
+        endif
         if ( np < 1 .or. np > size(primitives) ) then
           print *, 'np ', np
           print *, 'size(database) ', size(primitives)
@@ -5776,7 +5782,7 @@ contains ! =====     Public Procedures     =============================
 
       if ( myLogSpace .and. any ( values <= 0.0 ) ) then
         call Announce_Error ( valuesNode, no_error_code, &
-          & 'Non-positive input data in log profile fill' )
+          & 'Non-positive input data in log profile fill (reset logSpace=false?)' )
         return
       end if
       if ( myLogSpace ) values = log ( values )
@@ -6576,6 +6582,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.9  2008/08/06 17:27:47  pwagner
+! Fill by manipulation now respects mask better
+!
 ! Revision 2.8  2008/06/06 21:02:49  michael
 ! added fill method uncompressRadiance
 !
