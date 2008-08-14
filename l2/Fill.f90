@@ -919,6 +919,7 @@ contains ! =====     Public Procedures     =============================
       case ( s_transfer ) ! ===============================  Transfer ==
         ! Here we're on a transfer instruction
         ! Loop over the instructions
+        interpolate = .false.
         skipMask = .false.
         do j = 2, nsons(key)
           gson = subtree(j,key)  ! The argument
@@ -934,13 +935,15 @@ contains ! =====     Public Procedures     =============================
             sourceVectorIndex = decoration(fieldValue)
           case ( f_destination )
             destinationVectorIndex = decoration(fieldValue)
+          case ( f_interpolate )
+            interpolate = get_boolean ( fieldValue )
           case ( f_skipMask )
             skipMask = get_boolean ( fieldValue )
           case default ! Can't get here if type checker worked
           end select
         end do
         call TransferVectors ( vectors(sourceVectorIndex), &
-          & vectors(destinationVectorIndex), skipMask )
+          & vectors(destinationVectorIndex), skipMask, interpolate )
 
       case ( s_time ) ! ===================================  Time  =====
         if ( timing ) then
@@ -2358,6 +2361,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.363  2008/08/14 20:59:00  pwagner
+! /interpolate now possible field in Transfer command
+!
 ! Revision 2.362  2008/05/28 21:52:48  pwagner
 ! geo location Fill method to fill chunk numbers[maf]
 !
