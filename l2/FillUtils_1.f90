@@ -88,7 +88,8 @@ module FillUtils_1                     ! Procedures used by Fill
   use VectorsModule, only: &
     & ClearUnderMask, CopyVector, CreateMask, &
     & DestroyVectorInfo, Dump, &
-    & GetVectorQtyByTemplateIndex, isVectorQtyMasked, MaskVectorQty, &
+    & GetVectorQtyByTemplateIndex, GetVectorQuantityByType, &
+    & isVectorQtyMasked, MaskVectorQty, &
     & ValidateVectorQuantity, Vector_T, &
     & VectorValue_T, M_Fill, M_LinAlg, M_Cloud
   use VGridsDatabase, only: GETUNITFORVERTICALCOORDINATE
@@ -6329,11 +6330,12 @@ contains ! =====     Public Procedures     =============================
     end subroutine SpreadChannelFill
 
     ! ---------------------------------------------- TransferVectors -----
-    subroutine TransferVectors ( source, dest, skipMask )
+    subroutine TransferVectors ( source, dest, skipMask, interpolate )
       ! Copy common items in source to those in dest
       type (Vector_T), intent(in) :: SOURCE
       type (Vector_T), intent(inout) :: DEST
       logical, intent(in) :: SKIPMASK
+      logical, intent(in) :: INTERPOLATE
 
       ! Local variables
       type (VectorValue_T), pointer :: DQ ! Destination quantity
@@ -6359,11 +6361,19 @@ contains ! =====     Public Procedures     =============================
                 & call Deallocate_test ( dq%mask, 'dq%mask', ModuleName )
             end if
           end if
+        elseif ( interpolate ) then
+          dq => GetVectorQuantityByType ( dest, &
+            & quantityType=sq%template%quantityType, &
+            & molecule=sq%template%molecule )
+          if ( associated ( dq ) ) then
+            call FillQtyFromInterpolatedQty( dq, sq, force=.false., key=0, &
+              & dontmask=.false. )
+          end if
         end if
       end do
     end subroutine TransferVectors
 
-    ! ---------------------------------------------- TransferVectors -----
+    ! ---------------------------------------------- UncompressRadiance -----
     subroutine UncompressRadiance ( key, quantity, totalPowerQuantity, &
       & systemTemperatureQuantity, termsNode )
       integer, intent(in) :: KEY        ! Tree node for messages
@@ -6582,6 +6592,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.10  2008/08/14 20:58:40  pwagner
+! /interpolate now possible field in Transfer command
+!
 ! Revision 2.9  2008/08/06 17:27:47  pwagner
 ! Fill by manipulation now respects mask better
 !
