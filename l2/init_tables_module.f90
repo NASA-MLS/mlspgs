@@ -1053,6 +1053,7 @@ contains ! =====     Public procedures     =============================
       begin, s+s_transfer, &
              begin, f+f_source, s+s_vector, nr+n_field_spec, &
              begin, f+f_destination, s+s_vector, nr+n_field_spec, &
+             begin, f+f_interpolate, t+t_boolean, n+n_field_type, &
              begin, f+f_skipMask, t+t_boolean, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree( (/ &
@@ -1568,6 +1569,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.473  2008/08/14 20:58:17  pwagner
+! /interpolate now possible field in Transfer command
+!
 ! Revision 2.472  2008/07/30 19:08:00  vsnyder
 ! Add PhaseFrqTol field to ForwardModel spec
 !
