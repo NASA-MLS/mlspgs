@@ -30,11 +30,14 @@
 # -dot file          "dot" file before executing m4;
 #                        it may contain env settings and much more besides
 # -dryrun             merely echo the command that would be executed
+# -i                  ignore any TEMPLATE defs in env or macros files; use
+#                        final arg on commandline
 # -m4 cmd             use cmd instead of m4
 # -o file             store expanded l2cf in file instead of stdout
 # -v                  verbose; prints handy summary at end of l2cf
 # -w                  wrap lines in l2cf
 # -example            print brief example of how to use; exit
+# -example--dotfile   print brief example of how to use dotfile; exit
 # -h[elp]             print brief help message; exit
 #
 #
@@ -52,12 +55,22 @@
 #     appears in the macros file, it will have the same effect as if
 #       -m4 /some/path/to/m4
 #     was among the command-line options
+# (6) If the line
+#      TEMPLATE=/some/path/to/template
+#     appears in either the macros file or the env settings file,
+#     it will have the same effect as if
+#       /some/path/to/template.m4
+#     was the final the command-line argument
+# (7) Use a dot file in place of an env file
+#     (or in addition)
+#     if you need to use shell control structures or other features
+#     For an example of this see -example--dotfile
 # Result:
 # An expanded l2cf is written using appropriate macros
 # --------------- End expandl2cf.sh help
 # --------------- expandl2cf.sh example
 # Example:
-# Assume macros.txt contains the following (without the '#')
+# Assume macros.txt contains the following
 ## start of macros.txt
 # M4=$HOME/bin/m4
 # machine=me 
@@ -85,6 +98,78 @@
 #  -DV2ID=$TEST-$SUBTEST \
 #  l2cf.m4 > out.l2cf
 # --------------- End expandl2cf.sh example
+
+# --------------- expandl2cf.sh dotfile example
+# Example:
+# Assume SO.macros contains the following (without the '#')
+## start of SO.macros
+# file of m4 macros
+# each line contains a macro definition that will be passed to m4
+# e.g., a line consisting of (without the #)
+#category=noGoodBand17
+# would add the command line option "-Dcategory=noGoodBand17"
+# to the invocation of m4
+# M4=$HOME/bin/m4
+# EXPANDL2CF=${HOME}/mlspgs/util/expandl2cf.sh
+# machine=scramjet
+# day=$day
+# flagComputeAvks
+# l2pcVersion=$l2pcVersion
+# V2ID=$TEST-$SUBTEST
+# L1BSIDSVERSION=s7-f52
+# l2pcversion=$l2pcVersion
+# pfaversion=FS-03
+# outpathl2mtx=$JOBDIR/outputs
+# inpathleapsec=/science/pge/v0223/toolkit5.2.14/database/common/TD
+## end of SO.macros
+#
+# and that env.txt contains the following
+## start of SO.sh
+#!/bin/sh
+# dot file to establish environmental settings
+# executed prior to the invocation of m4
+# These will be expanded in your overridepaths.sh file
+# as well as in your file of m4 macros (if any)
+# These are not m4 macros, however, and so they
+# will not be automatically expanded in your l2cf template
+#
+# Use dot file instead of env file if you wish to use
+# shell control structures or commands
+#
+# Don't forget to export at the end
+#
+# Change these with each test
+# day=2008d037
+# CHUNK=96
+# TEST=SO-01
+# SUBTEST=a0096
+# L2CFVERSION=v3-09-so3001
+# TEMPLATE=v3-09-michaelavgkrnl.m4
+# l2pcVersion=v3-00-FS-05
+# case "$l2pcVersion" in
+#   "v3-00-HO-01")
+#     INPATHL2PC=/data1/pwagner/l2pc_30H1
+#     ;;
+#   "v3-00-FS-05")
+#     INPATHL2PC=/data1/pwagner/l2pc_305
+#     ;;
+# esac
+# PGE_BINARY_DIR=/home/pwagner/shrnkwrp-v3/pge/bin/IFC.Linux
+# PGE_SCRIPT_DIR=${HOME}/shrnkwrp-v3/pge/util
+# PGE_ROOT=/data1/pwagner_home/toolkits/toolkit5.2.14/bin/linux
+# PGSHOME=/home/pwagner/shrnkwrp-v3/toolkit5.2.14
+# JOBDIR="/data1/pwagner/l2tests/avgkrnls/$TEST/$SUBTEST"
+# # Retrieval version
+# OTHEROPTS="--crash --ntk -g --chunk $CHUNK --skipDirec -S'l2q,glob,mas,chu,opt1,log,pro1,time,apr'"
+# #
+# # Don't forget to export at the end
+# export day CHUNK TEST SUBTEST L2CFVERSION TEMPLATE l2pcVersion INPATHL2PC
+# export PGE_BINARY_DIR PGE_SCRIPT_DIR PGE_ROOT PGSHOME JOBDIR OTHEROPTS
+## end of SO.sh
+#
+# Then you would execute this script as
+#  expandl2cf.sh -dot SO.sh -Df SO.macros -o out.l2cf
+# --------------- End expandl2cf.sh dotfile example
 
 #---------------------------- get_unique_name
 #
@@ -185,6 +270,7 @@ dotfile=""
 dryrun="no"
 envfile=""
 I=expandl2cf
+ignore="no"
 l2cf="STDOUT"
 M4=m4
 macros=""
@@ -194,6 +280,7 @@ my_name=expandl2cf.sh
 myPATH=""
 stempl2cf=$HOME/`get_unique_name l2cf2`
 templ2cf=$HOME/`get_unique_name l2cf1`
+TEMPLATE=""
 verbose="no"
 wrap="no"
 
@@ -220,6 +307,10 @@ while [ "$more_opts" = "yes" ] ; do
        dryrun="yes"
        shift
        ;;
+    -i )
+       ignore="yes"
+       shift
+       ;;
     -Ef )
        shift
        envfile="$1"
@@ -242,6 +333,12 @@ while [ "$more_opts" = "yes" ] ; do
        ;;
     -example )
        sed -n '/'$my_name' example/,/End '$my_name' example/ p' $me \
+           | sed -n 's/^.//p' | sed '1 d; $ d'
+       rm -f $settings_file
+       exit
+       ;;
+    -example--dotfile )
+       sed -n '/'$my_name' dotfile example/,/End '$my_name' dotfile example/ p' $me \
            | sed -n 's/^.//p' | sed '1 d; $ d'
        rm -f $settings_file
        exit
@@ -297,12 +394,6 @@ then
   echo "templ2cf: $templ2cf"
 fi
 
-if [ "$1" = "" ]
-then
-  echo "Sorry--no template found among args"
-  exit 1
-fi
-
 if [ -f "$dotfile" ]
 then
   . "$dotfile"
@@ -325,6 +416,7 @@ then
   do
     line=`echo $linenosp | sed 's/\&/ /g'`
     a=`echo $line | grep 'M4='`
+    atemplate=`echo $line | grep 'TEMPLATE='`
     # echo "line: $line"
     # echo "a: $a"
     if [ "$a" != "" ]
@@ -332,10 +424,21 @@ then
       eval $line
       # echo $M4
       # exit
+    elif [ "$atemplate" != "" ]
+    then
+      eval $line
+      # echo $TEMPLATE
+      # exit
     else
       macros="-D${line} $macros"
     fi
   done
+fi
+
+if [ "$1" = "" -a "$TEMPLATE" = "" ]
+then
+  echo "Sorry--no template found among args"
+  exit 1
 fi
 
 if [ "$mypath" = "" -a "$M4PATH" = "" ]
@@ -353,12 +456,18 @@ else
   ALLOPTS="$macros"
 fi
 
+# Did we supply TEMPLATE?
+if [ "$TEMPLATE" = "" -o "$ignore" = "yes" ]
+then
+  TEMPLATE="$1"
+fi
+
 if [ "$dryrun" = "yes" ]
 then
-  echo "$M4 $ALLOPTS $1 > $templ2cf"
+  echo "$M4 $ALLOPTS $TEMPLATE > $templ2cf"
   exit 0
 else
-  eval $M4 $ALLOPTS $1 > $templ2cf
+  eval $M4 $ALLOPTS $TEMPLATE > $templ2cf
 fi
 
 if [ "$wrap" = "yes" ]
@@ -421,6 +530,9 @@ fi
 
 exit 0
 # $Log$
+# Revision 1.2  2008/07/16 23:37:01  pwagner
+# Improved example; consistent with email announcement
+#
 # Revision 1.1  2008/07/16 21:03:04  pwagner
 # First commit
 #
