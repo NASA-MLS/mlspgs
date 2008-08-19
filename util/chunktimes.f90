@@ -100,6 +100,7 @@ program chunktimes ! Reads chunk times from l2aux file(s)
   real(r4), dimension(:,:), pointer     :: alltimings => NULL()
   logical     :: is_hdf5
   ! logical     :: verbose = .false.
+  integer :: numPhases
   real        :: t1
   real        :: t2
   real        :: tFile
@@ -238,11 +239,12 @@ program chunktimes ! Reads chunk times from l2aux file(s)
           call tabulate(l2auxValue( 1, 1:options%finalPhase, :), &
             & options%phaseNames, options%tabulate )
         endif
+        numPhases = min( MaxPhases, size(l2auxvalue,2) )
         if ( options%showQManager ) then
           alltimings(1:dims(3), i) = timings
         else
-          alltimings(1:size(l2auxvalue,3), 1:size(l2auxvalue,2)) = &
-            & transpose( l2auxValue(1, :, :) )
+          alltimings( 1:size(l2auxvalue,3), 1:numPhases ) = &
+            & transpose( l2auxValue(1, 1:numPhases, :) )
         endif
         if ( .not. options%merge ) statistic%count=0
         call statistics(real(timings, r8), statistic, real(UNDEFINEDVALUE, r8))
@@ -815,6 +817,9 @@ end program chunktimes
 !==================
 
 ! $Log$
+! Revision 1.21  2008/06/17 00:06:31  pwagner
+! Can force printing stats on single line
+!
 ! Revision 1.20  2007/11/28 18:58:03  pwagner
 ! Increased limits; should last 5y
 !
