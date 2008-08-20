@@ -6,9 +6,20 @@ S = ..
 
 CONFDIR=../../..
 
+UTILDIR=../../../util
+
+# reecho.sh can filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+# However we will be using it just to create lapack_linker_line 
+# where LIB_LAPACK may contain multiple libraries
+REECHO=$(UTILDIR)/reecho.sh
+
 # Use the libmls.a directory, libdir, for .mod files
 # dir1 is the path prepended to its .o files in dependency lists
 libdir = ../../../lib/$(MLSCONFG)
+
+# Use the libmlspack.a directory, blaslib, for .mod files
+blaslib = ../../../blas/$(MLSCONFG)
 
 dir1 = $(libdir)/
 
@@ -22,6 +33,11 @@ dir1 = $(libdir)/
 # so that its object files share the current working directory with those of l2
 srclib = ../../../srclib
 
+include $(srclib)/$(MLSF95).$(MLSPLAT)
+include $(srclib)/targets.h
+
+ifeq ($(NEEDS_ITM),yes)
+
 # This is the directory name from which we will get init_tables_module
 # (either l1, l2, or l3)
 init_m_dir = l1
@@ -30,19 +46,18 @@ itmdir=../../../$(init_m_dir)/$(MLSCONFG)
 
 dir2 = $(itmdir)/
 
-# Use the libmlspack.a directory, blaslib, for .mod files
-blaslib = ../../../blas/$(MLSCONFG)
-
 MODPATHS = $(dir1) $(dir2) $(blaslib)
 
-UTILDIR=../../../util
+# ========================================================================
+#       The objects for the shared source files (in srclib)
+# Include their dependencies
+include $(srclib)/Makefile.dep
 
-# reecho.sh can filter out globbed file expansions that fail
-# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
-# However we will be using it just to create lapack_linker_line 
-# where LIB_LAPACK may contain multiple libraries
-REECHO=$(UTILDIR)/reecho.sh
-
+# Add them to L2OBJS
+ALLOBJS = $(OBJS) $(srclib_objs) $(itmdir)/init_tables_module.o
+ifeq ($(init_m_dir),l1)
+  ALLOBJS = $(OBJS) $(srclib_objs) $(itmdir)/init_tables_module.o $(itmdir)/BrightObjects_m.o
+endif
 # Set paths for finding source files (different from .o and .mod)
 
 vpath %.o ./
@@ -51,12 +66,27 @@ vpath %.f9h ../ $(srclib)
 vpath %.f ../
 vpath %.c ../
 
-include $(srclib)/$(MLSF95).$(MLSPLAT)
 # All the paths to supply .mod and INCLUDE files used in compiling %.f90
 # Precede each path by "-I "
 INC_PATHS := $(EXTRA_PATHS) \
   $(shell ${REECHO} ${PATH_OPTS} \
   $(UNPREFXDPTHS) $(MODPATHS) $(PGSINC) $(srclib) $S)
+
+else
+MODPATHS = $(dir1) $(blaslib)
+# Set paths for finding source files (different from .o and .mod)
+
+vpath %.o ./
+vpath %.f90 ../
+vpath %.f9h ../
+vpath %.f ../
+vpath %.c ../
+
+INC_PATHS := $(EXTRA_PATHS) \
+  $(shell ${REECHO} ${PATH_OPTS} \
+  $(UNPREFXDPTHS) $(MODPATHS) $(PGSINC) $S)
+ALLOBJS = $(OBJS)
+endif
 
 # Define some suffix rules
 
@@ -110,22 +140,10 @@ ifndef INSTALLDIR
 endif
 endif
 
-# ========================================================================
-#       The objects for the shared source files (in srclib)
-# Include their dependencies
-include $(srclib)/Makefile.dep
-
-# Add them to L2OBJS
-ALLOBJS = $(OBJS) $(srclib_objs) $(itmdir)/init_tables_module.o
-ifeq ($(init_m_dir),l1)
-  ALLOBJS = $(OBJS) $(srclib_objs) $(itmdir)/init_tables_module.o $(itmdir)/BrightObjects_m.o
-endif
 
 PROG_NAME=test
 
 STATIC_LINK := $(shell echo $(LDOPTS) | grep -e "-static")
-
-include $(srclib)/targets.h
 
 mlspack_dir=../../../blas/$(MLSCONFG)
 mlspack_linker_line=-L${mlspack_dir} -lmlspack
@@ -170,6 +188,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.25  2007/05/30 22:02:12  pwagner
+# Fixed bug preventing build of l2gpdiff
+#
 # Revision 1.24  2007/05/29 21:54:55  pwagner
 # Intel link needs l1/BrightObjects_m.o
 #
