@@ -110,10 +110,12 @@ sub uniq {
 sub GhostFiles {
    local($source_dir) = $ARGV[$[ + 1];
    local($binary_dir) = $ARGV[$[];
-   local($extra_source_dir);
-   local($num_source_dirs);
    local($current_source_dir_num);
+   local($extra_source_dir);
+   local(@f90_sources);
+   local($num_source_dirs);
    local(@objects);
+   local($recasedF90Source);
    local(@source_dirs);
    local(@sources);
    local($modulename);
@@ -159,9 +161,11 @@ print STDERR "Extra source directory: $extra_source_dir \n" unless !($debug);
         	unless chdir $source_dirs[$current_source_dir_num] ;
    # Associate each module with the name of the file that contains it
    #
-   foreach $file (<*.f90>) {
+   @f90_sources = <*.[fF]90>;
+   foreach $file (@f90_sources) {
       $sources[$num_sources] = $file;
-      ($objfile = $file) =~ s/\.f90$/.o/;
+      ($recasedF90Source = $file) =~ s/\.F90$/.f90/;
+      ($objfile = $recasedF90Source) =~ s/\.f90$/.o/;
       $objects[$num_sources] = $objfile;
     $got_module = "false";
      open(FILE, $file) || warn "Cannot open $file: $!\n";
@@ -268,6 +272,9 @@ print STDERR "modules: @modules \n \n" unless !($debug);
    }
   }
 # $Log$
+# Revision 1.7  2007/03/06 21:30:10  pwagner
+# Deleted outmoded lines concerning 'actua;l location of perl'
+#
 # Revision 1.6  2005/06/23 22:22:46  pwagner
 # Reworded Copyright statement
 #
