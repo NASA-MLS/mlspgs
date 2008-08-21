@@ -1211,7 +1211,6 @@ contains ! =====     Public procedures     =============================
              begin, f+f_do_freq_avg, t+t_boolean, n+n_field_type, &
              begin, f+f_do_1d, t+t_boolean, n+n_field_type, &
              begin, f+f_forceSidebandFraction, t+t_boolean, n+n_field_type, &
-             begin, f+f_generateTScat, t+t_boolean, n+n_field_type, &
              begin, f+f_i_saturation, t+t_i_saturation, n+n_field_type,&
              begin, f+f_incl_cld, t+t_boolean, n+n_field_type, &
              begin, f+f_integrationGrid, s+s_vGrid, n+n_field_spec, &
@@ -1569,6 +1568,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.474  2008/08/21 23:42:45  vsnyder
+! Remove GenerateTScat from ForwardModel; use TScat on Sids
+!
 ! Revision 2.473  2008/08/14 20:58:17  pwagner
 ! /interpolate now possible field in Transfer command
 !
