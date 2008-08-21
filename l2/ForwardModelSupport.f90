@@ -398,7 +398,7 @@ contains ! =====     Public Procedures     =============================
       & F_ATMOS_DER, F_BINSELECTORS, F_CHANNELS, F_CLOUD_DER, &
       & F_DEFAULT_spectroscopy, F_DIFFERENTIALSCAN, F_DO_BASELINE, F_DO_CONV, &
       & F_DO_FREQ_AVG, F_DO_1D, F_FREQUENCY, F_I_SATURATION, F_INCL_CLD, &
-      & F_FORCESIDEBANDFRACTION, F_GenerateTScat, F_INTEGRATIONGRID, &
+      & F_FORCESIDEBANDFRACTION, F_INTEGRATIONGRID, &
       & F_LINEARSIDEBAND, F_LINECENTER, F_LINEWIDTH, F_LINEWIDTH_TDEP, &
       & F_LOCKBINS, F_LSBLBLMOLECULES, F_LSBPFAMOLECULES, F_MODULE, &
       & F_MOLECULES, F_MOLECULEDERIVATIVES, F_NABTERMS, F_NAZIMUTHANGLES, &
@@ -490,7 +490,6 @@ contains ! =====     Public Procedures     =============================
     info%do_path_norm = .false.
     info%forceFoldedOutput = .false.
     info%forceSidebandFraction = .false.
-    info%generateTScat = .false.
     info%globalConfig = global
     info%incl_cld = .false.
     info%instrumentModule = 0
@@ -560,8 +559,6 @@ contains ! =====     Public Procedures     =============================
         info%do_1d = get_boolean(son)
       case ( f_forceSidebandFraction )
         info%forceSidebandFraction = get_boolean(son)
-      case ( f_generateTScat )
-        info%generateTScat = get_boolean(son)
       case ( f_i_saturation )
         info%i_saturation = decoration(subtree(2,son))
       case ( f_incl_cld )
@@ -1391,6 +1388,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.142  2008/08/21 23:42:46  vsnyder
+! Remove GenerateTScat from ForwardModel; use TScat on Sids
+!
 ! Revision 2.141  2008/07/30 19:08:00  vsnyder
 ! Add PhaseFrqTol field to ForwardModel spec
 !
