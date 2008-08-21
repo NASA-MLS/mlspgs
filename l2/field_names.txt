@@ -155,7 +155,6 @@ fwdModelExtra
 fwdModelIn
 fwdModelOut
 
-generateTScat
 geocAltitudeQuantity
 geodAngle
 geodAlt
@@ -461,6 +460,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.187  2008/08/21 23:42:46  vsnyder
+# Remove GenerateTScat from ForwardModel; use TScat on Sids
+#
 # Revision 2.186  2008/07/30 19:08:00  vsnyder
 # Add PhaseFrqTol field to ForwardModel spec
 #
