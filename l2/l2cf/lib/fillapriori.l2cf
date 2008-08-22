@@ -482,7 +482,7 @@ Fill, quantity=apriori.refGPH,$
 	0.1mb:0.3ppmv, 0.001mb:0ppmv ], logSpace=false
   Fill, quantity=vReg.h2o_hr, method=profile, profileValues= $
     [ 1000mb:50ppmv, 316mb:100ppmv,215mb:50ppmv, 147mb:5ppmv,121mb: 2ppmv, $
-      100mb:0.5ppmv, 83mb:0.3ppmv, 0.1mb:0.3ppmv, 0.001mb:0ppmv ], $
+      100mb:0.5ppmv, 83mb:0.3ppmv, 0.1mb:0.6ppmv, 0.001mb:0ppmv ], $
       logSpace=false
   Fill, quantity=vReg.RHiVmr, method=profile, profileValues= [ $
         681mb:10.0, 316mb:10.0, 215mb:10.0, 147mb:10.0]
@@ -625,6 +625,9 @@ begin Join
 end Join
   })
 ;$Log$
+;Revision 1.132  2008/06/06 21:05:50  michael
+;added fill method uncompressradiance
+;
 ;Revision 1.131  2008/05/27 16:59:49  pwagner
 ;Added new methyl molecules
 ;
