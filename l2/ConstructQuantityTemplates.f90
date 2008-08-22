@@ -158,7 +158,6 @@ contains ! ============= Public procedures ===================================
     logBasis = .false.
     minValue = -huge ( 0.0_rk )
     molecule = 0
-    noAux = 1
     noChans = 1
     quantitytype = 0
     radiometer = 0
@@ -436,6 +435,10 @@ contains ! ============= Public procedures ===================================
 
     ! Aux grid stuff
     if ( got(f_auxGrid) ) then
+      ! ??? Temp until init_tables says "no duplicate fields"
+      if ( associated(qty%auxGrids) ) call Announce_Error ( root, &
+        & 'AuxGrids field cannot be specified more than once' )
+      noAux = 1
       allocate ( qty%auxGrids(nsons(auxGridNode)-1), stat=i )
       call test_allocate ( i, 'ConstructQuantityTemplates', 'qty%auxGrids', &
         (/ 1 /), (/ nsons(auxGridNode)-1 /) )
@@ -1321,6 +1324,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.145  2008/08/22 01:04:18  vsnyder
+! Don't allow multiple AuxGrids fields
+!
 ! Revision 2.144  2008/06/06 01:58:31  vsnyder
 ! Make Aux grids VGrids, define ScatteringAngle grid type
 !
