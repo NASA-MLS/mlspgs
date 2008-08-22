@@ -92,7 +92,7 @@
 !define(spectroscopyRtvlL2cf,{!spectroscopyL2cf})
 })
 !ifdef(sidebandL2cf, {}, {
-!define(sidebandL2cf, {!sidebandPath/MLS-Aura_L2Cal-SBFraction_v2-0-0_0000d000.l2cf})
+!define(sidebandL2cf, {!sidebandPath/MLS-Aura_L2Cal-SBFraction_v3-0-2_0000d000.l2cf})
 })
 !ifdef(fovdirL2cf, {}, {
 !define(fovdirL2cf, {!fovdirPath/MLS-Aura_L2Cal-FOV-Directions_v1-5-0_0000d000.l2cf})
@@ -165,6 +165,9 @@
 !ifdef(outpathl1brad,{},{!define(outpathl1brad,!getdir(outpathl1brad))})
 !ifdef(outpathtmp,{},{!define(outpathtmp,!getdir(outpathtmp))})
 ;$Log$
+;Revision 1.38  2008/06/19 19:12:54  pwagner
+;All paths available from overridepaths.sh file
+;
 ;Revision 1.37  2008/05/13 16:48:56  pwagner
 ;PFA and Spectroscopy for FS series of v3 development tests
 ;
