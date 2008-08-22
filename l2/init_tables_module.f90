@@ -767,7 +767,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_type, t+t_quantityType, n+n_field_type, &
              begin, f+f_unit, t+t_units, n+n_field_type, &
              begin, f+f_minValue, t+t_numeric, n+n_field_type, &
-             np+n_spec_def /) )
+             ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_vectorTemplate, & ! Must be AFTER s_quantity
              begin, f+f_adopt, t+t_string, n+n_field_type, &
@@ -1568,6 +1568,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.475  2008/08/22 17:28:33  pwagner
+! fields may not be duplicated when declaring new Quantity in Construct
+!
 ! Revision 2.474  2008/08/21 23:42:45  vsnyder
 ! Remove GenerateTScat from ForwardModel; use TScat on Sids
 !
