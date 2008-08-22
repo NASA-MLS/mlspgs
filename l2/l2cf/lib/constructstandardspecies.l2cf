@@ -189,9 +189,9 @@ begin Construct
   ;; cloudMax quantities in l2gp format for quality flag uses
   !define(constructCloudMinMax,{!dnl
   cloudRadMin$1: Quantity, type=cloudMinMax, signal=!signal(!cloudBandFor$1), $
-    vGrid=vGridStandard, hGrid=hGridStandard, type=cloudMinMax
+    vGrid=vGridStandard, hGrid=hGridStandard
   cloudRadMax$1: Quantity, type=cloudMinMax, signal=!signal(!cloudBandFor$1), $
-    vGrid=vGridStandard, hGrid=hGridStandard, type=cloudMinMax!nl})
+    vGrid=vGridStandard, hGrid=hGridStandard!nl})
   !forall(constructCloudMinMax,!allRadiometers)
   !define(allCloudMinMax,{!dnl
     !makelist({cloudRadMin},{},!allRadiometers), $
