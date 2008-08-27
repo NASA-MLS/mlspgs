@@ -55,6 +55,8 @@ module DUMP_0
 ! DIFF                     dump diffs between pair of arrays of numeric type
 ! DUMP                     dump an array to output
 ! DUMPNAMEDVALUES          dump an array of paired names and values
+! DUMPSUMS                 dump after summing successive array values
+!                            ("inverse" of selfDiff)
 ! DUMPTABLE                dump a 2-d table of values with headers
 ! SELFDIFF                 dump increments between successive array values
 ! === (end of toc) ===
@@ -79,6 +81,10 @@ module DUMP_0
 !      [log clean], [char* format, [int width] ) 
 !       where values can be a 1d array of ints or reals, and
 !       names is a string list of corresponding names
+! dumpSums ( array, char* name,
+!      [fillvalue], [log clean], [int width], [char* format],
+!      [log wholearray], [log stats], [log rms], [log unique],
+!      [int lbound] ) 
 ! dumpTable ( values, headers, char* headside
 !      [char* format, [char* formats(:)] ) 
 !       where values can be a 2d array of ints or reals, and
@@ -101,7 +107,8 @@ module DUMP_0
 ! in the above, a string list is a string of elements (usu. comma-separated)
 ! === (end of api) ===
 
-  public :: DIFF, DUMP, DUMP_2x2xN, DUMPNAMEDVALUES, DUMPTABLE, SELFDIFF
+  public :: DIFF, DUMP, DUMP_2x2xN, DUMPNAMEDVALUES, DUMPTABLE, &
+    & SELFDIFF, DUMPSUMS
 
   interface DIFF        ! dump diffs between pair of n-d arrays of numeric type
     module procedure DIFF_1D_DOUBLE, DIFF_1D_INTEGER, DIFF_1D_REAL
@@ -134,6 +141,11 @@ module DUMP_0
     module procedure SELFDIFF_INTEGER
     module procedure SELFDIFF_REAL
     module procedure SELFDIFF_DOUBLE
+  end interface
+  interface DUMPSUMS       ! dump after summing successive array values
+    module procedure DUMPSUMS_INTEGER
+    module procedure DUMPSUMS_REAL
+    module procedure DUMPSUMS_DOUBLE
   end interface
   interface printRMSetc
     module procedure printRMSetc_DOUBLE, printRMSetc_INT, printRMSetc_REAL
@@ -1496,7 +1508,7 @@ contains
     character(len=*), intent(in), optional :: FORMAT
 
     logical :: MyClean
-    integer :: J, K
+    integer :: J
     character(len=64) :: MyFormat
 
     call theDumpBegins
@@ -1535,7 +1547,7 @@ contains
     character(len=*), intent(in), optional :: FORMAT
 
     logical :: MyClean
-    integer :: J, K
+    integer :: J
     character(len=64) :: MyFormat
 
     call theDumpBegins
@@ -2326,6 +2338,98 @@ contains
 
   end subroutine dumpNamedValues_REAL
 
+ ! ---------------------------------------------  DUMPSUMS  -----
+ ! This family of routines dumps the running sum:
+ ! summed(i) == ( array(i) + summed(i-1) )
+  subroutine DUMPSUMS_DOUBLE ( ARRAY, NAME, &
+    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, &
+    & unique, LBOUND )
+    double precision, intent(in) :: ARRAY(:)
+    character(len=*), intent(in), optional :: NAME
+    double precision, intent(in), optional :: FILLVALUE
+    logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    logical, intent(in), optional :: WHOLEARRAY
+    logical, intent(in), optional :: STATS
+    logical, intent(in), optional :: RMS
+    logical, intent(in), optional :: UNIQUE
+    integer, intent(in), optional :: LBOUND ! Low bound for Array
+    ! logical, parameter :: unique = .false. 
+    ! Local variables
+    integer                                  :: i
+    double precision, dimension(size(array)) :: summed
+    ! Executable
+    if ( size(array) < 1 ) return
+    summed(1) = array(1)
+    if ( size(array) > 1 ) then
+      do i=2, size(array)
+        summed(i) = array(i) + summed(i-1)
+      enddo
+    endif
+    call dump ( summed, NAME, &
+      & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, unique, LBOUND )
+  end subroutine DUMPSUMS_DOUBLE
+
+  subroutine DUMPSUMS_INTEGER ( ARRAY, NAME, &
+    & FILLVALUE, CLEAN, FORMAT, WIDTH, WHOLEARRAY, STATS, RMS, &
+    & unique, LBOUND )
+    integer, intent(in) :: ARRAY(:)
+    character(len=*), intent(in), optional :: NAME
+    integer, intent(in), optional :: FILLVALUE
+    logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    logical, intent(in), optional :: WHOLEARRAY
+    logical, intent(in), optional :: STATS
+    logical, intent(in), optional :: RMS
+    logical, intent(in), optional :: UNIQUE
+    integer, intent(in), optional :: LBOUND ! Low bound for Array
+    ! Local variables
+    integer                                  :: i
+    integer, dimension(size(array)) :: summed
+    ! logical, parameter :: unique = .false. 
+    ! Executable
+    if ( size(array) < 1 ) return
+    summed(1) = array(1)
+    if ( size(array) > 1 ) then
+      do i=2, size(array)
+        summed(i) = array(i) + summed(i-1)
+      enddo
+    endif
+    call dump ( summed, NAME, &
+    & FILLVALUE, CLEAN, FORMAT, WIDTH, WHOLEARRAY, STATS, RMS, unique, LBOUND )
+  end subroutine DUMPSUMS_INTEGER
+
+  subroutine DUMPSUMS_REAL ( ARRAY, NAME, &
+    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, &
+    & unique, LBOUND )
+    real, intent(in) :: ARRAY(:)
+    character(len=*), intent(in), optional :: NAME
+    real, intent(in), optional :: FILLVALUE
+    logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    logical, intent(in), optional :: WHOLEARRAY
+    logical, intent(in), optional :: STATS
+    logical, intent(in), optional :: RMS
+    logical, intent(in), optional :: UNIQUE
+    integer, intent(in), optional :: LBOUND ! Low bound for Array
+    ! Local variables
+    integer                                  :: i
+    real, dimension(size(array)) :: summed
+    ! Executable
+    if ( size(array) < 1 ) return
+    summed(1) = array(1)
+    if ( size(array) > 1 ) then
+      do i=2, size(array)
+        summed(i) = array(i) + summed(i-1)
+      enddo
+    endif
+    call dump ( summed, NAME, &
+      & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, unique, LBOUND )
+  end subroutine DUMPSUMS_REAL
+
   ! -----------------------------------  dumpTable  -----
   ! This family of routines dumps a table of values and headers
   ! The headside determines on which of the 4 sides 
@@ -2719,7 +2823,6 @@ contains
   
   logical function uniqueonly ( WHOLEARRAY, STATS, RMS )
     logical, intent(in), optional :: WHOLEARRAY, STATS, RMS
-    logical :: myWHOLEARRAY, mySTATS, myRMS
     ! Executable
     uniqueonly = .true.
     if ( present(wholeArray) ) uniqueonly = .not. wholeArray
@@ -2740,6 +2843,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.81  2008/08/27 16:23:41  pwagner
+! Added dumpSums
+!
 ! Revision 2.80  2008/07/10 00:13:30  pwagner
 ! SelfDiff can now print half wave lengths
 !
