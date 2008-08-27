@@ -293,7 +293,7 @@ contains
            & SbRatio, Update, Ptan, Chi_Out, Radiance, MIF_Times, DeadTime, &
            & Jacobian, RowFlags, dh_dz_out, dx_dh_out, ptan_Der )
 
-    ! Interpolate the radiance from Chi_In to Chi_Out, and maybe dI/PTan too.
+    ! Interpolate the radiance from Chi_In to Chi_Out, and maybe dI/dPTan too.
 
     use MatrixModule_1, only: FINDBLOCK, MATRIX_T
     use MLSCommon, only: R8, RP, RV
@@ -652,11 +652,15 @@ contains
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module Convolve_All_m
 
 ! $Log$
+! Revision 2.6  2008/08/27 19:56:51  vsnyder
+! Add PRINT to not_used_here
+!
 ! Revision 2.5  2006/08/02 19:55:33  vsnyder
 ! Tell CreateBlock that Convolve creates it, for leak tracking
 !
