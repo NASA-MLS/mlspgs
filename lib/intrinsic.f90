@@ -255,11 +255,15 @@ contains ! =====     Public procedures     =============================
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.61  2008/08/27 19:58:30  vsnyder
+! Add PRINT to not_used_here
+!
 ! Revision 2.60  2006/03/23 01:50:12  vsnyder
 ! Add Empty_OK parameter
 !
