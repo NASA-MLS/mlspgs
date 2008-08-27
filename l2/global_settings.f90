@@ -1002,11 +1002,15 @@ contains
   character (len=len(idParm)) :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.128  2007/12/14 01:50:47  pwagner
+! Zero out Fill values from BO_stat
+!
 ! Revision 2.127  2007/10/04 20:43:12  vsnyder
 ! Remove unused symbols
 !

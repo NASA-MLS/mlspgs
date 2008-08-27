@@ -215,7 +215,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
     type (QuantityTemplate_T) :: TEMPLATE ! Template for this quantity.
     integer :: index            ! Index of this quantity into vector database
     real(rv), dimension(:,:), pointer :: VALUES => NULL() ! The dimensions of
-    ! VALUES are Auxiliar coordinates (or 1) * Frequencies (or 1) * Vertical
+    ! VALUES are Auxiliary coordinates (or 1) * Frequencies (or 1) * Vertical
     ! Coordinates (or 1), and Horizontal Instances (scan or profile or 1). 
     ! These are taken from (template%noAux * template%noChans *
     ! template%noSurfs, template%noInstances).
@@ -2549,6 +2549,7 @@ contains ! =====     Public Procedures     =============================
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module VectorsModule
@@ -2556,6 +2557,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.133  2008/06/09 20:33:59  vsnyder
+! Repair some broken comments
+!
 ! Revision 2.132  2008/06/05 02:06:06  vsnyder
 ! Comments about Aux grids
 !

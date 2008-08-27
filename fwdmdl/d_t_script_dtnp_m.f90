@@ -127,10 +127,14 @@ contains
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module D_T_SCRIPT_DTNP_M
 ! $Log$
+! Revision 2.6  2007/06/26 00:38:55  vsnyder
+! Use column-sparse eta
+!
 ! Revision 2.5  2005/11/01 23:02:21  vsnyder
 ! PFA Derivatives
 !

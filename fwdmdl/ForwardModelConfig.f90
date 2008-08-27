@@ -1362,11 +1362,15 @@ contains
     character (len=len(idParm)) :: Id = IdParm
     !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.101  2008/07/31 17:39:34  vsnyder
+! Add PhaseFrqTol to the config
+!
 ! Revision 2.100  2008/05/20 00:27:32  vsnyder
 ! Add GenerateTScat field
 !
