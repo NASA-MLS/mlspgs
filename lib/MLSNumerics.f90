@@ -59,6 +59,9 @@ module MLSNumerics              ! Some low level numerical stuff
 ! FillLookUpTable          Fill table with evaluations at regularly-spaced args
 !                            to be used in place of later, frequent evaluations;
 !                            reversing role of (table, xtable) => function^(-1)
+! FindInRange                Finds indices of array elements for which values
+!                            lie within a range
+!                            (list need not be monotonic)
 ! Hunt                     Finds index of item(s) in list closest to prey
 !                           (list must be monotonic)
 ! HuntRange                Finds index range between which
@@ -89,6 +92,7 @@ module MLSNumerics              ! Some low level numerical stuff
 !     [nprec xS], [nprec xE] )
 ! FillLookUpTable ( nprec extern fun, nprec table(:), nprec x1, nprec x2, &
 !   [int N], [nprec xtable(:)] )
+! FindInRange ( num list(:), num vrange(2), int which(:), [how_many], [options] )
 ! Hunt ( nprec list, nprec values, int indices(:), &
 !   [int start], [log allowTopValue], [log allowBelowValue], &
 !   [log nearest], [log logSpace], [log fail] )
@@ -121,7 +125,7 @@ module MLSNumerics              ! Some low level numerical stuff
   public :: ClosestElement
   public :: dFdxApproximate, d2Fdx2Approximate
   public :: FApproximate, FInvApproximate, IFApproximate
-  public :: Destroy, Dump, Hunt, HuntRange
+  public :: Destroy, Dump, FindInRange, Hunt, HuntRange
   public :: InterpolateArraySetup, InterpolateArrayTeardown, InterpolateValues
   public :: FillLookUpTable, UseLookUpTable
   public :: SetUp
@@ -294,6 +298,10 @@ module MLSNumerics              ! Some low level numerical stuff
 
   interface FillLookUpTable
     module procedure FillLookUpTable_r4, FillLookUpTable_r8
+  end interface
+
+  interface FindInRange
+    module procedure FindInRange_int, FindInRange_r4, FindInRange_r8
   end interface
 
   interface Hunt
@@ -1123,6 +1131,45 @@ contains
     integer, parameter :: RK = R8
     include 'FillLookUpTable.f9h'
   end subroutine FillLookUpTable_r8
+
+! ------------------------------------------------  FindInRange  -----
+! This family of subroutines search not for a single index
+! but for all at which the corresponding elements
+! lie within a range of values, inclusive
+! If none, return (/ 0, .., 0 /)
+! Special interpretation: inclusive means
+! if vrange(1) == vrange(2), any values of list also == vrange
+! are within that range
+! Unlike Hunt, list need not be monotonic
+! options may include any of the following characters
+!    character            meaning
+!    ---------            -------
+!       a                 ignore sign
+!       r                 reverse sense (i.e. find outside range)
+!       c                 modulo 360 degress
+  subroutine FindInRange_int ( list, vrange, which, how_many, options )
+    integer, parameter :: RK = R4
+    ! Dummy args
+    integer, dimension(:) :: list
+    integer, dimension(2) :: vrange
+    include 'FindInRange.f9h'
+  end subroutine FindInRange_int
+
+  subroutine FindInRange_r4 ( list, vrange, which, how_many, options )
+    integer, parameter :: RK = R4
+    ! Dummy args
+    real(rk), dimension(:) :: list
+    real(rk), dimension(2) :: vrange
+    include 'FindInRange.f9h'
+  end subroutine FindInRange_r4
+
+  subroutine FindInRange_r8 ( list, vrange, which, how_many, options )
+    integer, parameter :: RK = R8
+    ! Dummy args
+    real(rk), dimension(:) :: list
+    real(rk), dimension(2) :: vrange
+    include 'FindInRange.f9h'
+  end subroutine FindInRange_r8
 
 ! -------------------------------------------------  HuntArray_r4  -----
 
@@ -2108,6 +2155,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.60  2008/09/03 20:43:48  pwagner
+! Added FindInRange
+!
 ! Revision 2.59  2008/06/06 22:52:21  pwagner
 ! EssentiallyEqual moved to MLSFillValues
 !
