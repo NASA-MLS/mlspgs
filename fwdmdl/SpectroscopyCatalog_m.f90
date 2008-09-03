@@ -407,6 +407,7 @@ contains ! =====  Public Procedures  ===================================
           call get_string ( sub_rosa(subtree(2,j)), fileType, strip=.true. )
           j = subtree(1,j)
         end if
+        spectroscopyFile = sub_rosa(j)
         ! call get_string ( sub_rosa(j), fileName, strip=.true. )
         call get_file_name ( pcfID, &
           & spectroscopyFile, filedatabase, MLSFile, toolkit, &
@@ -1458,11 +1459,15 @@ contains ! =====  Public Procedures  ===================================
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.45  2008/05/02 00:45:48  vsnyder
+! Remove unused symbols
+!
 ! Revision 2.44  2008/04/01 16:59:17  pwagner
 ! Can get hdf5 spectroscopy file path/name from PCF
 !
