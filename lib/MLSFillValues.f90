@@ -29,6 +29,7 @@ module MLSFillValues              ! Some FillValue-related stuff
   public :: extremum
   public :: FillFunction, InfFunction, NaNFunction
   public :: FilterValues
+  public :: GatherArray
   public :: HalfWaves
   public :: IsFillValue
   public :: IsFinite, IsInfinite, IsNaN
@@ -63,6 +64,7 @@ module MLSFillValues              ! Some FillValue-related stuff
 !                               (optionally allocates bloc first)
 ! Extremum                     Returns the value farther from 0
 ! FillFunction                 Returns the Fill value
+! GatherArray                  Gather a subset of elements from a larger array
 ! InfFunction                  Returns the Infinite value
 ! NaNFunction                  Returns the NaN value
 ! FilterValues                 Filters entries in two arrays
@@ -90,6 +92,8 @@ module MLSFillValues              ! Some FillValue-related stuff
 ! ExtractArray ( bloc, array, int range[2], [char* options] )
 ! nprec Extremum( nprec arg1, nprec arg2 )
 ! nprec FillFunction( nprec arg )
+! GatherArray ( bloc, array, int which1[:], &
+!   [int which2(:)], [int which3(:), [char* options] )
 ! halfWaves( nprec array[:], int lengths[:], [int nWaves] )
 ! nprec InfFunction( nprec arg )
 ! nprec NaNFunction( nprec arg )
@@ -141,6 +145,13 @@ module MLSFillValues              ! Some FillValue-related stuff
 
   interface FillFunction
     module procedure FillFunction_REAL, FillFunction_DOUBLE
+  end interface
+
+  interface GatherArray
+    module procedure GatherArray_1d_r4, GatherArray_1d_r8
+    module procedure GatherArray_2d_r4, GatherArray_2d_r8
+    module procedure GatherArray_3d_r4, GatherArray_3d_r8
+    module procedure GatherArray_1d_int
   end interface
 
   interface halfWaves
@@ -607,6 +618,77 @@ contains
     real                    :: value
     value = UndefinedValue
   end function FillFunction_REAL
+
+! -------------------------------------------------  GatherArray  -----
+! Calculates the half-wave lengths of an array
+! i.e., the number of consecutive pos. or neg. values
+  subroutine GatherArray_1d_int ( ibloc, iarray, which1, options )
+    integer, dimension(:), pointer :: ibloc
+    integer, dimension(:), pointer :: iarray ! The larger array
+    integer, parameter :: RK = R4
+    integer, dimension(:), intent(in)     :: which1
+    character(len=*), intent(in), optional :: options
+    ! Local variables
+    real(rk), dimension(:), pointer :: bloc => null()
+    real(rk), dimension(:), pointer :: array => null() ! The larger array
+    integer :: status
+    ! Executable
+    if ( associated(ibloc) ) then
+      allocate( bloc(size(ibloc)), stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, "unable to allocate 1-d bloc for int gathering" )
+    endif
+    allocate( array(size(iarray)), stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, "unable to allocate 1-d array for int gathering" )
+    array = iarray
+    call GatherArray ( bloc, array, which1, options )
+    if ( .not. associated(ibloc) ) then
+      allocate( ibloc(size(bloc)), stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, "unable to allocate 1-d bloc for int extracting" )
+    endif
+    ibloc = bloc
+    deallocate( bloc, array, stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, "unable to deallocate 1-d bloc for int extracting" )
+  end subroutine GatherArray_1d_int
+
+  subroutine GatherArray_1d_r4 ( bloc, array, which1, options )
+    integer, parameter :: RK = r4
+    character, parameter :: DIRECTION = 'g'
+    include 'GatherScatter_1d.f9h'
+  end subroutine GatherArray_1d_r4
+
+  subroutine GatherArray_2d_r4 ( bloc, array, which1, which2, options )
+    integer, parameter :: RK = r4
+    character, parameter :: DIRECTION = 'g'
+    include 'GatherScatter_2d.f9h'
+  end subroutine GatherArray_2d_r4
+
+  subroutine GatherArray_3d_r4 ( bloc, array, which1, which2, which3, options )
+    integer, parameter :: RK = r4
+    character, parameter :: DIRECTION = 'g'
+    include 'GatherScatter_3d.f9h'
+  end subroutine GatherArray_3d_r4
+
+  subroutine GatherArray_1d_r8 ( bloc, array, which1, options )
+    integer, parameter :: RK = R8
+    character, parameter :: DIRECTION = 'g'
+    include 'GatherScatter_1d.f9h'
+  end subroutine GatherArray_1d_r8
+
+  subroutine GatherArray_2d_r8 ( bloc, array, which1, which2, options )
+    integer, parameter :: RK = R8
+    character, parameter :: DIRECTION = 'g'
+    include 'GatherScatter_2d.f9h'
+  end subroutine GatherArray_2d_r8
+
+  subroutine GatherArray_3d_r8 ( bloc, array, which1, which2, which3, options )
+    integer, parameter :: RK = R8
+    character, parameter :: DIRECTION = 'g'
+    include 'GatherScatter_3d.f9h'
+  end subroutine GatherArray_3d_r8
 
 ! -------------------------------------------------  HalfWaves  -----
 ! Calculates the half-wave lengths of an array
@@ -2273,6 +2355,9 @@ end module MLSFillValues
 
 !
 ! $Log$
+! Revision 2.17  2008/09/03 20:41:17  pwagner
+! Added GatherArray
+!
 ! Revision 2.16  2008/07/10 00:12:43  pwagner
 ! Added extremum, halfWaves
 !
