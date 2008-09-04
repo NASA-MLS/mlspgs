@@ -628,11 +628,15 @@ contains
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module TREE
 
 ! $Log$
+! Revision 2.11  2008/09/04 00:45:51  vsnyder
+! Add PRINT to not_used_here
+!
 ! Revision 2.10  2006/07/28 02:00:17  vsnyder
 ! Pure cannonball polishing
 !
