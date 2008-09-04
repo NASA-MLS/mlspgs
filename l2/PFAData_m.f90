@@ -668,11 +668,15 @@ contains ! =====     Public Procedures     =============================
   character (len=len(idParm)) :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module PFAData_m
 
 ! $Log$
+! Revision 2.26  2008/09/04 20:00:28  vsnyder
+! Add PRINT statement in not_used_here
+!
 ! Revision 2.25  2006/06/15 20:39:59  vsnyder
 ! Add PFA oversampling
 !
