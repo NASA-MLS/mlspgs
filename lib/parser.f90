@@ -126,11 +126,11 @@ contains ! ====     Public Procedures     ==============================
   end subroutine BUILD_TREE
 
 ! --------------------------------------------------------  EXPON  -----
-  recursive subroutine EXPON  ! expon -> unitless unit? => n_unit
+  recursive subroutine EXPON  ! expon -> unitless 'unit' ? => n_unit
                               !       -> string
                               ! unitless -> primary
-                              !          -> + primary => n_plus
-                              !          -> - primary => n_minus
+                              !          -> '+' primary => n_plus
+                              !          -> '-' primary => n_minus
     if ( toggle(par) ) call where ( 'Enter EXPON', advance='yes' )
     if ( next%class == t_string ) then
       call get_token
@@ -342,7 +342,7 @@ o:  do
           call test_token ( t_right_parenthesis )
         end if
     exit
-      case ( t_number )       ! primary -> 'number' 'unit' ?
+      case ( t_number )       ! primary -> 'number'
         call get_token
     exit
       case ( t_left_parenthesis ) ! primary -> '(' expr ')'
@@ -507,6 +507,9 @@ o:  do
 end module PARSER
 
 ! $Log$
+! Revision 2.18  2008/09/04 20:02:20  vsnyder
+! Add PRINT statement in not_used_here + Cannonball polishing
+!
 ! Revision 2.17  2008/09/04 00:46:17  vsnyder
 ! Reverse precedence of unary +/- and units
 !
