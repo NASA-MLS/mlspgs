@@ -345,11 +345,15 @@ contains ! ====     Public Procedures     ==============================
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module EXPR_M
 
 ! $Log$
+! Revision 2.13  2008/09/04 20:03:09  vsnyder
+! Add PRINT statement in not_used_here
+!
 ! Revision 2.12  2005/08/04 02:55:02  vsnyder
 ! Add Expr_Check
 !
