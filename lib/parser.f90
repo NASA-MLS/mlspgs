@@ -19,7 +19,7 @@ module PARSER
   use SYMBOL_TABLE, only: DUMP_1_SYMBOL, DUMP_SYMBOL_CLASS
   use SYMBOL_TYPES ! Everything, except tree_init; remainder begin with T_
   use TOGGLES, only: PAR, TOGGLE
-  use TREE, only: BUILD_TREE, N_TREE_STACK, &
+  use TREE, only: TREE_BUILDER => BUILD_TREE, N_TREE_STACK, POP, &
                   PUSH_PSEUDO_TERMINAL, STACK_SUBTREE
   use TREE_TYPES   ! Everything, especially everything beginning with N_
   implicit NONE
@@ -114,19 +114,44 @@ contains ! ====     Public Procedures     ==============================
     end do
   end subroutine ARRAY
 
+! ---------------------------------------------------  BUILD_TREE  -----
+  subroutine BUILD_TREE ( NEW_NODE, NSONS, DECORATION )
+    integer, intent(in) :: NEW_NODE
+    integer, intent(in) :: NSONS
+    integer, intent(in), optional :: DECORATION
+
+    if ( toggle(par) ) call where ( 'Enter BUILD_TREE', advance='yes' )
+    call tree_builder ( new_node, nsons, decoration )
+    if ( toggle(par) ) call output ( nsons, before='Exit  BUILD_TREE ', advance='yes' )
+  end subroutine BUILD_TREE
+
 ! --------------------------------------------------------  EXPON  -----
-  recursive subroutine EXPON  ! expon -> ( +|- )? primary
+  recursive subroutine EXPON  ! expon -> unitless unit? => n_unit
+                              !       -> string
+                              ! unitless -> primary
+                              !          -> + primary => n_plus
+                              !          -> - primary => n_minus
     if ( toggle(par) ) call where ( 'Enter EXPON', advance='yes' )
-    if ( next%class == t_plus ) then
+    if ( next%class == t_string ) then
       call get_token
-      call primary
-      call build_tree ( n_plus, 1 )
-    else if ( next%class == t_minus ) then
-      call get_token
-      call primary
-      call build_tree ( n_minus, 1 )
     else
-      call primary
+      if ( next%class == t_plus ) then
+        call get_token
+        call primary
+        call build_tree ( n_plus, 1 )
+      else if ( next%class == t_minus ) then
+        call get_token
+        call primary
+        call build_tree ( n_minus, 1 )
+      else
+        call primary
+      end if
+      if ( next%class == t_identifier ) then
+        ! First, put unit back on stack (it was popped at end of PRIMARY)
+        call push_pseudo_terminal ( next%string_index, next%source )
+        call build_tree ( n_unit, 2 )
+        call get_token  ! the identifier is used up
+      end if
     end if
     if ( toggle(par) ) call output ( 'Exit  EXPON', advance='yes' )
   end subroutine EXPON 
@@ -301,7 +326,7 @@ o:  do
           call test_token ( t_identifier )
           call build_tree ( n_dot, 2 )
         else if ( next%class == t_left_parenthesis ) then
-          ! primary -> 'name' '(' expr list ',' ')' 'unit'?
+          ! primary -> 'name' '(' expr list ',' ')'
           n = 1
           call get_token
           do while ( next%class /= t_right_parenthesis )
@@ -315,30 +340,15 @@ o:  do
                                             ! test_token will push the unit
                                             ! name if it's there
           call test_token ( t_right_parenthesis )
-          if ( next%class == t_identifier ) then
-            call build_tree ( n_unit, 2 )
-            call get_token    ! the identifier is used up
-          end if
         end if
     exit
       case ( t_number )       ! primary -> 'number' 'unit' ?
         call get_token
-        if ( next%class == t_identifier ) then
-          call build_tree ( n_unit, 2 )
-          call get_token      ! the identifier is used up
-        end if
     exit
-      case ( t_string )       ! primary -> 'string'
-        call get_token
-    exit
-      case ( t_left_parenthesis ) ! primary -> '(' expr ')' 'unit' ?
+      case ( t_left_parenthesis ) ! primary -> '(' expr ')'
         call get_token
         call expr
         call test_token ( t_right_parenthesis )
-        if ( next%class == t_identifier ) then
-          call build_tree ( n_unit, 2 )
-          call get_token      ! the identifier is used up
-        end if
     exit
       case default
         if ( error > 1 ) exit
@@ -353,6 +363,7 @@ o:  do
     exit
       end select
     end do
+    if ( next%class == t_identifier ) call pop ( 1 ) ! delete unit name
     if ( toggle(par) ) call output ( 'Exit  PRIMARY', advance='yes' )
   end subroutine PRIMARY
 ! ---------------------------------------------------------  SPEC  -----
@@ -490,11 +501,15 @@ o:  do
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module PARSER
 
 ! $Log$
+! Revision 2.17  2008/09/04 00:46:17  vsnyder
+! Reverse precedence of unary +/- and units
+!
 ! Revision 2.16  2006/03/22 03:04:00  vsnyder
 ! Allow empty spec field values
 !
