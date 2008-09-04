@@ -231,6 +231,7 @@ contains ! =====     Public Procedures     =============================
 
         ! Then for all the pressures and temperatures....
         do tx = 1, temperatures%noSurfs
+          ! temperatures%surfs is really log temperature
           t = exp(temperatures%surfs(tx,1))
           do px = 1, pressures%noSurfs
             p = 10.0_rp**(-pressures%surfs(px,1))
@@ -430,11 +431,15 @@ contains ! =====     Public Procedures     =============================
   character (len=len(idParm)) :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module Create_PFAData_m
 
 ! $Log$
+! Revision 2.22  2008/09/04 19:59:32  vsnyder
+! Add PRINT statement in not_used_here
+!
 ! Revision 2.21  2006/07/29 03:01:41  vsnyder
 ! Send module name to AllocateOneSlabs
 !
