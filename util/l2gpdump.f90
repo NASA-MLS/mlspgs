@@ -19,15 +19,15 @@ PROGRAM L2GPDump ! dumps L2GPData files
    use Hdf, only: DFACC_READ
    use HDF5, only: h5fclose_f, h5gopen_f, h5gclose_f, h5fis_hdf5_f   
    use intrinsic, only: l_swath
-   use L2GPData, only: Dump, L2GPData_T, ReadL2GPData, DestroyL2GPContents, &
-     & L2GPNameLen, MAXSWATHNAMESBUFSIZE, RGP
+   use L2GPData, only: L2GPData_T, L2GPNameLen, MAXSWATHNAMESBUFSIZE, RGP, &
+     & Dump, DumpRange, ReadL2GPData, DestroyL2GPContents
    use MACHINE, only: HP, GETARG
    use MLSFiles, only: HDFVERSION_5, MLS_INQSWATH, &
      & mls_io_gen_closeF, mls_io_gen_openF, split_path_name
    use MLSHDF5, only: mls_h5open, mls_h5close
    use MLSMessageModule, only: MLSMessageConfig, MLSMSG_Error, MLSMSG_Warning, &
      & MLSMessage
-   use MLSStringLists, only: ExpandStringRange, &
+   use MLSStringLists, only: catLists, ExpandStringRange, &
      & GetStringElement, NumStringElements, &
      & stringElement, stringElementNum
    use OUTPUT_M, only: blanks, newline, OUTPUT, outputNamedValue, &
@@ -67,6 +67,10 @@ PROGRAM L2GPDump ! dumps L2GPData files
      character(len=255) ::  attrInquiry = ''
      character(len=255) ::  fields = ''
      character(len=255) ::  swaths = '*' ! wildcard, meaning all swaths
+     character(len=255) ::  geoBoxNames = '' ! which geolocation names to box
+     integer            ::  nGeoBoxDims = 0
+     real, dimension(4) ::  geoBoxLowBound
+     real, dimension(4) ::  geoBoxHiBound
      real    ::             ConvergenceCutOff = -1. ! Show % above, below this
      real    ::             PrecisionCutOff = -1. ! Show % above, below this
      real    ::             QualityCutOff = -1. ! Show % above, below this
@@ -172,6 +176,15 @@ contains
         call getarg ( i+1+hp, argstr )
         read( argstr, * ) options%convergenceCutOff
         i = i + 1
+      else if ( filename(1:4) == '-geo' ) then
+        call getarg ( i+1+hp, filename )
+        options%geoBoxNames = catLists( options%geoBoxNames, filename )
+        i = i + 1
+        options%nGeoBoxDims = min( options%nGeoBoxDims + 1, 4 )
+        call getarg ( i+1+hp, filename )
+        read( filename, * ) options%geoBoxLowBound(options%nGeoBoxDims), &
+          & options%geoBoxHiBound(options%nGeoBoxDims)
+        i = i + 1
       else if ( filename(1:6) == '-inqat' ) then
         call getarg ( i+1+hp, options%attrInquiry )
         i = i + 1
@@ -239,6 +252,11 @@ contains
       write (*,*) ' Options: -f filename => use filename'
       write (*,*) '          -h          => print brief help'
       write (*,*) '          -chunks cl  => dump only chunks named in cl'
+      write (*,*) '          -geo name lo,hi  '
+      write (*,*) '                      => dump only geobox low <= geo <= hi'
+      write (*,*) '                      where geo in {latitude, longitude, time, pressure}'
+      write (*,*) '                      (may be repeated)'
+      write (*,*) '                      if hi < lo then dump is outside geobox'
       write (*,*) '          -[n]inqattr attr'
       write (*,*) '                      => print only if attribute attr [not] present'
       write (*,*) '          -[n]inqds ds'
@@ -500,7 +518,12 @@ contains
      call deallocate_test( oddStatus, 'oddStatus', ModuleName )
      if ( alreadyDumped ) return
      ! Dump the actual swath
-     if ( options%chunks == '*' ) then
+     if ( options%nGeoBoxDims > 0 ) then
+       call dumpRange( l2gp, &
+         & options%geoBoxNames, options%geoBoxLowBound, options%geoBoxHiBound, &
+         & columnsOnly=options%columnsOnly, details=options%details, &
+         & fields=options%fields )
+     elseif ( options%chunks == '*' ) then
        call dump(l2gp, options%columnsOnly, options%details, options%fields)
        call showSummary
      else
@@ -590,6 +613,9 @@ end program L2GPDump
 !==================
 
 ! $Log$
+! Revision 1.4  2007/10/12 23:38:56  pwagner
+! Shows num profiles good, unuseable, with odd status
+!
 ! Revision 1.3  2007/06/14 21:45:42  pwagner
 ! Many bugs corrected regarding percentages
 !
