@@ -630,6 +630,9 @@ contains ! =====     Public Procedures     =============================
   ! picking out a set of subscripts for freqs, level2, times
   ! based on input range(s) for latitude, pressure, etc.
 
+  ! A trick: if the lowBound > hiBound then the sense is reversed
+  ! i.e. find subscripts outside corresponding range
+
   ! Note that this does not do the more useful task:
   ! Reposition an l2gp record onto a new set of geolocations
   ! via multi-dimensional or repeated interpolation
@@ -650,30 +653,30 @@ contains ! =====     Public Procedures     =============================
     real(rgp), dimension(2) :: longitudes  ! range
     real(r8), dimension(2) :: times  ! range
     ! Executable
-    pressures(1)  = 0.
-    latitudes(1)  = 0.
-    longitudes(1) = 0.
-    times(1)      = 0.
-    pressures(2)  = -100.
-    latitudes(2)  = -100.
-    longitudes(2) = -100.
-    times(2)      = -100.
-    elem = stringElementNum( lowerCase(geoBoxNames), 'pressures', countEmpty )
+    pressures(1)  = ol2gp%MissingValue
+    latitudes(1)  = ol2gp%MissingValue
+    longitudes(1) = ol2gp%MissingValue
+    times(1)      = ol2gp%MissingValue
+    pressures(2)  = ol2gp%MissingValue
+    latitudes(2)  = ol2gp%MissingValue
+    longitudes(2) = ol2gp%MissingValue
+    times(2)      = ol2gp%MissingValue
+    elem = stringElementNum( lowerCase(geoBoxNames), 'pressure', countEmpty )
     if ( elem > 0 ) then
       pressures(1)   = geoBoxLowBound(elem)
       pressures(2)   = geoBoxHiBound(elem)
     endif
-    elem = stringElementNum( lowerCase(geoBoxNames), 'latitudes', countEmpty )
+    elem = stringElementNum( lowerCase(geoBoxNames), 'latitude', countEmpty )
     if ( elem > 0 ) then
       latitudes(1)   = geoBoxLowBound(elem)
       latitudes(2)   = geoBoxHiBound(elem)
     endif
-    elem = stringElementNum( lowerCase(geoBoxNames), 'longitudes', countEmpty )
+    elem = stringElementNum( lowerCase(geoBoxNames), 'longitude', countEmpty )
     if ( elem > 0 ) then
       longitudes(1)   = geoBoxLowBound(elem)
       longitudes(2)   = geoBoxHiBound(elem)
     endif
-    elem = stringElementNum( lowerCase(geoBoxNames), 'times', countEmpty )
+    elem = stringElementNum( lowerCase(geoBoxNames), 'time', countEmpty )
     if ( elem > 0 ) then
       times(1)   = geoBoxLowBound(elem)
       times(2)   = geoBoxHiBound(elem)
@@ -702,6 +705,7 @@ contains ! =====     Public Procedures     =============================
     integer :: useFreqs  
     integer :: useLevels 
     integer :: useTimes  
+    ! logical, parameter :: DEEBug = .true.
     
     ! Executable
     do i=1, max( ol2gp%nFreqs, 1 )
@@ -713,36 +717,82 @@ contains ! =====     Public Procedures     =============================
     do i=1, max( ol2gp%nLevels, 1 )
       whichLevels(i)=i
     enddo
-    useFreqs = ol2gp%nFreqs
+    useFreqs = max( ol2gp%nFreqs, 1 )
     useTimes = ol2gp%nTimes
     useLevels = ol2gp%nLevels
     if ( present(pressures) ) then
-      if ( pressures(2) >= pressures(1) ) call FindInRange( ol2gp%pressures, pressures, whichLevels, useLevels )
+      if ( any(IsFillValue(pressures, ol2gp%MissingValue)) ) then
+        ! we do nothing
+      elseif ( pressures(2) >= pressures(1) ) then
+        call FindInRange( ol2gp%pressures, pressures, whichLevels, useLevels )
+      else
+        ! Reverse sense (i.e., find outside of range)
+        call FindInRange( ol2gp%pressures, pressures, whichLevels, useLevels, options='-r' )
+      endif
     endif
     if ( present(latitudes) ) then
-      if ( latitudes(2) >= latitudes(1) ) then
-        call FindInRange( ol2gp%latitude, latitudes, tempTimes, n )
-        intrsctn => Intersection( whichTimes, tempTimes )
+      if ( any(IsFillValue(latitudes, ol2gp%MissingValue)) ) then
+        ! we do nothing
+      else
+        if ( latitudes(2) >= latitudes(1) ) then
+          call FindInRange( ol2gp%latitude, latitudes, tempTimes, n )
+        else
+          ! Reverse sense (i.e., find outside of range)
+          call FindInRange( ol2gp%latitude, latitudes, tempTimes, n, options='-r' )
+        endif
+        intrsctn => Intersection( whichTimes(1:useTimes), tempTimes(1:n) )
         useTimes = size(intrsctn)
         whichTimes(1:useTimes) = intrsctn
+        if ( DeeBug ) then
+          call dump( latitudes, 'latitudes' )
+          call outputNamedValue( 'n', n )
+          call dump( tempTimes(1:n), 'tempTimes' )
+          call dump( intrsctn(1:useTimes), 'intrsctn' )
+        endif
         call deallocate_test( intrsctn, 'intersection with lats', ModuleName )
       endif
     endif
     if ( present(longitudes) ) then
-      if ( longitudes(2) >= longitudes(1) ) then
-        call FindInRange( ol2gp%longitude, longitudes, tempTimes, n )
-        intrsctn => Intersection( whichTimes, tempTimes )
+      if ( any(IsFillValue(longitudes, ol2gp%MissingValue)) ) then
+        ! we do nothing
+      else
+        if ( longitudes(2) >= longitudes(1) ) then
+          call FindInRange( ol2gp%longitude, longitudes, tempTimes, n )
+        else
+          ! Reverse sense (i.e., find outside of range)
+          call FindInRange( ol2gp%longitude, longitudes, tempTimes, n, options='-r' )
+        endif
+        intrsctn => Intersection( whichTimes(1:useTimes), tempTimes(1:n) )
         useTimes = size(intrsctn)
         whichTimes(1:useTimes) = intrsctn
-        call deallocate_test( intrsctn, 'intersection with longs', ModuleName )
+        if ( DeeBug ) then
+          call dump( longitudes, 'longitudes' )
+          call outputNamedValue( 'n', n )
+          call dump( tempTimes(1:n), 'tempTimes' )
+          call dump( intrsctn(1:useTimes), 'intrsctn' )
+        endif
+        call deallocate_test( intrsctn, 'intersection with lons', ModuleName )
       endif
     endif
     if ( present(times) ) then
-      if ( times(2) >= times(1) ) then
-        call FindInRange( ol2gp%time, times, tempTimes, n )
-        intrsctn => Intersection( whichTimes, tempTimes )
+      if ( any(IsFillValue(times, real(ol2gp%MissingValue, r8))) ) then
+        ! we do nothing
+      else
+        if ( times(2) >= times(1) ) then
+          call FindInRange( ol2gp%time, times, tempTimes, n )
+        else
+          ! Reverse sense (i.e., find outside of range)
+          call FindInRange( ol2gp%time, times, tempTimes, n, options='-r' )
+        endif
+        intrsctn => Intersection( whichTimes(1:useTimes), tempTimes(1:n) )
         useTimes = size(intrsctn)
         whichTimes(1:useTimes) = intrsctn
+        if ( DeeBug ) then
+          call dump( times, 'times' )
+          call outputNamedValue( 'n', n )
+          call dump( tempTimes(1:n), 'tempTimes' )
+          call dump( intrsctn(1:useTimes), 'intrsctn' )
+        endif
         call deallocate_test( intrsctn, 'intersection with times', ModuleName )
       endif
     endif
@@ -758,21 +808,44 @@ contains ! =====     Public Procedures     =============================
     l2gp%MissingStatus      = ol2gp%MissingStatus
     l2gp%verticalCoordinate = ol2gp%verticalCoordinate    
     ! Now fill the actual arrays
-    call GatherArray ( l2gp%pressures    , ol2gp%pressures    , whichLevels )
-    call GatherArray ( l2gp%frequency    , ol2gp%frequency    , whichFreqs )
-    call GatherArray ( l2gp%latitude     , ol2gp%latitude     , whichTimes )
-    call GatherArray ( l2gp%longitude    , ol2gp%longitude    , whichTimes )
-    call GatherArray ( l2gp%solarTime    , ol2gp%solarTime    , whichTimes )
-    call GatherArray ( l2gp%solarZenith  , ol2gp%solarZenith  , whichTimes )
-    call GatherArray ( l2gp%losAngle     , ol2gp%losAngle     , whichTimes )
-    call GatherArray ( l2gp%geodAngle    , ol2gp%geodAngle    , whichTimes )
-    call GatherArray ( l2gp%time         , ol2gp%time         , whichTimes )
-    call GatherArray ( l2gp%chunkNumber  , ol2gp%chunkNumber  , whichTimes )
-    call GatherArray ( l2gp%l2gpValue    , ol2gp%l2gpValue    , whichFreqs, whichLevels, whichTimes )
-    call GatherArray ( l2gp%l2gpPrecision, ol2gp%l2gpPrecision, whichFreqs, whichLevels, whichTimes )
-    call GatherArray ( l2gp%status       , ol2gp%status       , whichTimes )
-    call GatherArray ( l2gp%quality      , ol2gp%quality      , whichTimes )
-    call GatherArray ( l2gp%convergence  , ol2gp%convergence  , whichTimes )
+    if ( DeeBug ) then
+      call outputNamedValue( 'UseFreqs', useFreqs )
+      call outputNamedValue( 'UseLevels', useLevels )
+      call outputNamedValue( 'UseTimes', useTimes )
+      call dump( whichFreqs(1:useFreqs), 'whichFreqs' )
+      call dump( whichLevels(1:useLevels), 'whichLevels' )
+      call dump( whichTimes(1:useTimes), 'whichTimes' )
+    endif
+    call GatherArray ( l2gp%pressures    , ol2gp%pressures    , &
+      & whichLevels(1:useLevels) )
+    call GatherArray ( l2gp%frequency    , ol2gp%frequency    , &
+      & whichFreqs(1:useFreqs) )
+    call GatherArray ( l2gp%latitude     , ol2gp%latitude     , &
+      & whichTimes(1:useTimes) )
+    call GatherArray ( l2gp%longitude    , ol2gp%longitude    , &
+      & whichTimes(1:useTimes) )
+    call GatherArray ( l2gp%solarTime    , ol2gp%solarTime    , &
+      & whichTimes(1:useTimes) )
+    call GatherArray ( l2gp%solarZenith  , ol2gp%solarZenith  , &
+      & whichTimes(1:useTimes) )
+    call GatherArray ( l2gp%losAngle     , ol2gp%losAngle     , &
+      & whichTimes(1:useTimes) )
+    call GatherArray ( l2gp%geodAngle    , ol2gp%geodAngle    , &
+      & whichTimes(1:useTimes) )
+    call GatherArray ( l2gp%time         , ol2gp%time         , &
+      & whichTimes(1:useTimes) )
+    call GatherArray ( l2gp%chunkNumber  , ol2gp%chunkNumber  , &
+      & whichTimes(1:useTimes) )
+    call GatherArray ( l2gp%l2gpValue    , ol2gp%l2gpValue    , &
+      & whichFreqs(1:useFreqs), whichLevels(1:useLevels), whichTimes(1:useTimes) )
+    call GatherArray ( l2gp%l2gpPrecision, ol2gp%l2gpPrecision, &
+      & whichFreqs(1:useFreqs), whichLevels(1:useLevels), whichTimes(1:useTimes) )
+    call GatherArray ( l2gp%status       , ol2gp%status       , &
+      & whichTimes(1:useTimes) )
+    call GatherArray ( l2gp%quality      , ol2gp%quality      , &
+      & whichTimes(1:useTimes) )
+    call GatherArray ( l2gp%convergence  , ol2gp%convergence  , &
+      & whichTimes(1:useTimes) )
   end subroutine ContractL2GPRecord_opt
 
   ! ---------------------- cpL2GPData_fileID  ---------------------------
@@ -4841,6 +4914,7 @@ contains
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 !=============================================================================
@@ -4849,6 +4923,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.159  2008/09/03 20:43:09  pwagner
+! Added ContractL2GPRecord, diffRange, dumpRange
+!
 ! Revision 2.158  2008/07/09 16:36:31  pwagner
 ! Fixed "sleepy chunk" syndrome
 !
