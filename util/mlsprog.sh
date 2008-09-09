@@ -32,6 +32,43 @@
 
 # For this final step to operate we must be able to recognize the product files
 # A regular expression rreeggeexx will be sed-ed by the install script
+#------------------------------- extant_files ------------
+#
+# Function to return only those files among the args
+# that actually exist
+# Useful when passed something like *.f which may 
+# (1) expand to list of files, returned as extant_files_result, or
+# (2) stay *.f, in which case a blank is returned as extant_files_result 
+#     (unless you have perversely named a file '*.f')
+# usage: extant_files arg1 [arg2] ..
+
+extant_files()
+{
+   extant_files_result=
+   # Trivial case ($# = 0)
+   if [ "$1" != "" ]
+   then
+      for file
+      do
+         if [ -f "$file" ]
+         then
+               extant_files_result="$extant_files_result $file"
+         fi
+      done
+   fi
+   echo $extant_files_result
+}
+
+#------------------------------- Main Program ------------
+
+#****************************************************************
+#                                                               *
+#                  * * * Main Program  * * *                    *
+#                                                               *
+#                                                               *
+#	The entry point where control is given to the script         *
+#****************************************************************
+#
 
 NORMAL_STATUS=2
 # Use the following line to add extra options to MLSPROG
@@ -67,7 +104,15 @@ fi
 # repack level 2 product files to speed things up
 if [ -x "$H5REPACK" ]
 then
-  files=`echo rreeggeexx`
+  files=`extant_files rreeggeexx`
+  if [ "$files" = "" ]
+  then
+    if [ -d "outputs" ]
+    then
+      cd "outputs"
+      files=`extant_files rreeggeexx`
+    fi
+  fi
   for file in $files
   do
     if [ -w "$file" ]
@@ -96,6 +141,9 @@ else
 fi
 
 # $Log$
+# Revision 1.5  2006/04/12 22:39:24  pwagner
+# Needed to define H5REPACK before its use
+#
 # Revision 1.4  2006/04/03 23:09:09  pwagner
 # Added repacking
 #
