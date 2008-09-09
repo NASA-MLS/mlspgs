@@ -27,12 +27,12 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
      & GetAllHDF5AttrNames, GetAllHDF5DSNames, &
      & mls_h5open, mls_h5close
    use MLSMessageModule, only: MLSMessageConfig, MLSMSG_Error, MLSMSG_Warning, &
-     & MLSMessage
+     & dumpConfig, MLSMessage
    use MLSStats1, only: FILLVALUERELATION, Stat_T, dump, STATISTICS
    use MLSStringLists, only: catLists, GetStringElement, NumStringElements, &
      & StringElementNum
    use MLSStrings, only: lowercase
-   use output_m, only: output
+   use output_m, only: dump, outputOptions, output
    use Time_M, only: Time_Now, time_config
    
    implicit none
@@ -59,8 +59,10 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
     logical             :: la                 = .false.
     logical             :: ls                 = .false.
     logical             :: stats              = .false.
+    logical             :: timereads          = .false. ! Just time how long to read
     logical             :: radiances          = .false.
     logical             :: rms                = .false.
+    logical             :: unique             = .false.
     logical             :: useFillValue       = .false.
     character(len=128)  :: DSName      = '' ! Extra dataset if attributes under one
     character(len=128)  :: root        = '/'
@@ -83,6 +85,7 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
   integer     ::  i, status, error ! Counting indices & Error flags
   logical     :: is_hdf5
   character (len=MAXSDNAMESBUFSIZE) :: mySdList
+  integer     :: recl
   integer     :: sdfid1
   real        :: t1
   real        :: t2
@@ -91,6 +94,11 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
   MLSMessageConfig%useToolkit = .false.
   MLSMessageConfig%logFileUnit = -1
   time_config%use_wall_clock = .true.
+!   inquire( unit=6, recl=recl, name=filename )
+!   print *, 'record length: ', recl
+!   print *, 'file name: ', filename
+!   call dump(outputOptions)
+!   call dumpConfig(MLSMessageConfig)
   ! relationforpctages = '<' ! we want to know % chi^2 are < 1 (or whatever)
   CALL mls_h5open(error)
   n_filenames = 0
@@ -148,15 +156,16 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
       end if
     end if
     if ( options%datasets /= ' ' ) then
-      if ( options%radiances ) then
+      if ( options%radiances .or. options%timereads ) then
         call dumpradiances ( filenames(i), hdfVersion, options )
         sdfid1 = mls_sfstart( filenames(i), DFACC_READ, hdfVersion=hdfVersion )
       elseif ( options%useFillValue ) then
         call DumpHDF5DS ( sdfid1, trim(options%root), trim(options%datasets), &
-          & fillValue=options%fillValue, rms=options%rms, stats=options%stats )
+          & fillValue=options%fillValue, rms=options%rms, stats=options%stats, &
+          & unique=options%unique )
       else
         call DumpHDF5DS ( sdfid1, trim(options%root), trim(options%datasets), &
-          & rms=options%rms, stats=options%stats )
+          & rms=options%rms, stats=options%stats, unique=options%unique )
       endif
     endif
     if ( options%attributes /= ' ' ) then
@@ -187,8 +196,10 @@ contains
      print *, 'list attributes  ?  ', options%la   
      print *, 'list datasets  ?    ', options%ls
      print *, 'stats  ?            ', options%stats  
+     print *, 'just time reads?    ', options%timereads
      print *, 'radiances only    ? ', options%radiances
      print *, 'rms    ?            ', options%rms    
+     print *, 'unique    ?         ', options%unique
      print *, 'useFillValue  ?     ', options%useFillValue
      print *, 'root                ', options%root
      print *, 'fillValue           ', options%fillValue
@@ -279,8 +290,14 @@ contains
       else if ( filename(1:5) == '-rms ' ) then
         options%rms = .true.
         exit
+      else if ( filename(1:4) == '-uni' ) then
+        options%unique = .true.
+        exit
       else if ( filename(1:3) == '-s ' ) then
         options%stats = .true.
+        exit
+      else if ( filename(1:3) == '-t ' ) then
+        options%timereads = .true.
         exit
       else if ( filename(1:3) == '-f ' ) then
         call getarg ( i+1+hp, filename )
@@ -331,7 +348,9 @@ contains
       write (*,*) '          -ls             => just list sd names in files'
       write (*,*) '          -radiances      => show radiances only'
       write (*,*) '          -rms            => just print mean, rms'
+      write (*,*) '          -unique         => print only unique values'
       write (*,*) '          -s              => just show % statistics'
+      write (*,*) '          -t              => just time reads'
       write (*,*) '          -h              => print brief help'
       stop
   end subroutine print_help
@@ -457,6 +476,7 @@ contains
           & ' in ' // trim(File1) )
         cycle
       endif
+      if ( options%timereads ) cycle
       shp = shape(L1bRadiance%DpField)
       if ( options%rms .or. options%stats ) then
       elseif ( options%useFillValue ) then
@@ -506,6 +526,9 @@ end program l2auxdump
 !==================
 
 ! $Log$
+! Revision 1.5  2007/08/17 00:42:38  pwagner
+! Needed to increase MAXDS
+!
 ! Revision 1.4  2007/02/06 23:20:19  pwagner
 ! -radiances options dumps only radiances
 !
