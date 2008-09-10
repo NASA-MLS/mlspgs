@@ -1879,7 +1879,8 @@ contains
   end subroutine DiffL2GPData_atlast
     
   ! ------------------------------------------ DiffL2GPFiles_MLSFile ------------
-  subroutine DiffL2GPFiles_MLSFile ( L2GPFile1, L2GPFile2, pressures, chunks, &
+  subroutine DiffL2GPFiles_MLSFile ( L2GPFile1, L2GPFile2, &
+    & geoBoxNames, geoBoxLowBound, geoBoxHiBound, pressures, chunks, &
     & Details, wholeArray, stats, rms, ignoreBadChunks, &
     & swList, showMissing, fields, force, swaths1, swaths2, &
     & matchTimes, silent, verbose, numDiffs )
@@ -1889,6 +1890,9 @@ contains
     type(MLSFile_T)               :: L2GPfile2 ! file 2
     real, intent(in), dimension(:), optional :: pressures ! Which heights to dump
     integer, intent(in), dimension(:), optional :: Chunks ! Which chunks to dump
+    character(len=*), intent(in) , optional ::       geoBoxNames
+    real(rgp), dimension(:), intent(in), optional :: geoBoxLowBound  ! range
+    real(rgp), dimension(:), intent(in), optional :: geoBoxHiBound  ! range
     integer, intent(in), optional :: DETAILS ! <=0 => Don't diff data fields
     !                                        ! -1 Skip even geolocation fields
     !                                        ! -2 Skip all but name
@@ -1932,7 +1936,17 @@ contains
         & 'Unable to close l2gp file to diff between', MLSFile=L2GPFile2)
     endif
     
-    if ( present(chunks) .and. present(pressures) ) then
+    if ( present(geoBoxNames) ) then
+      call DiffL2GPFiles_Name ( L2GPFile1%Name, L2GPFile2%Name, &
+      & geoBoxNames=geoBoxNames, &
+      & geoBoxLowBound=geoBoxLowBound, geoBoxHiBound=geoBoxHiBound, &
+      & Details=Details, wholeArray=wholeArray, &
+      & stats=stats, rms=rms, ignoreBadChunks=ignoreBadChunks, &
+      & swList=swList, showMissing=showMissing, &
+      & fields=fields, force=force, swaths1=swaths1, swaths2=swaths2, &
+      & matchTimes=matchTimes, silent=silent, verbose=verbose, &
+      & numDiffs=numDiffs )
+    elseif ( present(chunks) .and. present(pressures) ) then
       call DiffL2GPFiles_Name ( L2GPFile1%Name, L2GPFile2%Name, &
       & pressures=pressures, &
       & chunks=chunks, Details=Details, wholeArray=wholeArray, &
@@ -1978,7 +1992,8 @@ contains
   end subroutine DiffL2GPFiles_MLSFile
     
   ! ------------------------------------------ DiffL2GPFiles_Name ------------
-  subroutine DiffL2GPFiles_Name ( file1, file2, pressures, chunks, &
+  subroutine DiffL2GPFiles_Name ( file1, file2, &
+    & geoBoxNames, geoBoxLowBound, geoBoxHiBound, pressures, chunks, &
     & Details, wholeArray, stats, rms, ignoreBadChunks, &
     & swList, showMissing, fields, force, swaths1, swaths2, matchTimes, &
     & silent, verbose, numDiffs )
@@ -1988,6 +2003,9 @@ contains
     character (len=*), intent(in) :: file2 ! Name of file 2
     real, intent(in), dimension(:), optional :: pressures ! Which heights to diff
     integer, intent(in), dimension(:), optional :: Chunks ! Which chunks to diff
+    character(len=*), intent(in) , optional ::       geoBoxNames
+    real(rgp), dimension(:), intent(in), optional :: geoBoxLowBound  ! range
+    real(rgp), dimension(:), intent(in), optional :: geoBoxHiBound  ! range
     integer, intent(in), optional :: DETAILS ! <=0 => Don't diff data fields
     !                                        ! -1 Skip even geolocation fields
     !                                        ! -2 Skip all but name
@@ -2158,7 +2176,14 @@ contains
            & hdfVersion=the_hdfVersion1 )
       call ReadL2GPData ( File2Handle, trim(swath2), l2gp2, &
            & hdfVersion=the_hdfVersion2 )
-      if ( present(chunks) .and. present(pressures) ) then
+      if ( present(geoBoxNames) ) then
+        call DiffL2GPData_RANGES( l2gp1, l2gp2, &
+        & geoBoxNames, geoBoxLowBound, geoBoxHiBound, chunks=chunks, &
+        & details=details, wholeArray=wholeArray, rms=rms, stats=stats, &
+        & ignoreBadChunks=ignoreBadChunks, fields=fields, &
+        & silent=silent, verbose=verbose, &
+        & numDiffs=numDiffs )
+      elseif ( present(chunks) .and. present(pressures) ) then
         call Diff( l2gp1, l2gp2, pressures=pressures, chunks=chunks, &
         & details=details, wholeArray=wholeArray, rms=rms, stats=stats, &
         & ignoreBadChunks=ignoreBadChunks, fields=fields, &
@@ -4923,6 +4948,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.160  2008/09/09 00:24:49  pwagner
+! Fix bug in dumpRange
+!
 ! Revision 2.159  2008/09/03 20:43:09  pwagner
 ! Added ContractL2GPRecord, diffRange, dumpRange
 !
