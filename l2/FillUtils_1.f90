@@ -2946,12 +2946,14 @@ contains ! =====     Public Procedures     =============================
     end subroutine FillQuantityFromAsciiFile
 
     ! ------------------------------------------- FillQtyFromInterpolatedQty
-    subroutine FillQtyFromInterpolatedQty ( qty, source, force, key, DONTMASK )
+    subroutine FillQtyFromInterpolatedQty ( qty, source, force, key, DONTMASK, &
+      & ptan )
       type (VectorValue_T), intent(inout) :: QTY
       type (VectorValue_T), intent(in) :: SOURCE
       logical, intent(in) :: FORCE
       integer, intent(in) :: KEY
       logical, intent(in) :: dontMask
+      type (VectorValue_T), optional :: PTAN ! press. values
 
       ! Local variables
       real (r8), dimension(:), pointer :: oldSurfs, newSurfs
@@ -2965,12 +2967,12 @@ contains ! =====     Public Procedures     =============================
           & 'Mismatch in quantities' )
         return
       end if
-      if ( .not. doHGridsMatch ( qty, source ) ) then
+      if ( .not. doHGridsMatch ( qty, source ) .and. .not. present(ptan) ) then
         call Announce_error ( key, no_error_code, &
           & 'Mismatch in horizontal grid' )
         return
       end if
-      if ( .not. doFGridsMatch ( qty, source ) ) then
+      if ( .not. doFGridsMatch ( qty, source )  .and. .not. present(ptan) ) then
         call Announce_error ( key, no_error_code, &
           & 'Mismatch in frequency grid' )
         return
@@ -2984,19 +2986,24 @@ contains ! =====     Public Procedures     =============================
         ! This quantity needs vertical interpolation
         ! These checks are for cases the code can't (yet) handle,
         ! may add this functionality later.
-        if ( qty%template%noChans /= 1 ) then
+        if ( present(ptan) ) then
+          ! Very (too?) forgiving
+        elseif ( qty%template%noChans /= 1) then
           call Announce_error ( key, no_error_code, &
             & 'Code cannot (yet?) interpolate multi channel quantities' )
           return
-        end if
-        if ( .not. all ( (/ qty%template%coherent, source%template%coherent /) ) ) then
+        elseif ( .not. all ( (/ qty%template%coherent, source%template%coherent /) ) ) then
           call Announce_error ( key, no_error_code, &
             & 'Code cannot (yet?) interpolate incoherent quantities' )
           return
         end if
 
         ! Work out vertical coordinate issues
-        if ( qty%template%verticalCoordinate == l_pressure ) then
+        if ( present(ptan) ) then
+          oldSurfs => source%template%surfs ( :, 1 )
+          newSurfs => ptan%values ( :, 1 )
+          mySurfs = .false.
+        elseif ( qty%template%verticalCoordinate == l_pressure ) then
           nullify ( oldSurfs, newSurfs )
           call Allocate_test ( oldSurfs, source%template%noSurfs, 'oldSurfs', ModuleName )
           call Allocate_test ( newSurfs, qty%template%noSurfs, 'newSurfs', ModuleName )
@@ -3387,8 +3394,12 @@ contains ! =====     Public Procedures     =============================
           end if
         else
           okSoFar = okSoFar &
-            & .and. quantity%template%noInstances == aorb%template%noInstances &
-            & .and. quantity%template%instanceLen == aorb%template%instanceLen
+            & .and. &
+            & ( &
+            & spreadflag .or. &
+            & quantity%template%noInstances == aorb%template%noInstances &
+            & .and. quantity%template%instanceLen == aorb%template%instanceLen &
+            & )
         end if
 
         if ( .not. okSoFar ) then
@@ -3797,7 +3808,13 @@ contains ! =====     Public Procedures     =============================
             & 'Illegal index for primitives array' )
           return
         endif
-        if ( .not. associated ( quantity%mask ) ) then
+        if ( spreadFlag ) then
+          do level=1, min( size(quantity%values, 1), size(a%values, 1) )
+            quantity%values(level, :) = primitives(np)%values(level, 1)
+          enddo
+          if ( level <=  size(quantity%values, 1) ) &
+            quantity%values(level:, :) = primitives(np)%values(level-1, 1)
+        elseif ( .not. associated ( quantity%mask ) ) then
           quantity%values = primitives(np)%values
         else
           where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 )
@@ -5697,9 +5714,9 @@ contains ! =====     Public Procedures     =============================
 
     end subroutine FillVectorQuantityFromL2GP
 
-    ! -------------------------------------- FillVectorQuantityFromProfile --
+    ! -------------------------------------- FillVectorQtyFromProfile --
     subroutine FillVectorQtyFromProfile ( quantity, valuesNode, &
-      & instancesNode, globalUnit, dontMask, logSpace )
+      & instancesNode, globalUnit, dontMask, logSpace, ptan )
       ! This fill is slightly complicated.  Given a values array along
       ! the lines of [ 1000mb : 1.0K, 100mb : 1.0K,  10mb : 2.0K] etc. it
       ! does the linear interpolation appropriate to perform the fill.
@@ -5709,6 +5726,7 @@ contains ! =====     Public Procedures     =============================
       integer, intent(in) :: GLOBALUNIT   ! Possible global unit
       logical, intent(in) :: DONTMASK     ! If set don't follow the fill mask
       logical, intent(in), optional :: LOGSPACE ! Interpolate in logspace
+      type (VectorValue_T), optional :: PTAN ! press. values
 
       ! Local variables
       integer :: C                      ! Channel loop counter
@@ -5737,9 +5755,9 @@ contains ! =====     Public Procedures     =============================
 
       ! Check the quantity is amenable to this type of fill
       if ( .not. ValidateVectorQuantity ( quantity, &
-        & coherent=.true. ) ) &
+        & coherent=.true. ) .and. .not. present(ptan) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'The quantity is not amenable to a profile fill' )
+        & 'The quantity is not amenable to a profile fill unless you supply ptan ptan' )
 
       ! Check the units
       testUnit = quantity%template%unit
@@ -5764,6 +5782,7 @@ contains ! =====     Public Procedures     =============================
         call expr ( subtree ( i+1, valuesNode ), exprUnit, exprValue )
         ! Check height unit OK
         heightUnit = GetUnitForVerticalCoordinate ( quantity%template%verticalCoordinate )
+        if ( present(ptan) ) heightUnit = PHYQ_Zeta
         if ( exprUnit(1) /= heightUnit .and. exprUnit(1) /= PHYQ_Dimensionless &
           & .and. .not. ( exprUnit(1) == PHYQ_Pressure .and. heightUnit == PHYQ_Zeta ) ) &
           & call Announce_error ( valuesNode, no_Error_Code, 'Bad height units for profile fill' )
@@ -5789,7 +5808,10 @@ contains ! =====     Public Procedures     =============================
       if ( myLogSpace ) values = log ( values )
 
       ! Get the appropriate height coordinate for output, for pressure take log.
-      if ( quantity%template%verticalCoordinate == l_pressure ) then
+      if ( present(ptan) ) then
+        localOutHeights = .false.
+        outHeights => ptan%values(:,1)
+      elseif ( quantity%template%verticalCoordinate == l_pressure ) then
         localOutHeights = .true.
         call Allocate_test ( outHeights, quantity%template%noSurfs, &
           & 'outHeights', ModuleName )
@@ -5801,7 +5823,7 @@ contains ! =====     Public Procedures     =============================
 
       ! Now, if the quantity is coherent, let's assume the user wanted the
       ! 'nearest' values
-      if ( quantity%template%coherent ) then
+      if ( quantity%template%coherent .or. present(ptan) ) then
         nullify ( inInds )
         call allocate_test ( inInds, noPoints, 'inInds', ModuleName )
         call hunt ( outHeights, heights, inInds, &
@@ -5809,8 +5831,8 @@ contains ! =====     Public Procedures     =============================
         if ( fail ) then
           call Announce_Error ( valuesNode, no_error_code, &
           & 'Problem in Hunt' )
-        return
-      end if
+          return
+        end if
         duplicated = .false.
         do i = 1, noPoints - 1
           do j = i + 1, noPoints
@@ -6592,6 +6614,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.11  2008/09/16 22:30:19  pwagner
+! Use optional arg ptan when source is profile, vector
+!
 ! Revision 2.10  2008/08/14 20:58:40  pwagner
 ! /interpolate now possible field in Transfer command
 !
