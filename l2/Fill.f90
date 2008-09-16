@@ -1873,12 +1873,20 @@ contains ! =====     Public Procedures     =============================
         if ( .not. got ( f_profileValues ) ) &
           call Announce_error ( key, no_Error_Code, 'profileValues not supplied' )
         if ( .not. got ( f_instances ) ) instancesNode = 0
+        if ( got ( f_ptanQuantity ) ) then
+          ptanQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(ptanVectorIndex), ptanQuantityIndex)
+        else
+          nullify ( ptanQuantity )
+        end if
         if ( got ( f_logSpace ) ) then
           call FillVectorQtyFromProfile ( quantity, valuesNode, &
-            & instancesNode, vectors(vectorIndex)%globalUnit, dontMask, logSpace=logSpace )
+            & instancesNode, vectors(vectorIndex)%globalUnit, dontMask, &
+            & logSpace=logSpace )
         else
           call FillVectorQtyFromProfile ( quantity, valuesNode, &
-            & instancesNode, vectors(vectorIndex)%globalUnit, dontMask )
+            & instancesNode, vectors(vectorIndex)%globalUnit, dontMask, &
+            & ptan=ptanQuantity )
         end if
 
       case ( l_refract )              ! --------- refraction for phiTan -----
@@ -2233,7 +2241,12 @@ contains ! =====     Public Procedures     =============================
           & vectors(VectorIndex), QuantityIndex )
         sourceQuantity => GetVectorQtyByTemplateIndex( &
           & vectors(sourceVectorIndex), sourceQuantityIndex )
-        if ( quantity%template%name /= sourceQuantity%template%name ) then
+        if ( got ( f_ptanQuantity ) ) then
+          ptanQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(ptanVectorIndex), ptanQuantityIndex)
+          call FillQtyFromInterpolatedQty ( quantity, sourceQuantity, &
+            & force, key, dontMask, ptanQuantity )
+        elseif ( quantity%template%name /= sourceQuantity%template%name ) then
           if ( .not. interpolate .and. .not. force ) then
             call Announce_Error ( key, No_Error_Code, &
               & 'Quantity and sourceQuantity do not have the same template' )
@@ -2361,6 +2374,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.364  2008/09/16 22:29:05  pwagner
+! pass optional field ptanQuantity to profile, vector methods
+!
 ! Revision 2.363  2008/08/14 20:59:00  pwagner
 ! /interpolate now possible field in Transfer command
 !
