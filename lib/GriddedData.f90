@@ -382,7 +382,7 @@ contains
         call outputNamedValue( 'height', NGrid%heights(iHeight) )
         OutGrid%field( iHeight, 1, 1, 1, 1, 1 ) = &
         & UseLookUpTable ( NGrid%heights(iHeight), TGrid%field( :, 1, 1, 1, 1, 1 ), &
-        & xtable=pEta, missingValue=TGrid%missingValue, options='i' )
+        & xtable=pEta, missingValue=TGrid%missingValue, options='ip' )
       enddo
       call dump( OutGrid%field( :, 1, 1, 1, 1, 1 ), 'T out (2)' )
       stop
@@ -617,10 +617,10 @@ contains
     call output ( GriddedData%noDates, advance='yes' )
     if ( myDetails >= 0 .or. GriddedData%noDates < 6 )&
       &  call dump ( GriddedData%dateStarts, &
-      & '    starting dates =' )
+      & '    starting dates =', format='(1pg17.9)' )
     if ( myDetails >= 0 .or. GriddedData%noDates < 6 ) &
       & call dump ( GriddedData%dateEnds, &
-      & '    ending dates =' )
+      & '    ending dates =', format='(1pg17.9)' )
 
     if ( .not. all(ieee_is_finite(GriddedData%field)) ) &
       & call output ( '*** Gridded Data contains non-finite values', advance='yes' )
@@ -632,8 +632,34 @@ contains
     endif
     if ( MAYDUMPFIELDVALUES .and. fieldvaluesdetails > 0 ) then
       call output ( ' ************ tabulated field values ********** ' ,advance='yes')
+      if ( fieldvaluesdetails < 2 ) then
+      ! Do 1d slices through data
+        if ( size(GriddedData%field, 1 ) > 1 ) &
+          & call dump ( GriddedData%field(:,1,1,1,1,1), &
+          & '    gridded field values sliced through heights =', &
+          & FillValue=GriddedData%MissingValue )
+        if ( size(GriddedData%field, 2 ) > 1 ) &
+          & call dump ( GriddedData%field(1,:,1,1,1,1), &
+          & '    gridded field values sliced through lats =', &
+          & FillValue=GriddedData%MissingValue )
+        if ( size(GriddedData%field, 3 ) > 1 ) &
+          & call dump ( GriddedData%field(1,1,:,1,1,1), &
+          & '    gridded field values sliced through lons =', &
+          & FillValue=GriddedData%MissingValue )
+        if ( size(GriddedData%field, 4 ) > 1 ) &
+          & call dump ( GriddedData%field(1,1,1,:,1,1), &
+          & '    gridded field values sliced through sol times =', &
+          & FillValue=GriddedData%MissingValue )
+        if ( size(GriddedData%field, 5 ) > 1 ) &
+          & call dump ( GriddedData%field(1,1,1,1,:,1), &
+          & '    gridded field values sliced through sol zeniths =', &
+          & FillValue=GriddedData%MissingValue )
+        if ( size(GriddedData%field, 6 ) > 1 ) &
+          & call dump ( GriddedData%field(1,1,1,1,1,:), &
+          & '    gridded field values sliced through dates =', &
+          & FillValue=GriddedData%MissingValue )
      ! May dump a 3-d slice of 6-d array
-      if ( GriddedData%noDates == 1 .and. GriddedData%noSzas == 1 &
+      elseif ( GriddedData%noDates == 1 .and. GriddedData%noSzas == 1 &
         & .and. GriddedData%noLsts == 1 ) then
         call dump ( GriddedData%field(:,:,:,1,1,1), &
           & '    gridded field values =', &
@@ -1303,6 +1329,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.53  2008/09/16 21:05:10  pwagner
+! Improved dumps
+!
 ! Revision 2.52  2008/06/06 22:52:21  pwagner
 ! EssentiallyEqual moved to MLSFillValues
 !
