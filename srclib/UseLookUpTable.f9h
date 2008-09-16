@@ -35,6 +35,7 @@
   real(rk), optional, intent(in)              :: yBottom, yTop ! Not used if
   real(rk)                                    :: value    ! x are presorted
   ! Internal variables
+  logical, parameter :: DeeBug = .false.
   real(r8) :: eps
   real(rk)                                    :: xStart, xEnd
   integer :: i
@@ -72,7 +73,7 @@
   xEnd = maxval(myXTable)
   if ( present(xE) ) xEnd = xE
   if ( present(missingValue) ) then
-    if ( x < xS .or. x > xE ) then
+    if ( x < xStart .or. x > xEnd ) then
       value = missingValue
       return
     endif
@@ -220,11 +221,20 @@ contains
       lower = max(indices(1), 1)
       call ClosestElement ( x, myXTable, indices, 'u' // subOptions )
       upper = max(indices(1), 1)
+      if ( DeeBug ) then
+        call outputNamedValue( 'lower', lower )
+        call outputNamedValue( 'upper', upper )
+        call outputNamedValue( 'x[lower]', myXtable(lower) )
+        call outputNamedValue( 'x[upper]', myXtable(upper) )
+        call outputNamedValue( 't[lower]', table(lower) )
+        call outputNamedValue( 't[upper]', table(upper) )
+      endif
       if ( myXtable(lower) == myXTable(upper) ) then
         value = table(lower)
         return
       endif
       eps = ( x - myXTable(lower) ) / ( myXTable(upper) - myXTable(lower) )
+      if ( DeeBug ) call outputNamedValue( 'eps', eps )
       value = eps*table(upper) + (1-eps)*table(lower)
     else
       ! ------------- c l o s e s t  ------------
@@ -236,6 +246,9 @@ contains
   end subroutine doTheDirtyDeed
   ! end subroutine UseLookUpTable_r4
 ! $Log$
+! Revision 1.4  2007/08/07 23:58:03  pwagner
+! Many changes, new options, improvements
+!
 ! Revision 1.3  2007/07/31 22:49:01  pwagner
 ! UseLookUpTable can now differentiate, integrate
 !
