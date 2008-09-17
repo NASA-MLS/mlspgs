@@ -26,7 +26,7 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   use MLSFiles, only: FILENOTFOUND, &
     & GetPCFromRef, MLS_HDF_VERSION, mls_io_gen_closeF, mls_io_gen_openF, &
     & split_path_name
-  use MLSStrings, only: Capitalize, LowerCase
+  use MLSStrings, only: Capitalize, HHMMSS_value, LowerCase
   use MLSStringLists, only: GetStringElement, NumStringElements, &
     & List2Array, ReplaceSubString
   use OUTPUT_M, only: OUTPUT
@@ -74,9 +74,9 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
 contains
 
   ! ----------------------------------------------- ReadGriddedData
-  subroutine ReadGriddedData(GriddedFile, lcf_where, description, v_type, &
+  subroutine ReadGriddedData( GriddedFile, lcf_where, description, v_type, &
     & the_g_data, returnStatus, &
-    & GeoDimList, fieldName, missingValue)
+    & GeoDimList, fieldName, missingValue, date )
 
     use MLSStats1, only: MLSMIN, MLSMAX, MLSMEAN
     ! This routine reads a Gridded Data file, returning a filled data
@@ -89,6 +89,10 @@ contains
 
     ! fieldName, if present, should be the rank 3 or higher object
     ! like temperature
+    
+    ! date is needed only for background files
+    ! or any other case in which different files come with the date gelolocations
+    ! unset
 
     ! Arguments
     type(MLSFile_T)                :: GriddedFile
@@ -100,6 +104,7 @@ contains
     character (LEN=*), optional, intent(IN) :: GeoDimList ! Comma-delimited dim names
     character (LEN=*), optional, intent(IN) :: fieldName ! Name of gridded field
     real(rgr), optional, intent(IN) :: missingValue
+    character (LEN=*), optional, intent(IN) :: date ! offset
 
     ! Local Variables
     character ( len=NameLen) :: my_description   ! In case mixed case
@@ -119,8 +124,8 @@ contains
     ! According to the kinds of gridded data files we can read
     select case ( trim(my_description) )
     case ('geos5')
-      call Read_geos5(GriddedFile, lcf_where, v_type, &
-        & the_g_data, GeoDimList, fieldName)
+      call Read_geos5( GriddedFile, lcf_where, v_type, &
+        & the_g_data, GeoDimList, fieldName, date )
       if ( DEEBUG ) then
         print *, '(Returned from read_dao)'
         print *, 'Quantity Name   ' // trim(the_g_data%QuantityName)
@@ -171,8 +176,8 @@ contains
   end subroutine ReadGriddedData
 
   ! ----------------------------------------------- Read_geos5
-  subroutine Read_geos5(GEOS5File, lcf_where, v_type, &
-    & the_g_data, GeoDimList, fieldName)
+  subroutine Read_geos5( GEOS5File, lcf_where, v_type, &
+    & the_g_data, GeoDimList, fieldName, date )
     use Dump_0, only: Dump
 
     ! This routine reads a gmao geos5 file, named something like
@@ -206,6 +211,7 @@ contains
     type( GriddedData_T ) :: the_g_data ! Result
     character (LEN=*), optional, intent(IN) :: GeoDimList ! Comma-delimited dim names
     character (LEN=*), optional, intent(IN) :: fieldName ! Name of gridded field
+    character (LEN=*), optional, intent(IN) :: date ! date (offset)
 
     ! Local Variables
     integer :: file_id, gd_id
@@ -238,8 +244,11 @@ contains
     real(r4), parameter :: FILLVALUE = 1.e15
     real(r4), dimension(:,:,:,:), pointer :: all_the_fields
     real(r8), dimension(:), pointer :: dim_field
+    real(r8) :: dateValue
     logical, parameter :: DEEBUG = .false.
     ! Executable code
+    dateValue = 0.
+    if ( present(date) ) dateValue = HHMMSS_value( date, status )
     ! Find list of grid names on this file (This has been core dumping on me)
     if(DEEBUG) print *, 'About to find grid list of file ', trim(GEOS5File%Name)
     gridlist = ''
@@ -435,8 +444,14 @@ contains
     ! call read_the_dim(gd_id, 'Time', dims(4), dim_field)
     call read_the_dim(gd_id, trim(dimNames(4)), dims(4), dim_field)
     ! the_g_data%lsts = dim_field
-    the_g_data%dateStarts = dim_field
-    the_g_data%dateEnds = dim_field
+    ! Because GMAO background files have no date field
+    if ( all(dim_field == 0._r8) ) then
+      the_g_data%dateStarts = dateValue
+      the_g_data%dateEnds = dateValue
+    else
+      the_g_data%dateStarts = dim_field
+      the_g_data%dateEnds = dim_field
+    endif
     deallocate(dim_field)        ! Before leaving, some light housekeeping
     ! Have not yet figured out how to assign these
     ! Probably will have to read metadata
@@ -1881,11 +1896,15 @@ contains
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module ncep_dao
 
 ! $Log$
+! Revision 2.48  2008/09/17 23:21:19  pwagner
+! Allow date string in gridded data to offset gmao background files
+!
 ! Revision 2.47  2008/01/07 21:38:12  pwagner
 ! Replace DEFAULTUNDEFINEDVALUE with user-settable undefinedValue
 !
