@@ -14,8 +14,9 @@ module ReadAPriori
 
   use Expr_M, only: Expr
   use Hdf, only: DFACC_RDWR, DFACC_RDONLY
-  use INIT_TABLES_MODULE, only: F_AURAINSTRUMENT, F_DIMLIST, F_FIELD, F_FILE, &
-    & F_HDFVERSION, F_missingValue, F_ORIGIN, F_QUANTITYTYPE, F_SDNAME, F_SWATH, &
+  use INIT_TABLES_MODULE, only: F_AURAINSTRUMENT, F_DATE, F_DIMLIST, &
+    & F_FIELD, F_FILE, F_HDFVERSION, F_missingValue, &
+    & F_ORIGIN, F_QUANTITYTYPE, F_SDNAME, F_SWATH, &
     & FIELD_FIRST, FIELD_LAST, L_CLIMATOLOGY, L_DAO, L_NCEP, &
     & L_GEOS5, L_GLORIA, L_STRAT, L_SURFACEHEIGHT, &
     & S_Dump, S_GRIDDED, S_L2AUX, S_L2GP
@@ -116,6 +117,8 @@ contains ! =====     Public Procedures     =============================
     integer :: AURAINST             ! index of 'MLS' in AuraInstrument='MLS'
     integer :: COMMAPOS                 ! For parsing string
     logical, parameter :: DEBUG = .FALSE.
+    integer :: DATE             ! in case using GMAO backgr
+    character(len=FileNameLen) :: DATESTRING ! 'X,Y,..'
     integer :: Details             ! How much info about the files to dump
     integer :: DIMLIST             ! index of 'X,Y,..' in dimList='X,Y,..'
     character(len=FileNameLen) :: DIMLISTSTRING ! 'X,Y,..'
@@ -232,6 +235,8 @@ contains ! =====     Public Procedures     =============================
         select case ( fieldIndex )
         case ( f_AuraInstrument )
           AuraInst = sub_rosa(subtree(2,field))
+        case ( f_date )
+          date = sub_rosa(subtree(2,field))
         case ( f_dimList )
           dimList = sub_rosa(subtree(2,field))
         case ( f_field )
@@ -262,6 +267,12 @@ contains ! =====     Public Procedures     =============================
         call get_string ( dimList, dimListString, strip=.true. )
       else
         dimListString = ''
+      end if
+        
+      if ( got(f_date) ) then
+        call get_string ( date, dateString, strip=.true. )
+      else
+        dateString = ''
       end if
         
       if ( got(f_AuraInstrument) ) then
@@ -551,7 +562,7 @@ contains ! =====     Public Procedures     =============================
             call ReadGriddedData ( GriddedFile, son, description, v_type, &
               & GriddedDatabase(gridIndex), returnStatus, &
               & dimListString, TRIM(fieldNameString), &
-              & missingValue )
+              & missingValue, dateString )
           else
             call SetupNewGriddedData ( GriddedDatabase(gridIndex), empty=.true. )
           endif
@@ -944,6 +955,7 @@ contains ! =====     Public Procedures     =============================
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module ReadAPriori
@@ -952,6 +964,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.75  2008/09/17 23:20:13  pwagner
+! Allow date string in gridded data to offset gmao background files
+!
 ! Revision 2.74  2007/10/24 00:16:59  pwagner
 ! Removed unused declarations
 !
