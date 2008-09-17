@@ -569,6 +569,7 @@ contains ! =====     Public procedures     =============================
     call make_tree ( (/ &
       begin, s+s_time, np+n_spec_def, &
       begin, s+s_gridded, &
+             begin, f+f_date, t+t_string, n+n_field_type, &
              begin, f+f_dimList, t+t_string, n+n_field_type, &
              begin, f+f_file, t+t_string, n+n_field_type, &
              begin, f+f_missingValue, t+t_numeric, n+n_field_type, &
@@ -1563,11 +1564,15 @@ contains ! =====     Public procedures     =============================
   character (len=len(idParm)) :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.476  2008/09/17 23:19:24  pwagner
+! Allow date string in gridded data to offset gmao background files
+!
 ! Revision 2.475  2008/08/22 17:28:33  pwagner
 ! fields may not be duplicated when declaring new Quantity in Construct
 !
