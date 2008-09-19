@@ -26,9 +26,13 @@ module DestroyCommand_m
 
 contains
 
-  subroutine DestroyCommand ( Key, Matrices, Vectors )
+  subroutine DestroyCommand ( Key, Matrices, Vectors, Grids )
 
-    use Init_Tables_Module, only: F_AllMatrices, F_AllVectors, F_Matrix, F_Vector
+    use GriddedData, only: griddedData_T, &
+      & DestroyGriddedData, DestroyGriddedDataDatabase
+    use Init_Tables_Module, only: F_AllGriddedData, F_AllMatrices, F_AllVectors, &
+      & F_GRID, F_Matrix, &
+      & F_Vector
     use MatrixModule_1, only: DestroyMatrixDatabase, DestroyMatrix, Dump, &
       & Matrix_Database_T
     use MoreTree, only: Get_Boolean, Get_Field_ID
@@ -43,9 +47,10 @@ contains
     integer, intent(in) :: Key ! Root of parse subtree
     type (matrix_database_T), dimension(:), pointer :: Matrices
     type (vector_T), dimension(:), pointer :: Vectors
+    type (griddedData_T), dimension(:), pointer :: Grids
 
     logical :: DEEBUG = .false.
-    integer :: J, K, MatrixToKill, Son, SourceVectorIndex
+    integer :: gridID, J, K, MatrixToKill, Son, SourceVectorIndex
 
     if ( toggle(gen) ) call trace_begin ( 'DestroyCommand' )
     ! Here we're to try to shrink the vector database by destroying a vector
@@ -54,10 +59,18 @@ contains
     do j = 2, nsons(key)
       son = subtree(j,key)  ! The argument
       select case ( get_field_id(son) )
+      case ( f_allGriddedData )
+        if ( get_boolean(son) ) call DestroyGriddedDataDatabase ( grids )
       case ( f_allMatrices )
         if ( get_boolean(son) ) call destroyMatrixDatabase ( matrices )
       case ( f_allVectors )
         if ( get_boolean(son) ) call destroyVectorDatabase ( vectors )
+      case ( f_grid )
+        do k = 2, nsons(son)
+          gridID = decoration(decoration(subtree(k,son)))
+
+          call DestroyGriddedData ( grids(gridID) )
+        end do
       case ( f_matrix )
         do k = 2, nsons(son)
           matrixToKill = decoration(decoration(subtree(k,son)))
@@ -110,12 +123,16 @@ contains
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 
 end module DestroyCommand_m
 
 ! $Log$
+! Revision 2.4  2008/09/19 23:54:31  pwagner
+! May now Destroy GriddedData
+!
 ! Revision 2.3  2006/08/04 18:08:23  vsnyder
 ! Simplify /allMatrices and /allVectors
 !
