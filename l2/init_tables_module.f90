@@ -1045,8 +1045,11 @@ contains ! =====     Public procedures     =============================
 
     call make_tree( (/ &
       begin, s+s_destroy, &
+             begin, f+f_allGriddedData, t+t_boolean, n+n_field_type, &
              begin, f+f_allMatrices, t+t_boolean, n+n_field_type, &
              begin, f+f_allVectors, t+t_boolean, n+n_field_type, &
+             begin, f+f_grid, s+s_gridded, s+s_concatenate, s+s_merge, &
+             s+s_ConvertEtaToP, n+n_field_spec, &
              begin, f+f_matrix, s+s_matrix, n+n_field_spec, &
              begin, f+f_vector, s+s_vector, n+n_field_spec, &
              np+n_spec_def /) )
@@ -1570,6 +1573,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.477  2008/09/19 23:54:45  pwagner
+! May now Destroy GriddedData
+!
 ! Revision 2.476  2008/09/17 23:19:24  pwagner
 ! Allow date string in gridded data to offset gmao background files
 !
