@@ -45,7 +45,8 @@ contains ! =====     Public Procedures     =============================
 
   ! -----------------------------------------------  Output_Close  -----
   subroutine Output_Close ( root, l2gpDatabase, l2auxDatabase, DirectDatabase, &
-    & matrices, vectors, fileDataBase, chunks, processingRange, canWriteL2PC )
+    & matrices, vectors, fileDataBase, GriddedDataBase, &
+    & chunks, processingRange, canWriteL2PC )
 
     ! Hard-wired assumptions:
 
@@ -65,6 +66,7 @@ contains ! =====     Public Procedures     =============================
     use DestroyCommand_m, only: DestroyCommand
     use DirectWrite_m, only: DirectData_T, Dump
     use Expr_M, only: Expr
+    use GriddedData, only: griddedData_T
     use HGrid, only: CREATEHGRIDFROMMLSCFINFO, DEALWITHOBSTRUCTIONS
     use HGridsDatabase, only: HGRID_T, &
       & ADDHGRIDTODATABASE, Dump
@@ -117,6 +119,7 @@ contains ! =====     Public Procedures     =============================
     type (DirectData_T), dimension(:), pointer :: DirectDatabase
     type (MLSChunk_T), dimension(:), pointer ::  Chunks  ! of data
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+    type (griddedData_T), dimension(:), pointer :: GriddedDataBase
     type (TAI93_Range_T), intent(in) :: processingRange
     logical, intent(in) :: canWriteL2PC ! Flag
 
@@ -487,7 +490,7 @@ contains ! =====     Public Procedures     =============================
         endif
 
       case ( s_Destroy )
-        call destroyCommand ( key, matrices, vectors )
+        call destroyCommand ( key, matrices, vectors, griddedDataBase )
       case ( s_HGrid )
         ! call announce_error ( spec_no, &
         !   &  "Error--HGrid not implemented yet")
@@ -1670,11 +1673,15 @@ contains ! =====     Public Procedures     =============================
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.136  2008/09/19 23:55:50  pwagner
+! May now Destroy GriddedData
+!
 ! Revision 2.135  2008/07/09 16:38:24  pwagner
 ! ReadStatus optional arg eliminated
 !
