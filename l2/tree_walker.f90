@@ -475,7 +475,8 @@ subtrees:   do while ( j <= howmany )
           exit
         else if ( .not. parallel%slave ) then
           call Output_Close ( son, l2gpDatabase, l2auxDatabase, DirectDatabase, &
-            & matrices, vectors, fileDataBase, chunks, processingRange, &
+            & matrices, vectors, fileDataBase, griddedDataBase, &
+            & chunks, processingRange, &
             & canWriteL2PC )
         end if
 
@@ -607,11 +608,15 @@ subtrees:   do while ( j <= howmany )
   character (len=len(idParm)) :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.164  2008/05/20 00:29:19  vsnyder
+! Don't leave J undefined if no chunks processed
+!
 ! Revision 2.163  2008/04/01 17:00:15  pwagner
 ! Can get hdf5 spectroscopy file path/name from PCF
 !
