@@ -869,7 +869,7 @@ contains ! =====     Public Procedures     =============================
       ! End of fill operations
 
       case ( s_destroy ) ! ===============================  Destroy ==
-        call destroyCommand ( key, matrices, vectors )
+        call destroyCommand ( key, matrices, vectors, griddedDataBase )
 
       case ( s_negativePrecision ) ! =======================  negativePrecision ==
         ! Here we're on a setNegative instruction
@@ -2367,6 +2367,7 @@ contains ! =====     Public Procedures     =============================
   character (len=len(idParm)) :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module Fill
@@ -2374,6 +2375,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.365  2008/09/19 23:55:05  pwagner
+! May now Destroy GriddedData
+!
 ! Revision 2.364  2008/09/16 22:29:05  pwagner
 ! pass optional field ptanQuantity to profile, vector methods
 !
