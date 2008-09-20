@@ -215,9 +215,9 @@ contains ! ======================= Public Procedures =========================
       endif
       call dump(l2gp, Details=-1)
     endif
-    call AppendL2GPData(l2gp, l2gpFile, &
+    call AppendL2GPData( l2gp, l2gpFile, &
       & sdName, offset, lastprofile=lastInstance, &
-      & TotNumProfs=TotalProfs, createSwath=createSwath)
+      & TotNumProfs=TotalProfs, createSwath=createSwath )
     if ( l2gpFile%access == DFACC_CREATE ) call writeAPrioriAttributes(l2gpFile)
     if ( index(switches, 'l2gp') /= 0 ) call dump(l2gp)
     ! Clear up our temporary l2gp
@@ -1048,11 +1048,15 @@ contains ! ======================= Public Procedures =========================
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.42  2008/09/20 00:03:00  pwagner
+! Added print statement to not_used_here
+!
 ! Revision 2.41  2006/10/11 22:58:00  pwagner
 ! Will write convergence ratio as another quality-like field of l2gp
 !
