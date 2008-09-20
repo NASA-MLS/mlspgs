@@ -6607,6 +6607,7 @@ contains ! =====     Public Procedures     =============================
   character (len=len(idParm)) :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module FillUtils_1
@@ -6614,6 +6615,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.12  2008/09/20 00:03:00  pwagner
+! Added print statement to not_used_here
+!
 ! Revision 2.11  2008/09/16 22:30:19  pwagner
 ! Use optional arg ptan when source is profile, vector
 !
