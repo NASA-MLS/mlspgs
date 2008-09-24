@@ -5716,7 +5716,7 @@ contains ! =====     Public Procedures     =============================
 
     ! -------------------------------------- FillVectorQtyFromProfile --
     subroutine FillVectorQtyFromProfile ( quantity, valuesNode, &
-      & instancesNode, globalUnit, dontMask, logSpace, ptan )
+      & instancesNode, globalUnit, dontMask, ptan, logSpace )
       ! This fill is slightly complicated.  Given a values array along
       ! the lines of [ 1000mb : 1.0K, 100mb : 1.0K,  10mb : 2.0K] etc. it
       ! does the linear interpolation appropriate to perform the fill.
@@ -5725,8 +5725,8 @@ contains ! =====     Public Procedures     =============================
       integer, intent(in) :: INSTANCESNODE ! Tree node for instances
       integer, intent(in) :: GLOBALUNIT   ! Possible global unit
       logical, intent(in) :: DONTMASK     ! If set don't follow the fill mask
+      type (VectorValue_T), pointer :: PTAN ! press. values
       logical, intent(in), optional :: LOGSPACE ! Interpolate in logspace
-      type (VectorValue_T), optional :: PTAN ! press. values
 
       ! Local variables
       integer :: C                      ! Channel loop counter
@@ -5755,9 +5755,9 @@ contains ! =====     Public Procedures     =============================
 
       ! Check the quantity is amenable to this type of fill
       if ( .not. ValidateVectorQuantity ( quantity, &
-        & coherent=.true. ) .and. .not. present(ptan) ) &
+        & coherent=.true. ) .and. .not. associated(ptan) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'The quantity is not amenable to a profile fill unless you supply ptan ptan' )
+        & 'The quantity is not amenable to a profile fill unless you supply ptan' )
 
       ! Check the units
       testUnit = quantity%template%unit
@@ -5782,7 +5782,7 @@ contains ! =====     Public Procedures     =============================
         call expr ( subtree ( i+1, valuesNode ), exprUnit, exprValue )
         ! Check height unit OK
         heightUnit = GetUnitForVerticalCoordinate ( quantity%template%verticalCoordinate )
-        if ( present(ptan) ) heightUnit = PHYQ_Zeta
+        if ( associated(ptan) ) heightUnit = PHYQ_Zeta
         if ( exprUnit(1) /= heightUnit .and. exprUnit(1) /= PHYQ_Dimensionless &
           & .and. .not. ( exprUnit(1) == PHYQ_Pressure .and. heightUnit == PHYQ_Zeta ) ) &
           & call Announce_error ( valuesNode, no_Error_Code, 'Bad height units for profile fill' )
@@ -5808,7 +5808,7 @@ contains ! =====     Public Procedures     =============================
       if ( myLogSpace ) values = log ( values )
 
       ! Get the appropriate height coordinate for output, for pressure take log.
-      if ( present(ptan) ) then
+      if ( associated(ptan) ) then
         localOutHeights = .false.
         outHeights => ptan%values(:,1)
       elseif ( quantity%template%verticalCoordinate == l_pressure ) then
@@ -5823,7 +5823,7 @@ contains ! =====     Public Procedures     =============================
 
       ! Now, if the quantity is coherent, let's assume the user wanted the
       ! 'nearest' values
-      if ( quantity%template%coherent .or. present(ptan) ) then
+      if ( quantity%template%coherent .or. associated(ptan) ) then
         nullify ( inInds )
         call allocate_test ( inInds, noPoints, 'inInds', ModuleName )
         call hunt ( outHeights, heights, inInds, &
@@ -6615,6 +6615,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.13  2008/09/24 16:46:09  livesey
+! Changed ptan from optional to pointer in fill from profile
+!
 ! Revision 2.12  2008/09/20 00:03:00  pwagner
 ! Added print statement to not_used_here
 !
