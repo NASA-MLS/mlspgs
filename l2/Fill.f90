@@ -1879,14 +1879,17 @@ contains ! =====     Public Procedures     =============================
         else
           nullify ( ptanQuantity )
         end if
+        ! The next bit may seem odd - why not just pass logSpace on and let it default to false?
+        ! The problem is, it should default to quantity%template%logSpace so absent means I don't
+        ! care not logSpace=.false.
         if ( got ( f_logSpace ) ) then
           call FillVectorQtyFromProfile ( quantity, valuesNode, &
             & instancesNode, vectors(vectorIndex)%globalUnit, dontMask, &
-            & logSpace=logSpace )
+            & ptanQuantity, logSpace=logSpace )
         else
           call FillVectorQtyFromProfile ( quantity, valuesNode, &
             & instancesNode, vectors(vectorIndex)%globalUnit, dontMask, &
-            & ptan=ptanQuantity )
+            & ptanQuantity )
         end if
 
       case ( l_refract )              ! --------- refraction for phiTan -----
@@ -2375,6 +2378,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.366  2008/09/24 16:46:37  livesey
+! Tidy up handling of ptan in profile fill
+!
 ! Revision 2.365  2008/09/19 23:55:05  pwagner
 ! May now Destroy GriddedData
 !
