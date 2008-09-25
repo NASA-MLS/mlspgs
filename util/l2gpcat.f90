@@ -68,6 +68,7 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
     integer            ::    overlap = 4                ! how many profiles
     integer, dimension(2) :: freqs = 0                  ! Keep range of freqs   
     integer, dimension(2) :: levels = 0                 ! Keep range of levels   
+    integer, dimension(2) :: nProfiles = 0              ! Discard if nProfiles outside range
     integer, dimension(2) :: profiles = 0               ! Keep range of profiles   
   end type options_T
   
@@ -76,10 +77,8 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
   integer, parameter ::          MAXFILES = 100
   logical, parameter ::          countEmpty = .true.
   logical     :: createdYet
-  logical, parameter ::          DEEBUG = .true.
-  ! logical ::          columnsOnly
+  logical, parameter ::          DEEBUG = .false.
   character(len=255) :: filename          ! input filename
-  ! character(len=255) :: outputFile= 'default.he5'        ! output filename
   character(len=255), dimension(MAXFILES) :: filenames
   integer            :: n_filenames
   integer     ::  i, j, status, error ! Counting indices & Error flags
@@ -87,7 +86,6 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
   integer     ::  hdfversion1
   integer     ::  hdfversion2
   logical     :: is_hdf5
-  ! logical     :: verbose = .false.
   real        :: t1
   real        :: t2
   real        :: tFile
@@ -188,11 +186,11 @@ contains
     integer :: numProfs
     integer :: numTotProfs
     type(L2GPData_T) :: ol2gp
-    integer :: time1
     real(rgp), dimension(MAXNUMPROFS) :: a
     real(rgp), dimension(MAXNUMPROFS) :: b
     integer :: N ! size of a
     integer :: M ! size of b
+    logical :: wroteAlready
     real(rgp), parameter :: eps = 0.01_rgp
     ! Executable
     a = 0.
@@ -201,33 +199,51 @@ contains
       & trim(options%outputFile)
     numswathssofar = mls_InqSwath ( filenames(1), SwathList, listSize, &
            & hdfVersion=HDFVERSION_5)
+    if ( DEEBUG ) then
+      print *, 'swaths in file'
+      print *, trim(swathList)
+    endif
     if ( options%swathNames /= ' ' ) then
       swathList1 = swathList
       swathList = Intersection( options%swathNames, swathList1 )
     endif
     call GetStringElement( swathList, swath, 1, countEmpty )
-    numTotProfs = 0
     do jj=1, NumStringElements( swathList, countEmpty )
       call GetStringElement( swathList, swath, jj, countEmpty )
       call time_now ( tFile )
       if ( options%verbose ) print *, 'Catenating swath: ', trim(swath)
       N = 0
       M = 0
-      time1 = 1
+      wroteAlready = .false.
+      numTotProfs = 0
       do i=1, n_filenames
         if ( options%verbose ) print *, 'Reading from: ', trim(filenames(i))
         call ReadL2GPData( trim(filenames(i)), swath, ol2gp, numProfs )
-        if ( i == 1 ) then
+        ! Check if nProfiles is in range
+        if ( any(options%nProfiles /= 0) ) then
+          if ( ol2gp%nTimes < options%nProfiles(1) .or. &
+            & ol2gp%nTimes > options%nProfiles(2) ) then
+            print *, 'Warning--skipping ', ol2gp%nTimes, ' profiles in ', trim(filenames(i))
+            call DestroyL2GPContents( ol2gp )
+            cycle
+          endif
+        endif
+        ! if ( i == 1 ) then
+        if ( .not. wroteAlready ) then
           status = InitializeMLSFile( l2gpFile, type=l_swath, access=DFACC_CREATE, &
             & content='l2gp', name='unknown', hdfVersion=HDFVERSION_5 )
           l2gpFile%name = options%outputFile
           l2gpFile%stillOpen = .false.
+          if ( DEEBUG ) then
+            print *, 'About to write ', trim(swath)
+          endif
           call WriteL2GPData ( ol2gp, l2gpFile, swath )
           N = ol2gp%nTimes
           a(1:N) = ol2gp%GeodAngle
           if ( options%verbose ) call dump( a(1:N), '1st a' )
           call DestroyL2GPContents( ol2gp )
           numTotProfs = numTotProfs + N
+          wroteAlready = .true.
           cycle
         endif
         M = ol2gp%nTimes
@@ -246,6 +262,7 @@ contains
           if ( options%verbose ) print *, 'Warning--overlaps not found', k, N, M
           if ( options%verbose ) call dump( a(1:N), 'a' )
           if ( options%verbose ) call dump( b(1:M), 'b' )
+          if ( DEEBUG ) print *, 'About to append ', trim(swath)
           call AppendL2GPData ( ol2gp, options%outputFile, &
           & swath, offset=max(0,numTotProfs) )
           ! Could this be a bug in the HDFEOS library?
@@ -257,6 +274,7 @@ contains
           call ExtractL2GPRecord ( ol2gp, l2gp, rTimes=(/ k, M /) )
           ! print *, 'should be writing'
           if ( options%verbose ) call dump( l2gp%GeodAngle, 'appended Geod. angle' )
+          if ( DEEBUG ) print *, 'About to append ', trim(swath)
           call AppendL2GPData ( l2gp, options%outputFile, &
           & swath, offset=max(0,numTotProfs) )
           ! Could this be a bug in the HDFEOS library?
@@ -430,6 +448,12 @@ contains
         call igetarg ( i+1+hp, options%levels(2) )
         i = i + 1
         exit
+      elseif ( filename(1:6) == '-nprof' ) then
+        call igetarg ( i+1+hp, options%nProfiles(1) )
+        i = i + 1
+        call igetarg ( i+1+hp, options%nProfiles(2) )
+        i = i + 1
+        exit
       elseif ( filename(1:5) == '-over' ) then
         call igetarg ( i+1+hp, options%overlap )
         i = i + 1
@@ -466,22 +490,23 @@ contains
       write (*,*) &
       & ' If no filenames supplied, you will be prompted to supply one'
       write (*,*) ' Options: -f filename   => add filename to list of filenames'
-      write (*,*) '                           (can do the same w/o the -f)'
-      write (*,*) '          -o ofile      => copy swaths to ofile'
-      write (*,*) '          -425          => convert from hdf4 to hdf5'
-      write (*,*) '          -524          => convert from hdf5 to hdf4'
-      write (*,*) '          -v            => switch on verbose mode'
-      write (*,*) '          -cat          => catenate swaths with same name'
-      write (*,*) '          -nodup        => if dup swath names, cp 1st only'
-      write (*,*) '          -freqs m n    => keep only freqs in range m n'
-      write (*,*) '          -levels m n   => keep only levels in range m n'
-      write (*,*) '          -profiles m n => keep only profiles in range m n'
-      write (*,*) '          -s name1,name2,..'
-      write (*,*) '             => copy only swaths so named; otherwise all'
-      write (*,*) '          -r rename1,rename2,..'
-      write (*,*) '             => if and how to rename the copied swaths'
-      write (*,*) '          -overlap n    => assume n profile overlaps'
-      write (*,*) '          -h            => print brief help'
+      write (*,*) '                    (can do the same w/o the -f)'
+      write (*,*) '   -o ofile      => copy swaths to ofile'
+      write (*,*) '   -425          => convert from hdf4 to hdf5'
+      write (*,*) '   -524          => convert from hdf5 to hdf4'
+      write (*,*) '   -v            => switch on verbose mode'
+      write (*,*) '   -cat          => catenate swaths with same name'
+      write (*,*) '   -nodup        => if dup swath names, cp 1st only'
+      write (*,*) '   -freqs m n    => keep only freqs in range m n'
+      write (*,*) '   -levels m n   => keep only levels in range m n'
+      write (*,*) '   -profiles m n => keep only profiles in range m n'
+      write (*,*) '   -nprofiles m n => keep only if nProfs is in range m n'
+      write (*,*) '   -s name1,name2,..'
+      write (*,*) '      => copy only swaths so named; otherwise all'
+      write (*,*) '   -r rename1,rename2,..'
+      write (*,*) '      => if and how to rename the copied swaths'
+      write (*,*) '   -overlap n    => assume n profile overlaps'
+      write (*,*) '   -h            => print brief help'
       stop
   end subroutine print_help
 !------------------------- SayTime ---------------------
@@ -512,6 +537,9 @@ end program L2GPcat
 !==================
 
 ! $Log$
+! Revision 1.11  2008/02/28 01:36:24  pwagner
+! -cat option catenates different pieces of same swath
+!
 ! Revision 1.10  2006/05/19 22:47:40  pwagner
 ! Fixed bug stopping us from creating -o file if first input file not copied
 !
