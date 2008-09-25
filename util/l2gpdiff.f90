@@ -19,7 +19,7 @@ program l2gpdiff ! show diffs between swaths in two different files
    use MLSFiles, only: mls_exists, HDFVERSION_5, MLS_INQSWATH
    use MLSHDF5, only: mls_h5open, mls_h5close
    use MLSMessageModule, only: MLSMessageConfig
-   use MLSStringLists, only: ExpandStringRange
+   use MLSStringLists, only: catLists, ExpandStringRange
    use MLSStrings, only: WriteIntsToChars
    use output_m, only: resumeOutput, suspendOutput, output
    use Time_M, only: Time_Now, time_config
@@ -45,6 +45,10 @@ program l2gpdiff ! show diffs between swaths in two different files
   type options_T
     character(len=MAXFIELDSLENGTH) :: chunks = '*' ! wild card means 'all'
     character(len=MAXFIELDSLENGTH) :: pressures = '*' ! wild card means 'all'
+    character(len=255) ::  geoBoxNames = '' ! which geolocation names to box
+    integer            ::  nGeoBoxDims = 0
+    real, dimension(4) ::  geoBoxLowBound
+    real, dimension(4) ::  geoBoxHiBound
     integer     :: Details = 1
     character(len=MAXFIELDSLENGTH) :: fields = '*' ! wild card means 'all'
     logical     :: force = .false.
@@ -133,7 +137,16 @@ program l2gpdiff ! show diffs between swaths in two different files
       print *, 'diff (1): ', trim(filenames(i-1))
       print *, '     (2): ', trim(filenames(i))
     endif
-    if ( options%chunks == '*' .and. options%pressures == '*' ) then
+    if ( options%nGeoBoxDims > 0 ) then
+      call diff( trim(filenames(i-1)), trim(filenames(i)), &
+      & options%geoBoxNames, options%geoBoxLowBound, options%geoBoxHiBound, &
+      & details=options%Details, stats=options%stats, &
+      & rms=options%rms, ignoreBadChunks=options%ignoreBadChunks, &
+      & showMissing=options%showMissing, fields=options%fields, &
+      & force=options%force, swaths1=options%swaths1, swaths2=options%swaths2, &
+      & matchTimes=options%matchTimes, &
+      & silent=options%silent, verbose=options%verbose, numDiffs=numDiffs )
+    elseif ( options%chunks == '*' .and. options%pressures == '*' ) then
       call diff( trim(filenames(i-1)), trim(filenames(i)), &
       & details=options%Details, stats=options%stats, &
       & rms=options%rms, ignoreBadChunks=options%ignoreBadChunks, &
@@ -169,8 +182,7 @@ program l2gpdiff ! show diffs between swaths in two different files
       call ExpandStringRange(options%pressures, pressures, npressures)
       if ( npressures < 1 ) cycle
       call diff( trim(filenames(i-1)), trim(filenames(i)), &
-      & pressures(1:nPressures), &
-      & chunks=chunks(1:nchunks), &
+      & pressures=pressures(1:nPressures), chunks=chunks(1:nchunks), &
       & details=options%Details, stats=options%stats, &
       & rms=options%rms, ignoreBadChunks=options%ignoreBadChunks, &
       & showMissing=options%showMissing, fields=options%fields, &
@@ -198,7 +210,7 @@ contains
      ! Local variables
      integer ::                         error = 1
      integer, save ::                   i = 1
-     character(LEN=16)              :: detailChars
+     character(LEN=160)              :: Chars
   ! Get inputfile name, process command-line args
   ! (which always start with -)
     do
@@ -214,6 +226,16 @@ contains
         exit
       elseif ( filename(1:6) == '-force' ) then
         options%force = .true.
+        exit
+      else if ( filename(1:4) == '-geo' ) then
+        call getarg ( i+1+hp, Chars )
+        options%geoBoxNames = catLists( options%geoBoxNames, Chars )
+        i = i + 1
+        options%nGeoBoxDims = min( options%nGeoBoxDims + 1, 4 )
+        call getarg ( i+1+hp, Chars )
+        read( Chars, * ) options%geoBoxLowBound(options%nGeoBoxDims), &
+          & options%geoBoxHiBound(options%nGeoBoxDims)
+        i = i + 1
         exit
       else if ( filename(1:6) == '-press' ) then
         call getarg ( i+1+hp, options%pressures )
@@ -234,9 +256,9 @@ contains
         i = i + 1
         exit
       else if ( filename(1:3) == '-d ' ) then
-        call getarg ( i+1+hp, detailChars )
+        call getarg ( i+1+hp, Chars )
         ! read(detailChars, '(i)') options%Details
-        read(detailChars, *) options%Details
+        read(Chars, *) options%Details
         i = i + 1
         exit
       else if ( filename(1:4) == '-ign' ) then
@@ -294,6 +316,11 @@ contains
       write (*,*) '                      =>   diff only chunks c1, c2,..'
       write (*,*) '          -fields "f1,f2,.."'
       write (*,*) '                      =>   diff only fields f1, f2,..'
+      write (*,*) '          -geo name lo,hi  '
+      write (*,*) '                      => diff only geobox low <= geo <= hi'
+      write (*,*) '                      where geo in {latitude, longitude, time, pressure}'
+      write (*,*) '                      (may be repeated)'
+      write (*,*) '                      if hi < lo then dump is outside geobox'
       write (*,*) '          -pressures "p1,p2,.."'
       write (*,*) '                      =>   diff only at pressures p1,p2,..'
       write (*,*) '          -d details  => level of details to show'
@@ -348,6 +375,9 @@ end program l2gpdiff
 !==================
 
 ! $Log$
+! Revision 1.14  2008/04/10 20:23:03  pwagner
+! Less voluminous output
+!
 ! Revision 1.13  2007/11/28 18:59:58  pwagner
 ! May choose where to print stat headers
 !
