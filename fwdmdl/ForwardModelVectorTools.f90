@@ -44,7 +44,7 @@ contains
     use Intrinsic, only: L_VMR
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSSets, only: FindFirst
-    use MLSSignals_m, only: GetSignalName
+    use MLSSignals_m, only: GetRadiometerName, GetSignalName
     use Molecules, only: L_EXTINCTION
     use QuantityTemplates, only: QuantityTemplate_T
     use String_table, only: Get_String
@@ -256,7 +256,7 @@ contains
 
       if ( present ( radiometer ) ) then
         msg = trim(msg) // ' for radiometer'
-        call get_string ( lit_indices(radiometer), msg(len_trim(msg)+2:))
+        call getRadiometerName ( radiometer, msg(len_trim(msg)+2:))
       end if
 
       if ( present ( reflector ) ) then
@@ -294,6 +294,9 @@ contains
 end module ForwardModelVectorTools
 
 ! $Log$
+! Revision 2.16  2008/09/29 22:54:13  vsnyder
+! Print radiometer name correctly in error message
+!
 ! Revision 2.15  2006/07/17 20:06:37  livesey
 ! Added initialization of foundInFirst
 !
