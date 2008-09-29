@@ -53,6 +53,7 @@ module MLSSignals_M
 ! DestroySignalDatabase           ...
 ! DestroySpectrometerType         ...
 ! DestroySpectrometerTypeDatabase ...
+! DisplayRadiometer               ... given its index in radiometer database
 ! DisplaySignalName               ...
 ! DisplaySignalName_index         ... given a signal index
 ! DisplaySignalName_signal        ... given a signal structure
@@ -88,7 +89,8 @@ module MLSSignals_M
   public :: DestroyBandDatabase, DestroyModuleDatabase
   public :: DestroyRadiometerDatabase, DestroySignal, DestroySignalDatabase
   public :: DestroySpectrometerType, DestroySpectrometerTypeDatabase
-  public :: DisplaySignalName, DisplaySignalName_index, DisplaySignalName_signal
+  public :: DisplayRadiometer, DisplaySignalName
+  public :: DisplaySignalName_index, DisplaySignalName_signal
   public :: Dump, Dump_Bands, Dump_Radiometers, Dump_Signal, Dump_Signals
   public :: Dump_Spectrometertypes
   public :: GetAllModules, GetBandName, GetFirstChannel, GetModuleFromRadiometer
@@ -791,6 +793,14 @@ contains
     end if
   end subroutine DestroySpectrometerTypeDatabase
 
+  ! ------------------------------------------  DisplayRadiometer  -----
+  subroutine DisplayRadiometer ( Index )
+    integer, intent(in) :: Index ! in radiometer database
+    call display_string ( radiometers(index)%prefix )
+    call output ( ':' )
+    call display_string ( radiometers(index)%suffix, strip=.true. )
+  end subroutine
+
   ! ------------------------------------  DisplaySignalName_index  -----
   subroutine DisplaySignalName_index ( Signal, Advance, Before, Sideband, Channel )
     ! Given a signal object, this routine displays a full signal name.
@@ -819,9 +829,7 @@ contains
     else
       sb = signal%sideband
     end if
-    call display_string ( radiometers(signal%radiometer)%prefix )
-    call output ( ':' )
-    call display_string ( radiometers(signal%radiometer)%suffix, strip=.true. )
+    call displayRadiometer ( signal%radiometer )
     call output ( '.' )
     call GetBandName ( signal%band, bandName, sideband=sb )
     call output ( trim(bandName) )
@@ -1795,6 +1803,9 @@ oc:     do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.84  2008/09/29 22:55:17  vsnyder
+! Add DisplayRadiometer subroutine
+!
 ! Revision 2.83  2007/05/22 02:28:28  vsnyder
 ! Don't use list-directed formatting for internal writes.  The standard
 ! allows a processor to insert any number of blanks it wishes, which might
