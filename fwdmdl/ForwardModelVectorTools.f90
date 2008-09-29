@@ -289,11 +289,15 @@ contains
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module ForwardModelVectorTools
 
 ! $Log$
+! Revision 2.17  2008/09/29 22:56:54  vsnyder
+! Add PRINT statement in Not_Used_Here to reduce compilation cascades
+!
 ! Revision 2.16  2008/09/29 22:54:13  vsnyder
 ! Print radiometer name correctly in error message
 !
