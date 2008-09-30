@@ -692,7 +692,7 @@ contains ! =====     Public Procedures     =============================
           & call AnnounceError ( toleranceNotK, root )
       case ( f_TScatMIF )
         call expr ( subtree(2,son), expr_units, value, type )
-        info%TScatMIF = value(1)
+        info%TScatMIF = nint(value(1))
         if ( expr_units(1) /= phyq_dimensionless ) &
           & call AnnounceError ( TScatMIF, root )
       case ( f_type )
@@ -1388,6 +1388,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.143  2008/09/30 22:37:51  vsnyder
+! Use nint(value) for TScatMIF
+!
 ! Revision 2.142  2008/08/21 23:42:46  vsnyder
 ! Remove GenerateTScat from ForwardModel; use TScat on Sids
 !
