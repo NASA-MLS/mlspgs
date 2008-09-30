@@ -501,8 +501,8 @@ contains ! =====     Public procedures     =============================
              l+l_elevOffset, l+l_extinction, &
              l+l_fieldAzimuth, l+l_fieldElevation, l+l_fieldStrength, &
              l+l_fwdModelTiming, l+l_fwdModelMean, l+l_fwdModelStdDev, &
-             l+l_gph, l+l_heightOffset, &
-             l+l_isotopeRatio, l+l_jacobian_cols, l+l_jacobian_rows, &
+             l+l_gph, l+l_heightOffset, l+l_isotopeRatio, l+l_IWC, &
+             l+l_jacobian_cols, l+l_jacobian_rows, &
              l+l_l1bMAFBaseline, l+l_l1bMIF_TAI, l+l_limbSidebandFraction, &
              l+l_lineCenter, l+l_lineWidth, l+l_lineWidth_tDep, &
              l+l_losTransFunc, l+l_losVel, &
@@ -675,7 +675,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_formula, t+t_numeric_range, n+n_field_type, &
              begin, f+f_number, t+t_numeric, n+n_field_type, &
              begin, f+f_start, t+t_numeric, nr+n_field_type, &
-             begin, f+f_step, t+t_numeric, n+n_field_type, &
+             begin, f+f_stop, t+t_numeric, n+n_field_type, &
+             begin, f+f_type, t+t_vGridType, nr+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_vGrid, &
@@ -752,23 +753,22 @@ contains ! =====     Public procedures     =============================
              begin, f+f_skipRetrievalif, s+s_Boolean, n+n_field_spec, &
              begin, f+f_stamp, t+t_boolean, n+n_field_type, &
              ndp+n_spec_def, &
-      begin, s+s_quantity, & ! Must be AFTER s_hgrid and s_vgrid
-             begin, f+f_irregular, t+t_boolean, n+n_field_type, &
-             begin, f+f_auxGrid, s+s_vgrid, n+n_field_spec, &
+      begin, s+s_quantity, & ! Must be AFTER [F, H, IWC, T, V]grid
              begin, f+f_fGrid, s+s_fgrid, n+n_field_spec, &
              begin, f+f_hGrid, s+s_hgrid, n+n_field_spec, &
-             begin, f+f_sGrid, s+s_vgrid, n+n_field_spec, &
-             begin, f+f_vGrid, s+s_vgrid, n+n_field_spec, &
+             begin, f+f_irregular, t+t_boolean, n+n_field_type, &
              begin, f+f_logBasis, t+t_boolean, n+n_field_type, &
+             begin, f+f_minValue, t+t_numeric, n+n_field_type, &
+             begin, f+f_module, s+s_module, n+n_field_spec, &
              begin, f+f_molecule, t+t_molecule, n+n_field_type, &
              begin, f+f_radiometer, s+s_radiometer, n+n_field_spec, &
              begin, f+f_reflector, t+t_reflector, n+n_field_type, &
-             begin, f+f_module, s+s_module, n+n_field_spec, &
+             begin, f+f_sGrid, s+s_vgrid, n+n_field_spec, &
              begin, f+f_signal, t+t_string, n+n_field_type, &
              begin, f+f_type, t+t_quantityType, n+n_field_type, &
              begin, f+f_unit, t+t_units, n+n_field_type, &
-             begin, f+f_minValue, t+t_numeric, n+n_field_type, &
-             ndp+n_spec_def /) )
+             begin, f+f_vGrid, s+s_vgrid, n+n_field_spec, &
+             np+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_vectorTemplate, & ! Must be AFTER s_quantity
              begin, f+f_adopt, t+t_string, n+n_field_type, &
@@ -1573,6 +1573,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.478  2008/09/30 22:31:40  vsnyder
+! Change TGrid, add IWC, delete AuxGrid
+!
 ! Revision 2.477  2008/09/19 23:54:45  pwagner
 ! May now Destroy GriddedData
 !
