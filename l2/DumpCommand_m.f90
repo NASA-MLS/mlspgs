@@ -109,7 +109,7 @@ contains
           call GetSignalName ( signalIndex, subSignalString, &                   
             & sideband=signals(signalIndex)%sideband, noChannels=.TRUE. )
           call output( 'sub-signal: ' // trim(subSignalString), advance='yes' )
-        endif
+        end if
         tvalue = tvalue .or. &
           & AnyGoodSignalData ( signalIndex, signals(signalIndex)%sideband, &
           & filedatabase, chunk )
@@ -117,15 +117,15 @@ contains
           if ( switchDetail(switches, 'bool') > 0 ) then
             call output( 'good signal data found: ' &
               & // trim(subSignalString), advance='yes' )
-          endif
+          end if
           exit
-        endif
+        end if
       enddo
       call deallocate_test(Signal_Indices, 'Signal_Indices', ModuleName)
     else
       print *, 'Sorry-unable to parse ', trim(signalString)
       tvalue = .false.
-    endif
+    end if
     call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
       & lowercase(trim(nameString)), tvalue, countEmpty=countEmpty )
     hashsize = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty )
@@ -290,7 +290,7 @@ contains
       ! This allows partial matches, case-insensitive
       tvalue = &
         & index( lowerCase(LastWarningMsg), lowerCase(trim(adjustl(message))) ) > 0
-    endif
+    end if
     call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
       & lowercase(trim(nameString)), tvalue, countEmpty=countEmpty )
     size = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty )
@@ -425,7 +425,7 @@ contains
     elseif( index('<>=', trim(op)) < 1 ) then
       call mlsmessage (MLSMSG_Error, moduleName, &
         & 'Formula in compare found unrecognized relation: ' // trim(op) )
-    endif
+    end if
     ! What kind of flattening?
     select case (flattening)
     case ('all')
@@ -439,7 +439,7 @@ contains
         if ( arg(2) == 'b' ) &
         tvalue = all ( isRelation( trim(op), aQuantity%values, bQuantity%values ) .or. &
           & iand ( ichar(aQuantity%mask(:,:)), m_fill ) /= 0 )
-      endif
+      end if
     case ('any')
       if ( .not. associated ( aQuantity%mask ) ) then
         tvalue = any ( isRelation( trim(op), aQuantity%values, c ) )
@@ -451,7 +451,7 @@ contains
         if ( arg(2) == 'b' ) &
         tvalue = any ( isRelation( trim(op), aQuantity%values, bQuantity%values ) .and. &
           & iand ( ichar(aQuantity%mask(:,:)), m_fill ) == 0 )
-      endif
+      end if
     case ('max', 'min', 'mean', 'median')
       a = statFun( trim(flattening), aQuantity%values, aQuantity%mask )
       b = c
@@ -509,7 +509,7 @@ contains
         end where
       else
         array = values
-      endif
+      end if
       select case (trim(name))
       case ('max')
         statFun = mlsmax( array, FillValue=FillValue )
@@ -567,7 +567,7 @@ contains
     if ( name > 0 ) then
       call get_string(name, nameString)
       nameString = lowerCase(nameString)
-    endif
+    end if
     do keyNo = 2, nsons(root)
       son = subtree(keyNo,root)
       field = subtree(1,son)
@@ -703,7 +703,7 @@ contains
       call trace_begin ( 'DumpCommand', root )
     else
       call MLSMessageCalls( 'push', constantName=ModuleName )
-    endif
+    end if
     haveQuantityTemplatesDB = present(quantityTemplatesDB)
     if ( haveQuantityTemplatesDB ) &
       & haveQuantityTemplatesDB = associated(quantityTemplatesDB)
@@ -723,9 +723,9 @@ contains
     DetailReduction = switchDetail(switches, 'red')
     if ( DetailReduction < 0 ) then ! The 'red' switch is absent
       DetailReduction = 0
-    elseif ( DetailReduction == 0 ) then ! By default, reduce details level by 2
+    else if ( DetailReduction == 0 ) then ! By default, reduce details level by 2
       DetailReduction = 2
-    endif
+    end if
 
     clean = .false.
     details = 0 - DetailReduction
@@ -916,7 +916,7 @@ contains
             call dump ( GetVectorQtyByTemplateIndex( &
               & vectors(vectorIndex), quantityIndex), details=details, &
               & vector=vectors(vectorIndex), clean=clean )
-          endif
+          end if
         end do
       case ( f_pfaData )
         do i = 2, nsons(son)
@@ -1069,7 +1069,7 @@ contains
             else
               call dump ( vectors(decoration(decoration(subtree(i,son)))), &
                 & details=details, clean=clean )
-            endif
+            end if
           end do
         else
           call announceError ( gson, noVectors )
@@ -1087,7 +1087,7 @@ contains
       call trace_end ( 'DumpCommand' )
     else
       call MLSMessageCalls( 'pop' )
-    endif
+    end if
 
   contains
 
@@ -1157,7 +1157,7 @@ contains
       call trace_begin ( 'DumpCommand', root )
     else
       call MLSMessageCalls( 'push', constantName=ModuleName )
-    endif
+    end if
     do j = 2, nsons(root)
       son = subtree(j,root) ! The argument
       fieldIndex = get_field_id(son)
@@ -1180,7 +1180,7 @@ contains
         call trace_end ( 'DumpCommand' )
       else
         call MLSMessageCalls( 'pop' )
-      endif
+      end if
     enddo
   end function Skip
 
@@ -1193,11 +1193,15 @@ contains
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.43  2008/09/30 22:00:22  vsnyder
+! Add PRINT statement to Not_Used_Here to reduce compilation cascades
+!
 ! Revision 2.42  2008/06/05 02:07:43  vsnyder
 ! Dump Mie tables
 !
