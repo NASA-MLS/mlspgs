@@ -26,7 +26,6 @@ module QuantityTemplates         ! Quantities within vectors
   use Output_m, only: NEWLINE, Output, outputNamedValue
   use String_Table, only: DISPLAY_STRING, Get_String
   use TOGGLES, only: SWITCHES
-  use VGridsDatabase, only: VGrid_T
 
   implicit none
   public
@@ -60,9 +59,7 @@ module QuantityTemplates         ! Quantities within vectors
     integer :: noInstances     ! Number of horizontal instances in this quantity
     integer :: noSurfs         ! Number of surfaces per instance
     integer :: noChans         ! Number of channels
-    integer :: noAux           ! Number of auxiliary coordinates.  The types
-                               ! of auxiliary coordinates are not constrained,
-                               ! but they are all specified by vGrids.
+    ! So far, the next two are used only for TScat quantities
 
     ! Flags describing the quantity
 
@@ -108,7 +105,7 @@ module QuantityTemplates         ! Quantities within vectors
 
     ! This is dimensioned (noSurfs,1) for coherent quantities and
     ! (noSurfs, noInstances) for incoherent ones.  Pretending the values are
-    ! dimensioned (noAux*noChans, noSurfs, noInstances), the SURFS coordinate
+    ! dimensioned (noChans, noSurfs, noInstances), the SURFS coordinate
     ! for the (:,i,j) values is surfs(i,1) for a coherent quantity or
     ! surfs(i,j) for an incoherent one.
 
@@ -147,13 +144,6 @@ module QuantityTemplates         ! Quantities within vectors
     real(r8) :: lo                      ! Local oscillator
     integer :: signal                   ! Index into signals database
     integer :: sideband                 ! Associated sideband -1, 0, +1
-
-    ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    ! Auxiliary coordinates
-    ! These are specified by vGrids.  noAux is the product of the sizes of
-    ! the vGrids.
-
-    type(VGrid_T), pointer :: AuxGrids(:) => NULL() ! vGrid indices
 
     ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     ! Some families of quantities require special additional information.
@@ -459,7 +449,7 @@ contains ! =====     Public Procedures     =============================
     z%name = a%name
     call SetupNewQuantityTemplate ( z, a%noInstances, a%noSurfs, a%noChans, &
       & a%coherent, a%stacked, a%regular, a%instanceLen, a%minorFrame, &
-      & a%majorFrame, noAux=a%noAux )
+      & a%majorFrame )
     ! Copy each other component -- tedious, but a shallow copy
     ! would lose newly allocated arrays
     z%quantityType = a%quantityType
@@ -495,12 +485,6 @@ contains ! =====     Public Procedures     =============================
     if ( .not. z%regular ) then
       z%surfIndex = a%surfIndex
       z%chanIndex = a%chanIndex
-    end if
-    if ( associated ( a%auxGrids ) ) then
-      allocate ( z%auxGrids(size(a%auxGrids)), stat=stat )
-      call test_allocate ( stat, 'QuantityTemplates', 'z%auxGrids', &
-        & (/ 1 /), (/ size(a%auxGrids) /) )
-      z%auxGrids = a%auxGrids
     end if
    
   end subroutine CopyQuantityTemplate
@@ -561,12 +545,6 @@ contains ! =====     Public Procedures     =============================
       call deallocate_test ( qty%chanIndex, trim(what) // '%chanIndex', ModuleName )
     end if
 
-    if ( associated(qty%auxGrids) ) then
-      if ( verbose ) call output( 'About to deallocate auxGrids', advance='yes' )
-      deallocate ( qty%auxGrids, stat=stat )
-      call test_deallocate ( stat, 'QuantityTemplates', trim(what)//'%auxGrids' )
-    end if
-
   end subroutine DestroyQuantityTemplateContents
 
   ! ----------------------------  DestroyQuantityTemplateDatabase  -----
@@ -623,12 +601,9 @@ contains ! =====     Public Procedures     =============================
       call myDisplayString ( lit_indices(quantity_template%quantityType), &
         & advance='yes' )
     end if
-    call output ( '      NoInstances = ' )
-    call output ( quantity_template%noInstances )
-    call output ( ' NoSurfs = ' )
-    call output ( quantity_template%noSurfs )
-    call output ( ' noChans = ' )
-    call output ( quantity_template%noChans, advance='yes' )
+    call output ( quantity_template%noInstances, before='      NoInstances = ' )
+    call output ( quantity_template%noChans,     before=' noChans = ' )
+    call output ( quantity_template%noSurfs,     before=' NoSurfs = ', advance='yes' )
     call output ( '      ' )
     if ( .not. quantity_template%coherent ) call output ( 'in' )
     call output ( 'coherent ' )
@@ -680,11 +655,6 @@ contains ! =====     Public Procedures     =============================
     else
       call newline
     end if
-    if ( associated(quantity_template%auxGrids) ) then
-      do i = 1, size(quantity_template%auxGrids)
-        call dump ( quantity_template%auxGrids(i), details )
-      end do
-    end if
     if ( quantity_template%radiometer /= 0 .and. .not. myNoL2CF ) then
       call output ( '      Radiometer = ' )
       call GetRadiometerName ( quantity_template%radiometer, str )
@@ -712,32 +682,36 @@ contains ! =====     Public Procedures     =============================
         call dump ( signals(quantity_template%signal) )
       end if
       if ( associated(quantity_template%phi) ) &
-        & call dump ( quantity_template%phi, '      Phi = ' )
+        & call dump ( quantity_template%phi,           '      Phi = ' )
       if ( associated(quantity_template%surfs) ) &
-        & call dump ( quantity_template%surfs, '      Surfs = ' )
+        & call dump ( quantity_template%surfs,         '      Surfs = ' )
       if ( myDetails > 1 ) then
         if ( associated(quantity_template%surfIndex) ) &
-          & call dump ( quantity_template%surfIndex, '      SurfIndex = ' )
+          & call dump ( quantity_template%surfIndex,   '      SurfIndex = ' )
         if ( associated(quantity_template%chanIndex) ) &
-          & call dump ( quantity_template%chanIndex, '      ChanIndex = ' )
+          & call dump ( quantity_template%chanIndex,   '      ChanIndex = ' )
         if ( associated(quantity_template%geodLat) ) &
-          & call dump ( quantity_template%geodLat, '      GeodLat = ' )
+          & call dump ( quantity_template%geodLat,     '      GeodLat = ' )
         if ( associated(quantity_template%lon) ) &
-          & call dump ( quantity_template%lon, '      Lon = ' )
+          & call dump ( quantity_template%lon,         '      Lon = ' )
         if ( associated(quantity_template%time) ) &
-          & call dump ( quantity_template%time, '      Time = ' )
+          & call dump ( quantity_template%time,        '      Time = ' )
         if ( associated(quantity_template%solarTime) ) &
-          & call dump ( quantity_template%solarTime, '      SolarTime = ' )
+          & call dump ( quantity_template%solarTime,   '      SolarTime = ' )
         if ( associated(quantity_template%solarZenith) ) &
           & call dump ( quantity_template%solarZenith, '      SolarZenith = ' )
         if ( associated(quantity_template%losAngle) ) &
-          & call dump ( quantity_template%losAngle, '      LosAngle = ' )
+          & call dump ( quantity_template%losAngle,    '      LosAngle = ' )
       end if
       if ( associated(quantity_template%frequencies) ) then
         call display_string ( lit_indices(quantity_template%frequencyCoordinate), &
           & before='      FrequencyCoordinate = ', advance='yes' )
         call dump ( quantity_template%frequencies, ' Frequencies = ' )
       end if
+    else
+      if ( associated(quantity_template%frequencies) ) &
+        & call display_string ( lit_indices(quantity_template%frequencyCoordinate), &
+          & before='      FrequencyCoordinate = ', advance='yes' )
     end if
   end subroutine DUMP_QUANTITY_TEMPLATE
 
@@ -813,7 +787,7 @@ contains ! =====     Public Procedures     =============================
   ! -----------------------------------  SetupNewQuantityTemplate  -----
   subroutine SetupNewQuantityTemplate ( qty, noInstances, noSurfs, &
     & noChans, coherent, stacked, regular, instanceLen, minorFrame, majorFrame, &
-    & sharedVGrid, sharedHGrid, sharedFGrid, noAux )
+    & sharedVGrid, sharedHGrid, sharedFGrid )
 
   ! Set up a new quantity template according to the user input.  This may
   ! be based on a previously supplied template (with possible
@@ -835,7 +809,6 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in), optional :: sharedVGrid
     logical, intent(in), optional :: sharedHGrid
     logical, intent(in), optional :: sharedFGrid
-    integer, intent(in), optional :: noAux
 
     ! Local variables
     integer :: noSurfsToAllocate        ! For allocations
@@ -851,7 +824,6 @@ contains ! =====     Public Procedures     =============================
     end if
 
     qty%quantityType = 0
-    qty%noAux = 1
     qty%noChans = 1
     qty%noInstances = 1
     qty%noSurfs = 1
@@ -885,16 +857,15 @@ contains ! =====     Public Procedures     =============================
     qty%molecule = 0
 
     ! Now, see if the user asked for modifications to this
-    if ( present ( noAux) )        qty%noAux = noAux
-    if ( present ( noChans) )      qty%noChans = noChans
-    if ( present ( noInstances) )  qty%noInstances = noInstances
-    if ( present ( noSurfs) )      qty%noSurfs = noSurfs
-    if ( present ( regular) )      qty%regular = regular
-    if ( present ( minorFrame) )   qty%minorFrame = minorFrame
-    if ( present ( majorFrame) )   qty%majorFrame = majorFrame
-    if ( present ( sharedVGrid ) ) qty%sharedVGrid = sharedVGrid
-    if ( present ( sharedHGrid ) ) qty%sharedHGrid = sharedHGrid
-    if ( present ( sharedFGrid ) ) qty%sharedFGrid = sharedFGrid
+    if ( present (noChans) )      qty%noChans = noChans
+    if ( present (noInstances) )  qty%noInstances = noInstances
+    if ( present (noSurfs) )      qty%noSurfs = noSurfs
+    if ( present (regular) )      qty%regular = regular
+    if ( present (minorFrame) )   qty%minorFrame = minorFrame
+    if ( present (majorFrame) )   qty%majorFrame = majorFrame
+    if ( present (sharedVGrid) )  qty%sharedVGrid = sharedVGrid
+    if ( present (sharedHGrid) )  qty%sharedHGrid = sharedHGrid
+    if ( present (sharedFGrid) )  qty%sharedFGrid = sharedFGrid
 
     if ( qty%minorFrame ) then
       if ( present(coherent) ) then
@@ -920,7 +891,7 @@ contains ! =====     Public Procedures     =============================
         qty%instanceLen = 0
       end if
     else
-      qty%instanceLen = qty%noSurfs*qty%noChans*qty%noAux
+      qty%instanceLen = qty%noSurfs * qty%noChans
     end if
 
     ! Now we allocate all the arrays we're going to need if necessary
@@ -974,6 +945,7 @@ contains ! =====     Public Procedures     =============================
     else
       nullify ( qty%surfIndex, qty%chanIndex )
     end if
+
     ! if ( index(switches, 'qtmp') > 0 ) call dump(qty, details=0, noL2CF=.true.)
   end subroutine SetupNewQuantityTemplate
 
@@ -985,6 +957,7 @@ contains ! =====     Public Procedures     =============================
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module QuantityTemplates
@@ -992,6 +965,11 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.51  2008/06/06 01:54:08  vsnyder
+! Aux grids have to be vGrids, not indices in vGridsDatabase, else clients
+! will have to have the database.
+! Make sure to deallocate the auxGrids.  Dump auxGrids.
+!
 ! Revision 2.50  2008/06/05 02:05:53  vsnyder
 ! Added Aux grids
 !
