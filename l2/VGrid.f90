@@ -44,8 +44,7 @@ module vGrid                    ! Definitions for vGrids in vector quantities
   integer, private, parameter :: TooFew = StartStopUnits + 1
   integer, private, parameter :: Unitless = TooFew + 1
   integer, private, parameter :: UnitsPressure = Unitless + 1
-  integer, private, parameter :: UnitsTemperature = UnitsPressure + 1
-  integer, private, parameter :: WrongUnits = UnitsTemperature + 1
+  integer, private, parameter :: WrongUnits = UnitsPressure + 1
 
 contains ! =====     Public Procedures     =============================
 
@@ -60,13 +59,13 @@ contains ! =====     Public Procedures     =============================
     use Allocate_Deallocate, only: Allocate_Test
     use EXPR_M, only: EXPR
     use INIT_TABLES_MODULE, only: F_COORDINATE, F_FORMULA, F_NUMBER, &
-      & F_RESOLUTION, F_SOURCEL2GP, F_START, F_STEP, F_STOP, F_TYPE, &
+      & F_RESOLUTION, F_SOURCEL2GP, F_START, F_STOP, F_TYPE, &
       & F_VALUES, FIELD_FIRST, FIELD_LAST, &
       & L_ANGLE, L_DIMENSIONLESS, L_DIMLESS, L_EXPLICIT, &
       & L_GEODALTITUDE, L_GPH, L_ICEDENSITY, L_INTEGER, L_L2GP, L_LINEAR, &
       & L_LOGARITHMIC, L_NONE, L_PRESSURE, L_THETA, L_ZETA, &
       & PHYQ_Angle, PHYQ_Dimensionless, PHYQ_ICEDENSITY, PHYQ_Length, &
-      & PHYQ_Pressure, PHYQ_Temperature, S_VGRID
+      & PHYQ_Pressure, PHYQ_Temperature, S_TGRID, S_VGRID
     use L2GPData, only: L2GPDATA_T
     use MoreTree, only: Get_Spec_ID
     use TOGGLES, only: GEN, TOGGLE
@@ -90,13 +89,12 @@ contains ! =====     Public Procedures     =============================
     integer :: I, J, K, L, N       ! Loop counter or limit
     integer :: L2GPINDEX           ! Index into database
     integer :: L2GPWhere           ! Tree index for L2GP
-    integer :: NUMBER              ! Index in tree of Number field
+    integer :: NUMBER              ! NINT ( Value of number field )
     integer :: PREV_UNITS          ! Units of previous element of Value field
     integer :: RESOLUTION          ! Index in tree of resolution field
     integer :: SON                 ! Son of Root
     integer :: START               ! Index in tree of start field
     double precision :: STEP       ! Step for linear or logarithmic grid
-    integer :: StepIndex           ! Where in the tree is the step field?
     double precision :: STOP(2)    ! Value of Stop field
     integer :: STOP_UNITS(2)       ! Units of Stop field
     integer :: UNITS(2)            ! Output from Expr
@@ -135,13 +133,11 @@ contains ! =====     Public Procedures     =============================
         if ( units(1) /= phyq_dimensionless ) &
           & call announce_error ( field, unitless, f_number )
         number = nint(values(1))
-        if ( number < 2 ) call announce_error ( root, tooFew )
+!       if ( number < 2 ) call announce_error ( root, tooFew )
       case ( f_start )
         start = son
       case ( f_resolution )
         resolution = son
-      case ( f_step )
-        stepIndex = son
       case ( f_stop )
         call expr ( value, stop_units, stop )
       case ( f_sourceL2GP )
@@ -155,10 +151,119 @@ contains ! =====     Public Procedures     =============================
       end select
     end do
 
-    if ( get_spec_id(root) == s_vGrid ) then
+    select case ( get_spec_id(root) )
+    case ( s_vGrid )
 
       ! Now check that this is a sensible vGrid; first the obvious stuff.
 
+      call makeGrid ( -1.0d0 )
+
+      ! Check that the given surfaces are in an appropriate unit
+
+      if ( got_field(f_start) .and. &
+        &( prev_units == PHYQ_Pressure .neqv. coordType == l_logarithmic) ) &
+        & call announce_error ( subtree(1,start), unitsPressure )
+
+      select case ( vGrid%verticalCoordinate )
+      case (l_angle)
+        if ( prev_units /= PHYQ_Angle) &
+          & call announce_error ( coordIndex, wrongUnits, f_type, phyq_angle )
+      case (l_dimensionless,l_dimless,l_integer)
+        if ( prev_units /= PHYQ_Dimensionless) &
+          & call announce_error ( coordIndex, wrongUnits, f_type, phyq_dimensionless )
+      case (l_geodAltitude)
+        if ( prev_units /= PHYQ_Length) &
+          & call announce_error ( coordIndex, wrongUnits, f_type, phyq_length )
+      case (l_gph)
+        if ( prev_units /= PHYQ_Length) &
+          & call announce_error ( coordIndex, wrongUnits, f_type, phyq_length )
+      case (l_none)
+        if ( coordType /= l_explicit ) &
+          & call announce_error ( root, requireExplicit )
+        if ( prev_units /= PHYQ_Dimensionless ) &
+          & call announce_error ( coordIndex, wrongUnits, f_type, &
+            & phyq_dimensionless )
+      case (l_pressure)
+        if ( prev_units /= PHYQ_Pressure) &
+          & call announce_error ( coordIndex, wrongUnits, f_type, phyq_pressure )
+      case (l_theta)
+        if ( prev_units /= PHYQ_Temperature) &
+          & call announce_error ( coordIndex, wrongUnits, f_type, phyq_temperature )
+      case (l_icedensity)
+        if ( prev_units /= PHYQ_Icedensity ) &
+          & call announce_error ( coordIndex, wrongUnits, f_type, &
+            & phyq_icedensity )
+      case (l_zeta)
+        select case ( prev_units )
+        case ( PHYQ_Dimensionless )     ! OK, do nothing
+        case ( PHYQ_Pressure )          ! Need to take log
+          vgrid%surfs= -LOG10(vgrid%surfs)
+        case default
+          call announce_error ( coordIndex, wrongUnits, f_type, phyq_dimensionless )
+          call announce_error ( coordIndex, moreUnits, lit_index=phyq_pressure )
+        end select
+      end select
+
+    case ( s_tGrid )
+      vGrid%verticalCoordinate = l_theta
+      call MakeGrid ( 1.0d0, PHYQ_Temperature )
+
+    end select
+
+    if ( toggle(gen) ) call trace_end ( "CreateVGridFromMLSCFInfo" )
+
+    status = error
+
+  contains
+
+    subroutine LogarithmicFormula ( StepSign, NeedUnits )
+    ! Allocate and fill vGrid%surfs from the Formula field
+      double precision, intent(in) :: StepSign ! +/- 1.0d0
+      integer, intent(in), optional :: NeedUnits
+      vgrid%noSurfs = 0
+      if ( got_field(f_formula) ) then
+        j = nsons(formula)
+        do i = 2, j ! Compute total number of surfaces
+          call expr ( subtree(i,formula), units, values )
+          if ( units(1) /= phyq_dimensionless .or. &
+            &  units(2) /= phyq_dimensionless ) &
+            call announce_error ( subtree(1,formula), wrongUnits, f_formula, &
+              & phyq_dimensionless )
+          vgrid%noSurfs = vgrid%noSurfs + nint(values(1))
+        end do
+        if ( got_field(f_start) ) prev_units = check_units ( start, f_start )
+      end if
+      if ( error == 0 ) then
+        call allocate_test ( vgrid%surfs, vgrid%noSurfs, 1, "vGrid%surfs", &
+          & ModuleName )
+        k = 1
+        n = 1 ! One less surface the first time, since we have one at the start.
+        call expr ( subtree(2,start), units, values )
+        if ( present(needUnits) ) then
+          if ( units(1) /= needUnits ) call announce_error ( &
+            & start, wrongUnits, f_start, needUnits )
+        end if
+        vgrid%surfs(1,1) = values(1)
+        do i = 2, j
+          call expr ( subtree(i,formula), units, values )
+          if ( values(2) <= 0.0d0 ) then
+            call announce_error ( subtree(1,formula), notPositive, f_formula )
+            exit
+          end if
+          step = 10.0 ** (StepSign/values(2))
+          do l = 1, nint(values(1)) - n
+            k = k + 1
+            vgrid%surfs(k,1) = vgrid%surfs(k-1,1) * step
+          end do
+          n = 0 ! Do all of the surfaces after the first time.
+        end do
+      end if
+
+    end subroutine LogarithmicFormula
+
+    subroutine MakeGrid ( StepSign, NeedUnits )
+      double precision, intent(in) :: StepSign ! +/- 1.0d0. for log grid
+      integer, intent(in), optional :: NeedUnits
       select case ( coordType )
       case ( l_explicit )
         call check_fields ( root, l_explicit, got_field, &
@@ -207,10 +312,14 @@ contains ! =====     Public Procedures     =============================
           vgrid%surfs(1,1) = values(1)
           if ( prev_units /= stop_units(1) ) &
             & call announce_error ( root, startStopUnits )
+          if ( present(needUnits) ) then
+            if ( prev_units /= needUnits ) call announce_error ( &
+              & start, wrongUnits, f_start, needUnits )
+          end if
         end if
         if ( got_field(f_stop) ) vgrid%surfs(vgrid%noSurfs,1) = stop(1)
         if ( error == 0 ) then
-          step = ( stop(1) - values(1) ) / ( number-1 )
+          if ( number > 1 ) step = ( stop(1) - values(1) ) / ( number-1 )
           do i = 2, number-1
             vgrid%surfs(i,1) = vgrid%surfs(1,1) + (i-1) * step
           end do
@@ -219,130 +328,10 @@ contains ! =====     Public Procedures     =============================
         call check_fields ( root, l_logarithmic , got_field, &
           & required=(/ f_formula, f_start /), &
           & extra=(/ f_stop, f_values /) )
-        call logarithmicFormula ( -1.0d0 )
+        call logarithmicFormula ( stepSign, needUnits )
       end select
 
-      ! Check that the given surfaces are in an appropriate unit
-
-      if ( got_field(f_start) .and. &
-        &( prev_units == PHYQ_Pressure .neqv. coordType == l_logarithmic) ) &
-        & call announce_error ( subtree(1,start), unitsPressure )
-
-      select case ( vGrid%verticalCoordinate )
-      case (l_angle)
-        if ( prev_units /= PHYQ_Angle) &
-          & call announce_error ( coordIndex, wrongUnits, f_type, phyq_angle )
-      case (l_dimensionless,l_dimless,l_integer)
-        if ( prev_units /= PHYQ_Dimensionless) &
-          & call announce_error ( coordIndex, wrongUnits, f_type, phyq_dimensionless )
-      case (l_geodAltitude)
-        if ( prev_units /= PHYQ_Length) &
-          & call announce_error ( coordIndex, wrongUnits, f_type, phyq_length )
-      case (l_gph)
-        if ( prev_units /= PHYQ_Length) &
-          & call announce_error ( coordIndex, wrongUnits, f_type, phyq_length )
-      case (l_none)
-        if ( coordType /= l_explicit ) &
-          & call announce_error ( root, requireExplicit )
-        if ( prev_units /= PHYQ_Dimensionless ) &
-          & call announce_error ( coordIndex, wrongUnits, f_type, &
-            & phyq_dimensionless )
-      case (l_pressure)
-        if ( prev_units /= PHYQ_Pressure) &
-          & call announce_error ( coordIndex, wrongUnits, f_type, phyq_pressure )
-      case (l_theta)
-        if ( prev_units /= PHYQ_Temperature) &
-          & call announce_error ( coordIndex, wrongUnits, f_type, phyq_temperature )
-      case (l_icedensity)
-        if ( prev_units /= PHYQ_Icedensity ) &
-          & call announce_error ( coordIndex, wrongUnits, f_type, &
-            & phyq_icedensity )
-      case (l_zeta)
-        select case ( prev_units )
-        case ( PHYQ_Dimensionless )     ! OK, do nothing
-        case ( PHYQ_Pressure )          ! Need to take log
-          vgrid%surfs= -LOG10(vgrid%surfs)
-        case default
-          call announce_error ( coordIndex, wrongUnits, f_type, phyq_dimensionless )
-          call announce_error ( coordIndex, moreUnits, lit_index=phyq_pressure )
-        end select
-      end select
-
-    else ! must be a tGrid
-      vGrid%verticalCoordinate = l_theta
-      if ( check_units ( start, f_start, values ) /= PHYQ_Temperature) &
-        & call announce_error ( start, unitsTemperature )
-      if ( got_field(f_formula) ) then
-        if ( got_field(f_number) .or. got_field(f_step) ) then
-          call announce_error ( formula, noStep )
-        else
-          call logarithmicFormula ( 1.0d0 )
-          vGrid%surfs = log(vGrid%surfs)
-        end if
-      else
-        if ( .not. (got_field(f_number) .and. got_field(f_step) ) ) then
-          call announce_error ( start, NeedBoth )
-        else
-          vGrid%noSurfs = number
-          call allocate_test ( vgrid%surfs, vgrid%noSurfs, 1, "vGrid%surfs", &
-            & ModuleName )
-          vGrid%surfs(1,1) = log(values(1))
-          if ( check_units ( stepIndex, f_step, values ) /= PHYQ_Dimensionless ) &
-            & call announce_error ( subtree(1,stepIndex), unitless, f_step )
-          if ( values(1) <= 0.0d0 ) &
-            & call announce_error ( subtree(1,stepIndex), notPositive, f_step )
-          if ( error == 0 ) then
-            do i = 2, number
-              vGrid%surfs(i,1) = vGrid%surfs(i-1,1) + values(1)
-            end do
-          end if
-        end if
-      end if
-    end if
-
-    if ( toggle(gen) ) call trace_end ( "CreateVGridFromMLSCFInfo" )
-
-    status = error
-
-  contains
-    subroutine LogarithmicFormula ( StepSign )
-    ! Allocate and fill vGrid%surfs from the Formula field
-      double precision, intent(in) :: StepSign ! +/- 1.0d0
-      vgrid%noSurfs = 0
-      if ( got_field(f_formula) ) then
-        j = nsons(formula)
-        do i = 2, j ! Compute total number of surfaces
-          call expr ( subtree(i,formula), units, values )
-          if ( units(1) /= phyq_dimensionless .or. &
-            &  units(2) /= phyq_dimensionless ) &
-            call announce_error ( subtree(1,formula), wrongUnits, f_formula, &
-              & phyq_dimensionless )
-          vgrid%noSurfs = vgrid%noSurfs + nint(values(1))
-        end do
-        if ( got_field(f_start) ) prev_units = check_units ( start, f_start )
-      end if
-      if ( error == 0 ) then
-        call allocate_test ( vgrid%surfs, vgrid%noSurfs, 1, "vGrid%surfs", &
-          & ModuleName )
-        k = 1
-        n = 1 ! One less surface the first time, since we have one at the start.
-        call expr ( subtree(2,start), units, values )
-        vgrid%surfs(1,1) = values(1)
-        do i = 2, j
-          call expr ( subtree(i,formula), units, values )
-          if ( values(2) <= 0.0d0 ) then
-            call announce_error ( subtree(1,formula), notPositive, f_formula )
-            exit
-          end if
-          step = 10.0 ** (StepSign/values(2))
-          do l = 1, nint(values(1)) - n
-            k = k + 1
-            vgrid%surfs(k,1) = vgrid%surfs(k-1,1) * step
-          end do
-          n = 0 ! Do all of the surfaces after the first time.
-        end do
-      end if
-    end subroutine LogarithmicFormula
+    end subroutine MakeGrid
 
   end function CreateVGridFromMLSCFInfo
 
@@ -413,11 +402,9 @@ contains ! =====     Public Procedures     =============================
       call display_string ( field_indices(field_index) )
       call output ( " field is required to be unitless.", advance='yes' )
     case ( unitsPressure )
-      call output ( "Pressure units are required for logarithmic grids,", &
+      call output ( "Pressure units are required for logarithmic vGrids,", &
         & advance='yes' )
       call output ( "and prohibited otherwise.", advance='yes' )
-    case ( unitsTemperature )
-      call output ( "Temperature units are are required.", advance='yes' )
     case ( wrongUnits )
       call output ( "The " )
       call display_string ( field_indices(field_index) )
@@ -491,12 +478,16 @@ contains ! =====     Public Procedures     =============================
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module vGrid
 
 !
 ! $Log$
+! Revision 2.25  2008/09/30 22:33:05  vsnyder
+! Change TGrid definition
+!
 ! Revision 2.24  2008/06/05 02:18:49  vsnyder
 ! Added dimensionless, dimless and iceDensity coordinates, spiffed error handler
 !
