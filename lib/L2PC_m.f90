@@ -693,8 +693,8 @@ contains ! ============= Public Procedures ==========================
           end select
           
           ! Write out the dimensions for the quantity and the edges
-          write (unit,*) qt%noAux, qt%noChans, qt%noSurfs, qt%noInstances, &
-            &  'noAux, noChans, noSurfs, noInstances'
+          write (unit,*) qt%noChans, qt%noSurfs, qt%noInstances, &
+            &  'noChans, noSurfs, noInstances'
           call get_string ( lit_indices(qt%verticalCoordinate), line )
           write (unit,*) qt%coherent, qt%stacked, trim(line), &
             &  ' coherent, stacked, verticalCoordinate'
@@ -707,21 +707,6 @@ contains ! ============= Public Procedures ==========================
           write (unit,*) 'phi'
           write (unit, rFmt) qt%phi
 
-          ! Write the aux grids if any
-          if ( associated(qt%auxGrids) ) then
-            write (unit,*) size(qt%auxGrids), 'size(qt%auxGrids)'
-            do grid = 1, size(qt%auxGrids)
-              call get_string ( lit_indices(qt%auxGrids(grid)%name), line )
-              write (unit,*) trim(line) ! grid name
-              call get_string ( lit_indices(qt%auxGrids(grid)%verticalCoordinate), &
-                & line )
-              write (unit,*) trim(line),' verticalCoordinate'
-              write (unit,*) size(qt%auxGrids(grid)%surfs), ' surfs'
-              write (unit, rFmt) qt%auxGrids(grid)%surfs
-            end do
-          else
-            write (unit,*) 0, 'size(qt%auxGrids)'
-          end if
         end if
       end do                            ! First loop over quantities
 
@@ -1051,7 +1036,6 @@ contains ! ============= Public Procedures ==========================
 
     ! Local variables
     integer :: GRID                     ! Loop counter
-    integer :: NOAUX                    ! Number of aux grids in a quantity
     integer :: NOINSTANCESOR1           ! For allocates
     integer :: NOQUANTITIES             ! Number of quantities in a vector
     integer :: NOSURFSOR1               ! For allocates
@@ -1140,10 +1124,10 @@ contains ! ============= Public Procedures ==========================
       end select
       
       ! Next read the dimensions for the quantity
-      read (unit,*, IOSTAT=status) qt%noAux, qt%noChans, qt%noSurfs, qt%noInstances
+      read (unit,*, IOSTAT=status) qt%noChans, qt%noSurfs, qt%noInstances
       if (status /= 0 ) then
         call io_error('io error in L2PC_m: ReadOneVector' // &
-          & ' Fortran read of NoChans, noSurfs, noInstances', status)
+          & ' Fortran read of noChans, noSurfs, noInstances', status)
           print *, 'Quantity: ', quantity
           print *, 'QuantityName: ', qt%name
           print *, 'QuantityType: ', qt%quantityType
@@ -1152,7 +1136,7 @@ contains ! ============= Public Procedures ==========================
         call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'An io-error occured' )
       end if
-      qt%instanceLen = qt%noChans* qt%noSurfs
+      qt%instanceLen = qt%noChans * qt%noSurfs
       read (unit,*, IOSTAT=status) qt%coherent, qt%stacked
       if (status /= 0 ) then
         call io_error('io error in L2PC_m: ReadOneVector' // &
@@ -1171,9 +1155,9 @@ contains ! ============= Public Procedures ==========================
       else
         noSurfsOr1 = qt%noSurfs
       endif
-      
-      call Allocate_test( qt%surfs, qt%noSurfs, noInstancesOr1, 'qt%surfs', ModuleName)
-      call Allocate_test( qt%phi, noSurfsOr1, qt%noInstances, 'qt%phi', ModuleName)
+
+      call Allocate_test ( qt%surfs, qt%noSurfs, noInstancesOr1, 'qt%surfs', ModuleName )
+      call Allocate_test ( qt%phi, noSurfsOr1, qt%noInstances, 'qt%phi', ModuleName )
       
       read (unit,*, IOSTAT=status) line              ! Line saying surfs
       if (status /= 0 ) then
@@ -1200,26 +1184,6 @@ contains ! ============= Public Procedures ==========================
         call io_error('io error in L2PC_m: ReadOneVector' // &
           & ' Fortran read of phi', status)
         call MLSMessage ( MLSMSG_Error, ModuleName, 'An io-error occured' )
-      end if
-
-      ! Read the auxiliary grids
-      read (unit,*, IOSTAT=status) noAux, line       ! line saying # size(aux)
-      if ( noAux > 0 ) then
-        allocate ( qt%auxGrids(noAux), stat=status )
-        call test_allocate ( status, moduleName, 'qty%auxGrids', (/ 1 /), &
-          & (/ noAux /) )
-        do grid = 1, noAux
-          read (unit,*) line ! Grid name
-          qt%auxGrids(grid)%name = GetStringIndexFromString (line)
-          read (unit,*) line ! Vertical coordinate
-          qt%auxGrids(grid)%verticalCoordinate = getLitIndexFromString(line)
-          read (unit,*) qt%auxGrids(grid)%noSurfs
-          call allocate_test ( qt%auxGrids(grid)%surfs, &
-            & qt%auxGrids(grid)%noSurfs, 1, 'qt%auxGrids(grid)%surfs', 'L2PC_m' )
-          read (unit,*) qt%auxGrids(grid)%surfs
-        end do
-      else
-        nullify ( qt%auxGrids )
       end if
 
       ! Now add this template to our private database 
@@ -1483,14 +1447,12 @@ contains ! ============= Public Procedures ==========================
     integer, intent(out) :: VECTOR      ! Index of vector read in L2PCVectors
 
     ! Local variables
-    integer :: AID                      ! HDF5 ID of aux grids group
     integer :: FREQUENCYCOORDINATE      ! Enumeration
     integer :: GID                      ! HDF5 ID of a grid  group
     integer :: GRID                     ! Loop counter
     integer :: I                        ! Index into various arrays
     integer :: MOLECULE                 ! Enumeration
     integer :: NAMEINDEX                ! Quantity name
-    integer :: NOAUX                    ! Number of aux grids
     integer :: NOCHANS                  ! Dimension
     integer :: NOINSTANCES              ! Dimension
     integer :: NOINSTANCESOR1           ! Dimension
@@ -1512,7 +1474,6 @@ contains ! ============= Public Procedures ==========================
     integer :: VERTICALCOORDINATE       ! Enumeratire
     integer :: VID                      ! HDF5 ID of vector group
     integer :: VTINDEX                  ! Index of vector template
-    character (len=64) :: THISGRID      ! Name of this aux grid
     character (len=64) :: THISNAME      ! Name of this quantity
     character (len=64) :: WORD          ! General string
 
@@ -1645,9 +1606,9 @@ contains ! ============= Public Procedures ==========================
       ! call GetHDF5Attribute ( qID, 'noSurfs', noSurfs )
       ! call GetHDF5Attribute ( qID, 'noChans', noChans )
       ! call GetHDF5Attribute ( qId, 'verticalCoordinate', word )
+      call GetHDF5Attribute ( MLSFile, 'noChans', noChans )
       call GetHDF5Attribute ( MLSFile, 'noInstances', noInstances )
       call GetHDF5Attribute ( MLSFile, 'noSurfs', noSurfs )
-      call GetHDF5Attribute ( MLSFile, 'noChans', noChans )
       call GetHDF5Attribute ( MLSFile, 'verticalCoordinate', word )
       verticalCoordinate = GetLitIndexFromString ( word )
       ! Look for frequency coordinate (optional for backwards compatability with
@@ -1706,46 +1667,6 @@ contains ! ============= Public Procedures ==========================
           & 'qt%frequencies', ModuleName )
         ! call LoadFromHDF5DS ( qId, 'frequencies', qt%frequencies )
         call LoadFromHDF5DS ( MLSFile, 'frequencies', qt%frequencies )
-      end if
-
-      ! Try to get the aux grids
-      if ( IsHDF5GroupPresent ( qId, 'auxGrids' ) ) then
-        call h5gOpen_f ( qId, 'auxGrids', aId, status )
-        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Unable to open aux grids group in '//trim(quantityNames(quantity))// &
-          & ' in vector '//trim(name) , &
-          & MLSFile=MLSFile )
-        call GetHDF5Attribute ( qId, 'noAuxGrids', noAux )
-        allocate ( qt%auxGrids(noAux), stat=status )
-        call test_allocate ( status, moduleName, 'qt%auxGrids', (/ 1 /), &
-          & (/ noAux /) )
-        do grid = 1, noAux
-          call h5gget_obj_info_idx_f ( aId, 'auxGrids', grid-1, thisGrid, &
-            & objType, status )
-          if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & 'Unable to access an aux grid within quantity ' // &
-            & trim(quantityNames(quantity))//' in vector '//trim(name) , &
-            & MLSFile=MLSFile )
-          call h5gOpen_f ( aId, trim(thisGrid), gId, status )
-          if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & 'Unable to open aux grid group '//trim(thisGrid)//' in quantity ' // &
-            & trim(quantityNames(quantity))//' in vector '//trim(name), &
-            & MLSFile=MLSFile )
-          qt%auxGrids(grid)%name = GetStringIndexFromString ( thisGrid )
-          call getHDF5Attribute ( gID, 'verticalCoordinate', word )
-          qt%auxGrids(grid)%verticalCoordinate = GetLitIndexFromString ( word )
-          call loadPtrFromHDF5DS ( gID, 'surfs', qt%auxGrids(grid)%surfs )
-          call h5gClose_f ( gID, status )
-          if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & 'Unable to close aux grid group '//trim(thisGrid)//' in quantity '// &
-            & trim(quantityNames(quantity))//' in vector '//trim(name), &
-            & MLSFile=MLSFile )
-        end do ! grid
-        call h5gClose_f ( aID, status )
-        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Unable to close aux grids group for ' // &
-          & trim(quantityNames(quantity))//' in vector '//trim(name), &
-          & MLSFile=MLSFile )
       end if
 
       ! Now record the index for this quantity template
@@ -1812,7 +1733,6 @@ contains ! ============= Public Procedures ==========================
     character ( len=132 ) :: LINE       ! A line of text
     character ( len=32 ) :: GNAME       ! Name of grid
     character ( len=32 ) :: QNAME       ! Name of quantity
-    integer :: AID                      ! HDF5 ID for aux grids group
     integer :: GID                      ! HDF5 ID for one grid group
     integer :: GRID                     ! Loop counter
     integer :: QID                      ! HDF5 ID for quantity group
@@ -1857,10 +1777,9 @@ contains ! ============= Public Procedures ==========================
           call MakeHDF5Attribute ( qID, 'signal', trim(line) )
         end select
         ! Write out the dimensions for the quantity
-        call MakeHDF5Attribute ( qID, 'noAux',   qt%noAux )
         call MakeHDF5Attribute ( qID, 'noChans', qt%noChans )
-        call MakeHDF5Attribute ( qID, 'noSurfs', qt%noSurfs )
         call MakeHDF5Attribute ( qID, 'noInstances', qt%noInstances )
+        call MakeHDF5Attribute ( qID, 'noSurfs', qt%noSurfs )
         call get_string ( lit_indices(qt%verticalCoordinate), line )
         call MakeHDF5Attribute ( qID, 'verticalCoordinate', trim(line) )
         call get_string ( lit_indices(qt%frequencyCoordinate), line )
@@ -1874,28 +1793,6 @@ contains ! ============= Public Procedures ==========================
         call SaveAsHDF5DS ( qID, 'solarZenith', qt%solarZenith )
         if ( associated ( qt%frequencies ) ) &
           & call SaveAsHDF5DS ( qID, 'frequencies', qt%frequencies )
-        ! Write out aux grids
-        if ( associated(qt%auxGrids) ) then
-          call h5gCreate_f ( qID, 'auxGrids', aID, status )
-          call MakeHDF5Attribute ( qID, 'noAuxGrids', size(qt%auxGrids) )
-          if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & 'Unable to create group for aux grids ' // trim(gName) )
-          do grid = 1, size(qt%auxGrids)
-            call get_string ( qt%auxGrids(grid)%name, gName )
-            call h5gCreate_f ( aID, trim(gName), gID, status )
-            if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & 'Unable to create group for grid ' // trim(gName) )
-            call get_string ( lit_indices(qt%auxGrids(grid)%verticalCoordinate), line )
-            call MakeHDF5Attribute ( gID, 'verticalCoordinate', trim(line) )
-            call SaveAsHDF5DS ( gID, 'surfs', qt%auxGrids(grid)%surfs )
-            call h5gClose_f ( gID, status )
-            if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & 'Unable to close grid group for ' // trim(gName) )
-          end do
-          call h5gClose_f ( aID, status )
-          if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & 'Unable to close aux grids group' )
-        end if
         ! Write out the values
         call SaveAsHDF5DS ( qID, 'values', vector%quantities(quantity)%values )
         ! Close the group
@@ -1932,11 +1829,15 @@ contains ! ============= Public Procedures ==========================
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module L2PC_m
 
 ! $Log$
+! Revision 2.83  2008/09/30 22:28:03  vsnyder
+! Remove AuxGrids -- didn't need them after all
+!
 ! Revision 2.82  2008/06/06 01:55:29  vsnyder
 ! Process AuxGrids field of vector quantities
 !
