@@ -96,12 +96,19 @@ contains ! =====     Public procedures     =============================
 
     call declare_unit ( l_zeta, 1.0d0, phyq_zeta )
     call declare_unit ( l_logp, 1.0d0, phyq_zeta )
+
 !   this is = 1/meters 
     call declare_unit ( l_invm, 1.0d-3, phyq_extinction )
     call declare_unit ( l_invkm, 1.0d0, phyq_extinction )
+
 !    call declare_unit ( l_extinction, 1.0d0, phyq_extinction )
-!   this is = 1Pa*1000*1sec^2/1meter^4
+
+!   this is = 1Pa/1000*1sec^2/1meter^2 = 1gm/meter^3
     call declare_unit ( l_icedensity, 1.0d0, phyq_icedensity )
+    call declare_unit ( l_iwc, 1.0d0, phyq_icedensity )
+    call declare_unit ( l_gm3, 1.0d0, phyq_icedensity )
+    call declare_unit ( l_mgm3, 1.0d-3, phyq_icedensity )
+
 !   this is 1DU ( = 2.687e20 molecules/m^2)
 !   (but we will use molecules/cm^2 as the default)
     call declare_unit ( l_DobsonUnits, 2.687d16, phyq_colmabundance )
@@ -109,6 +116,7 @@ contains ! =====     Public procedures     =============================
     call declare_unit ( l_molcm2, 1.0d0, phyq_colmabundance )
 
     call declare_unit ( l_pctrhi, 1.0d0, phyq_pctrhi )
+
     call declare_unit ( l_gauss, 1.0d0, phyq_gauss )
 
     call declare_unit ( l_profiles, 1.0d0, phyq_profiles )
@@ -133,11 +141,15 @@ contains ! =====     Public procedures     =============================
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module UNITS
 
 ! $Log$
+! Revision 2.31  2008/09/30 22:22:06  vsnyder
+! Add iwc, gm3, mgm3
+!
 ! Revision 2.30  2007/12/19 03:59:14  vsnyder
 ! Add a comment explaining why unused names are imported from Constants
 !
