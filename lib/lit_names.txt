@@ -82,6 +82,7 @@ geocAltitude
 geodAltitude
 geodAngle
 GHz
+gm3              # gm / meter^3
 gph
 gph_precision
 grid
@@ -101,6 +102,7 @@ invkm
 invm
 iteration
 isotopeRatio
+iwc              # gm / meter^3
 iwc_low_height
 iwc_high_height
 iwp
@@ -134,6 +136,7 @@ massMeanDiameterWater
 matrix3x3
 mb
 meters
+mgm3             # mg / meter^3
 MHz
 mif
 mifDeadTime      # How much of MIF is not collecting data
@@ -227,6 +230,9 @@ zeta
 zonalavg
 
 # $Log$
+# Revision 2.53  2008/09/30 22:22:05  vsnyder
+# Add iwc, gm3, mgm3
+#
 # Revision 2.52  2008/06/09 20:33:46  vsnyder
 # Move TScat here from l2/lit_names
 #
