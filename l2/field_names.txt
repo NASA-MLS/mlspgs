@@ -55,7 +55,6 @@ atmos
 atmos_der
 AuraInstrument
 autofill
-auxGrid
 average
 avoidBrightObjects
 
@@ -460,6 +459,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.188  2008/09/30 22:30:48  vsnyder
+# Remove AuxGrids -- didn't need them after all
+#
 # Revision 2.187  2008/08/21 23:42:46  vsnyder
 # Remove GenerateTScat from ForwardModel; use TScat on Sids
 #
