@@ -29,8 +29,7 @@ module ConstructQuantityTemplates
 
   ! The various properties has/can have
   integer, parameter :: NEXT = -1
-  integer, parameter :: P_AUXGRID            = 1
-  integer, parameter :: P_CHUNKED            = P_AUXGRID + 1
+  integer, parameter :: P_CHUNKED            = 1
   integer, parameter :: P_MAJORFRAME         = P_CHUNKED + 1
   integer, parameter :: P_MINORFRAME         = P_MAJORFRAME + 1
   integer, parameter :: P_MUSTBEZETA         = P_MINORFRAME + 1
@@ -69,10 +68,11 @@ contains ! ============= Public procedures ===================================
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, Test_Allocate
     use Chunks_m, only: MLSChunk_T
 !   use ChunkDivide_m, only: ChunkDivideConfig
+    use Dump_0, only: Dump
     use EXPR_M, only: EXPR
     use FGrid, only: fGrid_T
     use HGridsDatabase, only: hGrid_T
-    use INIT_TABLES_MODULE, only:  F_AUXGRID, F_FGRID, F_HGRID, F_IRREGULAR, &
+    use INIT_TABLES_MODULE, only:  F_FGRID, F_HGRID, F_IRREGULAR, &
       & F_LOGBASIS, F_MINVALUE, F_MODULE, F_MOLECULE, F_RADIOMETER, F_SGRID, &
       & F_SIGNAL, F_TYPE, F_VGRID, F_REFLECTOR, FIELD_FIRST, FIELD_LAST, &
       & L_TRUE, L_ZETA, L_XYZ, L_MATRIX3X3, L_CHANNEL, L_LOSTRANSFUNC, L_NONE
@@ -112,7 +112,6 @@ contains ! ============= Public procedures ===================================
     logical, dimension(field_first:field_last) :: GOT ! Fields
     character(len=127) :: SIGNALSTRING
 
-    integer :: AuxGridNode              ! Tree index of AuxGrid field
     integer :: FGRIDINDEX               ! Index of frequency grid
     integer :: FREQUENCYCOORDINATE      ! Literal
     integer :: HGRIDINDEX               ! Index of horizontal grid
@@ -120,7 +119,6 @@ contains ! ============= Public procedures ===================================
     integer :: INSTRUMENTMODULE         ! Database index
     integer :: KEY                      ! Field name, F_...
     integer :: MOLECULE                 ! Literal
-    integer :: NOAUX                    ! Quantity dimension
     integer :: NOCHANS                  ! Quantity dimension
     integer :: NOINSTANCES              ! Quantity dimension
     integer :: NOSURFS                  ! Quantity dimension
@@ -182,8 +180,6 @@ contains ! ============= Public procedures ===================================
       got ( decoration(key) ) = .true.
 
       select case ( decoration(key) )
-      case ( f_auxGrid )
-        auxGridNode = key ! Might have several sons
       case ( f_fgrid )
         fGridIndex = decoration(value)
       case ( f_hgrid )
@@ -202,6 +198,10 @@ contains ! ============= Public procedures ===================================
       case ( f_radiometer )
         radiometer = decoration(decoration(subtree(2,son)))
         instrumentModule = GetModuleFromRadiometer(radiometer)
+      case ( f_reflector )
+        reflector = value
+      case ( f_sgrid )
+        sGridIndex = decoration(value) ! node_id(value) == n_spec_args
       case ( f_signal )
         !??? For the moment it is simple, later we'll be more intelligent here
         !??? for example, letting the user choose either R1A or R1B.
@@ -231,10 +231,6 @@ contains ! ============= Public procedures ===================================
         call deallocate_test ( signalInds, 'signalInds', ModuleName )
         instrumentModule = GetModuleFromSignal(signal)
         radiometer = GetRadiometerFromSignal(signal)
-      case ( f_reflector )
-        reflector = value
-      case ( f_sgrid )
-        sGridIndex = decoration(value) ! node_id(value) == n_spec_args
       case ( f_type )
         quantityType = value
       case ( f_vgrid )
@@ -270,12 +266,6 @@ contains ! ============= Public procedures ===================================
     if ( got ( f_Reflector ) .neqv. properties ( p_Reflector ) ) &
       & call Announce_error ( root, trim ( merge ( 'unexpected', 'need      ', &
       & got(f_Reflector) ) ) // ' reflector for quantity type ', quantityType )
-
-    ! auxGrid is never required, but is sometimes prohibited
-    if ( got ( f_auxGrid ) .and. .not. properties ( p_auxGrid ) ) &
-      & call Announce_error ( root, 'unexpected auxGrid for quantity type ', &
-      & quantityType )
-
     ! These ones need a little more thought
     if ( .not. properties ( p_signalOptional ) ) then
       if ( got ( f_Signal ) .neqv. properties ( p_Signal ) ) &
@@ -344,7 +334,7 @@ contains ! ============= Public procedures ===================================
       isMinorFrame = .not. got ( f_hGrid )
     else
       isMinorFrame = properties(p_minorFrame)
-    endif
+    end if
 
     ! Now do the setup for the different families of quantities
     if ( isMinorFrame ) then
@@ -396,7 +386,7 @@ contains ! ============= Public procedures ===================================
         end if
       end if
 
-      ! Setup the vertical coordiantes
+      ! Setup the vertical coordinates
       if ( got (f_vGrid) ) then
         qty%vGridIndex = vGridIndex
         qty%verticalCoordinate = vGrids(vGridIndex)%verticalCoordinate
@@ -417,7 +407,7 @@ contains ! ============= Public procedures ===================================
         call MLSMessage ( MLSMSG_Warning, ModuleName,&
           & 'sharedFGrid needed to be reset' )
         qty%sharedFGrid = .true.
-      endif
+      end if
       ! print *, '2nd try: fGridIndex ', fGridIndex
       ! print *, 'qty%sharedFGrid ', qty%sharedFGrid
       ! print *, fGrids(fGridIndex)%values
@@ -433,21 +423,6 @@ contains ! ============= Public procedures ===================================
       ! print *, qty%frequencies
     end if
 
-    ! Aux grid stuff
-    if ( got(f_auxGrid) ) then
-      ! ??? Temp until init_tables says "no duplicate fields"
-      if ( associated(qty%auxGrids) ) call Announce_Error ( root, &
-        & 'AuxGrids field cannot be specified more than once' )
-      noAux = 1
-      allocate ( qty%auxGrids(nsons(auxGridNode)-1), stat=i )
-      call test_allocate ( i, 'ConstructQuantityTemplates', 'qty%auxGrids', &
-        (/ 1 /), (/ nsons(auxGridNode)-1 /) )
-      do i = 2, nsons(auxGridNode)
-        qty%auxGrids(i-1) = vGrids(decoration(subtree(i,auxGridNode)))
-        noAux = noAux * qty%auxGrids(i-1)%noSurfs
-      end do
-    end if
-
     ! Set up the remaining stuff
     qty%name = name
     qty%frequencyCoordinate = frequencyCoordinate
@@ -461,42 +436,7 @@ contains ! ============= Public procedures ===================================
     qty%sideband = sideband
     qty%signal = signal
     qty%unit = unitsTable ( quantityType )
-    
-    if ( index(switches,'qtmp') /= 0 ) then
-      call output( 'Template name: ', advance='no' )
-      call display_string ( qty%name, advance='no' )
-      call output( '   quantityType: ', advance='no' )
-      call display_string( lit_indices(qty%quantityType), advance='yes' )
-      call output( '   major frame? ', advance='no' )
-      call output( qty%majorFrame, advance='no' )
-      call output( '   minor frame? ', advance='no' )
-      call output( qty%minorFrame, advance='yes' )
-      call output( '    signal name: ', advance='no' )
-      call output( trim(signalString), advance='yes' )
-      call output( '   Instrument module: ', advance='no' )
-      if ( qty%instrumentModule < 1 ) then
-        call output( ' (none) ', advance='yes' )
-      else
-        call display_string ( modules(qty%instrumentModule)%name, advance='yes' )
-      end if
-      call output( '    Molecule: ', advance='no' )
-      if  ( qty%molecule < 1 ) then
-        call output ( ' (none)', advance='yes' )
-      else
-        call display_string ( qty%Molecule, advance='yes' )
-      end if
-      call output ( qty%noAux,       before='   noAux',     advance='no' )
-      call output ( qty%noChans,     before=' noChans',     advance='no' )
-      call output ( qty%noSurfs,     before=' noSurfs',     advance='no' )
-      call output ( qty%noInstances, before=' noInstances', advance='no' )
-      call output ( qty%instanceLen, before=' instanceLen', advance='yes' )
-      call output ( ' verticalCoordinate = ' )
-      call display_string ( lit_indices(qty%verticalCoordinate) )
-      call output ( ' frequencyCoordinate = ' )
-      call display_string ( lit_indices(qty%frequencyCoordinate), advance='yes' )
-    end if
 
-    if ( index(switches, 'qtmp') > 0 ) call dump(qty, details=0, noL2CF=.true.)
   end function CreateQtyTemplateFromMLSCFInfo
 
   ! --------------------------------  ConstructMinorFrameQuantity  -----
@@ -578,8 +518,7 @@ contains ! ============= Public procedures ===================================
         qty%instanceLen = 0
       end if
 
-    else
-      ! -------------------------------------- Not Got mifGeolocation ------------
+    else ! ------------------------------------ Not Got mifGeolocation -----
       ! We have no geolocation information, we have to read it ourselves
       ! from the L1BOA file.
 
@@ -611,7 +550,7 @@ contains ! ============= Public procedures ===================================
       if ( index(switches,'qtmp') /= 0 ) then
         call output ( "Instance offset for minor frame quantity is:" )
         call output ( qty%instanceOffset, advance='yes' )
-      endif
+      end if
 
       if ( .not. IsModuleSpacecraft(instrumentModule) ) then
         call GetModuleName ( instrumentModule, l1bItemName )
@@ -878,14 +817,14 @@ contains ! ============= Public procedures ===================================
     mySeverity = 'fatal'
     if ( present(severity) ) then
       if (index('WwNn', severity(1:1)) > 0 ) mySeverity='warning'
-    endif
+    end if
     if ( mySeverity /= 'fatal' ) then
       call blanks(5)
       call output ( ' (warning) ' )
     else
       call blanks(5, fillChar='*')
       call output ( ' (fatal) ' )
-    endif
+    end if
     call output ( 'At ' )
     if ( where > 0 ) then
       call print_source ( source_ref(where) )
@@ -991,15 +930,6 @@ contains ! ============= Public procedures ===================================
 
   end subroutine PointQuantityToHGrid
 
-  logical function not_used_here()
-  !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter :: IdParm = &
-       "$Id$"
-  character (len=len(idParm)) :: Id = idParm
-  !---------------------------------------------------------------------------
-    not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
-
   ! --------------------------------  ConstructMajorFrameQuantity  -----
   subroutine ConstructMajorFrameQuantity( chunk, instrumentModule, qty, noChans, &
     & mifGeolocation )
@@ -1057,8 +987,8 @@ contains ! ============= Public procedures ===================================
       L_EARTHRADIUS, L_EARTHREFL, L_ECRTOFOV, L_EFFECTIVEOPTICALDEPTH, &
       L_ELEVOFFSET, L_EXTINCTION, &
       L_FIELDAZIMUTH, L_FIELDELEVATION, L_FIELDSTRENGTH, &
-      L_GEOLOCATION, L_GPH, L_HEIGHTOFFSET, &
-      L_ISOTOPERATIO, L_JACOBIAN_COLS, L_JACOBIAN_ROWS, &
+      L_GEOLOCATION, L_GPH, L_HEIGHTOFFSET, L_ISOTOPERATIO, L_IWC, &
+      L_JACOBIAN_COLS, L_JACOBIAN_ROWS, &
       L_L1BMAFBASELINE, L_L1BMIF_TAI, L_LIMBSIDEBANDFRACTION, &
       L_LineCenter, L_LineWidth, L_LineWidth_TDep, &
       L_LOSTRANSFUNC, L_LOSVEL, &
@@ -1154,6 +1084,7 @@ contains ! ============= Public procedures ===================================
       l_gph, phyq_length, p_hGrid, p_vGrid, p_mustBeZeta, next, &
       l_heightOffset, phyq_length, p_hGrid, p_vGrid, next, &
       l_isotopeRatio, phyq_dimensionless, p_molecule, next, &
+      l_iwc, phyq_icedensity, p_hGrid, p_vGrid, next, &
       l_jacobian_cols, phyq_dimensionless, p_vGrid, next, &
       l_jacobian_rows, phyq_dimensionless, p_vGrid, next, &
       l_l1bMAFBaseline, phyq_temperature, p_majorFrame, p_signal, next, &
@@ -1207,14 +1138,13 @@ contains ! ============= Public procedures ===================================
       l_surfaceHeight, phyq_length, p_hGrid, next, &
       l_surfaceType, phyq_dimensionless, p_hGrid, next, & 
       l_systemTemperature, phyq_temperature, p_signal, next, &
-      l_temperature, phyq_temperature, p_auxGrid, p_hGrid, p_vGrid, &
-                     p_mustbezeta, next, &
+      l_temperature, phyq_temperature, p_hGrid, p_vGrid, p_mustbezeta, next, &
       l_totalPowerWeight, phyq_dimensionless, p_signal, next, &
       l_tngtECI, phyq_length, p_minorFrame, p_module, p_xyz, next, &
       l_tngtGeocAlt, phyq_length, p_minorFrame, p_module, next, &
       l_tngtGeodAlt, phyq_length, p_minorFrame, p_module, next, &
-      l_TScat, phyq_temperature, p_auxGrid, p_fGrid, p_hGrid, p_vGrid, next, &
-      l_vmr, phyq_vmr, p_auxGrid, p_hGrid, p_vGrid, p_fGridOptional, &
+      l_TScat, phyq_temperature, p_hGrid, p_signal, p_vGrid, next, &
+      l_vmr, phyq_vmr, p_hGrid, p_vGrid, p_fGridOptional, &
              p_molecule, p_radiometerOptional, p_mustbezeta, next /) )
 
     ! Do a bit of checking
@@ -1321,9 +1251,22 @@ contains ! ============= Public procedures ===================================
     qty%surfs = 0. ! We used to have impossible values for bnd. prs.
   end subroutine SetupEmptyVGridForQuantity
 
+  logical function not_used_here()
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+  !---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.146  2008/09/30 22:34:19  vsnyder
+! Remove AuxGrid and an unnecessary dump routine
+!
 ! Revision 2.145  2008/08/22 01:04:18  vsnyder
 ! Don't allow multiple AuxGrids fields
 !
