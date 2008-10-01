@@ -93,7 +93,7 @@ contains
         &  fwdModelIn, fwdModelExtra, quantityType=l_vmr, molIndex=b,    &
         &  config=fwdModelConf, radiometer=fwdModelConf%signals(1)%radiometer, &
         &  foundInFirst=fwdModelConf%beta_group(b)%qty%foundInFirst, &
-        &  noError=.true. )
+        &  noError=.false. )
     end do ! b
 
     ! Get state vector quantities for spectral parameters
@@ -154,11 +154,15 @@ contains
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module Get_Species_Data_m
 
 ! $Log$
+! Revision 2.30  2006/04/05 21:46:44  vsnyder
+! Allow state vector not to include all molecules
+!
 ! Revision 2.29  2005/09/07 23:07:26  vsnyder
 ! Find spectral parameters in FwdModelIn or FwdModelExtra
 !
