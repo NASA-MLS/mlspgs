@@ -5,7 +5,6 @@ pro CreateSpectroscopyL2CF, $
                             lineName=lineName, $
                             crossRefName=crossRefName, $
                             instrument=instrument, $
-                            maxExtinctions=maxExtinctions, $
                             fastRead=fastRead, $ ;; use fastRead for testing purposes only (otherwise cvs id info will be incorrect)
                             outName=outName, $
                             defsOnlyName=defsOnlyName, $
@@ -18,7 +17,6 @@ pro CreateSpectroscopyL2CF, $
 ; CreateSpectroscopyL2CF,outname='$HOME/mlspgs/tables/MLS-Aura_L2Cal-Spectroscopy-PFA_v3-0-0_0000d000.l2cf',/l2cfForPFAFwm
 
 
-if n_elements(maxExtinctions) eq 0 then maxExtinctions = 1
 if n_elements(instrument) eq 0 then instrument='emls'
 
 instrumentPrefixes=['emlsSignals=[ ', 'umlsSignals=[ ', 'xptl1Signals=[ ']
@@ -98,7 +96,7 @@ if instrument eq 'emls' then begin
                                        B19F:{lsb:['OH', 'O3'], usb:'NONE'},$
                                        B20F:{lsb:['O2', 'O3_V2'], usb:'O3'} }
 
-    MoleculesAlwaysPresent = [ 'H2O', 'N2', 'O2', 'O3', 'EXTINCTION' ]
+    MoleculesAlwaysPresent = [ 'H2O', 'N2', 'O2', 'O3', 'EXTINCTION', 'EXTINCTIONV2' ]
     MoleculesR = ['H2O_', 'O3_']
 
 ;; create list of all mandatory LBL molecules regardless of radiometer/sideband
@@ -147,7 +145,7 @@ while not eof ( unit ) do begin
             noChildren = [ noChildren, fix ( words(3) ) ]
         endelse
     endif
-endwhile
+  endwhile
 free_lun, unit
 ; Now work out the parents
 noCrossRefs = n_elements(texNames)
@@ -161,7 +159,7 @@ for index = 0, noCrossRefs - 1 do begin
 endfor  
 
 ; set dummy unity partition functions to prevent warning when taking logs 
-change = where(data.name eq 'N$_{2}$' or data.name eq 'EXTINCTION' $
+change = where(data.name eq 'N$_{2}$' or data.name eq 'EXTINCTION' or data.name eq 'EXTINCTIONV2' $
                or strmid(data.name,0,10) eq 'H$_{2}$O-r' or strmid(data.name,0,9) eq 'O$_{3}$-r' $
                or strmid(data.name,0,7) eq 'CLOUD\_' )
 data(change).q=1.0
@@ -261,7 +259,7 @@ for mol = 0, noMols - 1 do begin
     ;; Now print out a header line
     printf,unit, ''
     printf,unit, '  ;; ----------------------------------- '+thisMolName
-    if thisMolName ne 'EXTINCTION' then begin
+    if thisMolName ne 'EXTINCTION' and thisMolName ne 'EXTINCTIONV2' then begin
         isotopeLine = '!define(isotoperatio' + thisMolName + ',{' + $
           string ( data(mol).abun, format='(f10.8)' ) + '} )'
         printf, unit, '  ' + isotopeLine
@@ -444,6 +442,7 @@ array(*,*,where(niceNames eq 'N2')) = 1
 array(*,*,where(niceNames eq 'O2')) = 1
 array(*,*,where(niceNames eq 'O3')) = 1
 array(*,*,where(niceNames eq 'EXTINCTION')) = 1
+array(*,*,where(niceNames eq 'EXTINCTIONV2')) = 1
 sidebandStrings = ['L','','U']
 noBands = (size ( array ) ) (2)
 
@@ -479,12 +478,6 @@ newArray(1,noBands+database.noRadiometers,*) = niceNames ne ''
 
 ;; Use this new array
 array=newArray
-
-if maxExtinctions ne 1 and maxExtinctions ne 2 then begin
-    print,'Illegal value of maxExtinctions'
-    stop
-endif
-
 
 if instrument eq 'emls' then begin
 
@@ -529,8 +522,6 @@ if instrument eq 'emls' then begin
 
 endif;;instrument EQ emls
 
-for noExtinctions = 1, maxExtinctions do begin
-    if noExtinctions eq 1 then extraName='' else extraName='2X'
     for band = 0, noBands + database.noRadiometers do begin
         for sideband = 0, 2 do begin
             ;; Which molecules does it use
@@ -548,12 +539,12 @@ for noExtinctions = 1, maxExtinctions do begin
                 endcase
                 
                 ;; First do the comprehensive lists for full forward models.
-                line = '!define(molecules' + extraName + 'For' + outName + $
+                line = '!define(moleculesFor' + outName + $
                   sidebandStrings(sideband)+',{[ '
                 for p = 0, n_elements(usedParents)-1 do begin
                     if p ne 0 then line = line +', '
                     thisParent = usedParents(p)
-                    if thisParent ne 'EXTINCTION' then begin
+                    if thisParent ne 'EXTINCTION' and thisParent ne 'EXTINCTIONV2' then begin
                         children = where ( parentNames eq thisParent and $
                                            reform ( array(sideband, band, *) ) )
                         AddWordToLine, line, units, 2, '[ '+thisParent
@@ -567,11 +558,7 @@ for noExtinctions = 1, maxExtinctions do begin
                         line = line + ' ]'
                     endif else begin
                         ;; For extinction just use extinction alone, no isotope
-                        if noExtinctions eq 1 then begin
-                            AddWordToLine, line, units, 2, thisParent
-                        endif else begin
-                            AddWordToLine, line, units, 2, thisParent + ', ' + thisParent
-                        endelse
+                        AddWordToLine, line, units, 2, thisParent
                     endelse
                 endfor
                 line = line + ' ]})'
@@ -614,7 +601,7 @@ for noExtinctions = 1, maxExtinctions do begin
                         RTVLMandatoryLBLMolecules = RTVLMandatoryLBLMolecules[UNIQ(RTVLMandatoryLBLMolecules, SORT(RTVLMandatoryLBLMolecules))]
 
 ;; output the RTVL/l2pc case
-                        line = '!define(RTVLMandatoryLBLMolecules' + extraName + 'For' + outName + $
+                        line = '!define(RTVLMandatoryLBLMoleculesFor' + outName + $
                           sidebandStrings(sideband) + ',{ '
                         
                         doneAny = 0
@@ -630,7 +617,7 @@ for noExtinctions = 1, maxExtinctions do begin
                         
                         
 ;; output the SIDS case
-                        line = '!define(SIDSMandatoryLBLMolecules' + extraName + 'For' + outName + $
+                        line = '!define(SIDSMandatoryLBLMoleculesFor' + outName + $
                           sidebandStrings(sideband) + ',{ '
                         
                         doneAny = 0
@@ -651,18 +638,14 @@ for noExtinctions = 1, maxExtinctions do begin
                 
 ;; Now do just the parents for l2pc line forward models
 ;; First do the comprehensive lists for full forward models.
-                line = '!define(moleculeFamilies' + extraName + 'For' + outName + $
+                line = '!define(moleculeFamiliesFor' + outName + $
                   sidebandStrings(sideband)+',{[ '
                 for p = 0, n_elements(usedParents)-1 do begin
                     if p ne 0 then line = line + ', '
                     thisParent = usedParents(p)
                     children = where ( parentNames eq thisParent and $
                                        reform ( array(sideband, band, *) ) )
-                    if thisParent ne 'EXTINCTION' or noExtinctions eq 1 then begin
-                        AddWordToLine, line, units, 2, thisParent
-                    endif else begin
-                        AddWordToLine, line, units, 2, thisParent + ', ' + thisParent
-                    endelse
+                    AddWordToLine, line, units, 2, thisParent
                 endfor
                 line = line +' ]})'
                 printf, unit, line
@@ -673,18 +656,18 @@ for noExtinctions = 1, maxExtinctions do begin
         printf, unit, ''
         printf, defsUnit, ''
     endfor                      ; Loop over bands
-endfor
 
 ;; Print out a few more macro definitions
 isotopicMolecules = niceNames ( where ( nicenames ne 'EXTINCTION' and $
+                                        nicenames ne 'EXTINCTIONV2' and $
                                         nicenames ne '' ) )
 
 units = [ unit, defsUnit ]
 for i = 0, 1 do begin
     printf,units(i),'!define(molecules,{!moleculesFor$1})'
     printf,units(i),'!define(moleculeFamilies,{!moleculeFamiliesFor$1})'
-    printf,units(i),'!define(molecules2X,{!molecules2XFor$1})'
-    printf,units(i),'!define(moleculeFamilies2X,{!moleculeFamilies2XFor$1})'
+;    printf,units(i),'!define(molecules2X,{!molecules2XFor$1})'
+;    printf,units(i),'!define(moleculeFamilies2X,{!moleculeFamilies2XFor$1})'
     printf,units(i),'!define(isotopicMolecules,{' + strjoin(isotopicMolecules,',')+'})'
 endfor
 
