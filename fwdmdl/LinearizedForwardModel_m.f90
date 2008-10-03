@@ -815,7 +815,8 @@ contains ! =====     Public Procedures     =============================
             do qty = 1, size ( v%quantities )
               stateQ => v%quantities(qty)
               if ( stateQ%template%quantityType == l_vmr .and. &
-                &  stateQ%template%molecule == l2pcQ%template%molecule .and. &
+                &  ( stateQ%template%molecule == l_extinction .or. &
+                &    stateQ%template%molecule == l_extinctionv2 ) .and. &
                 &  stateQ%template%radiometer == l2pcQ%template%radiometer ) then
                 if ( DoFGridsMatch ( l2pcQ, stateQ ) ) exit searchLoop
               end if
@@ -1124,6 +1125,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.69  2008/10/03 16:31:13  livesey
+! Added EXTINCTIONV2
+!
 ! Revision 2.68  2008/06/06 22:51:44  pwagner
 ! EssentiallyEqual moved to MLSFillValues
 !
