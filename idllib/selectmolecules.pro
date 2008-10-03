@@ -38,7 +38,7 @@ read_molecule_file,moleculeFile,table_of_molecules,spectags,spectls, $
 
   idx2keep = [0]
   mol2keep = ['']
-  alwaysKeepMatch = ['N$_{2}$', 'O$_{2}$', 'EXTINCTION']
+  alwaysKeepMatch = ['N$_{2}$', 'O$_{2}$', 'EXTINCTION','EXTINCTIONV2']
   alwaysKeepPos = ['H$_{2}$O-r', 'O$_{3}$-r', 'CLOUD\_']
 
   t = 240.0
@@ -114,3 +114,6 @@ read_molecule_file,moleculeFile,table_of_molecules,spectags,spectls, $
 END
 
 ;$Log$
+;Revision 1.1  2006/04/27 23:03:20  lambert
+;called by createspectroscopyl2cf.pro
+;

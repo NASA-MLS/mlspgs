@@ -33,7 +33,7 @@ module GET_BETA_PATH_M
 contains
 
 ! ---------------------------------------  Get_Beta_Path_Scalar  -----
-  subroutine Get_Beta_Path_Scalar ( frq, p_path, t_path, tanh_path, &
+  subroutine Get_Beta_Path_Scalar ( frq, Flo, p_path, t_path, tanh_path, &
         & beta_group, SX, NoPolarized, gl_slabs, path_inds,         &
         & beta_path, t_der_path_flags, dTanh_dT, VelCor,            &
         & dBeta_dt_path, dBeta_dw_path, dBeta_dn_path, dBeta_dv_path, &
@@ -52,6 +52,7 @@ contains
 ! Inputs:
 
     real(r8), intent(in) :: Frq          ! frequency in MHz
+    real(r8), intent(in) :: Flo          ! LO frequency in MHz
     real(rp), intent(in) :: P_path(:)    ! path pressures in hPa!
     real(rp), intent(in) :: T_path(:)    ! path temperatures
     real(rp), intent(in) :: Tanh_path(:) ! tanh(0.5*h_over_k*frq / t_path)
@@ -153,14 +154,14 @@ contains
 
       do n = 1, size(beta_group(i)%lbl(sx)%cat_index)
         if ( present(sps_path) ) then
-          call create_beta_path ( path_inds, p_path, t_path, frq,   &
+          call create_beta_path ( path_inds, p_path, t_path, frq, flo,  &
             & beta_group(i)%lbl(sx)%ratio(n),                       &
             & gl_slabs(:,beta_group(i)%lbl(sx)%cat_index(n)),       &
             & tanh_path, noPolarized, velCor,                       &
             & beta_path(:,i), dTanh_dT, t_der_path_flags,           &
             & dBdT, dBdw, dBdn, dBdv, sps )
         else
-          call create_beta_path ( path_inds, p_path, t_path, frq,   &
+          call create_beta_path ( path_inds, p_path, t_path, frq, flo,  &
             & beta_group(i)%lbl(sx)%ratio(n),                       &
             & gl_slabs(:,beta_group(i)%lbl(sx)%cat_index(n)),       &
             & tanh_path, noPolarized, velCor,                       &
@@ -334,7 +335,7 @@ contains
   end subroutine Get_Beta_Path_PFA
 
   ! ------------------------------------  Get_Beta_Path_Polarized  -----
-  subroutine Get_Beta_Path_Polarized ( Frq, H, Beta_group, GL_slabs, &
+  subroutine Get_Beta_Path_Polarized ( Frq, Flo, H, Beta_group, GL_slabs, &
                                      & Path_inds, Beta_path, dBeta_path_dT )
 
     use Dump_0, only: Dump
@@ -350,6 +351,7 @@ contains
 ! Inputs:
 
     real(r8), intent(in) :: Frq       ! frequency in MHz
+    real(r8), intent(in) :: Flo       ! LO frequency in MHz
     real(rp), intent(in) :: H(:)      ! Magnetic field component in instrument
                                       ! polarization on the path
     type (slabs_struct), dimension(:,:), intent(in) :: GL_slabs
@@ -501,7 +503,7 @@ contains
 
 ! ----------------------------------------------  Create_beta  ---------
 
-  subroutine Create_beta ( pressure, Temp, Fgr, slabs_0, tanh1, &
+  subroutine Create_beta ( pressure, Temp, Fgr, Flo, slabs_0, tanh1, &
          &                 Beta_Value, NoPolarized, dTanh_dT,   &
          &                 dBeta_dT, dBeta_dw, dBeta_dn, dBeta_dv, Sps )
 
@@ -517,7 +519,7 @@ contains
 !  forward model.
 
     use MLSCommon, only: RP, R8, IP
-    use Molecules, only: L_N2, L_Extinction, L_H2O, L_O2
+    use Molecules, only: L_N2, L_Extinction, L_ExtinctionV2, L_H2O, L_O2
     use SLABS_SW_M, only: DVOIGT_SPECTRAL, VOIGT_LORENTZ, &
       & SLABS_LINES, SLABS_LINES_DT, &
       & SLABSWINT_LINES, SLABSWINT_LINES_DT
@@ -528,6 +530,7 @@ contains
     real(rp), intent(in) :: pressure   ! pressure in hPa
     real(rp), intent(in) :: temp       ! temperature in K
     real(r8), intent(in) :: fgr        ! frequency in MHz
+    real(r8), intent(in) :: Flo        ! LO frequency in MHz
     type(slabs_struct), intent(in) :: slabs_0 ! contains, among others:
 
 !    catalog        ! Pointer to spectroscopy catalog
@@ -593,6 +596,12 @@ contains
     case ( l_extinction ) ! ................................  Extinction
 
       beta_value = 1.0_rp
+      if ( present(dBeta_dT) ) dBeta_dT = 0.0_rp
+      return
+
+    case ( l_extinctionv2 ) ! ................................  ExtinctionV2
+
+      beta_value = ( fgr / flo ) ** 2.0_rp
       if ( present(dBeta_dT) ) dBeta_dT = 0.0_rp
       return
 
@@ -691,7 +700,7 @@ contains
 ! -----------------------------------------  Create_beta_path  ---------
 
   pure &
-  subroutine Create_beta_path ( Path_inds, Pressure, Temp, Fgr, Ratio,  &
+  subroutine Create_beta_path ( Path_inds, Pressure, Temp, Fgr, Flo, Ratio,  &
          &   Slabs_0, Tanh1, NoPolarized, VelCor, Beta_value, dTanh_dT, &
          &   Path_flags, dBeta_dT, dBeta_dw, dBeta_dn, dBeta_dv,        &
          &   Sps_Path )
@@ -701,7 +710,7 @@ contains
 !  associated.  Compute dBeta_dw, dBeta_dn, dBeta_dv if they're associated. 
 
     use MLSCommon, only: RP, R8
-    use Molecules, only: L_N2, L_Extinction, L_H2O, L_O2
+    use Molecules, only: L_N2, L_Extinction, L_ExtinctionV2, L_H2O, L_O2
     use Slabs_SW_m, only: SLABS_STRUCT, &
       & SLABS_LINES, SLABS_LINES_DAll, SLABS_LINES_DSpectral, SLABS_LINES_DT, &
       & SLABSWINT_LINES, &
@@ -712,6 +721,7 @@ contains
     real(rp), intent(in) :: Pressure(:)! pressure in hPa on the fine path grid
     real(rp), intent(in) :: Temp(:)    ! temperature in K along the path
     real(r8), intent(in) :: Fgr        ! frequency in MHz
+    real(r8), intent(in) :: Flo        ! LO frequency
     real(rp), intent(in) :: Ratio      ! Isotope ratio
     type(slabs_struct), intent(in) :: Slabs_0(:) ! contains, among others:
 
@@ -795,6 +805,12 @@ contains
       case ( l_extinction ) ! ................................  Extinction
 
         beta_value(j) = beta_value(j) + ratio
+!       if ( temp_der ) dBeta_dT(j) = dBeta_dT(j) + ratio * 0.0
+        cycle ! we know there are no spectral lines
+
+      case ( l_extinctionv2 ) ! ................................  Extinction
+
+        beta_value(j) = beta_value(j) + ratio * ( fgr / flo ) ** 2
 !       if ( temp_der ) dBeta_dT(j) = dBeta_dT(j) + ratio * 0.0
         cycle ! we know there are no spectral lines
 
@@ -1340,6 +1356,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.93  2008/04/18 22:51:30  vsnyder
+! Correct self-continuum
+!
 ! Revision 2.92  2008/02/29 01:59:39  vsnyder
 ! Added a separate H2O continuum routine
 !

@@ -2621,7 +2621,7 @@ contains
     & Do_1D, LineCenter, LineCenter_ix, LineWidth, LineWidth_ix, &
     & LineWidth_TDep, LineWidth_TDep_ix, T_der_flags )
 
-    use Molecules, only: L_Extinction
+    use Molecules, only: L_Extinction, L_ExtinctionV2
     use SpectroscopyCatalog_m, only: Lines
 
     real(rp), intent(in) :: p_path(:) ! Pressure in hPa or mbar
@@ -2681,7 +2681,7 @@ contains
       nl = Size(catalog%Lines)
       if ( nl == 0 ) cycle
 
-      if ( catalog%molecule == l_extinction ) cycle
+      if ( catalog%molecule == l_extinction .or. catalog%molecule == l_extinctionv2 ) cycle
 
       do j = 1, n
         temp_der = present(t_der_flags)
@@ -2752,6 +2752,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.58  2008/05/20 00:23:50  vsnyder
+! Receive Vel/C instead of Vel
+!
 ! Revision 2.57  2008/02/29 01:57:37  vsnyder
 ! Use MLSKinds instead of MLSCommon
 !

@@ -142,7 +142,7 @@ contains ! =====     Public Procedures     =============================
     use MLSSignals_m, only: Signal_T, GetSidebandLoop, GetSignalName
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
     use MLSNumerics, only: HUNT, INTERPOLATEVALUES
-    use Molecules, only: L_EXTINCTION
+    use Molecules, only: L_EXTINCTION, L_EXTINCTIONV2
     use Output_m, only: Output
     use QuantityTemplates, only: QuantityTemplate_T
     use String_Table, only: Display_String, Get_String
@@ -364,7 +364,8 @@ contains ! =====     Public Procedures     =============================
           if (.not. associated(fmConf%molecules) ) cycle
           if ( .not. any (l2pcQ%template%molecule == &
             &   fmConf%molecules)) cycle
-          if ( l2pcQ%template%molecule == l_extinction .and. &
+          if ( ( l2pcQ%template%molecule == l_extinction .or. &
+            &    l2pcQ%template%molecule == l_extinctionv2 ) .and. &
             & l2pcQ%template%radiometer /= signal%radiometer ) cycle
         end if
 
@@ -795,14 +796,14 @@ contains ! =====     Public Procedures     =============================
           & foundInFirst = foundInFirst, noError=.true. )
       case ( l_vmr )
         ! Here we may need to be a little more intelligent
-        if ( l2pcQ%template%molecule /= l_extinction ) then
+        if ( l2pcQ%template%molecule /= l_extinction .and. l2pcQ%template%molecule /= l_extinctionv2 ) then
           stateQ => GetQuantityForForwardModel ( FwdModelIn, FwdModelExtra,&
             & quantityType = l_vmr, config=fmConf, &
             & molecule = l2pcQ%template%molecule, &
             & foundInFirst = foundInFirst, noError=.true. )
         else
           searchLoop: do vec = 1, 2
-            ! Point to appropraite vector
+            ! Point to appropriate vector
             if ( vec == 1 ) then
               v => FwdModelIn
             else
@@ -814,7 +815,7 @@ contains ! =====     Public Procedures     =============================
             do qty = 1, size ( v%quantities )
               stateQ => v%quantities(qty)
               if ( stateQ%template%quantityType == l_vmr .and. &
-                &  stateQ%template%molecule == l_extinction .and. &
+                &  stateQ%template%molecule == l2pcQ%template%molecule .and. &
                 &  stateQ%template%radiometer == l2pcQ%template%radiometer ) then
                 if ( DoFGridsMatch ( l2pcQ, stateQ ) ) exit searchLoop
               end if
@@ -1123,6 +1124,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.68  2008/06/06 22:51:44  pwagner
+! EssentiallyEqual moved to MLSFillValues
+!
 ! Revision 2.67  2008/05/07 20:55:32  vsnyder
 ! OOPS, can't test optional args in specification exprs
 !

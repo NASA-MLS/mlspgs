@@ -65,7 +65,7 @@ contains
     & Grids_x, h2o_ind, ext_ind, QtyStuffIn )
 
     use ForwardModelConfig, only: ForwardModelConfig_t, QtyStuff_T
-    use Molecules, only: l_extinction, l_h2o
+    use Molecules, only: l_extinction, l_extinctionv2, l_h2o
     use VectorsModule, only: VectorValue_T
 
     type (forwardModelConfig_T), intent(in) :: fwdModelConf
@@ -113,6 +113,9 @@ contains
         kk = FwdModelConf%molecules(mol)
         if ( kk == l_h2o ) my_h2o_ind = mol        ! memorize h2o index
         if ( kk == l_extinction ) my_ext_ind = mol ! memorize extiction ix
+        ! Note the ambiguity here as to whether it's extinction or extinctionv2 with whoever
+        ! is last winning.
+        ! Also note, however, this option is never actually invoked
       end if
 
       call fill_grids_1 ( grids_x, mol, qtyStuff(mol)%qty, phitan, maf, &
@@ -563,6 +566,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.70  2008/06/06 22:51:44  pwagner
+! EssentiallyEqual moved to MLSFillValues
+!
 ! Revision 2.69  2008/05/20 00:15:07  vsnyder
 ! Change GRIDS_TMP to INTENT(IN)
 !
