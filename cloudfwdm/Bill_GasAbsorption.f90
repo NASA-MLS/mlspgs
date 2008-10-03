@@ -22,7 +22,7 @@ module Bill_GasAbsorption
 
 contains
 
-  subroutine Get_Beta_Bill (T, PB, F, RH, VMR_in, NS, ABSC, Catalog, LosVel )
+  subroutine Get_Beta_Bill (T, PB, F, FLO, RH, VMR_in, NS, ABSC, Catalog, LosVel )
 
 !==============================================================
 !      CALCULATE CLEAR-SKY ABSORPTION COEFFICIENT AT F AND T
@@ -65,6 +65,7 @@ contains
 
     REAL(rk) :: B                           ! BETA (1/m/ppv)                 
     REAL(rk) :: FF                          ! FREQUENCY IN MHz               
+    REAL(rk) :: FLO                         ! LO Frequenct in MHZ
     REAL(rp) :: myLosVel
     REAL(rk) :: P                           ! DRY AIR PARTIAL PRESSURE (hPa) 
     REAL(rk) :: VMR                         ! VOLUME MIXING RATIO            
@@ -121,7 +122,7 @@ contains
     tanh1 = tanh( ff / ( boltzmhz2 * t))
     do i = 1, n_sps
 
-      call create_beta ( PB, T, FF, gl_slabs(1,i), tanh1, bb, .false. )
+      call create_beta ( PB, T, FF, FLO, gl_slabs(1,i), tanh1, bb, .false. )
       
       select case (catalog(i)%molecule)
       case (L_H2O)
@@ -166,6 +167,9 @@ contains
 end module Bill_GasAbsorption
 
 ! $Log$
+! Revision 1.30  2005/06/09 02:34:27  vsnyder
+! Move stuff from l2pc_pfa_structures to slabs_sw_m
+!
 ! Revision 1.29  2004/04/02 01:15:14  jonathan
 ! fix bug
 !

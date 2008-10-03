@@ -777,6 +777,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
           & ForwardModelConfig%no_cloud_species,                          &
           & ForwardModelConfig%no_model_surfs,                            &
           & frequencies/1e3_r8,                                           &
+          & signal%lo/1e3_r8,                                             &
           & 10.0**(-temp%template%surfs),                                 &
           & gph%values(:, instance),                                      &
           & temp%values(:,instance),                                      &
@@ -1122,6 +1123,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.138  2007/07/25 21:59:07  vsnyder
+! Delete declaration for unused variable
+!
 ! Revision 1.137  2007/06/29 19:35:06  vsnyder
 ! Make ForwardModelIntermediate_t private to ScanModelModule
 !

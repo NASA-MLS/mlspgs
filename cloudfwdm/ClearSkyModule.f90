@@ -36,7 +36,7 @@ module ClearSkyModule
 contains
 
       SUBROUTINE CLEAR_SKY(L,NU,TS,S,LORS,WIND,XZ,XP,XT,XQ,VMR, NS, &
-                 &         F,RS,U,T,Z,TAU,tau_wet, tau_dry, Catalog, &
+                 &         F,FLO,RS,U,T,Z,TAU,tau_wet, tau_dry, Catalog, &
                  &         Bill_Spectra,LosVel, i_saturation )
 
 !======================================================
@@ -58,6 +58,7 @@ contains
       INTEGER, intent(in) :: LORS              ! Surface type index (land/sea)
       REAL(r8), intent(in) :: U(NU)            ! Scattering angles
       REAL(r8), intent(in) :: F                ! Frequency
+      REAL(r8), intent(in) :: FLO              ! LO Frequency
       REAL(r8), intent(in) :: TS               ! Surface temperature
       REAL(r8), intent(in) :: S                ! Salinity
       REAL(r8), intent(in) :: WIND             ! Wind speed
@@ -180,16 +181,16 @@ contains
            !--------------------------------
            ! Using bill's spectroscopy data
            !--------------------------------
-           call get_beta_bill (T(I), P, F, DQ, VMR1, &
+           call get_beta_bill (T(I), P, F, FLO, DQ, VMR1, &
             & NS, DR, Catalog, LosVel)           
            TAU(I)=DR*Z(I)
            
            IF (i_saturation /= l_clear) then    ! save time for clear sky
-           call get_beta_bill (T(I), P, F, 110._r8, VMR1, &
+           call get_beta_bill (T(I), P, F, FLO, 110._r8, VMR1, &
             & NS, DR, Catalog, LosVel)
            tau_wet(I)=DR*Z(I)
 
-           call get_beta_bill (T(I), P, F, 0.0_r8, VMR1, &
+           call get_beta_bill (T(I), P, F, FLO, 0.0_r8, VMR1, &
             & NS, DR, Catalog, LosVel)
            tau_dry(I)=DR*Z(I)
            Endif
@@ -211,6 +212,9 @@ contains
 end module ClearSkyModule
 
 ! $Log$
+! Revision 1.25  2005/06/22 18:27:38  pwagner
+! Cant have access declared outside module scope
+!
 ! Revision 1.24  2003/05/07 23:14:22  jonathan
 ! some clean-ups
 !

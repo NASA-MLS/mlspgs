@@ -30,7 +30,7 @@ contains
   !----------------------------------------  CloudForwardModel  -----
   SUBROUTINE CloudForwardModel (doChannel, NF, NZ, NT, NS, N,      &
          &   NZmodel,                                              &
-         &   FREQUENCY, PRESSURE, HEIGHT, TEMPERATURE, VMRin,      &
+         &   FREQUENCY, FLO, PRESSURE, HEIGHT, TEMPERATURE, VMRin,      &
          &   WCin, IPSDin, ZZT, RE, ISURF, Cloud_der, I_Saturation, IFOV,   &
          &   Bill_data,                                            &
          &   h_obs, elev_offset, AntennaPattern,                   &
@@ -201,6 +201,7 @@ contains
                                                ! True = ON
 
       REAL(r8), intent(in) :: FREQUENCY(NF)    ! FREQUENCIES (GHz)
+      REAL(r8), intent(in) :: FLO              ! LOCAL OSCILLATOR FREQUENCY (GHz)
       REAL(r8), intent(in) :: PRESSURE(NZ)     ! PRESSURE LEVEL
       REAL(r8), intent(in) :: HEIGHT(NZ)       ! PRESSURE HEIGHT
       REAL(r8), intent(in) :: TEMPERATURE(NZ)  ! ATMOSPHERIC TEMPERATURE
@@ -536,7 +537,7 @@ contains
 
          CALL CLEAR_SKY(NZmodel-1,NU,TS,S,LORS,SWIND,                   &
               &         YZ,YP,YT,YQ,VMR,NS,                             &
-              &         FREQUENCY(IFR),RS,U,TEMP,Z,TAU0,tau_wetAll,     &
+              &         FREQUENCY(IFR),FLO,RS,U,TEMP,Z,TAU0,tau_wetAll,     &
               &         tau_dry,Catalog, Bill_data, LosVel, i_saturation ) 
 !         CALL HEADER(3)
 
@@ -881,6 +882,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.70  2007/07/25 21:58:53  vsnyder
+! Delete declaration for unused variable
+!
 ! Revision 1.69  2007/07/11 22:28:36  vsnyder
 ! Replace tabs with spaces because tabs aren't standard
 !
