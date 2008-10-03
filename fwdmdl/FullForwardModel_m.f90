@@ -1863,7 +1863,7 @@ contains
           ! dTanh_dT = -h nu / (2 k T**2) 1/tanh1 d(tanh1)/dT
           if ( temp_der ) dTanh_dT_c(:npc) = &
               & frqhk / t_path_c**2 * ( tanh1_c - 1.0_rp / tanh1_c )
-          call get_beta_path ( Frq, p_path, t_path_c, tanh1_c,                &
+          call get_beta_path ( Frq, firstSignal%lo, p_path, t_path_c, tanh1_c,                &
             &  beta_group, sx, fwdModelConf%polarized, gl_slabs, c_inds,      &
             &  beta_path_c, t_der_path_flags, dTanh_dT_c, vel_rel,            &
             &  dbeta_dT_path_c, dbeta_dw_path_c, dbeta_dn_path_c,             &
@@ -2056,7 +2056,7 @@ contains
 
         else ! extra stuff for polarized case
 
-          call get_beta_path_polarized ( frq, h, beta_group%lbl(sx), gl_slabs, &
+          call get_beta_path_polarized ( frq, firstSignal%lo, h, beta_group%lbl(sx), gl_slabs, &
             & c_inds, beta_path_polarized, dBeta_dT_polarized_path_c )
 
           ! We put an explicit extent of -1:1 for the first dimension in
@@ -2152,7 +2152,7 @@ contains
           ! This avoids having four paths through the code, each with a
           ! different set of optional arguments.
 
-          call get_beta_path ( Frq, p_path, t_path_f(:ngl), tanh1_f(1:ngl),    &
+          call get_beta_path ( Frq, firstSignal%lo, p_path, t_path_f(:ngl), tanh1_f(1:ngl),    &
             & beta_group, sx, fwdModelConf%polarized, gl_slabs, gl_inds,       &
             & beta_path_f(:ngl,:), t_der_path_flags, dTanh_dT_f, vel_rel,      &
             & dbeta_dT_path_f, dbeta_dw_path_f, dbeta_dn_path_f,               &
@@ -2204,7 +2204,7 @@ contains
 
           ! Get the corrections to integrals for layers that need GL for
           ! the polarized species.
-          call get_beta_path_polarized ( frq, h, beta_group%lbl(sx), gl_slabs, &
+          call get_beta_path_polarized ( frq, firstSignal%lo, h, beta_group%lbl(sx), gl_slabs, &
             & gl_inds, beta_path_polarized_f, dBeta_dT_polarized_path_f )
 
           ! We put an explicit extent of -1:1 for the first dimension in
@@ -3351,6 +3351,11 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.289  2008/06/26 00:28:03  vsnyder
+! Simplify call to Compute_Z_PSIG.  Simplify some stuff.  Correct a bug:
+! If H-PHI iteration doesn't converge and no new zeta is added, z_ig isn't
+! defined.  Sneak up a little bit on TScat computation.
+!
 ! Revision 2.288  2008/05/20 00:23:21  vsnyder
 ! Much rearranging to prepare for TScat calculation.
 ! Use pointing-interpolated LOS velocity instead of MIF(1) for Doppler
