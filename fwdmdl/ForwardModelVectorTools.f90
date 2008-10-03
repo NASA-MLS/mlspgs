@@ -45,7 +45,7 @@ contains
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSSets, only: FindFirst
     use MLSSignals_m, only: GetRadiometerName, GetSignalName
-    use Molecules, only: L_EXTINCTION
+    use Molecules, only: L_EXTINCTION, L_EXTINCTIONV2
     use QuantityTemplates, only: QuantityTemplate_T
     use String_table, only: Get_String
     use VectorsModule, only: GetVectorQuantityByType, Vector_T, VectorValue_T
@@ -155,7 +155,8 @@ contains
         if ( present(radiometer) ) then
           ! We can be a little lenient here in the case of vmrs
           if ( quantityType == l_vmr ) then
-            if ( radiometer /= qt%radiometer .and. thisMolecule == l_extinction ) cycle
+            if ( radiometer /= qt%radiometer .and. &
+              & ( thisMolecule == l_extinction .or. thisMolecule == l_extinctionv2 ) ) cycle
           else
             if ( radiometer /= qt%radiometer ) cycle
           end if
@@ -295,6 +296,9 @@ contains
 end module ForwardModelVectorTools
 
 ! $Log$
+! Revision 2.18  2008/10/03 16:26:47  livesey
+! Added EXTINCTIONV2
+!
 ! Revision 2.17  2008/09/29 22:56:54  vsnyder
 ! Add PRINT statement in Not_Used_Here to reduce compilation cascades
 !
