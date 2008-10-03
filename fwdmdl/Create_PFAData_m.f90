@@ -351,7 +351,7 @@ contains ! =====     Public Procedures     =============================
       do f = 1, nqp
         frq = frqs(f)
         beta(f) = 0.0
-        call create_beta ( p, T, frq, slabs, &
+        call create_beta ( p, T, frq, signals(1)%lo, slabs, &
           & real(tanh(h_over_2K * frq / T),rp), beta(f), noPolarized=.false., &
           & dBeta_dw=dBeta_dw(f), dBeta_dn=dBeta_dn(f), dBeta_dv=dBeta_dv(f) )
       end do ! f
@@ -437,6 +437,9 @@ contains ! =====     Public Procedures     =============================
 end module Create_PFAData_m
 
 ! $Log$
+! Revision 2.23  2008/10/03 16:26:32  livesey
+! Pushed lo down to support EXTINCTIONV2
+!
 ! Revision 2.22  2008/09/04 19:59:32  vsnyder
 ! Add PRINT statement in not_used_here
 !
