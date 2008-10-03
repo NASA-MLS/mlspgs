@@ -498,7 +498,7 @@ contains ! =====     Public procedures     =============================
              l+l_dnwt_fnorm, l+l_dnwt_gdx, l+l_dnwt_gfac, &
              l+l_dnwt_gradn, l+l_dnwt_sq, l+l_dnwt_sqt,&
              l+l_earthRefl, l+l_ECRtoFOV, l+l_effectiveOpticalDepth, &
-             l+l_elevOffset, l+l_extinction, &
+             l+l_elevOffset, l+l_extinction, l+l_extinctionv2, &
              l+l_fieldAzimuth, l+l_fieldElevation, l+l_fieldStrength, &
              l+l_fwdModelTiming, l+l_fwdModelMean, l+l_fwdModelStdDev, &
              l+l_gph, l+l_heightOffset, l+l_isotopeRatio, l+l_IWC, &
@@ -1573,6 +1573,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.479  2008/10/03 16:39:52  livesey
+! Added extinctionv2
+!
 ! Revision 2.478  2008/09/30 22:31:40  vsnyder
 ! Change TGrid, add IWC, delete AuxGrid
 !
