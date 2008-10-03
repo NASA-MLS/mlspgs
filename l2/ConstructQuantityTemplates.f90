@@ -985,7 +985,7 @@ contains ! ============= Public procedures ===================================
       L_DNWT_FNORM, L_DNWT_GDX, L_DNWT_GFAC, &
       L_DNWT_GRADN, L_DNWT_SQ, L_DNWT_SQT,&
       L_EARTHRADIUS, L_EARTHREFL, L_ECRTOFOV, L_EFFECTIVEOPTICALDEPTH, &
-      L_ELEVOFFSET, L_EXTINCTION, &
+      L_ELEVOFFSET, L_EXTINCTION, L_EXTINCTIONV2, &
       L_FIELDAZIMUTH, L_FIELDELEVATION, L_FIELDSTRENGTH, &
       L_GEOLOCATION, L_GPH, L_HEIGHTOFFSET, L_ISOTOPERATIO, L_IWC, &
       L_JACOBIAN_COLS, L_JACOBIAN_ROWS, &
@@ -1078,6 +1078,8 @@ contains ! ============= Public procedures ===================================
       l_elevOffset, phyq_angle, p_signal, next, &
       l_extinction, phyq_extinction, p_hGrid, p_vGrid, p_fGrid, p_radiometer, &
                     p_mustBeZeta, next, &
+      l_extinctionv2, phyq_extinction, p_hGrid, p_vGrid, p_fGrid, p_radiometer, &
+                      p_mustBeZeta, next, &
       l_fieldAzimuth, phyq_angle, p_hGrid, p_vGrid, next, &
       l_fieldElevation, phyq_angle, p_hGrid, p_vGrid, next, &
       l_fieldStrength, phyq_gauss, p_hGrid, p_vGrid, next, &
@@ -1109,11 +1111,11 @@ contains ! ============= Public procedures ===================================
       l_numNewt, phyq_dimensionless, p_vGrid, next, &
       l_opticalDepth, phyq_dimensionless, p_minorFrame, p_signal, next, &
       l_orbitInclination, phyq_angle, p_minorFrame, p_scModule, next, &
-      l_phaseTiming, phyq_dimensionless, p_vGrid, next, &
-      l_phiTan, phyq_angle, p_minorFrame, p_module, next, & 
-      l_ptan, phyq_zeta, p_minorFrame, p_module, next /) )
+      l_phaseTiming, phyq_dimensionless, p_vGrid, next /) )
 
     call DefineQtyTypes ( (/ & 
+      l_phiTan, phyq_angle, p_minorFrame, p_module, next, &
+      l_ptan, phyq_zeta, p_minorFrame, p_module, next, &
       l_quality, phyq_dimensionless, p_hGrid, next, &
       l_radiance, phyq_temperature, p_minorFrame, p_signal, next, & 
       l_refltemp, phyq_temperature, p_majorFrame, p_reflector, p_module, next, &
@@ -1264,6 +1266,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.147  2008/10/03 16:39:42  livesey
+! Added EXTINCTIONV2
+!
 ! Revision 2.146  2008/09/30 22:34:19  vsnyder
 ! Remove AuxGrid and an unnecessary dump routine
 !
