@@ -55,6 +55,7 @@ CH$_{3}$CH$_{2}$CH$_{3}$                CH3CH2CH3                CH3CH2CH3   0
                 CLOUD\_A                  CLOUD_A                  CLOUD-A   0
                 CLOUD\_S                  CLOUD_S                  CLOUD-S   0
               EXTINCTION               EXTINCTION               EXTINCTION   0
+            EXTINCTIONV2             EXTINCTIONV2             EXTINCTIONV2   0
                      HBr                      HBR                      HBr   2
               H$^{79}$Br                   HBR_79                   HBr-79   0
               H$^{81}$Br                   HBR_81                   HBr-81   0
