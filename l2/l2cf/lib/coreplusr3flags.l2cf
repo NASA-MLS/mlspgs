@@ -6,6 +6,8 @@
 ; and so we'll need to know the last one
 !define(retrophase,{!phase})
 
+!ifdef(flagHiResO3inCPR3,{!define(O3StdProd,O3_R3)},{!define(O3StdProd,O3)})
+
 !divert!dnl
 ; This l2cf fragment does all the quality flagging for the Core+R3
 ; products.
@@ -14,8 +16,8 @@ begin Fill
   ;; ------------------------------------ O3-240
   !define(flaggingBands,{7,24,33})
   !define(flaggingRadiometers,{R3})!dnl
-  !makeQualityForOneProduct(product=O3,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -999K)
-  !makeStatusForOneProduct(product=O3,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -999K)
+  !makeQualityForOneProduct(product=!O3StdProd,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -999K)
+  !makeStatusForOneProduct(product=!O3StdProd,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -999K)
 
   ;; ------------------------------------- CO-240
   !define(flaggingBands,{9,25,33})
@@ -50,6 +52,9 @@ begin Fill
 end Fill
 
 ; $Log$
+; Revision 1.14  2006/10/13 22:13:27  dwu
+; change high cloud chisq threshold from 10 to 30
+;
 ; Revision 1.13  2006/10/11 23:04:55  pwagner
 ; Special retrieval phase name retrophase needed for Convergence Ratio Fill
 ;
