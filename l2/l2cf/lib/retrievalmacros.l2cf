@@ -31,7 +31,7 @@
 
 ; These macros define the MLS standard products
 ; IWC is somewhat special
-!define(allStandardProductsWithColumns,{BrO,CH3Cl,CH3CN,CH3OH,CH3COCH3,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2O,O3,OH,SO2})
+!define(allStandardProductsWithColumns,{BrO,CH3Cl,CH3CN,CH3OH,CH3COCH3,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2O,O3,O3_R3,OH,SO2})
 !define(allStandardProductsWithoutColumns,{Temperature,GPH,RHI})
 !define(allStandardProducts,{!tidyList(!allStandardProductsWithColumns, $
   !allStandardProductsWithoutColumns)})
@@ -556,6 +556,7 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
 })
 !ifelse($1,{O3}, {
 !define(theUnits,{, unit=DU})
+!ifdef(flagHiResO3inCPR3,{!define(theQuantity,{$1_r3})})
 },{!dnl
 !define(theUnits,{})
 })
@@ -879,6 +880,9 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
 })})
 
 ; $Log$
+; Revision 1.128  2008/06/06 21:23:38  michael
+; Allow saving of uncompressed radiances in forwardmodel file.
+;
 ; Revision 1.127  2008/05/27 16:59:49  pwagner
 ; Added new methyl molecules
 ;

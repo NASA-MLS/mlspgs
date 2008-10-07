@@ -20,7 +20,7 @@ begin Construct
   ;; -- hid-res log vGrid --
   !define(allLogHRMolecules,{H2O})
   ;; -- O3 has its own vGrid --
-  !define(O3Molecule,{O3})
+  !define(O3Molecule,{O3, O3_R3})
   ;; -- OH has its own vGrid --
   !define(OHMolecule,{OH})
 
@@ -76,7 +76,7 @@ begin Construct
 
   ;; Define the 'standard' vmrs
   !forall( {constructLinearVMR}, !allLinearMolecules )
-  !forall( {constructLinearVMRO3}, !O3Molecule )
+  !forall( {constructLinearVMRO3}, {O3} )
   !forall( {constructLinearVMROH}, !OHMolecule )
   !forall( {constructLogVMR}, !allLogMolecules )
 
@@ -86,6 +86,10 @@ begin Construct
   ;; molecule in the list!
   !forall( {constructHiResLinearVMR}, !allLinearHRMolecules)
   !forall( {constructHiResLogVMR}, !allLogHRMolecules)
+
+  ;; ----------------------------------------- O3_R3
+  O3_R3: Quantity, vGrid=vGridHiRes, hGrid=hGridStandard, type=vmr, $
+    molecule=O3
 
   ;; ----------------------------------------- RHI
   rhi: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=rhi, $
@@ -104,9 +108,11 @@ begin Construct
   oneHundredHPa: Quantity, type=boundaryPressure, hGrid=hGridStandard
   !define(constructColumn,{column_$1: Quantity, type=columnAbundance, $
     molecule=$1, hGrid=hGridStandard!nl})
+  !define(constructO3Column,{column_$1: Quantity, type=columnAbundance, $
+    molecule=O3, hGrid=hGridStandard!nl})
 
   !forall( {constructColumn}, !allLinearMolecules )
-  !forall( {constructColumn}, !O3Molecule )
+  !forall( {constructO3Column}, !O3Molecule )
   !forall( {constructColumn}, !OHMolecule )
   !forall( {constructColumn}, !allLogMolecules )
   !define(allColumns,
