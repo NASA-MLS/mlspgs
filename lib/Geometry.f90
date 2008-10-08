@@ -131,11 +131,15 @@ contains
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module Geometry
 
 ! $Log$
+! Revision 2.17  2008/10/08 01:11:37  vsnyder
+! Add PRINT statement in not_used_here to prevent compilation cascades
+!
 ! Revision 2.16  2008/10/08 01:07:59  vsnyder
 ! Add Get_R_Eq function
 !
