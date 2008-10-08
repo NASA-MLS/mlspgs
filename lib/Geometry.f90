@@ -19,11 +19,13 @@ module Geometry
   implicit NONE
   private
 
+  ! Constants
   public :: Earth_Axis_Ratio_Squared, Earth_Axis_Ratio_Squared_m1 ! a^2/b^2, a^2/b^2-1
   public :: EarthRadA, EarthRadB, EarthSurfaceGPH
   public :: GM, G0, J2, J4, SecPerYear, W, MaxRefraction
 
-  public :: GeodToGeocLat
+  ! Functions
+  public :: GeodToGeocLat, Get_R_Eq
 
   ! Earth dimensions.
 
@@ -65,12 +67,13 @@ module Geometry
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
-contains ! ------------------------------- Subroutines and functions ----
+contains
 
-  ! This function converts a geodetic latitude (IN DEGREES!) into a geocentric
-  ! one (IN RADIANS!)
-  
+  ! ----------------------------------------------  GeodToGeocLat  -----
   real(r8) elemental function GeodToGeocLat ( geodLat )
+
+  ! Convert a geodetic latitude (IN DEGREES!) into a geocentric one (IN RADIANS!)
+  ! (IN RADIANS!)
 
     use Units, only: Deg2Rad, PI
 
@@ -89,6 +92,38 @@ contains ! ------------------------------- Subroutines and functions ----
     end if
   end function GeodToGeocLat
 
+  ! ----------------------------------------------------  Get_R_eq -----
+  real(rp) elemental function Get_R_Eq ( Phi, Csq ) result ( R_eq )
+
+  !{ Given the orbit geodetic longitude {\tt Phi} = $\phi$ in radians and the
+  !  square of the minor axis of the orbit plane projected Earth ellipse in
+  !  meters {\tt Csq} = $R_c^2$ compute the radius in kilometers of an
+  !  equivalent circular Earth tangent to the elliptical Earth and having the
+  !  same radius of curvature as the elliptical Earth at $\phi$.
+  !%
+  ! \begin{equation*}
+  ! R_{eq} = \sqrt \frac{R_a^4 \sin^2 \phi + R_c^4 \cos^2 \phi}
+  !                    {R_a^2 \cos^2 \phi + R_c^2 \sin^2 \phi}
+  !        = \sqrt \frac{R_a^4 - (R_a^2+R_c^2)(R_a^2-R_c^2) \cos^2 \phi}
+  !                       {R_c^2 +              (R_a^2-R_c^2) \cos^2 \phi}
+  ! \end{equation*}
+  !%
+  ! This is Equation (5.21) in the 19 August 2004 ATBD JPL D-18130.
+
+  real(rp), intent(in) :: Phi
+  real(rp), intent(in) :: Csq
+
+  real(rp), parameter :: Earthrada_sq = earthrada ** 2
+  real(rp), parameter :: Earthrada_4 = earthrada_sq ** 2
+
+  r_eq = (earthrada_sq - csq) * COS(phi)**2
+  ! Earthrad[abc] are in meters, but r_eq needs to be in km.
+  r_eq = 0.001_rp * SQRT( &
+    & ( earthrada_4 -(earthrada_sq + csq) * r_eq ) / &
+    & ( csq + r_eq ) )
+
+  end function Get_R_Eq
+
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -101,6 +136,9 @@ contains ! ------------------------------- Subroutines and functions ----
 end module Geometry
 
 ! $Log$
+! Revision 2.16  2008/10/08 01:07:59  vsnyder
+! Add Get_R_Eq function
+!
 ! Revision 2.15  2006/09/28 20:51:46  vsnyder
 ! Add Earth_Axis_Ratio_Squared_m1
 !
