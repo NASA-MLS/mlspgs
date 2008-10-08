@@ -116,6 +116,7 @@ H$_{2}^{18}$O$(\nu_{2})$                H2O_18_V2                H2O-18-v2   0
                 HO$_{2}$                      HO2                      HO2   0
                    HOONO                    HOONO                    HOONO   0
              HOONO$_{2}$                   HOONO2                   HOONO2   0
+                NF$_{3}$                      NF3                      NF3   0
     NH$_2$CH$_2$CH$_2$OH              NH2CH2CH2OH              NH2CH2CH2OH   0
                 NH$_{3}$                      NH3                      NH3  -2
        NH$_{3}(\nu_{2})$                   NH3_V2                   NH3-v2   0
