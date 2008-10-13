@@ -515,7 +515,6 @@ contains
 ! last basis calculation
 
       do i = i, n_grid
-        if ( basis(n_coeffs) >= grid(i) ) exit
         eta(i,n_coeffs) = 1.0_rp
         not_zero(i,n_coeffs) = .true.
         first(i) = n_coeffs
@@ -564,7 +563,6 @@ contains
 
       do i = i, n_grid
         pi = p(i)
-        if ( basis(n_coeffs) >= grid(pi) ) exit
         eta(pi,n_coeffs) = 1.0_rp
         not_zero(pi,n_coeffs) = .true.
         first(pi) = n_coeffs
@@ -882,7 +880,6 @@ contains
       ! last basis calculation
 
       do i = i, rowN
-        if ( basis(n_coeffs) >= grid(i) ) exit
         eta(i,n_coeffs) = 1.0_rp
         nnz(n_coeffs) = nnz(n_coeffs) + 1
         nz(nnz(n_coeffs),n_coeffs) = i
@@ -928,7 +925,6 @@ contains
       ! last basis calculation
 
       do i = i, rowN, -1
-        if ( basis(n_coeffs) >= grid(i) ) exit
         eta(i,n_coeffs) = 1.0_rp
         nnz(n_coeffs) = nnz(n_coeffs) + 1
         nz(nnz(n_coeffs),n_coeffs) = i
@@ -1019,12 +1015,13 @@ contains
   end subroutine Multiply_Eta_Column_Sparse
 
 ! -----------------------------------------------  Select_NZ_List  -----
-  subroutine Select_NZ_List ( NZ_1, NNZ_1, List, NZ_2, NNZ_2 )
-  ! Select the nonzeros from NZ_1 that are in List and put their indices
-  ! in List into NZ_2.
+  subroutine Select_NZ_List ( NZ_1, NNZ_1, List, I_start, NZ_2, NNZ_2 )
+  ! Select the nonzeros from NZ_1 that are in List(I_start:) and put their
+  ! indices in List into NZ_2.
     integer, intent(in) :: NZ_1(:,:)
     integer, intent(in) :: NNZ_1(:)
     integer, intent(in) :: List(:)
+    integer, intent(in) :: I_Start
     integer, intent(out) :: NZ_2(:,:)
     integer, intent(out) :: NNZ_2(:)
 
@@ -1035,7 +1032,7 @@ contains
     ! This is just a merge
     do j = 1, size(nz_1,2)
       i1 = 1
-      i2 = 1
+      i2 = i_start
       do
         if ( i1 > nnz_1(j) .or. i2 > size(list) ) exit
         if ( nz_1(i1,j) < list(i2) ) then
@@ -1062,11 +1059,15 @@ contains
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module Get_Eta_Matrix_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.17  2007/06/25 20:36:08  vsnyder
+! Add column sparse representation
+!
 ! Revision 2.16  2007/06/06 01:15:43  vsnyder
 ! Use the PI variable instead of P(I)
 !
