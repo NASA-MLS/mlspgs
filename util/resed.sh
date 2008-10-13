@@ -19,6 +19,7 @@
 #                as an alternative to "-c command", you may use the next pair
 # -os oldstring string to be replaced
 # -rs oldstring string to replace it with
+# -g            "globally" repalce old string with new
 # -f file       file of commands to pass through to sed
 # -d1 dir1      operate on every file in dir1
 # -d2 dir2      storing results in dir2 (if dir2 doesn't exist, it creates it)
@@ -172,6 +173,7 @@ new_name=""
 old_string=""
 new_string=""
 dryrun="no"
+globally="no"
 SED="sed"
 while [ "$more_opts" = "yes" ] ; do
 
@@ -231,6 +233,10 @@ while [ "$more_opts" = "yes" ] ; do
        ;;
     -dryrun )
        dryrun="yes"
+       shift
+       ;;
+    -g )
+       globally="yes"
        shift
        ;;
     -grep )
@@ -303,6 +309,10 @@ then
   else
     the_command='s:'$old_string':'$new_string':'
     # the_opt='s:'$old_string':'$new_string':'
+  fi
+  if [ "$globally" = "yes" ]
+  then
+    the_command="$the_command"g
   fi
 elif [ "$the_command" = "" ]
 then
@@ -457,6 +467,9 @@ do
 done                                                       
 exit
 # $Log$
+# Revision 1.8  2006/06/07 17:06:49  pwagner
+# Did this fix a longstanding bug, or create one?
+#
 # Revision 1.7  2005/06/23 22:20:46  pwagner
 # Reworded Copyright statement
 #
