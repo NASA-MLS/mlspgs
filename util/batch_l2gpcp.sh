@@ -144,7 +144,7 @@ L2GPCAT=~/mlspgs/bin/LF95.Linux/l2gpcat
 reecho="`echo $0 | sed 's/'$I'/reecho/'`"
 # $the_splitter is split_path with me's path prepended
 the_splitter="`echo $0 | sed 's/'$I'/split_path/'`"
-l2gpcap_opts=""
+l2gpcat_opts=""
 list=""
 profile1=""
 profile2=""
@@ -291,6 +291,9 @@ do
 done
 exit
 # $Log$
+# Revision 1.3  2007/03/06 21:31:06  pwagner
+# Added magic APriori string
+#
 # Revision 1.2  2007/02/06 23:17:31  pwagner
 # Swath names fitted to v2.21
 #
