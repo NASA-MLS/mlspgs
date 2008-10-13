@@ -65,7 +65,7 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
     character(len=3) ::      convert= ' '               ! e.g., '425'
     character(len=255) ::    swathNames = ' '           ! which swaths to copy
     character(len=255) ::    rename = ' '               ! how to rename them
-    integer            ::    overlap = 4                ! how many profiles
+    integer            ::    overlap = 0                ! max profiles in overlap
     integer, dimension(2) :: freqs = 0                  ! Keep range of freqs   
     integer, dimension(2) :: levels = 0                 ! Keep range of levels   
     integer, dimension(2) :: nProfiles = 0              ! Discard if nProfiles outside range
@@ -173,11 +173,18 @@ contains
 ! a[1]   ..  a[N] b[k] b[k+1] .. b[M]
 ! <---   N   --->  <---   M-k+1  --->
 
+! A later wrinkle:
+! We may choose not to keep the full N profiles from the previous
+! swath, instead lopping off a few (kLopOff in number)
+! a[1]   ..  a[N-kL] b[k-kL] b[kL+1] .. b[M]
+! <---   N-kL   --->  <---   M-k+kL+1  --->
+
   subroutine catenate_swaths
     ! Internal variables
     integer :: j
     integer :: jj
     integer :: k
+    integer :: kLopOff
     integer :: p
     type(L2GPData_T) :: l2gp
     type( MLSFile_T ) :: l2gpFile
@@ -257,6 +264,12 @@ contains
         endif
         ! Find k
         k = FindFirst( (b(1:M) - a(N)) > eps )
+        kLopOff = 0
+        ! print *, 'k: ', k
+        if ( options%overlap > 0 ) then
+          kLopOff = k - min( k, options%overlap )
+          k = k - kLopOff
+        endif
         ! Are our overlaps uniform?
         if ( k < 2 ) then
           if ( options%verbose ) print *, 'Warning--overlaps not found', k, N, M
@@ -271,18 +284,20 @@ contains
           !  & swath, offset=max(0,numTotProfs) )
           numTotProfs = numTotProfs + M
         else
+          ! print *, 'k (before extraction): ', k
           call ExtractL2GPRecord ( ol2gp, l2gp, rTimes=(/ k, M /) )
+          ! print *, 'k (after extraction): ', k
           ! print *, 'should be writing'
           if ( options%verbose ) call dump( l2gp%GeodAngle, 'appended Geod. angle' )
           if ( DEEBUG ) print *, 'About to append ', trim(swath)
           call AppendL2GPData ( l2gp, options%outputFile, &
-          & swath, offset=max(0,numTotProfs) )
+          & swath, offset=max(0,numTotProfs-kLopOff) )
           ! Could this be a bug in the HDFEOS library?
           !if ( i > 1 .and. l2gp%nTimes > numTotProfs .and. .false. ) &
           !  & call AppendL2GPData ( l2gp, options%outputFile, &
           !  & swath, offset=max(0,numTotProfs) )
           call DestroyL2GPContents( l2gp )
-          numTotProfs = numTotProfs + M - k + 1
+          numTotProfs = numTotProfs + M - k - kLopOff + 1
           ! print *, 'k,N,M,total', k, N, M, numTotProfs
         endif
         call DestroyL2GPContents( ol2gp )
@@ -505,7 +520,7 @@ contains
       write (*,*) '      => copy only swaths so named; otherwise all'
       write (*,*) '   -r rename1,rename2,..'
       write (*,*) '      => if and how to rename the copied swaths'
-      write (*,*) '   -overlap n    => assume n profile overlaps'
+      write (*,*) '   -overlap n    => max num profiles in overlap'
       write (*,*) '   -h            => print brief help'
       stop
   end subroutine print_help
@@ -537,6 +552,9 @@ end program L2GPcat
 !==================
 
 ! $Log$
+! Revision 1.12  2008/09/25 23:13:20  pwagner
+! May exclude swaths when nProfiles outside range
+!
 ! Revision 1.11  2008/02/28 01:36:24  pwagner
 ! -cat option catenates different pieces of same swath
 !
