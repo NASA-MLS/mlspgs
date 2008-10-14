@@ -1015,13 +1015,12 @@ contains
   end subroutine Multiply_Eta_Column_Sparse
 
 ! -----------------------------------------------  Select_NZ_List  -----
-  subroutine Select_NZ_List ( NZ_1, NNZ_1, List, I_start, NZ_2, NNZ_2 )
-  ! Select the nonzeros from NZ_1 that are in List(I_start:) and put their
-  ! indices in List into NZ_2.
+  subroutine Select_NZ_List ( NZ_1, NNZ_1, List, NZ_2, NNZ_2 )
+  ! Select the nonzeros from NZ_1 that are in List and put their indices
+  ! in List into NZ_2.
     integer, intent(in) :: NZ_1(:,:)
     integer, intent(in) :: NNZ_1(:)
     integer, intent(in) :: List(:)
-    integer, intent(in) :: I_Start
     integer, intent(out) :: NZ_2(:,:)
     integer, intent(out) :: NNZ_2(:)
 
@@ -1032,7 +1031,7 @@ contains
     ! This is just a merge
     do j = 1, size(nz_1,2)
       i1 = 1
-      i2 = i_start
+      i2 = 1
       do
         if ( i1 > nnz_1(j) .or. i2 > size(list) ) exit
         if ( nz_1(i1,j) < list(i2) ) then
@@ -1065,6 +1064,9 @@ contains
 end module Get_Eta_Matrix_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.18  2008/10/13 23:42:28  vsnyder
+! Compute first,last correctly for 2d cases
+!
 ! Revision 2.17  2007/06/25 20:36:08  vsnyder
 ! Add column sparse representation
 !
