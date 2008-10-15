@@ -93,12 +93,6 @@ module FillUtils_1                     ! Procedures used by Fill
     & ValidateVectorQuantity, Vector_T, &
     & VectorValue_T, M_Fill, M_LinAlg, M_Cloud
   use VGridsDatabase, only: GETUNITFORVERTICALCOORDINATE
-  use VectorsModule, only: &
-    & ClearUnderMask, CopyVector, CreateMask, &
-    & DestroyVectorInfo, Dump, &
-    & GetVectorQtyByTemplateIndex, isVectorQtyMasked, MaskVectorQty, &
-    & ValidateVectorQuantity, Vector_T, &
-    & VectorValue_T, M_Fill, M_LinAlg, M_Cloud
 
   implicit none
   private
@@ -4525,6 +4519,12 @@ contains ! =====     Public Procedures     =============================
                 & call MaskVectorQty(quantity, row, column)
             end do
           end do
+          do column=1, size(quantity%values(1, :))
+            do row=1, size(quantity%values(:, 1))
+              if ( precisionQuantity%values(row, column) < 0.d0 ) &
+                & call MaskVectorQty(quantity, row, column)
+            end do
+          end do
         end if
 
         if ( switchDetail(switches, 'l1b') > -1 ) &
@@ -6615,6 +6615,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.14  2008/10/15 16:37:28  pwagner
+! Let precisions explicitly set negative also mask radiances
+!
 ! Revision 2.13  2008/09/24 16:46:09  livesey
 ! Changed ptan from optional to pointer in fill from profile
 !
