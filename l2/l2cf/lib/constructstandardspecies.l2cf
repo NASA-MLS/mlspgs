@@ -330,17 +330,23 @@ begin Construct
   !define(constructExtinction,{!dnl
   extinction$1: Quantity, type=vmr, molecule=extinction, $
     radiometer=$1, hGrid=hGridStandard, vGrid=vGridExtinction, $
+    fGrid=fGridExtinctionConstant!nl
+  extinctionv2$1: Quantity, type=vmr, molecule=extinctionv2, $
+    radiometer=$1, hGrid=hGridStandard, vGrid=vGridExtinction, $
     fGrid=fGridExtinctionConstant!nl})
 
   !forall(constructExtinction, !allRadiometers)
-  !define(allExtinctions,{!makelist({extinction},{},!allRadiometers)})
+  !define(allExtinctions,{!makelist({extinction},{},!allRadiometers),!makelist({extinctionv2},{},!allRadiometers)})
 
   !define(constructTOTALExtinction,{!dnl
     totalextinction$1: Quantity, type=vmr, molecule=extinction, $
     radiometer=$1, hGrid=hGridStandard, vGrid=vGridExtinction, $
+    fGrid=fGridExtinctionConstant!nl
+    totalextinctionv2$1: Quantity, type=vmr, molecule=extinctionv2, $
+    radiometer=$1, hGrid=hGridStandard, vGrid=vGridExtinction, $
     fGrid=fGridExtinctionConstant!nl})
   !forall(constructTOTALExtinction, !allRadiometers)
-  !define(alltotalExtinctions,{!makelist({totalextinction},{},!allRadiometers)})
+  !define(alltotalExtinctions,{!makelist({totalextinction},{},!allRadiometers),!makelist({totalextinctionv2},{},!allRadiometers)})
   
   ;; ----------------------------------------- Isotope ratios
   
