@@ -1138,6 +1138,8 @@ contains
       ! Already logged; no output to stdout
     else if ( stamped_chars == ' ' .and. present(insteadofblank)  ) then
       write ( outputOptions%prunit, '(a)', advance=my_adv ) trim(insteadofblank)
+    elseif ( len_trim(chars) < 1 .and. n_stamp == 1 ) then
+      write ( outputOptions%prunit, '(a)', advance=my_adv )
     else
       write ( outputOptions%prunit, '(a)', advance=my_adv ) stamped_chars(1:n_stamp)
     end if
@@ -2099,6 +2101,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.75  2008/10/17 00:04:22  pwagner
+! NewLine should not add space at line end when output to named file
+!
 ! Revision 2.74  2008/06/17 00:01:53  pwagner
 ! Separate options for auto and manual time stamping
 !
