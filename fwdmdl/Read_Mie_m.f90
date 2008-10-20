@@ -123,7 +123,7 @@ contains
     integer, intent(in) :: Details
     integer :: I_f, I_theta
     if ( .not. associated(f_s) ) return
-    call dump ( f_s, name='F_s (GHz)' )
+    call dump ( f_s, name='F_s (MHz)' )
     call dump ( T_s, name='T_s (K)' )
     call dump ( IWC_s, name='IWC_s (actually log10 IWC)' )
     call dump ( Rad2Deg*theta_s, name='Theta_s (Degrees)' )
@@ -197,6 +197,7 @@ contains
       call loadPtrFromHDF5DS ( fileID, 'T_s', T_s )
       call loadPtrFromHDF5DS ( fileID, 'THETA_s', theta_s )
       call loadPtrFromHDF5DS ( fileID, 'F_s', f_s )
+      f_s = 1000.0 * f_s ! F_s are GHz, standard unit is MHz
       ! Get the betas
       call loadPtrFromHDF5DS ( fileID, 'Beta_c_a', Beta_c_a )
       call loadPtrFromHDF5DS ( fileID, 'Beta_c_e', Beta_c_e )
@@ -329,6 +330,9 @@ contains
 end module Read_Mie_m
 
 ! $Log$
+! Revision 2.4  2008/10/20 23:23:20  vsnyder
+! Convert F_s from GHz to MHz, since MHz is the standard unit
+!
 ! Revision 2.3  2008/07/31 18:00:13  vsnyder
 ! Change coordinates from R8 to RP
 !
