@@ -82,6 +82,17 @@ get_unique_name()
    fi
 }
       
+#---------------------------- log_failed_run
+log_failed_run()
+{
+  FAILLOG=$HOME/failedjobs.log
+  if [ ! -f "$FAILLOG" ]
+  then
+    echo "log of failed jobs" > "$FAILLOG"
+  fi
+  echo "`date` $rcmd" >> "$FAILLOG"
+}
+
 #------------------------------- Main Program ------------
 
 #****************************************************************
@@ -94,7 +105,16 @@ get_unique_name()
 
 ENV_SCRIPT="./ronin.env"
 DRYRUN="no"
+rcmd="$@"
 
+if [ ! -d "$1" ]
+then
+  temp_file_name=`get_unique_name log -reverse`
+  JOBDIR=`pwd`
+  LOGFILE="${JOBDIR}/$temp_file_name"
+  echo "Sorry--can not cd to $1" > $LOGFILE
+  log_failed_run
+fi
 cd $1
 shift
 PGE=$1
@@ -148,7 +168,16 @@ then
   echo $PGE $@ >> $LOGFILE
 else
   eval $PGE $@ >> $LOGFILE
+  # Save return status
+  return_status=`expr $?`
+  if [ "$return_status" = 1 ]
+  then
+    log_failed_run
+  fi
 fi
 exit 0
 
 # $Log$
+# Revision 1.1  2008/04/09 17:13:54  pwagner
+# First commit
+#
