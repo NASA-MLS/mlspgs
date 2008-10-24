@@ -82,6 +82,7 @@ program Spartacus
   integer, parameter :: MAXNUMMULTIPROCS = 8 ! For some architectures > 1000 
   integer :: RECL = 10000          ! Record length for list
   integer :: STATUS                ! From OPEN
+  logical :: success               ! From INQUIRE
   logical :: SWITCH                ! "First letter after -- was not n"
   real :: T0, T1, T2, T_CONVERSION ! For timing
   integer :: TAG
@@ -140,24 +141,17 @@ program Spartacus
   end type master_T
 
   type options_T
-    logical            :: checkList = .false.
-    logical            :: cleanMasterDB = .false. ! Regularly clean db of done
-    logical            :: deferToElders = .true.  ! New masters defer to old
-    logical            :: dumpEachNewMaster = .false.
     logical            :: verbose = .false.
-    logical            :: reviveHosts = .false.   ! Regularly check for revivals
     character(len=16)  :: command = 'run'         ! {run, kill, dumphdb, dumpmdb
     logical            :: debug = DEEBUG          !   dump, checkh, clean}
     integer            :: errorLevel = MLSMSG_Warning
     logical            :: exitOnError = .false.   ! quit if an error occurs
     character(len=FILENAMELEN) &
-      &                :: LIST_file = '<STDIN>'   ! name of hosts file
+      &                :: cmds_file = '<STDIN>'   ! name of cmds file
     character(len=FILENAMELEN) &
       &                :: dump_file = '<STDIN>'   ! name of dump file
     character(len=FILENAMELEN) &
-      &                :: HDBfile = ''            ! name of hosts DB file
-    character(len=FILENAMELEN) &
-      &                :: MDBfile = ''            ! name of masters DB file
+      &                :: rslts_file = ''  ! name of results file
     logical :: bufferedDumpFile = .true.          ! lack of buffering slows sips
     logical :: Rescue = .false.                   ! -R option is set
     logical :: Timing = .false.                   ! -T option is set
@@ -193,6 +187,7 @@ program Spartacus
   integer :: noCmds
   integer :: noMachines
   type ( options_T ) :: options
+  character(len=MAXCMDLEN), dimension(MAXNUMCMDS) :: rslts ! Result files
   logical :: SKIPDELAY                ! Don't wait before doing the next go round
   logical :: SKIPDEATHWATCH           ! Don't check for deaths
   integer :: TIDARR(1)                ! One tid
@@ -249,15 +244,15 @@ program Spartacus
   !---------------- Task (3) ------------------
   ! Open the List of commands
   status = 0
-  options%LIST_file = '<STDIN>'
+  options%cmds_file = '<STDIN>'
   Cmds = '(no more)'
   inunit = 0
   line = adjustl(line)
   if ( line /= ' ' ) then
-    options%LIST_file = line
+    options%cmds_file = line
     call output( 'commands file name: ' )
     call output( trim(line), advance='yes' )
-    call read_textfile_arr( trim(options%LIST_file), Cmds )
+    call read_textfile_arr( trim(options%cmds_file), Cmds )
     call output( trim(Cmds(1)), advance='yes' )
     noCmds = FindFirst( Cmds == '(no more)' )
     noCmds = noCmds - 1
@@ -282,6 +277,15 @@ program Spartacus
   if ( noCmds < 1 ) then
     call output( 'Sorry-no commands found', advance='yes' )
     stop
+  endif
+  ! A corresponding results file? 
+  ! Unless cmd crashed, a result should be created
+  Rslts = ' '
+  if ( len_trim(options%rslts_file) > 1 ) then
+    call output( 'results file name: ' )
+    call output( trim(options%rslts_file), advance='yes' )
+    call read_textfile_arr( trim(options%rslts_file), Rslts )
+    call output( trim(Rslts(1)), advance='yes' )
   endif
   nullify( CmdsCompleted, CmdsStarted, CmdsAbandoned, CmdMachines, CmdTids, &
     & CmdNiceTids, machines )
@@ -456,6 +460,29 @@ program Spartacus
           call TimeStamp ( CmdID, advance='yes')
         endif
 
+        ! Now do we have a Result file we should have been expecting?
+        if ( len_trim( Rslts(CmdID) ) > 0 ) then
+          inquire( file=trim(Rslts(CmdID)), exist=success )
+          if ( .not. success ) then
+            ! Uh-oh, we crashed .. must tell l2q and try to relaunch task
+            call TellL2QMachineDied( machines(Machine), L2Qtid )
+            if ( options%verbose ) then
+              call output ( 'Bad news about command ' )
+              call TimeStamp ( CmdID, advance='yes' )
+            end if
+            ! Now update our information
+            CmdsCompleted(CmdID) = .false.
+            CmdsStarted(CmdID) = .false.
+            CmdTids(CmdID) = 0
+            machines(machine)%free = .false.
+            machines(machine)%tid = 0
+            machines(machine)%Chunk = 0
+            if ( options%verbose ) then
+              call printMasterStatus
+            end if
+            cycle
+          endif
+        endif
         ! Send news back to l2 queue manager
         call TellL2QMachineFinished( &
           & trim(machines(machine)%name), machines(machine)%tid, L2Qtid, &
@@ -553,12 +580,15 @@ contains
   ! Show current run-time settings
     call output(' Spartacus called with command line options: ', advance='no')
     call output(trim(command_line), advance='yes')
-    call output(' LIST file:', advance='no')  
+    call output(' cmds file:', advance='no')  
     call blanks(4, advance='no')                                     
-    call output(trim(options%LIST_file), advance='yes')                            
+    call output(trim(options%cmds_file), advance='yes')                            
     call output(' io Unit  :', advance='no')  
     call blanks(4, advance='no')                                     
     call output(inunit, advance='yes')                            
+    call output(' results file:', advance='no')  
+    call blanks(4, advance='no')                                     
+    call output(trim(options%rslts_file), advance='yes')                            
     call output(' -------------- Summary of run time options'      , advance='no')
     call output(' -------------- ', advance='yes')
     call output(' Debug               :                           ', advance='no')
@@ -646,6 +676,12 @@ contains
           end if
         case ( 'h', 'H', '?' )     ! Describe command line usage
           call option_usage
+        case ( 'r' )
+          i = i + 1
+          call getarg ( i, line )
+          ! call output( 'Processing ' // trim(line), advance='yes' )
+          command_line = trim(command_line) // ' ' // trim(line)
+          options%rslts_file = line
         case ( 'T' )
           options%timing = .true.
           do
@@ -682,16 +718,18 @@ contains
   subroutine Option_usage
   use MACHINE ! At least HP for command lines, and maybe GETARG, too
     call getarg ( 0+hp, line )
-    print *, 'Usage: ', trim(line), ' [options] [--] [LIST-name]'
+    print *, 'Usage: ', trim(line), ' [options] [--] [cmds-file]'
     print *, ' Options:'
-    print *, ' --help:      show help; stop'
-    print *, ' --version:   print version string; stop'
-    print *, ' --wall:      show times according to wall clock (if T[0] set)'
-    print *, ' -d:          debug'
-    print *, ' -v:          verbose'
-    print *, ' -h:          show help; stop'
-    print *, ' -T[0][smh]:  show timing [in s, m, h]'
-    print *, ' -T1:         show dates with timing'
+    print *, ' --help:          show help; stop'
+    print *, ' --version:       print version string; stop'
+    print *, ' --wall:          show times according to wall clock (if T[0] set)'
+    print *, ' -d:              debug'
+    print *, ' -v:              verbose'
+    print *, ' -r rslts-file:   rerun each cmd until corresponding file from'
+    print *, '                     rslts-file appears'
+    print *, ' -h:              show help; stop'
+    print *, ' -T[0][smh]:      show timing [in s, m, h]'
+    print *, ' -T1:             show dates with timing'
     stop
   end subroutine Option_usage
 
@@ -1154,6 +1192,9 @@ contains
 end program Spartacus
 
 ! $Log$
+! Revision 1.2  2008/04/22 17:59:26  pwagner
+! Hope we fixed the bug freeing the same wrong host over and over
+!
 ! Revision 1.1  2008/04/09 17:13:54  pwagner
 ! First commit
 !
