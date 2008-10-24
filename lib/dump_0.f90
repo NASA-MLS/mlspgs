@@ -191,6 +191,7 @@ module DUMP_0
 
   ! These are private variables declared module-wide purely for convenience
   integer, parameter :: MAXNUMELEMENTS = 2000
+  integer, parameter :: TOOMANYELEMENTS = 125*50*3500 ! Don't try to diff l1b DACS
   logical, parameter ::   DEEBUG = .false.
   logical :: myStats, myRMS, myWholeArray
   integer :: numNonFill, numFill
@@ -342,13 +343,89 @@ contains
     logical, intent(in), optional :: RMS
     integer, intent(in), optional :: LBOUND
 
+    real :: sizeFactor
+    integer, dimension(3) :: shp
+    shp = shape(array1)
+    if ( product(shape(array1)) > TOOMANYELEMENTS ) then
+      sizeFactor = product(shape(array1))/TOOMANYELEMENTS + 1.
+      if ( shp(2) > sizeFactor ) then
+        shp(2) = shp(2) / sizeFactor
+      elseif ( shp(1) > sizeFactor ) then
+        shp(1) = shp(1) / sizeFactor
+      elseif ( shp(3) > sizeFactor ) then
+        shp(3) = shp(3) / sizeFactor
+      else
+        return
+      endif
+      call DO_DIFF_3D_DOUBLE ( ARRAY1(1:shp(1), 1:shp(2), 1:shp(3)), NAME1, &
+        & ARRAY2(1:shp(1), 1:shp(2), 1:shp(3)), NAME2, &
+        & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    else
+      call DO_DIFF_3D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
+        & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    endif
+  end subroutine DIFF_3D_DOUBLE
+
+  subroutine DO_DIFF_3D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
+    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    double precision, intent(in) :: ARRAY1(:,:,:)
+    character(len=*), intent(in) :: NAME1
+    double precision, intent(in) :: ARRAY2(:,:,:)
+    character(len=*), intent(in) :: NAME2
+    double precision, intent(in), optional :: FILLVALUE
+    logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    logical, intent(in), optional :: WHOLEARRAY
+    logical, optional, intent(in) :: STATS
+    logical, intent(in), optional :: RMS
+    integer, intent(in), optional :: LBOUND
+
     double precision, dimension(product(shape(array1))) :: filtered1
     double precision, dimension(product(shape(array2))) :: filtered2
     double precision :: refmin, refmax, refrms
     include "diff.f9h"
-  end subroutine DIFF_3D_DOUBLE
+  end subroutine DO_DIFF_3D_DOUBLE
 
   subroutine DIFF_3D_REAL ( ARRAY1, NAME1, ARRAY2, NAME2, &
+    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    real, intent(in) :: ARRAY1(:,:,:)
+    character(len=*), intent(in) :: NAME1
+    real, intent(in) :: ARRAY2(:,:,:)
+    character(len=*), intent(in) :: NAME2
+    real, intent(in), optional :: FILLVALUE
+    logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    logical, intent(in), optional :: WHOLEARRAY
+    logical, optional, intent(in) :: STATS
+    logical, intent(in), optional :: RMS
+    integer, intent(in), optional :: LBOUND
+
+    real :: sizeFactor
+    integer, dimension(3) :: shp
+    shp = shape(array1)
+    if ( product(shape(array1)) > TOOMANYELEMENTS ) then
+      sizeFactor = product(shape(array1))/TOOMANYELEMENTS + 1.
+      if ( shp(2) > sizeFactor ) then
+        shp(2) = shp(2) / sizeFactor
+      elseif ( shp(1) > sizeFactor ) then
+        shp(1) = shp(1) / sizeFactor
+      elseif ( shp(3) > sizeFactor ) then
+        shp(3) = shp(3) / sizeFactor
+      else
+        return
+      endif
+      call DO_DIFF_3D_REAL ( ARRAY1(1:shp(1), 1:shp(2), 1:shp(3)), NAME1, &
+        & ARRAY2(1:shp(1), 1:shp(2), 1:shp(3)), NAME2, &
+        & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    else
+      call DO_DIFF_3D_REAL ( ARRAY1, NAME1, ARRAY2, NAME2, &
+        & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    endif
+  end subroutine DIFF_3D_REAL
+
+  subroutine DO_DIFF_3D_REAL ( ARRAY1, NAME1, ARRAY2, NAME2, &
     & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
     real, intent(in) :: ARRAY1(:,:,:)
     character(len=*), intent(in) :: NAME1
@@ -367,7 +444,7 @@ contains
     real, dimension(product(shape(array2))) :: filtered2
     real :: refmin, refmax, refrms
     include "diff.f9h"
-  end subroutine DIFF_3D_REAL
+  end subroutine DO_DIFF_3D_REAL
 
   ! -----------------------------------------------  DUMP_1D_BIT  -----
   subroutine DUMP_1D_BIT ( ARRAY, NAME, BITNAMES, FILLVALUE, CLEAN, UNIQUE )
@@ -2843,6 +2920,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.82  2008/10/24 23:21:49  pwagner
+! Limits 3d diffs to prevent segment faults
+!
 ! Revision 2.81  2008/08/27 16:23:41  pwagner
 ! Added dumpSums
 !
