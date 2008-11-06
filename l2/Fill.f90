@@ -54,7 +54,7 @@ contains ! =====     Public Procedures     =============================
     ! This is the main routine for the module.  It parses the relevant lines
     ! of the l2cf and works out what to do.
 
-    use Allocate_Deallocate, only: Test_Allocate
+    use Allocate_Deallocate, only: test_allocate, Deallocate_Test
     use Chunks_m, only: MLSChunk_T
     use DestroyCommand_m, only: DestroyCommand
     use DumpCommand_m, only: BooleanFromAnyGoodRadiances, &
@@ -134,21 +134,18 @@ contains ! =====     Public Procedures     =============================
       & L_HYDROSTATIC, L_ISOTOPE, &
       & L_IWCFROMEXTINCTION, L_KRONECKER, &
       & L_L1B, L_L2GP, L_L2AUX, &
-      & L_LOSVEL, &
-      & L_LSGLOBAL, L_LSLOCAL, L_LSWEIGHTED, &
+      & L_LOSVEL, L_LSGLOBAL, L_LSLOCAL, L_LSWEIGHTED, &
       & L_MAGAZEL, L_MAGNETICMODEL, &
-      & L_MANIPULATE, L_MEAN, L_MOLCM2, L_NEGATIVEPRECISION, &
-      & L_NONE, &
+      & L_MANIPULATE, L_MEAN, L_MOLCM2, &
+      & L_NEGATIVEPRECISION, L_NONE, &
       & L_NORADSPERMIF, L_OFFSETRADIANCE, &
       & L_PHASETIMING, L_PHITAN, &
       & L_PLAIN, L_PROFILE, L_PTAN,  L_QUALITY, &
       & L_RECTANGLEFROMLOS, L_REFGPH, L_REFRACT, &
       & L_REFLECTORTEMPMODEL, L_RESETUNUSEDRADIANCES, L_RHI, &
-      & L_RHIFROMH2O, L_RHIPRECISIONFROMH2O, L_ROTATEFIELD, &
-      & L_SCALEOVERLAPS, &
-      & L_SECTIONTIMING, &
-      & L_SPD, L_SPECIAL, L_SPREADCHANNEL, &
-      & L_SPLITSIDEBAND, L_STATUS, &
+      & L_RHIFROMH2O, L_RHIPRECISIONFROMH2O, L_ROTATEFIELD, L_SCALEOVERLAPS, &
+      & L_SECTIONTIMING, L_SPD, L_SPECIAL, L_SPREADCHANNEL, &
+      & L_SPLITSIDEBAND, L_STATUS, L_SWAPVALUES, &
       & L_TEMPERATURE, L_TNGTGEODALT, &
       & L_TNGTGEOCALT, L_UNCOMPRESSRADIANCE, L_VECTOR, L_VGRID, L_VMR, L_WMOTROPOPAUSE, &
       & L_ZETA
@@ -204,8 +201,8 @@ contains ! =====     Public Procedures     =============================
       & SOURCE_REF, SUB_ROSA, SUBTREE
     use TREE_TYPES, only: N_NAMED
     use VectorsModule, only: AddVectorToDatabase, &
-      & CreateVector, &
-      & GetVectorQtyByTemplateIndex, &
+      & CloneVectorQuantity, CreateVector, &
+      & GetVectorQtyByTemplateIndex, NullifyVectorValue, &
       & ValidateVectorQuantity, Vector_T, &
       & VectorTemplate_T, VectorValue_T, M_Fill
     use VGridsDatabase, only: VGRIDS
@@ -313,6 +310,7 @@ contains ! =====     Public Procedures     =============================
     type (vectorValue_T), pointer :: SYSTEMPQUANTITY
     type (vectorValue_T), pointer :: TEMPERATUREQUANTITY
     type (vectorValue_T), pointer :: TEMPPRECISIONQUANTITY
+    type (vectorValue_T)          :: TEMPSWAPQUANTITY
     type (vectorValue_T), pointer :: TOTALPOWERQUANTITY
     type (vectorValue_T), pointer :: TNGTECIQUANTITY
     type (vectorValue_T), pointer :: PHITANQUANTITY
@@ -2231,6 +2229,45 @@ contains ! =====     Public Procedures     =============================
             & minValue, maxValue, heightNode, additional )
         end if
 
+      case ( l_swapvalues )
+        if ( .not. got( f_sourceQuantity ) ) &
+          & call Announce_Error ( key, &
+          & no_error_code, 'Must supply sourcequantity for swapValues fill' )
+        sourceQuantity => GetVectorQtyByTemplateIndex( &
+          & vectors(sourceVectorIndex), sourceQuantityIndex )
+        ! nullify( tempswapquantity )
+        call CloneVectorQuantity( tempswapquantity, quantity )
+        if ( quantity%template%name /= sourceQuantity%template%name ) then
+          if ( .not. interpolate .and. .not. force ) then
+            call Announce_Error ( key, No_Error_Code, &
+              & 'Quantity and sourceQuantity do not have the same template' )
+          else
+            call FillQtyFromInterpolatedQty ( tempswapquantity, sourceQuantity, &
+              & force, key, dontMask )
+            call FillQtyFromInterpolatedQty ( sourceQuantity, quantity, &
+              & force, key, dontMask )
+            call FillQtyFromInterpolatedQty ( quantity, tempswapquantity, &
+              & force, key, dontMask )
+          end if
+        else
+          ! Just a straight copy
+          ! If we have a mask and we're going to obey it then do so
+          if ( associated(quantity%mask) .and. .not. dontMask ) then
+            where ( iand ( ichar(quantity%mask(:,:)), m_Fill ) == 0 )
+              tempswapquantity%values(:,:) = sourceQuantity%values(:,:)
+              sourceQuantity%values(:,:) = Quantity%values(:,:)
+              quantity%values(:,:) = tempswapquantity%values(:,:)
+            end where
+          else ! Otherwise, just blindly copy
+            tempswapquantity%values = sourceQuantity%values
+            sourceQuantity%values = Quantity%values
+            quantity%values = tempswapquantity%values
+          end if
+        end if
+        call deallocate_test( tempswapquantity%values, 'tempswapquantity%values', &
+          & moduleName )
+        call deallocate_test( tempswapquantity%mask, 'tempswapquantity%mask', &
+          & moduleName )
       case ( l_vector ) ! ---------------- Fill from another qty.
         ! This is VERY PRELIMINARY, A more fancy one needs to be written
         ! before too long.
@@ -2378,6 +2415,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.367  2008/11/06 21:50:46  pwagner
+! Fill method swapValues swaps values between two quantities
+!
 ! Revision 2.366  2008/09/24 16:46:37  livesey
 ! Tidy up handling of ptan in profile fill
 !
