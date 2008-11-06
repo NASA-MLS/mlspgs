@@ -158,6 +158,7 @@ special
 splitSideband
 spreadChannel
 strat
+swapValues
 switchingMirror
 
 tikhonov
@@ -169,6 +170,9 @@ weighted
 wmoTropopause
 
 # $Log$
+# Revision 2.64  2008/11/06 21:50:03  pwagner
+# Fill method swapValues swaps values between two quantities
+#
 # Revision 2.63  2008/06/09 20:33:25  vsnyder
 # Move TScat to lib/lit_names
 #
