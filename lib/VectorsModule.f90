@@ -41,6 +41,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 ! ClearUnderMask               Clear elements of z corresponding to MASK
 ! ClearVector                  Clear elements of z
 ! CloneVector                  Destroy 1st arg, then use 2nd arg for a template
+! CloneVectorQuantity          Destroy 1st arg, then use 2nd arg for a template
 ! ConstantXVector              Result z = A x
 ! ConstructVectorTemplate      Creates a vectorTemplate from a list of quantities
 ! CopyVector                   z = x, including copying values and mask
@@ -115,8 +116,8 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   public :: AddToVector, AddVectors, AddVectorTemplateToDatabase
   public :: AddVectorToDatabase, AssignVector, AXPY, CheckIntegrity
   public :: CheckNaN, CheckVectorForNaN, CheckVectorQuantityForNaN
-  public :: ClearMask
-  public :: ClearUnderMask, ClearVector, CloneVector, ConstantXVector
+  public :: ClearMask, ClearUnderMask, ClearVector
+  public :: CloneVector, CloneVectorQuantity, ConstantXVector
   public :: ConstructVectorTemplate, CopyVector, CopyVectorMask, CreateMaskArray
   public :: CreateMask, CreateVector, DestroyVectorDatabase, DestroyVectorInfo
   public :: DestroyVectorMask, DestroyVectorTemplateDatabase
@@ -718,6 +719,45 @@ contains ! =====     Public Procedures     =============================
     end do
     if ( present(database) ) i = addVectorToDatabase ( database, z )
   end subroutine  CloneVector
+
+  ! ------------------------------------------------  CloneVectorQuantity  -----
+  subroutine CloneVectorQuantity ( Z, X )
+  ! Destroy Z, except its name.
+  ! Create the characteristics of a vector quantityto be the same template as a
+  ! given one (except it has no name).  Values are allocated, but not
+  ! filled.  Z's mask is allocated if X's is allocated, but it is not filled.
+  ! isn't returned.
+
+  ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
+  ! It is important to invoke DestroyVectorInfo using Z after it is no
+  ! longer needed. Otherwise, a memory leak will result.  Also see
+  ! AssignVector.
+  ! !!!!! ===== END NOTE ===== !!!!! 
+
+    ! Dummy arguments:
+    type(vectorValue_T), intent(inout) :: Z
+    type(vectorValue_T), intent(in) :: X
+    ! Local variables:
+    integer :: I, Status
+    integer, dimension(2) :: shp
+    ! Executable statements:
+    call NullifyVectorValue( z )
+    ! nullify (z%values, z%mask)
+    z%template = x%template
+    ! z%values = x%values
+    ! z%mask = x%mask
+    
+    if ( associated(x%values) ) then
+      shp = shape(x%values)
+      call allocate_test( z%values, shp(1), shp(2), 'z%values', moduleName )
+      z%values = x%values
+    endif
+    if ( associated(x%mask) ) then
+      shp = shape(x%mask)
+      call allocate_test( z%mask, shp(1), shp(2), 'z%mask', moduleName )
+      z%mask = x%mask
+    endif
+  end subroutine CloneVectorQuantity
 
   ! --------------------------------------------  ConstantXVector  -----
   type (Vector_T) function ConstantXVector ( A, X ) result (Z)
@@ -2557,6 +2597,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.134  2008/08/27 19:58:30  vsnyder
+! Add PRINT to not_used_here
+!
 ! Revision 2.133  2008/06/09 20:33:59  vsnyder
 ! Repair some broken comments
 !
