@@ -34,7 +34,7 @@
 ; ! This may not always be the same as l2pcVersion
 !ifdef(pfaVersion,{},{!define(pfaVersion,!getdir(pfaVersion))})
 !ifelse(!pfaVersion, {}, {
-!define(pfaVersion,{FS-03})
+!define(pfaVersion,{FS-04})
 })
 
 ; Just in case the above paths were omitted from your overridepaths.sh file
@@ -83,10 +83,10 @@
 !define(signalsL2cf, {!signalsPath/MLS-Aura_L2Cal-Signals_v1-5-0_0000d000.l2cf})
 })
 !ifdef(spectroscopyL2cf, {}, {
-!define(spectroscopyL2cf, {!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy-PFA_v3-0-0_0000d000.l2cf})
+!define(spectroscopyL2cf, {!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy-PFA_v3-0-4_0000d000.l2cf})
 })
 !ifdef(spectroscopyFullL2cf, {}, {
-!define(spectroscopyFullL2cf, {!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy_v3-0-0_0000d000.l2cf})
+!define(spectroscopyFullL2cf, {!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy-all_v3-0-4_0000d000.l2cf})
 })
 !ifdef(spectroscopyRtvlL2cf, {}, {
 !define(spectroscopyRtvlL2cf,{!spectroscopyL2cf})
@@ -154,8 +154,8 @@
     '!pfaPath/PFA_R1A_!pfaVersion.h5',$
     '!pfaPath/PFA_DACS_!pfaVersion.h5']})
   })
-  !define(spectroscopyHDF,{!spectroscopyHDFPath/MLS-Aura_L2Cal-Spectroscopy-PFA_v3-0-0_0000d000.h5})
-  !define(spectroscopyFullHDF,{!spectroscopyHDFPath/MLS-Aura_L2Cal-Spectroscopy_v3-0-0_0000d000.h5})
+  !define(spectroscopyHDF,{!spectroscopyHDFPath/MLS-Aura_L2Cal-Spectroscopy-PFA_v3-0-4_0000d000.h5})
+  !define(spectroscopyFullHDF,{!spectroscopyHDFPath/MLS-Aura_L2Cal-Spectroscopy-all_v3-0-4_0000d000.h5})
   !define(spectroscopyRtvlHDF,{!spectroscopyHDF})
 })
 ;; output paths
@@ -165,6 +165,9 @@
 !ifdef(outpathl1brad,{},{!define(outpathl1brad,!getdir(outpathl1brad))})
 !ifdef(outpathtmp,{},{!define(outpathtmp,!getdir(outpathtmp))})
 ;$Log$
+;Revision 1.39  2008/08/22 17:22:41  pwagner
+;SBFraction version now 3-0-2
+;
 ;Revision 1.38  2008/06/19 19:12:54  pwagner
 ;All paths available from overridepaths.sh file
 ;
