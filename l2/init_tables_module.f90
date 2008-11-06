@@ -458,8 +458,8 @@ contains ! =====     Public procedures     =============================
              l+l_scaleOverlaps, l+l_special, l+l_splitSideband, &
              l+l_status, l+l_resetUnusedRadiances, &
              l+l_RHIFromH2O, l+l_RHIPrecisionFromH2O, l+l_spreadChannel, &
-             l+l_H2OFromRHI, l+l_fold, l+l_rectanglefromlos, l+l_uncompressRadiance, l+l_vGrid, &
-             l+l_wmoTropopause, n+n_dt_def, &
+             l+l_H2OFromRHI, l+l_fold, l+l_rectanglefromlos, l+l_swapValues, &
+             l+l_uncompressRadiance, l+l_vGrid, l+l_wmoTropopause, n+n_dt_def, &
       begin, t+t_fwmType, l+l_baseline, l+l_linear, l+l_full, l+l_scan, l+l_scan2d, &
              l+l_cloudFull, l+l_hybrid, l+l_switchingMirror, &
              l+l_polarLinear, n+n_dt_def, &
@@ -1573,6 +1573,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.480  2008/11/06 21:50:19  pwagner
+! Fill method swapValues swaps values between two quantities
+!
 ! Revision 2.479  2008/10/03 16:39:52  livesey
 ! Added extinctionv2
 !
