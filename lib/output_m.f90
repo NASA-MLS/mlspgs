@@ -2096,11 +2096,15 @@ contains
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.76  2008/11/24 19:29:43  pwagner
+! Added a print to not_used_here
+!
 ! Revision 2.75  2008/10/17 00:04:22  pwagner
 ! NewLine should not add space at line end when output to named file
 !
