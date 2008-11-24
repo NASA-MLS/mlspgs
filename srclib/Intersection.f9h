@@ -1,0 +1,58 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id$
+
+  ! ---------------------------------------------  Intersection  -----
+  ! This family of routines finds the intersection between
+  ! two sets represented by arrays
+
+  ! function IntersectionCharacter ( A, B, reverse ) result ( C )
+    ! method:
+    ! Go though a, checking for each element whether a match is found in (b)
+    ! If  so found, add the element
+    ! use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
+
+    ! character(len=*), dimension(:), intent(in) :: A(:), B(:)
+    ! character(len=len(a)), dimension(:), pointer :: C(:) ! Intent(out) -- nullified and then allocated here
+    ! logical, optional, intent(in) :: reverse
+    ! Local variables
+    ! integer :: i, j, size_c, status
+    ! character(len=len(a)), dimension(size(a)+size(b)) :: TC
+    ! logical :: myReverse
+    
+    ! Executable
+    myReverse = .false.
+    if ( present(reverse) ) myReverse = reverse
+    size_c = 0
+    do i=1, size(a)
+      ! Don't redo a repeated element
+      if ( i > 1 ) then
+        j = findFirst( a(:i-1), a(i) )
+        if ( j > 0 ) cycle
+      endif
+      j = findFirst( b, a(i) )
+      if ( (.not. myReverse .and. j > 0) .or. &
+        & (myReverse .and. j < 1) ) then
+        size_c = size_c + 1
+        TC(size_c) = a(i)
+      endif
+    enddo
+    ! print *, 'size(c): ', size_c    
+    ! print *, 'tc: ', tc(1:size_c)
+    nullify(c)
+    if ( size_c < 1 ) return
+    allocate ( c(size_c), stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      MLSMSG_Allocate // 'C in IntersectionGeneric' )
+    c = tc(:size_c)
+!  end function IntersectionCharacter
+! $Log$
