@@ -23,6 +23,7 @@ module DUMP_0
     & IsFinite, IsInfinite, IsNaN, &
     & InfFunction, NaNFunction, ReorderFillValues, ReplaceFillValues, &
     & WhereAreTheInfs, WhereAreTheNaNs
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
   use MLSSets, only: FindAll, FindUnique
   use MLSStats1, only: STAT_T, &
     & ALLSTATS, FILLVALUERELATION, HOWFAR, HOWNEAR, &
@@ -115,6 +116,11 @@ module DUMP_0
     module procedure DIFF_2D_DOUBLE, DIFF_2D_REAL
     module procedure DIFF_3D_DOUBLE, DIFF_3D_REAL
   end interface
+  interface FILTEREDDIFF        ! dump FILTEREDDIFFs between pair of n-d arrays of numeric type
+    module procedure FILTEREDDIFF_1D_DOUBLE, FILTEREDDIFF_1D_INTEGER, FILTEREDDIFF_1D_REAL
+    module procedure FILTEREDDIFF_2D_DOUBLE, FILTEREDDIFF_2D_REAL
+    module procedure FILTEREDDIFF_3D_DOUBLE, FILTEREDDIFF_3D_REAL
+  end interface
   interface DUMP        ! dump n-d arrays of homogeneous type
     module procedure DUMP_1D_BIT, DUMP_1D_CHAR, DUMP_1D_COMPLEX, DUMP_1D_DCOMPLEX
     module procedure DUMP_1D_DOUBLE, DUMP_1D_INTEGER
@@ -152,6 +158,11 @@ module DUMP_0
   end interface
   interface say_fill
     module procedure say_fill_char, say_fill_double, say_fill_int, say_fill_real
+  end interface
+  interface UNFILTEREDDIFF        ! dump UNFILTEREDDIFFs between pair of n-d arrays of numeric type
+    module procedure UNFILTEREDDIFF_1D_DOUBLE, UNFILTEREDDIFF_1D_INTEGER, UNFILTEREDDIFF_1D_REAL
+    module procedure UNFILTEREDDIFF_2D_DOUBLE, UNFILTEREDDIFF_2D_REAL
+    module procedure UNFILTEREDDIFF_3D_DOUBLE, UNFILTEREDDIFF_3D_REAL
   end interface
 
 !---------------------------- RCS Module Info ------------------------------
@@ -228,19 +239,27 @@ contains
     logical, intent(in), optional :: RMS
     integer, intent(in), optional :: LBOUND ! Low bound for Array
 
-    double precision, dimension(size(array1)) :: filtered1
-    double precision, dimension(size(array2)) :: filtered2
-    double precision :: refmin, refmax, refrms
-    include "diff.f9h"
+    if ( .not. present(FillValue) ) then
+      call UnfilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
+      & CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    elseif ( product(shape(array1)) > TOOMANYELEMENTS ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'array size of ' // trim(name1) // ' too large to filter Fill values' )
+      call UnfilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
+      & CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    else
+      call FilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
+      & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    endif
   end subroutine DIFF_1D_DOUBLE
 
-  subroutine DIFF_1D_INTEGER ( IARRAY1, NAME1, IARRAY2, NAME2, &
-    & IFILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
-    integer, intent(in) :: IARRAY1(:)
+  subroutine DIFF_1D_INTEGER ( ARRAY1, NAME1, ARRAY2, NAME2, &
+    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    integer, intent(in) :: ARRAY1(:)
     character(len=*), intent(in) :: NAME1
-    integer, intent(in) :: IARRAY2(:)
+    integer, intent(in) :: ARRAY2(:)
     character(len=*), intent(in) :: NAME2
-    integer, intent(in), optional :: IFILLVALUE
+    integer, intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
     integer, intent(in), optional :: WIDTH
     character(len=*), intent(in), optional :: FORMAT
@@ -249,20 +268,18 @@ contains
     logical, intent(in), optional :: RMS
     integer, intent(in), optional :: LBOUND ! Low bound for Array
 
-    real, dimension(size(iarray1)) :: array1
-    real, dimension(size(iarray2)) :: array2
-    real :: fillValue
-    ! So we don't have to write an integer-version of allstats
-    array1 = iarray1
-    array2 = iarray2
-    if ( present(iFillValue) ) then
-      fillValue = iFillValue
+    if ( .not. present(FillValue) ) then
+      call UnfilteredDiff_1D_INTEGER( ARRAY1, NAME1, ARRAY2, NAME2, &
+      & CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    elseif ( product(shape(array1)) > TOOMANYELEMENTS ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'array size of ' // trim(name1) // ' too large to filter Fill values' )
+      call UnfilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
+      & CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
     else
-      fillValue = int(undefinedValue)
+      call FilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
+      & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
     endif
-    call DIFF ( ARRAY1, NAME1, ARRAY2, NAME2, &
-      & FILLVALUE=FILLVALUE, CLEAN=CLEAN, WIDTH=WIDTH, FORMAT=FORMAT, &
-      & WHOLEARRAY=WHOLEARRAY, STATS=STATS, RMS=RMS, LBOUND=LBOUND )
   end subroutine DIFF_1D_INTEGER
 
   subroutine DIFF_1D_REAL ( ARRAY1, NAME1, ARRAY2, NAME2, &
@@ -280,10 +297,18 @@ contains
     logical, intent(in), optional :: RMS
     integer, intent(in), optional :: LBOUND ! Low bound for Array
 
-    real, dimension(size(array1)) :: filtered1
-    real, dimension(size(array2)) :: filtered2
-    real :: refmin, refmax, refrms
-    include "diff.f9h"
+    if ( .not. present(FillValue) ) then
+      call UnfilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
+      & CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    elseif ( product(shape(array1)) > TOOMANYELEMENTS ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'array size of ' // trim(name1) // ' too large to filter Fill values' )
+      call UnfilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
+      & CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    else
+      call FilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
+      & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    endif
   end subroutine DIFF_1D_REAL
 
   subroutine DIFF_2D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
@@ -300,11 +325,18 @@ contains
     logical, optional, intent(in) :: STATS
     logical, intent(in), optional :: RMS
     integer, intent(in), optional :: LBOUND
-    !
-    double precision, dimension(product(shape(array1))) :: filtered1
-    double precision, dimension(product(shape(array2))) :: filtered2
-    double precision :: refmin, refmax, refrms
-    include "diff.f9h"
+    if ( .not. present(FillValue) ) then
+      call UnfilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
+      & CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    elseif ( product(shape(array1)) > TOOMANYELEMENTS ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'array size of ' // trim(name1) // ' too large to filter Fill values' )
+      call UnfilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
+      & CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    else
+      call FilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
+      & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    endif
   end subroutine DIFF_2D_DOUBLE
 
   subroutine DIFF_2D_REAL ( ARRAY1, NAME1, ARRAY2, Name2, &
@@ -322,10 +354,18 @@ contains
     logical, intent(in), optional :: RMS
     integer, intent(in), optional :: LBOUND
     !
-    real, dimension(product(shape(array1))) :: filtered1
-    real, dimension(product(shape(array2))) :: filtered2
-    real :: refmin, refmax, refrms
-    include "diff.f9h"
+    if ( .not. present(FillValue) ) then
+      call UnfilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
+      & CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    elseif ( product(shape(array1)) > TOOMANYELEMENTS ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'array size of ' // trim(name1) // ' too large to filter Fill values' )
+      call UnfilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
+      & CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    else
+      call FilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
+      & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    endif
   end subroutine DIFF_2D_REAL
 
   subroutine DIFF_3D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
@@ -343,49 +383,19 @@ contains
     logical, intent(in), optional :: RMS
     integer, intent(in), optional :: LBOUND
 
-    real :: sizeFactor
-    integer, dimension(3) :: shp
-    shp = shape(array1)
-    if ( product(shape(array1)) > TOOMANYELEMENTS ) then
-      sizeFactor = product(shape(array1))/TOOMANYELEMENTS + 1.
-      if ( shp(2) > sizeFactor ) then
-        shp(2) = shp(2) / sizeFactor
-      elseif ( shp(1) > sizeFactor ) then
-        shp(1) = shp(1) / sizeFactor
-      elseif ( shp(3) > sizeFactor ) then
-        shp(3) = shp(3) / sizeFactor
-      else
-        return
-      endif
-      call DO_DIFF_3D_DOUBLE ( ARRAY1(1:shp(1), 1:shp(2), 1:shp(3)), NAME1, &
-        & ARRAY2(1:shp(1), 1:shp(2), 1:shp(3)), NAME2, &
-        & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    if ( .not. present(FillValue) ) then
+      call UnfilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
+      & CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    elseif ( product(shape(array1)) > TOOMANYELEMENTS ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'array size of ' // trim(name1) // ' too large to filter Fill values' )
+      call UnfilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
+      & CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
     else
-      call DO_DIFF_3D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
-        & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+      call FilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
+      & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
     endif
   end subroutine DIFF_3D_DOUBLE
-
-  subroutine DO_DIFF_3D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
-    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
-    double precision, intent(in) :: ARRAY1(:,:,:)
-    character(len=*), intent(in) :: NAME1
-    double precision, intent(in) :: ARRAY2(:,:,:)
-    character(len=*), intent(in) :: NAME2
-    double precision, intent(in), optional :: FILLVALUE
-    logical, intent(in), optional :: CLEAN
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    logical, intent(in), optional :: WHOLEARRAY
-    logical, optional, intent(in) :: STATS
-    logical, intent(in), optional :: RMS
-    integer, intent(in), optional :: LBOUND
-
-    double precision, dimension(product(shape(array1))) :: filtered1
-    double precision, dimension(product(shape(array2))) :: filtered2
-    double precision :: refmin, refmax, refrms
-    include "diff.f9h"
-  end subroutine DO_DIFF_3D_DOUBLE
 
   subroutine DIFF_3D_REAL ( ARRAY1, NAME1, ARRAY2, NAME2, &
     & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
@@ -402,49 +412,19 @@ contains
     logical, intent(in), optional :: RMS
     integer, intent(in), optional :: LBOUND
 
-    real :: sizeFactor
-    integer, dimension(3) :: shp
-    shp = shape(array1)
-    if ( product(shape(array1)) > TOOMANYELEMENTS ) then
-      sizeFactor = product(shape(array1))/TOOMANYELEMENTS + 1.
-      if ( shp(2) > sizeFactor ) then
-        shp(2) = shp(2) / sizeFactor
-      elseif ( shp(1) > sizeFactor ) then
-        shp(1) = shp(1) / sizeFactor
-      elseif ( shp(3) > sizeFactor ) then
-        shp(3) = shp(3) / sizeFactor
-      else
-        return
-      endif
-      call DO_DIFF_3D_REAL ( ARRAY1(1:shp(1), 1:shp(2), 1:shp(3)), NAME1, &
-        & ARRAY2(1:shp(1), 1:shp(2), 1:shp(3)), NAME2, &
-        & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    if ( .not. present(FillValue) ) then
+      call UnfilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
+      & CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    elseif ( product(shape(array1)) > TOOMANYELEMENTS ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'array size of ' // trim(name1) // ' too large to filter Fill values' )
+      call UnfilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
+      & CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
     else
-      call DO_DIFF_3D_REAL ( ARRAY1, NAME1, ARRAY2, NAME2, &
-        & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+      call FilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
+      & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
     endif
   end subroutine DIFF_3D_REAL
-
-  subroutine DO_DIFF_3D_REAL ( ARRAY1, NAME1, ARRAY2, NAME2, &
-    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
-    real, intent(in) :: ARRAY1(:,:,:)
-    character(len=*), intent(in) :: NAME1
-    real, intent(in) :: ARRAY2(:,:,:)
-    character(len=*), intent(in) :: NAME2
-    real, intent(in), optional :: FILLVALUE
-    logical, intent(in), optional :: CLEAN
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    logical, intent(in), optional :: WHOLEARRAY
-    logical, optional, intent(in) :: STATS
-    logical, intent(in), optional :: RMS
-    integer, intent(in), optional :: LBOUND
-
-    real, dimension(product(shape(array1))) :: filtered1
-    real, dimension(product(shape(array2))) :: filtered2
-    real :: refmin, refmax, refrms
-    include "diff.f9h"
-  end subroutine DO_DIFF_3D_REAL
 
   ! -----------------------------------------------  DUMP_1D_BIT  -----
   subroutine DUMP_1D_BIT ( ARRAY, NAME, BITNAMES, FILLVALUE, CLEAN, UNIQUE )
@@ -2655,6 +2635,161 @@ contains
       & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, unique, LBOUND )
   end subroutine SELFDIFF_REAL
 
+  ! --- Private procedures ---
+  subroutine FILTEREDDIFF_1D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
+    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    double precision, intent(in) :: ARRAY1(:)
+    character(len=*), intent(in) :: NAME1
+    double precision, intent(in) :: ARRAY2(:)
+    character(len=*), intent(in) :: NAME2
+    double precision, intent(in):: FILLVALUE
+    logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    logical, intent(in), optional :: WHOLEARRAY
+    logical, intent(in), optional :: STATS
+    logical, intent(in), optional :: RMS
+    integer, intent(in), optional :: LBOUND ! Low bound for Array
+
+    double precision, dimension(size(array1)) :: filtered1
+    double precision, dimension(size(array2)) :: filtered2
+    double precision :: refmin, refmax, refrms
+    include "diff.f9h"
+  end subroutine FILTEREDDIFF_1D_DOUBLE
+
+  subroutine FILTEREDDIFF_1D_INTEGER ( IARRAY1, NAME1, IARRAY2, NAME2, &
+    & IFILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    integer, intent(in) :: IARRAY1(:)
+    character(len=*), intent(in) :: NAME1
+    integer, intent(in) :: IARRAY2(:)
+    character(len=*), intent(in) :: NAME2
+    integer, intent(in), optional :: IFILLVALUE
+    logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    logical, intent(in), optional :: WHOLEARRAY
+    logical, intent(in), optional :: STATS
+    logical, intent(in), optional :: RMS
+    integer, intent(in), optional :: LBOUND ! Low bound for Array
+
+    real, dimension(size(iarray1)) :: array1
+    real, dimension(size(iarray2)) :: array2
+    real :: fillValue
+    ! So we don't have to write an integer-version of allstats
+    array1 = iarray1
+    array2 = iarray2
+    fillValue = iFillValue
+    call DIFF ( ARRAY1, NAME1, ARRAY2, NAME2, &
+      & FILLVALUE=FILLVALUE, CLEAN=CLEAN, WIDTH=WIDTH, FORMAT=FORMAT, &
+      & WHOLEARRAY=WHOLEARRAY, STATS=STATS, RMS=RMS, LBOUND=LBOUND )
+  end subroutine FILTEREDDIFF_1D_INTEGER
+
+  subroutine FILTEREDDIFF_1D_REAL ( ARRAY1, NAME1, ARRAY2, NAME2, &
+    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    real, intent(in) :: ARRAY1(:)
+    character(len=*), intent(in) :: NAME1
+    real, intent(in) :: ARRAY2(:)
+    character(len=*), intent(in) :: NAME2
+    real, intent(in):: FILLVALUE
+    logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    logical, intent(in), optional :: WHOLEARRAY
+    logical, intent(in), optional :: STATS
+    logical, intent(in), optional :: RMS
+    integer, intent(in), optional :: LBOUND ! Low bound for Array
+
+    real, dimension(size(array1)) :: filtered1
+    real, dimension(size(array2)) :: filtered2
+    real :: refmin, refmax, refrms
+    include "diff.f9h"
+  end subroutine FILTEREDDIFF_1D_REAL
+
+  subroutine FILTEREDDIFF_2D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
+      & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    double precision, intent(in) :: ARRAY1(:,:)
+    character(len=*), intent(in) :: NAME1
+    double precision, intent(in) :: ARRAY2(:,:)
+    character(len=*), intent(in) :: NAME2
+    double precision, intent(in):: FILLVALUE
+    logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    logical, intent(in), optional :: WHOLEARRAY
+    logical, optional, intent(in) :: STATS
+    logical, intent(in), optional :: RMS
+    integer, intent(in), optional :: LBOUND
+    !
+    double precision, dimension(product(shape(array1))) :: filtered1
+    double precision, dimension(product(shape(array2))) :: filtered2
+    double precision :: refmin, refmax, refrms
+    include "diff.f9h"
+  end subroutine FILTEREDDIFF_2D_DOUBLE
+
+  subroutine FILTEREDDIFF_2D_REAL ( ARRAY1, NAME1, ARRAY2, Name2, &
+      & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    real, intent(in) :: ARRAY1(:,:)
+    character(len=*), intent(in) :: NAME1
+    real, intent(in) :: ARRAY2(:,:)
+    character(len=*), intent(in) :: NAME2
+    real, intent(in):: FILLVALUE
+    logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    logical, intent(in), optional :: WHOLEARRAY
+    logical, optional, intent(in) :: STATS
+    logical, intent(in), optional :: RMS
+    integer, intent(in), optional :: LBOUND
+    !
+    real, dimension(product(shape(array1))) :: filtered1
+    real, dimension(product(shape(array2))) :: filtered2
+    real :: refmin, refmax, refrms
+    include "diff.f9h"
+  end subroutine FILTEREDDIFF_2D_REAL
+
+  subroutine FILTEREDDIFF_3D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
+    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    double precision, intent(in) :: ARRAY1(:,:,:)
+    character(len=*), intent(in) :: NAME1
+    double precision, intent(in) :: ARRAY2(:,:,:)
+    character(len=*), intent(in) :: NAME2
+    double precision, intent(in):: FILLVALUE
+    logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    logical, intent(in), optional :: WHOLEARRAY
+    logical, optional, intent(in) :: STATS
+    logical, intent(in), optional :: RMS
+    integer, intent(in), optional :: LBOUND
+
+    double precision, dimension(product(shape(array1))) :: filtered1
+    double precision, dimension(product(shape(array2))) :: filtered2
+    double precision :: refmin, refmax, refrms
+    include "diff.f9h"
+  end subroutine FILTEREDDIFF_3D_DOUBLE
+
+  subroutine FILTEREDDIFF_3D_REAL ( ARRAY1, NAME1, ARRAY2, NAME2, &
+    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    real, intent(in) :: ARRAY1(:,:,:)
+    character(len=*), intent(in) :: NAME1
+    real, intent(in) :: ARRAY2(:,:,:)
+    character(len=*), intent(in) :: NAME2
+    real, intent(in):: FILLVALUE
+    logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    logical, intent(in), optional :: WHOLEARRAY
+    logical, optional, intent(in) :: STATS
+    logical, intent(in), optional :: RMS
+    integer, intent(in), optional :: LBOUND
+
+    real, dimension(product(shape(array1))) :: filtered1
+    real, dimension(product(shape(array2))) :: filtered2
+    real :: refmin, refmax, refrms
+    include "diff.f9h"
+  end subroutine FILTEREDDIFF_3D_REAL
+
+  
   ! ------------------------------------------------------  Empty  -----
   function arrayShapeToString ( arrayShape ) result ( string )
     ! Given an array of integers return the shape as a string
@@ -2898,6 +3033,138 @@ contains
     end select
   end function theDefault
   
+  subroutine UNFILTEREDDIFF_1D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
+    & CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    double precision, intent(in) :: ARRAY1(:)
+    character(len=*), intent(in) :: NAME1
+    double precision, intent(in) :: ARRAY2(:)
+    character(len=*), intent(in) :: NAME2
+    logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    logical, intent(in), optional :: WHOLEARRAY
+    logical, intent(in), optional :: STATS
+    logical, intent(in), optional :: RMS
+    integer, intent(in), optional :: LBOUND ! Low bound for Array
+
+    double precision :: refmin, refmax, refrms
+    include "unfiltereddiff.f9h"
+  end subroutine UNFILTEREDDIFF_1D_DOUBLE
+
+  subroutine UNFILTEREDDIFF_1D_INTEGER ( IARRAY1, NAME1, IARRAY2, NAME2, &
+    & CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    integer, intent(in) :: IARRAY1(:)
+    character(len=*), intent(in) :: NAME1
+    integer, intent(in) :: IARRAY2(:)
+    character(len=*), intent(in) :: NAME2
+    logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    logical, intent(in), optional :: WHOLEARRAY
+    logical, intent(in), optional :: STATS
+    logical, intent(in), optional :: RMS
+    integer, intent(in), optional :: LBOUND ! Low bound for Array
+
+    real, dimension(size(iarray1)) :: array1
+    real, dimension(size(iarray2)) :: array2
+    ! So we don't have to write an integer-version of allstats
+    array1 = iarray1
+    array2 = iarray2
+    call DIFF ( ARRAY1, NAME1, ARRAY2, NAME2, &
+      & CLEAN=CLEAN, WIDTH=WIDTH, FORMAT=FORMAT, &
+      & WHOLEARRAY=WHOLEARRAY, STATS=STATS, RMS=RMS, LBOUND=LBOUND )
+  end subroutine UNFILTEREDDIFF_1D_INTEGER
+
+  subroutine UNFILTEREDDIFF_1D_REAL ( ARRAY1, NAME1, ARRAY2, NAME2, &
+    & CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    real, intent(in) :: ARRAY1(:)
+    character(len=*), intent(in) :: NAME1
+    real, intent(in) :: ARRAY2(:)
+    character(len=*), intent(in) :: NAME2
+    logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    logical, intent(in), optional :: WHOLEARRAY
+    logical, intent(in), optional :: STATS
+    logical, intent(in), optional :: RMS
+    integer, intent(in), optional :: LBOUND ! Low bound for Array
+
+    real :: refmin, refmax, refrms
+    include "unfiltereddiff.f9h"
+  end subroutine UNFILTEREDDIFF_1D_REAL
+
+  subroutine UNFILTEREDDIFF_2D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
+      & CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    double precision, intent(in) :: ARRAY1(:,:)
+    character(len=*), intent(in) :: NAME1
+    double precision, intent(in) :: ARRAY2(:,:)
+    character(len=*), intent(in) :: NAME2
+    logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    logical, intent(in), optional :: WHOLEARRAY
+    logical, optional, intent(in) :: STATS
+    logical, intent(in), optional :: RMS
+    integer, intent(in), optional :: LBOUND
+    !
+    double precision :: refmin, refmax, refrms
+    include "unfiltereddiff.f9h"
+  end subroutine UNFILTEREDDIFF_2D_DOUBLE
+
+  subroutine UNFILTEREDDIFF_2D_REAL ( ARRAY1, NAME1, ARRAY2, Name2, &
+      & CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    real, intent(in) :: ARRAY1(:,:)
+    character(len=*), intent(in) :: NAME1
+    real, intent(in) :: ARRAY2(:,:)
+    character(len=*), intent(in) :: NAME2
+    logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    logical, intent(in), optional :: WHOLEARRAY
+    logical, optional, intent(in) :: STATS
+    logical, intent(in), optional :: RMS
+    integer, intent(in), optional :: LBOUND
+    !
+    real :: refmin, refmax, refrms
+    include "unfiltereddiff.f9h"
+  end subroutine UNFILTEREDDIFF_2D_REAL
+
+  subroutine UNFILTEREDDIFF_3D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
+    & CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    double precision, intent(in) :: ARRAY1(:,:,:)
+    character(len=*), intent(in) :: NAME1
+    double precision, intent(in) :: ARRAY2(:,:,:)
+    character(len=*), intent(in) :: NAME2
+    logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    logical, intent(in), optional :: WHOLEARRAY
+    logical, optional, intent(in) :: STATS
+    logical, intent(in), optional :: RMS
+    integer, intent(in), optional :: LBOUND
+
+    double precision :: refmin, refmax, refrms
+    include "unfiltereddiff.f9h"
+  end subroutine UNFILTEREDDIFF_3D_DOUBLE
+
+  subroutine UNFILTEREDDIFF_3D_REAL ( ARRAY1, NAME1, ARRAY2, NAME2, &
+    & CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    real, intent(in) :: ARRAY1(:,:,:)
+    character(len=*), intent(in) :: NAME1
+    real, intent(in) :: ARRAY2(:,:,:)
+    character(len=*), intent(in) :: NAME2
+    logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    logical, intent(in), optional :: WHOLEARRAY
+    logical, optional, intent(in) :: STATS
+    logical, intent(in), optional :: RMS
+    integer, intent(in), optional :: LBOUND
+
+    real :: refmin, refmax, refrms
+    include "unfiltereddiff.f9h"
+  end subroutine UNFILTEREDDIFF_3D_REAL
+
   logical function uniqueonly ( WHOLEARRAY, STATS, RMS )
     logical, intent(in), optional :: WHOLEARRAY, STATS, RMS
     ! Executable
@@ -2915,11 +3182,15 @@ contains
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module DUMP_0
 
 ! $Log$
+! Revision 2.83  2008/11/24 19:34:47  pwagner
+! Less wasteful of memory; should not segment dault so often
+!
 ! Revision 2.82  2008/10/24 23:21:49  pwagner
 ! Limits 3d diffs to prevent segment faults
 !
