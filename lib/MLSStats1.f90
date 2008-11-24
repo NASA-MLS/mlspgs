@@ -1168,100 +1168,123 @@ contains
       
       ! Note that the statistic returned is inout--otherwise
       ! we would clobber nbins, bounds, bincount, etc.
-      subroutine howfar_d1int( array1, array2, pct, gaps, mode )
+      subroutine howfar_d1int( array1, array2, pct, gaps, mode, array1AtN, array2AtN )
         integer, parameter                             :: KINDVALUE = r4
         integer, dimension(:), intent(in)                   :: array1, array2
         real(KINDVALUE), dimension(:), intent(in)           :: pct
         type(Stat_T), dimension(:), intent(inout)           :: gaps
         character(len=*), intent(in)              :: mode ! 'rel' or 'abs'          
+        integer, dimension(:,:), optional, intent(out)      :: array1AtN
+        integer, dimension(:,:), optional, intent(out)      :: array2AtN
+        real(KINDVALUE), dimension(3,size(pct))             :: rArray1AtN, rArray2AtN
         call howfar_d1r4( real(array1, KINDVALUE), real(array2, KINDVALUE), &
-          & pct, gaps, mode )
+          & pct, gaps, mode, rArray1AtN, rArray2AtN )
+        if ( present(array1AtN) ) array1AtN = rArray1AtN
+        if ( present(array2AtN) ) array2AtN = rArray2AtN
       end subroutine howfar_d1int
 
-      subroutine howfar_d2int( array1, array2, pct, gaps, mode )
+      subroutine howfar_d2int( array1, array2, pct, gaps, mode, array1AtN, array2AtN )
         integer, parameter                             :: KINDVALUE = r4
         integer, dimension(:,:), intent(in)                 :: array1, array2
         real(KINDVALUE), dimension(:), intent(in)           :: pct
         type(Stat_T), dimension(:), intent(inout)           :: gaps
         character(len=*), intent(in)              :: mode ! 'rel' or 'abs'          
+        integer, dimension(:,:), optional, intent(out)      :: array1AtN
+        integer, dimension(:,:), optional, intent(out)      :: array2AtN
+        real(KINDVALUE), dimension(3,size(pct))             :: rArray1AtN, rArray2AtN
         call howfar_d2r4( real(array1, KINDVALUE), real(array2, KINDVALUE), &
-          & pct, gaps, mode )
+          & pct, gaps, mode, rArray1AtN, rArray2AtN )
+        if ( present(array1AtN) ) array1AtN = rArray1AtN
+        if ( present(array2AtN) ) array2AtN = rArray2AtN
       end subroutine howfar_d2int
 
-      subroutine howfar_d3int( array1, array2, pct, gaps, mode )
+      subroutine howfar_d3int( array1, array2, pct, gaps, mode, array1AtN, array2AtN )
         integer, parameter                             :: KINDVALUE = r4
         integer, dimension(:,:,:), intent(in)               :: array1, array2
         real(KINDVALUE), dimension(:), intent(in)           :: pct
         type(Stat_T), dimension(:), intent(inout)           :: gaps
         character(len=*), intent(in)              :: mode ! 'rel' or 'abs'          
+        integer, dimension(:,:), optional, intent(out)      :: array1AtN
+        integer, dimension(:,:), optional, intent(out)      :: array2AtN
+        real(KINDVALUE), dimension(3,size(pct))             :: rArray1AtN, rArray2AtN
         call howfar_d3r4( real(array1, KINDVALUE), real(array2, KINDVALUE), &
-          & pct, gaps, mode )
+          & pct, gaps, mode, rArray1AtN, rArray2AtN )
+        if ( present(array1AtN) ) array1AtN = rArray1AtN
+        if ( present(array2AtN) ) array2AtN = rArray2AtN
       end subroutine howfar_d3int
 
-      subroutine howfar_d1r4( array1, array2, pct, gaps, mode )
+      subroutine howfar_d1r4( array1, array2, pct, gaps, mode, array1AtN, array2AtN )
         integer, parameter                             :: KINDVALUE = r4
         include 'howfar.f9h'
       end subroutine howfar_d1r4
 
-      subroutine howfar_d2r4( array1, array2, pct, gaps, mode )
+      subroutine howfar_d2r4( array1, array2, pct, gaps, mode, array1AtN, array2AtN )
         integer, parameter                             :: KINDVALUE = r4
         real(KINDVALUE), dimension(:,:), intent(in)         :: array1, array2
         real(KINDVALUE), dimension(:), intent(in)           :: pct
         type(Stat_T), dimension(:), intent(inout)           :: gaps
         character(len=*), intent(in)              :: mode ! 'rel' or 'abs'          
+        real(KINDVALUE), dimension(:, :), &
+        & optional, intent(out)                 :: array1AtN, array2AtN
         integer, dimension(2)                          :: shp
         ! Executable
         shp = shape(array1)
         call howfar( reshape(array1, (/shp(1)*shp(2)/)), &
           & reshape(array2, (/shp(1)*shp(2)/)), &
-          & pct, gaps, mode )
+          & pct, gaps, mode, array1AtN, array2AtN )
       end subroutine howfar_d2r4
 
-      subroutine howfar_d3r4( array1, array2, pct, gaps, mode )
+      subroutine howfar_d3r4( array1, array2, pct, gaps, mode, array1AtN, array2AtN )
         integer, parameter                             :: KINDVALUE = r4
         real(KINDVALUE), dimension(:,:,:), intent(in)       :: array1, array2
         real(KINDVALUE), dimension(:), intent(in)           :: pct
         type(Stat_T), dimension(:), intent(inout)           :: gaps
         character(len=*), intent(in)              :: mode ! 'rel' or 'abs'          
+        real(KINDVALUE), dimension(:, :), &
+          & optional, intent(out)                 :: array1AtN, array2AtN
         integer, dimension(3)                          :: shp
         ! Executable
         shp = shape(array1)
         call howfar( reshape(array1, (/shp(1)*shp(2)*shp(3)/)), &
           & reshape(array2, (/shp(1)*shp(2)*shp(3)/)), &
-          & pct, gaps, mode )
+          & pct, gaps, mode, array1AtN, array2AtN )
       end subroutine howfar_d3r4
 
-      subroutine howfar_d1r8( array1, array2, pct, gaps, mode )
+      subroutine howfar_d1r8( array1, array2, pct, gaps, mode, array1AtN, array2AtN )
         integer, parameter                             :: KINDVALUE = r8
         include 'howfar.f9h'
       end subroutine howfar_d1r8
 
-      subroutine howfar_d2r8( array1, array2, pct, gaps, mode )
+      subroutine howfar_d2r8( array1, array2, pct, gaps, mode, array1AtN, array2AtN )
         integer, parameter                             :: KINDVALUE = r8
         real(KINDVALUE), dimension(:,:), intent(in)         :: array1, array2
         real(KINDVALUE), dimension(:), intent(in)           :: pct
         type(Stat_T), dimension(:), intent(inout)           :: gaps
         character(len=*), intent(in)              :: mode ! 'rel' or 'abs'          
+        real(KINDVALUE), dimension(:, :), &
+          & optional, intent(out)                 :: array1AtN, array2AtN
         integer, dimension(2)                          :: shp
         ! Executable
         shp = shape(array1)
         call howfar( reshape(array1, (/shp(1)*shp(2)/)), &
           & reshape(array2, (/shp(1)*shp(2)/)), &
-          & pct, gaps, mode )
+          & pct, gaps, mode, array1AtN, array2AtN )
       end subroutine howfar_d2r8
 
-      subroutine howfar_d3r8( array1, array2, pct, gaps, mode )
+      subroutine howfar_d3r8( array1, array2, pct, gaps, mode, array1AtN, array2AtN )
         integer, parameter                             :: KINDVALUE = r8
         real(KINDVALUE), dimension(:,:,:), intent(in)       :: array1, array2
         real(KINDVALUE), dimension(:), intent(in)           :: pct
         type(Stat_T), dimension(:), intent(inout)           :: gaps
         character(len=*), intent(in)              :: mode ! 'rel' or 'abs'          
+        real(KINDVALUE), dimension(:, :), &
+          & optional, intent(out)                 :: array1AtN, array2AtN
         integer, dimension(3)                          :: shp
         ! Executable
         shp = shape(array1)
         call howfar( reshape(array1, (/shp(1)*shp(2)*shp(3)/)), &
           & reshape(array2, (/shp(1)*shp(2)*shp(3)/)), &
-          & pct, gaps, mode )
+          & pct, gaps, mode, array1AtN, array2AtN )
       end subroutine howfar_d3r8
 
       ! ------------------- hownear -----------------------
@@ -2186,6 +2209,7 @@ contains
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 !=============================================================================
@@ -2194,6 +2218,9 @@ end module MLSStats1
 
 !
 ! $Log$
+! Revision 2.21  2008/11/24 19:31:49  pwagner
+! Less wasteful of memory; should not segment dault so often
+!
 ! Revision 2.20  2008/05/23 01:15:29  pwagner
 ! New public variables to control dumps; e.g. statsOnOneLine
 !
