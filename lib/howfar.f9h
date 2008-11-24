@@ -10,22 +10,27 @@
 ! foreign countries or providing access to foreign persons.
 
 ! $Id$
-      ! subroutine howfar( array1, array2, pct, gaps, mode )
+      ! subroutine howfar( array1, array2, pct, gaps, mode, &
+      !  & array1AtN, array2AtN )
       !  integer, parameter                             :: KINDVALUE = r4
       !  ! Args
       real(KINDVALUE), dimension(:), intent(in) :: array1, array2                 
       real(KINDVALUE), dimension(:), intent(in) :: pct                            
       type(Stat_T), dimension(:), intent(inout) :: gaps
       character(len=*), intent(in)              :: mode ! 'rel' or 'abs'          
+      real(KINDVALUE), dimension(:, :), &
+        & optional, intent(out)                 :: array1AtN, array2AtN
       ! Internal variables
       logical, parameter                        :: DEEBUG = .false.
       real(KINDVALUE)                           :: denominator                    
       integer                                   :: i, j, n, nkeep                    
-      real(r8), dimension(size(array1))         :: diffs, sdiffs
+      real(r8), dimension(size(array1))         :: diffs
+      ! real(r8), dimension(size(array1))         :: sdiffs
       ! permutation p and its inverse ip map diffs as follows:
       ! diffs(p)   -> sorted   sdiffs (i.e. sdiffs[i-1] < sdiffs[i])
       ! sdiffs(ip) -> presorted diffs
-      integer, dimension(size(array1))          :: ip, p
+      integer, dimension(size(array1))          :: p
+      ! integer, dimension(size(array1))          :: ip
       ! Executable
       ! call output( 'sizes of array1, array2', advance='yes' )
       ! call output( (/ size(array1), size(array2) /), advance='yes' )
@@ -52,22 +57,26 @@
       case default
         return
       end select
-      do i=1, n
-        sdiffs(i) = diffs(p(i))
-        ip(p(i)) = i
-      enddo
+      ! do i=1, n
+        ! sdiffs(i) = diffs(p(i))
+        ! ip(p(i)) = i
+      ! enddo
       do i=1, min( size(pct), size(gaps) )
         nkeep = (pct(i)*n)/100
         ! Always keep at least one point (is this best?)
         nkeep = max(nkeep, 1)
         nkeep = min(nkeep, n) ! Even if pct > 100 wasn't caught by test above
-        call statistics( sdiffs(:nkeep), gaps(i) )
+        ! call statistics( sdiffs(:nkeep), gaps(i) )
+        call statistics( diffs(p(:nkeep)), gaps(i) )
         if ( DEEBUG ) then
           call newline
           call output( 'max, min, median using sorted indexing: ' )
-          call output( (/ sdiffs(gaps(i)%indexing(1)), &
-            & sdiffs(gaps(i)%indexing(2)), &
-            & sdiffs(gaps(i)%indexing(3)) /), advance='yes' )
+          ! call output( (/ sdiffs(gaps(i)%indexing(1)), &
+          !   & sdiffs(gaps(i)%indexing(2)), &
+          !   & sdiffs(gaps(i)%indexing(3)) /), advance='yes' )
+          call output( (/ diffs(p(gaps(i)%indexing(1))), &
+            & diffs(p(gaps(i)%indexing(2))), &
+            & diffs(p(gaps(i)%indexing(3))) /), advance='yes' )
           call dump( gaps(i) )
         endif
         ! Map indexing back to original array1 indexing (pre-sorting order)
@@ -84,8 +93,13 @@
             & diffs(gaps(i)%indexing(2)), &
             & diffs(gaps(i)%indexing(3)) /), advance='yes' )
         endif
+        if ( present(array1Atn) ) array1Atn(:,i) = array1(gaps(i)%indexing)
+        if ( present(array2Atn) ) array2Atn(:,i) = array2(gaps(i)%indexing)
       enddo
 ! $Log$
+! Revision 2.3  2008/11/24 19:34:11  pwagner
+! Less wasteful of memory; should not segment dault so often
+!
 ! Revision 2.2  2007/10/25 00:00:01  pwagner
 ! Returns correct indexing to presorted array
 !
