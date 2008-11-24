@@ -722,31 +722,23 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------------  CloneVectorQuantity  -----
   subroutine CloneVectorQuantity ( Z, X )
-  ! Destroy Z, except its name.
-  ! Create the characteristics of a vector quantityto be the same template as a
-  ! given one (except it has no name).  Values are allocated, but not
-  ! filled.  Z's mask is allocated if X's is allocated, but it is not filled.
-  ! isn't returned.
+  ! Create a vector quantity to be the same template as a
+  ! given one.  If the original's values are allocated, allocate the clone's
+  ! and fill with the original's. Same with mask.
 
   ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
-  ! It is important to invoke DestroyVectorInfo using Z after it is no
-  ! longer needed. Otherwise, a memory leak will result.  Also see
-  ! AssignVector.
+  ! It is important to deallocate Z's values and mask after they are no
+  ! longer needed. Otherwise, a memory leak will result.
   ! !!!!! ===== END NOTE ===== !!!!! 
 
     ! Dummy arguments:
     type(vectorValue_T), intent(inout) :: Z
     type(vectorValue_T), intent(in) :: X
     ! Local variables:
-    integer :: I, Status
     integer, dimension(2) :: shp
     ! Executable statements:
     call NullifyVectorValue( z )
-    ! nullify (z%values, z%mask)
     z%template = x%template
-    ! z%values = x%values
-    ! z%mask = x%mask
-    
     if ( associated(x%values) ) then
       shp = shape(x%values)
       call allocate_test( z%values, shp(1), shp(2), 'z%values', moduleName )
@@ -1654,6 +1646,12 @@ contains ! =====     Public Procedures     =============================
         call output ( '<none given>' )
       end if
     end if
+    if ( qty%label /= 0 ) then
+      call output ( ' Vector quantity label = ' )
+      call display_string ( qty%label )
+    else
+      call output ( ' Vector quantity unlabeled ', advance='yes' )
+    endif
     if ( myDetails < -1 ) return
     call newLine
     if ( myDetails < 0 ) return
@@ -2597,6 +2595,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.135  2008/11/06 21:51:08  pwagner
+! Fill method swapValues swaps values between two quantities
+!
 ! Revision 2.134  2008/08/27 19:58:30  vsnyder
 ! Add PRINT to not_used_here
 !
