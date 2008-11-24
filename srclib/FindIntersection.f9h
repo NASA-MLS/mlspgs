@@ -45,7 +45,7 @@
     return
   endif
   do i1=1, size(set1)
-    i2 = findfirst( set2, set1(i1), myTol )
+    i2 = findfirst( set2, set1(i1), Tol=myTol )
     if ( i2 < 1 ) cycle
     my_how_many = my_how_many + 1
     if ( my_how_many > min( size(which1), size(which2) ) ) cycle
@@ -56,3 +56,6 @@
   
   ! end subroutine FindIntersectionInteger
 ! $Log$
+! Revision 1.1  2007/02/26 23:52:37  pwagner
+! First commit
+!
