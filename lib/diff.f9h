@@ -146,67 +146,58 @@
       & '*** non-matched NaNs diffing ' // trim(DiffName), &
       & advance='yes')
 
-    if ( present(FillValue) ) then
-      call ReplaceFillValues( filtered1, FillValue, newFill=real(0., kind(FillValue)) )
-      call ReplaceFillValues( filtered2, FillValue, newFill=real(0., kind(FillValue)) )
-    endif
+    call ReplaceFillValues( filtered1, FillValue, newFill=real(0., kind(FillValue)) )
+    call ReplaceFillValues( filtered2, FillValue, newFill=real(0., kind(FillValue)) )
     if ( all(filtered1 == filtered2) ) then
       call output( '(The two arrays are exactly equal)', advance='yes' )
       return
     endif
     if ( myRMS ) then
-      if( present(FillValue) ) then
-        ! We want to make sure we remove values from both arrays where either is fill
-        if ( DEBUG ) call outputNamedValue( 'filtering FillValue', FillValue )
-        filtered1 = reshape( array1, (/ product(shape(array1)) /) )
-        filtered2 = reshape( array2, (/ product(shape(array2)) /) )
-        where (filtered1 == FillValue)
-          filtered2 = FillValue
-        end where
-        where (filtered2 == FillValue)
-          filtered1 = FillValue
-        end where
-        numNonFill = count(filtered1 /= FillValue)
-        call ReorderFillValues ( filtered1, FillValue )
-        call ReorderFillValues ( filtered2, FillValue )
-        call allstats(filtered1(1:numNonFill), &
-          & addedData=.false., min=refmin, max=refmax, rms=refrms)
-        call allstats(filtered2(1:numNonFill), &
-          & addedData=.true., min=refmin, max=refmax, rms=refrms)
-        if ( PRINTREFERENCEVALUES ) &
-          & call printRMSetc ( 'Reference values', refmin, refmax, refrms )
-        ! call dump ( filtered1, 'filtered1', fillvalue=fillvalue )
-        ! call dump ( filtered2, 'filtered2', fillvalue=fillvalue )
-        call fillPcts
-        call usePcts
-        ! Prepare to find abs, relative differences
-        ! Avoid another automatic array
-        do i=1, size(filtered1)
-          tmax = max( abs(filtered1(i)), abs(filtered2(i)) )
-          filtered1(i) = filtered1(i) - filtered2(i)
-          filtered2(i) = tmax
-        enddo
-        ! call dump ( filtered1, 'filtered1-filtered2', fillvalue=real(0.,kind(array1)) )
-        ! call outputNamedValue( 'num /= fill value', numNonFill )
-        alreadySbtrcted = .true.
-        if ( myWholeArray ) then
-          call dump(filtered1, trim(DiffName), &
-            & real(0.,kind(array1)), CLEAN, WIDTH, FORMAT, &
-            & WHOLEARRAY, STATS, RMS, unique, LBOUND )
-        else
-          call dump( filtered1(1:numNonFill), trim(DiffName), &
-            & real(0.,kind(array1)), CLEAN, WIDTH, FORMAT, &
-            & WHOLEARRAY, STATS, RMS, unique, LBOUND )
-        endif
-        if ( DEBUG ) call output( 'DoneWithDiff', advance='yes' )
-        call doneWithDiff
-        return
+      ! We want to make sure we remove values from both arrays where either is fill
+      if ( DEBUG ) call outputNamedValue( 'filtering FillValue', FillValue )
+      filtered1 = reshape( array1, (/ product(shape(array1)) /) )
+      filtered2 = reshape( array2, (/ product(shape(array2)) /) )
+      where (filtered1 == FillValue)
+        filtered2 = FillValue
+      end where
+      where (filtered2 == FillValue)
+        filtered1 = FillValue
+      end where
+      numNonFill = count(filtered1 /= FillValue)
+      call ReorderFillValues ( filtered1, FillValue )
+      call ReorderFillValues ( filtered2, FillValue )
+      call allstats(filtered1(1:numNonFill), &
+        & addedData=.false., min=refmin, max=refmax, rms=refrms)
+      call allstats(filtered2(1:numNonFill), &
+        & addedData=.true., min=refmin, max=refmax, rms=refrms)
+      if ( PRINTREFERENCEVALUES ) &
+        & call printRMSetc ( 'Reference values', refmin, refmax, refrms )
+      ! call dump ( filtered1, 'filtered1', fillvalue=fillvalue )
+      ! call dump ( filtered2, 'filtered2', fillvalue=fillvalue )
+      call fillPcts
+      call usePcts
+      ! Prepare to find abs, relative differences
+      ! Avoid another automatic array
+      do i=1, size(filtered1)
+        tmax = max( abs(filtered1(i)), abs(filtered2(i)) )
+        filtered1(i) = filtered1(i) - filtered2(i)
+        filtered2(i) = tmax
+      enddo
+      ! call dump ( filtered1, 'filtered1-filtered2', fillvalue=real(0.,kind(array1)) )
+      ! call outputNamedValue( 'num /= fill value', numNonFill )
+      alreadySbtrcted = .true.
+      if ( myWholeArray ) then
+        call dump(filtered1, trim(DiffName), &
+          & real(0.,kind(array1)), CLEAN, WIDTH, FORMAT, &
+          & WHOLEARRAY, STATS, RMS, unique, LBOUND )
       else
-        call allstats(filtered1, &
-          & addedData=.false., min=refmin, max=refmax, rms=refrms)
-        call allstats(filtered2, &
-          & addedData=.true., min=refmin, max=refmax, rms=refrms)
+        call dump( filtered1(1:numNonFill), trim(DiffName), &
+          & real(0.,kind(array1)), CLEAN, WIDTH, FORMAT, &
+          & WHOLEARRAY, STATS, RMS, unique, LBOUND )
       endif
+      if ( DEBUG ) call output( 'DoneWithDiff', advance='yes' )
+      call doneWithDiff
+      return
       if ( PRINTREFERENCEVALUES ) &
         & call printRMSetc ( 'Reference values', refmin, refmax, refrms )
     endif
@@ -340,17 +331,30 @@
       pctMeanRatios = gapRatioStat%mean
       do i=1, MAXPCTS
         n = gapStat(i)%indexing(1)
+        if ( n < 1 ) then
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'unable to locate max of abs in filterediff' )
+          cycle
+        endif
         pctMaxGapAsRatios(i) = 0.
         absdiff = abs( filtered1(n) - filtered2(n) )
         if ( absdiff > real(0.,kind(array1)) ) pctMaxGapAsRatios(i) = &
           &  absdiff / max( abs(filtered1(n)), abs(filtered2(n)) )
         n = gapRatioStat(i)%indexing(1)
+        if ( n < 1 ) then
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'unable to locate max of ratio in filterediff' )
+          cycle
+        endif
         pctMaxRatioAsGaps(i) = abs( filtered1(n) - filtered2(n) )
       enddo
     end subroutine usePcts
 
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.17  2008/11/24 19:35:15  pwagner
+! Less wasteful of memory; should not segment dault so often
+!
 ! Revision 2.16  2008/06/18 20:44:30  pwagner
 ! dump subroutine has new optonal arg 'unique'
 !
