@@ -1038,9 +1038,11 @@ contains ! =====     Public procedures     =============================
 
     call make_tree( (/ &
       begin, s+s_label, &
-             begin, f+f_quantity, s+s_vector, f+f_template, f+f_quantities, nr+n_dot, &
+             begin, f+f_quantity, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
+             begin, f+f_vector, s+s_vector, n+n_field_spec, &
              begin, f+f_label, t+t_string, nr+n_field_type, &
              begin, f+f_prefixSignal, t+t_boolean, n+n_field_type, &
+             begin, f+f_suffixLabel, t+t_boolean, n+n_field_type, &
              ndp+n_spec_def /) )
 
     call make_tree( (/ &
@@ -1573,6 +1575,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.481  2008/12/02 23:27:41  pwagner
+! May automatically label every quantity in a vector now
+!
 ! Revision 2.480  2008/11/06 21:50:19  pwagner
 ! Fill method swapValues swaps values between two quantities
 !
