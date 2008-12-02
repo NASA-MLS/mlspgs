@@ -397,6 +397,7 @@ status
 # step already in MLSSignals field set, so can't put it here, too
 stop
 structure
+suffixLabel
 superDiagonal
 surface
 swath
@@ -459,6 +460,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.189  2008/12/02 23:27:22  pwagner
+# May automatically label every quantity in a vector now
+#
 # Revision 2.188  2008/09/30 22:30:48  vsnyder
 # Remove AuxGrids -- didn't need them after all
 #
