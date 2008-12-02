@@ -19,9 +19,9 @@ MODULE PCFHdr
 ! or split off global attribute stuff into a separate module
    USE Hdf, only: DFACC_RDWR, DFACC_WRITE, AN_FILE_DESC
    USE INTRINSIC, only: L_GRID, L_HDF, L_SWATH
-   USE MLSCommon, only: r8, FileNameLen, NameLen
+   USE MLSCommon, only: r8, FileNameLen, MLSFile_T, NameLen
    USE MLSFiles, only: GetPCFromRef, HDFVERSION_4, HDFVERSION_5, &
-     & MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
+     & InitializeMLSFile, open_MLSFile, close_MLSFile
    USE MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
      & MLSMSG_Warning, MLSMSG_DeAllocate, MLSMSG_FILEOPEN
    use MLSStrings, only: lowerCase
@@ -745,6 +745,7 @@ CONTAINS
 
 ! Parameters
       integer :: fileID
+      type(MLSFile_T)                :: MLSFile
       integer :: my_hdfVersion
       ! logical :: myisHDFEOS
       integer :: record_length
@@ -756,36 +757,44 @@ CONTAINS
       if ( present(hdfVersion) ) my_hdfVersion = hdfVersion
       the_type = l_hdf
       if ( present(fileType) ) the_type = fileType
+      status = InitializeMLSFile ( MLSFile, type=the_Type, access=DFACC_RDWR, &
+       & name=trim(file), HDFVersion=my_hdfVersion )
       select case(my_hdfVersion)
       case (HDFVERSION_4)
         call WritePCF2Hdr_hdf4 (file, anText)
       case (HDFVERSION_5)
         if ( the_type == l_swath ) then
-          fileID = mls_io_gen_openF(l_swath, .TRUE., status, &
-           & record_length, DFACC_RDWR, FileName=trim(file), &
-           & hdfVersion=hdfVersion, debugOption=.false. )
-          if ( status /= PGS_S_SUCCESS) &
-            & CALL MLSMessage(MLSMSG_Error, ModuleName, &
-            & 'Error opening hdfeos5 swath file for annotating with PCF' )
+          ! fileID = mls_io_gen_openF(l_swath, .TRUE., status, &
+          ! & record_length, DFACC_RDWR, FileName=trim(file), &
+          ! & hdfVersion=hdfVersion, debugOption=.false. )
+          call open_MLSFile( MLSFile )
+          fileID = MLSFile%FileID%f_id
+          ! if ( status /= PGS_S_SUCCESS) &
+          !  & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+          !  & 'Error opening hdfeos5 swath file for annotating with PCF' )
           call WritePCF2Hdr_hdfeos5 (fileID, anText)
-          status = mls_io_gen_closeF(l_swath, fileID, &
-            & hdfVersion=hdfVersion)
-          if ( status /= PGS_S_SUCCESS) &
-            & CALL MLSMessage(MLSMSG_Error, ModuleName, &
-            & 'Error closing hdfeos5 swath file for annotating with PCF' )
+          ! status = mls_io_gen_closeF(l_swath, fileID, &
+          !  & hdfVersion=hdfVersion)
+          call close_MLSFile( MLSFile )
+          ! if ( status /= PGS_S_SUCCESS) &
+          !  & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+          !  & 'Error closing hdfeos5 swath file for annotating with PCF' )
         elseif ( the_type == l_grid ) then
-          fileID = mls_io_gen_openF(l_grid, .TRUE., status, &
-           & record_length, DFACC_RDWR, FileName=trim(file), &
-           & hdfVersion=hdfVersion, debugOption=.false. )
-          if ( status /= PGS_S_SUCCESS) &
-            & CALL MLSMessage(MLSMSG_Error, ModuleName, &
-            & 'Error opening hdfeos5 grid file for annotating with PCF' )
+          ! fileID = mls_io_gen_openF(l_grid, .TRUE., status, &
+          !  & record_length, DFACC_RDWR, FileName=trim(file), &
+          !  & hdfVersion=hdfVersion, debugOption=.false. )
+          call open_MLSFile( MLSFile )
+          fileID = MLSFile%FileID%f_id
+          ! if ( status /= PGS_S_SUCCESS) &
+          !   & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+          !   & 'Error opening hdfeos5 grid file for annotating with PCF' )
           call WritePCF2Hdr_hdfeos5 (fileID, anText)
-          status = mls_io_gen_closeF(l_grid, fileID, &
-            & hdfVersion=hdfVersion)
-          if ( status /= PGS_S_SUCCESS) &
-            & CALL MLSMessage(MLSMSG_Error, ModuleName, &
-            & 'Error closing hdfeos5 grid file for annotating with PCF' )
+          ! status = mls_io_gen_closeF(l_grid, fileID, &
+          !  & hdfVersion=hdfVersion)
+          call close_MLSFile ( MLSFile )
+          ! if ( status /= PGS_S_SUCCESS) &
+          !  & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+          !  & 'Error closing hdfeos5 grid file for annotating with PCF' )
         else
           call h5fopen_f(trim(file), H5F_ACC_RDWR_F, fileID, status)
           if ( status /= PGS_S_SUCCESS) &
@@ -1168,12 +1177,16 @@ CONTAINS
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.46  2008/12/02 23:10:30  pwagner
+!# mls_io_gen_[openF,closeF] functions now private; use MLSFile_T interfaces instead
+!#
 !# Revision 2.45  2008/04/25 22:52:47  pwagner
 !# Remove unused 'use ..'
 !#
