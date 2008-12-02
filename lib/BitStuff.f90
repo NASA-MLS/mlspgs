@@ -40,6 +40,7 @@ module BitStuff
 !                      if any of the bits set in bitpattern also set in i
 ! NegativeIfBitSet   Return the negative abs. of the first arg
 !                      if the bitnumber is set in i
+! Reverse            Return the integer represented reversing the bits
 ! SetBits            Return the integer represented by the bits set among set
 ! WhichBitsAreSet    Which bit numbers are set?
 ! === (end of toc) ===
@@ -53,6 +54,7 @@ module BitStuff
 ! value NegativeIfBitPatternSet ( value, bits i, bits bitPattern )
 ! value NegativeIfBitSet ( value, bits i, int bitNumber )
 !                  value can be an int, real or double, scalar or array
+! bits Reverse ( bits i )
 ! bits SetBits ( int set(:) )
 ! WhichBitsAreSet ( bits i, int set(:), [int howMany], [int unset(:)] )
 ! === (end of api) ===
@@ -60,9 +62,10 @@ module BitStuff
   public :: BitsToBooleans, BooleansToBits
   public :: CountBits, CountBits_0, CountBits_1, CountBits_2
   public :: CountCharBits_0, CountCharBits_1, CountCharBits_2
-  public :: isBitSet, IsBitPatternSet, SetBits, WhichBitsAreSet
+  public :: isBitSet, IsBitPatternSet
   public :: NegativeIfBitSet, NegativeIfBitPatternSet
   public :: Reverse
+  public :: SetBits, WhichBitsAreSet
 
   interface CountBits
     module procedure countBits_0, countBits_1, countBits_2
@@ -328,7 +331,7 @@ contains
     if ( isBitSet(i, bitNumber) ) res = - abs(value)
   end function NegativeIfBitSet_dbl
 
-  ! --------------------------------------------  SetBits  -----
+  ! --------------------------------------------  Reverse  -----
   function Reverse ( i ) result(anti)
     ! Return the integer reversing the bit order of i
     ! E.g., if set(i) = (/ 0, 2, 4 /) set(result) will be (/N, N-2, N-4/)
@@ -424,11 +427,15 @@ contains
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module BitStuff
 
 ! $Log$
+! Revision 2.12  2008/12/02 23:08:10  pwagner
+! Added a print to not_used_here
+!
 ! Revision 2.11  2007/01/31 00:06:23  pwagner
 ! Made MAXBITNUMBER public
 !
