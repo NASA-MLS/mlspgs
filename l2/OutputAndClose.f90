@@ -16,7 +16,7 @@ module OutputAndClose ! outputs all data from the Join module to the
 
 !=======================================================================================
 
-  use Hdf, only: DFACC_RDONLY, DFACC_RDWR
+  use Hdf, only: DFACC_CREATE, DFACC_RDONLY, DFACC_RDWR
   use MLSMessageModule, only: MLSMessage, &
     & MLSMSG_Error, MLSMSG_Info, MLSMSG_Warning
   use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
@@ -89,8 +89,8 @@ contains ! =====     Public Procedures     =============================
       & MATRIX_DATABASE_T, MATRIX_T
     use MLSCommon, only: MLSFile_T, TAI93_Range_T, FileNameLen
     use MLSFiles, only: &
-      & AddInitializeMLSFile, Dump, GetMLSFileByName, &
-      & MLS_INQSWATH, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
+      & AddInitializeMLSFile, close_MLSFile, Dump, GetMLSFileByName, &
+      & MLS_INQSWATH, open_MLSFile
     use MLSL2Options, only: CATENATESPLITS, CHECKPATHS, &
       & DEFAULT_HDFVERSION_WRITE, &
       & PENALTY_FOR_NO_METADATA, SPECIALDUMPFILE, SKIPDIRECTWRITES, TOOLKIT
@@ -101,7 +101,6 @@ contains ! =====     Public Procedures     =============================
     use MLSStrings, only: trim_safe
     use MoreTree, only: Get_Spec_ID, GET_BOOLEAN
     use OUTPUT_M, only: blanks, OUTPUT, revertOutput, switchOutput
-    use SDPToolkit, only: PGSD_IO_GEN_WSEQFRM
     use Time_M, only: Time_Now
     use TOGGLES, only: GEN, TOGGLE, Switches
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -149,7 +148,6 @@ contains ! =====     Public Procedures     =============================
     integer :: INPUT_TYPE              ! L_L2AUX, L_L2GP, L_PC, L_L2DGG
     type(MLSFile_T), pointer :: inputFile
     integer :: KEY                      ! Index of spec_args node
-    integer :: L2PCUNIT
     integer :: listSize
     integer :: Metadata_error
     character (len=32) :: meta_name    ! From the metaName= field
@@ -415,8 +413,8 @@ contains ! =====     Public Procedures     =============================
         case default
         end select
 
-        if ( DEBUG ) print *, 'inputPhysicalfileName: ', inputPhysicalfileName
-        if ( DEBUG ) print *, 'outputPhysicalfileName: ', PhysicalfileName
+        if ( DEBUG ) print *, 'inputPhysicalfileName: ', trim(inputPhysicalfileName)
+        if ( DEBUG ) print *, 'outputPhysicalfileName: ', trim(PhysicalfileName)
         if ( DEBUG ) print *, 'repairGeoLocations: ', repairGeoLocations
         if ( DEBUG ) print *, 'create: ', create
         if ( DEBUG ) call display_string ( lit_indices(output_type), &
@@ -615,25 +613,37 @@ contains ! =====     Public Procedures     =============================
           ! Open file
           if ( ascii ) then
             ! ASCII l2pc file
-            l2pcUnit = mls_io_gen_openf ( l_ascii, .true., error,&
-              & recLen, PGSd_IO_Gen_WSeqFrm, trim(file_base), 0,0,0, unknown=.true. )
-            if ( error /= 0 ) call MLSMessage(MLSMSG_Error,ModuleName,&
-              & 'Failed to open l2pc file:'//trim(file_base))
+     !  l2pcUnit = mls_io_gen_openf ( l_ascii, .true., error, &
+     !    & recLen, PGSd_IO_Gen_WSeqFrm, trim(file_base), 0,0,0, &
+     !    & unknown=.true. )
+     !  if ( error /= 0 ) call MLSMessage(MLSMSG_Error,ModuleName,&
+     !    & 'Failed to open l2pc file:'//trim(file_base))
+            call returnFullFileName( file_base, PhysicalFilename, &
+              & 0, 0 )
+            outputFile => GetMLSFileByName(filedatabase, PhysicalFilename)
+            if ( .not. associated(outputFile) ) then
+              outputFile => AddInitializeMLSFile( filedatabase, &
+                & content='l2pc', &
+                & name=PhysicalFilename, shortName=file_base, &
+                & type=l_ascii, access=DFACC_RDWR )
+              call open_MLSFile( outputFile )
+            endif
 
             do in_field_no = 2, nsons(quantitiesNode)
               db_index = decoration(decoration(subtree(in_field_no, quantitiesNode )))
               call GetFromMatrixDatabase ( matrices(db_index), tmpMatrix )
-              call writeOneL2PC ( tmpMatrix, l2pcUnit, packed )
+              call writeOneL2PC ( tmpMatrix, outputFile%FileID%f_id, packed )
               if ( destroy ) call DestroyMatrix ( matrices(db_index) )
             end do ! in_field_no = 2, nsons(gson)
+            call close_MLSFile( outputFile )
 
-            error = mls_io_gen_closef ( l_ascii, l2pcUnit)
-            if ( error /= 0 ) then
-              call MLSMessage(MLSMSG_Error,ModuleName,&
-                & 'Failed to close l2pc file:'//trim(file_base))
-            else if ( switchDetail(switches, 'pro') > -1 ) then
-              call announce_success(file_base, 'l2pc', 0)
-            end if
+            ! error = mls_io_gen_closef ( l_ascii, l2pcUnit)
+            ! if ( error /= 0 ) then
+            !  call MLSMessage(MLSMSG_Error,ModuleName,&
+            !    & 'Failed to close l2pc file:'//trim(file_base))
+            ! else if ( switchDetail(switches, 'pro') > -1 ) then
+            !   call announce_success(file_base, 'l2pc', 0)
+            ! end if
           else
             ! For the moment call a routine
             call OutputHDF5L2PC ( trim(file_base), matrices, quantitiesNode, packed, &
@@ -1410,11 +1420,11 @@ contains ! =====     Public Procedures     =============================
     use L2GPData, only: AVOIDUNLIMITEDDIMS, &
       & MAXSWATHNAMESBUFSIZE, cpL2GPData
     use L2ParInfo, only: parallel
-    use MLSCommon, only: I4, MLSFile_T, FileNameLen
+    use MLSCommon, only: MLSFile_T, FileNameLen
     use MLSFiles, only: HDFVERSION_5, &
-      & AddInitializeMLSFile, GetMLSFileByName, GetPCFromRef, mls_exists, &
-      & MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, MLS_SFSTART, MLS_SFEND, &
-      & unSplitName
+      & AddInitializeMLSFile, close_MLSFile, DUMP, &
+      & GetMLSFileByName, GetPCFromRef, &
+      & mls_exists, MLS_SFSTART, MLS_SFEND, open_MLSFile, unSplitName
     use MLSHDF5, only: CpHDF5GlAttribute, MakeHDF5Attribute
     use MLSL2Options, only: CHECKPATHS, &
       & SKIPDIRECTWRITES, TOOLKIT
@@ -1445,9 +1455,8 @@ contains ! =====     Public Procedures     =============================
     character (len=FileNameLen) :: L2gpPhysicalFilename
     logical :: madeFile
     type(MLSFile_T), pointer :: outputFile
-    integer :: Record_Length
     integer :: ReturnStatus
-    integer(i4) :: SDFID                ! File handle
+    integer :: SDFID                ! File handle
     character (len=MAXSWATHNAMESBUFSIZE) :: sdList
     ! Executable
     if ( debug ) call dump(DirectDatabase)
@@ -1511,19 +1520,25 @@ contains ! =====     Public Procedures     =============================
         & 'unable to addmetadata to ' // trim(l2gpPhysicalFilename) )
       end if
       if ( madeFile ) then
-       call writeAPrioriAttributes(trim(l2gpPhysicalFilename), HDFVERSION_5)
-       outputFile => AddInitializeMLSFile(filedatabase, &
-         & content='l2dgg', &
-         & name=l2gpPhysicalFilename, shortName='DGG', &
-         & type=l_swath, access=DFACC_RDWR, HDFVersion=HDFVERSION_5, &
-         & PCBottom=mlspcf_l2dgg_start, PCTop=mlspcf_l2dgg_end)
-        FileID = mls_io_gen_openF( l_swath, .TRUE., ReturnStatus, &
-        & record_length, DFACC_RDWR, FileName=l2gpPhysicalFilename, &
-        & hdfVersion=HDFVERSION_5 )
-        call WriteLeapSecHDFEOSAttr (fileID)
-        if ( .not. DGGFILEISHYBRID ) call WriteutcPoleHDFEOSAttr (fileID)
-        ReturnStatus = mls_io_gen_closeF( l_swath, FileID, &
-        & hdfVersion=HDFVERSION_5, debugOption=.false. )
+       call writeAPrioriAttributes( outputFile )
+       ! call writeAPrioriAttributes(trim(l2gpPhysicalFilename), HDFVERSION_5)
+       ! outputFile => AddInitializeMLSFile(filedatabase, &
+        ! & content='l2dgg', &
+        ! & name=l2gpPhysicalFilename, shortName='DGG', &
+        ! & type=l_swath, access=DFACC_CREATE, HDFVersion=HDFVERSION_5, &
+        ! & PCBottom=mlspcf_l2dgg_start, PCTop=mlspcf_l2dgg_end)
+        ! FileID = mls_io_gen_openF( l_swath, .TRUE., ReturnStatus, &
+        ! & record_length, DFACC_RDWR, FileName=l2gpPhysicalFilename, &
+        ! & hdfVersion=HDFVERSION_5 )
+        !call dump ( outputFile, details = 1 )
+        call output ( 'About to open ' // trim(l2gpPhysicalFilename) , advance='yes' )
+        call open_MLSFile( outputFile )
+        call WriteLeapSecHDFEOSAttr ( outputFile%fileID%f_id )
+        if ( .not. DGGFILEISHYBRID ) &
+          & call WriteutcPoleHDFEOSAttr ( outputFile%fileID%f_id )
+        ! ReturnStatus = mls_io_gen_closeF( l_swath, FileID, &
+        ! & hdfVersion=HDFVERSION_5, debugOption=.false. )
+        call close_MLSFile ( outputFile )
         if ( DGGFILEISHYBRID ) then
           ! The utcpole is too large to be stored as an HDFEOS attribute
           ! Note:
@@ -1679,6 +1694,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.137  2008/12/02 23:13:15  pwagner
+! mls_io_gen_[openF,closeF] functions now private; use MLSFile_T interfaces instead
+!
 ! Revision 2.136  2008/09/19 23:55:50  pwagner
 ! May now Destroy GriddedData
 !
