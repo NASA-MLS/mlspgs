@@ -16,9 +16,9 @@ MODULE L2Interface
   USE intrinsic, ONLY: l_swath
   USE L2GPData, ONLY: L2GPData_T, ReadL2GPData, WriteL2GPData, SetupNewL2GPRecord, &
        & DestroyL2GPContents
-  USE MLSCommon, ONLY: r8
-  USE MLSFiles, ONLY: mls_openFile, mls_closeFile, & 
-       & mls_hdf_version, mls_inqswath, mls_io_gen_openF, mls_io_gen_closeF
+  USE MLSCommon, ONLY: r8, MLSFile_T
+  USE MLSFiles, ONLY: InitializeMLSFile, mls_openFile, mls_closeFile, & 
+       & mls_hdf_version, mls_inqswath, close_MLSFile, open_MLSFile
   USE MLSL3Common, ONLY: DATE_LEN, CCSDS_LEN, FILENAMELEN, maxWindow, & 
        & GRIDNAMELEN, maxMisDays
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Allocate, &
@@ -122,7 +122,7 @@ CONTAINS
 
        if (i == mlspcf_start) then
            indx = INDEX(physicalFilename, '.', .TRUE.)
-           read((physicalFilename(indx-3:indx-1)),'(i3)') doy_current
+           read(physicalFilename(indx-3:indx-1),'(i3)') doy_current
 	   doy_prev = doy_current
        endif 
        if (DEBUG) then
@@ -190,7 +190,7 @@ CONTAINS
        
 	  ! Check missing days that are not in the PCF
 
-          read((physicalFilename(indx-3:indx-1)),'(i3)') doy_current
+          read(physicalFilename(indx-3:indx-1),'(i3)') doy_current
 	  if (DEBUG) then
              print *,' doy_current: ', doy_current
              print *,' filename here: ', trim(physicalFilename)
@@ -233,6 +233,7 @@ CONTAINS
     
     ! Local variables
 
+    type(MLSFile_T)                :: MLSFile
     character (LEN=FileNameLen) :: pcfNames(40)
     integer :: mis_Days(maxMisDays), misDInt
     integer :: numDays, mis_numDay, the_hdfVersion, file_id
@@ -255,13 +256,17 @@ CONTAINS
 	   & numDays,'GlobalAttributes%OrbPeriodDays', ModuleName)
         do i = 1, numDays-1
            the_hdfVersion = mls_hdf_version(trim(pcfNames(i)))
-           file_id = mls_io_gen_openF(l_swath, .TRUE., status, &
-              & record_length, DFACC_READ, pcfNames(i), &
-              & hdfVersion=the_hdfVersion, debugOption=.false. )
-           if ( status /= 0 ) &
-              call MLSMessage ( MLSMSG_Error, ModuleName, &
-                & "Unable to open L2gp file: " &
-                & // trim(pcfNames(i))//' for reading')
+           status = InitializeMLSFile ( MLSFile, type=l_swath, access=DFACC_READ, &
+            & name=trim(pcfNames(i)), HDFVersion=the_hdfVersion )
+           call open_MLSFile( MLSFile )
+           file_ID = MLSFile%FileID%f_id
+           ! file_id = mls_io_gen_openF(l_swath, .TRUE., status, &
+           !   & record_length, DFACC_READ, pcfNames(i), &
+           !   & hdfVersion=the_hdfVersion, debugOption=.false. )
+           !if ( status /= 0 ) &
+           !   call MLSMessage ( MLSMSG_Error, ModuleName, &
+           !     & "Unable to open L2gp file: " &
+           !     & // trim(pcfNames(i))//' for reading')
               status = HE5_EHrdglatt(file_id, 'OrbitNumber', &
                 & GlobalAttributes%OrbNumDays(:,i))
               if (status /= 0) then
@@ -325,14 +330,18 @@ CONTAINS
 	      endif
           enddo
 
+           status = InitializeMLSFile ( MLSFile, type=l_swath, access=DFACC_READ, &
+            & name=trim(pcfNames(i)), HDFVersion=the_hdfVersion )
+           call open_MLSFile( MLSFile )
+           file_ID = MLSFile%FileID%f_id
           ! file_id = mls_io_gen_openF('swopen', .TRUE., status, &
-          file_id = mls_io_gen_openF(l_swath, .TRUE., status, &
-            & record_length, DFACC_READ, pcfNames(i), &
-            & hdfVersion=the_hdfVersion, debugOption=.false. )
-          if ( status /= 0 ) &
-            call MLSMessage ( MLSMSG_Error, ModuleName, &
-		& "Unable to open L2gp file: " &
-		& // trim(pcfNames(i))//' for reading')
+          ! file_id = mls_io_gen_openF(l_swath, .TRUE., status, &
+          !  & record_length, DFACC_READ, pcfNames(i), &
+          !  & hdfVersion=the_hdfVersion, debugOption=.false. )
+          !if ( status /= 0 ) &
+          !  call MLSMessage ( MLSMSG_Error, ModuleName, &
+		    !& "Unable to open L2gp file: " &
+		    !& // trim(pcfNames(i))//' for reading')
             status = HE5_EHrdglatt(file_id, 'OrbitNumber', &
 		& GlobalAttributes%OrbNumDays(:,m))
 	    n = n+1
@@ -382,12 +391,13 @@ CONTAINS
             end if
             call output(GlobalAttributes%LastMAFCtr, advance='yes')
 
+            call close_MLSFile( MLSFile )
             ! status = mls_io_gen_closeF('swclose', file_id, pcfNames(i), & 
-            status = mls_io_gen_closeF(l_swath, file_id, pcfNames(i), & 
-           	& hdfVersion=the_hdfVersion)
-            if ( status /= 0 ) &
-           	call MLSMessage ( MLSMSG_Error, ModuleName, &
-       	      	   & "Unable to close L2gp file:"//trim(pcfNames(i)))
+            ! status = mls_io_gen_closeF(l_swath, file_id, pcfNames(i), & 
+           	!& hdfVersion=the_hdfVersion)
+            !if ( status /= 0 ) &
+           	!call MLSMessage ( MLSMSG_Error, ModuleName, &
+       	   !   	   & "Unable to close L2gp file:"//trim(pcfNames(i)))
         END DO
     end if
 
@@ -574,6 +584,7 @@ CONTAINS
    
    ! Variables
    
+   type(MLSFile_T)                :: MLSFile
    CHARACTER (LEN=480) :: msr
    CHARACTER (LEN=FileNameLen) :: l3File
    CHARACTER (LEN=8) :: date
@@ -609,17 +620,22 @@ CONTAINS
 
       hdfVersion = mls_hdf_version(trim(l3File))
 
+      status = InitializeMLSFile ( MLSFile, type=l_swath, access=DFACC_RDWR, &
+       & name=l3File, HDFVersion=hdfVersion )
+      call open_MLSFile( MLSFile )
+      file_ID = MLSFile%FileID%f_id
       ! file_id = mls_io_gen_openF('swopen', .TRUE., status, &
-      file_id = mls_io_gen_openF(l_swath, .TRUE., status, &
-           & record_length, DFACC_RDWR, l3File, &
-           & hdfVersion=hdfVersion, debugOption=.false. )
+      ! file_id = mls_io_gen_openF(l_swath, .TRUE., status, &
+      !     & record_length, DFACC_RDWR, l3File, &
+      !     & hdfVersion=hdfVersion, debugOption=.false. )
 
       ! call dump (real(l3r(i)%l2gpValue, r8), 'l2gpValue: ')
       call WriteL2GPData(l3r(i), file_id, l3r(i)%name, & 
            & hdfVersion=hdfVersion,notUnlimited=.true.)
 
-      status = mls_io_gen_closeF(l_swath, file_id, l3File, & 
-           & hdfVersion=hdfVersion)
+      ! status = mls_io_gen_closeF(l_swath, file_id, l3File, & 
+      !     & hdfVersion=hdfVersion)
+      call close_MLSFile ( MLSFile )
 
    ENDDO
       
@@ -744,6 +760,9 @@ END MODULE L2Interface
 !=====================
 
 !# $Log$
+!# Revision 1.23  2007/06/26 19:06:26  cvuu
+!# fix bug
+!#
 !# Revision 1.22  2006/05/31 21:05:35  cvuu
 !# Check missing dates that are not in the PCF; Fix orbit number and orbit period for L3DZ
 !#

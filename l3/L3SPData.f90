@@ -16,7 +16,7 @@ MODULE L3SPData
    USE L3CF, ONLY: L3CFProd_T
    USE MLSCommon, ONLY: r8
    USE MLSFiles, ONLY: HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, &
-        & MLS_HDF_VERSION, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
+        & MLS_HDF_VERSION
    USE MLSL3Common, ONLY: GridNameLen, HDFE_NOMERGE, FILENAMELEN, &
         & DIM_ERR, GEO_ERR, DAT_ERR, WR_ERR, &
         & GEO_FIELD1, GEO_FIELD9, GEO_FIELD10, &
@@ -720,6 +720,9 @@ END MODULE L3SPData
 !==================
 
 ! $Log$
+! Revision 1.16  2006/02/28 17:56:56  cvuu
+! V2.00 commit
+!
 ! Revision 1.15  2005/06/23 19:07:39  pwagner
 ! Reworded Copyright statement, moved rcs id
 !

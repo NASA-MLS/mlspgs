@@ -17,11 +17,11 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   use Hdf, only: DFACC_RDONLY, DFACC_READ, DFACC_CREATE, DFACC_RDWR, &
     & DFNT_FLOAT32, DFNT_INT32, DFNT_FLOAT64
   use Intrinsic ! "units" type literals, beginning with L_
-  use MLSCommon, only: I4, R4, R8, defaultUndefinedValue, MLSFile_T
+  use MLSCommon, only: R4, R8, defaultUndefinedValue, MLSFile_T
   use MLSFiles, only: FILENOTFOUND, &
     & HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, WRONGHDFVERSION, &
     & DUMP, INITIALIZEMLSFILE, MLS_closeFile, MLS_EXISTS, mls_openFile, &
-    & MLS_HDF_VERSION, MLS_INQSWATH, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
+    & MLS_HDF_VERSION, MLS_INQSWATH, open_MLSFile, close_MLSFile
   use MLSFillValues, only: ExtractArray, GatherArray, &
     & IsFillValue, ReplaceFillValues
   use MLSMessageModule, only: MLSMSG_Allocate, MLSMSG_DeAllocate, MLSMSG_Error, &
@@ -286,7 +286,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
      ! dimensioned (nFreqs, nLevels, nTimes)
 
      ! Now we've changed our minds: status will be a 4-byte integer
-     integer(i4), pointer, dimension(:) :: status=>NULL()
+     integer, pointer, dimension(:) :: status=>NULL()
      !                (status is a reserved word in F90)
      real (rgp), pointer, dimension(:) :: quality=>NULL()
      real (rgp), pointer, dimension(:) :: convergence=>NULL()
@@ -294,7 +294,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 
      ! These are the fill/missing values for all arrays except status
      real (rgp)                        :: MissingValue = DefaultUndefinedValue
-     integer(i4)                       :: MissingStatus = 513 ! 512 + 1
+     integer                       :: MissingStatus = 513 ! 512 + 1
     ! Vertical coordinate
     character(len=8) :: verticalCoordinate ! E.g. 'Pressure', or 'Theta'
     ! integer :: verticalCoordinate ! The vertical coordinate used.  These
@@ -335,13 +335,14 @@ contains ! =====     Public Procedures     =============================
     ! logical, optional, intent(in) :: clean   ! Not implemented yet
 
     ! Local
+    logical :: file_exists
+    integer :: file_access
     integer :: L2FileHandle
+    type(MLSFile_T)                :: MLSFile
+    logical :: myClean
     integer :: record_length
     integer :: status
     integer :: the_hdfVersion
-    logical :: myClean
-    logical :: file_exists
-    integer :: file_access
     
     ! Executable code
     myClean = .false.
@@ -369,21 +370,26 @@ contains ! =====     Public Procedures     =============================
     else
       file_access = DFACC_CREATE
     endif
-    L2FileHandle = mls_io_gen_openF(l_swath, .TRUE., status, &
-       & record_length, file_access, FileName=FileName, &
-       & hdfVersion=the_hdfVersion, debugOption=.false. )
-    if ( status /= 0 ) &
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-       & "Unable to open L2gp file: " // trim(FileName) // ' for appending')
+    status = InitializeMLSFile ( MLSFile, type=l_swath, access=file_access, &
+     & name=trim(fileName), HDFVersion=the_hdfVersion )
+    call open_MLSFile( MLSFile )
+    L2FileHandle = MLSFile%FileID%f_id
+    ! L2FileHandle = mls_io_gen_openF(l_swath, .TRUE., status, &
+    !   & record_length, file_access, FileName=FileName, &
+    !   & hdfVersion=the_hdfVersion, debugOption=.false. )
+    !if ( status /= 0 ) &
+    !  call MLSMessage ( MLSMSG_Error, ModuleName, &
+    !   & "Unable to open L2gp file: " // trim(FileName) // ' for appending')
     call AppendL2GPData_fileID( l2gp, L2FileHandle, swathname, &
       & FileName, offset, lastProfile=lastProfile, totNumProfs=totNumProfs, &
       & hdfVersion=the_hdfVersion, createSwath=createSwath, &
       & maxchunksize=maxchunksize )
-    status = mls_io_gen_closeF(l_swath, L2FileHandle, FileName=FileName, &
-      & hdfVersion=the_hdfVersion)
-    if ( status /= 0 ) &
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-       & "Unable to close L2gp file: " // trim(FileName) // ' after appending')
+    call close_MLSFile( MLSFile )
+    ! status = mls_io_gen_closeF(l_swath, L2FileHandle, FileName=FileName, &
+    !  & hdfVersion=the_hdfVersion)
+    ! if ( status /= 0 ) &
+    !  call MLSMessage ( MLSMSG_Error, ModuleName, &
+    !   & "Unable to close L2gp file: " // trim(FileName) // ' after appending')
   end subroutine AppendL2GPData_fileName
 
   subroutine AppendL2GPData_fileID( l2gp, l2FileHandle, &
@@ -1021,6 +1027,7 @@ contains ! =====     Public Procedures     =============================
     type(GlobalAttributes_T) :: gAttributes
     type(GlobalAttributes_T) :: gAttributesOriginal
     integer :: listsize
+    type(MLSFile_T)                :: MLSFile1, MLSFile2
     logical :: myandGlAttributes
     character (len=MAXSWATHNAMESBUFSIZE) :: mySwathList
     character (len=MAXSWATHNAMESBUFSIZE) :: myrename
@@ -1066,12 +1073,16 @@ contains ! =====     Public Procedures     =============================
       noSwaths = mls_InqSwath ( file1, mySwathList, listSize, &
            & hdfVersion=the_hdfVersion1)
     endif
-    File1Handle = mls_io_gen_openF(l_swath, .TRUE., status, &
-       & record_length, DFACC_READ, FileName=File1, &
-       & hdfVersion=the_hdfVersion1, debugOption=.false. )
-    if ( status /= 0 ) &
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-       & "Unable to open L2gp file: " // trim(File1) // ' for cp-ing')
+    status = InitializeMLSFile ( MLSFile1, type=l_swath, access=DFACC_READ, &
+     & name=trim(file1), HDFVersion=the_hdfVersion1 )
+    call open_MLSFile( MLSFile1 )
+    File1Handle = MLSFile1%FileID%f_id
+    ! File1Handle = mls_io_gen_openF(l_swath, .TRUE., status, &
+    !   & record_length, DFACC_READ, FileName=File1, &
+    !   & hdfVersion=the_hdfVersion1, debugOption=.false. )
+    !if ( status /= 0 ) &
+    !  call MLSMessage ( MLSMSG_Error, ModuleName, &
+    !   & "Unable to open L2gp file: " // trim(File1) // ' for cp-ing')
 
     file_exists = ( mls_exists(trim(File2)) == 0 )
     if ( file_exists ) then
@@ -1100,12 +1111,16 @@ contains ! =====     Public Procedures     =============================
       & myandGlAttributes = myandGlAttributes .and. andGlAttributes
     myandGlAttributes = myandGlAttributes .and. &
       & (the_hdfVersion1 == HDFVERSION_5) .and. (the_hdfVersion2 == HDFVERSION_5)
-    File2Handle = mls_io_gen_openF(l_swath, .TRUE., status, &
-       & record_length, file_access, FileName=File2, &
-       & hdfVersion=the_hdfVersion2, debugOption=.false. )
-    if ( status /= 0 ) &
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-       & "Unable to open L2gp file: " // trim(File2) // ' for cping')
+    status = InitializeMLSFile ( MLSFile2, type=l_swath, access=file_access, &
+     & name=trim(file2), HDFVersion=the_hdfVersion2 )
+    call open_MLSFile( MLSFile2 )
+    File2Handle = MLSFile2%FileID%f_id
+    ! File2Handle = mls_io_gen_openF(l_swath, .TRUE., status, &
+    !   & record_length, file_access, FileName=File2, &
+    !   & hdfVersion=the_hdfVersion2, debugOption=.false. )
+    !if ( status /= 0 ) &
+    !  call MLSMessage ( MLSMSG_Error, ModuleName, &
+    !   & "Unable to open L2gp file: " // trim(File2) // ' for cping')
     if ( DEEBUG ) then
       print *, 'About to cp from file1 to file2: ', File1Handle, File2Handle
       print *, trim(mySwathList)
@@ -1135,22 +1150,22 @@ contains ! =====     Public Procedures     =============================
       & ReadData=ReadData, HGrid=HGrid, &
       & rFreqs=rFreqs, rLevels=rlevels, rTimes=rTimes, options=options )
     if ( DEEBUG ) print *, 'About to close File1Handle: ', File1Handle
-    status = mls_io_gen_closeF(l_swath, File1Handle, FileName=File1, &
-      & hdfVersion=the_hdfVersion1, debugOption=.false.)
-    if ( status /= 0 ) &
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-       & "Unable to close L2gp file: " // trim(File1) // ' after cping')
+    call close_MLSFile( MLSFile1 )
+    ! status = mls_io_gen_closeF(l_swath, File1Handle, FileName=File1, &
+    !  & hdfVersion=the_hdfVersion1, debugOption=.false.)
+    !if ( status /= 0 ) &
+    !  call MLSMessage ( MLSMSG_Error, ModuleName, &
+    !   & "Unable to close L2gp file: " // trim(File1) // ' after cping')
     if ( DEEBUG ) print *, 'About to close File2Handle: ', File2Handle
-    ! status = mls_io_gen_closeF('swclose', File2Handle, FileName=File2, &
-    !  & hdfVersion=the_hdfVersion, debugOption=.true.)
-    status = mls_io_gen_closeF(l_swath, File2Handle, &
-      & hdfVersion=the_hdfVersion2, debugOption=.false.)
-    if ( status /= 0 ) then
-      print *, 'status returned from mls_io_gen_closeF: ', status
-      print *, 'WRONGHDFVERSION: ', WRONGHDFVERSION
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-       & "Unable to close L2gp file: " // trim(File2) // ' after cping')
-    endif
+    call close_MLSFile( MLSFile2 )
+    !status = mls_io_gen_closeF(l_swath, File2Handle, &
+     ! & hdfVersion=the_hdfVersion2, debugOption=.false.)
+    !if ( status /= 0 ) then
+    !  print *, 'status returned from mls_io_gen_closeF: ', status
+    !  print *, 'WRONGHDFVERSION: ', WRONGHDFVERSION
+    !  call MLSMessage ( MLSMSG_Error, ModuleName, &
+    !   & "Unable to close L2gp file: " // trim(File2) // ' after cping')
+    !endif
   end subroutine cpL2GPData_fileName
 
   ! ---------------------- cpL2GPData_MLSFile  ---------------------------
@@ -2037,10 +2052,11 @@ contains
     type (L2GPData_T) :: l2gp1
     type (L2GPData_T) :: l2gp2
     integer :: listsize
+    type(MLSFile_T)                :: MLSFile1, MLSFile2
     logical :: myForce
+    integer :: myNumDiffs
     logical :: myShowMissing
     logical :: mySilent
-    integer :: myNumDiffs
     integer :: noSwaths
     integer :: noSwaths2
     integer :: noUnique
@@ -2130,18 +2146,26 @@ contains
       endif
       return
     endif
-    File1Handle = mls_io_gen_openF(l_swath, .TRUE., status, &
-       & record_length, DFACC_READ, FileName=File1, &
-       & hdfVersion=the_hdfVersion1, debugOption=.false. )
-    if ( status /= 0 ) &
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-       & "Unable to open L2gp file: " // trim(File1) // ' for diff')
-    File2Handle = mls_io_gen_openF(l_swath, .TRUE., status, &
-       & record_length, DFACC_READ, FileName=File2, &
-       & hdfVersion=the_hdfVersion2, debugOption=.false. )
-    if ( status /= 0 ) &
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-       & "Unable to open L2gp file: " // trim(File2) // ' for diff')
+    status = InitializeMLSFile ( MLSFile1, type=l_swath, access=DFACC_READ, &
+     & name=trim(file1), HDFVersion=the_hdfVersion1 )
+    call open_MLSFile( MLSFile1 )
+    File1Handle = MLSFile1%FileID%f_id
+    ! File1Handle = mls_io_gen_openF(l_swath, .TRUE., status, &
+    !   & record_length, DFACC_READ, FileName=File1, &
+    !   & hdfVersion=the_hdfVersion1, debugOption=.false. )
+    !if ( status /= 0 ) &
+    !  call MLSMessage ( MLSMSG_Error, ModuleName, &
+    !   & "Unable to open L2gp file: " // trim(File1) // ' for diff')
+    status = InitializeMLSFile ( MLSFile2, type=l_swath, access=DFACC_READ, &
+     & name=trim(file2), HDFVersion=the_hdfVersion2 )
+    call open_MLSFile( MLSFile2 )
+    File2Handle = MLSFile2%FileID%f_id
+    ! File2Handle = mls_io_gen_openF(l_swath, .TRUE., status, &
+    !   & record_length, DFACC_READ, FileName=File2, &
+    !   & hdfVersion=the_hdfVersion2, debugOption=.false. )
+    !if ( status /= 0 ) &
+    !  call MLSMessage ( MLSMSG_Error, ModuleName, &
+    !   & "Unable to open L2gp file: " // trim(File2) // ' for diff')
 
     ! Loop over swaths in file 1
 
@@ -2213,16 +2237,18 @@ contains
       call DestroyL2GPContents ( l2gp1 )
       call DestroyL2GPContents ( l2gp2 )
     enddo
-    status = mls_io_gen_closeF(l_swath, File1Handle, FileName=File1, &
-      & hdfVersion=the_hdfVersion1, debugOption=.false.)
-    if ( status /= 0 ) &
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-       & "Unable to close L2gp file: " // trim(File1) // ' after diff')
-    status = mls_io_gen_closeF(l_swath, File2Handle, FileName=File2, &
-      & hdfVersion=the_hdfVersion1, debugOption=.false.)
-    if ( status /= 0 ) &
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-       & "Unable to close L2gp file: " // trim(File2) // ' after diff')
+    call close_MLSFile( MLSFile1 )
+    call close_MLSFile( MLSFile2 )
+    ! status = mls_io_gen_closeF(l_swath, File1Handle, FileName=File1, &
+    !  & hdfVersion=the_hdfVersion1, debugOption=.false.)
+    !if ( status /= 0 ) &
+    !  call MLSMessage ( MLSMSG_Error, ModuleName, &
+    !   & "Unable to close L2gp file: " // trim(File1) // ' after diff')
+    !status = mls_io_gen_closeF(l_swath, File2Handle, FileName=File2, &
+    !  & hdfVersion=the_hdfVersion1, debugOption=.false.)
+    !if ( status /= 0 ) &
+    !  call MLSMessage ( MLSMSG_Error, ModuleName, &
+    !   & "Unable to close L2gp file: " // trim(File2) // ' after diff')
     if ( present(numDiffs) ) numDiffs = myNumDiffs
   end subroutine DiffL2GPFiles_Name
     
@@ -3364,6 +3390,7 @@ contains
 
     ! Local
     integer :: L2FileHandle
+    type(MLSFile_T)                :: MLSFile
     integer :: record_length
     integer :: status
     integer :: the_hdfVersion
@@ -3375,20 +3402,25 @@ contains
         & 'File not found; make sure the name and path are correct' &
         & // trim(fileName) )
 
-    L2FileHandle = mls_io_gen_openF(l_swath, .TRUE., status, &
-       & record_length, DFACC_READ, FileName=FileName, &
-       & hdfVersion=hdfVersion, debugOption=.false. )
-    if ( status /= 0 ) &
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-       & "Unable to open L2gp file: " // trim(FileName) // ' for reading')
+    status = InitializeMLSFile ( MLSFile, type=l_swath, access=DFACC_READ, &
+     & name=trim(fileName), HDFVersion=the_hdfVersion )
+    call open_MLSFile( MLSFile )
+    L2FileHandle = MLSFile%FileID%f_id
+    ! L2FileHandle = mls_io_gen_openF(l_swath, .TRUE., status, &
+    !   & record_length, DFACC_READ, FileName=FileName, &
+    !   & hdfVersion=hdfVersion, debugOption=.false. )
+    !if ( status /= 0 ) &
+    !  call MLSMessage ( MLSMSG_Error, ModuleName, &
+    !   & "Unable to open L2gp file: " // trim(FileName) // ' for reading')
     call ReadL2GPData_fileID(L2FileHandle, swathname, l2gp, numProfs=numProfs, &
        & firstProf=firstProf, lastProf=lastProf, hdfVersion=the_hdfVersion, &
        & hmot=hmot, ReadData=ReadData)
-    status = mls_io_gen_closeF(l_swath, L2FileHandle, FileName=FileName, &
-      & hdfVersion=hdfVersion)
-    if ( status /= 0 ) &
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-       & "Unable to close L2gp file: " // trim(FileName) // ' after reading')
+    call close_MLSFile( MLSFile )
+    ! status = mls_io_gen_closeF(l_swath, L2FileHandle, FileName=FileName, &
+    !  & hdfVersion=hdfVersion)
+    !if ( status /= 0 ) &
+    !  call MLSMessage ( MLSMSG_Error, ModuleName, &
+    !   & "Unable to close L2gp file: " // trim(FileName) // ' after reading')
   end subroutine ReadL2GPData_fileName
 
   ! ---------------------- ReadL2GPData_MLSFile  -----------------------------
@@ -4948,6 +4980,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.161  2008/09/10 00:44:58  pwagner
+! diffing files can now subset according to geolocation boxes
+!
 ! Revision 2.160  2008/09/09 00:24:49  pwagner
 ! Fix bug in dumpRange
 !
