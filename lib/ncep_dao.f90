@@ -21,10 +21,10 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   use intrinsic, only: l_ascii
   use l3ascii, only: l3ascii_read_field
   use LEXER_CORE, only: PRINT_SOURCE
-  use MLSCommon, only: LineLen, NameLen, FileNameLen, R8, R4, I4, &
+  use MLSCommon, only: LineLen, NameLen, FileNameLen, R8, R4, &
     & undefinedValue, MLSFile_T
   use MLSFiles, only: FILENOTFOUND, &
-    & GetPCFromRef, MLS_HDF_VERSION, mls_io_gen_closeF, mls_io_gen_openF, &
+    & GetPCFromRef, MLS_HDF_VERSION, open_MLSFile, close_MLSFile, &
     & split_path_name
   use MLSStrings, only: Capitalize, HHMMSS_value, LowerCase
   use MLSStringLists, only: GetStringElement, NumStringElements, &
@@ -1524,7 +1524,7 @@ contains
     logical :: OPENED                   ! Flag
     real (r4) :: ONEVALUE               ! One element of the grid
     character (len=1), dimension(4) :: TESTCHAR ! For finding our Endian
-    integer(i4) :: TESTINT              ! For finding our Endian
+    integer :: TESTINT              ! For finding our Endian
     character (len=1), dimension(bufferLen) :: BUFFER
     logical :: NEEDSWAP                 ! Flag for endian
         
@@ -1671,6 +1671,7 @@ contains
     logical :: use_PCF
 
     ! begin
+    ErrType= 0
     returnStatus = FILENOTFOUND
     end_of_file=.false.
     if(present(echo_data)) then
@@ -1709,8 +1710,11 @@ contains
       fname = climFile%name
       ! use Fortran open
       if(debug) call output('opening ' // fname, advance = 'yes')
-      CliUnit = mls_io_gen_openF ( l_ascii, .true., ErrType, &
-        & record_length, PGSd_IO_Gen_RSeqFrm, FileName=fname)
+      ! CliUnit = mls_io_gen_openF ( l_ascii, .true., ErrType, &
+      !   & record_length, PGSd_IO_Gen_RSeqFrm, FileName=fname)
+      call open_MLSFile( ClimFile )
+      CliUnit = ClimFile%FileID%f_id
+      
     endif
 
     if(debug) then
@@ -1776,7 +1780,9 @@ contains
         ! use Fortran close
       else
         if(debug) call output('closing ' // fname, advance = 'yes')
-        ErrType = mls_io_gen_CloseF (l_ascii, CliUnit )
+        ! ErrType = mls_io_gen_CloseF (l_ascii, CliUnit )
+        call close_MLSFile( ClimFile )
+        ErrType = 0
       endif
       if(ErrType /= 0) then
         call announce_error (ROOT, &
@@ -1902,6 +1908,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.49  2008/12/02 23:11:13  pwagner
+! mls_io_gen_[openF,closeF] functions now private; use MLSFile_T interfaces instead
+!
 ! Revision 2.48  2008/09/17 23:21:19  pwagner
 ! Allow date string in gridded data to offset gmao background files
 !
