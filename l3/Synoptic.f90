@@ -3825,7 +3825,7 @@ end if
        Real(r8) modGeod, geodAngle
 
        IF(geodAngle > -360.0) THEN
-          modGeod = mod(geodAngle, 360.0)
+          modGeod = mod(geodAngle, 360.0_r8)
           IF(modGeod < 0.0) THEN
             modGeod = modGeod + 360.0
           ENd IF
@@ -3945,6 +3945,9 @@ end if
 !===================
 
 ! $Log$
+! Revision 1.40  2006/05/24 19:14:30  cvuu
+! Fix the deallocate problem
+!
 ! Revision 1.39  2006/02/28 17:56:56  cvuu
 ! V2.00 commit
 !
