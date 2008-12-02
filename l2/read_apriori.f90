@@ -25,10 +25,8 @@ module ReadAPriori
   use MLSCommon, only: FileNameLen, MLSFile_T
   use MLSFiles, only: FILENOTFOUND, &
     & HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, &
-    & AddFileToDataBase, Dump, GetPCFromRef, InitializeMLSFile, &
-    & MLS_HDF_VERSION, &
-    & MLS_INQSWATH, mls_io_gen_closeF, mls_io_gen_openF, &
-    & SPLIT_PATH_NAME
+    & AddFileToDataBase, close_MLSFile, Dump, GetPCFromRef, InitializeMLSFile, &
+    & MLS_HDF_VERSION, MLS_INQSWATH, open_MLSFile, SPLIT_PATH_NAME
   use MLSL2Options, only: DEFAULT_HDFVERSION_READ, SPECIALDUMPFILE, TOOLKIT
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
   use MLSMessageModule, only: MLSMessage, MLSMessageCalls, &
@@ -73,8 +71,7 @@ module ReadAPriori
   type (APrioriFiles_T), save :: APrioriFiles
   interface writeAPrioriAttributes
     module procedure writeAPrioriAttributes_id
-    module procedure writeAPrioriAttributes_MF
-    module procedure writeAPrioriAttributes_name
+    module procedure writeAPrioriAttributes_mf
   end interface
   
   ! -----     Private declarations     ---------------------------------
@@ -782,26 +779,12 @@ contains ! =====     Public Procedures     =============================
     elseif ( MLSFile%StillOpen ) then
       call writeAPrioriAttributes_ID(MLSFile%fileID%f_id, HDFVERSION_5)
     else
-      call writeAPrioriAttributes_name(MLSFile%name, HDFVERSION_5)
+      call open_MLSFile( MLSFile )
+      ! call writeAPrioriAttributes_name(MLSFile%name, HDFVERSION_5)
+      call writeAPrioriAttributes_ID(MLSFile%fileID%f_id, HDFVERSION_5)
+      call close_MLSFile( MLSFile )
     endif
   end subroutine writeAPrioriAttributes_MF
-
-  ! ------------------------------------------  writeAPrioriAttributes_name  -----
-  subroutine writeAPrioriAttributes_name ( fileName, hdfVersion )
-    character(len=*), intent(in) :: fileName
-    integer, intent(in)          :: hdfVersion  ! Must be 5 to work properly
-    ! Internal variables
-    integer             :: fileID
-    integer             :: record_length
-    integer             :: status
-    ! Executable
-    fileID = mls_io_gen_openF(l_swath, .TRUE., status, &
-      & record_length, DFACC_RDWR, FileName=Filename, &
-      & hdfVersion=hdfVersion, debugOption=.false. )  
-    call writeAPrioriAttributes_ID ( fileID, hdfVersion )
-    status = mls_io_gen_closeF(l_swath, fileID, &
-      & hdfVersion=hdfVersion)
-  end subroutine writeAPrioriAttributes_name
 
   ! ------------------------------------------  writeAPrioriAttributes_ID  -----
   subroutine writeAPrioriAttributes_ID ( fileID, hdfVersion )
@@ -964,6 +947,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.76  2008/12/02 23:12:47  pwagner
+! mls_io_gen_[openF,closeF] functions now private; use MLSFile_T interfaces instead
+!
 ! Revision 2.75  2008/09/17 23:20:13  pwagner
 ! Allow date string in gridded data to offset gmao background files
 !
