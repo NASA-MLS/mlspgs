@@ -853,7 +853,9 @@ contains ! =====     Public Procedures     =============================
     if ( .not. isMonotonic(mif1GeodAngle) ) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & 'mif1GeodAngle is not monotonic--will try anyway' )
+      call dump( mif1GeodAngle, 'mif1GeodAngle (before)' )
       call monotonize(mif1GeodAngle)
+      call dump( mif1GeodAngle, 'mif1GeodAngle (after)' )
     endif
 
     ! Get or guess the start of the next chunk.
@@ -2331,6 +2333,7 @@ contains ! =====     Public Procedures     =============================
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module HGrid
@@ -2338,6 +2341,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.93  2008/12/02 23:29:41  pwagner
+! Added print to not_used_here
+!
 ! Revision 2.92  2007/10/02 22:40:51  vsnyder
 ! Increase trace level for CreateHGridFromMLSCFInfo
 !
