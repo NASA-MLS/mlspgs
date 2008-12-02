@@ -19,7 +19,7 @@ MODULE OpenInit
   USE MLSCommon, ONLY: r8
   USE MLSL3Common, ONLY: maxWindow, CCSDS_LEN, FILENAMELEN
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Fileopen, &
-       & MLSMSG_ALLOCATE
+       & MLSMSG_ALLOCATE, MLSMSG_Warning
   USE MLSPCF3, ONLY: mlspcf_l3_param_OutputVersion, mlspcf_l3_param_Cycle, &
        & mlspcf_l3_param_L2DayRange, mlspcf_l3_param_RangDays, & 
        & mlspcf_pcf_start,mlspcf_l3cf_start
@@ -349,7 +349,8 @@ CONTAINS
     CALL FillL3CF(cf, l3pcf%outputVersion, dates, numDays, l3cf, cfDef)
 
     ! Get L2GP Attributes
-
+    CALL MLSMessage( MLSMSG_Warning, ModuleName, &
+      & 'ReadL2GPAttribute does not properly set the intent(out) arg numDays' )
     CALL ReadL2GPAttribute (l3pcf%l3StartDay, l3pcf%l3EndDay, &
 	& l3cf(1)%fileTemplate, numDays)
 
@@ -537,6 +538,9 @@ END MODULE OpenInit
 !==================
 
 ! $Log$
+! Revision 1.24  2007/05/21 19:55:59  cvuu
+! Fix the avgPeriod problem when OrbitPeriod is zero
+!
 ! Revision 1.23  2006/09/21 16:07:02  cvuu
 ! Fix the problem of crossing a year boundary
 !
