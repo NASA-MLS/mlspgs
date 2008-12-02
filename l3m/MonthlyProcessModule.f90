@@ -123,7 +123,7 @@ CONTAINS
     DO j = 1, l2Days
        y = y + 1
        do x = 1, mis_l2Days
-	  read((pcf%dates(y)(6:8)), '(i3)') pcfdate_int
+	  read(pcf%dates(y)(6:8), '(i3)') pcfdate_int
 	  if (pcfdate_int == mis_Days(x)) then
 	     y = y + 1
 	  endif
