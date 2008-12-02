@@ -177,6 +177,7 @@ contains ! =====     Public Procedures     =============================
         case ( s_dump ) ! ============================== Dump ==========
           ! Handle disassociated pointers by allocating them with zero size
           status = 0
+          if ( CHECKPATHS ) cycle
           if ( .not. associated(vectors) ) allocate ( vectors(0), stat=status )
           call test_allocate ( status, moduleName, 'Vectors', (/0/), (/0/) )
           call dumpCommand ( key, vectors=vectors, HGrids=HGrids, &
@@ -1322,9 +1323,12 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------------ LabelVectorQuantity -----
   subroutine LabelVectorQuantity ( node, vectors )
-    use VectorsModule, only: VECTOR_T, VECTORVALUE_T, GETVECTORQTYBYTEMPLATEINDEX
+    use VectorsModule, only: VECTOR_T, VECTORVALUE_T, &
+      & GETVECTORQUANTITY, GETVECTORQTYBYTEMPLATEINDEX
     use MoreTree, only: GET_FIELD_ID, GET_BOOLEAN
-    use Init_tables_module, only: F_QUANTITY, F_PREFIXSIGNAL, F_LABEL
+    use Init_tables_module, only: F_LABEL, F_PREFIXSIGNAL, &
+      & F_QUANTITY, F_SUFFIXLABEL, F_VECTOR
+    use Output_m, only: outputNamedValue
     use Symbol_Table, only: ENTER_TERMINAL
     use Symbol_Types, only: T_STRING
     use String_Table, only: GET_STRING
@@ -1342,9 +1346,13 @@ contains ! =====     Public Procedures     =============================
     integer :: SOURCE                   ! Tree node
     integer :: VECTORINDEX              ! Index into database
     logical :: PREFIXSIGNAL             ! From l2cf
+    logical :: SUFFIXLABEL              ! From l2cf
+    integer :: VLABEL                   ! String index
+    character(len=8) :: whatToLabel     ! 'quantity' or 'vector'
     ! Executable code
     type (VectorValue_T), pointer :: QTY ! The quantity
     character(len=1024) :: LABELSTR     ! The label itself
+    ! character(len=128)  :: QTYSTR       ! The template name
 
     prefixSignal = .false.
     ! Loop over the fields of the mlscf line
@@ -1356,33 +1364,61 @@ contains ! =====     Public Procedures     =============================
         source = subtree(2,son) ! required to be an n_dot vertex
         vectorIndex = decoration(decoration(subtree(1,source)))
         quantityIndex = decoration(decoration(decoration(subtree(2,source))))
+        whatToLabel = 'quantity'
+      case ( f_vector )
+        vectorIndex = decoration(decoration(subtree(2,son)))
+        whatToLabel = 'vector'
       case ( f_prefixSignal )
         prefixSignal = get_boolean ( son )
+      case ( f_suffixLabel )
+        suffixLabel = get_boolean ( son )
       case ( f_label )
         label = sub_rosa(subtree(2,son))
       case default ! Can't get here if tree_checker worked properly
       end select
     end do
 
-    ! Get the quantity
-    qty => GetVectorQtyByTemplateIndex ( vectors(vectorIndex), quantityIndex )
+    select case ( whatToLabel )
+    case ( 'quantity' )
+      ! Get the quantity
+      qty => GetVectorQtyByTemplateIndex ( vectors(vectorIndex), quantityIndex )
 
-    ! Adapt the label if the prefix signal flag is set.
-    if ( prefixSignal ) then
-      if ( qty%template%signal == 0 ) then
-        call Announce_Error ( node, no_error_code, &
-          & 'The quantity has no signal so prefixSignal is not appropriate' )
-        return
+      ! Adapt the label if the prefix signal flag is set.
+      if ( prefixSignal ) then
+        if ( qty%template%signal == 0 ) then
+          call Announce_Error ( node, no_error_code, &
+            & 'The quantity has no signal so prefixSignal is not appropriate' )
+          return
+        end if
+        call GetSignalName ( qty%template%signal, labelStr, &
+          & sideband=qty%template%sideband )
+        call Get_String( label, labelStr(len_trim(labelStr)+1:), strip=.true. )
+        ! Now get an index for this possibly new name which may include the signal
+        label = enter_terminal ( trim(labelStr), t_string, caseSensitive=.true. )
       end if
-      call GetSignalName ( qty%template%signal, labelStr, &
-        & sideband=qty%template%sideband )
-      call Get_String( label, labelStr(len_trim(labelStr)+1:), strip=.true. )
-      ! Now get an index for this possibly new name which may include the signal
-      label = enter_terminal ( trim(labelStr), t_string, caseSensitive=.true. )
-    end if
 
-    ! Attach the label
-    qty%label = label
+      ! Attach the label
+      qty%label = label
+    case ( 'vector' )
+      do quantityIndex=1, size( vectors(vectorIndex)%quantities )
+        qty => GetVectorQuantity( vectors(vectorIndex), quantityIndex )
+        labelStr = ' '
+        if ( qty%template%name /= 0 ) then
+          call get_string( qty%template%name, labelStr, strip=.true. )
+        endif
+        if ( len_trim(labelStr) == 0 ) then
+          write( labelStr, '(a9,i3.3,a1)' ) 'quantity[', quantityIndex, ']'
+        endif
+        ! call outputNamedValue( 'label string start', labelStr, advance='yes' )
+        call Get_String( label, labelStr(len_trim(labelStr)+1:), strip=.true. )
+        ! Attach the label
+        vlabel = enter_terminal ( trim(labelStr), t_string, caseSensitive=.true. )
+        qty%label = vlabel
+      enddo
+    case default
+      call Announce_Error ( node, NO_ERROR_CODE, &
+        & 'Must specify quantity or vector in Label' )
+    end select
   end subroutine LabelVectorQuantity
 
   ! --------------------------------------------------  JoinQuantities  -----
@@ -2057,12 +2093,16 @@ contains ! =====     Public Procedures     =============================
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module Join
 
 !
 ! $Log$
+! Revision 2.134  2008/12/02 23:27:09  pwagner
+! May automatically label every quantity in a vector now
+!
 ! Revision 2.133  2007/12/07 01:50:52  pwagner
 ! Removed unused dummy variables, etc.
 !
