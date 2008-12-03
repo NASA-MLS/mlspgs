@@ -22,8 +22,9 @@ PROGRAM L2GPDump ! dumps L2GPData files
    use L2GPData, only: L2GPData_T, L2GPNameLen, MAXSWATHNAMESBUFSIZE, RGP, &
      & Dump, DumpRange, ReadL2GPData, DestroyL2GPContents
    use MACHINE, only: HP, GETARG
-   use MLSFiles, only: HDFVERSION_5, MLS_INQSWATH, &
-     & mls_io_gen_closeF, mls_io_gen_openF, split_path_name
+   use MLSCommon, only: MLSFile_T
+   use MLSFiles, only: HDFVERSION_5, InitializeMLSFile, MLS_INQSWATH, &
+     & close_MLSFile, open_MLSFile, split_path_name
    use MLSHDF5, only: mls_h5open, mls_h5close
    use MLSMessageModule, only: MLSMessageConfig, MLSMSG_Error, MLSMSG_Warning, &
      & MLSMessage
@@ -368,16 +369,17 @@ contains
     character(len=*), intent(in) :: filename          ! filename
     type ( options_T ) :: options
     ! Local variables
-    character (len=MAXSWATHNAMESBUFSIZE) :: SwathList
-    integer :: File1
-    integer :: listsize
     logical, parameter            :: countEmpty = .true.
-    type (L2GPData_T) :: l2gp
+    integer :: File1
     integer :: i
+    integer :: listsize
+    type (L2GPData_T) :: l2gp
+    type(MLSFile_T)                :: MLSFile
     integer :: noSwaths
-    character (len=L2GPNameLen) :: swath
     integer :: record_length
     integer :: status
+    character (len=L2GPNameLen) :: swath
+    character (len=MAXSWATHNAMESBUFSIZE) :: SwathList
     ! Get swath list
     noSwaths = mls_InqSwath ( filename, SwathList, listSize, &
            & hdfVersion=HDFVERSION_5)
@@ -392,6 +394,8 @@ contains
        call MLSMessage ( MLSMSG_Warning, ModuleName, &
             & 'No swaths to dump--unable to count swaths in ' // trim(swathList) )
     endif
+    status = InitializeMLSFile ( MLSFile, type=l_swath, access=DFACC_READ, &
+     & name=filename, HDFVersion=HDFVERSION_5 )
     ! Loop over swaths in file 1
     do i = 1, noSwaths
       call GetStringElement (trim(swathList), swath, i, countEmpty )
@@ -406,12 +410,15 @@ contains
            & hdfVersion=HDFVERSION_5 )
       ! Dump the swath- and file-level attributes
       if ( options%attributesToo ) then
-        File1 = mls_io_gen_openF(l_swath, .TRUE., status, &
-         & record_length, DFACC_READ, FileName=trim(filename), &
-         & hdfVersion=HDFVERSION_5, debugOption=.false. )
+        call open_MLSFile( MLSFile )
+        file1 = MLSFile%FileID%f_id
+        ! File1 = mls_io_gen_openF(l_swath, .TRUE., status, &
+        ! & record_length, DFACC_READ, FileName=trim(filename), &
+        ! & hdfVersion=HDFVERSION_5, debugOption=.false. )
         call dump(file1, l2gp)
-        status = mls_io_gen_closeF(l_swath, File1, FileName=Filename, &
-        & hdfVersion=HDFVERSION_5, debugOption=.false.)
+        call close_MLSFile ( MLSFile )
+        ! status = mls_io_gen_closeF(l_swath, File1, FileName=Filename, &
+        &! hdfVersion=HDFVERSION_5, debugOption=.false.)
       endif
       call myDump( options, l2gp, swath )
       call DestroyL2GPContents ( l2gp )
@@ -613,6 +620,9 @@ end program L2GPDump
 !==================
 
 ! $Log$
+! Revision 1.5  2008/09/09 16:51:38  pwagner
+! Added geolocation box to dump subsetted data
+!
 ! Revision 1.4  2007/10/12 23:38:56  pwagner
 ! Shows num profiles good, unuseable, with odd status
 !
