@@ -15,7 +15,7 @@ module MLSStringLists               ! Module to treat string lists
 
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, &
     & MLSMSG_Allocate, MLSMSG_DeAllocate
-  use MLSCommon, only: i4, BareFNLen
+  use MLSCommon, only: BareFNLen
   use MLSSets, only: FindFirst
   use MLSStrings, only: Capitalize, lowerCase, ncopies, &
     & ReadIntsFromChars, reverse, SplitNest, streq, trim_safe, writeIntsToChars
@@ -85,7 +85,7 @@ module MLSStringLists               ! Module to treat string lists
 ! ExtractSubString (char* str, char* outstr, char* sub1, char* sub2, &
 !       & [char* how], [log no_trim])
 ! GetStringElement (strlist inList, char* outElement,
-!   i4 nElement, log countEmpty, [char inseparator])
+!   nElement, log countEmpty, [char inseparator])
 ! GetHashElement (hash {keys = values}, char* key, 
 !   char* outElement, log countEmpty, [char inseparator], [log part_match])
 ! GetUniqueInts (int ints(:), int outs(:), int noUnique, 
@@ -118,7 +118,7 @@ module MLSStringLists               ! Module to treat string lists
 !   & log countEmpty, [char inseparator], [log IgnoreLeadingSpaces], 
 !     [strlist sortedList], [char leftRight])
 ! char* StringElement (strlist inList, &
-!   i4 nElement, log countEmpty, [char inseparator])
+!   nElement, log countEmpty, [char inseparator])
 ! int StringElementNum(strlist inList, char* test_string, log countEmpty, &
 !   & [char inseparator], [log part_match])
 ! int SwitchDetail(strlist inList, char* test_switch, [char* options])
@@ -258,7 +258,7 @@ contains
     CHARACTER (LEN=1), OPTIONAL, INTENT(IN)       :: leftRight
 
     ! Local variables
-    INTEGER(i4) :: listElem, arrayElem, nElems
+    integer :: listElem, arrayElem, nElems
 
     CHARACTER (LEN=1)               :: separator
     CHARACTER (LEN=1)               :: myLeftRight
@@ -944,13 +944,13 @@ contains
     ! Dummy arguments
     CHARACTER (LEN=*), INTENT(IN)   :: inList
     CHARACTER (LEN=*), INTENT(OUT)  :: outElement
-    INTEGER(i4), INTENT(IN)         :: nElement ! Entry number to return
+    integer, INTENT(IN)         :: nElement ! Entry number to return
     LOGICAL, INTENT(IN)   :: countEmpty
     character (len=*), optional, intent(in)       :: inseparator
 
     ! Local variables
-    INTEGER(i4) :: i           ! Loop counters
-    INTEGER(i4) :: elem, nextseparator
+    integer :: i           ! Loop counters
+    integer :: elem, nextseparator
 
     CHARACTER (LEN=1)               :: separator
     ! Executable code
@@ -1035,7 +1035,7 @@ contains
     logical, optional, intent(in)             :: part_match
 
     ! Local variables
-    integer(i4) :: elem
+    integer :: elem
     character (len=1)                          :: separator
 
     ! Executable code
@@ -1074,7 +1074,7 @@ contains
     logical, optional, intent(in)             :: part_match
 
     ! Local variables
-    integer(i4) :: elem
+    integer :: elem
     character (len=1)                          :: separator
 
     ! Executable code
@@ -1133,7 +1133,7 @@ contains
     LOGICAL, OPTIONAL, INTENT(IN)             :: part_match
 
     ! Local variables
-    INTEGER(i4) :: elem
+    integer :: elem
     CHARACTER (LEN=1)                          :: separator
 
     ! Executable code
@@ -1547,7 +1547,7 @@ contains
     LOGICAL, OPTIONAL, INTENT(IN)                 :: IgnoreLeadingSpaces
 
     ! Local variables
-    INTEGER(i4) :: elem, nElems
+    integer :: elem, nElems
 
     CHARACTER (LEN=1)               :: separator
     logical                         :: myIgnoreLeadingSpaces
@@ -2157,7 +2157,7 @@ contains
     character (len=*), optional, intent(in)       :: inseparator
 
     !----------Local vars----------!
-    INTEGER(i4) :: i, istr, irev, elem, iBuf
+    integer :: i, istr, irev, elem, iBuf
     INTEGER, PARAMETER :: MAXWORDLENGTH=80
     CHARACTER (LEN=1)               :: separator
     CHARACTER (LEN=1), DIMENSION(:), ALLOCATABLE :: charBuf
@@ -2270,12 +2270,9 @@ contains
     CHARACTER (LEN=1), OPTIONAL, INTENT(IN)       :: leftRight
 
     ! Local variables
-    INTEGER(i4) :: elem, nElems
+    integer :: elem, nElems
     integer, parameter                     :: MAXCHARVALUE = 256
     integer, parameter                     :: MAXELEM = MAXSTRELEMENTLENGTH
-!    integer, dimension(MAXELEM)           :: chValue, cvInvBN
-!    integer, dimension(MAXELEM)           :: binNumber, invBinNumber
-!    integer, dimension(MAXELEM)           :: jsort, inTheBin
     integer, dimension(:), allocatable     :: chValue, cvInvBN
     integer, dimension(:), allocatable     :: binNumber, invBinNumber 
     integer, dimension(:), allocatable     :: jsort, inTheBin
@@ -2532,7 +2529,7 @@ contains
 
     ! Local variables
     integer, parameter              :: MAXELEM = MAXSTRELEMENTLENGTH
-    INTEGER(i4) :: nElems, status, LongestLen
+    integer :: nElems, status, LongestLen
 
     CHARACTER (LEN=1)               :: separator
     CHARACTER (LEN=MAXSTRELEMENTLENGTH), DIMENSION(:), ALLOCATABLE    &
@@ -2605,7 +2602,7 @@ contains
     & result(outElement)
     ! Dummy arguments
     CHARACTER (LEN=*), INTENT(IN)   :: inList
-    INTEGER(i4), INTENT(IN)         :: nElement  ! Entry number to return
+    integer, INTENT(IN)         :: nElement  ! Entry number to return
     LOGICAL, INTENT(IN)   :: countEmpty
     character (len=*), optional, intent(in)       :: inseparator
     CHARACTER (LEN=len(inList))  :: outElement
@@ -3259,12 +3256,16 @@ contains
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.36  2008/12/11 19:39:20  pwagner
+! Added print statement to not_used_here
+!
 ! Revision 2.35  2008/05/21 20:00:19  pwagner
 ! Must not increment optional arg unless present
 !
