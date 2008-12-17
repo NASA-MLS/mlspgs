@@ -101,7 +101,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   use MLSSignals_m, only: MODULES, SIGNALS, GETSIGNALNAME
   use Molecules, only: L_EXTINCTION
   use OUTPUT_M, only: NEWLINE, OUTPUT, outputNamedValue
-  use QuantityTemplates, only: QuantityTemplate_T, CheckIntegrity, &
+  use QuantityTemplates, only: QuantityTemplate_T, CheckIntegrity, Dump, &
     & NullifyQuantityTemplate
   use STRING_TABLE, only: DISPLAY_STRING, GET_STRING, STRING_LENGTH
   use SYMBOL_TABLE, only: ENTER_TERMINAL
@@ -1610,6 +1610,7 @@ contains ! =====     Public Procedures     =============================
     !                                        ! <-1 => No newline after name
     !                                        ! =0  => No values
     !                                        ! >0  => Dump quantity values
+    !                                        ! >1  => Dump template with details-1
     !                                        ! Default 1
     character(len=*), intent(in), optional :: NAME
     logical, intent(in), optional :: CLEAN   ! Passed through to dump_0%dump
@@ -1651,7 +1652,7 @@ contains ! =====     Public Procedures     =============================
       call display_string ( qty%label )
     else
       call output ( ' Vector quantity unlabeled ', advance='yes' )
-    endif
+    end if
     if ( myDetails < -1 ) return
     call newLine
     if ( myDetails < 0 ) return
@@ -1692,13 +1693,12 @@ contains ! =====     Public Procedures     =============================
       end if
     else
       call output ( ', with' )
-      if ( .not. associated(qty%values) ) &
-        & call output ( 'out' )
+      if ( .not. associated(qty%values) ) call output ( 'out' )
       call output ( ' values, with' )
-      if ( .not. associated(qty%mask ) ) &
-        & call output ( 'out' )
+      if ( .not. associated(qty%mask ) ) call output ( 'out' )
       call output ( ' mask', advance='yes' )
     end if
+    if ( myDetails > 1 ) call dump ( qty%template, details=myDetails-1 )
   end subroutine Dump_Vector_Quantity
 
   ! ---------------------------------------  Dump_Vector_Template  -----
@@ -2595,6 +2595,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.136  2008/11/24 19:36:57  pwagner
+! Improved comments, dumps; removed unused variables
+!
 ! Revision 2.135  2008/11/06 21:51:08  pwagner
 ! Fill method swapValues swaps values between two quantities
 !
