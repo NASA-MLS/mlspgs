@@ -31,7 +31,7 @@ contains
 
   ! ---------------------------------------------------  Retrieve  -----
   subroutine Retrieve ( Root, VectorDatabase, MatrixDatabase, ConfigDatabase, &
-    & chunk )
+    & chunk, FileDataBase )
 
   !{Process the ``Retrieve'' section of the L2 Configuration File.
   ! The ``Retrieve'' section can have ForwardModel, Matrix, Sids, Subset or
@@ -82,7 +82,7 @@ contains
       & Matrix_SPD_T, MultiplyMatrixVectorNoT, ReflectMatrix, &
       & Sparsify, MultiplyMatrix_XTY
     use MatrixTools, only: DumpBlocks
-    use MLSCommon, only: R8, RV
+    use MLSCommon, only: R8, RV, MLSFile_T
     use MLSL2Options, only: SKIPRETRIEVAL, SPECIALDUMPFILE, &
       & STATEFILLEDBYSKIPPEDRETRIEVALS
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, Add_To_Retrieval_Timing
@@ -115,6 +115,7 @@ contains
     type(forwardModelConfig_T), dimension(:), pointer :: ConfigDatabase
 
     type(MLSChunk_T), intent(in) :: CHUNK
+    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
 
     ! Default values:
     real(r8), parameter :: DefaultInitLambda = 0.0_r8
@@ -317,7 +318,7 @@ contains
       case ( s_dump )
         if ( .not. SKIPRETRIEVAL ) &
           & call dumpCommand ( key, forwardModelConfigs=configDatabase, &
-          & vectors=vectorDatabase )
+          & vectors=vectorDatabase, FileDataBase=FileDataBase )
       case ( s_dumpblocks )
         if ( .not. SKIPRETRIEVAL ) call DumpBlocks ( key, matrixDatabase )
       case ( s_flagCloud )
@@ -2768,11 +2769,15 @@ NEWT: do ! Newtonian iteration
   character (len=len(idParm)) :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function NOT_USED_HERE
 
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.302  2008/12/18 21:13:05  pwagner
+! May now dump an l2pc or allL2PCs (use with caution)
+!
 ! Revision 2.301  2007/12/07 01:14:03  pwagner
 ! Lets us catch warnings and assign to runtime Booleans
 !
