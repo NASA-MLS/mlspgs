@@ -1281,6 +1281,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_allForwardModels, t+t_boolean, n+n_field_type, &
              begin, f+f_allGriddedData, t+t_boolean, n+n_field_type, &
              begin, f+f_allHGrids, t+t_boolean, n+n_field_type, &
+             begin, f+f_allL2PCs, t+t_boolean, n+n_field_type, &
              begin, f+f_allLines, t+t_boolean, n+n_field_type, &
              begin, f+f_allPFA, t+t_boolean, n+n_field_type, &
              begin, f+f_allQuantityTemplates, t+t_boolean, n+n_field_type, &
@@ -1300,6 +1301,7 @@ contains ! =====     Public procedures     =============================
                     s+s_ConvertEtaToP, s+s_wmoTrop, n+n_field_spec, &
              begin, f+f_hGrid, s+s_hgrid, n+n_field_spec/) )
     call make_tree ( (/ & ! Continuing for s_dump...
+             begin, f+f_l2pc, t+t_string, n+n_field_type, &
              begin, f+f_lines, s+s_line, n+n_field_spec, &
              begin, f+f_mark, t+t_boolean, n+n_field_type, &
              begin, f+f_mask, s+s_vector, f+f_template, &
@@ -1575,6 +1577,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.482  2008/12/18 21:06:25  pwagner
+! May now dump an l2pc or allL2PCs (use with caution)
+!
 ! Revision 2.481  2008/12/02 23:27:41  pwagner
 ! May automatically label every quantity in a vector now
 !
