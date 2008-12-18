@@ -18,9 +18,11 @@ module L2PC_m
   ! must be HDF5.
 
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
-  use Intrinsic, only: Lit_Indices, L_CHANNEL, L_GEODALTITUDE, L_ZETA, L_NONE, L_VMR, &
-    & L_RADIANCE, L_PTAN, L_NONE, L_INTERMEDIATEFREQUENCY, L_LATITUDE, L_FIELDAZIMUTH, &
-    & L_ROWS, L_COLUMNS, L_ADOPTED, L_TEMPERATURE, PHYQ_DIMENSIONLESS, PHYQ_TEMPERATURE, PHYQ_VMR
+  use dump_0, only: dump
+  use Intrinsic, only: L_CHANNEL, L_GEODALTITUDE, L_ZETA, L_NONE, L_VMR, &
+    & L_RADIANCE, L_NONE, L_INTERMEDIATEFREQUENCY, L_LATITUDE, L_FIELDAZIMUTH, &
+    & L_ROWS, L_COLUMNS, L_ADOPTED, L_TEMPERATURE, Lit_Indices, &
+    & PHYQ_DIMENSIONLESS, PHYQ_TEMPERATURE, PHYQ_VMR
   use machine, only: io_error
   use ManipulateVectorQuantities, only: DOVECTORSMATCH
   use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
@@ -28,7 +30,8 @@ module L2PC_m
   use MatrixModule_1, only: CREATEBLOCK, CREATEEMPTYMATRIX, &
     & DESTROYMATRIX, MATRIX_T, DUMP, FINDBLOCK, MATRIX_DATABASE_T, &
     & GETACTUALMATRIXFROMDATABASE, DUMP_STRUCT, COPYMATRIXVALUE
-  use MLSCommon, only: R8, RM, R4, MLSFile_T
+  use MLSCommon, only: R8, R4, MLSFile_T
+  use MLSFiles, only: DumpMLSFile => Dump
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, &
     & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE
   use MLSSets, only: FindFirst
@@ -36,17 +39,17 @@ module L2PC_m
   use MLSStrings, only: writeIntsToChars
   use Molecules, only: L_EXTINCTION
   use MoreTree, only: GetStringIndexFromString, GetLitIndexFromString
-  use Output_m, only: output
+  use Output_m, only: newLine, output, outputNamedValue
   use Parse_Signal_m, only: Parse_Signal
   use QuantityTemplates, only: ADDQUANTITYTEMPLATETODATABASE, QUANTITYTEMPLATE_T, &
     & SETUPNEWQUANTITYTEMPLATE, INFLATEQUANTITYTEMPLATEDATABASE, &
     & DESTROYQUANTITYTEMPLATECONTENTS, COPYQUANTITYTEMPLATE, NULLIFYQUANTITYTEMPLATE, &
     & COPYQUANTITYTEMPLATE
   use String_Table, only: GET_STRING
-  use TOGGLES, only: TAB, TOGGLE, SWITCHES
+  use TOGGLES, only: SWITCHES
   use Tree, only: DECORATION, NSONS, SUBTREE
   use VectorsModule, only: assignment(=), DESTROYVECTORINFO, COPYVECTOR, &
-    & VECTORTEMPLATE_T, VECTOR_T, VECTORVALUE_T, CREATEVECTOR, ADDVECTORTODATABASE, &
+    & VECTORTEMPLATE_T, VECTOR_T, CREATEVECTOR, ADDVECTORTODATABASE, &
     & ADDVECTORTEMPLATETODATABASE, CONSTRUCTVECTORTEMPLATE, NULLIFYVECTORTEMPLATE
 
   implicit NONE
@@ -56,18 +59,22 @@ module L2PC_m
     & binSelector_T, BinSelectors, close_l2pc_file, CreateDefaultBinSelectors, &
     & DefaultSelector_FieldAzimuth, DefaultSelector_Latitude, &
     & DestroyL2PC, DestroyL2PCDatabase, DestroyBinSelectorDatabase, &
-    & FlushL2PCBins, &
+    & Dump, FlushL2PCBins, &
     & LoadMatrix, LoadVector, Open_l2pc_file, OutputHDF5L2PC, &
     & PopulateL2PCBin, PopulateL2PCBinByName, &
     & read_l2pc_file, ReadCompleteHDF5L2PCFile, &
     & WriteOneL2PC
 
+  interface DUMP
+    module procedure DUMPONEL2PC, DumpL2PCDatabase, DumpL2PCFile
+  end interface
   ! This is the third attempt to do this.  An l2pc is simply a Matrix_T.
   ! As this contains pointers to vector_T's and so on, I maintain a private
   ! set of databases of these in this module.  We can't use the main databases,
   ! as these would get destroyed at the end of each chunk.
 
   ! The l2pc database and supporting databases
+  integer, dimension(:), pointer, public, save :: FileIDDatabase => NULL()
   type(QuantityTemplate_T), dimension(:), pointer, save :: L2PCQTS => NULL()
   type(VectorTemplate_T), dimension(:), pointer, save :: L2PCVTS => NULL()
   type(Vector_T), dimension(:), pointer, save :: L2PCVS => NULL()
@@ -119,6 +126,21 @@ contains ! ============= Public Procedures ==========================
     AddBinSelectorToDatabase = newSize
   end function AddBinSelectorToDatabase
 
+  ! ------------------------------------  Add fileID to database ----
+  integer function AddFileIDToDatabase ( Database, Item )
+    
+    ! This function simply adds a fileID  to a database of this type
+    
+    integer, dimension(:), pointer :: Database
+    integer :: Item
+    
+    integer, dimension(:), pointer :: TempDatabase
+
+    include "addItemToDatabase.f9h"
+
+    AddFileIDToDatabase = newSize
+  end function AddFileIDToDatabase
+
   ! ------------------------------------  Add l2pc to database ----
   integer function AddL2PCToDatabase ( Database, Item )
     
@@ -133,6 +155,177 @@ contains ! ============= Public Procedures ==========================
 
     AddL2PCToDatabase = newSize
   end function AddL2PCToDatabase
+
+  ! --------------------------------------- DumpL2PCDatabase ---------------
+  subroutine DumpL2PCDatabase ( L2pcDB, details )
+    ! This subroutine dumps an l2pc to stdout
+
+    ! Dummy arguments
+    type (matrix_T), dimension(:), intent(in), target :: L2pcDB
+    integer, intent(in), optional :: DETAILS ! <=0 => Don't dump multidim arrays
+    !                                        ! -1 Skip even 1-d arrays
+    !                                        ! -2 Skip all but size
+    !                                        ! >0 Dump even multi-dim arrays
+    !                                        ! Default 0
+    ! Local variables
+    integer :: i
+    ! Executable
+    do i=1, size(L2PCDB)
+      call DumpOneL2PC( L2PCDB(i), details )
+    enddo
+  end subroutine DumpL2PCDatabase
+
+  ! --------------------------------------- DumpL2PCFile ---------------
+  subroutine DumpL2PCFile ( L2PCFile, details )
+    ! This subroutine dumps an l2pc to stdout
+
+    ! Dummy arguments
+    type (MLSFile_T), intent(in) :: L2PCFile
+    integer, intent(in), optional :: DETAILS ! <=0 => Don't dump multidim arrays
+    !                                        ! -1 Skip even 1-d arrays
+    !                                        ! -2 Skip all but size
+    !                                        ! >0 Dump even multi-dim arrays
+    !                                        ! Default 0
+    ! Local variables
+    integer :: i
+    ! Executable
+    call dumpMLSFile( L2PCFile, details=1 )
+    call dump ( fileIDDataBase, 'file id database', format='(i10)' )
+    do i=1, size(L2PCDataBase)
+      if ( L2PCFile%FileID%f_id /= fileIDDataBase(i) ) cycle
+      call newline
+      call outputNamedValue( 'db index', i )
+      call DumpOneL2PC( L2PCDataBase(i), details )
+    enddo
+  end subroutine DumpL2PCFile
+
+  ! --------------------------------------- DumpOneL2PC ---------------
+  subroutine DumpOneL2PC ( L2pc, details )
+    ! This subroutine dumps an l2pc to stdout
+
+    ! Dummy arguments
+    type (matrix_T), intent(in), target :: L2pc
+    integer, intent(in), optional :: DETAILS ! <=0 => Don't dump multidim arrays
+    !                                        ! -1 Skip even 1-d arrays
+    !                                        ! -2 Skip all but size
+    !                                        ! >0 Dump even multi-dim arrays
+    !                                        ! Default 0
+
+    ! Local parameters
+    character (len=*), parameter :: rFmt = "(4(2x,1pg15.8))"
+    character (len=*), parameter :: iFmt = "(8(2x,i6))"
+
+    ! Local variables
+    integer :: AdjustedIndex            ! Index into quantities not skipped
+    integer :: BlockCol                 ! Index
+    integer :: BlockRow                 ! Index
+    integer :: myDetails
+    integer :: Quantity                 ! Loop counter
+    integer :: Vector                   ! Loop counter
+
+
+    character (len=132) :: Line, Word1, Word2 ! Line of text
+
+    type (MatrixElement_T), pointer :: M0 ! A Matrix0 within kStar
+    type (QuantityTemplate_T), pointer :: Qt  ! Temporary pointers
+    type (Vector_T), pointer :: V       ! Temporary pointer
+
+    ! Executable code
+    myDetails = 0
+    if ( present(details) ) myDetails = details
+
+    ! First dump the xStar and yStar
+    call output( '- Dump of L2PC -', advance='yes' )
+    do vector = 1, 2
+      ! Identify vector
+      if ( vector == 1 ) then
+        call output( 'xStar', advance='yes' )
+        v => l2pc%col%vec
+      else
+        call output( 'yStar', advance='yes' )
+        v => l2pc%row%vec
+      end if
+
+      call outputNamedValue( 'size', size(v%quantities) )
+      if ( myDetails < -1 ) return
+      ! Loop over quantities
+      do quantity = 1, size(v%quantities)
+          qt => v%quantities(quantity)%template
+
+          ! Write quantity name - will be ignored on the read (at least by
+          ! fortran, IDL pays attention
+          call get_string ( qt%name, line )
+          call outputNamedValue( 'quantity name', trim(line) )
+          
+          ! Write quantity type
+          call get_string ( lit_indices(qt%quantityType), line )
+          call outputNamedValue( 'quantity type', trim(line) )
+          
+          ! Write other info associated with type
+          select case ( qt%quantityType )
+          case (l_vmr)
+            call get_string ( lit_indices(qt%molecule), line )
+            call outputNamedValue( 'molecule', trim(line) )
+          case (l_radiance)
+            call GetSignalName ( qt%signal, line, sideband=qt%sideband )
+            call outputNamedValue( 'signal', trim(line) )
+          end select
+          
+          ! Write out the dimensions for the quantity and the edges
+          call outputNamedValue( 'noChans', qt%noChans )
+          call outputNamedValue( 'noSurfs', qt%noSurfs )
+          call outputNamedValue( 'noInstances', qt%noInstances )
+          call outputNamedValue( 'coherent', qt%coherent )
+          call outputNamedValue( 'stacked', qt%stacked )
+          call get_string ( lit_indices(qt%verticalCoordinate), line )
+          call outputNamedValue( 'vertical coordinate', trim(line) )
+          if ( myDetails < 0 ) cycle
+          call dump( qt%surfs, 'surfs' )
+          call dump( qt%phi, 'phi' )
+
+      end do                            ! First loop over quantities
+      if ( myDetails < 1 ) return
+      ! Now do a second loop and write the values
+      adjustedIndex = 1
+      do quantity = 1, size ( v%quantities )
+          call dump( v%quantities(quantity)%values, 'values' )
+      end do                            ! Second loop over quantities
+
+    end do                              ! Loop over xStar/yStar
+    
+    ! Now dump kStar
+    call output( 'kStar', advance='yes' )
+    call outputNamedValue( 'row instances first', l2pc%row%instFirst )
+    call outputNamedValue( 'column instances first', l2pc%col%instFirst )
+    do blockRow = 1, l2pc%row%NB
+      do blockCol = 1, l2pc%col%NB
+        ! Print the type of the matrix
+          m0 => l2pc%block(blockRow, blockCol)
+          call outputNamedValue( 'row', blockRow )
+          call outputNamedValue( 'col', blockCol )
+          call outputNamedValue( 'kind', m0%kind )
+          call get_string ( &
+            & l2pc%row%vec%quantities(&
+            &    l2pc%row%quant(blockRow))%template%name, word1 )
+          call get_string ( &
+            & l2pc%col%vec%quantities(&
+            &    l2pc%col%quant(blockCol))%template%name, word2 )
+          call outputNamedValue( trim(word1), l2pc%row%inst(blockRow) )
+          call outputNamedValue( trim(word2), l2pc%col%inst(blockRow) )
+          select case (m0%kind)
+          case (M_Absent)
+          case (M_Banded, M_Column_sparse)
+            call outputNamedValue( 'no value', size(m0%values) )
+            call dump( m0%R1, 'R1' )
+            call dump( m0%R2, 'R2' )
+            call dump( m0%values, 'values' )
+          case (M_Full)
+            call dump( m0%values, 'values' )
+          end select
+      end do
+    end do
+
+  end subroutine DumpOneL2PC
 
   ! ---------------------------------- LoadMatrix ----------
   subroutine LoadMatrix ( matrix, name, message )
@@ -218,7 +411,6 @@ contains ! ============= Public Procedures ==========================
     integer, intent(in) :: BIN          ! Name of MATRIX
     integer, intent(in) :: NAME         ! Name for new vector template
     type(QuantityTemplate_T), dimension(:), pointer :: QUANTITYTEMPLATES ! Mainstream database
-    type(VectorTemplate_T), dimension(:), pointer :: VECTORTEMPLATES ! Mainstream database
     integer, intent(in) :: SOURCE       ! L_COLUMNS, L_ROWS
     character (len=*), intent(out) :: MESSAGE ! Error message
 
@@ -315,7 +507,6 @@ contains ! ============= Public Procedures ==========================
   ! -------------------------------------- DestroyBinSelectorDatabase
   subroutine DestroyBinSelectorDatabase 
     ! Local variables
-    integer :: I                        ! Loop counter
     integer :: STATUS                   ! Flag from deallocate
     ! Executable code
     if ( .not. associated ( binSelectors ) ) return
@@ -469,7 +660,10 @@ contains ! ============= Public Procedures ==========================
     eof = .false.
     do while (.not. eof )
       call ReadOneASCIIL2PC ( l2pc, lun, eof )
-      if (.not. eof) dummy = AddL2PCToDatabase ( l2pcDatabase, l2pc )
+      if (.not. eof) then
+        dummy = AddL2PCToDatabase ( l2pcDatabase, l2pc )
+        dummy = AddFileIDToDatabase ( fileIDDatabase, lun )
+      endif
       if ( index ( switches, 'spa' ) /= 0 ) call Dump_struct ( l2pc, 'One l2pc bin' ) 
 
       ! Now nullify the pointers in l2pc so we don't clobber the one we've written
@@ -502,22 +696,16 @@ contains ! ============= Public Procedures ==========================
     integer :: BlocksGroupID            ! ID of group containing all blocks
     integer :: BlockGroupID             ! ID of this block group
     integer :: matrixID                 ! ID of hdf5 group containing matrix
-    integer :: Quantity                 ! Loop counter
-    integer :: Vector                   ! Loop counter
-    integer :: AdjustedIndex            ! Index into quantities not skipped
     integer :: STATUS                   ! Error flag
 
     integer, dimension(l2pc%row%nb) :: ROWBLOCKMAP
     integer, dimension(l2pc%col%nb) :: COLBLOCKMAP
     logical, dimension(l2pc%row%vec%template%noQuantities), target :: ROWPACK
     logical, dimension(l2pc%col%vec%template%noQuantities), target :: COLPACK
-    logical, dimension(:), pointer :: THISPACK
 
     character ( len=32 ) :: NAME        ! A name for output
 
     type (MatrixElement_T), pointer :: M0 ! A Matrix0 within kStar
-    type (QuantityTemplate_T), pointer :: Qt  ! Temporary pointers
-    type (Vector_T), pointer :: V       ! Temporary pointer
 
     ! Executable code
 
@@ -625,12 +813,11 @@ contains ! ============= Public Procedures ==========================
     character (len=*), parameter :: iFmt = "(8(2x,i6))"
 
     ! Local variables
+    integer :: AdjustedIndex            ! Index into quantities not skipped
     integer :: BlockCol                 ! Index
     integer :: BlockRow                 ! Index
-    integer :: Grid                     ! Loop counter
     integer :: Quantity                 ! Loop counter
     integer :: Vector                   ! Loop counter
-    integer :: AdjustedIndex            ! Index into quantities not skipped
 
     logical, dimension(l2pc%row%vec%template%noQuantities), target :: ROWPACK
     logical, dimension(l2pc%col%vec%template%noQuantities), target :: COLPACK
@@ -1027,22 +1214,18 @@ contains ! ============= Public Procedures ==========================
     ! Reads a vector from l2pc file and adds it to internal databases. This
     ! is internal as having it inside the above routine screws up databases.
 
-    use Allocate_Deallocate, only: Test_Allocate
-
     ! Dummy arguments
     integer, intent(in) :: UNIT         ! File unit
     integer, intent(out) :: VECTOR      ! Index of Vector read in L2PCVs
     logical, intent(out) :: EOF         ! Flag
 
     ! Local variables
-    integer :: GRID                     ! Loop counter
     integer :: NOINSTANCESOR1           ! For allocates
     integer :: NOQUANTITIES             ! Number of quantities in a vector
     integer :: NOSURFSOR1               ! For allocates
     integer :: QUANTITY                 ! Loop counter
     integer :: SIDEBAND                 ! From parse signal
     integer :: STATUS                   ! Flag
-    integer :: STRINGINDEX              ! Index of string
     integer :: VTINDEX                  ! Index for this vector template
 
     integer, dimension(:), pointer :: SIGINDS ! Result of parse signal
@@ -1221,7 +1404,6 @@ contains ! ============= Public Procedures ==========================
   end subroutine ReadOneVectorFromASCII
 
   ! --------------------------------------- ReadCompleteHDF5L2PC -------
-  ! subroutine ReadCompleteHDF5L2PCFile ( filename )
   subroutine ReadCompleteHDF5L2PCFile ( MLSFile, Where )
     use HDF5, only: H5F_ACC_RDONLY_F, h5fopen_f, H5GN_MEMBERS_F
     use Trace_M, only: Trace_begin, Trace_end
@@ -1263,10 +1445,10 @@ contains ! ============= Public Procedures ==========================
     
     ! Don't forget HDF5 numbers things from zero
     do bin = 0, noBins-1
-      ! call ReadOneHDF5L2PCRecord ( L2PC, fileID, bin, &
       call ReadOneHDF5L2PCRecord ( L2PC, MLSFile, bin, &
         & shallow=.true., info=Info )
       dummy = AddL2PCToDatabase ( l2pcDatabase, L2PC )
+      dummy = AddFileIDToDatabase ( fileIDDatabase, MLSFile%fileID%f_id )
       if ( index ( switches, 'spa' ) /= 0 ) call Dump_struct ( l2pc, 'One l2pc bin' ) 
 
       ! Now nullify the pointers in l2pc so we don't clobber the one we've written
@@ -1282,12 +1464,10 @@ contains ! ============= Public Procedures ==========================
     if ( toggle (gen) ) call trace_end ( "ReadCompleteHDF5L2PC" )
   end subroutine ReadCompleteHDF5L2PCFile
 
-  ! --------------------------------------- ReadOneHDF5L2PC ------------
-  ! subroutine ReadOneHDF5L2PCRecord ( l2pc, fileID, l2pcIndex, shallow, info )
+  ! --------------------------------------- ReadOneHDF5L2PCRecord ------------
   subroutine ReadOneHDF5L2PCRecord ( l2pc, MLSFile, l2pcIndex, shallow, info )
   use HDF5, only: H5GCLOSE_F, H5GOPEN_F, H5GGET_OBJ_INFO_IDX_F
   use MLSHDF5, only: GetHDF5Attribute, LoadFromHDF5DS
-  use Symbol_types, only: T_STRING
     type ( Matrix_T ), intent(out), target :: L2PC
     type (MLSFile_T), pointer   :: MLSFile
     ! integer, intent(in) :: FILEID       ! HDF5 ID of input file
@@ -1337,8 +1517,6 @@ contains ! ============= Public Procedures ==========================
 
     ! Read the row and column vectors
     MLSFile%fileID%grp_id = matrixId
-    ! call ReadOneVectorFromHDF5 ( matrixId, 'Columns', xStar )
-    ! call ReadOneVectorFromHDF5 ( matrixId, 'Rows', yStar )
     call ReadOneVectorFromHDF5 ( MLSFile, 'Columns', xStar )
     call ReadOneVectorFromHDF5 ( MLSFile, 'Rows', yStar )
 
@@ -1347,8 +1525,6 @@ contains ! ============= Public Procedures ==========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to access Blocks group of input l2pc matrix' , &
       & MLSFile=MLSFile )
-    ! call GetHDF5Attribute ( blocksID, 'rowInstanceFirst', rowInstanceFirst )
-    ! call GetHDF5Attribute ( blocksID, 'colInstanceFirst', colInstanceFirst )
     MLSFile%fileID%sd_id = blocksID
     call GetHDF5Attribute ( MLSFile, 'rowInstanceFirst', rowInstanceFirst )
     call GetHDF5Attribute ( MLSFile, 'colInstanceFirst', colInstanceFirst )
@@ -1379,17 +1555,12 @@ contains ! ============= Public Procedures ==========================
             & 'Unable to open group for l2pc matrix block '//trim(name) , &
             & MLSFile=MLSFile )
           ! Could check it's the block we're expecting but I think I'll be lazy
-          ! call GetHDF5Attribute ( blockID, 'kind', kind )
           MLSFile%fileID%sd_id = blockID
-          ! call GetHDF5Attribute ( blockID, 'kind', kind )
           call GetHDF5Attribute ( MLSFile, 'kind', kind )
           if ( kind == m_banded .or. kind == m_column_sparse ) then
-            ! call GetHDF5Attribute ( blockID, 'noValues', noValues )
             call GetHDF5Attribute ( MLSFile, 'noValues', noValues )
             call CreateBlock ( l2pc, blockRow, blockCol, kind, noValues )
             m0 => l2pc%block ( blockRow, blockCol )
-            ! call LoadFromHDF5DS ( blockId, 'r1', m0%r1 )
-            ! call LoadFromHDF5DS ( blockId, 'r2', m0%r2 )
             call LoadFromHDF5DS ( MLSFile, 'r1', m0%r1 )
             call LoadFromHDF5DS ( MLSFile, 'r2', m0%r2 )
           else
@@ -1397,7 +1568,6 @@ contains ! ============= Public Procedures ==========================
             m0 => l2pc%block ( blockRow, blockCol )
           end if
           if ( kind /= m_absent ) &
-            ! call LoadFromHDF5DS ( blockID, 'values', m0%values )
             call LoadFromHDF5DS ( MLSFile, 'values', m0%values )
           call h5gClose_f ( blockId, status )
           if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1432,24 +1602,19 @@ contains ! ============= Public Procedures ==========================
   end subroutine ReadOneHDF5L2PCRecord
 
   ! --------------------------------------- ReadOneVectorFromHDF5 ------
-  ! subroutine ReadOneVectorFromHDF5 ( location, name, vector )
   subroutine ReadOneVectorFromHDF5 ( MLSFile, name, vector )
-    use Allocate_Deallocate, only: Test_Allocate
     use HDF5, only: H5GCLOSE_F, H5GOPEN_F, H5GGET_OBJ_INFO_IDX_F
     use MLSHDF5, only: GetHDF5Attribute, IsHDF5AttributePresent, &
-      & IsHDF5DSPresent, IsHDF5GroupPresent, LoadFromHDF5DS, LoadPtrFromHDF5DS
+      & IsHDF5DSPresent, LoadFromHDF5DS
     use MLSSignals_m, only: Radiometers
     ! Read a vector from an l2pc HDF5 and adds it to internal databases.
     ! Dummy arguments
     type (MLSFile_T) :: MLSFile
-    ! integer, intent(in) :: LOCATION     ! Node in HDF5
     character (len=*), intent(in) :: NAME ! Name of vector
     integer, intent(out) :: VECTOR      ! Index of vector read in L2PCVectors
 
     ! Local variables
     integer :: FREQUENCYCOORDINATE      ! Enumeration
-    integer :: GID                      ! HDF5 ID of a grid  group
-    integer :: GRID                     ! Loop counter
     integer :: I                        ! Index into various arrays
     integer :: MOLECULE                 ! Enumeration
     integer :: NAMEINDEX                ! Quantity name
@@ -1504,7 +1669,6 @@ contains ! ============= Public Procedures ==========================
       & MLSFile=MLSFile )
 
     ! Get the number of quantities
-    ! call GetHDF5Attribute ( vId, 'noQuantities', noQuantities )
     MLSFile%fileID%sd_id = vID
     call GetHDF5Attribute ( MLSFile, 'noQuantities', noQuantities )
     call allocate_test ( qtInds, noQuantities, 'qtInds', ModuleName )
@@ -1525,7 +1689,6 @@ contains ! ============= Public Procedures ==========================
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to open quantity '//trim(thisName)//' in vector '//trim(name), &
         & MLSFile=MLSFile )
-      ! call GetHDF5Attribute ( qId, 'index', i )
       MLSFile%fileID%sd_id = qID
       call GetHDF5Attribute ( MLSFile, 'index', i )
       quantityNames ( i ) = thisName
@@ -1560,7 +1723,6 @@ contains ! ============= Public Procedures ==========================
       nameIndex = stringIndex
 
       ! Get the quantity type
-      ! call GetHDF5Attribute ( qId, 'type', word )
       MLSFile%fileID%sd_id = qID
       call GetHDF5Attribute ( MLSFile, 'type', word )
       quantityType = GetLitIndexFromString ( word )
@@ -1574,11 +1736,9 @@ contains ! ============= Public Procedures ==========================
       unit = phyq_dimensionless
       select case ( quantityType )
       case ( l_vmr )
-        ! call GetHDF5Attribute ( qID, 'molecule', word )
         call GetHDF5Attribute ( MLSFile, 'molecule', word )
         molecule = GetLitIndexFromString ( word )
         if ( molecule == l_extinction ) then
-          ! call GetHDF5Attribute ( qID, 'radiometer', word )
           call GetHDF5Attribute ( MLSFile, 'radiometer', word )
           stringIndex = GetStringIndexFromString ( word )
           radiometer = FindFirst ( Radiometers%prefix, stringIndex )
@@ -1588,7 +1748,6 @@ contains ! ============= Public Procedures ==========================
         end if
         unit = phyq_vmr
       case ( l_radiance )
-        ! call GetHDF5Attribute ( qID, 'signal', word )
         call GetHDF5Attribute ( MLSFile, 'signal', word )
         call Parse_Signal ( word, sigInds, sideband=sideband)
         signal = sigInds(1)
@@ -1602,10 +1761,6 @@ contains ! ============= Public Procedures ==========================
       end select
 
       ! Now read the dimensions for the quantity
-      ! call GetHDF5Attribute ( qID, 'noInstances', noInstances )
-      ! call GetHDF5Attribute ( qID, 'noSurfs', noSurfs )
-      ! call GetHDF5Attribute ( qID, 'noChans', noChans )
-      ! call GetHDF5Attribute ( qId, 'verticalCoordinate', word )
       call GetHDF5Attribute ( MLSFile, 'noChans', noChans )
       call GetHDF5Attribute ( MLSFile, 'noInstances', noInstances )
       call GetHDF5Attribute ( MLSFile, 'noSurfs', noSurfs )
@@ -1614,13 +1769,9 @@ contains ! ============= Public Procedures ==========================
       ! Look for frequency coordinate (optional for backwards compatability with
       ! older l2pc files.
       if ( IsHDF5AttributePresent ( qID, 'frequencyCoordinate' ) ) then
-        ! call GetHDF5Attribute ( qId, 'frequencyCoordinate', word )
         call GetHDF5Attribute ( MLSFile, 'frequencyCoordinate', word )
         frequencyCoordinate = GetLitIndexFromString ( trim(word) )
       end if
-      ! call GetHDF5Attribute ( qId, 'logBasis', logBasis )
-      ! call GetHDF5Attribute ( qId, 'coherent', coherent )
-      ! call GetHDF5Attribute ( qId, 'stacked', stacked )
       call GetHDF5Attribute ( MLSFile, 'logBasis', logBasis )
       call GetHDF5Attribute ( MLSFile, 'coherent', coherent )
       call GetHDF5Attribute ( MLSFile, 'stacked', stacked )
@@ -1651,12 +1802,9 @@ contains ! ============= Public Procedures ==========================
       endif
       
       ! Get the surfaces and phis
-      ! call LoadFromHDF5DS ( qId, 'surfs', qt%surfs )
-      ! call LoadFromHDF5DS ( qId, 'phi', qt%phi )
       call LoadFromHDF5DS ( MLSFile, 'surfs', qt%surfs )
       call LoadFromHDF5DS ( MLSFile, 'phi', qt%phi )
       if ( IsHDF5DSPresent ( qId, 'solarZenith' ) ) then
-        ! call LoadFromHDF5DS ( qId, 'solarZenith', qt%solarZenith )
         call LoadFromHDF5DS ( MLSFile, 'solarZenith', qt%solarZenith )
       else
         qt%solarZenith = 0.0
@@ -1665,7 +1813,6 @@ contains ! ============= Public Procedures ==========================
       if ( IsHDF5DSPresent ( qId, 'frequencies' ) ) then
         call Allocate_test( qt%frequencies, qt%noChans, &
           & 'qt%frequencies', ModuleName )
-        ! call LoadFromHDF5DS ( qId, 'frequencies', qt%frequencies )
         call LoadFromHDF5DS ( MLSFile, 'frequencies', qt%frequencies )
       end if
 
@@ -1706,7 +1853,6 @@ contains ! ============= Public Procedures ==========================
         & ' in vector '//trim(name), &
         & MLSFile=MLSFile )
       MLSFile%fileID%sd_id = qID
-      ! call LoadFromHDF5DS ( qId, 'values', &
       call LoadFromHDF5DS ( MLSFile, 'values', &
         & l2pcVs(vector)%quantities(quantity)%values )
       call h5gClose_f ( qId, status )
@@ -1731,10 +1877,7 @@ contains ! ============= Public Procedures ==========================
 
     ! Local variables
     character ( len=132 ) :: LINE       ! A line of text
-    character ( len=32 ) :: GNAME       ! Name of grid
     character ( len=32 ) :: QNAME       ! Name of quantity
-    integer :: GID                      ! HDF5 ID for one grid group
-    integer :: GRID                     ! Loop counter
     integer :: QID                      ! HDF5 ID for quantity group
     integer :: QINDEX                   ! Quantity index
     integer :: QUANTITY                 ! Index
@@ -1835,6 +1978,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.84  2008/12/18 21:31:18  pwagner
+! May now dump an l2pc or allL2PCs (use with caution)
+!
 ! Revision 2.83  2008/09/30 22:28:03  vsnyder
 ! Remove AuxGrids -- didn't need them after all
 !
