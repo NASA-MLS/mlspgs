@@ -395,7 +395,7 @@ subtrees:   do while ( j <= howmany )
               case ( z_retrieve )
                 if ( .not. checkPaths) &
                 & call retrieve ( son, vectors, matrices, forwardModelConfigDatabase, &
-                  & chunks(chunkNo) )
+                  & chunks(chunkNo), fileDataBase )
                 call add_to_section_timing ( 'retrieve', t1, now_stop )
               case ( z_output )
                 exit subtrees
@@ -614,6 +614,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.165  2008/09/19 23:56:28  pwagner
+! May now Destroy GriddedData
+!
 ! Revision 2.164  2008/05/20 00:29:19  vsnyder
 ! Don't leave J undefined if no chunks processed
 !

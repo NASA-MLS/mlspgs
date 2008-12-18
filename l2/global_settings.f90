@@ -322,7 +322,9 @@ contains
           numFiles = AddFileToDataBase(fileDataBase, DirectFile)
         case ( s_dump )
           if ( error == 0 ) then
-            call dumpCommand ( son, forwardModelConfigs=forwardModelConfigDatabase )
+            call dumpCommand ( son, &
+              & forwardModelConfigs=forwardModelConfigDatabase, &
+              & fileDatabase=fileDatabase )
           else
             call announce_error ( subtree(1,son), &
               & 'Preceeding errors prevent doing a dump here.' )
@@ -1008,6 +1010,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.129  2008/08/27 20:00:59  vsnyder
+! Add PRINT to not_used_here
+!
 ! Revision 2.128  2007/12/14 01:50:47  pwagner
 ! Zero out Fill values from BO_stat
 !
