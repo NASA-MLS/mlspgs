@@ -123,11 +123,15 @@ contains
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 END MODULE MLSPCF2
 
 ! $Log$
+! Revision 2.23  2008/12/18 22:00:01  pwagner
+! Added print to not_used_here
+!
 ! Revision 2.22  2008/05/08 19:18:22  pwagner
 ! added Mie Tables entries
 !
