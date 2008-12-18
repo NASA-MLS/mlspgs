@@ -15,7 +15,7 @@ module DumpCommand_M
 ! Or functions to set a run-time Boolean flag.
 ! (Should these latter functions be moved into a special module?)
 
-  implicit NONE
+  implicit none
   private
 
   public :: BooleanFromAnyGoodRadiances
@@ -602,7 +602,8 @@ contains
 
   ! ------------------------- DumpCommand ------------------------
   subroutine DumpCommand ( Root, QuantityTemplatesDB, &
-    & VectorTemplates, Vectors, ForwardModelConfigs, HGrids, griddedDataBase )
+    & VectorTemplates, Vectors, ForwardModelConfigs, HGrids, griddedDataBase, &
+    & FileDataBase )
 
   ! Process a "dump" command
 
@@ -617,24 +618,28 @@ contains
     use GriddedData, only: Dump, GriddedData_T
     use HGridsDatabase, only: Dump, HGRID_T
     use Init_Tables_Module, only: F_AllBooleans, F_AllForwardModels, &
-      & f_AllGriddedData, F_AllHGrids, &
-      & F_AllLines, F_AllPFA, F_AllQuantityTemplates, F_AllSignals, F_AllSpectra, &
+      & f_AllGriddedData, F_AllHGrids, F_AllL2PCs, F_AllLines, &
+      & F_AllPFA, F_AllQuantityTemplates, F_AllSignals, F_AllSpectra, &
       & F_AllVectors, F_AllVectorTemplates, F_AllVGrids, F_AntennaPatterns, &
       & F_Boolean, F_Clean, F_Details, F_DACSFilterShapes, &
       & F_FilterShapes, F_ForwardModel, F_GRID, &
-      & F_HGrid, F_Lines, F_Mark, F_Mask, F_MieTables, &
+      & F_HGrid, F_L2PC, F_Lines, F_Mark, F_Mask, F_MieTables, &
       & F_PfaData, F_PfaFiles, F_PFANum, F_PFAStru, F_PointingGrids, &
       & F_Quantity, F_Signals,  F_Spectroscopy, F_Stop, &
       & F_Template, F_Text, F_TGrid, &
       & F_Vector, F_VectorMask, F_VGrid, S_Quantity, S_VectorTemplate
+    use L2PC_m, only: L2PCDatabase, dumpL2PC => Dump
     use Intrinsic, only: PHYQ_Dimensionless
     use MLSL2Options, only: runTimeValues
+    use MLSCommon, only: MLSFile_T
+    ! use MLSFiles, only: DumpMLSFile => Dump
     use MLSMessageModule, only: MLSMessage, MLSMessageCalls, MLSMSG_error
+    use MLSSets, only: FindFirst
     use MLSSignals_m, only: Dump, Signals
     use MLSStrings, only: lowerCase
     use MLSStringLists, only: BooleanValue, SWITCHDETAIL
     use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
-    use Output_M, only: Output
+    use output_m, only: output !, outputNamedValue
     use PFADataBase_m, only: Dump, Dump_PFADataBase, Dump_PFAFileDataBase, &
       & Dump_PFAStructure, PFAData
     use PointingGrid_m, only: Dump_Pointing_Grid_Database
@@ -658,6 +663,7 @@ contains
     type (vector_T), dimension(:), optional                      :: Vectors
     type (HGrid_T), dimension(:), pointer, optional              :: HGrids
     type (GriddedData_T), dimension(:), pointer, optional        :: griddedDataBase
+    type (MLSFile_T), dimension(:), pointer, optional            :: FileDataBase
 
     character(len=80) :: BOOLEANSTRING  ! E.g., 'BAND13_OK'
     logical :: Clean
@@ -667,10 +673,12 @@ contains
     integer :: DetailReduction
     integer :: Details
     integer :: FieldIndex
+    integer :: FileIndex
     logical :: GotOne ! of something -- used to test loop completion
     integer :: GSON, I, J, K, L, Look
     logical :: HaveQuantityTemplatesDB, HaveVectorTemplates, HaveVectors, &
       &        HaveForwardModelConfigs, HaveGriddedData, HaveHGrids
+    character(len=80) :: NAMESTRING  ! E.g., 'L2PC-band15-SZASCALARHIRES'
     integer :: QuantityIndex
     integer :: Son
     integer :: Source ! column*256 + line
@@ -730,26 +738,6 @@ contains
     clean = .false.
     details = 0 - DetailReduction
 
-    ! We have to parse the line twice: once merely to pick up the details.
-    ! This results in using the last details field.  Van prefers to process
-    ! left-to-right to allow different details levels for different dumps.
-!     do j = 2, nsons(root)
-!       son = subtree(j,root) ! The argument
-!       fieldIndex = get_field_id(son)
-!       gson = son
-!       if (nsons(son) > 1) gson = subtree(2,son) ! Now value of said argument
-!       select case ( fieldIndex )
-!       case ( f_details )
-!         call expr ( gson, units, values, type )
-!         if ( units(1) /= phyq_dimensionless ) call AnnounceError ( gson, dimless )
-!         if ( type /= num_value ) call announceError ( gson, numeric )
-!         details = nint(values(1))
-!       case default
-!         ! We'll do these on the next traveral
-!       end select
-!     end do
-
-    ! then the second time to do the actual dumps
     do j = 2, nsons(root)
       son = subtree(j,root) ! The argument
       fieldIndex = get_field_id(son)
@@ -786,6 +774,8 @@ contains
             else
               call announceError ( son, noHGrid )
             end if
+          case ( f_allL2PCs )
+            call dumpL2PC( L2PCDataBase )
           case ( f_allLines )
             if ( associated(lines) ) then
               call dump_lines_database
@@ -895,6 +885,17 @@ contains
         else
           call announceError ( gson, noHGrid )
         end if
+      case ( f_L2PC )    ! Dump L2PC
+        if ( details < -1 .or. .not. present(FileDataBase) ) cycle
+        call get_string( sub_rosa(subtree(2,son)), nameString, strip=.true. )
+        fileIndex = FindFirst( FileDataBase%ShortName, trim(nameString) )
+        ! call outputNamedValue ( 'name string', trim(nameString) )
+        ! call outputNamedValue ( 'file index', fileIndex )
+        ! call dumpMLSFile( fileDataBase, details=1 )
+        if ( fileIndex < 1 ) cycle
+        call output ( ' L2PC short file name: ' // trim(nameString), advance='yes' )
+        call dumpL2PC ( &
+          & fileDataBase(fileIndex), details )
       case ( f_lines )
         do i = 2, nsons(son)
           what = decoration(decoration(subtree(i,son)))
@@ -1199,6 +1200,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.44  2008/12/18 21:12:00  pwagner
+! May now dump an l2pc or allL2PCs (use with caution)
+!
 ! Revision 2.43  2008/09/30 22:00:22  vsnyder
 ! Add PRINT statement to Not_Used_Here to reduce compilation cascades
 !
