@@ -202,7 +202,7 @@ contains ! =====     Public Procedures     =============================
     use TREE_TYPES, only: N_NAMED
     use VectorsModule, only: AddVectorToDatabase, &
       & CloneVectorQuantity, CreateVector, &
-      & GetVectorQtyByTemplateIndex, NullifyVectorValue, &
+      & GetVectorQtyByTemplateIndex, &
       & ValidateVectorQuantity, Vector_T, &
       & VectorTemplate_T, VectorValue_T, M_Fill
     use VGridsDatabase, only: VGRIDS
@@ -671,7 +671,7 @@ contains ! =====     Public Procedures     =============================
         if ( .not. associated(vectors) ) allocate ( vectors(0), stat=status )
         call test_allocate ( status, moduleName, 'Vectors', (/0/), (/0/) )
         call dumpCommand ( key, qtyTemplates, vectorTemplates, vectors, &
-          & GriddedDataBase=GriddedDataBase )
+          & GriddedDataBase=GriddedDataBase, FileDataBase=FileDataBase )
 
       case ( s_skip ) ! ============================== Skip ==========
         ! We'll skip the rest of the section if the Boolean cond'n is TRUE
@@ -2415,6 +2415,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.368  2008/12/18 21:14:05  pwagner
+! May now dump an l2pc or allL2PCs (use with caution)
+!
 ! Revision 2.367  2008/11/06 21:50:46  pwagner
 ! Fill method swapValues swaps values between two quantities
 !
