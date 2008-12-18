@@ -181,7 +181,7 @@ contains ! =====     Public Procedures     =============================
           if ( .not. associated(vectors) ) allocate ( vectors(0), stat=status )
           call test_allocate ( status, moduleName, 'Vectors', (/0/), (/0/) )
           call dumpCommand ( key, vectors=vectors, HGrids=HGrids, &
-            & ForwardModelConfigs=FWModelConfig )
+            & ForwardModelConfigs=FWModelConfig, FileDataBase=FileDataBase )
         case ( s_skip ) ! ============================== Skip ==========
           ! We'll skip the rest of the section if the Boolean cond'n is TRUE
           if ( Skip(key) ) exit
@@ -1328,7 +1328,7 @@ contains ! =====     Public Procedures     =============================
     use MoreTree, only: GET_FIELD_ID, GET_BOOLEAN
     use Init_tables_module, only: F_LABEL, F_PREFIXSIGNAL, &
       & F_QUANTITY, F_SUFFIXLABEL, F_VECTOR
-    use Output_m, only: outputNamedValue
+    ! use Output_m, only: outputNamedValue
     use Symbol_Table, only: ENTER_TERMINAL
     use Symbol_Types, only: T_STRING
     use String_Table, only: GET_STRING
@@ -2100,6 +2100,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.135  2008/12/18 21:14:24  pwagner
+! May now dump an l2pc or allL2PCs (use with caution)
+!
 ! Revision 2.134  2008/12/02 23:27:09  pwagner
 ! May automatically label every quantity in a vector now
 !
