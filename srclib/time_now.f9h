@@ -35,7 +35,7 @@
       time_config%startTime = values
       ! call yyyymmdd_to_dai(date, startdaysoff)
       call yyyymmdd_to_dai(values(1), values(2), values(3), time_config%startdaysoff)
-      if ( WALLCLOCKISELAPSEDFROMSTART ) then
+      if ( time_config%wallClockIsElapsedFromStart ) then
         t = 0.
       else
         t = values(8)/1000.0_rk + (values(7) + 60*(values(6) + 60*values(5)))
@@ -48,7 +48,7 @@
       else
         daysoff = 0
       endif
-      if ( WALLCLOCKISELAPSEDFROMSTART ) then
+      if ( time_config%wallClockIsElapsedFromStart ) then
         t = (values(8)-time_config%startTime(8))/1000.0_rk + &
         & (values(7) - time_config%startTime(7) &
         & + 60*(values(6) - time_config%startTime(6) + &
@@ -64,6 +64,9 @@
   t = t / time_config%time_divisor
 
 !$Log$
+!Revision 1.6  2005/09/22 23:37:05  pwagner
+!time_config and retry_config now hold config settings
+!
 !Revision 1.5  2005/06/22 20:03:56  pwagner
 !Reworded Copyright statement, moved rcs id
 !
