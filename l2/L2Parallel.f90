@@ -88,7 +88,8 @@ module L2Parallel
   integer, parameter :: HDFNAMELEN = 132 ! Max length of name of swath/sd
   character(len=*), parameter :: GROUPNAME = "mlsl2" ! Set by l2q
   logical, parameter :: NOTFORGOTTEN = .false. ! Note the death of forgottens
-  integer, parameter :: FIXDELAYFORSLAVETOFINISH   = 1500000 ! 15000000 ! 15 sec
+  integer, save      :: FIXDELAYFORSLAVETOFINISH   = 1500000 ! 15000000 ! 15 sec
+  integer, save      :: KILLINGSLAVESDELAY   = 1000000 ! 1 sec
 
   ! Private types
   type StoredResult_T
@@ -99,75 +100,8 @@ module L2Parallel
     character(len=HDFNameLen) :: hdfName ! Name of swath/sd
   end type StoredResult_T
 
-contains ! ================================ Procedures ======================
-
-  ! --------------------------------------------- SendChunkInfoToSlave ----------
-  subroutine SendChunkInfoToSlave ( chunks, chunkNo, slaveTid )
-    ! This routine sends a chunk to a slave task
-
-    ! Dummy arguments
-    type (MLSChunk_T), intent(in), dimension(:) :: CHUNKS ! The chunk
-    integer, intent(in) :: CHUNKNO      ! Which one is it.
-    integer, intent(in) :: SLAVETID     ! Who to send it to
-
-    ! Local variables
-    integer :: BUFFERID                 ! ID for buffer to send
-    integer :: INFO                     ! Flag from PVM
-    integer :: CHUNK                    ! Loop counter
-    integer :: BITS
-
-    ! Executable code
-    call BooleansToBits( (/ ChunkDivideConfig%allowPriorOverlaps, &
-      & ChunkDivideConfig%allowPostOverlaps /), Bits )
-    call PVMFInitSend ( PvmDataDefault, bufferID )
-    call PVMF90Pack ( (/ size(chunks), chunkNo /), info )
-    if ( info /= 0 ) &
-      & call PVMErrorMessage ( info, 'packing noChunks and chunkNo' )
-    do chunk = 1, size(chunks)
-      call PVMF90Pack ( &
-        & (/ chunks(chunk)%firstMAFIndex, &
-        &    chunks(chunk)%lastMAFIndex, &
-        &    chunks(chunk)%noMAFsLowerOverlap, &
-        &    chunks(chunk)%noMAFsUpperOverlap, &
-        &    chunks(chunk)%chunkNumber /), info )
-      if ( info /= 0 ) &
-        & call PVMErrorMessage ( info, 'packing one chunk header' )
-
-      if ( associated ( chunks(chunk)%hGridOffsets ) ) then
-        call PVMF90Pack ( size ( chunks(chunk)%hGridOffsets ), info )
-        if ( info /= 0 ) &
-          & call PVMErrorMessage ( info, 'packing size(hGridOffsets)' )
-        call PVMF90Pack ( chunks(chunk)%hGridOffsets, info )
-        if ( info /= 0 ) &
-          & call PVMErrorMessage ( info, 'packing hGridOffsets chunk' )
-      else
-        call PVMF90Pack ( 0, info )
-        if ( info /= 0 ) &
-          & call PVMErrorMessage ( info, 'packing 0 for size(hGridOffsets)' )
-      end if
-
-      if ( associated ( chunks(chunk)%hGridTotals ) ) then
-        call PVMF90Pack ( size ( chunks(chunk)%hGridTotals ), info )
-        if ( info /= 0 ) &
-          & call PVMErrorMessage ( info, 'packing size(hGridTotals)' )
-        call PVMF90Pack ( chunks(chunk)%hGridTotals, info )
-        if ( info /= 0 ) &
-          & call PVMErrorMessage ( info, 'packing hGridTotals chunk' )
-      else
-        call PVMF90Pack ( 0, info )
-        if ( info /= 0 ) &
-          & call PVMErrorMessage ( info, 'packing 0 for size(hGridTotals)' )
-      end if
-
-    end do
-    call PVMF90Pack ( Bits, info )
-    if ( info /= 0 ) &
-      & call PVMErrorMessage ( info, 'packing overlaps outside proc. rnge' )
-    call PVMFSend ( slaveTid, ChunkTag, info )
-    if ( info /= 0 ) &
-      & call PVMErrorMessage ( info, 'sending chunk' )
-  end subroutine SendChunkInfoToSlave
-
+contains 
+! ================================ Public Procedures ======================
   ! ----------------------------------------------- GetChunkInfoFromMaster ------
   subroutine GetChunkInfoFromMaster ( chunks, chunkNo )
     ! This function gets a chunk sent by SendChunkToSlave
@@ -367,7 +301,7 @@ contains ! ================================ Procedures ======================
     type (DirectWriteRequest_T), pointer :: REQUEST
 
     ! Executable code --------------------------------
-
+    KILLINGSLAVESDELAY   = 100*parallel%delay
     ! First, is this the first call. The first call does all the work
     ! so if it's not then quit.
     if ( finished ) return
@@ -838,6 +772,9 @@ contains ! ================================ Procedures ======================
           call TimeStamp ( 'Received an external message to give up, so finishing now', &
             & advance='yes' )
         end if
+        ! We're going to be quitting anyway, so might as well cut the delays
+        FIXDELAYFORSLAVETOFINISH = parallel%delay
+        KILLINGSLAVESDELAY = parallel%delay
         exit masterLoop
       end if
 
@@ -1208,7 +1145,7 @@ contains ! ================================ Procedures ======================
     ! First kill any children still running (only if we got a give up message).
     do chunk = 1, noChunks
       if ( chunkTids(chunk) /= 0 ) then
-        call usleep ( 100*parallel%delay )
+        call usleep ( KILLINGSLAVESDELAY )
         if ( usingL2Q ) then
           machine = chunkMachines(chunk)
           call TellL2QMachineFinished( &
@@ -1230,7 +1167,6 @@ contains ! ================================ Procedures ======================
     end do
 
     if ( usingL2Q ) then
-      ! call usleep ( 500*parallel%delay )
       call TellL2QMasterFinished(L2Qtid)
       if ( switchDetail(switches,'mas') > -1 ) &
         & call TimeStamp ( 'Telling l2q we are finished', &
@@ -1488,7 +1424,7 @@ contains ! ================================ Procedures ======================
 
   end subroutine L2MasterTask
 
-
+  ! ---------------------------------------- Private Procedures ----------
   ! -------------------------------------------- AddStoredQuantityToDatabase ----
   integer function AddStoredResultToDatabase ( database, item )
     ! Add a storedQuantity to a database, or create the database if it
@@ -1506,6 +1442,50 @@ contains ! ================================ Procedures ======================
     AddStoredResultToDatabase = newSize
   end function AddStoredResultToDatabase
 
+  ! --------------------------------- CleanUpDeadChunksOutput -------------
+  subroutine CleanUpDeadChunksOutput ( chunk, joinedQuantities, &
+    & joinedVectorTemplates, joinedVectors, storedResults )
+    ! This destroys the vector info etc. associated with any output
+    ! from a dead chunk.
+    integer, intent(in) :: CHUNK        ! Index of chunk
+    type (QuantityTemplate_T), dimension(:), pointer :: JOINEDQUANTITIES
+    type (VectorTemplate_T), dimension(:), pointer :: JOINEDVECTORTEMPLATES
+    type (Vector_T), dimension(:), pointer :: JOINEDVECTORS
+    type (StoredResult_T), dimension(:), pointer :: STOREDRESULTS
+
+    ! Local variables
+    integer :: PRECIND                  ! Index for precision (if any)
+    integer :: VALIND                   ! Index for value
+    integer :: RES                      ! Loop counter
+
+    ! Executable code
+    if ( .not. associated(storedResults) ) return
+    
+    do res = 1, size ( storedResults )
+      valInd = storedResults(res)%valInds(chunk)
+      if ( valInd /= 0 ) then
+        if ( parallel%stageInMemory ) then
+          call DestroyVectorInfo ( joinedVectors(valInd) )
+          call DestroyVectorTemplateInfo ( joinedVectorTemplates(valInd) )
+          call DestroyQuantityTemplateContents ( joinedQuantities(valInd) )
+        end if
+        storedResults(res)%valInds(chunk) = 0
+      end if
+
+      if ( storedResults(res)%gotPrecision ) then
+        precInd = storedResults(res)%precInds(chunk)
+        if ( precInd /= 0 ) then
+          if ( parallel%stageInMemory ) then
+            call DestroyVectorInfo ( joinedVectors(precInd) )
+            call DestroyVectorTemplateInfo ( joinedVectorTemplates(precInd) )
+            call DestroyQuantityTemplateContents ( joinedQuantities(precInd) )
+          end if
+          storedResults(res)%precInds(chunk) = 0
+        end if
+      end if
+    end do
+  end subroutine CleanUpDeadChunksOutput
+  
   ! ----------------------------------------- DestroyStoredQuantitiesDatabase ---
   subroutine DestroyStoredResultsDatabase ( database )
     type (StoredResult_T), dimension(:), pointer :: database
@@ -1525,6 +1505,211 @@ contains ! ================================ Procedures ======================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Deallocate//'stored quantities database' )
   end subroutine DestroyStoredResultsDatabase
+
+  ! -------------------------------------- RecieveMachineFromL2Q --------------
+  subroutine ReceiveMachineFromL2Q(machineName)
+    !
+    ! request a free host from the l2 queue manager
+    character(len=MACHINENAMELEN), intent(out)        :: MACHINENAME
+    !
+    integer :: BEAT
+    integer :: INFO                     ! From PVM
+    integer :: BUFFERIDRCV              ! From PVM
+    ! How many times to listen for queue manager's granting of request
+    ! (Setting NBEATS=0 means merely register the request with queue manager;
+    ! subsequent trips through master event loop will pick up message
+    ! when and if queue manager grants our request)
+    integer, parameter :: NBEATS = 0  ! 16   ! ~2x MAXNUMMASTERS  
+    ! Possibly a machine is free and the queue manager will
+    ! respond quickly
+    ! (This idea is tentative, however)
+    ! Now let's give queue manager a chance to receive our request
+    ! and deliberate a while (but not too long)
+    ! before giving up and going back to checking on our own slaves
+    
+    ! In fact this was a bad idea, or it turned out bad, anyway:
+    ! It slowed processing routine communication by the master to no more
+    ! than one message per NBEATS*delaytime, so long as the master was
+    ! hoping to hear from the queue manager. This meant between 3 and 4 seconds
+    ! between each signal being processed, so signals piled up in a huge
+    ! line waiting to be received and acted upon.
+    machineName = ' '
+    do beat = 1, max(NBEATS, 1)
+      call PVMFNRecv( -1, GRANTEDTAG, bufferIDRcv )
+      if ( bufferIDRcv < 0 ) then
+        call PVMErrorMessage ( info, "checking for Granted message" )
+      else if ( bufferIDRcv > 0 ) then
+        if ( switchDetail(switches,'l2q') > -1 ) &
+          & call TimeStamp('Weve been granted a host', advance='yes')
+        ! Granted us a machine
+        call PVMF90Unpack ( machineName, info )
+        if ( info /= 0 ) then
+          call PVMErrorMessage ( info, "unpacking machine name" )
+        endif
+        if ( len_trim(machineName) < 1 ) &
+          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'granted blank host name' )
+        return
+      else
+        if ( beat < max(NBEATS, 1)) call usleep ( parallel%delay )
+      endif
+    enddo
+    if ( switchDetail(switches,'l2q') > -1 .and. len_trim(machineName) > 0 ) &
+      & call TimeStamp('Received from l2q ' // trim(machineName), advance='yes')
+  end subroutine ReceiveMachineFromL2Q
+
+  ! -------------------------------------- RegisterWithL2Q --------------
+  subroutine RegisterWithL2Q(noChunks, machines, L2Qtid)
+    integer, intent(in)                                  :: noChunks
+    type(machine_t), dimension(:), pointer :: MACHINES
+    ! character(len=MachineNameLen), dimension(:), pointer :: MACHINENAMES
+    integer, intent(out)                                 :: L2Qtid
+    !
+    integer :: BUFFERID                 ! From PVM
+    character(len=16) :: DATESTRING
+    integer :: INDX
+    integer :: INFO                     ! From PVM
+    character(len=16) :: L2QSTRING
+    !
+    call pvmfgettid(GROUPNAME, 0, L2Qtid)
+    if ( L2Qtid < 1 ) then
+      call MLSMessage( MLSMSG_Error, ModuleName, &
+        & 'l2q queue manager not running--dead or not started yet?' )
+    else
+      write ( L2QSTRING, * ) L2QTID
+      call TimeStamp('Registering with l2q (l2qtid=' // &
+        & trim(L2QSTRING) // ')', advance='yes')
+    endif
+    call GetMachines ( machines )
+    ! Register ourselves with the l2 queue manager
+    ! Identify ourselves
+    call PVMFInitSend ( PvmDataDefault, bufferID )
+    call PVMF90Pack ( SIG_Register, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'packing registration' )
+    call PVMF90Pack ( noChunks, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'packing number of chunks' )
+    ! Now send our data date as a string
+    ! We might reasonably expect one of two formats for startUTC:
+    ! 1996-051T00:00:00.000000Z (using yyyy-dayofyear)
+    ! 2006-05-07T00:00:00.000000Z (using yyyy-month-dayofmonth)
+    ! (e.g., '2006d121')
+    indx = INDEX (L2PCF%startUTC, "T")
+    if ( indx > 0 ) then
+      if ( all( NAppearances(L2PCF%startUTC(1:indx-1), (/'-'/)) > 1 ) ) then
+        dateString = L2PCF%startUTC(1:indx-1) ! it was yyyy-month-dayofmonth
+      else
+        call ReplaceSubString ( L2PCF%startUTC(1:indx-1), dateString, &
+        & '-', 'd' )  ! it was yyyy-dayofyear
+      endif
+    else
+      dateString = '(unknown)'
+    endif
+    call PVMF90Pack ( dateString, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'packing date' )
+    call PVMFSend ( L2Qtid, petitionTag, info )
+    ! call PVMF90Pack ( noChunks, info )
+    ! if ( info /= 0 ) &
+    !   & call PVMErrorMessage ( info, 'packing L2QTid' )
+    ! call PVMFSend ( L2Qtid, petitionTag, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'sending finish packet' )
+  end subroutine RegisterWithL2Q
+
+  ! -------------------------------------- RequestMachineFromL2Q --------------
+  subroutine RequestMachineFromL2Q(L2Qtid, nextChunk, machineName)
+    !
+    ! request a free host from the l2 queue manager
+    integer, intent(in)                               :: L2Qtid
+    integer, intent(in)                               :: nextChunk
+    character(len=MACHINENAMELEN), intent(out)        :: MACHINENAME
+    !
+    integer :: BUFFERID                 ! From PVM
+    integer :: INFO                     ! From PVM
+    ! Identify ourselves
+    if ( switchDetail(switches,'l2q') > -1 ) &
+      & call TimeStamp('Requesting host from l2q', advance='yes')
+    call PVMFInitSend ( PvmDataDefault, bufferID )
+    call PVMF90Pack ( sig_requestHost, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'packing registration' )
+    call PVMF90Pack ( nextChunk, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'packing number of chunk' )
+    call PVMFSend ( L2Qtid, petitionTag, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'sending finish packet' )
+    call ReceiveMachineFromL2Q(machineName)
+  end subroutine requestMachineFromL2Q
+
+  ! --------------------------------------------- SendChunkInfoToSlave ------
+  subroutine SendChunkInfoToSlave ( chunks, chunkNo, slaveTid )
+    ! This routine sends a chunk to a slave task
+
+    ! Dummy arguments
+    type (MLSChunk_T), intent(in), dimension(:) :: CHUNKS ! The chunk
+    integer, intent(in) :: CHUNKNO      ! Which one is it.
+    integer, intent(in) :: SLAVETID     ! Who to send it to
+
+    ! Local variables
+    integer :: BUFFERID                 ! ID for buffer to send
+    integer :: INFO                     ! Flag from PVM
+    integer :: CHUNK                    ! Loop counter
+    integer :: BITS
+
+    ! Executable code
+    call BooleansToBits( (/ ChunkDivideConfig%allowPriorOverlaps, &
+      & ChunkDivideConfig%allowPostOverlaps /), Bits )
+    call PVMFInitSend ( PvmDataDefault, bufferID )
+    call PVMF90Pack ( (/ size(chunks), chunkNo /), info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'packing noChunks and chunkNo' )
+    do chunk = 1, size(chunks)
+      call PVMF90Pack ( &
+        & (/ chunks(chunk)%firstMAFIndex, &
+        &    chunks(chunk)%lastMAFIndex, &
+        &    chunks(chunk)%noMAFsLowerOverlap, &
+        &    chunks(chunk)%noMAFsUpperOverlap, &
+        &    chunks(chunk)%chunkNumber /), info )
+      if ( info /= 0 ) &
+        & call PVMErrorMessage ( info, 'packing one chunk header' )
+
+      if ( associated ( chunks(chunk)%hGridOffsets ) ) then
+        call PVMF90Pack ( size ( chunks(chunk)%hGridOffsets ), info )
+        if ( info /= 0 ) &
+          & call PVMErrorMessage ( info, 'packing size(hGridOffsets)' )
+        call PVMF90Pack ( chunks(chunk)%hGridOffsets, info )
+        if ( info /= 0 ) &
+          & call PVMErrorMessage ( info, 'packing hGridOffsets chunk' )
+      else
+        call PVMF90Pack ( 0, info )
+        if ( info /= 0 ) &
+          & call PVMErrorMessage ( info, 'packing 0 for size(hGridOffsets)' )
+      end if
+
+      if ( associated ( chunks(chunk)%hGridTotals ) ) then
+        call PVMF90Pack ( size ( chunks(chunk)%hGridTotals ), info )
+        if ( info /= 0 ) &
+          & call PVMErrorMessage ( info, 'packing size(hGridTotals)' )
+        call PVMF90Pack ( chunks(chunk)%hGridTotals, info )
+        if ( info /= 0 ) &
+          & call PVMErrorMessage ( info, 'packing hGridTotals chunk' )
+      else
+        call PVMF90Pack ( 0, info )
+        if ( info /= 0 ) &
+          & call PVMErrorMessage ( info, 'packing 0 for size(hGridTotals)' )
+      end if
+
+    end do
+    call PVMF90Pack ( Bits, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'packing overlaps outside proc. rnge' )
+    call PVMFSend ( slaveTid, ChunkTag, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'sending chunk' )
+  end subroutine SendChunkInfoToSlave
 
   ! -------------------------------------- StoreSlaveQuantity --------------
   subroutine StoreSlaveQuantity ( joinedQuantities, joinedVectorTemplates, &
@@ -1677,185 +1862,7 @@ contains ! ================================ Procedures ======================
 
   end subroutine StoreSlaveQuantity
 
-  ! --------------------------------- CleanUpDeadChunksOutput -------------
-  subroutine CleanUpDeadChunksOutput ( chunk, joinedQuantities, &
-    & joinedVectorTemplates, joinedVectors, storedResults )
-    ! This destroys the vector info etc. associated with any output
-    ! from a dead chunk.
-    integer, intent(in) :: CHUNK        ! Index of chunk
-    type (QuantityTemplate_T), dimension(:), pointer :: JOINEDQUANTITIES
-    type (VectorTemplate_T), dimension(:), pointer :: JOINEDVECTORTEMPLATES
-    type (Vector_T), dimension(:), pointer :: JOINEDVECTORS
-    type (StoredResult_T), dimension(:), pointer :: STOREDRESULTS
-
-    ! Local variables
-    integer :: PRECIND                  ! Index for precision (if any)
-    integer :: VALIND                   ! Index for value
-    integer :: RES                      ! Loop counter
-
-    ! Executable code
-    if ( .not. associated(storedResults) ) return
-    
-    do res = 1, size ( storedResults )
-      valInd = storedResults(res)%valInds(chunk)
-      if ( valInd /= 0 ) then
-        if ( parallel%stageInMemory ) then
-          call DestroyVectorInfo ( joinedVectors(valInd) )
-          call DestroyVectorTemplateInfo ( joinedVectorTemplates(valInd) )
-          call DestroyQuantityTemplateContents ( joinedQuantities(valInd) )
-        end if
-        storedResults(res)%valInds(chunk) = 0
-      end if
-
-      if ( storedResults(res)%gotPrecision ) then
-        precInd = storedResults(res)%precInds(chunk)
-        if ( precInd /= 0 ) then
-          if ( parallel%stageInMemory ) then
-            call DestroyVectorInfo ( joinedVectors(precInd) )
-            call DestroyVectorTemplateInfo ( joinedVectorTemplates(precInd) )
-            call DestroyQuantityTemplateContents ( joinedQuantities(precInd) )
-          end if
-          storedResults(res)%precInds(chunk) = 0
-        end if
-      end if
-    end do
-  end subroutine CleanUpDeadChunksOutput
-  
-  subroutine RegisterWithL2Q(noChunks, machines, L2Qtid)
-    integer, intent(in)                                  :: noChunks
-    type(machine_t), dimension(:), pointer :: MACHINES
-    ! character(len=MachineNameLen), dimension(:), pointer :: MACHINENAMES
-    integer, intent(out)                                 :: L2Qtid
-    !
-    integer :: BUFFERID                 ! From PVM
-    character(len=16) :: DATESTRING
-    integer :: INDX
-    integer :: INFO                     ! From PVM
-    character(len=16) :: L2QSTRING
-    !
-    call pvmfgettid(GROUPNAME, 0, L2Qtid)
-    if ( L2Qtid < 1 ) then
-      call MLSMessage( MLSMSG_Error, ModuleName, &
-        & 'l2q queue manager not running--dead or not started yet?' )
-    else
-      write ( L2QSTRING, * ) L2QTID
-      call TimeStamp('Registering with l2q (l2qtid=' // &
-        & trim(L2QSTRING) // ')', advance='yes')
-    endif
-    call GetMachines ( machines )
-    ! Register ourselves with the l2 queue manager
-    ! Identify ourselves
-    call PVMFInitSend ( PvmDataDefault, bufferID )
-    call PVMF90Pack ( SIG_Register, info )
-    if ( info /= 0 ) &
-      & call PVMErrorMessage ( info, 'packing registration' )
-    call PVMF90Pack ( noChunks, info )
-    if ( info /= 0 ) &
-      & call PVMErrorMessage ( info, 'packing number of chunks' )
-    ! Now send our data date as a string
-    ! We might reasonably expect one of two formats for startUTC:
-    ! 1996-051T00:00:00.000000Z (using yyyy-dayofyear)
-    ! 2006-05-07T00:00:00.000000Z (using yyyy-month-dayofmonth)
-    ! (e.g., '2006d121')
-    indx = INDEX (L2PCF%startUTC, "T")
-    if ( indx > 0 ) then
-      if ( all( NAppearances(L2PCF%startUTC(1:indx-1), (/'-'/)) > 1 ) ) then
-        dateString = L2PCF%startUTC(1:indx-1) ! it was yyyy-month-dayofmonth
-      else
-        call ReplaceSubString ( L2PCF%startUTC(1:indx-1), dateString, &
-        & '-', 'd' )  ! it was yyyy-dayofyear
-      endif
-    else
-      dateString = '(unknown)'
-    endif
-    call PVMF90Pack ( dateString, info )
-    if ( info /= 0 ) &
-      & call PVMErrorMessage ( info, 'packing date' )
-    call PVMFSend ( L2Qtid, petitionTag, info )
-    ! call PVMF90Pack ( noChunks, info )
-    ! if ( info /= 0 ) &
-    !   & call PVMErrorMessage ( info, 'packing L2QTid' )
-    ! call PVMFSend ( L2Qtid, petitionTag, info )
-    if ( info /= 0 ) &
-      & call PVMErrorMessage ( info, 'sending finish packet' )
-  end subroutine RegisterWithL2Q
-
-  subroutine RequestMachineFromL2Q(L2Qtid, nextChunk, machineName)
-    !
-    ! request a free host from the l2 queue manager
-    integer, intent(in)                               :: L2Qtid
-    integer, intent(in)                               :: nextChunk
-    character(len=MACHINENAMELEN), intent(out)        :: MACHINENAME
-    !
-    integer :: BUFFERID                 ! From PVM
-    integer :: INFO                     ! From PVM
-    ! Identify ourselves
-    if ( switchDetail(switches,'l2q') > -1 ) &
-      & call TimeStamp('Requesting host from l2q', advance='yes')
-    call PVMFInitSend ( PvmDataDefault, bufferID )
-    call PVMF90Pack ( sig_requestHost, info )
-    if ( info /= 0 ) &
-      & call PVMErrorMessage ( info, 'packing registration' )
-    call PVMF90Pack ( nextChunk, info )
-    if ( info /= 0 ) &
-      & call PVMErrorMessage ( info, 'packing number of chunk' )
-    call PVMFSend ( L2Qtid, petitionTag, info )
-    if ( info /= 0 ) &
-      & call PVMErrorMessage ( info, 'sending finish packet' )
-    call ReceiveMachineFromL2Q(machineName)
-  end subroutine requestMachineFromL2Q
-
-  subroutine ReceiveMachineFromL2Q(machineName)
-    !
-    ! request a free host from the l2 queue manager
-    character(len=MACHINENAMELEN), intent(out)        :: MACHINENAME
-    !
-    integer :: BEAT
-    integer :: INFO                     ! From PVM
-    integer :: BUFFERIDRCV              ! From PVM
-    ! How many times to listen for queue manager's granting of request
-    ! (Setting NBEATS=0 means merely register the request with queue manager;
-    ! subsequent trips through master event loop will pick up message
-    ! when and if queue manager grants our request)
-    integer, parameter :: NBEATS = 0  ! 16   ! ~2x MAXNUMMASTERS  
-    ! Possibly a machine is free and the queue manager will
-    ! respond quickly
-    ! (This idea is tentative, however)
-    ! Now let's give queue manager a chance to receive our request
-    ! and deliberate a while (but not too long)
-    ! before giving up and going back to checking on our own slaves
-    
-    ! In fact this was a bad idea, or it turned out bad, anyway:
-    ! It slowed processing routine communication by the master to no more
-    ! than one message per NBEATS*delaytime, so long as the master was
-    ! hoping to hear from the queue manager. This meant between 3 and 4 seconds
-    ! between each signal being processed, so signals piled up in a huge
-    ! line waiting to be received and acted upon.
-    machineName = ' '
-    do beat = 1, max(NBEATS, 1)
-      call PVMFNRecv( -1, GRANTEDTAG, bufferIDRcv )
-      if ( bufferIDRcv < 0 ) then
-        call PVMErrorMessage ( info, "checking for Granted message" )
-      else if ( bufferIDRcv > 0 ) then
-        if ( switchDetail(switches,'l2q') > -1 ) &
-          & call TimeStamp('Weve been granted a host', advance='yes')
-        ! Granted us a machine
-        call PVMF90Unpack ( machineName, info )
-        if ( info /= 0 ) then
-          call PVMErrorMessage ( info, "unpacking machine name" )
-        endif
-        if ( len_trim(machineName) < 1 ) &
-          & call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'granted blank host name' )
-        return
-      else
-        if ( beat < max(NBEATS, 1)) call usleep ( parallel%delay )
-      endif
-    enddo
-    if ( switchDetail(switches,'l2q') > -1 .and. len_trim(machineName) > 0 ) &
-      & call TimeStamp('Received from l2q ' // trim(machineName), advance='yes')
-  end subroutine ReceiveMachineFromL2Q
-
+  ! -------------------------------------- TellL2QMachineDied --------------
   subroutine TellL2QMachineDied(machine, L2Qtid)
     type(machine_T), intent(in)                         :: machine
     integer, intent(in)                                 :: L2Qtid
@@ -1890,6 +1897,7 @@ contains ! ================================ Procedures ======================
     endif
   end subroutine TellL2QMachineDied
 
+  ! -------------------------------------- TellL2QMachineFinished --------------
   subroutine TellL2QMachineFinished(machineName, tid, L2Qtid, delay)
     character(len=*), intent(in)                        :: MACHINENAME
     integer, intent(in)                                 :: tid
@@ -1922,6 +1930,7 @@ contains ! ================================ Procedures ======================
       & call PVMErrorMessage ( info, 'sending finish packet' )
   end subroutine TellL2QMachineFinished
 
+  ! -------------------------------------- TellL2QMasterFinished --------------
   subroutine TellL2QMasterFinished(L2Qtid)
     integer, intent(in)                                 :: L2Qtid
     !
@@ -1938,6 +1947,7 @@ contains ! ================================ Procedures ======================
       & call PVMErrorMessage ( info, 'sending finish packet' )
   end subroutine TellL2QMasterFinished
 
+  ! -------------------------------------- ThankL2Q --------------
   subroutine ThankL2Q(machine, L2Qtid)
     type(machine_T), intent(in)         :: machine
     integer, intent(in)                 :: L2Qtid
@@ -1973,6 +1983,7 @@ contains ! ================================ Procedures ======================
     endif
   end subroutine ThankL2Q
 
+  ! -------------------------------------- Never used here --------------
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -1980,12 +1991,16 @@ contains ! ================================ Procedures ======================
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.90  2009/01/12 19:22:04  pwagner
+! Alphabetized procedures; shorten time to finish when told to give up
+!
 ! Revision 2.89  2008/06/12 22:28:27  pwagner
 ! Added options to print direct write timings
 !
