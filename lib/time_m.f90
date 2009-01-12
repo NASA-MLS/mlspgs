@@ -18,9 +18,55 @@ module TIME_M
 
   use dates_module, only: yyyymmdd_to_dai
   use MLSMessageModule, only: MLSMSG_Warning, MLSMessage
-  implicit NONE
+  implicit none
   private
 
+! === (start of toc) ===
+!     c o n t e n t s
+!     - - - - - - - -
+
+! retry_config_t          retry configuration type
+! time_config_t           time configuration type
+
+! init_retry              Initialize the retry mechanism
+! retry                   Engage retry mechanism that monitors iterations,
+!                         exception handling, or synchronizing events
+!     Example:
+!     Assume you want to keep calling home until you get a successful result "0"
+!     making a call each 2 seconds, and giving up after 100 tries
+!     call init_retry(SUCCESSFUL_RESULT=0)
+!     do
+!        call home(result)
+!        shall_i = retry(result, delay=2.0, max_retries=100)
+!        if ( shall_i /= try_again) exit
+!     enddo
+!     if ( shall_i /= RETRY_SUCCESS ) 
+!        call exception_handler ( shall_i )
+!     endif
+! set_starttime            Explicitly set start time in time_config_t
+!                            formatted as array of integer values returned 
+!                            by intrinsic date_and_time
+!                         (/ year,month,day,t-t_utc,hour,minutes,s,ms /)
+!                          E.g., input (/ -1, i=1,8 /) to make next call
+!                          to time_now return 0
+! time_now                 Returns time according to time_config: as
+!                          (1) Arbitrary units if cpu time
+!                          (2) s since midnight if wall clock time
+!                          (3) s since 1st call to time_now (so 1st returns 0)
+! wait                     Wait for supplied interval to elapse
+! === (end of toc) ===
+
+! === (start of api) ===
+! init_retry ( [int successful_result], [int failed_result] )
+! int retry ( int trial_value, [real delay], [int max_retries], &
+!   [real max_retrying_time] )
+! set_starttime ( real values(8) )
+! time_now ( float t, [int invalues(8)] )
+! wait ( float t, [int err] )
+!
+! Note:
+! float means either real or double precision types
+! === (end of api) ===
   public :: TIME_NOW, TIME_NOW_D, TIME_NOW_S, &
    & WAIT, RETRY, INIT_RETRY, &
    & TRY_AGAIN, RETRY_SUCCESS, TOO_MANY_RETRIES, &
@@ -41,9 +87,12 @@ module TIME_M
   type time_config_t
     integer, dimension(8) :: starttime = -1  ! Reset on first call to time_now
     integer          :: startdaysoff = 0
-    integer          :: time_divisor = 1  ! Divide by this before returning result
+    ! Divide by this before returning time_now or waiting
+    integer          :: time_divisor = 1  
     logical          :: use_wall_clock = .false.
+    logical          :: wait_means_sleep = .true.
     integer          :: wait_loop_limits = 100
+    logical          :: wallClockIsElapsedFromStart = .true. ! return 0 for 1st call
   end type time_config_t
 
   ! This is the retry configuration type
@@ -55,13 +104,14 @@ module TIME_M
     real    :: init_t0
   end type retry_config_t
 
+  integer, parameter :: MICROSPERS = 1000000 ! How many micros in a s
   integer, parameter :: SUCCESSFUL_DEFAULT = 0
   integer, parameter :: FAILED_DEFAULT = 999
   integer, parameter :: TRY_AGAIN = 1
   integer, parameter :: RETRY_SUCCESS = TRY_AGAIN - 1
   integer, parameter :: TOO_MANY_RETRIES = RETRY_SUCCESS - 1
   !                                              so first value is 0.0
-  logical, parameter :: WALLCLOCKISELAPSEDFROMSTART = .true.
+  ! logical, parameter :: WALLCLOCKISELAPSEDFROMSTART = .true.
 
   type(time_config_t), public, save :: time_config
   type(retry_config_t), public, save :: retry_config
@@ -213,11 +263,15 @@ contains
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module TIME_M
 
 !$Log$
+!Revision 2.9  2009/01/12 18:45:06  pwagner
+!Improved cofiguration; wait means sleep
+!
 !Revision 2.8  2005/09/22 23:36:34  pwagner
 !time_config and retry_config now hold config settings
 !
