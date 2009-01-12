@@ -1323,12 +1323,16 @@ contains
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module GriddedData
 
 !
 ! $Log$
+! Revision 2.54  2009/01/12 18:45:46  pwagner
+! Added print statement to not_used_here
+!
 ! Revision 2.53  2008/09/16 21:05:10  pwagner
 ! Improved dumps
 !
