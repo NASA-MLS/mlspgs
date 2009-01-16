@@ -245,12 +245,12 @@ contains
 
 ! Tangent point or bounce off the earth's surface
 
-    drad_dx = drad_dx + inc_rad_path(tan_pt+1) * w
+    if ( i_start <= tan_pt ) drad_dx = drad_dx + inc_rad_path(tan_pt+1) * w
 
 ! Same as above, but don't add in the zero-emission layer at the 
 ! tangent point or earth's surface
 
-    do i = tan_pt+2 , min(n_path,i_end)
+    do i = max(i_start,tan_pt+2) , min(n_path,i_end)
       w = w - d_delta_dx(i-1)
       drad_dx = drad_dx + inc_rad_path(i) * w
     end do
@@ -264,10 +264,14 @@ contains
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module SCRT_DN_M
 ! $Log$
+! Revision 2.12  2006/12/13 02:32:03  vsnyder
+! Drag the tangent point around instead of assuming it's the middle one
+!
 ! Revision 2.11  2005/11/21 22:57:27  vsnyder
 ! PFA derivatives stuff
 !
