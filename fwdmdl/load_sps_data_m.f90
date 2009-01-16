@@ -65,7 +65,7 @@ contains
     & Grids_x, h2o_ind, ext_ind, QtyStuffIn )
 
     use ForwardModelConfig, only: ForwardModelConfig_t, QtyStuff_T
-    use Molecules, only: l_extinction, l_extinctionv2, l_h2o
+    use Molecules, only: l_extinction, l_h2o
     use VectorsModule, only: VectorValue_T
 
     type (forwardModelConfig_T), intent(in) :: fwdModelConf
@@ -107,7 +107,13 @@ contains
 
     do mol = 1, no_mol
 
-      if ( .not. associated(qtyStuff(mol)%qty) ) cycle
+      if ( .not. associated(qtyStuff(mol)%qty) ) then
+        grids_x%l_f(mol) = grids_x%l_f(mol-1)
+        grids_x%l_p(mol) = grids_x%l_p(mol-1)
+        grids_x%l_v(mol) = grids_x%l_v(mol-1)
+        grids_x%l_z(mol) = grids_x%l_z(mol-1)
+        cycle
+      end if
 
       if ( .not. present(qtyStuffIn) ) then
         kk = FwdModelConf%molecules(mol)
@@ -186,7 +192,7 @@ contains
        call create_grids_2 ( grids_x )
 
        do ii=1, no_ang
-          qtyStuff%values => qty%values(1:max_ele,ii:ii)
+         qtyStuff%values => qty%values(1:max_ele,ii:ii)
          call fill_grids_2 ( grids_x, ii, qtyStuff, setDerivFlags )
        end do
 
@@ -516,6 +522,7 @@ contains
   subroutine Dump_Grids ( The_Grid, Name, Details )
   ! Dump The_Grid
 
+    use Constants, only: rad2deg
     use Dump_0, only: Dump
     use Output_M, only: Output
 
@@ -546,7 +553,7 @@ contains
       call dump ( the_grid%min_val, 'The_grid%Min_Val' )
       call dump ( the_grid%frq_basis, 'The_grid%Frq_Basis' )
       call dump ( the_grid%zet_basis, 'The_grid%Zet_Basis' )
-      call dump ( the_grid%phi_basis, 'The_grid%Phi_Basis' )
+      call dump ( rad2deg*the_grid%phi_basis, 'The_grid%Phi_Basis (degrees)' )
       if ( myDetails > 1 ) then
         call dump ( the_grid%values, 'The_grid%Values' )
         call dump ( the_grid%deriv_flags, 'The_grid%Deriv_Flags' )
@@ -562,10 +569,15 @@ contains
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module LOAD_SPS_DATA_M
+
 ! $Log$
+! Revision 2.71  2008/10/03 16:30:31  livesey
+! Added EXTINCTIONV2
+!
 ! Revision 2.70  2008/06/06 22:51:44  pwagner
 ! EssentiallyEqual moved to MLSFillValues
 !
