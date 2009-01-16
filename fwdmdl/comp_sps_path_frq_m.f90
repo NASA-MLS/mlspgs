@@ -22,8 +22,8 @@ module Comp_Sps_Path_Frq_m
        "$RCSfile$"
   private :: not_used_here
 !---------------------------------------------------------------------------
- contains
-!-----------------------------------------------------------------
+
+contains
 
 ! --------------------------------------------  Comp_Sps_Path_Frq  -----
   subroutine Comp_Sps_Path_Frq ( Grids_x, Frq, eta_zp, &
@@ -32,6 +32,7 @@ module Comp_Sps_Path_Frq_m
 ! Compute the SPS path
 
     use MLSCommon, only: RP, IP, R8
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
     use Get_Eta_Matrix_m, only: Get_Eta_Sparse
     use Load_sps_data_m, only: Grids_T
 
@@ -103,7 +104,7 @@ module Comp_Sps_Path_Frq_m
         do sv_zp = w_inda + 1, w_indb
           do sv_f = 1, n_f
             v_inda = v_inda + 1
-!           where ( do_calc_zp(:,sv_zp) )
+!           where ( do_calc_zp(:,sv_zp) ) ! multiply/add is cheaper than branch
             eta_fzp(:,v_inda) = eta_zp(:,sv_zp)
             sps_path(:,sps_i) = sps_path(:,sps_i) +  &
                              &  grids_x%values(v_inda) * eta_fzp(:,v_inda)
@@ -116,7 +117,11 @@ module Comp_Sps_Path_Frq_m
           end do ! sv_f
         end do ! sv_zp
 
-        if ( grids_x%lin_log(sps_i)) sps_path(:,sps_i) = EXP(sps_path(:,sps_i))
+        if ( grids_x%lin_log(sps_i)) then
+          if ( any(sps_path(:,sps_i) == 0.0) ) call MLSMessage ( MLSMSG_Warning, &
+            & moduleName, 'For log-lin species, log(sps_path) = 0.0 somewhere' )
+          sps_path(:,sps_i) = EXP(sps_path(:,sps_i))
+        end if
 
       ! n_f == 1 means qty%template%frequencyCoordinate == l_none, i.e.,
       ! sps_path is not frequency dependent.
@@ -496,11 +501,15 @@ module Comp_Sps_Path_Frq_m
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module Comp_Sps_Path_Frq_m
 !
 ! $Log$
+! Revision 2.27  2009/01/16 23:47:00  vsnyder
+! Give warning in log-lin case if log(some mixing ratio) is zero
+!
 ! Revision 2.26  2007/06/26 00:38:17  vsnyder
 ! Separate frq>1 and frq<1 cases
 !
