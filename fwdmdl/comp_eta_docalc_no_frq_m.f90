@@ -69,7 +69,7 @@ contains
     integer(ip) :: Sps_1, Sps_n, Sps_i
     integer(ip) :: My_Tan, P_inda, V_Inda, V_Indb, Z_inda, P_indb, Z_indb
 
-    real(rp) :: Eta_p(1:size(path_zeta), & ! == size(path_zeta)
+    real(rp) :: Eta_p(1:size(path_phi), &  ! size(path_phi) == size(path_zeta)
       & maxval(Grids_x%l_p(1:ubound(Grids_x%l_p,1))-Grids_x%l_p(0:ubound(Grids_x%l_p,1)-1)))
     real(rp) :: Eta_z(1:size(path_zeta), & ! == size(path_zeta)
       & maxval(Grids_x%l_z(1:ubound(Grids_x%l_z,1))-Grids_x%l_z(0:ubound(Grids_x%l_z,1)-1)))
@@ -171,6 +171,9 @@ contains
 end module Comp_Eta_Docalc_No_Frq_m
 
 ! $Log$
+! Revision 2.12  2009/01/16 23:47:47  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.11  2007/07/25 20:21:10  vsnyder
 ! Delete declarations for unused variables
 !
