@@ -1648,10 +1648,10 @@ contains ! =====     Public Procedures     =============================
       end if
     end if
     if ( qty%label /= 0 ) then
-      call output ( ' Vector quantity label = ' )
+      call output ( ', label = ' )
       call display_string ( qty%label )
     else
-      call output ( ' Vector quantity unlabeled ', advance='yes' )
+      call output ( ' unlabeled ', advance='yes' )
     end if
     if ( myDetails < -1 ) return
     call newLine
@@ -2595,6 +2595,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.137  2008/12/17 02:57:28  vsnyder
+! Dump template with vector quantity if details gt 1
+!
 ! Revision 2.136  2008/11/24 19:36:57  pwagner
 ! Improved comments, dumps; removed unused variables
 !
