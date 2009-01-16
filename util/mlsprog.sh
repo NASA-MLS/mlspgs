@@ -70,7 +70,16 @@ extant_files()
 #****************************************************************
 #
 
+echo "We were called as $0 $@"
 NORMAL_STATUS=2
+
+# If the first arguments is "-Ef" then source the file of environment settings"
+if [ "$1" = "-Ef" ]
+then
+  shift
+  . $1
+  shift
+fi
 # Use the following line to add extra options to MLSPROG
 EXTRA_OPTIONS=mlseexxttrraa
 
@@ -83,12 +92,26 @@ MLSHOME=mlshhoommee
 GZIPLEVEL="1"
 #          ^^^---- compression level ("" means none)
 
+# The following environmental variable may already have been set
+if [ "$PGSMEM_USESHM" = "" ]
+then
+  PGSMEM_USESHM=NO
+fi
+ulimit -s unlimited
+ulimit -a
+export FLIB_DVT_BUFFER=0
 # Does MLSBIN start with "/" or not?
 # (in other words is it absolute or relative?)
 
 is_absolute=`echo "$MLSBIN" | grep '^\/'`
 
-if [ "$is_absolute" = "" ]
+if [ "$PGE_BINARY_DIR" != "" ]
+then
+   echo $PGE_BINARY_DIR/$MLSPROG $EXTRA_OPTIONS "$@"
+   $PGE_BINARY_DIR/$MLSPROG $EXTRA_OPTIONS "$@"
+   return_status=`expr $?`
+   H5REPACK=$PGE_BINARY_DIR/h5repack
+elif [ "$is_absolute" = "" ]
 then
    echo $MLSHOME/$MLSBIN/$MLSPROG $EXTRA_OPTIONS "$@"
    $MLSHOME/$MLSBIN/$MLSPROG $EXTRA_OPTIONS "$@"
@@ -141,6 +164,9 @@ else
 fi
 
 # $Log$
+# Revision 1.6  2008/09/09 16:55:48  pwagner
+# May h5repack even products in outputs subdirectory
+#
 # Revision 1.5  2006/04/12 22:39:24  pwagner
 # Needed to define H5REPACK before its use
 #
