@@ -9,10 +9,11 @@
 #       * Special value expanded into all standard species *
 # Special notes on species names:
 # (1) If str1 is StdProd it is expanded into the current standard products
-# (2) If str1 is L2FWM-.. it is expanded into the appropriate l2fwm files
-# (3) If str1 is L2AUX-.. it is expanded into the appropriate l2aux files
 # i.e.,  
 # BrO CH3CN ClO CO GPH H2O HCl HCN HNO3 HO2 HOCl IWC N2O O3 OH RHI Temperature
+# (2) If str1 is L2FWM-.. it is expanded into the appropriate l2fwm files
+# (3) If str1 is L2AUX-.. it is expanded into the appropriate l2aux files
+# (4) If str1 is all it is expanded into all hdf5 files with .h5 or .he5 suffixes
 
 #     O p t i o n s
 #    -dryrun              Merely echo the commands that would be executed
@@ -95,6 +96,7 @@ reecho="`echo $0 | sed 's/'$I'/reecho/'`"
 h5repack_opts=""
 list=""
 cycle=""
+doall="no"
 dryrun="no"
 more_opts="yes"
 more_strs="yes"
@@ -166,14 +168,20 @@ while [ "$more_strs" = "yes" ] ; do
     esac
 done
 
+dir1="$1"
+dir2="$2"
+
 if [ "$list" = "" ]
 then
   sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
       | sed -n 's/^.//p' | sed '1 d; $ d'
   exit
+elif [ "$list" = "all" ]
+then
+    extant_files $dir1/*.h5 $dir1/*.he5
+    list="$extant_files_result"
+    doall="yes"
 fi
-dir1="$1"
-dir2="$2"
 
 if [ "$GZIPLEVEL" != "" ]
 then
@@ -213,7 +221,10 @@ do
   l2fwm=`echo $i | grep -i l2fwm`
   # echo "l2aux $l2aux"
   # echo "l2fwm $l2fwm"
-  if [ "$l2fwm" != "" ]
+  if [ "$doall" = "yes" ]
+  then
+    extant_files_result="$i"
+  elif [ "$l2fwm" != "" ]
   then
     # echo $dir1/MLS-Aura_${i}_*c${cycle}*.h5
     extant_files $dir1/MLS-Aura_${i}_*c${cycle}*.h5
@@ -255,3 +266,6 @@ do
 done
 
 # $Log$
+# Revision 1.1  2006/03/23 19:28:49  pwagner
+# First commit
+#
