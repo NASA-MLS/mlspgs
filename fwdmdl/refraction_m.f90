@@ -335,8 +335,6 @@ contains
 
     ref_corr(1:no_ele) = 1.0_rp
 
-    Del_s = 0.0
-
     htan2 = ht * ht
     Nt2Ht2 = (n_path(tan_pt)*ht)**2
 
@@ -344,6 +342,7 @@ contains
 
     j1 = tan_pt
     j2 = 2
+    del_s(1) = 0.0
     do m = -1, 1, 2
       h2 = h_path(j1)
       n2 = n_path(j1)
@@ -428,6 +427,7 @@ contains
 
       j1 = tan_pt + 1
       j2 = no_ele - 1
+      del_s(no_ele) = 0.0
     end do ! m
 
     if ( bad ) then
@@ -604,11 +604,15 @@ contains
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module REFRACTION_M
 
 ! $Log$
+! Revision 2.35  2007/10/30 20:52:26  vsnyder
+! Change diagnostic output criteria
+!
 ! Revision 2.34  2007/10/02 22:35:17  vsnyder
 ! Cannonball polishing
 !
