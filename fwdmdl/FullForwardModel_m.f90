@@ -2845,7 +2845,7 @@ contains
         do_calc_hyd_c(1:npc,:) = do_calc_hyd(c_inds,:)
         do_calc_t_c(1:npc,:) = do_calc_t(c_inds,:)
         eta_zxp_t_c(1:npc,:) = eta_zxp_t(c_inds,:)
-        call select_nz_list ( nz_zxp_t, nnz_zxp_t, c_inds, nz_zxp_t_c, nnz_zxp_t_c )
+        call select_nz_list ( nz_zxp_t, nnz_zxp_t, c_inds, 1, nz_zxp_t_c, nnz_zxp_t_c )
         t_der_path_flags(1:npf) = any(do_calc_t(1:npf,:),2)
       else
         call more_metrics ( tan_ind_f, tan_pt_f, Grids_tmp%phi_basis,    &
@@ -3351,6 +3351,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.290  2008/10/03 16:27:14  livesey
+! Pushed down LO to support EXTINCTIONV2
+!
 ! Revision 2.289  2008/06/26 00:28:03  vsnyder
 ! Simplify call to Compute_Z_PSIG.  Simplify some stuff.  Correct a bug:
 ! If H-PHI iteration doesn't converge and no new zeta is added, z_ig isn't
