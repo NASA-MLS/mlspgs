@@ -16,11 +16,11 @@ begin Construct
   ;; -- standard log vGrid --
   !define(allLogMolecules,{H2O})
   ;; -- hid-res linear vGrid --
-  !define(allLinearHRMolecules,{O3,CO})
+  !define(allLinearHRMolecules,{CO})
   ;; -- hid-res log vGrid --
   !define(allLogHRMolecules,{H2O})
   ;; -- O3 has its own vGrid --
-  !define(O3Molecule,{O3, O3_R3})
+  !define(O3Molecule,{O3,O3_HR})
   ;; -- OH has its own vGrid --
   !define(OHMolecule,{OH})
 
@@ -87,10 +87,9 @@ begin Construct
   !forall( {constructHiResLinearVMR}, !allLinearHRMolecules)
   !forall( {constructHiResLogVMR}, !allLogHRMolecules)
 
-  ;; ----------------------------------------- O3_R3
-  O3_R3: Quantity, vGrid=vGridHiRes, hGrid=hGridStandard, type=vmr, $
-    molecule=O3
-
+  ;; ----------------------------------------- O3_HR
+  o3_hr: Quantity, vGrid=vGridHiRes, hGrid=hGridStandard, type=vmr, $
+    molecule=o3
   ;; ----------------------------------------- RHI
   rhi: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=rhi, $
     molecule=h2o

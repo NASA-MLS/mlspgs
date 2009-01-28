@@ -6,7 +6,7 @@
 ; and so we'll need to know the last one
 !define(retrophase,{!phase})
 
-!ifdef(flagHiResO3inCPR3,{!define(O3StdProd,O3_R3)},{!define(O3StdProd,O3)})
+!ifdef(flagHiResO3inCPR3,{!define(O3StdProd,O3_HR)},{!define(O3StdProd,O3)})
 
 !divert!dnl
 ; This l2cf fragment does all the quality flagging for the Core+R3
@@ -52,6 +52,9 @@ begin Fill
 end Fill
 
 ; $Log$
+; Revision 1.15  2008/10/07 18:11:49  pwagner
+; O3StdProd may be changed to O3_R3
+;
 ; Revision 1.14  2006/10/13 22:13:27  dwu
 ; change high cloud chisq threshold from 10 to 30
 ;
