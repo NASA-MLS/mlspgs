@@ -254,7 +254,7 @@ Fill, quantity=apriori.refGPH,$
   !define(interpolateToHiRes,{Fill, quantity=$1, sourceQuantity=!TrimLast3($1),!dnl
      method=vector, /interpolate!nl})
   !interpolateToHiRes(aprioriPrecision.temperature_HR)
-  !interpolateToHiRes(aprioriPrecision.o3_r3)
+  !interpolateToHiRes(aprioriPrecision.o3_HR)
   !forall(interpolateToHiRes,!makelist(aprioriPrecision.,{},!allHiResMolecules))
 
   ;; Get RHI_HR from RHI.  Not sure if this should really be from
@@ -429,8 +429,8 @@ Fill, quantity=apriori.refGPH,$
 
   !interpolateToHiRes(lowBound.temperature_HR)
   !interpolateToHiRes(highBound.temperature_HR)
-  !interpolateToHiRes(lowBound.o3_r3)
-  !interpolateToHiRes(highBound.o3_r3)
+  !interpolateToHiRes(lowBound.o3_HR)
+  !interpolateToHiRes(highBound.o3_HR)
   !forall(interpolateToHiRes,!makelist(lowBound.,{},!allHiResMolecules))
   !forall(interpolateToHiRes,!makelist(highBound.,{},!allHiResMolecules))
 
@@ -506,7 +506,7 @@ Fill, quantity=apriori.refGPH,$
     profileValues= [ 200mb:0.2ppmv, 100mb:0.5ppmv, 0.1mb:1ppmv, 0.046mb:0ppmv ]
   Fill, quantity=vReg.o3_HR, method=profile, $
     profileValues=[ 10mb:0.2ppmv ]
-  Fill, quantity=vReg.o3_r3, method=profile, $
+  Fill, quantity=vReg.o3_HR, method=profile, $
     profileValues=[ 10mb:0.2ppmv ]
 
   Fill, quantity=vReg.oh, method=profile, $
@@ -583,7 +583,7 @@ Fill, quantity=apriori.refGPH,$
     profileValues= [ 146mb:30ppbv, 100mb:0.3ppmv, 0.1mb:0.3ppmv, 0.046mb:0ppmv ]
   Fill, quantity=hReg.o3_HR, method=profile, $
     profileValues= [ 10mb:0.2ppmv ]
-  Fill, quantity=hReg.o3_r3, method=profile, $
+  Fill, quantity=hReg.o3_HR, method=profile, $
     profileValues= [ 10mb:0.2ppmv ]
 
   Fill, quantity=hReg.oh, method=profile, $
@@ -632,6 +632,9 @@ begin Join
 end Join
   })
 ;$Log$
+;Revision 1.134  2008/10/07 18:12:29  pwagner
+;Added O3_R3
+;
 ;Revision 1.133  2008/08/22 17:16:31  pwagner
 ;Reduced smoothing of water vapor at 0.1mb
 ;
