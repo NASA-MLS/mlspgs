@@ -26,6 +26,7 @@ module Chunks_m
   ! This datatype defines the `chunks' into which the input dataset is split
 
   type MLSChunk_T
+    logical :: abandoned = .false. ! Did we abandon this chunk's retrieval?
     integer :: firstMAFIndex   ! Index of first MAF in the chunk
     integer :: lastMAFIndex    ! Index of last MAF in the chunk
     integer :: noMAFsLowerOverlap ! Number of MAFs in the lower overlap region
@@ -89,11 +90,15 @@ contains ! =====     Private Procedures     ============================
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module Chunks_m
 
 ! $Log$
+! Revision 2.4  2009/02/03 17:58:38  pwagner
+! Added the abandoned field
+!
 ! Revision 2.3  2005/09/21 23:22:42  pwagner
 ! Dump may dump a single chunk
 !
