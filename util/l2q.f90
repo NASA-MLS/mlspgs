@@ -1132,7 +1132,7 @@ contains
           else
             call timestamp ( 'killing master ' // &
               & trim(masters(Ids(i))%name), advance='yes' )
-            if ( options%verbose ) call dump(masters(Ids(i)))
+            if ( options%verbose ) call dump_Master( masters(Ids(i)) )
             call PVMFSend ( masters(Ids(i))%tid, giveUpTag, info )
             masters(mastersID)%needs_host = .false. ! So we don't assign it hosts
           endif
@@ -2339,6 +2339,9 @@ contains
 end program L2Q
 
 ! $Log$
+! Revision 1.23  2008/06/17 00:03:13  pwagner
+! More tweaking, less freezing
+!
 ! Revision 1.22  2007/09/06 23:37:36  pwagner
 ! Delay before forcibly killing slaves is masters responsibility, not ours
 !
