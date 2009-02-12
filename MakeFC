@@ -573,6 +573,9 @@ install:
 	if [ ! -d $(INSTALLDIR) ] ; then \
 	   $(MLSBIN)/mkpath.sh $(INSTALLDIR) ; \
 	fi ; \
+	if [ license.txt ] ; then \
+	   cp license.txt $(INSTALLDIR) ; \
+	fi ; \
 	for dir in $(LEVELS); do \
 	case "$$dir" in \
 	"l1") \
@@ -602,7 +605,7 @@ install:
             rm -f $(INSTALLDIR)/mls$$dir.sh ; \
 	         sed "s=mlsxxyyzz=mls$$dir=; s=mlsbbiinn=$(INSTALLDIR)=; \
               s=mlshhoommee=$(MLSHOME)=; s=mlseexxttrraa==; \
-              s=rreeggeexx=\*L2FWM\*.h5 \*L2GP-[A-CE-Z]\*.he5 \*L2GP-DGG_\*.he5 \*L2AUX-[A-C]\*.h5 \*L2AUX-DGM_\*.h5=" \
+              s=rreeggeexx=\*L2FWM\*.h5 \*L2GP-[A-CE-Z]\*.he5 \*L2GP-DGG_\*.he5 \*L2AUX-[A-C]\*.h5 \*L2AUX-DGM_\*.h5 \*MTX\*.h5=" \
               $(MLSBIN)/mlsprog.sh > $(INSTALLDIR)/mls$$dir.sh ; \
             cp -a $(MLSBIN)/mlsl2pntk.sh $(INSTALLDIR); \
             chmod a+x $(INSTALLDIR)/mls$$dir.sh $(INSTALLDIR)/mlsl2pntk.sh ; \
@@ -1179,6 +1182,9 @@ tools: chunktimes checkpvmup compare dateconverter heconvert h5subset h5cat hl \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.111  2008/06/27 17:00:22  pwagner
+# Worked around Intel refusal to link when main program in c
+#
 # Revision 1.110  2008/05/22 17:36:07  pwagner
 # Added build commands for wrapLines, Mie_Tables
 #
