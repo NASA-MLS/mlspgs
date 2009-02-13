@@ -99,6 +99,12 @@ export FLIB_DVT_BUFFER=0
 
 NORMAL_STATUS=2
 
+# We print the file license.txt to stdout
+if [ -f $LEVEL2_BINARY_DIR/license.txt ]
+then
+  cat $LEVEL2_BINARY_DIR/license.txt
+fi
+
 env
 ulimit -s unlimited
 ulimit -a
@@ -210,3 +216,6 @@ else
 fi
 
 # $Log$
+# Revision 1.1  2008/01/25 18:24:55  pwagner
+# First commit
+#

@@ -153,6 +153,12 @@ then
   masterlog="$MASTERLOG"
 fi
 
+# We print the file license.txt to stdout
+if [ -f $PGE_BINARY_DIR/license.txt ]
+then
+  cat $PGE_BINARY_DIR/license.txt
+fi
+
 # The logs will be written as separate files into ${JOBDIR}/pvmlog
 # before being catenated at end of run
 # Make certain this directory exists and that it is empty
@@ -300,6 +306,9 @@ else
 fi
 
 # $Log$
+# Revision 1.18  2008/07/11 20:20:18  pwagner
+# Fixed bugs regarding products in outputs subdirectory
+#
 # Revision 1.17  2008/07/10 17:39:50  pwagner
 # Handle case when product files are in outputs subdirectory
 #

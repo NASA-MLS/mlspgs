@@ -66,12 +66,21 @@ MLSHOME=mlshhoommee
 
 is_absolute=`echo "$MLSBIN" | grep '^\/'`
 
+# We print the file license.txt to stdout
 if [ "$is_absolute" = "" ]
 then
    echo $MLSHOME/$MLSBIN/$MLSPROG_0 $EXTRA_OPTIONS "$@"
+   if [ -f $MLSHOME/$MLSBIN/license.txt ]
+   then
+     cat $MLSHOME/$MLSBIN/license.txt
+   fi
    $MLSHOME/$MLSBIN/$MLSPROG_0 $EXTRA_OPTIONS "$@"
 else
    echo $MLSBIN/$MLSPROG_0 $EXTRA_OPTIONS "$@"
+   if [ -f $MLSBIN/license.txt ]
+   then
+     cat $MLSBIN/license.txt
+   fi
    $MLSBIN/$MLSPROG_0 $EXTRA_OPTIONS "$@"
 fi
 
@@ -184,6 +193,9 @@ else
 fi
 
 # $Log$
+# Revision 1.9  2006/04/03 23:11:07  pwagner
+# Repack only files with write access
+#
 # Revision 1.8  2006/04/03 22:14:41  pwagner
 # Fixed serious syntax errors, oyther bugs
 #

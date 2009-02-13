@@ -108,17 +108,29 @@ is_absolute=`echo "$MLSBIN" | grep '^\/'`
 if [ "$PGE_BINARY_DIR" != "" ]
 then
    echo $PGE_BINARY_DIR/$MLSPROG $EXTRA_OPTIONS "$@"
+   if [ -f $PGE_BINARY_DIR/license.txt ]
+   then
+     cat $PGE_BINARY_DIR/license.txt
+   fi
    $PGE_BINARY_DIR/$MLSPROG $EXTRA_OPTIONS "$@"
    return_status=`expr $?`
    H5REPACK=$PGE_BINARY_DIR/h5repack
 elif [ "$is_absolute" = "" ]
 then
    echo $MLSHOME/$MLSBIN/$MLSPROG $EXTRA_OPTIONS "$@"
+   if [ -f $MLSHOME/$MLSBIN/license.txt ]
+   then
+     cat $MLSHOME/$MLSBIN/license.txt
+   fi
    $MLSHOME/$MLSBIN/$MLSPROG $EXTRA_OPTIONS "$@"
    return_status=`expr $?`
    H5REPACK=$MLSHOME/$MLSBIN/h5repack
 else
    echo $MLSBIN/$MLSPROG $EXTRA_OPTIONS "$@"
+   if [ -f $MLSBIN/license.txt ]
+   then
+     cat $MLSBIN/license.txt
+   fi
    $MLSBIN/$MLSPROG $EXTRA_OPTIONS "$@"
    return_status=`expr $?`
    H5REPACK=$MLSBIN/h5repack
@@ -164,6 +176,9 @@ else
 fi
 
 # $Log$
+# Revision 1.7  2009/01/16 01:51:39  pwagner
+# Takes -Ef settings.env as optional args
+#
 # Revision 1.6  2008/09/09 16:55:48  pwagner
 # May h5repack even products in outputs subdirectory
 #
