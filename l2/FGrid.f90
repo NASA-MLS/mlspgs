@@ -18,8 +18,8 @@ module FGrid                    ! Frequency grid information
     & L_CHANNEL, LIT_INDICES
   use Init_tables_module, only: F_Coordinate, F_Values
   use MLSCommon, only: r8
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
-    & MLSMSG_Deallocate
+  use MLSMessageModule, only: MLSMessage, &
+    & MLSMSG_Allocate, MLSMSG_Deallocate, MLSMSG_Error, MLSMSG_Warning
   use Output_M, only: Output
   use STRING_TABLE, only: DISPLAY_STRING
   use Tree, only: DECORATION, NSONS, SUBTREE
@@ -112,8 +112,8 @@ contains ! ===================================== Public procedures =====
         end do
       end select
     end do
-    if ( fGrid%frequencyCoordinate == l_channel ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Cannot actually use channel as fGrid coordinate' )
+    if ( fGrid%frequencyCoordinate == l_channel ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      & 'Did you mean to use channel as fGrid coordinate?' )
 
     ! Because the parser does such a great job, that's all we need to do here!
   end function CreateFGridFromMLSCFInfo
@@ -212,6 +212,9 @@ contains ! ===================================== Public procedures =====
 end module FGrid
 
 ! $Log$
+! Revision 2.10  2009/03/05 16:20:17  pwagner
+! May now use channel as FGrid coordinate
+!
 ! Revision 2.9  2005/06/22 18:57:01  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
