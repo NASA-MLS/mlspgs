@@ -463,7 +463,7 @@ contains ! =====     Public Procedures     =============================
 
     !=============================================== ExplicitFillVectorQuantity ==
     subroutine ExplicitFillVectorQuantity ( quantity, valuesNode, spreadFlag, &
-      & globalUnit, dontmask, &
+      & globalUnit, dontmask, channel, heightNode, &
       & AzEl, options, FillValue )
 
       ! This routine is called from MLSL2Fill to fill values from an explicit
@@ -475,6 +475,8 @@ contains ! =====     Public Procedures     =============================
       logical, intent(in) :: SPREADFLAG   ! One instance given, spread to all
       integer, intent(in) :: GLOBALUNIT   ! From parent vector
       logical, intent(in) :: DONTMASK     ! Don't bother with the mask
+      integer, intent(in) :: CHANNEL      ! Fill specified channel?
+      integer, intent(in) :: HEIGHTNODE   ! Fill specified height?
       logical, intent(in), optional :: AzEl ! Values are in [Mag, Az, El]; the
         ! desired quantity is components of Mag in the coordinate system to
         ! which Az and El are referenced.  So the number of values has to be
@@ -491,12 +493,17 @@ contains ! =====     Public Procedures     =============================
       real(r8), intent(in), optional :: FillValue
 
       ! Local variables
+      integer :: chan
+      real(r8) :: HEIGHT                ! The height to consider
       integer :: K                        ! Loop counter
       integer :: I,J                      ! Other indices
       logical :: MyAzEl
       real(kind(quantity%values)) :: myFillValue
       character (len=8) :: myOptions
       integer :: NoValues
+      integer :: numChans
+      integer :: surf
+      integer :: surface
       integer :: TestUnit                 ! Unit to use
       integer, dimension(2) :: unitAsArray ! Unit for value given
       real (r8), pointer, dimension(:) :: VALUES
@@ -583,21 +590,60 @@ contains ! =====     Public Procedures     =============================
         call output(values)
         call newline
       end if
+      ! Work out the height
+      if ( heightNode /= 0 ) then
+        if ( nsons ( heightNode ) /= 2 ) call Announce_Error ( heightNode, no_error_code, &
+          & 'Only one height can be supplied for status fill' )
+        if ( Quantity%template%verticalCoordinate /= l_zeta ) &
+          & call Announce_Error ( heightNode, no_error_code, 'Bad vertical coordinate for sourceQuantity' )
+        call expr_check ( subtree(2,heightNode) , unitAsArray, valueAsArray, &
+          & (/PHYQ_Pressure/), unitsError )
+        if ( unitsError ) call Announce_error ( heightNode, wrongUnits, &
+          & extraInfo=(/unitAsArray(1), PHYQ_Pressure/) )
+        height = - log10 ( valueAsArray(1) )
+        call Hunt ( Quantity%template%surfs(:,1), height, surface, nearest=.true. )
+        call outputNamedValue( 'height', height )
+        call dump( Quantity%template%surfs(:,1), 'surfs' )
+        call outputNamedValue( 'surface', surface )
+        call outputNamedValue( 'surfs(surface)', Quantity%template%surfs(surface, 1) )
+      endif
+      numChans = quantity%template%instanceLen / quantity%template%noSurfs
+      if ( numChans /= quantity%template%noChans ) then
+        call outputNamedValue( 'noSurfs', quantity%template%noSurfs )
+        call outputNamedValue( 'noChans', quantity%template%noChans )
+        call outputNamedValue( 'numChans', numChans )
+        call outputNamedValue( 'instanceLen', quantity%template%instanceLen )
+        call announce_error ( heightNode, no_Error_Code, &
+          & 'Inconsistent template instance length' )
+      endif
       ! Now loop through the quantity
       k = 0
       do i = 1, quantity%template%noInstances
-        do j = 1, quantity%template%instanceLen
-          k = k + 1
-          if ( .not. dontMask .and. associated ( quantity%mask ) ) then
-            if ( iand ( ichar(quantity%mask(j,i)), m_Fill ) /= 0 ) cycle
-          end if
-          select case (whichToReplace)
-          case ('/=')
-            if ( quantity%values(j,i) == myFillValue ) cycle
-          case ('==')
-            if ( quantity%values(j,i) /= myFillValue ) cycle
-          end select
-          quantity%values(j,i) = values ( mod ( k-1, noValues ) + 1 )
+        ! do j = 1, quantity%template%instanceLen
+        j = 0
+        do surf = 1, quantity%template%noSurfs
+          ! Have we specified which height to fill?
+          do chan = 1, numChans
+            j = j + 1
+            k = k + 1
+            if ( heightNode /= 0 ) then
+              if ( surface /= surf ) cycle
+            endif
+            if ( .not. dontMask .and. associated ( quantity%mask ) ) then
+              if ( iand ( ichar(quantity%mask(j,i)), m_Fill ) /= 0 ) cycle
+            end if
+            select case (whichToReplace)
+            case ('/=')
+              if ( quantity%values(j,i) == myFillValue ) cycle
+            case ('==')
+              if ( quantity%values(j,i) /= myFillValue ) cycle
+            end select
+            ! Have we specified which channel to fill?
+            if ( channel /= 0 ) then
+              if ( channel /= chan ) cycle
+            endif
+            quantity%values(j,i) = values ( mod ( k-1, noValues ) + 1 )
+          end do
         end do
       end do
 
@@ -5245,26 +5291,28 @@ contains ! =====     Public Procedures     =============================
 
     ! -------------------------------------------- FillStatusQuantity --------
     subroutine FillStatusQuantity ( key, quantity, sourceQuantity, statusValue, &
-      & minValue, maxValue, heightNode, additional )
+      & minValue, maxValue, heightNode, additional, force )
       integer, intent(in) :: KEY        ! Tree node
       type ( VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
-      type ( VectorValue_T), intent(in) :: SOURCEQUANTITY ! Chisq like quantity on which it's based
+      type ( VectorValue_T), intent(in) :: SOURCEQUANTITY ! Quantity on which it's based
       integer, intent(in) :: STATUSVALUE
       real(r8), intent(in) :: MINVALUE     ! A scale factor
       real(r8), intent(in) :: MAXVALUE     ! A scale factor
       integer, intent(in) :: HEIGHTNODE ! What heights
       logical, intent(in) :: ADDITIONAL ! Is this an additional flag or a fresh start?
+      logical, intent(in) :: FORCE ! May pound round pegs into square holes?
       ! Local variables
-      integer, dimension(2) :: UNITASARRAY ! From expr
-      real(r8), dimension(2) :: VALUEASARRAY ! From expr
       real(r8) :: HEIGHT                ! The height to consider
       integer :: SURFACE                ! Surface index
+      integer, dimension(2) :: UNITASARRAY ! From expr
+      real(r8), dimension(2) :: VALUEASARRAY ! From expr
       ! Executable code
       call MLSMessageCalls( 'push', constantName='FillStatusQuantity' )
       ! Do some sanity checking
       if ( quantity%template%quantityType /= l_status ) call Announce_error ( key, no_error_code, &
         & 'Quality quantity must be quality' )
-      if ( .not. DoHGridsMatch ( quantity, sourceQuantity ) ) call Announce_error ( &
+      if ( .not. ( force .or. DoHGridsMatch ( quantity, sourceQuantity ) ) ) &
+        & call Announce_error ( &
         & key, no_error_code, 'quantity and sourceQuantity do not have matching hGrids' )
 
       ! Work out the height
@@ -5283,10 +5331,15 @@ contains ! =====     Public Procedures     =============================
         surface = 1
       end if
       if ( .not. additional ) quantity%values = 0.0_r8
+      if ( size(sourceQuantity%values, 2) /= size(quantity%values, 2) ) then
+        if ( sourceQuantity%values(surface,1) > maxValue .or. sourceQuantity%values(surface,1) < minValue ) &
+          & quantity%values(1,:) = ior ( nint ( quantity%values(1,1) ), statusValue )
+      else
         ! quantity%values = iand ( nint ( quantity%values ), not ( statusValue ) )
-      where ( sourceQuantity%values(surface,:) > maxValue .or. sourceQuantity%values(surface,:) < minValue )
-        quantity%values(1,:) = ior ( nint ( quantity%values(1,:) ), statusValue )
-      end where
+        where ( sourceQuantity%values(surface,:) > maxValue .or. sourceQuantity%values(surface,:) < minValue )
+          quantity%values(1,:) = ior ( nint ( quantity%values(1,:) ), statusValue )
+        end where
+      endif
       call MLSMessageCalls( 'pop' )
     end subroutine FillStatusQuantity
 
@@ -6615,6 +6668,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.15  2009/03/05 18:38:32  pwagner
+! May specifiy height, channel with explicit Fill
+!
 ! Revision 2.14  2008/10/15 16:37:28  pwagner
 ! Let precisions explicitly set negative also mask radiances
 !
