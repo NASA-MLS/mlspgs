@@ -67,7 +67,7 @@ contains
       & AddDirectToDatabase, Dump, SetupNewDirect
     use DumpCommand_m, only: DumpCommand
     use EmpiricalGeometry, only: INITEMPIRICALGEOMETRY
-    use FGrid, only: AddFGridToDatabase, CreateFGridFromMLSCFInfo, FGrid_T
+    use FGrid, only: AddFGridToDatabase, CreateFGridFromMLSCFInfo, DUMP, FGrid_T
     use ForwardModelConfig, only: AddForwardModelConfigToDatabase, Dump, &
       & ForwardModelConfig_T
     use ForwardModelSupport, only: ConstructForwardModelConfig, &
@@ -200,18 +200,6 @@ contains
       call MLSMessageCalls( 'push', constantName=ModuleName )
     endif
 
-! The following tries to convert a switch like glo[n]
-! into the numerical value (n-3)
-!     i = index(switches, 'glo')
-!     if ( i /= 0 ) then
-!       if ( switches(i+3:i+3) >= '0' .and. switches(i+3:i+3) <= '9' ) then
-!         details = iachar(switches(i+3:i+3)) - iachar('0') - 2
-!       else
-!         details = -3
-!       end if
-!     else
-!       details = -4
-!     end if
     Details = switchDetail(switches, 'glo') - 3
 
     DetailReduction = switchDetail(switches, 'red')
@@ -337,6 +325,8 @@ contains
         case ( s_fgrid )
           call decorate ( son, AddFGridToDatabase ( fGrids, &
             & CreateFGridFromMLSCFInfo ( name, son ) ) )
+          if ( switchDetail(switches, 'fgrid') > -1 ) &
+            & call dump( fgrids(size(fGrids) ) )
         case ( s_forwardModelGlobal ) !??? Begin temporary stuff for l2load
           if ( stopEarly .or. &
             & ( checkPaths .and. .not. CHECKL2PCMONTHCORRECT ) ) cycle
@@ -1010,6 +1000,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.130  2008/12/18 21:13:46  pwagner
+! May now dump an l2pc or allL2PCs (use with caution)
+!
 ! Revision 2.129  2008/08/27 20:00:59  vsnyder
 ! Add PRINT to not_used_here
 !
