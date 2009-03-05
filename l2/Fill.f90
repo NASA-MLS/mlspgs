@@ -556,6 +556,7 @@ contains ! =====     Public Procedures     =============================
       allowMissing = .false.
       boxCarMethod = l_mean
       c = 0.
+      centerVertically = .false.
       channel = 0
       colmabunits = l_molcm2 ! default units for column abundances
       dontMask = .false.
@@ -563,11 +564,10 @@ contains ! =====     Public Procedures     =============================
       dontSumInstances = .false.
       excludeBelowBottom = .false.
       extinction = .false.
-      centerVertically = .false.
       force = .false.
       fromPrecision = .false.
       got= .false.
-      MissingGMAO = .false.
+      heightNode = 0
       ignoreZero = .false.
       ignoreNegative = .false.
       ignoreGeolocation = .false.
@@ -578,6 +578,7 @@ contains ! =====     Public Procedures     =============================
       maxValueUnit = 0
       minValue = -huge(0.0_r8)
       minValueUnit = 0
+      MissingGMAO = .false.
       logSpace = .false.
       resetSeed = .false.
       refract = .false.
@@ -599,7 +600,6 @@ contains ! =====     Public Procedures     =============================
       quadrature = .false.
       skipFill = .false.
       statusValue = 0
-      heightNode = 0
       whereFill = .false.
       whereNotFill = .false.
 
@@ -1538,7 +1538,7 @@ contains ! =====     Public Procedures     =============================
         if ( .not. got(f_explicitValues) ) &
           & call Announce_Error ( key, noExplicitValuesGiven )
         call ExplicitFillVectorQuantity ( quantity, valuesNode, spreadFlag, &
-          & vectors(vectorIndex)%globalUnit, dontmask )
+          & vectors(vectorIndex)%globalUnit, dontmask, channel, heightNode )
 
       case ( l_extractChannel )
         if ( .not. all(got ( (/f_sourceQuantity,f_channel/)))) &
@@ -1573,6 +1573,9 @@ contains ! =====     Public Procedures     =============================
         call get_string ( manipulation, GLStr, strip=.true. )
         select case (lowercase( trim(GLStr) ))
         ! Things about our chunk
+        case ( 'abandoned' )
+          quantity%values = 0
+          if ( Chunks(ChunkNo)%abandoned ) quantity%values = 1
         case ( 'chunk' )
           quantity%values = ChunkNo
         case ( '1stmaf' )
@@ -1819,7 +1822,8 @@ contains ! =====     Public Procedures     =============================
         if ( .not. got(f_explicitValues) ) &
           & call Announce_Error ( key, noExplicitValuesGiven )
         call ExplicitFillVectorQuantity ( quantity, valuesNode, spreadFlag, &
-          & vectors(vectorIndex)%globalUnit, dontmask, azEl=.true. )
+          & vectors(vectorIndex)%globalUnit, dontmask, channel, heightNode, &
+          & azEl=.true. )
 
       case ( l_magneticModel ) ! --------------------- Magnetic Model --
         if ( .not. got ( f_gphQuantity ) ) then
@@ -2200,7 +2204,8 @@ contains ! =====     Public Procedures     =============================
       case ( l_status )
         if ( got(f_ifMissingGMAO) ) then
           if ( MissingGMAO ) call ExplicitFillVectorQuantity ( quantity, &
-            & valuesNode, .true., phyq_Invalid, .true., options='-v' )
+            & valuesNode, .true., phyq_Invalid, .true., channel, heightNode, &
+            & options='-v' )
         elseif ( .not. all ( got ( (/ f_sourceQuantity, f_status /) ) ) ) then
           call Announce_Error ( key, no_error_code, &
           & 'Need sourceQuantity and status fields for status fill' )
@@ -2226,7 +2231,7 @@ contains ! =====     Public Procedures     =============================
             & 'Bad combination of max/min values' )
           call FillStatusQuantity ( key, quantity, &
             & sourceQuantity, statusValue, &
-            & minValue, maxValue, heightNode, additional )
+            & minValue, maxValue, heightNode, additional, force )
         end if
 
       case ( l_swapvalues )
@@ -2415,6 +2420,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.369  2009/03/05 18:37:59  pwagner
+! May specifiy height, channel with explicit Fill
+!
 ! Revision 2.368  2008/12/18 21:14:05  pwagner
 ! May now dump an l2pc or allL2PCs (use with caution)
 !
