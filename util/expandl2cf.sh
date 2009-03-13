@@ -27,11 +27,12 @@
 # -E envstg           set environment according to envstg
 #                        e.g., "-E TEST=GC-01" means "export TEST=GC-01
 # -Ef file            set environment according to definitions found in file
-# -dot file          "dot" file before executing m4;
+# -nmacros            don't "dot" macros file
+# -dot file           "dot" file before executing m4;
 #                        it may contain env settings and much more besides
 # -dryrun             merely echo the command that would be executed
 # -i                  ignore any TEMPLATE defs in env or macros files; use
-#                        final arg on commandline
+#                        final arg on commandline instead
 # -m4 cmd             use cmd instead of m4
 # -o file             store expanded l2cf in file instead of stdout
 # -v                  verbose; prints handy summary at end of l2cf
@@ -46,27 +47,39 @@
 #     must precede the template on the command line
 # (2) The default M4PATH of ~/mlspgs/l2/l2cf/lib will be used
 #     unless M4PATH is already defined or the -I option supplied
-# (3) The -w option assumes that wrapLines exists, is executable,
-#     and is in your PATH
-# (4) -Dmacro definitions, plus any in the -Df file, will be combined
+# (3) -Dmacro definitions, plus any in the -Df file, will be combined
 #     and passed to m4
-# (5) If the line
+# (4) If the line
 #      M4=/some/path/to/m4
 #     appears in the macros file, it will have the same effect as if
 #       -m4 /some/path/to/m4
 #     was among the command-line options
-# (6) If the line
+# (5) If the line
 #      TEMPLATE=/some/path/to/template
 #     appears in either the macros file or the env settings file,
+#     and "-i" is not among the command line options,
 #     it will have the same effect as if
 #       /some/path/to/template.m4
 #     was the final the command-line argument
-# (7) Use a dot file in place of an env file
+# (6) Use a dot file in place of an env file
 #     (or in addition)
 #     if you need to use shell control structures or other features
 #     For an example of this see -example--dotfile
 # Result:
-# An expanded l2cf is written using appropriate macros
+#     An expanded l2cf is written using appropriate macros
+# Other uses:
+# (PCF)
+#     expandl2cf.sh can also be used to expand a PCF template
+# (no overridepaths.sh)
+#     append to the macros file all the paths normally found in the
+#     overridepaths.sh file
+#
+# Bugs and limitations:
+# (1) set_read_env.sh must be both executable and in your path
+# (2) The -w option assumes that wrapLines exists, is executable,
+#     and is in your PATH
+# (3) Nobody uses the "dotfile"--should we remove it as an option?
+# (4) Should we include an example showing no overridepaths.sh?
 # --------------- End expandl2cf.sh help
 # --------------- expandl2cf.sh example
 # Example:
@@ -254,6 +267,19 @@ read_file_into_array()
   echo $array_result
 }
       
+#---------------------------- write_file_to_stdout
+#
+# read each line of stdin
+# writing it to stdout,
+# optionally prefixing each line with $1, e.g. comment characters
+
+write_file_to_stdout()
+{
+  while read line; do
+     echo "$1 $line"
+  done
+}
+      
 #------------------------------- Main Program ------------
 
 #****************************************************************
@@ -269,6 +295,7 @@ debug="no"
 dotfile=""
 dryrun="no"
 envfile=""
+expandmacros="yes"
 I=expandl2cf
 ignore="no"
 l2cf="STDOUT"
@@ -359,6 +386,10 @@ while [ "$more_opts" = "yes" ] ; do
        M4="$1"
        shift
        ;;
+    -nmacros )
+       expandmacros="no"
+       shift
+       ;;
     -v )
        verbose="yes"
        shift
@@ -385,6 +416,7 @@ then
   echo "macros: $macros"
   echo "macrofile: $macrofile"
   echo "dryrun: $dryrun"
+  echo "expandmacros: $expandmacros"
   echo "mypath: $mypath"
   echo "M4: $M4"
   which m4
@@ -401,23 +433,26 @@ fi
 
 if [ -f "$envfile" ]
 then
-  envlines=`cat $envfile | uniq | read_file_into_array`
-  for linenosp in $envlines
-  do
-    line=`echo $linenosp | sed 's/\&/ /g'`
-    eval export `echo $line`
-  done
+    . set_read_env.sh < $envfile
+else
+    echo ";;; Warning--no envfile"
 fi
 
 if [ -f "$macrofile" ]
 then
+  if [ "$expandmacros" = "yes" ]
+  then
+    . set_read_env.sh < $macrofile
+  fi
   l2cflines=`cat $macrofile | uniq | read_file_into_array`
   for linenosp in $l2cflines
   do
-    line=`echo $linenosp | sed 's/\&/ /g'`
+    line=`eval echo $linenosp | sed 's/\&/ /g'`
     a=`echo $line | grep 'M4='`
+    assignment=`echo $line | grep '='`
     atemplate=`echo $line | grep 'TEMPLATE='`
     # echo "line: $line"
+    # eval echo "line: $line"
     # echo "a: $a"
     if [ "$a" != "" ]
     then
@@ -433,6 +468,8 @@ then
       macros="-D${line} $macros"
     fi
   done
+else
+    echo ";;; Warning--no macrofile"
 fi
 
 if [ "$1" = "" -a "$TEMPLATE" = "" ]
@@ -496,40 +533,30 @@ echo ";;; $cmdline" >> $l2cf
 
 if [ -f "$dotfile" ]
 then
-  dotlines=`cat $dotfile | uniq | read_file_into_array`
   echo " " >> $l2cf
   echo ";;; ---------- contents of $dotfile -----------" >> $l2cf
-  for linenosp in $dotlines
-  do
-    line=`echo $linenosp | sed 's/\&/ /g'`
-    echo ";;; ${line}" >> $l2cf
-  done
+  cat $dotfile | write_file_to_stdout ";;;" >> $l2cf
 fi
 
 if [ -f "$envfile" ]
 then
   echo " " >> $l2cf
   echo ";;; ---------- contents of $envfile -----------" >> $l2cf
-  for linenosp in $envlines
-  do
-    line=`echo $linenosp | sed 's/\&/ /g'`
-    echo ";;; ${line}" >> $l2cf
-  done
+  cat $envfile | write_file_to_stdout ";;;" >> $l2cf
 fi
 
 if [ -f "$macrofile" ]
 then
   echo " " >> $l2cf
   echo ";;; ---------- contents of $macrofile -----------" >> $l2cf
-  for linenosp in $l2cflines
-  do
-    line=`echo $linenosp | sed 's/\&/ /g'`
-    echo ";;; ${line}" >> $l2cf
-  done
+  cat $macrofile | write_file_to_stdout ";;;" >> $l2cf
 fi
 
 exit 0
 # $Log$
+# Revision 1.3  2008/08/18 17:35:00  pwagner
+# Added -i, -example--dotfile options
+#
 # Revision 1.2  2008/07/16 23:37:01  pwagner
 # Improved example; consistent with email announcement
 #
