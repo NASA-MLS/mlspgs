@@ -63,11 +63,11 @@ contains
       & F_toleranceA, F_toleranceF, F_toleranceR, f_vRegOrders, f_vRegQuants, &
       & f_vRegWeights, f_vRegWeightVec, Field_first, Field_last, &
       & L_apriori, L_covariance, &
-      & L_dnwt_ajn,  L_dnwt_axmax,  L_dnwt_cait, L_dnwt_chiSqMinNorm, L_dnwt_chiSqNorm, &
-      & L_dnwt_diag,  L_dnwt_dxdx, &
-      & L_dnwt_dxdxl, L_dnwt_dxn,  L_dnwt_dxnl,  L_dnwt_flag, L_dnwt_fnmin, &
-      & L_dnwt_fnorm,  L_dnwt_gdx,  L_dnwt_gfac, L_dnwt_gradn,  L_dnwt_sq, &
-      & L_dnwt_sq,  L_dnwt_sqt, &
+      & L_dnwt_abandoned,  L_dnwt_ajn,  L_dnwt_axmax, &
+      & L_dnwt_cait, L_dnwt_chiSqMinNorm, L_dnwt_chiSqNorm, L_dnwt_count, &
+      & L_dnwt_diag,  L_dnwt_dxdx, L_dnwt_dxdxl, L_dnwt_dxn,  L_dnwt_dxnl, &
+      & L_dnwt_flag, L_dnwt_fnmin, L_dnwt_fnorm,  L_dnwt_gdx,  L_dnwt_gfac, &
+      & L_dnwt_gradn,  L_dnwt_sq, L_dnwt_sq,  L_dnwt_sqt, &
       & L_highcloud, L_Jacobian_Cols, L_Jacobian_Rows, &
       & L_lowcloud, L_newtonian, L_none, L_norm, &
       & L_NumGrad, L_numJ, L_NumNewt, l_Simple, &
@@ -114,7 +114,7 @@ contains
     type(matrix_Database_T), dimension(:), pointer :: MatrixDatabase
     type(forwardModelConfig_T), dimension(:), pointer :: ConfigDatabase
 
-    type(MLSChunk_T), intent(in) :: CHUNK
+    type(MLSChunk_T), intent(inout) :: CHUNK
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
 
     ! Default values:
@@ -1309,7 +1309,8 @@ contains
         & ScaleVector, SubtractFromVector
 
       ! Local Variables
-      logical :: Abandoned              ! Flag to indicate numerical problems
+      ! logical :: Abandoned              ! Flag to indicate numerical problems
+      real(r8) :: abandoned_value
       type(nwt_T) :: AJ                 ! "About the Jacobian", see NWT.
       type(matrix_SPD_T), target :: APlusRegCOV ! Covariance from a priori and Tikhnov alone
       type(matrix_SPD_T), target :: APlusRegNEQ ! Normal equations from a priori in Tikhnov alone.
@@ -1363,7 +1364,7 @@ contains
       real(rk) :: Lambda                ! Levenberg-Marquardt stabilization
                                         ! last applied to normal equations
       integer :: LATESTMAFSTARTED       ! For FWMParallel stuff
-      integer :: LoopCounter            ! Abandon after 50 * maxJ loop iterations
+      real(r8) :: LoopCounter            ! Abandon after 50 * maxJ loop iterations
       integer, dimension(2) :: MATRIXSTATUS ! Flag from matrix calculations
       real(rv) :: MU                    ! Move Length = scale for DX
       integer, parameter :: NF_GetJ = NF_Smallest_Flag - 1 ! Take an extra loop
@@ -1434,7 +1435,7 @@ contains
         & call SetupFWMSlaves ( configDatabase(configIndices), &
         & state, fwdModelExtra, FwdModelOut, jacobian )
       foundBetterState = ( maxJacobians == 0 )
-      abandoned = .false.
+      chunk%abandoned = .false.
       ! Set options for NWT
       nwt_opt(1:9) = (/  15, 1,      17, 2,      18, 3,      11, 4, 0 /)
       nwt_xopt(1:4) = (/ toleranceF, toleranceA, toleranceR, initLambda /)
@@ -1523,7 +1524,7 @@ contains
 NEWT: do ! Newtonian iteration
         loopCounter = loopCOunter + 1
         if ( loopCounter > max(50, 50 * maxJacobians) ) then
-          abandoned = .true.
+          chunk%abandoned = .true.
           call MLSMessage ( MLSMSG_Warning, ModuleName, &
             & 'Retrieval abandoned because DNWT appears to be looping.' )
           exit
@@ -2073,7 +2074,7 @@ NEWT: do ! Newtonian iteration
           call choleskyFactor ( factored, normalEquations, status=matrixStatus )
             call add_to_retrieval_timing ( 'cholesky_factor', t1 )
           if ( any ( matrixStatus /= 0 ) ) then
-            abandoned = .true.
+            chunk%abandoned = .true.
             call dump ( matrixStatus, 'matrixStatus [block, row in trouble] = ' )
             if ( d_mst ) then
               ! Dump the structure if we haven't done so already
@@ -2151,7 +2152,7 @@ NEWT: do ! Newtonian iteration
             call add_to_retrieval_timing ( 'cholesky_solver', t1 )
             if ( d_dvec ) call dump ( v(candidateDX), name='CandidateDX' )
           if ( any ( matrixStatus /= 0 ) ) then
-            abandoned = .true.
+            chunk%abandoned = .true.
             call dump ( matrixStatus, 'matrixStatus [block, row in trouble] = ' )
             if ( d_mst ) then
               call dump ( normalEquations%m%block(matrixStatus(1),matrixStatus(1)), &
@@ -2207,7 +2208,7 @@ NEWT: do ! Newtonian iteration
           call solveCholesky ( factored, q, v(candidateDX), &
             & transpose=.true., status=matrixStatus ) ! q := factored^{-T} v(candidateDX)
           if ( any ( matrixStatus /= 0 ) ) then
-            abandoned = .true.
+            chunk%abandoned = .true.
             call dump ( matrixStatus, 'matrixStatus [block, row in trouble] = ' )
             call MLSMessage ( MLSMSG_Warning, ModuleName, &
               & 'Retrieval abandoned due to problem solving for q in levenberg' )
@@ -2246,7 +2247,7 @@ NEWT: do ! Newtonian iteration
           call choleskyFactor ( factored, normalEquations, status=matrixStatus )
             call add_to_retrieval_timing( 'cholesky_factor', t1 )
           if ( any ( matrixStatus /= 0 ) ) then
-            abandoned = .true.
+            chunk%abandoned = .true.
             call dump ( matrixStatus, 'matrixStatus [block, row in trouble] = ' )
             if ( d_mst ) then
               call dump ( normalEquations%m%block(matrixStatus(1),matrixStatus(1)), &
@@ -2283,7 +2284,7 @@ NEWT: do ! Newtonian iteration
             & transpose=.true., status=matrixStatus ) ! v(candidateDX) := factored^{-T} v(aTb)
             call add_to_retrieval_timing( 'cholesky_solver', t1 )
           if ( any ( matrixStatus /= 0 ) ) then
-            abandoned = .true.
+            chunk%abandoned = .true.
             call dump ( matrixStatus, 'matrixStatus [block, row in trouble] = ' )
             call MLSMessage ( MLSMSG_Warning, ModuleName, &
               & 'Retrieval abandoned due to problem solving for aTb in solve' )
@@ -2291,7 +2292,7 @@ NEWT: do ! Newtonian iteration
           end if
 
           if ( ieee_is_nan ( aj%fnorm ) ) then
-            abandoned = .true.
+            chunk%abandoned = .true.
             if ( d_strb ) call dump ( v(x), name='Current state', details=9 )
             call MLSMessage ( MLSMSG_Warning, ModuleName, &
               & 'Retrieval abandoned due to numerical problems (with radiances?)' )
@@ -2305,7 +2306,7 @@ NEWT: do ! Newtonian iteration
           aj%fnmin = aj%fnorm**2 - (v(candidateDX) .dot. v(candidateDX))
 
           if ( ieee_is_nan ( aj%fnmin ) ) then
-            abandoned = .true.
+            chunk%abandoned = .true.
             if ( d_strb ) call dump ( v(x), name='Current state', details=9 )
             call MLSMessage ( MLSMSG_Warning, ModuleName, &
               & 'Retrieval abandoned due to numerical problems (with derivatives?)' )
@@ -2327,7 +2328,7 @@ NEWT: do ! Newtonian iteration
           ! v(candidateDX) := factored^{-1} v(candidateDX)
           call solveCholesky ( factored, v(candidateDX), status=matrixStatus )
           if ( any ( matrixStatus /= 0 ) ) then
-            abandoned = .true.
+            chunk%abandoned = .true.
             call dump ( matrixStatus, 'matrixStatus [block, row in trouble] = ' )
             call MLSMessage ( MLSMSG_Warning, ModuleName, &
               & 'Retrieval abandoned due to problem solving normal equations in solve' )
@@ -2578,8 +2579,15 @@ NEWT: do ! Newtonian iteration
         & call FillDiagVec ( diagnostics, aj, &
         & numGrad=numGrad, numJ=numJ, numNewt=numNewt, nwt_flag=nf_too_many, &
         & jacobian_rows=jacobian_rows, jacobian_cols=jacobian_cols )
+      abandoned_value = 0.d0
+      if ( chunk%abandoned ) abandoned_value = 1.d0
+      if ( got(f_diagnostics) ) then
+          call fillDiagQty ( diagnostics,  l_dnwt_abandoned, abandoned_value )
+          call fillDiagQty ( diagnostics, l_dnwt_count, loopCounter )
+      end if
 
-      if ( abandoned ) then
+      ! chunk%abandoned = abandoned
+      if ( chunk%abandoned ) then
           if ( d_cov ) call output ( "Abandoned; no covariance calculation", advance="yes" )
         foundBetterState = .false.
         ! We'll output our last good state, but set the error bar to
@@ -2775,6 +2783,9 @@ NEWT: do ! Newtonian iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.303  2009/03/14 02:43:19  honghanh
+! Add dnwt_abandoned and dnwt_count
+!
 ! Revision 2.302  2008/12/18 21:13:05  pwagner
 ! May now dump an l2pc or allL2PCs (use with caution)
 !
