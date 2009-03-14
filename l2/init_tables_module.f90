@@ -487,13 +487,13 @@ contains ! =====     Public procedures     =============================
       begin, t+t_outputType, l+l_l2aux, l+l_l2cf, l+l_l2dgg, l+l_l2fwm, &
              l+l_l2gp, l+l_l2pc, n+n_dt_def /) )
     call make_tree ( (/ &
-      begin, t+t_quantityType, l+l_adopted, l+l_baseline, l+l_boundarypressure, l+l_calSidebandFraction, &
-             l+l_chisqbinned, l+l_chisqchan, l+l_chisqmmaf, l+l_chisqmmif, l+l_cloudIce, &
-             l+l_cloudInducedRadiance, l+l_cloudExtinction, l+l_cloudMinMax, l+l_cloudRadSensitivity, &
-             l+l_cloudTemperature, l+l_cloudWater, l+l_columnabundance, &
-             l+l_dnwt_ajn, l+l_dnwt_axmax, l+l_dnwt_cait, &
+      begin, t+t_quantityType, l+l_adopted, l+l_baseline, l+l_boundarypressure, &
+             l+l_calSidebandFraction, l+l_chisqbinned, l+l_chisqchan, l+l_chisqmmaf, l+l_chisqmmif, &
+             l+l_cloudIce, l+l_cloudInducedRadiance, l+l_cloudExtinction, l+l_cloudMinMax, &
+             l+l_cloudRadSensitivity, l+l_cloudTemperature, l+l_cloudWater, l+l_columnabundance, &
+             l+l_dnwt_abandoned, l+l_dnwt_ajn, l+l_dnwt_axmax, l+l_dnwt_cait, &
              l+l_dnwt_chiSqMinNorm, l+l_dnwt_chiSqNorm, l+l_dnwt_chiSqRatio, &
-             l+l_dnwt_diag, l+l_dnwt_dxdx, l+l_dnwt_dxdxl, &
+             l+l_dnwt_count, l+l_dnwt_diag, l+l_dnwt_dxdx, l+l_dnwt_dxdxl, &
              l+l_dnwt_dxn, l+l_dnwt_dxnl, l+l_dnwt_flag, l+l_dnwt_fnmin, &
              l+l_dnwt_fnorm, l+l_dnwt_gdx, l+l_dnwt_gfac, &
              l+l_dnwt_gradn, l+l_dnwt_sq, l+l_dnwt_sqt,&
@@ -1577,6 +1577,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.483  2009/03/14 02:45:34  honghanh
+! Add dnwt_count and dwnt_abandoned
+!
 ! Revision 2.482  2008/12/18 21:06:25  pwagner
 ! May now dump an l2pc or allL2PCs (use with caution)
 !
