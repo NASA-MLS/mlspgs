@@ -76,19 +76,6 @@ end Join
 ;; In the future the following may be moved to a separate l2cf fragment
 ;; e.g., writephasetiming.l2cf
 !ifdef(flagAvoidDirectWrite,{},{
-begin Construct
-  phaseTiming: quantity, type=phaseTiming,  $
-    vGrid=vGridPhases
-  sectionTiming: quantity, type=phaseTiming,  $
-    vGrid=vGridPhases
-  chunkNumMMAF: quantity, type=geolocation, module= GHz
-  geodLatMMAF: quantity, type=geolocation, module= GHz
-  solarZenithMMAF: quantity, type=geolocation, module= GHz
-  timingTemplate: VectorTemplate, quantities = [ $
-    phaseTiming, sectionTiming, chunkNumMMAF, geodLatMMAF, solarZenithMMAF $
-    ]
-
-end Construct
 begin Fill
   timing: Vector, template=timingTemplate
   Fill, quantity=timing.phaseTiming, method=phaseTiming

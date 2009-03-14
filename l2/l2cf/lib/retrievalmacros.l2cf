@@ -753,7 +753,8 @@ End Join
   !define(statusLowCloud,32)
 ;; Bit 6 - Missing gmao--fallback to climatology
   !define(statusMissingGMAO,64)
-;; Bit 7 - Empty for now
+;; Bit 7 - The retrieval was abandoned du to a numerical problem
+  !define(statusAbandonedRtrvl,128)
 ;; Bit 8 - This profile is based on too few radiances
   !define(statusTooFewRadiances,256)
 ;; Bit 9 - This level 2 run tasked with this profile crashed
@@ -848,6 +849,11 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
   status=!statusTooFewRadiances+!statusDoNotUse, $
   sourceQuantity=temporaryDiagnostics.noRadsTmp, minValue=!MFminrads, /additional})
 
+;; Set status bit for abandoned retrieval
+Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
+  status=!statusAbandonedRtrvl+!statusDoNotUse, $
+  sourceQuantity=diag!retrophase.dnwt_abandoned, maxValue=0, /force
+
 })
 
 ;; Set status bits based on clouds contaminating radiances in selected radiometers
@@ -880,6 +886,9 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
 })})
 
 ; $Log$
+; Revision 1.130  2009/01/28 01:15:17  pwagner
+; Changed quantity name of hires ozone
+;
 ; Revision 1.129  2008/10/07 18:12:54  pwagner
 ; Added O3_R3
 ;
