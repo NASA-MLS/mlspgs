@@ -973,14 +973,14 @@ contains ! ============= Public procedures ===================================
   subroutine InitQuantityTemplates
     ! This routine initializes the quantity template properties
     ! This is the routine one needs to update when one introduces a new quantity type.
-    use Init_Tables_Module, only:  L_ADOPTED, L_BASELINE, L_BOUNDARYPRESSURE, &
+    use Init_Tables_Module, only:  L_ADOPTED, L_ADOPTED, L_BASELINE, L_BOUNDARYPRESSURE, &
       L_CALSIDEBANDFRACTION, &
       L_CHISQBINNED, L_CHISQCHAN, L_CHISQMMAF, L_CHISQMMIF, L_CLOUDICE, &
       L_CLOUDINDUCEDRADIANCE, L_CLOUDEXTINCTION, L_CLOUDMINMAX, L_CLOUDRADSENSITIVITY, &
       L_CLOUDTEMPERATURE, L_CLOUDWATER, L_COLUMNABUNDANCE, &
-      L_DNWT_AJN, L_DNWT_AXMAX, L_DNWT_CAIT, &
+      L_DNWT_ABANDONED, L_DNWT_AJN, L_DNWT_AXMAX, L_DNWT_CAIT, &
       L_DNWT_CHISQMINNORM, L_DNWT_CHISQNORM, L_DNWT_CHISQRATIO, &
-      L_DNWT_DIAG, L_DNWT_DXDX, L_DNWT_DXDXL, &
+      L_DNWT_COUNT, L_DNWT_DIAG, L_DNWT_DXDX, L_DNWT_DXDXL, &
       L_DNWT_DXN, L_DNWT_DXNL, L_DNWT_FLAG, L_DNWT_FNMIN, &
       L_DNWT_FNORM, L_DNWT_GDX, L_DNWT_GFAC, &
       L_DNWT_GRADN, L_DNWT_SQ, L_DNWT_SQT,&
@@ -1047,6 +1047,7 @@ contains ! ============= Public procedures ===================================
       l_cloudTemperature, phyq_temperature, p_hGrid, p_vGrid, p_mustBeZeta, next, &
       l_cloudWater, phyq_dimensionless, p_hGrid, p_vGrid, p_mustBeZeta, next, &
       l_columnAbundance, phyq_colmabundance, p_hGrid, p_molecule, next, &
+      l_dnwt_abandoned, phyq_dimensionless, p_vGrid, next, &
       l_dnwt_ajn, phyq_dimensionless, p_vGrid, next, &
       l_dnwt_axmax, phyq_dimensionless, p_vGrid, next, &
       l_dnwt_cait, phyq_dimensionless, p_vGrid, next, &
@@ -1055,6 +1056,7 @@ contains ! ============= Public procedures ===================================
     call DefineQtyTypes ( (/ &
       l_dnwt_chisqnorm, phyq_dimensionless, p_vGrid, next, &
       l_dnwt_chisqratio, phyq_dimensionless, p_vGrid, next, &
+      l_dnwt_count, phyq_dimensionless, p_vGrid, next, &
       l_dnwt_diag, phyq_dimensionless, p_vGrid, next, &
       l_dnwt_dxdx, phyq_dimensionless, p_vGrid, next, &
       l_dnwt_dxdxl, phyq_dimensionless, p_vGrid, next, &
@@ -1266,6 +1268,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.148  2009/03/14 02:44:46  honghanh
+! Add dnwt_count and dnwt_abandoned
+!
 ! Revision 2.147  2008/10/03 16:39:42  livesey
 ! Added EXTINCTIONV2
 !
