@@ -515,10 +515,12 @@ begin Construct
 
   ;; ----------------------------------------- Retrieval diagnostics
   !define(allRetrievalDiagnostics,{!tidyList( $
-    dnwt_ajn, dnwt_axmax, dnwt_cait, dnwt_chiSqMinNorm, dnwt_chiSqNorm, dnwt_chiSqRatio, $
-    dnwt_diag, dnwt_dxdx, dnwt_dxdxl, dnwt_dxn, dnwt_dxnl, dnwt_fnmin, dnwt_fnorm, $
-    dnwt_gdx, dnwt_gfac, dnwt_gradn, dnwt_sq, dnwt_sqt, numJ, dnwt_flag, $
-    jacobian_rows, jacobian_cols)})
+    dnwt_abandoned, dnwt_ajn, dnwt_axmax, $
+    dnwt_cait, dnwt_chiSqMinNorm, dnwt_chiSqNorm, dnwt_chiSqRatio, $
+    dnwt_count, dnwt_diag, dnwt_dxdx, dnwt_dxdxl, dnwt_dxn, dnwt_dxnl, $
+    dnwt_flag, dnwt_fnmin, dnwt_fnorm, $
+    dnwt_gdx, dnwt_gfac, dnwt_gradn, dnwt_sq, dnwt_sqt, $
+    jacobian_rows, jacobian_cols, numJ)})
   hGridDiag: hGrid, type=explicit, module=GHz, geodAngle= 0 degrees
   !define(constructRetrievalDiagnostic, !dnl
   {!ifdef(flagOutputDiagnosticsDGG,!dnl
@@ -528,7 +530,7 @@ begin Construct
     vGrid=vGridIterations!nl})})
   !forall(constructRetrievalDiagnostic,!allRetrievalDiagnostics)
   !define(outputRetrievalDiagnostics,{!tidyList( $
-    dnwt_chiSqNorm, dnwt_chiSqMinNorm, dnwt_chiSqRatio, $
+    dnwt_chiSqNorm, dnwt_chiSqMinNorm, dnwt_chiSqRatio, dnwt_count, $
     jacobian_rows, jacobian_cols, dnwt_flag, dnwt_sq, dnwt_sqt)})
 
   ;; ----------------------------------------- Other minor stuff
@@ -630,6 +632,21 @@ begin Construct
     
 end Construct
 
+; These will be used after all the chunks have been processed.
+; Still we are trying to get all the standard species constructed early.
+begin Construct
+  phaseTiming: quantity, type=phaseTiming,  $
+    vGrid=vGridPhases
+  sectionTiming: quantity, type=phaseTiming,  $
+    vGrid=vGridPhases
+  chunkNumMMAF: quantity, type=geolocation, module= GHz
+  geodLatMMAF: quantity, type=geolocation, module= GHz
+  solarZenithMMAF: quantity, type=geolocation, module= GHz
+  timingTemplate: VectorTemplate, quantities = [ $
+    phaseTiming, sectionTiming, chunkNumMMAF, geodLatMMAF, solarZenithMMAF $
+    ]
+
+end Construct
   ; These temporary vectors, which must be declared
   ; in a Fill section, will be used in every storeStandardProduct
   ; invocation (rather trhan risk clobbering something more valuable)
