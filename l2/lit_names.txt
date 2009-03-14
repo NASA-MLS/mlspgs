@@ -42,12 +42,14 @@ covariance
 dao
 direct
 # Quantities to report on progress of DNWT.  See NWT_T in dnwt_module
+dnwt_abandoned
 dnwt_ajn
 dnwt_axmax
 dnwt_cait
 dnwt_chiSqMinNorm
 dnwt_chiSqNorm
 dnwt_chiSqRatio
+dnwt_count
 dnwt_diag
 dnwt_dxdx
 dnwt_dxdxl
@@ -170,6 +172,9 @@ weighted
 wmoTropopause
 
 # $Log$
+# Revision 2.65  2009/03/14 02:43:45  honghanh
+# Add dnwt_abaonded and dnwt_count
+#
 # Revision 2.64  2008/11/06 21:50:03  pwagner
 # Fill method swapValues swaps values between two quantities
 #
