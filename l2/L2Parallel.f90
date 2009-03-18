@@ -398,8 +398,7 @@ contains
       do while ( chunkAndMachineReady() ) ! (nextChunk, machine) )
         if ( nextChunk < 1 ) then
           ! Should have returned false
-          call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & 'Illegal chunk number' )
+          call KillSlaves (.true., 'Illegal chunk number' )
         elseif ( USINGOLDSUBMIT ) then ! -- Using a batch system
           ! We must remove any --chunk chunkRange from slaveArguments
           info = index(lowerCase(slaveArguments), '--chunk')
@@ -441,6 +440,9 @@ contains
           info = myPVMSpawn ( trim(commandLine), PvmTaskHost, &
             & trim(machines(machine)%Name), &
             & 1, tidarr )
+          call output (tidarr(1), advance = 'no')
+          call output (' result is ', advance='no')
+          call output (info, advance = 'yes')
           if ( switchDetail(switches,'mas') > -1 ) then
             call output ( 'Tried to spawn ' )
             call TimeStamp ( trim(commandLine), advance='yes' )
@@ -478,6 +480,7 @@ contains
                 & ' ' // trim(chunkNiceTids(nextChunk)), &
                 & advance='yes' )
             end if
+            call output(chunkTids(nextChunk), advance='yes')
             call WelcomeSlave ( nextChunk, chunkTids(nextChunk) )
             if ( usingL2Q ) call ThankL2Q(machines(machine), L2Qtid)
             skipDeathWatch = .true.
@@ -605,9 +608,8 @@ contains
             endif
             chunkTids(chunk) = slaveTid
             call GetMachineNameFromTid ( slaveTid, thisName, info )
-            if ( info == -1 ) & 
-              & call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & 'Unable to get machine name from tid' )
+            if ( info == -1 ) &
+              & call KillSlaves (.true., 'Unable to get machine name from tid' )
             call WelcomeSlave ( chunk, slaveTid )
             if ( switchDetail(switches,'mas') > -1 ) then
               call output ( 'Welcomed task ' // &
@@ -638,9 +640,8 @@ contains
             ! Clearly, if we don't know about this file it's new
             noDirectWriteFiles = noDirectWriteFiles + 1
             if ( noDirectWriteFiles > maxDirectWriteFiles ) &
-              & call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & 'Too many direct write files, increase limit maxDirectWriteFiles in ' &
-              & // ModuleName )
+              & call KillSlaves (.true., 'Too many direct write files, ' &
+              & // 'increase limit maxDirectWriteFiles in ' // ModuleName )
             fileIndex = noDirectWriteFiles
             directWriteFilenames ( fileIndex ) = requestedFile
           end if
@@ -754,8 +755,7 @@ contains
           endif
 
         case default
-          call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & 'Unkown signal from slave' )
+          call KillSlaves (.true., 'Unkown signal from slave')
         end select
 
         ! Free the receive buffer
@@ -787,8 +787,7 @@ contains
         end if
         call pvmfgettid(GROUPNAME, 0, L2Qtid)
         if ( L2Qtid < 1 ) then
-          call MLSMessage( MLSMSG_Error, ModuleName, &
-            & 'switch l2q queue manager not running--dead or not started yet?' )
+          call KillSlaves (.true., 'switch l2q queue manager not running--dead or not started yet?')
         else
           call TimeStamp ( 'new l2q tid: ' )
           call TimeStamp ( L2Qtid, advance='yes' )
@@ -865,6 +864,7 @@ contains
           deadChunk = FindFirst ( chunkTids, deadTid )
           deadMachine = deadChunk ! A trick--only deadChunk matters
         endif
+
         if ( deadMachine > 0 ) then
           ! Now, to get round a memory management bug, we'll ignore this
           ! if, as far as we're concerned, the task was finished anyway.
@@ -983,8 +983,7 @@ contains
             call output(deadTID , advance='yes')
             call output('machine%tid ', advance='no')
             call output(machines(deadMachine)%tid , advance='yes')
-             call MLSMessage ( MLSMSG_Error, ModuleName, &
-               & 'Dead slave tid doesnt match machine tid' )
+            call KillSlaves (.true., 'Dead slave tid doesnt match machine tid')
           endif
           call TellL2QMachineDied( machines(deadMachine), L2Qtid )
           if ( switchDetail(switches,'l2q') > -1 ) then
@@ -1104,8 +1103,7 @@ contains
       end if
 
       ! Have we abandoned everything?
-      if ( all(chunksAbandoned) ) call MLSMessage( MLSMSG_Error, ModuleName, &
-        & 'All chunks abandoned' )
+      if ( all(chunksAbandoned) ) call KillSlaves ( .true., 'All chunks abandoned' )
 
       ! If we're done then exit
       if (all(chunksCompleted .or. chunksAbandoned)) then
@@ -1143,28 +1141,7 @@ contains
       call dump( machines%tid, 'machines%Tid', format='(i8)' )
     endif
     ! First kill any children still running (only if we got a give up message).
-    do chunk = 1, noChunks
-      if ( chunkTids(chunk) /= 0 ) then
-        call usleep ( KILLINGSLAVESDELAY )
-        if ( usingL2Q ) then
-          machine = chunkMachines(chunk)
-          call TellL2QMachineFinished( &
-            & trim(machines(machine)%name), machines(machine)%tid, L2Qtid, 0 )
-          if ( switchDetail(switches,'l2q') > -1 ) then
-            call output( 'tid: ', advance='no' )
-            call output( machines(machine)%tid, advance='no' )
-            call output( 'machine name: ', advance='no' )
-            call output( trim(machines(machine)%name), advance='no' )
-            call TimeStamp ( '   released', &
-            & advance='yes' )
-          endif
-          call usleep ( parallel%delay )
-        endif
-        call pvmfkill ( chunkTids(chunk), info )
-        if ( info /= 0 ) &
-          & call PVMErrorMessage ( info, 'killing slave' )
-      end if
-    end do
+    call KillSlaves(.false., '')  ! use any string here because isKillMaster = false
 
     if ( usingL2Q ) then
       call TellL2QMasterFinished(L2Qtid)
@@ -1421,6 +1398,41 @@ contains
       call PVMFNotify ( PVMTaskExit, NotifyTag, 1, (/ tid /), info )
       if ( info /= 0 ) call PVMErrorMessage ( info, 'setting up notify' )
     end subroutine WelcomeSlave
+
+    subroutine KillSlaves (isKillMaster, killMasterMsg)
+      ! This routine kills all running slaves, and if isKillMaster is
+      ! true, this routine will invoke MLSMessage with MLSError code
+      logical, intent(in) :: isKillMaster
+      character (len=*), intent(in) :: killMasterMsg
+
+      do chunk = 1, noChunks
+        if ( chunkTids(chunk) /= 0 ) then
+          call usleep ( KILLINGSLAVESDELAY )
+          if ( usingL2Q ) then
+            machine = chunkMachines(chunk)
+            call TellL2QMachineFinished( &
+              & trim(machines(machine)%name), machines(machine)%tid, L2Qtid, 0 )
+            if ( switchDetail(switches,'l2q') > -1 ) then
+              call output( 'tid: ', advance='no' )
+              call output( machines(machine)%tid, advance='no' )
+              call output( 'machine name: ', advance='no' )
+              call output( trim(machines(machine)%name), advance='no' )
+              call TimeStamp ( '   released', &
+                & advance='yes' )
+            endif
+            call usleep ( parallel%delay )
+          endif
+          call output (chunkTids(chunk), advance='yes')
+          call pvmfkill ( chunkTids(chunk), info )
+          if ( info /= 0 ) &
+            & call PVMErrorMessage ( info, 'killing slave' )
+        end if
+      end do
+
+      if (isKillMaster) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, killMasterMsg )
+
+    end subroutine KillSlaves
 
   end subroutine L2MasterTask
 
@@ -1998,6 +2010,10 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.91  2009/03/18 23:08:27  honghanh
+! Kill all running slaves before letting the master dies upon encountering errors.
+! Added subroutine KillSlaves
+!
 ! Revision 2.90  2009/01/12 19:22:04  pwagner
 ! Alphabetized procedures; shorten time to finish when told to give up
 !
