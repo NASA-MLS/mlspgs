@@ -304,7 +304,7 @@ macros=""
 macrofile=""
 me="$0"
 my_name=expandl2cf.sh
-myPATH=""
+mypath=""
 stempl2cf=$HOME/`get_unique_name l2cf2`
 templ2cf=$HOME/`get_unique_name l2cf1`
 TEMPLATE=""
@@ -378,7 +378,7 @@ while [ "$more_opts" = "yes" ] ; do
        ;;
     -I )
        shift
-       myPATH="$1"
+       mypath="$1"
        shift
        ;;
     -m4 )
@@ -554,6 +554,9 @@ fi
 
 exit 0
 # $Log$
+# Revision 1.4  2009/03/13 17:26:30  pwagner
+# Many improvements; tested with no overridepaths.sh file
+#
 # Revision 1.3  2008/08/18 17:35:00  pwagner
 # Added -i, -example--dotfile options
 #
