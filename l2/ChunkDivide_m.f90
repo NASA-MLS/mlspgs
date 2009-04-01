@@ -78,7 +78,7 @@ module ChunkDivide_m
     logical   :: skipL1BCheck = .false. ! Don't check for l1b data probs
     logical   :: allowPriorOverlaps = .true. ! Use MAFs before start time
     logical   :: allowPostOverlaps = .true. ! Use MAFs after end time
-    logical   :: saveObstructions = .false. ! Save obstructions for Output_Close
+    logical   :: saveObstructions = .true. ! Save obstructions for Output_Close
     logical   :: DACSDeconvolved = .true. ! Don't need to do this in level 2
     integer   :: numPriorOverlaps = 0     ! How many profiles before processingRanges
     integer   :: numPostOverlaps = 0     ! How many profiles after processingRanges
@@ -1278,6 +1278,9 @@ contains ! ===================================== Public Procedures =====
           else
             newObstruction%mafs(2) = maf - 2 + offset
             call AddObstructionToDatabase ( obstructions, newObstruction )
+            if ( switchDetail(switches, 'chu') > -1 ) &
+              call outputNamedValue( &
+              & 'maf where transition from bad to good made obstruction', maf )
           end if
         end if
         lastOneValid = valid(maf)
@@ -1287,6 +1290,9 @@ contains ! ===================================== Public Procedures =====
       if ( .not. lastOneValid ) then
         newObstruction%mafs(2) = size(valid) - 1 + offset
         call AddObstructionToDatabase ( obstructions, newObstruction )
+        if ( switchDetail(switches, 'chu') > -1 ) &
+          call outputNamedValue( &
+          & 'maf where transition from bad to good made obstruction', size(valid)-1 )
       end if
     end subroutine ConvertFlagsToObstructions
 
@@ -1764,6 +1770,9 @@ contains ! ===================================== Public Procedures =====
           newObstruction%mafs(1) = goodness_changes(mafset)
           newObstruction%mafs(2) = 0    ! For overzealous Lahey uninitialized checking
           call AddObstructionToDatabase ( obstructions, newObstruction )
+          if ( switchDetail(switches, 'chu') > -1 ) &
+            call outputNamedValue( &
+            & 'maf where any change made obstruction', goodness_changes(mafset) )
         enddo
       elseif ( num_goods_after_gap > 0 ) then
         do mafset = 1, num_goods_after_gap
@@ -1771,6 +1780,9 @@ contains ! ===================================== Public Procedures =====
           newObstruction%mafs(1) = goods_after_gap(mafset)
           newObstruction%mafs(2) = 0    ! For overzealous Lahey uninitialized checking
           call AddObstructionToDatabase ( obstructions, newObstruction )
+          if ( switchDetail(switches, 'chu') > -1 ) &
+            call outputNamedValue( &
+            & 'maf where num goods after gap made obstruction', goods_after_gap(mafset) )
         enddo
       endif
       ! OK, we have the mafs where the goodness changes, now what?
@@ -2534,11 +2546,15 @@ contains ! ===================================== Public Procedures =====
   character (len=len(idParm)) :: Id = idParm
   !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.88  2009/04/01 23:34:26  pwagner
+! By default saves obstructions db to written to l2aux file
+!
 ! Revision 2.87  2008/07/12 00:12:07  pwagner
 ! dump_criticalsignals not generic to appease sun studio 12
 !
