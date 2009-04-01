@@ -255,6 +255,8 @@ contains ! =====     Public Procedures     =============================
               call time_now ( dwt2 )
               if(DEEBUG)call print_source ( source_ref(son) )
               if(DEEBUG)print*,'Calling direct write to do the write'
+              if(DEEBUG)print*,'Asked to create file? ', createFile
+              if(DEEBUG)print*,'the file ', trim(theFile)
               call DirectWriteCommand ( son, ticket, vectors, &
                 & DirectdataBase, filedatabase, &
                 & chunkNo, chunks, FWModelConfig, HGrids, create=createFile, &
@@ -358,6 +360,7 @@ contains ! =====     Public Procedures     =============================
     use DirectWrite_m, only: DirectData_T, &
       & DirectWrite_l2GP, DirectWrite_l2aux, Dump, &
       & ExpandDirectDB, ExpandSDNames, FileNameToID
+    use dump_0, only: dump
     use Expr_m, only: EXPR
     use ForwardModelConfig, only: ForwardModelConfig_T
     use Hdf, only: DFACC_CREATE, DFACC_RDWR
@@ -383,7 +386,7 @@ contains ! =====     Public Procedures     =============================
       & mlspcf_l2dgg_start, mlspcf_l2dgg_end
     use MLSSets, only: FindFirst, FindNext
     use MoreTree, only: GET_FIELD_ID
-    use Output_m, only: Blanks, OUTPUT
+    use Output_m, only: Blanks, OUTPUT, outputNamedValue
     use OutputAndClose, only: add_metadata
     use String_Table, only: DISPLAY_STRING, GET_STRING
     use Time_M, only: Time_Now
@@ -420,6 +423,7 @@ contains ! =====     Public Procedures     =============================
     integer :: AFILE
     logical :: CREATEFILEFLAG           ! Flag (often copy of create)
     logical, dimension(:), pointer :: CREATETHISSOURCE
+    logical :: CREATETHISSWATH
     logical :: DEEBUG
     type(MLSFile_T), pointer :: directFile
     logical :: DISTRIBUTINGSOURCES      ! No field 'file=...' in l2cf line
@@ -960,6 +964,7 @@ contains ! =====     Public Procedures     =============================
           & ModuleName )
         call Allocate_test ( nameBuffer, noSources, 'nameBuffer', &
           & ModuleName )
+        if(DEEBUG)print *, 'Must we create this file?', createFileFlag
         if ( .not. createFileFlag ) then
           do source = 1, noSources
             if(DEEBUG)print*,'Source:', source
@@ -971,6 +976,8 @@ contains ! =====     Public Procedures     =============================
             call get_string ( hdfNameIndex, nameBuffer(source), strip=.true. )
             if(DEEBUG)print*,'Done'
           end do
+          if(DEEBUG)print *, '************** Checking for swaths in file ***************'
+          if(DEEBUG)call dump(directFile)
           dummy = MLS_SWATH_IN_FILE(directFile%Name, nameBuffer, HdfVersion, &
             & createThisSource, returnStatus )
           if(DEEBUG)print*,'Got out of MLS_SWATH_IN_FILE'
@@ -978,6 +985,9 @@ contains ! =====     Public Procedures     =============================
             call MLSMessage(MLSMSG_Warning, ModuleName, &
               & 'Unable to check on swath in ' // trim(filename) )
           endif
+          if(DEEBUG)call dump( createThisSource, 'createThisSource' )
+          source = findFirst( createThisSource )
+          call outputNamedValue ( 'source number of T', source )
         else
           createThisSource = .false.
         end if
@@ -1006,6 +1016,7 @@ contains ! =====     Public Procedures     =============================
       ! Loop over the quantities to output
       NumPermitted = 0
       NumOutput = 0
+      if(DEEBUG)print *, '************** Loop over quantities to output ***************'
       do source = 1, noSources
         ! At this point we're ready to write the data
         ! Make certain that the sources match the permitted file
@@ -1101,10 +1112,33 @@ contains ! =====     Public Procedures     =============================
             call output('createSwath: ', advance='no')
             call output(.not. createThisSource(source), advance='yes')
           endif
-          call DirectWrite_l2GP ( directFile, &
-            & qty, precQty, qualityQty, statusQty, convergQty, &
-            & hdfName, chunkNo, HGrids, &
-            & createSwath=(.not. createThisSource(source)) )
+          call outputNamedValue ( 'source number of DW', source )
+          createthisswath = (.not. createThisSource(source))
+          ! We have a bug somewhere in hdfeos
+          ! When we create the first swath in an hdfeos file
+          ! mls_swath_in_file can't find it
+          if ( createthisswath ) then
+            do while ( createthisswath )
+              call DirectWrite_l2GP ( directFile, &
+                & qty, precQty, qualityQty, statusQty, convergQty, &
+                & hdfName, chunkNo, HGrids, &
+                & createSwath=.true. )
+              createthisswath = .not. &
+                & mls_swath_in_file( directFile%name, hdfName, hdfVersion, returnStatus )
+              if(DEEBUG)print *, 'file name ', trim(directFile%name)
+              if(DEEBUG)print *, 'hdfName ', trim(hdfName)
+              if(DEEBUG)print *, 'still need to createthisswath ', createthisswath
+              if ( createthisswath ) &
+                & call MLSMessage ( MLSMSG_Warning, ModuleName, &
+                  & 'Needed to recreate swath ' // trim(hdfName) // ' in ' // &
+                  & trim(directFile%name) )
+            enddo
+          else
+            call DirectWrite_l2GP ( directFile, &
+              & qty, precQty, qualityQty, statusQty, convergQty, &
+              & hdfName, chunkNo, HGrids, &
+              & createSwath=.false. )
+          endif
           NumOutput= NumOutput + 1
           if ( outputType == l_l2dgg ) then
             filetype=l_l2dgg
@@ -2100,6 +2134,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.136  2009/04/01 23:35:59  pwagner
+! First attempt at fixing bug that wrote missing values to Temperature-APriori
+!
 ! Revision 2.135  2008/12/18 21:14:24  pwagner
 ! May now dump an l2pc or allL2PCs (use with caution)
 !
