@@ -153,6 +153,9 @@ module DUMP_0
     module procedure DUMPSUMS_REAL
     module procedure DUMPSUMS_DOUBLE
   end interface
+  interface printIt
+    module procedure printIt_char, printIt_DOUBLE, printIt_INT, printIt_REAL
+  end interface
   interface printRMSetc
     module procedure printRMSetc_DOUBLE, printRMSetc_INT, printRMSetc_REAL
   end interface
@@ -2841,6 +2844,30 @@ contains
     end if
 
   end subroutine Name_And_Size
+  
+  ! -------------------- PrintIt ---------------------
+  ! This family of subroutines exists only so that we can generically call
+  ! output with either a numeric arg or a character string, 
+  ! trimming if the latter
+  subroutine PrintIt_char (it)
+    character(len=*) :: it
+    call output ( trim(it), advance='no' )
+  end subroutine PrintIt_char
+
+  subroutine PrintIt_int (it)
+    integer :: it
+    call output ( it, advance='no' )
+  end subroutine PrintIt_int
+
+  subroutine PrintIt_real (it)
+    real :: it
+    call output ( it, advance='no' )
+  end subroutine PrintIt_real
+
+  subroutine PrintIt_double (it)
+    double precision :: it
+    call output ( it, advance='no' )
+  end subroutine PrintIt_double
 
   ! ----------------------------------------------  printPercentages  -----
   ! Prints a nicely-formatted summary of equal, unequal, etc.
@@ -2913,67 +2940,26 @@ contains
 
   ! ----------------------------------------------  Say_Fill_Char  -----
   subroutine Say_Fill_Char ( Subs, NumZeroRows, Fill, Inc  )
-    integer, intent(in) :: Subs(:)
-    integer, intent(inout) :: NumZeroRows
     character(len=*), intent(in) :: Fill
-    integer, intent(in), optional :: Inc
-    if ( numZeroRows /= 0 ) then
-      call say_subs ( subs, numZeroRows  )
-      call output ( '"', advance='no' )
-      call output ( trim(fill), advance='no' )
-      call output ( '" not printed.', advance='yes' )
-      numZeroRows = 0
-    end if
-    if ( present(inc) ) &
-      & call say_subs_only ( (/ subs(:inc-1), subs(inc)+1, subs(inc+1:) /) )
+    include 'Say_Fill.f9h'
   end subroutine Say_Fill_Char
 
   ! --------------------------------------------  Say_Fill_Double  -----
   subroutine Say_Fill_Double ( Subs, NumZeroRows, Fill, Inc )
-    integer, intent(in) :: Subs(:)
-    integer, intent(inout) :: NumZeroRows
     double precision, intent(in) :: Fill
-    integer, intent(in), optional :: Inc
-    if ( numZeroRows /= 0 ) then
-      call say_subs ( subs, numZeroRows )
-      call output ( fill, advance='no' )
-      call output ( ' not printed.', advance='yes' )
-      numZeroRows = 0
-    end if
-    if ( present(inc) ) &
-      & call say_subs_only ( (/ subs(:inc-1), subs(inc)+1, subs(inc+1:) /) )
+    include 'Say_Fill.f9h'
   end subroutine Say_Fill_Double
 
   ! -----------------------------------------------  Say_Fill_Int  -----
   subroutine Say_Fill_Int ( Subs, NumZeroRows, Fill, Inc )
-    integer, intent(in) :: Subs(:)
-    integer, intent(inout) :: NumZeroRows
     integer, intent(in) :: Fill
-    integer, intent(in), optional :: Inc
-    if ( numZeroRows /= 0 ) then
-      call say_subs ( subs, numZeroRows )
-      call output ( fill, advance='no' )
-      call output ( ' not printed.', advance='yes' )
-      numZeroRows = 0
-    end if
-    if ( present(inc) ) &
-      & call say_subs_only ( (/ subs(:inc-1), subs(inc)+1, subs(inc+1:) /) )
+    include 'Say_Fill.f9h'
   end subroutine Say_Fill_Int
 
   ! ----------------------------------------------  Say_Fill_Real  -----
   subroutine Say_Fill_Real ( Subs, NumZeroRows, Fill, Inc )
-    integer, intent(in) :: Subs(:)
-    integer, intent(inout) :: NumZeroRows
     real, intent(in) :: Fill
-    integer, intent(in), optional :: Inc
-    if ( numZeroRows /= 0 ) then
-      call say_subs ( subs, numZeroRows )
-      call output ( fill, advance='no' )
-      call output ( ' not printed.', advance='yes' )
-      numZeroRows = 0
-    end if
-    if ( present(inc) ) &
-      & call say_subs_only ( (/ subs(:inc-1), subs(inc)+1, subs(inc+1:) /) )
+    include 'Say_Fill.f9h'
   end subroutine Say_Fill_Real
 
   ! ----------------------------------------------------  Say_Subs -----
@@ -3188,6 +3174,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.84  2009/04/01 23:30:49  pwagner
+! Improved appearance when printing 'nnn lines of xxx not printed.'
+!
 ! Revision 2.83  2008/11/24 19:34:47  pwagner
 ! Less wasteful of memory; should not segment dault so often
 !
