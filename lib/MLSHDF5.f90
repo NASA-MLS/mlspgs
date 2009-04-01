@@ -2963,7 +2963,12 @@ contains ! ======================= Public Procedures =========================
       if ( fillValue ) myFillValue = 'T'
     end if
     ! Turn value into a character
-    write ( myValue, '(L1)' ) value
+    where ( value )
+      myValue = 'T'
+    elsewhere
+      myValue = 'F'
+    endwhere
+    ! write ( myValue, '(L1)' ) value
     call saveAsHDF5DS ( locID, name, myValue, finalShape, myFillValue, adding_to )
     call MLSMessageCalls( 'pop' )
   end subroutine SaveAsHDF5DS_logarr1
@@ -4944,11 +4949,15 @@ contains ! ======================= Public Procedures =========================
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.89  2009/04/01 23:27:27  pwagner
+! Worked around bug in saving logical array
+!
 ! Revision 2.88  2008/06/18 20:56:55  pwagner
 ! New optional arg 'unique' dumps print unique elements, counts only
 !
