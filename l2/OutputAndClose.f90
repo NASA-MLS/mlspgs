@@ -446,18 +446,14 @@ contains ! =====     Public Procedures     =============================
               & exclude=trim(exclude), &
               & notUnlimited=avoidUnlimitedDims )
           elseif ( .not. got(f_exclude) .and. repairGeoLocations ) then
-            ! call dump(HGrids(HGridIndex))
             if ( DEBUG ) print *,' size(filedatabse) ', size(filedatabase)
             if ( DEBUG ) print *, 'input file: ', trim(inputPhysicalFilename)
-            ! call dump(inputfile)
             if ( DEBUG ) print *, 'output file: ', trim(PhysicalFilename)
-            ! call dump(outputfile)
             call cpL2GPData(inputfile, &
               & outputfile, create2=create, &
               & swathList=trim(sdList), rename=rename, &
               & notUnlimited=avoidUnlimitedDims, &
               & HGrid=HGrids(HGridIndex), options="-r")
-              ! & HGrid=HGrids(HGridIndex), options="-rv")
           elseif ( got(f_exclude) .and. repairGeoLocations ) then
             call cpL2GPData(inputfile, &
               & outputfile, create2=create, &
@@ -465,17 +461,12 @@ contains ! =====     Public Procedures     =============================
               & exclude=trim(exclude), &
               & notUnlimited=avoidUnlimitedDims, &
               & HGrid=HGrids(HGridIndex), options="-r")
-              ! & HGrid=HGrids(HGridIndex), options="-rv")
           else
             call cpL2GPData( inputfile, &
               & outputfile, create2=create, &
               & swathList=trim(sdList), rename=rename, &
               & notUnlimited=avoidUnlimitedDims )
           endif
-          ! if ( noGapsHGIndex > 0 ) newHGridp => HGrids(noGapsHGIndex)
-          ! print *, 'Before writing attributes'
-          ! print *, 'noGapsHGIndex: ', noGapsHGIndex
-          ! call dump(hGrids(noGapsHGIndex))
           if ( noGapsHGIndex > 0 ) &
             & call writeHGridComponents( trim(PhysicalFilename), &
             & HGrids(noGapsHGIndex) )
@@ -490,8 +481,6 @@ contains ! =====     Public Procedures     =============================
       case ( s_Destroy )
         call destroyCommand ( key, matrices, vectors, griddedDataBase )
       case ( s_HGrid )
-        ! call announce_error ( spec_no, &
-        !   &  "Error--HGrid not implemented yet")
         if ( specialDumpFile /= ' ' ) &
           & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
         newHGrid = CreateHGridFromMLSCFInfo ( name, key, filedatabase, l2gpDatabase, &
@@ -500,23 +489,13 @@ contains ! =====     Public Procedures     =============================
         newHGridp => newHGrid 
         if ( DEBUG ) call dump(newHGridp)
         noGapsHGIndex = AddHGridToDatabase ( hGrids, newHGridp )
-        ! print *, 'On first adding to db'
-        ! print *, 'noGapsHGIndex: ', noGapsHGIndex
-        ! call dump(hGrids(noGapsHGIndex))
         newHGridp => newHGrid  ! newHGrid takes due notice of obstructions
-        ! noGapsHGrid = newHGrid
         if ( associated(obstructions) ) &
           & call DealWithObstructions( newHGridp, obstructions, DestroyOld = .false. )
         ! Don't skip the lower overlap profiles if ChunkDivide included them
         if ( ChunkDivideConfig%allowPriorOverlaps ) &
           & newHGridp%noProfsLowerOverlap = 0
         call decorate ( key, AddHGridToDatabase ( hGrids, newHGridp ) )
-        ! print *, 'After adding second Hgrid to db'
-        ! print *, 'noGapsHGIndex: ', noGapsHGIndex
-        ! call dump(hGrids(noGapsHGIndex))
-        ! print *, 'HGrid added; size now: ', size(hGrids)
-        ! print *, 'After dealing with obstructions'
-        ! call dump(newHGridp)
         if ( specialDumpFile /= ' ' ) &
           & call revertOutput
 
@@ -550,7 +529,6 @@ contains ! =====     Public Procedures     =============================
               & call Announce_error ( gson, &
               & 'No units allowed for hdfVersion: just integer 4 or 5')
             hdfVersion = value(1)
-          ! case ( f_quantities )
           case default                  ! Everything else processed later
           end select
         end do
@@ -613,11 +591,6 @@ contains ! =====     Public Procedures     =============================
           ! Open file
           if ( ascii ) then
             ! ASCII l2pc file
-     !  l2pcUnit = mls_io_gen_openf ( l_ascii, .true., error, &
-     !    & recLen, PGSd_IO_Gen_WSeqFrm, trim(file_base), 0,0,0, &
-     !    & unknown=.true. )
-     !  if ( error /= 0 ) call MLSMessage(MLSMSG_Error,ModuleName,&
-     !    & 'Failed to open l2pc file:'//trim(file_base))
             call returnFullFileName( file_base, PhysicalFilename, &
               & 0, 0 )
             outputFile => GetMLSFileByName(filedatabase, PhysicalFilename)
@@ -637,13 +610,6 @@ contains ! =====     Public Procedures     =============================
             end do ! in_field_no = 2, nsons(gson)
             call close_MLSFile( outputFile )
 
-            ! error = mls_io_gen_closef ( l_ascii, l2pcUnit)
-            ! if ( error /= 0 ) then
-            !  call MLSMessage(MLSMSG_Error,ModuleName,&
-            !    & 'Failed to close l2pc file:'//trim(file_base))
-            ! else if ( switchDetail(switches, 'pro') > -1 ) then
-            !   call announce_success(file_base, 'l2pc', 0)
-            ! end if
           else
             ! For the moment call a routine
             call OutputHDF5L2PC ( trim(file_base), matrices, quantitiesNode, packed, &
@@ -717,8 +683,6 @@ contains ! =====     Public Procedures     =============================
     end if
 
     ! Done wirh any Hgrids we may have created
-    ! print *, 'Was About to destroy HGridDataBase (but we granted it clemency)'
-    ! call destroyHGridDatabase ( hGrids )
 
     ! Done with text of PCF file at last
    
@@ -1412,6 +1376,8 @@ contains ! =====     Public Procedures     =============================
   subroutine unsplitFiles ( DirectDatabase, FileDatabase, usingSubmit, debug )
     ! Catenate any split Direct Writes
     ! We assume hdfVersion is 5
+    use Allocate_Deallocate, only: Deallocate_Test, Allocate_test
+    use ChunkDivide_m, only: OBSTRUCTIONS
     use DirectWrite_m, only: DirectData_T, Dump
     use HDF5, only: h5gclose_f, h5gopen_f
     use INIT_TABLES_MODULE, only: L_L2AUX, L_L2DGG
@@ -1425,7 +1391,7 @@ contains ! =====     Public Procedures     =============================
       & AddInitializeMLSFile, close_MLSFile, DUMP, &
       & GetMLSFileByName, GetPCFromRef, &
       & mls_exists, MLS_SFSTART, MLS_SFEND, open_MLSFile, unSplitName
-    use MLSHDF5, only: CpHDF5GlAttribute, MakeHDF5Attribute
+    use MLSHDF5, only: CpHDF5GlAttribute, MakeHDF5Attribute, SaveAsHDF5DS
     use MLSL2Options, only: CHECKPATHS, &
       & SKIPDIRECTWRITES, TOOLKIT
     use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, &
@@ -1454,6 +1420,8 @@ contains ! =====     Public Procedures     =============================
     integer :: L2gpFileHandle, L2gp_Version
     character (len=FileNameLen) :: L2gpPhysicalFilename
     logical :: madeFile
+    integer :: obst
+    integer, dimension(:,:), pointer :: obstruction_mafs => null()
     type(MLSFile_T), pointer :: outputFile
     integer :: ReturnStatus
     integer :: SDFID                ! File handle
@@ -1675,6 +1643,20 @@ contains ! =====     Public Procedures     =============================
         call MakeHDF5Attribute(grp_id, &
          & 'FailedMsgs', trim_safe(parallel%FailedMsgs), .true.)
         call h5gclose_f(grp_id, returnStatus)
+        ! Write 2 datasets for obstructions db
+        if ( associated(obstructions) ) then
+          if ( size(obstructions) > 0 ) then
+            call allocate_test( obstruction_mafs, size(obstructions), 2, &
+              & 'obstruction_mafs', ModuleName )
+            do obst=1, size(obstructions)
+              obstruction_mafs(obst, :) = obstructions(obst)%mafs
+            enddo
+            call SaveAsHDF5DS( sdfID, 'obstructions_range', obstructions%range )
+            call SaveAsHDF5DS( sdfID, 'obstructions_mafs', obstruction_mafs )
+            call deallocate_test( obstruction_mafs, &
+              & 'obstruction_mafs', ModuleName )
+          endif
+        endif
         returnStatus = mls_sfend(sdfid, hdfVersion=HDFVERSION_5)
       endif
     end if
@@ -1694,6 +1676,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.138  2009/04/01 23:32:32  pwagner
+! Writes obstructions db to l2aux file
+!
 ! Revision 2.137  2008/12/02 23:13:15  pwagner
 ! mls_io_gen_[openF,closeF] functions now private; use MLSFile_T interfaces instead
 !
