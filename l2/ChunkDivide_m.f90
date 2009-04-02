@@ -324,10 +324,11 @@ contains ! ===================================== Public Procedures =====
       & switchDetail(switches, 'opt') > -1 ) call dump(ChunkDivideConfig)
     if ( associated(obstructions) ) then
       if ( switchDetail(switches, 'chu' ) > -1 ) call Dump_Obstructions ( obstructions )
-      if ( .not. ChunkDivideConfig%saveObstructions ) &
-        & deallocate ( obstructions, stat=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_Deallocate//'obstructions' )
+      if ( .not. ChunkDivideConfig%saveObstructions ) then
+        deallocate ( obstructions, stat=status )
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & MLSMSG_Deallocate//'obstructions' )
+      end if
     end if
     if ( associated(ChunkDivideConfig%criticalSignals) ) then
       if ( switchDetail(switches, 'chu' ) > -1 ) &
@@ -2552,6 +2553,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.89  2009/04/02 18:09:26  pwagner
+! Fixed bug where status might be undefined
+!
 ! Revision 2.88  2009/04/01 23:34:26  pwagner
 ! By default saves obstructions db to written to l2aux file
 !
