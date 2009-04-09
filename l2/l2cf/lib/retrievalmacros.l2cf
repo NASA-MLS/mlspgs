@@ -20,6 +20,18 @@
 !define(allBandLSBs,{!makelist({},{L},!allBands)})
 !define(allBandUSBs,{!forloop({i},2,20,{!i{}U,})23U,24U,25U,!forloop({i},27,31,{!i{}U,})33U})
 
+; These will be used if we set status bits for too few radiances by Band number
+; Note that we reserve and use macros named MRn where n is the band number
+; Do not use identically-named macros for any other purpose
+!define(setMinRadsByBand,{!dnl
+!ProcessParVal(MR,$@)!dnl
+})
+!setMinRadsByBand(1=1700,2=440,3=650,4=1300,5=1100,6=1300,7=500,8=1200,9=1200,10=900)
+!setMinRadsByBand(11=800,12=900,13=900,14=900,15=1500,16=1500,17=500,18=1500,19=1500,20=500)
+!setMinRadsByBand(21=500,22=5400,23=290,24=750,25=1000,26=500,27=325,28=500,29=400,30=500)
+!setMinRadsByBand(31=500,32=100,33=55,34=100)
+
+!define(getMinRadsByBand,{!MR$1})
 ;; This macro is used in sids runs to get the band number part of a band
 ;; specifier (i.e. strip off the sideband if it is present)
 !define(getBandNumber,{!regexp({$1},{[0-9]+},{\&})})
@@ -781,6 +793,33 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, status=!status
 Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, status=!statusLowCloud+!statusBeWary, $
   sourceQuantity=otherDiagnostics.lowCloudSummary$1, minValue=!MFcloudmin, /additional!nl})
 
+!define(sumTooFewRads,{!dnl
+;; too few radiances summed over all Bands
+Fill, quantity=temporaryDiagnostics.noRadsTmp, method=explicit, explicitValues=0, /spread
+!forall(addInOneNoRads,!flaggingBands)
+;; Run a boxcar over this
+Fill, quantity=temporaryDiagnostics.noRadsTmp, method=boxcar, sourceQuantity=temporaryDiagnostics.noRadsTmp, $
+  boxCarMethod=min, width=3
+;; Set status based on this
+Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
+  status=!statusTooFewRadiances+!statusDoNotUse, $
+  sourceQuantity=temporaryDiagnostics.noRadsTmp, minValue=!MFminrads, /additional
+})
+!define(isTooFewRads,{!dnl
+;; too few radiances in this Band
+Fill, quantity=temporaryDiagnostics.noRadsTmp, method=explicit, explicitValues=0, /spread
+!addInOneNoRads($1)
+;; Run a boxcar over this
+Fill, quantity=temporaryDiagnostics.noRadsTmp, method=boxcar, sourceQuantity=temporaryDiagnostics.noRadsTmp, $
+  boxCarMethod=min, width=3
+;; Set status based on this
+Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
+  status=!statusTooFewRadiances+!statusDoNotUse, $
+  sourceQuantity=temporaryDiagnostics.noRadsTmp, minValue=!getMinRadsByBand($1), /additional
+})
+!define(anyTooFewRads,{!dnl
+!forall(isTooFewRads,!flaggingBands)
+})
 ;; Fill Quality fields, plus set status bit based on too few radiances
 !define(makeQualityForOneProduct,{!dnl
 !undefine(MFproduct)!dnl
@@ -838,21 +877,17 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
   /additional, /ifMissingGMAO
 
 !ifdef(MFminrads,{
-;; too few radiances
-Fill, quantity=temporaryDiagnostics.noRadsTmp, method=explicit, explicitValues=0, /spread
-!forall(addInOneNoRads,!flaggingBands)
-;; Run a boxcar over this
-Fill, quantity=temporaryDiagnostics.noRadsTmp, method=boxcar, sourceQuantity=temporaryDiagnostics.noRadsTmp, $
-  boxCarMethod=min, width=3
-;; Set status based on this
-Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
-  status=!statusTooFewRadiances+!statusDoNotUse, $
-  sourceQuantity=temporaryDiagnostics.noRadsTmp, minValue=!MFminrads, /additional})
-
+!ifdef(flagTooFewRadsByBand,{
+!anyTooFewRads
+},{
+!sumTooFewRads
+})
 ;; Set status bit for abandoned retrieval
 Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
   status=!statusAbandonedRtrvl+!statusDoNotUse, $
   sourceQuantity=diag!retrophase.dnwt_abandoned, maxValue=0, /force
+
+})
 
 })
 
@@ -886,6 +921,9 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
 })})
 
 ; $Log$
+; Revision 1.131  2009/03/14 02:47:33  honghanh
+; Add dnwt_abandoned
+;
 ; Revision 1.130  2009/01/28 01:15:17  pwagner
 ; Changed quantity name of hires ozone
 ;
