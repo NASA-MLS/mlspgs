@@ -166,6 +166,7 @@ h2oquantity
 h2oPrecisionQuantity
 hdfversion
 height
+heightRange
 hgrid
 highBound # for the state vector during retrieval
 homeGeodAngle
@@ -314,7 +315,6 @@ quantity
 quantityType
 
 radianceQuantity
-range
 ratioQuantity
 refGPHPrecisionquantity
 refGPHquantity
@@ -442,7 +442,6 @@ vector
 vectorMask
 vectors
 velLin # Velocity linearization
-versionRange
 vGrid
 vmrQuantity
 vRegOrders
@@ -461,6 +460,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.191  2009/04/13 20:45:57  pwagner
+# heightRange in explicit Fill can fill above or below specified height
+#
 # Revision 2.190  2008/12/18 18:01:03  pwagner
 # Added ability to dump all l2pcs (use with caution)
 #
