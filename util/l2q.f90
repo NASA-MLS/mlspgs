@@ -357,6 +357,7 @@ program L2Q
     call dump_settings
   end if
 
+  ! Read list of prospective hosts that will run slave tasks for masters
   call read_list
   call cure_host_database( hosts, silent=.true. )
   ! Are we rescuing an older l2q that died?
@@ -1910,14 +1911,17 @@ contains
     integer :: nhosts
     nhosts = 0
     do
-        if ( inunit >= 0 ) then
-          read ( inunit, '(a)', advance='no', eor=100, end=200, err=400, &
-            iostat=iostat ) newhost%name
-        else
-          read ( *, '(a)', advance='no', eor=100, end=200, err=400, &
-            iostat=iostat ) newhost%name
-        end if
-100     if ( options%verbose ) &
+      if ( inunit >= 0 ) then
+        read ( inunit, '(a)', advance='no', eor=100, end=200, err=400, &
+          iostat=iostat ) newhost%name
+      else
+        read ( *, '(a)', advance='no', eor=100, end=200, err=400, &
+          iostat=iostat ) newhost%name
+      end if
+100   newhost%name = adjustl( newhost%name )
+      ! Ignore commented-out lines and comments
+      if ( newhost%name(1:1) == '#' ) cycle
+      if ( options%verbose ) &
           & call output(trim(newhost%name) // ' added', advance='yes')
       newhost%master_tid = -1
       newhost%tid = -1
@@ -2339,6 +2343,9 @@ contains
 end program L2Q
 
 ! $Log$
+! Revision 1.24  2009/02/10 17:52:04  pwagner
+! Fixed syntax error
+!
 ! Revision 1.23  2008/06/17 00:03:13  pwagner
 ! More tweaking, less freezing
 !
