@@ -476,7 +476,7 @@ contains ! =====     Public Procedures     =============================
       integer, intent(in) :: GLOBALUNIT   ! From parent vector
       logical, intent(in) :: DONTMASK     ! Don't bother with the mask
       integer, intent(in) :: CHANNEL      ! Fill specified channel?
-      integer, intent(in) :: HEIGHTNODE   ! Fill specified height?
+      integer, intent(in) :: HEIGHTNODE   ! Fill (at) specified height?
       logical, intent(in), optional :: AzEl ! Values are in [Mag, Az, El]; the
         ! desired quantity is components of Mag in the coordinate system to
         ! which Az and El are referenced.  So the number of values has to be
@@ -488,6 +488,8 @@ contains ! =====     Public Procedures     =============================
       !   v              verbose
       !   e              replace only values in quantity == FillValue
       !   n              replace only values in quantity != FillValue
+      !   a              replace only values at heights above specified height
+      !   b              replace only values at heights below specified height
       !                   (defaults to replacing all)
       character (len=*), optional, intent(in) :: options ! E.g., '-v'
       real(r8), intent(in), optional :: FillValue
@@ -495,6 +497,7 @@ contains ! =====     Public Procedures     =============================
       ! Local variables
       integer :: chan
       real(r8) :: HEIGHT                ! The height to consider
+      character(len=8) :: heightRange   ! 'above', 'below', 'at'
       integer :: K                        ! Loop counter
       integer :: I,J                      ! Other indices
       logical :: MyAzEl
@@ -531,6 +534,13 @@ contains ! =====     Public Procedures     =============================
         whichToReplace = '/='
       end if
       verbose = ( index(myOptions, 'v') > 0 )
+      heightRange = 'at'
+      if ( index(myOptions, 'a') > 0 ) then
+        heightRange = 'above'
+      elseif ( index(myOptions, 'b') > 0 ) then
+        heightRange = 'below'
+      end if
+      
       ! Check the dimensions work out OK
       if ( myAzEl .and. mod(noValues,3) /= 0 ) &
           & call Announce_Error ( valuesNode, invalidExplicitFill )
@@ -627,7 +637,17 @@ contains ! =====     Public Procedures     =============================
             j = j + 1
             k = k + 1
             if ( heightNode /= 0 ) then
-              if ( surface /= surf ) cycle
+              select case (heightRange)
+              case('above')
+              ! Fill only surfs above supplied height
+                if ( surf < surface ) cycle
+              case('below')
+              ! Fill only surfs below supplied height
+                if ( surf > surface ) cycle
+              case('at')
+              ! Fill only surfs at supplied height
+                if ( surface /= surf ) cycle
+              end select
             endif
             if ( .not. dontMask .and. associated ( quantity%mask ) ) then
               if ( iand ( ichar(quantity%mask(j,i)), m_Fill ) /= 0 ) cycle
@@ -6127,7 +6147,7 @@ contains ! =====     Public Procedures     =============================
       call MLSMessageCalls( 'pop' )
     end subroutine FillWithBinResults
 
-    ! --------------------------------------------- FillWithBoxcarAvergage  ----
+    ! --------------------------------------------- FillWithBoxcarFunction  ----
     subroutine FillWithBoxcarFunction ( key, quantity, sourceQuantity, width, method )
       integer, intent(in) :: KEY        ! Key for tree node
       type (VectorValue_T), intent(inout) :: QUANTITY
@@ -6668,6 +6688,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.16  2009/04/13 20:45:57  pwagner
+! heightRange in explicit Fill can fill above or below specified height
+!
 ! Revision 2.15  2009/03/05 18:38:32  pwagner
 ! May specifiy height, channel with explicit Fill
 !
