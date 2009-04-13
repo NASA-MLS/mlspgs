@@ -40,24 +40,24 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
 
   ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   ! Set the following to TRUE before delivering level 2 to sips
-  logical, parameter :: SIPS_VERSION =  .false. 
+  logical, parameter :: SIPS_VERSION                 =  .false. 
 
   ! The following should be TRUE if run with level 1 as a single PGE
   ! sharing a single PCF
   ! (in which case we need to move some of the "mobile" PCF ids)
-  logical :: SHAREDPCF =  .false. 
+  logical :: SHAREDPCF                               =  .false. 
 
   ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
   ! Update these lines before delivery to sips     
   ! id to print out in response to "--version" command-line option       
   character(LEN=*), dimension(2), parameter :: CURRENT_VERSION_ID = (/ &    
-    & 'v2.22 swdev team              ', &       
+    & 'pre-v3 swdev team             ', &       
     & 'Copyright statement omitted   '/)
      
   ! Set the following to 1 before delivering to sips;                       
   ! when set to 0, it allows program to run w/o creating metadata           
-  integer            ::                         PENALTY_FOR_NO_METADATA = 0
+  integer            :: PENALTY_FOR_NO_METADATA      = 0
 
   ! Set the following to -2 before delivering to sips;                      
   ! (its possible values and their effects on normal output:                
@@ -65,74 +65,74 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! -2          sent to Log file (via MLSMessage)                           
   ! < -2        both stdout and Log file                                    
   ! > -1        Fortran 'unit=OUTPUT_PRINT_UNIT')                           
-  integer            :: OUTPUT_PRINT_UNIT = -2                              
+  integer            :: OUTPUT_PRINT_UNIT             = -2                              
 
   ! Set the following to MLSMSG_Error before delivering to sips;
   ! when set higher, it allows program keep going despite errors
   ! when set lower, the program would quit even on warnings
-  integer, parameter :: QUIT_ERROR_THRESHOLD = MLSMSG_Error
+  integer, parameter :: QUIT_ERROR_THRESHOLD          = MLSMSG_Error
 
   ! Set the following to 2 before delivering to sips;
   ! If 0, you won't be able to distinguish normal termination
   ! from some abnormal ones (e.g. in parser) (a bad thing)
   ! if 2, status will be 2 only if run complete                             
   ! and without error (a good thing)
-  integer, parameter :: NORMAL_EXIT_STATUS = 2          
+  integer, parameter :: NORMAL_EXIT_STATUS            = 2          
 
   ! ---------------------------------------------------------------
   ! None of the following need to be changed before delivery to sips
   
   ! Assume hdf files w/o explicit hdfVersion field are this                 
   ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc.                   
-  integer            :: DEFAULT_HDFVERSION_WRITE = HDFVERSION_5
+  integer            :: DEFAULT_HDFVERSION_WRITE      = HDFVERSION_5
   ! Set to WILDCARDHDFVERSION if you wish to autodetect such files          
   ! on input                                                                
-  integer            :: DEFAULT_HDFVERSION_READ = WILDCARDHDFVERSION
-  integer            :: LEVEL1_HDFVERSION = WILDCARDHDFVERSION
+  integer            :: DEFAULT_HDFVERSION_READ       = WILDCARDHDFVERSION  
+  integer            :: LEVEL1_HDFVERSION             = WILDCARDHDFVERSION  
 
   ! What units to use in summarizing timings at end of run
-  integer            :: SECTIONTIMINGUNITS = L_SECONDS
-  logical            :: patch = .false.       ! Set if run must not create file,
+  integer            :: SECTIONTIMINGUNITS            = L_SECONDS
+  logical            :: patch                         = .false. ! Set if run must not create file,
   ! Whether to restart printing identical warnings at each new phase
-  logical            :: RESTARTWARNINGS = .true.
-  ! Whether to skip doing the direct writes--quicker when snooping       swath  
-  logical            :: SKIPDIRECTWRITES = .false.         
-  logical            :: SKIPDIRECTWRITESORIGINAL = .false.         
+  logical            :: RESTARTWARNINGS               = .true.
+  ! Whether to skip doing the direct writes--quicker when snooping
+  logical            :: SKIPDIRECTWRITES              = .false.    
+  logical            :: SKIPDIRECTWRITESORIGINAL      = .false.    
   ! Whether to skip doing the retrieval--a pre-flight checkout of paths, etc.
-  logical            :: SKIPRETRIEVAL = .false.
-  logical            :: SKIPRETRIEVALORIGINAL = .false. ! May skip for some phases
+  logical            :: SKIPRETRIEVAL                 = .false.                           
+  logical            :: SKIPRETRIEVALORIGINAL         = .false. ! May skip for some phases
   ! Whether each slave deallocates all its arrays, pointers, etc.
   ! Sometimes slaves die or take too long to finish cleaning up
   ! But if system fails to reclaim memory properly, subsequent slaves
   ! may not find enough available and therefore crash
-  logical            :: SLAVESDOOWNCLEANUP = .false. ! Let system do it
+  logical            :: SLAVESDOOWNCLEANUP            = .false. ! Let system do it
   ! In case special dumps are to go to a special dumpfile
-  character(len=255) :: SPECIALDUMPFILE = ' '
+  character(len=255) :: SPECIALDUMPFILE               = ' '
   ! What to fill state, outputSD with if skipping retrieval
   real               :: STATEFILLEDBYSKIPPEDRETRIEVALS = 0.
   ! Whether to stop after a certain section: which section it is
-  character(len=16)  :: STOPAFTERSECTION = ' ' ! Blank means 'no'
+  character(len=16)  :: STOPAFTERSECTION              = ' ' ! Blank means 'no'
 
   ! Whether to exit with status 1 no matter what
-  logical            :: STOPWITHERROR = .false.         
+  logical            :: STOPWITHERROR                 = .false.         
   ! Whether to do only a pre-flight checkout of paths
-  logical            :: CHECKPATHS = .false.         
+  logical            :: CHECKPATHS                    = .false.         
   ! Whether to catenate split autoDirectWrites
-  logical            :: CATENATESPLITS = .true.         
+  logical            :: CATENATESPLITS                = .true.       
 
-  logical            :: TOOLKIT =                SIPS_VERSION 
+  logical            :: TOOLKIT                       =  SIPS_VERSION
   ! --------------------------------------------------------------------------
 
   ! This is the type to store runtime Booleans set and used by the l2cf
-  integer, parameter :: RTVSTRINGLENGTH = 1024
-  integer, parameter :: RTVARRAYLENGTH  = 128
+  integer, parameter :: RTVSTRINGLENGTH               = 1024
+  integer, parameter :: RTVARRAYLENGTH                = 128
   
   integer, private :: i ! For loop constructor below
 
   type :: runTimeValues_T
     ! Two arrays bound as a logical-valued hash
-    character(len=RTVSTRINGLENGTH)     :: lkeys = 'true,false'
-    logical, dimension(RTVARRAYLENGTH) :: lvalues = &
+    character(len=RTVSTRINGLENGTH)     :: lkeys       = 'true,false' 
+    logical, dimension(RTVARRAYLENGTH) :: lvalues     = &            
       & (/ .TRUE., (.FALSE., i=2, RTVARRAYLENGTH) /)
     ! Add two more arrays bound for each kind of hash: integer, string, real, ..
   end type runTimeValues_T
@@ -147,6 +147,7 @@ contains
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 END MODULE MLSL2Options
@@ -154,6 +155,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.44  2009/04/13 21:00:44  pwagner
+! update current version id to pre-v3
+!
 ! Revision 2.43  2008/01/08 00:16:29  pwagner
 ! Added SHAREDPCF so levels 1 and 2 can use same PCF
 !
