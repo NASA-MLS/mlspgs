@@ -856,7 +856,8 @@ contains ! =====     Public procedures     =============================
                     n+n_dot, &
              begin, f+f_h2oPrecisionQuantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
-             begin, f+f_height, t+t_numeric, n+n_field_type /), &
+             begin, f+f_height, t+t_numeric, n+n_field_type , &
+             begin, f+f_heightRange, t+t_string, n+n_field_type/),  &
              continue=.true. )
     call make_tree ( (/ & ! Continuing for s_fill...
              begin, f+f_ifMissingGMAO, t+t_boolean, n+n_field_type, &
@@ -1577,6 +1578,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.484  2009/04/13 20:45:57  pwagner
+! heightRange in explicit Fill can fill above or below specified height
+!
 ! Revision 2.483  2009/03/14 02:45:34  honghanh
 ! Add dnwt_count and dwnt_abandoned
 !
