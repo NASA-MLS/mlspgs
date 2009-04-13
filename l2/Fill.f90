@@ -96,8 +96,9 @@ contains ! =====     Public Procedures     =============================
       & F_DONTMASK, F_DONTSUMHEIGHTS, F_DONTSUMINSTANCES, &
       & F_ECRTOFOV, F_EARTHRADIUS, F_EXCLUDEBELOWBOTTOM, F_EXPLICITVALUES, &
       & F_EXTINCTION, F_FIELDECR, F_FILE, F_FLAGS, F_FORCE, &
-      & F_FRACTION, F_FROMPRECISION, F_GEOCALTITUDEQUANTITY, F_GPHQUANTITY, &
-      & F_HEIGHT, F_HIGHBOUND, F_H2OQUANTITY, F_H2OPRECISIONQUANTITY, &
+      & F_FRACTION, F_FROMPRECISION, &
+      & F_GEOCALTITUDEQUANTITY, F_GPHQUANTITY, F_HEIGHT, F_HEIGHTRANGE, &
+      & F_HIGHBOUND, F_H2OQUANTITY, F_H2OPRECISIONQUANTITY, &
       & F_IFMISSINGGMAO, F_IGNORENEGATIVE, F_IGNOREGEOLOCATION, F_IGNOREZERO, &
       & F_INSTANCES, F_INTEGRATIONTIME, F_INTERNALVGRID, &
       & F_INTERPOLATE, F_INVERT, F_INTRINSIC, F_ISPRECISION, &
@@ -375,6 +376,8 @@ contains ! =====     Public Procedures     =============================
     logical :: FROMPRECISION            ! Fill from l2gpPrecision not l2gpValue
     integer :: GEOCALTITUDEQUANTITYINDEX    ! In the source vector
     integer :: GEOCALTITUDEVECTORINDEX      ! In the vector database
+    integer :: GLOBALUNIT               ! To go into the vector
+    character(len=16) :: GLStr          ! geo. loc. in manipulation='..'
     integer :: GPHQUANTITYINDEX         ! In the source vector
     integer :: GPHVECTORINDEX           ! In the vector database
     logical, dimension(field_first:field_last) :: GOT
@@ -387,8 +390,6 @@ contains ! =====     Public Procedures     =============================
     integer :: H2OPRECISIONQUANTITYINDEX         ! in the quantities database
     integer :: H2OPRECISIONVECTORINDEX           ! In the vector database
     integer :: I, J                     ! Loop indices for section, spec, expr
-    integer :: GLOBALUNIT               ! To go into the vector
-    character(len=16) :: GLStr          ! geo. loc. in manipulation='..'
     integer :: IBO
     logical :: IGNOREZERO               ! Don't sum chi^2 at values of noise = 0
     logical :: IGNORENEGATIVE           ! Don't sum chi^2 at values of noise < 0
@@ -447,6 +448,7 @@ contains ! =====     Public Procedures     =============================
     integer :: NOSNOOPEDMATRICES        ! No matrices to snoop
     real(rv) :: OFFSETAMOUNT            ! For offsetRadiance
     logical :: OLD_MATH77_RAN_PACK      ! To restore math77_ran_pack
+    character(len=16) :: OPTIONS
     integer :: ORBITINCLINATIONVECTORINDEX ! In the vector database
     integer :: ORBITINCLINATIONQUANTITYINDEX ! In the quantities database
     integer :: PHITANVECTORINDEX        ! In the vector database
@@ -1129,7 +1131,7 @@ contains ! =====     Public Procedures     =============================
         case ( f_lsbFraction ) ! For folding
           lsbFractionVectorIndex = decoration(decoration(subtree(1,gson)))
           lsbFractionQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
-        case ( f_manipulation )
+        case ( f_heightRange, f_manipulation )
           manipulation = sub_rosa ( gson )
         case ( f_maxIterations )      ! For hydrostatic fill
           call expr_check ( gson , unitAsArray, valueAsArray, &
@@ -1537,8 +1539,17 @@ contains ! =====     Public Procedures     =============================
       case ( l_explicit ) ! ---------  Explicitly fill from l2cf  -----
         if ( .not. got(f_explicitValues) ) &
           & call Announce_Error ( key, noExplicitValuesGiven )
+        options = ' '
+        ! If heightRange field was present, it should have been one of
+        ! 'a[bove]' meaning fill heights above supplied value
+        ! 'b[elow]' meaning fill heights below supplied value
+        if ( got ( f_heightRange ) ) &
+          & call get_string ( manipulation, options, strip=.true. )
+        if ( index(' ab', options(1:1)) < 1 ) &
+          & call Announce_Error ( key, 0, 'invalid heightRange: ' // trim(options) )
         call ExplicitFillVectorQuantity ( quantity, valuesNode, spreadFlag, &
-          & vectors(vectorIndex)%globalUnit, dontmask, channel, heightNode )
+          & vectors(vectorIndex)%globalUnit, dontmask, channel, heightNode, &
+          & options=options(1:1) )
 
       case ( l_extractChannel )
         if ( .not. all(got ( (/f_sourceQuantity,f_channel/)))) &
@@ -2420,6 +2431,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.370  2009/04/13 20:45:57  pwagner
+! heightRange in explicit Fill can fill above or below specified height
+!
 ! Revision 2.369  2009/03/05 18:37:59  pwagner
 ! May specifiy height, channel with explicit Fill
 !
