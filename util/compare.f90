@@ -27,7 +27,7 @@ program COMPARE
 ! Print the maximum relative and absolute difference anywhere at the end
 ! if it's not zero.
 
-  use Machine, only: IO_Error
+  use Machine, only: IO_Error, getarg
 
   implicit NONE
 
@@ -59,6 +59,8 @@ program COMPARE
   character(127) :: Line1, line2
   logical, allocatable, dimension(:) :: M    ! abs(r1+r2) > 0.0
   integer :: N
+  character(len=3) :: NaNString
+  real(rk) :: NaNValue
   real(rk), allocatable, dimension(:) :: R1, R2  ! Inputs
   real(rk), allocatable, dimension(:) :: RD      ! Relative difference of R1, R2
   real(rk) :: RelAtAmaxG
@@ -72,8 +74,16 @@ program COMPARE
   real(rk) :: VMAX                ! Maximum absolute value in R1 or R2
   logical :: Zero = .false.       ! If ( all ), show zero differences, too.
 
-  read ( (/("NaN", i = 1, 10 ) /), * ) AbsAtRmaxG, RelAtAmaxG, avgsr, avgsa, &
-    & stdevr, stdeva
+  NaNString = "NaN"
+  read ( NaNString, * ) NaNvalue
+  ! read ( (/("NaN", i = 1, 10 ) /), * ) AbsAtRmaxG, RelAtAmaxG, avgsr, avgsa, &
+  !  & stdevr, stdeva
+  AbsAtRmaxG = NaNvalue
+  RelAtAmaxG = NaNvalue
+  avgsr = NaNvalue
+  avgsa = NaNvalue
+  stdevr = NaNvalue
+  stdeva = NaNvalue
 
   i = 1
   do
@@ -318,6 +328,10 @@ contains
 end program
 
 ! $Log$
+! Revision 1.17  2007/06/26 00:33:43  vsnyder
+! Print difference relative to max(maxval(abs(r1)),maxval(abs(r2))).
+! Get rid of eps and outputs scaled by it.
+!
 ! Revision 1.16  2007/06/19 00:29:39  vsnyder
 ! Print Max Abs Value if -a
 !

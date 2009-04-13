@@ -89,7 +89,8 @@ debug=1
 me="$0"
 my_name=batch_l2gpcat.sh
 I=batch_l2gpcat
-l2gpcat=$HOME/bin/l2gpcat
+#l2gpcat=$HOME/bin/l2gpcat
+l2gpcat=$HOME/apps/test/mlspgs-hybrid/bin/IFC.Linux.ifc10.0/l2gpcat
 split_path="`echo $0 | sed 's/'$I'/split_path/'`"
 l2gpcat_opts="-cat"
 list=""
@@ -246,3 +247,6 @@ do
 done
 
 # $Log$
+# Revision 1.1  2008/02/28 01:37:24  pwagner
+# 1st commit
+#

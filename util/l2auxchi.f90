@@ -45,7 +45,7 @@ program l2auxchi ! dumps chi^sq read from L2AUX files
 !---------------------------------------------------------------------------
 
 ! Brief description of program
-! diffs two l1b or l2aux files
+! diffs chi^2 quantities from l2aux files w.r.t. reference value
 
 ! To use this, copy it into
 ! mlspgs/tests/lib
@@ -262,7 +262,7 @@ contains
   subroutine dumpchisq( file1, hdfVersion, options, table, names )
   !------------------------------------------------------------------------
 
-    ! Given file names file1,
+    ! Given file name file1,
     ! This routine prints the diffs from referenceValue for chi^2
 
     ! Arguments
@@ -424,6 +424,9 @@ end program l2auxchi
 !==================
 
 ! $Log$
+! Revision 1.3  2006/08/23 00:00:37  pwagner
+! Many untested changes; compiles successfully
+!
 ! Revision 1.2  2006/05/24 22:22:05  pwagner
 ! Increased MAXDS to more realistic value
 !

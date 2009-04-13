@@ -90,12 +90,12 @@ PROGRAM L2GPDump ! dumps L2GPData files
   integer, save                   :: numNotUseable = 0
   integer, save                   :: numOddStatus = 0
   real, dimension(3), save        :: numTest = 0.
-  integer, parameter              :: MAXNUMBITSUSED = 8
+  integer, parameter              :: MAXNUMBITSUSED = 9
   integer, dimension(MAXNUMBITSUSED), parameter :: bitNumber = &
-    & (/ 0, 1, 2, 4, 5, 6, 8, 9 /)
+    & (/ 0, 1, 2, 4, 5, 6, 7, 8, 9 /)
   integer, dimension(MAXNUMBITSUSED, 2), save :: bitCounts = 0
   character(len=*), parameter     :: bitNames = &
-    & 'dontuse, bewary,   info,  hicld,  locld, nogmao, toofew,  crash'
+    & '  dontuse,   bewary,     info,    hicld,    locld,   nogmao,abandoned,   toofew,    crash'
   ! 
   MLSMessageConfig%useToolkit = .false.   
   MLSMessageConfig%logFileUnit = -1       
@@ -498,18 +498,22 @@ contains
      numOddStatus = numOddStatus + count( oddStatus )
      if ( options%statusBits ) then
        alreadyDumped = .true.
-       ! Bits 0 and 8 are special
+       ! First, and last 3 bits are special
        ! For bit 0 we filter out only points with precision < 0
-       ! For bit 8 we want % of crashed chunks, so we don't filter out at all
+       ! For the last 3
+       ! we want % of crashed chunks, so we don't filter out at all
        bitCounts(1, 2) = bitCounts(1, 2) + count( .not. negativePrec )
        bitCounts(1, 1) = bitCounts(1, 1) + count( .not. ( negativePrec .or. &
          & (mod(l2gp%status, 2) == 0) ) )
-       bitCounts(MAXNUMBITSUSED, 2) = bitCounts(MAXNUMBITSUSED, 2) + l2gp%nTimes
-       bitCounts(MAXNUMBITSUSED, 1) = bitCounts(MAXNUMBITSUSED, 1) + &
-         & count(isBitSet( l2gp%status, bitNumber(MAXNUMBITSUSED) ) )
+       do bitindex=MAXNUMBITSUSED-2, MAXNUMBITSUSED
+         bitCounts(bitindex, 2) = bitCounts(bitindex, 2) + l2gp%nTimes
+         bitCounts(bitindex, 1) = bitCounts(bitindex, 1) + &
+           & count(isBitSet( l2gp%status, bitNumber(bitindex) ) )
+       enddo
        ! call outputNamedValue ( 'max status', maxval(l2gp%status) )
        ! call outputNamedValue ( 'min status', minval(l2gp%status) )
-       do bitindex=2, MAXNUMBITSUSED-1
+       do bitindex=2, MAXNUMBITSUSED-3
+         ! Bit 
          bitCounts(bitindex, 2) = numGood
          bitCounts(bitindex, 1) = bitCounts(bitindex, 1) + &
            & count( .not. ( negativePrec .or. &
@@ -620,6 +624,9 @@ end program L2GPDump
 !==================
 
 ! $Log$
+! Revision 1.6  2008/12/03 00:15:04  pwagner
+! Must use MLSFile_T interfaces instead of mls_io_gen_..
+!
 ! Revision 1.5  2008/09/09 16:51:38  pwagner
 ! Added geolocation box to dump subsetted data
 !

@@ -465,7 +465,7 @@ then
       # echo $TEMPLATE
       # exit
     else
-      macros="-D${line} $macros"
+      macros="$macros -D${line}"
     fi
   done
 else
@@ -554,6 +554,9 @@ fi
 
 exit 0
 # $Log$
+# Revision 1.5  2009/03/26 20:24:08  honghanh
+# Change myPATH to mypath so the -I option can work
+#
 # Revision 1.4  2009/03/13 17:26:30  pwagner
 # Many improvements; tested with no overridepaths.sh file
 #
