@@ -232,7 +232,6 @@ contains ! =====     Public Procedures     =============================
       character(len=*), intent(in) :: MSG ! in case of error
       integer, intent(in), optional :: pcfEndCode
       ! Internal variables
-      ! type (MLSFile_T), pointer :: MLSFile
       character(len=255) :: fileTypeStr, PCFFileName, path, shortName
       integer :: returnStatus             ! non-zero means trouble
       integer :: mypcfEndCode
@@ -268,13 +267,11 @@ contains ! =====     Public Procedures     =============================
           & content=fileTypeStr, &
           & name=Filename, shortName=shortName, &
           & type=l_hdf, access=dfacc_rdonly, HDFVersion=HDFVERSION_5)
-          ! & type=l_hdf, access='rdonly', HDFVersion=HDFVERSION_5)
       else
         MLSFile => AddInitializeMLSFile(filedatabase, &
           & content=fileTypeStr, &
           & name=Filename, shortName=shortName, &
           & type=l_ascii, access=dfacc_rdonly)
-          ! & type=l_ascii, access='rdonly')
       endif      
       MLSFile%PCFId = lun
     end subroutine Get_File_Name
@@ -1383,11 +1380,15 @@ op:     do j = 2, nsons(theTree)
   character (len=len(idParm)) :: Id = idParm
   !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function NOT_USED_HERE
 
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.144  2009/04/16 21:56:43  pwagner
+! Added print to not_used_here
+!
 ! Revision 2.143  2008/09/30 22:37:51  vsnyder
 ! Use nint(value) for TScatMIF
 !
