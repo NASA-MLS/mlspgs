@@ -885,7 +885,7 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
 ;; Set status bit for abandoned retrieval
 Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
   status=!statusAbandonedRtrvl+!statusDoNotUse, $
-  sourceQuantity=diag!retrophase.dnwt_abandoned, maxValue=0, /force
+  sourceQuantity=diag!retrophase.dnwt_abandoned, maxValue=0, /additional, /exact, /force
 
 })
 
@@ -921,6 +921,9 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
 })})
 
 ; $Log$
+; Revision 1.132  2009/04/09 20:38:25  pwagner
+; May set Status bits for too few radiances by Band
+;
 ; Revision 1.131  2009/03/14 02:47:33  honghanh
 ; Add dnwt_abandoned
 ;
