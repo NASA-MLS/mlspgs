@@ -840,6 +840,7 @@ contains ! =====     Public procedures     =============================
                     n+n_dot, &
              begin, f+f_ECRtoFOV, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
+             begin, f+f_exact, t+t_boolean, n+n_field_type, &
              begin, f+f_excludeBelowBottom, t+t_boolean, n+n_field_type, &
              begin, f+f_explicitValues, t+t_numeric, n+n_field_type, &
              begin, f+f_extinction, t+t_boolean, n+n_field_type, &
@@ -1578,6 +1579,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.485  2009/04/16 21:54:40  pwagner
+! /exact keyword in status Fill to fix radiance bug
+!
 ! Revision 2.484  2009/04/13 20:45:57  pwagner
 ! heightRange in explicit Fill can fill above or below specified height
 !
