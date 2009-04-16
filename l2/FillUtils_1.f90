@@ -5311,7 +5311,7 @@ contains ! =====     Public Procedures     =============================
 
     ! -------------------------------------------- FillStatusQuantity --------
     subroutine FillStatusQuantity ( key, quantity, sourceQuantity, statusValue, &
-      & minValue, maxValue, heightNode, additional, force )
+      & minValue, maxValue, heightNode, additional, force, exact )
       integer, intent(in) :: KEY        ! Tree node
       type ( VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
       type ( VectorValue_T), intent(in) :: SOURCEQUANTITY ! Quantity on which it's based
@@ -5321,6 +5321,7 @@ contains ! =====     Public Procedures     =============================
       integer, intent(in) :: HEIGHTNODE ! What heights
       logical, intent(in) :: ADDITIONAL ! Is this an additional flag or a fresh start?
       logical, intent(in) :: FORCE ! May pound round pegs into square holes?
+      logical, intent(in) :: EXACT ! Set status to exact statusValue , don't OR values
       ! Local variables
       real(r8) :: HEIGHT                ! The height to consider
       integer :: SURFACE                ! Surface index
@@ -5352,13 +5353,27 @@ contains ! =====     Public Procedures     =============================
       end if
       if ( .not. additional ) quantity%values = 0.0_r8
       if ( size(sourceQuantity%values, 2) /= size(quantity%values, 2) ) then
-        if ( sourceQuantity%values(surface,1) > maxValue .or. sourceQuantity%values(surface,1) < minValue ) &
-          & quantity%values(1,:) = ior ( nint ( quantity%values(1,1) ), statusValue )
+        if ( sourceQuantity%values(surface,1) > maxValue .or. &
+          & sourceQuantity%values(surface,1) < minValue ) then
+          if ( exact ) then
+            quantity%values(1,:) = statusValue
+          else
+            quantity%values(1,:) = ior ( nint ( quantity%values(1,1) ), statusValue )
+          endif
+        endif
       else
         ! quantity%values = iand ( nint ( quantity%values ), not ( statusValue ) )
-        where ( sourceQuantity%values(surface,:) > maxValue .or. sourceQuantity%values(surface,:) < minValue )
-          quantity%values(1,:) = ior ( nint ( quantity%values(1,:) ), statusValue )
-        end where
+        if ( exact ) then
+          where ( sourceQuantity%values(surface,:) > maxValue .or. &
+            & sourceQuantity%values(surface,:) < minValue )
+              quantity%values(1,:) = statusValue
+          end where
+        else
+          where ( sourceQuantity%values(surface,:) > maxValue .or. &
+            & sourceQuantity%values(surface,:) < minValue )
+              quantity%values(1,:) = ior ( nint ( quantity%values(1,:) ), statusValue )
+          end where
+        endif
       endif
       call MLSMessageCalls( 'pop' )
     end subroutine FillStatusQuantity
@@ -6688,6 +6703,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.17  2009/04/16 21:55:23  pwagner
+! /exact keyword in status Fill to fix radiance bug
+!
 ! Revision 2.16  2009/04/13 20:45:57  pwagner
 ! heightRange in explicit Fill can fill above or below specified height
 !
