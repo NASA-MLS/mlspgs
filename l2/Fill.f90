@@ -94,7 +94,7 @@ contains ! =====     Public Procedures     =============================
       & F_C, F_CENTERVERTICALLY, F_CHANNEL, F_COLUMNS, &
       & F_DESTINATION, F_DIAGONAL, &
       & F_DONTMASK, F_DONTSUMHEIGHTS, F_DONTSUMINSTANCES, &
-      & F_ECRTOFOV, F_EARTHRADIUS, F_EXCLUDEBELOWBOTTOM, F_EXPLICITVALUES, &
+      & F_ECRTOFOV, F_EARTHRADIUS, F_EXACT, F_EXCLUDEBELOWBOTTOM, F_EXPLICITVALUES, &
       & F_EXTINCTION, F_FIELDECR, F_FILE, F_FLAGS, F_FORCE, &
       & F_FRACTION, F_FROMPRECISION, &
       & F_GEOCALTITUDEQUANTITY, F_GPHQUANTITY, F_HEIGHT, F_HEIGHTRANGE, &
@@ -360,6 +360,7 @@ contains ! =====     Public Procedures     =============================
     integer :: ECRTOFOVQUANTITYINDEX    ! Rotation matrix
     integer :: ECRTOFOVVECTORINDEX      ! Rotation matirx
     integer :: ERRORCODE                ! 0 unless error; returned by called routines
+    logical :: EXACT                    ! Set STATUS to value exactly, don't OR bits
     logical :: EXCLUDEBELOWBOTTOM       ! If set in binmax/binmin does not consider stuff below bottom
     character(len=16)  :: explicitUnit  ! E.g., DU
     logical :: Extinction               ! Flag for cloud extinction calculation
@@ -564,6 +565,7 @@ contains ! =====     Public Procedures     =============================
       dontMask = .false.
       dontSumHeights = .false.
       dontSumInstances = .false.
+      exact = .false.
       excludeBelowBottom = .false.
       extinction = .false.
       force = .false.
@@ -1056,6 +1058,8 @@ contains ! =====     Public Procedures     =============================
         case ( f_ECRToFOV ) ! For hydrostatic
           ecrToFOVVectorIndex = decoration(decoration(subtree(1,gson)))
           ecrToFOVQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+        case ( f_exact )
+          exact = get_boolean ( gson )
         case ( f_explicitValues ) ! For explicit fill
           valuesNode = subtree(j,key)
         case ( f_extinction ) ! For cloud extinction fill
@@ -2242,7 +2246,7 @@ contains ! =====     Public Procedures     =============================
             & 'Bad combination of max/min values' )
           call FillStatusQuantity ( key, quantity, &
             & sourceQuantity, statusValue, &
-            & minValue, maxValue, heightNode, additional, force )
+            & minValue, maxValue, heightNode, additional, force, exact )
         end if
 
       case ( l_swapvalues )
@@ -2431,6 +2435,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.371  2009/04/16 21:55:05  pwagner
+! /exact keyword in status Fill to fix radiance bug
+!
 ! Revision 2.370  2009/04/13 20:45:57  pwagner
 ! heightRange in explicit Fill can fill above or below specified height
 !
