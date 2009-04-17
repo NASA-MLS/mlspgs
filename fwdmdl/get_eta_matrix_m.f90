@@ -153,10 +153,13 @@ contains
 
 ! Things below go more efficiently if Grid is sorted
 
-    mySorted = .false.
-    if ( grid(1) <= grid(2) .and. present(sorted) ) mySorted = sorted
-
     n_grid = size(grid)
+
+    mySorted = n_grid == 1
+    if ( .not. mySorted ) then
+      if ( grid(1) <= grid(2) .and. present(sorted) ) mySorted = sorted
+    end if
+
     if ( mySorted ) then
       do i = 1, n_grid
         p(i) = i
@@ -403,10 +406,13 @@ contains
 
 ! Things below go more efficiently if Grid is sorted
 
-    mySorted = .false.
-    if ( grid(1) <= grid(2) .and. present(sorted) ) mySorted = sorted
-
     n_grid = size(grid)
+
+    mySorted = n_grid == 1
+    if ( .not. mySorted ) then
+      if ( grid(1) <= grid(2) .and. present(sorted) ) mySorted = sorted
+    end if
+
     if ( mySorted ) then
 
 ! first basis calculation
@@ -515,10 +521,13 @@ contains
 
 ! Things below go more efficiently if Grid is sorted
 
-    mySorted = .false.
-    if ( grid(1) <= grid(2) .and. present(sorted) ) mySorted = sorted
-
     n_grid = size(grid)
+
+    mySorted = n_grid == 1
+    if ( .not. mySorted ) then
+      if ( grid(1) <= grid(2) .and. present(sorted) ) mySorted = sorted
+    end if
+
     if ( mySorted ) then
 
 ! first basis calculation
@@ -650,10 +659,13 @@ contains
 
 ! Things below go more efficiently if Grid is sorted
 
-    mySorted = .false.
-    if ( grid(1) <= grid(2) .and. present(sorted) ) mySorted = sorted
-
     n_grid = size(grid)
+
+    mySorted = n_grid == 1
+    if ( .not. mySorted ) then
+      if ( grid(1) <= grid(2) .and. present(sorted) ) mySorted = sorted
+    end if
+
     if ( mySorted ) then
 
 ! first basis calculation
@@ -1128,6 +1140,10 @@ contains
 end module Get_Eta_Matrix_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.20  2009/01/16 23:44:15  vsnyder
+! Add Dump_Eta_Column_Sparse.  Double-check whether things are sorted.
+! Corrections to sparse calculations.
+!
 ! Revision 2.19  2008/10/14 20:59:16  vsnyder
 ! Undo changes to Select_NZ_List for now
 !
