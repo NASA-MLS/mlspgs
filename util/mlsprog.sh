@@ -81,7 +81,7 @@ then
   shift
 fi
 # Use the following line to add extra options to MLSPROG
-EXTRA_OPTIONS=mlseexxttrraa
+EXTRA_OPTIONS="$OTHEROPTS mlseexxttrraa"
 
 MLSPROG=mlsxxyyzz
 # This directory may be a relative path or an absolute one
@@ -176,6 +176,9 @@ else
 fi
 
 # $Log$
+# Revision 1.8  2009/02/13 17:37:05  pwagner
+# Running mlspgs automatically prints license text
+#
 # Revision 1.7  2009/01/16 01:51:39  pwagner
 # Takes -Ef settings.env as optional args
 #
