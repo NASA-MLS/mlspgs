@@ -1,6 +1,6 @@
 #!/bin/sh
 # --------------- batch_l2gpcat.sh help
-# batch_repack.sh
+# batch_l2gpcat.sh
 # l2gpcat all the files in dir1, saving them in dir2
 #
 # batch_l2gpcat.sh [opt1] [opt2] ..  str1 [str2] .. - dir1 dir2
@@ -89,8 +89,7 @@ debug=1
 me="$0"
 my_name=batch_l2gpcat.sh
 I=batch_l2gpcat
-#l2gpcat=$HOME/bin/l2gpcat
-l2gpcat=$HOME/apps/test/mlspgs-hybrid/bin/IFC.Linux.ifc10.0/l2gpcat
+l2gpcat=$HOME/bin/l2gpcat
 split_path="`echo $0 | sed 's/'$I'/split_path/'`"
 l2gpcat_opts="-cat"
 list=""
@@ -247,6 +246,9 @@ do
 done
 
 # $Log$
+# Revision 1.2  2009/04/13 20:43:17  pwagner
+# Fixed a bug preventing macros file from using its own macros properly
+#
 # Revision 1.1  2008/02/28 01:37:24  pwagner
 # 1st commit
 #
