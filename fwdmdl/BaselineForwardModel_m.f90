@@ -31,7 +31,8 @@ contains ! ======================================== BaselineForwardModel ======
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use ForwardModelConfig, only: FORWARDMODELCONFIG_T
     use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
-    use Intrinsic, only: L_BASELINE, L_PTAN, L_NONE, L_RADIANCE, L_INTERMEDIATEFREQUENCY
+    use Intrinsic, only: L_BASELINE, L_CHANNEL, L_INTERMEDIATEFREQUENCY, L_NONE, &
+     &  L_PTAN, L_RADIANCE
     use ManipulateVectorQuantities, only: FINDONECLOSESTINSTANCE
     use MatrixModule_0, only: SPARSIFY, MATRIXELEMENT_T, M_ABSENT, M_BANDED, DENSIFY, &
       & CHECKFORSIMPLEBANDEDLAYOUT
@@ -225,7 +226,7 @@ contains ! ======================================== BaselineForwardModel ======
       ! Now check the validity of the quantities we've been given
       minorFrameBasis = baseline%template%minorFrame
       if ( .not. ValidateVectorQuantity(baseline, regular=.true., &
-        & frequencyCoordinate=(/ l_none, l_intermediateFrequency/) ) ) &
+        & frequencyCoordinate=(/ l_channel, l_none, l_intermediateFrequency/) ) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & InvalidQuantity//'baseline' )
       if ( .not. ValidateVectorQuantity(ptan, minorFrame=.true., &
@@ -312,14 +313,18 @@ contains ! ======================================== BaselineForwardModel ======
       call Allocate_test ( chanWt0, noChans, 'chanWt0', ModuleName )
       call Allocate_test ( chanWt1, noChans, 'chanWt1', ModuleName )
       
-      if ( associated ( baseline%template%frequencies ) ) then
+      if ( associated ( baseline%template%frequencies ) .and. &
+        & baseline%template%frequencyCoordinate /= l_channel ) then
         call Hunt ( baseline%template%frequencies, &
           & signal%direction*signal%frequencies+signal%centerFrequency, chan0 )
       else
         chan0 = 1
       end if
       chan1 = min ( chan0+1, noBslChans )
-      if ( associated ( baseline%template%frequencies ) ) then
+      if ( baseline%template%frequencyCoordinate == l_channel ) then
+        chanWt0 = 1.0
+        chanWt1 = 0.0
+      elseif ( associated ( baseline%template%frequencies ) ) then
         where ( chan1 /= chan0 )
           chanWt1 = ( signal%frequencies*signal%direction+signal%centerFrequency - &
             & baseline%template%frequencies(chan0) ) / &
@@ -522,6 +527,9 @@ contains ! ======================================== BaselineForwardModel ======
 end module BaselineForwardModel_m
   
 ! $Log$
+! Revision 2.30  2009/04/20 18:46:55  pwagner
+! Needed changes to allow radiance adjustments by means of a baseline fwdmdl
+!
 ! Revision 2.29  2007/07/25 20:10:44  vsnyder
 ! Delete USE for unreferenced entities
 !
