@@ -800,7 +800,7 @@ contains ! =====     Public Procedures     =============================
           stateQ => GetQuantityForForwardModel ( FwdModelIn, FwdModelExtra,&
             & quantityType = l_vmr, config=fmConf, &
             & molecule = l2pcQ%template%molecule, &
-            & foundInFirst = foundInFirst, noError=.true. )
+            & foundInFirst = foundInFirst, noError=.true., matchQty=l2pcQ )
         else
           searchLoop: do vec = 1, 2
             ! Point to appropriate vector
@@ -1125,6 +1125,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.70  2008/10/03 16:39:29  livesey
+! Bug fix with EXTINCTIONV2
+!
 ! Revision 2.69  2008/10/03 16:31:13  livesey
 ! Added EXTINCTIONV2
 !
