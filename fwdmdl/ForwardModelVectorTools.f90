@@ -31,7 +31,7 @@ contains
   ! ---------------------------------  GetQuantityForForwardModel  -----
   function GetQuantityForForwardModel ( vector, otherVector, quantityType, &
     & molecule, instrumentModule, radiometer, reflector, signal, sideband, &
-    & molIndex, config, foundInFirst, wasSpecific, noError )
+    & molIndex, config, foundInFirst, wasSpecific, noError, matchQty )
 
     ! This function is in many senses like GetVectorQuantityByType, (to
     ! which it can revert), except that given a forwardModelConfig_T in
@@ -42,6 +42,7 @@ contains
     use ForwardModelConfig, only: ForwardModelConfig_T
     use Intrinsic, only: Lit_Indices
     use Intrinsic, only: L_VMR
+    use ManipulateVectorQuantities, only: DOHGRIDSMATCH, DOVGRIDSMATCH
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSSets, only: FindFirst
     use MLSSignals_m, only: GetRadiometerName, GetSignalName
@@ -65,6 +66,7 @@ contains
     logical, intent(out), optional :: FOUNDINFIRST ! Set if found in first vector
     logical, intent(out), optional :: WASSPECIFIC ! Set if listed as specific quantity
     logical, intent(in),  optional :: NOERROR ! Don't give error if not found
+    type (VectorValue_T), intent(in), optional :: MATCHQTY ! Result must match this
     ! Result
     type (VectorValue_T), pointer :: GetQuantityForForwardModel
 
@@ -170,6 +172,11 @@ contains
         if ( present(signal) ) then
           if ( signal /= qt%signal ) cycle
         end if
+        if ( present(matchQty) ) then
+          if ( .not. DoVGridsMatch ( v%quantities(quantity), matchQty ) ) cycle
+          if ( .not. DoHGridsMatch ( v%quantities(quantity), matchQty, &
+            & spacingOnly=.true. ) ) cycle
+        endif
         match ( quantity ) = .true.
       end do                            ! End loop over the quantities
     end do                              ! End loop over the one or two vectors
@@ -296,6 +303,9 @@ contains
 end module ForwardModelVectorTools
 
 ! $Log$
+! Revision 2.19  2009/04/20 16:36:26  pwagner
+! Needed changes when identical types with different names allowed in L2PC files
+!
 ! Revision 2.18  2008/10/03 16:26:47  livesey
 ! Added EXTINCTIONV2
 !
