@@ -5,8 +5,8 @@
 \topmargin -0.25in
 \textheight 9.0in
 
-\newcommand{\docname}{\bf wvs-048r2}
-\newcommand{\docdate}{26 October 2006}
+\newcommand{\docname}{\bf wvs-048r3}
+\newcommand{\docdate}{23 April 2009}
 
 \usepackage{graphicx}
 
@@ -80,7 +80,7 @@ polynomial in standard form,
 \begin{equation*}
 \frac12 (\phi_{j+1}-\phi_j) H_t \phi^2 -
 (H_{i,j+1}-H_{ij})\phi -
-H_{ij} \phi_{j+1} + H_{i,j+1} \phi_j +
+H_{ij} \phi_{j+1} + H_{i,j+1} \phi_j -
 (\phi_{j+1}-\phi_j)H_t
 \approx 0
 \end{equation*}
@@ -114,7 +114,7 @@ $\delta\phi$ in
 \begin{equation*}
 \frac12 (\phi_{j+1}-\phi_j) H_{\text{tan}} \delta\phi^2 -
 (H_{i,j+1}-H_{ij})\delta\phi -
-H_{ij} (\phi_{j+1}-\phi_t) + H_{i,j+1} (\phi_j-\phi_t) +
+H_{ij} (\phi_{j+1}-\phi_t) + H_{i,j+1} (\phi_j-\phi_t) -
 (\phi_{j+1}-\phi_j)H_t
 \approx 0
 \end{equation*}
@@ -123,6 +123,20 @@ and then we have $\phi = \delta\phi + \phi_t$.  This potentially has two
 solutions at the tangent point unless the tangent point is at one of the
 reference $\zeta$ values.  The existing code forces $\delta\phi$ to be
 zero at the tangent.
+
+This provides a starting point for Newton iteration, in which we use an
+$8^\text{th}$-order polynomial to approximate $\sec(\delta \phi)-1$.
+
+\begin{equation*}
+\frac12 (\phi_{j+1}-\phi_j) H_{\text{tan}} P_8(\delta\phi) -
+(H_{i,j+1}-H_{ij})\delta\phi -
+H_{ij} (\phi_{j+1}-\phi_t) + H_{i,j+1} (\phi_j-\phi_t) -
+(\phi_{j+1}-\phi_j)H_t
+\approx 0
+\end{equation*}
+
+We $P_8(\delta\phi)$ instead of $\sec(\delta\phi)-1$ because the latter
+suffers cancellation when $\delta\phi \approx 0$.
 
 \label{lastpage}
 \end{document}
