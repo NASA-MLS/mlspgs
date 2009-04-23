@@ -130,7 +130,7 @@ contains ! ======================= Public Procedures =========================
   ! ------------------------------------------ DirectWrite_L2GP_MF --------
   subroutine DirectWrite_L2GP_MF ( L2gpFile, &
     & quantity, precision, quality, status, Convergence, &
-    & sdName, chunkNo, HGrids, createSwath )
+    & sdName, chunkNo, HGrids, createSwath, lowerOverlap, upperOverlap )
 
     ! Purpose:
     ! Write standard hdfeos-formatted files ala l2gp for datasets that
@@ -152,33 +152,49 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in)              :: chunkNo
     type (HGrid_T), dimension(:), pointer ::     HGrids
     logical, intent(in), optional :: createSwath
+    logical, intent(in), optional :: lowerOverlap
+    logical, intent(in), optional :: upperOverlap
     ! Local variables
-    type (L2GPData_T) :: l2gp
-    integer :: OFFSET
+    ! logical :: DeeBug
     integer :: FIRSTINSTANCE
     integer :: GRANDTOTALINSTANCES
+    type (L2GPData_T) :: l2gp
     integer :: LASTINSTANCE
+    integer :: OFFSET
+    character(len=8) :: overlaps ! 'lower', 'upper', or 'none'
     integer :: NOTOWRITE
     integer :: TOTALPROFS
 
     ! Executable code
+    ! DeeBug = index(l2gp%name, 'lower') > 0 .or. &
+    !   & index(l2gp%name, 'upper') > 0
     ! Size the problem
-    firstInstance = quantity%template%noInstancesLowerOverlap + 1
-    lastInstance = quantity%template%noInstances - &
-      & quantity%template%noInstancesUpperOverlap
+    overlaps = 'none'
+    if ( present(lowerOverlap) ) then
+      if ( lowerOverlap ) overlaps = 'lower'
+    endif
+    if ( present(upperOverlap) ) then
+      if ( upperOverlap ) overlaps = 'upper'
+    endif
+    select case ( overlaps )
+    case ( 'lower' )
+      firstInstance =  1
+      lastInstance = quantity%template%noInstancesLowerOverlap
+      ! DeeBug = .true.
+    case ( 'upper' )
+      firstInstance =  quantity%template%noInstances - &
+        & quantity%template%noInstancesUpperOverlap + 1
+      lastInstance = quantity%template%noInstances
+      ! DeeBug = .true.
+    case ( 'none' )
+      firstInstance = quantity%template%noInstancesLowerOverlap + 1
+      lastInstance = quantity%template%noInstances - &
+        & quantity%template%noInstancesUpperOverlap
+    end select
     noToWrite = lastInstance - firstInstance + 1
     offset = quantity%template%instanceOffset
     grandtotalinstances = quantity%template%grandTotalInstances
     totalProfs = grandtotalinstances
-    if ( ChunkDivideConfig%allowPriorOverlaps .and. .false. ) then
-      offset = offset - &
-        & hGrids(quantity%template%hGridIndex)%noProfsLowerOverlap
-      totalProfs = totalProfs - &
-        & hGrids(quantity%template%hGridIndex)%noProfsLowerOverlap
-    endif
-    if ( ChunkDivideConfig%allowPostOverlaps .and. .false. ) &
-      & totalProfs = totalProfs - &
-      & hGrids(quantity%template%hGridIndex)%noProfsUpperOverlap
     ! Check sanity
     if ( offset + noToWrite - 1 > grandTotalInstances .and. grandTotalInstances > 0 ) then
       call output('offset: ', advance='no')
@@ -202,7 +218,8 @@ contains ! ======================= Public Procedures =========================
       & sdname, chunkNo, HGrids, offset=0, &
       & firstInstance=firstInstance, lastInstance=lastInstance)
     ! Output the l2gp into the file
-    if ( l2gp%name == 'Temperature-InitPtan' .and. deebug ) then
+    ! if ( l2gp%name == 'Temperature-InitPtan' .and. deebug ) then
+    if ( deebug ) then
       call output('firstInstance: ', advance='no')
       call output(firstInstance, advance='no')
       call output('  lastInstance: ', advance='no')
@@ -226,7 +243,7 @@ contains ! ======================= Public Procedures =========================
 
   ! ------------------------------------------- DirectWrite_L2Aux_MF --------
   subroutine DirectWrite_L2Aux_MF ( L2AUXFile, quantity, precision, sdName, &
-    & chunkNo, chunks, FWModelConfig )
+    & chunkNo, chunks, FWModelConfig, lowerOverlap, upperOverlap )
 
     ! Purpose:
     ! Write plain hdf-formatted files ala l2aux for datasets that
@@ -245,11 +262,12 @@ contains ! ======================= Public Procedures =========================
     type(ForwardModelConfig_T), dimension(:), pointer :: FWModelConfig
     type (VectorValue_T), intent(in) :: QUANTITY
     type (VectorValue_T), pointer :: PRECISION
-    ! integer, intent(in) :: SDNAME       ! Name of sd in output file
     character(len=*), intent(in) :: SDNAME       ! Name of sd in output file
     type(MLSFile_T)                :: L2AUXFile
     integer, intent(in) :: CHUNKNO      ! Index into chunks
     type (MLSChunk_T), dimension(:), intent(in) :: CHUNKS
+    logical, intent(in), optional :: lowerOverlap
+    logical, intent(in), optional :: upperOverlap
     ! Local parameters
     logical :: alreadyOpen
     logical, parameter :: DEEBUG = .false.
@@ -326,16 +344,20 @@ contains ! ======================= Public Procedures =========================
     select case (l2AUXFile%hdfversion)
     case (HDFVERSION_4)
       call DirectWrite_L2Aux_MF_hdf4 ( quantity, sdName, L2AUXFile, &
-        & chunkNo, chunks )
+        & chunkNo, chunks, &
+        & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap )
       if ( associated(precision) ) & 
         & call DirectWrite_L2Aux_MF_hdf4 ( precision, &
-        & trim(sdName) // 'precision', L2AUXFile, chunkNo, chunks )
+        & trim(sdName) // 'precision', L2AUXFile, chunkNo, chunks, &
+        & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap )
     case (HDFVERSION_5)
       call DirectWrite_L2Aux_MF_hdf5 ( quantity, sdName, L2AUXFile, &
-        & chunkNo, chunks, FWModelConfig )
+        & chunkNo, chunks, FWModelConfig, &
+        & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap )
       if ( associated(precision) ) & 
         & call DirectWrite_L2Aux_MF_hdf5 ( precision, &
-        & trim(sdName) // 'precision', L2AUXFile, chunkNo, chunks, FWModelConfig )
+        & trim(sdName) // 'precision', L2AUXFile, chunkNo, chunks, &
+        & FWModelConfig, lowerOverlap=lowerOverlap, upperOverlap=upperOverlap )
     case default
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unsupported hdfVersion for DirectWrite_L2Aux (currently only 4 or 5)' )
@@ -350,7 +372,7 @@ contains ! ======================= Public Procedures =========================
 
   ! ------------------------------------------ DirectWrite_L2Aux_MF_hdf4 --------
   subroutine DirectWrite_L2Aux_MF_hdf4 ( quantity, sdName, L2AUXFile, &
-    & chunkNo, chunks )
+    & chunkNo, chunks, lowerOverlap, upperOverlap )
 
     use Chunks_m, only: MLSChunk_T
     use Hdf, only: SFN2INDEX, SFSELECT, SFCREATE, &
@@ -366,6 +388,8 @@ contains ! ======================= Public Procedures =========================
     type(MLSFile_T)                :: L2AUXFile
     integer, intent(in) :: CHUNKNO      ! Index into chunks
     type (MLSChunk_T), dimension(:), intent(in) :: CHUNKS
+    logical, intent(in), optional :: lowerOverlap
+    logical, intent(in), optional :: upperOverlap
 
     ! Local parameters
     integer, parameter :: MAXFILES = 100             ! Set for an internal array
@@ -459,7 +483,7 @@ contains ! ======================= Public Procedures =========================
 
   ! ------------------------------------------ DirectWrite_L2Aux_MF_hdf5 --------
   subroutine DirectWrite_L2Aux_MF_hdf5 ( quantity, sdName, L2AUXFile, &
-    & chunkNo, chunks, FWModelConfig )
+    & chunkNo, chunks, FWModelConfig, lowerOverlap, upperOverlap )
 
     use Chunks_m, only: MLSChunk_T
     use ChunkDivide_m, only: ChunkDivideConfig
@@ -478,12 +502,13 @@ contains ! ======================= Public Procedures =========================
     use VectorsModule, only: VectorValue_T
 
     type (VectorValue_T), intent(in) :: QUANTITY
-    ! integer, intent(in) :: SDNAME       ! Name of sd in output file
     character(len=*), intent(in) :: SDNAME       ! Name of sd in output file
     type(MLSFile_T)                :: L2AUXFile
     integer, intent(in) :: CHUNKNO      ! Index into chunks
     type (MLSChunk_T), dimension(:), intent(in) :: CHUNKS
     type(ForwardModelConfig_T), dimension(:), pointer :: FWModelConfig
+    logical, intent(in), optional :: lowerOverlap
+    logical, intent(in), optional :: upperOverlap
 
     ! Local parameters
     integer, parameter :: MAXFILES = 100             ! Set for an internal array
@@ -497,6 +522,7 @@ contains ! ======================= Public Procedures =========================
     type (L2AUXData_T) :: l2aux
     integer :: last_maf
     type ( MLSChunk_T ) :: LASTCHUNK    ! The last chunk in the file
+    character(len=8) :: overlaps        ! 'lower', 'upper', or 'none'
     integer :: NODIMS                   ! Also index of maf dimension
     integer :: Num_qty_values
     integer :: returnStatus
@@ -516,6 +542,14 @@ contains ! ======================= Public Procedures =========================
     else
       noDims = 3
     end if
+    
+    overlaps = 'none'
+    if ( present(lowerOverlap) ) then
+      if ( lowerOverlap ) overlaps = 'lower'
+    endif
+    if ( present(upperOverlap) ) then
+      if ( upperOverlap ) overlaps = 'upper'
+    endif
 
     ! Create or access the SD
     already_there = IsHDF5DSPresent(L2AUXFile%fileID%f_id, trim(sdName))
@@ -532,22 +566,34 @@ contains ! ======================= Public Procedures =========================
     stride = 1
     start = 0
     sizes = 1
-    sizes(noDims) = quantity%template%noInstances - &
-      & quantity%template%noInstancesLowerOverlap - &
-      & quantity%template%noInstancesUpperOverlap
-    if ( MAYWRITEPOSTOVERLAPS .and. ChunkDivideConfig%allowPostOverlaps .and. &
-      & chunkNo == size(chunks) ) &
-      & sizes(noDims) = quantity%template%noInstances - &
-      & quantity%template%noInstancesLowerOverlap
     sizes(noDims-1) = quantity%template%noSurfs
     if ( noDims == 3 ) sizes(1) = quantity%template%noChans
     start(noDims) = quantity%template%instanceOffset
-    first_maf = 1+quantity%template%noInstancesLowerOverlap
-    last_maf = quantity%template%noInstances &
-      &       - quantity%template%noInstancesUpperOverlap
-    if ( MAYWRITEPOSTOVERLAPS .and. ChunkDivideConfig%allowPostOverlaps .and. &
-      & chunkNo == size(chunks) ) &
-      & last_maf = quantity%template%noInstances
+    select case ( overlaps )
+    case ( 'lower' )
+      sizes(noDims) = quantity%template%noInstancesLowerOverlap
+      first_maf = 1
+      last_maf = quantity%template%noInstances
+    case ( 'upper' )
+      sizes(noDims) = quantity%template%noInstancesUpperOverlap
+      first_maf = quantity%template%noInstances &
+        &       - quantity%template%noInstancesUpperOverlap + 1
+      last_maf = quantity%template%noInstances
+    case ( 'none' )
+      sizes(noDims) = quantity%template%noInstances - &
+        & quantity%template%noInstancesLowerOverlap - &
+        & quantity%template%noInstancesUpperOverlap
+      if ( MAYWRITEPOSTOVERLAPS .and. ChunkDivideConfig%allowPostOverlaps .and. &
+        & chunkNo == size(chunks) ) &
+        & sizes(noDims) = quantity%template%noInstances - &
+        & quantity%template%noInstancesLowerOverlap
+      first_maf = 1+quantity%template%noInstancesLowerOverlap
+      last_maf = quantity%template%noInstances &
+        &       - quantity%template%noInstancesUpperOverlap
+      if ( MAYWRITEPOSTOVERLAPS .and. ChunkDivideConfig%allowPostOverlaps .and. &
+        & chunkNo == size(chunks) ) &
+        & last_maf = quantity%template%noInstances
+    end select
 
     if ( DEEBUG ) then
       print *, 'sdname ', trim(sdName)
@@ -944,12 +990,6 @@ contains ! ======================= Public Procedures =========================
 
     ! Now copy the information from the quantity to the l2gpData
     L2GP%nTimesTotal = quantity%template%grandTotalInstances
-    if ( ChunkDivideConfig%allowPriorOverlaps .and. .false. ) &
-      & L2GP%nTimesTotal = L2GP%nTimesTotal - &
-      & hGrids(quantity%template%hGridIndex)%noProfsLowerOverlap
-    if ( ChunkDivideConfig%allowPostOverlaps .and. .false. ) &
-      & L2GP%nTimesTotal = L2GP%nTimesTotal - &
-      & hGrids(quantity%template%hGridIndex)%noProfsUpperOverlap
 
     ! name is an integer, but L2GP%name is Character data
     l2gp%nameIndex = 0
@@ -1054,6 +1094,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.43  2009/04/23 23:02:52  pwagner
+! May specify upperOverlap or lowerOverlap in DirectWrites
+!
 ! Revision 2.42  2008/09/20 00:03:00  pwagner
 ! Added print statement to not_used_here
 !
