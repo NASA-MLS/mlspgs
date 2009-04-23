@@ -245,7 +245,7 @@ contains ! =====     Public Procedures     =============================
             call DirectWriteCommand ( son, ticket, vectors, &
               & DirectdataBase, fileDatabase,  &
               & chunkNo, chunks, FWModelConfig, HGrids, makeRequest=.true., &
-              & NoExtraWrites=noExtraWrites)
+              & NoExtraWrites=noExtraWrites )
             noDirectWrites = noDirectWrites + noExtraWrites
           else
             ! On the later passes we do the actual direct write we've been
@@ -353,7 +353,7 @@ contains ! =====     Public Procedures     =============================
   subroutine DirectWriteCommand ( node, ticket, vectors, &
     & DirectDataBase, fileDatabase, &
     & chunkNo, chunks, FWModelConfig, HGrids, makeRequest, create, theFile, &
-    & noExtraWrites, namedFile)
+    & noExtraWrites, namedFile )
     ! Imports
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use Chunks_m, only: MLSChunk_T
@@ -366,7 +366,8 @@ contains ! =====     Public Procedures     =============================
     use Hdf, only: DFACC_CREATE, DFACC_RDWR
     use HGridsDatabase, only: HGrid_T
     use Init_tables_module, only: F_CONVERGENCE, F_FILE, F_HDFVERSION, &
-      & F_PRECISION, f_QUALITY, F_SOURCE, F_STATUS, F_TYPE
+      & F_LOWEROVERLAP, F_PRECISION, f_QUALITY, F_SOURCE, F_STATUS, F_TYPE, &
+      & F_UPPEROVERLAP
     use Init_tables_module, only: L_L2GP, L_L2AUX, L_L2DGG, L_L2FWM, &
       & L_PRESSURE, L_ZETA
     use intrinsic, only: L_NONE, L_HDF, L_SWATH, Lit_indices, PHYQ_DIMENSIONLESS
@@ -385,7 +386,7 @@ contains ! =====     Public Procedures     =============================
       & mlspcf_l2fwm_full_end, &
       & mlspcf_l2dgg_start, mlspcf_l2dgg_end
     use MLSSets, only: FindFirst, FindNext
-    use MoreTree, only: GET_FIELD_ID
+    use MoreTree, only: GET_FIELD_ID, GET_BOOLEAN
     use Output_m, only: Blanks, OUTPUT, outputNamedValue
     use OutputAndClose, only: add_metadata
     use String_Table, only: DISPLAY_STRING, GET_STRING
@@ -447,6 +448,7 @@ contains ! =====     Public Procedures     =============================
     logical :: ISNEWDIRECT              ! TRUE if not already in database
     integer :: KEYNO                    ! Loop counter, field in l2cf line
     integer :: l2gp_Version
+    logical :: lowerOverlap
     integer :: LASTFIELDINDEX           ! Type of previous field in l2cf line
     integer :: MYFILE              ! File permission granted for
     logical :: MYMAKEREQUEST            ! Copy of makeRequest
@@ -467,6 +469,7 @@ contains ! =====     Public Procedures     =============================
     logical :: SKIPDGM
     integer :: SON                      ! A tree node
     integer :: SOURCE                   ! Loop counter
+    logical :: upperOverlap
 
     integer, dimension(:), pointer :: CONVERGVECTORS ! Indices
     integer, dimension(:), pointer :: CONVERGQUANTITIES ! Indices
@@ -510,9 +513,11 @@ contains ! =====     Public Procedures     =============================
     hdfVersion = DEFAULT_HDFVERSION_WRITE
     file = 0
     filename = 'undefined'
+    lowerOverlap = .false.
     outputType=0
     outputtypestr = 'unknown'
     if ( present(namedFile) ) namedFile = .false.
+    upperOverlap = .false.
     gotsource = .false.
     do keyNo = 2, nsons(node)           ! Skip DirectWrite command
       son = subtree ( keyNo, node )
@@ -546,6 +551,10 @@ contains ! =====     Public Procedures     =============================
       case ( f_type )
         outputType = decoration(subtree(2,son))
         call get_string ( lit_indices(outputType), outputTypeStr, strip=.true. )
+      case ( f_lowerOverlap )
+        lowerOverlap = get_boolean ( son )
+      case ( f_upperOverlap )
+        upperOverlap = get_boolean ( son )
       end select
     end do
 
@@ -987,7 +996,7 @@ contains ! =====     Public Procedures     =============================
           endif
           if(DEEBUG)call dump( createThisSource, 'createThisSource' )
           source = findFirst( createThisSource )
-          call outputNamedValue ( 'source number of T', source )
+          if(DEEBUG)call outputNamedValue ( 'source number of T', source )
         else
           createThisSource = .false.
         end if
@@ -1111,8 +1120,8 @@ contains ! =====     Public Procedures     =============================
             call dump(directFile, details=1)
             call output('createSwath: ', advance='no')
             call output(.not. createThisSource(source), advance='yes')
+            call outputNamedValue ( 'source number of DW', source )
           endif
-          call outputNamedValue ( 'source number of DW', source )
           createthisswath = (.not. createThisSource(source))
           ! We have a bug somewhere in hdfeos
           ! When we create the first swath in an hdfeos file
@@ -1122,7 +1131,8 @@ contains ! =====     Public Procedures     =============================
               call DirectWrite_l2GP ( directFile, &
                 & qty, precQty, qualityQty, statusQty, convergQty, &
                 & hdfName, chunkNo, HGrids, &
-                & createSwath=.true. )
+                & createSwath=.true., &
+                & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap )
               createthisswath = .not. &
                 & mls_swath_in_file( directFile%name, hdfName, hdfVersion, returnStatus )
               if(DEEBUG)print *, 'file name ', trim(directFile%name)
@@ -1137,7 +1147,8 @@ contains ! =====     Public Procedures     =============================
             call DirectWrite_l2GP ( directFile, &
               & qty, precQty, qualityQty, statusQty, convergQty, &
               & hdfName, chunkNo, HGrids, &
-              & createSwath=.false. )
+              & createSwath=.false., &
+              & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap )
           endif
           NumOutput= NumOutput + 1
           if ( outputType == l_l2dgg ) then
@@ -1154,7 +1165,8 @@ contains ! =====     Public Procedures     =============================
           ! minor frame quantity or not.  This mixed zero/one indexing is beomming
           ! a real pain.  I wish I never want down that road!
           call DirectWrite_L2Aux ( directFile, qty, precQty, hdfName, &
-            & chunkNo, chunks, FWModelConfig )
+            & chunkNo, chunks, FWModelConfig, &
+            & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap )
           NumOutput = NumOutput + 1
           filetype=l_hdf
         case default
@@ -2134,6 +2146,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.137  2009/04/23 23:02:25  pwagner
+! May specify upperOverlap or lowerOverlap in DirectWrites
+!
 ! Revision 2.136  2009/04/01 23:35:59  pwagner
 ! First attempt at fixing bug that wrote missing values to Temperature-APriori
 !
