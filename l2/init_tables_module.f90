@@ -1118,6 +1118,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_file, t+t_string, nd+n_field_type, &
              begin, f+f_type, t+t_outputType, ndr+n_field_type, &
              begin, f+f_hdfVersion, t+t_numeric, ndr+n_field_type, &
+             begin, f+f_lowerOverlap, t+t_boolean, n+n_field_type, &
+             begin, f+f_upperOverlap, t+t_boolean, n+n_field_type, &
              np+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_copy, &  ! Must be AFTER s_hGrid if repairGeoLocations
@@ -1579,6 +1581,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.486  2009/04/23 23:01:59  pwagner
+! May specify upperOverlap or lowerOverlap in DirectWrites
+!
 ! Revision 2.485  2009/04/16 21:54:40  pwagner
 ! /exact keyword in status Fill to fix radiance bug
 !
