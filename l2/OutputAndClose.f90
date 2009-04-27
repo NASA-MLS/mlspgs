@@ -864,19 +864,6 @@ contains ! =====     Public Procedures     =============================
      if (returnStatus /= 0) then
          call MLSMessage ( MLSMSG_Error, ModuleName, &
            &  "While adding metadata failed to GetPCFromRef for " // trim(fileName) )
-     else if ( DEBUG ) then
-       call output ( 'preparing to populate metadata_oth', advance='yes' )
-       call output ( 'l2auxFileHandle: ', advance='no' )
-       call output ( FileHandle , advance='no' )
-       call output ( '   l2aux_mcf: ', advance='no' )
-       call output ( l2aux_mcf , advance='no' )
-       call output ( '   number of quantities: ', advance='no' )
-       call output ( numquantitiesperfile , advance='yes' )
-       do field_no=1, numquantitiesperfile
-         call output ( field_no , advance='no' )
-         call output ( '       ', advance='no' )
-         call output ( trim(QuantityNames(field_no)) , advance='yes' )
-       end do
      end if
      if ( present(quantityNamesInput) .and. present(numquantitiesperfileInput) ) then
        call allocate_test( quantityNames, size(quantityNamesInput), &
@@ -889,6 +876,22 @@ contains ! =====     Public Procedures     =============================
        call allocate_test( quantityNames, numquantitiesperfile, &
          & 'quantityNames', ModuleName )
        call List2Array( sdList, quantityNames, countEmpty )
+     endif
+     if ( DEBUG ) then
+       call output ( 'preparing to populate metadata_oth', advance='yes' )
+       call output ( 'l2auxFileHandle: ', advance='no' )
+       call output ( FileHandle , advance='no' )
+       call output ( '   l2aux_mcf: ', advance='no' )
+       call output ( l2aux_mcf , advance='no' )
+       call output ( '   number of quantities: ', advance='no' )
+       call output ( numquantitiesperfile , advance='yes' )
+       if ( associated(QuantityNames) ) then
+         do field_no=1, numquantitiesperfile
+           call output ( field_no , advance='no' )
+           call output ( '       ', advance='no' )
+           call output ( trim(QuantityNames(field_no)) , advance='yes' )
+         end do
+       endif
      endif
      call populate_metadata_oth &
        & ( FileHandle, l2aux_mcf, &
@@ -1676,6 +1679,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.139  2009/04/27 20:45:18  pwagner
+! Fixed bug causing crashes in add_metadata when debugging
+!
 ! Revision 2.138  2009/04/01 23:32:32  pwagner
 ! Writes obstructions db to l2aux file
 !
