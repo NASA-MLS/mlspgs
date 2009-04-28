@@ -2546,10 +2546,8 @@ contains ! =====     Public Procedures     =============================
             skipMe = .false.
             if ( .not. interpolate ) then
              skipMe = skipMe .or. &
-             & .not. dontMask .and. ( &
-             &   isVectorQtyMasked(sourceQuantity, qIndex, i) .or. &
-             &   isVectorQtyMasked(temperatureQuantity, qIndex, i) &
-             & )
+             & .not. dontMask .and. &
+             &   isVectorQtyMasked(Quantity, qIndex, i)
             end if
             skipMe = skipMe .or. &
             & .not. dontMask .and. ( &
@@ -2904,12 +2902,8 @@ contains ! =====     Public Procedures     =============================
             skipMe = .false.
             if ( .not. interpolate ) then
              skipMe = skipMe .or. &
-             & .not. dontMask .and. ( &
-             &   isVectorQtyMasked(sourcePrecisionQuantity, qIndex, i) .or. &
-             &   isVectorQtyMasked(tempPrecisionQuantity, qIndex, i) .or. &
-             &   isVectorQtyMasked(sourceQuantity, qIndex, i) .or. &
-             &   isVectorQtyMasked(temperatureQuantity, qIndex, i) &
-             & )
+             & .not. dontMask .and. &
+             &   isVectorQtyMasked(Quantity, qIndex, i)
             end if
             skipMe = skipMe .or. &
             & .not. dontMask .and. ( &
@@ -6703,6 +6697,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.18  2009/04/28 20:03:49  pwagner
+! Consider only mask of quantity being filled, not sources in FillRHi
+!
 ! Revision 2.17  2009/04/16 21:55:23  pwagner
 ! /exact keyword in status Fill to fix radiance bug
 !
