@@ -1714,7 +1714,7 @@ contains ! =====     Public Procedures     =============================
               call FillRHIFromH2O ( key, quantity, &
                 & sourceQuantity, temperatureQuantity, &
                 & dontMask, ignoreZero, ignoreNegative, interpolate, &
-                & .true., &   ! Mark Undefined values?
+                & .false., &   ! Mark Undefined values?
                 & invert )    ! invert rather than convert?
             end if
           end if
@@ -1980,7 +1980,7 @@ contains ! =====     Public Procedures     =============================
               call FillRHIFromH2O ( key, quantity, &
                 & h2oQuantity, temperatureQuantity, &
                 & dontMask, ignoreZero, ignoreNegative, interpolate, &
-                & .true., &   ! Mark Undefined values?
+                & .false., &   ! Mark Undefined values?
                 & invert )    ! invert rather than convert?
             end if
         end if
@@ -2435,6 +2435,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.372  2009/04/28 20:02:50  pwagner
+! No longer sets undefined values in FillRHI to -999.99
+!
 ! Revision 2.371  2009/04/16 21:55:05  pwagner
 ! /exact keyword in status Fill to fix radiance bug
 !
