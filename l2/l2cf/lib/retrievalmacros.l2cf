@@ -172,22 +172,6 @@ begin Fill
   Fill, quantity=outputPrecision.gph, method=gphPrecision, $
     refGPHPrecisionquantity=outputPrecision.refGPH, $
     tempPrecisionQuantity=outputPrecision.temperature
-  ;; Compute RHI from H2O
-  Fill, quantity=state.rhi_hr, h2oQuantity=state.h2o_hr, $
-    temperatureQuantity=state.temperature_hr, method=RHIFromH2O, /dontMask
-  Fill, quantity=state.rhi, h2oQuantity=state.h2o, $
-    temperatureQuantity=state.temperature, method=RHIFromH2O, /dontMask
-  ;; And RHI precision
-  Fill, quantity=outputPrecision.rhi_hr, $
-    h2oPrecisionQuantity=outputPrecision.h2o_hr, $
-    tempPrecisionQuantity=outputPrecision.temperature_hr, $
-    h2oQuantity=state.h2o_hr, temperatureQuantity=state.temperature_hr, $
-    method=RHIPrecisionFromH2O, /dontMask
-  Fill, quantity=outputPrecision.rhi, $
-    h2oPrecisionQuantity=outputPrecision.h2o, $
-    tempPrecisionQuantity=outputPrecision.temperature, $
-    h2oQuantity=state.h2o, temperatureQuantity=state.temperature, $
-    method=RHIPrecisionFromH2O, /dontMask
   ;; Set precision -ve when wose than 50% apriori precision
   NegativePrecision, precision=outputPrecision, aprioriPrecision=aprioriPrecision
   ;; Compute chi^2 ratio as measure of convergence
@@ -921,6 +905,9 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
 })})
 
 ; $Log$
+; Revision 1.133  2009/04/16 21:51:51  pwagner
+; Fixed bug where abandoned status bit wipes out radiance bit
+;
 ; Revision 1.132  2009/04/09 20:38:25  pwagner
 ; May set Status bits for too few radiances by Band
 ;
