@@ -584,6 +584,7 @@ contains ! =====     Public Procedures     =============================
       minValueUnit = 0
       MissingGMAO = .false.
       logSpace = .false.
+      options = ' '
       resetSeed = .false.
       refract = .false.
       scale = 0.0
@@ -1096,6 +1097,15 @@ contains ! =====     Public Procedures     =============================
           dontSumHeights = get_boolean ( gson )
         case ( f_dontSumInstances )
           dontSumInstances = get_boolean ( gson )
+        case ( f_heightRange )
+          manipulation = sub_rosa ( gson )
+          options = ' '
+          ! If heightRange field was present, it should have been one of
+          ! 'a[bove]' meaning fill heights above supplied value
+          ! 'b[elow]' meaning fill heights below supplied value
+          call get_string ( manipulation, options, strip=.true. )
+          if ( index(' ab', options(1:1)) < 1 ) &
+            & call Announce_Error ( key, 0, 'invalid heightRange: ' // trim(options) )
         case ( f_ignoreZero )
           ignoreZero = get_boolean ( gson )
         case ( f_ignoreGeolocation ) ! For l2gp etc. fill
@@ -1135,7 +1145,7 @@ contains ! =====     Public Procedures     =============================
         case ( f_lsbFraction ) ! For folding
           lsbFractionVectorIndex = decoration(decoration(subtree(1,gson)))
           lsbFractionQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
-        case ( f_heightRange, f_manipulation )
+        case ( f_manipulation )
           manipulation = sub_rosa ( gson )
         case ( f_maxIterations )      ! For hydrostatic fill
           call expr_check ( gson , unitAsArray, valueAsArray, &
@@ -1543,14 +1553,6 @@ contains ! =====     Public Procedures     =============================
       case ( l_explicit ) ! ---------  Explicitly fill from l2cf  -----
         if ( .not. got(f_explicitValues) ) &
           & call Announce_Error ( key, noExplicitValuesGiven )
-        options = ' '
-        ! If heightRange field was present, it should have been one of
-        ! 'a[bove]' meaning fill heights above supplied value
-        ! 'b[elow]' meaning fill heights below supplied value
-        if ( got ( f_heightRange ) ) &
-          & call get_string ( manipulation, options, strip=.true. )
-        if ( index(' ab', options(1:1)) < 1 ) &
-          & call Announce_Error ( key, 0, 'invalid heightRange: ' // trim(options) )
         call ExplicitFillVectorQuantity ( quantity, valuesNode, spreadFlag, &
           & vectors(vectorIndex)%globalUnit, dontmask, channel, heightNode, &
           & options=options(1:1) )
@@ -1822,15 +1824,51 @@ contains ! =====     Public Procedures     =============================
         else
           nullify ( bQuantity )
         end if
+        ! We can make this simpler by imitating Van's use of pointers in
+        ! place of optional args
+        ! (Later, for now just see if you can make it work at all)
         if ( got(f_c) ) then
-          call FillQuantityByManipulation ( quantity, aQuantity, bQuantity, &
-            & manipulation, key, &
-            & force, spreadflag, dontSumHeights, dontSumInstances, &
-            & c )
+          if ( any( got( &
+            & (/ f_height, f_channel /) &
+            & ) ) ) then
+            call CloneVectorQuantity( tempswapquantity, quantity )
+            call FillQuantityByManipulation ( tempswapquantity, aQuantity, bQuantity, &
+              & manipulation, key, &
+              & force, spreadflag, dontSumHeights, dontSumInstances, &
+              & c )
+            call ExplicitFillVectorQuantity ( quantity, valuesNode, spreadFlag, &
+              & vectors(vectorIndex)%globalUnit, dontmask, channel, heightNode, &
+              & options=options(1:1), extraQuantity=tempswapquantity )
+            call deallocate_test( tempswapquantity%values, 'tempswapquantity%values', &
+              & moduleName )
+            call deallocate_test( tempswapquantity%mask, 'tempswapquantity%mask', &
+              & moduleName )
+          else
+            call FillQuantityByManipulation ( quantity, aQuantity, bQuantity, &
+              & manipulation, key, &
+              & force, spreadflag, dontSumHeights, dontSumInstances, &
+              & c )
+          endif
         else
-          call FillQuantityByManipulation ( quantity, aQuantity, bQuantity, &
-            & manipulation, key, &
-            & force, spreadflag, dontSumHeights, dontSumInstances )
+          if ( any( got( &
+            & (/ f_height, f_channel /) &
+            & ) ) ) then
+            call CloneVectorQuantity( tempswapquantity, quantity )
+            call FillQuantityByManipulation ( tempswapquantity, aQuantity, bQuantity, &
+              & manipulation, key, &
+              & force, spreadflag, dontSumHeights, dontSumInstances )
+            call ExplicitFillVectorQuantity ( quantity, valuesNode, spreadFlag, &
+              & vectors(vectorIndex)%globalUnit, dontmask, channel, heightNode, &
+              & options=options(1:1), extraQuantity=tempswapquantity )
+            call deallocate_test( tempswapquantity%values, 'tempswapquantity%values', &
+              & moduleName )
+            call deallocate_test( tempswapquantity%mask, 'tempswapquantity%mask', &
+              & moduleName )
+          else
+            call FillQuantityByManipulation ( quantity, aQuantity, bQuantity, &
+              & manipulation, key, &
+              & force, spreadflag, dontSumHeights, dontSumInstances )
+          endif
         endif
 
       case ( l_magAzEl ) ! -- Magnetic Explicit from stren, azim, elev --
@@ -2435,6 +2473,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.373  2009/04/29 23:12:54  pwagner
+! Manipulation Fills can be restricted by height and heightRange
+!
 ! Revision 2.372  2009/04/28 20:02:50  pwagner
 ! No longer sets undefined values in FillRHI to -999.99
 !
