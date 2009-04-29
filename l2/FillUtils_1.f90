@@ -464,10 +464,19 @@ contains ! =====     Public Procedures     =============================
     !=============================================== ExplicitFillVectorQuantity ==
     subroutine ExplicitFillVectorQuantity ( quantity, valuesNode, spreadFlag, &
       & globalUnit, dontmask, channel, heightNode, &
-      & AzEl, options, FillValue )
+      & AzEl, options, FillValue, extraQuantity )
 
       ! This routine is called from MLSL2Fill to fill values from an explicit
-      ! fill command line
+      ! fill command line or as part of a compound Fill, e.g. manipulation
+      ! Fill with height (range) specified
+      
+      ! Use (1): extraQuantity not present
+      ! values node must be same shape as quantity or else /spread flag
+      ! spreads scalar values over all (unmasked) quantity%values
+
+      ! Use (2): extraQuantity present
+      ! values node ignored
+      ! sends ExtraQuantity%values into all (unmasked) quantity%values
 
       ! Dummy arguments
       type (VectorValue_T), intent(inout) :: QUANTITY ! The quantity to fill
@@ -493,6 +502,7 @@ contains ! =====     Public Procedures     =============================
       !                   (defaults to replacing all)
       character (len=*), optional, intent(in) :: options ! E.g., '-v'
       real(r8), intent(in), optional :: FillValue
+      type (VectorValue_T), optional :: EXTRAQUANTITY ! Instead of FillValue
 
       ! Local variables
       integer :: chan
@@ -522,7 +532,8 @@ contains ! =====     Public Procedures     =============================
 
       testUnit = quantity%template%unit
       if ( globalUnit /= phyq_Invalid ) testUnit = globalUnit
-      noValues = nsons(valuesNode) - 1
+      noValues = -1 ! if we will ignore valuesNode
+      if ( .not. present(ExtraQuantity) ) noValues = nsons(valuesNode) - 1
 
       myFillValue = 0.
       if ( present(FillValue) ) myFillValue = FillValue
@@ -541,64 +552,66 @@ contains ! =====     Public Procedures     =============================
         heightRange = 'below'
       end if
       
-      ! Check the dimensions work out OK
-      if ( myAzEl .and. mod(noValues,3) /= 0 ) &
-          & call Announce_Error ( valuesNode, invalidExplicitFill )
-      if ( spreadFlag ) then
-        if ( noValues /= quantity%template%instanceLen .and. &
-          & noValues /= quantity%template%noChans .and. &
-          & noValues /= 1 ) &
-          & call Announce_Error ( valuesNode, invalidExplicitFill )
-      else
-        if ( noValues /= &
-          & quantity%template%instanceLen * quantity%template%noInstances ) &
-          & call Announce_Error ( valuesNode, invalidExplicitFill, &
-            & extraInfo = (/ &
-              & quantity%template%instanceLen * quantity%template%noInstances /) )
-      end if
+      if ( .not. present(extraQuantity) ) then
+        ! Check the dimensions work out OK
+        if ( myAzEl .and. mod(noValues,3) /= 0 ) &
+            & call Announce_Error ( valuesNode, invalidExplicitFill )
+        if ( spreadFlag ) then
+          if ( noValues /= quantity%template%instanceLen .and. &
+            & noValues /= quantity%template%noChans .and. &
+            & noValues /= 1 ) &
+            & call Announce_Error ( valuesNode, invalidExplicitFill )
+        else
+          if ( noValues /= &
+            & quantity%template%instanceLen * quantity%template%noInstances ) &
+            & call Announce_Error ( valuesNode, invalidExplicitFill, &
+              & extraInfo = (/ &
+                & quantity%template%instanceLen * quantity%template%noInstances /) )
+        end if
 
-      ! Get the values the user asked for, checking their units
-      nullify ( values )
-      call Allocate_test ( values, noValues, 'values', ModuleName )
-      if ( .not. myAzEl ) then
-        do k = 1, noValues
-          call expr_check ( subtree(k+1,valuesNode) , unitAsArray, valueAsArray, &
-            & (/testUnit, PHYQ_Dimensionless/), unitsError )
-          if ( unitsError ) call Announce_error ( valuesNode, wrongUnits, &
-            & extraInfo=(/unitAsArray(1), testUnit, PHYQ_Dimensionless/) )
-          values ( k ) = valueAsArray(1)
-        end do
-      else
-        ! Convert from Mag, Az, El to 3-D projections
-        do k = 1, noValues, 3
-          call expr_check ( subtree(k+1,valuesNode) , unitAsArray, valueAsArray, &
-            & (/testUnit, PHYQ_Dimensionless/), unitsError )
-          if ( unitsError ) call Announce_error ( valuesNode, wrongUnits, &
-            & extraInfo=(/unitAsArray(1), testUnit, PHYQ_Dimensionless/) )
-          values ( k ) = valueAsArray(1)
-          ! Next two quantities have to be angles
-          call expr_check ( subtree(k+2,valuesNode) , unitAsArray, valueAsArray, &
-            & (/PHYQ_Angle/), unitsError )
-          if ( unitsError ) call Announce_error ( valuesNode, wrongUnits, &
-            & extraInfo=(/unitAsArray(1), PHYQ_Angle/) )
-          values (k+1) = deg2rad * valueAsArray(1)
-          call expr_check ( subtree(k+3,valuesNode) , unitAsArray, valueAsArray, &
-            & (/PHYQ_Angle/), unitsError )
-          if ( unitsError ) call Announce_error ( valuesNode, wrongUnits, &
-            & extraInfo=(/unitAsArray(1), PHYQ_Angle/) )
-          values (k+2) = deg2rad * valueAsArray(1)
-          values(k:k+2) = values(k) * (/ cos(values(k+1))*cos(values(k+2)), &
-                                         sin(values(k+1))*cos(values(k+2)), &
-                                         sin(values(k+2)) /)
-        end do
-      end if
+        ! Get the values the user asked for, checking their units
+        nullify ( values )
+        call Allocate_test ( values, noValues, 'values', ModuleName )
+        if ( .not. myAzEl ) then
+          do k = 1, noValues
+            call expr_check ( subtree(k+1,valuesNode) , unitAsArray, valueAsArray, &
+              & (/testUnit, PHYQ_Dimensionless/), unitsError )
+            if ( unitsError ) call Announce_error ( valuesNode, wrongUnits, &
+              & extraInfo=(/unitAsArray(1), testUnit, PHYQ_Dimensionless/) )
+            values ( k ) = valueAsArray(1)
+          end do
+        else
+          ! Convert from Mag, Az, El to 3-D projections
+          do k = 1, noValues, 3
+            call expr_check ( subtree(k+1,valuesNode) , unitAsArray, valueAsArray, &
+              & (/testUnit, PHYQ_Dimensionless/), unitsError )
+            if ( unitsError ) call Announce_error ( valuesNode, wrongUnits, &
+              & extraInfo=(/unitAsArray(1), testUnit, PHYQ_Dimensionless/) )
+            values ( k ) = valueAsArray(1)
+            ! Next two quantities have to be angles
+            call expr_check ( subtree(k+2,valuesNode) , unitAsArray, valueAsArray, &
+              & (/PHYQ_Angle/), unitsError )
+            if ( unitsError ) call Announce_error ( valuesNode, wrongUnits, &
+              & extraInfo=(/unitAsArray(1), PHYQ_Angle/) )
+            values (k+1) = deg2rad * valueAsArray(1)
+            call expr_check ( subtree(k+3,valuesNode) , unitAsArray, valueAsArray, &
+              & (/PHYQ_Angle/), unitsError )
+            if ( unitsError ) call Announce_error ( valuesNode, wrongUnits, &
+              & extraInfo=(/unitAsArray(1), PHYQ_Angle/) )
+            values (k+2) = deg2rad * valueAsArray(1)
+            values(k:k+2) = values(k) * (/ cos(values(k+1))*cos(values(k+2)), &
+                                           sin(values(k+1))*cos(values(k+2)), &
+                                           sin(values(k+2)) /)
+          end do
+        end if
 
-      if ( verbose ) then
-        call output('Explicit fill of values for ', advance='no')
-        call display_string ( quantity%template%name )
-        call newline
-        call output(values)
-        call newline
+        if ( verbose ) then
+          call output('Explicit fill of values for ', advance='no')
+          call display_string ( quantity%template%name )
+          call newline
+          call output(values)
+          call newline
+        end if
       end if
       ! Work out the height
       if ( heightNode /= 0 ) then
@@ -662,7 +675,11 @@ contains ! =====     Public Procedures     =============================
             if ( channel /= 0 ) then
               if ( channel /= chan ) cycle
             endif
-            quantity%values(j,i) = values ( mod ( k-1, noValues ) + 1 )
+            if ( present(extraQuantity) ) then
+              quantity%values(j,i) = extraQuantity%values(j,i)
+            else
+              quantity%values(j,i) = values ( mod ( k-1, noValues ) + 1 )
+            endif
           end do
         end do
       end do
@@ -3317,17 +3334,21 @@ contains ! =====     Public Procedures     =============================
       logical, intent(in) :: DONTSUMINSTANCES
       ! Local parameters
 
-      ! The following 1 and 2-way manipulations must be entered exactly as shown
+      ! The 1 and 2-way manipulations must be entered exactly as shown
       ! Other more general manipulations require the use of the constant
       ! "c". E.g., 'a/b+b/a' could be 'a/b+c*b/a' and set c=1
 
       ! "More general" means free use of '+', '-', '*', '/' and appropriate
-      ! nesting between '(' and ')' where appropriate. It does not permit
-      ! use of the functions 'abs', 'sign', etc. within the manipulation
-      ! Perhaps a future rewrite might permit this freedom, but for now
-      ! you must use intermediate fills and temporary quantities.
+      ! nesting between '(' and ')' where appropriate.
       
-      ! Correction: working on this rewrite now
+      ! Remember to use the "c", even for examples where it appears unneeded
+      ! e.g., not "-abs(a)" but instead use "c*abs(a)" and set c=-1
+      
+      ! Long-term question: Why not do away with any difference between general
+      ! and non-general manipulations? Just treat them all alike! Then
+      ! you would not need the clumsy insertion of unneeded "c".
+      ! Of course we would need to take care before calling
+      ! SimpleExprWithC to call it with some dummy constant, say 0._rv
       
       ! Not listed below but also available are the manipulations 
       ! 'a^c' and 'c^a' (also called 'a**c' and 'c**a')
@@ -3383,12 +3404,11 @@ contains ! =====     Public Procedures     =============================
       
       OneWay = any ( mstr == valid1WayManipulations )
       TwoWay = any ( mstr == valid2WayManipulations )
-      ! usesc  = .not. ( OneWay .or. TwoWay ) .and. &
-      !  & index(mstr, 'c') > 0
       usesc = present(c)
       StatisticalFunction = ( FindFirst( valid1WayManipulations, mstr ) > 7 )
       if ( .not. ( OneWay .or. TwoWay .or. usesc ) ) then
-        call Announce_Error ( key, no_error_code, 'Invalid manipulation' )
+        call Announce_Error ( key, no_error_code, 'Invalid manipulation:' &
+          & // trim(mstr) )
         return
       end if
       
@@ -6697,6 +6717,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.19  2009/04/29 23:11:04  pwagner
+! ExplicitFillVectorQuantity can Fill from an optional extraQuantity
+!
 ! Revision 2.18  2009/04/28 20:03:49  pwagner
 ! Consider only mask of quantity being filled, not sources in FillRHi
 !
