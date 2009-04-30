@@ -657,13 +657,13 @@ Begin Fill
 }, $1,{RHI}, {
   ;; Do fancy things to make RHI agree with H2O and temperature
   Fill, quantity=tempVectorState.!theQuantity, h2oQuantity=tempVectorState.h2o_hr, $
-    temperatureQuantity=tempVectorState.temperature_hr, method=RHIFromH2O, /dontMask
+    temperatureQuantity=tempVectorState.temperature_hr, method=RHIFromH2O
   ;; And RHI precision
   Fill, quantity=tempVectorPrecision.!theQuantity, $
     h2oPrecisionQuantity=tempVectorPrecision.h2o_hr, $
     tempPrecisionQuantity=tempVectorPrecision.temperature_hr, $
     h2oQuantity=tempVectorState.h2o_hr, temperatureQuantity=tempVectorState.temperature_hr, $
-    method=RHIPrecisionFromH2O, /dontMask
+    method=RHIPrecisionFromH2O
   ;; Keep the status and quality as they are, they should be identical
   ;; to those of H2O-190 which should be fine.
 
@@ -905,6 +905,9 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
 })})
 
 ; $Log$
+; Revision 1.134  2009/04/28 20:05:53  pwagner
+; Removed autoatic Fills of Rhi from completephase macro
+;
 ; Revision 1.133  2009/04/16 21:51:51  pwagner
 ; Fixed bug where abandoned status bit wipes out radiance bit
 ;

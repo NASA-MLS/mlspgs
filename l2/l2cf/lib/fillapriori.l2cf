@@ -236,7 +236,7 @@ Fill, quantity=apriori.refGPH,$
     h2oPrecisionQuantity=aprioriPrecision.h2o, $
     tempPrecisionQuantity=aprioriPrecision.temperature, $
     h2oQuantity=apriori.h2o, temperatureQuantity=apriori.temperature, $
-    method=RHIFromH2O, /dontMask
+    method=RHIFromH2O
 
   Fill, quantity=aprioriPrecision.rhivmrsngl, $
         sourcequantity=aprioriPrecision.rhi,method = vector,/interpolate, $
@@ -654,6 +654,9 @@ begin Join
 end Join
   })
 ;$Log$
+;Revision 1.136  2009/04/01 23:18:54  pwagner
+;New values consistent with tests beginning with H134
+;
 ;Revision 1.135  2009/01/28 17:58:59  pwagner
 ;Changed quantity name of hires ozone
 ;
