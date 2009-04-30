@@ -145,7 +145,7 @@ a\, P_8(\delta\phi) + b\, \delta\phi + c \approx 0\,.
 Using 16-digit arithmetic, $-1.5 \times 10^{-9} < P_8(\delta\phi) -
 \sec(\delta\phi) + 1 \leq 0$ for $|\delta\phi| \leq 0.2$.
 
-For the Newton iteration $\delta\phi_{n+1} = \delta\phi - d(\delta\phi) /
+For the Newton iteration $\delta\phi_{n+1} = \delta\phi_n - d(\delta\phi) /
 d^\prime(\delta\phi)$ the derivatives
 
 \begin{equation}
@@ -161,6 +161,9 @@ are necessary.  Remember, $\tan\delta\phi = \text{signum}(\delta\phi)
 % $Id$
 
 % $Log$
+% Revision 1.6  2009/04/30 02:40:29  vsnyder
+% Correct a sign error, derivatives
+%
 % Revision 1.5  2009/04/29 22:35:08  vsnyder
 % Clarify and simplify
 %
