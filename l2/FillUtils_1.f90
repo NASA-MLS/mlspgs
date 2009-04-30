@@ -467,7 +467,7 @@ contains ! =====     Public Procedures     =============================
       & AzEl, options, FillValue, extraQuantity )
 
       ! This routine is called from MLSL2Fill to fill values from an explicit
-      ! fill command line or as part of a compound Fill, e.g. manipulation
+      ! fill command line or as part of a compound Fill,
       ! Fill with height (range) specified
       
       ! Use (1): extraQuantity not present
@@ -2412,9 +2412,13 @@ contains ! =====     Public Procedures     =============================
        &                                  zetaTemperature, oldTemperature
       real (r8), dimension(sourceQuantity%template%noSurfs) :: &
        &                                  zetaH2o, oldH2o
+      real (r8), dimension(quantity%template%noSurfs, quantity%template%noInstances) :: &
+       &                                  values
       ! Executable statements
       call MLSMessageCalls( 'push', constantName='FillRHIFromH2O' )
+      values = 0.
       ! Let any undefined values be so marked (but not necessarily masked)
+      ! An exceptionally dubious step -- should remove this idea
       if ( markUndefinedValues ) Quantity%values = UNDEFINED_VALUE
       ! Will we convert %RHI to vmr?
       if ( invert ) then
@@ -2561,11 +2565,11 @@ contains ! =====     Public Procedures     =============================
             N = N + 1
             qIndex = Channel + (s-1)*quantity%template%noChans
             skipMe = .false.
-            if ( .not. interpolate ) then
-             skipMe = skipMe .or. &
-             & .not. dontMask .and. &
-             &   isVectorQtyMasked(Quantity, qIndex, i)
-            end if
+            ! if ( .not. interpolate ) then
+             ! skipMe = skipMe .or. &
+             ! & .not. dontMask .and. &
+             ! &   isVectorQtyMasked(Quantity, qIndex, i)
+            ! end if
             skipMe = skipMe .or. &
             & .not. dontMask .and. ( &
             & (ignoreNegative .and. H2OofZeta(s) < 0.0 ) &
@@ -2575,7 +2579,8 @@ contains ! =====     Public Procedures     =============================
             skipMe = skipMe .or. TofZeta(s) <= 0.0
             if ( .not. skipMe ) then
               T = TofZeta(s)
-              Quantity%values(qIndex, i) = &
+              ! Quantity%values(qIndex, i) = &
+              values(qIndex, i) = &
                & H2OofZeta(s) &
                & * &
                & RHIFromH2O_Factor(T, zeta(qIndex), vmr_unit_cnv, invert)
@@ -2584,6 +2589,13 @@ contains ! =====     Public Procedures     =============================
           end do
         end do
       end do
+      if ( .not. associated ( quantity%mask ) ) then
+        quantity%values = values
+      else
+        where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 )
+          quantity%values = values
+        end where
+      end if
       if ( DEEBUG_RHI ) then
         call output('rhi Num. instances: ', advance='no')
         if ( invert ) then
@@ -2702,9 +2714,13 @@ contains ! =====     Public Procedures     =============================
        &                                  zetaTemperature, oldTemperature
       real (r8), dimension(sourceQuantity%template%noSurfs) :: &
        &                                  zetaH2o, oldH2o
+      real (r8), dimension(quantity%template%noSurfs, quantity%template%noInstances) :: &
+       &                                  values
       ! Executable statements
       call MLSMessageCalls( 'push', constantName='FillRHIPrecisionFromH2O' )
+      values = 0.
       ! Let any undefined values be so marked (but not necessarily masked)
+      ! An exceptionally dubious step -- should remove this idea
       if ( markUndefinedValues ) Quantity%values = UNDEFINED_VALUE
       ! Will we convert %RHI to vmr?
       if ( invert ) then
@@ -2917,11 +2933,11 @@ contains ! =====     Public Procedures     =============================
             N = N + 1
             qIndex = Channel + (s-1)*quantity%template%noChans
             skipMe = .false.
-            if ( .not. interpolate ) then
-             skipMe = skipMe .or. &
-             & .not. dontMask .and. &
-             &   isVectorQtyMasked(Quantity, qIndex, i)
-            end if
+            ! if ( .not. interpolate ) then
+            !  skipMe = skipMe .or. &
+            !  & .not. dontMask .and. &
+            !  &   isVectorQtyMasked(Quantity, qIndex, i)
+            ! end if
             skipMe = skipMe .or. &
             & .not. dontMask .and. ( &
             & (ignoreNegative .and. H2OofZeta(s) < 0.0 ) &
@@ -2934,12 +2950,20 @@ contains ! =====     Public Procedures     =============================
                & TofZeta(s), zeta(qIndex), vmr_unit_cnv, &
                & H2OPrecisionofZeta(s), TPrecisionofZeta(s), &
                & rhi_precision, negativeToo )
-              Quantity%values(qIndex, i) = rhi_precision
+              ! Quantity%values(qIndex, i) = rhi_precision
+              values(qIndex, i) = rhi_precision
             end if
             wereAnySkipped = wereAnySkipped .or. skipMe
           end do
         end do
       end do
+      if ( .not. associated ( quantity%mask ) ) then
+        quantity%values = values
+      else
+        where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 )
+          quantity%values = values
+        end where
+      end if
       if ( DEEBUG_RHI ) then
         call output('rhi Num. instances: ', advance='no')
         if ( invert ) then
@@ -3350,6 +3374,14 @@ contains ! =====     Public Procedures     =============================
       ! Of course we would need to take care before calling
       ! SimpleExprWithC to call it with some dummy constant, say 0._rv
       
+      ! Isn't there a way to encapsulate the idiom
+      ! if ( .not. associated ( quantity%mask ) ) then
+      ! .   .   .
+      !   end where
+      ! endif
+      ! So we can shorten this considerably?
+      ! Probably need to create a temp array the same shape as quantity%values
+
       ! Not listed below but also available are the manipulations 
       ! 'a^c' and 'c^a' (also called 'a**c' and 'c**a')
       integer, parameter :: NO2WAYMANIPULATIONS = 8
@@ -3535,7 +3567,13 @@ contains ! =====     Public Procedures     =============================
             ! Should not have come here
           end select
           if ( spreadFlag ) then
-            quantity%values = qvalue
+            if ( .not. associated ( quantity%mask ) ) then
+              quantity%values = qvalue
+            else
+              where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 )
+                quantity%values = qvalue
+              end where
+            end if
           else
             quantity%values(1, 1) = qvalue
           endif
@@ -6717,6 +6755,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.20  2009/04/30 20:15:01  pwagner
+! Another fix to masking bit miscues in FillRHI..
+!
 ! Revision 2.19  2009/04/29 23:11:04  pwagner
 ! ExplicitFillVectorQuantity can Fill from an optional extraQuantity
 !
