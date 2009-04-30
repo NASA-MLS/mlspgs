@@ -406,7 +406,7 @@ contains ! =====     Public Procedures     =============================
             if ( .not. dontMask .and. associated(baselineQuantity%mask) ) then
               do i=1, numProfs
                 skipMe = .not. dontMask .and. &
-                  &  isVectorQtyMasked(baselineQuantity, chan, i)
+                  &  isVectorQtyMasked(baselineQuantity, chan, i, m_fill)
                 if ( .not. skipMe )  &
                 & quantity%values ( ind, i ) = sqrt ( &
                   & quantity%values ( ind, i )**2 + &
@@ -425,7 +425,7 @@ contains ! =====     Public Procedures     =============================
             if ( .not. dontMask .and. associated(baselineQuantity%mask) ) then
               do i=1, numProfs
                 skipMe = .not. dontMask .and. &
-                  &  isVectorQtyMasked(baselineQuantity, chan, i)
+                  &  isVectorQtyMasked(baselineQuantity, chan, i, m_fill)
                 if ( .not. skipMe )  &
                 & quantity%values ( ind, i ) = &
                   & quantity%values ( ind, i ) + &
@@ -907,11 +907,13 @@ contains ! =====     Public Procedures     =============================
           values = 0.0
           do s=1, measQty%template%noSurfs
             qIndex = c + (s-1)*nochans
+            ! skipMe = &
+            ! & .not. dontMask .and. ( &
+            ! &   isVectorQtyMasked(measQty, qIndex, i) .or. &
+            ! &   isVectorQtyMasked(modelQty, qIndex, i) .or. &
+            ! &   isVectorQtyMasked(noiseQty, qIndex, i) ) &
             skipMe = &
-            & .not. dontMask .and. ( &
-            &   isVectorQtyMasked(measQty, qIndex, i) .or. &
-            &   isVectorQtyMasked(modelQty, qIndex, i) .or. &
-            &   isVectorQtyMasked(noiseQty, qIndex, i) ) &
+            & .not. dontMask .and. isVectorQtyMasked(qty, qIndex, i, m_fill) &
             & .or. (ignoreNegative .and. noiseQty%values(qIndex, i) < 0.0 ) &
             & .or. (ignoreZero .and. noiseQty%values(qIndex, i) == 0.0 )
             if ( .not. skipMe ) then
@@ -1045,11 +1047,13 @@ contains ! =====     Public Procedures     =============================
           N = 0
           values = 0.0
           do row = 1, instanceLen
+            ! skipMe = &
+            ! & .not. dontMask .and. ( &
+            ! &   isVectorQtyMasked(measQty, row, i) .or. &
+            ! &   isVectorQtyMasked(modelQty, row, i) .or. &
+            ! &   isVectorQtyMasked(noiseQty, row, i) ) &
             skipMe = &
-            & .not. dontMask .and. ( &
-            &   isVectorQtyMasked(measQty, row, i) .or. &
-            &   isVectorQtyMasked(modelQty, row, i) .or. &
-            &   isVectorQtyMasked(noiseQty, row, i) ) &
+            & .not. dontMask .and. isVectorQtyMasked(qty, row, i, m_fill) &
             & .or. (ignoreNegative .and. noiseQty%values(row, i) < 0.0 ) &
             & .or. (ignoreZero .and. noiseQty%values(row, i) == 0.0 )
             if ( .not. skipMe ) then
@@ -1179,11 +1183,13 @@ contains ! =====     Public Procedures     =============================
           values = 0.0
           do c=1, measQty%template%noChans
             qIndex = c + (s-1)*measQty%template%noChans
+            ! skipMe = &
+            ! & .not. dontMask .and. ( &
+            ! &   isVectorQtyMasked(measQty, qIndex, i) .or. &
+            ! &   isVectorQtyMasked(modelQty, qIndex, i) .or. &
+            ! &   isVectorQtyMasked(noiseQty, qIndex, i) ) &
             skipMe = &
-            & .not. dontMask .and. ( &
-            &   isVectorQtyMasked(measQty, qIndex, i) .or. &
-            &   isVectorQtyMasked(modelQty, qIndex, i) .or. &
-            &   isVectorQtyMasked(noiseQty, qIndex, i) ) &
+            & .not. dontMask .and. isVectorQtyMasked(qty, qIndex, i, m_fill) &
             & .or. (ignoreNegative .and. noiseQty%values(qIndex, i) < 0.0 ) &
             & .or. (ignoreZero .and. noiseQty%values(qIndex, i) == 0.0 )
             if ( .not. skipMe ) then
@@ -1305,11 +1311,8 @@ contains ! =====     Public Procedures     =============================
         qIndex = findLast( flagQty%values(:,i) /= 0._rv )
         if ( qIndex == 0 .or. qIndex >= qty%template%noSurfs ) cycle
         skipMe = &
-          & .not. dontMask .and. ( &
-          &   isVectorQtyMasked(normQty, qIndex, i) .or. &
-          &   isVectorQtyMasked(minNormQty, qIndex, i) .or. &
-          &   minNormQty%values(qIndex, i) == 0. &
-          & )
+          & .not. dontMask .and. isVectorQtyMasked(qty, qIndex, i, m_fill) .or. &
+          &   minNormQty%values(qIndex, i) == 0.
           qty%values(:,i) = &
             & normQty%values(qIndex, i) / minNormQty%values(qIndex, i)
       end do
@@ -2231,7 +2234,7 @@ contains ! =====     Public Procedures     =============================
             i0 = 1 +  ( mif-1 ) * measQty%template%noChans
             i1 = i0 + measQty%template%noChans - 1
             quantity%values ( mif, maf ) = count ( &
-              & iand ( ichar ( measQty%mask ( i0:i1, maf ) ), m_linAlg ) == 0 )
+              & iand ( ichar ( measQty%mask ( i0:i1, maf ) ), M_LinAlg ) == 0 )
           end do
         end do
       else
@@ -3035,7 +3038,7 @@ contains ! =====     Public Procedures     =============================
         if ( .not. associated ( quantity%mask ) ) call CreateMask ( quantity )
         where ( quantity%values >= badRange(1) .and. &
           & quantity%values <= badRange(2) )
-          quantity%mask = char(ior(ichar(quantity%mask),m_linAlg))
+          quantity%mask = char(ior(ichar(quantity%mask),M_LinAlg))
         end where
       end if
     end subroutine FillQuantityFromAsciiFile
@@ -4627,20 +4630,20 @@ contains ! =====     Public Procedures     =============================
           do column=1, size(quantity%values(1, :))
             do row=1, size(quantity%values(:, 1))
               if ( quantity%values(row, column) < 0.d0 ) &
-                & call MaskVectorQty(quantity, row, column)
+                & call MaskVectorQty(quantity, row, column, M_LinAlg)
             end do
           end do
         else if ( present(precisionQuantity) ) then
           do column=1, size(quantity%values(1, :))
             do row=1, size(quantity%values(:, 1))
-              if ( isVectorQtyMasked(precisionQuantity, row, column) ) &
-                & call MaskVectorQty(quantity, row, column)
+              if ( isVectorQtyMasked(precisionQuantity, row, column, M_LinAlg) ) &
+                & call MaskVectorQty(quantity, row, column, M_LinAlg)
             end do
           end do
           do column=1, size(quantity%values(1, :))
             do row=1, size(quantity%values(:, 1))
               if ( precisionQuantity%values(row, column) < 0.d0 ) &
-                & call MaskVectorQty(quantity, row, column)
+                & call MaskVectorQty(quantity, row, column, M_LinAlg)
             end do
           end do
         end if
@@ -4653,7 +4656,7 @@ contains ! =====     Public Procedures     =============================
         quantity%values = DEFAULTUNDEFINEDVALUE ! -1.0
         do column=1, size(quantity%values(1,:))
           do row=1, size(quantity%values(:,1))
-            call MaskVectorQty ( quantity, row, column )
+            call MaskVectorQty ( quantity, row, column, M_LinAlg )
           end do
         end do
       end if
@@ -6293,7 +6296,7 @@ contains ! =====     Public Procedures     =============================
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Quantity and rad. qty. in offsetRadiance fill different signal/sideband' )
       if ( .not. associated ( radianceQuantity%mask ) ) return
-      where ( iand ( ichar(radianceQuantity%mask), m_linAlg ) /= 0 )
+      where ( iand ( ichar(radianceQuantity%mask), M_LinAlg ) /= 0 )
         quantity%values = quantity%values + amount
       end where
     end subroutine OffsetRadianceQuantity
@@ -6755,6 +6758,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.21  2009/04/30 22:13:29  pwagner
+! name of bit in MaskVectorQty and isVectorQtyMasked now mandatory
+!
 ! Revision 2.20  2009/04/30 20:15:01  pwagner
 ! Another fix to masking bit miscues in FillRHI..
 !
