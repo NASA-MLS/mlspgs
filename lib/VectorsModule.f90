@@ -2050,15 +2050,11 @@ contains ! =====     Public Procedures     =============================
     type (VectorValue_T), intent(in) :: vectorQty
     integer, intent(in) ::              ROW
     integer, intent(in) ::              COLUMN
-    integer, intent(in), optional ::    WHAT
+    integer, intent(in) ::              WHAT
 
-    integer :: MyWhat
-
-    myWhat = m_LinAlg
-    if ( present(what) ) myWhat = what
     isVectorQtyMasked = .false.
     if ( .not. associated(vectorQty%mask)) return
-    isVectorQtyMasked = iand(ichar(vectorQty%mask(row, column)), myWhat) /= 0
+    isVectorQtyMasked = iand(ichar(vectorQty%mask(row, column)), What) /= 0
 
   end function IsVectorQtyMasked
 
@@ -2074,15 +2070,11 @@ contains ! =====     Public Procedures     =============================
     type (VectorValue_T), intent(inout) :: vectorQty
     integer, intent(in) ::              ROW
     integer, intent(in) ::              COLUMN
-    integer, intent(in), optional ::    WHAT
+    integer, intent(in) ::              WHAT
 
-    integer :: MyWhat
-
-    myWhat = m_LinAlg
-    if ( present(what) ) myWhat = what
     if ( .not. associated(vectorQty%mask)) call CreateMask ( vectorQty)
     vectorQty%mask(row, column) = &
-      & char(ior( ichar(vectorQty%mask(row, column)), myWhat ) )
+      & char(ior( ichar(vectorQty%mask(row, column)), What ) )
 
   end subroutine MaskVectorQty
 
@@ -2595,6 +2587,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.138  2009/01/16 23:30:58  vsnyder
+! Spiff up a dump
+!
 ! Revision 2.137  2008/12/17 02:57:28  vsnyder
 ! Dump template with vector quantity if details gt 1
 !
