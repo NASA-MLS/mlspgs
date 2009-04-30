@@ -5,8 +5,8 @@
 \topmargin -0.25in
 \textheight 9.0in
 
-\newcommand{\docname}{\bf wvs-048r7}
-\newcommand{\docdate}{29 April 2009}
+\newcommand{\docname}{\bf wvs-048r8}
+\newcommand{\docdate}{30 April 2009}
 
 \usepackage{graphicx}
 
@@ -127,7 +127,7 @@ solutions at the tangent point unless the tangent point is at one of the
 reference $\zeta$ values.  The existing code forces $\delta\phi$ to be
 zero at the tangent.
 
-When $\delta\phi < 0.2$ radians use an $8^\text{th}$-order polynomial
+When $|\delta\phi| < 0.2$ radians use an $8^\text{th}$-order polynomial
 
 \begin{equation}
 \sec\delta\phi - 1 \approx P_8(\delta\phi) =
@@ -161,6 +161,9 @@ are necessary.  Remember, $\tan\delta\phi = \text{signum}(\delta\phi)
 % $Id$
 
 % $Log$
+% Revision 1.7  2009/04/30 02:45:11  vsnyder
+% Write Newton iteration correctly
+%
 % Revision 1.6  2009/04/30 02:40:29  vsnyder
 % Correct a sign error, derivatives
 %
