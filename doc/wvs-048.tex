@@ -5,7 +5,7 @@
 \topmargin -0.25in
 \textheight 9.0in
 
-\newcommand{\docname}{\bf wvs-048r6}
+\newcommand{\docname}{\bf wvs-048r7}
 \newcommand{\docdate}{29 April 2009}
 
 \usepackage{graphicx}
@@ -100,7 +100,7 @@ to $H_{i0} = H_t \sec(\phi-\phi_t)$ or $H_{in} = H_t \sec(\phi-\phi_t)$.
 We write Equation (\ref{one}) as a zero-finding problem
 
 \begin{equation}\label{two}
-a\, (\sec\delta\phi-1) + b\, \delta\phi + c = 0
+d(\delta\phi) = a\, (\sec\delta\phi-1) + b\, \delta\phi + c = 0
 \end{equation}
 
 where
@@ -109,7 +109,7 @@ where
 \delta\phi =\,& \phi - \phi_t\,, \\
 a =\,& (\phi_{j+1}-\phi_j) H_t\,, \\
 b =\,& -(H_{i,j+1}-H_{ij})\,, \text{ and} \\
-c =\,& - H_{ij} (\phi_{j+1}-\phi_t) + H_{i,j+1} (\phi_j-\phi_t) -
+c =\,& - H_{ij} (\phi_{j+1}-\phi_t) + H_{i,j+1} (\phi_j-\phi_t) +
 (\phi_{j+1}-\phi_j) H_\text{tan} \,.\\
 \end{split}\end{equation}
 
@@ -145,11 +145,25 @@ a\, P_8(\delta\phi) + b\, \delta\phi + c \approx 0\,.
 Using 16-digit arithmetic, $-1.5 \times 10^{-9} < P_8(\delta\phi) -
 \sec(\delta\phi) + 1 \leq 0$ for $|\delta\phi| \leq 0.2$.
 
+For the Newton iteration $\delta\phi_{n+1} = \delta\phi - d(\delta\phi) /
+d^\prime(\delta\phi)$ the derivatives
+
+\begin{equation}
+d^\prime(\delta\phi) = a\, \sec \delta\phi \tan \delta\phi + b \approx
+ P_8^\prime(\delta\phi) + b
+\end{equation}
+
+are necessary.  Remember, $\tan\delta\phi = \text{signum}(\delta\phi)
+\sqrt{\sec^2 \delta\phi - 1}$, not simply $\sqrt{\sec^2 \delta\phi - 1}$.
+
 \label{lastpage}
 \end{document}
 % $Id$
 
 % $Log$
+% Revision 1.5  2009/04/29 22:35:08  vsnyder
+% Clarify and simplify
+%
 % Revision 1.4  2009/04/28 02:55:18  vsnyder
 % Make notation more consistent
 %
