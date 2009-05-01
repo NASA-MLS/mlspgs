@@ -406,7 +406,7 @@ contains ! =====     Public Procedures     =============================
             if ( .not. dontMask .and. associated(baselineQuantity%mask) ) then
               do i=1, numProfs
                 skipMe = .not. dontMask .and. &
-                  &  isVectorQtyMasked(baselineQuantity, chan, i, m_fill)
+                  &  isVectorQtyMasked(baselineQuantity, chan, i, m_linAlg)
                 if ( .not. skipMe )  &
                 & quantity%values ( ind, i ) = sqrt ( &
                   & quantity%values ( ind, i )**2 + &
@@ -425,7 +425,7 @@ contains ! =====     Public Procedures     =============================
             if ( .not. dontMask .and. associated(baselineQuantity%mask) ) then
               do i=1, numProfs
                 skipMe = .not. dontMask .and. &
-                  &  isVectorQtyMasked(baselineQuantity, chan, i, m_fill)
+                  &  isVectorQtyMasked(baselineQuantity, chan, i, m_linalg)
                 if ( .not. skipMe )  &
                 & quantity%values ( ind, i ) = &
                   & quantity%values ( ind, i ) + &
@@ -907,13 +907,11 @@ contains ! =====     Public Procedures     =============================
           values = 0.0
           do s=1, measQty%template%noSurfs
             qIndex = c + (s-1)*nochans
-            ! skipMe = &
-            ! & .not. dontMask .and. ( &
-            ! &   isVectorQtyMasked(measQty, qIndex, i) .or. &
-            ! &   isVectorQtyMasked(modelQty, qIndex, i) .or. &
-            ! &   isVectorQtyMasked(noiseQty, qIndex, i) ) &
             skipMe = &
-            & .not. dontMask .and. isVectorQtyMasked(qty, qIndex, i, m_fill) &
+            & .not. dontMask .and. ( &
+            &   isVectorQtyMasked(measQty, qIndex, i, m_linalg) .or. &
+            &   isVectorQtyMasked(modelQty, qIndex, i, m_linalg) .or. &
+            &   isVectorQtyMasked(noiseQty, qIndex, i, m_linalg) ) &
             & .or. (ignoreNegative .and. noiseQty%values(qIndex, i) < 0.0 ) &
             & .or. (ignoreZero .and. noiseQty%values(qIndex, i) == 0.0 )
             if ( .not. skipMe ) then
@@ -1047,13 +1045,11 @@ contains ! =====     Public Procedures     =============================
           N = 0
           values = 0.0
           do row = 1, instanceLen
-            ! skipMe = &
-            ! & .not. dontMask .and. ( &
-            ! &   isVectorQtyMasked(measQty, row, i) .or. &
-            ! &   isVectorQtyMasked(modelQty, row, i) .or. &
-            ! &   isVectorQtyMasked(noiseQty, row, i) ) &
             skipMe = &
-            & .not. dontMask .and. isVectorQtyMasked(qty, row, i, m_fill) &
+            & .not. dontMask .and. ( &
+            &   isVectorQtyMasked(measQty, row, i, m_linalg) .or. &
+            &   isVectorQtyMasked(modelQty, row, i, m_linalg) .or. &
+            &   isVectorQtyMasked(noiseQty, row, i, m_linalg) ) &
             & .or. (ignoreNegative .and. noiseQty%values(row, i) < 0.0 ) &
             & .or. (ignoreZero .and. noiseQty%values(row, i) == 0.0 )
             if ( .not. skipMe ) then
@@ -1183,13 +1179,11 @@ contains ! =====     Public Procedures     =============================
           values = 0.0
           do c=1, measQty%template%noChans
             qIndex = c + (s-1)*measQty%template%noChans
-            ! skipMe = &
-            ! & .not. dontMask .and. ( &
-            ! &   isVectorQtyMasked(measQty, qIndex, i) .or. &
-            ! &   isVectorQtyMasked(modelQty, qIndex, i) .or. &
-            ! &   isVectorQtyMasked(noiseQty, qIndex, i) ) &
             skipMe = &
-            & .not. dontMask .and. isVectorQtyMasked(qty, qIndex, i, m_fill) &
+            & .not. dontMask .and. ( &
+            &   isVectorQtyMasked(measQty, qIndex, i, m_linalg) .or. &
+            &   isVectorQtyMasked(modelQty, qIndex, i, m_linalg) .or. &
+            &   isVectorQtyMasked(noiseQty, qIndex, i, m_linalg) ) &
             & .or. (ignoreNegative .and. noiseQty%values(qIndex, i) < 0.0 ) &
             & .or. (ignoreZero .and. noiseQty%values(qIndex, i) == 0.0 )
             if ( .not. skipMe ) then
@@ -1311,8 +1305,11 @@ contains ! =====     Public Procedures     =============================
         qIndex = findLast( flagQty%values(:,i) /= 0._rv )
         if ( qIndex == 0 .or. qIndex >= qty%template%noSurfs ) cycle
         skipMe = &
-          & .not. dontMask .and. isVectorQtyMasked(qty, qIndex, i, m_fill) .or. &
-          &   minNormQty%values(qIndex, i) == 0.
+          & .not. dontMask .and. ( &
+          &   isVectorQtyMasked(normQty, qIndex, i, m_linalg) .or. &
+          &   isVectorQtyMasked(minNormQty, qIndex, i, m_linalg) .or. &
+          &   minNormQty%values(qIndex, i) == 0. &
+          & )
           qty%values(:,i) = &
             & normQty%values(qIndex, i) / minNormQty%values(qIndex, i)
       end do
@@ -6758,6 +6755,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.22  2009/05/01 23:44:40  pwagner
+! Restored nearly all except for conversions between RHi and H2O
+!
 ! Revision 2.21  2009/04/30 22:13:29  pwagner
 ! name of bit in MaskVectorQty and isVectorQtyMasked now mandatory
 !
