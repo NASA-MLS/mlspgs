@@ -240,7 +240,7 @@ then
   # This sleep is to give slave tasks extra time to complete stdout
   sleep 20
   JOBSTATSFILE="$JOBDIR/phases.stats"
-  l2cf=`grep -i l2cf $masterlog | head -1 | awk '{print $9}'`
+  l2cf=$L2CFVERSION.l2cf
   $PGE_SCRIPT_DIR/jobstat-sips.sh -S $PGE_BINARY_DIR/mlsqlog-scan-sips.py \
     -t $PGE_SCRIPT_DIR/split_path.sh ${JOBDIR}/pvmlog "$l2cf" "$masterlog" \
     > "$JOBSTATSFILE"
@@ -306,6 +306,9 @@ else
 fi
 
 # $Log$
+# Revision 1.19  2009/02/13 17:37:05  pwagner
+# Running mlspgs automatically prints license text
+#
 # Revision 1.18  2008/07/11 20:20:18  pwagner
 # Fixed bugs regarding products in outputs subdirectory
 #
