@@ -32,6 +32,12 @@ begin Fill
   ;; Now invoke it for all relevant species
   !forall(fillWithClimatology,!allClimatologicalSpecies)
 
+  ;; Set the top of HCl to 3ppbv
+  ;; (We will be able to dispense with bookending Subsets soon)
+  Subset, quantity=apriori.hcl, height=[2.4mb:0.00001mb], mask=fill
+  Fill, quantity=apriori.hcl, method=explicit, explicitValues=3ppbv, /spread
+  Subset, quantity=apriori.hcl, mask=fill, /reset
+
   ;; Possibly overwrite temperature with the merged product
   !ifdef(flagUseOperationalTemperature,{Fill, quantity=apriori.temperature, $
     method=gridded, sourceGrid=mergedTemperature})
@@ -654,6 +660,9 @@ begin Join
 end Join
   })
 ;$Log$
+;Revision 1.137  2009/04/30 20:12:19  pwagner
+;Removed last /dontMask from H2O to RHi conversions
+;
 ;Revision 1.136  2009/04/01 23:18:54  pwagner
 ;New values consistent with tests beginning with H134
 ;
