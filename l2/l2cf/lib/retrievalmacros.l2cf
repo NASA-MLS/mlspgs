@@ -714,6 +714,15 @@ Begin Fill
     refGPHPrecisionquantity=tempVectorPrecision.refGPH, $
     tempPrecisionQuantity=tempVectorPrecision.temperature_hr
 
+}, $1,{Temperature}, {
+  !ifdef(pTop, {!dnl
+    Fill, quantity=tempVectorPrecision.!theQuantity, height=!pTop, heightRange="above", $
+    method=manipulate, a=tempVectorPrecision.!theQuantity, c=-1, manipulation='c*abs(a)'
+  })
+  !ifdef(pBottom, {!dnl
+    Fill, quantity=tempVectorPrecision.!theQuantity, height=!pBottom, heightRange="below", $
+    method=manipulate, a=tempVectorPrecision.!theQuantity, c=-1, manipulation='c*abs(a)'
+  })
 }, $1,{RHI}, {
   ;; Do fancy things to make RHI agree with H2O and temperature
   Fill, quantity=tempVectorState.!theQuantity, h2oQuantity=tempVectorState.h2o_hr, $
@@ -1093,6 +1102,9 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
 })})
 
 ; $Log$
+; Revision 1.136  2009/05/06 00:21:36  pwagner
+; Added saving chunk overlaps as diagnostics
+;
 ; Revision 1.135  2009/04/30 20:11:23  pwagner
 ; Removed last /dontMask from H2O to RHi conversions
 ;
