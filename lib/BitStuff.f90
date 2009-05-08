@@ -16,6 +16,7 @@ module BitStuff
 ! This module contains routines for interrogating, manipulating, using bits.
 
   use MLSSets, only: FindAll
+  use output_m, only: blanks, output, newline
 
   implicit none
   private
@@ -34,6 +35,7 @@ module BitStuff
 ! BitsToBooleans     Converts bits to an array of Boolean
 ! BooleansToBits     Converts an array of Boolean to bits
 ! CountBits          Returns the number of non-zero bits
+! DumpBitNames       Dump names of bits set
 ! IsBitPatternSet    Are any of the bits set in bitpattern also set in the arg
 ! IsBitSet           Is the specified bit number set
 ! NegativeIfBitPatternSet  Return the negative abs. of the first arg
@@ -49,6 +51,8 @@ module BitStuff
 ! BooleansToBits ( log Booleans(:), bits i )
 ! int CountBits ( value )
 !                 value can be a scalar or an array of ints or chars
+! DumpBitNames ( bits i, char* bitNames(:), [char* itemName], [log oneLine] )
+! DumpBitNames ( bits i(:), char* bitNames(:), [char* itemName], [log sortByName] )
 ! log IsBitPatternSet ( bits i, bits bitPattern )
 ! log IsBitSet ( bits i, int bitNumber )
 ! value NegativeIfBitPatternSet ( value, bits i, bits bitPattern )
@@ -62,7 +66,7 @@ module BitStuff
   public :: BitsToBooleans, BooleansToBits
   public :: CountBits, CountBits_0, CountBits_1, CountBits_2
   public :: CountCharBits_0, CountCharBits_1, CountCharBits_2
-  public :: isBitSet, IsBitPatternSet
+  public :: DumpBitNames, isBitSet, IsBitPatternSet
   public :: NegativeIfBitSet, NegativeIfBitPatternSet
   public :: Reverse
   public :: SetBits, WhichBitsAreSet
@@ -71,6 +75,11 @@ module BitStuff
     module procedure countBits_0, countBits_1, countBits_2
     module procedure countCharBits_0, countCharBits_1, countCharBits_2
   end interface
+  
+  interface DumpBitNames
+    module procedure dumpBitNames_sca, dumpBitNames_array
+  end interface
+  
 
   interface NegativeIfBitSet
     module procedure NegativeIfBitSet_int, NegativeIfBitSet_sng, &
@@ -228,6 +237,137 @@ contains
       countCharBits_2 = countCharBits_2 + countBits(array(:,i),what)
     end do
   end function CountCharBits_2
+
+  ! ------------------------------------------------  dumpBitNames  -----
+  ! This family shows which bits are set by name
+  ! Obviously this requires that an array of names be passed in
+  ! Say i = 41
+  ! This means that i = 1 + 8 + 32 
+  ! so the bits set are {0, 3, 5} which would be indexes {1, 4, 6}
+  ! in the array names; so we would print:
+  !    bit names set
+  !  itemName   names(1)
+  !  itemName   names(4)
+  !  itemName   names(6)
+  ! Optionally, we can try to print this all on one line
+  !  itemName   names(1) names(4) names(6)
+  ! If we wish to show which bits are set for an array, we
+  ! could easily do the same for each array element. That is the default.
+  ! Optionally, we can sort the results by bit name, printing instead:
+  !   array elements with bit set
+  !  names(1)  n1, n2, ..
+  !  names(2)  m1, m2, ..
+  !    .   .   .
+  ! (see also DUMP_1D_BIT in the dump_0 module)
+  subroutine dumpBitNames_sca ( i, names, itemName, oneLine )
+    integer, intent(in)                         :: i
+    character(len=*), dimension(0:), intent(in) :: names
+    character(len=*), optional, intent(in)      :: itemName
+    logical, optional, intent(in)               :: oneLine
+    ! Local variables
+    integer :: bitNumber
+    integer :: bitSet
+    integer :: bitValue
+    integer :: howMany
+    character(len=64) :: iTag
+    character(len=32) :: myName
+    logical :: myOneLine
+    integer, dimension(0:MAXBITNUMBER) :: which
+    ! Executable
+    myOneLine = .false.
+    if ( present(oneLine) ) myOneLine = oneLine
+    write( iTag, *) i
+    if ( myOneLine) then
+      myName = 'Bit names set by ' // adjustl(iTag)
+    else
+      myName = adjustl(iTag)
+    endif
+    if( present(itemName) ) myName = itemName
+    call WhichBitsAreSet ( i, which, howMany )
+    if ( howMany < 1 ) then
+      call output( 'No bits set in ' // trim(myName), advance='yes' )
+    elseif( myOneLine ) then
+      call output( trim(myName), advance='no' )
+      do bitSet=0, howMany-1
+        call blanks( 2 )
+        bitNumber = which(bitSet)
+        write( iTag, *) bitNumber
+        iTag = 'bit(' // adjustl(iTag) // ')'
+        if ( size(names) > bitNumber ) iTag = names(bitNumber)
+        call output( trim(iTag), advance='no' )
+      enddo
+      call newline
+    else
+      call output( 'bit value    name', advance='no' )
+      call output( '   set by         ', advance='no' )
+      call output( trim(myName), advance='yes' )
+      do bitSet=0, howMany-1
+        bitNumber = which(bitSet)
+        bitValue = 2**bitNumber
+        write( iTag, *) bitValue
+        call output( trim(adjustl(iTag)), advance='no' )
+        call blanks( 12 )
+        write( iTag, *) bitNumber
+        iTag = 'bit(' // adjustl(iTag) // ')'
+        if ( size(names) > bitNumber ) iTag = names(bitNumber)
+        call output( trim(iTag), advance='yes' )
+        bitValue = 2*bitValue
+      enddo
+    endif
+  end subroutine dumpBitNames_sca
+
+  subroutine dumpBitNames_array ( array, names, itemName, sortByName )
+    integer, dimension(:), intent(in)           :: array
+    character(len=*), dimension(0:), intent(in) :: names
+    character(len=*), optional, intent(in)      :: itemName
+    logical, optional, intent(in)               :: sortByName
+    ! Local variables
+    integer :: bitNumber
+    integer :: n ! how many array elements with this bit set
+    integer :: i
+    integer, dimension(size(array)) :: indWithBitSet
+    character(len=64) :: iTag
+    character(len=32) :: myName
+    logical :: mysortByName
+    character(len=32) :: myTaggedName
+    integer, dimension(0:MAXBITNUMBER) :: which
+    ! Executable
+    myName = 'bits'
+    if( present(itemName) ) myName = itemName
+    mysortByName = .false.
+    if ( present(sortByName) ) mysortByName = sortByName
+    if ( .not. mySortByName ) then
+      do i=1, size(array)
+        write( iTag, *) i
+        iTag = adjustl(iTag)
+        myTaggedName = trim(myName) // '(' // trim(iTag) // ')'
+        call dumpBitNames_sca( i, names, myTaggedName, oneLine=.true. )
+      enddo
+    else
+      call output( 'bit names set', advance='yes' )
+      do bitNumber=0, MAXBITNUMBER
+        write( iTag, *) bitNumber
+        iTag = 'bit(' // trim(adjustl(iTag)) // ')'
+        if ( size(names) > bitNumber ) iTag = names(bitNumber)
+        call output( trim(iTag), advance='no' )
+        call blanks(2)
+        indWithBitSet = 0
+        n = 0
+        do i=1, size(array)
+          if ( IsBitSet ( array(i), bitNumber ) ) then
+            n = n + 1
+            indWithBitSet(n) = array(i)
+          endif
+        enddo
+        if ( n < 1 ) then
+          call output( 'No array elements have this bit set', advance='yes' )
+        else
+          call output( indWithBitSet(1:n), advance='no' )
+          call newline
+        endif
+      enddo
+    endif
+  end subroutine dumpBitNames_array
 
   ! --------------------------------------------  IsBitPatternSet  -----
   elemental function IsBitPatternSet ( i, bitPattern ) result(SooDesu)
@@ -433,6 +573,9 @@ contains
 end module BitStuff
 
 ! $Log$
+! Revision 2.13  2009/05/08 00:38:13  pwagner
+! Added dumpBitNames
+!
 ! Revision 2.12  2008/12/02 23:08:10  pwagner
 ! Added a print to not_used_here
 !
