@@ -91,13 +91,13 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   ! --------------------------------------------------------------------------
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, Test_Deallocate
-  use BitStuff, only: IsBitSet
+  use BitStuff, only: dumpBitNames, IsBitSet
   use DUMP_0, only: DUMP
   use Intrinsic, only: LIT_INDICES, PHYQ_INVALID, L_VMR
   use MLSCommon, only: R8, RV
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
-  use MLSSets, only: FINDFIRST
+  use MLSSets, only: FINDFIRST, FINDUNIQUE
   use MLSSignals_m, only: MODULES, SIGNALS, GETSIGNALNAME
   use Molecules, only: L_EXTINCTION
   use OUTPUT_M, only: NEWLINE, OUTPUT, outputNamedValue
@@ -227,6 +227,9 @@ module VectorsModule            ! Vectors in the MLS PGS suite
     ! what is not interesting.  Zero means something about VALUES(i,j) is
     ! interesting, and one means it is not.  The low-order bit is used for
     ! linear algebra.  Other bits can be used for other purposes.
+    ! Actually the mask bits are got at from the ichar(mask)
+    ! Inversely, given the integer representation of the bits, we get the mask
+    ! by mask = char(int)
     integer :: label = 0        ! An optional label for this to be used as for
     ! example a swath name.  Often used in conjunction with the 'batch'
     ! approach to direct writes.
@@ -240,6 +243,9 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   integer, parameter :: M_Spare = 2**5
   integer, parameter :: M_Tikhonov = 2**3    ! Where to do Tikhonov regularization
 
+  character(len=16), dimension(6), parameter :: maskBitNames = (/ &
+    & 'linear algebra ', 'full derivatives', 'fill            ', &
+    & 'Tikhanov       ',  'cloud          ', 'spare           ' /)
   ! This type describes a vector.
 
   type Vector_T
@@ -1616,8 +1622,11 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in), optional :: CLEAN   ! Passed through to dump_0%dump
     type (Vector_T), intent(in), optional :: Vector ! Only to get its name
 
+    integer :: i
     integer :: myDetails
+    integer :: nUnique
     logical :: Dot ! Use vector.quantity notation
+    integer, dimension(1000) :: uniqueVals
 
     myDetails = 1
     if ( present(details) ) myDetails = details
@@ -1688,6 +1697,13 @@ contains ! =====     Public Procedures     =============================
         call dump ( ichar(qty%mask), name='  Mask =', &
           & format='(z3.2)', width = 20 )
 !           call dumpQuantityMask ( qty )
+        call FindUnique( &
+        & reshape( ichar(qty%mask), (/ size(qty%mask,1)*size(qty%mask,2) /) ), &
+        & uniqueVals, nUnique )
+        call outputNamedValue(' Number unique values', nUnique )
+        do i=1, nUnique
+          call DumpBitNames( uniqueVals(i), MaskBitNames )
+        enddo
       else
         call output ( '      Without mask', advance='yes' )
       end if
@@ -2587,6 +2603,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.139  2009/04/30 22:14:25  pwagner
+! name of bit in MaskVectorQty and isVectorQtyMasked now mandatory
+!
 ! Revision 2.138  2009/01/16 23:30:58  vsnyder
 ! Spiff up a dump
 !
