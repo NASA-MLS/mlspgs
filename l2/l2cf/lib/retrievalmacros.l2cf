@@ -19,6 +19,7 @@
 !define(allBands,{!forloop({i},1,33,{!i, })34}) ; 1,2,3..34
 !define(allBandLSBs,{!makelist({},{L},!allBands)})
 !define(allBandUSBs,{!forloop({i},2,20,{!i{}U,})23U,24U,25U,!forloop({i},27,31,{!i{}U,})33U})
+!define(restrictedSpecies, {O3,CO,HNO3,SO2,Temperature})
 
 ; These will be used if we set status bits for too few radiances by Band number
 ; Note that we reserve and use macros named MRn where n is the band number
@@ -576,6 +577,20 @@ Begin Fill
     boundaryPressure=tempVectorState.tpPressure !theUnits
   Fill, quantity=tempVectorPrecision.column_$1, method=special, vmrQuantity=tempVectorPrecision.!theQuantity, $
     boundaryPressure=tempVectorState.tpPressure !theUnits
+
+!ifelse(!index(!defn(restrictedSpecies),$1),{-1},{!dnl
+}, {!dnl
+!ifdef(pTop, {!dnl
+  Fill, quantity=tempVectorPrecision.!theQuantity, method=manipulate, $
+    height=!pTop, heightRange="above", a=tempVectorPrecision.!theQuantity, $
+    c= -1, manipulation="c*abs(a)"
+})
+!ifdef(pBottom, {!dnl
+  Fill, quantity=tempVectorPrecision.!theQuantity, height=!pBottom, heightRange="below", $
+    method=manipulate, a=tempVectorPrecision.!theQuantity, c= -1, manipulation='c*abs(a)'
+})
+})
+
 End Fill
 
 !ifdef(flagUseGEOS5PTrop,
@@ -714,15 +729,6 @@ Begin Fill
     refGPHPrecisionquantity=tempVectorPrecision.refGPH, $
     tempPrecisionQuantity=tempVectorPrecision.temperature_hr
 
-}, $1,{Temperature}, {
-  !ifdef(pTop, {!dnl
-    Fill, quantity=tempVectorPrecision.!theQuantity, height=!pTop, heightRange="above", $
-    method=manipulate, a=tempVectorPrecision.!theQuantity, c=-1, manipulation='c*abs(a)'
-  })
-  !ifdef(pBottom, {!dnl
-    Fill, quantity=tempVectorPrecision.!theQuantity, height=!pBottom, heightRange="below", $
-    method=manipulate, a=tempVectorPrecision.!theQuantity, c=-1, manipulation='c*abs(a)'
-  })
 }, $1,{RHI}, {
   ;; Do fancy things to make RHI agree with H2O and temperature
   Fill, quantity=tempVectorState.!theQuantity, h2oQuantity=tempVectorState.h2o_hr, $
@@ -742,6 +748,19 @@ Begin Fill
     method=vector,/force,/interpolate
   Subset, quantity=tempVectorPrecision.!theQuantity, mask=fill, /reset
 
+})
+
+!ifelse(!index(!defn(restrictedSpecies),$1),{-1},{!dnl
+}, {!dnl
+!ifdef(pTop, {!dnl
+  Fill, quantity=tempVectorPrecision.!theQuantity, method=manipulate, $
+    height=!pTop, heightRange="above", a=tempVectorPrecision.!theQuantity, $
+    c= -1, manipulation="c*abs(a)"
+})
+!ifdef(pBottom, {!dnl
+  Fill, quantity=tempVectorPrecision.!theQuantity, height=!pBottom, heightRange="below", $
+    method=manipulate, a=tempVectorPrecision.!theQuantity, c= -1, manipulation='c*abs(a)'
+})
 })
 End Fill
 
@@ -1102,6 +1121,9 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
 })})
 
 ; $Log$
+; Revision 1.137  2009/05/07 18:17:43  honghanh
+; Add/Modify pTop pBottom
+;
 ; Revision 1.136  2009/05/06 00:21:36  pwagner
 ; Added saving chunk overlaps as diagnostics
 ;
