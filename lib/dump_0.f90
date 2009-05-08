@@ -2834,6 +2834,7 @@ contains
     integer, intent(in) :: Size
 
     if ( present(name) ) then
+      if ( len_trim(name) < 1 ) return
       call output ( name )
       if ( clean ) then 
         call output ( trim(" \ ") ) ! This goofiness is to outwit an incorrect
@@ -3174,6 +3175,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.85  2009/05/08 00:40:09  pwagner
+! Avoid printing blank name when dumped with empty name string
+!
 ! Revision 2.84  2009/04/01 23:30:49  pwagner
 ! Improved appearance when printing 'nnn lines of xxx not printed.'
 !
