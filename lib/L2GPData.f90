@@ -13,6 +13,7 @@
 module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 !=============================================================================
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
+  use BitStuff, only: dumpBitNames
   use DUMP_0, only: DIFF, DUMP
   use Hdf, only: DFACC_RDONLY, DFACC_READ, DFACC_CREATE, DFACC_RDWR, &
     & DFNT_FLOAT32, DFNT_INT32, DFNT_FLOAT64
@@ -27,7 +28,8 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   use MLSMessageModule, only: MLSMSG_Allocate, MLSMSG_DeAllocate, MLSMSG_Error, &
     & MLSMSG_Warning, MLSMessage, MLSMessageCalls
   use MLSNumerics, only: FindInRange
-  use MLSSets, only: FindFirst, FindIntersection, FindLast, Intersection
+  use MLSSets, only: FindFirst, FindIntersection, FindLast, FindUnique, &
+    & Intersection
   use MLSStrings, only: Capitalize, lowercase
   use MLSStringLists, only: ExtractSubString, &
     & GetHashElement, GetStringElement, GetUniqueList, &
@@ -234,6 +236,11 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
     & 'molcm2,molcm2,DU,molcm2,molcm2,molcm2,molcm2,molcm2,molcm2,molcm2,' &
     & // &
     & 'molcm2,molcm2,molcm2,molcm2,molcm2,molcm2'
+  character(len=16), dimension(10), parameter :: StatusBitNames = (/ &
+    & 'do not use      ', 'beware           ', '(unused)        ', &
+    & 'inform          ', 'high clouds      ', 'low clouds      ', &
+    & 'no meteorology  ', 'abandoned chunk  ', 'too few radiance', &
+    & 'mlsl2 crashed   ' /)
 
   ! This datatype is the main one, it simply defines one l2gp swath
   ! It is used for 
@@ -2363,7 +2370,7 @@ contains
     & geoBoxNames, geoBoxLowBound, geoBoxHiBound, &
     & Pressures, Latitudes, Longitudes, Times, Chunks, ColumnsOnly, &
     & Details, fields )
-    ! DUMP 2 l2gps according to prescribed ranges of pressure, longitude, etc.
+    ! DUMP an l2gp according to prescribed ranges of pressure, longitude, etc.
     ! Dummy arguments
     type (l2gpData_T), intent(in) ::          FULLL2GP
     character(len=*), intent(in) , optional ::       geoBoxNames
@@ -2433,12 +2440,15 @@ contains
     character(len=*), intent(in), optional :: fields ! ,-separated list of names
 
     ! Local variables
+    integer :: ChunkFillValue
+    real(r8) :: FillValue
+    integer :: i
     integer :: ierr
     logical :: myColumnsOnly
     integer :: MYDETAILS
-    real(r8) :: FillValue
-    integer :: ChunkFillValue
     character(len=Len(DATA_FIELDS)+Len(GEO_FIELDS)) :: myFields
+    integer :: nUnique
+    integer, dimension(1000) :: uniqueVals
 
     ! Executable code
     myDetails = 1
@@ -2541,9 +2551,15 @@ contains
       & call dump ( real(l2gp%l2gpPrecision, r8), 'L2GPPrecision:', &
         & FillValue=FillValue )
       
-    if ( showMe(myDetails > 0, myFields, 'status') ) &
-      & call dump ( l2gp%status, 'Status:' )
+    if ( showMe(myDetails > 0, myFields, 'status') ) then
+      call dump ( l2gp%status, 'Status:' )
+      call FindUnique( l2gp%status, uniqueVals, nUnique )
+      call outputNamedValue(' Number unique values', nUnique )
+      do i=1, nUnique
+        call DumpBitNames( uniqueVals(i), StatusBitNames )
+      enddo
       
+    endif      
     if ( showMe(myDetails > 0, myFields, 'quality') ) &
       & call dump ( l2gp%quality, 'Quality:' )
       
@@ -4980,6 +4996,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.162  2008/12/02 23:11:41  pwagner
+! mls_io_gen_[openF,closeF] functions now private; use MLSFile_T interfaces instead
+!
 ! Revision 2.161  2008/09/10 00:44:58  pwagner
 ! diffing files can now subset according to geolocation boxes
 !
