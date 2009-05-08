@@ -55,7 +55,8 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
 ! LF95.Linux/test [options] [input files]
 
   type options_T
-    logical             :: verbose            = .false.
+    logical             :: laconic            = .false. ! Print contents only
+    logical             :: verbose            = .false. ! Print (lots) extra
     logical             :: la                 = .false.
     logical             :: ls                 = .false.
     logical             :: stats              = .false.
@@ -163,6 +164,10 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
         call DumpHDF5DS ( sdfid1, trim(options%root), trim(options%datasets), &
           & fillValue=options%fillValue, rms=options%rms, stats=options%stats, &
           & unique=options%unique )
+      elseif ( options%laconic ) then
+        call DumpHDF5DS ( sdfid1, trim(options%root), trim(options%datasets), &
+          & rms=options%rms, stats=options%stats, unique=options%unique, &
+          & laconic=options%laconic )
       else
         call DumpHDF5DS ( sdfid1, trim(options%root), trim(options%datasets), &
           & rms=options%rms, stats=options%stats, unique=options%unique )
@@ -179,9 +184,10 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
       endif
     endif
 	 status = mls_sfend(sdfid1, hdfVersion=hdfVersion)
-    call sayTime('reading this file', tFile)
+    if ( .not. options%laconic ) call sayTime('reading this file', tFile)
   enddo
-  if ( .not. (options%la .or. options%ls) ) call sayTime('reading all files')
+  if ( .not. ( options%laconic .or. options%la .or. options%ls ) ) &
+    &  call sayTime('reading all files')
   call mls_h5close(error)
 contains
 !------------------------- dumpSettings ---------------------
@@ -192,6 +198,7 @@ contains
      type ( options_T ), intent(in)   :: options
      ! Local variables
      integer :: i
+     print *, 'loaconic?           ', options%laconic
      print *, 'verbose?            ', options%verbose
      print *, 'list attributes  ?  ', options%la   
      print *, 'list datasets  ?    ', options%ls
@@ -253,6 +260,9 @@ contains
       else if ( filename(1:3) == '-d ' ) then
         call getarg ( i+1+hp, options%datasets )
         i = i + 1
+        exit
+      elseif ( filename(1:4) == '-lac' ) then
+        options%laconic = .true.
         exit
       elseif ( filename(1:3) == '-v ' ) then
         options%verbose = .true.
@@ -329,6 +339,7 @@ contains
       & ' If no filenames supplied, you will be prompted to supply one'
       write (*,*) ' Options: -f filename     => add filename to list of filenames'
       write (*,*) '                           (can do the same w/o the -f)'
+      write (*,*) '          -lac            => switch on laconic mode'
       write (*,*) '          -v              => switch on verbose mode'
       write (*,*) '          -A              => dump all attributes'
       write (*,*) '          -D              => dump all datasets (default)'
@@ -526,6 +537,9 @@ end program l2auxdump
 !==================
 
 ! $Log$
+! Revision 1.6  2008/09/09 16:53:34  pwagner
+! Many changes, hoping some are correct
+!
 ! Revision 1.5  2007/08/17 00:42:38  pwagner
 ! Needed to increase MAXDS
 !
