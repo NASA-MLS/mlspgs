@@ -117,7 +117,7 @@ module MLSHDF5
 ! DumpHDF5Attributes (int locID, [char names], [char groupName], [char DSName],
 !    [log stats], [log rms])
 ! DumpHDF5DS (int locID, char groupame, [char names],
-!    [real fillValue], [log stats], [log rms], [log unique])
+!    [real fillValue], [log stats], [log rms], [log unique], [log laconic])
 ! GetAllHDF5AttrNames (int itemID, char DSNames)
 ! GetAllHDF5DSNames (file, char gname, char DSNames)
 !     file can be one of:
@@ -503,7 +503,8 @@ contains ! ======================= Public Procedures =========================
   end subroutine DumpHDF5Attributes
   
   ! -------------------------------  DumpHDF5DS  -----
-  subroutine DumpHDF5DS ( locID, groupName, names, fillValue, stats, rms, unique )
+  subroutine DumpHDF5DS ( locID, groupName, &
+    & names, fillValue, stats, rms, unique, laconic )
     ! Dump datasets in groupID
     ! All of them or only those in names string list
     integer, intent(in)                     :: locID ! file or groupID
@@ -513,6 +514,7 @@ contains ! ======================= Public Procedures =========================
     logical, intent(in), optional           :: stats ! Show % = fill
     logical, intent(in), optional           :: rms ! Show rms, min, max
     logical, intent(in), optional           :: unique ! Show unique values, count
+    logical, intent(in), optional           :: laconic ! Don't print names
 
     ! Local variables
     integer :: classID
@@ -521,6 +523,7 @@ contains ! ======================= Public Procedures =========================
     character(len=1), dimension(:,:,:), pointer :: chArray
     ! logical, parameter :: DEEBUG = .false.
     integer, dimension(7) :: dims
+    logical :: dontPrintName
     double precision, dimension(:,:,:), pointer :: dValue => null()
     integer :: groupID
     integer(kind=hSize_t), dimension(7) :: hdims
@@ -529,6 +532,7 @@ contains ! ======================= Public Procedures =========================
     integer, dimension(:,:,:), pointer :: iValue => null()
     character(len=MAXNDSNAMES*32) :: myNames
     character(len=128) :: name
+    character(len=128) :: namePrinted
     integer :: numDS
     character(len=16) :: Qtype
     integer :: rank
@@ -546,6 +550,8 @@ contains ! ======================= Public Procedures =========================
     myNames = '*' ! Wildcard means 'all'
     if ( present(names) ) myNames = names
     if ( myNames == '*' ) call GetAllHDF5DSNames ( locID, groupName, myNames )
+    dontPrintName = .false.
+    if ( present(laconic) ) dontPrintName = laconic
     numDS = NumStringElements ( myNames, countEmpty )
     call h5gOpen_f ( locid, trim(groupName), groupID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -556,6 +562,8 @@ contains ! ======================= Public Procedures =========================
       if ( name == ',' .or. len_trim(name) < 1 ) cycle
       theIndexes = indexes( name, DONTDUMPTHESEDSNAMES )
       if ( any( theIndexes > 0 ) ) cycle
+      namePrinted = name
+      if ( dontPrintName ) namePrinted = ' '
       call h5dopen_f ( groupID, trim(name), ItemID, status )
       if ( status /= 0 ) then
         call output ( trim(name), advance='no' )
@@ -595,30 +603,30 @@ contains ! ======================= Public Procedures =========================
           call allocate_test( iValue, dims(1), dims(2), dims(3), 'iValue', ModuleName )
           call LoadFromHDF5DS ( groupID, name, iValue )
           if ( present(fillvalue) ) then
-            call dump ( iValue, trim(name), fillValue=int(fillvalue), &
+            call dump ( iValue, trim(namePrinted), fillValue=int(fillvalue), &
               & stats=stats, rms=rms, unique=unique )
           else
-            call dump ( iValue, trim(name), stats=stats, rms=rms, unique=unique )
+            call dump ( iValue, trim(namePrinted), stats=stats, rms=rms, unique=unique )
           endif
           call deallocate_test( iValue, 'iValue', ModuleName )
         case ( 2 )
           call allocate_test( iValue, dims(1), dims(2), 1, 'iValue', ModuleName )
           call LoadFromHDF5DS ( groupID, name, iValue(:,:,1) )
           if ( present(fillvalue) ) then
-            call dump ( iValue(:,:,1), trim(name), fillValue=int(fillvalue), &
+            call dump ( iValue(:,:,1), trim(namePrinted), fillValue=int(fillvalue), &
               & stats=stats, rms=rms, unique=unique )
           else
-            call dump ( iValue(:,:,1), trim(name), stats=stats, rms=rms, unique=unique )
+            call dump ( iValue(:,:,1), trim(namePrinted), stats=stats, rms=rms, unique=unique )
           endif
           call deallocate_test( iValue, 'iValue', ModuleName )
         case default
           call allocate_test( iValue, dims(1), 1, 1, 'iValue', ModuleName )
           call LoadFromHDF5DS ( groupID, name, iValue(:,1,1) )
           if ( present(fillvalue) ) then
-            call dump ( iValue(:,1,1), trim(name), fillValue=int(fillvalue), stats=stats, &
+            call dump ( iValue(:,1,1), trim(namePrinted), fillValue=int(fillvalue), stats=stats, &
               & rms=rms, unique=unique )
           else
-            call dump ( iValue(:,1,1), trim(name), stats=stats, rms=rms, unique=unique )
+            call dump ( iValue(:,1,1), trim(namePrinted), stats=stats, rms=rms, unique=unique )
           endif
           call deallocate_test( iValue, 'iValue', ModuleName )
          end select
@@ -628,30 +636,30 @@ contains ! ======================= Public Procedures =========================
           call allocate_test( dValue, dims(1), dims(2), dims(3), 'dValue', ModuleName )
           call LoadFromHDF5DS ( groupID, name, dValue )
           if ( present(fillvalue) ) then
-            call dump ( dValue, trim(name), fillValue=real(fillvalue, r8), &
+            call dump ( dValue, trim(namePrinted), fillValue=real(fillvalue, r8), &
               & stats=stats, rms=rms, unique=unique )
           else
-            call dump ( dValue, trim(name), stats=stats, rms=rms, unique=unique )
+            call dump ( dValue, trim(namePrinted), stats=stats, rms=rms, unique=unique )
           endif
           call deallocate_test( dValue, 'dValue', ModuleName )
         case ( 2 )
           call allocate_test( dValue, dims(1), dims(2), 1, 'dValue', ModuleName )
           call LoadFromHDF5DS ( groupID, name, dValue(:,:,1) )
           if ( present(fillvalue) ) then
-            call dump ( dValue(:,:,1), trim(name), &
+            call dump ( dValue(:,:,1), trim(namePrinted), &
               & fillValue=real(fillvalue, r8), stats=stats, rms=rms, unique=unique )
           else
-            call dump ( dValue(:,:,1), trim(name), stats=stats, rms=rms, unique=unique )
+            call dump ( dValue(:,:,1), trim(namePrinted), stats=stats, rms=rms, unique=unique )
           endif
           call deallocate_test( dValue, 'dValue', ModuleName )
         case default
           call allocate_test( dValue, dims(1), 1, 1, 'dValue', ModuleName )
           call LoadFromHDF5DS ( groupID, name, dValue(:,1,1) )
           if ( present(fillvalue) ) then
-            call dump ( dValue(:,1,1), trim(name), fillValue=real(fillvalue, r8), &
+            call dump ( dValue(:,1,1), trim(namePrinted), fillValue=real(fillvalue, r8), &
               & stats=stats, rms=rms, unique=unique )
           else
-            call dump ( dValue(:,1,1), trim(name), stats=stats, rms=rms, unique=unique )
+            call dump ( dValue(:,1,1), trim(namePrinted), stats=stats, rms=rms, unique=unique )
           endif
           call deallocate_test( dValue, 'dValue', ModuleName )
          end select
@@ -660,16 +668,14 @@ contains ! ======================= Public Procedures =========================
         ! call outputNamedValue( 'rank', rank )
         select case ( rank )
         case ( 3 )
-          !call MLSMessage ( MLSMSG_Error, ModuleName, &
-          !   & 'Unable to dump 3d character-valued DS ' // trim(name) )
           call allocate_test( chArray, dims(1), dims(2), dims(3), 'chArray', ModuleName )
           call LoadFromHDF5DS ( groupID, name, chArray )
-          call dump ( chArray, trim(name) )
+          call dump ( chArray, trim(namePrinted) )
           call deallocate_test( chArray, 'chArray', ModuleName )
         case ( 2 )
           call allocate_test( chArray, dims(1), dims(2), 1, 'chArray', ModuleName )
           call LoadFromHDF5DS ( groupID, name, chArray(:,:,1) )
-          call dump ( chArray(:,:,1), trim(name) )
+          call dump ( chArray(:,:,1), trim(namePrinted) )
           call deallocate_test( chArray, 'chArray', ModuleName )
         case default
           if ( dims(1) < 2 ) then
@@ -680,13 +686,13 @@ contains ! ======================= Public Procedures =========================
             ! Unfortunately, a lot of null characters sneak into this
             ! chValue(1) = Replace( chValue(1), char(0), char(32) ) ! Replace null with space
             ! call outputNamedValue ( 'len after replacing nulls', len_trim(chvalue(1)) )
-            ! call dump ( trim(chValue(1)), trim(name) )
-            call output( 'name: ' // trim(name), advance='yes' )
+            ! call dump ( trim(chValue(1)), trim(namePrinted) )
+            if ( len_trim(namePrinted) > 0 ) call output( 'name: ' // trim(name), advance='yes' )
             call output( trim(chValue(1)), advance='yes' )
           else
             call allocate_test( ch1dArray, dims(1), 'ch1dArray', ModuleName )
             call LoadFromHDF5DS ( groupID, name, ch1dArray )
-            call dump ( ch1dArray, trim(name) )
+            call dump ( ch1dArray, trim(namePrinted) )
             call deallocate_test( ch1dArray, 'ch1dArray', ModuleName )
           endif
          end select
@@ -4955,6 +4961,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.90  2009/05/08 00:42:04  pwagner
+! New optional arg laconic to prevent DumpHDF5DS from printing names
+!
 ! Revision 2.89  2009/04/01 23:27:27  pwagner
 ! Worked around bug in saving logical array
 !
