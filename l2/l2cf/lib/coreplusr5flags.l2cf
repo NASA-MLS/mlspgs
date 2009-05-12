@@ -12,13 +12,13 @@
 
 begin Fill
   ;; ------------------------------------ OH-2T5
-  !define(flaggingBands,{15,17,18,19})
+  !define(flaggingBands,{15,16,18,19})
   !define(flaggingRadiometers,{R5}) !dnl!dnl
   !makeQualityForOneProduct(product=OH,chisqScale=1.0,minRads=2000)
   !makeStatusForOneProduct(product=OH,chisqScale=1.0,minRads=2000)
 
   ;; ------------------------------------ O3-2T5
-  !define(flaggingBands,{15,17,18,19})
+  !define(flaggingBands,{15,16,18,19})
   !define(flaggingRadiometers,{R5})!dnl
   !makeQualityForOneProduct(product=O3,chisqScale=1.0,minRads=2000)
   !makeStatusForOneProduct(product=O3,chisqScale=1.0,minRads=2000)
@@ -38,6 +38,9 @@ begin Fill
 end Fill
 
 ; $Log$
+; Revision 1.12  2006/11/01 19:13:14  pwagner
+; Removed R3 as flagging radiometer
+;
 ; Revision 1.11  2006/10/11 23:04:55  pwagner
 ; Special retrieval phase name retrophase needed for Convergence Ratio Fill
 ;
