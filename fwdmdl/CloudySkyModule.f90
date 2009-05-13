@@ -41,7 +41,7 @@ contains
       use MLSKinds, only: r8      
       use PhaseFunction, only: PFsetup
       use SizeDistribution, only: DRP_SIZE
-      use Units, only: Pi
+      use Constants, only: Pi
 
       REAL(r8) :: F                            ! FREQUENCY IN GHz
       REAL(r8) :: WL                           ! WAVELENGTH IN METERS
@@ -334,6 +334,9 @@ contains
 end module CloudySkyModule
 
 ! $Log$
+! Revision 2.8  2009/05/13 20:03:01  vsnyder
+! Get constants from Constants, kinds from MLSKinds
+!
 ! Revision 2.7  2007/10/06 00:00:38  vsnyder
 ! Use new Water, Ice named constants from MieTheory
 !
