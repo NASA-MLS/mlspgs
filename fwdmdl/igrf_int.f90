@@ -21,7 +21,7 @@ module IGRF_INT
 !               GSFC, NSSDC, Code 933, Greenbelt, MD 20771, USA.
 !               BILITZA%NSSDCA.SPAN@DFTNIC.BITNET
 
-  use UNITS, only: Rad2Deg, Deg2Rad
+  use Constants, only: Rad2Deg, Deg2Rad
   use GEOMETRY, only: EarthRadA, EarthRadB
 
   implicit NONE
@@ -838,6 +838,9 @@ o:  do n = 3, size(p,2)-1
 end module IGRF_INT
 
 ! $Log$
+! Revision 2.3  2009/05/13 20:03:02  vsnyder
+! Get constants from Constants, kinds from MLSKinds
+!
 ! Revision 2.2  2005/06/22 18:08:19  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
