@@ -13,8 +13,8 @@
 MODULE FOV   ! Field-Of-View routines/data
 !=============================================================================
 
-  USE MLSCommon, ONLY: R8
-  USE Units, ONLY: Pi, Deg2Rad
+  USE Constants, ONLY: Pi, Deg2Rad
+  USE MLSKinds, ONLY: R8
 
   IMPLICIT NONE
 
@@ -144,6 +144,9 @@ CONTAINS
 END MODULE FOV
 !=============================================================================
 ! $Log$
+! Revision 2.4  2009/05/13 20:33:05  vsnyder
+! Get constants from Constants, kinds from MLSKinds
+!
 ! Revision 2.3  2005/06/23 18:41:35  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
