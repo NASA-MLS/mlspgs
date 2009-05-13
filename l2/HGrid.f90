@@ -712,17 +712,20 @@ contains ! =====     Public Procedures     =============================
     ! With older l1b files (pre v2.0), some coordinates
     ! (solar time, solar zenith angle) are mean rather than apparent local
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-    use Chunks_m, only: MLSChunk_T, Dump
     use ChunkDivide_m, only: ChunkDivideConfig
-    use dates_module, only: utc_to_time
+    use Chunks_m, only: MLSChunk_T, Dump
+    use Constants, only: DEG2RAD, RAD2DEG
+    use Dates_module, only: utc_to_time
     use Dump_0, only: DIFF, DUMP
     use EmpiricalGeometry, only: EmpiricalLongitude, ChooseOptimumLon0
     use HGridsDatabase, only: CREATEEMPTYHGRID, HGRID_T, TRIMHGRID, FINDCLOSESTMATCH
     use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData, &
       & AssembleL1BQtyName
-    use MLSCommon, only: MLSFile_T, NameLen, RK => R8, TAI93_RANGE_T
+    use MLSCommon, only: MLSFile_T, NameLen, TAI93_RANGE_T
     use MLSFiles, only: HDFVERSION_5, Dump, GetMLSFileByType
     use MLSFillValues, only: isMonotonic, Monotonize
+    use MLSHDF5, only: IsHDF5AttributeInFile
+    use MLSKinds, only: RK => R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MLSNumerics, only: HUNT, InterpolateValues
     use MLSStringLists, only: SwitchDetail
@@ -730,8 +733,6 @@ contains ! =====     Public Procedures     =============================
     use OUTPUT_M, only: OUTPUT
     use String_Table, only: Display_String
     use TOGGLES, only: SWITCHES
-    use UNITS, only: DEG2RAD, RAD2DEG
-    use MLSHDF5, only: IsHDF5AttributeInFile
 
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
     type (TAI93_Range_T), intent(in) :: PROCESSINGRANGE
@@ -2341,6 +2342,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.94  2009/05/13 20:41:55  vsnyder
+! Get constants from Constants, kinds from MLSKinds
+!
 ! Revision 2.93  2008/12/02 23:29:41  pwagner
 ! Added print to not_used_here
 !
