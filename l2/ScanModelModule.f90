@@ -24,6 +24,7 @@ module ScanModelModule          ! Scan model and associated calculations
   ! will ever be required.
 
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use Constants, ONLY: Deg2Rad, LN10, PI
   use ForwardModelConfig, only: ForwardModelConfig_T
   use ForwardModelIntermediate, only:  ForwardModelStatus_T
   use ForwardModelVectorTools, only: GETQUANTITYFORFORWARDMODEL
@@ -39,7 +40,7 @@ module ScanModelModule          ! Scan model and associated calculations
     & M_FULL, UpdateDiagonal
   use MatrixModule_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T, &
     & CREATEEMPTYMATRIX, DESTROYMATRIX, CLEARMATRIX
-  use MLSCommon, ONLY: R8, rp, rv
+  use MLSKinds, ONLY: R8, RP, RV
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING, &
     & MLSMessageCalls
   use MLSNumerics, only : HUNT, INTERPOLATEVALUES
@@ -50,7 +51,6 @@ module ScanModelModule          ! Scan model and associated calculations
   use VectorsModule, ONLY : VALIDATEVECTORQUANTITY, &
     & VECTOR_T, VECTORTEMPLATE_T, VECTORVALUE_T, CREATEVECTOR, &
     & CONSTRUCTVECTORTEMPLATE, DESTROYVECTORINFO
-  USE Units, ONLY: Deg2Rad, LN10, PI
 
   implicit NONE
 
@@ -2180,11 +2180,15 @@ contains ! =============== Subroutines and functions ==========================
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.71  2009/05/13 20:41:55  vsnyder
+! Get constants from Constants, kinds from MLSKinds
+!
 ! Revision 2.70  2007/08/20 22:06:08  pwagner
 ! Two procedures now push their names onto MLSCallStack
 !
