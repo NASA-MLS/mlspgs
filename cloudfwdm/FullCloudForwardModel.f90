@@ -49,7 +49,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     use MatrixModule_0,             only: MATRIXELEMENT_T, &
                                         & M_FULL, CREATEBLOCK
     use MatrixModule_1,             only: MATRIX_T, FINDBLOCK
-    use MLSCommon,                  only: r8, rm, rp
+    use MLSKinds,                   only: r8, rm, rp
     use MLSMessageModule,           only: MLSMessage, MLSMSG_Allocate, &
                                         & MLSMSG_Error, MLSMSG_Warning, &
                                         & MLSMSG_Deallocate
@@ -64,7 +64,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     use String_table,               only: GET_STRING
     use Toggles,                    only: Emit, Levels, Toggle
     use Trace_M,                    only: Trace_begin, Trace_end
-    use Units,                      only: Deg2Rad                         
+    use Constants,                  only: Deg2Rad                         
     use VectorsModule,              only: GETVECTORQUANTITYBYTYPE, VECTOR_T, &
                                         & VECTORVALUE_T, VALIDATEVECTORQUANTITY
 
@@ -1123,6 +1123,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.139  2008/10/03 21:04:26  livesey
+! Added fixes to support EXTINCTIONV2 stuff
+!
 ! Revision 1.138  2007/07/25 21:59:07  vsnyder
 ! Delete declaration for unused variable
 !

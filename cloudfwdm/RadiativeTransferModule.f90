@@ -15,9 +15,6 @@ module RadiativeTransferModule
 ! PERFORM MLS LIB RADIATIVE TRANSFER CALCULATIONS
 ! -------------------------------------------------------------------------
 
-      use Blackbody, only: planck
-      use Interpack, only: LOCATE
-      use Units     
       IMPLICIT NONE
       Private
       Public :: RADXFER
@@ -47,8 +44,11 @@ contains
 ! LAST UPDATE: 18/05/2001, J.JIANG
 !===================================================================
 
-      use MLSCommon, only: r8
-      IMPLICIT NONE
+      use Blackbody, only: planck
+      use Constants, only: Pi     
+      use Interpack, only: LOCATE
+      use MLSKinds, only: r8
+
       REAL(r8) :: RE
 
       INTEGER :: L,NT,NU,NUA,N
@@ -413,6 +413,9 @@ contains
 end module RadiativeTransferModule
 
 ! $Log$
+! Revision 1.19  2007/10/02 22:33:02  vsnyder
+! Modernization: No shared-do-term statements
+!
 ! Revision 1.18  2007/07/25 21:50:34  vsnyder
 ! Replace tabs by spaces because tabs are not standard
 !
