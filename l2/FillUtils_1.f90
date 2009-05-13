@@ -15,6 +15,7 @@ module FillUtils_1                     ! Procedures used by Fill
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use Chunks_m, only: MLSChunk_T
+  use Constants, only: Deg2Rad, Rad2Deg
   use Expr_M, only: EXPR, EXPR_CHECK, GetIndexFlagsFromList
   use GriddedData, only: GriddedData_T, WrapGriddedData
   ! Now the literals:
@@ -59,9 +60,9 @@ module FillUtils_1                     ! Procedures used by Fill
   use MatrixModule_1, only: Dump, FindBlock, Matrix_SPD_T, UpdateDiagonal
   ! NOTE: If you ever want to include defined assignment for matrices, please
   ! carefully check out the code around the call to snoop.
-  use MLSCommon, only: MLSFile_T, R4, R8, RM, RV, &
-    & DEFAULTUNDEFINEDVALUE
+  use MLSCommon, only: MLSFile_T, DEFAULTUNDEFINEDVALUE
   use MLSFiles, only: GetMLSFileByType
+  use MLSKinds, only: R4, R8, RM, RV
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, &
     & MLSMSG_Allocate, MLSMSG_Deallocate, MLSMessageCalls
   use MLSNumerics, only: InterpolateValues, Hunt
@@ -84,7 +85,6 @@ module FillUtils_1                     ! Procedures used by Fill
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: NSONS, &
     & SOURCE_REF, SUBTREE
-  use UNITS, only: Deg2Rad, Rad2Deg
   use VectorsModule, only: &
     & ClearUnderMask, CopyVector, CreateMask, &
     & DestroyVectorInfo, Dump, &
@@ -2243,12 +2243,12 @@ contains ! =====     Public Procedures     =============================
     subroutine FillPhiTanWithRefraction ( key, quantity, &
       & h2o, orbIncline, ptan, refGPH, temperature )
 
+      use Constants, only: DEG2RAD, RAD2DEG
       use Geometry, only: EarthRadA, EarthRadB, GEODTOGEOCLAT
       use Hydrostatic_M, only: HYDROSTATIC
       use MLSKinds, only: RP
       use Phi_Refractive_Correction_m, only: Phi_Refractive_Correction_Up
       use Refraction_m, only: REFRACTIVE_INDEX
-      use Units, only: DEG2RAD, RAD2DEG
 
       integer, intent(in) :: KEY          ! Tree node, for error messages
       type (VectorValue_T), intent(inout) :: QUANTITY ! PhiTan quantity to update
@@ -5019,7 +5019,7 @@ contains ! =====     Public Procedures     =============================
 
     ! ----------------------------------------- FillWithReflectorTemperature ---
     subroutine FillWithReflectorTemperature ( key, quantity, phiZero, termsNode )
-      use Units, only: DEG2RAD
+      use Constants, only: DEG2RAD
       integer, intent(in) :: KEY         ! Tree node for messages
       type (VectorValue_T), intent(inout) :: QUANTITY ! The quantity to fill
       real(r8), intent(in) :: PHIZERO   ! Offset term
@@ -6314,8 +6314,8 @@ contains ! =====     Public Procedures     =============================
 
     ! --------------------------------------------- RotateMagneticField ----
     subroutine RotateMagneticField ( key, qty, fieldECR, ecrToFOV )
+      use Constants, only: RAD2DEG
       use Intrinsic, only: L_FIELDAZIMUTH, L_FIELDELEVATION, L_FIELDSTRENGTH
-      use Units, only: RAD2DEG
       integer, intent(in) :: KEY        ! Where are we in the l2cf?
       type (VectorValue_T), intent(inout) :: QTY ! The quantity to fill
       type (VectorValue_T), intent(in) :: FIELDECR ! The input field
@@ -6755,6 +6755,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.23  2009/05/13 20:41:55  vsnyder
+! Get constants from Constants, kinds from MLSKinds
+!
 ! Revision 2.22  2009/05/01 23:44:40  pwagner
 ! Restored nearly all except for conversions between RHi and H2O
 !
