@@ -14,7 +14,7 @@ module Geometry
   ! This module contains some geometry routines and constants common to the
   ! forward model and the scan model.
 
-  use MLSCommon, only: R8, RP
+  use MLSKinds, only: R8, RP
 
   implicit NONE
   private
@@ -75,7 +75,7 @@ contains
   ! Convert a geodetic latitude (IN DEGREES!) into a geocentric one (IN RADIANS!)
   ! (IN RADIANS!)
 
-    use Units, only: Deg2Rad, PI
+    use Constants, only: Deg2Rad, PI
 
     ! Arguments
     real (r8), intent(in) :: geodLat
@@ -137,6 +137,9 @@ contains
 end module Geometry
 
 ! $Log$
+! Revision 2.18  2009/05/13 20:13:58  vsnyder
+! Get constants from Constants, kinds from MLSKinds
+!
 ! Revision 2.17  2008/10/08 01:11:37  vsnyder
 ! Add PRINT statement in not_used_here to prevent compilation cascades
 !
