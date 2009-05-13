@@ -14,10 +14,7 @@ module UNITS
 ! Provide several units and unit conversion constants.
 ! Initialize the declaration table with the unit names and scales.
 
-  ! The names imported from Constants are imported here because they
-  ! were at one time declared here, and several program units access
-  ! them from here.
-  use Constants, only: LN10, Pi, Deg2Rad, Rad2Deg, Sqrtln2, SqrtPi
+  use Constants, only: Rad2Deg
   use MLSKinds, only: R8
 
   implicit NONE
@@ -147,6 +144,9 @@ contains ! =====     Public procedures     =============================
 end module UNITS
 
 ! $Log$
+! Revision 2.32  2009/05/13 20:39:44  vsnyder
+! Remove unused USE names
+!
 ! Revision 2.31  2008/09/30 22:22:06  vsnyder
 ! Add iwc, gm3, mgm3
 !
