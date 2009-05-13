@@ -44,7 +44,7 @@ contains ! =====     Public Procedures     =============================
       & CREATEEMPTYMATRIX, DESTROYMATRIX
     use MLSCommon, only: R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use Units, only: DEG2RAD
+    use Constants, only: DEG2RAD
     use ForwardModelVectorTools, only: GETQUANTITYFORFORWARDMODEL
     use ManipulateVectorQuantities, only: FINDONECLOSESTINSTANCE
 
