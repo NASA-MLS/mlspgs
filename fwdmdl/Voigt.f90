@@ -12,7 +12,7 @@
 module Voigt_M
 
   use MLSKinds, only: RP
-  use Units, only: Pi, SqrtPi
+  use Constants, only: Pi, SqrtPi
 
   implicit NONE
 
@@ -1402,6 +1402,9 @@ contains
 end module Voigt_M
 
 ! $Log$
+! Revision 2.11  2009/05/13 20:03:01  vsnyder
+! Get constants from Constants, kinds from MLSKinds
+!
 ! Revision 2.10  2008/02/29 01:57:19  vsnyder
 ! Use MLSKinds instead of MLSCommon
 !
