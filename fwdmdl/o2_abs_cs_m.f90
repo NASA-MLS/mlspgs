@@ -34,7 +34,7 @@ contains
     use MLSCommon, only: IP, R8, Rk => RP
     use SpectroscopyCatalog_m, only: Lines
     use Slabs_SW_m, only: SLABS_STRUCT
-    use Units, only: SqrtPi
+    use Constants, only: SqrtPi
 
     real(r8), intent(in) :: Freq              ! Observation frequency
     integer(ip), intent(in) :: Qn(:)          ! Quantum numbers
@@ -118,7 +118,7 @@ contains
     use MLSCommon, only: IP, R8, Rk => RP
     use Slabs_SW_m, only: SLABS_STRUCT
     use SpectroscopyCatalog_m, only: Lines
-    use Units, only: SqrtPi
+    use Constants, only: SqrtPi
 
     real(r8), intent(in) :: Freq              ! Observation frequency
     integer(ip), intent(in) :: Qn(:)          ! Quantum numbers
@@ -916,6 +916,9 @@ contains
 end module O2_Abs_CS_M
 
 ! $Log$
+! Revision 2.17  2009/05/13 20:03:02  vsnyder
+! Get constants from Constants, kinds from MLSKinds
+!
 ! Revision 2.16  2007/05/23 22:45:08  vsnyder
 ! New slabs structure
 !
