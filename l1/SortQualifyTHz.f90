@@ -119,12 +119,12 @@ PRINT *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
   SUBROUTINE QualifyEachMAF
 !=============================================================================
 
-    USE MLSL1Config, ONLY: THz_seq, THz_seq_use
+    USE BrightObjects_m, ONLY:Test_BO_stat, BO_Match
+    USE Constants, ONLY: Rad2Deg
     USE MLSL1Common, ONLY: L1BFileInfo, SC_YPR, THz_GeodAlt
+    USE MLSL1Config, ONLY: THz_seq, THz_seq_use
     USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Warning
     USE SDPToolkit, ONLY: PGS_TD_TAItoUTC
-    USE BrightObjects_m, ONLY:Test_BO_stat, BO_Match
-    USE Units, ONLY: Rad2Deg
 
     INTEGER :: MAF, MIF, n, stat
     CHARACTER(len=80) :: msg
@@ -285,6 +285,9 @@ END MODULE SortQualifyTHz
 !=============================================================================
 
 ! $Log$
+! Revision 2.15  2009/05/13 20:33:05  vsnyder
+! Get constants from Constants, kinds from MLSKinds
+!
 ! Revision 2.14  2006/08/02 18:58:45  perun
 ! Change maximum SpaceAltRange value to 600 km from 250 km
 !
