@@ -17,16 +17,16 @@ module heights_module
   ! and scan calculations" by N. J. Livesey
 
 
+  use Constants, only: Deg2Rad, Rad2Deg
+
   use Geometry, only: Earth_Axis_Ratio_Squared, &
                     & Earth_Major_Axis => EarthRadA, &
                     & Earth_Minor_Axis => EarthRadB, EarthSurfaceGPH, GM, G0, &
                     & J2, J4, Omega => W
 
-  use MLSCommon, only: R8
+  use MLSKinds, only: R8
 
   use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
-
-  use Units, only: Deg2Rad, Rad2Deg
 
   implicit NONE
   private
@@ -168,11 +168,15 @@ contains
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module heights_module
 
 ! $Log$
+! Revision 2.5  2006/09/28 20:39:22  vsnyder
+! Correct singularity in lat_geod_to_geoc
+!
 ! Revision 2.4  2005/06/22 17:25:49  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
