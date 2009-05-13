@@ -11,8 +11,7 @@
 
 module EmpiricalGeometry                ! For empirically obtaining orbit information
 
-  use Allocate_Deallocate, only: Allocate_test
-  use MLSCommon, only: R8
+  use MLSKinds, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
 
   implicit none
@@ -43,7 +42,7 @@ contains ! ========================= Public Procedures ====================
     ! geodetic angle.
     ! Argument
 
-    use Units, only: Deg2Rad
+    use Constants, only: Deg2Rad
     real(r8), dimension(:), intent(in) :: GEODANGLE
     real(r8), dimension(size(geodAngle)), intent(out) :: LON
     real(r8), optional, intent(in) :: TRYLON0
@@ -79,6 +78,7 @@ contains ! ========================= Public Procedures ====================
   subroutine InitEmpiricalGeometry ( root )
     ! This subroutine sets up the empirical geometry from l2cf information
 
+    use Allocate_Deallocate, only: Allocate_test
     use Expr_M, only: EXPR
     use Init_Tables_Module, only: F_ITERATIONS, F_TERMS
     use Intrinsic, only: PHYQ_DimensionLess
@@ -131,7 +131,7 @@ contains ! ========================= Public Procedures ====================
   ! subroutine ChooseOptimumLon0 ( l1bInfo, chunk )
   subroutine ChooseOptimumLon0 ( filedatabase, chunk )
 
-    use Allocate_Deallocate, only: Deallocate_test
+    use Allocate_Deallocate, only: Allocate_test, Deallocate_test
     use Chunks_m, only: MLSChunk_T
     use L1BData, only: L1BData_T, ReadL1BData, DeallocateL1BData, Name_Len, &
       & AssembleL1BQtyName
@@ -223,11 +223,15 @@ contains ! ========================= Public Procedures ====================
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module EmpiricalGeometry
 
 ! $Log$
+! Revision 2.13  2009/05/13 20:41:55  vsnyder
+! Get constants from Constants, kinds from MLSKinds
+!
 ! Revision 2.12  2005/06/22 18:57:01  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
