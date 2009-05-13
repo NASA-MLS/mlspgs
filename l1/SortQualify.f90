@@ -13,7 +13,7 @@
 MODULE SortQualify ! Sort and qualify the L0 data
 !=============================================================================
 
-  USE MLSCommon, ONLY: r8
+  USE MLSKinds, ONLY: R8
   USE MLSL1Common, ONLY: L1BFileInfo, MAFinfo, MaxMIFs, OA_counterMAF, &
        OA_counterIndex, ChanLogical_T, BankInt_T, FBnum, MBnum, WFnum, &
        DACSnum, GHzNum
@@ -974,6 +974,9 @@ END MODULE SortQualify
 !=============================================================================
 
 ! $Log$
+! Revision 2.28  2009/05/13 20:33:05  vsnyder
+! Get constants from Constants, kinds from MLSKinds
+!
 ! Revision 2.27  2008/03/28 18:21:22  perun
 ! Remove debug write statements.
 !
