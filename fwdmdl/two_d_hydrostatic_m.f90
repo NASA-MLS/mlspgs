@@ -32,8 +32,8 @@ module Two_D_Hydrostatic_m
   use Geometry, only: earthRadA, Earth_Axis_Ratio_Squared_m1
   use Hydrostatic_m, only: hydrostatic
   use Load_sps_data_m, ONLY: Grids_T
-  use MLSCommon, only: RP, IP
-  use Units, only: PI
+  use MLSKinds, only: RP, IP
+  use Constants, only: PI
 
 ! Inputs:
 
@@ -125,6 +125,9 @@ module Two_D_Hydrostatic_m
 end module Two_D_Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.16  2007/01/17 23:51:00  vsnyder
+! Make dhidtlm optional
+!
 ! Revision 2.15  2006/09/28 21:54:33  vsnyder
 ! Remove unused symbols
 !

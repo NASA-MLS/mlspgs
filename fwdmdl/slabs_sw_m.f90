@@ -15,7 +15,7 @@ module SLABS_SW_M
 
   use MLSKinds, only: R8, RP
   use SpectroscopyCatalog_m, only: Catalog_T
-  use Units, only: SqrtPi
+  use Constants, only: SqrtPi
 
   implicit NONE
 
@@ -2123,7 +2123,7 @@ contains
 ! >>2005-06-16 WV Snyder Use nu0s/velCor instead of nu0s in Beta_v.
 
     use Physics, only: H_OVER_K, k, SpeedOfLight
-    use Units, only: Ln10, Sqrtln2, SqrtPi
+    use Constants, only: Ln10, Sqrtln2, SqrtPi
 
 ! inputs:
 
@@ -2398,7 +2398,7 @@ contains
 ! ** UPDATED: Jul/3/97  To include Hugh Pumphrey's Pressure Shift effects
 
     use Physics, only: H_OVER_K, k, SpeedOfLight
-    use Units, only: Ln10, Sqrtln2, SqrtPi
+    use Constants, only: Ln10, Sqrtln2, SqrtPi
 
 ! inputs:
 
@@ -2752,6 +2752,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.59  2008/10/03 16:30:48  livesey
+! Added EXTINCTIONV2
+!
 ! Revision 2.58  2008/05/20 00:23:50  vsnyder
 ! Receive Vel/C instead of Vel
 !

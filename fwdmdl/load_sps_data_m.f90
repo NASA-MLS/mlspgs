@@ -219,7 +219,7 @@ contains
     use ForwardModelConfig, only: ForwardModelConfig_t
     use VectorsModule, only: VECTORVALUE_T
     use MLSFillValues, only: ESSENTIALLYEQUAL
-    use Units, only: Deg2Rad
+    use Constants, only: Deg2Rad
 
     type (ForwardModelConfig_T) ,intent(in) :: FWDMODELCONF
     type (Grids_T), intent(inout) :: GRIDS_F   ! All the vmrs
@@ -409,7 +409,7 @@ contains
 
     use Intrinsic, only: L_IntermediateFrequency
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use Units, only: Deg2Rad
+    use Constants, only: Deg2Rad
     use VectorsModule, only: VectorValue_T, M_FullDerivatives
 
     type(grids_t), intent(inout) :: Grids_x
@@ -575,6 +575,10 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.72  2009/01/16 23:38:32  vsnyder
+! Correct problem with absent molecules.  Dump angles in degrees.  Add
+! PRINT statement to not_used_here.
+!
 ! Revision 2.71  2008/10/03 16:30:31  livesey
 ! Added EXTINCTIONV2
 !

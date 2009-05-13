@@ -36,8 +36,8 @@ contains
 
   ! Set up array of pointing angles
 
-    use Units, only: Deg2Rad, Ln10
-    use MLSCommon, only: RP
+    use Constants, only: Deg2Rad, Ln10
+    use MLSKinds, only: RP
 
   ! inputs
 
@@ -149,8 +149,8 @@ contains
 
   ! Set up array of pointing angles
 
-    use Units, only: Deg2Rad, Ln10
-    use MLSCommon, only: RP
+    use Constants, only: Deg2Rad, Ln10
+    use MLSKinds, only: RP
 
   ! inputs
 
@@ -235,7 +235,7 @@ contains
 
   ! Set up array of pointing angles
 
-    use Units, only: Deg2Rad, Ln10
+    use Constants, only: Deg2Rad, Ln10
     use MLSCommon, only: RP
 
   ! inputs
@@ -340,6 +340,9 @@ contains
 
 end module Get_Chi_Angles_m
 ! $Log$
+! Revision 2.18  2008/05/20 00:18:46  vsnyder
+! Separate angles from angles-and-derivatives
+!
 ! Revision 2.17  2005/12/07 00:32:58  vsnyder
 ! Add some TeXnicalities
 !

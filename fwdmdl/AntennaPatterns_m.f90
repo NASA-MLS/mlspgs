@@ -84,7 +84,7 @@ contains
     use Parse_Signal_m, only: Parse_Signal
     use Toggles, only: Gen, Switches, Toggle
     use Trace_M, only: Trace_begin, Trace_end
-    use Units, only: Pi
+    use Constants, only: Pi
 
     integer, intent(in) :: Lun               ! Logical unit number to read it
     integer, intent(in) :: Where             ! In the L2CF tree, for tracing
@@ -370,6 +370,9 @@ outer1: do
 end module AntennaPatterns_m
 
 ! $Log$
+! Revision 2.12  2007/10/03 23:58:26  vsnyder
+! Add 'where' for tracing
+!
 ! Revision 2.11  2007/06/25 20:33:02  vsnyder
 ! Add FFTW plans, as comments, in case we ever need them
 !

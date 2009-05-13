@@ -33,10 +33,10 @@ contains
       use Cloud_extinction,    only: Get_beta_cloud
       use CRREXP_m,            only: RREXP    ! ( exp(x)-1 ) / x, for Planck fn.
       use Interpack,           only: LOCATE
-      use MLSCommon,           only: RK => R8 ! working REAL kind
+      use MLSKinds,            only: RK => R8 ! working REAL kind
       use Physics,             only: H_OVER_K ! h/k in Kelvin/MHz
       use ScatteringAngle,     only: Angle
-      use Units,               only: Pi
+      use Constants,           only: Pi
       use Non_scat_ext,        only: GET_BETA_CLEAR
 
     ! Arguments
@@ -307,8 +307,8 @@ contains
   subroutine Interp_Tscat (TB_SCAT, THETA, PHI_angle, TT_SCAT)
 
       use Interpack,           only: LOCATE
-      use MLSCommon,           only: RK => R8 ! working REAL kind
-      use Units,               only: Pi
+      use MLSKinds,            only: RK => R8 ! working REAL kind
+      use Constants,           only: Pi
 
     ! Arguments
       real(rk), intent(in) :: TB_scat(:,:)   ! TB FROM SCATTERING PHASE FUNCTION
@@ -341,7 +341,7 @@ contains
   subroutine Convert_grid ( salb_path, cext_path, tt_path, path_inds, &
                           & beta_path_cloud, w0_path, tt_path_c )
 
-    use MLSCommon, only: RP, IP
+    use MLSKinds, only: RP, IP
 
     real(rp), intent(in) :: Salb_path(:,:) ! single scattering albedo gl grids  
     real(rp), intent(in) :: Cext_path(:,:) ! cloud extinction on gl grids
@@ -385,6 +385,9 @@ contains
 end module ScatSourceFunc
 
 ! $Log$
+! Revision 2.15  2007/10/02 22:32:45  vsnyder
+! Modernization: No shared-do-term statements
+!
 ! Revision 2.14  2007/07/25 20:19:42  vsnyder
 ! Delete USE for unreferenced entities and declarations for unused variables
 !
