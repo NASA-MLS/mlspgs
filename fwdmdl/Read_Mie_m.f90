@@ -119,7 +119,7 @@ contains
   !         >= 2 => 1 + dP_dIWC + dP_dT
     use Dump_0, only: Dump
     use Output_m, only: Output
-    use Units, only: Rad2Deg
+    use Constants, only: Rad2Deg
     integer, intent(in) :: Details
     integer :: I_f, I_theta
     if ( .not. associated(f_s) ) return
@@ -330,6 +330,9 @@ contains
 end module Read_Mie_m
 
 ! $Log$
+! Revision 2.5  2009/05/13 20:03:01  vsnyder
+! Get constants from Constants, kinds from MLSKinds
+!
 ! Revision 2.4  2008/10/20 23:23:20  vsnyder
 ! Convert F_s from GHz to MHz, since MHz is the standard unit
 !
