@@ -810,7 +810,7 @@ contains
     use Intrinsic, only: L_Pressure
     use ManipulateVectorQuantities, only: FindClosestInstances
     use MLSNumerics, only: InterpolateValues
-    use UNITS, only: Rad2Deg
+    use Constants, only: Rad2Deg
     use VectorsModule, only: VectorValue_T
     
     ! Dummy arguments
@@ -949,9 +949,13 @@ contains
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 end module CloudRetrievalModule
 ! $Log$
+! Revision 2.12  2009/05/13 20:41:55  vsnyder
+! Get constants from Constants, kinds from MLSKinds
+!
 ! Revision 2.11  2007/06/29 19:32:07  vsnyder
 ! Make ForwardModelIntermediate_t private to ScanModelModule
 !
