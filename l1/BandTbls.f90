@@ -453,8 +453,8 @@ CONTAINS
   SUBROUTINE LoadFourierCoeffs (unit, asciiUTC)
 !=============================================================================
 
+    use Constants, ONLY: Rad2Deg, Deg2Rad
     USE SDPToolkit, ONLY: spacecraftId, PGSd_SUN
-    USE Units, ONLY: Rad2Deg, Deg2Rad
 
     INTEGER, INTENT(IN) :: unit
     CHARACTER (LEN=27), INTENT(IN) :: asciiUTC
@@ -597,6 +597,9 @@ print *, 'cd1, sd1, beta: ', cd1, sd1, beta
 END MODULE BandTbls
 
 ! $Log$
+! Revision 2.10  2009/05/13 20:33:05  vsnyder
+! Get constants from Constants, kinds from MLSKinds
+!
 ! Revision 2.9  2006/08/02 18:51:45  perun
 ! Corrected nested loops in reading wide filters
 !
