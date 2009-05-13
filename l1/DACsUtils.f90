@@ -449,15 +449,15 @@ CONTAINS
   SUBROUTINE FinalizeDACSdata
 !=============================================================================
 
-    USE MLSL1Common, ONLY: L1BFileInfo, DACSchans
-    USE MLSCommon, ONLY: rm
-    USE MLSL1Config, ONLY: MIFsGHz, L1Config
-    USE MLS_DataProducts, ONLY: DataProducts_T, Deallocate_DataProducts
-    USE MLSAuxData, ONLY: Build_MLSAuxData
-    USE MLSHDF5, ONLY: IsHDF5DSPresent, MakeHDF5Attribute
+    USE Constants, ONLY: Pi
     USE HDF5, ONLY: h5gopen_f
     USE MatrixModule_0, ONLY: MatrixInversion
-    USE units, ONLY: Pi
+    USE MLSAuxData, ONLY: Build_MLSAuxData
+    USE MLSKinds, ONLY: RM
+    USE MLS_DataProducts, ONLY: DataProducts_T, Deallocate_DataProducts
+    USE MLSHDF5, ONLY: IsHDF5DSPresent, MakeHDF5Attribute
+    USE MLSL1Common, ONLY: L1BFileInfo, DACSchans
+    USE MLSL1Config, ONLY: MIFsGHz, L1Config
 
     INTEGER :: bno, ch, grp_id, i, Flag, maf, mif, noMAFs, sd_id, status
     INTEGER, PARAMETER :: rch(2) = (/ 10, 100 /)  ! range of channels
@@ -714,6 +714,9 @@ CONTAINS
 END MODULE DACsUtils
 
 ! $Log$
+! Revision 2.16  2009/05/13 20:33:05  vsnyder
+! Get constants from Constants, kinds from MLSKinds
+!
 ! Revision 2.15  2007/06/07 21:56:52  pwagner
 ! Gets derfi from lib
 !
