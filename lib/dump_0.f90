@@ -815,14 +815,19 @@ contains
   end subroutine DUMP_1D_INTEGER
 
   ! ----------------------------------------------  DUMP_1D_LOGICAL ----
-  subroutine DUMP_1D_LOGICAL ( ARRAY, NAME, CLEAN, LBOUND )
+  subroutine DUMP_1D_LOGICAL ( ARRAY, NAME, CLEAN, LBOUND, AS_GAPS )
     logical, intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
     logical, intent(in), optional :: CLEAN
     integer, intent(in), optional :: LBOUND ! Low bound of Array
+    logical, intent(in), optional :: AS_GAPS ! Use gaps in true to show false (or vice versa)
 
-    integer :: Base, J, K
+    integer :: Base, J, K, N, NTRUE, NFALSE
     logical :: myClean
+    logical :: myGaps
+    ! Executable
+    myGaps = .false.
+    if ( present(as_gaps) ) myGaps = as_gaps
 
     call theDumpBegins
     base = 0
@@ -836,6 +841,26 @@ contains
     else if ( size(array) == 1 .and. base == 0 ) then
       call name_and_size ( name, myClean, 1 )
       call output ( array(1), advance='yes' )
+    elseif ( myGaps ) then
+      call name_and_size ( name, myClean, size(array) )
+      if ( present(name) ) call output ( '', advance='yes' )
+      k = 0
+      if ( size(array)/100 > 100 )  call showColumnNums( 100 )
+      do j=1, size(array), 100
+        N = min(k+100, size(array)) - k
+        call output( k+1 )
+        call output ( ' through ')
+        call output( k+N, advance='yes' )
+        ntrue = count( array(k+1 : min(k+100, size(array))) )
+        nfalse = n - ntrue
+        if ( ntrue > 0 .and. ( ntrue < nfalse .or. nfalse < 1 ) ) then
+          call output( array(k+1 : k+N), onlyif=.true., advance='yes' )
+        else
+          call output( array(k+1 : k+N), onlyif=.false., advance='yes' )
+        endif
+        k = k + 100
+      enddo
+      call showColumnNums( 100 )
     else
       call name_and_size ( name, myClean, size(array) )
       if ( present(name) ) call output ( '', advance='yes' )
@@ -2983,6 +3008,40 @@ contains
     call output ( afterSub )
   end subroutine Say_Subs_Only
   
+  subroutine showColumnNums( lineLength, skip )
+    ! show column numbers
+    ! usu. printed below other data to help guide the eye as to where
+    ! stuff actually is
+    ! E.g.,
+    !   TTTT  TT  T
+    !       FF  FF FFFF
+    !   12345678901234567890          <-- These are the 
+    !            1         2          <-- two lines we print here
+    ! Args:
+    integer, intent(in)           :: lineLength ! How many per line
+    integer, intent(in), optional :: skip       ! start numbering after skip
+    ! Internal variables
+    integer                          :: bloc
+    character(len=10), dimension(2)  :: line
+    integer                          :: multiple
+    integer                          :: mySkip
+    integer                          :: numBlocs
+    ! Executable
+    numBlocs = 1 + (lineLength-1)/10
+    mySkip = 0
+    if ( present(skip) ) mySkip = skip
+    line(1) = '1234567890'
+!   line(2) = '         1'
+    do multiple=1, 2
+      if ( mySkip > 0 ) call blanks(mySkip)
+      do bloc = 1, numBlocs
+        write(line(2), '(i10)' ) bloc
+        call output( line(multiple), advance='no' )
+      enddo
+      call newline
+    enddo
+  end subroutine showColumnNums
+  
   subroutine theDumpBegins
     stampOptions%neverStamp = .true. ! So we don't interrupt tables of numbers
   end subroutine theDumpBegins
@@ -3175,6 +3234,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.86  2009/05/14 21:59:04  pwagner
+! New optional arg AS_GAPS dor dumping 1d bit logicals
+!
 ! Revision 2.85  2009/05/08 00:40:09  pwagner
 ! Avoid printing blank name when dumped with empty name string
 !
