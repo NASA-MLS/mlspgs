@@ -1434,18 +1434,38 @@ contains
   end subroutine OUTPUT_LOGICAL
 
   ! ---------------------------------------------  OUTPUT_LOGICAL  -----
-  subroutine OUTPUT_LOGICAL_ARRAY ( logs, ADVANCE, BEFORE, DONT_STAMP )
+  subroutine OUTPUT_LOGICAL_ARRAY ( logs, ADVANCE, BEFORE, DONT_STAMP, ONLYIF )
   ! Output LOG to PRUNIT using at most PLACES (default zero) places
     logical, dimension(:), intent(in) :: logs
     character(len=*), intent(in), optional :: ADVANCE
     character(len=*), intent(in), optional :: BEFORE
     logical, optional, intent(in) :: DONT_STAMP
+    logical, optional, intent(in) :: ONLYIF ! Print only if true (false)
+    ! Internal variables
+    character(len=1), dimension(size(logs)) :: clogs
+    character(len=size(logs)) :: logChars
     integer :: I ! loop inductor
+    character(len=1) :: ifonlyWhat
+    ! Executable
     if ( present(before) ) call output_ ( before, DONT_STAMP=DONT_STAMP )
-    do i = 1, size(logs)
-      call output ( logs(i), advance='no' )
-      call blanks ( 3, advance='no' )
-    end do
+    if ( present(onlyif) ) then
+      if ( onlyif ) then
+        ifonlyWhat = 'T'
+      else
+        ifonlyWhat = 'F'
+      endif
+      clogs = ' '
+      where (logs .eqv. onlyif)
+        clogs = ifonlyWhat
+      end where
+      logChars = transfer( clogs, logChars )
+      call output( logChars, advance='no' )
+    else
+      do i = 1, size(logs)
+        call output ( logs(i), advance='no' )
+        call blanks ( 3, advance='no' )
+      end do
+    endif
     if ( present(advance) ) call output_ ( '', advance=advance, DONT_STAMP=DONT_STAMP )
   end subroutine OUTPUT_LOGICAL_ARRAY
 
@@ -2102,6 +2122,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.77  2009/05/14 22:00:28  pwagner
+! New optional arg onlyif prints logicals only if true (false)
+!
 ! Revision 2.76  2008/11/24 19:29:43  pwagner
 ! Added a print to not_used_here
 !
