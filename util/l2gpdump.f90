@@ -62,6 +62,7 @@ PROGRAM L2GPDump ! dumps L2GPData files
      logical ::             verbose = .false.
      logical ::             senseInquiry = .true.
      integer ::             details = 1
+     integer ::             width = 5
      logical ::             columnsOnly = .false.
      logical ::             attributesToo = .false.
      character(len=255) ::  dsInquiry = ''
@@ -209,6 +210,10 @@ contains
         call getarg ( i+1+hp, argstr )
         read( argstr, * ) options%precisionCutOff
         i = i + 1
+      else if ( filename(1:2) == '-w' ) then
+        call getarg ( i+1+hp, argstr )
+        read( argstr, * ) options%width
+        i = i + 1
       else if ( filename(1:5) == '-qual' ) then
         call getarg ( i+1+hp, argstr )
         read( argstr, * ) options%qualityCutOff
@@ -267,6 +272,7 @@ contains
       write (*,*) '          -c          => dump only column abundances'
       write (*,*) '          -a          => dump attributes, too'
       write (*,*) '          -v          => verbose'
+      write (*,*) '          -w width    => dump with width items on each line'
       write (*,*) '     (details level)'
       write (*,*) '          -0          => dump only scalars, 1-d array'
       write (*,*) '          -1          => dump only scalars'
@@ -535,13 +541,13 @@ contains
          & columnsOnly=options%columnsOnly, details=options%details, &
          & fields=options%fields )
      elseif ( options%chunks == '*' ) then
-       call dump(l2gp, options%columnsOnly, options%details, options%fields)
+       call dump(l2gp, options%columnsOnly, options%details, options%fields, width=options%width)
        call showSummary
      else
        call ExpandStringRange(options%chunks, chunks, nchunks)
        if ( nchunks < 1 ) return
        call dump(l2gp, chunks(1:nChunks), &
-         & options%columnsOnly, options%details, options%fields)
+         & options%columnsOnly, options%details, options%fields, width=options%width)
        call showSummary
      endif
    end subroutine myDump
@@ -624,6 +630,9 @@ end program L2GPDump
 !==================
 
 ! $Log$
+! Revision 1.7  2009/04/13 20:43:17  pwagner
+! Fixed a bug preventing macros file from using its own macros properly
+!
 ! Revision 1.6  2008/12/03 00:15:04  pwagner
 ! Must use MLSFile_T interfaces instead of mls_io_gen_..
 !
