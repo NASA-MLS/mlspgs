@@ -105,6 +105,23 @@ changesyntax({@!})
 !define($1!GetParameter($2),!GetValue($2))!dnl
 !ProcessParVal($1,!shift(!shift($@)))})})
 
+; ---------------------------------------- Parameter=value macros
+
+; This set of macros allows us to write other macros which take
+; arguments of the form 'parameter=value'.  The first two are low level
+; macros.  The main one is ProcessParValCS.  One invokes this as the first
+; thing in a macro that uses this facility, with a prefix (which may be
+; empty) followed by $@.  The ProcessParValCS will then define a set of
+; macros of the form (prefix)parameter with the appropriate values.
+; Note that the 'parameter' names are case-sensitive.
+
+; This low level macro extracts a (lower case) parameter name
+!define(GetParameterCS,{!substr($1,0,!index($1,{=}))})
+; This is the high level macro described above
+!define(ProcessParValCS,{!ifelse($2,{},{},{!dnl
+!define($1!GetParameterCS($2),!GetValue($2))!dnl
+!ProcessParValCS($1,!shift(!shift($@)))})})
+
 ; ------------------------------------------------ Other low level
 ;                                                  macros
 

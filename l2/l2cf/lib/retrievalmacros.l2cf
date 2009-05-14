@@ -19,7 +19,6 @@
 !define(allBands,{!forloop({i},1,33,{!i, })34}) ; 1,2,3..34
 !define(allBandLSBs,{!makelist({},{L},!allBands)})
 !define(allBandUSBs,{!forloop({i},2,20,{!i{}U,})23U,24U,25U,!forloop({i},27,31,{!i{}U,})33U})
-!define(restrictedSpecies, {O3,CO,HNO3,SO2,Temperature})
 
 ; These will be used if we set status bits for too few radiances by Band number
 ; Note that we reserve and use macros named MRn where n is the band number
@@ -40,6 +39,16 @@
 !define(systemp,{!systemp$1})
 !define(nbw,{!nbw$1})
 
+; ------------------------------------Install pTop pBottom for some products
+!define(setPTopBySpecies,{!dnl
+!ProcessParValCS(pTop,$@)!dnl
+})
+!define(setPBottomBySpecies,{!dnl
+!ProcessParValCS(pBottom,$@)!dnl
+})
+
+!setPTopBySpecies(Temperature=0.000464mb, GPH=0.000464mb)
+!setPBottomBySpecies(Temperature=383mb, GPH=383mb, O3=316mb)
 ; ------------------------------------------------------- Product information
 
 ; These macros define the MLS standard products
@@ -578,17 +587,14 @@ Begin Fill
   Fill, quantity=tempVectorPrecision.column_$1, method=special, vmrQuantity=tempVectorPrecision.!theQuantity, $
     boundaryPressure=tempVectorState.tpPressure !theUnits
 
-!ifelse(!index(!defn(restrictedSpecies),$1),{-1},{!dnl
-}, {!dnl
-!ifdef(pTop, {!dnl
+!ifdef(pTop$1, {!dnl
   Fill, quantity=tempVectorPrecision.!theQuantity, method=manipulate, $
-    height=!pTop, heightRange="above", a=tempVectorPrecision.!theQuantity, $
+    height=!pTop$1, heightRange="above", a=tempVectorPrecision.!theQuantity, $
     c= -1, manipulation="c*abs(a)"
 })
-!ifdef(pBottom, {!dnl
-  Fill, quantity=tempVectorPrecision.!theQuantity, height=!pBottom, heightRange="below", $
+!ifdef(pBottom$1, {!dnl
+  Fill, quantity=tempVectorPrecision.!theQuantity, height=!pBottom$1, heightRange="below", $
     method=manipulate, a=tempVectorPrecision.!theQuantity, c= -1, manipulation='c*abs(a)'
-})
 })
 
 End Fill
@@ -750,17 +756,14 @@ Begin Fill
 
 })
 
-!ifelse(!index(!defn(restrictedSpecies),$1),{-1},{!dnl
-}, {!dnl
-!ifdef(pTop, {!dnl
+!ifdef(pTop$1, {!dnl
   Fill, quantity=tempVectorPrecision.!theQuantity, method=manipulate, $
-    height=!pTop, heightRange="above", a=tempVectorPrecision.!theQuantity, $
+    height=!pTop$1, heightRange="above", a=tempVectorPrecision.!theQuantity, $
     c= -1, manipulation="c*abs(a)"
 })
-!ifdef(pBottom, {!dnl
-  Fill, quantity=tempVectorPrecision.!theQuantity, height=!pBottom, heightRange="below", $
+!ifdef(pBottom$1, {!dnl
+  Fill, quantity=tempVectorPrecision.!theQuantity, height=!pBottom$1, heightRange="below", $
     method=manipulate, a=tempVectorPrecision.!theQuantity, c= -1, manipulation='c*abs(a)'
-})
 })
 End Fill
 
@@ -1121,6 +1124,9 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
 })})
 
 ; $Log$
+; Revision 1.138  2009/05/08 19:28:44  honghanh
+; Implement pTop, pBottom mechanism for HNO3, O3, CO, SO2 as well as Temperature
+;
 ; Revision 1.137  2009/05/07 18:17:43  honghanh
 ; Add/Modify pTop pBottom
 ;
