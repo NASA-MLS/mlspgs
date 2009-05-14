@@ -2328,7 +2328,7 @@ contains
   ! ------------------------------------------ DUMP_L2GP_CHUNKS ------------
 
 
-  subroutine DUMP_L2GP_CHUNKS ( fullL2gp, Chunks, ColumnsOnly, Details, Fields )
+  subroutine DUMP_L2GP_CHUNKS ( fullL2gp, Chunks, ColumnsOnly, Details, Fields, Width )
     ! Dump selected chunks of an l2gp
     ! Dummy arguments
     type (l2gpData_T), intent(in) ::          FULLL2GP
@@ -2340,7 +2340,7 @@ contains
     !                                        ! >0 Dump even multi-dim arrays
     !                                        ! Default 1
     character(len=*), intent(in), optional :: fields ! ,-separated list of names
-
+    integer, intent(in), optional :: width   ! width of each dumped line
     ! Local variables
     integer :: chunk
     integer :: i
@@ -2359,7 +2359,7 @@ contains
       call output ( chunk, advance='no')
       call output ( ' - - -', advance='yes')
       call ExtractL2GPRecord ( fullL2gp, l2gp, rTimes=irange )
-      call Dump ( L2gp, ColumnsOnly, Details, Fields )
+      call Dump ( L2gp, ColumnsOnly, Details, Fields, width )
       call DestroyL2GPContents( l2gp )
     enddo
   end subroutine DUMP_L2GP_CHUNKS
@@ -2369,7 +2369,7 @@ contains
   subroutine DUMPL2GPData_RANGES ( fullL2gp, &
     & geoBoxNames, geoBoxLowBound, geoBoxHiBound, &
     & Pressures, Latitudes, Longitudes, Times, Chunks, ColumnsOnly, &
-    & Details, fields )
+    & Details, fields, Width )
     ! DUMP an l2gp according to prescribed ranges of pressure, longitude, etc.
     ! Dummy arguments
     type (l2gpData_T), intent(in) ::          FULLL2GP
@@ -2388,7 +2388,7 @@ contains
     !                                        ! >0 Dump even multi-dim arrays
     !                                        ! Default 1
     character(len=*), intent(in), optional :: fields ! ,-separated list of names
-
+    integer, intent(in), optional :: width   ! width of each dumped line
     ! Local variables
     ! logical, parameter :: DEEBUG = .true.
     type (l2gpData_T) ::          L2GP
@@ -2414,9 +2414,9 @@ contains
     ! call output( 'nTimes: ', advance='no' )
     ! call output( l2gp1%nTimes, advance='yes' )
     if ( present(chunks) ) then
-      call DUMP_L2GP_Chunks ( L2gp, Chunks, ColumnsOnly, Details, Fields )
+      call DUMP_L2GP_Chunks ( L2gp, Chunks, ColumnsOnly, Details, Fields, width )
     else
-      call DUMP ( L2gp, ColumnsOnly, Details, Fields )
+      call DUMP ( L2gp, ColumnsOnly, Details, Fields, width )
     endif
     call DestroyL2GPContents( l2gp )
   end subroutine DUMPL2GPData_RANGES
@@ -2424,7 +2424,7 @@ contains
   ! ------------------------------------------ DUMP_L2GP ------------
 
 
-  subroutine Dump_L2GP ( L2gp, ColumnsOnly, Details, Fields )
+  subroutine Dump_L2GP ( L2gp, ColumnsOnly, Details, Fields, Width )
     ! Dump an l2gp
     ! Either according to level of detail set by Details
     ! or else just those fields named in Fields
@@ -2438,10 +2438,12 @@ contains
     !                                        ! >0 Dump even multi-dim arrays
     !                                        ! Default 1
     character(len=*), intent(in), optional :: fields ! ,-separated list of names
+    integer, intent(in), optional :: width   ! width of each dumped line
 
     ! Local variables
     integer :: ChunkFillValue
     real(r8) :: FillValue
+    real(rgp) :: FillValueGP
     integer :: i
     integer :: ierr
     logical :: myColumnsOnly
@@ -2468,6 +2470,7 @@ contains
     if ( myColumnsOnly .and. l2gp%nLevels > 1 ) return
     
     FillValue = real(l2gp%MissingValue, r8)
+    FillValueGP = l2gp%MissingValue
     ChunkFillValue = int(l2gp%MissingValue)
     if ( showMe(.true., myFields, 'swathname') ) then
       call output ( 'L2GP Data: (swath name) ')
@@ -2512,35 +2515,35 @@ contains
     
      ! if ( myDetails < 0 ) return
     if ( showMe(myDetails > -1, myFields, 'pressure') ) &
-      & call dump ( l2gp%pressures, trim(l2gp%verticalCoordinate) // 's:' )
+      & call dump ( l2gp%pressures, trim(l2gp%verticalCoordinate) // 's:', FillValue=FillValueGP, width=width )
       
     if ( showMe(myDetails > -1, myFields, 'latitude') ) &
-      & call dump ( l2gp%latitude, 'Latitude:' )
+      & call dump ( l2gp%latitude, 'Latitude:', FillValue=FillValueGP, width=width )
       
     if ( showMe(myDetails > -1, myFields, 'longitude') ) &
-      & call dump ( l2gp%longitude, 'Longitude:' )
+      & call dump ( l2gp%longitude, 'Longitude:', FillValue=FillValueGP, width=width )
       
     if ( showMe(myDetails > -1, myFields, 'solartime') ) &
-      & call dump ( l2gp%solarTime, 'SolarTime:' )
+      & call dump ( l2gp%solarTime, 'SolarTime:', FillValue=FillValueGP, width=width )
       
     if ( showMe(myDetails > -1, myFields, 'solarzenith') ) &
-      & call dump ( l2gp%solarZenith, 'SolarZenith:' )
+      & call dump ( l2gp%solarZenith, 'SolarZenith:', FillValue=FillValueGP, width=width )
       
     if ( showMe(myDetails > -1, myFields, 'LOSAngle') ) &
-      & call dump ( l2gp%losAngle, 'LOSAngle:' )
+      & call dump ( l2gp%losAngle, 'LOSAngle:', FillValue=FillValueGP, width=width )
       
     if ( showMe(myDetails > -1, myFields, 'geodAngle') ) &
-      & call dump ( l2gp%geodAngle, 'geodAngle:' )
+      & call dump ( l2gp%geodAngle, 'geodAngle:', FillValue=FillValueGP, width=width )
       
     if ( showMe(myDetails > -1, myFields, 'time') ) &
-      & call dump ( l2gp%time, 'Time:' )
+      & call dump ( l2gp%time, 'Time:', FillValue=FillValue, width=width )
       
     if ( showMe(myDetails > -1, myFields, 'chunkNumber') ) &
-      & call dump ( l2gp%chunkNumber, 'ChunkNumber:' )
+      & call dump ( l2gp%chunkNumber, 'ChunkNumber:', width=width )
       
       if ( showMe(myDetails > -1, myFields, 'pressure') .and. &
         & associated(l2gp%frequency) ) &
-        & call dump ( l2gp%frequency, 'Frequencies:' )
+        & call dump ( l2gp%frequency, 'Frequencies:', FillValue=FillValueGP, width=width )
       
       ! if ( myDetails < 1 ) return
     if ( showMe(myDetails > 0, myFields, 'l2gpvalue') ) &
@@ -2561,10 +2564,10 @@ contains
       
     endif      
     if ( showMe(myDetails > 0, myFields, 'quality') ) &
-      & call dump ( l2gp%quality, 'Quality:' )
+      & call dump ( l2gp%quality, 'Quality:', FillValue=FillValueGP )
       
     if ( showMe(myDetails > 0, myFields, 'convergence') ) &
-      & call dump ( l2gp%convergence, 'Convergence:' )
+      & call dump ( l2gp%convergence, 'Convergence:', FillValue=FillValueGP )
       
   contains
     logical function showMe(detailsOK, fields, field)
@@ -4996,6 +4999,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.163  2009/05/08 00:42:58  pwagner
+! Shows StatusBitNames when dumping Status bits
+!
 ! Revision 2.162  2008/12/02 23:11:41  pwagner
 ! mls_io_gen_[openF,closeF] functions now private; use MLSFile_T interfaces instead
 !
