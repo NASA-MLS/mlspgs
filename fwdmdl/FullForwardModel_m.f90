@@ -3256,7 +3256,7 @@ contains
 
     use MLSKinds, only: RK => RP
     use MLSNumerics, ONLY: InterpolateValues
-    use Units, only: Deg2Rad
+    use Constants, only: Deg2Rad
     use VectorsModule, only: VectorValue_T
 
     implicit NONE
@@ -3351,6 +3351,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.291  2009/01/21 01:00:39  pwagner
+! Compatible with hastily committed select_nz_list
+!
 ! Revision 2.290  2008/10/03 16:27:14  livesey
 ! Pushed down LO to support EXTINCTIONV2
 !
