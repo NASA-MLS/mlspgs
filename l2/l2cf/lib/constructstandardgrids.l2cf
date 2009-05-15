@@ -15,6 +15,8 @@ vGridHiRes: vGrid, type=Logarithmic, coordinate=Zeta, $
 })
 vGridrhisngllyr: vGrid, type=Logarithmic, coordinate=Zeta, $
   start=100mb, formula=[2:6]
+vGridutrhi: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=100mb, formula=[1:1]
 vGridrhiprfl: vGrid, type=Logarithmic, coordinate=Zeta, $
   start=681.2915mb, formula=[24:6,12:3]
 
@@ -83,6 +85,9 @@ vGridWMO: VGrid, type=Logarithmic, coordinate=Zeta, $
   start=1000mb, formula=[97:48]
 
 ; $Log$
+; Revision 1.31  2008/07/31 23:54:53  pwagner
+; Added flag extending HiRes VGrid to 1hPa
+;
 ; Revision 1.30  2006/05/19 21:59:27  lambert
 ; updates for OH
 ;

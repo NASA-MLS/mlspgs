@@ -101,6 +101,8 @@ begin Construct
     hGrid=hGridStandard, type=vmr, molecule=RHi
   RHiVMR:Quantity, vGrid=vGridrhiprfl, $
     hGrid=hGridStandard, type=vmr, molecule=RHi
+  UTRHi:Quantity, vGrid=vGridUTRHi, $
+    hGrid=hGridStandard, type=vmr, molecule=RHi
 
   ;; ----------------------------------------- Columns
   tpPressure: Quantity, type=boundaryPressure, hGrid=hGridStandard
@@ -579,7 +581,7 @@ begin Construct
     massMeanDiameterIce, massMeanDiameterWater, $
     !allMolecules, $
     !allHiResMolecules, $
-    RHiVMR, RHiVMRSNGL, rhi, rhi_HR, $
+    RHiVMR, RHiVMRSNGL, UTRHi, rhi, rhi_HR, $
     !allColumns, $
     !allBaselines, $
     !allBaselinesFine, $
