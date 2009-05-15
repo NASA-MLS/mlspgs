@@ -54,7 +54,7 @@
 ; These macros define the MLS standard products
 ; IWC is somewhat special
 !define(allStandardProductsWithColumns,{BrO,CH3Cl,CH3CN,CH3OH,CH3COCH3,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2O,O3,O3_HR,OH,SO2})
-!define(allStandardProductsWithoutColumns,{Temperature,GPH,RHI})
+!define(allStandardProductsWithoutColumns,{Temperature,GPH,RHI,UTRHI})
 !define(allStandardProducts,{!tidyList(!allStandardProductsWithColumns, $
   !allStandardProductsWithoutColumns)})
 !define(allHiResProducts,{Temperature_HR,H2O_HR,RHI_HR,GPH_HR})
@@ -613,6 +613,7 @@ End Join
 ;; Store chunk overlaps as diagnostics if flags are set
 !ifdef(flagDWLowerOverlap, {!dnl
 Begin Join
+  Label, quantity=tempVectorState.!theQuantity, label='lowerOverlap-$1-StdProd'
   Label, quantity=tempVectorState.column_$1, label='lowerOverlap-$1-StdProd column-MLS'
   DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
@@ -623,6 +624,7 @@ End Join
 })
 !ifdef(flagDWUpperOverlap, {!dnl
 Begin Join
+  Label, quantity=tempVectorState.!theQuantity, label='upperOverlap-$1-StdProd'
   Label, quantity=tempVectorState.column_$1, label='upperOverlap-$1-StdProd column-MLS'
   DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
@@ -675,6 +677,7 @@ End Join
 ;; Store chunk overlaps as diagnostics if flags are set
 !ifdef(flagDWLowerOverlap, {!dnl
 Begin Join
+  Label, quantity=tempVectorState.!theQuantity, label='lowerOverlap-$1-StdProd'
   Label, quantity=tempVectorState.column_$1, label='lowerOverlap-$1-StdProd column'
   DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
@@ -685,6 +688,7 @@ End Join
 })
 !ifdef(flagDWUpperOverlap, {!dnl
 Begin Join
+  Label, quantity=tempVectorState.!theQuantity, label='upperOverlap-$1-StdProd'
   Label, quantity=tempVectorState.column_$1, label='upperOverlap-$1-StdProd column'
   DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
@@ -909,6 +913,7 @@ End Join
 ;; Store chunk overlaps as diagnostics if flags are set
 !ifdef(flagDWLowerOverlap, {!dnl
 Begin Join
+  Label, quantity=tempVectorState.iwc, label='lowerOverlap-IWC-StdProd'
   Label, quantity=tempVectorState.iwp, label='lowerOverlap-IWP-StdProd'
   DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.iwc, precision=tempVectorPrecision.iwc, $
@@ -918,6 +923,7 @@ End Join
 !ifdef(flagDWUpperOverlap, {!dnl
 Begin Join
 ;; Store chunk overlaps as diagnostics if flags are set
+  Label, quantity=tempVectorState.iwc, label='upperOverlap-IWC-StdProd'
   Label, quantity=tempVectorState.iwp, label='upperOverlap-IWP-StdProd'
   DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.iwc, precision=tempVectorPrecision.iwc, $
@@ -1124,6 +1130,9 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
 })})
 
 ; $Log$
+; Revision 1.139  2009/05/14 14:44:11  honghanh
+; Add ProcessParValCS (or ProcessParVal case-sensitive) in m4defs.l2cf to support product-dependent pTop / pBottom implemented in retrievalmacros.l2cf
+;
 ; Revision 1.138  2009/05/08 19:28:44  honghanh
 ; Implement pTop, pBottom mechanism for HNO3, O3, CO, SO2 as well as Temperature
 ;
