@@ -269,6 +269,28 @@ while [ "$more_opts" = "yes" ] ; do
        echo "$otheropts" >> $LOGFILE
        shift
        ;;
+    --patch* )
+       otheropts=`add_option "$otheropts" $1`
+       echo "Adding argument to patch existing directWrite files" >> $LOGFILE
+       echo "$otheropts" >> $LOGFILE
+       shift
+       ;;
+    --maxFailuresPerCh* )
+       otheropts=`add_option "$otheropts" $1`
+       echo "Adding argument to set max falures per chunk" >> $LOGFILE
+       echo "$otheropts" >> $LOGFILE
+       shift
+       otheropts=`add_option "$otheropts" $1`
+       shift
+       ;;
+    --maxFailuresPerM* )
+       otheropts=`add_option "$otheropts" $1`
+       echo "Adding argument to set max falures per machine" >> $LOGFILE
+       echo "$otheropts" >> $LOGFILE
+       shift
+       otheropts=`add_option "$otheropts" $1`
+       shift
+       ;;
     --* )
        echo "Skipping unknown argument: $1" >> $LOGFILE
        shift
@@ -359,6 +381,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.3  2008/07/31 23:57:10  pwagner
+# Pass --skipDirectWrite option to slave tasks
+#
 # Revision 1.2  2008/04/22 18:01:02  pwagner
 # Removed things causing more harm than good
 #
