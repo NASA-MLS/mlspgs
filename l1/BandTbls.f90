@@ -488,7 +488,7 @@ CONTAINS
     if (abs (solRA*Rad2Deg - 180.0) < 90.0) cd1 = -cd1
     Beta = b0 + dSA * cd1 + eSA * sd1
     Beta = Beta * Deg2Rad                 ! back to radians
-print *, 'cd1, sd1, beta: ', cd1, sd1, beta
+
 !    Beta = ASIN (-orb(2) / SQRT (orb(1)**2 + orb(2)**2 + orb(3)**2))
 
 ! Read first line as comment:
@@ -597,6 +597,9 @@ print *, 'cd1, sd1, beta: ', cd1, sd1, beta
 END MODULE BandTbls
 
 ! $Log$
+! Revision 2.11  2009/06/01 13:59:20  perun
+! Remove extraneous debug print statement.
+!
 ! Revision 2.10  2009/05/13 20:33:05  vsnyder
 ! Get constants from Constants, kinds from MLSKinds
 !
