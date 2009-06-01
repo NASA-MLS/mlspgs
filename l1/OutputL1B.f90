@@ -221,6 +221,11 @@ CONTAINS
     dataset%name      = 'GHz/BO_stat       '
     dataset%data_type = 'integer           '
     CALL Build_MLSAuxData (sd_id,dataset, tp%tpBO_stat, lastIndex=noMAF)
+    dataset%name      = 'GHz/GalLat        '
+    dataset%data_type = 'real              '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpGalLat, lastIndex=noMAF)
+    dataset%name      = 'GHz/GalLon        '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpGalLon, lastIndex=noMAF)
 
 ! 3-d next:
 
@@ -314,6 +319,11 @@ CONTAINS
     dataset%name      = 'THz/BO_stat       '
     dataset%data_type = 'integer           '
     CALL Build_MLSAuxData (sd_id,dataset, tp%tpBO_stat, lastIndex=noMAF)
+    dataset%name      = 'THz/GalLat        '
+    dataset%data_type = 'real              '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpGalLat, lastIndex=noMAF)
+    dataset%name      = 'THz/GalLon        '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpGalLon, lastIndex=noMAF)
 
 ! 3-d next:
 
@@ -1013,6 +1023,9 @@ END MODULE OutputL1B
 !=============================================================================
 
 ! $Log$
+! Revision 2.28  2009/06/01 14:02:34  perun
+! Output galactic center latitude and longitudes for GHz and THz
+!
 ! Revision 2.27  2008/01/15 19:55:24  perun
 ! Add DisableRadOut flag to stop outputting unwanted bands.
 !
