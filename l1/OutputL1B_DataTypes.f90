@@ -88,6 +88,8 @@ MODULE OutputL1B_DataTypes
     REAL,     DIMENSION(:), POINTER :: tpLosAngle => NULL() ! line-of-sight ang to N
     REAL(r8), DIMENSION(:), POINTER :: tpLosVel => NULL()   ! line-of-sight velocity
     INTEGER,  DIMENSION(:), POINTER :: tpBO_stat => NULL()  ! Bright Obj Status of tp
+    REAL,     DIMENSION(:), POINTER :: tpGalLat => NULL()   ! galactic cntr lat of tp
+    REAL,     DIMENSION(:), POINTER :: tpGalLon => NULL()   ! galactic cntr long of tp
   END TYPE L1BOAtp_T
 
 CONTAINS
@@ -102,6 +104,9 @@ CONTAINS
 END MODULE OutputL1B_DataTypes
 
 ! $Log$
+! Revision 2.8  2009/06/01 14:03:40  perun
+! Added galactic center for each tp record structure
+!
 ! Revision 2.7  2006/03/24 15:16:01  perun
 ! Add tpGeodAltX for BOA to extend the altitude range for the THz coverage
 !
