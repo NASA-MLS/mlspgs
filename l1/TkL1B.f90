@@ -290,7 +290,7 @@ CONTAINS
     REAL(r8) :: unitLat(3,lenG), unitLon(3,lenG), vECR(3,lenG)
     REAL(r8) :: fov_sc(3,numValues), fov_orb(3,numValues)
     REAL(r8) :: eciV(6,lenG), ecrV(6,lenG)
-    REAL(r8) :: tngtVel(3), los_vec(3)
+    REAL(r8) :: tngtVel(3), los_vec(3,lenG)
     REAL(r8) :: MountsToFOV(3,3), ECRtoFOV(3,3), FOV_eci(3,numValues)
     REAL(r8) :: GroundMountsToFOV(3,3), ScToFOV(3,3)
     CHARACTER (LEN=32) :: mnemonic
@@ -475,10 +475,10 @@ CONTAINS
     ! Calculate losVel
     DO i = 1, lenG
       tngtVel = omega * (/ -tp%tpECI(2,i), tp%tpECI(1,i), 0.0_r8 /)
-      los_vec = tp%tpECI(:,i) - posECI(:,i)
-      los_vec = los_vec / SQRT (SUM (los_vec**2))
-      tp%tpLosVel(i) = DOT_PRODUCT (tngtVel, los_vec) - &
-           DOT_PRODUCT (velECI(:,i), los_vec)
+      los_vec(:,i) = tp%tpECI(:,i) - posECI(:,i)
+      los_vec(:,i) = los_vec(:,i) / SQRT (SUM (los_vec(:,i)**2))
+      tp%tpLosVel(i) = DOT_PRODUCT (tngtVel, los_vec(:,i)) - &
+           DOT_PRODUCT (velECI(:,i), los_vec(:,i))
     ENDDO
 
     ! Convert tpECI to tpOrb
@@ -510,7 +510,7 @@ CONTAINS
     returnStatus = Pgs_csc_scToECI (spacecraftId, numValues, asciiUTC, &
       offsets, fov_sc, fov_eci)
     CALL Set_BO_stat (asciiUTC, offsets, BO_def, BO_angle, BO_Negate, FOV_eci, &
-         tp%tpBO_stat, MoonToSpaceAngle)
+         los_vec, tp%tpGalLat, tp%tpGalLon, tp%tpBO_stat, MoonToSpaceAngle)
 
     IF (ANY (MIFbad)) THEN
        CALL Init_L1BOAtp (tp, MIFbad)
@@ -973,6 +973,22 @@ CONTAINS
        ALLOCATE (tp%tpBO_stat(nv), STAT=error)
        IF (error /= 0) THEN
           msr = MLSMSG_Allocate // '  GHz tp quantities: BO_stat'
+          CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
+
+    IF (.NOT. ASSOCIATED(tp%tpGalLat)) THEN
+       ALLOCATE (tp%tpGalLat(lenG), STAT=error)
+       IF (error /= 0) THEN
+          msr = MLSMSG_Allocate // '  GHz tp quantities: GalLat'
+          CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
+
+    IF (.NOT. ASSOCIATED(tp%tpGalLon)) THEN
+       ALLOCATE (tp%tpGalLon(lenG), STAT=error)
+       IF (error /= 0) THEN
+          msr = MLSMSG_Allocate // '  GHz tp quantities: GalLon'
           CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
        ENDIF
     ENDIF
@@ -1468,18 +1484,20 @@ CONTAINS
 
 !=============================================================================
   SUBROUTINE Set_BO_stat (asciiUTC, offset, BO_def, BO_angle, BO_Negate, &
-       FOV_eci, BO_stat, MoonToSpaceAngle)
+       FOV_eci, los_FOV, galLat, galLon, BO_stat, MoonToSpaceAngle)
 !=============================================================================
 
     USE BrightObjects_m, ONLY: GC_def
 
     CHARACTER (LEN=27), INTENT(in) :: asciiUTC
-    REAL(r8), INTENT(in) :: offset(:), FOV_eci(3,0:(MAFinfo%MIFsPerMAF-1))
+    REAL(r8), INTENT(in) :: offset(:), FOV_eci(3,0:(MAFinfo%MIFsPerMAF-1)), &
+         los_FOV(3,0:(lenG-1))
     REAL, INTENT(in) :: BO_angle(:) !ScAngle(0:)
     REAL, INTENT(in), OPTIONAL :: MoonToSpaceAngle
     INTEGER, INTENT(in) :: BO_def(:)
     LOGICAL, INTENT(in) :: BO_Negate(:)
     INTEGER, INTENT(out) :: BO_stat(0:)
+    REAL, INTENT(out) :: galLat(0:), galLon(0:)
 
     INTEGER :: i, j, MIF, returnStatus, nv
     REAL :: limb_angle, space_angle
@@ -1490,7 +1508,7 @@ CONTAINS
 
 ! Galactic center variables:
 
-    INTEGER, PARAMETER :: Ngal = 14
+    INTEGER, PARAMETER :: Ngal = 5
     REAL(r8) :: FOV_gal(3), thetasum, deltacross, deltadot
 
     REAL(r8), PARAMETER :: ECItogctr(3,3) = RESHAPE ((/ &
@@ -1498,30 +1516,23 @@ CONTAINS
          -0.872758, -0.450355, -0.188358, &
          -0.483540,  0.744601,  0.460174 /), (/ 3, 3 /))
 
-    REAL(r8), PARAMETER :: gal_cone_z = 0.754680843 ! 41.00250964° bounding cone
-    REAL(r8), PARAMETER :: gal_fan_y = 0.042 ! Gal.Latitude fan half-width,
+    REAL(r8), PARAMETER :: gal_cone_z = 0.765687153 ! 40.03183702° bounding cone
+    REAL(r8), PARAMETER :: gal_fan_y = 0.032 ! Gal.Latitude fan half-width,
                                              ! radians
 
 ! Strawman polygon for galactic core  REC 2005.11.09
 ! x unused:
 ! revised polygon for galactic core  REC 2005.11.18
 ! revised polygon for galactic core  REC 2007.06.21 !
+! revised polygon for galactic core  REC 2009.03.31: rectangle, per H.Pumphrey
+!  telecon messci_080603.pdf
 
     REAL(r8), PARAMETER :: gal(2:3,Ngal) = RESHAPE ((/ &
-         -0.156366,  -0.029666, & !0.987254
-         -0.224942,  -0.008727, & !0.974333
-         -0.139152,   0.017452, & !0.990117
-          0.000000,   0.017452, & !0.999848
-          0.045883,   0.024546, & !0.998645
-          0.074372,   0.024546, & !0.996928
-          0.095836,   0.013962, & !0.995299
-          0.656034,   0.008727, & !0.754681
-          0.642690,  -0.017452, & !0.765928
-          0.095804,  -0.029666, & !0.994958
-          0.086660,  -0.038046, & !0.995511
-          -0.013098, -0.040886, & !0.999078
-          -0.052093, -0.028565, & !0.998234
-          -0.156366, -0.029666  & !0.987254
+         -0.573309, -0.030539, & !0.818770 !
+         -0.573555,  0.008727, & !0.819121 !
+          0.642763,  0.008727, & !0.766015 !
+          0.642488, -0.030539, & !0.765687 !
+         -0.573309, -0.030539  & !0.818770 !
           /), (/ 2, Ngal /))
 
     ! Functions
@@ -1606,6 +1617,16 @@ CONTAINS
        ENDDO
    ENDDO
 
+! Calculate galactic center Lat/Long:
+
+   do MIF = 0, (lenG - 1)
+ 
+      FOV_gal = MATMUL (ECItogctr, los_FOV(:,MIF))
+      GalLat(MIF) = ASIN (MAX (MIN (FOV_gal(3), 1.0d0), -1.0d0)) * Rad2Deg
+      GalLon(MIF) = ATAN2 (FOV_gal(2), FOV_gal(1)) * Rad2Deg
+ 
+   enddo
+
   END SUBROUTINE Set_BO_stat
 
   LOGICAL FUNCTION not_used_here()
@@ -1620,6 +1641,9 @@ CONTAINS
 END MODULE TkL1B
 
 ! $Log$
+! Revision 2.34  2009/06/01 14:01:18  perun
+! Update galactic center polygon and save appropriate lat/longs
+!
 ! Revision 2.33  2007/06/27 14:45:30  perun
 ! Revised vertices of the galactic center polygon
 !
