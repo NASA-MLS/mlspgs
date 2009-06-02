@@ -16,9 +16,9 @@ module WriteMetadata ! Populate metadata and write it out
   use Hdf, only: DFACC_RDWR
   use INIT_TABLES_MODULE, only: l_l2dgg, l_l2gp, l_hdf, L_SWATH
   use LEXER_CORE, only: PRINT_SOURCE
-  use MLSCommon, only: FileNameLen, NameLen, R8
+  use MLSCommon, only: FileNameLen, NameLen, R8, L2Metadata_T
   use MLSFiles, only: GetPCFromRef, mls_sfstart, mls_sfend, Split_path_name
-  use MLSL2Options, only: PENALTY_FOR_NO_METADATA, TOOLKIT
+  use MLSL2Options, only: PENALTY_FOR_NO_METADATA, TOOLKIT, SHAREDPCF
   use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
   use MLSPCF2, only: Mlspcf_mcf_l2gp_end, Mlspcf_mcf_l2gp_start, &
     & Mlspcf_mcf_l2log_start
@@ -355,7 +355,7 @@ contains
   ! ---------------------------------------------  Third_grouping  -----
 
   subroutine Third_grouping ( HDF_FILE, hdf_sdid, Groups, &
-    & hdfVersion, filetype )
+    & hdfVersion, filetype, l2metaData )
 
     ! This writes the following metadata attributes:
 
@@ -397,6 +397,7 @@ contains
     character (len = PGSd_MET_GROUP_NAME_L) :: groups(PGSd_MET_NUM_OF_GROUPS)
     integer, optional, intent(in) :: hdfVersion
     integer, optional, intent(in)  :: filetype  ! 'sw' or 'hdf'
+    type (L2Metadata_T) :: l2metaData
 
     !Local Variables
 
@@ -563,8 +564,15 @@ contains
        & "Error in writing ZoneIdentifier attribute.")
      end if
 
+     if ( .not. sharedPCF ) then
+        l2metaData%minLon = -180.0
+        l2metaData%maxLon = 180.0
+        l2metaData%minLat = -90.0
+        l2metaData%maxLat = 90.0
+     end if
+
      attrName = 'WestBoundingCoordinate'
-     dval = -180.0
+     dval = l2metaData%minLon 
      returnStatus = pgs_met_setAttr_d (groups(INVENTORY), attrName, dval)
      if ( returnStatus /= PGS_S_SUCCESS ) then
        call announce_error ( 0, &
@@ -572,7 +580,7 @@ contains
      end if
 
      attrName = 'NorthBoundingCoordinate'
-     dval = 90.0
+     dval = l2metaData%maxLat 
      returnStatus = pgs_met_setAttr_d (groups(INVENTORY), attrName, dval)
      if ( returnStatus /= PGS_S_SUCCESS ) then
        call announce_error ( 0, &
@@ -580,7 +588,7 @@ contains
      end if
 
      attrName = 'EastBoundingCoordinate'
-     dval = 180.0
+     dval = l2metaData%maxLon 
      returnStatus = pgs_met_setAttr_d (groups(INVENTORY), attrName, dval)
      if ( returnStatus /= PGS_S_SUCCESS ) then
        call announce_error ( 0, &
@@ -588,7 +596,7 @@ contains
      end if
 
      attrName = 'SouthBoundingCoordinate'
-     dval = -90.0
+     dval = l2metaData%minLat 
      returnStatus = pgs_met_setAttr_d (groups(INVENTORY), attrName, dval)
      if ( returnStatus /= PGS_S_SUCCESS ) then
       call announce_error ( 0, &
@@ -680,7 +688,7 @@ contains
   ! --------------------------------------  Populate_metadata_std  -----
 
   subroutine Populate_metadata_std ( HDF_FILE, MCF_FILE, &
-    & Field_name, hdfVersion, Metadata_error, &
+    & Field_name, l2metaData, hdfVersion, Metadata_error, &
     & filetype )
 
     ! This is the standard way to write meta data
@@ -698,6 +706,7 @@ contains
 
     integer                        :: HDF_FILE, MCF_FILE
     character (len=*)              :: Field_name
+    type (L2Metadata_T) :: l2metaData
     integer, optional, intent(in)  :: hdfVersion
     integer, optional, intent(out) :: Metadata_error
     integer, optional, intent(in)  :: filetype  ! 'sw' or 'hdf'
@@ -757,7 +766,7 @@ contains
     call first_grouping(HDF_FILE, MCF_FILE, groups)
     call measured_parameter (HDF_FILE, field_name, groups, 1)
     call third_grouping (HDF_FILE, hdf_sdid, groups, &
-      & hdfVersion, filetype)
+      & hdfVersion, filetype, l2metaData)
 
     if ( SFINBETWEENSTARTEND ) then
       sdid = mls_sfstart (physical_fileName, DFACC_RDWR, &
@@ -799,7 +808,7 @@ contains
   ! --------------------------------------  Populate_metadata_oth  -----
 
   subroutine Populate_metadata_oth ( HDF_FILE, MCF_FILE, &
-    & NumQuantitiesPerFile, QuantityNames, hdfVersion, Metadata_error, &
+    & NumQuantitiesPerFile, QuantityNames, l2metaData, hdfVersion, Metadata_error, &
     & filetype )
 
     ! This is specially to write meta data for heterogeneous files
@@ -813,6 +822,7 @@ contains
     integer :: HDF_FILE, MCF_FILE, NumQuantitiesPerFile
     ! type(PCFData_T) :: L2pcf
     character (len=*), dimension(:) :: QuantityNames
+    type (L2Metadata_T) :: l2metaData
     integer, optional, intent(out) :: Metadata_error
     integer, optional, intent(in) :: hdfVersion
     ! character(len=*), optional, intent(in)  :: filetype  ! 'sw' or 'hdf'
@@ -880,7 +890,7 @@ contains
     end do
 
     call third_grouping (HDF_FILE, hdf_sdid, groups, &
-      & hdfVersion, filetype)
+      & hdfVersion, filetype, l2metaData)
 
     if ( SFINBETWEENSTARTEND ) then
       sdid = mls_sfstart (physical_fileName, DFACC_RDWR, &
@@ -1363,6 +1373,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.66  2009/06/02 17:53:15  cvuu
+! Add NRT Lat and Lon bounding to metadata
+!
 ! Revision 2.65  2008/05/02 00:33:53  vsnyder
 ! Delete unused symbol
 !
