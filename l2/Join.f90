@@ -373,7 +373,7 @@ contains ! =====     Public Procedures     =============================
     use intrinsic, only: L_NONE, L_HDF, L_SWATH, Lit_indices, PHYQ_DIMENSIONLESS
     use L2ParInfo, only: PARALLEL, LOGDIRECTWRITEREQUEST, FINISHEDDIRECTWRITE
     use ManipulateVectorQuantities, only: DOHGRIDSMATCH
-    use MLSCommon, only: R8, FileNameLen, MLSFile_T
+    use MLSCommon, only: R8, FileNameLen, MLSFile_T, L2Metadata_T
     use MLSFiles, only: HDFVERSION_5, &
       & AddInitializeMLSFile, dump, GetMLSFileByName, GetPCFromRef, &
       & mls_closeFile, mls_openFile, Split_path_name
@@ -489,6 +489,8 @@ contains ! =====     Public Procedures     =============================
     type(VectorValue_T), pointer :: STATUSQTY ! The quantities status
     type(DirectData_T), pointer :: thisDirect ! => null()
     real :: TimeIn, TimeSetUp, TimeWriting, timeToClose, TimeOut
+    type(L2Metadata_T) :: l2metaData
+
     ! Executable code
     DEEBUG = ( switchDetail(switches, 'direct') > -1 ) ! .or. SKIPDIRECTWRITES
     SKIPDGG = ( switchDetail(switches, 'skipdgg') > -1 )
@@ -1281,7 +1283,7 @@ contains ! =====     Public Procedures     =============================
       if ( createFileFlag .and. TOOLKIT .and. .not. SKIPMETADATA .and. &
         & outputType /= l_l2fwm .and. &
         & .not. (distributingSources .and. CATENATESPLITS) ) then
-        call add_metadata ( node, file_base, &
+        call add_metadata ( node, file_base, l2metaData, &
           & hdfVersion, filetype, errortype, NumPermitted, thisDirect%sdNames )
         if ( errortype /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'DirectWriteCommand unable to addmetadata to ' // trim(filename), &
@@ -2146,6 +2148,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.138  2009/06/02 17:53:15  cvuu
+! Add NRT Lat and Lon bounding to metadata
+!
 ! Revision 2.137  2009/04/23 23:02:25  pwagner
 ! May specify upperOverlap or lowerOverlap in DirectWrites
 !
