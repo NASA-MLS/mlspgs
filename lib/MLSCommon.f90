@@ -62,6 +62,7 @@ module MLSCommon                ! Common definitions for the MLS software
   public :: L1BInfo_T
   public :: Range_T
   public :: TAI93_Range_T
+  public :: L2Metadata_T
 
   ! Make parameters gotten from MLSKinds public
 
@@ -164,6 +165,15 @@ module MLSCommon                ! Common definitions for the MLS software
   end type TAI93_Range_T
   ! --------------------------------------------------------------------------
 
+  ! Datatype for the metadata files
+
+  type L2Metadata_T
+    real :: minLat = -90.0       ! min Latitude
+    real :: maxLat = 90.0      ! max Latitude
+    real :: minLon = -180.0      ! min Longitude
+    real :: maxLon = 180.0     ! max Longitude
+  end type L2Metadata_T
+
   contains
 
   elemental function inRange(arg, range) result(relation)
@@ -251,6 +261,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.32  2009/06/02 17:47:26  cvuu
+! Add L2Metadata structure
+!
 ! Revision 2.31  2008/01/09 20:50:01  pwagner
 ! is_what_ieee supports integer args
 !
