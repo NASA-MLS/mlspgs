@@ -17,6 +17,7 @@ module OutputAndClose ! outputs all data from the Join module to the
 !=======================================================================================
 
   use Hdf, only: DFACC_CREATE, DFACC_RDONLY, DFACC_RDWR
+  use MLSCommon, only: L2Metadata_T
   use MLSMessageModule, only: MLSMessage, &
     & MLSMSG_Error, MLSMSG_Info, MLSMSG_Warning
   use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
@@ -87,7 +88,7 @@ contains ! =====     Public Procedures     =============================
     use L2ParInfo, only: parallel
     use MatrixModule_1, only: DestroyMatrix, GETFROMMATRIXDATABASE, &
       & MATRIX_DATABASE_T, MATRIX_T
-    use MLSCommon, only: MLSFile_T, TAI93_Range_T, FileNameLen
+    use MLSCommon, only: MLSFile_T, TAI93_Range_T, FileNameLen, L2Metadata_T
     use MLSFiles, only: &
       & AddInitializeMLSFile, close_MLSFile, Dump, GetMLSFileByName, &
       & MLS_INQSWATH, open_MLSFile
@@ -120,6 +121,8 @@ contains ! =====     Public Procedures     =============================
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
     type (griddedData_T), dimension(:), pointer :: GriddedDataBase
     type (TAI93_Range_T), intent(in) :: processingRange
+    type (L2Metadata_T) :: l2metaData ! L2GP metadata 
+
     logical, intent(in) :: canWriteL2PC ! Flag
 
     ! - - - Local declarations - - -
@@ -441,7 +444,7 @@ contains ! =====     Public Procedures     =============================
           sdList = Intersection( sdList, sdListThere )
           if ( sdList == ' ' ) cycle
           if ( got(f_exclude) .and. .not. repairGeoLocations ) then
-            call cpL2GPData( inputfile, &
+            call cpL2GPData( l2metaData, inputfile, &
               & outputfile, create2=create, &
               & exclude=trim(exclude), &
               & notUnlimited=avoidUnlimitedDims )
@@ -449,20 +452,20 @@ contains ! =====     Public Procedures     =============================
             if ( DEBUG ) print *,' size(filedatabse) ', size(filedatabase)
             if ( DEBUG ) print *, 'input file: ', trim(inputPhysicalFilename)
             if ( DEBUG ) print *, 'output file: ', trim(PhysicalFilename)
-            call cpL2GPData(inputfile, &
+            call cpL2GPData(l2metaData, inputfile, &
               & outputfile, create2=create, &
               & swathList=trim(sdList), rename=rename, &
               & notUnlimited=avoidUnlimitedDims, &
               & HGrid=HGrids(HGridIndex), options="-r")
           elseif ( got(f_exclude) .and. repairGeoLocations ) then
-            call cpL2GPData(inputfile, &
+            call cpL2GPData(l2metaData, inputfile, &
               & outputfile, create2=create, &
               & swathList=trim(sdList), rename=rename, &
               & exclude=trim(exclude), &
               & notUnlimited=avoidUnlimitedDims, &
               & HGrid=HGrids(HGridIndex), options="-r")
           else
-            call cpL2GPData( inputfile, &
+            call cpL2GPData( l2metaData, inputfile, &
               & outputfile, create2=create, &
               & swathList=trim(sdList), rename=rename, &
               & notUnlimited=avoidUnlimitedDims )
@@ -474,7 +477,7 @@ contains ! =====     Public Procedures     =============================
         end select
         
         if ( TOOLKIT ) then
-          call add_metadata ( son, file_base, &
+          call add_metadata ( son, file_base, l2metaData, &
           & outputfile%hdfVersion, formattype, metadata_error )
         endif
 
@@ -720,13 +723,14 @@ contains ! =====     Public Procedures     =============================
   end subroutine Output_Close
 
   ! ---------------------------------------------  add_metadata  -----
-  subroutine add_metadata ( node, fileName, &
+  subroutine add_metadata ( node, fileName, l2metaData, &
     & hdfVersion, filetype, metadata_error, &
     & numquantitiesperfileinput, quantityNamesInput )
     
     use Allocate_Deallocate, only: Deallocate_Test, Allocate_test
     use INIT_TABLES_MODULE, only: L_L2DGG
     use Intrinsic, only: l_swath, l_hdf
+    use MLSCommon, only: L2Metadata_T
     use L2GPData, only: L2GPNameLen, MAXSWATHNAMESBUFSIZE
     use MLSFiles, only: GetPCFromRef, MLS_INQSWATH, split_path_name
     use MLSHDF5, only: GetAllHDF5DSNames
@@ -742,6 +746,7 @@ contains ! =====     Public Procedures     =============================
   ! Deal with metadata--1st for direct write, but later for all cases
   integer, intent(in) :: node
   character(len=*), intent(in) :: fileName
+  type (L2Metadata_T) :: l2metaData
   integer, intent(in) :: hdfVersion
   integer, intent(in) :: fileType  ! l_swath, l_hdf, ..
   integer, intent(out) :: metadata_error
@@ -833,7 +838,7 @@ contains ! =====     Public Procedures     =============================
          call output(l2gp_mcf , advance='yes')
        end if
        call populate_metadata_std &
-         & (FileHandle, l2gp_mcf, QuantityNames(1), &
+         & (FileHandle, l2gp_mcf, QuantityNames(1), l2metaData, &
          & hdfVersion=hdfVersion, metadata_error=metadata_error, &
          & filetype=filetype  )
      else
@@ -848,7 +853,7 @@ contains ! =====     Public Procedures     =============================
 
        call populate_metadata_oth &
          & ( FileHandle, l2gp_mcf, &
-         & numquantitiesperfile, QuantityNames, &
+         & numquantitiesperfile, QuantityNames, l2metaData, &
          & hdfVersion=hdfVersion, metadata_error=metadata_error, &
          & filetype=filetype  )
      end if
@@ -895,7 +900,7 @@ contains ! =====     Public Procedures     =============================
      endif
      call populate_metadata_oth &
        & ( FileHandle, l2aux_mcf, &
-       & numquantitiesperfile, QuantityNames,&
+       & numquantitiesperfile, QuantityNames, l2metaData, &
        & hdfVersion=hdfVersion, metadata_error=metadata_error, &
        & filetype=filetype  )
   case default
@@ -990,7 +995,7 @@ contains ! =====     Public Procedures     =============================
     use Intrinsic, only: l_hdf
     use L2AUXData, only: L2AUXDATA_T, WriteL2AUXData
     use L2GPData, only: L2GPNameLen
-    use MLSCommon, only: MLSFile_T, FileNameLen
+    use MLSCommon, only: MLSFile_T, FileNameLen, L2Metadata_T
     use MLSL2Options, only: checkPaths, TOOLKIT
     use MLSFiles, only: AddInitializeMLSFile, GetMLSFileByName, &
       & GetPCFromRef, split_path_name
@@ -1024,6 +1029,8 @@ contains ! =====     Public Procedures     =============================
     integer :: ReturnStatus
     integer :: SON                      ! Of Root -- spec_args or named node
     integer :: Version
+    type(L2Metadata_T) :: l2metaData
+
     ! Executable
     Version = 1
     OUTPUTTYPESTR = 'l2aux'
@@ -1097,7 +1104,7 @@ contains ! =====     Public Procedures     =============================
       if ( .not. TOOLKIT ) return
 
       ! Write the metadata file
-      call add_metadata ( son, fileName, &
+      call add_metadata ( son, fileName, l2metaData, &
         & hdfVersion, l_hdf, metadata_error, &
         & numquantitiesperfile, quantityNames )
     else if ( returnStatus /= PGS_S_SUCCESS ) then
@@ -1191,7 +1198,7 @@ contains ! =====     Public Procedures     =============================
     use INIT_TABLES_MODULE, only: F_OVERLAPS, F_QUANTITIES
     use Intrinsic, only: l_swath, Lit_indices
     use L2GPData, only: L2GPData_T, L2GPNameLen, WriteL2GPData
-    use MLSCommon, only: MLSFile_T, FileNameLen
+    use MLSCommon, only: MLSFile_T, FileNameLen, L2Metadata_T
     use MLSL2Options, only: checkPaths, TOOLKIT
     use MLSFiles, only: AddInitializeMLSFile, GetMLSFileByName, &
       & GetPCFromRef, split_path_name
@@ -1227,6 +1234,8 @@ contains ! =====     Public Procedures     =============================
     integer :: ReturnStatus
     integer :: SON                      ! Of Root -- spec_args or named node
     integer :: Version
+    type(L2Metadata_T) :: l2metaData
+
     ! Executable
     Version = 1
     call get_string ( lit_indices(output_Type), outputTypeStr, strip=.true. )
@@ -1297,7 +1306,7 @@ contains ! =====     Public Procedures     =============================
       if ( .not. TOOLKIT ) return
 
       ! Write the metadata file
-      call add_metadata ( son, fileName, &
+      call add_metadata ( son, fileName, l2metaData, &
         & hdfVersion, l_swath, metadata_error, &
         & numquantitiesperfile, quantityNames )
     else if ( returnStatus /= PGS_S_SUCCESS ) then
@@ -1389,7 +1398,7 @@ contains ! =====     Public Procedures     =============================
     use L2GPData, only: AVOIDUNLIMITEDDIMS, &
       & MAXSWATHNAMESBUFSIZE, cpL2GPData
     use L2ParInfo, only: parallel
-    use MLSCommon, only: MLSFile_T, FileNameLen
+    use MLSCommon, only: MLSFile_T, FileNameLen, L2Metadata_T
     use MLSFiles, only: HDFVERSION_5, &
       & AddInitializeMLSFile, close_MLSFile, DUMP, &
       & GetMLSFileByName, GetPCFromRef, &
@@ -1429,6 +1438,8 @@ contains ! =====     Public Procedures     =============================
     integer :: ReturnStatus
     integer :: SDFID                ! File handle
     character (len=MAXSWATHNAMESBUFSIZE) :: sdList
+    type(L2Metadata_T) :: l2metaData
+
     ! Executable
     if ( debug ) call dump(DirectDatabase)
     ! Any dgg eligible for being catenated
@@ -1479,13 +1490,13 @@ contains ! =====     Public Procedures     =============================
         endif
         if ( CHECKPATHS ) cycle
         madeFile = .true.
-        call cpL2GPData( inputFile, &
+        call cpL2GPData( l2metaData, inputFile, &
           & outputFile, create2=create2, &
           & notUnlimited=avoidUnlimitedDims )
         create2 = .false.
       end do
       if ( TOOLKIT .and. madeFile ) then
-        call add_metadata ( 0, trim(l2gpPhysicalFilename), &
+        call add_metadata ( 0, trim(l2gpPhysicalFilename), l2metaData, &
           & HDFVERSION_5, l_l2dgg, returnStatus, 1, (/'dgg'/) )
         if ( returnStatus /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'unable to addmetadata to ' // trim(l2gpPhysicalFilename) )
@@ -1611,7 +1622,7 @@ contains ! =====     Public Procedures     =============================
       end do
       ! Is metadata really needed for l2aux files?
       if ( TOOLKIT .and. madeFile ) then
-        call add_metadata ( 0, trim(l2auxPhysicalFilename), &
+        call add_metadata ( 0, trim(l2auxPhysicalFilename), l2metaData, &
           & HDFVERSION_5, l_hdf, returnStatus, 1, (/'dgm'/) )
         if ( returnStatus /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'unable to addmetadata to ' // trim(l2auxPhysicalFilename) )
@@ -1679,6 +1690,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.140  2009/06/02 17:53:15  cvuu
+! Add NRT Lat and Lon bounding to metadata
+!
 ! Revision 2.139  2009/04/27 20:45:18  pwagner
 ! Fixed bug causing crashes in add_metadata when debugging
 !
