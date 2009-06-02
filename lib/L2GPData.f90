@@ -18,7 +18,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   use Hdf, only: DFACC_RDONLY, DFACC_READ, DFACC_CREATE, DFACC_RDWR, &
     & DFNT_FLOAT32, DFNT_INT32, DFNT_FLOAT64
   use Intrinsic ! "units" type literals, beginning with L_
-  use MLSCommon, only: R4, R8, defaultUndefinedValue, MLSFile_T
+  use MLSCommon, only: R4, R8, defaultUndefinedValue, MLSFile_T, L2Metadata_T
   use MLSFiles, only: FILENOTFOUND, &
     & HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, WRONGHDFVERSION, &
     & DUMP, INITIALIZEMLSFILE, MLS_closeFile, MLS_EXISTS, mls_openFile, &
@@ -863,7 +863,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------- cpL2GPData_fileID  ---------------------------
 
-  subroutine cpL2GPData_fileID(file1, file2, swathList, &
+  subroutine cpL2GPData_fileID(l2metaData, file1, file2, swathList, &
     & hdfVersion1, hdfVersion2, notUnlimited, rename, ReadData, &
     & HGrid, rFreqs, rLevels, rTimes, options)
     !------------------------------------------------------------------------
@@ -875,6 +875,7 @@ contains ! =====     Public Procedures     =============================
     use HGridsDatabase, only: HGrid_T
     ! Arguments
 
+    type (L2Metadata_T) :: l2metaData
     integer, intent(in)           :: file1 ! handle of file 1
     integer, intent(in)           :: file2 ! handle of file 2
     character (len=*), intent(in) :: swathList ! copy only these; no wildcard
@@ -983,6 +984,12 @@ contains ! =====     Public Procedures     =============================
         call WriteL2GPData(l2gp, file2, trim(swath2), hdfVersion=hdfVersion2, &
           & notUnlimited=notUnlimited)
       endif
+
+      l2metaData%minLat= minval(l2gp%latitude)
+      l2metaData%maxLat= maxval(l2gp%latitude)
+      l2metaData%minLon= minval(l2gp%longitude)
+      l2metaData%maxLon= maxval(l2gp%longitude)
+
       call DestroyL2GPContents ( l2gp )
     enddo
        
@@ -990,7 +997,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------- cpL2GPData_fileName  ---------------------------
 
-  subroutine cpL2GPData_fileName(file1, file2, &
+  subroutine cpL2GPData_fileName(l2metaData, file1, file2, &
     & create2, hdfVersion1, hdfVersion2, swathList, rename, exclude, &
     & notUnlimited, andGlAttributes, ReadData, HGrid, &
     & rFreqs, rLevels, rTimes, options)
@@ -1007,6 +1014,7 @@ contains ! =====     Public Procedures     =============================
       & he5_readglobalattr, he5_writeglobalattr
     ! Arguments
 
+    type (L2Metadata_T) :: l2metaData
     character (len=*), intent(in) :: file1 ! Name of file 1
     character (len=*), intent(in) :: file2 ! Name of file 2
     logical, optional, intent(in) :: create2
@@ -1151,7 +1159,7 @@ contains ! =====     Public Procedures     =============================
       call RemoveListFromList(mySwathList, myrename, exclude)
       mySwathList = myrename
     endif
-    call cpL2GPData_fileID(File1Handle, File2Handle, &
+    call cpL2GPData_fileID(l2metaData, File1Handle, File2Handle, &
       & mySwathList, the_hdfVersion1, the_hdfVersion2, &
       & notUnlimited=notUnlimited, rename=rename, &
       & ReadData=ReadData, HGrid=HGrid, &
@@ -1177,7 +1185,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------- cpL2GPData_MLSFile  ---------------------------
 
-  subroutine cpL2GPData_MLSFile(L2GPfile1, L2GPfile2, &
+  subroutine cpL2GPData_MLSFile(l2metaData, L2GPfile1, L2GPfile2, &
     & create2, swathList, rename, exclude, &
     & notUnlimited, andGlAttributes, ReadData, HGrid, &
     & rFreqs, rLevels, rTimes, options)
@@ -1191,6 +1199,7 @@ contains ! =====     Public Procedures     =============================
     use HGridsDatabase, only: HGrid_T
     ! Arguments
 
+    type (L2Metadata_T) :: l2metaData
     type(MLSFile_T)               :: L2GPfile1 ! file 1
     type(MLSFile_T)               :: L2GPfile2 ! file 2
     logical, optional, intent(in) :: create2
@@ -1237,7 +1246,7 @@ contains ! =====     Public Procedures     =============================
         & 'Unable to close l2gp file to cp to', MLSFile=L2GPFile2)
     endif
     
-    call cpL2GPData_fileName(L2GPFile1%Name, L2GPFile2%Name, &
+    call cpL2GPData_fileName(l2metaData, L2GPFile1%Name, L2GPFile2%Name, &
       & create2, L2GPFile1%hdfVersion, L2GPFile2%hdfVersion, &
       & SwathList, rename, exclude, &
       & notUnlimited, andGLAttributes, ReadData, HGrid, &
@@ -4999,6 +5008,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.164  2009/05/14 22:01:21  pwagner
+! dumps now take width optional arg
+!
 ! Revision 2.163  2009/05/08 00:42:58  pwagner
 ! Shows StatusBitNames when dumping Status bits
 !
