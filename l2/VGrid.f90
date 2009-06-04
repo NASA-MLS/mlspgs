@@ -40,7 +40,8 @@ module vGrid                    ! Definitions for vGrids in vector quantities
   integer, private, parameter :: RequireExplicit = RedundantCoordinates + 1
   integer, private, parameter :: RequiredIf = RequireExplicit + 1
   integer, private, parameter :: ResolutionZetaOnly = RequiredIf + 1
-  integer, private, parameter :: StartStopUnits = ResolutionZetaOnly + 1
+  integer, private, parameter :: StartStopNumber = ResolutionZetaOnly + 1
+  integer, private, parameter :: StartStopUnits = StartStopNumber + 1
   integer, private, parameter :: TooFew = StartStopUnits + 1
   integer, private, parameter :: Unitless = TooFew + 1
   integer, private, parameter :: UnitsPressure = Unitless + 1
@@ -90,13 +91,15 @@ contains ! =====     Public Procedures     =============================
     integer :: L2GPINDEX           ! Index into database
     integer :: L2GPWhere           ! Tree index for L2GP
     integer :: NUMBER              ! NINT ( Value of number field )
+    integer :: NumberNode          ! Index in tree of number field
     integer :: PREV_UNITS          ! Units of previous element of Value field
     integer :: RESOLUTION          ! Index in tree of resolution field
     integer :: SON                 ! Son of Root
-    integer :: START               ! Index in tree of start field
+    integer :: StartNode           ! Index in tree of start field
     double precision :: STEP       ! Step for linear or logarithmic grid
     double precision :: STOP(2)    ! Value of Stop field
-    integer :: STOP_UNITS(2)       ! Units of Stop field
+    integer :: STOP_UNITS          ! Units of Stop field
+    integer :: StopNode            ! Index in tree of stop field
     integer :: UNITS(2)            ! Output from Expr
     integer :: VALUE               ! Index in tree of value tree for a field
     integer :: VALUE_FIELD         ! Index in tree of value field
@@ -129,17 +132,19 @@ contains ! =====     Public Procedures     =============================
       case ( f_formula )
         formula = son
       case ( f_number )
-        call expr ( subtree(2,son), units, values )
+        numberNode = son
+        call expr ( value, units, values )
         if ( units(1) /= phyq_dimensionless ) &
           & call announce_error ( field, unitless, f_number )
         number = nint(values(1))
 !       if ( number < 2 ) call announce_error ( root, tooFew )
       case ( f_start )
-        start = son
+        startNode = son
       case ( f_resolution )
         resolution = son
       case ( f_stop )
-        call expr ( value, stop_units, stop )
+        stopNode = son
+        stop_units = check_units(stopNode,f_stop) ! All sons the same unit
       case ( f_sourceL2GP )
         l2gpIndex = decoration(decoration(value))
         l2gpWhere = field
@@ -156,13 +161,13 @@ contains ! =====     Public Procedures     =============================
 
       ! Now check that this is a sensible vGrid; first the obvious stuff.
 
-      call makeGrid ( -1.0d0 )
+      call makeGrid ( -1.0d0 ) ! Computes prev_units also
 
       ! Check that the given surfaces are in an appropriate unit
 
       if ( got_field(f_start) .and. &
         &( prev_units == PHYQ_Pressure .neqv. coordType == l_logarithmic) ) &
-        & call announce_error ( subtree(1,start), unitsPressure )
+        & call announce_error ( subtree(1,startNode), unitsPressure )
 
       select case ( vGrid%verticalCoordinate )
       case (l_angle)
@@ -220,10 +225,11 @@ contains ! =====     Public Procedures     =============================
     ! Allocate and fill vGrid%surfs from the Formula field
       double precision, intent(in) :: StepSign ! +/- 1.0d0
       integer, intent(in), optional :: NeedUnits
+      integer :: nFormula ! Number of sons of f_formula
       vgrid%noSurfs = 0
       if ( got_field(f_formula) ) then
-        j = nsons(formula)
-        do i = 2, j ! Compute total number of surfaces
+        nFormula = nsons(formula)
+        do i = 2, nFormula ! Compute total number of surfaces
           call expr ( subtree(i,formula), units, values )
           if ( units(1) /= phyq_dimensionless .or. &
             &  units(2) /= phyq_dimensionless ) &
@@ -231,20 +237,20 @@ contains ! =====     Public Procedures     =============================
               & phyq_dimensionless )
           vgrid%noSurfs = vgrid%noSurfs + nint(values(1))
         end do
-        if ( got_field(f_start) ) prev_units = check_units ( start, f_start )
+        if ( got_field(f_start) ) prev_units = check_units ( startNode, f_start )
       end if
       if ( error == 0 ) then
         call allocate_test ( vgrid%surfs, vgrid%noSurfs, 1, "vGrid%surfs", &
           & ModuleName )
         k = 1
         n = 1 ! One less surface the first time, since we have one at the start.
-        call expr ( subtree(2,start), units, values )
+        call expr ( subtree(2,startNode), units, values )
         if ( present(needUnits) ) then
           if ( units(1) /= needUnits ) call announce_error ( &
-            & start, wrongUnits, f_start, needUnits )
+            & startNode, wrongUnits, f_start, needUnits )
         end if
         vgrid%surfs(1,1) = values(1)
-        do i = 2, j
+        do i = 2, nFormula
           call expr ( subtree(i,formula), units, values )
           if ( values(2) <= 0.0d0 ) then
             call announce_error ( subtree(1,formula), notPositive, f_formula )
@@ -264,6 +270,9 @@ contains ! =====     Public Procedures     =============================
     subroutine MakeGrid ( StepSign, NeedUnits )
       double precision, intent(in) :: StepSign ! +/- 1.0d0. for log grid
       integer, intent(in), optional :: NeedUnits
+      integer :: N    ! number of sons of NumberNode etc.
+      integer :: Son  ! of NumberNode etc.
+      integer :: Surf ! Subscript of vGrid%surfs
       select case ( coordType )
       case ( l_explicit )
         call check_fields ( root, l_explicit, got_field, &
@@ -302,26 +311,45 @@ contains ! =====     Public Procedures     =============================
           & required=(/ f_number, f_start, f_stop /), &
           & extra=(/ f_formula, f_values /) )
         if ( got_field(f_number) ) then
-          vgrid%noSurfs = number
+          n = nSons(numberNode)
+          if ( got_field(f_start) .and. got_field(f_stop) ) then
+            if ( n /= nSons(startNode) .or. n/= nSons(stopNode) ) &
+              &  call announce_error ( root, startStopNumber )
+          end if
+          vgrid%noSurfs = 0
+          do i = 2, nSons(numberNode)
+            son = subtree(i,numberNode)
+            call expr ( son, units, values )
+            if ( units(1) /= phyq_dimensionless ) &
+              & call announce_error ( son, unitless, f_number )
+            vgrid%noSurfs = vgrid%noSurfs + nint(values(1))
+          end do
           call allocate_test ( vgrid%surfs, vgrid%noSurfs, 1, "vGrid%surfs", &
             & ModuleName )
         end if
         if ( got_field(f_start) ) then
-          call expr ( subtree(2,start), units, values )
-          prev_units = units(1)
-          vgrid%surfs(1,1) = values(1)
-          if ( prev_units /= stop_units(1) ) &
+          prev_units = check_units ( startNode, f_start ) ! All sons same units
+          if ( prev_units /= stop_units ) &
             & call announce_error ( root, startStopUnits )
           if ( present(needUnits) ) then
             if ( prev_units /= needUnits ) call announce_error ( &
-              & start, wrongUnits, f_start, needUnits )
+              & startNode, wrongUnits, f_start, needUnits )
           end if
         end if
-        if ( got_field(f_stop) ) vgrid%surfs(vgrid%noSurfs,1) = stop(1)
         if ( error == 0 ) then
-          if ( number > 1 ) step = ( stop(1) - values(1) ) / ( number-1 )
-          do i = 2, number-1
-            vgrid%surfs(i,1) = vgrid%surfs(1,1) + (i-1) * step
+          surf = 0    ! Subscript in vgrid%surfs
+          do j = 2, n ! Loop over formulae
+            call expr ( subtree(j,numberNode), units, values )
+            number = nint(values(1))
+            surf = surf + 1
+            call expr ( subtree(j,startNode), units, values )
+            vgrid%surfs(surf,1) = values(1)
+            call expr ( subtree(j,stopNode), units, stop )
+            if ( number > 1 ) step = ( stop(1) - values(1) ) / ( number-1 )
+            do i = 2, number
+              surf = surf + 1
+              vgrid%surfs(surf,1) = values(1) + (i-1) * step
+            end do
           end do
         end if
       case ( l_logarithmic )
@@ -389,6 +417,10 @@ contains ! =====     Public Procedures     =============================
     case ( resolutionZetaOnly )
       call output ( &
         & "Resolution is only appropriate for zeta based vGrids", &
+        & advance='yes' )
+    case ( startStopNumber )
+      call output ( &
+        & "The 'start', 'stop' and 'number' fields do not have the same extents.", &
         & advance='yes' )
     case ( startStopUnits )
       call output ( &
@@ -485,6 +517,9 @@ end module vGrid
 
 !
 ! $Log$
+! Revision 2.26  2009/06/04 20:37:23  vsnyder
+! Make start, stop, number fields arrays for linear grids
+!
 ! Revision 2.25  2008/09/30 22:33:05  vsnyder
 ! Change TGrid definition
 !
