@@ -1234,7 +1234,7 @@ contains
       end if
       ! Unless there's a good reason not to do so,
       ! check if any hosts are currently free and any masters need hosts
-      if ( mayAssignAHost ) then
+      if ( mayAssignAHost .and. associated(masters) ) then
         ! Find oldest master needing a host and grateful for the ones he has
         mastersID = FindFirst( masters%needs_host .and. &
           & .not. masters%owes_thanks )
@@ -2343,6 +2343,9 @@ contains
 end program L2Q
 
 ! $Log$
+! Revision 1.25  2009/04/13 20:34:20  pwagner
+! Ignore comments in hosts list file
+!
 ! Revision 1.24  2009/02/10 17:52:04  pwagner
 ! Fixed syntax error
 !
