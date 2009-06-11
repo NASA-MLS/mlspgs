@@ -30,6 +30,9 @@ itmdir=../../../$(init_m_dir)/$(MLSCONFG)
 
 dir2 = $(itmdir)/
 
+# Use the libmlspack.a directory, blaslib, for .mod files
+blaslib = $(CONFDIR)/blas/$(MLSCONFG)
+
 # Use the fwdmdl directory, fwdmdldir, for more .mod files
 # dir3 is the path prepended to its .o files in dependency lists
 fwdmdldir = ../../../fwdmdl/$(MLSCONFG)
@@ -45,7 +48,7 @@ dir4 = $(clouddir)/
 # Use the libmlspack.a directory, blaslib, for .mod files
 blaslib = ../../../blas/$(MLSCONFG)
 
-MODPATHS = $(dir1) $(dir2) $(dir3) $(dir4)
+MODPATHS = $(dir1) $(dir2) $(dir3) $(dir4) $(blaslib)
 
 UTILDIR=../../../util
 
@@ -209,6 +212,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.25  2007/05/29 17:42:19  pwagner
+# compiler-specific settings now in srclib, not platforms
+#
 # Revision 1.24  2006/06/15 19:31:05  pwagner
 # Now links szlib; comtaible with toolkit 5.2.14.A
 #
