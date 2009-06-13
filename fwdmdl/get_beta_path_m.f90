@@ -95,7 +95,7 @@ contains
     real(rp) :: ES(size(t_path)) ! Used for RHi calculation
     real(rp) :: Sps(size(t_path))
     integer(ip) :: I, N, NP
-    logical, save :: Clean, DumpAll, DumpBeta, DumpStop
+    logical, save :: Clean, DumpAll, DumpBeta, DumpStop, DumpZeta
     logical, save :: First = .true. ! Fist-time flag
 
 ! begin the code
@@ -105,6 +105,7 @@ contains
       dumpStop = index(switches,'LBLB') > 0
       dumpAll = dumpStop .or. index(switches,'lblB') > 0
       dumpBeta = dumpAll .or. ( index(switches,'lblb') > 0 )
+      dumpZeta = index(switches,'dbz') > 0
       clean = index(switches,'clean') > 0
     end if
 
@@ -173,7 +174,7 @@ contains
           call display_string ( lit_indices(beta_group(i)%lbl(sx)%molecules(1:n)), &
             & before='LBL Betas for' )
           call output ( frq, before=', FRQ = ', advance='yes' )
-          call dump ( beta_path(:,i), name='Beta', clean=clean )
+          call dump ( beta_path(:,i), clean=clean )
           if ( associated(dBdT) ) call dump ( dBdT, name='dBdT', clean=clean )
         end if
       end do
@@ -188,7 +189,7 @@ contains
           call display_string ( lit_indices(l_rhi), before='LBL Betas for ' )
           call display_string ( lit_indices(beta_group(i)%lbl(sx)%molecules), &
             & before=' using' )
-          call dump ( beta_path(:,i), name='Beta', clean=clean )
+          call dump ( beta_path(:,i), clean=clean )
           if ( associated(dBdT) ) call dump ( dBdT, name='dBdT', clean=clean )
         end if
       end if
@@ -199,7 +200,11 @@ contains
       & call Trace_End ( 'ForwardModel.Get_Beta_Path_Scalar' )
 
     if ( dumpAll ) then
-      call dump ( p_path(path_inds), name='Pressures', clean=clean )
+      if ( dumpZeta ) then
+        call dump ( -log10(p_path(path_inds)), name='Zetas', clean=clean )
+      else
+        call dump ( p_path(path_inds), name='Pressures', clean=clean )
+      end if
       call dump ( t_path, name='Temperatures', clean=clean )
       call dump ( tanh_path, name='tanh(h nu / k T)', clean=clean )
     end if
@@ -1356,6 +1361,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.94  2008/10/03 16:29:56  livesey
+! Added EXTINCTIONV2
+!
 ! Revision 2.93  2008/04/18 22:51:30  vsnyder
 ! Correct self-continuum
 !
