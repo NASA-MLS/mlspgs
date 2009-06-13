@@ -46,7 +46,7 @@ contains
     use Get_Species_Data_M, only:  Get_Species_Data
     use GLnp, only: NGP1
     use Intrinsic, only: L_CLOUDICE, L_MAGNETICFIELD, &
-      & L_PHITAN, L_PTAN, L_TEMPERATURE
+      & L_PHITAN, L_PTAN, L_TEMPERATURE, L_TSCAT
     use Load_Sps_Data_m, only: DestroyGrids_t, Dump, EmptyGrids_T, Grids_T, &
       & Load_One_Item_Grid, Load_Sps_Data
     use MatrixModule_1, only: MATRIX_T
@@ -92,14 +92,14 @@ contains
                                 ! Z_PSIG & Min Zeta & surface Zeta
     integer :: MAX_F            ! Length of longest possible fine path
                                 ! (all npf<max_f)
-    integer :: S_T  ! Multiplier for temp derivative sizes, 0 or 1
     integer :: S_A  ! Multiplier for atmos derivative sizes, 0 or 1
+    integer :: S_I  ! Multiplier for ice/cloud sizes, 0 or 1
     integer :: S_LC ! Multiplier for line center deriv sizes, 0 or 1
     integer :: S_LW ! Multiplier for line width deriv sizes, 0 or 1
-    integer :: S_TD ! Multiplier for temp dependence deriv sizes, 0 or 1
-    integer :: S_P  ! Multiplier for polarized sizes, 0 or 1
     integer :: S_PFA ! Multiplier for PFA sizes, 0 or 1
-    integer :: S_I  ! Multiplier for ice/cloud sizes, 0 or 1
+    integer :: S_P  ! Multiplier for polarized sizes, 0 or 1
+    integer :: S_TD ! Multiplier for temp dependence deriv sizes, 0 or 1
+    integer :: S_T  ! Multiplier for temp derivative sizes, 0 or 1
 
     logical :: temp_der, atmos_der, spect_der, ptan_der ! Flags for various derivatives
     logical :: Spect_Der_Center, Spect_Der_Width, Spect_Der_Width_TDep
@@ -176,14 +176,16 @@ contains
   ! Compute the preselected integration grid (all surfs from temperature,
   ! tangent grid and species).  Tan_Press is thrown in for free.
     if ( fwdModelConf%generateTScat ) then
-      ! Make sure the observer zeta is in the preselected grid.
-      call compute_Z_PSIG ( fwdModelConf, temp, nlvl, &
-        &                   no_tan_hts, surfaceTangentIndex, z_psig, tan_press, &
-        &                   GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-        &                     quantityType=l_cloudIce, config=fwdModelConf ) )
+      ! Make sure the TScat zeta is in the preselected grid.
+      call compute_Z_PSIG ( fwdModelConf, temp, nlvl, no_tan_hts, &
+        &                   surfaceTangentIndex, z_psig, tan_press, &
+        &                   GetQuantityForForwardModel ( &
+        &                    fwdModelOut, quantityType=l_TScat, &
+        &                    signal=fwdModelConf%signals(1)%index ) )
+
     else
-      call compute_Z_PSIG ( fwdModelConf, temp, nlvl, &
-        &                   no_tan_hts, surfaceTangentIndex, z_psig, tan_press )
+      call compute_Z_PSIG ( fwdModelConf, temp, nlvl, no_tan_hts, &
+        &                   surfaceTangentIndex, z_psig, tan_press )
     end if
 
     max_c = 2*nlvl + max_new + 1 ! Maximum coarse path length
@@ -200,25 +202,26 @@ contains
       & qtyStuffIn=fwdModelConf%lineWidth_TDep%qty )
 
     if ( index(switches,'grids') /= 0 ) then ! dump the grids
-      call dump ( grids_f )
+      call dump ( grids_f, "Grids_f", details=9 )
       if ( size(fwdModelConf%lineCenter) > 0 ) call dump ( grids_v )
       if ( size(fwdModelConf%lineWidth) > 0 ) call dump ( grids_w )
       if ( size(fwdModelConf%lineWidth_TDep) > 0 ) call dump ( grids_n )
     end if
 
-    s_t = merge(1,0,temp_der)
     s_a = merge(1,0,atmos_der)
+    s_i = merge(1,0,FwdModelConf%incl_cld)
     s_lc = merge(1,0,spect_der_center)
     s_lw = merge(1,0,spect_der_width)
-    s_td = merge(1,0,spect_der_width_TDep)
-    s_p = merge(1,0,FwdModelConf%polarized)
     s_pfa = merge(1,0,FwdModelConf%anyPFA(1) .or. FwdModelConf%anyPFA(2))
-    s_i = merge(1,0,FwdModelConf%incl_cld)
+    s_p = merge(1,0,FwdModelConf%polarized)
+    s_td = merge(1,0,spect_der_width_TDep)
+    s_t = merge(1,0,temp_der)
 
     call FullForwardModelAuto ( FwdModelConf, FwdModelIn, FwdModelExtra,       &
                               & FwdModelOut, FmStat, z_psig, tan_press,        &
                               & grids_tmp, grids_f, grids_mag, grids_iwc,      &
-                              & grids_n, grids_v, grids_w, ptan, phitan, temp, &
+                              & grids_n, grids_v, grids_w,                     &
+                              & ptan, phitan, temp,                            &
                               & no_mol, noUsedChannels, no_sv_p_t, n_t_zeta,   &
                               & sv_t_len, nlvl, no_tan_hts,                    &
                               & surfaceTangentIndex,                           &
@@ -235,6 +238,7 @@ contains
     call destroygrids_t ( grids_w )
     call destroygrids_t ( grids_v )
 
+    ! Allocated in Compute_Z_PSIG:
     call deallocate_test ( tan_press,    'tan_press',    moduleName )
     call deallocate_test ( z_psig,       'z_psig',       moduleName )
 
@@ -269,7 +273,7 @@ contains
     ! & Comp_Sps_Path_Frq_nz, &
       & Comp_Sps_Path_No_Frq, Comp_1_Sps_Path_No_Frq
     use Compute_GL_Grid_m, only: Compute_GL_Grid
-    use Constants, only: Deg2Rad
+    use Constants, only: Deg2Rad, Rad2Deg
     use D_Hunt_m, only: Hunt
     use D_T_SCRIPT_DTNP_M, only: DT_SCRIPT_DT
     use Dump_0, only: Dump
@@ -280,13 +284,14 @@ contains
                                     &   B_Ptg_Angles, B_Refraction
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use Freq_Avg_m, only: Freq_Avg, Freq_Avg_DACS
-    use Geometry, only: Earth_Axis_Ratio_Squared_m1, EarthRadA, MaxRefraction
+    use Geometry, only: Earth_Axis_Ratio_Squared_m1, EarthRadA, Get_R_Eq, &
+      & MaxRefraction
     use Get_Eta_Matrix_m, only: Select_NZ_List
     use Get_Chi_Angles_m, only: Get_Chi_Angles
     use GLnp, only: GW, GX, NG, NGP1
     use Intrinsic, only: L_A, L_BOUNDARYPRESSURE, L_CLEAR, &
-      & L_CLOUDICE, L_CLOUDTEMPERATURE, L_EARTHREFL, L_ECRtoFOV, &
-      & L_ELEVOFFSET, L_GPH, &
+      & L_CLOUDICE, L_EARTHREFL, L_ECRtoFOV, &
+      & L_ELEVOFFSET, L_GPH, L_IWC, &
       & L_LOSVEL, L_LIMBSIDEBANDFRACTION, &
       & L_ORBITINCLINATION, L_RADIANCE, L_REFGPH, L_ScatteringAngle, &
       & L_SCGEOCALT, L_SPACERADIANCE, L_SurfaceHeight, L_TScat, L_VMR
@@ -306,7 +311,7 @@ contains
     use Path_Contrib_M, only: Get_GL_Inds
     use Phi_Refractive_Correction_m, only: Phi_Refractive_Correction
     use Physics, only: H_OVER_K, SpeedOfLight
-    use PointingGrid_m, only: POINTINGGRIDS
+    use PointingGrid_m, only: POINTINGGRIDS, PointingGrid_T
     use Read_Mie_m, only: Beta_c_a, Beta_c_e, Beta_c_s, &
       & dBeta_dIWC_c_a, dBeta_dIWC_c_e, dBeta_dIWC_c_s, &
       & dBeta_dT_c_a, dBeta_dT_c_e, dBeta_dT_c_s, dP_dIWC, dP_dT, &
@@ -402,19 +407,18 @@ contains
     integer :: NPC                ! Length of coarse path
     integer :: NPF                ! Length of a gl path
     integer :: NZ_IF              ! Effective size of Z_GLgrid and cohorts
-    integer :: NZ_IG              ! Effective size of Z_IG, size(z_psig) <=
+    integer :: NZ_IG              ! Effective size of Zetas, size(z_psig) <=
                                   ! nz_ig <= size(z_psig)+2
     integer :: PTG_I              ! Loop counter for the pointings
     integer :: SIDEBAND           ! Either zero or from firstSignal
     integer :: SIGIND             ! Signal index, loop counter
     integer :: SV_I               ! Loop index and other uses .
     integer :: SX                 ! 1 = LSB, 2 = USB
-    integer :: TAN_IND_C          ! Index of tangent point in coarse zeta grid
-    integer :: TAN_IND_F          ! Index of tangent point in fine grid
+    integer :: TAN_IND_C          ! Index of tangent point in coarse zeta ref grid
+    integer :: TAN_IND_F          ! Index of tangent point in fine zeta ref grid
     integer :: TAN_PT_C           ! Index of tangent point in coarse path
     integer :: TAN_PT_F           ! Index of tangent point in fine path
     integer :: THISSIDEBAND       ! Loop counter for sidebands, -1 = LSB, +1 = USB
-    integer :: WHICHPOINTINGGRID  ! Index into the pointing grids
     integer :: WINDOWFINISH       ! End of temperature `window'
     integer :: WINDOWSTART        ! Start of temperature `window'
 
@@ -427,13 +431,17 @@ contains
     logical :: Do_Zmin            ! "Do minimum Zeta calculation"
     logical, parameter :: PFAFalse = .false.
     logical, parameter :: PFATrue = .true.
-    logical :: Print_Mag          ! For debugging
-    logical :: Print_More_Points  ! Print if Do_More_Points finds more
-    logical :: Print_Ptg          ! For debugging
-    logical :: Print_Rad          ! For debugging
-    logical :: Print_Seez         ! For debugging
-    logical :: Print_TauL         ! For debugging
-    logical :: Print_TauP         ! For debugging
+    logical :: Print_Incopt       ! For debugging, from -Sincp
+    logical :: Print_Mag          ! For debugging, from -Smag
+    logical :: Print_More_Points  ! Print if Do_More_Points finds more, from -SZMOR
+    logical :: Print_Path         ! Nicer format than Print_Incopt, for few molecules
+    logical :: Print_Ptg          ! For debugging, from -Sptg
+    logical :: Print_Rad          ! For debugging, from -Srad
+    logical :: Print_Seez         ! For debugging, from -Sseez
+    logical :: Print_TauL         ! For debugging, from -Staul
+    logical :: Print_TauP         ! For debugging, from -Staup
+    logical :: Print_TScat        ! For debugging, from -STScat
+    integer :: Print_TScat_Detail ! For debugging, from -S[pP]sct
     logical :: temp_der, atmos_der, spect_der ! Flags for various derivatives
     logical :: Spect_Der_Center, Spect_Der_Width, Spect_Der_Width_TDep
 
@@ -443,7 +451,7 @@ contains
     integer, target :: CG_INDS_B(max_c) ! Base array for CG_INDS
     integer :: F_INDS(max_f)      ! Indices on fine grid
     integer, target :: GL_INDS_B(max_f) ! Base array for GL_INDS
-    integer :: GRIDS(no_tan_hts)  ! Heights in ptgGrid for each tangent
+    integer :: GRIDS(no_tan_hts)  ! Indices in ptgGrid for each tangent
     integer :: IPSD(s_i*max_f)
     integer :: nz_d_delta_df(s_a*max_c,size(grids_f%values)) ! nonzeros in
                                   ! d_delta_df
@@ -451,18 +459,21 @@ contains
                                   ! nz_d_delta_df
     integer :: Vert_Inds(max_f)   ! Height indices of fine path in H_Glgrid etc.
 
-    logical, pointer :: DO_CALC_Tscat(:,:)    ! 'Avoid zeros' indicator
-    logical, pointer :: DO_CALC_Salb(:,:)     ! 'Avoid zeros' indicator
-    logical, pointer :: DO_CALC_cext(:,:)     ! 'Avoid zeros' indicator
-    logical, pointer :: DO_CALC_Tscat_ZP(:,:) ! 'Avoid zeros' indicator
-    logical, pointer :: DO_CALC_Salb_ZP(:,:)  ! 'Avoid zeros' indicator
-    logical, pointer :: DO_CALC_Cext_ZP(:,:)  ! 'Avoid zeros' indicator
+    ! Cloud arrays are on the same grids as temperature
+    logical :: DO_CALC_Tscat(max_f,s_i*size(grids_tmp%values)) ! 'Avoid zeros' indicator
+    logical :: DO_CALC_Salb(max_f,s_i*size(grids_tmp%values))  ! 'Avoid zeros' indicator
+    logical :: DO_CALC_cext(max_f,s_i*size(grids_tmp%values))  ! 'Avoid zeros' indicator
+    logical :: DO_CALC_Tscat_ZP(max_f,s_i*grids_tmp%p_len)     ! 'Avoid zeros' indicator
+    logical :: DO_CALC_Salb_ZP(max_f,s_i*grids_tmp%p_len)      ! 'Avoid zeros' indicator
+    logical :: DO_CALC_Cext_ZP(max_f,s_i*grids_tmp%p_len)      ! 'Avoid zeros' indicator
+
+    real(r8), parameter :: FRQ_0 = 0.0_r8     ! Fake for comp_sps_path_frq
 
     real(r8) :: WC(s_i*fwdModelConf%no_cloud_species, max_f)
     real(r8) :: Scat_ang(s_i*fwdModelConf%num_scattering_angles)
 
-    real(rp) :: ALPHA_PATH_C(max_c)   ! coarse grid abs coeff.
-    real(rp) :: ALPHA_PATH_F(max_f)   ! fine grid abs coeff.
+    real(rp) :: ALPHA_PATH_C(max_c)   ! coarse grid absorption coefficient
+    real(rp) :: ALPHA_PATH_F(max_f)   ! fine grid absorption coefficient
     real(rp) :: B(max_c)              ! Planck radiation function
     real(rp) :: BETA_PATH_cloud_C(s_i*max_c) ! Beta on path coarse
     real(r8), target :: ChannelCenters(noUsedChannels) ! for PFA or non-frequency-averaging
@@ -498,10 +509,9 @@ contains
     real(rp) :: T_PATH_F(max_f)       ! T_PATH on fine grid
     real(rp) :: TT_PATH_C(s_i*max_c)  ! tscat on path coarse
     real(rp) :: W0_PATH_C(s_i*max_c)  ! w0 on path coarse
-    real(rp) :: Z_COARSE(max_c)       ! Z_PSIG & Z_min & surface zeta
+    real(rp) :: Z_COARSE(max_c)       ! Z_PSIG & Z_min & surface zeta on path
     real(rp), target :: Z_GLGRID_O(maxvert) ! Zeta on initial glGrid surfs, original
     real(rp), target :: Z_GLGRID_R(maxvert+nxg) ! Zeta on initial glGrid surfs, revised
-    real(rp) :: Z_IG(size(Z_PSIG)+2)  ! Z_PSIG + min Zeta + Earth intersection
     real(rp) :: Z_PATH(max_f)         ! Zeta on fine grid path tangent grid and
                                       ! species grids, sans duplicates.
     real(rp) :: BETA_PATH_C(max_c,no_mol)  ! Beta on path coarse
@@ -527,7 +537,7 @@ contains
     real(rp), target :: DHDZ_GLGRID_R(maxVert+nxg,no_sv_p_t) ! dH/dZ on glGrid surfs, revised
     real(rp) :: DX_DT(no_tan_hts,s_t*sv_t_len)     ! (No_tan_hts, nz*np)
     real(rp) :: ETA_FZP(max_f,size(grids_f%values)) ! Eta_z x Eta_p * Eta_f
-    real(rp) :: ETA_IWC_ZP(max_f,grids_iwc%p_len)
+    real(rp) :: ETA_IWC_ZP(max_f,s_i*grids_iwc%p_len)
     real(rp) :: ETA_Mag_ZP(max_f,grids_mag%p_len)  ! Eta_z x Eta_p
     real(rp) :: ETA_ZP(max_f,grids_f%p_len)        ! Eta_z x Eta_p
     real(rp) :: ETA_ZXP_N(max_f,size(grids_n%values)) ! Eta_z x Eta_p for N
@@ -617,7 +627,7 @@ contains
     logical :: DO_CALC_T_F(max_f, sv_t_len)    ! DO_CALC_T on fine grid
     logical :: DO_CALC_V(max_f, size(grids_v%values) ) ! on entire grid
     logical :: DO_CALC_W(max_f, size(grids_w%values) ) ! on entire grid
-    logical :: DO_CALC_ZP(size(eta_zp,1),size(eta_zp,2))
+    logical :: DO_CALC_ZP(max_f,grids_f%p_len) ! same shape as eta_zp
 
     integer :: NZ_ZP(size(eta_zp,1),size(eta_zp,2)) ! same shape as eta_zp
     integer :: NNZ_ZP(size(eta_zp,2))               ! number of columns of eta_zp
@@ -639,14 +649,12 @@ contains
                                     ! for our dacs
 
     real(rp) :: E_RFLTY       ! Earth reflectivity at given tan. point
-    real(rp) :: H_Surf        ! Height at surface above reference (zeta=-3)
+    real(rp) :: H_Surf        ! Height above earth surface of first (usually
+                              ! zeta=-3) surface
     real(rp) :: Min_Zeta      ! Minimum zeta along the path
     real(rp) :: Min_Phi       ! Phi at which minimum zeta occurs
     real(rp), parameter :: Min_Phi_Tol = 0.25 * gx(1)**2 ! First GL point
-    real(rp) :: R_EQ          ! Equivalent Earth Radius
     real(rp) :: ROT(3,3)      ! ECR-to-FOV rotation matrix
-    real(rp) :: TAN_HT        ! Height at the tangent, from equivalent Earth center
-    real(rp) :: TAN_HT_R      ! Tan_Ht - R_eq
     real(rp) :: Vel_Rel       ! Vel_z / c
 
     real(rp), pointer :: CT(:)           ! Cos(Theta), where theta
@@ -662,7 +670,6 @@ contains
       ! field vector, and the "instrument field of view plane polarized"
       ! (IFOVPP) X axis.
     real(rp), pointer :: STSP(:)         ! Sin(Theta) Sin(Phi)
-    real(rp), pointer :: Cext_PATH(:,:)  ! Cloud extinction on path
     real(rp), pointer :: DACsStaging(:,:) ! Temporary space for DACS radiances
 
     ! GL Grid quantities to/from Hydrostatic
@@ -673,43 +680,62 @@ contains
     real(rp), pointer :: T_GLGRID(:,:)   ! Either T_GLgrid_O or T_GLgrid_R
     real(rp), pointer :: Z_GLGRID(:)     ! Either Z_GLgrid_O or Z_GLgrid_R
 
+    ! Cloud arrays have the same grids as temperature
+    real(rp) :: ETA_Tscat(max_f,s_i*size(grids_tmp%values))
+    real(rp) :: ETA_Tscat_ZP(max_f,s_i*grids_tmp%p_len)
+    real(rp) :: ETA_Salb(max_f,s_i*size(grids_tmp%values))
+    real(rp) :: ETA_Salb_ZP(max_f,s_i*grids_tmp%p_len)
+    real(rp) :: ETA_Cext(max_f,s_i*size(grids_tmp%values))
+    real(rp) :: ETA_Cext_ZP(max_f,s_i*grids_tmp%p_len)
+    real(rp) :: Cext_PATH(max_f,s_i)    ! Cloud extinction on path
+    real(rp) :: Salb_PATH(max_f,s_i)    ! Single Scattering Albedo on path
+    real(rp) :: Tscat_PATH(max_f,s_i*fwdModelConf%num_scattering_angles) ! TScat on path
+
     ! Incremental opacity derivatives, Path X SVE:
-    real(rp), pointer :: ETA_Tscat(:,:)    !
-    real(rp), pointer :: ETA_Tscat_ZP(:,:) !
-    real(rp), pointer :: ETA_Salb(:,:)     !
-    real(rp), pointer :: ETA_Salb_ZP(:,:)  !
-    real(rp), pointer :: ETA_Cext(:,:)     !
-    real(rp), pointer :: ETA_Cext_ZP(:,:)  !
     real(rp), pointer :: INC_RAD_PATH(:,:) ! Incremental radiance along the path
     real(rp), pointer :: K_ATMOS_FRQ(:,:)  ! dI/dVMR, ptg.frq X vmr-SV
     real(rp), pointer :: K_SPECT_DN_FRQ(:,:) ! ****
     real(rp), pointer :: K_SPECT_DV_FRQ(:,:) ! ****
     real(rp), pointer :: K_SPECT_DW_FRQ(:,:) ! ****
     real(rp), pointer :: K_TEMP_FRQ(:,:)   ! dI/dT, ptg.frq X T-SV
-    real(rp), pointer :: Salb_PATH(:,:)    ! Single Scattering Albedo on path
     real(rp), pointer :: T_SCRIPT_LBL(:,:) ! Delta_B in some notes
-    real(rp), pointer :: Tscat_PATH(:,:)   ! TScat on path
 
     ! Used only to schlep from Convolution_Setup to Convolution
     real(rp) :: DH_DZ_OUT(ptan%template%nosurfs)
     real(rp) :: DX_DH_OUT(ptan%template%nosurfs)
     real(rp) :: DXDT_SURFACE(1,s_t*sv_t_len)
-    real(rp) :: DXDT_TAN(ptan%template%nosurfs,sv_t_len)
+    real(rp) :: DXDT_TAN(ptan%template%nosurfs,s_t*sv_t_len)
     real(rv), pointer :: L1BMIF_TAI(:,:)   ! MIF Times
     real(rv), pointer :: MIFDEADTIME(:,:)  ! Not collecting data
     real(rp) :: surf_angle(1)
     real(rp) :: TAN_CHI_OUT(ptan%template%nosurfs)
 
-    real(rp) :: earthradc ! minor axis of orbit plane projected Earth ellipse
-    real(rp) :: earthradc_sq ! earthradc**2
+    real(rp) :: earthradc_sq ! (minor axis of orbit plane projected Earth ellipse)**2
+
+! *** Beta & Molecules grouping variables:
+    type (Beta_Group_T), pointer :: Beta_Group(:) ! from FwdModelConf%Beta_Group
+
+! Channel information from the signals database as specified by fwdModelConf
+    type (Channels_T), pointer, dimension(:) :: Channels 
+
+    type (Grids_T) :: Grids_Tscat ! All the coordinates for scaterring source function
+    type (Grids_T) :: Grids_Salb ! All the coordinates for single scaterring albedo
+    type (Grids_T) :: Grids_Cext ! All the coordinates for cloud extinction
+
+    type (PointingGrid_T), pointer :: WHICHPOINTINGGRID ! Pointing grids for one signal
+
+    type (Signal_T), pointer :: FIRSTSIGNAL        ! The first signal we're dealing with
+
+    type (Slabs_Struct), dimension(:,:), pointer :: GL_SLABS ! Freq. indep. stuff
+
+    type (Tau_T) :: Tau_LBL, Tau_PFA
 
     type (VectorValue_T), pointer :: BOUNDARYPRESSURE
-    type (VectorValue_T), pointer :: CloudIce      ! IWC on cloud grid
-    type (VectorValue_T), pointer :: CloudTemp     ! Temperature on cloud grid
     type (VectorValue_T), pointer :: EARTHREFL     ! Earth reflectivity
     type (VectorValue_T), pointer :: ECRtoFOV      ! Rotation matrices
     type (VectorValue_T), pointer :: F             ! An arbitrary species
     type (VectorValue_T), pointer :: GPH           ! Geopotential height
+    type (VectorValue_T), pointer :: IWC           ! IWC field, for TScat gen.
     type (VectorValue_T), pointer :: LOSVEL        ! Line of sight velocity
     type (VectorValue_T), pointer :: ORBINCLINE    ! Orbital inclination
     type (VectorValue_T), pointer :: REFGPH        ! Reference geopotential height
@@ -720,26 +746,10 @@ contains
     type (VectorValue_T), pointer :: THISRADIANCE  ! A radiance vector quantity
     type (VectorValue_T), pointer :: TScat         ! Computed TScat, Jacobian row label
 
-    type (Signal_T), pointer :: FIRSTSIGNAL        ! The first signal we're dealing with
-
-    type (slabs_struct), dimension(:,:), pointer :: GL_SLABS ! Freq. indep. stuff
-
-    type (Grids_T) :: Grids_Tscat ! All the coordinates for scaterring source function
-    type (Grids_T) :: Grids_Salb ! All the coordinates for single scaterring albedo
-    type (Grids_T) :: Grids_Cext ! All the coordinates for cloud extinction
-
 !  The 'all_radiometers grid file' approach variables declaration:
 
     real(rp) :: max_ch_freq_grid, min_ch_freq_grid
     real(r8) :: TOL = 1.D-190
-
-! *** Beta & Molecules grouping variables:
-    type(beta_group_t), pointer :: Beta_Group(:) ! from FwdModelConf%Beta_Group
-
-    type(tau_t) :: Tau_LBL, Tau_PFA
-
-! Channel information from the signals database as specified by fwdModelConf
-    type(channels_T), pointer, dimension(:) :: Channels 
 
 ! Scattering source function for each temperature surface
     type (VectorValue_T) :: scat_src
@@ -761,12 +771,18 @@ contains
     if ( index(switches, 'Dpri') /= 0 ) dump_rad_pol = 2 ! Dump all
     if ( index(switches, 'DPRI') /= 0 ) dump_rad_pol = 3 ! Dump first and stop
     dump_rad_pol = index(switches, 'dpri')
+    print_Incopt = index(switches, 'incp' ) /= 0
     print_Mag = index(switches, 'mag') /= 0
-    print_Ptg = index(switches,'ptg') /= 0
+    print_Ptg = index(switches, 'ptg') /= 0
+    print_path = index(switches, 'path') /= 0
     print_Rad = index(switches, 'rad') /= 0
     print_Seez = index(switches, 'seez') /= 0
     print_TauL = index(switches, 'taul') /= 0
     print_TauP = index(switches, 'taup') /= 0
+    print_TScat = index(switches, 'TScat' ) /= 0
+    print_TScat_detail = 0
+    if ( index(switches, 'psct' ) /= 0 ) print_TScat_detail = 1
+    if ( index(switches, 'Psct' ) /= 0 ) print_TScat_detail = 2
     print_more_points = index(switches, 'ZMOR' ) /= 0
     do_more_points = index(switches, 'zmor') /= 0
 
@@ -775,14 +791,8 @@ contains
     ! them, they're undefined, i.e., junk that might be mistaken for
     ! associated.
 
-    nullify ( cext_path, eta_cext_zp, eta_salb_zp, eta_tscat_zp,       &
-      & frequencies, inc_rad_path, k_atmos_frq, k_spect_dn_frq,        &
-      & k_spect_dv_frq, k_spect_dw_frq, k_temp_frq, RadV, salb_path,   &
-      & tscat_path, t_script_lbl )
-
-    nullify ( do_calc_Cext, do_calc_Cext_zp, do_calc_Salb, &
-      &       do_calc_Salb_zp, do_calc_tscat, do_calc_tscat_zp, &
-      &       eta_cext, eta_salb, eta_tscat )
+    nullify ( frequencies, inc_rad_path, k_atmos_frq, k_spect_dn_frq, &
+      & k_spect_dv_frq, k_spect_dw_frq, k_temp_frq, RadV, t_script_lbl )
 
     ! Nullify pointers that are used to control whether calculations get done
     nullify ( linecenter_ix, linewidth_ix, linewidth_tdep_ix )
@@ -885,35 +895,38 @@ contains
         & fwdModelConf%catalog(thisSideband,:fwdModelConf%cat_size(sx)), &
         & moduleName, temp_der )
 
-      call frequency_setup_1
+      call frequency_setup_1 ( tan_press, grids )
 
       ! Loop over pointings --------------------------------------------------
       if ( toggle(emit) .and. levels(emit) > 2 ) &
         & call Trace_Begin ( 'ForwardModel.PointingLoop' )
 
-      do ptg_i = 1, no_tan_hts
+      if ( .not. FwdModelConf%generateTScat ) then
+        do ptg_i = 1, no_tan_hts
 
-        Vel_Rel = est_los_vel(ptg_i) / speedOfLight
+          Vel_Rel = est_los_vel(ptg_i) / speedOfLight
 
-        ! If we're doing frequency averaging, get the frequencies we need for
-        ! this pointing.
+          ! If we're doing frequency averaging, get the frequencies we need for
+          ! this pointing.
 
-        if ( FwdModelConf%do_freq_avg .and. fwdModelConf%anyLBL(sx) ) &
-          & call frequency_setup_2 ( (1.0_rp - Vel_Rel) * &
-          & PointingGrids(whichPointingGrid)%oneGrid(grids(ptg_i))%frequencies )
+          if ( associated(whichPointingGrid) ) &
+            & call frequency_setup_2 ( (1.0_rp - Vel_Rel) * &
+            & whichPointingGrid%oneGrid(grids(ptg_i))%frequencies )
 
-        call one_pointing ( vel_rel, tan_phi(ptg_i), &
-          &                 tan_press(ptg_i), est_scGeocAlt(ptg_i) )
+          ! Do the ray tracing
+          call one_pointing ( ptg_i, vel_rel, tan_phi(ptg_i), &
+            &                 tan_press(ptg_i), est_scGeocAlt(ptg_i) )
 
-      end do ! ptg_i
-
-      ! Do ray tracing at specified scattering angles?
-      if ( FwdModelConf%generateTScat ) call generate_TScat
+        end do ! ptg_i
+      else
+        ! Do ray tracing at specified scattering angles
+        call generate_TScat
+      end if
 
       if ( toggle(emit) .and. levels(emit) > 2 ) &
         & call Trace_End ( 'ForwardModel.PointingLoop' )
 
-      call convolution ! or interpolation to ptan
+      if ( .not. fwdModelConf%generateTScat ) call convolution ! or interpolate to ptan
 
       ! Frequency averaging and any LBL:
       if ( .not. associated(frequencies,channelCenters) ) &
@@ -985,9 +998,15 @@ contains
 
       do i = 1, noUsedChannels
         print "(/, 'ch', i3.3, '_pfa_rad\ ', i3.3 )", channels(i)%used, k
-        thisRadiance =>  &
-          GetQuantityForForwardModel (fwdModelOut, quantityType=l_radiance, &
-          & signal=fwdModelConf%signals(channels(i)%signal)%index, sideband=sideband )
+        if ( .not. fwdModelConf%GenerateTScat ) then
+          thisRadiance =>  &
+            GetQuantityForForwardModel (fwdModelOut, quantityType=l_radiance, &
+            & signal=fwdModelConf%signals(channels(i)%signal)%index, sideband=sideband )
+        else
+          thisRadiance =>  &
+            GetQuantityForForwardModel (fwdModelOut, quantityType=l_tscat, &
+            & signal=fwdModelConf%signals(channels(i)%signal)%index, sideband=sideband )
+        end if
         j = thisRadiance%template%noChans
         channel = channels(i)%used - channels(i)%origin + 1
         print "( 4(2x, 1pg15.8) )", &
@@ -1100,14 +1119,16 @@ contains
       if ( .not. doHGridsMatch ( refGPH, temp ) ) call Announce_Error ( &
         & 'Different horizontal grids for refGPH and temperature' )
 
-      ! Check that we have radiances for the channels that are used
-      do sigInd = 1, size(fwdModelConf%signals)
-        ! This just emits an error message and stops if we don't have a radiance.
-        ! We don't use the vector quantity -- at least not right away.  We get
-        ! it again later.
-        thisRadiance => GetVectorQuantityByType (fwdModelOut, quantityType=l_radiance, &
-          & signal=fwdModelConf%signals(sigInd)%index, sideband=sideband )
-      end do
+      if ( .not. fwdModelConf%generateTScat ) then
+        ! Check that we have radiances for the channels that are used
+        do sigInd = 1, size(fwdModelConf%signals)
+          ! This just emits an error message and stops if we don't have a radiance.
+          ! We don't use the vector quantity -- at least not right away.  We get
+          ! it again later.
+          thisRadiance => GetVectorQuantityByType (fwdModelOut, quantityType=l_radiance, &
+            & signal=fwdModelConf%signals(sigInd)%index, sideband=sideband )
+        end do
+      end if
 
       MAF = fmStat%maf
 
@@ -1144,12 +1165,12 @@ contains
 
   !{ Compute minor axis of orbit plane projected Earth ellipse $c$, where
   !  $c^2 = \frac{a^2\,b^2}{a^2 \sin^2 \beta + b^2 \cos^2 \beta} =
-  !         \frac{a^2}{\left(\frac{a^2}{b^2}-1\right) \sin^2 \beta + 1}$
+  !         \frac{a^2}{\left(\frac{a^2}{b^2}-1\right) \sin^2 \beta + 1}$.
+  !  This is Equation (5.3) in the 19 August 2004 ATBD JPL D-18130.
 
       earthradc_sq = earthRadA**2 / &
-            &     (Earth_Axis_Ratio_Squared_m1 * &
-                   &   SIN(orbIncline%values(1,maf)*Deg2Rad)**2 + 1)
-      earthradc = sqrt(earthradc_sq)
+                   &     ( Earth_Axis_Ratio_Squared_m1 * &
+                   &       SIN(orbIncline%values(1,maf)*Deg2Rad)**2 + 1 )
 
       if ( toggle(emit) .and. levels(emit) > 0 ) &
       &  call trace_end ( 'ForwardModel.Both_Sidebands_Setup' )
@@ -1438,8 +1459,8 @@ contains
       use Get_Chi_Out_m, only: Get_Chi_Out
       use Intrinsic, only: L_MIFDEADTIME, L_L1BMIF_TAI
 
-      real(rp) :: D2XDXDT_SURFACE(1,sv_t_len) ! Would s_t*sv_t_len work?
-      real(rp) :: D2XDXDT_TAN(ptan%template%nosurfs,sv_t_len) ! Would s_t*sv_t_len work?
+      real(rp) :: D2XDXDT_SURFACE(1,size(dxdt_surface,2))
+      real(rp) :: D2XDXDT_TAN(size(dxdt_tan,1),size(dxdt_tan,2))
       real(rp) :: One_dhdz(1), One_dxdh(1)
       real(rp) :: REQ_OUT(phitan%template%nosurfs)
 
@@ -1448,26 +1469,15 @@ contains
       if ( toggle(emit)  .and. levels(emit) > 0 ) &
       &  call trace_begin ( 'ForwardModel.Convolution_Setup' )
 
-      !{ Compute equivalent earth radius (\tt r\_eq})
-      ! \begin{equation*}\begin{split}
-      ! R_{eq} =\;& \sqrt \frac{R_a^4 \sin^2 \phi + R_c^4 \cos^2 \phi}
-      !                       {R_a^2 \cos^2 \phi + R_c^2 \sin^2 \phi}\\
-      !        =\;& \sqrt \frac{R_a^4 - (R_a^2+R_c^2)(R_a^2-R_c^2) \cos^2 \phi}
-      !                       {R_c^2 +              (R_a^2-R_c^2) \cos^2 \phi}
-      ! \end{split}\end{equation*}
-      !
-      ! Although this is the same mathematical formula as used in {\tt metrics},
-      ! the $\phi$ used here is different: These are on MIFs, not hypothetical
-      ! pointings to the desired tangent $\zeta$s.  Therefore, we can't use
-      ! these values in {\tt metrics}, or where its output {\tt r\_eq} value is
+      ! Compute equivalent earth radius
+
+      ! Although this is the same mathematical formula as used in metrics,
+      ! the phi used here is different: These are on MIFs, not hypothetical
+      ! pointings to the desired tangent zetas.  Therefore, we can't use
+      ! these values in metrics, or where its output r_eq value is
       ! used.
 
-      req_out = (earthrada-earthradc)*(earthrada+earthradc) * &
-        & COS(phitan%values(:,maf)*Deg2Rad)**2
-      ! Earthrad[abc] are in meters, but Req_Out needs to be in km.
-      req_out = 0.001_rp * SQRT( &
-        & ( earthrada**4 -(earthrada**2+earthradc_sq) * req_out ) / &
-        & ( earthradc_sq + req_out ) )
+      req_out = get_R_eq ( phitan%values(:,maf)*Deg2Rad, earthradc_sq )
 
       ! Temperature's windowStart:windowFinish are correct here.
       ! RefGPH and Temperature have the same horizontal basis.
@@ -1519,13 +1529,15 @@ contains
     end subroutine Dump_Print_Code
 
   ! ..........................................  Frequency_Average  .....
-    subroutine Frequency_Average
+    subroutine Frequency_Average ( Ptg_i )
 
       ! Here we either frequency average to get the unconvolved radiances, or
       ! we just store what we have as we're using monochromatic channels
 
       use Freq_Avg_m, only: Freq_Avg
       use SCRT_dn_m, only: SCRT_PFA
+
+      integer, intent(in) :: Ptg_i ! Pointing index
 
       integer :: C, ShapeInd
 
@@ -1575,10 +1587,10 @@ contains
             ! averaging because the filter function is normalized.
               call SCRT_PFA (c, tau_LBL, tau_PFA, t_script_pfa, radV(:noFreqs) )
             end if
-              call freq_Avg ( frequencies, &
-                &   filterShapes(shapeInd)%filterGrid,  &
-                &   filterShapes(shapeInd)%filterShape, &
-                &   radV(:noFreqs), radiances(ptg_i,c) )
+            call freq_Avg ( frequencies, &
+              &   filterShapes(shapeInd)%filterGrid,  &
+              &   filterShapes(shapeInd)%filterShape, &
+              &   radV(:noFreqs), radiances(ptg_i,c) )
           else
             radiances(ptg_i,c) = DACsStaging(channels(c)%used,channels(c)%dacs)
           end if
@@ -1599,7 +1611,7 @@ contains
                             ! PFA and no frequency averaging
       end select
 
-      if ( any_der ) call frequency_average_derivatives ( frq_avg_sel == 15 )
+      if ( any_der ) call frequency_average_derivatives ( ptg_i, frq_avg_sel == 15 )
 
       if ( toggle(emit) .and. levels(emit) > 4 ) &
         & call trace_end ( 'ForwardModel.FrequencyAvg' )
@@ -1683,7 +1695,8 @@ contains
     end subroutine Frequency_Average_Derivative
 
   ! ..............................  Frequency_Average_Derivatives  .....
-    subroutine Frequency_Average_Derivatives ( Combine )
+    subroutine Frequency_Average_Derivatives ( Ptg_i, Combine )
+      integer, intent(in) :: Ptg_i          ! Pointing index
       logical, intent(in) :: Combine        ! "Combine LBL and PFA"
 
       ! Frequency Average the temperature derivatives with the appropriate
@@ -1756,18 +1769,19 @@ contains
     end subroutine Frequency_Avg_Rad_Path
 
   ! .............................................  Frequency_Loop  .....
-    subroutine Frequency_Loop ( Alpha_Path_c, Beta_Path_c, C_Inds, Del_S,    &
-      & Del_Zeta, Do_Calc_fzp, Do_Calc_zp, Do_GL,                            &
-      & Frequencies, H_Path_C, IncOptDepth, P_Path, PFA, Ref_Corr, Sps_Path, &
-      & Tau, T_Path_c, T_Script, Tanh1_c, TT_Path_c, W0_Path_c, Z_Path )
+    subroutine Frequency_Loop ( Ptg_i, Alpha_Path_c, Beta_Path_c, C_Inds,    &
+      & Del_S, Del_Zeta, Do_Calc_fzp, Do_Calc_zp, Do_GL, Frequencies,        &
+      & H_Path_C, Tan_Ht, IncOptDepth, P_Path, PFA, Ref_Corr, Sps_Path,      &
+      & Tau, T_Path_c, T_Script, Tanh1_c, TT_Path_c, W0_Path_c, Z_Path,      &
+      & I_Start, I_End )
 
       ! Having arguments instead of using host association serves two
       ! purposes:  The array sizes are implicit, so we don't need explicitly
       ! to mention them, and the pointer attribute gets stripped during the
       ! trip through the CALL statement -- hopefully thereby helping optimizers.
-
       use CS_Expmat_m, only: CS_Expmat
       use DO_T_SCRIPT_M, only: TWO_D_T_SCRIPT, TWO_D_T_SCRIPT_CLOUD
+      use Dump_Path_m, only: Dump_Path
       use Get_Beta_Path_m, only: Get_Beta_Path, Get_Beta_Path_Cloud, &
         & Get_Beta_Path_PFA, Get_Beta_Path_Polarized
       use Get_d_Deltau_pol_m, only: Get_d_Deltau_pol_df, Get_d_Deltau_pol_dT
@@ -1778,7 +1792,8 @@ contains
         & DRAD_TRAN_DT, DRAD_TRAN_DX
       use ScatSourceFunc, only: T_SCAT, Interp_Tscat, Convert_Grid
 
-      real(rp), intent(out) :: Alpha_Path_c(:) ! Beta_Path * mixing ratio
+      integer, intent(in) :: Ptg_i        ! Pointing index
+      real(rp), intent(out) :: Alpha_Path_c(:) ! \sum Beta_Path * mixing ratio
       real(rp), intent(out) :: Beta_Path_c(:,:) ! path x species
       real(rp), intent(in) :: Del_S(:)    ! Integration lengths along path
       real(rp), intent(in) :: Del_Zeta(:) ! Integration lengths in Zeta coords
@@ -1788,6 +1803,8 @@ contains
       logical, intent(out) :: Do_GL(:)    ! Where to do GL correction
       real(r8), intent(in) :: Frequencies(:)  ! The frequency grid
       real(rp), intent(in) :: H_Path_C(:) ! Heights on coarse path
+      real(rp), intent(in) :: Tan_Ht      ! Geometric tangent height, km, 
+                                          ! from equivalent Earth center
       real(rp), intent(out) :: IncOptDepth(:)  ! Incremental optical depth
       real(rp), intent(in) :: P_Path(:)   ! Pressures along complete path
       logical, intent(in) :: PFA          ! Are we doing PFA or not?
@@ -1801,12 +1818,13 @@ contains
       real(rp), intent(out) :: Tanh1_c(:) ! tanh(frqhk/t_path_c)
       real(rp), intent(out) :: W0_Path_c(:) ! w0 on coarse path
       real(rp), intent(in) :: Z_Path(:)   ! -Log10(Pressures) along complete path
+      integer, intent(in) :: I_Start, I_End ! Bounds for coarse path integration
 
       integer :: FRQ_I                    ! Frequency loop index
       real(r8) :: FRQ                     ! Frequency
       real(r8) :: FRQHK                   ! 0.5 * Frq * H_Over_K
       integer :: I, J, L                  ! Loop inductor and subscript
-      integer :: I_STOP                   ! Upper index for radiance comp.
+      integer :: I_STOP                   ! Stop path integration before I_End
       integer :: P_Stop                   ! Where to stop in polarized case
       logical :: PFA_or_not_pol           ! PFA .or. .not. fwdModelConf%polarized
 
@@ -1863,10 +1881,10 @@ contains
           ! dTanh_dT = -h nu / (2 k T**2) 1/tanh1 d(tanh1)/dT
           if ( temp_der ) dTanh_dT_c(:npc) = &
               & frqhk / t_path_c**2 * ( tanh1_c - 1.0_rp / tanh1_c )
-          call get_beta_path ( Frq, firstSignal%lo, p_path, t_path_c, tanh1_c,                &
-            &  beta_group, sx, fwdModelConf%polarized, gl_slabs, c_inds,      &
-            &  beta_path_c, t_der_path_flags, dTanh_dT_c, vel_rel,            &
-            &  dbeta_dT_path_c, dbeta_dw_path_c, dbeta_dn_path_c,             &
+          call get_beta_path ( Frq, firstSignal%lo, p_path, t_path_c,      &
+            &  tanh1_c, beta_group, sx, fwdModelConf%polarized, gl_slabs,  &
+            &  c_inds, beta_path_c, t_der_path_flags, dTanh_dT_c, vel_rel, &
+            &  dbeta_dT_path_c, dbeta_dw_path_c, dbeta_dn_path_c,          &
             &  dbeta_dv_path_c, sps_path )
         end if
 
@@ -1887,7 +1905,7 @@ contains
                & fwdModelConf%num_azimuth_angles,                          &
                & fwdModelConf%num_ab_terms, fwdModelConf%num_size_bins,    &
                & fwdModelConf%no_cloud_species,                            &
-               & scat_src%values, scat_alb%values, cld_ext%values, Scat_ang)
+               & scat_src%values, scat_alb%values, cld_ext%values, Scat_ang )
 
           end if
 
@@ -1896,24 +1914,12 @@ contains
           call load_one_item_grid ( grids_tscat, scat_src, phitan, maf, &
             & fwdModelConf, .false., .true. )
 
-          call allocate_test ( do_calc_tscat, npf, size(grids_tscat%values),           &
-                             & 'do_calc_tscat', moduleName )
-          call allocate_test ( do_calc_tscat_zp, npf, grids_tscat%p_len,               &
-                             & 'do_calc_tscat_zp', moduleName )
-          call allocate_test ( eta_tscat,     npf, size(grids_tscat%values),           &
-                             & 'eta_tscat',     moduleName )
-          call allocate_test ( eta_tscat_zp,  npf, grids_tscat%p_len,                  &
-                             & 'eta_tscat_zp',  moduleName )
-          call allocate_test ( tscat_path,    npf, fwdModelConf%num_scattering_angles, &
-                               & 'tscat_path',  moduleName )
-
           call comp_eta_docalc_no_frq ( Grids_Tscat, z_path(1:npf), &
             &  phi_path(1:npf), eta_tscat_zp(1:npf,:),              &
             &  do_calc_tscat_zp(1:npf,:), tan_pt=tan_pt_f )
 
-        ! Frq=0.0
           call comp_sps_path_frq ( Grids_tscat,                &
-            & 0.0_r8, eta_tscat_zp(1:npf,:),                   &
+            & frq_0, eta_tscat_zp(1:npf,:),                    &
             & do_calc_tscat_zp(1:npf,:), tscat_path(1:npf,:),  &
             & do_calc_tscat(1:npf,:), eta_tscat(1:npf,:) )
 
@@ -1933,36 +1939,15 @@ contains
             call load_one_item_grid ( grids_salb,  scat_alb, phitan, maf, fwdModelConf, .false.)
             call load_one_item_grid ( grids_cext,  cld_ext,  phitan, maf, fwdModelConf, .false.)             
 
-            do i = 1, size(grids_salb%values)
-               if ( abs(grids_salb%values(i)) < TOL) then
-                       grids_salb%values(i) = 0.0
-               end if
-               if ( abs(grids_cext%values(i)) < TOL) then
-                       grids_cext%values(i) = 0.0
-               end if
-            end do
-
-            call allocate_test (do_calc_salb, npf, size(grids_salb%values),'do_calc_salb',moduleName)
-            call allocate_test (do_calc_salb_zp, npf, grids_salb%p_len,               &
-                              & 'do_calc_salb_zp', moduleName )
-            call allocate_test (eta_salb,    npf, size(grids_salb%values), 'eta_salb', moduleName)
-            call allocate_test (eta_salb_zp, npf, grids_salb%p_len, 'eta_salb_zp', moduleName)
-            call allocate_test ( salb_path,  npf, 1, 'salb_path', moduleName )
-
-            call allocate_test (do_calc_cext,npf,size(grids_cext%values),'do_calc_cext',moduleName)
-            call allocate_test (do_calc_cext_zp, npf, grids_cext%p_len,               &
-                              & 'do_calc_cext_zp', moduleName )
-            call allocate_test (eta_cext,    npf, size(grids_cext%values), 'eta_cext', moduleName)
-            call allocate_test (eta_cext_zp, npf, grids_cext%p_len,  'eta_cext_zp', moduleName)
-            call allocate_test (cext_path,   npf, 1, 'cext_path', moduleName)
+            where ( abs(grids_salb%values) < TOL ) grids_salb%values = 0.0
+            where ( abs(grids_cext%values) < TOL ) grids_cext%values = 0.0
 
             call comp_eta_docalc_no_frq ( Grids_salb, z_path(1:npf), &
               &  phi_path(1:npf), eta_salb_zp(1:npf,:),              &
               &  do_calc_salb_zp(1:npf,:), tan_pt=tan_pt_f )
 
-          ! Frq=0.0
             call comp_sps_path_frq ( Grids_salb,               &
-              & 0.0_r8, eta_salb_zp(1:npf,:),                  &
+              & frq_0, eta_salb_zp(1:npf,:),                   &
               & do_calc_salb_zp(1:npf,:), salb_path(1:npf,:),  &
               & do_calc_salb(1:npf,:), eta_salb(1:npf,:) )
 
@@ -1974,9 +1959,8 @@ contains
               &  phi_path(1:npf), eta_cext_zp(1:npf,:),              &
               &  do_calc_cext_zp(1:npf,:), tan_pt=tan_pt_f )
 
-          ! Frq=0.0
             call comp_sps_path_frq ( Grids_cext,               &
-              & 0.0_r8, eta_cext_zp(1:npf,:),                  &
+              & frq_0, eta_cext_zp(1:npf,:),                   &
               & do_calc_cext_zp(1:npf,:), cext_path(1:npf,:),  &
               & do_calc_cext(1:npf,:), eta_cext(1:npf,:) )
 
@@ -1986,35 +1970,18 @@ contains
 
             call convert_grid ( salb_path(1:npf,:), cext_path(1:npf,:),  & 
                               & tt_path(1:npf,:), c_inds,                & 
-                              & beta_path_cloud_c(1:npc), w0_path_c,           & 
+                              & beta_path_cloud_c(1:npc), w0_path_c,     & 
                               & tt_path_c )
 
-          else ! Not cld_fine              re-compute cext and w0 along the LOS
+          else
 
+            ! cld_fine              re-compute cext and w0 along the LOS
             call get_beta_path_cloud ( Frq, p_path, t_path(1:npf),      &
               &  tt_path(1:npf,:), c_inds,                              &
               &  beta_path_cloud_c(1:npc), w0_path_c,  tt_path_c,       &
               &  IPSD(1:npf),  WC(:,1:npf), fwdModelConf )
 
           end if
-
-          call deallocate_test ( do_calc_tscat,    'do_calc_tscat',    moduleName )
-          call deallocate_test ( do_calc_tscat_zp, 'do_calc_tscat_zp', moduleName )
-          call deallocate_test ( eta_tscat,        'eta_tscat',        moduleName )
-          call deallocate_test ( eta_tscat_zp,     'eta_tscat_zp',     moduleName )           
-          call deallocate_test ( tscat_path,       'tscat_path',       moduleName )
-
-          call deallocate_test ( do_calc_salb,     'do_calc_salb',     moduleName )
-          call deallocate_test ( do_calc_salb_zp,  'do_calc_salb_zp',  moduleName )
-          call deallocate_test ( eta_salb,         'eta_salb',         moduleName )
-          call deallocate_test ( eta_salb_zp,      'eta_salb_zp',      moduleName )
-          call deallocate_test ( salb_path,        'salb_path',        moduleName )
-
-          call deallocate_test ( do_calc_cext,     'do_calc_cext',     moduleName )
-          call deallocate_test ( do_calc_cext_zp,  'do_calc_cext_zp',  moduleName )
-          call deallocate_test ( eta_cext,         'eta_cext',         moduleName )
-          call deallocate_test ( eta_cext_zp,      'eta_cext_zp',      moduleName )
-          call deallocate_test ( cext_path,        'cext_path',        moduleName )
 
           do j = 1, npc ! Don't trust compilers to fuse loops
             alpha_path_c(j) = dot_product( sps_path(c_inds(j),:), &
@@ -2036,28 +2003,33 @@ contains
           !  here by the rectangle rule, \emph{viz.}
           !  $\Delta \delta_{i\rightarrow i-1} \approx G(\zeta_i) \delta s_i$.
 
-          do j = 1, npc ! Don't trust compilers to fuse loops
+          do j = i_start, i_end ! Don't trust compilers to fuse loops
             alpha_path_c(j) = dot_product( sps_path(c_inds(j),:), &
                                          & beta_path_c(j,:) )
             incoptdepth(j) = alpha_path_c(j) * del_s(j)
           end do
+          incoptdepth(i_end+1:npc) = 0.0 ! if not integrating full path
 
-          ! Needed to compute inc_rad_path_slice and by rad_tran_pol
-          call two_d_t_script ( t_path_c, &  
-            & spaceRadiance%values(1,1), frq, t_script(:,frq_i), B(:npc) )
+          ! T_Script and B needed to compute inc_rad_path_slice and by rad_tran_pol
+          call two_d_t_script ( t_path_c(i_start:i_end), &  
+            & spaceRadiance%values(1,1), frq, &
+            & t_script(i_start:i_end,frq_i), &
+            & B(i_start:i_end) )
 
         end if ! end of check cld 
 
         if ( .not. fwdModelConf%polarized ) then
           ! Determine where to use Gauss-Legendre for scalar instead of a trapezoid.
 
-          call path_contrib ( incoptdepth, tan_pt_c, e_rflty, fwdModelConf%tolerance, &
-            &                 do_gl )
+          call path_contrib ( incoptdepth, tan_pt_c, i_start, i_end, &
+            &                 e_rflty, fwdModelConf%tolerance, do_gl )
 
-        else ! extra stuff for polarized case
+        else ! Extra stuff for polarized case
+             ! Can't be doing TScat, so process the whole path
 
-          call get_beta_path_polarized ( frq, firstSignal%lo, h, beta_group%lbl(sx), gl_slabs, &
-            & c_inds, beta_path_polarized, dBeta_dT_polarized_path_c )
+          call get_beta_path_polarized ( frq, firstSignal%lo, h,         &
+            & beta_group%lbl(sx), gl_slabs, c_inds, beta_path_polarized, &
+            & dBeta_dT_polarized_path_c )
 
           ! We put an explicit extent of -1:1 for the first dimension in
           ! the hope a clever compiler will do better optimization with
@@ -2114,14 +2086,14 @@ contains
         ! Where we do GL, the second integral is approximated using GL (in
         ! {\tt Get\_Tau}).  Where we don't do GL, approximate it using the
         ! trapezoid rule (here).  There is already a factor of 0.5 in
-        ! {\tt del_zeta}, to compensate for the GL weights summing to 2.0.
+        ! {\tt del\_zeta}, to compensate for the GL weights summing to 2.0.
 
-        do j = 2, tan_pt_c
+        do j = i_start+1, tan_pt_c
           if ( .not. do_gl(j) ) &
             & incoptdepth(j) = incoptdepth(j) + &
               & ( alpha_path_c(j-1) - alpha_path_c(j) ) * dsdz_c(j-1)*del_zeta(j)
         end do
-        do j = tan_pt_c+1, npc-1
+        do j = tan_pt_c+1, i_end-1
           if ( .not. do_gl(j) ) &
             & incoptdepth(j) = incoptdepth(j) + &
               & ( alpha_path_c(j+1) - alpha_path_c(j) ) * dsdz_c(j+1)*del_zeta(j)
@@ -2152,10 +2124,10 @@ contains
           ! This avoids having four paths through the code, each with a
           ! different set of optional arguments.
 
-          call get_beta_path ( Frq, firstSignal%lo, p_path, t_path_f(:ngl), tanh1_f(1:ngl),    &
-            & beta_group, sx, fwdModelConf%polarized, gl_slabs, gl_inds,       &
-            & beta_path_f(:ngl,:), t_der_path_flags, dTanh_dT_f, vel_rel,      &
-            & dbeta_dT_path_f, dbeta_dw_path_f, dbeta_dn_path_f,               &
+          call get_beta_path ( Frq, firstSignal%lo, p_path, t_path_f(:ngl),    &
+            & tanh1_f(1:ngl), beta_group, sx, fwdModelConf%polarized, gl_slabs,&
+            & gl_inds, beta_path_f(:ngl,:), t_der_path_flags, dTanh_dT_f,      &
+            & vel_rel, dbeta_dT_path_f, dbeta_dw_path_f, dbeta_dn_path_f,      &
             & dbeta_dv_path_f, sps_path )
 
         end if ! .not. pfa
@@ -2166,37 +2138,58 @@ contains
                                        & beta_path_f(j,:) )
         end do
 
+        if ( print_incopt ) then
+          call dump ( beta_path_c(i_start+1:i_end-1,:), name="Beta_Path" )
+          call dump ( sps_path(c_inds(i_start+1:i_end-1),:), name="SPS_Path" )
+          call dump ( alpha_path_c(i_start+1:i_end-1), name="Alpha_Path_C" )
+          call dump ( incoptdepth(i_start+1:i_end-1), name="Incoptdepth" )
+          call dump ( del_s(i_start+1:i_end-1), name="Del_s" )
+        end if
+
         if ( .not. fwdModelConf%polarized ) then
 
         ! Compute SCALAR radiative transfer --------------------------
 
-          call get_tau ( frq_i, gl_inds, cg_inds, e_rflty, del_zeta, &
-            & alpha_path_c, ref_corr, incoptdepth, tan_pt_c,         &
-            & alpha_path_f(1:ngl), dsdz_gw_path, tau )
-            i_stop = tau%i_stop(frq_i)
+          call get_tau ( frq_i, gl_inds, cg_inds, i_start, e_rflty,  &
+            & del_zeta, alpha_path_c, ref_corr, incoptdepth(:i_end), &
+            & tan_pt_c, alpha_path_f(1:ngl), dsdz_gw_path, tau )
+          i_stop = tau%i_stop(frq_i)
 
           ! Get incremental radiance and radiance from Tau and T_Script
           ! Don't clobber them if doing PFA and already did LBL.
           if ( .not. pfa .or. .not. fwdModelConf%anyLBL(sx) ) then
             radV(frq_i) = 0.0
-            do j = 1, i_stop
+            do j = i_start, i_stop
               inc_rad_path_slice(j) = t_script(j,frq_i) * tau%tau(j,frq_i)
               radV(frq_i) = radV(frq_i) + inc_rad_path_slice(j)
             end do ! j
-            inc_rad_path_slice(i_stop+1:) = 0
           end if
 
           if ( pfa .and. frq_avg_sel == 15 ) then ! See Frequency_Average.
             ! Multiply Rad_Avg_Path by Tau to combine LBL and PFA.  Then
             ! sum to give RadV.  Remember, if PFA, Frq_I is a channel number.
             radV(frq_i) = 0.0
-            do j = 1, i_stop
+            do j = i_start, i_stop
               Rad_Avg_Path(j,frq_i) = Rad_Avg_Path(j,frq_i) * tau%tau(j,frq_i)
               radV(frq_i) = radV(frq_i) + Rad_Avg_Path(j,frq_i)
             end do ! j
             inc_rad_path_slice => Rad_Avg_Path(:npc,frq_i)
           end if
-        else ! Polarized model; can't combine with PFA
+
+          inc_rad_path_slice(i_stop+1:) = 0
+
+          if ( print_incopt ) then
+            call dump ( tau%tau(i_start:i_stop,frq_i), name="Tau" )
+            call dump ( inc_rad_path_slice(i_start:i_stop), name="Inc_Rad_Path_Slice" )
+            call output ( frq_i, before="RadV(" )
+            call output ( radV(frq_i), before=") = ", advance="yes" )
+          end if
+
+          if ( print_path ) call dump_path ( fwdModelConf, i_start, i_end, &
+            & phi_path(c_inds), z_path(c_inds), sps_path(c_inds,:), beta_path_c, &
+            & alpha_path_c, incoptdepth, frq_i, tau, inc_rad_path_slice )
+
+        else ! Polarized model; can't combine with PFA or TScat
 
         ! Compute POLARIZED radiative transfer -----------------------------
 
@@ -2204,8 +2197,9 @@ contains
 
           ! Get the corrections to integrals for layers that need GL for
           ! the polarized species.
-          call get_beta_path_polarized ( frq, firstSignal%lo, h, beta_group%lbl(sx), gl_slabs, &
-            & gl_inds, beta_path_polarized_f, dBeta_dT_polarized_path_f )
+          call get_beta_path_polarized ( frq, firstSignal%lo, h,            &
+            & beta_group%lbl(sx), gl_slabs, gl_inds, beta_path_polarized_f, &
+            & dBeta_dT_polarized_path_f )
 
           ! We put an explicit extent of -1:1 for the first dimension in
           ! the hope a clever compiler will do better optimization with
@@ -2232,9 +2226,9 @@ contains
             call output ( -p_stop )
             call output ( ') failed.  Value is', advance='yes' )
             call dump ( incoptdepth_pol(:,:,-p_stop), clean=.true. )
-            call output ( 'thisSideband = ' ); call output ( thisSideband )
-            call output ( ', ptg_i = ' ); call output ( ptg_i )
-            call output ( ', frq_i = ' ); call output ( frq_i, advance='true' )
+            call output ( thisSideband, before='thisSideband = ' )
+            call output ( ptg_i, before=', ptg_i = ' )
+            call output ( frq_i, before=', frq_i = ', advance='true' )
             call dump ( t_path_c(:npc), name='T_Path' )
             call dump ( ref_corr(:npc), name='Ref_Corr' )
             call dump ( n_path_c(:npc), name='N_Path' )
@@ -2257,13 +2251,12 @@ contains
           call drad_tran_df ( max_f, c_inds, gl_inds, del_zeta, Grids_f, &
             &  beta_path_c, eta_fzp, sps_path, do_calc_fzp,       &
             &  beta_path_f, do_gl, del_s, ref_corr, dsdz_gw_path, &
-            &  inc_rad_path_slice, tan_pt_c, i_stop,              &
+            &  inc_rad_path_slice, i_start, tan_pt_c, i_stop,     &
             &  size(d_delta_df,1), d_delta_df, nz_d_delta_df,     &
             &  nnz_d_delta_df, k_atmos_frq(frq_i,:) )
 !            &  d_delta_df(1:npc,:), k_atmos_frq(frq_i,:) )
-          if ( FwdModelConf%anyPFA(sx) ) then
 
-          else if ( fwdModelConf%polarized ) then
+          if ( .not. pfa_or_not_pol ) then ! polarized and not PFA
 
             ! VMR derivatives for polarized radiance.
             ! Compute DE / Df from D Incoptdepth_pol / Df and put
@@ -2287,11 +2280,15 @@ contains
               k_atmos_frq(frq_i,:) = real(d_rad_pol_df(2,2,:))
             end if
 
-          end if ! PFA
+          end if ! polarized and not PFA
 
-        end if
+        end if ! atmos_der
 
         if ( temp_der ) then
+
+          ! put indices of nonzeros in nz_zxp_t that are in c_inds into nz_zxp_t_c
+          call select_nz_list ( nz_zxp_t, nnz_zxp_t, c_inds(:i_stop), i_start, &
+            & nz_zxp_t_c, nnz_zxp_t_c )
 
           ! get d Delta B / d T * d T / eta
           call dt_script_dt ( t_path_c, B(:npc), eta_zxp_t_c(1:npc,:), &
@@ -2318,8 +2315,9 @@ contains
               & dAlpha_dT_path_f(:ngl), eta_zxp_t_f(:ngl,:),                 &
               & do_calc_t_f(:ngl,:), dsdh_path, dhdz_gw_path, dsdz_gw_path,  &
               & d_t_scr_dt(1:npc,:), tau%tau(:npc,frq_i),                    &
-              & inc_rad_path_slice, tan_pt_c, i_stop, grids_tmp%deriv_flags, &
-              & pfa .and. frq_avg_sel == 15, k_temp_frq(frq_i,:) )
+              & inc_rad_path_slice, i_start, tan_pt_c, i_stop,               &
+              & grids_tmp%deriv_flags, pfa .and. frq_avg_sel == 15,          &
+              & k_temp_frq(frq_i,:) )
 
           else ! pol and not pfa
 
@@ -2434,12 +2432,15 @@ contains
     end subroutine Frequency_Loop
 
   ! ..........................................  Frequency_Setup_1  .....
-    subroutine Frequency_Setup_1
+    subroutine Frequency_Setup_1 ( Tan_Press, Grids )
 
       ! Work out which pointing frequency grid we're going to need
 
       ! Code splits into two sections, one for when we're doing frequency
       ! averaging, and one when we're not.
+
+      real(rp), intent(in) :: Tan_Press(:)
+      integer, intent(out) :: Grids(:)
 
       integer :: I, K, PTG_I, ShapeInd
       integer :: MAXNOPTGFREQS     ! Used for sizing arrays
@@ -2447,31 +2448,31 @@ contains
       real(rp) :: R1, R2           ! real variables for various uses
       integer :: SUPERSET          ! Output from AreSignalsSuperset
 
+      nullify ( whichPointingGrid )
+
       if ( fwdModelConf%do_freq_avg .and. fwdModelConf%anyLBL(sx) ) then
 
-        whichPointingGrid = -1
         minSuperset = huge(0)
         do i = 1, size(pointingGrids)
           superset = AreSignalsSuperset ( pointingGrids(i)%signals, &
             & fwdModelConf%signals, sideband=thisSideband )
           if ( superset >= 0 .and. superset <= minSuperset ) then
             minSuperset = superset
-            whichPointingGrid = i
+            whichPointingGrid => pointingGrids(i)
           end if
         end do
-        if ( whichPointingGrid < 0 ) call Announce_Error ( &
+        if ( .not. associated(whichPointingGrid) ) call Announce_Error ( &
                & "No matching pointing frequency grids." )
 
         ! Now we've identified the pointing grids.  Locate the tangent grid
         ! within it.
-        call Hunt ( PointingGrids(whichPointingGrid)%oneGrid%height, &
+        call Hunt ( whichPointingGrid%oneGrid%height, &
                  &  tan_press, grids, allowTopValue=.TRUE., nearest=.TRUE. )
         ! Work out the maximum number of frequencies
         maxNoPtgFreqs = 0
         do ptg_i = 1, no_tan_hts
-          k = Size(pointingGrids(whichPointingGrid)%oneGrid(grids(ptg_i))% &
-                 & frequencies)
-          maxNoPtgFreqs = max ( maxNoPtgFreqs, k )
+          maxNoPtgFreqs = max ( maxNoPtgFreqs, &
+            & Size(whichPointingGrid%oneGrid(grids(ptg_i))%frequencies) )
         end do
 
         min_ch_freq_grid =  huge(min_ch_freq_grid)
@@ -2559,14 +2560,333 @@ contains
 
   ! .............................................  Generate_TScat  .....
     subroutine Generate_TScat
-      integer :: phi_i, ptg_i, zeta_i ! Loop inductors and subscripts
-      ! Loop over observer positions and scattering angles
-      do phi_i = 1, cloudIce%template%noInstances
-        do zeta_i = 1, cloudIce%template%noSurfs
-          do ptg_i = 1, scatteringAngles%template%noSurfs
+
+      ! Generate tables of TScat and its derivatives w.r.t. temperature
+      ! and IWC.  The geometric calculations are described in wvs_074.
+
+      use Constants, only: Pi
+      use ForwardModelConfig, only: QtyStuff_T
+      use Get_Eta_Matrix_m, only: Get_Eta_Sparse
+      use MLSSignals_m, only: GetNameOfSignal
+      use output_m, only: NewLine
+
+      real(rp) :: DPhi         ! Scat_Phi - Phi_Ref
+      real(rp) :: DPhi_Xi      ! dPhi - xi = psi in wvs-074
+      real(rp) :: Eta_s(size(Grids_tmp%phi_basis)) ! Coeffs to Scat_Tan_Phi
+      real(rp) :: Phi_Old      ! Used during iteration for Scat_Tan_Phi
+      real(rp) :: Phi_Ref      ! Tangent phi for the scattered ray
+      real(rp) :: Rads(4*nlvl+2*scatteringAngles%template%noSurfs,noUsedChannels)
+      real(rp) :: Ref_Ht       ! Height of the ray at the reference phi
+      real(rp) :: R_Eq         ! Equivalent circular earth radius at Phi_Ref
+      real(rp) :: Scat_Ht      ! km from center of equivalent circular earth
+      real(rp) :: Scat_Phi     ! Of the scattering point
+      real(rp) :: Scat_Tan_Ht  ! Of the ray to be scattered, Km from center
+      real(rp) :: Scat_Tan_Phi ! Of the ray to be scattered
+      real(rp) :: Scat_Zeta    ! Of the scattering point
+      real(rp) :: Theta        ! Angle from direct to reflected
+                               ! earth-intersecting ray
+      real(rp) :: Vel_Rel      ! LOS velocity / speed of light, along scattered
+                               ! ray
+      real(rp) :: Xi           ! Scattering angle
+      real(rp) :: Xi_Sub       ! Angle from horizon to scattering point's
+                               ! subsurface point
+      real(rp) :: Xis(size(rads,1))
+
+      ! Interpolating factors
+      real(rp) :: Eta_IWC(size(IWC_s))  ! for current IWC
+      real(rp) :: Eta_T(size(T_s))      ! for current temperature
+      real(rp) :: Eta_Xi(size(Theta_s)) ! for current pointing
+
+      integer :: IWC_1, IWC_n ! Which eta_IWC are nonzero
+      integer :: T_1, T_n     ! Which eta_T are nonzero
+      integer :: Xi_1, Xi_n   ! Which eta_xi are nonzero
+
+      integer :: F_I           ! Frequency (channel) index
+      integer :: First_s, Last_s ! How much of Eta_s to use
+      logical :: Forward       ! Half-ray is an earth-intersecting ray
+                               ! in the forward direction, xi >= xi_sub
+      integer :: I             ! Loop inductor
+      integer :: I_R           ! Index in Rad, Xis
+      integer :: I_Z           ! Index of scattering point zeta in Z_psig
+      integer :: Phases(noUsedChannels) ! Indices for phase tables
+      integer :: Phi_i         ! Loop inductor and subscript
+      integer :: Ptg_i, Ptg_j  ! Loop inductors and subscripts
+      integer :: Ptg_f         ! Ptg_i, Ptg_j on fine grid
+      logical :: Switch42      ! "42" appears in Switches
+      integer :: Zeta_i        ! Loop inductor and subscript
+      integer :: Zeta_f        ! I_z on find grid
+
+      character(128) :: Sig    ! Signal name, scratch for debug output
+
+      type (QtyStuff_T) :: Qtys(noUsedChannels)
+      type (VectorValue_T), pointer :: TScat
+
+      real(rp), parameter :: PIX2 = 2.0_rp * pi
+      real(rp), parameter :: PID2 = 0.5 * pi
+
+      if ( toggle(emit) ) call Trace_Begin ( 'Generate_TScat' )
+      switch42 = index(switches,"42") /= 0
+
+      ! Work out by-channel stuff
+
+      ! Get channel centers if we don't already have them
+      if ( fwdModelConf%do_freq_avg .and. fwdModelConf%anyLBL(sx) .and. .not. &
+        &  fwdModelConf%anyPFA(sx) ) call get_channel_centers ( channelCenters )
+
+      if ( print_TScat .or. print_TScat_detail > 0 ) &
+        & call output ( "Signals used for TScat computation:", advance="yes" )
+      do f_i = 1, noUsedChannels
+        ! Vector quantities for results, one for each channel
+        qtys(f_i)%qty => GetQuantityForForwardModel ( &
+          & fwdModelOut, quantityType=l_TScat, &
+          & signal=fwdModelConf%signals(channels(f_i)%signal)%index, &
+          & sideband=sideband )
+        if ( print_TScat .or. print_TScat_detail > 0 ) then
+          call GetNameOfSignal ( fwdModelConf%signals(channels(f_i)%signal), sig, &
+            & channel=channels(f_i)%used, sideband=thisSideband )
+          call output ( trim(sig), advance="yes" )
+        end if
+        ! Choose which frequency panel of phase function to use
+        ! (don't interpolate).  Make sure it's close enough.
+        phases(f_i) = minloc(abs(channelCenters(f_i)-f_s),1)
+        if ( abs(channelCenters(f_i)-f_s(phases(f_i))) > fwdModelConf%phaseFrqTol ) then
+          call output ( phases(f_i), before="phases(f_i) = ", after=", " )
+          call dump ( f_s, name="F_s" )
+          call dump ( channelCenters, name="ChannelCenters" )
+          call MLSMessage ( MLSMSG_Error, moduleName, &
+            & 'In TScat computation, phase function frequency coordinate too far from channel center' )
+        end if
+      end do
+
+      ! Get TScat quantity for first signal, to access its grids (they all have
+      ! the same grids)
+      TScat => GetQuantityForForwardModel ( &
+          & fwdModelOut, quantityType=l_TScat, &
+          & signal=fwdModelConf%signals(channels(1)%signal)%index, &
+          & sideband=sideband )
+
+      vel_rel = LOSVel%values(FwdModelConf%TScatMIF,MAF) / speedOfLight
+
+      phi_ref = phitan%values(FwdModelConf%TScatMIF,MAF) * deg2rad
+      r_eq = get_R_eq ( phi_ref, earthradc_sq )
+
+      if ( print_TScat_detail > 0 ) then
+        call output ( rad2deg*phi_ref, before="Phi_Ref = ", advance="yes" )
+        ! Debugging output header
+        call output ( &
+          & "Scat_Phi   Scat_Ht   Scat_Zeta     Xi       D2     Tan_Phi    Tan_Ht  Begin Phi   End Phi", &
+          & advance="yes" )
+      end if
+
+      ! Loop over observer zetas
+      do zeta_i = 1, TScat%template%noSurfs
+        scat_zeta = TScat%template%surfs(zeta_i,1)
+
+        ! Find index of Z_psig element closest to scat_zeta.
+        ! Assuming observer zetas got put into Z_psig as they should have been,
+        ! this should hit one element exactly.
+        i_z = minloc(abs(z_psig-scat_zeta),1)
+        if ( abs(z_psig(i_z)-scat_zeta) > 10.0 * epsilon(scat_zeta) * abs(scat_zeta) ) then
+          call output ( scat_zeta, before="Scattering point Zeta ", advance="yes" )
+          call dump ( z_psig, name="Zeta grid" )
+          call MLSMessage ( MLSMSG_Error, moduleName, &
+            & 'Scattering point Zeta ! & to be in Zeta grid' )
+        end if
+        zeta_f = (i_z-1) * ngp1 + 1 ! On Z_GLgrid, for H_GLGrid
+
+        ! Loop over observer phis
+        do phi_i = 1, TScat%template%noInstances
+
+          scat_phi = TScat%template%phi(1,phi_i) * deg2rad
+          dPhi = scat_phi - phi_ref
+          ! Interpolate in H_GLGrid at (phi_i,zeta_f) to get Scat_Ht
+          call get_eta_sparse ( Grids_tmp%phi_basis, scat_phi, &
+                              & eta_s, first_s, last_s )
+          scat_ht = dot_product(h_glgrid(zeta_f,first_s:last_s), &
+                 &             eta_s(first_s:last_s)) + r_eq
+
+          ! Subsurface scattering points handled by explicit angles
+          if ( scat_ht < r_eq ) cycle
+
+          ! Height of the ray at the phi_ref
+          ref_ht = scat_ht * cos(dPhi)
+
+          ! First do pointings to each zeta surface below the scattering
+          ! point zeta.  Pointings to specified angles aren't guaranteed to
+          ! be tangent at a pressure in the zeta grid.
+
+          i_r = 0
+          do ptg_i = 1, i_z
+
+            ! Handle earth-intersecting rays using explicit angles
+            if ( ptg_i < surfaceTangentIndex ) cycle
+
+            ptg_f = (ptg_i-1) * ngp1 + 1 ! On Z_GLgrid, for H_GLGrid
+
+            ! Compute scat_tan_ht and scat_tan_phi for the ray to be scattered.
+            ! Start with scat_tan_phi == phi_ref and iterate.
+
+            scat_tan_phi = phi_ref
+            do i = 1, 20
+              phi_old = scat_tan_phi
+
+              call get_eta_sparse ( Grids_tmp%phi_basis, scat_tan_phi, &
+                                  & eta_s, first_s, last_s )
+
+              scat_tan_ht = dot_product(h_glgrid(ptg_f,first_s:last_s), &
+                          &             eta_s(first_s:last_s)) + r_eq
+
+              ! Compute scattering angle and tan phi for the ray to be
+              ! scattered.  This is measured anti clockwise from the ray from
+              ! the scattering point to the external observer, so the
+              ! "downward" ray is at a negative angle.
+              dPhi_xi = acos(min(scat_tan_ht,scat_ht)/scat_ht)
+              xi = dPhi - dPhi_xi
+              scat_tan_phi = phi_ref + xi
+              if ( abs(scat_tan_phi-phi_old) < 0.0001 ) exit
+            end do
+
+            ! Handle earth-intersecting rays using explicit angles
+            if ( scat_tan_ht < r_eq ) cycle
+
+            ! Rays from the scattering point can't be tangent to higher altitudes
+
+            if ( scat_tan_ht > scat_ht ) cycle
+
+            ! If we're doing frequency averaging, get the frequencies we need
+            ! for this pointing.
+
+            if ( associated(whichPointingGrid) ) &
+              & call frequency_setup_2 ( (1.0_rp - Vel_Rel) * &
+              & whichPointingGrid%oneGrid(grids(ptg_i))%frequencies )
+
+            ! Do the ray tracing and radiative transfer, four times: once each
+            ! for forward and reverse scattering, and once each for upwelling
+            ! and downwelling rays
+            call one_tscat_pointing ( ptg_i, vel_rel, scat_tan_phi, &
+              &                       scat_zeta, scat_phi, scat_ht, &
+              &                       r_eq, xi, zeta_i, phi_i,      &
+              &                       xis, rads, i_r, rev=.true. )
+
+            xi = xi + pi
+            call one_tscat_pointing ( ptg_i, vel_rel, scat_tan_phi, &
+              &                       scat_zeta, scat_phi, scat_ht, &
+              &                       r_eq, xi, zeta_i, phi_i,      &
+              &                       xis, rads, i_r, rev=.false. )
+
+            xi = dPhi_xi + dPhi - pi
+            scat_tan_phi = scat_tan_phi + 2.0 * dphi_xi
+            call one_tscat_pointing ( ptg_i, vel_rel, scat_tan_phi, &
+              &                       scat_zeta, scat_phi, scat_ht, &
+              &                       r_eq, xi, zeta_i, phi_i,      &
+              &                       xis, rads, i_r, rev=.false. )
+
+            xi = xi + pi
+            call one_tscat_pointing ( ptg_i, vel_rel, scat_tan_phi, &
+              &                       scat_zeta, scat_phi, scat_ht, &
+              &                       r_eq, xi, zeta_i, phi_i,      &
+              &                       xis, rads, i_r, rev=.true. )
+
           end do ! ptg_i
-        end do ! zeta_i
-      end do ! phi_i
+
+          ! Now do pointings to specified angles, but only those that result
+          ! in earth-intersecting rays.  Use the surface-pressure frequency
+          ! pointing grid for all pointings.
+
+          ! If we're doing frequency averaging, get the frequencies we need.
+
+          if ( associated(whichPointingGrid) ) &
+            & call frequency_setup_2 ( (1.0_rp - Vel_Rel) * &
+            & whichPointingGrid%oneGrid(grids(1))%frequencies )
+
+          do ptg_j = 1, scatteringAngles%template%noSurfs
+
+            xi = scatteringAngles%template%surfs(ptg_j,1) * deg2rad
+
+            ! Reject angles not pointing downward
+
+            if ( xi > 0.0 .or. xi < -pi ) cycle
+
+            ! Compute scat_tan_ht and scat_tan_phi for the ray to be scattered.
+
+            scat_tan_ht = scat_ht * abs(cos(dPhi - xi)) ! xi < 0 here
+            theta = 2.0 * acos(scat_tan_ht/r_eq)
+
+            ! Rays that aren't earth-intersecting rays must be handled by
+            ! specified tangent zeta (else there is no unique tangent
+            ! point), not by specified angle.  They could be handled by
+            ! solving for tangent zeta using inverse interpolation in the
+            ! h_ref array, and then adding that zeta to the grid, but it's
+            ! much easier just to reject them.
+
+            scat_tan_ht = scat_tan_ht - r_eq
+            if ( scat_tan_ht > 0.0 ) cycle
+
+            xi_sub = dPhi - pid2
+            forward = xi >= xi_sub
+            scat_tan_phi = phi_ref + xi
+            if ( xi < xi_sub ) scat_tan_phi = scat_tan_phi - pi
+            if ( scat_tan_phi > pix2 ) scat_tan_phi = scat_tan_phi - pix2
+            if ( scat_tan_phi < -pix2 ) scat_tan_phi = scat_tan_phi + pix2
+
+            if ( print_TScat_detail > 1 ) then
+              write ( sig, "('scat_tan_ht = ', f10.4,', scat_tan_phi = ', f7.2, &
+              & ', xi_sub =', f7.2, ', theta = ', f7.2)" ) &
+              & scat_tan_ht, rad2deg*scat_tan_phi, rad2deg*xi_sub, rad2deg*theta
+              call output ( trim(sig), advance='yes' )
+            end if
+
+            ! Do the ray tracing and radiative transfer
+            call one_tscat_pointing ( 1, vel_rel, scat_tan_phi,     &
+              &                       scat_zeta, scat_phi, scat_ht, &
+              &                       r_eq, xi, zeta_i, phi_i,      &
+              &                       xis, rads, i_r, scat_tan_ht, forward )
+
+            xi = xi + pi
+            call one_tscat_pointing ( 1, vel_rel, scat_tan_phi,     &
+              &                       scat_zeta, scat_phi, scat_ht, &
+              &                       r_eq, xi, zeta_i, phi_i,      &
+              &                       xis, rads, i_r, scat_tan_ht, forward )
+
+          end do ! ptg_j
+
+          if ( print_TScat ) then
+            call output ("Phi_Ref  Scat_Phi   Scat_Ht  Scat_Zeta     Xi    Radiances", advance="yes" )
+            ! ptg_i, ptg_j and sig are just conveniently otherwise unused variables here
+            do ptg_i = 1, i_r
+              write ( sig, "(f7.2,f9.2,f12.4,f8.3,f11.2)" ) rad2deg*phi_ref, &
+                & rad2deg*scat_phi, scat_ht, scat_zeta, rad2deg*xis(ptg_i)
+              call output ( trim(sig) )
+              do ptg_j = 1, noUsedChannels
+                call output ( rads(ptg_i,ptg_j), format="(f9.3)" )
+              end do ! ptg_j
+              call newLine
+              if ( switch42 ) then
+                do ptg_j = 1, noUsedChannels
+                  call GetNameOfSignal ( fwdModelConf%signals(channels(ptg_j)%signal), &
+                    & sig, channel=channels(ptg_j)%used, sideband=thisSideband )
+                  write ( 42, "(f7.2,f9.2,f12.4,f8.3,f11.2,f9.3,2x,a)" ) &
+                    & rad2deg*phi_ref, rad2deg*scat_phi, scat_ht, scat_zeta, &
+                    & rad2deg*xis(ptg_i), rads(ptg_i,ptg_j), trim(sig)
+                end do
+              end if
+            end do ! ptg_i
+          end if
+
+          ! Get interpolating factors for scattering-point IWC.
+          call get_eta_sparse ( IWC_s, iwc%values(zeta_i,phi_i), &
+            & eta_IWC, IWC_1, IWC_n )
+          ! Get interpolating factors for scattering-point temperature.
+          call get_eta_sparse ( T_s, temp%values(zeta_i,phi_i), eta_T, T_1, T_n )
+
+          ! Interpolate the radiances from the Xis to the angular basis
+          ! for the phase function and convolve the phase function with them.
+
+        end do ! phi_i
+      end do ! zeta_i
+
+      if ( toggle(emit) ) call Trace_End ( 'Generate_TScat' )
+
     end subroutine Generate_TScat
 
   ! ........................................  Get_Channel_Centers  .....
@@ -2598,13 +2918,45 @@ contains
     end subroutine Get_Channel_Centers
 
   ! ...............................................  One_Pointing  .....
-    subroutine One_Pointing ( Vel_Rel, Tan_Phi, Tan_Press, Est_SCGeocAlt )
+    subroutine One_Pointing ( Ptg_i, Vel_Rel, Tan_Phi, Tan_Press, Est_SCGeocAlt, &
+      & Use_R_Eq, Scat_Zeta, Scat_Phi, Scat_Ht, Xi, Scat_Index, Scat_Tan_Ht,     &
+      & Forward, Rev )
 
-      real(rp), intent(in) :: Vel_Rel ! Vel_z / speedOfLight
-      real(rp), intent(in) :: Tan_Phi ! orbit geodetic angle at tangent, radians
-      real(rp), intent(in), optional  :: Tan_Press    ! hPa, not zeta
+      use Constants, only: Pi
+
+      integer, intent(in) :: Ptg_i     ! Pointing index
+      real(rp), intent(in) :: Vel_Rel  ! Vel_z / speedOfLight
+      real(rp), intent(in) :: Tan_Phi  ! orbit geodetic angle at tangent, radians
+      real(rp), intent(in), optional :: Tan_Press     ! hPa, not zeta
       real(rp), intent(in), optional :: Est_SCGeocAlt ! Est S/C geocentric
         ! altitude /m, used only to compute chi angles for convolution
+
+      real(rp), intent(in), optional :: Use_R_Eq    ! instead of at tangent
+      ! The following are all present iff fwdModelConf%generateTScat
+      real(rp), intent(in), optional :: Scat_Zeta   ! of scattering point
+      real(rp), intent(in), optional :: Scat_Phi    ! of scattering point
+      real(rp), intent(in), optional :: Scat_Ht     ! To check we hit the
+                                                    ! scattering point
+      real(rp), intent(in), optional :: Xi          ! Scattering angle
+      integer, intent(out), optional :: Scat_Index  ! in coarse grid
+      real(rp), intent(in), optional :: Scat_Tan_Ht ! Tangent height above earth
+                                                    ! geometric surface, km, for
+                                                    ! subsurface rays and
+                                                    ! generateTScat
+      logical, intent(in), optional :: Forward      ! For subsurface rays
+                                                    ! and generateTScat
+      logical, intent(in), optional :: Rev          ! Reverse the path
+
+      integer :: I_start, I_end ! Boundaries of coarse path to use
+      character(100) :: Line    ! Of output
+      logical :: MyRev          ! "Reverse the integration path"
+      real(rp) :: R_EQ          ! Equivalent Earth Radius at true surface
+      real(rp) :: REQ_S  ! Equivalent Earth Radius at height reference surface
+      real(rp) :: Scat_D1, Scat_D2   ! To compute scat_index
+      integer :: Scat_Temp           ! To compute scat_index
+      real(rp), parameter :: Scat_Tol = 1.0 ! max miss of scattering pt, (km/h)**2
+      real(rp) :: Tan_Ht ! Geometric tangent height, km, from equivalent Earth center
+      real(rp) :: Tan_Ht_S ! Tangent height above 1 bar reference surface, km
 
       if ( toggle(emit) .and. levels(emit) > 3 ) &
         & call Trace_Begin ( 'ForwardModel.Pointing ', index=ptg_i )
@@ -2625,159 +2977,16 @@ contains
       if ( toggle(emit) .and. levels(emit) > 4 ) &
         & call Trace_Begin ( 'ForwardModel.MetricsEtc' )
 
-      ! Compute where the tangent is, the equivalent Earth radius, tangent
-      ! height and surface height, and determine whether the ray
-      ! intersects the Earth surface
+      ! Compute where the tangent is.
       tan_ind_c = max(1,ptg_i-surfaceTangentIndex+1) ! On coarse grid
+      tan_ind_f = (tan_ind_c-1) * ngp1 + 1           ! On Z_GLgrid
+
       nz_ig = nlvl
-      if ( associated(surfaceHeight) ) then
-        call tangent_metrics ( tan_phi, Grids_tmp%phi_basis, z_psig, &
-          &                    h_glgrid, earthradc_sq,       & ! in
-          &                    tan_ind_c, nz_ig,             & ! inout
-          &                    r_eq, h_surf, tan_ht_r, z_ig, & ! output
-          &                    surf_height=surfaceHeight%values(1,:) ) ! opt
-      else if ( ptg_i < surfaceTangentIndex ) then
-        call tangent_metrics ( tan_phi, Grids_tmp%phi_basis, z_psig, &
-          &                    h_glgrid, earthradc_sq,       & ! in
-          &                    tan_ind_c, nz_ig,             & ! inout
-          &                    r_eq, h_surf, tan_ht_r, z_ig, & ! output
-          &                    Tan_Press=tan_press,          & ! optional
-          &                    Surf_Temp=temp%values(1,windowstart:windowfinish) )
-      else
-        call tangent_metrics ( tan_phi, Grids_tmp%phi_basis, z_psig, &
-          &                    h_glgrid, earthradc_sq,        & ! in
-          &                    tan_ind_c, nz_ig,              & ! inout
-          &                    r_eq, h_surf, tan_ht_r, z_ig )   ! output
-      end if
       nz_if = (nz_ig-1) * ngp1 + 1                ! On Z_GLgrid
-      tan_ind_f = (tan_ind_c-1) * ngp1 + 1        ! On Z_GLgrid
       tan_pt_f = nz_if + 1 - tan_ind_f            ! fine path tangent index
       tan_pt_c = (tan_pt_f + Ng) / Ngp1           ! coarse path tangent index
       npc = 2 * tan_pt_c
       npf = 2 * tan_pt_f
-
-      if ( nz_ig == nlvl ) then
-        z_coarse(:tan_pt_c) = z_psig(nlvl:tan_ind_c:-1)
-        z_coarse(tan_pt_c+1:npc) = z_psig(tan_ind_c:nlvl)
-      end if
-
-      if ( tan_ht_r < 0.0 ) then ! Handle Earth-intersecting ray
-        e_rflty = earthRefl%values(1,1)
-        if ( nz_ig > nlvl ) then ! Added a new zeta
-          z_coarse(:tan_pt_c) = z_ig(nz_ig:tan_ind_c:-1)
-          z_coarse(tan_pt_c+1:npc) = z_ig(tan_ind_c:nz_ig)
-          ! Use the "revised" GL-grid arrays, which depend upon the new zeta.
-          ddhidhidtl0 => ddhidhidtl0_r(:nz_if,:,:)
-          dh_dt_glgrid => dh_dt_glgrid_r(:nz_if,:,:)
-          dhdz_glgrid => dhdz_glgrid_r(:nz_if,:)
-          h_glgrid => h_glgrid_r(:nz_if,:)
-          t_glgrid => t_glgrid_r(:nz_if,:)
-          z_glgrid => z_glgrid_r(:nz_if)
-          call compute_GL_grid ( z_ig(:nz_ig), z_glgrid )
-
-          if ( temp_der ) then
-            call two_d_hydrostatic ( Grids_tmp, &
-              &  (/ (refGPH%template%surfs(1,1), j=windowStart,windowFinish) /), &
-              &  0.001*refGPH%values(1,windowStart:windowFinish), z_glgrid, &
-              &  orbIncline%values(1,maf)*Deg2Rad, t_glgrid, h_glgrid, &
-              &  dhdz_glgrid, dh_dt_glgrid, DDHDHDTL0=ddhidhidtl0 )
-          else
-            call two_d_hydrostatic ( Grids_tmp, &
-              &  (/ (refGPH%template%surfs(1,1), j=windowStart,windowFinish) /), &
-              &  0.001*refGPH%values(1,windowStart:windowFinish), z_glgrid, &
-              &  orbIncline%values(1,maf)*Deg2Rad, t_glgrid, h_glgrid, &
-              &  dhdz_glgrid )
-          end if
-        end if
-      end if
-
-      ! Get H_Path and Phi_Path on the fine grid.
-      if ( nz_ig > nlvl ) then ! Added a new zeta
-        call Height_Metrics ( tan_phi, tan_ind_f, Grids_tmp%phi_basis, &
-          &  h_glgrid, r_eq, h_surf, tan_ht_r, z_ig, &          ! in
-          &  vert_inds(1:npf), h_path(1:npf), phi_path(1:npf) ) ! out
-      else
-        call Height_Metrics ( tan_phi, tan_ind_f, Grids_tmp%phi_basis, &
-          &  h_glgrid, r_eq, h_surf, tan_ht_r, z_psig, &        ! in
-          &  vert_inds(1:npf), h_path(1:npf), phi_path(1:npf) ) ! out
-      end if
-
-      tan_ht = h_path(tan_pt_f) ! Includes Earth radius
-
-      ! Look for path crossings at zetas below the tangent point.
-      ! These can only happen if the minimum zeta isn't at the tangent.
-      call more_points ( tan_phi, tan_ind_f, Grids_tmp%phi_basis,   &
-        & z_glgrid, h_glgrid, r_eq, h_surf, tan_ht_r, phi_path(1:npf), & ! in
-        & more_z_path, more_h_path, more_phi_path, n_more )
-      if ( n_more > 0 .and. .not. do_more_points ) then
-        if ( print_more_points ) then
-          call output ( n_more, before='Want to add ', after=' more points', advance='yes' )
-          call dump ( more_h_path(:n_more), name='more_h_path', format='(f14.7)' )
-          call dump ( more_phi_path(:n_more), name='more_phi_path', format='(f14.8)' )
-          call dump ( more_z_path(:n_more), name='more_z_path' )
-          call output ( ptg_i, before='tan_phi(' )
-          call output ( tan_phi, before=') = ', format='(f12.6)' )
-          call output ( tan_ind_f, before=', tan_ind_f = ' )
-          call output ( tan_pt_f, before=', tan_pt_f = ' )
-          call output ( r_eq, before=', r_eq = ', format='(f12.6)', advance='yes' )
-          call output ( h_surf, before='h_surf = ', format='(f12.6)' )
-          call output ( tan_ht_r, before=', tan_ht_r = ', format='(f12.6)', advance='yes' )
-          call dump ( Grids_tmp%phi_basis, name='phi_basis', format='(f14.8)' )
-          call dump ( h_glgrid, name='h_glgrid', format='(f14.7)' )
-          call dump ( h_path(1:npf), name='h_path', format='(f14.7)' )
-          call dump ( phi_path(1:npf), name='phi_path', format='(f14.8)' )
-        end if
-        n_more = 0
-      end if
-
-      ! Get minimum zeta on the path
-      call Get_Min_Zeta ( Grids_tmp%phi_basis, h_glgrid(tan_ind_f,:), &
-                        & t_glgrid(tan_ind_f,:), z_glgrid(tan_ind_f), &
-                        & phi_path, tan_ind_f, tan_ht,                &
-                        & min_zeta, min_phi, min_index )
-
-      ! Add minimum zeta to the path
-      if ( min_index > 0 ) then ! minimum zeta not at or near tangent point
-        if ( do_zmin ) then
-          n_more = n_more + 1
-          more_z_path(n_more) = min_zeta
-          more_phi_path(n_more) = min_phi
-          more_h_path(n_more) = tan_ht/cos(min_phi)
-        else
-          if ( index(switches,'zdet') /= 0 ) then
-            call output ( min_index, before='Want to add minimum zeta at ' )
-            call output ( tan_ind_f, before=' (tan_ind_f = ' )
-            call output ( min_phi, before=') where phi = ' )
-            call output ( min_zeta, before=' and zeta = ', advance='yes' )
-            call dump ( Grids_tmp%phi_basis, name='phi_basis' )
-            call dump ( h_glgrid(tan_ind_f,:), 'h_glgrid' )
-            call dump ( t_glgrid(tan_ind_f,:), 't_glgrid' )
-            call dump ( phi_path, name='phi_path' )
-            call output ( z_glgrid(tan_ind_f), before='z_glgrid = ' )
-            call output ( tan_ind_f, before=', tan_ind_f =' )
-            call output ( tan_ht, before=', tan_ht = ', advance='yes' )
-          end if
-        end if
-      else
-        min_index = 0
-      end if
-
-      call add_points ( more_h_path(:n_more), more_phi_path(:n_more),     &
-        &               more_z_path(:n_more), min_index, z_glgrid, nz_if, &
-        &               z_coarse, h_path, phi_path, vert_inds,            &
-        &               npc, npf, tan_pt_c, tan_pt_f )
-
-      if ( print_more_points .and. n_more > 0 ) then
-        call dump ( Grids_tmp%phi_basis, name='phi_basis' )
-        call dump ( h_path(1:npf), name='h_path' )
-        call dump ( phi_path(1:npf), name='phi_path' )
-      end if
-
-      ! Compute Gauss Legendre (GL) grid ----------------------------------
-      call compute_GL_grid ( z_coarse(:tan_pt_c), z_path(:tan_pt_f), &
-        &                    p_path(:tan_pt_f) )
-      call compute_GL_grid ( z_coarse(tan_pt_c+1:npc), z_path(tan_pt_f+1:npf), &
-        &                    p_path(tan_pt_f+1:npf) )
 
       ! This is not pretty but we need some coarse path extraction indices
       c_inds => c_inds_b(:npc)
@@ -2786,6 +2995,208 @@ contains
       do_gl(1:npc:npc-1) = .false.; do_gl(2:npc-1) = .true.
       call get_gl_inds ( do_gl(:npc), tan_pt_c, f_inds, cg_inds_b, nglMax, ncg )
       cg_inds => cg_inds_b(:ncg) ! Should be the whole thing here; probably not used
+
+      z_coarse(:tan_pt_c) = z_psig(nlvl:tan_ind_c:-1)
+      z_coarse(tan_pt_c+1:npc) = z_psig(tan_ind_c:nlvl)
+
+      ! Compute the height of the pressure reference surface and the
+      ! tangent height above that surface.
+      if ( associated(surfaceHeight) ) then
+        call tangent_metrics ( tan_phi, Grids_tmp%phi_basis,      &
+          &                    h_glgrid, tan_ind_f,               & ! in
+          &                    h_surf, tan_ht_s,                  & ! output
+          &                    surf_height=surfaceHeight%values(1,:) ) ! optional
+      else if ( ptg_i < surfaceTangentIndex ) then
+        call tangent_metrics ( tan_phi, Grids_tmp%phi_basis,      &
+          &                    h_glgrid, tan_ind_f,               & ! in
+          &                    h_surf, tan_ht_s,                  & ! output
+          &                    z_ref=z_psig(1),                   & ! optional
+          &                    Tan_Press=tan_press,               & ! optional
+          &                    Surf_Temp=temp%values(1,windowstart:windowfinish) )
+      else
+        call tangent_metrics ( tan_phi, Grids_tmp%phi_basis,      &
+          &                    h_glgrid, tan_ind_f,               & ! in
+          &                    h_surf, tan_ht_s )                   ! output
+      end if
+
+      if ( present(scat_tan_ht) ) tan_ht_s = scat_tan_ht + h_surf
+
+      ! Handle Earth-intersecting ray.  It is assumed to reflect from the
+      ! reference height surface (h_glgrid(1,:)) so we didn't add a new
+      ! zeta at the reflection point so we don't need to recompute
+      ! heights from hydrostatic principles.
+      if ( tan_ht_s <= 0.0 ) e_rflty = earthRefl%values(1,1)
+
+      ! Compute equivalent earth radius r_eq at tan_phi.
+
+      if ( present(use_r_eq) ) then
+        r_eq = use_r_eq
+      else
+        r_eq = get_r_eq ( tan_phi, earthradc_sq ) ! Geometric earth radius
+      end if
+
+      ! Get H_Path and Phi_Path on the fine grid.
+      call Height_Metrics ( tan_phi, tan_ind_f, Grids_tmp%phi_basis, & ! in
+        &  h_glgrid, h_surf, tan_ht_s, z_glgrid(:nz_if), r_eq,       & ! in
+        &  req_s, vert_inds(1:npf), h_path(1:npf), phi_path(1:npf),  & ! out
+        &  forward=forward )                                           ! opt
+      tan_ht = tan_ht_s + req_s
+
+      ! If we're integrating from a scattering point, find where it is.
+      if ( present(scat_zeta) ) then
+        scat_index = 0
+        scat_d2 = huge(1.0_rp)
+        do scat_temp = 1, npc
+          scat_d1 = (phi_path(c_inds(scat_temp))-scat_phi)**2 + &
+                  &  (h_path(c_inds(scat_temp))/scat_ht-1.0_rp)**2
+          if ( scat_d1 < scat_d2 ) then
+            scat_index = scat_temp
+            scat_d2 = scat_d1
+          end if
+        end do
+
+        if ( present(rev) ) then
+          myRev = rev
+        else
+          myRev = (xi > -pi .and. xi < 0.0) .neqv. (scat_index < tan_pt_c)
+        end if
+        if ( myRev ) then
+          ! Ray from below the scattering point won't see the tangent point, or
+          ! Ray from above the scattering point will see the tangent point, so
+          ! reverse the path
+          z_coarse(:npc) = z_coarse(npc:1:-1)
+          vert_inds(:npf) = vert_inds(npf:1:-1)
+          h_path(:npf) = h_path(npf:1:-1)
+          phi_path(:npf) = phi_path(npf:1:-1)
+          scat_index = npc - scat_index + 1
+          tan_pt_c = npc - tan_pt_c ! The first one, not the same one
+          tan_pt_f = ngp1 * tan_pt_c - ng
+        end if
+
+        ! Check that we hit it well enough.
+        if ( abs(z_coarse(scat_index)-scat_zeta) > 0.05 .or. &
+          &  scat_d2 > scat_tol .or. &
+          ! or print details if requested
+          &  print_TScat_detail > 0 ) then
+          if ( print_TScat_detail == 0 ) call output ( & ! need heading
+            & "Scat_Phi   Scat_Ht   Scat_Zeta     Xi       D2     Tan_Phi    Tan_Ht  Begin Phi   End Phi", &
+            & advance="yes" )
+          write ( line, "(f7.2,f12.4,f9.3,f11.2,f10.6,f9.2,f11.4,f8.2,i4,f8.2,1x,L1)" ) &
+            & rad2deg*scat_phi, scat_ht, scat_zeta, rad2deg*xi, sqrt(scat_d2), & ! km/ht, not (km/ht)**2
+            & rad2deg*tan_phi, tan_ht, rad2deg*phi_path(1), c_inds(scat_index), &
+            & rad2deg*phi_path(npf), myRev
+          if ( present(forward) ) then; line = trim(line) // merge(" T", " F", forward)
+          else ; line = trim(line) // " T"
+          end if
+          if ( abs(z_coarse(scat_index)-scat_zeta) > 0.05 .or. &
+            &  scat_d2 > scat_tol ) then
+            call output ( trim(line) // " >", advance="yes" ) ! Too far away
+            call output ( req_s, before="Req_s = " )
+            call output ( phitan%values(FwdModelConf%TScatMIF,MAF), &
+              & before=", Phi_ref = ", advance="yes" )
+            call dump ( z_coarse, name="Z_Coarse" )
+            call dump ( rad2deg*phi_path(c_inds), name="Phi_Path", format="(f14.8)" )
+            call dump ( h_path(c_inds), name="H_Path", format="(f14.6)" )
+            call MLSMessage ( MLSMSG_Error, moduleName, &
+              & 'Scattering point appears not to be in path' )
+          else
+            call output ( trim(line) // " <", advance="yes" ) ! Close enough
+          end if
+          if ( print_TScat_detail > 1 ) then
+            call output ( tan_pt_c, before='Tan_Pt_C = ', after=', ' )
+            call output ( scat_index, before='Phi_Path_C(', after=':)', advance='yes' )
+            call dump ( rad2deg*phi_path(c_inds(scat_index:)) )
+            call output ( scat_index, before='H_Path_C(', after=':)', advance='yes' )
+            call dump ( h_path(c_inds(scat_index:)) )
+            call output ( scat_index, before='Z_Coarse(', after=':)', advance='yes' )
+            call dump ( z_coarse(scat_index:npc) )
+          end if
+        end if
+        if ( scat_index <= 1 ) return ! No ray to trace
+        i_start = scat_index
+        i_end = npc
+      else
+        i_start = 1
+        i_end = npc
+      end if
+
+      ! Look for path crossings at zetas below the tangent point.
+      ! These can only happen if the minimum zeta isn't at the tangent,
+      ! and the ray isn't an earth-intersecting ray.
+      if ( tan_ht_s > 0.0 ) then
+        call more_points ( tan_phi, tan_ind_f, Grids_tmp%phi_basis,   &
+        &   z_glgrid, h_glgrid, req_s, h_surf, tan_ht_s, phi_path(1:npf), & ! in
+        &   more_z_path, more_h_path, more_phi_path, n_more )
+        if ( n_more > 0 .and. .not. do_more_points ) then
+          if ( print_more_points ) then
+            call output ( n_more, before='Want to add ', after=' more points', advance='yes' )
+            call dump ( more_h_path(:n_more), name='more_h_path', format='(f14.7)' )
+            call dump ( more_phi_path(:n_more), name='more_phi_path', format='(f14.8)' )
+            call dump ( more_z_path(:n_more), name='more_z_path' )
+            call output ( ptg_i, before='tan_phi(' )
+            call output ( tan_phi, before=') = ', format='(f12.6)' )
+            call output ( tan_ind_f, before=', tan_ind_f = ' )
+            call output ( tan_pt_f, before=', tan_pt_f = ' )
+            call output ( req_s, before=', req_s = ', format='(f12.6)', advance='yes' )
+            call output ( h_surf, before='h_surf = ', format='(f12.6)' )
+            call output ( tan_ht_s, before=', tan_ht_s = ', format='(f12.6)', advance='yes' )
+            call dump ( Grids_tmp%phi_basis, name='phi_basis', format='(f14.8)' )
+            call dump ( h_glgrid, name='h_glgrid', format='(f14.7)' )
+            call dump ( h_path(1:npf), name='h_path', format='(f14.7)' )
+            call dump ( phi_path(1:npf), name='phi_path', format='(f14.8)' )
+          end if
+          n_more = 0
+        end if
+
+        ! Get minimum zeta on the path
+        call Get_Min_Zeta ( Grids_tmp%phi_basis, h_glgrid(tan_ind_f,:), &
+                          & t_glgrid(tan_ind_f,:), z_glgrid(tan_ind_f), &
+                          & phi_path, tan_ind_f, tan_ht,                &
+                          & min_zeta, min_phi, min_index )
+
+        ! Add minimum zeta to the path
+        if ( min_index > 0 ) then ! minimum zeta not at or near tangent point
+          if ( do_zmin ) then
+            n_more = n_more + 1
+            more_z_path(n_more) = min_zeta
+            more_phi_path(n_more) = min_phi
+            more_h_path(n_more) = tan_ht/cos(min_phi)
+          else
+            if ( index(switches,'zdet') /= 0 ) then
+              call output ( min_index, before='Want to add minimum zeta at ' )
+              call output ( tan_ind_f, before=' (tan_ind_f = ' )
+              call output ( min_phi, before=') where phi = ' )
+              call output ( min_zeta, before=' and zeta = ', advance='yes' )
+              call dump ( Grids_tmp%phi_basis, name='phi_basis' )
+              call dump ( h_glgrid(tan_ind_f,:), 'h_glgrid' )
+              call dump ( t_glgrid(tan_ind_f,:), 't_glgrid' )
+              call dump ( phi_path, name='phi_path' )
+              call output ( z_glgrid(tan_ind_f), before='z_glgrid = ' )
+              call output ( tan_ind_f, before=', tan_ind_f =' )
+              call output ( tan_ht, before=', tan_ht = ', advance='yes' )
+            end if
+          end if
+        else
+          min_index = 0
+        end if
+
+        call add_points ( more_h_path(:n_more), more_phi_path(:n_more),     &
+          &               more_z_path(:n_more), min_index, z_glgrid, nz_if, &
+          &               z_coarse, h_path, phi_path, vert_inds,            &
+          &               npc, npf, tan_pt_c, tan_pt_f )
+
+        if ( print_more_points .and. n_more > 0 ) then
+          call dump ( Grids_tmp%phi_basis, name='phi_basis' )
+          call dump ( h_path(1:npf), name='h_path' )
+          call dump ( phi_path(1:npf), name='phi_path' )
+        end if
+      end if
+
+      ! Compute Gauss Legendre (GL) grid ----------------------------------
+      call compute_GL_grid ( z_coarse(:tan_pt_c), z_path(:tan_pt_f), &
+        &                    p_path(:tan_pt_f) )
+      call compute_GL_grid ( z_coarse(tan_pt_c+1:npc), z_path(tan_pt_f+1:npf), &
+        &                    p_path(tan_pt_f+1:npf) )
 
       ! The 0.5 factor is to compensate for the GL weights adding up to 2.0.
       del_zeta(1:npc:npc-1) = 0.0_rp ! First and last ones
@@ -2845,7 +3256,6 @@ contains
         do_calc_hyd_c(1:npc,:) = do_calc_hyd(c_inds,:)
         do_calc_t_c(1:npc,:) = do_calc_t(c_inds,:)
         eta_zxp_t_c(1:npc,:) = eta_zxp_t(c_inds,:)
-        call select_nz_list ( nz_zxp_t, nnz_zxp_t, c_inds, 1, nz_zxp_t_c, nnz_zxp_t_c )
         t_der_path_flags(1:npf) = any(do_calc_t(1:npf,:),2)
       else
         call more_metrics ( tan_ind_f, tan_pt_f, Grids_tmp%phi_basis,    &
@@ -2868,17 +3278,15 @@ contains
       ! Compute sps_path with a FAKE frequency, mainly to get the
       ! WATER (H2O) contribution for refraction calculations, but also
       ! to compute sps_path for all those with no frequency component
-
-    ! Frq = 0.0_r8
       call comp_sps_path_frq ( Grids_f,           &
-        & 0.0_r8, eta_zp(1:npf,:),                &
+        & frq_0, eta_zp(1:npf,:),                 &
         & do_calc_zp(1:npf,:), sps_path(1:npf,:), &
         & do_calc_fzp(1:npf,:), eta_fzp(1:npf,:) )
 !       ! Send all of eta_zp so comp_sps_path_frq_nz doesn't get an array
 !       ! bounds error when it's clearing parts indexed by nz_zp.
 ! I don't know why this doesn't work
 !       call comp_sps_path_frq_nz ( Grids_f,                         &
-!         & 0.0_r8, eta_zp, nz_zp, nnz_zp,                           &
+!         & frq_0, eta_zp, nz_zp, nnz_zp,                            &
 !         & do_calc_zp(1:npf,:), sps_path(1:npf,:),                  &
 !         & do_calc_fzp(1:npf,:), eta_fzp(1:npf,:), nz_fzp, nnz_fzp )
 
@@ -2969,7 +3377,7 @@ contains
             mag_path(j,1:3) = mag_path(j,1:3) / mag_path(j,4)
           else
             mag_path(j,1:3) = 0.0_rp
-            mag_path(j,3) = 1.0_rp !arbitrarily, theta=0 for zero field
+            mag_path(j,3) = 1.0_rp ! arbitrarily, theta=0 for zero field
           end if
         end do
 
@@ -2987,23 +3395,23 @@ contains
 
       end if
 
-      if ( present(est_scGeocAlt) ) then
+      if ( present(est_scGeocAlt) .and. .not. fwdModelConf%generateTScat ) then
         ! Compute the pointing angles.  These are needed for antenna
         ! convolution, not for ray tracing.  We can't easily move these
-        ! computations into the convolution code because they need tan_ht_r
-        ! and R_eq, which are both gotten from Tangent_Metrics.
+        ! computations into the convolution code because they need Tan_Ht_s
+        ! and Req_s, which are gotten from Tangent_Metrics and Height_Metrics.
         if ( temp_der ) then
-          ! Ext_SCgeocAlt is in meters, but Get_Chi_Angles wants it in km.
+          ! Est_SCgeocAlt is in meters, but Get_Chi_Angles wants it in km.
           call get_chi_angles ( 0.001*est_scGeocAlt, n_path_c(tan_pt_c), &
-             & tan_ht_r, tan_phi, R_eq, 0.0_rp, ptg_angles(ptg_i),       &
+             & tan_ht_s, tan_phi, req_s, 0.0_rp, ptg_angles(ptg_i),      &
              & tan_dh_dt, tan_d2h_dhdt, dx_dt(ptg_i,:), d2x_dxdt(ptg_i,:) )
         else
           call get_chi_angles ( 0.001*est_scGeocAlt, n_path_c(tan_pt_c), &
-             & tan_ht_r, tan_phi, R_eq, 0.0_rp, ptg_angles(ptg_i) )
+             & tan_ht_s, tan_phi, req_s, 0.0_rp, ptg_angles(ptg_i) )
         end if
       end if
 
-      ! Compute refractive correction
+      ! Compute refractive correction and Del_s
       n_path_c(1:npc) = n_path_c(1:npc) + 1.0_rp
 
       call comp_refcor ( tan_pt_c, h_path_c(:npc), n_path_c(:npc), &
@@ -3167,17 +3575,22 @@ contains
 ! \end{tabular}
 
       if ( FwdModelConf%anyLBL(sx) ) then
-        call frequency_loop ( alpha_path_c(:npc), beta_path_c(:npc,:), c_inds,  &
-          & del_s(:npc), del_zeta(:npc),do_calc_fzp(:npf,:),                    &
-          & do_calc_zp(:npf,:), do_GL(:npc), frequencies, h_path_c,             &
+        call frequency_loop ( ptg_i, alpha_path_c(:npc), beta_path_c(:npc,:),   &
+          & c_inds(:npc), del_s(:npc), del_zeta(:npc), do_calc_fzp(:npf,:),     &
+          & do_calc_zp(:npf,:), do_GL(:npc), frequencies, h_path_c, tan_ht,     &
           & incoptdepth(:npc), p_path(:npf), pfaFalse, ref_corr(:npc),          &
           & sps_path(:npf,:), tau_lbl, t_path_c(:npc), t_script_lbl(:npc,:),    &
-          & tanh1_c(:npc), tt_path_c(:s_i*npc), w0_path_c(:s_i*npc), z_path(:npf) )
+          & tanh1_c(:npc), tt_path_c(:s_i*npc), w0_path_c(:s_i*npc),            &
+          & z_path(:npf), i_start, i_end )
         if ( print_TauL ) then
           call output ( thisSideband, before='Sideband ' )
           call output ( ptg_i, before=' Pointing ' )
-          call dump ( tau_lbl, noFreqs, ' Tau_LBL:' )
-          call dump ( t_script_lbl(:npc,:noFreqs), 'T_Script_LBL' )
+          call dump ( tau_lbl, noFreqs, ' Tau_LBL:', scat_index )
+          if ( present(scat_index) ) then
+            call dump ( t_script_lbl(scat_index:npc-1,:noFreqs), 'T_Script_LBL' )
+          else
+            call dump ( t_script_lbl(2:npc-1,:noFreqs), 'T_Script_LBL' )
+          end if
         end if
       end if
 
@@ -3189,24 +3602,25 @@ contains
           ! and every point along the path.  Multiply by Tau_PFA to combine
           ! PFA contribution in Frequency_Loop.
           call frequency_avg_rad_path
-          call frequency_average_derivatives ( .false. )
+          call frequency_average_derivatives ( ptg_i, .false. )
         end if
-        call frequency_loop ( alpha_path_c(:npc), beta_path_c(:npc,:), c_inds, &
-          & del_s(:npc), del_zeta(:npc), do_calc_fzp(:npf,:),                  &
-          & do_calc_zp(:npf,:), do_GL(:npc), channelCenters, h_path_c,         &
+        call frequency_loop ( ptg_i, alpha_path_c(:npc), beta_path_c(:npc,:),  &
+          & c_inds(:npc), del_s(:npc), del_zeta(:npc), do_calc_fzp(:npf,:),    &
+          & do_calc_zp(:npf,:), do_GL(:npc), channelCenters, h_path_c, tan_ht, &
           & incoptdepth(:npc), p_path(:npf), pfaTrue, ref_corr(:npc),          &
           & sps_path(:npf,:), tau_pfa, t_path_c(:npc), t_script_pfa(:npc,:),   &
-          & tanh1_c(:npc), tt_path_c(:s_i*npc), w0_path_c(:s_i*npc), z_path(:npf) )
+          & tanh1_c(:npc), tt_path_c(:s_i*npc), w0_path_c(:s_i*npc),           &
+          & z_path(:npf), i_start, i_end )
         if ( print_TauP ) then
           call output ( thisSideband, before='Sideband ' )
           call output ( ptg_i, before=' Pointing ' )
           call dump ( tau_pfa, noUsedChannels, ' Tau_PFA:' )
-          call dump ( t_script_pfa(:npc,:), 'T_Script_PFA' )
+          call dump ( t_script_pfa(2:npc-1,:), 'T_Script_PFA' )
         end if
 
       end if
 
-      call frequency_average ! or maybe just store
+      call frequency_average ( ptg_i )! or maybe just store
 
       ! If we're doing frequency averaging, there's a different frequency
       ! grid for each pointing, but we don't need to deallocate it here
@@ -3218,29 +3632,115 @@ contains
       ! End of pointing loop -------------------------------------------------
     end subroutine One_Pointing
 
+  ! .........................................  One_TScat_Pointing  .....
+    subroutine One_TScat_Pointing ( Ptg_i, Vel_Rel, Scat_Tan_Phi, Scat_Zeta,  &
+      &                             Scat_Phi, Scat_Ht, Use_R_Eq, Xi,          &
+      &                             Zeta_i, Phi_i, Xis, Rads, I_R, &
+      &                             Scat_Tan_Ht, Forward, Rev)
+
+      ! Do one TScat pointing
+
+      use Get_Eta_Matrix_m, only: Get_Eta_Sparse
+      use Read_Mie_m, only: F_s, IWC_s, T_s, Theta_s, P
+
+      integer, intent(in) :: Ptg_i          ! Pointing index for One_Pointing
+      real(rp), intent(in) :: Vel_Rel       ! LOS Vel / speed of light
+      real(rp), intent(in) :: Scat_Tan_Phi  ! of scattering point
+      real(rp), intent(in) :: Scat_Zeta     ! of scattering point
+      real(rp), intent(in) :: Scat_Phi      ! of scattering point
+      real(rp), intent(in) :: Scat_Ht       ! of scattering point
+      real(rp), intent(in) :: Use_R_Eq      ! R_Eq to use instead of at tangent
+      real(rp), intent(in) :: Xi            ! Scattering angle, radians
+      integer, intent(in) :: Zeta_i         ! Index of Scat_Zeta in
+                                            ! TScat%template%surfs
+      integer, intent(in) :: Phi_i          ! Index of Scat_Phi in
+                                            ! TScat%template%phi
+      real(rp), intent(inout) :: Xis(:)     ! Store Xi in Xis(I_R) if OK
+      real(rp), intent(inout) :: Rads(:,:)  ! Store radiance in Rads(I_R,:)
+      integer, intent(inout) :: I_R         ! Update if OK
+      real(rp), intent(in), optional :: Scat_Tan_Ht ! Tangent height above
+                                            ! earth geometric surface, km, for
+                                            ! subsurface rays
+      logical, intent(in), optional :: Forward      ! For subsurface rays
+                                            ! "xi >= xi_sub" in Generate_TScat
+      logical, intent(in), optional :: Rev  ! Reverse the integration order
+
+      integer :: Scat_Index   ! In coarse grid, used by one_pointing
+
+      ! Do the ray tracing for all the signals
+      call one_pointing ( ptg_i, vel_rel, scat_tan_phi, use_r_eq=use_r_eq, &
+        &                 scat_zeta=scat_zeta, scat_phi=scat_phi,          &
+        &                 scat_ht=scat_ht, xi=xi, scat_index=scat_index,   &
+        &                 scat_tan_ht=scat_tan_ht, forward=forward, rev=rev )
+
+      if ( scat_index <= 1 ) return ! No ray to trace
+
+      i_r = i_r + 1
+      xis(i_r) = xi
+      rads(i_r,1:noUsedChannels) = radiances(ptg_i,1:noUsedChannels)
+    end subroutine One_TScat_Pointing
+
   ! ................................................  TScat_Setup  .....
     subroutine TScat_Setup
       ! Get ready for TScat computation
-      if ( FwdModelConf%polarized ) call announce_error ( &
-        & 'Cannot compute TScat for the polarized model.' )
+      use Read_Mie_m, only: P
+      logical :: Error
+      integer :: Q ! Loop index
+      type (VectorValue_T), pointer :: TScat, TScat2
+      if ( .not. associated(p) ) call announce_error ( &
+        & "TScat computation needs the Mie phase function." )
       if ( FwdModelConf%do_conv ) call announce_error ( &
         & 'Convolution and TScat computation are incompatible.' )
+      if ( FwdModelConf%incl_cld ) call announce_error ( &
+        & 'Cloud modeling and TScat computation are incompatible.' )
+      if ( FwdModelConf%polarized ) call announce_error ( &
+        & 'Cannot compute TScat for the polarized model.' )
+      if ( FwdModelConf%refract ) call announce_error ( &
+        & 'Refractive correction and TScat computation are incompatible.' )
+      if ( FwdModelConf%spect_der ) call announce_error ( &
+        & 'Spectroscopy derivatives and TScat computation are incompatible.' )
       if ( .not. associated(F_s) .or. .not. associated(dP_dT) ) &
         & call announce_error ( 'TScat table computation requires Mie tables.' )
-      if ( .not. present(jacobian) ) &
-        & call announce_error ( 'TScat table computation requires a Jacobian.' )
-      cloudIce => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-        & quantityType=l_cloudIce, config=fwdModelConf )
-      cloudTemp => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-        & quantityType=l_cloudTemperature, config=fwdModelConf )
-      if ( cloudIce%template%vGridIndex /= cloudTemp%template%vGridIndex .or. &
-         & cloudIce%template%hGridIndex /= cloudTemp%template%hGridIndex ) &
-           & call announce_error ( &
-           & 'Cloud Ice and Temperature grids unequal for TScat computation.' )
-      ! These are primarily for subsurface angles, which are messy to specify
-      ! otherwise.
+      ! Get IWC field
+      iwc => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+        & quantityType=l_iwc, config=fwdModelConf )
+      ! Make sure all the TScat quantities for the selected signals have the
+      ! same grids
+      TScat => GetQuantityForForwardModel ( &
+          & fwdModelOut, quantityType=l_TScat, &
+          & signal=fwdModelConf%signals(channels(1)%signal)%index, &
+          & sideband=sideband )
+      if ( .not. TScat%template%coherent .or. &
+        &  .not. TScat%template%stacked ) call announce_error ( &
+          & 'TScat coordinates must be stacked and coherent' )
+      TScat%values = 0.0
+      error = .false.
+      do q = 2, noUsedChannels
+        TScat2 => GetQuantityForForwardModel ( &
+          & fwdModelOut, quantityType=l_TScat, &
+          & signal=fwdModelConf%signals(channels(q)%signal)%index, &
+          & sideband=sideband )
+        error = .not. TScat2%template%coherent .or. &
+          &     .not. TScat2%template%stacked .or. &
+          &     TScat%template%noChans /= TScat2%template%noChans .or. &
+          &     TScat%template%hGridIndex /= TScat2%template%hGridIndex .or. &
+          &     TScat%template%vGridIndex /= TScat2%template%vGridIndex
+        if ( error ) exit
+        TScat2%values = 0.0
+      end do
+      if ( error ) call announce_error ( "TScat quantities must all have the same grids." )
+      ! Make sure IWC and temperature are coherent and stacked
+      if ( .not. temp%template%stacked .or. .not. temp%template%coherent .or. &
+         & .not.  iwc%template%stacked .or. .not.  iwc%template%coherent ) &
+         & call announce_error ( "IWC and temperature must be coherent and stacked." )
+      ! Make sure IWC and temperature have same grids as TScat
+      if ( TScat%template%hGridIndex /= temp%template%hGridIndex .or. &
+         & TScat%template%vGridIndex /= temp%template%vGridIndex .or. &
+         & TScat%template%hGridIndex /=  iwc%template%hGridIndex .or. &
+         & TScat%template%vGridIndex /=  iwc%template%vGridIndex ) &
+         & call announce_error ( "TScat, IWC and temperature must have the same grids." )
       scatteringAngles => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-        & quantityType=l_scatteringAngle, config=fwdModelConf, noError=.true. )
+        & quantityType=l_scatteringAngle, config=fwdModelConf )
     end subroutine TScat_Setup
 
   end subroutine FullForwardModelAuto
@@ -3287,8 +3787,8 @@ contains
 
     sub = size(tan_press) - nlvl ! # subsurface levels = SurfaceTangentIndex-1
 
-    tan_phi(1:sub) = phitan%values(1,MAF)
-    est_scgeocalt(1:sub) = scGeocAlt%values(1,maf)
+    tan_phi(1:sub) = phitan%values(1,maf)
+    est_scgeocalt(1:sub) = scGeocalt%values(1,maf)
     est_los_vel(1:sub) = losvel%values(1,maf)
 
 ! Since the interpolateValues routine needs the OldX array to be sorted
@@ -3306,7 +3806,7 @@ contains
 
     ! Sort Z_MIF.  Permute P_MIF, T_MIF and V_MIF the same way.
     ! Use insertion sort since things may be nearly in order already.
-    do i = 2, k ! Invariant: z_mif(1:i-1) are sorted.
+    do i = 2, k ! Invariant: z_mif(0:i-1) are sorted.
       rz = z_mif(i)
       if ( rz < z_mif(i-1) ) then
         rp = p_mif(i)
@@ -3346,11 +3846,15 @@ contains
   character (len=len(idParm)) :: Id = IdParm
 !------------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function NOT_USED_HERE
 
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.292  2009/05/14 00:46:02  pwagner
+! Gets Deg2Rad from Constants now
+!
 ! Revision 2.291  2009/01/21 01:00:39  pwagner
 ! Compatible with hastily committed select_nz_list
 !
