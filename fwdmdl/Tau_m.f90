@@ -36,13 +36,13 @@ contains
 !---------------------------------------------------------------------------
 
   ! ----------------------------------------------------  Get_Tau  -----
-  subroutine Get_Tau ( Frq_i, gl_inds, more_inds, e_rflty, del_zeta, &
-                     &  alpha_path_c, ref_cor, incoptdepth, tan_pt, &
-                     &  alpha_path_gl, ds_dz_gw, tau )
+  subroutine Get_Tau ( Frq_i, gl_inds, more_inds, i_start, e_rflty,  &
+                     & del_zeta, alpha_path_c, ref_cor, incoptdepth, &
+                     & tan_pt, alpha_path_gl, ds_dz_gw, tau )
 
   ! Update IncOptDepth with its GL corrections.  Multiply it by the
   ! refractive correction Ref_Cor.  Compute Tau = exp(indefinite sum of
-  ! IncOptDepth).  The half-path point is a zero-thickness layer that
+  ! IncOptDepth).  The tangent point is a zero-thickness layer that
   ! doesn't have any IncOptDepth.  Instead, multiply tau(tan_pt) by
   ! e_rflty to get tau(tan_pt+1).
 
@@ -57,6 +57,7 @@ contains
     integer(ip), intent(in) :: gl_inds(:)    ! Gauss-Legendre grid indices
     integer(ip), intent(in) :: more_inds(:)  ! Places in the coarse path
   !                                            where GL is needed
+    integer, intent(in) :: I_Start           ! Where in path to start integrating
     real(rp), intent(in) :: e_rflty          ! earth reflectivity value (0--1).
     real(rp), intent(in) :: del_zeta(:)      ! path -log(P) differences on the
       !              main grid.  This is for the whole coarse path, not just
@@ -81,8 +82,8 @@ contains
 
   ! Internals
 
-    integer :: A, AA, I, I_Stop, N_Path
-    real(rp) :: total_opacity
+    integer :: A, AA, I, II, I_Stop, N_Path
+    real(rp) :: Total_Opacity
 
   ! Begin code
 
@@ -108,9 +109,10 @@ contains
       a = 1
       do i = 1, size(more_inds)
         aa = gl_inds(a)
-        incoptdepth(more_inds(i)) = incoptdepth(more_inds(i)) + &
-          & del_zeta(more_inds(i)) * &
-          & dot_product( (alpha_path_gl(a:a+ng-1) - alpha_path_c(more_inds(i))), &
+        ii = more_inds(i)
+        incoptdepth(ii) = incoptdepth(ii) + &
+          & del_zeta(ii) * &
+          & dot_product( (alpha_path_gl(a:a+ng-1) - alpha_path_c(ii)), &
                & ds_dz_gw(aa:aa+ng-1) )
         a = a + ng
       end do ! i
@@ -122,40 +124,56 @@ contains
   ! Compute Tau = exp(indefinite sum of IncOptDepth)
 
     n_path = size(incoptdepth)
-    tau%tau(1,frq_i) = 1.0_rp
     total_opacity = 0.0_rp
 
-!{ Compute $\tau_i$ for $2 \leq i \leq t$, where $t$ is given by half\_path.
-!  $\tau_i = \exp \left \{ - \sum_{j=2}^i \Delta \delta_{j \rightarrow j-1} \right \}$.
-!  $\Delta \delta_{j \rightarrow j-1}$ is given by incoptdepth and
-!  $- \sum_{j=2}^i \Delta \delta_{j \rightarrow j-1}$ is given by total\_opacity.
+    tau%tau(1:i_start,frq_i) = 1.0_rp
 
-    do i_stop = 2, tan_pt
+    !{ Compute $\tau_i$ for $i_start < i \leq t$, where $t$ is given by
+    !  tan\_pt.
+    !  $\tau_i = \exp \left \{ - \sum_{j=2}^i \Delta \delta_{j \rightarrow j-1}
+    !  \right \}$.
+    !  $\Delta \delta_{j \rightarrow j-1}$ is given by incoptdepth and
+    !  $- \sum_{j=2}^i \Delta \delta_{j \rightarrow j-1}$ is given by
+    !  total\_opacity.
+
+    do i_stop = i_start+1, min(tan_pt,n_path)
       total_opacity = total_opacity - incoptdepth(i_stop)
       tau%tau(i_stop,frq_i) = exp(total_opacity)
-      if ( total_opacity < black_out ) go to 99
+      if ( total_opacity < black_out ) go to 19 ! Won't add anything
     end do
+    if ( tan_pt >= n_path ) then
+      i_stop = i_stop - 1
+      go to 19
+    end if
 
-!{ Account for earth reflectivity at the tangent to the surface:
-!  $\tau_{2N - t + 1} = \Upsilon \tau_t$.
+    !{ Account for earth reflectivity at the tangent to the surface:
+    !  $\tau_{t + 1} = \Upsilon \tau_t$.
 
-    tau%tau(tan_pt+1,frq_i) = e_rflty * tau%tau(tan_pt,frq_i)
+    if ( i_start < tan_pt ) then
+      tau%tau(tan_pt+1,frq_i) = e_rflty * tau%tau(tan_pt,frq_i)
+      total_opacity = total_opacity + log(e_rflty)
+    else
+      i_stop = i_start
+    end if
 
-!{ Compute $\tau_i$ for $i > 2 N - t + 1$, where $t$ is given by half\_path.\\
-!  $\tau_i = \tau_{2N - t + 1} \exp \left \{ - \sum_{j=2N - t + 1}^i
-!    \Delta \delta_{j-1 \rightarrow j} \right \}$.
+    !{ Compute $\tau_i$ for $i > 2 N - t + 1$, where $t$ is given by tan\_pt.\\
+    !  $\tau_i = \tau_{2N - t + 1} \exp \left \{ - \sum_{j=2N - t + 1}^i
+    !    \Delta \delta_{j-1 \rightarrow j} \right \}$.
 
-! We don't reset total_opacity, so we compute e_rflty * exp(total_opacity)
-! instead of tau(tan_pt) * exp(total_opacity).  i_stop is tan_pt + 1 here.
+    ! i_stop is tan_pt + 1 here.
 
-    do while ( total_opacity >= black_out .and. i_stop < n_path )
-      total_opacity = total_opacity - incoptdepth(i_stop)
-      i_stop = i_stop + 1
-      tau%tau(i_stop,frq_i) = e_rflty * exp(total_opacity)
-    end do
+    if ( total_opacity >= black_out ) then
+      do while ( i_stop < n_path )
+        total_opacity = total_opacity - incoptdepth(i_stop)
+        if ( total_opacity < black_out ) exit ! Won't add anything
+        i_stop = i_stop + 1
+        tau%tau(i_stop,frq_i) = exp(total_opacity)
+      end do
+    end if
 
-99  continue
+19  continue
     tau%tau(i_stop+1:n_path,frq_i) = 0.0_rp
+
     tau%i_stop(frq_i) = i_stop
 
   end subroutine Get_Tau
@@ -170,20 +188,23 @@ contains
   end subroutine Destroy_Tau
 
 ! -----------------------------------------------------  Dump_Tau  -----
-  subroutine Dump_Tau ( Tau, NoFreqs, What )
+  subroutine Dump_Tau ( Tau, NoFreqs, What, I_Start )
     use Dump_0, only: Dump
     use Output_m, only: Output
 
     type(tau_t), intent(in) :: Tau
     integer, intent(in) :: NoFreqs ! Number of frequences
     character(len=*), intent(in), optional :: What
+    integer, intent(in), optional :: I_Start
 
-    integer :: I
+    integer :: I, My_Start
 
     if ( present(what) ) call output ( what, advance='yes' )
+    my_Start = 1
+    if ( present(i_start) ) my_Start = i_start
 
     do i = 1, noFreqs
-      call dump ( tau%tau(:tau%i_stop(i),i) )
+      call dump ( tau%tau(my_start:tau%i_stop(i),i) )
     end do
 
   end subroutine Dump_Tau
@@ -195,11 +216,15 @@ contains
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module Tau_M
 
 ! $Log$
+! Revision 2.10  2009/06/13 01:13:02  vsnyder
+! Specify start and end of path
+!
 ! Revision 2.9  2007/12/04 23:39:19  vsnyder
 ! Make black_out public
 !
