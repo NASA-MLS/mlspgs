@@ -256,21 +256,20 @@ contains
   subroutine DRad_tran_df ( max_f, indices_c, gl_inds, del_zeta, Grids_f,  &
                          &  beta_path_c, eta_zxp_f, sps_path, do_calc_f,   &
                          &  beta_path_f, do_gl, del_s, ref_cor,            &
-                         &  ds_dz_gw, inc_rad_path, tan_pt, i_stop,        &
-                         &  LD, d_delta_df, nz_d_delta_df, nnz_d_delta_df, &
-                         &  drad_df )
+                         &  ds_dz_gw, inc_rad_path, i_start, tan_pt,       &
+                         &  i_stop, LD, d_delta_df, nz_d_delta_df,         &
+                         &  nnz_d_delta_df, drad_df )
 
     use GLNP, only: NG
     use LOAD_SPS_DATA_M, ONLY: GRIDS_T
     use MLSKinds, only: RP, IP
     use SCRT_DN_M, ONLY: DSCRT_DX
-    use Where_M, only: Where
 
 ! Inputs
 
     integer, intent(in) :: Max_f            ! Leading dimension of Beta_Path_f
     integer(ip), intent(in) :: indices_c(:) ! coarse grid indicies
-    integer(ip), intent(in) :: gl_inds(:)   ! Gauss-Legendre grid indicies
+    integer(ip), intent(in) :: gl_inds(:)   ! Gauss-Legendre grid indices
     real(rp), intent(in) :: del_zeta(:)     ! path -log(P) differences on the
       !              main grid.  This is for the whole coarse path, not just
       !              the part up to the black-out
@@ -293,10 +292,12 @@ contains
       !              gw on the entire grid.  Only the gl_inds part is used.
     real(rp), intent(in) :: inc_rad_path(:)  ! incremental radiance along the
                                              ! path.  t_script * tau.
-    integer, intent(in) :: tan_pt            ! path stop index
-    integer(ip), intent(in) :: i_stop        ! path stop index
+    integer, intent(in) :: i_start           ! path_start_index + 1
+    integer, intent(in) :: tan_pt            ! Tangent point index in Del_Zeta
+    integer, intent(in) :: i_stop            ! path stop index
 
     integer, intent(in) :: LD                ! Leading dimension of D_Delta_dF
+
 ! Outputs
 
     real(rp), intent(inout) :: d_delta_df(ld,*) ! path x sve.  derivative of
@@ -306,11 +307,12 @@ contains
     integer, intent(out) :: nnz_d_delta_df(:) ! Column lengths in nz_delta_df
     real(rp), intent(out) :: drad_df(:)      ! derivative of radiances wrt
       !              mixing ratio state vector element. (K)
+
 ! Internals
 
-    integer(ip) :: A, AA, GA, I, II, III
-    integer(ip) :: i_start, n_inds, no_to_gl, npc, sps_i, sps_n, sv_i
-    integer(ip), target, dimension(1:Ng*size(inc_rad_path)) :: all_inds_B
+    integer(ip) :: AA, GA, I, II, III
+    integer(ip) :: i_begin, n_inds, no_to_gl, npc, sps_i, sps_n, sv_i
+    integer(ip), target, dimension(1:size(inc_rad_path)) :: all_inds_B
     integer(ip), target, dimension(1:size(inc_rad_path)) :: more_inds_B
     integer(ip), pointer :: all_inds(:)  ! all_inds => part of all_inds_B;
                                          ! Indices on GL grid for stuff
@@ -352,18 +354,15 @@ contains
           cycle
         end if
 
-        call get_do_calc_indexed ( size(do_gl), do_calc_f(:,sv_i), indices_c, &
-          & gl_inds, do_gl, do_calc )
-
 ! find where the non zeros are along the path
 
-        n_inds = count(do_calc)
+        call get_do_calc_indexed ( size(do_gl), do_calc_f(:,sv_i), indices_c, &
+          & gl_inds, do_gl, do_calc, n_inds, nz_d_delta_df(:,sv_i) )
+
         nnz_d_delta_df(sv_i) = n_inds
         if ( n_inds > 0 ) then
 
           inds => nz_d_delta_df(1:n_inds,sv_i)
-
-          call where ( do_calc, inds )
 
           no_to_gl = count(do_gl(inds))
 
@@ -371,7 +370,7 @@ contains
 
 ! see if anything needs to be gl-d
 
-            all_inds => all_inds_B(1:ng*no_to_gl)
+            all_inds => all_inds_B(1:no_to_gl)
             more_inds => more_inds_B(1:no_to_gl)
 
             call get_inds ( do_gl, do_calc, more_inds, all_inds )
@@ -403,9 +402,8 @@ contains
       !  abscissae~-- and $G(\zeta_i)$ is {\tt singularity}.  The weights
       !  are {\tt gw}.
 
-            a = 1
             do i = 1, no_to_gl
-              aa = all_inds(a)
+              aa = all_inds(i)
               ga = gl_inds(aa)
               ii = more_inds(i)
               d_delta_df(ii,sv_i) = d_delta_df(ii,sv_i) + &
@@ -413,7 +411,6 @@ contains
                 & sum( (beta_path_f(aa:aa+ng-1,sps_i) &
                      &   * eta_zxp_f(ga:ga+ng-1,sv_i) * sps_path(ga:ga+ng-1,sps_i) - &
                      &  singularity(ii)) * ds_dz_gw(ga:ga+ng-1) )
-              a = a + ng
             end do
 
             ! Refraction correction
@@ -445,16 +442,14 @@ contains
       !  abscissae~-- and $G(\zeta_i)$ is {\tt singularity}.  The weights
       !  are {\tt gw}.
 
-            a = 1
             do i = 1, no_to_gl
-              aa = all_inds(a)
+              aa = all_inds(i)
               ga = gl_inds(aa)
               ii = more_inds(i)
               d_delta_df(ii,sv_i) = d_delta_df(ii,sv_i) + &
                 & del_zeta(ii) * &
                 & sum( (beta_path_f(aa:aa+ng-1,sps_i) * eta_zxp_f(ga:ga+ng-1,sv_i) - &
                      &  singularity(ii)) * ds_dz_gw(ga:ga+ng-1) )
-              a = a + ng
             end do
 
             ! Refraction correction
@@ -462,10 +457,10 @@ contains
 
           end if
 
-          i_start = MIN(inds(1),i_stop)
+          i_begin = max(i_start,min(inds(1),i_stop))
 
           call dscrt_dx ( tan_pt, d_delta_df(:,sv_i), inc_rad_path, &
-                       &  i_start, i_stop, drad_df(sv_i))
+                       &  i_begin, i_stop, drad_df(sv_i))
 
         else
           drad_df(sv_i) = 0.0
@@ -488,13 +483,12 @@ contains
                          &  alpha_path_f, dAlpha_dT_path_f, &
                          &  eta_zxp_f, do_calc_t_f, &
                          &  ds_dh, dh_dz_gw, ds_dz_gw, dt_scr_dt, &
-                         &  tau, inc_rad_path, tan_pt, i_stop, deriv_flags, &
-                         &  pfa_update, drad_dt )
+                         &  tau, inc_rad_path, i_start, tan_pt, i_stop, &
+                         &  deriv_flags, pfa_update, drad_dt )
 
     use GLNP, only: NG
     use MLSKinds, only: RP, IP
     use SCRT_DN_M, ONLY: DSCRT_DT, DSCRT_DX
-    use Where_M, only: Where
 
 ! Inputs
 
@@ -545,8 +539,9 @@ contains
     real(rp), intent(in) :: tau(:)          ! transmission function.
     real(rp), intent(in) :: inc_rad_path(:) ! incremental radiance along the
                                             ! path.  t_script * tau.
+    integer, intent(in) :: i_start          ! path start index + 1
     integer, intent(in) :: Tan_pt           ! Tangent point index in Del_Zeta
-    integer(ip), intent(in) :: i_stop       ! path stop index
+    integer, intent(in) :: i_stop           ! path stop index
     logical, intent(in) :: deriv_flags(:)   ! Indicates which temperature
 !                                             derivatives to do
     logical, intent(in) :: PFA_Update       ! Use DSCRT_DX instead of DSCRT_DT.
@@ -555,11 +550,12 @@ contains
     real(rp), intent(out) :: drad_dt(:)     ! derivative of radiances wrt
 !                                             temperature state vector
 !                                             element. (K)
+
 ! Internals
 
-    integer(ip) :: A, AA, B, BB
-    integer(ip) :: i, j, i_start, n_inds, n_path, no_to_gl, p_i, sv_i
-    integer(ip), target, dimension(1:Ng*size(inc_rad_path)) :: all_inds_B
+    integer(ip) :: A, AA, B, GA
+    integer(ip) :: i, ii, i_begin, n_inds, n_path, no_to_gl, p_i, sv_i
+    integer(ip), target, dimension(1:size(inc_rad_path)) :: all_inds_B
     integer(ip), target, dimension(1:size(inc_rad_path)) :: inds_B, more_inds_B
     integer(ip), pointer :: all_inds(:)  ! all_inds => part of all_inds_B;
                                          ! Indices on GL grid for stuff
@@ -593,27 +589,23 @@ contains
     do sv_i = 1 , size(eta_zxp_c,dim=2)
       drad_dt(sv_i) = 0.0
       if ( .not. deriv_flags(sv_i)) cycle
-      i_start = 1
+      i_begin = i_start
 
 ! do the absorption part
 ! combine non zeros flags for both the main and gl parts
 
       call get_do_calc ( do_calc_t_c(:,sv_i), do_calc_t_f(:,sv_i), do_gl, &
-        & do_calc )
+        & do_calc, n_inds, inds_B )
 
-! find where the non zeros are along the path
-
-      n_inds = count(do_calc)
       if ( n_inds > 0 ) then
         inds => inds_B(1:n_inds)
 
-        call where ( do_calc, inds )
-        i_start = max(inds(1)-1,1)
+        i_begin = max(inds(1)-1, i_start)
 
         do i = 1, n_inds ! Don't trust the compiler to fuse loops
-          j = inds(i)
-          singularity(j) = dAlpha_dT_path_c(j) * eta_zxp_c(j,sv_i)
-          d_delta_dt(j,sv_i) = singularity(j) * del_s(j)
+          ii = inds(i)
+          singularity(ii) = dAlpha_dT_path_c(ii) * eta_zxp_c(ii,sv_i)
+          d_delta_dt(ii,sv_i) = singularity(ii) * del_s(ii)
         end do ! i
 
 ! see if anything needs to be gl-d
@@ -621,7 +613,7 @@ contains
         no_to_gl = count(do_gl(inds))
         if ( no_to_gl > 0 ) then
 
-          all_inds => all_inds_B(1:ng*no_to_gl)
+          all_inds => all_inds_B(1:no_to_gl)
           more_inds => more_inds_B(1:no_to_gl)
 
           call get_inds ( do_gl, do_calc, more_inds, all_inds )
@@ -642,17 +634,15 @@ contains
       !  the appropriate abscissae~-- and $G(\zeta_i)$ is {\tt
       !  singularity}.  The weights are {\tt gw}.
 
-          a = 1
           do i = 1, no_to_gl
-            aa = all_inds(a)
-            bb = aa + ng - 1
-            j = more_inds(i)
-            d_delta_dt(j,sv_i) = d_delta_dt(j,sv_i) + &
-              & del_zeta(j) * &
-              & sum( (dAlpha_dT_path_f(aa:bb) * eta_zxp_f(aa:bb,sv_i) - &
-                   &  singularity(j)) * &
-                   & ds_dz_gw(gl_inds(aa:bb)) )
-            a = a + ng
+            aa = all_inds(i)
+            ga = gl_inds(aa)
+            ii = more_inds(i)
+            d_delta_dt(ii,sv_i) = d_delta_dt(ii,sv_i) + &
+              & del_zeta(ii) * &
+              & sum( (dAlpha_dT_path_f(aa:aa+ng-1) * eta_zxp_f(aa:aa+ng-1,sv_i) - &
+                   &  singularity(ii)) * &
+                   & ds_dz_gw(ga:ga+ng-1) )
           end do
         end if ! no_to_gl > 0
 
@@ -761,7 +751,7 @@ contains
           end if
         end do ! p_i
 
-        i_start = min(i_start,inds(1))
+        i_begin = min(i_begin,inds(1))
 
       end if ! n_inds for hydrostatic > 0
 
@@ -775,12 +765,12 @@ contains
         ! If we're doing a PFA update, we do not want to include
         ! dt_scr_dt again.
 
-        call dscrt_dx ( tan_pt, d_delta_dt(:,sv_i), inc_rad_path, i_start, i_stop, &
+        call dscrt_dx ( tan_pt, d_delta_dt(:,sv_i), inc_rad_path, i_begin, i_stop, &
                      &  drad_dt(sv_i) )
       else
 
         call dscrt_dt ( tan_pt, d_delta_dt(:,sv_i), tau, inc_rad_path, dt_scr_dt(:,sv_i), &
-                      & i_start, i_stop, drad_dt(sv_i) )
+                      & i_begin, i_stop, drad_dt(sv_i) )
 
       end if
 
@@ -793,7 +783,7 @@ contains
 !  (Here dx could be: dw, dn or dv (dNu0) )
 
   subroutine DRad_tran_dx ( indices_c, gl_inds, del_zeta, Grids_f,        &
-                         &  eta_zxp_f, sps_path, sps_map, do_calc_f,      &
+                         &  eta_zxp, sps_path, sps_map, do_calc_f,        &
                          &  dbeta_path_c, dbeta_path_f, do_gl, del_s,     &
                          &  ref_cor, ds_dz_gw, inc_rad_path, tan_pt,      &
                          &  i_stop, drad_dx )
@@ -801,7 +791,6 @@ contains
     use LOAD_SPS_DATA_M, ONLY: GRIDS_T
     use MLSKinds, only: RP, IP
     use SCRT_DN_M, ONLY: DSCRT_DX
-    use Where_M, only: Where
 
 ! Inputs
 
@@ -811,12 +800,13 @@ contains
       !              main grid.  This is for the whole coarse path, not just
       !              the part up to the black-out
     type (Grids_T), intent(in) :: Grids_f    ! All the coordinates
-    real(rp), intent(in) :: eta_zxp_f(:,:)   ! representation basis function.
+    real(rp), intent(in) :: eta_zxp(:,:)     ! representation basis function,
+      !                                        composite path.
     real(rp), intent(in) :: sps_path(:,:)    ! Path species function, path X species.
     integer, intent(in) :: sps_map(:)        ! second-dimension subscripts for sps_path.
-    logical, intent(in) :: do_calc_f(:,:)    ! A logical indicating where the
-      !                                        representation basis function is
-      !                                        not zero.
+    logical, intent(in) :: do_calc_f(:,:)    ! Where the representation basis
+      !                                        function is not zero, composite
+      !                                        path.
     real(rp), intent(in) :: dbeta_path_c(:,:) ! derivative of beta wrt dx
       !                                        on main grid.
     real(rp), intent(in) :: dbeta_path_f(:,:) ! derivative of beta wrt dx
@@ -838,9 +828,9 @@ contains
 !                                              state vector element. (K)
 ! Internals
 
-    integer(ip) :: A, AA, GA, I, II, III
+    integer(ip) :: AA, GA, I, II, III
     integer(ip) :: i_start, n_inds, no_to_gl, sps_i, sps_m, sps_n, sv_i
-    integer(ip), target, dimension(1:Ng*size(inc_rad_path)) :: all_inds_B
+    integer(ip), target, dimension(1:size(inc_rad_path)) :: all_inds_B
     integer(ip), target, dimension(1:size(inc_rad_path)) :: inds_B, more_inds_B
     integer(ip), pointer :: all_inds(:)  ! all_inds => part of all_inds_B;
                                          ! Indices on GL grid for stuff
@@ -857,9 +847,9 @@ contains
     real(rp) :: singularity(1:size(inc_rad_path)) ! integrand on left edge of coarse
                                          ! grid panel -- singular at tangent pt.
 
-    logical :: do_calc(1:size(inc_rad_path))      ! Flags on coarse path where do_calc_c
-                                         ! or (do_gl and any corresponding
-                                         ! do_calc_f).
+    logical :: do_calc(1:size(inc_rad_path))      ! Flags on coarse path where
+                                         ! do_calc_c or (do_gl and any
+                                         ! corresponding do_calc_f).
 
 ! Begin code
 
@@ -872,23 +862,20 @@ contains
 
         d_delta_dx = 0.0_rp
 
-        call get_do_calc_indexed ( size(do_gl), do_calc_f(:,sv_i), indices_c, &
-          & gl_inds, do_gl, do_calc )
-
 ! find where the non zeros are along the path
 
-        n_inds = count(do_calc)
+        call get_do_calc_indexed ( size(do_gl), do_calc_f(:,sv_i), indices_c, &
+          & gl_inds, do_gl, do_calc, n_inds, inds_B )
+
         if ( n_inds > 0 ) then
 
           inds => inds_B(1:n_inds)
-
-          call where ( do_calc, inds )
 
           do i = 1, n_inds ! Don't trust the compiler to fuse loops
             ii = inds(i)
             iii = indices_c(ii)
             singularity(ii) = dbeta_path_c(ii,sps_i) &
-                            &  * eta_zxp_f(iii,sv_i) * sps_path(iii,sps_m)
+                            &  * eta_zxp(iii,sv_i) * sps_path(iii,sps_m)
             d_delta_dx(ii) = singularity(ii) * del_s(ii)
           end do ! i
 
@@ -897,7 +884,7 @@ contains
 
 ! see if anything needs to be gl-d
 
-            all_inds => all_inds_B(1:Ng*no_to_gl)
+            all_inds => all_inds_B(1:no_to_gl)
             more_inds => more_inds_B(1:no_to_gl)
 
             call get_inds ( do_gl, do_calc, more_inds, all_inds )
@@ -918,17 +905,15 @@ contains
       !  the appropriate abscissae~-- and $G(\zeta_i)$ is {\tt
       !  singularity}.  The weights are {\tt gw}.
 
-            a = 1
             do i = 1, no_to_gl
-              ii = more_inds(i)
-              aa = all_inds(a)
+              aa = all_inds(i)
               ga = gl_inds(aa)
+              ii = more_inds(i)
               d_delta_dx(ii) = d_delta_dx(ii) + &
                 & del_zeta(ii) * &
                 & sum( (dbeta_path_f(aa:aa+ng-1,sps_i) &
-                     &   * eta_zxp_f(ga:ga+ng-1,sv_i) * sps_path(ga:ga+ng-1,sps_m) - &
+                     &   * eta_zxp(ga:ga+ng-1,sv_i) * sps_path(ga:ga+ng-1,sps_m) - &
                      &  singularity(ii)) * ds_dz_gw(ga:ga+ng-1) )
-              a = a + ng
             end do
 
           end if
@@ -952,7 +937,7 @@ contains
   end subroutine DRad_tran_dx
 
   ! ------------------------------------------------  Get_Do_Calc  -----
-  subroutine Get_Do_Calc ( Do_Calc_c, Do_Calc_f, Do_GL, Do_Calc )
+  subroutine Get_Do_Calc ( Do_Calc_c, Do_Calc_f, Do_GL, Do_Calc, N_Inds, Inds )
 
   ! Set Do_Calc if Do_Calc_c or Do_GL and any of the corresponding Do-Calc_f
   ! flags are set.
@@ -963,6 +948,8 @@ contains
     logical, intent(in) :: Do_Calc_f(:) ! On the GL grid
     logical, intent(in) :: Do_GL(:)     ! Where on coarse grid to do GL
     logical, intent(out) :: Do_Calc(:)  ! Where on coarse grid to do calc.
+    integer, intent(out), optional :: N_Inds  ! count(do_calc)
+    integer, intent(out), optional :: Inds(:) ! Indices where do_calc is true
 
     integer :: I, P_I
 
@@ -970,17 +957,27 @@ contains
     do_calc = do_calc_c
     do p_i = 1 , size(do_gl)
       if ( do_gl(p_i) ) then
-        if ( any(do_calc_f(i:i+ng-1)) ) do_calc(p_i)=.true.
+        do_calc(p_i) = do_calc(p_i) .or. any(do_calc_f(i:i+ng-1))
         i = i + Ng
       end if
     end do
 
+    if ( present(n_inds) ) then
+      n_inds = 0
+      do p_i = 1 , size(do_gl)
+        if ( do_calc(p_i) ) then
+          n_inds = n_inds + 1
+          inds(n_inds) = p_i
+        end if
+      end do
+    end if
   end subroutine Get_Do_Calc
 
 ! =====     Private Procedures     =====================================
 
   ! ----------------------------------------  Get_Do_Calc_Indexed  -----
-  subroutine Get_Do_Calc_Indexed ( N, Do_Calc_all, C_Inds, F_Inds, Do_GL, Do_Calc )
+  subroutine Get_Do_Calc_Indexed ( N, Do_Calc_all, C_Inds, F_Inds, Do_GL, &
+    & Do_Calc, N_Inds, Inds )
 
   ! Set Do_Calc if Do_Calc_All(c_inds) or Do_GL and any of the corresponding
   ! Do_Calc_All(f_inds) flags are set.
@@ -997,6 +994,8 @@ contains
     integer(ip), intent(in) :: F_Inds(*)  ! Indices in Do_Calc_All for find grid
     logical, intent(in) :: Do_GL(*)       ! Where on coarse grid to do GL
     logical, intent(out) :: Do_Calc(*)    ! Where on coarse grid to do calc.
+    integer, intent(out) :: N_Inds        ! count(do_calc)
+    integer, intent(out) :: Inds(*)       ! Indices where do_calc is true
 #elif defined LF95
 !     Assumed-shape arguments are faster than assumed size
     logical, intent(in) :: Do_Calc_all(:) ! On the entire path
@@ -1004,13 +1003,17 @@ contains
     integer(ip), intent(in) :: F_Inds(:)  ! Indices in Do_Calc_All for find grid
     logical, intent(in) :: Do_GL(:)       ! Where on coarse grid to do GL
     logical, intent(out) :: Do_Calc(:)    ! Where on coarse grid to do calc.
+    integer, intent(out) :: N_Inds        ! count(do_calc)
+    integer, intent(out) :: Inds(:)       ! Indices where do_calc is true
 #else
 !     Assumed-shape arguments are faster than assumed size
     logical, intent(in) :: Do_Calc_all(:) ! On the entire path
     integer(ip), intent(in) :: C_Inds(:)  ! Indices in Do_Calc_All for coarse grid
-    integer(ip), intent(in) :: F_Inds(:)  ! Indices in Do_Calc_All for find grid
+    integer(ip), intent(in) :: F_Inds(:)  ! Indices in Do_Calc_All for fine grid
     logical, intent(in) :: Do_GL(:)       ! Where on coarse grid to do GL
     logical, intent(out) :: Do_Calc(:)    ! Where on coarse grid to do calc.
+    integer, intent(out) :: N_Inds        ! count(do_calc)
+    integer, intent(out) :: Inds(:)       ! Indices where do_calc is true
 #endif
 
     integer :: I, P_I
@@ -1020,6 +1023,7 @@ contains
 
 !     do_calc = do_calc_all(c_inds)
     i = 1 - Ng
+    n_inds = 0
     do p_i = 1, n
       do_calc(p_i) = do_calc_all(c_inds(p_i))
       if ( do_gl(p_i) ) then
@@ -1037,6 +1041,10 @@ contains
 !         k = f_inds(i)
 !         do_calc(p_i) = do_calc(p_i) .or. any(do_calc_all(k:k+ng-1))
 !         if ( any(do_calc_all(f_inds(i:i+ng-1))) ) do_calc(p_i)=.true.
+      end if
+      if ( do_calc(p_i) ) then
+        n_inds = n_inds + 1
+        inds(n_inds) = p_i
       end if
     end do
 ! !   This is much slower
@@ -1091,11 +1099,14 @@ contains
           ! It turns out, through a bizarre and worrying series of discoveries about Lahey
           ! that that was really slow under some repeatable, but totally unjustifiable circumstances.
           ! hence the regular do loop below - NJL / WVS
-          do k = 0, ng - 1
-            all_inds(j+k) = l+k
-          end do
+!           do k = 0, ng - 1
+!             all_inds(j+k) = l+k
+!           end do
+          ! We actually only need the first of the GL inds, since the rest
+          ! are consecutive.
+          all_inds(j) = l
           i = i + 1
-          j = j + Ng
+          j = j + 1
         end if
         l = l + Ng
       end if
@@ -1111,11 +1122,15 @@ contains
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.4  2009/06/13 01:11:55  vsnyder
+! Specify start and end of path, simplify some index calculations
+!
 ! Revision 2.3  2007/07/11 22:26:45  vsnyder
 ! Dumps
 !
