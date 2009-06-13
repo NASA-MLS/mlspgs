@@ -50,6 +50,7 @@ contains
     real(rp), intent(in) :: IncRadPath(:)
 
     integer :: I, J
+    character(80) :: Line ! of output
 
     ! Dump VMR and Beta
 
@@ -69,7 +70,7 @@ contains
       if ( j /= size(vmr,2) ) call blanks ( 6 )
     end do
     call NewLine
-    do i = i_start-1, i_end
+    do i = i_start, i_end
       call output ( i, format='(i3)' )
 !     call output ( rad2deg*phi(i), format='(f10.4)' )
 !     call output ( zeta(i), format='(f8.4)' )
@@ -83,14 +84,14 @@ contains
     ! Dump Alpha, Incoptdepth, Tau, IncRadPath
 
     call output ( "         Phi     Zeta    Alpha        IncOptDepth     Tau       IncRadPath", advance="yes" )
-    do i = i_start, tau%i_stop(frq_i)
-      call output ( i, format='(i3)' )
-      call output ( rad2deg*phi(i), format='(f10.4)' )
-      call output ( zeta(i), format='(f8.4)' )
-      call output ( alpha(i), format='(1pg14.6)' )
-      call output ( incoptdepth(i), format='(1pg14.6)' )
-      call output ( tau%tau(i,frq_i), format='(1pg14.6)' )
-      call output ( incradpath(i), format='(1pg14.6)', advance="yes" )
+    write ( line, 1 ) i_start, rad2deg*phi(i_start), zeta(i_start), &
+      & alpha(i_start)
+1   format ( i3, f10.4, f8.4, 1p, 4g14.6 )
+    call output ( trim(line), advance='yes' )
+    do i = i_start+1, tau%i_stop(frq_i)
+      write ( line, 1 ) i, rad2deg*phi(i), zeta(i), alpha(i), incoptdepth(i), &
+        & tau%tau(i,frq_i), incradpath(i)
+      call output ( trim(line), advance='yes' )
     end do
 
   end subroutine Dump_Path
@@ -108,6 +109,9 @@ contains
 end module Dump_Path_m
 
 ! $Log$
+! Revision 2.2  2009/06/13 00:53:16  vsnyder
+! Different meaning for i_start, simplify I/O
+!
 ! Revision 2.1  2008/12/18 02:58:29  vsnyder
 ! Initial commit
 !
