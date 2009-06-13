@@ -239,7 +239,7 @@ module MLSNumerics              ! Some low level numerical stuff
     real(r4) :: yLeft  = 0.                        ! Assume all y < x1 are this
     real(r4) :: yRight= 0.                         ! Assume all y > x2 are this
     real(r4), dimension(:), pointer :: y => null() ! y(xi)
-    ! type(Coefficients_R8) :: Coeffs                ! in case we'll use splines
+    ! type(Coefficients_R4) :: Coeffs                ! in case we'll use splines
   end type UnifDiscreteFn_r4
   
   type UnifDiscreteFn_r8
@@ -1415,7 +1415,7 @@ contains
     real(rk), dimension(:,:), optional, intent(out) :: IntYdX ! Antiderivative
                                               ! of Y at X
 
-    type(coefficients_r8) :: Coeffs
+    type(coefficients_r4) :: Coeffs
 
     include "InterpolateArray.f9h"
 
@@ -1458,7 +1458,7 @@ contains
 
     real(rk), intent(in) :: OldX(:), NewX(:)
     character(len=*), intent(in) :: Method
-    type(coefficients_R8), intent(out) :: Coeffs
+    type(coefficients_R4), intent(out) :: Coeffs
     character(len=*), intent(in), optional :: Extrapolate
     integer, intent(in), optional :: Width ! Second dimension for OldY when
                                            ! interpolations get done
@@ -1578,7 +1578,7 @@ contains
     integer, parameter :: RK = R4
 
     ! Dummy arguments
-    type(coefficients_r8), intent(in) :: Coeffs
+    type(coefficients_r4), intent(in) :: Coeffs
     real(rk), dimension(:), intent(in) :: oldX
     real(rk), dimension(:), intent(in) :: oldY
     real(rk), dimension(:), intent(in) :: newX
@@ -1630,7 +1630,7 @@ contains
     integer, parameter :: RK = R4
 
     ! Dummy arguments
-    type(coefficients_r8), intent(in) :: Coeffs
+    type(coefficients_r4), intent(in) :: Coeffs
     real(rk), dimension(:), intent(in) :: oldX
     real(rk), dimension(:,:), intent(in) :: oldY
     real(rk), dimension(:), intent(in) :: newX
@@ -2155,6 +2155,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.61  2009/06/13 02:27:39  vsnyder
+! Several coefficients_R8 should have been coefficients_R4
+!
 ! Revision 2.60  2008/09/03 20:43:48  pwagner
 ! Added FindInRange
 !
