@@ -28,12 +28,13 @@ module Path_Contrib_M
 contains
 
 !-------------------------------------------  Path_Contrib_Scalar  -----
-! Estimate the contributions (along the path) of each interval of the
-! (coarse) pre-selected integration grid.  Use that estimate to select
-! where to do Gauss-Legendre quadrature.  Then allocate and fill
-! arrays that control the Gauss-Legendre quadratures.
+! Estimate the error (along the path) of the integral in each interval
+! of the (coarse) pre-selected integration grid.  Use that estimate to
+! select where to do Gauss-Legendre quadrature.  Then specify where to
+! do the Gauss-Legendre quadratures.
 
-  subroutine Path_Contrib_Scalar ( incoptdepth, tan_pt, e_rflty, tol, do_gl )
+  subroutine Path_Contrib_Scalar ( incoptdepth, tan_pt, i_start, i_end, &
+    &                              e_rflty, tol, do_gl )
 
     use MLSCommon, only: RK => RP, IP
     use Tau_m, only: Black_Out
@@ -42,6 +43,7 @@ contains
 
     real(rk), intent(in) :: IncOptDepth(:) ! layer optical depth
     integer, intent(in) :: tan_pt          ! Tangent point index in IncOptDepth
+    integer, intent(in) :: i_start, i_end  ! How much of path to worry about
     real(rk), intent(in) :: e_rflty        ! earth reflectivity
     real(rk), intent(in) :: tol            ! accuracy target in K
 
@@ -55,7 +57,7 @@ contains
     real(rk) :: dtaudn(size(incoptdepth))  ! optical depth (delta) at first,
                                            ! then path derivative of the
                                            ! transmission function (tau)
-    integer(ip) :: i, n_path, last
+    integer(ip) :: last
 
     real(rk) :: MyTol
     real(rk), parameter :: temp = 250.0_rk
@@ -64,45 +66,41 @@ contains
 
   ! start code
 
-    n_path = size(incoptdepth)
-    last = n_path
     myTol = - tolScale * tol ! Negative because we're summing -incoptdepth
 
-  ! Compute the indefinite sum of (-incoptdepth).
+    ! Compute dtaudn = delta = indefinite sum of (-incoptdepth).
 
-    dtaudn(1) = 0.0_rk
-    do i = 2 , tan_pt
-      dtaudn(i) = dtaudn(i-1) - incoptdepth(i)
-      if ( dtaudn(i) < black_out ) then
-        last = i
-        go to 9
-      end if
+    dtaudn(i_start) = 0.0_rk
+    do last = i_start+1, min(tan_pt, i_end)
+      dtaudn(last) = dtaudn(last-1) - incoptdepth(last)
+      if ( dtaudn(last) < black_out ) go to 19
     end do
 
-    dtaudn(tan_pt+1) = dtaudn(tan_pt)
+    if ( tan_pt < i_end ) dtaudn(tan_pt+1) = dtaudn(tan_pt)
 
-    do i = tan_pt+2, n_path
-      dtaudn(i) = dtaudn(i-1) - incoptdepth(i-1)
-      if ( dtaudn(i) < black_out ) then
-        last = i
-        go to 9
-      end if
+    do last = tan_pt+2, i_end
+      dtaudn(last) = dtaudn(last-1) - incoptdepth(last-1)
+      if ( dtaudn(last) < black_out ) go to 19
     end do
+    last = i_end
 
-9   continue
+19  continue
 
-  ! compute the tau path derivative dTau/ds ~ exp(delta) d delta/ds.
+    ! compute the tau path derivative dTau/ds ~ exp(delta) d delta/ds.
 
-    dtaudn(:last) = (eoshift(dtaudn(:last),1,dtaudn(last)) -             &
-                     eoshift(dtaudn(:last),-1,dtaudn(1))) * exp(dtaudn(:last))
+    dtaudn(i_start:last) = &
+      & (eoshift(dtaudn(i_start:last),1,dtaudn(last)) -             &
+      &  eoshift(dtaudn(i_start:last),-1,dtaudn(i_start))) * &
+      & exp(dtaudn(i_start:last))
 
     dtaudn(tan_pt+1:last) = dtaudn(tan_pt+1:last) * e_rflty
 
-  ! find where the tau derivative is large.  Remember, tau is monotone
-  ! decreasing, so "large" means "large and negative."
+    ! find where the tau derivative is large.  Remember, tau is monotone
+    ! decreasing, so "large" means "large and negative."
 
-    where ( dtaudn(:last) < myTol ) do_gl(:last) = .true.
-    do_gl(last+1:) = .false. ! Tau is blacked out, so no point in doing GL
+    where ( dtaudn(i_start:last) < myTol ) do_gl(i_start:last) = .true.
+    do_gl(:i_start) = .false. ! irrelevant
+    do_gl(last+1:) = .false.  ! Tau is blacked out, so no point in doing GL
 
   end subroutine Path_Contrib_Scalar
 
@@ -245,11 +243,15 @@ contains
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module Path_Contrib_M
 
 ! $Log$
+! Revision 2.21  2007/12/04 01:56:41  vsnyder
+! Don't bother with earth reflectivity after black out
+!
 ! Revision 2.20  2006/12/13 02:32:03  vsnyder
 ! Drag the tangent point around instead of assuming it's the middle one
 !
