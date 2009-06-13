@@ -293,13 +293,15 @@ contains
     use Output_m, only: Output
     use Toggles, only: Switches
 
-    integer, intent(in) :: Tan_pt      ! Tangent point index in H_Path etc.
+    integer, intent(in) :: Tan_pt  ! Tangent point index in H_Path etc.
     real(rp), intent(in) :: H_PATH(:)
     real(rp), intent(in) :: N_PATH(:)
 
-    real(rp), intent(in) :: ht
+    real(rp), intent(in) :: ht     ! Geometric tangent height from Earth center, km
 
-    real(rp), intent(out) :: Del_s(:)
+    real(rp), intent(out) :: Del_s(:) ! Del_s(j) = path length from j to j+m,
+                                   ! where m is the direction from the tangent
+                                   ! point, except Del_s(0) = Del_s(no_ele) = 0.
     real(rp), intent(out) :: REF_CORR(:)
 
     integer, intent(out) :: Status ! 0 = OK, 1 = too many iterations,
@@ -610,6 +612,10 @@ contains
 end module REFRACTION_M
 
 ! $Log$
+! Revision 2.36  2009/01/16 23:42:04  vsnyder
+! Don't need to set all of Del_s to zero initially because all but 1 and
+! no_ele get set anyway.  Add PRINT statement to not_used_here.
+!
 ! Revision 2.35  2007/10/30 20:52:26  vsnyder
 ! Change diagnostic output criteria
 !
