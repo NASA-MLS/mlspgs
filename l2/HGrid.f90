@@ -1094,7 +1094,7 @@ contains ! =====     Public Procedures     =============================
         call dump(OldMethodValues, 'v1.51')
         call dump(hGrid%solarTime, 'v2.0')
         call diff( OldMethodValues, 'v1.51', hGrid%solarTime, 'v2.0', &
-          & stats=.true., rms=.true. )
+          & options='rs' )
         call deallocate_test(OldMethodValues, 'OldMethodValues', ModuleName)
       endif
     endif
@@ -1138,7 +1138,7 @@ contains ! =====     Public Procedures     =============================
       call dump(OldMethodValues, 'v1.51')
       call dump(hGrid%solarZenith, 'v2.0')
       call diff( OldMethodValues, 'v1.51', hGrid%solarZenith, 'v2.0', &
-        & stats=.true., rms=.true. )
+        & options='rs' )
       call deallocate_test(OldMethodValues, 'OldMethodValues', ModuleName)
       
     endif
@@ -2342,6 +2342,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.95  2009/06/16 17:42:16  pwagner
+! Changed api for dump, diff routines; now rely on options for most optional behavior
+!
 ! Revision 2.94  2009/05/13 20:41:55  vsnyder
 ! Get constants from Constants, kinds from MLSKinds
 !
