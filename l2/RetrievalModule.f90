@@ -2134,7 +2134,7 @@ NEWT: do ! Newtonian iteration
             aj%fnorm = sqrt(aj%fnorm)
               if ( d_sca ) &
                 & call dump ( (/ aj%fnorm, aj%chiSqNorm /) , &
-                & '     | F |    chi^2/DOF ', clean=.true. )
+                & '     | F |    chi^2/DOF ', options='c' )
             exit
           end if
           aj%diag = minDiag ( factored ) ! element on diagonal with
@@ -2197,9 +2197,9 @@ NEWT: do ! Newtonian iteration
             if ( d_sca ) then
               call dump ( (/ aj%fnorm, aj%fnmin, aj%diag, aj%ajn, aj%gradn /), &
                 & '     | F |      aj%fnmin       aj%diag      L1| FAC |        | G |', &
-                & clean=.true. )
+                & options='c' )
               call dump ( (/ aj%chiSqNorm, aj%chiSqMinNorm /), &
-                & ' chi^2/DOF  chimin^2/DOF ', clean=.true. )
+                & ' chi^2/DOF  chimin^2/DOF ', options='c' )
             end if
         case ( nf_lev ) ! ..................................  LEV  .....
         !{Solve ${\bf U}^T {\bf q} = {\bf \delta \hat x}$, then compute
@@ -2363,7 +2363,7 @@ NEWT: do ! Newtonian iteration
                 cosine = aj%gdx/(aj%dxn*aj%gradn)
               call dump ( (/ aj%dxn, aj%fnmin, cosine, aj%sq, mu /), &
                 & '    | DX |      aj%fnmin    ' // &
-                & 'cos(G, DX)        lambda            mu', clean=.true. )
+                & 'cos(G, DX)        lambda            mu', options='c' )
               if ( .not. aj%starting ) then
                 call output ( ' cos(DX, DXL) = ' )
                 cosine = -2.0_r8
@@ -2783,6 +2783,9 @@ NEWT: do ! Newtonian iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.304  2009/06/16 17:40:02  pwagner
+! Changed api for dump, diff routines; now rely on options for most optional behavior
+!
 ! Revision 2.303  2009/03/14 02:43:19  honghanh
 ! Add dnwt_abandoned and dnwt_count
 !
