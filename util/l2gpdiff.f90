@@ -68,27 +68,28 @@ program l2gpdiff ! show diffs between swaths in two different files
   
   type ( options_T ) :: options
 
-  integer, parameter ::          MAXFILES = 100
-  integer, parameter :: MAXNCHUNKS = 50
+  integer, parameter                      :: MAXFILES = 100
+  integer, parameter                      :: MAXNCHUNKS = 50
+  character(len=*), parameter             :: SWATHPREFIX='R3:240.B25D:CO.S1.DACS-1 chisqBinned Core'
 
-  integer, dimension(MAXNCHUNKS) :: chunks
-  character(len=255) :: filename          ! input filename
+  integer, dimension(MAXNCHUNKS)          :: chunks
+  character(len=8)                        :: dumpOptions
+  character(len=255)                      :: filename          ! input filename
   character(len=255), dimension(MAXFILES) :: filenames
-  integer     ::  i, error ! Counting indices & Error flags
-  integer :: listSize
-  integer            :: n_filenames
-  integer :: nChunks
-  integer :: nPressures
-  integer :: numDiffs
-  integer :: NUMSWATHSPERFILE
-  real, dimension(MAXNCHUNKS) :: pressures
-  character(len=16) :: string
-  character(len=MAXSWATHNAMESBUFSIZE) :: swathList1
-  character(len=*), parameter :: SWATHPREFIX='R3:240.B25D:CO.S1.DACS-1 chisqBinned Core'
-  real        :: t1
-  real        :: t2
-  real        :: tFile
-  logical, parameter :: USEALLINPUTSWATHS = .true.
+  integer                                 :: i, error ! Counting indices & Error flags
+  integer                                 :: listSize
+  integer                                 :: nChunks
+  integer                                 :: n_filenames
+  integer                                 :: nPressures
+  integer                                 :: numDiffs
+  integer                                 :: NUMSWATHSPERFILE
+  real, dimension(MAXNCHUNKS)             :: pressures
+  character(len=16)                       :: string
+  character(len=MAXSWATHNAMESBUFSIZE)     :: swathList1
+  real                                    :: t1
+  real                                    :: t2
+  real                                    :: tFile
+  logical, parameter                      :: USEALLINPUTSWATHS = .true.
   ! 
   MLSMessageConfig%useToolkit = .false.
   MLSMessageConfig%logFileUnit = -1
@@ -130,6 +131,12 @@ program l2gpdiff ! show diffs between swaths in two different files
   endif
   rmsFormat = '(1pe8.1)'
   if ( options%silent ) call suspendOutput
+  dumpOptions = '-'
+  if ( options%ignoreBadChunks ) dumpOptions = trim(dumpOptions) // 'i'
+  if ( options%silent ) dumpOptions = trim(dumpOptions) // 'm'
+  if ( options%rms ) dumpOptions = trim(dumpOptions) // 'r'
+  if ( options%stats ) dumpOptions = trim(dumpOptions) // 's'
+  if ( options%verbose ) dumpOptions = trim(dumpOptions) // 'v'
   call time_now ( t1 )
   do i = 2, n_filenames, 2
     call time_now ( tFile )
@@ -140,42 +147,42 @@ program l2gpdiff ! show diffs between swaths in two different files
     if ( options%nGeoBoxDims > 0 ) then
       call diff( trim(filenames(i-1)), trim(filenames(i)), &
       & options%geoBoxNames, options%geoBoxLowBound, options%geoBoxHiBound, &
-      & details=options%Details, stats=options%stats, &
-      & rms=options%rms, ignoreBadChunks=options%ignoreBadChunks, &
+      & details=options%Details, &
       & showMissing=options%showMissing, fields=options%fields, &
       & force=options%force, swaths1=options%swaths1, swaths2=options%swaths2, &
       & matchTimes=options%matchTimes, &
-      & silent=options%silent, verbose=options%verbose, numDiffs=numDiffs )
+      & numDiffs=numDiffs, &
+      & options=dumpOptions )
     elseif ( options%chunks == '*' .and. options%pressures == '*' ) then
       call diff( trim(filenames(i-1)), trim(filenames(i)), &
-      & details=options%Details, stats=options%stats, &
-      & rms=options%rms, ignoreBadChunks=options%ignoreBadChunks, &
+      & details=options%Details, &
       & showMissing=options%showMissing, fields=options%fields, &
       & force=options%force, swaths1=options%swaths1, swaths2=options%swaths2, &
       & matchTimes=options%matchTimes, &
-      & silent=options%silent, verbose=options%verbose, numDiffs=numDiffs )
+      & numDiffs=numDiffs, &
+      & options=dumpOptions )
     elseif ( options%pressures == '*' ) then
       call ExpandStringRange(options%chunks, chunks, nchunks)
       if ( nchunks < 1 ) cycle
       call diff( trim(filenames(i-1)), trim(filenames(i)), &
       & chunks=chunks(1:nchunks), &
-      & details=options%Details, stats=options%stats, &
-      & rms=options%rms, ignoreBadChunks=options%ignoreBadChunks, &
+      & details=options%Details, &
       & showMissing=options%showMissing, fields=options%fields, &
       & force=options%force, swaths1=options%swaths1, swaths2=options%swaths2, &
       & matchTimes=options%matchTimes, &
-      & silent=options%silent, verbose=options%verbose, numDiffs=numDiffs )
+      & numDiffs=numDiffs, &
+      & options=dumpOptions )
     elseif ( options%chunks == '*' ) then
       call ExpandStringRange(options%pressures, pressures, npressures)
       if ( npressures < 1 ) cycle
       call diff( trim(filenames(i-1)), trim(filenames(i)), &
       & pressures=pressures(1:nPressures), &
-      & details=options%Details, stats=options%stats, &
-      & rms=options%rms, ignoreBadChunks=options%ignoreBadChunks, &
+      & details=options%Details, &
       & showMissing=options%showMissing, fields=options%fields, &
       & force=options%force, swaths1=options%swaths1, swaths2=options%swaths2, &
       & matchTimes=options%matchTimes, &
-      & silent=options%silent, verbose=options%verbose, numDiffs=numDiffs )
+      & numDiffs=numDiffs, &
+      & options=dumpOptions )
     else
       call ExpandStringRange(options%chunks, chunks, nchunks)
       if ( nchunks < 1 ) cycle
@@ -183,12 +190,12 @@ program l2gpdiff ! show diffs between swaths in two different files
       if ( npressures < 1 ) cycle
       call diff( trim(filenames(i-1)), trim(filenames(i)), &
       & pressures=pressures(1:nPressures), chunks=chunks(1:nchunks), &
-      & details=options%Details, stats=options%stats, &
-      & rms=options%rms, ignoreBadChunks=options%ignoreBadChunks, &
+      & details=options%Details, &
       & showMissing=options%showMissing, fields=options%fields, &
       & force=options%force, swaths1=options%swaths1, swaths2=options%swaths2, &
       & matchTimes=options%matchTimes, &
-      & silent=options%silent, verbose=options%verbose, numDiffs=numDiffs )
+      & numDiffs=numDiffs, &
+      & options=dumpOptions )
     endif
     options%numDiffs = options%numDiffs + numDiffs
     if ( options%timing ) call sayTime('diff these files: ' // trim(filenames(i-1)) // &
@@ -375,6 +382,9 @@ end program l2gpdiff
 !==================
 
 ! $Log$
+! Revision 1.15  2008/09/25 23:11:54  pwagner
+! May confine diffs to a geolocation box
+!
 ! Revision 1.14  2008/04/10 20:23:03  pwagner
 ! Less voluminous output
 !

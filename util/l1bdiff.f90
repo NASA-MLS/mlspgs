@@ -74,24 +74,23 @@ program l1bdiff ! diffs two l1b or L2AUX files
     character(len=255) :: referenceFileName= 'default.h5'  ! reference filename
   end type options_T
   
-  type ( options_T ) :: options
-
-
+  type ( options_T ) ::          options
   integer, parameter ::          MAXDS = 300
   integer, parameter ::          MAXSDNAMESBUFSIZE = MAXDS*NAME_LEN
   integer, parameter ::          MAXFILES = 100
-  logical ::          columnsOnly
-  character(len=255) :: filename          ! input filename
+  logical ::                     columnsOnly
+  character(len=8)   ::          dumpOptions
+  character(len=255) ::          filename          ! input filename
   character(len=255), dimension(MAXFILES) :: filenames
-  integer            :: n_filenames
-  integer     ::  i, status, error ! Counting indices & Error flags
-  logical     :: is_hdf5
-  integer :: maf1, maf2
+  integer     ::                 i, status, error ! Counting indices & Error flags
+  logical     ::                 is_hdf5
+  integer ::                     maf1, maf2
   character (len=MAXSDNAMESBUFSIZE) :: mySdList
-  character(len=16) :: string
-  real        :: t1
-  real        :: t2
-  real        :: tFile
+  integer            ::          n_filenames
+  character(len=16) ::           string
+  real        ::                 t1
+  real        ::                 t2
+  real        ::                 tFile
   ! 
   MLSMessageConfig%useToolkit = .false.
   MLSMessageConfig%logFileUnit = -1
@@ -125,6 +124,10 @@ program l1bdiff ! diffs two l1b or L2AUX files
   endif
   if ( options%rms ) rmsFormat = '(1pe9.2)'
   if ( options%silent ) call suspendOutput
+  dumpOptions = '-'
+  if ( options%rms ) dumpOptions = trim(dumpOptions) // 'r'
+  if ( options%stats ) dumpOptions = trim(dumpOptions) // 's'
+  if ( options%unique ) dumpOptions = trim(dumpOptions) // 'u'
   call time_now ( t1 )
   if ( options%verbose .and. .not. options%list ) &
     & print *, 'Compare l1b data to: ', trim(options%referenceFileName)
@@ -446,14 +449,11 @@ contains
         if ( .not. options%silent ) print *, 'About to diff ', trim(sdName)
         if ( options%direct .or. .not. associated(L1bData%dpField) ) then
           ! print *, 'About to do it direct'
-          call diff(L1bData, L1bData2, &
-            & stats=options%stats, rms=options%rms, &
-            & silent=options%silent, numDiffs=numDiffs )
+          call diff(L1bData, L1bData2, numDiffs=numDiffs, options=dumpOptions )
         else
           ! print *, 'details=0'
           call diff(L1bData, L1bData2, details=0, &
-            & stats=options%stats, rms=options%rms, &
-            & silent=options%silent, numDiffs=numDiffs )
+            & numDiffs=numDiffs, options=dumpOptions )
           ! print *, 'done diffing'
           
           numDiffs = numDiffs + count( L1bData%dpField /= L1bData2%dpField )
@@ -478,13 +478,13 @@ contains
                 & '(1)', &
                 & L1bData2%dpField(:,:,maf1+options%moff:maf2+options%moff), &
                 & '(2)', &
-                & stats=options%stats, rms=options%rms )
+                & options=dumpOptions )
             else
               call diff( L1bData%dpField, &
                 & '(1)', &
                 & L1bData2%dpField, &
                 & '(2)', &
-                & stats=options%stats, rms=options%rms )
+                & options=dumpOptions )
             endif
           else
             ! print *, 'About to form dpField = dpField1 - dpField2'
@@ -495,13 +495,11 @@ contains
             elseif ( options%maf1 /= 0 .and. options%maf2 /= 0 ) then
               ! print *, shape( L1bData%dpField(:,:,options%maf1:options%maf2) )
               call dump( L1bData%dpField(:,:,options%maf1:options%maf2), &
-                & 'l1bData%dpField', &
-                & stats=options%stats, rms=options%rms, unique=options%unique )
+                & 'l1bData%dpField', options=dumpOptions )
             else
               ! print *, shape( L1bData%dpField )
               call dump( L1bData%dpField, &
-                & 'l1bData%dpField', &
-                & stats=options%stats, rms=options%rms, unique=options%unique )
+                & 'l1bData%dpField', options=dumpOptions )
             endif
           endif
         endif
@@ -633,8 +631,7 @@ contains
             & 'Skipping diff of char-valued ' // trim(sdName) )
         else
           call selfdiff( L1bData%intField(1, 1, :), trim(sdName), &
-            & stats=options%stats, rms=options%rms, unique=options%unique, &
-            & waves=options%halfWaves )
+            & waves=options%halfWaves, options=dumpOptions )
         endif
       elseif ( associated(L1bData%dpField) ) then
         if ( size(L1bData%dpField, 1) > 1 .or. &
@@ -643,8 +640,7 @@ contains
             & 'Skipping diff of char-valued ' // trim(sdName) )
         else
           call selfdiff( L1bData%dpField(1, 1, :), trim(sdName), &
-            & stats=options%stats, rms=options%rms, unique=options%unique, &
-            & waves=options%halfWaves )
+            & waves=options%halfWaves, options=dumpOptions )
         endif
       endif
       call DeallocateL1BData ( l1bData )
@@ -672,6 +668,9 @@ end program l1bdiff
 !==================
 
 ! $Log$
+! Revision 1.11  2008/07/10 00:14:43  pwagner
+! Added -self, -half, -unique options
+!
 ! Revision 1.10  2008/04/10 20:22:37  pwagner
 ! Less voluminous output
 !

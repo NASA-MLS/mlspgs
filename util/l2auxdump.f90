@@ -74,33 +74,26 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
   end type options_T
   
   type ( options_T ) :: options
-
-
   integer, parameter ::          MAXDS = 1024 ! 500
   integer, parameter ::          MAXSDNAMESBUFSIZE = MAXDS*NAME_LEN
   integer, parameter ::          MAXFILES = 100
   integer, parameter ::          hdfVersion = HDFVERSION_5
-  character(len=255) :: filename          ! input filename
+  character(len=8)   ::          dumpOptions
+  character(len=255) ::          filename          ! input filename
   character(len=255), dimension(MAXFILES) :: filenames
-  integer            :: n_filenames
-  integer     ::  i, status, error ! Counting indices & Error flags
-  logical     :: is_hdf5
+  integer     ::                 i, status, error ! Counting indices & Error flags
+  logical     ::                 is_hdf5
   character (len=MAXSDNAMESBUFSIZE) :: mySdList
-  integer     :: recl
-  integer     :: sdfid1
-  real        :: t1
-  real        :: t2
-  real        :: tFile
+  integer            ::          n_filenames
+  integer     ::                 recl
+  integer     ::                 sdfid1
+  real        ::                 t1
+  real        ::                 t2
+  real        ::                 tFile
   ! 
   MLSMessageConfig%useToolkit = .false.
   MLSMessageConfig%logFileUnit = -1
   time_config%use_wall_clock = .true.
-!   inquire( unit=6, recl=recl, name=filename )
-!   print *, 'record length: ', recl
-!   print *, 'file name: ', filename
-!   call dump(outputOptions)
-!   call dumpConfig(MLSMessageConfig)
-  ! relationforpctages = '<' ! we want to know % chi^2 are < 1 (or whatever)
   CALL mls_h5open(error)
   n_filenames = 0
   do      ! Loop over filenames
@@ -123,6 +116,11 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
   if ( options%useFillValue ) then
     fillValueRelation = options%fillValueRelation
   endif
+  dumpOptions = '-'
+  if ( options%rms ) dumpOptions = trim(dumpOptions) // 'r'
+  if ( options%stats ) dumpOptions = trim(dumpOptions) // 's'
+  if ( options%unique ) dumpOptions = trim(dumpOptions) // 'u'
+  if ( options%laconic ) dumpOptions = trim(dumpOptions) // 'l'
   call time_now ( t1 )
   do i=1, n_filenames
     call time_now ( tFile )
@@ -162,25 +160,20 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
         sdfid1 = mls_sfstart( filenames(i), DFACC_READ, hdfVersion=hdfVersion )
       elseif ( options%useFillValue ) then
         call DumpHDF5DS ( sdfid1, trim(options%root), trim(options%datasets), &
-          & fillValue=options%fillValue, rms=options%rms, stats=options%stats, &
-          & unique=options%unique )
-      elseif ( options%laconic ) then
-        call DumpHDF5DS ( sdfid1, trim(options%root), trim(options%datasets), &
-          & rms=options%rms, stats=options%stats, unique=options%unique, &
-          & laconic=options%laconic )
+          & fillValue=options%fillValue, options=dumpOptions )
       else
         call DumpHDF5DS ( sdfid1, trim(options%root), trim(options%datasets), &
-          & rms=options%rms, stats=options%stats, unique=options%unique )
+          & options=dumpOptions )
       endif
     endif
     if ( options%attributes /= ' ' ) then
       if ( options%DSName /= ' ' ) then
         call DumpHDF5Attributes ( sdfid1, trim(options%attributes), &
           & DSName=trim(options%root) // '/' // trim(options%DSName), &
-          & rms=options%rms, stats=options%stats )
+          & options=dumpOptions )
       else
         call DumpHDF5Attributes ( sdfid1, trim(options%attributes), &
-          & groupName=trim(options%root), rms=options%rms, stats=options%stats )
+          & groupName=trim(options%root), options=dumpOptions )
       endif
     endif
 	 status = mls_sfend(sdfid1, hdfVersion=hdfVersion)
@@ -198,7 +191,7 @@ contains
      type ( options_T ), intent(in)   :: options
      ! Local variables
      integer :: i
-     print *, 'loaconic?           ', options%laconic
+     print *, 'laconic?            ', options%laconic
      print *, 'verbose?            ', options%verbose
      print *, 'list attributes  ?  ', options%la   
      print *, 'list datasets  ?    ', options%ls
@@ -492,7 +485,7 @@ contains
       if ( options%rms .or. options%stats ) then
       elseif ( options%useFillValue ) then
         call dump( L1bRadiance%DpField, name=trim(sdName), &
-          & stats=.true., FillValue=real(options%fillValue, r8) )
+          & options='s', FillValue=real(options%fillValue, r8) )
       else
         call dump( L1bRadiance%DpField, name=trim(sdName) )
         call dump( L1bPrecision%DpField, name=trim(sdName) // precisionSuffix )
@@ -537,6 +530,9 @@ end program l2auxdump
 !==================
 
 ! $Log$
+! Revision 1.7  2009/05/08 17:33:09  pwagner
+! New command line option -lac to prevent printing non-data
+!
 ! Revision 1.6  2008/09/09 16:53:34  pwagner
 ! Many changes, hoping some are correct
 !
