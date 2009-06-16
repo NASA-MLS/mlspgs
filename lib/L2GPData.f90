@@ -143,7 +143,15 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 ! SetupNewL2GPRecord      Allocates arrays for a new L2GP
 ! WriteL2GPData           Writes an L2GP into a swath file
 
-  ! First some local parameters
+! The meaning of options has replaced the older logical arguments
+! if the options is present and contains the following characters:
+!   character         meaning
+!      ---            -------
+!       i              ignore bad chunks
+!       m              silent (mute)
+!       r              rms (or repair where appropriate)
+!       s              stats
+!       v              verbose  ! First some local parameters
   ! Assume L2GP files w/o explicit hdfVersion field are this
   ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc. 
   integer, parameter :: L2GPDEFAULT_HDFVERSION = HDFVERSION_5
@@ -237,10 +245,11 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
     & // &
     & 'molcm2,molcm2,molcm2,molcm2,molcm2,molcm2'
   character(len=16), dimension(10), parameter :: StatusBitNames = (/ &
-    & 'do not use      ', 'beware           ', '(unused)        ', &
-    & 'inform          ', 'high clouds      ', 'low clouds      ', &
-    & 'no meteorology  ', 'abandoned chunk  ', 'too few radiance', &
+    & 'do not use      ', 'beware          ', '(unused)        ', &
+    & 'inform          ', 'high clouds     ', 'low clouds      ', &
+    & 'no meteorology  ', 'abandoned chunk ', 'too few radiance', &
     & 'mlsl2 crashed   ' /)
+!      123456789012345678901234567890123456789012345678901234567890
 
   ! This datatype is the main one, it simply defines one l2gp swath
   ! It is used for 
@@ -1266,8 +1275,7 @@ contains ! =====     Public Procedures     =============================
   ! ------------------------------------------ DiffL2GPData_CHUNKS ------------
 
   subroutine DiffL2GPData_CHUNKS ( fullL2gp1, fullL2gp2, Chunks, &
-    & Details, wholeArray, stats, rms, ignoreBadChunks, fields, silent, &
-    & verbose, numDiffs )
+    & Details, options, fields, numDiffs )
     ! Dump selected chunks of an l2gp
     ! Dummy arguments
     type (l2gpData_T), intent(in) ::          FULLL2GP1
@@ -1278,14 +1286,8 @@ contains ! =====     Public Procedures     =============================
     !                                        ! -2 Skip all but name
     !                                        ! >0 Diff even data fields
     !                                        ! Default 1
-    logical, intent(in), optional :: STATS   ! if TRUE, just print stats
-    logical, intent(in), optional :: RMS     ! if TRUE, just print mean, rms
-    logical, intent(in), optional :: WHOLEARRAY   ! if TRUE, print anyway
-    logical, intent(in), optional :: IGNOREBADCHUNKS   ! if TRUE, ignore
-                                                     ! instances where geod bad
+    character(len=*), intent(in), optional :: options
     character(len=*), intent(in), optional :: fields  ! diff only these fields
-    logical, intent(in), optional :: silent  ! don't print anything
-    logical, intent(in), optional :: verbose  ! print something no matter what
     integer, intent(out), optional :: numDiffs  ! how many diffs
 
     ! Local variables
@@ -1297,7 +1299,7 @@ contains ! =====     Public Procedures     =============================
     logical :: mySilent
     ! Executable
     mySilent = .false.
-    if ( present(silent) ) mySilent = silent
+    if ( present(options) ) mySilent = index(options, 'm') > 0
     if ( DEEBUG ) then
       call output( 'mySilent: ', advance='no' )
       call output( mySilent, advance='yes' )
@@ -1329,8 +1331,8 @@ contains ! =====     Public Procedures     =============================
       ! call output( 'nTimes: ', advance='no' )
       ! call output( l2gp1%nTimes, advance='yes' )
       call Diff ( L2gp1, L2gp2, &
-        & Details, wholeArray, stats, rms, ignoreBadChunks, fields, &
-        & silent=silent, verbose=verbose, numDiffs=numDiffs )
+         & Details, options, fields, &
+         & numDiffs=numDiffs )
       call DestroyL2GPContents( l2gp1 )
       call DestroyL2GPContents( l2gp2 )
     enddo
@@ -1339,8 +1341,7 @@ contains ! =====     Public Procedures     =============================
   ! ------------------------------------------ DiffL2GPData_LEVELS ------------
 
   subroutine DiffL2GPData_LEVELS ( fullL2gp1, fullL2gp2, Pressures, Chunks, &
-    & Details, wholeArray, stats, rms, ignoreBadChunks, fields, silent, &
-    & verbose, numDiffs )
+    & Details, options, fields, numDiffs )
     ! Dump selected levels of an l2gp
     ! Dummy arguments
     type (l2gpData_T), intent(in) ::          FULLL2GP1
@@ -1352,14 +1353,8 @@ contains ! =====     Public Procedures     =============================
     !                                        ! -2 Skip all but name
     !                                        ! >0 Diff even data fields
     !                                        ! Default 1
-    logical, intent(in), optional :: STATS   ! if TRUE, just print stats
-    logical, intent(in), optional :: RMS     ! if TRUE, just print mean, rms
-    logical, intent(in), optional :: WHOLEARRAY   ! if TRUE, print anyway
-    logical, intent(in), optional :: IGNOREBADCHUNKS   ! if TRUE, ignore
-                                                     ! instances where geod bad
+    character(len=*), intent(in), optional :: options
     character(len=*), intent(in), optional :: fields  ! diff only these fields
-    logical, intent(in), optional :: silent  ! don't print anything
-    logical, intent(in), optional :: verbose  ! print something no matter what
     integer, intent(out), optional :: numDiffs  ! how many diffs
 
     ! Local variables
@@ -1371,7 +1366,7 @@ contains ! =====     Public Procedures     =============================
     logical :: mySilent
     ! Executable
     mySilent = .false.
-    if ( present(silent) ) mySilent = silent
+    if ( present(options) ) mySilent = index(options, 'm') > 0
     if ( DEEBUG ) then
       call output( 'mySilent: ', advance='no' )
       call output( mySilent, advance='yes' )
@@ -1401,12 +1396,10 @@ contains ! =====     Public Procedures     =============================
       ! call output( l2gp1%nTimes, advance='yes' )
       if ( present(chunks) ) then
         call DiffL2GPData_Chunks ( L2gp1, L2gp2, chunks, &
-          & Details, wholeArray, stats, rms, ignoreBadChunks, fields, &
-          & silent=silent, verbose=verbose, numDiffs=numDiffs )
+          & Details, options, fields, numDiffs=numDiffs )
       else
         call Diff ( L2gp1, L2gp2, &
-          & Details, wholeArray, stats, rms, ignoreBadChunks, fields, &
-          & silent=silent, verbose=verbose, numDiffs=numDiffs )
+          & Details, options, fields, numDiffs=numDiffs )
       endif
       call DestroyL2GPContents( l2gp1 )
       call DestroyL2GPContents( l2gp2 )
@@ -1418,8 +1411,7 @@ contains ! =====     Public Procedures     =============================
   subroutine DiffL2GPData_RANGES ( fullL2gp1, fullL2gp2, &
     & geoBoxNames, geoBoxLowBound, geoBoxHiBound, &
     & Pressures, Latitudes, Longitudes, Times, Chunks, &
-    & Details, wholeArray, stats, rms, ignoreBadChunks, fields, silent, &
-    & verbose, numDiffs )
+    & Details, options, fields, numDiffs )
     ! Diff 2 l2gps according to prescribed ranges of pressure, longitude, etc.
     ! Dummy arguments
     type (l2gpData_T), intent(in) ::          FULLL2GP1
@@ -1437,14 +1429,8 @@ contains ! =====     Public Procedures     =============================
     !                                        ! -2 Skip all but name
     !                                        ! >0 Diff even data fields
     !                                        ! Default 1
-    logical, intent(in), optional :: STATS   ! if TRUE, just print stats
-    logical, intent(in), optional :: RMS     ! if TRUE, just print mean, rms
-    logical, intent(in), optional :: WHOLEARRAY   ! if TRUE, print anyway
-    logical, intent(in), optional :: IGNOREBADCHUNKS   ! if TRUE, ignore
-                                                     ! instances where geod bad
+    character(len=*), intent(in), optional :: options
     character(len=*), intent(in), optional :: fields  ! diff only these fields
-    logical, intent(in), optional :: silent  ! don't print anything
-    logical, intent(in), optional :: verbose  ! print something no matter what
     integer, intent(out), optional :: numDiffs  ! how many diffs
 
     ! Local variables
@@ -1453,7 +1439,7 @@ contains ! =====     Public Procedures     =============================
     logical :: mySilent
     ! Executable
     mySilent = .false.
-    if ( present(silent) ) mySilent = silent
+    if ( present(options) ) mySilent = index(options, 'm') > 0
     if ( DEEBUG ) then
       call output( 'mySilent: ', advance='no' )
       call output( mySilent, advance='yes' )
@@ -1481,12 +1467,10 @@ contains ! =====     Public Procedures     =============================
     ! call output( l2gp1%nTimes, advance='yes' )
     if ( present(chunks) ) then
       call DiffL2GPData_Chunks ( L2gp1, L2gp2, chunks, &
-        & Details, wholeArray, stats, rms, ignoreBadChunks, fields, &
-        & silent=silent, verbose=verbose, numDiffs=numDiffs )
+        & Details, options, fields, numDiffs=numDiffs )
     else
       call Diff ( L2gp1, L2gp2, &
-        & Details, wholeArray, stats, rms, ignoreBadChunks, fields, &
-        & silent=silent, verbose=verbose, numDiffs=numDiffs )
+        & Details, options, fields, numDiffs=numDiffs )
     endif
     call DestroyL2GPContents( l2gp1 )
     call DestroyL2GPContents( l2gp2 )
@@ -1494,8 +1478,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------- DiffL2GPData  ---------------------------
   subroutine DiffL2GPData ( L2gp1, L2gp2, &
-    & Details, wholeArray, stats, rms, ignoreBadChunks, fields, matchTimes, &
-    & silent, verbose, numDiffs )
+    & Details, options, fields, matchTimes, numDiffs )
     ! Show diff between l2gp1 and l2gp2 down to level of Details
     
     ! Note:
@@ -1514,15 +1497,9 @@ contains ! =====     Public Procedures     =============================
     !                                        ! -2 Skip all but name
     !                                        ! >0 Diff even data fields
     !                                        ! Default 1
-    logical, intent(in), optional :: STATS   ! if TRUE, just print stats
-    logical, intent(in), optional :: RMS     ! if TRUE, just print mean, rms
-    logical, intent(in), optional :: WHOLEARRAY   ! if TRUE, print anyway
-    logical, intent(in), optional :: IGNOREBADCHUNKS   ! if TRUE, ignore
-                                                     ! instances where geod bad
+    character(len=*), intent(in), optional :: options
     character(len=*), intent(in), optional :: fields  ! diff only these fields
     logical, intent(in), optional :: matchTimes
-    logical, intent(in), optional :: silent  ! don't print anything
-    logical, intent(in), optional :: verbose  ! print something no matter what
     integer, intent(out), optional :: numDiffs  ! how many diffs
     ! Local variables
     integer :: how_many
@@ -1534,7 +1511,7 @@ contains ! =====     Public Procedures     =============================
     myMatchTimes = .false.
     if ( present(matchTimes) ) mymatchTimes = matchTimes
     mySilent = .false.
-    if ( present(silent) ) mySilent = silent
+    if ( present(options) ) mySilent = index(options, 'm') > 0
     if ( present(numDiffs) ) numDiffs = 0
     if ( myMatchTimes ) then
       ! 1st, find which profile times match (to within 0.1 s)
@@ -1555,21 +1532,18 @@ contains ! =====     Public Procedures     =============================
       call SetupNewL2GPRecord ( tl2gp1, proto=l2gp1, which=which1(1:how_many) )
       call SetupNewL2GPRecord ( tl2gp2, proto=l2gp2, which=which2(1:how_many) )
       call DiffL2GPData_atlast ( tL2gp1, tL2gp2, &
-      & Details, wholeArray, stats, rms, ignoreBadChunks, fields, &
-      & silent, verbose, numDiffs )
+      & Details, options, fields, numDiffs )
       call DestroyL2GPContents( tL2gp1 )
       call DestroyL2GPContents( tL2gp2 )
     else
       call DiffL2GPData_atlast ( L2gp1, L2gp2, &
-      & Details, wholeArray, stats, rms, ignoreBadChunks, fields, &
-      & silent, verbose, numDiffs )
+      & Details, options, fields, numDiffs )
     endif
   end subroutine DiffL2GPData
 
   ! ---------------------- DiffL2GPData_atlast  ---------------------------
   subroutine DiffL2GPData_atlast ( L2gp1, L2gp2, &
-    & Details, wholeArray, stats, rms, ignoreBadChunks, fields, silent, &
-    & verbose, numDiffs )
+    & Details, options, fields, numDiffs )
     ! Show diff between l2gp1 and l2gp2 down to level of Details
     
     ! Note:
@@ -1588,14 +1562,8 @@ contains ! =====     Public Procedures     =============================
     !                                        ! -2 Skip all but name
     !                                        ! >0 Diff even data fields
     !                                        ! Default 1
-    logical, intent(in), optional :: STATS   ! if TRUE, just print stats
-    logical, intent(in), optional :: RMS     ! if TRUE, just print mean, rms
-    logical, intent(in), optional :: WHOLEARRAY   ! if TRUE, print anyway
-    logical, intent(in), optional :: IGNOREBADCHUNKS   ! if TRUE, ignore
-                                                     ! instances where geod bad
+    character(len=*), intent(in), optional :: options
     character(len=*), intent(in), optional :: fields  ! diff only these fields
-    logical, intent(in), optional :: silent  ! don't print anything
-    logical, intent(in), optional :: verbose  ! print something no matter what
     integer, intent(out), optional :: numDiffs  ! how many diffs
     ! Local variables
     logical :: badChunks
@@ -1626,10 +1594,10 @@ contains ! =====     Public Procedures     =============================
     myDetails = 1
     if ( present(details) ) myDetails = details
     mySilent = .false.
-    if ( present(silent) ) mySilent = silent
+    if ( present(options) ) mySilent = index(options, 'm') > 0
     if ( mySilent ) call suspendOutput
     myVerbose = .false.
-    if ( present(verbose) ) myVerbose = verbose
+    if ( present(options) ) myVerbose = index(options, 'v') > 0
 
     myNumDiffs = 0
 
@@ -1711,8 +1679,8 @@ contains ! =====     Public Procedures     =============================
         & .or. &
         & any( IsFillValue ( l2gp2%l2gpValue, l2gp2%MissingValue ) ) &
         & )
-      if ( present ( ignoreBadChunks ) ) then
-        badChunks = ignoreBadChunks .and. badChunks
+      if ( present ( options ) ) then
+        badChunks = (index(options, 'i' ) > 0) .and. badChunks
       else
         badChunks = .false.
       endif
@@ -1765,7 +1733,7 @@ contains ! =====     Public Procedures     =============================
         & SwitchDetail(lowercase(myFields), 'value', '-c') > -1 ) then
         call diff ( l2gp1%l2gpValue, 'l2gp%l2gpValue', &
           &         l2gp2Temp%l2gpValue, ' ', &
-          & wholearray=wholearray, stats=stats, rms=rms, fillValue=l2gp1%MissingValue )
+          & options=options, fillValue=l2gp1%MissingValue )
         myNumDiffs = myNumDiffs + count( l2gp1%l2gpValue /= l2gp2Temp%l2gpValue )
       elseif ( all(l2gp1%l2gpValue == l2gp2Temp%l2gpValue) .and. &
         & SwitchDetail(lowercase(myFields), 'value', '-c') > -1 .and. myVerbose ) then
@@ -1775,7 +1743,7 @@ contains ! =====     Public Procedures     =============================
         & SwitchDetail(lowercase(myFields), 'precision', '-c') > -1 ) then
         call diff ( l2gp1%l2gpPrecision, 'l2gp%l2gpPrecision', &
           &         l2gp2Temp%l2gpPrecision, ' ', &
-          & wholearray=wholearray, stats=stats, rms=rms, fillValue=l2gp1%MissingValue )
+          & options=options, fillValue=l2gp1%MissingValue )
         myNumDiffs = myNumDiffs + count( l2gp1%l2gpPrecision /= l2gp2Temp%l2gpPrecision )
       elseif ( all(l2gp1%l2gpPrecision == l2gp2Temp%l2gpPrecision) .and. &
         & SwitchDetail(lowercase(myFields), 'precision', '-c') > -1 .and. myVerbose ) then
@@ -1786,7 +1754,7 @@ contains ! =====     Public Procedures     =============================
         & SwitchDetail(lowercase(myFields), 'status', '-c') > -1 ) then
         call diff ( l2gp1%status, 'l2gp%status', &
           &         l2gp2Temp%status, ' ', &
-          & wholearray=wholearray, stats=stats, rms=rms )
+          & options=options )
         myNumDiffs = myNumDiffs + count( l2gp1%status /= l2gp2Temp%status )
       elseif ( all(l2gp1%status == l2gp2Temp%status) .and. &
         & SwitchDetail(lowercase(myFields), 'status', '-c') > -1 .and. myVerbose ) then
@@ -1796,7 +1764,7 @@ contains ! =====     Public Procedures     =============================
         & SwitchDetail(lowercase(myFields), 'quality', '-c') > -1 ) then
         call diff ( l2gp1%quality, 'l2gp%quality', &
           &         l2gp2Temp%quality, ' ', &
-          & wholearray=wholearray, stats=stats, rms=rms )
+          & options=options )
         myNumDiffs = myNumDiffs + count( l2gp1%quality /= l2gp2Temp%quality )
       elseif ( all(l2gp1%quality == l2gp2Temp%quality) .and. &
         & SwitchDetail(lowercase(myFields), 'quality', '-c') > -1 .and. myVerbose ) then
@@ -1806,7 +1774,7 @@ contains ! =====     Public Procedures     =============================
         & SwitchDetail(lowercase(myFields), 'convergence', '-c') > -1 ) then
         call diff ( l2gp1%convergence, 'l2gp%convergence', &
           &         l2gp2Temp%convergence, ' ', &
-          & wholearray=wholearray, stats=stats, rms=rms )
+          & options=options )
         myNumDiffs = myNumDiffs + count( l2gp1%convergence /= l2gp2Temp%convergence )
       elseif ( all(l2gp1%convergence == l2gp2Temp%convergence) .and. &
         & SwitchDetail(lowercase(myFields), 'convergence', '-c') > -1 .and. myVerbose ) then
@@ -1823,35 +1791,35 @@ contains
         & SwitchDetail(lowercase(myFields), 'pressure', '-c') > -1 ) then
           call diff ( l2gp1%pressures, 'l2gp%pressures', &
             &         l2gp2%pressures, ' ', &
-            & wholearray=wholearray, stats=stats, rms=rms )
+            & options=options )
         myNumDiffs = myNumDiffs + count( l2gp1%pressures /= l2gp2%pressures )
       endif
       if ( any(l2gp1%latitude /= l2gp2%latitude) .and. &
         & SwitchDetail(lowercase(myFields), 'lat', '-c') > -1 ) then
           call diff ( l2gp1%latitude, 'l2gp%latitude', &
             &         l2gp2%latitude, ' ', &
-            & wholearray=wholearray, stats=stats, rms=rms )
+            & options=options )
         myNumDiffs = myNumDiffs + count( l2gp1%latitude /= l2gp2%latitude )
       endif
       if ( any(l2gp1%longitude /= l2gp2%longitude) .and. &
         & SwitchDetail(lowercase(myFields), 'lon', '-c') > -1 ) then
           call diff ( l2gp1%longitude, 'l2gp%longitude', &
             &         l2gp2%longitude, ' ', &
-            & wholearray=wholearray, stats=stats, rms=rms )
+            & options=options )
         myNumDiffs = myNumDiffs + count( l2gp1%longitude /= l2gp2%longitude )
       endif
       if ( any(l2gp1%solarTime /= l2gp2%solarTime) .and. &
         & SwitchDetail(lowercase(myFields), 'solartime', '-c') > -1 ) then
           call diff ( l2gp1%solarTime, 'l2gp%solarTime', &
             &         l2gp2%solarTime, ' ', &
-            & wholearray=wholearray, stats=stats, rms=rms )
+            & options=options )
         myNumDiffs = myNumDiffs + count( l2gp1%solarTime /= l2gp2%solarTime )
       endif
       if ( any(l2gp1%solarZenith /= l2gp2%solarZenith) .and. &
         & SwitchDetail(lowercase(myFields), 'solarzenith', '-c') > -1 ) then
           call diff ( l2gp1%solarZenith, 'l2gp%solarZenith', &
             &         l2gp2%solarZenith, ' ', &
-            & wholearray=wholearray, stats=stats, rms=rms )
+            & options=options )
         badChunks = .true.
         myNumDiffs = myNumDiffs + count( l2gp1%solarZenith /= l2gp2%solarZenith )
       endif
@@ -1859,14 +1827,14 @@ contains
         & SwitchDetail(lowercase(myFields), 'losangle', '-c') > -1 ) then
           call diff ( l2gp1%losAngle, 'l2gp%losAngle', &
             &         l2gp2%losAngle, ' ', &
-            & wholearray=wholearray, stats=stats, rms=rms )
+            & options=options )
         myNumDiffs = myNumDiffs + count( l2gp1%losAngle /= l2gp2%losAngle )
       endif
       if ( any(l2gp1%geodAngle /= l2gp2%geodAngle) .and. &
         & SwitchDetail(lowercase(myFields), 'geodangle', '-c') > -1 ) then
           call diff ( l2gp1%geodAngle, 'l2gp%geodAngle', &
             &         l2gp2%geodAngle, ' ', &
-            & wholearray=wholearray, stats=stats, rms=rms )
+            & options=options )
         ! badChunks = .true.
         myNumDiffs = myNumDiffs + count( l2gp1%geodAngle /= l2gp2%geodAngle )
       endif
@@ -1874,7 +1842,7 @@ contains
         & SwitchDetail(lowercase(myFields), 'time', '-c') > -1 ) then
           call diff ( l2gp1%time, 'l2gp%time', &
             &         l2gp2%time, ' ', &
-            & wholearray=wholearray, stats=stats, rms=rms )
+            & options=options )
         ! badChunks = .true.
         myNumDiffs = myNumDiffs + count( l2gp1%time /= l2gp2%time )
       endif
@@ -1882,7 +1850,7 @@ contains
         & SwitchDetail(lowercase(myFields), 'chunknumber', '-c') > -1 ) then
         call diff ( l2gp1%chunkNumber, 'l2gp1%chunkNumber', &
           &         l2gp2%chunkNumber, 'l2gp2%chunkNumber', &
-          & wholearray=wholearray, stats=stats, rms=rms )
+            & options=options )
         ! call dump ( l2gp1%chunkNumber - l2gp2%chunkNumber, &
         !  & 'l2gp%chunkNumber (diff)', stats=stats, rms=rms )
         myNumDiffs = myNumDiffs + count( l2gp1%chunkNumber /= l2gp2%chunkNumber )
@@ -1893,7 +1861,7 @@ contains
           & SwitchDetail(lowercase(myFields), 'freq', '-c') > -1 ) then
           call diff ( l2gp1%frequency, 'l2gp%frequency', &
             &         l2gp2%frequency, ' ', &
-            & wholearray=wholearray, stats=stats, rms=rms )
+            & options=options )
         myNumDiffs = myNumDiffs + count( l2gp1%frequency /= l2gp2%frequency )
         endif
       endif
@@ -1912,9 +1880,9 @@ contains
   ! ------------------------------------------ DiffL2GPFiles_MLSFile ------------
   subroutine DiffL2GPFiles_MLSFile ( L2GPFile1, L2GPFile2, &
     & geoBoxNames, geoBoxLowBound, geoBoxHiBound, pressures, chunks, &
-    & Details, wholeArray, stats, rms, ignoreBadChunks, &
+    & Details, options, &
     & swList, showMissing, fields, force, swaths1, swaths2, &
-    & matchTimes, silent, verbose, numDiffs )
+    & matchTimes, numDiffs )
     ! Show diff between swaths in file1 and file2 down to level of Details
     ! Dummy arguments
     type(MLSFile_T)               :: L2GPfile1 ! file 1
@@ -1931,10 +1899,7 @@ contains
     !                                        ! Default 1
     !
     ! The following parameters, if present, will override Details
-    logical, intent(in), optional :: WHOLEARRAY
-    logical, intent(in), optional :: RMS   ! if TRUE, just print mean, rms
-    logical, intent(in), optional :: STATS   ! if TRUE, just print stats
-    logical, intent(in), optional :: IGNOREBADCHUNKS
+    character(len=*), intent(in), optional :: options
     ! swList currently used only if showMissing is TRUE
     character (len=*), optional, intent(in) :: swList
     logical, intent(in), optional :: showMissing   ! if TRUE, just show which
@@ -1943,8 +1908,6 @@ contains
     character(len=*), intent(in), optional :: swaths2  ! only these swaths
     logical, intent(in), optional :: FORCE ! Force diff even if swathnames differ
     logical, intent(in), optional :: matchTimes  ! only matching profile times
-    logical, intent(in), optional :: silent  ! don't print anything
-    logical, intent(in), optional :: verbose  ! print something no matter what
     integer, intent(out), optional :: numDiffs  ! how many diffs
     ! Local                                         swaths are missing from other
     logical :: L1alreadyOpen
@@ -1971,44 +1934,39 @@ contains
       call DiffL2GPFiles_Name ( L2GPFile1%Name, L2GPFile2%Name, &
       & geoBoxNames=geoBoxNames, &
       & geoBoxLowBound=geoBoxLowBound, geoBoxHiBound=geoBoxHiBound, &
-      & Details=Details, wholeArray=wholeArray, &
-      & stats=stats, rms=rms, ignoreBadChunks=ignoreBadChunks, &
+      & Details=Details, options=options, &
       & swList=swList, showMissing=showMissing, &
       & fields=fields, force=force, swaths1=swaths1, swaths2=swaths2, &
-      & matchTimes=matchTimes, silent=silent, verbose=verbose, &
+      & matchTimes=matchTimes, &
       & numDiffs=numDiffs )
     elseif ( present(chunks) .and. present(pressures) ) then
       call DiffL2GPFiles_Name ( L2GPFile1%Name, L2GPFile2%Name, &
       & pressures=pressures, &
-      & chunks=chunks, Details=Details, wholeArray=wholeArray, &
-      & stats=stats, rms=rms, ignoreBadChunks=ignoreBadChunks, &
+      & chunks=chunks, Details=Details, options=options, &
       & swList=swList, showMissing=showMissing, &
       & fields=fields, force=force, swaths1=swaths1, swaths2=swaths2, &
-      & matchTimes=matchTimes, silent=silent, verbose=verbose, &
+      & matchTimes=matchTimes, &
       & numDiffs=numDiffs )
     elseif ( present(chunks) ) then
       call DiffL2GPFiles_Name ( L2GPFile1%Name, L2GPFile2%Name, &
-      & chunks=chunks, Details=Details, wholeArray=wholeArray, &
-      & stats=stats, rms=rms, ignoreBadChunks=ignoreBadChunks, &
+      & chunks=chunks, Details=Details, options=options, &
       & swList=swList, showMissing=showMissing, &
       & fields=fields, force=force, swaths1=swaths1, swaths2=swaths2, &
-      & matchTimes=matchTimes, silent=silent, verbose=verbose, &
+      & matchTimes=matchTimes, &
       & numDiffs=numDiffs )
     elseif ( present(pressures) ) then
       call DiffL2GPFiles_Name ( L2GPFile1%Name, L2GPFile2%Name, &
-      & pressures=pressures, Details=Details, wholeArray=wholeArray, &
-      & stats=stats, rms=rms, ignoreBadChunks=ignoreBadChunks, &
+      & pressures=pressures, Details=Details, options=options, &
       & swList=swList, showMissing=showMissing, &
       & fields=fields, force=force, swaths1=swaths1, swaths2=swaths2, &
-      & matchTimes=matchTimes, silent=silent, verbose=verbose, &
+      & matchTimes=matchTimes, &
       & numDiffs=numDiffs )
     else
       call DiffL2GPFiles_Name ( L2GPFile1%Name, L2GPFile2%Name, &
-      & Details=Details, wholeArray=wholeArray, &
-      & stats=stats, rms=rms, ignoreBadChunks=ignoreBadChunks, &
+      & Details=Details, options=options, &
       & swList=swList, showMissing=showMissing, &
       & fields=fields, force=force, swaths1=swaths1, swaths2=swaths2, &
-      & matchTimes=matchTimes, silent=silent, verbose=verbose, &
+      & matchTimes=matchTimes, &
       & numDiffs=numDiffs )
     endif
 
@@ -2025,9 +1983,9 @@ contains
   ! ------------------------------------------ DiffL2GPFiles_Name ------------
   subroutine DiffL2GPFiles_Name ( file1, file2, &
     & geoBoxNames, geoBoxLowBound, geoBoxHiBound, pressures, chunks, &
-    & Details, wholeArray, stats, rms, ignoreBadChunks, &
+    & Details, options, &
     & swList, showMissing, fields, force, swaths1, swaths2, matchTimes, &
-    & silent, verbose, numDiffs )
+    &  numDiffs )
     ! Show diff between swaths in file1 and file2 down to level of Details
     ! Dummy arguments
     character (len=*), intent(in) :: file1 ! Name of file 1
@@ -2044,10 +2002,7 @@ contains
     !                                        ! Default 1
     !
     ! The following parameters, if present, will override Details
-    logical, intent(in), optional :: WHOLEARRAY
-    logical, intent(in), optional :: RMS   ! if TRUE, just print mean, rms
-    logical, intent(in), optional :: STATS   ! if TRUE, just print stats
-    logical, intent(in), optional :: IGNOREBADCHUNKS
+    character(len=*), intent(in), optional :: options
     ! swList currently used only if showMissing is TRUE
     character (len=*), optional, intent(in) :: swList
     logical, intent(in), optional :: showMissing   ! if TRUE, just show which
@@ -2056,8 +2011,6 @@ contains
     character(len=*), intent(in), optional :: swaths2  ! only these swaths
     logical, intent(in), optional :: FORCE ! Force diff even if swathnames differ
     logical, intent(in), optional :: matchTimes  ! only matching profile times
-    logical, intent(in), optional :: silent  ! don't print anything
-    logical, intent(in), optional :: verbose  ! print something no matter what
     integer, intent(out), optional :: numDiffs  ! how many diffs
     ! Local                                         swaths are missing from other
     logical, parameter            :: countEmpty = .true.
@@ -2098,7 +2051,7 @@ contains
     myForce = .false.
     if ( present(force) ) myForce = force
     mySilent = .false.
-    if ( present(silent) ) mySilent = silent
+    if ( present(options) ) mySilent = index(options, 'm') > 0
 
     the_hdfVersion1 = mls_hdf_version(File1)
     the_hdfVersion2 = mls_hdf_version(File2)
@@ -2166,22 +2119,10 @@ contains
      & name=trim(file1), HDFVersion=the_hdfVersion1 )
     call open_MLSFile( MLSFile1 )
     File1Handle = MLSFile1%FileID%f_id
-    ! File1Handle = mls_io_gen_openF(l_swath, .TRUE., status, &
-    !   & record_length, DFACC_READ, FileName=File1, &
-    !   & hdfVersion=the_hdfVersion1, debugOption=.false. )
-    !if ( status /= 0 ) &
-    !  call MLSMessage ( MLSMSG_Error, ModuleName, &
-    !   & "Unable to open L2gp file: " // trim(File1) // ' for diff')
     status = InitializeMLSFile ( MLSFile2, type=l_swath, access=DFACC_READ, &
      & name=trim(file2), HDFVersion=the_hdfVersion2 )
     call open_MLSFile( MLSFile2 )
     File2Handle = MLSFile2%FileID%f_id
-    ! File2Handle = mls_io_gen_openF(l_swath, .TRUE., status, &
-    !   & record_length, DFACC_READ, FileName=File2, &
-    !   & hdfVersion=the_hdfVersion2, debugOption=.false. )
-    !if ( status /= 0 ) &
-    !  call MLSMessage ( MLSMSG_Error, ModuleName, &
-    !   & "Unable to open L2gp file: " // trim(File2) // ' for diff')
 
     ! Loop over swaths in file 1
 
@@ -2219,33 +2160,23 @@ contains
       if ( present(geoBoxNames) ) then
         call DiffL2GPData_RANGES( l2gp1, l2gp2, &
         & geoBoxNames, geoBoxLowBound, geoBoxHiBound, chunks=chunks, &
-        & details=details, wholeArray=wholeArray, rms=rms, stats=stats, &
-        & ignoreBadChunks=ignoreBadChunks, fields=fields, &
-        & silent=silent, verbose=verbose, &
+        & details=details, options=options, fields=fields, &
         & numDiffs=numDiffs )
       elseif ( present(chunks) .and. present(pressures) ) then
         call Diff( l2gp1, l2gp2, pressures=pressures, chunks=chunks, &
-        & details=details, wholeArray=wholeArray, rms=rms, stats=stats, &
-        & ignoreBadChunks=ignoreBadChunks, fields=fields, &
-        & silent=silent, verbose=verbose, &
+        & details=details, options=options, fields=fields, &
         & numDiffs=numDiffs )
       elseif ( present(chunks) ) then
         call Diff( l2gp1, l2gp2, chunks=chunks, &
-        & details=details, wholeArray=wholeArray, rms=rms, stats=stats, &
-        & ignoreBadChunks=ignoreBadChunks, fields=fields, &
-        & silent=silent, verbose=verbose, &
+        & details=details, options=options, fields=fields, &
         & numDiffs=numDiffs )
       elseif ( present(pressures) ) then
         call Diff( l2gp1, l2gp2, pressures=pressures, &
-        & details=details, wholeArray=wholeArray, rms=rms, stats=stats, &
-        & ignoreBadChunks=ignoreBadChunks, fields=fields, &
-        & silent=silent, verbose=verbose, &
+        & details=details, options=options, fields=fields, &
         & numDiffs=numDiffs )
       else
         call Diff( l2gp1, l2gp2, &
-        & details=details, wholeArray=wholeArray, rms=rms, stats=stats, &
-        & ignoreBadChunks=ignoreBadChunks, fields=fields, &
-        & matchTimes=matchTimes, silent=silent, verbose=verbose, &
+        & details=details, options=options, fields=fields, &
         & numDiffs=numDiffs )
       endif
 
@@ -5008,6 +4939,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.165  2009/06/02 17:49:17  cvuu
+! Write NRT Lat and Lon to L2Metadata
+!
 ! Revision 2.164  2009/05/14 22:01:21  pwagner
 ! dumps now take width optional arg
 !

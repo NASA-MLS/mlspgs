@@ -244,8 +244,9 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   integer, parameter :: M_Tikhonov = 2**3    ! Where to do Tikhonov regularization
 
   character(len=16), dimension(6), parameter :: maskBitNames = (/ &
-    & 'linear algebra ', 'full derivatives', 'fill            ', &
-    & 'Tikhanov       ',  'cloud          ', 'spare           ' /)
+    & 'linear algebra  ', 'full derivatives', 'fill            ', &
+    & 'Tikhanov        ', 'cloud           ', 'spare           ' /)
+!      123456789012345678901234567890123456789012345678901234567890
   ! This type describes a vector.
 
   type Vector_T
@@ -1441,10 +1442,11 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in), optional                :: CLEAN
 
     ! Local parameters
+    logical :: dumpThisQty
     integer :: J    ! Loop inductor, subscript
     integer :: MyDetails
-    logical :: dumpThisQty
     logical :: myditchafterdump
+    character(len=8) :: options
     integer :: TotalSize
     
     myDetails = 1
@@ -1475,6 +1477,10 @@ contains ! =====     Public Procedures     =============================
       call display_string ( vector%template%name )
     end if
     call newline
+    options = ' '
+    if ( present(clean) ) then
+      if ( clean ) options = 'c'
+    endif
     do j = 1, size(vector%quantities)
       dumpThisQty = myDetails > -2
       if ( associated(vector%quantities(j)%values) ) &
@@ -1626,10 +1632,15 @@ contains ! =====     Public Procedures     =============================
     integer :: myDetails
     integer :: nUnique
     logical :: Dot ! Use vector.quantity notation
+    character(len=8) :: options
     integer, dimension(1000) :: uniqueVals
 
     myDetails = 1
     if ( present(details) ) myDetails = details
+    options = ' '
+    if ( present(clean) ) then
+      if ( clean ) options = 'c'
+    endif
 
     if ( present(name) ) then
       call output ( name ); call output ( ', ' )
@@ -1692,7 +1703,7 @@ contains ! =====     Public Procedures     =============================
     call output ( size(qty%values(1,:)), before='x' )
     if ( myDetails > 0 ) then
       call newLine
-      call dump ( qty%values, '  Elements = ', clean=clean )
+      call dump ( qty%values, '  Elements = ', options=options )
       if ( associated(qty%mask) ) then
         call dump ( ichar(qty%mask), name='  Mask =', &
           & format='(z3.2)', width = 20 )
@@ -2603,6 +2614,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.140  2009/05/08 00:39:07  pwagner
+! Shows MaskBitNames when dumping Mask bits
+!
 ! Revision 2.139  2009/04/30 22:14:25  pwagner
 ! name of bit in MaskVectorQty and isVectorQtyMasked now mandatory
 !
