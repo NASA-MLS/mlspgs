@@ -30,7 +30,7 @@ module L1BData
   use MLSMessageModule, only: MLSMSG_Allocate, MLSMSG_Error, &
     & MLSMSG_L1BREAD, MLSMSG_Warning, &
     & MLSMessage, MLSMessageCalls
-  use MLSStrings, only: streq
+  use MLSStrings, only: indexes, streq
   use MLSStringLists, only: NumStringElements
   use MoreTree, only: Get_Field_ID
   use Output_M, only: Output, outputnamedValue, resumeOutput, suspendOutput
@@ -65,6 +65,7 @@ module L1BData
 !     (subroutines and functions)
 ! AssembleL1BQtyName              Returns Quantity Name depending on hdfVersion
 ! DeallocateL1BData               Called when an l1bData is finished with
+! Diff                            Diff two l1b quantities
 ! Dump                            Print facts about l1brad quantity
 ! findl1bdata                     Which file handle contains a given sd name
 ! Getl1BFile                      Which MLSFile contains a given sd name
@@ -88,6 +89,8 @@ module L1BData
 ! char*32 AssembleL1BQtyName (char name, int hdfVersion, log isTngtQty,
 !                         [char InstrumentName] ) 
 ! DeallocateL1BData (l1bData_T l1bData) 
+! Diff (l1bData_T l1bData1, l1bData_T l1bData2, int details, &
+!   [char options], [log silent], [int numDiffs], [int mafStart], [int mafEnd])
 ! Dump (l1bData_T l1bData, int details)
 ! int FindL1BData (int files(:), char fieldName, [int hdfVersion]) 
 ! MLSFile_T GetL1BFile (MLSFile_t filedatabase(:), char fieldName, [char options]) 
@@ -497,7 +500,7 @@ contains ! ============================ MODULE PROCEDURES ======================
 
   !-------------------------------------------------  DiffL1BData  -----
   subroutine DiffL1BData ( l1bData1, l1bData2, &
-    & details, stats, rms, silent, numDiffs, mafStart, mafEnd )
+    & details, options, silent, numDiffs, mafStart, mafEnd )
   use MLSFillValues, only: ESSENTIALLYEQUAL
   use MLSStrings, only: asciify, isAllAscii
     ! Diff two l1brad quantities
@@ -508,12 +511,11 @@ contains ! ============================ MODULE PROCEDURES ======================
     !                                        ! -2 Skip all but name
     !                                        ! >0 Dump even multi-dim arrays
     !                                        ! Default 1
-    logical, intent(in), optional :: STATS   ! if TRUE, just print stats
-    logical, intent(in), optional :: RMS     ! if TRUE, just print mean, rms
+    character(len=*), intent(in), optional :: options
     logical, intent(in), optional :: silent  ! don't print anything
     integer, intent(out), optional :: numDiffs  ! how many diffs
     integer, intent(in), optional :: mafStart, mafEnd
-    ! If either of stats or rms is present and TRUE, print much less
+    ! If options contains 'r' or 's', print much less
 
     ! Local variables
     integer :: i,j,k
@@ -531,8 +533,9 @@ contains ! ============================ MODULE PROCEDURES ======================
     myDetails = 1
     if ( present(details) ) myDetails = details
     hideAssocStatus = .false.
-    if ( present(stats) ) hideAssocStatus = stats
-    if ( present(rms) ) hideAssocStatus = hideAssocStatus .or. rms
+    if ( present(options) ) then
+      hideAssocStatus = any(indexes(options, (/'s','r'/)) > 0 )
+    endif
     prntAssocStatus = .not. hideAssocStatus
     if ( present(mafStart) ) then
       mafStart1 = mafStart
@@ -685,7 +688,7 @@ contains ! ============================ MODULE PROCEDURES ======================
       & .and. associated(l1bData1%intField) ) then
       if ( any(l1bData1%intField /= l1bData2%intField) ) then
         call dump ( l1bData1%intField - l1bData2%intField, &
-          & 'l1bData%intField (diff)', stats=stats, rms=rms )
+          & 'l1bData%intField (diff)', options=options )
         myNumDiffs = myNumDiffs + count(l1bData1%charField /= l1bData2%charField)
       endif
     else
@@ -715,7 +718,7 @@ contains ! ============================ MODULE PROCEDURES ======================
         & l1bData1%dpField(:,:,mafStart1:mafEnd1), '(1)', &
         & l1bData2%dpField(:,:,mafStart2:mafEnd2), '(2)', &
         & FillValue=REAL(undefinedValue, R8), &
-        & stats=stats, rms=rms )
+        & options=options )
         myNumDiffs = myNumDiffs + count(l1bData1%dpField /= l1bData2%dpField)
       endif
     else
@@ -3228,6 +3231,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.81  2009/06/16 17:15:55  pwagner
+! Changed api for dump, diff routines; now rely on options for most optional behavior
+!
 ! Revision 2.80  2008/06/06 22:52:21  pwagner
 ! EssentiallyEqual moved to MLSFillValues
 !
