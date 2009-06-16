@@ -555,7 +555,7 @@ contains
             & advance='yes' )
           call MLSMessage ( MLSMSG_Warning, ModuleName, &
             & "Got a message from an unknown slave")
-          call dump(chunkNiceTids, 'chunkNiceTids', trim=.true.)
+          call dump(chunkNiceTids, 'chunkNiceTids', options='t')
           call TimeStamp(slaveTid, advance='yes')
           call dump(chunkTids, 'chunkTids')
           call dump(machines%tid, 'machines%Tid')
@@ -1136,7 +1136,7 @@ contains
 
     if ( switchDetail(switches,'l2q') > -1 ) then
       call TimeStamp ( '   Finished', advance='yes' )
-      call dump( chunkNiceTids, 'chunkNiceTids', trim=.true. )
+      call dump( chunkNiceTids, 'chunkNiceTids', options='t' )
       call dump( chunkTids, 'chunkTids' )
       call dump( machines%tid, 'machines%Tid', format='(i8)' )
     endif
@@ -2010,6 +2010,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.92  2009/06/16 17:41:19  pwagner
+! Changed api for dump, diff routines; now rely on options for most optional behavior
+!
 ! Revision 2.91  2009/03/18 23:08:27  honghanh
 ! Kill all running slaves before letting the master dies upon encountering errors.
 ! Added subroutine KillSlaves
