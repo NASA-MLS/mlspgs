@@ -3421,10 +3421,15 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in), optional :: CLEAN     ! print \size
     integer :: MY_DETAILS
     logical :: My_Clean
+    character(len=8) :: options
     my_details = 1
     if ( present(details) ) my_details = details
     my_clean = .false.
     if ( present(clean) ) my_clean = clean
+    options = ' '
+    if ( present(clean) ) then
+      if ( clean ) options = 'c'
+    endif
     if ( present(name) ) call output ( name, advance='yes' )
     call output ( '  ' )
     call output ( matrix_block%nRows ); call output ( " Rows, " )
@@ -3458,11 +3463,11 @@ contains ! =====     Public Procedures     =============================
         if ( my_clean ) &
           & call output ( (bounds(2)-bounds(1))*(bounds(4)-bounds(3)), advance='yes' )
         call dump ( matrix_block%values(bounds(1):bounds(2),bounds(3):bounds(4)), &
-          & clean=clean )
+          & options=options )
       else
         if ( my_clean ) &
           & call output ( size(matrix_block%values), advance='yes' )
-        call dump ( matrix_block%values, clean=clean )
+        call dump ( matrix_block%values, options=options )
       end if
     else
       call output ( ' ' )
@@ -3557,6 +3562,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.4  2009/06/16 17:26:39  pwagner
+! Changed api for dump, diff routines; now rely on options for most optional behavior
+!
 ! Revision 2.3  2007/11/07 21:33:08  vsnyder
 ! Get kinds from MLSKinds instead of MLSCommon
 !
