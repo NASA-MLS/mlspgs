@@ -33,6 +33,7 @@
 # -dryrun             merely echo the command that would be executed
 # -i                  ignore any TEMPLATE defs in env or macros files; use
 #                        final arg on commandline instead
+# -ident              print idents of l2cf fragments at end of file
 # -m4 cmd             use cmd instead of m4
 # -o file             store expanded l2cf in file instead of stdout
 # -v                  verbose; prints handy summary at end of l2cf
@@ -297,6 +298,8 @@ dryrun="no"
 envfile=""
 expandmacros="yes"
 I=expandl2cf
+ident="no"
+IDENTMAKER=identl2cf.sh
 ignore="no"
 l2cf="STDOUT"
 M4=m4
@@ -336,6 +339,10 @@ while [ "$more_opts" = "yes" ] ; do
        ;;
     -i )
        ignore="yes"
+       shift
+       ;;
+    -ident* )
+       ident="yes"
        shift
        ;;
     -Ef )
@@ -523,6 +530,21 @@ else
   mv $templ2cf $l2cf
 fi
 
+if [ "$ident" = "yes" ]
+then
+echo ";;; ----- idents -----" >> $l2cf
+echo ";;; Note: any of the following files may differ from" >> $l2cf
+echo ";;; the cvs repository contents if they have been locally modified" >> $l2cf
+  if [ "$mypath" != "" ]
+  then
+    echo ";;; (from $mypath)" >> $l2cf
+    $IDENTMAKER -I $mypath $TEMPLATE >> $l2cf
+  else
+    echo ";;; (from ${HOME}/mlspgs/l2/l2cf/lib)" >> $l2cf
+    $IDENTMAKER $TEMPLATE >> $l2cf
+  fi
+fi
+
 if [ "$verbose" != "yes" ]
 then
   exit 0
@@ -554,6 +576,9 @@ fi
 
 exit 0
 # $Log$
+# Revision 1.6  2009/04/13 20:43:17  pwagner
+# Fixed a bug preventing macros file from using its own macros properly
+#
 # Revision 1.5  2009/03/26 20:24:08  honghanh
 # Change myPATH to mypath so the -I option can work
 #
