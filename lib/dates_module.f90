@@ -83,6 +83,7 @@ module dates_module
 ! secondsbetween2utcs 
 !                    How many seconds between 2 date-times
 ! splitDateTime      Splits dateTtime
+! tai2ccsds          tai (days, not s) -> ccsds (in "B" format)
 ! timeForm           Determines what format time is in
 ! utc_to_date        Returns date portion from dateTtime; e.g. yyyy-dddThh:mm:ss
 ! utc_to_time        Returns time portion from dateTtime; e.g. yyyy-dddThh:mm:ss
@@ -187,7 +188,7 @@ module dates_module
     & daysince2eudtf, days_in_year, &
     & eudtf2cal, eudtf2daysince, hoursbetween2utcs, &
     & lastday, nextMoon, reformatDate, reformatTime, &
-    & secondsbetween2utcs, splitDateTime, timeForm, &
+    & secondsbetween2utcs, splitDateTime, tai2ccsds, timeForm, &
     & utcForm, utc_to_date, utc_to_time, utc_to_yyyymmdd, &
     & yyyyDoy_to_mmdd, yyyymmdd_to_dai, yyyymmdd_to_Doy
 
@@ -370,6 +371,35 @@ contains
     eudtf=ccsds2eudtf(ccsds)
     tai=eudtf2daysince(eudtf,1993001)
   end function ccsds2tai
+
+  function eudtf2ccsds(eudtf) result (ccsds)
+    ! Converts eudtf to CCSDS dates (in "B" format)
+    ! Who concocted the eudtf?
+    !----args----!
+    integer, intent(in) :: eudtf
+    !---function--result---!
+    character(len=8) :: ccsds
+    !---local vars-----!
+    integer::year,day
+    !----Executable----!
+    year = eudtf / 1000
+    day = eudtf - 1000*year
+    write(unit=ccsds(1:4),fmt="(i4)")year
+    write(unit=ccsds(6:8),fmt="(i3)")day
+    ccsds(5:5) = '-'
+  end function eudtf2ccsds
+
+  ! Converts TAI date to CCSDS Date. This is DAYS since the TAI93=0
+  ! time _not_ genuine TAI93 which is in seconds. 
+  function tai2ccsds(tai) result (ccsds)
+    integer, intent(in) :: tai
+    !---function--result---!
+    character(len=8)::ccsds
+    !----local -----!
+    integer:: eudtf
+    eudtf = daysince2eudtf(tai,1993001)
+    ccsds = eudtf2ccsds(eudtf)
+  end function tai2ccsds
 
   ! ---------------------------------------------  datetime2utc  -----
   function datetime2utc(datetime) result(utc)
@@ -2185,10 +2215,14 @@ contains
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module dates_module
 ! $Log$
+! Revision 2.18  2007/12/19 01:28:46  pwagner
+! Removed unused variables
+!
 ! Revision 2.17  2007/09/24 20:23:32  pwagner
 ! Added new procedures converting to/from yyyyDoy
 !
