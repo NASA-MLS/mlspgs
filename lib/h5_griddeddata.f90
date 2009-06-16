@@ -22,8 +22,10 @@ module h5_griddeddata
 !     the working climatology for the retrieval is in HDF5 format instead
 !     of ASCII.
 
-use l3ascii
-use hdf5
+use GriddedData, only: GriddedData_T
+use hdf5, only: H5T_NATIVE_DOUBLE, hid_t, hsize_t, &
+  & h5gcreate_f, h5screate_simple_f, h5dcreate_f, &
+  & h5dwrite_f, h5dclose_f, h5sclose_f, h5gclose_f
 implicit none
 
 private
@@ -99,10 +101,6 @@ subroutine h5_write_griddeddata(loc_id,field)
 
   call h5gclose_f(group_id,error)
 
-
-  
-
-
 end subroutine h5_write_griddeddata
 
   logical function not_used_here()
@@ -112,12 +110,16 @@ end subroutine h5_write_griddeddata
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module h5_griddeddata
 
 
 ! $Log$
+! Revision 2.8  2009/06/16 17:20:26  pwagner
+! Restrict USEd items to only the ones needed
+!
 ! Revision 2.7  2005/07/12 17:12:50  pwagner
 ! New hdf5 library will drop integer dimension interfaces
 !
