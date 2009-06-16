@@ -15,12 +15,6 @@
 ! $Id$
 ! $RCSfile$
 
-    myStats = theDefault('stats') ! .false.
-    if ( present(stats) ) myStats = stats
-    myRMS = theDefault('rms') ! .false.
-    if ( present(RMS) ) myRMS = RMS
-    myWholeArray = .not. (myStats .or. myRMS) .or. theDefault('wholearray')
-    if ( present(wholeArray) ) myWholeArray = wholeArray
     if ( myRMS ) then
       if ( .not. any(isfinite(array)) ) then
         if ( present(name) ) call output ( trim(name) //'   ' )
@@ -106,6 +100,9 @@
       end if
     end if
 ! $Log$
+! Revision 2.16  2009/06/16 17:12:55  pwagner
+! Changed api for dump, diff routines; now rely on options for most optional behavior
+!
 ! Revision 2.15  2008/01/09 20:53:43  pwagner
 ! When NaNs short-circuit dump or diff, print how many and where
 !
