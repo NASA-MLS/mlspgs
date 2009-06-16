@@ -18,13 +18,12 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
     & gdopen, gdattach, gddetach, gdclose, gdfldinfo, &
     & gdinqgrid, gdnentries, gdinqdims, gdinqflds
   use Hdf, only: DFACC_RDONLY
-  use intrinsic, only: l_ascii
   use l3ascii, only: l3ascii_read_field
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: LineLen, NameLen, FileNameLen, R8, R4, &
     & undefinedValue, MLSFile_T
   use MLSFiles, only: FILENOTFOUND, &
-    & GetPCFromRef, MLS_HDF_VERSION, open_MLSFile, close_MLSFile, &
+    & Dump, GetPCFromRef, MLS_HDF_VERSION, open_MLSFile, close_MLSFile, &
     & split_path_name
   use MLSStrings, only: Capitalize, HHMMSS_value, LowerCase
   use MLSStringLists, only: GetStringElement, NumStringElements, &
@@ -833,7 +832,7 @@ contains
     ! Local Variables
     integer :: file_id, gd_id
     integer :: inq_success
-    integer :: nentries, ngrids, ndims, nfields
+    integer :: nentries, ndims, nfields
     integer :: strbufsize
     character(len=NameLen) :: my_gridname
     integer, parameter :: MAXLISTLENGTH=10*Linelen ! Max length list grid names
@@ -850,7 +849,7 @@ contains
     integer :: status
     integer :: field
     !                                  These start out initialized to one
-    integer                        :: nlon=1, nlat=1, nlev=1, ntime=1
+    integer                        :: nlon=1, nlat=1, nlev=1
     integer, parameter             :: i_longitude=1
     integer, parameter             :: i_latitude=i_longitude+1
     integer, parameter             :: i_vertical=i_latitude+1
@@ -1068,12 +1067,6 @@ contains
     else
     ! Now read the dims
     !  But .. they aren't there!
-      !nullify(dim_field)
-      !call read_the_dim(gd_id, 'XDim', dims(1), dim_field)
-      !the_g_data%lons = dim_field
-      !call read_the_dim(gd_id, 'YDim', dims(2), dim_field)
-      !the_g_data%lats = dim_field
-      !deallocate(dim_field)        ! Before leaving, some light housekeeping
       do i=1, xdimsize
         the_g_data%lons(i) = i - 1 + Lon_offset
       enddo
@@ -1195,13 +1188,11 @@ contains
     integer, parameter             :: i_latitude=i_longitude+1
     integer, parameter             :: i_vertical=i_latitude+1
     integer, parameter             :: i_time=i_vertical+1
-    integer, external :: GDRDFLD
     logical, parameter :: COUNTEMPTY=.true.
     real(r4), parameter :: FILLVALUE = 1.e15
     !real(r4), dimension(:,:,:,:), pointer :: all_the_fields
     real(r4), dimension(:,:,:), pointer :: all_the_fields
     real(r4), dimension(:,:,:), pointer :: t_all_fields
-    real(r8), dimension(:), pointer :: dim_field
     logical, parameter :: DEEBUG = .false.
     real(r8):: upleftpt(2), lowrightpt(2)
     integer :: i, xdimsize=1, ydimsize=2
@@ -1428,24 +1419,6 @@ contains
     deallocate(t_all_fields)
 
     ! Now read the dims
-    !nullify(dim_field)
-    ! call read_the_dim(gd_id, 'XDim', dims(1), dim_field)
-    !call read_the_dim(gd_id, trim(dimNames(1)), dims(1), dim_field)
-    !the_g_data%lons = dim_field
-    ! call read_the_dim(gd_id, 'YDim', dims(2), dim_field)
-    !call read_the_dim(gd_id, trim(dimNames(2)), dims(2), dim_field)
-    !the_g_data%lats = dim_field
-    ! call read_the_dim(gd_id, 'Height', dims(3), dim_field)
-    !call read_the_dim(gd_id, trim(dimNames(3)), dims(3), dim_field)
-    !the_g_data%Heights = dim_field
-    ! call read_the_dim(gd_id, 'Time', dims(4), dim_field)
-    !call read_the_dim(gd_id, trim(dimNames(4)), dims(4), dim_field)
-    ! the_g_data%lsts = dim_field
-    !the_g_data%dateStarts = dim_field
-    !the_g_data%dateEnds = dim_field
-    !deallocate(dim_field)        ! Before leaving, some light housekeeping
-    !end
-    ! But .. they aren't there
     do j=1, nlon
         the_g_data%lons(j) = j - 1 + Lon_offset
     enddo
@@ -1667,7 +1640,7 @@ contains
     integer :: ErrType
     logical :: echo
     logical :: dump_now
-    integer:: processCli, CliUnit, record_length
+    integer:: processCli, CliUnit
     logical :: use_PCF
 
     ! begin
@@ -1697,8 +1670,6 @@ contains
       processCli = GetPCFromRef(fname, mlspcf_l2clim_start, mlspcf_l2clim_end, &
         & .true., ErrType, version, debugOption=debug)
       if(ErrType /= 0) then
-        !    CALL MLSMessage (MLSMSG_Error, ModuleName, &
-        !              &"Climatology file name unmatched in PCF")
         call announce_error (ROOT, &
           &"Climatology file name " // trim(fname) // " unmatched in PCF", &
           & 'error number: ', extra_number=ErrType)
@@ -1710,8 +1681,6 @@ contains
       fname = climFile%name
       ! use Fortran open
       if(debug) call output('opening ' // fname, advance = 'yes')
-      ! CliUnit = mls_io_gen_openF ( l_ascii, .true., ErrType, &
-      !   & record_length, PGSd_IO_Gen_RSeqFrm, FileName=fname)
       call open_MLSFile( ClimFile )
       CliUnit = ClimFile%FileID%f_id
       
@@ -1723,6 +1692,7 @@ contains
       else
         call output('Starting at eof on io unit', advance = 'yes')
       endif
+      call dump( ClimFile )
     endif
 
 
@@ -1780,7 +1750,6 @@ contains
         ! use Fortran close
       else
         if(debug) call output('closing ' // fname, advance = 'yes')
-        ! ErrType = mls_io_gen_CloseF (l_ascii, CliUnit )
         call close_MLSFile( ClimFile )
         ErrType = 0
       endif
@@ -1908,6 +1877,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.50  2009/06/16 17:25:58  pwagner
+! Removed most unused stuff
+!
 ! Revision 2.49  2008/12/02 23:11:13  pwagner
 ! mls_io_gen_[openF,closeF] functions now private; use MLSFile_T interfaces instead
 !
