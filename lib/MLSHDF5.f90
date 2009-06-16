@@ -115,9 +115,9 @@ module MLSHDF5
 ! CpHDF5GlAttribute (char fromFile, char toFile, char name,
 !    [log skip_if_already_there])
 ! DumpHDF5Attributes (int locID, [char names], [char groupName], [char DSName],
-!    [log stats], [log rms])
+!    [char options])
 ! DumpHDF5DS (int locID, char groupame, [char names],
-!    [real fillValue], [log stats], [log rms], [log unique], [log laconic])
+!    [real fillValue], [char options])
 ! GetAllHDF5AttrNames (int itemID, char DSNames)
 ! GetAllHDF5DSNames (file, char gname, char DSNames)
 !     file can be one of:
@@ -169,6 +169,17 @@ module MLSHDF5
 ! d    Search for matches among datasets
 ! g    Search for matches among groups
 
+! The meaning of options has replaced the older logical arguments in Dumps
+! if the options is present and contains the following characters:
+!   character         meaning
+!      ---            -------
+!       c              Clean
+!       l              Laconic
+!       r              RMS       
+!       s              Stats     
+!       u              Unique    
+!       w              WholeArray
+!                      
 ! === (end of api) ===
   interface CpHDF5Attribute
     ! module procedure CpHDF5Attribute_int, CpHDF5Attribute_logical
@@ -366,15 +377,14 @@ contains ! ======================= Public Procedures =========================
   end subroutine CpHDF5GlAttribute_string
 
   ! -------------------------------  DumpHDF5Attributes  -----
-  subroutine DumpHDF5Attributes ( locID, names, groupName, DSName, stats, rms )
+  subroutine DumpHDF5Attributes ( locID, names, groupName, DSName, options )
     ! Dump attributes of locID (possibly followed by a group or DS name)
     ! All of them or only those in names string list
     integer, intent(in)                     :: locID ! attributes of what
     character (len=*), intent(in), optional :: NAMES  ! only these names
     character(len=*), intent(in), optional  :: groupName
     character(len=*), intent(in), optional  :: DSName
-    logical, intent(in), optional           :: stats ! Show % = fill
-    logical, intent(in), optional           :: rms ! Show rms, min, max
+    character(len=*), intent(in), optional :: options
 
     ! Local variables
     integer :: attrID
@@ -475,10 +485,10 @@ contains ! ======================= Public Procedures =========================
       select case ( QType )
       case ( 'integer' )
         call GetHDF5Attribute ( itemID, name, iValue(1:dims(1)) )
-        call dump ( iValue(1:dims(1)), trim(name), stats=stats, rms=rms )
+        call dump ( iValue(1:dims(1)), trim(name), options=options )
       case ( 'double', 'real' )
         call GetHDF5Attribute ( itemID, name, dValue(1:dims(1)) )
-        call dump ( dValue(1:dims(1)), trim(name), stats=stats, rms=rms )
+        call dump ( dValue(1:dims(1)), trim(name), options=options )
       case ( 'character' )
         call GetHDF5Attribute ( itemID, name, chValue )
         call dump ( (/ trim(chValue) /), trim(name) )
@@ -504,17 +514,14 @@ contains ! ======================= Public Procedures =========================
   
   ! -------------------------------  DumpHDF5DS  -----
   subroutine DumpHDF5DS ( locID, groupName, &
-    & names, fillValue, stats, rms, unique, laconic )
+    & names, fillValue, options )
     ! Dump datasets in groupID
     ! All of them or only those in names string list
     integer, intent(in)                     :: locID ! file or groupID
     character(len=*), intent(in)            :: groupName ! datasets in group
     character (len=*), intent(in), optional :: NAMES   ! only these names
     real, intent(in), optional              :: fillValue ! Show % = fill
-    logical, intent(in), optional           :: stats ! Show % = fill
-    logical, intent(in), optional           :: rms ! Show rms, min, max
-    logical, intent(in), optional           :: unique ! Show unique values, count
-    logical, intent(in), optional           :: laconic ! Don't print names
+    character(len=*), intent(in), optional :: options
 
     ! Local variables
     integer :: classID
@@ -545,13 +552,13 @@ contains ! ======================= Public Procedures =========================
     ! Executable
     call MLSMessageCalls( 'push', constantName='DumpHDF5DS' )
     skipCharValues = .false.
-    if ( present(rms) ) skipCharValues = skipCharValues .or. rms
-    if ( present(stats) ) skipCharValues = skipCharValues .or. stats
+    if ( present(options) ) &
+      & skipCharValues = any( indexes(options, (/'r','s'/)) > 0 )
     myNames = '*' ! Wildcard means 'all'
     if ( present(names) ) myNames = names
     if ( myNames == '*' ) call GetAllHDF5DSNames ( locID, groupName, myNames )
     dontPrintName = .false.
-    if ( present(laconic) ) dontPrintName = laconic
+    if ( present(options) ) dontPrintName = index(options, 'l') > 0
     numDS = NumStringElements ( myNames, countEmpty )
     call h5gOpen_f ( locid, trim(groupName), groupID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -604,9 +611,9 @@ contains ! ======================= Public Procedures =========================
           call LoadFromHDF5DS ( groupID, name, iValue )
           if ( present(fillvalue) ) then
             call dump ( iValue, trim(namePrinted), fillValue=int(fillvalue), &
-              & stats=stats, rms=rms, unique=unique )
+              & options=options )
           else
-            call dump ( iValue, trim(namePrinted), stats=stats, rms=rms, unique=unique )
+            call dump ( iValue, trim(namePrinted), options=options )
           endif
           call deallocate_test( iValue, 'iValue', ModuleName )
         case ( 2 )
@@ -614,19 +621,19 @@ contains ! ======================= Public Procedures =========================
           call LoadFromHDF5DS ( groupID, name, iValue(:,:,1) )
           if ( present(fillvalue) ) then
             call dump ( iValue(:,:,1), trim(namePrinted), fillValue=int(fillvalue), &
-              & stats=stats, rms=rms, unique=unique )
+              & options=options )
           else
-            call dump ( iValue(:,:,1), trim(namePrinted), stats=stats, rms=rms, unique=unique )
+            call dump ( iValue(:,:,1), trim(namePrinted), options=options )
           endif
           call deallocate_test( iValue, 'iValue', ModuleName )
         case default
           call allocate_test( iValue, dims(1), 1, 1, 'iValue', ModuleName )
           call LoadFromHDF5DS ( groupID, name, iValue(:,1,1) )
           if ( present(fillvalue) ) then
-            call dump ( iValue(:,1,1), trim(namePrinted), fillValue=int(fillvalue), stats=stats, &
-              & rms=rms, unique=unique )
+            call dump ( iValue(:,1,1), trim(namePrinted), fillValue=int(fillvalue), &
+              & options=options )
           else
-            call dump ( iValue(:,1,1), trim(namePrinted), stats=stats, rms=rms, unique=unique )
+            call dump ( iValue(:,1,1), trim(namePrinted), options=options )
           endif
           call deallocate_test( iValue, 'iValue', ModuleName )
          end select
@@ -637,9 +644,9 @@ contains ! ======================= Public Procedures =========================
           call LoadFromHDF5DS ( groupID, name, dValue )
           if ( present(fillvalue) ) then
             call dump ( dValue, trim(namePrinted), fillValue=real(fillvalue, r8), &
-              & stats=stats, rms=rms, unique=unique )
+              & options=options )
           else
-            call dump ( dValue, trim(namePrinted), stats=stats, rms=rms, unique=unique )
+            call dump ( dValue, trim(namePrinted), options=options )
           endif
           call deallocate_test( dValue, 'dValue', ModuleName )
         case ( 2 )
@@ -647,9 +654,9 @@ contains ! ======================= Public Procedures =========================
           call LoadFromHDF5DS ( groupID, name, dValue(:,:,1) )
           if ( present(fillvalue) ) then
             call dump ( dValue(:,:,1), trim(namePrinted), &
-              & fillValue=real(fillvalue, r8), stats=stats, rms=rms, unique=unique )
+              & fillValue=real(fillvalue, r8), options=options )
           else
-            call dump ( dValue(:,:,1), trim(namePrinted), stats=stats, rms=rms, unique=unique )
+            call dump ( dValue(:,:,1), trim(namePrinted), options=options )
           endif
           call deallocate_test( dValue, 'dValue', ModuleName )
         case default
@@ -657,9 +664,9 @@ contains ! ======================= Public Procedures =========================
           call LoadFromHDF5DS ( groupID, name, dValue(:,1,1) )
           if ( present(fillvalue) ) then
             call dump ( dValue(:,1,1), trim(namePrinted), fillValue=real(fillvalue, r8), &
-              & stats=stats, rms=rms, unique=unique )
+              & options=options )
           else
-            call dump ( dValue(:,1,1), trim(namePrinted), stats=stats, rms=rms, unique=unique )
+            call dump ( dValue(:,1,1), trim(namePrinted), options=options )
           endif
           call deallocate_test( dValue, 'dValue', ModuleName )
          end select
@@ -4804,22 +4811,22 @@ contains ! ======================= Public Procedures =========================
     if ( my_no_pairs ) then
       if ( present(ints) ) then
         call dump ( ints, names, &
-          & clean=clean, format=int_format, width=width )
+          & format=int_format, width=width )
       else if ( present(reals) ) then
-        call dump ( reals, names, clean=clean )
+        call dump ( reals, names )
       else if ( present(doubles) ) then
-        call dump ( doubles, names, clean=clean )
+        call dump ( doubles, names )
       end if
     else
       if ( present(ints) ) then
         call dumpNamedValues ( ints, names, &
-          & clean=clean, format=int_format, width=width )
+          & format=int_format, width=width )
       else if ( present(reals) ) then
         call dumpNamedValues ( reals, names, &
-          & clean=clean, format=real_format, width=width )
+          & format=real_format, width=width )
       else if ( present(doubles) ) then
         call dumpNamedValues ( doubles, names, &
-          & clean=clean, format=dbl_format, width=width )
+          & format=dbl_format, width=width )
       end if
     end if
     call MLSMessage ( severity, ModuleNameIn, message )
@@ -4961,6 +4968,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.91  2009/06/16 17:14:24  pwagner
+! Changed api for dump, diff routines; now rely on options for most optional behavior
+!
 ! Revision 2.90  2009/05/08 00:42:04  pwagner
 ! New optional arg laconic to prevent DumpHDF5DS from printing names
 !
