@@ -120,6 +120,7 @@
     integer :: numwarnings = 0
     integer :: totalnumwarnings = 0
     character(len=128) :: lastWarningMsg = ' '
+    logical :: ALLCAPSSummaries    = .false. ! Print summary msgs in ALL CAPS
   end type MLSMSGWarnings_T
 
   integer, parameter :: MAXMESSLENGTH = 255 ! Max length on one line
@@ -730,8 +731,13 @@ contains
       write(number, '(i10)') MLSMSGWarnings%timeswarned(i) - 1
       ! So grep can quickly spot the summarized warnings by, e.g.
       ! grep '##' mlsl2.log
-      call PrintItOut( trim(number) // ' ## ' &
-        &  // trim(MLSMSGWarnings%warningmessages(i)), MLSMSG_Info )
+      if ( MLSMSGWarnings%ALLCAPSSummaries ) then
+        call PrintItOut( trim(number) // ' ## ' &
+          &  // trim(Capitalize(MLSMSGWarnings%warningmessages(i))), MLSMSG_Info )
+      else
+        call PrintItOut( trim(number) // ' ## ' &
+          &  // trim(MLSMSGWarnings%warningmessages(i)), MLSMSG_Info )
+      endif
     enddo
   end subroutine SummarizeWarnings
 
@@ -920,6 +926,9 @@ contains
   
 !
 ! $Log$
+! Revision 2.10  2009/06/16 17:10:12  pwagner
+! Can Capitalize messages in warnings summaries
+!
 ! Revision 2.9  2008/05/28 21:01:48  pwagner
 ! Break endless cycling between PVMErrorMessage and MLSMessage
 !
