@@ -1251,23 +1251,31 @@ contains ! ===================================== Public Procedures =====
     end subroutine ChunkDivideL2CF
 
     ! --------------------------------- ConvertFlagsToObstructions -----
-    subroutine ConvertFlagsToObstructions ( valid, obstructions, mafRange )
+    subroutine ConvertFlagsToObstructions ( valid, obstructions, &
+      & mafRange, obstructionType )
       ! This routine takes an array of logicals indicating good/bad data
       ! and converts it into obstruction information.
-      logical, dimension(:), intent(in) :: VALID
+      logical, dimension(:), intent(in)           :: VALID
       type (Obstruction_T), dimension(:), pointer :: OBSTRUCTIONS
       integer, dimension(:), intent(in), optional :: MAFRANGE
+      character(len=*), intent(in), optional      :: obstructionType
 
       ! Local variables
-      integer :: MAF                    ! Loop counter
-      integer :: OFFSET                 ! MAF index offset
       logical :: LASTONEVALID           ! Flag
+      integer :: MAF                    ! Loop counter
       type (Obstruction_T) :: NEWOBSTRUCTION ! In progrss
+      character(len=64)    :: obstructionTrigger
+      integer :: OFFSET                 ! MAF index offset
 
       ! Executable code
       lastOneValid = .true.
       offset = 0
       if ( present(mafRange) ) offset = mafRange(1)
+      obstructionTrigger = &
+        & 'maf where transition from bad to good made obstruction'
+      if ( present(obstructionType) ) obstructionTrigger = &
+        & 'maf where transition from bad to good ' // trim(obstructionType) // &
+        & 'made obstruction'
 
       do maf = 1, size(valid)
         if ( valid(maf) .neqv. lastOneValid ) then
@@ -1281,7 +1289,7 @@ contains ! ===================================== Public Procedures =====
             call AddObstructionToDatabase ( obstructions, newObstruction )
             if ( switchDetail(switches, 'chu') > -1 ) &
               call outputNamedValue( &
-              & 'maf where transition from bad to good made obstruction', maf )
+              & trim(obstructionTrigger), maf )
           end if
         end if
         lastOneValid = valid(maf)
@@ -1293,7 +1301,7 @@ contains ! ===================================== Public Procedures =====
         call AddObstructionToDatabase ( obstructions, newObstruction )
         if ( switchDetail(switches, 'chu') > -1 ) &
           call outputNamedValue( &
-          & 'maf where transition from bad to good made obstruction', size(valid)-1 )
+          & trim(obstructionTrigger), size(valid)-1 )
       end if
     end subroutine ConvertFlagsToObstructions
 
@@ -1752,7 +1760,7 @@ contains ! ===================================== Public Procedures =====
         call dump(obstructions)
         endif
         call ConvertFlagsToObstructions ( valids_buffer, obstructions, &
-          & mafRange%Expanded )
+          & mafRange%Expanded, obstructionType='critical radiances' )
         if ( swLevel > -1 ) then
         call output ( 'After converting valids to obstructions', advance='yes' )
         call dump(obstructions)
@@ -1854,7 +1862,8 @@ contains ! ===================================== Public Procedures =====
         & ModuleName )
       call List2Array (criticalSignalStr, criticalSignals,  countEmpty=.true. )
       if ( switchDetail(switches, 'chu') > -1 ) &
-        & call dump( criticalSignals, 'critical Signals chosen', trim=.true. )
+        & call dump( criticalSignals, 'critical Signals chosen', &
+        & options=what_options(trim=.true.) )
     end subroutine ChooseCriticalSignals
 
     ! ----------------------------------------- PruneChunks -----------
@@ -2224,7 +2233,8 @@ contains ! ===================================== Public Procedures =====
           end if                          ! Consider this module
         end do                            ! Module Loop
         ! Convert this information into obstructions and tidy up.
-        call ConvertFlagsToObstructions ( valid, obstructions )
+        call ConvertFlagsToObstructions ( valid, obstructions, &
+          & obstructionType='scan' )
         call Deallocate_test ( valid, 'valid', ModuleName )
         call Deallocate_test ( wasSmoothed, 'wasSmoothed', ModuleName )
         call Deallocate_test ( angleWasSmoothed, 'angleWasSmoothed', ModuleName )
@@ -2540,6 +2550,24 @@ contains ! ===================================== Public Procedures =====
     enddo
   end subroutine smoothOutDroppedMAFs
 
+  function what_options( clean, transpose, trim ) result( options )
+    use MLSStrings, only: trim_safe
+    logical, optional, intent(in) :: clean
+    logical, optional, intent(in) :: transpose
+    logical, optional, intent(in) :: trim
+    character(len=8) :: options
+    options = ' '
+    if ( present(clean) ) then
+      if ( clean ) options = trim_safe(options) // 'c'
+    endif
+    if ( present(transpose) ) then
+      if ( transpose ) options = trim_safe(options) // 'p'
+    endif
+    if ( present(trim) ) then
+      if ( trim ) options = trim_safe(options) // 't'
+    endif
+  end function what_options
+
   logical function not_used_here()
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -2553,6 +2581,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.90  2009/06/16 17:42:59  pwagner
+! Changed api for dump, diff routines; now rely on options for most optional behavior
+!
 ! Revision 2.89  2009/04/02 18:09:26  pwagner
 ! Fixed bug where status might be undefined
 !
