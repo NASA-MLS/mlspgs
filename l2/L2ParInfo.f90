@@ -606,7 +606,8 @@ contains ! ==================================================================
 
       close ( unit=lun )
     end if
-    if ( index(switches,'mach') /=0 ) call dump ( machineNames, trim=.true. )
+    if ( index(switches,'mach') /=0 ) &
+      & call dump ( machineNames, options=what_options(trim=.true.) )
   end subroutine GetMachineNames
 
   ! ---------------------------------------- GetMachines ------------
@@ -798,6 +799,24 @@ contains ! ==================================================================
     GetNiceTidString = '[t'//trim(LowerCase ( GetNiceTidString ))//']'
   end function GetNiceTidString
 
+  function what_options( clean, transpose, trim ) result( options )
+    use MLSStrings, only: trim_safe
+    logical, optional, intent(in) :: clean
+    logical, optional, intent(in) :: transpose
+    logical, optional, intent(in) :: trim
+    character(len=8) :: options
+    options = ' '
+    if ( present(clean) ) then
+      if ( clean ) options = trim_safe(options) // 'c'
+    endif
+    if ( present(transpose) ) then
+      if ( transpose ) options = trim_safe(options) // 'p'
+    endif
+    if ( present(trim) ) then
+      if ( trim ) options = trim_safe(options) // 't'
+    endif
+  end function what_options
+
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -810,6 +829,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.51  2009/06/16 17:41:37  pwagner
+! Changed api for dump, diff routines; now rely on options for most optional behavior
+!
 ! Revision 2.50  2007/10/24 00:16:38  pwagner
 ! Removed unused declarations
 !
