@@ -47,6 +47,8 @@ module MLSStringLists               ! Module to treat string lists
 !     (subroutines and functions)
 ! Array2List         Converts an array of strings to a single string list
 ! BooleanValue       Evaluate a boolean formula: e.g. 'p and not {q or r)'
+! BuildHash          Builds a hash out of a hash constructor like
+!                     [ 100mb : 0.5ppmv, 50mb : 0.1ppmv, 31mb : 0.12ppmv ]
 ! catLists           cats 2 string lists, taking care if either one is blank
 ! ExpandStringRange  Turns '1,2-5,7' into '1,2,3,4,5,7' or ints or logicals
 ! ExtractSubString   Extracts portion of string sandwiched between sub1 and sub2
@@ -80,6 +82,8 @@ module MLSStringLists               ! Module to treat string lists
 ! Array2List (char* inArray(:), char* outList(:), &
 !   & [char inseparator], [int ordering], [char leftRight]) 
 ! log BooleanValue ( char* str, char* lkeys, log lvalues[:] )
+! BuildHash (char* Constructor, char* values, &
+!   & [char* operator], [char separator], [char* options])
 ! char* catLists (char* str1, char* str2)
 ! ExpandStringRange (char* str, char* outst)
 ! ExtractSubString (char* str, char* outstr, char* sub1, char* sub2, &
@@ -173,7 +177,7 @@ module MLSStringLists               ! Module to treat string lists
 !     first w/o the extra arg, and the second time with the extra arg
 ! === (end of api) ===
 
-  public :: Array2List, BooleanValue, catLists, &
+  public :: Array2List, BooleanValue, BuildHash, catLists, &
    & ExpandStringRange, ExtractSubString, &
    & GetHashElement, GetStringElement, &
    & GetUniqueInts, GetUniqueStrings, GetUniqueList, Intersection, IsInList, &
@@ -460,6 +464,53 @@ contains
       enddo
     end function evaluatePrimitive
   end function BooleanValue
+
+  ! -------------------------------------------------  BuildHash  -----
+  ! Build a hash from a constructor
+  ! E.g., given '[ 100mb : 0.5ppmv, 50mb : 0.1ppmv, 31mb : 0.12ppmv ]'
+  ! Returns 
+  ! keys = '100mb, 50mb, 31mb'  
+  ! hash = '0.5ppmv, 0.1ppmv, 0.12ppmv'
+  ! operator   optionally use something other than ':'
+  ! separator  optionally use something other than ','
+  ! options    'a' append to existing keys, values
+  ! Use:
+  ! The constructor example shown above is used in level 2 profile Fills
+  subroutine BuildHash( Constructor, Keys, values, operator, separator, options )
+    ! Dummy arguments
+    character (len=*), intent(in)             :: Constructor
+    character (len=*), intent(inout)          :: Keys
+    character (len=*), intent(inout)          :: values
+    character (len=*), optional, intent(in)   :: operator ! defaults to ':'
+    character (len=*), optional, intent(in)   :: separator ! defaults to ','
+    character (len=*), optional, intent(in)   :: options
+    ! Internal variables
+    logical :: append
+    logical, parameter :: countEmpty = .false.
+    integer :: i
+    character(len=128) :: istr
+    character(len=3) :: op
+    character(len=1) :: sep
+    character(len=MAXSTRLISTLENGTH) :: str
+    ! Executable
+    op = ':'
+    if ( present(operator) ) op = operator
+    sep = ','
+    if ( present(separator) ) sep = separator
+    append = .false.
+    if ( present(options) ) append = ( index(options, 'a') > 0 )
+    if ( .not. append ) then
+      keys = ' '
+      values = ' '
+    endif
+    str = unquote( Constructor, quotes='[]$', stripany=.true. )
+    do i=1, NumStringElements( str, countEmpty, inseparator=trim(sep) )
+      call GetStringElement( str, istr, i, countEmpty, inseparator=trim(sep) )
+      if ( len_trim(istr) < 1 ) cycle
+      keys = catlists( keys, stringElement( istr, 1, countEmpty, inseparator=trim(op) ) )
+      values = catlists( values, stringElement( istr, 2, countEmpty, inseparator=trim(op) ) )
+    enddo
+  end subroutine BuildHash
 
   ! -------------------------------------------------  catLists_int  -----
   function catLists_int (STR1, INT, inseparator) result (OUTSTR)
@@ -3263,6 +3314,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.37  2009/06/16 17:07:05  pwagner
+! Added BuildHash to build keys, values arrays from Constructor
+!
 ! Revision 2.36  2008/12/11 19:39:20  pwagner
 ! Added print statement to not_used_here
 !
