@@ -56,7 +56,8 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! NCopies            How many copies of a substring in a string
 ! ReadCompleteLineWithoutComments     
 !                    Knits continuations, snips comments
-! ReadIntsFromChars  Converts an array of strings to ints using Fortran read
+! ReadIntsFromChars  Converts an [array of] strings to int[s] using Fortran read
+! ReadNumsFromChars  Converts an [array of] strings to num[s] using Fortran read
 ! Replace            Replaces every instance of oldChar with newChar
 ! ReplaceNonAscii    Replaces every non-ascii char with newChar
 ! Reverse            Turns 'a string' -> 'gnirts a'
@@ -65,8 +66,10 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! size_trim          Returns len_trim of equivalent character scalar for array
 ! SplitNest          Splits 'part 1 (part 2) part 3' -> 'part 1', 'part 2', 'part 3'
 ! SplitWords         Splits 'first, the, rest, last' -> 'first', 'the, rest', 'last'
+! squeeze            Snip excess spaces from between words; optionally snip all
 ! streq              Generalized strings "==" (optionally ignoring case,
 !                      leading blanks, and allowing wildcard matches)
+! stretch            Insert spaces between words; optionally between letters
 ! Strings2Ints       Converts an array of strings to ints using "ichar" ftn
 ! trim_safe          trims string down, but never to length 0
 ! WriteIntsToChars   Converts an array of ints to strings using Fortran write
@@ -93,7 +96,8 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! int NCopies (char* str, char* substring, [log overlap])
 ! ReadCompleteLineWithoutComments (int unit, char* fullLine, [log eof], &
 !       & [char commentChar], [char continuationChar])
-! readIntsFromChars (char* strs(:), int ints(:), char* forbiddens)
+! readIntsFromChars (char* strs[(:)], int ints[(:)], char* forbiddens)
+! readNumsFromChars (char* strs[(:)], num num[(:)], char* forbiddens)
 ! char* Replace (char* str, char oldChar, char newChar)
 ! char* ReplaceNonAscii (char* str, char newChar)
 ! char* Reverse (char* str)
@@ -103,9 +107,11 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! SplitNest ( char *str, char* part1, char* part2, char* part3, [char* parens] )
 ! SplitWords (char *line, char* first, char* rest, [char* last], &
 !       & [log threeWay], [char* delimiter])
+! char* squeeze (char* str, [char* options])
 ! log streq (char* str1, char* str2, [char* options])
 ! log streq (char* str1(:), char* str2, [char* options])
 ! log streq (char* str1, char* str2(:), [char* options])
+! char* stretch (char* str, [char* options])
 ! strings2Ints (char* strs(:), int ints(:,:))
 ! char* trim_safe (char* str)
 ! writeIntsToChars (int ints(:), char* strs(:))
@@ -159,9 +165,10 @@ MODULE MLSStrings               ! Some low level string handling stuff
    & depunctuate, FlushArrayLeft, hhmmss_value, &
    & indexes, ints2Strings, isAllAscii, IsAscii, IsRepeat, &
    & LenTrimToAscii, LinearSearchStringArray, LowerCase, NAppearances, NCopies, &
-   & ReadCompleteLineWithoutComments, readIntsFromChars, &
+   & ReadCompleteLineWithoutComments, readNumsFromChars, readIntsFromChars, &
    & Replace, ReplaceNonAscii, Reverse, Reverse_trim, Rot13, &
-   & size_trim, SplitNest, SplitWords, streq, strings2Ints, trim_safe, &
+   & size_trim, SplitNest, SplitWords, squeeze, streq, stretch, strings2Ints, &
+   & trim_safe, &
    & writeIntsToChars
 
   interface asciify
@@ -169,6 +176,12 @@ MODULE MLSStrings               ! Some low level string handling stuff
   end interface
 
   interface readIntsFromChars
+    module procedure readAnIntFromChars, readIntArrayFromChars
+  end interface
+
+  interface readNumsFromChars
+    module procedure readADoubleFromChars, ReadDoubleArrayFromChars
+    module procedure readARealFromChars, ReadRealArrayFromChars
     module procedure readAnIntFromChars, readIntArrayFromChars
   end interface
 
@@ -1073,8 +1086,20 @@ contains
 
   END SUBROUTINE ReadCompleteLineWithoutComments
 
-  ! --------------------------------------------------  readAnIntFromChars  -----
-  subroutine readAnIntFromChars (str, int, forbiddens, ignore)
+  ! ----------------  readIntsFromChars  ----- readNumsFromChars  -----
+  ! This family of routines reads either a single number or an array
+  ! depending on the shape of its args
+  ! If called with type integer (real, double) return args, it will try to read
+  ! the string data as integers (reals, doubles)
+  
+  ! Use:
+  ! Depending on optional arguments you can numerical part from a combination
+  ! of number and unit, e.g. 6.3km
+  
+  ! Beware of mixing e-type format with dimensions
+  ! E.g., '3.2e0ppmv' will very likely confuse the subroutine
+  ! (is the unit string 'ppmv' or is it 'e0ppmv'?)
+  subroutine readAnIntFromChars (str, num, forbiddens, ignore)
     ! takes a string and returns an integer
     ! using Fortran "read"
     ! (which could cause an io error--that's why this
@@ -1101,79 +1126,10 @@ contains
     !
     !--------Argument--------!
     CHARACTER (LEN=*), INTENT(in) ::   str
-    integer, intent(out)          ::   int
-    CHARACTER (LEN=*), INTENT(in), optional     ::   forbiddens
-    CHARACTER (LEN=*), INTENT(in), optional     ::   ignore
-
-    !----------Local vars----------!
-    INTEGER :: j, k, status
-    LOGICAL :: leave_undef
-    character(len=40)                           ::   myForbiddens
-    character(len=40)                           ::   myIgnore
-    character(len=len(str))                     ::   myStr
-    !----------Executable part----------!
-   status = 0
-   ! Check that all is well (if not returns STRINGCONTAINSFORBIDDENS)
-   int = STRINGCONTAINSFORBIDDENS
-   if ( present(forbiddens) ) then
-     myForbiddens = adjustl(forbiddens)
-   else
-     myForbiddens = ' '
-   endif
-   if ( present(ignore) ) then
-     myignore = adjustl(ignore)
-   else
-     myignore = ' '
-   endif
-   leave_undef = (str == ' ')
-   if ( myForbiddens /= ' ' ) then
-     do j=1, len(trim(myForbiddens))
-        leave_undef = leave_undef &
-         & .or. &
-         & ( &
-         &    index(str, myForbiddens(j:j)) > 0 &
-         &  .and. &
-         &    myForbiddens(j:j) /= ' ' &
-         & )
-     enddo
-   endif
-   if ( leave_undef ) then
-     return
-   elseif (  myIgnore == "" ) then
-     read( str, *, iostat=status, err=100 ) int
-     if ( status /= 0 ) int = STRINGCONTAINSFORBIDDENS
-   ! elseif (  myIgnore == "*" ) then
-   elseif (  index(myIgnore, "*") /= 0 ) then
-     int = 0  ! a str made up entirely of ignorables means "0"
-     k = 1
-     myStr = ""
-     do j = 1, len(str)
-       if ( .not. isAlphabet(str(j:j)) .and. &
-         & index(myIgnore, str(j:j)) < 1 ) then
-         myStr(k:k) = str(j:j)
-         k = k + 1
-       endif
-     enddo
-     if ( myStr /= "" ) read( mystr, *, iostat=status, err=100 ) int
-   else
-     int = 0  ! a str made up entirely of ignorables means "0"
-     k = 1
-     myStr = ""
-     do j = 1, len(str)
-       if ( index(myIgnore, str(j:j)) < 1 ) then
-         myStr(k:k) = str(j:j)
-         k = k + 1
-       endif
-     enddo
-     if ( myStr /= "" ) read( mystr, *, iostat=status, err=100 ) int
-   endif
-   if ( status /= 0 ) int = STRINGCONTAINSFORBIDDENS
-   return
-100   int = STRINGCONTAINSFORBIDDENS
-
+    integer, intent(out)          ::   num
+    include 'ReadANumFromChars.f9h'
   end subroutine readAnIntFromChars
 
-  ! --------------------------------------------------  readIntArrayFromChars  -----
   SUBROUTINE readIntArrayFromChars (strs, ints, forbiddens)
     ! takes an array of strings and returns integer array
     ! using Fortran "read"
@@ -1188,8 +1144,7 @@ contains
     CHARACTER (LEN=*), INTENT(in), optional     ::   forbiddens
 
     !----------Local vars----------!
-    INTEGER :: i, j, arrSize
-    LOGICAL :: leave_undef
+    INTEGER :: i, arrSize
     !----------Executable part----------!
 
    ! Check that all is well (if not returns blanks)
@@ -1203,6 +1158,62 @@ contains
    enddo
 
   END SUBROUTINE readIntArrayFromChars
+
+  subroutine readARealFromChars (str, num, forbiddens, ignore)
+    !--------Argument--------!
+    CHARACTER (LEN=*), INTENT(in) ::   str
+    real, intent(out)             ::   num
+    include 'ReadANumFromChars.f9h'
+  end subroutine readARealFromChars
+
+  subroutine readADoubleFromChars (str, num, forbiddens, ignore)
+    !--------Argument--------!
+    CHARACTER (LEN=*), INTENT(in) ::   str
+    double precision, intent(out)             ::   num
+    include 'ReadANumFromChars.f9h'
+  end subroutine readADoubleFromChars
+
+  SUBROUTINE ReadRealArrayFromChars (strs, nums, forbiddens)
+    character (len=*), intent(in), dimension(:) ::   strs
+    real, intent(out), dimension(:)             ::   nums
+    character (len=*), intent(in), optional     ::   forbiddens
+
+    !----------Local vars----------!
+    integer :: i, arrSize
+    !----------Executable part----------!
+
+   ! Check that all is well (if not returns blanks)
+   arrSize = MIN(size(strs), size(nums))
+   if ( arrSize <= 0 ) then
+     nums = LENORSIZETOOSMALL
+     return
+   endif
+   do i=1, arrSize
+     call readARealFromChars(strs(i), nums(i), forbiddens)
+   enddo
+
+  END SUBROUTINE ReadRealArrayFromChars
+
+  SUBROUTINE ReadDoubleArrayFromChars (strs, nums, forbiddens)
+    character (len=*), intent(in), dimension(:) ::   strs
+    double precision, intent(out), dimension(:)             ::   nums
+    character (len=*), intent(in), optional     ::   forbiddens
+
+    !----------Local vars----------!
+    integer :: i, arrSize
+    !----------Executable part----------!
+
+   ! Check that all is well (if not returns blanks)
+   arrSize = MIN(size(strs), size(nums))
+   if ( arrSize <= 0 ) then
+     nums = LENORSIZETOOSMALL
+     return
+   endif
+   do i=1, arrSize
+     call readADoubleFromChars(strs(i), nums(i), forbiddens)
+   enddo
+
+  END SUBROUTINE ReadDoubleArrayFromChars
 
    ! --------------------------------------------------  Replace  -----
   function Replace (str, oldChar, newchar) RESULT (outstr)
@@ -1556,6 +1567,69 @@ contains
     END IF
 
   END SUBROUTINE SplitWords
+  
+  ! ------------------------------------------------- squeeze --------
+  ! Snip excess spaces between words
+  ! E.g., turns ' a   man   from   Sai- Pan' into ' a man from Sai- Pan'
+  ! Optionally snips all spaces making it 'amanfromSai-Pan'
+  
+  ! options, if present, can contain the following characters
+  !  character                 effect
+  !     a                   snip all spaces (see CompressString)
+  function squeeze( str, options ) result( squeezed )
+    ! Args
+    character(len=*), intent(in)           :: str
+    character(len=*), optional, intent(in) :: options
+    character(len=len(str))                :: squeezed
+    ! Internal variables
+    integer                                :: cpos ! current position in str
+    integer                                :: cposq ! current position in squeezed
+    logical                                :: newWord
+    logical                                :: snipAll
+    character(len=1)                       :: space
+    ! Executable
+    snipAll = .false.
+    if ( present(options) ) snipAll = ( index(options, 'a') > 0 )
+    space = ' '
+    squeezed = str
+    if ( len_trim(str) < 2 ) return
+    squeezed = ' '
+    if ( snipAll ) then
+      if ( .true. ) then
+        cposq = 0
+        do cpos = 1, len_trim(str)
+          ! This is easy -- snip every space no matter where
+          if ( str(cpos:cpos) /= space ) then
+            cposq = cposq + 1
+            squeezed(cposq:cposq) = str(cpos:cpos)
+          endif
+        enddo
+      else
+        squeezed = CompressString( str )
+      endif
+    else
+      squeezed(1:1) = str(1:1)
+      cposq = 1
+      newWord = ( str(1:1) == space )
+      do cpos = 2, len_trim(str)
+        if ( newWord ) then
+          ! Already have at least one space, so must snip any others
+          ! i.e., snip unless not a space
+          if ( str(cpos:cpos) /= space ) then
+            cposq = cposq + 1
+            squeezed(cposq:cposq) = str(cpos:cpos)
+            newWord = .false.
+          endif
+        else
+          ! don't snip, even if a space
+          cposq = cposq + 1
+          squeezed(cposq:cposq) = str(cpos:cpos)
+          ! Have we reached a space which divides words?
+          newWord = ( str(cpos:cpos) == space )
+        endif
+      enddo
+    endif
+  end function squeeze
        
   ! -------------------------------------------------  streq_array1  -----
   function streq_array1 (STR1, STR2, OPTIONS) result (relation)
@@ -1791,6 +1865,66 @@ contains
 90  if ( reverseSense ) relation = .not. relation
   end function streq_scalar
 
+  ! ------------------------------------------------- stretch --------
+  ! Insert extra spaces between words
+  ! E.g., turns 'How long, America' into 'How  long,  America'
+  ! Optionally inserts a space after every character
+  ! making it 'H o w   l o n g ,   A m e r i c a'
+  
+  ! options, if present, can contain the following characters
+  !  character                 effect
+  !     a                   insert space after every character
+  function stretch( str, options ) result( stretched )
+    ! Args
+    character(len=*), intent(in)           :: str
+    character(len=*), optional, intent(in) :: options
+    character(len=2*len(str)+1)                :: stretched
+    ! Internal variables
+    integer                                :: cpos ! current position in str
+    integer                                :: cposq ! current position in stretched
+    logical                                :: newWord
+    logical                                :: everywhere
+    character(len=1)                       :: space
+    ! Executable
+    everywhere = .false.
+    if ( present(options) ) everywhere = ( index(options, 'a') > 0 )
+    space = ' '
+    stretched = str
+    if ( len_trim(str) < 2 ) return
+    stretched = ' '
+    if ( everywhere ) then
+    cpos = len_trim(str)
+    ! Fortran does not support (start : end : stride) syntax for substrings
+    ! stretched(1:2*cpos+1:2) = str(1:cpos)
+    ! stretched(2:2*cpos:2) = ' '
+      do cpos = 1, len_trim(str)
+        ! This is easy -- snip every space no matter where
+        stretched(2*cpos-1:2*cpos) = str(cpos:cpos) // ' '
+      enddo
+    else
+      stretched(1:1) = str(1:1)
+      cposq = 1
+      newWord = ( str(1:1) == space )
+      do cpos = 2, len_trim(str)
+        if ( newWord ) then
+          ! Already have at least one space, so add one more
+          cposq = cposq + 1
+          stretched(cposq:cposq) = ' '
+          if ( str(cpos:cpos) /= space ) then
+            cposq = cposq + 1
+            stretched(cposq:cposq) = str(cpos:cpos)
+          endif
+        else
+          ! don't insert
+          cposq = cposq + 1
+          stretched(cposq:cposq) = str(cpos:cpos)
+        endif
+        ! Have we reached a space which divides words?
+        newWord = ( str(cpos:cpos) == space )
+      enddo
+    endif
+  end function stretch
+       
   ! --------------------------------------------------  strings2Ints  -----
   SUBROUTINE strings2Ints (strs, ints)
     ! takes an array of strings and returns integer array
@@ -2149,6 +2283,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.75  2009/06/16 17:08:42  pwagner
+! Added ReadNumsFromChars, squeeze, stretch functions
+!
 ! Revision 2.74  2008/06/04 21:44:43  pwagner
 ! Added lenTrimToAscii and ReplaceNonAscii
 !
