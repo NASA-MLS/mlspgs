@@ -204,7 +204,7 @@ contains
         call dump ( more_inds, name='More_Inds' )
         call dump ( gl_inds, name='GL_Inds' )
         call dump ( gl_delta_polarized, name='GL_Delta_Polarized', width=3, &
-          & transpose=.true. )
+          & options='p' ) ! transpose=.TRUE.
         call Dump_2x2xN ( incoptdepth_pol_gl, name='IncoptDepth_Pol_GL' )
         call Dump_2x2xN ( incoptdepth_pol, name='Incoptdepth_Pol' )
         call dump ( ref_cor, name='Ref_Cor' )
@@ -1128,6 +1128,9 @@ contains
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.5  2009/06/16 17:37:09  pwagner
+! Changed api for dump, diff routines; now rely on options for most optional behavior
+!
 ! Revision 2.4  2009/06/13 01:11:55  vsnyder
 ! Specify start and end of path, simplify some index calculations
 !
