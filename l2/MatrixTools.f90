@@ -427,7 +427,7 @@ contains ! =====  Public procedures  ===================================
 
           if ( mb%kind /= m_absent .and. details > 0 ) then
             if ( diagonal ) then
-              call dump ( val_1d, name=', number dumped:', clean=.true. )
+              call dump ( val_1d, name=', number dumped:', options=what_options(clean=.true.) )
               call deallocate_test ( val_1d, 'val_1d', moduleName )
             else
               do cs = 1, noColSurfaces
@@ -446,7 +446,7 @@ contains ! =====  Public procedures  ===================================
               end do
               if ( mb%kind /= m_full ) &
                 & call deallocate_test ( val, 'val', ModuleName )
-              call dump ( toDump, name=', number dumped:', clean=.true. )
+              call dump ( toDump, name=', number dumped:', options=what_options(clean=.true.) )
             end if
           else
             call newLine
@@ -761,6 +761,24 @@ contains ! =====  Public procedures  ===================================
 
   end subroutine PVMSendMatrix
 
+  function what_options( clean, transpose, trim ) result( options )
+    use MLSStrings, only: trim_safe
+    logical, optional, intent(in) :: clean
+    logical, optional, intent(in) :: transpose
+    logical, optional, intent(in) :: trim
+    character(len=8) :: options
+    options = ' '
+    if ( present(clean) ) then
+      if ( clean ) options = trim_safe(options) // 'c'
+    endif
+    if ( present(transpose) ) then
+      if ( transpose ) options = trim_safe(options) // 'p'
+    endif
+    if ( present(trim) ) then
+      if ( trim ) options = trim_safe(options) // 't'
+    endif
+  end function what_options
+
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -773,6 +791,9 @@ contains ! =====  Public procedures  ===================================
 end module MatrixTools
 
 ! $Log$
+! Revision 1.26  2007/10/05 23:41:06  vsnyder
+! Don't reference element 1 of a zero-size array
+!
 ! Revision 1.25  2007/10/02 22:41:27  vsnyder
 ! Don't crash if a matrix can't be dumped
 !

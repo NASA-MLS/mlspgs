@@ -426,7 +426,8 @@ contains
 
     logical :: Any_Der            ! temp_der .or. atmos_der .or. spect_der
     logical :: cld_fine = .false.
-    logical :: Clean              ! Used for dumping
+    ! logical :: Clean              ! Used for dumping
+    character(len=4) :: Clean     ! Used for dumping
     logical :: Do_More_Points     ! Do intersections of path at zetas < zeta(tan)
     logical :: Do_Zmin            ! "Do minimum Zeta calculation"
     logical, parameter :: PFAFalse = .false.
@@ -764,7 +765,8 @@ contains
       & call trace_begin ( 'Full ForwardModel, MAF=', index=fmstat%maf )
 
     ! Set flags from command-line switches
-    clean = index(switches, 'clean') /= 0
+    clean = ' '
+    if ( index(switches, 'clean') /= 0 ) clean = 'c'
     do_zmin = index(switches, 'dozm') /= 0 ! Do minimum zeta only if requested
     dump_rad_pol = 0 ! Dump rad_tran_pol intermediates
     if ( index(switches, 'dpri') /= 0 ) dump_rad_pol = 1 ! Dump if overflow
@@ -2225,7 +2227,7 @@ contains
             call output ( 'Exp(incoptdepth_pol(:,:,' )
             call output ( -p_stop )
             call output ( ') failed.  Value is', advance='yes' )
-            call dump ( incoptdepth_pol(:,:,-p_stop), clean=.true. )
+            call dump ( incoptdepth_pol(:,:,-p_stop), options='c' ) ! clean=.TRUE.
             call output ( thisSideband, before='thisSideband = ' )
             call output ( ptg_i, before=', ptg_i = ' )
             call output ( frq_i, before=', frq_i = ', advance='true' )
@@ -3387,10 +3389,10 @@ contains
         h => mag_path(1:npf,4)    ! magnitude of magnetic field
 
         if ( print_Mag ) then
-          call dump ( h, 'H', clean=clean )
-          call dump ( ct, 'Cos(theta)', clean=clean )
-          call dump ( stcp, 'Sin(theta) Cos(phi)', clean=clean )
-          call dump ( stsp, 'Sin(theta) Sin(phi)', clean=clean )
+          call dump ( h, 'H', options=clean )
+          call dump ( ct, 'Cos(theta)', options=clean )
+          call dump ( stcp, 'Sin(theta) Cos(phi)', options=clean )
+          call dump ( stsp, 'Sin(theta) Sin(phi)', options=clean )
         end if
 
       end if
@@ -3852,6 +3854,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.293  2009/06/13 01:15:03  vsnyder
+! Intermediate commit of extensive changes for TScat calculation
+!
 ! Revision 2.292  2009/05/14 00:46:02  pwagner
 ! Gets Deg2Rad from Constants now
 !

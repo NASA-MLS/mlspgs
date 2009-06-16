@@ -43,7 +43,8 @@ module Metrics_m
   logical, parameter :: NewtonDetails = .true. .and. debug
   logical, parameter :: ComplexDebug = .true. .and. debug
   ! For debugging output format:
-  logical, parameter :: Clean = .false.
+  ! logical, parameter :: Clean = .false.
+  character(len=4), parameter :: options=' '
   logical, parameter :: Degrees = .true.
   real, parameter :: Ang = rad2deg ! degrees
 ! real, parameter :: Ang = 1.0     ! .not. degrees
@@ -529,10 +530,10 @@ path: do i = i1, i2
       call output ( tan_ht_s, before='tan_ht_s = ' )
       call output ( req_s, before=', r_eq+h_surf = ', advance='yes' )
       call dump ( rad2deg*p_grid, name='p_grid (degrees) before refractive correction', &
-        & format='(f14.8)', clean=clean )
+        & format='(f14.8)', options=options )
       if ( h_phi_dump == 0 ) &
-        & call dump ( rad2deg*p_basis, name='p_basis (degrees)', format='(f14.6)', clean=clean )
-      call dump ( h_grid, name='h_grid', format='(f14.6)', clean=clean )
+        & call dump ( rad2deg*p_basis, name='p_basis (degrees)', format='(f14.6)', options=options )
+      call dump ( h_grid, name='h_grid', format='(f14.6)', options=options )
     end if
 
   contains
@@ -541,7 +542,7 @@ path: do i = i1, i2
       integer, intent(in) :: FirstRow
       call output ( tan_ht_s, before='tan_ht_s = ' )
       call output ( req_s, before=', r_eq+h_surf = ' )
-      call dump ( rad2deg*p_basis, name='p_basis (degrees)', format='(f14.6)', clean=clean )
+      call dump ( rad2deg*p_basis, name='p_basis (degrees)', format='(f14.6)', options=options )
       call output ( phi_t, before='phi_t = ', format='(f11.8)' )
       call output ( rad2deg*phi_t, before=" = ", format='(f13.8)' )
       call output ( h_surf, before =', h_surf = ' )
@@ -549,12 +550,12 @@ path: do i = i1, i2
       if ( tan_ht_s < 0.0 ) then
         call output ( n_tan, before='phi_offset (' )
         call output ( n_tan+1, before=':', after=') (radians) ' )
-        call dump ( phi_offset(n_tan:n_tan+1), clean=.true. )
+        call dump ( phi_offset(n_tan:n_tan+1), options='c' ) ! clean=.true.
         call output ( n_tan, before='phi_offset (' )
         call output ( n_tan+1, before=':', after=') (degrees) ' )
-        call dump ( rad2deg*phi_offset(n_tan:n_tan+1), clean=.true. )
+        call dump ( rad2deg*phi_offset(n_tan:n_tan+1), options='c' ) ! clean=.true.
       end if
-      call dump ( h_ref(firstRow:n_vert,:), name='h_ref', format='(f14.7)',clean=clean )
+      call dump ( h_ref(firstRow:n_vert,:), name='h_ref', format='(f14.7)',options=options )
       if ( debug ) call dump ( vert_inds, name='vert_inds' )
     end subroutine DumpInput
 
@@ -909,12 +910,12 @@ path: do i = i1, i2
     if ( present(dhidtlm) ) call Tangent_Temperature_Derivatives ( size(z_basis) )
 
     if ( do_dumps > 0 ) then
-      call dump ( t_ref, name='t_ref', format='(1pg14.6)', clean=clean )
-      call dump ( t_grid(:n_path), name='t_grid', format='(1pg14.6)', clean=clean )
-      call dump ( dhitdzi(:n_path), name='dhitdzi', format='(1pg14.6)', clean=clean )
-      call dump ( eta_p, name='eta_p', format='(1pg14.6)', clean=clean )
-      call dump ( col1, name='col1', clean=clean )
-      call dump ( col2, name='col2', clean=clean )
+      call dump ( t_ref, name='t_ref', format='(1pg14.6)', options=options )
+      call dump ( t_grid(:n_path), name='t_grid', format='(1pg14.6)', options=options )
+      call dump ( dhitdzi(:n_path), name='dhitdzi', format='(1pg14.6)', options=options )
+      call dump ( eta_p, name='eta_p', format='(1pg14.6)', options=options )
+      call dump ( col1, name='col1', options=options )
+      call dump ( col2, name='col2', options=options )
       call dump_nz ( nz_p, nnz_p, what=' in More_Metrics' )
       if ( dump_stop > 0 ) stop
     end if
@@ -1114,6 +1115,10 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.60  2009/06/13 01:14:29  vsnyder
+! Extensive changes almost everywhere.  Correct many problems with
+! Earth-reflecting rays.
+!
 ! Revision 2.59  2008/06/26 00:28:16  vsnyder
 ! Cannonball polishing
 !

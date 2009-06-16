@@ -95,7 +95,8 @@ contains
     real(rp) :: ES(size(t_path)) ! Used for RHi calculation
     real(rp) :: Sps(size(t_path))
     integer(ip) :: I, N, NP
-    logical, save :: Clean, DumpAll, DumpBeta, DumpStop, DumpZeta
+    character(len=4), save :: clean
+    logical, save :: DumpAll, DumpBeta, DumpStop, DumpZeta
     logical, save :: First = .true. ! Fist-time flag
 
 ! begin the code
@@ -106,7 +107,9 @@ contains
       dumpAll = dumpStop .or. index(switches,'lblB') > 0
       dumpBeta = dumpAll .or. ( index(switches,'lblb') > 0 )
       dumpZeta = index(switches,'dbz') > 0
-      clean = index(switches,'clean') > 0
+      ! clean = index(switches,'clean') > 0
+      clean = ' '
+      if ( index(switches,'clean') > 0 ) clean = 'c'
     end if
 
     if ( toggle(emit) .and. levels(emit) > 6 ) &
@@ -174,8 +177,8 @@ contains
           call display_string ( lit_indices(beta_group(i)%lbl(sx)%molecules(1:n)), &
             & before='LBL Betas for' )
           call output ( frq, before=', FRQ = ', advance='yes' )
-          call dump ( beta_path(:,i), clean=clean )
-          if ( associated(dBdT) ) call dump ( dBdT, name='dBdT', clean=clean )
+          call dump ( beta_path(:,i), options=clean )
+          if ( associated(dBdT) ) call dump ( dBdT, name='dBdT', options=clean )
         end if
       end do
 
@@ -189,8 +192,8 @@ contains
           call display_string ( lit_indices(l_rhi), before='LBL Betas for ' )
           call display_string ( lit_indices(beta_group(i)%lbl(sx)%molecules), &
             & before=' using' )
-          call dump ( beta_path(:,i), clean=clean )
-          if ( associated(dBdT) ) call dump ( dBdT, name='dBdT', clean=clean )
+          call dump ( beta_path(:,i), options=clean )
+          if ( associated(dBdT) ) call dump ( dBdT, name='dBdT', options=clean )
         end if
       end if
 
@@ -201,12 +204,12 @@ contains
 
     if ( dumpAll ) then
       if ( dumpZeta ) then
-        call dump ( -log10(p_path(path_inds)), name='Zetas', clean=clean )
+        call dump ( -log10(p_path(path_inds)), name='Zetas', options=clean )
       else
-        call dump ( p_path(path_inds), name='Pressures', clean=clean )
+        call dump ( p_path(path_inds), name='Pressures', options=clean )
       end if
-      call dump ( t_path, name='Temperatures', clean=clean )
-      call dump ( tanh_path, name='tanh(h nu / k T)', clean=clean )
+      call dump ( t_path, name='Temperatures', options=clean )
+      call dump ( tanh_path, name='tanh(h nu / k T)', options=clean )
     end if
     if ( dumpStop ) stop
 
@@ -256,7 +259,8 @@ contains
     real(rp), pointer :: dBdn(:), dBdT(:), dBdv(:), dBdw(:) ! slices of dBeta_d*_path
     real(rp) :: ES(size(t_path)) ! Used for RHi calculation
     integer :: I, N
-    logical, save :: Clean, DumpAll, DumpBeta, DumpStop
+    character(len=4), save :: clean
+    logical, save :: DumpAll, DumpBeta, DumpStop
     logical, save :: First = .true. ! First-time flag
 
     if ( first ) then
@@ -264,7 +268,9 @@ contains
       dumpStop = index(switches,'PFAB') > 0
       dumpAll = dumpStop .or. index(switches,'pfaB') > 0
       dumpBeta = dumpAll .or. ( index(switches,'pfab') > 0 )
-      clean = index(switches,'clean') > 0
+      ! clean = index(switches,'clean') > 0
+      clean = ' '
+      if ( index(switches,'clean') > 0 ) clean = 'c'
     end if
 
     nullify ( dBdT, dBdn, dBdv, dBdw )
@@ -300,8 +306,8 @@ contains
             call display_string ( lit_indices(beta_group(i)%pfa(sx)%molecules(1:n)), &
             & before='PFA Betas for' )
             call output ( frq, before=', FRQ = ', advance='yes' )
-            call dump ( beta_path(:,i), name='Beta', clean=clean )
-            if ( associated(dBdT) ) call dump ( dBdT, name='dBdT', clean=clean )
+            call dump ( beta_path(:,i), name='Beta', options=clean )
+            if ( associated(dBdT) ) call dump ( dBdT, name='dBdT', options=clean )
           end if
         end if
       end do ! n = 1, size(beta_group(i)%pfa(sx)%molecules)
@@ -324,16 +330,16 @@ contains
           call display_string ( lit_indices(l_rhi), before='PFA Betas for ' )
           call display_string ( lit_indices(beta_group(i)%pfa(sx)%molecules), &
             & before=' using' )
-          call dump ( beta_path(:,i), name='Beta', clean=clean )
-          if ( associated(dBdT) ) call dump ( dBdT, name='dBdT', clean=clean )
+          call dump ( beta_path(:,i), name='Beta', options=clean )
+          if ( associated(dBdT) ) call dump ( dBdT, name='dBdT', options=clean )
         end if
       end if
 
     end do ! i = 1, size(beta_group)
 
     if ( dumpAll ) then
-      call dump ( p_path(path_inds), name='Pressures', clean=clean )
-      call dump ( t_path, name='Temperatures', clean=clean )
+      call dump ( p_path(path_inds), name='Pressures', options=clean )
+      call dump ( t_path, name='Temperatures', options=clean )
     end if
     if ( dumpStop ) stop
 
@@ -382,14 +388,17 @@ contains
     real(rp) :: RATIO ! Isotope ratio, not mixing ratio
     complex(rp) :: Sigma_m, Pi, Sigma_p
     complex(rp) :: dSigma_m_dT, dPi_dT, dSigma_p_dT
-    logical, save :: Clean, DumpBeta, DumpStop
+    character(len=4), save :: clean
+    logical, save :: DumpBeta, DumpStop
     logical, save :: First = .true. ! First-time flag
 
     if ( first ) then
       first = .false.
       dumpStop = index(switches,'POLB') > 0
       dumpBeta = dumpStop .or. ( index(switches,'polb') > 0 )
-      clean = index(switches,'clean') > 0
+      ! clean = index(switches,'clean') > 0
+      clean = ' '
+      if ( index(switches,'clean') > 0 ) clean = 'c'
     end if
 
 ! begin the code
@@ -427,10 +436,10 @@ contains
           call display_string ( lit_indices(beta_group(i)%molecules(1:n)), &
             & before='Polarized Betas for' )
           call output ( frq, before=', FRQ = ', advance='yes' )
-          call dump ( beta_path(:,:,i), name='Beta', clean=clean )
+          call dump ( beta_path(:,:,i), name='Beta', options=clean )
           if ( size(dBeta_path_dT) > 0 ) then
-            call dump ( real(dBeta_path_dT), name='real(dBeta_path_dT)', clean=clean )
-            call dump ( aimag(dBeta_path_dT), name='aimag(dBeta_path_dT)', clean=clean )
+            call dump ( real(dBeta_path_dT), name='real(dBeta_path_dT)', options=clean )
+            call dump ( aimag(dBeta_path_dT), name='aimag(dBeta_path_dT)', options=clean )
           end if
         end if
       end do ! n
@@ -1361,6 +1370,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.95  2009/06/13 01:10:01  vsnyder
+! Label Beta array, option to dump zeta
+!
 ! Revision 2.94  2008/10/03 16:29:56  livesey
 ! Added EXTINCTIONV2
 !
