@@ -25,7 +25,7 @@ module L3ascii ! Collections of Hugh's subroutines to handle TYPE GriddedData_T
   use TREE, only: DUMP_TREE_NODE, SOURCE_REF
 
   implicit NONE
-  public
+  private
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -42,8 +42,8 @@ module L3ascii ! Collections of Hugh's subroutines to handle TYPE GriddedData_T
 ! make_log_axis          Create log axis according to specified divisions
 ! L3ascii_get_multiplier How much was the mixing ratio multiplied by?
 
-  public::L3ascii_open, L3ascii_read_field, L3ascii_interp_field, Make_log_axis
-  public::L3ascii_get_multiplier
+  public::L3ascii_open, L3ascii_read_field, &
+    & L3ascii_interp_field, L3ascii_get_multiplier, Make_log_axis
   !private::get_next_noncomment_line, 
   private :: Make_linear_axis
   private :: Read_explicit_axis, Ilocate
@@ -854,6 +854,7 @@ itemsloop:do
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module L3ascii
@@ -861,6 +862,9 @@ end module L3ascii
 
 !
 ! $Log$
+! Revision 2.34  2009/06/16 17:19:22  pwagner
+! Made default access private
+!
 ! Revision 2.33  2008/01/07 21:36:33  pwagner
 ! Replace DEFAULTUNDEFINEDVALUE with user-settable undefinedValue
 !
