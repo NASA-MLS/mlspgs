@@ -12,6 +12,7 @@
 module GriddedData ! Contains the derived TYPE GriddedData_T
 
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST, E_Def, E_Dp
+  use dates_module, only: tai2ccsds
   use Dump_0, only: dump
   use intrinsic, only: L_GEODALTITUDE, L_GPH, L_ETA, L_PRESSURE, &
     & L_THETA
@@ -21,7 +22,7 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
   use MLSMessageModule, only: MLSMSG_Allocate, MLSMSG_DeAllocate, MLSMSG_Error, &
     & MLSMSG_Warning, MLSMessage, MLSMessageCalls
   use MLSStrings, only: LOWERCASE
-  use Output_m, only: BLANKS, OUTPUT, outputNamedValue
+  use Output_m, only: OUTPUTOPTIONS, BLANKS, OUTPUT, OUTPUTNAMEDVALUE, NEWLINE
 
   implicit NONE
   private
@@ -94,11 +95,11 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
     real (rgr), pointer, dimension(:) :: Lats => NULL() ! Latitudes [noLats]
     integer :: noLons                   ! Number of longitudes
     real (rgr), pointer, dimension(:) :: Lons => NULL() ! Longitudes [noLons]
-    integer noLsts                      ! Number of local times
+    integer :: noLsts                      ! Number of local times
     real (rgr), pointer, dimension(:) :: Lsts => NULL() ! Local times [noLsts]
-    integer noSzas                      ! Number of solar zenith angles
+    integer :: noSzas                      ! Number of solar zenith angles
     real (rgr), pointer, dimension(:) :: Szas => NULL() ! Zenith angles [noSzas]
-    integer noDates                     ! Number of dates in data
+    integer :: noDates                     ! Number of dates in data
     real (r8), pointer, dimension(:) :: DateStarts => NULL()
     ! Starting dates in SDP toolkit format
     real (r8), pointer, dimension(:) :: DateEnds => NULL()
@@ -550,24 +551,97 @@ contains
     !                                        ! -2 Skip all but name
     !                                        ! >0 Dump even multi-dim arrays
     !                                        ! Default 0
+    !                                        ! > 2 Climatology text file format
 
     ! Local Variables
-    integer :: MYDETAILS
-    integer :: FIELDVALUESDETAILS
+    character(len=8) :: ccsds
     integer :: date
     character(len=4) :: dateChar
+    integer :: FIELDVALUESDETAILS
+    integer :: i
+    logical :: lookLikeClimatologyTxtfile
+    integer :: MYDETAILS
+    integer :: numElmnts
 
     ! Executable code
     myDetails = 0
     if ( present(details) ) myDetails = details
     fieldvaluesdetails = myDetails
     if ( index(ALWAYSDUMPTHESE, trim(GriddedData%description)) > 0 ) then
-      myDetails = 1
+      myDetails = max( myDetails, 1 )
       fieldvaluesdetails = max(fieldvaluesdetails, AUTOMATICDETAILS)
     endif
+    lookLikeClimatologyTxtfile = ( myDetails > 2 )
     if ( GriddedData%empty ) then
       call output('This Gridded quantity was empty (perhaps the file name' &
         & // ' was wrong)', advance='yes')
+      return
+    endif
+    if ( lookLikeClimatologyTxtfile ) then
+      ! Format dump to look like Climatology text file
+      call output('Field ' // trim(GriddedData%quantityName), advance='no')
+      call blanks (3)
+      call output(trim(GriddedData%units), advance='yes')
+      ! Vertical coords
+      outputOptions%arrayElmntSeparator = ','
+      outputOptions%nArrayElmntsPerLine = 6
+      call output('; Define vertical coordinates', advance='yes')
+      call output('Pressure ', advance='no')
+      call output('Explicit ', advance='no')
+      call output('( ', advance='yes')
+      call output(GriddedData%heights, advance='no')
+      call output(') ', advance='yes')
+      ! Horizontal coords
+      call output('; Define horizontal coordinates etc.', advance='yes')
+      call output('Latitude ', advance='no')
+      call output('Explicit ', advance='no')
+      call output('( ', advance='yes')
+      call output(GriddedData%Lats, advance='no')
+      call output(') ', advance='yes')
+      call output('Longitude ', advance='no')
+      call output('Explicit ', advance='no')
+      call output('( ', advance='yes')
+      call output(GriddedData%Lons, advance='no')
+      call output(') ', advance='yes')
+      if ( associated(GriddedData%Lsts) ) then
+        call output('lst ', advance='no')
+        call output('Explicit ', advance='no')
+        call output('( ', advance='yes')
+        call output(GriddedData%Lsts, advance='no')
+        call output(') ', advance='yes')
+      endif
+      if ( associated(GriddedData%Szas) ) then
+        call output('sza ', advance='no')
+        call output('Explicit ', advance='no')
+        call output('( ', advance='yes')
+        call output(GriddedData%Szas, advance='no')
+        call output(') ', advance='yes')
+      endif
+      outputOptions%arrayElmntSeparator = ' '
+      outputOptions%nArrayElmntsPerLine = 7
+      outputOptions%nBlanksBtwnElmnts   = 1
+      outputOptions%sdFormatDefault     = '(1pe10.3)'
+      numElmnts = GriddedData%noHeights * &
+        & max(1, size(GriddedData%Lats)) * &
+        & max(1, size(GriddedData%Lons)) * &
+        & max(1, size(GriddedData%Lsts)) * &
+        & max(1, size(GriddedData%Szas))
+      do i=1, size(GriddedData%DateStarts)
+        ccsds = tai2ccsds( int(GriddedData%DateStarts(i) / 86400 + 0.5) )
+        !if ( i > 1 ) then
+        !   date = (GriddedData%DateStarts(i) - GriddedData%DateStarts(1)) / 86400 + 1.5
+        !else
+        !  date = 1
+        !endif
+        read( ccsds(6:8), *) date
+        call output('Date Single ', advance='no')
+        call output(-date, advance='yes')
+        call output( reshape( GriddedData%field(:,:,:,:,:,i), (/numElmnts/) ), &
+          & advance='no')
+        call newLine
+      enddo
+      outputOptions%sdFormatDefault     = '*' ! Restore default format
+      outputOptions%nBlanksBtwnElmnts   = 3
       return
     endif
     call output('Gridded quantity name ' // GriddedData%quantityName, advance='yes')
@@ -1330,6 +1404,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.55  2009/06/16 17:25:13  pwagner
+! Can dump Gridded data to look like Climatology file
+!
 ! Revision 2.54  2009/01/12 18:45:46  pwagner
 ! Added print statement to not_used_here
 !
