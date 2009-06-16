@@ -12,18 +12,15 @@
 ! $Id$
 
 !   subroutine DIFF_1D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
-!     & CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+!     & WIDTH, FORMAT, LBOUND, OPTIONS )
 !     double precision, intent(in) :: ARRAY1(:)
 !     character(len=*), intent(in), optional :: NAME1
 !     double precision, intent(in) :: ARRAY2(:)
 !     character(len=*), intent(in), optional :: NAME2
-!     logical, intent(in), optional :: CLEAN
 !     integer, intent(in), optional :: WIDTH
 !     character(len=*), intent(in), optional :: FORMAT
-!     logical, intent(in), optional :: WHOLEARRAY
-!     logical, intent(in), optional :: STATS
-!     logical, intent(in), optional :: RMS
 !     integer, intent(in), optional :: LBOUND ! Low bound for Array
+!     character(len=*), iptional, intent(in) :: OPTIONS
 ! 
 !     double precision, dimension(size(array1)) :: array1
 !     double precision, dimension(size(array2)) :: array2
@@ -70,10 +67,26 @@
     logical, parameter :: unique = .false. 
     ! Executable
     thisIsADiff = .true.  ! For special dumps
-    myStats = .false.
-    if ( present(stats) ) myStats = stats
-    myRMS = .false.
-    if ( present(RMS) ) myRMS = RMS
+    myClean      = theDefault('clean') ! .false.
+    myGaps       = theDefault('gaps')
+    myRMS        = theDefault('rms')   ! .false.
+    myStats      = theDefault('stat')  ! .false.
+    myTranspose  = theDefault('transpose')  ! .false.
+    myTrim       = theDefault('trim')  ! .false.
+    myUnique     = theDefault('unique')
+    myWholeArray = theDefault('wholearray') .or. &
+        & .not. (myStats .or. myRMS)
+    if ( present(options) ) then
+      myClean       = index( options, 'c' ) > 0
+      myGaps        = index( options, 'g' ) > 0
+      myRMS         = index( options, 'r' ) > 0
+      myStats       = index( options, 's' ) > 0
+      myTranspose   = index( options, 'p' ) > 0
+      myTrim        = index( options, 't' ) > 0
+      myUnique      = index( options, 'u' ) > 0
+      myWholeArray  = ( index( options, 'w' ) > 0 ) .or. &
+        & .not. (myStats .or. myRMS)
+    endif
 
     if ( len_trim(name2) < 1 ) then
       DiffName = trim(name1) // ' (diff)'
@@ -81,7 +94,6 @@
       DiffName = trim(name1) // ' - ' // trim(name2)
     endif
 
-    myWholeArray = .not. (myStats .or. myRMS)
     if ( DEBUG ) then
       call outputNamedValue( 'myStats', myStats )
       call outputNamedValue( 'myRMS', myRMS )
@@ -89,11 +101,10 @@
     endif
     if ( myWholeArray ) then
       call dump(array1-array2, trim(DiffName), &
-      & real(0.,kind(array1)), CLEAN, WIDTH, FORMAT, &
-      & WHOLEARRAY, STATS, RMS, unique, LBOUND )
+      & real(0.,kind(array1)), WIDTH, FORMAT, &
+      & LBOUND, OPTIONS )
       return
     endif
-    if ( present(wholeArray) ) myWholeArray = wholeArray
     
     NaNsIn1 = any(.not. ieee_is_finite(array1))
     if ( NaNsIn1 ) then
@@ -152,8 +163,8 @@
     call fillPcts
     call usePcts
     call dump(array1-array2, trim(DiffName), &
-      & real(0.,kind(array1)), CLEAN, WIDTH, FORMAT, &
-      & WHOLEARRAY, STATS, RMS, unique, LBOUND )
+      & real(0.,kind(array1)), WIDTH, FORMAT, &
+      & LBOUND, OPTIONS )
     call doneWithDiff
     if ( DEBUG ) call output( 'DoneWithDiff', advance='yes' )
   contains
@@ -282,6 +293,9 @@
 
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.2  2009/06/16 17:12:55  pwagner
+! Changed api for dump, diff routines; now rely on options for most optional behavior
+!
 ! Revision 2.1  2008/11/24 19:38:08  pwagner
 ! First commit
 !
