@@ -198,12 +198,14 @@ module OUTPUT_M
                                          ! -2 means MLSMessage if 
                                          ! < -2, both printer and MLSMSG
                                          ! > 0, actual unit number
-    integer :: MLSMSG_Level = MLSMSG_Info ! What level if logging
-    integer :: newLineVal = 13 ! 13 means <cr> becomes new line; -999 means ignore
-    logical :: BUFFERED = .true.
-    logical :: OPENED = .false.
-    logical :: SKIPMLSMSGLOGGING = .false.
-    logical :: usePatternedBlanks = .true. ! Use patterns for special fillChars
+    integer :: MLSMSG_Level        = MLSMSG_Info ! What level if logging
+    integer :: newLineVal          = 13 ! 13 means <cr> becomes new line; -999 means ignore
+    integer :: nArrayElmntsPerLine = 7
+    integer :: nBlanksBtwnElmnts   = 3
+    logical :: BUFFERED            = .true.
+    logical :: OPENED              = .false.
+    logical :: SKIPMLSMSGLOGGING   = .false.
+    logical :: usePatternedBlanks  = .true. ! Use patterns for special fillChars
     character(len=9) :: specialFillChars = '123456789'
     character(len=9) :: lineupFillChars =  'ynnnnynnn' ! whether they line up
     character(len=16), dimension(9) :: patterns = (/ & ! on consecutive lines
@@ -219,6 +221,7 @@ module OUTPUT_M
       !   12345678901234567890
     character(len=FileNameLen) :: name = 'stdout'
     character(len=12) :: sdFormatDefault = '*' ! * means default format spec
+    character(len=1)  :: arrayElmntSeparator = ' '
   end type
   
   type(outputOptions_T), public, save :: outputOptions
@@ -1112,8 +1115,10 @@ contains
       the_chars = chars // ' '
       if (LOGEXTRABLANKS) n_chars = max(len(chars), 1)
       if ( present(log_chars) ) then
-        n_chars = len_trim(log_chars) + 1
-        the_chars = log_chars(:n_chars-1) // ' '
+        if ( len_trim(log_chars) > 0 ) then
+          n_chars = len_trim(log_chars) + 1
+          the_chars = log_chars(:n_chars-1) // ' '
+        end if
       end if
       if ( the_chars == ' ' .and. present(insteadofblank)  ) then
         my_chars = trim(insteadofblank) // ' '
@@ -1317,7 +1322,7 @@ contains
     if ( .not. is_what_ieee(finite_signal, value) ) FormatSpec = NONFINITEFORMAT
     if ( present(Format)  ) FormatSpec = Format
     include 'numToChars.f9h'
-    log_chars = line
+    log_chars = ' ' ! line
     if ( present(LogFormat)  ) then
       write ( log_chars, LogFormat ) value
     end if
@@ -1345,7 +1350,15 @@ contains
     my_adv = Advance_is_yes_or_no(advance)
     do i = 1, size(values)
       call output ( values(i), advance='no', format=format, logFormat=logFormat )
-      call blanks ( 3, advance='no' )
+      if ( i < size(values) ) then
+        if ( len_trim(outputOptions%arrayElmntSeparator) > 0 ) &
+          & call output_( outputOptions%arrayElmntSeparator, advance='no' )
+        if ( mod(i, outputOptions%nArrayElmntsPerLine) == 0 ) then
+          call output_ ( '', advance='yes', DONT_STAMP=.true. )
+        else
+          call blanks ( outputOptions%nBlanksBtwnElmnts, advance='no' )
+        endif
+      endif
     end do
     if ( present(advance)  ) then
       call output_ ( '', advance=advance, DONT_STAMP=DONT_STAMP )
@@ -1409,7 +1422,15 @@ contains
     my_adv = Advance_is_yes_or_no(advance)
     do i = 1, size(integers)
       call output ( integers(i), advance='no', format=format )
-      call blanks ( 3, advance='no' )
+      if ( i < size(integers) ) then
+        if ( len_trim(outputOptions%arrayElmntSeparator) > 0 ) &
+          & call output_( outputOptions%arrayElmntSeparator, advance='no' )
+        if ( mod(i, outputOptions%nArrayElmntsPerLine) == 0 ) then
+          call output_ ( '', advance='yes', DONT_STAMP=.true. )
+        else
+          call blanks ( outputOptions%nBlanksBtwnElmnts, advance='no' )
+        endif
+      endif
     end do
     if ( present(advance)  ) then
       call output_ ( '', advance=advance, DONT_STAMP=DONT_STAMP )
@@ -1463,7 +1484,15 @@ contains
     else
       do i = 1, size(logs)
         call output ( logs(i), advance='no' )
-        call blanks ( 3, advance='no' )
+      if ( i < size(logs) ) then
+        if ( len_trim(outputOptions%arrayElmntSeparator) > 0 ) &
+          & call output_( outputOptions%arrayElmntSeparator, advance='no' )
+        if ( mod(i, outputOptions%nArrayElmntsPerLine) == 0 ) then
+          call output_ ( '', advance='yes', DONT_STAMP=.true. )
+        else
+          call blanks ( outputOptions%nBlanksBtwnElmnts, advance='no' )
+        endif
+      endif
       end do
     endif
     if ( present(advance) ) call output_ ( '', advance=advance, DONT_STAMP=DONT_STAMP )
@@ -1488,8 +1517,7 @@ contains
     if ( .not. is_what_ieee(finite_signal, value) ) FormatSpec = NONFINITEFORMAT
     if ( present(Format)  ) FormatSpec = Format
     include 'numToChars.f9h'
-
-    log_chars = line
+    log_chars = ' ' ! line
     if ( present(LogFormat)  ) then
       write ( log_chars, LogFormat ) value
     end if
@@ -1516,7 +1544,15 @@ contains
     my_adv = Advance_is_yes_or_no(advance)
     do i = 1, size(values)
       call output ( values(i), advance='no', format=format, logFormat=logFormat )
-      call blanks ( 3, advance='no' )
+      if ( i < size(values) ) then
+        if ( len_trim(outputOptions%arrayElmntSeparator) > 0 ) &
+          & call output_( outputOptions%arrayElmntSeparator, advance='no' )
+        if ( mod(i, outputOptions%nArrayElmntsPerLine) == 0 ) then
+          call output_ ( '', advance='yes', DONT_STAMP=.true. )
+        else
+          call blanks ( outputOptions%nBlanksBtwnElmnts, advance='no' )
+        endif
+      endif
     end do
     if ( present(advance)  ) then
       call output_ ( '', advance=advance, DONT_STAMP=DONT_STAMP )
@@ -2122,6 +2158,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.78  2009/06/16 17:22:42  pwagner
+! With outputOptions may make outputted arrays look like text Climatology file
+!
 ! Revision 2.77  2009/05/14 22:00:28  pwagner
 ! New optional arg onlyif prints logicals only if true (false)
 !
