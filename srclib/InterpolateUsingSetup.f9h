@@ -25,6 +25,7 @@
 !   real(rk), dimension(size(newX,1),size(oldY,2)) :: oldYlower, oldYupper
     integer :: noOld, noNew, width ! Dimensions
     real(rk) :: p                  ! For second derivative guesser
+    real(rk) :: R1, R2             ! Ratios of oldY/oldX
     logical :: spline              ! Flag
     real(rk), dimension(:,:), pointer :: temp ! For 2nd der. guess
     logical :: useMissingRegions   ! Copy of missing regions
@@ -96,16 +97,23 @@
 
       ! Here we have to solve a tridiagonal equation
       ! This is a straight copy of my (Nathaniel's) IDL code, devectorized
-      ! to avoid the need for array temporary values.
+      ! to avoid the need for array temporary values.  The quantities
+      ! r1 and r2 are computed as they are so as to avoid dividing 0/0
+      ! if there are identical abscissae having identical corresponding
+      ! ordinates.  If abscissae are identical but ordinates are not, x/0
+      ! occurs.
       oldSecond(1,:) = 0.0
       temp(1,:) = 0.0
-      do ind = 2, noOld-1
-        do col = 1, width
+      do col = 1, width
+        r2 = oldY(2,col) - oldY(1,col)
+        if ( r2 /= 0.0 ) r2 = r2 / (oldX(2)-oldX(1))
+        do ind = 2, noOld-1
           p = 1.0 / (coeffs%sig(ind)*oldSecond(ind-1,col)+2.0)
           oldSecond(ind,col) = (coeffs%sig(ind)-1.0) * p
-          temp(ind,col) = (oldY(ind+1,col)-oldY(ind,col))/(oldX(ind+1)-oldX(ind)) - &
-            & (oldY(ind,col)-oldY(ind-1,col))/(oldX(ind)-oldX(ind-1))
-          temp(ind,col) = (6.0*temp(ind,col)/(oldX(ind+1)-oldX(ind-1)) - &
+          r1 = r2
+          r2 = oldY(ind+1,col) - oldY(ind,col)
+          if ( r2 /= 0.0 ) r2 = r2 / (oldX(ind+1)-oldX(ind))
+          temp(ind,col) = (6.0_rk*(r2 - r1)/(oldX(ind+1)-oldX(ind-1)) - &
             & coeffs%sig(ind)*temp(ind-1,col)) * p
         end do
       end do
@@ -280,6 +288,9 @@
 ! end subroutine InterpolateUsingSetup_r*
 
 ! $Log$
+! Revision 1.6  2005/08/06 01:27:06  vsnyder
+! Corrections to antiderivatives
+!
 ! Revision 1.5  2005/08/03 17:54:35  vsnyder
 ! Add antiderivatives
 !

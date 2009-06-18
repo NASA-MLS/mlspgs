@@ -25,6 +25,7 @@
 !   real(rk), dimension(size(newX,1)) :: oldYlower, oldYupper
     integer :: noOld, noNew        ! Dimensions
     real(rk) :: p                  ! For second derivative guesser
+    real(rk) :: R1, R2             ! Ratios of oldY/oldX
     logical :: spline              ! Flag
     real(rk), dimension(:), pointer :: temp ! For 2nd der. guess
     logical :: useMissingRegions   ! Copy of missing regions
@@ -96,15 +97,22 @@
 
       ! Here we have to solve a tridiagonal equation
       ! This is a straight copy of my (Nathaniel's) IDL code, devectorized
-      ! to avoid the need for array temporary values.
+      ! to avoid the need for array temporary values.  The quantities
+      ! r1 and r2 are computed as they are so as to avoid dividing 0/0
+      ! if there are identical abscissae having identical corresponding
+      ! ordinates.  If abscissae are identical but ordinates are not, x/0
+      ! occurs.
       oldSecond(1) = 0.0_rk
       temp(1) = 0.0_rk
+      r2 = oldY(2) - oldY(1)
+      if ( r2 /= 0.0 ) r2 = r2 / ( oldX(2) - oldX(1) )
       do ind = 2, noOld-1
         p = 1.0_rk / (coeffs%sig(ind)*oldSecond(ind-1)+2.0_rk)
-        oldSecond(ind) = (coeffs%sig(ind)-1.0_rk) * p
-        temp(ind) = (oldY(ind+1)-oldY(ind))/(oldX(ind+1)-oldX(ind)) - &
-          & (oldY(ind)-oldY(ind-1))/(oldX(ind)-oldX(ind-1))
-        temp(ind) = (6.0_rk*temp(ind)/(oldX(ind+1)-oldX(ind-1)) - &
+        oldSecond(ind) = (coeffs%sig(ind)-1.0_rk) * p  
+        r1 = r2
+        r2 = oldY(ind+1) - oldY(ind)
+        if ( r2 /= 0.0 ) r2 = r2 / (oldX(ind+1)-oldX(ind))
+        temp(ind) = (6.0_rk*(r2 - r1)/(oldX(ind+1)-oldX(ind-1)) - &
           & coeffs%sig(ind)*temp(ind-1)) * p
       end do
       oldSecond(noOld) = 0.0_rk
@@ -223,6 +231,9 @@
 ! end subroutine InterpolateScalarUsingSetup_r*
 
 ! $Log$
+! Revision 1.4  2005/08/03 17:53:54  vsnyder
+! Add antiderivatives
+!
 ! Revision 1.3  2005/06/22 20:03:56  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
