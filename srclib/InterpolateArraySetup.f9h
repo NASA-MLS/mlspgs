@@ -9,8 +9,6 @@
 ! export authority as may be required before exporting such information to
 ! foreign countries or providing access to foreign persons.
 
-! $Id$
-
 ! subroutine InterpolateArraySetup_r* ( OldX, NewX, Method, Coeffs, &
 !   & Extrapolate, Width, DyByDx, dNewByDOld, intYdX )
 
@@ -21,6 +19,11 @@
     integer :: Ind, NewInd, NoNew, NoOld
     integer, parameter :: RA = kind(coeffs%a)
     real(rm), pointer :: TempDNewByDOld(:,:)
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
 
     ! Size the problem, check sanity, set up arrays etc.
 
@@ -40,13 +43,11 @@
     call allocate_test ( coeffs%b, noNew, "Coeffs%B", ModuleName )
     call allocate_test ( coeffs%gap, noNew, "Coeffs%Gap", ModuleName )
     call allocate_test ( coeffs%lowerInds, noNew, "Coeffs%LowerInds", ModuleName )
-    call allocate_test ( coeffs%upperInds, noNew, "Coeffs%UpperInds", ModuleName )
 
     call Hunt ( oldX, newX, coeffs%lowerInds )
-    coeffs%upperInds = coeffs%lowerInds + 1
-    coeffs%gap = oldX(coeffs%upperInds) - oldX(coeffs%lowerInds)
+    coeffs%gap = oldX(coeffs%lowerInds+1) - oldX(coeffs%lowerInds)
 
-    coeffs%A = (oldX(coeffs%upperInds)-newX)/coeffs%gap
+    coeffs%A = (oldX(coeffs%lowerInds+1)-newX)/coeffs%gap
 
     ! If extrapolate is "C"onstant, deal with that
     if ( extrapolateMethod == "C" ) coeffs%A = max(min(coeffs%A,1.0_rA),0.0_rA)
@@ -69,14 +70,25 @@
         & ( MLSMSG_Error, ModuleName, "Cannot get dNewBydOld from spline")
       call allocate_test ( coeffs%c, noNew, "Coeffs%C", ModuleName )
       call allocate_test ( coeffs%d, noNew, "Coeffs%D", ModuleName )
-      call allocate_test ( coeffs%sig, noOld-1, "Coeffs%Sig", ModuleName, &
-        & lowBound=2 )
+      call allocate_test ( coeffs%dX, noOld, "Coeffs%dX", ModuleName, lowBound=2 )
+      call allocate_test ( coeffs%o, noOld-1, "Coeffs%O", ModuleName, lowBound=2 )
+      call allocate_test ( coeffs%p, noOld-1, "Coeffs%P", ModuleName, lowBound=2 )
       ! Note the extrapolate bad case is covered as A=B=0.0
       gap2 = coeffs%gap ** 2 / 6.0
       coeffs%C = (coeffs%A**3-coeffs%A) * gap2
       coeffs%D = (coeffs%B**3-coeffs%B) * gap2
-      coeffs%sig = (oldX(2:noOld-1)-oldX(1:noOld-2)) / &
-        &          (oldX(3:noOld)-oldX(1:noOld-2))
+      coeffs%dX = oldX(2:noOld)-oldX(1:noOld-1)
+
+      if ( noOld > 2 ) then ! to avoid needing coeffs%o(1) to start the iteration
+        coeffs%p(2) = 0.5 / ( oldX(3) - oldX(1) )
+        coeffs%o(2) = -coeffs%dx(3) * coeffs%p(2)
+      end if
+      do ind = 3, noOld-1
+        coeffs%p(ind) = 1.0 / &
+                      & ( coeffs%dx(ind) * coeffs%o(ind-1) + &
+                      &   2.0 * ( oldX(ind+1) - oldX(ind-1) ) )
+        coeffs%o(ind) = -coeffs%dx(ind+1) * coeffs%p(ind)
+      end do
 
       ! Compute some more coefficients for splines if DyByDx is present
       if ( present(dyByDx) ) then
@@ -102,8 +114,8 @@
         do ind = 1, width
           tempDNewByDOld(newInd+ind*noNew,coeffs%lowerInds(newInd)+ind*noOld) = &
             &  coeffs%A(newInd)
-          tempDNewByDOld(newInd+ind*noNew,coeffs%upperInds(newInd)+ind*noOld) = &
-            & coeffs%B(newInd)
+          tempDNewByDOld(newInd+ind*noNew,coeffs%lowerInds(newInd)+1+ind*noOld) = &
+            &  coeffs%B(newInd)
         end do
       end do
       call Sparsify ( tempDNewByDOld, dNewbyDOld, &
@@ -116,7 +128,7 @@
         call allocate_test ( coeffs%bi, noNew, "Coeffs%BI", ModuleName )
         call allocate_test ( coeffs%ci, noNew, "Coeffs%CI", ModuleName )
         call allocate_test ( coeffs%di, noNew, "Coeffs%DI", ModuleName )
-        coeffs%AI = newX * (oldX(coeffs%upperInds) - 0.5 * newX) / coeffs%gap
+        coeffs%AI = newX * (oldX(coeffs%lowerInds+1) - 0.5 * newX) / coeffs%gap
         coeffs%BI = newX - coeffs%AI
         coeffs%CI = -gap2 * ( coeffs%AI + 0.25 * coeffs%gap * coeffs%A**4 )
         coeffs%DI = -gap2 * ( coeffs%BI - 0.25 * coeffs%gap * coeffs%B**4 )
@@ -126,6 +138,9 @@
 ! end subroutine InterpolateArraySetup_r*
 
 ! $Log$
+! Revision 1.4  2005/08/06 01:35:47  vsnyder
+! Cannonball polishing
+!
 ! Revision 1.3  2005/08/03 16:34:20  pwagner
 ! InterpolateArray optionally finds antiderivatives
 !

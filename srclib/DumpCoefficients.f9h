@@ -10,26 +10,35 @@
 ! foreign countries or providing access to foreign persons.
 
 ! $RCSfile$
-! $Id$
 
 ! subroutine DumpCoefficients_r* ( Coeffs )
 !   type(coefficients_r*), intent(in) :: Coeffs )
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
 
     if ( associated(coeffs%lowerInds) ) call dump ( coeffs%lowerInds, name='LowerInds' )
-    if ( associated(coeffs%upperInds) ) call dump ( coeffs%upperInds, name='UpperInds' )
     if ( associated(coeffs%a) ) call dump ( coeffs%a, name='A' )
     if ( associated(coeffs%b) ) call dump ( coeffs%b, name='B' )
     if ( associated(coeffs%gap) ) call dump ( coeffs%gap, name='Gap' )
     if ( associated(coeffs%c) ) call dump ( coeffs%c, name='C' )
     if ( associated(coeffs%d) ) call dump ( coeffs%d, name='D' )
-    if ( associated(coeffs%sig) ) call dump ( coeffs%sig, name='Sig' )
     if ( associated(coeffs%e) ) call dump ( coeffs%e, name='C' )
     if ( associated(coeffs%f) ) call dump ( coeffs%f, name='D' )
     if ( associated(coeffs%ai) ) call dump ( coeffs%ai, name='AI' )
     if ( associated(coeffs%bi) ) call dump ( coeffs%bi, name='BI' )
     if ( associated(coeffs%ci) ) call dump ( coeffs%ci, name='CI' )
     if ( associated(coeffs%di) ) call dump ( coeffs%di, name='DI' )
+    if ( associated(coeffs%dx) ) call dump ( coeffs%dx, name='dX' )
+    if ( associated(coeffs%o) ) call dump ( coeffs%o, name='O' )
+    if ( associated(coeffs%p) ) call dump ( coeffs%p, name='P' )
+    if ( associated(coeffs%badValue) ) call dump ( coeffs%badValue, name='BadValue' )
 
 ! end subroutine DumpCoefficients_r*
 
 ! $Log$
+! Revision 1.1  2005/08/04 20:38:41  vsnyder
+! Initial commit
+!
