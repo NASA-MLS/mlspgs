@@ -133,10 +133,14 @@ module MLSNumerics              ! Some low level numerical stuff
 
   type, public :: Coefficients_R4
     private
-    integer, pointer :: LowerInds(:) => NULL(), UpperInds(:) => NULL()
-    !{ Coefficients for linear interpolation:
-    !  {\tt Gap} $= g = x_{i+1}-x_i$.  $A = \frac{x_{i+1}-x}g$.
-    !                                  $B = 1-A = \frac{x-x_i}g$.
+    integer, pointer :: LowerInds(:) => NULL()
+    !{ Coefficients for linear interpolation:  Let $\{x\} =$ {\tt oldX} and
+    !  $\{\chi\} =$ {\tt newX}.  Then
+    !  {\tt Gap(j)} $= g_j = x_{i+1}-x_i$, $A_j = \frac{x_{i+1}-\chi_j}{g_j}$,    
+    !                                  and $B_j = 1-A_j = \frac{\chi_j-x_i}{g_j}$,
+    !  where $i$ is such that $x_i \leq \chi_j < x_{i+1}$ for $1 \leq j \leq$
+    !  {\tt size(newX)}.  $|\{g\}| = |\{A\}| = |\{B\}|$, and
+    !  others that depend upon them, $=|\{\chi\}|$ = {\tt size(newX)}.
     !  Coefficients for differentiation in the linear case (and of the linear
     !  terms in the spline case) are just $-1$ and $+1$, so they're not
     !  computed here.
@@ -144,7 +148,13 @@ module MLSNumerics              ! Some low level numerical stuff
     !{ Coefficients for spline interpolation:
     !  $C = (A^3-A) \frac{g^2}6$.  $D = (B^3-B) \frac{g^2}6$.
     real(r4), pointer :: C(:) => NULL(), D(:) => NULL()
-    real(r4), pointer :: Sig(:) => NULL() ! for second derivative guesser
+    !{ {\tt dX(i)} $= \delta_i = x_i-x_{i-1}$ for $1 < i \leq$ {\tt size(oldX)} and
+    !  $\Delta_i = x_{i+1}-x_{i-1}$ for $1 < i <$
+    !  {\tt size(oldX)}.
+    !  {\tt P(i)} $= p_i = \frac1{\delta_i o_{i-1} + 2 \Delta_i}$ and
+    !  {\tt O(i)} $= o_i = -\delta_{i+1} p_i$
+    !  for $1 < i <$ {\tt size(oldX)} and zero at the ends.
+    real(r4), pointer :: dX(:) => NULL(), P(:) => NULL(), O(:) => NULL()
     !{ Coefficients for spline derivatives:
     !  $E = \frac{\text{d}C}{\text{d}A} = \frac6g \frac{\text{d}C}{\text{d}x}
     !     = 3 A^2 - 1$.
@@ -167,10 +177,14 @@ module MLSNumerics              ! Some low level numerical stuff
 
   type, public :: Coefficients_R8
     private
-    integer, pointer :: LowerInds(:) => NULL(), UpperInds(:) => NULL()
-    !{ Coefficients for linear interpolation:
-    !  {\tt Gap} $= g = x_{i+1}-x_i$.  $A = \frac{x_{i+1}-x}g$.
-    !                                  $B = 1-A = \frac{x-x_i}g$.
+    integer, pointer :: LowerInds(:) => NULL()
+    !{ Coefficients for linear interpolation:  Let $\{x\} =$ {\tt oldX} and
+    !  $\{\chi\} =$ {\tt newX}.  Then
+    !  {\tt Gap(j)} $= g_j = x_{i+1}-x_i$, $A_j = \frac{x_{i+1}-\chi_j}{g_j}$,    
+    !                                  and $B_j = 1-A_j = \frac{\chi_j-x_i}{g_j}$,
+    !  where $i$ is such that $x_i \leq \chi_j < x_{i+1}$ for $1 \leq j \leq$
+    !  {\tt size(newX)}.  $|\{g\}| = |\{A\}| = |\{B\}|$, and
+    !  others that depend upon them, $=|\{\chi\}|$ = {\tt size(newX)}.
     !  Coefficients for differentiation in the linear case (and of the linear
     !  terms in the spline case) are just $-1$ and $+1$, so they're not
     !  computed here.
@@ -178,7 +192,13 @@ module MLSNumerics              ! Some low level numerical stuff
     !{ Coefficients for spline interpolation:
     !  $C = (A^3-A) \frac{g^2}6$.  $D = (B^3-B) \frac{g^2}6$.
     real(r8), pointer :: C(:) => NULL(), D(:) => NULL()
-    real(r8), pointer :: Sig(:) => NULL() ! for second derivative guesser
+    !{ {\tt dX(i)} $= \delta_i = x_i-x_{i-1}$ for $1 < i \leq$ {\tt size(oldX)} and
+    !  $\Delta_i = x_{i+1}-x_{i-1}$ for $1 < i <$
+    !  {\tt size(oldX)}.
+    !  {\tt P(i)} $= p_i = \frac1{\delta_i o_{i-1} + 2 \Delta_i}$ and
+    !  {\tt O(i)} $= o_i = -\delta_{i+1} p_i$
+    !  for $1 < i <$ {\tt size(oldX)} and zero at the ends.
+    real(r8), pointer :: dX(:) => NULL(), P(:) => NULL(), O(:) => NULL()
     !{ Coefficients for spline derivatives:
     !  $E = \frac{\text{d}C}{\text{d}A} = \frac6g \frac{\text{d}C}{\text{d}x}
     !     = 3 A^2 - 1$.
@@ -2148,6 +2168,7 @@ contains
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, id ! .mod files sometimes change if PRINT is added
   end function not_used_here
 
 end module MLSNumerics
@@ -2155,6 +2176,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.62  2009/06/20 02:32:58  vsnyder
+! Precompute more stuff, handle identical abscissae, in spline case
+!
 ! Revision 2.61  2009/06/13 02:27:39  vsnyder
 ! Several coefficients_R8 should have been coefficients_R4
 !
