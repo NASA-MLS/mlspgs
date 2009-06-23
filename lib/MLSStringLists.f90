@@ -63,6 +63,7 @@ module MLSStringLists               ! Module to treat string lists
 ! listMatches        Return list of matches for string in a list
 ! NumStringElements  Returns number of elements in string list
 ! PutHashElement     puts value into hash list corresponding to key string
+! ReadIntsFromList   Read an array of ints from a string list
 ! RemoveElemFromList removes occurrence(s) of elem from a string list
 ! RemoveListFromList removes occurrence(s) of elems in a string list from another
 ! RemoveNumFromList  removes a numbered elem from a string list
@@ -107,6 +108,8 @@ module MLSStringLists               ! Module to treat string lists
 !   & [char inseparator], [int LongestLen])
 ! PutHashElement (hash {keys = values}, char* key, 
 !   char* elem, log countEmpty, [char inseparator], [log part_match])
+! ReadIntsFromList(strlist inList, int ints(:), &
+!    & [char inseparator])
 ! RemoveElemFromList(strlist inList, strlist outList, char* elem, &
 !    & [char inseparator])
 ! RemoveListFromList(strlist inList, strlist outList, strlist exclude, &
@@ -182,6 +185,7 @@ module MLSStringLists               ! Module to treat string lists
    & GetHashElement, GetStringElement, &
    & GetUniqueInts, GetUniqueStrings, GetUniqueList, Intersection, IsInList, &
    & List2Array, listMatches, PutHashElement, NumStringElements, &
+   & ReadIntsFromList, &
    & RemoveElemFromList, RemoveListFromList, RemoveNumFromList, &
    & ReplaceSubString, ReverseList, &
    & SortArray, SortList, StringElement, StringElementNum, SwitchDetail, &
@@ -1886,6 +1890,24 @@ contains
 
   end subroutine PutHashElement_str
 
+  ! --------------------------------------------------  ReadIntsFromList  -----
+  subroutine ReadIntsFromList ( inList, ints, error )
+    ! Takes a list and reads it as an array of ints
+    ! E.g., given '1 2 2 3 4 4'  returns (/ 1, 2, 2, 3, 4, 5 /)
+    !--------Argument--------!
+    CHARACTER (LEN=*), INTENT(IN)      :: inList
+    integer, dimension(:), INTENT(OUT) :: ints
+    integer, optional, INTENT(OUT)     :: error
+    ! Method:
+    ! Use Fortran read
+    integer :: status
+    ints = -999
+    status = 0
+    if ( len_trim(inList) > 0 ) read(inList, *, iostat=status, err=100, end=100) ints
+100   continue
+    if ( present(error) ) error = status
+  end subroutine ReadIntsFromList
+
   ! --------------------------------------------------  RemoveElemFromList  -----
   subroutine RemoveElemFromList (inList, outList, elem, inseparator)
     ! Takes a list and removes all occurrence(s) of elem
@@ -3300,20 +3322,23 @@ contains
     endif
   end subroutine prepOptions
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
-    print *, not_used_here ! .mod files sometimes change if PRINT is added
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.38  2009/06/23 18:22:49  pwagner
+! Added ReadIntsfromList
+!
 ! Revision 2.37  2009/06/16 17:07:05  pwagner
 ! Added BuildHash to build keys, values arrays from Constructor
 !
