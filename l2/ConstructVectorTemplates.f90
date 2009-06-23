@@ -149,20 +149,24 @@ contains ! =====     Public Procedures     =============================
     call MLSMessage ( MLSMSG_Error, ModuleName, 'Problem with vector template construction' )
   end subroutine Announce_Error
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 END MODULE ConstructVectorTemplates
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.15  2009/06/23 18:46:18  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.14  2006/08/05 02:12:27  vsnyder
 ! Add ForWhom argument to ConstructVectorTemplate
 !
