@@ -16,7 +16,9 @@
 ; ----------------------------------------------------------------
 ; ----------------------------------------------------------------
 
+divert(-1)
 
+;$Id$
 ; --------------------------- Changing m4 syntax etc.
 
 ; These are the m4 definitions for l2cf's
@@ -145,3 +147,5 @@ changesyntax({@!})
 ;; Just count how many args we're given
 ;; (for things like flaggingBands)
 !define(nargs, {$#})
+;$Log$
+!divert!dnl
