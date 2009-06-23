@@ -1,4 +1,5 @@
 !divert(-1)
+; $Id$
 ;; All the stuff related to the outmoded operations of
 ;; outputting standard products in any manner except
 ;; that controlled by flagCopyStandardProducts
@@ -164,6 +165,11 @@ Output, quantities=[ !undivert(!joinedDGMDivert) ], type=l2aux, $
 Output, type=l2cf, $
   file='!DGMFileName'})
 
+;; Now output the master ident file (but only if asked)
+!ifdef(flagWriteIdentToDGM,{
+Copy, inputFile='master.ident', inputtype=l2cf, type=l2aux, $
+  file='!DGMFileName'})
+
 ;; These days pretty well everything is written with directWrite
 ;; statements
 
@@ -175,3 +181,6 @@ Output,  quantities=[ !undivert(!matrixDivert) ], type=l2pc, $
 
 
 end Output
+!divert(-1)
+; $Log$
+!divert!dnl
