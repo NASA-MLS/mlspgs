@@ -2629,17 +2629,21 @@ contains ! =====     Public Procedures     =============================
     end do
   end function MinDiag_1
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.115  2009/06/23 18:25:42  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.114  2007/11/07 21:33:08  vsnyder
 ! Get kinds from MLSKinds instead of MLSCommon
 !
