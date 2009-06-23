@@ -1,8 +1,10 @@
+!divert(-1)
 ; $Id$
 
 ; This is a new l2cf fragement that defines all the (mainly vertical)
 ; grids.
 
+!divert!dnl
 !ifdef(flagSkipVGridStandard,{},{
 vGridStandard: vGrid, type=Logarithmic, coordinate=Zeta, $
   start=1000mb, formula=[25:6,12:3]})
@@ -18,7 +20,7 @@ vGridrhisngllyr: vGrid, type=Logarithmic, coordinate=Zeta, $
 vGridutrhi: vGrid, type=Logarithmic, coordinate=Zeta, $
   start=100mb, formula=[1:1]
 vGridrhiprfl: vGrid, type=Logarithmic, coordinate=Zeta, $
-  start=681.2915mb, formula=[24:6,12:3]
+  start=316.2278mb, formula=[22:6,12:3]
 
 vGridBaseline: vGrid, type=Logarithmic, coordinate=Zeta, $
   start=1000mb, formula=[25:12,4:1]
@@ -83,8 +85,12 @@ vGridIWC: vGrid, type=Logarithmic, coordinate=Zeta, $
 
 vGridWMO: VGrid, type=Logarithmic, coordinate=Zeta, $
   start=1000mb, formula=[97:48]
+!divert(-1)
 
 ; $Log$
+; Revision 1.32  2009/05/15 20:24:17  pwagner
+; Added UTRHi as quantity and standard product
+;
 ; Revision 1.31  2008/07/31 23:54:53  pwagner
 ; Added flag extending HiRes VGrid to 1hPa
 ;
@@ -180,3 +186,4 @@ vGridWMO: VGrid, type=Logarithmic, coordinate=Zeta, $
 ; Revision 1.1  2002/12/05 20:41:56  livesey
 ; First version
 ;
+!divert!dnl
