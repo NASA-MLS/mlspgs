@@ -1,8 +1,10 @@
+!divert(-1)
 ;; $Id$
 
 ;; This l2cf fragment is for setting up a priori vectors with
 ;; appropriate quantities
 
+!divert!dnl
 ;; ----------------------------------------------- Setup vectors
 
 ;; First define the vectors in question
@@ -32,12 +34,19 @@ begin Fill
   ;; Now invoke it for all relevant species
   !forall(fillWithClimatology,!allClimatologicalSpecies)
 
+  !ifdef(flagSetTopOfHCl,{
+
+  Dump, text='Before setting top of HCl to 3ppbv'
+  Dump, details=2, quantity=apriori.hcl
   ;; Set the top of HCl to 3ppbv
   ;; (We will be able to dispense with bookending Subsets soon)
   Subset, quantity=apriori.hcl, height=[2.4mb:0.00001mb], mask=fill
   Fill, quantity=apriori.hcl, method=explicit, explicitValues=3ppbv, /spread
   Subset, quantity=apriori.hcl, mask=fill, /reset
 
+  Dump, text='After setting top of HCl to 3ppbv'
+  Dump, details=2, quantity=apriori.hcl
+})
   ;; Possibly overwrite temperature with the merged product
   !ifdef(flagUseOperationalTemperature,{Fill, quantity=apriori.temperature, $
     method=gridded, sourceGrid=mergedTemperature})
@@ -203,9 +212,13 @@ Fill, quantity=apriori.refGPH,$
 
 
   Fill, quantity=aprioriPrecision.co,   method=profile, $
-    profileValues= [ 100mb : 0.5ppmv, 50mb : 0.1ppmv, 10mb : 0.2ppmv, 1mb : 0.7ppmv, 0.1mb : 5ppmv, 0.01mb : 10ppmv,  0.001mb : 20ppmv ]
+    profileValues= [ 100mb : 0.5ppmv, 50mb : 0.1ppmv, 31mb : 0.12ppmv, $
+    10mb : 0.2ppmv, 3.1mb : 0.35ppmv, 1mb : 0.7ppmv, 0.31mb : 2ppmv, $
+    0.1mb : 5ppmv, 0.01mb : 10ppmv,  0.001mb : 20ppmv ]
   Fill, quantity=aprioriPrecision.co_hr,   method=profile, $
-    profileValues= [ 464mb : 500ppbv, 316mb : 1ppmv, 100mb : 1ppmv, 0.001mb : 100ppmv ]
+    profileValues= [ 100mb : 0.5ppmv, 50mb : 0.1ppmv, 31mb : 0.12ppmv, $
+    10mb : 0.2ppmv, 3.1mb : 0.35ppmv, 1mb : 0.7ppmv, 0.31mb : 2ppmv, $
+    0.1mb : 5ppmv, 0.01mb : 10ppmv,  0.001mb : 20ppmv ]
   Fill, quantity=aprioriPrecision.h2o, method=profile, profileValues = $
     [ 1000mb: 10000ppmv, 464mb : 10000ppmv, 316mb : 1500ppmv, $
       215mb : 300ppmv, 147mb : 300ppmv, 100mb : 3.0ppmv ]
@@ -250,12 +263,8 @@ Fill, quantity=apriori.refGPH,$
   Fill, quantity=aprioriPrecision.rhivmrsngl, method=profile, $
         profileValues= [ 100mb:100, 68mb:0.0001 ]
 
-  Fill, quantity=aprioriPrecision.rhivmr,sourcequantity=aprioriPrecision.rhi,$
-        method = vector,/interpolate, /force
-  Subset, quantity=aprioriPrecision.rhivmr, height=[681mb:147mb], mask=fill
   Fill, quantity=aprioriPrecision.rhivmr, method=explicit,  $
         explicitValues=100, /spread
-  Subset, quantity=aprioriPrecision.rhivmr, mask=fill, /reset
 
   ;; This macro interpolates standard resolution quantities to the
   ;; hiRes equivalents. 
@@ -278,7 +287,8 @@ Fill, quantity=apriori.refGPH,$
       215mb : 300ppmv, 147mb : 20ppmv, 100mb : 6.0ppmv ]
 
   Fill, quantity=vReg.co_hr, method=profile, profileValues= $
-    [ 10mb:30ppbv, 1mb:300ppbv, 0.1mb:3ppmv, 0.046mb:0ppmv ]
+    [ 10mb:15ppbv, 3.1mb:50ppbv,  1mb:150ppbv, 0.31mb: 0.5ppmv, 0.1mb:1.5ppmv, $
+      0.03mb:5ppmv, 0.01mb: 15ppmv, 0.003mb: 50ppmv, 0.001mb:150ppmv ]
 
   ;; We already filled the hires ozone precision by inerpolating the std res
   ;   Fill, quantity=aprioriPrecision.o3_hr, method=profile,$
@@ -408,7 +418,7 @@ Fill, quantity=apriori.refGPH,$
         manipulation='a<b'
 
    Fill, quantity=lowBound.RHiVmr, method=explicit, explicitValues=0.00001, /spread
-   Fill, quantity=highBound.RHiVmr, method=explicit, explicitValues=110, /spread
+   Fill, quantity=highBound.RHiVmr, method=explicit, explicitValues=1000, /spread
 
 ;; ensure that apriori between lowbound and highbound
    Fill, quantity=apriori.RHiVmr, method=manipulate,a=apriori.RHiVmr,b=lowBound.RHiVmr,$
@@ -503,9 +513,11 @@ Fill, quantity=apriori.refGPH,$
   Fill, quantity=vReg.ch3coch3, method=profile, $
     profileValues= [ 1mb:0.1ppbv, 0.68mb:0ppbv ]
   Fill, quantity=vReg.co, method=profile, profileValues= $
-    [ 10mb:30ppbv, 1mb:300ppbv, 0.1mb:3ppmv, 0.046mb:0ppmv ] 
+    [ 10mb:15ppbv, 3.1mb:50ppbv,  1mb:150ppbv, 0.31mb: 0.5ppmv, 0.1mb:1.5ppmv, $
+      0.03mb:5ppmv, 0.01mb: 15ppmv, 0.003mb: 50ppmv, 0.001mb:150ppmv ]
   Fill, quantity=vReg.co_hr, method=profile, profileValues= $
-    [ 10mb:30ppbv, 1mb:300ppbv, 0.1mb:3ppmv, 0.046mb:0ppmv ] 
+    [ 10mb:15ppbv, 3.1mb:50ppbv,  1mb:150ppbv, 0.31mb: 0.5ppmv, 0.1mb:1.5ppmv, $
+      0.03mb:5ppmv, 0.01mb: 15ppmv, 0.003mb: 50ppmv, 0.001mb:150ppmv ]
   Fill, quantity=vReg.h2o, method=profile, profileValues= $
     [ 1000mb:500ppmv, 300mb:50ppmv, 215mb:20ppmv, 147mb:10ppmv, 100mb:1.0ppmv,$
 	0.1mb:0.3ppmv, 0.001mb:0ppmv ], logSpace=false
@@ -514,7 +526,7 @@ Fill, quantity=apriori.refGPH,$
       100mb:0.5ppmv, 83mb:0.3ppmv, 1mb:0.6ppmv, 0.1mb:10ppmv, 0.001mb:0ppmv ], $
       logSpace=false
   Fill, quantity=vReg.RHiVmr, method=profile, profileValues= [ $
-        681mb:10.0, 316mb:10.0, 215mb:10.0, 147mb:10.0]
+                    316mb:20.0, 215mb:20.0, 147mb:20.0]
   Fill, quantity=vReg.hcl, method=profile, $
     profileValues= [ 0.1mb:1.0ppbv, 0.046mb:0ppbv ]
   Fill, quantity=vReg.hcn, method=profile, $
@@ -586,15 +598,20 @@ Fill, quantity=apriori.refGPH,$
   Fill, quantity=hReg.ch3coch3, method=profile, $
     profileValues= [  1mb:0.05ppbv, 0.68:0pptv ]
   Fill, quantity=hReg.co, method=profile, profileValues= $
-    [ 10mb:10ppbv, 1mb:100ppbv, 0.1mb:1ppmv, 0.01mb:3ppmv, 0.0068mb:0ppmv ] 
+    [ 10mb:5ppbv,  3mb: 15ppbv, 1mb:50ppbv, 0.3mb: 150ppbv, 0.1mb:0.5ppmv, $
+      0.03mb: 1.5ppmv, 0.01mb:5ppmv, 0.003mb:15ppmv, 0.001mb: 50ppmv ]
   Fill, quantity=hReg.co_hr, method=profile, profileValues= $
-    [ 10mb:10ppbv, 1mb:100ppbv, 0.1mb:1ppmv, 0.01mb:3ppmv, 0.0068mb:0ppmv ] 
+    [ 10mb:5ppbv,  3mb: 15ppbv, 1mb:50ppbv, 0.3mb: 150ppbv, 0.1mb:0.5ppmv, $
+      0.03mb: 1.5ppmv, 0.01mb:5ppmv, 0.003mb:15ppmv, 0.001mb: 50ppmv ]
   Fill, quantity=hReg.h2o, method=profile, $
     profileValues=[ 146mb:0ppmv, 100mb:0.3ppmv, 1mb:0.3ppmv, 0.1mb:5ppmv, 0.046mb:0ppmv ], $
     logSpace=false
 
   Fill, quantity=hReg.h2o_HR, method=profile, $
      profileValues=[ 147mb:0ppmv, 121mb:2ppmv, 100mb:0.3ppmv, 0.1mb:0.3ppmv, 0.046mb:0ppmv ], logSpace=false
+
+  Fill, quantity=hReg.RHiVmr, method=profile, profileValues= [ $
+        316mb:40.0, 215mb:30.0, 147mb:20.0, 100mb:20.0]
 
   Fill, quantity=hReg.hcl, method=profile, $
     profileValues= [ 0.1mb:0.3ppbv, 0.046mb:0ppbv ]
@@ -660,7 +677,11 @@ begin Join
   
 end Join
   })
+!divert(-1)
 ;$Log$
+;Revision 1.139  2009/05/06 00:12:23  pwagner
+;Scaled h2o smoothing params by 16 from 0.1mb to 0.001mb
+;
 ;Revision 1.138  2009/05/05 17:35:37  pwagner
 ;Set the top of HCl to 3ppbv consistent with test H190
 ;
@@ -772,3 +793,4 @@ end Join
 ;Revision 1.102  2006/05/12 19:31:10  lambert
 ;corrected apriori.totalextinctionr3 and aprioriPrecision.totalextinctionr3 values
 ;
+!divert!dnl
