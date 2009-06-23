@@ -22,9 +22,9 @@
 ! the "private" keyword. This bit is therefcre commented out and added to the 
 ! function not_used_here at the end of the source file.
 !---------------------------- RCS Module Info ------------------------------
-!  character (len=*), parameter :: ModuleName= &
-!       "$RCSfile$"
-  !private :: not_used_here 
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
 
@@ -215,16 +215,15 @@
         PGS_MET_SFEnd=0
       END FUNCTION PGS_MET_SFEnd
       
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-  character (len=*), parameter :: ModuleName= &
-       "$RCSfile$"
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 !=============================================================================
 !END MODULE SDPToolkitSubstitute
@@ -232,6 +231,9 @@
 
 !
 ! $Log$
+! Revision 2.16  2009/06/23 18:25:42  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.15  2005/12/10 00:23:56  pwagner
 ! Added PGS_SMF_TestStatusLevel interface
 !
