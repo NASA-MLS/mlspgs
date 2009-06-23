@@ -256,19 +256,22 @@ contains
     retry = TRY_AGAIN
   end function RETRY
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
-    print *, not_used_here ! .mod files sometimes change if PRINT is added
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module TIME_M
 
 !$Log$
+!Revision 2.10  2009/06/23 18:25:44  pwagner
+!Prevent Intel from optimizing ident string away
+!
 !Revision 2.9  2009/01/12 18:45:06  pwagner
 !Improved cofiguration; wait means sleep
 !
