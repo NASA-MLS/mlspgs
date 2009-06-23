@@ -621,19 +621,22 @@ contains
     stop
   end subroutine TREE_ERROR
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
-    print *, not_used_here ! .mod files sometimes change if PRINT is added
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module TREE
 
 ! $Log$
+! Revision 2.12  2009/06/23 18:25:44  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.11  2008/09/04 00:45:51  vsnyder
 ! Add PRINT to not_used_here
 !
