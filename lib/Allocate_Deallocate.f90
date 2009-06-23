@@ -941,18 +941,22 @@ contains
   end function memproduct
 
   ! ------------------------------------------------  Not_Used_Here  -----
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-  !------------------------------- RCS Ident Info ------------------------------
-  character(len=*), parameter :: Idparm = &
-    & "$Id$"
-  character(len=len(idparm)) :: Id = idparm
-  !-----------------------------------------------------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.36  2009/06/23 18:25:42  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.35  2008/05/21 21:49:26  vsnyder
 ! Add allocation routines with arrays for bounds
 !
