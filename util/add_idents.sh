@@ -21,21 +21,21 @@
 #  *{$suffix} in supplied directory names
 #The fix involves adding the following two blocs to each file:
 #       (bloc 1)
-#  >---------------------------- RCS Module Info ------------------------------
-#    character (len=*), parameter :: IdParm = &
-#  >      "$RCSfile$"
-#  >  private :: not_used_here
-#  >---------------------------------------------------------------------------
+# !---------------------------- RCS Ident Info -------------------------------
+#   character (len=*), private, parameter :: ModuleName= "$RCSfile$"
+#   private :: not_used_here
+# !---------------------------------------------------------------------------
 #   . . .
 #       (bloc 2)
-#  >  logical function not_used_here()
-#  >---------------------------- RCS Ident Info -------------------------------
-#    character (len=*), parameter :: IdParm = &
-#  >      "$Id$"
-#    character (len=len(idParm)), save :: Id = idParm
-#  >---------------------------------------------------------------------------
-#  >    not_used_here = (id(1:1) == ModuleName(1:1))
-#  >  end function not_used_here
+# !--------------------------- end bloc --------------------------------------
+#   logical function not_used_here()
+#   character (len=*), parameter :: IdParm = &
+#        "$Id$"
+#   character (len=len(idParm)) :: Id = idParm
+#     not_used_here = (id(1:1) == ModuleName(1:1))
+#     print *, Id ! .mod files sometimes change if PRINT is added
+#   end function not_used_here
+# !---------------------------------------------------------------------------
 #end module L1BData
 #(where the added lines have been marked with the ">")
 # Note that we assume the older style of rcs info is already present
@@ -61,7 +61,7 @@
 #                 where  n       bloc               where
 #                        1    COPYRIGHT.txt       beginning of file
 #                        2    RCSModule.txt       before 1st "contains"
-#                        3    RCSIdent.txt        before "end module"
+#                        3    endbloc.txt        before "end module"
 # -rep script   use script instead of replacetext.sh
 #       with use (2) only
 # -api          printing api
@@ -76,7 +76,7 @@
 #(3)The default use is Use(1); -api and -toc are mutually exclusive
 #(4)use(1) requires 
 #   (a) replacetext.sh to be in the path (unless overridden by -rep)
-#   (b) RCSIdent.txt, RCSModule.txt, and COPYRIGHT.txt
+#   (b) endbloc.txt, RCSModule.txt, and COPYRIGHT.txt
 #       to be in the current working directory (unless overridden by -dtxt)
 #(5)Not tested with c, f77, shell scripts, Makefiles, or include files
 # --------------- End add_idents.sh help
@@ -157,14 +157,14 @@ mv_if_diff()
 #
 # Function to add the lines needed to assure that after compilation
 # a file's $id and $RCS idents will be found in the executable
-# Relies upon a trick to circumvent Lahey's zealous optimizer
-# RCS id split into two blocs to circumvent NAG's propensity
+# Relies upon a trick to circumvent Intel's zealous optimizer
+# RCS id no longer split into two blocs; who cares about NAG's propensity
 # to launch cascade of recompilation when date field in ID changes
-# at each cvs commit
+# at each cvs commit?
 # Upgraded to:
-# (1) Replace the copyright statement with its new working
-# (2) Separate $id and $RCS identifiers, moving the former 
-#      among the not_used_here private function code bloc
+# (1) Replace the copyright statement with its new wording
+# (2) Rejoin $id and $RCS identifiers,
+# (3) Replace the not_used_here private function code bloc with new end bloc
 # usage: add_the_lines file
 
 add_the_lines()
@@ -186,80 +186,41 @@ then
     cat $dtxt/COPYRIGHT.txt "$file" > "$tempfile"
     mv_if_diff "$tempfile" "$file"
   fi
-
-  # Second: replace the old RCS bloc
-  test2=`echo $force_blocs | grep 2`
-  $REPLACER -i "-- RCS Ident Info --" "!--------------------------------------------" \
-    $file $dtxt/RCSModule.txt > "$tempfile"
+fi
+# Second: replace the old RCS bloc
+test2=`echo $force_blocs | grep 2`
+$REPLACER -i "-- RCS Module Info --" "!--------------------------------------------" \
+  $file $dtxt/RCSModule.txt > "$tempfile"
+mv_if_diff "$tempfile" "$file"
+testC=`grep -i "rcs module" "$file"`
+if [ "$test2" != "" -a "$testC" = "" ]
+then
+  $REPLACER -i -b "contains" "contains" \
+  $file $dtxt/RCSModule.txt > "$tempfile"
   mv_if_diff "$tempfile" "$file"
-  testC=`grep -i "rcs module" "$file"`
-  if [ "$test2" != "" -a "$testC" = "" ]
-  then
-    $REPLACER -i -b "contains" "contains" \
-    $file $dtxt/RCSModule.txt > "$tempfile"
-    mv_if_diff "$tempfile" "$file"
-  fi
+fi
 
-  # Third: replace the old not_used_here bloc
-  test3=`echo $force_blocs | grep 3`
+# Third: replace the old not_used_here bloc
+test3=`echo $force_blocs | grep 3`
+test=`grep -ie '-- end bloc --' $file`                     
+if [ "$test" != "" ]                                      
+then                                                     
+  # echo Must replace the old end bloc
+$REPLACER -i "-- end bloc --" "!--------------------------------------------" \
+    $file $dtxt/endbloc.txt > "$tempfile"
+  mv_if_diff "$tempfile" "$file"
+else
   $REPLACER -i "logical function not_used_here" "end function not_used_here" \
-    $file $dtxt/RCSIdent.txt > "$tempfile"
+    $file $dtxt/endbloc.txt > "$tempfile"
   mv_if_diff "$tempfile" "$file"
   testC=`grep -i "end function not_used_here" "$file"`
   if [ "$test3" != "" -a "$testC" = "" ]
   then
     $REPLACER -i -b "end module" "end module" \
-    $file $dtxt/RCSIdent.txt > "$tempfile"
+    $file $dtxt/endbloc.txt > "$tempfile"
     mv_if_diff "$tempfile" "$file"
   fi
-else                                                
-  echo "$file already has ident added in this way"  
-fi                                                  
-}
-
-#------------------------------- add_the_lines_old ------------
-#
-# Function to add the lines needed to assure that after compilation
-# a file's $id and $RCS idents will be found in the executable
-# Relies upon a trick to circumvent Lahey's zealous optimizer
-# usage: add_the_lines file
-
-add_the_lines_old()
-{
-file="$1"
-test=`grep -i 'not_used_here' $file`                     
-if [ "$test" = "" ]                                      
-then                                                     
-# > >     test1=`grep -i 'END MODULE' $file`             
-# > >     if [ "$test1" != "" ]                          
-# > >     then                                           
-# > >       sed 's/END MODULE/end module/' $file > temp  
-# > >       mv temp $file                                
-# > >     fi                                             
-  test1=`grep -i '^ *contains' $file`                    
-  if [ "$test1" = "" ]                                   
-  then                                                   
-    sed '/\$RCSfile/ a\
-  private \:\: not_used_here ' $file | \
-      sed '/[eE][nN][dD] [mM][oO][dD][uU][lL][eE]/ i\
-contains \
-  logical function not_used_here()\
-    not_used_here = (id(1:1) == ModuleName(1:1))\
-  end function not_used_here\
-'     > temp
-  else
-    sed '/\$RCSfile/ a\
-  private \:\: not_used_here ' $file | \
-      sed '/[eE][nN][dD] [mM][oO][dD][uU][lL][eE]/ i\
-  logical function not_used_here()\
-    not_used_here = (id(1:1) == ModuleName(1:1))\
-  end function not_used_here\
-'     > temp
-  fi                                                
-  mv temp $file                                     
-else                                                
-  echo "$file already has ident added in this way"  
-fi                                                  
+fi
 }
 
 #------------------------------- extant_files ------------
@@ -467,6 +428,9 @@ do
 done
 exit 0
 # $Log$
+# Revision 1.5  2005/06/23 22:20:45  pwagner
+# Reworded Copyright statement
+#
 # Revision 1.4  2005/06/22 22:43:21  pwagner
 # Changes to add new Copyright statement, rcs blocs
 #
