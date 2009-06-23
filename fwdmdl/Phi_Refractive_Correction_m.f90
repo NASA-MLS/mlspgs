@@ -23,7 +23,7 @@ module Phi_Refractive_Correction_m
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 contains
 !---------------------------------------------------------------------------
@@ -272,18 +272,22 @@ contains
 
   end subroutine Phi_Refractive_Correction_Up
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module Phi_Refractive_Correction_m
 
 ! $Log$
+! Revision 2.4  2009/06/23 18:26:10  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.3  2006/12/13 02:32:03  vsnyder
 ! Drag the tangent point around instead of assuming it's the middle one
 !

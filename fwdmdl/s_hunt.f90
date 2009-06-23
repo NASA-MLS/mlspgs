@@ -27,18 +27,22 @@ contains
     integer, parameter :: RK = r4
     include 'hunt.f9h'
   end subroutine S_HUNT
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module S_HUNT_M
 
 ! $Log$
+! Revision 2.4  2009/06/23 18:26:11  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.3  2005/06/22 18:08:19  pwagner
 ! Reworded Copyright statement, moved rcs id
 !

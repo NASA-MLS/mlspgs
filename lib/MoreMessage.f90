@@ -229,18 +229,22 @@ contains
   end subroutine MessageWithSingleArray
 
 !=======================================================================
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-    !---------------------------- RCS Ident Info -----------------------
-    character (len=*), parameter :: IdParm = &
+  character (len=*), parameter :: IdParm = &
        "$Id$"
-    character (len=len(idParm)) :: Id = idParm
-    !-------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module MoreMessage
 
 ! $Log$
+! Revision 2.4  2009/06/23 18:25:42  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.3  2006/04/20 01:08:32  vsnyder
 ! Don't look past the end of the input
 !
