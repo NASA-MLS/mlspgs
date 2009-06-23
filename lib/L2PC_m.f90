@@ -1965,19 +1965,22 @@ contains ! ============= Public Procedures ==========================
     name = ' Block' // ' ' // trim(adjustl(strs(1))) // ' ' // trim(adjustl(strs(2)))
   end subroutine CreateBlockName
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
-    print *, not_used_here ! .mod files sometimes change if PRINT is added
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module L2PC_m
 
 ! $Log$
+! Revision 2.85  2009/06/23 18:25:42  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.84  2008/12/18 21:31:18  pwagner
 ! May now dump an l2pc or allL2PCs (use with caution)
 !
