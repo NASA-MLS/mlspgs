@@ -2697,21 +2697,24 @@ contains
   end function mls_io_gen_openF
 
 !====================
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
-    print *, not_used_here ! .mod files sometimes change if PRINT is added
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module MLSFiles
 !====================
 
 !
 ! $Log$
+! Revision 2.87  2009/06/23 18:25:42  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.86  2008/12/02 23:10:51  pwagner
 ! mls_io_gen_[openF,closeF] functions now private; use MLSFile_T interfaces instead
 !
