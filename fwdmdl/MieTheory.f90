@@ -30,7 +30,7 @@ module MieTheory
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
 contains
@@ -141,18 +141,22 @@ contains
 
   end subroutine MieCoeff
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module MieTheory
 
 ! $Log$
+! Revision 2.7  2009/06/23 18:26:10  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.6  2007/10/06 00:00:17  vsnyder
 ! Modernization, polishing
 !

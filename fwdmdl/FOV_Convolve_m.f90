@@ -496,18 +496,22 @@ contains
   end subroutine DTCST_T
 
   ! ----------------------------------------------  not_used_here  -----
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module FOV_Convolve_m
 
 ! $Log$
+! Revision 2.7  2009/06/23 18:26:10  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.6  2007/06/25 20:34:15  vsnyder
 ! Use DTCST instead of DFFT for even transforms
 !
