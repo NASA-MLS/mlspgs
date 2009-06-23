@@ -2145,19 +2145,22 @@ contains
   end function stamp 
 
   ! ..............................................  not_used_here  .....
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
-    print *, not_used_here ! .mod files sometimes change if PRINT is added
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.79  2009/06/23 18:25:43  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.78  2009/06/16 17:22:42  pwagner
 ! With outputOptions may make outputted arrays look like text Climatology file
 !
