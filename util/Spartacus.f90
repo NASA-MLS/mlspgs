@@ -514,7 +514,7 @@ program Spartacus
 
   if ( options%verbose ) then
     call TimeStamp ( '   Finished', advance='yes' )
-    call dump( CmdNiceTids, 'CmdNiceTids', trim=.true. )
+    call dump( CmdNiceTids, 'CmdNiceTids', options='t' )
     call dump( CmdTids, 'CmdTids' )
     call dump( machines%tid, 'machines%Tid', format='(i8)' )
   endif
@@ -1192,6 +1192,9 @@ contains
 end program Spartacus
 
 ! $Log$
+! Revision 1.3  2008/10/24 23:16:04  pwagner
+! May check each cmd against corresponding line in rslts file for crash
+!
 ! Revision 1.2  2008/04/22 17:59:26  pwagner
 ! Hope we fixed the bug freeing the same wrong host over and over
 !
