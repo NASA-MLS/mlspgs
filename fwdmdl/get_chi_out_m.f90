@@ -180,18 +180,22 @@ contains
 
   end subroutine Get_Chi_Out
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module Get_Chi_Out_m
 
 ! $Log$
+! Revision 2.21  2009/06/23 18:26:11  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.20  2008/07/31 17:57:54  vsnyder
 ! Make some arguments optional
 !
