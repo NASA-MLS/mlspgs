@@ -661,19 +661,22 @@ contains ! =====     Public Procedures     =============================
 
 ! =====     Private Procedures     =====================================
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
   character (len=len(idParm)) :: Id = idParm
-!---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
-    print *, not_used_here ! .mod files sometimes change if PRINT is added
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module PFAData_m
 
 ! $Log$
+! Revision 2.27  2009/06/23 18:46:18  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.26  2008/09/04 20:00:28  vsnyder
 ! Add PRINT statement in not_used_here
 !

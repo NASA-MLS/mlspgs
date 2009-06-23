@@ -21,7 +21,7 @@ module vGrid                    ! Definitions for vGrids in vector quantities
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
 ! -----     Private declarations     ---------------------------------
@@ -503,20 +503,23 @@ contains ! =====     Public Procedures     =============================
     end do
   end function CHECK_UNITS
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
-    print *, not_used_here ! .mod files sometimes change if PRINT is added
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module vGrid
 
 !
 ! $Log$
+! Revision 2.27  2009/06/23 18:46:19  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.26  2009/06/04 20:37:23  vsnyder
 ! Make start, stop, number fields arrays for linear grids
 !
