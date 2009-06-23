@@ -97,7 +97,8 @@ contains ! =====     Public Procedures     =============================
       & PENALTY_FOR_NO_METADATA, SPECIALDUMPFILE, SKIPDIRECTWRITES, TOOLKIT
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
     use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, MLSPCF_L2GP_END, &
-      & MLSPCF_L2GP_START, mlspcf_l2dgg_start, mlspcf_l2dgg_end
+      & MLSPCF_L2GP_START, MLSPCF_L2DGG_START, MLSPCF_L2DGG_END, &
+      & MLSPCF_L2CLIM_START, MLSPCF_L2CLIM_END
     use MLSStringLists, only: Intersection, switchDetail, unquote
     use MLSStrings, only: trim_safe
     use MoreTree, only: Get_Spec_ID, GET_BOOLEAN
@@ -413,6 +414,19 @@ contains ! =====     Public Procedures     =============================
             call MLSMessage(MLSMSG_Error, ModuleName, &
               & 'No entry in filedatabase for ' // trim(inputPhysicalFilename) )
           endif
+        case ( l_l2cf ) ! --------------------- Copying l2gp files -----
+          call returnFullFileName(inputfile_base, inputPhysicalFilename, &
+            & mlspcf_l2clim_start, mlspcf_l2clim_end)
+          ! inputFile => GetMLSFileByName(filedatabase, inputPhysicalFilename)
+          inputFile => AddInitializeMLSFile( filedatabase, &
+              & content='mlsl2.ident', &
+              & name=inputPhysicalFilename, shortName=inputfile_base, &
+              & type=l_ascii, access=DFACC_RDWR, &
+              & PCBottom=mlspcf_l2clim_start, PCTop=mlspcf_l2clim_end )
+          if ( .not. associated(inputFile) ) then
+            call MLSMessage(MLSMSG_Error, ModuleName, &
+              & 'No entry in filedatabase for ' // trim(inputPhysicalFilename) )
+          endif
         case default
         end select
 
@@ -432,9 +446,14 @@ contains ! =====     Public Procedures     =============================
           formattype = l_hdf
           ! Note that we haven't yet implemented repair stuff for l2aux
           ! So crashed chunks remain crashed chunks
-          call cpL2AUXData(inputFile, &
-            & outputFile, create2=create, &
-            & sdList=trim(sdList))
+          if ( input_type /= output_type ) then
+            ! So far we only allow copying l2cf types, i.e. text files
+            call CopyTextFileToHDF ( file_base, DEBUG, filedatabase, inputFile )
+          else
+            call cpL2AUXData(inputFile, &
+              & outputFile, create2=create, &
+              & sdList=trim(sdList))
+          endif
         case ( l_l2gp, l_l2dgg ) ! --------------------- Copying l2gp files -----
           formattype = l_swath
           ! How to use swaths field? See definition of sdList
@@ -544,7 +563,7 @@ contains ! =====     Public Procedures     =============================
         ! Otherwise--normal output commands
         select case ( output_type )
         case ( l_l2cf ) ! ------------------------------ Writing l2cf file ---
-          call OutputL2CF ( file_base, DEBUG, filedatabase )
+          call CopyTextFileToHDF ( file_base, DEBUG, filedatabase )
           cycle
 
         case ( l_l2gp ) ! --------------------- Writing l2gp files -----
@@ -1113,9 +1132,10 @@ contains ! =====     Public Procedures     =============================
     end if
   end subroutine OutputL2AUX
 
-  ! ---------------------------------------------  OutputL2CF  -----
-  subroutine OutputL2CF ( fileName, DEBUG, filedatabase )
-    ! Do the work of outputting the l2cf to a named file
+  ! ---------------------------------------------  CopyTextFileToHDF  -----
+  subroutine CopyTextFileToHDF ( fileName, DEBUG, filedatabase, inputFile )
+    ! Do the work of copying the text file to a named file
+    ! If inputFile omitted, copy the l2cf
     use Intrinsic, only: l_hdf
     use MLSCommon, only: MLSFile_T, FileNameLen
     use MLSL2Options, only: checkPaths, TOOLKIT
@@ -1129,6 +1149,7 @@ contains ! =====     Public Procedures     =============================
     character(len=*), intent(inout)         :: fileName ! according to l2cf
     logical, intent(in)                     :: DEBUG ! Print lots?
     type(MLSFile_T), dimension(:), pointer  :: filedatabase
+    type(MLSFile_T), optional, pointer      :: inputFile
     ! Internal variables
     type(MLSFile_T), pointer                :: MLSL2CF
     integer                                 :: status
@@ -1142,16 +1163,20 @@ contains ! =====     Public Procedures     =============================
     integer :: Version
     ! Executable
     nullify ( MLSL2CF )
-    MLSL2CF => GetMLSFileByType(filedatabase, content='l2cf')
+    if ( present(inputFile) ) then
+      MLSL2CF => inputFile
+    else
+      MLSL2CF => GetMLSFileByType(filedatabase, content='l2cf')
+    endif
     if ( .not. associated(MLSL2CF) ) then
       call MLSMessage(MLSMSG_Warning, ModuleName, &
-        & 'Unable to write dataset--no entry in filedatabase for l2cf' )
+        & 'Unable to write dataset--no entry in filedatabase for text file' )
       return
     endif
     if ( MLSL2CF%stillOpen ) call mls_closeFile( MLSL2CF, status )
     if ( MLSL2CF%name == '<STDIN>' ) then
       call MLSMessage(MLSMSG_Warning, ModuleName, &
-        & 'Unable to write dataset--stdin has been used for l2cf' )
+        & 'Unable to write dataset--stdin has been used for text file' )
       return
     endif
     Version = 1
@@ -1171,7 +1196,7 @@ contains ! =====     Public Procedures     =============================
     end if
 
     if ( returnStatus == 0 .and. .not. checkPaths ) then
-      ! Open the HDF file and write l2cf
+      ! Open the HDF file and write text file
       outputFile => GetMLSFileByName(filedatabase, FullFilename)
       if ( .not. associated(outputFile) ) then
         if(DEBUG) call MLSMessage(MLSMSG_Warning, ModuleName, &
@@ -1183,11 +1208,11 @@ contains ! =====     Public Procedures     =============================
           & PCBottom=mlspcf_l2dgm_start, PCTop=mlspcf_l2dgm_end)
       endif
       if ( .not. outputFile%stillOpen ) call mls_openFile( outputFile, status )
-      call SaveAsHDF5DS ( MLSL2CF%name, outputFile%FileID%f_id, 'l2cf', &
-        & maxLineLen=4096 )
+      call SaveAsHDF5DS ( MLSL2CF%name, outputFile%FileID%f_id, &
+        & trim(MLSL2CF%content), maxLineLen=4096 )
       call mls_closeFile( outputFile, status )
     endif
-  end subroutine OutputL2CF
+  end subroutine CopyTextFileToHDF
 
   ! ---------------------------------------------  OutputL2GP  -----
   subroutine OutputL2GP ( key, fileName, DEBUG, &
@@ -1677,19 +1702,22 @@ contains ! =====     Public Procedures     =============================
     PHASENAMEATTRIBUTES = .true.
   end subroutine unsplitFiles
     
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
-    print *, not_used_here ! .mod files sometimes change if PRINT is added
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.141  2009/06/23 18:45:16  pwagner
+! May copy arbitrary text file into DGM file
+!
 ! Revision 2.140  2009/06/02 17:53:15  cvuu
 ! Add NRT Lat and Lon bounding to metadata
 !
