@@ -672,18 +672,22 @@ contains ! ============================= Local wrappers ======================
     sfwdata_r3 = sfwdata ( sds_id, start, stride, edges, data )
   end function sfwdata_r3
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module Hdf
 
 ! $Log$
+! Revision 2.17  2009/06/23 18:25:42  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.16  2007/06/21 00:49:51  vsnyder
 ! Remove tabs, which are not part of the Fortran standard
 !

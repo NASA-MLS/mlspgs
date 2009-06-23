@@ -122,18 +122,22 @@ contains ! ====     Public Procedures     ==============================
     call MLSMessageCalls( 'pop' )
   end subroutine TRACE_END
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module TRACE_M
 
 ! $Log$
+! Revision 2.17  2009/06/23 18:25:44  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.16  2007/08/13 17:38:42  pwagner
 ! Push named procedures automatically onto new MLSCallStack
 !
