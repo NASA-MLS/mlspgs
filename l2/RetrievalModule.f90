@@ -2770,19 +2770,22 @@ NEWT: do ! Newtonian iteration
 
   end subroutine Retrieve
 
-  logical function NOT_USED_HERE()
-!---------------------------- RCS Ident Info -------------------------------
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
   character (len=*), parameter :: IdParm = &
        "$Id$"
   character (len=len(idParm)) :: Id = idParm
-!---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
-    print *, not_used_here ! .mod files sometimes change if PRINT is added
-  end function NOT_USED_HERE
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
 
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.305  2009/06/23 18:46:18  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.304  2009/06/16 17:40:02  pwagner
 ! Changed api for dump, diff routines; now rely on options for most optional behavior
 !
