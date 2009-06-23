@@ -200,18 +200,22 @@ contains ! ===================================== Public procedures =====
     nullify ( f%values )
   end subroutine NullifyFGrid
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module FGrid
 
 ! $Log$
+! Revision 2.11  2009/06/23 18:46:18  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.10  2009/03/05 16:20:17  pwagner
 ! May now use channel as FGrid coordinate
 !
