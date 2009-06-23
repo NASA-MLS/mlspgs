@@ -1618,7 +1618,7 @@ contains ! =====     Public Procedures     =============================
           quantity%values = quantity%template%time
         case default
           call Announce_error ( key, no_Error_Code, trim(GLStr) // &
-            & 'manipulation not recognized' )
+            & 'geolocation not recognized' )
         end select
 
       case ( l_gphPrecision) ! -------------  GPH precision  -----
@@ -2458,21 +2458,23 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine MLSL2Fill
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
   character (len=len(idParm)) :: Id = idParm
-!---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
-    print *, not_used_here ! .mod files sometimes change if PRINT is added
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
-
+!---------------------------------------------------------------------------
 end module Fill
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.374  2009/06/23 18:46:18  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.373  2009/04/29 23:12:54  pwagner
 ! Manipulation Fills can be restricted by height and heightRange
 !
