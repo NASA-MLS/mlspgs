@@ -779,18 +779,22 @@ contains ! =====  Public procedures  ===================================
     endif
   end function what_options
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module MatrixTools
 
 ! $Log$
+! Revision 1.27  2009/06/16 17:40:19  pwagner
+! Changed api for dump, diff routines; now rely on options for most optional behavior
+!
 ! Revision 1.26  2007/10/05 23:41:06  vsnyder
 ! Don't reference element 1 of a zero-size array
 !

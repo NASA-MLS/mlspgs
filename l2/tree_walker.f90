@@ -601,19 +601,22 @@ subtrees:   do while ( j <= howmany )
 
   end subroutine WALK_TREE_TO_DO_MLS_L2
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
   character (len=len(idParm)) :: Id = idParm
-!---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
-    print *, not_used_here ! .mod files sometimes change if PRINT is added
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.166  2008/12/18 21:12:41  pwagner
+! May now dump an l2pc or allL2PCs (use with caution)
+!
 ! Revision 2.165  2008/09/19 23:56:28  pwagner
 ! May now Destroy GriddedData
 !
