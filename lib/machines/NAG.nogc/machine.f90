@@ -461,18 +461,22 @@ contains
   end function MLS_HOWMANY_GC
 
   ! ----------------------------------------------  not_used_here  -----
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module MACHINE
 
 ! $Log$
+! Revision 1.3  2005/06/22 20:35:55  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 1.2  2004/09/01 01:46:27  vsnyder
 ! Added Paul's version of Crash_Burn
 !

@@ -164,19 +164,23 @@ CONTAINS
   END FUNCTION IEEE_VALUE_S
 
 ! ----------------------------------------------  not_used_here  -----
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 END MODULE IEEE_ARITHMETIC
 
 !
 ! $Log$
+! Revision 1.7  2005/06/22 20:26:22  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 1.6  2005/05/12 20:39:11  pwagner
 ! Made ieee_is_finite elemental
 !
