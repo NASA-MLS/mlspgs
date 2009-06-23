@@ -217,20 +217,24 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
   end subroutine PRINTITOUT
 
 !=======================================================================
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module MLSMessageModule
 !=======================================================================
 
 !
 ! $Log$
+! Revision 2.39  2009/06/23 18:25:42  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.38  2009/06/16 17:10:12  pwagner
 ! Can Capitalize messages in warnings summaries
 !
