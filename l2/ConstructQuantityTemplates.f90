@@ -1255,19 +1255,22 @@ contains ! ============= Public procedures ===================================
     qty%surfs = 0. ! We used to have impossible values for bnd. prs.
   end subroutine SetupEmptyVGridForQuantity
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-  !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
   character (len=len(idParm)) :: Id = idParm
-  !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
-    print *, not_used_here ! .mod files sometimes change if PRINT is added
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.149  2009/06/23 18:46:18  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.148  2009/03/14 02:44:46  honghanh
 ! Add dnwt_count and dnwt_abandoned
 !
