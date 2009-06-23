@@ -252,6 +252,8 @@ contains ! =====     Public Procedures     =============================
     num_retrieval_times = NumStringElements(retrieval_names, countEmpty)
     elem = StringElementNum(section_names, LowerCase(section_name), countEmpty)
     if ( elem < 1 .or. elem > num_section_times ) then
+      print *, 'elem ', elem
+      print *, 'num_section_times ', num_section_times
       call MLSMessage ( MLSMSG_Error, moduleName, &
       & 'Unable to find section name ' // section_name // &
       & ' among list ' // section_names // ',' // retrieval_names )
@@ -871,20 +873,24 @@ contains ! =====     Public Procedures     =============================
     endif
   end subroutine announce_phase
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 END MODULE MLSL2Timings
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.41  2009/06/23 18:46:18  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.40  2007/09/06 23:32:47  pwagner
 ! Fixed repeated phase name bug in Info component of MLSMessageConfig
 !
