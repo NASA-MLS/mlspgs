@@ -919,18 +919,22 @@ contains ! =================================== Public procedures
     if ( toggle(gen) ) call trace_end ( "wmoTropFromGrid" )
   end function wmoTropFromGrid
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.38  2009/06/23 18:46:18  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.37  2008/06/06 22:52:53  pwagner
 ! EssentiallyEqual moved to MLSFillValues
 !
