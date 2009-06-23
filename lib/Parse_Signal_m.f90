@@ -657,18 +657,22 @@ o:  do
 
   end subroutine Parse_Signal
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module Parse_Signal_M
 
 ! $Log$
+! Revision 2.25  2009/06/23 18:25:42  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.24  2006/07/29 01:36:33  vsnyder
 ! Put the arguments to [de]Allocate_Test in the correct order
 !
