@@ -61,20 +61,24 @@ module MLSKinds                 ! Kind type parameters for the MLS software
 
 contains
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module MLSKinds
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.2  2009/06/23 18:25:42  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.1  2005/10/19 22:52:47  vsnyder
 ! Initial commit -- move kinds here from MLSCommon
 !
