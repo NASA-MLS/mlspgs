@@ -329,17 +329,21 @@ contains
 
   end subroutine Get_Chi_Angles_Simple_Deriv
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module Get_Chi_Angles_m
 ! $Log$
+! Revision 2.19  2009/05/13 20:03:01  vsnyder
+! Get constants from Constants, kinds from MLSKinds
+!
 ! Revision 2.18  2008/05/20 00:18:46  vsnyder
 ! Separate angles from angles-and-derivatives
 !

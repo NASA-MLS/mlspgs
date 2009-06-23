@@ -299,18 +299,22 @@ outer2: do
     end if
   end subroutine Dump_Pointing_Grid_Database
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module PointingGrid_m
 
 ! $Log$
+! Revision 2.10  2007/10/03 23:58:26  vsnyder
+! Add 'where' for tracing
+!
 ! Revision 2.9  2007/05/23 22:40:20  vsnyder
 ! Change tracing level of Read_Pointing_Grid_File from zero to one
 !

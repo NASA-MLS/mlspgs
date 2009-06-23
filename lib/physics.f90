@@ -37,17 +37,21 @@ module PHYSICS
   private :: not_used_here 
 !---------------------------------------------------------------------------
 contains 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module PHYSICS
 ! $Log$
+! Revision 2.7  2007/12/19 04:01:38  vsnyder
+! Get R8 and RP from MLSKinds instead of MLSCommon
+!
 ! Revision 2.6  2007/12/19 03:59:39  vsnyder
 ! Get LN10 from Constants instead of from Units
 !

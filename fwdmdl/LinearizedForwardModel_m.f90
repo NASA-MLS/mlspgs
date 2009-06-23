@@ -1113,18 +1113,22 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine LinearizedForwardModelAuto
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.71  2009/04/20 18:44:27  pwagner
+! Needed changes when identical types with different names allowed in L2PC files
+!
 ! Revision 2.70  2008/10/03 16:39:29  livesey
 ! Bug fix with EXTINCTIONV2
 !

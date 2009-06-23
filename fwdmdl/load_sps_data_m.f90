@@ -562,19 +562,22 @@ contains
 
   end subroutine Dump_Grids
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
-    print *, not_used_here ! .mod files sometimes change if PRINT is added
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.73  2009/05/13 20:03:02  vsnyder
+! Get constants from Constants, kinds from MLSKinds
+!
 ! Revision 2.72  2009/01/16 23:38:32  vsnyder
 ! Correct problem with absent molecules.  Dump angles in degrees.  Add
 ! PRINT statement to not_used_here.

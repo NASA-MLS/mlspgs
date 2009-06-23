@@ -23,8 +23,9 @@ module NRM2_M ! From Math77, converted to Fortran 90
   end interface
 
 !---------------------------- RCS Module Info ------------------------------
-  character (len=*), private, parameter :: ModuleName="$RCSfile$"
-  private :: not_used_here
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
 contains
@@ -48,15 +49,19 @@ contains
   end function DNRM2
 
 !=======================================================================
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module NRM2_M
 
 ! $Log$
+! Revision 1.1  2006/03/22 02:04:28  vsnyder
+! Initial commit
+!

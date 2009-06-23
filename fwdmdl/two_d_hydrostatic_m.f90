@@ -113,18 +113,22 @@ module Two_D_Hydrostatic_m
 
   end subroutine Two_D_Hydrostatic
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module Two_D_Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.17  2009/05/13 20:03:02  vsnyder
+! Get constants from Constants, kinds from MLSKinds
+!
 ! Revision 2.16  2007/01/17 23:51:00  vsnyder
 ! Make dhidtlm optional
 !

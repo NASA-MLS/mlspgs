@@ -93,15 +93,12 @@ contains
     character(len=*), intent(in), optional :: FILE
 
     integer :: L
-!    character(len=127) :: MSG           ! From the Lahey IOSTAT_MSG intrinsic
 
     write (*,*) message(:len_trim(message))
     if ( present(file) ) then
       l = len_trim(file)
       write (*,*) file(:l)
     end if
-!    call iostat_msg (iostat, msg)       ! Lahey intrinsic
-!    write (*,*) msg(:len_trim(msg))     ! Print the error message
     write (*,*) 'Error status code =', iostat
     return
   end subroutine IO_ERROR_
@@ -193,6 +190,9 @@ contains
 end module MACHINE
 
 ! $Log$
+! Revision 1.4  2005/06/22 20:26:22  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 1.3  2005/03/04 21:41:16  pwagner
 ! Expedient until system command available
 !

@@ -257,18 +257,22 @@ contains
 
   end subroutine DSCRT_DX
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
-    print *, not_used_here ! .mod files sometimes change if PRINT is added
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module SCRT_DN_M
 ! $Log$
+! Revision 2.13  2009/01/16 23:40:03  vsnyder
+! Correct case of starting point on path past the tangent point.
+! add PRINT statement to not_used_here.
+!
 ! Revision 2.12  2006/12/13 02:32:03  vsnyder
 ! Drag the tangent point around instead of assuming it's the middle one
 !

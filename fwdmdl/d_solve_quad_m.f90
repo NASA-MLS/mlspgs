@@ -32,18 +32,22 @@ contains
     include 'solve_quad.f9h'
   end subroutine D_SOLVE_QUAD
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module D_SOLVE_QUAD_M
 
 ! $Log$
+! Revision 2.3  2005/06/22 18:08:18  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.2  2002/10/16 01:37:11  vsnyder
 ! Move a parameter from module scope to procedure scope
 !

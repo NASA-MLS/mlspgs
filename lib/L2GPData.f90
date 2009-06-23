@@ -4923,15 +4923,15 @@ contains
   end subroutine writeL2GPData_MLSFile
 
 !=============================================================================
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
-    print *, not_used_here ! .mod files sometimes change if PRINT is added
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 !=============================================================================
 end module L2GPData
@@ -4939,6 +4939,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.166  2009/06/16 17:21:08  pwagner
+! Changed api for dump, diff routines; now rely on options for most optional behavior
+!
 ! Revision 2.165  2009/06/02 17:49:17  cvuu
 ! Write NRT Lat and Lon to L2Metadata
 !

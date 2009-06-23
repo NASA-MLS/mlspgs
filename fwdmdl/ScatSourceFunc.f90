@@ -373,18 +373,22 @@ contains
 
   end subroutine Convert_grid
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module ScatSourceFunc
 
 ! $Log$
+! Revision 2.16  2009/05/13 20:03:01  vsnyder
+! Get constants from Constants, kinds from MLSKinds
+!
 ! Revision 2.15  2007/10/02 22:32:45  vsnyder
 ! Modernization: No shared-do-term statements
 !

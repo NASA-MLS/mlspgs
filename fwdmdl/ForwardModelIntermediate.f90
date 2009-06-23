@@ -41,18 +41,22 @@ module ForwardModelIntermediate
 
 contains
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module ForwardModelIntermediate
 
 ! $Log$
+! Revision 2.9  2007/07/25 20:11:17  vsnyder
+! Delete USE for unreferenced entities
+!
 ! Revision 2.8  2007/06/29 19:32:42  vsnyder
 ! Make ForwardModelIntermediate_t private to ScanModelModule
 !

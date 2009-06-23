@@ -406,18 +406,22 @@ contains
 
   end subroutine Mcrt_Der
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module MCRT_m
 
 ! $Log$
+! Revision 2.22  2006/12/13 02:32:03  vsnyder
+! Drag the tangent point around instead of assuming it's the middle one
+!
 ! Revision 2.21  2006/04/21 22:10:37  vsnyder
 ! Spiff TeXnicalities, delete unused computations, some optimizations
 !

@@ -161,19 +161,22 @@ contains
 
   end function gph_to_geom
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
-    print *, not_used_here ! .mod files sometimes change if PRINT is added
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module heights_module
 
 ! $Log$
+! Revision 2.6  2009/05/13 20:40:05  vsnyder
+! Get constants from Constants, kinds from MLSKinds
+!
 ! Revision 2.5  2006/09/28 20:39:22  vsnyder
 ! Correct singularity in lat_geod_to_geoc
 !

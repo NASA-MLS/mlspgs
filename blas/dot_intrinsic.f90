@@ -82,18 +82,22 @@ contains
     mdsdot = dot_product(x(1:1+(n-1)*incx:incx), y(1:1+(n-1)*incy:incy))
   end function MDSDOT
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module Dot_M
 
 ! $Log$
+! Revision 1.7  2005/06/22 19:45:19  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 1.6  2002/10/10 23:48:57  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !

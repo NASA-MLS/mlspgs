@@ -1110,19 +1110,23 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
   end subroutine FullCloudForwardModelWrapper
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.140  2009/05/13 20:10:20  vsnyder
+! Move USE from module scope, get constants from Constants, kinds from MLSKINDS
+!
 ! Revision 1.139  2008/10/03 21:04:26  livesey
 ! Added fixes to support EXTINCTIONV2 stuff
 !

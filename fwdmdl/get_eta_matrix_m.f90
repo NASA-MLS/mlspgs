@@ -1127,19 +1127,22 @@ contains
 
 !=========================================================================
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
-    print *, not_used_here ! .mod files sometimes change if PRINT is added
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module Get_Eta_Matrix_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.21  2009/04/17 22:41:26  vsnyder
+! Repair bug when n_grid == 1
+!
 ! Revision 2.20  2009/01/16 23:44:15  vsnyder
 ! Add Dump_Eta_Column_Sparse.  Double-check whether things are sorted.
 ! Corrections to sparse calculations.

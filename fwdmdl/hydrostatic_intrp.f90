@@ -224,17 +224,21 @@ contains
 
   end subroutine COMPUTE_COEFF
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module HYDROSTATIC_INTRP
 ! $Log$
+! Revision 2.5  2006/11/30 23:20:57  vsnyder
+! Move a USE from module scope to subprogram scope
+!
 ! Revision 2.4  2005/06/22 18:08:19  pwagner
 ! Reworded Copyright statement, moved rcs id
 !

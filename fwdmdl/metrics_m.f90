@@ -1102,19 +1102,22 @@ path: do i = i1, i2
 
   end subroutine More_Points
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
-    print *, not_used_here ! .mod files sometimes change if PRINT is added
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module Metrics_m
 
 ! $Log$
+! Revision 2.61  2009/06/16 17:37:26  pwagner
+! Changed api for dump, diff routines; now rely on options for most optional behavior
+!
 ! Revision 2.60  2009/06/13 01:14:29  vsnyder
 ! Extensive changes almost everywhere.  Correct many problems with
 ! Earth-reflecting rays.

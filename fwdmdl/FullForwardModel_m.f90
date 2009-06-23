@@ -3841,19 +3841,22 @@ contains
   end subroutine Estimate_Tan_Phi
 
 ! ------------------------------------------------  not_used_here  -----
-  logical function NOT_USED_HERE()
-!------------------------------ RCS Ident Info -------------------------------
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
   character (len=*), parameter :: IdParm = &
-    & "$Id$"
-  character (len=len(idParm)) :: Id = IdParm
-!------------------------------------------------------------------------------
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
-    print *, not_used_here ! .mod files sometimes change if PRINT is added
-  end function NOT_USED_HERE
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
 
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.294  2009/06/16 17:38:17  pwagner
+! Changed api for dump, diff routines; now rely on options for most optional behavior
+!
 ! Revision 2.293  2009/06/13 01:15:03  vsnyder
 ! Intermediate commit of extensive changes for TScat calculation
 !

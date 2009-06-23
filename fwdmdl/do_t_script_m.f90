@@ -132,18 +132,22 @@ contains
 
   end subroutine Two_D_T_Script_Cloud
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module DO_T_SCRIPT_M
 
 ! $Log$
+! Revision 2.11  2005/11/01 23:02:21  vsnyder
+! PFA Derivatives
+!
 ! Revision 2.10  2005/06/22 18:08:18  pwagner
 ! Reworded Copyright statement, moved rcs id
 !

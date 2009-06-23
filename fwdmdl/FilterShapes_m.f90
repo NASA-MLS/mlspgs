@@ -540,18 +540,22 @@ contains
     call MLSMessage ( MLSMSG_Error, moduleName, "Input error" )
   end subroutine Read_A_Line
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module FilterShapes_m
 
 ! $Log$
+! Revision 2.24  2007/10/11 20:05:03  vsnyder
+! Use correct loop bounds when destroying DACSfilterShapes
+!
 ! Revision 2.23  2007/10/03 23:58:26  vsnyder
 ! Add 'where' for tracing
 !

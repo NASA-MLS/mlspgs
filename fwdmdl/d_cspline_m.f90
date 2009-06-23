@@ -33,17 +33,21 @@ contains
     include 'cspline.f9h'
   end subroutine D_CSPLINE
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module D_CSPLINE_M
 ! $Log$
+! Revision 2.5  2005/06/22 18:08:18  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.4  2002/10/14 20:51:53  vsnyder
 ! Repair CVS stuff broken before previous commit
 !

@@ -147,19 +147,22 @@ contains
 
   end subroutine Get_Species_Data
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
-    print *, not_used_here ! .mod files sometimes change if PRINT is added
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module Get_Species_Data_m
 
 ! $Log$
+! Revision 2.31  2008/10/01 21:01:54  vsnyder
+! Require state vector to include all molecules; 2.30 was a bad idea
+!
 ! Revision 2.30  2006/04/05 21:46:44  vsnyder
 ! Allow state vector not to include all molecules
 !

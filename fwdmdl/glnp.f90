@@ -45,18 +45,22 @@ module GLNP
 !---------------------------------------------------------------------------
 
 contains 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module GLNP
 
 ! $Log$
+! Revision 2.6  2006/06/29 19:31:21  vsnyder
+! Inching toward Lobatto
+!
 ! Revision 2.5  2006/06/16 20:32:31  vsnyder
 ! Define NGP1 in glnp
 !

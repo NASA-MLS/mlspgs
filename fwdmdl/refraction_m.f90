@@ -599,19 +599,22 @@ contains
 
 !------------------------------------------------------------------
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
-    print *, not_used_here ! .mod files sometimes change if PRINT is added
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module REFRACTION_M
 
 ! $Log$
+! Revision 2.37  2009/06/13 01:08:51  vsnyder
+! Improve comments about dummy arguments
+!
 ! Revision 2.36  2009/01/16 23:42:04  vsnyder
 ! Don't need to set all of Del_s to zero initially because all but 1 and
 ! no_ele get set anyway.  Add PRINT statement to not_used_here.

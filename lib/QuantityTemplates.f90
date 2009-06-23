@@ -950,21 +950,24 @@ contains ! =====     Public Procedures     =============================
   end subroutine SetupNewQuantityTemplate
 
 !=============================================================================
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
-    print *, not_used_here ! .mod files sometimes change if PRINT is added
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module QuantityTemplates
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.52  2008/09/30 22:28:03  vsnyder
+! Remove AuxGrids -- didn't need them after all
+!
 ! Revision 2.51  2008/06/06 01:54:08  vsnyder
 ! Aux grids have to be vGrids, not indices in vGridsDatabase, else clients
 ! will have to have the database.

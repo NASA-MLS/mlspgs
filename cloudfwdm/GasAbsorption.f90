@@ -330,18 +330,22 @@ contains
        return
        end function myshape
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module GasAbsorption
 
 ! $Log$
+! Revision 1.26  2007/07/25 22:08:04  vsnyder
+! Replace tabs by spaces because tabs are not standard
+!
 ! Revision 1.25  2007/07/25 21:59:39  vsnyder
 ! Move USE from module scope to procedure scope
 !

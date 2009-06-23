@@ -870,18 +870,22 @@ contains
 
       END SUBROUTINE CloudForwardModel
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.71  2008/10/03 21:04:26  livesey
+! Added fixes to support EXTINCTIONV2 stuff
+!
 ! Revision 1.70  2007/07/25 21:58:53  vsnyder
 ! Delete declaration for unused variable
 !

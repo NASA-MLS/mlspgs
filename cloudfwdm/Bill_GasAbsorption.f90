@@ -155,18 +155,22 @@ contains
 
   end subroutine get_beta_bill 
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-  !---------------------------- RCS Ident Info -------------------------------
-    character (len=*), parameter :: IdParm = &
-    "$Id$"
-    character (len=len(idParm)) :: Id = IdParm
-  !---------------------------------------------------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module Bill_GasAbsorption
 
 ! $Log$
+! Revision 1.31  2008/10/03 21:04:26  livesey
+! Added fixes to support EXTINCTIONV2 stuff
+!
 ! Revision 1.30  2005/06/09 02:34:27  vsnyder
 ! Move stuff from l2pc_pfa_structures to slabs_sw_m
 !

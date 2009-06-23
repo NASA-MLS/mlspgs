@@ -143,18 +143,22 @@ contains
 
       END SUBROUTINE MODEL_ATMOS
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module ModelInput
 
 ! $Log$
+! Revision 1.16  2005/06/22 18:27:38  pwagner
+! Cant have access declared outside module scope
+!
 ! Revision 1.15  2003/05/14 23:29:13  dwu
 ! fix a dimension problem with locate
 !

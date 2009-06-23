@@ -37,16 +37,20 @@ subroutine testfield ( h, ct, stcp, stsp)
     stsp=0.707
 end subroutine testfield
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 end module testfield_m
 ! $Log$
+! Revision 2.2  2005/06/22 18:08:20  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.1  2003/05/05 23:00:26  livesey
 ! Merged in feb03 newfwm branch
 !

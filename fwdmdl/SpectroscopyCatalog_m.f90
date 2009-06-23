@@ -1452,19 +1452,22 @@ contains ! =====  Public Procedures  ===================================
   end subroutine Write_Spectroscopy 
 
 ! ------------------------------------------------  not_used_here  -----
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
-    print *, not_used_here ! .mod files sometimes change if PRINT is added
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.46  2008/09/03 20:07:28  pwagner
+! Fixed bug in writeSpectroscopy
+!
 ! Revision 2.45  2008/05/02 00:45:48  vsnyder
 ! Remove unused symbols
 !

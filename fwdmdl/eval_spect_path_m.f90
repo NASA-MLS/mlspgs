@@ -126,18 +126,22 @@ contains
 
 !---------------------------------------------------------------------
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module Eval_Spect_Path_m
 !
 ! $Log$
+! Revision 2.10  2007/06/06 01:16:27  vsnyder
+! Tell get_eta_matrix that the grid is sorted
+!
 ! Revision 2.9  2005/06/22 18:08:18  pwagner
 ! Reworded Copyright statement, moved rcs id
 !

@@ -187,18 +187,22 @@ contains
 
   end subroutine Freq_Avg_Setup
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module Freq_Avg_m
 
 ! $Log$
+! Revision 2.14  2006/04/25 23:25:37  vsnyder
+! Revise DACS filter shape data structure
+!
 ! Revision 2.13  2005/10/24 20:24:55  vsnyder
 ! Insert Euler-Maclaurin idea as a comment.  Why doesn't it work?
 !

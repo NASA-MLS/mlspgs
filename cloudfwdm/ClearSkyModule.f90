@@ -200,18 +200,22 @@ contains
 
       END SUBROUTINE CLEAR_SKY
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module ClearSkyModule
 
 ! $Log$
+! Revision 1.26  2008/10/03 21:04:26  livesey
+! Added fixes to support EXTINCTIONV2 stuff
+!
 ! Revision 1.25  2005/06/22 18:27:38  pwagner
 ! Cant have access declared outside module scope
 !

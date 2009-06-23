@@ -234,6 +234,9 @@ end module Inf_NaN_Detection
 
 !
 ! $Log$
+! Revision 1.3  2005/06/22 20:26:22  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 1.2  2004/03/29 18:49:56  pwagner
 ! Fixed buggy Lahey NaN detection
 !

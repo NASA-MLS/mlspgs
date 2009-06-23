@@ -236,19 +236,22 @@ contains
   end subroutine Get_GL_inds
 
 !-----------------------------------------------------------------------
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
-    print *, not_used_here ! .mod files sometimes change if PRINT is added
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module Path_Contrib_M
 
 ! $Log$
+! Revision 2.22  2009/06/13 01:11:07  vsnyder
+! Specify start and end of path
+!
 ! Revision 2.21  2007/12/04 01:56:41  vsnyder
 ! Don't bother with earth reflectivity after black out
 !

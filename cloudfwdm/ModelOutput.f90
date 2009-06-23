@@ -212,18 +212,22 @@ contains
 
       END SUBROUTINE SENSITIVITY
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module ModelOutput
 
 ! $Log$
+! Revision 1.19  2007/07/25 22:00:12  vsnyder
+! Delete USE for unreferenced entity and declarations for unused variables
+!
 ! Revision 1.18  2005/06/22 18:27:38  pwagner
 ! Cant have access declared outside module scope
 !

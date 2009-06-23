@@ -1354,20 +1354,22 @@ contains
     call newLine
   end subroutine Dump_Qty_Stuff
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-
-    !---------------------------- RCS Ident Info -------------------------------
-    character (len=*), parameter :: IdParm = &
-      & "$Id$"
-    character (len=len(idParm)) :: Id = IdParm
-    !---------------------------------------------------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
-    print *, not_used_here ! .mod files sometimes change if PRINT is added
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.102  2008/08/27 19:56:51  vsnyder
+! Add PRINT to not_used_here
+!
 ! Revision 2.101  2008/07/31 17:39:34  vsnyder
 ! Add PhaseFrqTol to the config
 !

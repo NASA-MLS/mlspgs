@@ -222,18 +222,22 @@ contains
 
       END SUBROUTINE SETUP_SPECTRA
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module SpectraLines
 
 ! $Log$
+! Revision 1.5  2005/06/22 18:27:38  pwagner
+! Cant have access declared outside module scope
+!
 ! Revision 1.4  2002/11/06 18:20:30  jonathan
 ! add N2O
 !

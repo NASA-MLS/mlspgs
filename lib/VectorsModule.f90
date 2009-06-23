@@ -2599,21 +2599,24 @@ contains ! =====     Public Procedures     =============================
     end do
   end subroutine
 !=======================================================================
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
-    print *, not_used_here ! .mod files sometimes change if PRINT is added
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module VectorsModule
 !=======================================================================
 
 !
 ! $Log$
+! Revision 2.141  2009/06/16 17:17:55  pwagner
+! Changed api for dump, diff routines; now rely on options for most optional behavior
+!
 ! Revision 2.140  2009/05/08 00:39:07  pwagner
 ! Shows MaskBitNames when dumping Mask bits
 !

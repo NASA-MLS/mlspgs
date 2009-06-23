@@ -2208,18 +2208,21 @@ contains
     ! call dumpDateTime(datetime, 'From utc2datetime')
   end function utc2datetime
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
-    print *, not_used_here ! .mod files sometimes change if PRINT is added
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module dates_module
 ! $Log$
+! Revision 2.19  2009/06/16 17:23:38  pwagner
+! Added tai2ccsds
+!
 ! Revision 2.18  2007/12/19 01:28:46  pwagner
 ! Removed unused variables
 !

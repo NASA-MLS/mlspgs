@@ -321,18 +321,22 @@ module Hydrostatic_m
 
   end subroutine Hydrostatic_No_Der
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
+  character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.20  2007/01/17 23:50:15  vsnyder
+! Exchange dhidzi, dhidtq, make dhidtq optional
+!
 ! Revision 2.19  2006/11/30 23:28:29  vsnyder
 ! Correct some local array sizes
 !
