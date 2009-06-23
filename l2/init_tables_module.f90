@@ -1568,19 +1568,22 @@ contains ! =====     Public procedures     =============================
 
   end subroutine INIT_TABLES
 
+!--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
   character (len=len(idParm)) :: Id = idParm
-!---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
-    print *, not_used_here ! .mod files sometimes change if PRINT is added
+    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.487  2009/06/23 18:46:18  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.486  2009/04/23 23:01:59  pwagner
 ! May specify upperOverlap or lowerOverlap in DirectWrites
 !
