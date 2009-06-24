@@ -22,7 +22,7 @@ module OUTPUT_M
   use MLSSets, only: FindAll, FindFirst
   use MLSStringLists, only: ExpandStringRange, getStringElement, &
     & NumStringElements, wrap
-  use MLSStrings, only: lowerCase, nCopies, writeIntsToChars
+  use MLSStrings, only: lowerCase, nCopies, readIntsFromChars, writeIntsToChars
   implicit none
   private
 
@@ -1371,6 +1371,11 @@ contains
   ! Output INT to PRUNIT using at most PLACES (default zero) places
   ! If 'fill' is present and true, fill leading blanks with zeroes (only
   ! makes sense if 'places' is specified).
+
+  ! Note that we never have places and format specified simultaneously
+  ! we therefore institute the following trick:
+  ! if format is present and contains the string 'PLACES=', the integer
+  ! following the '=' will be taken to be places
     integer, intent(in) :: INT
     integer, intent(in), optional :: PLACES
     character(len=*), intent(in), optional :: ADVANCE
@@ -1383,11 +1388,19 @@ contains
     integer :: I, J
     character(len=12) :: LINE
     integer :: MY_PLACES
+    logical :: formatEncodesPlaces ! Have we used format to encode places?
     my_places = 0
     if ( present(places)  ) then; my_places = places; end if
     my_fill = .false.
     if ( present(places) .and. present(fill) ) my_fill = fill
-    if ( present(format)  ) then
+    formatEncodesPlaces = .false.
+    if ( present(format) ) then
+      if ( index( lowercase(format), 'places=' ) > 0 ) then
+        formatEncodesPlaces = .true.
+        call readIntsFromChars ( format, my_places, ignore='*=' )
+      endif
+    endif
+    if ( present(format) .and. .not. formatEncodesPlaces ) then
       line = ' '
       write ( line, format ) int
       i = 1
@@ -2158,6 +2171,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.80  2009/06/24 22:35:44  pwagner
+! Trick to pass places arg into output via format arg
+!
 ! Revision 2.79  2009/06/23 18:25:43  pwagner
 ! Prevent Intel from optimizing ident string away
 !
