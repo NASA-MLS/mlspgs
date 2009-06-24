@@ -608,80 +608,16 @@ contains
     character(len=*), intent(in), optional :: FORMAT
     integer, intent(in), optional :: LBOUND ! Low bound for Array
     character(len=*), optional, intent(in) :: options
-
-    integer :: Base
-    integer, parameter :: DefaultWidth = 5
-    integer :: J, K, MyWidth
-    double precision :: myFillValue
-    integer :: nUnique
     integer, dimension(MAXNUMELEMENTS) :: counts
     double precision, dimension(MAXNUMELEMENTS) :: elements
+    double precision :: myFillValue
+    integer :: Base, J, K
     character(len=64) :: MyFormat
+    integer :: MyWidth
     integer :: NumZeroRows
-
-    ! Executable
-    call theDumpBegins ( options )
-    myFillValue = 0.d0
-    if ( present(FillValue) ) myFillValue=FillValue
-    if ( myUnique ) then
-      call FindUnique( array, elements, nUnique, counts )
-      if ( nUnique < 2 ) then
-        call output( 'Every value is ', advance='no' )
-        call output( elements(1), advance='yes' )
-      else
-        call output( '    value             counts', advance='yes' )
-        do j=1, nUnique
-          call output( j )
-          call blanks( 3 )
-          call output( elements(j) )
-          call blanks( 3 )
-          call output( counts(j), advance='yes' )
-        enddo
-      endif
-      if ( uniqueonly ( options ) ) return
-    endif
-    include 'dumpstats.f9h'
-    myWidth = defaultWidth
-    if ( present(width) ) myWidth = width
+    integer :: nUnique
     myFormat = sdFormatDefault
-    if ( present(format) ) myFormat = format
-    base = 0
-    if ( present(lbound) ) base = lbound - 1
-
-    numZeroRows = 0
-    if ( size(array) == 0 ) then
-      call empty ( name )
-    else if ( size(array) == 1 .and. base == 0 ) then
-      call name_and_size ( name, myClean, 1 )
-      call output ( array(1), myFormat, advance='yes' )
-    else
-      call name_and_size ( name, myClean, size(array) )
-      if ( present(name) ) call output ( '', advance='yes' )
-      do j = 1, size(array), myWidth
-!         if (.not. myClean) then
-!           call output ( j, max(defaultWidth-1,ilog10(size(array))+1) )
-!           call output ( afterSub )
-!         end if
-!         do k = j, min(j+myWidth-1, size(array))
-!           call output ( array(k), myFormat )
-!         end do
-        if (.not. myClean) then
-          if ( any(array(j:min(j+myWidth-1, size(array))) /= myFillValue) ) then
-            call say_fill ( (/ j-1+base, size(array) /), numZeroRows, myFillValue, inc=1 )
-          else
-            numZeroRows = numZeroRows + 1
-          end if
-        end if
-        if ( myClean .or. any(array(j:min(j+myWidth-1, size(array))) /= myFillValue) ) then
-          do k = j, min(j+myWidth-1, size(array))
-           call output ( array(k), myFormat )
-          end do
-          call output ( '', advance='yes' )
-        endif
-      end do
-      call say_fill ( (/ j-myWidth, size(array) /), numZeroRows, myFillValue )
-    end if
-    call theDumpEnds
+    include 'dump1d.f9h'
   end subroutine DUMP_1D_DOUBLE
 
   ! --------------------------------------------  DUMP_1D_INTEGER  -----
@@ -694,73 +630,16 @@ contains
     integer, intent(in), optional :: WIDTH ! How many numbers per line (10)?
     integer, intent(in), optional :: LBOUND ! Low bound for Array
     character(len=*), optional, intent(in) :: options
-
-    integer :: Base, J, K
-    integer :: MyWidth
-    integer :: NumZeroRows
-
-    integer :: nUnique
     integer, dimension(MAXNUMELEMENTS) :: counts
     integer, dimension(MAXNUMELEMENTS) :: elements
     integer :: myFillValue
-    ! Executable
-    call theDumpBegins ( options )
-    myFillValue = 0
-    if ( present(FillValue) ) myFillValue=FillValue
-    if ( myUnique ) then
-      call FindUnique( array, elements, nUnique, counts )
-      if ( nUnique < 2 ) then
-        call output( 'Every value is ', advance='no' )
-        call output( elements(1), advance='yes' )
-      else
-        call output( '    value             counts', advance='yes' )
-        do j=1, nUnique
-          call output( j )
-          call blanks( 3 )
-          call output( elements(j) )
-          call blanks( 3 )
-          call output( counts(j), advance='yes' )
-        enddo
-      endif
-      if ( uniqueonly ( options ) ) return
-    endif
-    include 'dumpstats.f9h'
-    myWidth = 10
-    if ( present(width) ) myWidth = width
-    base = 0
-    if ( present(lbound) ) base = lbound - 1
-
-    numZeroRows = 0
-    if ( size(array) == 0 ) then
-      call empty ( name )
-    else if ( size(array) == 1 .and. base == 0 ) then
-      call name_and_size ( name, myClean, 1 )
-      call output ( array(1), advance='yes' )
-    else
-      call name_and_size ( name, myClean, size(array) )
-      if ( present(name) ) call output ( '', advance='yes' )
-      do j = 1, size(array), myWidth
-        if (.not. myClean) then
-          if ( any(array(j:min(j+myWidth-1, size(array))) /= myFillValue) ) then
-            call say_fill ( (/ j-1+base, size(array) /), numZeroRows, myFillValue, inc=1 )
-          else
-            numZeroRows = numZeroRows + 1
-          end if
-        end if
-        if ( myClean .or. any(array(j:min(j+myWidth-1, size(array))) /= myFillValue) ) then
-          do k = j, min(j+myWidth-1, size(array))
-            if ( present(format) ) then
-              call output ( array(k), format=format )
-            else
-              call output ( array(k), places=6 )
-            end if
-          end do
-          call output ( '', advance='yes' )
-        end if
-      end do ! j
-      call say_fill ( (/ j-myWidth, size(array) /), numZeroRows, myFillValue )
-    end if
-    call theDumpEnds
+    integer :: Base, J, K
+    character(len=64) :: MyFormat
+    integer :: MyWidth
+    integer :: NumZeroRows
+    integer :: nUnique
+    myFormat = 'places=6' ! To sneak places arg into call to output
+    include 'dump1d.f9h'
   end subroutine DUMP_1D_INTEGER
 
   ! ----------------------------------------------  DUMP_1D_LOGICAL ----
@@ -829,74 +708,16 @@ contains
     character(len=*), intent(in), optional :: FORMAT
     integer, intent(in), optional :: LBOUND ! Low bound for Array
     character(len=*), optional, intent(in) :: options
-
-    integer :: Base
-    integer, parameter :: DefaultWidth = 5
-    integer :: J, K, MyWidth
-    character(len=64) :: MyFormat
-    integer :: NumZeroRows
-
-    real :: myFillValue
-    integer :: nUnique
     integer, dimension(MAXNUMELEMENTS) :: counts
     real, dimension(MAXNUMELEMENTS) :: elements
-    ! Executable
-    call theDumpBegins ( options )
-    myFillValue = 0.
-    if ( present(FillValue) ) myFillValue=FillValue
-    if ( myUnique ) then
-      call FindUnique( array, elements, nUnique, counts )
-      if ( nUnique < 2 ) then
-        call output( 'Every value is ', advance='no' )
-        call output( elements(1), advance='yes' )
-      else
-        call output( '    value             counts', advance='yes' )
-        do j=1, nUnique
-          call output( j )
-          call blanks( 3 )
-          call output( elements(j) )
-          call blanks( 3 )
-          call output( counts(j), advance='yes' )
-        enddo
-      endif
-      if ( uniqueonly ( options ) ) return
-    endif
-    include 'dumpstats.f9h'
-
-    myWidth = defaultWidth
-    if ( present(width) ) myWidth = width
+    real :: myFillValue
+    integer :: Base, J, K
+    character(len=64) :: MyFormat
+    integer :: MyWidth
+    integer :: NumZeroRows
+    integer :: nUnique
     myFormat = sdFormatDefault
-    if ( present(format) ) myFormat = format
-    base = 0
-    if ( present(lbound) ) base = lbound - 1
-
-    numZeroRows = 0
-    if ( size(array) == 0 ) then
-      call empty ( name )
-    else if ( size(array) == 1 .and. base == 0 ) then
-      call name_and_size ( name, myClean, 1 )
-      call output ( array(1), myFormat, advance='yes' )
-    else
-      call name_and_size ( name, myClean, size(array) )
-      if ( present(name) ) call output ( '', advance='yes' )
-      do j = 1, size(array), myWidth
-        if (.not. myClean) then
-          if ( any(array(j:min(j+myWidth-1, size(array))) /= myFillValue) ) then
-            call say_fill ( (/ j-1+base, size(array) /), numZeroRows, myFillValue, inc=1 )
-          else
-            numZeroRows = numZeroRows + 1
-          end if
-        end if
-        if ( myClean .or. any(array(j:min(j+myWidth-1, size(array))) /= myFillValue) ) then
-          do k = j, min(j+myWidth-1, size(array))
-           call output ( array(k), myFormat )
-          end do
-          call output ( '', advance='yes' )
-        endif
-      end do
-      call say_fill ( (/ j-myWidth, size(array) /), numZeroRows, myFillValue )
-    end if
-    call theDumpEnds
+    include 'dump1d.f9h'
   end subroutine DUMP_1D_REAL
 
   ! -----------------------------------------------  DUMP_2D_CHAR  -----
@@ -1135,90 +956,8 @@ contains
     integer :: nUnique
     integer, dimension(MAXNUMELEMENTS) :: counts
     double precision, dimension(MAXNUMELEMENTS) :: elements
-    ! Executable
-    call theDumpBegins ( options )
-
-    myFillValue = 0.0d0
-    if ( present(FillValue) ) myFillValue = FillValue
-    if ( myUnique ) then
-      call FindUnique( reshape( array, (/ product(shape(array)) /) ), &
-        & elements, nUnique, counts )
-      if ( nUnique < 2 ) then
-        call output( 'Every value is ', advance='no' )
-        call output( elements(1), advance='yes' )
-      else
-        call output( '    value             counts', advance='yes' )
-        do j=1, nUnique
-          call output( j )
-          call blanks( 3 )
-          call output( elements(j) )
-          call blanks( 3 )
-          call output( counts(j), advance='yes' )
-        enddo
-      endif
-      if ( uniqueonly ( options ) ) return
-    endif
-    include 'dumpstats.f9h'
-
     myFormat = sdFormatDefault
-    if ( present(format) ) myFormat = format
-
-    numZeroRows = 0
-    if ( size(array) == 0 ) then
-      call empty ( name )
-    else if ( size(array) == 1 ) then
-      call name_and_size ( name, myClean, 1 )
-      call output ( array(1,1), myFormat, advance='yes' )
-    else if ( size(array,2) == 1 ) then
-      call dump ( array(:,1), name, options=options )
-    else
-      call name_and_size ( name, myClean, size(array) )
-      if ( .not. myTranspose ) then
-        if ( present(name) ) call output ( '', advance='yes' )
-        do i = 1, size(array,1)
-          do j = 1, size(array,2), 5
-            if (.not. myClean) then
-              if ( any(array(i,j:min(j+4, size(array,2))) /= myFillValue) ) then
-                call say_fill ( (/ i, size(array,1), j-1, size(array,2) /), &
-                  & numZeroRows, myFillValue, inc=3 )
-              else
-                numZeroRows = numZeroRows + 1
-              end if
-            end if
-            if ( myClean .or. any(array(i,j:min(j+4, size(array,2))) /= myFillValue) ) then
-              do k = j, min(j+4, size(array,2))
-                call output ( array(i,k), myFormat )
-              end do
-              call output ( '', advance='yes' )
-            end if
-          end do
-        end do
-        call say_fill ( (/ i-1, size(array,1), j-5, size(array,2) /), &
-          & numZeroRows, myFillValue )
-      else ! Dump the transpose
-        if ( present(name) ) call output ( ' ' )
-        call output ( '(transposed)', advance='yes' )
-        do j = 1, size(array,2)
-          do i = 1, size(array,1), 5
-            if ( any(array(i:min(i+4, size(array,1)),j) /= myFillValue) ) then  
-              call say_fill ( (/ i, size(array,1), j-1, size(array,2) /), &
-                & numZeroRows, myFillValue, inc=3 )
-            else                                                            
-              numZeroRows = numZeroRows + 1                                 
-            end if                                                          
-            if ( myClean .or. any(array(i:min(i+4, size(array,1)),j) /= myFillValue) ) then
-              do k = i, min(i+4, size(array,1))
-                call output ( array(k,j), myFormat )
-              end do
-              call output ( '', advance='yes' )
-            end if                                                          
-          end do
-        end do
-      end if
-      call say_fill ( (/ i-5, size(array,1), j-1, size(array,2) /), &
-        & numZeroRows, myFillValue )
-    end if
-    call theDumpEnds
+    include 'dump2d.f9h'
   end subroutine DUMP_2D_DOUBLE
 
   ! --------------------------------------------  DUMP_2D_INTEGER  -----
@@ -1240,70 +979,8 @@ contains
     integer :: nUnique
     integer, dimension(MAXNUMELEMENTS) :: counts
     integer, dimension(MAXNUMELEMENTS) :: elements
-    ! Executable
-    call theDumpBegins ( options )
-    myFillValue = 0
-    if ( present(FillValue) ) myFillValue = FillValue
-    if ( myUnique ) then
-      call FindUnique( reshape( array, (/ product(shape(array)) /) ), &
-        & elements, nUnique, counts )
-      if ( nUnique < 2 ) then
-        call output( 'Every value is ', advance='no' )
-        call output( elements(1), advance='yes' )
-      else
-        call output( '    value             counts', advance='yes' )
-        do j=1, nUnique
-          call output( j )
-          call blanks( 3 )
-          call output( elements(j) )
-          call blanks( 3 )
-          call output( counts(j), advance='yes' )
-        enddo
-      endif
-      if ( uniqueonly ( options ) ) return
-    endif
-    include 'dumpstats.f9h'
-    myWidth = 10
-    if ( present(width) ) myWidth = width
-
-    numZeroRows = 0
-    if ( size(array) == 0 ) then
-      call empty ( name )
-    else if ( size(array) == 1 ) then
-      call name_and_size ( name, myClean, 1 )
-      call output ( array(1,1), advance='yes' )
-    else if ( size(array,2) == 1 ) then
-      call dump ( array(:,1), name, &
-        & fillvalue=fillvalue, format=format, width=width, options=options )
-    else
-      call name_and_size ( name, myClean, size(array) )
-      if ( present(name) ) call output ( '', advance='yes' )
-      do i = 1, size(array,1)
-        do j = 1, size(array,2), myWidth
-          if (.not. myClean) then
-            if ( any(array(i,j:min(j+myWidth-1, size(array,2))) /= myFillValue) ) then
-              call say_fill ( (/ i, size(array,1), j-1, size(array,2) /), &
-                & numZeroRows, myFillValue, inc=3 )
-            else
-              numZeroRows = numZeroRows + 1
-            end if
-          end if
-          if ( myClean .or. any(array(i,j:min(j+myWidth-1, size(array,2))) /= myFillValue) ) then
-            do k = j, min(j+myWidth-1, size(array,2))
-              if ( present(format) ) then
-                call output ( array(i,k), format=format )
-              else
-                call output ( array(i,k), places=6 )
-              end if
-            end do
-            call output ( '', advance='yes' )
-          end if
-        end do ! j
-      end do ! i
-      call say_fill ( (/ i-1, size(array,1), j-myWidth, size(array,2) /), &
-        & numZeroRows, myFillValue )
-    end if
-    call theDumpEnds
+    myFormat = 'places=6' ! To sneak places arg into call to output
+    include 'dump2d.f9h'
   end subroutine DUMP_2D_INTEGER
 
   ! --------------------------------------------  DUMP_2D_LOGICAL  -----
@@ -1362,90 +1039,8 @@ contains
     integer :: nUnique
     integer, dimension(MAXNUMELEMENTS) :: counts
     real, dimension(MAXNUMELEMENTS) :: elements
-    ! Executable
-    call theDumpBegins ( options )
-
-    myFillValue = 0.0e0
-    if ( present(FillValue) ) myFillValue = FillValue
-    if ( myUnique ) then
-      call FindUnique( reshape( array, (/ product(shape(array)) /) ), &
-        & elements, nUnique, counts )
-      if ( nUnique < 2 ) then
-        call output( 'Every value is ', advance='no' )
-        call output( elements(1), advance='yes' )
-      else
-        call output( '    value             counts', advance='yes' )
-        do j=1, nUnique
-          call output( j )
-          call blanks( 3 )
-          call output( elements(j) )
-          call blanks( 3 )
-          call output( counts(j), advance='yes' )
-        enddo
-      endif
-      if ( uniqueonly ( options ) ) return
-    endif
-    include 'dumpstats.f9h'
-
     myFormat = sdFormatDefault
-    if ( present(format) ) myFormat = format
-
-    numZeroRows = 0
-    if ( size(array) == 0 ) then
-      call empty ( name )
-    else if ( size(array) == 1 ) then
-      call name_and_size ( name, myClean, 1 )
-      call output ( array(1,1), myFormat, advance='yes' )
-    else if ( size(array,2) == 1 ) then
-      call dump ( array(:,1), name, options=options )
-    else
-      call name_and_size ( name, myClean, size(array) )
-      if ( .not. myTranspose ) then
-        if ( present(name) ) call output ( '', advance='yes' )
-        do i = 1, size(array,1)
-          do j = 1, size(array,2), 5
-            if (.not. myClean) then
-              if ( any(array(i,j:min(j+4, size(array,2))) /= myFillValue) ) then
-                call say_fill ( (/ i, size(array,1), j-1, size(array,2) /), &
-                  & numZeroRows, myFillValue, inc=3 )
-              else
-                numZeroRows = numZeroRows + 1
-              end if
-            end if
-            if ( myClean .or. any(array(i,j:min(j+4, size(array,2))) /= myFillValue) ) then
-              do k = j, min(j+4, size(array,2))
-                call output ( array(i,k), myFormat )
-              end do
-              call output ( '', advance='yes' )
-            end if
-          end do
-        end do
-        call say_fill ( (/ i-1, size(array,1), j-5, size(array,2) /), &
-          & numZeroRows, myFillValue )
-      else ! Dump the transpose
-        if ( present(name) ) call output ( ' ' )
-        call output ( '(transposed)', advance='yes' )
-        do j = 1, size(array,2)
-          do i = 1, size(array,1), 5
-            if ( any(array(i:min(i+4, size(array,1)),j) /= myFillValue) ) then  
-              call say_fill ( (/ i-1, size(array,1), j, size(array,2) /), &
-                & numZeroRows, myFillValue, inc=1 )
-            else                                                            
-              numZeroRows = numZeroRows + 1                                 
-            end if                                                          
-            if ( myClean .or. any(array(i:min(i+4, size(array,1)),j) /= myFillValue) ) then
-              do k = i, min(i+4, size(array,1))
-                call output ( array(k,j), myFormat )
-              end do
-              call output ( '', advance='yes' )
-            end if                                                          
-          end do
-        end do
-      end if
-      call say_fill ( (/ i-5, size(array,1), j-1, size(array,2) /), &
-        & numZeroRows, myFillValue )
-    end if
-    call theDumpEnds
+    include 'dump2d.f9h'
   end subroutine DUMP_2D_REAL
 
   ! -----------------------------------------  DUMP_2x2xN_COMPLEX  -----
@@ -1731,71 +1326,8 @@ contains
     integer :: nUnique
     integer, dimension(MAXNUMELEMENTS) :: counts
     double precision, dimension(MAXNUMELEMENTS) :: elements
-
-    ! Executable
-    call theDumpBegins ( options )
-    myFillValue = 0.d0
-    if ( present(FillValue) ) myFillValue=FillValue
-    if ( myUnique ) then
-      call FindUnique( reshape( array, (/ product(shape(array)) /) ), &
-        & elements, nUnique, counts )
-      if ( nUnique < 2 ) then
-        call output( 'Every value is ', advance='no' )
-        call output( elements(1), advance='yes' )
-      else
-        call output( '    value             counts', advance='yes' )
-        do j=1, nUnique
-          call output( j )
-          call blanks( 3 )
-          call output( elements(j) )
-          call blanks( 3 )
-          call output( counts(j), advance='yes' )
-        enddo
-      endif
-      if ( uniqueonly ( options ) ) return
-    endif
-    include 'dumpstats.f9h'
-
     myFormat = sdFormatDefault
-    if ( present(format) ) myFormat = format
-
-    numZeroRows = 0
-    if ( size(array) == 0 ) then
-      call empty ( name )
-    else if ( size(array) == 1 ) then
-      call name_and_size ( name, myClean, 1 )
-      call output ( array(1,1,1), myFormat, advance='yes' )
-    else if ( size(array,2) == 1 .and. size(array,3) == 1 ) then
-      call dump ( array(:,1,1), name, options=options )
-    else if ( size(array,3) == 1 ) then
-      call dump ( array(:,:,1), name, fillValue=fillValue, options=options )
-    else
-      call name_and_size ( name, myClean, size(array) )
-      if ( present(name) ) call output ( '', advance='yes' )
-      do i = 1, size(array,1)
-        do j = 1, size(array,2)
-          do k = 1, size(array,3), 5
-            if (.not. myClean) then
-              if ( any(array(i,j,k:min(k+4, size(array,3))) /= myFillValue) ) then
-                call say_fill ( (/ i, size(array,1), j-1, size(array,2), &
-                  & k, size(array,3) /), numZeroRows, myFillValue, inc=3 )
-              else
-                numZeroRows = numZeroRows + 1
-              end if
-            end if
-            if ( myClean .or. any(array(i,j,k:min(k+4, size(array,3))) /= myFillValue) ) then
-              do l = k, min(k+4, size(array,3))
-                call output ( array(i,j,l), myFormat )
-              end do
-              call output ( '', advance='yes' )
-            end if
-          end do
-        end do
-      end do
-      call say_fill ( (/ i-1, size(array,1), j-1, size(array,2), &
-        & k-5, size(array,3) /), numZeroRows, myFillValue )
-   end if
-    call theDumpEnds
+    include 'dump3d.f9h'
   end subroutine DUMP_3D_DOUBLE
 
   ! --------------------------------------------  DUMP_3D_INTEGER  -----
@@ -1815,81 +1347,13 @@ contains
     integer, dimension(3) :: which, re_mainder
     integer :: how_many
 
+    character(len=64) :: MyFormat
     integer :: myFillValue
     integer :: nUnique
     integer, dimension(MAXNUMELEMENTS) :: counts
     integer, dimension(MAXNUMELEMENTS) :: elements
-    ! Executable
-    call theDumpBegins ( options )
-    myFillValue = 0
-    if ( present(FillValue) ) myFillValue=FillValue
-    if ( myUnique ) then
-      call FindUnique( reshape( array, (/ product(shape(array)) /) ), &
-        & elements, nUnique, counts )
-      if ( nUnique < 2 ) then
-        call output( 'Every value is ', advance='no' )
-        call output( elements(1), advance='yes' )
-      else
-        call output( '    value             counts', advance='yes' )
-        do j=1, nUnique
-          call output( j )
-          call blanks( 3 )
-          call output( elements(j) )
-          call blanks( 3 )
-          call output( counts(j), advance='yes' )
-        enddo
-      endif
-      if ( uniqueonly ( options ) ) return
-    endif
-    include 'dumpstats.f9h'
-    myWidth = 10
-    if ( present(width) ) myWidth = width
-    call FindAll( (/ size(array, 1), size(array, 2), size(array, 3)/), &
-      & 1, which, how_many, re_mainder=re_mainder)
-
-    numZeroRows = 0
-    if ( size(array) == 0 ) then
-      call empty ( name )
-    else if ( size(array) == 1 ) then
-      call name_and_size ( name, myClean, 1 )
-      call output ( array(1,1,1), advance='yes' )
-    else if ( how_many == 2 ) then
-      call dump ( reshape(array, (/ re_mainder(1) /)), name, &
-      & format=format, options=options )
-    else if ( how_many == 1 ) then
-      call dump ( reshape(array, (/ re_mainder(1), re_mainder(2) /)), &
-        & name, format=format, options=options )
-    else
-      call name_and_size ( name, myClean, size(array) )
-      if ( present(name) ) call output ( '', advance='yes' )
-      do i = 1, size(array,1)
-        do j = 1, size(array,2)
-          do k = 1, size(array,3), myWidth
-            if (.not. myClean) then
-              if ( any(array(i,j,k:min(k+myWidth-1, size(array,3))) /= myFillValue) ) then
-                call say_fill ( (/ i, size(array,1), j-1, size(array,2), &
-                  & k, size(array,3) /), numZeroRows, myFillValue, inc=3 )
-              else
-                numZeroRows = numZeroRows + 1
-              end if
-            end if
-            if ( myClean .or. any(array(i,j,k:min(k+myWidth-1, size(array,3))) /= myFillValue) ) then
-              do l = k, min(k+myWidth-1, size(array,3))
-                if ( present(format) ) then
-                  call output ( array(i,j,l), format=format )
-                else
-                  call output ( array(i,j,l), places=6 )
-                end if
-              end do
-              call output ( '', advance='yes' )
-            end if
-          end do
-        end do
-      end do
-      call say_fill ( (/ i-1, size(array,1), j-1, size(array,2), &
-        & k-myWidth, size(array,3) /), numZeroRows, myFillValue )
-    end if
-    call theDumpEnds
+    myFormat = 'places=6' ! To sneak places arg into call to output
+    include 'dump3d.f9h'
   end subroutine DUMP_3D_INTEGER
 
   ! ---------------------------------------------  DUMP_3D_REAL  -----
@@ -1910,71 +1374,8 @@ contains
     integer :: nUnique
     integer, dimension(MAXNUMELEMENTS) :: counts
     real, dimension(MAXNUMELEMENTS) :: elements
-
-    ! Executable
-    call theDumpBegins ( options )
-    myFillValue = 0.
-    if ( present(FillValue) ) myFillValue=FillValue
-    if ( myUnique ) then
-      call FindUnique( reshape( array, (/ product(shape(array)) /) ), &
-        & elements, nUnique, counts )
-      if ( nUnique < 2 ) then
-        call output( 'Every value is ', advance='no' )
-        call output( elements(1), advance='yes' )
-      else
-        call output( '    value             counts', advance='yes' )
-        do j=1, nUnique
-          call output( j )
-          call blanks( 3 )
-          call output( elements(j) )
-          call blanks( 3 )
-          call output( counts(j), advance='yes' )
-        enddo
-      endif
-      if ( uniqueonly ( options ) ) return
-    endif
-    include 'dumpstats.f9h'
-
     myFormat = sdFormatDefault
-    if ( present(format) ) myFormat = format
-
-    numZeroRows = 0
-    if ( size(array) == 0 ) then
-      call empty ( name )
-    else if ( size(array) == 1 ) then
-      call name_and_size ( name, myClean, 1 )
-      call output ( array(1,1,1), myFormat, advance='yes' )
-    else if ( size(array,2) == 1 .and. size(array,3) == 1 ) then
-      call dump ( array(:,1,1), name, options=options )
-    else if ( size(array,3) == 1 ) then
-      call dump ( array(:,:,1), name, fillValue=fillValue, options=options )
-    else
-      call name_and_size ( name, myClean, size(array) )
-      if ( present(name) ) call output ( '', advance='yes' )
-      do i = 1, size(array,1)
-        do j = 1, size(array,2)
-          do k = 1, size(array,3), 5
-            if (.not. myClean) then
-              if ( any(array(i,j,k:min(k+4, size(array,3))) /= myFillValue) ) then
-                call say_fill ( (/ i, size(array,1), j-1, size(array,2), &
-                  & k, size(array,3) /), numZeroRows, myFillValue, inc=3 )
-              else
-                numZeroRows = numZeroRows + 1
-              end if
-            end if
-            if ( myClean .or. any(array(i,j,k:min(k+4, size(array,3))) /= myFillValue) ) then
-              do l = k, min(k+4, size(array,3))
-                call output ( array(i,j,l), myFormat )
-              end do
-              call output ( '', advance='yes' )
-            endif
-          end do
-        end do
-      end do
-      call say_fill ( (/ i-1, size(array,1), j-1, size(array,2), &
-        & k-5, size(array,3) /), numZeroRows, myFillValue )
-   end if
-    call theDumpEnds
+    include 'dump3d.f9h'
   end subroutine DUMP_3D_REAL
 
   ! -----------------------------------------------  DUMP_HASH_STR  -----
@@ -2981,6 +2382,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.89  2009/06/24 22:36:32  pwagner
+! Make use of dump1-3.f9h include files
+!
 ! Revision 2.88  2009/06/23 18:25:43  pwagner
 ! Prevent Intel from optimizing ident string away
 !
