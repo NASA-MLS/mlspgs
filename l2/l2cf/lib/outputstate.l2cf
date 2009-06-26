@@ -167,7 +167,7 @@ Output, type=l2cf, $
 
 ;; Now output the master ident file (but only if asked)
 !ifdef(flagWriteIdentToDGM,{
-Copy, inputFile='master.ident', inputtype=l2cf, type=l2aux, $
+Copy, inputFile='master.ident', inputtype=ascii, type=l2aux, $
   file='!DGMFileName'})
 
 ;; These days pretty well everything is written with directWrite
@@ -183,4 +183,7 @@ Output,  quantities=[ !undivert(!matrixDivert) ], type=l2pc, $
 end Output
 !divert(-1)
 ; $Log$
+; Revision 1.43  2009/06/23 17:34:36  pwagner
+; Can write mlsl2 ident to DGM file
+;
 !divert!dnl
