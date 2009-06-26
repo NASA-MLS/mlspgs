@@ -414,18 +414,18 @@ contains ! =====     Public Procedures     =============================
             call MLSMessage(MLSMSG_Error, ModuleName, &
               & 'No entry in filedatabase for ' // trim(inputPhysicalFilename) )
           endif
-        case ( l_l2cf ) ! --------------------- Copying l2gp files -----
+        case ( l_ascii, l_l2cf ) ! --------------------- Copying ascii files -----
           call returnFullFileName(inputfile_base, inputPhysicalFilename, &
             & mlspcf_l2clim_start, mlspcf_l2clim_end)
-          ! inputFile => GetMLSFileByName(filedatabase, inputPhysicalFilename)
           inputFile => AddInitializeMLSFile( filedatabase, &
-              & content='mlsl2.ident', &
+              & content=trim(inputfile_base), &
               & name=inputPhysicalFilename, shortName=inputfile_base, &
               & type=l_ascii, access=DFACC_RDWR, &
               & PCBottom=mlspcf_l2clim_start, PCTop=mlspcf_l2clim_end )
           if ( .not. associated(inputFile) ) then
-            call MLSMessage(MLSMSG_Error, ModuleName, &
+            call MLSMessage(MLSMSG_Warning, ModuleName, &
               & 'No entry in filedatabase for ' // trim(inputPhysicalFilename) )
+            cycle
           endif
         case default
         end select
@@ -442,12 +442,17 @@ contains ! =====     Public Procedures     =============================
         if ( CHECKPATHS ) cycle
 
         select case ( output_type )
-        case ( l_l2aux ) ! --------------------- Copying l2aux files -----
+        case ( l_l2aux ) ! --------------------- Copying to l2aux files -----
           formattype = l_hdf
           ! Note that we haven't yet implemented repair stuff for l2aux
           ! So crashed chunks remain crashed chunks
           if ( input_type /= output_type ) then
-            ! So far we only allow copying l2cf types, i.e. text files
+            ! So far we only allow copying text files
+            if ( .not. any( input_type == (/ l_ascii, l_l2cf /) ) ) then
+              call MLSMessage(MLSMSG_Warning, ModuleName, &
+              & 'Unable to copy to l2aux file file type for' // trim(inputPhysicalFilename) )
+              cycle
+            endif
             call CopyTextFileToHDF ( file_base, DEBUG, filedatabase, inputFile )
           else
             call cpL2AUXData(inputFile, &
@@ -1715,6 +1720,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.142  2009/06/26 00:17:14  pwagner
+! May now copy ascii file to DGM calling input file type 'ascii' insstead of 'l2cf'
+!
 ! Revision 2.141  2009/06/23 18:45:16  pwagner
 ! May copy arbitrary text file into DGM file
 !
