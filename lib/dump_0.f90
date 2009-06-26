@@ -29,7 +29,7 @@ module DUMP_0
     & ALLSTATS, FILLVALUERELATION, HOWFAR, HOWNEAR, &
     & MLSMAX, MLSMEAN, MLSMIN, MLSSTDDEV, RATIOS, RESET
   use MLSStringLists, only: catLists, GetStringElement, NumStringElements
-  use MLSStrings, only: indexes, lowercase
+  use MLSStrings, only: indexes, lowercase, trim_safe
   use OUTPUT_M, only: outputOptions, stampOptions, &
     & ALIGNTOFIT, BLANKS, NEWLINE, NUMTOCHARS, OUTPUT, OUTPUTNAMEDVALUE
 
@@ -55,6 +55,7 @@ module DUMP_0
 !     (subroutines and functions)
 ! DIFF                     dump diffs between pair of arrays of numeric type
 ! DUMP                     dump an array to output
+! DUMPDUMPOPTIONS          dump module settings for dump, diff, etc.
 ! DUMPNAMEDVALUES          dump an array of paired names and values
 ! DUMPSUMS                 dump after summing successive array values
 !                            ("inverse" of selfDiff)
@@ -78,6 +79,7 @@ module DUMP_0
 ! dump ( strlist string, char* name, [char* fillvalue], [char* options] )
 ! dump ( log countEmpty, strlist keys, strlist values, char* name, 
 !       [char* separator], [char* options] )
+! dumpDumpOptions
 ! dumpNamedValues ( values, strlist names,
 !      [char* format, [int width], [char* options] ) 
 !       where values can be a 1d array of ints or reals, and
@@ -120,8 +122,8 @@ module DUMP_0
 ! in the above, a string list is a string of elements (usu. comma-separated)
 ! === (end of api) ===
 
-  public :: DIFF, DUMP, DUMP_2x2xN, DUMPNAMEDVALUES, DUMPTABLE, &
-    & SELFDIFF, DUMPSUMS
+  public :: DIFF, DUMP, DUMP_2x2xN, DUMPDUMPOPTIONS, DUMPNAMEDVALUES, &
+    & DUMPSUMS, DUMPTABLE, SELFDIFF
 
   interface DIFF        ! dump diffs between pair of n-d arrays of numeric type
     module procedure DIFF_1D_DOUBLE, DIFF_1D_INTEGER, DIFF_1D_REAL
@@ -1506,6 +1508,36 @@ contains
     call theDumpEnds
   end subroutine DUMP_STRLIST
 
+  ! ---------------------------------------------- DumpDumpOptions -----
+  subroutine DumpDumpOptions
+    ! Show dump, diff options
+    character(len=1), parameter :: fillChar = '1' ! fill blanks with '. .'
+     call blanks(90, fillChar='-', advance='yes')
+     call output(' ------------------------ Summary of automatic Dump, Diff options'      , advance='no')
+     call output(' ------------------------ ', advance='yes')
+     call outputNamedValue ( 'character printed between row, col id and data', aftersub, advance='yes', &
+       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
+     call outputNamedValue ( 'default DIFF switches for CLEAN, TRIM, etc.', trim_safe(DEFAULTDIFFOPTIONS), advance='yes', &
+       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
+     call outputNamedValue ( 'default DUMP switches for CLEAN, TRIM, etc.', trim_safe(DEFAULTDUMPOPTIONS), advance='yes', &
+       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
+     call outputNamedValue ( 'print abs min, max, etc. when DIFF has RMS set TRUE?', DIFFRMSMEANSRMS, advance='yes', &
+       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
+     call outputNamedValue ( 'skip dumping every element of a constant array?', DIFFRMSMEANSRMS, advance='yes', &
+       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
+     call outputNamedValue ( 'what side to place headers when dumping tables', trim(DUMPTABLESIDE), advance='yes', &
+       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
+     call outputNamedValue ( 'print stats all on one line?', STATSONONELINE, advance='yes', &
+       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
+     call outputNamedValue ( 'rms output format', trim_safe(RMSFORMAT), advance='yes', &
+       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
+     call outputNamedValue ( 'numeric output format', trim_safe(SDFORMATDEFAULT), advance='yes', &
+       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
+     call outputNamedValue ( 'complex output format', trim_safe(sdFormatDefaultCmplx), advance='yes', &
+       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
+     call blanks(90, fillChar='-', advance='yes')
+  end subroutine DumpDumpOptions
+
   ! -----------------------------------  dumpNamedValues  -----
   ! Another hash-like dump:
   ! Show names and related (numerical) values
@@ -2382,6 +2414,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.90  2009/06/26 00:15:18  pwagner
+! Added dumpDumpOptions
+!
 ! Revision 2.89  2009/06/24 22:36:32  pwagner
 ! Make use of dump1-3.f9h include files
 !
