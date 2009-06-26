@@ -484,7 +484,7 @@ contains ! =====     Public procedures     =============================
       begin, t+t_rowsOrColumns, l+l_rows, l+l_columns, n+n_dt_def, &
       begin, t+t_reflector, l+l_primary, l+l_secondary, l+l_tertiary, &
              l+l_complete, n+n_dt_def, &
-      begin, t+t_outputType, l+l_l2aux, l+l_l2cf, l+l_l2dgg, l+l_l2fwm, &
+      begin, t+t_outputType, l+l_ascii, l+l_l2aux, l+l_l2cf, l+l_l2dgg, l+l_l2fwm, &
              l+l_l2gp, l+l_l2pc, n+n_dt_def /) )
     call make_tree ( (/ &
       begin, t+t_quantityType, l+l_adopted, l+l_baseline, l+l_boundarypressure, &
@@ -1581,6 +1581,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.488  2009/06/26 00:16:58  pwagner
+! May now copy ascii file to DGM calling input file type 'ascii' insstead of 'l2cf'
+!
 ! Revision 2.487  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
 !
