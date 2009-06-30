@@ -172,7 +172,7 @@ contains
   subroutine READ_TEXTFILE_sca ( File, string, maxLineLen, nLines )
   ! read a textfile into a single string
     character(len=*), intent(in)  :: File ! its path and name
-    character(len=*), intent(out) :: string    ! its contents
+    character(len=*), intent(inout) :: string    ! its contents
     integer, optional, intent(in) :: maxLineLen
     integer, optional, intent(out) :: nLines ! num lines read
     ! Internal variables
@@ -273,6 +273,9 @@ contains
 end module IO_STUFF
 
 ! $Log$
+! Revision 2.11  2009/06/30 15:21:21  pwagner
+! Changed intent to prevent READ_TEXTFILE_sca from leaving undefineds in string
+!
 ! Revision 2.10  2009/06/23 18:25:43  pwagner
 ! Prevent Intel from optimizing ident string away
 !
