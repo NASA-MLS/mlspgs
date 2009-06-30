@@ -689,7 +689,7 @@ contains ! =====     Public Procedures     =============================
         call newline
       end if
       ! Tidy up
-      call Deallocate_test ( values, 'values', ModuleName )
+      if ( .not. present(extraQuantity) ) call Deallocate_test ( values, 'values', ModuleName )
 
     end subroutine ExplicitFillVectorQuantity
 
@@ -6755,6 +6755,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.25  2009/06/30 15:19:05  pwagner
+! Fixed bug in ExplicitFillVectorQuantity
+!
 ! Revision 2.24  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
 !
