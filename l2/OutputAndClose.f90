@@ -156,6 +156,7 @@ contains ! =====     Public Procedures     =============================
     integer :: Metadata_error
     character (len=32) :: meta_name    ! From the metaName= field
     integer :: NAME                     ! string index of label on output
+    logical :: newFile                  ! is this file new?
     type (HGrid_T), target :: newHGrid
     type (HGrid_T), pointer :: newHGridp
     integer :: NODE
@@ -252,6 +253,7 @@ contains ! =====     Public Procedures     =============================
       repairGeoLocations = .false.
       skipCopy = .false.
       create = .false.
+      newFile = .false.
 
       son = subtree(spec_no,root)
       if ( node_id(son) == n_named ) then ! Is spec labeled?
@@ -344,6 +346,7 @@ contains ! =====     Public Procedures     =============================
             & mlspcf_l2dgm_start, mlspcf_l2dgm_end)
           outputFile => GetMLSFileByName(filedatabase, PhysicalFilename)
           if ( .not. associated(outputFile) ) then
+            newFile = .true.
             outputFile => AddInitializeMLSFile(filedatabase, &
               & content=outputTypeStr, &
               & name=PhysicalFilename, shortName=file_base, &
@@ -355,6 +358,7 @@ contains ! =====     Public Procedures     =============================
             & mlspcf_l2gp_start, mlspcf_l2gp_end)
           outputFile => GetMLSFileByName(filedatabase, PhysicalFilename)
           if ( .not. associated(outputFile) ) then
+            newFile = .true.
             outputFile => AddInitializeMLSFile(filedatabase, &
               & content=outputTypeStr, &
               & name=PhysicalFilename, shortName=file_base, &
@@ -366,6 +370,7 @@ contains ! =====     Public Procedures     =============================
             & mlspcf_l2dgg_start, mlspcf_l2dgg_end)
           outputFile => GetMLSFileByName(filedatabase, PhysicalFilename)
           if ( .not. associated(outputFile) ) then
+            newFile = .true.
             outputFile => AddInitializeMLSFile(filedatabase, &
               & content=outputTypeStr, &
               & name=PhysicalFilename, shortName=file_base, &
@@ -379,6 +384,7 @@ contains ! =====     Public Procedures     =============================
           call MLSMessage(MLSMSG_Error, ModuleName, &
             & 'Unable to Copy to ' // trim(PhysicalFilename) )
         endif
+        if ( DEBUG ) call dump( outputFile, details=2 )
 
         select case ( input_type )
         case ( l_l2aux ) ! --------------------- Copying l2aux files -----
@@ -441,6 +447,7 @@ contains ! =====     Public Procedures     =============================
 
         if ( CHECKPATHS ) cycle
 
+        if ( DEBUG ) call dump( inputFile, details=2 )
         select case ( output_type )
         case ( l_l2aux ) ! --------------------- Copying to l2aux files -----
           formattype = l_hdf
@@ -500,7 +507,7 @@ contains ! =====     Public Procedures     =============================
         case default
         end select
         
-        if ( TOOLKIT ) then
+        if ( TOOLKIT .and. newFile ) then
           call add_metadata ( son, file_base, l2metaData, &
           & outputfile%hdfVersion, formattype, metadata_error )
         endif
@@ -1144,12 +1151,13 @@ contains ! =====     Public Procedures     =============================
     use Intrinsic, only: l_hdf
     use MLSCommon, only: MLSFile_T, FileNameLen
     use MLSL2Options, only: checkPaths, TOOLKIT
-    use MLSFiles, only: AddInitializeMLSFile, &
+    use MLSFiles, only: AddInitializeMLSFile, dump, &
       & GetMLSFileByName, GetMLSFileByType, GetPCFromRef, &
       & mls_closeFile, mls_openFile, &
       & split_path_name
     use MLSHDF5, only: SaveAsHDF5DS
     use MLSPCF2, only: mlspcf_l2dgm_start, mlspcf_l2dgm_end
+    use OUTPUT_M, only: blanks, OUTPUT
     ! Args
     character(len=*), intent(inout)         :: fileName ! according to l2cf
     logical, intent(in)                     :: DEBUG ! Print lots?
@@ -1211,6 +1219,13 @@ contains ! =====     Public Procedures     =============================
           & name=FullFilename, shortName=fileName, &
           & type=l_hdf, access=DFACC_RDWR, HDFVersion=hdfVersion, &
           & PCBottom=mlspcf_l2dgm_start, PCTop=mlspcf_l2dgm_end)
+      endif
+      if ( DEBUG ) then
+        call output ( 'About to copy text file to hdf', advance='yes' )
+        call output ( 'input text file', advance='yes' )
+        call dump( MLSL2CF, details=2 )
+        call output ( 'output hdf file', advance='yes' )
+        call dump( outputFile, details=2 )
       endif
       if ( .not. outputFile%stillOpen ) call mls_openFile( outputFile, status )
       call SaveAsHDF5DS ( MLSL2CF%name, outputFile%FileID%f_id, &
@@ -1720,6 +1735,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.143  2009/07/01 20:37:30  pwagner
+! Avoid adding metadata to a file more than once
+!
 ! Revision 2.142  2009/06/26 00:17:14  pwagner
 ! May now copy ascii file to DGM calling input file type 'ascii' insstead of 'l2cf'
 !
