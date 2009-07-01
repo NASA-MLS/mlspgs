@@ -562,8 +562,8 @@ contains
     !{ Error in $P$ depends on work(1) and error in $\beta_{c\_s}$.
     ! Suppose $x$ and $y$ are functions with errors $e$ and $f$ respectively.
     ! Let $a=e/x$ and $b=f/y$.  Then the error in $x/y$ is
-    ! $\frac{x(1+1)}{y(1-b)} -\frac{x}y = \frac{x}y \frac{a+b}{1-b}$.  Substituting
-    ! $e$ and $f$ we have $\frac1{|y|} \left{|x|f + |y|e}{|y|-f}$.  Neglecting
+    ! $\frac{x(1-a)}{y(1-b)} -\frac{x}y = \frac{x}y \frac{a+b}{1-b}$.  Substituting
+    ! $e$ and $f$ we have $\frac1{|y|} \frac{|x|f + |y|e}{|y|-f}$.  Neglecting
     ! $f$ w.r.t.\ $y$, we have $\frac{x}y \left( f + \frac{x}y e \right)$.
     error = answer * ( work(1) + answer * eest(i_T,i_IWC,i_f,i_c_s) )
     nFuncP(1,i_T,i_IWC,i_theta,i_f,1) = nfuse
@@ -601,11 +601,11 @@ contains
     answer = ( lambda**2 / pi2 * answer - &
            &   p(i_T,i_IWC,i_Theta,i_f) * dBeta_dIWC(i_T,i_IWC,i_f,i_c_s) ) / &
            & beta(i_T,i_IWC,i_f,i_c_s)
-    !{ Final error depends on work(1), error in $\beta_{c\_s}, error in $P(\theta)$
-    ! and error in $\frac{\partial \beta_{c\_s}}{\partial \text{IWC}}.
-    ! Let $x$ and $y$ be quantities with errors $e$ and $f$.  Then neglecting
-    ! $ef$ the error in $xy$ is $xf + ye$. See {\tt do\_dint\_phase} for the
-    ! error in a quotient.
+    !{ Final error depends on work(1), error in $\beta_{c\_s}$, error in
+    ! $P(\theta)$ and error in $\frac{\partial \beta_{c\_s}}{\partial
+    ! \text{IWC}}$. Let $x$ and $y$ be quantities with errors $e$ and $f$. 
+    ! Then neglecting $ef$ the error in $xy$ is $xf + ye$. See {\tt
+    ! do\_dint\_phase} for the error in a quotient.
     numer = work(1) + & ! Error in numerator of answer
           &   e_p(i_T,i_IWC,i_Theta,i_f) * abs(dBeta_dIWC(i_T,i_IWC,i_f,i_c_s)) + &
           &   abs(p(i_T,i_IWC,i_Theta,i_f)) * e_dBeta_dIWC(i_T,i_IWC,i_f,i_c_s)
@@ -651,8 +651,8 @@ contains
     answer = ( lambda**2 /pi2 * answer - &
            &   p(i_T,i_IWC,i_Theta,i_f) * dBeta_dT(i_T,i_IWC,i_f,i_c_s) ) / &
            & beta(i_T,i_IWC,i_f,i_c_s)
-    !{ Final error depends on work(1), error in $\beta_{c\_s}, error in
-    ! $P(\theta)$ and error in $\frac{\partial \beta_{c\_s}}{\partial T}.
+    !{ Final error depends on work(1), error in $\beta_{c\_s}$, error in
+    ! $P(\theta)$ and error in $\frac{\partial \beta_{c\_s}}{\partial T}$.
     ! Let $x$ and $y$ be quantities with errors $e$ and $f$.  Then neglecting
     ! $ef$ the error in $xy$ is $xf + ye$. See {\tt do\_dint\_phase} for the
     ! error in a quotient.
@@ -1099,6 +1099,9 @@ contains
 end program Mie_Tables
 
 ! $Log$
+! Revision 1.3  2008/06/05 02:20:09  vsnyder
+! Added HDF output, added explicit frequencies
+!
 ! Revision 1.2  2008/05/22 01:56:31  vsnyder
 ! List of frequencies, HDF output
 !
