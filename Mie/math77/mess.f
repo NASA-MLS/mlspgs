@@ -7,9 +7,18 @@ c++ END
 c     .  Copyright (C) 1991, California Institute of Technology.
 c     .  All rights reserved.  U. S. Government sponsorship under
 c     .  NASA contract NAS7-918 is acknowledged.
+c>> 2008-02-28 MESS  Krogh  Fixed "f" format for C code.
+c>> 2007-09-08 MESS  Krogh  Fixed definitions of MEVLAS.
+c>> 2006-07-27 MESS  Krogh  Fixed boundary case in printing long text.
+c>> 2006-03-20 MESS  Krogh  Added code for output of sparse vector.
+c>> 2005-04-07 MESS  Krogh  Declared LFLGDB integer in MESSMH.
+c>> 2004-12-15 MESS  Krogh  Added " - 1" at end of line on label 410.
+c>> 2002-05-17 MESS  Krogh  Added way for user to get error count.
+c>> 2001-12-28 MESS  Krogh  Added NSKIP for more flexible output values.
+c>> 2000-12-30 MESS  Krogh  Fixed some types/casts in C code.
 c>> 1997-12-12 MESS  Krogh  Prefixed 0P edit descriptor to F format.
 c>> 1996-07-11 MESS  Krogh  Transpose matrix output for C.
-c>> 1996-06-27 MESS  Krogh  fprintf(stdout, => printf(, memset now used
+c>> 1996-06-27 MESS  Krogh  fprintf(stdout, => printf( & memset now used
 c>> 1996-06-18 MESS  Krogh  "Saved" NTEXTR.
 c>> 1996-05-15 MESS  Krogh  Changes to use .C. and C%%.
 c>> 1996-03-30 MESS  Krogh  Added external statement.
@@ -269,6 +278,8 @@ c         row or column index, respectively, ends the text for the
 c         current row or column, and resets the text pointer to where
 c         it started.
 c      $  a single '$' is printed, continue till the next '$'.
+c      -  Start a negative number for skipping.
+c     0-9 Digits for skipping.
 c      C  Only used by PMESS which deletes it and the preceding '$'.
 c         Used at the end of a line to indicate continued text.
 c   other Don't use this -- the '$' is ignored, but new features may
@@ -354,6 +365,7 @@ c MEJVCI=66  (K66) As for MEIVCI, except use format set with $(.
 c MEFVCI=67  (K67, L67) As for MEFVEC, except the vector entries have a
 c            spacing of K67, and there are L67 entries in the vector.
 c MEGVCI=68  (K68) As for MEFVCI, except use format set with $(.
+c MEFSPV=69  (K69) Output IDAT, FDAT as a sparse vector.
 c
 c
 c ************************** Internal Variables ************************
@@ -362,6 +374,7 @@ c BUF    Character string holding characters to be output.
 c C      Used for temp. storage of a character.
 c DOLS   A heading/trailing string of characters, default = $'s.
 c ERMSG  Default part of error message.
+c ERRCNT Used to keep a count of error messages.
 c EUNIT  Unit number for output of error messages.
 c FDAT   Formal array, containing floating point data to output.  Only
 c   appears external to this subroutine.
@@ -468,6 +481,8 @@ c   = 6  Got "maximum" value for entries in a matrix.
 c   = 7  Vector (either print or get format for label indices.)
 c   = 8  Matrix (either print or get format for label indices.)
 c   = 9  Output of data in a table.
+c   =10  Get "maximum" valur for entries in a sparse vector.
+c   =11  Output a sparse vector.
 c LHEAD  If = 0 no print of DOLS, else DOLS printed in error messages.
 c LINERR Gives LENLIN for error messages.
 c LINMSG Gives LENLIN for diagnostic messages.
@@ -501,12 +516,12 @@ c MEMAXI is the largest action which a user can request.
 c MEVBAS is the smallest action index, used to set the starting index in
 c   IVAR.
 c MEVLAS is the largest index for a variable in IVAR.
-c MECONT,  MEDDI,  MEELI,  MEEME, MEEUNI, MEFDAT, MEFMAT, MEFVCI,
-c MEFVEC, MEGBAS, MEGMAT, MEGVCI, MEGVEC, MEHEAD, MEIDAT, MEIMAT,
-c MEIVCI, MEIVEC, MEJMAT, MEJVCI, MEJVEC, MEMAXE, MEMAXI, MEMDA1,
-c MEMDA2, MEMDA3, MEMDA4, MEMDA5, MEMDAT, MEMLIN, MEMUNI, MENTXT,
-c MEPRNT, MESCRN, MERES1, MERES2, MERES3,  MERET, MESTOP, MESUNI,
-c  METAB, METDIG, METEXT
+c MECONT,  MEDDI,  MEELI,  MEEME, MEEUNI, MEFDAT, MEFMAT, MEFSPV,
+c MEFVCI, MEFVEC, MEGBAS, MEGMAT, MEGVCI, MEGVEC, MEHEAD, MEIDAT,
+c MEIMAT, MEIVCI, MEIVEC, MEJMAT, MEJVCI, MEJVEC, MEMAXE, MEMAXI,
+c MEMDA1, MEMDA2, MEMDA3, MEMDA4, MEMDA5, MEMDAT, MEMLIN, MEMUNI,
+c MENTXT, MEPRNT, MESCRN, MERES1, MERES2, MERES3,  MERET, MESTOP,
+c MESUNI,  METAB, METDIG, METEXT
 c MPT  Current pointer to data for matrix or vector output.
 c MTEXT  Equivalenced to MTEXTR and MTEXTC.
 c MTEXTC TEXT(MTEXTC) starts text for printing column labels.
@@ -524,6 +539,8 @@ c NMDAT  Pointer to next thing to print from MDAT.
 c NROCO  Equivalenced to (NROW, NCOL).  Used in matrix output.
 c NROW   Number of rows for matrix output.    When printing tables,
 c   MDAT(NROW) gives place where line was split.  (=0 if not split)
+c NSKIP  The amount to skip ahead on the next floating or integer
+c   output.
 c NTEXT  Index inside an element of TEXT for the next text output.
 c NTEXTR Value of NTEXT to use if get a $R.
 c NTXTSV Saved value of NTEXT when doing matrix output.
@@ -543,7 +560,6 @@ c XARG   If .true., output data is not integer, and a return is made to
 c   print data from FDAT.
 c XARGOK Set .true. if call is from program that will print data from
 c   FDAT.
-c XMESS  Name of the block data subprogram that initializes common data.
 c
 c++ CODE for .C. is inactive
 c      integer  kciwid, kccwid, kcrwid, lbeg, lend, lfprec, lgprec
@@ -551,29 +567,30 @@ c      common /MESSCC/ kciwid,kccwid,kcrwid,lbeg,lend,lfprec,lgprec
 C%%    long int kc;
 c++ END
       integer LNMSG, LNERR
-      parameter (LNMSG = 128)
-      parameter (LNERR = 79)
+      parameter (LNMSG=128)
+      parameter (LNERR=79)
 c
 c ************** Parameters Defining Actions (See Above) ***************
 c
       integer   MESUNI, MEHEAD, MEDDIG, MEMLIN, MEELIN, MEMUNI, MEEUNI,
      1  MESCRN, MEDIAG, MEMAXE, MESTOP, MEPRNT, METDIG, MENTXT, MEIDAT,
      2  MEFDAT, MEMDAT, MEMDA1, MEMDA2, MEMDA3, MEMDA4, MEMDA5, METABS,
-     3  MECONT, MERET , MEEMES, METEXT, METABL, MERES3, MEIVCI, MEIVEC,
-     4  MEIMAT, MEJVCI, MEJVEC, MEJMAT, MEFVCI, MEFVEC, MEFMAT, MEGVCI,
-     1  MEGVEC, MEGMAT, MEMAXI, MEGBAS, MEVBAS, MEVLAS
+     3  MEERRS, MECONT, MERET , MEEMES, METEXT, METABL, MERES3, MEIVCI,
+     4  MEIVEC, MEIMAT, MEJVCI, MEJVEC, MEJMAT, MEFVCI, MEFVEC, MEFMAT,
+     5  MEGVCI, MEGVEC, MEGMAT, MEMAXI, MEGBAS, MEVBAS, MEVLAS, MEFSPV
 c Parameters for changing the environment.
       parameter (MESUNI=10,MEHEAD=11,MEDDIG=12,MEMLIN=13,MEELIN=14,
      1 MEMUNI=15,MEEUNI=16,MESCRN=17,MEDIAG=18,MEMAXE=19,MESTOP=20,
      2 MEPRNT=21,METDIG=22,MENTXT=23,MEIDAT=24,MEFDAT=25,MEMDAT=26,
-     3 MEMDA1=27,MEMDA2=28,MEMDA3=29,MEMDA4=30,MEMDA5=31,METABS=32)
+     3 MEMDA1=27,MEMDA2=28,MEMDA3=29,MEMDA4=30,MEMDA5=31,METABS=32,
+     4 MEERRS=33)
 c Parameters for actions.
-      parameter (MECONT=50, MERET=51,MEEMES=52,METEXT=53,
+      parameter (MECONT=50, MERET=51,MEEMES=52,METEXT=53,MEFSPV=54,
      1 METABL=55,MERES3=56,MEIVEC=57,MEIMAT=58,MEJVEC=59,MEJMAT=60,
      2 MEFVEC=61,MEFMAT=62,MEGVEC=63,MEGMAT=64,MEIVCI=65,MEJVCI=66,
      2 MEFVCI=67,MEGVCI=68)
 c Parameter derived from those above.
-      parameter (MEMAXI=68,MEGBAS=49,MEVBAS=10,MEVLAS=32)
+      parameter (MEMAXI=68,MEGBAS=49,MEVBAS=10,MEVLAS=33)
 c
 c ************************** Variable Declarations *********************
 c
@@ -584,37 +601,37 @@ c
       integer    I, ICOL, INCM(MECONT:MEIMAT), INERR, IOUT, IROW, IROW1,
      1    ITEXTR, ITXTSV, J, JJ, K, K1, K2, KDILAB, KK, KNT, KOLWID, KP,
      2    KS, LASKNT, LBUF1, LBUF2, LENBUF, LINSTR, M,
-     3    MBNDHI(MEVBAS:MEVLAS-5), MBNDLO(MEVBAS:MEVLAS-5), MTEXT(2),
-     4    MTEXTC, MTEXTR, NLINE, NROCO(2), NTEXTR, NTXTSV
+     3    MBNDHI(MEVBAS:MEVLAS), MBNDLO(MEVBAS:MEVLAS), MTEXT(2),
+     4    MTEXTC, MTEXTR, NLINE, NROCO(2), NSKIP, NTEXTR, NTXTSV
       integer MESSGS
       logical   GETW, FIRST
       character ERMSG*63, ERMSG1*27
       character SC, C
-      parameter (SC = '$')
+      parameter (SC='$')
       save  FIRST, I, ICOL, INERR, IROW, IROW1, ITXTSV, KDILAB, KNT,
-     1   LASKNT, M, MTEXT, NLINE, NTEXTR, NTXTSV
+     1   LASKNT, M, MTEXT, NLINE, NSKIP, NTEXTR, NTXTSV
       save /CMESSI/, /CMESSC/
       equivalence (MTEXT(1), MTEXTR), (MTEXT(2), MTEXTC)
 c
 c ************************** Data from common block ********************
 c
-      parameter (LENBUF = 250)
+      parameter (LENBUF=250)
       logical          XARG, GOTFMT, XARGOK
-      integer          EUNIT, ICHAR0, IRC, IVAR(MEVBAS:MEVLAS), IMAG,
-     1   INC, ITEXT, IWF, IWG, KDF, KDFDEF, KDI, KDIAG, KDJ, KLINE,
-     2   KSCRN, KSHIFT, KSPEC, KT, MAXERR, LASTI, LBUF, LENLIN, LENOUT,
-     3   LENTRY, LENTXT, LHEAD, LINERR, LINMSG, LOCBEG, LPRINT, LSTOP,
-     4   LSTRT, LTEXT, MAXWID(2), MDAT(5), MPT, MUNIT, NCOL, NDIM,
-     5   NFDAT, NIDAT, NMDAT, NROW, NTEXT, OUNIT, SUNIT, TABSPA
+      integer          ERRCNT, EUNIT, ICHAR0, IRC, IVAR(MEVBAS:MEVLAS),
+     1   IMAG, INC, ITEXT, IWF, IWG, KDF, KDFDEF, KDI, KDIAG, KDJ,
+     2   KLINE, KSCRN, KSHIFT, KSPEC, KT, MAXERR, LASTI, LBUF, LENLIN,
+     3   LENOUT, LENTRY, LENTXT, LHEAD, LINERR, LINMSG, LOCBEG, LPRINT,
+     4   LSTOP, LSTRT, LTEXT, MAXWID(2), MDAT(5), MPT, MUNIT, NCOL,
+     5   NDIM, NFDAT, NIDAT, NMDAT, NROW, NTEXT, OUNIT, SUNIT, TABSPA
 c
-      character BUF*(LENBUF), DOLS*72, FMTC*7, FMTF*15, FMTG*15,
+      character BUF*(LENBUF), DOLS*72, FMTC*7, FMTF*22, FMTG*15,
      1  FMTI*7, FMTIM(2)*7, FMTJ*7, FMTR*7, FMTT*15
       common /CMESSI/ SUNIT, LHEAD, KDFDEF, LINMSG, LINERR, MUNIT,
      1   EUNIT, KSCRN, KDIAG, MAXERR, LSTOP, LPRINT, KDF, NTEXT, NIDAT,
-     2   NFDAT, NMDAT, MDAT, TABSPA, ICHAR0, IMAG, INC, IRC, ITEXT,
-     3   IWF, IWG, KDI, KDJ, KLINE, KSHIFT, KSPEC, KT, LASTI, LBUF,
-     4   LENLIN, LENOUT, LENTRY, LENTXT, LOCBEG, LSTRT, LTEXT, MAXWID,
-     5   MPT, NROW, NCOL, NDIM, OUNIT, GOTFMT, XARG, XARGOK
+     2   NFDAT, NMDAT, MDAT, TABSPA, ERRCNT, ICHAR0, IMAG, INC, IRC,
+     3   ITEXT, IWF, IWG, KDI, KDJ, KLINE, KSHIFT, KSPEC, KT, LASTI,
+     4   LBUF, LENLIN, LENOUT, LENTRY, LENTXT, LOCBEG, LSTRT, LTEXT,
+     5   MAXWID, MPT, NROW, NCOL, NDIM, OUNIT, GOTFMT, XARG, XARGOK
       common /CMESSC / BUF, DOLS, FMTF, FMTG, FMTI, FMTJ, FMTT, FMTIM
       equivalence (IVAR(MEVBAS), SUNIT)
       equivalence (FMTIM(1), FMTR), (FMTIM(2), FMTC)
@@ -630,11 +647,13 @@ c
 c                 50  51, 52  53  54 55 56 57 58
       data INCM /  1,  1,  4,  1,  2, 0, 0, 2, 6 /
       data MBNDLO /  0, 0, -50,  39,  39, -99, -99,         0,
-     1           0,          0, 0, 0, -50,        1,          1,
-     2           1, 1,   1 /
+     1       0,          0, 0, 0, -50,        1,          1,
+     2       1, 1, -1000000000, -1000000000, -1000000000, -1000000000,
+     3       -1000000000,   1,  0 /
       data MBNDHI / 99, 1,  50, 500, 500,  99,  99, 100000000,
      1  1000000000, 1000000000, 8, 8,  50, 10000000, 1000000000,
-     2  1000000000, 5, 100 /
+     2  1000000000, 5, 1000000000, 1000000000, 1000000000, 1000000000,
+     3  1000000000, 100, 1000000000 /
 c
 c ************************* Start of Executable Code *******************
 c
@@ -656,8 +675,10 @@ c Initialize common block
          MAXERR = 0
          MUNIT = 0
          OUNIT = 0
+         NSKIP = 0
          SUNIT = -1
          TABSPA = 6
+         IVAR(MEERRS) = 0
 c++ CODE for ~.C. is active
          DOLS(1:40) = '$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$'
          DOLS(41:72) ='$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$'
@@ -671,7 +692,8 @@ C      FMTJ = '%*d\0'
 C      FMTG = '%*.*E\0'
 c++ END
       else
-         go to (5, 10, 20, 850, 1160, 1620, 1130, 1530, 960), LENTRY
+c               1  2  3   4    5    6    7    8   9   10   11
+         go to (5,10,20,850,1160,1620,1130,1530,960,1210,1220), LENTRY
       end if
 c                             First entry for a message
     5 LBUF = 0
@@ -713,10 +735,6 @@ c                             Pick up the next action request
       if (abs(M) .gt. MEVLAS) go to 180
       if (M .gt. 0) then
          IVAR(M) = MACT(I-1)
-         if (M .ge. MEMDA1) then
-            if (M .le. MEMDA5) go to 120
-            M = M - 5
-         end if
          if (IVAR(M) .lt. MBNDLO(M)) then
             IVAR(M) = MBNDLO(M)
          else if (IVAR(M) .gt. MBNDHI(M)) then
@@ -758,8 +776,8 @@ C%%          cmessi.sunit = 1L;}
 C
       MACT(I-1) = IVAR(-M)
       go to 120
-c  ME ..    CONT  RET EMES ETXT ???? TABL
-  140 go to (170, 200, 310, 400, 180, 910, 180), M-MEGBAS
+c  ME ..    CONT  RET EMES ETXT  FSPV TABL
+  140 go to (170, 200, 310, 400, 1200, 910, 180), M-MEGBAS
       if (M .le. MEGVCI) go to 1000
       go to 180
 c
@@ -790,6 +808,7 @@ c                       Finish print before exit.
 c
 c Action MEEMES -- Start an error message
   310 LENTRY = 3
+      ERRCNT = ERRCNT + 1
 c++  Code for UMESS is inactive
 C      call UMESS(TEXT, MACT(I+1), IVAR)
 c++  End
@@ -828,7 +847,7 @@ c++ END
       end if
       if (INERR .le. 0) then
 c                                 Just finished an error message
-         if (INERR .ne. 0) stop 'Stopped in MESS.'
+         if (INERR .ne. 0) stop
          OUNIT = MUNIT
          LENLIN = LINMSG
          return
@@ -853,8 +872,8 @@ C%%       memcpy(&cmessc.buf[cmessi.lbuf], ermsg, strlen(ermsg));
       LSTRT = LBUF + 1
       call MESSFI
       LBUF = LBUF + KDI
-C%%   sprintf(&cmessc.buf[cmessi.lstrt-1L], "%*d",
-C%%           messcc.kciwid, cmessi.imag);
+C%%   sprintf(&cmessc.buf[cmessi.lstrt-1L], "%*ld",
+C%%           (int)messcc.kciwid, cmessi.imag);
       write (BUF(LSTRT:LBUF), FMTI) IMAG
 c          Finish up the start error message action.
       if (MACT(I+3) .lt. 0) go to 40
@@ -873,9 +892,15 @@ c Action METEXT -- Print string from TEXT
       NTEXTR = NTEXT
       ITEXTR = ITEXT
 c                  Continue with print from TEXT
-  410 K1 = LENBUF - LBUF + NTEXT
-      K2 = min(K1, LENTXT)
-      LSTRT = LBUF + 1
+c K     take at most K-1 chars., but if 0 take max number
+c K1    is last loc. used from TEXT if LENTXT is BIG.
+c NEXT  is first character location in TEXT(ITEXT)      
+c K2    is last character location in TEXT(ITEXT)
+c LSTRT is first character position in BUF
+c LBUF  is last used character position in BUF
+
+ 410  LSTRT = LBUF + 1
+      K2 = min(LENTXT, NTEXT + (LENBUF - LSTRT))
 C%%       if ((ctmp=memchr(TEXT(cmessi.itext-1L,cmessi.ntext-1), SC,
 C%%          k2 - cmessi.ntext + 1)) == NULL)
 C%%             k = 0;
@@ -883,17 +908,18 @@ C%%       else
 C%%             k = ctmp - TEXT(cmessi.itext-1L,cmessi.ntext-1) + 1;
       K = index(TEXT(ITEXT)(NTEXT:K2), SC)
       if (K .eq. 0) then
+c Want to take all that we can.
          LBUF = LSTRT + K2 - NTEXT
 C%%       memcpy(&cmessc.buf[cmessi.lstrt-1L], TEXT(cmessi.itext-1L,
 C%%         cmessi.ntext-1), k2 - cmessi.ntext + 1L);
          BUF(LSTRT:LBUF) = TEXT(ITEXT)(NTEXT:K2)
-         if (K1 .ge. LENTXT) then
-            ITEXT = ITEXT + 1
-            NTEXT = 1
-            if (LBUF .le. LENLIN) go to 410
-            K1 = 1
+         if (K2 .eq. LENTXT) then
+           ITEXT = ITEXT + 1
+           NTEXT = 1
+           if (LBUF .le. LENLIN) go to 410
+         else
+           NTEXT = K2 + 1
          end if
-         NTEXT = NTEXT + K1 - 1
          KSPEC = 12
          if (ITEXT - ITEXTR .lt. 4000) go to 480
          KSPEC = 2
@@ -903,6 +929,8 @@ C%%         cmessi.ntext-1), k2 - cmessi.ntext + 1L);
 C%%   if (k >= 2) memcpy(&cmessc.buf[cmessi.lstrt-1],
 C%%     TEXT(cmessi.itext-1L, cmessi.ntext-1), k - 1L);
       if (K .ge. 2) BUF(LSTRT:LBUF) = TEXT(ITEXT)(NTEXT:NTEXT+K-2)
+c        Jump to location below if get $ after computing an NSKIP.
+  415 continue
       NTEXT = NTEXT + K + 1
       if (NTEXT .gt. LENTXT) then
          ITEXT = ITEXT + 1
@@ -934,7 +962,29 @@ c                Special code to take care of " " following "$".
 c              1   2   3   4   5   6   7   8   9  10  11  12, 13
 c              B   E   R   N   I   M   F   J   G   (   T done end err
       go to (455,480,450,460,700,680,900,700,900,600,690,410,390), KSPEC
-c                        No match, continue with the text.
+c               No match  -- Check for setting NSKIP
+      if (((C .ge. '0') .and. (C .le. '9')) .or. (C .eq. '-')) then
+         NSKIP = 0
+         K1 = 1
+         if (C .ne. '-') go to 436
+         K1 = -1
+  433    C = TEXT(ITEXT)(NTEXT:NTEXT)
+         NTEXT = NTEXT + 1
+         if (NTEXT .ge. LENTXT) then
+            ITEXT = ITEXT + 1
+            NTEXT = 1
+         end if
+  436    if ((C .ge. '0') .and. (C .le. '9')) then
+            NSKIP = 10 * NSKIP + K1 * (ICHAR(C) - ICHAR0)
+            go to 433
+         end if
+         if (C .eq. '$') then
+            K = 0
+            go to 415
+         end if
+      end if
+c      
+c Continue with the text.
   440 LBUF = LBUF + 1
       BUF(LBUF:LBUF) = C
       go to 410
@@ -999,6 +1049,9 @@ c              I,   i,   F,   f,   E,   e,   G,   g
   601 continue
 c++ CODE for ~.C. is active
       FMTG='(0P,99F'
+c++ CODE for .C. is inactive
+C%%   strcpy(cmessc.fmtg, "%*.*f\0");
+C%%   messcc.lgprec = 0;
 c++ END
       go to 603
   602 continue
@@ -1080,13 +1133,15 @@ C%%  for (kc=cmessi.lstrt-1; kc<cmessi.lbuf; kc++) cmessc.buf[kc]=' ';
       BUF(LSTRT:LBUF) = ' '
       go to 850
 c                         Print from IDAT
-  700 IOUT = IDAT(NIDAT)
+  700 NIDAT = NIDAT + NSKIP
+      NSKIP = 0
+      IOUT = IDAT(NIDAT)
       NIDAT = NIDAT + 1
   720 LSTRT = LBUF + 1
       IMAG = IOUT
       if (KSPEC .ge. 8) then
          LBUF = LBUF + KDJ
-C%%   sprintf(&cmessc.buf[cmessi.lstrt-1], "%*d", cmessi.kdj, iout);
+C%%   sprintf(&cmessc.buf[cmessi.lstrt-1],"%*ld",(int)cmessi.kdj, iout);
       write (BUF(LSTRT:LBUF), FMTJ) IOUT
          go to 850
       end if
@@ -1094,7 +1149,7 @@ c
 c                Get format for integer output.
       call MESSFI
       LBUF = LBUF + KDI
-C%%  sprintf(&cmessc.buf[cmessi.lstrt-1], "%*d", messcc.kciwid, iout);
+C%% sprintf(&cmessc.buf[cmessi.lstrt-1],"%*ld",(int)messcc.kciwid,iout);
       write (BUF(LSTRT:LBUF), FMTI) IOUT
 c                         Entry here to check line after numeric output.
   850 if (LBUF .le. LENLIN) go to 410
@@ -1141,12 +1196,14 @@ c++ CODE for ~.C. is active
          FMTI(6:6) = char(mod(LENOUT, 10) + ichar0)
 c++ END
          if (KK .eq. 3) then
-C%%         sprintf(&cmessc.buf[cmessi.lstrt-1], "%*d",
-C%%            cmessi.lenout, mact[i]);
+C%%         sprintf(&cmessc.buf[cmessi.lstrt-1], "%*ld",
+C%%            (int)cmessi.lenout, mact[i]);
             write (BUF(LSTRT:LBUF), FMTI) MACT(I+1)
             go to 960
          end if
 c                            Regular integer output
+         NIDAT = NIDAT + NSKIP
+         NSKIP = 0
 c++ CODE for ~.C. is active
          write (BUF(LSTRT:LBUF), FMTI) (IDAT(K), K = NIDAT,
      1      NIDAT+KLINE-1)
@@ -1155,7 +1212,7 @@ c++ CODE for .C. is inactive
 C%%  kk = cmessi.nidat;
 C%%  for (cmessi.nidat=kk; cmessi.nidat<kk+cmessi.kline; cmessi.nidat++)
 C%%     sprintf(&cmessc.buf[cmessi.lstrt+cmessi.lenout*(cmessi.nidat
-C%%       - kk) - 1], "%*d", cmessi.lenout, idat[cmessi.nidat-1]);
+C%%       - kk) - 1], "%*ld", (int)cmessi.lenout, idat[cmessi.nidat-1]);
 c++ END
          go to 960
 c                           Various floating point output
@@ -1259,7 +1316,7 @@ C%%   rewind(scratch_file);
   995 LBUF = 5
       IROW = IROW + 1
       if (IROW .ne. 0) then
-C%%      sprintf(cmessc.buf, "%4d",  irow%10000);
+C%%      sprintf(cmessc.buf, "%4ld",  irow%10000);
          write(BUF(1:4), '(I4)') mod(IROW, 10000)
       else
 C%%    memset(cmessc.buf,' ',4);
@@ -1281,9 +1338,10 @@ c                          Get started with vector or matrix output
  1000 INC = 1
       LOCBEG = NIDAT
       if (M .gt. MEGMAT) then
-         M = MEIVEC + 2 * (M - MEIVCI)
-         I = I + 1
-         INC = MACT(I)
+c Have a user set increment between entries of a vector.
+        M = MEIVEC + 2 * (M - MEIVCI)
+        I = I + 1
+        INC = MACT(I)
       end if
       XARG = M .gt. MEJMAT
       if (XARG) then
@@ -1293,6 +1351,8 @@ c                          Get started with vector or matrix output
       end if
       GOTFMT = M .gt. MEIMAT
       if (GOTFMT) M = M - 2
+      LOCBEG = LOCBEG + NSKIP
+      NSKIP = 0
       MPT = LOCBEG
       if (M .eq. MEIMAT) go to 1300
 c                           Take care of setup for vector output
@@ -1311,7 +1371,7 @@ c                          Get format for label output.
 C%%   messcc.kcrwid = messcc.kciwid;
       FMTR = FMTI
       KDILAB = KDI+1
-      LINSTR = 2*KDILAB+1
+      LINSTR = 2*KDILAB+2
       if (XARG) then
          if (.not. GOTFMT) go to 1150
          IWF = IWG
@@ -1351,12 +1411,12 @@ c++ CODE for ~.C. is active
       write (BUF(1:KDILAB), FMTR) KNT+1
 c++ CODE for .C. is inactive
 C%%   memset(cmessc.buf,' ',LENBUF);
-C%%   sprintf(cmessc.buf, "%*d", messcc.kcrwid, knt+1);
+C%%   sprintf(cmessc.buf, "%*ld", (int)messcc.kcrwid, knt+1);
 c++ END
       BUF(KDILAB:KDILAB) = '-'
       KLINE = min(NLINE, LASKNT - KNT)
       KNT = KNT + KLINE
-C%%    sprintf(&cmessc.buf[kdilab], "%*d", messcc.kcrwid, knt);
+C%%    sprintf(&cmessc.buf[kdilab], "%*ld", (int)messcc.kcrwid, knt);
       write (BUF(KDILAB+1:2*KDILAB), FMTR) KNT
 C%%    cmessc.buf[kdilab*2L-1] = ':';
 C%%    for (kc=kdilab*2L; kc < *linstr-1; kc++) cmessc.buf[kc] = ' ';
@@ -1372,7 +1432,7 @@ c++ CODE for ~.C. is active
 c++ CODE for .C. is inactive
 C%%   for (k=cmessi.mpt; k<=cmessi.mpt+cmessi.kline-1; k++)
 C%%  sprintf(&cmessc.buf[cmessi.lstrt+messcc.kciwid*(k-cmessi.mpt)-1],
-C%%      "%*d", messcc.kciwid, idat[cmessi.inc*k-1]);
+C%%      "%*ld", (int)messcc.kciwid, idat[cmessi.inc*k-1]);
 c++ END
       MPT = MPT + KLINE * INC
 c
@@ -1387,6 +1447,31 @@ c                                          After other format
       LENTRY = 7
       NFDAT = LASTI + 1
       go to 1080
+
+
+c                         Sparse vector output.
+ 1200 XARG = .true.
+      if (.not. XARGOK) go to 40
+      GOTFMT = .false.
+      MPT = 1
+      LOCBEG = 1
+      INC = 1
+      LASKNT = MACT(I+1)
+      LASTI = LASKNT
+      LENTRY = 10
+      return
+
+c                Entry after getting format for sparse data output.
+ 1210 LENOUT = IWF
+      LENTRY = 11
+      NLINE = LENLIN / IWF
+
+ 1220 call MESSPR
+      KLINE = min(LASKNT - MPT + 1, NLINE)
+      if (KLINE .le. 0) go to 40
+      LBUF = LENOUT * KLINE
+      return
+
 c
 c                           Take care of setup for matrix output
  1300 continue
@@ -1432,7 +1517,7 @@ c                        Go get row/column widths
             end if
          end if
          call MESSFI
-         MAXWID(IRC) = max(MAXWID(IRC), LTEXT + KDI)
+         MAXWID(IRC) = max(MAXWID(IRC), LTEXT + KDI+1)
 C%%      if (cmessi.irc == 1)
 C%%         messcc.kcrwid = cmessi.kdi;
 C%%      else
@@ -1513,7 +1598,7 @@ C%%    for (kc=cmessi.lbuf; kc < *linstr; kc++) cmessc.buf[kc] = ' ';
          go to 1520
       end if
  1515 continue
-C%%   sprintf(&cmessc.buf[cmessi.lbuf], "%*d", messcc.kcrwid, irow);
+C%%   sprintf(&cmessc.buf[cmessi.lbuf],"%*ld",(int)messcc.kcrwid,irow);
 C%%    for (kc=cmessi.lbuf+messcc.kcrwid;
 C%%       kc < *linstr; kc++) cmessc.buf[kc] = ' ';
       write (BUF(LBUF+1:LINSTR), FMTR) IROW
@@ -1524,7 +1609,7 @@ C%%       kc < *linstr; kc++) cmessc.buf[kc] = ' ';
 c                                    Integer output
 C%% for (k=cmessi.mpt; k<=cmessi.lasti; k+=cmessi.ndim)
 C%%  sprintf(&cmessc.buf[cmessi.lstrt + messcc.kciwid*(k-cmessi.mpt)/
-C%%     cmessi.ndim - 1], "%*d", messcc.kciwid, idat[k-1]);
+C%%     cmessi.ndim - 1], "%*ld", (int)messcc.kciwid, idat[k-1]);
          write (BUF(LSTRT:LBUF), FMTI) (IDAT(K), K=MPT,LASTI,NDIM)
 c
 c                                     Entry here after matrix output.
@@ -1576,25 +1661,25 @@ c
 c
 c For comments on other variables, see the listing for MESS.
       integer   LENBUF, MEVBAS, MEVLAS
-      parameter (LENBUF = 250)
-      parameter (MEVBAS = 10)
-      parameter (MEVLAS = 32)
+      parameter (LENBUF=250)
+      parameter (MEVBAS=10)
+      parameter (MEVLAS=33)
       logical          XARG, GOTFMT, XARGOK
-      integer          EUNIT, ICHAR0, IRC, IVAR(MEVBAS:MEVLAS), IMAG,
-     1   INC, ITEXT, IWF, IWG, KDF, KDFDEF, KDI, KDIAG, KDJ, KLINE,
-     2   KSCRN, KSHIFT, KSPEC, KT, MAXERR, LASTI, LBUF, LENLIN, LENOUT,
-     3   LENTRY, LENTXT, LHEAD, LINERR, LINMSG, LOCBEG, LPRINT, LSTOP,
-     4   LSTRT, LTEXT, MAXWID(2), MDAT(5), MPT, MUNIT, NCOL, NDIM,
-     5   NFDAT, NIDAT, NMDAT, NROW, NTEXT, OUNIT, SUNIT, TABSPA
+      integer          ERRCNT, EUNIT, ICHAR0, IRC, IVAR(MEVBAS:MEVLAS),
+     1   IMAG, INC, ITEXT, IWF, IWG, KDF, KDFDEF, KDI, KDIAG, KDJ,
+     2   KLINE, KSCRN, KSHIFT, KSPEC, KT, MAXERR, LASTI, LBUF, LENLIN,
+     3   LENOUT, LENTRY, LENTXT, LHEAD, LINERR, LINMSG, LOCBEG, LPRINT,
+     4   LSTOP, LSTRT, LTEXT, MAXWID(2), MDAT(5), MPT, MUNIT, NCOL,
+     5   NDIM, NFDAT, NIDAT, NMDAT, NROW, NTEXT, OUNIT, SUNIT, TABSPA
 c
-      character BUF*(LENBUF), DOLS*72, FMTC*7, FMTF*15, FMTG*15,
+      character BUF*(LENBUF), DOLS*72, FMTC*7, FMTF*20, FMTG*15,
      1  FMTI*7, FMTIM(2)*7, FMTJ*7, FMTR*7, FMTT*15
       common /CMESSI/ SUNIT, LHEAD, KDFDEF, LINMSG, LINERR, MUNIT,
      1   EUNIT, KSCRN, KDIAG, MAXERR, LSTOP, LPRINT, KDF, NTEXT, NIDAT,
-     2   NFDAT, NMDAT, MDAT, TABSPA, ICHAR0, IMAG, INC, IRC, ITEXT,
-     3   IWF, IWG, KDI, KDJ, KLINE, KSHIFT, KSPEC, KT, LASTI, LBUF,
-     4   LENLIN, LENOUT, LENTRY, LENTXT, LOCBEG, LSTRT, LTEXT, MAXWID,
-     5   MPT, NROW, NCOL, NDIM, OUNIT, GOTFMT, XARG, XARGOK
+     2   NFDAT, NMDAT, MDAT, TABSPA, ERRCNT, ICHAR0, IMAG, INC, IRC,
+     3   ITEXT, IWF, IWG, KDI, KDJ, KLINE, KSHIFT, KSPEC, KT, LASTI,
+     4   LBUF, LENLIN, LENOUT, LENTRY, LENTXT, LOCBEG, LSTRT, LTEXT,
+     5   MAXWID, MPT, NROW, NCOL, NDIM, OUNIT, GOTFMT, XARG, XARGOK
       common /CMESSC / BUF, DOLS, FMTF, FMTG, FMTI, FMTJ, FMTT, FMTIM
       equivalence (IVAR(MEVBAS), SUNIT)
       equivalence (FMTIM(1), FMTR), (FMTIM(2), FMTC)
@@ -1640,25 +1725,25 @@ c
 c
 c For comments on other variables, see the listing for MESS.
       integer   LENBUF, MEVBAS, MEVLAS
-      parameter (LENBUF = 250)
-      parameter (MEVBAS = 10)
-      parameter (MEVLAS = 32)
+      parameter (LENBUF=250)
+      parameter (MEVBAS=10)
+      parameter (MEVLAS=33)
       logical          XARG, GOTFMT, XARGOK
-      integer          EUNIT, ICHAR0, IRC, IVAR(MEVBAS:MEVLAS), IMAG,
-     1   INC, ITEXT, IWF, IWG, KDF, KDFDEF, KDI, KDIAG, KDJ, KLINE,
-     2   KSCRN, KSHIFT, KSPEC, KT, MAXERR, LASTI, LBUF, LENLIN, LENOUT,
-     3   LENTRY, LENTXT, LHEAD, LINERR, LINMSG, LOCBEG, LPRINT, LSTOP,
-     4   LSTRT, LTEXT, MAXWID(2), MDAT(5), MPT, MUNIT, NCOL, NDIM,
-     5   NFDAT, NIDAT, NMDAT, NROW, NTEXT, OUNIT, SUNIT, TABSPA
+      integer          ERRCNT, EUNIT, ICHAR0, IRC, IVAR(MEVBAS:MEVLAS),
+     1   IMAG, INC, ITEXT, IWF, IWG, KDF, KDFDEF, KDI, KDIAG, KDJ,
+     2   KLINE, KSCRN, KSHIFT, KSPEC, KT, MAXERR, LASTI, LBUF, LENLIN,
+     3   LENOUT, LENTRY, LENTXT, LHEAD, LINERR, LINMSG, LOCBEG, LPRINT,
+     4   LSTOP, LSTRT, LTEXT, MAXWID(2), MDAT(5), MPT, MUNIT, NCOL,
+     5   NDIM, NFDAT, NIDAT, NMDAT, NROW, NTEXT, OUNIT, SUNIT, TABSPA
 c
-      character BUF*(LENBUF), DOLS*72, FMTC*7, FMTF*15, FMTG*15,
+      character BUF*(LENBUF), DOLS*72, FMTC*7, FMTF*20, FMTG*15,
      1  FMTI*7, FMTIM(2)*7, FMTJ*7, FMTR*7, FMTT*15
       common /CMESSI/ SUNIT, LHEAD, KDFDEF, LINMSG, LINERR, MUNIT,
      1   EUNIT, KSCRN, KDIAG, MAXERR, LSTOP, LPRINT, KDF, NTEXT, NIDAT,
-     2   NFDAT, NMDAT, MDAT, TABSPA, ICHAR0, IMAG, INC, IRC, ITEXT,
-     3   IWF, IWG, KDI, KDJ, KLINE, KSHIFT, KSPEC, KT, LASTI, LBUF,
-     4   LENLIN, LENOUT, LENTRY, LENTXT, LOCBEG, LSTRT, LTEXT, MAXWID,
-     5   MPT, NROW, NCOL, NDIM, OUNIT, GOTFMT, XARG, XARGOK
+     2   NFDAT, NMDAT, MDAT, TABSPA, ERRCNT, ICHAR0, IMAG, INC, IRC,
+     3   ITEXT, IWF, IWG, KDI, KDJ, KLINE, KSHIFT, KSPEC, KT, LASTI,
+     4   LBUF, LENLIN, LENOUT, LENTRY, LENTXT, LOCBEG, LSTRT, LTEXT,
+     5   MAXWID, MPT, NROW, NCOL, NDIM, OUNIT, GOTFMT, XARG, XARGOK
       common /CMESSC / BUF, DOLS, FMTF, FMTG, FMTI, FMTJ, FMTT, FMTIM
       equivalence (IVAR(MEVBAS), SUNIT)
       equivalence (FMTIM(1), FMTR), (FMTIM(2), FMTC)
@@ -1728,32 +1813,31 @@ c LSTRDB Value of LSTRT when see a "$ ".
 c LTXTDB Value of LTEXT when see a "$ ".
 c TEXT  Original input character vector.
 c
-      integer J, K, KK, L
+      integer J, K, KB, KK, L, LFLGDB, LSTRDB, LTXTDB
       character*(*)  TEXT(*)
       character SC, C
-      parameter (SC = '$')
+      parameter (SC='$')
 c For comments on other variables, see the listing for MESS.
       integer   KOLWID, LINSTR, LENBUF, MEVBAS, MEVLAS
-      parameter (LENBUF = 250)
-      parameter (MEVBAS = 10)
-      parameter (MEVLAS = 32)
+      parameter (LENBUF=250)
+      parameter (MEVBAS=10)
+      parameter (MEVLAS=33)
       logical          XARG, GOTFMT, XARGOK
-      integer          EUNIT, ICHAR0, IRC, IVAR(MEVBAS:MEVLAS), IMAG,
-     1   INC, ITEXT, IWF, IWG, KB, KDF, KDFDEF, KDI, KDIAG, KDJ, KLINE,
-     2   KSCRN, KSHIFT, KSPEC, KT, MAXERR, LASTI, LBUF, LENLIN, LENOUT,
-     3   LENTRY, LENTXT, LFLGDB, LHEAD, LINERR, LINMSG, LOCBEG, LPRINT,
-     4   LSTOP, LSTRDB, LSTRT, LTEXT, LTXTDB, MAXWID(2), MDAT(5), MPT,
-     5   MUNIT, NCOL, NDIM, NFDAT, NIDAT, NMDAT, NROW, NTEXT, OUNIT,
-     6   SUNIT, TABSPA
+      integer          ERRCNT, EUNIT, ICHAR0, IRC, IVAR(MEVBAS:MEVLAS),
+     1   IMAG, INC, ITEXT, IWF, IWG, KDF, KDFDEF, KDI, KDIAG, KDJ,
+     2   KLINE, KSCRN, KSHIFT, KSPEC, KT, MAXERR, LASTI, LBUF, LENLIN,
+     3   LENOUT, LENTRY, LENTXT, LHEAD, LINERR, LINMSG, LOCBEG, LPRINT,
+     4   LSTOP, LSTRT, LTEXT, MAXWID(2), MDAT(5), MPT, MUNIT, NCOL,
+     5   NDIM, NFDAT, NIDAT, NMDAT, NROW, NTEXT, OUNIT, SUNIT, TABSPA
 c
-      character BUF*(LENBUF), DOLS*72, FMTC*7, FMTF*15, FMTG*15,
+      character BUF*(LENBUF), DOLS*72, FMTC*7, FMTF*20, FMTG*15,
      1  FMTI*7, FMTIM(2)*7, FMTJ*7, FMTR*7, FMTT*15
       common /CMESSI/ SUNIT, LHEAD, KDFDEF, LINMSG, LINERR, MUNIT,
      1   EUNIT, KSCRN, KDIAG, MAXERR, LSTOP, LPRINT, KDF, NTEXT, NIDAT,
-     2   NFDAT, NMDAT, MDAT, TABSPA, ICHAR0, IMAG, INC, IRC, ITEXT,
-     3   IWF, IWG, KDI, KDJ, KLINE, KSHIFT, KSPEC, KT, LASTI, LBUF,
-     4   LENLIN, LENOUT, LENTRY, LENTXT, LOCBEG, LSTRT, LTEXT, MAXWID,
-     5   MPT, NROW, NCOL, NDIM, OUNIT, GOTFMT, XARG, XARGOK
+     2   NFDAT, NMDAT, MDAT, TABSPA, ERRCNT, ICHAR0, IMAG, INC, IRC,
+     3   ITEXT, IWF, IWG, KDI, KDJ, KLINE, KSHIFT, KSPEC, KT, LASTI,
+     4   LBUF, LENLIN, LENOUT, LENTRY, LENTXT, LOCBEG, LSTRT, LTEXT,
+     5   MAXWID, MPT, NROW, NCOL, NDIM, OUNIT, GOTFMT, XARG, XARGOK
       common /CMESSC / BUF, DOLS, FMTF, FMTG, FMTI, FMTJ, FMTT, FMTIM
       equivalence (IVAR(MEVBAS), SUNIT)
       equivalence (FMTIM(1), FMTR), (FMTIM(2), FMTC)
@@ -1895,8 +1979,8 @@ c  Special code to remove the "$" preceding a blank.  Only works for 1.
          end if
          if (C .eq. '#') then
 c                                  Output column index
-C%%         sprintf(&cmessc.buf[cmessi.lstrt-1], "%*d ",
-C%%           cmessi.lbuf-cmessi.lstrt, cmessi.imag+j-1);
+C%%         sprintf(&cmessc.buf[cmessi.lstrt-1], "%*ld ",
+C%%           (int)(cmessi.lbuf-cmessi.lstrt), cmessi.imag+j-1);
             write (BUF(LSTRT:LBUF), FMTC) IMAG + J - 1
             if (NTEXT .ne. 0) NTEXT = K
             go to 300
@@ -1923,25 +2007,25 @@ c
 c
 c For comments on other variables, see the listing for MESS.
       integer   LENBUF, MEVBAS, MEVLAS
-      parameter (LENBUF = 250)
-      parameter (MEVBAS = 10)
-      parameter (MEVLAS = 32)
+      parameter (LENBUF=250)
+      parameter (MEVBAS=10)
+      parameter (MEVLAS=33)
       logical          XARG, GOTFMT, XARGOK
-      integer          EUNIT, ICHAR0, IRC, IVAR(MEVBAS:MEVLAS), IMAG,
-     1   INC, ITEXT, IWF, IWG, KDF, KDFDEF, KDI, KDIAG, KDJ, KLINE,
-     2   KSCRN, KSHIFT, KSPEC, KT, MAXERR, LASTI, LBUF, LENLIN, LENOUT,
-     3   LENTRY, LENTXT, LHEAD, LINERR, LINMSG, LOCBEG, LPRINT, LSTOP,
-     4   LSTRT, LTEXT, MAXWID(2), MDAT(5), MPT, MUNIT, NCOL, NDIM,
-     5   NFDAT, NIDAT, NMDAT, NROW, NTEXT, OUNIT, SUNIT, TABSPA
+      integer          ERRCNT, EUNIT, ICHAR0, IRC, IVAR(MEVBAS:MEVLAS),
+     1   IMAG, INC, ITEXT, IWF, IWG, KDF, KDFDEF, KDI, KDIAG, KDJ,
+     2   KLINE, KSCRN, KSHIFT, KSPEC, KT, MAXERR, LASTI, LBUF, LENLIN,
+     3   LENOUT, LENTRY, LENTXT, LHEAD, LINERR, LINMSG, LOCBEG, LPRINT,
+     4   LSTOP, LSTRT, LTEXT, MAXWID(2), MDAT(5), MPT, MUNIT, NCOL,
+     5   NDIM, NFDAT, NIDAT, NMDAT, NROW, NTEXT, OUNIT, SUNIT, TABSPA
 c
-      character BUF*(LENBUF), DOLS*72, FMTC*7, FMTF*15, FMTG*15,
+      character BUF*(LENBUF), DOLS*72, FMTC*7, FMTF*20, FMTG*15,
      1  FMTI*7, FMTIM(2)*7, FMTJ*7, FMTR*7, FMTT*15
       common /CMESSI/ SUNIT, LHEAD, KDFDEF, LINMSG, LINERR, MUNIT,
      1   EUNIT, KSCRN, KDIAG, MAXERR, LSTOP, LPRINT, KDF, NTEXT, NIDAT,
-     2   NFDAT, NMDAT, MDAT, TABSPA, ICHAR0, IMAG, INC, IRC, ITEXT,
-     3   IWF, IWG, KDI, KDJ, KLINE, KSHIFT, KSPEC, KT, LASTI, LBUF,
-     4   LENLIN, LENOUT, LENTRY, LENTXT, LOCBEG, LSTRT, LTEXT, MAXWID,
-     5   MPT, NROW, NCOL, NDIM, OUNIT, GOTFMT, XARG, XARGOK
+     2   NFDAT, NMDAT, MDAT, TABSPA, ERRCNT, ICHAR0, IMAG, INC, IRC,
+     3   ITEXT, IWF, IWG, KDI, KDJ, KLINE, KSHIFT, KSPEC, KT, LASTI,
+     4   LBUF, LENLIN, LENOUT, LENTRY, LENTXT, LOCBEG, LSTRT, LTEXT,
+     5   MAXWID, MPT, NROW, NCOL, NDIM, OUNIT, GOTFMT, XARG, XARGOK
       common /CMESSC / BUF, DOLS, FMTF, FMTG, FMTI, FMTJ, FMTT, FMTIM
       equivalence (IVAR(MEVBAS), SUNIT)
       equivalence (FMTIM(1), FMTR), (FMTIM(2), FMTC)
@@ -1950,34 +2034,40 @@ c
       data NSCRN / 0 /
 c
       if (LBUF .ne. 0) then
-         if (OUNIT .le. 0) then
-            if (KSCRN .gt. 0) then
-               if (NSCRN .ge. KSCRN) then
+ 10     if (BUF(LBUF:LBUF) .eq. ' ') then
+          if (LBUF .gt. 1) then
+            LBUF = LBUF - 1
+            go to 10
+          end if
+        end if
+        if (OUNIT .le. 0) then
+          if (KSCRN .gt. 0) then
+            if (NSCRN .ge. KSCRN) then
 C%%               printf( " Type 'Enter' to continue\n" );
-                  print '('' Type "Enter" to continue'')'
-C%%               scanf( "" );
-                  read (*, *)
-                  NSCRN = 0
-               end if
-               NSCRN = NSCRN + 1
+              print '('' Type "Enter" to continue'')'
+C%%               scanf( "%*[^\n]%*c" );
+              read (*, *)
+              NSCRN = 0
             end if
-C%%      printf( "%.*s\n", cmessi.lbuf, cmessc.buf);
-            print '(1X, A)', BUF(1:LBUF)
-            if (OUNIT .eq. 0) go to 10
-         end if
+            NSCRN = NSCRN + 1
+          end if
+C%%      printf( "%.*s\n", (int)cmessi.lbuf, cmessc.buf);
+          print '(1X, A)', BUF(1:LBUF)
+          if (OUNIT .eq. 0) go to 20
+        end if
 c++ CODE for ~.C. is active
-         K = abs(OUNIT)
-         write (K, '(A)', ERR=20) BUF(1:LBUF)
+        K = abs(OUNIT)
+        write (K, '(A)', ERR=30) BUF(1:LBUF)
 c++ CODE for .C. is inactive
 C%%      fprintf(c_handle[labs(cmessi.ounit)-1], "%.*s\n",
-C%%      cmessi.lbuf, cmessc.buf);
+C%%      (int)cmessi.lbuf, cmessc.buf);
 c++ END
-   10    LBUF = 0
+ 20     LBUF = 0
       end if
       return
 c++ CODE for ~.C. is active
 c              See if opening fixes the error
-20    write(SCRNAM, '(A, I2.2, A)') 'MESSF_', K, '.tmp'
+30    write(SCRNAM, '(A, I2.2, A)') 'MESSF_', K, '.tmp'
       open (UNIT=K, STATUS='UNKNOWN', FILE=SCRNAM)
       write (K, '(A)') BUF(1:LBUF)
       return
@@ -2003,25 +2093,25 @@ c++ END
       parameter (MESUNI=10, MEPRNT=21, MECONT=50)
 c
       INTEGER LENBUF, MEVBAS, MEVLAS
-      parameter (LENBUF = 250)
-      parameter (MEVBAS = 10)
-      parameter (MEVLAS = 32)
+      parameter (LENBUF=250)
+      parameter (MEVBAS=10)
+      parameter (MEVLAS=33)
       logical          XARG, GOTFMT, XARGOK
-      integer          EUNIT, ICHAR0, IRC, IVAR(MEVBAS:MEVLAS), IMAG,
-     1   INC, ITEXT, IWF, IWG, KDF, KDFDEF, KDI, KDIAG, KDJ, KLINE,
-     2   KSCRN, KSHIFT, KSPEC, KT, MAXERR, LASTI, LBUF, LENLIN, LENOUT,
-     3   LENTRY, LENTXT, LHEAD, LINERR, LINMSG, LOCBEG, LPRINT, LSTOP,
-     4   LSTRT, LTEXT, MAXWID(2), MDAT(5), MPT, MUNIT, NCOL, NDIM,
-     5   NFDAT, NIDAT, NMDAT, NROW, NTEXT, OUNIT, SUNIT, TABSPA
+      integer          ERRCNT, EUNIT, ICHAR0, IRC, IVAR(MEVBAS:MEVLAS),
+     1   IMAG, INC, ITEXT, IWF, IWG, KDF, KDFDEF, KDI, KDIAG, KDJ,
+     2   KLINE, KSCRN, KSHIFT, KSPEC, KT, MAXERR, LASTI, LBUF, LENLIN,
+     3   LENOUT, LENTRY, LENTXT, LHEAD, LINERR, LINMSG, LOCBEG, LPRINT,
+     4   LSTOP, LSTRT, LTEXT, MAXWID(2), MDAT(5), MPT, MUNIT, NCOL,
+     5   NDIM, NFDAT, NIDAT, NMDAT, NROW, NTEXT, OUNIT, SUNIT, TABSPA
 c
-      character BUF*(LENBUF), DOLS*72, FMTC*7, FMTF*15, FMTG*15,
+      character BUF*(LENBUF), DOLS*72, FMTC*7, FMTF*20, FMTG*15,
      1  FMTI*7, FMTIM(2)*7, FMTJ*7, FMTR*7, FMTT*15
       common /CMESSI/ SUNIT, LHEAD, KDFDEF, LINMSG, LINERR, MUNIT,
      1   EUNIT, KSCRN, KDIAG, MAXERR, LSTOP, LPRINT, KDF, NTEXT, NIDAT,
-     2   NFDAT, NMDAT, MDAT, TABSPA, ICHAR0, IMAG, INC, IRC, ITEXT,
-     3   IWF, IWG, KDI, KDJ, KLINE, KSHIFT, KSPEC, KT, LASTI, LBUF,
-     4   LENLIN, LENOUT, LENTRY, LENTXT, LOCBEG, LSTRT, LTEXT, MAXWID,
-     5   MPT, NROW, NCOL, NDIM, OUNIT, GOTFMT, XARG, XARGOK
+     2   NFDAT, NMDAT, MDAT, TABSPA, ERRCNT, ICHAR0, IMAG, INC, IRC,
+     3   ITEXT, IWF, IWG, KDI, KDJ, KLINE, KSHIFT, KSPEC, KT, LASTI,
+     4   LBUF, LENLIN, LENOUT, LENTRY, LENTXT, LOCBEG, LSTRT, LTEXT,
+     5   MAXWID, MPT, NROW, NCOL, NDIM, OUNIT, GOTFMT, XARG, XARGOK
       common /CMESSC / BUF, DOLS, FMTF, FMTG, FMTI, FMTJ, FMTT, FMTIM
       equivalence (IVAR(MEVBAS), SUNIT)
       equivalence (FMTIM(1), FMTR), (FMTIM(2), FMTC)
