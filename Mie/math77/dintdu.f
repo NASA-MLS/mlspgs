@@ -2,6 +2,7 @@
 C     .  Copyright (C) 1989, California Institute of Technology.
 C     .  All rights reserved.  U. S. Government sponsorship under
 C     .  NASA contract NAS7-918 is acknowledged.
+C>> 2007-03-28 DINTDU  Krogh  l .le. 0 changed to l .le. 1
 C>> 1996-03-31 DINTDU  Krogh  Removed unused variable in common.
 c>> 1995-11-20 DINTDU  Krogh  Converted from SFTRAN to Fortran 77.
 c>> 1994-10-19 DINTDU  Krogh  Changes to use M77CON
@@ -144,6 +145,8 @@ C     *****    EQUIVALENCE STATEMENTS    *******************************
 C
       EQUIVALENCE (PHI(18),PHIT)
       EQUIVALENCE (FAT(1),FATA), (FAT(2),FATB)
+c
+c$OMP THREADPRIVATE( /DINTNC/, /DINTC/, /DINTEC/ )
 C
 C     *****    PROCEDURES     ******************************************
 C
