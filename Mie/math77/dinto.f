@@ -310,7 +310,7 @@ C End of parameters defining locations in the common blocks.
 C
 c ********* Error message text ***************
 c[Last 2 letters of Param. name]  [Text generating message.]
-cAA NSUB=$I on ($F, $F), KDIM=$I$B
+cAA NSUB=$I on ($F, $F) KDIM=$I$B
 cAB  DEL=$(E12.5) DELMIN=$(E09.3) $B
 cAC EPS=$G PART=$I AIM=$I$B
 cAD  DISCHK=$I WORRY=$F$B
@@ -319,7 +319,7 @@ cAF TA=$F$E
 cAG $(I2) $(E11.4) $G $G $G $G $G $J$E
 cAH **** Reverse Direction ****$E
 cAI ISTOP=$I $I $I $I,  XJ=$F XJP=$F$B
-cAJ XT$HFT$HPHI$HPHIT  KDIM=$I$E
+cAJ XT$HFT$HPHI$HPHIT$E
 cAK $#
 cAL INC=$I INC2=$I  E=$F $B
 cAM X=$F F1=$F COUNT=$F$E
@@ -340,41 +340,41 @@ c    KDIM=$I$E
 c   $
 cAW Abscissae for dimensions $I to $I: $B
 c   $
-cAX Really on ($F, $F), KDIM=$I DEL=$(E12.5)     TA=$(E10.3) $E
+cAX Really on ($F, $F) KDIM=$I DEL=$(E12.5)     TA=$(E10.3) $E
 c   $
 cAY DINT$B
       integer LTXTAA,LTXTAB,LTXTAC,LTXTAD,LTXTAE,LTXTAF,LTXTAG,LTXTAH,
      * LTXTAI,LTXTAJ,LTXTAK,LTXTAL,LTXTAM,LTXTAN,LTXTAO,LTXTAP,LTXTAQ,
      * LTXTAR,LTXTAS,LTXTAT,LTXTAU,LTXTAV,LTXTAW,LTXTAX,LTXTAY
-      parameter (LTXTAA=  1,LTXTAB= 31,LTXTAC= 63,LTXTAD= 86,LTXTAE=107,
-     * LTXTAF=117,LTXTAG=124,LTXTAH=158,LTXTAI=187,LTXTAJ=221,
-     * LTXTAK=249,LTXTAL=251,LTXTAM=274,LTXTAN=295,LTXTAO=314,
-     * LTXTAP=362,LTXTAQ=418,LTXTAR=448,LTXTAS=476,LTXTAT=  1,
+      parameter (LTXTAA=  1,LTXTAB= 30,LTXTAC= 62,LTXTAD= 85,LTXTAE=106,
+     * LTXTAF=116,LTXTAG=123,LTXTAH=157,LTXTAI=186,LTXTAJ=220,
+     * LTXTAK=239,LTXTAL=241,LTXTAM=264,LTXTAN=285,LTXTAO=304,
+     * LTXTAP=352,LTXTAQ=409,LTXTAR=439,LTXTAS=467,LTXTAT=  1,
      * LTXTAU=  1,LTXTAV=  1,LTXTAW=  1,LTXTAX=  1,LTXTAY=  1)
-      character MTXTAA(3) * (173)
+      character MTXTAA(3) * (170)
       character MTXTAB(1) * (80)
       character MTXTAC(1) * (32)
       character MTXTAD(1) * (67)
       character MTXTAE(1) * (37)
-      character MTXTAF(1) * (59)
+      character MTXTAF(1) * (58)
       character MTXTAG(1) * (6)
-      data MTXTAA/'NSUB=$I on ($F, $F), KDIM=$I$B DEL=$(E12.5) DELMIN=$(
-     *E09.3) $BEPS=$G PART=$I AIM=$I$B DISCHK=$I WORRY=$F$B KDIM=$I$BTA=
-     *$F$E$(I2) $(E11.4) $G $G $G $G $G $J$E**** Reverse Dir','ection **
-     ***$EISTOP=$I $I $I $I,  XJ=$F XJP=$F$BXT$HFT$HPHI$HPHIT  KDIM=$I$E
-     *$#INC=$I INC2=$I  E=$F $BX=$F F1=$F COUNT=$F$ERound-Off = $F.  $BA
-     *pparent non-integrable singulari','ty near $F.  $BAbsiccae have co
-     *alesced.  WHERE=$I, DELMIN=$F, NSUB=$I$EDELTA chosen by search = $
-     *F.$EDiscontinuity in ($F, $F).$EUsed $I function values -- the max
-     *imium.$E  '/
+      data MTXTAA/'NSUB=$I on ($F, $F) KDIM=$I$B DEL=$(E12.5) DELMIN=$(E
+     *09.3) $BEPS=$G PART=$I AIM=$I$B DISCHK=$I WORRY=$F$B KDIM=$I$BTA=$
+     *F$E$(I2) $(E11.4) $G $G $G $G $G $J$E**** Reverse D','irection ***
+     **$EISTOP=$I $I $I $I,  XJ=$F XJP=$F$BXT$HFT$HPHI$HPHIT$E$#INC=$I I
+     *NC2=$I  E=$F $BX=$F F1=$F COUNT=$F$ERound-Off = $F.  $BApparent no
+     *n-integrable singularity n','ear $F.  $BAbsiccae have coalesced. $
+     * WHERE=$I, DELMIN=$F, NSUB=$I$EDELTA chosen by search = $F.$EDisco
+     *ntinuity in ($F, $F).$EUsed $I function values -- the maximium.$E
+     * '/
       data MTXTAB/' K     ERRI        ERR       EPSMIN       EPS       $
      *   RE        REPROD  KDIM$E'/
       data MTXTAC/' PHISUM=$F PHTSUM=$F SEARCH=$I$E'/
       data MTXTAD/'Accept result $I = $F, ACCUM=$F, ERR=$(E10.4), EPSMIN
      *=$G, KDIM=$I$E'/
       data MTXTAE/'Abscissae for dimensions $I to $I: $B'/
-      data MTXTAF/'Really on ($F, $F), KDIM=$I DEL=$(E12.5)     TA=$(E10
-     *.3) $E'/
+      data MTXTAF/'Really on ($F, $F) KDIM=$I DEL=$(E12.5)     TA=$(E10.
+     *3) $E'/
       data MTXTAG/'DINT$B'/
 c **** End of automatically generated text
       PARAMETER (IDFLT1=1024)
@@ -382,7 +382,7 @@ c **** End of automatically generated text
       PARAMETER (IDINT1=IDINT2*32)
       PARAMETER (MESA1=IDINT1*LNSUB+IDFLT1*LLOC1+LTXTAA)
       PARAMETER (MESA2=IDFLT1*LDELTA+LTXTAB)
-      PAR AMETER (MESA3=IDINT1*LPART+IDINT2*LKAIMT+IDFLT1*LEPS+LTXTAC)
+      PARAMETER (MESA3=IDINT1*LPART+IDINT2*LKAIMT+IDFLT1*LEPS+LTXTAC)
       PARAMETER (MESA4=29*IDINT1+IDFLT1*LWORRY+LTXTAD)
       PARAMETER (MESA5=30*IDINT1+LTXTAE)
       PARAMETER (MESA6=(32+LK)*IDINT1+(12+LKDIM)*IDINT2+IDFLT1*LERRI+
@@ -421,6 +421,8 @@ C  JUMP = 10  11  12      13
       DATA MACTAR / METEXT, MEFDAT, 0, MEFVEC, 0, MERET /
       DATA MACTH / METEXT, MERET /
       DATA MACTER / MEEMES, 0, 0, -1, MECONT /
+c
+c$OMP THREADPRIVATE( /DINTNC/, /DINTC/, /DINTEC/ )
 C
 C     *****     EXECUTABLE STATEMENTS     ******************************
 C
