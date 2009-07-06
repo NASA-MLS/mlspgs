@@ -2,6 +2,7 @@
 C     .  Copyright (C) 1989, California Institute of Technology.
 C     .  All rights reserved.  U. S. Government sponsorship under
 C     .  NASA contract NAS7-918 is acknowledged.
+C>> 2008-01-11 DINTMA Krogh  Added new error message.
 C>> 1996-03-31 DINTMA Krogh  Removed unused variable in common.
 c>> 1995-11-20 DINTMA Krogh  Converted from SFTRAN to Fortran 77.
 C>> 1995-11-16 DINTMA Krogh  Corrected comment.
@@ -18,7 +19,7 @@ C>> 1988-04-28 DINTMA Snyder Initial code.
 C
 C     MULTIDIMENSIONAL QUADRATURE SUPERVISION PROGRAM.
 c
-c--D replaces "?": ?INTA,?intc,?intec,?INTF,?INTM,?INTMA,?INTNC,?INTOP
+c--D replaces "?": ?INTA,?INTC,?INTEC,?INTF,?INTM,?INTMA,?INTNC,?INTOP
 C
 C     *****     M77CON INFORMATION     *********************************
 C
@@ -329,16 +330,20 @@ C
       INTEGER MACT(5), IDAT(3)
 c ********* Error message text ***************
 c[Last 2 letters of Param. name]  [Text generating message.]
-cAA DINTMA$B
+cAA SINTMA$B
 cAB NWORK = $I, needs to be at least $I, for NDIM = $I.$E
-cAC $I = IFLAG($I) should be an inner integral dimension $C
+cAC Since you are using reverse communication you probably $C
+c   forgot to exit when IOPT(1) + NDIM was .le. 0$E
+cAD $I = IFLAG($I) should be an inner integral dimension $C
 c   in the interval [1,$I].$E
-      integer LTXTAA,LTXTAB,LTXTAC
-      parameter (LTXTAA=  1,LTXTAB=  9,LTXTAC= 62)
-      character MTXTAA(1) * (139)
-      data MTXTAA/'DINTMA$BNWORK = $I, needs to be at least $I, for NDIM
-     * = $I.$E$I = IFLAG($I) should be an inner integral dimension in th
-     *e interval [1,$I].$E'/
+      integer LTXTAA,LTXTAB,LTXTAC,LTXTAD
+      parameter (LTXTAA=  1,LTXTAB=  9,LTXTAC= 62,LTXTAD=164)
+      character MTXTAA(1) * (242)
+      data MTXTAA/'SINTMA$BNWORK = $I, needs to be at least $I, for NDIM
+     * = $I.$ESince you are using reverse communication you probably for
+     *got to exit when IOPT(1) + NDIM was .le. 0$E$I = IFLAG($I) should$
+     * be an inner integral dimension in the interval [1,$I].$E'/
+c **** End of automatically generated text
       DATA MACT / MEEMES, 88, 0, 0, MERET /
 c
 c     *****     DATA Statement     *************************************
@@ -346,6 +351,8 @@ c
 c++   Code for ~SL is INACTIVE
 c      data FIRST /.TRUE./
 c++   End
+c
+c$OMP THREADPRIVATE( /DINTNC/, /DINTC/, /DINTEC/ )
 C
 C     *****     PROCEDURES     *****************************************
 C
@@ -384,7 +391,11 @@ c++   End
       IDAT(2) = NWORK*(NDIM-1)+3*NDIM
       IF (KDIM.LT.IDAT(2)) THEN
          IFLAG(1)=-NDIM-3
-         MACT(4) = LTXTAB
+         if ((REVERM .ne. 0) .and. (KDIM .ge. NDIM)) then
+           MACT(4) = LTXTAC
+         else
+           MACT(4) = LTXTAB
+         end if
          IDAT(1) = KDIM
          IDAT(3) = NDIM
          GO TO 118
@@ -545,7 +556,7 @@ C           THE "SIGN" FUNCTION WANTS ITS ARGUMENTS TO BE THE SAME TYPE.
 C
 C     ERRONEOUS INNER INTEGRAL DIMENSIONALITY.
 C
-115   MACT(4) = LTXTAC
+ 115  MACT(4) = LTXTAD
       IDAT(3) = KDIM
       IDAT(2) = IXKDIM
       IDAT(1) = IFLAG(IXKDIM)
