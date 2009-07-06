@@ -965,6 +965,8 @@ C     TDECR(ZL1)=TA+(ZL1-TA)*((ZL1-TA)/TB)
 C TINCR   IS USED TO TRANSFORM AN ABSCISSA FROM THE CURRENT COORDINATE
 C         SYSTEM TO ONE IN WHICH NSUB IS INCREMENTED BY A FACTOR OF 2.
       TINCR(ZL1)=TA+SIGN(SQRT(ABS(TB*(ZL1-TA))),TB)
+c
+c$OMP THREADPRIVATE( /DINTNC/, /DINTC/, /DINTEC/ )
 C
 C     *****    PROCEDURES     ******************************************
 C
@@ -991,10 +993,13 @@ C
       END(1)=BINIT
       EPSR=MAX(EPSO,ABS(RELEPS))
       EPSMAX=XEPS*EPSR
+      ESOLD=0.0d0
+      HAVDIF=.FALSE.
       NSUB=0
       TA=START(1)
       TLEN=ABS(BINIT-AINIT)
       STEP(1)=1.0d0
+      STEP(2)=1.0d0
       WORRY(1)=END(1)
       INIT=.TRUE.
       DID1=.FALSE.
@@ -1076,6 +1081,7 @@ C
       ABSDIF=ABS(DIFF)
       PX=DIFF
       DELTA=ABS(DELTA)
+      ERRC=0.0d0
       SUM=ALOCAL+0.5d0*(BLOCAL-ALOCAL)
       EPSS=MAX(EPS,EPSMAX)
       DID1=START(PART).NE.ALOCAL
@@ -1879,12 +1885,14 @@ C     END BLOCK
       S=START(1)
       START(1)=X1
       IF (FAIL) THEN
+C        Jump disappeared.  X1..X2 not yet integrated.
          START(2)=X1
 ! Why was the following ever done ???
 !         TA=X1+0.5d0*(X2-X1)
          TA=X1
          TASAVE=TA
       ELSE
+C        Jump didn't disappear.  X1..X2 was integrated using trapezoid
          START(2)=X2
          TA=START(1)
          TASAVE=START(2)
