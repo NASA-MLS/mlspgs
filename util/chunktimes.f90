@@ -84,7 +84,7 @@ program chunktimes ! Reads chunk times from l2aux file(s)
   logical, parameter ::          SHOWDATEANDTIME = .false.
   integer, parameter ::          MAXFILES = 2000
   integer, parameter ::          MAXPHASES = 50
-  integer, parameter ::          MAXCHUNKS = 600
+  integer, parameter ::          MAXCHUNKS = 3600
   character(len=255) :: filename          ! input filename
   character(len=4096):: longChunkList = ''
   character(len=4096):: tempChunkList = ''
@@ -817,6 +817,9 @@ end program chunktimes
 !==================
 
 ! $Log$
+! Revision 1.22  2008/08/19 00:39:25  pwagner
+! Fixed bug overstepping array bounds
+!
 ! Revision 1.21  2008/06/17 00:06:31  pwagner
 ! Can force printing stats on single line
 !
