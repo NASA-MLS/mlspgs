@@ -194,7 +194,8 @@ diff_fun()
 	then
       the_diff="-1"
    else
-      echo "diff_fun: file not found"
+      echo "newAifBdiff.sh/diff_fun: file not found"
+      echo ".. usually results from a severe Makefile or compilation error"
       exit 1
    fi
 }
@@ -451,6 +452,9 @@ else
    exit 0
 fi
 # $Log$
+# Revision 1.13  2007/06/01 16:46:12  pwagner
+# Tries to ignore Intel time stamps of .mod files
+#
 # Revision 1.12  2005/06/23 22:20:45  pwagner
 # Reworded Copyright statement
 #
