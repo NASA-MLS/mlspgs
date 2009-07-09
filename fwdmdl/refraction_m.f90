@@ -11,7 +11,7 @@
 
 module REFRACTION_M
 
-  use MLSCommon, only: RP
+  use MLSKinds, only: RP
     
   implicit none
 
@@ -612,6 +612,9 @@ contains
 end module REFRACTION_M
 
 ! $Log$
+! Revision 2.38  2009/06/23 18:26:11  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.37  2009/06/13 01:08:51  vsnyder
 ! Improve comments about dummy arguments
 !

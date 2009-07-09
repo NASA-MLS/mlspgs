@@ -12,7 +12,7 @@
 module GLNP
 
 ! **************  Gauss-Legendre 3 point formula ***************
-  use MLSCommon, only: R8
+  use MLSKinds, only: R8
   implicit NONE
   private
   public :: GW, GW_All, GX, GX_All, Legendre, Lobatto, NG, NGNEW, NGP1
@@ -58,6 +58,9 @@ contains
 end module GLNP
 
 ! $Log$
+! Revision 2.7  2009/06/23 18:26:11  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.6  2006/06/29 19:31:21  vsnyder
 ! Inching toward Lobatto
 !
