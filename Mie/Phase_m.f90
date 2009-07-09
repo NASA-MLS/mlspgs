@@ -33,10 +33,10 @@ contains
   ! \begin{equation}\begin{split}
   !  S_1(\theta,r) =\,& \sum_{j=1}^\infty \frac{2j+1}{j(j+1)} \left(
   !     a_j \frac{\text{d} P_j^1(\cos\theta)}{\text{d}\theta} +
-  !     b_j \frac{P_j^1(\cos\theta)}{\sin\theta} \text{ and} \\
+  !     b_j \frac{P_j^1(\cos\theta)}{\sin\theta}\right) \text{ and} \\
   !  S_2(\theta,r) =\,& \sum_{j=1}^\infty \frac{2j+1}{j(j+1)} \left(
-  !     a_j \frac{P_j^1(\cos\theta)}{\sin\theta} \text{ and} +
-  !     b_j \frac{\text{d} P_j^1(\cos\theta)}{\text{d}\theta} \\
+  !     a_j \frac{P_j^1(\cos\theta)}{\sin\theta} +
+  !     b_j \frac{\text{d} P_j^1(\cos\theta)}{\text{d}\theta}\right) \\
   ! \end{split}\end{equation}
   ! and $P_j^1$ is the Legendre function of the first kind and order 1.
   ! $a_j$ and $b_j$ are coefficients used to compute the Mie efficiency
@@ -140,3 +140,6 @@ contains
 end module Phase_m
 
 ! $Log$
+! Revision 1.1  2008/04/19 01:15:27  vsnyder
+! Initial commit
+!
