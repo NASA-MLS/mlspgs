@@ -11,13 +11,13 @@
 
 ! subroutine ?_HUNT ( ELEMENT, ARRAY, N, JLO, JHI )
 
-    integer(i4), intent(in) :: N
+    integer, intent(in) :: N
 
 !   real(rk), intent(in) :: ELEMENT, ARRAY(n)
     real(rk), intent(in) :: ELEMENT, ARRAY(*)
 
-    integer(i4), intent(in out) :: JLO
-    integer(i4), intent(out)    :: JHI
+    integer, intent(in out) :: JLO
+    integer, intent(out)    :: JHI
 
     integer :: INC, JM
     logical :: ASCND
@@ -72,6 +72,9 @@
 
 ! end subroutine ?_HUNT
 ! $Log$
+! Revision 2.6  2005/06/22 18:20:14  pwagner
+! Cant have access declared outside module scope
+!
 ! Revision 2.5  2005/06/22 18:14:01  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
