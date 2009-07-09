@@ -23,8 +23,7 @@ contains
 ! A binary search routine with a hunt procedure, to start from last known
 ! location (if 0 < JLO < N) or from the begining otherwise.
   pure subroutine D_HUNT ( ELEMENT, ARRAY, N, JLO, JHI )
-    use MLSCommon, only: I4, R8
-    integer, parameter :: RK = r8
+    integer, parameter :: RK = kind(0.0d0)
     include 'hunt.f9h'
   end subroutine D_HUNT
 !--------------------------- end bloc --------------------------------------
@@ -39,6 +38,9 @@ contains
 
 end module D_HUNT_M
 ! $Log$
+! Revision 2.5  2009/06/23 18:26:10  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.4  2005/06/22 18:08:18  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
