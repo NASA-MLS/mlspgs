@@ -23,8 +23,7 @@ contains
 ! A binary search routine with a hunt procedure, to start from last known
 ! location (if 0 < JLO < N) or from the begining otherwise.
   pure subroutine S_HUNT ( ELEMENT, ARRAY, N, JLO, JHI )
-    use MLSCommon, only: I4, R4
-    integer, parameter :: RK = r4
+    integer, parameter :: RK = kind(0.0e0)
     include 'hunt.f9h'
   end subroutine S_HUNT
 !--------------------------- end bloc --------------------------------------
@@ -40,6 +39,9 @@ contains
 end module S_HUNT_M
 
 ! $Log$
+! Revision 2.5  2009/07/09 23:54:38  vsnyder
+! Remove need for MLSCommon or MLSKinds
+!
 ! Revision 2.4  2009/06/23 18:26:11  pwagner
 ! Prevent Intel from optimizing ident string away
 !
