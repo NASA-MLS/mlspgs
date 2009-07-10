@@ -3359,21 +3359,16 @@ contains ! =====     Public Procedures     =============================
       ! Local parameters
 
       ! The 1 and 2-way manipulations must be entered exactly as shown
-      ! Other more general manipulations require the use of the constant
-      ! "c". E.g., 'a/b+b/a' could be 'a/b+c*b/a' and set c=1
-
+      ! Other more general manipulations are automatically recognized
+      ! (with autoRecognizeGeneralExp)
+      
       ! "More general" means free use of '+', '-', '*', '/' and appropriate
       ! nesting between '(' and ')' where appropriate.
       
-      ! Remember to use the "c", even for examples where it appears unneeded
-      ! e.g., not "-abs(a)" but instead use "c*abs(a)" and set c=-1
-      
-      ! Long-term question: Why not do away with any difference between general
-      ! and non-general manipulations? Just treat them all alike! Then
-      ! you would not need the clumsy insertion of unneeded "c".
-      ! Of course we would need to take care before calling
-      ! SimpleExprWithC to call it with some dummy constant, say 0._rv
-      
+      ! Why not do away with the 1-way and 2-way manipulations that can be
+      ! done by the general manipulation? E.g., (a+b)/2 is easily 
+      ! handled already, why make it a special 2-way?
+
       ! Isn't there a way to encapsulate the idiom
       ! if ( .not. associated ( quantity%mask ) ) then
       ! .   .   .
@@ -3384,6 +3379,8 @@ contains ! =====     Public Procedures     =============================
 
       ! Not listed below but also available are the manipulations 
       ! 'a^c' and 'c^a' (also called 'a**c' and 'c**a')
+      logical, parameter :: autoRecognizeGeneralExp = .true.
+      integer, parameter :: MAXSTRLISTLENGTH = 128
       integer, parameter :: NO2WAYMANIPULATIONS = 8
       character(len=*), parameter :: VALID2WAYMANIPULATIONS ( NO2WAYMANIPULATIONS ) = (/ &
         & 'a+b     ', &
@@ -3410,22 +3407,22 @@ contains ! =====     Public Procedures     =============================
         & 'rms(a)     ', &
         & 'stddev(a)  ' /)
       ! Local variables
-      character (len=128) :: MSTR
       character (len=1) :: ABNAME
-      logical :: OKSOFAR
-      logical :: OneWay
-      logical :: TwoWay
-      logical :: StatisticalFunction
-      logical :: USESC
+      type (VectorValue_T), pointer :: AORB
+      real(rv) :: cc
       integer :: I, INSTANCE, ISURF
       logical :: NEEDSB
       integer :: NoChans
       integer :: NoInstances
       integer :: NoSurfs
       integer :: NUMWAYS ! 1 or 2
-      type (VectorValue_T), pointer :: AORB
+      character (len=128) :: MSTR
+      logical :: OKSOFAR
+      logical :: OneWay
       real(rv) :: qvalue
-      integer, parameter :: MAXSTRLISTLENGTH = 128
+      logical :: TwoWay
+      logical :: StatisticalFunction
+      logical :: USESC
       ! Executable code
       call MLSMessageCalls( 'push', constantName='FillQuantityByManipulation' )
 
@@ -3436,12 +3433,18 @@ contains ! =====     Public Procedures     =============================
       
       OneWay = any ( mstr == valid1WayManipulations )
       TwoWay = any ( mstr == valid2WayManipulations )
-      usesc = present(c)
+      usesC = present(c)
       StatisticalFunction = ( FindFirst( valid1WayManipulations, mstr ) > 7 )
       if ( .not. ( OneWay .or. TwoWay .or. usesc ) ) then
-        call Announce_Error ( key, no_error_code, 'Invalid manipulation:' &
-          & // trim(mstr) )
-        return
+        if ( autoRecognizeGeneralExp ) then
+          usesC = .true.
+          call MLSMessage ( MLSMSG_Warning, moduleName, &
+            & 'Automatically recognizing general manipulation: ' // trim(mstr) )
+        else
+          call Announce_Error ( key, no_error_code, 'Invalid manipulation:' &
+            & // trim(mstr) )
+          return
+        end if
       end if
       
       needsB = TwoWay .or. (usesC .and. (index(mstr, 'b') > 0) )
@@ -3744,12 +3747,18 @@ contains ! =====     Public Procedures     =============================
       case default
         ! This should be one of the cases which use the constant "c"
         if ( .not. present(c) ) then
-          ! How did we get here?
-          call Announce_Error ( key, no_error_code, &
-            & 'trim(mstr) manipulation but no c supplied' )
-          return
+          if ( autoRecognizeGeneralExp ) then
+            cc = 0._rv
+          else
+            ! How did we get here?
+            call Announce_Error ( key, no_error_code, &
+              & 'trim(mstr) manipulation but no c supplied' )
+            return
+          endif
+        else
+          cc = c
         endif
-        call SimpleExprWithC( quantity, a, b, c, mstr )
+        call SimpleExprWithC( quantity, a, b, cc, mstr )
       end select
       call MLSMessageCalls( 'pop' )
 
@@ -3826,37 +3835,37 @@ contains ! =====     Public Procedures     =============================
         call ReplaceSubString( mstr, collapsedstr, '+', ' & ', &
           & which='all', no_trim=.true. )
         call ReplaceSubString( collapsedstr, mstr, '&', '+', &
-          & which='all', no_trim=.false. )
+          & which='all', no_trim=.true. )
 
         call ReplaceSubString( mstr, collapsedstr, '*', ' & ', &
           & which='all', no_trim=.true. )
         call ReplaceSubString( collapsedstr, mstr, '&', '*', &
-          & which='all', no_trim=.false. )
+          & which='all', no_trim=.true. )
 
         call ReplaceSubString( mstr, collapsedstr, '-', ' & ', &
           & which='all', no_trim=.true. )
         call ReplaceSubString( collapsedstr, mstr, '&', '-', &
-          & which='all', no_trim=.false. )
+          & which='all', no_trim=.true. )
 
         call ReplaceSubString( mstr, collapsedstr, '/', ' & ', &
           & which='all', no_trim=.true. )
         call ReplaceSubString( collapsedstr, mstr, '&', '/', &
-          & which='all', no_trim=.false. )
+          & which='all', no_trim=.true. )
 
         call ReplaceSubString( mstr, collapsedstr, '<', ' & ', &
           & which='all', no_trim=.true. )
         call ReplaceSubString( collapsedstr, mstr, '&', '<', &
-          & which='all', no_trim=.false. )
+          & which='all', no_trim=.true. )
 
         call ReplaceSubString( mstr, collapsedstr, '>', ' & ', &
           & which='all', no_trim=.true. )
         call ReplaceSubString( collapsedstr, mstr, '&', '>', &
-          & which='all', no_trim=.false. )
+          & which='all', no_trim=.true. )
 
         call ReplaceSubString( mstr, collapsedstr, '^', ' & ', &
           & which='all', no_trim=.true. )
         call ReplaceSubString( collapsedstr, mstr, '&', '^', &
-          & which='all', no_trim=.false. )
+          & which='all', no_trim=.true. )
 
         collapsedstr = lowerCase(mstr)
         if ( DEEBUG ) call outputNamedValue( 'collapsedstr', collapsedstr )
@@ -3957,17 +3966,17 @@ contains ! =====     Public Procedures     =============================
         call ReplaceSubString( mstr, collapsedstr, '-', '&', &
           & which='all', no_trim=.true. )
         call ReplaceSubString( collapsedstr, temp, '&', '+-', &
-          & which='all', no_trim=.false. )
+          & which='all', no_trim=.true. )
 
         call ReplaceSubString( temp, collapsedstr, '<', '&', &
           & which='all', no_trim=.true. )
         call ReplaceSubString( collapsedstr, temp, '&', '+<', &
-          & which='all', no_trim=.false. )
+          & which='all', no_trim=.true. )
 
         call ReplaceSubString( temp, collapsedstr, '>', '&', &
           & which='all', no_trim=.true. )
         call ReplaceSubString( collapsedstr, temp, '&', '+>', &
-          & which='all', no_trim=.false. )
+          & which='all', no_trim=.true. )
         ! Now loop over terms
         n = NumStringElements( temp, COUNTEMPTY, inseparator='+' )
         if ( n < 1 ) then
@@ -6755,6 +6764,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.26  2009/07/10 20:56:52  pwagner
+! Fixed bug affecting manipulations like 'a+b+c'
+!
 ! Revision 2.25  2009/06/30 15:19:05  pwagner
 ! Fixed bug in ExplicitFillVectorQuantity
 !
