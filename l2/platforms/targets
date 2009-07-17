@@ -81,7 +81,7 @@ INC_PATHS := $(EXTRA_PATHS) \
 	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
 
 .c.o:
-	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
+	$(CC) -c $(COPTS) ${INC_PATHS} -DNAGf90Fortran $<
 
 mlsl2: MLSL2.o
 
@@ -208,6 +208,9 @@ tar:
 # (See also Abs.Linux, LF95.Linux, etc.)
 
 # $Log$
+# Revision 1.50  2007/05/29 17:42:18  pwagner
+# compiler-specific settings now in srclib, not platforms
+#
 # Revision 1.49  2006/06/15 19:31:35  pwagner
 # Now links szlib; comtaible with toolkit 5.2.14.A
 #

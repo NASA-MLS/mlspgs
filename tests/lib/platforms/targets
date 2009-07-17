@@ -102,7 +102,7 @@ endif
 	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
 
 .c.o:
-	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
+	$(CC) -c $(COPTS) ${INC_PATHS} -DNAGf90Fortran $<
 
 # This is the default name of the configure file
 # It may be overridden for multiple platforms, special options, etc.
@@ -188,6 +188,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.27  2009/06/09 18:55:42  pwagner
+# Can now build writeMetadataTest.f90
+#
 # Revision 1.26  2008/08/20 18:40:22  pwagner
 # Added NEEDS_ITM setting to control whether to link with init_tables_module
 #

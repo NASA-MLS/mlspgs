@@ -66,7 +66,7 @@ INC_PATHS := $(EXTRA_PATHS) \
 	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
 
 .c.o:
-	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
+	$(CC) -c $(COPTS) ${INC_PATHS} -DNAGf90Fortran $<
 
 libmls.a: L2PC_m.o
 
@@ -203,6 +203,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.51  2007/05/29 17:42:18  pwagner
+# compiler-specific settings now in srclib, not platforms
+#
 # Revision 1.50  2004/03/30 00:22:24  pwagner
 # Take care that lib is rebuilt after changes in machines directory
 #

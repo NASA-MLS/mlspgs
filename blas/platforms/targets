@@ -58,7 +58,7 @@ INC_PATHS := $(EXTRA_PATHS) \
 	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
 
 .c.o:
-	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
+	$(CC) -c $(COPTS) ${INC_PATHS} -DNAGf90Fortran $<
 
 # This is the default name of the configure file
 # It may be overridden for multiple platforms, special options, etc.
@@ -180,6 +180,9 @@ sddot.o: ../sddot.f
 	$(FC) -c $(DUSTY_NO_OPT) -O $(INC_PATHS) ../sddot.f $(FAFTER)
 
 # $Log$
+# Revision 1.6  2007/05/29 17:42:18  pwagner
+# compiler-specific settings now in srclib, not platforms
+#
 # Revision 1.5  2006/03/27 19:20:32  pwagner
 # Makefile.dep now stored with objects
 #

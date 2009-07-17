@@ -84,7 +84,7 @@ INC_PATHS := $(EXTRA_PATHS) \
 	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
 
 .c.o:
-	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
+	$(CC) -c $(COPTS) ${INC_PATHS} -DNAGf90Fortran $<
 
 # This is the default name of the configure file
 # It may be overridden for multiple platforms, special options, etc.
@@ -187,6 +187,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.22  2007/05/29 17:42:19  pwagner
+# compiler-specific settings now in srclib, not platforms
+#
 # Revision 1.21  2006/06/15 19:31:05  pwagner
 # Now links szlib; comtaible with toolkit 5.2.14.A
 #

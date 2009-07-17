@@ -67,7 +67,7 @@ INC_PATHS := $(EXTRA_PATHS) \
 	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
 
 .c.o:
-	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
+	$(CC) -c $(COPTS) ${INC_PATHS} -DNAGf90Fortran $<
 
 libfwdmdl.a: FullForwardModel_m.o
 
@@ -176,6 +176,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 2.14  2007/06/06 01:11:05  vsnyder
+# Add .F90 vpath
+#
 # Revision 2.13  2007/05/29 17:42:18  pwagner
 # compiler-specific settings now in srclib, not platforms
 #

@@ -87,7 +87,7 @@ INC_PATHS := $(EXTRA_PATHS) \
 	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
 
 .c.o:
-	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
+	$(CC) -c $(COPTS) ${INC_PATHS} -DNAGf90Fortran $<
 
 # This is the default name of the configure file
 # It may be overridden for multiple platforms, special options, etc.
@@ -212,6 +212,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.26  2009/06/11 20:11:16  pwagner
+# Needed blaslib among paths for NAG to search for .mod files
+#
 # Revision 1.25  2007/05/29 17:42:19  pwagner
 # compiler-specific settings now in srclib, not platforms
 #
