@@ -112,6 +112,7 @@ module FillUtils_1                     ! Procedures used by Fill
   ! -----     Declarations for Fill and internal subroutines     -------
 
   logical, parameter :: DEEBUG = .FALSE.                 ! Usually FALSE
+  logical, parameter :: UNIFORMCHISQRATIO = .FALSE.
   integer, public :: FILLERROR
 
   ! -999.99 ! Same as %template%badvalue
@@ -1218,6 +1219,11 @@ contains ! =====     Public Procedures     =============================
       ! Note the following tricks:
       ! The number of surfaces is the maximum allowed number of iterations
       ! The actual number of iterations will be less than this
+      
+      ! Depending on UNIFORMCHISQRATIO
+      ! TRUE    all values will equal the ratio of tghe last ieration
+      ! FALSE   nth value will be ratio for nth iteration, up to last one
+      !           and all zero thereafter
       ! After the last iteration, all "surfaces" above this are zero-filled
       
       ! The number of instances will be the number of chunks
@@ -1310,8 +1316,16 @@ contains ! =====     Public Procedures     =============================
           &   isVectorQtyMasked(minNormQty, qIndex, i, m_linalg) .or. &
           &   minNormQty%values(qIndex, i) == 0. &
           & )
+        if ( UNIFORMCHISQRATIO .or. &
+          & size(qty%values) /= size(normQty%values) .or. &
+          & size(qty%values) /= size(minNormQty%values) ) then
           qty%values(:,i) = &
             & normQty%values(qIndex, i) / minNormQty%values(qIndex, i)
+        else
+          qty%values(:,i) = 0._rv
+          qty%values(1:qIndex,i) = &
+            & normQty%values(1:qIndex, i) / minNormQty%values(1:qIndex, i)
+        endif
       end do
     end subroutine FillChiSqRatio
 
@@ -1569,14 +1583,19 @@ contains ! =====     Public Procedures     =============================
       type ( VectorValue_T), intent(in) :: SOURCEQUANTITY ! dnwt_ChisqRatio quantity on which it's based
       real(r8), intent(in) :: SCALE     ! A scale factor
       ! Local variables
+      integer ::                             QINDEX
       ! Executable code
       ! Do some sanity checking
       if ( quantity%template%quantityType /= l_quality ) call Announce_error ( key, no_error_code, &
         & 'Convergence quantity must be quality' )
       if ( sourceQuantity%template%quantityType /= l_dnwt_chisqRatio ) call Announce_error ( &
         & key, no_error_code, 'sourceQuantity must be of type chisqRatio' )
-
-      quantity%values(1,:) = scale * sourceQuantity%values(1,1)
+      if ( UNIFORMCHISQRATIO ) then
+        quantity%values(1,:) = scale * sourceQuantity%values(1,1)
+      else
+        qIndex = findLast( sourceQuantity%values(:,1) /= 0._rv )
+        quantity%values(1,:) = scale * sourceQuantity%values(qIndex,1)
+      endif
     end subroutine FillConvergenceFromChisq
 
     !------------------------------------- FillCovariance ------------
@@ -6764,6 +6783,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.27  2009/07/21 20:34:56  pwagner
+! chi^2 ratio nay hold values for iterations prior to final
+!
 ! Revision 2.26  2009/07/10 20:56:52  pwagner
 ! Fixed bug affecting manipulations like 'a+b+c'
 !
