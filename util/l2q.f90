@@ -937,6 +937,8 @@ contains
           if ( options%verbose ) then
             call proclaim('Master ' // trim(masterNameFun(masterTID)) // &
             & ' thanks for host', hosts(hostsID)%Name, advance='no')
+            call output(' ; tid ', advance='no')
+            call output(tid, advance='no')
             call output(' (Now has ', advance='no')
             call output(masters(mastersID)%numHosts, advance='no')
             call timestamp(' )', advance='yes')
@@ -1315,7 +1317,6 @@ contains
     if ( all(hosts%free) ) return
     if ( .not. present(masters) ) then
       ! usage (1) 
-      ! call GetMachineNames ( machineNames )
       if ( .not. associated(machineNames) ) call MLSMessage( MLSMSG_Error, ModuleName, &
       & 'unable to get machine names in free_hosts' )
       if ( size(machineNames) < 1 ) call MLSMessage( MLSMSG_Error, ModuleName, &
@@ -2343,6 +2344,9 @@ contains
 end program L2Q
 
 ! $Log$
+! Revision 1.26  2009/06/09 17:06:19  pwagner
+! Prevent using masters before it becomes allocated
+!
 ! Revision 1.25  2009/04/13 20:34:20  pwagner
 ! Ignore comments in hosts list file
 !

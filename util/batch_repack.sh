@@ -24,7 +24,7 @@
 
 # Bugs and limitations
 # (1) h5repack is assumed to exist, to be an executable, and to be in
-#     $HOME/pvm3/bin/LINUX
+#     $HOME/bin/LINUX
 # (2) The l2gp file names are assumed to match the pattern
 #      MLS-Aura_L2GP-xxxx_*.he5 ; l2fwm, l2aux as indicated above
 # (3) If multiple matches, we try always to pick out the last
@@ -266,6 +266,9 @@ do
 done
 
 # $Log$
+# Revision 1.2  2009/01/16 01:52:57  pwagner
+# Will hrepack all eligible files if string is 'all'
+#
 # Revision 1.1  2006/03/23 19:28:49  pwagner
 # First commit
 #
