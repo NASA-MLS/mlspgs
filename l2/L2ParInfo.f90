@@ -338,6 +338,7 @@ contains ! ==================================================================
     call output ('Number of machines free: ', advance='no')
     call output (count(machines%free .and. machines%OK), advance='yes')
     if ( size(machines) < 1 ) return
+    nullify ( master_tids, master_names )
     call Allocate_test ( master_tids, size(machines), 'machine_tids', moduleName )
     call Allocate_test ( master_names, size(machines), 'machine_names', moduleName )
     master_tids = 0
@@ -830,6 +831,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.53  2009/07/21 20:35:38  pwagner
+! Nullify pointers before call ing allocate_test with them
+!
 ! Revision 2.52  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
 !
