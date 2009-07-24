@@ -53,6 +53,12 @@ begin Fill
   !makeQualityForOneProduct(product=HNO3,chisqScale=1.0,minRads=4000,cloudMax=10K,cloudMin= -10K)
   !makeStatusForOneProduct(product=HNO3,chisqScale=1.0,minRads=4000,cloudMax=10K,cloudMin= -10K)
 
+  ;; ------------------------------------ CH3Cl-640
+  !define(flaggingBands,{10})
+  !define(flaggingRadiometers,{R4})!dnl
+  !makeQualityForOneProduct(product=CH3Cl,chisqScale=1.0,minRads=600,cloudMax=10K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=CH3Cl,chisqScale=1.0,minRads=600,cloudMax=10K,cloudMin= -10K)
+
   ;; ------------------------------------ CH3CN-640
   !define(flaggingBands,{10,11,12,14,28,29,30,31})
   !define(flaggingRadiometers,{R4})!dnl
@@ -80,6 +86,9 @@ begin Fill
 end Fill
 
 ; $Log$
+; Revision 1.10  2009/01/28 01:18:35  pwagner
+; Removed Band1 and R1 products
+;
 ; Revision 1.9  2006/11/01 23:39:00  dwu
 ; undo the changes since yesterday
 ;
