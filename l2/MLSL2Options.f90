@@ -52,8 +52,8 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! Update these lines before delivery to sips     
   ! id to print out in response to "--version" command-line option       
   character(LEN=*), dimension(2), parameter :: CURRENT_VERSION_ID = (/ &    
-    & 'pre-v3 swdev team             ', &       
-    & 'Copyright statement omitted   '/)
+    & 'v3.10 swdev team               ' , &       
+    & 'See license terms for copyright'/)
      
   ! Set the following to 1 before delivering to sips;                       
   ! when set to 0, it allows program to run w/o creating metadata           
@@ -155,6 +155,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.46  2009/07/24 23:22:47  pwagner
+! Updated version id, copyright statement
+!
 ! Revision 2.45  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
 !
