@@ -131,16 +131,26 @@ CONTAINS
     double precision, intent(in) ::      X
     type(ieee_class_type), intent(in) :: CLASS
     double precision ::                  the_value
-    
-  ! Private
 
-  ! The following is made necessary only because ifc
-  ! fails to comply--this obviously fails if any number ever matches this
+    logical, save :: HaveNaN = .false.
+    real, save :: NaN
+    character(len=3) :: NaNString = 'NaN'
+
+  ! Private
+    if ( .not. haveNaN ) then
+      haveNaN = .true.
+      read ( NaNString, * ) NaN
+    end if
+
     select case ( class%what )
     case ( ieee_quiet_nan%what )     ! IEEE_Quiet_NaN
-      the_value = -9.e19
+      the_value = NaN
     case ( ieee_signaling_nan%what ) ! IEEE_Signaling_NaN
+      ! The following is necessary only because I don't know how to generate a
+      ! signaling NaN--this obviously fails if any number ever matches this
       the_value = 9.e19
+      print *, 'Stupid programmer, tricks are for kids IEEE_VALUE_D'
+      stop
     end select
   END FUNCTION IEEE_VALUE_D
 
@@ -149,16 +159,26 @@ CONTAINS
     real, intent(in) ::                  X
     type(ieee_class_type), intent(in) :: CLASS
     real ::                              the_value
-    
-  ! Private
 
-  ! The following is made necessary only because ifc
-  ! fails to comply--this obviously fails if any number ever matches this
+    logical, save :: HaveNaN = .false.
+    real, save :: NaN
+    character(len=3) :: NaNString = 'NaN'
+
+  ! Private
+    if ( .not. haveNaN ) then
+      haveNaN = .true.
+      read ( NaNString, * ) NaN
+    end if
+
     select case ( class%what )
     case ( ieee_quiet_nan%what )     ! IEEE_Quiet_NaN
-      the_value = -9.e19
+      the_value = NaN
     case ( ieee_signaling_nan%what ) ! IEEE_Signaling_NaN
+      ! The following is necessary only because I don't know how to generate a
+      ! signaling NaN--this obviously fails if any number ever matches this
       the_value = 9.e19
+      print *, 'Stupid programmer, tricks are for kids IEEE_VALUE_D'
+      stop
     end select
   END FUNCTION IEEE_VALUE_S
 
@@ -177,6 +197,9 @@ END MODULE IEEE_ARITHMETIC
 
 !
 ! $Log$
+! Revision 1.5  2009/06/23 19:58:52  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 1.4  2007/04/13 20:22:08  pwagner
 ! Changes in line with Intel v9.1
 !
