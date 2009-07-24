@@ -155,6 +155,9 @@ CONTAINS
     more_data = (ios == 0)
     IF (.NOT. more_data) RETURN    !! Nothing more to do
 
+    MIF_dur = L1Config%Calib%MIF_duration
+    MAF_dur = MIF_dur * nom_MIFs   !Nominal duration of MAF
+
 ! Do L1BOA for all good data times:
 
     IF (SciMAF(0)%secTAI >= L1Config%Input_TAI%startTime .AND. &
@@ -178,9 +181,6 @@ CONTAINS
     sci_MAFno = SciMAF(0)%MAFno
 
 PRINT *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
-
-    MIF_dur = L1Config%Calib%MIF_duration
-    MAF_dur = MIF_dur * nom_MIFs   !Nominal duration of MAF
 
     IF (CalWin%current > 0) THEN
        dif_MAFno = sci_MAFno - prev_MAFno
@@ -974,6 +974,9 @@ END MODULE SortQualify
 !=============================================================================
 
 ! $Log$
+! Revision 2.29  2009/07/24 16:38:43  perun
+! Assign MIF_dur before using
+!
 ! Revision 2.28  2009/05/13 20:33:05  vsnyder
 ! Get constants from Constants, kinds from MLSKinds
 !
