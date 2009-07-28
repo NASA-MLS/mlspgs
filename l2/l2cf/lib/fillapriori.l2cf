@@ -418,7 +418,7 @@ Fill, quantity=apriori.refGPH,$
         manipulation='a<b'
 
    Fill, quantity=lowBound.RHiVmr, method=explicit, explicitValues=0.00001, /spread
-   Fill, quantity=highBound.RHiVmr, method=explicit, explicitValues=1000, /spread
+   Fill, quantity=highBound.RHiVmr, method=explicit, explicitValues=2000, /spread
 
 ;; ensure that apriori between lowbound and highbound
    Fill, quantity=apriori.RHiVmr, method=manipulate,a=apriori.RHiVmr,b=lowBound.RHiVmr,$
@@ -526,7 +526,7 @@ Fill, quantity=apriori.refGPH,$
       100mb:0.5ppmv, 83mb:0.3ppmv, 1mb:0.6ppmv, 0.1mb:10ppmv, 0.001mb:0ppmv ], $
       logSpace=false
   Fill, quantity=vReg.RHiVmr, method=profile, profileValues= [ $
-                    316mb:20.0, 215mb:20.0, 147mb:20.0]
+                    316mb:20.0, 68mb:20.0, 0.147mb:2.0,0.1mb:0.0]
   Fill, quantity=vReg.hcl, method=profile, $
     profileValues= [ 0.1mb:1.0ppbv, 0.046mb:0ppbv ]
   Fill, quantity=vReg.hcn, method=profile, $
@@ -611,7 +611,7 @@ Fill, quantity=apriori.refGPH,$
      profileValues=[ 147mb:0ppmv, 121mb:2ppmv, 100mb:0.3ppmv, 0.1mb:0.3ppmv, 0.046mb:0ppmv ], logSpace=false
 
   Fill, quantity=hReg.RHiVmr, method=profile, profileValues= [ $
-        316mb:40.0, 215mb:30.0, 147mb:20.0, 100mb:20.0]
+        316mb:20.0, 68mb:20.0, 0.147mb:2.0,0.1mb:0.0]
 
   Fill, quantity=hReg.hcl, method=profile, $
     profileValues= [ 0.1mb:0.3ppbv, 0.046mb:0ppbv ]
@@ -679,6 +679,9 @@ end Join
   })
 !divert(-1)
 ;$Log$
+;Revision 1.140  2009/06/23 17:33:43  pwagner
+;Does not automatically set top of HCl
+;
 ;Revision 1.139  2009/05/06 00:12:23  pwagner
 ;Scaled h2o smoothing params by 16 from 0.1mb to 0.001mb
 ;
