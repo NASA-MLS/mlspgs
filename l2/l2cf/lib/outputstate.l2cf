@@ -47,7 +47,7 @@ Output, quantities=[joined_iwc, joined_iwp], type=l2gp, $
 ;; We're planning on only O3 accompanying its column
 !ifdef(ColumnStdProds,{},{!define(ColumnStdProds,{O3})})!dnl
 ;; (IWC and RHI will be treated separately below)
-!ifdef(NonColumnStdProds,{},{!define(NonColumnStdProds,{BrO,CH3CN,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2O,OH,SO2,Temperature,GPH})})!dnl
+!ifdef(NonColumnStdProds,{},{!define(NonColumnStdProds,{BrO,CH3CN,CH3Cl,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2O,OH,SO2,Temperature,GPH})})!dnl
 
 !ifdef(flagCopyStandardProducts,{
 
@@ -183,6 +183,9 @@ Output,  quantities=[ !undivert(!matrixDivert) ], type=l2pc, $
 end Output
 !divert(-1)
 ; $Log$
+; Revision 1.44  2009/06/26 00:18:10  pwagner
+; Changed input file type of master.ident to 'ascii'
+;
 ; Revision 1.43  2009/06/23 17:34:36  pwagner
 ; Can write mlsl2 ident to DGM file
 ;
