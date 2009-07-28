@@ -14,25 +14,25 @@
 
 begin Fill
   ;; ------------------------------------ O3-240
-  !define(flaggingBands,{7,24,33})
+  !define(flaggingBands,{7,24})
   !define(flaggingRadiometers,{R3})!dnl
   !makeQualityForOneProduct(product=!O3StdProd,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -999K)
   !makeStatusForOneProduct(product=!O3StdProd,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -999K)
 
   ;; ------------------------------------- CO-240
-  !define(flaggingBands,{9,25,33})
+  !define(flaggingBands,{9,25})
   !define(flaggingRadiometers,{R3})!dnl
   !makeQualityForOneProduct(product=CO,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -999K)
   !makeStatusForOneProduct(product=CO,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -999K)
 
   ;; ------------------------------------- HNO3-240
-  !define(flaggingBands,{7,8,9,33})
+  !define(flaggingBands,{7,8,9})
   !define(flaggingRadiometers,{R3})!dnl
   !makeQualityForOneProduct(product=HNO3,chisqScale=1.0,minRads=2000,cloudMax=30K,cloudMin= -999K)
   !makeStatusForOneProduct(product=HNO3,chisqScale=1.0,minRads=2000,cloudMax=30K,cloudMin= -999K)
 
   ;; ------------------------------------- SO2-240
-  !define(flaggingBands,{8,33})
+  !define(flaggingBands,{8})
   !define(flaggingRadiometers,{R3})!dnl
   !makeQualityForOneProduct(product=SO2,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -999K)
   !makeStatusForOneProduct(product=SO2,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -999K)
@@ -52,6 +52,9 @@ begin Fill
 end Fill
 
 ; $Log$
+; Revision 1.16  2009/01/28 01:15:17  pwagner
+; Changed quantity name of hires ozone
+;
 ; Revision 1.15  2008/10/07 18:11:49  pwagner
 ; O3StdProd may be changed to O3_R3
 ;
