@@ -1,4 +1,4 @@
-! Copyright 2006, by the California Institute of Technology. ALL
+! Copyright 2009, by the California Institute of Technology. ALL
 ! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 ! commercial use must be negotiated with the Office of Technology Transfer
 ! at the California Institute of Technology.
@@ -812,8 +812,8 @@ CONTAINS
 
        CALL Mc_aux (mafTime, offsets, sc%scECR, q)
 
-       CALL TkL1B_mc (ascTAI, dscTAI, sc%scECR, nV, numOrb, &
-            q, mafTAI, offsets, sc%scGeodAngle, sc%scOrbIncl)
+       CALL TkL1B_mc (ascTAI, dscTAI, sc%scECR, nV, numOrb,  q, mafTAI, &
+            offsets, sc%scECR, sc%scVelECR, sc%scOrbIncl, sc%scGeodAngle)
 
        scGeodAngle = Deg2Rad * sc%scGeodAngle(1)   ! save 1st scGeodAngle
 
@@ -1028,8 +1028,8 @@ CONTAINS
 
     ! Compute GHz master coordinate
 
-    CALL TkL1B_mc (ascTAI, dscTAI, tp%tpECR, lenG, numOrb, &
-         q, mafTAI, offsets(1:lenG), tp%tpGeodAngle, sc%scOrbIncl)
+    CALL TkL1B_mc (ascTAI, dscTAI, tp%tpECR, lenG, numOrb, q, mafTAI, &
+         offsets(1:lenG), sc%scECR, sc%scVelECR, sc%scOrbIncl, tp%tpGeodAngle)
 
     ! Save info for baseline corrections
 
@@ -1089,8 +1089,8 @@ CONTAINS
 
     ! Compute THz master coordinate
 
-    CALL TkL1B_mc (ascTAI, dscTAI, tp%tpECR, lenT, numOrb, &
-         q, mafTAI, offsets(1:lenT), tp%tpGeodAngle, sc%scOrbIncl)
+    CALL TkL1B_mc (ascTAI, dscTAI, tp%tpECR, lenG, numOrb, q, mafTAI, &
+         offsets(1:lenG), sc%scECR, sc%scVelECR, sc%scOrbIncl, tp%tpGeodAngle)
 
     ! Write THZ information
 
@@ -1365,8 +1365,8 @@ CONTAINS
   END FUNCTION orbInclineCrossProd
 
   !---------------------------------------------------TkL1B_mc -----------------
-  SUBROUTINE TkL1B_mc (ascTAI, dscTAI, dotVec, nV, numOrb, &
-    q, timeTAI, time_offset, geodAngle, scOrbIncl)
+  SUBROUTINE TkL1B_mc (ascTAI, dscTAI, dotVec, nV, numOrb, q, timeTAI, &
+       time_offset, scECR, scVelECR, scOrbIncl, geodAngle)
     ! This subroutine computes phi, the master coordinate for the spacecraft and
     ! tangent point records.
     ! Arguments
@@ -1375,9 +1375,9 @@ CONTAINS
     REAL(r8), INTENT(IN) :: q(3,nV)
     REAL(r8), INTENT(IN) :: time_offset(nV)
     REAL(r8), INTENT(IN) :: ascTAI(:), dscTAI(:)
-    REAL(r8), INTENT(IN) :: dotVec(3,nV)
+    REAL(r8), INTENT(IN) :: dotVec(3,nV), scECR(3,*), scVelECR(3,*)
+    REAL, INTENT(IN) ::     scOrbIncl(nV)
     REAL, INTENT(OUT) ::    geodAngle(nV)
-    REAL, INTENT(in) ::     scOrbIncl(nV)
 
     ! Functions
     INTEGER :: Pgs_csc_getEarthFigure
@@ -1387,8 +1387,12 @@ CONTAINS
 
     REAL(r8) :: a, asciiTAI, b, cSq, equatRad_a, orbRad, polarRad_c
     REAL(r8) :: cosPhi(nV), gamma(nV), phi(nV), sinPhi(nV)
-    REAL(r8) :: s(3,nV)
+    REAL(r8) :: s(3), velECR(3), qxnew, qynew, qnew(3), qnorm
     REAL(r8) :: orbInclineNow, DvecSqrtSum
+
+    ! Constants:
+
+    REAL(r8), PARAMETER :: vel_corr = 7.292115d-05
 
     ! Executable code
 
@@ -1414,10 +1418,20 @@ CONTAINS
           phi(i) = UNDEFINED_VALUE / Rad2Deg
           CYCLE
        ENDIF
-       s(:,i) = dotVec(:,i) / DvecSqrtSum
+       s = dotVec(:,i) / DvecSqrtSum
+
+       ! Determine a "new" Q value:
+
+       velECR = vel_corr * (/ -scECR(2,i), scECR(1,i), 0.0d0 /) + &
+            scVelECR(:,i)
+       qxnew = dotVec(1,i) * velECR(3) - dotVec(3,i) * velECR(1)
+       qynew = dotVec(2,i) * velECR(3) - dotVec(3,i) * velECR(2)
+       qnorm = sqrt (qxnew**2 + qynew**2)
+       qnew = (/ qxnew/qnorm, qynew/qnorm, 0.0d0 /)
 
        ! Calculate the geocentric angle as a number of radians between 0 and PI
-       gamma(i) = ACOS(MAX(MIN((q(1,i)*s(1,i) + q(2,i)*s(2,i)), 1.0d0),-1.0d0))
+       !gamma(i) = ACOS(MAX(MIN((q(1,i)*s(1) + q(2,i)*s(2)), 1.0d0),-1.0d0))
+       gamma(i) = ACOS(MAX(MIN((qnew(1)*s(1) + qnew(2)*s(2)), 1.0d0),-1.0d0))
 
        ! Place angle between PI and 2*PI, if in Southern Hemisphere
        IF (dotVec(3,i) < 0.0 ) gamma(i) = 2*PI - gamma(i)
@@ -1641,6 +1655,9 @@ CONTAINS
 END MODULE TkL1B
 
 ! $Log$
+! Revision 2.35  2009/07/28 18:08:11  perun
+! New calculation for geodangle
+!
 ! Revision 2.34  2009/06/01 14:01:18  perun
 ! Update galactic center polygon and save appropriate lat/longs
 !
