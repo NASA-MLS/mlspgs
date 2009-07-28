@@ -351,7 +351,7 @@ fi
 if [ "$the_list" = "" ]
 then
   echo 'No valid files were found among the command line arguments'
-  echo 'Make sure you entered their path/names correctly'
+  echo 'Make sure you entered their path/names correctly  (resed.sh)'
   exit
 fi
 
@@ -467,6 +467,9 @@ do
 done                                                       
 exit
 # $Log$
+# Revision 1.9  2008/10/13 23:30:03  pwagner
+# Added the -g option to globally do the subsitution old to new
+#
 # Revision 1.8  2006/06/07 17:06:49  pwagner
 # Did this fix a longstanding bug, or create one?
 #
