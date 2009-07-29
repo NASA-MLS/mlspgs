@@ -5,8 +5,8 @@
 \topmargin -0.25in
 \textheight 9.0in
 
-\newcommand{\docname}{\bf wvs-074}
-\newcommand{\docdate}{27 March 2008}
+\newcommand{\docname}{\bf wvs-074r2}
+\newcommand{\docdate}{9 April 2009}
 
 \usepackage{graphicx}
 
@@ -36,68 +36,131 @@
 \vspace{-10pt}
 \begin{tabbing}
 \phantom{References: }\= \\
-To: \>Bill\\
+To: \>Van\\
 Subject: \>Tangent heights and angles for scattering calculations\\
 From: \>Van Snyder\\
 \end{tabbing}
 
-\parindent 0pt \parskip 10pt
+\parindent 0pt \parskip 8pt
 \vspace{-20pt}
 
-{\includegraphics[width=474pt,height=563pt,clip]{./wvs-074-scatter.eps}}
+\newcommand{\pC}{{\bfseries\sffamily C}}
+\newcommand{\pO}{{\bfseries\sffamily O}}
+\newcommand{\pP}{{\bfseries\sffamily P}}
+
+We wish to calculate paths to \pP\ at various angles, along which
+radiation arriving at \pP\ would be scattered toward an observer at \pO. 
+Ultimately, this radiation will be convolved with the scattering phase
+function at \pP\ to calculate radiation scattered at \pP\ in the
+direction of \pO, but that is the subject of memos wvs-068, wvs-070 nd
+wvs-071.
+
+Consider first the case when rays do not reflect from the Earth's surface. 
+
+{\includegraphics[width=450pt,height=375pt,clip]{./wvs-074-scatter-1.eps}}
+
+We wish to calculate the angles $\xi_1$ and $\xi_2$ with respect to the
+horizon defined by the line from \pP\ to \pO, to characterize rays along
+which to calculate radiative transfer to \pP\ at specified coordinates
+$(H,\phi)$, where $H$ is height measured from the center \pC\ of the
+equivalent circular earth and $\phi$ is the angle at \pC\ measured
+anti-clockwise from the reference (red) line, which is normal to the
+horizon and passes through the center of the equivalent circular Earth. 
+The angles $\xi_1$ and $\xi_2$ at \pP\ between the ray and the observer
+at \pO, measured anti-clockwise at \pP\ from the horizon, are calculated
+from $H,\,\phi$, and the tangent heights $Ht_1$ and $Ht_2$ at the tangent
+points $t_1$ and $t_2$, which in turn are calculated from specified log
+pressure $\zeta$ using hydrostatic equilibrium.  Although $\zeta$ is the
+same at $t_1$ and $t_2$, $Ht_1$ and $Ht_2$ are not necessarily equal
+because of the possibility of different temperature profiles below $t_1$
+and $t_2$.  In any case, neither $Ht_1$ nor $Ht_2$ exceeds $H$.
+
+Radiation can arrive at \pP\ along two rays that pass through $t_1$ and
+$t_2$. Along one ray the angle at \pP\ is $\xi_1$, and along the other it
+is $\xi_2$.  Radiation can arrive at \pP\ along opposite rays, that would
+pass through $t_1$ and $t_t$ if they continued past \pP, at angles
+$\pi+\xi_1$ and $\pi+\xi_2$.
+
+The angle $\psi_1 = \angle t_1$\pC\pP\ at \pC\ between lines to the limb
+ray tangent point $t_1$ and the scattering point \pP\ is
+%
+\begin{equation}
+  \psi_1 = \cos^{-1} \frac{Ht_1}{H} \,.
+\end{equation}
+%
+and similarly for the angle $\psi_2 = \angle$\pP\pC$t_2$.  The angle
+$\xi_c$ below the horizon of the ray arriving at \pP\ from the direction
+nearest to \pO\ and tangent to the Earth's surface is
+%
+\begin{equation}
+  \xi_c = -\left(\frac\pi2 - \phi - \psi(R) \right)\,,\,\,
+    \phi-\frac\pi2 \leq \xi_c \leq 0\,,\,\,\psi(R) = \cos^{-1} \frac{R}H\,.
+\end{equation}
+%
+The angle $\xi_1$ below the horizon of the ray arriving at \pP\ from the
+direction nearer to \pO\ is
+%
+\begin{equation}
+  \xi_1 = \phi - \psi_1\,,\,\, \xi_c \leq \xi_1 \leq 0\,.
+\end{equation}
+%
+The angle $\xi_2$ below the horizon of the ray arriving at \pP\ from the
+direction opposite \pO\ is
+%
+\begin{equation}
+  \xi_2 = \psi_1 + \psi_2 - \pi + \xi_1 = \psi_2 + \phi-\pi\,,\,\,
+    -\pi \leq \xi_2 \leq -2 \psi(R) + \xi_c\,.
+\end{equation}
+%
+If we assume $Ht_1 = Ht_2$, that is, the same equivalent circular earth is
+sufficiently accurate at both limb tangent angles, this becomes
+%
+\begin{equation}
+  \xi_2 = \psi_1 + \phi-\pi\,,\,\,
+    -\pi \leq \xi_2 \leq -2 \psi(R) + \xi_c = 
+      -\left(\frac\pi2 - \phi + \psi(R) \right)\,.
+\end{equation}
+%
+The angles at \pC\ from the reference line to the tangent points $t_1$
+and $t_2$ are $\xi_1$ and $\psi_1+\psi_2+\xi_1 = \pi+\xi_2$, respectively
+(remember that $\xi_1$ is negative in the figure).
 
 \newpage
 
-Assume a set of points are given, each one specified by its height and
-angle from a reference line.
+Consider now the case when rays reflect from the Earth's surface.
 
-We wish to calculate the tangent heights and angles to produce radiative
-transfer through each of the points P at specified coordinates
-$(H,\phi)$, where $H$ is height measured from the center of the
-equivalent circular earth and $\phi$ is the angle measured anti-clockwise
-from the reference (red) line, at specified angles $-\pi \leq \xi \leq 0$,
-i.e., below the horizon, where the horizon is defined to be perpendicular
-to the reference line.  In the figure, radiation is considered to be
-transferred from below the horizon if $\xi \geq \xi_c$ or $\xi \leq
-\xi_c-\pi$, and above the horizon followed by reflection from the surface
-otherwise.  The other segment of the path, i.e., the part above the
-horizon, can be used to calculate radiative transfer from opposite
-directions.
+{\includegraphics[width=450pt,height=400pt,clip]{./wvs-074-scatter-2.eps}}
 
-Ultimately, we wish to calculate the radiance scattered from the source
-to an observer at the right on the horizon.
-
-The critical angle $\xi_c$ is the angle at which a ray reaching
-the point P from the source is just tangent to the earth's surface.
-
+The tangent point for a ray reflected from the Earth's surface would be
+below the surface.  Therefore the height cannot be specified by $\zeta$
+and hydrostatic equilibrium.  Rather $\xi_3$ is specified and $Ht_3 =
+Ht_4$ is calculated:
+%
 \begin{equation}
-\xi_c = \phi - \cos^{-1} \frac{R}H
+  Ht_3 = H | \cos(\phi-\xi_3)|\,,
 \end{equation}
-
-Case 1: The given angle is $\xi = \xi_2 \geq \xi_c$ or $\xi_2 \leq -\xi_c
-- \pi$
-
-The tangent height is $Ht_2$ and the tangent angle is $\xi_2$, where
-
+%
+The angle $\theta = \angle t_3$\pC$\rho$ at \pC\ between the rays to the
+reflection point $\rho$ and $t_3$ is
+%
 \begin{equation}
-Ht_2 = H | \cos (\phi - \xi_2) |
+  \theta = \cos^{-1} \frac{Ht_3}R \,.
 \end{equation}
+%
+and the angle $\angle \rho$\pC$t_4$ has the same magnitude. The angle at
+\pC\ between rays to the direct and scattered ray tangents $t_3$ and
+$t_4$ is therefore $2 \theta$.
 
-Case 2: The given angle is $\xi = \xi_3$ and $-\pi - \xi_c < \xi_3 < \xi_c$
+The angles at \pC\ from the reference line to the rays to the tangent
+points $t_3$ and $t_4$ are $\xi_3$ and $2\theta+\xi_3$, respectively.
 
-The tangent height is $Ht_3$ and the tangent angle is $\xi_4$, where
-
-\begin{equation}\begin{split}
-Ht_3 =\,& H | \cos (\phi - \xi_3) | = R \cos \theta \\
-\theta =\,& \cos^{-1} \frac{Ht_3}R =
-            \cos^{-1} \left| \frac{\cos(\phi-\xi_3)}{\cos(\phi-\xi_c)}
-                     \right| \\
-\xi_4 =\,&\left\{ \begin{array}{ll}
-  2 \theta + \xi_3 & \xi_3 > \phi-\frac\pi2 \\
-  -2\theta - \xi_3 & \text{otherwise} \\
-  \end{array} \right.
-\end{split}\end{equation}
+The same formulae are valid when $\xi_3 < -\phi$, that is, when the
+incident ray arrives at $\rho$ from the direction opposite to the
+direction from \pP\ to \pO.
 
 \label{lastpage}
 \end{document}
+
 % $Id$
+
+% $Log$
