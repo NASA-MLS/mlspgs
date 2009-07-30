@@ -407,8 +407,6 @@ contains ! ============================ MODULE PROCEDURES ====================
     MLSData%CharField(1,1,1) = char_data
     MLSData%rank = 1
 
-    allocate(MLSData%Dimensions(1), stat=status)
-
     call CopyFromDataProducts (dataset, MLSData)
 
     attribenabled = .false.
@@ -460,7 +458,6 @@ contains ! ============================ MODULE PROCEDURES ====================
     MLSData%IntField(1,1,1) = int_data
     MLSData%rank = 1
 
-    allocate(MLSData%Dimensions(1), stat=status)
     call CopyFromDataProducts (dataset, MLSData)
 
     attribenabled = .false.
@@ -512,7 +509,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     MLSData%RealField(1,1,1) = real_data
     MLSData%rank = 1
-    allocate(MLSData%Dimensions(1), stat=status)
+
     call CopyFromDataProducts (dataset, MLSData)
 
     attribenabled = .false.
@@ -560,8 +557,6 @@ contains ! ============================ MODULE PROCEDURES ====================
     MLSData%DpField(1,1,1) = double_data
     MLSData%rank = 1
 
-
-    allocate(MLSData%Dimensions(1), stat=status)
     call CopyFromDataProducts (dataset, MLSData)
 
     attribenabled = .false.
@@ -624,7 +619,6 @@ contains ! ============================ MODULE PROCEDURES ====================
        MLSData%rank = 1
     endif
 
-    allocate(MLSData%Dimensions(MLSData%rank), stat=status)
     call CopyFromDataProducts (dataset, MLSData)
 
     attribenabled = .false.
@@ -646,6 +640,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     if (error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
          'Error Writing MLSAuxData for '// trim(dataset%name) ) 
+
     call deallocate_mlsauxdata(MLSData)
  end subroutine Build_MLSAuxData_Real_1d
 !------------------------------------------------------------------------------
@@ -687,7 +682,6 @@ contains ! ============================ MODULE PROCEDURES ====================
        MLSData%rank = 1
     endif
 
-    allocate(MLSData%Dimensions(MLSData%rank), stat=status)
     call CopyFromDataProducts (dataset, MLSData)
 
     attribenabled = .false.
@@ -750,7 +744,6 @@ contains ! ============================ MODULE PROCEDURES ====================
        MLSData%rank = 1
     endif
 
-    allocate(MLSData%Dimensions(MLSData%rank), stat=status)
     call CopyFromDataProducts (dataset, MLSData)
 
     attribenabled = .false.
@@ -815,7 +808,6 @@ contains ! ============================ MODULE PROCEDURES ====================
        MLSData%rank = 2
     endif
 
-    allocate(MLSData%Dimensions(MLSData%rank), stat=status)
     call CopyFromDataProducts (dataset, MLSData)
 
     attribenabled = .false.
@@ -868,7 +860,6 @@ contains ! ============================ MODULE PROCEDURES ====================
     call Allocate_MLSAuxData(trim(dataset%name),& 
          trim(dataset%data_type),dim_array,MLSData)
 
-
     do j = 1, dim_array(2)
        do i = 1, dim_array(1)
           MLSData%DpField(i,j,1) = double_data(i,j) 
@@ -881,7 +872,6 @@ contains ! ============================ MODULE PROCEDURES ====================
        MLSData%rank = 2
     endif
 
-    allocate(MLSData%Dimensions(MLSData%rank), stat=status)
     call CopyFromDataProducts (dataset, MLSData)
 
     attribenabled = .false.
@@ -946,7 +936,6 @@ contains ! ============================ MODULE PROCEDURES ====================
        MLSData%rank = 2
     endif
 
-    allocate(MLSData%Dimensions(MLSData%rank), stat=status)
     call CopyFromDataProducts (dataset, MLSData)
 
     attribenabled = .false.
@@ -1006,7 +995,6 @@ contains ! ============================ MODULE PROCEDURES ====================
        enddo
     enddo
 
-    allocate(MLSData%Dimensions(3), stat=status)
     call CopyFromDataProducts (dataset, MLSData)
 
     call Write_MLSAuxData(file_id, MLSData, error,write_attributes=.true., &
@@ -1052,7 +1040,6 @@ contains ! ============================ MODULE PROCEDURES ====================
        enddo
     enddo
 
-    allocate(MLSData%Dimensions(3), stat=status)
     call CopyFromDataProducts (dataset, MLSData)
 
     call Write_MLSAuxData(file_id, MLSData, error,write_attributes=.true., &
@@ -1097,7 +1084,6 @@ contains ! ============================ MODULE PROCEDURES ====================
        enddo
     enddo
 
-    allocate(MLSData%Dimensions(3), stat=status)
     call CopyFromDataProducts (dataset, MLSData)
 
     call Write_MLSAuxData(file_id, MLSData, error, write_attributes=.true., &
@@ -2329,6 +2315,7 @@ contains ! ============================ MODULE PROCEDURES ====================
        error = 1
        return
     end select
+
     adims_create(1) = adims(1)                                         
     call h5screate_simple_f(arank, adims_create(1:arank), aspace_id, h5error)  
     if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
@@ -2736,7 +2723,6 @@ contains ! ============================ MODULE PROCEDURES ====================
     integer :: i, rank, arank, h5error, status
     logical :: myWrite_attributes
     !--------------------------------------------------------------------------
-
     error = 0
     myWrite_attributes = .false.
     if ( present(write_attributes) ) myWrite_attributes=write_attributes
@@ -2744,6 +2730,7 @@ contains ! ============================ MODULE PROCEDURES ====================
     nullify (char_data, attr_data)
     dims = 1
     adims = 1
+
     test_type: select case (trim(MLSAuxData%type_name))
 
     case ('real')
@@ -2848,7 +2835,6 @@ contains ! ============================ MODULE PROCEDURES ====================
     end select test_type
 
     call h5eset_auto_f(0, h5error)
-
     call h5dopen_f(file_id, trim(MLSAuxData%name), dset_id, h5error)
 
     if (h5error /= 0) then 
@@ -3042,6 +3028,7 @@ contains ! ============================ MODULE PROCEDURES ====================
             call Write_MLSAuxAttributes (dset_id, &
             trim(MLSAuxData%name), 'Dimensions', error, MLSAuxData)
     endif
+
 !
 ! Close all identifiers.
 !
@@ -3060,36 +3047,102 @@ contains ! ============================ MODULE PROCEDURES ====================
   end subroutine Write_MLSAuxData
 
   subroutine CopyFromDataProducts( dataset, MLSAuxData )
+    ! It's unclear to me what the original developer's vision for this
+    ! subroutine is. However, since the name of the subroutine is "Copy,"
+    ! it is reasonable to assume that the fields Dimensions,
+    ! FrequencyCoordinates, VerticalCoordinates, and HorizontalCoordinates
+    ! of MLSAuxData will be identical to those of dataset once this
+    ! subroutine finishes given that it does not violate the constraints
+    ! of MLSAuxData's data type. In addition, since it does not conflict with
+    ! the current use of this subroutine, I will mandate that this 
+    ! subroutine will allocate those fields for MLSAuxData. This means
+    ! that before this subroutine is called, MLSAuxData should not
+    ! have those fields allocated, otherwise, the program will stop to
+    ! avoid memory leak.
+    ! Concerning this subroutine, MLSAuxData_T type has one constraint
+    ! that dictates the size of MLSAuxData%Dimensions to be equal to 
+    ! the value of MLSAuxData%rank. I'm not aware of constraints regarding
+    ! FrequencyCoordinates, VerticalCoordinates, or HorizontalCoordinates.
+    ! -haley n-
     type( MLSAuxData_T ), intent(inout) :: MLSAuxData
     type( DataProducts_T ), intent(in) :: dataset
-    integer :: i
+    integer :: i, status, length
+    character(len=20) :: routineName = "CopyFromDataProducts"
 
-    if (associated(dataset%Dimensions) ) then 
-       do i = 1, size(dataset%Dimensions)
-          MLSAuxData%Dimensions(i) = '                    '
-          MLSAuxData%Dimensions(i) = trim(dataset%Dimensions(i))
-       end do
+    if (associated(MLSAuxData%Dimensions)) &
+      call MLSMessage(MLSMSG_Error, ModuleName, & 
+         'MLSAuxData%Dimensions is already allocated. ' &
+         // 'Quitting to avoid memory leak.')
+
+    if (associated(MLSAuxData%FrequencyCoordinates)) &
+      call MLSMessage(MLSMSG_Error, ModuleName, &
+         'MLSAuxData%FrequencyCoordinates is already allocated. ' &
+         // 'Quitting to avoid memory leak.')
+
+    if (associated(MLSAuxData%VerticalCoordinates)) &
+      call MLSMessage(MLSMSG_Error, ModuleName, &
+         'MLSAuxData%VerticalCoordinates is already allocated. ' &
+         // 'Quitting to avoid memory leak.')
+
+    if (associated(MLSAuxData%HorizontalCoordinates)) &
+      call MLSMessage(MLSMSG_Error, ModuleName, &
+         'MLSAuxData%HorizontalCoordinates is already allocated. ' &
+         // 'Quitting to avoid memory leak.')
+
+    if (associated(dataset%Dimensions)) then 
+       allocate(MLSAuxData%Dimensions(MLSAuxData%rank), stat=status) 
+       !MLSAuxData%rank should be less than or equal to the size of dataset%Dimensions,
+       !but just to be on the safe size, I'll get the min size of the 2. -haley n-
+       if (status == 0) then
+          do i = 1, min(size(dataset%Dimensions), size(MLSAuxData%Dimensions))
+             MLSAuxData%Dimensions(i) = trim(dataset%Dimensions(i))
+          end do
+       else
+          call MLSMessage(MLSMSG_Error, ModuleName, "In " // routineName &
+               // ": cannot allocate MLSAuxData%Dimensions.")
+       endif
     endif
 
-    if (associated(dataset%FrequencyCoordinates) ) then 
-       do i = 1, size(dataset%FrequencyCoordinates)
-          MLSAuxData%FrequencyCoordinates(i) = &
-               dataset%FrequencyCoordinates(i)
-       enddo
+    if (associated(dataset%FrequencyCoordinates)) then
+       length = size(dataset%FrequencyCoordinates)
+       allocate(MLSAuxData%FrequencyCoordinates(length), stat=status)
+       if (status == 0) then
+          do i = 1, length
+             MLSAuxData%FrequencyCoordinates(i) = &
+                  dataset%FrequencyCoordinates(i)
+          enddo
+       else
+          call MLSMessage(MLSMSG_Error, ModuleName, "In " // routineName &
+               // ": cannot allocate MLSAuxData%FrequencyCoordinates.")
+       endif
     endif
 
-    if (associated(dataset%VerticalCoordinates) ) then 
-       do i = 1, size(dataset%VerticalCoordinates)
-          MLSAuxData%VerticalCoordinates(i) = &
-               dataset%VerticalCoordinates(i)
-       enddo
+    if (associated(dataset%VerticalCoordinates)) then
+       length = size(dataset%VerticalCoordinates)
+       allocate(MLSAuxData%VerticalCoordinates(length), stat=status)
+       if (status == 0) then 
+          do i = 1, length
+             MLSAuxData%VerticalCoordinates(i) = &
+                  dataset%VerticalCoordinates(i)
+          enddo
+       else
+          call MLSMessage(MLSMSG_Error, ModuleName, "In " // routineName &
+               // ": cannot allocate MLSAuxData%VerticalCoordinates.")
+       endif 
     endif
 
-    if (associated(dataset%HorizontalCoordinates) ) then 
-       do i = 1, size(dataset%HorizontalCoordinates)
-          MLSAuxData%HorizontalCoordinates(i) = &
-               dataset%HorizontalCoordinates(i)
-       enddo
+    if (associated(dataset%HorizontalCoordinates)) then
+       length = size(dataset%HorizontalCoordinates)
+       allocate(MLSAuxData%HorizontalCoordinates(length), stat=status) 
+       if (status == 0) then
+          do i = 1, length
+             MLSAuxData%HorizontalCoordinates(i) = &
+                  dataset%HorizontalCoordinates(i)
+          enddo
+       else
+          call MLSMessage(MLSMSG_Error, ModuleName, "In " // routineName &
+               // ": cannot allocate MLSAuxData%HorizontalCoordinates.")
+       endif
     endif
 
   end subroutine CopyFromDataProducts
@@ -3139,6 +3192,10 @@ contains ! ============================ MODULE PROCEDURES ====================
 end module MLSAuxData
 
 ! $Log$
+! Revision 2.28  2009/07/30 20:43:05  honghanh
+! Changed CopyFromDataProduct to create arrays before copying to them
+! Add array size checking for Dimensions field in CopyFromDataProduct
+!
 ! Revision 2.27  2009/06/23 18:25:42  pwagner
 ! Prevent Intel from optimizing ident string away
 !
