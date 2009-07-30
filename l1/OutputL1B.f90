@@ -146,10 +146,8 @@ CONTAINS
     CALL Build_MLSAuxData (sd_id, dataset, sc%ypr, lastIndex=noMAF)
     dataset%name      = 'sc/yprRate        '
     CALL Build_MLSAuxData (sd_id, dataset, sc%yprRate, lastIndex=noMAF)
-    CALL Deallocate_DataProducts (dataset)
     dataset%name      = 'sc/VelECR         '
     CALL Build_MLSAuxData (sd_id, dataset, sc%scVelECR, lastIndex=noMAF)
-
     CALL Deallocate_DataProducts (dataset)
 
   END SUBROUTINE OutputL1B_sc
@@ -507,7 +505,7 @@ CONTAINS
           sd_id = -999
        ENDIF
 
-       IF ((ANY(rad(i)%value /= 0.0)) .AND. (sd_id /= -999)) THEN   
+       IF ((ANY(rad(i)%value /= 0.0)) .AND. (sd_id /= -999)) THEN 
           ! if good radiance data exists 
           ! Create/Open the value SDs
           dims(1) = SIZE (rad(i)%value,1)
@@ -544,6 +542,7 @@ CONTAINS
              dataset%name = TRIM(name) // ' ModelOffset'
              CALL Build_MLSAuxData (sdId%DiagId, dataset, rad(i)%ModelOffset, &
                   lastIndex=noMAF, fill_value=RAD_FILL)
+
           ENDIF
 
 ! Output baselines
@@ -582,7 +581,7 @@ CONTAINS
              rad_mif = dim_mif
              rad_sdid = sd_id
           ENDWHERE
-
+         
        ENDIF
     ENDDO
 
@@ -1023,6 +1022,9 @@ END MODULE OutputL1B
 !=============================================================================
 
 ! $Log$
+! Revision 2.29  2009/07/30 20:40:44  honghanh
+! Remove a deallocate statement so that dataset sc/VelECR has a Dimensions attribute
+!
 ! Revision 2.28  2009/06/01 14:02:34  perun
 ! Output galactic center latitude and longitudes for GHz and THz
 !
