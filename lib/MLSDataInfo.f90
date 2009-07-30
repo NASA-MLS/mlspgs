@@ -12,6 +12,7 @@
   module MLSDataInfo
 
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
+  ! use output_m, only: OUTPUTNAMEDVALUE
        
   implicit none
 
@@ -50,6 +51,7 @@
 !
     ! use output_m, only: outputNamedValue
     use HDF5, only: hid_t, H5G_DATASET_F, H5G_LINK_F, &
+      & H5G_UNKNOWN_F, H5G_GROUP_F, H5G_TYPE_F, &
       & h5gn_members_f,h5gget_obj_info_idx_f
 ! This subroutine lists entries in the HDF5 file.
 !
@@ -61,9 +63,11 @@
 !
 ! define internal variables.
 !
+    logical, parameter :: OBJINFOBROKEN = .true. ! starting with hdf5 1.8
     integer :: i, nmembers, h5error, count, type_id
-    character(len=name_len) :: name_buffer, path_name
+    character(len=name_len) :: name_buffer, path_name, new_loc_name
     logical :: dataset_found
+    integer :: nsubmembers
     ! call outputNamedValue( 'loc_id', loc_id )
     ! call outputNamedValue( 'loc_name', loc_name )
 
@@ -84,17 +88,40 @@
     if (h5error.eq.0) then 
 
           path_name = loc_name
+          if (trim(path_name) /= "/") then                                         
+            new_loc_name = trim(path_name) // "/" // trim(name_buffer) 
+          else                                                                     
+            new_loc_name = trim(path_name) // trim(name_buffer)        
+          endif                                                                    
+          ! call outputNamedValue( 'new loc_name', new_loc_name )
 
+        ! call outputNamedValue( 'H5G_DATASET_F', H5G_DATASET_F )
+        ! call outputNamedValue( 'H5G_LINK_F', H5G_LINK_F )
+        ! call outputNamedValue( 'H5G_UNKNOWN_F', H5G_UNKNOWN_F )
+        ! call outputNamedValue( 'H5G_GROUP_F', H5G_GROUP_F )
+        ! call outputNamedValue( 'H5G_TYPE_F', H5G_TYPE_F )
+        ! call outputNamedValue( 'type_id', type_id )
          ! if (type_id .EQ. 2) then  ! H5G_DATASET_F
-        if (type_id .EQ. H5G_DATASET_F) then  ! H5G_DATASET_F
+        if ( OBJINFOBROKEN ) then
+          ! h5gget_obj_info_idx_f doesn't return a reliable type_id
+          ! so we'll call h5gn_members until we get an error
+           call h5gn_members_f( loc_id, trim(new_loc_name), nsubmembers, h5error )
+           if ( h5error == 0 .and. nsubmembers > 0 ) then
+             dataset_found = .FALSE.
+             path_name = new_loc_name
+             call Query_MLSData( loc_id, trim(path_name), dataset_info)
+           else
+             dataset_found = .TRUE.
+             count = dataset_info%number_of_entries + 1
+             dataset_info%name(count) = new_loc_name
+
+             dataset_info%number_of_entries = count
+           endif
+        elseif (type_id .EQ. H5G_DATASET_F) then  ! H5G_DATASET_F
 
           dataset_found = .TRUE.
           count = dataset_info%number_of_entries + 1
-          if (trim(path_name) /= "/") then                                         
-            dataset_info%name(count) = trim(path_name) // "/" // trim(name_buffer) 
-          else                                                                     
-            dataset_info%name(count) = trim(path_name) // trim(name_buffer)        
-          endif                                                                    
+          dataset_info%name(count) = new_loc_name
 
           dataset_info%number_of_entries = count
 
@@ -103,11 +130,7 @@
           dataset_found = .TRUE.
           count = dataset_info%number_of_entries + 1
 
-          if (trim(path_name) /= "/") then 
-            dataset_info%name(count) = trim(path_name) // "/" // trim(name_buffer)
-          else 
-            dataset_info%name(count) = trim(path_name) // trim(name_buffer)
-          endif
+          dataset_info%name(count) = new_loc_name
 
           dataset_info%number_of_entries = count
 
@@ -115,11 +138,7 @@
 
            dataset_found = .FALSE.
  
-           if (trim(path_name) /= "/") then 
-            path_name = trim(path_name) // "/" // trim(name_buffer)
-           else 
-            path_name = trim(path_name) // trim(name_buffer)
-           endif
+          path_name = new_loc_name
  
            call Query_MLSData(loc_id,trim(path_name),dataset_info)
 
@@ -146,6 +165,9 @@
 end module MLSDataInfo
 
 ! $Log$
+! Revision 2.9  2009/07/30 00:17:58  pwagner
+! Worked around apparent bug in hdf5 1.8
+!
 ! Revision 2.8  2009/06/23 18:25:42  pwagner
 ! Prevent Intel from optimizing ident string away
 !
