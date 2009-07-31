@@ -48,7 +48,7 @@
 })
 
 !setPTopBySpecies(Temperature=0.000464mb, GPH=0.000464mb)
-!setPBottomBySpecies(Temperature=383mb, GPH=383mb, O3=316mb)
+!setPBottomBySpecies(Temperature=383mb, GPH=383mb)
 ; ------------------------------------------------------- Product information
 
 ; These macros define the MLS standard products
@@ -1130,6 +1130,9 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
 })})
 
 ; $Log$
+; Revision 1.140  2009/05/15 20:25:52  pwagner
+; Fixed bug causing O3 and IWC overlaps to overwrite std prods
+;
 ; Revision 1.139  2009/05/14 14:44:11  honghanh
 ; Add ProcessParValCS (or ProcessParVal case-sensitive) in m4defs.l2cf to support product-dependent pTop / pBottom implemented in retrievalmacros.l2cf
 ;
