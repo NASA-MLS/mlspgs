@@ -28,6 +28,7 @@ module MLSHDF5
   use MLSDataInfo, only: MLSDataInfo_T, Query_MLSData
   use MLSFiles, only: HDFVERSION_5, INITIALIZEMLSFILE
   use MLSKinds, only: r8
+  use MLSSets, only: FindFirst
   use MLSStringLists, only: catLists, IsInList, &
     & GetStringElement, NumStringElements, StringElement
   use MLSStrings, only: indexes, Replace
@@ -234,7 +235,8 @@ module MLSHDF5
       & LdFrmHDF5DS_ID_dblarr3, LdFrmHDF5DS_ID_dblarr4, &
       & LdFrmHDF5DS_ID_snglarr1, LdFrmHDF5DS_ID_snglarr2, &
       & LdFrmHDF5DS_ID_snglarr3, LdFrmHDF5DS_ID_snglarr4, &
-      & LdFrmHDF5DS_ID_chararr1, LdFrmHDF5DS_ID_chararr2, LdFrmHDF5DS_ID_chararr3
+      & LdFrmHDF5DS_ID_chararr1, LdFrmHDF5DS_ID_chararr2, &
+      & LdFrmHDF5DS_ID_chararr3, LdFrmHDF5DS_ID_charscalar
     module procedure LoadFromHDF5DS_intarr1, LoadFromHDF5DS_intarr2, &
       & LoadFromHDF5DS_intarr3, LoadFromHDF5DS_intarr4, &
       & LoadFromHDF5DS_logarr1, &
@@ -242,7 +244,8 @@ module MLSHDF5
       & LoadFromHDF5DS_dblarr3, LoadFromHDF5DS_dblarr4, &
       & LoadFromHDF5DS_snglarr1, LoadFromHDF5DS_snglarr2, &
       & LoadFromHDF5DS_snglarr3, LoadFromHDF5DS_snglarr4, &
-      & LoadFromHDF5DS_chararr1, LoadFromHDF5DS_chararr2, LoadFromHDF5DS_chararr3
+      & LoadFromHDF5DS_chararr1, LoadFromHDF5DS_chararr2, &
+      & LoadFromHDF5DS_chararr3, LoadFromHDF5DS_charscalar
   end interface
 
   interface LoadPtrFromHDF5DS
@@ -295,8 +298,8 @@ module MLSHDF5
   integer, parameter :: MAXNDSNAMES = 1000   ! max number of DS names in a file
   integer, parameter                      :: MAXATTRIBUTESIZE =   40000
   integer, parameter                      :: MAXTEXTSIZE      = 2000000
-  character(len=*), dimension(1), parameter :: DONTDUMPTHESEDSNAMES = (/ &
-    & 'coremetadata' /)
+  character(len=*), dimension(2), parameter :: DONTDUMPTHESEDSNAMES = (/ &
+    & 'wtfcoremetadata', 'wtfxmlmetadata ' /)
   ! Local variables
   integer(hid_t) :: cparms
 
@@ -684,6 +687,11 @@ contains ! ======================= Public Procedures =========================
           call LoadFromHDF5DS ( groupID, name, chArray(:,:,1) )
           call dump ( chArray(:,:,1), trim(namePrinted) )
           call deallocate_test( chArray, 'chArray', ModuleName )
+        case ( 0 )
+          chvalue = ' ' ! 
+          call LoadFromHDF5DS ( groupID, Name, chvalue(1) )
+          if ( len_trim(namePrinted) > 0 ) call output( 'name: ' // trim(name), advance='yes' )
+          call output( trim(chValue(1)), advance='yes' )
         case default
           if ( dims(1) < 2 ) then
             ! In case we have a very long dataset, e.g. the l2cf
@@ -3156,6 +3164,30 @@ contains ! ======================= Public Procedures =========================
 
   end subroutine SaveAsHDF5DS_snglarr4
 
+  ! ------------------------------------  LdFrmHDF5DS_ID_charscalar  -----
+  subroutine LdFrmHDF5DS_ID_charscalar ( locID, name, value )
+    ! This routine loads a scalar with values from a DS
+    integer, intent(in) :: LOCID          ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    character (len=*), intent(out) :: VALUE    ! The scalar itself
+
+    character(len=*), parameter :: Sfx = 'charscalar'
+
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    type (MLSFile_T)   :: MLSFile
+
+    ! Executable code
+    call MLSMessageCalls( 'push', constantName='LdFromHDF5DS_ID_'//sfx )
+    status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
+      & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
+    MLSFile%fileID%sd_id = locID
+    MLSFile%stillOpen = .true.
+    call LoadFromHDF5DS ( MLSFile, name, value )
+    call MLSMessageCalls( 'pop' )
+
+  end subroutine LdFrmHDF5DS_ID_charscalar
+
   ! ------------------------------------  LdFrmHDF5DS_ID_chararr1  -----
   subroutine LdFrmHDF5DS_ID_chararr1 ( locID, name, value, &
     & start, count, stride, block )
@@ -3510,6 +3542,53 @@ contains ! ======================= Public Procedures =========================
     include 'LdFrmHDF5DS_ID.f9h'
 
   end subroutine LdFrmHDF5DS_ID_snglarr4
+
+  ! ------------------------------------  LoadFromHDF5DS_charscalar  -----
+  subroutine LoadFromHDF5DS_charscalar ( MLSFile, name, value )
+    ! This routine loads a scalar with values from a DS
+    type (MLSFile_T)   :: MLSFile
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    character (len=*), intent(out) :: VALUE    ! The scalar itself
+
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    integer :: SPACEID                  ! ID of dataspace
+    integer :: MEMSPACEID               ! ID of dataspace
+    integer :: SETID                    ! ID of dataset
+    integer :: STRINGTYPE               ! String type
+    integer :: STRINGSIZE               ! String size
+    value = ' '
+    call MLSMessageCalls( 'push', constantName='LoadFromHDF5DS_charscalar' )
+    call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataset ' // trim(name), &
+      & MLSFile=MLSFile )
+    call h5dGet_type_f ( setID, stringType, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to get type for scalar ' // trim(name), &
+      & MLSFile=MLSFile )
+    call h5tGet_size_f ( stringType, stringSize, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to get size for scalar ' // trim(name), &
+      & MLSFile=MLSFile )
+    if ( stringSize > len(value) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Value too long to fit in space given for scalar ' // trim(name), &
+      & MLSFile=MLSFile )
+    call h5dget_space_f ( setID, spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataspace for dataset ' // trim(name), &
+      & MLSFile=MLSFile )
+    call h5dread_f ( setID, stringtype, value, ones(1:7), status )
+    ! In case there are any nulls, we will replace them with blanks
+    status = FindFirst( value, achar(0) )
+    if ( status > 0 ) value( status: ) = ' '
+    call h5dClose_f ( setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close dataset ' // trim(name), &
+      & MLSFile=MLSFile )
+    call MLSMessageCalls( 'pop' )
+
+  end subroutine LoadFromHDF5DS_charscalar
 
   ! ------------------------------------  LoadFromHDF5DS_chararr1  -----
   subroutine LoadFromHDF5DS_chararr1 ( MLSFile, name, value, &
@@ -4968,6 +5047,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.93  2009/08/04 20:44:08  pwagner
+! Now able to dump character scalar ds
+!
 ! Revision 2.92  2009/06/23 18:25:42  pwagner
 ! Prevent Intel from optimizing ident string away
 !
