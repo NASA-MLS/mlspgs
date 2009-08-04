@@ -90,7 +90,7 @@ module L1BData
 !                         [char InstrumentName] ) 
 ! DeallocateL1BData (l1bData_T l1bData) 
 ! Diff (l1bData_T l1bData1, l1bData_T l1bData2, int details, &
-!   [char options], [log silent], [int numDiffs], [int mafStart], [int mafEnd])
+!   [char options], [int numDiffs], [int mafStart], [int mafEnd])
 ! Dump (l1bData_T l1bData, int details)
 ! int FindL1BData (int files(:), char fieldName, [int hdfVersion]) 
 ! MLSFile_T GetL1BFile (MLSFile_t filedatabase(:), char fieldName, [char options]) 
@@ -500,7 +500,7 @@ contains ! ============================ MODULE PROCEDURES ======================
 
   !-------------------------------------------------  DiffL1BData  -----
   subroutine DiffL1BData ( l1bData1, l1bData2, &
-    & details, options, silent, numDiffs, mafStart, mafEnd )
+    & details, options, numDiffs, mafStart, mafEnd )
   use MLSFillValues, only: ESSENTIALLYEQUAL
   use MLSStrings, only: asciify, isAllAscii
     ! Diff two l1brad quantities
@@ -512,7 +512,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     !                                        ! >0 Dump even multi-dim arrays
     !                                        ! Default 1
     character(len=*), intent(in), optional :: options
-    logical, intent(in), optional :: silent  ! don't print anything
+    ! logical, intent(in), optional :: silent  ! don't print anything
     integer, intent(out), optional :: numDiffs  ! how many diffs
     integer, intent(in), optional :: mafStart, mafEnd
     ! If options contains 'r' or 's', print much less
@@ -553,7 +553,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     endif
     
     mySilent = .false.
-    if ( present(silent) ) mySilent = silent
+    if ( present(options) ) mySilent = index( options, 'h' )
     if ( DEBUG ) then
       call outputNamedValue( 'myDetails', myDetails )
       call outputNamedValue( 'mySilent', mysilent )
@@ -3232,6 +3232,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.83  2009/08/04 20:43:18  pwagner
+! Replaced silent optional arg
+!
 ! Revision 2.82  2009/06/23 18:25:42  pwagner
 ! Prevent Intel from optimizing ident string away
 !
