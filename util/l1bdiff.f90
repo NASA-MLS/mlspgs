@@ -128,6 +128,7 @@ program l1bdiff ! diffs two l1b or L2AUX files
   if ( options%rms ) dumpOptions = trim(dumpOptions) // 'r'
   if ( options%stats ) dumpOptions = trim(dumpOptions) // 's'
   if ( options%unique ) dumpOptions = trim(dumpOptions) // 'u'
+  if ( options%silent ) dumpOptions = trim(dumpOptions) // 'h'
   call time_now ( t1 )
   if ( options%verbose .and. .not. options%list ) &
     & print *, 'Compare l1b data to: ', trim(options%referenceFileName)
@@ -668,6 +669,9 @@ end program l1bdiff
 !==================
 
 ! $Log$
+! Revision 1.12  2009/06/16 22:37:40  pwagner
+! Changed api for dump, diff routines; now rely on options for most optional behavior
+!
 ! Revision 1.11  2008/07/10 00:14:43  pwagner
 ! Added -self, -half, -unique options
 !
