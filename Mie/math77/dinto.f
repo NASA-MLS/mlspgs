@@ -2,6 +2,7 @@
 C     .  Copyright (C) 1989, California Institute of Technology.
 C     .  All rights reserved.  U. S. Government sponsorship under
 C     .  NASA contract NAS7-918 is acknowledged.
+c>> 2009-07-15 DINTO  Krogh  Fixed incorrect outputs of KDIM
 c>> 2008-01-17 DINTO  Krogh  Updated generated error message text.
 C>> 2000-12-01 DINTO  Krogh  Removed unused parameters LABSC & MASA16.
 C>> 1996-03-31 DINTO  Krogh  Removed unused variable in common.
@@ -380,7 +381,8 @@ c **** End of automatically generated text
       PARAMETER (IDFLT1=1024)
       PARAMETER (IDINT2=IDFLT1*256)
       PARAMETER (IDINT1=IDINT2*32)
-      PARAMETER (MESA1=IDINT1*LNSUB+IDFLT1*LLOC1+LTXTAA)
+      PARAMETER (MESA1=IDINT1*LNSUB+(12+LKDIM)*IDINT2+IDFLT1*LLOC1
+     1  +LTXTAA)
       PARAMETER (MESA2=IDFLT1*LDELTA+LTXTAB)
       PARAMETER (MESA3=IDINT1*LPART+IDINT2*LKAIMT+IDFLT1*LEPS+LTXTAC)
       PARAMETER (MESA4=29*IDINT1+IDFLT1*LWORRY+LTXTAD)
@@ -421,8 +423,6 @@ C  JUMP = 10  11  12      13
       DATA MACTAR / METEXT, MEFDAT, 0, MEFVEC, 0, MERET /
       DATA MACTH / METEXT, MERET /
       DATA MACTER / MEEMES, 0, 0, -1, MECONT /
-c
-c$OMP THREADPRIVATE( /DINTNC/, /DINTC/, /DINTEC/ )
 C
 C     *****     EXECUTABLE STATEMENTS     ******************************
 C
@@ -524,6 +524,7 @@ C Take care of stuff that is double precision in single precision code.
       IF (LMESS .EQ. 0) RETURN
       IF (LMESS .LT. 0) then
          ABSCIS = abs(LOCAL(4) - LOCAL(3))
+         IDAT(1) = KDIM
          CALL DMESS(MACTH, MTXTAF, IDAT, FSAV(LLOC3))
       end if
   230 IF (NDIM .LE. KDIM) RETURN

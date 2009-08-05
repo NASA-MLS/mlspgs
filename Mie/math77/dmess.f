@@ -137,7 +137,7 @@ c
      4   LSTOP, LSTRT, LTEXT, MAXWID(2), MDAT(5), MPT, MUNIT, NCOL,
      5   NDIM, NFDAT, NIDAT, NMDAT, NROW, NTEXT, OUNIT, SUNIT, TABSPA
 c
-      character BUF*(LENBUF), DOLS*72, FMTC*7, FMTF*22, FMTG*15,
+      character BUF*(LENBUF), DOLS*72, FMTC*7, FMTF*20, FMTG*15,
      1  FMTI*7, FMTIM(2)*7, FMTJ*7, FMTR*7, FMTT*15
       common /CMESSI/ SUNIT, LHEAD, KDFDEF, LINMSG, LINERR, MUNIT,
      1   EUNIT, KSCRN, KDIAG, MAXERR, LSTOP, LPRINT, KDF, NTEXT, NIDAT,
@@ -236,7 +236,7 @@ c               Want to use an "E" format
           IWF = IWF + ID + KEXE
 c++ CODE for ~.C. is active
           if (LENTRY .eq. 10) IWF = IWF - 1
-          write (FMTF,'(''(1P,99(E'',I2,''.'',I2,''E'',I1,'',:,1X))'')')
+          write (FMTF, '(''(1P,99(E'',I2,''.'',I2,''E'',I1,'':1X))'')')
      1      IWF, ID, KEXE - 2
 c++ CODE for .C. is inactive
 cc WATCOM C and others (?) man need an extra 1 here??
@@ -257,7 +257,7 @@ c               Want to use an "F" format
       end if
 c++ CODE for ~.C. is active
       IWF = IWF + ID + max(KBIG, -1)
-      write (FMTF, '(''(0P,99(F'',I2,''.'',I2,'',:,1X))'')') IWF,ID
+      write (FMTF, '(''(0P,99(F'',I2,''.'',I2,'':1X))'')') IWF,ID
 c++ CODE for .C. is inactive
 c      IWF = IWF + ID + max(KBIG, 0)
 c%%    strcpy(cmessc.fmtf, "%*.*f ");
