@@ -399,7 +399,8 @@ contains ! ============================ MODULE PROCEDURES ======================
   end function AssembleL1BQtyName
 
   !-------------------------------------------------  ContractL1BData  -----
-  subroutine ContractL1BData ( L1BDataIn, L1BDataOut, noMAFs, firstMAF, lastMAF )
+  subroutine ContractL1BData ( L1BDataIn, L1BDataOut, noMAFs, &
+    & firstMAF, lastMAF, firstChannel, lastChannel, firstMIF, lastMIF )
     ! Contract full l1bdataIn to just those mafs
     ! beginning with firstMAF (if present) and ending with lastMAF
     ! Remember 1st maf of full l1bData is numbered 0 
@@ -413,6 +414,10 @@ contains ! ============================ MODULE PROCEDURES ======================
     type(L1BData_T), intent(out) :: L1BDataOut
     integer, optional, intent(in):: firstMAF ! Remember, 1st of full set is 0
     integer, optional, intent(in):: lastMAF
+    integer, optional, intent(in):: firstChannel
+    integer, optional, intent(in):: lastChannel
+    integer, optional, intent(in):: firstMIF
+    integer, optional, intent(in):: lastMIF
     integer, intent(out)         :: NoMAFs
     ! Internal variables
     integer, dimension(3) :: dims
@@ -424,7 +429,10 @@ contains ! ============================ MODULE PROCEDURES ======================
     logical, parameter :: DEEBug = .false.
     ! Executable
     myFirstMAF = 0
-    if ( present(firstMAF) ) myFirstMAF = firstMAF
+    if ( present(firstMAF) ) then
+      call output( 'Should not print, but who knows?', advance='yes' )
+      myFirstMAF = firstMAF
+    endif
     myLastMAF = l1bDataIn%NoMAFs - l1bDataIn%firstMAF - 1
     if ( present(lastMAF) ) myLastMAF = lastMAF
     if ( associated(l1bDataIn%charField)) then
@@ -442,6 +450,10 @@ contains ! ============================ MODULE PROCEDURES ======================
     rank = l1bDataIn%trueRank
     l1bDataOut%noMAFs = noMAFs
     l1bDataOut%firstMAF = myFirstMAF
+    if ( present(firstChannel) .and. present(lastChannel) ) &
+      & dims(1) = lastChannel - firstChannel + 1
+    if ( present(firstMIF) .and. present(lastMIF) ) &
+      & dims(1) = lastMIF - firstMIF + 1
     if ( DEEBug ) print *, 'Preparing to contract ', trim(l1bDataIn%L1BName)
     if ( DEEBug ) print *, 'rank ', rank
     if ( DEEBug ) print *, 'NoMAFs ', NoMAFs
@@ -451,7 +463,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     if ( DEEBug ) print *, 'min(dpField) ',minval(l1bDataIn%dpField(1,1,:))
     if ( DEEBug ) print *, 'max(dpField) ',maxval(l1bDataIn%dpField(1,1,:))
     call allocateL1BData ( l1bDataOut, dims, L1bDataSibling=l1bDataIn )
-    mafOffSet = firstMAF
+    mafOffSet = myFirstMAF
     if ( mafOffSet+NoMAFs > size(l1bDataIn%counterMAF) ) &
       & mafOffSet = size(l1bDataIn%counterMAF) - NoMAFs
     do maf=1, NoMAFs
@@ -500,7 +512,7 @@ contains ! ============================ MODULE PROCEDURES ======================
 
   !-------------------------------------------------  DiffL1BData  -----
   subroutine DiffL1BData ( l1bData1, l1bData2, &
-    & details, options, numDiffs, mafStart, mafEnd )
+    & details, options, numDiffs, mafStart, mafEnd, l1bValues1, l1bValues2 )
   use MLSFillValues, only: ESSENTIALLYEQUAL
   use MLSStrings, only: asciify, isAllAscii
     ! Diff two l1brad quantities
@@ -515,14 +527,17 @@ contains ! ============================ MODULE PROCEDURES ======================
     ! logical, intent(in), optional :: silent  ! don't print anything
     integer, intent(out), optional :: numDiffs  ! how many diffs
     integer, intent(in), optional :: mafStart, mafEnd
+    real(r8), dimension(:), optional :: l1bValues1
+    real(r8), dimension(:), optional :: l1bValues2
     ! If options contains 'r' or 's', print much less
-
+    ! if options contains 'd' don't bother with essentially equal and so on
     ! Local variables
     integer :: i,j,k
     logical :: hideAssocStatus
     logical :: l1b1NotFinite
     logical :: l1b2NotFinite
     integer :: MYDETAILS
+    logical :: myDirect
     integer :: mafStart1, mafStart2, mafEnd1, mafEnd2
     integer :: myNumDiffs
     logical :: mySilent
@@ -554,6 +569,8 @@ contains ! ============================ MODULE PROCEDURES ======================
     
     mySilent = .false.
     if ( present(options) ) mySilent = index( options, 'h' )
+    myDirect = .false.
+    if ( present(options) ) myDirect = index( options, 'd' )
     if ( DEBUG ) then
       call outputNamedValue( 'myDetails', myDetails )
       call outputNamedValue( 'mySilent', mysilent )
@@ -695,6 +712,25 @@ contains ! ============================ MODULE PROCEDURES ======================
       if ( prntAssocStatus ) &
         & call output('(intField arrays not associated)', advance='yes')
     end if
+    
+    if ( present(l1bValues1) .and. present(l1bValues2) ) then
+      l1b1NotFinite = .not. any(ieee_is_finite(l1bValues1))
+      l1b2NotFinite = .not. any(ieee_is_finite(l1bValues2))
+      if ( l1b1NotFinite .and. l1b2NotFinite ) then
+        call output('both dpField arrays all NaNs', advance='yes')
+      elseif ( l1b1NotFinite ) then
+        call output('l1bValues1 array all NaNs', advance='yes')
+      elseif ( l1b2NotFinite ) then
+        call output('l1bValues2 array all NaNs', advance='yes')
+      else
+        if ( DEBUG ) call output( 'Calling direct diff', advance='yes' )
+        myNumDiffs = myNumDiffs + count(l1bValues1 /= l1bValues2)
+        call DIFF ( &
+          & l1bValues1, '(1)', &
+          & l1bValues2, '(2)', &
+          & options=options )
+      endif
+    endif
 
     if ( associated(l1bData1%dpField) &
       & .and. associated(l1bData1%dpField) ) then
@@ -706,15 +742,26 @@ contains ! ============================ MODULE PROCEDURES ======================
         call outputNamedValue( 'l1b2NotFinite', l1b2NotFinite )
       endif
       if ( l1b1NotFinite .and. l1b2NotFinite ) then
-          call output('both dpField arrays all NaNs', advance='yes')
+        call output('both dpField arrays all NaNs', advance='yes')
       elseif ( l1b1NotFinite ) then
-          call output('l1bData1%dpField array all NaNs', advance='yes')
+        call output('l1bData1%dpField array all NaNs', advance='yes')
       elseif ( l1b2NotFinite ) then
-          call output('l1bData2%dpField array all NaNs', advance='yes')
+        call output('l1bData2%dpField array all NaNs', advance='yes')
+      elseif ( myDirect ) then
+        if ( DEBUG ) call output( 'Calling direct diff', advance='yes' )
+        myNumDiffs = myNumDiffs + count(l1bData1%dpField /= l1bData2%dpField)
+        ! l1bData1%dpField = l1bData1%dpField - l1bData2%dpField
+        ! call dump ( &
+        !  & l1bData1%dpField, '(1)-(2)', &
+        !  & options=options )
+        call DIFF ( &
+          & l1bData1%dpField, '(1)', &
+          & l1bData2%dpField, '(2)', &
+          & options=options )
       elseif ( .not. EssentiallyEqual(l1bData1%dpField, l1bData2%dpField, &
         & FillValue=REAL(undefinedValue, R8)) ) then
-          if ( DEBUG ) call output( 'Calling diff', advance='yes' )
-          call diff ( &
+        if ( DEBUG ) call output( 'Calling diff', advance='yes' )
+        call diff ( &
         & l1bData1%dpField(:,:,mafStart1:mafEnd1), '(1)', &
         & l1bData2%dpField(:,:,mafStart2:mafEnd2), '(2)', &
         & FillValue=REAL(undefinedValue, R8), &
@@ -1520,6 +1567,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     if ( myhdfVersion == HDFVERSION_4 ) then
       call ReadL1BData_FH_hdf4 ( L1FileHandle, trim(QuantityName), L1bData, &
       & NoMAFs, Flag, FirstMAF, LastMAF, NEVERFAIL, L2AUX )
+      if ( flag /= 0 ) NOMAFS = -1
     else
       call ReadL1BData_FH_hdf5 ( L1FileHandle, trim(QuantityName), L1bData, &
       & NoMAFs, Flag, FirstMAF, LastMAF, NEVERFAIL, L2AUX )
@@ -1531,9 +1579,12 @@ contains ! ============================ MODULE PROCEDURES ======================
       if ( Flag == 0 ) then
         call Reshape_for_hdf4(L1bData)
       else
-        ! print *, 'Warning: ', trim(QuantityName) // ' not found in l1b files'
-        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        call MLSMessage ( MLSMSG_Warning, ModuleName // '/ReadL1BData_fileHandle', &
         & 'Failed to find '//trim(QuantityName)//' in l1b files')
+        NOMAFS = -1
+        call outputNamedValue( 'noMAFs', noMAFs )
+        call outputNamedValue( 'Flag', Flag )
+        call output( 'returning now', advance='yes' )
         return
       end if
     end if
@@ -2055,13 +2106,6 @@ contains ! ============================ MODULE PROCEDURES ======================
       end if
       if ( DEEBUG) print *, 'deallocating counterMAF dims'
       deallocate(cmdims, cmmaxdims)
-      ! if ( sds1_id == -1 ) then
-      !   flag = NOCOUNTERMAFID
-      !   deallocate(dims, maxdims)
-      !   if ( MyNeverFail ) return
-      !   call MLSMessage ( MLSMSG_Error, ModuleName, &
-      !   & 'Failed to find identifier of counterMAF data set.')
-      ! end if
     end if
 
     if ( DEEBUG) print *, 'computing FirstMAFCtr'
@@ -2249,6 +2293,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     if ( myhdfVersion == HDFVERSION_4 ) then
       call ReadL1BData_MF_hdf4 ( L1BFile, trim(QuantityName), L1bData, &
       & NoMAFs, Flag, FirstMAF, LastMAF, NEVERFAIL, L2AUX )
+      if ( flag /= 0 ) noMAFs = -1
     else
       call ReadL1BData_MF_hdf5 ( L1BFile, trim(QuantityName), L1bData, &
       & NoMAFs, Flag, FirstMAF, LastMAF, NEVERFAIL, L2AUX )
@@ -2260,10 +2305,10 @@ contains ! ============================ MODULE PROCEDURES ======================
       if ( Flag == 0 ) then
         call Reshape_for_hdf4(L1bData)
       else
-        ! print *, 'Warning: ', trim(QuantityName) // ' not found in l1b files'
-        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        call MLSMessage ( MLSMSG_Warning, ModuleName // '/ReadL1BData_MLSFile', &
         & 'Failed to find '//trim(QuantityName)//' in l1b files')
         if ( .not. alreadyOpen )  call mls_closeFile(L1BFile, returnStatus)
+        NOMAFS = -1
         return
       end if
     end if
@@ -2782,13 +2827,6 @@ contains ! ============================ MODULE PROCEDURES ======================
       end if
       if ( DEEBUG) print *, 'deallocating counterMAF dims'
       deallocate(cmdims, cmmaxdims)
-      ! if ( sds1_id == -1 ) then
-      !   flag = NOCOUNTERMAFID
-      !   deallocate(dims, maxdims)
-      !   if ( MyNeverFail ) return
-      !   call MLSMessage ( MLSMSG_Error, ModuleName, &
-      !   & 'Failed to find identifier of counterMAF data set.')
-      ! end if
     end if
 
     if ( DEEBUG) print *, 'computing FirstMAFCtr'
@@ -3072,19 +3110,28 @@ contains ! ============================ MODULE PROCEDURES ======================
     integer, optional, intent(in)   :: m
     ! Internal variables
     integer :: nn  ! number of indices to copy
+    integer :: c1, c2, m1, m2 ! starting, ending channel nums and mif nums
     ! Executable
     nn = 0
     if ( present(m) ) nn=m-1
     ! print *, 'Copying from to ', nIn, nOut
     if ( associated(l1BDataIn%charField) .and. &
       & associated(l1BDataOut%charField) ) then
-        l1BDataOut%charField(:,:,nOut:nOut+nn) = &
-        & l1BDataIn%charField(:,:,nIn:nIn+nn)
+        c1 = 1
+        c2 = min( size(l1BDataIn%charField, 1), size(l1BDataOut%charField, 1) )
+        m1 = 1
+        m2 = min( size(l1BDataIn%charField, 2), size(l1BDataOut%charField, 2) )
+        l1BDataOut%charField(c1:c2,m1:m2,nOut:nOut+nn) = &
+        & l1BDataIn%charField(c1:c2,m1:m2,nIn:nIn+nn)
     endif
     if ( associated(l1BDataIn%intField) .and. &
       & associated(l1BDataOut%intField) ) then
-        l1BDataOut%intField(:,:,nOut:nOut+nn) = &
-        & l1BDataIn%intField(:,:,nIn:nIn+nn)
+        c1 = 1
+        c2 = min( size(l1BDataIn%intField, 1), size(l1BDataOut%intField, 1) )
+        m1 = 1
+        m2 = min( size(l1BDataIn%intField, 2), size(l1BDataOut%intField, 2) )
+        l1BDataOut%intField(c1:c2,m1:m2,nOut:nOut+nn) = &
+        & l1BDataIn%intField(c1:c2,m1:m2,nIn:nIn+nn)
     endif
     if ( associated(l1BDataIn%dpField) .and. &
       & associated(l1BDataOut%dpField) ) then
@@ -3103,8 +3150,12 @@ contains ! ============================ MODULE PROCEDURES ======================
           call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'Tried to copy past size of input field in cpField')
         endif
-        l1BDataOut%dpField(:,:,nOut:nOut+nn) = &
-        & l1BDataIn%dpField(:,:,nIn:nIn+nn)
+        c1 = 1
+        c2 = min( size(l1BDataIn%dpField, 1), size(l1BDataOut%dpField, 1) )
+        m1 = 1
+        m2 = min( size(l1BDataIn%dpField, 2), size(l1BDataOut%dpField, 2) )
+        l1BDataOut%dpField(c1:c2,m1:m2,nOut:nOut+nn) = &
+        & l1BDataIn%dpField(c1:c2,m1:m2,nIn:nIn+nn)
     ! print *, l1BDataIn%dpField(1,1,nIn:nIn+nn)
     endif
   end subroutine cpField
@@ -3232,6 +3283,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.84  2009/08/17 16:53:40  pwagner
+! May contract L1BData along any of its dimensions
+!
 ! Revision 2.83  2009/08/04 20:43:18  pwagner
 ! Replaced silent optional arg
 !
