@@ -399,6 +399,7 @@ status
 stop
 structure
 suffixLabel
+sum
 superDiagonal
 surface
 swath
@@ -460,6 +461,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.192  2009/08/17 16:37:39  pwagner
+# read_apriori may read DELP field and perform sum
+#
 # Revision 2.191  2009/04/13 20:45:57  pwagner
 # heightRange in explicit Fill can fill above or below specified height
 #
