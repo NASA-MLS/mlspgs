@@ -46,6 +46,9 @@
     real(kind(array1))               :: rmsratio
     real(kind(array1))               :: stddev
     real(kind(array1))               :: stddevratio
+    real                             :: sTime
+    real                             :: t1
+    real                             :: t2
     logical, parameter               :: PRINTREFERENCEVALUES = .false.
     logical, parameter               :: PRINTMINMAXWITHRMS = .true.
     logical, parameter               :: USEDUMPTABLE = .true.
@@ -66,8 +69,12 @@
     real(kind(array1)), dimension(MAXPCTS,7) :: table
     logical, parameter :: unique = .false. 
     ! Executable
+    t1 = 0.
+    t2 = 0.
+    sTime = 0.
     thisIsADiff = .true.  ! For special dumps
     myClean      = theDefault('clean') ! .false.
+    myDirect     = theDefault('direct') ! .false.
     myGaps       = theDefault('gaps')
     myRMS        = theDefault('rms')   ! .false.
     myStats      = theDefault('stat')  ! .false.
@@ -78,6 +85,7 @@
         & .not. (myStats .or. myRMS)
     if ( present(options) ) then
       myClean       = index( options, 'c' ) > 0
+      myDirect      = index( options, 'd' ) > 0
       myGaps        = index( options, 'g' ) > 0
       myRMS         = index( options, 'r' ) > 0
       myStats       = index( options, 's' ) > 0
@@ -107,6 +115,11 @@
     endif
     
     NaNsIn1 = any(.not. ieee_is_finite(array1))
+    if ( NaNsIn1 .and. myDirect ) then
+      call output( &
+        & '*** skipping: non finite values found in ' // trim(name1), advance='yes')
+      return
+    endif
     if ( NaNsIn1 ) then
       if ( .not. any(ieee_is_finite(array1)) ) then
         call output( &
@@ -128,6 +141,11 @@
     endif
 
     NaNsIn2 = any(.not. ieee_is_finite(array2))
+    if ( NaNsIn1 .and. myDirect ) then
+      call output( &
+        & '*** skipping: non finite values found in ' // trim(name2), advance='yes')
+      return
+    endif
     if ( NaNsIn2 ) then
       if ( .not. any(ieee_is_finite(array2)) ) then
         call output( &
@@ -148,6 +166,8 @@
       endif
     endif
 
+    call SayTime( 'Checking for NaNs and Infs', stime )
+    stime = t2
     if ( all(array1 == array2) ) then
       call output( '(The two arrays are exactly equal)', advance='yes' )
       return
@@ -160,11 +180,19 @@
       if ( PRINTREFERENCEVALUES ) &
         & call printRMSetc ( 'Reference values', refmin, refmax, refrms )
     endif
+    if ( DEBUG ) call SayTime( 'statistics', stime )
+    stime = t2
     call fillPcts
+    if ( DEBUG ) call SayTime( 'percentages', stime )
+    stime = t2
     call usePcts
+    if ( DEBUG ) call SayTime( 'ratios', stime )
+    stime = t2
     call dump(array1-array2, trim(DiffName), &
       & real(0.,kind(array1)), WIDTH, FORMAT, &
       & LBOUND, OPTIONS )
+    if ( DEBUG ) call SayTime( 'dump', stime )
+    stime = t2
     call doneWithDiff
     if ( DEBUG ) call output( 'DoneWithDiff', advance='yes' )
   contains
@@ -291,8 +319,25 @@
       enddo
     end subroutine usePcts
 
+  subroutine SayTime ( What, startTime )
+    character(len=*), intent(in) :: What
+    real, intent(in), optional :: startTime
+    real :: myt1
+    if ( present(startTime) ) then
+      myt1 = startTime
+    else
+      myt1 = t1
+    endif
+    call time_now ( t2 )
+    call output ( "Timing for " // what // " = " )
+    call output ( dble(t2 - myt1), advance = 'yes' )
+  end subroutine SayTime
+
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.3  2009/08/17 18:05:14  pwagner
+! direct option skips diffing if non-finite values found
+!
 ! Revision 2.2  2009/06/16 17:12:55  pwagner
 ! Changed api for dump, diff routines; now rely on options for most optional behavior
 !
