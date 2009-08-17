@@ -468,7 +468,7 @@ contains ! =====     Public procedures     =============================
              l+l_clear_110rh_below_tropopause, l+l_cloudy_110rh_below_top, &
              l+l_cloudy_110rh_in_cloud, l+l_cloudy_nearside_only, n+n_dt_def /) )
     call make_tree ( (/ &
-      begin, t+t_griddedOrigin, l+l_climatology, l+l_dao, l+l_geos5, &
+      begin, t+t_griddedOrigin, l+l_climatology, l+l_dao, l+l_geos5, l+l_merra, &
              l+l_gloria, l+l_ncep, l+l_strat, l+l_surfaceHeight, n+n_dt_def, &
       begin, t+t_hGridType, l+l_explicit, l+l_fixed, l+l_fractional, &
              l+l_height, l+l_regular, l+l_l2gp, n+n_dt_def, &
@@ -575,6 +575,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_missingValue, t+t_numeric, n+n_field_type, &
              begin, f+f_field, t+t_string, n+n_field_type, &
              begin, f+f_origin, t+t_griddedOrigin, n+n_field_type, &
+             begin, f+f_sum, t+t_boolean, n+n_field_type, &
              np+n_spec_def, &
 !      begin, s+s_l2gp, np+n_spec_def, & ! To avoid forward reference in h/vGrid
       begin, s+s_hGrid, &
@@ -1581,6 +1582,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.489  2009/08/17 16:39:36  pwagner
+! read_apriori may read DELP field and perform sum
+!
 ! Revision 2.488  2009/06/26 00:16:58  pwagner
 ! May now copy ascii file to DGM calling input file type 'ascii' insstead of 'l2cf'
 !
