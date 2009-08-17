@@ -1137,7 +1137,7 @@ contains
               & trim(masters(Ids(i))%name), advance='yes' )
             if ( options%verbose ) call dump_Master( masters(Ids(i)) )
             call PVMFSend ( masters(Ids(i))%tid, giveUpTag, info )
-            masters(mastersID)%needs_host = .false. ! So we don't assign it hosts
+            masters(Ids(i))%needs_host = .false. ! So we don't assign it hosts
           endif
         enddo
         dumpMasters = .true.
@@ -2344,6 +2344,9 @@ contains
 end program L2Q
 
 ! $Log$
+! Revision 1.27  2009/07/21 20:37:52  pwagner
+! Print tid when logging masters thanks for hostl2q.f90
+!
 ! Revision 1.26  2009/06/09 17:06:19  pwagner
 ! Prevent using masters before it becomes allocated
 !
