@@ -1,29 +1,17 @@
 ; ----------------------------------------------- Read / merge geos5
 
-; A note of caution.  If !inpathdao includes the year (as it will at the
-; SCF), then expect this to fail when the first day is 31 December, as
-; the second day will be in the next year.  It will get the filename
-; right though.
+; Assume the geos5 filenames obey the following format:
+; {something}_{typ}_v.{vers}.{yyyy}{mm}{dd}_{hhhh}.V01.hdf
+; where
+;   typ   is one of "dyn" or "prs"
+;   yyyy  is the year; e.g. 2009
+;   mm    is the month; e.g. 06
+;   dd    is the day; e.g. 09
+;   hhhh  is the time starting from 0000 and ending at 2359
 
 ; This L2CF fragment reads and merges the geos5 data.
+; If given merra data instead, automatically read and sum the delp field
 begin ReadApriori
-  !ifdef(flagUsingGEOS4,
-  {
-  !ifdef(flagUsingPCF,
-    {!define(daoFile1,{})!define(daoFile2,{})},
-    {
-    !ifdef(daoVersion,{},{!define(daoVersion,{GEOS403})})
-    !define(daoDay1,!ccsdsbtodao(!day))
-    !define(daoDay2,!ccsdsbtodao(!ccsdsbadd(!day,1)))
-    !define(daoFile1,{, file='!inpathdao/DAS.flk.asm.tsyn3d_mis_p.!daoVersion.!daoDay1{}00.!daoDay1{}18.V01'})
-    !define(daoFile2,{, file='!inpathdao/DAS.flk.asm.tsyn3d_mis_p.!daoVersion.!daoDay2{}00.!daoDay2{}18.V01'})})
-
-  daoTemperatureInputThis: gridded, origin=dao, field='TMPU', $
-    dimList='XDim,YDim,Height,Time' !daoFile1
-  daoTemperatureInputNext: gridded, origin=dao, field='TMPU', $
-    dimList='XDim,YDim,Height,Time' !daoFile2
-  },{
-
   !ifdef(flagUsingPCF,
     {!define(geos5TFile1,{})!define(geos5TFile2,{})!define(geos5TFile3,{})!define(geos5TFile4,{})
      !define(geos5PFile1,{})!define(geos5PFile2,{})!define(geos5PFile3,{})!define(geos5PFile4,{})
@@ -31,8 +19,8 @@ begin ReadApriori
     {
     !ifdef(geos5Version,{},{!define(geos5Version,{GEOS510})})
     !ifdef(geos5Head,{},{!define(geos5Head,{DAS.ops.asm.tavg3d})})
-    !define(geos5Day1,!ccsdsbtodao(!day))
-    !define(geos5Day2,!ccsdsbtodao(!ccsdsbadd(!day,1)))
+    !define(geos5Day1,{!TrimLastChar(!esyscmd(dateconverter -o yyyymmdd "!day"))})
+    !define(geos5Day2,{!TrimLastChar(!esyscmd(dateconverter +1 -o yyyymmdd "!day"))})
     !define(geos5TFile1,{, file='!inpathgeos5dd/!geos5Head_dyn_v.!geos5Version.!geos5Day1_0000.V01.hdf'})
     !define(geos5TFile2,{, file='!inpathgeos5dd/!geos5Head_dyn_v.!geos5Version.!geos5Day1_0600.V01.hdf'})
     !define(geos5TFile3,{, file='!inpathgeos5dd/!geos5Head_dyn_v.!geos5Version.!geos5Day1_1200.V01.hdf'})
@@ -65,17 +53,16 @@ begin ReadApriori
     dimList='XDim,YDim,Height,Time' !geos5TFile4
   geos5TemperatureInputNext: gridded, origin=geos5, field='T', $
     dimList='XDim,YDim,Height,Time' !geos5TFileN
-  geos5PressureInput1: gridded, origin=geos5, field='PL', $
-    dimList='XDim,YDim,Height,Time' !geos5PFile1
-  geos5PressureInput2: gridded, origin=geos5, field='PL', $
-    dimList='XDim,YDim,Height,Time' !geos5PFile2
-  geos5PressureInput3: gridded, origin=geos5, field='PL', $
-    dimList='XDim,YDim,Height,Time' !geos5PFile3
-  geos5PressureInput4: gridded, origin=geos5, field='PL', $
-    dimList='XDim,YDim,Height,Time' !geos5PFile4
-  geos5PressureInputNext: gridded, origin=geos5, field='PL', $
-    dimList='XDim,YDim,Height,Time' !geos5PFileN
-  })
+  geos5PressureInput1: gridded, origin=geos5, field='PL,DELP', $
+    dimList='XDim,YDim,Height,Time' !geos5PFile1, /sum
+  geos5PressureInput2: gridded, origin=geos5, field='PL,DELP', $
+    dimList='XDim,YDim,Height,Time' !geos5PFile2, /sum
+  geos5PressureInput3: gridded, origin=geos5, field='PL,DELP', $
+    dimList='XDim,YDim,Height,Time' !geos5PFile3, /sum
+  geos5PressureInput4: gridded, origin=geos5, field='PL,DELP', $
+    dimList='XDim,YDim,Height,Time' !geos5PFile4, /sum
+  geos5PressureInputNext: gridded, origin=geos5, field='PL,DELP', $
+    dimList='XDim,YDim,Height,Time' !geos5PFileN, /sum
 end ReadApriori
 
 !define(convertEtaToPGPH,{!dnl
@@ -92,16 +79,6 @@ end ReadApriori
 
 !ifdef( flagUseOperationalGPH,{
 begin MergeGrids
-  !ifdef(flagUsingGEOS4,
-  {
-  daoGPHInput: Concatenate, $
-    a=daoGPHInputThis, b=daoGPHInputNext
-  delete, grid=daoGPHInputThis
-  delete, grid=daoGPHInputNext
-  mergedGPH: Merge, operational=daoGPHInput, $
-    climatology=gridGPH, height=1mb, scale=5km
-  delete, grid=daoGPHInput
-  },{    
   ;; to save memory convert before catenating, not after
   !forall( convertEtaToPGPH,1,2,3,4,Next)
 
@@ -113,23 +90,11 @@ begin MergeGrids
   delete, grid=geos5ConvertedGPH3
   delete, grid=geos5ConvertedGPH4
   delete, grid=geos5ConvertedGPHNext
-  })
 end MergeGrids })
 
 
 
 begin MergeGrids
-  !ifdef(flagUsingGEOS4,
-  {
-  daoTemperatureInput: Concatenate, $
-    a=daoTemperatureInputThis, b=daoTemperatureInputNext
-  delete, grid=daoTemperatureInputThis
-  delete, grid=daoTemperatureInputNext
-  mergedTemperature: Merge, operational=daoTemperatureInput, $
-    climatology=gridTemperature, height=1mb, scale=5km
-  !define(flagUseOperationalTemperature,{yes})
-  delete, grid=daoTemperatureInput
-  },{
   ;; wmo p trop (using the values from mid-day)
   geos5EtaWMOPTrop: wmoTrop, $
     a=geos5TemperatureInput3, b=geos5PressureInput3
@@ -150,6 +115,5 @@ begin MergeGrids
     climatology=gridTemperature, height=1mb, scale=5km
   !define(flagUseOperationalTemperature,{yes})
   delete, grid=geos5Concatenate
-  })
 end MergeGrids
 
