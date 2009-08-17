@@ -32,6 +32,7 @@ module DUMP_0
   use MLSStrings, only: indexes, lowercase, trim_safe
   use OUTPUT_M, only: outputOptions, stampOptions, &
     & ALIGNTOFIT, BLANKS, NEWLINE, NUMTOCHARS, OUTPUT, OUTPUTNAMEDVALUE
+  use Time_M, only: Time_Now, time_config
 
   implicit none
   private
@@ -214,7 +215,7 @@ module DUMP_0
   integer, parameter :: MAXNUMELEMENTS = 2000
   integer, parameter :: TOOMANYELEMENTS = 125*50*3500 ! Don't try to diff l1b DACS
   logical, parameter ::   DEEBUG = .false.
-  logical :: myClean, myFillValue, myGaps, myStats, myRMS, &
+  logical :: myClean, myDirect, myFillValue, myGaps, myStats, myRMS, &
     & myTranspose, myTrim, myUnique, myWholeArray
   integer :: numNonFill, numFill
   logical, save :: thisIsADiff = .false.
@@ -2263,6 +2264,8 @@ contains
     select case ( lowercase(code) )
     case ('clean')
       isit = index( defaultstring, 'c' ) > 0
+    case ('direct')
+      isit = index( defaultstring, 'd' ) > 0
     case ('rms')
       isit = index( defaultstring, 'r' ) > 0
     case ('stat')
@@ -2414,6 +2417,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.91  2009/08/17 16:55:41  pwagner
+! Among options string 'd' means 'direct'
+!
 ! Revision 2.90  2009/06/26 00:15:18  pwagner
 ! Added dumpDumpOptions
 !
