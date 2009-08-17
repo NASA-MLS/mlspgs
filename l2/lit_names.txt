@@ -118,6 +118,7 @@ lsWeighted   # Fill method for incoherent-to-coherent
 manipulate
 max
 mean
+merra
 min
 
 ncep
@@ -172,6 +173,9 @@ weighted
 wmoTropopause
 
 # $Log$
+# Revision 2.66  2009/08/17 16:35:52  pwagner
+# Added merra for gmao reanalysis files
+#
 # Revision 2.65  2009/03/14 02:43:45  honghanh
 # Add dnwt_abaonded and dnwt_count
 #
