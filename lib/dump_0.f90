@@ -205,6 +205,7 @@ module DUMP_0
   logical, public, save ::   STATSONONELINE = .true.
 
   ! These determine how dumped numerical data (s.p. or d.p.) will be formatted
+  character(len=2), public, save  :: INTPLACES = '6' ! how many places
   character(len=16), public, save :: RMSFORMAT = '*' ! * means default format
   character(len=16), public, save :: SDFORMATDEFAULT = '(1pg14.6)'
   character(*), parameter :: sdFormatDefaultCmplx = &
@@ -641,7 +642,7 @@ contains
     integer :: MyWidth
     integer :: NumZeroRows
     integer :: nUnique
-    myFormat = 'places=6' ! To sneak places arg into call to output
+    myFormat = 'places=' // INTPLACES ! To sneak places arg into call to output
     include 'dump1d.f9h'
   end subroutine DUMP_1D_INTEGER
 
@@ -982,7 +983,7 @@ contains
     integer :: nUnique
     integer, dimension(MAXNUMELEMENTS) :: counts
     integer, dimension(MAXNUMELEMENTS) :: elements
-    myFormat = 'places=6' ! To sneak places arg into call to output
+    myFormat = 'places=' // INTPLACES ! To sneak places arg into call to output
     include 'dump2d.f9h'
   end subroutine DUMP_2D_INTEGER
 
@@ -1355,7 +1356,7 @@ contains
     integer :: nUnique
     integer, dimension(MAXNUMELEMENTS) :: counts
     integer, dimension(MAXNUMELEMENTS) :: elements
-    myFormat = 'places=6' ! To sneak places arg into call to output
+    myFormat = 'places=' // INTPLACES ! To sneak places arg into call to output
     include 'dump3d.f9h'
   end subroutine DUMP_3D_INTEGER
 
@@ -2417,6 +2418,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.92  2009/08/18 20:41:17  pwagner
+! making INTPLACES public can change appearance of dumped ints
+!
 ! Revision 2.91  2009/08/17 16:55:41  pwagner
 ! Among options string 'd' means 'direct'
 !
