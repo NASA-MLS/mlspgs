@@ -131,7 +131,7 @@ extant_files()
 #	The entry point where control is given to the script         *
 #****************************************************************
 #
-stdprods='BrO CH3CN ClO CO GPH H2O HCl HCN HNO3 HO2 HOCl IWC N2O O3 OH RHI SO2 Temperature'
+stdprods='BrO CH3Cl CH3CN ClO CO GPH H2O HCl HCN HNO3 HO2 HOCl IWC N2O O3 OH RHI SO2 Temperature'
 debug=1
 #     ^  -- set this to 1 if worried
 keep=1
@@ -291,6 +291,9 @@ do
 done
 exit
 # $Log$
+# Revision 1.4  2008/10/13 23:30:56  pwagner
+# Fixed typo
+#
 # Revision 1.3  2007/03/06 21:31:06  pwagner
 # Added magic APriori string
 #

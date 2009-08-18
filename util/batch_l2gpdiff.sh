@@ -139,7 +139,7 @@ extant_files()
 #	The entry point where control is given to the script         *
 #****************************************************************
 #
-stdprods='BrO CH3CN ClO CO GPH H2O HCl HCN HNO3 HO2 HOCl IWC N2O O3 OH RHI Temperature'
+stdprods='BrO CH3Cl CH3CN ClO CO GPH H2O HCl HCN HNO3 HO2 HOCl IWC N2O O3 OH RHI Temperature'
 debug=0
 #     ^  -- set this to 1 if worried
 keep=0
@@ -393,6 +393,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.9  2007/10/09 18:24:05  pwagner
+# Passes -pressures 'p1,p2,..' to l2gpdiff
+#
 # Revision 1.8  2007/06/01 16:48:58  pwagner
 # Tiny changes, defaults to not keeping temp files
 #
