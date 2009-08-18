@@ -13,7 +13,7 @@
 program l2auxdump ! dumps datasets, attributes from L2AUX files
 !=================================
 
-   use Dump_0, only: DUMP
+   use Dump_0, only: DUMP, INTPLACES
    use Hdf, only: DFACC_READ
    use HDF5, only: h5fis_hdf5_f, h5gclose_f, h5gopen_f
    use L1BData, only: l1bdata_t, NAME_LEN, PRECISIONSUFFIX, &
@@ -94,6 +94,7 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
   MLSMessageConfig%useToolkit = .false.
   MLSMessageConfig%logFileUnit = -1
   time_config%use_wall_clock = .true.
+  INTPLACES = '8'
   CALL mls_h5open(error)
   n_filenames = 0
   do      ! Loop over filenames
@@ -530,6 +531,9 @@ end program l2auxdump
 !==================
 
 ! $Log$
+! Revision 1.8  2009/06/16 22:38:28  pwagner
+! Changed api for dump, diff routines; now rely on options for most optional behavior
+!
 ! Revision 1.7  2009/05/08 17:33:09  pwagner
 ! New command line option -lac to prevent printing non-data
 !
