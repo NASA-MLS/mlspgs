@@ -195,7 +195,7 @@ contains
       ! Get the index arrays
       call loadPtrFromHDF5DS ( fileID, 'IWC_s', iwc_s )
       call loadPtrFromHDF5DS ( fileID, 'T_s', T_s )
-      call loadPtrFromHDF5DS ( fileID, 'THETA_s', theta_s )
+      call loadPtrFromHDF5DS ( fileID, 'Theta_s', theta_s )
       call loadPtrFromHDF5DS ( fileID, 'F_s', f_s )
       f_s = 1000.0 * f_s ! F_s are GHz, standard unit is MHz
       ! Get the betas
@@ -331,6 +331,9 @@ contains
 end module Read_Mie_m
 
 ! $Log$
+! Revision 2.7  2009/08/20 19:47:26  vsnyder
+! Replace THETA_s by Theta_s to conform to Mie_Tables
+!
 ! Revision 2.6  2009/06/23 18:26:10  pwagner
 ! Prevent Intel from optimizing ident string away
 !
