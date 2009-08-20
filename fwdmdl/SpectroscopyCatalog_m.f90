@@ -1006,9 +1006,10 @@ contains ! =====  Public Procedures  ===================================
           myCatalog(i)%molecule = l_none
         else
           j = getLitIndexFromString(trim(moleculeNames(myCatalog(i)%molecule)))
-          if ( j < first_molecule .or. j > last_molecule ) call MLSMessage ( &
-            & MLSMSG_Error, moduleName, 'The string ' // &
+          if ( j < first_molecule .or. j > last_molecule ) then
+            call MLSMessage ( MLSMSG_Error, moduleName, 'The string ' // &
             & trim(moleculeNames(myCatalog(i)%molecule)) // ' is not a molecule name.' )
+          end if
           myCatalog(i)%molecule = j
           call allocate_test ( myCatalog(i)%lines, lineIndices(i)-lineIndices(i-1), &
             & 'MyCatalog(i)%lines', moduleName )
@@ -1465,6 +1466,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.47  2009/06/23 18:26:10  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.46  2008/09/03 20:07:28  pwagner
 ! Fixed bug in writeSpectroscopy
 !
