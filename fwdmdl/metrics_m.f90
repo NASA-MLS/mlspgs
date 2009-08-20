@@ -516,11 +516,20 @@ path: do i = i1, i2
       end if
     end if
 
-!     if ( maxval(p_grid) < -pix2 ) then
-!       p_grid = p_grid + pix2
-!     else if ( minval(p_grid) > pix2 ) then
-!       p_grid = p_grid - pix2
-!     end if
+    ! Put angles in -2 pi .. 2 pi
+    p_grid(:n_path) = mod(p_grid(:n_path),pix2)
+
+    if ( tan_ht_s < 0.0 ) then ! Earth-intersecting ray
+      if ( n_path >= 4 ) then
+        ! Put the reflection point on the same side of the Earth as the rest
+        ! of the path.
+        if ( abs(p_grid(n_tan-1) - p_grid(n_tan)) > 0.9 * pi ) then
+          ! Reflection point on the wrong side of the earth
+          p_grid(n_tan:n_tan+1) = mod(p_grid(n_tan:n_tan+1) + &
+            & sign(pi,p_grid(n_tan-1) - p_grid(n_tan)),pix2)
+        end if
+      end if
+    end if
 
     ! Since we have solved for the intersection of sec(phi) with the heights
     ! on constant-zeta surfaces, it is impossible for the heights not to be
@@ -1115,6 +1124,9 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.62  2009/06/23 18:26:11  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.61  2009/06/16 17:37:26  pwagner
 ! Changed api for dump, diff routines; now rely on options for most optional behavior
 !
