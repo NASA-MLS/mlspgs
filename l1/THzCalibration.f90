@@ -24,7 +24,7 @@ MODULE THzCalibration ! Calibration data and routines for the THz module
   PRIVATE
 
   PUBLIC :: CalibrateTHz, Chan_type_T, MAFdata_T, CalBuf_T, CalBuf, Cnts, &
-       VarCnts, SpaceTemp, nvBounds, ColdCnts, HotCnts
+       VarCnts, SpaceTemp, nvBounds, ColdCnts, HotCnts, GoodCal
 
 !---------------------------- RCS Module Info ------------------------------
   CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
@@ -76,6 +76,7 @@ MODULE THzCalibration ! Calibration data and routines for the THz module
   REAL :: MaxBias, SpaceTemp
   REAL(r8) :: aerr(THzChans,THzNum), Chisq(THzChans,THzNum)
   REAL(r8) :: dLlo(THzChans,THzNum), yTsys(THzChans,THzNum)
+  LOGICAL :: GoodCal = .TRUE.
   CHARACTER(len=80) :: msg
 
 ! Default gains:
@@ -874,7 +875,10 @@ CONTAINS
     TYPE (MAFdata_T), POINTER :: CurMAFdata => NULL()
 
     ntot = COUNT (CalFlag == 1)
-    IF (ntot == 0) RETURN
+    IF (ntot == 0) THEN
+       goodcal = .FALSE.
+       RETURN
+    ENDIF
 
     filter = 1000.0 * SQRT (ChanBw / 6.0)
     vnorm = 1.0d0 / ntot
@@ -1088,6 +1092,9 @@ END MODULE THzCalibration
 !=============================================================================
 
 ! $Log$
+! Revision 2.13  2009/08/21 18:59:13  perun
+! Set calibration flag to false when no cal data is available.
+!
 ! Revision 2.12  2006/08/22 18:39:40  perun
 ! Initialize tt array to 0.0
 !
