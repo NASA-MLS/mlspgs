@@ -195,6 +195,8 @@ module MLSAuxData
   CHARACTER(len=*), PUBLIC, PARAMETER :: & 
     H5_ERROR_PROPERTY_CLOSE  = 'HDF5 Error Closing Property List '
 
+  logical, parameter :: DEBUG = .false.
+
 interface Build_MLSAuxData
   module procedure Build_MLSAuxData_Character
   module procedure Build_MLSAuxData_Double, &
@@ -810,6 +812,9 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     call CopyFromDataProducts (dataset, MLSData)
 
+    if ( MLSData%name == "R1A:118.B22D:PT.S0.DACS-4 precision" .and. DEBUG ) then
+      print *, '2d real dim_array: ', dim_array
+    endif
     attribenabled = .false.
     if (present (lastIndex) ) then 
        if (lastIndex .eq. 1) then 
@@ -874,6 +879,9 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     call CopyFromDataProducts (dataset, MLSData)
 
+    if ( MLSData%name == "R1A:118.B22D:PT.S0.DACS-4 precision"  .and. DEBUG ) then
+      print *, '2d double dim_array: ', dim_array
+    endif
     attribenabled = .false.
     if (present (lastIndex) ) then
        if (lastIndex .eq. 1) then 
@@ -997,6 +1005,10 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     call CopyFromDataProducts (dataset, MLSData)
 
+    if ( MLSData%name == "R1A:118.B22D:PT.S0.DACS-4 precision"  .and. DEBUG ) then
+      print *, '3d real dim_array: ', dim_array
+    endif
+
     call Write_MLSAuxData(file_id, MLSData, error,write_attributes=.true., &
          fill_value_r=fill_value)
 
@@ -1041,6 +1053,9 @@ contains ! ============================ MODULE PROCEDURES ====================
     enddo
 
     call CopyFromDataProducts (dataset, MLSData)
+    if ( MLSData%name == "R1A:118.B22D:PT.S0.DACS-4 precision"  .and. DEBUG ) then
+      print *, '3d double dim_array: ', dim_array
+    endif
 
     call Write_MLSAuxData(file_id, MLSData, error,write_attributes=.true., &
          fill_value_d=fill_value)
@@ -2717,6 +2732,7 @@ contains ! ============================ MODULE PROCEDURES ====================
     real, dimension(:), pointer :: attr_data => NULL()
     integer(hsize_t), dimension(7) :: adims, dims
     integer(hsize_t), dimension(3) :: chunk_dims, dims_create, maxdims, start
+    integer(hsize_t), dimension(3) :: dims_file
     integer(hsize_t), dimension(1) :: adims_create
     integer(hid_t) :: cparms,dspace_id,dset_id,type_id, &
          attr_id, atype_id, aspace_id, filespace, memspace, s_type_id 
@@ -2730,7 +2746,11 @@ contains ! ============================ MODULE PROCEDURES ====================
     nullify (char_data, attr_data)
     dims = 1
     adims = 1
-
+    if ( MLSAuxData%name == 'R1A:118.B22D:PT.S0.DACS-4 precision'  .and. DEBUG ) then
+      print *, 'Write_MLSAuxData: ', trim(MLSAuxData%type_name)
+      write(*, '(a12, 8I8)') 'rank: ', MLSAuxData%rank
+      if ( present(index) ) write(*, '(a12, 8I8)') 'index: ', index
+    endif
     test_type: select case (trim(MLSAuxData%type_name))
 
     case ('real')
@@ -2839,6 +2859,9 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     if (h5error /= 0) then 
 
+       if ( MLSAuxData%name == 'R1A:118.B22D:PT.S0.DACS-4 precision'  .and. DEBUG ) then
+         print *, 'The dataset doesnt exist yet--must create it', h5error, dset_id
+       endif
        call h5eset_auto_f(1, h5error)
 !--------------------------------------------------------------------
        call h5screate_simple_f (rank, dims_create(1:rank), &
@@ -2961,14 +2984,46 @@ contains ! ============================ MODULE PROCEDURES ====================
        dims(rank) = index
        chunk_dims(rank) = index
     endif
+    call h5dget_space_f(dset_id, filespace, h5error)
+    if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
+         H5_ERROR_DSET_GETSPACE // trim(MLSAuxData%name) )
 
-    call h5dextend_f(dset_id, dims_create, h5error)
+  ! Wonder what the existing dims are?
+    call h5sget_simple_extent_dims_f(filespace, dims_file(1:rank),&
+         maxdims(1:rank),h5error)
+    if ( MLSAuxData%name == 'R1A:118.B22D:PT.S0.DACS-4 precision' .and. DEBUG ) then
+      print *, 'Before call to extend'
+      write(*, '(a12, 8I8)') 'start      : ', start(1:rank)
+      write(*, '(a12, 8I8)') 'dims       : ', dims(1:rank)
+      write(*, '(a12, 8I8)') 'dims_create: ', dims_create(1:rank)
+      write(*, '(a12, 8I8)') 'dims_file: ', dims_file(1:rank)
+      write(*, '(a12, 8I8)') 'maxdims    : ', maxdims(1:rank)
+    endif
+    ! call h5dextend_f(dset_id, dims_create, h5error)
+    do i=1, rank
+      dims_file(i) = max( dims_file(i), dims_create(i) )
+    enddo
+    ! hdf5 1.8 introduced h5dset_extent_f to rplace h5dextend_f
+    ! which has been deprecated
+    ! Therefore swap comments between the following two statements
+    ! when necessary.
+    ! call h5dset_extent_f(dset_id, dims_file, h5error)
+    call h5dextend_f(dset_id, dims_file, h5error)
     if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
          H5_ERROR_DSET_EXTEND // trim(MLSAuxData%name) )
 
     call h5dget_space_f(dset_id, filespace, h5error)
     if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
          H5_ERROR_DSET_GETSPACE // trim(MLSAuxData%name) )
+
+  ! Wonder what the existing dims are?
+    call h5sget_simple_extent_dims_f(filespace, dims_file(1:rank),&
+         maxdims(1:rank),h5error)
+    if ( MLSAuxData%name == 'R1A:118.B22D:PT.S0.DACS-4 precision'  .and. DEBUG ) then
+      print *, 'After dextend'
+      write(*, '(a12, 8I8)') 'dims_file: ', dims_file(1:rank)
+      write(*, '(a12, 8I8)') 'maxdims    : ', maxdims(1:rank)
+    endif
 
     call h5dget_type_f(dset_id, type_id, h5error)
     if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
@@ -2980,6 +3035,14 @@ contains ! ============================ MODULE PROCEDURES ====================
     if (h5error /= 0) call MLSMessage (MLSMSG_Error, ModuleName, & 
          H5_ERROR_DSPACE_CREATE // trim(MLSAuxData%name))
 
+  ! Wonder what the existing dims are?
+    call h5sget_simple_extent_dims_f(filespace, dims_file(1:rank),&
+         maxdims(1:rank),h5error)
+    if ( MLSAuxData%name == 'R1A:118.B22D:PT.S0.DACS-4 precision' .and. DEBUG ) then
+      print *, 'Before hyperslab'
+      write(*, '(a12, 8I8)') 'dims_file: ', dims_file(1:rank)
+      write(*, '(a12, 8I8)') 'maxdims    : ', maxdims(1:rank)
+    endif
     call h5sselect_hyperslab_f (filespace, H5S_SELECT_SET_F, start(1:rank), &
          dims_create(1:rank), h5error)
     if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
@@ -3044,6 +3107,22 @@ contains ! ============================ MODULE PROCEDURES ====================
     if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
          H5_ERROR_DSET_CLOSE // trim(MLSAuxData%name) )
 
+    if ( MLSAuxData%name == 'R1A:118.B22D:PT.S0.DACS-4 precision' .and. DEBUG ) then
+      print *, 'After closing all the identifiers'
+      write(*, '(a12, 8I8)') 'start      : ', start(1:rank)
+      write(*, '(a12, 8I8)') 'dims       : ', dims(1:rank)
+      write(*, '(a12, 8I8)') 'dims_create: ', dims_create(1:rank)
+      write(*, '(a12, 8I8)') 'maxdims    : ', maxdims(1:rank)
+      print *, '(reopening dspace)'
+      call h5dopen_f(file_id, trim(MLSAuxData%name), dset_id, h5error)
+      call h5dget_space_f(dset_id,dspace_id,h5error)
+      call h5sget_simple_extent_ndims_f(dspace_id,rank,h5error)
+      call h5sget_simple_extent_dims_f(dspace_id,dims_create(1:rank),&
+           maxdims(1:rank),h5error)
+      write(*, '(a12, 8I8)') 'dims_create: ', dims_create(1:rank)
+      write(*, '(a12, 8I8)') 'maxdims    : ', maxdims(1:rank)
+      call h5dclose_f(dset_id, h5error)
+    endif
   end subroutine Write_MLSAuxData
 
   subroutine CopyFromDataProducts( dataset, MLSAuxData )
@@ -3192,6 +3271,9 @@ contains ! ============================ MODULE PROCEDURES ====================
 end module MLSAuxData
 
 ! $Log$
+! Revision 2.29  2009/08/21 19:45:05  pwagner
+! Reverse effects of hdf5.1.8 that led to consinsistent noMAFs between datasets
+!
 ! Revision 2.28  2009/07/30 20:43:05  honghanh
 ! Changed CopyFromDataProduct to create arrays before copying to them
 ! Add array size checking for Dimensions field in CopyFromDataProduct
