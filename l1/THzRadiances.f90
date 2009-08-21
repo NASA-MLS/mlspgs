@@ -15,7 +15,7 @@ MODULE THzRadiances ! Determine radiances for the THz module
 
   USE MLSCommon, ONLY: r8
   USE MLSL1Common, ONLY: THzNum, THzChans, Deflt_chi2, BandChanBad
-  USE THzCalibration, ONLY : CalBuf, nvBounds, ColdCnts, HotCnts
+  USE THzCalibration, ONLY : CalBuf, nvBounds, ColdCnts, HotCnts, GoodCal
   USE MLSL1Rad, ONLY : THzRad
 
   IMPLICIT NONE
@@ -108,6 +108,7 @@ CONTAINS
     USE MLSL1Common, ONLY: L1BFileInfo, OA_counterMAF, OA_counterIndex
     USE OutputL1B, ONLY: OutputL1B_rad, OutputL1B_DiagsT
     USE EngTbls, ONLY: Reflec_T
+    USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Info
 
     INTEGER :: MAFno, counterMAF, ibgn, nv, last_OA_counterMAF
     REAL(r8) :: TAI
@@ -115,6 +116,12 @@ CONTAINS
     INTEGER, SAVE :: MAFindex = 1
 
     PRINT *, 'ProcessLimbData'
+
+    IF (.NOT. GoodCal) THEN
+       CALL MLSMessage (MLSMSG_Info, ModuleName, &
+            & "No good THz calibration available!")
+       RETURN
+    ENDIF
 
     nv = 1
     ibgn = 0
@@ -176,6 +183,9 @@ END MODULE THzRadiances
 !=============================================================================
 
 ! $Log$
+! Revision 2.16  2009/08/21 19:01:09  perun
+! Process and output radiances only when good calibration is available.
+!
 ! Revision 2.15  2007/06/21 21:05:53  perun
 ! Save LLO_Bias for outputting as diagnostics
 !
