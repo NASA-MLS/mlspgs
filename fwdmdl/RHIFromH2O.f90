@@ -20,7 +20,7 @@ module RHIFromH2O                     ! H2O <-> RHI Conversions
   use MLSCommon, only: R8
   implicit none
   private
-  public :: RHIFromH2O_Factor, RHIPrecFromH2O
+  public :: RHIFromH2O_Factor, RHIPrecFromH2O, H2OPrecFromRHi
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
@@ -62,7 +62,17 @@ contains ! =====     Public Procedures     =============================
   end function RHIFromH2O_Factor
 
   !--------------------------------------------  RHIPrecFromH2O  -----
-
+  ! Idea:
+  ! Assuming the errors in {H2O] and Temperature are uncorrelated, the errors
+  ! in a function jointly of x and y can be expressed as
+  ! (d f)^2 = (d x (ds f / ds x)^2 + (d y (ds f / ds y)^2
+  
+  ! d[RHi]^2 = ( d [H2O] (ds [RHi]/ ds [H2O]) )^2 + ( [H2O] dT (ds F / ds T) )^2
+  ! where ds y / ds x means the (partial) derivative of y w.r.t. x
+  ! d x means precision or uncertainty in x
+  ! and F(T) is the factor computed in RHIFromH2O_Factor
+  ! namely, [RHi] = F(T) [H2O]; so finally
+  ! d[H2O]^2 = ( d [H2O] F )^2 + ( [H2O] dT (ds F / ds T) )^2
   subroutine RHIPrecFromH2O ( H2Ovmr, T, zeta, vmr_unit_cnv, &
     & H2OPrecision, TPrecision, RHIPrecision, NEGATIVETOO )
   ! Calculate RHI Precision based on that of H2O and Temperature
@@ -107,25 +117,65 @@ contains ! =====     Public Procedures     =============================
    & + ( TPrecision * df_dT )**2 &
    & )
   if ( isNegative ) RHIPrecision = -RHIPrecision
-  contains
-    function dC_dT ( T )
-      ! As found in ref.
-      real(r8), intent(in)   :: T
-      real(r8)               :: dC_dT
-      ! Local
-      real(r8), parameter    :: a0 = -1.2141649d0
-      real(r8), parameter    :: a1 = 9.09718d0
-      real(r8), parameter    :: a2 = 0.876793d0
-      real, parameter        :: ILLEGALTEMP = UNDEFINED_VALUE
-      !
-      if ( T > 0.d0 ) then
-        dC_dT = a1*(273.16/T**2) - a2/273.16
-      else
-        dC_dT = ILLEGALTEMP
-      end if
-    end function dC_dT
-
   end subroutine RHIPrecFromH2O
+
+  !--------------------------------------------  H2OPrecFromRhI  -----
+  ! Idea:
+  ! Assuming the errors in {RHi] and Temperature are uncorrelated, the errors
+  ! in a function jointly of x and y can be expressed as
+  ! (d f)^2 = (d x (ds f / ds x)^2 + (d y (ds f / ds y)^2
+  
+  ! d[H2O]^2 = ( d [RHi] (ds [H2O]/ ds [RHi]) )^2 + ( [RHi] dT (ds F^-1 / ds T) )^2
+  ! where ds y / ds x means the (partial) derivative of y w.r.t. x
+  ! d x means precision or uncertainty in x
+  ! and F(T) is the factor computed in RHIFromH2O_Factor
+  ! namely, [RHi] = F(T) [H2O]; so finally
+  ! d[H2O]^2 = ( d [RHi] / F )^2 + ( [H2O] dT (ds F / ds T) / F )^2
+  subroutine H2OPrecFromRhI ( H2Ovmr, T, zeta, vmr_unit_cnv, &
+    & RHIPrecision, TPrecision, H2OPrecision, NEGATIVETOO )
+  ! Calculate H2O Precision based on that of RHi and Temperature
+  ! Eq. 9 from "UARS Microwave Limb Sounder upper tropospheric
+  !  humidity measurement: Method and validation" Read et. al. 
+  !  J. Geoph. Res. Dec. 2001 (106) D23
+  ! recoded by PAW
+  ! Arguments
+  real(r8), intent(in)  :: H2Ovmr          ! vmr of H2O
+  real(r8), intent(in)  :: T               ! Temperature
+  real(r8), intent(in)  :: zeta            ! Surface in log pressure units
+  integer, intent(in)   :: vmr_unit_cnv    ! E.g., 6 for ppmv
+  real(r8), intent(in)  :: TPrecision      ! Precision of Temperature
+  real(r8), intent(in) :: RHIPrecision    ! Precision of RHI
+  real(r8), intent(out)  :: H2OPrecision    ! Precision of H2O
+  logical, intent(in), optional   :: NEGATIVETOO  ! Set RHI Precision negative 
+  ! Local variables                          if either T or H2O Precsisions are
+  integer :: invs
+  real(r8) :: Eff         ! F in the above
+  real(r8) :: df_dT       ! ds F / ds T in the above
+  logical :: isNegative
+  
+  ! Executable
+  isNegative = .false.
+  if ( present(negativeToo) ) &
+    & isNegative = negativeToo .and. &
+    & ( RHIPrecision < 0.d0 .or. TPrecision < 0.d0 )
+  invs = -1
+  Eff = exp(invs*( &
+   & (C(T)+zeta+vmr_unit_cnv) * log(10.) &
+   & + &
+   & 3.56654*log(T/273.16) &
+   & ))
+  df_dT = exp(invs*( &
+   & (C(T)+zeta+vmr_unit_cnv) * log(10.) &
+   & + &
+   & 3.56654*log(T/273.16) &
+   & )) &
+   & * invs * ( dC_dT(T) * log(10.) + 3.56654 / T )
+  H2OPrecision = sqrt (&
+   & ( RHIPrecision / Eff )**2 &
+   & + ( TPrecision * H2Ovmr * df_dT / Eff )**2 &
+   & )
+  if ( isNegative ) H2OPrecision = -H2OPrecision
+  end subroutine H2OPrecFromRhI
 
 ! =====     Private Procedures     =============================
     function C ( T )
@@ -145,6 +195,23 @@ contains ! =====     Public Procedures     =============================
       end if
     end function C
 
+    function dC_dT ( T )
+      ! As found in ref.
+      real(r8), intent(in)   :: T
+      real(r8)               :: dC_dT
+      ! Local
+      real(r8), parameter    :: a0 = -1.2141649d0
+      real(r8), parameter    :: a1 = 9.09718d0
+      real(r8), parameter    :: a2 = 0.876793d0
+      real, parameter        :: ILLEGALTEMP = UNDEFINED_VALUE
+      !
+      if ( T > 0.d0 ) then
+        dC_dT = a1*(273.16/T**2) - a2/273.16
+      else
+        dC_dT = ILLEGALTEMP
+      end if
+    end function dC_dT
+
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -160,6 +227,9 @@ end module RHIFromH2O
 
 !
 ! $Log$
+! Revision 2.5  2009/08/24 20:08:55  pwagner
+! May Fill H2O precision from RHI precision
+!
 ! Revision 2.4  2009/06/23 18:26:10  pwagner
 ! Prevent Intel from optimizing ident string away
 !
