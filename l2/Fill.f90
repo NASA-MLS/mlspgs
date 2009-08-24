@@ -69,7 +69,7 @@ contains ! =====     Public Procedures     =============================
       & FillChiSqChan, FillChiSqMMaf, FillChiSqMMif, FillChiSqRatio, &
       & FillColAbundance, FillFoldedRadiance, FillPhiTanWithRefraction, &
       & FillIWCFromExtinction, FillRHIFromH2O, FillNoRadsPerMIF, &
-      & FillRHIPrecisionFromH2O, FillVectorQtyWithEstNoise, &
+      & FillRHIPrecisionFromOrToH2O, FillVectorQtyWithEstNoise, &
       & FillVectorQtyHydrostatically, FillFromSplitSideband, FillGPHPrecision, &
       & FillVectorQtyFromIsotope, FillQuantityFromAsciiFile, RotateMagneticField, &
       & ExplicitFillVectorQuantity, FillVectorQuantityFromL1B, &
@@ -111,7 +111,7 @@ contains ! =====     Public Procedures     =============================
       & F_PROFILE, F_PROFILEVALUES, F_PTANQUANTITY, &
       & F_QUADRATURE, F_QUANTITY, F_RADIANCEQUANTITY, F_RATIOQUANTITY, &
       & F_REFRACT, F_REFGPHQUANTITY, F_REFGPHPRECISIONQUANTITY, F_RESETSEED, &
-      & F_RHIQUANTITY, F_ROWS, F_SCALE, &
+      & F_RHIPRECISIONQUANTITY, F_RHIQUANTITY, F_ROWS, F_SCALE, &
       & F_SCALEINSTS, F_SCALERATIO, F_SCALESURFS, &
       & F_SCECI, F_SCVEL, F_SCVELECI, F_SCVELECR, F_SEED, F_SKIPMASK, &
       & F_SOURCE, F_SOURCEGRID, F_SOURCEL2AUX, F_SOURCEL2GP, &
@@ -131,8 +131,8 @@ contains ! =====     Public Procedures     =============================
       & L_DOBSONUNITS, L_DU, &
       & L_ESTIMATEDNOISE, L_EXPLICIT, L_EXTRACTCHANNEL, L_FOLD, &
       & L_FWDMODELTIMING, L_FWDMODELMEAN, L_FWDMODELSTDDEV, L_GEOLOCATION, &
-      & L_GEOCALTITUDE, L_GEODALTITUDE, L_GPHPRECISION, L_GRIDDED, L_H2OFROMRHI, &
-      & L_HYDROSTATIC, L_ISOTOPE, &
+      & L_GEOCALTITUDE, L_GEODALTITUDE, L_GPHPRECISION, L_GRIDDED, &
+      & L_H2OFROMRHI, L_H2OPRECISIONFROMRHI, L_HYDROSTATIC, L_ISOTOPE, &
       & L_IWCFROMEXTINCTION, L_KRONECKER, &
       & L_L1B, L_L2GP, L_L2AUX, &
       & L_LOSVEL, L_LSGLOBAL, L_LSLOCAL, L_LSWEIGHTED, &
@@ -305,6 +305,7 @@ contains ! =====     Public Procedures     =============================
     type (vectorValue_T), pointer :: RATIOQUANTITY
     type (vectorValue_T), pointer :: REFGPHQUANTITY
     type (vectorValue_T), pointer :: REFGPHPRECISIONQUANTITY
+    type (vectorValue_T), pointer :: RHIPRECISIONQUANTITY
     type (vectorValue_T), pointer :: SCECIQUANTITY
     type (vectorValue_T), pointer :: SCVELQUANTITY
     type (vectorValue_T), pointer :: SOURCEQUANTITY
@@ -475,6 +476,8 @@ contains ! =====     Public Procedures     =============================
     integer :: REFGPHPRECISIONQUANTITYINDEX      ! in the quantities database
     integer :: REFGPHPRECISIONVECTORINDEX        ! In the vector database
     logical :: RESETSEED                ! Let mls_random_seed choose new seed
+    integer :: RHIPRECISIONQUANTITYINDEX         ! in the quantities database
+    integer :: RHIPRECISIONVECTORINDEX           ! In the vector database
     integer :: ROWVECTOR                ! Vector defining rows of Matrix
     real(r8) :: SCALE                   ! Scale factor
     real(r8) :: SCALEINSTANCES          ! Scale factor for weighted LS fill
@@ -1257,6 +1260,9 @@ contains ! =====     Public Procedures     =============================
           refGPHPrecisionQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
         case ( f_resetSeed )
           resetSeed = get_boolean ( gson )
+        case ( f_rhiPrecisionQuantity ) ! For converting to h2o precision
+          rhiPrecisionVectorIndex = decoration(decoration(subtree(1,gson)))
+          rhiPrecisionQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
         case ( f_rhiQuantity ) ! For h2o from rhi
           sourceVectorIndex = decoration(decoration(subtree(1,gson)))
           sourceQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -1721,6 +1727,44 @@ contains ! =====     Public Procedures     =============================
             end if
           end if
 
+      case ( l_H2OPrecisionfromRHi ) ! --fill H2O prec. from RHi quantity --
+        if ( .not. any(got( &
+          & (/f_h2oquantity, f_temperatureQuantity, &
+          & f_rhiPrecisionquantity, f_tempPrecisionQuantity/) &
+          & )) ) then
+          call Announce_error ( key, No_Error_code, &
+            & 'Missing a required field to fill h2o precision'  )
+        else
+          h2oQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(h2oVectorIndex), h2oQuantityIndex)
+          temperatureQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(temperatureVectorIndex), temperatureQuantityIndex)
+          rhiPrecisionQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(rhiPrecisionVectorIndex), rhiPrecisionQuantityIndex)
+          tempPrecisionQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(tempPrecisionVectorIndex), tempPrecisionQuantityIndex)
+          if ( .not. ValidateVectorQuantity(h2oQuantity, &
+            & quantityType=(/l_vmr/), molecule=(/l_h2o/)) ) then
+            call Announce_Error ( key, No_Error_code, &
+              & 'The h2oQuantity is not a vmr for the H2O molecule'  )
+          else if ( .not. ValidateVectorQuantity(temperatureQuantity, &
+            & quantityType=(/l_temperature/)) ) then
+            call Announce_Error ( key, No_Error_code, &
+              & 'The temperatureQuantity is not a temperature'  )
+          else if ( .not. ValidateVectorQuantity(tempPrecisionQuantity, &
+            & quantityType=(/l_temperature/)) ) then
+            call Announce_Error ( key, No_Error_code, &
+              & 'The tempPrecisionQuantity is not a temperature'  )
+          else
+            call FillRHIPrecisionFromOrToH2O ( key, quantity, &
+              & rhiPrecisionQuantity, tempPrecisionQuantity, h2oQuantity, &
+              & temperatureQuantity, dontMask, ignoreZero, &
+              & ignoreNegative, interpolate, &
+              & .true., &   ! Mark Undefined values?
+              & invert=.true. )    ! convert RHiPrecisionToH2O
+          end if
+        end if
+
       case ( l_hydrostatic ) ! -------------  Hydrostatic fills  -----
         ! Need a temperature and a refgph quantity
         if ( .not.all(got( (/ f_refGPHQuantity, f_temperatureQuantity /))) ) &
@@ -2064,7 +2108,7 @@ contains ! =====     Public Procedures     =============================
             call Announce_Error ( key, No_Error_code, &
               & 'The tempPrecisionQuantity is not a temperature'  )
           else
-            call FillRHIPrecisionFromH2O ( key, quantity, &
+            call FillRHIPrecisionFromOrToH2O ( key, quantity, &
               & h2oPrecisionQuantity, tempPrecisionQuantity, h2oQuantity, &
               & temperatureQuantity, dontMask, ignoreZero, &
               & ignoreNegative, interpolate, &
@@ -2472,6 +2516,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.375  2009/08/24 20:13:47  pwagner
+! May Fill H2O precision from RHI precision
+!
 ! Revision 2.374  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
 !
