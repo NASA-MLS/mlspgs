@@ -335,6 +335,7 @@ resolution
 retrievalExtra
 retrievalForwardModel
 retrievalIn
+rhiPrecisionQuantity
 rhiQuantity
 rhsOut
 rowChannels
@@ -461,6 +462,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.193  2009/08/24 18:21:48  pwagner
+# May Fill H2O precision from RHI precision
+#
 # Revision 2.192  2009/08/17 16:37:39  pwagner
 # read_apriori may read DELP field and perform sum
 #
