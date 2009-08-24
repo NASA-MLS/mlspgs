@@ -458,7 +458,7 @@ contains ! =====     Public procedures     =============================
              l+l_scaleOverlaps, l+l_special, l+l_splitSideband, &
              l+l_status, l+l_resetUnusedRadiances, &
              l+l_RHIFromH2O, l+l_RHIPrecisionFromH2O, l+l_spreadChannel, &
-             l+l_H2OFromRHI, l+l_fold, l+l_rectanglefromlos, l+l_swapValues, &
+             l+l_H2OFromRHI, l+l_H2OPrecisionFromRHI, l+l_fold, l+l_rectanglefromlos, l+l_swapValues, &
              l+l_uncompressRadiance, l+l_vGrid, l+l_wmoTropopause, n+n_dt_def, &
       begin, t+t_fwmType, l+l_baseline, l+l_linear, l+l_full, l+l_scan, l+l_scan2d, &
              l+l_cloudFull, l+l_hybrid, l+l_switchingMirror, &
@@ -929,6 +929,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_refGPHPrecisionQuantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
              begin, f+f_resetSeed, t+t_boolean, n+n_field_type, &
+             begin, f+f_rhiPrecisionQuantity, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
              begin, f+f_rhiQuantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot /), &
              continue = .true. )
@@ -1582,6 +1584,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.490  2009/08/24 20:13:16  pwagner
+! May Fill H2O precision from RHI precision
+!
 ! Revision 2.489  2009/08/17 16:39:36  pwagner
 ! read_apriori may read DELP field and perform sum
 !
