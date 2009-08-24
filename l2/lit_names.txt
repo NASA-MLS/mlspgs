@@ -88,6 +88,7 @@ gridded
 gphPrecision
 
 H2OFromRHI
+H2OPrecisionFromRHI
 height
 highcloud
 hydrostatic
@@ -173,6 +174,9 @@ weighted
 wmoTropopause
 
 # $Log$
+# Revision 2.67  2009/08/24 18:21:30  pwagner
+# May Fill H2O precision from RHI precision
+#
 # Revision 2.66  2009/08/17 16:35:52  pwagner
 # Added merra for gmao reanalysis files
 #
