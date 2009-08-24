@@ -16,9 +16,9 @@ module ReadAPriori
   use Hdf, only: DFACC_RDWR, DFACC_RDONLY
   use INIT_TABLES_MODULE, only: F_AURAINSTRUMENT, F_DATE, F_DIMLIST, &
     & F_FIELD, F_FILE, F_HDFVERSION, F_missingValue, &
-    & F_ORIGIN, F_QUANTITYTYPE, F_SDNAME, F_SWATH, &
-    & FIELD_FIRST, FIELD_LAST, L_CLIMATOLOGY, L_DAO, L_NCEP, &
-    & L_GEOS5, L_GLORIA, L_STRAT, L_SURFACEHEIGHT, &
+    & F_ORIGIN, F_QUANTITYTYPE, F_SDNAME, F_SUM, F_SWATH, &
+    & FIELD_FIRST, FIELD_LAST, L_CLIMATOLOGY, L_DAO, L_GEOS5, L_GLORIA, &
+    & L_MERRA, L_NCEP, L_STRAT, L_SURFACEHEIGHT, &
     & S_Dump, S_GRIDDED, S_L2AUX, S_L2GP
   use Intrinsic, only: l_ascii, L_Binary, l_grid, l_hdf, l_swath, PHYQ_Dimensionless
   use LEXER_CORE, only: PRINT_SOURCE
@@ -40,8 +40,8 @@ module ReadAPriori
     & mlspcf_surfaceHeight_start, mlspcf_surfaceHeight_end
   use MLSStringLists, only: catLists, SWITCHDETAIL
   use MLSStrings, only: lowercase
-  use MoreTree, only: Get_Spec_ID
-  use OUTPUT_M, only: BLANKS, OUTPUT, &
+  use MoreTree, only: Get_BOOLEAN, Get_Spec_ID
+  use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE, &
     & revertoutput, switchOutput
   use SDPToolkit, only: PGS_S_SUCCESS
   use String_Table, only: GET_STRING
@@ -163,6 +163,7 @@ contains ! =====     Public Procedures     =============================
     integer :: SdName        ! sub-rosa index of name in sdName='name'
     character(len=FileNameLen) :: SDNAMESTRING ! actual literal sdName
     character(len=FileNameLen) :: subString   ! file name w/o path
+    logical :: sumDelp          ! sum up the DELP field values to get PL?
     integer :: SwathName        ! sub-rosa index of name in swath='name'
     character(len=FileNameLen) :: SWATHNAMESTRING ! actual literal swath name
     real :: T1, T2                      ! for timing
@@ -223,6 +224,7 @@ contains ! =====     Public Procedures     =============================
       end if
 
       ! Now parse file and field names
+      sumDelp = .false.
       fileName = 0
       swathName = 0
       do j = 2, nsons(key)
@@ -253,6 +255,8 @@ contains ! =====     Public Procedures     =============================
           griddedOrigin = decoration(subtree(2,subtree(j,key)))
         case ( f_quantityType )
           quantityType = decoration(subtree(2,subtree(j,key)))
+        case ( f_sum )
+          sumDelp = get_boolean(field)
         case ( f_swath )
           swathName = sub_rosa(subtree(2,field))
         case ( f_sdname )
@@ -421,11 +425,6 @@ contains ! =====     Public Procedures     =============================
             & call revertOutput
         endif
 
-        ! call mls_closeFile(L2AUXFile, returnStatus)
-!         if ( returnStatus /= 0 ) then
-!           call announce_error ( son, &
-!             & 'Failed to close l2aux file ' // trim(FileNameString) )
-!         elseif(index(switches, 'pro') /= 0) then                            
         if( switchDetail(switches, 'pro') > -1 ) then                            
            call announce_success(FilenameString, 'l2aux', &                    
            & sdNameString, MLSFile=L2AUXFile)    
@@ -525,7 +524,7 @@ contains ! =====     Public Procedures     =============================
             call announce_success(FilenameString, 'dao not found--carry on', &                    
                & fieldNameString, MLSFile=GriddedFile)
           endif
-        case ( l_geos5 ) ! ---------------------------- GMAO Data (GEOS5)
+        case ( l_geos5, l_merra ) ! ---------------------------- GMAO Data (GEOS5)
           ! call outputNamedValue ( 'fileNameString', trim(fileNameString) )
           ! call outputNamedValue ( 'LastGEOS5PCF', LastGEOS5PCF )
           call get_pcf_id ( fileNameString, path, subString, l2apriori_version, &
@@ -548,18 +547,31 @@ contains ! =====     Public Procedures     =============================
           case ( 'tmpu' )
             description = 'dao'
             v_type = v_is_pressure
-          case ( 'pl', 't' )
+          case ( 'pl', 't', 'delp' )
             description = 'geos5'
             v_type = V_is_eta
           case default
+            ! We may use this case if we allow for either merra or geos5
+            ! in the same l2cf declarartion; e.g.
+            ! geos5SumInput: gridded, origin=geos5, field='PL,DELP',  ..
+            ! which means:
+            ! 1st, try to read the field 'PL'
+            ! if that fails, try to read the field 'DELP'
+            ! (optionally summing over it to create a 'PL' field)
             description = 'geos5'
             v_type = V_is_eta
           end select
+          if ( griddedOrigin == l_merra ) description = 'merra'
+          if ( DEBUG ) then
+            call outputNamedValue( 'fileName', fileNameString )
+            call outputNamedValue( 'fieldName', fieldNameString )
+            call outputNamedValue( 'description', description )
+          endif
           if ( returnStatus == PGS_S_SUCCESS) then
             call ReadGriddedData ( GriddedFile, son, description, v_type, &
               & GriddedDatabase(gridIndex), returnStatus, &
               & dimListString, TRIM(fieldNameString), &
-              & missingValue, dateString )
+              & missingValue, dateString, sumDelp )
           else
             call SetupNewGriddedData ( GriddedDatabase(gridIndex), empty=.true. )
           endif
@@ -947,6 +959,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.78  2009/08/24 20:25:28  pwagner
+! Added merra file type, 'DELP' field name, /sum filed
+!
 ! Revision 2.77  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
 !
