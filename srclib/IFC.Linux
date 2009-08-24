@@ -2,7 +2,9 @@
 #to compile a Fortran 9x program or library
 
 # "$Id$"
+ifndef USEMYFC
 FC = ifort
+endif
 
 # Currently, unknown if DUSTY needs to be different yet
 DUSTY = $(FOPTS)
@@ -11,3 +13,6 @@ DUSTY = $(FOPTS)
 PATH_OPTS=-d -prefix=-I
 
 # $Log$
+# Revision 1.1  2007/05/29 17:38:47  pwagner
+# First commit
+#
