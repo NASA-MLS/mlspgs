@@ -568,9 +568,9 @@ contains ! ============================ MODULE PROCEDURES ======================
     endif
     
     mySilent = .false.
-    if ( present(options) ) mySilent = index( options, 'h' )
+    if ( present(options) ) mySilent = ( index( options, 'h' ) > 0 )
     myDirect = .false.
-    if ( present(options) ) myDirect = index( options, 'd' )
+    if ( present(options) ) myDirect = ( index( options, 'd' ) > 0 )
     if ( DEBUG ) then
       call outputNamedValue( 'myDetails', myDetails )
       call outputNamedValue( 'mySilent', mysilent )
@@ -3283,6 +3283,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.85  2009/08/24 18:34:45  pwagner
+! Repaired syntax errors only NAG complained about
+!
 ! Revision 2.84  2009/08/17 16:53:40  pwagner
 ! May contract L1BData along any of its dimensions
 !
