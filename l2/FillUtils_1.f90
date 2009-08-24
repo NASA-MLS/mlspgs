@@ -78,7 +78,7 @@ module FillUtils_1                     ! Procedures used by Fill
   use Molecules, only: L_H2O
   use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, outputNamedValue
   use QuantityTemplates, only: Epoch, QuantityTemplate_T
-  use RHIFromH2O, only: RHIFromH2O_Factor, RHIPrecFromH2O
+  use RHIFromH2O, only: H2OPrecFromRHI, RHIFromH2O_Factor, RHIPrecFromH2O
   use ScanModelModule, only: GetBasisGPH, Get2DHydrostaticTangentPressure, GetGPHPrecision
   use String_Table, only: Display_String, get_string
   use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
@@ -172,7 +172,7 @@ module FillUtils_1                     ! Procedures used by Fill
       & FillChiSqChan, FillChiSqMMaf, FillChiSqMMif, FillChiSqRatio, &
       & FillColAbundance, FillFoldedRadiance, FillPhiTanWithRefraction, &
       & FillIWCFromExtinction, FillRHIFromH2O, FillNoRadsPerMIF, &
-      & FillRHIPrecisionFromH2O, FillVectorQtyWithEstNoise, &
+      & FillRHIPrecisionFromOrToH2O, FillVectorQtyWithEstNoise, &
       & FillVectorQtyHydrostatically, FillFromSplitSideband, FillGPHPrecision, &
       & FillVectorQtyFromIsotope, FillQuantityFromAsciiFile, RotateMagneticField, &
       & ExplicitFillVectorQuantity, FillVectorQuantityFromL1B, &
@@ -2645,9 +2645,10 @@ contains ! =====     Public Procedures     =============================
       call MLSMessageCalls( 'pop' )
     end subroutine FillRHIFromH2O
 !MJF
-    ! ------------------------------------- FillRHIPrecisionFromH2O ----
-    subroutine FillRHIPrecisionFromH2O ( key, quantity, &
-     & sourcePrecisionQuantity, tempPrecisionQuantity, sourceQuantity, temperatureQuantity, &
+    ! ------------------------------------- FillRHIPrecisionFromOrToH2O ----
+    subroutine FillRHIPrecisionFromOrToH2O ( key, quantity, &
+     & sourcePrecisionQuantity, tempPrecisionQuantity, sourceQuantity, &
+     & temperatureQuantity, &
      & dontMask, ignoreZero, ignoreNegative, interpolate, &
      & markUndefinedValues, invert )
       ! For precisions:
@@ -2711,7 +2712,7 @@ contains ! =====     Public Procedures     =============================
       integer ::                          N           ! Num. of summed values
       logical, parameter ::               NEGATIVETOO = .true.
       integer ::                          QINDEX
-      real (r8) ::                        rhi_precision
+      real (r8) ::                        qty_precision
       integer ::                          S           ! Surface loop counter
       integer ::                          S_H2O       ! Instance num for surfs
       integer ::                          S_RHI       ! Instance num for surfs
@@ -2724,7 +2725,7 @@ contains ! =====     Public Procedures     =============================
       ! You may consider declaring them as pointers and
       ! calling allocate_test and deallocate_test
       real (r8), dimension(quantity%template%noSurfs) :: &
-       &                                  zeta, TPrecisionofZeta, H2OPrecisionofZeta, TofZeta, H2OofZeta
+       &                                  zeta, TPrecisionofZeta, sourcePrecisionofZeta, TofZeta, H2OofZeta
       real (r8), dimension(TempPrecisionquantity%template%noSurfs) :: &
        &                                  zetaTempPrecision, oldTempPrecision
       real (r8), dimension(sourcePrecisionQuantity%template%noSurfs) :: &
@@ -2736,17 +2737,17 @@ contains ! =====     Public Procedures     =============================
       real (r8), dimension(quantity%template%noSurfs, quantity%template%noInstances) :: &
        &                                  values
       ! Executable statements
-      call MLSMessageCalls( 'push', constantName='FillRHIPrecisionFromH2O' )
+      call MLSMessageCalls( 'push', constantName='FillRHIPrecisionFromOrToH2O' )
       values = 0.
       ! Let any undefined values be so marked (but not necessarily masked)
       ! An exceptionally dubious step -- should remove this idea
       if ( markUndefinedValues ) Quantity%values = UNDEFINED_VALUE
       ! Will we convert %RHI to vmr?
-      if ( invert ) then
-       call Announce_Error ( key, No_Error_code, &
-        & ' FillRHIPrecisionFromH2O unable to invert' )
-       return
-      end if
+      ! if ( invert ) then
+      ! call Announce_Error ( key, No_Error_code, &
+      !  & ' FillRHIPrecisionFromOrToH2O unable to invert' )
+      ! return
+      ! end if
       ! Do we need to internally convert the vmr units?
       if ( VMR_UNITS == 'ppmv' ) then
         vmr_unit_cnv = 6
@@ -2758,7 +2759,7 @@ contains ! =====     Public Procedures     =============================
       ! Check that all is well
       if ( invert .and. interpolate ) then
        call Announce_Error ( key, No_Error_code, &
-        & ' FillRHIPrecisionFromH2O unable to invert and interpolate simultaneously' )
+        & ' FillRHIPrecisionFromOrToH2O unable to invert and interpolate simultaneously' )
        return
       end if
       matched_sizes = .true.
@@ -2773,7 +2774,7 @@ contains ! =====     Public Procedures     =============================
       end do
       if ( .not. (matched_sizes .or. interpolate) ) then
        call Announce_Error ( key, No_Error_code, &
-        & 'Incompatible quantities in FillRHIPrecisionFromH2O--' //&
+        & 'Incompatible quantities in FillRHIPrecisionFromOrToH2O--' //&
         & '(unless interpolating, all must have same shape)' )
        return
       end if
@@ -2787,7 +2788,7 @@ contains ! =====     Public Procedures     =============================
        & )
       if ( .not. (matched_surfs .or. interpolate) ) then
        call Announce_Error ( key, No_Error_code, &
-        & 'Different vertical coords in FillRHIPrecisionFromH2O--' //&
+        & 'Different vertical coords in FillRHIPrecisionFromOrToH2O--' //&
         & '(unless interpolating, all must be on the same VGrid)' )
        return
       end if
@@ -2903,7 +2904,7 @@ contains ! =====     Public Procedures     =============================
             ! We want newY(newX) via linear interp. w/o extrapolating
             ! and mark undefined values among oldY with UNDEFINED_VALUE
             call InterpolateValues( zetah2oPrecision, oldH2oPrecision, &
-             & zeta, H2OPrecisionofZeta, &
+             & zeta, sourcePrecisionofZeta, &
              & 'Linear', extrapolate='Constant', &
              & badValue=real(UNDEFINED_VALUE, r8), &
              & missingRegions=.TRUE. )
@@ -2942,7 +2943,7 @@ contains ! =====     Public Procedures     =============================
             do s=1, quantity%template%noSurfs
               N = N + 1
               qIndex = Channel + (s-1)*quantity%template%noChans
-              H2OPrecisionofZeta(s) = sourcePrecisionQuantity%values(qIndex, i)
+              sourcePrecisionofZeta(s) = sourcePrecisionQuantity%values(qIndex, i)
               TPrecisionofZeta(s) = TempPrecisionQuantity%values(qIndex, i)
               H2OofZeta(s) = sourceQuantity%values(qIndex, i)
               TofZeta(s) = TemperatureQuantity%values(qIndex, i)
@@ -2965,12 +2966,19 @@ contains ! =====     Public Procedures     =============================
             ! But skip no matter what else if temperature illegal
             skipMe = skipMe .or. TofZeta(s) <= 0.0
             if ( .not. skipMe ) then
-              call RHIPrecFromH2O( H2OofZeta(s), &
-               & TofZeta(s), zeta(qIndex), vmr_unit_cnv, &
-               & H2OPrecisionofZeta(s), TPrecisionofZeta(s), &
-               & rhi_precision, negativeToo )
-              ! Quantity%values(qIndex, i) = rhi_precision
-              values(qIndex, i) = rhi_precision
+              if ( invert ) then
+                call H2OPrecFromRHi( H2OofZeta(s), &
+                 & TofZeta(s), zeta(qIndex), vmr_unit_cnv, &
+                 & sourcePrecisionofZeta(s), TPrecisionofZeta(s), &
+                 & qty_precision, negativeToo )
+              else
+                call RHIPrecFromH2O( H2OofZeta(s), &
+                 & TofZeta(s), zeta(qIndex), vmr_unit_cnv, &
+                 & sourcePrecisionofZeta(s), TPrecisionofZeta(s), &
+                 & qty_precision, negativeToo )
+              endif
+              ! Quantity%values(qIndex, i) = qty_precision
+              values(qIndex, i) = qty_precision
             end if
             wereAnySkipped = wereAnySkipped .or. skipMe
           end do
@@ -3011,7 +3019,7 @@ contains ! =====     Public Procedures     =============================
         end if
       end if
       call MLSMessageCalls( 'pop' )
-    end subroutine FillRHIPrecisionFromH2O
+    end subroutine FillRHIPrecisionFromOrToH2O
 !MJF
     ! ----------------------------------- FillQuantityFromASCIIFile --------
     subroutine FillQuantityFromAsciiFile ( key, quantity, filename, badRange )
@@ -6783,6 +6791,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.28  2009/08/24 20:14:11  pwagner
+! May Fill H2O precision from RHI precision
+!
 ! Revision 2.27  2009/07/21 20:34:56  pwagner
 ! chi^2 ratio nay hold values for iterations prior to final
 !
