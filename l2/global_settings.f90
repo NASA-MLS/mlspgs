@@ -583,6 +583,7 @@ contains
       & DirectDatabase, ForwardModelConfigDatabase, &
       & LeapSecFileName, details-detailReduction )
 
+    ! Take notice of the types of apriori files being used
     if ( APrioriFiles%dao // AprioriFiles%ncep // AprioriFiles%geos5 &
       &  == ' ' ) then
       GlobalAttributes%MiscNotes = catLists(GlobalAttributes%MiscNotes, &
@@ -590,6 +591,25 @@ contains
     elseif ( APrioriFiles%dao // AprioriFiles%geos5 == ' ' ) then
       GlobalAttributes%MiscNotes = catLists(GlobalAttributes%MiscNotes, &
         & 'No gmao files--falling back to ncep', '\')
+    endif
+
+    if ( len_trim(APrioriFiles%dao) > 0 ) then
+      GlobalAttributes%MiscNotes = catlists( GlobalAttributes%MiscNotes, &
+        & 'apriori(dao)' )
+      GlobalAttributes%MiscNotes = catlists( GlobalAttributes%MiscNotes, &
+        & trim(APrioriFiles%dao) )
+    endif
+    if ( len_trim(APrioriFiles%ncep) > 0 ) then
+      GlobalAttributes%MiscNotes = catlists( GlobalAttributes%MiscNotes, &
+        & 'apriori(ncep)' )
+      GlobalAttributes%MiscNotes = catlists( GlobalAttributes%MiscNotes, &
+        & trim(APrioriFiles%ncep) )
+    endif
+    if ( len_trim(APrioriFiles%geos5) > 0 ) then
+      GlobalAttributes%MiscNotes = catlists( GlobalAttributes%MiscNotes, &
+        & 'apriori(geos5)' )
+      GlobalAttributes%MiscNotes = catlists( GlobalAttributes%MiscNotes, &
+        & trim(APrioriFiles%geos5) )
     endif
 
     if ( error /= 0 ) &
@@ -1000,6 +1020,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.132  2009/06/23 18:46:18  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.131  2009/03/05 16:21:36  pwagner
 ! fgrid switch dumps each fgrid
 !
