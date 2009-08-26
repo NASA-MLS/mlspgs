@@ -54,12 +54,15 @@ module ReadAPriori
 
   implicit none
   private
-  public ::  APrioriFiles, APrioriFiles_T, read_apriori, writeAPrioriAttributes
+  public ::  APrioriFiles, APrioriFiles_T, &
+    & read_apriori, readAPrioriAttributes, writeAPrioriAttributes
   private ::  announce_error
   integer, private :: ERROR
   integer, private, parameter :: MAXNUMFILES = 10
 
    ! What a priori files did we read? 
+   ! (This is very wasteful of memory--let's change it
+   ! so that it one field is needed)
   type APrioriFiles_T
     character (len=MAXNUMFILES*FileNameLen) :: l2gp = ''
     character (len=MAXNUMFILES*FileNameLen) :: l2aux = ''
@@ -69,6 +72,12 @@ module ReadAPriori
   end type APrioriFiles_T
 
   type (APrioriFiles_T), save :: APrioriFiles
+
+  interface readAPrioriAttributes
+    module procedure readAPrioriAttributes_id
+    module procedure readAPrioriAttributes_mf
+  end interface
+  
   interface writeAPrioriAttributes
     module procedure writeAPrioriAttributes_id
     module procedure writeAPrioriAttributes_mf
@@ -515,14 +524,14 @@ contains ! =====     Public Procedures     =============================
             if( switchDetail(switches, 'pro') > -1 ) &                            
               & call announce_success(FilenameString, 'dao', &                    
                & fieldNameString, MLSFile=GriddedFile)    
-            if ( description == 'dao' ) then
-              apriorifiles%dao = catlists(apriorifiles%dao, trim(FilenameString))
-            else
-              apriorifiles%geos5 = catlists(apriorifiles%geos5, trim(FilenameString))
-            endif
           else
             call announce_success(FilenameString, 'dao not found--carry on', &                    
                & fieldNameString, MLSFile=GriddedFile)
+          endif
+          if ( description == 'dao' ) then
+            apriorifiles%dao = catlists(apriorifiles%dao, trim(FilenameString))
+          else
+            apriorifiles%geos5 = catlists(apriorifiles%geos5, trim(FilenameString))
           endif
         case ( l_geos5, l_merra ) ! ---------------------------- GMAO Data (GEOS5)
           ! call outputNamedValue ( 'fileNameString', trim(fileNameString) )
@@ -579,15 +588,11 @@ contains ! =====     Public Procedures     =============================
             if( switchDetail(switches, 'pro') > -1 ) &                            
               & call announce_success(FilenameString, 'geos5', &                    
                & fieldNameString, MLSFile=GriddedFile)    
-            if ( description == 'dao' ) then
-              apriorifiles%dao = catlists(apriorifiles%dao, trim(FilenameString))
-            else
-              apriorifiles%geos5 = catlists(apriorifiles%geos5, trim(FilenameString))
-            endif
           else
             call announce_success(FilenameString, 'geos5 not found--carry on', &                    
                & fieldNameString, MLSFile=GriddedFile)
           endif
+          apriorifiles%geos5 = catlists(apriorifiles%geos5, trim(FilenameString))
           ! error = 1
         case ( l_gloria ) ! ------------------------- Data in Gloria's UARS format
           call get_pcf_id ( fileNameString, path, subString, l2apriori_version, &
@@ -702,6 +707,17 @@ contains ! =====     Public Procedures     =============================
       end select     ! types of apriori data
     end do                              ! Lines in l2cf loop
     
+    call output( '------------------- apriori datatypes --------------', advance='yes' )
+    call output ( 'l2gp', advance='yes' )
+    call dump( trim(APrioriFiles%l2gp), 'l2gp files' )
+    call output ( 'l2aux', advance='yes' )
+    call dump( trim(APrioriFiles%l2aux), 'l2aux files' )
+    call output ( 'ncep', advance='yes' )
+    call dump( trim(APrioriFiles%ncep), 'ncep files' )
+    call output ( 'dao', advance='yes' )
+    call dump( trim(APrioriFiles%dao), 'dao files' )
+    call output ( 'geos5', advance='yes' )
+    call dump( trim(APrioriFiles%geos5), 'geos5 files' )
     if ( ERROR/=0 ) then
       call MLSMessage(MLSMSG_Error,ModuleName, &
         & 'Problem with read_apriori section')
@@ -779,6 +795,68 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine read_apriori
 
+  ! ------------------------------------------  readAPrioriAttributes_MF  -----
+  subroutine readAPrioriAttributes_MF ( MLSFile )
+    type(MLSFile_T) :: MLSFile
+    ! Executable
+    if ( MLSFile%hdfVersion /= HDFVERSION_5 ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'Wrong hdfVersion--can read apriori attributes for hdf5 only', &
+        & MLSFile=MLSFile )
+      return ! Can only do this for hdf5 files
+    elseif ( MLSFile%StillOpen ) then
+      call readAPrioriAttributes_ID(MLSFile%fileID%f_id, HDFVERSION_5)
+    else
+      call open_MLSFile( MLSFile )
+      call readAPrioriAttributes_ID(MLSFile%fileID%f_id, HDFVERSION_5)
+      call close_MLSFile( MLSFile )
+    endif
+  end subroutine readAPrioriAttributes_MF
+
+  ! ------------------------------------------  readAPrioriAttributes_ID  -----
+  subroutine readAPrioriAttributes_ID ( fileID, hdfVersion )
+    ! read info about what apriori files were used
+    ! Storing them as hdfeos5 attributes
+    use HDFEOS5, only: MLS_charType
+    use MLSHDFEOS, only: HE5_EHRDGLATT
+    ! Args
+    integer, intent(in) :: fileID
+    integer, intent(in) :: hdfVersion  ! Must be 5 to work properly
+    ! Internal variables
+    integer             :: status
+    ! Executable
+    if ( hdfVersion /= HDFVERSION_5 ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'Wrong hdfVersion--can read apriori attributes for hdf5 only' )
+      return ! Can only do this for hdf5 files
+    endif
+    status = HE5_EHRDGLATT(fileID, &
+     & 'A Priori l2gp', APrioriFiles%l2gp)
+    if ( status /= 0 ) &
+      &  call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      & 'Problem writing APrioriFiles%l2gp' // trim(APrioriFiles%l2gp) )
+    status = HE5_EHRDGLATT(fileID, &
+     & 'A Priori l2aux', APrioriFiles%l2aux)
+    if ( status /= 0 ) &
+      &  call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      & 'Problem writing APrioriFiles%l2aux' // trim(APrioriFiles%l2aux) )
+    status = HE5_EHRDGLATT(fileID, &
+     & 'A Priori ncep', APrioriFiles%ncep)
+    if ( status /= 0 ) &
+      &  call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      & 'Problem writing APrioriFiles%ncep' // trim(APrioriFiles%ncep) )
+    status = HE5_EHRDGLATT(fileID, &
+     & 'A Priori gmao', APrioriFiles%dao)
+    if ( status /= 0 ) &
+      &  call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      & 'Problem writing APrioriFiles%dao' // trim(APrioriFiles%dao) )
+    status = HE5_EHRDGLATT(fileID, &
+     & 'A Priori geos5', APrioriFiles%geos5)
+    if ( status /= 0 ) &
+      &  call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      & 'Problem writing APrioriFiles%geos5' // trim(APrioriFiles%geos5) )
+  end subroutine readAPrioriAttributes_ID
+
   ! ------------------------------------------  writeAPrioriAttributes_MF  -----
   subroutine writeAPrioriAttributes_MF ( MLSFile )
     type(MLSFile_T) :: MLSFile
@@ -839,6 +917,12 @@ contains ! =====     Public Procedures     =============================
     if ( status /= 0 ) &
       &  call MLSMessage ( MLSMSG_Warning, ModuleName, &
       & 'Problem writing APrioriFiles%dao' // trim(APrioriFiles%dao) )
+    status = mls_EHwrglatt(fileID, &
+     & 'A Priori geos5', MLS_CHARTYPE, 1, &
+     &  trim(APrioriFiles%geos5))
+    if ( status /= 0 ) &
+      &  call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      & 'Problem writing APrioriFiles%geos5' // trim(APrioriFiles%dao) )
   end subroutine writeAPrioriAttributes_ID
 
 ! =====     Private Procedures     =====================================
@@ -959,6 +1043,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.79  2009/08/26 16:48:17  pwagner
+! Added readAPrioriAttributes; writes APrioriFiles%geos5 as file attribute
+!
 ! Revision 2.78  2009/08/24 20:25:28  pwagner
 ! Added merra file type, 'DELP' field name, /sum filed
 !
