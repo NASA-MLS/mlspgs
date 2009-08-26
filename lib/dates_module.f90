@@ -1852,9 +1852,9 @@ contains
     case (0)
       which = 'n'
     case (1)
-      which = 'a'
-    case (2)
       which = 'b'
+    case (2)
+      which = 'a'
     case default
       which = 'u'
     end select
@@ -2220,6 +2220,9 @@ contains
 
 end module dates_module
 ! $Log$
+! Revision 2.20  2009/06/23 18:25:43  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.19  2009/06/16 17:23:38  pwagner
 ! Added tai2ccsds
 !
