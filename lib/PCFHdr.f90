@@ -12,11 +12,14 @@
 !===============================================================================
 MODULE PCFHdr
 !===============================================================================
-! Unfortunately from the point of view of its name, which fails to clearly 
+! Dsepite an unfortunate choice of name, which fails to clearly 
 ! indicate it, this module contains ways to annotate, write
 ! attributes, and otherwise do miscellaneous things to mls product files.
 ! It might have been better named PCFHdrAndGlobalAttributes
 ! or split off global attribute stuff into a separate module
+
+   use dates_module, only: utc_to_date, utc_to_yyyymmdd, utcForm
+   use dump_0, only: dump
    USE Hdf, only: DFACC_RDWR, DFACC_WRITE, AN_FILE_DESC
    USE INTRINSIC, only: L_GRID, L_HDF, L_SWATH
    USE MLSCommon, only: r8, FileNameLen, MLSFile_T, NameLen
@@ -25,8 +28,7 @@ MODULE PCFHdr
    USE MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
      & MLSMSG_Warning, MLSMSG_DeAllocate, MLSMSG_FILEOPEN
    use MLSStrings, only: lowerCase
-   use dates_module, only: utc_to_date, utc_to_yyyymmdd
-   use output_m, only: outputNamedValue
+   use output_m, only: output, outputNamedValue
    USE SDPToolkit, only: PGSD_PC_UREF_LENGTH_MAX, PGS_S_SUCCESS, &
      & PGSD_MET_GROUP_NAME_L, PGS_IO_GEN_CLOSEF, PGS_IO_GEN_OPENF, &
      & PGSD_IO_GEN_RDIRUNF, Pgs_pc_getReference, &
@@ -34,8 +36,8 @@ MODULE PCFHdr
      & UseSDPToolkit, max_orbits
    IMPLICIT NONE
    PUBLIC :: GlobalAttributes_T, &
+     & CreatePCFAnnotation, dumpGlobalAttributes,  &
      & FillTAI93Attribute, &
-     & CreatePCFAnnotation,  &
      & h5_writeglobalattr, he5_writeglobalattr, he5_readglobalattr, &
      & InputInputPointer, WriteInputPointer, &
      & WriteLeapSecHDFEOSAttr, WriteLeapSecHDF5DS, WritePCF2Hdr, &
@@ -66,7 +68,7 @@ MODULE PCFHdr
 ! in particular hdfeos5 and plain hdf5
   integer, parameter, public :: INPUTPTR_STRING_LENGTH = PGSd_PC_UREF_LENGTH_MAX
   integer, parameter, public :: GA_VALUE_LENGTH = 40
-  integer, parameter, public :: MiscNotesLENGTH = 1024
+  integer, parameter, public :: MiscNotesLENGTH = 4096
   integer, parameter, public :: UTC_A_VALUE_LENGTH = 27
   integer, parameter, public :: UTC_B_VALUE_LENGTH = 25
   character(len=*), parameter, private :: PCFATTRIBUTENAME = 'PCF'
@@ -105,6 +107,7 @@ MODULE PCFHdr
   ! Use this in case hdfVersion omitted from call to WritePCF2Hdr
   ! E.g., in level 3 prior to conversion
   integer, public, save            :: PCFHDR_DEFAULT_HDFVERSION = HDFVERSION_5
+  logical, parameter :: DEBUG = .false.
 
 CONTAINS
 
@@ -172,6 +175,27 @@ CONTAINS
 !------------------------------------
    END SUBROUTINE CreatePCFAnnotation
 !------------------------------------
+
+!----------------------------------------
+   SUBROUTINE dumpGlobalAttributes
+!----------------------------------------
+      integer                           :: DayofYear
+      DayOfYear = GranuleDayOfYear_fun()
+      call outputNamedValue('Orbit numbers', GlobalAttributes%orbNum)
+      call outputNamedValue('Orbit Periods', GlobalAttributes%orbPeriod)
+      call output ('InstrumentName: ' // trim( GlobalAttributes%InstrumentName  ))
+      call output ('Process level: ' // trim(  GlobalAttributes%ProcessLevel    ))
+      ! call output ('Input version: ' // trim(  GlobalAttributes%inputVersion    ))
+      call output ('PGE version: ' // trim(    GlobalAttributes%PGEVersion      ))
+      call output ('Misc Notes: ' // trim(     GlobalAttributes%MiscNotes      ))
+      call output ('Start UTC: ' // trim(      GlobalAttributes%StartUTC        ))
+      call output ('End UTC: ' // trim(        GlobalAttributes%EndUTC          ))
+      call outputNamedValue ( 'Granule month:', GlobalAttributes%GranuleMonth )
+      call outputNamedValue ( 'Granule day:' , GlobalAttributes%GranuleDay  )
+      call outputNamedValue ( 'Granule year:' ,GlobalAttributes%GranuleYear )
+      call outputNamedValue ( 'Granule day of year:', DayOfYear )
+      call outputNamedValue ( 'Equator crossing time (tai93):', GlobalAttributes%TAI93At0zOfGranule )
+   end SUBROUTINE dumpGlobalAttributes
 
 !----------------------------------------
    SUBROUTINE FillTAI93Attribute (LeapSecFileName)
@@ -368,6 +392,7 @@ CONTAINS
          & 'LastMAF', HE5T_NATIVE_INT, 1, &
          &  (/ GlobalAttributes%LastMAFCtr /) )
       endif
+      if ( DEBUG ) call outputNamedValue( 'GlobalAttributes%MiscNotes: ', GlobalAttributes%MiscNotes )
       status = mls_EHwrglatt(fileID, &
        & 'MiscNotes', MLS_CHARTYPE, 1, &
        &  GlobalAttributes%MiscNotes)
@@ -401,6 +426,7 @@ CONTAINS
       integer :: listSize
 ! Executable
       status = he5_EHinqglatts(fileID, attrList, listSize)
+      status = 0
       if ( status /= 0 ) then
         if ( present(returnStatus) ) then
           returnStatus = 1
@@ -429,6 +455,10 @@ CONTAINS
       status = he5_EHrdglatt(fileID, &
        & 'PGEVersion', &
        &  gAttributes%PGEVersion)
+      status = he5_EHrdglatt(fileID, &
+       & 'MiscNotes', &
+       &  gAttributes%MiscNotes)
+      if ( DEBUG ) call outputNamedValue('Misc Notes (read) ', trim(gAttributes%MiscNotes) )
       status = he5_EHrdglatt(fileID, &
        & 'StartUTC', &
        &  gAttributes%StartUTC)
@@ -1076,15 +1106,27 @@ CONTAINS
     integer :: status
     character (len=UTC_A_VALUE_LENGTH) :: asciiutc_a
     character (len=UTC_B_VALUE_LENGTH) :: asciiutc_b
+    character(len=1) :: whatUTCForm
     ! Executable
     if ( GlobalAttributes%GranuleMonth <= 0 .or. .not. UseSDPToolkit ) then
       dayOfYear = GlobalAttributes%GranuleDay
     else
-      asciiutc_a = GlobalAttributes%StartUTC
-      status = pgs_td_asciitime_atob(asciiutc_a, asciiutc_b)
-      if ( status /= 0 ) &
-        & CALL MLSMessage(MLSMSG_Error, ModuleName, &
-        & 'Unable to convert utc A to B formats')
+      whatUTCForm = utcForm(GlobalAttributes%StartUTC)
+      ! call outputNamedValue( 'utc form', whatUTCForm )
+      select case (whatUTCForm)
+      case ('a')
+        asciiutc_a = GlobalAttributes%StartUTC
+        status = pgs_td_asciitime_atob(asciiutc_a, asciiutc_b)
+        if ( status /= 0 ) then
+          call outputNamedValue( 'StartUTC', GlobalAttributes%StartUTC )
+          CALL MLSMessage(MLSMSG_Error, ModuleName, &
+          & 'Unable to convert utc A to B formats')
+        endif
+      case ('b')
+        asciiutc_b = GlobalAttributes%StartUTC
+      case default
+        asciiutc_b = GlobalAttributes%StartUTC
+      end select
       call utc_to_yyyymmdd(asciiutc_b, status, &
         & year, month, dayOfYear) 
       if ( status /= 0 ) &
@@ -1184,6 +1226,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.48  2009/08/26 16:33:58  pwagner
+!# Workaround for buggy hdfeos function he5_EHinqglatts; added dumpGlobalAttributes
+!#
 !# Revision 2.47  2009/06/23 18:25:42  pwagner
 !# Prevent Intel from optimizing ident string away
 !#
