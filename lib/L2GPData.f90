@@ -166,6 +166,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 
   ! TRUE means we can avoid using unlimited dimension and its time penalty
   logical, public            :: AVOIDUNLIMITEDDIMS = .true.
+  logical, public            :: WRITEMASTERSFILEATTRIBUTES = .true.
 
   integer, parameter :: CHARATTRLEN = 255   ! was GA_VALUE_LENGTH
   integer, parameter :: L2GPNameLen = 80
@@ -390,22 +391,11 @@ contains ! =====     Public Procedures     =============================
      & name=trim(fileName), HDFVersion=the_hdfVersion )
     call open_MLSFile( MLSFile )
     L2FileHandle = MLSFile%FileID%f_id
-    ! L2FileHandle = mls_io_gen_openF(l_swath, .TRUE., status, &
-    !   & record_length, file_access, FileName=FileName, &
-    !   & hdfVersion=the_hdfVersion, debugOption=.false. )
-    !if ( status /= 0 ) &
-    !  call MLSMessage ( MLSMSG_Error, ModuleName, &
-    !   & "Unable to open L2gp file: " // trim(FileName) // ' for appending')
     call AppendL2GPData_fileID( l2gp, L2FileHandle, swathname, &
       & FileName, offset, lastProfile=lastProfile, totNumProfs=totNumProfs, &
       & hdfVersion=the_hdfVersion, createSwath=createSwath, &
       & maxchunksize=maxchunksize )
     call close_MLSFile( MLSFile )
-    ! status = mls_io_gen_closeF(l_swath, L2FileHandle, FileName=FileName, &
-    !  & hdfVersion=the_hdfVersion)
-    ! if ( status /= 0 ) &
-    !  call MLSMessage ( MLSMSG_Error, ModuleName, &
-    !   & "Unable to close L2gp file: " // trim(FileName) // ' after appending')
   end subroutine AppendL2GPData_fileName
 
   subroutine AppendL2GPData_fileID( l2gp, l2FileHandle, &
@@ -1101,12 +1091,6 @@ contains ! =====     Public Procedures     =============================
      & name=trim(file1), HDFVersion=the_hdfVersion1 )
     call open_MLSFile( MLSFile1 )
     File1Handle = MLSFile1%FileID%f_id
-    ! File1Handle = mls_io_gen_openF(l_swath, .TRUE., status, &
-    !   & record_length, DFACC_READ, FileName=File1, &
-    !   & hdfVersion=the_hdfVersion1, debugOption=.false. )
-    !if ( status /= 0 ) &
-    !  call MLSMessage ( MLSMSG_Error, ModuleName, &
-    !   & "Unable to open L2gp file: " // trim(File1) // ' for cp-ing')
 
     file_exists = ( mls_exists(trim(File2)) == 0 )
     if ( file_exists ) then
@@ -1139,14 +1123,8 @@ contains ! =====     Public Procedures     =============================
      & name=trim(file2), HDFVersion=the_hdfVersion2 )
     call open_MLSFile( MLSFile2 )
     File2Handle = MLSFile2%FileID%f_id
-    ! File2Handle = mls_io_gen_openF(l_swath, .TRUE., status, &
-    !   & record_length, file_access, FileName=File2, &
-    !   & hdfVersion=the_hdfVersion2, debugOption=.false. )
-    !if ( status /= 0 ) &
-    !  call MLSMessage ( MLSMSG_Error, ModuleName, &
-    !   & "Unable to open L2gp file: " // trim(File2) // ' for cping')
     if ( DEEBUG ) then
-      print *, 'About to cp from file1 to file2: ', File1Handle, File2Handle
+      print *, 'About to cp from file1 to file2: ', trim(file1), trim(file2)
       print *, trim(mySwathList)
     endif
     ! Maybe copy global attributes, too
@@ -1154,13 +1132,17 @@ contains ! =====     Public Procedures     =============================
       call he5_readglobalattr (File1Handle, gAttributes, &
         & ProcessLevel, DayofYear, TAI93At0zOfGranule, status)
       if ( status == 0 ) then
+        if ( DEEBUG ) call output ( '(Global Attributes read) ', advance='yes')
         ! Unfortunately, he5_writeglobalattr writes class-level data
         ! so must store original version so can copy new data into it 
         gAttributesOriginal = GlobalAttributes
         GlobalAttributes = gAttributes
+        if ( DEEBUG ) call outputNamedValue('Misc Notes (written) ', trim(GlobalAttributes%MiscNotes) )
         call he5_writeglobalattr (File2Handle)
         ! Before leaving must copy original data back
         GlobalAttributes = gAttributesOriginal
+      else
+        call output ( '(Global Attributes missing) ' // trim(file1), advance='yes')
       endif
     endif
 
@@ -2623,6 +2605,7 @@ contains
       call output ('Process level: ' // trim(  gAttributes%ProcessLevel    ))
       ! call output ('Input version: ' // trim(  gAttributes%inputVersion    ))
       call output ('PGE version: ' // trim(    gAttributes%PGEVersion      ))
+      call output ('Misc Notes: ' // trim(     gAttributes%MiscNotes      ))
       call output ('Start UTC: ' // trim(      gAttributes%StartUTC        ))
       call output ('End UTC: ' // trim(        gAttributes%EndUTC          ))
       call dump_int ( gAttributes%GranuleMonth, 'Granule month:' )
@@ -3365,21 +3348,10 @@ contains
      & name=trim(fileName), HDFVersion=the_hdfVersion )
     call open_MLSFile( MLSFile )
     L2FileHandle = MLSFile%FileID%f_id
-    ! L2FileHandle = mls_io_gen_openF(l_swath, .TRUE., status, &
-    !   & record_length, DFACC_READ, FileName=FileName, &
-    !   & hdfVersion=hdfVersion, debugOption=.false. )
-    !if ( status /= 0 ) &
-    !  call MLSMessage ( MLSMSG_Error, ModuleName, &
-    !   & "Unable to open L2gp file: " // trim(FileName) // ' for reading')
     call ReadL2GPData_fileID(L2FileHandle, swathname, l2gp, numProfs=numProfs, &
        & firstProf=firstProf, lastProf=lastProf, hdfVersion=the_hdfVersion, &
        & hmot=hmot, ReadData=ReadData)
     call close_MLSFile( MLSFile )
-    ! status = mls_io_gen_closeF(l_swath, L2FileHandle, FileName=FileName, &
-    !  & hdfVersion=hdfVersion)
-    !if ( status /= 0 ) &
-    !  call MLSMessage ( MLSMSG_Error, ModuleName, &
-    !   & "Unable to close L2gp file: " // trim(FileName) // ' after reading')
   end subroutine ReadL2GPData_fileName
 
   ! ---------------------- ReadL2GPData_MLSFile  -----------------------------
@@ -4418,7 +4390,8 @@ contains
     call List2Array(GeolocationUnits, theUnits, .true.)
 
     ! - -   G l o b a l   A t t r i b u t e s   - -
-    call he5_writeglobalattr(L2GPFile%fileID%f_id)
+    if ( WRITEMASTERSFILEATTRIBUTES ) &
+      & call he5_writeglobalattr(L2GPFile%fileID%f_id)
 
     swid = mls_SWattach (L2GPFile, name)
     
@@ -4939,6 +4912,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.167  2009/06/23 18:25:42  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.166  2009/06/16 17:21:08  pwagner
 ! Changed api for dump, diff routines; now rely on options for most optional behavior
 !
