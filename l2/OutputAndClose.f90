@@ -35,6 +35,7 @@ module OutputAndClose ! outputs all data from the Join module to the
   ! -----     Private declarations     ---------------------------------
 
   ! Should we get any of this from MLSL2Options?
+  logical, parameter :: COPYFILEATTRIBUTES = .true.
   logical, parameter :: DGGFILEISHYBRID = .false.      ! may write PCF as DS?
   logical, parameter :: LOGFILEGETSMETADATA = .false.  ! metadata to log file?
   logical, parameter :: FAKEPARALLELMASTER =  .false.  ! make up fake stuff?
@@ -82,8 +83,8 @@ contains ! =====     Public Procedures     =============================
       & S_COPY, S_Destroy, S_HGrid, S_OUTPUT, S_TIME
     use Intrinsic, only: l_ascii, l_swath, l_hdf, Lit_indices, PHYQ_Dimensionless
     use L2AUXData, only: L2AUXDATA_T, cpL2AUXData
-    use L2GPData, only: AVOIDUNLIMITEDDIMS, L2GPData_T, &
-      & MAXSWATHNAMESBUFSIZE, cpL2GPData
+    use L2GPData, only: AVOIDUNLIMITEDDIMS, L2GPDATA_T, &
+      & MAXSWATHNAMESBUFSIZE, WRITEMASTERSFILEATTRIBUTES, CPL2GPDATA
     use L2PC_m, only: WRITEONEL2PC, OUTPUTHDF5L2PC
     use L2ParInfo, only: parallel
     use MatrixModule_1, only: DestroyMatrix, GETFROMMATRIXDATABASE, &
@@ -205,6 +206,7 @@ contains ! =====     Public Procedures     =============================
     usingL2Q = ( index(parallel%submit, 'l2q') > 0 )
     usingSubmit = trim_safe(parallel%submit) /= ''
     usingOldSubmit = usingSubmit .and. .not. usingL2Q
+    WRITEMASTERSFILEATTRIBUTES = .not. parallel%master ! cp file attributes from slaves
 
     ! Before looping over lines in l2cf, do any automatic tasks
     ! Catenate any split Direct Writes
@@ -478,7 +480,7 @@ contains ! =====     Public Procedures     =============================
             call cpL2GPData( l2metaData, inputfile, &
               & outputfile, create2=create, &
               & exclude=trim(exclude), &
-              & notUnlimited=avoidUnlimitedDims )
+              & notUnlimited=avoidUnlimitedDims, andGlAttributes=copyFileAttributes )
           elseif ( .not. got(f_exclude) .and. repairGeoLocations ) then
             if ( DEBUG ) print *,' size(filedatabse) ', size(filedatabase)
             if ( DEBUG ) print *, 'input file: ', trim(inputPhysicalFilename)
@@ -486,20 +488,20 @@ contains ! =====     Public Procedures     =============================
             call cpL2GPData(l2metaData, inputfile, &
               & outputfile, create2=create, &
               & swathList=trim(sdList), rename=rename, &
-              & notUnlimited=avoidUnlimitedDims, &
+              & notUnlimited=avoidUnlimitedDims, andGlAttributes=copyFileAttributes, &
               & HGrid=HGrids(HGridIndex), options="-r")
           elseif ( got(f_exclude) .and. repairGeoLocations ) then
             call cpL2GPData(l2metaData, inputfile, &
               & outputfile, create2=create, &
               & swathList=trim(sdList), rename=rename, &
               & exclude=trim(exclude), &
-              & notUnlimited=avoidUnlimitedDims, &
+              & notUnlimited=avoidUnlimitedDims, andGlAttributes=copyFileAttributes, &
               & HGrid=HGrids(HGridIndex), options="-r")
           else
             call cpL2GPData( l2metaData, inputfile, &
               & outputfile, create2=create, &
               & swathList=trim(sdList), rename=rename, &
-              & notUnlimited=avoidUnlimitedDims )
+              & notUnlimited=avoidUnlimitedDims, andGlAttributes=copyFileAttributes )
           endif
           if ( noGapsHGIndex > 0 ) &
             & call writeHGridComponents( trim(PhysicalFilename), &
@@ -1537,7 +1539,7 @@ contains ! =====     Public Procedures     =============================
         madeFile = .true.
         call cpL2GPData( l2metaData, inputFile, &
           & outputFile, create2=create2, &
-          & notUnlimited=avoidUnlimitedDims )
+          & notUnlimited=avoidUnlimitedDims, andGlAttributes=copyFileAttributes )
         create2 = .false.
       end do
       if ( TOOLKIT .and. madeFile ) then
@@ -1735,6 +1737,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.144  2009/08/26 17:18:42  pwagner
+! Master copies file attributes from slaves instead of writing its own
+!
 ! Revision 2.143  2009/07/01 20:37:30  pwagner
 ! Avoid adding metadata to a file more than once
 !
