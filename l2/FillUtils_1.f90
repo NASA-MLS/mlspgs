@@ -5814,18 +5814,24 @@ contains ! =====     Public Procedures     =============================
         ! Now check that geodAngle's are a sufficient match
         if ( any(abs(l2gp%geodAngle(firstProfile:lastProfile)-&
           &         quantity%template%phi(1,:)) > tolerance) ) then
-          call dump ( l2gp%geodAngle(firstProfile:lastProfile), 'L2GP geodetic angle' )
-          call dump ( quantity%template%phi(1,:), 'Quantity Geodetic angle' )
-          call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & 'Quantity has profiles that mismatch l2gp in geodetic angle' )
+          if ( switchDetail(switches, 'l2gp') > -1) then
+            call dump ( l2gp%geodAngle(firstProfile:lastProfile), 'L2GP geodetic angle' )
+            call dump ( quantity%template%phi(1,:), 'Quantity Geodetic angle' )
+          endif
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'Quantity has profiles that mismatch l2gp in geodetic angle; interpolate?' )
         end if
 
         ! Now check that the times match
         if ( any(abs(l2gp%time(firstProfile:lastProfile)- &
-          &         quantity%template%time(1,:)) > timeTol) ) &
-          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          &         quantity%template%time(1,:)) > timeTol) ) then
+          if ( switchDetail(switches, 'l2gp') > -1) then
+            call dump ( l2gp%time(firstProfile:lastProfile), 'L2GP geodetic angle' )
+            call dump ( quantity%template%time(1,:), 'Quantity Geodetic angle' )
+          endif
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'Quantity has profiles that mismatch l2gp in time' )
-
+        endif
         ! Currently the code cannot interpolate in 3 dimensions, wouldn't
         ! be hard to code up, but no need as yet.
         if ( interpolate .and. quantity%template%noChans /= 1 ) then
@@ -6791,6 +6797,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.29  2009/09/01 17:14:02  pwagner
+! Reduce severity of profile mismatch in FillVectorQuantityFromL2GP to permit filling 1d sids with truth
+!
 ! Revision 2.28  2009/08/24 20:14:11  pwagner
 ! May Fill H2O precision from RHI precision
 !
