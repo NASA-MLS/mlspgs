@@ -111,6 +111,11 @@ program L2Q
   integer, parameter          :: TURNREVIVALSONTAG = SWITCHDUMPFILETAG - 1
   integer, parameter          :: TURNREVIVALSOFFTAG = TURNREVIVALSONTAG - 1
 
+  ! These are special tid values
+  integer, parameter          :: UNASSIGNED = -1
+  integer, parameter          :: AWAITINGREVIVAL = UNASSIGNED - 1
+  integer, parameter          :: AWAITINGTHANKS = AWAITINGREVIVAL - 1
+
   integer, parameter          :: DUMPUNIT = LIST_UNIT + 1
   integer, parameter          :: TEMPUNIT = DUMPUNIT + 1
   integer, parameter          :: HDBUNIT = TEMPUNIT + 1
@@ -484,7 +489,8 @@ contains
     endif      
     host%master_tid = master%tid
     host%free = .false.
-    host%tid = 0
+    ! host%tid = 0
+    host%tid = AWAITINGTHANKS
     if ( options%debug ) then
        call output ('Number of machines free: ', advance='no')
        call timestamp (count(hosts%free .and. hosts%OK), advance='yes')
@@ -914,7 +920,8 @@ contains
           if ( info /= 0 ) then
             call myPVMErrorMessage ( info, "unpacking machineName" )
           endif
-          hostsID = FindFirst(  hosts%name==machineName .and. hosts%tid < 1 )
+          hostsID = FindFirst(  hosts%name==machineName .and. hosts%tid == AWAITINGTHANKS )
+          ! hostsID = FindFirst(  hosts%name==machineName .and. hosts%tid < 1 )
           if ( hostsID < 1 ) then
             call output(' mastersID ', advance='no')
             call output(mastersID , advance='yes')
@@ -1925,7 +1932,8 @@ contains
       if ( options%verbose ) &
           & call output(trim(newhost%name) // ' added', advance='yes')
       newhost%master_tid = -1
-      newhost%tid = -1
+      ! newhost%tid = -1
+      newhost%tid = UNASSIGNED
       newhost%chunk = -1
       newhost%OK = .false.
       newhost%free = .true.
@@ -2230,7 +2238,8 @@ contains
         endif
       endif
     endif
-    host%tid = 0
+    host%tid = UNASSIGNED
+    ! host%tid = 0
     host%master_tid = 0
     host%free = .true.
     host%chunk = -1
@@ -2344,6 +2353,9 @@ contains
 end program L2Q
 
 ! $Log$
+! Revision 1.28  2009/08/17 20:25:46  pwagner
+! Should fix the forgotten needs_host when a master is killed
+!
 ! Revision 1.27  2009/07/21 20:37:52  pwagner
 ! Print tid when logging masters thanks for hostl2q.f90
 !
