@@ -285,10 +285,8 @@ CONTAINS
     INTEGER, INTENT (in) :: ibgn, iend, iorbit
     LOGICAL, INTENT (in), OPTIONAL :: fillnvbounds
 
-    INTEGER :: i, j, nBounds, nMAFs, status
+    INTEGER :: i, j, nBounds, status
     INTEGER :: ibound, iMAF, mbgn, mend, nv
-
-    nMAFs = (iend-ibgn+1)/148
 
     DEALLOCATE (Bounds, stat=status)
     ALLOCATE (Bounds(ibgn:iend))
@@ -332,7 +330,7 @@ CONTAINS
 ! Determine nvBounds:
 
     DEALLOCATE (nvBounds, stat=status)
-    ALLOCATE (nvBounds(nMAFs))
+    ALLOCATE (nvBounds(CalBuf%MAFs))
     nvBounds = 0
     iMAF = 1
     mbgn = 0
@@ -1092,6 +1090,9 @@ END MODULE THzCalibration
 !=============================================================================
 
 ! $Log$
+! Revision 2.14  2009/09/03 19:07:33  perun
+! Use correct number of MAFs in THzBound routine
+!
 ! Revision 2.13  2009/08/21 18:59:13  perun
 ! Set calibration flag to false when no cal data is available.
 !
