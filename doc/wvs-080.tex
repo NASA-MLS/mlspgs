@@ -5,8 +5,8 @@
 \topmargin -0.25in
 \textheight 9.0in
 
-\newcommand{\docname}{\bf wvs-080r1}
-\newcommand{\docdate}{25 August 2009}
+\newcommand{\docname}{\bf wvs-080r2}
+\newcommand{\docdate}{10 September 2009}
 
 \begin{document}
 
@@ -44,39 +44,24 @@ We calculate $T_\text{scat}$ by propagating a ray from space through a sample
 atmosphere to a specified point $s$.  The points on that ray are called $r$ in
 the sequel.
 
-At $s$ we have the phase function $P_s(\theta)$, $\frac{\partial
-P_s(\theta)}{\partial x_s}$, radiance $I_s$ resulting from radiative transfer along
-the ray to $s$, $\frac{\partial I_s}{\partial x_s}$,
-and $\frac{\partial I_s}{\partial x_r}$, where $x$ is temperature, IWC, or a
-mixing ratio.  The phase function is normalized
+At $s$ we have the phase function
 
 \begin{equation*}
-\overline{P_s}(\theta) =
- \frac{P_s(\theta)}
-      {\int_{-\pi}^\pi P_s(\theta) \sin\theta \, \text{d}\theta}
+P_s(\theta) = \frac{\lambda^2}{2 \pi \beta_{c\_s}}
+  \int_0^\infty n(r) p_0(\theta,r) \text{d} \theta\,,
 \end{equation*}
 
 where $\theta$ is the angle between the incident ray and the scattered ray that
-originates at $s$.
-
-Derivatives of $\overline{P_s}(\theta)$ with respect to auxiliary parameters $x$
-are
-
-\begin{equation*}
-\frac{\partial\overline{P_s}(\theta)}{\partial x} =
-  \frac1{\int_{-\pi}^\pi P_s(\theta) \sin\theta \, \text{d}\theta}
-  \left(\frac{\partial P_s(\theta)}{\partial x}
-  - \overline{P_s}(\theta)
-      \int_{-\pi}^\pi \frac{\partial P_s(\theta)}{\partial x}
-     \sin\theta \, \text{d}\theta
-  \right)
-\end{equation*}
+originates at $s$, $\frac{\partial P_s(\theta)}{\partial x_s}$, radiance
+$I_s$ resulting from radiative transfer along the ray to $s$,
+$\frac{\partial I_s}{\partial x_s}$, and $\frac{\partial I_s}{\partial x_r}$,
+where $x$ is temperature, IWC, or a mixing ratio.
 
 $T_\text{scat}$ at $s$ is defined as
 
 \begin{equation*}
 T_{\text{scat}_s} =
- \int_{-\pi}^\pi \overline{P_s}(\theta) I_s(\theta) \sin\theta
+ \int_{-\pi}^\pi P_s(\theta) I_s(\theta) \sin\theta
   \, \text{d}\theta\,.
 \end{equation*}
 
@@ -85,8 +70,8 @@ From this
 \begin{equation*}
 \frac{\partial T_{\text{scat}_s}}{\partial x_s} =
  \int_{-\pi}^\pi
-  \left( \frac{\partial \overline{P_s}(\theta)}{\partial x_s} I_s(\theta) +
-         \overline{P_s}(\theta) \frac{\partial I_s(\theta)}{\partial x_s} \right)
+  \left( \frac{\partial P_s(\theta)}{\partial x_s} I_s(\theta) +
+         P_s(\theta) \frac{\partial I_s(\theta)}{\partial x_s} \right)
   \sin\theta \, \text{d} \theta
 \end{equation*}
 
@@ -95,15 +80,17 @@ and
 \begin{equation*}
 \frac{\partial T_{\text{scat}_s}}{\partial x_r} =
  \int_{-\pi}^\pi 
-  \left( \frac{\partial \overline{P_s}(\theta)}{\partial x_r} I_s(\theta) +
-          \overline{P_s}(\theta) \frac{\partial I_s(\theta)}{\partial x_r} \right)
+  \left( \frac{\partial P_s(\theta)}{\partial x_r} I_s(\theta) +
+          P_s(\theta) \frac{\partial I_s(\theta)}{\partial x_r} \right)
   \sin\theta \, \text{d} \theta =
- \int_{-\pi}^\pi \overline{P_s}(\theta) \frac{\partial I_s(\theta)}{\partial x_r}
+ \int_{-\pi}^\pi P_s(\theta) \frac{\partial I_s(\theta)}{\partial x_r}
   \sin\theta \, \text{d} \theta
 \end{equation*}
 
-since $\overline{P_s}(\theta)$ does not depend upon $x_r$.
+since $P_s(\theta)$ does not depend upon $x_r$.
 
 \label{lastpage}
 \end{document}
 % $Id$
+
+% $Log$
