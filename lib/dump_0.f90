@@ -49,6 +49,7 @@ module DUMP_0
 ! DUMPTABLESIDE            what side to place headers when dumping tables
 ! FILTERFILLSFROMRMS       exclude fill values when calculating rms, etc.
 !                           (not implemented yet)
+! PCTFORMAT                use this format to print % with '-s' diff option
 ! RMSFORMAT                use this format to print min, max, rms, etc.
 ! SDFORMATDEFAULT          use this format to print s.p., d.p. by default
 ! STATSONONELINE           stats, rms each printed on a single line
@@ -105,10 +106,11 @@ module DUMP_0
 ! if the options is present and contains the following characters:
 !   character         meaning
 !      ---            -------
+!       b              table of % vs. amount of differences (pdf)
 !       c              clean
 !       g              gaps      
-!       r              rms       
-!       s              stats     
+!       r              rms -- min, max, etc. of differences
+!       s              stats -- number of differences
 !       p              transpose 
 !       t              trim      
 !       u              unique    
@@ -192,6 +194,7 @@ module DUMP_0
   ! These public parameters can be reconfigured outside the module
   ! --------------------------------------------------------------------------
   character, public, parameter :: AFTERSUB = '#'
+  character(len=*), parameter :: DEFAULTPCTFORMAT = '(0pf6.1)'
 
   ! The following character strings can include one or more options listed above
   !
@@ -206,6 +209,7 @@ module DUMP_0
 
   ! These determine how dumped numerical data (s.p. or d.p.) will be formatted
   character(len=2), public, save  :: INTPLACES = '6' ! how many places
+  character(len=16), public, save :: PCTFORMAT = '*' ! * means default format
   character(len=16), public, save :: RMSFORMAT = '*' ! * means default format
   character(len=16), public, save :: SDFORMATDEFAULT = '(1pg14.6)'
   character(*), parameter :: sdFormatDefaultCmplx = &
@@ -216,8 +220,10 @@ module DUMP_0
   integer, parameter :: MAXNUMELEMENTS = 2000
   integer, parameter :: TOOMANYELEMENTS = 125*50*3500 ! Don't try to diff l1b DACS
   logical, parameter ::   DEEBUG = .false.
-  logical :: myClean, myDirect, myFillValue, myGaps, myStats, myRMS, &
+  logical, parameter ::   SHORTCUTDIFFS = .false.
+  logical :: myClean, myDirect, myFillValue, myGaps, myStats, myRMS, myTable, &
     & myTranspose, myTrim, myUnique, myWholeArray
+  character(len=16) :: myPCTFormat
   integer :: numNonFill, numFill
   logical, save :: thisIsADiff = .false.
   integer :: how_many
@@ -1531,6 +1537,8 @@ contains
        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
      call outputNamedValue ( 'print stats all on one line?', STATSONONELINE, advance='yes', &
        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
+     call outputNamedValue ( 'pct output format', trim_safe(PCTFORMAT), advance='yes', &
+       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
      call outputNamedValue ( 'rms output format', trim_safe(RMSFORMAT), advance='yes', &
        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
      call outputNamedValue ( 'numeric output format', trim_safe(SDFORMATDEFAULT), advance='yes', &
@@ -2231,7 +2239,7 @@ contains
     myTrim       = theDefault('trim')  ! .false.
     myUnique     = theDefault('unique')
     myWholeArray = theDefault('wholearray') .or. &
-        & .not. (myStats .or. myRMS)
+        & .not. (myStats .or. myRMS.or. myTable)
     if ( present(options) ) then
       myClean       = index( options, 'c' ) > 0
       myGaps        = index( options, 'g' ) > 0
@@ -2241,7 +2249,7 @@ contains
       myTrim        = index( options, 't' ) > 0
       myUnique      = index( options, 'u' ) > 0
       myWholeArray  = ( index( options, 'w' ) > 0 ) .or. &
-        & .not. (myStats .or. myRMS)
+        & .not. (myStats .or. myRMS.or. myTable)
     endif
   end subroutine theDumpBegins
 
@@ -2418,6 +2426,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.93  2009/09/10 20:58:00  pwagner
+! 3 ways to summarize diffs: 'b' (table), 'r' (rms), 's' (number of differences)
+!
 ! Revision 2.92  2009/08/18 20:41:17  pwagner
 ! making INTPLACES public can change appearance of dumped ints
 !
