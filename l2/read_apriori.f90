@@ -27,7 +27,8 @@ module ReadAPriori
     & HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, &
     & AddFileToDataBase, close_MLSFile, Dump, GetPCFromRef, InitializeMLSFile, &
     & MLS_HDF_VERSION, MLS_INQSWATH, open_MLSFile, SPLIT_PATH_NAME
-  use MLSL2Options, only: DEFAULT_HDFVERSION_READ, SPECIALDUMPFILE, TOOLKIT
+  use MLSL2Options, only: CHECKPATHS, DEFAULT_HDFVERSION_READ, SPECIALDUMPFILE, &
+    & TOOLKIT
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
   use MLSMessageModule, only: MLSMessage, MLSMessageCalls, &
     & MLSMSG_Error, MLSMSG_Warning
@@ -228,7 +229,7 @@ contains ! =====     Public Procedures     =============================
       FileType = get_spec_id(key)
 
       if ( fileType == s_dump ) then
-        call dumpCommand ( key, griddedDataBase=griddedDataBase )
+        if ( .not. CHECKPATHS ) call dumpCommand ( key, griddedDataBase=griddedDataBase )
         cycle
       end if
 
@@ -1043,6 +1044,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.80  2009/09/10 23:03:41  pwagner
+! Prevents 'Dump, /stop' line in l2cf from causing checkPaths failure
+!
 ! Revision 2.79  2009/08/26 16:48:17  pwagner
 ! Added readAPrioriAttributes; writes APrioriFiles%geos5 as file attribute
 !
