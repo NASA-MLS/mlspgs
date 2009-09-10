@@ -48,14 +48,14 @@ At $s$ we have the phase function
 
 \begin{equation*}
 P_s(\theta) = \frac{\lambda^2}{2 \pi \beta_{c\_s}}
-  \int_0^\infty n(r) p_0(\theta,r) \text{d} \theta\,,
+  \int_0^\infty n(r)\, p_0(\theta,r)\, \text{d} r\,,
 \end{equation*}
 
-where $\theta$ is the angle between the incident ray and the scattered ray that
-originates at $s$, $\frac{\partial P_s(\theta)}{\partial x_s}$, radiance
-$I_s$ resulting from radiative transfer along the ray to $s$,
-$\frac{\partial I_s}{\partial x_s}$, and $\frac{\partial I_s}{\partial x_r}$,
-where $x$ is temperature, IWC, or a mixing ratio.
+$\frac{\partial P_s(\theta)}{\partial x_s}$, radiance $I_s$ resulting from
+radiative transfer along the ray to $s$, $\frac{\partial I_s}{\partial x_s}$,
+and $\frac{\partial I_s}{\partial x_r}$, where $\theta$ is the angle between
+the incident ray and the scattered ray that originates at $s$,  $x$ is
+temperature, IWC, or a mixing ratio.
 
 $T_\text{scat}$ at $s$ is defined as
 
@@ -94,3 +94,6 @@ since $P_s(\theta)$ does not depend upon $x_r$.
 % $Id$
 
 % $Log$
+% Revision 1.3  2009/09/10 23:09:20  vsnyder
+% Normalization is included in P, not something separate -- see wvs-070
+%
