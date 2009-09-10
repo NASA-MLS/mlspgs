@@ -26,74 +26,80 @@
 !     double precision, dimension(size(array2)) :: array2
     integer, parameter :: MAXPCTS = 10
     logical :: NaNsIn1, NaNsIn2
-    ! This is terrible: don't use lengths of optional args
-    ! character(len(name1) + len(name2) + 8) :: DiffName
     character(len=64) :: DiffName
     real(kind(array1)), dimension(3, MAXPCTS):: array1AtNAbs
     real(kind(array1)), dimension(3, MAXPCTS):: array2AtNAbs
     real(kind(array1)), dimension(3, MAXPCTS):: array1AtNRel
     real(kind(array1)), dimension(3, MAXPCTS):: array2AtNRel
-    real(kind(array1)), dimension(2)      :: exvalues
-    real(kind(array1)), dimension(2)      :: exratios
-    real(kind(array1)), dimension(MAXPCTS):: gaps
-    type(Stat_T), dimension(MAXPCTS)      :: gapStat
-    real(kind(array1)), dimension(MAXPCTS):: gapratios
-    type(Stat_T), dimension(MAXPCTS)      :: gapRatioStat
-    real(kind(array1))                    :: minratio
-    real(kind(array1))                    :: maxratio
-    real(kind(array1))               :: medianratio
-    real(kind(array1))               :: meanratio
-    real(kind(array1))               :: rmsratio
-    real(kind(array1))               :: stddev
-    real(kind(array1))               :: stddevratio
-    real                             :: sTime
-    real                             :: t1
-    real                             :: t2
-    logical, parameter               :: PRINTREFERENCEVALUES = .false.
-    logical, parameter               :: PRINTMINMAXWITHRMS = .true.
-    logical, parameter               :: USEDUMPTABLE = .true.
+    real(kind(array1)), dimension(2)         :: exvalues
+    real(kind(array1)), dimension(2)         :: exratios
+    real(kind(array1)), dimension(MAXPCTS)   :: gaps
+    type(Stat_T), dimension(MAXPCTS)         :: gapStat
+    real(kind(array1)), dimension(MAXPCTS)   :: gapratios
+    type(Stat_T), dimension(MAXPCTS)         :: gapRatioStat
+    real(kind(array1))                       :: minratio
+    real(kind(array1))                       :: maxratio
+    real(kind(array1))                       :: medianratio
+    real(kind(array1))                       :: meanratio
+    integer                                  :: numTot
+    integer                                  :: numEqual
+    real(kind(array1))                       :: pctDiff
+    real(kind(array1))                       :: pctEqual
+    real(kind(array1)), dimension(MAXPCTS)   :: pcts
+    real(kind(array1)), dimension(MAXPCTS)   :: pctratios
+    real(kind(array1)), dimension(MAXPCTS)   :: pctMaxGaps
+    real(kind(array1)), dimension(MAXPCTS)   :: pctMaxGapAsRatios
+    real(kind(array1)), dimension(MAXPCTS)   :: pctMeanGaps
+    real(kind(array1)), dimension(MAXPCTS)   :: pctMaxRatios
+    real(kind(array1)), dimension(MAXPCTS)   :: pctMaxRatioAsGaps
+    real(kind(array1)), dimension(MAXPCTS)   :: pctMeanRatios
+    real(kind(array1))                       :: rmsratio
+    real(kind(array1))                       :: stddev
+    real(kind(array1))                       :: stddevratio
+    real                                     :: sTime
+    real                                     :: t1
+    real                                     :: t2
+    real(kind(array1)), dimension(MAXPCTS,7) :: table
+    logical, parameter                       :: PRINTREFERENCEVALUES = .false.
+    logical, parameter                       :: PRINTMINMAXWITHRMS = .true.
+    logical, parameter                       :: USEDUMPTABLE = .true.
     ! character(len=*), parameter      :: HEADSIDE = 'top'
     logical, parameter               :: DEBUG = .false.
     real(kind(array1)), dimension(MAXPCTS), parameter :: PCTAGES = &
       & (/ 99.9, 99.8, 99.7, 99.5, 99., 98., 97., 95., 90., 80. /)
     real, dimension(MAXPCTS), parameter :: PCTFACTORS = &
       & (/ .01, .02, .05, .1, .2, .5, 1., 2., 5., 10. /)
-    real(kind(array1)), dimension(MAXPCTS) :: pcts
-    real(kind(array1)), dimension(MAXPCTS) :: pctratios
-    real(kind(array1)), dimension(MAXPCTS) :: pctMaxGaps
-    real(kind(array1)), dimension(MAXPCTS) :: pctMaxGapAsRatios
-    real(kind(array1)), dimension(MAXPCTS) :: pctMeanGaps
-    real(kind(array1)), dimension(MAXPCTS) :: pctMaxRatios
-    real(kind(array1)), dimension(MAXPCTS) :: pctMaxRatioAsGaps
-    real(kind(array1)), dimension(MAXPCTS) :: pctMeanRatios
-    real(kind(array1)), dimension(MAXPCTS,7) :: table
     logical, parameter :: unique = .false. 
     ! Executable
     t1 = 0.
     t2 = 0.
     sTime = 0.
     thisIsADiff = .true.  ! For special dumps
+    myPCTFormat  = DEFAULTPCTFORMAT
+    if ( PCTFORMAT /= '*' ) myPCTFormat = PCTFORMAT
     myClean      = theDefault('clean') ! .false.
     myDirect     = theDefault('direct') ! .false.
     myGaps       = theDefault('gaps')
     myRMS        = theDefault('rms')   ! .false.
     myStats      = theDefault('stat')  ! .false.
+    myTable      = theDefault('table')  ! .false.
     myTranspose  = theDefault('transpose')  ! .false.
     myTrim       = theDefault('trim')  ! .false.
     myUnique     = theDefault('unique')
     myWholeArray = theDefault('wholearray') .or. &
-        & .not. (myStats .or. myRMS)
+        & .not. (myStats .or. myRMS.or. myTable)
     if ( present(options) ) then
       myClean       = index( options, 'c' ) > 0
       myDirect      = index( options, 'd' ) > 0
       myGaps        = index( options, 'g' ) > 0
       myRMS         = index( options, 'r' ) > 0
       myStats       = index( options, 's' ) > 0
+      myTable       = index( options, 'b' ) > 0
       myTranspose   = index( options, 'p' ) > 0
       myTrim        = index( options, 't' ) > 0
       myUnique      = index( options, 'u' ) > 0
       myWholeArray  = ( index( options, 'w' ) > 0 ) .or. &
-        & .not. (myStats .or. myRMS)
+        & .not. (myStats .or. myRMS.or. myTable)
     endif
 
     if ( len_trim(name2) < 1 ) then
@@ -104,7 +110,8 @@
 
     if ( DEBUG ) then
       call outputNamedValue( 'myStats', myStats )
-      call outputNamedValue( 'myRMS', myRMS )
+      call outputNamedValue( 'myRMs', myRMS)
+      call outputNamedValue( 'myTable', myTable )
       call outputNamedValue( 'myWholeArray', myWholeArray )
     endif
     if ( myWholeArray ) then
@@ -166,7 +173,7 @@
       endif
     endif
 
-    call SayTime( 'Checking for NaNs and Infs', stime )
+    if ( DEBUG ) call SayTime( 'Checking for NaNs and Infs', stime )
     stime = t2
     if ( all(array1 == array2) ) then
       call output( '(The two arrays are exactly equal)', advance='yes' )
@@ -207,9 +214,21 @@
       if ( .not. PRINTMINMAXWITHRMS ) return
       originalSDFormat = outputOptions%sdFormatDefault
       outputOptions%sdFormatDefault = rmsFormat
-      call ratios( array1, array2, exvalues, exratios, &
-        & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
-        & op='-' )
+      if ( DEBUG ) call outputNamedValue( 'maxarr(1-2)', maxval(array1-array2))
+      if ( SHORTCUTDIFFS .and. &
+        & (numEqual == numTot .or. stddev == real(0., kind(stddev))) ) then
+        exvalues = real(0., kind(stddev))
+        exratios = real(0., kind(stddev))
+        minratio = real(0., kind(stddev))
+        maxratio = real(0., kind(stddev))
+        meanratio = real(0., kind(stddev))
+        rmsratio = real(0., kind(stddev))
+        medianratio = real(0., kind(stddev))
+      else
+        call ratios( array1, array2, exvalues, exratios, &
+          & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
+          & op='-' )
+      endif
       call output( 'Maximum difference: ', advance='no' )
       call output( exvalues(1), advance='no' )
       call output( '  ( as ratio:  ', advance='no' )
@@ -221,14 +240,14 @@
       call output( exvalues(2), advance='no' )
       call output( ' )', advance='yes' )
       call printRMSetc( 'ratio', minratio, maxratio, rmsratio, meanratio )
-      if ( myStats .and. USEDUMPTABLE ) then
+      if ( myTABLE ) then
         call output( '% of arrays nearer than', advance='yes' )
         table(:,1) = gaps
         table(:,2) = pcts
         table(:,3) = gapratios
         table(:,4) = pctratios
         formats(1:3:2) = rmsFormat
-        formats(2:4:2) = '(0pf6.1)'
+        formats(2:4:2) = myPCTFormat ! '(0pf6.1)'
         call dumpTable ( table(:,1:4), &
           & (/ 'abs diff', &
           &    '%       ', &
@@ -237,14 +256,19 @@
           & headside=dumpTableSide, formats=formats(1:4) )
         call output( 'By keeping the closest % of arrays', advance='yes' )
         table(:,1) = pctAges
-        table(:,2) = pctMaxGaps
-        table(:,3) = pctMaxGapAsRatios
-        table(:,4) = pctMeanGaps
-        table(:,5) = pctMaxRatios
-        table(:,6) = pctMaxRatioAsGaps
-        table(:,7) = pctMeanRatios
+      if ( SHORTCUTDIFFS .and. &
+        & (numEqual == numTot .or. stddev == real(0., kind(stddev))) ) then
+          table(:,2:7) = real(0., kind(stddev))
+        else
+          table(:,2) = pctMaxGaps
+          table(:,3) = pctMaxGapAsRatios
+          table(:,4) = pctMeanGaps
+          table(:,5) = pctMaxRatios
+          table(:,6) = pctMaxRatioAsGaps
+          table(:,7) = pctMeanRatios
+        endif
         formats(2:7) = rmsFormat
-        formats(1) = '(0pf6.1)'
+        formats(1) = myPCTFormat ! '(0pf6.1)'
         call dumpTable ( table, &
           & (/ '%          ', &
           &    'max diffs  ', &
@@ -254,37 +278,38 @@
           &    '(as abs)   ', &
           &    'mean ratios' /), &
           & headside=dumpTableSide, formats=formats )
-      elseif ( myStats ) then
+      endif
+      if ( myStats ) then
         ! Now to show how near the two arrays are
-        call output( '% of arrays nearer than', advance='yes' )
-        call output( '(abs diff) ', advance='no' )
-        call output( gaps, advance='yes' )
-        call output( '%          ', advance='no' )
-        call output( pcts, advance='yes' )
-        call output( '(ratio diff) ', advance='no' )
-        call output( gapratios, advance='yes' )
-        call output( '%            ', advance='no' )
-        call output( pctratios, advance='yes' )
-        call output( 'By keeping the closest % of arrays', advance='yes' )
-        call output( '%          ', advance='no' )
-        call output( pctAges, FORMAT='(0pf8.1)', advance='yes' )
-        call output( '(max diffs) ', advance='no' )
-        call output( pctMaxGaps, advance='yes' )
-        call output( '(mean diffs) ', advance='no' )
-        call output( pctMeanGaps, advance='yes' )
-        call output( '(max ratios) ', advance='no' )
-        call output( pctMaxRatios, advance='yes' )
-        call output( '(mean ratios) ', advance='no' )
-        call output( pctMeanRatios, advance='yes' )
+        call output( '% of arrays equal ', advance='no' )
+        call output( pctEqual, format = myPCTFormat, advance='no' )
+        call output( '  (number of elements ', advance='no' )
+        call output( numEqual, advance='no' )
+        call output( ')', advance='yes' )
+        call output( '% of arrays diff  ', advance='no' )
+        call output( pctDiff, format = myPCTFormat, advance='no' )
+        call output( '  (number of elements ', advance='no' )
+        call output( numTot - numEqual, advance='no' )
+        call output( ')', advance='yes' )
       endif
       outputOptions%sdFormatDefault = originalSDFormat
       
     end subroutine doneWithDiff
 
     subroutine fillPcts
+      ! Executable
+      numTot = max( 1, product(shape(array1)) )
+      numEqual = count( array1 == array2 )
+      pctEqual = (100.*numEqual)/numTot
+      pctDiff = 100. - pctEqual
       stddev = mlsstddev( array1-array2 )
       gaps = PCTFACTORS*stddev
       call hownear( array1, array2, pcts, gaps=gaps )
+      if ( DEBUG ) then
+        call outputNamedValue( 'maxarr(1-2)', maxval(array1-array2))
+        call outputNamedValue( 'stddev', stddev)
+        call outputNamedValue( 'gaps(1)', gaps(1))
+      endif
       call ratios( array1, array2, exvalues, exratios, &
         & stddevratio=stddevratio, op='-' )
       gapratios = pctFactors*stddevratio
@@ -306,6 +331,11 @@
       call howfar( array1, array2, pctages, &
         & gaps=gapRatiostat, mode='rel', array1AtN=array1AtNRel, &
         & array2AtN=array2AtNRel )
+      if ( DEBUG ) then
+        call outputNamedValue( 'maxarrpcts(1-2)', maxval(array1-array2))
+        call outputNamedValue( 'pctMaxGaps(1)', pctMaxGaps(1))
+        call outputNamedValue( 'pctMaxRatios(1)', pctMaxRatios(1))
+      endif
       pctMaxGaps = gapStat%max
       pctMeanGaps = gapStat%mean
       pctMaxRatios = gapRatioStat%max
@@ -335,6 +365,9 @@
 
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.4  2009/09/10 20:59:12  pwagner
+! 3 ways to summarize diffs: 'b' (table), 'r' (rms), 's' (number of differences)
+!
 ! Revision 2.3  2009/08/17 18:05:14  pwagner
 ! direct option skips diffing if non-finite values found
 !
