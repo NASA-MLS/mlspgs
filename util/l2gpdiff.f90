@@ -57,6 +57,7 @@ program l2gpdiff ! show diffs between swaths in two different files
     logical     :: rms = .false.
     logical     :: showMissing = .false.
     logical     :: stats = .false.
+    logical     :: table = .false.
     character(len=8) :: HEADSIDE = 'left' ! on which side stats headers printed
     character(len=MAXSWATHNAMESBUFSIZE) :: swaths1 = '*'
     character(len=MAXSWATHNAMESBUFSIZE) :: swaths2 = '*'
@@ -136,6 +137,7 @@ program l2gpdiff ! show diffs between swaths in two different files
   if ( options%silent ) dumpOptions = trim(dumpOptions) // 'm'
   if ( options%rms ) dumpOptions = trim(dumpOptions) // 'r'
   if ( options%stats ) dumpOptions = trim(dumpOptions) // 's'
+  if ( options%table ) dumpOptions = trim(dumpOptions) // 'b'
   if ( options%verbose ) dumpOptions = trim(dumpOptions) // 'v'
   call time_now ( t1 )
   do i = 2, n_filenames, 2
@@ -292,6 +294,9 @@ contains
         call getarg ( i+1+hp, options%swaths2 )
         i = i + 1
         exit
+      else if ( filename(1:2) == '-t' ) then
+        options%table = .true.
+        exit
       else if ( filename(1:6) == '-miss ' ) then
         options%showMissing = .true.
         exit
@@ -343,9 +348,10 @@ contains
       write (*,*) '          -ignore     => ignore bad chunks'
       write (*,*) '          -matchTimes => only matching profile times'
       write (*,*) '          -rms        => just print mean, rms'
-      write (*,*) '          -s          => just show statistics'
+      write (*,*) '          -s          => just show number of differences'
       write (*,*) '          -side "s"   => print stat headers on one of'
       write (*,*) '                          {"top", "left", "right", "bottom"}'
+      write (*,*) '          -t[able]    => table of % vs. amount of differences (pdf)'
       write (*,*) '          -miss       => just show which swaths are missing'
       write (*,*) '          -h          => print brief help'
       write (*,*) '    (Notes)'
@@ -382,6 +388,9 @@ end program l2gpdiff
 !==================
 
 ! $Log$
+! Revision 1.16  2009/06/16 22:37:59  pwagner
+! Changed api for dump, diff routines; now rely on options for most optional behavior
+!
 ! Revision 1.15  2008/09/25 23:11:54  pwagner
 ! May confine diffs to a geolocation box
 !

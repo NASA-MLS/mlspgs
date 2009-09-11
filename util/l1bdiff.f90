@@ -13,26 +13,25 @@
 program l1bdiff ! diffs two l1b or L2AUX files
 !=================================
 
-   use Allocate_Deallocate, only: Allocate_test, DeAllocate_test
-   use Dump_0, only: DIFFRMSMEANSRMS, rmsFormat, DIFF, DUMP, SELFDIFF
+   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+   use Dump_0, only: DIFFRMSMEANSRMS, RMSFORMAT, DIFF, DUMP, SELFDIFF
    use Hdf, only: DFACC_CREATE, DFACC_READ
-   use HDF5, only: h5fis_hdf5_f, &
-     & H5GCLOSE_F, H5GOPEN_F, H5DOPEN_F, H5DCLOSE_F, h5gcreate_f
+   use HDF5, only: H5FIS_HDF5_F, &
+     & H5GCLOSE_F, H5GOPEN_F, H5DOPEN_F, H5DCLOSE_F, H5GCREATE_F
    use L1BData, only: L1BData_T, NAME_LEN, &
-     & contractL1BData, DeallocateL1BData, Diff, ReadL1BData
+     & CONTRACTL1BDATA, DEALLOCATEL1BDATA, DIFF, READL1BDATA
    use MACHINE, only: FILSEP, HP, IO_ERROR, GETARG
    use MLSFiles, only: FILENOTFOUND, WILDCARDHDFVERSION, &
-     & mls_exists, mls_hdf_version, mls_sfstart, mls_sfend, &
+     & MLS_EXISTS, MLS_HDF_VERSION, MLS_SFSTART, MLS_SFEND, &
      & HDFVERSION_4, HDFVERSION_5
-   use MLSHDF5, only: GetAllHDF5DSNames, saveAsHDF5DS, &
-     & IsHDF5AttributePresent, mls_h5open, mls_h5close
+   use MLSHDF5, only: GETALLHDF5DSNAMES, MLS_H5OPEN, MLS_H5CLOSE
    use MLSKinds, only: R8
-   use MLSMessageModule, only: MLSMessageConfig, MLSMSG_Error, MLSMSG_Warning, &
-     & MLSMessage
-   use MLSStringLists, only: GetStringElement, NumStringElements
-   use MLSStrings, only: WriteIntsToChars
-   use output_m, only: resumeOutput, suspendOutput, output, outputNamedValue
-   use Time_M, only: Time_Now, time_config
+   use MLSMessageModule, only: MLSMESSAGECONFIG, MLSMSG_ERROR, MLSMSG_WARNING, &
+     & MLSMESSAGE
+   use MLSStringLists, only: GETSTRINGELEMENT, NUMSTRINGELEMENTS
+   use MLSStrings, only: WRITEINTSTOCHARS
+   use output_m, only: RESUMEOUTPUT, SUSPENDOUTPUT, OUTPUT, OUTPUTNAMEDVALUE
+   use Time_M, only: TIME_NOW, TIME_CONFIG
    
    implicit none
 
@@ -63,6 +62,7 @@ program l1bdiff ! diffs two l1b or L2AUX files
     logical     :: list = .false.
     logical     :: stats = .false.
     logical     :: rms = .false.
+    logical     :: table = .false.
     logical     :: direct = .true.
     logical     :: oneD = .true.
     logical     :: l2aux = .false.
@@ -132,6 +132,7 @@ program l1bdiff ! diffs two l1b or L2AUX files
   if ( options%unique ) dumpOptions = trim(dumpOptions) // 'u'
   if ( options%silent ) dumpOptions = trim(dumpOptions) // 'h'
   if ( options%direct ) dumpOptions = trim(dumpOptions) // 'd'
+  if ( options%table ) dumpOptions = trim(dumpOptions) // 'b'
   call time_now ( t1 )
   if ( options%verbose .and. .not. options%list ) &
     & print *, 'Compare l1b data to: ', trim(options%referenceFileName)
@@ -233,6 +234,9 @@ contains
       else if ( filename(1:3) == '-s ' ) then
         options%stats = .true.
         exit
+      else if ( filename(1:2) == '-t' ) then
+        options%table = .true.
+        exit
       elseif ( filename(1:6) == '-skip ' ) then
         call getarg ( i+1+hp, options%skipList )
         i = i + 1
@@ -265,26 +269,29 @@ contains
       & 'Usage:l1bdiff [options] [filenames]'
       write (*,*) &
       & ' If no filenames supplied, you will be prompted to supply one'
-      write (*,*) ' Options: -f filename     => add filename to list of filenames'
-      write (*,*) '                           (can do the same w/o the -f)'
-      write (*,*) '          -d list         => just diff the SDs in list'
-      write (*,*) '          -ascii          => diff even character-valued fields'
-      write (*,*) '          -l2aux          => the files are l2aux, not l1b'
-      write (*,*) '          -v              => switch on verbose mode'
-      write (*,*) '          -self           => dump successive differences'
-      write (*,*) '                             between values in same file'
-      write (*,*) '          -half           => (if -self) show no. of 1/2 waves'
-      write (*,*) '          -half           => diff 1/2 of channels (so DACS wont crash)'
-      write (*,*) '          -silent         => switch on silent mode'
-      write (*,*) '                            (printing only if diffs found)'
-      write (*,*) '          -unique         => dump only unique elements'
-      write (*,*) '          -l              => just list sd names in files'
-      write (*,*) '          -maf m1,m2      => just diff in the range [m1,m2]'
-      write (*,*) '          -moff offset    => 2nd data set starts after 1st'
-      write (*,*) '          -rms            => just print mean, rms'
-      write (*,*) '          -s              => just show statistics'
-      write (*,*) '          -skip list      => skip diffing the SDs in list'
-      write (*,*) '          -h              => print brief help'
+      write (*,*) ' Options: -f filename => add filename to list of filenames'
+      write (*,*) '                         (can do the same w/o the -f)'
+      write (*,*) '          -d list     => just diff the SDs in list'
+      write (*,*) '          -ascii      => diff even character-valued fields'
+      write (*,*) '          -l2aux      => the files are l2aux, not l1b'
+      write (*,*) '          -v          => switch on verbose mode'
+      write (*,*) '          -self       => dump successive differences'
+      write (*,*) '                         between values in same file'
+      write (*,*) '          -half       => (1) (if with -self) '
+      write (*,*) '                         show no. of 1/2 waves'
+      write (*,*) '                         (2) (otherwise)'
+      write (*,*) '                         diff 1/2 of channels (so DACS wont crash)'
+      write (*,*) '          -silent     => switch on silent mode'
+      write (*,*) '                        (printing only if diffs found)'
+      write (*,*) '          -unique     => dump only unique elements'
+      write (*,*) '          -l          => just list sd names in files'
+      write (*,*) '          -maf m1,m2  => just diff in the range [m1,m2]'
+      write (*,*) '          -moff offset=> 2nd data set starts after 1st'
+      write (*,*) '          -rms        => just print mean, rms'
+      write (*,*) '          -s          => just show number of differences'
+      write (*,*) '          -skip list  => skip diffing the SDs in list'
+      write (*,*) '          -t[able]    => table of % vs. amount of differences (pdf)'
+      write (*,*) '          -h          => print brief help'
       stop
   end subroutine print_help
 !------------------------- SayTime ---------------------
@@ -754,6 +761,9 @@ end program l1bdiff
 !==================
 
 ! $Log$
+! Revision 1.14  2009/08/18 20:43:23  pwagner
+! Changes needed to diff DACS radiance files
+!
 ! Revision 1.13  2009/08/04 20:45:12  pwagner
 ! silent option adds 'h' to options arg
 !
