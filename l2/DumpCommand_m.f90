@@ -621,19 +621,22 @@ contains
       & f_AllGriddedData, F_AllHGrids, F_AllL2PCs, F_AllLines, &
       & F_AllPFA, F_AllQuantityTemplates, F_AllSignals, F_AllSpectra, &
       & F_AllVectors, F_AllVectorTemplates, F_AllVGrids, F_AntennaPatterns, &
-      & F_Boolean, F_Clean, F_Details, F_DACSFilterShapes, &
+      & F_Boolean, F_Clean, F_CrashBurn, F_Details, F_DACSFilterShapes, &
       & F_FilterShapes, F_ForwardModel, F_GRID, &
       & F_HGrid, F_L2PC, F_Lines, F_Mark, F_Mask, F_MieTables, &
       & F_PfaData, F_PfaFiles, F_PFANum, F_PFAStru, F_PointingGrids, &
-      & F_Quantity, F_Signals,  F_Spectroscopy, F_Stop, &
+      & F_Quantity, F_Signals,  F_Spectroscopy, F_Stop, F_StopWithError, &
       & F_Template, F_Text, F_TGrid, &
       & F_Vector, F_VectorMask, F_VGrid, S_Quantity, S_VectorTemplate
+    use L2ParInfo, only: PARALLEL, CLOSEPARALLEL
     use L2PC_m, only: L2PCDatabase, dumpL2PC => Dump
     use Intrinsic, only: PHYQ_Dimensionless
-    use MLSL2Options, only: runTimeValues
+    use MACHINE, only: NEVERCRASH
+    use MLSL2Options, only: NORMAL_EXIT_STATUS, RUNTIMEVALUES, STOPWITHERROR
     use MLSCommon, only: MLSFile_T
     ! use MLSFiles, only: DumpMLSFile => Dump
-    use MLSMessageModule, only: MLSMessage, MLSMessageCalls, MLSMSG_error
+    use MLSMessageModule, only: MLSMessage, MLSMessageCalls, MLSMessageExit, &
+      & MLSMSG_CRASH, MLSMSG_ERROR, MLSMSG_INFO
     use MLSSets, only: FindFirst
     use MLSSignals_m, only: Dump, Signals
     use MLSStrings, only: lowerCase
@@ -748,8 +751,8 @@ contains
         & f_allHGrids, f_allLines, &
         & f_allPFA, f_allQuantityTemplates, f_allSignals, f_allSpectra, &
         & f_allVectors, f_allVectorTemplates, f_allVGrids, f_antennaPatterns, &
-        & f_DACSfilterShapes, f_filterShapes, f_MieTables, &
-        & f_pfaFiles, f_pfaStru, f_pointingGrids, f_stop )
+        & f_crashBurn, f_DACSfilterShapes, f_filterShapes, f_MieTables, &
+        & f_pfaFiles, f_pfaStru, f_pointingGrids, f_stop, f_stopWithError )
         if ( get_boolean(son) ) then
           select case ( fieldIndex )
           case ( f_allBooleans )
@@ -819,6 +822,10 @@ contains
             call dump ( vGrids )
           case ( f_antennaPatterns )
             call dump_antenna_patterns_database ( son )
+          case ( f_crashBurn )
+              NEVERCRASH = .false.
+              call MLSMessage( MLSMSG_CRASH, moduleName, &
+                & "Program stopped by /crashBurn field on DUMP statement.")
           case ( f_DACSfilterShapes )
             call dump_dacs_filter_database ( son )
           case ( f_filterShapes )
@@ -832,11 +839,20 @@ contains
           case ( f_pointingGrids )
             call dump_pointing_grid_database ( son )
           case ( f_stop )
-            call announceError ( son, stop )
-            if ( index(switches,'erh') > 0 ) &
-              & call mlsmessage (MLSMSG_Error, moduleName, &
-                & "Program stopped by /stop field on DUMP statement." )
-            stop
+            if ( NORMAL_EXIT_STATUS /= 0 .and. .not. parallel%slave ) then
+              call MLSMessageExit( NORMAL_EXIT_STATUS, &
+                & farewell="Program stopped with normal status by /stop field on DUMP statement.")
+            elseif( parallel%slave ) then
+              call closeParallel(0)
+              call MLSMessageExit( &
+                & farewell="slave stopped by /stop field on DUMP statement.")
+            else
+              call MLSMessageExit( &
+                & farewell="Program stopped by /stop field on DUMP statement.")
+            endif
+          case ( f_stopWithError )
+              call MLSMessageExit( 1, &
+                & farewell="Program stopped by /stopWithError field on DUMP statement.")
           end select
         end if
       case ( f_Boolean )
@@ -1200,6 +1216,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.46  2009/09/15 20:03:48  pwagner
+! Dump commands take boolean fields /stop, /stopWithError, /crashBurn
+!
 ! Revision 2.45  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
 !
