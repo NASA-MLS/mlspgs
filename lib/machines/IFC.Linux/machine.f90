@@ -58,7 +58,7 @@ contains
     integer, intent(in), optional :: OPT(:)
     integer :: I = -huge(0)
     real :: arg
-    character(len=*), parameter :: DEFAULTMETHOD = 'b' ! 'a' or 'b'
+    character(len=*), parameter :: DEFAULTMETHOD = 'a' ! 'a' or 'b'
     character(len=1) :: method
     if ( present(code) ) print *, 'In ifc MACHINE%CRASH_BURN, CODE =', code
     if ( present(msg) ) print *, 'In ifc MACHINE%CRASH_BURN, MSG = ', trim(msg)
@@ -189,6 +189,9 @@ contains
 end module MACHINE
 
 ! $Log$
+! Revision 1.9  2009/06/23 19:58:52  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 1.8  2008/01/16 17:48:10  pwagner
 ! Fleshed out ifort call to system
 !
