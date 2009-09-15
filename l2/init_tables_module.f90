@@ -1300,6 +1300,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_antennaPatterns, t+t_boolean, n+n_field_type, &
              begin, f+f_Boolean, s+s_Boolean, n+n_field_spec, &
              begin, f+f_Clean, t+t_boolean, n+n_field_type, &
+             begin, f+f_crashBurn, t+t_boolean, n+n_field_type, &
              begin, f+f_DACSfilterShapes, t+t_boolean, n+n_field_type, &
              begin, f+f_details, t+t_numeric, n+n_field_type, &
              begin, f+f_forwardModel, s+s_forwardModel, n+n_field_spec, &
@@ -1325,6 +1326,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_signals, s+s_signal, n+n_field_spec, &
              begin, f+f_spectroscopy, t+t_molecule, n+n_field_type, &
              begin, f+f_stop, t+t_boolean, n+n_field_type, &
+             begin, f+f_stopWithError, t+t_boolean, n+n_field_type, &
              begin, f+f_template, s+s_vectorTemplate, s+s_quantity, n+n_field_spec, &
              begin, f+f_text, t+t_string, n+n_field_type, &
              begin, f+f_tGrid, s+s_tGrid, n+n_field_spec, &
@@ -1584,6 +1586,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.491  2009/09/15 20:03:39  pwagner
+! Dump commands take boolean fields /stop, /stopWithError, /crashBurn
+!
 ! Revision 2.490  2009/08/24 20:13:16  pwagner
 ! May Fill H2O precision from RHI precision
 !
