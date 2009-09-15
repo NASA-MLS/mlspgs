@@ -94,6 +94,7 @@ copy
 cost
 covariance
 covSansReg # Compute covariance matrix without regularization
+crashBurn
 create
 criteria
 criticalBands
@@ -398,6 +399,7 @@ stateMin # for the state vector during retrieval
 status
 # step already in MLSSignals field set, so can't put it here, too
 stop
+stopWithError
 structure
 suffixLabel
 sum
@@ -462,6 +464,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.194  2009/09/15 20:03:29  pwagner
+# Dump commands take boolean fields /stop, /stopWithError, /crashBurn
+#
 # Revision 2.193  2009/08/24 18:21:48  pwagner
 # May Fill H2O precision from RHI precision
 #
