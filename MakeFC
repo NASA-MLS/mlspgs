@@ -401,7 +401,6 @@ endif
 # Automatic targets
 
 levels:
-#	 @for dir in blas lib $(LEVELS); do \  
 	 @for dir in $(LEVELS); do \
 	  $(MAKE) -f $(MakeFName) -C $$dir; \
 	done
@@ -498,6 +497,10 @@ depends:
 		$(MAKE) -f $(MakeFName) internalcleanup ; \
 	fi
 	@$(MAKE) -f $(MakeFName) internaldepends
+
+doc:
+	$(MAKE) -f $(MakeFName) -C $@ depends
+	$(MAKE) -f $(MakeFName) -C $@ doc
 
 doc--api:
 	@echo "api for each of $(SUBDIRS)"; \
@@ -1055,7 +1058,10 @@ internaldepends:
         ../$(MLSBIN)/makemakedep.sh -p $$temp_name_1 ../lib ../l2; \
         sed 's/OBJS =/srclib_objs =/' $$temp_name_1 > $$temp_name_2; \
         rm -f $$temp_name_1 ; \
-        mv $$temp_name_2 Makefile.dep
+        mv $$temp_name_2 Makefile.dep; \
+	echo "Making dependencies for doc"; \
+        cd ../doc; \
+        $(MAKE) -f $(MakeFName) depends
 
 internalsaymake:
 	@if [ "$(SUBDIRS)" = "" ] ; then \
@@ -1067,7 +1073,7 @@ internalsaymake:
 		mv Makefile Makefile.old ;\
 	fi ; \
 	$(LOOKS_LIKE_line)
-	 @for dir in $(SUBDIRS); do \
+	 @for dir in $(SUBDIRS) doc; do \
 	  cd $$dir; \
 		if [ -f Makefile ] ; then \
 			rm -f Makefile.old ;\
@@ -1098,9 +1104,6 @@ internalupdate: internalsaymake
          -cf "../$(CONFDIR)/$(MLSCFILE)" $$m_option; \
 		cd .. ; \
 	done
-#		../$(MLSBIN)/mlsconfigure -dc "../$(CONFDIR)" -pc $$PLATFORMS \
-#         -cf "$(MLSCFILE)" -nc -nd $$m_option; \
-#	@$(MAKE) -f $(MakeFName) ghostbuster
 	@$(MAKE) -f $(MakeFName) internaldepends
 	@$(MAKE) -f $(MakeFName) internalmftests
 
@@ -1185,6 +1188,9 @@ tools: chunktimes checkpvmup compare dateconverter heconvert h5subset h5cat hl \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.113  2009/09/02 22:06:58  pwagner
+# install-nrt made a target to install mlsnrt.sh
+#
 # Revision 1.112  2009/02/12 23:23:22  pwagner
 # Running mlspgs automatically prints license text
 #
