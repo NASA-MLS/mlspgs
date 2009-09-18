@@ -1360,7 +1360,7 @@ contains
        call output ( count(.not. &
          & (chunksStarted .or. chunksCompleted .or. chunksAbandoned ) ) )
        call TimeStamp ( ' left. ', advance='yes' )
-       if ( .not. USINGOLDSUBMIT ) then
+       if ( .not. ( USINGOLDSUBMIT .or. USINGL2Q ) ) then
          call output ( count ( .not. machines%Free ) )
          call output ( ' of ' )
          call output ( noMachines )
@@ -2010,6 +2010,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.94  2009/09/18 00:30:25  pwagner
+! Dont print misleading lines about busy, avoided machines if using l2q
+!
 ! Revision 2.93  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
 !
