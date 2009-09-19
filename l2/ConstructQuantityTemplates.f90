@@ -991,7 +991,7 @@ contains ! ============= Public procedures ===================================
       L_JACOBIAN_COLS, L_JACOBIAN_ROWS, &
       L_L1BMAFBASELINE, L_L1BMIF_TAI, L_LIMBSIDEBANDFRACTION, &
       L_LineCenter, L_LineWidth, L_LineWidth_TDep, &
-      L_LOSTRANSFUNC, L_LOSVEL, &
+      L_LogIWC, L_LOSTRANSFUNC, L_LOSVEL, &
       L_MASSMEANDIAMETERICE, L_MASSMEANDIAMETERWATER, L_MAGNETICFIELD, &
       L_MIFDEADTIME, &
       L_NOISEBANDWIDTH, L_NORADSPERMIF, L_NORADSBINNED, &
@@ -1004,10 +1004,11 @@ contains ! ============= Public procedures ===================================
       L_STRAYRADIANCE, L_SurfaceHeight, L_SURFACETYPE, L_SYSTEMTEMPERATURE, &
       L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, L_TNGTGEOCALT, &
       L_TOTALPOWERWEIGHT, L_TSCAT, L_VMR
-    use Init_Tables_Module, only: PHYQ_EXTINCTION, PHYQ_FREQUENCY,&
-      & PHYQ_GAUSS, PHYQ_IceDensity, PHYQ_LENGTH, &
+    use Init_Tables_Module, only: PHYQ_ANGLE, PHYQ_COLMABUNDANCE, &
+      & PHYQ_DIMENSIONLESS, PHYQ_EXTINCTION, PHYQ_FREQUENCY,&
+      & PHYQ_GAUSS, PHYQ_IceDensity, PHYQ_LENGTH, PHYQ_LogIceDensity, &
       & PHYQ_PRESSURE, PHYQ_TEMPERATURE, PHYQ_TIME, PHYQ_VELOCITY, &
-      & PHYQ_VMR, PHYQ_ZETA, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_COLMABUNDANCE
+      & PHYQ_VMR, PHYQ_ZETA
     use MLSMessageModule, only: MLSMSG_Error, MLSMessage
     use Intrinsic, only: LIT_INDICES
     use Output_M, only: OUTPUT
@@ -1097,6 +1098,7 @@ contains ! ============= Public procedures ===================================
       l_lineCenter, phyq_frequency, p_hGrid, p_vGrid, p_molecule, next, &
       l_lineWidth,  phyq_frequency, p_hGrid, p_vGrid, p_molecule, next, &
       l_lineWidth_TDep, phyq_dimensionless, p_hGrid, p_vGrid, p_molecule, next, &
+      l_logiwc, phyq_logIceDensity, p_hGrid, p_vGrid, next, &
       l_losTransFunc, phyq_dimensionless, p_minorFrame, p_sGrid, p_module, next, &
       l_losVel, phyq_dimensionless, p_minorFrame, p_module, next, &
       l_magneticField, phyq_gauss, p_vGrid, p_hGrid, p_xyz, p_mustBeZeta, next, &
@@ -1268,6 +1270,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.150  2009/09/19 00:33:44  vsnyder
+! Add LogIWC
+!
 ! Revision 2.149  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
 !
