@@ -105,6 +105,7 @@ contains ! =====     Public procedures     =============================
     call declare_unit ( l_iwc, 1.0d0, phyq_icedensity )
     call declare_unit ( l_gm3, 1.0d0, phyq_icedensity )
     call declare_unit ( l_mgm3, 1.0d-3, phyq_icedensity )
+    call declare_unit ( l_logIWC, 1.0d0, phyq_logIceDensity )
 
 !   this is 1DU ( = 2.687e20 molecules/m^2)
 !   (but we will use molecules/cm^2 as the default)
@@ -144,6 +145,9 @@ contains ! =====     Public procedures     =============================
 end module UNITS
 
 ! $Log$
+! Revision 2.34  2009/09/19 00:35:17  vsnyder
+! Add phyq_logIceDensity and LotIWC
+!
 ! Revision 2.33  2009/06/23 18:25:44  pwagner
 ! Prevent Intel from optimizing ident string away
 !
