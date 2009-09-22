@@ -34,8 +34,10 @@ UTILDIR=$(CONFDIR)/util
 REECHO=$(UTILDIR)/reecho.sh
 
 # Errors in the .tex sources require us to omit the following
-OMIT_SRCS := wvs-004*.tex wvs-010.tex wvs-051*.tex wvs-063*.tex wvs-074.tex
+OMIT_SRCS := wvs-010.tex wvs-074.tex wvs-051-neural_body.tex
 OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
+OMIT_SRCS_REV := 'wvs-004\*.tex' 'wvs-051\*.tex' 'wvs-063\*.tex'
+OMIT_PREFXD_REV := $(shell ${REECHO} -prefix=-d -escape -nlast $(OMIT_SRCS_REV))
 
 # Set paths for finding source files
 
@@ -79,10 +81,10 @@ clean:
 
 depends:
 	$(UTILDIR)/makemakedep.sh -s tex -o dvi -p Makefile.dep.1 \
-     $(OMIT_PREFXD)
+     $(OMIT_PREFXD) $(OMIT_PREFXD_REV)
 	sed 's/OBJS =/NEAROBJS =/' Makefile.dep.1 > Makefile.dep.2
 	$(UTILDIR)/makemakedep.sh -s tex -o pdf -p Makefile.dep.1 \
-     $(OMIT_PREFXD)
+     $(OMIT_PREFXD) $(OMIT_PREFXD_REV)
 	cat Makefile.dep.1 Makefile.dep.2 > Makefile.dep
 	if [ ! -d $(DVIDIR) ] ; then \
 	  		mkdir $(DVIDIR) ;\
@@ -94,9 +96,21 @@ depends:
 	  		mkdir $(LOGDIR) ;\
 			fi
 
+internalupdate:
+	@echo "Copying or linking MakeFC to Makefile in ./" ; \
+	cp MakeFC Makefile
+
 tar:
 	rm -f doc.tgz
 	tar hcvzf docs.tgz * --exclude \*.dvi --exclude \*.pdf --exclude doc
 
+update: internalupdate
+	$(MAKE) depends
+
+.PHONY: all clean depends internalupdate tar update \
+
 # ========================================================================
 # $Log$
+# Revision 1.1  2009/09/18 19:47:31  pwagner
+# First commit
+#
