@@ -26,6 +26,8 @@ srclib = ../../../srclib
 # (either l1, l2, or l3)
 init_m_dir = l2
 
+libl2_sources = ../../../$(init_m_dir)/
+
 itmdir=../../../$(init_m_dir)/$(MLSCONFG)
 
 dir2 = $(itmdir)/
@@ -62,7 +64,7 @@ REECHO=$(UTILDIR)/reecho.sh
 
 vpath %.o ./
 vpath %.f90 ../ $(srclib)
-vpath %.f9h ../ $(srclib)
+vpath %.f9h ../ $(srclib) $(libl2_sources)
 vpath %.f ../
 vpath %.c ../
 
@@ -71,7 +73,7 @@ include $(srclib)/$(MLSF95).$(MLSPLAT)
 # Precede each path by "-I "
 INC_PATHS := $(EXTRA_PATHS) \
   $(shell ${REECHO} ${PATH_OPTS} \
-  $(UNPREFXDPTHS) $(MODPATHS) $(PGSINC) $(srclib) $S)
+  $(UNPREFXDPTHS) $(MODPATHS) $(PGSINC) $(srclib) $(libl2_sources) $S)
 
 # Define some suffix rules
 
@@ -131,8 +133,6 @@ ALLOBJS = $(OBJS)
 PROG_NAME=test
 
 include $(srclib)/targets.h
-
-libl2_sources = ../../../$(init_m_dir)/
 
 libl2_f90 := $(shell ${REECHO} $(libl2_sources)/*.f90)
 
@@ -212,6 +212,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.27  2009/07/17 20:27:32  pwagner
+# Added COPTS as cc options
+#
 # Revision 1.26  2009/06/11 20:11:16  pwagner
 # Needed blaslib among paths for NAG to search for .mod files
 #
