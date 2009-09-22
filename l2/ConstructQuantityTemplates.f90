@@ -1091,7 +1091,9 @@ contains ! ============= Public procedures ===================================
       l_isotopeRatio, phyq_dimensionless, p_molecule, next, &
       l_iwc, phyq_icedensity, p_hGrid, p_vGrid, next, &
       l_jacobian_cols, phyq_dimensionless, p_vGrid, next, &
-      l_jacobian_rows, phyq_dimensionless, p_vGrid, next, &
+      l_jacobian_rows, phyq_dimensionless, p_vGrid, next /) )
+
+    call DefineQtyTypes ( (/ & 
       l_l1bMAFBaseline, phyq_temperature, p_majorFrame, p_signal, next, &
       l_l1bMIF_TAI, phyq_time, p_minorFrame, p_scmodule, next, &
       l_limbSidebandFraction, phyq_dimensionless, p_signal, next, &
@@ -1270,6 +1272,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.151  2009/09/22 17:02:31  pwagner
+! NAG complained of too many continuation statements
+!
 ! Revision 2.150  2009/09/19 00:33:44  vsnyder
 ! Add LogIWC
 !
