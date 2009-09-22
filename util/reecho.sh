@@ -33,8 +33,15 @@
 #               may be repeated; e.g. -dir dir1 -dir dir2 searches both
 # -dirn "dir"   cd to "dir" then just reecho all files/directories there
 #               same as (cd dir; ls; back)
+# -escape       remove back slashes '\' before echoing
+#                (which may be there to escape glob character '*' )
+# -[n]first     discard/retain only the first of globbed matches 
+#                (used with -escape option)
+# -[n]last      discard/retain only the last of globbed matches 
+#                (used with -escape option)
+# -reverse      reverse the order of globbed matches (used with -escape option)
 # -lib          reecho each arg "x" if the file "libx.a" exists or ...
-# -unique       remove duplicates matches before output
+# -unique       remove duplicate matches before output
 # -h[elp]       print brief help message; exit
 # -prefix=xxx   reecho xxx in front of each arg (separated by a space)
 #               e.g. '-I a-dir -I b-dir -I c-dir ..'
@@ -108,6 +115,46 @@
 
 #
 
+#------------------------------- skip_firstarg ------------
+#
+# Function to skip first arg
+# usage: skip_firstarg arg1 [arg2] ..
+
+skip_firstarg()
+{
+   if [ "$#" -gt 1 ]
+   then
+     shift
+     echo $@
+   fi
+}
+
+#------------------------------- skip_lastarg ------------
+#
+# Function to skip last arg
+# usage: skip_lastarg arg1 [arg2] ..
+
+skip_lastarg()
+{
+   if [ "$#" -gt 1 ]
+   then
+     revargs=`reverse_array $@`
+     revargs=`skip_firstarg $revargs`
+     revargs=`reverse_array $revargs`
+     echo $revargs
+   fi
+}
+
+#------------------------------- snip_backslash ------------
+#
+# Function to snip "\" char from arg
+# usage: snip_backslash arg1 [arg2] ..
+
+snip_backslash()
+{
+   echo $1 | sed 's/\\//g'
+}
+
 #------------------------------- extant_files ------------
 #
 # Function to return only those files among the args
@@ -126,69 +173,123 @@ extant_files()
    then
       for arg
       do
-         arg_not_bad="yes"
-         for file in $bad_args
-         do
-            if [ "$arg" = "$file" ]
-            then
-               arg_not_bad="no"
-            fi
-         done
 
          if [ "$as_lib" = "yes" ]
          then
-            file="lib${arg}.a"
+            files="lib${arg}.a"
          else
-            file=$arg
+            files=$arg
          fi
-         
-         if [ "$arg_not_bad" != "yes" ]
+         # Do we have an escaped "*" to glob? If so, snip the "\"
+         if [ "$escape" = "yes" ]
          then
-#           arg a bad one--automatically excluded--no operation needed
-            file=$file
-         elif [ $the_opt = "-glob" ]
-         then
-            check=`echo $file | grep -i '\*'`
-            if [ $the_sense = "yes" -a "$check" != "" ]
-            then
-                  extant_files_result="$extant_files_result $arg"
-            elif [ $the_sense = "no" -a "$check" = "" ]
-            then
-                  extant_files_result="$extant_files_result $arg"
-            fi
-         elif [ $the_opt = "-grep" ]
-         then
-            # This should return non-blank if the_text is in the file
-            # (but only if the file exists and we have read permission)
-            if [ ! -r "$file" ]
-            then
-              check=""
-            else
-              check=`grep -l "$the_text" "$file"`
+           # eval snip_backslash $files
+           files=`eval snip_backslash $files`
+           if [ "$reverse" = "yes" ]
+           then
+             files=`reverse_array $files`
+           fi
+           if [ "$first" = "yes" ]
+           then
+             files=`echo $files | awk '{print $1}'`
+           elif [ "$first" = "no" ]
+           then
+             files=`skip_firstarg $files`
+           elif [ "$last" = "yes" ]
+           then
+             for file in $files
+             do
+               # bash wants something to be done whether we need it or not
+               arg_not_bad="yes"
+             done
+             files=$file
+           elif [ "$last" = "no" ]
+           then
+             files=`skip_lastarg $files`
+           fi
+         fi
+
+         for file in $files
+         do
+
+           arg_not_bad="yes"
+           for badfile in $bad_args
+           do
+              if [ "$file" = "$badfile" ]
+              then
+                 arg_not_bad="no"
+              fi
+           done
+
+           if [ "$arg_not_bad" != "yes" ]
+           then
+  #           arg a bad one--automatically excluded--no operation needed
+              file=$file
+           elif [ $the_opt = "-glob" ]
+           then
+              check=`echo $file | grep -i '\*'`
               if [ $the_sense = "yes" -a "$check" != "" ]
               then
-                  extant_files_result="$extant_files_result $arg"
+                    extant_files_result="$extant_files_result $file"
               elif [ $the_sense = "no" -a "$check" = "" ]
               then
-                  extant_files_result="$extant_files_result $arg"
+                    extant_files_result="$extant_files_result $file"
               fi
-            fi
-         elif [ $the_sense = "yes" ]
-         then
-            if [ $the_opt "$file" ]
-            then
-                  extant_files_result="$extant_files_result $arg"
-            fi
-         else
-            if [ ! $the_opt "$file" ]
-            then
-                  extant_files_result="$extant_files_result $arg"
-            fi
-         fi
+           elif [ $the_opt = "-grep" ]
+           then
+              # This should return non-blank if the_text is in the file
+              # (but only if the file exists and we have read permission)
+              if [ ! -r "$file" ]
+              then
+                check=""
+              else
+                check=`grep -l "$the_text" "$file"`
+                if [ $the_sense = "yes" -a "$check" != "" ]
+                then
+                    extant_files_result="$extant_files_result $file"
+                elif [ $the_sense = "no" -a "$check" = "" ]
+                then
+                    extant_files_result="$extant_files_result $file"
+                fi
+              fi
+           elif [ $the_sense = "yes" ]
+           then
+              if [ $the_opt "$file" ]
+              then
+                    extant_files_result="$extant_files_result $file"
+              fi
+           else
+              if [ ! $the_opt "$file" ]
+              then
+                    extant_files_result="$extant_files_result $file"
+              fi
+           fi
+        done
       done
    fi
+   # echo $extant_files_result
 }
 
+#---------------------------- reverse_array
+#
+# Function to reverse the elements of a space-separated array
+# eg given
+# reverse_array 'e a b c d'
+# writes 'd c b a e' to standard output
+
+reverse_array()
+{
+
+   # Do we have enough args?
+      if [ $# -lt 1 ]
+      then
+         echo "Usage: reverse_array 'a b c ..'"
+         exit 1
+      fi
+      
+      perl -e 'print join(" ", reverse(@ARGV))' $@
+}
+      
 #---------------------------- sort_array
 #
 # Function to sort the elements of a space-separated array
@@ -237,6 +338,10 @@ reecho_args()
   separate_suffix="yes"
   bad_args=""
   dirs=""
+  first=""
+  last=""
+  reverse="no"
+  escape="no"
   unique="no"
   while [ "$more_opts" = "yes" ] ; do
 
@@ -358,6 +463,30 @@ reecho_args()
       -excl )
          shift
          bad_args="$1 $bad_args"
+         shift
+         ;;
+      -first )
+         first="yes"
+         shift
+         ;;
+      -nfirst )
+         first="no"
+         shift
+         ;;
+      -last )
+         last="yes"
+         shift
+         ;;
+      -nlast )
+         last="no"
+         shift
+         ;;
+      -reverse )
+         reverse="yes"
+         shift
+         ;;
+      -escape )
+         escape="yes"
          shift
          ;;
       -uniq* )
@@ -552,6 +681,9 @@ done
 echo $result
 exit
 # $Log$
+# Revision 1.8  2007/05/29 17:41:20  pwagner
+# New --set opts for multiple option sets
+#
 # Revision 1.7  2005/06/23 22:20:46  pwagner
 # Reworded Copyright statement
 #
