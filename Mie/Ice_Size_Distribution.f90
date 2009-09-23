@@ -33,7 +33,7 @@ module Ice_Size_Distribution
   end interface
 
   real, parameter, public :: D_0 = 1.0          ! um
-  real, parameter, public :: Rho_ice = 0.91     ! g/m^3
+  real, parameter, public :: Rho_ice = 0.91     ! g/cm^3
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -61,7 +61,7 @@ contains
 !               {D_0^3 \rho_{\text{ice}} \sigma \exp( 3 \mu + 4.5 \sigma^2)}
 !   \end{split}\end{equation*}
 !%
-!   where $D_0 = 1 \mu$m, $\rho_{\text{ice}} = 0.91$ g/m$^3$,
+!   where $D_0 = 1 \mu$m, $\rho_{\text{ice}} = 0.91$ g/cm$^3$,
 !   IWC$_0$ = 1 g/m$^3$ and $T$ is the atmospheric temperature in Celsius.
 !%
 !  The derivatives w.r.t. IWC when $\I \leq 0.252(\I/\I_0)^{0.837}$ are
@@ -494,3 +494,6 @@ contains
 end module Ice_Size_Distribution
 
 ! $Log$
+! Revision 1.1  2008/04/19 01:15:27  vsnyder
+! Initial commit
+!
