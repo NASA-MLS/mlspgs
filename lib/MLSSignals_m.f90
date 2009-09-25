@@ -927,10 +927,12 @@ oc:     do
   end subroutine DUMP_RADIOMETERS
 
   ! ------------------------------------------------  Dump_Signal  -----
-  subroutine DUMP_SIGNAL ( SIGNAL, DETAILS )
+  subroutine DUMP_SIGNAL ( SIGNAL, DETAILS, OtherChannels )
     type (signal_T), intent(in) :: SIGNAL
     logical, intent(in), optional :: Details ! false => don't dump frequencies
                                              ! default true.
+    logical, optional, pointer :: OtherChannels(:)
+    logical, pointer :: Channels(:)
     logical :: My_Details
     character (len=80) :: Str
     my_details = .true.
@@ -1001,9 +1003,11 @@ oc:     do
       if ( .not. signal%deferred ) call output ( ' not' )
       call output ( ' deferred', advance='yes' )
     end if ! my_details
-    if (associated(signal%channels)) then
+    channels => signal%channels
+    if ( present(otherChannels) ) channels => otherChannels
+    if (associated(channels)) then
       call output ( '   Channel Flags:', advance='yes' )
-      call dump ( signal%channels, lbound=lbound(signal%channels,1) )
+      call dump ( channels, lbound=lbound(channels,1) )
     else
       call output ( '   All channels selected', advance='yes' )
     end if
@@ -1200,7 +1204,8 @@ oc:     do
 
   ! --------------------------------------------  GetNameOfSignal  -----
   subroutine GetNameOfSignal ( Signal, String_text, NoRadiometer, NoBand, &
-    & NoSwitch, NoSpectrometer, NoChannels, NoSuffix, sideband, channel )
+    & NoSwitch, NoSpectrometer, NoChannels, NoSuffix, sideband, channel, &
+    & OtherChannels )
     ! Given a signal object, this routine constructs a full signal name.
     type(signal_T), intent(in) :: SIGNAL
     character(len=*), intent(inout) :: STRING_TEXT
@@ -1212,9 +1217,12 @@ oc:     do
     logical, intent(in), optional :: NOSUFFIX
     integer, intent(in), optional :: SIDEBAND
     integer, intent(in), optional :: CHANNEL ! Only this channel, noChannels overrides it
+    logical, pointer, optional :: OtherChannels(:) ! instead of from Signal,
+                                                   ! Channel overrides this
 
     ! Local variables
     logical :: First     ! First channel in signal text
+    logical, pointer :: Channels(:) ! From signal or OtherChannels
     integer :: I, J, L
     logical :: MY_NORADIOMETER, MY_NOBAND, MY_NOSWITCH
     logical :: MY_NOSPECTROMETER, MY_NOCHANNELS
@@ -1268,30 +1276,32 @@ oc:     do
     end if
 
     if ( .not. my_noChannels ) then
+      channels => signal%channels
+      if ( present(otherChannels) ) channels => otherChannels
       if ( present(channel) ) then
         l = len_trim(string_text)
         call addToSignalString ( '.C' )
         write ( word,'(I8)') channel
         call addToSignalString ( word )
-      else if ( associated(signal%channels) ) then
-        if ( .not. all(signal%channels) .or. &
-          & lbound(signal%channels,1) /= lbound(signal%frequencies,1) .or. &
-          & ubound(signal%channels,1) /= ubound(signal%frequencies,1) ) then
+      else if ( associated(channels) ) then
+        if ( .not. all(channels) .or. &
+          & lbound(channels,1) /= lbound(signal%frequencies,1) .or. &
+          & ubound(channels,1) /= ubound(signal%frequencies,1) ) then
           l = len_trim(string_text)
           call addToSignalString ( '.C' )
-          i = lbound(signal%channels, 1)
+          i = lbound(channels, 1)
           first = .true.
           oc: do
             do
-              if ( i > ubound(signal%channels, 1) ) exit oc
-              if ( signal%channels(i) ) exit
+              if ( i > ubound(channels, 1) ) exit oc
+              if ( channels(i) ) exit
               i = i + 1
             end do
             if ( .not. first ) call addToSignalString ( '+' )
             first = .false.
             j = i
-            do while ( j < ubound(signal%channels, 1) )
-              if ( .not. signal%channels(j+1) ) exit
+            do while ( j < ubound(channels, 1) )
+              if ( .not. channels(j+1) ) exit
               j = j + 1
             end do
             if ( j > i ) then
@@ -1436,7 +1446,8 @@ oc:     do
 
   ! ----------------------------------------------  GetSignalName  -----
   subroutine GetSignalName ( Signal, String_text, NoRadiometer, NoBand, &
-    & NoSwitch, NoSpectrometer, NoChannels, NoSuffix, Sideband, Channel )
+    & NoSwitch, NoSpectrometer, NoChannels, NoSuffix, Sideband, Channel, &
+    & OtherChannels )
     ! Given an index in the signals database, this routine constructs a
     ! full signal name.
     integer, intent(in) :: SIGNAL                 ! Database index
@@ -1449,9 +1460,12 @@ oc:     do
     logical, intent(in), optional :: NOSUFFIX
     integer, intent(in), optional :: SIDEBAND
     integer, intent(in), optional :: CHANNEL ! Only this channel, noChannels overrides this
+    logical, pointer, optional :: OtherChannels(:) ! instead of from Signal,
+                                                   ! Channel overrides this
 
     call getNameOfSignal ( signals(signal), string_text, noRadiometer, noBand, &
-      & noSwitch, noSpectrometer, noChannels, noSuffix, sideband, channel )
+      & noSwitch, noSpectrometer, noChannels, noSuffix, sideband, channel, &
+      & otherChannels )
   end subroutine GetSignalName 
 
   ! ----------------------------------------  GetSpectrometerName  -----
@@ -1804,6 +1818,11 @@ oc:     do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.87  2009/09/25 02:44:14  vsnyder
+! Added OtherChannels to dump and getSignalName routines to use specific
+! channels instead of the ones in the data structure (because sometimes
+! we have a signals database index plus channels from some other source)
+!
 ! Revision 2.86  2009/06/23 18:25:42  pwagner
 ! Prevent Intel from optimizing ident string away
 !
