@@ -61,6 +61,7 @@ avoidBrightObjects
 
 b
 badRange
+badValue
 baselineQuantity
 basisFraction
 bin
@@ -202,6 +203,8 @@ isPrecision
 iterations
 
 jacobian
+
+keepChannels
 
 l2pc
 label
@@ -464,6 +467,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.195  2009/09/25 02:37:01  vsnyder
+# Add badValue, keepChannels
+#
 # Revision 2.194  2009/09/15 20:03:29  pwagner
 # Dump commands take boolean fields /stop, /stopWithError, /crashBurn
 #
