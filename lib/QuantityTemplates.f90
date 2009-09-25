@@ -136,6 +136,7 @@ module QuantityTemplates         ! Quantities within vectors
 
     ! Some quantities are on abritrary freqency grids; these quantities refer
     ! to those.
+    logical, pointer :: Channels(:) => NULL() ! If /keepChannels is set
     integer :: frequencyCoordinate ! An enumerated type, e.g. FG_USBFreq
     logical :: sharedFGrid              ! Set of frequencies are a pointer not a copy
     integer :: fGridIndex               ! Index of any fGrid Index used
@@ -679,7 +680,12 @@ contains ! =====     Public Procedures     =============================
         call output ( '   Signal ' )
         call output ( quantity_template%signal )
         call output ( ':', advance='yes' )
-        call dump ( signals(quantity_template%signal) )
+        if ( associated(quantity_template%channels) ) then
+          call dump ( signals(quantity_template%signal), &
+            & otherChannels=quantity_template%channels )
+        else
+          call dump ( signals(quantity_template%signal) )
+        end if
       end if
       if ( associated(quantity_template%phi) ) &
         & call dump ( quantity_template%phi,           '      Phi = ' )
@@ -779,15 +785,15 @@ contains ! =====     Public Procedures     =============================
     ! argument association. Since all pointers within it have default
     ! initialization, they therefore become nullified.
     
-    ! All non-pointer compnents of course become undefined and so must
-    ! be explicitly defined after the call
+    ! All non-pointer components of course become undefined and so must
+    ! be explicitly defined after the call.
 
   end subroutine NullifyQuantityTemplate
 
   ! -----------------------------------  SetupNewQuantityTemplate  -----
   subroutine SetupNewQuantityTemplate ( qty, noInstances, noSurfs, &
     & noChans, coherent, stacked, regular, instanceLen, minorFrame, majorFrame, &
-    & sharedVGrid, sharedHGrid, sharedFGrid )
+    & sharedVGrid, sharedHGrid, sharedFGrid, badValue )
 
   ! Set up a new quantity template according to the user input.  This may
   ! be based on a previously supplied template (with possible
@@ -809,6 +815,7 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in), optional :: sharedVGrid
     logical, intent(in), optional :: sharedHGrid
     logical, intent(in), optional :: sharedFGrid
+    real(r8), intent(in), optional :: badValue
 
     ! Local variables
     integer :: noSurfsToAllocate        ! For allocations
@@ -866,6 +873,7 @@ contains ! =====     Public Procedures     =============================
     if ( present (sharedVGrid) )  qty%sharedVGrid = sharedVGrid
     if ( present (sharedHGrid) )  qty%sharedHGrid = sharedHGrid
     if ( present (sharedFGrid) )  qty%sharedFGrid = sharedFGrid
+    if ( present (badValue) )     qty%badValue = badValue
 
     if ( qty%minorFrame ) then
       if ( present(coherent) ) then
@@ -965,6 +973,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.53  2009/06/23 18:25:42  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.52  2008/09/30 22:28:03  vsnyder
 ! Remove AuxGrids -- didn't need them after all
 !
