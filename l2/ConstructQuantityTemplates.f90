@@ -72,10 +72,11 @@ contains ! ============= Public procedures ===================================
     use EXPR_M, only: EXPR
     use FGrid, only: fGrid_T
     use HGridsDatabase, only: hGrid_T
-    use INIT_TABLES_MODULE, only:  F_FGRID, F_HGRID, F_IRREGULAR, &
-      & F_LOGBASIS, F_MINVALUE, F_MODULE, F_MOLECULE, F_RADIOMETER, F_SGRID, &
-      & F_SIGNAL, F_TYPE, F_VGRID, F_REFLECTOR, FIELD_FIRST, FIELD_LAST, &
-      & L_TRUE, L_ZETA, L_XYZ, L_MATRIX3X3, L_CHANNEL, L_LOSTRANSFUNC, L_NONE
+    use INIT_TABLES_MODULE, only:  F_BADVALUE, F_FGRID, F_HGRID, F_IRREGULAR, &
+      & F_KEEPCHANNELS, F_LOGBASIS, F_MINVALUE, F_MODULE, F_MOLECULE, &
+      & F_RADIOMETER, F_SGRID, F_SIGNAL, F_TYPE, F_VGRID, F_REFLECTOR, &
+      & FIELD_FIRST, FIELD_LAST, L_TRUE, L_ZETA, L_XYZ, L_MATRIX3X3, &
+      & L_CHANNEL, L_LOSTRANSFUNC, L_NONE
     use Intrinsic, only: LIT_INDICES
     use MLSCommon, only: MLSFile_T, RK => R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
@@ -105,8 +106,11 @@ contains ! ============= Public procedures ===================================
                        ! undefined when those procedures return.
 
     ! Local variables
+    logical, pointer :: Channels(:)     ! From Parse_Signal
     logical :: LOGBASIS                 ! To place in quantity
     logical :: ISMINORFRAME             ! Is a minor frame quantity
+    logical :: KeepChannels             ! From /channels, means keep the channels
+                                        ! information from the signal
     logical :: REGULAR                  ! Flag
     logical, dimension(noProperties) :: PROPERTIES ! Properties for this quantity type
     logical, dimension(field_first:field_last) :: GOT ! Fields
@@ -136,6 +140,7 @@ contains ! ============= Public procedures ===================================
     integer, dimension(2) :: EXPR_UNITS
     integer, dimension(:), pointer :: SignalInds ! From parse signal
 
+    real(rk) :: BadValue
     real(rk) :: MINVALUE                ! Minimum value allowed for quantity in fwm
     real(rk), dimension(2) :: EXPR_VALUE
     type (signal_T) :: SIGNALINFO       ! Details of the appropriate signal
@@ -148,11 +153,12 @@ contains ! ============= Public procedures ===================================
 
     ! Set appropriate defaults
     call NullifyQuantityTemplate ( qty ) ! for Sun's rubbish compiler
-    nullify ( signalInds )
+    nullify ( channels, signalInds )
     qty%name = name
     fGridIndex = 0
     hGridIndex = 0
     instrumentModule = 0
+    keepChannels = .false.
     logBasis = .false.
     minValue = -huge ( 0.0_rk )
     molecule = 0
@@ -180,10 +186,15 @@ contains ! ============= Public procedures ===================================
       got ( decoration(key) ) = .true.
 
       select case ( decoration(key) )
+      case ( f_badValue )
+        call expr ( subtree(2,son), expr_units, expr_value )
+        badValue = expr_value(1)
       case ( f_fgrid )
         fGridIndex = decoration(value)
       case ( f_hgrid )
         hGridIndex = decoration(value)
+      case ( f_keepChannels )
+        keepChannels = (value == l_true)
       case ( f_logBasis )
         logBasis = (value == l_true)
       case ( f_irregular )
@@ -209,7 +220,7 @@ contains ! ============= Public procedures ===================================
         !??? Here we would do intelligent stuff to work out which bands
         !??? are present, for the moment choose the first
         call parse_Signal ( signalString, signalInds, &
-          & tree_index=son, sideband=sideband )
+          & tree_index=son, sideband=sideband, channels=channels )
         if ( .not. associated(signalInds) ) then ! A parse error occurred
           call MLSMessage ( MLSMSG_Error, ModuleName,&
             & 'Unable to parse signal string' )
@@ -317,6 +328,10 @@ contains ! ============= Public procedures ===================================
       signalInfo = GetSignal ( signal )
       frequencyCoordinate = l_channel
       noChans = size ( signalInfo%frequencies )
+      if ( keepChannels ) then
+        qty%channels => channels
+        nullify ( channels ) ! so we don't deallocate out from under qty%channels
+      end if
     else if ( got(f_sGrid) ) then
       ! Uses an sGrid.  This is faked as frequency, but it's not
       noChans = size ( vGrids(sGridIndex)%surfs )
@@ -436,7 +451,9 @@ contains ! ============= Public procedures ===================================
     qty%sideband = sideband
     qty%signal = signal
     qty%unit = unitsTable ( quantityType )
+    if ( got(f_badValue) ) qty%badValue = badValue
 
+    call deallocate_test ( channels, 'Channels', moduleName )
   end function CreateQtyTemplateFromMLSCFInfo
 
   ! --------------------------------  ConstructMinorFrameQuantity  -----
@@ -1114,12 +1131,12 @@ contains ! ============= Public procedures ===================================
       l_noiseBandwidth, phyq_frequency, p_signal, next, &
       l_numGrad, phyq_dimensionless, p_vGrid, next, &
       l_numJ, phyq_dimensionless, p_vGrid, next, &
-      l_numNewt, phyq_dimensionless, p_vGrid, next, &
+      l_numNewt, phyq_dimensionless, p_vGrid, next /) )
+
+    call DefineQtyTypes ( (/ &
       l_opticalDepth, phyq_dimensionless, p_minorFrame, p_signal, next, &
       l_orbitInclination, phyq_angle, p_minorFrame, p_scModule, next, &
-      l_phaseTiming, phyq_dimensionless, p_vGrid, next /) )
-
-    call DefineQtyTypes ( (/ & 
+      l_phaseTiming, phyq_dimensionless, p_vGrid, next, &
       l_phiTan, phyq_angle, p_minorFrame, p_module, next, &
       l_ptan, phyq_zeta, p_minorFrame, p_module, next, &
       l_quality, phyq_dimensionless, p_hGrid, next, &
@@ -1272,6 +1289,10 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.152  2009/09/25 02:40:28  vsnyder
+! Add badValue to specify badValue field, keepChannels to allocate a
+! channels(:) pointer and save the channels output from Parse_Signal
+!
 ! Revision 2.151  2009/09/22 17:02:31  pwagner
 ! NAG complained of too many continuation statements
 !
