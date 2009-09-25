@@ -755,9 +755,11 @@ contains ! =====     Public procedures     =============================
              begin, f+f_stamp, t+t_boolean, n+n_field_type, &
              ndp+n_spec_def, &
       begin, s+s_quantity, & ! Must be AFTER [F, H, IWC, T, V]grid
+             begin, f+f_badValue, t+t_numeric, n+n_field_type, &
              begin, f+f_fGrid, s+s_fgrid, n+n_field_spec, &
              begin, f+f_hGrid, s+s_hgrid, n+n_field_spec, &
              begin, f+f_irregular, t+t_boolean, n+n_field_type, &
+             begin, f+f_keepChannels, t+t_boolean, n+n_field_type, &
              begin, f+f_logBasis, t+t_boolean, n+n_field_type, &
              begin, f+f_minValue, t+t_numeric, n+n_field_type, &
              begin, f+f_module, s+s_module, n+n_field_spec, &
@@ -1586,6 +1588,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.493  2009/09/25 02:37:24  vsnyder
+! Add badValue, keepChannels
+!
 ! Revision 2.492  2009/09/19 00:33:44  vsnyder
 ! Add LogIWC
 !
