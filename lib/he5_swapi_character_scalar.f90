@@ -11,6 +11,7 @@
 
 module HE5_SWAPI_CHARACTER_SCALAR
 
+  use hdf5, only: size_t
   public :: HE5_EHWRGLATT_CHARACTER_SCALAR, HE5_EHRDGLATT_CHARACTER_SCALAR, &
     & HE5_SWRDFLD_CHARACTER_SCALAR, HE5_SWWRFLD_CHARACTER_SCALAR, &
     & HE5_SWWRATTR_CHARACTER_SCALAR, HE5_SWWRLATTR_CHARACTER_SCALAR, &
@@ -30,7 +31,7 @@ contains
     integer, intent(in) :: FILEID      ! File ID
     character(len=*), intent(in) :: ATTRNAME     ! Attribute name
     integer, intent(in) :: DATATYPE    ! E.g., MLS_charType
-    integer, intent(in) :: COUNT   ! How many
+    integer(kind=size_t), intent(in) :: COUNT   ! How many
     character(len=*), intent(in) :: BUFFER  ! Buffer for write
 
     integer, external :: HE5_EHWRGLATT
@@ -55,9 +56,9 @@ contains
     & STARTS, STRIDES, EDGES, BUFFER )
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: FIELDNAME     ! Field name
-    integer, intent(in) :: STARTS(*)    ! Start array
-    integer, intent(in) :: STRIDES(*)   ! Stride array
-    integer, intent(in) :: EDGES(*)     ! Edge array
+    integer(kind=size_t), intent(in) :: STARTS(*)    ! Start array
+    integer(kind=size_t), intent(in) :: STRIDES(*)   ! Stride array
+    integer(kind=size_t), intent(in) :: EDGES(*)     ! Edge array
     character(len=*), intent(out) :: BUFFER  ! Buffer for read
 
     integer, external :: HE5_SWRDFLD
@@ -70,9 +71,9 @@ contains
     & STARTS, STRIDES, EDGES, BUFFER )
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: FIELDNAME     ! Field name
-    integer, intent(in) :: STARTS(*)    ! Start array
-    integer, intent(in) :: STRIDES(*)   ! Stride array
-    integer, intent(in) :: EDGES(*)     ! Edge array
+    integer(kind=size_t), intent(in) :: STARTS(*)    ! Start array
+    integer(kind=size_t), intent(in) :: STRIDES(*)   ! Stride array
+    integer(kind=size_t), intent(in) :: EDGES(*)     ! Edge array
     character(len=*), intent(in) :: BUFFER  ! Buffer for write
 
     integer, external :: HE5_SWWRFLD
@@ -86,7 +87,7 @@ contains
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: ATTRNAME     ! Attribute name
     integer, intent(in) :: DATATYPE    ! E.g., MLS_charType
-    integer, intent(in) :: COUNT   ! How many
+    integer(kind=size_t), intent(in) :: COUNT   ! How many
     character(len=*), intent(in) :: BUFFER  ! Buffer for write
 
     integer, external :: HE5_SWWRATTR
@@ -101,7 +102,7 @@ contains
     character(len=*), intent(in) :: FIELDNAME     ! Field name
     character(len=*), intent(in) :: ATTRNAME     ! Attribute name
     integer, intent(in) :: DATATYPE    ! E.g., MLS_charType
-    integer, intent(in) :: COUNT   ! How many
+    integer(kind=size_t), intent(in) :: COUNT   ! How many
     character(len=*), intent(in) :: BUFFER  ! Buffer for write
 
     integer, external :: HE5_SWWRLATTR
@@ -148,6 +149,9 @@ contains
 end module HE5_SWAPI_CHARACTER_SCALAR
 
 ! $Log$
+! Revision 2.11  2009/09/29 23:34:38  pwagner
+! Changes needed by 64-bit build
+!
 ! Revision 2.10  2009/06/23 18:25:43  pwagner
 ! Prevent Intel from optimizing ident string away
 !
