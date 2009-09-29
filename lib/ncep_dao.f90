@@ -26,6 +26,7 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   use MLSFiles, only: FILENOTFOUND, &
     & Dump, GetPCFromRef, MLS_HDF_VERSION, open_MLSFile, close_MLSFile, &
     & split_path_name
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use MLSStrings, only: Capitalize, HHMMSS_value, LowerCase
   use MLSStringLists, only: GetStringElement, NumStringElements, &
     & List2Array, ReplaceSubString, StringElementNum
@@ -35,7 +36,6 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
     & PGSd_GCT_INVERSE, &
     & UseSDPToolkit
   use TREE, only: DUMP_TREE_NODE, SOURCE_REF
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
 
   implicit none
   private
@@ -1533,6 +1533,8 @@ contains
       & HE5_GDOPEN, HE5_GDATTACH, HE5_GDDETACH, HE5_GDCLOSE, &
       & HE5_GDNENTRIES, HE5_GDINQGRID, HE5_GDINQDIMS, HE5_GDINQFLDS, &
       & HE5_GDFLDINFO, HE5_GDGRIDINFO
+    use MLSHDFEOS, only: hsizes
+    use hdf5, only: hsize_t, hssize_t, size_t
 
     ! This routine reads a ncep stratospheric combined product file,
     ! named something like nmct_030126.he5
@@ -1569,7 +1571,7 @@ contains
     integer :: gd_id(2)
     integer :: inq_success
     integer :: nentries, ngrids, ndims, nfields
-    integer :: strbufsize
+    integer(kind=size_t) :: strbufsize
     logical,  parameter       :: CASESENSITIVE = .false.
     integer, parameter :: GRIDORDER=1   ! What order grid written to file
     character (len=MAXLISTLENGTH) :: gridlist
@@ -1581,7 +1583,8 @@ contains
     character (len=MAXLISTLENGTH) :: fieldlist
     integer, parameter :: MAXNAMELENGTH=NameLen         ! Max length of grid name
     character (len=MAXNAMELENGTH) :: actual_field_name
-    integer, dimension(NENTRIESMAX) :: dims, rank, numberTypes
+    integer, dimension(NENTRIESMAX) :: rank, numberTypes
+    integer(kind=size_t), dimension(NENTRIESMAX) :: dims
     integer                        :: our_rank, numberType
     integer, dimension(NENTRIESMAX,NENTRIESMAX) :: dims_temp
 
@@ -1599,7 +1602,8 @@ contains
     real(r4), dimension(:,:,:), pointer :: t_all_fields
     logical, parameter :: DEEBUG = .false.
     real(r8):: upleftpt(2), lowrightpt(2)
-    integer :: i, xdimsize=1, ydimsize=2
+    integer :: i
+    integer(kind=size_t) :: xdimsize=1, ydimsize=2
     integer, parameter :: Lon_offset = -180  ! Longitude start in degrees
     integer, parameter :: Lat_offset = -90   ! Latitude start in degrees
     integer :: fdims3, sdims3
@@ -1774,8 +1778,8 @@ contains
        if(DEEBUG) print *, 'xdimsize ', xdimsize
        if(DEEBUG) print *, 'ydimsize ', ydimsize
 
-       status = he5_gdrdfld(gd_id(i), trim(actual_field_name), start, stride, &
-         & edge, all_the_fields)
+       status = he5_gdrdfld(gd_id(i), trim(actual_field_name), &
+         & hsizes(start), hsizes(stride), hsizes(edge), all_the_fields)
        if(status /= 0) &
           & call announce_error(lcf_where, "failed to read field " &
           & //trim(actual_field_name))
@@ -1863,8 +1867,8 @@ contains
          stride = 1                                                             
          edge = field_size                                                       
          values = the_g_data%missingValue
-         status = he5_gdrdfld(gd_id, trim(field_name), start, stride, edge, &
-           & values)                                                     
+         status = he5_gdrdfld(gd_id, trim(field_name), &
+           & hsizes(start), hsizes(stride), hsizes(edge), values)                                                     
          if ( status /= 0 ) &
            & call announce_error(lcf_where, "failed to read dim field " &
            & // trim(field_name))
@@ -2279,6 +2283,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.53  2009/09/29 23:35:09  pwagner
+! Changes needed by 64-bit build
+!
 ! Revision 2.52  2009/08/17 16:52:19  pwagner
 ! From MERRA file may read DELP field and perform sum
 !
