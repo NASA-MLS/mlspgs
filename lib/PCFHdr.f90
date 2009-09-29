@@ -20,22 +20,23 @@ MODULE PCFHdr
 
    use dates_module, only: utc_to_date, utc_to_yyyymmdd, utcForm
    use dump_0, only: dump
-   USE Hdf, only: DFACC_RDWR, DFACC_WRITE, AN_FILE_DESC
-   USE INTRINSIC, only: L_GRID, L_HDF, L_SWATH
-   USE MLSCommon, only: r8, FileNameLen, MLSFile_T, NameLen
-   USE MLSFiles, only: GetPCFromRef, HDFVERSION_4, HDFVERSION_5, &
+   use Hdf, only: DFACC_RDWR, DFACC_WRITE, AN_FILE_DESC
+   use INTRINSIC, only: L_GRID, L_HDF, L_SWATH
+   use MLSCommon, only: r8, FileNameLen, MLSFile_T, NameLen
+   use MLSFiles, only: GetPCFromRef, HDFVERSION_4, HDFVERSION_5, &
      & InitializeMLSFile, open_MLSFile, close_MLSFile
-   USE MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
+   use MLSHDFEOS, only: HSIZE
+   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
      & MLSMSG_Warning, MLSMSG_DeAllocate, MLSMSG_FILEOPEN
    use MLSStrings, only: lowerCase
    use output_m, only: output, outputNamedValue
-   USE SDPToolkit, only: PGSD_PC_UREF_LENGTH_MAX, PGS_S_SUCCESS, &
+   use SDPToolkit, only: PGSD_PC_UREF_LENGTH_MAX, PGS_S_SUCCESS, &
      & PGSD_MET_GROUP_NAME_L, PGS_IO_GEN_CLOSEF, PGS_IO_GEN_OPENF, &
      & PGSD_IO_GEN_RDIRUNF, Pgs_pc_getReference, &
      & PGS_TD_ASCIITIME_ATOB, PGS_TD_ASCIITIME_BTOA, &
      & UseSDPToolkit, max_orbits
-   IMPLICIT NONE
-   PUBLIC :: GlobalAttributes_T, &
+   implicit none
+   public :: GlobalAttributes_T, &
      & CreatePCFAnnotation, dumpGlobalAttributes,  &
      & FillTAI93Attribute, &
      & h5_writeglobalattr, he5_writeglobalattr, he5_readglobalattr, &
@@ -334,17 +335,17 @@ CONTAINS
 ! Executable
       if (present(dayNum)) then
          status = he5_EHwrglatt(fileID, &
-            & 'OrbitNumber', HE5T_NATIVE_INT, max_orbits, &
+            & 'OrbitNumber', HE5T_NATIVE_INT, hsize(max_orbits), &
             &  GlobalAttributes%OrbNumDays(:,dayNum))
          status = he5_EHwrglatt(fileID, &
-            & 'OrbitPeriod', HE5T_NATIVE_DOUBLE, max_orbits, &
+            & 'OrbitPeriod', HE5T_NATIVE_DOUBLE, hsize(max_orbits), &
             &  GlobalAttributes%OrbPeriodDays(:,dayNum))
       else
          status = he5_EHwrglatt(fileID, &
-            & 'OrbitNumber', HE5T_NATIVE_INT, max_orbits, &
+            & 'OrbitNumber', HE5T_NATIVE_INT, hsize(max_orbits), &
             &  GlobalAttributes%OrbNum)
          status = he5_EHwrglatt(fileID, &
-            & 'OrbitPeriod', HE5T_NATIVE_DOUBLE, max_orbits, &
+            & 'OrbitPeriod', HE5T_NATIVE_DOUBLE, hsize(max_orbits), &
             &  GlobalAttributes%OrbPeriod)
       end if
       status = mls_EHwrglatt(fileID, &
@@ -370,26 +371,26 @@ CONTAINS
       ! if ( GlobalAttributes%GranuleMonth == ' ') &
       if ( GlobalAttributes%GranuleDay < 1 ) return
       status = he5_EHwrglatt(fileID, &
-       & 'GranuleMonth', HE5T_NATIVE_INT, 1, &
+       & 'GranuleMonth', HE5T_NATIVE_INT, hsize(1), &
        &  (/ GranuleMonth_fun() /) )
       status = he5_EHwrglatt(fileID, &
-       & 'GranuleDay', HE5T_NATIVE_INT, 1, &
+       & 'GranuleDay', HE5T_NATIVE_INT, hsize(1), &
        &  (/ GranuleDay_fun() /) )
       status = he5_EHwrglatt(fileID, &
-       & 'GranuleDayOfYear', HE5T_NATIVE_INT, 1, &
+       & 'GranuleDayOfYear', HE5T_NATIVE_INT, hsize(1), &
        &  (/ GranuleDayOfYear_fun() /) )
       status = he5_EHwrglatt(fileID, &
-       & 'GranuleYear', HE5T_NATIVE_INT, 1, &
+       & 'GranuleYear', HE5T_NATIVE_INT, hsize(1), &
        &  (/ GlobalAttributes%GranuleYear/) )
       status = he5_EHwrglatt(fileID, &
-       & 'TAI93At0zOfGranule', HE5T_NATIVE_DOUBLE, 1, &
+       & 'TAI93At0zOfGranule', HE5T_NATIVE_DOUBLE, hsize(1), &
        &  (/ GlobalAttributes%TAI93At0zOfGranule/) )
       if ( lowercase(ProcessLevel(1:2)) == 'l2' ) then
         status = he5_EHwrglatt(fileID, &
-         & 'FirstMAF', HE5T_NATIVE_INT, 1, &
+         & 'FirstMAF', HE5T_NATIVE_INT, hsize(1), &
          &  (/ GlobalAttributes%FirstMAFCtr /) )
         status = he5_EHwrglatt(fileID, &
-         & 'LastMAF', HE5T_NATIVE_INT, 1, &
+         & 'LastMAF', HE5T_NATIVE_INT, hsize(1), &
          &  (/ GlobalAttributes%LastMAFCtr /) )
       endif
       if ( DEBUG ) call outputNamedValue( 'GlobalAttributes%MiscNotes: ', GlobalAttributes%MiscNotes )
@@ -608,16 +609,16 @@ CONTAINS
       character(len=GA_VALUE_LENGTH) :: ProcessLevel = ''
 ! Executable
       status = he5_SWwrattr(swathID, &
-       & 'OrbitNumber', HE5T_NATIVE_INT, max_orbits, &
+       & 'OrbitNumber', HE5T_NATIVE_INT, hsize(max_orbits), &
        &  GlobalAttributes%OrbNum)
       status = he5_SWwrattr(swathID, &
-       & 'OrbitPeriod', HE5T_NATIVE_DOUBLE, max_orbits, &
+       & 'OrbitPeriod', HE5T_NATIVE_DOUBLE, hsize(max_orbits), &
        &  GlobalAttributes%OrbPeriod)
       status = he5_SWwrattr(swathID, &
-       & 'InstrumentName', MLS_CHARTYPE, 1, &
+       & 'InstrumentName', MLS_CHARTYPE, hsize(1), &
        &  GlobalAttributes%InstrumentName)
       status = he5_SWwrattr(swathID, &
-       & 'HostName', MLS_CHARTYPE, 1, &
+       & 'HostName', MLS_CHARTYPE, hsize(1), &
        &  GlobalAttributes%HostName)
       ProcessLevel = ProcessLevelFun()
       status = mls_SWwrattr(swathID, &
@@ -635,32 +636,32 @@ CONTAINS
       if ( GlobalAttributes%GranuleDay < 1 ) return
       if ( GlobalAttributes%GranuleMonth > 0 ) then
         status = he5_SWwrattr(swathID, &
-         & 'GranuleMonth', HE5T_NATIVE_INT, 1, &
+         & 'GranuleMonth', HE5T_NATIVE_INT, hsize(1), &
          &  (/ GlobalAttributes%GranuleMonth/) )
         status = he5_SWwrattr(swathID, &
-         & 'GranuleDay', HE5T_NATIVE_INT, 1, &
+         & 'GranuleDay', HE5T_NATIVE_INT, hsize(1), &
          &  (/ GlobalAttributes%GranuleDay/) )
       else
         status = he5_SWwrattr(swathID, &
-         & 'GranuleDayOfYear', HE5T_NATIVE_INT, 1, &
+         & 'GranuleDayOfYear', HE5T_NATIVE_INT, hsize(1), &
          &  (/ GlobalAttributes%GranuleDay/) )
       endif
       status = he5_SWwrattr(swathID, &
-       & 'GranuleYear', HE5T_NATIVE_INT, 1, &
+       & 'GranuleYear', HE5T_NATIVE_INT, hsize(1), &
        &  (/ GlobalAttributes%GranuleYear/) )
       status = he5_SWwrattr(swathID, &
-       & 'TAI93At0zOfGranule', HE5T_NATIVE_DOUBLE, 1, &
+       & 'TAI93At0zOfGranule', HE5T_NATIVE_DOUBLE, hsize(1), &
        &  (/ GlobalAttributes%TAI93At0zOfGranule/) )
       if ( lowercase(ProcessLevel(1:2)) == 'l2' ) then
         status = he5_SWwrattr(swathID, &
-         & 'FirstMAF', HE5T_NATIVE_INT, 1, &
+         & 'FirstMAF', HE5T_NATIVE_INT, hsize(1), &
          &  (/ GlobalAttributes%FirstMAFCtr/) )
         status = he5_SWwrattr(swathID, &
-         & 'LastMAF', HE5T_NATIVE_INT, 1, &
+         & 'LastMAF', HE5T_NATIVE_INT, hsize(1), &
          &  (/ GlobalAttributes%LastMAFCtr/) )
       endif
       status = he5_SWwrattr(swathID, &
-       & 'MiscNotes', MLS_CHARTYPE, 1, &
+       & 'MiscNotes', MLS_CHARTYPE, hsize(1), &
        &  GlobalAttributes%MiscNotes)
 !------------------------------------------------------------
    END SUBROUTINE sw_writeglobalattr
@@ -1030,7 +1031,7 @@ CONTAINS
        if ( blockNumber > 9 ) write( blockChar, '(i2)') blockNumber
 
         status = he5_EHwrglatt(fileID, 'PCF'//TRIM(ADJUSTL(blockChar)), &
-                & MLS_CHARTYPE, lastChar-firstChar+1, &
+                & MLS_CHARTYPE, hsize(lastChar-firstChar+1), &
                 & anText(firstChar:lastChar))
         if ( status /= PGS_S_SUCCESS) then
            CALL MLSMessage(MLSMSG_Error, ModuleName, &
@@ -1226,6 +1227,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.49  2009/09/29 23:36:28  pwagner
+!# Changes needed by 64-bit build
+!#
 !# Revision 2.48  2009/08/26 16:33:58  pwagner
 !# Workaround for buggy hdfeos function he5_EHinqglatts; added dumpGlobalAttributes
 !#
