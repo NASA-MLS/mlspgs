@@ -11,6 +11,7 @@
 
 module HE5_SWAPI_REAL
 
+  use hdf5, only: hsize_t, hssize_t, size_t
   public :: HE5_SWRDFLD_REAL, HE5_SWRDFLD_REAL_2D, HE5_SWRDFLD_REAL_3D, &
     & HE5_SWWRFLD_REAL, HE5_SWWRFLD_REAL_2D, HE5_SWWRFLD_REAL_3D, &
     & HE5_EHWRGLATT_REAL, HE5_EHRDGLATT_REAL, &
@@ -32,7 +33,7 @@ contains
     integer, intent(in) :: FILEID      ! File ID
     character(len=*), intent(in) :: ATTRNAME     ! Field name
     integer, intent(in) :: DATATYPE
-    integer, intent(in) :: COUNT   ! Stride array
+    integer(kind=size_t), intent(in) :: COUNT   ! Stride array
     real, intent(in) :: BUFFER(:)       ! Buffer for write
 
     integer, external :: HE5_EHWRGLATT
@@ -68,9 +69,9 @@ contains
     & STARTS, STRIDES, EDGES, BUFFER )
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: FIELDNAME     ! Field name
-    integer, intent(in) :: STARTS(*)    ! Start array
-    integer, intent(in) :: STRIDES(*)   ! Stride array
-    integer, intent(in) :: EDGES(*)     ! Edge array
+    integer(kind=size_t), intent(in) :: STARTS(*)    ! Start array
+    integer(kind=size_t), intent(in) :: STRIDES(*)   ! Stride array
+    integer(kind=size_t), intent(in) :: EDGES(*)     ! Edge array
     real, intent(out) :: BUFFER(:)      ! Buffer for read
 
     integer, external :: HE5_SWRDFLD
@@ -83,13 +84,21 @@ contains
     & STARTS, STRIDES, EDGES, BUFFER )
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: FIELDNAME     ! Field name
-    integer, intent(in) :: STARTS(*)    ! Start array
-    integer, intent(in) :: STRIDES(*)   ! Stride array
-    integer, intent(in) :: EDGES(*)     ! Edge array
+    integer(kind=size_t), intent(in) :: STARTS(*)    ! Start array
+    integer(kind=size_t), intent(in) :: STRIDES(*)   ! Stride array
+    integer(kind=size_t), intent(in) :: EDGES(*)     ! Edge array
     real, intent(out) :: BUFFER(:,:)    ! Buffer for read
 
     integer, external :: HE5_SWRDFLD
+    !integer(kind=size_t), dimension(2) :: hstarts, hstrides, hedges
+    !hstarts(1:2) = starts(1:2)
+    !hstrides(1:2) = strides(1:2)
+    !hedges(1:2) = edges(1:2)
 
+      ! print *, 'In HE5_SWRDFLD_REAL_2D: ', trim(fieldname)
+      ! print *, 'starts:  ', starts(1:2)
+      ! print *, 'strides: ', strides(1:2)
+      ! print *, 'edges: ', edges(1:2)
     HE5_SWrdfld_real_2d  = HE5_SWrdfld(swathid, fieldname, starts, strides, &
       & edges, buffer )
   end function HE5_SWRDFLD_REAL_2D
@@ -98,9 +107,9 @@ contains
     & STARTS, STRIDES, EDGES, BUFFER )
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: FIELDNAME     ! Field name
-    integer, intent(in) :: STARTS(*)    ! Start array
-    integer, intent(in) :: STRIDES(*)   ! Stride array
-    integer, intent(in) :: EDGES(*)     ! Edge array
+    integer(kind=size_t), intent(in) :: STARTS(*)    ! Start array
+    integer(kind=size_t), intent(in) :: STRIDES(*)   ! Stride array
+    integer(kind=size_t), intent(in) :: EDGES(*)     ! Edge array
     real, intent(out) :: BUFFER(:,:,:)  ! Buffer for read
 
     integer, external :: HE5_SWRDFLD
@@ -113,13 +122,24 @@ contains
     & STARTS, STRIDES, EDGES, BUFFER )
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: FIELDNAME     ! Field name
-    integer, intent(in) :: STARTS(*)    ! Start array
-    integer, intent(in) :: STRIDES(*)   ! Stride array
-    integer, intent(in) :: EDGES(*)     ! Edge array
+    integer(kind=size_t), intent(in) :: STARTS(*)    ! Start array
+    integer(kind=size_t), intent(in) :: STRIDES(*)   ! Stride array
+    integer(kind=size_t), intent(in) :: EDGES(*)     ! Edge array
     real, intent(in) :: BUFFER(:)       ! Buffer for write
 
+    ! integer(kind=size_t) :: COUNTS(1)
     integer, external :: HE5_SWWRFLD
 
+    ! print *, 'In HE5_SWRDFLD_REAL: ', trim(fieldname)
+    ! print *, 'starts:  ', starts(1:1)
+    ! print *, 'strides: ', strides(1:1)
+    ! print *, 'edges: ', edges(1:1)
+    ! if ( edges(1) < size(BUFFER) ) then
+    !   print *, 'Warning--edges array too small for values'
+    ! endif
+    ! counts = max(edges(1), size(BUFFER) )
+    ! print *, 'counts: ', counts(1:1)
+    ! print *, 'size(BUFFER): ', size(BUFFER)
     HE5_SWwrfld_real = HE5_SWwrfld(swathid, fieldname, starts, strides, &
       & edges, buffer )
   end function HE5_SWWRFLD_REAL
@@ -128,9 +148,9 @@ contains
     & STARTS, STRIDES, EDGES, BUFFER )
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: FIELDNAME     ! Field name
-    integer, intent(in) :: STARTS(*)    ! Start array
-    integer, intent(in) :: STRIDES(*)   ! Stride array
-    integer, intent(in) :: EDGES(*)     ! Edge array
+    integer(kind=size_t), intent(in) :: STARTS(*)    ! Start array
+    integer(kind=size_t), intent(in) :: STRIDES(*)   ! Stride array
+    integer(kind=size_t), intent(in) :: EDGES(*)     ! Edge array
     real, intent(in) :: BUFFER(:,:)     ! Buffer for write
 
     integer, external :: HE5_SWWRFLD
@@ -143,9 +163,9 @@ contains
     & STARTS, STRIDES, EDGES, BUFFER )
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: FIELDNAME     ! Field name
-    integer, intent(in) :: STARTS(*)    ! Start array
-    integer, intent(in) :: STRIDES(*)   ! Stride array
-    integer, intent(in) :: EDGES(*)     ! Edge array
+    integer(kind=size_t), intent(in) :: STARTS(*)    ! Start array
+    integer(kind=size_t), intent(in) :: STRIDES(*)   ! Stride array
+    integer(kind=size_t), intent(in) :: EDGES(*)     ! Edge array
     real, intent(in) :: BUFFER(:,:,:)   ! Buffer for write
 
     integer, external :: HE5_SWWRFLD
@@ -159,7 +179,7 @@ contains
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: ATTRNAME     ! Field name
     integer, intent(in) :: DATATYPE
-    integer, intent(in) :: COUNT   ! Stride array
+    integer(kind=size_t), intent(in) :: COUNT   ! Stride array
     real, intent(in) :: BUFFER(:)       ! Buffer for write
 
     integer, external :: HE5_SWWRATTR
@@ -174,7 +194,7 @@ contains
     character(len=*), intent(in) :: FIELDNAME     ! Field name
     character(len=*), intent(in) :: ATTRNAME     ! Field name
     integer, intent(in) :: DATATYPE
-    integer, intent(in) :: COUNT   ! Stride array
+    integer(kind=size_t), intent(in) :: COUNT   ! Stride array
     real, intent(in) :: BUFFER(:)       ! Buffer for write
 
     integer, external :: HE5_SWWRLATTR
@@ -221,6 +241,9 @@ contains
 end module HE5_SWAPI_REAL
 
 ! $Log$
+! Revision 2.8  2009/09/29 23:34:38  pwagner
+! Changes needed by 64-bit build
+!
 ! Revision 2.7  2009/06/23 18:25:43  pwagner
 ! Prevent Intel from optimizing ident string away
 !
