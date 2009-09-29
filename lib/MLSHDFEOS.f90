@@ -54,11 +54,13 @@ module MLSHDFEOS
     &                      SWWRFLD_INTEGER
   use SWAPI_REAL, only: SWRDFLD_REAL, SWRDFLD_REAL_2D, SWRDFLD_REAL_3D, &
     &                   SWWRFLD_REAL, SWWRFLD_REAL_2D, SWWRFLD_REAL_3D
+  use hdf5, only: hsize_t, hssize_t, size_t
 
   implicit NONE
   private
 
-  public :: HE5_EHWRGLATT, HE5_EHRDGLATT, MLS_EHWRGLATT, MLS_ISGLATT, &
+  public :: HE5_EHWRGLATT, HE5_EHRDGLATT, HSIZE, HSIZES, &
+    & MLS_EHWRGLATT, MLS_ISGLATT, &
     & MLS_DFLDSETUP, MLS_GFLDSETUP, &
     & MLS_SWDEFDIM, MLS_SWDIMINFO, MLS_SWRDFLD, MLS_SWWRFLD, &
     & MLS_SWATTACH, MLS_SWCREATE, MLS_SWDETACH, MLS_GDCREATE, MLS_GDWRATTR, &
@@ -202,6 +204,12 @@ module MLSHDFEOS
   logical, parameter :: DEEBUG = .false.  
   character(len=1), parameter :: BLANK = ' '
 
+  ! Convenient to put stuff here
+  ! integer, parameter :: MAXRANK = 7
+  ! integer(kind=hsize_t), dimension(MAXRANK) :: hstart
+  ! integer(kind=hsize_t), dimension(MAXRANK) :: hstride
+  ! integer(kind=hsize_t), dimension(MAXRANK) :: hedge
+
 contains ! ======================= Public Procedures =========================
 
   ! ---------------------------------------------  MLS_EHWRGLATT  -----
@@ -216,10 +224,10 @@ contains ! ======================= Public Procedures =========================
     call MLSMessageCalls( 'push', constantName='MLS_EHWRGLATT_char' )
     if ( len_trim(buffer) > 0 ) then
       MLS_EHWRGLATT_char = he5_ehwrglatt_character_scalar( FILEID, &
-      & ATTRNAME, DATATYPE, max(COUNT, len_trim(BUFFER)), BUFFER )
+      & ATTRNAME, DATATYPE, hsize(max(COUNT, len_trim(BUFFER))), BUFFER )
     else
       MLS_EHWRGLATT_char = he5_ehwrglatt_character_scalar( FILEID, &
-      & ATTRNAME, DATATYPE, 1, BLANK )
+      & ATTRNAME, DATATYPE, hsize(1), BLANK )
     endif
     call MLSMessageCalls( 'pop' )
 
@@ -277,10 +285,10 @@ contains ! ======================= Public Procedures =========================
       return
     elseif ( len_trim(buffer) > 0 ) then
       MLS_EHWRGLATT_textfile = he5_ehwrglatt_character_scalar( FILEID, &
-      & ATTRNAME, DATATYPE, max(1, len_trim(BUFFER)), BUFFER )
+      & ATTRNAME, DATATYPE, hsize(max(1, len_trim(BUFFER))), BUFFER )
     else
       MLS_EHWRGLATT_textfile = he5_ehwrglatt_character_scalar( FILEID, &
-      & ATTRNAME, DATATYPE, 1, BLANK )
+      & ATTRNAME, DATATYPE, hsize(1), BLANK )
     endif
     call MLSMessageCalls( 'pop' )
 
@@ -388,7 +396,7 @@ contains ! ======================= Public Procedures =========================
           & 'GRIDNAME call to MLS_GDCREATE already there: ' // trim(GRIDNAME))
       endif
       MLS_GDCREATE = he5_gdcreate(Fileid, trim(GRIDNAME), &
-        & xdimsize, ydimsize, upleft, lowright)
+        & hsize(xdimsize), hsize(ydimsize), upleft, lowright)
     case default
       MLS_GDCREATE = -1
     end select
@@ -411,10 +419,10 @@ contains ! ======================= Public Procedures =========================
     call MLSMessageCalls( 'push', constantName='mls_gdwrattr' )
     if ( len_trim(buffer) > 0 ) then
       mls_gdwrattr = HE5_GDWRATTR( GRIDID, &
-      & ATTRNAME, DATATYPE, max(COUNT, len_trim(BUFFER)), BUFFER )
+      & ATTRNAME, DATATYPE, hsize(max(COUNT, len_trim(BUFFER))), BUFFER )
     else
       mls_gdwrattr = HE5_GDWRATTR( GRIDID, &
-      & ATTRNAME, DATATYPE, 1, BLANK )
+      & ATTRNAME, DATATYPE, hsize(1), BLANK )
     endif
 
     call MLSMessageCalls( 'pop' )
@@ -709,7 +717,7 @@ contains ! ======================= Public Procedures =========================
     case (HDFVERSION_4)
       MLS_SWdefdim = swdefdim(swathid, DIMNAME, DIMSIZE)
     case (HDFVERSION_5)
-        MLS_SWdefdim = HE5_SWdefdim(swathid, DIMNAME, DIMSIZE)
+        MLS_SWdefdim = HE5_SWdefdim(swathid, DIMNAME, hsize(DIMSIZE))
     case default
       MLS_SWdefdim = -1
     end select
@@ -863,7 +871,7 @@ contains ! ======================= Public Procedures =========================
          & MERGE)
     case (HDFVERSION_5)
       if ( chunk_rank /= 0 ) &
-        & mls_dfldsetup = HE5_SWdefchunk(swathid, chunk_rank, chunk_dims)
+        & mls_dfldsetup = HE5_SWdefchunk( swathid, chunk_rank, hsizes(chunk_dims) )
       if ( mls_dfldsetup == 0 ) then
         if ( present(iFill) ) then
           mls_dfldsetup = HE5_SWsetfill(swathid, trim(fieldname), &
@@ -902,7 +910,7 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in)          :: MERGE
     integer, intent(in)          :: CHUNK_RANK
     integer, dimension(RANK), intent(in) :: CHUNK_DIMS
-    character(len=*), optional :: FIleName
+    character(len=*), optional :: FileName
     integer, optional, intent(in) :: hdfVersion
     logical, optional, intent(in) :: DONTFAIL
     integer, optional, intent(in) :: iFill
@@ -941,7 +949,7 @@ contains ! ======================= Public Procedures =========================
         & Datatype, MERGE)
     case (HDFVERSION_5)
       if ( chunk_rank /= 0 ) &
-        & mls_gfldsetup = HE5_SWdefchunk(swathid, chunk_rank, chunk_dims)
+        & mls_gfldsetup = HE5_SWdefchunk( swathid, chunk_rank, hsizes(chunk_dims) )
       if ( mls_gfldsetup == 0 ) then
         if ( present(iFill) ) then
           mls_gfldsetup = HE5_SWsetfill(swathid, trim(fieldname), &
@@ -1085,7 +1093,7 @@ contains ! ======================= Public Procedures =========================
         & start, stride, edge, values)
     case (HDFVERSION_5)
       mls_swrdfld_double_1d = HE5_SWRDFLD_DOUBLE(swathid, trim(fieldname), &
-        & start, stride, edge, values)
+        & hsizes(start), hsizes(stride), hsizes(edge), values)
     case default
       mls_swrdfld_double_1d = -1
     end select
@@ -1141,7 +1149,7 @@ contains ! ======================= Public Procedures =========================
         & start, stride, edge, values)
     case (HDFVERSION_5)
       mls_swrdfld_double_2d = HE5_SWRDFLD_DOUBLE_2D(swathid, trim(fieldname), &
-        & start, stride, edge, values)
+        & hsizes(start), hsizes(stride), hsizes(edge), values)
     case default
       mls_swrdfld_double_2d = -1
     end select
@@ -1197,7 +1205,7 @@ contains ! ======================= Public Procedures =========================
         & start, stride, edge, values)
     case (HDFVERSION_5)
       mls_swrdfld_double_3d = HE5_SWRDFLD_DOUBLE_3D(swathid, trim(fieldname), &
-        & start, stride, edge, values)
+        & hsizes(start), hsizes(stride), hsizes(edge), values)
     case default
       mls_swrdfld_double_3d = -1
     end select
@@ -1253,7 +1261,7 @@ contains ! ======================= Public Procedures =========================
         & start, stride, edge, values)
     case (HDFVERSION_5)
       mls_swrdfld_integer = HE5_SWRDFLD_INTEGER(swathid, trim(fieldname), &
-        & start, stride, edge, values)
+        & hsizes(start), hsizes(stride), hsizes(edge), values)
     case default
       mls_swrdfld_integer = -1
     end select
@@ -1309,7 +1317,7 @@ contains ! ======================= Public Procedures =========================
         & start, stride, edge, values)
     case (HDFVERSION_5)
       mls_swrdfld_REAL_1d = HE5_SWRDFLD_REAL(swathid, trim(fieldname), &
-        & start, stride, edge, values)
+        & hsizes(start), hsizes(stride), hsizes(edge), values)
     case default
       mls_swrdfld_REAL_1d = -1
     end select
@@ -1364,8 +1372,17 @@ contains ! ======================= Public Procedures =========================
       mls_swrdfld_REAL_2d = SWRDFLD_REAL_2D(swathid, trim(fieldname), &
         & start, stride, edge, values)
     case (HDFVERSION_5)
+      if ( DEEBUG ) then
+        print *, 'About to read 2-d field: ', trim(fieldname)
+        print *, 'start:  ', start
+        print *, 'stride: ', stride
+        print *, 'edge: ', edge
+        print *, 'hsize_t(start):  ', hsizes(start)
+        print *, 'hsize_t(stride): ', hsizes(stride)
+        print *, 'hsize_t(edge): ', hsizes(edge)
+      endif
       mls_swrdfld_REAL_2d = HE5_SWRDFLD_REAL_2D(swathid, trim(fieldname), &
-        & start, stride, edge, values)
+        & hsizes(start), hsizes(stride), hsizes(edge), values)
     case default
       mls_swrdfld_REAL_2d = -1
     end select
@@ -1421,7 +1438,7 @@ contains ! ======================= Public Procedures =========================
         & start, stride, edge, values)
     case (HDFVERSION_5)
       mls_swrdfld_REAL_3d = HE5_SWRDFLD_REAL_3D(swathid, trim(fieldname), &
-        & start, stride, edge, values)
+        & hsizes(start), hsizes(stride), hsizes(edge), values)
     case default
       mls_swrdfld_REAL_3d = -1
     end select
@@ -1443,10 +1460,10 @@ contains ! ======================= Public Procedures =========================
     call MLSMessageCalls( 'push', constantName='mls_swwrattr' )
     if ( len_trim(buffer) > 0 ) then
       mls_swwrattr = HE5_SWWRATTR( SWATHID, &
-      & ATTRNAME, DATATYPE, max(COUNT, len_trim(BUFFER)), BUFFER )
+      & ATTRNAME, DATATYPE, hsize(max(COUNT, len_trim(BUFFER))), BUFFER )
     else
       mls_swwrattr = HE5_SWWRATTR( SWATHID, &
-      & ATTRNAME, DATATYPE, 1, BLANK )
+      & ATTRNAME, DATATYPE, hsize(1), BLANK )
     endif
     call MLSMessageCalls( 'pop' )
 
@@ -1465,10 +1482,10 @@ contains ! ======================= Public Procedures =========================
     call MLSMessageCalls( 'push', constantName='mls_swwrlattr' )
     if ( len_trim(buffer) > 0 ) then
       mls_swwrlattr = HE5_SWWRLATTR( SWATHID, FIELDNAME, &
-      & ATTRNAME, DATATYPE, max(COUNT, len_trim(BUFFER)), BUFFER )
+      & ATTRNAME, DATATYPE, hsize(max(COUNT, len_trim(BUFFER))), BUFFER )
     else
       mls_swwrlattr = HE5_SWWRLATTR( SWATHID, FIELDNAME, &
-      & ATTRNAME, DATATYPE, 1, BLANK )
+      & ATTRNAME, DATATYPE, hsize(1), BLANK )
     endif
     call MLSMessageCalls( 'pop' )
 
@@ -1527,7 +1544,7 @@ contains ! ======================= Public Procedures =========================
         & start, stride, edge, values)
     case (HDFVERSION_5)
       mls_SWWRFLD_CHAR_1D = HE5_SWWRFLD(swathid, trim(fieldname), &
-        & start, stride, edge, values)
+        & hsizes(start), hsizes(stride), hsizes(edge), values)
     case default
       mls_SWWRFLD_CHAR_1D = -1
     end select
@@ -1586,7 +1603,7 @@ contains ! ======================= Public Procedures =========================
         & start, stride, edge, values)
     case (HDFVERSION_5)
       mls_SWWRFLD_double_1d = HE5_SWWRFLD_DOUBLE(swathid, trim(fieldname), &
-        & start, stride, edge, values)
+        & hsizes(start), hsizes(stride), hsizes(edge), values)
     case default
       mls_SWWRFLD_double_1d = -1
     end select
@@ -1642,7 +1659,7 @@ contains ! ======================= Public Procedures =========================
         & start, stride, edge, values)
     case (HDFVERSION_5)
       mls_SWWRFLD_double_2d = HE5_SWWRFLD_DOUBLE_2D(swathid, trim(fieldname), &
-        & start, stride, edge, values)
+        & hsizes(start), hsizes(stride), hsizes(edge), values)
     case default
       mls_SWWRFLD_double_2d = -1
     end select
@@ -1698,7 +1715,7 @@ contains ! ======================= Public Procedures =========================
         & start, stride, edge, values)
     case (HDFVERSION_5)
       mls_SWWRFLD_double_3d = HE5_SWWRFLD_DOUBLE_3D(swathid, trim(fieldname), &
-        & start, stride, edge, values)
+        & hsizes(start), hsizes(stride), hsizes(edge), values)
     case default
       mls_SWWRFLD_double_3d = -1
     end select
@@ -1754,7 +1771,7 @@ contains ! ======================= Public Procedures =========================
         & start, stride, edge, values)
     case (HDFVERSION_5)
       mls_SWWRFLD_integer = HE5_SWWRFLD_INTEGER(swathid, trim(fieldname), &
-        & start, stride, edge, values)
+        & hsizes(start), hsizes(stride), hsizes(edge), values)
     case default
       mls_SWWRFLD_integer = -1
     end select
@@ -1779,6 +1796,7 @@ contains ! ======================= Public Procedures =========================
     integer, optional, intent(in) :: hdfVersion
     logical, optional, intent(in) :: DONTFAIL
     ! Internal variables
+    logical, parameter :: DEEBUG = .false.
     logical :: myDontFail
     integer :: myHdfVersion
     logical :: needsFileName
@@ -1804,13 +1822,20 @@ contains ! ======================= Public Procedures =========================
     else
       myHdfVersion = hdfVersion
     endif
+    if(DEEBUG) print *, 'swathid: ', swathid
+    if(DEEBUG) print *, 'myHdfVersion: ', myHdfVersion
+    if(DEEBUG) print *, 'fieldname: ', trim(fieldname)
+    if(DEEBUG) print *, 'start: ', hsizes(start)
+    if(DEEBUG) print *, 'stride: ', hsizes(stride)
+    if(DEEBUG) print *, 'edge: ', hsizes(edge)
+    if(DEEBUG) print *, 'shape(values): ', shape(values)
     select case (myHdfVersion)
     case (HDFVERSION_4)
       mls_SWWRFLD_REAL_1d = SWWRFLD_REAL(swathid, trim(fieldname), &
         & start, stride, edge, values)
     case (HDFVERSION_5)
       mls_SWWRFLD_REAL_1d = HE5_SWWRFLD_REAL(swathid, trim(fieldname), &
-        & start, stride, edge, values)
+        & hsizes(start), hsizes(stride), hsizes(edge), values)
     case default
       mls_SWWRFLD_REAL_1d = -1
     end select
@@ -1835,9 +1860,11 @@ contains ! ======================= Public Procedures =========================
     integer, optional, intent(in) :: hdfVersion
     logical, optional, intent(in) :: DONTFAIL
     ! Internal variables
+    logical, parameter :: DEEBUG = .false.
     logical :: myDontFail
     integer :: myHdfVersion
     logical :: needsFileName
+    ! Executable
     call MLSMessageCalls( 'push', constantName='mls_SWWRFLD_REAL_2D' )
     mls_SWWRFLD_REAL_2d = 0
     myDontFail = .false.
@@ -1863,9 +1890,9 @@ contains ! ======================= Public Procedures =========================
     if(DEEBUG) print *, 'swathid: ', swathid
     if(DEEBUG) print *, 'myHdfVersion: ', myHdfVersion
     if(DEEBUG) print *, 'fieldname: ', trim(fieldname)
-    if(DEEBUG) print *, 'start: ', start
-    if(DEEBUG) print *, 'stride: ', stride
-    if(DEEBUG) print *, 'edge: ', edge
+    if(DEEBUG) print *, 'start: ', hsizes(start)
+    if(DEEBUG) print *, 'stride: ', hsizes(stride)
+    if(DEEBUG) print *, 'edge: ', hsizes(edge)
     if(DEEBUG) print *, 'shape(values): ', shape(values)
     select case (myHdfVersion)
     case (HDFVERSION_4)
@@ -1873,7 +1900,7 @@ contains ! ======================= Public Procedures =========================
         & start, stride, edge, values)
     case (HDFVERSION_5)
       mls_SWWRFLD_REAL_2d = HE5_SWWRFLD_REAL_2D(swathid, trim(fieldname), &
-        & start, stride, edge, values)
+        & hsizes(start), hsizes(stride), hsizes(edge), values)
     case default
       mls_SWWRFLD_REAL_2d = -1
     end select
@@ -1929,7 +1956,7 @@ contains ! ======================= Public Procedures =========================
         & start, stride, edge, values)
     case (HDFVERSION_5)
       mls_SWWRFLD_REAL_3d = HE5_SWWRFLD_REAL_3D(swathid, trim(fieldname), &
-        & start, stride, edge, values)
+        & hsizes(start), hsizes(stride), hsizes(edge), values)
     case default
       mls_SWWRFLD_REAL_3d = -1
     end select
@@ -1948,6 +1975,7 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in) :: HdfVersion
     integer, optional, intent(out) :: error
     ! Internal variables
+    integer(kind=size_t)             :: hlistsize
     integer                          :: listsize
     character(len=MAXDLISTLENGTH)    :: fieldlist
     integer                          :: nswaths
@@ -1961,10 +1989,14 @@ contains ! ======================= Public Procedures =========================
     case (HDFVERSION_4)
       nswaths = swinqswath(trim(filename), fieldlist, listsize)
     case (HDFVERSION_5)
-      nswaths = HE5_swinqswath(trim(filename), fieldlist, listsize)
+      nswaths = HE5_swinqswath(trim(filename), fieldlist, hlistsize)
+      listsize = hlistsize
     end select
     if ( present(error) ) error = min(0, nswaths)
-    if ( nswaths < 1 ) return
+    if ( nswaths < 1 ) then
+      call MLSMessageCalls( 'pop' )
+      return
+    endif
     if ( listsize > MAXDLISTLENGTH ) then
        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'list size too big in mls_swath_in_file_sca ' // trim(filename) )
@@ -1986,6 +2018,7 @@ contains ! ======================= Public Procedures =========================
     logical, dimension(:), intent(out) :: which
     integer, optional, intent(out) :: error
     ! Internal variables
+    integer(kind=size_t)             :: hlistsize
     integer                          :: listsize
     character(len=MAXDLISTLENGTH)    :: fieldlist
     integer                          :: nswaths
@@ -2003,10 +2036,14 @@ contains ! ======================= Public Procedures =========================
     case (HDFVERSION_4)
       nswaths = swinqswath(trim(filename), fieldlist, listsize)
     case (HDFVERSION_5)
-      nswaths = HE5_swinqswath(trim(filename), fieldlist, listsize)
+      nswaths = HE5_swinqswath(trim(filename), fieldlist, hlistsize)
+      listsize = hlistsize
     end select
     if ( present(error) ) error = min(0, nswaths)
-    if ( nswaths < 1 ) return
+    if ( nswaths < 1 ) then
+      call MLSMessageCalls( 'pop' )
+      return
+    endif
     if (Deebug) print *, ' nswaths is ', nswaths
     if (Deebug) print *, ' listsize is ', listsize
     if (Deebug) print *, ' fieldlist is ', trim(fieldlist)
@@ -2025,6 +2062,29 @@ contains ! ======================= Public Procedures =========================
   end function mls_swath_in_file_arr
 
 ! ======================= Private Procedures =========================  
+
+  ! ---------------- hsize ------------
+  function hsize ( arg ) result ( h )
+    ! Return arg with same integer value
+    ! but with kind value size_t or, someday, hdfeos5size_t
+    integer,  intent(in)               :: arg
+    integer(kind=size_t)               :: h
+    integer :: i
+    h = int(arg, size_t)
+  end function hsize
+
+  ! ---------------- hsizes ------------
+  function hsizes ( ints ) result ( h )
+    ! Return array with same integer values as ints
+    ! but with kind value size_t or, someday, hdfeos5size_t
+    integer, dimension(:), intent(in)               :: ints
+    integer(kind=size_t), dimension(size(ints))     :: h
+    integer :: i
+    h = 0
+    do i=1, size(ints)
+      h(i) = int(ints(i), size_t)
+    enddo
+  end function hsizes
 
   ! ---------------------------------------------  is_datafield_in_swath  -----
   logical function is_datafield_in_swath(swathid, field, HdfVersion)
@@ -2147,6 +2207,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDFEOS
 
 ! $Log$
+! Revision 2.39  2009/09/29 23:33:49  pwagner
+! Changes needed by 64-bit build
+!
 ! Revision 2.38  2009/06/23 18:25:42  pwagner
 ! Prevent Intel from optimizing ident string away
 !
