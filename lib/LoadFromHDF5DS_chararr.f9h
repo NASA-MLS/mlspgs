@@ -20,7 +20,7 @@
     integer :: MEMSPACEID               ! ID of dataspace
     integer :: SETID                    ! ID of dataset
     integer :: STRINGTYPE               ! String type
-    integer :: STRINGSIZE               ! String size
+    integer(kind=Size_t) :: STRINGSIZE               ! String size
 
     integer :: Rank
 
@@ -66,6 +66,9 @@
 !   end subroutine LoadFromHDF5DS_chararr*
 
 ! $Log$
+! Revision 2.2  2009/09/29 23:31:49  pwagner
+! Changes needed by 64-bit build
+!
 ! Revision 2.1  2008/05/09 23:27:18  vsnyder
 ! Initial commit
 !

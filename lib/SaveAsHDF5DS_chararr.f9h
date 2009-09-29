@@ -40,7 +40,7 @@
     call h5tcopy_f ( H5T_NATIVE_CHARACTER, stringtype, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to create stringtype for array' // trim(name) )
-    call h5tset_size_f ( stringtype, max(len(value), 1), status )
+    call h5tset_size_f ( stringtype, int(max(len(value), 1), size_t), status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to set size for stringtype ' // trim(name) )
     ! Create the dataspace
@@ -56,6 +56,9 @@
 !   end subroutine SaveAsHDF5DS_chararr*
 
 ! $Log$
+! Revision 2.2  2009/09/29 23:32:09  pwagner
+! Changes needed by 64-bit build
+!
 ! Revision 2.1  2008/05/09 23:27:18  vsnyder
 ! Initial commit
 !
