@@ -25,6 +25,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
     & MLS_HDF_VERSION, MLS_INQSWATH, open_MLSFile, close_MLSFile
   use MLSFillValues, only: ExtractArray, GatherArray, &
     & IsFillValue, ReplaceFillValues
+  use MLSHDFEOS, only: HSIZE
   use MLSMessageModule, only: MLSMSG_Allocate, MLSMSG_DeAllocate, MLSMSG_Error, &
     & MLSMSG_Warning, MLSMessage, MLSMessageCalls
   use MLSNumerics, only: FindInRange
@@ -38,6 +39,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   use Output_M, only: blanks, Output, outputNamedValue, &
     & resumeOutput, suspendOutput
   use STRING_TABLE, only: DISPLAY_STRING
+  use HDF5, only: size_t
 
   implicit none
 
@@ -499,6 +501,7 @@ contains ! =====     Public Procedures     =============================
     logical :: swath_exists
     integer :: swathid
     type (L2GPData_T) :: totall2gp
+    logical, parameter :: DEEBUG = .false.
 
     ! Executable code
     call MLSMessageCalls( 'push', constantName='AppendL2GPData_MLSFile' )
@@ -3467,10 +3470,12 @@ contains
     integer, dimension(MAXFNFIELDS) :: types
     integer, dimension(7) :: numberType
     integer, dimension(7) :: flddims
+    integer(kind=size_t), dimension(7) :: hflddims
     character (LEN=480) :: msr
 
     integer :: first, freq, lev, nDims, nFlds, size, swid, status
-    integer :: start(3), stride(3), edge(3), dims(3)
+    integer, dimension(3) :: start, stride, edge, dims
+    integer(kind=size_t), dimension(3) :: hdims
     integer :: nFreqs, nLevels, nTimes, nFreqsOr1, nLevelsOr1, myNumProfs
     logical :: firstCheck, lastCheck
 
@@ -3520,7 +3525,8 @@ contains
     if( hdfVersion == HDFVERSION_4 ) then
       nDims = swinqdims(swid, list, dims)
     else
-      nDims = HE5_SWinqdims(swid, list, dims)
+      nDims = HE5_SWinqdims(swid, list, hdims)
+      dims = hdims
       nFlds = HE5_SWinqdflds( swid, fieldlist, ranks, types )
       ReadingConvergence = isInList( lowerCase(fieldList), 'convergence', '-fc' )
     endif
@@ -3540,8 +3546,9 @@ contains
     if ( hdfVersion == HDFVERSION_5 ) then
       ! This will be wrong if timeIsUnlim .eq. .TRUE. . 
       ! HE5_SWdiminfo returns 1 instead of the right answer.
-      status = HE5_swfldinfo(swid, trim(DF_Name), rank, flddims, &
+      status = HE5_swfldinfo(swid, trim(DF_Name), rank, hflddims, &
         & numberType, dimlist, maxdimlist)
+      flddims = hflddims
       call GetHashElement (dimlist, &
        & maxdimlist, 'nTimes', &
        & maxDimName, .false.)
@@ -4211,7 +4218,7 @@ contains
     character (len=*), intent(IN), optional :: swathName ! Defaults->l2gp%name
     integer,intent(IN),optional::offset
     ! Parameters
-
+    logical, parameter :: DEEBUG = .false.
     character (len=*), parameter :: WR_ERR = 'Failed to write data field '
 
     ! Variables
@@ -4245,7 +4252,7 @@ contains
     edge(2) = l2gp%nLevels
     edge(3) = l2gp%nTimes
     if (DEEBUG) then
-      call output( 'Writing data now', advance='yes' )
+      call output( 'Writing data now ' // trim(name), advance='yes' )
       call outputNamedValue( 'stride, start, edge', (/ stride(3), start(3), edge(3) /) )
       call outputNamedValue( 'shape(Geod. Angle', shape(l2gp%geodAngle) )
     endif
@@ -4253,11 +4260,13 @@ contains
     if ( l2gp%nFreqs > 0 ) then
        ! Value and Precision are 3-D fields
        if (DEEBUG) print *, 'start, stride, edge ', start, stride, edge
+       ! What the devil???
+       ! Why aren't we writing a 3-d array here??
        status = mls_SWwrfld(swid, 'L2gpValue', start, stride, edge, &
-            & reshape(real(l2gp%l2gpValue), (/size(l2gp%l2gpValue)/)), &
+            & reshape(l2gp%l2gpValue, edge), &
             & hdfVersion=hdfVersion )
        status = mls_SWwrfld(swid, 'L2gpPrecision', start, stride, edge, &
-            & reshape(real(l2gp%l2gpPrecision), (/size(l2gp%l2gpPrecision)/)), &
+            & reshape(l2gp%l2gpPrecision, edge), &
             & hdfVersion=hdfVersion )
 
     else if ( l2gp%nLevels > 0 ) then
@@ -4265,9 +4274,9 @@ contains
       
        if (DEEBUG) print *, 'start, stride, edge: ', start(2:3), stride(2:3), edge(2:3)
        status = mls_SWwrfld( swid, 'L2gpValue', start(2:3), stride(2:3), &
-            edge(2:3), real(l2gp%l2gpValue(1,:,:) ), hdfVersion=hdfVersion)
+            edge(2:3), l2gp%l2gpValue(1,:,:), hdfVersion=hdfVersion)
        status = mls_SWwrfld( swid, 'L2gpPrecision', start(2:3), stride(2:3), &
-            edge(2:3), real(l2gp%l2gpPrecision(1,:,:) ), hdfVersion=hdfVersion)
+            edge(2:3), l2gp%l2gpPrecision(1,:,:), hdfVersion=hdfVersion)
     else
 
        ! Value and Precision are 1-D fields
@@ -4397,13 +4406,13 @@ contains
     
     !   - -   S w a t h   A t t r i b u t e s   - -
     status = he5_swwrattr(swid, trim(l2gp%verticalCoordinate), &
-      & rgp_type, size(l2gp%pressures), &
+      & rgp_type, hsize(size(l2gp%pressures)), &
       & l2gp%pressures)
     field_name = l2gp%verticalCoordinate ! 'Pressure'
     status = mls_swwrattr(swid, 'VerticalCoordinate', MLS_CHARTYPE, 1, &
       & field_name)
     if ( SWATHLEVELMISSINGVALUE ) &
-      & status = he5_swwrattr(swid, 'MissingValue', rgp_type, 1, &
+      & status = he5_swwrattr(swid, 'MissingValue', rgp_type, hsize(1), &
       & (/ real(l2gp%MissingValue, rgp) /) )
     
     !   - -   G e o l o c a t i o n   A t t r i b u t e s   - -
@@ -4436,15 +4445,15 @@ contains
         if ( trim(theTitles(field)) == 'Time' ) then
           status = he5_swwrlattr(swid, trim(theTitles(field)), &
             & 'MissingValue', &
-            & HE5T_NATIVE_DOUBLE, 1, (/ real(l2gp%MissingValue, r8) /) )
+            & HE5T_NATIVE_DOUBLE, hsize(1), (/ real(l2gp%MissingValue, r8) /) )
         elseif ( trim(theTitles(field)) == 'ChunkNumber' ) then
           status = he5_swwrlattr(swid, trim(theTitles(field)), &
             & 'MissingValue', &
-            & HE5T_NATIVE_INT, 1, (/ int(l2gp%MissingValue) /) )
+            & HE5T_NATIVE_INT, hsize(1), (/ int(l2gp%MissingValue) /) )
         else
           status = he5_swwrlattr(swid, trim(theTitles(field)), &
             & 'MissingValue', &
-            & rgp_type, 1, (/ real(l2gp%MissingValue, rgp) /) )
+            & rgp_type, hsize(1), (/ real(l2gp%MissingValue, rgp) /) )
         endif
         if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
          & "Unable to write local attribute to " // trim(theTitles(field)) )
@@ -4523,7 +4532,7 @@ contains
     status = mls_swwrlattr(swid, 'L2gpValue', 'Units', &
       & MLS_CHARTYPE, 1, units_name)
     status = he5_swwrlattr(swid, 'L2gpValue', 'MissingValue', &
-      & rgp_type, 1, (/ real(l2gp%MissingValue, rgp) /) )
+      & rgp_type, hsize(1), (/ real(l2gp%MissingValue, rgp) /) )
     if ( DEEBUG ) print *, 'Title ', trim(expnd_uniq_fdef)
     status = mls_swwrlattr(swid, 'L2gpValue', &
       & 'UniqueFieldDefinition', &
@@ -4533,7 +4542,7 @@ contains
     status = mls_swwrlattr(swid, 'L2gpPrecision', 'Units', &
       & MLS_CHARTYPE, 1, units_name)
     status = he5_swwrlattr(swid, 'L2gpPrecision', 'MissingValue', &
-      & rgp_type, 1, (/ real(l2gp%MissingValue, rgp) /) )
+      & rgp_type, hsize(1), (/ real(l2gp%MissingValue, rgp) /) )
     status = mls_swwrlattr(swid, 'L2gpPrecision', &
       & 'UniqueFieldDefinition', &
       & MLS_CHARTYPE, 1, expnd_uniq_fdef)
@@ -4544,7 +4553,7 @@ contains
     status = mls_swwrlattr(swid, 'Status', 'Units', &
       & MLS_CHARTYPE, 1, NOUNITS)
     status = he5_swwrlattr(swid, 'Status', 'MissingValue', &
-      & HE5T_NATIVE_INT, 1, (/ l2gp%MissingStatus /) )
+      & HE5T_NATIVE_INT, hsize(1), (/ l2gp%MissingStatus /) )
 
     status = mls_swwrlattr(swid, 'Status', &
       & 'UniqueFieldDefinition', &
@@ -4555,7 +4564,7 @@ contains
     status = mls_swwrlattr(swid, 'Quality', 'Units', &
       & MLS_CHARTYPE, 1, NOUNITS)
     status = he5_swwrlattr(swid, 'Quality', 'MissingValue', &
-      & rgp_type, 1, (/ real(l2gp%MissingValue, rgp) /) )
+      & rgp_type, hsize(1), (/ real(l2gp%MissingValue, rgp) /) )
     status = mls_swwrlattr(swid, 'Quality', &
       & 'UniqueFieldDefinition', &
       & MLS_CHARTYPE, 1, 'MLS-Specific')
@@ -4565,7 +4574,7 @@ contains
     status = mls_swwrlattr(swid, 'Convergence', 'Units', &
       & MLS_CHARTYPE, 1, NOUNITS)
     status = he5_swwrlattr(swid, 'Convergence', 'MissingValue', &
-      & rgp_type, 1, (/ real(l2gp%MissingValue, rgp) /) )
+      & rgp_type, hsize(1), (/ real(l2gp%MissingValue, rgp) /) )
     status = mls_swwrlattr(swid, 'Convergence', &
       & 'UniqueFieldDefinition', &
       & MLS_CHARTYPE, 1, 'MLS-Specific')
@@ -4912,6 +4921,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.168  2009/08/26 16:45:55  pwagner
+! Public global flag WRITEMASTERSFILEATTRIBUTES determines whether to overwrite slave file attributes with masters
+!
 ! Revision 2.167  2009/06/23 18:25:42  pwagner
 ! Prevent Intel from optimizing ident string away
 !
