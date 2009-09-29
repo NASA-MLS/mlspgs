@@ -11,6 +11,7 @@
 
 module HE5_SWAPI_CHARACTER_ARRAY
 
+  use hdf5, only: size_t
   public :: HE5_EHWRGLATT_CHARACTER_ARRAY, HE5_EHRDGLATT_CHARACTER_ARRAY, &
     & HE5_SWRDFLD_CHARACTER_ARRAY, HE5_SWWRFLD_CHARACTER_ARRAY, &
     & HE5_SWWRATTR_CHARACTER_ARRAY, HE5_SWWRLATTR_CHARACTER_ARRAY, &
@@ -30,7 +31,7 @@ contains
     integer, intent(in) :: FILEID      ! File ID
     character(len=*), intent(in) :: ATTRNAME     ! Attribute name
     integer, intent(in) :: DATATYPE    ! E.g., MLS_charType
-    integer, intent(in) :: COUNT   ! How many to write
+    integer(kind=size_t), intent(in) :: COUNT   ! How many to write
     character(len=*), intent(in) :: BUFFER(:)  ! Buffer for write
 
     integer, external :: HE5_EHWRGLATT
@@ -55,9 +56,9 @@ contains
     & STARTS, STRIDES, EDGES, BUFFER )
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: FIELDNAME     ! Field name
-    integer, intent(in) :: STARTS(*)    ! Start array
-    integer, intent(in) :: STRIDES(*)   ! Stride array
-    integer, intent(in) :: EDGES(*)     ! Edge array
+    integer(kind=size_t), intent(in) :: STARTS(*)    ! Start array
+    integer(kind=size_t), intent(in) :: STRIDES(*)   ! Stride array
+    integer(kind=size_t), intent(in) :: EDGES(*)     ! Edge array
     character(len=*), intent(out) :: BUFFER(:) ! Buffer for read
 
     integer, external :: HE5_SWRDFLD
@@ -70,15 +71,18 @@ contains
     & STARTS, STRIDES, EDGES, BUFFER )
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: FIELDNAME     ! Field name
-    integer, intent(in) :: STARTS(*)    ! Start array
-    integer, intent(in) :: STRIDES(*)   ! Stride array
-    integer, intent(in) :: EDGES(*)     ! Edge array
+    integer(kind=size_t), intent(in) :: STARTS(*)    ! Start array
+    integer(kind=size_t), intent(in) :: STRIDES(*)   ! Stride array
+    integer(kind=size_t), intent(in) :: EDGES(*)     ! Edge array
     character(len=*), intent(in) :: BUFFER(:)  ! Buffer for write
 
+    integer(kind=size_t) :: COUNTS(1)
     integer, external :: HE5_SWWRFLD
 
+    counts = max(edges(1), size(buffer) )
+
     HE5_SWwrfld_character_array=HE5_SWwrfld(swathid, fieldname, starts, &
-         strides, edges, buffer )
+         strides, counts, buffer )
   end function HE5_SWWRFLD_CHARACTER_ARRAY
 
   integer function HE5_SWWRATTR_CHARACTER_ARRAY ( SWATHID, &
@@ -86,7 +90,7 @@ contains
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: ATTRNAME     ! Attribute name
     integer, intent(in) :: DATATYPE    ! E.g., MLS_charType
-    integer, intent(in) :: COUNT   ! How many to write
+    integer(kind=size_t), intent(in) :: COUNT   ! How many to write
     character(len=*), intent(in) :: BUFFER(:)  ! Buffer for write
 
     integer, external :: HE5_SWWRATTR
@@ -101,7 +105,7 @@ contains
     character(len=*), intent(in) :: FIELDNAME     ! Field name
     character(len=*), intent(in) :: ATTRNAME     ! Attribute name
     integer, intent(in) :: DATATYPE    ! E.g., MLS_charType
-    integer, intent(in) :: COUNT   ! How many to write
+    integer(kind=size_t), intent(in) :: COUNT   ! How many to write
     character(len=*), intent(in) :: BUFFER(:)  ! Buffer for write
 
     integer, external :: HE5_SWWRLATTR
