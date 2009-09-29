@@ -1368,7 +1368,7 @@ contains ! =====     Public Procedures     =============================
     use HDFEOS5, only: he5_swclose, he5_swopen, &
       & HE5F_ACC_RDWR, HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE
     use HGridsDatabase, only: HGRID_T
-    use MLSHDFEOS, only: he5_EHwrglatt, MLS_isGlAtt
+    use MLSHDFEOS, only: HE5_EHWRGLATT, HSIZE, MLS_ISGLATT
     ! Args
     character(len=*), intent(in) :: fileName
     type(HGrid_T)                :: HGrid
@@ -1381,21 +1381,21 @@ contains ! =====     Public Procedures     =============================
       ! call dump(HGrid)
       fileID = he5_swopen(trim(fileName), HE5F_ACC_RDWR)
       h = HGrid%noProfs
-      status = he5_EHwrglatt(fileID, 'HGrid_noProfs', HE5T_NATIVE_INT, 1, &
+      status = he5_EHwrglatt(fileID, 'HGrid_noProfs', HE5T_NATIVE_INT, HSIZE(1), &
         &  (/ h /) )
-      status = he5_EHwrglatt(fileID, 'HGrid_phi', HE5T_NATIVE_DOUBLE, h, &
+      status = he5_EHwrglatt(fileID, 'HGrid_phi', HE5T_NATIVE_DOUBLE, hsize(h), &
         &  HGrid%phi(1,:) )
-      status = he5_EHwrglatt(fileID, 'HGrid_geodLat', HE5T_NATIVE_DOUBLE, h, &
+      status = he5_EHwrglatt(fileID, 'HGrid_geodLat', HE5T_NATIVE_DOUBLE, hsize(h), &
         &  HGrid%geodLat(1,:) )
-      status = he5_EHwrglatt(fileID, 'HGrid_lon', HE5T_NATIVE_DOUBLE, h, &
+      status = he5_EHwrglatt(fileID, 'HGrid_lon', HE5T_NATIVE_DOUBLE, hsize(h), &
         &  HGrid%lon(1,:) )
-      status = he5_EHwrglatt(fileID, 'HGrid_time', HE5T_NATIVE_DOUBLE, h, &
+      status = he5_EHwrglatt(fileID, 'HGrid_time', HE5T_NATIVE_DOUBLE, hsize(h), &
         &  HGrid%time(1,:) )
-      status = he5_EHwrglatt(fileID, 'HGrid_solarTime', HE5T_NATIVE_DOUBLE, h, &
+      status = he5_EHwrglatt(fileID, 'HGrid_solarTime', HE5T_NATIVE_DOUBLE, hsize(h), &
         &  HGrid%solarTime(1,:) )
-      status = he5_EHwrglatt(fileID, 'HGrid_solarZenith', HE5T_NATIVE_DOUBLE, h, &
+      status = he5_EHwrglatt(fileID, 'HGrid_solarZenith', HE5T_NATIVE_DOUBLE, hsize(h), &
         &  HGrid%solarZenith(1,:) )
-      status = he5_EHwrglatt(fileID, 'HGrid_losAngle', HE5T_NATIVE_DOUBLE, h, &
+      status = he5_EHwrglatt(fileID, 'HGrid_losAngle', HE5T_NATIVE_DOUBLE, hsize(h), &
         &  HGrid%losAngle(1,:) )
       status = he5_swclose(fileID)
     endif
@@ -1737,6 +1737,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.145  2009/09/29 23:37:32  pwagner
+! Changes needed by 64-bit build
+!
 ! Revision 2.144  2009/08/26 17:18:42  pwagner
 ! Master copies file attributes from slaves instead of writing its own
 !
