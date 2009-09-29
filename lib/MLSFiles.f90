@@ -46,6 +46,7 @@ module MLSFiles               ! Utility file routines
 !   Until then, just declare them as external
 !    & PGS_MET_SFstart, PGS_MET_SFend, &
   use String_Table, only: display_string, get_string
+  use HDF5, only: size_t
   implicit none
 
   private 
@@ -1347,14 +1348,15 @@ contains
 
     ! Arguments
 
-      character (len=*), intent(in) :: FILENAME
-      character (len=*), intent(out) :: SWATHLIST
-      integer, intent(out):: STRBUFSIZE
-      integer :: mls_inqswath
+    character (len=*), intent(in) :: FILENAME
+    character (len=*), intent(out) :: SWATHLIST
+    integer, intent(out):: STRBUFSIZE
+    integer :: mls_inqswath
     integer, optional, intent(in) :: hdfVersion
 
     ! Local
     integer :: myhdfVersion
+    integer(kind=size_t) :: HSTRBUFSIZE
 
     ! Executable code
     if ( mls_exists(trim(FileName)) /= 0 ) then
@@ -1373,7 +1375,8 @@ contains
       myhdfVersion = mls_hdf_version(trim(FileName))
     endif
     if(myhdfVersion == HDFVERSION_5) then
-      mls_inqswath = he5_swinqswath(trim(FileName), swathList, strBufSize)
+      mls_inqswath = he5_swinqswath(trim(FileName), swathList, hstrBufSize)
+      strbufsize = hstrbufsize
     elseif(myhdfVersion == HDFVERSION_4) then
       mls_inqswath = swinqswath(FileName, swathList, strBufSize)
     else                          
@@ -2712,6 +2715,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.88  2009/09/29 23:32:40  pwagner
+! Changes needed by 64-bit build
+!
 ! Revision 2.87  2009/06/23 18:25:42  pwagner
 ! Prevent Intel from optimizing ident string away
 !
