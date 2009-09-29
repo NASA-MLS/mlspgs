@@ -594,9 +594,9 @@ contains
     integer, intent(in) :: WHY
     integer, intent(in) :: WHERE
     if ( where == null_tree ) then
-      call error_intro ( 0, compiler )
+      call error_intro ( compiler, 0 )
     else
-      call error_intro ( source_ref(where), compiler )
+      call error_intro ( compiler, source_ref(where) )
     end if
     if ( why == is_pseudo .or. why == no_more_sons .or. why == not_pseudo ) &
     then
@@ -634,6 +634,9 @@ contains
 end module TREE
 
 ! $Log$
+! Revision 2.13  2009/09/29 23:22:44  vsnyder
+! Arguments reversed in call to error_intro
+!
 ! Revision 2.12  2009/06/23 18:25:44  pwagner
 ! Prevent Intel from optimizing ident string away
 !
