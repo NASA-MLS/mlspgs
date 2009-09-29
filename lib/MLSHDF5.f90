@@ -42,7 +42,7 @@ module MLSHDF5
     & H5T_IEEE_F32LE, H5T_IEEE_F64LE, H5T_IEEE_F64LE, &
     & H5T_NATIVE_DOUBLE, H5T_NATIVE_REAL, H5T_STD_I32LE, &
     & H5T_NATIVE_CHARACTER, H5T_NATIVE_INTEGER, H5T_STRING, H5T_STRING_F, &
-    & HID_T, HSIZE_T ! , HSSIZE_T
+    & HID_T, HSIZE_T, HSSIZE_T, SIZE_T
   ! Now routines
   use HDF5, only: H5ACLOSE_F, H5ACREATE_F, &
     & H5AGET_NAME_F, H5AGET_NUM_ATTRS_F, &
@@ -409,7 +409,7 @@ contains ! ======================= Public Procedures =========================
     integer :: spaceID
     integer :: status
     integer :: type_id
-    integer :: type_size
+    integer(kind=Size_t) :: type_size
     ! Executable
     call MLSMessageCalls( 'push', constantName='DumpHDF5Attributes' )
     myNames = '*' ! Wildcard means 'all'
@@ -468,7 +468,7 @@ contains ! ======================= Public Procedures =========================
         call outputNamedValue ( 'name', name )
         call outputNamedValue ( 'attrID', attrID )
         call outputNamedValue ( 'type_id', type_id )
-        call outputNamedValue ( 'type_size', type_size )
+        call outputNamedValue ( 'type_size', int(type_size) )
         call outputNamedValue ( 'classID', classID )
         call outputNamedValue ( 'H5T_STRING_F', H5T_STRING_F )
         call outputNamedValue ( 'spaceID', spaceID )
@@ -551,7 +551,7 @@ contains ! ======================= Public Procedures =========================
     integer :: status
     integer, dimension(size(DONTDUMPTHESEDSNAMES) ) :: theIndexes
     integer :: type_id
-    integer :: type_size
+    integer(kind=Size_t) :: type_size
     ! Executable
     call MLSMessageCalls( 'push', constantName='DumpHDF5DS' )
     skipCharValues = .false.
@@ -589,7 +589,7 @@ contains ! ======================= Public Procedures =========================
         call outputNamedValue ( 'name', name )
         call outputNamedValue ( 'ItemID', ItemID )
         call outputNamedValue ( 'type_id', type_id )
-        call outputNamedValue ( 'type_size', type_size )
+        call outputNamedValue ( 'type_size', int(type_size) )
         call outputNamedValue ( 'classID', classID )
         call outputNamedValue ( 'H5T_STRING_F', H5T_STRING_F )
         call outputNamedValue ( 'spaceID', spaceID )
@@ -739,7 +739,7 @@ contains ! ======================= Public Procedures =========================
     integer :: i
     integer :: itemID
     character(len=128) :: name
-    integer :: namelength
+    integer(kind=Size_t) :: namelength
     integer :: num
     integer :: status
     character(len=len(names)) :: tempnames
@@ -1038,9 +1038,9 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to create stringtype ' // trim(name) )
     if ( my_dont_trim) then
-      call h5tset_size_f(stringtype, max(len(value), 1), status )
+      call h5tset_size_f(stringtype, int(max(len(value), 1), size_t), status )
     else
-      call h5tset_size_f(stringtype, max(len_trim(value), 1), status )
+      call h5tset_size_f(stringtype, int(max(len(value), 1), size_t), status )
     endif
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to set size for stringtype ' // trim(name) )
@@ -1158,7 +1158,7 @@ contains ! ======================= Public Procedures =========================
     call h5tcopy_f ( H5T_NATIVE_CHARACTER, stringtype, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to create stringtype ' // trim(name) )
-    call h5tset_size_f(stringtype, max(len_trim(value), 1), status )
+    call h5tset_size_f(stringtype, int(max(len(value), 1), size_t), status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to set size for stringtype ' // trim(name) )
     ! Create dataspace and attribute
@@ -1236,7 +1236,7 @@ contains ! ======================= Public Procedures =========================
     call h5tcopy_f ( H5T_NATIVE_CHARACTER, stringtype, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to create stringtype for array' // trim(name) )
-    call h5tset_size_f ( stringtype, len(value(1)), status )
+    call h5tset_size_f ( stringtype, int(len(value(1)), size_t), status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to set size for stringtype ' // trim(name) )
     ! Create dataspace and attribute
@@ -1616,7 +1616,7 @@ contains ! ======================= Public Procedures =========================
     integer :: ATTRID                   ! ID for attribute
     integer :: STATUS                   ! Flag from HDF5
     integer :: STRINGTYPE               ! String type
-    integer :: STRINGSIZE               ! String size
+    integer(kind=Size_t) :: STRINGSIZE               ! String size
 
     ! Executable code
     call MLSMessageCalls( 'push', constantName='GetHDF5Attribute_string' )
@@ -1670,7 +1670,7 @@ contains ! ======================= Public Procedures =========================
     integer :: ATTRID                   ! ID for attribute
     integer :: STATUS                   ! Flag from HDF5
     integer :: STRINGTYPE               ! String type
-    integer :: STRINGSIZE               ! String size
+    integer(kind=Size_t) :: STRINGSIZE               ! String size
     integer(kind=hsize_t), dimension(1) :: SHP        ! Shape
 
     ! Executable code
@@ -2179,7 +2179,7 @@ contains ! ======================= Public Procedures =========================
     integer :: LB                       ! 1, else LowBound
     integer :: STATUS                   ! Flag from HDF5
     integer :: STRINGTYPE               ! String type
-    integer :: STRINGSIZE               ! String size
+    integer(kind=Size_t) :: STRINGSIZE               ! String size
     integer(kind=hSize_t), dimension(1) :: MaxShp, SHP ! Shape
 
     ! Executable code
@@ -2325,7 +2325,7 @@ contains ! ======================= Public Procedures =========================
     integer :: classID
     integer :: STATUS                   ! Flag
     integer :: type_id
-    integer :: type_size
+    integer(kind=Size_t) :: type_size
 
     ! Executable code
     call MLSMessageCalls( 'push', constantName='GetHDF5AttrDims' )
@@ -2351,7 +2351,7 @@ contains ! ======================= Public Procedures =========================
       call outputNamedValue ( 'name', name )
       call outputNamedValue ( 'attrID', attrID )
       call outputNamedValue ( 'type_id', type_id )
-      call outputNamedValue ( 'type_size', type_size )
+      call outputNamedValue ( 'type_size', int(type_size) )
       call outputNamedValue ( 'classID', classID )
       call outputNamedValue ( 'dspaceID', dspace_ID )
       call outputNamedValue ( 'rank', rank )
@@ -2810,7 +2810,7 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to create dataspace for scalar character ' // trim(name) )
     type_id = H5T_NATIVE_CHARACTER
     call h5tcopy_f ( type_id, s_type_id, status )
-    call h5tset_size_f ( s_type_id, len(value), status )
+    call h5tset_size_f ( s_type_id, int(len(value), size_t), status )
     ! Create the dataset
     call h5dCreate_f ( locID, trim(name), s_type_id, spaceID, setID, &
       & status )
@@ -2889,7 +2889,7 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to create dataspace for scalar character ' // trim(name) )
     type_id = H5T_NATIVE_CHARACTER
     call h5tcopy_f ( type_id, s_type_id, status )
-    call h5tset_size_f ( s_type_id, len_trim(value), status )
+    call h5tset_size_f ( s_type_id, int(len_trim(value), size_t), status )
     ! Create the dataset
     call h5dCreate_f ( locID, trim(name), s_type_id, spaceID, setID, &
       & status )
@@ -3556,7 +3556,7 @@ contains ! ======================= Public Procedures =========================
     integer :: MEMSPACEID               ! ID of dataspace
     integer :: SETID                    ! ID of dataset
     integer :: STRINGTYPE               ! String type
-    integer :: STRINGSIZE               ! String size
+    integer(kind=Size_t) :: STRINGSIZE               ! String size
     value = ' '
     call MLSMessageCalls( 'push', constantName='LoadFromHDF5DS_charscalar' )
     call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
@@ -3967,7 +3967,7 @@ contains ! ======================= Public Procedures =========================
     integer :: SPACEID                  ! ID of dataspace
     integer :: SETID                    ! ID of dataset
     integer :: STRINGTYPE               ! String type
-    integer :: STRINGSIZE               ! String size
+    integer(kind=Size_t) :: STRINGSIZE               ! String size
     integer :: LB, UB
 
     ! Executable code
@@ -4010,7 +4010,7 @@ contains ! ======================= Public Procedures =========================
     integer :: SPACEID                  ! ID of dataspace
     integer :: SETID                    ! ID of dataset
     integer :: STRINGTYPE               ! String type
-    integer :: STRINGSIZE               ! String size
+    integer(kind=Size_t) :: STRINGSIZE               ! String size
 
     ! Executable code
     call MLSMessageCalls( 'push', constantName='LoadPtrFromHDF5DS_chararr2' )
@@ -5047,6 +5047,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.94  2009/09/29 23:31:24  pwagner
+! Changes needed by 64-bit build
+!
 ! Revision 2.93  2009/08/04 20:44:08  pwagner
 ! Now able to dump character scalar ds
 !
