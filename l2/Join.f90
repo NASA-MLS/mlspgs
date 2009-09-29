@@ -706,9 +706,9 @@ contains ! =====     Public Procedures     =============================
         call output ( "Offending quantity " )
         call display_string ( qty%template%name, strip=.true., advance='yes' )
         call output ( "Expected type " )
-        call display_string ( lit_indices(expectedType) )
+        call display_string ( lit_indices(expectedType), advance='yes' )
         call output ( "Output file type " )
-        call display_string ( lit_indices(outputType) )
+        call display_string ( lit_indices(outputType), advance='yes' )
         call Announce_Error ( son, no_error_code, &
           & "Inappropriate quantity for this file type in direct write", &
           & Penalty=0 )
@@ -2148,6 +2148,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.140  2009/09/29 23:40:45  pwagner
+! Unjam error message when DirectWrite type is unexpected
+!
 ! Revision 2.139  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
 !
