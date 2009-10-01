@@ -204,8 +204,8 @@ contains ! ====     Public Procedures     ==============================
 
         ! -------------------------------------------------------- Init sections
       case ( z_globalsettings )
-        call set_global_settings ( son, forwardModelConfigDatabase, fGrids, &
-          & l2gpDatabase, DirectDatabase, processingRange, filedatabase )
+        call set_global_settings ( son, forwardModelConfigDatabase, &
+          & filedatabase, fGrids, l2gpDatabase, DirectDatabase, processingRange )
         call add_to_section_timing ( 'global_settings', t1, now_stop )
         if ( now_stop .and. .not. parallel%slave ) then
           call finishUp(.true.)
@@ -614,6 +614,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.167  2009/06/23 18:46:19  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.166  2008/12/18 21:12:41  pwagner
 ! May now dump an l2pc or allL2PCs (use with caution)
 !
