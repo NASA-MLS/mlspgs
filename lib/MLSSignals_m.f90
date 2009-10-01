@@ -25,14 +25,14 @@ module MLSSignals_M
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, PVMErrorMessage
   use MLSStrings, only: LowerCase, Capitalize
-  use MoreTree, only: Get_Boolean
+  use MoreTree, only: Get_Boolean, StartErrorMessage
   use Output_M, only: Output
   use String_Table, only: Display_String, Get_String
   use Time_M, only: Time_Now
   use Toggles, only: Gen, Switches, Toggle
   use Trace_M, only: Trace_begin, Trace_end
-  use Tree, only: Decorate, Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, &
-    & Subtree
+  use Tree, only: Decorate, Decoration, Node_ID, Nsons, Source_Ref, &
+    & Sub_Rosa, Subtree
   use Tree_Types, only: N_named
 
   implicit none
@@ -549,13 +549,10 @@ contains
       integer, intent(in), optional :: MoreFields(:)
 
       integer :: I
-      integer :: Source
 
       error = max(error,1)
-      source = source_ref ( son )
-      call output ( 'At ' )
-      call print_source ( source )
-      call output ( ' MLSSignals complained: ' )
+      call startErrorMessage ( son ) ! print '***** At <where>: '
+      call output ( 'MLSSignals complained: ' )
       select case ( code )
       case ( allOrNone )
         call output ( 'Either all of the fields ' )
@@ -802,24 +799,29 @@ contains
   end subroutine
 
   ! ------------------------------------  DisplaySignalName_index  -----
-  subroutine DisplaySignalName_index ( Signal, Advance, Before, Sideband, Channel )
+  subroutine DisplaySignalName_index ( Signal, Advance, Before, Sideband, &
+                                     & Channel, OtherChannels )
     ! Given a signal object, this routine displays a full signal name.
     integer, intent(in) :: SIGNAL
     character(len=*), intent(in), optional :: Advance, Before
     integer, intent(in), optional :: Sideband ! Use this instead of Signal's
     integer, intent(in), optional :: Channel  ! Use this instead of Signal's
+    logical, pointer, optional :: OtherChannels(:) ! Use these instead of Signal's
     call displaySignalName ( signals(signal), advance, before, sideband, channel )
    end subroutine DisplaySignalName_index
 
   ! -----------------------------------  DisplaySignalName_signal  -----
-  subroutine DisplaySignalName_signal ( Signal, Advance, Before, Sideband, Channel )
+  subroutine DisplaySignalName_signal ( Signal, Advance, Before, Sideband, &
+                                      & Channel, OtherChannels )
     ! Given a signal object, this routine displays a full signal name.
     use String_Table, only: Display_String
     type(signal_T), intent(in) :: SIGNAL
     character(len=*), intent(in), optional :: Advance, Before
     integer, intent(in), optional :: Sideband ! Use this instead of Signal's
     integer, intent(in), optional :: Channel  ! Use this instead of Signal's
+    logical, pointer, optional :: OtherChannels(:) ! Use these instead of Signal's
     character(len=15) :: BandName
+    logical, pointer :: Channels(:)
     logical :: First
     integer :: I, J, SB
 
@@ -838,34 +840,38 @@ contains
     call output ( signal%spectrometer, before='-' )
     if ( present(channel) ) then
       call output ( channel, before='.C' )
-    else if ( associated(signal%channels) ) then
-      if ( .not. all(signal%channels) .or. &
-        & lbound(signal%channels,1) /= lbound(signal%frequencies,1) .or. &
-        & ubound(signal%channels,1) /= ubound(signal%frequencies,1) ) then
-        first = .true.
-        call output ( '.C' )
-        i = lbound(signal%channels, 1)
-oc:     do
-          do
-            if ( i > ubound(signal%channels, 1) ) exit oc
-            if ( signal%channels(i) ) exit
-            i = i + 1
-          end do
-          if ( .not. first ) call output ( '+' )
-          first = .false.
-          j = i
-          do while ( j < ubound(signal%channels, 1) )
-            if ( .not. signal%channels(j+1) ) exit
-            j = j + 1
-          end do
-          if ( j > i ) then
-            call output ( i, after = ':' )
-            call output ( j )
-          else
-            call output ( i )
-          end if
-          i = j + 1
-        end do oc
+    else
+      channels => signal%channels
+      if ( present(otherChannels) ) channels => otherChannels
+      if ( associated(channels) ) then
+        if ( .not. all(channels) .or. &
+          & lbound(channels,1) /= lbound(signal%frequencies,1) .or. &
+          & ubound(channels,1) /= ubound(signal%frequencies,1) ) then
+          first = .true.
+          call output ( '.C' )
+          i = lbound(channels, 1)
+oc:       do
+            do
+              if ( i > ubound(channels, 1) ) exit oc
+              if ( channels(i) ) exit
+              i = i + 1
+            end do
+            if ( .not. first ) call output ( '+' )
+            first = .false.
+            j = i
+            do while ( j < ubound(channels, 1) )
+              if ( .not. channels(j+1) ) exit
+              j = j + 1
+            end do
+            if ( j > i ) then
+              call output ( i, after = ':' )
+              call output ( j )
+            else
+              call output ( i )
+            end if
+            i = j + 1
+          end do oc
+        end if
       end if
     end if
     call output ( '', advance=advance )
@@ -931,15 +937,17 @@ oc:     do
     type (signal_T), intent(in) :: SIGNAL
     logical, intent(in), optional :: Details ! false => don't dump frequencies
                                              ! default true.
-    logical, optional, pointer :: OtherChannels(:)
+    logical, pointer, optional :: OtherChannels(:)
     logical, pointer :: Channels(:)
     logical :: My_Details
     character (len=80) :: Str
     my_details = .true.
     if ( present(details) ) my_details = details
+    channels => signal%channels
+    if ( present(otherChannels) ) channels => otherChannels
     if ( signal%name > 0 ) call display_string ( signal%name, advance='yes' )
     call output ( '   Signal: ' )
-    call displaySignalName ( signal )
+    call displaySignalName ( signal, otherChannels=otherChannels )
     call output ( '   Module: ')
     call output ( signal%instrumentModule )
     call output ( ' - ' )
@@ -1003,8 +1011,6 @@ oc:     do
       if ( .not. signal%deferred ) call output ( ' not' )
       call output ( ' deferred', advance='yes' )
     end if ! my_details
-    channels => signal%channels
-    if ( present(otherChannels) ) channels => otherChannels
     if (associated(channels)) then
       call output ( '   Channel Flags:', advance='yes' )
       call dump ( channels, lbound=lbound(channels,1) )
@@ -1818,6 +1824,9 @@ oc:     do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.88  2009/10/01 00:49:13  vsnyder
+! Add OtherSignals to DisplaySignalName_*
+!
 ! Revision 2.87  2009/09/25 02:44:14  vsnyder
 ! Added OtherChannels to dump and getSignalName routines to use specific
 ! channels instead of the ones in the data structure (because sometimes
