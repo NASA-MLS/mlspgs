@@ -59,7 +59,7 @@ module GLOBAL_SETTINGS
 contains
 
   subroutine SET_GLOBAL_SETTINGS ( ROOT, ForwardModelConfigDatabase, &
-    & FGrids, l2gpDatabase, DirectDatabase, processingRange, filedatabase )
+    & filedatabase, FGrids, l2gpDatabase, DirectDatabase, processingRange )
 
     use BitStuff, only: isBitSet
     use dates_module, only: utc_to_yyyymmdd
@@ -106,7 +106,7 @@ contains
     use MLSStrings, only: hhmmss_value, lowerCase, trim_safe
     use MLSStringLists, only: Array2List, catLists, SWITCHDETAIL
     use MLSSignals_m, only: INSTRUMENT
-    use MoreTree, only: GET_FIELD_ID, GET_SPEC_ID
+    use MoreTree, only: GET_FIELD_ID, GET_SPEC_ID, StartErrorMessage
     use OUTPUT_M, only: BLANKS, OUTPUT, outputCalendar, &
       & revertoutput, switchOutput
     use PFAData_m, only: Get_PFAdata_from_l2cf, Flush_PFAData, Make_PFAData, &
@@ -132,13 +132,12 @@ contains
     use HDF5, only: h5gclose_f, h5gopen_f
 
     integer, intent(in) :: ROOT    ! Index of N_CF node in abstract syntax tree
-    type(ForwardModelConfig_T), dimension(:), pointer :: &
-      & ForwardModelConfigDatabase
-    type ( fGrid_T ), pointer, dimension(:) :: FGrids
-    type ( l2gpData_T), dimension(:), pointer :: L2GPDATABASE
-    type (DirectData_T), dimension(:), pointer :: DirectDatabase
-    type (TAI93_Range_T) :: processingRange ! Data processing range
-    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+    type(ForwardModelConfig_T), pointer :: ForwardModelConfigDatabase(:)
+    type (MLSFile_T), pointer :: FILEDATABASE(:)
+    type ( fGrid_T ), pointer, optional :: FGrids(:)
+    type ( l2gpData_T), pointer, optional :: L2GPDATABASE(:)
+    type (DirectData_T), pointer, optional :: DirectDatabase(:)
+    type (TAI93_Range_T), optional :: processingRange ! Data processing range
 
     ! Local variables
     character(len=BO_NAMELEN), dimension(BO_NAMEDIMS) :: BO_names
@@ -160,9 +159,12 @@ contains
     integer :: NUMFILES
     integer :: OUTPUT_VERSION_STRING  ! Sub_rosa index
     integer :: param_id            ! e.g., p_brightObjects
+    character(32) :: Param_Name
+    logical :: Restricted          ! Some commands not available
     integer :: ReturnStatus        ! non-zero means trouble
     integer :: SON                 ! Son of root
     integer :: spec_id             ! e.g., s_binSelector
+    character(32) :: Spec_Name
     logical :: StopEarly
     integer :: Sub_rosa_index
     integer :: The_HDF_version     ! 4 or 5 (corresp. to hdf4 or hdf5)
@@ -182,6 +184,11 @@ contains
     real(r8) :: OrbPeriod(max_orbits)
     type(MLSFile_T), pointer :: L1BFile
 
+    integer, parameter :: Param_restricted = 1 ! Parameter not allowed
+    integer, parameter :: Spec_restricted = param_restricted + 1 ! Spec not allowed
+
+    restricted = .not. all( (/present(FGrids), present(l2gpDatabase), &
+                           present(DirectDatabase), present(processingRange) /))
     timing = section_times
     if ( timing ) call time_now ( t1 )
     stopEarly = ( &
@@ -222,7 +229,7 @@ contains
             & '*** l2cf parameter global setting ignored ***', &
             & just_a_warning = .true.)
           cycle
-        endif
+        end if
         if ( DEEBUG ) call display_string( parm_indices(param_id), advance='yes' )
         select case ( param_id )
         ! This will allow us to use different names from the toolkit
@@ -264,10 +271,11 @@ contains
             stopTimeIsAbsolute = .true.
           end if
         case ( p_leapsecfile )
+          if ( restricted ) call NotAllowed ( son, param_restricted )
           call get_string ( sub_rosa_index, LeapSecFileName, strip=.true. )
           inquire(file=trim(LeapSecFileName), exist=itExists)
           if ( .not. itExists ) then
-            call announce_error(0, &
+            call announce_error(son, &
             & '*** Leap Second File ' // trim(LeapSecFileName) // &
             & ' not found', &
             & just_a_warning = .false.)
@@ -301,9 +309,11 @@ contains
         if ( DEEBUG ) call display_string( spec_indices(spec_id), advance='yes' )
         select case ( spec_id )
         case ( s_binSelector )
+          if ( restricted ) call notAllowed ( son, spec_restricted )
           call decorate (son, AddBinSelectorToDatabase ( &
             & binSelectors, CreateBinSelectorFromMLSCFInfo ( son ) ) )
         case ( s_directWriteFile )
+          if ( restricted ) call notAllowed ( son, spec_restricted )
           call decorate (son, AddDirectToDatabase ( &
             & DirectDatabase, &
             & CreateDirectTypeFromMLSCFInfo ( son, DirectFile ) ) )
@@ -323,6 +333,7 @@ contains
           call flush_PFAData ( son, status )
           error = max(error,status)
         case ( s_fgrid )
+          if ( restricted ) call notAllowed ( son, spec_restricted )
           call decorate ( son, AddFGridToDatabase ( fGrids, &
             & CreateFGridFromMLSCFInfo ( name, son ) ) )
           if ( switchDetail(switches, 'fgrid') > -1 ) &
@@ -337,6 +348,7 @@ contains
             & forwardModelConfigDatabase, &
             & ConstructForwardModelConfig ( name, son, .true. ) ) )
         case ( s_l1boa )
+          if ( restricted ) call notAllowed ( son, spec_restricted )
           the_hdf_version = LEVEL1_HDFVERSION
           call l1boaSetup ( son, filedatabase, F_FILE, hdfVersion=the_hdf_version )
           if( switchDetail(switches, 'pro') > -1 ) then                            
@@ -369,6 +381,7 @@ contains
             & just_a_warning = .true.)
           end if
         case ( s_l1brad )
+          if ( restricted ) call notAllowed ( son, spec_restricted )
           the_hdf_version = LEVEL1_HDFVERSION
           call l1bradSetup ( son, filedatabase, F_FILE, &
             & hdfVersion=the_hdf_version )
@@ -385,6 +398,7 @@ contains
             & just_a_warning = .true.)
           end if
         case ( s_l2parsf )
+          if ( restricted ) call notAllowed ( son, spec_restricted )
           sub_rosa_index = sub_rosa(subtree(2,subtree(2, son)))
           call get_string ( sub_rosa_index, FilenameString, strip=.true. )
           parallel%stagingFile = FilenameString
@@ -411,6 +425,7 @@ contains
             timing = .true.
           end if
         case ( s_tGrid, s_vGrid )
+          if ( restricted ) call notAllowed ( son, spec_restricted )
           call decorate ( son, AddVGridToDatabase ( vGrids, &
             & CreateVGridFromMLSCFInfo ( name, son, l2gpDatabase, returnStatus ) ) )
           error = max(error, returnStatus)
@@ -421,6 +436,8 @@ contains
     end do
 
     if ( DEEBUG ) call output( 'done with statements', advance='yes' )
+
+    if ( restricted ) return
 
     L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
     if ( .not. associated(L1BFile) ) then
@@ -631,8 +648,6 @@ contains
     subroutine Announce_Error ( Lcf_where, Full_message, Use_toolkit, &
       & Error_number, just_a_warning )
 
-      use LEXER_CORE, only: PRINT_SOURCE
-
       ! Arguments
 
       integer, intent(in) :: Lcf_where
@@ -654,25 +669,19 @@ contains
       end if
 
       if ( .not. just_print_it ) then
-       if ( .not. my_warning ) then
-        error = max(error,1)
-        call output ( '***** At ' )
+        if ( .not. my_warning ) then
+          error = max(error,1)
+          call startErrorMessage ( lcf_where )
 
-        if ( lcf_where > 0 ) then
-          call print_source ( source_ref(lcf_where) )
-        else
-          call output ( '(no lcf node available)' )
-        end if
+          call output ( "The " );
+          if ( lcf_where > 0 ) then
+            call dump_tree_node ( lcf_where, 0 )
+          else
+            call output ( '(no lcf tree available)' )
+          end if
 
-        call output ( ": The " );
-        if ( lcf_where > 0 ) then
-          call dump_tree_node ( lcf_where, 0 )
-        else
-          call output ( '(no lcf tree available)' )
-        end if
-
-        call output ( " Caused the following error:", advance='yes', &
-         & from_where=ModuleName)
+          call output ( " Caused the following error:", advance='yes', &
+           & from_where=ModuleName)
 
         end if
 
@@ -680,11 +689,11 @@ contains
           & from_where=ModuleName)
 
         if ( present(error_number) ) then
-         if ( my_warning ) then
-          call output ( 'Warning number ', advance='no' )
-        else
-          call output ( 'Error number ', advance='no' )
-        end if
+          if ( my_warning ) then
+           call output ( 'Warning number ', advance='no' )
+          else
+            call output ( 'Error number ', advance='no' )
+          end if
 
           call output ( error_number, places=9, advance='yes' )
         end if
@@ -874,6 +883,25 @@ contains
 
     end subroutine dump_global_settings
 
+    ! -----------------------------------------------  NotAllowed  -----
+    subroutine NotAllowed ( where, why )
+      integer, intent(in) :: Where ! tree index
+      integer, intent(in) :: Why   ! param_restricted or spec_restricted
+
+      call startErrorMessage ( where )
+      select case ( why )
+      case ( param_restricted )
+        call output ( 'Parameter ' )
+        call display_string( parm_indices(param_id) )
+      case ( spec_restricted )
+        call output ( ' Specification ' )
+        call display_string( spec_indices(spec_id) )
+      end select
+      call output ( ' is not allowed.', advance='yes' )
+      call MLSMessage ( MLSMSG_Error, moduleName, &
+        'Prohibited parameter or specification in GlobalSettings section' )
+    end subroutine NotAllowed
+
     ! ---------------------------------------------  proclaim  -----
     subroutine proclaim ( Name, l1_type, hdfVersion )
       character(LEN=*), intent(in)   :: Name
@@ -1020,6 +1048,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.133  2009/08/26 17:16:15  pwagner
+! Note types of apriori files in file attribute MiscNotes
+!
 ! Revision 2.132  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
 !
