@@ -429,6 +429,7 @@ contains
   subroutine GET_STRING ( STRING, STRING_TEXT, CAP, STRIP, NOERROR, IERR )
   ! Put as much as will fit of the string indexed by STRING into STRING_TEXT.
   ! If CAP is present and .TRUE., capitalize STRING_TEXT.
+  ! If STRIP is present and .TRUE., remove quotes if any.
   ! If NOERROR is present and TRUE, return safely no matter what
   ! If IERR is present and error occurs, set it to 1 && return safely
     integer, intent(in) :: STRING
@@ -437,21 +438,23 @@ contains
     logical, intent(in), optional :: STRIP
     logical, intent(in), optional :: NOERROR
     integer, intent(out), optional :: IERR
-    integer :: I, J, offset
-    logical :: MY_CAP, MY_STRIP
+    integer :: I, J, MY_IERR, offset
+    logical :: MY_CAP, MY_NOERROR, MY_STRIP
 
     string_text=''         ! No matter what, return string_text
-    if ( string < lbound(strings,1) .or. string > ubound(strings,1) ) then
-      if ( present(noError) ) then
-        if (noError) then
-          if ( present(ierr) ) ierr=1
-          return
-        end if
-      else if ( present(ierr) ) then
-        ierr = 1
-        return
-      end if
+
+    my_noerror = .false.
+    if ( present(noError) ) my_noerror = noerror
+
+    if ( my_noerror ) then
+      call test_string ( string, 'GET_STRING', my_ierr )
+    else
+      call test_string ( string, 'GET_STRING', ierr )
+      my_ierr = 0
+      if ( present(ierr) ) my_ierr = ierr
     end if
+
+    if ( my_ierr /= 0 ) return
 
     my_cap = .false.
     my_strip = .false.
@@ -464,10 +467,6 @@ contains
         &  ( (char_table(strings(string-1)+1) == "'") .and.&
         &    (char_table(strings(string)) == "'") ) ) &
         & offset=1
-    end if
-    call test_string ( string, 'GET_STRING', ierr )
-    if ( present(ierr) ) then
-      if ( ierr /= 0 ) return
     end if
     j = 0
     if ( my_cap ) then
@@ -863,6 +862,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.24  2009/10/01 19:42:14  vsnyder
+! Simplify error testing in Get_String, improve comments
+!
 ! Revision 2.23  2009/06/23 18:25:44  pwagner
 ! Prevent Intel from optimizing ident string away
 !
