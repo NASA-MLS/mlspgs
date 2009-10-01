@@ -1,0 +1,210 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module WriteHDF_m
+
+  implicit NONE
+
+  private
+
+  public :: WriteHDF
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+  private :: not_used_here
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine WriteHDF ( File, R_max, R_min, N_cut, IWC_s, T_s, Theta_s, F_s, &
+    & Beta, Eest, nFunc, MaxOrd, P, E_P, nFuncP, MaxOrdP, &
+    & WantBeta, WantIWC, WantP, &
+    & dBeta_dIWC, E_dBeta_dIWC, dBeta_dT, E_dBeta_dT, &
+    & dP_dIWC, E_dP_dIWC, dP_dT, E_dP_dT )
+
+    ! Write the tables as HDF5 datasets
+    use HDF5, only: H5FCreate_F, H5FClose_F, H5F_ACC_TRUNC_F, H5GOpen_F, H5GClose_F
+    use MLSKinds, only: R8
+    use MLSHDF5, only: MakeHDF5Attribute, MLS_H5Open, MLS_H5Close, SaveAsHDF5DS
+
+    character(len=*), intent(in) :: File
+    real(r8), intent(in) :: R_Max
+    real(r8), intent(in) :: R_Min
+    integer, intent(in) :: N_Cut
+    real(r8), intent(in) :: IWC_s(:)
+    real(r8), intent(in) :: T_s(:)
+    real(r8), intent(in) :: Theta_s(:)
+    real(r8), intent(in) :: F_s(:)
+    real(r8), intent(in) :: Beta(:,:,:,:)
+    real(r8), intent(in) :: Eest(:,:,:,:)
+    integer, intent(in) :: nFunc(:,:,:,:,:)
+    integer, intent(in) :: MaxOrd(:,:,:,:)
+    real(r8), intent(in) :: P(:,:,:,:)
+    real(r8), intent(in) :: E_P(:,:,:,:)
+    integer, intent(in) :: nFuncP(:,:,:,:,:,:)
+    integer, intent(in) :: MaxOrdP(:,:,:,:,:)
+    logical, intent(in) :: WantBeta, WantIWC, WantP
+    real(r8), intent(in), optional :: dBeta_dIWC(:,:,:,:)
+    real(r8), intent(in), optional :: E_dBeta_dIWC(:,:,:,:)
+    real(r8), intent(in), optional :: dBeta_dT(:,:,:,:)
+    real(r8), intent(in), optional :: E_dBeta_dT(:,:,:,:)
+    real(r8), intent(in), optional :: dP_dIWC(:,:,:,:)
+    real(r8), intent(in), optional :: E_dP_dIWC(:,:,:,:)
+    real(r8), intent(in), optional :: dP_dT(:,:,:,:)
+    real(r8), intent(in), optional :: E_dP_dT(:,:,:,:)
+
+    integer, parameter :: I_c_e = 1, I_c_s = 2
+
+    integer :: FileID, GroupID, IOStat
+    logical :: Exist
+
+    ! Destroy the file if it exists.  I don't know how to get HDF to
+    ! write a brand new file if there's one there already.
+    inquire ( file=trim(file), exist=exist )
+    if ( exist ) then
+      open ( 42, file=trim(file) )
+      close ( 42, status='delete' )
+    end if
+
+    ! Start up HDF5
+    call MLS_H5Open ( iostat )
+    if ( iostat /= 0 ) then
+      write ( *, * ) 'Unable to start up HDF5, iostat =', iostat
+      return
+    end if
+
+    ! Create the HDF5 output file
+    call H5FCreate_F ( trim(file), H5F_ACC_TRUNC_F, fileID, iostat )
+    if ( iostat /= 0 ) then
+      write ( *, * ) 'Unable to create HDF5 file ', trim(file), ', iostat =', &
+        & iostat
+      return
+    end if
+
+    ! Save some scalars as attributes of the '/' group
+    call H5GOpen_F ( fileID, '/', groupID, iostat )
+    if ( iostat /= 0 ) then
+      write ( *, * ) 'Unable to open "/" group in ', trim(file), ', iostat =', &
+        & iostat
+      return
+    end if
+    call makeHDF5Attribute ( groupID, 'R_Max', r_max )
+    call makeHDF5Attribute ( groupID, 'R_Min', r_min )
+    call makeHDF5Attribute ( groupID, 'N_Cut', n_cut )
+    call H5GClose_F ( groupID, iostat )
+    if ( iostat /= 0 ) then
+      write ( *, * ) 'Unable to close "/" group in ', trim(file), ', iostat =', &
+        & iostat
+      return
+    end if
+
+    ! Save the index arrays
+    call saveAsHDF5DS ( fileID, 'IWC_s', iwc_s )
+    call saveAsHDF5DS ( fileID, 'T_s', T_s )
+    call saveAsHDF5DS ( fileID, 'Theta_s', theta_s )
+    call saveAsHDF5DS ( fileID, 'F_s', f_s )
+
+    ! Save the betas
+    if ( wantBeta ) then
+      call saveAsHDF5DS ( fileID, 'Beta_c_e', beta(:,:,:,i_c_e) )
+      call saveAsHDF5DS ( fileID, 'Beta_c_s', beta(:,:,:,i_c_s) )
+      call saveAsHDF5DS ( fileID, 'Beta_c_a', beta(:,:,:,i_c_e) - beta(:,:,:,i_c_s) )
+      call saveAsHDF5DS ( fileID, 'Beta_c_e_err_est', eest(:,:,:,i_c_e) )
+      call saveAsHDF5DS ( fileID, 'Beta_c_s_err_est', eest(:,:,:,i_c_s) )
+      call saveAsHDF5DS ( fileID, 'Beta_c_e_nfunc', nFunc(:,:,:,:,i_c_e) )
+      call saveAsHDF5DS ( fileID, 'Beta_c_s_nfunc', nFunc(:,:,:,:,i_c_s) )
+      call saveAsHDF5DS ( fileID, 'Beta_c_e_max_ord', maxOrd(:,:,:,i_c_e) )
+      call saveAsHDF5DS ( fileID, 'Beta_c_s_max_ord', maxOrd(:,:,:,i_c_s) )
+    end if
+
+    ! Save the phase function
+    if ( wantP ) then
+      call saveAsHDF5DS ( fileID, 'P', p )
+      call saveAsHDF5DS ( fileID, 'P_err_est', e_p )
+      call saveAsHDF5DS ( fileID, 'P_nfunc', nFuncP(1,:,:,:,:,1) )
+      call saveAsHDF5DS ( fileID, 'P_iflag', nFuncP(2,:,:,:,:,1) )
+      call saveAsHDF5DS ( fileID, 'P_max_ord', maxOrdP(:,:,:,:,1) )
+    end if
+
+    if ( present(dBeta_dIWC) ) then
+      ! Save the Beta IWC derivatives
+      if ( wantBeta ) then
+        call saveAsHDF5DS ( fileID, 'dBeta_dIWC_c_e', dBeta_dIWC(:,:,:,i_c_e) )
+        call saveAsHDF5DS ( fileID, 'dBeta_dIWC_c_s', dBeta_dIWC(:,:,:,i_c_s) )
+        call saveAsHDF5DS ( fileID, 'dBeta_dIWC_c_a', dBeta_dIWC(:,:,:,i_c_e) - &
+                                                    & dBeta_dIWC(:,:,:,i_c_s) )
+        call saveAsHDF5DS ( fileID, 'dBeta_dIWC_c_e_err_est', e_dBeta_dIWC(:,:,:,i_c_e) )
+        call saveAsHDF5DS ( fileID, 'dBeta_dIWC_c_s_err_est', e_dBeta_dIWC(:,:,:,i_c_s) )
+        call saveAsHDF5DS ( fileID, 'dBeta_dIWC_c_e_nfunc', nFunc(:,:,:,:,3) )
+        call saveAsHDF5DS ( fileID, 'dBeta_dIWC_c_s_nfunc', nFunc(:,:,:,:,4) )
+        call saveAsHDF5DS ( fileID, 'dBeta_dIWC_c_e_max_ord', maxOrd(:,:,:,3) )
+        call saveAsHDF5DS ( fileID, 'dBeta_dIWC_c_s_max_ord', maxOrd(:,:,:,4) )
+
+        ! Save the Beta T derivatives
+        call saveAsHDF5DS ( fileID, 'dBeta_dT_c_e', dBeta_dT(:,:,:,i_c_e) )
+        call saveAsHDF5DS ( fileID, 'dBeta_dT_c_s', dBeta_dT(:,:,:,i_c_s) )
+        call saveAsHDF5DS ( fileID, 'dBeta_dT_c_a', dBeta_dT(:,:,:,i_c_e) - &
+                                                  & dBeta_dT(:,:,:,i_c_s) )
+        call saveAsHDF5DS ( fileID, 'dBeta_dT_c_e_err_est', e_dBeta_dT(:,:,:,i_c_e) )
+        call saveAsHDF5DS ( fileID, 'dBeta_dT_c_s_err_est', e_dBeta_dT(:,:,:,i_c_s) )
+        call saveAsHDF5DS ( fileID, 'dBeta_dT_c_e_nfunc', nFunc(:,:,:,:,5) )
+        call saveAsHDF5DS ( fileID, 'dBeta_dT_c_s_nfunc', nFunc(:,:,:,:,6) )
+        call saveAsHDF5DS ( fileID, 'dBeta_dT_c_e_max_ord', maxOrd(:,:,:,5) )
+        call saveAsHDF5DS ( fileID, 'dBeta_dT_c_s_max_ord', maxOrd(:,:,:,6) )
+      end if
+
+      if ( wantP ) then
+        ! Save the P IWC derivatives
+        call saveAsHDF5DS ( fileID, 'dP_dIWC', dP_dIWC )
+        call saveAsHDF5DS ( fileID, 'dP_dIWC_err_est', e_dP_dIWC )
+        call saveAsHDF5DS ( fileID, 'dP_dIWC_nfunc', nFuncP(1,:,:,:,:,2) )
+        call saveAsHDF5DS ( fileID, 'dP_dIWC_iflag', nFuncP(2,:,:,:,:,2) )
+        call saveAsHDF5DS ( fileID, 'dP_dIWC_maxord', maxOrdP(:,:,:,:,2) )
+
+        ! Save the P T derivatives
+        call saveAsHDF5DS ( fileID, 'dP_dT', dP_dT )
+        call saveAsHDF5DS ( fileID, 'dP_dT_err_est', e_dP_dT )
+        call saveAsHDF5DS ( fileID, 'dP_dT_nfunc', nFuncP(1,:,:,:,:,3) )
+        call saveAsHDF5DS ( fileID, 'dP_dT_iflag', nFuncP(2,:,:,:,:,3) )
+        call saveAsHDF5DS ( fileID, 'dP_dT_maxord', maxOrdP(:,:,:,:,3) )
+      end if
+
+    end if ! present(dBeta_dIWC)
+
+    ! Close the HDF5 output file
+    call H5FClose_F ( fileID, iostat )
+    if ( iostat /= 0 ) then
+      write ( *, * ) 'Unable to close HDF5 file ', &
+        trim(file), ', iostat =', iostat
+      return
+    end if
+
+    ! Shut down HDF5
+    call MLS_H5Close ( iostat )
+    if ( iostat /= 0 ) &
+      write ( *, * ) 'Unable to shut down HDF5, iostat =', iostat
+
+  end subroutine WriteHDF
+
+  logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, id
+  end function not_used_here
+
+end module WriteHDF_m
+
+! $Log$
