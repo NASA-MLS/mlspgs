@@ -100,7 +100,7 @@ contains ! =====     Public Procedures     =============================
     use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, MLSPCF_L2GP_END, &
       & MLSPCF_L2GP_START, MLSPCF_L2DGG_START, MLSPCF_L2DGG_END, &
       & MLSPCF_L2CLIM_START, MLSPCF_L2CLIM_END
-    use MLSStringLists, only: Intersection, switchDetail, unquote
+    use MLSStringLists, only: Intersection, switchDetail
     use MLSStrings, only: trim_safe
     use MoreTree, only: Get_Spec_ID, GET_BOOLEAN
     use OUTPUT_M, only: blanks, OUTPUT, revertOutput, switchOutput
@@ -281,11 +281,9 @@ contains ! =====     Public Procedures     =============================
           case ( f_create )
             create = get_boolean ( gson )
           case ( f_exclude )
-            call get_string ( sub_rosa(subtree(2,gson)), exclude )
-            exclude = unquote(exclude) ! Parser includes quotes
+            call get_string ( sub_rosa(subtree(2,gson)), exclude, strip=.true. )
           case ( f_file )
-            call get_string ( sub_rosa(subtree(2,gson)), file_base )
-            file_base = unquote(file_base) ! Parser includes quotes
+            call get_string ( sub_rosa(subtree(2,gson)), file_base, strip=.true. )
             if ( DEBUG ) print *, 'file_base: ', trim(file_base)
           case ( f_hdfVersion )
             call expr ( subtree(2,gson), units, value, type )
@@ -300,18 +298,15 @@ contains ! =====     Public Procedures     =============================
             skipCopy = get_boolean ( gson ) .and. &
               & ( parallel%numFailedChunks == 0 )
           case ( f_inputfile )
-            call get_string ( sub_rosa(subtree(2, gson)), inputfile_base )
-            inputfile_base = unquote(inputfile_base) ! Parser includes quotes
+            call get_string ( sub_rosa(subtree(2, gson)), inputfile_base, strip=.true. )
           case ( f_inputtype )
             input_type = decoration(subtree(2, gson))
           case ( f_rename )
-            call get_string ( sub_rosa(subtree(2,gson)), rename )
-            rename = unquote(rename) ! Parser includes quotes
+            call get_string ( sub_rosa(subtree(2,gson)), rename, strip=.true. )
           case ( f_repairGeoLocations )
             repairGeoLocations = get_boolean ( gson )
           case ( f_swath )
-            call get_string ( sub_rosa(subtree(2,gson)), sdList )
-            sdList = unquote(sdList) ! Parser includes quotes
+            call get_string ( sub_rosa(subtree(2,gson)), sdList, strip=.true. )
           case ( f_type )
             output_type = decoration(subtree(2, gson))
             call get_string ( lit_indices(output_Type), outputTypeStr, strip=.true. )
@@ -547,11 +542,9 @@ contains ! =====     Public Procedures     =============================
           got(field_index) = .true.
           select case ( field_index )   ! Field name
           case ( f_file )
-            call get_string ( sub_rosa(subtree(2,gson)), file_base )
-            file_base = file_base(2:LEN_TRIM(file_base)-1) ! Parser includes quotes
+            call get_string ( sub_rosa(subtree(2,gson)), file_base, strip=.true. )
           case ( f_metaName )
-            call get_string ( sub_rosa(subtree(2,gson)), meta_name )
-            meta_name = meta_name(2:LEN_TRIM(meta_name)-1) ! Parser includes quotes
+            call get_string ( sub_rosa(subtree(2,gson)), meta_name, strip=.true. )
           case ( f_type )
             output_type = decoration(subtree(2,gson))
             call get_string ( lit_indices(output_Type), outputTypeStr, strip=.true. )
@@ -564,7 +557,7 @@ contains ! =====     Public Procedures     =============================
             if ( units(1) /= phyq_dimensionless ) &
               & call Announce_error ( gson, &
               & 'No units allowed for hdfVersion: just integer 4 or 5')
-            hdfVersion = value(1)
+            hdfVersion = nint(value(1))
           case default                  ! Everything else processed later
           end select
         end do
@@ -1737,6 +1730,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.146  2009/10/01 19:53:53  vsnyder
+! Use strip=.true in get_string instead of unquote later
+!
 ! Revision 2.145  2009/09/29 23:37:32  pwagner
 ! Changes needed by 64-bit build
 !
