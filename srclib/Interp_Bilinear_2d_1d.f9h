@@ -41,10 +41,13 @@
     if ( u ) then
       zNew(i) = zNew(i) + z
     else
-      zNew = z
+      zNew(i) = z
     end if
   end do
 
 ! end subroutine Interp_Bilinear_2d_1d_r*
 
 ! $Log$
+! Revision 1.1  2006/01/05 03:27:59  vsnyder
+! Initial commit
+!
