@@ -25,7 +25,6 @@ MODULE PCFHdr
    use MLSCommon, only: r8, FileNameLen, MLSFile_T, NameLen
    use MLSFiles, only: GetPCFromRef, HDFVERSION_4, HDFVERSION_5, &
      & InitializeMLSFile, open_MLSFile, close_MLSFile
-   use MLSHDFEOS, only: HSIZE
    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
      & MLSMSG_Warning, MLSMSG_DeAllocate, MLSMSG_FILEOPEN
    use MLSStrings, only: lowerCase
@@ -321,7 +320,7 @@ CONTAINS
 
     use HDFEOS5, only: HE5T_NATIVE_INT, &
       & HE5T_NATIVE_DOUBLE, MLS_charType
-    use MLSHDFEOS, only: he5_EHwrglatt, mls_EHwrglatt
+    use MLSHDFEOS, only: he5_EHwrglatt, hsize, mls_EHwrglatt
 ! Brief description of subroutine
 ! This subroutine writes the global attributes for an hdf-eos5 file
 
@@ -596,7 +595,7 @@ CONTAINS
 
       use HDFEOS5, only: HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE, MLS_charType
       use HE5_SWAPI, only: he5_SWwrattr
-      use MLSHDFEOS, only: mls_SWwrattr
+      use MLSHDFEOS, only: hsize, mls_SWwrattr
 ! Brief description of subroutine
 ! This subroutine writes the global attributes for an hdf-eos5 swath
 
@@ -997,7 +996,7 @@ CONTAINS
 !----------------------------------------
 
       use HDFEOS5, only: MLS_charType
-      use MLSHDFEOS, only: he5_EHwrglatt
+      use MLSHDFEOS, only: hsize, he5_EHwrglatt
 ! Brief description of subroutine
 ! This subroutine writes the PCF into an HDF-EOS5 file as an attribute.
 ! It does so as file level attributes
@@ -1227,6 +1226,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.50  2009/10/05 23:37:59  pwagner
+!# Moved use mlshdfeos statements from module scope to speedup Lahey; this is the last time we do that
+!#
 !# Revision 2.49  2009/09/29 23:36:28  pwagner
 !# Changes needed by 64-bit build
 !#
