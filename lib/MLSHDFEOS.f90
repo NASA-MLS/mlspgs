@@ -54,7 +54,6 @@ module MLSHDFEOS
     &                      SWWRFLD_INTEGER
   use SWAPI_REAL, only: SWRDFLD_REAL, SWRDFLD_REAL_2D, SWRDFLD_REAL_3D, &
     &                   SWWRFLD_REAL, SWWRFLD_REAL_2D, SWWRFLD_REAL_3D
-  use hdf5, only: hsize_t, hssize_t, size_t
 
   implicit NONE
   private
@@ -203,12 +202,6 @@ module MLSHDFEOS
   ! Print debugging stuff?
   logical, parameter :: DEEBUG = .false.  
   character(len=1), parameter :: BLANK = ' '
-
-  ! Convenient to put stuff here
-  ! integer, parameter :: MAXRANK = 7
-  ! integer(kind=hsize_t), dimension(MAXRANK) :: hstart
-  ! integer(kind=hsize_t), dimension(MAXRANK) :: hstride
-  ! integer(kind=hsize_t), dimension(MAXRANK) :: hedge
 
 contains ! ======================= Public Procedures =========================
 
@@ -1331,6 +1324,7 @@ contains ! ======================= Public Procedures =========================
   ! ---------------------------------------------  MLS_SWRDFLD_REAL_2d  -----
   integer function MLS_SWRDFLD_REAL_2d ( SWATHID, FIELDNAME, &
     & START, STRIDE, EDGE, VALUES, FILENAME, hdfVersion, DONTFAIL )
+    use hdf5, only: hsize_t, hssize_t, size_t
     integer, parameter :: RANK = 2
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: FIELDNAME     ! Field name
@@ -1970,6 +1964,7 @@ contains ! ======================= Public Procedures =========================
   ! ---------------------------------------------  mls_swath_in_file_sca  -----
   logical function mls_swath_in_file_sca(filename, swath, HdfVersion, error)
     ! Returns .true. if swath found in file, .false. otherwise
+    use hdf5, only: hsize_t, hssize_t, size_t
     character(len=*), intent(in) :: filename
     character(len=*), intent(in) :: swath
     integer, intent(in) :: HdfVersion
@@ -2011,6 +2006,7 @@ contains ! ======================= Public Procedures =========================
   ! ---------------------------------------------  mls_swath_in_file_arr  -----
   logical function mls_swath_in_file_arr(filename, swaths, HdfVersion, &
     & which, error )
+    use hdf5, only: hsize_t, hssize_t, size_t
     ! Array version of the above
     character(len=*), intent(in) :: filename
     character(len=*), dimension(:), intent(in) :: swaths
@@ -2065,6 +2061,7 @@ contains ! ======================= Public Procedures =========================
 
   ! ---------------- hsize ------------
   function hsize ( arg ) result ( h )
+    use hdf5, only: hsize_t, hssize_t, size_t
     ! Return arg with same integer value
     ! but with kind value size_t or, someday, hdfeos5size_t
     integer,  intent(in)               :: arg
@@ -2075,6 +2072,7 @@ contains ! ======================= Public Procedures =========================
 
   ! ---------------- hsizes ------------
   function hsizes ( ints ) result ( h )
+    use hdf5, only: hsize_t, hssize_t, size_t
     ! Return array with same integer values as ints
     ! but with kind value size_t or, someday, hdfeos5size_t
     integer, dimension(:), intent(in)               :: ints
@@ -2207,6 +2205,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDFEOS
 
 ! $Log$
+! Revision 2.40  2009/10/05 23:38:21  pwagner
+! Moved use hdf5 statements from module scope to speedup Lahey; this is the last time we do that
+!
 ! Revision 2.39  2009/09/29 23:33:49  pwagner
 ! Changes needed by 64-bit build
 !
