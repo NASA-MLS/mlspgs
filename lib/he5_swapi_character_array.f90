@@ -11,7 +11,6 @@
 
 module HE5_SWAPI_CHARACTER_ARRAY
 
-  use hdf5, only: size_t
   public :: HE5_EHWRGLATT_CHARACTER_ARRAY, HE5_EHRDGLATT_CHARACTER_ARRAY, &
     & HE5_SWRDFLD_CHARACTER_ARRAY, HE5_SWWRFLD_CHARACTER_ARRAY, &
     & HE5_SWWRATTR_CHARACTER_ARRAY, HE5_SWWRLATTR_CHARACTER_ARRAY, &
@@ -28,6 +27,7 @@ contains
 
   integer function HE5_EHWRGLATT_CHARACTER_ARRAY ( FILEID, &
     & ATTRNAME, DATATYPE, COUNT, BUFFER )
+  use hdf5, only: size_t
     integer, intent(in) :: FILEID      ! File ID
     character(len=*), intent(in) :: ATTRNAME     ! Attribute name
     integer, intent(in) :: DATATYPE    ! E.g., MLS_charType
@@ -54,6 +54,7 @@ contains
 
   integer function HE5_SWRDFLD_CHARACTER_ARRAY ( SWATHID, FIELDNAME, &
     & STARTS, STRIDES, EDGES, BUFFER )
+  use hdf5, only: size_t
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: FIELDNAME     ! Field name
     integer(kind=size_t), intent(in) :: STARTS(*)    ! Start array
@@ -69,6 +70,7 @@ contains
 
   integer function HE5_SWWRFLD_CHARACTER_ARRAY ( SWATHID, FIELDNAME, &
     & STARTS, STRIDES, EDGES, BUFFER )
+  use hdf5, only: size_t
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: FIELDNAME     ! Field name
     integer(kind=size_t), intent(in) :: STARTS(*)    ! Start array
@@ -87,6 +89,7 @@ contains
 
   integer function HE5_SWWRATTR_CHARACTER_ARRAY ( SWATHID, &
     & ATTRNAME, DATATYPE, COUNT, BUFFER )
+  use hdf5, only: size_t
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: ATTRNAME     ! Attribute name
     integer, intent(in) :: DATATYPE    ! E.g., MLS_charType
@@ -101,6 +104,7 @@ contains
 
   integer function HE5_SWWRLATTR_CHARACTER_ARRAY ( SWATHID, FIELDNAME, &
     & ATTRNAME, DATATYPE, COUNT, BUFFER )
+  use hdf5, only: size_t
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: FIELDNAME     ! Field name
     character(len=*), intent(in) :: ATTRNAME     ! Attribute name
