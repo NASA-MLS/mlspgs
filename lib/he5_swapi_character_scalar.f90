@@ -11,7 +11,6 @@
 
 module HE5_SWAPI_CHARACTER_SCALAR
 
-  use hdf5, only: size_t
   public :: HE5_EHWRGLATT_CHARACTER_SCALAR, HE5_EHRDGLATT_CHARACTER_SCALAR, &
     & HE5_SWRDFLD_CHARACTER_SCALAR, HE5_SWWRFLD_CHARACTER_SCALAR, &
     & HE5_SWWRATTR_CHARACTER_SCALAR, HE5_SWWRLATTR_CHARACTER_SCALAR, &
@@ -28,6 +27,7 @@ contains
 
   integer function HE5_EHWRGLATT_CHARACTER_SCALAR ( FILEID, &
     & ATTRNAME, DATATYPE, COUNT, BUFFER )
+  use hdf5, only: size_t
     integer, intent(in) :: FILEID      ! File ID
     character(len=*), intent(in) :: ATTRNAME     ! Attribute name
     integer, intent(in) :: DATATYPE    ! E.g., MLS_charType
@@ -54,6 +54,7 @@ contains
 
   integer function HE5_SWRDFLD_CHARACTER_SCALAR ( SWATHID, FIELDNAME, &
     & STARTS, STRIDES, EDGES, BUFFER )
+  use hdf5, only: size_t
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: FIELDNAME     ! Field name
     integer(kind=size_t), intent(in) :: STARTS(*)    ! Start array
@@ -69,6 +70,7 @@ contains
 
   integer function HE5_SWWRFLD_CHARACTER_SCALAR ( SWATHID, FIELDNAME, &
     & STARTS, STRIDES, EDGES, BUFFER )
+  use hdf5, only: size_t
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: FIELDNAME     ! Field name
     integer(kind=size_t), intent(in) :: STARTS(*)    ! Start array
@@ -84,6 +86,7 @@ contains
 
   integer function HE5_SWWRATTR_CHARACTER_SCALAR ( SWATHID, &
     & ATTRNAME, DATATYPE, COUNT, BUFFER )
+  use hdf5, only: size_t
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: ATTRNAME     ! Attribute name
     integer, intent(in) :: DATATYPE    ! E.g., MLS_charType
@@ -98,6 +101,7 @@ contains
 
   integer function HE5_SWWRLATTR_CHARACTER_SCALAR ( SWATHID, FIELDNAME, &
     & ATTRNAME, DATATYPE, COUNT, BUFFER )
+  use hdf5, only: size_t
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: FIELDNAME     ! Field name
     character(len=*), intent(in) :: ATTRNAME     ! Attribute name
@@ -149,6 +153,9 @@ contains
 end module HE5_SWAPI_CHARACTER_SCALAR
 
 ! $Log$
+! Revision 2.12  2009/10/05 23:37:05  pwagner
+! Moved use hdf5 statements from module scope to speedup Lahey; this is the last time we do taht
+!
 ! Revision 2.11  2009/09/29 23:34:38  pwagner
 ! Changes needed by 64-bit build
 !
