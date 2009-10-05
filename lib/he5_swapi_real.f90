@@ -11,7 +11,6 @@
 
 module HE5_SWAPI_REAL
 
-  use hdf5, only: hsize_t, hssize_t, size_t
   public :: HE5_SWRDFLD_REAL, HE5_SWRDFLD_REAL_2D, HE5_SWRDFLD_REAL_3D, &
     & HE5_SWWRFLD_REAL, HE5_SWWRFLD_REAL_2D, HE5_SWWRFLD_REAL_3D, &
     & HE5_EHWRGLATT_REAL, HE5_EHRDGLATT_REAL, &
@@ -30,6 +29,7 @@ contains
 
   integer function HE5_EHWRGLATT_REAL ( FILEID, &
     & ATTRNAME, DATATYPE, COUNT, BUFFER )
+  use hdf5, only: hsize_t, hssize_t, size_t
     integer, intent(in) :: FILEID      ! File ID
     character(len=*), intent(in) :: ATTRNAME     ! Field name
     integer, intent(in) :: DATATYPE
@@ -67,6 +67,7 @@ contains
 
   integer function HE5_SWRDFLD_REAL ( SWATHID, FIELDNAME, &
     & STARTS, STRIDES, EDGES, BUFFER )
+  use hdf5, only: hsize_t, hssize_t, size_t
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: FIELDNAME     ! Field name
     integer(kind=size_t), intent(in) :: STARTS(*)    ! Start array
@@ -82,6 +83,7 @@ contains
 
   integer function HE5_SWRDFLD_REAL_2D ( SWATHID, FIELDNAME, &
     & STARTS, STRIDES, EDGES, BUFFER )
+  use hdf5, only: hsize_t, hssize_t, size_t
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: FIELDNAME     ! Field name
     integer(kind=size_t), intent(in) :: STARTS(*)    ! Start array
@@ -90,21 +92,13 @@ contains
     real, intent(out) :: BUFFER(:,:)    ! Buffer for read
 
     integer, external :: HE5_SWRDFLD
-    !integer(kind=size_t), dimension(2) :: hstarts, hstrides, hedges
-    !hstarts(1:2) = starts(1:2)
-    !hstrides(1:2) = strides(1:2)
-    !hedges(1:2) = edges(1:2)
-
-      ! print *, 'In HE5_SWRDFLD_REAL_2D: ', trim(fieldname)
-      ! print *, 'starts:  ', starts(1:2)
-      ! print *, 'strides: ', strides(1:2)
-      ! print *, 'edges: ', edges(1:2)
     HE5_SWrdfld_real_2d  = HE5_SWrdfld(swathid, fieldname, starts, strides, &
       & edges, buffer )
   end function HE5_SWRDFLD_REAL_2D
 
   integer function HE5_SWRDFLD_REAL_3D ( SWATHID, FIELDNAME, &
     & STARTS, STRIDES, EDGES, BUFFER )
+  use hdf5, only: hsize_t, hssize_t, size_t
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: FIELDNAME     ! Field name
     integer(kind=size_t), intent(in) :: STARTS(*)    ! Start array
@@ -120,6 +114,7 @@ contains
 
   integer function HE5_SWWRFLD_REAL ( SWATHID, FIELDNAME, &
     & STARTS, STRIDES, EDGES, BUFFER )
+  use hdf5, only: hsize_t, hssize_t, size_t
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: FIELDNAME     ! Field name
     integer(kind=size_t), intent(in) :: STARTS(*)    ! Start array
@@ -130,22 +125,13 @@ contains
     ! integer(kind=size_t) :: COUNTS(1)
     integer, external :: HE5_SWWRFLD
 
-    ! print *, 'In HE5_SWRDFLD_REAL: ', trim(fieldname)
-    ! print *, 'starts:  ', starts(1:1)
-    ! print *, 'strides: ', strides(1:1)
-    ! print *, 'edges: ', edges(1:1)
-    ! if ( edges(1) < size(BUFFER) ) then
-    !   print *, 'Warning--edges array too small for values'
-    ! endif
-    ! counts = max(edges(1), size(BUFFER) )
-    ! print *, 'counts: ', counts(1:1)
-    ! print *, 'size(BUFFER): ', size(BUFFER)
     HE5_SWwrfld_real = HE5_SWwrfld(swathid, fieldname, starts, strides, &
       & edges, buffer )
   end function HE5_SWWRFLD_REAL
 
   integer function HE5_SWWRFLD_REAL_2D ( SWATHID, FIELDNAME, &
     & STARTS, STRIDES, EDGES, BUFFER )
+  use hdf5, only: hsize_t, hssize_t, size_t
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: FIELDNAME     ! Field name
     integer(kind=size_t), intent(in) :: STARTS(*)    ! Start array
@@ -161,6 +147,7 @@ contains
 
   integer function HE5_SWWRFLD_REAL_3D ( SWATHID, FIELDNAME, &
     & STARTS, STRIDES, EDGES, BUFFER )
+  use hdf5, only: hsize_t, hssize_t, size_t
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: FIELDNAME     ! Field name
     integer(kind=size_t), intent(in) :: STARTS(*)    ! Start array
@@ -176,6 +163,7 @@ contains
 
   integer function HE5_SWWRATTR_REAL ( SWATHID, &
     & ATTRNAME, DATATYPE, COUNT, BUFFER )
+  use hdf5, only: hsize_t, hssize_t, size_t
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: ATTRNAME     ! Field name
     integer, intent(in) :: DATATYPE
@@ -190,6 +178,7 @@ contains
 
   integer function HE5_SWWRLATTR_REAL ( SWATHID, FIELDNAME, &
     & ATTRNAME, DATATYPE, COUNT, BUFFER )
+  use hdf5, only: hsize_t, hssize_t, size_t
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: FIELDNAME     ! Field name
     character(len=*), intent(in) :: ATTRNAME     ! Field name
@@ -241,6 +230,9 @@ contains
 end module HE5_SWAPI_REAL
 
 ! $Log$
+! Revision 2.9  2009/10/05 23:37:05  pwagner
+! Moved use hdf5 statements from module scope to speedup Lahey; this is the last time we do taht
+!
 ! Revision 2.8  2009/09/29 23:34:38  pwagner
 ! Changes needed by 64-bit build
 !

@@ -11,7 +11,6 @@
 
 module HE5_SWAPI_INTEGER
 
-  use hdf5, only: size_t
   public :: HE5_SWRDFLD_INTEGER, HE5_SWRDFLD_INTEGER_2D, HE5_SWRDFLD_INTEGER_3D, &
     & HE5_SWWRFLD_INTEGER, HE5_SWWRFLD_INTEGER_2D, HE5_SWWRFLD_INTEGER_3D, &
     & HE5_EHWRGLATT_INTEGER, HE5_EHRDGLATT_INTEGER, &
@@ -30,6 +29,7 @@ contains
 
   integer function HE5_EHWRGLATT_INTEGER ( FILEID, &
     & ATTRNAME, DATATYPE, COUNT, BUFFER )
+  use hdf5, only: size_t
     integer, intent(in) :: FILEID      ! File ID
     character(len=*), intent(in) :: ATTRNAME     ! Field name
     integer, intent(in) :: DATATYPE
@@ -67,6 +67,7 @@ contains
 
   integer function HE5_SWRDFLD_INTEGER ( SWATHID, FIELDNAME, &
     & STARTS, STRIDES, EDGES, BUFFER )
+  use hdf5, only: size_t
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: FIELDNAME     ! Field name
     integer(kind=size_t), intent(in) :: STARTS(*)    ! Start array
@@ -82,6 +83,7 @@ contains
 
   integer function HE5_SWRDFLD_INTEGER_2D ( SWATHID, FIELDNAME, &
     & STARTS, STRIDES, EDGES, BUFFER )
+  use hdf5, only: size_t
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: FIELDNAME     ! Field name
     integer(kind=size_t), intent(in) :: STARTS(*)    ! Start array
@@ -97,6 +99,7 @@ contains
 
   integer function HE5_SWRDFLD_INTEGER_3D ( SWATHID, FIELDNAME, &
     & STARTS, STRIDES, EDGES, BUFFER )
+  use hdf5, only: size_t
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: FIELDNAME     ! Field name
     integer(kind=size_t), intent(in) :: STARTS(*)    ! Start array
@@ -112,6 +115,7 @@ contains
 
   integer function HE5_SWWRFLD_INTEGER ( SWATHID, FIELDNAME, &
     & STARTS, STRIDES, EDGES, BUFFER )
+  use hdf5, only: size_t
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: FIELDNAME     ! Field name
     integer(kind=size_t), intent(in) :: STARTS(*)    ! Start array
@@ -130,6 +134,7 @@ contains
 
   integer function HE5_SWWRFLD_INTEGER_2D ( SWATHID, FIELDNAME, &
     & STARTS, STRIDES, EDGES, BUFFER )
+  use hdf5, only: size_t
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: FIELDNAME     ! Field name
     integer(kind=size_t), intent(in) :: STARTS(*)    ! Start array
@@ -145,6 +150,7 @@ contains
 
   integer function HE5_SWWRFLD_INTEGER_3D ( SWATHID, FIELDNAME, &
     & STARTS, STRIDES, EDGES, BUFFER )
+  use hdf5, only: size_t
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: FIELDNAME     ! Field name
     integer(kind=size_t), intent(in) :: STARTS(*)    ! Start array
@@ -160,6 +166,7 @@ contains
 
   integer function HE5_SWWRATTR_INTEGER ( SWATHID, &
     & ATTRNAME, DATATYPE, COUNT, BUFFER )
+  use hdf5, only: size_t
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: ATTRNAME     ! Field name
     integer, intent(in) :: DATATYPE
@@ -174,6 +181,7 @@ contains
 
   integer function HE5_SWWRLATTR_INTEGER ( SWATHID, FIELDNAME, &
     & ATTRNAME, DATATYPE, COUNT, BUFFER )
+  use hdf5, only: size_t
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: FIELDNAME     ! Field name
     character(len=*), intent(in) :: ATTRNAME     ! Field name
@@ -225,6 +233,9 @@ contains
 end module HE5_SWAPI_INTEGER
 
 ! $Log$
+! Revision 2.9  2009/10/05 23:37:05  pwagner
+! Moved use hdf5 statements from module scope to speedup Lahey; this is the last time we do taht
+!
 ! Revision 2.8  2009/09/29 23:34:38  pwagner
 ! Changes needed by 64-bit build
 !
