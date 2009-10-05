@@ -32,8 +32,6 @@ module MLSHDF5
   use MLSStringLists, only: catLists, IsInList, &
     & GetStringElement, NumStringElements, StringElement
   use MLSStrings, only: indexes, Replace
-  ! To switch to/from hdfeos5.1.6(+) uncomment next line
-  use H5LIB, ONLY: h5open_f, h5close_f
   ! Lets break down our use, parameters first
   use HDF5, only: H5F_ACC_RDONLY_F, H5F_ACC_RDWR_F, &
     & H5P_DATASET_CREATE_F, &
@@ -308,6 +306,8 @@ contains ! ======================= Public Procedures =========================
   ! ------------------------------------------------  MLS_h5close  -----
   subroutine MLS_h5close ( error )
     ! Arguments
+  ! To switch to/from hdfeos5.1.6(+) uncomment next line
+  use H5LIB, ONLY: h5open_f, h5close_f
     integer, intent(out) :: error          ! Trouble if /= 0
     error = 0
     call h5close_f ( error )
@@ -316,6 +316,8 @@ contains ! ======================= Public Procedures =========================
   ! -------------------------------------------------  MLS_h5open  -----
   subroutine MLS_h5open ( error )
     ! Arguments
+  ! To switch to/from hdfeos5.1.6(+) uncomment next line
+  use H5LIB, ONLY: h5open_f, h5close_f
     integer, intent(out) :: error          ! Trouble if /= 0
     error = 0
     call h5open_f ( error )
@@ -5047,6 +5049,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.95  2009/10/05 23:38:59  pwagner
+! Moved use h5lib statements from module scope to speedup Lahey; this is the last time we do that
+!
 ! Revision 2.94  2009/09/29 23:31:24  pwagner
 ! Changes needed by 64-bit build
 !
