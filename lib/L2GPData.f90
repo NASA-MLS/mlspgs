@@ -39,7 +39,6 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   use Output_M, only: blanks, Output, outputNamedValue, &
     & resumeOutput, suspendOutput
   use STRING_TABLE, only: DISPLAY_STRING
-  use HDF5, only: size_t
 
   implicit none
 
@@ -3433,6 +3432,7 @@ contains
   use HDFEOS5, only: HE5_SWINQDIMS, HE5_SWINQDFLDS, HE5_swfldinfo
   use MLSHDFEOS, only: mls_swattach, mls_swdetach, mls_swdiminfo, mls_swrdfld
   use MLSStringLists, only: isInList
+  use HDF5, only: size_t
     !------------------------------------------------------------------------
 
     ! This routine reads an L2GP file, returning a filled data structure and the !
@@ -4921,6 +4921,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.169  2009/09/29 23:35:43  pwagner
+! Changes needed by 64-bit build
+!
 ! Revision 2.168  2009/08/26 16:45:55  pwagner
 ! Public global flag WRITEMASTERSFILEATTRIBUTES determines whether to overwrite slave file attributes with masters
 !
