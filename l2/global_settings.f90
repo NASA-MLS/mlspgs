@@ -72,6 +72,7 @@ contains
       & ForwardModelConfig_T
     use ForwardModelSupport, only: ConstructForwardModelConfig, &
       & ForwardModelGlobalSetup, CreateBinSelectorFromMLSCFInfo
+    use Hdf, only: DFACC_CREATE
     use INIT_TABLES_MODULE, only: F_FILE, F_TYPE, &
       & L_L2GP, L_L2DGG, L_L2FWM, &
       & parm_indices, &
@@ -104,7 +105,8 @@ contains
       & mlspcf_l2fwm_full_end, &
       & mlspcf_l2dgg_start, mlspcf_l2dgg_end
     use MLSStrings, only: hhmmss_value, lowerCase, trim_safe
-    use MLSStringLists, only: Array2List, catLists, SWITCHDETAIL
+    use MLSStringLists, only: Array2List, catLists, SWITCHDETAIL, &
+      & NumStringElements, StringElement
     use MLSSignals_m, only: INSTRUMENT
     use MoreTree, only: GET_FIELD_ID, GET_SPEC_ID, StartErrorMessage
     use OUTPUT_M, only: BLANKS, OUTPUT, outputCalendar, &
@@ -722,7 +724,6 @@ contains
       & filedatabase, DirectDatabase, ForwardModelConfigDatabase, &
       & LeapSecFileName, details )
 
-      use MLSStringLists, only: NumStringElements, StringElement
       ! Dump info obtained during OpenAndInitialize and global_settings:
       ! L1B databse
       ! L1OA file
@@ -925,7 +926,6 @@ contains
 
     ! --------------------------------------------------  SayTime  -----
     subroutine SayTime ( msg )
-      use MLSStrings, only: trim_safe
       character(len=*), optional, intent(in) :: msg
       call time_now ( t2 )
       if ( total_times ) then
@@ -944,7 +944,6 @@ contains
 
     ! --------------------------  CreateDirectTypeFromMLSCFInfo  -----
     function CreateDirectTypeFromMLSCFInfo ( root, DirectFile ) result (Direct)
-    use Hdf, only: DFACC_CREATE
     integer, intent(in) :: ROOT         ! Tree node
     type (DirectData_T) :: Direct
     type (MLSFile_T)    :: DirectFile
@@ -1048,6 +1047,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.134  2009/10/01 19:56:35  vsnyder
+! Restrict some functionality in callable forward model mode
+!
 ! Revision 2.133  2009/08/26 17:16:15  pwagner
 ! Note types of apriori files in file attribute MiscNotes
 !
