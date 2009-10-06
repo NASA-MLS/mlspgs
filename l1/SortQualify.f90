@@ -664,6 +664,8 @@ PRINT *, 'switch MAF: ', CurMAFdata%SciPkt(0)%MAFno
              bandno = bankno
           END SELECT
 
+          IF (bandno < 0) CYCLE     ! Switch is changing
+
           WHERE (CurMAFdata%SciPkt(MIF)%altG > BandAlt(bandno)%Meters .AND. &
                (CurMAFdata%MIFprecSign(MIF) > 0.0))
              CurMAFdata%LimbAltFlag(MIF)%FB(:,bankno) = .TRUE.
@@ -674,6 +676,7 @@ PRINT *, 'switch MAF: ', CurMAFdata%SciPkt(0)%MAFno
           ELSEWHERE
              CurMAFdata%LimbAltFlag(MIF)%FB(:,bankno) = .FALSE.
           ENDWHERE
+ 
           CurMAFdata%LimbAltIndx%FB(:,bankno) = BandAlt(bandno)%indx
 
        ENDDO
@@ -718,6 +721,8 @@ PRINT *, 'switch MAF: ', CurMAFdata%SciPkt(0)%MAFno
           ELSE
              bandno = bankno + 21
           ENDIF
+
+          IF (bandno < 0) CYCLE     ! Switch is changing
 
           WHERE (CurMAFdata%SciPkt(MIF)%altG > BandAlt(bandno)%Meters .AND. &
                (CurMAFdata%MIFprecSign(MIF) > 0.0))
@@ -974,6 +979,9 @@ END MODULE SortQualify
 !=============================================================================
 
 ! $Log$
+! Revision 2.30  2009/10/06 16:03:48  perun
+! Handle unknown switch position
+!
 ! Revision 2.29  2009/07/24 16:38:43  perun
 ! Assign MIF_dur before using
 !
