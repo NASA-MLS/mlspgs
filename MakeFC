@@ -323,7 +323,7 @@ LEVELS = l1 l2 l3 l3m
 
 # OTHER_SUBDIRS are *not* built automatically:
 # you must either name them individually, or use the "all" target
-OTHER_SUBDIRS = fwdmdl cloudfwdm
+OTHER_SUBDIRS = fwdmdl cloudfwdm cfm
 #         All the subdirectories
 
 #You may build all the subdirectories via the "all" target; i.e.,
@@ -366,17 +366,6 @@ sids_l1boa := sids/l1boa
 # SUBDIRS when you invoke it with "make update":
 # likely candidates are "depends" or "depends ghostbuster"
 SUBDIRS_UPDATE = depends ghostbuster
-
-# This determines the command by which MakeFC looks like Makefile
-# Choose either "link" or "copy"; warning--link has caused cvs probs
-# so recommend leaving it copy
-LOOKS_LIKE_MakeFC = copy
-
-ifeq ($(LOOKS_LIKE_MakeFC),copy)
-	LOOKS_LIKE_line = cp MakeFC Makefile
-else
-	LOOKS_LIKE_line = ln -s MakeFC Makefile
-endif
 
 # utctotai lib sources
 UTCDIR=utctotai
@@ -1072,15 +1061,13 @@ internalsaymake:
 		rm -f Makefile.old ;\
 		mv Makefile Makefile.old ;\
 	fi ; \
-	$(LOOKS_LIKE_line)
+	cp MakeFC Makefile
 	 @for dir in $(SUBDIRS) doc; do \
-	  cd $$dir; \
-		if [ -f Makefile ] ; then \
-			rm -f Makefile.old ;\
-			mv Makefile Makefile.old ;\
+		if [ -f $$dir/Makefile ] ; then \
+			rm -f $$dir/Makefile.old ;\
+			mv $$dir/Makefile $$dir/Makefile.old ;\
 		fi ; \
-		$(LOOKS_LIKE_line) ;\
-	  cd ..; \
+		cp $$dir/MakeFC $$dir/Makefile ;\
 	done
 
 internalupdate: internalsaymake
@@ -1124,7 +1111,7 @@ internalmftests:
 				mv Makefile Makefile.old ;\
 			fi ; \
 			if [ -f MakeFC ] ; then \
-				$(LOOKS_LIKE_line) ;\
+				cp MakeFC Makefile ;\
             $(MAKE) -f $(MakeFName) $(SUBDIRS_UPDATE); \
 			fi ; \
 		../../$(MLSBIN)/updatemf.sh -pc "$(PLATFORMS)" \
@@ -1188,6 +1175,9 @@ tools: chunktimes checkpvmup compare dateconverter heconvert h5subset h5cat hl \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.114  2009/09/18 19:55:49  pwagner
+# Able to build doc
+#
 # Revision 1.113  2009/09/02 22:06:58  pwagner
 # install-nrt made a target to install mlsnrt.sh
 #
