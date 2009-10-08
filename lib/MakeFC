@@ -149,19 +149,11 @@ ifdef WE_CAN
 NOHUNTING := yes
 endif
 #These modules require custom builds, so omit build commands from dependencies
-CUSTOM_BUILDS := Hdf.f90 string_table.f90 ncep_dao.f90
-# Custom builds for some modules needed to fool LF95 compiler
-# in the bad old days so it wouldn't take forever to finish 
-# (~14 hours for tree-walker)
-# No, Lahey didn't fix their compiler
-# (they called the compile times "proper", adding for clarification
-# "We don't fix this problem,"
-# we worked around their bug by moving USE statements inside procedures
-ifeq ($(MLSF95),LF95nasty)
-  CUSTOM_BUILDS := $(CUSTOM_BUILDS) L2PC_m.f90 MLSFiles.f90 L2GPData.f90
-endif
+CUSTOM_BUILDS := Hdf.f90 string_table.f90 ncep_dao.f90 \
+    MLSStrings.f90 MLSStringLists.f90
 CUSTOM_PREFXD := $(shell ${REECHO} -prefix=-db $(CUSTOM_BUILDS))
 
+# Most compilers name their .mod files using lowercase; Absoft uses UPPERcase
 ifeq ($(MLSF95),Abs)
   UP_OR_LOW := -mod UPPER
 else
@@ -323,6 +315,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.57  2009/10/08 23:07:24  pwagner
+# Added workarounds for buggy Intel v11 handling of strings
+#
 # Revision 2.56  2008/07/11 23:59:19  pwagner
 # 1st changes to get sunstudio to link mlsl2
 #
