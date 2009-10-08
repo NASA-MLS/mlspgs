@@ -182,6 +182,18 @@ ncep_dao.o: ncep_dao.mod
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
    -T ncep_dao.o ncep_dao.mod 
 
+# Intel's ifort compiler v11.x for 32-bit architecture has a string-handling bug
+# unless treated very carefully
+MLSStringLists.o: mlsstringlists.mod MLSStringLists.f90 
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t -T MLSStringLists.o mlsstringlists.mod 
+mlsstringlists.mod: MLSStringLists.f90 mlscommon.mod mlsmessagemodule.mod \
+	mlssets.mod mlsstrings.mod
+	$(UTILDIR)/newAifBdiff.sh -a mlsstringlists.mod $(FC) -c $(FOPTS) $(PRE) $(INC_PATHS) $(S)/MLSStringLists.f90 $(FAFTER)
+MLSStrings.o: mlsstrings.mod MLSStrings.f90 
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t -T MLSStrings.o mlsstrings.mod 
+mlsstrings.mod: MLSStrings.f90 mlscommon.mod ReadANumFromChars.f9h
+	$(UTILDIR)/newAifBdiff.sh -a mlsstrings.mod $(FC) -c $(FOPTS) $(PRE) $(INC_PATHS) $(S)/MLSStrings.f90 $(FAFTER)
+
 else
 #	l1
 
@@ -318,8 +330,18 @@ string_table.o:
 ncep_dao.o:
 	$(FC) -c $(NOUNASS) $(INC_PATHS) $(S)/ncep_dao.f90 $(FAFTER)
 
+# Intel's ifort compiler v11.x for 32-bit architecture has a string-handling bug
+# unless treated very carefully
+MLSStringLists.o:
+	$(FC) -c ${FOPTS} $(PRE) $(INC_PATHS) $(S)/MLSStringLists.f90 $(FAFTER)
+MLSStrings.o:
+	$(FC) -c ${FOPTS} $(PRE) $(INC_PATHS) $(S)/MLSStrings.f90 $(FAFTER)
+
 endif
 # $Log$
+# Revision 1.14  2005/09/08 00:25:01  pwagner
+# Fixed bug is build command for l1/EngTbls.o
+#
 # Revision 1.13  2004/08/19 00:07:46  pwagner
 # Fixed missing mod dependencies for machine.o
 #
