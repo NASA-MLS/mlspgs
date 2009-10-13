@@ -22,7 +22,8 @@
 !     real, intent(in), optional :: mean
 
     if ( thisIsADiff ) then
-      if ( present(name) ) call output ( trim(name), advance='no' )
+      if ( present(name) .and. PRINTNAMEIFDIFF ) &
+        & call output ( trim(name), advance='no' )
       if ( DIFFRMSMEANSRMS ) then
         call output ( ' min : max, rms: ', advance='no' )
         if ( present(mean) ) call output ( ' mean: ', advance='no' )
@@ -65,6 +66,9 @@
       call newline
     end if
 ! $Log$
+! Revision 2.2  2009/10/13 00:06:38  pwagner
+! Eliminate redundant printing of name
+!
 ! Revision 2.1  2007/07/16 23:30:27  pwagner
 ! First commit
 !
