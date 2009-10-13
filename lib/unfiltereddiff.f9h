@@ -229,17 +229,19 @@
           & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
           & op='-' )
       endif
-      call output( 'Maximum difference: ', advance='no' )
-      call output( exvalues(1), advance='no' )
-      call output( '  ( as ratio:  ', advance='no' )
-      call output( exratios(1), advance='no' )
-      call output( ' )', advance='yes' )
-      call output( 'Maximum ratio: ', advance='no' )
-      call output( exratios(2), advance='no' )
-      call output( '  ( as difference:  ', advance='no' )
-      call output( exvalues(2), advance='no' )
-      call output( ' )', advance='yes' )
-      call printRMSetc( 'ratio', minratio, maxratio, rmsratio, meanratio )
+      if ( myRMS ) then
+        call output( 'Maximum difference: ', advance='no' )
+        call output( exvalues(1), advance='no' )
+        call output( '  ( as ratio:  ', advance='no' )
+        call output( exratios(1), advance='no' )
+        call output( ' )', advance='yes' )
+        call output( 'Maximum ratio: ', advance='no' )
+        call output( exratios(2), advance='no' )
+        call output( '  ( as difference:  ', advance='no' )
+        call output( exvalues(2), advance='no' )
+        call output( ' )', advance='yes' )
+        call printRMSetc( 'ratio', minratio, maxratio, rmsratio, meanratio )
+      endif
       if ( myTABLE ) then
         call output( '% of arrays nearer than', advance='yes' )
         table(:,1) = gaps
@@ -365,6 +367,9 @@
 
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.5  2009/10/13 00:05:03  pwagner
+! Should print rms figures only when requested to
+!
 ! Revision 2.4  2009/09/10 20:59:12  pwagner
 ! 3 ways to summarize diffs: 'b' (table), 'r' (rms), 's' (number of differences)
 !
