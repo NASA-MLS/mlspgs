@@ -202,10 +202,11 @@ module DUMP_0
   character(len=8), public, save :: DEFAULTDIFFOPTIONS = ' '
   character(len=8), public, save :: DEFAULTDUMPOPTIONS = ' '
   character(len=8), public, save :: DUMPTABLESIDE      = 'top'
-  logical, public, save ::   DIFFRMSMEANSRMS = .false.
-  logical, public, save ::   DONTDUMPIFALLEQUAL = .true.
-  logical, public, save ::   FILTERFILLSFROMRMS = .false.
-  logical, public, save ::   STATSONONELINE = .true.
+  logical, public, save ::   DIFFRMSMEANSRMS           = .false.
+  logical, public, save ::   DONTDUMPIFALLEQUAL        = .true.
+  logical, public, save ::   FILTERFILLSFROMRMS        = .false.
+  logical, public, save ::   PRINTNAMEIFDIFF           = .true.
+  logical, public, save ::   STATSONONELINE            = .true.
 
   ! These determine how dumped numerical data (s.p. or d.p.) will be formatted
   character(len=2), public, save  :: INTPLACES = '6' ! how many places
@@ -629,6 +630,24 @@ contains
     myFormat = sdFormatDefault
     include 'dump1d.f9h'
   end subroutine DUMP_1D_DOUBLE
+
+  ! --------------------------------------------  DUMP_BOGUS  -----
+  ! Never used--just here to tell Makefiles that dumpstats.f9h is
+  ! a prerequisite for dump_0 because perl script f90makedep.pl
+  ! won't follow .f9h files to look for more uses and includes.
+  ! When will we repair the perl script?
+  !
+  subroutine DUMP_BOGUS ( ARRAY, NAME, &
+    & FILLVALUE, FORMAT, WIDTH, LBOUND, OPTIONS )
+    integer, intent(in) :: ARRAY(:)
+    character(len=*), intent(in), optional :: NAME
+    integer, intent(in), optional :: FILLVALUE
+    character(len=*), intent(in), optional :: FORMAT
+    integer, intent(in), optional :: WIDTH ! How many numbers per line (10)?
+    integer, intent(in), optional :: LBOUND ! Low bound for Array
+    character(len=*), optional, intent(in) :: options
+    include 'dumpstats.f9h'
+  end subroutine DUMP_BOGUS
 
   ! --------------------------------------------  DUMP_1D_INTEGER  -----
   subroutine DUMP_1D_INTEGER ( ARRAY, NAME, &
@@ -2089,24 +2108,26 @@ contains
     integer, intent(in) :: equal
     integer, intent(in) :: unequal
     if ( equal+unequal < 1 ) return
-      if ( present(name) ) call output ( trim(name), advance='no' )
-      call blanks( 1, advance='no' )
-      call output( fillvaluerelation, advance='no' )
-      call output ( ', !', advance='no' )
-      call output( fillvaluerelation, advance='no' )
-      call output ( ' (%) ', advance='no' )
-      call output ( equal, advance='no' )
-      call output ( ': ', advance='no' )
-      call output ( unequal, advance='no' )
-      if ( .not. STATSONONELINE ) then
-        call newline
-        call blanks(10)
-      endif
-      call output ( '( ', advance='no' )
-      call output ( 100*equal/(equal+unequal+0.), advance='no' )
-      call output ( ': ', advance='no' )
-      call output ( 100*unequal/(equal+unequal+0.), advance='no' )
-      call output ( ' )', advance='yes' )
+    myPCTFormat  = DEFAULTPCTFORMAT
+    if ( PCTFORMAT /= '*' ) myPCTFormat = PCTFORMAT
+    if ( present(name) ) call output ( trim(name), advance='no' )
+    call blanks( 1, advance='no' )
+    call output( fillvaluerelation, advance='no' )
+    call output ( ', !', advance='no' )
+    call output( fillvaluerelation, advance='no' )
+    call output ( ' (%) ', advance='no' )
+    call output ( equal, advance='no' )
+    call output ( ': ', advance='no' )
+    call output ( unequal, advance='no' )
+    if ( .not. STATSONONELINE ) then
+      call newline
+      call blanks(10)
+    endif
+    call output ( '( ', advance='no' )
+    call output ( 100*equal/(equal+unequal+0.), format = myPCTFormat, advance='no' )
+    call output ( ': ', advance='no' )
+    call output ( 100*unequal/(equal+unequal+0.), format = myPCTFormat, advance='no' )
+    call output ( ' )', advance='yes' )
   end subroutine printPercentages
 
   ! ----------------------------------------------  printRMSetc  -----
@@ -2426,6 +2447,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.94  2009/10/13 00:09:04  pwagner
+! Percentages printed with better format; dumpstats.f9h now a direct prerequisite
+!
 ! Revision 2.93  2009/09/10 20:58:00  pwagner
 ! 3 ways to summarize diffs: 'b' (table), 'r' (rms), 's' (number of differences)
 !
