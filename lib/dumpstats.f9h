@@ -15,9 +15,9 @@
 ! $Id$
 ! $RCSfile$
 
+    if ( present(name) ) call output ( trim(name) //'   ' )
     if ( myRMS ) then
       if ( .not. any(isfinite(array)) ) then
-        if ( present(name) ) call output ( trim(name) //'   ' )
         call output ('(no finite values found in array--skipped) ', advance='yes')
       elseif ( .not. all(isfinite(array)) ) then
         if ( present(name) ) call output ( trim(name) //'   ' )
@@ -43,7 +43,7 @@
           & mean=sum(array)/(size(array)+0.)  )
       end if
     end if
-    if ( myStats ) then
+    if ( myStats .and. .not. thisIsADiff ) then
       ! Count how many meet our desired relationship w.r.t. FillValue
       select case ( fillvaluerelation )
       case ( '=' )
@@ -56,7 +56,8 @@
         numNonFill = count(array /= myFillValue)
       end select
       numFill = size(array) - numNonFill
-      call printPercentages ( name, numFill, numNonFill  )
+      ! call output( 'about to dump %', advance='yes' )
+      call printPercentages ( equal=numFill, unEqual=numNonFill  )
     end if
     if ( .not. myWholeArray ) return
 
@@ -100,6 +101,9 @@
       end if
     end if
 ! $Log$
+! Revision 2.17  2009/10/13 00:06:12  pwagner
+! Eliminate redundant printing of name
+!
 ! Revision 2.16  2009/06/16 17:12:55  pwagner
 ! Changed api for dump, diff routines; now rely on options for most optional behavior
 !
