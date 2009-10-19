@@ -22,7 +22,7 @@
 !     real, intent(in), optional :: mean
 
     if ( thisIsADiff ) then
-      if ( present(name) .and. PRINTNAMEIFDIFF ) &
+      if ( present(name) .and. PRINTNAMEIFDIFF .and. .not. nameHasBeenPrinted ) &
         & call output ( trim(name), advance='no' )
       if ( DIFFRMSMEANSRMS ) then
         call output ( ' min : max, rms: ', advance='no' )
@@ -41,7 +41,7 @@
         call blanks(3)
       endif
     elseif ( STATSONONELINE ) then
-      if ( present(name) ) call output ( trim(name), advance='no' )
+      if ( present(name) .and. .not. nameHasBeenPrinted ) call output ( trim(name), advance='no' )
       call output ( ' min : max, rms: ', advance='no' )
       if ( present(mean) ) call output ( ' mean: ', advance='no' )
       call output(min, advance='no')
@@ -55,7 +55,7 @@
       end if
       call newline
     else
-      if ( present(name) ) call output ( trim(name), advance='no' )
+      if ( present(name) .and. .not. nameHasBeenPrinted ) call output ( trim(name), advance='no' )
       call output ( ' min      max        rms', advance='no' )
       if ( present(mean) ) call output ( '       mean ', advance='no' )
       call newline
@@ -65,7 +65,11 @@
       if ( present(mean) ) call output ( mean, advance='no' )
       call newline
     end if
+    nameHasBeenPrinted = .true.
 ! $Log$
+! Revision 2.3  2009/10/19 17:29:48  pwagner
+! Trying to prevent double-printing of name
+!
 ! Revision 2.2  2009/10/13 00:06:38  pwagner
 ! Eliminate redundant printing of name
 !
