@@ -225,6 +225,7 @@ module DUMP_0
   logical :: myClean, myDirect, myFillValue, myGaps, myStats, myRMS, myTable, &
     & myTranspose, myTrim, myUnique, myWholeArray
   character(len=16) :: myPCTFormat
+  logical, save :: nameHasBeenPrinted = .false.
   integer :: numNonFill, numFill
   logical, save :: thisIsADiff = .false.
   integer :: how_many
@@ -2251,6 +2252,7 @@ contains
   
   subroutine theDumpBegins(options)
     character(len=*), intent(in), optional :: options
+    nameHasBeenPrinted = .false.
     stampOptions%neverStamp = .true. ! So we don't interrupt tables of numbers
     myClean      = theDefault('clean') ! .false.
     myGaps       = theDefault('gaps')
@@ -2447,6 +2449,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.95  2009/10/19 17:33:26  pwagner
+! Trying to prevent double-printing of name
+!
 ! Revision 2.94  2009/10/13 00:09:04  pwagner
 ! Percentages printed with better format; dumpstats.f9h now a direct prerequisite
 !
