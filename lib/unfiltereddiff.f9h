@@ -75,6 +75,7 @@
     t2 = 0.
     sTime = 0.
     thisIsADiff = .true.  ! For special dumps
+    nameHasBeenPrinted = .false.
     myPCTFormat  = DEFAULTPCTFORMAT
     if ( PCTFORMAT /= '*' ) myPCTFormat = PCTFORMAT
     myClean      = theDefault('clean') ! .false.
@@ -202,6 +203,7 @@
     stime = t2
     call doneWithDiff
     if ( DEBUG ) call output( 'DoneWithDiff', advance='yes' )
+    nameHasBeenPrinted = .true.
   contains
     subroutine doneWithDiff
       ! Internal variables
@@ -367,6 +369,9 @@
 
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.6  2009/10/19 17:32:51  pwagner
+! Trying to prevent double-printing of name
+!
 ! Revision 2.5  2009/10/13 00:05:03  pwagner
 ! Should print rms figures only when requested to
 !
