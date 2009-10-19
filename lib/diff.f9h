@@ -12,19 +12,16 @@
 ! $Id$
 
 !   subroutine DIFF_1D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
-!     & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+!     & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
 !     double precision, intent(in) :: ARRAY1(:)
 !     character(len=*), intent(in), optional :: NAME1
 !     double precision, intent(in) :: ARRAY2(:)
 !     character(len=*), intent(in), optional :: NAME2
 !     double precision, intent(in), optional :: FILLVALUE
-!     logical, intent(in), optional :: CLEAN
 !     integer, intent(in), optional :: WIDTH
 !     character(len=*), intent(in), optional :: FORMAT
-!     logical, intent(in), optional :: WHOLEARRAY
-!     logical, intent(in), optional :: STATS
-!     logical, intent(in), optional :: RMS
 !     integer, intent(in), optional :: LBOUND ! Low bound for Array
+!     character(len=*), intent(in), optional :: options
 ! 
 !     double precision, dimension(size(array1)) :: filtered1
 !     double precision, dimension(size(array2)) :: filtered2
@@ -72,6 +69,7 @@
     ! Executable
     thisIsADiff = .true.  ! For special dumps
     alreadySbtrcted = .false.
+    nameHasBeenPrinted = .false.
     myPCTFormat  = DEFAULTPCTFORMAT
     if ( PCTFORMAT /= '*' ) myPCTFormat = PCTFORMAT
     myClean      = theDefault('clean') ! .false.
@@ -241,6 +239,7 @@
       & LBOUND, options )
     call doneWithDiff
     if ( DEBUG ) call output( 'DoneWithDiff', advance='yes' )
+    nameHasBeenPrinted = .true.
   contains
     subroutine doneWithDiff
       ! Internal variables
@@ -392,6 +391,9 @@
 
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.21  2009/10/19 17:29:04  pwagner
+! Trying to prevent double-printing of name
+!
 ! Revision 2.20  2009/10/13 00:04:16  pwagner
 ! Corrected sometimes wrong percentages
 !
