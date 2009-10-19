@@ -602,18 +602,13 @@ install:
             cp -a $(MLSBIN)/mlsl2pntk.sh $(INSTALLDIR); \
             chmod a+x $(INSTALLDIR)/mls$$dir.sh $(INSTALLDIR)/mlsl2pntk.sh ; \
 			fi ; \
-			if [ "$$L2PARALLEL" = "" ] ; then \
-           echo "To install parallel executables for level 2: " ;\
-           echo "enter  make install L2PARALLEL=yes" ;\
-			else \
-           echo "Installing level 2 parallel executables into $(INSTALLDIR)"; \
-           cp -a $(MLSBIN)/jobstat-sips.sh $(MLSBIN)/../scripts/mlsqlog-scan-sips.py \
-            $(MLSBIN)/mlsl2p.sh $(MLSBIN)/slavetmplt.sh \
-            $(MLSBIN)/mlsl2pntk.sh $(MLSBIN)/slavetmpltntk.sh \
-            $(INSTALLDIR); \
-           chmod a+x $(INSTALLDIR)/*.sh $(INSTALLDIR)/*.py; \
-           echo "(Don't forget to scp them to your cluster)"; \
-         fi; \
+         echo "Installing level 2 parallel executables into $(INSTALLDIR)"; \
+         cp -a $(MLSBIN)/jobstat-sips.sh $(MLSBIN)/../scripts/mlsqlog-scan-sips.py \
+          $(MLSBIN)/mlsl2p.sh $(MLSBIN)/slavetmplt.sh \
+          $(MLSBIN)/mlsl2pntk.sh $(MLSBIN)/slavetmpltntk.sh \
+          $(INSTALLDIR); \
+         chmod a+x $(INSTALLDIR)/*.sh $(INSTALLDIR)/*.py; \
+         echo "(Don't forget to scp them to your cluster)"; \
 		;; \
 	"l3") \
 			if [ -f $$dir/$(MLSCONFG)/mlsl3d ] ; then \
@@ -1175,6 +1170,9 @@ tools: chunktimes checkpvmup compare dateconverter heconvert h5subset h5cat hl \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.115  2009/10/07 18:29:03  pwagner
+# Preparing to add callable forward model
+#
 # Revision 1.114  2009/09/18 19:55:49  pwagner
 # Able to build doc
 #
