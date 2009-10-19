@@ -15,12 +15,15 @@
 ! $Id$
 ! $RCSfile$
 
-    if ( present(name) ) call output ( trim(name) //'   ' )
+    if ( present(name) .and. .not. nameHasBeenPrinted ) then
+      call output ( trim(name) //'   ' )
+      nameHasBeenPrinted = .true.
+    endif
     if ( myRMS ) then
       if ( .not. any(isfinite(array)) ) then
         call output ('(no finite values found in array--skipped) ', advance='yes')
       elseif ( .not. all(isfinite(array)) ) then
-        if ( present(name) ) call output ( trim(name) //'   ' )
+        if ( present(name) .and. .not. nameHasBeenPrinted ) call output ( trim(name) //'   ' )
         call output ('(non-finite values found in array--skipped) ', advance='yes')
         call WhereAreTheInfs ( array, which, how_many )
         if ( how_many > 0 ) then
@@ -101,6 +104,9 @@
       end if
     end if
 ! $Log$
+! Revision 2.18  2009/10/19 17:29:24  pwagner
+! Trying to prevent double-printing of name
+!
 ! Revision 2.17  2009/10/13 00:06:12  pwagner
 ! Eliminate redundant printing of name
 !
