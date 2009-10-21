@@ -38,6 +38,7 @@ module MLSSpecialFunctions              ! Some special functions
 ! isPrime                  Is arg prime?
 ! nextPrime                Next prime > arg
 ! prime                    nth prime
+! primeFactors             break arg into its prime factors
 ! === (end of toc) ===
 
 ! === (start of api) ===
@@ -49,11 +50,12 @@ module MLSSpecialFunctions              ! Some special functions
 ! log isPrime(int n)
 ! int nextPrime(int n)
 ! int prime(int n)
+! int primeFactors( int n, int[:] factors, [int[:] powers] )
 ! === (end of api) ===
 
   public :: gamma
   public :: derfci, derfi, serfci, serfi, d1mach, i1mach, r1mach
-  public :: isPrime, nextPrime, prime
+  public :: isPrime, nextPrime, prime, primeFactors
 
   interface gamma
     module procedure sgamma, dgamma
@@ -115,7 +117,6 @@ contains
       next = next + 2
     enddo
   end function NextPrime
-
 
   integer function prime(n)
     ! Returns the nth prime number
@@ -255,6 +256,77 @@ contains
 
     prime = primenumbers(n)
   end function prime
+
+  function primeFactors( n, factors, powers ) result(nFactors)
+    ! Break n into its prime factors and, optionally, their powers
+    ! E.g., called with 200, returns 2 (the number of prime factors) 
+    ! along with:
+    ! factors = (/ 2, 5 /)
+    ! powers  = (/ 3, 2 /)
+    ! for 200 = (2^3) (5^2)
+    ! Args
+    integer, intent(in)                              :: n
+    integer, dimension(:), intent(out)               :: factors
+    integer, dimension(:), optional, intent(out)     :: powers
+    integer                                          :: nFactors
+    ! Internal variables
+    logical :: addOneTok
+    integer :: i ! check prime(i)
+    integer :: k ! counts which factor
+    integer :: m
+    integer :: primo
+    ! Executable
+    nFactors = 0
+    factors = 1
+    if ( present(powers) ) powers = 0
+    if ( isPrime(n) .or. n < 2 ) then
+      factors(1) = n
+      if ( present(powers) ) powers(1) = 1
+      nFactors = 1
+      return
+    endif
+    m = n
+    k = 1
+    do i = 1, n
+      if ( m < 2 .or. k > size(factors) ) then
+        return
+      endif
+      ! Now check to see if prime(i) divides m
+      if ( prime(i) < 0 ) then
+        primo = nextPrime(primo+1)
+      else
+        primo = prime(i)
+      endif
+      ! print *, 'm, primo', m, primo
+      if ( primo < 0 ) return
+      addOneTok = .false.
+      do
+        if ( mod(m, primo) /= 0 .or. m < primo ) exit
+        addOneTok = .true.
+        factors(k) = primo
+        if ( present(powers) ) powers(k) = powers(k) + 1
+        nFactors = k
+        m = m / primo
+      enddo
+      if ( addOneTok ) k = k + 1
+    enddo
+  end function primeFactors
+
+  function PrimeIndex(n) result(i)
+    ! Returns the index i of prime number prime(i) greater than the arg n
+    ! Method:
+    ! Starting with n, we'll check each integer until we find one that is prime
+    ! Args
+    integer, intent(in) :: n ! E.g., if n=100 returns 101 which is next prime > 100
+    integer :: i
+    ! Internal variables
+    integer :: mp
+    ! Executable
+    ! First, some intializing
+    if ( primenumbers(1) < 0 ) i = prime(n)
+    i = findFirst( primenumbers > n )
+  end function PrimeIndex
+
 
       double precision function DGAMMA(X)
 !>> 1996-03-30 DGAMMA Krogh  Added external statement.
@@ -2378,6 +2450,9 @@ end module MLSSpecialFunctions
 
 !
 ! $Log$
+! Revision 2.6  2009/10/21 22:47:36  pwagner
+! primeFactors breaks down composite integers
+!
 ! Revision 2.5  2009/06/23 18:24:06  pwagner
 ! Added prime, isPrime, nextPrime
 !
