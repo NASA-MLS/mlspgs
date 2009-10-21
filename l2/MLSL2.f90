@@ -724,7 +724,7 @@ program MLSL2
   ! in directwrites of l2gp files currently fails 
   ! (when will this be fixed?)
   if ( parallel%chunkRange /= ' ' ) then
-    avoidUnlimitedDims = .false.
+    ! avoidUnlimitedDims = .false.
     call ExpandStringRange( parallel%chunkRange, iChunks )
   else
     iChunks = 0
@@ -1141,6 +1141,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.171  2009/10/21 16:59:10  pwagner
+! No longer insist on unlimited dims when given chunkrange
+!
 ! Revision 2.170  2008/01/08 00:22:02  pwagner
 ! Levels 1 and 2 can use same shared PCF now if --shared option set
 !
