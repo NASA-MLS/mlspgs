@@ -160,13 +160,14 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   ! r4 corresponds to sing. prec. :: same as stored in files
   integer, public, parameter :: rgp = r4
 
-  ! How long may the list of swath names grow (~80 x max num. of swaths/file)
-  integer, private, parameter :: MAXCHUNKTIMES = 120
+  integer, private, parameter :: MAXCHUNKTIMES = 1 ! 120
   integer, public, parameter :: MAXNUMSWATHPERFILE = 300
+  ! How long may the list of swath names grow (~80 x max num. of swaths/file)
   integer, public, parameter :: MAXSWATHNAMESBUFSIZE = 80*MAXNUMSWATHPERFILE
 
   ! TRUE means we can avoid using unlimited dimension and its time penalty
-  logical, public            :: AVOIDUNLIMITEDDIMS = .true.
+  logical, public            :: AVOIDUNLIMITEDDIMS         = .true.
+  logical, public            :: MUSTGUARDAGIANSTHDFEOSBUG  = .true.
   logical, public            :: WRITEMASTERSFILEATTRIBUTES = .true.
 
   integer, parameter :: CHARATTRLEN = 255   ! was GA_VALUE_LENGTH
@@ -500,7 +501,7 @@ contains ! =====     Public Procedures     =============================
     logical :: swath_exists
     integer :: swathid
     type (L2GPData_T) :: totall2gp
-    logical, parameter :: DEEBUG = .false.
+    ! logical, parameter :: DEEBUG = .false.
 
     ! Executable code
     call MLSMessageCalls( 'push', constantName='AppendL2GPData_MLSFile' )
@@ -541,7 +542,7 @@ contains ! =====     Public Procedures     =============================
       endif
     endif
 
-    if ( swath_exists ) then
+    if ( swath_exists .and. MUSTGUARDAGIANSTHDFEOSBUG ) then
       if(DEEBUG) print *, 'OK, swath already exists'
       ! We must guard against a bug in HDF-EOS that prevents appending more
       ! profiles to a swath than already exist
@@ -558,6 +559,8 @@ contains ! =====     Public Procedures     =============================
         if(DEEBUG) call outputNamedValue( 'AppendL2GPData expanded', totall2gp%nTimes )
       endif
       call DestroyL2GPContents ( totall2gp )
+    elseif ( swath_exists ) then
+      if(DEEBUG) print *, 'OK, swath already exists, but HDFEOS bug no longer scares us'
     else
       ! Must create swath in file w/o disturbing other swaths
       if(DEEBUG) print *, 'Must create swath'
@@ -3916,7 +3919,6 @@ contains
     if ( L2GPFile%hdfVersion == HDFVERSION_5 .and. .not. myNotUnlimited ) then
       ! Defining special "unlimited dimension called UNLIM
       ! print*,"Defined Unlim with size", HE5S_UNLIMITED_f
-      ! status = HE5_SWdefdim(swid, UNLIM, HE5S_UNLIMITED_F)
       status = mls_swdefdim(swid, UNLIM, HE5S_UNLIMITED_F, &
         & hdfVersion=hdfVersion)
     endif
@@ -3930,7 +3932,7 @@ contains
       myDim12 = MAX_DIML12
       myDim123 = MAX_DIML123
     endif
-    if ( DEEBUG ) then
+    if ( deebughere ) then
       print *, 'myDim1 ', myDim1
       print *, 'myDim12 ', myDim12
       print *, 'myDim123 ', myDim123
@@ -3940,9 +3942,11 @@ contains
       print *, 'nFreqs ', l2gp%nFreqs
     endif
     if ( mycompressTimes ) then
+      if ( deebughere ) call outputNamedValue ('nTimes',  max(l2gp%nTimes,1) )
       status = mls_swdefdim(swid, 'nTimes', max(l2gp%nTimes,1), &
         & hdfVersion=hdfVersion)
     else
+      if ( deebughere ) call outputNamedValue ('nTimes',  max(l2gp%nTimesTotal,1) )
       status = mls_swdefdim(swid, 'nTimes', max(l2gp%nTimesTotal,1), &
         & hdfVersion=hdfVersion)
     endif
@@ -3999,15 +4003,19 @@ contains
 
     if ( l2gp%nLevels > 0 ) then
 
+      chunk_rank=1
+      chunk_dims(1)=CHUNKLEVELS
       status = mls_gfldsetup(swid, 'Pressure', 'nLevels', MAX_DIML, &
-      & DFNT_FLOAT32, HDFE_NOMERGE, 0, chunk_dims, &
+      & DFNT_FLOAT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
       & hdfVersion=hdfVersion, rFill=l2gp%MissingValue)
     end if
 
     if ( l2gp%nFreqs > 0 ) then
 
+      chunk_rank=1
+      chunk_dims(1)=CHUNKFREQS
       status = mls_gfldsetup(swid, 'Frequency', 'nFreqs', MAX_DIML, &
-      & DFNT_FLOAT32, HDFE_NOMERGE, 0, chunk_dims, &
+      & DFNT_FLOAT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
       & hdfVersion=hdfVersion, rFill=l2gp%MissingValue)
     end if
 
@@ -4218,7 +4226,7 @@ contains
     character (len=*), intent(IN), optional :: swathName ! Defaults->l2gp%name
     integer,intent(IN),optional::offset
     ! Parameters
-    logical, parameter :: DEEBUG = .false.
+    ! logical, parameter :: DEEBUG = .false.
     character (len=*), parameter :: WR_ERR = 'Failed to write data field '
 
     ! Variables
@@ -4921,6 +4929,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.170  2009/10/05 23:39:24  pwagner
+! Moved use hdf5 statements from module scope to speedup Lahey; this is the last time we do that
+!
 ! Revision 2.169  2009/09/29 23:35:43  pwagner
 ! Changes needed by 64-bit build
 !
