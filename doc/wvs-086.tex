@@ -1,13 +1,16 @@
 \documentclass[11pt]{article}
+
 \usepackage{alltt}
+\usepackage{color}
 \usepackage[fleqn]{amsmath}\textwidth 6.5in
+
 \oddsidemargin -0.25in
 %\evensidemargin -0.5in
 \topmargin -0.25in
 \textheight 9.0in
 
-\newcommand{\docname}{\bf wvs-086r2}
-\newcommand{\docdate}{21 October 2009}
+\newcommand{\docname}{\bf wvs-086r3}
+\newcommand{\docdate}{23 October 2009}
 
 \begin{document}
 
@@ -45,7 +48,7 @@ From: \>Van Snyder\\
 
 Consider the piecewise cubic polynomial
 
-\begin{equation}
+\begin{equation}\label{one}
 S_i(x) = a_i (x-x_i)^3 + b_i (x-x_i)^2 + c_i (x-x_i) + d_i\,.
 \end{equation}
 
@@ -146,7 +149,21 @@ b_n \\
 \end{array} \right]
 \end{equation}
 
-\section{Tedious solution}
+Having the solution for Equation (\ref{nine}), substitute Equations
+(\ref{three}) and (\ref{four}) into Equation (\ref{one}) and collect terms
+involving $b_i$, $b_{i+1}$, $d_i$ and $d_{i+1}$ to give
+
+\begin{equation}\begin{split}
+& S_i(x) = A d_i + B d_{i+1} + C b_i + D b_{i+1}
+         = A y_i + B y_{i+1} + C b_i + D b_{i+1} \text{ where }\\
+&\begin{array}{lll} A = \frac{x_{i+1}-x}{h_i} && B = 1 - A \\
+                    C = (A^3-A) \frac{h_i^2}3 && D = (B^3-B) \frac{h_i^2}3
+ \end{array}\,.
+\end{split}\end{equation}
+
+Notice that the first two terms are just linear interpolation.
+
+\section{Tedious solution of Equation (\ref{nine})}
 
 The three nonzeros above the diagonal can be eliminated using Gaussian
 elimination.  Alternatively, an explicit LU factorization can be developed,
@@ -335,7 +352,7 @@ To evaluate the interpolating spline at $\xi$, compute $\hat{\xi} = x_1 +
 \xi\!\!\mod (x_n-x_1)$ and evaluate $S_j(\hat{\xi})$ where $x_j \leq \hat{\xi}
 < x_{j+1}$.
 
-\section{Easier solution}
+\section{Easier solution of Equation (\ref{nine})}
 
 In Equation (\ref{nine}), use the first equation to eliminate $b_n$ and
 write $\sigma_0 = 2 (h_1+h_{n-1})$, giving
@@ -395,71 +412,72 @@ A_{22} =\,& L_{21} U_{12} + L_{22}
 
 The first of these requires the $L U$ decomposition of an $n-2 \times n-2$
 symmetric tridiagonal matrix.  The $L U$ decomposition of a tridiagonal
-matrix can be represented two ways.  In the general nonsymmetric case,
-write
+matrix can be represented two ways, known as the Doolitle and Crout
+factorizations.  In the general nonsymmetric case, write
 
 \begin{equation}
 A_{11} = \left[ \begin{array}{llllll}
-     d_1   & a_1   & 0     & \dots & 0       & 0 \\
-     b_2   & d_2   & a_2   & \dots & 0       & 0 \\
-     \dots & \dots & \dots & \dots & \dots   & \dots \\
-     0     & 0     & 0     & \dots & d_{n-1} & a_{n-1} \\
-     0     & 0     & 0     & \dots & b_n     & d_n
+     \sigma_1 & p_1      & 0     & \dots & 0            & 0 \\
+     q_2      & \sigma_2 & p_2   & \dots & 0            & 0 \\
+     \dots    & \dots    & \dots & \dots & \dots        & \dots \\
+     0        & 0        & 0     & \dots & \sigma_{n-2} & p_{n-2} \\
+     0        & 0        & 0     & \dots & q_{n-1}      & \sigma_{n-1}
     \end{array} \right]
     \text{ and }
     \beta_i = \left\{ \begin{array}{ll}
-     d_1 & i = 1 \\
-     d_i - \frac{b_i}{\beta_{i-1}}\, a_{i-1} & i > 1
+     \sigma_1 & i = 1 \\
+     \sigma_i - \frac{q_i}{\beta_{i-1}}\, p_{i-1} & i > 1
     \end{array} \right. \,.
 \end{equation}
 
 Then
 
 \begin{equation} \begin{split}
-A_{11} =\,& L_a U_a = \left[ \begin{array}{llllll}
+A_{11} =\,& \left[ \begin{array}{llllll}
      1                   & 0     & 0     & \dots & 0       & 0 \\
-     \frac{b_2}{\beta_1} & 1     & 0     & \dots & 0       & 0 \\
-     0     & \frac{b_3}{\beta_2} & 1     & \dots & 0       & 0 \\
+     \frac{q_2}{\beta_1} & 1     & 0     & \dots & 0       & 0 \\
+     0     & \frac{q_3}{\beta_2} & 1     & \dots & 0       & 0 \\
      \dots         & \dots       & \dots & \dots & \dots   & \dots \\
      0                   & 0     & 0     & \dots & 1       & 0 \\
-     0     & 0     & 0   & \dots & \frac{b_n}{\beta_{n-1}} & 1
+     0     & 0     & 0   & \dots & \frac{q_{n-1}}{\beta_{n-2}} & 1
     \end{array} \right]
     \,
     \left[ \begin{array}{llllll}
-     \beta_1 & a_1     & 0       & \dots & 0       & 0 \\
-     0       & \beta_2 & a_2     & \dots & 0       & 0 \\
+     \beta_1 & p_1     & 0       & \dots & 0       & 0 \\
+     0       & \beta_2 & p_2     & \dots & 0       & 0 \\
      0       & 0       & \beta_3 & \dots & 0       & 0 \\
      \dots   & \dots   & \dots   & \dots & \dots   & \dots \\
-     0       & 0       & 0       & \dots & \beta_{n-1} & a_{n-1} \\
-     0       & 0       & 0       & \dots & 0       & \beta_n
-    \end{array} \right] \\
+     0       & 0       & 0       & \dots & \beta_{n-2} & p_{n-2} \\
+     0       & 0       & 0       & \dots & 0       & \beta_{n-1}
+    \end{array} \right] \text{ (Doolittle)} \\
   \,& \\
-  =\,& L_b U_b = \left[ \begin{array}{llllll}
+  =\,& \left[ \begin{array}{llllll}
      \beta_1 & 0       & 0       & \dots               & 0       & 0 \\
-     b_2     & \beta_2 & 0       & \dots               & 0       & 0 \\
-     0       & b_3     & \beta_3 & \dots               & 0       & 0 \\
+     q_2     & \beta_2 & 0       & \dots               & 0       & 0 \\
+     0       & q_3     & \beta_3 & \dots               & 0       & 0 \\
      \dots   & \dots   & \dots   & \dots & \dots       & \dots \\
-     0       & 0       & 0       & \dots & \beta_{n-1} & 0 \\
-     0       & 0       & 0       & \dots & b_n         & \beta_n
+     0       & 0       & 0       & \dots & \beta_{n-2} & 0 \\
+     0       & 0       & 0       & \dots & q_{n-1}     & \beta_{n-1}
     \end{array} \right]
     \,
     \left[ \begin{array}{llllll}
-     1       & \frac{a_1}{\beta_1} & 0 & \dots & 0       & 0 \\
-     0       & 1 & \frac{a_2}{\beta_2} & \dots & 0       & 0 \\
+     1       & \frac{p_1}{\beta_1} & 0 & \dots & 0       & 0 \\
+     0       & 1 & \frac{p_2}{\beta_2} & \dots & 0       & 0 \\
      0       & 0       & 1             & \dots & 0       & 0 \\
      \dots   & \dots   & \dots         & \dots & \dots   & \dots \\
-     0       & 0       & 0     & \dots & 1 & \frac{a_{n-1}}{\beta_{n-1}} \\
+     0       & 0       & 0     & \dots & 1 & \frac{p_{n-2}}{\beta_{n-2}} \\
      0       & 0       & 0             & \dots & 0       & 1
-    \end{array} \right] \,, \\
+    \end{array} \right] \text{ (Crout)}\,, \\
 \end{split}\end{equation}
 
-where we choose $L_b U_b$.  Since $A_{11}$ is tridiagonal, $L_{11}$ and
-$U_{11}$ are bidiagonal.  Let {\tt SIGMA(0:n-2)} represent the diagonal of
-$A$, and {\tt H(1:n-2)} represent the subdiagonal. Let {\tt D(1:n-1)}
-represent the diagonal $d$ of $L$, with {\tt D(n-1)} representing
-$L_{22}$, and let {\tt U(1:n-2)} represent the superdiagonal $u$ of
-$U_{11}$.  The subdiagonal $s$ of $L_{11}$ is the same as the subdiagonal
-{\tt H(1:n-3)} of $A_{11}$.  We can calculate $L_{11}$ and $U_{11}$ thus:
+where we choose the Crout factorization.  Since $A_{11}$ is tridiagonal,
+$L_{11}$ and $U_{11}$ are bidiagonal.  In our case $A$ is symmetric, i.e.,
+$q_i = p_{i-1} = h_{i-1}$. Let {\tt SIGMA(0:n-2)} represent the diagonal
+of $A$, and {\tt H(1:n-2)} represent the subdiagonal. Let {\tt D(1:n-1)}
+represent the diagonal of $L$, with {\tt D(n-1)} representing $L_{22}$,
+and let {\tt U(1:n-2)} represent the superdiagonal of $U_{11}$.  The
+subdiagonal of $L_{11}$ is the same as the subdiagonal {\tt H(1:n-3)} of
+$A_{11}$.  We can calculate $L_{11}$ and $U_{11}$ thus:
 
 \begin{alltt}
   D(1) = SIGMA(0)
@@ -475,17 +493,19 @@ in Equation (\ref{eighteen})
 \begin{equation}
  \left[ \begin{array}{l} h_{n-1}\\ 0\\ \dots\\ 0\\ h_{n-2}
  \end{array} \right] = 
- \left[ \begin{array}{lllll} d_1   & 0     & 0     & \dots   & 0 \\
-                             h_1   & d_2   & 0     & \dots   & 0 \\
-                             0     & h_2   & d_3   & \dots   & 0 \\
-                             \dots & \dots & \dots & \dots   & 0 \\
-                             0     & 0     & \dots & h_{n-3} & d_{n-2}
+ \left[ \begin{array}{lllll}
+    \beta_1 & 0       & 0       & \dots   & 0 \\
+    h_1     & \beta_2 & 0       & \dots   & 0 \\
+    0       & h_2     & \beta_3 & \dots   & 0 \\
+    \dots   & \dots   & \dots   & \dots   & 0 \\
+    0       & 0       & \dots   & h_{n-3} & \beta_{n-2}
         \end{array} \right]
- \left[ \begin{array}{l} c_1 \\ c_2 \\ c_3 \\ \dots \\ c_{n-2}
+ \left[ \begin{array}{l} \gamma_1 \\ \gamma_2 \\ \gamma_3 \\ \dots \\ \gamma_{n-2}
  \end{array} \right]
 \end{equation}
 
-for $c = U_{12}$.  Let {\tt C(1:n-2)} represent $c$. Then
+for $\gamma = U_{12}$.  Let {\tt C(1:n-2)} (for Column) represent $\gamma$.
+Then
 
 \begin{alltt}
   C(1) = H(n-1) / D(1)
@@ -515,7 +535,7 @@ in Equation (\ref{eighteen})
 \end{equation}
 
 
-for $r = L_{21}$.  Let {\tt R(1:n-2)} represent $r$.  
+for $r = L_{21}$.  Let {\tt R(1:n-2)} (for Row) represent $r$.  Then
 
 \begin{alltt}
   R(1) = H(n-1)
@@ -537,12 +557,12 @@ We can solve $ A\, b = L\,U\,b =$
 
 \begin{equation}
  \left[ \begin{array}{llllll}
- d_1   & 0     & 0     & \dots   & 0       & 0 \\
- h_1   & d_2   & 0     & \dots   & 0       & 0 \\
- 0     & h_2   & d_3   & \dots   & 0       & 0 \\
- \dots & \dots & \dots & \dots   & \dots   & \dots \\
- 0     & 0     & 0     & \dots   & d_{n-2} & 0 \\
- r_1   & r_2   & 0     & \dots   & r_{n-2} & L_{22}
+ \beta_1 & 0       & 0       & \dots   & 0           & 0 \\
+ h_1     & \beta_2 & 0       & \dots   & 0           & 0 \\
+ 0       & h_2     & \beta_3 & \dots   & 0           & 0 \\
+ \dots   & \dots   & \dots   & \dots   & \dots       & \dots \\
+ 0       & 0       & 0       & \dots   & \beta_{n-2} & 0 \\
+ r_1     & r_2     & 0       & \dots   & r_{n-2}     & L_{22}
  \end{array} \right]
  \left[ \begin{array}{llllll}
  1     & u_1   & 0     & \dots   & 0     & c_1 \\
@@ -551,62 +571,79 @@ We can solve $ A\, b = L\,U\,b =$
  \dots & \dots & \dots & \dots   & \dots &\dots \\
  0     & 0     & 0     & \dots   & 1     & c_{n-2} \\
  0     & 0     & 0     & \dots   & 0     & 1
- \end{array} \right] \,b = \zeta
+ \end{array} \right] \,b =
+ \left[ \begin{array}{l}
+ y_1 \\
+ y_2 \\
+ y_3 \\
+ \dots \\
+ y_{n-2} \\
+ y_{n-1} \end{array} \right] = y
 \end{equation}
 
-for $b$ by first solving $L\,y = \zeta$ for $y$, and then solving $U\,b =
-y$ for $b$.  Let {\tt Y(1:n-1)} represent $y$, {\tt B(1:n-1)} represent
-$b$, and {\tt Z(1:n-1)} represent $\zeta$.  Then
+for $b$ by first solving $L\,z = y$ for $z$, and then solving $U\,b =
+z$ for $b$.  Let {\tt Z(1:n-1)} represent $z$, {\tt B(1:n-1)} represent
+$b$, and {\tt Y(1:n-1)} represent $y$.  Then
 
 \begin{alltt}
-  Y(1) = Z(1) / D(1)
+  Z(1) = Y(1) / D(1)
   do k = 2, n-2
-    Y(k) = ( Z(k) - H(k-1) * Y(k-1) ) / D(k)
+    Z(k) = ( Y(k) - H(k-1) * Z(k-1) ) / D(k)
   end do
-  Y(n-1) = ( Z(n-1) - dot_product(R,Y(1:n-1)) ) / L22
+  Z(n-1) = ( Y(n-1) - dot_product(R,Z(1:n-1)) ) / L22
 
-  B(n-1) = Y(n-1)
-  B(n-2) = Y(n-2) - C(n-2) * B(n-1)
+  B(n-1) = Z(n-1)
+  B(n-2) = Z(n-2) - C(n-2) * B(n-1)
   do k = n-3, 1, -1
-    B(k) = Y(k) - U(k) * B(k+1) - C(k) * B(n-1)
+    B(k) = Z(k) - U(k) * B(k+1) - C(k) * B(n-1)
   end do
 \end{alltt}
 
-Combining all of this into one lump, we can factor $A$ and solve for $y$
-in one loop, and solve for $b$ in a second loop:
+Combining all of this into one lump and shifting gears so that {\tt D}
+represents the reciprocal of the diagonal of $L$, we can factor $A$ and solve
+for $z$ in one loop, and solve for $b$ in a second loop:
 
 \begin{alltt}
-  D(1) = SIGMA(0)
-  C(1) = H(n-1) / D(1)
-  R(1) = H(n-1)
-  Y(1) = Z(1) / D(1)
+  D(1) = 1.0 / SIGMA(0)
+  \textcolor{red}{C(1) = H(n-1) * D(1)}
+  \textcolor{red}{R(1) = H(n-1)}
+  Z(1) = Y(1) * D(1)
   do k = 2, n-3
-    U(k-1) = H(k-1) / D(k-1)
-    D(k) = SIGMA(k-1) - H(k-1) * U(k-1)
-    C(k) = - H(k-1) * C(k-1) / D(k)
-    R(k) = - R(k-1) * U(k-1)
-    Y(k) = ( Z(k) - H(k-1) * Y(k-1) ) / D(k)
+    U(k-1) = H(k-1) * D(k-1)
+    D(k) = 1.0 / ( SIGMA(k-1) - H(k-1) * U(k-1) )
+    \textcolor{red}{C(k) = - H(k-1) * C(k-1) * D(k)}
+    \textcolor{red}{R(k) = - R(k-1) * U(k-1)}
+    Z(k) = ( Y(k) - H(k-1) * Z(k-1) ) * D(k)
   end do
-  U(n-3) = H(n-3) / D(n-3)
-  D(n-2) = SIGMA(n-3) - H(n-3) * U(n-3)
-  C(n-2) = ( H(n-2) - H(n-3) * C(n-3) ) / D(n-2)
-  R(n-2) = H(n-2) - R(n-3) * U(n-3)
-  D(n-1) = SIGMA(n-2) - dot_product ( R(1:n-2), C )
-  Y(n-2) = ( Z(n-2) - H(n-3) * D(n-3) ) / D(n-2)
-  Y(n-1) = ( Z(n-1) - dot_product(R,Y) ) / D(n-1)
+  U(n-3) = H(n-3) * D(n-3)
+  D(n-2) = 1.0 / ( SIGMA(n-3) - H(n-3) * U(n-3) )
+  \textcolor{red}{C(n-2) = ( H(n-2) - H(n-3) * C(n-3) ) * D(n-2)}
+  \textcolor{red}{R(n-2) = H(n-2) - R(n-3) * U(n-3)}
+  D(n-1) = 1.0 / ( SIGMA(n-2) \textcolor{red}{ - dot_product ( R(1:n-2), C )} )
+  Z(n-2) = ( Y(n-2) - H(n-3) * D(n-3) ) * D(n-2)
 
-  B(n-1) = Y(n-1)
-  B(n-2) = Y(n-2) - C(n-2) * B(n-1)
+  B(n-1) = ( Y(n-1) \textcolor{red}{ - dot_product(R,Z)} ) * D(n-1) ! = Z(n-1)
+  B(n-2) = Z(n-2) - \textcolor{blue}{ C(n-2)} * B(n-1)
   do k = n-3, 1, -1
-    B(k) = Y(k) - U(k) * B(k+1) - C(k) * B(n-1)
+    B(k) = Z(k) - U(k) * B(k+1) \textcolor{red}{ - C(k) * B(n-1)}
   end do
 \end{alltt}
+
+where the parts in \textcolor{red}{red} or \textcolor{blue}{blue} are the
+additions necessary for periodic continuity.  In the case without periodic
+continuity, $r=0$, $c_{1 \dots n-3} = 0$, and $c_{n-2} = u_{n-2} =
+\frac{\rho_{n-2}}{\beta{n-2}}$, so the \textcolor{red}{red} parts can be
+removed, and the \textcolor{blue}{blue} part replaced by {\tt U(n-2)} where
+{\tt U(n-2) = H(n-2) * D(n-2)}.
 
 \label{lastpage}
 \end{document}
 % $Id$
 
 % $Log$
+% Revision 1.4  2009/10/21 22:45:49  vsnyder
+% Flesh out LU factorization mathematical exposition
+%
 % Revision 1.3  2009/10/17 00:54:54  vsnyder
 % Forgot to change to r1
 %
