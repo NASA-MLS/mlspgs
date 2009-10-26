@@ -19,7 +19,7 @@ module ReadAPriori
     & F_ORIGIN, F_QUANTITYTYPE, F_SDNAME, F_SUM, F_SWATH, &
     & FIELD_FIRST, FIELD_LAST, L_CLIMATOLOGY, L_DAO, L_GEOS5, L_GLORIA, &
     & L_MERRA, L_NCEP, L_STRAT, L_SURFACEHEIGHT, &
-    & S_Dump, S_GRIDDED, S_L2AUX, S_L2GP
+    & S_DIFF, S_DUMP, S_GRIDDED, S_L2AUX, S_L2GP
   use Intrinsic, only: l_ascii, L_Binary, l_grid, l_hdf, l_swath, PHYQ_Dimensionless
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: FileNameLen, MLSFile_T
@@ -228,7 +228,7 @@ contains ! =====     Public Procedures     =============================
 
       FileType = get_spec_id(key)
 
-      if ( fileType == s_dump ) then
+      if ( any( fileType == (/s_diff, s_dump/) ) ) then
         if ( .not. CHECKPATHS ) call dumpCommand ( key, griddedDataBase=griddedDataBase )
         cycle
       end if
@@ -1044,6 +1044,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.81  2009/10/26 17:11:07  pwagner
+! Added Diff command to be used like Dump in l2cf
+!
 ! Revision 2.80  2009/09/10 23:03:41  pwagner
 ! Prevents 'Dump, /stop' line in l2cf from causing checkPaths failure
 !
