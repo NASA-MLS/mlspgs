@@ -132,7 +132,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_CYCLICJACOBI       = s_copy + 1
   integer, parameter :: S_DELETE             = s_cyclicJacobi + 1
   integer, parameter :: S_DESTROY            = s_delete + 1
-  integer, parameter :: S_DIRECTWRITE        = s_destroy + 1
+  integer, parameter :: S_DIFF               = s_destroy + 1
+  integer, parameter :: S_DIRECTWRITE        = s_diff + 1
   integer, parameter :: S_DIRECTWRITEFILE    = s_directWrite + 1
   integer, parameter :: S_DISJOINTEQUATIONS  = s_directWriteFile + 1
   integer, parameter :: S_DUMP               = s_disjointEquations + 1
@@ -351,6 +352,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_empiricalGeometry) =    add_ident ( 'EmpiricalGeometry' )
     spec_indices(s_delete) =               add_ident ( 'delete' )
     spec_indices(s_destroy) =              add_ident ( 'destroy' )
+    spec_indices(s_diff) =                 add_ident ( 'diff' )
     spec_indices(s_directWrite) =          add_ident ( 'directWrite' )
     spec_indices(s_directWriteFile) =      add_ident ( 'directWriteFile' )
     spec_indices(s_disjointEquations) =    add_ident ( 'disjointEquations' )
@@ -1283,6 +1285,19 @@ contains ! =====     Public procedures     =============================
       begin, s+s_skip, &
              begin, f+f_Boolean, s+s_Boolean, n+n_field_spec, &
              ndp+n_spec_def /) )
+    call make_tree ( (/ & ! Must be AFTER s_vector, s_vectorTemplate, etc.
+      begin, s+s_diff, &
+             begin, f+f_Clean, t+t_boolean, n+n_field_type, &
+             begin, f+f_crashBurn, t+t_boolean, n+n_field_type, &
+             begin, f+f_details, t+t_numeric, n+n_field_type, &
+             begin, f+f_quantity, s+s_vector, f+f_template, &
+                    f+f_quantities, n+n_dot, &
+             begin, f+f_stop, t+t_boolean, n+n_field_type, &
+             begin, f+f_stopWithError, t+t_boolean, n+n_field_type, &
+             begin, f+f_text, t+t_string, n+n_field_type, &
+             begin, f+f_Grid, s+s_gridded, s+s_merge, s+s_Concatenate, &
+                    s+s_ConvertEtaToP, s+s_wmoTrop, n+n_field_spec, &
+             np+n_spec_def /) )
     call make_tree ( (/ & ! Must be AFTER s_forwardModel, s_hGrid, s_pfaData,
                           ! s_makePFA, s_vector, s_vectorTemplate, etc.
       begin, s+s_dump, &
@@ -1588,6 +1603,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.494  2009/10/26 17:10:37  pwagner
+! Added Diff command to be used like Dump in l2cf
+!
 ! Revision 2.493  2009/09/25 02:37:24  vsnyder
 ! Add badValue, keepChannels
 !
