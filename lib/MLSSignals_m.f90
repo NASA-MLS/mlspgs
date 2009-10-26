@@ -37,6 +37,7 @@ module MLSSignals_M
 
   implicit none
 
+! === (start of toc) ===
 !     c o n t e n t s
 !     - - - - - - - -
 
@@ -71,6 +72,7 @@ module MLSSignals_M
 ! GetNameOfSignal                 Given a signal object, this routine constructs a full signal name
 ! GetRadiometerFromSignal         Returns radiometer field from given signal given as database index
 ! GetRadiometerName               Given an index in the Radiometers database, place radiometer name
+! GetRadiometerIndex              Returns index in the Radiometers database, given radiometer name
 ! GetSidebandStartStop            Given a signal, compute SidebandStart and SidebandStop
 ! GetSignal                       Given the database index, this routine returns the signal data structure
 ! GetSignalIndex                  Returns the index in the signals database, given signal name in mixed case
@@ -80,6 +82,10 @@ module MLSSignals_M
 ! MatchSignal                     Given an array Signals, find the matching one
 ! MatchSignalPair                 Determine whether two signals match
 ! MLSSignals                      Process the MLSSignals section of the L2 configuration file
+! === (end of toc) ===
+
+! === (start of api) ===
+! === (end of api) ===
 
   private ! So as not to re-export everything accessed by USE association.
 
@@ -96,7 +102,8 @@ module MLSSignals_M
   public :: GetAllModules, GetBandName, GetFirstChannel, GetModuleFromRadiometer
   public :: GetModuleIndex, GetSidebandLoop, GetSidebandStartStop, GetSignalIndex
   public :: GetModuleFromSignal, GetModuleName, GetNameOfSignal
-  public :: GetRadiometerFromSignal, GetRadiometerName, GetSignal, GetSignalName
+  public :: GetRadiometerFromSignal, GetRadiometerName, GetRadiometerIndex
+  public :: GetSignal, GetSignalName
   public :: GetSpectrometerTypeName, IsModuleSpacecraft, MatchSignal
   public :: MatchSignalPair, MLSSignals
   public :: PVMPackSignal, PVMUnpackSignal
@@ -1345,6 +1352,33 @@ oc:       do
     GetRadiometerFromSignal = signals(signal)%radiometer
   end function GetRadiometerFromSignal
 
+  ! ----------------------------------------------  GetRadiometerIndex  -----
+  subroutine GetRadiometerIndex(string_text, radiometer)
+    ! Returns the index in the radiometer database, given radiometer name in mixed case
+    ! Returns 0 if radiometer name not found
+    ! (inverse function: GetradiometerName)
+    integer, intent(out) :: radiometer
+    character (len=*), intent(in) :: string_text
+    ! Local variables
+    character (len=len(string_text))             :: string_test
+    if ( size(radiometers) < 1 ) then
+      radiometer = 0
+      return
+    end if
+    do radiometer=1, size(radiometers)
+      if ( radiometers(radiometer)%prefix > 0 ) then
+        call Get_String ( radiometers(radiometer)%prefix, string_test )
+        if ( LowerCase(trim(string_text)) == LowerCase(trim(string_test))) &
+          & return
+        call get_string ( radiometers(radiometer)%suffix, &
+          & string_test(LEN_TRIM(string_test)+1:), cap=.true., strip=.true. )
+        if ( LowerCase(trim(string_text)) == LowerCase(trim(string_test))) &
+          & return
+      end if
+    end do
+    radiometer = 0
+  end subroutine GetRadiometerIndex
+
   ! ------------------------------------------  GetRadiometerName  -----
   subroutine GetRadiometerName(radiometer, string_text, noSuffix)
     ! Given an index in the Radiometers database, place radiometer name
@@ -1824,6 +1858,9 @@ oc:       do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.89  2009/10/26 17:08:02  pwagner
+! Added GetRadiometerIndex
+!
 ! Revision 2.88  2009/10/01 00:49:13  vsnyder
 ! Add OtherSignals to DisplaySignalName_*
 !
