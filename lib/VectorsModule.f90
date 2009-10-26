@@ -55,6 +55,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 ! DestroyVectorTemplateDatabase Destroys a vector template database
 ! DestroyVectorTemplateInfo    Destroys a vector template
 ! DestroyVectorValue           Destroy the "values" field in all of the quantities in a vector
+! Diff                         Generic for several diff_...; see the interface
 ! DivideVectors                Y = A / X if Y is present, else X = A / X
 ! DotVectors                   z = x . y
 ! DotVectorsMasked             z = x . y, but only where mask is "off"
@@ -92,7 +93,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, Test_Deallocate
   use BitStuff, only: dumpBitNames, IsBitSet
-  use DUMP_0, only: DUMP
+  use DUMP_0, only: DIFF, DUMP
   use Intrinsic, only: LIT_INDICES, PHYQ_INVALID, L_VMR
   use MLSCommon, only: R8, RV
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
@@ -121,7 +122,9 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   public :: ConstructVectorTemplate, CopyVector, CopyVectorMask, CreateMaskArray
   public :: CreateMask, CreateVector, DestroyVectorDatabase, DestroyVectorInfo
   public :: DestroyVectorMask, DestroyVectorTemplateDatabase
-  public :: DestroyVectorTemplateInfo, DestroyVectorValue, DivideVectors
+  public :: DestroyVectorTemplateInfo, DestroyVectorValue
+  public :: DiffVectorQuantities
+  public :: DivideVectors
   public :: DotVectors, DotVectorsMasked, DumpNiceMaskSummary
   public :: DumpMask, DumpQuantityMask, DumpVectorMask, Dump_Vector
   public :: Dump_Vectors, Dump_Vector_Template, Dump_Vector_Templates
@@ -153,8 +156,12 @@ module VectorsModule            ! Vectors in the MLS PGS suite
     module procedure CheckVectorForNaN, CheckVectorQuantityForNaN
   end interface
 
+  interface DIFF
+    module procedure DIFFVECTORQUANTITIES
+  end interface
+
   interface DUMP
-    module procedure DUMP_VECTOR, DUMP_VECTORS, Dump_Vector_Quantity
+    module procedure DUMP_VECTOR, DUMP_VECTORS, DUMP_VECTOR_QUANTITY
     module procedure DUMP_VECTOR_TEMPLATE, DUMP_VECTOR_TEMPLATES
   end interface
 
@@ -1093,6 +1100,36 @@ contains ! =====     Public Procedures     =============================
         & "vector%quantities(i)%values", ModuleName )
     end do
   end subroutine DestroyVectorValue
+
+  ! ---------------------------------------  DiffVectorQuantities  -----
+  subroutine DiffVectorQuantities ( Qty1, Qty2, Name, Options )
+
+    type (VectorValue_T), intent(in) :: QTY1, QTY2
+    character(len=*), intent(in), optional :: NAME
+    character(len=*), intent(in), optional :: OPTIONS
+    !
+    integer :: i
+    integer :: nUnique
+    integer, dimension(1000) :: uniqueVals
+
+    if ( present(name) ) then
+      call output ( name ); call output ( ', ' )
+    end if
+    call output ( ' Qty_Template_Name = ' )
+    if ( qty1%template%name /= 0 ) then
+      call display_string ( qty1%template%name )
+    else
+      call output ( '<none given>' )
+    end if
+    if ( qty1%label /= 0 ) then
+      call output ( ', label = ' )
+      call display_string ( qty1%label )
+    else
+      call output ( ' unlabeled ', advance='yes' )
+    end if
+    call diff ( qty1%values, 'quantity(1) values', &
+      &         qty2%values, 'quantity(2) values', options=options )
+  end subroutine DiffVectorQuantities
 
   ! ----------------------------------------------  DivideVectors  -----
   subroutine DivideVectors ( A, X, Y )
@@ -2614,6 +2651,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.142  2009/06/23 18:25:43  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.141  2009/06/16 17:17:55  pwagner
 ! Changed api for dump, diff routines; now rely on options for most optional behavior
 !
