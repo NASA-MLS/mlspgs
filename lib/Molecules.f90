@@ -16,9 +16,23 @@ module Molecules
 ! Declaring the definitions is handled by the tree walker.
 
   use INTRINSIC ! Everything
+  use MLSStrings, only: LowerCase, Capitalize
+  use String_Table, only: Display_String, Get_String
 
   implicit NONE
   public
+! === (start of toc) ===
+!     c o n t e n t s
+!     - - - - - - - -
+
+! InitMolecules             Create the type tree for all molecule types             
+!                             e.g., l_ch3cl                                         
+! GetMoleculeIndex          Returns lit index from Molecule name in mixed case      
+! GetMoleculeName           Returns Molecule name in mixed case from lit index      
+! === (end of toc) ===
+
+! === (start of api) ===
+! === (end of api) ===
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -120,6 +134,32 @@ contains ! =====     Public procedures     =============================
 
   end subroutine INIT_MOLECULES
 
+  ! ----------------------------------------------  GetMoleculeIndex  -----
+  subroutine GetMoleculeIndex(string_text, Molecule)
+    ! Returns the lit index,  given Molecule name in mixed case
+    ! Returns 0 if Molecule name not found
+    ! (inverse function: GetMoleculeName)
+    integer, intent(out) :: Molecule
+    character (len=*), intent(in) :: string_text
+    ! Local variables
+    character (len=len(string_text))             :: string_test
+    do Molecule=first_molecule, last_molecule
+      call get_string ( lit_indices(Molecule), string_test, strip=.true. )
+      if ( LowerCase(trim(string_text)) == LowerCase(trim(string_test))) &
+        & return
+    end do
+    Molecule = 0
+  end subroutine GetMoleculeIndex
+
+  ! ----------------------------------------------  GetMoleculeName  -----
+  subroutine GetMoleculeName(Molecule, string_text)
+    ! Given the lit index, returns Molecule name in mixed case
+    ! (inverse function: GetMoleculeIndex)
+    integer, intent(in) :: Molecule
+    character (len=*), intent(out) :: string_text
+    call get_string ( lit_indices(Molecule), string_text, strip=.true. )
+  end subroutine GetMoleculeName
+
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -133,6 +173,9 @@ contains ! =====     Public procedures     =============================
 end module MOLECULES
 
 ! $Log$
+! Revision 2.26  2009/10/26 17:07:28  pwagner
+! Added GetMoleculeName and -Index
+!
 ! Revision 2.25  2009/06/23 18:25:42  pwagner
 ! Prevent Intel from optimizing ident string away
 !
