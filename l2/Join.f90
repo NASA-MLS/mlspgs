@@ -52,7 +52,7 @@ contains ! =====     Public Procedures     =============================
     use DumpCommand_m, only: DumpCommand, Skip
     use HGridsDatabase, only: HGrid_T
     use Init_Tables_Module, only: S_L2GP, S_L2AUX, S_TIME, S_DIRECTWRITE, &
-      & S_DUMP, S_LABEL, S_SKIP
+      & S_DIFF, S_DUMP, S_LABEL, S_SKIP
     use ForwardModelConfig, only: ForwardModelConfig_T
     use L2GPData, only: L2GPDATA_T
     use L2AUXData, only: L2AUXDATA_T
@@ -174,7 +174,7 @@ contains ! =====     Public Procedures     =============================
         end if
         specId = get_spec_id ( key )
         select case ( specId )
-        case ( s_dump ) ! ============================== Dump ==========
+        case ( s_diff, s_dump ) ! ======================= Diff, Dump ==========
           ! Handle disassociated pointers by allocating them with zero size
           status = 0
           if ( CHECKPATHS ) cycle
@@ -2148,6 +2148,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.141  2009/10/26 17:11:53  pwagner
+! Added Diff command to be used like Dump in l2cf
+!
 ! Revision 2.140  2009/09/29 23:40:45  pwagner
 ! Unjam error message when DirectWrite type is unexpected
 !
