@@ -153,7 +153,7 @@ contains ! =====     Public Procedures     =============================
     ! Now the specifications:
     use INIT_TABLES_MODULE, only: S_ANYGOODVALUES, S_ANYGOODRADIANCES, &
       & S_CATCHWARNING, S_COMPARE, S_COMPUTETOTALPOWER, S_DESTROY, &
-      & S_DUMP, S_FILL, S_FILLCOVARIANCE, &
+      & S_DIFF, S_DUMP, S_FILL, S_FILLCOVARIANCE, &
       & S_FILLDIAGONAL, S_FLAGCLOUD, S_FLUSHL2PCBINS, S_FLUSHPFA, &
       & S_LOAD, S_MATRIX,  S_NEGATIVEPRECISION, S_PHASE, S_POPULATEL2PCBIN, &
       & S_REEVALUATE, S_RESTRICTRANGE, S_SKIP, S_SNOOP, &
@@ -669,7 +669,7 @@ contains ! =====     Public Procedures     =============================
       case ( s_Reevaluate )
         call decorate ( key,  BooleanFromFormula ( 0, key ) )
 
-      case ( s_dump ) ! ============================== Dump ==========
+      case ( s_diff, s_dump ) ! ======================== Diff, Dump ==========
         ! Handle disassociated pointers by allocating them with zero size
         status = 0
         if ( .not. associated(qtyTemplates) ) allocate ( qtyTemplates(0), stat=status )
@@ -2516,6 +2516,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.376  2009/10/26 17:11:28  pwagner
+! Added Diff command to be used like Dump in l2cf
+!
 ! Revision 2.375  2009/08/24 20:13:47  pwagner
 ! May Fill H2O precision from RHI precision
 !
