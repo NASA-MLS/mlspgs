@@ -72,8 +72,8 @@ contains
       & L_lowcloud, L_newtonian, L_none, L_norm, &
       & L_NumGrad, L_numJ, L_NumNewt, l_Simple, &
       & S_ANYGOODVALUES, S_CATCHWARNING, S_Compare, &
-      & S_dump, S_dumpBlocks, S_flagCloud, S_flushPFA, S_LeakCheck, S_matrix, &
-      & S_REEVALUATE, S_restrictRange, S_retrieve, &
+      & S_diff, S_dump, S_dumpBlocks, S_flagCloud, S_flushPFA, S_LeakCheck, &
+      & S_matrix, S_REEVALUATE, S_restrictRange, S_retrieve, &
       & S_sids, S_SKIP, S_snoop, S_subset, S_time, S_updateMask
     use Intrinsic, only: PHYQ_Dimensionless
     use L2ParInfo, only: PARALLEL
@@ -315,7 +315,7 @@ contains
         call decorate ( key,  BooleanFromCatchWarning ( key ) )
       case ( s_compare )
         call decorate ( key,  BooleanFromComparingQtys ( key, vectorDatabase ) )
-      case ( s_dump )
+      case ( s_diff, s_dump )
         if ( .not. SKIPRETRIEVAL ) &
           & call dumpCommand ( key, forwardModelConfigs=configDatabase, &
           & vectors=vectorDatabase, FileDataBase=FileDataBase )
@@ -2783,6 +2783,9 @@ NEWT: do ! Newtonian iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.306  2009/10/26 17:12:39  pwagner
+! Added Diff command to be used like Dump in l2cf
+!
 ! Revision 2.305  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
 !
