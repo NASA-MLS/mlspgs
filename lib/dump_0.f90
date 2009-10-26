@@ -222,7 +222,7 @@ module DUMP_0
   integer, parameter :: TOOMANYELEMENTS = 125*50*3500 ! Don't try to diff l1b DACS
   logical, parameter ::   DEEBUG = .false.
   logical, parameter ::   SHORTCUTDIFFS = .false.
-  logical :: myClean, myDirect, myFillValue, myGaps, myStats, myRMS, myTable, &
+  logical :: myClean, myDirect, myGaps, myStats, myRMS, myTable, &
     & myTranspose, myTrim, myUnique, myWholeArray
   character(len=16) :: myPCTFormat
   logical, save :: nameHasBeenPrinted = .false.
@@ -647,6 +647,7 @@ contains
     integer, intent(in), optional :: WIDTH ! How many numbers per line (10)?
     integer, intent(in), optional :: LBOUND ! Low bound for Array
     character(len=*), optional, intent(in) :: options
+    integer :: myFillValue
     include 'dumpstats.f9h'
   end subroutine DUMP_BOGUS
 
@@ -2449,6 +2450,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.96  2009/10/26 18:53:33  pwagner
+! Fixed bug only NAG found
+!
 ! Revision 2.95  2009/10/19 17:33:26  pwagner
 ! Trying to prevent double-printing of name
 !
