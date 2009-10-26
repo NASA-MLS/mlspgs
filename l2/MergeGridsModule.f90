@@ -37,7 +37,7 @@ contains ! =================================== Public procedures
     use GriddedData, only: GRIDDEDDATA_T, &
       & ADDGRIDDEDDATATODATABASE
     use Init_tables_module, only: S_CONCATENATE, S_CONVERTETATOP, &
-      & S_DELETE, S_DUMP, S_MERGE, S_WMOTROP
+      & S_DELETE, S_DIFF, S_DUMP, S_MERGE, S_WMOTROP
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMESSAGECALLS
     use MoreTree, only: GET_SPEC_ID
     use Trace_M, only: TRACE_BEGIN, TRACE_END
@@ -85,7 +85,7 @@ contains ! =================================== Public procedures
       case ( s_wmoTrop )
         call decorate ( key, AddgriddedDataToDatabase ( griddedDataBase, &
           & wmoTropFromGrid ( key, griddedDataBase ) ) )
-      case ( s_dump )
+      case ( s_diff, s_dump )
         call dumpCommand ( key, griddedDataBase=griddedDataBase )
       case default
         ! Shouldn't get here is parser worked?
@@ -932,6 +932,9 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.39  2009/10/26 17:12:09  pwagner
+! Added Diff command to be used like Dump in l2cf
+!
 ! Revision 2.38  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
 !
