@@ -22,7 +22,7 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
      & AppendL2GPData, cpL2GPData, DestroyL2GPContents, ExtractL2GPRecord, &
      & ReadL2GPData, WriteL2GPData
    use MACHINE, only: FILSEP, HP, IO_ERROR, GETARG
-   use MLSCommon, only: MLSFile_t, R8
+   use MLSCommon, only: MLSFile_t, R8, L2Metadata_T
    use MLSFiles, only: mls_exists, &
      & HDFVERSION_4, HDFVERSION_5, MLS_INQSWATH, InitializeMLSFile
    use MLSHDF5, only: mls_h5open, mls_h5close
@@ -94,6 +94,7 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
   character(len=MAXSWATHNAMESBUFSIZE) :: swathList
   character(len=MAXSWATHNAMESBUFSIZE) :: swathList1
   character(len=MAXSWATHNAMESBUFSIZE) :: swathListAll
+  type (L2Metadata_T) :: l2metaData
   integer :: listSize
   integer :: NUMSWATHSPERFILE
   integer :: NUMSWATHSSOFAR
@@ -364,14 +365,14 @@ contains
         if ( any( (/options%freqs(2), options%levels(2), &
           & options%profiles(2)/) > 0 ) &
           & ) then
-          call cpL2GPData(trim(filenames(i)), &
+          call cpL2GPData( l2metaData, trim(filenames(i)), &
           & trim(options%outputFile), create2=.not. createdYet, &
           & hdfVersion1=hdfVersion1, hdfVersion2=hdfVersion2, &
           & swathList=trim(swathList), rename=rename, &
           & notUnlimited=.true., andGlAttributes=.true., &
           & rFreqs=options%freqs, rLevels=options%levels, rTimes=options%profiles)
         else
-          call cpL2GPData(trim(filenames(i)), &
+          call cpL2GPData( l2metaData, trim(filenames(i)), &
           & trim(options%outputFile), create2=.not. createdYet, &
           & hdfVersion1=hdfVersion1, hdfVersion2=hdfVersion2, &
           & swathList=trim(swathList), rename=rename, &
@@ -383,13 +384,13 @@ contains
       else
         if ( any( (/options%freqs(2), options%levels(2), options%profiles(2)/) &
           & > 0 ) ) then
-          call cpL2GPData(trim(filenames(i)), &
+          call cpL2GPData( l2metaData, trim(filenames(i)), &
           & trim(options%outputFile), create2=.not. createdYet, &
           & hdfVersion1=hdfVersion1, hdfVersion2=hdfVersion2, &
           & notUnlimited=.true., andGlAttributes=.true., &
           & rFreqs=options%freqs, rLevels=options%levels, rTimes=options%profiles)
         else
-          call cpL2GPData(trim(filenames(i)), &
+          call cpL2GPData( l2metaData, trim(filenames(i)), &
           & trim(options%outputFile), create2=.not. createdYet, &
           & hdfVersion1=hdfVersion1, hdfVersion2=hdfVersion2, &
           & notUnlimited=.true., andGlAttributes=.true.)
@@ -552,6 +553,9 @@ end program L2GPcat
 !==================
 
 ! $Log$
+! Revision 1.13  2008/10/13 23:32:41  pwagner
+! Changed meaning of -overlap option; useful now in rolling up nrts
+!
 ! Revision 1.12  2008/09/25 23:13:20  pwagner
 ! May exclude swaths when nProfiles outside range
 !
