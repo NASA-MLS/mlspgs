@@ -624,10 +624,11 @@ contains
       & F_Boolean, F_Clean, F_CrashBurn, F_Details, F_DACSFilterShapes, &
       & F_FilterShapes, F_ForwardModel, F_GRID, &
       & F_HGrid, F_L2PC, F_Lines, F_Mark, F_Mask, F_MieTables, &
-      & F_PfaData, F_PfaFiles, F_PFANum, F_PFAStru, F_PointingGrids, &
+      & F_OPTIONS, F_PfaData, F_PfaFiles, F_PFANum, F_PFAStru, F_PointingGrids, &
       & F_Quantity, F_Signals,  F_Spectroscopy, F_Stop, F_StopWithError, &
       & F_Template, F_Text, F_TGrid, &
-      & F_Vector, F_VectorMask, F_VGrid, S_Quantity, S_VectorTemplate
+      & F_Vector, F_VectorMask, F_VGrid, &
+      & S_DIFF, S_DUMP, S_QUANTITY, S_VECTORTEMPLATE
     use L2ParInfo, only: PARALLEL, CLOSEPARALLEL
     use L2PC_m, only: L2PCDatabase, dumpL2PC => Dump
     use Intrinsic, only: PHYQ_Dimensionless
@@ -642,7 +643,7 @@ contains
     use MLSStrings, only: lowerCase
     use MLSStringLists, only: BooleanValue, SWITCHDETAIL
     use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
-    use output_m, only: output !, outputNamedValue
+    use output_m, only: output, outputNamedValue
     use PFADataBase_m, only: Dump, Dump_PFADataBase, Dump_PFAFileDataBase, &
       & Dump_PFAStructure, PFAData
     use PointingGrid_m, only: Dump_Pointing_Grid_Database
@@ -654,8 +655,9 @@ contains
     use Trace_m, only: Trace_begin, Trace_end
     use Tree, only: Decoration, Node_Id, Nsons, Source_Ref, Sub_rosa, Subtree
     use Tree_Types, only: N_Spec_Args
-    use VectorsModule, only: Dump, DumpQuantityMask, DumpVectorMask, & ! for vectors, vector quantities and templates
-      & GetVectorQtyByTemplateIndex, Vector_T, VectorTemplate_T
+    use VectorsModule, only: Vector_T, VectorTemplate_T, &
+      & Diff, Dump, DumpQuantityMask, DumpVectorMask, & ! for vectors, vector quantities and templates
+      & GetVectorQtyByTemplateIndex
     use VGridsDatabase, only: Dump, VGrids
 
     integer, intent(in) :: Root ! Root of the parse tree for the dump command
@@ -675,14 +677,18 @@ contains
     character(8) :: Date
     integer :: DetailReduction
     integer :: Details
+    integer :: DiffOrDump
     integer :: FieldIndex
     integer :: FileIndex
+    logical :: GotFirst ! of something -- needed if diffing 2 of them
     logical :: GotOne ! of something -- used to test loop completion
     integer :: GSON, I, J, K, L, Look
     logical :: HaveQuantityTemplatesDB, HaveVectorTemplates, HaveVectors, &
       &        HaveForwardModelConfigs, HaveGriddedData, HaveHGrids
     character(len=80) :: NAMESTRING  ! E.g., 'L2PC-band15-SZASCALARHIRES'
+    character(len=80) :: OPTIONSSTRING  ! E.g., '-rbs' (see dump_0.f90)
     integer :: QuantityIndex
+    integer :: QuantityIndex2
     integer :: Son
     integer :: Source ! column*256 + line
     character :: TempText*20, Text*255
@@ -690,6 +696,7 @@ contains
     character(10) :: TimeOfDay
     logical :: tvalue
     integer :: VectorIndex
+    integer :: VectorIndex2
     integer :: Type     ! of the Details expr -- has to be num_value
     integer :: Units(2) ! of the Details expr -- has to be phyq_dimensionless
     double precision :: Values(2) ! of the Details expr
@@ -715,6 +722,12 @@ contains
     else
       call MLSMessageCalls( 'push', constantName=ModuleName )
     end if
+    ! Were we called to do a diff or a dump?
+    ! The following must be one of (/ s_dump, s_diff /)
+    DiffOrDump = get_spec_id(root)
+    if ( .not. any( DiffOrDump == (/ s_dump, s_diff /) ) ) &
+    &  call MLSMessage( MLSMSG_Error, moduleName, &
+        & "Expected either Diff or Dump command to get here")
     haveQuantityTemplatesDB = present(quantityTemplatesDB)
     if ( haveQuantityTemplatesDB ) &
       & haveQuantityTemplatesDB = associated(quantityTemplatesDB)
@@ -739,7 +752,9 @@ contains
     end if
 
     clean = .false.
+    GotFirst = .false.
     details = 0 - DetailReduction
+    OPTIONSSTRING = '-'
 
     do j = 2, nsons(root)
       son = subtree(j,root) ! The argument
@@ -924,17 +939,36 @@ contains
         if ( details < -1 ) cycle
         do i = 2, nsons(son)
           gson = subtree(i,son)
-          vectorIndex = decoration(decoration(subtree(1,gson)))
-          quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
-          if ( fieldIndex == f_mask ) then
+          if ( gotFirst ) then
+            vectorIndex2 = decoration(decoration(subtree(1,gson)))
+            quantityIndex2 = decoration(decoration(decoration(subtree(2,gson))))
+          else
+            vectorIndex = decoration(decoration(subtree(1,gson)))
+            quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          endif
+          if ( DiffOrDump == s_diff ) then
+            if ( gotFirst ) &
+              & call diff ( &
+              & GetVectorQtyByTemplateIndex( &
+              & vectors(vectorIndex), quantityIndex), &
+              & GetVectorQtyByTemplateIndex( &
+              & vectors(vectorIndex2), quantityIndex2), &
+              & options=optionsString )
+          elseif ( fieldIndex == f_mask ) then
             call dumpQuantityMask ( GetVectorQtyByTemplateIndex( &
               & vectors(vectorIndex), quantityIndex), details=details )
           else
+            if ( clean ) optionsString = trim(optionsString) // 'c'
             call dump ( GetVectorQtyByTemplateIndex( &
               & vectors(vectorIndex), quantityIndex), details=details, &
-              & vector=vectors(vectorIndex), clean=clean )
+              & vector=vectors(vectorIndex), options=optionsString )
           end if
         end do
+        GotFirst = .true.
+      case ( f_options )
+        call get_string ( sub_rosa(gson), optionsString, strip=.true. )
+        optionsString = lowerCase(optionsString)
+        call outputNamedValue( 'options', trim(optionsString) )
       case ( f_pfaData )
         do i = 2, nsons(son)
           look = decoration(decoration(subtree(i,son)))
@@ -1216,6 +1250,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.47  2009/10/27 22:18:18  pwagner
+! Implemented new Diff command; so far only of vector quantities
+!
 ! Revision 2.46  2009/09/15 20:03:48  pwagner
 ! Dump commands take boolean fields /stop, /stopWithError, /crashBurn
 !
