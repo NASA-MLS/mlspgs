@@ -1290,6 +1290,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_Clean, t+t_boolean, n+n_field_type, &
              begin, f+f_crashBurn, t+t_boolean, n+n_field_type, &
              begin, f+f_details, t+t_numeric, n+n_field_type, &
+             begin, f+f_options, t+t_string, n+n_field_type, &
              begin, f+f_quantity, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
              begin, f+f_stop, t+t_boolean, n+n_field_type, &
@@ -1332,6 +1333,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_mask, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
              begin, f+f_MieTables, t+t_boolean, n+n_field_type, &
+             begin, f+f_options, t+t_string, n+n_field_type, &
              begin, f+f_pfaData, s+s_makePFA, s+s_pfaData, s+s_readPFA, &
                     n+n_field_spec, &
              begin, f+f_pfaFiles, t+t_boolean, n+n_field_type, &
@@ -1530,15 +1532,15 @@ contains ! =====     Public procedures     =============================
              begin, p+p_cycle, t+t_string, n+n_name_def, &
              begin, p+p_starttime, t+t_string, n+n_name_def, &
              begin, p+p_endtime, t+t_string, n+n_name_def, &
-             s+s_binSelector, s+s_directWriteFile, s+s_dump, &
+             s+s_binSelector, s+s_dump, s+s_directWriteFile, s+s_dump, &
              s+s_empiricalGeometry, s+s_fGrid, s+s_flushPFA, s+s_forwardModel, &
              s+s_forwardModelGlobal, s+s_l1brad, s+s_l1boa, &
              s+s_l2parsf, s+s_makePFA, s+s_pfaData, s+s_readPFA, &
              s+s_tGrid, s+s_time, s+s_vGrid, s+s_writePFA, n+n_section, &
-      begin, z+z_readapriori, s+s_time, s+s_dump, s+s_gridded, s+s_l2gp, &
+      begin, z+z_readapriori, s+s_time, s+s_diff, s+s_dump, s+s_gridded, s+s_l2gp, &
              s+s_l2aux, s+s_snoop, n+n_section, &
       begin, z+z_mergegrids, s+s_time, s+s_merge, s+s_concatenate, &
-             s+s_ConvertEtaToP, s+s_delete, s+s_dump, s+s_vgrid, s+s_wmoTrop, &
+             s+s_ConvertEtaToP, s+s_delete, s+s_diff, s+s_dump, s+s_vgrid, s+s_wmoTrop, &
              n+n_section /) )
     call make_tree ( (/ &
       begin, z+z_chunkdivide, &
@@ -1563,20 +1565,20 @@ contains ! =====     Public procedures     =============================
       begin, z+z_fill, &
              s+s_anyGoodRadiances, s+s_anyGoodValues, s+s_catchWarning, &
              s+s_compare, s+s_computeTotalPower, s+s_destroy, &
-             s+s_dump, s+s_fill, s+s_fillCovariance, &
+             s+s_diff, s+s_dump, s+s_fill, s+s_fillCovariance, &
              s+s_fillDiagonal, s+s_flagcloud, s+s_flushL2PCBins, s+s_flushPFA, &
              s+s_load, s+s_matrix, s+s_negativePrecision, s+s_phase, &
              s+s_populateL2PCBin, s+s_reevaluate, s+s_restrictRange, &
              s+s_skip, s+s_snoop, s+s_subset, &
              s+s_time, s+s_transfer, s+s_updateMask, s+s_vector, n+n_section, &
       begin, z+z_retrieve, s+s_anyGoodValues, s+s_catchWarning, &
-             s+s_checkpoint, s+s_compare, s+s_dump, s+s_dumpBlocks, &
+             s+s_checkpoint, s+s_compare, s+s_diff, s+s_dump, s+s_dumpBlocks, &
              s+s_flagCloud, s+s_flushPFA, s+s_leakcheck, s+s_matrix, &
              s+s_reevaluate, s+s_restrictRange, s+s_retrieve, &
              s+s_sids, s+s_skip, s+s_snoop, s+s_subset, s+s_time, s+s_updateMask, &
              n+n_section, &
       begin, z+z_join, s+s_time, s+s_label, s+s_l2gp, s+s_l2aux, &
-                       s+s_directWrite, s+s_dump, s+s_skip, n+n_section, &
+             s+s_directWrite, s+s_diff, s+s_dump, s+s_skip, n+n_section, &
       begin, z+z_algebra, s+s_columnScale, s+s_combineChannels, s+s_cyclicJacobi, &
              s+s_disjointEquations, s+s_normalEquations, s+s_reflect, &
              s+s_regularization, s+s_rowScale, n+n_section+d*no_check_eq, &
@@ -1603,6 +1605,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.495  2009/10/27 22:13:09  pwagner
+! Remedied omission of s_diff from commands allowed by sections
+!
 ! Revision 2.494  2009/10/26 17:10:37  pwagner
 ! Added Diff command to be used like Dump in l2cf
 !
