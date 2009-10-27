@@ -146,6 +146,15 @@ then
 fi
 
 H5REPACK=$PGE_BINARY_DIR/h5repack
+NETCDFAUGMENT=$PGE_BINARY_DIR/aug_hdfeos5
+if [ ! -x "$H5REPACK" ]
+then
+  H5REPACK=$MLSTOOLS/H5REPACK
+fi
+if [ ! -x "$NETCDFAUGMENT" ]
+then
+  NETCDFAUGMENT=$MLSTOOLS/aug_hdfeos5
+fi
 #EXTRA_SCRIPT_DIR="$PGE_SCRIPT_DIR/../scripts"
 masterlog="${JOBDIR}/exec_log/process.stdout"
 if [ "$MASTERLOG" != "" ]
@@ -266,6 +275,29 @@ then
   cat "$LOGFILE" "$JOBSTATSFILE" > "$LOGFILE".1
   mv "$LOGFILE".1 "$LOGFILE"
 fi
+
+# augment level 2 product files to make them netcdf-compatible
+if [ -x "$NETCDFAUGMENT" ]
+then
+  files=`extant_files *L2GP-[A-CE-Z]*.he5 *L2GP-DGG_*.he5`
+  if [ "$files" = "" ]
+  then
+    if [ -d "outputs" ]
+    then
+      cd "outputs"
+      files=`extant_files *L2GP-[A-CE-Z]*.he5 *L2GP-DGG_*.he5`
+    fi
+  fi
+  for file in $files
+  do
+    if [ -w "$file" ]
+    then
+      echo $NETCDFAUGMENT $file
+      $NETCDFAUGMENT $file
+    fi
+  done
+fi
+
 # repack level 2 product files to speed things up
 if [ -x "$H5REPACK" ]
 then
@@ -306,6 +338,10 @@ else
 fi
 
 # $Log$
+# Revision 1.21  2009/05/01 22:10:38  honghanh
+# Change the initialization of l2cf back to the old way because environment
+# variables defined in .env file is not avaiable to mlsl2p.sh.
+#
 # Revision 1.20  2009/05/01 20:40:22  honghanh
 # Use L2CFVERSION to supply l2cf variable
 #
