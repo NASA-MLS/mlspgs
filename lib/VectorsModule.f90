@@ -1113,7 +1113,10 @@ contains ! =====     Public Procedures     =============================
     integer, dimension(1000) :: uniqueVals
 
     if ( present(name) ) then
-      call output ( name ); call output ( ', ' )
+      if ( len_trim(name) > 0 ) then
+        call output ( name )
+        call output ( ', ' )
+      end if
     end if
     call output ( ' Qty_Template_Name = ' )
     if ( qty1%template%name /= 0 ) then
@@ -1540,7 +1543,7 @@ contains ! =====     Public Procedures     =============================
         & (vector%quantities(j)%template%majorFrame .eqv. majorFrame)
       if ( dumpThisQty ) then
         call output ( j, 4, after="~" )
-        call dump ( vector%quantities(j), details, clean=clean )
+        call dump ( vector%quantities(j), details, options=options )
         if ( myditchafterdump ) return
       end if
     end do ! j
@@ -1652,7 +1655,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine Dump_Vectors
 
   ! ---------------------------------------  Dump_Vector_Quantity  -----
-  subroutine Dump_Vector_Quantity ( Qty, Details, Name, Clean, Vector )
+  subroutine Dump_Vector_Quantity ( Qty, Details, Name, Vector, Options )
 
     type (VectorValue_T), intent(in) :: QTY
     integer, intent(in), optional :: DETAILS ! <0  => Name only
@@ -1662,22 +1665,18 @@ contains ! =====     Public Procedures     =============================
     !                                        ! >1  => Dump template with details-1
     !                                        ! Default 1
     character(len=*), intent(in), optional :: NAME
-    logical, intent(in), optional :: CLEAN   ! Passed through to dump_0%dump
+    ! logical, intent(in), optional :: CLEAN   ! Passed through to dump_0%dump
     type (Vector_T), intent(in), optional :: Vector ! Only to get its name
+    character(len=*), intent(in), optional :: Options ! E.g., '-sb'
 
     integer :: i
     integer :: myDetails
     integer :: nUnique
     logical :: Dot ! Use vector.quantity notation
-    character(len=8) :: options
     integer, dimension(1000) :: uniqueVals
 
     myDetails = 1
     if ( present(details) ) myDetails = details
-    options = ' '
-    if ( present(clean) ) then
-      if ( clean ) options = 'c'
-    endif
 
     if ( present(name) ) then
       call output ( name ); call output ( ', ' )
@@ -2651,6 +2650,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.143  2009/10/26 17:08:44  pwagner
+! Added DiffVectorQuantities
+!
 ! Revision 2.142  2009/06/23 18:25:43  pwagner
 ! Prevent Intel from optimizing ident string away
 !
