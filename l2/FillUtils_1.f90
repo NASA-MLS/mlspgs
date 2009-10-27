@@ -4745,12 +4745,14 @@ contains ! =====     Public Procedures     =============================
       ! Local variables
       real :: B(3)                      ! Magnetic field
       integer :: INSTANCE               ! Loop counter
+      character(len=8) :: options
       integer :: SURF                   ! Loop counter
       integer :: SURFOR1                ! Index
       real    :: XYZ(3)                 ! lat, lon, height for to_cart
 
       ! Executable code
-
+      options = ' '
+      if ( switchDetail(switches,'clean') > -1 ) options = '-c'
       if ( .not. ValidateVectorQuantity ( qty, quantityType=(/l_magneticField/), &
         & frequencyCoordinate=(/ l_xyz /) ) ) then
         call Announce_Error ( key, no_error_code, &
@@ -4797,7 +4799,7 @@ contains ! =====     Public Procedures     =============================
       end do
 
       if ( switchDetail(switches,'mag') > -1 ) &
-        & call dump ( qty, clean=(switchDetail(switches,'clean') > -1) )
+        & call dump ( qty, options=options )
 
     end subroutine FillQuantityUsingMagneticModel
 
@@ -6797,6 +6799,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.30  2009/10/27 22:14:24  pwagner
+! Compiles with new api for Dump vector quantity
+!
 ! Revision 2.29  2009/09/01 17:14:02  pwagner
 ! Reduce severity of profile mismatch in FillVectorQuantityFromL2GP to permit filling 1d sids with truth
 !
