@@ -282,6 +282,7 @@ operation
 operational
 opticalDepth
 opticalDepthCutoff
+options
 orbitInclination
 origin
 outputCovariance
@@ -467,6 +468,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.196  2009/10/27 22:10:36  pwagner
+# Added options field used by Dump, Diff commands
+#
 # Revision 2.195  2009/09/25 02:37:01  vsnyder
 # Add badValue, keepChannels
 #
