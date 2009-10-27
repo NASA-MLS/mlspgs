@@ -111,8 +111,9 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   implicit none
   private
   ! Generics
-  public :: Assignment (=), DUMP, Multiply, operator (+), operator (-)
+  public :: Assignment (=), Multiply, operator (+), operator (-)
   public :: operator (*), operator ( .DOT. ), operator ( .MDOT. )
+  public :: diff, dump
   ! Specifics
   public :: AddToVector, AddVectors, AddVectorTemplateToDatabase
   public :: AddVectorToDatabase, AssignVector, AXPY, CheckIntegrity
@@ -2650,6 +2651,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.144  2009/10/27 22:16:38  pwagner
+! New api for dump vector quantity--drops 'clean', adds 'options'
+!
 ! Revision 2.143  2009/10/26 17:08:44  pwagner
 ! Added DiffVectorQuantities
 !
