@@ -36,7 +36,7 @@
 #
 # Bugs and limitations
 # (1) l2gpdiff is assumed to exist, to be an executable, and to be in
-#     $HOME/mlspgs/bin/LF95.Linux
+#     either your PATH or /software/toolkit/mlstools/l2gpdiff
 # (2) The l2gp file names are assumed to match the pattern
 #      MLS-Aura_L2GP-xxxx_*.he5
 # (3) If multiple matches, we try always to pick out the last
@@ -140,14 +140,19 @@ extant_files()
 #****************************************************************
 #
 stdprods='BrO CH3Cl CH3CN ClO CO GPH H2O HCl HCN HNO3 HO2 HOCl IWC N2O O3 OH RHI Temperature'
-debug=0
+debug=1
 #     ^  -- set this to 1 if worried
 keep=0
 #    ^  -- set this to 1 to keep temp files (else delete)
 me="$0"
 my_name=batch_l2gpdiff.sh
 I=batch_l2gpdiff
-L2GPDIFF=~/mlspgs/bin/LF95.Linux/l2gpdiff
+#L2GPDIFF=~/mlspgs/bin/LF95.Linux/l2gpdiff
+L2GPDIFF=`which l2gpdiff`
+if [ ! -x $L2GPDIFF ]
+then
+  L2GPDIFF=/software/toolkit/mlstools/l2gpdiff
+fi
 # $reecho is reecho with me's path prepended
 reecho="`echo $0 | sed 's/'$I'/reecho/'`"
 # $the_splitter is split_path with me's path prepended
@@ -166,6 +171,10 @@ more_opts="yes"
 more_strs="yes"
 while [ "$more_strs" = "yes" ] ; do
 
+    if [ "$debug" ]
+    then
+      echo "arg $1"
+    fi
     case "$1" in
 
     - )
@@ -198,10 +207,6 @@ while [ "$more_strs" = "yes" ] ; do
 	    shift
 	    shift
        ;;
-#    -match* )
-#	    matchTimes="yes"
-#	    shift
-#       ;;
     -unique )
 	    unique="yes"
 	    shift
@@ -226,7 +231,7 @@ while [ "$more_strs" = "yes" ] ; do
        opt_takes_args=`echo "-d,-f,-chunks,-fields,-pressures,-s1,-s2" | grep -e "$1"`
        # if [ "$1" = "-d" -o "$1" = "-f" ]
        echo opt_takes_args: $opt_takes_args
-       if [ "$opt_takes_args" != "" ]
+       if [ "$opt_takes_args" != "" -a "$1" != "-s" ]
        then
 	       l2gpdiff_opts="$l2gpdiff_opts $2"
           shift
@@ -393,6 +398,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.10  2009/08/18 21:04:52  pwagner
+# Added new CH3Cl stdprod
+#
 # Revision 1.9  2007/10/09 18:24:05  pwagner
 # Passes -pressures 'p1,p2,..' to l2gpdiff
 #
