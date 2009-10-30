@@ -58,13 +58,14 @@ program l1bdiff ! diffs two l1b or L2AUX files
     logical     :: silent = .false.
     logical     :: timing = .false.
     logical     :: unique = .false.
+    logical     :: debug = .false.
     logical     :: verbose = .false.
     logical     :: list = .false.
     logical     :: stats = .false.
     logical     :: rms = .false.
     logical     :: table = .false.
     logical     :: direct = .true.
-    logical     :: oneD = .true.
+    logical     :: oneD = .false.
     logical     :: l2aux = .false.
     logical     :: ascii = .false. ! If true, diff even character fields
     integer     :: maf1 = 0
@@ -444,12 +445,12 @@ contains
         &  index(options%skipList, trim(sdName)) > 0 ) cycle
       do ihalf=1, nHalves
         ! Allocate and fill l2aux
-        if ( options%verbose ) print *, 'About to read ', trim(sdName)
+        if ( options%debug ) print *, 'About to read ', trim(sdName)
         if ( options%halfwaves ) then
           call ReadL1BData ( sdfid1, trim(sdName), L1bDataT, NoMAFs, status, &
             & hdfVersion=the_hdfVersion, NEVERFAIL=.true., l2aux=options%l2aux )
-          call outputNamedValue( 'NoMAFs', noMAFs )
-          call outputNamedValue( 'status', status )
+          ! call outputNamedValue( 'NoMAFs', noMAFs )
+          ! call outputNamedValue( 'status', status )
           if ( noMAFs < 1 ) cycle
           if ( status /= 0 ) then
 	         call MLSMessage ( MLSMSG_Warning, ModuleName, &
@@ -478,10 +479,10 @@ contains
             cycle
           endif
         endif
-        call SayTime( 'Reading l1bdata 1', stime )
+        if ( options%timing ) call SayTime( 'Reading l1bdata 1', stime )
         stime = t2
-        if (associated(L1BData%dpField) ) &
-          & call outputnamedValue('shape(l1bdata)', shape(L1BData%dpField) )
+        ! if (associated(L1BData%dpField) ) &
+        !   & call outputnamedValue('shape(l1bdata)', shape(L1BData%dpField) )
         ! if ( options%verbose ) print *, 'About to read ', trim(sdName), ' (2nd)'
         if ( options%halfwaves ) then
           call ReadL1BData ( sdfid1, trim(sdName), L1bDataT, NoMAFs, status, &
@@ -500,10 +501,10 @@ contains
             cycle
           endif
         endif
-        call SayTime( 'Reading l1bdata 2', stime )
+        if ( options%timing ) call SayTime( 'Reading l1bdata 2', stime )
         stime = t2
-        if (associated(L1BData2%dpField) ) &
-          & call outputnamedValue('shape(l1bdata2)', shape(L1BData2%dpField) )
+        ! if (associated(L1BData2%dpField) ) &
+        !   & call outputnamedValue('shape(l1bdata2)', shape(L1BData2%dpField) )
         if ( associated(L1bData%charField) .and. .not. options%ascii ) then
 	       call MLSMessage ( MLSMSG_Warning, ModuleName, &
             & 'Skipping diff of char-valued ' // trim(sdName) )
@@ -540,7 +541,7 @@ contains
           call allocate_test(l1bValues2, nsize, 'l1bValues2', ModuleName )
           l1bValues2 = reshape( L1bData2%dpField, (/nsize/) )
           call deallocate_test( L1bData2%dpField, 'l1bData%Values2', ModuleName )
-          call SayTime( 'Copying values to 1-d arrays', stime )
+          if ( options%timing ) call SayTime( 'Copying values to 1-d arrays', stime )
           stime = t2
           call diff(L1bData, L1bData2, numDiffs=numDiffs, options=dumpOptions, &
             & l1bValues1=l1bValues1, l1bValues2=l1bValues2 )
@@ -596,7 +597,7 @@ contains
         call DeallocateL1BData ( l1bData )
         call DeallocateL1BData ( l1bData2 )
         options%numDiffs = options%numDiffs + numDiffs
-        call SayTime( 'Doing the diff', stime )
+        if ( options%timing ) call SayTime( 'Doing the diff', stime )
         stime = t2
       enddo ! Loop of halves
     enddo ! Loop of datasets
@@ -761,6 +762,9 @@ end program l1bdiff
 !==================
 
 ! $Log$
+! Revision 1.15  2009/09/11 23:24:01  pwagner
+! options now include -t to be consistent with diff apis
+!
 ! Revision 1.14  2009/08/18 20:43:23  pwagner
 ! Changes needed to diff DACS radiance files
 !
