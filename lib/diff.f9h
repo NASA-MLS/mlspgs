@@ -94,6 +94,8 @@
       myWholeArray  = ( index( options, 'w' ) > 0 ) .or. &
         & .not. (myStats .or. myRMS.or. myTable)
     endif
+    onlyWholeArray = myWholeArray .and. &
+      & .not. (myRMS .or. myStats .or. myTable)
 
     if ( len_trim(name2) < 1 ) then
       DiffName = trim(name1) // ' (diff)'
@@ -391,6 +393,9 @@
 
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.22  2009/10/30 23:02:04  pwagner
+! Should not double-print name if only whole array diff
+!
 ! Revision 2.21  2009/10/19 17:29:04  pwagner
 ! Trying to prevent double-printing of name
 !
