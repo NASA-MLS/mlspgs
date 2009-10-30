@@ -1582,9 +1582,9 @@ contains ! ============================ MODULE PROCEDURES ======================
         call MLSMessage ( MLSMSG_Warning, ModuleName // '/ReadL1BData_fileHandle', &
         & 'Failed to find '//trim(QuantityName)//' in l1b files')
         NOMAFS = -1
-        call outputNamedValue( 'noMAFs', noMAFs )
-        call outputNamedValue( 'Flag', Flag )
-        call output( 'returning now', advance='yes' )
+        ! call outputNamedValue( 'noMAFs', noMAFs )
+        ! call outputNamedValue( 'Flag', Flag )
+        ! call output( 'returning now', advance='yes' )
         return
       end if
     end if
@@ -3283,6 +3283,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.86  2009/10/30 23:03:50  pwagner
+! Commented-out more debugging lines
+!
 ! Revision 2.85  2009/08/24 18:34:45  pwagner
 ! Repaired syntax errors only NAG complained about
 !
