@@ -21,7 +21,7 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
   ! (except for dao dimensions)
   use MLSMessageModule, only: MLSMSG_Allocate, MLSMSG_DeAllocate, MLSMSG_Error, &
     & MLSMSG_Warning, MLSMessage, MLSMessageCalls
-  use MLSStrings, only: LOWERCASE
+  use MLSStrings, only: LOWERCASE, READINTSFROMCHARS
   use Output_m, only: OUTPUTOPTIONS, BLANKS, OUTPUT, OUTPUTNAMEDVALUE, NEWLINE
 
   implicit NONE
@@ -33,9 +33,40 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
+! === (start of toc) ===
+!     c o n t e n t s
+!     - - - - - - - -
+
+!     (parameters and data)
+! GriddedData_T            The data type to hold climatology, gmao, etc.
+
+!     (subroutines and functions)
+! AddGriddedDataToDatabase What the name says
+!                          
+! ConcatenateGriddedData   Produce a a combination of two grids, 
+!                           an earlier and a later
+! ConvertFromEtaLevelGrids Convert two eta-level grids, one of them pressures,
+!                           to a pressure-level Grid
+! DestroyGriddedData Deallocate all the pointer components
+! DestroyGriddedDataDatabase
+!                    Destroy all the elements of the database
+! Diff               Print differences between two grids
+! DoGriddeddataMatch Same shapes, are on same geolocations, etc.?
+! Dump               Print details, values of a grid
+! NullifyGriddedData Nullify all its pointer components
+! SetupNewGriddedData
+!                    What the name says
+! SliceGriddedData   Resample grid at supplied coords
+! WrapGriddedData    Add extra points in longitude beyond +/-180
+!                     and in solar time beyond 0..24 to aid in interpolations
+! === (end of toc) ===
+
+! === (start of api) ===
+! === (end of api) ===
   public :: GriddedData_T, AddGriddedDataToDatabase, &
     & ConcatenateGriddedData, ConvertFromEtaLevelGrids, CopyGrid, &
-    & DestroyGriddedData, DestroyGriddedDataDatabase, DoGriddeddataMatch, Dump, &
+    & DestroyGriddedData, DestroyGriddedDataDatabase, &
+    & Diff, DoGriddeddataMatch, Dump, &
     & NullifyGriddedData, RGR, SetupNewGriddedData, SliceGriddedData, &
     & WrapGriddedData
 
@@ -44,6 +75,10 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
   interface ConcatenateGriddedData
     module procedure ConcatenateGriddedData_2
     module procedure ConcatenateGriddedData_array
+  end interface
+
+  interface DIFF
+    module procedure DiffGriddedData
   end interface
 
   interface DUMP
@@ -413,7 +448,7 @@ contains
 
   ! -----------------------------------------  DestroyGriddedData  -----
   subroutine DestroyGriddedData ( Qty )
-    ! This subroutine destroys a quantity template
+    ! This subroutine deallocates all the pointer components
 
     ! Dummy argument
     type (GriddedData_T), intent(INOUT) :: Qty
@@ -469,6 +504,86 @@ contains
       call trace_end ( "DestroyGriddedDataDatabase" )
     end if
   end subroutine DestroyGriddedDataDatabase
+
+  ! --------------------------------------------  DiffGriddedData  -----
+  subroutine DiffGriddedData ( GriddedData1, GriddedData2, options )
+    use Dump_0, only: Diff, Dump
+    use ieee_arithmetic, only: ieee_is_finite, ieee_is_nan
+    use Intrinsic, only: Lit_Indices
+    use String_Table, only: Display_String
+
+    ! Imitating what dump_pointing_grid_database does, but for gridded data
+    ! which may come from climatology, ncep, dao
+    type (GriddedData_T) :: GriddedData1, GriddedData2
+    character(len=*), intent(in), optional :: options
+
+    ! Local Variables
+    character(len=8) :: ccsds
+    integer :: date
+    integer :: details
+    character(len=4) :: dateChar
+    integer :: i
+    logical :: lookLikeClimatologyTxtfile
+    integer :: numElmnts
+
+    ! Executable code
+    if ( GriddedData1%empty .or. GriddedData2%empty ) then
+      call output('At least one Gridded quantity was empty (perhaps the file name' &
+        & // ' was wrong)', advance='yes')
+      return
+    endif
+    details = 0
+    if ( present(options) ) then
+      call readIntsFromChars( options, details, ignore='-*' )
+      call outputNamedValue('options', &
+      & options, advance='yes')
+    endif
+    call output('Gridded quantity (1) name ' // &
+      & GriddedData1%quantityName, advance='yes')
+    call output('Gridded quantity (2) name ' // &
+      & GriddedData2%quantityName, advance='yes')
+    call outputNamedValue('details', &
+      & details, advance='yes')
+   ! May dump a 3-d slice of 6-d array
+    if ( details == 1 ) then
+      call diff ( &
+        & GriddedData1%field(:,1,1,1,1,1), &
+        & GriddedData1%quantityName, &
+        & GriddedData2%field(:,1,1,1,1,1), &
+        & GriddedData2%quantityName, &
+        & options=options )
+    elseif ( details == 2 ) then
+      call diff ( &
+        & GriddedData1%field(:,:,1,1,1,1), &
+        & GriddedData1%quantityName, &
+        & GriddedData2%field(:,:,1,1,1,1), &
+        & GriddedData2%quantityName, &
+        & options=options )
+    elseif ( GriddedData1%noDates == 1 .and. GriddedData1%noSzas == 1 &
+      & .and. GriddedData1%noLsts == 1 ) then
+      call diff ( &
+        & GriddedData1%field(:,:,:,1,1,1), &
+        & GriddedData1%quantityName, &
+        & GriddedData2%field(:,:,:,1,1,1), &
+        & GriddedData2%quantityName, &
+        & options=options )
+    elseif ( GriddedData1%noSzas == 1 .and. GriddedData1%noLsts == 1 ) then
+   ! May dump a 4-d array as noDates instances of 3-d arrays
+      do date=1, GriddedData1%noDates
+        write(dateChar, '(i4)') date
+        call diff ( &
+          & GriddedData1%field(:,:,:,1,1,date), &
+          & GriddedData1%quantityName, &
+          & GriddedData2%field(:,:,:,1,1,date), &
+          & GriddedData2%quantityName, &
+          & options=options )
+      enddo
+    else
+      call output ( ' *(Sorry, diff_6d_... not yet coded)* ' , &
+        & advance='yes')
+    endif
+
+  end subroutine DiffGriddedData
 
   ! ----------------------------------------  DoGriddeddataMatch  -----
   function DoGriddeddataMatch ( a, b ) result( match )
@@ -775,9 +890,9 @@ contains
   subroutine SetupNewGriddedData ( Qty, Source, NoHeights, NoLats, &
     & NoLons, NoLsts, NoSzas, NoDates, missingValue, verticalCoordinate, &
     & units, heightsUnits, Empty )
-  ! This first routine sets up a new quantity template according to the user
-  ! input.  This may be based on a previously supplied template (with possible
-  ! modifications), or created from scratch.
+  ! This first routine sets up a new grid according to the user
+  ! input.  This may be based partly on an already-defined source
+  ! or created from scratch.
     use Allocate_Deallocate, only: Test_Allocate
     ! Dummy arguments
     type (GriddedData_T) :: QTY ! Result
@@ -925,7 +1040,7 @@ contains
     ! Missing value to use
     real(r8) :: MYMISSINGVALUE
 
-    ! Now the indcies for each corner
+    ! Now the indices for each corner
     integer, dimension(size(heights),2) :: HEIGHTI
     integer, dimension(size(lats),2)    :: LATI
     integer, dimension(size(lons),2)    :: LONI
@@ -1404,6 +1519,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.57  2009/10/30 23:04:50  pwagner
+! Added diff of gridded data
+!
 ! Revision 2.56  2009/06/23 18:25:42  pwagner
 ! Prevent Intel from optimizing ident string away
 !
