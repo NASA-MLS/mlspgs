@@ -115,7 +115,7 @@ module DUMP_0
 !       t              trim      
 !       u              unique    
 !       w              wholearray
-!                      
+!       1 or 2 or ..   ignored; calling routine is free to interpret
 
 ! An exception is the behavior of wholearray:
 ! if both {rms, stats} are FALSE or unset, the whole array is dumped (or diffed)
@@ -223,7 +223,7 @@ module DUMP_0
   logical, parameter ::   DEEBUG = .false.
   logical, parameter ::   SHORTCUTDIFFS = .false.
   logical :: myClean, myDirect, myGaps, myStats, myRMS, myTable, &
-    & myTranspose, myTrim, myUnique, myWholeArray
+    & myTranspose, myTrim, myUnique, myWholeArray, onlyWholeArray
   character(len=16) :: myPCTFormat
   logical, save :: nameHasBeenPrinted = .false.
   integer :: numNonFill, numFill
@@ -2259,6 +2259,7 @@ contains
     myGaps       = theDefault('gaps')
     myRMS        = theDefault('rms')   ! .false.
     myStats      = theDefault('stat')  ! .false.
+    myTable      = theDefault('table')  ! .false.
     myTranspose  = theDefault('transpose')  ! .false.
     myTrim       = theDefault('trim')  ! .false.
     myUnique     = theDefault('unique')
@@ -2269,12 +2270,15 @@ contains
       myGaps        = index( options, 'g' ) > 0
       myRMS         = index( options, 'r' ) > 0
       myStats       = index( options, 's' ) > 0
+      myTable       = index( options, 'b' ) > 0
       myTranspose   = index( options, 'p' ) > 0
       myTrim        = index( options, 't' ) > 0
       myUnique      = index( options, 'u' ) > 0
       myWholeArray  = ( index( options, 'w' ) > 0 ) .or. &
         & .not. (myStats .or. myRMS.or. myTable)
     endif
+    onlyWholeArray = myWholeArray .and. &
+      & .not. (myRMS .or. myStats .or. myTable)
   end subroutine theDumpBegins
 
   subroutine theDumpEnds
@@ -2294,7 +2298,7 @@ contains
     else
       defaultString = DEFAULTDUMPOPTIONS
     endif
-    select case ( lowercase(code) )
+    select case ( code )
     case ('clean')
       isit = index( defaultstring, 'c' ) > 0
     case ('direct')
@@ -2450,6 +2454,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.97  2009/10/30 23:02:41  pwagner
+! Should not double-print name if only whole array diff
+!
 ! Revision 2.96  2009/10/26 18:53:33  pwagner
 ! Fixed bug only NAG found
 !
