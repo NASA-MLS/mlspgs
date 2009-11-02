@@ -355,6 +355,7 @@ contains
     integer :: the_hdfVersion
     
     ! Executable code
+    numDiffs = 0
     stime = t2
     the_hdfVersion = HDFVERSION_5
     the_hdfVersion = hdfVersion
@@ -532,7 +533,7 @@ contains
         elseif ( options%oneD .and. associated(L1bData%dpField) ) then
           ! We will store L1BData%dpField in a values array
           nsize = product(shape(L1bData%dpField))
-          print *, 'About to do it 1-d ' // dumpOptions, nsize
+          if ( .not. options%silent ) print *, 'About to do it 1-d ' // dumpOptions, nsize
           call dump( L1bData%dpField-L1bData2%dpField, 'L1bData%dpField diff' )
           stop
           call allocate_test(l1bValues1, nsize, 'l1bValues1', ModuleName )
@@ -548,7 +549,7 @@ contains
           call deallocate_test( L1bValues1, 'l1bValues1', ModuleName )
           call deallocate_test( L1bValues2, 'l1bValues2', ModuleName )
         elseif ( options%direct .or. .not. associated(L1bData%dpField) ) then
-          print *, 'About to do it direct ' // dumpOptions
+          if ( .not. options%silent ) print *, 'About to do it direct ' // dumpOptions
           call diff(L1bData, L1bData2, numDiffs=numDiffs, options=dumpOptions )
         else
           ! print *, 'details=0'
@@ -600,6 +601,7 @@ contains
         if ( options%timing ) call SayTime( 'Doing the diff', stime )
         stime = t2
       enddo ! Loop of halves
+      ! print *, 'After ' // trim(sdName) // ' ', options%numDiffs
     enddo ! Loop of datasets
 	 call h5gClose_f (grpID, status)
     if ( status /= 0 ) then
@@ -762,6 +764,9 @@ end program l1bdiff
 !==================
 
 ! $Log$
+! Revision 1.16  2009/10/30 23:06:34  pwagner
+! Last change let executable land on bare stop; must fix oneD yet
+!
 ! Revision 1.15  2009/09/11 23:24:01  pwagner
 ! options now include -t to be consistent with diff apis
 !
