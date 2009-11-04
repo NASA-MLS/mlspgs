@@ -103,7 +103,7 @@ contains
     ! like temperature
     
     ! date is needed only for background files
-    ! or any other case in which different files come with the date gelolocations
+    ! or any other case in which different files come with the date geolocations
     ! unset
 
     ! Arguments
@@ -127,6 +127,8 @@ contains
     ! Executable code
     
     my_description = lowercase(description)
+    if ( my_description == 'geos5' ) &
+      & my_description = GEOS5orMERRA( GriddedFile )
     if ( DEEBUG ) print *, 'Reading ' // trim(my_description) // ' data'
 
     call nullifyGriddedData ( the_g_data ) ! for Sun's still useless compiler
@@ -155,27 +157,6 @@ contains
         call outputNamedValue('associated(the_g_data%field)', associated(the_g_data%field))
         call outputNamedValue('NumStringElements', NumStringElements(fieldNames, COUNTEMPTY))
       endif
-      if ( .not. associated(the_g_data%field) .and. &
-        & NumStringElements(fieldNames, COUNTEMPTY) > 1 ) then
-        ! we will try again with this file, assuming we were supplied with
-        ! a declaration like this:
-        ! geos5SumInput: gridded, origin=geos5, field='PL,DELP',  ..
-        call getStringElement(fieldNames, fieldName, 2, COUNTEMPTY)
-        if ( DEEBUG ) call output( 'trying again with ' // trim(fieldName), advance='yes' )
-        call Read_merra( GriddedFile, lcf_where, v_type, &
-          & the_g_data, GeoDimList, fieldName, date, sumDelp )
-        if ( DEEBUG ) then
-          print *, '(Returned from read_merra)'
-          print *, 'Quantity Name   ' // trim(the_g_data%QuantityName)
-          print *, 'Description     ' // trim(the_g_data%description)
-          print *, 'Units           ' // trim(the_g_data%units)
-          print *, 'Vertical Coord  ', the_g_data%verticalCoordinate, v_type, v_is_pressure
-          if ( .not. associated(the_g_data%field) ) return
-          print *, 'max val  ', mlsmax( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue )
-          print *, 'min val  ', mlsmin( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue )
-          print *, 'meanval  ', mlsmean( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue )
-        endif
-      endif
     case ('dao', 'gmao')
       call Read_dao(GriddedFile, lcf_where, v_type, &
         & the_g_data, GeoDimList, fieldName)
@@ -187,6 +168,10 @@ contains
         print *, 'Vertical Coord  ', the_g_data%verticalCoordinate, v_type, v_is_pressure
       endif
     case ('merra')
+      ! In case we were forced to acknowledge that out GMAO files
+      ! are MERRA and not GEOS5
+      if ( NumStringElements(fieldNames, COUNTEMPTY) > 1 ) &
+        & call getStringElement(fieldNames, fieldName, 2, COUNTEMPTY)
       call Read_merra( GriddedFile, lcf_where, v_type, &
         & the_g_data, GeoDimList, fieldName, date, sumDelp )
     case ('ncep')
@@ -558,11 +543,9 @@ contains
 
     ! This routine reads a gmao MERRA file, named something like
     ! MERRA300.prod.assim.inst6_3d_ana_Nv.20050131.hdf (pressure with
-    ! fieldname='DELP') or 
-    ! MERRA300.prod.assim.inst3_3d_asm_Cp.20050330.hdf (temperature
-    ! with fieldname='T') 
+    ! fieldname='DELP' or 'T')
     ! returning a filled data
-    ! structure appropriate for newer style gmao geos5
+    ! structure appropriate for newer style gmao merra
     ! (For one thing it holds 4-d, not 3-d fields)
 
     ! FileName and the_g_data are required args
@@ -579,8 +562,9 @@ contains
     ! 'Time, Height, YDim, XDim'
     ! We'll simply copy it into a single gridded data type
     
-    ! This is so similar to read_geos5 that we may combine the two into
-    ! a single routine
+    ! This is so similar to read_geos5 that we ought to combine the two into
+    ! a single routine, except the extra timeIndex business would need
+    ! careful handling
 
     ! Arguments
     type(MLSFile_T)                :: GEOS5file
@@ -614,6 +598,7 @@ contains
     integer :: start(4), stride(4), edge(4)
     integer :: status
     character(len=16) :: the_units
+    integer                        :: timeIndex
     !                                  These start out initialized to one
     integer                        :: nlon=1, nlat=1, nlev=1, ntime=1
     integer, parameter             :: i_longitude=1
@@ -622,13 +607,18 @@ contains
     integer, parameter             :: i_time=i_vertical+1
     integer, external :: GDRDFLD
     real(r4), parameter :: FILLVALUE = 1.e15
-    real(r4), dimension(:,:,:,:), pointer :: all_the_fields
+    real(r4), dimension(:,:,:,:), pointer :: all_the_fields => null()
     real(r8), dimension(:), pointer :: dim_field, pb
     real(r8) :: dateValue
     logical, parameter :: DEEBUG = .false.
     ! Executable code
     dateValue = 0.
     if ( present(date) ) dateValue = HHMMSS_value( date, status )
+    timeIndex = int(1.5 + (dateValue - 1.)/(6*60*60)) ! How many quarter-days?
+    if ( DEEBUG ) then
+      print *, 'date (s) ', dateValue
+      print *, 'time index ', timeIndex
+    endif
     mySum = .false.
     if ( present(sumDelp) ) mySum = sumDelp
     ! Find list of grid names on this file (This has been core dumping on me)
@@ -746,7 +736,7 @@ contains
     the_g_data%noLats = nlat
     the_g_data%noHeights = nlev
     ! the_g_data%noLsts = ntime
-    the_g_data%noDates = ntime
+    the_g_data%noDates = 1 ! ntime
     ! The following is an awful hack
     ! to prevent me from the having to read the units attribute
     select case ( lowercase(actual_field_name) )
@@ -765,7 +755,7 @@ contains
 
     ! Setup the grid
     call SetupNewGriddedData ( the_g_data, noHeights=nlev, noLats=nlat, &
-      & noLons=nlon, noLsts=1, noSzas=1, noDates=ntime, &
+      & noLons=nlon, noLsts=1, noSzas=1, noDates=1, & ! noDates=ntime, &
       & missingValue=FILLVALUE, units=the_units, verticalCoordinate=v_type, &
       & heightsunits='hPa' )
       ! & noLons=nlon, noLsts=ntime, noSzas=1, noDates=1, missingValue=FILLVALUE )
@@ -774,10 +764,13 @@ contains
     if(DEEBUG) print *, 'our units ', the_g_data%units
     if(DEEBUG) print *, 'our vertical coord ', the_g_data%verticalCoordinate
     if(DEEBUG) print *, 'v_type ', v_type
-    allocate(all_the_fields(dims(1), dims(2), dims(3), dims(4)), stat=status)
+    if(DEEBUG) print *, 'About to allocate ', dims(1:4)
+    ! allocate(all_the_fields(dims(1), dims(2), dims(3), dims(4)), stat=status)
+    ! if ( status /= 0 ) &
+    !    & call announce_error(lcf_where, "failed to allocate field_data")
+    call allocate_test( all_the_fields, dims(1), dims(2), dims(3), dims(4), &
+        & 'all_the_fields', ModuleName // 'Read_merra' )
     all_the_fields = the_g_data%missingValue
-    if ( status /= 0 ) &
-        & call announce_error(lcf_where, "failed to allocate field_data")
     start = 0                                                             
     stride = 1                                                               
     edge = dims(1:4)                                                        
@@ -820,16 +813,18 @@ contains
     ! The actual dimlist is this                    XDim,YDim,Height,TIME
     ! Need to reshape it so that the order becomes: Height,YDim,XDim,TIME
     if ( DEEBUG) then
-      print *, 'dao Before reshaping'
+      print *, 'merra Before reshaping'
       call dump(all_the_fields(:,1,1,1), 'x-slice')
       call dump(all_the_fields(1,:,1,1), 'y-slice')
       call dump(all_the_fields(1,1,:,1), 'p-slice')
       call dump(all_the_fields(1,1,1,:), 't-slice')
     endif
     ! the_g_data%field(:,:,:,:,1,1) = reshape( all_the_fields, &
-    the_g_data%field(:,:,:,1,1,:) = reshape( all_the_fields, &
-      & shape=(/nLev, nlat, nlon, ntime/), order=(/3,2,1,4/) &
+    the_g_data%field(:,:,:,1,1,1) = reshape( all_the_fields(:,:,:,timeIndex), &
+      & shape=(/nLev, nlat, nlon/), order=(/3,2,1/) &
       & )
+      ! & shape=(/nLev, nlat, nlon, ntime/), order=(/3,2,1,4/) &
+      ! & )
     if ( DEEBUG ) then
       print *, 'dao After reshaping'
       call dump(the_g_data%field(1,1,:,1,1,1), 'x-slice')
@@ -837,7 +832,9 @@ contains
       call dump(the_g_data%field(:,1,1,1,1,1), 'p-slice')
       call dump(the_g_data%field(1,1,1,:,1,1), 't-slice')
     endif
-    deallocate(all_the_fields)
+    ! deallocate(all_the_fields)
+    call deallocate_test( all_the_fields, 'all_the_fields', &
+        & ModuleName // 'Read_merra' )
     ! Now read the dims
     nullify(dim_field)
     ! call read_the_dim(gd_id, 'XDim', dims(1), dim_field)
@@ -857,8 +854,12 @@ contains
       the_g_data%dateStarts = dateValue
       the_g_data%dateEnds = dateValue
     else
-      the_g_data%dateStarts = dim_field
-      the_g_data%dateEnds = dim_field
+      the_g_data%dateStarts = dim_field(timeIndex)
+      the_g_data%dateEnds = dim_field(timeIndex)
+    endif
+    if ( DEEBUG ) then
+      call dump(the_g_data%dateStarts, 'dateStarts')
+      call dump(the_g_data%dateEnds, 'dateEnds')
     endif
     deallocate(dim_field)        ! Before leaving, some light housekeeping
     ! Have not yet figured out how to assign these
@@ -2174,6 +2175,82 @@ contains
   end subroutine READ_CLIMATOLOGY
 
   ! ----- utility procedures ----
+  function GEOS5orMERRA( File ) result( fType )
+    ! Attempt to identify file as
+    ! (1) GEOS5, or
+    ! (2) MERRA
+    ! based on size of dims(4) of field "T"
+    ! Arguments
+    type(MLSFile_T)                :: File
+    character(len=8)               :: fType
+    ! Local Variables
+    integer :: file_id, gd_id
+    integer :: inq_success
+    character (len=MAXLISTLENGTH) :: gridlist
+    character (len=MAXLISTLENGTH), dimension(1) :: dimlists
+    integer :: ngrids
+    integer                        :: our_rank, numberType
+    integer :: strbufsize
+    logical,  parameter       :: CASESENSITIVE = .false.
+    integer, parameter :: GRIDORDER=1   ! What order grid written to file
+    integer, parameter :: MAXNAMELENGTH=NameLen         ! Max length of grid name
+    character (len=MAXNAMELENGTH) :: gridname, actual_field_name
+    integer, dimension(NENTRIESMAX) :: dims, rank, numberTypes
+    integer :: status
+    logical, parameter :: DEEBUG = .false.
+    ! Executable
+    fType = 'geos5'
+    gridlist = ''
+    inq_success = gdinqgrid(File%Name, gridlist, strbufsize)
+    if (inq_success < 0) then
+      call announce_error(0, "Could not inquire gridlist "// &
+        & trim(File%Name))
+    elseif ( strbufsize > MAXLISTLENGTH ) then
+       CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'list size too big in Read_merra ' // trim(File%Name), MLSFile=File )
+    elseif ( strbufsize < MAXLISTLENGTH .and. strbufsize > 0 ) then
+      gridlist = gridlist(1:strbufsize) // ' '
+    endif
+    file_id = gdopen(File%Name, DFACC_RDONLY)
+
+    if (file_id < 0) then
+      call announce_error(0, "Could not open "// File%Name)
+    end if
+    ! Find grid name corresponding to the GRIDORDER'th one
+    ngrids = NumStringElements(gridlist, COUNTEMPTY)
+
+    if(ngrids <= 0) then
+      call announce_error(0, "NumStringElements of gridlist <= 0")
+    elseif(ngrids /= inq_success) then
+      call announce_error(0, "NumStringElements of gridlist /= inq_success")
+    elseif(ngrids < GRIDORDER) then
+      call announce_error(0, "NumStringElements of gridlist < GRIDORDER")
+    endif
+
+    call GetStringElement(gridlist, gridname, GRIDORDER, COUNTEMPTY)
+
+    gd_id = gdattach(file_id, gridname)
+    if (gd_id < 0) then
+      call announce_error(0, "Could not attach "//trim(gridname))
+    end if
+
+    ! Now find the rank of our field
+    inq_success = gdfldinfo(gd_id, 'T', our_rank, dims, &
+      & numbertype, dimlists(1))
+
+    if ( DEEBUG ) then
+      print *, 'our_rank ', our_rank
+      print *, 'dims ', dims(1:our_rank)
+    endif
+
+    if ( dims(4) > 1 ) then
+      fType = 'merra'
+    else
+      fType = 'geos5'
+    endif
+    status = gddetach(gd_id)
+    status = gdclose(file_id)
+  end function GEOS5orMERRA
   
   ! ------------------------------------------------  ncepFieldNameTohPa  -----
   subroutine ncepFieldNameTohPa ( field_name, pressure )
@@ -2283,6 +2360,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.54  2009/11/04 23:16:49  pwagner
+! Fixed bugs in recognizing and reading merra files
+!
 ! Revision 2.53  2009/09/29 23:35:09  pwagner
 ! Changes needed by 64-bit build
 !
