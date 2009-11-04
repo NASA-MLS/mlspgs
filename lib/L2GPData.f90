@@ -160,7 +160,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   ! r4 corresponds to sing. prec. :: same as stored in files
   integer, public, parameter :: rgp = r4
 
-  integer, private, parameter :: MAXCHUNKTIMES = 1 ! 120
+  integer, private, parameter :: MAXCHUNKTIMES = 120
   integer, public, parameter :: MAXNUMSWATHPERFILE = 300
   ! How long may the list of swath names grow (~80 x max num. of swaths/file)
   integer, public, parameter :: MAXSWATHNAMESBUFSIZE = 80*MAXNUMSWATHPERFILE
@@ -4929,6 +4929,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.171  2009/10/22 00:52:39  pwagner
+! Second try at fixing hdfeos5 bug; still no luck
+!
 ! Revision 2.170  2009/10/05 23:39:24  pwagner
 ! Moved use hdf5 statements from module scope to speedup Lahey; this is the last time we do that
 !
