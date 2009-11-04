@@ -1,0 +1,228 @@
+\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9.0in
+
+\newcommand{\docname}{\bf wvs-087}
+\newcommand{\docdate}{2 November 2009}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[u]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Nathaniel, Bill\\
+Subject: \>Potential speedup of full forward model by nearly $4\times$\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 10pt
+\vspace{-20pt}
+
+\section{The problem}
+
+The central problem of the full forward model is to evaluate the integral
+
+\begin{equation}\label{one}
+I = \int_0^S \,\text{d}s\,
+ \exp\left(-
+ \int_0^s \,\text{d}s^\prime \sum_{i=1}^n \rho_i(s^\prime) \beta_i(T(s^\prime))
+ \right)
+\end{equation}
+
+where $\rho_i$ is the mixing ratio for the $i^\text{th}$ chemical species, $n$
+is the number of chemical species, $T$ is temperature, and $\beta_i$ is the
+absorption cross section for the $i^\text{th}$ chemical species.  Similar
+integrals are used to evaluate $\frac{\partial I}{\partial\rho_i(s_j)}$ and
+$\frac{\partial I}{\partial T(s_j)}$ to provide the Jacobian matrix needed by
+the Newton solver.
+
+\section{Current method}
+
+The full forward model approximates the inner integral in Equation (\ref{one})
+in $\zeta=\log_{10}P$ coordinates by
+\begin{enumerate}
+\item dividing the path into segments, each bounded by a pressure level taken
+      from the configuration file,
+\item using a trapezoidal rule on each segment,
+\item forming an error estimate for that quadrature, and
+\item using a three-point Gauss quadrature for segments where the error
+      estimate is larger than a tolerance specified in the configuration file.
+      In most cases, this tolerance is specified as $-1$, which results in
+      using Gauss quadrature on every segment.
+\end{enumerate}
+
+Where Gauss quadrature is used, the inner integrand is evaluated four times per
+segment.  Where Gauss quadrature is not used, the inner integrand is evaluated
+once per segment.
+
+The attraction of the Gauss quadrature is that it has fifth order, that is, it
+integrates a fifth-order polynomial exactly.
+
+\section{First alternative}
+
+An alternative to this scheme is a Newton-Cotes-like quadrature that uses
+values of the inner integrand at points outside each segment.  This has the
+form
+
+\begin{equation}
+\int_{x_i}^{x_j} \text{d}x\, f(x) \approx \sum_{k=l}^m w_k f(x_k)
+\text{ with } l \leq i < j \leq m \text{ and } x_k < x_{k+1}\,.
+\end{equation}
+
+Consider a sequence of three segments not at the end of the path, such that
+$l=i-1, j=i+1, m=j+1=l+3$, that is, using $f(x_{i-1}) \dots f(x_{i+2})$ to
+evaluate the integral from $x_i$ to $x_{i+1}$.  In this case, the quadrature has
+third order.
+
+If this is sufficiently accurate, and if we choose $\{x\}$ to be the same as
+the segment boundaries, this sort of quadrature would require the same number
+of values of $\beta_i(T(s^\prime))$ as the trapezoidal rule.  That is, one
+quarter the number of values required by the presently-used scheme.  If this is
+not sufficiently accurate, we might be able to use a higher-order scheme of the
+same type, i.e., with $l < i-1$ and $m > l+3$.
+
+The full forward model spends a significant fraction of its time evaluating
+$\beta_i(T(s^\prime))$ and its derivatives for the Gauss quadrature, and
+working out where to apply the Gauss quadrature.  If this were eliminated, the
+full forward model would do slightly more than one fourth as much work, that
+is, it would run nearly four times faster.  It would also be greatly simplified.
+
+It would not be difficult to implement this scheme within the current
+organization of the full forward model for evaluation purposes, as an option,
+without removing the capability to use Gauss quadrature.
+
+\section{Quadrature formulae}
+
+Consider first the problem of integrating over $x_1 \dots\, x_2$ using $f(x_0)
+\dots f(x_3)$.  This is the sort of case that would apply other than at the ends
+of the path or at the tangent point.
+
+We have $\int_{x_1}^{x_2} \text{d}x\, f(x) \approx \sum_{k=0}^3 a_k f(x_k)$.  We
+can solve for $a_k$ using the method of undetermined coefficients by setting
+$f(x)=x^\alpha$ for $\alpha=0\dots 3$, giving four equations for the four
+unknown coefficients.  If the abscissae are equally spaced with spacing $= h$,
+then $a_0 = a_3 = -\frac{1}{24}h$ and $a_1 = a_2 = \frac{13}{24}h$.
+
+Where abscissae are not equally spaced the weights are complicated.  First put
+$x_0=0,\, x_1=h_1,\, x_2=h_1+h_2,\, x_3=h_1+h_2+h_3$. Then we have
+
+\begin{equation}\begin{split}
+a_0 =\,& -\frac1{12}
+ \frac{h_2^3(h_2 + 2 h_3)}{h_1 ( h_1+h_2) (h_1+h_2+h_3)} \\
+a_1 =\,& \frac1{12}
+ \frac{h_2 ( 4 h_1 h_2 + 6 h_1 h_3 + h_2^2 + 2 h_2 h_3 )}
+      {h_1 ( h_2 + h+3 )} \\
+a_2 =\,& \frac1{12}
+ \frac{h_2 ( 2 h_1 h_2 + 6 h_1 h_3 + h_2^2 + 4 h_2 h_3 )}
+      {( h_1 + h_2 ) h_3} \\
+a_3 = \,& -\frac1{12}
+ \frac{h_2^3 (2 h_1 + h_2) }
+      {(h_1+h_2+h_3) (h_2+h_3) h_3}\,.
+\end{split}\end{equation}
+
+To integrate over $x_0 \dots\, x_1$ the coefficients for equally spaced abscissae
+are $a_0 = \frac38 h,\, a_1 = \frac{19}{24} h,\, a_2 = -\frac5{24} h,\,
+a_3 = \frac1{24} h$.  For unequally spaced abscissae the coefficients are
+
+\begin{equation}\begin{split}
+a_0 =\,& \frac1{12}
+ \frac{h_1(3 h_1^2 + 8 h_1 h_2 + 4 h_1 h_3 + 6 h_2^2 + 6 h_2 h_3)}
+      {(h_1+h_2) (h_1+h_2+h_3)} \\
+a_1 = \,& \frac1{12}
+ \frac{h_1 ( h_1^2 + 4 h_1 h_2 + 2 h_1 h_3 + 6 h_2^2 + 6 h_2 h_3 )}
+      {h_2 ( h_2+h_3)} \\
+a_2 =\,& -\frac1{12}
+ \frac{h_1^3 (h_1 + 2 h_2 + 2 h_3)}{(h_1+h_2) h_2 h_3} \\
+a_3 =\,& \frac1{12}
+ \frac{h_1^3 ( h_1 + 2 h_2 )}{(h_2+h_3)(h_1+h_2+h_3) h_3}\,.
+\end{split}\end{equation}
+
+To integrate over $x_2 \dots\, x_3$ the coefficients for equally spaced abscissae
+are $a_0 = \frac1{24} h,\, a_1 = -\frac5{24} h,\, a_2 = \frac{19}{24} h,\,
+a_3 = \frac38 h$.  For unequally spaced abscissae the coefficients are
+
+\begin{equation}\begin{split}
+a_0 =\,& \frac1{12}
+ \frac{h_3^3 ( 2 h_2 + h_3 )}{h_1 (h_1+h_2)(h_1+h_2+h_3)} \\
+a_1 =\,& -\frac1{12}
+ \frac{h_3^3 (2 h_1 + 2 h_2 + h_3)}{h_1 h_2 (h_2+h_3)} \\
+a_2 = \,& \frac1{12}
+ \frac{h_3 ( 6 h_1 h_2 + 2 h_1 h_3 + 6 h_2^2 + 4 h_2 h_3 + h_3^2)}
+      {h_2 ( h_1+h_2)} \\
+a_3 =\,& \frac1{12}
+ \frac{h_3(6 h_1 h_2 + 4 h_1 h_3 + 6 h_2^2 + 8 h_2 h_3 + 3 h_3^2)}
+      {(h_2+h_3) (h_1+h_2+h_3)}
+\end{split}\end{equation}
+
+which are the same as in the previous case except in the opposite order, and
+with $h_1$ and $h_3$ exchanged.
+
+Since we evaluate many of these integrals with the same abscissae, the
+coefficients could be computed in advance for each set of abscissae.
+
+Alternatively, we could interpolate $\rho_i$ and $T$ from the Newton solution
+points so as to have equally spaced abscissae, and evaluate $\beta_i$ at those
+abscissae.  This would add only a few evaluations of $\beta_i$ in the usual case
+because our abscissa spacing changes only occasionally.
+
+\section{More work, but maybe much more payoff}
+
+Another change to how Equation (\ref{one}) is evaluated would be more work, but
+might have a bigger (perhaps much bigger) payoff.
+
+Divide the path for the outer integral into (far) fewer segments than the
+number of solution levels for the nonlinear solver.
+
+If these segment boundaries are not a subset of the solution levels for the
+nonlinear solver, interpolate $\rho_i$ and $T$ from the nonlinear solver's
+abscissae to this coarser set of segment boundaries.  It's necessary to divide
+the path into two major segments to allow inserting earth reflectivity at the
+midpoint.  It will probably be necessary to separate it into several segments,
+with a separate quadrature in each one.  If the segment boundaries are put at
+Gauss points, it might be necessary to divide into more segments than otherwise
+since Gauss formulae concentrate abscissae near the ends of the interval.
+
+Evaluate the inner integral over segments defined by segment boundaries for the
+outer integral, using a Gauss (or Patterson) formula on each of these
+segments.  Alternatively, evaluate the inner integral over segments defined
+independently from the abscissae for the outer integral, and interpolate the
+results to the abscissae for the outer integral.
+
+Our experience with quadrature suggests that for a particular error, a
+high-order Gauss (or Patterson) formula on a long interval is sufficiently more
+efficient than a low-order formula on a short interval that the total number of
+integrand evaluations is reduced.
+
+It would be a simple matter to test this hypothesis by writing $\zeta$ and
+values of the inner integrand to a file and examining differences offline.
+
+Fred Krogh has given me important ideas and advice concerning this note.
+
+\label{lastpage}
+\end{document}
+
+% $Id$
+
+% $Log$
