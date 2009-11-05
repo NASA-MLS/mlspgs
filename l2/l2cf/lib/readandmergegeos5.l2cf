@@ -44,25 +44,25 @@ begin ReadApriori
   geos5GPHInputNext: gridded, origin=geos5, field='HGHT', $
     dimList='XDim,YDim,Height,Time' !geos5TFileN})
   geos5TemperatureInput1: gridded, origin=geos5, field='T', $
-    dimList='XDim,YDim,Height,Time' !geos5TFile1
+    dimList='XDim,YDim,Height,Time' !geos5TFile1, date='00:00:00'
   geos5TemperatureInput2: gridded, origin=geos5, field='T', $
-    dimList='XDim,YDim,Height,Time' !geos5TFile2
+    dimList='XDim,YDim,Height,Time' !geos5TFile2, date='06:00:00'
   geos5TemperatureInput3: gridded, origin=geos5, field='T', $
-    dimList='XDim,YDim,Height,Time' !geos5TFile3
+    dimList='XDim,YDim,Height,Time' !geos5TFile3, date='12:00:00'
   geos5TemperatureInput4: gridded, origin=geos5, field='T', $
-    dimList='XDim,YDim,Height,Time' !geos5TFile4
+    dimList='XDim,YDim,Height,Time' !geos5TFile4, date='18:00:00'
   geos5TemperatureInputNext: gridded, origin=geos5, field='T', $
-    dimList='XDim,YDim,Height,Time' !geos5TFileN
+    dimList='XDim,YDim,Height,Time' !geos5TFileN, date='00:00:00'
   geos5PressureInput1: gridded, origin=geos5, field='PL,DELP', $
-    dimList='XDim,YDim,Height,Time' !geos5PFile1, /sum
+    dimList='XDim,YDim,Height,Time' !geos5PFile1, /sum, date='00:00:00'
   geos5PressureInput2: gridded, origin=geos5, field='PL,DELP', $
-    dimList='XDim,YDim,Height,Time' !geos5PFile2, /sum
+    dimList='XDim,YDim,Height,Time' !geos5PFile2, /sum, date='06:00:00'
   geos5PressureInput3: gridded, origin=geos5, field='PL,DELP', $
-    dimList='XDim,YDim,Height,Time' !geos5PFile3, /sum
+    dimList='XDim,YDim,Height,Time' !geos5PFile3, /sum, date='12:00:00'
   geos5PressureInput4: gridded, origin=geos5, field='PL,DELP', $
-    dimList='XDim,YDim,Height,Time' !geos5PFile4, /sum
+    dimList='XDim,YDim,Height,Time' !geos5PFile4, /sum, date='18:00:00'
   geos5PressureInputNext: gridded, origin=geos5, field='PL,DELP', $
-    dimList='XDim,YDim,Height,Time' !geos5PFileN, /sum
+    dimList='XDim,YDim,Height,Time' !geos5PFileN, /sum, date='00:00:00'
 end ReadApriori
 
 !define(convertEtaToPGPH,{!dnl
