@@ -52,7 +52,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! Update these lines before delivery to sips     
   ! id to print out in response to "--version" command-line option       
   character(LEN=*), dimension(2), parameter :: CURRENT_VERSION_ID = (/ &    
-    & 'v3.10 swdev team               ' , &       
+    & 'v3.20 swdev team               ' , &       
     & 'See license terms for copyright'/)
      
   ! Set the following to 1 before delivering to sips;                       
@@ -92,7 +92,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
 
   ! What units to use in summarizing timings at end of run
   integer            :: SECTIONTIMINGUNITS            = L_SECONDS
-  logical            :: patch                         = .false. ! Set if run must not create file,
+  logical            :: PATCH                         = .false. ! Set if run must not create file,
   ! Whether to restart printing identical warnings at each new phase
   logical            :: RESTARTWARNINGS               = .true.
   ! Whether to skip doing the direct writes--quicker when snooping
@@ -155,6 +155,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.47  2009/11/05 00:31:21  pwagner
+! Updated version id
+!
 ! Revision 2.46  2009/07/24 23:22:47  pwagner
 ! Updated version id, copyright statement
 !
