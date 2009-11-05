@@ -736,17 +736,36 @@ contains ! =================================== Public procedures
         call output( Temperatures%verticalCoordinate==Pressures%verticalcoordinate, &
           & advance='yes' )
         call output( 'starting dates match? ', advance='no' )
-        call output( any( Temperatures%DateStarts==Pressures%DateStarts ), &
+        call output( all( Temperatures%DateStarts==Pressures%DateStarts ), &
           & advance='yes' )
         call output( 'ending dates match? ', advance='no' )
-        call output( any( Temperatures%DateEnds==Pressures%DateEnds ), &
+        call output( all( Temperatures%DateEnds==Pressures%DateEnds ), &
           & advance='yes' )
         call output( 'Lsts match? ', advance='no' )
-        call output( any( Temperatures%Lsts==Pressures%Lsts ), &
+        call output( all( Temperatures%Lsts==Pressures%Lsts ), &
           & advance='yes' )
         call output( 'Szas match? ', advance='no' )
-        call output( any( Temperatures%Szas==Pressures%Szas ), &
+        call output( all( Temperatures%Szas==Pressures%Szas ), &
           & advance='yes' )
+        call output( 'Num Heights match? ', advance='no' )
+        call output( Temperatures%noHeights==Pressures%noHeights, &
+          & advance='yes' )
+        call output( 'Heights match? ', advance='no' )
+        call output( all( Temperatures%Heights==Pressures%Heights ), &
+          & advance='yes' )
+        call output( 'Missing value match? ', advance='no' )
+        call output( Temperatures%missingValue==Pressures%missingValue, &
+          & advance='yes' )
+        call output( 'Heights units? ', advance='no' )
+        call output( Temperatures%heightsUnits==Pressures%heightsUnits, &
+          & advance='yes' )
+        call output( 'shapes match? ', advance='no' )
+        call output( all( shape(Temperatures%field)==shape(Pressures%field) ), &
+          & advance='yes' )
+        call output( 'Dumping Temperatures grid', advance='yes' )
+        call dump( Temperatures, details=0 )
+        call output( 'Dumping Pressures grid', advance='yes' )
+        call dump( Pressures, details=0 )
         call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Gridded T,P data must match to calculate wmo Tropopause' )
       endif
@@ -782,10 +801,16 @@ contains ! =================================== Public procedures
     newGrid%equivalentLatitude = Temperatures%equivalentLatitude
     newGrid%heights            = missingValue ! Temperatures%missingValue
     nlev = Temperatures%noHeights
-    if ( Temperatures%empty .or. Pressures%empty ) then
+    if ( Temperatures%empty ) then
       newGrid%empty = .true.
       call MLSMessage ( MLSMSG_Warning, moduleName, &
-        & 'Temperatures or Pressures grid was empty' )
+        & 'Temperatures grid was empty' )
+      if ( toggle(gen) ) call trace_end ( "wmoTropFromGrid" )
+      return
+    elseif ( Pressures%empty ) then
+      newGrid%empty = .true.
+      call MLSMessage ( MLSMSG_Warning, moduleName, &
+        & 'Pressures grid was empty' )
       if ( toggle(gen) ) call trace_end ( "wmoTropFromGrid" )
       return
     endif
@@ -932,6 +957,9 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.40  2009/11/05 00:29:06  pwagner
+! Better diagnostics output if something goes wrong
+!
 ! Revision 2.39  2009/10/26 17:12:09  pwagner
 ! Added Diff command to be used like Dump in l2cf
 !
