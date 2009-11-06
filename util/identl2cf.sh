@@ -129,7 +129,7 @@ then
 fi
 
 # Extract names of files to be included
-incfiles=`grep '\!include' v3-HO-238.m4 | sed -n 's/\(.*\)\!include(\(.*\.l2cf\))\(?*\)/\2/p' | sed 's/}.*//'`
+incfiles=`grep '\!include' $template | sed -n 's/\(.*\)\!include(\(.*\.l2cf\))\(?*\)/\2/p' | sed 's/}.*//'`
 
 # Append any known to be missed by this syntax rule
 files="$incfiles $files"
@@ -154,3 +154,6 @@ do
 done
 exit
 # $Log$
+# Revision 1.1  2009/06/16 22:35:53  pwagner
+# First commit
+#
