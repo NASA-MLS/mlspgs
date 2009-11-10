@@ -666,20 +666,20 @@ contains ! =====     Public Procedures     =============================
           else
             call output('Lahey did weird thing again: ', advance='yes')
           end if
-            call output('l2gp type number: ', advance='no')
-            call output(l_l2gp, advance='yes')
+          call output('l2gp type number: ', advance='no')
+          call output(l_l2gp, advance='yes')
 
-            call output('l2aux type number: ', advance='no')
-            call output(l_l2aux, advance='yes')
+          call output('l2aux type number: ', advance='no')
+          call output(l_l2aux, advance='yes')
 
-            call output('l2dgg type number: ', advance='no')
-            call output(l_l2dgg, advance='yes')
+          call output('l2dgg type number: ', advance='no')
+          call output(l_l2dgg, advance='yes')
 
-            call output('output type number: ', advance='no')
-            call output(output_type, advance='yes')
+          call output('output type number: ', advance='no')
+          call output(output_type, advance='yes')
 
-            call output('file_base: ', advance='no')
-            call output(trim(file_base), advance='yes')
+          call output('file_base: ', advance='no')
+          call output(trim(file_base), advance='yes')
 
         end select
 
@@ -1542,24 +1542,13 @@ contains ! =====     Public Procedures     =============================
         & 'unable to addmetadata to ' // trim(l2gpPhysicalFilename) )
       end if
       if ( madeFile ) then
-       call writeAPrioriAttributes( outputFile )
-       ! call writeAPrioriAttributes(trim(l2gpPhysicalFilename), HDFVERSION_5)
-       ! outputFile => AddInitializeMLSFile(filedatabase, &
-        ! & content='l2dgg', &
-        ! & name=l2gpPhysicalFilename, shortName='DGG', &
-        ! & type=l_swath, access=DFACC_CREATE, HDFVersion=HDFVERSION_5, &
-        ! & PCBottom=mlspcf_l2dgg_start, PCTop=mlspcf_l2dgg_end)
-        ! FileID = mls_io_gen_openF( l_swath, .TRUE., ReturnStatus, &
-        ! & record_length, DFACC_RDWR, FileName=l2gpPhysicalFilename, &
-        ! & hdfVersion=HDFVERSION_5 )
-        !call dump ( outputFile, details = 1 )
-        call output ( 'About to open ' // trim(l2gpPhysicalFilename) , advance='yes' )
+        call writeAPrioriAttributes( outputFile )
+        if (switchDetail( switches, 'pro') > 0 ) &
+          call output ( 'About to open ' // trim(l2gpPhysicalFilename) , advance='yes' )
         call open_MLSFile( outputFile )
         call WriteLeapSecHDFEOSAttr ( outputFile%fileID%f_id )
         if ( .not. DGGFILEISHYBRID ) &
           & call WriteutcPoleHDFEOSAttr ( outputFile%fileID%f_id )
-        ! ReturnStatus = mls_io_gen_closeF( l_swath, FileID, &
-        ! & hdfVersion=HDFVERSION_5, debugOption=.false. )
         call close_MLSFile ( outputFile )
         if ( DGGFILEISHYBRID ) then
           ! The utcpole is too large to be stored as an HDFEOS attribute
@@ -1614,10 +1603,7 @@ contains ! =====     Public Procedures     =============================
           !   &  "no sd known for " // trim(DirectDatabase(DB_index)%fileName) )
           sdList = ' '
         else
-          ! print *, 'About to try to convert array2List'
-          ! call dump(DirectDatabase(DB_index))
           call Array2List(DirectDatabase(DB_index)%sdNames, sdList)
-          ! print *, 'result: ', trim(sdList)
         endif
 
         if ( DEBUG ) then
@@ -1652,11 +1638,12 @@ contains ! =====     Public Procedures     =============================
           & outputFile, create2=create2 )
         end if
         if ( create2 ) then
-          ! print *, 'About to CpHDF5GlAttribute from ' // trim(DirectDatabase(DB_index)%fileName)
           call CpHDF5GlAttribute ( DirectDatabase(DB_index)%fileName, &
             & l2auxPhysicalFilename, 'Phase Names' )
           call CpHDF5GlAttribute ( DirectDatabase(DB_index)%fileName, &
             & l2auxPhysicalFilename, 'ForwardModel Names' )
+          call CpHDF5GlAttribute ( DirectDatabase(DB_index)%fileName, &
+            & l2auxPhysicalFilename, 'MiscNotes' )
         endif
         create2= .false.
       end do
@@ -1730,6 +1717,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.147  2009/11/10 00:44:03  pwagner
+! Copies MiscNotes while unsplitting l2aux files, too
+!
 ! Revision 2.146  2009/10/01 19:53:53  vsnyder
 ! Use strip=.true in get_string instead of unquote later
 !
