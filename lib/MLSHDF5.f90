@@ -334,7 +334,7 @@ contains ! ======================= Public Procedures =========================
     ! Local variables
     logical :: my_skip
     logical :: is_present
-    character (len=2000) :: value1
+    character (len=4096) :: value1
 
     ! Executable code
     call MLSMessageCalls( 'push', constantName='CpHDF5Attribute_string' )
@@ -1642,9 +1642,13 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to get size for attribute ' // trim(name), &
       & MLSFile=MLSFile )
-    if ( stringSize > len(value) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Value too long to fit in space given for attribute ' // trim(name), &
-      & MLSFile=MLSFile )
+    if ( stringSize > len(value) ) then
+      call outputnamedValue( 'stringSize', stringSize )
+      call outputnamedValue( 'len(value)', len(value) )
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Value too long to fit in space given for attribute ' // trim(name), &
+        & MLSFile=MLSFile )
+    endif
     ! Now actually read the data!
     value = ''
     call h5aread_f ( attrID, stringType, value(1:stringSize), ones, status )
@@ -5049,6 +5053,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.96  2009/11/10 00:31:43  pwagner
+! Raised character string size in CpHDF5Attribute_string consistent with PCFHdr%MiscNotesLENGTH
+!
 ! Revision 2.95  2009/10/05 23:38:59  pwagner
 ! Moved use h5lib statements from module scope to speedup Lahey; this is the last time we do that
 !
