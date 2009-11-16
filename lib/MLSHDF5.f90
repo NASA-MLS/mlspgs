@@ -555,6 +555,7 @@ contains ! ======================= Public Procedures =========================
     integer :: type_id
     integer(kind=Size_t) :: type_size
     ! Executable
+    if ( present(options) .and. DEEBUG ) call outputNamedValue( 'options', options )
     call MLSMessageCalls( 'push', constantName='DumpHDF5DS' )
     skipCharValues = .false.
     if ( present(options) ) &
@@ -648,9 +649,13 @@ contains ! ======================= Public Procedures =========================
           call allocate_test( dValue, dims(1), dims(2), dims(3), 'dValue', ModuleName )
           call LoadFromHDF5DS ( groupID, name, dValue )
           if ( present(fillvalue) ) then
+            if ( present(options) .and. DEEBUG ) &
+              & call outputNamedValue( 'options', options )
             call dump ( dValue, trim(namePrinted), fillValue=real(fillvalue, r8), &
               & options=options )
           else
+            if ( present(options) .and. DEEBUG ) &
+              & call outputNamedValue( 'options', options )
             call dump ( dValue, trim(namePrinted), options=options )
           endif
           call deallocate_test( dValue, 'dValue', ModuleName )
@@ -1643,7 +1648,7 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to get size for attribute ' // trim(name), &
       & MLSFile=MLSFile )
     if ( stringSize > len(value) ) then
-      call outputnamedValue( 'stringSize', stringSize )
+      call outputnamedValue( 'stringSize', int(stringSize) )
       call outputnamedValue( 'len(value)', len(value) )
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Value too long to fit in space given for attribute ' // trim(name), &
@@ -5053,6 +5058,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.97  2009/11/16 21:55:55  pwagner
+! orked around lack of generic outputnamedValue for longint
+!
 ! Revision 2.96  2009/11/10 00:31:43  pwagner
 ! Raised character string size in CpHDF5Attribute_string consistent with PCFHdr%MiscNotesLENGTH
 !
