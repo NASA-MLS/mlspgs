@@ -16,8 +16,9 @@ module MLSNumerics              ! Some low level numerical stuff
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use DUMP_0, only : DUMP, SELFDIFF
   use MatrixModule_0, only: CreateBlock, M_Absent, MatrixElement_T, Sparsify
-  use MLSCommon, only : undefinedValue, R4, R8, Rm
-  use MLSFillValues, only: filterValues, IsFillValue, ReplaceFillValues
+  use MLSCommon, only : undefinedValue
+  use MLSFillValues, only: IsFillValue, ReplaceFillValues
+  use MLSKinds, only: R4, R8, Rm
   use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
     & MLSMessage
   use MLSSets, only: FindFirst, FindLast
@@ -112,7 +113,7 @@ module MLSNumerics              ! Some low level numerical stuff
 !   [matrixElement_T dNewByDOld], [log IntYdX] )
 ! InterpolateArrayTeardown ( Coefficients_nprec Coeffs )
 ! Setup ( UnifDiscreteFn_nprec UDF, int N, nprec x1, nprec x2, [ nprec y(:)], &
-!    [char* BC], [nprec yLeft], [nprec yRight], [extern nprec fun] ) )
+!    [char* BC], [nprec yLeft], [nprec yRight], [extern nprec fun] )
 ! nprec UseLookUpTable ( nprec x, nprec table(:), [nprec x1], [nprec x2], &
 !    [nprec xtable(:), [nprec missingValue], [char* options], &
 !    [nprec xS], [nprec xE] )
@@ -123,38 +124,52 @@ module MLSNumerics              ! Some low level numerical stuff
 
   public :: Battleship
   public :: ClosestElement
-  public :: dFdxApproximate, d2Fdx2Approximate
-  public :: FApproximate, FInvApproximate, IFApproximate
-  public :: Destroy, Dump, FindInRange, Hunt, HuntRange
+  public :: Destroy, dFdxApproximate, d2Fdx2Approximate, Dump
+  public :: FApproximate, FillLookUpTable, FindInRange, FInvApproximate
+  public :: Hunt, HuntRange, IFApproximate
   public :: InterpolateArraySetup, InterpolateArrayTeardown, InterpolateValues
-  public :: FillLookUpTable, UseLookUpTable
   public :: SetUp
-  public :: UnifDiscreteFn_r4, UnifDiscreteFn_r8
+  public :: UseLookUpTable
 
   type, public :: Coefficients_R4
     private
-    integer, pointer :: LowerInds(:) => NULL()
     !{ Coefficients for linear interpolation:  Let $\{x\} =$ {\tt oldX} and
     !  $\{\chi\} =$ {\tt newX}.  Then
     !  {\tt Gap(j)} $= g_j = x_{i+1}-x_i$, $A_j = \frac{x_{i+1}-\chi_j}{g_j}$,    
     !                                  and $B_j = 1-A_j = \frac{\chi_j-x_i}{g_j}$,
     !  where $i$ is such that $x_i \leq \chi_j < x_{i+1}$ for $1 \leq j \leq$
-    !  {\tt size(newX)}.  $|\{g\}| = |\{A\}| = |\{B\}|$, and
+    !  {\tt size(newX)}.
+    !  {\tt lowerInds} = $\{i\, |\, x_i \leq \chi_j < x_{i+1},\,1 \leq j \leq$
+    !  {\tt size(newX)}$\}$.
+    !  $|\{g\}| = |\{A\}| = |\{B\}|$, and
     !  others that depend upon them, $=|\{\chi\}|$ = {\tt size(newX)}.
     !  Coefficients for differentiation in the linear case (and of the linear
     !  terms in the spline case) are just $-1$ and $+1$, so they're not
     !  computed here.
+    integer, pointer :: LowerInds(:) => NULL()
     real(r4), pointer :: A(:) => NULL(), B(:) => NULL(), Gap(:) => NULL()
     !{ Coefficients for spline interpolation:
     !  $C = (A^3-A) \frac{g^2}6$.  $D = (B^3-B) \frac{g^2}6$.
     real(r4), pointer :: C(:) => NULL(), D(:) => NULL()
     !{ {\tt dX(i)} $= \delta_i = x_i-x_{i-1}$ for $1 < i \leq$ {\tt size(oldX)} and
-    !  $\Delta_i = x_{i+1}-x_{i-1}$ for $1 < i <$
+    !  $\Delta_i = x_{i+1}-x_{i-1} = \delta_i + \delta_{i+1}$ for $1 < i <$
     !  {\tt size(oldX)}.
     !  {\tt P(i)} $= p_i = \frac1{\delta_i o_{i-1} + 2 \Delta_i}$ and
     !  {\tt O(i)} $= o_i = -\delta_{i+1} p_i$
     !  for $1 < i <$ {\tt size(oldX)} and zero at the ends.
+    !  $p_i$ is the inverse of the diagonal of $L$ in the $LU$ factorization
+    !  of the symmetric tridiagonal linear system for splines, $\delta_i$ is
+    !  the subdiagonal of $L$, and $o_i$ is the negative of the
+    !  superdiagonal of $U$.  The nonzero part of each row of the original
+    !  system is of the form $[\delta_{i-1},\, 2 \Delta_i ,\, \delta_i]$.
+    !  See wvs-086.
     real(r4), pointer :: dX(:) => NULL(), P(:) => NULL(), O(:) => NULL()
+    !{ In the periodic continuity case, {\tt Col} is the rightmost column of
+    !  $U$ and {\tt Row} is the bottom row of $L$.  During the backsolve, the
+    !  last element of {\tt Col} is used instead of the last element of $o$,
+    !  and the last element of {\tt Row} is used instead of the last element
+    !  of $\delta$.
+    real(r4), pointer :: Col(:) => NULL(), Row(:) => NULL()
     !{ Coefficients for spline derivatives:
     !  $E = \frac{\text{d}C}{\text{d}A} = \frac6g \frac{\text{d}C}{\text{d}x}
     !     = 3 A^2 - 1$.
@@ -177,28 +192,43 @@ module MLSNumerics              ! Some low level numerical stuff
 
   type, public :: Coefficients_R8
     private
-    integer, pointer :: LowerInds(:) => NULL()
     !{ Coefficients for linear interpolation:  Let $\{x\} =$ {\tt oldX} and
     !  $\{\chi\} =$ {\tt newX}.  Then
     !  {\tt Gap(j)} $= g_j = x_{i+1}-x_i$, $A_j = \frac{x_{i+1}-\chi_j}{g_j}$,    
     !                                  and $B_j = 1-A_j = \frac{\chi_j-x_i}{g_j}$,
     !  where $i$ is such that $x_i \leq \chi_j < x_{i+1}$ for $1 \leq j \leq$
-    !  {\tt size(newX)}.  $|\{g\}| = |\{A\}| = |\{B\}|$, and
+    !  {\tt size(newX)}.
+    !  {\tt lowerInds} = $\{i\, |\, x_i \leq \chi_j < x_{i+1},\,1 \leq j \leq$
+    !  {\tt size(newX)}$\}$.
+    !  $|\{g\}| = |\{A\}| = |\{B\}|$, and
     !  others that depend upon them, $=|\{\chi\}|$ = {\tt size(newX)}.
     !  Coefficients for differentiation in the linear case (and of the linear
     !  terms in the spline case) are just $-1$ and $+1$, so they're not
     !  computed here.
+    integer, pointer :: LowerInds(:) => NULL()
     real(r8), pointer :: A(:) => NULL(), B(:) => NULL(), Gap(:) => NULL()
     !{ Coefficients for spline interpolation:
     !  $C = (A^3-A) \frac{g^2}6$.  $D = (B^3-B) \frac{g^2}6$.
     real(r8), pointer :: C(:) => NULL(), D(:) => NULL()
     !{ {\tt dX(i)} $= \delta_i = x_i-x_{i-1}$ for $1 < i \leq$ {\tt size(oldX)} and
-    !  $\Delta_i = x_{i+1}-x_{i-1}$ for $1 < i <$
+    !  $\Delta_i = x_{i+1}-x_{i-1} = \delta_i + \delta_{i+1}$ for $1 < i <$
     !  {\tt size(oldX)}.
     !  {\tt P(i)} $= p_i = \frac1{\delta_i o_{i-1} + 2 \Delta_i}$ and
     !  {\tt O(i)} $= o_i = -\delta_{i+1} p_i$
     !  for $1 < i <$ {\tt size(oldX)} and zero at the ends.
+    !  $p_i$ is the inverse of the diagonal of $L$ in the $LU$ factorization
+    !  of the symmetric tridiagonal linear system for splines, $\delta_i$ is
+    !  the subdiagonal of $L$, and $o_i$ is the negative of the
+    !  superdiagonal of $U$.  The nonzero part of each row of the original
+    !  system is of the form $[\delta_{i-1},\, 2 \Delta_i ,\, \delta_i]$.
+    !  See wvs-086.
     real(r8), pointer :: dX(:) => NULL(), P(:) => NULL(), O(:) => NULL()
+    !{ In the periodic continuity case, {\tt Col} is the rightmost column of
+    !  $U$ and {\tt Row} is the bottom row of $L$.  During the backsolve, the
+    !  last element of {\tt Col} is used instead of the last element of $o$,
+    !  and the last element of {\tt Row} is used instead of the last element
+    !  of $\delta$.
+    real(r8), pointer :: Col(:) => NULL(), Row(:) => NULL()
     !{ Coefficients for spline derivatives:
     !  $E = \frac{\text{d}C}{\text{d}A} = \frac6g \frac{\text{d}C}{\text{d}x}
     !     = 3 A^2 - 1$.
@@ -250,7 +280,7 @@ module MLSNumerics              ! Some low level numerical stuff
   ! Another family of datatypes may someday be implemented,
   ! which would utilize non-uniformly spaced x values
   
-  type UnifDiscreteFn_r4
+  type, public :: UnifDiscreteFn_r4
     integer :: N = 0                               ! The number of values xi
     character(len=8) :: BC = 'clamped'             ! boundary conditions
     character(len=1) :: method = ' '               ! which of closest xi to use
@@ -262,7 +292,7 @@ module MLSNumerics              ! Some low level numerical stuff
     ! type(Coefficients_R4) :: Coeffs                ! in case we'll use splines
   end type UnifDiscreteFn_r4
   
-  type UnifDiscreteFn_r8
+  type, public :: UnifDiscreteFn_r8
     integer :: N = 0                               ! The number of values xi
     character(len=8) :: BC = 'clamped'             ! boundary conditions
     character(len=1) :: method = ' '               ! which of closest xi to use
@@ -463,7 +493,7 @@ contains
           if ( fnext == isShort ) exit
         else
           if ( (fnext-isShort)*(flast-isShort) <= 0 ) exit
-        endif
+        end if
       enddo
       if ( shot > maxPhase1 ) return ! No shot was long enough
     else
@@ -483,10 +513,10 @@ contains
           if ( fnext == isShort ) exit
         else
           if ( (fnext-isShort)*(flast-isShort) <= 0 ) exit
-        endif
+        end if
       enddo
       if ( shot > size(ns) ) return ! No shot was long enough
-    endif
+    end if
     ! Phase 2
     ! Narrow the spashes, always keeping root between x0 and x2
     x0 = x1
@@ -504,10 +534,10 @@ contains
             root = x2
           else
             root = -1
-          endif
-        endif
+          end if
+        end if
         return
-      endif
+      end if
       if ( index(myOptions, 's') > 0 ) then
         if ( fun(x1) == isShort ) then
           x0 = x1
@@ -515,7 +545,7 @@ contains
         else
           ! x0 = x0
           x2 = x1
-        endif
+        end if
       elseif ( index(myOptions, 'r') > 0 ) then
         if ( fun(x1) == isShort ) then
           ! x0 = x0
@@ -523,21 +553,21 @@ contains
         else
           x0 = x1
           ! x2 = x2
-        endif
+        end if
       else
         if ( (fun(x2)-isShort)*(fun(x1)-isShort) == 0 ) then
           if ( fun(x2) == isShort ) then
             root = x2
           else
             root = x1
-          endif
+          end if
           return
         elseif ( (fun(x2)-isShort)*(fun(x1)-isShort) < 0 ) then
           x0 = x1
         else
           x2 = x1
-        endif
-      endif
+        end if
+      end if
     enddo
   end subroutine Battleship_int
 
@@ -585,7 +615,7 @@ contains
           if ( fnext .eqv. isShort ) exit
         else
           if ( fnext .neqv. flast ) exit
-        endif
+        end if
       enddo
       if ( shot > maxPhase1 ) return ! No shot was long enough
     else
@@ -605,10 +635,10 @@ contains
           if ( fnext .eqv. isShort ) exit
         else
           if ( fnext .neqv. flast ) exit
-        endif
+        end if
       enddo
       if ( shot > size(ns) ) return ! No shot was long enough
-    endif
+    end if
     ! Phase 2
     ! Narrow the spashes, always keeping root between x0 and x2
     x0 = x1
@@ -626,10 +656,10 @@ contains
             root = x2
           else
             root = -1
-          endif
-        endif
+          end if
+        end if
         return
-      endif
+      end if
       if ( index(myOptions, 's') > 0 ) then
         if ( fun(x1) .eqv. isShort ) then
           x0 = x1
@@ -637,7 +667,7 @@ contains
         else
           ! x0 = x0
           x2 = x1
-        endif
+        end if
       elseif ( index(myOptions, 'r') > 0 ) then
         if ( fun(x1) .eqv. isShort ) then
           ! x0 = x0
@@ -645,21 +675,21 @@ contains
         else
           x0 = x1
           ! x2 = x2
-        endif
+        end if
       else
         if ( (fun(x2) .eqv. isShort) .or. (fun(x1) .eqv. isShort) ) then
           if ( fun(x2) .eqv. isShort ) then
             root = x2
           else
             root = x1
-          endif
+          end if
           return
         elseif ( fun(x2) .neqv. fun(x1) ) then
           x0 = x1
         else
           x2 = x1
-        endif
-      endif
+        end if
+      end if
     enddo
   end subroutine Battleship_log
 
@@ -817,7 +847,7 @@ contains
       call deallocate_test( xArray, 'xArray (r4)', ModuleName )
     else
       value = UseLookUpTable ( arg, UDF%y, UDF%x1, UDF%x2, options=options // '2' )
-    endif
+    end if
     value = itsSign*value
   end function d2Fdx2Approximate_r4
 
@@ -848,7 +878,7 @@ contains
       call deallocate_test( xArray, 'xArray (r8)', ModuleName )
     else
       value = UseLookUpTable ( arg, UDF%y, UDF%x1, UDF%x2, options=options // '2' )
-    endif
+    end if
     value = itsSign*value
   end function d2Fdx2Approximate_r8
 
@@ -888,7 +918,7 @@ contains
       call deallocate_test( xArray, 'xArray (r4)', ModuleName )
     else
       value = UseLookUpTable ( arg, UDF%y, UDF%x1, UDF%x2, options=options // '1' )
-    endif
+    end if
     value = itsSign*value
   end function dFdxApproximate_r4
 
@@ -919,20 +949,24 @@ contains
       call deallocate_test( xArray, 'xArray (r8)', ModuleName )
     else
       value = UseLookUpTable ( arg, UDF%y, UDF%x1, UDF%x2, options=options // '1' )
-    endif
+    end if
     value = itsSign*value
   end function dFdxApproximate_r8
 
 ! ---------------------------------------------------------  Dump  -----
-  subroutine DumpCoefficients_r4 ( Coeffs )
+  subroutine DumpCoefficients_r4 ( Coeffs, Name )
     use Dump_0, only: Dump
+    use Output_m, only: Output
     type(coefficients_r4), intent(in) :: Coeffs
+    character(len=*), optional, intent(in) :: Name
     include 'DumpCoefficients.f9h'
   end subroutine DumpCoefficients_r4
 
-  subroutine DumpCoefficients_r8 ( Coeffs )
+  subroutine DumpCoefficients_r8 ( Coeffs, Name )
     use Dump_0, only: Dump
+    use Output_m, only: Output
     type(coefficients_r8), intent(in) :: Coeffs
+    character(len=*), optional, intent(in) :: Name
     include 'DumpCoefficients.f9h'
   end subroutine DumpCoefficients_r8
 
@@ -959,12 +993,12 @@ contains
     if ( .not. associated(UDF%y) ) then
       call output( '(y values not associated)', advance='yes' )
       return
-    endif
+    end if
     if ( myDetails < 1 ) then
       call outputNamedValue( 'min(y)           ', minval(UDF%y) )
       call outputNamedValue( 'max(y)           ', maxval(UDF%y) )
       return
-    endif
+    end if
     call dump ( UDF%y, name='y' )
   end subroutine DumpUnifDiscreteFn_r4
 
@@ -991,12 +1025,12 @@ contains
     if ( .not. associated(UDF%y) ) then
       call output( '(y values not associated)', advance='yes' )
       return
-    endif
+    end if
     if ( myDetails < 1 ) then
       call outputNamedValue( 'min(y)           ', minval(UDF%y) )
       call outputNamedValue( 'max(y)           ', maxval(UDF%y) )
       return
-    endif
+    end if
     call dump ( UDF%y, name='y' )
   end subroutine DumpUnifDiscreteFn_r8
 
@@ -1043,7 +1077,7 @@ contains
     else
       ! call outputNamedValue( 'options', options )
       value = UseLookUpTable ( arg, UDF%y, UDF%x1, UDF%x2, options=options )
-    endif
+    end if
     value = itsSign*value
   end function FApproximate_r4
 
@@ -1081,7 +1115,7 @@ contains
     else
       ! call outputNamedValue( 'options', options )
       value = UseLookUpTable ( arg, UDF%y, UDF%x1, UDF%x2, options=options )
-    endif
+    end if
     value = itsSign*value
   end function FApproximate_r8
 
@@ -1363,7 +1397,7 @@ contains
       value = UseLookUpTable ( x2, UDF%y, UDF%x1, UDF%x2, options=options // 'S' ) &
            & - &
            &  UseLookUpTable ( x1, UDF%y, UDF%x1, UDF%x2, options=options // 'S' )
-    endif
+    end if
   end function IFApproximate_r4
 
   function IFApproximate_r8 ( UDF, xS, xE ) result(value)
@@ -1397,7 +1431,7 @@ contains
       value = UseLookUpTable ( x2, UDF%y, UDF%x1, UDF%x2, options=options // 'S' ) &
            & - &
            &  UseLookUpTable ( x1, UDF%y, UDF%x1, UDF%x2, options=options // 'S' )
-    endif
+    end if
   end function IFApproximate_r8
 
 ! ------------------------------------------  InterpolateArray_r4  -----
@@ -1407,7 +1441,7 @@ contains
 
   ! Method is one of 'L'inear, or 'S'pline
   !                                (Numerical Recipes, more later no doubt)
-  ! Extrapolate is one of 'A'llow, 'C'onstant or 'B'ad
+  ! Extrapolate is one of 'A'llow, 'C'onstant, 'B'ad or 'P'eriodic (Spline only)
 
   ! Notes:
   !   oldX must be monotonically increasing or decreasing
@@ -1977,7 +2011,7 @@ contains
         p = x + k*Period
       else
         p = x - k*Period
-      endif
+      end if
       ! Now if signed cyclic (any non-trig examples of such a beast?)
       ! we also need to know if k is even or odd
       ! if even, we're still the same sign as home
@@ -2019,7 +2053,7 @@ contains
         p = x + k*Period
       else
         p = x - k*Period
-      endif
+      end if
       ! Now if signed cyclic (any non-trig examples of such a beast?)
       ! we also need to know if k is even or odd
       ! if even, we're still the same sign as home
@@ -2084,7 +2118,7 @@ contains
     if ( N < 2 ) then
       indices(1) = address
       return
-    endif
+    end if
     aofk = address - OFFSET
     do k=1, N
       indices(k) = MOD(aofk, shp(k))
@@ -2112,7 +2146,7 @@ contains
       ! Still too few for anything better than trapezoid
       sum = (h/2)*( y(1) + y(2) )
       return
-    endif
+    end if
     ! Do we have an even number of intervals, or odd?
     if ( mod(n-1, 2) == 1 ) then
       ! Odd--therefore start with Simpson's 3/8 rule
@@ -2122,7 +2156,7 @@ contains
     else
       ! Even--therefore stick with Simpson's
       n1 = 1
-    endif
+    end if
     do i=n1, n-2, 2
       sum = sum + (h/3)*( y(i) + 4*y(i+1) + y(i+2) )
     enddo
@@ -2145,7 +2179,7 @@ contains
       ! Still too few for anything better than trapezoid
       sum = (h/2)*( y(1) + y(2) )
       return
-    endif
+    end if
     ! Do we have an even number of intervals, or odd?
     if ( mod(n-1, 2) == 1 ) then
       ! Odd--therefore start with Simpson's 3/8 rule
@@ -2155,7 +2189,7 @@ contains
     else
       ! Even--therefore stick with Simpson's
       n1 = 1
-    endif
+    end if
     do i=n1, n-2, 2
       sum = sum + (h/3)*( y(i) + 4*y(i+1) + y(i+2) )
     enddo
@@ -2176,6 +2210,10 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.63  2009/11/17 23:34:38  vsnyder
+! Alphabetize public procedure names, add components for periodic continuity
+! to Coefficients_R* types, add Name argument to DumpCoefficients_r*
+!
 ! Revision 2.62  2009/06/20 02:32:58  vsnyder
 ! Precompute more stuff, handle identical abscissae, in spline case
 !
