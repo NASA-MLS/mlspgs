@@ -21,7 +21,7 @@ module L2PC_m
   use dump_0, only: dump
   use Intrinsic, only: L_CHANNEL, L_GEODALTITUDE, L_ZETA, L_NONE, L_VMR, &
     & L_RADIANCE, L_NONE, L_INTERMEDIATEFREQUENCY, L_LATITUDE, L_FIELDAZIMUTH, &
-    & L_ROWS, L_COLUMNS, L_ADOPTED, L_TEMPERATURE, Lit_Indices, &
+    & L_ROWS, L_COLUMNS, L_ADOPTED, L_TEMPERATURE, L_TSCAT, Lit_Indices, &
     & PHYQ_DIMENSIONLESS, PHYQ_TEMPERATURE, PHYQ_VMR
   use machine, only: io_error
   use ManipulateVectorQuantities, only: DOVECTORSMATCH
@@ -1646,8 +1646,9 @@ contains ! ============= Public Procedures ==========================
     logical :: STACKED                  ! Flag
     logical :: LOGBASIS                 ! Flag
 
-    integer, dimension(:), pointer :: SIGINDS ! Index into signals database
-    integer, dimension(:), pointer :: QTINDS ! Quantity indices
+    integer, dimension(:), pointer :: SIGINDS  ! Index into signals database
+    integer, dimension(:), pointer :: QTINDS   ! Quantity indices
+    logical, dimension(:), pointer :: CHANNELS ! From Parse_Signal
 
     character (len=64), pointer, dimension(:) :: QUANTITYNAMES ! Names of quantities
     type ( QuantityTemplate_T), pointer :: QT    ! Template for the quantity
@@ -1747,9 +1748,14 @@ contains ! ============= Public Procedures ==========================
           frequencyCoordinate = l_none
         end if
         unit = phyq_vmr
-      case ( l_radiance )
+      case ( l_radiance, l_TScat )
         call GetHDF5Attribute ( MLSFile, 'signal', word )
-        call Parse_Signal ( word, sigInds, sideband=sideband)
+        if ( quantityType == l_radiance ) then
+          call Parse_Signal ( word, sigInds, sideband=sideband )
+        else
+          nullify ( qt%channels )
+          call Parse_Signal ( word, sigInds, sideband=sideband, channels=qt%channels )
+        end if
         signal = sigInds(1)
         verticalCoordinate = l_geodAltitude
         frequencyCoordinate = l_channel
@@ -1918,6 +1924,10 @@ contains ! ============= Public Procedures ==========================
         case (l_radiance)
           call GetSignalName ( qt%signal, line, sideband=qt%sideband )
           call MakeHDF5Attribute ( qID, 'signal', trim(line) )
+        case (l_TScat)
+          call GetSignalName ( qt%signal, line, sideband=qt%sideband, &
+            & otherChannels=qt%channels )
+          call MakeHDF5Attribute ( qID, 'signal', trim(line) )
         end select
         ! Write out the dimensions for the quantity
         call MakeHDF5Attribute ( qID, 'noChans', qt%noChans )
@@ -1978,6 +1988,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.86  2009/11/17 23:43:51  vsnyder
+! Add ability to output TScat
+!
 ! Revision 2.85  2009/06/23 18:25:42  pwagner
 ! Prevent Intel from optimizing ident string away
 !
