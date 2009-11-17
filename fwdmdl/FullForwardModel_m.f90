@@ -290,7 +290,7 @@ contains
     use Get_Chi_Angles_m, only: Get_Chi_Angles
     use GLnp, only: GW, GX, NG, NGP1
     use Intrinsic, only: L_A, L_BOUNDARYPRESSURE, L_CLEAR, &
-      & L_CLOUDICE, L_EARTHREFL, L_ECRtoFOV, &
+      & L_EARTHREFL, L_ECRtoFOV, &
       & L_ELEVOFFSET, L_GPH, L_IWC, L_LogIWC, &
       & L_LOSVEL, L_LIMBSIDEBANDFRACTION, &
       & L_ORBITINCLINATION, L_RADIANCE, L_REFGPH, L_ScatteringAngle, &
@@ -1360,6 +1360,8 @@ contains
 
           call fov_convolve_setup ( antennaPatterns(whichPattern), ptg_angles, &
             & tan_chi_out-thisElev, convolve_support, &
+            & get_r_eq(sum(tan_phi)/no_tan_hts,earthradc_sq), & ! Average r_eq
+            & sum(0.001_rp*est_scgeocalt)/no_tan_hts,         & ! Average alt
             & do_dRad_dx=ptan_der, do_Scan_Avg=fwdModelConf%scanAverage )
 
           if ( temp_der ) then
@@ -2586,6 +2588,11 @@ contains
       real(rp) :: Phi_Ref      ! Tangent phi for the scattered ray
       real(rp) :: Rads(4*nlvl+2*scatteringAngles%template%noSurfs,noUsedChannels)
       real(rp) :: Theta_e(2*size(theta_s)-merge(1,0,theta_s(1)==0.0)) ! Extended to -theta_s
+      real(rp) :: P_On_Theta(size(theta_e)) ! P * sin(abs(theta)) interpolated
+                               ! to scattering point IWC and T for each theta,
+                               ! intermediary to getting P_On_Xi
+      real(rp) :: P_On_Xi(size(rads,1)) ! P * sin(abs(theta)) interpolated
+                               ! to scattering point IWC and T for each xi
       real(rp) :: P_Rad(size(theta_e)) ! P interpolated to scattering point
                                ! IWC and T * Rads_On_Theta
       real(rp) :: Rads_On_Theta_e(size(theta_e), noUsedChannels) ! Rads on Theta_e
@@ -2973,24 +2980,26 @@ contains
             ! are not.  First do the ones for negative theta.
             do ptg_i = 1, size(theta_s)
               ! theta_e(ptg_i) == -theta_s(size(theta_s)-ptg_i+1) here
-              p_rad(ptg_i) = &
+              p_on_theta(ptg_i) = &
                 ! dot_product(eta_t,matmul(p(...),eta_iwc))
                 & sum(eta_t_iwc * &
                 &     p(t_ix+0:t_ix+1,iwc_ix+0:iwc_ix+1,ptg_i,freq_ix(f_i)) ) * &
-                & abs(sin(theta_e(ptg_i))) * &
-                & rads_on_theta_e(ptg_i,f_i)
+                & abs(sin(theta_e(ptg_i)))
             end do
             ! Now the ones for positive theta.
-            do ptg_j = size(theta_e)-size(theta_s), size(theta_e)
+            do ptg_j = size(theta_e)-size(theta_s)+1, size(theta_e)
               ! theta_e(ptg_j) == theta_s(size(theta_e)-size(theta_s)+ptg_j)
               ptg_i = size(theta_e) - ptg_j + 1
-              p_rad(ptg_j) = &
+              p_on_theta(ptg_j) = &
                 ! dot_product(eta_t,matmul(p(...),eta_iwc))
                 & sum(eta_t_iwc * &
                 &     p(t_ix+0:t_ix+1,iwc_ix+0:iwc_ix+1,ptg_i,freq_ix(f_i)) ) * &
-                & abs(sin(theta_e(ptg_j))) * &
-                & rads_on_theta_e(ptg_j,f_i)
+                & abs(sin(theta_e(ptg_j)))
             end do
+            ! Now interpolate P_On_Theta to P_On_Xi.  Ideally, this would
+            ! be done with a periodic spline, but we don't have that yet, so
+            ! just use linear interpolation.
+            
             TScat%values(surf_i,phi_i) = 0.0
             do ptg_i = 2, size(theta_e)
               ! Trapezoidal quadrature, without assuming equal abscissa spacing
@@ -3983,6 +3992,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.296  2009/09/25 02:45:06  vsnyder
+! TScat computation appears to be working
+!
 ! Revision 2.295  2009/06/23 18:26:10  pwagner
 ! Prevent Intel from optimizing ident string away
 !
