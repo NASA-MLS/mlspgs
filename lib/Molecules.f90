@@ -120,11 +120,12 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_o3_r5h) =       add_ident ( 'o3_r5h' )
     lit_indices(l_o3_r5v) =       add_ident ( 'o3_r5v' )
 
-    ! Create the type tree for the molecule type.  RHi is added explicitly
-    ! since it's already a literal for other purposes (in Intrinsic).
+    ! Create the type tree for the molecule type.  CloudIce and RHi are added
+    ! explicitly since they're already literals for other purposes (in
+    ! Intrinsic).
     call make_tree ( (/ &
       begin, t+t_molecule, &
-        & l+(/ (i,i=first_molecule, last_molecule), l_rhi /), &
+        & l+(/ (i,i=first_molecule, last_molecule), l_cloudIce, l_rhi /), &
         & n+n_dt_def /) )
 
   contains
@@ -173,6 +174,9 @@ contains ! =====     Public procedures     =============================
 end module MOLECULES
 
 ! $Log$
+! Revision 2.27  2009/11/17 23:44:28  vsnyder
+! Add CloudIce to type tree
+!
 ! Revision 2.26  2009/10/26 17:07:28  pwagner
 ! Added GetMoleculeName and -Index
 !
