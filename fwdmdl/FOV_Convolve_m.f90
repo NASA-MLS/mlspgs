@@ -21,6 +21,11 @@ module FOV_Convolve_m
   private
   public :: FOV_Convolve_Setup, FOV_Convolve_1D, FOV_Convolve_2d
   public :: FOV_Convolve_Temp_Derivs, FOV_Convolve_Teardown
+  public :: Dump, Dump_Convolve_Support
+
+  interface Dump
+    module procedure Dump_Convolve_Support
+  end interface
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -44,9 +49,41 @@ module FOV_Convolve_m
 
 contains
 
+  ! --------------------------------------  Dump_Convolve_Support  -----
+  subroutine Dump_Convolve_Support ( cs, Name, Details )
+    use AntennaPatterns_m, only: DUMP_ANTENNA_PATTERNS_DATABASE
+    use Dump_0, only: DUMP
+    use MLSNumerics, only: Dump
+    use Output_m, only: OUTPUT
+
+    type (convolve_support_t), intent(in) :: cs
+    character(len=*), optional, intent(in) :: Name
+    integer, optional, intent(in) :: Details ! 0 => no coeffs (default)
+    integer :: My_Details
+
+    if ( present(name) ) then
+      call output ( name, advance='yes' )
+    else
+      call output ( 'Convolve support:', advance='yes' )
+    end if
+    call dump ( cs%angles, name="Angles" )
+    my_Details = 0
+    if ( present(details) ) my_Details = details
+    if ( my_Details > 0 ) then
+      call dump ( cs%coeffs_1, name='Coefficients 1' )
+      call dump ( cs%coeffs_2, name='Coefficients 2' )
+    end if
+    call dump ( cs%del_chi_in, name="Del_Chi_In" )
+    call dump ( cs%del_chi_out, name="Del_Chi_Out" )
+    call output ( cs%init_angle, before='Init angle: ', advance='yes' )
+    call dump ( cs%p, name="P" )
+    call dump ( cs%dp, name="dP" )
+
+  end subroutine Dump_Convolve_Support
+
   ! -----------------------------------------  FOV_Convolve_Setup  -----
   subroutine FOV_Convolve_Setup ( AntennaPattern, Chi_in, Chi_out, &
-    & Convolve_Support, Req, Rsc, Earth_frac, Do_dRad_dx, Do_Scan_Avg )
+    & Convolve_Support, R_eq, R_sc, Earth_frac, Do_dRad_dx, Do_Scan_Avg )
 
     use Allocate_Deallocate, only: Allocate_test
     use AntennaPatterns_m, only: AntennaPattern_T
@@ -59,8 +96,8 @@ contains
     real(rp), intent(in) :: Chi_in(:)  ! input pointing angles radians
     real(rp), intent(in) :: Chi_out(:) ! output pointing angles radians
 
-    real(rp), optional, intent(in) :: req ! equivalent earth radius
-    real(rp), optional, intent(in) :: rsc ! spacecraft radius
+    real(rp), intent(in) :: r_eq ! equivalent earth radius
+    real(rp), intent(in) :: r_sc ! spacecraft radius from equivalent center
     real(rp), optional, intent(in) :: earth_frac ! fraction of earth in total
     !                                   filled-out pattern
     ! req, rsc and earth_frac are non critical parameters and don't
@@ -75,14 +112,10 @@ contains
 
     integer :: AAAPN, I
     real(r8) :: AAAP_step, Ang_step
-    real(r8) :: E_frac, R_eq, R_sc, R_ratio
+    real(r8) :: E_frac, R_ratio
     logical :: My_Do_dRad_dx, My_Do_Scan_Avg
 
-    r_eq = 6371.0_rp
-    r_sc = r_eq + 705.0_rp
     e_frac = 0.185
-    if ( present(req)) r_eq = req
-    if ( present(rsc)) r_sc = rsc
     if ( present(earth_frac)) e_frac = 0.5 * earth_frac
     r_ratio = r_eq / r_sc ! earth radius / spacecraft radius
 
@@ -509,6 +542,9 @@ contains
 end module FOV_Convolve_m
 
 ! $Log$
+! Revision 2.8  2009/11/17 23:38:11  vsnyder
+! Add Dump, make R_eq, R_sc nonoptional in FOV_Convolve_Setup
+!
 ! Revision 2.7  2009/06/23 18:26:10  pwagner
 ! Prevent Intel from optimizing ident string away
 !

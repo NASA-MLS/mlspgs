@@ -21,9 +21,10 @@ module Convolve_All_m
 
   implicit NONE
   private
-  public :: CONVOLVE_RADIANCE, CONVOLVE_TEMPERATURE_DERIV, CONVOLVE_OTHER_DERIV
-  public :: INTERPOLATE_RADIANCE, INTERPOLATE_TEMPERATURE_DERIV
-  public :: INTERPOLATE_OTHER_DERIV
+  public :: CONVOLVE_OTHER_DERIV, CONVOLVE_RADIANCE, CONVOLVE_TEMPERATURE_DERIV
+  public :: INTERPOLATE_RADIANCE, INTERPOLATE_OTHER_DERIV
+  public :: INTERPOLATE_TEMPERATURE_DERIV
+  public :: STORE_OTHER_DERIV, STORE_TEMPERATURE_DERIV
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -555,6 +556,115 @@ contains
 
   end subroutine Interpolate_Other_Deriv
 
+  ! ------------------------------------  Store_Temperature_Deriv  -----
+  subroutine Store_Temperature_Deriv ( MAF, Channel, Radiance, Temp, &
+                                     & Grids_Tmp, di_dT, Jacobian )
+
+    use Load_sps_data_m, only: Grids_T
+    use MatrixModule_1, only: FINDBLOCK, MATRIX_T
+    use MLSCommon, only: RP
+    use VectorsModule, only: VectorValue_T
+
+    ! Inputs
+    integer, intent(in) :: MAF
+    integer, intent(in) :: CHANNEL
+    type (VectorValue_T), intent(in) :: RADIANCE ! Only for some indices
+    type (vectorvalue_t), intent(in) :: TEMP     ! Only for some indices
+    type (Grids_T), intent(in) :: Grids_Tmp      ! Temperature's grids, etc.
+    real(rp), intent(in) :: dI_dT(:,:) ! derivative of radiance wrt
+    !                      temperature on chi_in
+
+    ! Outputs
+    type (Matrix_t), intent(inout) :: Jacobian
+
+    ! Local variables
+    integer :: Col, JF, JZ, NoChans, Row, SV_I
+
+    ! Start here
+
+    sv_i = 0
+    noChans = radiance%template%noChans
+
+    row = FindBlock ( Jacobian%row, radiance%index, maf )
+
+    do jf = grids_tmp%windowStart(1), grids_tmp%windowFinish(1)
+
+      col = FindBlock ( Jacobian%col, temp%index, jf )
+      call getFullBlock ( jacobian, row, col, 'temperature' )
+
+      do jz = 1, temp%template%noSurfs
+
+        ! Check if derivatives are needed for this (zeta & phi) :
+
+        sv_i = sv_i + 1
+        if ( grids_tmp%deriv_flags(sv_i) ) &
+          & jacobian%block(row,col)%values(channel::noChans,jz) = dI_dT(:,sv_i)
+
+      end do
+
+    end do
+
+  end subroutine Store_Temperature_Deriv
+
+  ! ------------------------------------------  Store_Other_Deriv  -----
+  subroutine Store_Other_Deriv ( MAF, Channel, Radiance, Qtys, Grids_f, &
+                               & dI_df, Jacobian )
+
+    use ForwardModelConfig, only: QtyStuff_T
+    use Load_sps_data_m, only: Grids_T
+    use MatrixModule_1, only: FINDBLOCK, MATRIX_T
+    use MLSCommon, only: R8, RP, RV
+    use VectorsModule, only: VectorValue_T
+
+    ! Inputs
+    integer, intent(in) :: MAF
+    integer, intent(in) :: CHANNEL
+    type (VectorValue_T), intent(in) :: RADIANCE ! Only for some indices
+    type(QtyStuff_T), intent(in) :: Qtys(:)
+    type (Grids_T), intent(in) :: Grids_f
+    real(rp), intent(in) :: dI_df(:,:) ! mixing ratio derivatives or any
+    !                                    parameter for which a simple
+    !                                    convolution will suffice
+
+    ! Outputs
+    type (Matrix_t), intent(inout) :: Jacobian
+
+    ! Local variables
+    integer :: Col, IS, JF, K, NFZ, NoChans, Row, SV_F
+
+    noChans = Radiance%template%noChans
+
+    row = FindBlock ( Jacobian%row, radiance%index, maf )
+
+    do is = 1, size(qtys)
+
+      if ( .not. qtys(is)%foundInFirst ) cycle
+
+      sv_f = grids_f%l_v(is-1)
+      nfz = (Grids_f%l_f(is) - Grids_f%l_f(is-1)) * &
+          & (Grids_f%l_z(is) - Grids_f%l_z(is-1))
+
+      do jf = Grids_f%windowStart(is), Grids_f%windowfinish(is)
+
+        col = FindBlock ( Jacobian%col, qtys(is)%qty%index, jf)
+        call getFullBlock ( jacobian, row, col, 'atmospheric' )
+
+        do k = 1, nfz
+
+          ! Check if derivatives are needed for this (zeta & phi) :
+
+          sv_f = sv_f + 1
+          if ( Grids_f%deriv_flags(sv_f) ) &
+            & jacobian%block(row,col)%values(channel::noChans,k) = di_df(:,sv_f)
+
+        end do
+
+      end do
+
+    end do
+
+  end subroutine Store_Other_Deriv
+
 ! =====     Private Procedures     =====================================
 
   subroutine GetBandedBlock ( Jacobian, Row, Col, NoChans, NoPtan )
@@ -658,6 +768,9 @@ contains
 end module Convolve_All_m
 
 ! $Log$
+! Revision 2.8  2009/11/17 23:40:08  vsnyder
+! Add Store_*_Deriv routines
+!
 ! Revision 2.7  2009/06/23 18:26:10  pwagner
 ! Prevent Intel from optimizing ident string away
 !
