@@ -11,14 +11,16 @@
 
 ! $RCSfile$
 
-! subroutine DumpCoefficients_r* ( Coeffs )
+! subroutine DumpCoefficients_r* ( Coeffs, Name )
 !   type(coefficients_r*), intent(in) :: Coeffs )
+!   character(len=*), optional, intent(in) :: Name
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
   character (len=len(idParm)), save :: Id = idParm
 !---------------------------------------------------------------------------
 
+    if ( present(name) ) call output ( name, advance='yes' )
     if ( associated(coeffs%lowerInds) ) call dump ( coeffs%lowerInds, name='LowerInds' )
     if ( associated(coeffs%a) ) call dump ( coeffs%a, name='A' )
     if ( associated(coeffs%b) ) call dump ( coeffs%b, name='B' )
@@ -34,11 +36,16 @@
     if ( associated(coeffs%dx) ) call dump ( coeffs%dx, name='dX' )
     if ( associated(coeffs%o) ) call dump ( coeffs%o, name='O' )
     if ( associated(coeffs%p) ) call dump ( coeffs%p, name='P' )
+    if ( associated(coeffs%row) ) call dump ( coeffs%row, name='Row' )
+    if ( associated(coeffs%col) ) call dump ( coeffs%col, name='Col' )
     if ( associated(coeffs%badValue) ) call dump ( coeffs%badValue, name='BadValue' )
 
 ! end subroutine DumpCoefficients_r*
 
 ! $Log$
+! Revision 1.2  2009/06/20 02:32:44  vsnyder
+! Precompute more stuff, handle identical abscissae, in spline case
+!
 ! Revision 1.1  2005/08/04 20:38:41  vsnyder
 ! Initial commit
 !
