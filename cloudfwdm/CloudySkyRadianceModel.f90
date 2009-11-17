@@ -804,7 +804,7 @@ contains
          SRad =0.0_r8
 
          call fov_convolve_setup ( antennaPattern, ptg_angle, ptg_angle, &
-           & convolve_support )
+           & convolve_support, RE, Rs_eq )
          ! No provision for scan averaging yet -- the NULL() are MIF_Times
          ! and DeadTime
          call fov_convolve_1d ( convolve_support, RAD0, NULL(), NULL(), SRad0 )
@@ -883,6 +883,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.72  2009/06/23 18:26:19  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 1.71  2008/10/03 21:04:26  livesey
 ! Added fixes to support EXTINCTIONV2 stuff
 !
