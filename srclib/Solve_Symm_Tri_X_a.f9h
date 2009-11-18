@@ -1,0 +1,38 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! subroutine Solve_Symm_Tri_X_a ( DIAG, H, Z )
+
+    ! Solve A b = z all at once -- don't return the factors.
+    !   The solution b is returned in Z.
+    !   Solve with multiple right-hand-side vectors
+    ! DIAG(1:n) is the diagonal of A
+    ! H(1:n-1) is the super- and subdiagonal, H(n) is the corner
+    ! Z(1:n) is the RHS on input and the solution on output
+
+    real(rk), intent(in) :: DIAG(:), H(:)
+    real(rk), intent(inout) :: Z(:,:)
+
+    real(rk), dimension(size(diag))   :: D ! Inverse of diagonal of L
+                                           ! Subdiagonal of L is H(1:n-2)
+                                           !   and R(n-1)
+    real(rk), dimension(size(diag)-2) :: U ! Superdiagonal of U
+
+    ! Doing it this way instead of inline avoids factoring A for every column
+    ! of Z
+    call factor_symm_tri ( diag, h, d, u )
+    call solve_factored_symm_tri ( h, d, u, z )
+
+! end subroutine Solve_Symm_Tri_X_a
+
+! $Id$
+
+! $Log$

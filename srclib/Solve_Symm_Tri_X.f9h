@@ -1,0 +1,50 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! subroutine Solve_Symm_Tri_X ( DIAG, H, Z )
+
+    ! Solve A b = z all at once -- don't return the factors.
+    !   The solution b is returned in Z.
+    ! DIAG(1:n) is the diagonal of A
+    ! H(1:n-1) is the super- and subdiagonal, H(n) is the corner
+    ! Z(1:n) is the RHS on input and the solution on output
+
+    real(rk), intent(in) :: DIAG(:), H(:)
+    real(rk), intent(inout) :: Z(:)
+
+    real(rk), dimension(size(diag))   :: D ! Inverse of diagonal of L
+                                           ! Subdiagonal of L is H(1:n-2)
+                                           !   and R(n-1)
+    real(rk), dimension(size(diag)-2) :: U ! Superdiagonal of U
+
+    integer :: K, N
+
+    n = size(diag)
+
+    ! LU factor A and solve L y = z, using Z temporarily for y
+    d(1) = 1.0 / diag(1)
+    z(1) = z(1) * d(1)
+    do k = 2, n
+      u(k-1) = h(k-1) * d(k-1)
+      d(k) = 1.0 / ( diag(k) - h(k-1) * u(k-1) )
+      z(k) = ( z(k) - h(k-1) * z(k-1) ) * d(k)
+    end do
+
+    ! Solve U b = z
+    do k = n-1, 1, -1
+      z(k) = z(k) - u(k) * z(k+1)
+    end do
+
+! end subroutine Solve_Symm_Tri_X
+
+! $Id$
+
+! $Log$
