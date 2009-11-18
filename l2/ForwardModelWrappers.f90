@@ -40,7 +40,7 @@ contains ! ============= Public Procedures ==========================
     use Init_tables_module, only: L_LINEAR, L_SCAN, L_SCAN2D, L_FULL, L_CLOUDFULL, &
       & L_SWITCHINGMIRROR, L_HYBRID, L_POLARLINEAR, L_BASELINE
     use LinearizedForwardModel_m, only: LINEARIZEDFORWARDMODEL
-    use MatrixModule_1, only: MATRIX_T
+    use MatrixModule_1, only: MATRIX_T, CHECKINTEGRITY
     use MLSL2Timings, only: Add_to_retrieval_timing
     use MLSMessageModule, only: MLSMessage, MLSMessageCalls, MLSMSG_Error, MLSMSG_Warning
     use PolarLinearModel_m, only: POLARLINEARMODEL
@@ -157,6 +157,7 @@ contains ! ============= Public Procedures ==========================
       k = 1 ! Check, print name if any
     end if
     if ( k > 0 ) then
+      ! Check radiances
       if ( checkNaN(fwdModelOut, k-1, 'ForwardModelOut') ) then
         if ( k > 1 ) then
           call dump ( fwdModelIn, k-1, 'ForwardModelIn' )
@@ -171,8 +172,21 @@ contains ! ============= Public Procedures ==========================
         end if
         call MLSMessage ( k, ModuleName, 'NaNs found in forward model output' )
       end if
-    end if
 
+      ! Check Jacobians if relevant
+      if ( present ( Jacobian ) ) then 
+        if ( .not. checkIntegrity ( Jacobian, noError=.true. ) ) then
+          if ( k > 2 ) then
+            k = MLSMSG_Error
+          else
+            k = MLSMSG_Warning
+          end if
+          call MLSMessage ( k, ModuleName, 'Problem (NANs?) found in Jacobians' )
+        end if
+      end if
+      
+    end if
+      
     ! Do the timing stuff
     call time_now (time_end)
     deltaTime = time_end - time_start
@@ -204,6 +218,10 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.32  2009/11/18 22:18:07  livesey
+! Added ability to check Jacobians as well as radiances is the various
+! fmNAN flags are set
+!
 ! Revision 2.31  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
 !
