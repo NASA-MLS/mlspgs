@@ -104,6 +104,7 @@
     endif
 
     if ( DEBUG ) then
+      call output( '(in diff)', advance='yes' )
       call outputNamedValue( 'myStats', myStats )
       call outputNamedValue( 'myRMs', myRMS)
       call outputNamedValue( 'myTable', myTable )
@@ -198,7 +199,21 @@
         & call printRMSetc ( 'Reference values', refmin, refmax, refrms )
       ! call dump ( filtered1, 'filtered1', fillvalue=fillvalue )
       ! call dump ( filtered2, 'filtered2', fillvalue=fillvalue )
-      call fillPcts
+      if ( product(shape(array1)) > TOOMANYELEMENTS ) then
+        call outputNamedValue( 'Array size excessive for pcts', product(shape(array1)) )
+        if ( myWholeArray ) then
+          call dump( filtered1-filtered2, trim(DiffName), &
+            & real(0.,kind(array1)), WIDTH, FORMAT, &
+            & LBOUND, options )
+        else
+          call dump( filtered1(1:numNonFill)-filtered2(1:numNonFill), trim(DiffName), &
+            & real(0.,kind(array1)), WIDTH, FORMAT, &
+            & LBOUND, options )
+        endif
+        return
+      else
+        call fillPcts
+      endif
       call usePcts
       ! Prepare to find abs, relative differences
       ! Avoid another automatic array
@@ -211,7 +226,7 @@
       ! call outputNamedValue( 'num /= fill value', numNonFill )
       alreadySbtrcted = .true.
       if ( myWholeArray ) then
-        call dump(filtered1, trim(DiffName), &
+        call dump( filtered1, trim(DiffName), &
           & real(0.,kind(array1)), WIDTH, FORMAT, &
           & LBOUND, options )
       else
@@ -393,6 +408,9 @@
 
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.23  2009/11/20 01:16:02  pwagner
+! More protection against running out of memory diffing DACS datasets
+!
 ! Revision 2.22  2009/10/30 23:02:04  pwagner
 ! Should not double-print name if only whole array diff
 !
