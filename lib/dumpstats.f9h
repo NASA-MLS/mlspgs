@@ -20,6 +20,11 @@
       call output ( trim(name) //'   ' )
       nameHasBeenPrinted = .true.
     endif
+    if ( myShape ) then
+      call outputNamedValue( 'rank', myRank, advance='no' )
+      call output( '   shape  ', advance='no' )
+      call output( shape(array), advance='yes' )
+    endif
     if ( myRMS ) then
       if ( .not. any(isfinite(array)) ) then
         call output ('(no finite values found in array--skipped) ', advance='yes')
@@ -105,6 +110,9 @@
       end if
     end if
 ! $Log$
+! Revision 2.20  2009/11/20 01:16:47  pwagner
+! Added new option H or 'shape' to just show array rank, shape
+!
 ! Revision 2.19  2009/10/30 23:03:02  pwagner
 ! Should not double-print name if only whole array diff
 !
