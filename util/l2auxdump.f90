@@ -13,6 +13,7 @@
 program l2auxdump ! dumps datasets, attributes from L2AUX files
 !=================================
 
+   use Allocate_Deallocate, only: allocate_test, deallocate_test
    use Dump_0, only: DUMP, INTPLACES
    use Hdf, only: DFACC_READ
    use HDF5, only: h5fis_hdf5_f, h5gclose_f, h5gopen_f
@@ -63,6 +64,7 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
     logical             :: timereads          = .false. ! Just time how long to read
     logical             :: radiances          = .false.
     logical             :: rms                = .false.
+    logical             :: shape              = .false.
     logical             :: unique             = .false.
     logical             :: useFillValue       = .false.
     character(len=128)  :: DSName      = '' ! Extra dataset if attributes under one
@@ -85,6 +87,8 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
   logical     ::                 is_hdf5
   character (len=MAXSDNAMESBUFSIZE) :: mySdList
   integer            ::          n_filenames
+  real(r8), dimension(:), pointer :: precisions => null()
+  real(r8), dimension(:), pointer :: radiances => null()
   integer     ::                 recl
   integer     ::                 sdfid1
   real        ::                 t1
@@ -119,6 +123,7 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
   endif
   dumpOptions = '-'
   if ( options%rms ) dumpOptions = trim(dumpOptions) // 'r'
+  if ( options%shape ) dumpOptions = trim(dumpOptions) // 'H'
   if ( options%stats ) dumpOptions = trim(dumpOptions) // 's'
   if ( options%unique ) dumpOptions = trim(dumpOptions) // 'u'
   if ( options%laconic ) dumpOptions = trim(dumpOptions) // 'l'
@@ -177,6 +182,7 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
           & groupName=trim(options%root), options=dumpOptions )
       endif
     endif
+    print *, 'About to mls_sfend on ', sdfid1
 	 status = mls_sfend(sdfid1, hdfVersion=hdfVersion)
     if ( .not. options%laconic ) call sayTime('reading this file', tFile)
   enddo
@@ -200,6 +206,7 @@ contains
      print *, 'just time reads?    ', options%timereads
      print *, 'radiances only    ? ', options%radiances
      print *, 'rms    ?            ', options%rms    
+     print *, 'shape  ?            ', options%shape
      print *, 'unique    ?         ', options%unique
      print *, 'useFillValue  ?     ', options%useFillValue
      print *, 'root                ', options%root
@@ -294,6 +301,9 @@ contains
       else if ( filename(1:5) == '-rms ' ) then
         options%rms = .true.
         exit
+      else if ( filename(1:6) == '-shape' ) then
+        options%shape = .true.
+        exit
       else if ( filename(1:4) == '-uni' ) then
         options%unique = .true.
         exit
@@ -334,6 +344,7 @@ contains
       write (*,*) ' Options: -f filename     => add filename to list of filenames'
       write (*,*) '                           (can do the same w/o the -f)'
       write (*,*) '          -lac            => switch on laconic mode'
+      write (*,*) '          -shape          => just dump array shapes, not contents'
       write (*,*) '          -v              => switch on verbose mode'
       write (*,*) '          -A              => dump all attributes'
       write (*,*) '          -D              => dump all datasets (default)'
@@ -377,6 +388,7 @@ contains
 
     ! Local
     logical, parameter            :: countEmpty = .true.
+    character(len=8)   ::          dumpOptions
     logical :: file_exists
     integer :: file_access
     integer :: grpid
@@ -405,6 +417,12 @@ contains
       if ( options%rms ) which = 'rms'
       if ( options%stats ) which = catLists( which, 'max,min,mean,stddev' )
     endif 
+  dumpOptions = '-'
+  if ( options%rms ) dumpOptions = trim(dumpOptions) // 'r'
+  if ( options%shape ) dumpOptions = trim(dumpOptions) // 'H'
+  if ( options%stats ) dumpOptions = trim(dumpOptions) // 's'
+  if ( options%unique ) dumpOptions = trim(dumpOptions) // 'u'
+  if ( options%laconic ) dumpOptions = trim(dumpOptions) // 'l'
     the_hdfVersion = HDFVERSION_5
     the_hdfVersion = hdfVersion
     file_exists = ( mls_exists(trim(File1)) == 0 )
@@ -488,17 +506,28 @@ contains
         call dump( L1bRadiance%DpField, name=trim(sdName), &
           & options='s', FillValue=real(options%fillValue, r8) )
       else
-        call dump( L1bRadiance%DpField, name=trim(sdName) )
-        call dump( L1bPrecision%DpField, name=trim(sdName) // precisionSuffix )
+        call dump( L1bRadiance%DpField, name=trim(sdName), &
+          & options=dumpOptions )
+        call dump( L1bPrecision%DpField, name=trim(sdName) // precisionSuffix, &
+          & options=dumpOptions )
       endif
       L1BStat%count = 0
-      call statistics(&
-        & reshape( L1bRadiance%DpField, (/ product(shp) /) ), &
-        & L1BStat, &
-        & precision=reshape( L1bPrecision%DpField, (/ product(shp) /) ) )
-      call dump ( L1BStat, which )
+      print *, 'About to reshape radiances'
+      call allocate_test ( radiances, product(shp), 'radiances', ModuleName )
+      radiances = reshape( L1bRadiance%DpField, (/ product(shp) /) )
       call DeallocateL1BData ( l1bRadiance )
+      print *, 'About to reshape precisions'
+      call allocate_test ( precisions, product(shp), 'precisions', ModuleName )
+      precisions = reshape( L1bPrecision%DpField, (/ product(shp) /) )
       call DeallocateL1BData ( l1bPrecision )
+      print *, 'About to call statistics'
+      call statistics(&
+        & radiances, &
+        & L1BStat, &
+        & precision=precisions )
+      call dump ( L1BStat, which )
+      call deallocate_test ( radiances, 'radiances', ModuleName )
+      call deallocate_test ( precisions, 'precisions', ModuleName )
     enddo
 	 call h5gClose_f ( grpID, status )
     if ( status /= 0 ) then
@@ -531,6 +560,9 @@ end program l2auxdump
 !==================
 
 ! $Log$
+! Revision 1.9  2009/08/18 20:42:15  pwagner
+! Dumping counterMAF array looks better
+!
 ! Revision 1.8  2009/06/16 22:38:28  pwagner
 ! Changed api for dump, diff routines; now rely on options for most optional behavior
 !
