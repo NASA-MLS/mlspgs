@@ -15,23 +15,37 @@ begin ReadApriori
   !ifdef(flagUsingPCF,
     {!define(geos5TFile1,{})!define(geos5TFile2,{})!define(geos5TFile3,{})!define(geos5TFile4,{})
      !define(geos5PFile1,{})!define(geos5PFile2,{})!define(geos5PFile3,{})!define(geos5PFile4,{})
-     !define(geos5TFileN,{})!define(geos5PFileN,{})},
-    {
-    !ifdef(geos5Version,{},{!define(geos5Version,{GEOS510})})
-    !ifdef(geos5Head,{},{!define(geos5Head,{DAS.ops.asm.tavg3d})})
-    !define(geos5Day1,{!TrimLastChar(!esyscmd(dateconverter -o yyyymmdd "!day"))})
-    !define(geos5Day2,{!TrimLastChar(!esyscmd(dateconverter +1 -o yyyymmdd "!day"))})
-    !define(geos5TFile1,{, file='!inpathgeos5dd/!geos5Head_dyn_v.!geos5Version.!geos5Day1_0000.V01.hdf'})
-    !define(geos5TFile2,{, file='!inpathgeos5dd/!geos5Head_dyn_v.!geos5Version.!geos5Day1_0600.V01.hdf'})
-    !define(geos5TFile3,{, file='!inpathgeos5dd/!geos5Head_dyn_v.!geos5Version.!geos5Day1_1200.V01.hdf'})
-    !define(geos5TFile4,{, file='!inpathgeos5dd/!geos5Head_dyn_v.!geos5Version.!geos5Day1_1800.V01.hdf'})
-    !define(geos5TFileN,{, file='!inpathgeos5dn/!geos5Head_dyn_v.!geos5Version.!geos5Day2_0000.V01.hdf'})
-    !define(geos5PFile1,{, file='!inpathgeos5pd/!geos5Head_prs_v.!geos5Version.!geos5Day1_0000.V01.hdf'})
-    !define(geos5PFile2,{, file='!inpathgeos5pd/!geos5Head_prs_v.!geos5Version.!geos5Day1_0600.V01.hdf'})
-    !define(geos5PFile3,{, file='!inpathgeos5pd/!geos5Head_prs_v.!geos5Version.!geos5Day1_1200.V01.hdf'})
-    !define(geos5PFile4,{, file='!inpathgeos5pd/!geos5Head_prs_v.!geos5Version.!geos5Day1_1800.V01.hdf'})
-    !define(geos5PFileN,{, file='!inpathgeos5pn/!geos5Head_prs_v.!geos5Version.!geos5Day2_0000.V01.hdf'})})
-
+     !define(geos5TFileN,{})!define(geos5PFileN,{})
+     },{
+      !define(geos5Day1,{!TrimLastChar(!esyscmd(dateconverter -o yyyymmdd "!day"))})
+      !define(geos5Day2,{!TrimLastChar(!esyscmd(dateconverter +1 -o yyyymmdd "!day"))})
+      !ifdef(flagUsingMERRA,
+      {!dnl
+        !define(geos5TFile1,{, file='!inpathmerradd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+        !define(geos5TFile2,{, file='!inpathmerradd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+        !define(geos5TFile3,{, file='!inpathmerradd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+        !define(geos5TFile4,{, file='!inpathmerradd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+        !define(geos5TFileN,{, file='!inpathmerradn/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day2.hdf'})
+        !define(geos5PFile1,{, file='!inpathmerrapd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+        !define(geos5PFile2,{, file='!inpathmerrapd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+        !define(geos5PFile3,{, file='!inpathmerrapd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+        !define(geos5PFile4,{, file='!inpathmerrapd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+        !define(geos5PFileN,{, file='!inpathmerrapn/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day2.hdf'})
+      },{
+        !ifdef(geos5Version,{},{!define(geos5Version,{GEOS510})})
+        !ifdef(geos5Head,{},{!define(geos5Head,{DAS.ops.asm.tavg3d})})
+        !define(geos5TFile1,{, file='!inpathgeos5dd/!geos5Head_dyn_v.!geos5Version.!geos5Day1_0000.V01.hdf'})
+        !define(geos5TFile2,{, file='!inpathgeos5dd/!geos5Head_dyn_v.!geos5Version.!geos5Day1_0600.V01.hdf'})
+        !define(geos5TFile3,{, file='!inpathgeos5dd/!geos5Head_dyn_v.!geos5Version.!geos5Day1_1200.V01.hdf'})
+        !define(geos5TFile4,{, file='!inpathgeos5dd/!geos5Head_dyn_v.!geos5Version.!geos5Day1_1800.V01.hdf'})
+        !define(geos5TFileN,{, file='!inpathgeos5dn/!geos5Head_dyn_v.!geos5Version.!geos5Day2_0000.V01.hdf'})
+        !define(geos5PFile1,{, file='!inpathgeos5pd/!geos5Head_prs_v.!geos5Version.!geos5Day1_0000.V01.hdf'})
+        !define(geos5PFile2,{, file='!inpathgeos5pd/!geos5Head_prs_v.!geos5Version.!geos5Day1_0600.V01.hdf'})
+        !define(geos5PFile3,{, file='!inpathgeos5pd/!geos5Head_prs_v.!geos5Version.!geos5Day1_1200.V01.hdf'})
+        !define(geos5PFile4,{, file='!inpathgeos5pd/!geos5Head_prs_v.!geos5Version.!geos5Day1_1800.V01.hdf'})
+        !define(geos5PFileN,{, file='!inpathgeos5pn/!geos5Head_prs_v.!geos5Version.!geos5Day2_0000.V01.hdf'})
+        })
+    })
 !ifdef(flagUseOperationalGPH, {
   geos5GPHInput1: gridded, origin=geos5, field='HGHT', $
     dimList='XDim,YDim,Height,Time' !geos5TFile1
