@@ -69,10 +69,12 @@ CONTAINS
     real, intent(in) ::          arg
   ! Private
     
-    IEEE_IS_FINITE_S = .FALSE.
-    if( IEEE_Is_NaN_S(arg) ) RETURN
-    if( IEEE_Is_Inf_io_S(arg) ) RETURN
-    IEEE_IS_FINITE_S = .TRUE.
+    ! IEEE_IS_FINITE_S = .FALSE.
+    ! if( IEEE_Is_NaN_S(arg) ) RETURN
+    ! if( IEEE_Is_Inf_io_S(arg) ) RETURN
+    ! if( IEEE_Is_Inf_Huge_S(arg) ) RETURN
+    ! IEEE_IS_FINITE_S = .TRUE.
+    IEEE_IS_FINITE_S = ( abs(arg) < Huge(arg) )
   END FUNCTION IEEE_IS_FINITE_S
   
   elemental logical function IEEE_IS_FINITE_D( ARG )
@@ -80,12 +82,24 @@ CONTAINS
     double precision, intent(in) ::          arg
   ! Private
     
-    IEEE_IS_FINITE_D = .FALSE.
-    if( IEEE_Is_NaN_D(arg) ) RETURN
-    if( IEEE_Is_Inf_io_D(arg) ) RETURN
-    IEEE_IS_FINITE_D = .TRUE.
+    ! IEEE_IS_FINITE_D = .FALSE.
+    ! if( IEEE_Is_NaN_D(arg) ) RETURN
+    ! if( IEEE_Is_Inf_io_D(arg) ) RETURN
+    ! if( IEEE_Is_Inf_Huge_D(arg) ) RETURN
+    ! IEEE_IS_FINITE_D = .TRUE.
+    IEEE_IS_FINITE_D = ( abs(arg) < Huge(arg) )
   END FUNCTION IEEE_IS_FINITE_D
   
+  elemental logical function IEEE_Is_Inf_Huge_D ( X ) result(res)
+    double precision, intent(in) :: X
+    res = ABS(x) > Huge(x)
+  end function IEEE_Is_Inf_Huge_D
+
+  elemental logical function IEEE_Is_Inf_Huge_S ( X ) result(res)
+    real, intent(in) :: X
+    res = ABS(x) > Huge(x)
+  end function IEEE_Is_Inf_Huge_S
+
   elemental logical function IEEE_Is_Inf_io_D ( X ) result(res)
     double precision, intent(in) :: X
     character(len=80) :: reschar
@@ -197,6 +211,9 @@ END MODULE IEEE_ARITHMETIC
 
 !
 ! $Log$
+! Revision 1.6  2009/07/24 17:43:06  pwagner
+! Brought Intel treatment of NaNs into better compliance
+!
 ! Revision 1.5  2009/06/23 19:58:52  pwagner
 ! Prevent Intel from optimizing ident string away
 !
