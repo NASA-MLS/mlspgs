@@ -19,7 +19,7 @@ module DUMP_0
   use BitStuff, only: MAXBITNUMBER, WhichBitsAreSet
   use ieee_arithmetic, only: ieee_is_finite
   use MLSCommon, only: undefinedValue
-  use MLSFillValues, only : allFinite, FilterValues, HalfWaves, &
+  use MLSFillValues, only : FilterValues, HalfWaves, &
     & IsFinite, IsInfinite, IsNaN, &
     & InfFunction, NaNFunction, ReorderFillValues, ReplaceFillValues, &
     & WhereAreTheInfs, WhereAreTheNaNs
@@ -2471,6 +2471,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.99  2009/11/20 01:15:11  pwagner
+! Decided against using allFinite
+!
 ! Revision 2.98  2009/11/20 01:12:50  pwagner
 ! Added new option H or 'shape' to just show array rank, shape
 !
