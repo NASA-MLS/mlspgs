@@ -19,7 +19,7 @@ module DUMP_0
   use BitStuff, only: MAXBITNUMBER, WhichBitsAreSet
   use ieee_arithmetic, only: ieee_is_finite
   use MLSCommon, only: undefinedValue
-  use MLSFillValues, only : FilterValues, HalfWaves, &
+  use MLSFillValues, only : allFinite, FilterValues, HalfWaves, &
     & IsFinite, IsInfinite, IsNaN, &
     & InfFunction, NaNFunction, ReorderFillValues, ReplaceFillValues, &
     & WhereAreTheInfs, WhereAreTheNaNs
@@ -106,6 +106,7 @@ module DUMP_0
 ! if the options is present and contains the following characters:
 !   character         meaning
 !      ---            -------
+!       H              show rank, shape of array
 !       b              table of % vs. amount of differences (pdf)
 !       c              clean
 !       g              gaps      
@@ -222,11 +223,11 @@ module DUMP_0
   integer, parameter :: TOOMANYELEMENTS = 125*50*3500 ! Don't try to diff l1b DACS
   logical, parameter ::   DEEBUG = .false.
   logical, parameter ::   SHORTCUTDIFFS = .false.
-  logical :: myClean, myDirect, myGaps, myStats, myRMS, myTable, &
+  logical :: myClean, myDirect, myGaps, myStats, myShape, myRMS, myTable, &
     & myTranspose, myTrim, myUnique, myWholeArray, onlyWholeArray
   character(len=16) :: myPCTFormat
   logical, save :: nameHasBeenPrinted = .false.
-  integer :: numNonFill, numFill
+  integer :: myRank, numNonFill, numFill
   logical, save :: thisIsADiff = .false.
   integer :: how_many
   integer, dimension(1024) :: which
@@ -648,6 +649,7 @@ contains
     integer, intent(in), optional :: LBOUND ! Low bound for Array
     character(len=*), optional, intent(in) :: options
     integer :: myFillValue
+    myRank = 0
     include 'dumpstats.f9h'
   end subroutine DUMP_BOGUS
 
@@ -2173,6 +2175,9 @@ contains
     include 'printRMSetc.f9h'
   end subroutine printRMSetc_int
 
+  ! This family of subroutines print subscripts to the left
+  ! of each dumped row, sometimes noting that repeated lines
+  ! that have been omitted for brevity
   ! ----------------------------------------------  Say_Fill_Char  -----
   subroutine Say_Fill_Char ( Subs, NumZeroRows, Fill, Inc  )
     character(len=*), intent(in) :: Fill
@@ -2258,27 +2263,29 @@ contains
     myClean      = theDefault('clean') ! .false.
     myGaps       = theDefault('gaps')
     myRMS        = theDefault('rms')   ! .false.
+    myShape      = theDefault('shape')  ! .false.
     myStats      = theDefault('stat')  ! .false.
     myTable      = theDefault('table')  ! .false.
     myTranspose  = theDefault('transpose')  ! .false.
     myTrim       = theDefault('trim')  ! .false.
     myUnique     = theDefault('unique')
     myWholeArray = theDefault('wholearray') .or. &
-        & .not. (myStats .or. myRMS.or. myTable)
+        & .not. (myStats .or. myRMS.or. myTable .or. myShape )
     if ( present(options) ) then
       myClean       = index( options, 'c' ) > 0
       myGaps        = index( options, 'g' ) > 0
       myRMS         = index( options, 'r' ) > 0
+      myShape       = index( options, 'H' ) > 0
       myStats       = index( options, 's' ) > 0
       myTable       = index( options, 'b' ) > 0
       myTranspose   = index( options, 'p' ) > 0
       myTrim        = index( options, 't' ) > 0
       myUnique      = index( options, 'u' ) > 0
       myWholeArray  = ( index( options, 'w' ) > 0 ) .or. &
-        & .not. (myStats .or. myRMS.or. myTable)
+        & .not. (myStats .or. myRMS.or. myTable .or. myShape )
     endif
     onlyWholeArray = myWholeArray .and. &
-      & .not. (myRMS .or. myStats .or. myTable)
+      & .not. (myRMS .or. myStats .or. myTable .or. myShape)
   end subroutine theDumpBegins
 
   subroutine theDumpEnds
@@ -2303,12 +2310,22 @@ contains
       isit = index( defaultstring, 'c' ) > 0
     case ('direct')
       isit = index( defaultstring, 'd' ) > 0
+    case ('gaps')
+      isit = index( defaultstring, 'g' ) > 0
     case ('rms')
       isit = index( defaultstring, 'r' ) > 0
+    case ('shape')
+      isit = index( defaultstring, 'H' ) > 0
     case ('stat')
       isit = index( defaultstring, 's' ) > 0
+    case ('table')
+      isit = index( defaultstring, 'b' ) > 0
+    case ('transpose')
+      isit = index( defaultstring, 'p' ) > 0
     case ('trim')
       isit = index( defaultstring, 't' ) > 0
+    case ('unique')
+      isit = index( defaultstring, 'u' ) > 0
     case ('wholearray')
       isit = index( defaultstring, 'w' ) > 0
     case default
@@ -2454,6 +2471,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.98  2009/11/20 01:12:50  pwagner
+! Added new option H or 'shape' to just show array rank, shape
+!
 ! Revision 2.97  2009/10/30 23:02:41  pwagner
 ! Should not double-print name if only whole array diff
 !
