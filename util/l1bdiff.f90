@@ -65,7 +65,7 @@ program l1bdiff ! diffs two l1b or L2AUX files
     logical     :: rms = .false.
     logical     :: table = .false.
     logical     :: direct = .true.
-    logical     :: oneD = .false.
+    logical     :: oneD = .true.
     logical     :: l2aux = .false.
     logical     :: ascii = .false. ! If true, diff even character fields
     integer     :: maf1 = 0
@@ -534,8 +534,9 @@ contains
           ! We will store L1BData%dpField in a values array
           nsize = product(shape(L1bData%dpField))
           if ( .not. options%silent ) print *, 'About to do it 1-d ' // dumpOptions, nsize
-          call dump( L1bData%dpField-L1bData2%dpField, 'L1bData%dpField diff' )
-          stop
+          call dump( L1bData%dpField-L1bData2%dpField, 'L1bData%dpField diff', &
+            & options=dumpOptions )
+          ! stop
           call allocate_test(l1bValues1, nsize, 'l1bValues1', ModuleName )
           l1bValues1 = reshape( L1bData%dpField, (/nsize/) )
           call deallocate_test( L1bData%dpField, 'l1bData%Values1', ModuleName )
@@ -544,6 +545,7 @@ contains
           call deallocate_test( L1bData2%dpField, 'l1bData%Values2', ModuleName )
           if ( options%timing ) call SayTime( 'Copying values to 1-d arrays', stime )
           stime = t2
+          print *, 'About to do it 1-d ' // dumpOptions, nsize
           call diff(L1bData, L1bData2, numDiffs=numDiffs, options=dumpOptions, &
             & l1bValues1=l1bValues1, l1bValues2=l1bValues2 )
           call deallocate_test( L1bValues1, 'l1bValues1', ModuleName )
@@ -764,6 +766,9 @@ end program l1bdiff
 !==================
 
 ! $Log$
+! Revision 1.17  2009/11/02 19:54:06  pwagner
+! Fixed bug causing goldbrick to print excessively
+!
 ! Revision 1.16  2009/10/30 23:06:34  pwagner
 ! Last change let executable land on bare stop; must fix oneD yet
 !
