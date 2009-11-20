@@ -69,7 +69,7 @@
       & (/ 99.9, 99.8, 99.7, 99.5, 99., 98., 97., 95., 90., 80. /)
     real, dimension(MAXPCTS), parameter :: PCTFACTORS = &
       & (/ .01, .02, .05, .1, .2, .5, 1., 2., 5., 10. /)
-    logical, parameter :: unique = .false. 
+    logical, parameter :: unique = .true. 
     ! Executable
     t1 = 0.
     t2 = 0.
@@ -112,6 +112,7 @@
     endif
 
     if ( DEBUG ) then
+      call output( '(in unfiltered diff)', advance='yes' )
       call outputNamedValue( 'myStats', myStats )
       call outputNamedValue( 'myRMs', myRMS)
       call outputNamedValue( 'myTable', myTable )
@@ -192,7 +193,15 @@
     endif
     if ( DEBUG ) call SayTime( 'statistics', stime )
     stime = t2
-    call fillPcts
+    if ( product(shape(array1)) > TOOMANYELEMENTS ) then
+      call outputNamedValue( 'Array size excessive for pcts', product(shape(array1)) )
+      call dump(array1-array2, trim(DiffName), &
+        & real(0.,kind(array1)), WIDTH, FORMAT, &
+        & LBOUND, OPTIONS )
+      return
+    else
+      call fillPcts
+    endif
     if ( DEBUG ) call SayTime( 'percentages', stime )
     stime = t2
     call usePcts
@@ -371,6 +380,9 @@
 
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.8  2009/11/20 01:16:17  pwagner
+! More protection against running out of memory diffing DACS datasets
+!
 ! Revision 2.7  2009/10/30 23:02:19  pwagner
 ! Should not double-print name if only whole array diff
 !
