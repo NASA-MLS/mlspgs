@@ -1,3 +1,16 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id$
+
 ! subroutine DUMP_1D_INTEGER ( ARRAY, NAME, &                                 
 !   & FILLVALUE, FORMAT, WIDTH, LBOUND, OPTIONS )                             
 !   integer, intent(in) :: ARRAY(:)                                           
@@ -14,11 +27,9 @@
 !   integer :: MyWidth
 !   integer :: NumZeroRows
 !   integer :: nUnique
-
-! $Id$
-
     ! Executable
     call theDumpBegins ( options )
+    myRank = 1
     myFillValue = 0
     if ( present(FillValue) ) myFillValue=FillValue
     if ( myUnique ) then
@@ -74,6 +85,9 @@
     call theDumpEnds
 !   end subroutine DUMP_1D_INTEGER
 ! $Log$
+! Revision 2.2  2009/11/20 01:11:27  pwagner
+! Added new options to just show array rank, shape
+!
 ! Revision 2.1  2009/06/24 22:34:21  pwagner
 ! First commit
 !

@@ -20,7 +20,6 @@
 !   character(len=*), intent(in), optional :: FORMAT         
 !   integer, intent(in), optional :: LBOUND                  
 !   character(len=*), intent(in), optional :: options        
-! 
 !   integer :: I, J, K, L                                    
 !   integer :: NumZeroRows                                   
 !   double precision :: myFillValue                          
@@ -28,9 +27,9 @@
 !   integer :: nUnique                                       
 !   integer, dimension(MAXNUMELEMENTS) :: counts             
 !   double precision, dimension(MAXNUMELEMENTS) :: elements  
-
     ! Executable
     call theDumpBegins ( options )
+    myRank = 3
     myFillValue = 0.d0
     if ( present(FillValue) ) myFillValue=FillValue
     if ( myUnique ) then
@@ -91,10 +90,13 @@
       end do
       call say_fill ( (/ i-1, size(array,1), j-1, size(array,2), &
         & k-5, size(array,3) /), numZeroRows, myFillValue )
-   end if
+    end if
     call theDumpEnds
 ! end subroutine DUMP_3D_DOUBLE
 ! $Log$
+! Revision 2.2  2009/11/20 01:11:53  pwagner
+! Added new options to just show array rank, shape
+!
 ! Revision 2.1  2009/06/24 22:34:21  pwagner
 ! First commit
 !

@@ -29,7 +29,7 @@
 !   double precision, dimension(MAXNUMELEMENTS) :: elements
     ! Executable
     call theDumpBegins ( options )
-
+    myRank = 2
     myFillValue = 0
     if ( present(FillValue) ) myFillValue = FillValue
     if ( myUnique ) then
@@ -112,6 +112,9 @@
     call theDumpEnds
 !   end subroutine DUMP_2D_INTEGER
 ! $Log$
+! Revision 2.2  2009/11/20 01:11:40  pwagner
+! Added new options to just show array rank, shape
+!
 ! Revision 2.1  2009/06/24 22:34:21  pwagner
 ! First commit
 !
