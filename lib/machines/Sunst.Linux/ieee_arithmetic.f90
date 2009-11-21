@@ -69,10 +69,7 @@ CONTAINS
     real, intent(in) ::          arg
   ! Private
     
-    IEEE_IS_FINITE_S = .FALSE.
-    if( IEEE_Is_NaN_S(arg) ) RETURN
-    if( IEEE_Is_Inf_io_S(arg) ) RETURN
-    IEEE_IS_FINITE_S = .TRUE.
+    IEEE_IS_FINITE_S = ( abs(arg) <= Huge(arg) )
   END FUNCTION IEEE_IS_FINITE_S
   
   elemental logical function IEEE_IS_FINITE_D( ARG )
@@ -80,10 +77,7 @@ CONTAINS
     double precision, intent(in) ::          arg
   ! Private
     
-    IEEE_IS_FINITE_D = .FALSE.
-    if( IEEE_Is_NaN_D(arg) ) RETURN
-    if( IEEE_Is_Inf_io_D(arg) ) RETURN
-    IEEE_IS_FINITE_D = .TRUE.
+    IEEE_IS_FINITE_D = ( abs(arg) <= Huge(arg) )
   END FUNCTION IEEE_IS_FINITE_D
   
   elemental logical function IEEE_Is_Inf_io_D ( X ) result(res)
@@ -177,6 +171,9 @@ END MODULE IEEE_ARITHMETIC
 
 !
 ! $Log$
+! Revision 1.2  2009/06/23 19:58:53  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 1.1  2008/07/11 23:57:14  pwagner
 ! 1st commit
 !

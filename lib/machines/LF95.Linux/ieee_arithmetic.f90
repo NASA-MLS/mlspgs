@@ -65,15 +65,12 @@ MODULE IEEE_ARITHMETIC              ! Common utilities for the MLSL1 program
 
 CONTAINS
   
-  elemental logical function ieee_is_finite_s( arg )
+  elemental logical function IEEE_IS_FINITE_S( ARG )
   ! Formal args
     real, intent(in) ::          arg
   ! Private
     
-    IEEE_IS_FINITE_S = .FALSE.
-    if( isnan(arg) ) RETURN
-    if( isinf(arg) ) RETURN
-    IEEE_IS_FINITE_S = .TRUE.
+    IEEE_IS_FINITE_S = ( abs(arg) <= Huge(arg) )
   END FUNCTION IEEE_IS_FINITE_S
   
   elemental logical function IEEE_IS_FINITE_D( ARG )
@@ -81,10 +78,7 @@ CONTAINS
     double precision, intent(in) ::          arg
   ! Private
     
-    IEEE_IS_FINITE_D = .FALSE.
-    if( isnan(arg) ) RETURN
-    if( isinf(arg) ) RETURN
-    IEEE_IS_FINITE_D = .TRUE.
+    IEEE_IS_FINITE_D = ( abs(arg) <= Huge(arg) )
   END FUNCTION IEEE_IS_FINITE_D
   
   elemental logical function IEEE_Is_NaN_D ( X )
@@ -178,6 +172,9 @@ END MODULE IEEE_ARITHMETIC
 
 !
 ! $Log$
+! Revision 1.8  2009/06/23 19:58:52  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 1.7  2005/06/22 20:26:22  pwagner
 ! Reworded Copyright statement, moved rcs id
 !

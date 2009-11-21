@@ -69,31 +69,17 @@ CONTAINS
   elemental logical function IEEE_IS_FINITE_S( ARG )
   ! Formal args
     real, intent(in) ::          arg
-!    integer, external ::         ir_isnan
-!    integer, external ::         ir_isinf
   ! Private
     
-    IEEE_IS_FINITE_S = .FALSE.
-    if( IEEE_Is_NaN_S(arg) ) RETURN
-    if( IEEE_Is_Inf_io_S(arg) ) RETURN
-!    if( ir_isnan(arg) == 1 ) RETURN
-!    if( ir_isinf(arg) == 1 ) RETURN
-    IEEE_IS_FINITE_S = .TRUE.
+    IEEE_IS_FINITE_S = ( abs(arg) <= Huge(arg) )
   END FUNCTION IEEE_IS_FINITE_S
   
   elemental logical function IEEE_IS_FINITE_D( ARG )
   ! Formal args
     double precision, intent(in) ::          arg
-!    integer, external ::         ir_isnan
-!    integer, external ::         ir_isinf
   ! Private
     
-    IEEE_IS_FINITE_D = .FALSE.
-    if( IEEE_Is_NaN_D(arg) ) RETURN
-    if( IEEE_Is_Inf_io_D(arg) ) RETURN
-!    if( ir_isnan(arg) == 1 ) RETURN
-!    if( ir_isinf(arg) == 1 ) RETURN
-    IEEE_IS_FINITE_D = .TRUE.
+    IEEE_IS_FINITE_D = ( abs(arg) <= Huge(arg) )
   END FUNCTION IEEE_IS_FINITE_D
   
   elemental logical function IEEE_Is_Inf_io_D ( X ) result(res)
@@ -187,6 +173,9 @@ END MODULE IEEE_ARITHMETIC
 
 !
 ! $Log$
+! Revision 1.9  2009/06/23 19:58:53  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 1.8  2005/06/22 20:27:58  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
