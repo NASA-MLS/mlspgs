@@ -171,7 +171,7 @@ contains
                                         ! a son or grandson of root.
     type(vector_T), pointer :: LowBound ! For state during retrieval
     integer :: MaxJacobians             ! Maximum number of Jacobian
-                                        ! evaluations of Newtonian method
+                                        ! evaluations of Newton method
     type(vector_T), pointer :: Measurements  ! The measurements vector
     type(vector_T), pointer :: MeasurementSD ! The measurements vector's Std. Dev.
     integer :: Method                   ! Method to use for inversion, currently
@@ -685,7 +685,7 @@ contains
                & jacobian, chunk,maxJacobians,initlambda)
             call add_to_retrieval_timing( 'low_cloud', t1 )
           case ( l_newtonian, l_simple ) 
-            call newtonianSolver
+            call newtonSolver
           case default
             call MLSMessage ( MLSMSG_Error, moduleName, &
             & "this retrieval method has not yet been implemented" )
@@ -1277,8 +1277,9 @@ contains
         call alt_nwtdb ( aj, width, level, why )
       end if
     end subroutine My_NWTDB
-    ! ------------------------------------------  NewtonianSolver  -----
-    subroutine NewtonianSolver
+
+    ! ------------------------------------------  NewtonSolver  -----
+    subroutine NewtonSolver
 
       use DNWT_Module, only: FlagName, NF_AITKEN, NF_BEST, NF_BIGGEST_FLAG, &
       & NF_DX, NF_DX_AITKEN, NF_EVALF, NF_EVALJ, NF_FANDJ, NF_GMOVE, NF_LEV, &
@@ -1397,7 +1398,7 @@ contains
       character(len=10) :: TheFlagName  ! Name of NWTA's flag argument
       integer :: TikhonovRows           ! How many rows of Tiknonov regularization?
 
-      call MLSMessageCalls( 'push', constantName='NewtonianSolver' )
+      call MLSMessageCalls( 'push', constantName='NewtonSolver' )
       ! Set flags from switches
       d_atb = index ( switches, 'atb' ) /= 0
       d_col = index(switches,'col') /= 0
@@ -1499,7 +1500,7 @@ contains
       numJ = 0
       numNewt = 0
       aj%axmax = 0.0
-        call time_now ( t0 ) ! time base for Newtonian iteration
+        call time_now ( t0 ) ! time base for Newton iteration
       do k = 1, size(v(x)%quantities)
         aj%axmax = max(aj%axmax, maxval(abs(v(x)%quantities(k)%values)))
       end do
@@ -1521,13 +1522,13 @@ contains
       call copyVector ( v(bestX), v(x) ) ! bestX = x to start things off
       prev_nwt_flag = huge(0)
       loopCounter = 0
-NEWT: do ! Newtonian iteration
-        loopCounter = loopCOunter + 1
+NEWT: do ! Newton iteration
+        loopCounter = loopCounter + 1
         if ( loopCounter > max(50, 50 * maxJacobians) ) then
           chunk%abandoned = .true.
           call MLSMessage ( MLSMSG_Warning, ModuleName, &
             & 'Retrieval abandoned because DNWT appears to be looping.' )
-          exit
+          exit NEWT
         end if
         if ( nwt_flag == nf_getJ ) then
           if ( got(f_diagnostics) ) call FillDiagVec ( diagnostics, aj, &
@@ -1637,7 +1638,7 @@ NEWT: do ! Newtonian iteration
                 call time_now ( t3 )
                 call output ( t3-t0, before=' at ', after=' seconds', advance='yes' )
               end if
-            if ( .not. foundBetterState ) exit
+            if ( .not. foundBetterState ) exit NEWT
             ! Restore BestX, run the forward model one more time to get a new
             ! Jacobian, and form normal equations -- the last two so that the
             ! a posteriori covariance is consistent with BestX.
@@ -1648,7 +1649,7 @@ NEWT: do ! Newtonian iteration
             ! to compute a posteriori covariance or standard deviation, or
             ! an averaging kernel?
             if ( .not. (got(f_outputCovariance) .or. got(f_outputSD) .or. &
-              &         got(f_average)) ) exit ! no
+              &         got(f_average)) ) exit NEWT ! no
             nwt_flag = nf_getJ
           end if
 
@@ -2074,7 +2075,6 @@ NEWT: do ! Newtonian iteration
           call choleskyFactor ( factored, normalEquations, status=matrixStatus )
             call add_to_retrieval_timing ( 'cholesky_factor', t1 )
           if ( any ( matrixStatus /= 0 ) ) then
-            chunk%abandoned = .true.
             call dump ( matrixStatus, 'matrixStatus [block, row in trouble] = ' )
             if ( d_mst ) then
               ! Dump the structure if we haven't done so already
@@ -2095,9 +2095,10 @@ NEWT: do ! Newtonian iteration
               & 'Consider applying or increasing the weight of Tikhonov regularization for the block', &
               & advance='yes' )
             call output ( 'Re-run with -Smst to see more details', advance='yes' )
-            call MLSMessage ( MLSMSG_Warning, ModuleName, &
-              & 'Retrieval abandoned due to problem factoring normalEquations in evalJ' )
-            exit NEWT
+            call newtonSolverFailed ( 'problem factoring normalEquations in evalJ', &
+              & nwt_flag, prev_nwt_flag, d_ndb_2, aj )
+!             exit NEWT
+            cycle NEWT
           end if
             if ( d_neq_f ) &
               & call dump ( normalEquations%m, 'Normal Equations', 2, clean=.true. )
@@ -2135,7 +2136,7 @@ NEWT: do ! Newtonian iteration
               if ( d_sca ) &
                 & call dump ( (/ aj%fnorm, aj%chiSqNorm /) , &
                 & '     | F |    chi^2/DOF ', options='c' )
-            exit
+            exit NEWT
           end if
           aj%diag = minDiag ( factored ) ! element on diagonal with
             !       smallest absolute value, after triangularization
@@ -2152,7 +2153,6 @@ NEWT: do ! Newtonian iteration
             call add_to_retrieval_timing ( 'cholesky_solver', t1 )
             if ( d_dvec ) call dump ( v(candidateDX), name='CandidateDX' )
           if ( any ( matrixStatus /= 0 ) ) then
-            chunk%abandoned = .true.
             call dump ( matrixStatus, 'matrixStatus [block, row in trouble] = ' )
             if ( d_mst ) then
               call dump ( normalEquations%m%block(matrixStatus(1),matrixStatus(1)), &
@@ -2162,9 +2162,10 @@ NEWT: do ! Newtonian iteration
               if ( got(f_lowBound) ) call dump ( lowBound, name='Low Bound', details=9 )
               if ( got(f_highBound) ) call dump ( highBound, name='High Bound', details=9 )
             end if
-            call MLSMessage ( MLSMSG_Warning, ModuleName, &
-              & 'Retrieval abandoned due to problem solving normalEquations in evalJ' )
-            exit
+            call newtonSolverFailed ( 'problem solving normalEquations in evalJ', &
+              & nwt_flag, prev_nwt_flag, d_ndb_2, aj )
+!             exit NEWT
+            cycle NEWT
           end if
 
           !{AJ\%FNMIN = $L_2$ norm of residual, $||{\bf\Sigma}^T {\bf J}^T
@@ -2208,11 +2209,11 @@ NEWT: do ! Newtonian iteration
           call solveCholesky ( factored, q, v(candidateDX), &
             & transpose=.true., status=matrixStatus ) ! q := factored^{-T} v(candidateDX)
           if ( any ( matrixStatus /= 0 ) ) then
-            chunk%abandoned = .true.
             call dump ( matrixStatus, 'matrixStatus [block, row in trouble] = ' )
-            call MLSMessage ( MLSMSG_Warning, ModuleName, &
-              & 'Retrieval abandoned due to problem solving for q in levenberg' )
-            exit
+            call newtonSolverFailed ( 'problem solving for q in levenberg', &
+              & nwt_flag, prev_nwt_flag, d_ndb_2, aj )
+!             exit NEWT
+            cycle NEWT
           end if
           aj%qnsq = q .dot. q
             if ( d_sca ) &
@@ -2247,7 +2248,6 @@ NEWT: do ! Newtonian iteration
           call choleskyFactor ( factored, normalEquations, status=matrixStatus )
             call add_to_retrieval_timing( 'cholesky_factor', t1 )
           if ( any ( matrixStatus /= 0 ) ) then
-            chunk%abandoned = .true.
             call dump ( matrixStatus, 'matrixStatus [block, row in trouble] = ' )
             if ( d_mst ) then
               call dump ( normalEquations%m%block(matrixStatus(1),matrixStatus(1)), &
@@ -2257,9 +2257,10 @@ NEWT: do ! Newtonian iteration
               if ( got(f_lowBound) ) call dump ( lowBound, name='Low Bound', details=9 )
               if ( got(f_highBound) ) call dump ( highBound, name='High Bound', details=9 )
             end if
-            call MLSMessage ( MLSMSG_Warning, ModuleName, &
-              & 'Retrieval abandoned due to problem factoring normal equations in solve' )
-            exit
+            call newtonSolverFailed ( 'problem factoring normal equations in solve', &
+              & nwt_flag, prev_nwt_flag, d_ndb_2, aj )
+!             exit NEWT
+            cycle NEWT
           end if
             if ( d_fac_n ) call dump_Linf ( factored%m, &
                 & 'L1 norms of blocks of factor after Marquardt:', &
@@ -2284,19 +2285,19 @@ NEWT: do ! Newtonian iteration
             & transpose=.true., status=matrixStatus ) ! v(candidateDX) := factored^{-T} v(aTb)
             call add_to_retrieval_timing( 'cholesky_solver', t1 )
           if ( any ( matrixStatus /= 0 ) ) then
-            chunk%abandoned = .true.
             call dump ( matrixStatus, 'matrixStatus [block, row in trouble] = ' )
-            call MLSMessage ( MLSMSG_Warning, ModuleName, &
-              & 'Retrieval abandoned due to problem solving for aTb in solve' )
-            exit
+            call newtonSolverFailed ( 'problem solving for aTb in solve', &
+              & nwt_flag, prev_nwt_flag, d_ndb_2, aj )
+!             exit NEWT
+            cycle NEWT
           end if
 
           if ( ieee_is_nan ( aj%fnorm ) ) then
-            chunk%abandoned = .true.
             if ( d_strb ) call dump ( v(x), name='Current state', details=9 )
-            call MLSMessage ( MLSMSG_Warning, ModuleName, &
-              & 'Retrieval abandoned due to numerical problems (with radiances?)' )
-            exit
+            call newtonSolverFailed ( 'numerical problems (with radiances?)', &
+              & nwt_flag, prev_nwt_flag, d_ndb_2, aj )
+!             exit NEWT
+            cycle NEWT
           end if
 
           ! aj%fnorm is now the norm of f, not its square.
@@ -2306,11 +2307,11 @@ NEWT: do ! Newtonian iteration
           aj%fnmin = aj%fnorm**2 - (v(candidateDX) .dot. v(candidateDX))
 
           if ( ieee_is_nan ( aj%fnmin ) ) then
-            chunk%abandoned = .true.
             if ( d_strb ) call dump ( v(x), name='Current state', details=9 )
-            call MLSMessage ( MLSMSG_Warning, ModuleName, &
-              & 'Retrieval abandoned due to numerical problems (with derivatives?)' )
-            exit
+            call newtonSolverFailed ( 'numerical problems (with derivatives?)', &
+              & nwt_flag, prev_nwt_flag, d_ndb_2, aj )
+!             exit NEWT
+            cycle NEWT
           end if
 
           if ( aj%fnmin < 0.0 ) then
@@ -2328,11 +2329,11 @@ NEWT: do ! Newtonian iteration
           ! v(candidateDX) := factored^{-1} v(candidateDX)
           call solveCholesky ( factored, v(candidateDX), status=matrixStatus )
           if ( any ( matrixStatus /= 0 ) ) then
-            chunk%abandoned = .true.
             call dump ( matrixStatus, 'matrixStatus [block, row in trouble] = ' )
-            call MLSMessage ( MLSMSG_Warning, ModuleName, &
-              & 'Retrieval abandoned due to problem solving normal equations in solve' )
-            exit
+            call newtonSolverFailed ( 'problem solving normal equations in solve', &
+              & nwt_flag, prev_nwt_flag, d_ndb_2, aj )
+!             exit NEWT
+            cycle NEWT
           end if
 
           !{Shorten $\delta {\bf \hat x} =$ {\tt dxUnScaled} to stay within
@@ -2540,8 +2541,8 @@ NEWT: do ! Newtonian iteration
               &    got(f_average) ) .and.                             &
               &  ( nwt_flag == nf_tolx_best .or.                      &
               &    nwt_flag == nf_tolx .and. aj%sq /= 0.0 .or.        &
-              &    tikhonovNeeded .and. covSansReg ) ) cycle ! yes
-            exit ! no
+              &    tikhonovNeeded .and. covSansReg ) ) cycle NEWT ! yes
+            exit NEWT ! no
           end if
           diagonal = .false.
           nwt_flag = nf_start
@@ -2753,7 +2754,31 @@ NEWT: do ! Newtonian iteration
       call deallocate_test ( fmStat%rows, 'FmStat%rows', moduleName )
       call add_to_retrieval_timing( 'newton_solver', t1 )
       call MLSMessageCalls( 'pop' )
-    end subroutine NewtonianSolver
+    end subroutine NewtonSolver
+
+    ! ------------------------------------  NewtonSolverFailed  -----
+    subroutine NewtonSolverFailed ( Why, Nwt_Flag, Prev_Nwt_Flag, &
+      & D_ndb_2, AJ )
+      use DNWT_Module, only: NF_START, NWT_T
+      character(len=*), intent(in) :: Why      ! What failed
+      integer, intent(inout) :: Nwt_Flag       ! Solver's state flag
+      integer, intent(inout) :: Prev_Nwt_Flag  ! Solver's previous state
+      logical, intent(in) :: D_ndb_2           ! "dump AJ"
+      type (NWT_T), intent(in) :: AJ           ! Solver's database
+
+!       block ! for abandoned chunk version, followed by EXIT NEWT
+!         chunk%abandoned = .true.
+!         call MLSMessage ( MLSMSG_Warning, ModuleName, &
+!           & 'Retrieval abandoned due to ' // trim(why) )
+!       end block
+!     block ! for forced gradient move version, followed by CYCLE NEWT
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & 'Gradient move forced due to ' // trim(why) )
+          if ( d_ndb_2 ) call my_nwtdb ( aj, width=9 )
+        prev_nwt_flag = nwt_flag
+        nwt_flag = nf_start ! Force gradient move
+!     end block
+    end subroutine NewtonSolverFailed
 
     ! --------------------------------------------------  SayTime  -----
     subroutine SayTime
@@ -2783,6 +2808,9 @@ NEWT: do ! Newtonian iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.307  2009/11/23 21:10:18  vsnyder
+! Gradiant move instead of abandonment when trouble occurs
+!
 ! Revision 2.306  2009/10/26 17:12:39  pwagner
 ! Added Diff command to be used like Dump in l2cf
 !
