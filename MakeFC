@@ -321,6 +321,17 @@ LEVELS = l1 l2 l3 l3m
 
 #-----------------------
 
+# These are all the configurations that will be removed by distclean
+# EVERY_MLSCONFG = LF95.Linux  NAG.Linux  NAG.SGI  NAG.Sun  Unknown.None  Sun.Sun
+# Instead of hard-coding, as customized name are now possible for MLSCONFG
+# we will let reecho.sh find the ones we'll use
+REECHO=$(MLSBIN)/reecho.sh
+UNIQUE_NAME=$(MLSBIN)/unique_name.sh
+EVERY_MLSCONFG = $(shell ${REECHO} -d -dirn lib/machines -excl CVS -excl NAG.nogc)
+
+# These shouldn't be tarred up as part of EVERYTHING (or ever)
+EXCL_MLSCONFG = $(shell ${REECHO} -d -dirn lib/machines -prefix='--exclude' -suffixn='/\*' -excl CVS)
+
 # OTHER_SUBDIRS are *not* built automatically:
 # you must either name them individually, or use the "all" target
 OTHER_SUBDIRS = fwdmdl cloudfwdm cfm
@@ -331,7 +342,8 @@ OTHER_SUBDIRS = fwdmdl cloudfwdm cfm
 
 # make all
 
-SUBDIRS = blas lib $(LEVELS) $(OTHER_SUBDIRS)
+#SUBDIRS = blas lib $(LEVELS) $(OTHER_SUBDIRS)
+SUBDIRS := $(shell ${REECHO} -d blas lib $(LEVELS) $(OTHER_SUBDIRS))
 
 # This isn't really everything, just everything the SIPS might need
 # so it will be bundled up by tar
@@ -346,19 +358,7 @@ EVERYTHING = $(SUBDIRS)  srclib \
 #    make tar TAR=/usr/local/gnu/bin/tar
 TAR=tar
 
-# These are all the configurations that will be removed by distclean
-# EVERY_MLSCONFG = LF95.Linux  NAG.Linux  NAG.SGI  NAG.Sun  Unknown.None  Sun.Sun
-# Instead of hard-coding, as customized name are now possible for MLSCONFG
-# we will let reecho.sh find the ones we'll use
-REECHO=$(MLSBIN)/reecho.sh
-UNIQUE_NAME=$(MLSBIN)/unique_name.sh
-EVERY_MLSCONFG = $(shell ${REECHO} -d -dirn lib/machines -excl CVS -excl NAG.nogc)
-
-# These shouldn't be tarred up as part of EVERYTHING (or ever)
-EXCL_MLSCONFG = $(shell ${REECHO} -d -dirn lib/machines -prefix='--exclude' -suffixn='/\*' -excl CVS)
-
 # The next 2 may be commented out if you're absolutely sure you won't need them
-#tests_sub_dirs := $(shell echo tests/*)
 tests_sub_dirs := $(shell ${REECHO} -d -excl tests/CVS tests/*)
 sids_l1boa := sids/l1boa
   
@@ -1170,6 +1170,9 @@ tools: chunktimes checkpvmup compare dateconverter heconvert h5subset h5cat hl \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.116  2009/10/19 21:05:48  pwagner
+# Ignores L2PARALLEL; always install level 2 parallel executables
+#
 # Revision 1.115  2009/10/07 18:29:03  pwagner
 # Preparing to add callable forward model
 #
