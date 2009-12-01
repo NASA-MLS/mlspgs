@@ -91,7 +91,7 @@ endif
 
 include ../../customblds/$(MLSF95).$(MLSPLAT)
 
-machines_f90 := $(shell ${REECHO} -dirn $(MACH_DIR))
+machines_f90 := $(shell ${REECHO} $(REECHOMACHOPTS) -dir $(MACH_DIR) -escape \*.f90)
 MACH_OBJS := $(shell echo ${machines_f90} | sed 's/\.f90/.o/g;s/\.f/.o/g;s/\.c/.o/g')
 #machines_f90 := $(shell cd $(MACH_DIR); echo *.f90)
 #MACH_OBJS := $(shell echo ${machines_f90} | sed 's/f90/o/g')
@@ -203,6 +203,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.52  2009/07/17 20:27:32  pwagner
+# Added COPTS as cc options
+#
 # Revision 1.51  2007/05/29 17:42:18  pwagner
 # compiler-specific settings now in srclib, not platforms
 #

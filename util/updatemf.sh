@@ -26,6 +26,19 @@
 # foreign countries or providing access to foreign persons.
 
 # "$Id$"
+#----------------------- Exclude -----------------------
+
+# Function to temporarily hide a file to excclude it from calculations
+#
+
+Exclude()
+{
+	if [ -f "$1" ]
+   then
+     mv "$1" "$1-x"
+   fi
+}
+
 #---------------------------- get_unique_name
 #
 # Function returns a unique name based on arg, PID and HOSTNAME
@@ -233,10 +246,10 @@ if [ "$made_new_dir" = "true" ] ; then
    fi
 fi
 
+machines_root=$conf_dir/lib/machines            
+machines_base=$machines_root/$MLSF95.$MLSPLAT   
 if [ "$MLSCONFG" != "$MLSF95.$MLSPLAT" -a "$m_update" = "true" ] ; then
 # In case of a custom configuration name, make sure machine files are up-to-date
-  machines_root=$conf_dir/lib/machines            
-  machines_base=$machines_root/$MLSF95.$MLSPLAT   
   the_files=`$REECHO -dirn $machines_root/"$MLSF95.$MLSPLAT"`
   echo "About to make sure $the_files"
   echo "are up-to-date in $machines_root/$MLSCONFG"
@@ -248,9 +261,27 @@ if [ "$MLSCONFG" != "$MLSF95.$MLSPLAT" -a "$m_update" = "true" ] ; then
   done
 fi
 
+# In case you're using the REECHOMACHOPTS mechanism
+# to exclude certain files from the machines subdirectory, basically
+# rename them or remove them
+# echo "m_update $m_update REECHOMACHOPTS $REECHOMACHOPTS"
+if [ "$m_update" = "true" -a "$REECHOMACHOPTS" != "" ] ; then
+  the_files=`$REECHO -dir $machines_root/$MLSCONFG fuzzy $REECHOMACHOPTS`
+  echo "About to rename $the_files"
+  echo "in $machines_root/$MLSCONFG"
+  for file in $the_files
+  do
+    var=`Exclude $machines_root/$MLSCONFG/$file`
+  done
+fi
+
+
 exit 0
 
 # $Log$
+# Revision 1.6  2007/05/29 17:40:29  pwagner
+# compiler-specific settings now in srclib, not platforms
+#
 # Revision 1.5  2005/06/23 22:20:46  pwagner
 # Reworded Copyright statement
 #
