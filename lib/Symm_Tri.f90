@@ -39,10 +39,13 @@ module Symm_Tri
 
   interface Factor_Symm_Tri
     module procedure Factor_Symm_Tri_r4, Factor_Symm_Tri_r8
+    module procedure Factor_Symm_Tri_inPlace_r4, Factor_Symm_Tri_inPlace_r8
   end interface
 
   interface Factor_Symm_Tri_Plus_1
     module procedure Factor_Symm_Tri_Plus_1_r4, Factor_Symm_Tri_Plus_1_r8
+    ! Factor in place:
+    module procedure Factor_Symm_Tri_Plus_1X_r4, Factor_Symm_Tri_Plus_1X_r8
   end interface
 
   interface Solve_Factored_Symm_Tri
@@ -131,15 +134,28 @@ contains
 
   end subroutine Factor_Symm_Tri_r8
 
+! --------------------------------------  Factor_Symm_Tri_inPlace  -----
+  subroutine Factor_Symm_Tri_inPlace_r4 ( D, H, U )
+    ! Factor a symmetric tridiagonal matrix in place
+    integer, parameter :: RK = R4
+
+    include "Factor_Symm_Tri_inPlace.f9h"
+
+  end subroutine Factor_Symm_Tri_inPlace_r4
+
+  subroutine Factor_Symm_Tri_inPlace_r8 ( D, H, U )
+    ! Factor a symmetric tridiagonal matrix in place
+    integer, parameter :: RK = R8
+
+    include "Factor_Symm_Tri_inPlace.f9h"
+
+  end subroutine Factor_Symm_Tri_inPlace_r8
+
 ! ---------------------------------------  Factor_Symm_Tri_Plus_1  -----
   subroutine Factor_Symm_Tri_Plus_1_r4 ( DIAG, H, D, R, U, C )
     ! Factor a symmetric tridiagonal matrix augmented by the same
     ! nonzero element in the top right and bottom left corners (so it's
     ! still symmetric).
-
-    ! We could use Factor_Symm_Tri to factor the top left n-1 X n-1 block
-    ! of A, and then compute D(n), C and R, but what we do here fuses the
-    ! loops.
 
     integer, parameter :: RK = R4
 
@@ -152,15 +168,34 @@ contains
     ! nonzero element in the top right and bottom left corners (so it's
     ! still symmetric).
 
-    ! We could use Factor_Symm_Tri to factor the top left n-1 X n-1 block
-    ! of A, and then compute D(n), C and R, but what we do here fuses the
-    ! loops.
-
     integer, parameter :: RK = R8
 
     include "Factor_Symm_Tri_Plus_1.f9h"
 
   end subroutine Factor_Symm_Tri_Plus_1_r8
+
+! -------------------------------------  Factor_Symm_Tri_Plus_1X  -----
+  subroutine Factor_Symm_Tri_Plus_1X_r4 ( D, H, R, U, C )
+    ! Factor a symmetric tridiagonal matrix augmented by the same
+    ! nonzero element in the top right and bottom left corners (so it's
+    ! still symmetric), in place.
+
+    integer, parameter :: RK = R4
+
+    include "Factor_Symm_Tri_Plus_1X.f9h"
+
+  end subroutine Factor_Symm_Tri_Plus_1X_r4
+
+  subroutine Factor_Symm_Tri_Plus_1X_r8 ( D, H, R, U, C )
+    ! Factor a symmetric tridiagonal matrix augmented by the same
+    ! nonzero element in the top right and bottom left corners (so it's
+    ! still symmetric), in place.
+
+    integer, parameter :: RK = R8
+
+    include "Factor_Symm_Tri_Plus_1X.f9h"
+
+  end subroutine Factor_Symm_Tri_Plus_1X_r8
 
 ! --------------------------------------  Solve_Factored_Symm_Tri  -----
   subroutine Solve_Factored_Symm_Tri_r4 ( H, D, U, Z, B )
@@ -600,6 +635,9 @@ contains
 end module Symm_Tri
 
 ! $Log$
+! Revision 2.2  2009/12/02 01:17:36  vsnyder
+! Add in-place solvers
+!
 ! Revision 2.1  2009/11/18 00:07:46  vsnyder
 ! Initial commit
 !
