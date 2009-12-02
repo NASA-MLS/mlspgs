@@ -9,7 +9,7 @@
 ! export authority as may be required before exporting such information to
 ! foreign countries or providing access to foreign persons.
 
-! subroutine Factor_Symm_Tri_Plus_1_r4 ( DIAG, H, D, R, U, C )
+! subroutine Factor_Symm_Tri_Plus_1_r* ( DIAG, H, D, R, U, C )
     ! Factor a symmetric tridiagonal matrix augmented by the same
     ! nonzero element in the top right and bottom left corners (so it's
     ! still symmetric).
@@ -48,8 +48,11 @@
     r(n-1) = h(n-1) - r(n-2) * u(n-2)
     d(n) = 1.0 / ( diag(n) - dot_product(r(1:n-1),c) )
 
-! end subroutine Factor_Symm_Tri_Plus_1_r4
+! end subroutine Factor_Symm_Tri_Plus_1_r*
 
 ! $Id$
 
 ! $Log$
+! Revision 1.1  2009/11/18 00:07:12  vsnyder
+! Bodies for Symm_Tri
+!
