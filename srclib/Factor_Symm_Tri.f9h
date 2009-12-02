@@ -9,7 +9,7 @@
 ! export authority as may be required before exporting such information to
 ! foreign countries or providing access to foreign persons.
 
-! subroutine Factor_Symm_Tri ( DIAG, H, D, U )
+! subroutine Factor_Symm_Tri_r* ( DIAG, H, D, U )
     ! Factor a symmetric tridiagonal matrix
 
     ! There are at least two ways to LU factor a symmetric tridiagonal matrix.
@@ -30,27 +30,26 @@
     ! chose Crout.
 
     real(rk), intent(in) :: DIAG(:) ! (1:n) Diagonal of the matrix
-    real(rk), intent(in) :: H(:)    ! (1:n) ((1:n-1) is the super- and
-                                    ! subdiagonal, H(n) is the corners
+    real(rk), intent(in) :: H(:)    ! (1:n-1) is the super- and subdiagonal
     real(rk), intent(out) :: D(:)   ! (1:n) Inverse of diagonal of L
-                                    ! Subdiagonal of L is H(1:n-2)
-                                    !   and R(n-1)
-    real(rk), intent(out) :: U(:)   ! (1:n-2) Superdiagonal of U, except (n,n-1)
-                                    ! Diagonal of U is 1
+                                    ! Subdiagonal of L is H(1:n-1)
+    real(rk), intent(out) :: U(:)   ! (1:n-1) Superdiagonal of U
 
     integer :: K, N
 
     n = size(diag)
 
     d(1) = 1.0 / diag(1)
-    do k = 2, n-1
+    do k = 2, n
       u(k-1) = h(k-1) * d(k-1)
       d(k) = 1.0 / ( diag(k) - h(k-1) * u(k-1) )
     end do
-    d(n) = 1.0 / ( diag(n) - h(n-1) * u(n-1) )
 
-! end subroutine Factor_Symm_Tri
+! end subroutine Factor_Symm_Tri_r*
 
 ! $Id$
 
 ! $Log$
+! Revision 1.1  2009/11/18 00:07:12  vsnyder
+! Bodies for Symm_Tri
+!
