@@ -18,14 +18,12 @@
     ! B(1:n) is output
 
     real(rk), intent(in) :: DIAG(:), H(:), Z(:)
-    real(rk), intent(out) :: B(:)
+    real(rk), intent(out) :: B(:) ! Solution, temporarily solution of L y = z
 
     real(rk), dimension(size(diag))   :: D ! Inverse of diagonal of L
-                                           ! Subdiagonal of L is H(1:n-2)
-                                           !   and R(n-1)
-    real(rk), dimension(size(diag)-1) :: Y ! Solution of L y = z
-                                           ! Diagonal of U is 1
+                                           ! Subdiagonal of L is H(1:n-1)
     real(rk), dimension(size(diag)-2) :: U ! Superdiagonal of U
+                                           ! Diagonal of U is 1
 
     integer :: K, N
 
@@ -33,17 +31,16 @@
 
     ! LU factor A and solve L y = z
     d(1) = 1.0 / diag(1)
-    y(1) = z(1) * d(1)
-    do k = 2, n-1
+    b(1) = z(1) * d(1)
+    do k = 2, n
       u(k-1) = h(k-1) * d(k-1)
       d(k) = 1.0 / ( diag(k) - h(k-1) * u(k-1) )
-      y(k) = ( z(k) - h(k-1) * y(k-1) ) * d(k)
+      b(k) = ( z(k) - h(k-1) * b(k-1) ) * d(k)
     end do
 
     ! Solve U b = z
-    b(n) = ( z(n) - h(n-1) * y(n-1) ) * d(n) ! y(n), if we had computed it
     do k = n-1, 1, -1
-      b(k) = y(k) - u(k) * b(k+1)
+      b(k) = b(k) - u(k) * b(k+1)
     end do
 
 ! end subroutine Solve_Symm_Tri
@@ -51,3 +48,6 @@
 ! $Id$
 
 ! $Log$
+! Revision 1.1  2009/11/18 00:07:12  vsnyder
+! Bodies for Symm_Tri
+!
