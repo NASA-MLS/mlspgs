@@ -22,7 +22,7 @@
     call deallocate_test ( coeffs%gap, 'Coeffs%Gap', ModuleName )
     call deallocate_test ( coeffs%lowerInds, 'Coeffs%LowerInds', ModuleName )
 
-    ! Spline -- no need to test if it's there because deallocate_test does.
+    ! Spline -- no need to test if they're there because deallocate_test does.
     call deallocate_test ( coeffs%c, 'Coeffs%C', ModuleName )
     call deallocate_test ( coeffs%d, 'Coeffs%D', ModuleName )
     call deallocate_test ( coeffs%e, 'Coeffs%E', ModuleName )
@@ -30,8 +30,10 @@
     call deallocate_test ( coeffs%dx, 'Coeffs%dX', ModuleName )
     call deallocate_test ( coeffs%o, 'Coeffs%O', ModuleName )
     call deallocate_test ( coeffs%p, 'Coeffs%P', ModuleName )
+    call deallocate_test ( coeffs%row, 'Coeffs%Row', ModuleName )
+    call deallocate_test ( coeffs%col, 'Coeffs%Col', ModuleName )
 
-    ! Stuff for integration -- again no need to test if it's there
+    ! Stuff for integration -- again no need to test if they're there
     call deallocate_test ( coeffs%ai, 'Coeffs%AI', ModuleName )
     call deallocate_test ( coeffs%bi, 'Coeffs%BI', ModuleName )
     call deallocate_test ( coeffs%ci, 'Coeffs%CI', ModuleName )
@@ -43,6 +45,9 @@
 ! end subroutine InterpolateArrayTeardown_r*
 
 ! $Log$
+! Revision 1.4  2009/06/20 02:32:44  vsnyder
+! Precompute more stuff, handle identical abscissae, in spline case
+!
 ! Revision 1.3  2005/08/03 16:34:20  pwagner
 ! InterpolateArray optionally finds antiderivatives
 !
