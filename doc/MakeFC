@@ -24,7 +24,8 @@ MakeFName = MakeFC
 # then (re)name the Makefiles in /l2 /lib etc. also MakeFC
 
 # where to store .configure; 
-CONFDIR=..
+#CONFDIR=..
+CONFDIR=${HOME}/mlspgs
 
 UTILDIR=$(CONFDIR)/util
 
@@ -32,6 +33,9 @@ UTILDIR=$(CONFDIR)/util
 # e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
 # However we will be using it just to prefix any unprefixed preset paths
 REECHO=$(UTILDIR)/reecho.sh
+
+# l2 won't build yet (it lacks certain files, e.g. l2cf_Fill_BinMax.tex)
+SUBDIRS := $(shell ${REECHO} -d cfm)
 
 # Errors in the .tex sources require us to omit the following
 OMIT_SRCS := wvs-010.tex wvs-074.tex wvs-051-neural_body.tex
@@ -47,7 +51,7 @@ PDFDIR = ./pdf/
 
 vpath %.tex ./
 vpath %.dvi $(DVIDIR)
-vpath %.l2cf ../l2/l2cf/lib
+vpath %.l2cf $(CONFDIR)/l2/l2cf/lib
 vpath %.log $(LOGDIR)
 vpath %.pdf $(PDFDIR)
 
@@ -95,10 +99,23 @@ depends:
 	if [ ! -d $(LOGDIR) ] ; then \
 	  		mkdir $(LOGDIR) ;\
 			fi
+	 for dir in $(SUBDIRS); do \
+	  $(MAKE) -C $$dir depends; \
+	done
 
 internalupdate:
-	@echo "Copying or linking MakeFC to Makefile in ./" ; \
+	@echo "Copying or linking MakeFC to Makefile in $(SUBDIRS)" ; \
 	cp MakeFC Makefile
+	 for dir in $(SUBDIRS); do \
+	  cp MakeFC $$dir; \
+	  cp MakeFC $$dir/Makefile; \
+	done
+
+cfm:
+	$(MAKE) -f $(MakeFName) -C $@
+
+l2:
+	$(MAKE) -f $(MakeFName) -C $@
 
 tar:
 	rm -f doc.tgz
@@ -107,10 +124,13 @@ tar:
 update: internalupdate
 	$(MAKE) depends
 
-.PHONY: all clean depends internalupdate tar update \
+.PHONY: all clean depends internalupdate tar update l2 \
 
 # ========================================================================
 # $Log$
+# Revision 1.2  2009/09/22 17:46:29  pwagner
+# Can now ignore sources marked by revision number
+#
 # Revision 1.1  2009/09/18 19:47:31  pwagner
 # First commit
 #
