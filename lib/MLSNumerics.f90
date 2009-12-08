@@ -16,14 +16,15 @@ module MLSNumerics              ! Some low level numerical stuff
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use DUMP_0, only : DUMP, SELFDIFF
   use MatrixModule_0, only: CreateBlock, M_Absent, MatrixElement_T, Sparsify
-  use MLSCommon, only : undefinedValue
+  use MLSCommon, only : UndefinedValue
   use MLSFillValues, only: IsFillValue, ReplaceFillValues
   use MLSKinds, only: R4, R8, Rm
   use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
     & MLSMessage
   use MLSSets, only: FindFirst, FindLast
-  use MLSStrings, only: Capitalize, trim_safe
-  use OUTPUT_M, only: blanks, output, outputNamedValue
+  use MLSStrings, only: Capitalize, Trim_safe
+  use Output_m, only: Blanks, Output, OutputNamedValue
+  use Symm_Tri, only: Factor_Symm_Tri, Solve_Factored_Symm_Tri
 
   implicit none
 
@@ -2210,6 +2211,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.64  2009/12/08 21:43:14  vsnyder
+! Get Symm_Tri
+!
 ! Revision 2.63  2009/11/17 23:34:38  vsnyder
 ! Alphabetize public procedure names, add components for periodic continuity
 ! to Coefficients_R* types, add Name argument to DumpCoefficients_r*
