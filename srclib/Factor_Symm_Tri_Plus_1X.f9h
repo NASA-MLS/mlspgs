@@ -49,3 +49,7 @@
     d(n) = 1.0 / ( d(n) - dot_product(r(1:n-1),c) )
 
 ! end subroutine Factor_Symm_Tri_Plus_1X_r*
+
+! $Id$
+
+! $Log$
