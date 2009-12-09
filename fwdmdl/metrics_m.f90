@@ -516,9 +516,6 @@ path: do i = i1, i2
       end if
     end if
 
-    ! Put angles in -2 pi .. 2 pi
-    p_grid(:n_path) = mod(p_grid(:n_path),pix2)
-
     if ( tan_ht_s < 0.0 ) then ! Earth-intersecting ray
       if ( n_path >= 4 ) then
         ! Put the reflection point on the same side of the Earth as the rest
@@ -1124,6 +1121,11 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.63  2009/08/20 23:30:56  vsnyder
+! Handwaving to put p_grid in -2 pi .. 2 pi and the reflection point of
+! an Earth-intersecting path on the same side of the Earth as the rest of
+! the path.
+!
 ! Revision 2.62  2009/06/23 18:26:11  pwagner
 ! Prevent Intel from optimizing ident string away
 !
