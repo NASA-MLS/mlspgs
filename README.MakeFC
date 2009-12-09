@@ -117,7 +117,13 @@ This will automatically build lib and mlsln where n={1,2,3,3m}. To build other
 parts see the section BUILDING ONLY PARTS OF THE SOFTWARE below.
 
 To simplify things the set of directories {blas, l1, l2, l3, l3m, lib, fwdmdl,
-cloudfwdm} will be henceforth called simply the "mlslevels".
+cloudfwdm, cfm} will be henceforth called simply the "mlslevels".
+
+l3 and l3m are being carried along for now, but at some point in the future
+will be removed.
+
+cfm is anticipated to be added to the cvs repository in the near future. Your
+distribution may lack it just yet.
 
 WHAT YOU NEED
 You may begin when you checkout a fresh copy of the mlspgs archive or obtain
@@ -347,6 +353,8 @@ configure_full   combines configure, configure_pvm, configure_fopts
 configure_help   prints some details on the mlsconfigure script
 distclean    does a clean; restores archive nearly to initial state
 disthelp     prints this file
+doc          turn the latex files under doc into .dvi and .pdf
+               mostly they document the algorithms and apis of level 2 and cfm
 firsthelp    summarizes prerequisite libraries for building mls
 help         lists topics on which more help is available
 help--brief  brief overview of building mls
@@ -416,11 +424,11 @@ Hierarchy of make
 The following is a partial org chart showing how make invoked at the top will
 call make in the mlslevels which in turn will call make in subdirectories
 
-         <----------------mlspgs---------------------------------------->
-        /           /   /        \     \             \        \          \
-       l1         l2---+----------+--->cloudfwdm--->fwdmdl   l3m-------->l3
-       |\           \   \        /     /             /        /          /
-       | ------------+---+---->lib<---+-------------+--------------------
+         <----------------mlspgs-------------------->
+        /    /      /   /        \     \             \    
+       l1   cfm--->l2---+---------+--->cloudfwdm--->fwdmdl
+       |\    \      \   \        /     /             /       
+       | ------------+---+---->lib<---+-------------/
        |              \   \    /     /             /
        |               ---->blas<------------------
        |                      |
@@ -477,6 +485,7 @@ become problem-plagued with recent releases of hdf4 and hdf5. The toolkit
 people seem poised to drop support for SGI and older Suns.
 
 IMPERFECTIONS AND COMPLICATIONS
+General
 The only combinations of compiler.platform/OS provided for so far are
   Unknown.None
   Abs.Linux
@@ -487,12 +496,57 @@ The only combinations of compiler.platform/OS provided for so far are
   NAG.Sun
   NAG.SGI
   Sun.Sun
-NAG.SGI assumes abi=32. To compile for a 64 bit kernel, we could
-(1) add platforms/NAG.SGI64 with altered flags
-(2) allow adding extra compiler settings (see below)
-To use these, 64 bit versions of the libraries HDFEOS, etc. would have
-to available, too.
 
+32-bit vs. 64-bit
+Some of our desktops are now running in 64-bit mode. To see whether the
+machine you're currently logged into is 64-bit or not, try typing
+ uname -i
+If it is 64-bit, you will see the line
+ x86_64
+returned. If it is 32-bit, you will see
+ i386
+instead.
+
+The way 32-bit vs. 64-bit impacts building mlspgs will be spelled out in
+detail.
+
+First of all, we built only one 64-bit toolkit, and that is for the
+Intel compiler ifort v11. Users fonder of Lahey, NAG, or earlier
+versions of the Intel compiler must build mlspgs only on 32-bit
+platforms. 
+
+While executables built with v11 produce results close to but different
+from v10, we neglect them and have used v11 in all v3.20 development
+tests except ME-01-003 and -004.
+
+The .configure for the 64-bit toolkit is in 
+/software/toolkit/ifc11-64/.configure
+
+You can copy it to your mlspgs directory, perhaps renaming it to
+something more memorable like .configure-ifc11-64.
+
+Incidentally, it uses the internal ieee_arithmetic support rather than
+the one in machines/IFC.Linux.
+
+Now we list some prohibitions to keep in mind:
+(1) Do not use the same .configure file to build somethimes with ifort
+v10 and other times with ifort v11. Treat them as two different
+compilers.
+(2) Do not use the same .configure to build sometimes on 64-bit
+platforms and other times on 32-bit platforms. Keep the .configure file
+names, and their MLSCONFG=name subdirectories, distinct.
+(3) Do not use the same .configure while switching between internal
+ieee_arithmetic support and that supplied in machines/IFC.Linux.
+
+Although I have claimed otherwise, you are not able to successfully both
+build and run 32-bit executables on 64-bit platforms.
+
+Can you run 32-bit executables on 64-bit platforms if they were built on
+32-bit platforms? It depends. Definitely not if the executable was
+linked dynamically. 
+
+Can you run 64-bit executables on 32-bit platforms if they were built on
+64-bit platforms? No.
 If you have a different combination, contact me. Even better, if you have a
 different combination and can get it to work, send it to me, or "cvs commit".
 
@@ -629,6 +683,7 @@ BLAS               Path to an external blas library; unless LIB_BLAS set the
                    library must then be named \$BLAS/libblas.a
                    You would use this if you already had a precompiled, 
                    highly-optimized library of the usual blas routines
+BUILDL3            build l3 and l3m, too as part of "make all" or "make install"
 FFTW_ROOT          Path to the FFTW library; required for levels 1 and 3
 FOPTS              Override default compiler option; note that you must
                    use only legal options
@@ -675,6 +730,11 @@ PGSTK              Also mentioned below in connection with .configure,
                    but if set to blank on the line invoking make, it will
                    cause make to build a toolkit-free version of lib and l2;
                    E.g., "make PGSTK="
+USEMYFC            Must be set to pick up FC from your .configure
+REECHOMACHOPTS     extra command line options used when reechoing contents of 
+                    lib/machines/MLSCONFG directory; e.g.,
+REECHOMACHOPTS=-excl ieee_arithmetic.f90
+                    says to use internal ieee_arithmetic support
 
 ASSORTED COMMENTS
 The sources currently must reside directly under the mlslevels, and this fact
@@ -789,10 +849,13 @@ export FFTW_ROOT
 export FOPTS
 export LDOPTS
 
--pw                           2000-Oct-24 to 2007-May-29
+-pw                           2000-Oct-24 to 2009-Dec-08
 EOF
 exit
 # $Log$
+# Revision 1.40  2007/05/29 18:04:14  pwagner
+# compiler-specific settings now in srclib, not platforms
+#
 # Revision 1.39  2005/06/23 23:00:53  pwagner
 # Reworded Copyright statement
 #
