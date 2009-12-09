@@ -316,7 +316,13 @@ SHELL = /bin/sh
 #
 #          Default levels
 
-LEVELS = l1 l2 l3 l3m
+# We only build level 3 when requested explicitly
+# (and the directories still exist)
+ifdef BUILDL3
+  LEVELS = l1 l2 l3 l3m
+else
+  LEVELS = l1 l2
+endif
 #----------------------------------------------------------
 
 #-----------------------
@@ -1170,6 +1176,9 @@ tools: chunktimes checkpvmup compare dateconverter heconvert h5subset h5cat hl \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.117  2009/11/30 19:27:16  pwagner
+# Should succeed even if some SUBDIRS missing
+#
 # Revision 1.116  2009/10/19 21:05:48  pwagner
 # Ignores L2PARALLEL; always install level 2 parallel executables
 #
