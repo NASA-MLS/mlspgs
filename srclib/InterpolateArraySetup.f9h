@@ -18,7 +18,10 @@
 
     ! If ExtrapolateMethod == P, make OldX one element longer than you
     ! would otherwise, with OldX(last) = OldX(first) + Period.  NewX is
-    ! then reduced modulo Period.
+    ! then put within the range OldX(1)..OldX(last) using
+    !   NewX_P = modulo(NewX - OldX(1),Period)
+    !   where ( NewX_P < 0 ) NewX_P = NewX_P + Period
+    !   NewX_P = NewX_P + OldX(1)
 
     target :: NewX
 
@@ -65,7 +68,9 @@
       nullify ( newX_P )
       call allocate_test ( newX_P, noNew, "NewX_P", moduleName )
       period = oldX(noOld)-oldX(1)
-      newX_P = modulo(newX,period)
+      NewX_P = modulo(NewX - OldX(1),Period)
+      where ( NewX_P < 0 ) NewX_P = NewX_P + Period
+      NewX_P = NewX_P + OldX(1)
     end if
     call Hunt ( oldX, newX_P, coeffs%lowerInds )
     coeffs%gap = oldX(coeffs%lowerInds+1) - oldX(coeffs%lowerInds)
@@ -166,6 +171,9 @@
 ! end subroutine InterpolateArraySetup_r*
 
 ! $Log$
+! Revision 1.6  2009/12/08 21:44:21  vsnyder
+! Provide splines with periodic boundary conditions, use Symm_Tri
+!
 ! Revision 1.5  2009/06/20 02:32:44  vsnyder
 ! Precompute more stuff, handle identical abscissae, in spline case
 !
