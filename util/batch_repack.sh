@@ -91,7 +91,11 @@ debug=0
 me="$0"
 my_name=batch_h5repack.sh
 I=batch_h5repack
-H5REPACK=$HOME/bin/h5repack
+H5REPACK=`which h5repack 2>/dev/null`
+if [ ! -x "$H5REPACK" ]
+then
+  H5REPACK=$HDFTOOLS/h5repack
+fi
 reecho="`echo $0 | sed 's/'$I'/reecho/'`"
 h5repack_opts=""
 list=""
@@ -266,6 +270,9 @@ do
 done
 
 # $Log$
+# Revision 1.3  2009/07/21 20:37:52  pwagner
+# Print tid when logging masters thanks for hostl2q.f90
+#
 # Revision 1.2  2009/01/16 01:52:57  pwagner
 # Will hrepack all eligible files if string is 'all'
 #
