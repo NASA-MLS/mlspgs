@@ -147,11 +147,10 @@ keep=0
 me="$0"
 my_name=batch_l2gpdiff.sh
 I=batch_l2gpdiff
-#L2GPDIFF=~/mlspgs/bin/LF95.Linux/l2gpdiff
 L2GPDIFF=`which l2gpdiff`
 if [ ! -x $L2GPDIFF ]
 then
-  L2GPDIFF=/software/toolkit/mlstools/l2gpdiff
+  L2GPDIFF=$MLSTOOLS/l2gpdiff
 fi
 # $reecho is reecho with me's path prepended
 reecho="`echo $0 | sed 's/'$I'/reecho/'`"
@@ -398,6 +397,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.11  2009/10/27 21:14:00  pwagner
+# Corrected bug in options; l2gpdiff now assumed to be in PATH
+#
 # Revision 1.10  2009/08/18 21:04:52  pwagner
 # Added new CH3Cl stdprod
 #

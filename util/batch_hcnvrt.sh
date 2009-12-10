@@ -156,7 +156,11 @@ fi
 # arglist  list of source files     ""
 #----------------------- Implementation -----------------------
 
-command="heconvert"
+command=`which heconvert 2>/dev/null`
+if [ ! -x "$command" ]
+then
+  command=$HDFTOOLS/heconvert
+fi
 prefix=""
 suffix=""
 result_pattern="same"
@@ -308,6 +312,9 @@ done
 exit 0
 
 # $Log$
+# Revision 1.3  2005/06/23 22:20:45  pwagner
+# Reworded Copyright statement
+#
 # Revision 1.2  2003/06/05 16:22:16  pwagner
 # Internal function renamed mkpath()
 #

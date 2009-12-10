@@ -89,7 +89,11 @@ debug=1
 me="$0"
 my_name=batch_l2gpcat.sh
 I=batch_l2gpcat
-l2gpcat=$HOME/bin/l2gpcat
+l2gpcat=`which l2gpcat 2>/dev/null`
+if [ ! -x "$l2gpcat" ]
+then
+  command=$MLSTOOLS/l2gpcat
+fi
 split_path="`echo $0 | sed 's/'$I'/split_path/'`"
 l2gpcat_opts="-cat"
 list=""
@@ -246,6 +250,9 @@ do
 done
 
 # $Log$
+# Revision 1.3  2009/04/18 00:50:18  pwagner
+# Reverted last buggy commit
+#
 # Revision 1.2  2009/04/13 20:43:17  pwagner
 # Fixed a bug preventing macros file from using its own macros properly
 #

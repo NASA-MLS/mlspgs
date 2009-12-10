@@ -139,7 +139,11 @@ keep=1
 me="$0"
 my_name=batch_l2gpcp.sh
 I=batch_l2gpcp
-L2GPCAT=~/mlspgs/bin/LF95.Linux/l2gpcat
+L2GPCAT=`which l2gpcat 2>/dev/null`
+if [ ! -x "$L2GPCAT" ]
+then
+  L2GPCAT=$MLSTOOLS/l2gpcat
+fi
 # $reecho is reecho with me's path prepended
 reecho="`echo $0 | sed 's/'$I'/reecho/'`"
 # $the_splitter is split_path with me's path prepended
@@ -291,6 +295,9 @@ do
 done
 exit
 # $Log$
+# Revision 1.5  2009/08/18 21:05:09  pwagner
+# Added new CH3Cl stdprod
+#
 # Revision 1.4  2008/10/13 23:30:56  pwagner
 # Fixed typo
 #
