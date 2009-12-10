@@ -320,6 +320,7 @@ then
   echo 'You must have either a command file or a command-line'
   exit
 fi
+
 if [ "$new_name" != "" -a "$the_suffix" != "" ]
 then
   echo 'You cannot specify both a new_name and a suffix'
@@ -346,6 +347,13 @@ then
   the_list=`$reecho $reecho_opt $the_text "$@"`
 else
   the_list=`$reecho -dir "$dir1" $reecho_opt $the_text '*'`
+fi
+
+if [ $DEEBUG = "on" ]
+then
+   echo "the_command $the_command"
+   echo "the_suffix $the_suffix"
+   echo "the_list $the_list"
 fi
 
 if [ "$the_list" = "" ]
@@ -467,6 +475,9 @@ do
 done                                                       
 exit
 # $Log$
+# Revision 1.10  2009/07/28 21:57:23  pwagner
+# print origin of error mesg
+#
 # Revision 1.9  2008/10/13 23:30:03  pwagner
 # Added the -g option to globally do the subsitution old to new
 #
