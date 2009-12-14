@@ -730,6 +730,17 @@ contains ! =================================== Public procedures
         Pressures    => Temperatures
         Temperatures => Placeholder
       endif
+      if ( Temperatures%empty ) then
+        call MLSMessage ( MLSMSG_Warning, moduleName, &
+          & 'Empty Temperatures grid for calculating wmo tropopause' )
+        if ( toggle(gen) ) call trace_end ( "wmoTropFromGrid" )
+        return
+      elseif ( Pressures%empty ) then
+        call MLSMessage ( MLSMSG_Warning, moduleName, &
+          & 'Empty Pressures grid for calculating wmo tropopause' )
+        if ( toggle(gen) ) call trace_end ( "wmoTropFromGrid" )
+        return
+      endif
     ! What if Temperatures and Pressures don't match
       if ( .not. doGriddeddataMatch( Temperatures, Pressures ) ) then
         call output( 'Vert. coords match? ', advance='no' )
@@ -957,6 +968,9 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.41  2009/12/14 18:37:50  pwagner
+! Dont crash in wmoTropFromGrid if one of the grids is empty
+!
 ! Revision 2.40  2009/11/05 00:29:06  pwagner
 ! Better diagnostics output if something goes wrong
 !
