@@ -5660,25 +5660,24 @@ contains ! =====     Public Procedures     =============================
       integer, intent(out) :: ERRORCODE   ! Error code (one of constants defined above)
 
       ! Local variables
+      logical :: DEEBUG
       integer :: instance,surf            ! Loop counter
       integer :: instIndex,surfIndex      ! Indices
       real(rv) :: newValue
-      logical :: DEEBUG
+      logical :: noGrid
       ! Executable code
       errorCode = 0
       DEEBUG = .false.
       ! DEEBUG = ( grid%quantityName == 'TEMPERATURE' .or. &
       !   & grid%description == 'Temperature' )
-      if ( grid%empty ) then
-        if ( index(lowercase(grid%description), 'tropopause') > 0 ) then
-          ! Must allow this as missing gmao files are a possibility
-          ! to be handled with grace and aplomb
-          call MLSMessage ( MLSMSG_Warning, moduleName, &
-            & 'No tropopause values in grid--filling with missing values' )
-          quantity%values = grid%missingValue
-        else
-          errorCode=EmptyGridForFill
-        end if
+      noGrid = .not. associated(grid%field)
+      if ( .not. noGrid ) noGrid = grid%empty
+      if ( noGrid ) then
+        ! Must allow this as missing gmao files are a possibility
+        ! to be handled with grace and aplomb
+        call MLSMessage ( MLSMSG_Warning, moduleName, &
+          & 'No tropopause or whatever values in grid--filling with missing values' )
+        quantity%values = REAL( DEFAULTUNDEFINEDVALUE ) ! grid%missingValue
         return
       end if
 
@@ -6799,6 +6798,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.31  2009/12/14 18:35:51  pwagner
+! Dont crash in FillVectorQuantityFromGrid if Grid is empty
+!
 ! Revision 2.30  2009/10/27 22:14:24  pwagner
 ! Compiles with new api for Dump vector quantity
 !
