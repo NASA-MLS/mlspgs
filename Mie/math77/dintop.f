@@ -196,8 +196,6 @@ C
 C     *****    DATA STATEMENTS   ***************************************
 C
       DATA ICHG /1,1,0,0,0,1,1,1,1,0,1,1,0/
-c
-c$OMP THREADPRIVATE( /DINTNC/, /DINTC/, /DINTEC/ )
 C
 C     *****    PROCEDURES     ******************************************
 C

@@ -2,6 +2,8 @@
 c     .  Copyright (C) 1991, California Institute of Technology.
 c     .  All rights reserved.  U. S. Government sponsorship under
 c     .  NASA contract NAS7-918 is acknowledged.
+c>> 2009-09-27 DMESS Krogh  Same as below, in another place.
+c>> 2009-07-23 DMESS Krogh  Changed ,1x to :1x in write to FMTF.
 c>> 2008-06-13 DMESS Krogh  Changed -0's to 0.
 c>> 2007-09-08 DMESS Krogh  Fixed definitions of MEVLAS.
 c>> 2006-10-08 DMESS Krogh  Another try, see 2005-05-26
@@ -273,7 +275,7 @@ c               Take care of setup for sparse vector
  70     continue
         call MESSFI
 c  Format forms:     12345678901234567890   123456789012345678  1234567
-c                    (1P,99(Edd.ddEd,1X))   (0P,99(Fxx.xx,1X))  (99Idd)
+c                    (1P,99(Edd.ddEd:1X))   (0P,99(Fxx.xx:1X))  (99Idd)
 c++ CODE for ~.C. is active        
         if (FMTF(8:8) .eq. 'F') then
           FMTSP=

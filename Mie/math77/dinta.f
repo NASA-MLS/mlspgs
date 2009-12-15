@@ -2,6 +2,9 @@
 C     .  Copyright (C) 1989, California Institute of Technology.
 C     .  All rights reserved.  U. S. Government sponsorship under
 C     .  NASA contract NAS7-918 is acknowledged.
+c>> 2009-11/03 DINTA Krogh  Set initial value for a few variables.
+c>> 2009-10-17 DINTA Krogh  AACUM now set with ACUM on coalescing nodes.
+c>> 2008-02-23 DINTA Krogh/Snyder Misc. Changes
 c>> 2001-09-11 DINTA Krogh  Fixed so really small intervals not picked.
 c>> 1996-04-27 DINTA Krogh  Changes to use .C. and C%%.
 C>> 1996-03-31 DINTA Krogh  Removed unused variable in common.
@@ -14,7 +17,7 @@ c>> 1994-09-01 DINTA Snyder don't give round-off msg if err << eps
 C>> 1994-08-22 DINTA Krogh -- Modified data for C conversion.
 c>> 1994-08-19 DINTA Snyder fix divide by 0 if ERR=0 and don't believe.
 c>> 1994-08-15 DINTA Snyder convert MAX(A,B,C) to MAX(A,MAX(B,C))
-c>> 1994-07-07 DINTA Snyder set up for CHGTYP.
+c>> 1994-07-07 DINTA Snyder set up for CHGTYP. 
 C>> 1994-06-29 DINTA Snyder suppress discontinuity msg if one jump.
 C>> 1994-06-22 DINTA Snyder don't use RE when reducing stepsize.
 C>> 1993-05-26 DINTA Krogh -- Added data for C conversion.  Needs edit.
@@ -631,7 +634,7 @@ C
 C     IN THE COMMENTS BELOW, F(K,I) REFERS TO THE FUNCTION VALUE
 C     COMPUTED FOR THE I'TH NODE OF THE K'TH FORMULA.
 C    P   Points
-C Indices      Use  (C = Correction Coefficiend N&W = Nodes and Weights)
+C Indices      Use  (C = Correction Coefficient N&W = Nodes and Weights)
 C    1      3  C for F(1,1)
 C   2-  3      N&W for F(2,1)
 C   4-  5   7  C for F(1,1) and F(2,1)
@@ -986,6 +989,11 @@ C     SETUP FOR COMPLETE INTERVAL.
 C     SET INITIAL VALUES.
 C
       IFLAG(1)=0
+      XJ = 0.D0
+      XJP = 0.D0
+      FAT(1) = 0.D0
+      FAT(2) = 0.D0
+      ERRC = 0.0d0
       ERRT(2)=0.0d0
       START(1)=AINIT
       END(1)=BINIT
@@ -998,6 +1006,7 @@ C
       WORRY(1)=END(1)
       INIT=.TRUE.
       DID1=.FALSE.
+      HAVDIF=.FALSE.
       EPS=EPSR
       IF (TALOC.NE.0) THEN
          I=ABS(TALOC)
@@ -1438,7 +1447,7 @@ C              IF THE JUMP IS WEAK, PRETEND ITS NOT THERE.
 C     END BLOCK
 640   CONTINUE
       if (NSUB.NE.0) then
-         CALL DINTNS (NSRA)
+         CALL DINTNS (NSRB)
          GO TO 640
       END IF
       START(PART)=BLOCAL
@@ -1532,7 +1541,7 @@ C     THERE WAS A REASON FOR SETTING NSUB NON-ZERO.
          GO TO 2610
       END IF
 C     REDUCE NSUB TO ZERO BEFORE CONTINUING THE SEARCH.
-      X1=REAL(NSUB)
+      X1=DBLE(NSUB)
       J=1
       DO 820 I=1,LENDT
          T=(XT(I)-TA)/TB
@@ -1879,10 +1888,14 @@ C     END BLOCK
       S=START(1)
       START(1)=X1
       IF (FAIL) THEN
+C        Jump disappeared.  X1..X2 not yet integrated.
          START(2)=X1
-         TA=X1+0.5d0*(X2-X1)
+! Why was the following ever done ???
+!         TA=X1+0.5d0*(X2-X1)
+         TA=X1
          TASAVE=TA
       ELSE
+C        Jump didn't disappear.  X1..X2 was integrated using trapezoid
          START(2)=X2
          TA=START(1)
          TASAVE=START(2)
@@ -2263,6 +2276,7 @@ C
 C        WHERE .LT. 0 MEANS ABSCISSAE COALESCED DURING THE QUADRATURE
 C        STEP.  ACUM IS GARBAGE DURING THE QUADRATURE STEP SO USE PACUM.
          ACUM=PACUM
+         AACUM = abs(ACUM)
          EPSMIN=PEPSMN
       ELSE
          TPS=ACUM-PACUM
@@ -2361,7 +2375,7 @@ C        DO BLOCK
             IF (ABS(BLOCAL-START(PART)).LT.ABS(TEND-START(PART))-DELMIN)
      1         THEN
                IF (.NOT.HAVDIF) GO TO 2390
-               IF (PHISUM.LT.REAL(10*(K-KAIMT))*PHTSUM) GO TO 2380
+               IF (PHISUM.LT.DBLE(10*(K-KAIMT))*PHTSUM) GO TO 2380
                IF (PHISUM.GE.16.0d0*PHTSUM) GO TO 2390
                IF (PHISUM.GE.PHTSUM*0.5d0**(KAIMT-K+1)) GO TO 2390
                GO TO 2380

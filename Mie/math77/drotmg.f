@@ -1,6 +1,7 @@
       subroutine DROTMG (D1,D2,X1,Y1,PARAM)
 C Copyright (c) 1996, California Institute of Technology. U.S.
 C Government Sponsorship under NASA Contract NAS7-1260 is acknowledged.
+C>> 2006-06-07 DROTMG Krogh  Removed arithmetic ifs
 C>> 1999-12-30 DROTMG Krogh  Big reorg., no more assigned goto's.
 C>> 1999-12-22 DROTMG Krogh  Declared IGO.
 C>> 1994-10-20 DROTMG Krogh  Changes to use M77CON
@@ -121,21 +122,20 @@ C
       X1 = 0.D0
 
 C     Return
- 220  if (PFLAG) 250, 230, 240
+ 220  continue
+      if (PFLAG .eq. 0.D0) then
+        PARAM(3) = H21
+        PARAM(4) = H12
+      else if (PFLAG .gt. 0.D0) then
 
- 230  PARAM(3) = H21
-      PARAM(4) = H12
-      go to 260
-
- 240  PARAM(2) = H11
-      PARAM(5) = H22
-      go to 260
-
- 250  PARAM(2) = H11
-      PARAM(3) = H21
-      PARAM(4) = H12
-      PARAM(5) = H22
-
+        PARAM(2) = H11
+        PARAM(5) = H22
+      else
+        PARAM(2) = H11
+        PARAM(3) = H21
+        PARAM(4) = H12
+        PARAM(5) = H22
+      end if
  260  PARAM(1) = PFLAG
-      RETURN
-      END
+      return
+      end

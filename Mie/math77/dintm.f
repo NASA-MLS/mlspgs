@@ -2,6 +2,7 @@
 C     .  Copyright (C) 1989, California Institute of Technology.
 C     .  All rights reserved.  U. S. Government sponsorship under
 C     .  NASA contract NAS7-918 is acknowledged.
+C>> 2009-11-03 DINTM  Krogh  Initialized lots of variables.
 C>> 1996-03-31 DINTM  Krogh  Removed unused variable in common.
 c>> 1995-11-20 DINTM  Krogh  Converted from SFTRAN to Fortran 77.
 C>> 1994-11-14 DINTM  Krogh  Declared all vars.
@@ -431,15 +432,40 @@ C     FOUND BY LOOKING AT THE DEFINITIONS IN DINTOP.
      1  EMEPS,  EEPSM8, EDELM2, EDELM3, ESQEPS, ERSQEP, ERSQE6, EMINF,
      2  ESMALL, ENZER,  EDELM1, ENINF
       SAVE /DINTEC/
-c
-c$OMP THREADPRIVATE( /DINTNC/, /DINTC/, /DINTEC/ )
+
+c For initialization of common blocks
+      integer KREAL, KINT, KLOG, ITEMP
+      parameter (KINT=29, KREAL=169, KLOG=11)
+      logical LMOVE(KLOG)
+      integer IMOVE(KINT)
+      double precision RMOVE(KREAL)
+      equivalence (AACUM, RMOVE)
+      equivalence (DISCF, IMOVE)
+      equivalence (DID1, LMOVE)
+C
 C
 C     *****    PROCEDURES     ******************************************
 C
+
+c Initialize common blocks to avoid references to undefined variables.
+
+      do 5 ITEMP = 1, KLOG
+        LMOVE(ITEMP) = .false.
+ 5    continue
+      do 10 ITEMP = 1, KREAL
+        RMOVE(ITEMP) = 0.D0
+ 10   continue
+      do 15 ITEMP = 1, KINT
+        IMOVE(ITEMP) = 0
+ 15   continue
+
       WHEREM=0
       NFEVAL=0
       NDIM=NDIMI
       KDIM=NWORK
+      X = 0.D0
+
+
 C     KDIM IS TEMPORARILY USED IN DINTMA TO CHECK THE DIMENSION OF
 C     WORK.
       CALL DINTOP (IOPT,WORK)

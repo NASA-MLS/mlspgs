@@ -7,7 +7,9 @@ c++ END
 c     .  Copyright (C) 1991, California Institute of Technology.
 c     .  All rights reserved.  U. S. Government sponsorship under
 c     .  NASA contract NAS7-918 is acknowledged.
-c>> 2008-02-28 MESS  Krogh  Fixed "f" format for C code.
+c>> 2009-10-30 MESS  Krogh  Defined DSCRN.
+c>> 2009-02-28 MESS  Krogh  Added FMTT = ' ' for NAG compiler.
+c>> 2009-02-28 MESS  Krogh  Fixed "f" format for C code.
 c>> 2007-09-08 MESS  Krogh  Fixed definitions of MEVLAS.
 c>> 2006-07-27 MESS  Krogh  Fixed boundary case in printing long text.
 c>> 2006-03-20 MESS  Krogh  Added code for output of sparse vector.
@@ -660,25 +662,26 @@ c
 c
       if (FIRST) then
          FIRST = .false.
-         ICHAR0 = ICHAR('0')
 c Initialize common block
-         EUNIT = 0
-         KDI = 1
-         KDJ = 6
-         LSTOP = 3
-         LENTRY = 1
+         SUNIT = -1
          LHEAD = 1
-         LPRINT = 3
          LINMSG = LNMSG
          LINERR = LNERR
-         LENLIN = LNMSG
-         MAXERR = 0
          MUNIT = 0
+         EUNIT = 0
+         KSCRN = 0
+         MAXERR = 0
+         TABSPA = 6
+         LSTOP = 3
+         LPRINT = 3
+         ERRCNT = 0
+         ICHAR0 = ICHAR('0')
+         KDI = 1
+         KDJ = 6
+         LENLIN = LNMSG
+         LENTRY = 1
          OUNIT = 0
          NSKIP = 0
-         SUNIT = -1
-         TABSPA = 6
-         IVAR(MEERRS) = 0
 c++ CODE for ~.C. is active
          DOLS(1:40) = '$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$'
          DOLS(41:72) ='$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$'
@@ -1066,6 +1069,7 @@ c++ END
   604 IMAG = 0
       GETW = .true.
       K = NTEXT
+      FMTT = ' '
   606 continue
          NTEXT = NTEXT + 1
          if (NTEXT .gt. LENTXT) then

@@ -2,6 +2,7 @@
 
 C Copyright (c) 1996, California Institute of Technology. U.S.
 C Government Sponsorship under NASA Contract NAS7-1260 is acknowledged.
+C>> 2006-06-07 DROTM  Krogh  Removed arithmetic ifs
 C>> 1994-10-20 DROTM  Krogh  Changes to use M77CON
 C>> 1994-04-29 DROTM  CLL Edited to make DP and SP codes similar.
 C>> 1985-08-02 DROTM  Lawson  Initial code.
@@ -31,87 +32,81 @@ C     -----------------------------------------------------------------
 C     -----------------------------------------------------------------
 C
       DFLAG=DPARAM(1)
-      IF(N .LE. 0 .OR.(DFLAG+TWO.EQ.ZERO)) GO TO 140
-          IF(.NOT.(INCX.EQ.INCY.AND. INCX .GT.0)) GO TO 70
+      IF ((N .LE. 0) .OR. (DFLAG+TWO .EQ. ZERO)) RETURN
+      IF ((INCX .NE. INCY) .OR. (INCX .LT. 0)) THEN
+        KX=1
+        KY=1
+        IF(INCX .LT. 0) KX=1+(1-N)*INCX
+        IF(INCY .LT. 0) KY=1+(1-N)*INCY
 C
-               NSTEPS=N*INCX
-               IF(DFLAG) 50,10,30
-   10          CONTINUE
-               DH12=DPARAM(4)
-               DH21=DPARAM(3)
-                    DO 20 I=1,NSTEPS,INCX
-                    W=DX(I)
-                    Z=DY(I)
-                    DX(I)=W+Z*DH12
-                    DY(I)=W*DH21+Z
-   20               CONTINUE
-               GO TO 140
-   30          CONTINUE
-               DH11=DPARAM(2)
-               DH22=DPARAM(5)
-                    DO 40 I=1,NSTEPS,INCX
-                    W=DX(I)
-                    Z=DY(I)
-                    DX(I)=W*DH11+Z
-                    DY(I)=-W+DH22*Z
-   40               CONTINUE
-               GO TO 140
-   50          CONTINUE
-               DH11=DPARAM(2)
-               DH12=DPARAM(4)
-               DH21=DPARAM(3)
-               DH22=DPARAM(5)
-                    DO 60 I=1,NSTEPS,INCX
-                    W=DX(I)
-                    Z=DY(I)
-                    DX(I)=W*DH11+Z*DH12
-                    DY(I)=W*DH21+Z*DH22
-   60               CONTINUE
-               GO TO 140
-   70     CONTINUE
-          KX=1
-          KY=1
-          IF(INCX .LT. 0) KX=1+(1-N)*INCX
-          IF(INCY .LT. 0) KY=1+(1-N)*INCY
-C
-          IF(DFLAG)120,80,100
-   80     CONTINUE
+        IF (DFLAG .EQ. 0.D0) THEN
           DH12=DPARAM(4)
           DH21=DPARAM(3)
-               DO 90 I=1,N
-               W=DX(KX)
-               Z=DY(KY)
-               DX(KX)=W+Z*DH12
-               DY(KY)=W*DH21+Z
-               KX=KX+INCX
-               KY=KY+INCY
-   90          CONTINUE
-          GO TO 140
-  100     CONTINUE
+          DO 10 I=1,N
+            W=DX(KX)
+            Z=DY(KY)
+            DX(KX)=W+Z*DH12
+            DY(KY)=W*DH21+Z
+            KX=KX+INCX
+            KY=KY+INCY
+ 10       CONTINUE
+        ELSE IF (DFLAG .GT. 0.D0) then
           DH11=DPARAM(2)
           DH22=DPARAM(5)
-               DO 110 I=1,N
-               W=DX(KX)
-               Z=DY(KY)
-               DX(KX)=W*DH11+Z
-               DY(KY)=-W+DH22*Z
-               KX=KX+INCX
-               KY=KY+INCY
-  110          CONTINUE
-          GO TO 140
-  120     CONTINUE
+          DO 20 I=1,N
+            W=DX(KX)
+            Z=DY(KY)
+            DX(KX)=W*DH11+Z
+            DY(KY)=-W+DH22*Z
+            KX=KX+INCX
+            KY=KY+INCY
+ 20      CONTINUE
+        ELSE
           DH11=DPARAM(2)
           DH12=DPARAM(4)
           DH21=DPARAM(3)
           DH22=DPARAM(5)
-               DO 130 I=1,N
-               W=DX(KX)
-               Z=DY(KY)
-               DX(KX)=W*DH11+Z*DH12
-               DY(KY)=W*DH21+Z*DH22
-               KX=KX+INCX
-               KY=KY+INCY
-  130          CONTINUE
-  140     CONTINUE
-          RETURN
-          END
+          DO 30 I=1,N
+            W=DX(KX)
+            Z=DY(KY)
+            DX(KX)=W*DH11+Z*DH12
+            DY(KY)=W*DH21+Z*DH22
+            KX=KX+INCX
+            KY=KY+INCY
+ 30       CONTINUE
+        END IF
+      ELSE
+        NSTEPS=N*INCX
+        IF (DFLAG .EQ. 0.D0) THEN
+          DH12=DPARAM(4)
+          DH21=DPARAM(3)
+          DO 40 I=1,NSTEPS,INCX
+            W=DX(I)
+            Z=DY(I)
+            DX(I)=W+Z*DH12
+            DY(I)=W*DH21+Z
+ 40       CONTINUE
+        ELSE IF (DFLAG .GT. 0.D0) THEN
+          DH11=DPARAM(2)
+          DH22=DPARAM(5)
+          DO 50 I=1,NSTEPS,INCX
+            W=DX(I)
+            Z=DY(I)
+            DX(I)=W*DH11+Z
+            DY(I)=-W+DH22*Z
+ 50       CONTINUE
+        ELSE
+          DH11=DPARAM(2)
+          DH12=DPARAM(4)
+          DH21=DPARAM(3)
+          DH22=DPARAM(5)
+          DO 60 I=1,NSTEPS,INCX
+            W=DX(I)
+            Z=DY(I)
+            DX(I)=W*DH11+Z*DH12
+            DY(I)=W*DH21+Z*DH22
+ 60       CONTINUE
+        END IF
+      END IF
+      RETURN
+      END

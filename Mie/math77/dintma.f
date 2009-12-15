@@ -2,6 +2,7 @@
 C     .  Copyright (C) 1989, California Institute of Technology.
 C     .  All rights reserved.  U. S. Government sponsorship under
 C     .  NASA contract NAS7-918 is acknowledged.
+c>> 2009-10-31 DINTMA Krogh  Initialized ACUM,PACUM,RESULT(2).
 C>> 2008-01-11 DINTMA Krogh  Added new error message.
 C>> 1996-03-31 DINTMA Krogh  Removed unused variable in common.
 c>> 1995-11-20 DINTMA Krogh  Converted from SFTRAN to Fortran 77.
@@ -351,12 +352,12 @@ c
 c++   Code for ~SL is INACTIVE
 c      data FIRST /.TRUE./
 c++   End
-c
-c$OMP THREADPRIVATE( /DINTNC/, /DINTC/, /DINTEC/ )
 C
 C     *****     PROCEDURES     *****************************************
 C
-      IF (WHEREM.NE.0) GO TO (90,75,30), WHEREM
+      IF (WHEREM.NE.0) THEN
+        GO TO (90,75,30), WHEREM
+      end if
 C
 C     OUTERMOST DIMENSION.
 C
@@ -417,6 +418,11 @@ C
       ERRINB=0.0d0
       NFEVAL=1
 C     NFEVAL IS TESTED IN DINTOP.  DINTF MAY CALL DINTOP.
+C  Intialize ACUM,PACUM,RESULT(2) to avoid diagnostics.
+      ACUM = 0.D0
+      PACUM = 0.D0
+      RESULT(2) = 0.D0
+
       IF (REVERM.NE.0) RETURN
       CALL DINTF (ANSWER,WORK,IFLAG(1))
 30    IF (ABS(IFLAG(1)).GT.NDIM) TALOC=IFLAG(1)

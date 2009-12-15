@@ -335,8 +335,6 @@ c++ Save data by elements if ~.C.
       DATA BETAS(131) / .4218064520555042532D-001 /
       DATA BETAS(132) / .4218064520555042532D-001 /
       DATA BETAS(133) / .1000000000000000051D+001 /
-c
-c$OMP THREADPRIVATE( /DINTNC/, /DINTC/, /DINTEC/ )
 C
 C     *****    PROCEDURES     ******************************************
 C
