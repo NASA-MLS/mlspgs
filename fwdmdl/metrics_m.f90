@@ -277,11 +277,11 @@ contains
       if ( present(forward) ) myForward = forward
       theta = 2.0_rp*Acos(tan_ht/req_s)
       if ( myForward ) then
-        phi_offset(1:n_tan) = mod(phi_t + theta, pix2)
-        phi_offset(n_tan+1:) = mod(phi_t, pix2)
+        phi_offset(1:n_tan) = phi_t + theta
+        phi_offset(n_tan+1:) = phi_t
       else
-        phi_offset(:n_tan) = mod(phi_t, pix2)
-        phi_offset(n_tan+1:) = mod(phi_t - theta, pix2)
+        phi_offset(:n_tan) = phi_t
+        phi_offset(n_tan+1:) = phi_t - theta
       end if
       ! This expression for p_grid puts the midpoint of the path at the
       ! reflection point.
@@ -1121,6 +1121,9 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.64  2009/12/09 21:32:03  vsnyder
+! Remove ill-advised mod on p_grid
+!
 ! Revision 2.63  2009/08/20 23:30:56  vsnyder
 ! Handwaving to put p_grid in -2 pi .. 2 pi and the reflection point of
 ! an Earth-intersecting path on the same side of the Earth as the rest of
