@@ -554,7 +554,7 @@ contains
     real(rp), target :: MAG_PATH(s_p*max_f,4)      ! Magnetic field on path
     real(rp), target :: RAD_AVG_PATH(max_c,s_pfa*noUsedChannels) ! Freq. Avgd.
                                                    ! LBL radiance along the path
-    real(rp) :: RADIANCES(no_tan_hts,noUsedChannels) ! (Nptg,noChans)
+    real(rp) :: RADIANCES(noUsedChannels,no_tan_hts) ! (noChans,Nptg)
     real(rp) :: SPECT_N_PATH(max_f,size(fwdModelConf%lineWidth_TDep)) ! Line Width Temperature Dependence
     real(rp) :: SPECT_V_PATH(max_f,size(fwdModelConf%lineCenter)) ! Line Center
     real(rp) :: SPECT_W_PATH(max_f,size(fwdModelConf%lineWidth)) ! Line Width
@@ -1366,17 +1366,17 @@ contains
 
           if ( temp_der ) then
             call convolve_radiance ( convolve_support, maf, chanInd, &
-              & radiances(:,i), thisFraction, update, ptan, thisRadiance, &
+              & radiances(i,:), thisFraction, update, ptan, thisRadiance, &
               & L1BMIF_TAI, MIFDeadTime, &
               & Jacobian, fmStat%rows, dh_dz_out, dx_dh_out, ptan_der, rad_FFT )
             call convolve_temperature_deriv ( convolve_support, maf, chanInd, &
-              & radiances(:,i), rad_fft, thisFraction, update, thisRadiance, &
+              & radiances(i,:), rad_fft, thisFraction, update, thisRadiance, &
               & temp, grids_tmp, surf_angle(1), L1BMIF_TAI, MIFDeadTime, &
               & real(k_temp(i,:,:),kind=rp), &
               & dx_dt, d2x_dxdt, dxdt_tan, dxdt_surface, Jacobian, fmStat%rows )
           else ! No temperature derivative
             call convolve_radiance ( convolve_support, maf, chanInd, &
-              & radiances(:,i), thisFraction, update, ptan, thisRadiance, &
+              & radiances(i,:), thisFraction, update, ptan, thisRadiance, &
               & L1BMIF_TAI, MIFDeadTime, &
               & Jacobian, fmStat%rows, dh_dz_out, dx_dh_out, ptan_der )
           end if
@@ -1413,7 +1413,7 @@ contains
             & dyByDx=ptan_der.or.fwdModelConf%scanAverage )
 
           call interpolate_radiance ( coeffs, maf, chanInd, ptg_angles, &
-            & radiances(:,i), thisFraction, update, ptan, tan_chi_out-thisElev, &
+            & radiances(i,:), thisFraction, update, ptan, tan_chi_out-thisElev, &
             & thisRadiance, L1BMIF_TAI, MIFDeadTime, Jacobian, fmStat%rows, &
             & dh_dz_out, dx_dh_out, ptan_der )
 
@@ -1581,7 +1581,7 @@ contains
 
       select case ( frq_avg_sel )
       case ( 2, 3, 12, 13 ) ! Just copy radiance. PFA + DACS - LBL impossible
-        radiances(ptg_i,:) = radV(:noFreqs)
+        radiances(:,ptg_i) = radV(:noFreqs)
       case ( 10, 11, 14 )   ! Frq Avg path integrated radiance
         ! Now go through channel by channel
         do c = 1, noUsedChannels
@@ -1596,9 +1596,9 @@ contains
             call freq_Avg ( frequencies, &
               &   filterShapes(shapeInd)%filterGrid,  &
               &   filterShapes(shapeInd)%filterShape, &
-              &   radV(:noFreqs), radiances(ptg_i,c) )
+              &   radV(:noFreqs), radiances(c,ptg_i) )
           else
-            radiances(ptg_i,c) = DACsStaging(channels(c)%used,channels(c)%dacs)
+            radiances(c,ptg_i) = DACsStaging(channels(c)%used,channels(c)%dacs)
           end if
         end do
       case ( 15 )   ! Frq Avg rad along path
@@ -1608,9 +1608,9 @@ contains
         ! Tau_PFA in Frequency_Loop to combine LBL and PFA contributions.
         do c = 1, noUsedChannels
           if ( channels(c)%dacs == 0 ) then
-            radiances(ptg_i,c) = radV(c) ! Computed in Frequency_Loop
+            radiances(c,ptg_i) = radV(c) ! Computed in Frequency_Loop
           else
-            radiances(ptg_i,c) = DACsStaging(channels(c)%used,channels(c)%dacs)
+            radiances(c,ptg_i) = DACsStaging(channels(c)%used,channels(c)%dacs)
           end if
         end do
       case default          ! Impossible cases: No LBL or PFA,
@@ -2573,9 +2573,7 @@ contains
       use Constants, only: Pi
       use ForwardModelConfig, only: QtyStuff_T
       use Get_Eta_Matrix_m, only: Get_Eta_Sparse
-      use MLSNumerics, only: Coefficients => Coefficients_R8, & ! R8 == RP
-        & InterpolateArraySetup, InterpolateArrayTeardown, &
-        & InterpolateValues
+      use MLSNumerics, only: InterpolateValues
       use MLSSignals_m, only: GetNameOfSignal
       use Output_m, only: NewLine
       use Sort_m, only: Sortp
@@ -2586,16 +2584,13 @@ contains
       real(rp) :: Eta_s(size(Grids_tmp%phi_basis)) ! Coeffs to Scat_Tan_Phi
       real(rp) :: Phi_Old      ! Used during iteration for Scat_Tan_Phi
       real(rp) :: Phi_Ref      ! Tangent phi for the scattered ray
-      real(rp) :: Rads(4*nlvl+2*scatteringAngles%template%noSurfs,noUsedChannels)
-      real(rp) :: Theta_e(2*size(theta_s)-merge(1,0,theta_s(1)==0.0)) ! Extended to -theta_s
-      real(rp) :: P_On_Theta(size(theta_e)) ! P * sin(abs(theta)) interpolated
-                               ! to scattering point IWC and T for each theta,
-                               ! intermediary to getting P_On_Xi
-      real(rp) :: P_On_Xi(size(rads,1)) ! P * sin(abs(theta)) interpolated
+      real(rp) :: P_On_Theta_e(2*size(theta_s)+1) ! P * sin(abs(theta))
+                               ! interpolated to scattering point IWC and T for
+                               ! each theta, intermediary to getting P_On_Xi
+      real(rp) :: P_T_IWC_F(size(theta_s)) ! P interpolated to T, IWC
+      real(rp) :: Rads(noUsedChannels,4*nlvl+2*scatteringAngles%template%noSurfs)
+      real(rp) :: P_On_Xi(size(rads,2)) ! P * sin(abs(theta)) interpolated
                                ! to scattering point IWC and T for each xi
-      real(rp) :: P_Rad(size(theta_e)) ! P interpolated to scattering point
-                               ! IWC and T * Rads_On_Theta
-      real(rp) :: Rads_On_Theta_e(size(theta_e), noUsedChannels) ! Rads on Theta_e
       real(rp) :: Ref_Ht       ! Height of the ray at the reference phi
       real(rp) :: R_Eq         ! Equivalent circular earth radius at Phi_Ref
       real(rp) :: Scat_Ht      ! km from center of equivalent circular earth
@@ -2605,19 +2600,20 @@ contains
       real(rp) :: Scat_Zeta    ! Of the scattering point
       real(rp) :: Theta        ! Angle from direct to reflected
                                ! earth-intersecting ray
+      real(rp) :: Theta_e(2*size(theta_s)+1) ! Extended to -theta_s
       real(rp) :: Vel_Rel      ! LOS velocity / speed of light, along scattered
                                ! ray
       real(rp) :: Xi           ! Scattering angle
       real(rp) :: Xi_Sub       ! Angle from horizon to scattering point's
                                ! subsurface point
-      real(rp) :: Xis(size(rads,1))
+      real(rp) :: Xis(size(rads,2))
 
       ! Interpolating factors
       real(rp) :: Eta_IWC(0:1) ! for current IWC
       real(rp) :: Eta_T(0:1)   ! for current temperature
       real(rp) :: Eta_T_IWC(0:1,0:1) ! for both
-      type(coefficients) :: Xi_Coeffs   ! From Xi's to phase function's thetas
 
+      integer :: Beg_Pos_Theta ! 1 if theta_s(1) /= 0, else 2
       integer :: IWC_IX        ! Which IWC index for phase function to use
       integer :: T_IX          ! Which Temperature index for phase functio to use
 
@@ -2627,8 +2623,10 @@ contains
                                ! in the forward direction, xi >= xi_sub
       integer :: Freq_Ix(noUsedChannels) ! Frequency indices for phase tables
       integer :: I             ! Loop inductor
-      integer :: I_R           ! Index in Rad, Xis
+      integer :: I_R           ! Index in Rad, Xis, eventually number of them
       integer :: I_Z           ! Index of scattering point zeta in Z_psig
+      integer :: N_Theta_e     ! size(theta_e) or size(theta_e)-1, depending
+                               ! upon whether theta_e covers 0..360 or lacks one
       integer :: Phi_i         ! Loop inductor and subscript
       integer :: Ptg_i, Ptg_j  ! Loop inductors and subscripts
       integer :: Ptg_f         ! Ptg_i, Ptg_j on fine grid
@@ -2848,6 +2846,11 @@ contains
             scat_tan_phi = phi_ref + xi
             if ( xi < xi_sub ) scat_tan_phi = scat_tan_phi - pi
             scat_tan_phi = mod(scat_tan_phi,pix2)
+            if ( scat_tan_phi < -pi ) then
+              scat_tan_phi = scat_tan_phi + pix2
+            else if ( scat_tan_phi > pi ) then
+              scat_tan_phi = scat_tan_phi - pix2
+            end if
 
             if ( print_TScat_detail > 1 ) then
               write ( sig, "('scat_tan_ht = ', f10.4,', scat_tan_phi = ', f7.2, &
@@ -2878,7 +2881,7 @@ contains
                 & rad2deg*scat_phi, scat_ht, scat_zeta, rad2deg*xis(ptg_i)
               call output ( trim(sig) )
               do f_i = 1, noUsedChannels
-                call output ( rads(ptg_i,f_i), format="(f9.3)" )
+                call output ( rads(f_i,ptg_i), format="(f9.3)" )
               end do ! f_i
               call newLine
             end do ! ptg_i
@@ -2890,7 +2893,7 @@ contains
                   & sig, channel=channels(f_i)%used, sideband=thisSideband )
                 write ( 42, "(f7.2,f9.2,f12.4,f8.3,f11.2,f9.3,2x,a)" ) &
                   & rad2deg*phi_ref, rad2deg*scat_phi, scat_ht, scat_zeta, &
-                  & rad2deg*xis(ptg_i), rads(ptg_i,f_i), trim(sig)
+                  & rad2deg*xis(ptg_i), rads(f_i,ptg_i), trim(sig)
               end do
             end do
           end if
@@ -2929,20 +2932,19 @@ contains
           ! to interpolate the xi's.  The phase function is sign-symmetric on
           ! theta_s, but the radiances are not sign-symmetric on xi's.
           theta_e(1:size(theta_s)) = -theta_s(size(theta_s):1:-1)
-          theta_e(size(theta_e)-size(theta_s)+1:) = theta_s
+          beg_pos_theta = merge(2,1,theta_s(1)==0.0)
+          theta_e(size(theta_s)+1:2*size(theta_s)+1-beg_pos_theta) = &
+            & theta_s(beg_pos_theta:)
+          ! Set up theta_e to cover 2 pi, to prepare it for periodic spline
+          ! interpolation input abscissa set.
+          n_theta_e = 2*size(theta_s) + 1 - beg_pos_theta
+          if ( abs(theta_e(n_theta_e)-theta_e(1)-pix2) > 0.001 ) then
+            n_theta_e = n_theta_e + 1
+            theta_s(n_theta_e) = theta_s(n_theta_e) + pix2
+          end if
 
           ! Sort the xis in preparation for interpolating.
           call sortp ( xis(:i_r), 1, i_r, sort_xi(:i_r) )
-
-          ! Interpolate the radiances from Xis to the angular basis for the
-          ! phase function (Theta_e) using a spline.
-
-          call interpolateArraySetup ( xis(sort_xi(:i_r)), theta_e, &
-            & method='S', coeffs=xi_coeffs, extrapolate='A' )
-
-          call interpolateValues ( xi_coeffs, &
-            & xis(sort_xi(:i_r)), rads(sort_xi(:i_r),:), &
-            & theta_e, rads_on_theta_e(:,:), method='S', extrapolate='A' )
 
           !{ Interpolate the phase function to IWC and Temperature at the
           !  scattering point and convolve the interpolated phase function
@@ -2976,48 +2978,40 @@ contains
             TScat => qtys(f_i)%qty
             surf_i = channels(f_i)%used - channels(f_i)%origin + 1 + &
                    & TScat%template%noChans * (zeta_i-1)
-            ! The phase function is symmetric in theta, but the radiances
-            ! are not.  First do the ones for negative theta.
+            ! Interpolate P to scattering point IWC and temperature and
+            ! multiply that by sin(theta)
             do ptg_i = 1, size(theta_s)
-              ! theta_e(ptg_i) == -theta_s(size(theta_s)-ptg_i+1) here
-              p_on_theta(ptg_i) = &
-                ! dot_product(eta_t,matmul(p(...),eta_iwc))
+              p_t_iwc_f(ptg_i) = &
                 & sum(eta_t_iwc * &
                 &     p(t_ix+0:t_ix+1,iwc_ix+0:iwc_ix+1,ptg_i,freq_ix(f_i)) ) * &
                 & abs(sin(theta_e(ptg_i)))
             end do
-            ! Now the ones for positive theta.
-            do ptg_j = size(theta_e)-size(theta_s)+1, size(theta_e)
-              ! theta_e(ptg_j) == theta_s(size(theta_e)-size(theta_s)+ptg_j)
-              ptg_i = size(theta_e) - ptg_j + 1
-              p_on_theta(ptg_j) = &
-                ! dot_product(eta_t,matmul(p(...),eta_iwc))
-                & sum(eta_t_iwc * &
-                &     p(t_ix+0:t_ix+1,iwc_ix+0:iwc_ix+1,ptg_i,freq_ix(f_i)) ) * &
-                & abs(sin(theta_e(ptg_j)))
-            end do
-            ! Now interpolate P_On_Theta to P_On_Xi.  Ideally, this would
-            ! be done with a periodic spline, but we don't have that yet, so
-            ! just use linear interpolation.
-            
+            ! The phase function is symmetric in theta, but the radiances
+            ! are not.  Unfold p_t_iwc_f to negative theta.
+            p_on_theta_e(1:size(theta_s)) = p_t_iwc_f(size(theta_s):1:-1)
+            p_on_theta_e(size(theta_s)+1:2*size(theta_s)+1-beg_pos_theta) = &
+              & p_t_iwc_f(beg_pos_theta:)
+            ! Now interpolate P_On_Theta_e to P_On_Xi using a periodic spline
+            call interpolateValues ( theta_e(:n_theta_e), p_on_theta_e(:n_theta_e), &
+              & xis(sort_xi(:i_r)), p_on_xi(:i_r), method='S', extrapolate='P' )
+
             TScat%values(surf_i,phi_i) = 0.0
-            do ptg_i = 2, size(theta_e)
+            do ptg_i = 2, i_r
               ! Trapezoidal quadrature, without assuming equal abscissa spacing
               ! and the factor of 0.5 in Equation 4.50 in the 4 June 2004
               ! cloud forward model ATBD
               TScat%values(surf_i,phi_i) = TScat%values(surf_i,phi_i) + &
-                & 0.25 * ( p_rad(ptg_i-1) + p_rad(ptg_i) ) *             &
-                &        ( theta_e(ptg_i) - theta_e(ptg_i-1) )
+                & 0.25 * ( p_on_xi(ptg_i-1)*rads(f_i,sort_xi(ptg_i-1)) + &
+                &          p_on_xi(ptg_i  )*rads(f_i,sort_xi(ptg_i  )) ) * &
+                &        ( xis(sort_xi(ptg_i)) - xis(sort_xi(ptg_i-1)) )
             end do
-            ! It isn't necessary to divide TScat%values(surf_i,phi_i) by
-            ! \int p(\theta) \sin\theta d\theta because that normalization
-            ! was done when the tables were constructed.
+            ! It isn't necessary to divide by \int p(\theta) \sin\theta d\theta
+            ! because that normalization was done when the P tables were
+            ! constructed.
           end do ! f_i = 1, noUsedChannels
 
         end do ! phi_i
       end do ! zeta_i
-
-      call interpolateArrayTeardown ( xi_coeffs )
 
       if ( dump_TScat ) then
         do f_i = 1, noUsedChannels
@@ -3796,7 +3790,7 @@ contains
       integer, intent(in) :: Phi_i          ! Index of Scat_Phi in
                                             ! TScat%template%phi
       real(rp), intent(inout) :: Xis(:)     ! Store Xi in Xis(I_R) if OK
-      real(rp), intent(inout) :: Rads(:,:)  ! Store radiance in Rads(I_R,:)
+      real(rp), intent(inout) :: Rads(:,:)  ! Store radiance in Rads(:,I_R)
       integer, intent(inout) :: I_R         ! Update if OK
       real(rp), intent(in), optional :: Scat_Tan_Ht ! Tangent height above
                                             ! earth geometric surface, km, for
@@ -3817,7 +3811,7 @@ contains
 
       i_r = i_r + 1
       xis(i_r) = xi
-      rads(i_r,1:noUsedChannels) = radiances(ptg_i,1:noUsedChannels)
+      rads(:,i_r) = radiances(:,ptg_i)
     end subroutine One_TScat_Pointing
 
   ! ................................................  TScat_Setup  .....
@@ -3992,6 +3986,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.297  2009/11/17 23:45:32  vsnyder
+! Add R_eq, R_sc arguments to FOV_Convolve_Setup, incomplete TScat stuff
+!
 ! Revision 2.296  2009/09/25 02:45:06  vsnyder
 ! TScat computation appears to be working
 !
