@@ -42,7 +42,7 @@ contains
 
     use FOV_Convolve_m, only: Convolve_Support_t, FOV_Convolve_1d
     use MatrixModule_1, only: FINDBLOCK, MATRIX_T
-    use MLSCommon, only: R8, RP, RV
+    use MLSKinds, only: R8, RP, RV
     use VectorsModule, only: VectorValue_T
 
     ! Required inputs
@@ -126,7 +126,7 @@ contains
       & FOV_Convolve_Temp_Derivs
     use Load_sps_data_m, only: Grids_T
     use MatrixModule_1, only: FINDBLOCK, MATRIX_T
-    use MLSCommon, only: R8, RP, RV
+    use MLSKinds, only: R8, RP, RV
     use VectorsModule, only: VectorValue_T
 
     ! Inputs
@@ -216,7 +216,7 @@ contains
       & FOV_Convolve_2d
     use Load_sps_data_m, only: Grids_T
     use MatrixModule_1, only: FINDBLOCK, MATRIX_T
-    use MLSCommon, only: R8, RP, RV
+    use MLSKinds, only: R8, RP, RV
     use VectorsModule, only: VectorValue_T
 
     ! Inputs
@@ -297,7 +297,7 @@ contains
     ! Interpolate the radiance from Chi_In to Chi_Out, and maybe dI/dPTan too.
 
     use MatrixModule_1, only: FINDBLOCK, MATRIX_T
-    use MLSCommon, only: R8, RP, RV
+    use MLSKinds, only: R8, RP, RV
     use MLSNumerics, only: Coefficients => Coefficients_r8, InterpolateValues
     use ScanAverage_m, only: ScanAverage
     use VectorsModule, only: VectorValue_T
@@ -384,7 +384,7 @@ contains
 
     use Load_sps_data_m, only: Grids_T
     use MatrixModule_1, only: FINDBLOCK, MATRIX_T
-    use MLSCommon, only: R8, RP, RV
+    use MLSKinds, only: R8, RP, RV
     use MLSNumerics, only: Coefficients => Coefficients_r8, InterpolateValues
     use ScanAverage_m, only: ScanAverage
     use VectorsModule, only: VectorValue_T
@@ -464,7 +464,7 @@ contains
     use ForwardModelConfig, only: QtyStuff_T
     use Load_sps_data_m, only: Grids_T
     use MatrixModule_1, only: FINDBLOCK, MATRIX_T
-    use MLSCommon, only: R8, RP, RV
+    use MLSKinds, only: R8, RP, RV
     use MLSNumerics, only: Coefficients => Coefficients_r8, InterpolateValues
     use ScanAverage_m, only: ScanAverage
     use VectorsModule, only: VectorValue_T
@@ -562,7 +562,7 @@ contains
 
     use Load_sps_data_m, only: Grids_T
     use MatrixModule_1, only: FINDBLOCK, MATRIX_T
-    use MLSCommon, only: RP
+    use MLSKinds, only: RP
     use VectorsModule, only: VectorValue_T
 
     ! Inputs
@@ -613,7 +613,7 @@ contains
     use ForwardModelConfig, only: QtyStuff_T
     use Load_sps_data_m, only: Grids_T
     use MatrixModule_1, only: FINDBLOCK, MATRIX_T
-    use MLSCommon, only: R8, RP, RV
+    use MLSKinds, only: R8, RP, RV
     use VectorsModule, only: VectorValue_T
 
     ! Inputs
@@ -670,7 +670,7 @@ contains
   subroutine GetBandedBlock ( Jacobian, Row, Col, NoChans, NoPtan )
     use MatrixModule_0, only: M_ABSENT, M_BANDED, CHECKFORSIMPLEBANDEDLAYOUT
     use MatrixModule_1, only: CREATEBLOCK, MATRIX_T
-    use MLSCommon, only: RM
+    use MLSKinds, only: RM
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use String_Table, only: Get_String
     type (Matrix_t), intent(inout) :: Jacobian
@@ -698,7 +698,7 @@ contains
   subroutine GetFullBlock ( Jacobian, Row, Col, What )
     use MatrixModule_0, only: M_ABSENT, M_FULL
     use MatrixModule_1, only: CREATEBLOCK, MATRIX_T
-    use MLSCommon, only: RM
+    use MLSKinds, only: RM
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use String_Table, only: Get_String
     type (Matrix_t), intent(inout) :: Jacobian
@@ -724,7 +724,7 @@ contains
   subroutine LoadMatrixValue ( In, Out, SbRatio, Update )
     ! If Update add SbRatio*In to Out else assign SbRatio*In to Out.
     ! Identical to LoadVectorValue except for kind of Out.
-    use MLSCommon, only: R8, RM
+    use MLSKinds, only: R8, RM
     real(r8), intent(in) :: In(:)
     real(rm), intent(inout) :: Out(:)
     real(r8), intent(in) :: SbRatio
@@ -741,7 +741,7 @@ contains
   subroutine LoadVectorValue ( In, Out, SbRatio, Update )
     ! If Update add SbRatio*In to Out else assign SbRatio*In to Out.
     ! Identical to LoadMatrixValue except for kind of Out.
-    use MLSCommon, only: R8, RV
+    use MLSKinds, only: R8, RV
     real(r8), intent(in) :: In(:)
     real(rv), intent(inout) :: Out(:)
     real(r8), intent(in) :: SbRatio
@@ -768,6 +768,9 @@ contains
 end module Convolve_All_m
 
 ! $Log$
+! Revision 2.9  2009/12/15 03:17:07  vsnyder
+! Get kinds from MLSKinds instead of MLSCommon
+!
 ! Revision 2.8  2009/11/17 23:40:08  vsnyder
 ! Add Store_*_Deriv routines
 !

@@ -14,7 +14,7 @@ module FOV_Convolve_m
   ! Antenna field of view convolutions
 
   use AntennaPatterns_m, only: AntennaPattern_T
-  use MLSCommon, only: R8
+  use MLSKinds, only: R8
   use MLSNumerics, only: Coefficients => Coefficients_r8
 
   implicit NONE
@@ -87,7 +87,7 @@ contains
 
     use Allocate_Deallocate, only: Allocate_test
     use AntennaPatterns_m, only: AntennaPattern_T
-    use MLSCommon, only: Rp
+    use MLSKinds, only: Rp
     use MLSNumerics, only: InterpolateArraySetup
 
     ! Inputs
@@ -161,7 +161,7 @@ contains
   subroutine FOV_Convolve_1D ( Convolve_Support, &
     & Rad_In, MIF_Times, DeadTime, Rad_Out, DRad_dx_out, Rad_FFT_out )
 
-    use MLSCommon, only: Rp, Rv
+    use MLSKinds, only: Rp, Rv
     use MLSNumerics, only: InterpolateValues
     use ScanAverage_m, only: ScanAverage
 
@@ -233,7 +233,7 @@ contains
   subroutine FOV_Convolve_2d ( Convolve_Support, dI_df, MIF_Times, DeadTime, &
     & dI_df_flag, dRad_df_out )
 
-    use MLSCommon, only: Rp, Rv
+    use MLSKinds, only: Rp, Rv
 
     ! Inputs
 
@@ -278,7 +278,7 @@ contains
     & Rad_FFT, Surf_Angle, MIF_Times, DeadTime, dI_dT, dx_dT, ddx_dxdT, &
     & dx_dT_out, di_dT_flag, dRad_dT_out )
 
-    use MLSCommon, only: Rp, Rv, R8
+    use MLSKinds, only: Rp, Rv, R8
     use MLSNumerics, only: Coefficients=>Coefficients_r8, Hunt, &
       & InterpolateArraySetup, InterpolateArrayTeardown, InterpolateValues
     use ScanAverage_m, only: ScanAverage
@@ -542,6 +542,9 @@ contains
 end module FOV_Convolve_m
 
 ! $Log$
+! Revision 2.9  2009/12/15 03:17:07  vsnyder
+! Get kinds from MLSKinds instead of MLSCommon
+!
 ! Revision 2.8  2009/11/17 23:38:11  vsnyder
 ! Add Dump, make R_eq, R_sc nonoptional in FOV_Convolve_Setup
 !
