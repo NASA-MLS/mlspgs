@@ -1,0 +1,48 @@
+\documentclass[11pt]{article}
+\usepackage{shortmlsdoc}
+\usepackage{times}
+\usepackage{geometry}
+\usepackage[svgnames]{xcolor}
+\usepackage{listings}
+\usepackage[square]{natbib}
+\usepackage{underscore}
+%
+\newcommand{\mycomment}[1]{{\color{red}\sffamily\slshape #1}}
+\newcommand{\snippet}[1]{\texttt{#1}}
+%
+\rcsInfo $Id$
+\seriestitle{Aura Microwave Limb Sounder (MLS)}
+\title{Callable Forward Model Interface Requirements Document}
+\author{H.~H.~Nguyen, P.~A.~Wagner, and N.~J.~Livesey}
+%
+\begin{document}
+\maketitle
+%
+\lstset{language=Fortran}
+\lstset{backgroundcolor=\color{WhiteSmoke}}
+\lstset{frame=single,framerule=0pt}
+\lstset{xleftmargin=1ex}
+\lstset{xrightmargin=1ex}
+%
+\lstset{basicstyle=\footnotesize\ttfamily}
+\lstset{commentstyle=\color{red}\itshape}
+\lstset{keywordstyle=\color{Green}\bfseries}
+%\lstset{identifierstyle=\color{MediumBlue}}
+\lstset{stringstyle=\color{Chocolate}}
+%
+% --------------------------------------------- Main document
+%
+\input{cfm-introduction.tex}
+%
+\input{cfm-structure-review.tex}
+%
+\input{cfm-reference.tex}
+%
+\appendix
+%
+\input{cfm-example.tex}
+%
+\bibliographystyle{plainnat}
+\bibliography{cfmbib}
+
+\end{document}
