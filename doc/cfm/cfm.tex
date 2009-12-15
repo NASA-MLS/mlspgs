@@ -5,10 +5,15 @@
 \usepackage[svgnames]{xcolor}
 \usepackage{listings}
 \usepackage[square]{natbib}
+\usepackage{amsmath}
 \usepackage{underscore}
 %
-\newcommand{\mycomment}[1]{{\color{red}\sffamily\slshape #1}}
+\newcommand{\mycomment}[1]{{\sffamily\slshape #1}}
 \newcommand{\snippet}[1]{\texttt{#1}}
+%
+\setlength{\fboxsep}{4mm}
+\newcommand{\asside}[2]{\par\noindent\colorbox{Linen}{\parbox{\linewidth-2\fboxsep}{%
+      \sffamily{\large\textbf{#1}\par}\vspace{1.5ex}#2}}\par}
 %
 \rcsInfo $Id$
 \seriestitle{Aura Microwave Limb Sounder (MLS)}
@@ -29,6 +34,8 @@
 \lstset{keywordstyle=\color{Green}\bfseries}
 %\lstset{identifierstyle=\color{MediumBlue}}
 \lstset{stringstyle=\color{Chocolate}}
+%
+\newcommand{\degsym}{\ensuremath{^\circ}}
 %
 % --------------------------------------------- Main document
 %
