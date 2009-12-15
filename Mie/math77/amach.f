@@ -635,6 +635,7 @@ C              go to 100
 C           end if
 c++   END
             print*,'AMACH has bad parameters for current environment.'
+            print*,'TEST =', test, ', DM1 =', dm1
             stop
          end if
 c++   Code for HOW = RUN is INACTIVE
