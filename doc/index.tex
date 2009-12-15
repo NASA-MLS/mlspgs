@@ -40,7 +40,9 @@
 \fi
 
 \hyperbaseurl{}
-\newcommand\h[1]{#1 \href{#1.dvi}{dvi} \href{#1.pdf}{pdf}}
+\newcommand\hr[1]{\href{#1.dvi}{dvi} \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 \hr{#1}}
+\newcommand\hh[2]{#1 \hr{#2}}
 
 \begin{document}
 
@@ -59,6 +61,7 @@
 \pagestyle{headfoot}
 
 \begin{longtable}[l]{l|p{5in}}
+\hh{l2cf}{l2cfquickreference} & l2cf quick reference (very old)\\
 \h{wvs-001} & Observations Concerning Code in the {\tt mlspgs/l2} Directory\\
 \h{wvs-002} & The retrieval iteration in the form of a least-squares problem\\
 \h{wvs-003} & The Forward Model\\
@@ -160,6 +163,9 @@
 % $Id$
 
 % $Log$
+% Revision 1.5  2009/12/15 21:22:01  vsnyder
+% Add wvs-086 and wvs-087
+%
 % Revision 1.4  2009/10/15 22:57:49  vsnyder
 % Add wvs-086
 %
