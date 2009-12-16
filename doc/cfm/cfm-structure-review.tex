@@ -107,8 +107,111 @@ quantity in the L1 files.
 
 \subsection{Quantities and Vectors in MLSCFM}
 
+The heterogeneous nature of the MLS state and measurement vectors
+dictates that a flexible system be used for their description.  In the
+MLSCFM software vectors consist of `templates' and `values'.  Separating
+the vector template from its values allows for efficient storage, and
+more importantly tracking, of related quantities (e.g., the state, the
+initial guess, and the \emph{a priori}, or the measurements and their
+forward model estimates).  Vector templates are, in turn, composed of
+one or more `quantity templates'.  While quantities do not strictly
+speaking exist in isolation from vectors, the term `quantitiy' is oten
+loosely used in the software to refer to either a specific quantity
+within a vector, and/or its template.
+
+Vector quantities typically describe a single- or multi-valued physical
+quantity (temperature profiles, abundances for one species, radiances
+for one band).  They can have up to three dimensions, named `channels',
+`surfaces' and 'instances' (channels is the fastest changing index,
+instances the slowest).  Instance is a time-like or horizontal
+dimension, and typically refers to either profiles (for geophysical
+quantities) or major frames (for instrument quantities such as measured
+radiances).  Similarly, `surfaces' can refer to pressure levels for
+geophysical quantities, or minor frames for instrument quantities.  The
+channels dimension is typically only used for radiance quantities.  The
+actual fortran arrays storing vector quantity values are dimensioned
+\snippet{( channels * surfaces, instances )}.  While increasing the
+complexity of access for multi-channel quantities, this simplifies the
+storage of matrices in the software.
+
+`Coherent' quantities are those where the surfaces are the same for
+every instance.  Geophysical quantities, being reported on a fixed
+pressure grid, are coherent, while radiance quantities where each MAF
+involves views of different altitudes, are incoherent.
+
+`Stacked' quantities are those where the different surfaces in each
+instance share the same horizontal geolocation (latitude, longitude,
+time etc.).  Again, state vector quantities are typically stacked, with
+the quantity describing vertical profiles, while radiance quantities are
+unstacked, as each minor frame within the scan has a slightly different
+geolocation.
+
+Geophysical quantities are essentially always coherent and stacked,
+while `minor frame' (i.e., more instrument related) quantities are
+always incoherent and unstacked.  Two `minor frame' vector quantities
+describing parameters associated with the same MLS module (GHz, THz or
+spacecraft) can, by definition, be assumed to have the same geolocation.
+This important assertion is relied upon throughout the forward model
+software.  Conversely, in the state vector, geolocation information does
+not need to be consistent from quantity to quantity.  The vertical (or
+horizontal) grids for temperature need not relate to that for
+composition, nor do the grids for all molecules need to be identical.
+
+In addition to geolocation information, quantity templates typically
+contain additional information to describe the quantity.  This includes
+the molecule for an abundance-related quantity, the signal, radiometer
+and module for a radiance-related quantity etc. etc.
+
+\subsection{Matrices in MLSCFM}
+
+Matrices in the CFM software are defined by the vectors that describe
+their rows and columns.  For example, the Jacobian matrix relates a
+state vector to a measurement vector, while a covariance matrix
+describes the covariance of a single vector. The matrices are stored in a blocked manner,
+with subblocks relating one instance of one quantity in the rows vector
+with an instance of another quantities in the columns vector.  The
+tomographic nature of the MLS retrievals \citep{LiveseyEtal06} means
+that many of the blocks are all zero and can be omitted for efficiency
+of storage and computation.  Similarly, many of the individual blocks
+are themselves sparse, and can be stored as such in the software.
+
+The MLSCFM software contains two main modules for dealing with matrices.
+\snippet{MatrixModule_0} contains the software for storing and
+manipulating individual blocks, while \snippet{MatrixModule_1} contains
+the software that describes matrices as a collection of
+\snippet{Matrix_0} blocks, and the algorithms for operating upon these
+`\snippet{Matrix_1}' entities.  
+
 \subsection{Sources of information for MLS state vector components}
-\mycomment{Where can they get tangent pressure information, extinction etc.?}
+
+The MLS forward models require a wide variety of vector quantities as
+input.  Typically, two state vectors are supplied, one
+(\snippet{ForwardModelIn}) containing the quantities of interest (i.e.,
+those quantities for which a solution is sought for some or all
+elements), and the other (\snippet{ForwardModelExtra}) containing other
+(e.g., calibration) quantities, also needed by the forward model.  The
+majority of these lesser quantities will be defined and filled for the user by
+subroutines supplied as part of the MLSCFM software, and need little
+discussion here.
+
+However, an important exception is the tangent pressure information, for
+which there are a variety of approaches.  Firstly, the value retrieved
+as part of the MLS processing can be read from the L2 `DGM' file.  This
+is useful for initial `O--F' studies, but is not feasible when radiance
+assimilation is to be performed in real time.  In addition the
+production processing's use of GMAO temperature as an \emph{a priori}
+introduces potential biases in this approach.
+
+An alternative approach is to estimate the tangent pressure given
+knowledge of atmospheric temperature and geopotential height, Aura
+orientation and MLS pointing.  However, the pointing knowledge is
+imperfect and can also introduce biases.
+
+The best approach is likely to solve for tangent pressure for each minor
+frame as part of any radiance assimilation activity.  Whether this
+proves to be practical is the subject of further investigations.
+(Asside, one approach may be to take GMAO GPH as `truth' and retrieve a
+-- hopefully slowly varying -- Aura attitude offset term).
 
 \subsection{Defining forward models}
 
