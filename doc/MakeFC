@@ -84,6 +84,7 @@ clean:
 	rm -fr *.dvi *.pdf $(DVIDIR) $(PDFDIR)
 
 depends:
+	$(MAKE) -f $(MakeFName) internalupdate
 	$(UTILDIR)/makemakedep.sh -s tex -o dvi -p Makefile.dep.1 \
      $(OMIT_PREFXD) $(OMIT_PREFXD_REV)
 	sed 's/OBJS =/NEAROBJS =/' Makefile.dep.1 > Makefile.dep.2
@@ -128,6 +129,9 @@ update: internalupdate
 
 # ========================================================================
 # $Log$
+# Revision 1.3  2009/12/08 19:51:37  pwagner
+# Working prior to adding cfm items
+#
 # Revision 1.2  2009/09/22 17:46:29  pwagner
 # Can now ignore sources marked by revision number
 #
