@@ -391,7 +391,7 @@ contains ! =====  Public procedures  ===================================
             & matrix%col%vec%quantities(matrix%col%quant(col))%template%name )
           call output ( matrix%col%inst(col), before=':', after=' (' )
           call output ( row, after=',' )
-          call output ( col, after=') is' )
+          call output ( col, after=') is ' )
           nullify ( val )
           select case ( mb%kind )
           case ( m_absent )
@@ -794,6 +794,9 @@ contains ! =====  Public procedures  ===================================
 end module MatrixTools
 
 ! $Log$
+! Revision 1.29  2009/12/17 23:44:43  vsnyder
+! Print block coordinates in dump
+!
 ! Revision 1.28  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
 !
