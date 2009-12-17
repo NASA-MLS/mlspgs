@@ -42,7 +42,7 @@ given in the \snippet{MLS-Aura_L2Cal-Signals_\ldots} file supplied with
 the software.  For most bands, the number of channels is quoted in the
 \snippet{Spectrometer} clause (\snippet{FB25}, \snippet{MB11} or
 \snippet{WF4}) and are numbered 1\ldots$n$.  The exception are the
-Digital Autocorellator Spectrometers (DACs) which have 129 channels
+Digital Autocorrelator Spectrometers (DACs) which have 129 channels
 numbered 0\ldots128.
 
 \subsubsection{MLS L1 files}
@@ -115,7 +115,7 @@ more importantly tracking, of related quantities (e.g., the state, the
 initial guess, and the \emph{a priori}, or the measurements and their
 forward model estimates).  Vector templates are, in turn, composed of
 one or more `quantity templates'.  While quantities do not strictly
-speaking exist in isolation from vectors, the term `quantitiy' is oten
+speaking exist in isolation from vectors, the term `quantity' is often
 loosely used in the software to refer to either a specific quantity
 within a vector, and/or its template.
 
@@ -210,13 +210,38 @@ imperfect and can also introduce biases.
 The best approach is likely to solve for tangent pressure for each minor
 frame as part of any radiance assimilation activity.  Whether this
 proves to be practical is the subject of further investigations.
-(Asside, one approach may be to take GMAO GPH as `truth' and retrieve a
+(Aside, one approach may be to take GMAO GPH as `truth' and retrieve a
 -- hopefully slowly varying -- Aura attitude offset term).
 
 \subsection{Defining forward models}
+The forward models must be defined before they can be invoked. The procedure
+used to define them is (\snippet{ConstructForwardModelConfig}). Fortunately,
+at this stage we anticipate that the necessary calls to this function
+will be made automatically during the setup phase, lifting the burden from
+the library user. Subsequent versions may be enhanced by allowing the user
+to construct and use additional forward models on-the-fly.
+
+In general the forward models are defined according to two classes of
+characteristics: global characteristics which are common to all, and specific
+characteristics which may vary from model to model. One key characteristic that
+varies is whether the forward model is a linearized model or the full model. The
+linearized model has the advantage of being quicker to compute, but at the price
+of being less accurate.
+
 
 \subsection{Invoking forward models}
-
+In the example at the end of this document we show how to invoke a forward
+model. Especially important is the order of steps leading up to its invocation.
+From a very general perspective we first perform an overall setup, loading into
+memory all the global data. Then we define the spatial grids. Then we define the
+vector and quantity templates. Two vector templates in particular deserve
+mention: the state template will hold everything that is known about the
+atmosphere including temperatures and molecular abundances; the measurement
+template will hold all the radiances. Then we create
+instances of the state and measurement vectors. Filling the state vector is a
+key task which the user will want to adapt according to need. 
+Finally comes the call to the forward model which fills the measurement
+vector and optionally the Jacobian matrix.
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: "cfm"
