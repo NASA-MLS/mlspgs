@@ -389,11 +389,13 @@ contains ! =====  Public procedures  ===================================
           call output ( matrix%row%inst(row), before=':', after=', ' )
           call display_string ( &
             & matrix%col%vec%quantities(matrix%col%quant(col))%template%name )
-          call output ( matrix%col%inst(col), before=':', after=' is ' )
+          call output ( matrix%col%inst(col), before=':', after=' (' )
+          call output ( row, after=',' )
+          call output ( col, after=') is' )
           nullify ( val )
           select case ( mb%kind )
           case ( m_absent )
-            call output ( ' absent' )
+            call output ( 'absent' )
           case ( m_column_sparse, m_banded )
             if ( mb%kind == m_column_sparse ) then
               call output ( 'column sparse' )
@@ -792,6 +794,9 @@ contains ! =====  Public procedures  ===================================
 end module MatrixTools
 
 ! $Log$
+! Revision 1.28  2009/06/23 18:46:18  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 1.27  2009/06/16 17:40:19  pwagner
 ! Changed api for dump, diff routines; now rely on options for most optional behavior
 !
