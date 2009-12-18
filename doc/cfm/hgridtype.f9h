@@ -1,0 +1,15 @@
+type HGrid_T
+    integer :: NAME                 ! Not used
+    integer :: noProfs              ! Number of profiles in this grid
+    integer :: noProfsLowerOverlap=0  ! Not used
+    integer :: noProfsUpperOverlap=0  ! Not used
+
+    ! Now the various coordinates in the HGrid, all dimensioned (noProfs)
+    real(r8), dimension(:,:), pointer :: phi         => NULL()
+    real(r8), dimension(:,:), pointer :: geodLat     => NULL()
+    real(r8), dimension(:,:), pointer :: lon         => NULL()
+    real(r8), dimension(:,:), pointer :: time        => NULL()
+    real(r8), dimension(:,:), pointer :: solarTime   => NULL()
+    real(r8), dimension(:,:), pointer :: solarZenith => NULL()
+    real(r8), dimension(:,:), pointer :: losAngle    => NULL()
+end type HGrid_T

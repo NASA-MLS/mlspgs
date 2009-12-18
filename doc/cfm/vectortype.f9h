@@ -1,0 +1,11 @@
+type Vector_T
+    integer :: Name = 0        ! Not used
+    integer :: Where = 0       ! Not used
+    integer :: GlobalUnit = PHYQ_Invalid ! Alternative units for whole vector
+    type (VectorTemplate_T) :: TEMPLATE ! Template for this vector
+    type (VectorValue_T), dimension(:), pointer :: QUANTITIES => NULL() ! The
+    ! dimension of QUANTITIES is the same as for the QUANTITIES field of the
+    ! vector template.  Each element of QUANTITIES here corresponds to the
+    ! one in the same position in the QUANTITIES field of the vector template.
+end type Vector_T
+

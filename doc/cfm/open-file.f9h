@@ -1,0 +1,17 @@
+use CFM
+use HDF, only :: DFACC_RDONLY
+
+integer :: error
+type(MLSFile_T) :: l1bfile
+
+
+error = InitializeMLSFile(l1bfile, content='l1boa', &
+        name='/data/emls/l1b/v02.23/2008/037/MLS-Aura_L1BOA_v02-23-c01_2008d037.h5', &
+        shortName='L1BOA', type=l_hdf, access=DFACC_RDONLY)
+if (error == 0) then
+   call mls_openFile(L1BFile, error)
+   if (error /= PGS_S_SUCCESS ) then
+      ! Error handling
+   end if
+end if
+call mls_closefile(l1bfile)
