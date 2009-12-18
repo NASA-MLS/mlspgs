@@ -5,6 +5,27 @@
 \subsection{Data types}
 
 \subsubsection{\snippet{HGrid\_T}}
+\lstinputlisting{hgridtype.f9h}
+\subsubsection{\snippet{VGrid\_T}}
+\lstinputlisting{vgridtype.f9h}
+\subsubsection{\snippet{Vector\_T}}
+\lstinputlisting{vectortype.f9h}
+\subsubsection{\snippet{VectorValue\_T}}
+\lstinputlisting{vectorvaluetype.f9h}
+\subsubsection{\snippet{VectorTemplate\_T}}
+\lstinputlisting{vectortemplatetype.f9h}
+\subsubsection{\snippet{QuantityTemplate\_T}}
+\lstinputlisting{quantitytemplatetype.f9h}
+\subsubsection{\snippet{Enumerate types and other types}}
+\begin{itemize}
+ \item real(r4): real numbers with decimal precision at least 5.
+ \item real(r8): real numbers with decimal precision at least 13.
+ \item t\_vgridCoordinate: enumerate values are TBD.
+ \item t\_quantityType: enumerate values are TBD.
+ \item t\_molecule: enumerate values are TBD.
+ \item phyq\_invalid: a constant integer to indicate an invalid 
+                      physical quantity. Value is TBD.
+\end{itemize}
 
 \subsection{Procedures and functions}
 
@@ -18,18 +39,143 @@
 
   Steering a middle course, we have tried to do both.}
 
-\subsubsection{\snippet{CFM\_MLSSetup}}
-\subsubsection{\snippet{CreateExplicitHGrid}}
-\subsubsection{\snippet{CreateRegularHGrid}}
-\subsubsection{\snippet{cfm\_CreateQtyTemplate}}
-\subsubsection{\snippet{ConstructVectorTemplate}}
-\subsubsection{\snippet{CreateVecTemplate}}
-\subsubsection{\snippet{ForwardModel}}
-\subsubsection{\snippet{int InitializeMLSFile}}
-\subsubsection{\snippet{mls\_openFile}}
-\subsubsection{\snippet{mls\_CloseFile}}
-\subsubsection{\snippet{CFM\_MLSCleanup}}
+\subsubsection{\snippet{AddQuantityTemplateToDatabase}}
+Puts a given template to a given array (database) by allocating
+a new array, and deallocating the old array if database is associated.
 
+Dummy variables:
+\begin{itemize}
+ \item database: an one-dimensional array of QuantityTemplate\_T objects,
+                 or a NULL pointer.
+ \item template: a quantity template to be added.
+\end{itemize}
+
+\subsubsection{\snippet{CFM\_MLSCleanup}}
+Deallocates memory and closes files what CFM\_MLSSetup allocated or opened.
+
+\subsubsection{\snippet{CFM\_MLSSetup}}
+Gets the ForwardModelConfig\_T object, the filedatabase, and initializes 
+internally used variables.
+
+Dummy variables:
+\begin{itemize}
+ \item fmConfig: an object to be filled with forward model settings read 
+                 from a L2CF
+ \item filedatabase: an one-dimensional array of MLSFile\_T objects to be 
+                     filled in with necessary and already opened 
+                     spectroscopy file(s) and engineering data file(s).
+                     This subroutine will allocate the array.
+ \item fakeChunk: used internally, to be passed to other subroutines.
+ \item error: is set to 0 if this subroutine runs successfully, a non-zero
+              number otherwise.
+\end{itemize}
+
+\subsubsection{\snippet{CreateQuantityTemplate}}
+Creates a QuantityTemplate\_T object.
+
+Dummy variables:
+\begin{itemize}
+ \item filedatabase: an array of already-opened MLSFile\_T objects.
+ \item chunk: a MLSChunk\_T object returned by CFM\_MLSSetup
+              for internal used.
+ \item qHGrid: the (x,y) coordinates of samples of the spacecraft's
+               path.
+ \item qVGrid: the z coordinates of samples the spacecraft's path.
+ \item qLogBasis: true if points in qHGrid and qVGrid are calculated
+                  on a log scale.
+ \item qMinimumV:
+ \item qInstrumentModule: either "GHz" or "THz."
+ \item qMolecule: a string naming the molecule associated with the
+                  quantity.
+ \item qType: a string naming the type of the quantity.
+
+\end{itemize}
+Return: a quantity template.
+
+\subsubsection{\snippet{CreateVector}}
+Creates a Vector\_T object.
+
+Dummy variables:
+\begin{itemize}
+ \item vecTemplate: a VectorTemplate\_T object describing the vector to be
+                    returned.
+ \item qtyTemplateDatabase: an array of QuantityTemplate\_T objects describing
+                            the quantities in the returned vector.
+\end{itemize}
+
+Return: an empty vector
+
+\subsubsection{\snippet{CreateVectorTemplate}}
+Creates a vector template.
+
+
+Dummy variables:
+\begin{itemize}
+ \item qtyTemplateDB: an array of QuantityTemplate\_T objects describing
+                      all available quantities.
+ \item selected: an array of logicals of the same size as qtyTemplateDB,
+                 whose elements are true where the corresponding
+                 qtyTemplateDB's elements are used by the vector of
+                 this vector template.
+\end{itemize}
+
+Return: a VectorTemplate\_T object.
+
+\subsubsection{\snippet{ForwardModel}}
+Relates an atmospheric state, representing by a state vector and an optional 
+extra state vector, to MLS radiances, also representing by a vector.
+
+
+Dummy variables:
+\begin{itemize}
+ \item fmConfig: a ForwardModelConfig\_T object containing the settings for
+                 the forward model.
+ \item stateVectorIn: a Vector\_T object representing an atmospheric state
+ \item stateVectorExtra: a Vector\_T object representing the atmospheric 
+                         state's elements that are not captured in 
+                         stateVectorIn. There is no constraint on what must 
+                         be or must not be in either stateVectorIn or 
+                         stateVectorExtra as long as they do not contain 
+                         duplicate information.
+ \item radiances: the radiances corresponding to the atmospheric state 
+                  given by stateVectorIn and stateVectorExtra, to be filled 
+                  in by this subroutine.
+ \item fmStat: used internally and to be filled by this subroutine.
+ \item jacobianMatrix: the matrix equivalent of the forward model with the 
+                       specific setting in fmConfig.
+\end{itemize}
+
+\subsubsection{\snippet{InitializeMLSFile}}
+Initializes an MLSFile\_T object to be opened later.
+
+Dummy variables:
+\begin{itemize}
+ \item content: TBD for now.
+ \item name: the name of the file.
+ \item shortName (optional): a short alias for the file.
+ \item type: either l\_hdf or l\_ascii, actual values are TBD.
+ \item access: one of DFACC_CREATE, DFACC_RDONLY, DFACC_READ, 
+               or DFACC_RDWR of HDF library
+ \item file: the file object to be initialized
+\end{itemize}
+
+\subsubsection{\snippet{mls\_CloseFile}}
+Closes an open file.
+
+Dummy variables:
+\begin{itemize}
+ \item file: the file to be closed in an initialized MLSFile\_T object.
+\end{itemize}
+
+\subsubsection{\snippet{mls\_openFile}}
+Opens a file.
+
+Dummy variables:
+\begin{itemize}
+ \item file: the file to be opened in an initialized MLSFile\_T object.
+ \item error: a value to store error code in. If the file is opened 
+              successfully, the error code is PGS\_S\_SUCCESS.
+\end{itemize}
 
 %%% Local Variables: 
 %%% mode: latex

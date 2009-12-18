@@ -1,77 +1,59 @@
 program mockup
 
-   use CFM_MLSSetup_m, only: CFM_MLSSetup, CFM_MLSCleanup
-   use ForwardModelConfig, only: ForwardModelConfig_T
-   use ForwardModelWrappers, only: ForwardModel
-   use VectorsModule, only: Vector_T, VectorTemplate_T, CreateVector
-   use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
-   use MatrixModule_1, only: Matrix_T
-   use QuantityTemplates, only: QuantityTemplate_T, &
-          AddQuantityTemplateToDatabase
-   use FGrid, only: FGrid_T
-   use HGridsDatabase, only: HGrid_T
-   use MLSCommon, only: MLSFile_T
-
-   use Dummy, only: dummyHGrid => dummyHGrid1
+   use CFM 
 
    implicit none
 
-   integer :: error 
-   type(ForwardModelConfig_T) :: aForwardModelConfig
-   type (ForwardModelConfig_T), pointer :: ForwardModelConfigDatabase(:) => NULL()
-   type(Vector_T) :: fwdModelIn, fwdModelExtra, fwdModelOut
-   type(VectorTemplate_T) :: inputVectorTemplate
-   type(QuantityTemplate_T), dimension(:), pointer :: qtyTemplates => NULL()
-   type(ForwardModelStatus_t) :: fwdStatus
-   type(Vector_T), dimension(:), pointer :: vectors => NULL()
-   type(Matrix_T) :: aJacobian
-   type(QuantityTemplate_T) :: qtyTemplate
-   type(FGrid_T), dimension(:), pointer :: fgrids => NULL()
-   type(HGrid_T), dimension(:), pointer :: hgrids => NULL()
+   integer :: error
+   type(ForwardModelConfig_T) :: fmConfig
    type(MLSFile_T), dimension(:), pointer :: filedatabase => NULL()
-   real :: a
+   type(MLSChunk_T) :: fakeChunk
+   ! type(HGrid_T) ... more attributes for HGrid_T object(s)
+   ! type(VGrid_T) ... more attributes for VGrid_T object(s)
+   type(QuantityTemplate_T), dimension(:), pointer :: qtyTemplateDB => NULL()
+   logical, dimension(:), pointer :: stateSelected => NULL()
+   logical, dimension(:), pointer :: stateExtraSelected => NULL()
+   type(VectorTemplate_T) :: stateVectorTemplate
+   type(VectorTemplate_T) :: stateVectorExtraTemplate
+   type(Vector_T) :: stateVector
+   type(Vector_T) :: stateVectorExtra
+   type(Vector_T) :: radiances
+   type(ForwardModelStatus_T) :: fmStatus
+   type(Matrix_T) :: jacobianMatrix
 
    !Executables
-   a = .0
-   print *, "Haley: a", a
-   call CFM_MLSSetup(error, ForwardModelConfigDatabase)
 
-   if (error /=0) stop
+   ! Create fmConfig
+   call CFM_MLSSetup(error, fmConfig, filedatabase, fakeChunk)
+   if (error /= 0) then
+      ! Print your choice of error message
+      stop
+   end if
 
-   aForwardModelConfig = ForwardModelConfigDatabase(1)
+   ! You need to create vgrid and hgrid for a qtyTemplate
 
-   call CreateQuantityTemplate(fgrids, hgrids, filedatabase, qtyTemplate)
-   allocate (qtyTemplates(1), stat=error)
-   if (error /= 0) stop
-   error = AddQuantityTemplateToDatabase (qtyTemplates, qtyTemplate)
+   ! To create qtyTemplateDB, see the example for creating a quantity
+   ! template snippet
+   ! Initialize stateSelected and stateExtraSelected as appropriate
 
-   call VectorFill (inputVectorTemplate, qtyTemplates, fwdModelIn)
+   ! Create vector template for stateVectorIn
+   stateVectorInTemplate = CreateVectorTemplate (qtyTemplateDB, stateSelected)
+   ! Create stateVectorIn
+   stateVectorIn = CreateVector(stateVectorTemplate, qtyTemplateDB)
+   ! Fill stateVectorIn%quantities, see VectorValue_T
 
-   call ForwardModel (aForwardModelConfig, fwdModelIn, fwdModelExtra, fwdModelOut, &
-                     & fwdStatus, jacobian=aJacobian, vectors=vectors)
+   ! Create vector template for stateVectorExtra
+   stateVectorInTemplate = CreateVectorTemplate (qtyTemplateDB, &
+           stateExtraSelected)
+   ! Create stateVectorExtra
+   stateVectorExtra = CreateVector(stateVectorExtraTemplate, &
+                                   qtyTemplateDB)
+   ! Fill stateVectorExtra%quantities, see VectorValue_T
+ 
+   ! Invoke the forward model  
+   call ForwardModel (fmConfig, stateVectorIn, stateVectorExtra, radiances, &
+                     & fmStatus, jacobian=jacobianMatrix)
 
    call CFM_MLSCleanup
-
-   contains 
-
-      subroutine VectorFill (inputVectorTemplate, qtyTemplates, vector)
-         type(VectorTemplate_T), intent(in) :: inputVectorTemplate
-         type(QuantityTemplate_T), dimension(:), pointer :: qtyTemplates
-         type(Vector_T), intent(out) :: vector
-
-         vector = CreateVector(-1, inputVectorTemplate, qtyTemplates)
-
-      end subroutine VectorFill
-
-      subroutine CreateQuantityTemplate (fgrids, hgrids, filedatabase, &
-                     qtyTemplate) 
-         type(FGrid_T), dimension(:), pointer :: fgrids
-         type(HGrid_T), dimension(:), pointer :: hgrids
-         type(MLSFile_T), dimension(:), pointer :: filedatabase
-         type(QuantityTemplate_T), intent(out) :: qtyTemplate
-
-         qtyTemplate%name = -1
-
-      end subroutine CreateQuantityTemplate
 
 end program
