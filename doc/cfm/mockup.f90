@@ -37,13 +37,13 @@ program mockup
    ! Initialize stateSelected and stateExtraSelected as appropriate
 
    ! Create vector template for stateVectorIn
-   stateVectorInTemplate = CreateVectorTemplate (qtyTemplateDB, stateSelected)
+   stateVectorTemplate = CreateVectorTemplate (qtyTemplateDB, stateSelected)
    ! Create stateVectorIn
-   stateVectorIn = CreateVector(stateVectorTemplate, qtyTemplateDB)
+   stateVector = CreateVector(stateVectorTemplate, qtyTemplateDB)
    ! Fill stateVectorIn%quantities, see VectorValue_T
 
    ! Create vector template for stateVectorExtra
-   stateVectorInTemplate = CreateVectorTemplate (qtyTemplateDB, &
+   stateVectorExtraTemplate = CreateVectorTemplate (qtyTemplateDB, &
            stateExtraSelected)
    ! Create stateVectorExtra
    stateVectorExtra = CreateVector(stateVectorExtraTemplate, &

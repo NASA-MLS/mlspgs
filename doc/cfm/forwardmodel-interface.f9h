@@ -1,0 +1,25 @@
+!Relates an atmospheric state, representing by a state vector 
+!and an optional extra state vector, to MLS radiances, also 
+!representing by a vector.
+subroutine ForwardModel ( fmConfig, stateVector, stateVectorExtra, &
+   radiances, fmStat, Jacobian)
+   !An object containing the settings for the forward model.
+   type(ForwardModelConfig_T), intent(inout) :: fmConfig
+   
+   !A vector describing an atmospheric state.
+   type(vector_T), intent(in) ::  stateVector
+
+   !A vector describing other properties of the atmosphere
+   ! that are not described by stateVector
+   type(Vector_T), intent(in), optional :: stateVectorExtra
+
+   !A vector to store the output of the forward model.
+   type(Vector_T), intent(inout) :: radiances
+
+   !This object is used internally.
+   type(ForwardModelStatus_t), intent(inout) :: fmStat
+
+   !The matrix equivalent of the forward model with the
+   !specific setting in fmConfig.
+   type(Matrix_T), intent(inout), optional :: JACOBIAN
+end subroutine

@@ -1,0 +1,29 @@
+!Creates a QuantityTemplate\_T object.
+type(QuantityTemplate_T) function CreateQuantityTemplate (filedatabase, &
+        chunk, qHGrid, qVGrid, qLogBasis, qMininumV, qInstrumentModule,
+        qMolecule, qType)
+   !An array of already-opened MLSFile_T objects.
+   type(MLSFile_T), dimension(:), pointer :: filedatabase
+
+   !A MLSChunk_T object returned by CFM_MLSSetup for internal used.
+   type(MLSChunk_T) :: chunk
+
+   !The (x,y) coordinates of samples of the spacecraft's path.
+   type(HGrid_T) :: qHGrid
+
+   !The z coordinates of samples the spacecraft's path.
+   type(VGrid_T) :: qVGrid
+
+   !.true. if points in qHGrid and qVGrid are calculated on a log scale.
+   logical, intent(in) :: qLogBasis
+
+   !If qLogBasis is .true., then this is the threshold to which greater
+   !or equal coordinate values are recorded as their logarithmic equivalent.
+   !The default value is 1.0.
+   real(r8), optional :: qMinimumV
+
+   character(len=*), pointer :: qInstrumentModule !either "GHz" or "THz."
+
+   !A string naming the type of the quantity.
+   character(len=*), pointer :: qType
+end function

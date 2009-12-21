@@ -1,0 +1,26 @@
+!Initializes an MLSFile_T object to be opened later. Returns 0 if the
+!file can be successfully initialized.
+integer function InitializeMLSFile ( file, type, access, content, name, &
+   & shortName)
+   !The file object to be initialized.
+   type(MLSFile_T), intent(out) :: file
+
+   !The file type; either l\_hdf or l\_ascii, actual 
+   !values are TBD.
+   integer, optional, intent(in) :: type
+
+   !The access mode of the file; one of DFACC_CREATE, 
+   !DFACC_RDONLY, DFACC_READ, or DFACC_RDWR from HDF library
+   integer, optional, intent(in) :: access
+
+   !This variable is used to distinguish among MLS level 1
+   !file. Valid values are "l1boa," "l1brad," "l2gp," "l2aux," 
+   !"l2pc."
+   character(len=*), optional, intent(in) :: content
+
+   !The name of the file.
+   character(len=*), optional, intent(in) :: name
+
+   !A short alias for the file.
+   character(len=*), optional, intent(in) :: shortName
+end function

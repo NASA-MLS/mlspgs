@@ -1,0 +1,20 @@
+!Gets the ForwardModelConfig_T object, the filedatabase, and initializes
+!internally used variables.
+subroutine CFM_MLSSetup (error, fmConfig, filedatabase, fakeChunk)
+   !This is set to 0 if this subroutine runs successfully, a non-zero
+   !number otherwise.
+   integer, intent(out) :: error
+
+   !An object to be filled with forward model settings read
+   !from a L2CF
+   type (ForwardModelConfig_T) :: fmConfig
+
+   !An one-dimensional array of MLSFile_T objects to be
+   !filled in with necessary and already opened
+   !spectroscopy file(s) and engineering data file(s).
+   !This subroutine will allocate the array.
+   type (MLSFile_T), dimension(:), pointer, optional :: filedatabase
+   
+   !This variable is used internally, to be passed to other subroutines.
+   type (MLSChunk_T), intent(out), optional :: fakeChunk
+end subroutine

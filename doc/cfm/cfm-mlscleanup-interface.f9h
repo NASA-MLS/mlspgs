@@ -1,0 +1,3 @@
+!Deallocates memory and closes files what CFM MLSSetup allocated or opened.
+subroutine CFM_MLSCleanup
+end subroutine

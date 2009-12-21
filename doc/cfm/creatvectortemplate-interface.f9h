@@ -1,0 +1,12 @@
+!Creates a vector template.
+type(VectorTemplate_T) function CreateVectorTemplate (qtyTemplateDB, selected)
+   !An array of QuantityTemplate\_T objects describing all available 
+   !quantities.
+   type(QuantityTemplate_T), dimension(:), pointer :: qtyTemplateDB
+
+   !An array of logicals of the same size as qtyTemplateDB,
+   !whose elements are true where the corresponding
+   !qtyTemplateDB's elements are used by the vector of
+   !this vector template.
+   logical, dimension(:), pointer :: selected
+end function

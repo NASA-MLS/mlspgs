@@ -1,0 +1,11 @@
+!Opens a file
+subroutine MLS_OpenFile (file, error)
+   !An initialized MLSFile_T object
+   type(MLSFile_T), :: file
+
+   !Optional variable to store error code.
+   !If the file is opened successfully,
+   !the error code is PGS_S_SUCCESS (actual
+   !value is TBD).
+   integer, optional, intent(out) :: error
+end subroutine

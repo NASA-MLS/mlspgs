@@ -1,0 +1,9 @@
+!Creates an empty vector
+type(Vector_T) function CreateVector (vecTemplate, qtyTemplateDatabase)
+   !A VectorTemplate_T object describing the vector to be returned.
+   type(VectorTemplate_T), intent(in) :: vecTemplate
+
+   !An array of QuantityTemplate_T objects describing
+   !the quantities in the returned vector.
+   type(QuantityTemplate_T), dimension(:), pointer :: qtyTemplateDatabase
+end function

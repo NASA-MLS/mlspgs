@@ -1,0 +1,9 @@
+!Closes an open file.
+subroutine MLS_CloseFile(file, error)
+   !The file to be closed.
+   type(MLSFile_T) :: file
+   
+   !This variable is set to 0 when the file is closed successfully.
+   !It is set to a non-zero otherwise.
+   integer, optional, intent(out) :: error
+end subroutine
