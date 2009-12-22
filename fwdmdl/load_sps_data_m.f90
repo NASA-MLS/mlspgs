@@ -21,6 +21,7 @@ module LOAD_SPS_DATA_M
   public :: EmptyGrids_t, Destroygrids_t, Dump, Dump_Grids
 
   type, public :: Grids_T                 ! Fit all Gridding categories
+    integer,  pointer :: names(:) => null() ! for each sps, from Qty template
     integer,  pointer :: l_f(:) => null() ! Last entry in frq. grid per sps
     integer,  pointer :: l_z(:) => null() ! Last entry in zeta grid per sps
     integer,  pointer :: l_p(:) => null() ! Last entry in phi  grid per sps
@@ -327,6 +328,7 @@ contains
     type (Grids_T), intent(inout) :: Grids_X
     integer, intent(in) :: N
 
+    call allocate_test ( Grids_x%names, n, 'Grids_x%names', ModuleName )
     call allocate_test ( Grids_x%l_z, n, 'Grids_x%l_z', ModuleName, lowBound=0 )
     call allocate_test ( Grids_x%l_p, n, 'Grids_x%l_p', ModuleName, lowBound=0 )
     call allocate_test ( Grids_x%l_f, n, 'Grids_x%l_f', ModuleName, lowBound=0 )
@@ -386,6 +388,8 @@ contains
     type(forwardModelConfig_T), intent(in) :: FwdModelConf
 
     integer :: KF, KP, KZ
+
+    grids_x%names(ii) = qty%template%name
 
     kf = qty%template%noChans ! == 1 if qty%template%frequencyCoordinate == l_none
     call FindInstanceWindow ( qty, phitan, maf, fwdModelConf%phiWindow, &
@@ -480,6 +484,7 @@ contains
     type (Grids_T), intent(inout) :: Grids_x
 
     grids_x%p_len = 0
+    call allocate_test(Grids_x%names,0,'grids_x%names',modulename)
     call allocate_test(grids_x%l_f,0,'grids_x%l_f',modulename)
     call allocate_test(grids_x%l_z,0,'grids_x%l_z',modulename)
     call allocate_test(grids_x%l_p,0,'grids_x%l_p',modulename)
@@ -502,6 +507,7 @@ contains
 
     type (Grids_T), intent(inout) :: Grids_x
 
+    call deallocate_test(Grids_x%names,'grids_x%names',modulename)
     call deallocate_test(grids_x%l_f,'grids_x%l_f',modulename)
     call deallocate_test(grids_x%l_z,'grids_x%l_z',modulename)
     call deallocate_test(grids_x%l_p,'grids_x%l_p',modulename)
@@ -524,14 +530,15 @@ contains
 
     use Constants, only: rad2deg
     use Dump_0, only: Dump
-    use Output_M, only: Output
+    use Output_M, only: NewLine, Output
+    use String_Table, only: Display_String, String_Length
 
     type(grids_t), intent(in) :: The_Grid
     character(len=*), intent(in), optional :: Name
     integer, intent(in), optional :: Details ! <= 0 => don't dump bases
                                              ! <= 1 => don't dump values, default 0
 
-    integer :: myDetails
+    integer :: I, L, MyDetails, W
 
     myDetails = 0
     if ( present(details) ) myDetails = details
@@ -542,6 +549,26 @@ contains
       call output ( name, advance='no' )
     end if
     call output ( the_grid%p_len, before = ', P_Len = ', advance='yes' )
+    call output ( 'Molecules:' )
+    w = len('Molecules:')
+    do i = 1, size(the_grid%names)
+      if ( the_grid%names(i) > 0 ) then
+        l = string_length(the_grid%names(i)) + 1
+      else
+        l = 2
+      end if
+      if ( w + l > 100 ) then ! Will the line be overly filled?
+        call newLine
+        w = 0
+      end if
+      w = w + l
+      if ( the_grid%names(i) > 0 ) then
+        call display_string ( the_grid%names(i), before=' ' )
+      else
+        call output ( ' ?' )
+      end if
+    end do
+    call newLine
     call dump ( the_grid%l_f(1:), 'The_grid%l_f' )
     call dump ( the_grid%l_z(1:), 'The_grid%l_z' )
     call dump ( the_grid%l_p(1:), 'The_grid%l_p' )
@@ -575,6 +602,9 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.74  2009/06/23 18:26:11  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.73  2009/05/13 20:03:02  vsnyder
 ! Get constants from Constants, kinds from MLSKinds
 !
