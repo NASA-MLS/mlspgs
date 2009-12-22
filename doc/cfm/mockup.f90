@@ -13,8 +13,10 @@ program mockup
    type(QuantityTemplate_T), dimension(:), pointer :: qtyTemplateDB => NULL()
    logical, dimension(:), pointer :: stateSelected => NULL()
    logical, dimension(:), pointer :: stateExtraSelected => NULL()
+   logical, dimension(:), pointer :: radianceSelected => NULL()
    type(VectorTemplate_T) :: stateVectorTemplate
    type(VectorTemplate_T) :: stateVectorExtraTemplate
+   type(VectorTemplate_T) :: radianceTemplate
    type(Vector_T) :: stateVector
    type(Vector_T) :: stateVectorExtra
    type(Vector_T) :: radiances
@@ -34,13 +36,14 @@ program mockup
 
    ! To create qtyTemplateDB, see the example for creating a quantity
    ! template snippet
-   ! Initialize stateSelected and stateExtraSelected as appropriate
+   ! Initialize stateSelected, stateExtraSelected, radianceSelected 
+   ! as appropriate
 
    ! Create vector template for stateVectorIn
    stateVectorTemplate = CreateVectorTemplate (qtyTemplateDB, stateSelected)
-   ! Create stateVectorIn
+   ! Create stateVector
    stateVector = CreateVector(stateVectorTemplate, qtyTemplateDB)
-   ! Fill stateVectorIn%quantities, see VectorValue_T
+   ! Fill stateVector%quantities, see VectorValue_T
 
    ! Create vector template for stateVectorExtra
    stateVectorExtraTemplate = CreateVectorTemplate (qtyTemplateDB, &
@@ -49,9 +52,13 @@ program mockup
    stateVectorExtra = CreateVector(stateVectorExtraTemplate, &
                                    qtyTemplateDB)
    ! Fill stateVectorExtra%quantities, see VectorValue_T
+
+   ! You have to create an empty radiances vector
+   radianceTemplate = CreateVectorTemplate(qtyTemplateDB, radianceSelected)
+   radiances = CreateVector(radianceTemplate, qtyTemplateDB)
  
    ! Invoke the forward model  
-   call ForwardModel (fmConfig, stateVectorIn, stateVectorExtra, radiances, &
+   call ForwardModel (fmConfig, stateVector, stateVectorExtra, radiances, &
                      & fmStatus, jacobian=jacobianMatrix)
 
    call CFM_MLSCleanup
