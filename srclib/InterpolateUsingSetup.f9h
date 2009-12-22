@@ -200,7 +200,7 @@
       end if
 
       ! Now compute (most of) the RHS in oldSecond
-      oldSecond(lb:ub,:) = oldSecond(lb:ub,:) - oldSecond(lb-1:ub-1,:)
+      oldSecond(2:ub,:) = oldSecond(2:ub,:) - oldSecond(1:ub-1,:)
 
       if ( .not. associated(coeffs%row) ) then ! not periodic continuity
         ! RHS is already complete
@@ -274,6 +274,9 @@
 ! end subroutine InterpolateUsingSetup_r*
 
 ! $Log$
+! Revision 1.9  2009/12/08 21:44:21  vsnyder
+! Provide splines with periodic boundary conditions, use Symm_Tri
+!
 ! Revision 1.8  2009/06/20 02:32:44  vsnyder
 ! Precompute more stuff, handle identical abscissae, in spline case
 !
