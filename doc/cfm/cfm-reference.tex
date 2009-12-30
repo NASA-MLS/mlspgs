@@ -1,41 +1,113 @@
-
 \section{Reference}
-\subsection{Conventions}
+\label{sec:Reference}
+
+\subsection{A note on tables and strings}
+
+The MLSL2 software makes heavy use of tables to hold commonly referred
+to entities, such as strings, or entries in the `Level 2 Configuration
+File' (L2CF hereafter).  This is witnessed by the use of integers in
+most of the derived types below to hold items such as the name of a
+quantity template, the type of information it holds (temperature,
+composition etc.), the specific molecule for composition quantities, the
+specific signal for radiance quantities, etc.  However, the MLSCFM
+software presents string arguments to most of the routines supplied that
+relieves the calling code of having to be aware of the underlying
+tables.
 
 \subsection{Data types}
 
 \subsubsection{\snippet{HGrid\_T}}
+The \snippet{HGrid\_T} data type describes the `horizontal' coordinate
+system for a vector quantity template.  It is only used for `stacked'
+quantities.  Unstacked quantities (those where the different surfaces in
+an instance do not share the same geolocation) have their horizontal
+coordinate information stored in the quantity template itself.
+
 \lstinputlisting{hgridtype.f9h}
+
 \subsubsection{\snippet{VGrid\_T}}
+The \snippet{VGrid\_T} data type describes the `vertical' coordinate
+system for a vector quantity template.  It is only used for `coherent'
+quantities.  Incoherent quantities (those where the different instances
+do not share the same vertical levels) have their vertical coordinate
+information stored in the quantity template itself.
+
 \lstinputlisting{vgridtype.f9h}
-\subsubsection{\snippet{Vector\_T}}
-\lstinputlisting{vectortype.f9h}
-\subsubsection{\snippet{VectorValue\_T}}
-\lstinputlisting{vectorvaluetype.f9h}
-\subsubsection{\snippet{VectorTemplate\_T}}
-\lstinputlisting{vectortemplatetype.f9h}
+
 \subsubsection{\snippet{QuantityTemplate\_T}}
+The \snippet{QuantityTemplate\_T} type is arguably the most important
+derived type in the MLSCFM software.  It describes a collection of
+profiles (`instances') for a given quantity (temperature, composition,
+tangent pressure, radiance etc.).  See the discussion in
+Section~\ref{sec:QuantityTemplates} above.  Typically the geolocation
+information is a `shallow copy' (i.e., a pointer to) the source
+\snippet{HGrid\_T} and \snippet{VGrid\_T} information or, in the case of
+minor frame quantities, a minor frame geolocation repository.
+
 \lstinputlisting{quantitytemplatetype.f9h}
-\subsubsection{\snippet{Enumerate types and other types}}
-\begin{itemize}
- \item real(r4): real numbers with decimal precision at least 5.
- \item real(r8): real numbers with decimal precision at least 13.
- \item t\_vgridCoordinate: enumerate values are TBD.
- \item t\_quantityType: enumerate values are TBD.
- \item t\_molecule: enumerate values are TBD.
- \item phyq\_invalid: a constant integer to indicate an invalid 
-                      physical quantity. Value is TBD.
-\end{itemize}
+
+\subsubsection{\snippet{VectorTemplate\_T}}
+
+A vector template is simply a collection of quantity templates, along
+with a small amount of summary information.
+
+\lstinputlisting{vectortemplatetype.f9h}
+
+\subsubsection{\snippet{VectorValue\_T}}
+
+The \snippet{VectorValue\_T} type contains the individual values for a
+single quantity within a vector.  The \snippet{mask} bitfield contains
+element by element flags.  Most of these are for internal use by the
+MLSL2 software.
+
+\tbd{Possibly describe the element by element Jacobian computation
+  capability within the \snippet{Mask} component if useful.}
+
+\lstinputlisting{vectorvaluetype.f9h}
+
+\subsubsection{\snippet{Vector\_T}}
+
+The \snippet{Vector\_T} describes one instantiation (i.e., collection of
+values) for a vector with a given template.
+
+\lstinputlisting{vectortype.f9h}
+
+\subsubsection{\snippet{MatrixElement\_T}}
+
+A \snippet{MatrixElement\_T} type describes one block of a matrix (see
+the discussion in Section~\ref{sec:Matrices}).  Matrix blocks can be
+`absent', `banded', `column sparse', `full', or, occasionally `unknown',
+as described in the comments below.
+
+\lstinputlisting{matrixelementtype.f9h}
+
+\subsubsection{\snippet{RC\_Info}}
+
+The \snippet{RC\_Info} data type describes the rows or columns of a
+matrix.  In addition to citing the vector that describes the rows or
+columns, the ordering of the subblocks within the matrix is also
+defined.
+
+\lstinputlisting{rcinfotype.f9h}
+
+\subsubsection{\snippet{Matrix\_T}}
+
+This type describes a \snippet{Matrix_1} entity -- a collection of
+\snippet{Matrix_0} blocks, along with information describing the rows
+and columns.
+
+\lstinputlisting{matrixtype.f9h}
+
+\tbd{It is possible more types will need to be detailed here.  The
+  \snippet{ForwardModelConfig\_T} is one, but it will probably be
+  sufficient to define the routine that will create one.}
 
 \subsection{Procedures and functions}
 
-\mycomment{Each procedure will be introduced and described in a very
-  general way. The example near the end of this document should show
-  sufficient detail to make how and when to use each perfectly clear.
-
-  The procedures are presented alphabetically. Only the procedures'
-  header and dummy variables are shown to give the users an idea
-  on how to invoke them. Their internal implementation is not shown.}
+This subsection describes the main routines it is anticipated a user of
+the CFM software will need to invoke.  They are presented in
+alphabetical order.  The example given in Appendix~\ref{app:Example}
+illustrates their invocation and logical flow.
 
 \subsubsection{\snippet{AddQuantityTemplateToDatabase}}
 \lstinputlisting{addqtytemplate-interface.f9h}
@@ -66,6 +138,11 @@
 
 \subsubsection{\snippet{mls\_openFile}}
 \lstinputlisting{mlsopenfile-interface.f9h}
+
+\tbd{More of these will probably need to be added as work on the CFM
+  software proceeds.  In particular, the routine for defining
+  \snippet{ForwardModelConfig\_T} which will be shaped by emerging
+  needs.}
 
 %%% Local Variables: 
 %%% mode: latex

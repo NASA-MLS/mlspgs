@@ -1,14 +1,15 @@
 \section{Review of overall structure}
+\label{sec:Review}
 
 This section introduces the various data entities and functionalities
-associated with the MLSCFM software.  More details on specific derived type
-definitions and function / subroutine invocation are given in the
-reference section.
+associated with the MLSCFM software.  More details on specific derived
+type definitions and function / subroutine invocation are given in
+Section~\ref{sec:Review}.
 
 \subsection{MLS radiance measurements and related parameters}
 
 The calibrated MLS radiance measurements are stored, along with radiance
-geolocation information in the MLS Level~1B (L1 hereafter) files.  The
+geolocation information, in the MLS Level~1B (L1 hereafter) files.  The
 L1 files of relevance to MLSCFM applications are the radiance files and
 the orbit/attitude file.  These files typically have a daily granularity
 running from midnight to midnight UT.
@@ -20,9 +21,9 @@ The principal divisions within the MLS L1 files are known as \emph{major
 complete vertical scan of the MLS GHz and THz antennas (including limb
 scanning, calibration and retrace activities).  The antennae move
 continuously during a MAF and radiances are integrated at 1/6\,s
-intervals known as minor frames (MIFs).  During a standard scan limb
+intervals known as minor frames (MIFs).  During a standard scan, limb
 views are taken for the first 120 MIFs (114 for the THz antenna).  The
-remaining $\sim$26 MIFs in the MAF are spend performing calibration and
+remaining $\sim$26 MIFs in the MAF are spent performing calibration and
 antenna retraces.  The on board software attempts to lock the MLS scans
 to the Aura orbit, such that scans are made at the same latitudes each
 orbit.  In order to accomplish this, occasional `leap MIFs' must be
@@ -55,69 +56,71 @@ L1BRADT file contains radiances measured by the MLS THz bands.
 
 L1BRAD files are stored in HDF5 (not HDFEOS) and are flat files
 containing many HDF SDs.  The most important of these are radiances
-which are stored as arrays, named after the signal designation described
-above.  The arrays are dimensioned channel, MIF, MAF with channel the
-most rapidly changing index.  Precisions are stored for each radiance,
-in a separate SD with the name `\snippet{<signal> precision}' (note the
-intervening space).  Radiances that should not be used are indicated by
-a negative precision values.  The additional quantity `\snippet{<signal>
-  Baseline}` values (dimensioned channel, MAF) should be added (for each
-MIF per channel/MAF) before radiances are used.  Similarly, the
-`\snippet{<signal> Baseline precision}' should be added in quadrature to
-the precisions.  (The baseline `AC' and `DC' terms are diagnostic and may
-be ignored).  All numbers refer to brightness temperature in Kelvins.
+which are stored as arrays, named according to the signal designation
+nomenclature described above.  The arrays are dimensioned channel, MIF,
+MAF with channel the most rapidly changing index.  Precisions are stored
+for each radiance, in a separate SD with the name `\snippet{<signal>
+  precision}' (note the intervening space).  Radiances that the MLS
+Level~1 software deems should not be used are so indicated by having
+their precisions set negative.  The additional quantity
+`\snippet{<signal> Baseline}` values (dimensioned channel, MAF) should
+be added (for each MIF per channel/MAF) before radiances are used.
+Similarly, the `\snippet{<signal> Baseline precision}' should be added
+in quadrature to the precisions.  (The baseline `AC' and `DC' terms are
+diagnostic and may be ignored).  All numbers refer to brightness
+temperature in Kelvins.
 
 The L1BOA (orbit/attitude) file contains information on spacecraft
 location and the locations of the GHz and THz tangent points.  All
-angles are degrees and all dimensions are meters.  Quantities are mostly
-dimensioned MIF, MAF, with vectors dimensioned 3, MIF, MAF.
-
-Time is the EOS standard TAI93 time (number of seconds, including leap
-seconds, since midnight UT on January 1st, 1993.
+angles are degrees and all dimensions are meters.  Time is the EOS
+standard TAI93 time (number of seconds, including leap seconds, since
+midnight UT on January 1st, 1993.  Quantities are mostly dimensioned
+MIF, MAF, with vectors dimensioned 3, MIF, MAF.
 
 \subsubsection{A note on \snippet{GeodAngle}}
 
 An important quantity for MLS L1 (and L2) data is the so-called `Orbit
-Geodetic Angle' (referred to in the software as \snippet{GeodAngle}).
-This is used as a horizontal coordinate for most quantities, and is
-defined as the geodetic great circle angle along the Aura orbit track,
-increasing with time from the first ascending equator crossing of the
-day (defined as 0\degsym).  Unusually for an angle, this number accumulates
-beyond 360\degsym.  So, the first complete orbit in the day is
-0\degsym\,--\,360\degsym, the second is 360\degsym\,--\,720\degsym\ etc.
+Geodetic Angle' (referred to in the software as \snippet{GeodAngle} or
+\snippet{Phi}).  This is used as a horizontal coordinate for most
+quantities, and is defined as the geodetic great circle angle along the
+Aura orbit track, increasing with time from the first ascending equator
+crossing of the day (defined as 0\degsym).  Unusually for an angle, this
+number accumulates beyond 360\degsym.  So, the first complete orbit in
+the day is 0\degsym\,--\,360\degsym, the second is
+360\degsym\,--\,720\degsym\ etc.
 
 \subsection{Constructing the MLS state vector}
 
 The MLS state vector consists of a heterogeneous collection of
 quantities, some geophysical, some instrument related.  As with the
-measurement vector (which mainly consists of MLS L1 radiance), these are
-described structures consisting of `quantities' and `vectors' described
-in the following subsection.
+measurement vector (which mainly consists of MLS L1 radiances), these
+are contained in Fortran~90 derived types consisting of `quantities' and
+`vectors' as detailed in the following subsection.
 
-The main geophysical quantities are consecutive vertical profiles of
-atmospheric temperature and composition on a regular grid in geodetic
-angle and pressure (actually $-\log_{10}\left(p/\text{hPa}\right)$).
-
-The most important instrument quantities are the `tangent pressures' for
-the MLS GHz and THz limb views, which are dimensioned MIF, MAF.  Others
-include terms like `baseline', which describe additional terms used to
-capture unexplained spectrally-flat MLS signals.  Note, such terms are
-not to be confused with the, unfortunately similarly named, baseline
-quantity in the L1 files.
+The principal geophysical quantities in the state vector are consecutive
+vertical profiles of atmospheric temperature and composition on a
+regular grid in geodetic angle and pressure (actually
+$-\log_{10}\left(p/\text{hPa}\right)$).  Other important state vector
+quantities are the `tangent pressures' for the MLS GHz and THz limb
+views, which are dimensioned MIF, MAF (only the GHz is likely to be of
+interest in most CFM applications).
 
 \subsection{Quantities and Vectors in MLSCFM}
+\label{sec:QuantityTemplates}
 
 The heterogeneous nature of the MLS state and measurement vectors
 dictates that a flexible system be used for their description.  In the
 MLSCFM software vectors consist of `templates' and `values'.  Separating
-the vector template from its values allows for efficient storage, and
-more importantly tracking, of related quantities (e.g., the state, the
-initial guess, and the \emph{a priori}, or the measurements and their
-forward model estimates).  Vector templates are, in turn, composed of
-one or more `quantity templates'.  While quantities do not strictly
-speaking exist in isolation from vectors, the term `quantity' is often
-loosely used in the software to refer to either a specific quantity
-within a vector, and/or its template.
+the vector template from its values allows for efficient storage of
+related quantities (e.g., the state, the initial guess, and the \emph{a
+  priori}, or the measurements and their forward model estimates).
+Separating the template from the values also aids more rigid error
+checking, such as only allowing to vectors to be added if they share a
+template.  Vector templates are, in turn, composed of one or more
+`quantity templates'.  While quantities do not, strictly speaking, exist
+in isolation from vectors, the term `quantity' is often loosely used in
+the software to refer to either a specific quantity within a vector,
+and/or its template.
 
 Vector quantities typically describe a single- or multi-valued physical
 quantity (temperature profiles, abundances for one species, radiances
@@ -129,10 +132,10 @@ quantities) or major frames (for instrument quantities such as measured
 radiances).  Similarly, `surfaces' can refer to pressure levels for
 geophysical quantities, or minor frames for instrument quantities.  The
 channels dimension is typically only used for radiance quantities.  The
-actual fortran arrays storing vector quantity values are dimensioned
+actual Fortran arrays storing vector quantity values are dimensioned
 \snippet{( channels * surfaces, instances )}.  While increasing the
 complexity of access for multi-channel quantities, this simplifies the
-storage of matrices in the software.
+storage of matrices in the software, as discussed below.
 
 `Coherent' quantities are those where the surfaces are the same for
 every instance.  Geophysical quantities, being reported on a fixed
@@ -141,21 +144,22 @@ involves views of different altitudes, are incoherent.
 
 `Stacked' quantities are those where the different surfaces in each
 instance share the same horizontal geolocation (latitude, longitude,
-time etc.).  Again, state vector quantities are typically stacked, with
-the quantity describing vertical profiles, while radiance quantities are
-unstacked, as each minor frame within the scan has a slightly different
-geolocation.
+time etc.).  Again, geophysical quantities are typically stacked, with
+the quantity describing vertical profiles, while radiance and tangent
+pressure quantities are unstacked, as each minor frame within the scan
+has a slightly different geolocation.
 
-Geophysical quantities are essentially always coherent and stacked,
-while `minor frame' (i.e., more instrument related) quantities are
-always incoherent and unstacked.  Two `minor frame' vector quantities
-describing parameters associated with the same MLS module (GHz, THz or
-spacecraft) can, by definition, be assumed to have the same geolocation.
-This important assertion is relied upon throughout the forward model
-software.  Conversely, in the state vector, geolocation information does
-not need to be consistent from quantity to quantity.  The vertical (or
-horizontal) grids for temperature need not relate to that for
-composition, nor do the grids for all molecules need to be identical.
+As stated above, geophysical quantities are generally both coherent and
+stacked, while `minor frame' (i.e., more instrument related) quantities
+are always incoherent and unstacked.  Two `minor frame' vector
+quantities describing parameters associated with the same MLS module
+(GHz, THz or spacecraft) can, by definition, be assumed to have the same
+geolocation.  This important assertion is relied upon throughout the
+forward model software.  Conversely, for most geophysical quantities,
+geolocation information does not need to be consistent from quantity to
+quantity.  The vertical (or horizontal) grids for temperature need not
+relate to those for composition, nor do the grids for all molecules need
+to be identical.
 
 In addition to geolocation information, quantity templates typically
 contain additional information to describe the quantity.  This includes
@@ -163,17 +167,19 @@ the molecule for an abundance-related quantity, the signal, radiometer
 and module for a radiance-related quantity etc. etc.
 
 \subsection{Matrices in MLSCFM}
+\label{sec:Matrices}
 
 Matrices in the CFM software are defined by the vectors that describe
 their rows and columns.  For example, the Jacobian matrix relates a
 state vector to a measurement vector, while a covariance matrix
-describes the covariance of a single vector. The matrices are stored in a blocked manner,
-with subblocks relating one instance of one quantity in the rows vector
-with an instance of another quantities in the columns vector.  The
-tomographic nature of the MLS retrievals \citep{LiveseyEtal06} means
-that many of the blocks are all zero and can be omitted for efficiency
-of storage and computation.  Similarly, many of the individual blocks
-are themselves sparse, and can be stored as such in the software.
+describes the covariance of a single vector. The matrices are stored in
+a blocked manner, with subblocks relating one instance of one quantity
+in the rows vector with an instance of another quantities in the columns
+vector.  The tomographic nature of the MLS retrievals
+\citep{LiveseyEtal06} means that many of the blocks are all zero and can
+be omitted for efficiency of storage and computation.  Similarly, many
+of the individual blocks are themselves sparse, and can be stored as
+such in the software.
 
 The MLSCFM software contains two main modules for dealing with matrices.
 \snippet{MatrixModule_0} contains the software for storing and
@@ -213,35 +219,132 @@ proves to be practical is the subject of further investigations.
 (Aside, one approach may be to take GMAO GPH as `truth' and retrieve a
 -- hopefully slowly varying -- Aura attitude offset term).
 
+\tbd{More information will likely be needed here, depending on the
+  precise route taken in the coming months.}
+
 \subsection{Defining forward models}
-The forward models must be defined before they can be invoked. The procedure
-used to define them is (\snippet{ConstructForwardModelConfig}). Fortunately,
-at this stage we anticipate that the necessary calls to this function
-will be made automatically during the setup phase, lifting the burden from
-the library user. Subsequent versions may be enhanced by allowing the user
-to construct and use additional forward models on-the-fly.
 
-In general the forward models are defined according to two classes of
-characteristics: global characteristics which are common to all, and specific
-characteristics which may vary from model to model. One key characteristic that
-varies is whether the forward model is a linearized model or the full model. The
-linearized model has the advantage of being quicker to compute, but at the price
-of being less accurate.
+In addition to defining vectors for the state and measurement vectors
+(and possibly defining Jacobian matrices to connect them), the CFM
+software also requires individual forward models to be defined.  There
+are several different types of forward models that can be defined.  In
+the context of the CFM, we anticipate that the `Full', `Linearized', `Baseline' and
+`Scan2D' models will be of interest.
 
+\subsubsection{The `full' forward model}
+
+The `full' forward model is the cornerstone of the MLS forward models.
+This model is described in \citet{ReadEtal06} and \citet{SchwartzEtal06}
+and is a full 2-dimensional ray tracing line-by-line forward model.  One
+full forward model call computes radiances for one or more channels
+within a given radiometer.  As the forward model computes for the full
+spectral range covered by all the channels requested, in cases where
+radiances from distinct spectral regions (e.g., groups of channels above
+and below, but not at, the line center) are to be computed, more
+efficiency is gained if separate full forward models are defined each
+covering only adjacent channels.  Full forward models may be `scalar' or
+`polarized', the latter being needed for accurate modeling of the
+118\,GHz O\cs2 line in the mesosphere.
+
+In addition to computing radiances, full forward models can also be
+requested to compute Jacobians with respect some state vector quantities
+(down to the element by element level).  Various approximations (e.g.,
+the degree to which full Gauss-Legendre integration is performed, and
+the so called `pre frequency averaging' assumption) can be requested,
+depending on the desired efficiency and accuracy.
+
+\subsubsection{The `linearized' forward model}
+
+The `linearized' forward model simply computes radiances based on a
+linearized form of the full forward model, to whit:
+\begin{equation}
+\b{y} = \b{y}_0 + \b{K} \left ( \b{x} - \b{x}_0\right)
+\end{equation}
+Where $\b{x}$ is the state vector, and $\b{y}$ is a vector of radiances
+(on a fixed tangent pressure grid).  $\b{y}_0$ and $\b{K}_0$ are
+pre-computed radiances and jacobians, respectively, corresponding to a
+pre-defined linearization point $\b{x}_0$ in state space.  Following
+this Taylor series expansion, the radiances are interpolated to the
+actual tangent pressures defined in the supplied state vector.  The
+precomputed radiances and Jacobians for pre-selected states are stored
+in `Level~2 Processing Coefficient' (L2PC) files, and are generated by
+off-line runs of the MLSL2 software invoking the full forward models
+described above.  The linearization points are typically defined as a
+function of latitude (in $\sim$15\degsym-wide bins) and calendar month.
+
+The linearized model produces results much faster than all but the
+simplest full forward model runs.  However, being linear, its accuracy
+degrades rapidly as atmospheric optical depth increases (i.e., close to
+line centers and/or lower in the atmosphere).
+
+\subsubsection{The `baseline' forward model}
+
+\tbd{Include discussion of this forward model if needed.}
+
+\subsubsection{The `scan' forward model}
+
+Given knowledge, from the MLS state vector, of the atmospheric
+temperature profile on pressure surfaces, the geopotential height at one
+pressure surface, and MLS tangent point pressures for each minor frame,
+it is possible, through hydrostatic balance (and refraction
+calculations, for which a water vapor profile is needed for accuracy),
+to compute the expected tangent point altitudes for the MLS radiance
+observations.  Comparing these to the tangent point altitudes derived
+from the MLS antenna position encoder and the Aura attitude control
+system provides an additional constraint on the atmospheric temperature
+profiles, and enables retrieval of geopotential height (subject to
+inaccuracies in MLS/Aura pointing).
+
+The `scan residual' model invokes these calculations as described in
+\citet{ReadEtal06}.  For a variety of reasons, this model is formulated
+to compute the `scan residual', being the difference between the
+tangent point altitudes inferred from hydrostatic balance and those
+inferred from Aura/MLS pointing.  The `measurement' of this quantity is
+assumed to be zero with a precision reflective of the precision of the
+MLS scan encoder ($\sim$30\,m).
 
 \subsection{Invoking forward models}
-In the example at the end of this document we show how to invoke a forward
-model. Especially important is the order of steps leading up to its invocation.
-From a very general perspective we first perform an overall setup, loading into
-memory all the global data. Then we define the spatial grids. Then we define the
-vector and quantity templates. Two vector templates in particular deserve
-mention: the state template will hold everything that is known about the
-atmosphere including temperatures and molecular abundances; the measurement
-template will hold all the radiances. Then we create
-instances of the state and measurement vectors. Filling the state vector is a
-key task which the user will want to adapt according to need. 
-Finally comes the call to the forward model which fills the measurement
-vector and optionally the Jacobian matrix.
+
+Once forward models are defined, and state and measurement vectors are
+defined and filled, forward models can be invoked.  As described above,
+two state vectors can be supplied -- \snippet{ForwardModelIn} defining
+the quantities for which solutions are sought, and
+\snippet{ForwardModelExtra} defining other needed quantities.  From the
+forward model's perspective, the only difference between these two is
+that Jacobians, if requested, are only computed for quantities in the
+first vector.
+
+The forward models, particularly the full forward model, require a
+diverse range of quantities to be supplied through the state vector(s).
+These are detailed in Table~\ref{tab:StateVectorNeeds}.
+
+\begin{table}
+\caption{State vector quantities needed for different forward model
+  types.  Cells with `?' indicate that the quantity may be required for
+  some configurations.}
+\label{tab:StateVectorNeeds}
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+Quantity & Full & Linearized & Scan \\
+\midrule
+Temperature & Y & Y & Y \\
+Reference GPH & Y & Y & Y \\
+Tangent pressure & Y & Y & Y \\
+Composition & Y & Y & Y \\
+Space radiance & Y \\
+Earth reflectivity & Y \\
+Surface altitude & Y \\
+Orbital inclination & Y \\
+Line of sight velocity & Y \\
+Spacecraft altitude & Y \\
+Sideband fractions & Y & ? \\
+Magnetic field & ? \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{table}
+
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: "cfm"

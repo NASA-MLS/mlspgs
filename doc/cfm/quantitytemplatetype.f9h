@@ -66,8 +66,10 @@ type QuantityTemplate_T
     ! Horizontal coordinates
     logical :: sharedHGrid              ! Set if horiz coords a pointer not a copy
     integer :: hGridIndex               ! Index of any hGrid used
-    integer :: instanceOffset           ! Ind of 1st non overlapped instance in output
-    integer :: grandTotalInstances      ! Total number of instances in destination output file
+    integer :: instanceOffset           ! Ind of 1st non overlapped instance
+                                        ! in output
+    integer :: grandTotalInstances      ! Total number of instances 
+                                        ! in destination output file
     ! for example MAF index, or profile index.
     real(r8), dimension(:,:), pointer :: phi => NULL()
 
