@@ -82,6 +82,10 @@
 # -c char           comment character
 # -mod case         use variant "(1)-mod" of dependency lines
 #                    with module names all in case (UPPER, lower)
+# -S file           calculate dependencies just for file
+# -i regexp         regexp used to catch include dependencies; e.g.
+#                    '\!include\(([^)]+)' catches "include('file.txt')"
+#                    '\\input\{([^)]+)}'  catches "\input{cfm-reference.tex}"
 #
 # P.A. Wagner (May 15 2002)
 # Copyright 2005, by the California Institute of Technology. ALL
@@ -136,15 +140,21 @@ $dir1_PREPENDS = TRUE;
 # Check command-line args for options -s etc.
 $more_opts = TRUE;
 $source_ext = '';
+$source_file = '';
 $obj_ext = '';
 $long_line = '';
 $long_file = '';
 $delimiter = ' ';
 $term_char = "\\";
 $comment_char = "#";
+$include_pattern = '\!include\(([^)]+)';
 while ($more_opts) {
    if ($ARGV[0] =~ /^-db/) {
       $dont_build{$ARGV[1]} = 1;
+      shift;
+      shift;
+   } elsif ($ARGV[0] =~ /^-i/) {
+      $include_pattern = $ARGV[1];
       shift;
       shift;
    } elsif ($ARGV[0] =~ /^-s/) {
@@ -180,6 +190,10 @@ while ($more_opts) {
       $mod_case = $ARGV[1];
       shift;
       shift;
+   } elsif ($ARGV[0] =~ /^-S/) {
+      $source_file = $ARGV[1];
+      shift;
+      shift;
    } else {
       $more_opts = 0;
    }
@@ -190,13 +204,20 @@ open(MAKEFILE, ">-");
 #
 if ($source_ext ne '') {
 #  note: the final argument in the subroutine call below works for m4 files only
-  &MakeDependsGeneral("*.$source_ext", "$obj_ext", '\!include\(([^)]+)');
+  if ($source_file ne '') {
+  #  note: the final argument in the subroutine call below works for m4 files only
+    &MakeDependsGeneral("$source_file", "$obj_ext", $include_pattern);
+  } else {
+  &MakeDependsGeneral("*.$source_ext", "$obj_ext", $include_pattern);
+  }
 } elsif ($long_file ne '') {
   &ReadAndSplit("$long_file", "$delimiter", "$term_char", "$comment_char");
 } elsif ($long_line ne '') {
   &SplitAndPrint("$long_line", "$delimiter", "$term_char");
+} elsif ($source_file ne '') {
+  &MakeDependsf90($ARGV[1],"$source_file");
 } else {
-  &MakeDependsf90($ARGV[1]);
+  &MakeDependsf90($ARGV[1],"*.f90");
   # &MakeDepends("*.f *.F", '^\s*include\s+["\']([^"\']+)["\']');
   # &MakeDepends("*.c",     '^\s*#\s*include\s+["\']([^"\']+)["\']');
 }
@@ -354,6 +375,7 @@ sub MakeDependsGeneral {
    local($obj_ext) = @_[1];
    local($pattern) = @_[2];
    #
+   # print MAKEFILE "# $pattern: ";
    foreach $file (<${lang}>) {
       open(FILE, $file) || warn "Cannot open $file: $!\n";
       while (<FILE>) {
@@ -421,6 +443,7 @@ sub SplitAndPrint {
 #
 sub MakeDependsf90 {
    local($compiler) = &toLower(@_[0]);
+   local($lang) = @_[1];
    local(@dependencies);
 #  To store object file name keyed by module name
    local(%filename);
@@ -442,7 +465,8 @@ sub MakeDependsf90 {
    #
    # Associate each module with the name of the file that contains it
    #
-   foreach $file (<*.f90>) {
+#   foreach $file (<*.f90>) {
+   foreach $file (<${lang}>) {
       open(FILE, $file) || warn "Cannot open $file: $!\n";
       while (<FILE>) {
          # This bit of filtering is to exclude statements that begin 
@@ -481,7 +505,8 @@ sub MakeDependsf90 {
         } else {        
             $prependant = '';
        }
-       foreach $file (<*.f90>) {
+       # foreach $file (<*.f90>) {
+       foreach $file (<${lang}>) {
           open(FILE, $file) || warn "Cannot open $file: $!\n";
           ($objfile = "$prependant" . "$file") =~ s/\.f90$/.o/;
           $key = '';
@@ -570,7 +595,8 @@ sub MakeDependsf90 {
    # Print the dependencies of each file that has one or more include's or
    # references one or more modules
    #
-   foreach $file (<*.f90>) {
+   # foreach $file (<*.f90>) {
+   foreach $file (<${lang}>) {
       open(FILE, $file);
       while (<FILE>) {
          #/^\s*use\s+([^\s,!]+)/i && push(@modules, &toLower($1));
@@ -676,6 +702,9 @@ sub MakeDependsf90 {
      }
    }
 # $Log$
+# Revision 1.16  2007/06/08 23:08:41  vsnyder
+# Add PRE reference to BUILD_PART2
+#
 # Revision 1.15  2007/03/06 21:30:10  pwagner
 # Deleted outmoded lines concerning 'actua;l location of perl'
 #

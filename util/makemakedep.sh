@@ -38,6 +38,10 @@
 #               use program instead of perl to run f90makedep.pl
 # -s pattern    match source file suffixes against "%.pattern"
 # -o pattern    match object file suffixes against "%.pattern"
+# -S file       calculate dependencies just for file
+# -i regexp     regexp used to catch include dependencies; e.g.
+#                '\!include\(([^)]+)' catches "include('file.txt')"
+#                '\\input\{([^)]+)}'  catches "\input{cfm-reference.tex}"
 # -mod case     .mod-style of dependencies where case is one of {lower, UPPER}
 #               with build commands below each target
 # -h[elp]       print brief help message; exit
@@ -264,6 +268,8 @@ include_c="yes"
 orthodox="yes"
 s_pattern="f90"
 o_pattern="o"
+regexp=""
+source_file=""
 dep_file="Makefile.dep"
 me="$0"
 my_name=makemakedep.sh
@@ -345,6 +351,16 @@ while [ "$more_opts" = "yes" ] ; do
        shift
 	    shift
        ;;
+    -i )
+	    regexp="$2"
+       shift
+	    shift
+       ;;
+    -S )
+	    source_file="$2"
+       shift
+	    shift
+       ;;
     -s )
 	    s_pattern="$2"
        shift
@@ -392,6 +408,8 @@ then
    echo " wrong list: $wrong_list "  
    echo " dont_build_list list: $dont_build_list "  
    echo " excl_from_objs_list list: $excl_from_objs_list "  
+   echo " regexp: $regexp "  
+   echo " source_file: $source_file "  
    echo " s_pattern: $s_pattern "  
    echo " o_pattern: $o_pattern "  
    echo " ACT_COURTEOUS: $ACT_COURTEOUS "  
@@ -452,28 +470,38 @@ fi
 #  (excluding any named either by -do or by -d options)
 echo "OBJS = \\"  >> $dep_file
 
-if [ "$include_f90" = "yes" ] ; then
-   # extant_files *.f90
-   extant_files_result="`$reecho $excl_from_objs_list *.f90`"
-   (echo $extant_files_result | sed 's/\.f90/.o  /g; s/$/\\/') >> $dep_file
-fi
+if [ "$source_file" != "" ]
+then
+  if [ "$include_f90" = "yes" ] ; then
+     (echo $source_file | sed 's/\.f90/.o  /g; s/$/\\/') >> $dep_file
+  fi
+  if [ "$orthodox" != "yes" ] ; then
+     (echo $source_file | sed 's/\.'$s_pattern'/.'$o_pattern'  /g; s/$/\\/') >> $dep_file
+  fi
+else
+  if [ "$include_f90" = "yes" ] ; then
+     # extant_files *.f90
+     extant_files_result="`$reecho $excl_from_objs_list *.f90`"
+     (echo $extant_files_result | sed 's/\.f90/.o  /g; s/$/\\/') >> $dep_file
+  fi
 
-if [ "$include_f77" = "yes" ] ; then
-   # extant_files *.f
-   extant_files_result="`$reecho $excl_from_objs_list *.f`"
-   (echo $extant_files_result | sed 's/\.f/.o  /g; s/$/\\/') >> $dep_file
-fi
+  if [ "$include_f77" = "yes" ] ; then
+     # extant_files *.f
+     extant_files_result="`$reecho $excl_from_objs_list *.f`"
+     (echo $extant_files_result | sed 's/\.f/.o  /g; s/$/\\/') >> $dep_file
+  fi
 
-if [ "$include_c" = "yes" ] ; then
-   # extant_files *.c
-   extant_files_result="`$reecho $excl_from_objs_list *.c`"
-   (echo $extant_files_result | sed 's/\.c/.o  /g; s/$/\\/') >> $dep_file
-fi
+  if [ "$include_c" = "yes" ] ; then
+     # extant_files *.c
+     extant_files_result="`$reecho $excl_from_objs_list *.c`"
+     (echo $extant_files_result | sed 's/\.c/.o  /g; s/$/\\/') >> $dep_file
+  fi
 
-if [ "$orthodox" != "yes" ] ; then
-   # extant_files *.$s_pattern
-   extant_files_result="`$reecho $excl_from_objs_list *.$s_pattern`"
-   (echo $extant_files_result | sed 's/\.'$s_pattern'/.'$o_pattern'  /g; s/$/\\/') >> $dep_file
+  if [ "$orthodox" != "yes" ] ; then
+     # extant_files *.$s_pattern
+     extant_files_result="`$reecho $excl_from_objs_list *.$s_pattern`"
+     (echo $extant_files_result | sed 's/\.'$s_pattern'/.'$o_pattern'  /g; s/$/\\/') >> $dep_file
+  fi
 fi
 
 echo " "  >> $dep_file
@@ -504,6 +532,17 @@ else
    if [ "$dont_build_list" != "" ] ; then
      the_DEPMAKER="$the_DEPMAKER $dont_build_list"
    fi
+
+#  tack on the source_file if non-empty
+   if [ "$source_file" != "" ] ; then
+     the_DEPMAKER="$the_DEPMAKER -S $source_file"
+   fi
+
+#  tack on the regexp if non-empty
+   if [ "$regexp" != "" ] ; then
+     the_DEPMAKER="$the_DEPMAKER -i $regexp"
+   fi
+
    if [ "$orthodox" = "yes" ]
    then
 	   if [ $PRINT_TOO_MUCH = "1" ]
@@ -539,6 +578,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.28  2006/02/23 20:25:16  pwagner
+# Should exclude temp files whose names start with tilde
+#
 # Revision 1.27  2005/06/23 22:20:45  pwagner
 # Reworded Copyright statement
 #
