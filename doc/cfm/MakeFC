@@ -1,0 +1,120 @@
+# "$Id$"
+#	Makefile
+#
+# Copyright 2009, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+# ---------------------- The name of this file (is the right-hand-side below)
+MakeFName = MakeFC
+# If the right-hand-side is not Makefile
+# then to make mls with this file you must instead  of bare "make" use
+#     make -f $(MakeFName)
+
+# where to store .configure; 
+CONFDIR=${HOME}/mlspgs
+
+UTILDIR=$(CONFDIR)/util
+
+# reecho.sh can filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+# However we will be using it just to prefix any unprefixed preset paths
+REECHO=$(UTILDIR)/reecho.sh
+
+# Errors in the .tex sources require us to omit the following
+OMIT_SRCS := wvs-010.tex wvs-074.tex wvs-051-neural_body.tex
+OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
+OMIT_SRCS_REV := 'wvs-004\*.tex' 'wvs-051\*.tex' 'wvs-063\*.tex'
+OMIT_PREFXD_REV := $(shell ${REECHO} -prefix=-d -escape -nlast $(OMIT_SRCS_REV))
+
+# Set paths for finding source files
+
+DVIDIR = ./dvi/
+LOGDIR = ./log/
+PDFDIR = ./pdf/
+AUX=cfm.aux
+BIB=cfmbib.bib
+BBL=cfm.bbl
+
+vpath %.f9h ./
+vpath %.tex ./
+vpath %.dvi $(DVIDIR)
+vpath %.l2cf $(CONFDIR)/l2/l2cf/lib
+vpath %.log $(LOGDIR)
+vpath %.pdf $(PDFDIR)
+
+# Define some suffix rules
+
+.SUFFIXES:
+.SUFFIXES: .tex .dvi .pdf
+.tex.dvi:
+	echo "\end" | latex $<
+	echo "\end" | latex $<
+	mv $@ $(DVIDIR)
+	mv $*.log $(LOGDIR)
+
+.dvi.pdf:
+	dvipdf $(DVIDIR)/$<
+	mv $@ $(PDFDIR)
+
+cfm:
+
+-include Makefile.dep
+
+all: cfm
+
+cfm: ${NEAROBJS} ${OBJS} ${BBL}
+	date > cfm; echo $(OBJS) >> cfm
+
+${AUX}: cfm.tex
+	latex cfm
+
+${BBL}: ${BIB} ${AUX}
+	bibtex cfm
+
+${NEAROBJS}: ${BBL}
+# ========================================================================
+
+clean:
+	rm -fr *.dvi *.pdf $(DVIDIR) $(PDFDIR)
+
+depends:
+	$(MAKE) -f $(MakeFName) internalupdate
+	$(UTILDIR)/makemakedep.sh -s tex -o dvi -p Makefile.dep.1 -S cfm.tex \
+     -i '\\input\{([^)]+)}' \
+     $(OMIT_PREFXD) $(OMIT_PREFXD_REV)
+	sed 's/OBJS =/NEAROBJS =/' Makefile.dep.1 > Makefile.dep.2
+	$(UTILDIR)/makemakedep.sh -s tex -o pdf -p Makefile.dep.1 -S cfm.tex \
+     -i '\\input\{([^)]+)}' \
+     $(OMIT_PREFXD) $(OMIT_PREFXD_REV)
+	cat Makefile.dep.1 Makefile.dep.2 > Makefile.dep
+	if [ ! -d $(DVIDIR) ] ; then \
+	  		mkdir $(DVIDIR) ;\
+			fi ; \
+	if [ ! -d $(PDFDIR) ] ; then \
+	  		mkdir $(PDFDIR) ;\
+			fi ; \
+	if [ ! -d $(LOGDIR) ] ; then \
+	  		mkdir $(LOGDIR) ;\
+			fi
+internalupdate:
+	cp MakeFC Makefile
+
+tar:
+	rm -f cfm.tgz
+	tar hcvzf cfm.tgz * --exclude \*.dvi --exclude \*.pdf --exclude cfm
+
+update: internalupdate
+	$(MAKE) depends
+
+.PHONY: all clean depends internalupdate tar update cfm \
+
+# ========================================================================
+# $Log$
