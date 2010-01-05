@@ -108,8 +108,10 @@ internalupdate:
 	@echo "Copying or linking MakeFC to Makefile in $(SUBDIRS)" ; \
 	cp MakeFC Makefile
 	 for dir in $(SUBDIRS); do \
+	  if [ ! -f $$dir/MakeFC]; then \
 	  cp MakeFC $$dir; \
 	  cp MakeFC $$dir/Makefile; \
+	  fi; \
 	done
 
 cfm:
@@ -129,6 +131,9 @@ update: internalupdate
 
 # ========================================================================
 # $Log$
+# Revision 1.4  2009/12/16 19:33:44  pwagner
+# Hope this fixes goldbrick
+#
 # Revision 1.3  2009/12/08 19:51:37  pwagner
 # Working prior to adding cfm items
 #
