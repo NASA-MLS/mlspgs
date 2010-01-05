@@ -1,0 +1,35 @@
+  ! Parameters for the KIND component of objects of type(MatrixElement_T):
+  integer, parameter :: M_Absent = 0         ! An absent block -- assumed zero
+  integer, parameter :: M_Banded = 1         ! A banded matrix.  The nonzero
+    ! values in each column are assumed to be in a contiguous sequence.  For
+    ! column I, R1(I) gives the row of the first nonzero value, and the
+    ! nonzero elements are VALUES(R2(I-1)+1:R2(I)).
+  integer, parameter :: M_Column_sparse = 2  ! A sparse block in column-sparse
+    ! representation.  Only the non-zero values are stored.  For column(I),
+    ! R1(I) gives the index in R2 and VALUES for the last stored value.  The
+    ! rows of the nonzero values are R2(R1(I-1)+1:R1(I)), and their values are
+    ! VALUES(R1(I-1)+1:R1(I)).  R1(0) = 0.
+  integer, parameter :: M_Full = 3           ! A non-sparse block
+  integer, parameter :: M_Unknown = 4        ! We don't know yet
+    ! This is used for reading l2pc files where we don't want to load the block
+    ! into memory until we know we need it.  The MatrixModule_0 code doesn't
+    ! understand such blocks, so use them with care.
+
+  type MatrixElement_T
+    integer :: KIND = M_Absent               ! Kind of block -- one of the
+      !                                        M_... parameters above
+    integer :: nRows = 0, nCols = 0          ! Numbers of rows and columns
+    integer, pointer, dimension(:) :: R1 => NULL()     ! Indexed by the column
+      ! number. Used for the first column number if KIND = M_Banded, as
+      ! described above for M_Column_sparse if KIND = M_Column_sparse, and not
+      ! used otherwise.
+    integer, pointer, dimension(:) :: R2 => NULL()     ! Indexed by the
+      ! column number if KIND = M_Banded, by elements of R1 if KIND =
+      ! M_Column_sparse, and not used otherwise.  See M_Banded and
+      ! M_Column_sparse above.
+    real(rm), pointer, dimension(:,:) :: VALUES => NULL()   ! Values of the
+      ! matrix elements.  Indexed by row and column indices if KIND == M_Full,
+      ! by elements in the range of values of R1 if KIND == M_Banded, and by
+      ! elements of R2 if KIND == M_Column_sparse.
+  end type MatrixElement_T
+

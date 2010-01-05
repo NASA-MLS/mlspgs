@@ -1,0 +1,15 @@
+  type RC_Info
+  ! Information about the row or column of a matrix
+    type(Vector_T) :: Vec               ! Vector used to define the row
+      ! or column space of the matrix, if any.
+    integer :: NB = 0              ! Number of blocks of rows or columns
+    logical :: InstFirst = .true.  ! TRUE means horizontal instance is the
+      ! major order and quantity is the minor order.
+    integer, pointer :: Nelts(:) => NULL()  ! Numbers of rows or columns in
+      ! each row or column of blocks.
+    integer, pointer :: Inst(:) => NULL()   ! The instance indices for the
+      ! rows or columns of blocks.
+    integer, pointer :: Quant(:) => NULL()  ! The quantity indices for the
+      ! rows or columns of blocks.  These are indices within Vec, not the
+      ! quantity template database.
+  end type RC_Info
