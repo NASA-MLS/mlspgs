@@ -101,7 +101,7 @@ depends:
 	  		mkdir $(LOGDIR) ;\
 			fi
 	 for dir in $(SUBDIRS); do \
-	  $(MAKE) -C $$dir depends; \
+	  $(MAKE) -f $(MakeFName) -C $$dir depends; \
 	done
 
 internalupdate:
@@ -125,12 +125,15 @@ tar:
 	tar hcvzf docs.tgz * --exclude \*.dvi --exclude \*.pdf --exclude doc
 
 update: internalupdate
-	$(MAKE) depends
+	$(MAKE) -f $(MakeFName) depends
 
 .PHONY: all clean depends internalupdate tar update l2 \
 
 # ========================================================================
 # $Log$
+# Revision 1.5  2010/01/05 19:24:29  pwagner
+# Preserves Makefiles under subdirectories
+#
 # Revision 1.4  2009/12/16 19:33:44  pwagner
 # Hope this fixes goldbrick
 #
