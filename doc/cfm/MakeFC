@@ -25,14 +25,11 @@ UTILDIR=$(CONFDIR)/util
 
 # reecho.sh can filter out globbed file expansions that fail
 # e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
-# However we will be using it just to prefix any unprefixed preset paths
 REECHO=$(UTILDIR)/reecho.sh
 
-# Errors in the .tex sources require us to omit the following
-OMIT_SRCS := wvs-010.tex wvs-074.tex wvs-051-neural_body.tex
-OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
-OMIT_SRCS_REV := 'wvs-004\*.tex' 'wvs-051\*.tex' 'wvs-063\*.tex'
-OMIT_PREFXD_REV := $(shell ${REECHO} -prefix=-d -escape -nlast $(OMIT_SRCS_REV))
+# Most source files match one of the following patterns
+f9h_sources := $(shell ${REECHO} *.f9*)
+tex_sources := $(shell ${REECHO} *.tex)
 
 # Set paths for finding source files
 
@@ -64,6 +61,18 @@ vpath %.pdf $(PDFDIR)
 	dvipdf $(DVIDIR)/$<
 	mv $@ $(PDFDIR)
 
+# Bugs and limitations:
+# (1) We are assuming latex and dvipdf are both available
+# An alternative approach would skip building dvi files; e.g.
+#   pdflatex cfm
+#   bibtex cfm
+#   pdflatex cfm
+#   pdflatex cfm
+# (2) Dependencies can be traced from .tex file using makemake.sh
+# It cannot track .f9h nor .f90 files yet, which is why we use the 
+# f9h_sources mechanism
+# (3) Nor can it handle .bib files, and thus we resort to the BIB mechanism
+
 cfm:
 
 -include Makefile.dep
@@ -71,7 +80,8 @@ cfm:
 all: cfm
 
 cfm: ${NEAROBJS} ${OBJS} ${BBL}
-	date > cfm; echo $(OBJS) >> cfm
+	date > cfm; echo $(OBJS) >> cfm; \
+   touch ${BBL}; touch $(DVIDIR)/*; touch $(PDFDIR)/*
 
 ${AUX}: cfm.tex
 	latex cfm
@@ -79,11 +89,11 @@ ${AUX}: cfm.tex
 ${BBL}: ${BIB} ${AUX}
 	bibtex cfm
 
-${NEAROBJS}: ${BBL}
+${NEAROBJS}: ${BBL} ${f9h_sources}
 # ========================================================================
 
 clean:
-	rm -fr *.dvi *.pdf $(DVIDIR) $(PDFDIR)
+	rm -fr *.dvi *.pdf $(DVIDIR) $(PDFDIR) ${AUX} ${BBL} cfm
 
 depends:
 	$(MAKE) -f $(MakeFName) internalupdate
@@ -112,9 +122,12 @@ tar:
 	tar hcvzf cfm.tgz * --exclude \*.dvi --exclude \*.pdf --exclude cfm
 
 update: internalupdate
-	$(MAKE) depends
+	$(MAKE) -f $(MakeFName) depends
 
 .PHONY: all clean depends internalupdate tar update cfm \
 
 # ========================================================================
 # $Log$
+# Revision 1.1  2010/01/05 19:21:26  pwagner
+# First commit
+#
