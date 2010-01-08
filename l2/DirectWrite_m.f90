@@ -498,7 +498,7 @@ contains ! ======================= Public Procedures =========================
     use MLSHDF5, only: IsHDF5AttributePresent, ISHDF5DSPRESENT, &
       & MakeHDF5Attribute, SaveAsHDF5DS
     use MLSL2Timings, only: showTimingNames
-    use PCFHdr, only: h5_writeglobalattr
+    use PCFHdr, only: H5_WRITEMLSFILEATTR, H5_WRITEGLOBALATTR
     use VectorsModule, only: VectorValue_T
 
     type (VectorValue_T), intent(in) :: QUANTITY
@@ -684,6 +684,7 @@ contains ! ======================= Public Procedures =========================
         & 'Section Names', trim(showTimingNames('sections', .true.)), .true.)
       call h5gclose_f(grp_id, returnstatus)
     endif
+    call h5_writeMLSFileAttr(L2AUXFile, skip_if_already_there=.true.)
 
   end subroutine DirectWrite_L2Aux_MF_hdf5
 
@@ -1094,6 +1095,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.45  2010/01/08 00:11:19  pwagner
+! Added ability to write MLSFile_T fields as attributes
+!
 ! Revision 2.44  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
 !
