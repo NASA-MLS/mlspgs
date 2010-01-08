@@ -39,10 +39,45 @@ MODULE PCFHdr
      & CreatePCFAnnotation, dumpGlobalAttributes,  &
      & FillTAI93Attribute, &
      & h5_writeglobalattr, he5_writeglobalattr, he5_readglobalattr, &
+     & h5_writeMLSFileAttr, he5_writeMLSFileAttr, &
      & InputInputPointer, WriteInputPointer, &
      & WriteLeapSecHDFEOSAttr, WriteLeapSecHDF5DS, WritePCF2Hdr, &
      & WriteutcPoleHDFEOSAttr, WriteutcPoleHDF5DS
    private
+
+! === (start of toc) ===                                                 
+!     c o n t e n t s                                                    
+!     - - - - - - - -                                                    
+
+!     (data types and parameters)
+! inputptr_string_length   string length used by InputPointer procedures
+! ga_value_length          string length used by GlobalAttributes_T
+! MiscNotesLength          string length used by MiscNotes field
+! utc_a_value_length       string length used to encode utc version 'a'
+! utc_b_value_length       string length used to encode utc version 'b'
+! GlobalAttributes         which attributes to write to product files
+
+!     (subroutines and functions)
+! CreatePCFAnnotation      read the PCF file into a character array
+! dumpGlobalAttributes     dumps the global attributes
+! FillTAI93Attribute       Fill the TAI93 component of the global attribute 
+!                           based on theStartUTC component
+! h5_writeglobalattr       writes the global attributes to an hdf5-formatted file
+! he5_writeglobalattr      writes the global attributes to an hdfeos5-formatted file
+! he5_readglobalattr       reads the global attributes from an hdfeos5-formatted file
+! InputInputPointer        Prepare Input for WriteInputPointer
+! sw_writeglobalattr       writes the global attributes for an hdfeos5 swath
+! WriteInputPointer        Write InputPointer metadata
+! WriteLeapSecHDFEOSAttr   Write contents of leapsec file as hdfeos5 attribute
+! WriteLeapSecHDF5DS       Write contents of leapsec file as hdf5 dataset
+! WritePCF2Hdr             Write the PCF into an HDF or HDF-EOS file
+! WriteutcPoleHDFEOSAttr   Write contents of utcPole file as hdfeos5 attribute
+! WriteutcPoleHDF5DS       Write contents of utcPole file as hdf5 dataset
+! === (end of toc) ===                                                   
+! === (start of api) ===
+! log inRange( int arg, Range_T range )
+! log is_what_ieee( int what, num arg )
+! === (end of api) ===
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -52,14 +87,6 @@ MODULE PCFHdr
 
 ! Contents:
 
-! Subroutines -- CreatePCFAnnotation
-!                WritePCF2Hdr
-!                WriteInputPointer
-!                InputInputPointer
-!                h5_writeglobalattr
-!                he5_writeglobalattr
-!                he5_readglobalattr
-!                sw_writeglobalatt
 ! Remarks:  This module contains subroutines for writing the PCF as an 
 ! annotation to HDF files. (obsolete)
 ! It also contains the two routines that prepare and write the input pointer
@@ -315,6 +342,76 @@ CONTAINS
 !------------------------------------------------------------
 
 !------------------------------------------------------------
+   SUBROUTINE h5_writeMLSFileAttr (MLSFile, skip_if_already_there)
+!------------------------------------------------------------
+
+      use HDF5, only: h5gclose_f, h5gopen_f
+      USE MLSHDF5, only: IsHDF5AttributePresent, MakeHDF5Attribute
+! Brief description of subroutine
+! This subroutine writes the components of an MLSFile_t 
+! as attributes for an hdf5-formatted file
+! It does so at the root '/' group level
+
+! Arguments
+
+      ! INTEGER, INTENT(IN) :: fileID
+      type(MLSFile_T)       :: MLSFile
+      logical, intent(in), optional :: skip_if_already_there
+! Local variables
+      integer :: fileID
+      integer :: grp_id
+      integer :: status
+      logical :: my_skip
+      logical, parameter :: WRITE_ORBIT = .false.
+      character(len=GA_VALUE_LENGTH) :: ProcessLevel = ''
+
+      ! Executable code
+      if ( .not. MLSFile%stillOpen ) then
+        call open_MLSFile( MLSFile )
+      endif
+      my_skip = .false.
+      if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
+      if ( my_skip ) then
+        if ( IsHDF5AttributePresent('/', fileID, 'ShortName') ) &
+          & return
+      endif
+      fileID = MLSFile%FileID%f_id
+      call h5gopen_f(fileID, '/', grp_id, status)
+      call MakeHDF5Attribute(grp_id, &
+       & 'content', MLSFile%content, .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'lastOperation', MLSFile%lastOperation, .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'name', MLSFile%name, .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'ShortName', MLSFile%ShortName, .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'typeStr', MLSFile%typeStr, .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'type', MLSFile%type, .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'access', MLSFile%access, .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'HDFVersion', MLSFile%HDFVersion, .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'PCFId', MLSFile%PCFId, .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'recordLength', MLSFile%recordLength, .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'errorCode', MLSFile%errorCode, .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'PCFIdRange', (/MLSFile%PCFIdRange%Bottom, MLSFile%PCFIdRange%Top/), .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'FileID', &
+       & (/MLSFile%FileID%f_id, MLSFile%FileID%grp_id, MLSFile%FileID%sd_id/), &
+       & .true.)
+      call h5gclose_f(grp_id, status)
+
+!------------------------------------------------------------
+   END SUBROUTINE h5_writeMLSFileAttr
+!------------------------------------------------------------
+
+!------------------------------------------------------------
    SUBROUTINE he5_writeglobalattr (fileID,dayNum)
 !------------------------------------------------------------
 
@@ -322,7 +419,7 @@ CONTAINS
       & HE5T_NATIVE_DOUBLE, MLS_charType
     use MLSHDFEOS, only: he5_EHwrglatt, hsize, mls_EHwrglatt
 ! Brief description of subroutine
-! This subroutine writes the global attributes for an hdf-eos5 file
+! This subroutine writes the global attributes for an hdfeos5 file
 
 ! Arguments
 
@@ -398,6 +495,77 @@ CONTAINS
        &  GlobalAttributes%MiscNotes)
 !------------------------------------------------------------
    END SUBROUTINE he5_writeglobalattr
+!------------------------------------------------------------
+
+!------------------------------------------------------------
+   SUBROUTINE he5_writeMLSFileAttr (MLSFile)
+!------------------------------------------------------------
+
+    use HDFEOS5, only: HE5T_NATIVE_INT, &
+      & HE5T_NATIVE_DOUBLE, MLS_charType
+    use MLSHDFEOS, only: he5_EHwrglatt, hsize, mls_EHwrglatt
+! Brief description of subroutine
+! This subroutine writes the components of an MLSFile_t 
+! as attributes for an hdfeos5-formatted file
+
+! Arguments
+
+      ! INTEGER, INTENT(IN) :: fileID
+      type(MLSFile_T)       :: MLSFile
+! Local variables
+      integer :: fileID
+      integer :: status
+      logical :: my_skip
+      logical, parameter :: WRITE_ORBIT = .false.
+      character(len=GA_VALUE_LENGTH) :: ProcessLevel = ''
+
+      ! Executable code
+      if ( .not. MLSFile%stillOpen ) then
+        call open_MLSFile( MLSFile )
+      endif
+      fileID = MLSFile%FileID%f_id
+      status = mls_EHwrglatt(fileID, &
+       & 'content', MLS_CHARTYPE, 1, &
+       &  MLSFile%content)
+      status = mls_EHwrglatt(fileID, &
+       & 'lastOperation', MLS_CHARTYPE, 1, &
+       &  MLSFile%lastOperation)
+      status = mls_EHwrglatt(fileID, &
+       & 'name', MLS_CHARTYPE, 1, &
+       &  MLSFile%name)
+      status = mls_EHwrglatt(fileID, &
+       & 'ShortName', MLS_CHARTYPE, 1, &
+       &  MLSFile%ShortName)
+      status = mls_EHwrglatt(fileID, &
+       & 'typeStr', MLS_CHARTYPE, 1, &
+       &  MLSFile%typeStr)
+      status = he5_EHwrglatt(fileID, &
+       & 'type', HE5T_NATIVE_INT, hsize(1), &
+       &  (/ MLSFile%type /) )
+      status = he5_EHwrglatt(fileID, &
+       & 'access', HE5T_NATIVE_INT, hsize(1), &
+       &  (/ MLSFile%access /) )
+      status = he5_EHwrglatt(fileID, &
+       & 'HDFVersion', HE5T_NATIVE_INT, hsize(1), &
+       &  (/ MLSFile%HDFVersion /) )
+      status = he5_EHwrglatt(fileID, &
+       & 'PCFId', HE5T_NATIVE_INT, hsize(1), &
+       &  (/ MLSFile%PCFId /) )
+      status = he5_EHwrglatt(fileID, &
+       & 'recordlength', HE5T_NATIVE_INT, hsize(1), &
+       &  (/ MLSFile%recordlength /) )
+      status = he5_EHwrglatt(fileID, &
+       & 'errorCode', HE5T_NATIVE_INT, hsize(1), &
+       &  (/ MLSFile%errorCode /) )
+      status = he5_EHwrglatt(fileID, &
+       & 'PCFIDRange', HE5T_NATIVE_INT, hsize(2), &
+       &  (/ MLSFile%PCFIDRange%Bottom, MLSFile%PCFIDRange%Top /) )
+      status = he5_EHwrglatt(fileID, &
+       & 'FileID', HE5T_NATIVE_INT, hsize(3), &
+       &  (/MLSFile%FileID%f_id, MLSFile%FileID%grp_id, MLSFile%FileID%sd_id/) )
+
+!------------------------------------------------------------
+   END SUBROUTINE he5_writeMLSFileAttr
 !------------------------------------------------------------
 
 !------------------------------------------------------------
@@ -597,7 +765,7 @@ CONTAINS
       use HE5_SWAPI, only: he5_SWwrattr
       use MLSHDFEOS, only: hsize, mls_SWwrattr
 ! Brief description of subroutine
-! This subroutine writes the global attributes for an hdf-eos5 swath
+! This subroutine writes the global attributes for an hdfeos5 swath
 
 ! Arguments
 
@@ -1226,6 +1394,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.51  2010/01/08 00:10:46  pwagner
+!# Added ability to write MLSFile_T fields as attributes
+!#
 !# Revision 2.50  2009/10/05 23:37:59  pwagner
 !# Moved use mlshdfeos statements from module scope to speedup Lahey; this is the last time we do that
 !#
