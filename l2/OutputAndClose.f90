@@ -104,6 +104,7 @@ contains ! =====     Public Procedures     =============================
     use MLSStrings, only: trim_safe
     use MoreTree, only: Get_Spec_ID, GET_BOOLEAN
     use OUTPUT_M, only: blanks, OUTPUT, revertOutput, switchOutput
+    use PCFHdr, only: HE5_WRITEMLSFILEATTR
     use Time_M, only: Time_Now
     use TOGGLES, only: GEN, TOGGLE, Switches
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -498,6 +499,7 @@ contains ! =====     Public Procedures     =============================
               & swathList=trim(sdList), rename=rename, &
               & notUnlimited=avoidUnlimitedDims, andGlAttributes=copyFileAttributes )
           endif
+          call he5_writeMLSFileAttr( outputFile )
           if ( noGapsHGIndex > 0 ) &
             & call writeHGridComponents( trim(PhysicalFilename), &
             & HGrids(noGapsHGIndex) )
@@ -1452,7 +1454,8 @@ contains ! =====     Public Procedures     =============================
     use MLSStringLists, only: Array2List, switchDetail
     use MLSStrings, only: trim_safe
     use OUTPUT_M, only: blanks, OUTPUT
-    use PCFHdr, only: WriteLeapSecHDFEOSAttr, WriteLeapSecHDF5DS, &
+    use PCFHdr, only: h5_writeMLSFileAttr, he5_writeMLSFileAttr, &
+      & WriteLeapSecHDFEOSAttr, WriteLeapSecHDF5DS, &
       & WriteutcPoleHDFEOSAttr, WriteutcPoleHDF5DS
     use readAPriori, only: writeAPrioriAttributes
     use TOGGLES, only: Switches
@@ -1542,6 +1545,7 @@ contains ! =====     Public Procedures     =============================
         & 'unable to addmetadata to ' // trim(l2gpPhysicalFilename) )
       end if
       if ( madeFile ) then
+        call he5_writeMLSFileAttr( outputFile )
         call writeAPrioriAttributes( outputFile )
         if (switchDetail( switches, 'pro') > 0 ) &
           call output ( 'About to open ' // trim(l2gpPhysicalFilename) , advance='yes' )
@@ -1656,6 +1660,7 @@ contains ! =====     Public Procedures     =============================
       end if
       
       ! Now we can write any last-minute attributes or datasets to the l2aux
+      if ( madeFile ) call h5_writeMLSFileAttr ( outputFile )
       ! E.g., parallel stuff
       if ( (parallel%master .or. switchDetail(switches, 'chu') > -1 ) &
         & .and. .not. (checkPaths .or. SKIPDIRECTWRITES) .and. &
@@ -1717,6 +1722,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.148  2010/01/08 00:11:37  pwagner
+! Added ability to write MLSFile_T fields as attributes
+!
 ! Revision 2.147  2009/11/10 00:44:03  pwagner
 ! Copies MiscNotes while unsplitting l2aux files, too
 !
