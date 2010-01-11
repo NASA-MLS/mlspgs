@@ -412,6 +412,7 @@ contains ! ======================= Public Procedures =========================
     integer :: status
     integer :: type_id
     integer(kind=Size_t) :: type_size
+    ! logical, parameter :: DEEBUG = .true.
     ! Executable
     call MLSMessageCalls( 'push', constantName='DumpHDF5Attributes' )
     myNames = '*' ! Wildcard means 'all'
@@ -2328,7 +2329,7 @@ contains ! ======================= Public Procedures =========================
     integer(kind=hSize_t), dimension(:), optional, intent(out) :: MAXDIMS ! max Values
 
     ! Local variables
-    logical, parameter :: DEEBUG = .true.
+    ! logical, parameter :: DEEBUG = .true.
     integer :: dspace_id                ! spaceID for Attr
     integer(kind=hSize_t), dimension(:), pointer :: maxdims_ptr
     integer :: my_rank, rank
@@ -2350,8 +2351,10 @@ contains ! ======================= Public Procedures =========================
     call h5aGet_type_f ( attrID, type_id, status )
     call h5tGet_size_f ( type_id, type_size, status )
     call h5tget_class_f ( type_id, classID, status )
-    call h5dget_space_f ( attrID, dspace_id, status )
+    call h5aget_space_f ( attrID, dspace_id, status )
+    if ( status /= 0 ) call outputNamedValue ( 'h5dget_space_f status', status )
     call h5sget_simple_extent_ndims_f ( dspace_id, rank, status )
+    if ( status /= 0 ) call outputNamedValue ( 'h5sget_simple_extent_ndims_f status', status )
     my_rank = min(rank, size(dims))
     allocate ( maxdims_ptr(my_rank) )
     call h5sget_simple_extent_dims_f ( dspace_id, dims(1:my_rank), &
@@ -5058,6 +5061,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.98  2010/01/11 18:33:57  pwagner
+! Fixed bug in dumping array-valued attributes
+!
 ! Revision 2.97  2009/11/16 21:55:55  pwagner
 ! orked around lack of generic outputnamedValue for longint
 !
