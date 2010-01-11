@@ -34,7 +34,21 @@ module MLSCommon                ! Common definitions for the MLS software
 ! LineLen       character-length of most input
 ! FileNameLen   character-length of path/filenames
 ! BareFNLen     character-length of filenames
-! L1BInfo_T     L1B data file names, etc.
+! fill_signal   signal to is_what_ieee to check for undefined (fill) values
+! finite_signal signal to is_what_ieee to check for finite
+! inf_signal    signal to is_what_ieee to check for inf
+! nan_signal    signal to is_what_ieee to check for NaN
+! DEFAULTUNDEFINEDVALUE 
+!               default fill values, e.g. when creating hdf arrays
+! UNDEFINEDVALUE 
+!               value to check for by is_what_ieee
+! FileIDs_T     id numbers for file, group, swath or dataset
+! L1BInfo_T     L1B data file names, etc. 
+!                (Should we replace these with FileIDs?)
+! L2Metadata_T  Coords of (lon,lat) box to write as metadata
+! MLSFile_T     File name, type, id, etc.
+! Range_T       Bottom, Top of PCFID range
+! TAI93_Range_T start, end times in TAI93 formatted r8
 
 !     (subroutines and functions)
 ! inRange       does an argument lie with a specified range
@@ -84,7 +98,7 @@ module MLSCommon                ! Common definitions for the MLS software
   integer, public, parameter :: FILL_SIGNAL   = NAN_SIGNAL + 1
 
   interface is_what_ieee
-    module procedure is_what_ieee_REAL, is_what_ieee_DOUBLE, is_what_ieee_INTEGER
+    module procedure is_what_ieee_r4, is_what_ieee_r8, is_what_ieee_INTEGER
   end interface
   
   ! Because we'd like not to always drag the SDPToolkit with us
@@ -98,14 +112,16 @@ module MLSCommon                ! Common definitions for the MLS software
   integer, public, parameter :: FileNameLen=max(PGSd_PC_FILE_PATH_MAX, 132) ! was 132
   integer, public, parameter :: BareFNLen=64      ! Bare file name length (w/o path)
 
-  real, public, parameter ::    DEFAULTUNDEFINEDVALUE = -999.99 ! Try to use in lib, l2
-  real, public, parameter ::    UNDEFINEDTOLERANCE = 0.2 ! Poss. could make it 1
+  real(r4), public, parameter ::    DEFAULTUNDEFINEDVALUE = -999.99 ! Try to use in lib, l2
+  real(r4), public, parameter ::    UNDEFINEDTOLERANCE = 0.2 ! Poss. could make it 1
 
   ! This can be set to a different value if that would be more convenient
-  real, public, save      ::    UNDEFINEDVALUE = DEFAULTUNDEFINEDVALUE
+  real(r4), public, save      ::    UNDEFINEDVALUE = DEFAULTUNDEFINEDVALUE
   ! --------------------------------------------------------------------------
   
-  ! A type to hold the hdf ids
+  ! A type to hold the hdf file ids
+  ! (Should make it recursive in case dataset path something like
+  ! "/grp_1/grp_2/../grp_n/sd")
 
   type FileIds_T
     integer :: f_id     = 0 ! File id, handle, or io unit
@@ -124,9 +140,8 @@ module MLSCommon                ! Common definitions for the MLS software
 
   ! Moved here from MLSFiles module
   ! Information describing the files used by the mls software
-  ! Stop passing file handles back & forth between routines
+  ! Stop passing file handles or names back & forth between routines
   ! -- pass one of these instead
-  ! (Not used yet; maybe someday)
   type MLSFile_T
     character (LEN=16) :: content=""  ! e.g., 'l1brad', 'l2gp', 'l2aux', ..
     character (LEN=8) :: lastOperation=""  ! 'open','close','read','write'
@@ -184,10 +199,10 @@ module MLSCommon                ! Common definitions for the MLS software
     relation = (arg < (range%top + 1)) .and. (arg > (range%bottom - 1))
   end function inRange
 
-  elemental function is_what_ieee_DOUBLE( what, arg ) result( itIs )
+  elemental function is_what_ieee_r8( what, arg ) result( itIs )
     ! Args
     integer, intent(in)                       :: what ! a signal flag
-    double precision, intent(in)              :: arg
+    real(r8), intent(in)                      :: arg
     logical                                   :: itIs
     ! Executable
     select case (what)
@@ -203,12 +218,12 @@ module MLSCommon                ! Common definitions for the MLS software
     case default
       itIs = .false. ! what signal flag did you mean? not recognized
     end select
-  end function is_what_ieee_DOUBLE
+  end function is_what_ieee_r8
 
-  elemental function is_what_ieee_REAL( what, arg ) result( itIs )
+  elemental function is_what_ieee_r4( what, arg ) result( itIs )
     ! Args
     integer, intent(in)                       :: what ! a signal flag
-    real, intent(in)                          :: arg
+    real(r4), intent(in)                      :: arg
     logical                                   :: itIs
     ! Executable
     select case (what)
@@ -224,7 +239,7 @@ module MLSCommon                ! Common definitions for the MLS software
     case default
       itIs = .false. ! what signal flag did you mean? not recognized
     end select
-  end function is_what_ieee_REAL
+  end function is_what_ieee_r4
 
   elemental function is_what_ieee_integer( what, arg ) result( itIs )
     ! Args
@@ -262,6 +277,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.34  2010/01/11 18:32:44  pwagner
+! Completed toc; generic is_what_ieee_ now use r4, r8
+!
 ! Revision 2.33  2009/06/23 18:25:42  pwagner
 ! Prevent Intel from optimizing ident string away
 !
