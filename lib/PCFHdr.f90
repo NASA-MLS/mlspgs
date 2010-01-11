@@ -394,13 +394,13 @@ CONTAINS
       call MakeHDF5Attribute(grp_id, &
        & 'HDFVersion', MLSFile%HDFVersion, .true.)
       call MakeHDF5Attribute(grp_id, &
-       & 'PCFId', MLSFile%PCFId, .true.)
+       & 'PCFID', MLSFile%PCFId, .true.)
       call MakeHDF5Attribute(grp_id, &
        & 'recordLength', MLSFile%recordLength, .true.)
       call MakeHDF5Attribute(grp_id, &
        & 'errorCode', MLSFile%errorCode, .true.)
       call MakeHDF5Attribute(grp_id, &
-       & 'PCFIdRange', (/MLSFile%PCFIdRange%Bottom, MLSFile%PCFIdRange%Top/), .true.)
+       & 'PCFIDRange', (/MLSFile%PCFIdRange%Bottom, MLSFile%PCFIdRange%Top/), .true.)
       call MakeHDF5Attribute(grp_id, &
        & 'FileID', &
        & (/MLSFile%FileID%f_id, MLSFile%FileID%grp_id, MLSFile%FileID%sd_id/), &
@@ -549,7 +549,7 @@ CONTAINS
        & 'HDFVersion', HE5T_NATIVE_INT, hsize(1), &
        &  (/ MLSFile%HDFVersion /) )
       status = he5_EHwrglatt(fileID, &
-       & 'PCFId', HE5T_NATIVE_INT, hsize(1), &
+       & 'PCFID', HE5T_NATIVE_INT, hsize(1), &
        &  (/ MLSFile%PCFId /) )
       status = he5_EHwrglatt(fileID, &
        & 'recordlength', HE5T_NATIVE_INT, hsize(1), &
@@ -1394,6 +1394,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.52  2010/01/11 18:36:07  pwagner
+!# Changed attribute names to 'PCFID..'
+!#
 !# Revision 2.51  2010/01/08 00:10:46  pwagner
 !# Added ability to write MLSFile_T fields as attributes
 !#
