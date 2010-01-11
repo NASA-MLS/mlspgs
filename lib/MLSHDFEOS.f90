@@ -812,8 +812,8 @@ contains ! ======================= Public Procedures =========================
 
   end function MLS_SWdiminfo
 
-  ! ---------------------------------------------  MLS_dfldsetUP  -----
-  integer function MLS_dfldsetUP ( SWATHID, FIELDNAME, DIMNAME, MAXDIMList, &
+  ! ---------------------------------------------  MLS_DFLDSETUP  -----
+  integer function MLS_DFLDSETUP ( SWATHID, FIELDNAME, DIMNAME, MAXDIMList, &
     & DATATYPE, MERGE, CHUNK_RANK, CHUNK_DIMS, &
     & FILENAME, hdfVersion, DONTFAIL, iFill, rFill, dFill )
     integer, parameter :: RANK = 7
@@ -883,12 +883,17 @@ contains ! ======================= Public Procedures =========================
     case default
       mls_dfldsetup = -1
     end select
+    if ( DEEBUG ) then
+      print *, 'mls_dfldsetup: FIELDName, DIMNAME, MAXDIMLIST, TYPE, MERGE'
+      print *, FIELDName, DIMNAME, trim(MAXDIMLIST), DATATYPE, MERGE
+      print *, chunk_rank, chunk_dims
+    endif
     if ( .not. myDontFail .and. mls_dfldsetup == -1 ) &
       & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Failed to set up data field ' // trim(fieldname) )
     call MLSMessageCalls( 'pop' )
 
-  end function MLS_dfldsetUP
+  end function MLS_DFLDSETUP
 
   ! ---------------------------------------------  MLS_GFLDSETUP  -----
   integer function MLS_GFLDSETUP ( SWATHID, FIELDNAME, DIMNAME, MAXDIMList, &
@@ -962,7 +967,11 @@ contains ! ======================= Public Procedures =========================
     case default
       mls_gfldsetup = -1
     end select
-   ! print *, 'mls_gfldsetup returns: ', mls_gfldsetup
+    if ( DEEBUG ) then
+      print *, 'mls_gfldsetup: FIELDName, DIMNAME, MAXDIMLIST, TYPE, MERGE'
+      print *, FIELDName, DIMNAME, trim(MAXDIMLIST), DATATYPE, MERGE
+      print *, chunk_rank, chunk_dims
+    endif
     if ( .not. myDontFail .and. mls_gfldsetup == -1 ) &
       & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Failed to set up geoloc field ' // trim(fieldname) )
@@ -2205,6 +2214,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDFEOS
 
 ! $Log$
+! Revision 2.41  2010/01/11 18:34:50  pwagner
+! Added more debug printing
+!
 ! Revision 2.40  2009/10/05 23:38:21  pwagner
 ! Moved use hdf5 statements from module scope to speedup Lahey; this is the last time we do that
 !
