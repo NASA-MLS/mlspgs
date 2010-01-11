@@ -723,7 +723,7 @@ contains ! ============================ MODULE PROCEDURES ======================
       elseif ( l1b2NotFinite ) then
         call output('l1bValues2 array all NaNs', advance='yes')
       else
-        if ( DEBUG ) call output( 'Calling direct diff', advance='yes' )
+        if ( DEBUG ) call output( 'Calling direct diff with l1bvalues1 and 2', advance='yes' )
         myNumDiffs = myNumDiffs + count(l1bValues1 /= l1bValues2)
         call DIFF ( &
           & l1bValues1, '(1)', &
@@ -3283,6 +3283,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.87  2010/01/11 18:33:19  pwagner
+! Changed a comment
+!
 ! Revision 2.86  2009/10/30 23:03:50  pwagner
 ! Commented-out more debugging lines
 !
