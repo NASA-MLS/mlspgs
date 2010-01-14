@@ -20,8 +20,10 @@ module Read_Mie_m
   public :: Destroy_Mie, Dump_Mie, Read_Mie
 
   ! Coordinates
-  real(rp), public, pointer :: F_s(:) => NULL(), IWC_s(:) => NULL()
-  real(rp), public, pointer :: T_s(:) => NULL(), Theta_s(:) => NULL()
+  real(rp), public, pointer :: F_s(:) => NULL()     ! MHz
+  real(rp), public, pointer :: IWC_s(:) => NULL()   ! log10(IWC)
+  real(rp), public, pointer :: T_s(:) => NULL()     ! K
+  real(rp), public, pointer :: Theta_s(:) => NULL() ! Radians above horizon
   ! Betas
   real(r8), public, pointer :: Beta_c_a(:,:,:) => NULL()  ! T X IWC X F
   real(r8), public, pointer :: Beta_c_e(:,:,:) => NULL()  ! T X IWC X F
@@ -331,6 +333,9 @@ contains
 end module Read_Mie_m
 
 ! $Log$
+! Revision 2.8  2010/01/14 02:24:06  vsnyder
+! Add some comments
+!
 ! Revision 2.7  2009/08/20 19:47:26  vsnyder
 ! Replace THETA_s by Theta_s to conform to Mie_Tables
 !
