@@ -36,8 +36,8 @@ module MLSHDFEOS
   use HE5_SWAPI_DOUBLE, only: HE5_EHWRGLATT_DOUBLE, HE5_EHRDGLATT_DOUBLE, &
     & HE5_SWRDFLD_DOUBLE, HE5_SWRDFLD_DOUBLE_2D, HE5_SWRDFLD_DOUBLE_3D, &
     & HE5_SWWRFLD_DOUBLE, HE5_SWWRFLD_DOUBLE_2D, HE5_SWWRFLD_DOUBLE_3D
-  use HE5_SWAPI_INTEGER, only: HE5_EHWRGLATT_INTEGER, HE5_EHRDGLATT_INTEGER, &
-    & HE5_SWRDFLD_INTEGER, HE5_SWWRFLD_INTEGER
+  use HE5_SWAPI_INTEGER, only: HE5_EHWRGLATT_INTEGER, &
+    & HE5_SWRDFLD_INTEGER, HE5_SWWRFLD_INTEGER, HE5_EHRDGLATT
   use HE5_SWAPI_REAL, only: HE5_EHWRGLATT_REAL, HE5_EHRDGLATT_REAL, &
     & HE5_SWRDFLD_REAL, HE5_SWRDFLD_REAL_2D, HE5_SWRDFLD_REAL_3D, &
     & HE5_SWWRFLD_REAL, HE5_SWWRFLD_REAL_2D, HE5_SWWRFLD_REAL_3D
@@ -64,7 +64,7 @@ module MLSHDFEOS
     & MLS_SWDEFDIM, MLS_SWDIMINFO, MLS_SWRDFLD, MLS_SWWRFLD, &
     & MLS_SWATTACH, MLS_SWCREATE, MLS_SWDETACH, MLS_GDCREATE, MLS_GDWRATTR, &
     & MLS_SWWRATTR, MLS_SWWRLATTR, &
-    & mls_swath_in_file
+    & MLS_SWATH_IN_FILE
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -78,11 +78,15 @@ module MLSHDFEOS
 
 ! HE5_EHRDGLATT     Reads the global attributes at file level
 ! HE5_EHWRGLATT     Writes the global attributes at file level
+! HSIZE             Return arg with same integer value
+!                     but with kind value size_t
+! HSIZES            Return array as HSIZE
 ! MLS_DFLDSETUP     Sets up a data field in a swath
 ! MLS_GDCREATE      Creates a grid (perhaps prior to writing)
 ! MLS_GDWRATTR      Writes a grid-level attribute (e.g., pressures)
 ! MLS_GFLDSETUP     Sets up a geolocation field in a swath
 ! MLS_ISGLATT       Is the named global attribute present in the file?
+! MLS_SWATH_IN_FILE Is named swath in file?
 ! MLS_SWATTACH      Attaches a swath (perhaps prior to reading)
 ! MLS_SWCREATE      Creates a swath (perhaps prior to writing)
 ! MLS_SWDEFDIM      Sets up a dimension for a swath
@@ -101,6 +105,8 @@ module MLSHDFEOS
 ! int HE5_EHWRGLATT (int fileID, char* attrName, int datatype, int count, value)
 !     value can be one of:
 !    {char* value, char* value(:), int value(:), r4 value(:), r8 value(:)}
+! size_t HSIZE (int arg)
+! size_t(:) HSIZES (int ints(:))
 ! int MLS_SWSETFILL (int swathID, char* names, int datatype, value) 
 !     value can be one of:
 !    {char* value, int value, r4 value, r8 value}
@@ -119,6 +125,7 @@ module MLSHDFEOS
 !     [int iFill], [r4 rFill], [r8 dFill]) 
 ! log MLS_ISGLATT (file, char* attrname)
 !     file can be one of: int fileID, or char* filename
+! log MLS_SWATH_IN_FILE (file, char* attrname)
 ! int MLS_SWATTACH (file, char* swathname, [char* filename], [int hdfVersion], 
 !     [log dontFail]) 
 !     file can be one of: int fileID, or type(MLSFile_T) MLSFile
@@ -150,8 +157,9 @@ module MLSHDFEOS
   end interface
 
   interface HE5_EHRDGLATT   ! From its name, might better be in he5_ehapi.f90
-    module procedure HE5_EHRDGLATT_CHARACTER_SCALAR, HE5_EHRDGLATT_DOUBLE, &
-    HE5_EHRDGLATT_INTEGER, HE5_EHRDGLATT_REAL, HE5_EHRDGLATT_CHARACTER_ARRAY
+    module procedure HE5_EHRDGLATT_CHARACTER_SCALAR, &
+      & HE5_EHRDGLATT_DOUBLE, &
+      & HE5_EHRDGLATT_REAL, HE5_EHRDGLATT_CHARACTER_ARRAY
   end interface
 
   interface MLS_EHWRGLATT
@@ -2066,8 +2074,6 @@ contains ! ======================= Public Procedures =========================
     call MLSMessageCalls( 'pop' )
   end function mls_swath_in_file_arr
 
-! ======================= Private Procedures =========================  
-
   ! ---------------- hsize ------------
   function hsize ( arg ) result ( h )
     use hdf5, only: hsize_t, hssize_t, size_t
@@ -2092,6 +2098,8 @@ contains ! ======================= Public Procedures =========================
       h(i) = int(ints(i), size_t)
     enddo
   end function hsizes
+
+! ======================= Private Procedures =========================  
 
   ! ---------------------------------------------  is_datafield_in_swath  -----
   logical function is_datafield_in_swath(swathid, field, HdfVersion)
@@ -2214,6 +2222,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDFEOS
 
 ! $Log$
+! Revision 2.42  2010/01/14 23:29:35  pwagner
+! Uses separate scalar and array generic forms for HE5_EHRDGLATT_INTEGER
+!
 ! Revision 2.41  2010/01/11 18:34:50  pwagner
 ! Added more debug printing
 !
