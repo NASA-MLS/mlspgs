@@ -17,6 +17,7 @@ module HE5_SWAPI_INTEGER
     & HE5_SWWRATTR_INTEGER, HE5_SWWRLATTR_INTEGER, &
     & HE5_SWRDATTR_INTEGER, HE5_SWRDLATTR_INTEGER
   public :: HE5_SWSETFILL_INTEGER
+  public :: HE5_EHRDGLATT
   private
 
 !---------------------------- RCS Module Info ------------------------------
@@ -25,6 +26,9 @@ module HE5_SWAPI_INTEGER
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
+  interface HE5_EHRDGLATT
+    module procedure HE5_EHRDGLATT_INTEGER_ARR, HE5_EHRDGLATT_INTEGER_SCA
+  end interface
 contains
 
   integer function HE5_EHWRGLATT_INTEGER ( FILEID, &
@@ -42,7 +46,7 @@ contains
          & attrname, datatype, count, buffer )
   end function HE5_EHWRGLATT_INTEGER
 
-  integer function HE5_EHRDGLATT_INTEGER ( FILEID, &
+  integer function HE5_EHRDGLATT_INTEGER_ARR ( FILEID, &
     & ATTRNAME, BUFFER )
     integer, intent(in) :: FILEID      ! File ID
     character(len=*), intent(in) :: ATTRNAME     ! Field name
@@ -50,9 +54,23 @@ contains
 
     integer, external :: HE5_EHRDGLATT
 
-    he5_ehrdglatt_INTEGER = he5_ehrdglatt(fileID, &
+    he5_ehrdglatt_INTEGER_ARR = he5_ehrdglatt(fileID, &
          & attrname, buffer )
-  end function HE5_EHRDGLATT_INTEGER
+  end function HE5_EHRDGLATT_INTEGER_ARR
+
+  integer function HE5_EHRDGLATT_INTEGER_SCA ( FILEID, &
+    & ATTRNAME, VALUE )
+    integer, intent(in) :: FILEID      ! File ID
+    character(len=*), intent(in) :: ATTRNAME     ! Field name
+    integer, intent(out) :: VALUE
+
+    integer, external :: HE5_EHRDGLATT
+    integer, dimension(1) :: buffer
+
+    he5_ehrdglatt_INTEGER_SCA = he5_ehrdglatt(fileID, &
+         & attrname, buffer )
+    value = buffer(1)
+  end function HE5_EHRDGLATT_INTEGER_SCA
 
   integer function HE5_SWSETFILL_INTEGER (SWATHID, FIELDNAME, NUMBERTYPE, &
     & FILLVALUE)
@@ -233,6 +251,9 @@ contains
 end module HE5_SWAPI_INTEGER
 
 ! $Log$
+! Revision 2.10  2010/01/14 23:18:37  pwagner
+! Separate scalar and array generic forms for HE5_EHRDGLATT_INTEGER
+!
 ! Revision 2.9  2009/10/05 23:37:05  pwagner
 ! Moved use hdf5 statements from module scope to speedup Lahey; this is the last time we do taht
 !
