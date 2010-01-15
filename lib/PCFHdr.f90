@@ -38,6 +38,7 @@ MODULE PCFHdr
    public :: GlobalAttributes_T, &
      & CreatePCFAnnotation, dumpGlobalAttributes,  &
      & FillTAI93Attribute, &
+     & h5_readMLSFileAttr, he5_readMLSFileAttr, &
      & h5_writeglobalattr, he5_writeglobalattr, he5_readglobalattr, &
      & h5_writeMLSFileAttr, he5_writeMLSFileAttr, &
      & InputInputPointer, WriteInputPointer, &
@@ -269,6 +270,129 @@ CONTAINS
 !------------------------------------
 
 !------------------------------------------------------------
+   SUBROUTINE h5_readMLSFileAttr (MLSFile)
+!------------------------------------------------------------
+
+      use HDF5, only: h5gclose_f, h5gopen_f
+      USE MLSHDF5, only: GetHDF5Attribute, IsHDF5AttributePresent, MakeHDF5Attribute
+! Brief description of subroutine
+! This subroutine reads the components of an MLSFile_t 
+! as attributes from an hdf5-formatted file
+! It does so at the root '/' group level
+
+! Arguments
+
+      type(MLSFile_T)       :: MLSFile
+! Local variables
+      integer :: fileID
+      integer :: grp_id
+      integer :: status
+      integer, dimension(2) :: ints
+      character(len=GA_VALUE_LENGTH) :: ProcessLevel = ''
+
+      ! Executable code
+      if ( .not. MLSFile%stillOpen ) then
+        call open_MLSFile( MLSFile )
+      endif
+      fileID = MLSFile%FileID%f_id
+      if ( IsHDF5AttributePresent('/', fileID, 'ShortName') ) &
+        & return
+      call h5gopen_f(fileID, '/', grp_id, status)
+      MLSFile%FileID%grp_id = grp_id
+      MLSFile%FileID%sd_id = 0
+      call GetHDF5Attribute(MLSFile, &
+       & 'content', MLSFile%content)
+      call GetHDF5Attribute(MLSFile, &
+       & 'lastOperation', MLSFile%lastOperation)
+      call GetHDF5Attribute(MLSFile, &
+       & 'name', MLSFile%name)
+      call GetHDF5Attribute(MLSFile, &
+       & 'ShortName', MLSFile%ShortName)
+      call GetHDF5Attribute(MLSFile, &
+       & 'typeStr', MLSFile%typeStr)
+      call GetHDF5Attribute(MLSFile, &
+       & 'type', MLSFile%type)
+      call GetHDF5Attribute(MLSFile, &
+       & 'access', MLSFile%access)
+      call GetHDF5Attribute(MLSFile, &
+       & 'HDFVersion', MLSFile%HDFVersion)
+      call GetHDF5Attribute(MLSFile, &
+       & 'PCFID', MLSFile%PCFId)
+      call GetHDF5Attribute(MLSFile, &
+       & 'recordLength', MLSFile%recordLength)
+      call GetHDF5Attribute(MLSFile, &
+       & 'errorCode', MLSFile%errorCode)
+      call GetHDF5Attribute( MLSFile, &
+       & 'PCFIDRange', ints )
+      MLSFile%PCFIdRange%Bottom = ints(1)
+      MLSFile%PCFIdRange%Top    = ints(2)
+      call h5gclose_f(grp_id, status)
+
+!------------------------------------------------------------
+   END SUBROUTINE h5_readMLSFileAttr
+!------------------------------------------------------------
+
+!------------------------------------------------------------
+   SUBROUTINE he5_readMLSFileAttr (MLSFile)
+!------------------------------------------------------------
+
+    use HDFEOS5, only: HE5T_NATIVE_INT, &
+      & HE5T_NATIVE_DOUBLE, MLS_charType
+    use MLSHDFEOS, only: HE5_EHRDGLATT
+! Brief description of subroutine
+! This subroutine reads the components of an MLSFile_t 
+! as attributes from an hdfeos5-formatted file
+
+! Arguments
+
+      type(MLSFile_T)       :: MLSFile
+! Local variables
+      integer :: fileID, status
+      integer, dimension(2) :: ints
+      character(len=GA_VALUE_LENGTH) :: ProcessLevel = ''
+
+      ! Executable code
+      if ( .not. MLSFile%stillOpen ) then
+        call open_MLSFile( MLSFile )
+      endif
+      fileID = MLSFile%FileID%f_id
+      status = HE5_EHRDGLATT( fileID, &
+       & 'content', &
+       &  MLSFile%content )
+      status = HE5_EHRDGLATT( fileID, &
+       & 'lastOperation', &
+       &  MLSFile%lastOperation )
+      status = HE5_EHRDGLATT( fileID, &
+       & 'name', &
+       &  MLSFile%name )
+      status = HE5_EHRDGLATT( fileID, &
+       & 'ShortName', &
+       &  MLSFile%ShortName )
+      status = HE5_EHRDGLATT( fileID, &
+       & 'typeStr', &
+       &  MLSFile%typeStr )
+      status = he5_EHrdglatt( fileID, &
+       & 'type', MLSFile%type )
+      status = he5_EHrdglatt( fileID, &
+       & 'access', MLSFile%access )
+      status = he5_EHrdglatt( fileID, &
+       & 'HDFVersion', MLSFile%HDFVersion )
+      status = he5_EHrdglatt( fileID, &
+       & 'PCFID', MLSFile%PCFId )
+      status = he5_EHrdglatt( fileID, &
+       & 'recordlength', MLSFile%recordlength )
+      status = he5_EHrdglatt( fileID, &
+       & 'errorCode', MLSFile%errorCode )
+      status = he5_EHrdglatt( fileID, &
+       & 'PCFIDRange', ints )
+      MLSFile%PCFIDRange%Bottom = ints(1)
+      MLSFile%PCFIDRange%Top    = ints(2)
+
+!------------------------------------------------------------
+   END SUBROUTINE he5_readMLSFileAttr
+!------------------------------------------------------------
+
+!------------------------------------------------------------
    SUBROUTINE h5_writeglobalattr (fileID, skip_if_already_there)
 !------------------------------------------------------------
 
@@ -354,7 +478,6 @@ CONTAINS
 
 ! Arguments
 
-      ! INTEGER, INTENT(IN) :: fileID
       type(MLSFile_T)       :: MLSFile
       logical, intent(in), optional :: skip_if_already_there
 ! Local variables
@@ -371,11 +494,11 @@ CONTAINS
       endif
       my_skip = .false.
       if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
+      fileID = MLSFile%FileID%f_id
       if ( my_skip ) then
         if ( IsHDF5AttributePresent('/', fileID, 'ShortName') ) &
           & return
       endif
-      fileID = MLSFile%FileID%f_id
       call h5gopen_f(fileID, '/', grp_id, status)
       call MakeHDF5Attribute(grp_id, &
        & 'content', MLSFile%content, .true.)
@@ -1394,6 +1517,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.53  2010/01/15 01:12:37  pwagner
+!# Added routines to read MLSFile_T components
+!#
 !# Revision 2.52  2010/01/11 18:36:07  pwagner
 !# Changed attribute names to 'PCFID..'
 !#
