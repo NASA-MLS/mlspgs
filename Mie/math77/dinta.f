@@ -344,11 +344,14 @@ C NFMAX   IS THE INDEX OF THE ENTRY IN THE OPTION VECTOR (IOPT) TO
 C         USE TO CONTROL THE MAXIMUM NUMBER OF FUNCTION EVALUATIONS.
 C NOMOUT  IS THE NOMINAL OUTPUT UNIT.
 C NSUB    IS THE POWER OF THE TRANSFORMATION OF THE FORM
-C         X=TA+(T-TA)*((T-TA)/(TB-TA))**(NSUB-1)
-C         WHERE X IS THE USER'S INDEPENDENT VARIABLE AND T IS THE
-C         INDEPENDENT VARIABLE TO USE FOR INTEGRATION.  NSUB MAY
-C         ONLY BE A POWER OF 2.  NSUB=0 REALLY MEANS NSUB=1, BUT
-C         IS SIMPLER TO USE.
+C         X=TA+(T-TA)*((T-TA)/TB)**(NSUB-1)
+C         WHERE X IS THE USER'S INDEPENDENT VARIABLE, T IS THE
+C         INDEPENDENT VARIABLE TO USE FOR INTEGRATION, AND TA AND TB ARE
+C         DESCRIBED BELOW.  NOTICE THAT TA TRANSFORMS TO TA AND TA+TB
+C         TRANSFORMS TO TA+TB, SO THE VALUES OF TA AND TB ARE
+C         INDEPENDENT OF THE VALUE OF NSUB.
+C         NSUB MAY ONLY BE A POWER OF 2.  NSUB=0 REALLY MEANS NSUB=1,
+C         BUT IS SIMPLER TO USE.
 C NSUBMX  IS THE MAXIMUM VALUE FOR NSUB.
 C NSUBSV  IS THE VALUE TO USE FOR NSUB WHEN RESTARTING
 C         AFTER A SUBDIVISION.
@@ -434,9 +437,12 @@ C         SUBDIVISION.  THE SIGN OF STEP IS THE SIGN TO USE FOR
 C         ACCUMULATION OF THE ANSWER INTO RESULT(PART).
 C SUM     IS THE CENTER OF THE CURRENT INTERVAL.
 C T       IS THE TRANSFORMED INDEPENDENT VARIABLE.  SEE NSUB.
-C TA TB   ARE THE INTERVAL ON WHICH A VARIABLE TRANSFORMATION
-C         IS DEFINED.  SEE NSUB.  THE SIGN OF TB IS ALSO USED TO
-C         INDICATE THE DIRECTION OF STEP ACCUMULATION.
+C TA      IS THE LOCATION OF A SINGULARITY OR DISCONTINUITY.  ITS VALUE
+C         IS INDEPENDENT OF NSUB.  SEE NSUB.
+C TB      IS THE DISTANCE FROM TA TO THE END OF THE PANEL BEING
+C         INTEGRATED, CORRECTLY SIGNED.  ITS VALUE IS INDEPENDENT OF
+C         NSUB.  SEE NSUB.  THE SIGN OF TB IS ALSO USED TO INDICATE THE
+C         DIRECTION OF STEP ACCUMULATION.
 C TALOC   IF NON-ZERO IS THE INDEX IN WORK OF THE LOCATION OF A
 C         SINGULARITY.
 C TASAVE  IS THE VALUE TO USE FOR TA WHEN RESTARTING PART 1
@@ -2683,31 +2689,9 @@ C
       IFLAG(1)=5
       GO TO 2345
 2860  NFEVAL=NFEVAL+1
-      IF (ABSCIS.EQ.ALOCAL) THEN
-c##      F2=DINTSM(ABSCIS)/EDELM2
-c##      ABSCIS=ABSCIS+SIGN(F2,TB)
-         abscis=abscis+sign(max(enzer,emeps*abs(abscis)),tb)
-c?       I have no idea why the following 4 lines were added.
-c?       They appear to be simply wrong.
-c?       if (nsub.ne.0) then
-c?          abscis=tincr(abscis)
-c?          if (nsub.eq.4) abscis=tincr(abscis)
-c?       end if
-         X=ABSCIS
-      ELSE IF (ABSCIS.EQ.BLOCAL) THEN
-c##      F2=DINTSM(ABSCIS)/EDELM2
-c##      ABSCIS=ABSCIS-SIGN(F2,TB)
-         abscis=abscis-sign(max(enzer,emeps*abs(abscis)),tb)
-c?       I have no idea why the following 4 lines were added.
-c?       They appear to be simply wrong.
-c?       if (nsub.ne.0) then
-c?          abscis=tincr(abscis)
-c?          if (nsub.eq.4) abscis=tincr(abscis)
-c?       end if
-         X=ABSCIS
-      END IF
       T=1.0d0
       IF (NSUB.NE.0) THEN
+c                 Put ABSCIS in user coordinates
          X1=TA/TB
          T=(ABSCIS-TA)/TB
 c?       ABSCIS=TA*(1.0d0+X1)+ABSCIS*(T-X1)
@@ -2720,6 +2704,17 @@ c?          ABSCIS=TA*(1.0d0+X1)+ABSCIS*(F2-X1)
             T=T+T
          END IF
          T=T+T
+      END IF
+      IF (ABSCIS.EQ.ALOCAL) THEN
+c##      F2=DINTSM(ABSCIS)/EDELM2
+c##      ABSCIS=ABSCIS+SIGN(F2,TB)
+         abscis=abscis+sign(max(enzer,emeps*abs(abscis)),tb)
+         X=ABSCIS
+      ELSE IF (ABSCIS.EQ.BLOCAL) THEN
+c##      F2=DINTSM(ABSCIS)/EDELM2
+c##      ABSCIS=ABSCIS-SIGN(F2,TB)
+         abscis=abscis-sign(max(enzer,emeps*abs(abscis)),tb)
+         X=ABSCIS
       END IF
       WORK(KDIM)=ABSCIS
       IF (REVERS.NE.0) RETURN
