@@ -34,7 +34,8 @@ module ForwardModelSupport
   integer, parameter :: BadQuantityType        = BadMoleculeGroup + 1
   integer, parameter :: BadSideband            = BadQuantityType + 1
   integer, parameter :: CloudHas               = BadSideband + 1
-  integer, parameter :: CloudNeeds             = CloudHas + 1
+  integer, parameter :: CloudLBL               = CloudHas + 1
+  integer, parameter :: CloudNeeds             = CloudLBL + 1
   integer, parameter :: CloudNot               = CloudNeeds + 1
   integer, parameter :: DerivSansMolecules     = CloudNot  + 1
   integer, parameter :: DuplicateMolecule      = DerivSansMolecules + 1
@@ -412,6 +413,7 @@ contains ! =====     Public Procedures     =============================
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MLSNumerics, only: HUNT
     use MLSSignals_M, only: Signals
+    use Molecules, only: L_Cloud_A, L_Cloud_S
     use MoreTree, only: Get_Boolean, Get_Field_ID
     use Parse_Signal_m, only: PARSE_SIGNAL
     use String_Table, only: Get_String
@@ -441,7 +443,7 @@ contains ! =====     Public Procedures     =============================
     integer :: LineTrees(3)             ! Tree indices of f_line...
     integer :: M                        ! Max LBL molecules in either sideband
     integer :: MoleculeTree             ! Tree index of f_molecules
-    integer, dimension(:), pointer :: Molecules ! In a LineTree
+    integer, dimension(:), pointer :: MyMolecules ! In a LineTree
     integer :: NELTS                    ! Number of elements of an array tree
     logical :: No_Dup_Mol               ! Duplicate molecules => error
     integer :: NumPFA, NumLBL           ! Numbers of such molecules in a beta group
@@ -898,17 +900,17 @@ op:     do j = 2, nsons(theTree)
         info%lineWidth_TDep => lineStru
       end select
       if ( lineTrees(i) == null_tree ) cycle
-      molecules => lineStru%molecule
+      myMolecules => lineStru%molecule
       do j = 2, nsons(LineTrees(i))
         son = subtree( j, LineTrees(i) )
         if ( node_id(son) == n_array ) then
           call announceError ( NoArray, son )
           cycle
         end if
-        molecules(j-1) = decoration( son )
+        myMolecules(j-1) = decoration( son )
         ! Look for duplicates
         do k = 2, j-1
-          if ( molecules(k-1) == thisMolecule ) &
+          if ( myMolecules(k-1) == thisMolecule ) &
             & call announceError ( lineParamTwice, son )
         end do  ! k = 2, j-1
       end do ! j = 2, nsons(LineTrees(i))
@@ -916,10 +918,10 @@ op:     do j = 2, nsons(theTree)
       do s = s1, s2 ! Sideband
         do b = 1, size(info%beta_group)
           if ( size(info%beta_group(b)%lbl(s)%molecules) > 0 ) then
-            do found = 1, size(molecules)
-              if ( abs(molecules(found)) == info%beta_group(b)%lbl(s)%molecules(1) ) then
+            do found = 1, size(myMolecules)
+              if ( abs(myMolecules(found)) == info%beta_group(b)%lbl(s)%molecules(1) ) then
                 lineStru%beta(s) = b ! Store beta group index
-                molecules(found) = -abs(molecules(found)) ! Mark it as used
+                myMolecules(found) = -abs(myMolecules(found)) ! Mark it as used
                 info%beta_group(b)%lbl(s)%spect_der_ix(i) = found
                 exit
               end if
@@ -928,10 +930,10 @@ op:     do j = 2, nsons(theTree)
         end do ! b = 1, size(info%beta_group)
       end do ! s = s1, s2
       ! Check for unused ones, make them positive again
-      do j = 1, size(molecules)
-        if ( molecules(j) > 0 ) & ! not used, so not in any LBL list
+      do j = 1, size(myMolecules)
+        if ( myMolecules(j) > 0 ) & ! not used, so not in any LBL list
           & call announceError ( LineNotMolecule, subtree(j+1,lineTrees(i)) )
-        molecules(j) = abs(molecules(j))
+        myMolecules(j) = abs(myMolecules(j))
       end do
     end do ! i = lineCenter, lineWidth_TDep
 
@@ -1031,6 +1033,14 @@ op:     do j = 2, nsons(theTree)
         info%binSelectors = DefaultSelector_Latitude
       end if
     end if
+
+    do i = 1, size(info%beta_group)
+      if ( any(info%beta_group(i)%lbl(1)%molecules == l_cloud_a) .or. &
+         & any(info%beta_group(i)%lbl(1)%molecules == l_cloud_s) .or. &
+         & any(info%beta_group(i)%lbl(2)%molecules == l_cloud_a) .or. &
+         & any(info%beta_group(i)%lbl(2)%molecules == l_cloud_s) ) &
+           & call announceError ( CloudLBL, root )
+    end do
 
     if ( error /= 0 ) then
       call dump ( info, 'ConstructForwardModelConfig' )
@@ -1280,6 +1290,8 @@ op:     do j = 2, nsons(theTree)
     case ( CloudHas )
       call display_string ( what, before='Cloud forward model internally has the ' )
       call output ( ' molecule', advance='yes' )
+    case ( CloudLBL )
+      call output ( 'Cloud_A and Cloud_S cannot be LBL', advance='yes' )
     case ( CloudNeeds )
       call output ( 'Cloud forward model needs both H2O and O3 molecules', &
         & advance='yes' )
@@ -1386,6 +1398,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.146  2010/01/22 01:00:20  vsnyder
+! Require Cloud_A and Cloud_S "molecules" to be handled as PFA, not LBL.
+!
 ! Revision 2.145  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
 !
