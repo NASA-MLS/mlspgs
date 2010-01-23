@@ -902,9 +902,7 @@ contains ! =====     Public Procedures     =============================
       if ( associated(findPFA(molecule)%s(signal)%sb(sb)%c ) ) then
         PFADatumIx = findPFA(molecule)%s(signal)%sb(sb)%c(channel)
         if ( PFADatumIx /= 0 ) then
-          if ( debug ) print *, 'PFADatumIx ', &
-            & PFADatumIx
-
+          if ( debug ) print *, 'PFADatumIx ', PFADatumIx
           call readDS ( 'absorption', PFAData(PFADatumIx)%absorption )
           call readDS ( 'dAbsDnu', PFAData(PFADatumIx)%dAbsDnu )
           if ( derivs ) then
@@ -1320,6 +1318,9 @@ contains ! =====     Public Procedures     =============================
 end module PFADataBase_m
 
 ! $Log$
+! Revision 2.40  2010/01/23 01:05:01  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.39  2009/06/23 18:26:10  pwagner
 ! Prevent Intel from optimizing ident string away
 !
