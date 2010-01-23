@@ -120,7 +120,6 @@ linear
 lineCenter       # \nu_0 offset from catalog
 lineWidth        # w     offset from catalog
 lineWidth_tDep   # n     offset from catalog
-logIWC           # log10(iwc)
 logp
 LOSTransFunc
 LOSVel
@@ -231,6 +230,9 @@ zeta
 zonalavg
 
 # $Log$
+# Revision 2.55  2010/01/23 01:03:00  vsnyder
+# Remove LogIWC
+#
 # Revision 2.54  2009/09/19 00:34:47  vsnyder
 # Add LogIWC
 #
