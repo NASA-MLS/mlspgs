@@ -1008,7 +1008,7 @@ contains ! ============= Public procedures ===================================
       L_JACOBIAN_COLS, L_JACOBIAN_ROWS, &
       L_L1BMAFBASELINE, L_L1BMIF_TAI, L_LIMBSIDEBANDFRACTION, &
       L_LineCenter, L_LineWidth, L_LineWidth_TDep, &
-      L_LogIWC, L_LOSTRANSFUNC, L_LOSVEL, &
+      L_LOSTRANSFUNC, L_LOSVEL, &
       L_MASSMEANDIAMETERICE, L_MASSMEANDIAMETERWATER, L_MAGNETICFIELD, &
       L_MIFDEADTIME, &
       L_NOISEBANDWIDTH, L_NORADSPERMIF, L_NORADSBINNED, &
@@ -1117,7 +1117,6 @@ contains ! ============= Public procedures ===================================
       l_lineCenter, phyq_frequency, p_hGrid, p_vGrid, p_molecule, next, &
       l_lineWidth,  phyq_frequency, p_hGrid, p_vGrid, p_molecule, next, &
       l_lineWidth_TDep, phyq_dimensionless, p_hGrid, p_vGrid, p_molecule, next, &
-      l_logiwc, phyq_logIceDensity, p_hGrid, p_vGrid, next, &
       l_losTransFunc, phyq_dimensionless, p_minorFrame, p_sGrid, p_module, next, &
       l_losVel, phyq_dimensionless, p_minorFrame, p_module, next, &
       l_magneticField, phyq_gauss, p_vGrid, p_hGrid, p_xyz, p_mustBeZeta, next, &
@@ -1289,6 +1288,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.153  2010/01/23 01:02:37  vsnyder
+! Remove LogIWC
+!
 ! Revision 2.152  2009/09/25 02:40:28  vsnyder
 ! Add badValue to specify badValue field, keepChannels to allocate a
 ! channels(:) pointer and save the channels output from Parse_Signal
