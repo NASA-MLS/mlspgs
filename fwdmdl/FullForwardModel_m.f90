@@ -46,11 +46,12 @@ contains
     use Get_Species_Data_M, only:  Get_Species_Data
     use GLnp, only: NGP1
     use Intrinsic, only: L_CLOUDICE, L_MAGNETICFIELD, &
-      & L_PHITAN, L_PTAN, L_TEMPERATURE, L_TSCAT
+      & L_PHITAN, L_PTAN, L_TEMPERATURE, L_TSCAT, L_VMR
     use Load_Sps_Data_m, only: DestroyGrids_t, Dump, EmptyGrids_T, Grids_T, &
       & Load_One_Item_Grid, Load_Sps_Data
     use MatrixModule_1, only: MATRIX_T
     use MLSKinds, only: RP
+    use Molecules, only: L_CLOUD_A
     use Toggles, only: Switches
     use VectorsModule, only: Vector_T, VectorValue_T
 
@@ -70,6 +71,7 @@ contains
     type (Grids_T) :: Grids_n   ! All the spectroscopy(N) coordinates
     type (Grids_T) :: Grids_v   ! All the spectroscopy(V) coordinates
     type (Grids_T) :: Grids_w   ! All the spectroscopy(W) coordinates
+    type (VectorValue_T), pointer :: CloudIce ! Ice water content
     type (VectorValue_T), pointer :: PHITAN ! Tangent geodAngle component of state vector
     type (VectorValue_T), pointer :: PTAN   ! Tangent pressure component of state vector
     type (VectorValue_T), pointer :: TEMP   ! Temperature component of state vector
@@ -98,8 +100,9 @@ contains
     integer :: S_LW ! Multiplier for line width deriv sizes, 0 or 1
     integer :: S_PFA ! Multiplier for PFA sizes, 0 or 1
     integer :: S_P  ! Multiplier for polarized sizes, 0 or 1
-    integer :: S_TD ! Multiplier for temp dependence deriv sizes, 0 or 1
     integer :: S_T  ! Multiplier for temp derivative sizes, 0 or 1
+    integer :: S_TD ! Multiplier for temp dependence deriv sizes, 0 or 1
+    integer :: S_TG ! Multiplier for TScat generation sizes, 0 or 1
 
     logical :: temp_der, atmos_der, spect_der, ptan_der ! Flags for various derivatives
     logical :: Spect_Der_Center, Spect_Der_Width, Spect_Der_Width_TDep
@@ -164,11 +167,18 @@ contains
       call emptyGrids_t ( grids_mag ) ! Allocate components with zero size
     end if
 
+    nullify ( cloudIce )
     if ( FwdModelConf%incl_cld ) then
-      call load_one_item_grid ( grids_iwc, &
-        & GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra,  &
-        & quantityType=l_cloudIce, noError=.true., config=fwdModelConf ), &
-        & phitan, fmStat%maf, fwdModelConf, .false., .false. )
+      ! Try type l_cloudIce first
+      cloudIce => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra,  &
+        & quantityType=l_cloudIce, config=fwdModelConf, noError=.true. )
+      if ( .not. associated(cloudIce) ) & ! now try type vmr with cloud_a molecule
+        & cloudIce => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra,  &
+        & quantityType=l_vmr, molecule=l_cloud_a, config=fwdModelConf, noError=.true. )
+    end if
+    if ( associated(cloudIce) ) then
+      call load_one_item_grid ( grids_iwc, cloudIce, phitan, fmStat%maf, &
+        & fwdModelConf, .false., .false. )
     else
       call emptyGrids_t ( grids_iwc ) ! Allocate components with zero size
     end if
@@ -203,6 +213,7 @@ contains
 
     if ( index(switches,'grids') /= 0 ) then ! dump the grids
       call dump ( grids_f, "Grids_f", details=9 )
+      call dump ( grids_tmp, "Grids_tmp", details=9 )
       if ( size(fwdModelConf%lineCenter) > 0 ) call dump ( grids_v )
       if ( size(fwdModelConf%lineWidth) > 0 ) call dump ( grids_w )
       if ( size(fwdModelConf%lineWidth_TDep) > 0 ) call dump ( grids_n )
@@ -214,8 +225,9 @@ contains
     s_lw = merge(1,0,spect_der_width)
     s_pfa = merge(1,0,FwdModelConf%anyPFA(1) .or. FwdModelConf%anyPFA(2))
     s_p = merge(1,0,FwdModelConf%polarized)
-    s_td = merge(1,0,spect_der_width_TDep)
     s_t = merge(1,0,temp_der)
+    s_td = merge(1,0,spect_der_width_TDep)
+    s_tg = merge(1,0,FwdModelConf%GenerateTScat)
 
     call FullForwardModelAuto ( FwdModelConf, FwdModelIn, FwdModelExtra,       &
                               & FwdModelOut, FmStat, z_psig, tan_press,        &
@@ -227,6 +239,7 @@ contains
                               & surfaceTangentIndex,                           &
                               & max_c, maxVert, max_f, H2O_ind, ptan_der,      &
                               & s_t, s_a, s_lc, s_lw, s_td, s_p, s_pfa, s_i,   &
+                              & s_tg,                                          &
                               ! Optional:
                               & Jacobian )
 
@@ -257,6 +270,7 @@ contains
                               & surfaceTangentIndex,                           &
                               & max_c, maxVert, max_f, H2O_ind, ptan_der,      &
                               & s_t, s_a, s_lc, s_lw, s_td, s_p, s_pfa, s_i,   &
+                              & s_tg,                                          &
                               ! Optional:
                               & Jacobian )
 
@@ -265,9 +279,7 @@ contains
   ! work arrays are automatic arrays, instead of being explicitly allocated
   ! and deallocated.
 
-    use Add_Points_m, only: Add_Points
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-    use AntennaPatterns_m, only: ANTENNAPATTERNS
     use Comp_Eta_Docalc_No_Frq_m, only: Comp_Eta_Docalc_No_Frq
     use Comp_Sps_Path_Frq_m, only: Comp_Sps_Path, Comp_Sps_Path_Frq, &
     ! & Comp_Sps_Path_Frq_nz, &
@@ -275,7 +287,6 @@ contains
     use Compute_GL_Grid_m, only: Compute_GL_Grid
     use Constants, only: Deg2Rad, Rad2Deg
     use D_Hunt_m, only: Hunt
-    use D_T_SCRIPT_DTNP_M, only: DT_SCRIPT_DT
     use Dump_0, only: Dump
     use FilterShapes_m, only: DACSFilterShapes, FilterShapes
     use ForwardModelConfig, only: Beta_Group_T, Channels_T, &
@@ -283,44 +294,28 @@ contains
     use ForwardModelIntermediate, only: ForwardModelStatus_t, &
                                     &   B_Ptg_Angles, B_Refraction
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
-    use Freq_Avg_m, only: Freq_Avg, Freq_Avg_DACS
-    use Geometry, only: Earth_Axis_Ratio_Squared_m1, EarthRadA, Get_R_Eq, &
-      & MaxRefraction
-    use Get_Eta_Matrix_m, only: Select_NZ_List
-    use Get_Chi_Angles_m, only: Get_Chi_Angles
-    use GLnp, only: GW, GX, NG, NGP1
-    use Intrinsic, only: L_A, L_BOUNDARYPRESSURE, L_CLEAR, &
-      & L_EARTHREFL, L_ECRtoFOV, &
-      & L_ELEVOFFSET, L_GPH, L_IWC, L_LogIWC, &
-      & L_LOSVEL, L_LIMBSIDEBANDFRACTION, &
-      & L_ORBITINCLINATION, L_RADIANCE, L_REFGPH, L_ScatteringAngle, &
-      & L_SCGEOCALT, L_SPACERADIANCE, L_SurfaceHeight, L_TScat, L_VMR
-    use Load_Sps_Data_m, only: DestroyGrids_t, Dump, Grids_T, &
-      & Load_One_Item_Grid
+    use Geometry, only: Get_R_Eq
+    use GLnp, only: GX, NGP1
+    use Intrinsic, only: L_A, L_RADIANCE, L_TScat, L_VMR
+    use Load_Sps_Data_m, only: DestroyGrids_t, Dump, Grids_T
     use MatrixModule_1, only: MATRIX_T
-    use Metrics_m, only: More_Metrics, More_Points, Height_Metrics, &
-      & Tangent_Metrics
-    use Min_Zeta_m, only: Get_Min_Zeta
     use MLSKinds, only: R4, R8, RP, RV
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MLSNumerics, only: Hunt, InterpolateValues
     use MLSSignals_m, only: AreSignalsSuperset, GetNameOfSignal, MatchSignal, &
       & Radiometers, Signal_t
-    use Molecules, only: L_H2O, L_N2O, L_O3
+    use Molecules, only: L_CLOUD_A, L_H2O, L_N2O, L_O3
     use Output_m, only: Output
     use Path_Contrib_M, only: Get_GL_Inds
-    use Phi_Refractive_Correction_m, only: Phi_Refractive_Correction
-    use Physics, only: H_OVER_K, SpeedOfLight
+    use Physics, only: SpeedOfLight
     use PointingGrid_m, only: POINTINGGRIDS, PointingGrid_T
     use Read_Mie_m, only: Beta_c_a, Beta_c_e, Beta_c_s, &
       & dBeta_dIWC_c_a, dBeta_dIWC_c_e, dBeta_dIWC_c_s, &
       & dBeta_dT_c_a, dBeta_dT_c_e, dBeta_dT_c_s, dP_dIWC, dP_dT, &
       & F_s, IWC_s, P, T_s, Theta_s
-    use REFRACTION_M, only: REFRACTIVE_INDEX, COMP_REFCOR
-    use SLABS_SW_M, only: ALLOCATESLABS, DESTROYCOMPLETESLABS, &
-      & GET_GL_SLABS_ARRAYS, SLABS_STRUCT
+    use SLABS_SW_M, only: ALLOCATESLABS, DESTROYCOMPLETESLABS, SLABS_STRUCT
 ! use testfield_m
-    use Tau_M, only: Destroy_Tau, Dump, Get_Tau, Tau_T
+    use Tau_M, only: Destroy_Tau, Dump, Tau_T
     use Toggles, only: Emit, Levels, Switches, Toggle
     use Trace_M, only: Trace_begin, Trace_end
     use TWO_D_HYDROSTATIC_M, only: Two_D_Hydrostatic
@@ -377,6 +372,7 @@ contains
     integer, intent(in) :: S_P  ! Multiplier for polarized sizes, 0 or 1
     integer, intent(in) :: S_PFA ! Multiplier for PFA sizes, 0 or 1
     integer, intent(in) :: S_I  ! Multiplier for ice/cloud sizes, 0 or 1
+    integer, intent(in) :: S_TG ! Multiplier for TScat generation sizes, 0 or 1
 
     type(matrix_T), intent(inout), optional :: Jacobian
 
@@ -391,6 +387,7 @@ contains
     integer :: IER                ! Status flag from allocates
     integer :: I                  ! Loop index and other uses.
     integer :: INST               ! Instance of temperature nearest to MAF
+    integer :: I_Cloud_A          ! Which beta group, if any, is Cloud_A
     integer :: J                  ! Loop index and other uses.
     integer :: K                  ! Loop index and other uses.
     integer :: MAF                ! MAF under consideration
@@ -524,6 +521,8 @@ contains
     real(rp) :: D_T_SCR_dT(max_c,s_t*sv_t_len)  ! D Delta_B in some notes
                                       ! path x state-vector-components
     real(rp) :: D2X_DXDT(no_tan_hts,s_t*sv_t_len)  ! (No_tan_hts, nz*np)
+    real(rp) :: DBETA_DIWC_PATH_C(max_c,s_tg*no_mol)  ! dBeta_dIWC on coarse grid
+    real(rp) :: DBETA_DIWC_PATH_F(max_f,s_tg*no_mol)  ! dBeta_dIWC on fine grid
     real(rp) :: DBETA_DN_PATH_C(max_c,s_td*size(fwdModelConf%lineWidth_TDep)) ! dBeta_dn on coarse grid
     real(rp) :: DBETA_DN_PATH_F(max_f,s_td*size(fwdModelConf%lineWidth_TDep)) ! dBeta_dn on fine grid
     real(rp) :: DBETA_DT_PATH_C(max_c,s_t*no_mol)  ! dBeta_dT on coarse grid
@@ -737,7 +736,7 @@ contains
     type (VectorValue_T), pointer :: ECRtoFOV      ! Rotation matrices
     type (VectorValue_T), pointer :: F             ! An arbitrary species
     type (VectorValue_T), pointer :: GPH           ! Geopotential height
-    type (VectorValue_T), pointer :: IWC           ! IWC field, for TScat gen.
+    type (VectorValue_T), pointer :: IWC           ! IWC at scattering points, for TScat gen.
     type (VectorValue_T), pointer :: LOSVEL        ! Line of sight velocity
     type (VectorValue_T), pointer :: ORBINCLINE    ! Orbital inclination
     type (VectorValue_T), pointer :: REFGPH        ! Reference geopotential height
@@ -840,6 +839,20 @@ contains
     else
       if ( FwdModelConf%incl_cld ) call cloud_setup
       call convolution_setup
+    end if
+
+    ! Find which, if any, of the beta groups is Cloud_A.  This is needed
+    ! because beta(Cloud_A) depends upon mixing ratio, which means the
+    ! derivative of alpha isn't just beta, it's beta + (mixing ratio) *
+    ! dBeta_d(mixing ratio).
+    i_cloud_a = 0
+    if ( size(dBeta_dIWC_path_c) /= 0 ) then
+      do i = 1, size(beta_group)
+        if ( beta_group(i)%molecule == l_cloud_a ) then
+          i_cloud_a = i
+          exit
+        end if
+      end do
     end if
 
     ! Compute hydrostatic grid -----------------------------------------------
@@ -1060,6 +1073,10 @@ contains
     ! Setup stuff done for both sidebands, other than output angles
     ! for convolution and stuff for clouds.
 
+      use Geometry, only: Earth_Axis_Ratio_Squared_m1, EarthRadA
+      use Intrinsic, only: L_EARTHREFL, L_ECRtoFOV, L_GPH, L_LOSVEL, &
+        & L_SurfaceHeight, L_ORBITINCLINATION, L_REFGPH, L_SCGEOCALT, &
+        & L_SPACERADIANCE
       use ManipulateVectorQuantities, only: DoHGridsMatch
 
       if ( toggle(emit)  .and. levels(emit) > 0 ) &
@@ -1184,6 +1201,7 @@ contains
   ! ................................................  Cloud_Setup  .....
     subroutine Cloud_Setup
 
+      use Intrinsic, only: L_BOUNDARYPRESSURE, L_CLEAR
       use Load_Sps_Data_m, only: Modify_values_for_supersat
       use ManipulateVectorQuantities, only: FindOneClosestInstance
 
@@ -1242,6 +1260,8 @@ contains
 
       ! Convolution if needed, or interpolation to ptan ----------------
 
+      use AntennaPatterns_m, only: ANTENNAPATTERNS
+      use Intrinsic, only: L_ELEVOFFSET, L_LIMBSIDEBANDFRACTION
       use Convolve_All_m, only: Convolve_Radiance, Convolve_Temperature_Deriv, &
         & Convolve_Other_Deriv, Interpolate_Radiance, &
         & Interpolate_Temperature_Deriv, Interpolate_Other_Deriv
@@ -1540,7 +1560,7 @@ contains
       ! Here we either frequency average to get the unconvolved radiances, or
       ! we just store what we have as we're using monochromatic channels
 
-      use Freq_Avg_m, only: Freq_Avg
+      use Freq_Avg_m, only: Freq_Avg, Freq_Avg_DACS
       use SCRT_dn_m, only: SCRT_PFA
 
       integer, intent(in) :: Ptg_i ! Pointing index
@@ -1628,6 +1648,8 @@ contains
 
       ! Frequency average or simply copy K_Frq to give K, the final
       ! Jacobian.
+
+      use Freq_Avg_m, only: Freq_Avg, Freq_Avg_DACS
 
       type(grids_T), intent(in) :: Grids
       real(rp), intent(in) :: K_FRQ(:,:)    ! To be averaged  Frq X Grid
@@ -1787,16 +1809,21 @@ contains
       ! trip through the CALL statement -- hopefully thereby helping optimizers.
       use CS_Expmat_m, only: CS_Expmat
       use DO_T_SCRIPT_M, only: TWO_D_T_SCRIPT, TWO_D_T_SCRIPT_CLOUD
+      use D_T_SCRIPT_DTNP_M, only: DT_SCRIPT_DT
       use Dump_Path_m, only: Dump_Path
       use Get_Beta_Path_m, only: Get_Beta_Path, Get_Beta_Path_Cloud, &
         & Get_Beta_Path_PFA, Get_Beta_Path_Polarized
       use Get_d_Deltau_pol_m, only: Get_d_Deltau_pol_df, Get_d_Deltau_pol_dT
+      use Get_Eta_Matrix_m, only: Select_NZ_List
+      use Load_Sps_Data_m, only:  Load_One_Item_Grid
       use Mcrt_m, only: Mcrt_der
       use Opacity_m, only: Opacity
       use Path_Contrib_M, only: Path_Contrib
+      use Physics, only: H_OVER_K
       use RAD_TRAN_M, only: RAD_TRAN_POL, DRAD_TRAN_DF, &
         & DRAD_TRAN_DT, DRAD_TRAN_DX
       use ScatSourceFunc, only: T_SCAT, Interp_Tscat, Convert_Grid
+      use Tau_M, only: Get_Tau
 
       integer, intent(in) :: Ptg_i        ! Pointing index
       real(rp), intent(out) :: Alpha_Path_c(:) ! \sum Beta_Path * mixing ratio
@@ -1878,9 +1905,10 @@ contains
 !           & firstSignal%lo, thisSideband )
 
         if ( pfa ) then
-          call get_beta_path_PFA ( frq, frq_i, z_path, c_inds, t_path_c,  &
-            & beta_group, sx, vel_rel, beta_path_c, t_der_path_flags,     &
-            & dbeta_dT_path_c, dbeta_dw_path_c, dbeta_dn_path_c, dbeta_dv_path_c )
+          call get_beta_path_PFA ( frq, frq_i, z_path, c_inds, t_path_c, &
+            & beta_group, sx, vel_rel, sps_path, beta_path_c,            &
+            & t_der_path_flags, dbeta_dT_path_c, dbeta_dw_path_c,        &
+            & dbeta_dn_path_c, dbeta_dv_path_c, dbeta_dIWC_path_c )
         else
           frqhk = 0.5_r8 * frq * h_over_k    ! h nu / 2 k
           tanh1_c = tanh( frqhk / t_path_c ) ! tanh ( h nu / 2 k T )
@@ -2113,9 +2141,10 @@ contains
 
         if ( pfa ) then
 
-          call get_beta_path_PFA ( frq, frq_i, z_path, gl_inds, t_path_f(:ngl),   &
-            & beta_group, sx, vel_rel, beta_path_f(:ngl,:), t_der_path_flags,     &
-            & dbeta_dT_path_f, dbeta_dw_path_f, dbeta_dn_path_f, dbeta_dv_path_f )
+          call get_beta_path_PFA ( frq, frq_i, z_path, gl_inds, t_path_f(:ngl), &
+            & beta_group, sx, vel_rel, sps_path, beta_path_f(:ngl,:),           &
+            & t_der_path_flags, dbeta_dT_path_f, dbeta_dw_path_f,               &
+            & dbeta_dn_path_f, dbeta_dv_path_f, dbeta_dIWC_path_f )
 
         else
 
@@ -2255,12 +2284,11 @@ contains
         if ( atmos_der ) then
 
           call drad_tran_df ( max_f, c_inds, gl_inds, del_zeta, Grids_f, &
-            &  beta_path_c, eta_fzp, sps_path, do_calc_fzp,       &
-            &  beta_path_f, do_gl, del_s, ref_corr, dsdz_gw_path, &
-            &  inc_rad_path_slice, i_start, tan_pt_c, i_stop,     &
-            &  size(d_delta_df,1), d_delta_df, nz_d_delta_df,     &
-            &  nnz_d_delta_df, k_atmos_frq(frq_i,:) )
-!            &  d_delta_df(1:npc,:), k_atmos_frq(frq_i,:) )
+            &  beta_path_c, eta_fzp, sps_path, do_calc_fzp,              &
+            &  beta_path_f, do_gl, del_s, ref_corr, dsdz_gw_path,        &
+            &  inc_rad_path_slice, dBeta_dIWC_path_c, dBeta_dIWC_path_f, &
+            &  i_cloud_a, i_start, tan_pt_c, i_stop, size(d_delta_df,1), &
+            &  d_delta_df, nz_d_delta_df, nnz_d_delta_df, k_atmos_frq(frq_i,:) )
 
           if ( .not. pfa_or_not_pol ) then ! polarized and not PFA
 
@@ -2571,9 +2599,12 @@ contains
       ! and IWC.  The geometric calculations are described in wvs_074.
 
       use Constants, only: Pi
+      use Convolve_All_m, only: Store_Other_Deriv, Store_Temperature_Deriv
       use ForwardModelConfig, only: QtyStuff_T
       use Get_Eta_Matrix_m, only: Get_Eta_Sparse
-      use MLSNumerics, only: InterpolateValues
+      use MatrixModule_1, only: FindBlock
+      use MLSNumerics, only: Coefficients_r8, InterpolateArraySetup, &
+        & InterpolateValues, InterpolateArrayTeardown
       use MLSSignals_m, only: GetNameOfSignal
       use Output_m, only: NewLine
       use Sort_m, only: Sortp
@@ -2587,9 +2618,18 @@ contains
       real(rp) :: P_On_Theta_e(2*size(theta_s)+1) ! P * sin(abs(theta))
                                ! interpolated to scattering point IWC and T for
                                ! each theta, intermediary to getting P_On_Xi
-      real(rp) :: P_T_IWC_F(size(theta_s)) ! P interpolated to T, IWC
+      real(rp) :: P_T_IWC(size(theta_s)) ! P interpolated to T, IWC
       real(rp) :: Rads(noUsedChannels,4*nlvl+2*scatteringAngles%template%noSurfs)
+      real(r4) :: K_Atmos_TScat(noUsedChannels,size(rads,2),s_a*size(grids_f%values))
+      real(rp) :: K_Atmos_p(s_a*size(grids_f%values)) ! K_Atmos convolved with P
+      real(r4) :: K_Temp_TScat(noUsedChannels,size(rads,2),s_t*sv_t_len)
+      real(rp) :: K_Temp_p(s_t*size(grids_tmp%values)) ! K_Temp convolved with P
+      real(rp) :: LogIWC       ! log10(iwc)
       real(rp) :: P_On_Xi(size(rads,2)) ! P * sin(abs(theta)) interpolated
+                               ! to scattering point IWC and T for each xi
+      real(rp) :: dP_dIWC_On_Xi(size(rads,2)) ! dP/dIWC * sin(abs(theta)) interpolated
+                               ! to scattering point IWC and T for each xi
+      real(rp) :: dP_dT_On_Xi(size(rads,2)) ! dP/dT * sin(abs(theta)) interpolated
                                ! to scattering point IWC and T for each xi
       real(rp) :: Ref_Ht       ! Height of the ray at the reference phi
       real(rp) :: R_Eq         ! Equivalent circular earth radius at Phi_Ref
@@ -2614,6 +2654,7 @@ contains
       real(rp) :: Eta_T_IWC(0:1,0:1) ! for both
 
       integer :: Beg_Pos_Theta ! 1 if theta_s(1) /= 0, else 2
+      integer :: Col           ! Column number of Jacobian block
       integer :: IWC_IX        ! Which IWC index for phase function to use
       integer :: T_IX          ! Which Temperature index for phase functio to use
 
@@ -2630,6 +2671,7 @@ contains
       integer :: Phi_i         ! Loop inductor and subscript
       integer :: Ptg_i, Ptg_j  ! Loop inductors and subscripts
       integer :: Ptg_f         ! Ptg_i, Ptg_j on fine grid
+      integer :: Row           ! Row number of Jacobian block
       integer :: Sort_Xi(size(Xis)) ! Permutation vector to sort Xis
       integer :: Surf_i        ! Surface (first) subscript for TScat%values,
                                ! which combines frequency and zeta index
@@ -2639,7 +2681,8 @@ contains
 
       character(128) :: Sig    ! Signal name, scratch for debug output
 
-      type (QtyStuff_T) :: Qtys(noUsedChannels)
+      type (Coefficients_r8) :: Coeffs_Theta_e_Xi ! To interpolate from Theta_e to Xi
+      type (QtyStuff_T) :: TScats(noUsedChannels)
       type (VectorValue_T), pointer :: TScat
 
       real(rp), parameter :: PIX2 = 2.0_rp * pi
@@ -2658,11 +2701,11 @@ contains
         & call output ( "Signals used for TScat computation:", advance="yes" )
       do f_i = 1, noUsedChannels
         ! Vector quantities for results, one for each channel
-        qtys(f_i)%qty => GetQuantityForForwardModel ( &
+        TScats(f_i)%qty => GetQuantityForForwardModel ( &
           & fwdModelOut, quantityType=l_TScat, &
           & signal=fwdModelConf%signals(channels(f_i)%signal)%index, &
           & sideband=sideband )
-        qtys(f_i)%qty%values = 0.0
+        TScats(f_i)%qty%values = 0.0 ! Is this needed?
         if ( print_TScat .or. print_TScat_detail > 0 ) then
           call GetNameOfSignal ( fwdModelConf%signals(channels(f_i)%signal), sig, &
             & channel=channels(f_i)%used, sideband=thisSideband )
@@ -2682,7 +2725,7 @@ contains
 
       ! Get TScat quantity for first signal, to access its grids (they all have
       ! the same grids)
-      TScat => qtys(1)%qty
+      TScat => TScats(1)%qty
 
       vel_rel = LOSVel%values(FwdModelConf%TScatMIF,MAF) / speedOfLight
 
@@ -2709,12 +2752,15 @@ contains
           call output ( scat_zeta, before="Scattering point Zeta ", advance="yes" )
           call dump ( z_psig, name="Zeta grid" )
           call MLSMessage ( MLSMSG_Error, moduleName, &
-            & 'Scattering point Zeta ! & to be in Zeta grid' )
+            & 'Scattering point Zeta does not appear to be in Zeta grid' )
         end if
         zeta_f = (i_z-1) * ngp1 + 1 ! On Z_GLgrid, for H_GLGrid
 
         ! Loop over observer phis
         do phi_i = 1, TScat%template%noInstances
+
+          if ( iwc%values(zeta_i,phi_i) <= 0.0 ) cycle ! no IWC, no scattering
+          logIWC = log10(iwc%values(zeta_i,phi_i))
 
           scat_phi = TScat%template%phi(1,phi_i) * deg2rad
           dPhi = scat_phi - phi_ref
@@ -2785,26 +2831,30 @@ contains
             call one_tscat_pointing ( ptg_i, vel_rel, scat_tan_phi, &
               &                       scat_zeta, scat_phi, scat_ht, &
               &                       r_eq, xi, zeta_i, phi_i,      &
-              &                       xis, rads, i_r, rev=.true. )
+              &                       xis, rads, k_atmos_TScat, k_temp_TScat, &
+              &                       i_r, rev=.true. )
 
             xi = xi + pi
             call one_tscat_pointing ( ptg_i, vel_rel, scat_tan_phi, &
               &                       scat_zeta, scat_phi, scat_ht, &
               &                       r_eq, xi, zeta_i, phi_i,      &
-              &                       xis, rads, i_r, rev=.false. )
+              &                       xis, rads, k_atmos_TScat, k_temp_TScat, &
+              &                       i_r, rev=.false. )
 
             xi = dPhi_xi + dPhi - pi
             scat_tan_phi = scat_tan_phi + 2.0 * dphi_xi
             call one_tscat_pointing ( ptg_i, vel_rel, scat_tan_phi, &
               &                       scat_zeta, scat_phi, scat_ht, &
               &                       r_eq, xi, zeta_i, phi_i,      &
-              &                       xis, rads, i_r, rev=.false. )
+              &                       xis, rads, k_atmos_TScat, k_temp_TScat, &
+              &                       i_r, rev=.false. )
 
             xi = xi + pi
             call one_tscat_pointing ( ptg_i, vel_rel, scat_tan_phi, &
               &                       scat_zeta, scat_phi, scat_ht, &
               &                       r_eq, xi, zeta_i, phi_i,      &
-              &                       xis, rads, i_r, rev=.true. )
+              &                       xis, rads, k_atmos_TScat, k_temp_TScat, &
+              &                       i_r, rev=.true. )
 
           end do ! ptg_i
 
@@ -2863,13 +2913,15 @@ contains
             call one_tscat_pointing ( 1, vel_rel, scat_tan_phi,     &
               &                       scat_zeta, scat_phi, scat_ht, &
               &                       r_eq, xi, zeta_i, phi_i,      &
-              &                       xis, rads, i_r, scat_tan_ht, forward )
+              &                       xis, rads, k_atmos_TScat, k_temp_TScat, &
+              &                       i_r, scat_tan_ht, forward )
 
             xi = xi + pi
             call one_tscat_pointing ( 1, vel_rel, scat_tan_phi,     &
               &                       scat_zeta, scat_phi, scat_ht, &
               &                       r_eq, xi, zeta_i, phi_i,      &
-              &                       xis, rads, i_r, scat_tan_ht, forward )
+              &                       xis, rads, k_atmos_TScat, k_temp_TScat, &
+              &                       i_r, scat_tan_ht, forward )
 
           end do ! ptg_j
 
@@ -2900,14 +2952,14 @@ contains
 
           ! Get interpolating factors for scattering-point IWC to phase function
           ! IWC_s.
-          ! IWC_s(iwc_ix) <= iwc%values(zeta_i,phi_i) < IWC_s(iwc_ix+1_).
-          call hunt ( IWC_s, iwc%values(zeta_i,phi_i), iwc_ix )
-          if ( iwc%values(zeta_i,phi_i) < IWC_s(1) ) then
+          ! IWC_s(iwc_ix) <= logIWC < IWC_s(iwc_ix+1_).
+          call hunt ( IWC_s, logIWC, iwc_ix )
+          if ( logIWC < IWC_s(1) ) then
             eta_iwc = (/ 1.0, 0.0 /) ! constant extrapolation below range
-          else if ( iwc%values(zeta_i,phi_i) > IWC_s(size(IWC_s)) ) then
+          else if ( logIWC > IWC_s(size(IWC_s)) ) then
             eta_iwc = (/ 0.0, 1.0 /) ! constant extrapolation above range
           else
-            eta_iwc(1) = (iwc%values(zeta_i,phi_i) - iwc_s(iwc_ix)) / &
+            eta_iwc(1) = (logIWC - iwc_s(iwc_ix)) / &
                        & ( iwc_s(iwc_ix+1) - iwc_s(iwc_ix) )
             eta_iwc(0) = 1.0 - eta_iwc(1)
           end if
@@ -2974,48 +3026,90 @@ contains
           !%
           ! which can be expressed in matrix-vector form as $\xi^T Z \eta$.
 
+          call interpolateArraySetup ( theta_e(:n_theta_e), xis(sort_xi(:i_r)), &
+            & method='S', coeffs=coeffs_Theta_e_Xi, extrapolate='P' )
           do f_i = 1, noUsedChannels
-            TScat => qtys(f_i)%qty
+            TScat => TScats(f_i)%qty
+            row = findBlock ( jacobian%row, TScat%index, phi_i )
+            if ( row == 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+              & "Unable to find row of Jacobian to store TScat derivatives" )
             surf_i = channels(f_i)%used - channels(f_i)%origin + 1 + &
                    & TScat%template%noChans * (zeta_i-1)
-            ! Interpolate P to scattering point IWC and temperature and
-            ! multiply that by sin(theta)
-            do ptg_i = 1, size(theta_s)
-              p_t_iwc_f(ptg_i) = &
-                & sum(eta_t_iwc * &
-                &     p(t_ix+0:t_ix+1,iwc_ix+0:iwc_ix+1,ptg_i,freq_ix(f_i)) ) * &
-                & abs(sin(theta_e(ptg_i)))
-            end do
-            ! The phase function is symmetric in theta, but the radiances
-            ! are not.  Unfold p_t_iwc_f to negative theta.
-            p_on_theta_e(1:size(theta_s)) = p_t_iwc_f(size(theta_s):1:-1)
-            p_on_theta_e(size(theta_s)+1:2*size(theta_s)+1-beg_pos_theta) = &
-              & p_t_iwc_f(beg_pos_theta:)
-            ! Now interpolate P_On_Theta_e to P_On_Xi using a periodic spline
-            call interpolateValues ( theta_e(:n_theta_e), p_on_theta_e(:n_theta_e), &
-              & xis(sort_xi(:i_r)), p_on_xi(:i_r), method='S', extrapolate='P' )
+            ! Interpolate P to scattering point IWC and temperature, and
+            ! angles Xi at which radiative transfer was done.
+!             ! Interpolate P to scattering point IWC and temperature and
+!             ! multiply that by sin(theta)
+!             do ptg_i = 1, size(p_t_iwc)
+!               p_t_iwc(ptg_i) = &
+!                 & sum(eta_t_iwc * &
+!                 &     p(t_ix+0:t_ix+1,iwc_ix+0:iwc_ix+1,ptg_i,freq_ix(f_i)) ) * &
+!                 & abs(sin(theta_e(ptg_i)))
+!             end do
+!             ! The phase function is symmetric in theta, but the radiances
+!             ! are not.  Unfold p_t_iwc to negative theta.
+!             p_on_theta_e(1:size(p_t_iwc)) = p_t_iwc(size(p_t_iwc):1:-1)
+!             p_on_theta_e(size(p_t_iwc)+1:2*size(p_t_iwc)+1-beg_pos_theta) = &
+!               & p_t_iwc(beg_pos_theta:)
+!             ! Now interpolate P_On_Theta_e to P_On_Xi using a periodic spline
+!             call interpolateValues ( coeffs_Theta_e_Xi, &
+!               & theta_e(:n_theta_e), p_on_theta_e(:n_theta_e), &
+!               & xis(sort_xi(:i_r)), p_on_xi(:i_r), method='S', extrapolate='P' )
+            call interpolate_P_to_theta_e ( p(t_ix+0:t_ix+1,iwc_ix+0:iwc_ix+1,:,freq_ix(f_i)), &
+              & Eta_t_iwc, Theta_e(:n_theta_e), Beg_Pos_Theta, &
+              & Xis(sort_xi(:i_r)), coeffs_Theta_e_Xi, &
+              & P_on_Xi(:i_r) )
 
-            TScat%values(surf_i,phi_i) = 0.0
-            do ptg_i = 2, i_r
-              ! Trapezoidal quadrature, without assuming equal abscissa spacing
-              ! and the factor of 0.5 in Equation 4.50 in the 4 June 2004
-              ! cloud forward model ATBD
+            !{ Compute $\int_{-\pi}^\pi \, f(\xi) P(\xi)\, \text{d}\xi$ using
+            ! trapezoidal quadrature, without assuming equal abscissa spacing,
+            ! and including the factor of 0.5 in Equation 4.50 in the 4 June
+            ! 2004 cloud forward model ATBD.  Start with the wrap-around panel.
+            TScat%values(surf_i,phi_i) =  &
+              & 0.25 * ( p_on_xi(i_r)*rads(f_i,sort_xi(i_r)) + &
+              &          p_on_xi(  1)*rads(f_i,sort_xi(  1)) ) * &
+              &        ( xis(sort_xi(1)) + pix2 - xis(sort_xi(i_r)) )
+            if ( atmos_der ) k_atmos_p =  &
+              & 0.25 * ( p_on_xi(i_r)*k_atmos_TScat(f_i,sort_xi(i_r),:) + &
+              &          p_on_xi(  1  )*k_atmos_TScat(f_i,sort_xi(  1  ),:) ) * &
+              &        ( xis(sort_xi(  1)) + pix2 - xis(sort_xi(i_r)) )
+            if ( temp_der ) k_temp_p =  &
+              & 0.25 * ( p_on_xi(i_r)*k_temp_TScat(f_i,sort_xi(i_r),:) + &
+              &          p_on_xi(  1  )*k_temp_TScat(f_i,sort_xi(  1  ),:) ) * &
+              &        ( xis(sort_xi(  1)) + pix2 - xis(sort_xi(i_r)) )
+            do ptg_i = 2, i_r ! Now do the rest.
               TScat%values(surf_i,phi_i) = TScat%values(surf_i,phi_i) + &
                 & 0.25 * ( p_on_xi(ptg_i-1)*rads(f_i,sort_xi(ptg_i-1)) + &
                 &          p_on_xi(ptg_i  )*rads(f_i,sort_xi(ptg_i  )) ) * &
                 &        ( xis(sort_xi(ptg_i)) - xis(sort_xi(ptg_i-1)) )
+              if ( atmos_der ) k_atmos_p = k_atmos_p + &
+                & 0.25 * ( p_on_xi(ptg_i-1)*k_atmos_TScat(f_i,sort_xi(ptg_i-1),:) + &
+                &          p_on_xi(ptg_i  )*k_atmos_TScat(f_i,sort_xi(ptg_i  ),:) ) * &
+                &        ( xis(sort_xi(ptg_i)) - xis(sort_xi(ptg_i-1)) )
+              if ( temp_der ) k_temp_p = k_temp_p + &
+                & 0.25 * ( p_on_xi(ptg_i-1)*k_temp_TScat(f_i,sort_xi(ptg_i-1),:) + &
+                &          p_on_xi(ptg_i  )*k_temp_TScat(f_i,sort_xi(ptg_i  ),:) ) * &
+                &        ( xis(sort_xi(ptg_i)) - xis(sort_xi(ptg_i-1)) )
             end do
-            ! It isn't necessary to divide by \int p(\theta) \sin\theta d\theta
-            ! because that normalization was done when the P tables were
+            !{ It isn't necessary to divide by
+            ! $\int \, P(\xi) \sin\xi \, \text{d}\xi$
+            ! because that normalization was done when the $P$ tables were
             ! constructed.
+            if ( atmos_der ) &
+              & call store_other_deriv ( phi_i, surf_i, TScats(f_i)%qty, &
+                                       & beta_group%qty, Grids_f, k_atmos_p, &
+                                       & jacobian )
+            if ( temp_der ) &
+              & call store_temperature_deriv ( phi_i, surf_i, TScats(f_i)%qty, &
+                                       & temp, grids_tmp, k_temp_p, &
+                                       & jacobian )
           end do ! f_i = 1, noUsedChannels
+          call interpolateArrayTeardown ( coeffs_Theta_e_Xi )
 
         end do ! phi_i
       end do ! zeta_i
 
       if ( dump_TScat ) then
         do f_i = 1, noUsedChannels
-          call dump ( qtys(f_i)%qty%values, name = 'TScat' )
+          call dump ( TScats(f_i)%qty%values, name = 'TScat' )
         end do
       end if
 
@@ -3051,12 +3145,64 @@ contains
 
     end subroutine Get_Channel_Centers
 
+    ! ---------------------------------  Interpolate_P_to_theta_e  -----
+    subroutine Interpolate_P_to_theta_e ( P, Eta_t_iwc, Theta_e, Beg_Pos_Theta, &
+      &                                   Xis, Coeffs, P_on_Xi )
+
+      ! Interpolate P or dP_dT or dP_dIWC from Theta to Xi, for TScat generation.
+
+      use MLSKinds, only: Rp
+      use MLSNumerics, only: Coefficients_r8, InterpolateValues
+
+      real(rp), intent(in) :: P(0:,0:,:) ! P or dP_dT or dP_dIWC on T x IWC x Theta
+      real(rp), intent(in) :: Eta_T_IWC(0:,0:) ! 2x2, to interpolate to T, IWC
+      real(rp), intent(in) :: Theta_e(:) ! Theta extended to negative values
+      integer, intent(in) :: Beg_Pos_Theta ! 1 or 2, depending on whether
+                                         ! theta_e(1) is nonzero or zero
+      real(rp), intent(in) :: Xis(:) ! Angles on which radiative transfer calculated
+      type(coefficients_r8), intent(in) :: Coeffs ! To interpolate from Theta_e to Xis
+      real(rp), intent(out) :: P_on_Xi(:) ! Interpolated result
+
+      real(rp) :: P_T_IWC(size(p,3)) ! P interpolated to T and IWC
+      real(rp) :: P_on_Theta_e(2*size(p_t_iwc)+1-beg_pos_theta) ! onto negative theta
+
+      integer :: I
+
+      ! Interpolate P to scattering point IWC and temperature and
+      ! multiply that by sin(theta)
+      do i = 1, size(p_t_iwc)
+        p_t_iwc(i) = &
+          & sum(eta_t_iwc(0:1,0:1) * p(0:1,0:1,i) ) * abs(sin(theta_e(i)))
+      end do
+
+      ! The phase function is symmetric in theta, but the radiances
+      ! are not.  Unfold p_t_iwc to negative theta.
+      p_on_theta_e(1:size(p_t_iwc)) = p_t_iwc(size(p_t_iwc):1:-1)
+      p_on_theta_e(size(p_t_iwc)+1:2*size(p_t_iwc)+1-beg_pos_theta) = &
+        & p_t_iwc(beg_pos_theta:)
+
+      ! Now interpolate P_On_Theta_e to P_On_Xi using a periodic spline
+      call interpolateValues ( coeffs, theta_e, p_on_theta_e, &
+        & xis, p_on_xi, method='S', extrapolate='P' )
+
+    end subroutine Interpolate_P_to_theta_e
+
   ! ...............................................  One_Pointing  .....
     subroutine One_Pointing ( Ptg_i, Vel_Rel, Tan_Phi, Tan_Press, Est_SCGeocAlt, &
       & Use_R_Eq, Scat_Zeta, Scat_Phi, Scat_Ht, Xi, Scat_Index, Scat_Tan_Ht,     &
       & Forward, Rev )
 
+      use Add_Points_m, only: Add_Points
       use Constants, only: Pi
+      use Geometry, only: MaxRefraction
+      use Get_Chi_Angles_m, only: Get_Chi_Angles
+      use GLnp, only: GW, NG
+      use Metrics_m, only: Height_Metrics, More_Metrics, More_Points, &
+        & Tangent_Metrics
+      use Min_Zeta_m, only: Get_Min_Zeta
+      use Phi_Refractive_Correction_m, only: Phi_Refractive_Correction
+      use REFRACTION_M, only: REFRACTIVE_INDEX, COMP_REFCOR
+      use SLABS_SW_M, only: GET_GL_SLABS_ARRAYS
 
       integer, intent(in) :: Ptg_i     ! Pointing index
       real(rp), intent(in) :: Vel_Rel  ! Vel_z / speedOfLight
@@ -3769,7 +3915,8 @@ contains
   ! .........................................  One_TScat_Pointing  .....
     subroutine One_TScat_Pointing ( Ptg_i, Vel_Rel, Scat_Tan_Phi, Scat_Zeta,  &
       &                             Scat_Phi, Scat_Ht, Use_R_Eq, Xi,          &
-      &                             Zeta_i, Phi_i, Xis, Rads, I_R, &
+      &                             Zeta_i, Phi_i, Xis, Rads, K_Atmos_TScat,  &
+      &                             K_Temp_TScat, I_R, &
       &                             Scat_Tan_Ht, Forward, Rev)
 
       ! Do one TScat pointing
@@ -3791,6 +3938,8 @@ contains
                                             ! TScat%template%phi
       real(rp), intent(inout) :: Xis(:)     ! Store Xi in Xis(I_R) if OK
       real(rp), intent(inout) :: Rads(:,:)  ! Store radiance in Rads(:,I_R)
+      real(r4), intent(inout) :: K_Atmos_TScat(:,:,:) ! Store partials in K_Atmos_TScat(:,I_R,:)
+      real(r4), intent(inout) :: K_Temp_TScat(:,:,:) ! Store partials in K_Atmos_TScat(:,I_R,:)
       integer, intent(inout) :: I_R         ! Update if OK
       real(rp), intent(in), optional :: Scat_Tan_Ht ! Tangent height above
                                             ! earth geometric surface, km, for
@@ -3812,11 +3961,14 @@ contains
       i_r = i_r + 1
       xis(i_r) = xi
       rads(:,i_r) = radiances(:,ptg_i)
+      if ( atmos_der ) k_atmos_TScat(:,i_r,:) = k_atmos(:,ptg_i,:)
+      if ( temp_der ) k_temp_TScat(:,i_r,:) = k_temp(:,ptg_i,:)
     end subroutine One_TScat_Pointing
 
   ! ................................................  TScat_Setup  .....
     subroutine TScat_Setup
       ! Get ready for TScat computation
+      use Intrinsic, only: L_ScatteringAngle
       use Read_Mie_m, only: P
       logical :: Error
       integer :: Q ! Loop index
@@ -3836,8 +3988,8 @@ contains
       if ( .not. associated(F_s) .or. .not. associated(dP_dT) ) &
         & call announce_error ( 'TScat table computation requires Mie tables.' )
       ! Get IWC field
-      iwc => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-        & quantityType=l_LogIWC, config=fwdModelConf ) ! Log10(IWC)
+      iwc => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra,  &
+        & quantityType=l_vmr, molecule=l_cloud_a, config=fwdModelConf )
       ! Make sure all the TScat quantities for the selected signals have the
       ! same grids
       TScat => GetQuantityForForwardModel ( &
@@ -3867,7 +4019,7 @@ contains
       if ( .not. temp%template%stacked .or. .not. temp%template%coherent .or. &
          & .not.  iwc%template%stacked .or. .not.  iwc%template%coherent ) &
          & call announce_error ( "IWC and temperature must be coherent and stacked." )
-      ! Make sure IWC and temperature have same grids as TScat
+      ! Make sure IWC and temperature have the same grids as TScat
       if ( TScat%template%hGridIndex /= temp%template%hGridIndex .or. &
          & TScat%template%vGridIndex /= temp%template%vGridIndex .or. &
          & TScat%template%hGridIndex /=  iwc%template%hGridIndex .or. &
@@ -3986,6 +4138,12 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.298  2009/12/15 03:30:04  vsnyder
+! TScat radiance calculation working again -- P interpreted to xi instead
+! of radiance interpolated to theta.
+! Exchange order of subscripts of "radiances" to be consistent with k_...
+! and to get better locality in frequency loop
+!
 ! Revision 2.297  2009/11/17 23:45:32  vsnyder
 ! Add R_eq, R_sc arguments to FOV_Convolve_Setup, incomplete TScat stuff
 !
