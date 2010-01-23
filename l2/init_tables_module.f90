@@ -507,7 +507,7 @@ contains ! =====     Public procedures     =============================
              l+l_jacobian_cols, l+l_jacobian_rows, &
              l+l_l1bMAFBaseline, l+l_l1bMIF_TAI, l+l_limbSidebandFraction, &
              l+l_lineCenter, l+l_lineWidth, l+l_lineWidth_tDep, &
-             l+l_logIWC, l+l_losTransFunc, l+l_losVel, &
+             l+l_losTransFunc, l+l_losVel, &
              l+l_massMeanDiameterIce, l+l_massMeanDiameterWater, l+l_magneticField, &
              l+l_MIFDeadTime, &
              l+l_noiseBandwidth, l+l_noRadsPerMIF, l+l_noRadsBinned, &
@@ -1605,6 +1605,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.496  2010/01/23 01:02:37  vsnyder
+! Remove LogIWC
+!
 ! Revision 2.495  2009/10/27 22:13:09  pwagner
 ! Remedied omission of s_diff from commands allowed by sections
 !
