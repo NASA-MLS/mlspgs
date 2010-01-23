@@ -253,12 +253,13 @@ contains
 !--------------------------------------------------  DRad_tran_df  -----
 ! This is the radiative transfer derivative wrt mixing ratio model
 
-  subroutine DRad_tran_df ( max_f, indices_c, gl_inds, del_zeta, Grids_f,  &
-                         &  beta_path_c, eta_zxp_f, sps_path, do_calc_f,   &
-                         &  beta_path_f, do_gl, del_s, ref_cor,            &
-                         &  ds_dz_gw, inc_rad_path, i_start, tan_pt,       &
-                         &  i_stop, LD, d_delta_df, nz_d_delta_df,         &
-                         &  nnz_d_delta_df, drad_df )
+  subroutine DRad_tran_df ( max_f, indices_c, gl_inds, del_zeta, Grids_f,   &
+                          & beta_path_c, eta_zxp_f, sps_path, do_calc_f,    &
+                          & beta_path_f, do_gl, del_s, ref_cor,             &
+                          & ds_dz_gw, inc_rad_path, dBeta_df_c, dBeta_df_f, &
+                          & i_dBeta_df, i_start, tan_pt, i_stop, LD,        &
+                          & d_delta_df, nz_d_delta_df, nnz_d_delta_df,      &
+                          & drad_df )
 
     use GLNP, only: NG
     use LOAD_SPS_DATA_M, ONLY: GRIDS_T
@@ -292,9 +293,12 @@ contains
       !              gw on the entire grid.  Only the gl_inds part is used.
     real(rp), intent(in) :: inc_rad_path(:)  ! incremental radiance along the
                                              ! path.  t_script * tau.
-    integer, intent(in) :: i_start           ! path_start_index + 1
+    real(rp), intent(in) :: dBeta_df_c(*)    ! In case beta depends on mixing ratio
+    real(rp), intent(in) :: dBeta_df_f(*)    ! In case beta depends on mixing ratio
+    integer, intent(in) :: I_dBeta_df        ! If nonzero, which beta depends on mixing ratio
+    integer, intent(in) :: I_start           ! path_start_index + 1
     integer, intent(in) :: tan_pt            ! Tangent point index in Del_Zeta
-    integer, intent(in) :: i_stop            ! path stop index
+    integer, intent(in) :: I_stop            ! path stop index
 
     integer, intent(in) :: LD                ! Leading dimension of D_Delta_dF
 
@@ -377,14 +381,25 @@ contains
           end if
 
           if ( grids_f%lin_log(sps_i) ) then
+          ! sps_path is actually exp(mixing ratio) here
 
-            do i = 1, n_inds ! Don't trust the compiler to fuse loops
-              ii = inds(i)
-              iii = indices_c(ii)
-              singularity(ii) = beta_path_c(ii,sps_i) &
-                        & * eta_zxp_f(iii,sv_i) * sps_path(iii,sps_i)
-              d_delta_df(ii,sv_i) = singularity(ii) * del_s(ii)
-            end do ! i
+            if ( sps_i /= i_dBeta_df ) then ! don't want the test in the loop
+              do i = 1, n_inds ! Don't trust the compiler to fuse loops
+                ii = inds(i)
+                iii = indices_c(ii)
+                singularity(ii) = eta_zxp_f(iii,sv_i) * sps_path(iii,sps_i) * &
+                          & beta_path_c(ii,sps_i)
+                d_delta_df(ii,sv_i) = singularity(ii) * del_s(ii)
+              end do ! i
+            else ! beta is a function of mixing ratio
+              do i = 1, n_inds ! Don't trust the compiler to fuse loops
+                ii = inds(i)
+                iii = indices_c(ii)
+                singularity(ii) = eta_zxp_f(iii,sv_i) * sps_path(iii,sps_i) * &
+                          & ( beta_path_c(ii,sps_i) + dBeta_df_c(ii) )
+                d_delta_df(ii,sv_i) = singularity(ii) * del_s(ii)
+              end do ! i
+            end if
 
       !{ Apply Gauss-Legendre quadrature to the panels indicated by
       !  {\tt more\_inds}.  We remove a singularity (which actually only
@@ -402,16 +417,29 @@ contains
       !  abscissae~-- and $G(\zeta_i)$ is {\tt singularity}.  The weights
       !  are {\tt gw}.
 
-            do i = 1, no_to_gl
-              aa = all_inds(i)
-              ga = gl_inds(aa)
-              ii = more_inds(i)
-              d_delta_df(ii,sv_i) = d_delta_df(ii,sv_i) + &
-                & del_zeta(ii) * &
-                & sum( (beta_path_f(aa:aa+ng-1,sps_i) &
-                     &   * eta_zxp_f(ga:ga+ng-1,sv_i) * sps_path(ga:ga+ng-1,sps_i) - &
-                     &  singularity(ii)) * ds_dz_gw(ga:ga+ng-1) )
-            end do
+            if ( sps_i /= i_dBeta_df ) then ! don't want the test in the loop
+              do i = 1, no_to_gl
+                aa = all_inds(i)
+                ga = gl_inds(aa)
+                ii = more_inds(i)
+                d_delta_df(ii,sv_i) = d_delta_df(ii,sv_i) + &
+                  & del_zeta(ii) * &
+                  & sum( (eta_zxp_f(ga:ga+ng-1,sv_i) * sps_path(ga:ga+ng-1,sps_i) &
+                       &  * beta_path_f(aa:aa+ng-1,sps_i) - &
+                       &  singularity(ii)) * ds_dz_gw(ga:ga+ng-1) )
+              end do
+            else ! beta is a function of mixing ratio
+              do i = 1, no_to_gl
+                aa = all_inds(i)
+                ga = gl_inds(aa)
+                ii = more_inds(i)
+                d_delta_df(ii,sv_i) = d_delta_df(ii,sv_i) + &
+                  & del_zeta(ii) * &
+                  & sum( (eta_zxp_f(ga:ga+ng-1,sv_i) * sps_path(ga:ga+ng-1,sps_i) &
+                       &  * ( beta_path_f(aa:aa+ng-1,sps_i) + dBeta_df_f(aa:aa+ng-1) ) &
+                       &  - singularity(ii)) * ds_dz_gw(ga:ga+ng-1) )
+              end do
+            end if
 
             ! Refraction correction
             d_delta_df(inds,sv_i) = ref_cor(inds) * d_delta_df(inds,sv_i) * &
@@ -419,12 +447,23 @@ contains
 
           else
 
-            do i = 1, n_inds
-              ii = inds(i)
-              singularity(ii) = beta_path_c(ii,sps_i) &
-                        & * eta_zxp_f(indices_c(ii),sv_i)
-              d_delta_df(ii,sv_i) = singularity(ii) * del_s(ii)
-            end do ! i
+            if ( sps_i /= i_dBeta_df ) then ! don't want the test in the loop
+              do i = 1, n_inds
+                ii = inds(i)
+                singularity(ii) = eta_zxp_f(indices_c(ii),sv_i) &
+                          & * beta_path_c(ii,sps_i)
+                d_delta_df(ii,sv_i) = singularity(ii) * del_s(ii)
+              end do ! i
+            else
+              do i = 1, n_inds
+                ii = inds(i)
+                iii = indices_c(ii)
+                singularity(ii) = eta_zxp_f(indices_c(ii),sv_i) &
+                          & * ( beta_path_c(ii,sps_i) + &
+                          &     sps_path(iii,sps_i) * dBeta_df_c(ii) )
+                d_delta_df(ii,sv_i) = singularity(ii) * del_s(ii)
+              end do ! i
+            end if
 
       !{ Apply Gauss-Legendre quadrature to the panels indicated by
       !  {\tt more\_inds}.  We remove a singularity (which actually only
@@ -442,15 +481,30 @@ contains
       !  abscissae~-- and $G(\zeta_i)$ is {\tt singularity}.  The weights
       !  are {\tt gw}.
 
-            do i = 1, no_to_gl
-              aa = all_inds(i)
-              ga = gl_inds(aa)
-              ii = more_inds(i)
-              d_delta_df(ii,sv_i) = d_delta_df(ii,sv_i) + &
-                & del_zeta(ii) * &
-                & sum( (beta_path_f(aa:aa+ng-1,sps_i) * eta_zxp_f(ga:ga+ng-1,sv_i) - &
-                     &  singularity(ii)) * ds_dz_gw(ga:ga+ng-1) )
-            end do
+            if ( sps_i /= i_dBeta_df ) then ! don't want the test in the loop
+              do i = 1, no_to_gl
+                aa = all_inds(i)
+                ga = gl_inds(aa)
+                ii = more_inds(i)
+                d_delta_df(ii,sv_i) = d_delta_df(ii,sv_i) + &
+                  & del_zeta(ii) * &
+                  & sum( (eta_zxp_f(ga:ga+ng-1,sv_i) * beta_path_f(aa:aa+ng-1,sps_i) - &
+                       &  singularity(ii)) * ds_dz_gw(ga:ga+ng-1) )
+              end do
+            else
+              do i = 1, no_to_gl
+                aa = all_inds(i)
+                ga = gl_inds(aa)
+                ii = more_inds(i)
+                d_delta_df(ii,sv_i) = d_delta_df(ii,sv_i) + &
+                  & del_zeta(ii) * &
+                  & sum( (eta_zxp_f(ga:ga+ng-1,sv_i) &
+                       &  * ( beta_path_f(aa:aa+ng-1,sps_i) &
+                       &      + dBeta_df_f(aa:aa+ng-1) ) &
+                       &  - singularity(ii)) &
+                       & * ds_dz_gw(ga:ga+ng-1) )
+              end do
+            end if
 
             ! Refraction correction
             d_delta_df(inds,sv_i) = ref_cor(inds) * d_delta_df(inds,sv_i)
@@ -1128,6 +1182,9 @@ contains
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.6  2010/01/23 01:21:24  vsnyder
+! Handle derivatives for betas that depend upon mixing ratio
+!
 ! Revision 2.5  2009/06/16 17:37:09  pwagner
 ! Changed api for dump, diff routines; now rely on options for most optional behavior
 !
