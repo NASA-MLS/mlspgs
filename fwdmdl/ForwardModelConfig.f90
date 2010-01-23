@@ -411,9 +411,12 @@ contains
 
       use Allocate_deallocate, only: Allocate_Test
       use Intrinsic, only: Lit_Indices
+      use MLSMessageModule, only: MLSMessage, MLSMSG_Error
       use MLSSignals_m, only: DisplaySignalName
+      use Molecules, only: L_Cloud_A, L_Cloud_S
       use MoreTree, only: StartErrorMessage
       use PFADatabase_m, only: Test_And_Fetch_PFA
+      use Read_Mie_m, only: Beta_c_a, Beta_c_s
       use String_Table, only: Display_String
       use Tree, only: Source_Ref
 
@@ -433,6 +436,18 @@ contains
             & size(fwdModelConf%beta_group(b)%pfa(sx)%molecules), &
             & 'Beta_group(b)%PFA(sx)%data', moduleName, fill=0 )
           do p = 1, size(fwdModelConf%beta_group(b)%pfa(sx)%molecules)
+            if ( fwdModelConf%beta_group(b)%pfa(sx)%molecules(p) == l_cloud_a ) then
+              if ( .not. associated(beta_c_a) ) &
+                call MLSMessage ( MLSMSG_Error, moduleName, &
+                  'No Mie tables for Cloud_A beta' )
+              cycle
+            end if
+            if ( fwdModelConf%beta_group(b)%pfa(sx)%molecules(p) == l_cloud_s ) then
+              if ( .not. associated(beta_c_s) )  &
+                call MLSMessage ( MLSMSG_Error, moduleName, &
+                  'No Mie tables for Cloud_S beta' )
+              cycle
+            end if
             do channel = 1, size(fwdModelConf%channels)
               ! Look up PFA data and read it if necessary
               fwdModelConf%beta_group(b)%pfa(sx)%data(channel,p) = &
@@ -1367,6 +1382,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.103  2009/06/23 18:26:10  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.102  2008/08/27 19:56:51  vsnyder
 ! Add PRINT to not_used_here
 !
