@@ -42,7 +42,7 @@ contains
     use Dump_0, only: Dump
     use ForwardModelConfig, only: Beta_Group_T, LineCenter, LineWidth, LineWidth_TDep
     use Intrinsic, only: L_RHi, Lit_Indices
-    use MLSCommon, only: R8, RP, IP
+    use MLSKinds, only: R8, RP, IP
     use Output_m, only: Output
     use Slabs_SW_m, only: SLABS_STRUCT
     use String_Table, only: Display_String
@@ -217,15 +217,19 @@ contains
 
   ! ------------------------------------------  Get_Beta_Path_PFA  -----
   subroutine Get_Beta_Path_PFA ( Frq, Frq_i, P_Path, Path_Inds, T_Path, &
-    & Beta_Group, SX, Vel_Rel, Beta_Path, T_Der_Path_Flags, &
-    & dBeta_dT_Path, dBeta_dw_Path, dBeta_dn_Path, dBeta_dv_Path )
+    & Beta_Group, SX, Vel_Rel, Sps_Path, Beta_Path, T_Der_Path_Flags, &
+    & dBeta_dT_Path, dBeta_dw_Path, dBeta_dn_Path, dBeta_dv_Path, &
+    & dBeta_dIWC_Path )
 
     use Dump_0, only: Dump
     use ForwardModelConfig, only: Beta_Group_T
-    use Intrinsic, only: L_RHi, Lit_Indices
-    use MLSCommon, only: RP, R8
+    use Intrinsic, only: L_CloudIce, L_RHi, Lit_Indices
+    use MLSKinds, only: RP, R8
+    use Molecules, only: L_Cloud_A, L_Cloud_S
     use Output_m, only: Output
     use PFADataBase_m, only: PFAData
+    use Read_Mie_m, only: Beta_c_a, dBeta_dIWC_c_a, dBeta_dT_c_a, &
+                        & Beta_c_s, dBeta_dIWC_c_s, dBeta_dT_c_s
     use String_Table, only: Display_String
     use Toggles, only: Switches
 
@@ -238,6 +242,7 @@ contains
     type(beta_group_t), intent(in) :: Beta_Group(:) ! PFA stuff for the beta group
     integer, intent(in) :: SX            ! Sideband index, 1 or 2.
     real(rp), intent(in) :: Vel_Rel     ! LOS Vel / C
+    real(rp), intent(in) :: Sps_Path(:,:) ! VMR's, for nonlinear species
 
 ! Output
     real(rp), intent(out) :: beta_path(:,:) ! path beta for each specie
@@ -247,16 +252,16 @@ contains
     logical, intent(in) :: T_Der_Path_Flags(:) ! where temperature derivatives
 !                               are needed. Only useful for subsetting.
 
-! Optional outputs.  We use ASSOCIATED instead of PRESENT so that the
-! caller doesn't need multiple branches.  These would be INTENT(OUT) if
-! we could say so.
+! Optional outputs.  We use size(...)/=0 instead of PRESENT so that the
+! caller doesn't need multiple branches.
 
-    real(rp), target :: dBeta_dT_path(:,:) ! Temperature
-    real(rp), target :: dBeta_dw_path(:,:) ! line width
-    real(rp), target :: dBeta_dn_path(:,:) ! line width t dep.
-    real(rp), target :: dBeta_dv_path(:,:) ! line position
+    real(rp), target, intent(out) :: dBeta_dT_path(:,:)   ! Temperature
+    real(rp), target, intent(out) :: dBeta_dw_path(:,:)   ! line width
+    real(rp), target, intent(out) :: dBeta_dn_path(:,:)   ! line width t dep.
+    real(rp), target, intent(out) :: dBeta_dv_path(:,:)   ! line position
+    real(rp), target, intent(out) :: dBeta_dIWC_path(:,:) ! IWC
 
-    real(rp), pointer :: dBdn(:), dBdT(:), dBdv(:), dBdw(:) ! slices of dBeta_d*_path
+    real(rp), pointer :: dBdIWC(:), dBdn(:), dBdT(:), dBdv(:), dBdw(:) ! slices of dBeta_d*_path
     real(rp) :: ES(size(t_path)) ! Used for RHi calculation
     integer :: I, N
     character(len=4), save :: clean
@@ -273,7 +278,7 @@ contains
       if ( index(switches,'clean') > 0 ) clean = 'c'
     end if
 
-    nullify ( dBdT, dBdn, dBdv, dBdw )
+    nullify ( dBdIWC, dBdT, dBdn, dBdv, dBdw )
 
     do i = 1, size(beta_group)
       if ( size(dBeta_dt_path) > 0 ) then
@@ -292,48 +297,63 @@ contains
         dBdw => dBeta_dw_path(:,i)
         dBdw = 0.0_rp
       end if
+      if ( size(dBeta_dIWC_path) > 0 ) then
+        dBdIWC => dBeta_dIWC_path(:,i)
+        dBdIWC = 0.0_rp
+      end if
 
       beta_path(:,i) = 0.0_rp
 
-      do n = 1, size(beta_group(i)%pfa(sx)%molecules)
-        if ( beta_group(i)%pfa(sx)%data(frq_i,n)/= 0 ) then
-          call create_beta_path_pfa ( frq, p_path, path_inds, t_path, vel_rel, &
-            & PFAData(beta_group(i)%pfa(sx)%data(frq_i,n)),   &
-            & beta_group(i)%pfa(sx)%ratio(n), beta_path(:,i), &
-            & t_der_path_flags, dBdT, dBdw, dBdn, dBdv )
+      select case ( beta_group(i)%molecule )
+      case ( l_cloud_a )
+        call create_beta_path_Mie ( frq, t_path, sps_path(:,i), path_inds, &
+          & beta_c_a, dBeta_dIWC_c_a, dBeta_dT_c_a, beta_path(:,i), &
+          & dBdT, dBdIWC )
+      case ( l_cloud_s )
+        call create_beta_path_Mie ( frq, t_path, sps_path(:,i), path_inds, &
+          & beta_c_s, dBeta_dIWC_c_s, dBeta_dT_c_s, beta_path(:,i), &
+          & dBdT, dBdIWC )
+      case default
+        do n = 1, size(beta_group(i)%pfa(sx)%molecules)
+          if ( beta_group(i)%pfa(sx)%data(frq_i,n)/= 0 ) then
+            call create_beta_path_pfa ( frq, p_path, path_inds, t_path, vel_rel, &
+              & PFAData(beta_group(i)%pfa(sx)%data(frq_i,n)),   &
+              & beta_group(i)%pfa(sx)%ratio(n), beta_path(:,i), &
+              & t_der_path_flags, dBdT, dBdw, dBdn, dBdv )
+
+            if ( dumpBeta ) then
+              call display_string ( lit_indices(beta_group(i)%pfa(sx)%molecules(1:n)), &
+              & before='PFA Betas for' )
+              call output ( frq, before=', FRQ = ', advance='yes' )
+              call dump ( beta_path(:,i), name='Beta', options=clean )
+              if ( associated(dBdT) ) call dump ( dBdT, name='dBdT', options=clean )
+            end if
+          end if
+        end do ! n = 1, size(beta_group(i)%pfa(sx)%molecules)
+
+        if ( beta_group(i)%molecule == l_rhi ) then
+          !{ Convert specific humidity to relative humidity
+          ! \begin{equation}\begin{split}
+          ! e_s =\,& \frac1P \exp\left(19.6783-\frac{6140.4}T\right)\\
+          ! \beta^{\text{RHi}} =\,& \beta^{\text{H}_2\text{O}} e_s\\
+          ! \frac{\partial \beta^{\text{RHi}}}{\partial T} =\,&
+          !  e_s \frac{\partial \beta^{\text{H}_2\text{O}}}{\partial T} +
+          !  \frac{6140.4}{T^2} \beta^{\text{RHi}}
+          ! \end{split}\end{equation}
+          es = exp(RHa - RHb/t_path) / p_path(path_inds)
+          beta_path(:,i) = beta_path(:,i) * es
+          if ( associated(dBdT) ) &
+            & dBdT = es * dBdT + RHb / t_path**2 * beta_path(:,i)
 
           if ( dumpBeta ) then
-            call display_string ( lit_indices(beta_group(i)%pfa(sx)%molecules(1:n)), &
-            & before='PFA Betas for' )
-            call output ( frq, before=', FRQ = ', advance='yes' )
+            call display_string ( lit_indices(l_rhi), before='PFA Betas for ' )
+            call display_string ( lit_indices(beta_group(i)%pfa(sx)%molecules), &
+              & before=' using' )
             call dump ( beta_path(:,i), name='Beta', options=clean )
             if ( associated(dBdT) ) call dump ( dBdT, name='dBdT', options=clean )
           end if
         end if
-      end do ! n = 1, size(beta_group(i)%pfa(sx)%molecules)
-
-      if ( beta_group(i)%molecule == l_rhi ) then
-        !{ Convert specific humidity to relative humidity
-        ! \begin{equation}\begin{split}
-        ! e_s =\,& \frac1P \exp\left(19.6783-\frac{6140.4}T\right)\\
-        ! \beta^{\text{RHi}} =\,& \beta^{\text{H}_2\text{O}} e_s\\
-        ! \frac{\partial \beta^{\text{RHi}}}{\partial T} =\,&
-        !  e_s \frac{\partial \beta^{\text{H}_2\text{O}}}{\partial T} +
-        !  \frac{6140.4}{T^2} \beta^{\text{RHi}}
-        ! \end{split}\end{equation}
-        es = exp(RHa - RHb/t_path) / p_path(path_inds)
-        beta_path(:,i) = beta_path(:,i) * es
-        if ( associated(dBdT) ) &
-          & dBdT = es * dBdT + RHb / t_path**2 * beta_path(:,i)
-
-        if ( dumpBeta ) then
-          call display_string ( lit_indices(l_rhi), before='PFA Betas for ' )
-          call display_string ( lit_indices(beta_group(i)%pfa(sx)%molecules), &
-            & before=' using' )
-          call dump ( beta_path(:,i), name='Beta', options=clean )
-          if ( associated(dBdT) ) call dump ( dBdT, name='dBdT', options=clean )
-        end if
-      end if
+      end select
 
     end do ! i = 1, size(beta_group)
 
@@ -352,7 +372,7 @@ contains
     use Dump_0, only: Dump
     use ForwardModelConfig, only: LBL_T
     use Intrinsic, only: Lit_Indices
-    use MLSCommon, only: R8, RP, IP
+    use MLSKinds, only: R8, RP, IP
     use O2_Abs_CS_m, only: O2_Abs_CS, D_O2_Abs_CS_dT
     use Output_m, only: Output
     use Slabs_SW_m, only: SLABS_STRUCT
@@ -453,7 +473,7 @@ contains
         & beta_path_cloud, w0_path, tt_path_c, IPSD, WC, fwdModelConf  )
     use ForwardModelConfig, only: FORWARDMODELCONFIG_T
     use Cloud_extinction, only: get_beta_cloud
-    use MLSCommon, only: R8, RP, IP
+    use MLSKinds, only: R8, RP, IP
 
 ! Inputs:
 
@@ -532,7 +552,7 @@ contains
 !  running time was achieved.  Create_Beta is in the inner loop of the
 !  forward model.
 
-    use MLSCommon, only: RP, R8, IP
+    use MLSKinds, only: RP, R8, IP
     use Molecules, only: L_N2, L_Extinction, L_ExtinctionV2, L_H2O, L_O2
     use SLABS_SW_M, only: DVOIGT_SPECTRAL, VOIGT_LORENTZ, &
       & SLABS_LINES, SLABS_LINES_DT, &
@@ -723,7 +743,7 @@ contains
 !  should be called for primary and image separately. Compute dBeta_dT if it's
 !  associated.  Compute dBeta_dw, dBeta_dn, dBeta_dv if they're associated. 
 
-    use MLSCommon, only: RP, R8
+    use MLSKinds, only: RP, R8
     use Molecules, only: L_N2, L_Extinction, L_ExtinctionV2, L_H2O, L_O2
     use Slabs_SW_m, only: SLABS_STRUCT, &
       & SLABS_LINES, SLABS_LINES_DAll, SLABS_LINES_DSpectral, SLABS_LINES_DT, &
@@ -949,13 +969,112 @@ contains
 
   end Subroutine Create_beta_path
 
+  ! ---------------------------------------  Create_Beta_Path_Mie  -----
+  pure &
+  subroutine Create_Beta_Path_Mie ( Frq, T_Path, IWC_Path, Path_Inds, &
+    & Beta_Tab, dBeta_dIWC_tab, dBeta_dT_tab, Beta_Path, dBdT, dBdIWC )
+
+  !{Interpolate in Beta\_c\_a and its derivatives to the T and IWC along the
+  ! path.
+  !
+  ! Let $\xi_1 = \frac{x-x_0}{x_1-x_0}$, $\xi_0 = \frac{x_1-x}{x_1-x_0} =
+  ! 1-\xi_1$,
+  ! $\eta_1 = \frac{y-y_0}{y_1-y_0}$, $\eta_0 = \frac{y_1-y}{y_1-y_0} =
+  ! 1-\eta_1$,
+  ! $\xi = [\xi_0,\xi_1]^T$, $\eta = [\eta_0,\eta_1]^T$, and
+  ! $Z = \left| \begin{array}{cc} z_{00} & z_{01} \\ z_{10} & z_{11}\\
+  !             \end{array} \right|$.
+  !
+  ! The interpolation can be done either by interpolating in $x$ to
+  ! $z_c = \xi_0 z_{00} + \xi_1 z_{10}$ and $z_d = \xi_0 z_{01} +
+  ! \xi_1 z_{11}$ and then in $y$ to $z = \eta_0 z_c + \eta_1 z_d$,
+  ! or interpolating in $y$ to $z_a = \eta_0 z_{00} + \eta_1 z_{01}$
+  ! and $z_b = \eta_0 z_{10} + \eta_1 z_{11}$ and then in $x$ to $z =
+  ! \xi_0 z_a + \xi_1 z_b$.  The two orders of interpolation are
+  ! equivalent, and when expanded give
+  !%
+  ! $
+  ! z(x,y) = \xi_0 \eta_0 z_{00} + \xi_1 \eta_0 z_{10} +
+  ! \xi_0 \eta_1 z_{10} + \xi_1 \eta_1 z_{11},
+  ! $
+  !%
+  ! which can be expressed in matrix-vector form as $\xi^T Z \eta$.
+
+    use D_Hunt_m, only: Hunt
+    use MLSKinds, only: RP, R8
+    use Read_Mie_m, only: F_s, IWC_s, T_s
+
+! Inputs:
+    real(r8), intent(in) :: Frq         ! Channel center frequency in MHz
+    real(rp), intent(in) :: T_Path(:)   ! Temperature in K along the path
+    real(rp), intent(in) :: IWC_Path(:) ! Ice water content along the path
+    integer, intent(in) :: Path_Inds(:) ! Which IWC_Path to use
+    real(r8), intent(in) :: Beta_Tab(:,:,:)       ! T x IWC x F
+    real(r8), intent(in) :: dBeta_dIWC_Tab(:,:,:) ! T x IWC x F
+    real(r8), intent(in) :: dBeta_dT_Tab(:,:,:)   ! T x IWC x F
+
+! Outputs:
+    real(rp), intent(inout) :: Beta_Path(:)  ! Beta along the path
+
+! Optional outputs.  These are pointers instead of optional.  Null means
+! "don't compute it."  We do this so the caller doesn't need four branches.
+    real(rp), pointer :: dBdT(:)       ! dBeta_dT along the path
+    real(rp), pointer :: dBdIWC(:)     ! dBeta_dIWC along the path
+
+! -----     Local variables     ----------------------------------------
+
+    real(rp) :: Eta(2,2)  ! Interpolating factors for T x IWC
+    integer :: F_I(2)     ! Indices for F_s
+    real(rp) :: I_Fac     ! Interpolating factor for IWC
+    integer :: I_I(2)     ! Indices in IWC_s
+    integer :: J
+    real(rp) :: Log10_IWC ! log10(IWC_path(j))
+    integer :: N_F        ! Frequency index (3rd) for Beta_c_a etc.
+                          ! F_I(1) or F_I(2), whichever is closest to Frq
+    real(rp) :: T_Fac     ! Interpolating factor for T
+    integer :: T_I(2)     ! Indices in T_s
+
+    f_i = 0 ! Initialize for Hunt
+    i_i = 0
+    t_i = 0
+
+    call hunt ( frq, f_s, size(f_s), f_i(1), f_i(2) )
+    n_f = merge(f_i(1), f_i(2), frq-f_s(f_i(1)) < frq-f_s(f_i(2)))
+
+    !ocl independent
+    !ocl temp
+    do j = 1, size(beta_path)
+      if ( iwc_path(path_inds(j)) <= tiny(iwc_path(path_inds(j))) ) then
+        beta_path(j) = 0.0
+        if ( associated(dBdIWC) ) dBdIWC(j) = 0.0
+        if ( associated(dBdT) ) dBdT(j) = 0.0
+      else
+        log10_IWC = log10(iwc_path(path_inds(j)))
+        call hunt ( log10_IWC, iwc_s, size(iwc_s), i_i(1), i_i(2) )
+        call hunt ( t_path(j), t_s, size(t_s), t_i(1), t_i(2) )
+        i_fac = (log10_IWC - iwc_s(i_i(1))) / (iwc_s(i_i(2)) - iwc_s(i_i(1)))
+        t_fac = (t_path(j) - t_s(t_i(1))) / (t_s(t_i(2)) - t_s(t_i(1)))
+        eta = reshape( (/ (1.0 - t_fac) * (1.0 - i_fac), &
+                          t_fac         * (1.0 - i_fac), &
+                          (1.0 - t_fac) * i_fac        , &
+                          t_fac         * i_fac         /), (/ 2, 2 /) )
+        beta_path(j) = sum(eta * beta_tab(t_i,i_i,n_f))
+        if ( associated(dBdIWC) ) &
+          & dBdIWC(j) = sum(eta * dBeta_dIWC_tab(t_i,i_i,n_f))
+        if ( associated(dBdT) ) &
+          & dBdT(j) = sum(eta * dBeta_dT_tab(t_i,i_i,n_f))
+      end if
+    end do
+
+  end subroutine Create_Beta_Path_Mie
+
   ! ---------------------------------------  Create_Beta_Path_PFA  -----
   pure &
   subroutine Create_Beta_Path_PFA ( Frq, P_Path, Path_Inds, T_Path, Vel_Rel, &
     & PFAD, Ratio, Beta_Path, T_Der_Path, dBdT, dBdw, dBdn, dBdv )
 
     use D_Hunt_m, only: Hunt
-    use MLSCommon, only: RP, R8
+    use MLSKinds, only: RP, R8
     use PFADataBase_m, only: PFAData_t
 
 ! Inputs:
@@ -1077,7 +1196,7 @@ contains
       !  $P$ coordinate.''
 
       ! Now the derivatives.  Remember that bp includes ratio, so we don't
-      ! beed to weight by ratio here.
+      ! need to weight by ratio here.
 
       if ( temp_der ) then
         ! Interpolate to get d^2 log Beta / d log T d Nu, to Doppler-correct
@@ -1124,7 +1243,7 @@ contains
   pure function Abs_CS_Cont ( Cont, Temperature, Pressure, Frequency ) &
     & result(Abs_CS_Cont_r)
   ! real(rp) function Abs_CS_Cont ( Cont, Temperature, Pressure, Frequency )
-    use MLSCommon, only: RP
+    use MLSKinds, only: RP
 
     real(rp), intent(in) :: CONT(:)     ! continuum parameters
     real(rp), intent(in) :: TEMPERATURE ! in Kelvin
@@ -1142,7 +1261,7 @@ contains
   ! Compute the general continuum contribution and its temperature derivative
   pure subroutine Abs_CS_Cont_dT ( Cont, Temperature, Pressure, Frequency, &
     & Beta, dBeta_dT )
-    use MLSCommon, only: RP
+    use MLSKinds, only: RP
 
     real(rp), intent(in) :: CONT(:)     ! continuum parameters
     real(rp), intent(in) :: TEMPERATURE ! in Kelvin
@@ -1171,7 +1290,7 @@ contains
   pure function Abs_CS_H2O_Cont ( Cont, Temperature, Pressure, Frequency, Sps ) &
     & result(Abs_CS_H2O_Cont_r)
   ! real(rp) function Abs_CS_Cont ( Cont, Temperature, Pressure, Frequency )
-    use MLSCommon, only: RP
+    use MLSKinds, only: RP
 
     real(rp), intent(in) :: CONT(:)     ! continuum parameters
     real(rp), intent(in) :: TEMPERATURE ! in Kelvin
@@ -1197,7 +1316,7 @@ contains
   ! Compute the general continuum contribution and its temperature derivative
   pure subroutine Abs_CS_H2O_Cont_dT ( Cont, Temperature, Pressure, Frequency, &
     & SPS, Beta, dBeta_dT, dBeta_df )
-    use MLSCommon, only: RP
+    use MLSKinds, only: RP
 
     real(rp), intent(in) :: CONT(:)     ! continuum parameters
     real(rp), intent(in) :: TEMPERATURE ! in Kelvin
@@ -1240,7 +1359,7 @@ contains
   pure function Abs_CS_N2_Cont ( Cont, Temperature, Pressure, Frequency ) &
     & result(Abs_CS_N2_Cont_r)
   ! real(rp) Function Abs_CS_N2_cont ( Cont, Temperature, Pressure, Frequency )
-    use MLSCommon, only: RP
+    use MLSKinds, only: RP
 
     real(rp), intent(in) :: CONT(:)     ! continuum parameters
     real(rp), intent(in) :: TEMPERATURE ! in Kelvin
@@ -1266,7 +1385,7 @@ contains
   pure subroutine Abs_CS_N2_Cont_dT ( Cont, Temperature, Pressure, Frequency, &
     & Beta, dBeta_dT )
 
-    use MLSCommon, only: RP
+    use MLSKinds, only: RP
 
     real(rp), intent(in) :: CONT(:)     ! continuum parameters
     real(rp), intent(in) :: TEMPERATURE ! in Kelvin
@@ -1305,7 +1424,7 @@ contains
   pure function Abs_CS_O2_Cont ( Cont, Temperature, Pressure, Frequency ) &
     & result(Abs_CS_O2_Cont_r)
   ! real(rp) Function ABS_CS_O2_CONT ( Cont, Temperature, Pressure, Frequency )
-    use MLSCommon, only: RP
+    use MLSKinds, only: RP
 
     real(rp), intent(in) :: CONT(:)     ! continuum parameters
     real(rp), intent(in) :: TEMPERATURE ! in Kelvin
@@ -1328,7 +1447,7 @@ contains
   pure subroutine Abs_CS_O2_Cont_dT ( Cont, Temperature, Pressure, Frequency, &
       & Beta, dBeta_dT )
 
-    use MLSCommon, only: RP
+    use MLSKinds, only: RP
 
     real(rp), intent(in) :: CONT(:)     ! continuum parameters
     real(rp), intent(in) :: TEMPERATURE ! in Kelvin
@@ -1371,6 +1490,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.97  2009/06/23 18:26:11  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.96  2009/06/16 17:37:47  pwagner
 ! Changed api for dump, diff routines; now rely on options for most optional behavior
 !
