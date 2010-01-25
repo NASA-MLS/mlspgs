@@ -17,13 +17,38 @@ module IO_STUFF
 
   private
   public :: GET_LUN
+  public :: READ_STDIN
   public :: READ_TEXTFILE
+
+! === (start of toc) ===                                                 
+!     c o n t e n t s                                                    
+!     - - - - - - - -                                                    
+
+!     (subroutines and functions)
+! GET_LUN       Find a Fortran logical unit number that's not in use.
+! read_stdin    Read standard input into characters scalar or array
+! read_textfile Read contents of a textfile into characters scalar or array
+! === (end of toc) ===
+
+! === (start of api) ===
+! GET_LUN( int lun, [log msg] )
+! read_stdin( str string, [int maxLineLen], [int nLines] )
+! read_textfile( char* File, str string, [int maxLineLen], [int nLines] )
+! str can be any of
+! character(len=*)                 a scalar character string of any length
+! character(len=*), dimension(:)   a 1d character array of any length
+! character(len=*), dimension(:,:) a 1d character array of any length
+! === (end of api) ===
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
   private :: not_used_here 
 !---------------------------------------------------------------------------
+
+  interface read_stdin
+    module procedure read_stdin_arr, read_stdin_arr2d, read_stdin_sca
+  end interface
 
   interface read_textfile
     module procedure read_textfile_arr, read_textfile_arr2d, read_textfile_sca
@@ -49,6 +74,156 @@ contains
     write(*,*) 'IO_STUFF%GET_LUN-E- Unable to get a logical unit number'
     return
   end subroutine GET_LUN
+
+
+  !------------------ read_stdin
+  ! Notes and limitations:
+  ! Won't change unread elements (so you can prefill with nulls)
+  ! formatted io
+  ! No line should be longer than len(string)
+  ! (To get around that limitation supply optional arg maxLineLen)
+  subroutine READ_stdin_arr ( string, maxLineLen, nLines )
+  ! read stdin into string array, one line per element
+    character(len=*), dimension(:), intent(inout) :: string    ! its contents
+    integer, optional, intent(in) :: maxLineLen
+    integer, optional, intent(out) :: nLines ! num lines read
+    ! Internal variables
+    integer :: lun = 5
+    integer :: pos
+    integer :: recrd
+    integer :: status
+    character(len=1), dimension(len(string)) :: cArray
+    character(len=1), dimension(len(string)) :: nullArray
+    character(len=12) :: xfmt
+    character(len=8) :: xlen
+    ! What format do we use for reading each line?
+    xfmt = '(128a1)' ! This is the default; if lines are larger supply maxLineLen
+    if ( present(maxLineLen) ) then
+     write( xlen, '(i8)' ) maxLineLen
+     if ( len(string) < maxLineLen ) write( xlen, '(i8)' ) len(string)
+     if ( index(xlen, '*') < 1 ) xfmt = '(' // trim(adjustl(xlen)) // 'a1)'
+    else
+     write( xlen, '(i8)' ) len(string)
+     if ( index(xlen, '*') < 1 ) xfmt = '(' // trim(adjustl(xlen)) // 'a1)'
+    endif
+    ! Try to read the stdin
+    if ( present(nLines) ) nLines = 0
+    recrd = 0
+    ! print *, 'xfmt: ', xfmt
+    do
+      status = 0
+      call null_fill_1d( nullArray )
+      cArray = string( min(recrd+1, size(string)) )
+      read( UNIT=lun, fmt=xfmt, eor=50, end=500, err=50, advance='no' ) nullArray
+500   status = -1
+50    if ( status /= 0 ) exit
+      do pos=1, len(string) - 1
+        if ( any(nullArray(pos:pos+1) == achar(0)) ) exit
+      enddo
+      pos = max(pos, 2)
+      cArray(1:pos-1) = nullArray(1:pos-1)
+      ! print *, cArray
+      recrd = min(recrd+1, size(string))
+      string(recrd) = transfer( cArray, string(recrd) )
+    enddo
+    if ( present(nLines) ) nLines = recrd
+  end subroutine READ_stdin_arr
+
+  subroutine READ_stdin_arr2d ( chars, LineLen, nLines )
+  ! read stdin into a 2d char array, one line per row
+  ! leaving unread elements unchanged
+  ! (So you can prefill with nulls)
+    character(len=1), dimension(:,:), intent(inout) :: chars    ! its contents
+    integer, optional, intent(out) :: LineLen ! max line length read
+    integer, optional, intent(out) :: nLines ! num lines read
+    ! Internal variables
+    character(len=1), dimension(size(chars,2)) :: cArray
+    integer :: lun = 5
+    integer :: N ! max line length so far
+    integer :: col
+    integer :: recrd
+    integer :: status
+    character(len=12) :: xfmt
+    character(len=8) :: xlen
+    N = 0
+    ! What format do we use for reading each line?
+    xfmt = '(128a1)' ! This is the default
+    write( xlen, '(i8)' ) size(chars,2)
+    if ( index(xlen, '*') < 1 ) xfmt = '(' // trim(adjustl(xlen)) // 'a1)'
+    ! Try to read stdin
+    if ( present(nLines) ) nLines = 0
+    recrd = 1
+    ! print *, 'xfmt: ', xfmt
+    do
+      status = 0
+      call null_fill_1d( cArray )
+      read( UNIT=lun, fmt=xfmt, eor=50, end=500, err=50, advance='no' ) cArray
+500   status = -1
+50    if ( status /= 0 ) exit
+      do col=1, size(chars, 2)
+        if( cArray(col) == achar(0) ) then
+          N = max(N, col-1)
+          exit
+        else
+          chars(recrd, col) = cArray(col)
+        endif
+      enddo
+      if ( col > size(chars, 2) ) N = size(chars, 2)
+      recrd = min(recrd + 1, size(chars, 1))
+    enddo
+    if ( present(nLines) ) nLines = recrd
+    if ( present(LineLen) ) LineLen = N
+  end subroutine READ_stdin_arr2d
+
+  subroutine READ_stdin_sca ( string, maxLineLen, nLines )
+  ! read stdin into a single string
+    character(len=*), intent(inout) :: string    ! its contents
+    integer, optional, intent(in) :: maxLineLen
+    integer, optional, intent(out) :: nLines ! num lines read
+    ! Internal variables
+    character(len=1), dimension(len(string)) :: cArray
+    integer :: i
+    integer :: lun = 5
+    integer :: lines
+    integer :: pos
+    integer :: recrd
+    integer :: status
+    character(len=12) :: xfmt
+    character(len=8) :: xlen
+    ! Executable
+    ! What format do we use for reading each line?
+    xfmt = '(128a1)' ! This is the default; if lines are larger supply maxLineLen
+    if ( present(maxLineLen) ) then
+     write( xlen, '(i8)' ) maxLineLen
+     if ( len(string) < maxLineLen ) write( xlen, '(i8)' ) len(string)
+     if ( index(xlen, '*') < 1 ) xfmt = '(' // trim(adjustl(xlen)) // 'a1)'
+    else
+     write( xlen, '(i8)' ) len(string)
+     if ( index(xlen, '*') < 1 ) xfmt = '(' // trim(adjustl(xlen)) // 'a1)'
+    endif
+    ! Try to read the stdin
+    if ( present(nLines) ) nLines = 0
+    recrd = 0
+    ! print *, 'xfmt: ', xfmt
+    i = 0
+    do
+      status = 0
+      call null_fill_1d( carray )
+      read( UNIT=lun, fmt=xfmt, eor=50, end=500, err=50, advance='no' ) cArray
+500   status = -1
+50    if ( status /= 0 ) exit
+      ! print *, cArray
+      recrd = recrd + 1
+      oneLine: do pos=1, len(string) - 1
+        if ( any(carray(pos:pos+1) == achar(0)) ) exit oneLine
+        i = min(i + 1, len(string))
+        string(i:i) = carray(pos)
+       enddo oneLine
+      i = min(i + 1, len(string))
+      string(i:i) = achar(13)
+    enddo
+    if ( present(nLines) ) nLines = recrd
+  end subroutine READ_stdin_sca
 
   !------------------ read_textfile
   ! Notes and limitations:
@@ -273,6 +448,9 @@ contains
 end module IO_STUFF
 
 ! $Log$
+! Revision 2.12  2010/01/25 23:51:11  pwagner
+! Added routines to read stdin into string variables
+!
 ! Revision 2.11  2009/06/30 15:21:21  pwagner
 ! Changed intent to prevent READ_TEXTFILE_sca from leaving undefineds in string
 !
