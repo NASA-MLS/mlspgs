@@ -1,0 +1,99 @@
+\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9in
+
+\newcommand{\docname}{\bf wvs-089}
+\newcommand{\docdate}{25 January 2010}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill, Van\\
+Subject: \>TScat derivatives w.r.t. T and IWC\\
+From: \>Van Snyder\\
+Reference: \>wvs-066, wvs-076
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+Denote the reference orbit geodetic angle $\phi$ by $\phi_i$.
+
+The scattering points in the set $\{S_{jk}\}$, in the orbit plane, are on a
+grid specified by $\{\phi_j\} \times \{\zeta_k\}$, where $\{\phi_j\}$ are orbit
+geodetic angles.
+
+The reference horizon is the line in the orbit plane from the scattering point
+$S_{jk}$ and perpendicular to the line in the orbit plane from the center of
+the Earth at $\phi_i$.  The angle $\chi$ is measured anticlockwise in the orbit
+plane from that line.
+
+The points in the set $\{A_{mn}\}$, also in the orbit plane, include points in
+addition to $\{S_{jk}\}$, on a grid specified by $\{\phi_m\} \times
+\{\zeta_n\}$.
+
+$P_{jk}(\chi)$ is the Mie phase function, evaluated for IWC and T at $S_{jk}$;
+$\chi = 0$ at the reference horizon.
+
+The radiance arriving at $S_{jk}$ from direction $\chi$ in the orbit plane is
+$I_{ijk}(\chi)$.
+
+The radiance arriving at $S_{jk}$ from all directions in the orbit plane,
+convolved with the Mie phase function, is
+
+\begin{equation}
+\overline{I}_{ijk} = \int_{-\pi}^\pi I_{ijk}(\chi) P_{jk}(\chi)\, \text{d} \chi
+\,.
+\end{equation}
+
+The derivative of phase-convolved radiance at $S_{jk}$ with respect to some
+quantity $x_{mn}$ at $A_{mn}$, where $x$ is either IWC or $T$, is
+
+
+\begin{equation}\label{two}
+\frac{\partial\overline{I}_{ijk}}{\partial x_{mn}} =
+ \int_{-\pi}^\pi
+  \left[ \frac{\partial I_{ijk}(\chi)}{\partial x_{mn}} P_{jk}(\chi) +
+         I_{ijk}(\chi) \frac{\partial P_{jk}(\chi)}{\partial x_{mn}}
+          \right] \, \text{d} \chi \,.
+\end{equation}
+
+If $S_{jk}$ is not at $A_{mn}$, then $\frac{\partial P_{jk}(\chi)}{\partial
+x_{mn}} = 0$.  Therefore, when $S_{jk}$ is not at $A_{mn}$, Equation
+(\ref{two}) can be simplified to
+
+\begin{equation}
+\frac{\partial\overline{I}_{ijk}}{\partial x_{mn}} =
+ \int_{-\pi}^\pi
+  \frac{\partial I_{ijk}(\chi)}{\partial x_{mn}} P_{jk}(\chi)\, \text{d} \chi \,.
+\end{equation}
+
+\label{lastpage}
+\end{document}
+% $Id$
+
+% $Log$
