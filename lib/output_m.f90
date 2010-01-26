@@ -22,7 +22,8 @@ module OUTPUT_M
   use MLSSets, only: FindAll, FindFirst
   use MLSStringLists, only: ExpandStringRange, getStringElement, &
     & NumStringElements, wrap
-  use MLSStrings, only: lowerCase, nCopies, readIntsFromChars, writeIntsToChars
+  use MLSStrings, only: lowerCase, nCopies, &
+    & readIntsFromChars, trim_safe, writeIntsToChars
   implicit none
   private
 
@@ -44,9 +45,9 @@ module OUTPUT_M
 
 !     (subroutines and functions)
 ! alignToFit               align printed argument to fit column range
-! blanks                   "print" specified number of blanks [or fill chars]
-! blanksToColumn           "print" blanks [or fill chars] out to specified column
-! blanksToTab              "print" blanks [or fill chars] out to next tab stop
+! blanks                   print specified number of blanks [or fill chars]
+! blanksToColumn           print blanks [or fill chars] out to specified column
+! blanksToTab              print blanks [or fill chars] out to next tab stop
 ! dump                     dump output or stamp options
 ! dumpsize                 print a nicely-formatted memory size 
 ! getStamp                 get stamp being added to every output
@@ -969,48 +970,27 @@ contains
     logical, intent(in), optional          :: DONT_STAMP ! Prevent double-stamping
     integer, intent(in), optional :: NEWLINEVAL ! What char val to treat as <cr>
     ! Internal variables
-    integer :: how_many
     integer :: I ! loop inductor
-    integer :: lastCR
     integer :: myNewLineVal
-    integer, dimension(len(chars)) :: which
     ! Executable
     myNewLineVal = outputOptions%newlineVal
     if ( present(newLineVal) ) myNewLineVal = newLineVal
-    call FindAll( chars, achar(myNewLineVal), which, how_many=how_many )
-    ! print *, 'how many? ', how_many
-    ! print *, 'which? ', (which(i), i=1, how_many)
-    if ( how_many < 1 ) then
+    i = index( chars, achar(myNewLineVal) )
+    if ( i < 1 ) then
       call OUTPUT_CHAR_NOCR ( CHARS, &
         & ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS, INSTEADOFBLANK, DONT_STAMP )
     else
-      ! Yes, this complicated (more work needed to simplify)
-      ! Find which locations are <cr>
-      ! Then call output for the stretches of chars in between
-      ! Instead of printing <cr>, call newLine
-      
-      ! A much simpler alternative would simply loop over all the chars, calling
-      ! output_char unless the char in question was a <cr> when
-      ! we would instead call newLine
-      
-      ! We may switch to this alternative
-      ! One advantage: we would not need the automatic array 'which'
-      lastCR = 0
-      do i=1, how_many
-        if ( which(i) > lastCR+1 .and. which(i) < len(chars)+1 ) then
-          call OUTPUT_CHAR_NOCR ( CHARS(lastCR+1:which(i)-1), &
+      do i=1, len(chars)
+        if ( chars(i:i) /= achar(myNewLineVal) ) then
+          call OUTPUT_CHAR_NOCR ( CHARS(i:i), &
         & ADVANCE='no', FROM_WHERE=FROM_WHERE, DONT_LOG=DONT_LOG, &
         & LOG_CHARS=LOG_CHARS, INSTEADOFBLANK=INSTEADOFBLANK, &
         & DONT_STAMP=DONT_STAMP )
+        else
+          call newLine
         endif
-        call newLine
-        lastCR = which(i)
       enddo
-      if ( lastCR < len(chars) ) &
-        & call OUTPUT_CHAR_NOCR ( CHARS(lastCR+1:), &
-        & ADVANCE=ADVANCE, FROM_WHERE=FROM_WHERE, DONT_LOG=DONT_LOG, &
-        & LOG_CHARS=LOG_CHARS, INSTEADOFBLANK=INSTEADOFBLANK, &
-        & DONT_STAMP=DONT_STAMP )
+      if ( Advance_is_yes_or_no(advance) == 'yes' ) call newLine
     endif
   end subroutine OUTPUT_CHAR
 
@@ -1142,7 +1122,9 @@ contains
     if ( outputOptions%prunit < 0  ) then
       ! Already logged; no output to stdout
     else if ( stamped_chars == ' ' .and. present(insteadofblank)  ) then
-      write ( outputOptions%prunit, '(a)', advance=my_adv ) trim(insteadofblank)
+      write ( outputOptions%prunit, '(a)', advance=my_adv ) trim_safe(insteadofblank)
+    else if ( stamped_chars == ' ' .and. my_adv == 'no' ) then
+      write ( outputOptions%prunit, '(a)', advance='no' ) ' '
     elseif ( len_trim(chars) < 1 .and. n_stamp == 1 ) then
       write ( outputOptions%prunit, '(a)', advance=my_adv )
     else
@@ -2171,6 +2153,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.81  2010/01/26 17:49:42  pwagner
+! Fixed bug that added space before newlines; simplified output_char
+!
 ! Revision 2.80  2009/06/24 22:35:44  pwagner
 ! Trick to pass places arg into output via format arg
 !
