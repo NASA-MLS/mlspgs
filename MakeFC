@@ -667,7 +667,7 @@ install-l3d:
 install-l3m:
 	@$(MAKE) -f $(MakeFName) install LEVELS=l3m
 
-install-nrt:
+install-nrt: install-l1 install-l2
 	@cp $(MLSBIN)/mlsnrt.sh $(INSTALLDIR)
 
 # Build executables out of sources from mlspgs/util directory
@@ -1124,8 +1124,6 @@ internalmftests:
      cd "$(sids_l1boa)"; \
      $(MAKE) -f $(MakeFName) update; \
    fi
-#		../../$(MLSBIN)/mlsconfigure -dc "../../$(CONFDIR)" -pc "$(PLATFORMS)" \
-#         -cf "$(MLSCFILE)" -nc -nd; \
 
 show_copy:
 	@echo "MakeFC copy number $(COPY_NUMBER)"
@@ -1176,6 +1174,9 @@ tools: chunktimes checkpvmup compare dateconverter heconvert h5subset h5cat hl \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.118  2009/12/09 01:12:55  pwagner
+# l3 and l3m no longer built by default
+#
 # Revision 1.117  2009/11/30 19:27:16  pwagner
 # Should succeed even if some SUBDIRS missing
 #
