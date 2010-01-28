@@ -133,6 +133,15 @@ echo $LEVEL1_BINARY_DIR/$MLSPROG_1 $EXTRA_OPTIONS "$@"
 $LEVEL1_BINARY_DIR/$MLSPROG_1 $EXTRA_OPTIONS "$@"
 return_status_1=`expr $?`
 H5REPACK=$LEVEL1_BINARY_DIR/h5repack
+NETCDFAUGMENT=$LEVEL1_BINARY_DIR/aug_hdfeos5
+if [ ! -x "$H5REPACK" ]
+then
+  H5REPACK=$MLSTOOLS/H5REPACK
+fi
+if [ ! -x "$NETCDFAUGMENT" ]
+then
+  NETCDFAUGMENT=$MLSTOOLS/aug_hdfeos5
+fi
 
 if [ $return_status_1 != $NORMAL_STATUS ]
 then
@@ -208,6 +217,29 @@ then
   done
 fi
 
+# augment level 2 product files to make them netcdf-compatible
+# (must not reverse order of repack, augment)
+if [ -x "$NETCDFAUGMENT" ]
+then
+  files=`extant_files *L2GP-[A-CE-Z]*.he5 *L2GP-DGG_*.he5`
+  if [ "$files" = "" ]
+  then
+    if [ -d "outputs" ]
+    then
+      cd "outputs"
+      files=`extant_files *L2GP-[A-CE-Z]*.he5 *L2GP-DGG_*.he5`
+    fi
+  fi
+  for file in $files
+  do
+    if [ -w "$file" ]
+    then
+      echo $NETCDFAUGMENT $file
+      $NETCDFAUGMENT $file
+    fi
+  done
+fi
+
 if [ $return_status != $NORMAL_STATUS ]
 then
    exit 1
@@ -216,6 +248,9 @@ else
 fi
 
 # $Log$
+# Revision 1.2  2009/02/13 17:37:05  pwagner
+# Running mlspgs automatically prints license text
+#
 # Revision 1.1  2008/01/25 18:24:55  pwagner
 # First commit
 #
