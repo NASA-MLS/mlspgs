@@ -649,6 +649,7 @@ contains
     integer, intent(in), optional :: LBOUND ! Low bound for Array
     character(len=*), optional, intent(in) :: options
     integer :: myFillValue
+    myFillValue = 0
     myRank = 0
     include 'dumpstats.f9h'
   end subroutine DUMP_BOGUS
@@ -2471,6 +2472,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.100  2010/01/29 21:08:21  pwagner
+! gave myFillValue a value to stop lf95 complaints
+!
 ! Revision 2.99  2009/11/20 01:15:11  pwagner
 ! Decided against using allFinite
 !
