@@ -1997,18 +1997,20 @@ contains ! ======================= Public Procedures =========================
     nswaths = 0
     mls_swath_in_file_sca = .false.
     fieldlist = ''
+    listsize = -1 ! So we can check later whether it has been set
+    hlistsize = -1
     select case (HdfVersion)
     case (HDFVERSION_4)
       nswaths = swinqswath(trim(filename), fieldlist, listsize)
     case (HDFVERSION_5)
       nswaths = HE5_swinqswath(trim(filename), fieldlist, hlistsize)
-      listsize = hlistsize
     end select
     if ( present(error) ) error = min(0, nswaths)
     if ( nswaths < 1 ) then
       call MLSMessageCalls( 'pop' )
       return
     endif
+    if ( listsize < 0 ) listsize = hlistsize
     if ( listsize > MAXDLISTLENGTH ) then
        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'list size too big in mls_swath_in_file_sca ' // trim(filename) )
@@ -2222,6 +2224,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDFEOS
 
 ! $Log$
+! Revision 2.43  2010/01/29 01:16:06  pwagner
+! Fixed undefined hlistsize bug Lahey complained about
+!
 ! Revision 2.42  2010/01/14 23:29:35  pwagner
 ! Uses separate scalar and array generic forms for HE5_EHRDGLATT_INTEGER
 !
