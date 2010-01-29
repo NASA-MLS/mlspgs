@@ -64,10 +64,10 @@ ifeq ($(MLSF95),LF95)
    gcc_libloc=$(shell ${REECHO} -d /usr/lib/gcc*/i386-redhat-linux/${gcc_version})
    static_object=$(shell ${UTILDIR}/which_fftw.sh -static)
 ifdef STATIC_LINK
-   l_specials=-lz -L${gcc_libloc} -lgcc \
+   l_specials=-lz -L${gcc_libloc} -lgcc -ldl \
      ${static_object}
 else
-   l_specials=-lz -L${gcc_libloc} -lgcc
+   l_specials=-lz -L${gcc_libloc} -lgcc -ldl
 endif
 endif
 
@@ -116,6 +116,9 @@ utctotai_linker_line=-L${INSTALLDIR} -lutctotai
 utctotai_message=Building program with toolkitless utc to tai conversion
 
 # $Log$
+# Revision 1.5  2008/07/11 23:54:42  pwagner
+# 1st changes to get sunstudio to link mlsl2
+#
 # Revision 1.4  2007/04/16 23:04:20  pwagner
 # Changes in line with Intel v9.1
 #
