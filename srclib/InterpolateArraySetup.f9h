@@ -150,6 +150,7 @@
       end do
       call Sparsify ( tempDNewByDOld, dNewbyDOld, &
         & "tempDNewByDOld", ModuleName ) ! dNewbyDOld := tempDNewByDOld
+      call Deallocate_Test ( tempDNewByDOld, "tempDNewByDOld", ModuleName )
     end if
 
     if ( present(intYdX) ) then
@@ -171,6 +172,9 @@
 ! end subroutine InterpolateArraySetup_r*
 
 ! $Log$
+! Revision 1.7  2009/12/10 02:56:14  vsnyder
+! Put NewX into the period of OldX correctly
+!
 ! Revision 1.6  2009/12/08 21:44:21  vsnyder
 ! Provide splines with periodic boundary conditions, use Symm_Tri
 !
