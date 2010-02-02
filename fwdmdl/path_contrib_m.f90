@@ -76,9 +76,9 @@ contains
       if ( dtaudn(last) < black_out ) go to 19
     end do
 
-    if ( tan_pt < i_end ) dtaudn(tan_pt+1) = dtaudn(tan_pt)
+    if ( last == tan_pt+1 ) dtaudn(tan_pt+1) = dtaudn(tan_pt)
 
-    do last = tan_pt+2, i_end
+    do last = max(i_start+1,tan_pt+2), i_end
       dtaudn(last) = dtaudn(last-1) - incoptdepth(last-1)
       if ( dtaudn(last) < black_out ) go to 19
     end do
@@ -249,6 +249,9 @@ contains
 end module Path_Contrib_M
 
 ! $Log$
+! Revision 2.23  2009/06/23 18:26:11  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.22  2009/06/13 01:11:07  vsnyder
 ! Specify start and end of path
 !
