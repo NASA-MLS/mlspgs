@@ -119,7 +119,7 @@ contains
 
     end if
 
-    incoptdepth = ref_cor * incoptdepth
+    incoptdepth(i_start:) = ref_cor(i_start:) * incoptdepth(i_start:)
 
   ! Compute Tau = exp(indefinite sum of IncOptDepth)
 
@@ -222,6 +222,9 @@ contains
 end module Tau_M
 
 ! $Log$
+! Revision 2.12  2010/02/02 01:36:03  vsnyder
+! Don't reference incoptdepth and ref_cor before i_start
+!
 ! Revision 2.11  2009/06/23 18:26:10  pwagner
 ! Prevent Intel from optimizing ident string away
 !
