@@ -185,9 +185,6 @@ program MLSL2
 !---------------------------- RCS Ident Info ------------------------------
   character (len=*), parameter :: ModuleName= &
        "$RCSfile$"
-  character (len=*), parameter :: IdParm = &
-       "$Id$"
-  character (len=len(idParm)) :: Id = idParm
 !---------------------------------------------------------------------------
 
   type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
@@ -199,10 +196,11 @@ program MLSL2
   !---------------- Task (1) ------------------
 
   call time_now ( t0 )
-  call mls_h5open(error)
+  call mls_h5open ( error )
   if (error /= 0) then
       call MLSMessage ( MLSMSG_Error, moduleName, &
-        & "Unable to mls_open" )
+        & "Unable to mls_h5open" )
+      if ( not_used_here() ) print *, "This never gets executed"
   end if
   ! Before looking at command-line options, TOOLKIT is set to SIPS_VERSION
   ! So here's a good place to put any SIPS-specific settings overriding defaults
@@ -1138,9 +1136,23 @@ contains
     call output ( unit_number, advance='yes')
   end subroutine announce_success
 
+!-----------------------------------------------------------------------
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+!---------------------------------------------------------------------------
+
 end program MLSL2
 
 ! $Log$
+! Revision 2.172  2010/02/02 01:41:03  vsnyder
+! Move declaration of Id to a place where it is more difficult for a
+! compiler to notice it's not actually referenced.
+!
 ! Revision 2.171  2009/10/21 16:59:10  pwagner
 ! No longer insist on unlimited dims when given chunkrange
 !
