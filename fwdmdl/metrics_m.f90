@@ -854,8 +854,10 @@ path: do i = i1, i2
     !                                                pressure at the tangent
     logical, optional, intent(out) :: do_calc_hyd(:,:) ! nonzero locator for
     !           hydrostatic calculations.  Computed if present(dhidtlm)
-    logical, optional, intent(out) :: do_calc_t(:,:) ! nonzero locater for
-    !           temperature bases computations.  Computed if present(dhidtlm)
+    logical, optional, intent(inout) :: do_calc_t(:,:) ! nonzero locater for
+    !           temperature bases computations.  Computed if present(dhidtlm).
+    !           intent(inout) instead of intent(out) so as not to make parts we
+    !           don't touch undefined.
     real(rp), optional, intent(inout) :: eta_zxp(:,:) ! eta matrix for temperature
     !           Computed if present(dhidtlm)
     integer, optional, intent(inout) :: NZ_ZXP(:,:)   ! Nonzeros in Eta_zxp
@@ -1121,6 +1123,9 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.65  2009/12/15 03:20:06  vsnyder
+! Don't force phi_offset to -pix2..pix2 for Earth-intersecting rasy
+!
 ! Revision 2.64  2009/12/09 21:32:03  vsnyder
 ! Remove ill-advised mod on p_grid
 !
