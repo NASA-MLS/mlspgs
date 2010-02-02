@@ -309,10 +309,6 @@ contains
     use Path_Contrib_M, only: Get_GL_Inds
     use Physics, only: SpeedOfLight
     use PointingGrid_m, only: POINTINGGRIDS, PointingGrid_T
-    use Read_Mie_m, only: Beta_c_a, Beta_c_e, Beta_c_s, &
-      & dBeta_dIWC_c_a, dBeta_dIWC_c_e, dBeta_dIWC_c_s, &
-      & dBeta_dT_c_a, dBeta_dT_c_e, dBeta_dT_c_s, dP_dIWC, dP_dT, &
-      & F_s, IWC_s, P, T_s, Theta_s
     use SLABS_SW_M, only: ALLOCATESLABS, DESTROYCOMPLETESLABS, SLABS_STRUCT
 ! use testfield_m
     use Tau_M, only: Destroy_Tau, Dump, Tau_T
@@ -2607,6 +2603,7 @@ contains
         & InterpolateValues, InterpolateArrayTeardown
       use MLSSignals_m, only: GetNameOfSignal
       use Output_m, only: NewLine
+      use Read_Mie_m, only: dP_dIWC, dP_dT, F_s, IWC_s, P, T_s, Theta_s
       use Sort_m, only: Sortp
       use VectorsModule, only: Dump
 
@@ -2672,6 +2669,7 @@ contains
       integer :: Ptg_i, Ptg_j  ! Loop inductors and subscripts
       integer :: Ptg_f         ! Ptg_i, Ptg_j on fine grid
       integer :: Row           ! Row number of Jacobian block
+      integer :: Scat_Index(size(Xis)) ! of scattering point in coarse grid
       integer :: Sort_Xi(size(Xis)) ! Permutation vector to sort Xis
       integer :: Surf_i        ! Surface (first) subscript for TScat%values,
                                ! which combines frequency and zeta index
@@ -2832,14 +2830,14 @@ contains
               &                       scat_zeta, scat_phi, scat_ht, &
               &                       r_eq, xi, zeta_i, phi_i,      &
               &                       xis, rads, k_atmos_TScat, k_temp_TScat, &
-              &                       i_r, rev=.true. )
+              &                       i_r, scat_index, rev=.true. )
 
             xi = xi + pi
             call one_tscat_pointing ( ptg_i, vel_rel, scat_tan_phi, &
               &                       scat_zeta, scat_phi, scat_ht, &
               &                       r_eq, xi, zeta_i, phi_i,      &
               &                       xis, rads, k_atmos_TScat, k_temp_TScat, &
-              &                       i_r, rev=.false. )
+              &                       i_r, scat_index, rev=.false. )
 
             xi = dPhi_xi + dPhi - pi
             scat_tan_phi = scat_tan_phi + 2.0 * dphi_xi
@@ -2847,14 +2845,14 @@ contains
               &                       scat_zeta, scat_phi, scat_ht, &
               &                       r_eq, xi, zeta_i, phi_i,      &
               &                       xis, rads, k_atmos_TScat, k_temp_TScat, &
-              &                       i_r, rev=.false. )
+              &                       i_r, scat_index, rev=.false. )
 
             xi = xi + pi
             call one_tscat_pointing ( ptg_i, vel_rel, scat_tan_phi, &
               &                       scat_zeta, scat_phi, scat_ht, &
               &                       r_eq, xi, zeta_i, phi_i,      &
               &                       xis, rads, k_atmos_TScat, k_temp_TScat, &
-              &                       i_r, rev=.true. )
+              &                       i_r, scat_index, rev=.true. )
 
           end do ! ptg_i
 
@@ -2878,9 +2876,6 @@ contains
 
             ! Compute scat_tan_ht and scat_tan_phi for the ray to be scattered.
 
-            scat_tan_ht = scat_ht * abs(cos(dPhi - xi)) ! xi < 0 here
-            theta = 2.0 * acos(scat_tan_ht/r_eq)
-
             ! Rays that aren't earth-intersecting rays must be handled by
             ! specified tangent zeta (else there is no unique tangent
             ! point), not by specified angle.  They could be handled by
@@ -2888,8 +2883,11 @@ contains
             ! h_ref array, and then adding that zeta to the grid, but it's
             ! much easier just to reject them.
 
+            scat_tan_ht = scat_ht * abs(cos(dPhi - xi)) ! xi < 0 here
+            if ( scat_tan_ht > r_eq ) cycle
+            theta = 2.0 * acos(scat_tan_ht/r_eq)
+
             scat_tan_ht = scat_tan_ht - r_eq
-            if ( scat_tan_ht > 0.0 ) cycle
 
             xi_sub = dPhi - pid2
             forward = xi >= xi_sub
@@ -2914,14 +2912,14 @@ contains
               &                       scat_zeta, scat_phi, scat_ht, &
               &                       r_eq, xi, zeta_i, phi_i,      &
               &                       xis, rads, k_atmos_TScat, k_temp_TScat, &
-              &                       i_r, scat_tan_ht, forward )
+              &                       i_r, scat_index, scat_tan_ht, forward )
 
             xi = xi + pi
             call one_tscat_pointing ( 1, vel_rel, scat_tan_phi,     &
               &                       scat_zeta, scat_phi, scat_ht, &
               &                       r_eq, xi, zeta_i, phi_i,      &
               &                       xis, rads, k_atmos_TScat, k_temp_TScat, &
-              &                       i_r, scat_tan_ht, forward )
+              &                       i_r, scat_index, scat_tan_ht, forward )
 
           end do ! ptg_j
 
@@ -3037,27 +3035,20 @@ contains
                    & TScat%template%noChans * (zeta_i-1)
             ! Interpolate P to scattering point IWC and temperature, and
             ! angles Xi at which radiative transfer was done.
-!             ! Interpolate P to scattering point IWC and temperature and
-!             ! multiply that by sin(theta)
-!             do ptg_i = 1, size(p_t_iwc)
-!               p_t_iwc(ptg_i) = &
-!                 & sum(eta_t_iwc * &
-!                 &     p(t_ix+0:t_ix+1,iwc_ix+0:iwc_ix+1,ptg_i,freq_ix(f_i)) ) * &
-!                 & abs(sin(theta_e(ptg_i)))
-!             end do
-!             ! The phase function is symmetric in theta, but the radiances
-!             ! are not.  Unfold p_t_iwc to negative theta.
-!             p_on_theta_e(1:size(p_t_iwc)) = p_t_iwc(size(p_t_iwc):1:-1)
-!             p_on_theta_e(size(p_t_iwc)+1:2*size(p_t_iwc)+1-beg_pos_theta) = &
-!               & p_t_iwc(beg_pos_theta:)
-!             ! Now interpolate P_On_Theta_e to P_On_Xi using a periodic spline
-!             call interpolateValues ( coeffs_Theta_e_Xi, &
-!               & theta_e(:n_theta_e), p_on_theta_e(:n_theta_e), &
-!               & xis(sort_xi(:i_r)), p_on_xi(:i_r), method='S', extrapolate='P' )
             call interpolate_P_to_theta_e ( p(t_ix+0:t_ix+1,iwc_ix+0:iwc_ix+1,:,freq_ix(f_i)), &
               & Eta_t_iwc, Theta_e(:n_theta_e), Beg_Pos_Theta, &
               & Xis(sort_xi(:i_r)), coeffs_Theta_e_Xi, &
               & P_on_Xi(:i_r) )
+            if ( atmos_der ) &
+              & call interpolate_P_to_theta_e ( dP_dIWC(t_ix+0:t_ix+1,iwc_ix+0:iwc_ix+1,:,freq_ix(f_i)), &
+              & Eta_t_iwc, Theta_e(:n_theta_e), Beg_Pos_Theta, &
+              & Xis(sort_xi(:i_r)), coeffs_Theta_e_Xi, &
+              & dP_dIWC_on_Xi(:i_r) )
+            if ( temp_der ) &
+              & call interpolate_P_to_theta_e ( dP_dT(t_ix+0:t_ix+1,iwc_ix+0:iwc_ix+1,:,freq_ix(f_i)), &
+              & Eta_t_iwc, Theta_e(:n_theta_e), Beg_Pos_Theta, &
+              & Xis(sort_xi(:i_r)), coeffs_Theta_e_Xi, &
+              & dP_dT_on_Xi(:i_r) )
 
             !{ Compute $\int_{-\pi}^\pi \, f(\xi) P(\xi)\, \text{d}\xi$ using
             ! trapezoidal quadrature, without assuming equal abscissa spacing,
@@ -3067,27 +3058,51 @@ contains
               & 0.25 * ( p_on_xi(i_r)*rads(f_i,sort_xi(i_r)) + &
               &          p_on_xi(  1)*rads(f_i,sort_xi(  1)) ) * &
               &        ( xis(sort_xi(1)) + pix2 - xis(sort_xi(i_r)) )
-            if ( atmos_der ) k_atmos_p =  &
-              & 0.25 * ( p_on_xi(i_r)*k_atmos_TScat(f_i,sort_xi(i_r),:) + &
-              &          p_on_xi(  1  )*k_atmos_TScat(f_i,sort_xi(  1  ),:) ) * &
-              &        ( xis(sort_xi(  1)) + pix2 - xis(sort_xi(i_r)) )
-            if ( temp_der ) k_temp_p =  &
-              & 0.25 * ( p_on_xi(i_r)*k_temp_TScat(f_i,sort_xi(i_r),:) + &
-              &          p_on_xi(  1  )*k_temp_TScat(f_i,sort_xi(  1  ),:) ) * &
-              &        ( xis(sort_xi(  1)) + pix2 - xis(sort_xi(i_r)) )
+            if ( atmos_der ) then
+              k_atmos_p =  &
+                & 0.25 * ( p_on_xi(i_r)*k_atmos_TScat(f_i,sort_xi(i_r),:) + &
+                &          p_on_xi(  1)*k_atmos_TScat(f_i,sort_xi(  1),:) ) * &
+                &        ( xis(sort_xi(  1)) + pix2 - xis(sort_xi(i_r)) )
+              k_atmos_p(scat_index(i_r)) = k_atmos_p(scat_index(i_r)) + &
+                & 0.25 * ( dP_dIWC_on_Xi(i_r)*rads(f_i,sort_xi(i_r)) + &
+                &          dP_dIWC_on_Xi(  1)*rads(f_i,sort_xi(  1)) ) * &
+                &        ( xis(sort_xi(  1)) + pix2 - xis(sort_xi(i_r)) )
+            end if
+            if ( temp_der ) then
+              k_temp_p =  &
+                & 0.25 * ( p_on_xi(i_r)*k_temp_TScat(f_i,sort_xi(i_r),:) + &
+                &          p_on_xi(  1)*k_temp_TScat(f_i,sort_xi(  1),:) ) * &
+                &        ( xis(sort_xi(  1)) + pix2 - xis(sort_xi(i_r)) )
+              k_temp_p(scat_index(i_r)) = k_temp_p(scat_index(i_r)) + &
+                & 0.25 * ( dP_dT_on_Xi(i_r)*rads(f_i,sort_xi(i_r)) + &
+                &          dP_dT_on_Xi(  1)*rads(f_i,sort_xi(  1)) ) * &
+                &        ( xis(sort_xi(  1)) + pix2 - xis(sort_xi(i_r)) )
+              end if
             do ptg_i = 2, i_r ! Now do the rest.
               TScat%values(surf_i,phi_i) = TScat%values(surf_i,phi_i) + &
                 & 0.25 * ( p_on_xi(ptg_i-1)*rads(f_i,sort_xi(ptg_i-1)) + &
                 &          p_on_xi(ptg_i  )*rads(f_i,sort_xi(ptg_i  )) ) * &
                 &        ( xis(sort_xi(ptg_i)) - xis(sort_xi(ptg_i-1)) )
-              if ( atmos_der ) k_atmos_p = k_atmos_p + &
-                & 0.25 * ( p_on_xi(ptg_i-1)*k_atmos_TScat(f_i,sort_xi(ptg_i-1),:) + &
-                &          p_on_xi(ptg_i  )*k_atmos_TScat(f_i,sort_xi(ptg_i  ),:) ) * &
-                &        ( xis(sort_xi(ptg_i)) - xis(sort_xi(ptg_i-1)) )
-              if ( temp_der ) k_temp_p = k_temp_p + &
-                & 0.25 * ( p_on_xi(ptg_i-1)*k_temp_TScat(f_i,sort_xi(ptg_i-1),:) + &
-                &          p_on_xi(ptg_i  )*k_temp_TScat(f_i,sort_xi(ptg_i  ),:) ) * &
-                &        ( xis(sort_xi(ptg_i)) - xis(sort_xi(ptg_i-1)) )
+              if ( atmos_der ) then
+                k_atmos_p = k_atmos_p + &
+                  & 0.25 * ( p_on_xi(ptg_i-1)*k_atmos_TScat(f_i,sort_xi(ptg_i-1),:) + &
+                  &          p_on_xi(ptg_i  )*k_atmos_TScat(f_i,sort_xi(ptg_i  ),:) ) * &
+                  &        ( xis(sort_xi(ptg_i)) - xis(sort_xi(ptg_i-1)) )
+                k_atmos_p(scat_index(ptg_i-1)) = k_atmos_p(scat_index(ptg_i-1)) + &
+                  & 0.25 * ( dP_dIWC_on_Xi(ptg_i-1)*rads(f_i,sort_xi(ptg_i-1)) + &
+                  &          dP_dIWC_on_Xi(ptg_i  )*rads(f_i,sort_xi(ptg_i  )) ) * &
+                  &        ( xis(sort_xi(ptg_i  )) + pix2 - xis(sort_xi(ptg_i-1)) )
+              end if
+              if ( temp_der ) then
+                k_temp_p = k_temp_p + &
+                  & 0.25 * ( p_on_xi(ptg_i-1)*k_temp_TScat(f_i,sort_xi(ptg_i-1),:) + &
+                  &          p_on_xi(ptg_i  )*k_temp_TScat(f_i,sort_xi(ptg_i  ),:) ) * &
+                  &        ( xis(sort_xi(ptg_i)) - xis(sort_xi(ptg_i-1)) )
+                k_temp_p(scat_index(ptg_i-1)) = k_temp_p(scat_index(ptg_i-1)) + &
+                  & 0.25 * ( dP_dT_on_Xi(ptg_i-1)*rads(f_i,sort_xi(ptg_i-1)) + &
+                  &          dP_dT_on_Xi(ptg_i  )*rads(f_i,sort_xi(ptg_i  )) ) * &
+                  &        ( xis(sort_xi(ptg_i  )) + pix2 - xis(sort_xi(ptg_i-1)) )
+              end if
             end do
             !{ It isn't necessary to divide by
             ! $\int \, P(\xi) \sin\xi \, \text{d}\xi$
@@ -3916,13 +3931,12 @@ contains
     subroutine One_TScat_Pointing ( Ptg_i, Vel_Rel, Scat_Tan_Phi, Scat_Zeta,  &
       &                             Scat_Phi, Scat_Ht, Use_R_Eq, Xi,          &
       &                             Zeta_i, Phi_i, Xis, Rads, K_Atmos_TScat,  &
-      &                             K_Temp_TScat, I_R, &
+      &                             K_Temp_TScat, I_R, Scat_Index,            &
       &                             Scat_Tan_Ht, Forward, Rev)
 
       ! Do one TScat pointing
 
       use Get_Eta_Matrix_m, only: Get_Eta_Sparse
-      use Read_Mie_m, only: F_s, IWC_s, T_s, Theta_s, P
 
       integer, intent(in) :: Ptg_i          ! Pointing index for One_Pointing
       real(rp), intent(in) :: Vel_Rel       ! LOS Vel / speed of light
@@ -3940,7 +3954,8 @@ contains
       real(rp), intent(inout) :: Rads(:,:)  ! Store radiance in Rads(:,I_R)
       real(r4), intent(inout) :: K_Atmos_TScat(:,:,:) ! Store partials in K_Atmos_TScat(:,I_R,:)
       real(r4), intent(inout) :: K_Temp_TScat(:,:,:) ! Store partials in K_Atmos_TScat(:,I_R,:)
-      integer, intent(inout) :: I_R         ! Update if OK
+      integer, intent(inout) :: I_R         ! Index in Xis, Scat_index; Update if OK
+      integer, intent(out) :: Scat_Index(:) ! Index of scattering point in coarse grid
       real(rp), intent(in), optional :: Scat_Tan_Ht ! Tangent height above
                                             ! earth geometric surface, km, for
                                             ! subsurface rays
@@ -3948,17 +3963,18 @@ contains
                                             ! "xi >= xi_sub" in Generate_TScat
       logical, intent(in), optional :: Rev  ! Reverse the integration order
 
-      integer :: Scat_Index   ! In coarse grid, used by one_pointing
+      integer :: My_Scat_Index
 
       ! Do the ray tracing for all the signals
       call one_pointing ( ptg_i, vel_rel, scat_tan_phi, use_r_eq=use_r_eq, &
         &                 scat_zeta=scat_zeta, scat_phi=scat_phi,          &
-        &                 scat_ht=scat_ht, xi=xi, scat_index=scat_index,   &
+        &                 scat_ht=scat_ht, xi=xi, scat_index=my_scat_index,&
         &                 scat_tan_ht=scat_tan_ht, forward=forward, rev=rev )
 
-      if ( scat_index <= 1 ) return ! No ray to trace
+      if ( my_scat_index <= 1 ) return ! No ray to trace
 
       i_r = i_r + 1
+      scat_index(i_r) = my_scat_index
       xis(i_r) = xi
       rads(:,i_r) = radiances(:,ptg_i)
       if ( atmos_der ) k_atmos_TScat(:,i_r,:) = k_atmos(:,ptg_i,:)
@@ -3969,12 +3985,13 @@ contains
     subroutine TScat_Setup
       ! Get ready for TScat computation
       use Intrinsic, only: L_ScatteringAngle
-      use Read_Mie_m, only: P
+      use Read_Mie_m, only: dP_dT, F_s, P
       logical :: Error
       integer :: Q ! Loop index
       type (VectorValue_T), pointer :: TScat, TScat2
-      if ( .not. associated(p) ) call announce_error ( &
-        & "TScat computation needs the Mie phase function." )
+      if ( .not. associated(p) .or. .not. associated(F_s) .or. &
+        &  .not. associated(dP_dT) ) &
+        & call announce_error ( 'TScat table computation requires Mie tables.' )
       if ( FwdModelConf%do_conv ) call announce_error ( &
         & 'Convolution and TScat computation are incompatible.' )
       if ( FwdModelConf%incl_cld ) call announce_error ( &
@@ -3985,8 +4002,6 @@ contains
         & 'Refractive correction and TScat computation are incompatible.' )
       if ( FwdModelConf%spect_der ) call announce_error ( &
         & 'Spectroscopy derivatives and TScat computation are incompatible.' )
-      if ( .not. associated(F_s) .or. .not. associated(dP_dT) ) &
-        & call announce_error ( 'TScat table computation requires Mie tables.' )
       ! Get IWC field
       iwc => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra,  &
         & quantityType=l_vmr, molecule=l_cloud_a, config=fwdModelConf )
@@ -4138,6 +4153,16 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.299  2010/01/23 01:30:49  vsnyder
+! Move USEs into closer proximity to references.  Get cloudIce as vmr if it
+! isn't available as a quantityType.  Create TScat stuff with zero size if
+! not doing TScat table generation.  Get index of Cloud_A if there is one.
+! Provide that betas for Cloud_A and Cloud_S depend upon IWC mixing ratio.
+! Calculate TScat derivatives (still not complete).  Don't compute TScat
+! or derivatives where there's no IWC.  Don't use the logIWC quantity type.
+! During TScat table computation, interpolate P to pointing angles rather
+! than interpolating incident radiance to angles where T is tabluated.
+!
 ! Revision 2.298  2009/12/15 03:30:04  vsnyder
 ! TScat radiance calculation working again -- P interpreted to xi instead
 ! of radiance interpolated to theta.
