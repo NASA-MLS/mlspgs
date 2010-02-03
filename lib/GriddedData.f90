@@ -1388,12 +1388,13 @@ contains
     ! Given a grid, possibly add extra points in longitude beyond +/-180
     ! and in solar time beyond 0..24 to aid in interpolations.
     ! Dummy arguments
-    use Allocate_Deallocate, only: Test_Allocate
+    use Allocate_Deallocate, only: Memory_Units, Test_Allocate, Test_DeAllocate
     type ( GriddedData_T ), intent(inout) :: GRID
     ! Local variables
     real (rgr), dimension(:), pointer :: NEWLONS
     real (rgr), dimension(:), pointer :: NEWLSTS
     real (rgr), dimension(:,:,:,:,:,:), pointer :: NEWFIELD
+    real :: S ! Size in bytes of a deallocated field
     integer :: LOWERLON
     integer :: UPPERLON
     integer :: LOWERLST
@@ -1491,9 +1492,9 @@ contains
     ! Tidy up
     call Deallocate_test ( grid%lons, 'grid%lons', ModuleName )
     call Deallocate_test ( grid%lsts, 'grid%lsts', ModuleName )
+    s = real(merge(e_dp,e_def,rgr==r8))/memory_units * size(grid%field)
     deallocate ( grid%field, stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Deallocate//'grid%values' )
+    call test_deallocate ( status, moduleName, 'grid%values', s )
 
     ! Make grid use new values
     grid%noLons = grid%noLons + lowerLon + upperLon
@@ -1519,6 +1520,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.58  2010/02/03 23:09:23  vsnyder
+! Use Test_Deallocate
+!
 ! Revision 2.57  2009/10/30 23:04:50  pwagner
 ! Added diff of gridded data
 !
