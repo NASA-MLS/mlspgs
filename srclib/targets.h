@@ -1,6 +1,4 @@
 # "$Id$"
-STATIC_LINK := $(shell echo $(LDOPTS) | grep -e "-static")
-
 PVM_PATH = ${PVM_ROOT}/lib/${PVM_ARCH}
 
 ifdef PVM_ROOT
@@ -14,7 +12,6 @@ endif
 
 ifdef BLAS
 ifdef LIB_BLAS
-#   blas_linker_line=-L${BLAS} -l${LIB_BLAS}
     blas_linker_line := $(shell ${REECHO} -dir ${BLAS} -prefixn=-l -lib ${LIB_BLAS})
     blas_linker_line := -L${BLAS} ${blas_linker_line}
 else
@@ -28,7 +25,6 @@ endif
 
 ifdef LAPACK
 ifdef LIB_LAPACK
-#   lapack_linker_line=-L${LAPACK} -l${LIB_LAPACK}
     lapack_linker_line := $(shell ${REECHO} -dir ${LAPACK} -prefixn=-l -lib ${LIB_LAPACK})
     lapack_linker_line := -L${LAPACK} ${lapack_linker_line}
 else
@@ -48,63 +44,6 @@ else
    tk_linker_line=
 endif
 
-ifdef HDF5
-ifeq ($(MLSPLAT),Sun)
-   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 -R${HDF5}
-else
-#   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 -Xlinker -rpath=${HDF5} \
-#    -lssl -lz
-   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 
-   l_specials := $(l_specials) -lz
-endif
-ifdef HDFEOS5
-   hdfeos5_linker_line=-L${HDFEOS5} -lhe5_hdfeos
-ifeq ($(MLSF95),LF95)
-   gcc_version=$(shell ${UTILDIR}/which_fftw.sh -gcc)
-   gcc_libloc=$(shell ${REECHO} -d /usr/lib/gcc*/i386-redhat-linux/${gcc_version})
-   static_object=$(shell ${UTILDIR}/which_fftw.sh -static)
-ifdef STATIC_LINK
-   l_specials=-lz -L${gcc_libloc} -lgcc -ldl \
-     ${static_object}
-else
-   l_specials=-lz -L${gcc_libloc} -lgcc -ldl
-endif
-endif
-
-ifeq ($(MLSF95),Sunst)
-   gcc_version=$(shell ${UTILDIR}/which_fftw.sh -gcc)
-   gcc_libloc=$(shell ${REECHO} -d /usr/lib/gcc*/i386-redhat-linux/${gcc_version})
-#  l_specials=-lz -L/usr/lib/gcc-lib/i386-redhat-linux/2.96/ -lgcc
-  l_specials=-lz -L${gcc_libloc} -lgcc
-endif
-
-ifeq ($(MLSF95),IFCold)
-   gcc_version=$(shell ${UTILDIR}/which_fftw.sh -gcc)
-   gcc_libloc=$(shell ${REECHO} -d /usr/lib/gcc*/i386-redhat-linux/${gcc_version})
-   static_object=$(shell ${UTILDIR}/which_fftw.sh -static)
-   STATIC_LINK := $(shell echo $(LDOPTS) | grep -e "-Bstatic")
-ifdef STATIC_LINK
-   l_specials=-lz -L${gcc_libloc} -lgcc \
-     ${static_object}
-else
-   l_specials=-lz -L${gcc_libloc} -lgcc
-endif
-endif
-else
-   hdfeos5_linker_line=
-endif
-ifdef HDFVERSIONS
-   he5lib_linker_line=-L$(CONFDIR)/he5lib/$(MLSCONFG) -lhe5
-   he5lib_message=program will support files with either hdf version
-   mlsl2_prereqs := $(mlsl2_prereqs) $(he5libdir)/libhe5.a
-endif
-   hdf5_message=Building program with hdf5
-else
-   hdf5_linker_line=
-   hdfeos5_linker_line=
-   hdf5_message=Building program without hdf5
-endif
-
 fftw_linker_line = $(shell ${UTILDIR}/which_fftw.sh ${FFTW_ROOT} ${FFTW_PREC})
 
 mlspack_dir=$(CONFDIR)/blas/$(MLSCONFG)
@@ -116,6 +55,9 @@ utctotai_linker_line=-L${INSTALLDIR} -lutctotai
 utctotai_message=Building program with toolkitless utc to tai conversion
 
 # $Log$
+# Revision 1.6  2010/01/29 18:14:11  pwagner
+# Added -dl to Lahey link for xml compatibility
+#
 # Revision 1.5  2008/07/11 23:54:42  pwagner
 # 1st changes to get sunstudio to link mlsl2
 #
