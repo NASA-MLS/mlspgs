@@ -18,7 +18,15 @@ endif
 # How to prefix search paths for include and .mod files
 PATH_OPTS=-d -prefix=-I
 
+# Some macros needed to link successfully
+hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 
+l_specials := $(l_specials) -lz -ldl
+hdfeos5_linker_line=-L${HDFEOS5} -lhe5_hdfeos
+
 # $Log$
+# Revision 1.2  2009/08/24 20:27:02  pwagner
+# FC defined in .configure supersedes default
+#
 # Revision 1.1  2007/05/29 17:38:47  pwagner
 # First commit
 #
