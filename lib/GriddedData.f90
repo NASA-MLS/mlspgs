@@ -507,10 +507,7 @@ contains
 
   ! --------------------------------------------  DiffGriddedData  -----
   subroutine DiffGriddedData ( GriddedData1, GriddedData2, options )
-    use Dump_0, only: Diff, Dump
-    use ieee_arithmetic, only: ieee_is_finite, ieee_is_nan
-    use Intrinsic, only: Lit_Indices
-    use String_Table, only: Display_String
+    use Dump_0, only: Diff
 
     ! Imitating what dump_pointing_grid_database does, but for gridded data
     ! which may come from climatology, ncep, dao
@@ -518,13 +515,9 @@ contains
     character(len=*), intent(in), optional :: options
 
     ! Local Variables
-    character(len=8) :: ccsds
     integer :: date
     integer :: details
     character(len=4) :: dateChar
-    integer :: i
-    logical :: lookLikeClimatologyTxtfile
-    integer :: numElmnts
 
     ! Executable code
     if ( GriddedData1%empty .or. GriddedData2%empty ) then
@@ -1520,6 +1513,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.59  2010/02/04 23:08:00  vsnyder
+! Remove USE or declaration for unused names
+!
 ! Revision 2.58  2010/02/03 23:09:23  vsnyder
 ! Use Test_Deallocate
 !
