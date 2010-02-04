@@ -16,8 +16,7 @@ module OutputAndClose ! outputs all data from the Join module to the
 
 !=======================================================================================
 
-  use Hdf, only: DFACC_CREATE, DFACC_RDONLY, DFACC_RDWR
-  use MLSCommon, only: L2Metadata_T
+  use Hdf, only: DFACC_RDONLY, DFACC_RDWR
   use MLSMessageModule, only: MLSMessage, &
     & MLSMSG_Error, MLSMSG_Info, MLSMSG_Warning
   use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
@@ -1154,7 +1153,7 @@ contains ! =====     Public Procedures     =============================
       & split_path_name
     use MLSHDF5, only: SaveAsHDF5DS
     use MLSPCF2, only: mlspcf_l2dgm_start, mlspcf_l2dgm_end
-    use OUTPUT_M, only: blanks, OUTPUT
+    use OUTPUT_M, only: OUTPUT
     ! Args
     character(len=*), intent(inout)         :: fileName ! according to l2cf
     logical, intent(in)                     :: DEBUG ! Print lots?
@@ -1722,6 +1721,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.149  2010/02/04 23:12:44  vsnyder
+! Remove USE or declaration for unreferenced names
+!
 ! Revision 2.148  2010/01/08 00:11:37  pwagner
 ! Added ability to write MLSFile_T fields as attributes
 !
