@@ -19,7 +19,6 @@ MODULE PCFHdr
 ! or split off global attribute stuff into a separate module
 
    use dates_module, only: utc_to_date, utc_to_yyyymmdd, utcForm
-   use dump_0, only: dump
    use Hdf, only: DFACC_RDWR, DFACC_WRITE, AN_FILE_DESC
    use INTRINSIC, only: L_GRID, L_HDF, L_SWATH
    use MLSCommon, only: r8, FileNameLen, MLSFile_T, NameLen
@@ -274,7 +273,7 @@ CONTAINS
 !------------------------------------------------------------
 
       use HDF5, only: h5gclose_f, h5gopen_f
-      USE MLSHDF5, only: GetHDF5Attribute, IsHDF5AttributePresent, MakeHDF5Attribute
+      USE MLSHDF5, only: GetHDF5Attribute, IsHDF5AttributePresent
 ! Brief description of subroutine
 ! This subroutine reads the components of an MLSFile_t 
 ! as attributes from an hdf5-formatted file
@@ -288,7 +287,6 @@ CONTAINS
       integer :: grp_id
       integer :: status
       integer, dimension(2) :: ints
-      character(len=GA_VALUE_LENGTH) :: ProcessLevel = ''
 
       ! Executable code
       if ( .not. MLSFile%stillOpen ) then
@@ -336,8 +334,6 @@ CONTAINS
    SUBROUTINE he5_readMLSFileAttr (MLSFile)
 !------------------------------------------------------------
 
-    use HDFEOS5, only: HE5T_NATIVE_INT, &
-      & HE5T_NATIVE_DOUBLE, MLS_charType
     use MLSHDFEOS, only: HE5_EHRDGLATT
 ! Brief description of subroutine
 ! This subroutine reads the components of an MLSFile_t 
@@ -349,7 +345,6 @@ CONTAINS
 ! Local variables
       integer :: fileID, status
       integer, dimension(2) :: ints
-      character(len=GA_VALUE_LENGTH) :: ProcessLevel = ''
 
       ! Executable code
       if ( .not. MLSFile%stillOpen ) then
@@ -486,7 +481,6 @@ CONTAINS
       integer :: status
       logical :: my_skip
       logical, parameter :: WRITE_ORBIT = .false.
-      character(len=GA_VALUE_LENGTH) :: ProcessLevel = ''
 
       ! Executable code
       if ( .not. MLSFile%stillOpen ) then
@@ -625,7 +619,7 @@ CONTAINS
 !------------------------------------------------------------
 
     use HDFEOS5, only: HE5T_NATIVE_INT, &
-      & HE5T_NATIVE_DOUBLE, MLS_charType
+      & MLS_charType
     use MLSHDFEOS, only: he5_EHwrglatt, hsize, mls_EHwrglatt
 ! Brief description of subroutine
 ! This subroutine writes the components of an MLSFile_t 
@@ -638,9 +632,7 @@ CONTAINS
 ! Local variables
       integer :: fileID
       integer :: status
-      logical :: my_skip
       logical, parameter :: WRITE_ORBIT = .false.
-      character(len=GA_VALUE_LENGTH) :: ProcessLevel = ''
 
       ! Executable code
       if ( .not. MLSFile%stillOpen ) then
@@ -1069,7 +1061,7 @@ CONTAINS
       type(MLSFile_T)                :: MLSFile
       integer :: my_hdfVersion
       ! logical :: myisHDFEOS
-      integer :: record_length
+    ! integer :: record_length
       integer :: status
       ! character (len=2) :: the_type
       integer :: the_type
@@ -1517,6 +1509,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.54  2010/02/04 23:08:00  vsnyder
+!# Remove USE or declaration for unused names
+!#
 !# Revision 2.53  2010/01/15 01:12:37  pwagner
 !# Added routines to read MLSFile_T components
 !#
