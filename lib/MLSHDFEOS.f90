@@ -1341,7 +1341,7 @@ contains ! ======================= Public Procedures =========================
   ! ---------------------------------------------  MLS_SWRDFLD_REAL_2d  -----
   integer function MLS_SWRDFLD_REAL_2d ( SWATHID, FIELDNAME, &
     & START, STRIDE, EDGE, VALUES, FILENAME, hdfVersion, DONTFAIL )
-    use hdf5, only: hsize_t, hssize_t, size_t
+  ! use hdf5, only: hsize_t
     integer, parameter :: RANK = 2
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: FIELDNAME     ! Field name
@@ -1981,7 +1981,7 @@ contains ! ======================= Public Procedures =========================
   ! ---------------------------------------------  mls_swath_in_file_sca  -----
   logical function mls_swath_in_file_sca(filename, swath, HdfVersion, error)
     ! Returns .true. if swath found in file, .false. otherwise
-    use hdf5, only: hsize_t, hssize_t, size_t
+    use hdf5, only: size_t
     character(len=*), intent(in) :: filename
     character(len=*), intent(in) :: swath
     integer, intent(in) :: HdfVersion
@@ -2025,7 +2025,7 @@ contains ! ======================= Public Procedures =========================
   ! ---------------------------------------------  mls_swath_in_file_arr  -----
   logical function mls_swath_in_file_arr(filename, swaths, HdfVersion, &
     & which, error )
-    use hdf5, only: hsize_t, hssize_t, size_t
+    use hdf5, only: size_t
     ! Array version of the above
     character(len=*), intent(in) :: filename
     character(len=*), dimension(:), intent(in) :: swaths
@@ -2078,18 +2078,17 @@ contains ! ======================= Public Procedures =========================
 
   ! ---------------- hsize ------------
   function hsize ( arg ) result ( h )
-    use hdf5, only: hsize_t, hssize_t, size_t
+    use hdf5, only: size_t
     ! Return arg with same integer value
     ! but with kind value size_t or, someday, hdfeos5size_t
     integer,  intent(in)               :: arg
     integer(kind=size_t)               :: h
-    integer :: i
     h = int(arg, size_t)
   end function hsize
 
   ! ---------------- hsizes ------------
   function hsizes ( ints ) result ( h )
-    use hdf5, only: hsize_t, hssize_t, size_t
+    use hdf5, only: size_t
     ! Return array with same integer values as ints
     ! but with kind value size_t or, someday, hdfeos5size_t
     integer, dimension(:), intent(in)               :: ints
@@ -2224,6 +2223,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDFEOS
 
 ! $Log$
+! Revision 2.44  2010/02/04 23:08:00  vsnyder
+! Remove USE or declaration for unused names
+!
 ! Revision 2.43  2010/01/29 01:16:06  pwagner
 ! Fixed undefined hlistsize bug Lahey complained about
 !
