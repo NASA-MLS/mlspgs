@@ -43,13 +43,10 @@ contains ! ========= Public Procedures ============================
       & F_MINCHANNELS, F_SIGNALS, F_MEASUREMENTS, F_MASK
     use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST
     use Init_Tables_Module, only: L_ZETA, L_RADIANCE
-    use Tree, only: NSONS, SUBTREE, DECORATION, SUB_ROSA
+    use Tree, only: NSONS, SUBTREE, DECORATION
     use MoreTree, only: GET_FIELD_ID
-    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE, &
-      & MLSMSG_DEALLOCATE
     use MLSSignals_M, only: Signal_T
     use Parse_Signal_M, only: EXPAND_SIGNAL_LIST
-    use String_Table, only: GET_STRING
     use ManipulateVectorQuantities, only: FINDONECLOSESTINSTANCE
     use MLSNumerics, only: HUNT
 
@@ -78,24 +75,19 @@ contains ! ========= Public Procedures ============================
     integer :: NOMIFS                   ! Number of minor frames
     integer :: NOVALIDCHANNELS          ! How many channels meet our criteria
     integer :: QUANTITYINDEX            ! Index in database, not vector
-    integer :: SIDEBAND                 ! Returned by parse_signal
     integer :: SON                      ! Tree node
-    integer :: STATUS                   ! Flag from allocate etc.
     integer :: SURF                     ! Loop counter
     integer :: VECTORINDEX              ! Vector index for quantity
 
     integer, dimension(2) :: EXPRUNIT   ! Units for expression
-    integer, dimension(:), pointer :: MAFFORINSTANCE ! Maps instances to mafs
     integer, dimension(:), pointer :: MAFSFORINSTANCE ! Which maf relevant for each inst.
     integer, dimension(:), pointer :: MEASQTYINDS ! Indices
     integer, dimension(:), pointer :: MIFPOINTINGS ! Which basis for each mif?
-    integer, dimension(:), pointer :: SIGNALINDS ! Returned by parse_signal
 
     logical :: ERRORFLAG                ! Set if problem
     logical :: FOUNDONE                 ! Flag for instance identification
     logical :: Got(field_first:field_last)   ! "Got this field already"
 
-    character (len=132) :: SIGNALSTRING ! One signal
     character(len=1), dimension(:), pointer :: MIFMASKS ! Part of rad%mask
 
     real(r8) :: BASISFRACTION           ! Value of argument of same name
@@ -269,7 +261,6 @@ contains ! ========= Public Procedures ============================
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use Expr_m, only: EXPR, GETINDEXFLAGSFROMLIST
     use MLSCommon, only: R8
-    use Declaration_table, only: NUM_VALUE
     use Intrinsic, only: PHYQ_LENGTH, PHYQ_PRESSURE, PHYQ_INVALID, PHYQ_DIMENSIONLESS
     use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST
     use Init_Tables_Module, only: F_QUANTITY, F_PTANQUANTITY, F_CHANNELS, F_HEIGHT, &
@@ -277,7 +268,7 @@ contains ! ========= Public Procedures ============================
       & F_IGNORE, F_RESET, F_SURFACE, F_ADDITIONAL
     use Init_Tables_Module, only: L_RADIANCE, L_OPTICALDEPTH, L_NONE, L_ZETA, L_PRESSURE
     use Tree_Types, only: N_COLON_LESS, N_LESS_COLON, &
-      & N_LESS_COLON_LESS, N_NAMED
+      & N_LESS_COLON_LESS
     use VectorsModule, only: GETVECTORQTYBYTEMPLATEINDEX, SETMASK, VECTORVALUE_T, &
       & VECTOR_T, CLEARMASK, CREATEMASK, M_LINALG, DUMPMASK
     use Tree, only: NSONS, SUBTREE, DECORATION, NODE_ID
@@ -304,12 +295,9 @@ contains ! ========= Public Procedures ============================
     integer :: MaskBit                ! Bits corresponding to Mask
     integer :: MAINVECTORINDEX        ! Vector index of quantity to subset
     integer :: NODE                   ! Either heightNode or surfaceNode
-    integer :: NROWS                  ! Loop limit dumping mask
     integer :: ODCUTOFFHEIGHT         ! `First' index optically thick
     integer :: QUANTITYINDEX          ! Index
     integer :: RANGEID                ! nodeID of a range
-    integer :: RANGE_LOW, RANGE_HI    ! Bounds of a range
-    integer :: ROW                    ! Row index dumping mask
     integer :: S1(1), S2(1)           ! Results of minloc intrinsic
     integer :: SCANDIRECTION          ! +/-1 for up or down
     integer :: SON                    ! Tree node
@@ -322,7 +310,6 @@ contains ! ========= Public Procedures ============================
     integer :: MINUNIT                ! Units for minValue
     integer :: MAXUNIT                ! Units for maxValue
 
-    real(r8) :: HeightMin, HeightMax
     real(r8), dimension(:), pointer :: THESEHEIGHTS ! Subset of heights
     real(r8) :: VALUE(2)              ! Value returned by expr
     real(r8) :: OPTICALDEPTHCUTOFF    ! Maximum value of optical depth to allow
@@ -731,13 +718,12 @@ contains ! ========= Public Procedures ============================
       & F_HEIGHT, F_CLOUDHEIGHT, F_CHANNELS, F_CLOUDCHANNELS, F_CLOUDRADIANCE, &
       & F_CLOUDRADIANCECUTOFF, F_MASK
     use Init_Tables_Module, only: L_RADIANCE, L_CLOUDINDUCEDRADIANCE, L_ZETA
-    use Declaration_table, only: NUM_VALUE
     use Intrinsic, only: PHYQ_PRESSURE, PHYQ_TEMPERATURE, &
       & PHYQ_DIMENSIONLESS
     use MoreTree, only: GET_FIELD_ID
-    use VectorsModule, only: ClearMask, CreateMask, &
+    use VectorsModule, only: CreateMask, &
       & GetVectorQtyByTemplateIndex, SetMask, VectorValue_T, Vector_T, &
-      & M_LINALG, m_cloud
+      & m_cloud
     use Tree, only: NSONS, SUBTREE, DECORATION
 
     integer, intent(in) :: KEY        ! Tree node
@@ -759,7 +745,6 @@ contains ! ========= Public Procedures ============================
     integer :: INSTANCE               ! Loop counter
     integer :: MaskBit                ! Bits corresponding to Mask
     integer :: QUANTITYINDEX          ! Index
-    integer :: RANGEID                ! nodeID of a range
     integer :: SON                    ! Tree node
     integer :: STATUS                 ! Flag
     integer :: TYPE                   ! Type of value returned by expr
@@ -976,12 +961,10 @@ contains ! ========= Public Procedures ============================
     use Init_Tables_Module, only: F_QUANTITY, F_SOURCEQUANTITY, &
       & F_OPERATION, F_SOURCEMASK, F_MASK
     use Init_Tables_Module, only: L_INVERT, L_COPY, L_ANDMASKS, L_ORMASKS
-    use VectorsModule, only: GETVECTORQTYBYTEMPLATEINDEX, SETMASK, VECTORVALUE_T, &
-      & VECTOR_T, CLEARMASK, CREATEMASK, M_LINALG, DUMPMASK
-    use Tree, only: NSONS, SUBTREE, DECORATION, NODE_ID
+    use VectorsModule, only: GETVECTORQTYBYTEMPLATEINDEX, VECTORVALUE_T, &
+      & VECTOR_T, CREATEMASK
+    use Tree, only: NSONS, SUBTREE, DECORATION
     use MoreTree, only: GET_FIELD_ID
-    use Toggles, only: SWITCHES
-    use Output_M, only: OUTPUT
 
     integer, intent(in) :: KEY          ! Tree node
     type (Vector_T), dimension(:) :: VECTORS
@@ -1099,9 +1082,8 @@ contains ! ========= Public Procedures ============================
   
   subroutine AnnounceError ( NODE, STRING, FIELDINDEX, ANOTHERFIELDINDEX )
     
-    use Intrinsic, only: FIELD_INDICES, SPEC_INDICES
+    use Intrinsic, only: FIELD_INDICES
     use Lexer_Core, only: PRINT_SOURCE
-    use String_Table, only: DISPLAY_STRING
     use Tree, only: SOURCE_REF
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
     use Output_M, only: OUTPUT
@@ -1180,6 +1162,9 @@ contains ! ========= Public Procedures ============================
 end module SubsetModule
  
 ! $Log$
+! Revision 2.18  2010/02/04 23:12:44  vsnyder
+! Remove USE or declaration for unreferenced names
+!
 ! Revision 2.17  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
 !
