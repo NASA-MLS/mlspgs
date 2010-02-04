@@ -633,11 +633,11 @@ contains
     use L2PC_m, only: L2PCDatabase, dumpL2PC => Dump
     use Intrinsic, only: PHYQ_Dimensionless
     use MACHINE, only: NEVERCRASH
-    use MLSL2Options, only: NORMAL_EXIT_STATUS, RUNTIMEVALUES, STOPWITHERROR
+    use MLSL2Options, only: NORMAL_EXIT_STATUS, RUNTIMEVALUES
     use MLSCommon, only: MLSFile_T
     ! use MLSFiles, only: DumpMLSFile => Dump
     use MLSMessageModule, only: MLSMessage, MLSMessageCalls, MLSMessageExit, &
-      & MLSMSG_CRASH, MLSMSG_ERROR, MLSMSG_INFO
+      & MLSMSG_CRASH, MLSMSG_ERROR
     use MLSSets, only: FindFirst
     use MLSSignals_m, only: Dump, Signals
     use MLSStrings, only: lowerCase
@@ -1269,6 +1269,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.49  2010/02/04 23:12:44  vsnyder
+! Remove USE or declaration for unreferenced names
+!
 ! Revision 2.48  2009/11/02 21:22:25  pwagner
 ! May diff grided data
 !
