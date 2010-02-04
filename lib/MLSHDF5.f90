@@ -40,7 +40,7 @@ module MLSHDF5
     & H5T_IEEE_F32LE, H5T_IEEE_F64LE, H5T_IEEE_F64LE, &
     & H5T_NATIVE_DOUBLE, H5T_NATIVE_REAL, H5T_STD_I32LE, &
     & H5T_NATIVE_CHARACTER, H5T_NATIVE_INTEGER, H5T_STRING, H5T_STRING_F, &
-    & HID_T, HSIZE_T, HSSIZE_T, SIZE_T
+    & HID_T, HSIZE_T, SIZE_T
   ! Now routines
   use HDF5, only: H5ACLOSE_F, H5ACREATE_F, &
     & H5AGET_NAME_F, H5AGET_NUM_ATTRS_F, &
@@ -307,7 +307,7 @@ contains ! ======================= Public Procedures =========================
   subroutine MLS_h5close ( error )
     ! Arguments
   ! To switch to/from hdfeos5.1.6(+) uncomment next line
-  use H5LIB, ONLY: h5open_f, h5close_f
+    use H5LIB, ONLY: h5close_f
     integer, intent(out) :: error          ! Trouble if /= 0
     error = 0
     call h5close_f ( error )
@@ -317,7 +317,7 @@ contains ! ======================= Public Procedures =========================
   subroutine MLS_h5open ( error )
     ! Arguments
   ! To switch to/from hdfeos5.1.6(+) uncomment next line
-  use H5LIB, ONLY: h5open_f, h5close_f
+    use H5LIB, ONLY: h5open_f
     integer, intent(out) :: error          ! Trouble if /= 0
     error = 0
     call h5open_f ( error )
@@ -3567,7 +3567,6 @@ contains ! ======================= Public Procedures =========================
     ! Local variables
     integer :: STATUS                   ! Flag from HDF5
     integer :: SPACEID                  ! ID of dataspace
-    integer :: MEMSPACEID               ! ID of dataspace
     integer :: SETID                    ! ID of dataset
     integer :: STRINGTYPE               ! String type
     integer(kind=Size_t) :: STRINGSIZE               ! String size
@@ -5061,6 +5060,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.99  2010/02/04 23:08:00  vsnyder
+! Remove USE or declaration for unused names
+!
 ! Revision 2.98  2010/01/11 18:33:57  pwagner
 ! Fixed bug in dumping array-valued attributes
 !
