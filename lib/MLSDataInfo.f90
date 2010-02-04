@@ -51,7 +51,7 @@
 !
     ! use output_m, only: outputNamedValue
     use HDF5, only: hid_t, H5G_DATASET_F, H5G_LINK_F, &
-      & H5G_UNKNOWN_F, H5G_GROUP_F, H5G_TYPE_F, &
+    ! & H5G_UNKNOWN_F, H5G_GROUP_F, H5G_TYPE_F, &
       & h5gn_members_f,h5gget_obj_info_idx_f
 ! This subroutine lists entries in the HDF5 file.
 !
@@ -165,6 +165,9 @@
 end module MLSDataInfo
 
 ! $Log$
+! Revision 2.10  2010/02/04 23:08:00  vsnyder
+! Remove USE or declaration for unused names
+!
 ! Revision 2.9  2009/07/30 00:17:58  pwagner
 ! Worked around apparent bug in hdf5 1.8
 !
