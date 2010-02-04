@@ -168,7 +168,7 @@ contains
 
 !     tau(1,2) = (prod(1,1)*conjg(prod(2,1)) + prod(1,2)*conjg(prod(2,2)) )
       tau(1,2) = cmplx( t11r * t21r + t11i * t21i + t12r * t22r + t12i * t22i, &
-               &       -t11r * t21i + t11i * t21r - t12r * t22i + t12i * t22r )
+               &       -t11r * t21i + t11i * t21r - t12r * t22i + t12i * t22r, kind=rk )
 
       tau(2,1) = conjg(tau(1,2))
 
@@ -289,7 +289,7 @@ contains
                         &        +  real(dPdx(2,1)) * aimag(prod(1,1,i_p))  &
                         &        - aimag(dPdx(2,1)) *  real(prod(1,1,i_p))  &
                         &        +  real(dPdx(2,2)) * aimag(prod(1,2,i_p))  &
-                        &        - aimag(dPdx(2,2)) *  real(prod(1,2,i_p)) )
+                        &        - aimag(dPdx(2,2)) *  real(prod(1,2,i_p)), kind=rk )
           ! dTauDx(2,1) = conjg(dTauDx(1,2))
             dTauDx(2,2) = 2.0_rk * (real(dPdx(2,1)) *  real(prod(2,1,i_p)) + &
                         &          aimag(dPdx(2,1)) * aimag(prod(2,1,i_p)) + &
@@ -362,7 +362,7 @@ contains
                         &        +  real(dPdx(2,1)) * aimag(prod(1,1,i_p))  &
                         &        - aimag(dPdx(2,1)) *  real(prod(1,1,i_p))  &
                         &        +  real(dPdx(2,2)) * aimag(prod(1,2,i_p))  &
-                        &        - aimag(dPdx(2,2)) *  real(prod(1,2,i_p)) )
+                        &        - aimag(dPdx(2,2)) *  real(prod(1,2,i_p)), kind=rk )
           ! dTauDx(2,1) = conjg(dTauDx(1,2))
             dTauDx(2,2) = 2.0_rk * (real(dPdx(2,1)) *  real(prod(2,1,i_p)) + &
                         &          aimag(dPdx(2,1)) * aimag(prod(2,1,i_p)) + &
@@ -419,6 +419,9 @@ contains
 end module MCRT_m
 
 ! $Log$
+! Revision 2.23  2009/06/23 18:26:11  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.22  2006/12/13 02:32:03  vsnyder
 ! Drag the tangent point around instead of assuming it's the middle one
 !
