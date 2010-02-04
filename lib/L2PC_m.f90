@@ -1648,7 +1648,6 @@ contains ! ============= Public Procedures ==========================
 
     integer, dimension(:), pointer :: SIGINDS  ! Index into signals database
     integer, dimension(:), pointer :: QTINDS   ! Quantity indices
-    logical, dimension(:), pointer :: CHANNELS ! From Parse_Signal
 
     character (len=64), pointer, dimension(:) :: QUANTITYNAMES ! Names of quantities
     type ( QuantityTemplate_T), pointer :: QT    ! Template for the quantity
@@ -1988,6 +1987,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.87  2010/02/04 23:08:00  vsnyder
+! Remove USE or declaration for unused names
+!
 ! Revision 2.86  2009/11/17 23:43:51  vsnyder
 ! Add ability to output TScat
 !
