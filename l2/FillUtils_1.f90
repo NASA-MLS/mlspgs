@@ -711,7 +711,6 @@ contains ! =====     Public Procedures     =============================
       integer :: SON                    ! Tree node
       integer :: I                      ! Loop counter
       integer :: K                      ! Loop counter
-      integer :: S                      ! Signal loop counter
       integer :: SIGNAL                 ! the signal we're looking for
 
       type (Vector_T), pointer :: MEASUREMENTS ! The measurement vector to compute total power for
@@ -6798,6 +6797,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.32  2010/02/04 23:12:44  vsnyder
+! Remove USE or declaration for unreferenced names
+!
 ! Revision 2.31  2009/12/14 18:35:51  pwagner
 ! Dont crash in FillVectorQuantityFromGrid if Grid is empty
 !
