@@ -184,7 +184,6 @@ contains
     character(len=1), dimension(len(string)) :: cArray
     integer :: i
     integer :: lun = 5
-    integer :: lines
     integer :: pos
     integer :: recrd
     integer :: status
@@ -354,7 +353,6 @@ contains
     character(len=1), dimension(len(string)) :: cArray
     integer :: i
     integer :: lun
-    integer :: lines
     integer :: pos
     integer :: recrd
     integer :: status
@@ -448,6 +446,9 @@ contains
 end module IO_STUFF
 
 ! $Log$
+! Revision 2.13  2010/02/04 23:08:00  vsnyder
+! Remove USE or declaration for unused names
+!
 ! Revision 2.12  2010/01/25 23:51:11  pwagner
 ! Added routines to read stdin into string variables
 !

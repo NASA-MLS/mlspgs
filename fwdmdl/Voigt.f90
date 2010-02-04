@@ -631,7 +631,7 @@ contains
     integer :: i
     real(rp) :: denom1,denom2,xp,xm,y2
 
-    cvoigth6 = cmplx(0.0_rp,0.0_rp)
+    cvoigth6 = cmplx(0.0_rp,0.0_rp,kind=rp)
     y2 = y**2
     do i = 1 , n
       xm = x-gx(i)
@@ -920,7 +920,7 @@ contains
     ti = ( q1 + q3 * x2 ) * y2
     u = ( 1.0_rp + 0.5_rp * x2 ) * x2 + 1.0 - 0.5 * y4 - tr * y - ti * x
     v = ( x2 + 1.0_rp ) * y2 + x * tr - y * ti
-    taylor = cmplx(u,v)
+    taylor = cmplx(u,v,kind=rp)
 
   end function Taylor
 
@@ -1403,6 +1403,9 @@ contains
 end module Voigt_M
 
 ! $Log$
+! Revision 2.13  2010/02/04 23:09:28  vsnyder
+! Use kind= in CMPLX
+!
 ! Revision 2.12  2009/06/23 18:26:10  pwagner
 ! Prevent Intel from optimizing ident string away
 !
