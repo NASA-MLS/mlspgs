@@ -64,9 +64,7 @@ contains
   ! Compute the surface height and the tangent height at Phi_T.
 
     use Get_Eta_Matrix_m, only: Get_Eta_Sparse
-    use GLNP, only: NGP1
-    use Make_Z_Grid_m, only: Default_Thresh ! Threshold for rejecting duplicates
-    use MLSKinds, only: RP, R8
+    use MLSKinds, only: RP
     use Output_m, only: OUTPUT
     use Toggles, only: Switches
 
@@ -157,7 +155,6 @@ contains
 
     use Constants, only: Pi, Rad2Deg
     use Dump_0, only: Dump
-    use Geometry, only: Get_R_Eq
     use Get_Eta_Matrix_m, only: Get_Eta_Sparse
     use IEEE_Arithmetic, only: IEEE_Is_NaN
     use MLSKinds, only: RP
@@ -1123,6 +1120,9 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.66  2010/02/02 01:34:55  vsnyder
+! Make do_calc_t intent(inout)
+!
 ! Revision 2.65  2009/12/15 03:20:06  vsnyder
 ! Don't force phi_offset to -pix2..pix2 for Earth-intersecting rasy
 !

@@ -223,7 +223,7 @@ contains
 
     use Dump_0, only: Dump
     use ForwardModelConfig, only: Beta_Group_T
-    use Intrinsic, only: L_CloudIce, L_RHi, Lit_Indices
+    use Intrinsic, only: L_RHi, Lit_Indices
     use MLSKinds, only: RP, R8
     use Molecules, only: L_Cloud_A, L_Cloud_S
     use Output_m, only: Output
@@ -1490,6 +1490,10 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.98  2010/01/23 01:20:15  vsnyder
+! Allow betas that depend upon mixing ratio, get beta for Cloud_A and
+! Cloud_S from the Mie tables, get kinds from MLSKinds instead of MLSCommon
+!
 ! Revision 2.97  2009/06/23 18:26:11  pwagner
 ! Prevent Intel from optimizing ident string away
 !
