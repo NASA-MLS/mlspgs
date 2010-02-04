@@ -616,16 +616,15 @@ contains
     character(len=*), intent(in), dimension(:) :: substrings
     character(len=*), optional :: mode
     integer, dimension(size(substrings)) :: array
-    character(len=len(str)) :: substr
     ! Returns the array of indexes of each element of substrings in str
     ! The mode determines how consecutive elements of array are ordered
     ! (default is first)
     ! mode          order
     ! ------        -----
-    ! first         always find first occurrence of substr(i) in str
-    ! last          always find last occurrence of substr(i) in str
-    ! left          progressively find next substr(i) after substr(i-1)
-    ! right         progressively find next substr(i) before substr(i-1)
+    ! first         always find first occurrence of substrings(i) in str
+    ! last          always find last occurrence of substrings(i) in str
+    ! left          progressively find next substrings(i) after substrings(i-1)
+    ! right         progressively find next substrings(i) before substrings(i-1)
     ! wrap          left-right, meeting in middle
     !
     ! E.g., if str='ababababababa' and substrings = (/'a', 'a', 'a', 'a', 'a'/)
@@ -673,7 +672,7 @@ contains
        ipos = index(str(lpos:), trim_safe(substrings(i)))
        if ( ipos < 1 ) exit
        left(i) = lpos + ipos - 1
-       lpos = left(i) + max(len_trim(substrings(i)), 1) ! len(trim_safe(substr(i)))
+       lpos = left(i) + max(len_trim(substrings(i)), 1) ! len(trim_safe(substrings(i)))
        if ( lpos > len(str) ) exit
      enddo
      right = 0
@@ -904,7 +903,6 @@ contains
     character(len=*), intent(in), dimension(:) :: substrings
     logical, optional, intent(in) :: dontTrim
     integer, dimension(size(substrings)) :: array
-    character(len=len(str)) :: substr
     ! Returns the array of the number of times each element of substrings
     ! appears in str
     ! E.g., if str='ababababababa' and substrings = (/'a', 'ab', 'abab', 'b'/)
@@ -2072,7 +2070,6 @@ contains
     ! Args:
     character(len=*), intent(in), optional  :: options
     ! Internal variables
-    integer :: sepIndex
     character(len=16) :: myOptions
     ! Executable
     caseSensitive       = .true.
@@ -2284,6 +2281,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.77  2010/02/04 23:08:00  vsnyder
+! Remove USE or declaration for unused names
+!
 ! Revision 2.76  2009/06/23 18:25:42  pwagner
 ! Prevent Intel from optimizing ident string away
 !
