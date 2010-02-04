@@ -12,7 +12,7 @@
 module MLSAuxData
 
   ! Reading and interacting with Level 1B data (HDF5)
-  use MLS_DataProducts, only: Deallocate_DataProducts, DataProducts_T
+  use MLS_DataProducts, only: DataProducts_T
   use HDF5, only: hid_t, hsize_t, H5T_NATIVE_CHARACTER, H5T_NATIVE_DOUBLE, &
        H5T_NATIVE_INTEGER, H5T_IEEE_F32LE, H5S_UNLIMITED_F, H5T_STD_I32LE, & 
        H5T_NATIVE_REAL,H5T_IEEE_F64LE,H5P_DATASET_CREATE_F, H5S_SELECT_SET_F, &
@@ -22,8 +22,8 @@ module MLSAuxData
        h5dget_create_plist_f, h5pget_chunk_f, h5dget_type_f, & 
        h5sselect_hyperslab_f, h5dread_f, h5dwrite_f, h5dextend_f, &
        h5acreate_f, h5awrite_f, h5aread_f, h5aclose_f, h5tcopy_f, &
-       h5tset_size_f, h5aopen_name_f, h5aget_type_f, h5aget_space_f, &
-       h5tequal_f, h5fis_hdf5_f, h5eset_auto_f, h5gcreate_f, h5gclose_f, &
+       h5tset_size_f, h5aopen_name_f, h5aget_space_f, &
+       h5tequal_f, h5eset_auto_f, h5gcreate_f, h5gclose_f, &
        h5gopen_f, h5pset_fill_value_f
   use MLSCommon, only: r4, r8
   use MLSStrings, only: Lowercase
@@ -395,7 +395,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     type( MLSAuxData_T ) :: MLSData
     integer, dimension(3) :: dims
-    integer :: error, status
+    integer :: error
     logical :: attribenabled
 
     dims(1) = 1
@@ -445,7 +445,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     type( MLSAuxData_T ) :: MLSData
     integer, dimension(3) :: dims
-    integer :: error, status
+    integer :: error
     logical :: attribenabled
 
     dims(1) = 1
@@ -498,7 +498,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     type( MLSAuxData_T ) :: MLSData
     integer, dimension(3) :: dims
-    integer :: error, status
+    integer :: error
     logical :: attribenabled
 
     dims(1) = 1
@@ -546,7 +546,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     type( MLSAuxData_T ) :: MLSData
     integer, dimension(3) :: dims
-    integer :: error, status
+    integer :: error
     logical :: attribenabled
 
     dims(1) = 1
@@ -595,7 +595,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     type( MLSAuxData_T ) :: MLSData
     integer, dimension(3) :: dim_array
-    integer :: i,error, status
+    integer :: i,error
     logical :: attribenabled
 
     dim_array = 1
@@ -658,7 +658,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     type( MLSAuxData_T ) :: MLSData
     integer, dimension(3) :: dim_array
-    integer :: i,error, status
+    integer :: i,error
     logical :: attribenabled
 
     dim_array = 1
@@ -720,7 +720,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     type( MLSAuxData_T ) :: MLSData
     integer, dimension(3) :: dim_array
-    integer :: i,j,error, status
+    integer :: i,error
     logical :: attribenabled
 
     dim_array = 1
@@ -782,7 +782,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     type( MLSAuxData_T ) :: MLSData
     integer, dimension(3) :: dim_array
-    integer :: i,j,k,error, status
+    integer :: i,j,error
     logical :: attribenabled
 
     dim_array = 1
@@ -849,7 +849,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     type( MLSAuxData_T ) :: MLSData
     integer, dimension(3) :: dim_array
-    integer :: i,j,error, status
+    integer :: i,j,error
     logical :: attribenabled
 
     dim_array = 1
@@ -916,7 +916,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     type( MLSAuxData_T ) :: MLSData
     integer, dimension(3) :: dim_array
-    integer :: i,j,error, status
+    integer :: i,j,error
     logical :: attribenabled
 
     dim_array = 1
@@ -978,7 +978,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     type( MLSAuxData_T ) :: MLSData
     integer, dimension(3) :: dim_array
-    integer :: i,j,k,error, status
+    integer :: i,j,k,error
 
     dim_array = 1
     if (present(dims) ) then
@@ -1027,7 +1027,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     type( MLSAuxData_T ) :: MLSData
     integer, dimension(3) :: dim_array
-    integer :: i,j,k,error, status
+    integer :: i,j,k,error
 
     dim_array = 1
     if (present(dims) ) then
@@ -1074,7 +1074,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     type( MLSAuxData_T ) :: MLSData
     integer, dimension(3) :: dim_array
-    integer :: i,j,k,error, status
+    integer :: i,j,k,error
 
     dim_array = 1
     if (present(dims) ) then
@@ -1112,7 +1112,7 @@ contains ! ============================ MODULE PROCEDURES ====================
       char_length)
     type( DataProducts_T ), intent(inout) :: dataset
     character (len=*), intent(inout) :: char_data
-    integer, intent(inout) :: char_length
+    integer, intent(in) :: char_length
     integer(hid_t), intent(in) :: file_id
 
     type( MLSAuxData_T ) :: MLSData
@@ -1352,7 +1352,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     type( MLSAuxData_T ) :: MLSData
     integer, dimension(3) :: dim_array
-    integer :: i,j,error,status,i_first,i_last
+    integer :: i,error,status,i_first,i_last
 
     do i=1,3
        dim_array(i) = 1
@@ -1401,7 +1401,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     type( MLSAuxData_T ) :: MLSData
     integer, dimension(3) :: dim_array
-    integer :: i,j,k,error,status,j_first,j_last
+    integer :: i,j,error,status,j_first,j_last
 
     do i=1,3
        dim_array(i) = 1
@@ -2726,17 +2726,14 @@ contains ! ============================ MODULE PROCEDURES ====================
 !-------------------------------------------------------------------------
 ! Internal variables.
 !
-    character(len=480) :: msr
-    character(len=name_len) :: aname
     character(len=1), dimension(:), pointer :: char_data => NULL()
     real, dimension(:), pointer :: attr_data => NULL()
     integer(hsize_t), dimension(7) :: adims, dims
     integer(hsize_t), dimension(3) :: chunk_dims, dims_create, maxdims, start
     integer(hsize_t), dimension(3) :: dims_file
-    integer(hsize_t), dimension(1) :: adims_create
     integer(hid_t) :: cparms,dspace_id,dset_id,type_id, &
-         attr_id, atype_id, aspace_id, filespace, memspace, s_type_id 
-    integer :: i, rank, arank, h5error, status
+         filespace, memspace, s_type_id 
+    integer :: i, rank, h5error
     logical :: myWrite_attributes
     !--------------------------------------------------------------------------
     error = 0
@@ -3271,6 +3268,9 @@ contains ! ============================ MODULE PROCEDURES ====================
 end module MLSAuxData
 
 ! $Log$
+! Revision 2.30  2010/02/04 23:08:00  vsnyder
+! Remove USE or declaration for unused names
+!
 ! Revision 2.29  2009/08/21 19:45:05  pwagner
 ! Reverse effects of hdf5.1.8 that led to consinsistent noMAFs between datasets
 !
