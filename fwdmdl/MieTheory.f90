@@ -97,8 +97,8 @@ contains
       !        a0=cdcos(mx)/cdsin(mx)
 
       ! ....   for f95
-      w9=cmplx(cos(x),-sin(x))
-      w0=cmplx(sin(x),cos(x))
+      w9=cmplx(cos(x),-sin(x),kind=r8)
+      w0=cmplx(sin(x),cos(x),kind=r8)
       a0=cos(mx)/sin(mx)
 
       do i=1, nab
@@ -154,6 +154,9 @@ contains
 end module MieTheory
 
 ! $Log$
+! Revision 2.8  2010/02/04 23:09:28  vsnyder
+! Use kind= in CMPLX
+!
 ! Revision 2.7  2009/06/23 18:26:10  pwagner
 ! Prevent Intel from optimizing ident string away
 !
