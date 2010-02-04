@@ -16,7 +16,7 @@
     logical :: DoNewY              ! Not skipNewY (or true if absent)
     character :: ExtrapolateMethod ! Tidy copy of extrapolate parameter
     real(rk) :: Fill               ! Fill value for dyByDx or intYdX
-    integer :: Ind, Col            ! Loop counters
+    integer :: Ind                 ! Loop counter
     integer :: LB, UB              ! Bounds for oldSecond
     integer :: NoOld, NoNew, Width ! Dimensions
     real(rk), dimension(:,:), pointer :: OldSecond ! Second derivative, i.e.,
@@ -274,6 +274,9 @@
 ! end subroutine InterpolateUsingSetup_r*
 
 ! $Log$
+! Revision 1.10  2009/12/22 01:58:43  vsnyder
+! Compute RHS correctly -- stay within array bounds
+!
 ! Revision 1.9  2009/12/08 21:44:21  vsnyder
 ! Provide splines with periodic boundary conditions, use Symm_Tri
 !
