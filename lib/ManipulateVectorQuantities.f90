@@ -15,7 +15,7 @@ module ManipulateVectorQuantities ! Various routines for manipulating vectors
 
   use MLSMessageModule, only: MLSMSG_Error, &
     & MLSMessage, MLSMessageCalls
-  use MLSCommon, only: R8, RV, MLSFile_T
+  use MLSCommon, only: R8, RV
   use MLSNumerics, only: HUNT
   use VectorsModule, only: VECTORVALUE_T, VECTOR_T
   use Intrinsic, only: L_PHITAN, L_CHANNEL, L_NONE, PHYQ_ANGLE, PHYQ_PROFILES
@@ -509,6 +509,9 @@ contains
 end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.35  2010/02/04 23:08:00  vsnyder
+! Remove USE or declaration for unused names
+!
 ! Revision 2.34  2009/06/23 18:25:42  pwagner
 ! Prevent Intel from optimizing ident string away
 !
