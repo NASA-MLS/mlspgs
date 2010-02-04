@@ -13,7 +13,7 @@
 module ReadAPriori
 
   use Expr_M, only: Expr
-  use Hdf, only: DFACC_RDWR, DFACC_RDONLY
+  use Hdf, only: DFACC_RDONLY
   use INIT_TABLES_MODULE, only: F_AURAINSTRUMENT, F_DATE, F_DIMLIST, &
     & F_FIELD, F_FILE, F_HDFVERSION, F_missingValue, &
     & F_ORIGIN, F_QUANTITYTYPE, F_SDNAME, F_SUM, F_SWATH, &
@@ -818,7 +818,6 @@ contains ! =====     Public Procedures     =============================
   subroutine readAPrioriAttributes_ID ( fileID, hdfVersion )
     ! read info about what apriori files were used
     ! Storing them as hdfeos5 attributes
-    use HDFEOS5, only: MLS_charType
     use MLSHDFEOS, only: HE5_EHRDGLATT
     ! Args
     integer, intent(in) :: fileID
@@ -1044,6 +1043,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.82  2010/02/04 23:12:44  vsnyder
+! Remove USE or declaration for unreferenced names
+!
 ! Revision 2.81  2009/10/26 17:11:07  pwagner
 ! Added Diff command to be used like Dump in l2cf
 !

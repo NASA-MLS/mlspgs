@@ -19,7 +19,7 @@ module OUTPUT_M
   use MLSCommon, only: FileNameLen, finite_signal, is_what_ieee
   use MLSMessageModule, only: MLSMessage, MLSMessageInternalFile, &
     & MLSMSG_Info, MLSMSG_Error
-  use MLSSets, only: FindAll, FindFirst
+  use MLSSets, only: FindFirst
   use MLSStringLists, only: ExpandStringRange, getStringElement, &
     & NumStringElements, wrap
   use MLSStrings, only: lowerCase, nCopies, &
@@ -2153,6 +2153,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.82  2010/02/04 23:08:00  vsnyder
+! Remove USE or declaration for unused names
+!
 ! Revision 2.81  2010/01/26 17:49:42  pwagner
 ! Fixed bug that added space before newlines; simplified output_char
 !
