@@ -30,9 +30,12 @@
       c1 = s**2 / ( 1.0_rk + c )
     end if
 
-    crrexp = ( conjg(z) * ( cmplx(c,s) * rexp(x) + cmplx(-c1,s) ) ) / zabs
+    crrexp = ( conjg(z) * ( cmplx(c,s,kind=rk) * rexp(x) + cmplx(-c1,s,kind=rk) ) ) / zabs
 
 ! $Log$
+! Revision 2.2  2005/06/22 17:44:10  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.1  2003/05/05 23:00:05  livesey
 ! Merged in feb03 newfwm branch
 !
