@@ -787,7 +787,7 @@ contains ! ======================= Public Procedures =========================
     ! Begin executable
     isNew = .true.
     ! Do we have any database yet?
-    if ( .not. associated(directDB) ) then
+    if ( size(directDB) < 1 ) then
       ! print *, 'Setting up initial database with ', trim(fileNameBase)
       call SetupNewDirect(tempDirectData, 0)
       dbID = AddDirectToDatabase( directDB, tempDirectData )
@@ -1095,6 +1095,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.46  2010/02/04 19:10:26  pwagner
+! Change condition on directwrite db from associated to zero size
+!
 ! Revision 2.45  2010/01/08 00:11:19  pwagner
 ! Added ability to write MLSFile_T fields as attributes
 !
