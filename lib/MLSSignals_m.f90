@@ -20,7 +20,6 @@ module MLSSignals_M
   use Init_MLSSignals_m ! Everything
   use Intrinsic, only: Field_First, Field_indices, Lit_Indices, &
     & PHYQ_Dimensionless, PHYQ_Frequency, PHYQ_Indices, S_Time, L_A, l_emls
-  use Lexer_Core, only: Print_Source
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, PVMErrorMessage
@@ -31,7 +30,7 @@ module MLSSignals_M
   use Time_M, only: Time_Now
   use Toggles, only: Gen, Switches, Toggle
   use Trace_M, only: Trace_begin, Trace_end
-  use Tree, only: Decorate, Decoration, Node_ID, Nsons, Source_Ref, &
+  use Tree, only: Decorate, Decoration, Node_ID, Nsons, &
     & Sub_Rosa, Subtree
   use Tree_Types, only: N_named
 
@@ -1858,6 +1857,9 @@ oc:       do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.90  2010/02/04 23:08:00  vsnyder
+! Remove USE or declaration for unused names
+!
 ! Revision 2.89  2009/10/26 17:08:02  pwagner
 ! Added GetRadiometerIndex
 !
