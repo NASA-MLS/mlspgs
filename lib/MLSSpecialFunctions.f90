@@ -104,8 +104,6 @@ contains
     ! Args
     integer, intent(in) :: n ! E.g., if n=100 returns 101 which is next prime > 100
     integer :: next
-    ! Internal variables
-    integer :: mp
     ! Executable
     next = 2
     if ( n < 3 ) return
@@ -319,8 +317,6 @@ contains
     ! Args
     integer, intent(in) :: n ! E.g., if n=100 returns 101 which is next prime > 100
     integer :: i
-    ! Internal variables
-    integer :: mp
     ! Executable
     ! First, some intializing
     if ( primenumbers(1) < 0 ) i = prime(n)
@@ -2450,6 +2446,9 @@ end module MLSSpecialFunctions
 
 !
 ! $Log$
+! Revision 2.7  2010/02/04 23:08:00  vsnyder
+! Remove USE or declaration for unused names
+!
 ! Revision 2.6  2009/10/21 22:47:36  pwagner
 ! primeFactors breaks down composite integers
 !
