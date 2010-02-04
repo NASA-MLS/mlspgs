@@ -122,7 +122,6 @@ contains
     ! Local Variables
     character ( len=len(fieldNames)) :: fieldName   ! In case we supply two
     character ( len=NameLen) :: my_description   ! In case mixed case
-    integer :: nFieldNames
     logical, parameter :: DEEBUG = .false.
     ! Executable code
     
@@ -1535,7 +1534,7 @@ contains
       & HE5_GDNENTRIES, HE5_GDINQGRID, HE5_GDINQDIMS, HE5_GDINQFLDS, &
       & HE5_GDFLDINFO, HE5_GDGRIDINFO
     use MLSHDFEOS, only: hsizes
-    use hdf5, only: hsize_t, hssize_t, size_t
+    use hdf5, only: size_t
 
     ! This routine reads a ncep stratospheric combined product file,
     ! named something like nmct_030126.he5
@@ -2194,8 +2193,8 @@ contains
     logical,  parameter       :: CASESENSITIVE = .false.
     integer, parameter :: GRIDORDER=1   ! What order grid written to file
     integer, parameter :: MAXNAMELENGTH=NameLen         ! Max length of grid name
-    character (len=MAXNAMELENGTH) :: gridname, actual_field_name
-    integer, dimension(NENTRIESMAX) :: dims, rank, numberTypes
+    character (len=MAXNAMELENGTH) :: gridname
+    integer, dimension(NENTRIESMAX) :: dims
     integer :: status
     logical, parameter :: DEEBUG = .false.
     ! Executable
@@ -2360,6 +2359,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.55  2010/02/04 23:08:00  vsnyder
+! Remove USE or declaration for unused names
+!
 ! Revision 2.54  2009/11/04 23:16:49  pwagner
 ! Fixed bugs in recognizing and reading merra files
 !
