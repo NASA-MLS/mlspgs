@@ -18,7 +18,6 @@ module DUMP_0
 
   use BitStuff, only: MAXBITNUMBER, WhichBitsAreSet
   use ieee_arithmetic, only: ieee_is_finite
-  use MLSCommon, only: undefinedValue
   use MLSFillValues, only : FilterValues, HalfWaves, &
     & IsFinite, IsInfinite, IsNaN, &
     & InfFunction, NaNFunction, ReorderFillValues, ReplaceFillValues, &
@@ -32,7 +31,7 @@ module DUMP_0
   use MLSStrings, only: indexes, lowercase, trim_safe
   use OUTPUT_M, only: outputOptions, stampOptions, &
     & ALIGNTOFIT, BLANKS, NEWLINE, NUMTOCHARS, OUTPUT, OUTPUTNAMEDVALUE
-  use Time_M, only: Time_Now, time_config
+  use Time_M, only: Time_Now
 
   implicit none
   private
@@ -1376,9 +1375,8 @@ contains
     character(len=*), intent(in), optional :: options
 
     integer :: I, J, K, L
-    integer :: MyWidth
     integer :: NumZeroRows
-    integer, dimension(3) :: which, re_mainder
+    integer, dimension(3) :: which
     integer :: how_many
 
     character(len=64) :: MyFormat
@@ -2336,18 +2334,16 @@ contains
   
   subroutine UNFILTEREDDIFF_1D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
     & WIDTH, FORMAT, LBOUND, OPTIONS )
-    double precision, intent(in) :: ARRAY1(:)
+    integer, parameter :: RK = kind(1.0d0)
+    real(rk), intent(in) :: ARRAY1(:)
     character(len=*), intent(in) :: NAME1
-    double precision, intent(in) :: ARRAY2(:)
+    real(rk), intent(in) :: ARRAY2(:)
     character(len=*), intent(in) :: NAME2
     integer, intent(in), optional :: WIDTH
     character(len=*), intent(in), optional :: FORMAT
     integer, intent(in), optional :: LBOUND ! Low bound for Array
     character(len=*), intent(in), optional :: options
 
-    double precision, dimension(size(array1)) :: filtered1
-    double precision, dimension(size(array2)) :: filtered2
-    double precision :: refmin, refmax, refrms
     include "unfiltereddiff.f9h"
   end subroutine UNFILTEREDDIFF_1D_DOUBLE
 
@@ -2374,78 +2370,76 @@ contains
 
   subroutine UNFILTEREDDIFF_1D_REAL ( ARRAY1, NAME1, ARRAY2, NAME2, &
     & WIDTH, FORMAT, LBOUND, OPTIONS )
-    real, intent(in) :: ARRAY1(:)
+    integer, parameter :: RK = kind(1.0e0)
+    real(rk), intent(in) :: ARRAY1(:)
     character(len=*), intent(in) :: NAME1
-    real, intent(in) :: ARRAY2(:)
+    real(rk), intent(in) :: ARRAY2(:)
     character(len=*), intent(in) :: NAME2
     integer, intent(in), optional :: WIDTH
     character(len=*), intent(in), optional :: FORMAT
     integer, intent(in), optional :: LBOUND ! Low bound for Array
     character(len=*), intent(in), optional :: options
 
-    real, dimension(size(array1)) :: filtered1
-    real, dimension(size(array2)) :: filtered2
-    real :: refmin, refmax, refrms
     include "unfiltereddiff.f9h"
   end subroutine UNFILTEREDDIFF_1D_REAL
 
   subroutine UNFILTEREDDIFF_2D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
     & WIDTH, FORMAT, LBOUND, OPTIONS )
-    double precision, intent(in) :: ARRAY1(:,:)
+    integer, parameter :: RK = kind(1.0d0)
+    real(rk), intent(in) :: ARRAY1(:,:)
     character(len=*), intent(in) :: NAME1
-    double precision, intent(in) :: ARRAY2(:,:)
+    real(rk), intent(in) :: ARRAY2(:,:)
     character(len=*), intent(in) :: NAME2
     integer, intent(in), optional :: WIDTH
     character(len=*), intent(in), optional :: FORMAT
     integer, intent(in), optional :: LBOUND
     character(len=*), intent(in), optional :: options
-    !
-    double precision :: refmin, refmax, refrms
+
     include "unfiltereddiff.f9h"
   end subroutine UNFILTEREDDIFF_2D_DOUBLE
 
   subroutine UNFILTEREDDIFF_2D_REAL ( ARRAY1, NAME1, ARRAY2, NAME2, &
     & WIDTH, FORMAT, LBOUND, OPTIONS )
-    real, intent(in) :: ARRAY1(:,:)
+    integer, parameter :: RK = kind(1.0e0)
+    real(rk), intent(in) :: ARRAY1(:,:)
     character(len=*), intent(in) :: NAME1
-    real, intent(in) :: ARRAY2(:,:)
+    real(rk), intent(in) :: ARRAY2(:,:)
     character(len=*), intent(in) :: NAME2
     integer, intent(in), optional :: WIDTH
     character(len=*), intent(in), optional :: FORMAT
     integer, intent(in), optional :: LBOUND
     character(len=*), intent(in), optional :: options
-    !
-    real :: refmin, refmax, refrms
+
     include "unfiltereddiff.f9h"
   end subroutine UNFILTEREDDIFF_2D_REAL
 
   subroutine UNFILTEREDDIFF_3D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
     & WIDTH, FORMAT, LBOUND, OPTIONS )
-    double precision, intent(in) :: ARRAY1(:,:,:)
+    integer, parameter :: RK = kind(1.0d0)
+    real(rk), intent(in) :: ARRAY1(:,:,:)
     character(len=*), intent(in) :: NAME1
-    double precision, intent(in) :: ARRAY2(:,:,:)
+    real(rk), intent(in) :: ARRAY2(:,:,:)
     character(len=*), intent(in) :: NAME2
     integer, intent(in), optional :: WIDTH
     character(len=*), intent(in), optional :: FORMAT
     integer, intent(in), optional :: LBOUND
     character(len=*), intent(in), optional :: options
 
-    double precision :: refmin, refmax, refrms
     include "unfiltereddiff.f9h"
   end subroutine UNFILTEREDDIFF_3D_DOUBLE
 
   subroutine UNFILTEREDDIFF_3D_REAL ( ARRAY1, NAME1, ARRAY2, NAME2, &
     & WIDTH, FORMAT, LBOUND, OPTIONS )
-    real, intent(in) :: ARRAY1(:,:,:)
+    integer, parameter :: RK = kind(1.0e0)
+    real(rk), intent(in) :: ARRAY1(:,:,:)
     character(len=*), intent(in) :: NAME1
-    real, intent(in) :: ARRAY2(:,:,:)
+    real(rk), intent(in) :: ARRAY2(:,:,:)
     character(len=*), intent(in) :: NAME2
     integer, intent(in), optional :: WIDTH
     character(len=*), intent(in), optional :: FORMAT
     integer, intent(in), optional :: LBOUND
     character(len=*), intent(in), optional :: options
 
-    real :: refmin, refmax, refrms
     include "unfiltereddiff.f9h"
   end subroutine UNFILTEREDDIFF_3D_REAL
 
@@ -2472,6 +2466,10 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.101  2010/02/04 23:05:39  vsnyder
+! Remove USE and declaration for unreferenced names.
+! Declare a kind parameter in unfiltereddiff*
+!
 ! Revision 2.100  2010/01/29 21:08:21  pwagner
 ! gave myFillValue a value to stop lf95 complaints
 !
