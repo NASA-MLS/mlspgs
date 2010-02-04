@@ -161,12 +161,10 @@ contains
     integer :: NUMFILES
     integer :: OUTPUT_VERSION_STRING  ! Sub_rosa index
     integer :: param_id            ! e.g., p_brightObjects
-    character(32) :: Param_Name
     logical :: Restricted          ! Some commands not available
     integer :: ReturnStatus        ! non-zero means trouble
     integer :: SON                 ! Son of root
     integer :: spec_id             ! e.g., s_binSelector
-    character(32) :: Spec_Name
     logical :: StopEarly
     integer :: Sub_rosa_index
     integer :: The_HDF_version     ! 4 or 5 (corresp. to hdf4 or hdf5)
@@ -1047,6 +1045,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.135  2009/10/05 23:40:35  pwagner
+! Moved use statements to module scope to speedup Lahey; this is the last time we do that
+!
 ! Revision 2.134  2009/10/01 19:56:35  vsnyder
 ! Restrict some functionality in callable forward model mode
 !
