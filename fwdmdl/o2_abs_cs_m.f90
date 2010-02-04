@@ -93,8 +93,8 @@ contains
         &  (slabs%s(j)%y - slabs%s(j)%yi*z) / denomm, & ! Real part
         & (z + slabs%s(j)%y * (slabs%s(j)%y/slabs%s(j)%x1 -   & ! Imaginary part...
         &   freq*slabs%s(j)%yi) / slabs%s(j)%v0s) / denomm -  &
-        &   2.0_rk/(slabs%s(j)%x1 * slabs%s(j)%v0s) &
-        & )
+        &   2.0_rk/(slabs%s(j)%x1 * slabs%s(j)%v0s),          &
+        & kind=rk)
 
     end do
 
@@ -253,7 +253,7 @@ contains
       i1 = z
       d = oneOvSqpi / (z*z + y2)
 
-      wing = wing + s * cmplx ( d * (r1 - r2), d * (i1 + i2 - i3) - i4 )
+      wing = wing + s * cmplx ( d * (r1 - r2), d * (i1 + i2 - i3) - i4, kind=rk )
 
       dz = slabs%d(j)%dx1_dT + slabs%d(j)%dv0s_dT / sigma
       dD = (2.0_rk * sqrtPi) * ( z**2 * dz + y2 * slabs%d(j)%dy_dT ) * d
@@ -269,7 +269,8 @@ contains
 
       dWing = dWing + s * &
         &             cmplx ( d * (r1 * dr1 - r2 * dr2), &
-        &                     d * (i1 * di1 + i2 * di2 - i3 * di3) - i4 * di4 )
+        &                     d * (i1 * di1 + i2 * di2 - i3 * di3) - i4 * di4, &
+        &                     kind=rk )
 
     end do
 
@@ -363,7 +364,7 @@ contains
       z  = 0.25_rk * s * f_o_v0
       zr = z * (u - y*v)
       zi = z * (v + u * (x + y))
-      sigma_p = sigma_p + cmplx(zr, zi)
+      sigma_p = sigma_p + cmplx(zr, zi, kind=rk)
 
 !     m = -n
 
@@ -380,7 +381,7 @@ contains
 !     z  =  0.25_rk * s * f_o_v0
       zr = z * (u - y*v)
       zi = z * (v + u * (x + y))
-      sigma_m = sigma_m + cmplx(zr, zi)
+      sigma_m = sigma_m + cmplx(zr, zi, kind=rk)
 
 !     m = n + 1
 
@@ -397,7 +398,7 @@ contains
       z = 2.0_rk * z
       zr = z * (u - y*v)
       zi = z * (v + u * (x + y))
-      pi = pi + cmplx(zr, zi)
+      pi = pi + cmplx(zr, zi, kind=rk)
 
     else if ( n > 0 ) then
 
@@ -417,7 +418,7 @@ contains
         z  = s * xi
         zr = z * (u - y * v)
         zi = z * (v + u  * (w / (x1*nu) + y))
-        pi = pi + cmplx(zr, zi)
+        pi = pi + cmplx(zr, zi, kind=rk)
 
 ! sigma_p transition
 
@@ -428,7 +429,7 @@ contains
         z  = s * xi
         zr = z  * (u - y * v)
         zi = z * (v + u  * (w/(x1 * nu) + y))
-        sigma_p = sigma_p + cmplx(zr, zi)
+        sigma_p = sigma_p + cmplx(zr, zi, kind=rk)
 
 ! sigma_m transition
 
@@ -439,7 +440,7 @@ contains
         z  = s * xi
         zr = z * (u - y * v)
         zi = z * (v + u  * (x + y))
-        sigma_m = sigma_m + cmplx(zr, zi)
+        sigma_m = sigma_m + cmplx(zr, zi, kind=rk)
 
       end do
 
@@ -461,7 +462,7 @@ contains
         z  = s * xi
         zr = z * (u - y * v)
         zi = z * (v + u  * (x + y))
-        pi = pi + cmplx(zr, zi)
+        pi = pi + cmplx(zr, zi, kind=rk)
 
 ! sigma_p transition
 
@@ -472,7 +473,7 @@ contains
         z  = s * xi
         zr = z * (u - y*v)
         zi = z * (v + u  * (x + y))
-        sigma_p = sigma_p + cmplx(zr, zi)
+        sigma_p = sigma_p + cmplx(zr, zi, kind=rk)
 
 ! sigma_m transition
 
@@ -483,7 +484,7 @@ contains
         z  = s * xi
         zr = z * (u - y * v)
         zi = z * (v + u  * (x + y))
-        sigma_m = sigma_m + cmplx(zr, zi)
+        sigma_m = sigma_m + cmplx(zr, zi, kind=rk)
 
       end do
 
@@ -501,7 +502,7 @@ contains
       z  = s * xi
       zr = z * (u - y*v)
       zi = z * (v + u  * (x + y))
-      sigma_p = sigma_p + cmplx(zr, zi)
+      sigma_p = sigma_p + cmplx(zr, zi, kind=rk)
 
 ! m = n
 
@@ -516,7 +517,7 @@ contains
       z  = s * xi
       zr = z * (u - y*v)
       zi = z * (v + u  * (x + y))
-      sigma_m = sigma_m + cmplx(zr, zi)
+      sigma_m = sigma_m + cmplx(zr, zi, kind=rk)
 
 ! m = -(n-1)
 
@@ -531,7 +532,7 @@ contains
       z  = s * xi
       zr = z * (u - y*v)
       zi = z * (v + u  * (x + y))
-      pi = pi + cmplx(zr, zi)
+      pi = pi + cmplx(zr, zi, kind=rk)
 
 ! sigma_p transition
 
@@ -542,7 +543,7 @@ contains
       z  = s * xi
       zr = z * (u - y*v)
       zi = z * (v + u  * (x + y))
-      sigma_p = sigma_p + cmplx(zr, zi)
+      sigma_p = sigma_p + cmplx(zr, zi,kind=r8)
 
 ! m = n - 1
 
@@ -557,7 +558,7 @@ contains
       z  = s * xi
       zr = z * (u - y*v)
       zi = z * (v + u  * (x + y))
-      pi = pi + cmplx(zr, zi)
+      pi = pi + cmplx(zr, zi, kind=rk)
 
 ! sigma_m transition
 
@@ -568,7 +569,7 @@ contains
       z  = s * xi
       zr = z * (u - y*v)
       zi = z * (v + u  * (x + y))
-      sigma_m = sigma_m + cmplx(zr, zi)
+      sigma_m = sigma_m + cmplx(zr, zi, kind=rk)
 
     end if
 
@@ -846,8 +847,8 @@ contains
       dZi = ds * zi + dv + du * z + u * ( dx + y * dy )
 
       z  = s * xi
-      r  =  r + z * cmplx( zr,  zi)
-      dr = dr + z * cmplx(dZr, dZi)
+      r  =  r + z * cmplx( zr,  zi, kind=rk)
+      dr = dr + z * cmplx(dZr, dZi, kind=rk)
     end subroutine Absorption
 
   end subroutine d_Mag_O2_Abs_CS_dT
@@ -917,6 +918,9 @@ contains
 end module O2_Abs_CS_M
 
 ! $Log$
+! Revision 2.19  2010/02/04 23:09:28  vsnyder
+! Use kind= in CMPLX
+!
 ! Revision 2.18  2009/06/23 18:26:11  pwagner
 ! Prevent Intel from optimizing ident string away
 !
