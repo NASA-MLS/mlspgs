@@ -36,9 +36,6 @@
     integer, dimension(:), intent(out) ::     which
     integer, optional, intent(out) ::         how_many
     real(rk) :: arg
-    real(rk), dimension(size(list)) :: slist
-    real(rk), dimension(2) :: svrange
-    real(rk) :: smaller
     ! Local variables
     logical :: absval
     logical :: cyclic
@@ -109,3 +106,6 @@
     enddo
     if ( present(how_many) ) how_many = nt
 ! $Log$
+! Revision 1.1  2008/09/03 20:08:46  pwagner
+! First commit
+!
