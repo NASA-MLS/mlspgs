@@ -11,61 +11,61 @@
 
 ! $Id$
 
-!   subroutine DIFF_1D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
+!   subroutine DIFF_&D_* ( ARRAY1, NAME1, ARRAY2, NAME2, &
 !     & WIDTH, FORMAT, LBOUND, OPTIONS )
-!     double precision, intent(in) :: ARRAY1(:)
+!     integer, parameter :: RK = kind(1.0d0) ! or kind(1.0e0)
+!     real(rk), intent(in) :: ARRAY1(:)
 !     character(len=*), intent(in), optional :: NAME1
-!     double precision, intent(in) :: ARRAY2(:)
+!     real(rk), intent(in) :: ARRAY2(:)
 !     character(len=*), intent(in), optional :: NAME2
 !     integer, intent(in), optional :: WIDTH
 !     character(len=*), intent(in), optional :: FORMAT
 !     integer, intent(in), optional :: LBOUND ! Low bound for Array
 !     character(len=*), iptional, intent(in) :: OPTIONS
 ! 
-!     double precision, dimension(size(array1)) :: array1
-!     double precision, dimension(size(array2)) :: array2
     integer, parameter :: MAXPCTS = 10
     logical :: NaNsIn1, NaNsIn2
     character(len=64) :: DiffName
-    real(kind(array1)), dimension(3, MAXPCTS):: array1AtNAbs
-    real(kind(array1)), dimension(3, MAXPCTS):: array2AtNAbs
-    real(kind(array1)), dimension(3, MAXPCTS):: array1AtNRel
-    real(kind(array1)), dimension(3, MAXPCTS):: array2AtNRel
-    real(kind(array1)), dimension(2)         :: exvalues
-    real(kind(array1)), dimension(2)         :: exratios
-    real(kind(array1)), dimension(MAXPCTS)   :: gaps
+    real(rk), dimension(3, MAXPCTS):: array1AtNAbs
+    real(rk), dimension(3, MAXPCTS):: array2AtNAbs
+    real(rk), dimension(3, MAXPCTS):: array1AtNRel
+    real(rk), dimension(3, MAXPCTS):: array2AtNRel
+    real(rk), dimension(2)         :: exvalues
+    real(rk), dimension(2)         :: exratios
+    real(rk), dimension(MAXPCTS)   :: gaps
     type(Stat_T), dimension(MAXPCTS)         :: gapStat
-    real(kind(array1)), dimension(MAXPCTS)   :: gapratios
+    real(rk), dimension(MAXPCTS)   :: gapratios
     type(Stat_T), dimension(MAXPCTS)         :: gapRatioStat
-    real(kind(array1))                       :: minratio
-    real(kind(array1))                       :: maxratio
-    real(kind(array1))                       :: medianratio
-    real(kind(array1))                       :: meanratio
+    real(rk)                       :: minratio
+    real(rk)                       :: maxratio
+    real(rk)                       :: medianratio
+    real(rk)                       :: meanratio
     integer                                  :: numTot
     integer                                  :: numEqual
-    real(kind(array1))                       :: pctDiff
-    real(kind(array1))                       :: pctEqual
-    real(kind(array1)), dimension(MAXPCTS)   :: pcts
-    real(kind(array1)), dimension(MAXPCTS)   :: pctratios
-    real(kind(array1)), dimension(MAXPCTS)   :: pctMaxGaps
-    real(kind(array1)), dimension(MAXPCTS)   :: pctMaxGapAsRatios
-    real(kind(array1)), dimension(MAXPCTS)   :: pctMeanGaps
-    real(kind(array1)), dimension(MAXPCTS)   :: pctMaxRatios
-    real(kind(array1)), dimension(MAXPCTS)   :: pctMaxRatioAsGaps
-    real(kind(array1)), dimension(MAXPCTS)   :: pctMeanRatios
-    real(kind(array1))                       :: rmsratio
-    real(kind(array1))                       :: stddev
-    real(kind(array1))                       :: stddevratio
-    real                                     :: sTime
-    real                                     :: t1
-    real                                     :: t2
-    real(kind(array1)), dimension(MAXPCTS,7) :: table
+    real(rk)                       :: pctDiff
+    real(rk)                       :: pctEqual
+    real(rk), dimension(MAXPCTS)   :: pcts
+    real(rk), dimension(MAXPCTS)   :: pctratios
+    real(rk), dimension(MAXPCTS)   :: pctMaxGaps
+    real(rk), dimension(MAXPCTS)   :: pctMaxGapAsRatios
+    real(rk), dimension(MAXPCTS)   :: pctMeanGaps
+    real(rk), dimension(MAXPCTS)   :: pctMaxRatios
+    real(rk), dimension(MAXPCTS)   :: pctMaxRatioAsGaps
+    real(rk), dimension(MAXPCTS)   :: pctMeanRatios
+    real(rk)                       :: rmsratio
+    real(rk)                       :: stddev
+    real(rk)                       :: stddevratio
+    real(rk) :: refmin, refmax, refrms
+    real                           :: sTime
+    real                           :: t1
+    real                           :: t2
+    real(rk), dimension(MAXPCTS,7) :: table
     logical, parameter                       :: PRINTREFERENCEVALUES = .false.
     logical, parameter                       :: PRINTMINMAXWITHRMS = .true.
     logical, parameter                       :: USEDUMPTABLE = .true.
     ! character(len=*), parameter      :: HEADSIDE = 'top'
     logical, parameter               :: DEBUG = .false.
-    real(kind(array1)), dimension(MAXPCTS), parameter :: PCTAGES = &
+    real(rk), dimension(MAXPCTS), parameter :: PCTAGES = &
       & (/ 99.9, 99.8, 99.7, 99.5, 99., 98., 97., 95., 90., 80. /)
     real, dimension(MAXPCTS), parameter :: PCTFACTORS = &
       & (/ .01, .02, .05, .1, .2, .5, 1., 2., 5., 10. /)
@@ -120,7 +120,7 @@
     endif
     if ( myWholeArray ) then
       call dump(array1-array2, trim(DiffName), &
-      & real(0.,kind(array1)), WIDTH, FORMAT, &
+      & real(0.,rk), WIDTH, FORMAT, &
       & LBOUND, OPTIONS )
       return
     endif
@@ -196,7 +196,7 @@
     if ( product(shape(array1)) > TOOMANYELEMENTS ) then
       call outputNamedValue( 'Array size excessive for pcts', product(shape(array1)) )
       call dump(array1-array2, trim(DiffName), &
-        & real(0.,kind(array1)), WIDTH, FORMAT, &
+        & real(0.,rk), WIDTH, FORMAT, &
         & LBOUND, OPTIONS )
       return
     else
@@ -208,7 +208,7 @@
     if ( DEBUG ) call SayTime( 'ratios', stime )
     stime = t2
     call dump(array1-array2, trim(DiffName), &
-      & real(0.,kind(array1)), WIDTH, FORMAT, &
+      & real(0.,rk), WIDTH, FORMAT, &
       & LBOUND, OPTIONS )
     if ( DEBUG ) call SayTime( 'dump', stime )
     stime = t2
@@ -334,7 +334,7 @@
     subroutine usePcts
       ! Internal variables
       integer :: i
-      real(kind(array1)) :: absdiff
+      real(rk) :: absdiff
       ! Executable
       do i=1, MAXPCTS
         call reset(gapstat(i))
@@ -358,7 +358,7 @@
       do i=1, MAXPCTS
         pctMaxGapAsRatios(i) = 0.
         absdiff = abs( array1AtNAbs(1, i) - array2AtNAbs(1, i) )
-        if ( absdiff > real(0.,kind(array1)) ) pctMaxGapAsRatios(i) = &
+        if ( absdiff > real(0.,rk) ) pctMaxGapAsRatios(i) = &
           &  absdiff / max( abs(array1AtNAbs(1, i)), abs(array2AtNAbs(1, i)) )
         pctMaxRatioAsGaps(i) = abs( array1AtNRel(1, i) - array2AtNRel(1, i) )
       enddo
@@ -380,6 +380,9 @@
 
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.9  2010/02/04 23:04:29  vsnyder
+! Use kind=rk instead of double precision
+!
 ! Revision 2.8  2009/11/20 01:16:17  pwagner
 ! More protection against running out of memory diffing DACS datasets
 !
