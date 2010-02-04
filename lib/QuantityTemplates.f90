@@ -438,10 +438,8 @@ contains ! =====     Public Procedures     =============================
     ! We don't need to do if often as typically only a shallow copy
     ! is required.  Note that this also follows any 'links' to h/vGrids and expands
     ! them too.
-    use Allocate_Deallocate, only: Test_Allocate
     type (QuantityTemplate_T), intent(inout) :: Z
     type (QuantityTemplate_T), intent(in) :: A
-    integer :: Stat
 
     ! Executable code
     ! Destroy result
@@ -493,10 +491,8 @@ contains ! =====     Public Procedures     =============================
   ! ----------------------------  DestroyQuantityTemplateContents  -----
   subroutine DestroyQuantityTemplateContents ( qty )
     ! Dummy argument
-    use Allocate_Deallocate, only: Test_Deallocate
     type (QuantityTemplate_T), intent(inout) :: QTY
 
-    integer :: Stat
     logical :: Verbose
     character(63) :: What
 
@@ -587,7 +583,6 @@ contains ! =====     Public Procedures     =============================
                                              ! Default 1
     logical, intent(in), optional :: NOL2CF  ! if TRUE => Don't dump L2-specific
                                              !  stuff
-    integer :: I ! Loop counter
     integer :: MyDetails
     character (len=80) :: Str
     logical :: myNoL2CF
@@ -973,6 +968,10 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.54  2009/09/25 02:42:07  vsnyder
+! Added badValue to SetupNewQuantityTemplate, dump channels field of
+! quantity if it's associated.
+!
 ! Revision 2.53  2009/06/23 18:25:42  pwagner
 ! Prevent Intel from optimizing ident string away
 !

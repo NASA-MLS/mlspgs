@@ -359,7 +359,6 @@ contains ! =====     Public Procedures     =============================
     integer :: L2FileHandle
     type(MLSFile_T)                :: MLSFile
     logical :: myClean
-    integer :: record_length
     integer :: status
     integer :: the_hdfVersion
     
@@ -1052,7 +1051,6 @@ contains ! =====     Public Procedures     =============================
     character (len=MAXSWATHNAMESBUFSIZE) :: myrename
     integer :: noSwaths
     character(len=40)        :: ProcessLevel
-    integer :: record_length
     integer :: status
     double precision         :: TAI93At0zOfGranule
     integer :: the_hdfVersion1
@@ -2016,7 +2014,6 @@ contains
     integer :: noSwaths
     integer :: noSwaths2
     integer :: noUnique
-    integer :: record_length
     character (len=MAXSWATHNAMESBUFSIZE) :: rename
     integer :: status
     character (len=L2GPNameLen) :: swath
@@ -2319,7 +2316,6 @@ contains
     ! Local variables
     ! logical, parameter :: DEEBUG = .true.
     type (l2gpData_T) ::          L2GP
-    logical :: mySilent
     ! Executable
     if ( DEEBUG ) then
       if ( present(pressures) ) &
@@ -3338,7 +3334,6 @@ contains
     ! Local
     integer :: L2FileHandle
     type(MLSFile_T)                :: MLSFile
-    integer :: record_length
     integer :: status
     integer :: the_hdfVersion
     
@@ -4929,6 +4924,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.172  2009/11/04 23:15:53  pwagner
+! Restored MAXCHUNKTIMES to 120; at 1 DGG file became enormous (who could have guessed)
+!
 ! Revision 2.171  2009/10/22 00:52:39  pwagner
 ! Second try at fixing hdfeos5 bug; still no luck
 !

@@ -1108,10 +1108,6 @@ contains ! =====     Public Procedures     =============================
     type (VectorValue_T), intent(in) :: QTY1, QTY2
     character(len=*), intent(in), optional :: NAME
     character(len=*), intent(in), optional :: OPTIONS
-    !
-    integer :: i
-    integer :: nUnique
-    integer, dimension(1000) :: uniqueVals
 
     if ( present(name) ) then
       if ( len_trim(name) > 0 ) then
@@ -2651,6 +2647,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.145  2009/10/27 23:28:46  pwagner
+! Generic Diff must be public, too, at least NAG thinks so
+!
 ! Revision 2.144  2009/10/27 22:16:38  pwagner
 ! New api for dump vector quantity--drops 'clean', adds 'options'
 !
