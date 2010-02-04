@@ -158,6 +158,9 @@ contains ! ====     Public Procedures     ==============================
     allocate ( vectors(0), stat=error_flag )
     if ( error_flag /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate // 'vectors' )
+    allocate ( directDatabase(0), stat=error_flag )
+    if ( error_flag /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate // 'direct write files' )
 
     nullify ( chunksSkipped )
     warnOnDestroy = ( switchDetail(switches, 'destroy' ) > -1 )
@@ -614,6 +617,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.168  2009/10/01 19:58:00  vsnyder
+! Pass file database to set_global_settings
+!
 ! Revision 2.167  2009/06/23 18:46:19  pwagner
 ! Prevent Intel from optimizing ident string away
 !
