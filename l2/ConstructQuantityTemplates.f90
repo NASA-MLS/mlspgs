@@ -65,10 +65,9 @@ contains ! ============= Public procedures ===================================
   type (QuantityTemplate_T) function CreateQtyTemplateFromMLSCFInfo ( &
     & Name, Root, FGrids, HGrids, filedatabase, Chunk, MifGeolocation ) &
     & result ( QTY )
-    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, Test_Allocate
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Chunks_m, only: MLSChunk_T
 !   use ChunkDivide_m, only: ChunkDivideConfig
-    use Dump_0, only: Dump
     use EXPR_M, only: EXPR
     use FGrid, only: fGrid_T
     use HGridsDatabase, only: hGrid_T
@@ -77,18 +76,15 @@ contains ! ============= Public procedures ===================================
       & F_RADIOMETER, F_SGRID, F_SIGNAL, F_TYPE, F_VGRID, F_REFLECTOR, &
       & FIELD_FIRST, FIELD_LAST, L_TRUE, L_ZETA, L_XYZ, L_MATRIX3X3, &
       & L_CHANNEL, L_LOSTRANSFUNC, L_NONE
-    use Intrinsic, only: LIT_INDICES
     use MLSCommon, only: MLSFile_T, RK => R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MLSSignals_m, only:GetModuleFromRadiometer, GetModuleFromSignal, &
-      & GetRadiometerFromSignal, GetSignal, Signal_T, MODULES, IsModuleSpacecraft
-    use OUTPUT_M, only: OUTPUT
+      & GetRadiometerFromSignal, GetSignal, Signal_T, IsModuleSpacecraft
     use Parse_Signal_m, only: PARSE_SIGNAL
     use QuantityTemplates, only: QuantityTemplate_T, &
-      & DUMP, SetupNewQuantityTemplate, &
+      & SetupNewQuantityTemplate, &
       & NullifyQuantityTemplate
-    use STRING_TABLE, only: GET_STRING, DISPLAY_STRING
-    use TOGGLES, only: SWITCHES
+    use STRING_TABLE, only: GET_STRING
     use TREE, only: DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE
     use TREE_TYPES, only: N_SET_ONE
     use VGridsDatabase, only: VGrids
@@ -1023,7 +1019,7 @@ contains ! ============= Public procedures ===================================
       L_TOTALPOWERWEIGHT, L_TSCAT, L_VMR
     use Init_Tables_Module, only: PHYQ_ANGLE, PHYQ_COLMABUNDANCE, &
       & PHYQ_DIMENSIONLESS, PHYQ_EXTINCTION, PHYQ_FREQUENCY,&
-      & PHYQ_GAUSS, PHYQ_IceDensity, PHYQ_LENGTH, PHYQ_LogIceDensity, &
+      & PHYQ_GAUSS, PHYQ_IceDensity, PHYQ_LENGTH, &
       & PHYQ_PRESSURE, PHYQ_TEMPERATURE, PHYQ_TIME, PHYQ_VELOCITY, &
       & PHYQ_VMR, PHYQ_ZETA
     use MLSMessageModule, only: MLSMSG_Error, MLSMessage
@@ -1288,6 +1284,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.154  2010/02/04 23:12:44  vsnyder
+! Remove USE or declaration for unreferenced names
+!
 ! Revision 2.153  2010/01/23 01:02:37  vsnyder
 ! Remove LogIWC
 !
