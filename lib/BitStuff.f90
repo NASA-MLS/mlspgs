@@ -330,7 +330,6 @@ contains
     character(len=32) :: myName
     logical :: mysortByName
     character(len=32) :: myTaggedName
-    integer, dimension(0:MAXBITNUMBER) :: which
     ! Executable
     myName = 'bits'
     if( present(itemName) ) myName = itemName
@@ -573,6 +572,9 @@ contains
 end module BitStuff
 
 ! $Log$
+! Revision 2.15  2010/02/04 23:08:00  vsnyder
+! Remove USE or declaration for unused names
+!
 ! Revision 2.14  2009/06/23 18:25:42  pwagner
 ! Prevent Intel from optimizing ident string away
 !

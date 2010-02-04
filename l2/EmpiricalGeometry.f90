@@ -142,23 +142,14 @@ contains ! ========================= Public Procedures ====================
     ! type (L1BInfo_T), intent(in) :: L1BINFO
     type (MLSChunk_T), intent(in) :: CHUNK ! This chunk
 
-    ! Local parameters
-    integer, parameter :: NOLON0OPTIONS = 18
-
     ! Local variables
-    integer :: BESTOPTION(1)            ! With lowest cost
-    real(r8), dimension(noLon0Options) :: options
-    real(r8), dimension(noLon0Options) :: cost
     type (L1BData_T) :: tpGeodAngle     ! From L1B
     type (L1BData_T) :: tpLon           ! From L1B
     integer :: NOMAFS                   ! From ReadL1B
     integer :: FLAG                     ! From ReadL1B
-    integer :: I,J                      ! Loop counters
     real(r8), dimension(:), pointer :: TESTPHI ! Angle
     real(r8), dimension(:), pointer :: TESTLON ! Longitude to match
     real(r8), dimension(:), pointer :: GUESSLON ! Attempt at match
-    real(r8) :: LOWLIMIT, HILIMIT       ! For new options
-    real(r8) :: DELTA                   ! For new options
     integer ::  hdfVersion
     character(len=Name_Len) :: l1bItemName
     type (MLSFile_T), pointer             :: L1BFile
@@ -229,6 +220,9 @@ contains ! ========================= Public Procedures ====================
 end module EmpiricalGeometry
 
 ! $Log$
+! Revision 2.15  2010/02/04 23:12:44  vsnyder
+! Remove USE or declaration for unreferenced names
+!
 ! Revision 2.14  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
 !
