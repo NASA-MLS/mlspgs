@@ -67,8 +67,7 @@ module INTRINSIC
   integer, parameter :: PHYQ_VELOCITY =        phyq_zeta+1        ! Default meters/second
   integer, parameter :: PHYQ_EXTINCTION =      phyq_velocity+1    ! Default 1/meters
   integer, parameter :: PHYQ_ICEDENSITY =      phyq_extinction+1  ! Default g/meters^3
-  integer, parameter :: PHYQ_LOGICEDENSITY =   phyq_icedensity+1  ! Default log10 g/meters^3
-  integer, parameter :: PHYQ_COLMABUNDANCE =   phyq_logicedensity+1 ! Default molecules/cm^2
+  integer, parameter :: PHYQ_COLMABUNDANCE =   phyq_icedensity+1  ! Default log10 g/meters^3
   integer, parameter :: PHYQ_PCTRHI =          phyq_colmabundance+1 ! default %RHI
   integer, parameter :: PHYQ_GAUSS =           phyq_pctrhi + 1
   integer, parameter :: PHYQ_PROFILES =        phyq_gauss + 1
@@ -187,7 +186,6 @@ contains ! =====     Public procedures     =============================
     phyq_indices(phyq_zeta) =              add_ident ( 'zeta' )
     phyq_indices(phyq_extinction) =        add_ident ( 'extinction' )
     phyq_indices(phyq_icedensity) =        add_ident ( 'iceDensity' )
-    phyq_indices(phyq_logicedensity) =     add_ident ( 'logIceDensity' ) ! log10
     phyq_indices(phyq_colmabundance) =     add_ident ( 'colmabundance' )
     phyq_indices(phyq_pctrhi) =            add_ident ( 'pctrhi' )
     phyq_indices(phyq_gauss) =             add_ident ( 'gauss' )
@@ -263,6 +261,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.64  2010/02/04 23:03:25  vsnyder
+! Remove PHYQ_LOGICEDENSITY
+!
 ! Revision 2.63  2009/09/19 00:35:07  vsnyder
 ! Add phyq_logIceDensity
 !
