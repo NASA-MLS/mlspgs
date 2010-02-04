@@ -138,8 +138,6 @@ contains
 
     integer :: Stat
     type (templateStuff_t) :: TemplateStuff
-    type (quantityTemplate_t) :: TestTemplate
-    character(len=127) :: Text ! of the quantity template name
 
     real(r8), allocatable :: Surfs(:,:)
     real(r8), allocatable :: Phi(:,:)
@@ -322,7 +320,6 @@ contains
     ! the specifications of a previous Checkpoint command
     use Machine, only: IO_Error
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use MoreTree, only: Get_Field_ID
     use Tree, only: Decoration, NSons, Subtree
     use VectorsModule, only: Vector_t
 
@@ -332,7 +329,7 @@ contains
     type (vector_t), intent(in), optional :: Vectors(:) ! to save, else use
       ! the ones mentioned on a prior Checkpoint command, if any.
 
-    integer :: I, Son, Status, Unit
+    integer :: I, Status, Unit
 
     if ( checkpointRoot <= 0 ) then
       if ( .not. present(name) .or. .not. present(vectors) ) return
@@ -401,7 +398,6 @@ contains
     integer, intent(out) :: Status ! 0 = OK
 
     integer :: I
-    integer :: GlobalUnit ! Alternative physical units for the vector
     integer :: NQ ! Number of vector quantities
     type (vectorValueStuff_t) :: VectorValueStuff
 
@@ -434,7 +430,6 @@ contains
     ! the specifications of a previous Checkpoint command
     use Machine, only: IO_Error
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use MoreTree, only: Get_Field_ID
     use Tree, only: Decoration, NSons, Subtree
     use VectorsModule, only: Vector_t
 
@@ -444,7 +439,7 @@ contains
     type (vector_t), intent(inout), optional :: Vectors(:) ! to save, else use
       ! the ones mentioned on a prior Checkpoint command, if any.
 
-    integer :: I, Son, Status, Unit
+    integer :: I, Status, Unit
 
     if ( checkpointRoot <= 0 ) then
       if ( .not. present(name) .or. .not. present(vectors) ) return
@@ -659,6 +654,9 @@ contains
 end module Checkpoint
 
 ! $Log$
+! Revision 2.3  2010/02/04 23:12:44  vsnyder
+! Remove USE or declaration for unreferenced names
+!
 ! Revision 2.2  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
 !
