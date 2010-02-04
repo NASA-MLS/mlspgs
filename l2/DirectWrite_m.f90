@@ -136,7 +136,6 @@ contains ! ======================= Public Procedures =========================
     ! Write standard hdfeos-formatted files ala l2gp for datasets that
     ! are too big to keep all chunks stored in memory
     ! so instead write them out profile-by-profile
-    use ChunkDivide_m, only: ChunkDivideConfig
     use Hdf, only: DFACC_CREATE, DFACC_RDONLY
     use HGridsDatabase, only: HGrid_T
     use L2GPData, only: L2GPData_T, &
@@ -904,7 +903,6 @@ contains ! ======================= Public Procedures =========================
   subroutine vectorValue_to_l2gp (QUANTITY, &
     & precision, quality, status, convergence,  l2gp, &
     & name, chunkNo, HGrids, offset, firstInstance, lastInstance)
-    use ChunkDivide_m, only: ChunkDivideConfig
     use HGridsDatabase, only: HGrid_T
     use Intrinsic, only: L_None
     use L2GPData, only: L2GPData_T, RGP, &
@@ -1095,6 +1093,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.47  2010/02/04 23:12:44  vsnyder
+! Remove USE or declaration for unreferenced names
+!
 ! Revision 2.46  2010/02/04 19:10:26  pwagner
 ! Change condition on directwrite db from associated to zero size
 !
