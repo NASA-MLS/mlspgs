@@ -23,7 +23,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   use DUMP_0, only: DUMP
   use Gemm_M, only: GEMM
   use Gemv_M, only: GEMV
-  use MLSKinds, only: RM, RV, R4, R8
+  use MLSKinds, only: RM, R4, R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use OUTPUT_M, only: OUTPUT
   use VectorsModule, only: M_LinAlg
@@ -3562,6 +3562,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.5  2010/02/04 23:08:00  vsnyder
+! Remove USE or declaration for unused names
+!
 ! Revision 2.4  2009/06/16 17:26:39  pwagner
 ! Changed api for dump, diff routines; now rely on options for most optional behavior
 !

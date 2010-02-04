@@ -135,8 +135,8 @@ contains
 !     del_opcty(2,1,h_i) = rhorrx * (alpha_path(0,h_i) - del_p) &
 !       &                  + im_one * del_m
       del_opcty(1,2,h_i) = rhorrx * (alpha_path(0,h_i) - del_p)
-      del_opcty(2,1,h_i) = del_opcty(1,2,h_i) - cmplx(-aimag(del_m),real(del_m))
-      del_opcty(1,2,h_i) = del_opcty(1,2,h_i) + cmplx(-aimag(del_m),real(del_m))
+      del_opcty(2,1,h_i) = del_opcty(1,2,h_i) - cmplx(-aimag(del_m),real(del_m), kind=rk)
+      del_opcty(1,2,h_i) = del_opcty(1,2,h_i) + cmplx(-aimag(del_m),real(del_m), kind=rk)
       del_opcty(2,2,h_i) = rhopi2 * alpha_path(0,h_i) + rhosi2 * del_p
 
     end do
@@ -156,6 +156,9 @@ contains
 end module Opacity_M
 
 ! $Log$
+! Revision 2.5  2010/02/04 23:09:53  vsnyder
+! Use kind= in CMPLX
+!
 ! Revision 2.4  2009/06/23 18:26:11  pwagner
 ! Prevent Intel from optimizing ident string away
 !
