@@ -26,26 +26,22 @@ module SnoopMLSL2               ! Interface between MLSL2 and IDL snooper via pv
   ! the little extra book keeping this involves is worth it.
 
   use init_tables_module, only: F_Comment, F_PhaseName
-  use Intrinsic, only: LIT_INDICES
-  use LEXER_CORE, only: PRINT_SOURCE
   use MatrixModule_0, ONLY: MatrixElement_T
   use MatrixModule_1, ONLY: Matrix_T, RC_Info
-  use MLSCommon, only: R4, R8, I4, RM
+  use MLSCommon, only: R8, RM
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, &
-    & MLSMSG_Info, MLSMSG_Allocate, MLSMSG_DeAllocate, PVMErrorMessage
+    & MLSMSG_Allocate, MLSMSG_DeAllocate, PVMErrorMessage
   use MLSSets, only: FINDFIRST
-  use MLSSignals_M, only: GETSIGNALNAME
   use MoreTree, only: Get_Field_Id
-  use PVM, only: PVMDataDefault, PVMFinitsend, PVMFmyTid, PVMFgSize, &
+  use PVM, only: PVMDataDefault, PVMFinitsend, PVMFmyTid, &
     & PVMF90Unpack, PVMTaskExit, PVMFNotify, PVMFSend
-  use PVMIDL, only:  IDLMsgTag, PVMIDLPack, PVMIDLReceive, PVMIDLSend, PVMIDLUnpack
+  use PVMIDL, only:  PVMIDLPack, PVMIDLSend, PVMIDLUnpack
   use QuantityPVM, only: PVMSENDQUANTITY
-  use QuantityTemplates, only: QuantityTemplate_T
   use OUTPUT_M, only: OUTPUT
   use STRING_TABLE, only: GET_STRING, DISPLAY_STRING
   use Symbol_Table, only: ENTER_TERMINAL
   use Symbol_Types, only: T_IDENTIFIER
-  use TREE, only:  DUMP_TREE_NODE, NSONS, SOURCE_REF, SUB_ROSA, SUBTREE
+  use TREE, only:  NSONS, SOURCE_REF, SUB_ROSA, SUBTREE
   use Toggles, only: SWITCHES
   use VectorsModule, only: Vector_T, VectorValue_T
 
@@ -479,14 +475,12 @@ contains ! ========  Public Procedures =========================================
     ! Local variables, first the more exciting ones.
     integer, save :: MYTID=0            ! Local task ID under PVM
     type (SnooperInfo_T), dimension(:), pointer, save :: SNOOPERS => NULL()
-    type (SnooperInfo_T), dimension(:), pointer, save :: OLDSNOOPERS => NULL()
     ! For add/del ops.
 
     ! Now the more mundane items
     integer :: BYTES
     integer :: BUFFERID, INFO           ! Flags and ids from PVM
     character (len=132) :: COMMENT      ! Comment field to snoop command
-    integer :: CONTROLINGSNOOPER        ! This one is controling
     integer :: I                        ! Loop inductor, subtree index
     integer :: INUM                     ! Index in group
     character (len=132) :: LINE         ! Line of text received
@@ -960,9 +954,6 @@ contains ! ========  Public Procedures =========================================
     integer :: QUANTITY                 ! index
 
     type (VectorValue_T), pointer :: q  ! This vector quantity
-    type (QuantityTemplate_T), pointer :: qt ! The quantity template
-
-    character (len=132) :: word         ! A line of text to send.
 
     ! Executable code
 
@@ -1014,6 +1005,9 @@ contains ! ========  Public Procedures =========================================
 end module SnoopMLSL2
 
 ! $Log$
+! Revision 2.42  2010/02/04 23:12:44  vsnyder
+! Remove USE or declaration for unreferenced names
+!
 ! Revision 2.41  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
 !
