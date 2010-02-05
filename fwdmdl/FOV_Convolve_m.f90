@@ -51,7 +51,6 @@ contains
 
   ! --------------------------------------  Dump_Convolve_Support  -----
   subroutine Dump_Convolve_Support ( cs, Name, Details )
-    use AntennaPatterns_m, only: DUMP_ANTENNA_PATTERNS_DATABASE
     use Dump_0, only: DUMP
     use MLSNumerics, only: Dump
     use Output_m, only: OUTPUT
@@ -542,6 +541,9 @@ contains
 end module FOV_Convolve_m
 
 ! $Log$
+! Revision 2.10  2010/02/05 03:19:05  vsnyder
+! Remove USE for unreferenced name
+!
 ! Revision 2.9  2009/12/15 03:17:07  vsnyder
 ! Get kinds from MLSKinds instead of MLSCommon
 !
