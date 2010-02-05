@@ -366,7 +366,7 @@ contains
   end subroutine Get_Beta_Path_PFA
 
   ! ------------------------------------  Get_Beta_Path_Polarized  -----
-  subroutine Get_Beta_Path_Polarized ( Frq, Flo, H, Beta_group, GL_slabs, &
+  subroutine Get_Beta_Path_Polarized ( Frq, H, Beta_group, GL_slabs, &
                                      & Path_inds, Beta_path, dBeta_path_dT )
 
     use Dump_0, only: Dump
@@ -382,7 +382,6 @@ contains
 ! Inputs:
 
     real(r8), intent(in) :: Frq       ! frequency in MHz
-    real(r8), intent(in) :: Flo       ! LO frequency in MHz
     real(rp), intent(in) :: H(:)      ! Magnetic field component in instrument
                                       ! polarization on the path
     type (slabs_struct), dimension(:,:), intent(in) :: GL_slabs
@@ -469,7 +468,7 @@ contains
   end subroutine Get_Beta_Path_Polarized
 
   ! ----------------------------------------  Get_Beta_Path_Cloud  -----
-  subroutine Get_Beta_Path_Cloud ( Frq, p_path, t_path,  tt_path, path_inds, &
+  subroutine Get_Beta_Path_Cloud ( Frq, t_path, tt_path, path_inds, &
         & beta_path_cloud, w0_path, tt_path_c, IPSD, WC, fwdModelConf  )
     use ForwardModelConfig, only: FORWARDMODELCONFIG_T
     use Cloud_extinction, only: get_beta_cloud
@@ -479,7 +478,6 @@ contains
 
     real(r8), intent(in) :: Frq             ! frequency in MHz
     real(rp), intent(in) :: T_path(:)       ! path temperatures
-    real(rp), intent(in) :: P_path(:)       ! path pressures in hPa!
     real(rp), intent(in) :: tt_path(:,:)    ! scating source func on gl grids
 
 
@@ -1490,6 +1488,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.99  2010/02/04 23:10:38  vsnyder
+! Remove USE for unreferenced names
+!
 ! Revision 2.98  2010/01/23 01:20:15  vsnyder
 ! Allow betas that depend upon mixing ratio, get beta for Cloud_A and
 ! Cloud_S from the Mie tables, get kinds from MLSKinds instead of MLSCommon
