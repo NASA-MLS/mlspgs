@@ -317,10 +317,6 @@ contains
     use TWO_D_HYDROSTATIC_M, only: Two_D_Hydrostatic
     use VectorsModule, only: GETVECTORQUANTITYBYTYPE, VECTOR_T, VECTORVALUE_T
 
-    ! Extra space in the ..._R variables:  Replacement for tangent Zeta,
-    ! new space for minimum Zeta, plus GL points around them.
-    integer, parameter :: NXG = ( max_new + 1 ) * ngp1 - 1
-
     type(forwardModelConfig_T), intent(inout) :: FwdModelConf
     type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
     type(vector_T), intent(inout) :: FwdModelOut  ! Radiances, etc.
@@ -505,8 +501,7 @@ contains
     real(rp) :: TT_PATH_C(s_i*max_c)  ! tscat on path coarse
     real(rp) :: W0_PATH_C(s_i*max_c)  ! w0 on path coarse
     real(rp) :: Z_COARSE(max_c)       ! Z_PSIG & Z_min & surface zeta on path
-    real(rp), target :: Z_GLGRID_O(maxvert) ! Zeta on initial glGrid surfs, original
-    real(rp), target :: Z_GLGRID_R(maxvert+nxg) ! Zeta on initial glGrid surfs, revised
+    real(rp) :: Z_GLGRID(maxvert)     ! Zeta on initial glGrid surfs
     real(rp) :: Z_PATH(max_f)         ! Zeta on fine grid path tangent grid and
                                       ! species grids, sans duplicates.
     real(rp) :: BETA_PATH_C(max_c,no_mol)  ! Beta on path coarse
@@ -530,8 +525,7 @@ contains
     real(rp) :: DH_DT_PATH(max_f,s_t*sv_t_len)     ! dH/dT on path
     real(rp) :: DH_DT_PATH_C(max_c,s_t*sv_t_len)   ! DH_DT_PATH on coarse grid
     real(rp) :: DH_DT_PATH_F(max_f,s_t*sv_t_len)   ! DH_DT_PATH on fine grid
-    real(rp), target :: DHDZ_GLGRID_O(maxVert,no_sv_p_t) ! dH/dZ on glGrid surfs, original
-    real(rp), target :: DHDZ_GLGRID_R(maxVert+nxg,no_sv_p_t) ! dH/dZ on glGrid surfs, revised
+    real(rp) :: DHDZ_GLGRID(maxVert,no_sv_p_t) ! dH/dZ on glGrid surfs
     real(rp) :: DX_DT(no_tan_hts,s_t*sv_t_len)     ! (No_tan_hts, nz*np)
     real(rp) :: ETA_FZP(max_f,size(grids_f%values)) ! Eta_z x Eta_p * Eta_f
     real(rp) :: ETA_IWC_ZP(max_f,s_i*grids_iwc%p_len)
@@ -543,8 +537,7 @@ contains
     real(rp) :: ETA_ZXP_T_F(max_f,s_t*sv_t_len)    ! ETA_ZXP_T on fine grid
     real(rp) :: ETA_ZXP_V(max_f,size(grids_v%values)) ! Eta_z x Eta_p for V
     real(rp) :: ETA_ZXP_W(max_f,size(grids_w%values)) ! Eta_z x Eta_p for W
-    real(rp), target :: H_GLGRID_O(maxVert,no_sv_p_t) ! H on glGrid surfs, original
-    real(rp), target :: H_GLGRID_R(maxVert+nxg,no_sv_p_t) ! H on glGrid surfs, revised
+    real(rp) :: H_GLGRID(maxVert,no_sv_p_t)        ! H on glGrid surfs
     real(rp) :: IWC_PATH(max_f,s_i)                ! IWC on path
     real(rp), target :: MAG_PATH(s_p*max_f,4)      ! Magnetic field on path
     real(rp), target :: RAD_AVG_PATH(max_c,s_pfa*noUsedChannels) ! Freq. Avgd.
@@ -554,8 +547,7 @@ contains
     real(rp) :: SPECT_V_PATH(max_f,size(fwdModelConf%lineCenter)) ! Line Center
     real(rp) :: SPECT_W_PATH(max_f,size(fwdModelConf%lineWidth)) ! Line Width
     real(rp) :: SPS_PATH(max_f,no_mol)             ! species on path
-    real(rp), target :: T_GLGRID_O(maxVert,no_sv_p_t) ! Temp on glGrid surfs, original
-    real(rp), target :: T_GLGRID_R(maxVert+nxg,no_sv_p_t) ! Temp on glGrid surfs, revised
+    real(rp) :: T_GLGRID(maxVert,no_sv_p_t)        ! Temp on glGrid surfs
     real(rp) :: T_SCRIPT_PFA(max_c,s_pfa*noUsedChannels) ! Delta_B in some notes
     real(rp) :: TT_PATH(max_f,s_i)                 ! TScat on path along the LOS
     real(r8) :: VMRARRAY(no_mol,s_i*n_t_zeta)      ! The VMRs
@@ -572,8 +564,7 @@ contains
       &       size(grids_w%values), size(grids_n%values), size(grids_v%values)), &
       & size(fwdModelConf%usedDACSSignals) )
 
-    real(rp), target :: DH_DT_GLGRID_O(maxVert,n_t_zeta,s_t*no_sv_p_t)
-    real(rp), target :: DH_DT_GLGRID_R(maxVert+nxg,n_t_zeta,s_t*no_sv_p_t)
+    real(rp), target :: DH_DT_GLGRID(maxVert,n_t_zeta,s_t*no_sv_p_t)
 
     complex(rp) :: D_RAD_POL_DF(2,2,s_p*s_a*size(grids_f%values)) ! From mcrt_der
     complex(rp) :: D_RAD_POL_DT(2,2,s_p*s_t*sv_t_len) ! From mcrt_der
@@ -600,8 +591,7 @@ contains
     real(rp) :: EST_LOS_VEL(no_tan_hts)   ! Est S/C line-of-sight velocity M/S
     real(rp) :: TAN_D2H_DHDT(s_t*sv_t_len)
     real(rp) :: TAN_PHI(no_tan_hts)
-    real(rp), target :: DDHIDHIDTL0_O(maxVert,n_t_zeta,s_t*no_sv_p_t) ! Original
-    real(rp), target :: DDHIDHIDTL0_R(maxVert+nxg,n_t_zeta,s_t*no_sv_p_t) ! Revised
+    real(rp) :: DDHIDHIDTL0(maxVert,n_t_zeta,s_t*no_sv_p_t)
     real(r4) :: K_ATMOS(noUsedChannels,no_tan_hts,s_a*size(grids_f%values))
     ! Channels x pointings x grid values == frequencies x surfaces x instances x molecules:
     real(r4) :: K_SPECT_DN(noUsedChannels,no_tan_hts,s_td*size(grids_n%values))
@@ -669,14 +659,6 @@ contains
     real(rp), pointer :: STSP(:)         ! Sin(Theta) Sin(Phi)
     real(rp), pointer :: DACsStaging(:,:) ! Temporary space for DACS radiances
 
-    ! GL Grid quantities to/from Hydrostatic
-    real(rp), pointer :: DDHIDHIDTL0(:,:,:) ! Either DDHIDHIDTL0_O or DDHIDHIDTL0_R
-    real(rp), pointer :: DH_DT_GLGRID(:,:,:) ! Either DH_DT_GLgrid_O or DH_DT_GLgrid_R
-    real(rp), pointer :: DHDZ_GLGRID(:,:) ! Either DHDZ_GLgrid_O or DHDZ_GLgrid_R
-    real(rp), pointer :: H_GLGRID(:,:)   ! Either H_GLgrid_O or H_GLgrid_R
-    real(rp), pointer :: T_GLGRID(:,:)   ! Either T_GLgrid_O or T_GLgrid_R
-    real(rp), pointer :: Z_GLGRID(:)     ! Either Z_GLgrid_O or Z_GLgrid_R
-
     ! Cloud arrays have the same grids as temperature
     real(rp) :: ETA_Tscat(max_f,s_i*size(grids_tmp%values))
     real(rp) :: ETA_Tscat_ZP(max_f,s_i*grids_tmp%p_len)
@@ -741,7 +723,6 @@ contains
     type (VectorValue_T), pointer :: SPACERADIANCE ! Emission from space
     type (VectorValue_T), pointer :: SurfaceHeight ! km above mean sea level
     type (VectorValue_T), pointer :: THISRADIANCE  ! A radiance vector quantity
-    type (VectorValue_T), pointer :: TScat         ! Computed TScat, Jacobian row label
 
 !  The 'all_radiometers grid file' approach variables declaration:
 
@@ -1153,15 +1134,6 @@ contains
       windowFinish = grids_tmp%windowFinish(1)
 
   ! Compute reference Gauss Legendre (GL) grid ------------------------------
-
-      ! Fill the "original" GL-grid arrays.  These depend only upon the
-      ! original Zetas (Z_PSIG) derived from the L2CF using make_z_grid.
-      ddhidhidtl0 => ddhidhidtl0_o
-      dh_dt_glgrid => dh_dt_glgrid_o
-      dhdz_glgrid => dhdz_glgrid_o
-      h_glgrid => h_glgrid_o
-      t_glgrid => t_glgrid_o
-      z_glgrid => z_glgrid_o
 
       call compute_GL_grid ( z_psig, z_glgrid )
 
@@ -1852,7 +1824,7 @@ contains
       integer :: FRQ_I                    ! Frequency loop index
       real(r8) :: FRQ                     ! Frequency
       real(r8) :: FRQHK                   ! 0.5 * Frq * H_Over_K
-      integer :: I, J, L                  ! Loop inductor and subscript
+      integer :: J, L                     ! Loop inductor and subscript
       integer :: I_STOP                   ! Stop path integration before I_End
       integer :: P_Stop                   ! Where to stop in polarized case
       logical :: PFA_or_not_pol           ! PFA .or. .not. fwdModelConf%polarized
@@ -2006,9 +1978,8 @@ contains
           else
 
             ! cld_fine              re-compute cext and w0 along the LOS
-            call get_beta_path_cloud ( Frq, p_path, t_path(1:npf),      &
-              &  tt_path(1:npf,:), c_inds,                              &
-              &  beta_path_cloud_c(1:npc), w0_path_c,  tt_path_c,       &
+            call get_beta_path_cloud ( Frq, t_path(1:npf), tt_path(1:npf,:), &
+              &  c_inds, beta_path_cloud_c(1:npc), w0_path_c, tt_path_c,     &
               &  IPSD(1:npf),  WC(:,1:npf), fwdModelConf )
 
           end if
@@ -2057,9 +2028,8 @@ contains
         else ! Extra stuff for polarized case
              ! Can't be doing TScat, so process the whole path
 
-          call get_beta_path_polarized ( frq, firstSignal%lo, h,         &
-            & beta_group%lbl(sx), gl_slabs, c_inds, beta_path_polarized, &
-            & dBeta_dT_polarized_path_c )
+          call get_beta_path_polarized ( frq, h, beta_group%lbl(sx), gl_slabs, &
+            & c_inds, beta_path_polarized, dBeta_dT_polarized_path_c )
 
           ! We put an explicit extent of -1:1 for the first dimension in
           ! the hope a clever compiler will do better optimization with
@@ -2228,9 +2198,8 @@ contains
 
           ! Get the corrections to integrals for layers that need GL for
           ! the polarized species.
-          call get_beta_path_polarized ( frq, firstSignal%lo, h,            &
-            & beta_group%lbl(sx), gl_slabs, gl_inds, beta_path_polarized_f, &
-            & dBeta_dT_polarized_path_f )
+          call get_beta_path_polarized ( frq, h,beta_group%lbl(sx), gl_slabs, &
+            & gl_inds, beta_path_polarized_f, dBeta_dT_polarized_path_f )
 
           ! We put an explicit extent of -1:1 for the first dimension in
           ! the hope a clever compiler will do better optimization with
@@ -2600,7 +2569,7 @@ contains
       use Get_Eta_Matrix_m, only: Get_Eta_Sparse
       use MatrixModule_1, only: FindBlock
       use MLSNumerics, only: Coefficients_r8, InterpolateArraySetup, &
-        & InterpolateValues, InterpolateArrayTeardown
+        & InterpolateArrayTeardown
       use MLSSignals_m, only: GetNameOfSignal
       use Output_m, only: NewLine
       use Read_Mie_m, only: dP_dIWC, dP_dT, F_s, IWC_s, P, T_s, Theta_s
@@ -2612,10 +2581,6 @@ contains
       real(rp) :: Eta_s(size(Grids_tmp%phi_basis)) ! Coeffs to Scat_Tan_Phi
       real(rp) :: Phi_Old      ! Used during iteration for Scat_Tan_Phi
       real(rp) :: Phi_Ref      ! Tangent phi for the scattered ray
-      real(rp) :: P_On_Theta_e(2*size(theta_s)+1) ! P * sin(abs(theta))
-                               ! interpolated to scattering point IWC and T for
-                               ! each theta, intermediary to getting P_On_Xi
-      real(rp) :: P_T_IWC(size(theta_s)) ! P interpolated to T, IWC
       real(rp) :: Rads(noUsedChannels,4*nlvl+2*scatteringAngles%template%noSurfs)
       real(r4) :: K_Atmos_TScat(noUsedChannels,size(rads,2),s_a*size(grids_f%values))
       real(rp) :: K_Atmos_p(s_a*size(grids_f%values)) ! K_Atmos convolved with P
@@ -2651,7 +2616,6 @@ contains
       real(rp) :: Eta_T_IWC(0:1,0:1) ! for both
 
       integer :: Beg_Pos_Theta ! 1 if theta_s(1) /= 0, else 2
-      integer :: Col           ! Column number of Jacobian block
       integer :: IWC_IX        ! Which IWC index for phase function to use
       integer :: T_IX          ! Which Temperature index for phase functio to use
 
@@ -2826,33 +2790,29 @@ contains
             ! Do the ray tracing and radiative transfer, four times: once each
             ! for forward and reverse scattering, and once each for upwelling
             ! and downwelling rays
-            call one_tscat_pointing ( ptg_i, vel_rel, scat_tan_phi, &
-              &                       scat_zeta, scat_phi, scat_ht, &
-              &                       r_eq, xi, zeta_i, phi_i,      &
-              &                       xis, rads, k_atmos_TScat, k_temp_TScat, &
-              &                       i_r, scat_index, rev=.true. )
+            call one_tscat_pointing ( ptg_i, vel_rel, scat_tan_phi,       &
+              &                       scat_zeta, scat_phi, scat_ht,       &
+              &                       r_eq, xi, xis, rads, k_atmos_TScat, &
+              &                       k_temp_TScat, i_r, scat_index, rev=.true. )
 
             xi = xi + pi
-            call one_tscat_pointing ( ptg_i, vel_rel, scat_tan_phi, &
-              &                       scat_zeta, scat_phi, scat_ht, &
-              &                       r_eq, xi, zeta_i, phi_i,      &
-              &                       xis, rads, k_atmos_TScat, k_temp_TScat, &
-              &                       i_r, scat_index, rev=.false. )
+            call one_tscat_pointing ( ptg_i, vel_rel, scat_tan_phi,       &
+              &                       scat_zeta, scat_phi, scat_ht,       &
+              &                       r_eq, xi, xis, rads, k_atmos_TScat, &
+              &                       k_temp_TScat, i_r, scat_index, rev=.false. )
 
             xi = dPhi_xi + dPhi - pi
             scat_tan_phi = scat_tan_phi + 2.0 * dphi_xi
-            call one_tscat_pointing ( ptg_i, vel_rel, scat_tan_phi, &
-              &                       scat_zeta, scat_phi, scat_ht, &
-              &                       r_eq, xi, zeta_i, phi_i,      &
-              &                       xis, rads, k_atmos_TScat, k_temp_TScat, &
-              &                       i_r, scat_index, rev=.false. )
+            call one_tscat_pointing ( ptg_i, vel_rel, scat_tan_phi,       &
+              &                       scat_zeta, scat_phi, scat_ht,       &
+              &                       r_eq, xi, xis, rads, k_atmos_TScat, &
+              &                       k_temp_TScat, i_r, scat_index, rev=.false. )
 
             xi = xi + pi
-            call one_tscat_pointing ( ptg_i, vel_rel, scat_tan_phi, &
-              &                       scat_zeta, scat_phi, scat_ht, &
-              &                       r_eq, xi, zeta_i, phi_i,      &
-              &                       xis, rads, k_atmos_TScat, k_temp_TScat, &
-              &                       i_r, scat_index, rev=.true. )
+            call one_tscat_pointing ( ptg_i, vel_rel, scat_tan_phi,       & 
+              &                       scat_zeta, scat_phi, scat_ht,       & 
+              &                       r_eq, xi, xis, rads, k_atmos_TScat, &
+              &                       k_temp_TScat, i_r, scat_index, rev=.true. )
 
           end do ! ptg_i
 
@@ -2908,18 +2868,18 @@ contains
             end if
 
             ! Do the ray tracing and radiative transfer
-            call one_tscat_pointing ( 1, vel_rel, scat_tan_phi,     &
-              &                       scat_zeta, scat_phi, scat_ht, &
-              &                       r_eq, xi, zeta_i, phi_i,      &
-              &                       xis, rads, k_atmos_TScat, k_temp_TScat, &
-              &                       i_r, scat_index, scat_tan_ht, forward )
+            call one_tscat_pointing ( 1, vel_rel, scat_tan_phi,           &
+              &                       scat_zeta, scat_phi, scat_ht,       &
+              &                       r_eq, xi, xis, rads, k_atmos_TScat, &
+              &                       k_temp_TScat, i_r, scat_index,      &
+              &                       scat_tan_ht, forward )
 
             xi = xi + pi
-            call one_tscat_pointing ( 1, vel_rel, scat_tan_phi,     &
-              &                       scat_zeta, scat_phi, scat_ht, &
-              &                       r_eq, xi, zeta_i, phi_i,      &
-              &                       xis, rads, k_atmos_TScat, k_temp_TScat, &
-              &                       i_r, scat_index, scat_tan_ht, forward )
+            call one_tscat_pointing ( 1, vel_rel, scat_tan_phi,           &
+              &                       scat_zeta, scat_phi, scat_ht,       &
+              &                       r_eq, xi, xis, rads, k_atmos_TScat, &
+              &                       k_temp_TScat, i_r, scat_index,      &
+              &                       scat_tan_ht, forward )
 
           end do ! ptg_j
 
@@ -3179,7 +3139,10 @@ contains
       real(rp), intent(out) :: P_on_Xi(:) ! Interpolated result
 
       real(rp) :: P_T_IWC(size(p,3)) ! P interpolated to T and IWC
-      real(rp) :: P_on_Theta_e(2*size(p_t_iwc)+1-beg_pos_theta) ! onto negative theta
+      real(rp) :: P_on_Theta_e(2*size(p_t_iwc)+1-beg_pos_theta) ! P * sin(abs(theta))
+                               ! interpolated to scattering point IWC and T for
+                               ! each theta (including negative theta), intermediary
+                               ! to getting P_On_Xi
 
       integer :: I
 
@@ -3259,15 +3222,6 @@ contains
       ! Assume it's not an earth-intersecting ray and min zeta is at
       ! the tangent point
       e_rflty = 1.0
-      ! Use the "original" GL-grid arrays -- the ones filled before the
-      ! sideband loop.  These depend only upon the original Zetas
-      ! (Z_PSIG) derived from the L2CF using make_z_grid.
-      ddhidhidtl0 => ddhidhidtl0_o
-      dh_dt_glgrid => dh_dt_glgrid_o
-      dhdz_glgrid => dhdz_glgrid_o
-      h_glgrid => h_glgrid_o
-      t_glgrid => t_glgrid_o
-      z_glgrid => z_glgrid_o
 
       if ( toggle(emit) .and. levels(emit) > 4 ) &
         & call Trace_Begin ( 'ForwardModel.MetricsEtc' )
@@ -3440,7 +3394,7 @@ contains
             call dump ( h_path(1:npf), name='h_path', format='(f14.7)' )
             call dump ( phi_path(1:npf), name='phi_path', format='(f14.8)' )
           end if
-          n_more = 0
+          n_more = 0 !??? Code appears not to work yet, so turn it off
         end if
 
         ! Get minimum zeta on the path
@@ -3930,13 +3884,10 @@ contains
   ! .........................................  One_TScat_Pointing  .....
     subroutine One_TScat_Pointing ( Ptg_i, Vel_Rel, Scat_Tan_Phi, Scat_Zeta,  &
       &                             Scat_Phi, Scat_Ht, Use_R_Eq, Xi,          &
-      &                             Zeta_i, Phi_i, Xis, Rads, K_Atmos_TScat,  &
-      &                             K_Temp_TScat, I_R, Scat_Index,            &
-      &                             Scat_Tan_Ht, Forward, Rev)
+      &                             Xis, Rads, K_Atmos_TScat, K_Temp_TScat,   &
+      &                             I_R, Scat_Index, Scat_Tan_Ht, Forward, Rev)
 
       ! Do one TScat pointing
-
-      use Get_Eta_Matrix_m, only: Get_Eta_Sparse
 
       integer, intent(in) :: Ptg_i          ! Pointing index for One_Pointing
       real(rp), intent(in) :: Vel_Rel       ! LOS Vel / speed of light
@@ -3946,10 +3897,6 @@ contains
       real(rp), intent(in) :: Scat_Ht       ! of scattering point
       real(rp), intent(in) :: Use_R_Eq      ! R_Eq to use instead of at tangent
       real(rp), intent(in) :: Xi            ! Scattering angle, radians
-      integer, intent(in) :: Zeta_i         ! Index of Scat_Zeta in
-                                            ! TScat%template%surfs
-      integer, intent(in) :: Phi_i          ! Index of Scat_Phi in
-                                            ! TScat%template%phi
       real(rp), intent(inout) :: Xis(:)     ! Store Xi in Xis(I_R) if OK
       real(rp), intent(inout) :: Rads(:,:)  ! Store radiance in Rads(:,I_R)
       real(r4), intent(inout) :: K_Atmos_TScat(:,:,:) ! Store partials in K_Atmos_TScat(:,I_R,:)
@@ -4153,6 +4100,11 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.300  2010/02/02 01:39:06  vsnyder
+! Move USEs closer to where the used stuff is referenced.  Don't compute
+! theta if it trying to do so will cause an exception.  Finish applying the
+! product rule correctly for TScat derivatives.
+!
 ! Revision 2.299  2010/01/23 01:30:49  vsnyder
 ! Move USEs into closer proximity to references.  Get cloudIce as vmr if it
 ! isn't available as a quantityType.  Create TScat stuff with zero size if
