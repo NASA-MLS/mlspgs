@@ -671,7 +671,7 @@ contains
     use ForwardModelConfig, only: QtyStuff_T
     use Load_sps_data_m, only: Grids_T
     use MatrixModule_1, only: FINDBLOCK, MATRIX_T
-    use MLSKinds, only: R8, RP, RV
+    use MLSKinds, only: RP
     use VectorsModule, only: VectorValue_T
 
     ! Inputs
@@ -730,7 +730,7 @@ contains
     use ForwardModelConfig, only: QtyStuff_T
     use Load_sps_data_m, only: Grids_T
     use MatrixModule_1, only: FINDBLOCK, MATRIX_T
-    use MLSKinds, only: R8, RP, RV
+    use MLSKinds, only: RP
     use VectorsModule, only: VectorValue_T
 
     ! Inputs
@@ -885,6 +885,9 @@ contains
 end module Convolve_All_m
 
 ! $Log$
+! Revision 2.11  2010/02/05 03:18:11  vsnyder
+! Remove USE for unreferenced names
+!
 ! Revision 2.10  2009/12/22 03:23:05  vsnyder
 ! Add Store_Other_Deriv, Store_Temp_Deriv versions
 !
