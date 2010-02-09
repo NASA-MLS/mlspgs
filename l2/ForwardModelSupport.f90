@@ -489,6 +489,7 @@ contains ! =====     Public Procedures     =============================
     info%do_path_norm = .false.
     info%forceFoldedOutput = .false.
     info%forceSidebandFraction = .false.
+    info%GenerateTScat = .false.
     info%globalConfig = global
     info%incl_cld = .false.
     info%instrumentModule = 0
@@ -1398,6 +1399,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.147  2010/02/09 16:22:32  pwagner
+! Give info%GenerateTScat an initial value
+!
 ! Revision 2.146  2010/01/22 01:00:20  vsnyder
 ! Require Cloud_A and Cloud_S "molecules" to be handled as PFA, not LBL.
 !
