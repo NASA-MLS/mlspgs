@@ -1456,32 +1456,24 @@ contains
     ! Fill the 'central' part of the fields
     newLons ( 1+lowerLon : lowerLon+grid%noLons ) = grid%lons
     newLsts ( 1+lowerLst : lowerLst+grid%noLsts ) = grid%lsts
-    newField ( :, :, &
-      & 1+lowerLon : lowerLon+grid%noLons, &
-      & 1+lowerLst : lowerLst+grid%noLsts, &
-      & :, : ) = grid%field
 
     ! Wrap edges
     if ( lowerLon == 1 ) then
       newLons(1) = grid%lons ( grid%noLons ) - 360.0
-      newField ( :, :, 1, :, :, : ) = grid%field ( :, :, grid%noLons, :, :, : )
     end if
     if ( upperLon == 1 ) then
       newLons ( grid%noLons + lowerLon + 1 ) = grid%lons ( 1 ) + 360.0
-      newField ( :, :, grid%noLons + lowerLon + 1, :, :, : ) = &
-        & grid%field ( :, :, 1, :, : ,: )
     end if
 
     if ( lowerLst == 1 ) then
       newLsts(1) = grid%lsts ( grid%noLsts ) - 24.0
-      newField ( :, :, :, 1, :, : ) = grid%field ( :, :, :, grid%noLsts, :, : )
     end if
     if ( upperLst == 1 ) then
       newLsts ( grid%noLsts + lowerLst + 1 ) = grid%lsts ( 1 ) + 24.0
-      newField ( :, :, :, grid%noLsts + lowerLst + 1, :, : ) = &
-        & grid%field ( :, :, :, 1, : ,: )
     end if
 
+    call wraparrays( grid%field, newfield, lowerLon, upperLon, lowerLst, upperLst, &
+    & grid%noLons, grid%noLsts )
     ! Tidy up
     call Deallocate_test ( grid%lons, 'grid%lons', ModuleName )
     call Deallocate_test ( grid%lsts, 'grid%lsts', ModuleName )
@@ -1499,6 +1491,40 @@ contains
   end subroutine WrapGriddedData
 
   ! -------- Private ---------------
+  subroutine wrapArrays ( old, new, lowerLon, upperLon, lowerLst, upperLst, &
+    & oldNoLons, oldNoLsts )
+  ! Hide our array shenanigans to
+  ! (1) prevent compilers like NAG from using a temp array and running out
+  !     of memory
+  ! (2) prevent cleverer compilers like Intel from checking whether they
+  !     need a temp array
+  ! Args
+    real (rgr), dimension(:,:,:,:,:,:) :: old
+    real (rgr), dimension(:,:,:,:,:,:) :: new
+    integer, intent(in) :: lowerLon, upperLon, lowerLst, upperLst, &
+    & oldNoLons, oldNoLsts
+    new ( :, :, &
+      & 1+lowerLon : lowerLon+oldNoLons, &
+      & 1+lowerLst : lowerLst+oldNoLsts, &
+      & :, : ) = old
+    ! Wrap edges
+    if ( lowerLon == 1 ) then
+      new ( :, :, 1, :, :, : ) = old ( :, :, oldNoLons, :, :, : )
+    end if
+    if ( upperLon == 1 ) then
+      new ( :, :, oldNoLons + lowerLon + 1, :, :, : ) = &
+        & old ( :, :, 1, :, : ,: )
+    end if
+
+    if ( lowerLst == 1 ) then
+      new ( :, :, :, 1, :, : ) = old ( :, :, :, oldNoLsts, :, : )
+    end if
+    if ( upperLst == 1 ) then
+      new ( :, :, :, oldNoLsts + lowerLst + 1, :, : ) = &
+        & old ( :, :, :, 1, : ,: )
+    end if
+  end subroutine wrapArrays
+
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -1513,6 +1539,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.60  2010/02/09 16:24:12  pwagner
+! Hide large array section assignments in subroutine to prevent NAG from creating temps
+!
 ! Revision 2.59  2010/02/04 23:08:00  vsnyder
 ! Remove USE or declaration for unused names
 !
