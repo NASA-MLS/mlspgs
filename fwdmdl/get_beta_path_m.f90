@@ -263,7 +263,7 @@ contains
 
     real(rp), pointer :: dBdIWC(:), dBdn(:), dBdT(:), dBdv(:), dBdw(:) ! slices of dBeta_d*_path
     real(rp) :: ES(size(t_path)) ! Used for RHi calculation
-    integer :: I, N
+    integer :: I, J, NP
     character(len=4), save :: clean
     logical, save :: DumpAll, DumpBeta, DumpStop
     logical, save :: First = .true. ! First-time flag
@@ -280,25 +280,27 @@ contains
 
     nullify ( dBdIWC, dBdT, dBdn, dBdv, dBdw )
 
+    np = size(t_path)
+
     do i = 1, size(beta_group)
       if ( size(dBeta_dt_path) > 0 ) then
-        dBdT => dBeta_dt_path(:,i)
+        dBdT => dBeta_dt_path(:np,i)
         dBdT = 0.0_rp
       end if
       if ( size(dBeta_dn_path) > 0 ) then
-        dBdn => dBeta_dn_path(:,i)
+        dBdn => dBeta_dn_path(:np,i)
         dBdn = 0.0_rp
       end if
       if ( size(dBeta_dv_path) > 0 ) then
-        dBdv => dBeta_dv_path(:,i)
+        dBdv => dBeta_dv_path(:np,i)
         dBdv = 0.0_rp
       end if
       if ( size(dBeta_dw_path) > 0 ) then
-        dBdw => dBeta_dw_path(:,i)
+        dBdw => dBeta_dw_path(:np,i)
         dBdw = 0.0_rp
       end if
       if ( size(dBeta_dIWC_path) > 0 ) then
-        dBdIWC => dBeta_dIWC_path(:,i)
+        dBdIWC => dBeta_dIWC_path(:np,i)
         dBdIWC = 0.0_rp
       end if
 
@@ -306,30 +308,30 @@ contains
 
       select case ( beta_group(i)%molecule )
       case ( l_cloud_a )
-        call create_beta_path_Mie ( frq, t_path, sps_path(:,i), path_inds, &
+        call create_beta_path_Mie ( frq, t_path, sps_path(:np,i), path_inds, &
           & beta_c_a, dBeta_dIWC_c_a, dBeta_dT_c_a, beta_path(:,i), &
           & dBdT, dBdIWC )
       case ( l_cloud_s )
-        call create_beta_path_Mie ( frq, t_path, sps_path(:,i), path_inds, &
+        call create_beta_path_Mie ( frq, t_path, sps_path(:np,i), path_inds, &
           & beta_c_s, dBeta_dIWC_c_s, dBeta_dT_c_s, beta_path(:,i), &
           & dBdT, dBdIWC )
       case default
-        do n = 1, size(beta_group(i)%pfa(sx)%molecules)
-          if ( beta_group(i)%pfa(sx)%data(frq_i,n)/= 0 ) then
+        do j = 1, size(beta_group(i)%pfa(sx)%molecules)
+          if ( beta_group(i)%pfa(sx)%data(frq_i,j)/= 0 ) then
             call create_beta_path_pfa ( frq, p_path, path_inds, t_path, vel_rel, &
-              & PFAData(beta_group(i)%pfa(sx)%data(frq_i,n)),   &
-              & beta_group(i)%pfa(sx)%ratio(n), beta_path(:,i), &
+              & PFAData(beta_group(i)%pfa(sx)%data(frq_i,j)),   &
+              & beta_group(i)%pfa(sx)%ratio(j), beta_path(:,i), &
               & t_der_path_flags, dBdT, dBdw, dBdn, dBdv )
 
             if ( dumpBeta ) then
-              call display_string ( lit_indices(beta_group(i)%pfa(sx)%molecules(1:n)), &
+              call display_string ( lit_indices(beta_group(i)%pfa(sx)%molecules(1:j)), &
               & before='PFA Betas for' )
               call output ( frq, before=', FRQ = ', advance='yes' )
               call dump ( beta_path(:,i), name='Beta', options=clean )
               if ( associated(dBdT) ) call dump ( dBdT, name='dBdT', options=clean )
             end if
           end if
-        end do ! n = 1, size(beta_group(i)%pfa(sx)%molecules)
+        end do ! j = 1, size(beta_group(i)%pfa(sx)%molecules)
 
         if ( beta_group(i)%molecule == l_rhi ) then
           !{ Convert specific humidity to relative humidity
@@ -1488,6 +1490,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.100  2010/02/05 03:29:09  vsnyder
+! Remove unused dummy arguments
+!
 ! Revision 2.99  2010/02/04 23:10:38  vsnyder
 ! Remove USE for unreferenced names
 !
