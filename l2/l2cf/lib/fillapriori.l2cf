@@ -520,10 +520,11 @@ Fill, quantity=apriori.refGPH,$
       0.03mb:5ppmv, 0.01mb: 15ppmv, 0.003mb: 50ppmv, 0.001mb:150ppmv ]
   Fill, quantity=vReg.h2o, method=profile, profileValues= $
     [ 1000mb:500ppmv, 300mb:50ppmv, 215mb:20ppmv, 147mb:10ppmv, 100mb:1.0ppmv,$
-	0.1mb:0.3ppmv, 0.001mb:0ppmv ], logSpace=false
+    1mb:0.3ppmv,0.1mb:5ppmv, 0.001mb:0ppmv ], logSpace=false
+
   Fill, quantity=vReg.h2o_hr, method=profile, profileValues= $
     [ 1000mb:50ppmv, 316mb:100ppmv,215mb:50ppmv, 147mb:5ppmv,121mb: 2ppmv, $
-      100mb:0.5ppmv, 83mb:0.3ppmv, 1mb:0.6ppmv, 0.1mb:10ppmv, 0.001mb:0ppmv ], $
+      100mb:0.5ppmv, 83mb:0.3ppmv, 10mb:0.3ppmv, 1mb:0.4ppmv, 0.1mb:3ppmv, 0.001mb:0ppmv ], $
       logSpace=false
   Fill, quantity=vReg.RHiVmr, method=profile, profileValues= [ $
                     316mb:20.0, 68mb:20.0, 0.147mb:2.0,0.1mb:0.0]
@@ -604,14 +605,15 @@ Fill, quantity=apriori.refGPH,$
     [ 10mb:5ppbv,  3mb: 15ppbv, 1mb:50ppbv, 0.3mb: 150ppbv, 0.1mb:0.5ppmv, $
       0.03mb: 1.5ppmv, 0.01mb:5ppmv, 0.003mb:15ppmv, 0.001mb: 50ppmv ]
   Fill, quantity=hReg.h2o, method=profile, $
-    profileValues=[ 146mb:0ppmv, 100mb:0.3ppmv, 1mb:0.3ppmv, 0.1mb:5ppmv, 0.046mb:0ppmv ], $
-    logSpace=false
+     profileValues=[ 147mb:0ppmv, 121mb:2ppmv, 100mb:0.3ppmv, 10mb:0.3ppmv, 1mb:0.4ppmv, 0.1mb:3ppmv, $
+     0.046mb:0ppmv ], logSpace=false
 
   Fill, quantity=hReg.h2o_HR, method=profile, $
-     profileValues=[ 147mb:0ppmv, 121mb:2ppmv, 100mb:0.3ppmv, 0.1mb:0.3ppmv, 0.046mb:0ppmv ], logSpace=false
+     profileValues=[ 147mb:0ppmv, 121mb:2ppmv, 100mb:0.3ppmv, 10mb:0.3ppmv, 1mb:0.4ppmv, 0.1mb:3ppmv, $
+     0.046mb:0ppmv ], logSpace=false
 
   Fill, quantity=hReg.RHiVmr, method=profile, profileValues= [ $
-        316mb:20.0, 68mb:20.0, 0.147mb:2.0,0.1mb:0.0]
+        316mb:2.0, 68mb:2.0, 0.147mb:0.2,0.1mb:0.0]
 
   Fill, quantity=hReg.hcl, method=profile, $
     profileValues= [ 0.1mb:0.3ppbv, 0.046mb:0ppbv ]
@@ -679,6 +681,9 @@ end Join
   })
 !divert(-1)
 ;$Log$
+;Revision 1.141  2009/07/28 20:08:17  pwagner
+;Tightened RHi smoothing, raised its high bound to 2000
+;
 ;Revision 1.140  2009/06/23 17:33:43  pwagner
 ;Does not automatically set top of HCl
 ;
