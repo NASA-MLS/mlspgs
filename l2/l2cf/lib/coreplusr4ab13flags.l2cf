@@ -30,21 +30,12 @@ begin Fill
   !makeQualityForOneProduct(product=SO2,chisqScale=1.0,minRads=200,cloudMax=10K,cloudMin= -10K)
   !makeStatusForOneProduct(product=SO2,chisqScale=1.0,minRads=200,cloudMax=10K,cloudMin= -10K)
 
-  ;; ------------------------------------- Temperature-CorePlusR4AB13
-  !define(flaggingBands,{1})
-  !define(flaggingRadiometers,{R1A,R1B})!dnl
-  !makeQualityForOneProduct(product=Temperature,chisqScale=1.0,minRads=800,cloudMax=30K,cloudMin= -4K)
-  !makeStatusForOneProduct(product=Temperature,chisqScale=1.0,minRads=800,cloudMax=30K,cloudMin= -4K)
-
-  ;; ------------------------------------- GPH-CorePlusR4AB13
-  !define(flaggingBands,{1})
-  !define(flaggingRadiometers,{R1A,R1B})!dnl
-  !makeQualityForOneProduct(product=GPH,chisqScale=1.0,minRads=800,cloudMax=30K,cloudMin= -4K)
-  !makeStatusForOneProduct(product=GPH,chisqScale=1.0,minRads=800,cloudMax=30K,cloudMin= -4K)
-
 end Fill
 
 ; $Log$
+; Revision 1.10  2006/11/01 23:39:06  dwu
+; undo the changes since yesterday
+;
 ; Revision 1.9  2006/11/01 20:52:40  dwu
 ; compute r4 status based on R1 cloud flags
 ;
