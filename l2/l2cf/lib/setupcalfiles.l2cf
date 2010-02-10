@@ -129,7 +129,7 @@
   !define(antennaFile, {'!antennaPath/MLS-Aura_L2Cal-AAAP_v2-0-0_0000d000.txt'})
   })
   !ifdef(climatologyFile, {}, {
-  !define(climatologyFile, {'!climatologyPath/MLS-Aura_L2Cal-Climatologies_v1-7-4_0000d000.txt'})
+  !define(climatologyFile, {'!climatologyPath/MLS-Aura_L2Cal-Climatologies_v1-7-6_0000d000.txt'})
   })
   !ifdef(filterFile, {}, {
   !define(filterFile, {'!filterPath/MLS-Aura_L2Cal-Filters_v3-0-2_0000d000.txt'})
@@ -165,6 +165,9 @@
 !ifdef(outpathl1brad,{},{!define(outpathl1brad,!getdir(outpathl1brad))})
 !ifdef(outpathtmp,{},{!define(outpathtmp,!getdir(outpathtmp))})
 ;$Log$
+;Revision 1.41  2009/06/23 17:35:15  pwagner
+;Climatology now at version 1.7.4
+;
 ;Revision 1.40  2008/11/06 23:07:05  pwagner
 ;Brought up-to-date with v3.0.4 of Spectroscopy
 ;
