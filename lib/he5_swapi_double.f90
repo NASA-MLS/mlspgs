@@ -48,7 +48,7 @@ contains
     character(len=*), intent(in) :: ATTRNAME     ! Field name
     double precision, intent(out) :: BUFFER(:)   ! Buffer for read
 
-    double precision, external :: HE5_EHRDGLATT
+    integer, external :: HE5_EHRDGLATT
 
     he5_ehrdglatt_DOUBLE = he5_ehrdglatt(fileID, &
          & attrname, buffer )
@@ -231,6 +231,9 @@ contains
 
 end module HE5_SWAPI_DOUBLE
 ! $Log$
+! Revision 2.10  2010/02/10 19:45:02  pwagner
+! Fixed error in declaring return type of external HE5_EHRDGLATT
+!
 ! Revision 2.9  2009/10/05 23:37:05  pwagner
 ! Moved use hdf5 statements from module scope to speedup Lahey; this is the last time we do taht
 !
