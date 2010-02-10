@@ -237,7 +237,12 @@ contains ! =====  Public procedures  ===================================
       end if
       call output ( 'Dump of ' )
       if ( diagonal ) call output ( 'diagonal of ' )
-      call display_string ( matrix%name, advance='yes' )
+      call display_string ( matrix%name )
+      if ( matrix%row%vec%name /= 0 ) &
+        & call display_string ( matrix%row%vec%name, before=', row vector ' )
+      if ( matrix%col%vec%name /= 0 ) &
+        & call display_string ( matrix%col%vec%name, before=', column vector ' )
+      call newLine
       if ( stru ) then
         call dump_struct ( matrix )
       else
@@ -794,6 +799,9 @@ contains ! =====  Public procedures  ===================================
 end module MatrixTools
 
 ! $Log$
+! Revision 1.30  2009/12/17 23:56:41  vsnyder
+! Correct a formatting blunder
+!
 ! Revision 1.29  2009/12/17 23:44:43  vsnyder
 ! Print block coordinates in dump
 !
