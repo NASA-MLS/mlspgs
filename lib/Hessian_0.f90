@@ -50,11 +50,13 @@ module HessianModule_0          ! Low-level Hessians in the MLS PGS suite
   end interface
 
   interface Multiply
-    module procedure Hessian_Vector_Vector_Multiply
+    module procedure Hessian_Vec_Vec_Multiply_D
+    module procedure Hessian_Vec_Vec_Multiply_S
   end interface
 
   interface Sparsify
-    module procedure Sparsify_Hessian, Sparsify_Hessian_Array
+    module procedure Sparsify_Hessian, Sparsify_Hessian_Array_D
+    module procedure Sparsify_Hessian_Array_S
   end interface Sparsify
 
 !---------------------------- RCS Module Info ------------------------------
@@ -123,45 +125,49 @@ contains
 
   end subroutine Destroy_Hessian
 
-  ! ------------------------------- Hessian_Vector_Vector_Multiply -----
-  subroutine Hessian_Vector_Vector_Multiply ( H, V, P, Update )
-  !{ Multiply a Hessian {\tt H} by {\tt V} twice, with a factor of $\frac12$,
-  !  giving {\tt P}: $P^k = \frac12 H^k_{ij} V^i V^j$ or $P^k = P^k + \frac12
-  !  H^k_{ij} V^i V^j$, depending upon {\tt Update}.  This is the
-  !  second-order term of a Taylor series.  {\tt P} is initially set to zero
-  !  unless {\tt Update} is present and true.
+  ! ----------------------------------- Hessian_Vec_Vec_Multiply_D -----
+  subroutine Hessian_Vec_Vec_Multiply_D ( H, V1, V2, P, Update )
+  !{ Multiply a Hessian {\tt H} by {\tt V1} and {\tt V2}, with a factor of
+  !  $\frac12$, giving {\tt P}: $P^k = \frac12 H^k_{ij} V_1^i V_2^j$ or
+  !  $P^k = P^k + \frac12 H^k_{ij} V_1^i V_2^j$, depending upon {\tt
+  !  Update}.  This is the second-order term of a Taylor series.  {\tt P}
+  !  is initially set to zero unless {\tt Update} is present and true.
 
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    integer, parameter :: RK = RM
+    integer, parameter :: RK = kind(0.0d0)
     type(Hessian_0), intent(in) :: H
-    real(rk), intent(in) :: V(:)
+    real(rk), intent(in) :: V1(:), V2(:)
     real(rk), intent(inout) :: P(:)
     logical, intent(in), optional :: Update
 
     integer :: J, K, N
     logical :: MyUpdate
 
-    myUpdate = .false.
-    if ( present(update) ) myUpdate = update
-    if ( .not. myUpdate ) p = 0
+    include 'Hessian_Vector_Vector_Multiply_0.f9h'
 
-    if ( associated(h%tuple) ) then ! First try the sparse representation
-      do n = 1, size(h%tuple)
-        k = h%tuple(n)%k
-        p(k) = p(k) + 0.5 * h%tuple(n)%h * v(h%tuple(n)%i) * v(h%tuple(n)%j)
-      end do
-    else if ( associated(h%h) ) then ! Then try the dense represenation
-      if ( size(h%h,3) /= size(p) .or. size(h%h,1) /= size(v) ) &
-        call MLSMessage ( MLSMSG_Error, moduleName, &
-          & "Dimensions of Hessian and vectors incompatible in multiply" )
-      do k = 1, size(h%h,3)
-        do j = 1, size(h%h,2)
-          p(k) = p(k) + 0.5 * dot_product(h%h(:,j,k), v(:)) * v(j)
-        end do
-      end do
-    end if
+  end subroutine Hessian_Vec_Vec_Multiply_D
 
-  end subroutine Hessian_Vector_Vector_Multiply
+  ! ----------------------------------- Hessian_Vec_Vec_Multiply_S -----
+  subroutine Hessian_Vec_Vec_Multiply_S ( H, V1, V2, P, Update )
+  !{ Multiply a Hessian {\tt H} by {\tt V1} and {\tt V2}, with a factor of
+  !  $\frac12$, giving {\tt P}: $P^k = \frac12 H^k_{ij} V_1^i V_2^j$ or
+  !  $P^k = P^k + \frac12 H^k_{ij} V_1^i V_2^j$, depending upon {\tt
+  !  Update}.  This is the second-order term of a Taylor series.  {\tt P}
+  !  is initially set to zero unless {\tt Update} is present and true.
+
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    integer, parameter :: RK = kind(0.0e0)
+    type(Hessian_0), intent(in) :: H
+    real(rk), intent(in) :: V1(:), V2(:)
+    real(rk), intent(inout) :: P(:)
+    logical, intent(in), optional :: Update
+
+    integer :: J, K, N
+    logical :: MyUpdate
+
+    include 'Hessian_Vector_Vector_Multiply_0.f9h'
+
+  end subroutine Hessian_Vec_Vec_Multiply_S
 
   ! --------------------------------------------- Sparsify_Hessian -----
   subroutine Sparsify_Hessian ( H )
@@ -176,12 +182,12 @@ contains
 
   end subroutine Sparsify_Hessian
 
-  ! --------------------------------------- Sparsify_Hessian_Array -----
-  subroutine Sparsify_Hessian_Array ( H_Array, H )
+  ! ------------------------------------- Sparsify_Hessian_Array_D -----
+  subroutine Sparsify_Hessian_Array_D ( H_Array, H )
   ! Create a sparse representation of H_Array in H.
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
-    integer, parameter :: RK = RM
+    integer, parameter :: RK = kind(0.0d0)
     real(rk), intent(in) :: H_Array(:,:,:) ! H(i,j,k)
     type(Hessian_0), intent(inout) :: H    ! inout so we can deallocate tuple
 
@@ -192,25 +198,29 @@ contains
       call test_deallocate ( stat, moduleName, "H%Tuple" )
     end if
 
-    n = count(h_array /= 0)
-    h%rows = size(h_array,3)
-    h%columns = size(h_array,2)
-    allocate ( h%tuple(n), stat=stat )
-    call test_allocate ( stat, moduleName, "H%Tuple", (/ 1 /), (/ n /), -1 )
+    include 'Sparsify_Hessian_Array.f9h'
 
-    l = 0
-    do k = 1, size(h_array,3)
-      do j = 1, size(h_array,2)
-        do i = 1, size(h_array,1)
-          if ( h_array(i,j,k) /= 0 ) then
-            l = l + 1
-            h%tuple(l) = tuple_t(h_array(i,j,k),i,j,k)
-          end if
-        end do
-      end do
-    end do
+  end subroutine Sparsify_Hessian_Array_D
 
-  end subroutine Sparsify_Hessian_Array
+  ! ------------------------------------- Sparsify_Hessian_Array_S -----
+  subroutine Sparsify_Hessian_Array_S ( H_Array, H )
+  ! Create a sparse representation of H_Array in H.
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    integer, parameter :: RK = kind(0.0e0)
+    real(rk), intent(in) :: H_Array(:,:,:) ! H(i,j,k)
+    type(Hessian_0), intent(inout) :: H    ! inout so we can deallocate tuple
+
+    integer :: I, J, K, L, N, Stat
+
+    if ( associated(h%tuple) ) then
+      deallocate ( h%tuple, stat=stat )
+      call test_deallocate ( stat, moduleName, "H%Tuple" )
+    end if
+
+    include 'Sparsify_Hessian_Array.f9h'
+
+  end subroutine Sparsify_Hessian_Array_S
 
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
@@ -224,6 +234,9 @@ contains
 end module HessianModule_0
 
 ! $Log$
+! Revision 2.2  2010/02/12 21:09:31  vsnyder
+! Add generic single/double versions of multiply and sparsify
+!
 ! Revision 2.1  2010/02/12 20:20:26  vsnyder
 ! Initial commit
 !
