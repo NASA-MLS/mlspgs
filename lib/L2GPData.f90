@@ -3472,8 +3472,9 @@ contains
     character (LEN=480) :: msr
 
     integer :: first, freq, lev, nDims, nFlds, size, swid, status
-    integer, dimension(3) :: start, stride, edge, dims
-    integer(kind=size_t), dimension(3) :: hdims
+    integer, dimension(3) :: start, stride, edge
+    integer, dimension(4) :: dims
+    integer(kind=size_t), dimension(4) :: hdims
     integer :: nFreqs, nLevels, nTimes, nFreqsOr1, nLevelsOr1, myNumProfs
     logical :: firstCheck, lastCheck
 
@@ -3487,7 +3488,7 @@ contains
     logical :: deeBugHere
     ! Executable code
     call MLSMessageCalls( 'push', constantName= 'ReadL2GPData_MF_hdf' )
-    deeBugHere = DEEBUG     ! .or. .true.
+    deeBugHere = DEEBUG ! .or. .true.
     nullify ( realFreq, realSurf, realProf, real3 )
     hdfVersion = L2GPFile%hdfVersion
     ! Don't fail when trying to read an mls-specific field 
@@ -3509,6 +3510,8 @@ contains
       swid = mls_SWattach(L2GPFile, l2gp%Name)
       DF_Name = DATA_FIELD1
       DF_Precision = DATA_FIELD2
+      if ( deeBugHere ) print *, 'DF_NAME: ',DF_NAME
+      if ( deeBugHere ) print *, 'DF_Precision: ',DF_Precision
     case default
     end select
     if (swid == -1) call MLSMessage(MLSMSG_Error, ModuleName, &
@@ -3532,6 +3535,9 @@ contains
     if ( deeBugHere ) print *, 'swathName: ', l2gp%name
     if ( deeBugHere ) print *, 'dimlist: ', trim(list)
     if ( deeBugHere ) print *, 'ndims: ', ndims
+    if ( deeBugHere ) print *, 'DF_NAME: ',DF_NAME
+    if ( deeBugHere ) print *, 'DF_Precision: ',DF_Precision
+    if ( deeBugHere ) print *, 'DATA_FIELD1: ', DATA_FIELD1
     if ( deeBugHere ) print *, 'dims: ', dims
     if (nDims == -1) call MLSMessage(MLSMSG_Error, ModuleName, &
       & 'Failed to get dimension information on hdfeos5 swath ' // &
@@ -4924,6 +4930,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.173  2010/02/04 23:08:00  vsnyder
+! Remove USE or declaration for unused names
+!
 ! Revision 2.172  2009/11/04 23:15:53  pwagner
 ! Restored MAXCHUNKTIMES to 120; at 1 DGG file became enormous (who could have guessed)
 !
