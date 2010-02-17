@@ -154,10 +154,16 @@ contains ! ===================================== Public procedures =====
   subroutine DumpFGrid ( fGrid )
     ! Dummy arguments
     type (FGrid_T), intent(in) :: fGrid
+    integer :: ierr
 
     ! Executable code
     call output('FGrid name: ', advance='no')
-    call display_string ( fgrid%name, advance='yes' )
+    if ( fgrid%name > 0 ) then
+        call display_string ( fgrid%name, advance='yes' )
+        if ( ierr /= 0 ) call output ( '(not found in string table)')
+    else
+        call output('(unknown)', advance='yes')
+    endif
     call output('Number channels: ', advance='no')
     call output(fGrid%noChans, advance='yes')
     call output('Frequency coord: ', advance='no')
@@ -213,6 +219,9 @@ contains ! ===================================== Public procedures =====
 end module FGrid
 
 ! $Log$
+! Revision 2.12  2010/02/17 20:27:26  honghanh
+! Fix Dump subroutine to print FGrid when it has no name
+!
 ! Revision 2.11  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
 !
