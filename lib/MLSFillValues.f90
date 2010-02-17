@@ -18,13 +18,14 @@ module MLSFillValues              ! Some FillValue-related stuff
     & is_what_ieee
   use MLSKinds ! Everything
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-  use MLSSets, only: findFirst, findLast
+  use MLSSets, only: FindAll, findFirst, findLast
   use MLSStrings, only: Lowercase
 
   implicit none
 
   private
 
+  public :: Decimate
   public :: EmbedArray, EssentiallyEqual, ExtractArray
   public :: extremum
   public :: FillFunction, InfFunction, NaNFunction
@@ -55,6 +56,8 @@ module MLSFillValues              ! Some FillValue-related stuff
 !     - - - - - - - -
 
 !         Functions, operations, routines
+! Decimate                     Finds locations of non-zero values in presumably
+!                                sparse array
 ! EmbedArray                   Replace a bloc of elements in the larger array
 !                              with the smaller
 ! EssentiallyEqual         Returns true if two real arguments 'close enough'
@@ -86,6 +89,12 @@ module MLSFillValues              ! Some FillValue-related stuff
 ! === (end of toc) ===                                                   
 
 ! === (start of api) ===
+! Decimate ( array[:], int i[:], int n, &
+!   & [nprec testvalue], [nprec values[:], [char* options] )
+! Decimate ( array[:,:], int i[:], int j[:], int n, &
+!   & [nprec testvalue], [nprec values[:], [char* options] )
+! Decimate ( array[:,:,:], int i[:], int j[:],  int k[:], int n, &
+!   & [nprec testvalue], [nprec values[:], [char* options] )
 ! EmbedArray ( bloc, array, int range[2], [char* options] )
 ! log EssentiallyEqual ( nprec A, nprec B, &
 !   [nprec FillValue], [nprec Precision] )
@@ -116,6 +125,13 @@ module MLSFillValues              ! Some FillValue-related stuff
     module procedure BridgeMissingValues_1dr4, BridgeMissingValues_1dr8, BridgeMissingValues_1dint
     module procedure BridgeMissingValues_2dr4, BridgeMissingValues_2dr8, BridgeMissingValues_2dint
     module procedure BridgeMissingValues_3dr4, BridgeMissingValues_3dr8, BridgeMissingValues_3dint
+  end interface
+
+  interface Decimate
+    module procedure Decimate_1d_r4, Decimate_1d_r8
+    module procedure Decimate_2d_r4, Decimate_2d_r8
+    module procedure Decimate_3d_r4, Decimate_3d_r8
+    module procedure Decimate_1d_int
   end interface
 
   interface EmbedArray
@@ -266,12 +282,72 @@ module MLSFillValues              ! Some FillValue-related stuff
   ! where obviously 100000 is an arbitrary number
   ! Should we study this more carefully?
   real, parameter, private :: FILLVALUETOLERANCE = 0.2 ! Poss. could make it 1
-
+  integer, parameter       :: MAXDECIMATED = 10000
   character(len=3), save :: NaNString = 'NaN'
   character(len=3), save :: InfString = 'Inf'
   logical, parameter ::   DEEBUG = .false.
 
 contains
+
+  ! ---------------------------------------------  Decimate  -----
+  ! This family of routines returns just those values of an array[i,j,..]
+  ! depending upon options:
+  ! options             which 
+  !   '+'              values  >  testvalue
+  !   '/'              values  /= testvalue
+  ! If '||' is among the options, we test according to |array[i]|
+  ! If testvalue is not supplied, it defaults to 0
+  ! Optionally we return just the indices i for 1-d arrays, (i,j) for 2-d,
+  ! (i,j,k) for 3-d, etc.
+  subroutine Decimate_1d_int ( iarray, i, n, itestvalue, ivalues, options )
+    integer, dimension(:), intent(out) :: i
+    integer, dimension(:), intent(in) :: iarray ! The larger array
+    integer, intent(out) :: n
+    integer, parameter :: RK = R4
+    integer, intent(in), optional     :: itestvalue
+    integer, dimension(:), intent(out), optional :: ivalues
+    character(len=*), intent(in), optional :: options
+    ! Local variables
+    real(rk), dimension(size(iarray)) :: array ! The sparse array
+    real(rk) :: testvalue
+    real(rk), dimension(MAXDECIMATED) :: values
+    ! Executable
+    testvalue = 0._rk
+    if ( present(itestvalue) ) testvalue = real( itestvalue, rk )
+    array = iarray
+    call Decimate ( array, i, n, testvalue, values, options )
+    if ( present(ivalues) ) ivalues = values(1:size(ivalues))
+  end subroutine Decimate_1d_int
+
+  subroutine Decimate_1d_r4 ( array, i, n, testvalue, values, options )
+    integer, parameter :: RK = R4
+    include 'Decimate_1d.f9h'
+  end subroutine Decimate_1d_r4
+
+  subroutine Decimate_2d_r4 ( array, i, j, n, testvalue, values, options )
+    integer, parameter :: RK = R4
+    include 'Decimate_2d.f9h'
+  end subroutine Decimate_2d_r4
+
+  subroutine Decimate_3d_r4 ( array, i, j, k, n, testvalue, values, options )
+    integer, parameter :: RK = R4
+    include 'Decimate_3d.f9h'
+  end subroutine Decimate_3d_r4
+
+  subroutine Decimate_1d_r8 ( array, i, n, testvalue, values, options )
+    integer, parameter :: RK = r8
+    include 'Decimate_1d.f9h'
+  end subroutine Decimate_1d_r8
+
+  subroutine Decimate_2d_r8 ( array, i, j, n, testvalue, values, options )
+    integer, parameter :: RK = r8
+    include 'Decimate_2d.f9h'
+  end subroutine Decimate_2d_r8
+
+  subroutine Decimate_3d_r8 ( array, i, j, k, n, testvalue, values, options )
+    integer, parameter :: RK = r8
+    include 'Decimate_3d.f9h'
+  end subroutine Decimate_3d_r8
 
   ! ---------------------------------------------  EmbedArray  -----
   ! This family of routines replace a bloc of elements in a larger
@@ -424,14 +500,14 @@ contains
       & a >= nearest ( b, -1.0_r8 ) .and. a <= nearest ( b, 1.0_r8 )
   end function EssentiallyEqual_r8
 
-  function EssentiallyEqual_r4_1d ( A, B, FillValue, Precision ) &
-    & result(equal)
-  ! This function is slightly different:
+  ! The following functions are slightly different:
   ! A scalar logical testing that every element of two arrays are equal
   ! You may filter out values in either array equal to the FillValue
   ! or for which the corresponding Precision array is negative
   ! or where either element is not finite
   ! Warn if an element of one array is finite while the other is not
+  function EssentiallyEqual_r4_1d ( A, B, FillValue, Precision ) &
+    & result(equal)
     real(r4), dimension(:), intent(in)             :: A
     real(r4), dimension(:), intent(in)             :: B
     real(r4), intent(in)                           :: fillValue
@@ -449,11 +525,6 @@ contains
 
   function EssentiallyEqual_r8_1d ( A, B, FillValue, Precision ) &
     & result(equal)
-  ! This function is slightly different:
-  ! A scalar logical testing that every element of two arrays are equal
-  ! You may filter out values in either array equal to the FillValue
-  ! or for which the corresponding Precision array is negative
-  ! or where either element is not finite
     real(r8), dimension(:), intent(in)             :: A
     real(r8), dimension(:), intent(in)             :: B
     real(r8), intent(in)                           :: fillValue
@@ -471,11 +542,6 @@ contains
 
   function EssentiallyEqual_r4_2d ( A, B, FillValue, Precision ) &
     & result(equal)
-  ! This function is slightly different:
-  ! A scalar logical testing that every element of two arrays are equal
-  ! You may filter out values in either array equal to the FillValue
-  ! or for which the corresponding Precision array is negative
-  ! or where either element is not finite
     real(r4), dimension(:,:), intent(in)             :: A
     real(r4), dimension(:,:), intent(in)             :: B
     real(r4), intent(in)                             :: fillValue
@@ -497,11 +563,6 @@ contains
 
   function EssentiallyEqual_r8_2d ( A, B, FillValue, Precision ) &
     & result(equal)
-  ! This function is slightly different:
-  ! A scalar logical testing that every element of two arrays are equal
-  ! You may filter out values in either array equal to the FillValue
-  ! or for which the corresponding Precision array is negative
-  ! or where either element is not finite
     real(r8), dimension(:,:), intent(in)             :: A
     real(r8), dimension(:,:), intent(in)             :: B
     real(r8), intent(in)                             :: fillValue
@@ -523,11 +584,6 @@ contains
 
   function EssentiallyEqual_r4_3d ( A, B, FillValue, Precision ) &
     & result(equal)
-  ! This function is slightly different:
-  ! A scalar logical testing that every element of two arrays are equal
-  ! You may filter out values in either array equal to the FillValue
-  ! or for which the corresponding Precision array is negative
-  ! or where either element is not finite
     real(r4), dimension(:,:,:), intent(in)             :: A
     real(r4), dimension(:,:,:), intent(in)             :: B
     real(r4), intent(in)                               :: fillValue
@@ -549,11 +605,6 @@ contains
 
   function EssentiallyEqual_r8_3d ( A, B, FillValue, Precision ) &
     & result(equal)
-  ! This function is slightly different:
-  ! A scalar logical testing that every element of two arrays are equal
-  ! You may filter out values in either array equal to the FillValue
-  ! or for which the corresponding Precision array is negative
-  ! or where either element is not finite
     real(r8), dimension(:,:,:), intent(in)             :: A
     real(r8), dimension(:,:,:), intent(in)             :: B
     real(r8), intent(in)                               :: fillValue
@@ -574,7 +625,7 @@ contains
   end function EssentiallyEqual_r8_3d
 
 ! -------------------------------------------------  Extremum  -----
-! Returns the fillValue
+! Returns the arg with the large absolute value
   function Extremum_DOUBLE(arg1, arg2) result(value)
     double precision, intent(in) :: arg1, arg2
     double precision             :: value
@@ -620,8 +671,9 @@ contains
   end function FillFunction_REAL
 
 ! -------------------------------------------------  GatherArray  -----
-! Calculates the half-wave lengths of an array
-! i.e., the number of consecutive pos. or neg. values
+! This family of subroutines gathers {array[i], i in which1} into bloc}
+! if 'a' is among options, we allocate bloc
+! We could also code ScatterArray, but choose not to do so
   subroutine GatherArray_1d_int ( ibloc, iarray, which1, options )
     integer, dimension(:), pointer :: ibloc
     integer, dimension(:), pointer :: iarray ! The larger array
@@ -1993,6 +2045,64 @@ contains
 
   end subroutine DUMP_NAME_V_PAIRS
   
+  subroutine rerank( address, shp, indices )
+    ! Find multidimensional set of indices in an array
+    ! with shape shp corresponding to 1-d address
+    !
+    ! We shall assume that the first index is the fastest, then the 2nd, ..
+    ! Our method is the following:
+    ! Let the size of the kth index be s[k]
+    ! Then we seek the array i[k] such that
+    ! address = i[1] + s[1] ( i[2] + s[2] ( i[3] + .. + i[N] ) .. )
+    ! (Where we assume 0-based indexing, like c, 
+    !   rather than 1-based, as Fortran uses)
+    ! We can build this by parts as follows
+    ! a[N]   = i[N]
+    ! a[N-1] = i[N-1] + s[N-1] i[N]
+    ! a[N-2] = i[N-2] + s[N-2] ( i[N-1] + s[N-1] i[N] )
+    ! .   .   .
+    ! a[1] = address
+    ! Where N is the rank of the array
+    ! Note then that the recurrences hold
+    ! a[N-1] - a[N] s[N-1]   = i[N-1]
+    ! a[N-2] - a[N-1] s[N-2] = i[N-2]
+    ! .   .   .
+    ! a[1] - a[2] s[1]       = i[1]
+    !
+    ! From this last we realize that
+    ! i[1] = a[1] mod(s[1])
+    ! Solve it for i[1], then a[2] = ( a[1] - i[1] ) / s[1]
+    ! Then for succeeding values of k
+    ! i[k] = a[k] mod(s[k])
+    
+    ! Remember to modify each of these if we wish to use
+    ! Fortran-style indexes which start at 1, not 0, as follows
+    !
+    ! i'[k] = i[k] + 1, k > 1
+    ! i'[1] = i[1]
+    ! address = i'[1] + s[1] ( i'[2] - 1 + s[2] ( i[3] - 1 + .. + i[N] ) .. )
+    integer, intent(in)                :: address
+    integer, dimension(:), intent(in)  :: shp
+    integer, dimension(:), intent(out) :: indices
+    ! Local variables
+    integer :: aofk
+    integer :: k
+    integer :: N
+    integer, parameter :: OFFSET = 1 ! at what index do arrays start?
+    !
+    N = size(shp)
+    if ( N < 2 ) then
+      indices(1) = address
+      return
+    end if
+    aofk = address - OFFSET
+    do k=1, N
+      indices(k) = MOD(aofk, shp(k))
+      aofk = ( aofk - indices(k) ) / shp(k)
+    enddo
+    indices = indices + OFFSET ! Converting to Fortran-style, beginning with 1
+  end subroutine rerank
+  
   subroutine swap_int( first, second )
     ! Swap first and second args
     integer, intent(inout) :: first
@@ -2356,6 +2466,9 @@ end module MLSFillValues
 
 !
 ! $Log$
+! Revision 2.19  2010/02/17 22:30:53  pwagner
+! Added Decimate routines to pick out non-zeros in sparse arrays
+!
 ! Revision 2.18  2009/06/23 18:25:42  pwagner
 ! Prevent Intel from optimizing ident string away
 !
