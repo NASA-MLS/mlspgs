@@ -23,6 +23,7 @@ module CFM_MLSSetup_m
    use SDPToolkit, only: PGS_S_SUCCESS
    use Intrinsic, only: l_hdf, l_ascii
    use Hdf, only: DFACC_RDONLY
+   use input ! for l1boa file
 
    implicit none
 
@@ -90,7 +91,7 @@ module CFM_MLSSetup_m
          allocate(filedatabase(1), stat=error)
          if (error /= 0) return
          error = InitializeMLSFile(l1bfile, content='l1boa', &
-            name='/data/emls/l1b/v02.23/2008/037/MLS-Aura_L1BOA_v02-23-c01_2008d037.h5', &
+            name=trim(l1boa), &
             shortName='L1BOA', type=l_hdf, access=DFACC_RDONLY)
          if (error == 0) then
             call mls_openFile(L1BFile, error)
