@@ -1,0 +1,112 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module CFM_Tree_Walker
+
+! Traverse the tree output by the parser and checked by the tree checker.
+! Perform the actions in the order indicated.
+
+  implicit none
+  private
+
+  public :: Walk_Tree
+
+!---------------------------- RCS Ident Info -------------------------------
+  character(len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains ! ====     Public Procedures     ==============================
+
+  subroutine Walk_Tree ( Root, First_Section, ForwardModelConfigDatabase )
+
+    use Allocate_Deallocate, only: TEST_DEALLOCATE
+    use ForwardModelConfig, only: ForwardModelConfig_T
+    use Global_Settings, only: Set_Global_Settings
+    use Init_Tables_Module, only: Z_GLOBALSETTINGS, Z_MLSSIGNALS, Z_SPECTROSCOPY
+    use Intrinsic, only: Section_Indices
+    use MLSCommon, only: MLSFile_T
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSPCF2, only: mlspcf_spectroscopy_end
+    use MoreTree, only: StartErrorMessage
+    use Output_m, only: Output
+    use SpectroscopyCatalog_m, only: Spectroscopy
+    use String_Table, only: Display_String
+    use Time_M, only: Time_Now
+    use Toggles, only: GEN, LEVELS, SWITCHES, TOGGLE
+    use Trace_m, only: DEPTH, TRACE_BEGIN, TRACE_END
+    use Tree, only: DECORATION, NSONS, SUBTREE
+    use MLSSignals_M, only: MLSSignals
+
+    integer, intent(in) ::       Root          ! Root of the abstract syntax tree
+    integer, intent(in) ::       First_Section ! Index of son of root of first n_cf
+    type (ForwardModelConfig_T), pointer :: ForwardModelConfigDatabase(:)
+
+    type (MLSFile_T), pointer :: File_Data_Base(:)
+    integer :: I             ! Loop inductor, subtree index
+    integer :: Section_Index ! Z_MLSSignals, Z_GlobalSettings, Z_Spectroscopy
+    integer :: Son           ! Tree index of son of a tree vertex
+    integer :: Stat          ! From deallocate
+    real :: T1, T2           ! For timing
+
+    logical, parameter :: TOOLKIT = .false.
+
+    if ( toggle(gen) ) &
+      & call trace_begin ( 'Walk_Tree', subtree(first_section,root) )
+    call time_now ( t1 )
+    nullify ( File_Data_Base )
+
+    ! Loop over the tree
+    do i = first_section, nsons(root)
+      son = subtree(i,root)
+      section_index = decoration(subtree(1,son))
+      select case ( section_index )
+      case ( z_GlobalSettings )
+        call set_global_settings ( son, forwardModelConfigDatabase, File_Data_Base )
+      case ( z_MLSSignals )
+        call MLSSignals ( son )
+      case ( z_Spectroscopy )
+        call spectroscopy ( son, TOOLKIT, mlspcf_spectroscopy_end, File_Data_Base )
+      case default
+        call startErrorMessage ( son )
+        call output ( 'Section ' )
+        call display_string ( section_indices(section_index) )
+        call output ( ' is not supported in callable forward model', advance='yes' )
+        call MLSMessage ( MLSMSG_Error, moduleName, 'Unsupported CF section' )
+      end select
+    end do
+
+    ! We only needed File_Data_Base to keep Spectroscopy and
+    ! Set_Global_Settings happy
+    deallocate ( File_Data_Base, stat=stat )
+    call test_deallocate ( stat, moduleName, 'File_Data_Base' )
+
+    call time_now ( t2 )
+    !call output ( t2-t1, before='Timing to set up forward model = ', advance='yes' )
+
+    if ( toggle(gen) ) call trace_end ( 'Walk_Tree' )
+
+  end subroutine Walk_Tree
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module CFM_Tree_Walker
+
+! $Log$
