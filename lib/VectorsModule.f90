@@ -2062,6 +2062,7 @@ contains ! =====     Public Procedures     =============================
         call GetSignalName ( signal, msg(len_trim(msg)+2:), sideband=sideband )
       end if
 
+      call dump( vector, details=1 )
       call MLSMessage ( MLSMSG_Error, ModuleName, msg(:len_trim(msg)) )
     end if
 
@@ -2647,6 +2648,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.146  2010/02/04 23:08:00  vsnyder
+! Remove USE or declaration for unused names
+!
 ! Revision 2.145  2009/10/27 23:28:46  pwagner
 ! Generic Diff must be public, too, at least NAG thinks so
 !
