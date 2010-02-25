@@ -151,7 +151,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_FORWARDMODELGLOBAL = s_forwardModel + 1
   integer, parameter :: S_FREQUENCYGRID      = s_forwardModelGlobal + 1
   integer, parameter :: S_GRIDDED            = s_frequencyGrid + 1
-  integer, parameter :: S_HGRID              = s_gridded + 1
+  integer, parameter :: S_HESSIAN            = s_gridded + 1
+  integer, parameter :: S_HGRID              = s_hessian + 1
   integer, parameter :: S_L1BRAD             = s_hgrid + 1
   integer, parameter :: S_L1BOA              = s_l1brad + 1
   integer, parameter :: S_L2AUX              = s_l1boa + 1
@@ -180,7 +181,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_SIDS               = s_rowscale + 1
   integer, parameter :: S_SKIP               = s_sids + 1
   integer, parameter :: S_SNOOP              = s_skip + 1
-  integer, parameter :: S_SUBSET             = s_snoop + 1
+  integer, parameter :: S_STREAMLINEHESSIAN  = s_snoop + 1
+  integer, parameter :: S_SUBSET             = s_streamlineHessian + 1
   integer, parameter :: S_TEMPLATE           = s_subset + 1
   integer, parameter :: S_TGRID              = s_template + 1
   integer, parameter :: S_TRANSFER           = s_tgrid + 1
@@ -370,6 +372,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_forwardModelGlobal) =   add_ident ( 'forwardModelGlobal' )
     spec_indices(s_frequencyGrid) =        add_ident ( 'frequencyGrid' )
     spec_indices(s_gridded) =              add_ident ( 'gridded' )
+    spec_indices(s_hessian) =              add_ident ( 'hessian' )
     spec_indices(s_hgrid) =                add_ident ( 'hgrid' )
     spec_indices(s_l1brad) =               add_ident ( 'l1brad' )
     spec_indices(s_l1boa) =                add_ident ( 'l1boa' )
@@ -399,6 +402,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_sids) =                 add_ident ( 'sids' )
     spec_indices(s_skip) =                 add_ident ( 'skip' )
     spec_indices(s_snoop) =                add_ident ( 'snoop' )
+    spec_indices(s_streamlineHessian) =    add_ident ( 'streamlineHessian' )
     spec_indices(s_subset) =               add_ident ( 'subset' )
     spec_indices(s_template) =             add_ident ( 'template' )
     spec_indices(s_tgrid ) =               add_ident ( 'tGrid' )
@@ -788,6 +792,10 @@ contains ! =====     Public procedures     =============================
              begin, f+f_fraction, t+t_boolean, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
+      begin, s+s_hessian, &   ! Must be AFTER s_vector
+             begin, f+f_rows, s+s_vector, nr+n_field_spec, &
+             begin, f+f_columns, s+s_vector, nr+n_field_spec, &
+             ndp+n_spec_def, &
       begin, s+s_l2gp, &   ! Must be AFTER s_vector
              begin, f+f_source, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
@@ -1154,7 +1162,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_metaName, t+t_string, n+n_field_type, &
              begin, f+f_overlaps, s+s_l2aux, s+s_l2gp, n+n_field_spec, &
              begin, f+f_packed, t+t_boolean, n+n_field_type, &
-             begin, f+f_quantities, s+s_l2aux, s+s_l2gp, s+s_matrix, &
+             begin, f+f_quantities, s+s_l2aux, s+s_l2gp, s+s_matrix, s+s_hessian, &
                     s+s_directWrite, n+n_field_spec, &
              begin, f+f_type, t+t_outputType, nr+n_field_type, &
              begin, f+f_writeCounterMAF, t+t_boolean, n+n_field_type, &
@@ -1434,6 +1442,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_fwdModelOut, s+s_vector, nr+n_field_spec, &
              begin, f+f_destroyJacobian, t+t_boolean, n+n_field_type, &
              begin, f+f_jacobian, s+s_matrix, n+n_field_spec, &
+             begin, f+f_hessian, s+s_hessian, n+n_field_spec, &
+             begin, f+f_mirrorHessian, t+t_boolean, n+n_field_type, &
              begin, f+f_perturbation, s+s_vector, n+n_field_spec, &
              begin, f+f_singleMAF, t+t_numeric, n+n_field_type, &
              begin, f+f_TScat, t+t_boolean, n+n_field_type, &
@@ -1481,6 +1491,11 @@ contains ! =====     Public procedures     =============================
              begin, f+f_frequencies, t+t_numeric, nr+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
+      begin, s+s_streamlineHessian, &
+             begin, f+f_hessian, s+s_hessian, nr+n_field_spec, &
+             begin, f+f_scaleHeight, t+t_numeric, n+n_field_type, &
+             begin, f+f_geodAngle, t+t_numeric, n+n_field_type, &
+             ndp+n_spec_def, &
       begin, s+s_snoop, &
              begin, f+f_comment, t+t_string, n+n_field_type, &
              begin, f+f_phaseName, t+t_string, n+n_field_type, &
@@ -1567,9 +1582,9 @@ contains ! =====     Public procedures     =============================
              s+s_compare, s+s_computeTotalPower, s+s_destroy, &
              s+s_diff, s+s_dump, s+s_fill, s+s_fillCovariance, &
              s+s_fillDiagonal, s+s_flagcloud, s+s_flushL2PCBins, s+s_flushPFA, &
-             s+s_load, s+s_matrix, s+s_negativePrecision, s+s_phase, &
+             s+s_hessian, s+s_load, s+s_matrix, s+s_negativePrecision, s+s_phase, &
              s+s_populateL2PCBin, s+s_reevaluate, s+s_restrictRange, &
-             s+s_skip, s+s_snoop, s+s_subset, &
+             s+s_skip, s+s_snoop, s+s_streamlineHessian, s+s_subset, &
              s+s_time, s+s_transfer, s+s_updateMask, s+s_vector, n+n_section, &
       begin, z+z_retrieve, s+s_anyGoodValues, s+s_catchWarning, &
              s+s_checkpoint, s+s_compare, s+s_diff, s+s_dump, s+s_dumpBlocks, &
@@ -1605,6 +1620,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.497  2010/02/25 18:21:44  pwagner
+! Adds support for new Hessian data type
+!
 ! Revision 2.496  2010/01/23 01:02:37  vsnyder
 ! Remove LogIWC
 !
