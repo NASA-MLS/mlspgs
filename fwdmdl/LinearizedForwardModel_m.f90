@@ -52,6 +52,7 @@ contains ! =====     Public Procedures     =============================
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
     use MLSSignals_m, only: Signal_T
     use VectorsModule, only: GETVECTORQUANTITYBYTYPE, VECTOR_T, VECTORVALUE_T
+    use ForwardModelVectorTools, only: GetQuantityForForwardModel
 
     ! Dummy arguments
     type(forwardModelConfig_T), intent(in) :: FMCONF
@@ -131,7 +132,7 @@ contains ! =====     Public Procedures     =============================
     use Intrinsic, only: L_RADIANCE, L_TEMPERATURE, L_PTAN, L_VMR, &
       & L_LIMBSIDEBANDFRACTION, L_ZETA, L_OPTICALDEPTH, L_LATITUDE, L_FIELDSTRENGTH, &
       & L_FIELDELEVATION, L_FIELDAZIMUTH
-    use L2PC_m, only: L2PCDATABASE, POPULATEL2PCBIN
+    use L2PC_m, only: L2PC_T, L2PCDATABASE, POPULATEL2PCBIN
     use ManipulateVectorQuantities, only: FINDONECLOSESTINSTANCE, &
       & DOHGRIDSMATCH, DOVGRIDSMATCH, DOFGRIDSMATCH
     use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
@@ -229,7 +230,7 @@ contains ! =====     Public Procedures     =============================
     type(vector_T) :: DELTAX            ! xp-xStar
     type(Signal_T), pointer :: signal   ! Signal from the configuration
 
-    type(Matrix_T), pointer :: L2PC     ! The l2pc to use
+    type(L2PC_T), pointer :: L2PC     ! The l2pc to use
     type(MatrixElement_T), pointer :: L2PCBLOCK  ! A block from the l2pc
     type(MatrixElement_T), pointer :: JBLOCK     ! A block from the jacobian
 
@@ -312,7 +313,7 @@ contains ! =====     Public Procedures     =============================
 
       ! Set a dimension
       radInl2pc => GetVectorQuantityByType ( &
-        & l2pc%row%vec, quantityType=l_radiance, &
+        & l2pc%j%row%vec, quantityType=l_radiance, &
         & signal=signal%index, sideband=sideband )
       noPointings = radInL2PC%template%noSurfs
       if ( radInL2PC%template%noChans /= noChans ) &
@@ -321,7 +322,7 @@ contains ! =====     Public Procedures     =============================
 
       ! Now we loop over the quantities in the l2pc file and construct an xPrime
       ! for them
-      call cloneVector ( xP, l2pc%col%vec, vectorNameText='_xP' )
+      call cloneVector ( xP, l2pc%j%col%vec, vectorNameText='_xP' )
       call cloneVector ( deltaX, xP, vectorNameText='_deltaX' ) ! sets values to 0.0
 
       ! Set up some other stuff before main loop
@@ -331,7 +332,7 @@ contains ! =====     Public Procedures     =============================
         & instrumentModule = radiance%template%instrumentModule,&
         & foundInFirst = ptanInFirst )
 
-      xStarPtan => GetVectorQuantityByType ( l2pc%col%vec, &
+      xStarPtan => GetVectorQuantityByType ( l2pc%j%col%vec, &
         & quantityType = l_ptan )
 
       rowLBlock = 1
@@ -353,10 +354,10 @@ contains ! =====     Public Procedures     =============================
       end if
 
       ! -------- Main loop over xStar quantities -------------------------------
-      quantityLoop: do qtyInd = 1, size ( l2pc%col%vec%quantities )
+      quantityLoop: do qtyInd = 1, size ( l2pc%j%col%vec%quantities )
 
         ! Identify this quantity in xStar
-        l2pcQ => l2pc%col%vec%quantities(qtyInd)
+        l2pcQ => l2pc%j%col%vec%quantities(qtyInd)
 
         ! Now see if we are wanting to deal with this
         if ( l2pcQ%template%quantityType == l_ptan ) cycle ! Get this from interpolation
@@ -378,8 +379,8 @@ contains ! =====     Public Procedures     =============================
         if ( .not. associated(stateQ) ) then
           anyBlocks = .false.
           do xStarInstance = 1, l2pcQ%template%noInstances
-            colLBlock = FindBlock ( l2pc%col, l2pcQ%index, xStarInstance )
-            if ( l2pc%block(rowLBlock,colLBlock)%kind /= M_Absent ) then
+            colLBlock = FindBlock ( l2pc%j%col, l2pcQ%index, xStarInstance )
+            if ( l2pc%j%block(rowLBlock,colLBlock)%kind /= M_Absent ) then
               anyBlocks = .true.
               exit
             end if
@@ -394,7 +395,7 @@ contains ! =====     Public Procedures     =============================
 
         if ( toggle(emit) .and. levels(emit) > 1 ) then
           call output ( 'Dealing with xStar Quantity named ' )
-          call display_string ( l2pc%col%vec%quantities(qtyInd)%template%name, &
+          call display_string ( l2pc%j%col%vec%quantities(qtyInd)%template%name, &
             & advance='yes' )
         end if
 
@@ -463,9 +464,9 @@ contains ! =====     Public Procedures     =============================
           ! We want to set the row flag even if we don't compute derivatives
           ! as we want our contribution to the radiances known.
           if (doDerivatives) then
-            colLBlock = FindBlock ( l2pc%col, l2pcQ%index, xStarInstance )
+            colLBlock = FindBlock ( l2pc%j%col, l2pcQ%index, xStarInstance )
             colJBlock = FindBlock ( jacobian%col, stateQ%index, xInstance )
-            l2pcBlock => l2pc%block(rowLBlock,colLBlock)
+            l2pcBlock => l2pc%j%block(rowLBlock,colLBlock)
 
             if ( l2pcBlock%kind /= M_Absent ) then
               ! OK, before, I was doing transpose / reshapes / 
@@ -540,7 +541,7 @@ contains ! =====     Public Procedures     =============================
           ! Otherwise, difference it from the l2pc state
           deltaX%quantities(qtyInd)%values = &
             & xP%quantities(qtyInd)%values - &
-            & l2pc%col%vec%quantities(qtyInd)%values
+            & l2pc%j%col%vec%quantities(qtyInd)%values
         end if
 
       end do quantityLoop               ! End loop over quantities
@@ -549,22 +550,22 @@ contains ! =====     Public Procedures     =============================
       if ( toggle(emit) .and. levels(emit) > 8 ) then
         call dump ( (/deltaX/) )
 
-        call dump ( l2pc%col%inst, 'l2pc%col%inst' )
-        call dump ( l2pc%col%quant, 'l2pc%col%quant' )
+        call dump ( l2pc%j%col%inst, 'l2pc%j%col%inst' )
+        call dump ( l2pc%j%col%quant, 'l2pc%j%col%quant' )
 
-        call dump ( l2pc%row%inst, 'l2pc%row%inst' )
-        call dump ( l2pc%row%quant, 'l2pc%row%quant' )
+        call dump ( l2pc%j%row%inst, 'l2pc%j%row%inst' )
+        call dump ( l2pc%j%row%quant, 'l2pc%j%row%quant' )
       end if
 
-      call cloneVector( yp, l2pc%row%vec, vectorNameText='_yP' )
-      call MultiplyMatrixVectorNoT ( l2pc, deltaX, yP, update = .false. )
+      call cloneVector( yp, l2pc%j%row%vec, vectorNameText='_yP' )
+      call MultiplyMatrixVectorNoT ( l2pc%j, deltaX, yP, update = .false. )
 
       if ( toggle(emit) .and. levels(emit) > 8 ) then
-        call dump ( (/yp, l2pc%row%vec/) )
+        call dump ( (/yp, l2pc%j%row%vec/) )
       end if
 
       ! Now, if no yStar has been supplied add yP to the one in the l2pc file
-      if ( fmConf%yStar == 0 ) yP = yP + l2pc%row%vec
+      if ( fmConf%yStar == 0 ) yP = yP + l2pc%j%row%vec
 
       ! Now we interpolate yP to ptan
       call allocate_test( ypMapped, radInL2PC%template%noSurfs, &
@@ -937,7 +938,7 @@ contains ! =====     Public Procedures     =============================
       ! Get a first cut at the 'possible' flag
       possible = .false.
       do bin = 1, noBins
-        binRad => l2pcDatabase(bin)%row%vec%quantities(1)%template
+        binRad => l2pcDatabase(bin)%j%row%vec%quantities(1)%template
         possible ( binRad%sideband, bin ) = ( binRad%signal == signal )
       end do
       ! Set the cost to zero by default
@@ -958,11 +959,17 @@ contains ! =====     Public Procedures     =============================
       noSelectors = size ( fmConf%binSelectors )
       do bin = 1, noBins
         if ( .not. any ( possible ( :, bin ) ) ) cycle
-        binRad => l2pcDatabase(bin)%row%vec%quantities(1)%template
+        binRad => l2pcDatabase(bin)%j%row%vec%quantities(1)%template
         do selector = 1, noSelectors
           sel => binSelectors ( fmConf%binSelectors(selector) )
           select case ( sel%selectorType )
           case ( l_nameFragment )
+            if ( l2pcDatabase(bin)%name < 1 ) &
+              & call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'l2pc db name missing from string table' )
+            if ( sel%nameFragment < 1 ) &
+              & call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'l2pc selector name fragment missing from string table' )
             call get_string ( l2pcDatabase(bin)%name, binName, strip=.true., cap=.true. )
             call get_string ( sel%nameFragment, nameFragment, strip=.true., cap=.true. )
             if ( len_trim(nameFragment) /= 0 ) then
@@ -996,11 +1003,11 @@ contains ! =====     Public Procedures     =============================
             ! This one involves matching elements of xStar with x.
             if ( sel%selectorType == l_vmr ) then
               l2pcQ => GetVectorQuantityByType ( &
-                & l2pcDatabase(bin)%col%vec, quantityType=l_vmr, &
+                & l2pcDatabase(bin)%j%col%vec, quantityType=l_vmr, &
                 & molecule=sel%molecule, noError=.true. )
             else
               l2pcQ => GetVectorQuantityByType ( &
-                & l2pcDatabase(bin)%col%vec, quantityType=sel%selectorType, &
+                & l2pcDatabase(bin)%j%col%vec, quantityType=sel%selectorType, &
                 & noError=.true. )
             end if
             if ( .not. associated ( l2pcQ ) ) then
@@ -1126,6 +1133,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.72  2009/06/23 18:26:10  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.71  2009/04/20 18:44:27  pwagner
 ! Needed changes when identical types with different names allowed in L2PC files
 !
