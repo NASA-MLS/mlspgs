@@ -82,8 +82,7 @@ contains ! =====     Public Procedures     =============================
       & F_FILTERSHAPES, F_L2PC, F_MieTables, F_PFAFILES, F_POINTINGGRIDS
     use intrinsic, only: l_ascii, l_hdf
     use L2ParInfo, only: PARALLEL
-    use L2PC_m, only: OPEN_L2PC_FILE, CLOSE_L2PC_FILE, READ_L2PC_FILE, &
-      & READCOMPLETEHDF5L2PCFILE
+    use L2PC_m, only: READCOMPLETEHDF5L2PCFILE
     use MLSCommon, only: MLSFile_T
     use MLSPCF2, only: MLSPCF_antpats_start, MLSPCF_filtshps_start, &
       &          mlspcf_dacsfltsh_start, MLSPCF_ptggrids_start, &
@@ -167,14 +166,7 @@ contains ! =====     Public Procedures     =============================
           call get_file_name ( last_l2pc, &
             & get_field_id(son), filedatabase, MLSFile, &
             & 'L2PC File not found in PCF', mlspcf_l2pc_end )
-          if ( index ( fileName, '.txt' ) /= 0 ) then
-            call open_l2pc_file ( fileName, lun)
-            call read_l2pc_file ( lun, subtree(j,son) )
-            call close_l2pc_file ( lun )
-          else
-            ! call ReadCompleteHDF5L2PCFile ( fileName )
-            call ReadCompleteHDF5L2PCFile ( MLSFile, subtree(j,son) )
-          end if
+          call ReadCompleteHDF5L2PCFile ( MLSFile, subtree(j,son) )
         end do
       case ( f_MieTables )
         do j = 2, nsons(son)
@@ -1399,6 +1391,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.148  2010/02/25 18:17:48  pwagner
+! Removed outmoded ascii l2pc file support
+!
 ! Revision 2.147  2010/02/09 16:22:32  pwagner
 ! Give info%GenerateTScat an initial value
 !
