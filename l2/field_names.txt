@@ -169,6 +169,7 @@ h2oPrecisionQuantity
 hdfversion
 height
 heightRange
+hessian
 hgrid
 highBound # for the state vector during retrieval
 homeGeodAngle
@@ -252,6 +253,7 @@ mif
 minChannels
 minNormQty
 minValue
+mirrorHessian
 missingValue
 moleculeDerivatives
 molecules
@@ -351,6 +353,7 @@ rowSurfaces
 
 saveObstructions
 scale
+scaleHeight
 scaleInsts      # for weighted least-squares fill
 scaleRatio      # for weighted least-squares fill
 scaleSurfs      # for weighted least-squares fill
@@ -468,6 +471,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.197  2010/02/25 18:37:13  pwagner
+# Adds support for new Hessian data type
+#
 # Revision 2.196  2009/10/27 22:10:36  pwagner
 # Added options field used by Dump, Diff commands
 #
