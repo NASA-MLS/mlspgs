@@ -48,7 +48,7 @@ contains ! =====     Public Procedures     =============================
   !---------------------------------------------------  MLSL2Fill  -----
 
   subroutine MLSL2Fill ( Root, filedatabase, GriddedDataBase, VectorTemplates, &
-    & Vectors, QtyTemplates, Matrices, L2GPDatabase, L2AUXDatabase, &
+    & Vectors, QtyTemplates, Matrices, Hessians, L2GPDatabase, L2AUXDatabase, &
     & FWModelConfig, Chunks, ChunkNo )
 
     ! This is the main routine for the module.  It parses the relevant lines
@@ -86,6 +86,8 @@ contains ! =====     Public Procedures     =============================
     use ForwardModelSupport, only: FillFwdModelTimings
     use GLOBAL_SETTINGS, only: BrightObjects
     use GriddedData, only: GriddedData_T
+    use HessianModule_1, only: AddHessianToDatabase, CreateEmptyHessian, Hessian_T, &
+      & NullifyHessian, StreamlineHessian
     ! We need many things from Init_Tables_Module.  First the fields:
     use INIT_TABLES_MODULE, only: F_A, F_ADDITIONAL, F_ALLOWMISSING, &
       & F_APRIORIPRECISION, F_AVOIDBRIGHTOBJECTS, &
@@ -97,8 +99,8 @@ contains ! =====     Public Procedures     =============================
       & F_ECRTOFOV, F_EARTHRADIUS, F_EXACT, F_EXCLUDEBELOWBOTTOM, F_EXPLICITVALUES, &
       & F_EXTINCTION, F_FIELDECR, F_FILE, F_FLAGS, F_FORCE, &
       & F_FRACTION, F_FROMPRECISION, &
-      & F_GEOCALTITUDEQUANTITY, F_GPHQUANTITY, F_HEIGHT, F_HEIGHTRANGE, &
-      & F_HIGHBOUND, F_H2OQUANTITY, F_H2OPRECISIONQUANTITY, &
+      & F_GEOCALTITUDEQUANTITY, F_GEODANGLE, F_GPHQUANTITY, F_HEIGHT, F_HEIGHTRANGE, &
+      & F_HESSIAN, F_HIGHBOUND, F_H2OQUANTITY, F_H2OPRECISIONQUANTITY, &
       & F_IFMISSINGGMAO, F_IGNORENEGATIVE, F_IGNOREGEOLOCATION, F_IGNOREZERO, &
       & F_INSTANCES, F_INTEGRATIONTIME, F_INTERNALVGRID, &
       & F_INTERPOLATE, F_INVERT, F_INTRINSIC, F_ISPRECISION, &
@@ -111,7 +113,7 @@ contains ! =====     Public Procedures     =============================
       & F_PROFILE, F_PROFILEVALUES, F_PTANQUANTITY, &
       & F_QUADRATURE, F_QUANTITY, F_RADIANCEQUANTITY, F_RATIOQUANTITY, &
       & F_REFRACT, F_REFGPHQUANTITY, F_REFGPHPRECISIONQUANTITY, F_RESETSEED, &
-      & F_RHIPRECISIONQUANTITY, F_RHIQUANTITY, F_ROWS, F_SCALE, &
+      & F_RHIPRECISIONQUANTITY, F_RHIQUANTITY, F_ROWS, F_SCALE, F_SCALEHEIGHT, &
       & F_SCALEINSTS, F_SCALERATIO, F_SCALESURFS, &
       & F_SCECI, F_SCVEL, F_SCVELECI, F_SCVELECR, F_SEED, F_SKIPMASK, &
       & F_SOURCE, F_SOURCEGRID, F_SOURCEL2AUX, F_SOURCEL2GP, &
@@ -155,8 +157,8 @@ contains ! =====     Public Procedures     =============================
       & S_CATCHWARNING, S_COMPARE, S_COMPUTETOTALPOWER, S_DESTROY, &
       & S_DIFF, S_DUMP, S_FILL, S_FILLCOVARIANCE, &
       & S_FILLDIAGONAL, S_FLAGCLOUD, S_FLUSHL2PCBINS, S_FLUSHPFA, &
-      & S_LOAD, S_MATRIX,  S_NEGATIVEPRECISION, S_PHASE, S_POPULATEL2PCBIN, &
-      & S_REEVALUATE, S_RESTRICTRANGE, S_SKIP, S_SNOOP, &
+      & S_HESSIAN, S_LOAD, S_MATRIX,  S_NEGATIVEPRECISION, S_PHASE, S_POPULATEL2PCBIN, &
+      & S_REEVALUATE, S_RESTRICTRANGE, S_SKIP, S_SNOOP, S_STREAMLINEHESSIAN, &
       & S_SUBSET, S_TIME, S_TRANSFER, S_UPDATEMASK, S_VECTOR
     ! Now some arrays
     use Intrinsic, only: lit_indices, &
@@ -216,6 +218,7 @@ contains ! =====     Public Procedures     =============================
     type (vector_T), dimension(:), pointer :: Vectors
     type (quantityTemplate_T), dimension(:), pointer :: QtyTemplates
     type (matrix_database_T), dimension(:), pointer :: Matrices
+    type (Hessian_T), dimension(:), pointer :: Hessians
     type (l2GPData_T), dimension(:), pointer :: L2GPDatabase
     type (l2AUXData_T), dimension(:), pointer :: L2AUXDatabase
     type(ForwardModelConfig_T), dimension(:), pointer :: FWModelConfig
@@ -378,6 +381,7 @@ contains ! =====     Public Procedures     =============================
     logical :: FROMPRECISION            ! Fill from l2gpPrecision not l2gpValue
     integer :: GEOCALTITUDEQUANTITYINDEX    ! In the source vector
     integer :: GEOCALTITUDEVECTORINDEX      ! In the vector database
+    real(r8) :: GEODANGLE               ! For StreamlineHessian
     integer :: GLOBALUNIT               ! To go into the vector
     character(len=16) :: GLStr          ! geo. loc. in manipulation='..'
     integer :: GPHQUANTITYINDEX         ! In the source vector
@@ -386,6 +390,8 @@ contains ! =====     Public Procedures     =============================
     integer :: GRIDINDEX                ! Index of requested grid
     integer :: GSON                     ! Descendant of Son
     integer :: HEIGHTNODE               ! Descendant of son
+    type (Hessian_T) :: Hessian         ! A Hessian to create
+    integer :: HESSIANINDEX             ! An index into the hessians
     logical :: HIGHBOUND                ! Flag
     integer :: H2OQUANTITYINDEX         ! in the quantities database
     integer :: H2OVECTORINDEX           ! In the vector database
@@ -480,6 +486,7 @@ contains ! =====     Public Procedures     =============================
     integer :: RHIPRECISIONVECTORINDEX           ! In the vector database
     integer :: ROWVECTOR                ! Vector defining rows of Matrix
     real(r8) :: SCALE                   ! Scale factor
+    real(r8) :: SCALEHEIGHT             ! Scale height for StreamlineHessian
     real(r8) :: SCALEINSTANCES          ! Scale factor for weighted LS fill
     real(r8) :: SCALERATIO              ! Scale factor for weighted LS fill
     real(r8) :: SCALESURFS              ! Scale factor for weighted LS fill
@@ -680,6 +687,32 @@ contains ! =====     Public Procedures     =============================
         call test_allocate ( status, moduleName, 'Vectors', (/0/), (/0/) )
         call dumpCommand ( key, qtyTemplates, vectorTemplates, vectors, &
           & GriddedDataBase=GriddedDataBase, FileDataBase=FileDataBase )
+
+      case ( s_hessian ) ! ===============================  Hessian  =====
+        got = .false.
+        do j = 2, nsons(key)
+          gson = subtree(j,key)              ! The field
+          fieldIndex = get_field_id(gson)
+          got(fieldIndex) = .true.
+          if ( nsons(gson) > 1 ) &
+            & fieldValue = decoration(subtree(2,gson)) ! The field's value
+          select case ( fieldIndex )
+          case ( f_columns )
+            colVector = decoration(fieldValue)
+          case ( f_rows )
+            rowVector = decoration(fieldValue)
+          end select
+        end do
+        if ( got(f_columns) .and. got(f_rows) ) then
+          ! We decorate with a negative number to differentiate hessians from
+          ! Jacobians when it comes time to write them out
+          call decorate ( key, -addHessianToDatabase(hessians, &
+            & createEmptyHessian ( vectorName, &
+            & vectors(rowVector), vectors(colVector), where=source_ref(key) )) )
+        else
+          call announce_error ( key, missingField, &
+            & extraInfo = (/ f_columns, f_rows /) )
+        end if
 
       case ( s_skip ) ! ============================== Skip ==========
         ! We'll skip the rest of the section if the Boolean cond'n is TRUE
@@ -986,6 +1019,32 @@ contains ! =====     Public Procedures     =============================
         deallocate ( snoopMatrices, STAT=status )
         if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & MLSMSG_Deallocate//'snoopMatrices' )
+
+      case ( s_StreamlineHessian ) ! =============== StreamlineHessian =====
+        do j = 2, nsons(key)
+          gson = subtree(j,key) ! The argument
+          fieldIndex = get_field_id(gson)
+          got(fieldIndex)=.true.
+          select case ( fieldIndex )
+          case ( f_hessian )
+            hessianIndex = -decoration(decoration(subtree(2,gson)))
+          case ( f_scaleHeight )
+            call expr_check ( subtree(2,gson), unitAsArray, valueAsArray, &
+              & (/PHYQ_Dimensionless/), unitsError )
+            if ( unitsError ) call Announce_error ( subtree(j,key), wrongUnits, &
+              & extraInfo=(/unitAsArray(1), PHYQ_Dimensionless/) )
+            scaleHeight = valueAsArray(1)
+          case ( f_geodAngle )
+            call expr_check ( subtree(2,gson), unitAsArray, valueAsArray, &
+              & (/PHYQ_Angle/), unitsError )
+            if ( unitsError ) call Announce_error ( subtree(j,key), wrongUnits, &
+              & extraInfo=(/unitAsArray(1), PHYQ_Angle/) )
+            geodAngle = valueAsArray(1)
+          end select
+        end do
+        call StreamlineHessian ( hessians ( hessianIndex ), scaleHeight, geodAngle )
+
+      ! End of fill operations
 
       case default ! Can't get here if tree_checker worked correctly
       end select
@@ -2516,6 +2575,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.377  2010/02/25 18:37:51  pwagner
+! Adds support for new Hessian data type
+!
 ! Revision 2.376  2009/10/26 17:11:28  pwagner
 ! Added Diff command to be used like Dump in l2cf
 !
