@@ -48,6 +48,7 @@ contains ! ====     Public Procedures     ==============================
     use ForwardModelSupport, only: printForwardModelTiming
     use Global_Settings, only: Set_Global_Settings
     use GriddedData, only: GriddedData_T, DestroyGriddedDataDatabase, Dump
+    use HessianModule_1, only: DestroyHessianDatabase, Hessian_T
     use HGridsDatabase, only: HGrid_T
     use HGrid, only: COMPUTEALLHGRIDOFFSETS
     use Init_Tables_Module, only: L_CHISQCHAN, L_CHISQMMAF, L_CHISQMMIF,  &
@@ -119,6 +120,7 @@ contains ! ====     Public Procedures     ==============================
       & pointer ::                               ForwardModelConfigDatabase
     type (GriddedData_T), dimension(:), &
       & pointer ::                               GriddedDataBase
+    type (Hessian_T), dimension(:), pointer ::   Hessians
     type (HGrid_T), dimension(:), pointer ::     HGrids
     integer ::                                   HOWMANY  ! Nsons(Root)
     integer ::                                   I, J     ! Loop inductors
@@ -148,7 +150,7 @@ contains ! ====     Public Procedures     ==============================
     type (VectorTemplate_T), dimension(:), pointer :: VectorTemplates
 
     ! Executable
-    nullify ( chunks, forwardModelConfigDatabase, griddedDataBase, &
+    nullify ( chunks, forwardModelConfigDatabase, griddedDataBase, hessians, &
       & directDatabase, hGrids, l2auxDatabase, l2gpDatabase, matrices, mifGeolocation, &
       & qtyTemplates, vectorTemplates, fGrids, vGrids )
 
@@ -385,7 +387,7 @@ subtrees:   do while ( j <= howmany )
               case ( z_fill )
                 if ( .not. checkPaths ) then 
                   call MLSL2Fill ( son, filedatabase, griddedDataBase, &
-                  & vectorTemplates, vectors, qtyTemplates, matrices, &
+                  & vectorTemplates, vectors, qtyTemplates, matrices, hessians, &
                   & l2gpDatabase, l2auxDatabase, forwardModelConfigDatabase, &
                   & chunks, chunkNo )
                 end if
@@ -397,7 +399,7 @@ subtrees:   do while ( j <= howmany )
                 call add_to_section_timing ( 'join', t1, now_stop )
               case ( z_retrieve )
                 if ( .not. checkPaths) &
-                & call retrieve ( son, vectors, matrices, forwardModelConfigDatabase, &
+                & call retrieve ( son, vectors, matrices, hessians, forwardModelConfigDatabase, &
                   & chunks(chunkNo), fileDataBase )
                 call add_to_section_timing ( 'retrieve', t1, now_stop )
               case ( z_output )
@@ -428,10 +430,12 @@ subtrees:   do while ( j <= howmany )
               if ( warnOnDestroy ) call output('About to MLSL2Deconstruct', advance='yes' )
               call MLSL2DeConstruct ( qtyTemplates, vectorTemplates, &
                 & mifGeolocation, hGrids )
-              if ( warnOnDestroy ) call output('About to destroy vector db', advance='yes' )
-              call DestroyVectorDatabase ( vectors )
+              if ( warnOnDestroy ) call output('About to destroy hessian db', advance='yes' )
+              call DestroyHessianDatabase ( hessians )
               if ( warnOnDestroy ) call output('About to destroy matrix db', advance='yes' )
               call DestroyMatrixDatabase ( matrices )
+              if ( warnOnDestroy ) call output('About to destroy vector db', advance='yes' )
+              call DestroyVectorDatabase ( vectors )
             end if
             if ( warnOnDestroy ) call output('About to forget optimum Lon0', advance='yes' )
             call ForgetOptimumLon0
@@ -478,7 +482,7 @@ subtrees:   do while ( j <= howmany )
           exit
         else if ( .not. parallel%slave ) then
           call Output_Close ( son, l2gpDatabase, l2auxDatabase, DirectDatabase, &
-            & matrices, vectors, fileDataBase, griddedDataBase, &
+            & matrices, hessians, vectors, fileDataBase, griddedDataBase, &
             & chunks, processingRange, &
             & canWriteL2PC )
         end if
@@ -489,10 +493,12 @@ subtrees:   do while ( j <= howmany )
           if ( warnOnDestroy ) call output('About to MLSL2Deconstruct', advance='yes' )
           call MLSL2DeConstruct ( qtyTemplates, vectorTemplates, &
             & mifGeolocation, hGrids )
-          if ( warnOnDestroy ) call output('About to destroy vector db', advance='yes' )
-          call DestroyVectorDatabase ( vectors )
+          if ( warnOnDestroy ) call output('About to destroy hessian db', advance='yes' )
+          call DestroyHessianDatabase ( hessians )
           if ( warnOnDestroy ) call output('About to destroy matrix db', advance='yes' )
           call DestroyMatrixDatabase ( matrices )
+          if ( warnOnDestroy ) call output('About to destroy vector db', advance='yes' )
+          call DestroyVectorDatabase ( vectors )
         end if
 
         if ( specialDumpFile /= ' ' ) &
@@ -617,6 +623,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.169  2010/02/04 19:10:58  pwagner
+! Allocate directwrite db with zero size
+!
 ! Revision 2.168  2009/10/01 19:58:00  vsnyder
 ! Pass file database to set_global_settings
 !
