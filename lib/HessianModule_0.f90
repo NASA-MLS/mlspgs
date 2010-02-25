@@ -616,12 +616,13 @@ contains
     print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
 !---------------------------------------------------------------------------
-    not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
 
 end module HessianModule_0
 
 ! $Log$
+! Revision 2.2  2010/02/25 18:34:11  pwagner
+! Fixed bug in first commit
+!
 ! Revision 2.1  2010/02/25 18:13:35  pwagner
 ! First commit
 !

@@ -11,9 +11,12 @@
 
 
     n = count(h_array /= 0)
-    h%rows = size(h_array,3)
-    h%columns = size(h_array,2)
-    allocate ( h%tuple(n), stat=stat )
+    h%kind   = H_Sparse
+    h%nRows  = size ( h_array, 1 )
+    h%nCols1 = size ( h_array, 2 )
+    h%nCols2 = size ( h_array, 3 )
+
+    allocate ( h%tuples(n), stat=stat )
     call test_allocate ( stat, moduleName, "H%Tuple", (/ 1 /), (/ n /), -1 )
 
     l = 0
@@ -22,7 +25,7 @@
         do i = 1, size(h_array,1)
           if ( h_array(i,j,k) /= 0 ) then
             l = l + 1
-            h%tuple(l) = tuple_t(h_array(i,j,k),i,j,k)
+            h%tuples(l) = tuple_t(h_array(i,j,k),i,j,k)
           end if
         end do
       end do
@@ -30,6 +33,9 @@
 
 ! $Id$
 ! $Log$
+! Revision 2.2  2010/02/25 18:35:44  pwagner
+! Conforms with changed Hessian structure
+!
 ! Revision 2.1  2010/02/12 21:08:45  vsnyder
 ! Initial commit
 !
