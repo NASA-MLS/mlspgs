@@ -46,7 +46,7 @@ contains ! =====     Public Procedures     =============================
 
   ! -----------------------------------------------  Output_Close  -----
   subroutine Output_Close ( root, l2gpDatabase, l2auxDatabase, DirectDatabase, &
-    & matrices, vectors, fileDataBase, GriddedDataBase, &
+    & matrices, hessians, vectors, fileDataBase, GriddedDataBase, &
     & chunks, processingRange, canWriteL2PC )
 
     ! Hard-wired assumptions:
@@ -68,10 +68,11 @@ contains ! =====     Public Procedures     =============================
     use DirectWrite_m, only: DirectData_T, Dump
     use Expr_M, only: Expr
     use GriddedData, only: griddedData_T
+    use HessianModule_1, only: Hessian_T
     use HGrid, only: CREATEHGRIDFROMMLSCFINFO, DEALWITHOBSTRUCTIONS
     use HGridsDatabase, only: HGRID_T, &
       & ADDHGRIDTODATABASE, Dump
-    use INIT_TABLES_MODULE, only: F_ASCII, F_CREATE, F_DESTROY, F_DONTPACK, &
+    use INIT_TABLES_MODULE, only: F_CREATE, F_DESTROY, F_DONTPACK, &
       & F_EXCLUDE, F_FILE, F_HDFVERSION, F_HGRID, &
       & F_IFANYCRASHEDCHUNKS, F_INPUTFILE, F_INPUTTYPE, &
       & F_METADATAONLY, F_METANAME, F_OVERLAPS, F_PACKED, &
@@ -84,7 +85,7 @@ contains ! =====     Public Procedures     =============================
     use L2AUXData, only: L2AUXDATA_T, cpL2AUXData
     use L2GPData, only: AVOIDUNLIMITEDDIMS, L2GPDATA_T, &
       & MAXSWATHNAMESBUFSIZE, WRITEMASTERSFILEATTRIBUTES, CPL2GPDATA
-    use L2PC_m, only: WRITEONEL2PC, OUTPUTHDF5L2PC
+    use L2PC_m, only: OUTPUTHDF5L2PC
     use L2ParInfo, only: parallel
     use MatrixModule_1, only: DestroyMatrix, GETFROMMATRIXDATABASE, &
       & MATRIX_DATABASE_T, MATRIX_T
@@ -117,6 +118,7 @@ contains ! =====     Public Procedures     =============================
     type (L2GPData_T), dimension(:), pointer :: L2GPDATABASE ! L2GP products
     type (L2AUXData_T), dimension(:), pointer :: L2AUXDATABASE ! L2AUX products
     type (Matrix_Database_T), dimension(:), pointer :: MATRICES ! Matrix database (for l2pcs)
+    type (Hessian_T), dimension(:), pointer :: HESSIANS ! Hessian database (for l2pcs)
     type (Vector_T), dimension(:), pointer :: Vectors ! Vectors database
     type (DirectData_T), dimension(:), pointer :: DirectDatabase
     type (MLSChunk_T), dimension(:), pointer ::  Chunks  ! of data
@@ -600,8 +602,6 @@ contains ! =====     Public Procedures     =============================
           do field_no = 2, nsons(key) ! Skip "output" name
             gson = subtree(field_no,key)
             select case ( decoration(subtree(1,gson)) )
-            case ( f_ascii )
-              ascii = get_boolean ( gson )
             case ( f_destroy )
               destroy = get_boolean ( gson )
             case ( f_dontPack )
@@ -618,39 +618,12 @@ contains ! =====     Public Procedures     =============================
             end select
           end do ! field_no = 2, nsons(key)
 
-          ! Open file
-          if ( ascii ) then
-            ! ASCII l2pc file
-            call returnFullFileName( file_base, PhysicalFilename, &
-              & 0, 0 )
-            outputFile => GetMLSFileByName(filedatabase, PhysicalFilename)
-            if ( .not. associated(outputFile) ) then
-              outputFile => AddInitializeMLSFile( filedatabase, &
-                & content='l2pc', &
-                & name=PhysicalFilename, shortName=file_base, &
-                & type=l_ascii, access=DFACC_RDWR )
-              call open_MLSFile( outputFile )
-            endif
+          call OutputHDF5L2PC ( trim(file_base), matrices, hessians, quantitiesNode, packed, &
+            & dontPack )
 
-            do in_field_no = 2, nsons(quantitiesNode)
-              db_index = decoration(decoration(subtree(in_field_no, quantitiesNode )))
-              call GetFromMatrixDatabase ( matrices(db_index), tmpMatrix )
-              call writeOneL2PC ( tmpMatrix, outputFile%FileID%f_id, packed )
-              if ( destroy ) call DestroyMatrix ( matrices(db_index) )
-            end do ! in_field_no = 2, nsons(gson)
-            call close_MLSFile( outputFile )
-
-          else
-            ! For the moment call a routine
-            call OutputHDF5L2PC ( trim(file_base), matrices, quantitiesNode, packed, &
-              & dontPack )
-
-            do in_field_no = 2, nsons(quantitiesNode)
-              db_index = decoration(decoration(subtree(in_field_no, quantitiesNode )))
-              if ( destroy ) call DestroyMatrix ( matrices(db_index) )
-            end do ! in_field_no = 2, nsons(gson)
-
-          end if
+          ! We used to destroy the written out matrix here, but I don't want to do that anymore
+          ! (NJL, 13 Feb 2010)
+          
           call Deallocate_test ( dontPack, 'dontPack', ModuleName )
 
         case ( l_l2dgg ) ! --------------------- Writing l2dgg files -----
@@ -1721,6 +1694,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.150  2010/02/25 18:18:31  pwagner
+! Conforms with changed l2pc structure
+!
 ! Revision 2.149  2010/02/04 23:12:44  vsnyder
 ! Remove USE or declaration for unreferenced names
 !
