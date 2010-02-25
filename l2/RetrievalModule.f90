@@ -30,7 +30,7 @@ module RetrievalModule
 contains
 
   ! ---------------------------------------------------  Retrieve  -----
-  subroutine Retrieve ( Root, VectorDatabase, MatrixDatabase, ConfigDatabase, &
+  subroutine Retrieve ( Root, VectorDatabase, MatrixDatabase, HessianDatabase, ConfigDatabase, &
     & chunk, FileDataBase )
 
   !{Process the ``Retrieve'' section of the L2 Configuration File.
@@ -45,6 +45,7 @@ contains
       & BooleanFromAnyGoodValues, &
       & BooleanFromCatchWarning, BooleanFromComparingQtys, BooleanFromFormula, &
       & DumpCommand, Skip
+    use HessianModule_1, only: Hessian_T
     use IEEE_Arithmetic, only: IEEE_IS_NAN
     use Expr_M, only: Expr
     use ForwardModelConfig, only: ForwardModelConfig_T
@@ -112,6 +113,7 @@ contains
                                         ! It indexes an n_cf vertex
     type(vector_T), dimension(:), target :: VectorDatabase
     type(matrix_Database_T), dimension(:), pointer :: MatrixDatabase
+    type(Hessian_T), dimension(:), pointer :: HessianDatabase
     type(forwardModelConfig_T), dimension(:), pointer :: ConfigDatabase
 
     type(MLSChunk_T), intent(inout) :: CHUNK
@@ -710,7 +712,7 @@ contains
       case ( s_sids )
         if ( SKIPRETRIEVAL ) cycle
         call time_now ( t1 )
-        call sids ( key, VectorDatabase, MatrixDatabase, configDatabase, chunk)
+        call sids ( key, VectorDatabase, MatrixDatabase, HessianDatabase, configDatabase, chunk)
       case ( s_skip ) ! ============================== Skip ==========
         ! We'll skip the rest of the section if the Boolean cond'n is TRUE
         if ( Skip(key) ) exit
@@ -2808,6 +2810,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.308  2010/02/25 18:19:27  pwagner
+! Adds support for new Hessian database
+!
 ! Revision 2.307  2009/11/23 21:10:18  vsnyder
 ! Gradiant move instead of abandonment when trouble occurs
 !
