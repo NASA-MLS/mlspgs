@@ -43,8 +43,8 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   public :: Assignment(=), CheckIntegrity, CholeskyFactor, CholeskyFactor_1
   public :: ClearLower, ClearLower_1, ClearMatrix, ClearRows, ClearRows_1, ColumnScale, ColumnScale_1
   public :: CopyMatrix, CopyMatrixValue, CreateBlock, CreateBlock_1, CreateEmptyMatrix
-  public :: CyclicJacobi, DestroyBlock, DestroyBlock_1, DestroyMatrix
-  public :: DestroyMatrixInDatabase, DestroyMatrixDatabase, Dump, Dump_Linf
+  public :: CyclicJacobi, DefineRCInfo, DestroyBlock, DestroyBlock_1, DestroyMatrix
+  public :: DestroyMatrixInDatabase, DestroyMatrixDatabase, DestroyRCInfo, Dump, Dump_Linf
   public :: Dump_Struct, FindBlock, FrobeniusNorm, GetActualMatrixFromDatabase, GetDiagonal
   public :: GetDiagonal_1, GetFromMatrixDatabase, GetKindFromMatrixDatabase
   public :: GetMatrixElement, GetMatrixElement_1, GetVectorFromColumn
@@ -61,7 +61,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   public :: MultiplyMatrixVectorNoT, MultiplyMatrixVectorNoT_1
   public :: MultiplyMatrixVectorSPD_1
   public :: Negate, Negate_1
-  public :: NewMultiplyMatrixVector, NormalEquations, NullifyMatrix, NullifyMatrix_1
+  public :: NewMultiplyMatrixVector, NormalEquations, NullifyRCInfo, NullifyMatrix, NullifyMatrix_1
   public :: operator(+), ReflectMatrix, RC_Info, RowScale, RowScale_1, ScaleMatrix
   public :: SolveCholesky, SolveCholesky_1, Spill, Spill_1
   public :: Sparsify_1, Sparsify, TransposeMatrix
@@ -863,8 +863,8 @@ contains ! =====     Public Procedures     =============================
     call destroyMatrix ( z )  ! Avoid a memory leak if it isn't freshly minted
     z%name = name
     if ( present(text) ) z%name = enter_terminal ( text, t_identifier )
-    call defineInfo ( z%row, row, row_Quan_First )
-    call defineInfo ( z%col, col, col_Quan_First )
+    call defineRCInfo ( z%row, row, row_Quan_First )
+    call defineRCInfo ( z%col, col, col_Quan_First )
     if ( present(where) ) z%where = where
     allocate ( z%block(z%row%nb,z%col%nb), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -875,56 +875,6 @@ contains ! =====     Public Procedures     =============================
       end do
     end do
 
-  contains
-    subroutine DefineInfo ( RC, Vec, QuanFirst )
-      type(RC_Info), intent(out) :: RC
-      type(Vector_T), intent(in) :: Vec
-      logical, intent(in), optional :: QuanFirst
-
-      integer :: I, J, N      ! Subscripts or loop inductors
-      logical :: NEW          ! Was an instance seen?
-
-      rc%vec = vec
-      rc%instFirst = .true.
-      if ( present(quanFirst) ) rc%instFirst = .not. quanFirst
-      rc%nb = vec%template%totalInstances
-      call allocate_test ( rc%nelts, rc%nb, &
-        & "rc%nelts in CreateEmptyMatrix", ModuleName )
-      call allocate_test ( rc%inst, rc%nb, "rc%inst in CreateEmptyMatrix", &
-        & ModuleName )
-      call allocate_test ( rc%quant, rc%nb, "rc%quant in CreateEmptyMatrix", &
-        & ModuleName )
-      if ( rc%instFirst ) then
-!??? Are rc%nelts etc. different if the vector is not regular?
-        n = 0
-        j = 0
-        do ! ( until .not. new )
-          j = j + 1           ! instance number
-          new = .false.       ! Instance j not seen for any quantity
-          do i = 1, size(vec%quantities)
-            if ( size(vec%quantities(i)%values,2) >= j ) then
-              n = n + 1
-              rc%nelts(n) = size(vec%quantities(i)%values,1)
-              rc%inst(n) = j
-              rc%quant(n) = i
-              new = .true.    ! Instance j seen for some quantity
-            end if
-          end do ! i
-          if ( .not. new ) exit
-        end do ! j
-      else
-!??? Are rc%nelts etc. different if the vector is not regular?
-        n = 0
-        do i = 1, size(vec%quantities)
-          do j = 1, size(vec%quantities(i)%values,2)
-            n = n + 1
-            rc%nelts(n) = size(vec%quantities(i)%values,1)
-            rc%inst(n) = j
-            rc%quant(n) = i
-          end do ! j
-        end do ! i
-      end if
-    end subroutine DefineInfo
   end subroutine CreateEmptyMatrix
 
   ! ----------------------------------------------- CyclicJacobi_1 --------
@@ -1093,6 +1043,57 @@ contains ! =====     Public Procedures     =============================
     end do ! End sweep loop
   end subroutine CyclicJacobi_1
           
+  ! ----------------------------------------------------- DefineRCInfo -----------------
+  subroutine DefineRCInfo ( RC, Vec, QuanFirst )
+    type(RC_Info), intent(out) :: RC
+    type(Vector_T), intent(in) :: Vec
+    logical, intent(in), optional :: QuanFirst
+    
+    integer :: I, J, N      ! Subscripts or loop inductors
+    logical :: NEW          ! Was an instance seen?
+    
+    rc%vec = vec
+    rc%instFirst = .true.
+    if ( present(quanFirst) ) rc%instFirst = .not. quanFirst
+    rc%nb = vec%template%totalInstances
+    call allocate_test ( rc%nelts, rc%nb, &
+      & "rc%nelts in CreateEmptyMatrix", ModuleName )
+    call allocate_test ( rc%inst, rc%nb, "rc%inst in CreateEmptyMatrix", &
+      & ModuleName )
+    call allocate_test ( rc%quant, rc%nb, "rc%quant in CreateEmptyMatrix", &
+      & ModuleName )
+    if ( rc%instFirst ) then
+      !??? Are rc%nelts etc. different if the vector is not regular?
+      n = 0
+      j = 0
+      do ! ( until .not. new )
+        j = j + 1           ! instance number
+        new = .false.       ! Instance j not seen for any quantity
+        do i = 1, size(vec%quantities)
+          if ( size(vec%quantities(i)%values,2) >= j ) then
+            n = n + 1
+            rc%nelts(n) = size(vec%quantities(i)%values,1)
+            rc%inst(n) = j
+            rc%quant(n) = i
+            new = .true.    ! Instance j seen for some quantity
+          end if
+        end do ! i
+        if ( .not. new ) exit
+      end do ! j
+    else
+      !??? Are rc%nelts etc. different if the vector is not regular?
+      n = 0
+      do i = 1, size(vec%quantities)
+        do j = 1, size(vec%quantities(i)%values,2)
+          n = n + 1
+          rc%nelts(n) = size(vec%quantities(i)%values,1)
+          rc%inst(n) = j
+          rc%quant(n) = i
+        end do ! j
+      end do ! i
+    end if
+  end subroutine DefineRCInfo
+  
   ! ---------------------------------------------  DestroyBlock_1  -----
   subroutine DestroyBlock_1 ( A )
   ! Destroy the "block" component of a matrix.  This leaves its structure
@@ -2641,6 +2642,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.116  2010/02/25 18:05:21  pwagner
+! Conforms with changed l2pc structure
+!
 ! Revision 2.115  2009/06/23 18:25:42  pwagner
 ! Prevent Intel from optimizing ident string away
 !
