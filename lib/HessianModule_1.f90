@@ -335,16 +335,16 @@ contains
             case ( h_absent )
             case ( h_sparse )
               do t = 1, hb%tuplesFilled
-                s1 = ( hb%tuples(t)%j-1 ) / q1.noChans + 1
-                s2 = ( hb%tuples(t)%k-1 ) / q1.noChans + 1
+                s1 = ( hb%tuples(t)%j-1 ) / q1%noChans + 1
+                s2 = ( hb%tuples(t)%k-1 ) / q1%noChans + 1
                 if ( abs ( q1%surfs(s1,1) - q2%surfs(s2,1) ) > scaleHeight ) &
                   & hb%tuples(t)%h = 0
               end do
             case ( h_full )
               do kk = 1, hb%nCols2
-                s2 = ( kk-1 ) / q2.noChans + 1
+                s2 = ( kk-1 ) / q2%noChans + 1
                 do jj = 1, hb%nCols1
-                  s1 = ( jj-1 ) / q1.noChans + 1
+                  s1 = ( jj-1 ) / q1%noChans + 1
                   if ( abs ( q1%surfs(s1,1) - q2%surfs(s2,1) ) > scaleHeight ) &
                     & hb%values ( :, jj, kk ) = 0
                 end do
@@ -373,6 +373,9 @@ contains
 end module HessianModule_1
 
 ! $Log$
+! Revision 2.2  2010/02/25 21:14:33  pwagner
+! Replaced non-standard component separator '.' with '%'
+!
 ! Revision 2.1  2010/02/25 18:14:02  pwagner
 ! First commit
 !
