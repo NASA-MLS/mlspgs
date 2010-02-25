@@ -26,7 +26,7 @@ module SidsModule
 
 contains
 
-  subroutine SIDS ( Root, VectorDatabase, MatrixDatabase, configDatabase, chunk)
+  subroutine SIDS ( Root, VectorDatabase, MatrixDatabase, HessianDatabase, configDatabase, chunk)
 
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use Chunks_m, only: MLSChunk_T
@@ -34,17 +34,18 @@ contains
     use ForwardModelConfig, only: ForwardModelConfig_T
     use ForwardModelWrappers, only: ForwardModel
     use ForwardModelIntermediate, only: ForwardModelStatus_T
+    use HessianModule_1, only: Hessian_T, InsertHessianPlane
     use Init_Tables_Module, only: f_destroyjacobian, f_forwardModel, f_fwdModelExtra, &
-      f_fwdModelIn, f_fwdModelOut, f_jacobian, f_perturbation, f_singleMAF, &
-      f_TScat
+      f_fwdModelIn, f_fwdModelOut, f_hessian, f_jacobian, f_mirrorHessian, &
+      f_perturbation, f_singleMAF, f_TScat
     use Intrinsic, only: PHYQ_DIMENSIONLESS
     use Lexer_Core, only: Print_Source
     use MLSCommon, only: R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
     use MatrixModule_0, only: M_Absent, M_Full, M_Banded, M_Column_Sparse, &
       & MatrixElement_T
-    use MatrixModule_1, only: CreateBlock, DestroyBlock, FindBlock, &
-      GetFromMatrixDatabase, Matrix_Database_T, Matrix_T
+    use MatrixModule_1, only: AddToMatrix, CopyMatrix, CreateBlock, DestroyBlock, DestroyMatrix, FindBlock, &
+      GetFromMatrixDatabase, Matrix_Database_T, Matrix_T, ScaleMatrix
     use MLSL2Timings, only: add_to_retrieval_timing
     use MoreTree, only: Get_Field_Id, Get_Boolean
     use Output_M, only: Output
@@ -60,6 +61,7 @@ contains
     ! Indexes an n_cf vertex
     type(vector_T), dimension(:), target :: VectorDatabase
     type(matrix_Database_T), dimension(:), pointer :: MatrixDatabase
+    type(hessian_t), dimension(:), pointer :: HessianDatabase
     type(forwardModelConfig_T), dimension(:), pointer :: configDatabase
     type(MLSChunk_T), intent(in) :: chunk
 
@@ -74,10 +76,13 @@ contains
     type(vector_T), pointer :: FwdModelOut
     type(vector_T), pointer :: Perturbation
     type(vector_T) :: SaveState         ! For numerical derivatives
+    type(matrix_T) :: SaveJacobian      ! The Jacobian matrix
     type(vector_T) :: Deviation         ! Result of perturbation
     type(vector_T) :: SaveResult        ! Result of forward model out
     integer :: I                        ! Subscript, loop inductor
+    integer :: IxHessian                ! Index of Hessian in hessian database
     integer :: IxJacobian               ! Index of Jacobian in matrix database
+    type(hessian_T), pointer :: Hessian ! The Jacobian matrix
     type(matrix_T), pointer :: Jacobian ! The Jacobian matrix
     integer :: COL                      ! Column in jacobian
     integer :: ELEMENT                  ! Index
@@ -87,6 +92,7 @@ contains
     integer :: MAF2                     ! Loop limit
     integer :: MAF                      ! Index
     integer :: QUANTITY                 ! Index
+    logical :: GETANAJAC                ! Forward model needs to compute analytical Jacobians
     integer :: ROWINSTANCE              ! From jacobian
     integer :: ROWQUANTITY              ! From jacobian
     integer :: ROW                      ! Row in jacobian
@@ -96,6 +102,7 @@ contains
     logical :: DESTROYJACOBIAN          ! Flag
     logical :: DOTHISONE                ! Flag
     logical :: DOTSCAT                  ! Flag
+    logical :: MIRRORHESSIAN            ! Flag
     real ::    T1
     type (MatrixElement_T), pointer :: M0 ! A block from the jacobian
 
@@ -108,6 +115,7 @@ contains
     integer, parameter :: NotPlain = needJacobian + 1  ! Not a "plain" matrix
     integer, parameter :: PerturbationNotState = NotPlain + 1 ! Ptb. not same as state
     integer, parameter :: BadSingleMAF = PerturbationNotState + 1 ! Bad units for singleMAF
+    integer, parameter :: WrongDestroyJacobian = BadSingleMAF + 1 ! destroyJacobian with Hessian
 
     if ( toggle(gen) ) call trace_begin ( "SIDS", root )
     call time_now ( t1 )
@@ -119,6 +127,7 @@ contains
     error = 0
     ixJacobian = 0
     destroyJacobian = .false.
+    mirrorHessian = .false.
     singleMAF = -1
     fwdModelExtra => NULL()             ! Can be omitted
 
@@ -128,6 +137,8 @@ contains
       select case ( field )
       case ( f_destroyJacobian )
         destroyJacobian = Get_boolean(son)
+      case ( f_mirrorHessian )
+        mirrorHessian = Get_boolean(son)
       case ( f_forwardModel )
         call Allocate_Test ( configs, nsons(son)-1, 'configs', ModuleName )
         do config = 2, nsons(son)
@@ -141,6 +152,8 @@ contains
         fwdModelOut => vectorDatabase(decoration(decoration(subtree(2,son))))
       case ( f_jacobian )
         ixJacobian = decoration(subtree(2,son)) ! jacobian: matrix vertex
+      case ( f_hessian )
+        ixHessian =  decoration(subtree(2,son)) ! hessian: hessian vertex
       case ( f_perturbation )
         perturbation => vectorDatabase(decoration(decoration(subtree(2,son))))
       case ( f_singleMAF ) 
@@ -170,6 +183,18 @@ contains
         call announceError ( needJacobian )
       end if
     end if
+
+    ! Check we have a Jacobian if we have a Hessian
+    if ( ixHessian > 0 .and. ixJacobian <= 0 ) call announceError( needJacobian )
+    if ( ixHessian > 0 ) hessian => HessianDatabase ( -decoration ( ixHessian ) )
+
+    ! Check that if we set destroyJacobian we're not asking for Hessian information
+    if ( destroyJacobian .and. ( ixHessian > 0 ) ) call announceError ( wrongDestroyJacobian )
+
+    ! Now work out if we're going to be asking the forward model to compute analytical Jacobians
+    ! or if it's up to us to do so
+    getAnaJac = ( ixJacobian > 0 ) .and. ( .not. associated ( perturbation ) .or. &
+      & ( ixHessian > 0 ) )
 
     ! Setup some stuff for the case where we're doing numerical derivatives.
     if ( associated ( perturbation ) ) then
@@ -215,6 +240,7 @@ contains
       ! Now loop over the MAFs / forward model configs and run the models
       if ( doThisOne ) then
         fmStat%newScanHydros = .true.
+        
         if ( ixJacobian > 0 ) then
           call allocate_test ( fmStat%rows, jacobian%row%nb, 'fmStat%rows', &
             & ModuleName )
@@ -245,7 +271,7 @@ contains
           do maf = maf1, maf2
             fmStat%maf = maf
               call add_to_retrieval_timing( 'sids', t1 )
-            if ( ixJacobian > 0 .and. .not. associated(perturbation)) then
+            if ( getAnaJac ) then
               call forwardModel ( configDatabase(configs(config)), &
                 & FwdModelIn, FwdModelExtra, &
                 & FwdModelOut, fmStat, Jacobian, vectorDatabase )
@@ -275,32 +301,44 @@ contains
         if ( associated ( perturbation ) ) then
           if ( element == 0 ) then
             call CopyVector (saveResult, fwdModelOut, clone=.true.)
+            if ( ixHessian > 0 ) call CopyMatrix ( saveJacobian, jacobian )
           else
-            deviation = fwdModelOut - saveResult
-            ! Store the deviation in the jacobian
-            col = FindBlock ( jacobian%col, quantity, instance )
-            ! Loop over rows in the jacobian
-            do row = 1, jacobian%row%nb
-              rowQuantity = jacobian%row%quant(row)
-              rowInstance = jacobian%row%inst(row)
-              ! Is there anydeviaiton to store?
-              if ( maxval ( abs ( &
-                & deviation%quantities(rowQuantity)%values(:,rowInstance))) /= 0.0 ) then
-                
-                ! If so, this column of the block (creating if necessary)
-                m0 => jacobian%block(row,col)
-                if ( m0%kind == M_Absent ) then
-                  call CreateBlock ( jacobian, row, col, m_full )
-                  m0%values = 0.0
-                end if
-                if ( any (m0%kind == (/ m_banded, m_column_sparse /) ) ) &
-                  & call MLSMessage(MLSMSG_Error, ModuleName, &
-                  & 'Unable to fill banded/column sparse blocks numerically')
-                m0%values(:,element) = &
-                  & deviation%quantities(rowQuantity)%values(:,rowInstance)/thisPtb
-
-              end if                    ! Anything to place?
-            end do                      ! Loop over rows
+            if ( ixHessian <= 0 ) then
+              ! We're doing perturbations to get Jacobians
+              deviation = fwdModelOut - saveResult
+              ! Store the deviation in the jacobian
+              col = FindBlock ( jacobian%col, quantity, instance )
+              ! Loop over rows in the jacobian
+              do row = 1, jacobian%row%nb
+                rowQuantity = jacobian%row%quant(row)
+                rowInstance = jacobian%row%inst(row)
+                ! Is there anydeviaiton to store?
+                if ( maxval ( abs ( &
+                  & deviation%quantities(rowQuantity)%values(:,rowInstance))) /= 0.0 ) then
+                  
+                  ! If so, this column of the block (creating if necessary)
+                  m0 => jacobian%block(row,col)
+                  if ( m0%kind == M_Absent ) then
+                    call CreateBlock ( jacobian, row, col, m_full )
+                    m0%values = 0.0
+                  end if
+                  if ( any (m0%kind == (/ m_banded, m_column_sparse /) ) ) &
+                    & call MLSMessage(MLSMSG_Error, ModuleName, &
+                    & 'Unable to fill banded/column sparse blocks numerically')
+                  m0%values(:,element) = &
+                    & deviation%quantities(rowQuantity)%values(:,rowInstance)/thisPtb
+                  
+                end if                    ! Anything to place?
+              end do                      ! Loop over rows
+            else
+              ! We're doing perturbations to get Hessians
+              call AddToMatrix ( jacobian, saveJacobian, -1.0_r8 )
+              call ScaleMatrix ( jacobian, 1.0/thisPtb )
+              ! Store the deviation in the hessian
+              col = FindBlock ( hessian%col, quantity, instance )
+              ! Insert this difference
+              call InsertHessianPlane ( hessian, jacobian, col, element, mirror=mirrorHessian )
+            end if
           end if                         ! Not very first run
         end if                           ! Doing perturbation.
 
@@ -329,6 +367,10 @@ contains
       call DestroyVectorInfo ( saveState )
       call DestroyVectorInfo ( saveResult )
       call DestroyVectorInfo ( deviation )
+      if ( ixHessian > 0 ) then
+        call CopyMatrix ( jacobian, saveJacobian )
+        call DestroyMatrix ( saveJacobian )
+      end if
     end if
 
     configDatabase(configs)%generateTScat = .false.
@@ -359,6 +401,8 @@ contains
           & advance='yes' )
       case ( badSingleMAF )
         call output ( 'The singleMAF argument must be dimensionless', advance='yes' )
+      case ( wrongDestroyJacobian )
+        call output ( 'Cannot set destroyJacobian and ask for a Hessian', advance='yes' )
       end select
     end subroutine AnnounceError
 
@@ -377,6 +421,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.54  2010/02/25 18:20:12  pwagner
+! Adds support for new Hessian data type
+!
 ! Revision 2.53  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
 !
