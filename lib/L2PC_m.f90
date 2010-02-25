@@ -23,6 +23,9 @@ module L2PC_m
     & L_RADIANCE, L_NONE, L_INTERMEDIATEFREQUENCY, L_LATITUDE, L_FIELDAZIMUTH, &
     & L_ROWS, L_COLUMNS, L_ADOPTED, L_TEMPERATURE, L_TSCAT, Lit_Indices, &
     & PHYQ_DIMENSIONLESS, PHYQ_TEMPERATURE, PHYQ_VMR
+  use HessianModule_0, only: CreateBlock, HessianElement_T, &
+    & H_Absent, H_Sparse, H_Full, H_Unknown, DestroyBlock
+  use HessianModule_1, only: Hessian_T, DestroyHessian, CreateEmptyHessian
   use machine, only: io_error
   use ManipulateVectorQuantities, only: DOVECTORSMATCH
   use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
@@ -36,6 +39,7 @@ module L2PC_m
     & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE
   use MLSSets, only: FindFirst
   use MLSSignals_m, only: GETSIGNALNAME
+  use MLSStringLists, only: switchDetail
   use MLSStrings, only: writeIntsToChars
   use Molecules, only: L_EXTINCTION
   use MoreTree, only: GetStringIndexFromString, GetLitIndexFromString
@@ -56,32 +60,42 @@ module L2PC_m
   private
   
   public :: AddBinSelectorToDatabase, AddL2PCToDatabase, AdoptVectorTemplate, &
-    & binSelector_T, BinSelectors, close_l2pc_file, CreateDefaultBinSelectors, &
+    & binSelector_T, BinSelectors, CreateDefaultBinSelectors, &
     & DefaultSelector_FieldAzimuth, DefaultSelector_Latitude, &
     & DestroyL2PC, DestroyL2PCDatabase, DestroyBinSelectorDatabase, &
-    & Dump, FlushL2PCBins, &
-    & LoadMatrix, LoadVector, Open_l2pc_file, OutputHDF5L2PC, &
+    & Dump, FlushL2PCBins, L2PC_T, &
+    & LoadMatrix, LoadVector, OutputHDF5L2PC, &
     & PopulateL2PCBin, PopulateL2PCBinByName, &
-    & read_l2pc_file, ReadCompleteHDF5L2PCFile, &
-    & WriteOneL2PC
+    & ReadCompleteHDF5L2PCFile
 
   interface DUMP
     module procedure DUMPONEL2PC, DumpL2PCDatabase, DumpL2PCFile
   end interface
-  ! This is the third attempt to do this.  An l2pc is simply a Matrix_T.
+  ! This is an update to the L2PCs where we can store both Jacobians and Hessians
+  ! Previously the L2PC's were just Matrix_Ts, now they're more diversified
   ! As this contains pointers to vector_T's and so on, I maintain a private
   ! set of databases of these in this module.  We can't use the main databases,
   ! as these would get destroyed at the end of each chunk.
 
-  ! The l2pc database and supporting databases
+  ! The supporting databases
   integer, dimension(:), pointer, public, save :: FileIDDatabase => NULL()
   type(QuantityTemplate_T), dimension(:), pointer, save :: L2PCQTS => NULL()
   type(VectorTemplate_T), dimension(:), pointer, save :: L2PCVTS => NULL()
   type(Vector_T), dimension(:), pointer, save :: L2PCVS => NULL()
-  type(Matrix_T), dimension(:), pointer, public, save :: L2PCDatabase => NULL()
 
   integer :: counterStart
   parameter ( counterStart = huge (0) / 4 )
+
+  ! This type holds an l2pc
+  type L2PC_T
+    integer :: NAME                     ! The name of the L2PC bin
+    type(Matrix_T) :: J                 ! The Jacobian
+    logical :: GOTH                     ! Set true if also have Hessian Info
+    type(Hessian_T) :: H                ! The Hessian
+  end type L2PC_T
+
+  ! The L2PC database
+  type(L2PC_T), dimension(:), pointer, public, save :: L2PCDatabase => NULL()
 
   ! This datatype describes a selection rule for l2pc bins.
   type BinSelector_T
@@ -99,9 +113,11 @@ module L2PC_m
     integer :: fileID     ! What is the HDF5 file ID
     integer :: binID      ! What is the groupID for the bin
     integer :: blocksID   ! What is the groupID for the blocks
+    integer :: hBlocksID  ! What is the groupID for the hessian blocks
     integer, dimension(:,:), pointer :: BLOCKID => NULL()
+    character(len=64) :: matrixName
   end type L2PCINFO_T
-  type ( L2PCInfo_T), dimension(:), pointer, save :: L2PCINFO => NULL()
+  type(L2PCInfo_T), dimension(:), pointer, save :: L2PCINFO => NULL()
 
   ! Default bin selectors (see CreateDefaultBinSelectors below)
   integer, parameter :: DEFAULTSELECTOR_LATITUDE = 1
@@ -146,10 +162,10 @@ contains ! ============= Public Procedures ==========================
     
     ! This function simply adds an l2pc  to a database of said l2pc s.
     
-    type(Matrix_T), dimension(:), pointer :: Database
-    type(Matrix_T) :: Item
+    type(L2PC_T), dimension(:), pointer :: Database
+    type(L2PC_T) :: Item
     
-    type(Matrix_T), dimension(:), pointer :: TempDatabase
+    type(L2PC_T), dimension(:), pointer :: TempDatabase
 
     include "addItemToDatabase.f9h"
 
@@ -161,7 +177,7 @@ contains ! ============= Public Procedures ==========================
     ! This subroutine dumps an l2pc to stdout
 
     ! Dummy arguments
-    type (matrix_T), dimension(:), intent(in), target :: L2pcDB
+    type (l2pc_t), dimension(:), intent(in), target :: L2pcDB
     integer, intent(in), optional :: DETAILS ! <=0 => Don't dump multidim arrays
     !                                        ! -1 Skip even 1-d arrays
     !                                        ! -2 Skip all but size
@@ -204,7 +220,7 @@ contains ! ============= Public Procedures ==========================
     ! This subroutine dumps an l2pc to stdout
 
     ! Dummy arguments
-    type (matrix_T), intent(in), target :: L2pc
+    type (l2pc_t), intent(in), target :: L2pc
     integer, intent(in), optional :: DETAILS ! <=0 => Don't dump multidim arrays
     !                                        ! -1 Skip even 1-d arrays
     !                                        ! -2 Skip all but size
@@ -234,16 +250,23 @@ contains ! ============= Public Procedures ==========================
     myDetails = 0
     if ( present(details) ) myDetails = details
 
-    ! First dump the xStar and yStar
     call output( '- Dump of L2PC -', advance='yes' )
+    call outputNamedValue( 'name as index in string table', l2pc%name )
+    if ( l2pc%name > 0 ) then
+      call get_string ( l2pc%name, line )
+      call outputNamedValue( 'name', trim(line) )
+    else
+      call output( '*** Uh-oh, name not found in string table', advance='yes' )
+    endif
+    ! First dump the xStar and yStar
     do vector = 1, 2
       ! Identify vector
       if ( vector == 1 ) then
         call output( 'xStar', advance='yes' )
-        v => l2pc%col%vec
+        v => l2pc%j%col%vec
       else
         call output( 'yStar', advance='yes' )
-        v => l2pc%row%vec
+        v => l2pc%j%row%vec
       end if
 
       call outputNamedValue( 'size', size(v%quantities) )
@@ -295,23 +318,23 @@ contains ! ============= Public Procedures ==========================
     
     ! Now dump kStar
     call output( 'kStar', advance='yes' )
-    call outputNamedValue( 'row instances first', l2pc%row%instFirst )
-    call outputNamedValue( 'column instances first', l2pc%col%instFirst )
-    do blockRow = 1, l2pc%row%NB
-      do blockCol = 1, l2pc%col%NB
+    call outputNamedValue( 'row instances first', l2pc%j%row%instFirst )
+    call outputNamedValue( 'column instances first', l2pc%j%col%instFirst )
+    do blockRow = 1, l2pc%j%row%NB
+      do blockCol = 1, l2pc%j%col%NB
         ! Print the type of the matrix
-          m0 => l2pc%block(blockRow, blockCol)
+          m0 => l2pc%j%block(blockRow, blockCol)
           call outputNamedValue( 'row', blockRow )
           call outputNamedValue( 'col', blockCol )
           call outputNamedValue( 'kind', m0%kind )
           call get_string ( &
-            & l2pc%row%vec%quantities(&
-            &    l2pc%row%quant(blockRow))%template%name, word1 )
+            & l2pc%j%row%vec%quantities(&
+            &    l2pc%j%row%quant(blockRow))%template%name, word1 )
           call get_string ( &
-            & l2pc%col%vec%quantities(&
-            &    l2pc%col%quant(blockCol))%template%name, word2 )
-          call outputNamedValue( trim(word1), l2pc%row%inst(blockRow) )
-          call outputNamedValue( trim(word2), l2pc%col%inst(blockRow) )
+            & l2pc%j%col%vec%quantities(&
+            &    l2pc%j%col%quant(blockCol))%template%name, word2 )
+          call outputNamedValue( trim(word1), l2pc%j%row%inst(blockRow) )
+          call outputNamedValue( trim(word2), l2pc%j%col%inst(blockRow) )
           select case (m0%kind)
           case (M_Absent)
           case (M_Banded, M_Column_sparse)
@@ -349,7 +372,7 @@ contains ! ============= Public Procedures ==========================
       return
     end if
     call PopulateL2PCBin ( i )
-    source => l2pcDatabase(i)
+    source => l2pcDatabase(i)%j
     if ( .not. DoVectorsMatch ( matrix%row%vec, source%row%vec ) ) then
       message = 'Rows do not match for loading'
       return
@@ -385,7 +408,7 @@ contains ! ============= Public Procedures ==========================
       return
     end if
     call PopulateL2PCBin ( i )
-    matrix => l2pcDatabase(i)
+    matrix => l2pcDatabase(i)%j
     select case ( source )
     case ( l_rows )
       sourceVector => matrix%row%vec
@@ -431,7 +454,7 @@ contains ! ============= Public Procedures ==========================
       return
     end if
 
-    m => l2pcDatabase(i)
+    m => l2pcDatabase(i)%j
     if ( source == l_rows ) then
       sourceTemplate => m%row%vec%template
     else
@@ -466,12 +489,6 @@ contains ! ============= Public Procedures ==========================
       call NullifyQuantityTemplate ( qt ) ! To avoid treading on one in database
     end do
   end function AdoptVectorTemplate
-
-  ! -----------------------------------  Close_L2PC_File  -----
-  subroutine Close_L2PC_File ( Lun )
-    integer, intent(in) :: lun
-    close ( lun )
-  end subroutine Close_L2PC_File
 
   ! -------------------------------------- CreateDefaultBinSelectors --
   subroutine CreateDefaultBinSelectors
@@ -518,29 +535,42 @@ contains ! ============= Public Procedures ==========================
   ! ----------------------------------------------- DestroyL2PC ----
   subroutine DestroyL2PC ( l2pc )
     ! Dummy arguments
-    type (Matrix_T), intent(inout), target :: L2PC
+    type (L2pc_t), intent(inout), target :: L2PC
 
     integer :: QUANTITY                 ! Loop index
     integer :: VECTOR                   ! Loop index
+    integer :: JH                       ! Loop index
 
     type (Vector_T), pointer :: V       ! Temporary pointer
 
     ! Exectuable code
-    do vector = 1, 2
-      if ( vector == 1 ) then
-        v => l2pc%col%vec
-      else
-        v => l2pc%row%vec
-      end if
-      
-      do quantity = 1, size(v%quantities)
-        call DestroyQuantityTemplateContents (v%quantities(quantity)%template )
+    do jh = 1, 2
+      if ( jh == 2 .and. .not. l2pc%gotH ) continue
+      do vector = 1, 2
+        if ( vector == 1 ) then
+          if ( jh == 1 ) then
+            v => l2pc%j%col%vec
+          else
+            v => l2pc%h%col%vec
+          end if
+        else
+          if ( jh == 1 ) then
+            v => l2pc%j%row%vec
+          else
+            v => l2pc%h%row%vec
+          end if
+        end if
+        
+        do quantity = 1, size(v%quantities)
+          call DestroyQuantityTemplateContents (v%quantities(quantity)%template )
+        end do
+        call DestroyVectorInfo ( v )
       end do
-      call DestroyVectorInfo ( v )
     end do
-    
+      
     ! Destory kStar
-    call DestroyMatrix ( l2pc )
+    call DestroyMatrix ( l2pc%j )
+    if ( l2pc%goth ) call DestroyHessian ( l2pc%h )
     
   end subroutine DestroyL2PC
 
@@ -566,55 +596,39 @@ contains ! ============= Public Procedures ==========================
   ! ------------------------------------ FlushL2PCBins -------------
   subroutine FlushL2PCBins
     ! Local variables
-    integer :: BIN              ! Loop counter
-    integer :: BLOCKROW         ! Loop counter
-    integer :: BLOCKCOL         ! Loop counter
+    integer :: BIN                      ! Loop counter
+    integer :: I,J,K                    ! Loop counters
 
-    type ( Matrix_T ), pointer :: L2PC
+    type ( L2pc_t ), pointer :: L2PC
     type ( MatrixElement_T), pointer :: M0
 
     ! Executable code
     if ( .not. associated ( l2pcDatabase ) ) return
     do bin = 1, size ( l2pcDatabase )
       l2pc => l2pcDatabase ( bin )
-      do blockRow = 1, l2pc%row%NB
-        do blockCol = 1, l2pc%col%NB
-          m0 => l2pc%block ( blockRow, blockCol )
-          if ( m0%kind /= m_absent ) then
-            call DestroyBlock ( m0 )
-            m0%kind = M_Unknown
-          end if
+      do i = 1, l2pc%j%row%NB
+        do j = 1, l2pc%j%col%NB
+          call DestroyBlock ( l2pc%j%block(i,j) )
         end do
       end do
+      if ( l2pc%goth ) then
+        do i = 1, l2pc%h%row%NB
+          do j = 1, l2pc%h%col%NB
+            do k = 1, l2pc%h%col%NB
+              call DestroyBlock ( l2pc%h%block(i,j,k) )
+            end do
+          end do
+        end do
+      end if
     end do
   end subroutine FlushL2PCBins
 
-  ! ------------------------------------ open_l2pc_file ------------
-  subroutine Open_L2PC_File ( Filename, Lun )
-
-    character(len=*), intent(in) :: Filename ! Name of the antenna pattern file
-    integer, intent(out) :: Lun              ! Logical unit number to read it
-
-    logical :: Exist, Opened
-    integer :: Status
-
-    do lun = 20, 99
-      inquire ( unit=lun, exist=exist, opened=opened )
-      if ( exist .and. .not. opened ) exit
-    end do
-    if ( opened .or. .not. exist ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      & "No logical unit numbers available" )
-    open ( unit=lun, file=filename, status='old', form='formatted', &
-      & access='sequential', iostat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      & "Unable to open l2pc file " // Filename )
-  end subroutine Open_L2PC_File
-
   ! --------------------------------------------- OutputHDF5L2PC
-  subroutine OutputHDF5L2PC ( filename, matrices, quantitiesNode, packed, dontPack )
+  subroutine OutputHDF5L2PC ( filename, matrices, hessians, quantitiesNode, packed, dontPack )
   use HDF5, only: H5FCREATE_F, H5FClose_F, H5F_ACC_TRUNC_F
     character (len=*), intent(in) :: FILENAME
     type (Matrix_Database_T), dimension(:), pointer :: MATRICES
+    type (Hessian_T), dimension(:), pointer :: HESSIANS
     integer, intent(in) :: QUANTITIESNODE
     logical, intent(in) :: PACKED
     integer, dimension(:), pointer :: DONTPACK
@@ -624,162 +638,157 @@ contains ! ============= Public Procedures ==========================
     integer :: STATUS                   ! From HDF
     integer :: FIELD                    ! Node index
     integer :: DB_INDEX                 ! Index of matrix
+    integer :: NXT_INDEX                ! Index of next matrix (Hessian?)
+    logical :: GOTH                     ! True if there is a Hessian
     type (Matrix_T), pointer :: tmpMatrix
+    type (Hessian_T), pointer :: tmpHessian
 
     ! Executable code
     call H5FCreate_F ( trim(filename), H5F_ACC_TRUNC_F, fileID, &
       & status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open hdf5 l2pc file for output.' )
-    do field = 2, nsons(quantitiesNode)
+    field = 2
+    do
+      if ( field > nsons(quantitiesNode) ) exit
       db_index = decoration(decoration(subtree(field, quantitiesNode )))
       call GetActualMatrixFromDatabase ( matrices(db_index), tmpMatrix )
-      call writeOneHDF5L2PC ( tmpMatrix, fileID, packed, dontPack )
-    end do ! in_field_no = 2, nsons(gson)
+      goth = .false.
+      if ( field < nsons(quantitiesNode) ) then
+        nxt_index = decoration(decoration(subtree(field+1, quantitiesNode )))
+        if ( nxt_index < 0 ) then
+          tmpHessian => hessians ( -nxt_index )
+          goth = .true.
+          field = field + 1
+        end if
+      end if
+      if ( goth ) then
+        call writeOneHDF5L2PC ( tmpMatrix, fileID, packed, dontPack, hessian=tmpHessian )
+      else
+        call writeOneHDF5L2PC ( tmpMatrix, fileID, packed, dontPack )
+      end if
+      field = field + 1
+    end do ! Loop over fields
     call H5FClose_F ( fileID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
       & 'Unable to close hdf5 l2pc file.' )
 
   end subroutine OutputHDF5L2PC
 
-  ! ------------------------------------- Read_l2pc_file ------
-  subroutine Read_l2pc_file ( Lun, Where )
-    use Trace_M, only: Trace_begin, Trace_end
-    use Toggles, only: Toggle, gen
-    ! Read all the bins in an l2pc file
-    integer, intent(in) :: lun
-    integer, intent(in) :: Where ! In the L2CF tree, for tracing
-
-    ! Local variables
-    type (Matrix_T) :: L2pc
-    integer :: Dummy
-    logical :: Eof
-
-    ! Executable code
-    if ( toggle (gen) ) call trace_begin ( "Read_l2pc_file", where )
-    eof = .false.
-    do while (.not. eof )
-      call ReadOneASCIIL2PC ( l2pc, lun, eof )
-      if (.not. eof) then
-        dummy = AddL2PCToDatabase ( l2pcDatabase, l2pc )
-        dummy = AddFileIDToDatabase ( fileIDDatabase, lun )
-      endif
-      if ( index ( switches, 'spa' ) /= 0 ) call Dump_struct ( l2pc, 'One l2pc bin' ) 
-
-      ! Now nullify the pointers in l2pc so we don't clobber the one we've written
-      nullify ( l2pc%block )
-      nullify ( l2pc%row%nelts, l2pc%row%inst, l2pc%row%quant )
-      nullify ( l2pc%col%nelts, l2pc%col%inst, l2pc%col%quant )
-      nullify ( l2pc%row%vec%template%quantities, l2pc%col%vec%template%quantities )
-      nullify ( l2pc%row%vec%quantities, l2pc%col%vec%quantities )
-      
-    end do
-
-    if ( toggle (gen) ) call trace_end ( "Read_l2pc_file" )
-  end subroutine Read_l2pc_file
-
   ! --------------------------------------- WriteOneHDF5L2PC -----------
-  subroutine WriteOneHDF5L2PC ( L2pc, fileID, packed, dontPack )
+  subroutine WriteOneHDF5L2PC ( JACOBIAN, fileID, packed, dontPack, hessian )
   use HDF5, only: H5GCLOSE_F, H5GCREATE_F
   use MLSHDF5, only: MakeHDF5Attribute, SaveAsHDF5DS
     ! This subroutine writes an l2pc to a file in hdf5 format
 
     ! Dummy arguments
-    type (matrix_T), intent(in), target :: L2PC
+    type (matrix_T), intent(in), target :: JACOBIAN
     integer, intent(in) :: fileID
     logical, intent(in) :: PACKED
     integer, dimension(:), pointer :: DONTPACK
+    type (Hessian_T), intent(in), optional :: HESSIAN
 
     ! Local variables
-    integer :: BlockCol                 ! Index
-    integer :: BlockRow                 ! Index
-    integer :: BlocksGroupID            ! ID of group containing all blocks
-    integer :: BlockGroupID             ! ID of this block group
+    integer :: I, J, K                  ! Loop index (row, col, col)
+    integer :: BlocksGID                ! ID of group containing all blocks
+    integer :: BlockGID                 ! ID of this block group
     integer :: matrixID                 ! ID of hdf5 group containing matrix
     integer :: STATUS                   ! Error flag
 
-    integer, dimension(l2pc%row%nb) :: ROWBLOCKMAP
-    integer, dimension(l2pc%col%nb) :: COLBLOCKMAP
-    logical, dimension(l2pc%row%vec%template%noQuantities), target :: ROWPACK
-    logical, dimension(l2pc%col%vec%template%noQuantities), target :: COLPACK
+    integer, dimension(jacobian%row%nb) :: ROWBLOCKMAP
+    integer, dimension(jacobian%col%nb) :: COLBLOCKMAP
+    logical, dimension(jacobian%row%vec%template%noQuantities), target :: ROWPACK
+    logical, dimension(jacobian%col%vec%template%noQuantities), target :: COLPACK
 
     character ( len=32 ) :: NAME        ! A name for output
 
-    type (MatrixElement_T), pointer :: M0 ! A Matrix0 within kStar
+    type (MatrixElement_T), pointer :: M0 ! A Matrix_0 within kStar
+    type (HessianElement_T), pointer :: H0 ! A Hessian_0 within hStar
 
     ! Executable code
+    ! If we have a Hessian, make sure it matches the jacobian
+    if ( present ( hessian ) ) then
+      if ( jacobian%row%vec%name /= hessian%row%vec%name ) call MLSMessage ( &
+        & MLSMSG_Error, ModuleName, 'Rows of Jacobian and Hessian do not match' )
+      if ( jacobian%col%vec%name /= hessian%col%vec%name ) call MLSMessage ( &
+        & MLSMSG_Error, ModuleName, 'Columns of Jacobian and Hessian do not match' )
+      if ( jacobian%row%instFirst .neqv. hessian%row%instFirst ) call MLSMessage ( &
+        & MLSMSG_Error, ModuleName, 'Row order of Jacobian and Hessian do not match' )
+      if ( jacobian%col%instFirst .neqv. hessian%col%instFirst ) call MLSMessage ( &
+        & MLSMSG_Error, ModuleName, 'Column order of Jacobian and Hessian do not match' )
+    end if
 
     ! Work out which quantities we can skip
     if ( packed ) then
-      call MakeMatrixPackMap ( l2pc, rowPack, colPack, rowBlockMap, colBlockMap, dontPack )
+      call MakeMatrixPackMap ( jacobian, rowPack, colPack, rowBlockMap, colBlockMap, dontPack, hessian )
     else
       rowPack = .true.
       colPack = .true.
-      do blockRow = 1, l2pc%row%nb
-        rowBlockMap(blockRow) = blockRow
+      do i = 1, jacobian%row%nb
+        rowBlockMap(i) = i
       end do
-      do blockCol = 1, l2pc%col%nb
-        colBlockMap(blockCol) = blockCol
+      do j = 1, jacobian%col%nb
+        colBlockMap(j) = j
       end do
     end if
 
     ! First create the group for this.
-    call get_string ( l2pc%name, name, strip=.true., cap=.true. )
+    call get_string ( jacobian%name, name, strip=.true., cap=.true. )
     call h5gCreate_f ( fileID, trim(name), matrixID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to create group for l2pc matrix' )
 
     ! Now dump the vectors
-    call WriteVectorAsHDF5L2PC ( matrixID, l2pc%col%vec, 'Columns', colPack )
-    call WriteVectorAsHDF5L2PC ( matrixID, l2pc%row%vec, 'Rows', rowPack )
+    call WriteVectorAsHDF5L2PC ( matrixID, jacobian%col%vec, 'Columns', colPack )
+    call WriteVectorAsHDF5L2PC ( matrixID, jacobian%row%vec, 'Rows', rowPack )
 
     ! Now create a group for the blocks
-    call h5gCreate_f ( matrixID, 'Blocks', blocksGroupID, status )
+    call h5gCreate_f ( matrixID, 'Blocks', blocksGID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to create group for all l2pc matrix blocks' )
 
     ! Make the flags
-    call MakeHDF5Attribute ( blocksGroupID, 'rowInstanceFirst', l2pc%row%instFirst )
-    call MakeHDF5Attribute ( blocksGroupID, 'colInstanceFirst', l2pc%col%instFirst )
+    call MakeHDF5Attribute ( blocksGID, 'rowInstanceFirst', jacobian%row%instFirst )
+    call MakeHDF5Attribute ( blocksGID, 'colInstanceFirst', jacobian%col%instFirst )
 
     ! Now loop over the blocks and write them.
-    do blockRow = 1, l2pc%row%NB
-      do blockCol = 1, l2pc%col%NB
+    do i = 1, jacobian%row%NB
+      do j = 1, jacobian%col%NB
         ! Do we write this block?
-        if ( rowPack(l2pc%row%quant(blockRow)) .and. &
-          &  colPack(l2pc%col%quant(blockCol)) ) then
+        if ( rowPack(jacobian%row%quant(i)) .and. &
+          &  colPack(jacobian%col%quant(j)) ) then
           ! Identify the block
-          m0 => l2pc%block(blockRow, blockCol)
+          m0 => jacobian%block(i, j)
           ! Get a name for this group for the block
-          ! write ( name, * ) 'Block', rowBlockMap(blockRow), colBlockMap(blockCol)
-          call CreateBlockName( rowBlockMap(blockRow), colBlockMap(blockCol), name )
+          ! write ( name, * ) 'Block', rowBlockMap(i), colBlockMap(j)
+          call CreateBlockName ( rowBlockMap(i), colBlockMap(j), 0, name )
           ! Create a grop for this block
-          call h5gCreate_f ( blocksGroupID, trim(name), blockGroupID, status )
+          call h5gCreate_f ( blocksGID, trim(name), blockGID, status )
           if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & 'Unable to create group for l2pc matrix block' )
+            & 'Unable to create group for jacobian matrix block' )
           ! Stick some attributes on it
           call get_string ( &
-            & l2pc%row%vec%quantities(&
-            &    l2pc%row%quant(blockRow))%template%name, name )
-          call MakeHDF5Attribute ( blockGroupID, 'rowQuantity', trim(name) )
+            & jacobian%row%vec%quantities(&
+            &    jacobian%row%quant(i))%template%name, name )
+          call MakeHDF5Attribute ( blockGID, 'rowQuantity', trim(name) )
           call get_string ( &
-            & l2pc%col%vec%quantities(&
-            &    l2pc%col%quant(blockCol))%template%name, name )
-          call MakeHDF5Attribute ( blockGroupID, 'colQuantity', trim(name) )
-          call MakeHDF5Attribute ( blockGroupID, 'rowInstance', l2pc%row%inst(blockRow) )
-          call MakeHDF5Attribute ( blockGroupID, 'colInstance', l2pc%col%inst(blockCol) )
-          call MakeHDF5Attribute ( blockGroupID, 'kind', m0%kind )
+            & jacobian%col%vec%quantities(&
+            &    jacobian%col%quant(j))%template%name, name )
+          call MakeHDF5Attribute ( blockGID, 'colQuantity', trim(name) )
+          call MakeHDF5Attribute ( blockGID, 'rowInstance', jacobian%row%inst(i) )
+          call MakeHDF5Attribute ( blockGID, 'colInstance', jacobian%col%inst(j) )
+          call MakeHDF5Attribute ( blockGID, 'kind', m0%kind )
           ! Write the datasets
           if ( m0%kind /= m_absent ) then
-            call SaveAsHDF5DS ( blockGroupID, 'values', real ( m0%values, r4 ) )
+            call SaveAsHDF5DS ( blockGID, 'values', real ( m0%values, r4 ) )
             if ( m0%kind /= m_full ) then
-              call MakeHDF5Attribute ( blockGroupID, 'noValues', size(m0%values) )
-              call SaveAsHDF5DS ( blockGroupID, 'r1', m0%r1 )
-              call SaveAsHDF5DS ( blockGroupID, 'r2', m0%r2 )
+              call MakeHDF5Attribute ( blockGID, 'noValues', size(m0%values) )
+              call SaveAsHDF5DS ( blockGID, 'r1', m0%r1 )
+              call SaveAsHDF5DS ( blockGID, 'r2', m0%r2 )
             end if                      ! Not sparse or banded
           end if                        ! Not absent
           ! Close group for block
-          call h5gClose_f ( blockGroupID, status )
+          call h5gClose_f ( blockGID, status )
           if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
             & 'Unable to close group for l2pc matrix block' )
         end if                          ! Do this block
@@ -787,9 +796,84 @@ contains ! ============= Public Procedures ==========================
     end do
 
     ! Now close blocks group
-    call h5gClose_f ( blocksGroupID, status )
+    call h5gClose_f ( blocksGID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close qroup for all l2pc matrix blocks' )
+
+    ! Create a group for the Hessian blocks if any
+    if ( present ( hessian ) ) then
+      call h5gCreate_f ( matrixID, 'HessianBlocks', blocksGID, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to create group for all l2pc matrix hessian blocks' )
+      
+      ! Make the flags
+      call MakeHDF5Attribute ( blocksGID, 'rowInstanceFirst', hessian%row%instFirst )
+      call MakeHDF5Attribute ( blocksGID, 'colInstanceFirst', hessian%col%instFirst )
+
+      ! Now loop over the blocks and write them.
+      do i = 1, hessian%row%NB
+        do j = 1, hessian%col%NB
+          do k = 1, hessian%col%NB
+            ! Do we write this block?
+            if ( rowPack(hessian%row%quant(i)) .and. &
+              &  colPack(hessian%col%quant(j)) .and. &
+              &  colPack(hessian%col%quant(k)) ) then
+              ! Identify the block
+              h0 => hessian%block ( i, j, k )
+              ! Skip the absent ones in order to make life simpler
+              if ( h0%kind == h_absent ) continue
+              ! Get a name for this group for the block
+              call CreateBlockName ( rowBlockMap(i), colBlockMap(j), colBlockMap(k), name )
+              ! Create a group for this block
+              call h5gCreate_f ( blocksGID, trim(name), blockGID, status )
+              if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+                & 'Unable to create group for hessian matrix block' )
+              ! Stick some attributes on it
+              call get_string ( &
+                & hessian%row%vec%quantities(&
+                &    hessian%row%quant(i))%template%name, name )
+              call MakeHDF5Attribute ( blockGID, 'rowQuantity', trim(name) )
+              call MakeHDF5Attribute ( blockGID, 'rowInstance', hessian%row%inst(i) )
+              
+              call get_string ( &
+                & hessian%col%vec%quantities(&
+                &    hessian%col%quant(j))%template%name, name )
+              call MakeHDF5Attribute ( blockGID, 'col1Quantity', trim(name) )
+              call MakeHDF5Attribute ( blockGID, 'col1Instance', hessian%col%inst(j) )
+              
+              call get_string ( &
+                & hessian%col%vec%quantities(&
+                &    hessian%col%quant(j))%template%name, name )
+              call MakeHDF5Attribute ( blockGID, 'col2Quantity', trim(name) )
+              call MakeHDF5Attribute ( blockGID, 'col2Instance', hessian%col%inst(j) )
+              
+              call MakeHDF5Attribute ( blockGID, 'kind', h0%kind )
+              ! Write the datasets
+              
+              if ( h0%kind == h_full ) then
+                call SaveAsHDF5DS ( blockGID, 'values', real ( h0%values, r4 ) )
+              end if
+              if ( h0%kind == h_sparse ) then
+                call MakeHDF5Attribute ( blockGID, 'noValues', h0%tuplesFilled )
+                call SaveAsHDF5DS ( blockGID, 'i', h0%tuples(1:h0%tuplesFilled)%i )
+                call SaveAsHDF5DS ( blockGID, 'j', h0%tuples(1:h0%tuplesFilled)%j )
+                call SaveAsHDF5DS ( blockGID, 'k', h0%tuples(1:h0%tuplesFilled)%k )
+                call SaveAsHDF5DS ( blockGID, 'h', h0%tuples(1:h0%tuplesFilled)%h )
+              end if
+              ! Close group for block
+              call h5gClose_f ( blockGID, status )
+              if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+                & 'Unable to close group for l2pc matrix block' )
+            end if                          ! Do this block
+          end do
+        end do
+      end do
+    
+      ! Now close blocks group
+      call h5gClose_f ( blocksGID, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to close qroup for all l2pc matrix blocks' )
+    end if
 
     ! Close matrix group
     call h5gClose_f ( matrixID, status )
@@ -797,159 +881,9 @@ contains ! ============= Public Procedures ==========================
       & 'Unable to close group for l2pc matrix' ) 
  end subroutine WriteOneHDF5L2PC
   
-  ! --------------------------------------- WriteOneL2PC ---------------
-  subroutine WriteOneL2PC ( L2pc, Unit, packed )
-    ! This subroutine writes an l2pc to a file
-    ! Currently this file is ascii, later it will be
-    ! some kind of HDF file
-
-    ! Dummy arguments
-    type (matrix_T), intent(in), target :: L2pc
-    integer, intent(in) :: Unit
-    logical, intent(in) :: PACKED
-
-    ! Local parameters
-    character (len=*), parameter :: rFmt = "(4(2x,1pg15.8))"
-    character (len=*), parameter :: iFmt = "(8(2x,i6))"
-
-    ! Local variables
-    integer :: AdjustedIndex            ! Index into quantities not skipped
-    integer :: BlockCol                 ! Index
-    integer :: BlockRow                 ! Index
-    integer :: Quantity                 ! Loop counter
-    integer :: Vector                   ! Loop counter
-
-    logical, dimension(l2pc%row%vec%template%noQuantities), target :: ROWPACK
-    logical, dimension(l2pc%col%vec%template%noQuantities), target :: COLPACK
-    logical, dimension(:), pointer :: THISPACK
-
-    character (len=132) :: Line, Word1, Word2 ! Line of text
-
-    type (MatrixElement_T), pointer :: M0 ! A Matrix0 within kStar
-    type (QuantityTemplate_T), pointer :: Qt  ! Temporary pointers
-    type (Vector_T), pointer :: V       ! Temporary pointer
-
-    ! Executable code
-
-    ! Work out which quantities we can skip
-    if ( packed ) then
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Cannot pack ASCII L2PC files any more (never worked anyway!)' ) 
-      ! call MakeMatrixPackMap ( l2pc, rowPack, colPack )
-    else
-      rowPack = .true.
-      colPack = .true.
-    end if
-
-    ! First dump the xStar and yStar
-    do vector = 1, 2
-      ! Identify vector
-      if ( vector == 1 ) then
-        write (unit,*) 'xStar'
-        v => l2pc%col%vec
-        thisPack => colPack
-      else
-        write (unit,*) 'yStar'
-        v => l2pc%row%vec
-        thisPack => rowPack
-      end if
-
-      write (unit,*) count ( thisPack )
-      ! Loop over quantities
-      do quantity = 1, size(v%quantities)
-        if ( thisPack(quantity) ) then
-          qt => v%quantities(quantity)%template
-
-          ! Write quantity name - will be ignored on the read (at least by
-          ! fortran, IDL pays attention
-          call get_string ( qt%name, line )
-          write (unit,*) trim(line)
-          
-          ! Write quantity type
-          call get_string ( lit_indices(qt%quantityType), line )
-          write (unit,*) trim(line)
-          
-          ! Write other info associated with type
-          select case ( qt%quantityType )
-          case (l_vmr)
-            call get_string ( lit_indices(qt%molecule), line )
-            write (unit,*) trim(line)
-          case (l_radiance)
-            call GetSignalName ( qt%signal, line, sideband=qt%sideband )
-            write (unit,*) trim(line)
-          end select
-          
-          ! Write out the dimensions for the quantity and the edges
-          write (unit,*) qt%noChans, qt%noSurfs, qt%noInstances, &
-            &  'noChans, noSurfs, noInstances'
-          call get_string ( lit_indices(qt%verticalCoordinate), line )
-          write (unit,*) qt%coherent, qt%stacked, trim(line), &
-            &  ' coherent, stacked, verticalCoordinate'
-!           if ( all (qt%verticalCoordinate /= (/ l_none, l_zeta /)) &
-!             & .and. (vector==1) .and. (qt%quantityType /= l_ptan) ) &
-!             &   call MLSMessage(MLSMSG_Error,ModuleName, &
-!             &     "Only zeta coordinates allowed (or none) for xStar.")
-          write (unit,*) 'surfs'
-          write (unit, rFmt) qt%surfs
-          write (unit,*) 'phi'
-          write (unit, rFmt) qt%phi
-
-        end if
-      end do                            ! First loop over quantities
-
-      ! Now do a second loop and write the values
-      adjustedIndex = 1
-      do quantity = 1, count ( thisPack )
-        if ( thisPack(quantity) ) then
-          write (unit,*) 'values', adjustedIndex
-          write (unit,rFmt) v%quantities(quantity)%values
-          adjustedIndex = adjustedIndex + 1
-        end if
-      end do                            ! Second loop over quantities
-
-    end do                              ! Loop over xStar/yStar
-    
-    ! Now dump kStar
-    write (unit,*) 'kStar'
-    write (unit,*) l2pc%row%instFirst, l2pc%col%instFirst, 'Instances first'
-    do blockRow = 1, l2pc%row%NB
-      do blockCol = 1, l2pc%col%NB
-        ! Print the type of the matrix
-        if ( rowPack(l2pc%row%quant(blockRow)) .and. &
-          &  colPack(l2pc%col%quant(blockCol)) ) then
-          m0 => l2pc%block(blockRow, blockCol)
-          write (unit,*) blockRow, blockCol, m0%kind,&
-            & 'row, col, kind'
-          call get_string ( &
-            & l2pc%row%vec%quantities(&
-            &    l2pc%row%quant(blockRow))%template%name, word1 )
-          call get_string ( &
-            & l2pc%col%vec%quantities(&
-            &    l2pc%col%quant(blockCol))%template%name, word2 )
-          write (unit,*) trim(word1), l2pc%row%inst(blockRow), ' , ',&
-            &            trim(word2), l2pc%col%inst(blockCol)
-          select case (m0%kind)
-          case (M_Absent)
-          case (M_Banded, M_Column_sparse)
-            write (unit,*) size(m0%values), ' no values'
-            write (unit,*) 'R1'
-            write (unit,iFmt) m0%R1
-            write (unit,*) 'R2'
-            write (unit,iFmt) m0%R2
-            write (unit,*) 'values'
-            write (unit,rFmt) m0%values
-          case (M_Full)
-            write (unit,rFmt) m0%values
-          end select
-        end if
-      end do
-    end do
-
-  end subroutine WriteOneL2PC
-
   ! ======================================= PRIVATE PROCEDURES ====================
 
-  ! ------------------------------------ AddBinSelectorToDatabase --
+  ! ------------------------------------ AddL2PCInfoToDatabase --
   integer function AddL2PCInfoToDatabase ( database, item )
     type (L2PCInfo_T), dimension(:), pointer :: DATABASE
     type (L2PCInfo_T) :: item
@@ -974,6 +908,11 @@ contains ! ============= Public Procedures ==========================
       call h5gClose_f ( l2pcInfo(i)%blocksID, status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to close Blocks group for preserved input l2pc' )
+      if ( l2pcInfo(i)%hblocksID /= 0 ) then
+        call h5gClose_f ( l2pcInfo(i)%hblocksID, status )
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Unable to close Hessian Blocks group for preserved input l2pc' )
+      end if
       call h5gClose_f ( l2pcInfo(i)%binID, status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to close matrix group for preserved input l2pc' )
@@ -992,44 +931,50 @@ contains ! ============= Public Procedures ==========================
   end subroutine DestroyL2PCInfoDatabase
 
   ! ----------------------------------- MakeMatrixPackMap -----------
-  subroutine MakeMatrixPackMap ( m, rowPack, colPack, rowBlockMap, colBlockMap, dontpack )
+  subroutine MakeMatrixPackMap ( j, rowPack, colPack, rowBlockMap, colBlockMap, dontpack, h )
     ! This subroutine fills the boolean arrays rowPack, colPack
     ! (each length row/col%noQuantities) with a flag set true
     ! if the quantity has any derivatives at all
     
     ! Dummy arguments
-    type (Matrix_T), intent(in) :: M
-    logical, intent(out), dimension(M%row%vec%template%noQuantities) :: ROWPACK
-    logical, intent(out), dimension(M%col%vec%template%noQuantities) :: COLPACK
-    integer, intent(out), dimension(M%row%NB) :: ROWBLOCKMAP
-    integer, intent(out), dimension(M%col%NB) :: COLBLOCKMAP
+    type (Matrix_t), intent(in) :: J
+    logical, intent(out), dimension(J%row%vec%template%noQuantities) :: ROWPACK
+    logical, intent(out), dimension(J%col%vec%template%noQuantities) :: COLPACK
+    integer, intent(out), dimension(J%row%NB) :: ROWBLOCKMAP
+    integer, intent(out), dimension(J%col%NB) :: COLBLOCKMAP
     integer, dimension(:), pointer :: DONTPACK ! Quantities not to pack
+    type (Hessian_T), intent(in), optional :: H ! A hessian to consider also
 
     ! Local variables
     integer :: ROWQ                     ! Loop counter
     integer :: COLQ                     ! Loop counter
+    integer :: COLQ1                    ! Loop counter
+    integer :: COLQ2                    ! Loop counter
     integer :: ROWI                     ! Loop counter
     integer :: COLI                     ! Loop counter
+    integer :: COLI1                    ! Loop counter
+    integer :: COLI2                    ! Loop counter
     integer :: ROWBLOCK                 ! Block index
     integer :: COLBLOCK                 ! Block index
-    logical, dimension(M%row%NB) :: ROWBLOCKFLAG ! Flags per row block
-    logical, dimension(M%col%NB) :: COLBLOCKFLAG ! Flags per row block
+    integer :: COLBLOCK1                ! Block index
+    integer :: COLBLOCK2                ! Block index
+    logical, dimension(J%row%NB) :: ROWBLOCKFLAG ! Flags per row block
+    logical, dimension(J%col%NB) :: COLBLOCKFLAG ! Flags per row block
 
     ! Executable code
-
     rowPack = .false.
     colPack = .false.
 
     ! Do a nested loop over cols/rows
     ! I tried to be fancy with cycles etc. but the code got really messy.
     ! This simple approach is probably the clearest.
-    do colQ = 1, m%col%vec%template%noQuantities
-      do colI = 1, m%col%vec%quantities(colQ)%template%noInstances
-        colBlock = FindBlock ( m%col, colQ, colI )
-        do rowQ = 1, m%row%vec%template%noQuantities
-          do rowI = 1, m%row%vec%quantities(rowQ)%template%noInstances
-            rowBlock = FindBlock ( m%row, rowQ, rowI )
-            if ( m%block ( rowBlock, colBlock ) % kind /= M_Absent ) then
+    do rowQ = 1, j%row%vec%template%noQuantities
+      do rowI = 1, j%row%vec%quantities(rowQ)%template%noInstances
+        rowBlock = FindBlock ( j%row, rowQ, rowI )
+        do colQ = 1, j%col%vec%template%noQuantities
+          do colI = 1, j%col%vec%quantities(colQ)%template%noInstances
+            colBlock = FindBlock ( j%col, colQ, colI )
+            if ( j%block ( rowBlock, colBlock ) % kind /= M_Absent ) then
               rowPack ( rowQ ) = .true.
               colPack ( colQ ) = .true.
             end if
@@ -1038,25 +983,49 @@ contains ! ============= Public Procedures ==========================
       end do
     end do
 
+    ! Do the same thing for any hessian supplied
+    if ( present ( h ) ) then
+      do rowQ = 1, h%row%vec%template%noQuantities
+        do rowI = 1, h%row%vec%quantities(rowQ)%template%noInstances
+          rowBlock = FindBlock ( h%row, rowQ, rowI )
+          do colQ1 = 1, h%col%vec%template%noQuantities
+            do colI1 = 1, h%col%vec%quantities(colQ1)%template%noInstances
+              colBlock1 = FindBlock ( h%col, colQ1, colI1 )
+              do colQ2 = 1, h%col%vec%template%noQuantities
+                do colI2 = 1, h%col%vec%quantities(colQ2)%template%noInstances
+                  colBlock2 = FindBlock ( h%col, colQ2, colI2 )
+                  if ( h%block ( rowBlock, colBlock1, colBlock2 ) % kind /= H_Absent ) then
+                    rowPack ( rowQ ) = .true.
+                    colPack ( colQ1 ) = .true.
+                    colPack ( colQ2 ) = .true.
+                  end if
+                end do
+              end do
+            end do
+          end do
+        end do
+      end do
+    end if
+    
     ! Go back and set to true any we know we want to keep
     if ( associated ( dontPack ) ) then
-      do colQ = 1, m%col%vec%template%noQuantities
-        if ( any ( dontPack == m%col%vec%template%quantities(colQ) ) ) &
+      do colQ = 1, j%col%vec%template%noQuantities
+        if ( any ( dontPack == j%col%vec%template%quantities(colQ) ) ) &
           & colPack ( colQ ) = .true.
       end do
-      do rowQ = 1, m%row%vec%template%noQuantities
-        if ( any ( dontPack == m%row%vec%template%quantities(rowQ) ) ) &
+      do rowQ = 1, j%row%vec%template%noQuantities
+        if ( any ( dontPack == j%row%vec%template%quantities(rowQ) ) ) &
           & rowPack ( rowQ ) = .true.
       end do
     end if
 
     ! Now work out the block mappings
-    rowBlockFlag = rowPack ( m%row%quant )
-    do rowBlock = 1, m%row%nb
+    rowBlockFlag = rowPack ( j%row%quant )
+    do rowBlock = 1, j%row%nb
       rowBlockMap ( rowBlock ) = count ( rowBlockFlag ( 1:rowBlock ) )
     end do
-    colBlockFlag = colPack ( m%col%quant )
-    do colBlock = 1, m%col%nb
+    colBlockFlag = colPack ( j%col%quant )
+    do colBlock = 1, j%col%nb
       colBlockMap ( colBlock ) = count ( colBlockFlag ( 1:colBlock ) )
     end do
     
@@ -1073,50 +1042,80 @@ contains ! ============= Public Procedures ==========================
 
   ! --------------------------------------- Populate L2PCBin --------
   subroutine PopulateL2PCBin ( bin )
-  use HDF5, only: H5GCLOSE_F, H5GOPEN_F
+  use HDF5, only: H5GCLOSE_F, H5GOPEN_F, H5GGET_OBJ_INFO_IDX_F, &
+      & H5GN_MEMBERS_F
   use MLSHDF5, only: GetHDF5Attribute, LoadFromHDF5DS
     integer, intent(in) :: BIN ! The bin index to populate
 
     ! Local variables
-    type ( Matrix_T ), pointer :: L2PC  ! This l2pc
-    type ( L2PCInfo_T ), pointer :: INFO ! Info for this l2pc
-    type ( MatrixElement_T ), pointer :: M0 
+    type(L2pc_t), pointer :: L2PC  ! This l2pc
+    type(L2PCInfo_T), pointer :: INFO ! Info for this l2pc
+    type(MatrixElement_T), pointer :: M0 
     integer :: BLOCKROW  ! Loop counter
     integer :: BLOCKCOL  ! Loop counter
     character ( len=64 ) :: NAME ! Name of a block
     integer :: BLOCKID   ! Group ID for a block
+    integer :: BLOCKSID  ! Group ID for all the non-Hessian blocks
     integer :: STATUS    ! Flag from HDF5
     integer :: KIND      ! Kind for this block
     integer :: NOVALUES  ! Number of values for this block
+    integer :: i, nmembers, objtype
     ! Executable code
 
     l2pc => l2pcDatabase ( bin )
-    if ( .not. any ( l2pc%block%kind == m_unknown ) ) return
+    if ( .not. any ( l2pc%j%block%kind == m_unknown ) ) return
     info => l2pcInfo ( bin )
 
-    do blockRow = 1, l2pc%row%NB
-      do blockCol = 1, l2pc%col%NB
+    call h5gn_members_f( info%binID, 'Blocks', nmembers, status )
+    if ( index ( switches, 'l2pc' ) > 0 ) then
+      call outputNamedValue ( 'nmembers under ' // 'Blocks', nmembers )
+      do i=0, nmembers-1
+        call h5gget_obj_info_idx_f( info%binID, 'Blocks', i, &
+                                           name, objtype, status )
+        call outputNamedValue ( 'member name: ', trim(name) )
+      enddo
+    endif
+
+    call h5gOpen_f ( info%binId, 'Blocks', blocksId, status )
+    if ( status /= 0 ) then
+      call outputNamedValue( 'binID', info%binID )
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to open Blocks group for l2pc matrix block '//trim(info%matrixName) )
+    endif
+    do blockRow = 1, l2pc%j%row%NB
+      do blockCol = 1, l2pc%j%col%NB
         ! Skip blocks we know about or are absent
-        m0 => l2pc%block ( blockRow, blockCol )
+        m0 => l2pc%j%block ( blockRow, blockCol )
         if ( m0%kind /= m_unknown ) cycle
         ! Access this block
         ! write ( name, * ) 'Block', blockRow, blockCol
-        call CreateBlockName( blockRow, blockCol, name )
-        call h5gOpen_f ( info%blocksId, trim(name), blockId, status )
-        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Unable to open group for l2pc matrix block '//trim(name) )
-
+        call CreateBlockName ( blockRow, blockCol, 0, name )
+        ! This doesn't work any more (Why not?)
+        ! call h5gOpen_f ( info%blocksId, trim(name), blockId, status )
+        call h5gOpen_f ( blocksId, trim(name), blockId, status )
+        if ( status /= 0 ) then
+          call outputNamedValue( 'Block name', trim(name) )
+          call outputNamedValue( 'Blocks ID', info%blocksId )
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Unable to open group for l2pc matrix block '//trim(name) )
+        elseif ( switchDetail( switches, 'l2pc' ) > 0 ) then
+          call outputNamedValue( 'Block name', trim(name) )
+          call outputNamedValue( 'Blocks ID', info%blocksId )
+          call outputNamedValue( 'Block ID', blockId )
+        endif
         ! Get kind of block
         call GetHDF5Attribute ( blockID, 'kind', kind )
+        
+        ! Read the block
         if ( kind == m_banded .or. kind == m_column_sparse ) then
           call GetHDF5Attribute ( blockID, 'noValues', noValues )
-          call CreateBlock ( l2pc, blockRow, blockCol, kind, noValues )
-          m0 => l2pc%block ( blockRow, blockCol )
+          call CreateBlock ( l2pc%j, blockRow, blockCol, kind, noValues )
+          m0 => l2pc%j%block ( blockRow, blockCol )
           call LoadFromHDF5DS ( blockId, 'r1', m0%r1 )
           call LoadFromHDF5DS ( blockId, 'r2', m0%r2 )
         else
-          call CreateBlock ( l2pc, blockRow, blockCol, kind )
-          m0 => l2pc%block ( blockRow, blockCol )
+          call CreateBlock ( l2pc%j, blockRow, blockCol, kind )
+          m0 => l2pc%j%block ( blockRow, blockCol )
         end if
         if ( kind /= m_absent ) &
           call LoadFromHDF5DS ( blockID, 'values', m0%values )
@@ -1125,283 +1124,17 @@ contains ! ============= Public Procedures ==========================
           & 'Unable to close group for l2pc matrix block '//trim(name) )
       end do
     end do
-    if ( index ( switches, 'spa' ) /= 0 ) call dump_struct ( l2pc, 'Populated l2pc bin' )
-!     if ( .not. CheckIntegrity ( l2pc ) ) then
-!       call MLSMessage ( MLSMSG_Error, ModuleName, &
-!         & 'L2PC failed integrity test' )
-!     end if
+    call h5gClose_f ( blocksId, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close Blocks group for l2pc matrix '//trim(info%matrixName) )
+
+    if ( l2pc%goth ) then
+      stop !!! CODE HERE
+    endif
+
+    if ( index ( switches, 'spa' ) /= 0 ) call dump_struct ( l2pc%j, 'Populated l2pc bin' )
 
   end subroutine PopulateL2PCBin
-
-  ! -------------------------------------------  ReadOneASCIIL2PC  -----
-  subroutine ReadOneASCIIL2PC ( L2pc, Unit, Eof )
-    ! This subroutine writes an l2pc to a file
-    ! Currently this file is ascii, later it will be
-    ! some kind of HDF file
-
-    ! Dummy arguments
-    type (Matrix_T), intent(out), target :: L2pc
-    integer, intent(in) :: Unit
-    logical, intent(inout) :: Eof
-
-    ! Local variables
-    integer :: BLOCKCOL                 ! Index
-    integer :: BLOCKKIND                ! Kind of matrix block
-    integer :: BLOCKROW                 ! Index
-    integer :: NOVALUES                 ! For banded/sparse matrices
-    integer :: TESTBLOCKROW             ! Test index
-    integer :: TESTBLOCKCOL             ! Test index
-
-    logical :: COLINSTFIRST             ! Matrix order
-    logical :: ROWINSTFIRST             ! Matrix order
-
-    character (len=132) :: Line         ! Line of text
-
-    type (MatrixElement_T), pointer :: M0 ! A Matrix0 within kStar
-    integer :: XSTAR                    ! Linearisation state vector index
-    integer :: YSTAR                    ! Radiances for xStar vector index
-
-    ! executable code
-
-    ! First read the xStar and yStar
-    call ReadOneVectorFromASCII ( unit, xStar, eof )
-    if ( eof ) return
-
-    call ReadOneVectorFromASCII ( unit, yStar, eof )
-    if ( eof ) return
-
-    ! Now read kStar
-    read (unit,*) line                  ! Line saying kStar
-    read (unit,*) rowInstFirst, colInstFirst ! Flags
-    call CreateEmptyMatrix ( l2pc, 0, l2pcVs(yStar), l2pcVs(xStar), &
-      & row_quan_first = .not. rowInstFirst,&
-      & col_quan_first = .not. colInstFirst )
-
-    ! Loop over blocks and read them
-    do blockRow = 1, l2pc%row%NB
-      do blockCol = 1, l2pc%col%NB
-        ! Read the type of the matrix and a set of test indices
-        read (unit,*) testBlockRow, testBlockCol, blockKind
-        if (testBlockRow /= blockRow) call MLSMessage(MLSMSG_Error,ModuleName,&
-          & 'Bad row number for kStar')
-        if (testBlockCol /= blockCol) call MLSMessage(MLSMSG_Error,ModuleName,&
-          & 'Bad col number for kStar')
-        read (unit,*) line              ! String giving info, we can ignore.
-        select case (blockKind)
-        case (M_Absent)
-          call CreateBlock ( l2pc, blockRow, blockCol, blockKind )
-        case (M_Banded, M_Column_sparse)
-          read (unit,*) noValues
-          call CreateBlock ( l2pc, blockRow, blockCol, blockKind, noValues )
-          m0 => l2pc%block ( blockRow, blockCol )
-          read (unit,*) line ! 'R1'
-          read (unit,*) m0%R1
-          read (unit,*) line ! 'R2'
-          read (unit,*) m0%R2
-          read (unit,*) line ! 'values'
-          read (unit,*) m0%values
-        case (M_Full)
-          call CreateBlock ( l2pc, blockRow, blockCol, blockKind )
-          m0 => l2pc%block ( blockRow, blockCol )
-          read (unit,*) m0%values
-        end select
-      end do
-    end do
-  end subroutine ReadOneASCIIL2PC
-
-  ! ------------------------------------------ ReadOneVectorFromASCII ----
-  subroutine ReadOneVectorFromASCII ( unit, vector, eof )
-    ! Reads a vector from l2pc file and adds it to internal databases. This
-    ! is internal as having it inside the above routine screws up databases.
-
-    ! Dummy arguments
-    integer, intent(in) :: UNIT         ! File unit
-    integer, intent(out) :: VECTOR      ! Index of Vector read in L2PCVs
-    logical, intent(out) :: EOF         ! Flag
-
-    ! Local variables
-    integer :: NOINSTANCESOR1           ! For allocates
-    integer :: NOQUANTITIES             ! Number of quantities in a vector
-    integer :: NOSURFSOR1               ! For allocates
-    integer :: QUANTITY                 ! Loop counter
-    integer :: SIDEBAND                 ! From parse signal
-    integer :: STATUS                   ! Flag
-    integer :: VTINDEX                  ! Index for this vector template
-
-    integer, dimension(:), pointer :: SIGINDS ! Result of parse signal
-    integer, dimension(:), pointer :: QTINDS  ! Quantity indices
-    
-    character (len=132) :: Line       ! Line of text
-    
-    type (QuantityTemplate_T) :: QT     ! Temporary quantity template
-    type (VectorTemplate_T) :: VT       ! Temporary template for vector
-    type (Vector_T) :: V                ! Temporary vector
-    
-    ! Executable code
-    
-    eof = .false. 
-    nullify ( sigInds, qtInds )
-    read (unit,*, IOSTAT=status) line
-    if (status == -1 ) then
-      eof = .true.
-      return
-    end if
-    
-    ! Note we fill this later
-    read (unit,*) noQuantities
-    call allocate_test ( qtInds, noQuantities, 'qtInds', ModuleName )
-    
-    ! Loop over quantities
-    do quantity = 1, noQuantities
-      
-      ! Nullify stuff so we don't clobber arrays now in databases
-      nullify ( qt%surfs, qt%phi )
-
-      ! Read and ignore the name, we're going on the type, at least for the
-      ! moment.
-      read (unit,*, IOSTAT=status) line
-      
-      ! Read quantity type
-      read (unit,*, IOSTAT=status) line
-      if (status /= 0 ) then
-        call io_error('io error in L2PC_m: ReadOneVector' // &
-          & ' Fortran read of line for quantity type', status)
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'An io-error occured' )
-      end if
-      qt%quantityType = GetLitIndexFromString ( line, qt%name )
-
-      ! Set defaults for coordinates, radiance is the later exception
-      qt%verticalCoordinate = l_zeta
-      qt%frequencyCoordinate = l_none
-      qt%noInstancesLowerOverlap = 0
-      qt%noInstancesUpperOverlap = 0
-      qt%regular = .true.
-
-      ! Read other info associated with type
-      select case ( qt%quantityType )
-      case (l_vmr)
-        read (unit,*, IOSTAT=status) line
-        if (status /= 0 ) then
-        call io_error('io error in L2PC_m: ReadOneVector' // &
-          & ' Fortran read of line for l_vmr', status)
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'An io-error occured' )
-        end if
-        qt%molecule = GetLitIndexFromString ( line, qt%name )
-      case (l_radiance)
-        read (unit,*, IOSTAT=status) line
-        if (status /= 0 ) then
-        call io_error('io error in L2PC_m: ReadOneVector' // &
-          & ' Fortran read of line for radiance', status)
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'An io-error occured' )
-        end if
-        call Parse_Signal (line, sigInds, sideband=sideband)
-        qt%signal = sigInds(1)
-        qt%sideband = sideband
-        qt%frequencyCoordinate = l_channel
-        qt%verticalCoordinate = l_geodAltitude
-        call deallocate_test(sigInds,'sigInds',ModuleName)
-      case default
-      end select
-      
-      ! Next read the dimensions for the quantity
-      read (unit,*, IOSTAT=status) qt%noChans, qt%noSurfs, qt%noInstances
-      if (status /= 0 ) then
-        call io_error('io error in L2PC_m: ReadOneVector' // &
-          & ' Fortran read of noChans, noSurfs, noInstances', status)
-          print *, 'Quantity: ', quantity
-          print *, 'QuantityName: ', qt%name
-          print *, 'QuantityType: ', qt%quantityType
-          print *, 'l_vmr: ', l_vmr
-          print *, 'last literal read: ', trim(line)
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'An io-error occured' )
-      end if
-      qt%instanceLen = qt%noChans * qt%noSurfs
-      read (unit,*, IOSTAT=status) qt%coherent, qt%stacked
-      if (status /= 0 ) then
-        call io_error('io error in L2PC_m: ReadOneVector' // &
-          & ' Fortran read of coherent, stacked', status)
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'An io-error occured' )
-      end if
-      
-      if (qt%coherent) then
-        noInstancesOr1 = 1
-      else
-        noInstancesOr1 = qt%noInstances
-      endif
-      if (qt%stacked) then
-        noSurfsOr1 = 1
-      else
-        noSurfsOr1 = qt%noSurfs
-      endif
-
-      call Allocate_test ( qt%surfs, qt%noSurfs, noInstancesOr1, 'qt%surfs', ModuleName )
-      call Allocate_test ( qt%phi, noSurfsOr1, qt%noInstances, 'qt%phi', ModuleName )
-      
-      read (unit,*, IOSTAT=status) line              ! Line saying surfs
-      if (status /= 0 ) then
-        call io_error('io error in L2PC_m: ReadOneVector' // &
-          & ' Fortran read of line saying surfs', status)
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'An io-error occured' )
-      end if
-      read (unit,*, IOSTAT=status) qt%surfs
-      if (status /= 0 ) then
-        call io_error('io error in L2PC_m: ReadOneVector' // &
-          & ' Fortran read of surfs', status)
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'An io-error occured' )
-      end if
-      read (unit,*, IOSTAT=status) line              ! Line saying phi
-      if (status /= 0 ) then
-        call io_error('io error in L2PC_m: ReadOneVector' // &
-          & ' Fortran read of line saying phi', status)
-        call MLSMessage ( MLSMSG_Error, ModuleName, 'An io-error occured' )
-      end if
-      read (unit,*, IOSTAT=status) qt%phi
-      if (status /= 0 ) then
-        call io_error('io error in L2PC_m: ReadOneVector' // &
-          & ' Fortran read of phi', status)
-        call MLSMessage ( MLSMSG_Error, ModuleName, 'An io-error occured' )
-      end if
-
-      ! Now add this template to our private database 
-      qtInds(quantity) = AddQuantityTemplateToDatabase ( l2pcQTs, qt )
-      
-    end do                            ! First Loop over quantities
-    
-    ! Now create a vector template with these quantities
-    call ConstructVectorTemplate ( 0, l2pcQTs, qtInds, vt, forWhom=moduleName )
-    vtIndex = AddVectorTemplateToDatabase ( l2pcVTs, vt )
-    
-    call deallocate_test ( qtInds, 'qtInds', ModuleName )
-    
-    ! Now create a vector for this vector template
-    v = CreateVector ( 0, l2pcVTs(vtIndex), l2pcQTs, vectorNameText='_v' )
-    vector = AddVectorToDatabase ( l2pcVs, v )
-    
-    ! Now go through the quantities again and read the values
-    do quantity = 1, noQuantities
-      read (unit,*, IOSTAT=status) line              ! Just a comment line
-      if (status /= 0 ) then
-        call io_error('io error in L2PC_m: ReadOneVector' // &
-          & ' Fortran read of comment in loop of quantities', status)
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'An io-error occured' )
-      end if
-      read (unit,*, IOSTAT=status) l2pcVs(vector)%quantities(quantity)%values
-      if (status /= 0 ) then
-        call io_error('io error in L2PC_m: ReadOneVector' // &
-          & ' Fortran read of quantities', status)
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'An io-error occured' )
-      end if
-    end do
-  end subroutine ReadOneVectorFromASCII
 
   ! --------------------------------------- ReadCompleteHDF5L2PC -------
   subroutine ReadCompleteHDF5L2PCFile ( MLSFile, Where )
@@ -1415,7 +1148,7 @@ contains ! ============= Public Procedures ==========================
     ! Local variables
     integer :: FILEID          ! From hdf5
     type (L2PCInfo_T) :: INFO  ! Info for one bin
-    type (Matrix_T) :: L2PC    ! The l2pc read from one bin
+    type (L2pc_t) :: L2PC    ! The l2pc read from one bin
     integer :: STATUS          ! Flag from HDF5
     integer :: NOBINS          ! Number of bins
     integer :: BIN             ! Loop counter
@@ -1449,14 +1182,20 @@ contains ! ============= Public Procedures ==========================
         & shallow=.true., info=Info )
       dummy = AddL2PCToDatabase ( l2pcDatabase, L2PC )
       dummy = AddFileIDToDatabase ( fileIDDatabase, MLSFile%fileID%f_id )
-      if ( index ( switches, 'spa' ) /= 0 ) call Dump_struct ( l2pc, 'One l2pc bin' ) 
+      if ( index ( switches, 'spa' ) /= 0 ) call Dump_struct ( l2pc%j, 'One l2pc bin' ) 
 
       ! Now nullify the pointers in l2pc so we don't clobber the one we've written
-      nullify ( l2pc%block )
-      nullify ( l2pc%row%nelts, l2pc%row%inst, l2pc%row%quant )
-      nullify ( l2pc%col%nelts, l2pc%col%inst, l2pc%col%quant )
-      nullify ( l2pc%row%vec%template%quantities, l2pc%col%vec%template%quantities )
-      nullify ( l2pc%row%vec%quantities, l2pc%col%vec%quantities )
+      nullify ( l2pc%j%block )
+      nullify ( l2pc%j%row%nelts, l2pc%j%row%inst, l2pc%j%row%quant )
+      nullify ( l2pc%j%col%nelts, l2pc%j%col%inst, l2pc%j%col%quant )
+      nullify ( l2pc%j%row%vec%template%quantities, l2pc%j%col%vec%template%quantities )
+      nullify ( l2pc%j%row%vec%quantities, l2pc%j%col%vec%quantities )
+
+      nullify ( l2pc%h%block )
+      nullify ( l2pc%h%row%nelts, l2pc%h%row%inst, l2pc%h%row%quant )
+      nullify ( l2pc%h%col%nelts, l2pc%h%col%inst, l2pc%h%col%quant )
+      nullify ( l2pc%h%row%vec%template%quantities, l2pc%h%col%vec%template%quantities )
+      nullify ( l2pc%h%row%vec%quantities, l2pc%h%col%vec%quantities )
       dummy = AddL2PCInfoToDatabase ( l2pcInfo, Info )
     end do
     
@@ -1466,22 +1205,24 @@ contains ! ============= Public Procedures ==========================
 
   ! --------------------------------------- ReadOneHDF5L2PCRecord ------------
   subroutine ReadOneHDF5L2PCRecord ( l2pc, MLSFile, l2pcIndex, shallow, info )
-  use HDF5, only: H5GCLOSE_F, H5GOPEN_F, H5GGET_OBJ_INFO_IDX_F
-  use MLSHDF5, only: GetHDF5Attribute, LoadFromHDF5DS
-    type ( Matrix_T ), intent(out), target :: L2PC
+    use HDF5, only: H5GCLOSE_F, H5GOPEN_F, H5GGET_OBJ_INFO_IDX_F, &
+      & H5GN_MEMBERS_F
+    use MLSHDF5, only: GetHDF5Attribute, LoadFromHDF5DS
+    type ( L2pc_t ), intent(out), target :: L2PC
     type (MLSFile_T), pointer   :: MLSFile
     ! integer, intent(in) :: FILEID       ! HDF5 ID of input file
     integer, intent(in) :: L2PCINDEX        ! Index of l2pc entry to read
     logical, optional, intent(in) :: SHALLOW ! Don't read blocks
-    type ( L2PCInfo_T), intent(out), optional :: INFO ! Information output
+    type(L2PCInfo_T), intent(out), optional :: INFO ! Information output
 
     ! Local variables
-    integer :: BLOCKCOL                 ! Loop counter
     integer :: BLOCKID                  ! Id of block group (one block at a time)
-    integer :: BLOCKROW                 ! Loop counter
     integer :: BLOCKSID                 ! Id of blocks group
+    integer :: HBLOCKSID                ! Id of HessianBlocks group
+    integer :: I, J, K                  ! Block loop indices
     integer :: KIND                     ! Kind of block (absent, etc.)
     integer :: MATRIXID                 ! HDF5 for matrix group
+    integer :: NMEMBERS
     integer :: NOVALUES                 ! For banded or column sparse cases
     integer :: OBJTYPE                  ! From HDF5
     integer :: STATUS                   ! Flag from HDF5
@@ -1493,7 +1234,8 @@ contains ! ============= Public Procedures ==========================
     logical :: ROWINSTANCEFIRST         ! Flag for matrix
     logical :: MYSHALLOW                ! Value of shallow
 
-    type (MatrixElement_T), pointer :: M0 ! A Matrix0 within kStar
+    type (MatrixElement_T), pointer :: M0 ! A Matrix block within kStar
+    type (HessianElement_T), pointer :: H0 ! A Hessian block within kStar
     character ( len=64 ) :: MATRIXNAME  ! Name for matrix
     character ( len=64 ) :: NAME        ! Name for block group
 
@@ -1510,6 +1252,8 @@ contains ! ============= Public Procedures ==========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to get information on matrix in input l2pc file', &
       & MLSFile=MLSFile )
+    if ( index ( switches, 'l2pc' ) /= 0 ) &
+      & call outputNamedValue ( 'Reading matrix', matrixName )
     call h5gOpen_f ( MLSFile%fileID%f_id, trim(matrixName), matrixId, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open matrix in input l2pc file' , &
@@ -1532,40 +1276,72 @@ contains ! ============= Public Procedures ==========================
     stringIndex = GetStringIndexFromString ( "'"//trim(matrixName)//"'" )
 
     ! Create the matrix
-    call CreateEmptyMatrix ( l2pc, stringIndex, l2pcVs(yStar), l2pcVs(xStar), &
+    call CreateEmptyMatrix ( l2pc%j, stringIndex, l2pcVs(yStar), l2pcVs(xStar), &
       & row_quan_first = .not. rowInstanceFirst,&
       & col_quan_first = .not. colInstanceFirst )
 
+    ! Must *not* forget to name l2pc 
+    ! (l2pc%name will itself never be used beyond this point)
+    l2pc%name = l2pc%j%name
+    
     ! Fill up the information
     if ( present ( info ) ) then
       info%fileID = MLSFile%fileID%f_id
       info%binID = matrixID
       info%blocksID = blocksID
+      info%matrixName = matrixName
     end if
 
+    if ( switchDetail( switches, 'l2pc' ) > 0 ) then
+      do i = 1, l2pc%j%row%NB
+        do j = 1, l2pc%j%col%NB
+          call CreateBlockName ( i, j, 0, name )
+          call h5gOpen_f ( blocksId, trim(name), blockId, status )
+          if ( status /= 0 ) then
+            call outputNamedValue( 'Block name', trim(name) )
+            call outputNamedValue( 'Blocks ID', blocksId )
+            call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'Unable to open group for l2pc matrix block '//trim(name) , &
+              & MLSFile=MLSFile )
+          elseif ( switchDetail( switches, 'l2pc' ) > 0 ) then
+            call outputNamedValue( 'Block name', trim(name) )
+            call outputNamedValue( 'Blocks ID', blocksId )
+            call outputNamedValue( 'Block ID', blockId )
+          endif
+          call h5gClose_f ( blockId, status )
+        enddo
+      enddo
+    endif
     ! Loop over blocks and read them
     if ( .not. myShallow ) then
-      do blockRow = 1, l2pc%row%NB
-        do blockCol = 1, l2pc%col%NB
+      do i = 1, l2pc%j%row%NB
+        do j = 1, l2pc%j%col%NB
           ! Access this block
-          ! write ( name, * ) 'Block', blockRow, blockCol
-          call CreateBlockName( blockRow, blockCol, name )
+          call CreateBlockName ( i, j, 0, name )
           call h5gOpen_f ( blocksId, trim(name), blockId, status )
-          if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & 'Unable to open group for l2pc matrix block '//trim(name) , &
-            & MLSFile=MLSFile )
+          if ( status /= 0 ) then
+            call outputNamedValue( 'Block name', trim(name) )
+            call outputNamedValue( 'Blocks ID', blocksId )
+            call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'Unable to open group for l2pc matrix block '//trim(name) , &
+              & MLSFile=MLSFile )
+          elseif ( switchDetail( switches, 'l2pc' ) > 0 ) then
+            call outputNamedValue( 'Block name', trim(name) )
+            call outputNamedValue( 'Blocks ID', blocksId )
+            call outputNamedValue( 'Block ID', blockId )
+          endif
           ! Could check it's the block we're expecting but I think I'll be lazy
           MLSFile%fileID%sd_id = blockID
           call GetHDF5Attribute ( MLSFile, 'kind', kind )
           if ( kind == m_banded .or. kind == m_column_sparse ) then
             call GetHDF5Attribute ( MLSFile, 'noValues', noValues )
-            call CreateBlock ( l2pc, blockRow, blockCol, kind, noValues )
-            m0 => l2pc%block ( blockRow, blockCol )
+            call CreateBlock ( l2pc%j, i, j, kind, noValues )
+            m0 => l2pc%j%block ( i, j )
             call LoadFromHDF5DS ( MLSFile, 'r1', m0%r1 )
             call LoadFromHDF5DS ( MLSFile, 'r2', m0%r2 )
           else
-            call CreateBlock ( l2pc, blockRow, blockCol, kind )
-            m0 => l2pc%block ( blockRow, blockCol )
+            call CreateBlock ( l2pc%j, i, j, kind )
+            m0 => l2pc%j%block ( i, j )
           end if
           if ( kind /= m_absent ) &
             call LoadFromHDF5DS ( MLSFile, 'values', m0%values )
@@ -1577,14 +1353,84 @@ contains ! ============= Public Procedures ==========================
       end do
     else
       ! Otherwise, flag the whole matrix as unknown
-      do blockRow = 1, l2pc%row%NB
-        do blockCol = 1, l2pc%col%NB
-          call CreateBlock ( l2pc, blockRow, blockCol, m_unknown )
+      do i = 1, l2pc%j%row%NB
+        do j = 1, l2pc%j%col%NB
+          call CreateBlock ( l2pc%j, i, j, m_unknown )
         end do
       end do
     end if
-        
-    ! Finish up, though if in shallow mode, then keep the groups open
+
+    call h5gClose_f ( blocksId, status )
+    ! Look for any Hessian blocks
+    ! We begin by assuming there are none
+    call h5gn_members_f( MLSFile%fileID%f_id, trim(matrixName), nmembers, status )
+    if ( index ( switches, 'l2pc' ) > 0 ) then
+      call outputNamedValue ( 'nmembers under ' // trim(matrixName), nmembers )
+      do i=0, nmembers-1
+        call h5gget_obj_info_idx_f( MLSFile%fileID%f_id, trim(matrixName), i, &
+                                           name, objtype, status )
+        call outputNamedValue ( 'member name: ', trim(name) )
+      enddo
+    endif
+    status = 1
+    if ( nmembers > 3 ) call h5gOpen_f ( matrixID, 'HessianBlocks', hBlocksID, status )
+    if ( status == 0 .and. nmembers > 3 ) then
+      MLSFile%fileID%sd_id = blocksID
+
+      l2pc%h = CreateEmptyHessian ( stringIndex, l2pcVs(yStar), l2pcVs(xStar) )
+      if ( present ( info ) ) info%hBlocksID = hBlocksID
+
+      ! Loop over blocks and read them
+      if ( .not. myShallow ) then
+        do i = 1, l2pc%h%row%NB
+          do j = 1, l2pc%h%col%NB
+            do k = 1, l2pc%h%col%NB
+              ! Access this block
+              call CreateBlockName ( i, j, k, name )
+              call h5gOpen_f ( blocksId, trim(name), blockId, status )
+              if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+                & 'Unable to open group for l2pc matrix block '//trim(name) , &
+                & MLSFile=MLSFile )
+              ! Could check it's the block we're expecting but I think I'll be lazy
+              MLSFile%fileID%sd_id = blockID
+              call GetHDF5Attribute ( MLSFile, 'kind', kind )
+
+              select case ( kind )
+              case ( h_absent )
+                call CreateBlock ( l2pc%j, i, j, k, kind, noValues )
+              case ( h_sparse )
+                call GetHDF5Attribute ( MLSFile, 'noValues', noValues )
+                call CreateBlock ( l2pc%j, i, j, k, kind, noValues )
+                h0 => l2pc%h%block ( i, j, k )
+                call LoadFromHDF5DS ( MLSFile, 'i', h0%tuples%i )
+                call LoadFromHDF5DS ( MLSFile, 'j', h0%tuples%j )
+                call LoadFromHDF5DS ( MLSFile, 'k', h0%tuples%k )
+                call LoadFromHDF5DS ( MLSFile, 'h', h0%tuples%h )
+              case ( h_full )
+                call CreateBlock ( l2pc%j, i, j, k, kind )
+                h0 => l2pc%h%block ( i, j, k )                
+                call LoadFromHDF5DS ( MLSFile, 'values', h0%values )
+              end select
+              call h5gClose_f ( blockId, status )
+              if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+                & 'Unable to close group for input l2pc matrix block '//trim(name) , &
+                & MLSFile=MLSFile )
+            end do
+          end do
+        end do
+      else
+        ! Otherwise, flag the whole matrix as unknown
+        do i = 1, l2pc%h%row%NB
+          do j = 1, l2pc%h%col%NB
+            do k = 1, l2pc%h%col%NB
+              call CreateBlock ( l2pc%j, i, j, k, h_unknown )
+            end do
+          end do
+        end do
+      end if
+    end if                              ! Looking for Hessians
+    
+    ! finish up, though if in shallow mode, then keep the groups open
     if ( .not. myShallow ) then
       call h5gClose_f ( blocksID, status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1595,10 +1441,13 @@ contains ! ============= Public Procedures ==========================
         & 'Unable to close matrix group for input l2pc' , &
         & MLSFile=MLSFile )
     endif
-
+    if ( switchDetail( switches, 'l2pc' ) > 0 ) then
+      call dump_struct (l2pc%j)
+      call dump (l2pc)
+    endif
     if ( index ( switches, 'l2pc' ) /= 0 ) &
       & call output ( 'Done reading bin from l2pc file', advance='yes' )
-
+    
   end subroutine ReadOneHDF5L2PCRecord
 
   ! --------------------------------------- ReadOneVectorFromHDF5 ------
@@ -1961,17 +1810,18 @@ contains ! ============= Public Procedures ==========================
 
   end subroutine WriteVectorAsHDF5L2PC
 
-  subroutine CreateBlockName ( row, column, name )
+  subroutine CreateBlockName ( row, column1, column2, name )
     ! Because the Intel compiler produces a different result from
     ! write(str, *) int
     ! Args
-    integer, intent(in)           :: row, column
+    integer, intent(in)           :: row, column1, column2
     character(len=*), intent(out) :: name
     ! Internal variables
-    character(len=16), dimension(2) :: strs
+    character(len=16), dimension(3) :: strs
     ! Executable
-    call writeIntsToChars( (/row, column/), strs )
+    call writeIntsToChars( (/row, column1, column2/), strs )
     name = ' Block' // ' ' // trim(adjustl(strs(1))) // ' ' // trim(adjustl(strs(2)))
+    if ( column2 > 0 ) name = trim ( name ) // ' ' // trim(adjustl(strs(3)))
   end subroutine CreateBlockName
 
 !--------------------------- end bloc --------------------------------------
@@ -1987,6 +1837,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.88  2010/02/25 18:04:45  pwagner
+! l2pc type can now hold matrix and Hessian types
+!
 ! Revision 2.87  2010/02/04 23:08:00  vsnyder
 ! Remove USE or declaration for unused names
 !
