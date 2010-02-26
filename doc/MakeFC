@@ -108,7 +108,7 @@ internalupdate:
 	@echo "Copying or linking MakeFC to Makefile in $(SUBDIRS)" ; \
 	cp MakeFC Makefile
 	 for dir in $(SUBDIRS); do \
-	  if [ ! -f $$dir/MakeFC]; then \
+	  if [ ! -f $$dir/MakeFC ]; then \
 	  cp MakeFC $$dir; \
 	  cp MakeFC $$dir/Makefile; \
 	  fi; \
@@ -131,6 +131,9 @@ update: internalupdate
 
 # ========================================================================
 # $Log$
+# Revision 1.6  2010/01/06 17:34:22  pwagner
+# Should use MakeFC to make depends in SUBDIRS
+#
 # Revision 1.5  2010/01/05 19:24:29  pwagner
 # Preserves Makefiles under subdirectories
 #
