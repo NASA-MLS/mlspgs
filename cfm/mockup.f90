@@ -13,10 +13,10 @@ program mockup
    use HGridsDatabase, only: HGrid_T, DestroyHGridContents
    use Intrinsic, only: phyq_pressure, l_zeta, L_IntermediateFrequency
    use FGrid, only: FGrid_T, DestroyFGridContents
-   use QuantityTemplates, only: QuantityTemplate_T, Dump, &
+   use QuantityTemplates, only: QuantityTemplate_T, &
          AddQuantityTemplateToDatabase, DestroyQuantityTemplateDatabase
    use Init_tables_module, only: l_logarithmic
-   use VectorsModule, only: VectorTemplate_T
+   use VectorsModule, only: VectorTemplate_T, Dump
 
    implicit none
 
@@ -38,9 +38,10 @@ program mockup
    type(QuantityTemplate_T) :: temperature, GPH, H2O, O3, ptanGHz, ptanTHz, band7, &
                                geodAltitude
    type(QuantityTemplate_T), dimension(:), pointer :: qtyTemplates
-   type(VectorTemplate_T) :: stateTemplate
+   type(VectorTemplate_T) :: stateTemplate, measurementTemplate
    character(len=3) :: GHz = "GHz"
    character(len=3) :: THz = "THz"
+   integer :: stateSelected(7), measurementSelected(1)
 
    call CFM_MLSSetup(error, ForwardModelConfigDatabase, filedatabase, fakeChunk)
    if (error /=0) stop
@@ -73,9 +74,14 @@ program mockup
    numQty = AddQuantityTemplateToDatabase(qtyTemplates, band7)
    numQty = AddQuantityTemplateToDatabase(qtyTemplates, geodAltitude)
 
-   do i = 1, size(qtyTemplates)
-      call dump(qtyTemplates(i), details=2)
-   end do
+   stateSelected = (/1,2,3,4,5,6,8/)
+   stateTemplate = CreateVectorTemplate(qtyTemplates, stateSelected)
+
+   measurementSelected = (/7/)
+   measurementTemplate = CreateVectorTemplate(qtyTemplates, measurementSelected)
+
+   call dump(stateTemplate, quantities=qtyTemplates)
+   call dump(measurementTemplate, quantities=qtyTemplates)
 
    call DestroyQuantityTemplateDatabase (qtyTemplates)
    call DestroyHGridContents(hGridStandard)
