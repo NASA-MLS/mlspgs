@@ -16,7 +16,8 @@ program mockup
    use QuantityTemplates, only: QuantityTemplate_T, &
          AddQuantityTemplateToDatabase, DestroyQuantityTemplateDatabase
    use Init_tables_module, only: l_logarithmic
-   use VectorsModule, only: VectorTemplate_T, Dump
+   use VectorsModule, only: VectorTemplate_T, Vector_T, &
+                            DestroyVectorTemplateInfo, Dump
 
    implicit none
 
@@ -39,6 +40,7 @@ program mockup
                                geodAltitude
    type(QuantityTemplate_T), dimension(:), pointer :: qtyTemplates
    type(VectorTemplate_T) :: stateTemplate, measurementTemplate
+   type(Vector_T) :: state
    character(len=3) :: GHz = "GHz"
    character(len=3) :: THz = "THz"
    integer :: stateSelected(7), measurementSelected(1)
@@ -83,6 +85,8 @@ program mockup
    call dump(stateTemplate, quantities=qtyTemplates)
    call dump(measurementTemplate, quantities=qtyTemplates)
 
+   call DestroyVectorTemplateInfo(stateTemplate)
+   call DestroyVectorTemplateInfo(measurementTemplate)
    call DestroyQuantityTemplateDatabase (qtyTemplates)
    call DestroyHGridContents(hGridStandard)
    call DestroyVGridContents(vGridStandard)
