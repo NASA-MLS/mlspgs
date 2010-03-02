@@ -5,6 +5,7 @@ program mockup
    use CFM_FGrid, only: CreateFGrid
    use CFM_QuantityTemplate, only: CreateQtyTemplate, InitQuantityTemplates
    use CFM_VectorTemplate, only: CreateVectorTemplate
+   use CFM_Vector, only: CreateVector
 
    use Chunks_m, only: MLSChunk_T
    use ForwardModelConfig, only: ForwardModelConfig_T
@@ -17,7 +18,8 @@ program mockup
          AddQuantityTemplateToDatabase, DestroyQuantityTemplateDatabase
    use Init_tables_module, only: l_logarithmic
    use VectorsModule, only: VectorTemplate_T, Vector_T, &
-                            DestroyVectorTemplateInfo, Dump
+                            DestroyVectorTemplateInfo, DestroyVectorInfo, &
+                            Dump
 
    implicit none
 
@@ -40,7 +42,7 @@ program mockup
                                geodAltitude
    type(QuantityTemplate_T), dimension(:), pointer :: qtyTemplates
    type(VectorTemplate_T) :: stateTemplate, measurementTemplate
-   type(Vector_T) :: state
+   type(Vector_T) :: state, measurement
    character(len=3) :: GHz = "GHz"
    character(len=3) :: THz = "THz"
    integer :: stateSelected(7), measurementSelected(1)
@@ -82,9 +84,14 @@ program mockup
    measurementSelected = (/7/)
    measurementTemplate = CreateVectorTemplate(qtyTemplates, measurementSelected)
 
-   call dump(stateTemplate, quantities=qtyTemplates)
-   call dump(measurementTemplate, quantities=qtyTemplates)
+   state = CreateVector(stateTemplate, qtyTemplates)
+   measurement = CreateVector(measurementTemplate, qtyTemplates)
 
+   call dump(state)
+   call dump(measurement)
+
+   call DestroyVectorInfo (state)
+   call DestroyVectorInfo (measurement)
    call DestroyVectorTemplateInfo(stateTemplate)
    call DestroyVectorTemplateInfo(measurementTemplate)
    call DestroyQuantityTemplateDatabase (qtyTemplates)
