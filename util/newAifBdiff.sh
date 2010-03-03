@@ -182,10 +182,17 @@ diff_fun()
       od -t c "$2" > $temp2
       if [ "$is_ifort" != "" ]
       then
+        # The Intel compiler puts in the .mod files
+        # (1) A time stamp in the first few lines; and
+        # (2) Mixes up \v and \n
         temp3=`get_unique_name 3`
         sed -n '5,$ p' $temp1 > $temp3
         mv $temp3 $temp1
+        sed 's/\\v/  /g; s/\\n/  /g' $temp1 > $temp3
+        mv $temp3 $temp1
         sed -n '5,$ p' $temp2 > $temp3
+        mv $temp3 $temp2
+        sed 's/\\v/  /g; s/\\n/  /g' $temp2 > $temp3
         mv $temp3 $temp2
       fi
       the_diff=`diff $temp1 $temp2 | wc -l`
@@ -452,6 +459,9 @@ else
    exit 0
 fi
 # $Log$
+# Revision 1.14  2009/07/08 00:40:16  pwagner
+# Error message slightly more informative
+#
 # Revision 1.13  2007/06/01 16:46:12  pwagner
 # Tries to ignore Intel time stamps of .mod files
 #
