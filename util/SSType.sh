@@ -78,7 +78,7 @@ response=""
 
 for PROG in $PROGS
 do
-  $PROG > /dev/null
+  $PROG > /dev/null 2>&1
   return_status=`expr $?`
   SSstring=`echo $PROG | sed 's/has//'`
   if [ "$return_status" = "$NORMAL_STATUS" ]
@@ -93,3 +93,6 @@ do
 done
 echo $response
 # $Log$
+# Revision 1.1  2010/03/06 00:59:57  pwagner
+# First commit
+#
