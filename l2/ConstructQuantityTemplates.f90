@@ -16,11 +16,44 @@ module ConstructQuantityTemplates
   use Init_tables_module, only: FIRST_LIT, LAST_LIT
 
   implicit none
-  private
+
+  private 
+
+  ! The various properties has/can have
+  integer, parameter :: NEXT = -1
+  integer, parameter :: P_CHUNKED            = 1
+  integer, public, parameter :: P_MAJORFRAME         = P_CHUNKED + 1
+  integer, public, parameter :: P_MINORFRAME         = P_MAJORFRAME + 1
+  integer, public, parameter :: P_MUSTBEZETA         = P_MINORFRAME + 1
+  integer, public, parameter :: P_FGRID              = P_MUSTBEZETA + 1
+  integer, public, parameter :: P_FGRIDOPTIONAL      = P_FGRID + 1
+  integer, public, parameter :: P_FLEXIBLEVHGRID     = P_FGRIDOPTIONAL + 1
+  integer, public, parameter :: P_HGRID              = P_FLEXIBLEVHGRID + 1
+  integer, public, parameter :: P_MODULE             = P_HGRID + 1
+  integer, public, parameter :: P_MOLECULE           = P_MODULE + 1
+  integer, public, parameter :: P_SGRID              = P_MOLECULE + 1
+  integer, public, parameter :: P_VGRID              = P_SGRID + 1
+  integer, public, parameter :: P_RADIOMETER         = P_VGRID + 1
+  integer, public, parameter :: P_RADIOMETEROPTIONAL = P_RADIOMETER + 1
+  integer, public, parameter :: P_REFLECTOR          = P_RADIOMETEROPTIONAL + 1
+  integer, public, parameter :: P_SCMODULE           = P_REFLECTOR + 1
+  integer, public, parameter :: P_SIGNAL             = P_SCMODULE + 1
+  integer, public, parameter :: P_SIGNALOPTIONAL     = P_SIGNAL + 1
+  integer, public, parameter :: P_SUPPRESSCHANNELS   = P_SIGNALOPTIONAL + 1
+  integer, public, parameter :: P_XYZ                = P_SUPPRESSCHANNELS + 1
+  integer, public, parameter :: P_MATRIX3X3          = P_XYZ + 1
+
+  integer, public, parameter :: NOPROPERTIES = P_MATRIX3X3
+
+  ! Local, saved variables (constant tables really)
+  logical, public, save, dimension ( noProperties, first_lit : last_lit ) :: &
+    & PROPERTYTABLE
+  integer, public, save, dimension ( first_lit : last_lit ) :: UNITSTABLE
 
   public :: AnyGoodSignalData, ConstructMinorFrameQuantity, ConstructMajorFrameQuantity
   public :: cfm_CreateQtyTemplate, CreateQtyTemplateFromMLSCFInfo
   public :: ForgeMinorFrames
+  public :: InitQuantityTemplates, GetQtyTypeIndex
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -28,36 +61,6 @@ module ConstructQuantityTemplates
   private :: not_used_here 
   !---------------------------------------------------------------------------
 
-  ! The various properties has/can have
-  integer, parameter :: NEXT = -1
-  integer, parameter :: P_CHUNKED            = 1
-  integer, parameter :: P_MAJORFRAME         = P_CHUNKED + 1
-  integer, parameter :: P_MINORFRAME         = P_MAJORFRAME + 1
-  integer, parameter :: P_MUSTBEZETA         = P_MINORFRAME + 1
-  integer, parameter :: P_FGRID              = P_MUSTBEZETA + 1
-  integer, parameter :: P_FGRIDOPTIONAL      = P_FGRID + 1
-  integer, parameter :: P_FLEXIBLEVHGRID     = P_FGRIDOPTIONAL + 1
-  integer, parameter :: P_HGRID              = P_FLEXIBLEVHGRID + 1
-  integer, parameter :: P_MODULE             = P_HGRID + 1
-  integer, parameter :: P_MOLECULE           = P_MODULE + 1
-  integer, parameter :: P_SGRID              = P_MOLECULE + 1
-  integer, parameter :: P_VGRID              = P_SGRID + 1
-  integer, parameter :: P_RADIOMETER         = P_VGRID + 1
-  integer, parameter :: P_RADIOMETEROPTIONAL = P_RADIOMETER + 1
-  integer, parameter :: P_REFLECTOR          = P_RADIOMETEROPTIONAL + 1
-  integer, parameter :: P_SCMODULE           = P_REFLECTOR + 1
-  integer, parameter :: P_SIGNAL             = P_SCMODULE + 1
-  integer, parameter :: P_SIGNALOPTIONAL     = P_SIGNAL + 1
-  integer, parameter :: P_SUPPRESSCHANNELS   = P_SIGNALOPTIONAL + 1
-  integer, parameter :: P_XYZ                = P_SUPPRESSCHANNELS + 1
-  integer, parameter :: P_MATRIX3X3          = P_XYZ + 1
-
-  integer, parameter :: NOPROPERTIES = P_MATRIX3X3
-
-  ! Local, saved variables (constant tables really)
-  logical, save, dimension ( noProperties, first_lit : last_lit ) :: &
-    & PROPERTYTABLE
-  integer, save, dimension ( first_lit : last_lit ) :: UNITSTABLE
   logical, save :: FIRSTCALL = .true.
 
 contains ! ============= Public procedures ===================================
@@ -856,7 +859,7 @@ contains ! ============= Public procedures ===================================
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
     type (MLSChunk_T), intent(in) :: chunk   ! The chunk under consideration
     integer, intent(in) :: instrumentModule  ! Database index
-    type (QuantityTemplate_T), intent(out) :: qty ! Resulting quantity
+    type (QuantityTemplate_T) :: qty ! Resulting quantity
     integer, intent(in), optional :: noChans
     logical, intent(in), optional :: regular
     integer, intent(in), optional :: instanceLen
@@ -1381,7 +1384,7 @@ contains ! ============= Public procedures ===================================
       if ( .not. any(PROPERTYTABLE(:, QtyType) ) ) cycle
       call get_string ( lit_indices(QtyType), string_test, strip=.true. )
       if ( LowerCase(trim(string_text)) == LowerCase(trim(string_test))) &
-        & return
+       & return
     end do
     QtyType = 0
   end subroutine GetQtyTypeIndex
@@ -1689,6 +1692,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.157  2010/03/09 22:40:50  honghanh
+! Change to support cfm creation of quantity template
+!
 ! Revision 2.156  2010/03/05 20:17:51  honghanh
 ! Put ConstructMajorFrameQuantity to the list of public subroutine
 !
