@@ -3,6 +3,8 @@ module CFM_Vector
    use QuantityTemplates, only: QuantityTemplate_T
    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
          MLSMSG_Error, MLSMSG_Warning
+   use Allocate_Deallocate, only: Allocate_Test
+   use MLSCommon, only: r8
 
    implicit none
    public :: CreateVector
@@ -29,6 +31,25 @@ module CFM_Vector
          vector%quantities(quantity)%template = &
             qtyDatabase(vectorTemplate%quantities(quantity))
       end do
+      call CreateValues(vector)
    end function
+
+   ! =====     Private Procedures     =====================================
+   subroutine CreateValues ( Vector)
+      ! Allocate space for the values of a vector.
+      type(Vector_T), intent(inout) :: Vector
+      integer :: QTY
+      real(r8), parameter :: MYHUGE = 1.0e15
+
+      do qty = 1, size(vector%quantities)
+         call allocate_test ( vector%quantities(qty)%values, &
+           & vector%quantities(qty)%template%noChans * &
+           & vector%quantities(qty)%template%noSurfs, &
+           & vector%quantities(qty)%template%noInstances, &
+           & "vector%quantities(qty)%%values", ModuleName )
+         vector%quantities(qty)%values = 0.0_r8
+    end do
+  end subroutine
+
 
 end module

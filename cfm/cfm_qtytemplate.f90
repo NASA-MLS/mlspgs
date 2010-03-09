@@ -25,7 +25,7 @@ module CFM_QuantityTemplate
       L_LineCenter, L_LineWidth, L_LineWidth_TDep, &
       L_LOSTRANSFUNC, L_LOSVEL, &
       L_MASSMEANDIAMETERICE, L_MASSMEANDIAMETERWATER, L_MAGNETICFIELD, &
-      L_MIFDEADTIME, &
+      L_MIFDEADTIME, L_ZETA, L_XYZ, L_MATRIX3X3, L_Channel, &
       L_NOISEBANDWIDTH, L_NORADSPERMIF, L_NORADSBINNED, &
       L_NUMGRAD, L_NUMJ, L_NUMNEWT, L_OPTICALDEPTH, L_ORBITINCLINATION, &
       L_PHASETIMING, L_PHITAN, L_PTAN, L_QUALITY, L_RADIANCE, &
@@ -49,73 +49,59 @@ module CFM_QuantityTemplate
     use Molecules, only: GetMoleculeIndex
     use Chunks_m, only: MLSChunk_T
     use MLSCommon, only: MLSFile_T
-    use ConstructQuantityTemplates, only : AnyGoodSignalData
+    use ConstructQuantityTemplates, only : AnyGoodSignalData, GetQtyTypeIndex, &
+            ConstructMajorFrameQuantity, ConstructMinorFrameQuantity
     use Parse_Signal_m, only: PARSE_SIGNAL
-    use MLSSignals_m, only: GetModuleFromSignal, GetRadiometerFromSignal
- 
+    use MLSSignals_m, only: GetModuleFromSignal, GetRadiometerFromSignal, &
+                            GetSignal, Signal_T, IsModuleSpacecraft, &
+                            GetRadiometerIndex, GetModuleFromRadiometer
+    use ConstructQuantityTemplates, only: unitstable, propertyTable, noProperties, &
+          p_majorFrame, p_minorFrame, p_mustBeZeta, p_fGrid, p_hGrid, &
+          p_vgrid, p_radiometer, p_radiometerOptional, p_scModule, &
+          p_signal, p_signalOptional, p_xyz, p_matrix3x3, p_flexibleVHGrid, &
+          p_suppressChannels, p_module, p_molecule, p_fGridOptional
+
    implicit none
 
-   public :: CreateQtyTemplate, InitQuantityTemplates
+   public :: CreateQtyTemplate
    private
 
-  ! The various properties has/can have
-  integer, parameter :: NEXT = -1
-  integer, parameter :: P_CHUNKED            = 1
-  integer, parameter :: P_MAJORFRAME         = P_CHUNKED + 1
-  integer, parameter :: P_MINORFRAME         = P_MAJORFRAME + 1
-  integer, parameter :: P_MUSTBEZETA         = P_MINORFRAME + 1
-  integer, parameter :: P_FGRID              = P_MUSTBEZETA + 1
-  integer, parameter :: P_FGRIDOPTIONAL      = P_FGRID + 1
-  integer, parameter :: P_FLEXIBLEVHGRID     = P_FGRIDOPTIONAL + 1
-  integer, parameter :: P_HGRID              = P_FLEXIBLEVHGRID + 1
-  integer, parameter :: P_MODULE             = P_HGRID + 1
-  integer, parameter :: P_MOLECULE           = P_MODULE + 1
-  integer, parameter :: P_SGRID              = P_MOLECULE + 1
-  integer, parameter :: P_VGRID              = P_SGRID + 1
-  integer, parameter :: P_RADIOMETER         = P_VGRID + 1
-  integer, parameter :: P_RADIOMETEROPTIONAL = P_RADIOMETER + 1
-  integer, parameter :: P_REFLECTOR          = P_RADIOMETEROPTIONAL + 1
-  integer, parameter :: P_SCMODULE           = P_REFLECTOR + 1
-  integer, parameter :: P_SIGNAL             = P_SCMODULE + 1
-  integer, parameter :: P_SIGNALOPTIONAL     = P_SIGNAL + 1
-  integer, parameter :: P_SUPPRESSCHANNELS   = P_SIGNALOPTIONAL + 1
-  integer, parameter :: P_XYZ                = P_SUPPRESSCHANNELS + 1
-  integer, parameter :: P_MATRIX3X3          = P_XYZ + 1
-
-  integer, parameter :: NOPROPERTIES = P_MATRIX3X3
-
-
    character(len=20) :: ModuleName = "CFM_QuantityTemplate"
-   integer, save, dimension (first_lit : last_lit) :: unitsTable
-   logical, dimension(noProperties, first_lit : last_lit), save :: propertyTable
 
    contains
 
    type(QuantityTemplate_T) function CreateQtyTemplate (type, filedatabase, chunk, &
-        avgrid, ahgrid, qInstModule, qMolecule, qLogBasis, qMinValue, qSignal) &
-        & result(qty)
+        avgrid, ahgrid, afgrid, qInstModule, qMolecule, qLogBasis, qMinValue, qSignal, &
+        qRadiometer, mifGeolocation) result(qty)
       character(len=*), intent(in) :: type
       type (MLSFile_T), dimension(:), pointer, optional ::     FILEDATABASE
       type (MLSChunk_T), intent(in), optional :: Chunk
       type(VGrid_T), intent(in), optional :: avgrid
       type(HGrid_T), intent(in), optional :: ahgrid
+      type(FGrid_T), intent(in), optional :: afgrid
       character(len=*), optional :: qInstModule
       character(len=*), optional :: qMolecule
       character(len=*), optional :: qSignal
       logical, optional :: qLogBasis
       real(r8), optional :: qMinValue
+      character(len=*), optional :: qRadiometer
+      type (QuantityTemplate_T), dimension(:), intent(in), optional, target :: &
+      & MifGeolocation ! TARGET attribute needed so pointers to MifGeolocation
+                       ! created at lower levels in the call tree don't become
+                       ! undefined when those procedures return.
 
       logical, dimension(noProperties) :: PROPERTIES ! Properties for this quantity type
       character(len=127) :: signalString
       integer, dimension(:), pointer :: SignalInds ! From parse signal
       logical, pointer :: Channels(:)     ! From Parse_Signal
-      integer :: s_index
+      integer :: s_index, temp
+      type(Signal_T) :: signalInfo
 
       call NullifyQuantityTemplate(qty)
       qty%instrumentModule = 0
       call GetQtyTypeIndex(type, qty%quantityType)
       qty%name = 0
-      qty%fGridIndex = 0
+      qty%fGridIndex = 0 ! we're not getting fgrid from fgridDatabase
       qty%hGridIndex = 0 ! we're not getting hgrid from hgridDatabase
       qty%vGridIndex = 0 ! we're not getting vgrid from vgridDatabase
       qty%logBasis = .false.
@@ -167,29 +153,36 @@ module CFM_QuantityTemplate
             & call Announce_error ( 0, trim ( merge ( 'unexpected', 'need      ', &
             & present(qSignal) ) ) // ' signal for quantity type ', qty%quantityType )
       end if
-
-    ! Set up a non major/minor frame quantity
-      if (present(avGrid)) then
-         qty%verticalCoordinate = avGrid%verticalCoordinate
-         qty%surfs => avGrid%surfs
-         qty%noSurfs = avgrid%noSurfs
-      else
-         call SetupEmptyVGridForQuantity(qty)
-      end if 
-
-      if (present(ahgrid)) then
-         qty%noInstances = ahgrid%noprofs
-         call PointQuantityToHGrid (ahgrid, qty)
-      else
-         call SetupEmptyHGridForQuantity(qty)
+      if ( properties ( p_mustBeZeta ) .and. present(avGrid) ) then
+         if ( avGrid%verticalCoordinate /= l_zeta ) &
+           & call Announce_error ( 0, 'Expecting log pressure coordinates for', &
+           & qty%quantityType )
+      end if
+      if (.not. properties(p_fGridOptional)) then
+         if ( present ( aFGrid ) .neqv. properties ( p_fGrid ) ) &
+           & call Announce_error ( 0, trim ( merge ( 'unexpected', 'need      ', &
+           & present(aFGrid) ) ) // ' fGrid for quantity type ', qty%quantityType )
+      end if
+      if ( .not. properties ( p_radiometerOptional ) ) then
+         if ( present ( qRadiometer ) .neqv. properties ( p_Radiometer ) ) &
+           & call Announce_error ( 0, trim ( merge ( 'unexpected', 'need      ', &
+           & present(qRadiometer) ) ) // ' radiometer for quantity type ', qty%quantityType )
       end if
 
+     ! Set up a non major/minor frame quantity
       qty%minorFrame = .not. present(ahgrid)
 
       qty%unit = unitsTable(qty%quantityType)
 
       if (present(qInstModule)) then
          call GetModuleIndex (qInstModule, qty%instrumentModule)
+      end if
+      if (present (qRadiometer)) then
+         call GetRadiometerIndex(qRadiometer, qty%radiometer)
+         ! Every radiometer pairs with only one instrument module
+         qty%instrumentModule = GetModuleFromRadiometer(qty%radiometer)
+         ! If the user happen to pass in the wrong instrumentModule,
+         ! silently correct it, for simplicity
       end if
 
       if (present(qMolecule)) then
@@ -229,240 +222,75 @@ module CFM_QuantityTemplate
             end if
           end if
           call deallocate_test ( signalInds, 'signalInds', ModuleName )
+          ! if the user has pass in the wrong instrumentModule or radiometer
+          ! just silently correct it, for simplicity.
           qty%instrumentModule = GetModuleFromSignal(qty%signal)
           qty%radiometer = GetRadiometerFromSignal(qty%signal)
       end if
+
+      ! After all the possible places where instrumentModule can be set
+      if ( properties ( p_scModule ) ) then
+         if ( .not. IsModuleSpacecraft ( qty%instrumentModule ) ) &
+           & call Announce_error ( 0, 'Module must be spacecraft' )
+      end if
+
+      ! Now establish the frequency coordinate system
+      if (present(afgrid)) then
+         qty%frequencyCoordinate = afgrid%frequencyCoordinate
+         qty%frequencies => afgrid%values
+         qty%noChans = afgrid%noChans
+      else if (properties(p_xyz)) then
+         ! XYZ quantity (e.g. ECI/ECR stuff)
+         qty%frequencyCoordinate = l_xyz
+         qty%noChans = 3
+      else if (properties(p_matrix3x3)) then
+         ! XYZ^2 quantity (e.g. rotation matrix)
+         qty%frequencyCoordinate = l_matrix3x3
+         qty%noChans = 9
+      else if (present(qSignal) .and. .not. properties(p_suppressChannels)) then
+         ! This is a channel based quantity
+         signalInfo = GetSignal(qty%signal)
+         qty%frequencyCoordinate = l_channel
+         qty%noChans = size(signalInfo%frequencies)
+      end if
+
+      ! Now do the setup for the different families of quantities
+      if ((qty%minorFrame .or. properties(p_majorFrame)) .and. &
+         .not. present(mifGeoLocation)) &
+         call MLSMessage(MLSMSG_Error, moduleName, "Missing needed mifGeoLocation")
+      if (qty%minorFrame) then
+         call ConstructMinorFrameQuantity (filedatabase, chunk, qty%instrumentModule, &
+              qty, noChans=qty%noChans, regular=qty%regular, mifGeoLocation=mifGeoLocation)
+      else if (properties(p_majorFrame)) then
+         ! Setup a major frame quantity
+         call ConstructMajorFrameQuantity (chunk, qty%instrumentModule, qty, &
+              qty%noChans, mifGeoLocation)
+      else
+         ! Setup the quantity template
+         nullify(qty%surfs) ! sharedVGrid = .true.
+         nullify(qty%phi, qty%geodLat, qty%lon, qty%time, qty%solarTime, &
+                 qty%solarZenith, qty%losAngle) ! sharedHGrid=.true.
+         nullify(qty%surfIndex, qty%chanIndex) ! regular=.true.
+
+         if (present(ahgrid)) then
+            qty%noInstances = ahgrid%noprofs
+            call PointQuantityToHGrid (ahgrid, qty)
+         else
+            call SetupEmptyHGridForQuantity(qty)
+         end if
+
+         if (present(avGrid)) then
+            qty%verticalCoordinate = avGrid%verticalCoordinate
+            qty%surfs => avGrid%surfs
+            qty%noSurfs = avgrid%noSurfs
+         else
+            call SetupEmptyVGridForQuantity(qty)
+         end if
+
+         qty%instanceLen = qty%noSurfs * qty%noChans
+     end if
+
    end function
-
-  ! ----------------------------------------------  GetQtyTypeIndex  -----
-  subroutine GetQtyTypeIndex(string_text, QtyType)
-    use Intrinsic, only: LIT_INDICES
-    use MLSStrings, only: LowerCase
-    use STRING_TABLE, only: GET_STRING, DISPLAY_STRING
-    ! Returns the lit index,  given QtyType name in mixed case
-    ! Returns 0 if QtyType name not found
-    ! (inverse function: GetQtyTypeName)
-    integer, intent(out) :: QtyType
-    character (len=*), intent(in) :: string_text
-    ! Local variables
-    character (len=len(string_text))             :: string_test
-    do QtyType=first_lit, last_lit
-      ! Skip if not quantity type
-      if ( .not. any(PROPERTYTABLE(:, QtyType) ) ) cycle
-      call get_string ( lit_indices(QtyType), string_test, strip=.true. )
-      if ( LowerCase(trim(string_text)) == LowerCase(trim(string_test))) &
-        & return
-    end do
-    QtyType = 0
-  end subroutine GetQtyTypeIndex
-
-  ! ----------------------------------------------- InitQuantityTemplates ----
-  subroutine InitQuantityTemplates
-    ! This routine initializes the quantity template properties
-    ! This is the routine one needs to update when one introduces a new quantity type.
-
-    ! Local variables
-    integer :: I                        ! Loop counter
-    integer, dimension(0), parameter :: NONE = (/ ( 0, i=1,0 ) /)
-    logical :: VALID                    ! Flag
-    character(len=132) :: MESSAGE       ! An error message
-
-    ! Executable code
-    ! Basically here, we're going to go through and populate the various tables
-
-    propertyTable = .false.
-    unitsTable = 0
-
-    call DefineQtyTypes ( (/ &
-      l_adopted, phyq_dimensionless, none, next, &
-      l_baseline, phyq_temperature, p_flexibleVHGrid, p_fGrid, p_radiometerOptional, &
-                  p_signalOptional, p_suppressChannels, p_mustBeZeta, next, &
-      l_boundaryPressure, phyq_pressure, p_hGrid, next, &
-      l_calSidebandFraction, phyq_dimensionless, p_signal, next, &
-      l_chisqBinned, phyq_dimensionless, p_hGrid, p_vGrid, &
-                     p_signal, p_suppressChannels, p_mustBeZeta, next, &
-      l_chisqChan, phyq_dimensionless, p_majorFrame, p_signal, next, &
-      l_chisqMMAF, phyq_dimensionless, p_majorFrame, p_signal, &
-                   p_suppressChannels, next, &
-      l_chisqMMIF, phyq_dimensionless, p_minorFrame, p_signal, &
-                   p_suppressChannels, next, &
-      l_cloudExtinction, phyq_dimensionless, p_hGrid, p_vGrid, p_mustBeZeta, next, &
-      l_cloudIce, phyq_IceDensity, p_hGrid, p_vGrid, p_mustBeZeta, next, &
-      l_cloudInducedRadiance, phyq_temperature, p_minorFrame, p_signal, next, &
-      l_cloudMinMax, phyq_temperature, p_hGrid, p_vGrid, p_mustbezeta, &
-                     p_signal, p_suppressChannels, next, &
-      l_cloudRadSensitivity, phyq_temperature, p_minorFrame, p_signal, next, &
-      l_cloudTemperature, phyq_temperature, p_hGrid, p_vGrid, p_mustBeZeta, next, &
-      l_cloudWater, phyq_dimensionless, p_hGrid, p_vGrid, p_mustBeZeta, next, &
-      l_columnAbundance, phyq_colmabundance, p_hGrid, p_molecule, next, &
-      l_dnwt_abandoned, phyq_dimensionless, p_vGrid, next, &
-      l_dnwt_ajn, phyq_dimensionless, p_vGrid, next, &
-      l_dnwt_axmax, phyq_dimensionless, p_vGrid, next, &
-      l_dnwt_cait, phyq_dimensionless, p_vGrid, next, &
-      l_dnwt_chisqminnorm, phyq_dimensionless, p_vGrid /) )
-
-    call DefineQtyTypes ( (/ &
-      l_dnwt_chisqnorm, phyq_dimensionless, p_vGrid, next, &
-      l_dnwt_chisqratio, phyq_dimensionless, p_vGrid, next, &
-      l_dnwt_count, phyq_dimensionless, p_vGrid, next, &
-      l_dnwt_diag, phyq_dimensionless, p_vGrid, next, &
-      l_dnwt_dxdx, phyq_dimensionless, p_vGrid, next, &
-      l_dnwt_dxdxl, phyq_dimensionless, p_vGrid, next, &
-      l_dnwt_dxn, phyq_dimensionless, p_vGrid, next, &
-      l_dnwt_dxnl, phyq_dimensionless, p_vGrid, next, &
-      l_dnwt_flag, phyq_dimensionless, p_vGrid, next, &
-      l_dnwt_fnmin, phyq_dimensionless, p_vGrid, next, &
-      l_dnwt_fnorm, phyq_dimensionless, p_vGrid, next, &
-      l_dnwt_gdx, phyq_dimensionless, p_vGrid, next, &
-      l_dnwt_gfac, phyq_dimensionless, p_vGrid, next, &
-      l_dnwt_gradn, phyq_dimensionless, p_vGrid, next, &
-      l_dnwt_sq, phyq_dimensionless, p_vGrid, next, &
-      l_dnwt_sqt, phyq_dimensionless, p_vGrid, next, &
-      l_geolocation, phyq_dimensionless, p_majorframe, p_module, next, &
-      l_earthRadius, phyq_length, p_hGrid, next, &
-      l_earthRefl, phyq_dimensionless, none /) )
-
-    call DefineQtyTypes ( (/ &
-      l_ecrToFOV, phyq_dimensionless, p_minorFrame, p_module, p_matrix3x3, next, &
-      l_effectiveOpticalDepth, phyq_dimensionless, p_minorFrame, p_signal, next, &
-      l_elevOffset, phyq_angle, p_signal, next, &
-      l_extinction, phyq_extinction, p_hGrid, p_vGrid, p_fGrid, p_radiometer, &
-                    p_mustBeZeta, next, &
-      l_extinctionv2, phyq_extinction, p_hGrid, p_vGrid, p_fGrid, p_radiometer, &
-                      p_mustBeZeta, next, &
-      l_fieldAzimuth, phyq_angle, p_hGrid, p_vGrid, next, &
-      l_fieldElevation, phyq_angle, p_hGrid, p_vGrid, next, &
-      l_fieldStrength, phyq_gauss, p_hGrid, p_vGrid, next, &
-      l_geodAltitude, phyq_length, p_minorFrame, p_module, next, &
-      l_gph, phyq_length, p_hGrid, p_vGrid, p_mustBeZeta, next, &
-      l_heightOffset, phyq_length, p_hGrid, p_vGrid, next, &
-      l_isotopeRatio, phyq_dimensionless, p_molecule, next, &
-      l_iwc, phyq_icedensity, p_hGrid, p_vGrid, next, &
-      l_jacobian_cols, phyq_dimensionless, p_vGrid, next, &
-      l_jacobian_rows, phyq_dimensionless, p_vGrid, next /) )
-
-    call DefineQtyTypes ( (/ &
-      l_l1bMAFBaseline, phyq_temperature, p_majorFrame, p_signal, next, &
-      l_l1bMIF_TAI, phyq_time, p_minorFrame, p_scmodule, next, &
-      l_limbSidebandFraction, phyq_dimensionless, p_signal, next, &
-      l_lineCenter, phyq_frequency, p_hGrid, p_vGrid, p_molecule, next, &
-      l_lineWidth,  phyq_frequency, p_hGrid, p_vGrid, p_molecule, next, &
-      l_lineWidth_TDep, phyq_dimensionless, p_hGrid, p_vGrid, p_molecule, next, &
-      p_hGrid, p_vGrid, next, &
-      l_losTransFunc, phyq_dimensionless, p_minorFrame, p_sGrid, p_module, next, &
-      l_losVel, phyq_dimensionless, p_minorFrame, p_module, next, &
-      l_magneticField, phyq_gauss, p_vGrid, p_hGrid, p_xyz, p_mustBeZeta, next, &
-      l_massMeanDiameterIce, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
-      l_massMeanDiameterWater, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
-      l_mifDeadTime, phyq_time, next, &
-      l_noRadsBinned, phyq_dimensionless, p_vGrid, p_hGrid, &
-                      p_signal, p_suppressChannels, p_mustBeZeta, next, &
-      l_noRadsPerMIF, phyq_dimensionless, p_minorFrame, p_signal, &
-                      p_suppressChannels, next, &
-      l_noiseBandwidth, phyq_frequency, p_signal, next, &
-      l_numGrad, phyq_dimensionless, p_vGrid, next, &
-      l_numJ, phyq_dimensionless, p_vGrid, next, &
-      l_numNewt, phyq_dimensionless, p_vGrid, next /) )
-
-    call DefineQtyTypes ( (/ &
-      l_opticalDepth, phyq_dimensionless, p_minorFrame, p_signal, next, &
-      l_orbitInclination, phyq_angle, p_minorFrame, p_scModule, next, &
-      l_phaseTiming, phyq_dimensionless, p_vGrid, next, &
-      l_phiTan, phyq_angle, p_minorFrame, p_module, next, &
-      l_ptan, phyq_zeta, p_minorFrame, p_module, next, &
-      l_quality, phyq_dimensionless, p_hGrid, next, &
-      l_radiance, phyq_temperature, p_minorFrame, p_signal, next, &
-      l_refltemp, phyq_temperature, p_majorFrame, p_reflector, p_module, next, &
-      l_refltrans, phyq_dimensionless, p_signal, p_reflector, next, &
-      l_reflrefl, phyq_dimensionless, p_signal, p_reflector, next, &
-      l_reflspill, phyq_temperature, p_signal, p_majorframe, p_reflector, next, &
-      l_refGPH, phyq_length, p_hGrid, p_vGrid, p_mustBeZeta, next, &
-      l_rhi, phyq_dimensionless, p_hGrid, p_vGrid, p_molecule, p_mustBeZeta, next, &
-      l_scECI, phyq_length, p_minorFrame, p_scModule, p_xyz, next, &
-      l_scGeocAlt, phyq_length, p_minorFrame, p_scModule, next, &
-      l_scVel, phyq_velocity, p_minorFrame, p_scModule, p_xyz, next, &
-      l_scVelECI, phyq_velocity, p_minorFrame, p_scModule, p_xyz, next, &
-      l_scVelECR, phyq_velocity, p_minorFrame, p_scModule, p_xyz, next, &
-      l_scanResidual, phyq_length, p_minorFrame, p_module, next, &
-      l_scatteringAngle, phyq_angle, p_vGrid, next, &
-      l_singleChannelRadiance, phyq_temperature, p_minorFrame, p_signal, &
-                               p_suppressChannels, next, &
-      l_sizeDistribution, phyq_dimensionless, p_hGrid, p_vGrid, p_mustBeZeta, next, &
-      l_spaceRadiance, phyq_temperature, none, next, &
-      l_status, phyq_dimensionless, p_hGrid, next, &
-      l_strayRadiance, phyq_temperature, p_signal, p_majorFrame, next, &
-      l_surfaceHeight, phyq_length, p_hGrid, next, &
-      l_surfaceType, phyq_dimensionless, p_hGrid, next, &
-      l_systemTemperature, phyq_temperature, p_signal, next, &
-      l_temperature, phyq_temperature, p_hGrid, p_vGrid, p_mustbezeta, next, &
-      l_totalPowerWeight, phyq_dimensionless, p_signal, next, &
-      l_tngtECI, phyq_length, p_minorFrame, p_module, p_xyz, next, &
-      l_tngtGeocAlt, phyq_length, p_minorFrame, p_module, next, &
-      l_tngtGeodAlt, phyq_length, p_minorFrame, p_module, next, &
-      l_TScat, phyq_temperature, p_hGrid, p_signal, p_vGrid, next, &
-      l_vmr, phyq_vmr, p_hGrid, p_vGrid, p_fGridOptional, &
-             p_molecule, p_radiometerOptional, p_mustbezeta, next /) )
-
-    ! Do a bit of checking
-    do i = first_lit, last_lit
-      valid = .true.
-      message =  ''
-      ! Check it's not both major and minor frame
-      if ( count ( propertyTable ( (/ p_minorFrame, p_majorFrame /), i ) ) > 1 ) then
-        valid = .false.
-        message = "Quantity cannot be both major and minor frame"
-      end if
-      ! Check that we can identify the module for major/minor frame
-      if ( ( propertyTable ( p_minorFrame, i ) .or. &
-        &    propertyTable ( p_majorFrame, i ) ) .and. &
-        & .not. any ( propertyTable ( &
-        & (/ p_radiometer, p_module, p_scModule, p_signal /), i ) ) ) then
-        valid = .false.
-        message = "Badly defined major/minor frame quantity"
-      end if
-      ! Check that mustBeZeta quantities have a vGrid
-      if ( propertyTable ( p_mustBeZeta, i ) .and. .not. &
-        & ( propertyTable ( p_vGrid, i ) .or. propertyTable ( p_flexibleVHGrid, i ) ) ) then
-        valid = .false.
-        message = "Quantity must have vGrid if it must be on log-pressure"
-      end if
-      ! Print out any message
-      if ( .not. valid ) then
-        call output ( "Offending quantity: " )
-        call display_string ( lit_indices ( i ), strip=.true., advance='yes' )
-        call MLSMessage ( MLSMSG_Error, ModuleName, message )
-      end if
-    end do
-  contains
-    ! --------------------------- Internal subroutine
-    subroutine DefineQtyTypes ( info )
-      integer, dimension(:), intent(in) :: INFO
-      ! Local variables
-      integer :: I                      ! Location
-      integer :: QTYTYPE                ! Index
-      ! Executable code
-      qtyType = 0
-      i = 1
-      do while ( i <= size(info) )
-        if ( qtyType == 0 ) then
-          qtyType = info ( i )
-          propertyTable ( :, qtyType ) = .false.
-          i = i + 1
-          if ( i > size(info) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & 'Malformed call to DefineQtyTypes' )
-          unitsTable ( qtyType ) = info ( i )
-        else
-          if ( info(i) /= next ) then
-            propertyTable ( info(i), qtyType ) = .true.
-          else
-            qtyType = 0
-          end if
-        end if
-        i = i + 1
-      end do
-    end subroutine DefineQtyTypes
-
-  end subroutine InitQuantityTemplates
 
   ! ----------------------------------  PointQuantityToHGrid  -----
   subroutine PointQuantityToHGrid ( hGrid, qty )

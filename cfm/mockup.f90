@@ -1,11 +1,13 @@
 program mockup
+   use input
    use CFM_MLSSetup_m, only: CFM_MLSSetup, CFM_MLSCleanup
    use CFM_VGrid, only: CreateVGrid
    use CFM_HGrid, only: CreateRegularHGrid
    use CFM_FGrid, only: CreateFGrid
-   use CFM_QuantityTemplate, only: CreateQtyTemplate, InitQuantityTemplates
+   use CFM_QuantityTemplate, only: CreateQtyTemplate
    use CFM_VectorTemplate, only: CreateVectorTemplate
    use CFM_Vector, only: CreateVector
+   use CFM_Fill, only: ExplicitFillVectorQuantity
 
    use Chunks_m, only: MLSChunk_T
    use ForwardModelConfig, only: ForwardModelConfig_T
@@ -17,9 +19,11 @@ program mockup
    use QuantityTemplates, only: QuantityTemplate_T, &
          AddQuantityTemplateToDatabase, DestroyQuantityTemplateDatabase
    use Init_tables_module, only: l_logarithmic
-   use VectorsModule, only: VectorTemplate_T, Vector_T, &
+   use VectorsModule, only: VectorTemplate_T, Vector_T, VectorValue_T, &
                             DestroyVectorTemplateInfo, DestroyVectorInfo, &
-                            Dump
+                            GetVectorQtyByTemplateIndex, Dump
+   use Construct, only: ConstructMIFGeolocation
+   use ConstructQuantityTemplates, only: InitQuantityTemplates
 
    implicit none
 
@@ -40,12 +44,14 @@ program mockup
    type(FGrid_T) :: fGridStandard
    type(QuantityTemplate_T) :: temperature, GPH, H2O, O3, ptanGHz, ptanTHz, band7, &
                                geodAltitude
+   type(QuantityTemplate_T), dimension(:), pointer :: mifGeoLocation => NULL()
    type(QuantityTemplate_T), dimension(:), pointer :: qtyTemplates
    type(VectorTemplate_T) :: stateTemplate, measurementTemplate
    type(Vector_T) :: state, measurement
    character(len=3) :: GHz = "GHz"
    character(len=3) :: THz = "THz"
    integer :: stateSelected(7), measurementSelected(1)
+   type(VectorValue_T) :: quantity
 
    call CFM_MLSSetup(error, ForwardModelConfigDatabase, filedatabase, fakeChunk)
    if (error /=0) stop
@@ -56,18 +62,26 @@ program mockup
    fGridStandard = CreateFGrid(L_IntermediateFrequency, (/0.0_r8/))
 
    ! Have to initialize before we start creating quantity templates
+   call ConstructMIFGeolocation(mifGeoLocation, filedatabase, fakeChunk)
    call InitQuantityTemplates
-   temperature = CreateQtyTemplate("temperature", avgrid=vGridStandard, ahgrid=hGridStandard)
-   GPH = CreateQtyTemplate("GPH", avgrid=vGridStandard, ahgrid=hGridStandard)
-   O3 = CreateQtyTemplate("vmr", avgrid=vGridStandard, &
-                          ahgrid=hGridStandard, qMolecule="O3")
-   H2O = CreateQtyTemplate("vmr", avgrid=vGridStandard, &
+   temperature = CreateQtyTemplate("temperature", filedatabase=filedatabase, &
+                                   avgrid=vGridStandard, ahgrid=hGridStandard, &
+                                   mifGeolocation=mifGeolocation)
+   GPH = CreateQtyTemplate("GPH", filedatabase=filedatabase, avgrid=vGridStandard, &
+                           ahgrid=hGridStandard, mifGeolocation=mifGeolocation)
+   O3 = CreateQtyTemplate("vmr", filedatabase=filedatabase, avgrid=vGridStandard, &
+                          ahgrid=hGridStandard, qMolecule="O3", mifGeolocation=mifGeolocation)
+   H2O = CreateQtyTemplate("vmr", filedatabase=filedatabase, avgrid=vGridStandard, &
                            ahgrid=hGridStandard, qMolecule="H2O", &
-                           qLogBasis=.true., qMinValue=0.1_r8)
-   ptanGHz = CreateQtyTemplate("ptan", qInstModule=GHz)
-   ptanTHz = CreateQtyTemplate("ptan", qInstModule=THz)
-   band7 = CreateQtyTemplate("radiance", filedatabase, fakeChunk, qSignal="R3:240.B7F:O3")
-   geodAltitude = CreateQtyTemplate("geodAltitude", qInstModule=GHz)
+                           qLogBasis=.true., qMinValue=0.1_r8, mifGeolocation=mifGeolocation)
+   ptanGHz = CreateQtyTemplate("ptan", filedatabase=filedatabase, qInstModule=GHz, &
+                               mifGeoLocation=mifGeolocation)
+   ptanTHz = CreateQtyTemplate("ptan", filedatabase=filedatabase, qInstModule=THz, &
+                               mifGeolocation=mifGeolocation)
+   band7 = CreateQtyTemplate("radiance", filedatabase=filedatabase, chunk=fakeChunk, &
+                             qSignal="R3:240.B7F:O3", mifGeolocation=mifGeolocation)
+   geodAltitude = CreateQtyTemplate("geodAltitude", filedatabase=filedatabase, &
+                                    qInstModule=GHz, mifGeolocation=mifGeolocation)
 
    numQty = AddQuantityTemplateToDatabase(qtyTemplates, temperature)
    numQty = AddQuantityTemplateToDatabase(qtyTemplates, GPH)
@@ -87,7 +101,21 @@ program mockup
    state = CreateVector(stateTemplate, qtyTemplates)
    measurement = CreateVector(measurementTemplate, qtyTemplates)
 
+   quantity = GetVectorQtyByTemplateIndex(state, 1)
+   call ExplicitFillVectorQuantity(quantity, TemperatureInput)   
+
+   quantity = GetVectorQtyByTemplateIndex(state, 2)
+   call ExplicitFillVectorQuantity(quantity, GPHInput)
+
+   quantity = GetVectorQtyByTemplateIndex(state, 4)
+   call ExplicitFillVectorQuantity(quantity, H2OInput)
+
+   quantity = GetVectorQtyByTemplateIndex(state, 3)
+   call ExplicitFillVectorQuantity(quantity, O3Input)
+
+   print *, "Dumping state"
    call dump(state)
+   print *, "Dumping measurement"
    call dump(measurement)
 
    call DestroyVectorInfo (state)

@@ -48,6 +48,7 @@ module CFM_HGrid
       l1bItemName = AssembleL1BQtyName (instrumentModuleName // ".tpGeodAngle", &
                                         l1bfile%hdfVersion, .false.)
       call ReadL1BData (L1BFile, trim(l1bItemName), l1bField, noMafs, flag, &
+                        firstMaf=fakeChunk%firstMafIndex, lastMaf=fakeChunk%lastMafIndex, &
                         dontPad=.true.)
       nullify (mif1GeodAngle)
       call Allocate_Test (mif1geodangle, nomafs, "mif1geodangle", modulename)
@@ -63,7 +64,7 @@ module CFM_HGrid
       end if
 
       maxAngle = maxval (l1bField%dpField(1,:,nomafs))
-      last = origin + spacing + int ((maxAngle-origin)/spacing)
+      last = origin + spacing * int ((maxAngle-origin)/spacing)
       delta = last - maxAngle ! So +ve means last could be smaller
       if (delta > spacing/2) then
          last = last - spacing

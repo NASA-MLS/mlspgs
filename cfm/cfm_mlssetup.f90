@@ -103,7 +103,10 @@ module CFM_MLSSetup_m
             end if
             if (present(fakeChunk)) then
                fakeChunk%lastMafIndex = FindMaxMAF (filedatabase, fakeChunk%firstMafIndex )
-               fakeChunk%lastMafIndex = fakeChunk%lastMafIndex - fakeChunk%firstMafIndex
+               
+               !fakeChunk%lastMafIndex = fakeChunk%lastMafIndex - fakeChunk%firstMafIndex
+               ! temporary just have 1 maf
+               fakeChunk%lastMafIndex = 0
                fakeChunk%firstMafIndex = 0
             end if
          end if
