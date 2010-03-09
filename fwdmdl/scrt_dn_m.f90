@@ -173,7 +173,7 @@ contains
 
 !{ $-W_i = -\sum_{j=2}^i \frac{\partial \Delta \delta_{j \rightarrow j - 1}}
 !                           {\partial x_k}$,
-!  where the derivative is given by d_delta_dt.
+!  where the derivative is given by d\_delta\_dt.
 
     do i = max(2,i_start), min(i_end,tan_pt)
       w = w - d_delta_dt(i)
@@ -269,6 +269,9 @@ contains
 
 end module SCRT_DN_M
 ! $Log$
+! Revision 2.14  2009/06/23 18:26:11  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.13  2009/01/16 23:40:03  vsnyder
 ! Correct case of starting point on path past the tangent point.
 ! add PRINT statement to not_used_here.
