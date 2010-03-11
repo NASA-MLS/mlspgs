@@ -32,7 +32,7 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
    use MLSStats1, only: FILLVALUERELATION, Stat_T, dump, STATISTICS
    use MLSStringLists, only: catLists, GetStringElement, NumStringElements, &
      & StringElementNum
-   use MLSStrings, only: lowercase
+   use MLSStrings, only: lowercase, trim_safe
    use output_m, only: dump, outputOptions, output
    use Time_M, only: Time_Now, time_config
    
@@ -178,11 +178,12 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
           & DSName=trim(options%root) // '/' // trim(options%DSName), &
           & options=dumpOptions )
       else
+        ! print *, 'Trying to dump ', trim(options%attributes), ' from ', trim(options%root)
         call DumpHDF5Attributes ( sdfid1, trim(options%attributes), &
           & groupName=trim(options%root), options=dumpOptions )
       endif
     endif
-    print *, 'About to mls_sfend on ', sdfid1
+    ! print *, 'About to mls_sfend on ', sdfid1
 	 status = mls_sfend(sdfid1, hdfVersion=hdfVersion)
     if ( .not. options%laconic ) call sayTime('reading this file', tFile)
   enddo
@@ -209,12 +210,12 @@ contains
      print *, 'shape  ?            ', options%shape
      print *, 'unique    ?         ', options%unique
      print *, 'useFillValue  ?     ', options%useFillValue
-     print *, 'root                ', options%root
+     print *, 'root                ', trim_safe(options%root)
      print *, 'fillValue           ', options%fillValue
      print *, 'fillValueRelation   ', options%fillValueRelation
-     print *, 'DSName              ', options%DSName
-     print *, 'attributes          ', options%attributes
-     print *, 'datasets            ', options%datasets
+     print *, 'DSName              ', trim_safe(options%DSName)
+     print *, 'attributes          ', trim_safe(options%attributes)
+     print *, 'datasets            ', trim_safe(options%datasets)
      print *, 'num files           ', n_filenames
      do i=1, n_filenames
        print *, i, trim(filenames(i))
@@ -344,29 +345,29 @@ contains
       write (*,*) ' Options: -f filename     => add filename to list of filenames'
       write (*,*) '                           (can do the same w/o the -f)'
       write (*,*) '          -lac            => switch on laconic mode'
-      write (*,*) '          -shape          => just dump array shapes, not contents'
       write (*,*) '          -v              => switch on verbose mode'
-      write (*,*) '          -A              => dump all attributes'
-      write (*,*) '          -D              => dump all datasets (default)'
-      write (*,*) '          -nA             => do not dump attributes (default)'
-      write (*,*) '          -nD             => do not dump datasets'
+      write (*,*) '          -la             => just list attribute names in files'
+      write (*,*) '          -ls             => just list sd names in files'
+      write (*,*) '          -s              => just show % statistics'
+      write (*,*) '          -t              => just time reads'
+      write (*,*) '          -radiances      => show radiances only'
+      write (*,*) '          -rms            => just print mean, rms'
+      write (*,*) '          -shape          => just dump array shapes, not contents'
+      write (*,*) '          -unique         => print only unique values'
       write (*,*) '          -r root         => limit to group based at root'
       write (*,*) '                             (default is "/")'
       write (*,*) '          -rd DSName      => limit attributes to root/DSName'
       write (*,*) '                             (default is group attributes at root)'
-      write (*,*) '          -a a1,a2,..     => dump just attributes named a1,a2,..'
-      write (*,*) '          -d d1,d2,..     => dump just datasets named a1,a2,..'
       write (*,*) '          -fv value       => filter rms, % around value'
       write (*,*) '          -fvr relation   => one of {"=","<",">"}'
       write (*,*) '                              we filter values standing in'
       write (*,*) '                              this relation with fillValue'
-      write (*,*) '          -la             => just list attribute names in files'
-      write (*,*) '          -ls             => just list sd names in files'
-      write (*,*) '          -radiances      => show radiances only'
-      write (*,*) '          -rms            => just print mean, rms'
-      write (*,*) '          -unique         => print only unique values'
-      write (*,*) '          -s              => just show % statistics'
-      write (*,*) '          -t              => just time reads'
+      write (*,*) '          -A              => dump all attributes'
+      write (*,*) '          -D              => dump all datasets (default)'
+      write (*,*) '          -nA             => do not dump attributes (default)'
+      write (*,*) '          -nD             => do not dump datasets'
+      write (*,*) '          -a a1,a2,..     => dump just attributes named a1,a2,..'
+      write (*,*) '          -d d1,d2,..     => dump just datasets named a1,a2,..'
       write (*,*) '          -h              => print brief help'
       stop
   end subroutine print_help
@@ -560,6 +561,9 @@ end program l2auxdump
 !==================
 
 ! $Log$
+! Revision 1.10  2009/11/20 23:03:38  pwagner
+! -shape option just dumps array rank, shape
+!
 ! Revision 1.9  2009/08/18 20:42:15  pwagner
 ! Dumping counterMAF array looks better
 !
