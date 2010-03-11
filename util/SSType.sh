@@ -25,10 +25,11 @@
 #    O p t i o n s
 # -a            show all SSE; e.g., "SSE2 SSE3 SSSE3"; 
 #                 by default shows only highest
+# -M dir        use dir to search for tool hasSSE2, etc.
 # -h[elp]       print brief help message; exit
 #Notes:
-#(1) Proper operation assumes that either the following programs
-#    are in your path or that MLSTOOLS is defined and that can be found there
+#(1) Proper operation assumes that the following programs
+#    are in one of: your path, where MLSTOOLS is defined, or dir using -d option
 #    hasSSE2  hasSSE3  hasSSSE3
 #(2) We are assuming that these programs were built for the same bitness
 #    as the host where the commands are executed; e.g. 64-bit OS
@@ -50,6 +51,7 @@ PROGS="hasSSE2  hasSSE3  hasSSSE3"
 me="$0"
 my_name=SSType.sh
 all="no"
+dir="$MLSTOOLS"
 more_opts="yes"
 while [ "$more_opts" = "yes" ] ; do
 
@@ -63,6 +65,11 @@ while [ "$more_opts" = "yes" ] ; do
        all="yes"
        shift
 	;;
+    -d )
+       dir="$2"
+       shift
+       shift
+	;;
     * )
        more_opts="no"
        ;;
@@ -70,9 +77,9 @@ while [ "$more_opts" = "yes" ] ; do
 done
 
 #Is MLSTOOLS defined and is it a permissible directory?
-if [ -d "$MLSTOOLS" ]
+if [ -d "$dir" ]
 then
-  cd $MLSTOOLS
+  cd $dir
 fi
 response=""
 
@@ -93,6 +100,9 @@ do
 done
 echo $response
 # $Log$
+# Revision 1.2  2010/03/06 01:15:50  pwagner
+# Was not hiding stderr properly
+#
 # Revision 1.1  2010/03/06 00:59:57  pwagner
 # First commit
 #
