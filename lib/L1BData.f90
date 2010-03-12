@@ -706,7 +706,9 @@ contains ! ============================ MODULE PROCEDURES ======================
       if ( any(l1bData1%intField /= l1bData2%intField) ) then
         call dump ( l1bData1%intField - l1bData2%intField, &
           & 'l1bData%intField (diff)', options=options )
-        myNumDiffs = myNumDiffs + count(l1bData1%charField /= l1bData2%charField)
+        myNumDiffs = myNumDiffs + count(l1bData1%intField /= l1bData2%intField)
+      elseif ( .not. mySilent ) then
+        call output('(integer arrays are exactly equal)', advance='yes')
       endif
     else
       if ( prntAssocStatus ) &
@@ -3283,6 +3285,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.88  2010/03/12 21:12:07  pwagner
+! Note when diffing if integer arrays are equal
+!
 ! Revision 2.87  2010/01/11 18:33:19  pwagner
 ! Changed a comment
 !
