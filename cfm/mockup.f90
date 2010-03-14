@@ -8,20 +8,22 @@ program mockup
    use CFM_VectorTemplate, only: CreateVectorTemplate
    use CFM_Vector, only: CreateVector
    use CFM_Fill, only: ExplicitFillVectorQuantity
+   use CFM_IO, only: Read_Spectroscopy
 
    use Chunks_m, only: MLSChunk_T
    use ForwardModelConfig, only: ForwardModelConfig_T
    use MLSCommon, only: MLSFile_T, r8
-   use VGridsDatabase, only: VGrid_T, DestroyVGridContents
+   use VGridsDatabase, only: VGrid_T, DestroyVGridContents, Dump
    use HGridsDatabase, only: HGrid_T, DestroyHGridContents
-   use Intrinsic, only: phyq_pressure, l_zeta, L_IntermediateFrequency
+   use Intrinsic, only: L_IntermediateFrequency
    use FGrid, only: FGrid_T, DestroyFGridContents
    use QuantityTemplates, only: QuantityTemplate_T, &
          AddQuantityTemplateToDatabase, DestroyQuantityTemplateDatabase
-   use Init_tables_module, only: l_logarithmic
+   use Init_tables_module, only: l_logarithmic, l_zeta, &
+                                 phyq_pressure
    use VectorsModule, only: VectorTemplate_T, Vector_T, VectorValue_T, &
                             DestroyVectorTemplateInfo, DestroyVectorInfo, &
-                            GetVectorQtyByTemplateIndex, Dump
+                            GetVectorQtyByTemplateIndex
    use Construct, only: ConstructMIFGeolocation
    use ConstructQuantityTemplates, only: InitQuantityTemplates
 
@@ -58,6 +60,7 @@ program mockup
 
    vGridStandard = CreateVGrid(l_zeta, l_logarithmic, &
                                1000.0d0, "37:6", phyq_pressure)
+   call dump(vGridStandard)
    hGridStandard = CreateRegularHGrid(GHz, 0.0_r8, 1.5_r8, filedatabase, fakeChunk)
    fGridStandard = CreateFGrid(L_IntermediateFrequency, (/0.0_r8/))
 
@@ -112,11 +115,6 @@ program mockup
 
    quantity = GetVectorQtyByTemplateIndex(state, 3)
    call ExplicitFillVectorQuantity(quantity, O3Input)
-
-   print *, "Dumping state"
-   call dump(state)
-   print *, "Dumping measurement"
-   call dump(measurement)
 
    call DestroyVectorInfo (state)
    call DestroyVectorInfo (measurement)
