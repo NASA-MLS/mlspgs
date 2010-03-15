@@ -8,7 +8,6 @@ program mockup
    use CFM_VectorTemplate, only: CreateVectorTemplate
    use CFM_Vector, only: CreateVector
    use CFM_Fill, only: ExplicitFillVectorQuantity
-   use CFM_IO, only: Read_Spectroscopy
 
    use Chunks_m, only: MLSChunk_T
    use ForwardModelConfig, only: ForwardModelConfig_T
