@@ -13,8 +13,8 @@ program mockup
    use Chunks_m, only: MLSChunk_T
    use ForwardModelConfig, only: ForwardModelConfig_T
    use MLSCommon, only: MLSFile_T, r8
-   use VGridsDatabase, only: VGrid_T, DestroyVGridContents, Dump
-   use HGridsDatabase, only: HGrid_T, DestroyHGridContents
+   use VGridsDatabase, only: VGrid_T, DestroyVGridContents
+   use HGridsDatabase, only: HGrid_T, DestroyHGridContents, Dump
    use Intrinsic, only: L_IntermediateFrequency
    use FGrid, only: FGrid_T, DestroyFGridContents
    use QuantityTemplates, only: QuantityTemplate_T, &
@@ -60,8 +60,8 @@ program mockup
 
    vGridStandard = CreateVGrid(l_zeta, l_logarithmic, &
                                1000.0d0, "37:6", phyq_pressure)
-   call dump(vGridStandard)
    hGridStandard = CreateRegularHGrid(GHz, 0.0_r8, 1.5_r8, filedatabase, fakeChunk)
+   call dump(hGridStandard)
    fGridStandard = CreateFGrid(L_IntermediateFrequency, (/0.0_r8/))
 
    ! Have to initialize before we start creating quantity templates
