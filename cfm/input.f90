@@ -1,7 +1,7 @@
 module Input
    use MLSCommon, only: r8
    implicit none
-   character(len=100) :: l1boa = "/data/emls/l1b/v02.23/2008/037/MLS-Aura_L1BOA_v02-23-c01_2008d037.h5"
+   character(len=100) :: l1boa = "/data/emls/l1b/v02.23/2005/037/MLS-Aura_L1BOA_v02-23-c01_2005d037.h5"
    character(len=100) :: spectroscopy = '/data/emls/l2cal/MLS-Aura_L2Cal-Spectroscopy-PFA_v3-0-4_0000d000.h5'
    real(r8), dimension(37) :: &
    TemperatureInput= (/ 2.9128e+02,  2.9149e+02,  2.8439e+02,  2.7649e+02,  2.6942e+02, &

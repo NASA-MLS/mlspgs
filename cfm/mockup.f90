@@ -59,7 +59,10 @@ program mockup
 
    vGridStandard = CreateVGrid(l_zeta, l_logarithmic, &
                                1000.0d0, "37:6", phyq_pressure)
-   hGridStandard = CreateRegularHGrid(GHz, 0.0_r8, 1.5_r8, filedatabase, fakeChunk)
+
+   ! Have insetoverlaps, and single
+   hGridStandard = CreateRegularHGrid(GHz, 0.0_r8, 1.5_r8, .true., .true., &
+        filedatabase, fakeChunk)
    call dump(hGridStandard)
    fGridStandard = CreateFGrid(L_IntermediateFrequency, (/0.0_r8/))
 

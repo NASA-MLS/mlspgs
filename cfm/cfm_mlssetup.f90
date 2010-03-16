@@ -105,9 +105,10 @@ module CFM_MLSSetup_m
                fakeChunk%lastMafIndex = FindMaxMAF (filedatabase, fakeChunk%firstMafIndex )
                
                !fakeChunk%lastMafIndex = fakeChunk%lastMafIndex - fakeChunk%firstMafIndex
-               ! temporary just have 1 maf
-               fakeChunk%lastMafIndex = 0
-               fakeChunk%firstMafIndex = 0
+               ! temporary just have 1 maf, the first 5 maf in the file, belong to 
+               ! previous day
+               fakeChunk%lastMafIndex = 6
+               fakeChunk%firstMafIndex = 6
             end if
          end if
       end if
