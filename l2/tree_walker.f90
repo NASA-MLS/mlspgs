@@ -572,7 +572,8 @@ subtrees:   do while ( j <= howmany )
         call destroy_Filter_Shapes_Database
         call destroyBinSelectorDatabase
         call destroyL2PCDatabase
-        call output('Destroyed l2pc db', advance='yes')
+        if ( index ( switches, 'l2pc' ) > 0 ) &
+          & call output('Destroyed l2pc db', advance='yes')
         call destroyFWMConfigDatabase ( forwardModelConfigDatabase )
         call destroy_line_database
         call destroy_pointing_grid_database
@@ -623,6 +624,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.170  2010/02/25 18:20:44  pwagner
+! Adds support for new Hessian database
+!
 ! Revision 2.169  2010/02/04 19:10:58  pwagner
 ! Allocate directwrite db with zero size
 !
