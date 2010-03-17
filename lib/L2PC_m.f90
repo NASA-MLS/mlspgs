@@ -69,7 +69,7 @@ module L2PC_m
     & ReadCompleteHDF5L2PCFile
 
   interface DUMP
-    module procedure DUMPONEL2PC, DumpL2PCDatabase, DumpL2PCFile
+    module procedure DUMPONEL2PC, DumpL2PCDatabase, DumpL2PCFile, DumpL2PCInfo
   end interface
   ! This is an update to the L2PCs where we can store both Jacobians and Hessians
   ! Previously the L2PC's were just Matrix_Ts, now they're more diversified
@@ -122,6 +122,8 @@ module L2PC_m
   ! Default bin selectors (see CreateDefaultBinSelectors below)
   integer, parameter :: DEFAULTSELECTOR_LATITUDE = 1
   integer, parameter :: DEFAULTSELECTOR_FIELDAZIMUTH = 2
+  
+  logical, parameter :: DIEIFDESTROYFAILS = .false.
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -349,6 +351,27 @@ contains ! ============= Public Procedures ==========================
     end do
 
   end subroutine DumpOneL2PC
+
+  ! --------------------------------------- DumpL2PCInfo ---------------
+  subroutine DumpL2PCInfo ( L2PCInfo, details )
+    ! This subroutine dumps an l2pc to stdout
+
+    ! Dummy arguments
+    type (L2PCInfo_T), intent(in) :: L2PCInfo
+    integer, intent(in), optional :: DETAILS ! <=0 => Don't dump multidim arrays
+    !                                        ! -1 Skip even 1-d arrays
+    !                                        ! -2 Skip all but size
+    !                                        ! >0 Dump even multi-dim arrays
+    !                                        ! Default 0
+    ! Local variables
+    integer :: i
+    ! Executable
+    call outputNamedValue ( 'fileID', L2PCInfo%fileID )
+    call outputNamedValue ( 'binID', L2PCInfo%binID )
+    call outputNamedValue ( 'blocksID', L2PCInfo%blocksID )
+    call outputNamedValue ( 'hblocksID', L2PCInfo%hBlocksID )
+    call outputNamedValue ( 'matrixName', trim(L2PCInfo%matrixName) )
+  end subroutine DumpL2PCInfo
 
   ! ---------------------------------- LoadMatrix ----------
   subroutine LoadMatrix ( matrix, name, message )
@@ -896,7 +919,7 @@ contains ! ============= Public Procedures ==========================
 
   ! ------------------------------------ DestroyL2PCInfoDatabase ----
   subroutine DestroyL2PCInfoDatabase
-  use HDF5, only: H5FClose_F, H5GCLOSE_F
+  use HDF5, only: H5FClose_F, H5GCLOSE_F, H5ESET_AUTO_F
     ! Local variables
     integer :: I                ! Loop counter
     integer :: STATUS           ! Flag from HDF
@@ -904,17 +927,23 @@ contains ! ============= Public Procedures ==========================
     ! Executable code
 
     if ( .not. associated(l2pcInfo) ) return
+    call h5eSet_auto_f ( 0, status )
     do i = 1, size ( l2pcInfo )
+      if ( index ( switches, 'l2pc' ) > 0 ) &
+        & call outputNamedValue( 'Destroying l2pc db entry number ', i )
       call h5gClose_f ( l2pcInfo(i)%blocksID, status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      if ( status /= 0 .and. DIEIFDESTROYFAILS ) then
+        call dump( l2pcInfo(i) )
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to close Blocks group for preserved input l2pc' )
+      endif
       if ( l2pcInfo(i)%hblocksID /= 0 ) then
         call h5gClose_f ( l2pcInfo(i)%hblocksID, status )
-        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        if ( status /= 0 .and. DIEIFDESTROYFAILS ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'Unable to close Hessian Blocks group for preserved input l2pc' )
       end if
       call h5gClose_f ( l2pcInfo(i)%binID, status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      if ( status /= 0 .and. DIEIFDESTROYFAILS ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to close matrix group for preserved input l2pc' )
       ! Close the file?
       if ( count ( l2pcInfo%fileID == l2pcInfo(i)%fileID ) == 1 ) then
@@ -925,8 +954,9 @@ contains ! ============= Public Procedures ==========================
       end if
       l2pcInfo(i)%fileID = 0
     end do
+    call h5eSet_auto_f ( 1, status )
     deallocate ( l2pcInfo, stat=i )
-    if ( i /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+    if ( i /= 0 .and. DIEIFDESTROYFAILS ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Deallocate//'l2pcInfo' )
   end subroutine DestroyL2PCInfoDatabase
 
@@ -1092,6 +1122,7 @@ contains ! ============= Public Procedures ==========================
         call CreateBlockName ( blockRow, blockCol, 0, name )
         ! This doesn't work any more (Why not?)
         ! call h5gOpen_f ( info%blocksId, trim(name), blockId, status )
+        info%blocksId = blocksID ! When did these diverge?
         call h5gOpen_f ( blocksId, trim(name), blockId, status )
         if ( status /= 0 ) then
           call outputNamedValue( 'Block name', trim(name) )
@@ -1837,6 +1868,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.89  2010/03/17 20:59:10  pwagner
+! Code around bombs in DestroyL2PCInfoDatabase
+!
 ! Revision 2.88  2010/02/25 18:04:45  pwagner
 ! l2pc type can now hold matrix and Hessian types
 !
