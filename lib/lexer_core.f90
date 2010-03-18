@@ -13,13 +13,9 @@ module LEXER_CORE
 ! Provides the token type and the initialization routine used by all
 ! lexers, and a routine to print the source text line and column number.
 
-  use OUTPUT_M, only: OUTPUT
-  use STRING_TABLE, only: ALLOCATE_HASH_TABLE
-  use SYMBOL_TABLE, only: ALLOCATE_SYMBOL_TABLE
-  use TOGGLES, only: INIT_TOGGLE
-
   implicit NONE
-  public
+  private
+  public :: NEED, TOKEN, INIT_LEXER, PRINT_SOURCE
 
   type :: TOKEN
     integer :: CLASS               ! Token class = token index
@@ -41,6 +37,10 @@ contains
   subroutine INIT_LEXER ( N_CHARS, N_SYMBOLS, HASH_TABLE_SIZE, STAT )
   ! Allocate the character, symbol and hash tables, which automatically
   ! initializes them.
+    use STRING_TABLE, only: ALLOCATE_HASH_TABLE
+    use SYMBOL_TABLE, only: ALLOCATE_SYMBOL_TABLE
+    use TOGGLES, only: INIT_TOGGLE
+
     integer, intent(in) :: N_CHARS      ! Initial size of character table
     integer, intent(in) :: N_SYMBOLS    ! Initial sizes of string and
                                         ! symbol tables
@@ -58,6 +58,8 @@ contains
 
   subroutine PRINT_SOURCE ( SOURCE, ADVANCE, BEFORE )
   ! Output "line LLL, column CCC"
+    use OUTPUT_M, only: OUTPUT
+
     integer, intent(in) :: SOURCE  ! 256*srcLine + srcCol
     character(len=*), intent(in), optional :: ADVANCE
     character(len=*), intent(in), optional :: BEFORE
@@ -81,6 +83,9 @@ contains
 end module LEXER_CORE
 
 ! $Log$
+! Revision 2.6  2010/03/18 02:36:39  vsnyder
+! Move USE from module scope to procedure scope
+!
 ! Revision 2.5  2010/03/18 02:31:18  vsnyder
 ! Add BEFORE to PRINT_SOURCE
 !
