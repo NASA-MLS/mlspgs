@@ -56,10 +56,12 @@ contains
     return
   end subroutine INIT_LEXER
 
-  subroutine PRINT_SOURCE ( SOURCE, ADVANCE )
+  subroutine PRINT_SOURCE ( SOURCE, ADVANCE, BEFORE )
   ! Output "line LLL, column CCC"
     integer, intent(in) :: SOURCE  ! 256*srcLine + srcCol
     character(len=*), intent(in), optional :: ADVANCE
+    character(len=*), intent(in), optional :: BEFORE
+    if ( present(before) ) call output ( before )
     call output ( 'line ' )
     call output ( source/256 )
     call output ( ', column ' )
@@ -79,6 +81,9 @@ contains
 end module LEXER_CORE
 
 ! $Log$
+! Revision 2.5  2010/03/18 02:31:18  vsnyder
+! Add BEFORE to PRINT_SOURCE
+!
 ! Revision 2.4  2009/06/23 18:25:43  pwagner
 ! Prevent Intel from optimizing ident string away
 !
