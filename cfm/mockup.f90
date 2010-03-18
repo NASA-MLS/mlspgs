@@ -107,9 +107,6 @@ program mockup
    state = CreateVector(stateTemplate, qtyTemplates)
    measurement = CreateVector(measurementTemplate, qtyTemplates)
 
-   call dump(state)
-   call dump(measurement)
-
    quantity = GetVectorQtyByTemplateIndex(state, 1)
    call ExplicitFillVectorQuantity(quantity, TemperatureInput)
 
@@ -121,6 +118,8 @@ program mockup
 
    quantity = GetVectorQtyByTemplateIndex(state, 3)
    call ExplicitFillVectorQuantity(quantity, O3Input)
+
+   call dump(state)
 
    call DestroyVectorInfo (state)
    call DestroyVectorInfo (measurement)
