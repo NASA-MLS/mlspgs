@@ -13,10 +13,10 @@ program mockup
    use ForwardModelConfig, only: ForwardModelConfig_T
    use MLSCommon, only: MLSFile_T, r8
    use VGridsDatabase, only: VGrid_T, DestroyVGridContents
-   use HGridsDatabase, only: HGrid_T, DestroyHGridContents, Dump
+   use HGridsDatabase, only: HGrid_T, DestroyHGridContents
    use Intrinsic, only: L_IntermediateFrequency
-   use FGrid, only: FGrid_T, DestroyFGridContents
-   use QuantityTemplates, only: QuantityTemplate_T, &
+   use FGrid, only: FGrid_T, DestroyFGridContents, Dump
+   use QuantityTemplates, only: QuantityTemplate_T, Dump, &
          AddQuantityTemplateToDatabase, DestroyQuantityTemplateDatabase
    use Init_tables_module, only: l_logarithmic, l_zeta, &
                                  phyq_pressure
@@ -63,8 +63,9 @@ program mockup
    ! Have insetoverlaps, and single
    hGridStandard = CreateRegularHGrid(GHz, 0.0_r8, 1.5_r8, .true., .true., &
         filedatabase, fakeChunk)
-   call dump(hGridStandard)
+
    fGridStandard = CreateFGrid(L_IntermediateFrequency, (/0.0_r8/))
+   !call dump(fGridStandard)
 
    ! Have to initialize before we start creating quantity templates
    call ConstructMIFGeolocation(mifGeoLocation, filedatabase, fakeChunk)
@@ -88,6 +89,15 @@ program mockup
    geodAltitude = CreateQtyTemplate("geodAltitude", filedatabase=filedatabase, &
                                     qInstModule=GHz, mifGeolocation=mifGeolocation)
 
+   call dump(ptanGHz, details=2)
+   call dump(ptanTHz, details=2)
+   call dump(temperature, details=2)
+   call dump(GPH, details=2)
+   call dump(O3, details=2)
+   call dump(H2O, details=2)
+   call dump(band7, details=2)
+   call dump(geodAltitude, details=2)
+
    numQty = AddQuantityTemplateToDatabase(qtyTemplates, temperature)
    numQty = AddQuantityTemplateToDatabase(qtyTemplates, GPH)
    numQty = AddQuantityTemplateToDatabase(qtyTemplates, O3)
@@ -107,7 +117,7 @@ program mockup
    measurement = CreateVector(measurementTemplate, qtyTemplates)
 
    quantity = GetVectorQtyByTemplateIndex(state, 1)
-   call ExplicitFillVectorQuantity(quantity, TemperatureInput)   
+   call ExplicitFillVectorQuantity(quantity, TemperatureInput)
 
    quantity = GetVectorQtyByTemplateIndex(state, 2)
    call ExplicitFillVectorQuantity(quantity, GPHInput)
