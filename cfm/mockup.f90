@@ -104,11 +104,11 @@ program mockup
    measurementSelected = (/7/)
    measurementTemplate = CreateVectorTemplate(qtyTemplates, measurementSelected)
 
-   call dump(stateTemplate, details=1, quantities=qtyTemplates)
-   call dump(measurementTemplate, details=1, quantities=qtyTemplates)
-
    state = CreateVector(stateTemplate, qtyTemplates)
    measurement = CreateVector(measurementTemplate, qtyTemplates)
+
+   call dump(state)
+   call dump(measurement)
 
    quantity = GetVectorQtyByTemplateIndex(state, 1)
    call ExplicitFillVectorQuantity(quantity, TemperatureInput)
