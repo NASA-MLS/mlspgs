@@ -16,13 +16,13 @@ program mockup
    use HGridsDatabase, only: HGrid_T, DestroyHGridContents
    use Intrinsic, only: L_IntermediateFrequency
    use FGrid, only: FGrid_T, DestroyFGridContents, Dump
-   use QuantityTemplates, only: QuantityTemplate_T, Dump, &
+   use QuantityTemplates, only: QuantityTemplate_T, &
          AddQuantityTemplateToDatabase, DestroyQuantityTemplateDatabase
    use Init_tables_module, only: l_logarithmic, l_zeta, &
                                  phyq_pressure
    use VectorsModule, only: VectorTemplate_T, Vector_T, VectorValue_T, &
                             DestroyVectorTemplateInfo, DestroyVectorInfo, &
-                            GetVectorQtyByTemplateIndex
+                            GetVectorQtyByTemplateIndex, Dump
    use Construct, only: ConstructMIFGeolocation
    use ConstructQuantityTemplates, only: InitQuantityTemplates
 
@@ -89,15 +89,6 @@ program mockup
    geodAltitude = CreateQtyTemplate("geodAltitude", filedatabase=filedatabase, &
                                     qInstModule=GHz, mifGeolocation=mifGeolocation)
 
-   call dump(ptanGHz, details=2)
-   call dump(ptanTHz, details=2)
-   call dump(temperature, details=2)
-   call dump(GPH, details=2)
-   call dump(O3, details=2)
-   call dump(H2O, details=2)
-   call dump(band7, details=2)
-   call dump(geodAltitude, details=2)
-
    numQty = AddQuantityTemplateToDatabase(qtyTemplates, temperature)
    numQty = AddQuantityTemplateToDatabase(qtyTemplates, GPH)
    numQty = AddQuantityTemplateToDatabase(qtyTemplates, O3)
@@ -107,11 +98,14 @@ program mockup
    numQty = AddQuantityTemplateToDatabase(qtyTemplates, band7)
    numQty = AddQuantityTemplateToDatabase(qtyTemplates, geodAltitude)
 
-   stateSelected = (/1,2,3,4,5,6,8/)
+   stateSelected = (/5,6,1,2,4,3,8/)
    stateTemplate = CreateVectorTemplate(qtyTemplates, stateSelected)
 
    measurementSelected = (/7/)
    measurementTemplate = CreateVectorTemplate(qtyTemplates, measurementSelected)
+
+   call dump(stateTemplate, details=1, quantities=qtyTemplates)
+   call dump(measurementTemplate, details=1, quantities=qtyTemplates)
 
    state = CreateVector(stateTemplate, qtyTemplates)
    measurement = CreateVector(measurementTemplate, qtyTemplates)
