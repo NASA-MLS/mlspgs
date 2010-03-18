@@ -143,11 +143,12 @@ contains ! =====     Public procedures     =============================
     integer, intent(out) :: Molecule
     character (len=*), intent(in) :: string_text
     ! Local variables
-    character (len=len(string_text))             :: string_test
+    character (len=81)             :: string_test
     do Molecule=first_molecule, last_molecule
       call get_string ( lit_indices(Molecule), string_test, strip=.true. )
-      if ( LowerCase(trim(string_text)) == LowerCase(trim(string_test))) &
-        & return
+      if ( LowerCase(trim(string_text)) == LowerCase(trim(string_test))) then
+        return
+      end if
     end do
     Molecule = 0
   end subroutine GetMoleculeIndex
@@ -174,6 +175,9 @@ contains ! =====     Public procedures     =============================
 end module MOLECULES
 
 ! $Log$
+! Revision 2.28  2010/03/18 20:42:38  honghanh
+! Fix a bug in GetMoleculdIndex: adjust string_test length to accomodate all molecules
+!
 ! Revision 2.27  2009/11/17 23:44:28  vsnyder
 ! Add CloudIce to type tree
 !
