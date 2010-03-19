@@ -69,6 +69,10 @@ module L2PC_m
     & ReadCompleteHDF5L2PCFile
 
   interface DUMP
+    module procedure DUMPONEL2PC, DumpL2PCDatabase, DumpL2PCFile
+  end interface
+
+  interface DUMP_PRIVATE
     module procedure DUMPONEL2PC, DumpL2PCDatabase, DumpL2PCFile, DumpL2PCInfo
   end interface
   ! This is an update to the L2PCs where we can store both Jacobians and Hessians
@@ -933,7 +937,7 @@ contains ! ============= Public Procedures ==========================
         & call outputNamedValue( 'Destroying l2pc db entry number ', i )
       call h5gClose_f ( l2pcInfo(i)%blocksID, status )
       if ( status /= 0 .and. DIEIFDESTROYFAILS ) then
-        call dump( l2pcInfo(i) )
+        call dump_private( l2pcInfo(i) )
         call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to close Blocks group for preserved input l2pc' )
       endif
@@ -1868,6 +1872,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.90  2010/03/19 20:18:47  pwagner
+! Moved DumpL2PCInfo out of public scope to appease ifort v10 which crashed the goldbrick
+!
 ! Revision 2.89  2010/03/17 20:59:10  pwagner
 ! Code around bombs in DestroyL2PCInfoDatabase
 !
