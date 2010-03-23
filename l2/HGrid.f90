@@ -792,6 +792,7 @@ contains ! =====     Public Procedures     =============================
     real(rk) :: ImPart
     real(rk) :: r1
     real(rk) :: r2
+
     ! Executable code
     nullify(OldMethodValues)
     deebughere = deebug .or. ( switchDetail(switches, 'hgrid') > 0 ) ! e.g., 'hgrid1' 
@@ -1168,12 +1169,12 @@ contains ! =====     Public Procedures     =============================
     ! The deal will be the first legitimate profile is the first one who's phi
     ! is above the first non overlapped MAF.
     call Hunt ( hGrid%phi(1,:), mif1GeodAngle(chunk%noMAFsLowerOverlap+1), &
-      & hGrid%noProfsLowerOverlap, allowTopValue=.true., allowBelowValue=.true. )
+       & hGrid%noProfsLowerOverlap, allowTopValue=.true., allowBelowValue=.true. )
+
     ! So the hunt returns the index of the last overlapped, which is
     ! the number we want to be in the overlap.
-
     call Hunt ( hGrid%phi(1,:), nextAngle, &
-      & hGrid%noProfsUpperOverlap, allowTopValue=.true., allowBelowValue=.true. )
+       & hGrid%noProfsUpperOverlap, allowTopValue=.true., allowBelowValue=.true. )
     ! Here the hunt returns the index of the last non overlapped profile
     ! So we do a subtraction to get the number in the overlap.
     hGrid%noProfsUpperOverlap = hGrid%noProfs - hGrid%noProfsUpperOverlap
@@ -1228,7 +1229,6 @@ contains ! =====     Public Procedures     =============================
         call TrimHGrid ( hGrid, 1, hGrid%noProfs-lastProfInRun )
       end if
     end if
-
     ! Now a 'softer' limit that applies to all cases, this just moves the
     ! overlap regions around if necessary to deal with overspill.
     if ( hGrid%noProfsLowerOverlap+1 <= hGrid%noProfs ) then
@@ -1257,22 +1257,25 @@ contains ! =====     Public Procedures     =============================
 
     ! Now deal with the user requests
     if ( single ) then
-      ! Set up for no overlaps
-      hGrid%noProfsLowerOverlap = 0
-      hGrid%noProfsUpperOverlap = 0
-      ! Delete all but the 'center' profile
-      extra = hGrid%noProfs - 1
-      left = extra / 2
-      right = extra - left
-      if ( left > 0 ) call TrimHGrid ( hGrid, -1, left )
-      if ( right > 0 ) call TrimHGrid ( hGrid, 1, right )
-    else
-      if ( maxLowerOverlap >= 0 .and. &
-        & ( hGrid%noProfsLowerOverlap > maxLowerOverlap ) ) &
-        call TrimHGrid ( hGrid, -1, hGrid%noProfsLowerOverlap - maxLowerOverlap )
-      if ( maxUpperOverlap >= 0 .and. &
-        & ( hGrid%noProfsUpperOverlap > maxUpperOverlap ) ) &
-        call TrimHGrid ( hGrid, 1, hGrid%noProfsUpperOverlap - maxUpperOverlap )
+       ! Set up for no overlaps
+       hGrid%noProfsLowerOverlap = 0
+       hGrid%noProfsUpperOverlap = 0
+       ! Delete all but the 'center' profile
+       extra = hGrid%noProfs - 1
+       left = extra / 2
+       right = extra - left
+       if ( left > 0 ) call TrimHGrid ( hGrid, -1, left )
+       if ( right > 0 ) call TrimHGrid ( hGrid, 1, right )
+    else if (hgrid%noProfs > 1) then
+       if ( maxLowerOverlap >= 0 .and. &
+          & ( hGrid%noProfsLowerOverlap > maxLowerOverlap ) ) &
+          call TrimHGrid ( hGrid, -1, hGrid%noProfsLowerOverlap - maxLowerOverlap )
+       if ( maxUpperOverlap >= 0 .and. &
+          & ( hGrid%noProfsUpperOverlap > maxUpperOverlap ) ) &
+          call TrimHGrid ( hGrid, 1, hGrid%noProfsUpperOverlap - maxUpperOverlap )
+    else ! if there is only one profile, then don't care about overlap
+       hGrid%noProfsLowerOverlap = 0
+       hGrid%noProfsUpperOverlap = 0
     end if
 
     if ( hGrid%noProfs == 0 ) then
@@ -2342,6 +2345,10 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.97  2010/03/23 23:26:03  honghanh
+! Add a case where single option is not set, but hgrid%noProfs is 1
+! then set overlap fields to 0.
+!
 ! Revision 2.96  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
 !
