@@ -80,7 +80,7 @@ contains ! =====     Public Procedures     =============================
       & F_SWATH, F_TYPE, F_WRITECOUNTERMAF, &
       & FIELD_FIRST, FIELD_LAST, &
       & L_L2AUX, L_L2CF, L_L2DGG, L_L2GP, L_L2PC, &
-      & S_COPY, S_Destroy, S_HGrid, S_OUTPUT, S_TIME
+      & S_COPY, S_Destroy, S_DumpBlocks, S_HGrid, S_OUTPUT, S_TIME
     use Intrinsic, only: l_ascii, l_swath, l_hdf, Lit_indices, PHYQ_Dimensionless
     use L2AUXData, only: L2AUXDATA_T, cpL2AUXData
     use L2GPData, only: AVOIDUNLIMITEDDIMS, L2GPDATA_T, &
@@ -89,6 +89,7 @@ contains ! =====     Public Procedures     =============================
     use L2ParInfo, only: parallel
     use MatrixModule_1, only: DestroyMatrix, GETFROMMATRIXDATABASE, &
       & MATRIX_DATABASE_T, MATRIX_T
+    use MatrixTools, only: DumpBlocks
     use MLSCommon, only: MLSFile_T, TAI93_Range_T, FileNameLen, L2Metadata_T
     use MLSFiles, only: &
       & AddInitializeMLSFile, close_MLSFile, Dump, GetMLSFileByName, &
@@ -514,6 +515,8 @@ contains ! =====     Public Procedures     =============================
 
       case ( s_Destroy )
         call destroyCommand ( key, matrices, vectors, griddedDataBase )
+      case ( s_Dumpblocks )
+        call dumpBlocks ( key, matrices, hessians )
       case ( s_HGrid )
         if ( specialDumpFile /= ' ' ) &
           & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
@@ -1694,6 +1697,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.151  2010/03/24 20:53:45  vsnyder
+! Add DumpBlocks to Output section
+!
 ! Revision 2.150  2010/02/25 18:18:31  pwagner
 ! Conforms with changed l2pc structure
 !
