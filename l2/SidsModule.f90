@@ -82,7 +82,7 @@ contains
     integer :: I                        ! Subscript, loop inductor
     integer :: IxHessian                ! Index of Hessian in hessian database
     integer :: IxJacobian               ! Index of Jacobian in matrix database
-    type(hessian_T), pointer :: Hessian ! The Jacobian matrix
+    type(hessian_T), pointer :: Hessian ! The Hessian matrix
     type(matrix_T), pointer :: Jacobian ! The Jacobian matrix
     integer :: COL                      ! Column in jacobian
     integer :: ELEMENT                  ! Index
@@ -111,11 +111,12 @@ contains
     real (r8) :: THISPTB                ! A scalar perturbation
 
     ! Error message codes
-    integer, parameter :: NeedJacobian = 1   ! Needed if derivatives requested
+    integer, parameter :: BadSingleMAF = 1 ! Bad units for singleMAF
+    integer, parameter :: HessianNotJacobian = BadSingleMAF + 1 ! Column vectors different
+    integer, parameter :: NeedJacobian = HessianNotJacobian + 1 ! Needed if derivatives requested
     integer, parameter :: NotPlain = needJacobian + 1  ! Not a "plain" matrix
     integer, parameter :: PerturbationNotState = NotPlain + 1 ! Ptb. not same as state
-    integer, parameter :: BadSingleMAF = PerturbationNotState + 1 ! Bad units for singleMAF
-    integer, parameter :: WrongDestroyJacobian = BadSingleMAF + 1 ! destroyJacobian with Hessian
+    integer, parameter :: WrongDestroyJacobian = PerturbationNotState + 1 ! destroyJacobian with Hessian
 
     if ( toggle(gen) ) call trace_begin ( "SIDS", root )
     call time_now ( t1 )
@@ -186,7 +187,14 @@ contains
 
     ! Check we have a Jacobian if we have a Hessian
     if ( ixHessian > 0 .and. ixJacobian <= 0 ) call announceError( needJacobian )
-    if ( ixHessian > 0 ) hessian => HessianDatabase ( -decoration ( ixHessian ) )
+    if ( ixHessian > 0 ) then
+      hessian => HessianDatabase ( -decoration ( ixHessian ) )
+      if ( hessian%col%vec%template%name /= jacobian%col%vec%template%name &
+        & .or. hessian%row%vec%template%name /= jacobian%row%vec%template%name &
+        & .or. (hessian%col%instFirst .neqv. jacobian%col%instFirst) &
+        & .or. (hessian%row%instFirst .neqv. jacobian%row%instFirst) )&
+        & call announceError ( HessianNotJacobian )
+    end if
 
     ! Check that if we set destroyJacobian we're not asking for Hessian information
     if ( destroyJacobian .and. ( ixHessian > 0 ) ) call announceError ( wrongDestroyJacobian )
@@ -198,10 +206,8 @@ contains
 
     ! Setup some stuff for the case where we're doing numerical derivatives.
     if ( associated ( perturbation ) ) then
-      if ( perturbation%template%name /= fwdModelIn%template%name ) then
-        call AnnounceError ( perturbationNotState )
-        stop
-      end if
+      if ( perturbation%template%name /= fwdModelIn%template%name ) &
+        & call AnnounceError ( perturbationNotState )
       quantity = 1
       instance = 1
       element = 0
@@ -212,6 +218,9 @@ contains
       doThisOne = .true.
     end if
 
+    if ( error > 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Errors prevent SIDS run.' )
+
     configDatabase(configs)%generateTScat = doTScat
 
     ! Now have a possible loop over state vector elements, applying corrections.
@@ -220,19 +229,18 @@ contains
       ! Deal with the case where this is a perturbation.
       if ( associated ( perturbation ) ) then
         if ( element == 0 ) then
-          ! Do a first unperturbed case
+          ! Do a first unperturbed case.  Save the initial state first.
           call CopyVector ( saveState, fwdModelIn, clone=.true. )
           doThisOne=.true.
         else
           thisPtb =perturbation%quantities(quantity)%values(element,instance)
-          if ( thisPtb /= 0.0 ) then
-            call CopyVector ( fwdModelIn, saveState )
+          doThisOne = thisPtb /= 0.0
+          if ( doThisOne ) then
+            call CopyVector ( fwdModelIn, saveState ) ! Get saved state
+            ! Perturb it
             fwdModelIn%quantities(quantity)%values(element,instance) = &
               & fwdModelIn%quantities(quantity)%values(element,instance) + &
               & thisPtb
-            doThisOne=.true.
-          else
-            doThisOne=.false.
           end if
         end if
       end if
@@ -299,6 +307,8 @@ contains
         
         ! Place the numerical derivative result into Jacobian if needed
         if ( associated ( perturbation ) ) then
+          ! Where to store deviation in Jacobian or Hessian
+          col = FindBlock ( jacobian%col, quantity, instance )
           if ( element == 0 ) then
             call CopyVector (saveResult, fwdModelOut, clone=.true.)
             if ( ixHessian > 0 ) call CopyMatrix ( saveJacobian, jacobian )
@@ -306,13 +316,11 @@ contains
             if ( ixHessian <= 0 ) then
               ! We're doing perturbations to get Jacobians
               deviation = fwdModelOut - saveResult
-              ! Store the deviation in the jacobian
-              col = FindBlock ( jacobian%col, quantity, instance )
               ! Loop over rows in the jacobian
               do row = 1, jacobian%row%nb
                 rowQuantity = jacobian%row%quant(row)
                 rowInstance = jacobian%row%inst(row)
-                ! Is there anydeviaiton to store?
+                ! Is there any deviation to store?
                 if ( maxval ( abs ( &
                   & deviation%quantities(rowQuantity)%values(:,rowInstance))) /= 0.0 ) then
                   
@@ -334,8 +342,6 @@ contains
               ! We're doing perturbations to get Hessians
               call AddToMatrix ( jacobian, saveJacobian, -1.0_r8 )
               call ScaleMatrix ( jacobian, 1.0/thisPtb )
-              ! Store the deviation in the hessian
-              col = FindBlock ( hessian%col, quantity, instance )
               ! Insert this difference
               call InsertHessianPlane ( hessian, jacobian, col, element, mirror=mirrorHessian )
             end if
@@ -388,8 +394,12 @@ contains
       error = max(error,1)
       call output ( '***** At ' )
       call print_source ( source_ref(root) )
-      call output ( ' RetrievalModule complained: ' )
+      call output ( ' SidsModule complained: ' )
       select case ( code )
+      case ( badSingleMAF )
+        call output ( 'The singleMAF argument must be dimensionless', advance='yes' )
+      case ( HessianNotJacobian )
+        call output ( 'Hessian and Jacobian are not compatible.', advance='yes' )
       case ( needJacobian )
         call output ( 'A Jacobian is required if derivatives are requested.', &
           & advance='yes' )
@@ -399,8 +409,6 @@ contains
       case ( perturbationNotState )
         call output ( 'The perturbation vector is not the same type as fwdModelIn.', &
           & advance='yes' )
-      case ( badSingleMAF )
-        call output ( 'The singleMAF argument must be dimensionless', advance='yes' )
       case ( wrongDestroyJacobian )
         call output ( 'Cannot set destroyJacobian and ask for a Hessian', advance='yes' )
       end select
@@ -421,6 +429,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.55  2010/03/24 20:56:11  vsnyder
+! Minor tweaks in Hessian generation
+!
 ! Revision 2.54  2010/02/25 18:20:12  pwagner
 ! Adds support for new Hessian data type
 !
