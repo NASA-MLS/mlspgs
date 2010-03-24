@@ -1506,6 +1506,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_stamp, t+t_boolean, n+n_field_type, &
              ndp+n_spec_def, &
       begin, s+s_dumpblocks, &
+             begin, f+f_allHessians, t+t_boolean, n+n_field_type, &
              begin, f+f_allMatrices, t+t_boolean, n+n_field_type, &
              begin, f+f_colChannels, t+t_numeric, t+t_numeric_range, &
                     n+n_field_type, &
@@ -1516,6 +1517,7 @@ contains ! =====     Public procedures     =============================
                     n+n_field_type, &
              begin, f+f_details, t+t_numeric, n+n_field_type, &
              begin, f+f_diagonal, t+t_boolean, n+n_field_type, &
+             begin, f+f_hessian, s+s_hessian, n+n_field_spec, &
              begin, f+f_matrix, s+s_matrix, n+n_field_spec, &
              begin, f+f_noAbsent, t+t_boolean, n+n_field_type, &
              begin, f+f_rowChannels, t+t_numeric, t+t_numeric_range, &
@@ -1597,8 +1599,8 @@ contains ! =====     Public procedures     =============================
       begin, z+z_algebra, s+s_columnScale, s+s_combineChannels, s+s_cyclicJacobi, &
              s+s_disjointEquations, s+s_normalEquations, s+s_reflect, &
              s+s_regularization, s+s_rowScale, n+n_section+d*no_check_eq, &
-      begin, z+z_output, s+s_copy, s+s_destroy, s+s_hgrid, s+s_output, &
-             s+s_time, n+n_section /) )
+      begin, z+z_output, s+s_copy, s+s_destroy, s+s_dumpblocks, s+s_hgrid, &
+             s+s_output, s+s_time, n+n_section /) )
 
   contains
 
@@ -1620,6 +1622,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.499  2010/03/24 20:53:10  vsnyder
+! Add AllHessians and Hessians to DumpBlocks, allow DumpBlocks in Output section
+!
 ! Revision 2.498  2010/03/02 01:08:59  pwagner
 ! Added geodAltitude as a quantity type
 !
