@@ -457,6 +457,8 @@ contains ! ============= Public procedures ===================================
   end function CreateQtyTemplateFromMLSCFInfo
 
   ! --------------------------------  ConstructMinorFrameQuantity  -----
+  ! I think we should make filedatabase and chunk optional as well
+  ! because we don't need it when mifGeolocation is present -haley
   subroutine ConstructMinorFrameQuantity ( filedatabase, chunk, instrumentModule, &
     & qty, noChans, regular, instanceLen, mifGeolocation )
 
@@ -1311,6 +1313,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.159  2010/03/24 17:35:13  honghanh
+! Just a note to fix ConstructMinorFrameQuantity
+!
 ! Revision 2.158  2010/03/09 22:44:08  honghanh
 ! Remove cfm_CreateQtyTemplate, set InitQuantityTemplate, and previously private constants to public
 !
