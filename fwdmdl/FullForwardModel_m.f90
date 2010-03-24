@@ -2721,7 +2721,14 @@ contains
         ! Loop over observer phis
         do phi_i = 1, TScat%template%noInstances
 
-          if ( iwc%values(zeta_i,phi_i) <= 0.0 ) cycle ! no IWC, no scattering
+          if ( iwc%values(zeta_i,phi_i) <= 0.0 ) then ! no IWC, no scattering
+            call output ( TScat%template%phi(1,phi_i), &
+              & before='Scattering point at (' )
+            call output ( z_glgrid(zeta_f), before=',', &
+              & after=') rejected because there is no IWC there.', advance='yes' )
+            cycle
+          end if
+
           logIWC = log10(iwc%values(zeta_i,phi_i))
 
           scat_phi = TScat%template%phi(1,phi_i) * deg2rad
@@ -2733,7 +2740,16 @@ contains
                  &             eta_s(first_s:last_s)) + r_eq
 
           ! Subsurface scattering points handled by explicit angles
-          if ( scat_ht < r_eq ) cycle
+          if ( scat_ht < r_eq ) then
+            call output ( TScat%template%phi(1,phi_i), &
+              & before='Scattering point at (' )
+            call output ( z_glgrid(zeta_f), before=',' )
+            call output ( scat_ht, format='(f8.3)', &
+              & before=') rejected because its height (' )
+            call output ( r_eq, format='(f8.3)', &
+              & before=') is below the Earth surface (', after=').', advance='yes' )
+            cycle
+          end if
 
           ! Height of the ray at the phi_ref
           ref_ht = scat_ht * cos(dPhi)
@@ -4100,6 +4116,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.301  2010/02/05 03:29:19  vsnyder
+! Remove unused stuff
+!
 ! Revision 2.300  2010/02/02 01:39:06  vsnyder
 ! Move USEs closer to where the used stuff is referenced.  Don't compute
 ! theta if it trying to do so will cause an exception.  Finish applying the
