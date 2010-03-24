@@ -45,8 +45,8 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   public :: CopyMatrix, CopyMatrixValue, CreateBlock, CreateBlock_1, CreateEmptyMatrix
   public :: CyclicJacobi, DefineRCInfo, DestroyBlock, DestroyBlock_1, DestroyMatrix
   public :: DestroyMatrixInDatabase, DestroyMatrixDatabase, DestroyRCInfo, Dump, Dump_Linf
-  public :: Dump_Struct, FindBlock, FrobeniusNorm, GetActualMatrixFromDatabase, GetDiagonal
-  public :: GetDiagonal_1, GetFromMatrixDatabase, GetKindFromMatrixDatabase
+  public :: Dump_RC, Dump_Struct, FindBlock, FrobeniusNorm, GetActualMatrixFromDatabase
+  public :: GetDiagonal, GetDiagonal_1, GetFromMatrixDatabase, GetKindFromMatrixDatabase
   public :: GetMatrixElement, GetMatrixElement_1, GetVectorFromColumn
   public :: GetVectorFromColumn_1, InvertCholesky, InvertCholesky_1
   public :: K_Cholesky, K_Empty, K_Kronecker, K_Plain, K_SPD
@@ -116,6 +116,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   end interface
 
   interface Dump
+    module procedure Dump_RC
     module procedure Dump_Matrix, Dump_Matrix_Database, Dump_Matrix_in_Database
   end interface
 
@@ -1190,6 +1191,49 @@ contains ! =====     Public Procedures     =============================
       & MLSMSG_DeAllocate // "D%matrix in DestroyMatrixDatabase" )
     end subroutine DeallocateMatrix
   end subroutine DestroyMatrixDatabase
+
+  ! ----------------------------------------------------  Dump_RC  -----
+  subroutine Dump_RC ( RC, R_or_C, Details )
+    type(rc_info), intent(in) :: RC
+    character(len=*), intent(in) :: R_or_C
+    logical, intent(in) :: Details
+    call output ( 'Number of ' )
+    call output ( r_or_c )
+    call output ( ' blocks = ' )
+    call output ( rc%nb )
+    call output ( ' Vector that defines ' )
+    call output ( r_or_c )
+    call output ( 's' )
+    if ( rc%vec%name == 0 ) then
+      call output ( ' has no name', advance='yes' )
+    else
+      call output ( ': ' )
+      call display_string ( rc%vec%name, advance='yes' )
+    end if
+    call output ( 'Order of '//r_or_c//' blocks is ' )
+    if ( rc%instFirst ) then
+      call output ( 'instance, then quantity', advance='yes' )
+    else
+      call output ( 'quantity, then instance', advance='yes' )
+    end if
+    if ( details ) then
+      call output ( 'Numbers of ' )
+      call output ( r_or_c )
+      call output ( 's in each block' )
+      call output ( ':', advance='yes' )
+      call dump ( rc%nelts )
+      call output ( 'Instance indices for blocks in the ' )
+      call output ( r_or_c )
+      call output ( 's' )
+      call output ( ':', advance='yes' )
+      call dump ( rc%inst )
+      call output ( 'Quantity indices for blocks in the ' )
+      call output ( r_or_c )
+      call output ( 's' )
+      call output ( ':', advance='yes' )
+      call dump ( rc%quant )
+    end if
+  end subroutine Dump_RC
 
   ! --------------------------------------------------  FindBlock  -----
   integer function FindBlock ( RC, Quantity, Instance )
@@ -2512,49 +2556,6 @@ contains ! =====     Public Procedures     =============================
       end if
   end subroutine Dump_Matrix_in_Database
 
-  ! ----------------------------------------------------  Dump_RC  -----
-  subroutine Dump_RC ( RC, R_or_C, Details )
-    type(rc_info), intent(in) :: RC
-    character(len=*), intent(in) :: R_or_C
-    logical, intent(in) :: Details
-    call output ( 'Number of ' )
-    call output ( r_or_c )
-    call output ( ' blocks = ' )
-    call output ( rc%nb )
-    call output ( ' Vector that defines ' )
-    call output ( r_or_c )
-    call output ( 's' )
-    if ( rc%vec%name == 0 ) then
-      call output ( ' has no name', advance='yes' )
-    else
-      call output ( ': ' )
-      call display_string ( rc%vec%name, advance='yes' )
-    end if
-    call output ( 'Order of '//r_or_c//' blocks is ' )
-    if ( rc%instFirst ) then
-      call output ( 'instance, then quantity', advance='yes' )
-    else
-      call output ( 'quantity, then instance', advance='yes' )
-    end if
-    if ( details ) then
-      call output ( 'Numbers of ' )
-      call output ( r_or_c )
-      call output ( 's in each block' )
-      call output ( ':', advance='yes' )
-      call dump ( rc%nelts )
-      call output ( 'Instance indices for blocks in the ' )
-      call output ( r_or_c )
-      call output ( 's' )
-      call output ( ':', advance='yes' )
-      call dump ( rc%inst )
-      call output ( 'Quantity indices for blocks in the ' )
-      call output ( r_or_c )
-      call output ( 's' )
-      call output ( ':', advance='yes' )
-      call dump ( rc%quant )
-    end if
-  end subroutine Dump_RC
-
   ! ------------------------------------------------  Dump_Struct  -----
   subroutine Dump_Struct ( Matrix, Name, Upper )
   ! Display the structure of the kinds of the matrix blocks
@@ -2642,6 +2643,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.117  2010/03/24 20:39:12  vsnyder
+! Make Dump_RC public and part of Dump generic
+!
 ! Revision 2.116  2010/02/25 18:05:21  pwagner
 ! Conforms with changed l2pc structure
 !
