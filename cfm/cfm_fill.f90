@@ -145,7 +145,7 @@ module CFM_Fill_m
       integer :: noValues, numChans
       integer :: i,j,k
       integer :: surf, chan
-      character :: int1 = "          ", int2 = "          "
+      character(len=10) :: int1 = "          ", int2 = "          "
 
       noValues = size(values)
 
@@ -155,7 +155,7 @@ module CFM_Fill_m
             quantity%template%instanceLen * quantity%template%noInstances, int1)
          call writeIntsToChars(noValues, int2)
          call MLSMessage (MLSMSG_Error, moduleName, &
-           "Incorrect amount of data, expect " // int1 // ", has " // int2)
+           "Incorrect amount of data, expect " // trim(int1) // ", has " // trim(int2))
       end if
 
       ! need checking on the value and their units?
