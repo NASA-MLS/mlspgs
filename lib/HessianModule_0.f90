@@ -23,8 +23,8 @@ module HessianModule_0          ! Low-level Hessians in the MLS PGS suite
 
   public :: H_Absent, H_Sparse, H_Full, H_Unknown
   public :: HessianElement_T, Tuple_T
-  public :: ClearBlock, CreateBlock, Densify, DestroyBlock, InsertHessianPlane
-  public :: Multiply, OptimizeBlock, Sparsify
+  public :: ClearBlock, CreateBlock, Densify, DestroyBlock, Dump
+  public :: InsertHessianPlane, Multiply, OptimizeBlock, Sparsify
 
   integer, parameter :: H_Absent = 0    ! An absent block -- assumed zero
   integer, parameter :: H_Sparse = 1    ! A 3-way indexed sparse representation
@@ -46,9 +46,9 @@ module HessianModule_0          ! Low-level Hessians in the MLS PGS suite
     integer :: nCols1   ! Extent of second dimension of H
     integer :: nCols2   ! Extent of third dimension of H
     integer :: kind     ! One of H_Absent, H_Sparse, H_Full, H_Unknown
-    type(tuple_t), pointer :: tuples(:) => NULL() ! Some may not be filled (yet)
-    integer :: tuplesFilled ! Number of tuples filled
-    real(rm), pointer :: values(:,:,:) => NULL() ! for full explicit representation
+    type(tuple_t), pointer :: Tuples(:) => NULL() ! Some may not be filled (yet)
+    integer :: TuplesFilled = 0 ! Number of tuples filled
+    real(rm), pointer :: Values(:,:,:) => NULL() ! for full explicit representation
   end type HessianElement_T
 
   interface ClearBlock
@@ -64,7 +64,11 @@ module HessianModule_0          ! Low-level Hessians in the MLS PGS suite
   end interface
 
   interface DestroyBlock
-    module procedure DestroyHessianBlock_0
+    module procedure ClearHessianBlock_0
+  end interface
+
+  interface Dump
+    module procedure Dump_Hessian_Block
   end interface
 
   interface InsertHessianPlane
@@ -112,7 +116,7 @@ contains
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
       & "Attempt to agument an already densified Hessian block" )
 
-    if ( h%kind == h_absent ) then
+    if ( h%kind == h_absent .or. .not. associated(h%tuples) ) then
       h%kind = h_sparse
       allocate ( h%tuples ( 0 ), stat=stat )
       call test_allocate ( stat, moduleName, "H%Tuples", &
@@ -131,7 +135,7 @@ contains
       else
         extra = N
       end if
-      
+
       ! Create new tuple
       allocate ( H%tuples ( size ( oldTuple ) + extra ), stat=stat )
       call test_allocate ( stat, moduleName, "H%Tuple", &
@@ -153,14 +157,14 @@ contains
     type(HessianElement_T), intent(inout) :: H
     integer :: Stat
 
-    if ( h%kind == h_sparse ) then
+    if ( associated(h%tuples) ) then
       deallocate ( h%tuples, stat=stat )
       call test_deallocate ( stat, moduleName, "H%Tuples in DestroyHessianBlock" )
     end if
 
-    if ( h%kind == h_full ) &
-      & call deallocate_test ( h%values, moduleName, "H%H in DestroyHessianBlock" )
+    call deallocate_test ( h%values, moduleName, "H%H in DestroyHessianBlock" )
 
+    h%tuplesFilled = 0
     h%kind = h_absent
 
   end subroutine ClearHessianBlock_0
@@ -179,7 +183,7 @@ contains
 
     integer :: STAT                     ! Status from allocate
 
-    call DestroyBlock ( H )
+    call clearBlock ( H )
 
     h%nRows = nRows
     h%nCols1 = nCols1
@@ -230,25 +234,59 @@ contains
 
   end subroutine Densify_Hessian
 
-  ! ---------------------------------------------- Destroy_Hessian -----
-  subroutine DestroyHessianBlock_0 ( H )
-  ! Destroy a HessianElement_T structure
+  ! -----------------------------------------  Dump_Hessian_Block  -----
+  subroutine Dump_Hessian_Block ( H, Name, Details, Indices, Clean )
+    use Dump_0, only: Dump
+    use Output_m, only: Output
+    type(HessianElement_T), intent(in) :: H
+    character(len=*), intent(in), optional :: NAME
+    integer, intent(in), optional :: Details ! Print details, 0 => minimal,
+                                             ! 1 => values, default 1
+    integer, intent(in), optional :: Indices(:) ! 3 indices of the block
+    logical, intent(in), optional :: CLEAN   ! print \size
 
-    use Allocate_Deallocate, only: Deallocate_Test, Test_Deallocate
+    integer :: I
+    integer :: My_Details
+    logical :: My_Clean
 
-    type(HessianElement_T), intent(inout) :: H
+    my_Details = 1
+    if ( present(details) ) my_Details = details
+    my_Clean = .false.
+    if ( present(clean) ) my_Clean = clean
 
-    integer :: Stat
-
-    if ( h%kind == h_sparse ) then
-      deallocate ( h%tuples, stat=stat )
-      call test_deallocate ( stat, moduleName, "H%Tuples in DestroyHessianBlock" )
+    if ( present(name) ) call output ( name, advance='yes' )
+    if ( present(indices) ) then
+      call output ( indices(1), before = ' (', after=', ' )
+      call output ( indices(2), after=', ' )
+      call output ( indices(3), after=')' )
     end if
+    call output ( ' has ' )
+    call output ( h%nRows, after=' Rows, ' )
+    call output ( h%nCols1, after = ' First Columns, ' )
+    call output ( h%nCols2, after = ' Second Columns, is ' )
+    select case ( h%kind )
+    case ( h_absent )
+      call output ( 'absent', advance='yes' )
+    case ( h_sparse )
+      call output ( size(h%tuples), before='sparse with ', &
+        & after=' nonzero elements', advance='yes' )
+      if ( my_details > 0 ) then
+        do i = 1, size(h%tuples)
+          call output ( h%tuples(i)%i, format='(i5)' )
+          call output ( h%tuples(i)%j, format='(i5)' )
+          call output ( h%tuples(i)%k, format='(i5)' )
+          call output ( '   ' )
+          call output ( h%tuples(i)%h, advance='yes' )
+        end do
+      end if
+    case ( h_full )
+      call output ( 'full', advance='yes' )
+      if ( details > 0 ) call dump ( h%values, options=merge('c',' ',my_clean) )
+    case ( h_unknown )
+      call output ( 'of unknown form, nothing to dump', advance='yes' )
+    end select
 
-    if ( h%kind == h_full ) &
-      & call deallocate_test ( h%values, moduleName, "H%H in DestroyHessianBlock" )
-
-  end subroutine DestroyHessianBlock_0
+  end subroutine Dump_Hessian_Block
 
   ! ----------------------------------- Hessian_Vec_Vec_Multiply_D -----
   subroutine Hessian_Vec_Vec_Multiply_D ( H, V1, V2, P, Update )
@@ -360,6 +398,8 @@ contains
       h%tuplesFilled = n
     end if
 
+    call optimizeBlock ( h )
+
   end subroutine InsertHessianPlane_Array
 
   ! -------------------------------------------- InsertHessianPlane_Matrix ---
@@ -374,7 +414,7 @@ contains
     integer, intent(in) :: K
     logical, intent(in), optional :: MIRRORING
 
-    integer :: I, J, P, Q, R, N, B
+    integer :: I, J, P, R, N
     logical :: MYMIRRORING
     type ( tuple_t ) :: oneTuple
 
@@ -421,26 +461,20 @@ contains
           else
             oneTuple%j = j
           end if
-          if ( j == 1 ) then
-            p = 1
-            b = plane%r2(j)
-          else
-            p = plane%r2(j-1) + 1
-            b = plane%r2(j) - p + 1
-          end if
 
-          do i = plane%r1(j), plane%r1(j) + b
+          i = plane%r1(j) ! Row number of first nonzero
+          do p = plane%r2(j-1) + 1, plane%r2(j) ! Indices in values of nonzeros
             oneTuple%i = i
             oneTuple%h = plane%values ( p, 1 )
-            p = p + 1
+            i = i + 1
+            if ( h%kind == H_Sparse ) then
+              n = n + 1
+              h%tuples(n) = oneTuple
+            else
+!print*,'Stats: ', associated ( h%values ), oneTuple%i, oneTuple%j, oneTuple%k
+              h%values ( oneTuple%i, oneTuple%j, oneTuple%k ) = oneTuple%h
+            end if
           end do
-          n = n + 1
-          if ( h%kind == H_Sparse ) then
-            h%tuples(n) = oneTuple
-          else
-            print*,'Stats: ', associated ( h%values ), oneTuple%i, oneTuple%j, oneTuple%k
-            h%values ( oneTuple%i, oneTuple%j, oneTuple%k ) = oneTuple%h
-          end if
         end do
       case ( M_Column_Sparse )
         do j = 1, plane%nCols
@@ -449,18 +483,11 @@ contains
           else
             oneTuple%j = j
           end if
-          if ( j == 1 ) then
-            p = 1
-            q = plane%r1(1)
-          else
-            p = plane%r1(j-1)
-            q = plane%r1(j)
-          end if
-          do r = p, q
-            oneTuple%i = plane%r2 ( r )
+          do r = plane%r1(j-1) + 1, plane%r1(j) ! Indices of nonzeros and their row numbers
+            oneTuple%i = plane%r2 ( r ) ! Row number of nonzero
             oneTuple%h = plane%values ( r, 1 )
-            n = n + 1
             if ( h%kind == H_Sparse ) then
+              n = n + 1
               h%tuples(n) = oneTuple
             else
               h%values ( oneTuple%i, oneTuple%j, oneTuple%k ) = oneTuple%h
@@ -468,15 +495,18 @@ contains
           end do
         end do
       end select
-      h%tuplesFilled = n
+      if ( h%kind == H_Sparse ) h%tuplesFilled = n
     end if
+
+    call optimizeBlock ( h )
 
   end subroutine InsertHessianPlane_Matrix
 
   ! ------------------------------------------------- OptimizeBlock ----
-  recursive subroutine OptimizeBlock ( H )
+  subroutine OptimizeBlock ( H )
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, &
       & Test_Allocate, Test_Deallocate
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
     use Sort_M, only: SORTP
     ! Delete any 'zero' elements and reorder with i as the slowest changing index
     ! (While this is unconventional, it optimizes for invocations of the 2nd order
@@ -484,28 +514,45 @@ contains
     type (HessianElement_T), intent(inout) :: H
 
     ! Local variables
-    logical :: ANYDUPLICATES            ! Used to keep track of duplicates
     type (Tuple_T), dimension(:), pointer :: NEWTUPLES ! Workspace
     integer, dimension(:), pointer :: ORDER ! The new order for the tuples
     integer, dimension(:), pointer :: RANK ! A 'cost' used to generate rank
     integer :: N        ! Number to end up with
-    integer :: I,J      ! Loop counters
+    integer :: I,J,K    ! Loop counters
     integer :: MaxRank  ! Used to place a tuple out of the running
     integer :: STATUS   ! Flag from allocate
 
-    if ( h%Kind == H_Absent ) return
-    if ( h%kind == H_Sparse ) call Sparsify_Hessian ( H )
+    if ( h%kind == h_Absent .or. h%kind == h_Unknown ) return
+    if ( h%kind == h_Full ) then
+      n = count(h%values /= 0.0)
+      if ( 2.5 * n > size(h%values) ) return ! sparsifying won't improve things
+        ! Assuming integers take half the space of real(rm), each tuple takes
+        ! 2.5 times the space of a single value.
+      call Sparsify_Hessian ( H )
+      if ( h%kind /= h_Sparse ) return
+    end if
     ! OK, so now it must be sparse
 
-    ! How many will I end up with
-    n = count ( h%tuples ( 1:h%tuplesFilled ) % h /= 0 )
-    if ( n == 0 ) then
-      call ClearBlock ( H )
+    if ( h%tuplesFilled == 0 ) then
+      call clearBlock ( h )
       return
     end if
 
-    call Allocate_Test ( rank,  h%tuplesFilled, "Rank in OptimizeBlock", ModuleName )
-    call Allocate_Test ( order, h%tuplesFilled, "Order in OptimizeBlock", ModuleName )
+    if ( .not. associated(h%tuples) ) then
+      call MLSMessage ( MLSMSG_Warning, moduleName, &
+        & "How do we get h%tuples disassociated but h%tuplesFilled > 0?" )
+      call clearBlock ( h )
+    end if
+
+    ! How many will I end up with at most
+    n = count ( h%tuples ( 1:h%tuplesFilled ) % h /= 0 )
+    if ( n == 0 ) then
+      call clearBlock ( h )
+      return
+    end if
+
+    call allocate_Test ( rank,  h%tuplesFilled, "Rank in OptimizeBlock", ModuleName )
+    call allocate_Test ( order, h%tuplesFilled, "Order in OptimizeBlock", ModuleName )
     rank = h%tuples(1:h%tuplesFilled)%k + &
       & h%nCols2 * ( h%tuples(1:h%tuplesFilled)%j + &
       &   h%nCols1 * h%tuples(1:h%tuplesFilled)%i )
@@ -516,41 +563,55 @@ contains
       rank = maxRank
     end where
 
-    allocate ( newTuples ( N ), stat=status )
-    call test_allocate ( status, moduleName, "newTuples", (/1/), (/N/) )
-    h%tuplesFilled = N
-    
-    call SortP ( rank, 1, n, order )
+    call SortP ( rank, 1, h%tuplesFilled, order )
 
-    ! Stor the tuples
-    do i = 1, n
-      newTuples(i) = h%tuples(order(i))
-    end do
+    ! If the first sorted one has a zero value, they all do, since zeros
+    ! were given maxRank.
+    if ( h%tuples(order(1))%h == 0.0 ) then
+      call clearBlock ( h )
+    else
 
-    deallocate ( h%tuples, stat=status )
-    call test_deallocate ( status, moduleName, "h%tuples" )
+      allocate ( newTuples ( n ), stat=status )
+      call test_allocate ( status, moduleName, "newTuples", (/1/), (/n/) )
+
+      ! Store the sorted tuples while eliminating duplicates
+      newTuples(1) = h%tuples(order(1))
+      i = 1 ! The one to test for duplication
+      k = 1 ! How many unique ones so far
+o:    do while ( i < n )
+        do j = i+1, n ! The one to test whether it's a duplicate
+          if ( rank(order(i)) /= rank(order(j)) ) then ! Found next unique one
+            i = j
+            k = k + 1
+            newTuples(k) = h%tuples(order(j)) ! Store the next unique one
+            cycle o
+          end if
+        end do
+        exit ! The ones on the end are duplicates
+      end do o
+
+      deallocate ( h%tuples, stat=status )
+      call test_deallocate ( status, moduleName, "h%tuples" )
+
+      h%tuples => newTuples
+      h%tuplesFilled = k
+
+      ! Densify if that would take less space
+      if ( 2.5 * n > h%nRows * h%nCols1 * h%nCols2 ) then
+        call densify_Hessian ( h )
+      else if ( n > 1.2 * k ) then
+        ! We have an inordinately greater number of tuples than needed
+        allocate ( newTuples ( k ), stat=status )
+        call test_allocate ( status, moduleName, "newTuples", (/1/), (/k/) )
+        newTuples(:k) = h%tuples(:k)
+        deallocate ( h%tuples, stat=status )
+        call test_deallocate ( status, moduleName, "h%tuples" )
+        h%tuples => newTuples
+      end if
+    end if
 
     call Deallocate_Test ( rank, "Rank in OptimizeBlock", ModuleName )
     call Deallocate_Test ( order, "Order in OptimizeBlock", ModuleName )
-
-    h%tuples => newTuples    
-
-    ! Now, look for duplicates (we only need to worry about pairs, but let's be careful)
-    anyDuplicates = .false.
-    do i = 1, n - 1
-      j = i + 1
-      innerLoop: do
-        if ( &
-          & h%tuples(i)%i /= h%tuples(j)%i .or. &
-          & h%tuples(i)%j /= h%tuples(j)%j .or. &
-          & h%tuples(i)%k /= h%tuples(j)%k ) exit innerLoop
-        h%tuples(j)%h = 0
-        anyDuplicates = .true.
-        j = j + 1
-        if ( j == n+1 ) exit innerLoop
-      end do innerLoop
-    end do
-    if ( anyDuplicates ) call OptimizeBlock ( h )
 
   end subroutine OptimizeBlock
 
@@ -563,7 +624,7 @@ contains
     type (HessianElement_T), intent(inout) :: H
 
     if ( associated(h%values) ) call sparsify ( h%values, h )
-    call deallocate_test ( h%values, "H%H in Sparsify_Hessian", moduleName )
+    call deallocate_test ( h%values, "H%Values in Sparsify_Hessian", moduleName )
 
   end subroutine Sparsify_Hessian
 
@@ -571,17 +632,12 @@ contains
   subroutine Sparsify_Hessian_Array_D ( H_Array, H )
   ! Create a sparse representation of H_Array in H.
 
-    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use Allocate_Deallocate, only: Deallocate_Test, Test_Allocate, Test_Deallocate
     integer, parameter :: RK = kind(0.0d0)
     real(rk), intent(in) :: H_Array(:,:,:) ! H(i,j,k)
     type(HessianElement_T), intent(inout) :: H    ! inout so we can deallocate tuple
 
     integer :: I, J, K, L, N, Stat
-
-    if ( h%kind == H_Sparse ) then
-      deallocate ( h%tuples, stat=stat )
-      call test_deallocate ( stat, moduleName, "H%Tuple" )
-    end if
 
     include 'Sparsify_Hessian_Array.f9h'
 
@@ -591,17 +647,12 @@ contains
   subroutine Sparsify_Hessian_Array_S ( H_Array, H )
   ! Create a sparse representation of H_Array in H.
 
-    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use Allocate_Deallocate, only: Deallocate_Test, Test_Allocate, Test_Deallocate
     integer, parameter :: RK = kind(0.0e0)
     real(rk), intent(in) :: H_Array(:,:,:) ! H(i,j,k)
     type(HessianElement_T), intent(inout) :: H    ! inout so we can deallocate tuple
 
     integer :: I, J, K, L, N, Stat
-
-    if ( h%kind == H_Sparse ) then
-      deallocate ( h%tuples, stat=stat )
-      call test_deallocate ( stat, moduleName, "H%Tuple" ) 
-    end if
 
     include 'Sparsify_Hessian_Array.f9h'
 
@@ -620,6 +671,12 @@ contains
 end module HessianModule_0
 
 ! $Log$
+! Revision 2.3  2010/03/24 20:36:24  vsnyder
+! Add Dump_Hessian_Block.  Replace specific DestroyHessianBlock_0 with
+! ClearHessianBlock_0 but keep generic DestroyBlock.  Add OptimizeBlock
+! at the end of InsertHessianPlane_Array.  Simplify InsertHessianPlane_Matrix.
+! Simplify OptimizeBlock.
+!
 ! Revision 2.2  2010/02/25 18:34:11  pwagner
 ! Fixed bug in first commit
 !

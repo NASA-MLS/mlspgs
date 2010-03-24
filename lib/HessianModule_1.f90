@@ -29,18 +29,23 @@ module HessianModule_1          ! High-level Hessians in the MLS PGS suite
   private
 
   type :: Hessian_T
-    integer :: Name = 0  ! Sub-rosa index of hHessian name, if any, else zero
+    integer :: Name = 0  ! Sub-rosa index of Hessian name, if any, else zero
     integer :: Where = 0 ! Source_ref for creation if by L2CF
     type(RC_Info) :: Col, Row  ! Column and row info
     type(HessianElement_T), dimension(:,:,:), pointer :: BLOCK => NULL()
   end type Hessian_T
  
   public :: AddHessianToDatabase, CreateEmptyHessian, DestroyHessian
-  public :: DestroyHessianDatabase, Hessian_T
-  public :: InsertHessianPlane, Multiply, NullifyHessian, StreamlineHessian
+  public :: DestroyHessianDatabase, Dump, Hessian_T
+  public :: InsertHessianPlane, Multiply, NullifyHessian
+  public :: OptimizeHessian, StreamlineHessian
 
   interface CreateBlock
     module procedure CreateHessianBlock_1
+  end interface
+
+  interface Dump
+    module procedure Dump_Hessian, Dump_Hessian_Database
   end interface
 
   interface InsertHessianPlane
@@ -55,6 +60,9 @@ module HessianModule_1          ! High-level Hessians in the MLS PGS suite
     module procedure NullifyHessian_1
   end interface
 
+  interface OptimizeHessian
+    module procedure OptimizeHessian_1
+  end interface
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -192,6 +200,115 @@ contains
     end if
   end subroutine DestroyHessianDatabase
 
+  ! -----------------------------------------------  Dump_Hessian  -----
+  subroutine Dump_Hessian ( H, Name, Details, Clean )
+    use HessianModule_0, only: Dump
+    use Lexer_core, only: Print_Source
+    use MatrixModule_1, only: Dump_RC
+    use Output_m, only: Output, NewLine
+    use String_Table, only: Display_String
+
+    type (Hessian_T), intent(in) :: H
+    character(len=*), intent(in), optional :: NAME
+    integer, intent(in), optional :: Details ! Print details, default 1
+      ! <= -3 => no output
+      ! -2 => Just name, size, and where created
+      ! -1 => Just row and col info for each block
+      ! 0 => Dimensions of each block,
+      ! 1 => Values in each block
+    logical, intent(in), optional :: CLEAN   ! print \size
+
+    integer :: I, J, K    ! Subscripts, loop inductors
+    integer :: My_Details
+    integer :: TotalSize  ! of all blocks
+
+    my_details = 1
+    if ( present(details) ) my_details = details
+    if ( my_details <= -3 ) return
+    if ( present(name) ) call output ( name )
+    if ( h%name > 0 ) then
+      if ( present(name) ) call output ( ', ' )
+      call output ( 'Name = ' )
+      call display_string ( h%name )
+    end if
+    if ( h%where > 0 ) then
+      call output ( ', created at ' )
+      call print_source ( h%where )
+    end if
+    call newLine
+    if ( my_details > -2 ) then
+      call dump_rc ( h%row, 'row', .true. )
+      call dump_rc ( h%col, 'col', .true. )
+    end if
+    if ( .not. associated(h%block) ) then
+      call output ( '      (the hessian has been destroyed)', advance='yes' )
+      return
+    end if
+    totalSize = 0
+    do k = 1, h%col%nb
+      do j = 1, h%col%nb
+        do i = 1, h%row%nb
+          select case ( h%block(i,j,k)%kind )
+          case ( h_sparse )
+            if ( associated(h%block(i,j,k)%tuples) ) &
+              & totalSize = totalSize + h%block(i,j,k)%TuplesFilled
+          case ( h_full )
+            if ( associated(h%block(i,j,k)%values) ) &
+              & totalSize = totalSize + size(h%block(i,j,k)%values)
+          end select
+          if ( my_details < 0 ) cycle
+          call output ( i, before='Block at row ' )
+          call output ( j, before=' and columns ' )
+          call output ( k, before=', ', after=' (' )
+          if ( h%row%vec%quantities(h%row%quant(i))%template%name /= 0 ) then
+            call display_string ( &
+              & h%row%vec%quantities(h%row%quant(i))%template%name )
+            call output ( ':' )
+          else
+            call output ( '<No template>:' )
+          end if
+          call output ( h%row%Inst(i) )
+          call output (' , ')
+          if ( h%col%vec%quantities(h%col%quant(j))%template%name /= 0 ) then
+            call display_string ( &
+              & h%col%vec%quantities(h%col%quant(j))%template%name )
+            call output ( ':' )
+          else
+            call output ( '<No template>:' )
+          end if
+          call output ( h%col%Inst(j) )
+          call output (' , ')
+          if ( h%col%vec%quantities(h%col%quant(k))%template%name /= 0 ) then
+            call display_string ( &
+              & h%col%vec%quantities(h%col%quant(k))%template%name )
+            call output ( ':' )
+          else
+            call output ( '<No template>:' )
+          end if
+          call output ( h%col%Inst(k) )
+          call output ( ' )' )
+          call newLine
+          call dump ( h%block(i,j,k), details=my_details, clean=clean )
+        end do
+      end do
+    end do
+
+  end subroutine Dump_Hessian
+
+  ! --------------------------------------  Dump_Hessian_Database  -----
+  subroutine Dump_Hessian_Database ( H, Details, Clean )
+    type (Hessian_T), intent(in) :: H(:)
+    integer, intent(in), optional :: Details ! See Dump_Hessian
+    logical, intent(in), optional :: CLEAN   ! print \size
+
+    integer :: I
+
+    do i = 1, size(h)
+      call dump ( h(i), details=details, clean=clean )
+    end do
+
+  end subroutine Dump_Hessian_Database
+
   ! ------------------------------- Hessian_Vector_Vector_Multiply -----
   subroutine Hessian_Vector_Vector_Multiply ( H, V, P, Update )
   !{ Multiply a Hessian {\tt H} by {\tt V} twice, with a factor of $\frac12$,
@@ -242,7 +359,7 @@ contains
   ! ---------------------------------- InsertHessianPlane_1 ----
   subroutine InsertHessianPlane_1 ( H, M, B, EL, MIRROR )
     ! Insert matrix M as a plane (block B, element EL) of the Hessian H
-    ! If set, populate the transpose set also
+    ! If Mirror is set, populate the transpose set also
     use HessianModule_0, only: InsertHessianPlane
     use MatrixModule_1, only: Matrix_T
     ! Dummy arguments
@@ -259,7 +376,7 @@ contains
     myMirror = .false.
     if ( present ( mirror ) ) myMirror = mirror
 
-    ! Check that the jacobian and hessian match
+    ! Check that the Jacobian and Hessian match
     if ( h%col%vec%template%name /= m%col%vec%template%name &
       & .or. h%row%vec%template%name /= m%row%vec%template%name &
       & .or. (h%col%instFirst .neqv. m%col%instFirst) &
@@ -271,9 +388,10 @@ contains
     do rb = 1, H%row%nb
       do cb = 1, H%col%nb
         call InsertHessianPlane ( H%block(rb,cb,b), M%block(rb,cb), el )
-        if ( myMirror ) &
-          & call InsertHessianPlane ( H%block(rb,b,cb), M%block(rb,cb), &
-          & el, mirroring=.true. )
+        if ( myMirror ) then
+          call InsertHessianPlane ( H%block(rb,b,cb), M%block(rb,cb), el, &
+          & mirroring=.true. )
+        end if
       end do
     end do
     
@@ -290,6 +408,20 @@ contains
     call nullifyRCInfo ( h%row )
     nullify ( h%block )
   end subroutine NullifyHessian_1
+
+  ! -------------------------------------  OptimizeHessian_1  -----
+  subroutine OptimizeHessian_1 ( H )
+  ! Get rid of duplicates and zeroes
+    type (Hessian_T), intent(inout) :: H
+    integer :: I, J, K
+    do k = lbound(h%block,3), ubound(h%block,3)
+      do j = lbound(h%block,2), ubound(h%block,2)
+        do i = lbound(h%block,1), ubound(h%block,1)
+          call optimizeBlock ( h%block(i,j,k) )
+        end do
+      end do
+    end do
+  end subroutine OptimizeHessian_1
 
   ! -------------------------------------- StreamlineHessian ------
   subroutine StreamlineHessian ( H, scaleHeight, geodAngle )
@@ -327,9 +459,9 @@ contains
             call ClearBlock ( hb )
           else
             ! Now clear elements on vertical grounds, but only for simple quantities
-            if ( .not. q1%coherent .or. .not. q2%coherent ) continue
+            if ( .not. q1%coherent .or. .not. q2%coherent ) cycle
             if ( q1%verticalCoordinate /= l_zeta .or. &
-              &  q2%verticalCoordinate /= l_zeta ) continue
+              &  q2%verticalCoordinate /= l_zeta ) cycle
 
             select case ( hb%kind )
             case ( h_absent )
@@ -373,6 +505,9 @@ contains
 end module HessianModule_1
 
 ! $Log$
+! Revision 2.3  2010/03/24 20:38:14  vsnyder
+! Add Dump and Optimize.  Replace 'continue' with 'cycle'.
+!
 ! Revision 2.2  2010/02/25 21:14:33  pwagner
 ! Replaced non-standard component separator '.' with '%'
 !
