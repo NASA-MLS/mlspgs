@@ -322,7 +322,8 @@ contains
           & call dumpCommand ( key, forwardModelConfigs=configDatabase, &
           & vectors=vectorDatabase, FileDataBase=FileDataBase )
       case ( s_dumpblocks )
-        if ( .not. SKIPRETRIEVAL ) call DumpBlocks ( key, matrixDatabase )
+        if ( .not. SKIPRETRIEVAL ) &
+          & call DumpBlocks ( key, matrixDatabase, hessianDatabase )
       case ( s_flagCloud )
         if ( toggle(gen) .and. levels(gen) > 0 ) &
           & call trace_begin ( "Retrieve.flagCloud", root )
@@ -2810,6 +2811,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.309  2010/03/24 20:56:46  vsnyder
+! Add Hessian database to DumpBlocks call
+!
 ! Revision 2.308  2010/02/25 18:19:27  pwagner
 ! Adds support for new Hessian database
 !
