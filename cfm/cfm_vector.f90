@@ -1,4 +1,4 @@
-module CFM_Vector
+module CFM_Vector_m
    use VectorsModule, only: Vector_T, VectorTemplate_T, VectorValue_T, &
                             DestroyVectorInfo, GetVectorQtyByTemplateIndex, &
                             Dump

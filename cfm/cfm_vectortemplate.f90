@@ -1,4 +1,4 @@
-module CFM_VectorTemplate
+module CFM_VectorTemplate_m
    use VectorsModule, only: VectorTemplate_T, NullifyVectorTemplate, &
                             DestroyVectorTemplateInfo, Dump
    use QuantityTemplates, only: QuantityTemplate_T
@@ -16,6 +16,8 @@ module CFM_VectorTemplate
 
    contains
 
+   ! qtyTemplateDB is a 1-based, 1-dimensional array of QuantityTemplate_T
+   ! selectedQty is a list of the array indices of the chosen quantity templates.
    type(VectorTemplate_T) function CreateVectorTemplate (qtyTemplateDB, selectedQty) &
          result (vecTemplate)
 

@@ -1,4 +1,4 @@
-module CFM_VGrid
+module CFM_VGrid_m
    use VGridsDatabase, only: VGrid_T, NullifyVGrid, &
                              DestroyVGridContents, Dump
    use MLSCommon, only: r8
@@ -19,6 +19,10 @@ module CFM_VGrid
 
    contains
 
+   ! Create a VGrid, from a given formula, a starting value, a type
+   ! (currently only supported logarithmic type)
+   ! The format of formula is "number_of_surfaces:num_decades_between_surfaces".
+   ! For example, "37:6" or "25:8,12:6".
    type(VGrid_T) function CreateVGrid (coordinate, type, start, &
                  formula, unit) result (vGrid)
 

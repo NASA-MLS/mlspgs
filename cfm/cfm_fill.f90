@@ -1,5 +1,5 @@
-module CFM_Fill
- 
+module CFM_Fill_m
+
    use Init_Tables_Module, only: L_LOSVEL, &
        L_L1BMIF_TAI, L_L1BMAFBASELINE, &
        L_ECRTOFOV, L_PTAN, L_ORBITINCLINATION, &
@@ -15,7 +15,8 @@ module CFM_Fill
    use MLSSignals_m, only: GetSignalName, GetModuleName
    use BitStuff, only: NegativeIfBitPatternSet
    use Chunks_m, only: MLSChunk_T
-  
+   use MLSStrings, only: writeIntsToChars
+
    implicit none
 
    public :: ExplicitFillVectorQuantity
@@ -24,6 +25,8 @@ module CFM_Fill
    character(len=20) :: moduleName="CFM_Fill"
 
    contains
+
+   ! This is an incomplete subroutine
    subroutine FillVectorQuantityFromL1B (quantity, chunk, filedatabase)
       type(VectorValue_T), intent(inout) :: quantity
       type(MLSChunk_T), intent(in) :: chunk
@@ -54,7 +57,7 @@ module CFM_Fill
             call GetModuleName (quantity%template%instrumentModule, nameString)
             nameString = AssembleL1BQtyName('MIF_TAI', hdf_version, .false., &
                  trim(nameString))
-         else 
+         else
             nameString = 'MIF_TAI'
          end if
       case (l_losVel)
@@ -132,6 +135,9 @@ module CFM_Fill
 
    end subroutine
 
+   ! Fill the quantity with given values.
+   ! Note that the amount of values provided must be equal to
+   ! quantity%template%instanceLen * quantity%template%noInstances
    subroutine ExplicitFillVectorQuantity (quantity, values)
       type(VectorValue_T), intent(inout) :: quantity
       real(r8), dimension(:), intent(in) :: values
@@ -139,22 +145,20 @@ module CFM_Fill
       integer :: noValues, numChans
       integer :: i,j,k
       integer :: surf, chan
+      character :: int1 = "          ", int2 = "          "
 
       noValues = size(values)
 
       if (noValues /= quantity%template%instanceLen * &
                 quantity%template%noInstances) then
-         ! need to find out how to convert integer to char to write
-         ! better error message here
-         print *, "not the right amount of data, expect ", &
-                  quantity%template%instanceLen * quantity%template%noInstances, &
-                  ", has ", noValues
+         call writeIntsToChars( &
+            quantity%template%instanceLen * quantity%template%noInstances, int1)
+         call writeIntsToChars(noValues, int2)
          call MLSMessage (MLSMSG_Error, moduleName, &
-           "Incorrect amount of data")
+           "Incorrect amount of data, expect " // int1 // ", has " // int2)
       end if
 
       ! need checking on the value and their units?
-
       numChans = quantity%template%instanceLen / quantity%template%noSurfs
       if (numChans /= quantity%template%noChans) then
          call MLSMessage (MLSMSG_Error, moduleName, &

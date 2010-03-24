@@ -1,4 +1,4 @@
-module CFM_FGrid
+module CFM_FGrid_m
    use FGrid, only: FGrid_T, nullifyFGrid, &
                     DestroyFGridContents, Dump
    use Allocate_Deallocate, only : allocate_test, Deallocate_test

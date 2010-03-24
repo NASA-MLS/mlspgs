@@ -1,4 +1,4 @@
-module CFM_QuantityTemplate
+module CFM_QuantityTemplate_m
    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, Test_Allocate
    use FGrid, only: fGrid_T
    use HGridsDatabase, only: hGrid_T
@@ -79,6 +79,8 @@ module CFM_QuantityTemplate
    contains
 
    ! This subroutine design is prone to bugs, I'll fix it when I got some time. -haley
+
+   ! Creating a quantity based on the optional input this subroutine is provided with.
    type(QuantityTemplate_T) function CreateQtyTemplate (type, filedatabase, chunk, &
         avgrid, ahgrid, afgrid, qInstModule, qMolecule, qLogBasis, qMinValue, qSignal, &
         qRadiometer, qBadValue, mifGeolocation) result(qty)
@@ -108,6 +110,7 @@ module CFM_QuantityTemplate
       type(Signal_T) :: signalInfo
       integer :: quantityType, noChans, sideband, signal, radiometer
 
+      ! Executables
       call NullifyQuantityTemplate(qty)
       qty%instrumentModule = 0
       call GetQtyTypeIndex(type, quantityType)
@@ -262,11 +265,18 @@ module CFM_QuantityTemplate
 
       ! Now do the setup for the different families of quantities
       if (qty%minorFrame) then
+      if (.not. present(mifGeoLocation) .and. &
+          .not. (present(filedatabase) .and. present(chunk))) &
+            call MLSMessage(MLSMSG_Error, ModuleName, &
+            'Need either mifGeolocation or both filedatabase and ' &
+            // 'chunk to create minor frame quantity')
          call ConstructMinorFrameQuantity (filedatabase, chunk, qty%instrumentModule, &
               qty, noChans=noChans, regular=qty%regular, mifGeoLocation=mifGeoLocation)
       else if (properties(p_majorFrame)) then
          if (.not. present(mifGeoLocation)) &
             call MLSMessage(MLSMSG_Error, moduleName, "Missing needed mifGeoLocation")
+         if (.not. present(chunk)) &
+            call MLSMessage(MLSMSG_Error, moduleName, "Need chunk to create major frame quantity")
          ! Setup a major frame quantity
          call ConstructMajorFrameQuantity (chunk, qty%instrumentModule, qty, &
               noChans, mifGeoLocation)
@@ -408,7 +418,7 @@ module CFM_QuantityTemplate
     if ( present ( extra ) ) call display_string ( lit_indices ( extra ), strip=.true. )
     call output ( '', advance='yes' )
     if ( mySeverity == 'fatal') &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, 'Problem in Construct' )
+      & call MLSMessage ( MLSMSG_Error, ModuleName, 'Problem in creating quantity' )
   end subroutine Announce_Error
 
 end module
