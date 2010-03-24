@@ -35,8 +35,8 @@ module L2PC_m
     & GETACTUALMATRIXFROMDATABASE, DUMP_STRUCT, COPYMATRIXVALUE
   use MLSCommon, only: R8, R4, MLSFile_T
   use MLSFiles, only: DumpMLSFile => Dump
-  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, &
-    & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE
+  use MLSMessageModule, only: MLSMESSAGE, &
+    & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, MLSMSG_ERROR
   use MLSSets, only: FindFirst
   use MLSSignals_m, only: GETSIGNALNAME
   use MLSStringLists, only: switchDetail
@@ -58,7 +58,7 @@ module L2PC_m
 
   implicit NONE
   private
-  
+
   public :: AddBinSelectorToDatabase, AddL2PCToDatabase, AdoptVectorTemplate, &
     & binSelector_T, BinSelectors, CreateDefaultBinSelectors, &
     & DefaultSelector_FieldAzimuth, DefaultSelector_Latitude, &
@@ -150,12 +150,12 @@ contains ! ============= Public Procedures ==========================
 
   ! ------------------------------------  Add fileID to database ----
   integer function AddFileIDToDatabase ( Database, Item )
-    
+
     ! This function simply adds a fileID  to a database of this type
-    
+
     integer, dimension(:), pointer :: Database
     integer :: Item
-    
+
     integer, dimension(:), pointer :: TempDatabase
 
     include "addItemToDatabase.f9h"
@@ -165,12 +165,12 @@ contains ! ============= Public Procedures ==========================
 
   ! ------------------------------------  Add l2pc to database ----
   integer function AddL2PCToDatabase ( Database, Item )
-    
+
     ! This function simply adds an l2pc  to a database of said l2pc s.
-    
+
     type(L2PC_T), dimension(:), pointer :: Database
     type(L2PC_T) :: Item
-    
+
     type(L2PC_T), dimension(:), pointer :: TempDatabase
 
     include "addItemToDatabase.f9h"
@@ -285,11 +285,11 @@ contains ! ============= Public Procedures ==========================
           ! fortran, IDL pays attention
           call get_string ( qt%name, line )
           call outputNamedValue( 'quantity name', trim(line) )
-          
+
           ! Write quantity type
           call get_string ( lit_indices(qt%quantityType), line )
           call outputNamedValue( 'quantity type', trim(line) )
-          
+
           ! Write other info associated with type
           select case ( qt%quantityType )
           case (l_vmr)
@@ -299,7 +299,7 @@ contains ! ============= Public Procedures ==========================
             call GetSignalName ( qt%signal, line, sideband=qt%sideband )
             call outputNamedValue( 'signal', trim(line) )
           end select
-          
+
           ! Write out the dimensions for the quantity and the edges
           call outputNamedValue( 'noChans', qt%noChans )
           call outputNamedValue( 'noSurfs', qt%noSurfs )
@@ -321,7 +321,7 @@ contains ! ============= Public Procedures ==========================
       end do                            ! Second loop over quantities
 
     end do                              ! Loop over xStar/yStar
-    
+
     ! Now dump kStar
     call output( 'kStar', advance='yes' )
     call outputNamedValue( 'row instances first', l2pc%j%row%instFirst )
@@ -545,7 +545,7 @@ contains ! ============= Public Procedures ==========================
     sel%heightRange = 0.0_r8
     sel%cost = 1.0
     dummy = AddBinSelectorToDatabase ( binSelectors, sel )
-    
+
   end subroutine CreateDefaultBinSelectors
 
   ! -------------------------------------- DestroyBinSelectorDatabase
@@ -572,7 +572,7 @@ contains ! ============= Public Procedures ==========================
 
     ! Exectuable code
     do jh = 1, 2
-      if ( jh == 2 .and. .not. l2pc%gotH ) continue
+      if ( jh == 2 .and. .not. l2pc%gotH ) cycle
       do vector = 1, 2
         if ( vector == 1 ) then
           if ( jh == 1 ) then
@@ -587,18 +587,18 @@ contains ! ============= Public Procedures ==========================
             v => l2pc%h%row%vec
           end if
         end if
-        
+
         do quantity = 1, size(v%quantities)
           call DestroyQuantityTemplateContents (v%quantities(quantity)%template )
         end do
         call DestroyVectorInfo ( v )
       end do
     end do
-      
+
     ! Destory kStar
     call DestroyMatrix ( l2pc%j )
     if ( l2pc%goth ) call DestroyHessian ( l2pc%h )
-    
+
   end subroutine DestroyL2PC
 
   ! ------------------------------------------- DestroyL2PCDatabase ---
@@ -704,8 +704,9 @@ contains ! ============= Public Procedures ==========================
 
   ! --------------------------------------- WriteOneHDF5L2PC -----------
   subroutine WriteOneHDF5L2PC ( JACOBIAN, fileID, packed, dontPack, hessian )
-  use HDF5, only: H5GCLOSE_F, H5GCREATE_F
-  use MLSHDF5, only: MakeHDF5Attribute, SaveAsHDF5DS
+    use HessianModule_0, only: OptimizeBlock
+    use HDF5, only: H5GCLOSE_F, H5GCREATE_F
+    use MLSHDF5, only: MakeHDF5Attribute, SaveAsHDF5DS
     ! This subroutine writes an l2pc to a file in hdf5 format
 
     ! Dummy arguments
@@ -832,7 +833,7 @@ contains ! ============= Public Procedures ==========================
       call h5gCreate_f ( matrixID, 'HessianBlocks', blocksGID, status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to create group for all l2pc matrix hessian blocks' )
-      
+
       ! Make the flags
       call MakeHDF5Attribute ( blocksGID, 'rowInstanceFirst', hessian%row%instFirst )
       call MakeHDF5Attribute ( blocksGID, 'colInstanceFirst', hessian%col%instFirst )
@@ -847,8 +848,9 @@ contains ! ============= Public Procedures ==========================
               &  colPack(hessian%col%quant(k)) ) then
               ! Identify the block
               h0 => hessian%block ( i, j, k )
+              call optimizeBlock ( h0 )
               ! Skip the absent ones in order to make life simpler
-              if ( h0%kind == h_absent ) continue
+!             if ( h0%kind == h_absent ) cycle
               ! Get a name for this group for the block
               call CreateBlockName ( rowBlockMap(i), colBlockMap(j), colBlockMap(k), name )
               ! Create a group for this block
@@ -856,27 +858,28 @@ contains ! ============= Public Procedures ==========================
               if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
                 & 'Unable to create group for hessian matrix block' )
               ! Stick some attributes on it
+              ! Row name
               call get_string ( &
                 & hessian%row%vec%quantities(&
                 &    hessian%row%quant(i))%template%name, name )
               call MakeHDF5Attribute ( blockGID, 'rowQuantity', trim(name) )
               call MakeHDF5Attribute ( blockGID, 'rowInstance', hessian%row%inst(i) )
-              
+              ! First column name
               call get_string ( &
                 & hessian%col%vec%quantities(&
                 &    hessian%col%quant(j))%template%name, name )
               call MakeHDF5Attribute ( blockGID, 'col1Quantity', trim(name) )
               call MakeHDF5Attribute ( blockGID, 'col1Instance', hessian%col%inst(j) )
-              
+              ! Second column name
               call get_string ( &
                 & hessian%col%vec%quantities(&
-                &    hessian%col%quant(j))%template%name, name )
+                &    hessian%col%quant(k))%template%name, name )
               call MakeHDF5Attribute ( blockGID, 'col2Quantity', trim(name) )
               call MakeHDF5Attribute ( blockGID, 'col2Instance', hessian%col%inst(j) )
-              
+
               call MakeHDF5Attribute ( blockGID, 'kind', h0%kind )
               ! Write the datasets
-              
+
               if ( h0%kind == h_full ) then
                 call SaveAsHDF5DS ( blockGID, 'values', real ( h0%values, r4 ) )
               end if
@@ -895,7 +898,7 @@ contains ! ============= Public Procedures ==========================
           end do
         end do
       end do
-    
+
       ! Now close blocks group
       call h5gClose_f ( blocksGID, status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -907,7 +910,7 @@ contains ! ============= Public Procedures ==========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close group for l2pc matrix' ) 
  end subroutine WriteOneHDF5L2PC
-  
+
   ! ======================================= PRIVATE PROCEDURES ====================
 
   ! ------------------------------------ AddL2PCInfoToDatabase --
@@ -969,7 +972,7 @@ contains ! ============= Public Procedures ==========================
     ! This subroutine fills the boolean arrays rowPack, colPack
     ! (each length row/col%noQuantities) with a flag set true
     ! if the quantity has any derivatives at all
-    
+
     ! Dummy arguments
     type (Matrix_t), intent(in) :: J
     logical, intent(out), dimension(J%row%vec%template%noQuantities) :: ROWPACK
@@ -1040,7 +1043,7 @@ contains ! ============= Public Procedures ==========================
         end do
       end do
     end if
-    
+
     ! Go back and set to true any we know we want to keep
     if ( associated ( dontPack ) ) then
       do colQ = 1, j%col%vec%template%noQuantities
@@ -1062,7 +1065,7 @@ contains ! ============= Public Procedures ==========================
     do colBlock = 1, j%col%nb
       colBlockMap ( colBlock ) = count ( colBlockFlag ( 1:colBlock ) )
     end do
-    
+
   end subroutine MakeMatrixPackMap
 
   ! --------------------------------------- PopulateL2PCBinByName ---
@@ -1140,7 +1143,7 @@ contains ! ============= Public Procedures ==========================
         endif
         ! Get kind of block
         call GetHDF5Attribute ( blockID, 'kind', kind )
-        
+
         ! Read the block
         if ( kind == m_banded .or. kind == m_column_sparse ) then
           call GetHDF5Attribute ( blockID, 'noValues', noValues )
@@ -1210,7 +1213,7 @@ contains ! ============= Public Procedures ==========================
       call output ( 'Number of bins: ' )
       call output ( noBins, advance='yes' )
     endif
-    
+
     ! Don't forget HDF5 numbers things from zero
     do bin = 0, noBins-1
       call ReadOneHDF5L2PCRecord ( L2PC, MLSFile, bin, &
@@ -1233,7 +1236,7 @@ contains ! ============= Public Procedures ==========================
       nullify ( l2pc%h%row%vec%quantities, l2pc%h%col%vec%quantities )
       dummy = AddL2PCInfoToDatabase ( l2pcInfo, Info )
     end do
-    
+
     ! Don't close the file, we're keeping it open to read blocks from it later
     if ( toggle (gen) ) call trace_end ( "ReadCompleteHDF5L2PC" )
   end subroutine ReadCompleteHDF5L2PCFile
@@ -1318,7 +1321,7 @@ contains ! ============= Public Procedures ==========================
     ! Must *not* forget to name l2pc 
     ! (l2pc%name will itself never be used beyond this point)
     l2pc%name = l2pc%j%name
-    
+
     ! Fill up the information
     if ( present ( info ) ) then
       info%fileID = MLSFile%fileID%f_id
@@ -1464,7 +1467,7 @@ contains ! ============= Public Procedures ==========================
         end do
       end if
     end if                              ! Looking for Hessians
-    
+
     ! finish up, though if in shallow mode, then keep the groups open
     if ( .not. myShallow ) then
       call h5gClose_f ( blocksID, status )
@@ -1482,7 +1485,7 @@ contains ! ============= Public Procedures ==========================
     endif
     if ( index ( switches, 'l2pc' ) /= 0 ) &
       & call output ( 'Done reading bin from l2pc file', advance='yes' )
-    
+
   end subroutine ReadOneHDF5L2PCRecord
 
   ! --------------------------------------- ReadOneVectorFromHDF5 ------
@@ -1678,7 +1681,7 @@ contains ! ============= Public Procedures ==========================
       qt%verticalCoordinate = verticalCoordinate
       qt%frequencyCoordinate = frequencyCoordinate
       qt%unit = unit
-      
+
       if (qt%coherent) then
         noInstancesOr1 = 1
       else
@@ -1689,7 +1692,7 @@ contains ! ============= Public Procedures ==========================
       else
         noSurfsOr1 = qt%noSurfs
       endif
-      
+
       ! Get the surfaces and phis
       call LoadFromHDF5DS ( MLSFile, 'surfs', qt%surfs )
       call LoadFromHDF5DS ( MLSFile, 'phi', qt%phi )
@@ -1719,9 +1722,9 @@ contains ! ============= Public Procedures ==========================
     ! Now create a vector template with these quantities
     call ConstructVectorTemplate ( 0, l2pcQTs, qtInds, vt, forWhom=moduleName )
     vtIndex = AddVectorTemplateToDatabase ( l2pcVTs, vt )
-    
+
     call deallocate_test ( qtInds, 'qtInds', ModuleName )
-    
+
     ! Now create a vector for this vector template
     if ( index ( switches, 'l2pc' ) /= 0 ) &
       & call output ( 'Creating vector', advance='yes' )
@@ -1729,7 +1732,7 @@ contains ! ============= Public Procedures ==========================
     if ( index ( switches, 'l2pc' ) /= 0 ) &
       & call output ( 'Adding vector to database', advance='yes' )
     vector = AddVectorToDatabase ( l2pcVs, v )
-    
+
     ! Now go through the quantities again and read the values
     do quantity = 1, noQuantities
       if ( index ( switches, 'l2pc' ) /= 0 ) then
@@ -1751,7 +1754,7 @@ contains ! ============= Public Procedures ==========================
     end do
 
     call Deallocate_test ( quantityNames, 'quantityNames', ModuleName )
-      
+
   end subroutine ReadOneVectorFromHDF5
 
   ! --------------------------------------- WriteVectorAsHDF5L2PC ----------
@@ -1872,6 +1875,11 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.91  2010/03/24 20:48:55  vsnyder
+! Replace 'continue' by 'cycle'.  Call OptimizeBlock from WriteOneHDF5L2PC
+! when writing a Hessian, to avoid trying to write empty arrays.  Add some
+! comments.  Fix a wrong-subscript bug.
+!
 ! Revision 2.90  2010/03/19 20:18:47  pwagner
 ! Moved DumpL2PCInfo out of public scope to appease ifort v10 which crashed the goldbrick
 !
