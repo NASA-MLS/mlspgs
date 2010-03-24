@@ -14,10 +14,9 @@ module MatrixTools                      ! Various tools for matrices
   ! This module provides some tools for dealing matrices not already present in
   ! MatrixModule_0 and MatrixModule_1.  In particular the DumpBlocks subroutine.
 
-  use MatrixModule_0, only: DENSIFY, &
+  use MatrixModule_0, only: &
     & M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, MATRIXELEMENT_T
-  use MatrixModule_1, only: Dump_Struct, FINDBLOCK, GETFROMMATRIXDATABASE, &
-    & MATRIX_DATABASE_T, MATRIX_T, RC_INFO
+  use MatrixModule_1, only: FINDBLOCK, MATRIX_T, RC_INFO
   use MLSCommon, only: R8, RM
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, PVMERRORMESSAGE
   use PVM, only: PVMDATADEFAULT, PVMFINITSEND, PVMFSEND
@@ -40,7 +39,7 @@ module MatrixTools                      ! Various tools for matrices
 contains ! =====  Public procedures  ===================================
 
   ! --------------------------------------------------  DumpBlocks  ----
-  subroutine DumpBlocks ( key, matrices )
+  subroutine DumpBlocks ( key, matrices, hessians )
     ! This routine can be called whenever a DumpBlocks command is issued in the
     ! l2cf.  It can be used to dump requested blocks from the l2cf.  It dumps
     ! the blocks specified by the Cartesian product of the rowQuantity and
@@ -54,32 +53,41 @@ contains ! =====  Public procedures  ===================================
     use Declaration_table, only: Num_Value
     use DUMP_0, only: DUMP
     use Expr_m, only: Expr
-    use Init_Tables_Module, only: F_AllMatrices, &
+    use HessianModule_0, only: H_Absent, HessianElement_T
+    use HessianModule_1, only: Dump, Hessian_T
+    use Init_Tables_Module, only: F_AllHessians, F_AllMatrices, &
       & F_COLCHANNELS, F_COLINSTANCES, F_COLQUANTITY, F_COLSURFACES, &
-      & F_Details, F_Diagonal, F_MATRIX, F_NOABSENT, &
+      & F_Details, F_Diagonal, F_Hessian, F_MATRIX, F_NOABSENT, &
       & F_ROWCHANNELS, F_ROWINSTANCES, F_ROWQUANTITY, F_ROWSURFACES, &
       & F_Structure
     use Intrinsic, only: PHYQ_Dimensionless
-    use MatrixModule_1, only: Dump
+    use Lexer_Core, only: Print_Source
+    use MatrixModule_1, only: Dump, Dump_Struct, GETFROMMATRIXDATABASE, &
+      & MATRIX_DATABASE_T
     use MLSStringLists, only: SWITCHDETAIL
     use MoreTree, only: GET_BOOLEAN, GET_FIELD_ID
     use Output_M, only: NewLine, OUTPUT
     use String_Table, only: DISPLAY_STRING
     use Toggles, only: Switches
-    use Tree, only: DECORATION, NSONS, SUBTREE
-    use VectorsModule, only: GETVECTORQTYBYTEMPLATEINDEX, VECTORVALUE_T
+    use Tree, only: DECORATION, NSONS, SOURCE_REF, SUBTREE
+    use VectorsModule, only: GetVectorQtyByTemplateIndex, &
+      & GetVectorQuantityIndexByType, VECTORVALUE_T
 
     ! Dummy arguments
     integer, intent(in) :: KEY          ! L2CF node
     type (Matrix_Database_T), dimension(:), pointer :: MATRICES ! Matrix database
+    type (Hessian_T), dimension(:), pointer :: Hessians
 
     ! Local variables
-    integer :: COL                      ! Matrix block column
+    integer :: COL                      ! Matrix or Hessian block column
+    integer :: COL2                     ! Hessian block second column
     integer :: COLCHANNELSNODE          ! Tree node
     integer :: COLINSTANCE              ! Loop counter
+    integer :: COLINSTANCE2             ! Loop counter
     integer :: COLINSTANCESNODE         ! Tree node
-    integer :: COLQI                    ! Index of column quantity within vector
+    integer :: COLQI, Colqi2            ! Index of column quantity within vector
     integer :: COLQuantityIx            ! Index in ColQIs array
+    integer :: COLQuantityIx2           ! Index in ColQIs array for dumping Hessians
     integer :: COLQuantityNode          ! Tree node
     integer :: COLSURFACESNODE          ! Tree node
     integer :: DetailReduction
@@ -87,6 +95,8 @@ contains ! =====  Public procedures  ===================================
     logical :: Diagonal                 ! Dump only the diagonal
     logical :: DoAny                    ! Any non-absent blocks?
     integer :: FIELDINDEX               ! Type for tree node
+    integer :: HessianIndex             ! Hessian database index
+    integer :: Hessian1, HessianEnd     ! Range for HessianIndex
     integer :: MATRIXINDEX              ! Matrix database index
     integer :: Matrix1, MatrixEnd       ! Range for MatrixIndex
     integer :: NColQ                    ! How many column quantities?
@@ -106,28 +116,37 @@ contains ! =====  Public procedures  ===================================
     integer :: Units(2) ! of the Details expr -- has to be phyq_dimensionless
     double precision :: Values(2) ! of the Details expr
 
-    integer, dimension(:), pointer :: ColInds ! Which column instances?
-    integer, dimension(:), pointer :: ColQIs  ! Which column quantities?
-    integer, dimension(:), pointer :: RowInds ! Which row instances?
-    integer, dimension(:), pointer :: RowQIs  ! Which row quantities?
+    integer, dimension(:), pointer :: ColInds  ! Which column instances?
+    integer, dimension(:), pointer :: ColInds2 ! Which column instances for Hessians?
+    integer, dimension(:), pointer :: ColQIs   ! Which column quantities?
+    integer, dimension(:), pointer :: ColQIs2  ! Which column quantities for Hessians??
+    integer, dimension(:), pointer :: RowInds  ! Which row instances?
+    integer, dimension(:), pointer :: RowQIs   ! Which row quantities?
 
+    logical :: AllHessians   ! Dump all hessians
     logical :: AllMatrices   ! Dump all matrices
     logical :: Fail          ! No matrix to get from database
     logical :: Stru          ! Dump sparsity structure instead of values
 
-    type (VectorValue_T), pointer :: COLQ ! Row quantity
-    type (VectorValue_T), pointer :: ROWQ ! Row quantity
-    type (Matrix_T), pointer :: MATRIX  ! The matrix to dump
-    type (MatrixElement_T), pointer :: MB ! A block from the matrix
+    type (VectorValue_T), pointer :: COLQ   ! Col quantity
+    type (VectorValue_T), pointer :: COLQ2  ! 2nd Col quantity for a Hessian
+    type (VectorValue_T), pointer :: ROWQ   ! Row quantity
+    type (Hessian_T), pointer :: Hessian    ! The Hessian to dump
+    type (Matrix_T), pointer :: MATRIX      ! The matrix to dump
+    type (MatrixElement_T), pointer :: MB   ! A block from the matrix
+    type (HessianElement_T), pointer :: HB  ! A block from the Hessian
 
     ! Error codes for Announce_Error
     integer, parameter :: Dimless = 1     ! Details has to be dimensionless
     integer, parameter :: Duplicate = dimless + 1     ! Duplicate quantity name specified
-    integer, parameter :: NeedMatrix = duplicate + 1  ! Need /all or matrix
-    integer, parameter :: NeedMatrixDatabase = needMatrix + 1 ! Need some matrix!
-    integer, parameter :: Numeric = needMatrixDatabase + 1 ! Details can't be range
-    integer, parameter :: OutOfRange = numeric + 1    ! Index out of range
-    integer, parameter :: Redundant = outOfRange + 1  ! Both /all and matrix
+    integer, parameter :: NeedHessianDatabase = duplicate + 1 ! Need some matrix!
+    integer, parameter :: NeedMatrixDatabase = NeedHessianDatabase + 1 ! Need some matrix!
+    integer, parameter :: NeedSomething = NeedMatrixDatabase + 1  ! Need /all or matrix
+    integer, parameter :: NoSuchQuantity = NeedSomething + 1  ! for row or column selection
+    integer, parameter :: Numeric = NoSuchQuantity + 1 ! Details can't be range
+    integer, parameter :: OutOfRange = numeric + 1     ! Index out of range
+    integer, parameter :: QuantAndMol = outOfRange + 1 ! Both quantity and molecule
+    integer, parameter :: Redundant = quantAndMol + 1  ! Both /all and matrix
 
     ! Executable code
 
@@ -142,13 +161,10 @@ contains ! =====  Public procedures  ===================================
       DetailReduction = 2
     endif
 
-    if ( .not. associated(matrices) ) then
-      call announce_error ( needMatrixDatabase, key )
-      return
-    end if
 
     ! Set defaults
 
+    allHessians = .false.
     allMatrices = .false.
     colChannelsNode = 0
     colInstancesNode = 0
@@ -156,7 +172,12 @@ contains ! =====  Public procedures  ===================================
     colSurfacesNode = 0
     details = 1 - detailReduction
     diagonal = .false.
+    hessianIndex = -1
+    hessian1 = 1
+    hessianEnd = -1 ! In case no Hessians are to be dumped
     matrixIndex = -1
+    matrix1 = 1
+    matrixEnd = -1  ! In case no Matrices are to be dumped
     noAbsent = .false.
     rowChannelsNode = 0
     rowInstancesNode = 0
@@ -164,14 +185,24 @@ contains ! =====  Public procedures  ===================================
     rowSurfacesNode = 0
     stru = .false.
 
-    nullify ( colInds, colQIs, rowInds, rowQIs )
+    nullify ( colInds, colInds2, colQIs, colQIs2, rowInds, rowQIs )
 
     ! First go through the parsed information.
     do node = 2, nsons(key)                ! Skip the DumpBlocks son
       son = subtree(node,key)              ! This argument
       fieldIndex = get_field_id(son)       ! ID for this field
       select case ( fieldIndex )
+      case ( f_allHessians )
+        if ( .not. associated(hessians) ) then
+          call announce_error ( needHessianDatabase, son )
+          return
+        end if
+        allHessians = get_Boolean ( son )
       case ( f_allMatrices )
+        if ( .not. associated(matrices) ) then
+          call announce_error ( needMatrixDatabase, son )
+          return
+        end if
         allMatrices = get_Boolean ( son )
       case ( f_details )
         call expr ( subtree(2,son), units, values, type )
@@ -180,6 +211,10 @@ contains ! =====  Public procedures  ===================================
         details = nint(values(1)) - detailReduction
       case ( f_diagonal )
         diagonal = get_Boolean ( son )
+      case ( f_hessian )
+        ! The decoration is the negative of the index; see Fill, where
+        ! the Hessian spec is processed.
+        hessianIndex = -decoration(decoration(subtree(2,son)))
       case ( f_matrix )
         matrixIndex = decoration(decoration(subtree(2,son)))
       case ( f_rowQuantity )
@@ -206,9 +241,10 @@ contains ! =====  Public procedures  ===================================
       end select
     end do
 
-    ! Was a matrix specified?
-    if ( .not. allMatrices .and. matrixIndex < 0 ) then
-      call announce_error ( needMatrix, key )
+    ! Was a matrix or hessian specified?
+    if ( .not. allMatrices .and. matrixIndex < 0 .and. &
+      &  .not. allHessians .and. hessianIndex < 0 ) then
+      call announce_error ( needSomething, key )
       return
     end if
     
@@ -222,9 +258,22 @@ contains ! =====  Public procedures  ===================================
       end if
       matrix1 = 1
       matrixEnd = size(matrices)
-    else
+    else if ( matrixIndex > 0 ) then
       matrix1 = matrixIndex
       matrixEnd = matrixIndex
+    end if
+
+    if ( allHessians ) then
+      if ( hessianIndex > 0 ) call announce_error ( redundant, key )
+      if ( details < 0 ) then
+        call dump ( hessians, details=details )
+        return
+      end if
+      hessian1 = 1
+      matrixEnd = size(hessians)
+    else if ( hessianIndex > 0 ) then
+      hessian1 = hessianIndex
+      hessianEnd = hessianIndex
     end if
 
     do matrixIndex = matrix1, matrixEnd
@@ -238,10 +287,13 @@ contains ! =====  Public procedures  ===================================
       call output ( 'Dump of ' )
       if ( diagonal ) call output ( 'diagonal of ' )
       call display_string ( matrix%name )
+      call output ( ' at ' )
+      call print_source ( source_ref(key), before=' at ' )
       if ( matrix%row%vec%name /= 0 ) &
         & call display_string ( matrix%row%vec%name, before=', row vector ' )
       if ( matrix%col%vec%name /= 0 ) &
         & call display_string ( matrix%col%vec%name, before=', column vector ' )
+      if ( noAbsent ) call output ( ', /noAbsent' )
       call newLine
       if ( stru ) then
         call dump_struct ( matrix )
@@ -258,13 +310,14 @@ contains ! =====  Public procedures  ===================================
         do rowQuantityIx = 1, nRowQ
           rowQI = rowQIs(rowQuantityIx)
           rowQ => matrix%row%vec%quantities(rowQI)
+          ! Fill some flags arrays
+          call FillIndicesArray ( rowInstancesNode, rowQ%template%noInstances, &
+            & rowInds )
           do colQuantityIx = 1, nColQ
             colQI = colQIs(colQuantityIx)
             colQ => matrix%col%vec%quantities(colQI)
 
             ! Fill some flags arrays
-            call FillIndicesArray ( rowInstancesNode, rowQ%template%noInstances, &
-              & rowInds )
             call FillIndicesArray ( colInstancesNode, colQ%template%noInstances, &
               & colInds )
 
@@ -283,28 +336,107 @@ contains ! =====  Public procedures  ===================================
               end do o
             end if
 
-            if ( doAny ) call DumpOneBlock
-
-            call deallocate_test ( rowInds, 'rowInds', ModuleName )
+            if ( doAny ) call DumpOneMatrixBlock
             call deallocate_test ( colInds, 'colInds', ModuleName )
 
           end do ! colQuantityIx
+
+          call deallocate_test ( rowInds, 'rowInds', ModuleName )
         end do ! rowQuantityIx
       end if
 
     end do ! matrixIndex
+
+    do hessianIndex = hessian1, hessianEnd
+      call output ( 'Dump of ' )
+      call display_string ( hessians(hessianIndex)%name )
+      call print_source ( source_ref(key), before=' at ' )
+      if ( hessians(hessianIndex)%row%vec%name /= 0 ) &
+        & call display_string ( hessians(hessianIndex)%row%vec%name, before=', row vector ' )
+      if ( hessians(hessianIndex)%col%vec%name /= 0 ) &
+        & call display_string ( hessians(hessianIndex)%col%vec%name, before=', column vectors ' )
+      if ( noAbsent ) call output ( ', /noAbsent' )
+      call newLine
+
+      ! Get the row and column quantities
+      call allocate_test ( colQIs, hessians(hessianIndex)%col%nb, 'colQIs', moduleName )
+      call allocate_test ( rowQIs, hessians(hessianIndex)%row%nb, 'rowQIs', moduleName )
+
+      call getQuantities ( hessians(hessianIndex)%col, colQIs, nColQ, colQuantityNode, 'column' )
+      call getQuantities ( hessians(hessianIndex)%row, rowQIs, nRowQ, rowQuantityNode, 'row' )
+
+      ! Dump the specified blocks
+      do rowQuantityIx = 1, nRowQ
+        rowQI = rowQIs(rowQuantityIx)
+        rowQ => hessians(hessianIndex)%row%vec%quantities(rowQI)
+        ! Fill some flags arrays
+        call FillIndicesArray ( rowInstancesNode, rowQ%template%noInstances, &
+          & rowInds )
+        do colQuantityIx = 1, nColQ
+          colQI = colQIs(colQuantityIx)
+          colQ => hessians(hessianIndex)%col%vec%quantities(colQI)
+
+          ! Fill some flags arrays
+          call FillIndicesArray ( colInstancesNode, colQ%template%noInstances, &
+            & colInds )
+          do colQuantityIx2 = 1, nColQ
+            colQI2 = colQIs(colQuantityIx2)
+            colQ2 => hessians(hessianIndex)%col%vec%quantities(colQI2)
+
+            ! Fill some flags arrays
+            call FillIndicesArray ( colInstancesNode, colQ%template%noInstances, &
+              & colInds2 )
+
+            ! Find the block to dump.
+            nullify ( hb )
+      o2:   do rowInstance = 1, size(rowInds)
+              do colInstance = 1, size(colInds)
+                do colInstance2 = 1, size(colInds2)
+                  row = FindBlock ( hessians(hessianIndex)%row, rowQI, rowInds(rowInstance) )
+                  col = FindBlock ( hessians(hessianIndex)%col, colQI, colInds(colInstance) )
+                  col2 = FindBlock ( hessians(hessianIndex)%col, colQI2, colInds2(colInstance2) )
+                  hb => hessians(hessianIndex)%block ( row, col, col2 )
+                  if ( associated(hb) ) then
+                    if ( hb%kind /= h_absent .or. .not. noAbsent ) then
+                      if ( details >= 0 ) then
+                        call display_string ( &
+                          & hessians(hessianIndex)%row%vec%quantities(row)%template%name, before='[' )
+                        call display_string ( &
+                          & hessians(hessianIndex)%col%vec%quantities(col)%template%name, before=',' )
+                        call display_string ( &
+                          & hessians(hessianIndex)%col%vec%quantities(col2)%template%name, before=',' )
+                        call output ( '] ' )
+                      end if
+                      call DumpOneHessianBlock ( hb, (/row,col,col2/) )
+                      exit O2
+                    end if
+                  end if
+                end do
+              end do
+            end do o2
+
+          end do ! colQuantityIx2
+        end do ! colQuantityIx
+      end do ! rowQuantityIx
+
+      call deallocate_test ( rowInds, 'rowInds', ModuleName )
+      call deallocate_test ( colInds, 'colInds', ModuleName )
+      call deallocate_test ( colInds2, 'colInds2', ModuleName )
+
+    end do ! hessianIndex
 
     call deallocate_test ( colQIs, 'colQIs', moduleName )
     call deallocate_test ( rowQIs, 'rowQIs', moduleName )
 
   contains
     ! ...........................................  Announce_Error  .....
-    subroutine Announce_Error ( What, Where, Number )
+    subroutine Announce_Error ( What, Where, Number, Text )
       use MoreTree, only: StartErrorMessage
       use TREE, only: SUB_ROSA
-      integer, intent(in) :: What      ! Error code
-      integer, intent(in) :: Where     ! Tree node
-      integer, intent(in), optional :: Number    ! Stuff to stick into message
+      integer, intent(in) :: What             ! Error code 
+      integer, intent(in) :: Where            ! Tree node  
+      integer, intent(in), optional :: Number ! to stick into message
+      character(len=*), intent(in), optional :: Text ! to stick into message
 
       call startErrorMessage ( where )
       select case ( what )
@@ -313,26 +445,36 @@ contains ! =====  Public procedures  ===================================
       case ( duplicate )
         call display_string ( sub_rosa(where), before=': Duplicate quantity ' )
         call output ( ' not used.', advance='yes' )
-      case ( needMatrix )
-        call output ( 'Either /all or a matrix must be specified', &
-          & advance='yes' )
+      case ( needHessianDatabase )
+        call output ( 'There is no Hessian database', advance='yes' )
       case ( needMatrixDatabase )
         call output ( 'There is no matrix database', advance='yes' )
+      case ( needSomething )
+        call output ( &
+          & 'Need at least one of /allMatrices, matrix, /allHessians, hessian', &
+          & advance='yes' )
+      case ( noSuchQuantity )
+        call display_string ( sub_rosa(where) )
+        call output ( ' is not a '//text//' quantity.', advance='yes' )
       case ( numeric )
         call output ( "The field is not numeric." )
       case ( outOfRange )
         call output ( number, before=': Index ', after=' is out of range.', &
           & advance='yes' )
+      case ( quantAndMol )
+        call output ( 'Both quantities and molecules specified; molecules used.', &
+          & advance='yes' )
       case ( redundant )
-        call output ( ': Both /all and a matrix specified.  /all used.', &
+        call output ( ': Both /allMatrices and a Matrix specified, ' // &
+          & 'or /allMatrices and a Hessian specified; /all used.', &
           & advance='yes' )
       end select
     end subroutine Announce_Error
 
-    ! .............................................  DumpOneBlock  .....
-    subroutine DumpOneBlock
+    ! .......................................  DumpOneMatrixBlock  .....
+    subroutine DumpOneMatrixBlock
 
-      use MatrixModule_0, only: GetDiagonal
+      use MatrixModule_0, only: DENSIFY, GetDiagonal
 
       ! Local variables
       integer :: CC                       ! Loop counter
@@ -468,7 +610,16 @@ contains ! =====  Public procedures  ===================================
       call deallocate_test ( rowSurfInds,  'rowSurfInds',  ModuleName )
       call deallocate_test ( colSurfInds,  'colSurfInds',  ModuleName )
 
-    end subroutine DumpOneBlock
+    end subroutine DumpOneMatrixBlock
+
+    ! ......................................  DumpOneHessianBlock  .....
+    subroutine DumpOneHessianBlock ( HB, Indices )
+      use HessianModule_0, only: Dump, HessianElement_T
+      type(HessianElement_T), intent(in) :: HB
+      integer, intent(in) :: Indices(:)
+      ! For now ignore the row and column instances
+      call dump ( hb, details=details, indices=indices )
+    end subroutine DumpOneHessianBlock
 
     ! .........................................  FillIndicesArray  .....
     subroutine FillIndicesArray ( Node, Num, Inds )
@@ -490,7 +641,6 @@ contains ! =====  Public procedures  ===================================
       real(r8), dimension(2) :: VALUE     ! Value from expr
 
       nullify ( inds )
-      call allocate_test ( inds, num, 'Inds', moduleName )
 
       if ( node /= 0 ) then
         error = .false.
@@ -532,26 +682,27 @@ contains ! =====  Public procedures  ===================================
       type(RC_Info), intent(in) :: RC  ! Row or Column info for Matrix
       integer, intent(out) :: QIs(:)   ! Quantity indices
       integer, intent(out) :: NQIs     ! Number of QIs actually used
-      integer, intent(in) :: QInode    ! Tree node -- zero if not specified
+      integer, intent(in) :: QInode    ! Tree node for quantities -- zero if not specified
       character(len=*), intent(in) :: Text  ! 'row' or 'column' for error message
 
       integer :: I                     ! Subscript, loop inductor
       integer :: QI                    ! A quantity index -- may go into QIs
+      integer :: Son                   ! of Node
       type(vectorValue_t), pointer :: Q  ! A vector quantity
 
       nQIs = 0
-      if ( QInode /= 0 ) then
-        do i = 2, nsons(QInode)
-          ! Identify the row quantity.  The decoration is an index into the
+      if ( qInode /= 0 ) then
+        do i = 2, nsons(qInode)
+          son = subtree(i,qInode)
+          ! Identify the quantity.  The decoration is an index into the
           ! quantity templates database.  We need to get it as an index into
-          ! the vector that describes the row.
+          ! the vector that describes the row or column.
           Q => GetVectorQtyByTemplateIndex ( rc%vec, &
-            & decoration(decoration(subtree(i,QInode))), qi ) ! qi is output too
-          if ( .not. associated (Q) ) &
-            & call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & text // ' quantity was not found.' )
-          if ( any(QIs(:nQIs) == qi ) ) then
-            call announce_error ( duplicate, subtree(i,QInode), subtree(i,QInode) )
+            & decoration(decoration(son)), qi ) ! qi is output too
+          if ( .not. associated (Q) ) then
+            call announce_error ( noSuchQuantity, son, text=text )
+          else if ( any(QIs(:nQIs) == qi ) ) then
+            call announce_error ( duplicate, son )
           else
             nQIs = nQIs + 1
             QIs(nQIs) = qi
@@ -799,6 +950,9 @@ contains ! =====  Public procedures  ===================================
 end module MatrixTools
 
 ! $Log$
+! Revision 1.31  2010/02/10 20:00:25  vsnyder
+! More output from the dump
+!
 ! Revision 1.30  2009/12/17 23:56:41  vsnyder
 ! Correct a formatting blunder
 !
