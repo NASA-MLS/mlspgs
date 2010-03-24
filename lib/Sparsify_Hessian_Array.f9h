@@ -16,6 +16,10 @@
     h%nCols1 = size ( h_array, 2 )
     h%nCols2 = size ( h_array, 3 )
 
+    if ( associated(h%tuples) ) then
+      deallocate ( h%tuples, stat=stat )
+      call test_deallocate ( stat, moduleName, "H%Tuples" )
+    end if
     allocate ( h%tuples(n), stat=stat )
     call test_allocate ( stat, moduleName, "H%Tuple", (/ 1 /), (/ n /), -1 )
 
@@ -30,9 +34,13 @@
         end do
       end do
     end do
+    call deallocate_test ( h%values, "H%Values in Sparsify_Hessian", moduleName )
 
 ! $Id$
 ! $Log$
+! Revision 2.3  2010/03/24 20:18:55  vsnyder
+! Squash memory leaks
+!
 ! Revision 2.2  2010/02/25 18:35:44  pwagner
 ! Conforms with changed Hessian structure
 !
