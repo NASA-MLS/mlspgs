@@ -1,30 +1,29 @@
 program mockup
-   use input
-   use CFM_MLSSetup_m, only: CFM_MLSSetup, CFM_MLSCleanup
-   use CFM_VGrid, only: CreateVGrid
-   use CFM_HGrid, only: CreateRegularHGrid
-   use CFM_FGrid, only: CreateFGrid
-   use CFM_QuantityTemplate, only: CreateQtyTemplate
-   use CFM_VectorTemplate, only: CreateVectorTemplate
-   use CFM_Vector, only: CreateVector
-   use CFM_Fill, only: ExplicitFillVectorQuantity
+   use input   ! Provides hard-coded input for testing purposes only
 
-   use Chunks_m, only: MLSChunk_T
-   use ForwardModelConfig, only: ForwardModelConfig_T
+   use CFM_MLSSetup_m, only: CFM_MLSSetup, CFM_MLSCleanup, MLSChunk_T
+   use CFM_VGrid, only: CreateVGrid, DestroyVGridContents, &
+                        VGrid_T, Dump
+   use CFM_HGrid, only: CreateRegularHGrid, HGrid_T, &
+                        DestroyHGridContents, Dump
+   use CFM_FGrid, only: CreateFGrid, FGrid_T, DestroyFGridContents, &
+                        Dump
+   use CFM_QuantityTemplate, only: CreateQtyTemplate, Dump, &
+                        AddQuantityTemplateToDatabase, &
+                        DestroyQuantityTemplateDatabase, &
+                        QuantityTemplate_T, InitQuantityTemplates, &
+                        ConstructMIFGeolocation
+   use CFM_VectorTemplate, only: CreateVectorTemplate, Dump, &
+                        VectorTemplate_T, DestroyVectorTemplateInfo
+   use CFM_Vector, only: CreateVector, Dump, &
+                         Vector_T, VectorValue_T, &
+                         DestroyVectorInfo, GetVectorQtyByTemplateIndex
+   use CFM_Fill, only: ExplicitFillVectorQuantity
    use MLSCommon, only: MLSFile_T, r8
-   use VGridsDatabase, only: VGrid_T, DestroyVGridContents
-   use HGridsDatabase, only: HGrid_T, DestroyHGridContents
-   use Intrinsic, only: L_IntermediateFrequency
-   use FGrid, only: FGrid_T, DestroyFGridContents, Dump
-   use QuantityTemplates, only: QuantityTemplate_T, &
-         AddQuantityTemplateToDatabase, DestroyQuantityTemplateDatabase
+
+   use ForwardModelConfig, only: ForwardModelConfig_T
    use Init_tables_module, only: l_logarithmic, l_zeta, &
-                                 phyq_pressure
-   use VectorsModule, only: VectorTemplate_T, Vector_T, VectorValue_T, &
-                            DestroyVectorTemplateInfo, DestroyVectorInfo, &
-                            GetVectorQtyByTemplateIndex, Dump
-   use Construct, only: ConstructMIFGeolocation
-   use ConstructQuantityTemplates, only: InitQuantityTemplates
+                                 phyq_pressure, L_IntermediateFrequency
 
    implicit none
 
@@ -54,22 +53,27 @@ program mockup
    integer :: stateSelected(7), measurementSelected(1)
    type(VectorValue_T) :: quantity
 
-   call CFM_MLSSetup(error, ForwardModelConfigDatabase, filedatabase, fakeChunk)
-   if (error /=0) stop
+   ! Reads L2CF from standard input, populates ForwardModelConfigDatabase, filedatabase,
+   ! and fakeChunk
+   call CFM_MLSSetup(startTime, endTime, error, filedatabase, fakeChunk, &
+                     ForwardModelConfigDatabase)
+   if (error /= 0 ) stop
 
-   vGridStandard = CreateVGrid(l_zeta, l_logarithmic, &
-                               1000.0d0, "37:6", phyq_pressure)
+   vGridStandard = CreateVGrid (l_zeta, l_logarithmic, 1000.0d0, "37:6", phyq_pressure)
+   !call dump(vGridStandard, details=2)
 
-   ! Have insetoverlaps, and single
-   hGridStandard = CreateRegularHGrid(GHz, 0.0_r8, 1.5_r8, .true., .true., &
+   ! Have insetoverlaps, and not single
+   hGridStandard = CreateRegularHGrid(GHz, 0.0_r8, 1.5_r8, .true., .false., &
         filedatabase, fakeChunk)
+   !call dump(hGridStandard)
 
    fGridStandard = CreateFGrid(L_IntermediateFrequency, (/0.0_r8/))
    !call dump(fGridStandard)
 
    ! Have to initialize before we start creating quantity templates
-   call ConstructMIFGeolocation(mifGeoLocation, filedatabase, fakeChunk)
    call InitQuantityTemplates
+   ! Reading mifGeolocation from L1BOA file
+   call ConstructMIFGeolocation(mifGeoLocation, filedatabase, fakeChunk)
    temperature = CreateQtyTemplate("temperature", filedatabase=filedatabase, &
                                    avgrid=vGridStandard, ahgrid=hGridStandard, &
                                    mifGeolocation=mifGeolocation)
@@ -98,14 +102,29 @@ program mockup
    numQty = AddQuantityTemplateToDatabase(qtyTemplates, band7)
    numQty = AddQuantityTemplateToDatabase(qtyTemplates, geodAltitude)
 
-   stateSelected = (/5,6,1,2,4,3,8/)
+!   call dump(ptanGHz, details=2)
+!   call dump(ptanTHz, details=2)
+!   call dump(temperature, details=2)
+!   call dump(GPH, details=2)
+!   call dump(O3, details=2)
+!   call dump(H2O, details=2)
+!   call dump(band7, details=2)
+!   call dump(geodAltitude, details=2)
+
+   stateSelected = (/5,6,1,2,4,3,8/)   ! The numbers are the order that
+                                       ! quantities template were added
    stateTemplate = CreateVectorTemplate(qtyTemplates, stateSelected)
+!   call dump(stateTemplate, details=2, quantities=qtyTemplates)
 
    measurementSelected = (/7/)
    measurementTemplate = CreateVectorTemplate(qtyTemplates, measurementSelected)
+!   call dump(measurementTemplate, details=2, quantities=qtyTemplates)
 
    state = CreateVector(stateTemplate, qtyTemplates)
    measurement = CreateVector(measurementTemplate, qtyTemplates)
+
+!   call dump(state, details=2)
+!   call dump(measurement, details=2)
 
    quantity = GetVectorQtyByTemplateIndex(state, 1)
    call ExplicitFillVectorQuantity(quantity, TemperatureInput)
@@ -119,8 +138,9 @@ program mockup
    quantity = GetVectorQtyByTemplateIndex(state, 3)
    call ExplicitFillVectorQuantity(quantity, O3Input)
 
-   call dump(state)
+   call dump(state, details=2)
 
+   ! Clean up memory
    call DestroyVectorInfo (state)
    call DestroyVectorInfo (measurement)
    call DestroyVectorTemplateInfo(stateTemplate)

@@ -1,6 +1,10 @@
 module Input
    use MLSCommon, only: r8
+
    implicit none
+
+   character(len=27) :: startTime = "2005-037T00:00:00.0000"
+   character(len=27) :: endTime = "2005-037T00:00:59.9999"
    character(len=100) :: l1boa = "/data/emls/l1b/v02.23/2005/037/MLS-Aura_L1BOA_v02-23-c01_2005d037.h5"
    character(len=100) :: spectroscopy = '/data/emls/l2cal/MLS-Aura_L2Cal-Spectroscopy-PFA_v3-0-4_0000d000.h5'
    real(r8), dimension(37) :: &

@@ -1,11 +1,15 @@
 module CFM_FGrid
-   use FGrid, only: FGrid_T, nullifyFGrid
+   use FGrid, only: FGrid_T, nullifyFGrid, &
+                    DestroyFGridContents, Dump
    use Allocate_Deallocate, only : allocate_test, Deallocate_test
    use Intrinsic, only: l_none
    use MLSCommon, only: r8
 
    implicit none
-   public :: CreateFGrid, DestroyFGridContents
+
+   public :: CreateFGrid, DestroyFGridContents, Dump
+   public :: FGrid_T
+
    private
    character(len=20), parameter :: moduleName="CFM_FGrid"
    contains
@@ -16,7 +20,7 @@ module CFM_FGrid
       real(r8), dimension(:), intent(in) :: values
 
       integer :: i
-      
+
       call nullifyFGrid(fGrid)
       fGrid%name = -1
       fGrid%frequencyCoordinate = frequencyCoordinate
@@ -26,15 +30,7 @@ module CFM_FGrid
       do i = 1, fgrid%nochans
          fgrid%values(i) = values(i)
       end do
-      
+
    end function
 
-   subroutine DestroyFGridContents (fGrid)
-      type(FGrid_T) :: fGrid
-
-      call deallocate_test (fGrid%values, 'fgrid%values', modulename)
-      fgrid%name = 0
-      fgrid%noChans = 0
-      fGrid%frequencyCoordinate = l_none
-   end subroutine
 end module

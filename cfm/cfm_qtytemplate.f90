@@ -4,7 +4,9 @@ module CFM_QuantityTemplate
    use HGridsDatabase, only: hGrid_T
    use VGridsDatabase, only: VGrids, VGrid_T
    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
-   use QuantityTemplates, only: QuantityTemplate_T, NullifyQuantityTemplate
+   use QuantityTemplates, only: QuantityTemplate_T, NullifyQuantityTemplate, &
+                                DestroyQuantityTemplateDatabase, &
+                                AddQuantityTemplateToDatabase, Dump
    use Init_Tables_Module, only: FIRST_LIT, LAST_LIT, L_ADOPTED, &
       L_BASELINE, L_BOUNDARYPRESSURE, L_CALSIDEBANDFRACTION, &
       L_CHISQBINNED, L_CHISQCHAN, L_CHISQMMAF, L_CHISQMMIF, L_CLOUDICE, &
@@ -50,20 +52,26 @@ module CFM_QuantityTemplate
     use Chunks_m, only: MLSChunk_T
     use MLSCommon, only: MLSFile_T
     use ConstructQuantityTemplates, only : AnyGoodSignalData, GetQtyTypeIndex, &
-            ConstructMajorFrameQuantity, ConstructMinorFrameQuantity
+            ConstructMajorFrameQuantity, ConstructMinorFrameQuantity, &
+            InitQuantityTemplates, &
+            unitstable, propertyTable, noProperties, &
+            p_majorFrame, p_minorFrame, p_mustBeZeta, p_fGrid, p_hGrid, &
+            p_vgrid, p_radiometer, p_radiometerOptional, p_scModule, &
+            p_signal, p_signalOptional, p_xyz, p_matrix3x3, p_flexibleVHGrid, &
+            p_suppressChannels, p_module, p_molecule, p_fGridOptional
+    use Construct, only: ConstructMIFGeolocation
     use Parse_Signal_m, only: PARSE_SIGNAL
     use MLSSignals_m, only: GetModuleFromSignal, GetRadiometerFromSignal, &
                             GetSignal, Signal_T, IsModuleSpacecraft, &
                             GetRadiometerIndex, GetModuleFromRadiometer
-    use ConstructQuantityTemplates, only: unitstable, propertyTable, noProperties, &
-          p_majorFrame, p_minorFrame, p_mustBeZeta, p_fGrid, p_hGrid, &
-          p_vgrid, p_radiometer, p_radiometerOptional, p_scModule, &
-          p_signal, p_signalOptional, p_xyz, p_matrix3x3, p_flexibleVHGrid, &
-          p_suppressChannels, p_module, p_molecule, p_fGridOptional
 
    implicit none
 
-   public :: CreateQtyTemplate
+   public :: CreateQtyTemplate, DestroyQuantityTemplateDatabase
+   public :: AddQuantityTemplateToDatabase
+   public :: QuantityTemplate_T, Dump
+   public :: InitQuantityTemplates, ConstructMIFGeolocation
+
    private
 
    character(len=20) :: ModuleName = "CFM_QuantityTemplate"
@@ -253,13 +261,12 @@ module CFM_QuantityTemplate
       end if
 
       ! Now do the setup for the different families of quantities
-      if ((qty%minorFrame .or. properties(p_majorFrame)) .and. &
-         .not. present(mifGeoLocation)) &
-         call MLSMessage(MLSMSG_Error, moduleName, "Missing needed mifGeoLocation")
       if (qty%minorFrame) then
          call ConstructMinorFrameQuantity (filedatabase, chunk, qty%instrumentModule, &
               qty, noChans=noChans, regular=qty%regular, mifGeoLocation=mifGeoLocation)
       else if (properties(p_majorFrame)) then
+         if (.not. present(mifGeoLocation)) &
+            call MLSMessage(MLSMSG_Error, moduleName, "Missing needed mifGeoLocation")
          ! Setup a major frame quantity
          call ConstructMajorFrameQuantity (chunk, qty%instrumentModule, qty, &
               noChans, mifGeoLocation)

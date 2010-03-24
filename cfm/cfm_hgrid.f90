@@ -1,5 +1,6 @@
 module CFM_HGrid
-   use HGridsDatabase, only: HGrid_T, CreateEmptyHGrid, TrimHGrid, FindClosestMatch
+   use HGridsDatabase, only: HGrid_T, CreateEmptyHGrid, TrimHGrid, &
+                             FindClosestMatch, DestroyHGridContents, Dump
    use MLSKinds, only: R8
    use L1BData, only: L1BData_T, ReadL1BData, DeallocateL1BData, AssembleL1BQtyName
    use MLSCommon, only: NameLen, MLSFile_T
@@ -11,14 +12,15 @@ module CFM_HGrid
    use Chunks_m, only: MLSChunk_T
    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
 
-   implicit none 
+   implicit none
 
-   public :: CreateRegularHGrid
+   public :: CreateRegularHGrid, DestroyHGridContents, Dump
+   public :: HGrid_T
 
-   private 
+   private
    character(len=20), parameter :: moduleName = "CFM_HGrid"
 
-   contains 
+   contains
    type(HGrid_T) function CreateRegularHGrid (instrumentModuleName, origin, &
                   spacing, insetOverLaps, single, filedatabase, &
                   fakeChunk) result(hgrid)
@@ -49,6 +51,7 @@ module CFM_HGrid
       integer :: n, extra, left, right
       real(r8), dimension(:), pointer :: TMPANGLE ! A temporary array for the single case
 
+      ! Executables
       L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
       call ChooseOptimumLon0(filedatabase, fakeChunk)
       l1bItemName = AssembleL1BQtyName (instrumentModuleName // ".tpGeodAngle", &
@@ -69,7 +72,7 @@ module CFM_HGrid
          first = origin + spacing * int ((minAngle-origin)/spacing)
          delta = first - minAngle ! it means first could be smaller
          if (delta > spacing/2) then
-            first = first - spacing 
+            first = first - spacing
          else if (delta < -spacing/2) then
             first = first + spacing
          end if
@@ -82,7 +85,7 @@ module CFM_HGrid
          else if (delta < -spacing/2) then
             last = last + spacing
          end if
-      else 
+      else
          ! The 'single' option is typically used for running single profile retrievals
          ! in a debug mode.  In order to ensure we choose the same profile for each MAF
          ! that a phiWindow=0 forward model would select, we have to do some extra work.
@@ -134,7 +137,7 @@ module CFM_HGrid
       hgrid%geodlat = rad2deg * asin (sin(deg2rad*hgrid%phi) * sin(deg2rad*incline))
 
       call EmpiricalLongitude(hgrid%phi(1,:), hgrid%lon(1,:))
-      
+
       l1bitemname = AssembleL1BQtyName("MAFStartTimeTAI", l1bfile%hdfversion, .false.)
       call ReadL1BData(l1bfile, l1bItemName, l1bfield, nomafs, &
                        flag, firstMaf=fakeChunk%firstMafIndex, &

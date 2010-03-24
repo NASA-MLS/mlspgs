@@ -1,5 +1,7 @@
 module CFM_Vector
-   use VectorsModule, only: Vector_T, VectorTemplate_T
+   use VectorsModule, only: Vector_T, VectorTemplate_T, VectorValue_T, &
+                            DestroyVectorInfo, GetVectorQtyByTemplateIndex, &
+                            Dump
    use QuantityTemplates, only: QuantityTemplate_T
    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
          MLSMSG_Error, MLSMSG_Warning
@@ -7,7 +9,11 @@ module CFM_Vector
    use MLSCommon, only: r8
 
    implicit none
-   public :: CreateVector
+
+   public :: CreateVector, DestroyVectorInfo, GetVectorQtyByTemplateIndex
+   public :: Dump
+   public :: Vector_T, VectorValue_T
+
    private
    character(len=20) :: moduleName="CFM_Vector"
 

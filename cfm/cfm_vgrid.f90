@@ -1,5 +1,6 @@
 module CFM_VGrid
-   use VGridsDatabase, only: VGrid_T, NullifyVGrid
+   use VGridsDatabase, only: VGrid_T, NullifyVGrid, &
+                             DestroyVGridContents, Dump
    use MLSCommon, only: r8
    use MLSStrings, only: ReadIntsFromChars
    use MLSStringLists, only: List2Array, NumStringElements
@@ -10,7 +11,8 @@ module CFM_VGrid
    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
 
    implicit none
-   public :: CreateVGrid
+   public :: CreateVGrid, DestroyVGridContents, Dump
+   public :: VGrid_T
 
    private
    character(len=20) :: moduleId = "CFM_VGrid.f90"
@@ -75,7 +77,7 @@ module CFM_VGrid
          call ReadIntsFromChars(pair(2), temp)
          n = n + 1
          vgrid%surfs(n,1) = temp
-         
+
       end do
    end subroutine
 

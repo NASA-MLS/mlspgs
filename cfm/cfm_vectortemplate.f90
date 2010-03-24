@@ -1,5 +1,6 @@
 module CFM_VectorTemplate
-   use VectorsModule, only: VectorTemplate_T, NullifyVectorTemplate
+   use VectorsModule, only: VectorTemplate_T, NullifyVectorTemplate, &
+                            DestroyVectorTemplateInfo, Dump
    use QuantityTemplates, only: QuantityTemplate_T
    use Allocate_Deallocate, only: Allocate_test
 
@@ -7,7 +8,9 @@ module CFM_VectorTemplate
 
    private
 
-   public :: CreateVectorTemplate
+   public :: CreateVectorTemplate, DestroyVectorTemplateInfo
+   public :: Dump
+   public :: VectorTemplate_T
 
    character(len=20) :: moduleName = "CFM_VectorTemplate"
 
@@ -24,7 +27,7 @@ module CFM_VectorTemplate
       vecTemplate%noQuantities = size(selectedQty)
       vecTemplate%totalInstances = sum(qtyTemplateDB(selectedQty)%noInstances)
       vecTemplate%totalElements = &
-          sum(qtyTemplateDB(selectedQty)%noInstances & 
+          sum(qtyTemplateDB(selectedQty)%noInstances &
           *qtyTemplateDB(selectedQty)%instanceLen)
       call allocate_test(vecTemplate%quantities, vecTemplate%noQuantities, &
             'vecTemplate%quantities', moduleName)
