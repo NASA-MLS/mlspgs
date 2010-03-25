@@ -1021,6 +1021,8 @@ contains ! =====     Public Procedures     =============================
           & MLSMSG_Deallocate//'snoopMatrices' )
 
       case ( s_StreamlineHessian ) ! =============== StreamlineHessian =====
+        geodAngle = -1.0 ! means "not specified"
+        scaleHeight = -1.0 ! means "not specified"
         do j = 2, nsons(key)
           gson = subtree(j,key) ! The argument
           fieldIndex = get_field_id(gson)
@@ -2575,6 +2577,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.378  2010/03/25 01:50:25  vsnyder
+! Make sure GeodAngle and ScaleHeight get values in StreamlineHessian
+!
 ! Revision 2.377  2010/02/25 18:37:51  pwagner
 ! Adds support for new Hessian data type
 !
