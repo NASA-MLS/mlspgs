@@ -81,7 +81,7 @@ contains
     integer(kind=size_t) :: COUNTS(1)
     integer, external :: HE5_SWWRFLD
 
-    counts = max(edges(1), size(buffer) )
+    counts = max(edges(1), int(size(buffer), size_t) )
 
     HE5_SWwrfld_character_array=HE5_SWwrfld(swathid, fieldname, starts, &
          strides, counts, buffer )
