@@ -2239,11 +2239,11 @@ contains ! ===================================== Public Procedures =====
            maxLength = nint ( ChunkDivideConfig%maxLength )
            noMAFsBelowHome = home - m1
            noChunksBelowHome = noMAFsBelowHome / maxLength
-           ! If user did not request specific number of chunks choose them
-           noChunks = noChunksBelowHome + noMAFsAtOrAboveHome / maxLength
            if ( mod ( noMAFsBelowHome, maxLength ) /= 0 ) &
               noChunksBelowHome = noChunksBelowHome + 1
            noMAFsAtOrAboveHome = m2 - home + 1
+           ! If user did not request specific number of chunks choose them
+           noChunks = noChunksBelowHome + noMAFsAtOrAboveHome / maxLength
            if ( mod ( noMAFsAtOrAboveHome, maxLength ) /= 0 ) &
               & noChunks = noChunks + 1
         else
@@ -2339,7 +2339,7 @@ contains ! ===================================== Public Procedures =====
           call output ( ' noMAFSAtOrAboveHome: ' )
           call output ( noMAFsAtOrAboveHome, advance='yes' )
           call output ( ' NoChunks: ' )
-          call output ( NoChunks , advance='yes' )
+          call output ( NoChunks, advance='yes' )
           call output ( ' noChunksBelowHome: ' )
           call output ( noChunksBelowHome , advance='yes' )
           call dump ( boundaries , 'boundaries' )
@@ -2612,6 +2612,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.93  2010/03/25 20:16:06  honghanh
+! Fix a bug of using uninitialized variable
+!
 ! Revision 2.92  2010/03/23 23:53:08  honghanh
 ! Move most subroutine inside ChunkDivide out, including
 ! ChunkDivide_Orbital, create CFM_ChunkDivide, which call
