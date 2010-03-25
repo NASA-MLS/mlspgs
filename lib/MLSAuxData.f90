@@ -24,7 +24,7 @@ module MLSAuxData
        h5acreate_f, h5awrite_f, h5aread_f, h5aclose_f, h5tcopy_f, &
        h5tset_size_f, h5aopen_name_f, h5aget_space_f, &
        h5tequal_f, h5eset_auto_f, h5gcreate_f, h5gclose_f, &
-       h5gopen_f, h5pset_fill_value_f
+       h5gopen_f, h5pset_fill_value_f, size_t
   use MLSCommon, only: r4, r8
   use MLSStrings, only: Lowercase
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_Error, MLSMSG_deallocate, &
@@ -1850,7 +1850,7 @@ contains ! ============================ MODULE PROCEDURES ====================
                    if (h5error /= 0) call MLSMessage (MLSMSG_Error, &
                         ModuleName, H5_ERROR_TYPE_COPY // trim(MLSAuxData%name))
 
-                   call h5tset_size_f(s_type_id, string_length, h5error)
+                   call h5tset_size_f(s_type_id, int(string_length, size_t), h5error)
                    if (h5error /= 0) call MLSMessage (MLSMSG_Error, &
                         & ModuleName, H5_ERROR_TYPE_SET // trim(MLSAuxData%name))
 
@@ -2346,7 +2346,7 @@ contains ! ============================ MODULE PROCEDURES ====================
             H5_ERROR_TYPE_COPY // trim(AttributeName) // ' in ' // &
             trim(MLSAuxData%name))
 
-       CALL h5tset_size_f(atype_id, attrlen, h5error)
+       CALL h5tset_size_f(atype_id, int(attrlen, size_t), h5error)
        IF (h5error /= 0) CALL MLSMessage(MLSMSG_Error, ModuleName, & 
             H5_ERROR_TYPE_SET // trim(AttributeName) // ' in ' // &
             trim(MLSAuxData%name))
@@ -2905,7 +2905,7 @@ contains ! ============================ MODULE PROCEDURES ====================
           if (h5error /= 0) call MLSMessage (MLSMSG_Error, &
                ModuleName, H5_ERROR_TYPE_COPY // trim(MLSAuxData%name))
 
-          call h5tset_size_f (s_type_id, string_length, h5error)
+          call h5tset_size_f (s_type_id, int(string_length, size_t), h5error)
           IF (h5error /= 0) CALL MLSMessage (MLSMSG_Error, &
                ModuleName, H5_ERROR_TYPE_SET//trim(MLSAuxData%name))
 
@@ -3061,7 +3061,7 @@ contains ! ============================ MODULE PROCEDURES ====================
        IF (h5error /= 0) call MLSMessage (MLSMSG_Error, &
             ModuleName, H5_ERROR_TYPE_COPY // trim(MLSAuxData%name))
        
-       call h5tset_size_f (s_type_id, string_length, h5error)
+       call h5tset_size_f (s_type_id, int(string_length, size_t), h5error)
        IF (h5error /= 0) call MLSMessage (MLSMSG_Error, &
             ModuleName, H5_ERROR_TYPE_SET // trim(MLSAuxData%name))
 
@@ -3268,6 +3268,9 @@ contains ! ============================ MODULE PROCEDURES ====================
 end module MLSAuxData
 
 ! $Log$
+! Revision 2.31  2010/03/25 18:41:02  pwagner
+! args to max function now the same integer type
+!
 ! Revision 2.30  2010/02/04 23:08:00  vsnyder
 ! Remove USE or declaration for unused names
 !
