@@ -186,6 +186,7 @@ ifAnyCrashedChunks
 ifMissingGMAO
 ignore
 ignoreGeolocation
+ignoreHessian # in quasi-linear forward model
 ignoreNegative
 ignoreZero
 inclination
@@ -428,6 +429,7 @@ terms
 test
 text # literal text to dump in Dump command
 tGrid
+threshold # for removing snall Hessian values
 tngtECI
 tolerance
 toleranceA Atolerance
@@ -472,6 +474,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.199  2010/03/26 23:11:57  vsnyder
+# Add ignoreHessian
+#
 # Revision 2.198  2010/03/24 20:52:09  vsnyder
 # Add AllHessians
 #
