@@ -167,6 +167,9 @@ module ForwardModelConfig
     logical :: ForceSidebandFraction  ! If set mult. by SBfrac even if single sideband
     logical :: GenerateTScat          ! Generate TScat tables
     logical :: GlobalConfig           ! If set is shared between all chunks
+    logical :: IgnoreHessian          ! Don't do 2nd-order Taylor series
+                                      ! in quasi-linear model even if L2PC has
+                                      ! a Hessian
     logical :: Incl_cld ! Include cloud extinction calculation in Bill's forward model
     logical :: LockBins               ! Use same l2pc bin for whole chunk
     logical :: Polarized              ! Use polarized model for Zeeman-split lines
@@ -774,8 +777,8 @@ contains
       & config%anyPFA,  config%atmos_der, config%default_spectroscopy, &
       & config%differentialScan, config%do_1d, config%do_baseline, &
       & config%do_conv, config%do_freq_avg,  config%forceFoldedOutput, &
-      & config%forceSidebandFraction,  config%globalConfig, config%incl_cld, &
-      & config%lockBins, &
+      & config%forceSidebandFraction,  config%globalConfig, &
+      & config%ignoreHessian, config%incl_cld, config%lockBins, &
       & config%polarized, config%refract, config%skipOverlaps, &
       & config%spect_Der, config%switchingMirror,  config%temp_Der /), &
       & msg ="Packing fwmConfig logicals" )
@@ -850,7 +853,7 @@ contains
     ! Local variables
     integer :: INFO                     ! Flag from PVM
     logical :: FLAG                     ! A flag from the sender
-    logical, dimension(24) :: LS        ! Temporary array, for logical scalars
+    logical, dimension(25) :: LS        ! Temporary array, for logical scalars
     integer, dimension(10) :: IS        ! Temporary array, for integer scalars
     real(r8), dimension(2) :: RS        ! Temporary array, for real scalars
     integer :: I                        ! Loop counter
@@ -899,6 +902,7 @@ contains
     config%forceFoldedOutput     = ls(i) ; i = i + 1
     config%forceSidebandFraction = ls(i) ; i = i + 1
     config%globalConfig          = ls(i) ; i = i + 1
+    config%ignoreHessian         = ls(i) ; i = i + 1
     config%incl_cld              = ls(i) ; i = i + 1
     config%lockBins              = ls(i) ; i = i + 1
     config%polarized             = ls(i) ; i = i + 1
@@ -1382,6 +1386,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.104  2010/01/23 01:04:26  vsnyder
+! Make sure Mie tables have been read if needed
+!
 ! Revision 2.103  2009/06/23 18:26:10  pwagner
 ! Prevent Intel from optimizing ident string away
 !
