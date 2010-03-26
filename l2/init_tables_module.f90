@@ -1237,6 +1237,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_do_1d, t+t_boolean, n+n_field_type, &
              begin, f+f_forceSidebandFraction, t+t_boolean, n+n_field_type, &
              begin, f+f_i_saturation, t+t_i_saturation, n+n_field_type,&
+             begin, f+f_ignoreHessian, t+t_boolean, n+n_field_type, &
              begin, f+f_incl_cld, t+t_boolean, n+n_field_type, &
              begin, f+f_integrationGrid, s+s_vGrid, n+n_field_spec, &
              begin, f+f_linearSideband, t+t_numeric, n+n_field_type, &
@@ -1492,9 +1493,10 @@ contains ! =====     Public procedures     =============================
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_streamlineHessian, &
+             begin, f+f_geodAngle, t+t_numeric, n+n_field_type, &
              begin, f+f_hessian, s+s_hessian, nr+n_field_spec, &
              begin, f+f_scaleHeight, t+t_numeric, n+n_field_type, &
-             begin, f+f_geodAngle, t+t_numeric, n+n_field_type, &
+             begin, f+f_threshold, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def, &
       begin, s+s_snoop, &
              begin, f+f_comment, t+t_string, n+n_field_type, &
@@ -1622,6 +1624,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.500  2010/03/26 23:12:12  vsnyder
+! Add ignoreHessian field to forwardModel
+!
 ! Revision 2.499  2010/03/24 20:53:10  vsnyder
 ! Add AllHessians and Hessians to DumpBlocks, allow DumpBlocks in Output section
 !
