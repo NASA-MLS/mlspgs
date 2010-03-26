@@ -64,6 +64,10 @@ module HessianModule_1          ! High-level Hessians in the MLS PGS suite
     module procedure OptimizeHessian_1
   end interface
 
+  interface StreamlineHessian
+    module procedure StreamlineHessian_1
+  end interface
+
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
@@ -72,7 +76,7 @@ module HessianModule_1          ! High-level Hessians in the MLS PGS suite
 
 contains
 
-  ! ----------------------------------------  AddHessianToDatabase  -----
+  ! ----------------------------------------- AddHessianToDatabase -----
   integer function AddHessianToDatabase ( DATABASE, ITEM )
 
   ! This routine adds a vector to a database of such vectors, 
@@ -90,7 +94,7 @@ contains
     AddHessianToDatabase = newSize
   end function AddHessianToDatabase
 
-  ! ------------------------------ CreateEmptyHessian ---
+  ! ------------------------------------------- CreateEmptyHessian -----
 
   type (Hessian_T) function CreateEmptyHessian ( Name, Row, Col, &
     & Row_Quan_First, Col_Quan_First, Text, where ) result ( H )
@@ -135,7 +139,7 @@ contains
     end do
   end function CreateEmptyHessian
 
-  ! ----------------------------------- CreateHessianBlock_1 ----
+  ! ----------------------------------------- CreateHessianBlock_1 -----
   subroutine CreateHessianBlock_1 ( H, RowNum, ColNum1, ColNum2, Kind, InitTuples )
   ! Create the hessian block Z%Block(RowNum,ColNum), which sprang into
   ! existence with kind M_Absent.  Create it with the specified Kind.
@@ -153,7 +157,7 @@ contains
       & initTuples )
   end subroutine CreateHessianBlock_1
 
-  ! --------------------------------------  DestroyHessian  -----
+  ! ----------------------------------------------- DestroyHessian -----
   subroutine DestroyHessian ( hessian )
     ! This subroutine destroys a hessian
     
@@ -180,7 +184,7 @@ contains
     end if
   end subroutine DestroyHessian
 
-  ! --------------------------------------  DestroyHessianDatabase  -----
+  ! --------------------------------------- DestroyHessianDatabase -----
   subroutine DestroyHessianDatabase ( database )
 
   ! This subroutine destroys a vector database
@@ -200,7 +204,7 @@ contains
     end if
   end subroutine DestroyHessianDatabase
 
-  ! -----------------------------------------------  Dump_Hessian  -----
+  ! ------------------------------------------------- Dump_Hessian -----
   subroutine Dump_Hessian ( H, Name, Details, Clean )
     use HessianModule_0, only: Dump
     use Lexer_core, only: Print_Source
@@ -295,7 +299,7 @@ contains
 
   end subroutine Dump_Hessian
 
-  ! --------------------------------------  Dump_Hessian_Database  -----
+  ! ---------------------------------------- Dump_Hessian_Database -----
   subroutine Dump_Hessian_Database ( H, Details, Clean )
     type (Hessian_T), intent(in) :: H(:)
     integer, intent(in), optional :: Details ! See Dump_Hessian
@@ -356,7 +360,7 @@ contains
 
   end subroutine Hessian_Vector_Vector_Multiply
 
-  ! ---------------------------------- InsertHessianPlane_1 ----
+  ! ----------------------------------------- InsertHessianPlane_1 -----
   subroutine InsertHessianPlane_1 ( H, M, B, EL, MIRROR )
     ! Insert matrix M as a plane (block B, element EL) of the Hessian H
     ! If Mirror is set, populate the transpose set also
@@ -397,7 +401,7 @@ contains
     
   end subroutine InsertHessianPlane_1
 
-  ! -------------------------------------- NullifyHessian ------
+  ! ----------------------------------------------- NullifyHessian -----
   subroutine NullifyHessian_1 ( H )
     ! Given a matrix, nullify all the pointers associated with it
     type(Hessian_T), intent(inout) :: H
@@ -409,7 +413,7 @@ contains
     nullify ( h%block )
   end subroutine NullifyHessian_1
 
-  ! -------------------------------------  OptimizeHessian_1  -----
+  ! -------------------------------------------- OptimizeHessian_1 -----
   subroutine OptimizeHessian_1 ( H )
   ! Get rid of duplicates and zeroes
     type (Hessian_T), intent(inout) :: H
@@ -423,74 +427,62 @@ contains
     end do
   end subroutine OptimizeHessian_1
 
-  ! -------------------------------------- StreamlineHessian ------
-  subroutine StreamlineHessian ( H, scaleHeight, geodAngle )
+  ! ------------------------------------------ StreamlineHessian_1 -----
+  subroutine StreamlineHessian_1 ( H, ScaleHeight, GeodAngle, Threshold )
+
+    use HessianModule_0, only: StreamlineHessian
     use Intrinsic, only: L_ZETA
     use MLSKinds, only: R8
     use QuantityTemplates, only: QuantityTemplate_T
     ! Given a Hessian, trim off the elements that are further away than indicated in
-    ! scale height (for zeta coordinates) and geodAngle
+    ! scale height (for zeta coordinates) or geodAngle.  In each block, replace
+    ! ones that are smaller in magnitude than the maximum in the block by
+    ! a factor of threshold by zero.
     type (Hessian_T), intent(inout) :: H
-    type (HessianElement_T), pointer :: HB
-    real(r8), intent(in) :: scaleHeight
-    real(r8), intent(in) :: geodAngle
+    type (HessianElement_T), pointer :: HBU, HBL ! In Upper and Lower triangle
+    real(r8), intent(in) :: ScaleHeight ! Negative if not specified
+    real(r8), intent(in) :: GeodAngle   ! Negative if not specified
+    real(r8), intent(in) :: Threshold   ! Negative if not specified
 
-    type (QuantityTemplate_T), pointer :: Q1, Q2
-    integer :: P1, P2, S1, S2           ! Profile and surface for column quantities
-    integer :: I, J, K                  ! Loop counters
-    integer :: T, II, JJ, KK            ! More loop counters and indices
+    type (QuantityTemplate_T), pointer :: Q1, Q2 ! For 1st, 2nd cols of H
+    integer :: P1, P2   ! Profile indices for 1st, 2nd cols of H
+    integer :: I, J, K  ! Loop counters
     logical :: DROPBLOCK
 
     do i = 1, h%row%nb
-      do j = 1, h%col%nb
+      do j = 1, h%col%nb - 1
         p1 = h%col%inst(j)
         q1 => h%col%vec%quantities ( h%col%quant(j) ) % template
-        do k = 1, h%col%nb
+        do k = j + 1, h%col%nb
           p2 = h%col%inst(k)
           q2 => h%col%vec%quantities ( h%col%quant(k) ) % template
 
-          hb => h%block ( i, j, k )
+          hbu => h%block ( i, j, k )
+          hbl => h%block ( i, k, j )
           
-          ! Decide whether to drop this on horizontal grounds
+          ! Decide whether to drop these on horizontal grounds
           dropBlock = .false.
-          if ( q1%stacked .and. q2%stacked .and. ( geodAngle > 0 ) ) &
+          if ( q1%stacked .and. q2%stacked .and. ( geodAngle > 0.0 ) ) &
             & dropBlock = abs ( q1%phi(1,p1) - q2%phi(1,p2) ) > geodAngle
           if ( dropBlock ) then
-            call ClearBlock ( hb )
+            call ClearBlock ( hbu )
+            call ClearBlock ( hbl )
           else
             ! Now clear elements on vertical grounds, but only for simple quantities
-            if ( .not. q1%coherent .or. .not. q2%coherent ) cycle
-            if ( q1%verticalCoordinate /= l_zeta .or. &
-              &  q2%verticalCoordinate /= l_zeta ) cycle
+            if ( q1%coherent .and. q1%verticalCoordinate == l_zeta .and. &
+               & q2%coherent .and. q2%verticalCoordinate == l_zeta .and. &
+               & scaleHeight > 0.0 ) then
 
-            select case ( hb%kind )
-            case ( h_absent )
-            case ( h_sparse )
-              do t = 1, hb%tuplesFilled
-                s1 = ( hb%tuples(t)%j-1 ) / q1%noChans + 1
-                s2 = ( hb%tuples(t)%k-1 ) / q1%noChans + 1
-                if ( abs ( q1%surfs(s1,1) - q2%surfs(s2,1) ) > scaleHeight ) &
-                  & hb%tuples(t)%h = 0
-              end do
-            case ( h_full )
-              do kk = 1, hb%nCols2
-                s2 = ( kk-1 ) / q2%noChans + 1
-                do jj = 1, hb%nCols1
-                  s1 = ( jj-1 ) / q1%noChans + 1
-                  if ( abs ( q1%surfs(s1,1) - q2%surfs(s2,1) ) > scaleHeight ) &
-                    & hb%values ( :, jj, kk ) = 0
-                end do
-              end do
-            end select
+              call streamlineHessian ( hbu, q1, q2, scaleHeight, threshold )
+              call streamlineHessian ( hbl, q2, q1, scaleHeight, threshold )
 
-            ! Now optimize this block
-            call OptimizeBlock ( hb )
+            end if
           end if
         end do
       end do
     end do
 
-  end subroutine StreamlineHessian
+  end subroutine StreamlineHessian_1
 
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -505,6 +497,9 @@ contains
 end module HessianModule_1
 
 ! $Log$
+! Revision 2.4  2010/03/26 23:15:45  vsnyder
+! Add Threshold to StreamlineHessian
+!
 ! Revision 2.3  2010/03/24 20:38:14  vsnyder
 ! Add Dump and Optimize.  Replace 'continue' with 'cycle'.
 !

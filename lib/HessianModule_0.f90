@@ -25,6 +25,7 @@ module HessianModule_0          ! Low-level Hessians in the MLS PGS suite
   public :: HessianElement_T, Tuple_T
   public :: ClearBlock, CreateBlock, Densify, DestroyBlock, Dump
   public :: InsertHessianPlane, Multiply, OptimizeBlock, Sparsify
+  public :: StreamlineHessian
 
   integer, parameter :: H_Absent = 0    ! An absent block -- assumed zero
   integer, parameter :: H_Sparse = 1    ! A 3-way indexed sparse representation
@@ -84,7 +85,11 @@ module HessianModule_0          ! Low-level Hessians in the MLS PGS suite
   interface Sparsify
     module procedure Sparsify_Hessian, Sparsify_Hessian_Array_D
     module procedure Sparsify_Hessian_Array_S
-  end interface Sparsify
+  end interface
+
+  interface StreamlineHessian
+    module procedure StreamlineHessian_0
+  end interface
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -94,7 +99,7 @@ module HessianModule_0          ! Low-level Hessians in the MLS PGS suite
 
 contains
 
-  ! ----------------------------------------- AugmentHessian -----------
+  ! ----------------------------------------------- AugmentHessian -----
   subroutine AugmentHessian ( H, N, factor )
     ! Make space for N extra elements in the Hessian tuple if it's not already there
     ! If Geometric is present then don't merely add 'just enough' values, but
@@ -150,7 +155,7 @@ contains
     end if
   end subroutine AugmentHessian
 
-  ! ----------------------------------------- ClearHessianBlock_0 -----
+  ! ------------------------------------------ ClearHessianBlock_0 -----
   subroutine ClearHessianBlock_0 ( H )
     ! Clear a HessianElement_T structure
     use Allocate_Deallocate, only: Deallocate_Test, Test_Deallocate
@@ -234,7 +239,7 @@ contains
 
   end subroutine Densify_Hessian
 
-  ! -----------------------------------------  Dump_Hessian_Block  -----
+  ! ------------------------------------------- Dump_Hessian_Block -----
   subroutine Dump_Hessian_Block ( H, Name, Details, Indices, Clean )
     use Dump_0, only: Dump
     use Output_m, only: Output
@@ -332,7 +337,7 @@ contains
 
   end subroutine Hessian_Vec_Vec_Multiply_S
 
-  ! --------------------------------------------- InsertHessianPlane_Array ---
+  ! ------------------------------------- InsertHessianPlane_Array -----
   subroutine InsertHessianPlane_Array ( H, plane, k, mirroring )
     ! Insert the supplied array in (:,:,k) of the HessianElement_T
     ! or the (:,k,:) plane if mirroring is present and true
@@ -402,7 +407,7 @@ contains
 
   end subroutine InsertHessianPlane_Array
 
-  ! -------------------------------------------- InsertHessianPlane_Matrix ---
+  ! ------------------------------------ InsertHessianPlane_Matrix -----
   subroutine InsertHessianPlane_Matrix ( H, plane, k, mirroring )
     ! Insert the supplied matrix_0 element in (:,:,k) of the HessianElement_T
     ! or the (:,k,:) plane if mirroring is present and true
@@ -502,7 +507,7 @@ contains
 
   end subroutine InsertHessianPlane_Matrix
 
-  ! ------------------------------------------------- OptimizeBlock ----
+  ! ------------------------------------------------ OptimizeBlock -----
   subroutine OptimizeBlock ( H )
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, &
       & Test_Allocate, Test_Deallocate
@@ -658,6 +663,51 @@ o:    do while ( i < n )
 
   end subroutine Sparsify_Hessian_Array_S
 
+  !  ----------------------------------------- StreamlineHessian_0 -----
+  subroutine StreamlineHessian_0 ( H, Q1, Q2, ScaleHeight, Threshold )
+    ! Remove elements that are separated vertically by than ScaleHeight or
+    ! that are smaller in magnitude than the maximum in the block by a factor
+    ! of threshold
+    use MLSKinds, only: R8
+    use QuantityTemplates, only: QuantityTemplate_T
+    type (HessianElement_T), intent(inout) :: H
+    type (QuantityTemplate_T), intent(in) :: Q1, Q2 ! For 1st, 2nd cols of H
+    real(r8), intent(in) :: ScaleHeight
+    real(r8), intent(in) :: Threshold
+    real(r8) :: Cutoff ! Threshold * maxval(abs(...)) if threshold > 0.
+    integer :: J, K    ! Subscripts
+    integer :: S1, S2  ! Surface indices for 1st, 2nd cols of H
+
+    select case ( h%kind )
+    case ( h_absent )
+      return
+    case ( h_sparse )
+      cutoff = threshold * maxval(abs(h%tuples%h))
+      where ( abs( h%tuples%h ) < cutoff .or. &
+        &     abs( q1%surfs( (h%tuples%j-1 ) / q1%noChans + 1, 1) -   &
+        &          q2%surfs( (h%tuples%k-1 ) / q2%noChans + 1, 1) ) > &
+        &     scaleHeight  ) h%tuples%h = 0.0
+    case ( h_full )
+      do k = 1, h%nCols2 - 1
+        s2 = ( k-1 ) / q2%noChans + 1
+        do j = k + 1, h%nCols1
+          s1 = ( j-1 ) / q1%noChans + 1
+          if ( abs ( q1%surfs(s1,1) - q2%surfs(s2,1) ) > scaleHeight ) then
+            h%values ( :, j, k ) = 0
+            h%values ( :, k, j ) = 0
+          end if
+        end do
+      end do
+      if ( threshold > 0 ) then
+        cutoff = threshold * maxval(abs(h%values))
+        where ( abs(h%values) < cutoff ) h%values = 0.0
+      end if
+    end select
+
+    call optimizeBlock ( h )
+
+  end subroutine StreamlineHessian_0
+
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -671,6 +721,9 @@ o:    do while ( i < n )
 end module HessianModule_0
 
 ! $Log$
+! Revision 2.4  2010/03/26 23:15:45  vsnyder
+! Add Threshold to StreamlineHessian
+!
 ! Revision 2.3  2010/03/24 20:36:24  vsnyder
 ! Add Dump_Hessian_Block.  Replace specific DestroyHessianBlock_0 with
 ! ClearHessianBlock_0 but keep generic DestroyBlock.  Add OptimizeBlock
