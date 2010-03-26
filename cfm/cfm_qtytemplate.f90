@@ -80,22 +80,41 @@ module CFM_QuantityTemplate_m
 
    ! This subroutine design is prone to bugs, I'll fix it when I got some time. -haley
 
-   ! Creating a quantity based on the optional input this subroutine is provided with.
+   ! Creating a quantity based on the optional inputs this subroutine is provided with.
    type(QuantityTemplate_T) function CreateQtyTemplate (type, filedatabase, chunk, &
         avgrid, ahgrid, afgrid, qInstModule, qMolecule, qLogBasis, qMinValue, qSignal, &
         qRadiometer, qBadValue, mifGeolocation) result(qty)
+      ! a case-insensitive string, one of the allowable strings for type
+      ! listed in the "Callable Forward Model Interface Requirements Document" (from
+      ! now on will be called CFM document).
       character(len=*), intent(in) :: type
+      ! is an array of open files (see CFM_MLSSetup)
       type (MLSFile_T), dimension(:), pointer, optional ::     FILEDATABASE
+      ! an input holder, storing the time range of the data to be read
+      ! (see CFM_MLSSetup)
       type (MLSChunk_T), intent(in), optional :: Chunk
+      ! the z-coordinate samples of the spacecraft's path
       type(VGrid_T), intent(in), optional :: avgrid
+      ! the (x,y) coordinate samples of the spacecraft's path
       type(HGrid_T), intent(in), optional :: ahgrid
+      ! the frequency in which the data is gathered
       type(FGrid_T), intent(in), optional :: afgrid
+      ! instrument module, a case-insensitive string, either "THz" or "GHz"
       character(len=*), optional :: qInstModule
+      ! a case-insensitive string, one of the molecules listed in the CFM document.
       character(len=*), optional :: qMolecule
+      ! if type is "radiance", then a qSignal must be provided
       character(len=*), optional :: qSignal
+      ! tells whether the value of avgrid and ahgrid
+      ! is on logarithmic scale. The default value is .false..
       logical, optional :: qLogBasis
+      ! is used only qLogBasis is .true., in which case
+      ! it is the threshold to which greater or equal coordinate values are recorded
+      ! as their logarithmic equivalent. The default value is 1.0.
       real(r8), optional :: qMinValue
       character(len=*), optional :: qRadiometer
+      ! a number to indicate that a data point shouldn't be used. Default
+      ! is -huge(0.0_r8)
       real(r8), optional :: qBadValue
       type (QuantityTemplate_T), dimension(:), intent(in), optional, target :: &
       & MifGeolocation ! TARGET attribute needed so pointers to MifGeolocation

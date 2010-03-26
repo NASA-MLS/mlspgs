@@ -56,25 +56,41 @@ module CFM_MLSSetup_m
 
    character(len=20), parameter :: moduleName = "CFM_MLSSetup"
    integer, parameter :: CCSDSLen = 27
-   type(MLSFile_T), dimension(:), save, pointer :: filedatabase => NULL()
+   type(MLSFile_T), dimension(:), save, pointer :: myFiledatabase => NULL()
    type(ChunkDivideConfig_T), save :: chunkDivideConfig  ! Using default options
 
    contains
 
    ! Parse the L2CF given in standard input, and use it to read
-   ! ForwardModelConfig(s) in ForwardModelConfigDatabase,
-   ! also read Spectroscopy, MLSSignals.
-   ! Read L1BOA file and put it into the filedatabase
-   ! Use the startTime and endTime to create a MLSChunk_T object
+   ! ForwardModelConfig(s), then put them in ForwardModelConfigDatabase.
+   ! Also reads Spectroscopy, MLSSignals.
+   ! Reads L1BOA file and put it into the filedatabase.
+   ! Uses the startTime and endTime to create a MLSChunk_T object
    ! that uses by other subroutines that read data from L1BOA.
+   ! Note: the use of a filedatabase, instead of just one MLSFile_T
+   ! object to store L1BOA is for convenience when wrapping
+   ! existing code in MLSPGS.
+   ! CFM_MLSSetup is to be called only once before CFM_MLSCleanup is called.
    subroutine CFM_MLSSetup (startTime, endTime, l1boa, retVal, &
       filedatabase, fakeChunk, ForwardModelConfigDatabase)
 
-      character(len=CCSDSlen), intent(in) :: startTime, endTime
+      ! The start time of the data to be read in the format
+      ! yyyy-doyThh:mm:ss.zzzz
+      character(len=CCSDSlen), intent(in) :: startTime
+      ! The stop time of the data to be read in the same format as startTime.
+      character(len=CCSDSlen), intent(in) :: endTime
+      ! The file name of L1BOA file.
       character(len=*), intent(in) :: l1boa
+      ! Return value: 0 if successful, non-zero if error(s) is encountered.
       integer, intent(out) :: retVal
+      ! Output: An array of MLSFile_T object, representing open file(s),
+      ! including L1BOA.
       type (MLSFile_T), dimension(:), pointer :: filedatabase
+      ! Output: A data holder that holds the startTime and endTime
+      ! in a way that can be understood by other subroutines.
       type (MLSChunk_T), intent(out) :: fakeChunk
+      ! Output: to store all ForwardModelConfig_T objects declared in L2CF.
+      ! This argument will be nullified inside this subroutine.
       type (ForwardModelConfig_T), pointer, optional :: ForwardModelConfigDatabase(:)
 
       integer :: Root
@@ -109,6 +125,7 @@ module CFM_MLSSetup_m
          return
       end if
 
+      ! We have to call this before opening any HDF5 file
       call h5open_f(error)
       if (error /= 0) then
          print *, "Error in initialize hdf5 library"
@@ -117,6 +134,7 @@ module CFM_MLSSetup_m
       end if
 
       if (present(ForwardModelConfigDatabase)) then
+         nullify(ForwardModelConfigDatabase)
          call Walk_Tree ( Root, First_Section, ForwardModelConfigDatabase )
       else
          call Walk_Tree ( Root, First_Section, dummy1 )
@@ -127,9 +145,11 @@ module CFM_MLSSetup_m
       nullify(filedatabase)
       allocate(filedatabase(1), stat=error)
       if (error /= 0) return
-         error = InitializeMLSFile(l1bfile, content='l1boa', &
-         name=trim(l1boa), &
-         shortName='L1BOA', type=l_hdf, access=DFACC_RDONLY)
+      myFiledatabase => filedatabase ! Remember what you allocate
+                                     ! so you can deallocate later
+
+      error = InitializeMLSFile(l1bfile, content='l1boa', &
+      name=trim(l1boa), shortName='L1BOA', type=l_hdf, access=DFACC_RDONLY)
       if (error == 0) then
          call mls_openFile(L1BFile, error)
          if (error /= PGS_S_SUCCESS ) then
@@ -139,7 +159,7 @@ module CFM_MLSSetup_m
             filedatabase(1) = l1bfile
          end if
 
-         !Populate fakeChunk
+         ! Get the start time and end time encoded
          error = pgs_td_utctotai (startTime, processingrange%starttime)
          if (error /= PGS_S_SUCCESS .and. error /= PGSTD_E_NO_LEAP_SECS) then
             print *, "Could not convert UTC Start time to TAI"
@@ -171,9 +191,8 @@ module CFM_MLSSetup_m
          chunkDivideConfig%lowerOverlapFamily = phyq_mafs
          chunkDivideConfig%upperOverlapFamily = phyq_mafs
          chunkDivideConfig%noChunks = 1
+         ! Create a fake chunk out of the start time, end time, and L1BOA
          fakeChunk = GetChunkFromTimeRange(processingRange, filedatabase, chunkDivideConfig)
-!         fakeChunk%lastMafIndex = FindMaxMAF (filedatabase, fakeChunk%firstMafIndex )
-!         fakeChunk%lastMafIndex = fakeChunk%lastMafIndex - fakeChunk%firstMafIndex
       end if
 
    end subroutine CFM_MLSSetup
@@ -184,6 +203,7 @@ module CFM_MLSSetup_m
       integer :: error
       integer :: i
 
+      ! Clean up for the tree
       call destroy_char_table
       call destroy_hash_table
       call destroy_string_table
@@ -191,12 +211,15 @@ module CFM_MLSSetup_m
       call deallocate_decl
       call deallocate_tree
 
-      do i = 1, size(filedatabase)
-         call mls_closefile(filedatabase(i))
+      ! Close open files
+      do i = 1, size(myFiledatabase)
+         call mls_closefile(myFiledatabase(i))
       end do
 
-      if (associated(filedatabase)) deallocate(filedatabase)
+      ! Deallocate filedatabase
+      if (associated(myFiledatabase)) deallocate(myFiledatabase)
 
+      ! Have to call this, after we stops using HDF5 library
       call h5close_f (error)
       if (error /= 0) then
          print *, "Error in finishing up hdf5 library"

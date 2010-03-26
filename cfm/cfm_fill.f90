@@ -136,10 +136,12 @@ module CFM_Fill_m
    end subroutine
 
    ! Fill the quantity with given values.
-   ! Note that the amount of values provided must be equal to
-   ! quantity%template%instanceLen * quantity%template%noInstances
    subroutine ExplicitFillVectorQuantity (quantity, values)
+      ! The quantity to be filled. Only values are filled,
+      ! other fields of VectorValue_T object won't be overwritten.
       type(VectorValue_T), intent(inout) :: quantity
+      ! the amount of values provided must be equal to
+      ! quantity%template%instanceLen * quantity%template%noInstances
       real(r8), dimension(:), intent(in) :: values
 
       integer :: noValues, numChans

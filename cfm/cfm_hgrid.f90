@@ -26,12 +26,16 @@ module CFM_HGrid_m
    type(HGrid_T) function CreateRegularHGrid (instrumentModuleName, origin, &
                   spacing, insetOverLaps, filedatabase, &
                   fakeChunk) result(hgrid)
-
+      ! The (x,y) origin of coordinate
       real(r8), intent(in) :: origin
       real(r8), intent(in) :: spacing
+      ! the filedatabase must contains L1BOA file (see CFM_MLSSetup)
       type(MLSFile_T), dimension(:), pointer :: filedatabase
+      ! Either "GHz" or "THz" but the string is case-insensitive.
       character(len=*), intent(in) :: instrumentModuleName
       logical, intent(in) :: insetOverlaps
+      ! Contains the time range of the data to be gotten out of L1BOA
+      ! (see CFM_MLSSetup)
       type(MLSChunk_T) :: fakeChunk
 
       type(MLSFile_T), pointer :: l1bfile

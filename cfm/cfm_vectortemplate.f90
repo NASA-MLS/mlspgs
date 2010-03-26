@@ -9,6 +9,11 @@ module CFM_VectorTemplate_m
    private
 
    public :: CreateVectorTemplate, DestroyVectorTemplateInfo
+   ! Please see mockup.f90 for examples of using Dump subroutines.
+   ! Details level typically range from -3 to 3, for most subroutines
+   ! the domain for the details argument can be smaller. However,
+   ! passing a too big or too small number won't cause the subroutine
+   ! to crash. This applies to all Dump subroutines from all modules.
    public :: Dump
    public :: VectorTemplate_T
 
@@ -16,12 +21,14 @@ module CFM_VectorTemplate_m
 
    contains
 
-   ! qtyTemplateDB is a 1-based, 1-dimensional array of QuantityTemplate_T
-   ! selectedQty is a list of the array indices of the chosen quantity templates.
+   ! Create a VectorTemplate_T, which references one or many quantities.
+   ! To ensure correctness, the same qtyTemplateDB, must be passed to
+   ! CreateVector function in conjunction with the returned VectorTemplate_T.
    type(VectorTemplate_T) function CreateVectorTemplate (qtyTemplateDB, selectedQty) &
          result (vecTemplate)
-
+      ! a list of the array indices of the chosen quantity templates.
       integer, intent(in) :: selectedQty(:)
+      ! a 1-based, 1-dimensional array of all QuantityTemplate_T objects
       type(QuantityTemplate_T), intent(in) :: qtyTemplateDB(:)
 
       call nullifyVectorTemplate(vecTemplate)

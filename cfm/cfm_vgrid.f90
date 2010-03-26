@@ -21,15 +21,18 @@ module CFM_VGrid_m
 
    ! Create a VGrid, from a given formula, a starting value, a type
    ! (currently only supported logarithmic type)
-   ! The format of formula is "number_of_surfaces:num_decades_between_surfaces".
-   ! For example, "37:6" or "25:8,12:6".
    type(VGrid_T) function CreateVGrid (coordinate, type, start, &
                  formula, unit) result (vGrid)
-
       real(r8), intent(in) :: start
+      ! The format of formula is
+      ! "number_of_surfaces:num_decades_between_surfaces".
+      ! For example, "37:6" or "25:8,12:6".
       character(len=*), intent(in) :: formula
+      ! Currently only support l_zeta
       integer, intent(in) :: coordinate
+      ! Currently only support l_logarithmic (log-based vgrid)
       integer, intent(in) :: type
+      ! Must be either phyq_dimensionless or phyq_pressure
       integer, intent(in) :: unit
 
       call nullifyVGrid(vGrid) ! for sun's still useless compiler

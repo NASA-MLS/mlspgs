@@ -14,6 +14,7 @@ module CFM_FGrid_m
    character(len=20), parameter :: moduleName="CFM_FGrid"
    contains
 
+   ! Creates and fills an FGrid_T given a coordinate and a list of values
    type(FGrid_T) function CreateFGrid (frequencyCoordinate, values) &
    result (fGrid)
       integer, intent(in) :: frequencyCoordinate
