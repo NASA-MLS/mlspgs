@@ -99,8 +99,8 @@ contains ! =====     Public Procedures     =============================
       & F_ECRTOFOV, F_EARTHRADIUS, F_EXACT, F_EXCLUDEBELOWBOTTOM, F_EXPLICITVALUES, &
       & F_EXTINCTION, F_FIELDECR, F_FILE, F_FLAGS, F_FORCE, &
       & F_FRACTION, F_FROMPRECISION, &
-      & F_GEOCALTITUDEQUANTITY, F_GEODANGLE, F_GPHQUANTITY, F_HEIGHT, F_HEIGHTRANGE, &
-      & F_HESSIAN, F_HIGHBOUND, F_H2OQUANTITY, F_H2OPRECISIONQUANTITY, &
+      & F_GEOCALTITUDEQUANTITY, F_GPHQUANTITY, F_HEIGHT, F_HEIGHTRANGE, &
+      & F_HIGHBOUND, F_H2OQUANTITY, F_H2OPRECISIONQUANTITY, &
       & F_IFMISSINGGMAO, F_IGNORENEGATIVE, F_IGNOREGEOLOCATION, F_IGNOREZERO, &
       & F_INSTANCES, F_INTEGRATIONTIME, F_INTERNALVGRID, &
       & F_INTERPOLATE, F_INVERT, F_INTRINSIC, F_ISPRECISION, &
@@ -113,7 +113,7 @@ contains ! =====     Public Procedures     =============================
       & F_PROFILE, F_PROFILEVALUES, F_PTANQUANTITY, &
       & F_QUADRATURE, F_QUANTITY, F_RADIANCEQUANTITY, F_RATIOQUANTITY, &
       & F_REFRACT, F_REFGPHQUANTITY, F_REFGPHPRECISIONQUANTITY, F_RESETSEED, &
-      & F_RHIPRECISIONQUANTITY, F_RHIQUANTITY, F_ROWS, F_SCALE, F_SCALEHEIGHT, &
+      & F_RHIPRECISIONQUANTITY, F_RHIQUANTITY, F_ROWS, F_SCALE, &
       & F_SCALEINSTS, F_SCALERATIO, F_SCALESURFS, &
       & F_SCECI, F_SCVEL, F_SCVELECI, F_SCVELECR, F_SEED, F_SKIPMASK, &
       & F_SOURCE, F_SOURCEGRID, F_SOURCEL2AUX, F_SOURCEL2GP, &
@@ -381,7 +381,6 @@ contains ! =====     Public Procedures     =============================
     logical :: FROMPRECISION            ! Fill from l2gpPrecision not l2gpValue
     integer :: GEOCALTITUDEQUANTITYINDEX    ! In the source vector
     integer :: GEOCALTITUDEVECTORINDEX      ! In the vector database
-    real(r8) :: GEODANGLE               ! For StreamlineHessian
     integer :: GLOBALUNIT               ! To go into the vector
     character(len=16) :: GLStr          ! geo. loc. in manipulation='..'
     integer :: GPHQUANTITYINDEX         ! In the source vector
@@ -486,7 +485,6 @@ contains ! =====     Public Procedures     =============================
     integer :: RHIPRECISIONVECTORINDEX           ! In the vector database
     integer :: ROWVECTOR                ! Vector defining rows of Matrix
     real(r8) :: SCALE                   ! Scale factor
-    real(r8) :: SCALEHEIGHT             ! Scale height for StreamlineHessian
     real(r8) :: SCALEINSTANCES          ! Scale factor for weighted LS fill
     real(r8) :: SCALERATIO              ! Scale factor for weighted LS fill
     real(r8) :: SCALESURFS              ! Scale factor for weighted LS fill
@@ -855,7 +853,6 @@ contains ! =====     Public Procedures     =============================
           fieldIndex = get_field_id(gson)
           if ( nsons(gson) > 1) &
             & gson = decoration(decoration(subtree(2,gson))) ! Now value of said argument
-          got(fieldIndex)=.true.
           select case ( fieldIndex )
           case ( f_matrix )
             matrixToFill = gson
@@ -891,7 +888,6 @@ contains ! =====     Public Procedures     =============================
           fieldIndex = get_field_id(gson)
           if ( nsons(gson) > 1) &
             & gson = decoration(decoration(subtree(2,gson))) ! Now value of said argument
-          got(fieldIndex)=.true.
           select case ( fieldIndex )
           case ( f_matrix )
             matrixToFill = gson
@@ -1021,30 +1017,7 @@ contains ! =====     Public Procedures     =============================
           & MLSMSG_Deallocate//'snoopMatrices' )
 
       case ( s_StreamlineHessian ) ! =============== StreamlineHessian =====
-        geodAngle = -1.0 ! means "not specified"
-        scaleHeight = -1.0 ! means "not specified"
-        do j = 2, nsons(key)
-          gson = subtree(j,key) ! The argument
-          fieldIndex = get_field_id(gson)
-          got(fieldIndex)=.true.
-          select case ( fieldIndex )
-          case ( f_hessian )
-            hessianIndex = -decoration(decoration(subtree(2,gson)))
-          case ( f_scaleHeight )
-            call expr_check ( subtree(2,gson), unitAsArray, valueAsArray, &
-              & (/PHYQ_Dimensionless/), unitsError )
-            if ( unitsError ) call Announce_error ( subtree(j,key), wrongUnits, &
-              & extraInfo=(/unitAsArray(1), PHYQ_Dimensionless/) )
-            scaleHeight = valueAsArray(1)
-          case ( f_geodAngle )
-            call expr_check ( subtree(2,gson), unitAsArray, valueAsArray, &
-              & (/PHYQ_Angle/), unitsError )
-            if ( unitsError ) call Announce_error ( subtree(j,key), wrongUnits, &
-              & extraInfo=(/unitAsArray(1), PHYQ_Angle/) )
-            geodAngle = valueAsArray(1)
-          end select
-        end do
-        call StreamlineHessian ( hessians ( hessianIndex ), scaleHeight, geodAngle )
+        call doStreamline
 
       ! End of fill operations
 
@@ -1065,12 +1038,53 @@ contains ! =====     Public Procedures     =============================
 
   contains
 
-    ! ------------------------------------------------- fillCommand ------
+    ! ---------------------------------------------- DoStreamline  -----
+    subroutine DoStreamline
+      use INIT_TABLES_MODULE, only: F_GEODANGLE, F_HESSIAN, F_SCALEHEIGHT, &
+        & F_THRESHOLD
+      real(r8) :: GEODANGLE               ! For StreamlineHessian
+      real(r8) :: SCALEHEIGHT             ! Scale height for StreamlineHessian
+      real(r8) :: THRESHOLD
+      geodAngle = -1.0   ! means "not specified"
+      scaleHeight = -1.0 ! means "not specified"
+      threshold = -1.0   ! means "not specified"
+      do j = 2, nsons(key)
+        gson = subtree(j,key) ! The argument
+        fieldIndex = get_field_id(gson)
+        select case ( fieldIndex )
+        case ( f_geodAngle )
+          call expr_check ( subtree(2,gson), unitAsArray, valueAsArray, &
+            & (/PHYQ_Angle/), unitsError )
+          if ( unitsError ) call Announce_error ( subtree(j,key), wrongUnits, &
+            & extraInfo=(/unitAsArray(1), PHYQ_Angle/) )
+          geodAngle = valueAsArray(1)
+        case ( f_hessian )
+          hessianIndex = -decoration(decoration(subtree(2,gson)))
+        case ( f_scaleHeight )
+          call expr_check ( subtree(2,gson), unitAsArray, valueAsArray, &
+            & (/PHYQ_Dimensionless/), unitsError )
+          if ( unitsError ) call Announce_error ( subtree(j,key), wrongUnits, &
+            & extraInfo=(/unitAsArray(1), PHYQ_Dimensionless/) )
+          scaleHeight = valueAsArray(1)
+        case ( f_threshold )
+          call expr_check ( subtree(2,gson), unitAsArray, valueAsArray, &
+            & (/PHYQ_Dimensionless/), unitsError )
+          if ( unitsError ) call Announce_error ( subtree(j,key), wrongUnits, &
+            & extraInfo=(/unitAsArray(1), PHYQ_Dimensionless/) )
+          threshold = valueAsArray(1)
+        end select
+      end do
+      call StreamlineHessian ( hessians ( hessianIndex ), &
+        & scaleHeight, geodAngle, threshold )
+    end subroutine DoStreamline
+
+    ! ------------------------------------------------ fillCommand -----
     subroutine fillCommand
     ! Now we're on actual Fill instructions.
       ! Loop over the instructions to the Fill command
       BOMask = 0
       AvoidObjects = ' '
+      got = .false.
       do j = 2, nsons(key)
         gson = subtree(j,key) ! The argument
         fieldIndex = get_field_id(gson)
@@ -2577,6 +2591,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.379  2010/03/26 23:16:56  vsnyder
+! Add Threshold to StreamlineHessian
+!
 ! Revision 2.378  2010/03/25 01:50:25  vsnyder
 ! Make sure GeodAngle and ScaleHeight get values in StreamlineHessian
 !
