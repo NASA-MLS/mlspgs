@@ -81,14 +81,14 @@ contains ! =====     Public Procedures     =============================
     ! ... but in certain rare circumstances (when we're called by the hybrid model)
     ! we might want to force the folded one.
     if ( fmConf%forceFoldedOutput ) sideband = 0
-    radiance => GetVectorQuantityByType (fwdModelOut, quantityType=l_radiance, &
-      & signal=signal%index, sideband=sideband, noError=.true. )
+    radiance => GetQuantityForForwardModel (fwdModelOut, quantityType=l_radiance, &
+      & signal=signal%index, sideband=sideband, noError=.true., config=fmConf )
 
     ! Now, it's possible we're really being asked to deal with optical depth, not
     ! radiance.
     if ( .not. associated ( radiance ) ) &
-      & radiance => GetVectorQuantityByType (fwdModelOut, quantityType=l_opticalDepth, &
-        & signal=signal%index, sideband=sideband, noError=.true. )
+      & radiance => GetQuantityForForwardModel (fwdModelOut, quantityType=l_opticalDepth, &
+        & signal=signal%index, sideband=sideband, noError=.true., config=fmConf )
 
     ! Now, some possible error messages
     if ( .not. associated ( radiance ) ) call MLSMessage ( &
@@ -129,6 +129,7 @@ contains ! =====     Public Procedures     =============================
     use ForwardModelConfig, only: FORWARDMODELCONFIG_T
     use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
+    use HessianModule_1, only: Multiply
     use Intrinsic, only: L_RADIANCE, L_TEMPERATURE, L_PTAN, L_VMR, &
       & L_LIMBSIDEBANDFRACTION, L_ZETA, L_OPTICALDEPTH, L_LATITUDE, L_FIELDSTRENGTH, &
       & L_FIELDELEVATION, L_FIELDAZIMUTH
@@ -559,6 +560,9 @@ contains ! =====     Public Procedures     =============================
 
       call cloneVector( yp, l2pc%j%row%vec, vectorNameText='_yP' )
       call MultiplyMatrixVectorNoT ( l2pc%j, deltaX, yP, update = .false. )
+      if ( .not. fmConf%ignoreHessian .and. l2pc%goth ) &
+        ! We have a Hessian and want to use it; add a term to the Taylor series
+        & call Multiply ( l2pc%h, deltaX, yP, update = .true. )
 
       if ( toggle(emit) .and. levels(emit) > 8 ) then
         call dump ( (/yp, l2pc%j%row%vec/) )
@@ -1133,6 +1137,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.73  2010/02/25 18:02:17  pwagner
+! Conforms with changed l2pc structure
+!
 ! Revision 2.72  2009/06/23 18:26:10  pwagner
 ! Prevent Intel from optimizing ident string away
 !
