@@ -1,12 +1,10 @@
-!Creates a vector template.
-type(VectorTemplate_T) function CreateVectorTemplate (qtyTemplateDB, selected)
-   !An array of QuantityTemplate\_T objects describing all available 
-   !quantities.
-   type(QuantityTemplate_T), dimension(:), pointer :: qtyTemplateDB
-
-   !An array of logicals of the same size as qtyTemplateDB,
-   !whose elements are true where the corresponding
-   !qtyTemplateDB's elements are used by the vector of
-   !this vector template.
-   logical, dimension(:), pointer :: selected
+! Create a VectorTemplate_T, which references one or many quantities.
+! To ensure correctness, the same qtyTemplateDB, must be passed to
+! CreateVector function in conjunction with the returned VectorTemplate_T.
+type(VectorTemplate_T) function CreateVectorTemplate (qtyTemplateDB, selectedQty) &
+   result (vecTemplate)
+   ! a list of the array indices of the chosen quantity templates.
+   integer, intent(in) :: selectedQty(:)
+   ! a 1-based, 1-dimensional array of all QuantityTemplate_T objects
+   type(QuantityTemplate_T), intent(in) :: qtyTemplateDB(:)
 end function

@@ -1,20 +1,32 @@
-!Gets the ForwardModelConfig_T object, the filedatabase, and initializes
-!internally used variables.
-subroutine CFM_MLSSetup (error, fmConfig, filedatabase, fakeChunk)
-   !This is set to 0 if this subroutine runs successfully, a non-zero
-   !number otherwise.
-   integer, intent(out) :: error
+! Parse the L2CF given in standard input, and use it to read
+! ForwardModelConfig(s), then put them in ForwardModelConfigDatabase.
+! Also reads Spectroscopy, MLSSignals.
+! Reads L1BOA file and put it into the filedatabase.
+! Uses the startTime and endTime to create a MLSChunk_T object
+! that uses by other subroutines that read data from L1BOA.
+! Note: the use of a filedatabase, instead of just one MLSFile_T
+! object to store L1BOA is for convenience when wrapping
+! existing code in MLSPGS.
+! CFM_MLSSetup is to be called only once before CFM_MLSCleanup is called.
+subroutine CFM_MLSSetup (startTime, endTime, l1boa, retVal, &
+   filedatabase, fakeChunk, ForwardModelConfigDatabase)
 
-   !An object to be filled with forward model settings read
-   !from a L2CF
-   type (ForwardModelConfig_T) :: fmConfig
-
-   !An one-dimensional array of MLSFile_T objects to be
-   !filled in with necessary and already opened
-   !spectroscopy file(s) and engineering data file(s).
-   !This subroutine will allocate the array.
-   type (MLSFile_T), dimension(:), pointer, optional :: filedatabase
-   
-   !This variable is used internally, to be passed to other subroutines.
-   type (MLSChunk_T), intent(out), optional :: fakeChunk
+   ! The start time of the data to be read in the format
+   ! yyyy-doyThh:mm:ss.zzzz
+   character(len=CCSDSlen), intent(in) :: startTime
+   ! The stop time of the data to be read in the same format as startTime.
+   character(len=CCSDSlen), intent(in) :: endTime
+   ! The file name of L1BOA file.
+   character(len=*), intent(in) :: l1boa
+   ! Return value: 0 if successful, non-zero if error(s) is encountered.
+   integer, intent(out) :: retVal
+   ! Output: An array of MLSFile_T object, representing open file(s),
+   ! including L1BOA.
+   type (MLSFile_T), dimension(:), pointer :: filedatabase
+   ! Output: A data holder that holds the startTime and endTime
+   ! in a way that can be understood by other subroutines.
+   type (MLSChunk_T), intent(out) :: fakeChunk
+   ! Output: to store all ForwardModelConfig_T objects declared in L2CF.
+   ! This argument will be nullified inside this subroutine.
+   type (ForwardModelConfig_T), pointer, optional :: ForwardModelConfigDatabase(:)
 end subroutine
