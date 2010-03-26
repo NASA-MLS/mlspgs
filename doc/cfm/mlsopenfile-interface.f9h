@@ -3,9 +3,8 @@ subroutine MLS_OpenFile (file, error)
    !An initialized MLSFile_T object
    type(MLSFile_T) :: file
 
-   !Optional variable to store error code.
-   !If the file is opened successfully,
-   !the error code is PGS_S_SUCCESS (actual
-   !value is TBD).
+   !This is an optional argument; if present it will be set to:
+   ! PGS_S_SUCCESS (0) when the file is closed successfully.
+   ! a non-zero otherwise.
    integer, optional, intent(out) :: error
 end subroutine
