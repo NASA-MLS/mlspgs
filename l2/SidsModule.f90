@@ -127,6 +127,7 @@ contains
     doTScat = .false.
     error = 0
     ixJacobian = 0
+    IxHessian = 0
     destroyJacobian = .false.
     mirrorHessian = .false.
     singleMAF = -1
@@ -429,6 +430,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.56  2010/03/29 18:40:09  pwagner
+! Repaired error due to undefined ixHessian
+!
 ! Revision 2.55  2010/03/24 20:56:11  vsnyder
 ! Minor tweaks in Hessian generation
 !
