@@ -1028,7 +1028,7 @@ contains ! ============= Public procedures ===================================
       L_EARTHRADIUS, L_EARTHREFL, L_ECRTOFOV, L_EFFECTIVEOPTICALDEPTH, &
       L_ELEVOFFSET, L_EXTINCTION, L_EXTINCTIONV2, &
       L_FIELDAZIMUTH, L_FIELDELEVATION, L_FIELDSTRENGTH, &
-      L_GEODALTITUDE, L_GEOLOCATION, L_GPH, L_HEIGHTOFFSET, L_ISOTOPERATIO, L_IWC, &
+      L_GEOLOCATION, L_GPH, L_HEIGHTOFFSET, L_ISOTOPERATIO, L_IWC, &
       L_JACOBIAN_COLS, L_JACOBIAN_ROWS, &
       L_L1BMAFBASELINE, L_L1BMIF_TAI, L_LIMBSIDEBANDFRACTION, &
       L_LineCenter, L_LineWidth, L_LineWidth_TDep, &
@@ -1127,7 +1127,6 @@ contains ! ============= Public procedures ===================================
       l_fieldAzimuth, phyq_angle, p_hGrid, p_vGrid, next, &
       l_fieldElevation, phyq_angle, p_hGrid, p_vGrid, next, &
       l_fieldStrength, phyq_gauss, p_hGrid, p_vGrid, next, &
-      l_geodAltitude, phyq_length, p_minorFrame, p_module, next, &
       l_gph, phyq_length, p_hGrid, p_vGrid, p_mustBeZeta, next, &
       l_heightOffset, phyq_length, p_hGrid, p_vGrid, next, &
       l_isotopeRatio, phyq_dimensionless, p_molecule, next, &
@@ -1313,6 +1312,10 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.160  2010/03/31 19:59:55  honghanh
+! Removing l_geodAltitude quantityType as there is l_tngtgeodaltitude
+! quantityType already
+!
 ! Revision 2.159  2010/03/24 17:35:13  honghanh
 ! Just a note to fix ConstructMinorFrameQuantity
 !
