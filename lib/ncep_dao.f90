@@ -18,7 +18,8 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   use HDFEOS, only: HDFE_NENTDIM, &
     & gdopen, gdattach, gddetach, gdclose, gdfldinfo, &
     & gdinqgrid, gdnentries, gdinqdims, gdinqflds
-  use Hdf, only: DFACC_RDONLY
+  use Hdf, only: DFACC_CREATE, DFACC_RDONLY, DFACC_RDWR, &
+    & DFNT_FLOAT32, DFNT_FLOAT64
   use l3ascii, only: l3ascii_read_field
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: LineLen, NameLen, FileNameLen, R8, R4, &
@@ -53,11 +54,13 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
 !     (subroutines and functions)
 ! read_climatology            read l3ascii-formatted climatology file
 ! ReadGriddedData             read hdfeos-formatted meteorology file
+! WriteGriddedData            write hdfeos-formatted meteorology file
 ! ReadGloriaFile              read binary-formatted file designed by G. Manney
 ! === (end of toc) ===
 
   public:: READ_CLIMATOLOGY
   public:: ReadGriddedData, ReadGloriaFile
+  public:: WriteGriddedData
 
   integer :: ERROR
 
@@ -2173,6 +2176,202 @@ contains
 
   end subroutine READ_CLIMATOLOGY
 
+  ! ----------------------------------------------- WriteGriddedData
+  subroutine WriteGriddedData( GriddedFile, lcf_where, description, v_type, &
+    & the_g_data, returnStatus, &
+    & GeoDimList, fieldNames, missingValue, date, sumDelp )
+
+    use MLSStats1, only: MLSMIN, MLSMAX, MLSMEAN
+    ! This routine Writes a Gridded Data file, based on an array of filled data
+    ! structures and the  appropriate for the description
+    ! which may be one of 'geos5', 'gmao', 'dao', 'merra', 'ncep', 'strat'
+
+    ! FileName and the_g_data are required args
+    ! GeoDimList should be the Dimensions' short names
+    ! as a comma-delimited character string in the order:
+    ! longitude, latitude, vertical level, time
+
+    ! fieldNames should be the data fields' short names
+    ! as a comma-delimited character string in the order
+    ! of the elements of the_g_data array
+
+    ! fieldName should name the rank 3 or higher object
+    ! like temperature
+    
+    ! Arguments
+    type(MLSFile_T)                         :: GriddedFile
+    integer, intent(IN)                     :: lcf_where    ! node of the lcf that provoked me         
+    integer, intent(IN)                     :: v_type       ! vertical coordinate; an 'enumerated' type
+    type( GriddedData_T ), dimension(:)     :: the_g_data   ! Result
+    character (LEN=*), intent(IN)           :: description ! e.g., 'dao'
+    integer, intent(out)                    :: returnStatus ! E.g., FILENOTFOUND
+    character (LEN=*), intent(IN)           :: GeoDimList ! Comma-delimited dim names
+    character (LEN=*), intent(IN)           :: fieldNames ! Names of gridded field
+    real(rgr), optional, intent(IN)         :: missingValue
+    character (LEN=*), optional, intent(IN) :: date ! offset
+    logical, optional, intent(IN)           :: sumDelp ! sum the DELP to make PL
+
+    ! Local Variables
+    integer :: fieldIndex
+    character ( len=len(fieldNames)) :: fieldName   ! In case we supply two
+    character ( len=NameLen) :: my_description   ! In case mixed case
+    logical, parameter :: DEEBUG = .false.
+    ! Executable code
+    returnStatus = 0
+    my_description = lowercase(description)
+    if ( my_description == 'geos5' ) &
+      & my_description = GEOS5orMERRA( GriddedFile )
+    if ( DEEBUG ) print *, 'Writeing ' // trim(my_description) // ' data'
+
+    do fieldIndex=1, size(the_g_data)
+      call getStringElement(fieldNames, fieldName, fieldIndex, COUNTEMPTY)
+      ! According to the kinds of gridded data files we can Write
+      select case ( trim(my_description) )
+      case ('geos5')
+        call announce_error(lcf_where, 'WriteGriddedData called with illegal' &
+          & // ' description: ' // trim(my_description))
+      case ('dao', 'gmao')
+        call announce_error(lcf_where, 'WriteGriddedData called with illegal' &
+          & // ' description: ' // trim(my_description))
+      case ('merra')
+        call Write_merra( (fieldIndex==1), GriddedFile, lcf_where, v_type, &
+          & the_g_data(fieldIndex), GeoDimList, fieldName )
+      case ('ncep')
+        call announce_error(lcf_where, 'WriteGriddedData called with illegal' &
+          & // ' description: ' // trim(my_description))
+      case ('strat')
+        call announce_error(lcf_where, 'WriteGriddedData called with illegal' &
+          & // ' description: ' // trim(my_description))
+      case default
+        call announce_error(lcf_where, 'WriteGriddedData called with unknown' &
+          & // ' description: ' // trim(my_description))
+      end select
+    enddo
+  end subroutine WriteGriddedData
+
+  ! ----------------------------------------------- Write_merra
+  subroutine Write_merra( createGrid, GEOS5File, lcf_where, v_type, &
+    & the_g_data, GeoDimList, fieldName )
+    use Dump_0, only: Dump
+
+    ! This routine Writes a gmao MERRA file, named something like
+    ! MERRA300.prod.assim.inst6_3d_ana_Nv.20050131.hdf (pressure with
+    ! fieldname='DELP' or 'T')
+    ! based on a filled data
+    ! structure appropriate for newer style gmao merra
+    ! (For one thing it holds 4-d, not 3-d fields)
+
+    ! FileName and the_g_data are required args
+    ! GeoDimList, if present, should be the Dimensions' short names
+    ! as a comma-delimited character string in the order:
+    ! longitude, latitude, vertical level, time
+
+    ! fieldName, if present, should be the rank 4
+    ! like temperature
+
+    ! This file is formatted in the following way:
+    ! At each gridded quantity, e.g. EOSGRID,
+    ! a rank 4 field, e.g. T, is given with dimensions
+    ! 'Time, Height, YDim, XDim'
+    ! We'll simply copy it into a single gridded data type
+    
+    ! This is so similar to Write_geos5 that we ought to combine the two into
+    ! a single routine, except the extra timeIndex business would need
+    ! careful handling
+
+    ! Arguments
+    logical, intent(in)                     :: createGrid
+    type(MLSFile_T)                         :: GEOS5file
+    integer, intent(IN)                     :: lcf_where    ! node of the lcf that provoked me
+    integer, intent(IN)                     :: v_type       ! vertical coordinate; an 'enumerated' type
+    type( GriddedData_T )                   :: the_g_data ! Result
+    character (LEN=*), optional, intent(IN) :: GeoDimList ! Comma-delimited dim names
+    character (LEN=*), optional, intent(IN) :: fieldName ! Name of gridded field
+
+    ! Local Variables
+    integer :: itime, ilat, ilon, ilev
+    integer :: file_id, gd_id
+    integer :: inq_success
+    integer :: nentries, ngrids, ndims, nfields
+    integer :: strbufsize
+    logical,  parameter       :: CASESENSITIVE = .false.
+    integer, parameter :: GRIDORDER=1   ! What order grid written to file
+    character (len=MAXLISTLENGTH) :: gridlist
+    character (len=MAXLISTLENGTH) :: dimlist, actual_dim_list
+    character (len=MAXLISTLENGTH), dimension(1) :: dimlists
+    character (len=16), dimension(NENTRIESMAX) :: dimNames
+    character (len=MAXLISTLENGTH) :: fieldlist
+    integer, parameter :: MAXNAMELENGTH=NameLen         ! Max length of grid name
+    integer, dimension(NENTRIESMAX) :: dims, rank, numberTypes
+    integer                        :: our_rank, numberType
+    logical                        :: mySum
+
+    integer :: start(4), stride(4), edge(4)
+    integer :: status
+    character(len=16) :: the_units
+    integer                        :: timeIndex
+    !                                  These start out initialized to one
+    integer                        :: nlon=1, nlat=1, nlev=1, ntime=1
+    integer, parameter             :: i_longitude=1
+    integer, parameter             :: i_latitude=i_longitude+1
+    integer, parameter             :: i_vertical=i_latitude+1
+    integer, parameter             :: i_time=i_vertical+1
+    integer, external :: GDRDFLD
+    character(len=*), parameter    :: GridName = "EOSGRID"
+    integer, parameter :: gctp_geo = 0
+    real(r4), parameter :: FILLVALUE = 1.e15
+    real(r4), dimension(:,:,:,:), pointer :: all_the_fields => null()
+    real(r8), dimension(:), pointer :: dim_field, pb
+    real(r8) :: dateValue
+    real(r8) :: uplft(2), lowrgt(2)
+    real(r8) :: projparm(13)
+    logical, parameter :: DEEBUG = .false.
+    integer, external :: gdopen, gdclose, gdcreate, gdattach, &
+      & gddefdim, gddeffld, gddefproj, gddetach, gdwrfld
+    ! Executable code
+    uplft = (/ -180000000.000000 ,90000000.000000 /)
+    lowrgt = (/ 180000000.000000,-90000000.000000 /)
+    projparm = 0.0
+    dims(1) = the_g_data%noLons
+    dims(2) = the_g_data%noLats
+    dims(3) = the_g_data%noHeights
+    dims(4) = the_g_data%noDates
+    edge = dims(1:4)                                                        
+    start = 0
+    stride = 1
+    error = 0
+    if ( createGrid ) then
+      file_id = gdopen(GEOS5File%Name, DFACC_CREATE)
+      gd_id = gdcreate(file_id, gridName, the_g_data%noLons, &
+           & the_g_data%noLats, uplft, lowrgt)
+      status = gddefdim( gd_Id, 'TDim', the_g_data%noDates )
+      status = gddefdim( gd_Id, 'ZDim', the_g_data%noHeights )
+      status = gddefdim( gd_Id, 'YDim', the_g_data%noLats )
+      status = gddefdim( gd_Id, 'XDim', the_g_data%noLons )
+      status = gddefproj( gd_Id, GCTP_GEO, 0, 0, projparm )
+      status = gddeffld( gd_Id, 'TIME', 'TDim', DFNT_FLOAT64, 0 )
+      status = gddeffld( gd_Id, 'Height', 'ZDim', DFNT_FLOAT32, 0 )
+      status = gddeffld( gd_Id, 'YDim', 'YDim', DFNT_FLOAT32, 0 )
+      status = gddeffld( gd_Id, 'XDim', 'XDim', DFNT_FLOAT32, 0 )
+      status = gdwrfld( gd_Id, 'TIME', start(4), stride(4), edge(4), the_g_data%dateStarts )
+      status = gdwrfld( gd_Id, 'Height', start(3), stride(3), edge(3), the_g_data%heights )
+      status = gdwrfld( gd_Id, 'YDim', start(2), stride(2), edge(2), the_g_data%Lats )
+      status = gdwrfld( gd_Id, 'XDim', start(1), stride(1), edge(1), the_g_data%Lons )
+    else
+      file_id = gdopen(GEOS5File%Name, DFACC_RDWR)
+      gd_id = gdattach(file_id, gridname)
+    endif
+
+    if (file_id < 0) then
+      call announce_error(lcf_where, "Could not open "// GEOS5File%Name)
+    end if
+    status = gddeffld( gd_Id, fieldName, 'TIME,Height,YDim,XDim', DFNT_FLOAT32, 0 )
+    status = gdwrfld( gd_Id, 'XDim', start(1), stride(1), edge(1), the_g_data%Lons )
+    status = gddetach( gd_Id )
+    status = gdclose( file_id )
+
+  end subroutine Write_merra
+
   ! ----- utility procedures ----
   function GEOS5orMERRA( File ) result( fType )
     ! Attempt to identify file as
@@ -2359,6 +2558,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.56  2010/03/31 18:12:10  pwagner
+! Added WriteGriddedData
+!
 ! Revision 2.55  2010/02/04 23:08:00  vsnyder
 ! Remove USE or declaration for unused names
 !
