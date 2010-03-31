@@ -418,13 +418,8 @@ contains
       if ( options%attributesToo ) then
         call open_MLSFile( MLSFile )
         file1 = MLSFile%FileID%f_id
-        ! File1 = mls_io_gen_openF(l_swath, .TRUE., status, &
-        ! & record_length, DFACC_READ, FileName=trim(filename), &
-        ! & hdfVersion=HDFVERSION_5, debugOption=.false. )
         call dump(file1, l2gp)
         call close_MLSFile ( MLSFile )
-        ! status = mls_io_gen_closeF(l_swath, File1, FileName=Filename, &
-        &! hdfVersion=HDFVERSION_5, debugOption=.false.)
       endif
       call myDump( options, l2gp, swath )
       call DestroyL2GPContents ( l2gp )
@@ -630,6 +625,9 @@ end program L2GPDump
 !==================
 
 ! $Log$
+! Revision 1.8  2009/05/14 22:04:27  pwagner
+! New commandline arg -w width
+!
 ! Revision 1.7  2009/04/13 20:43:17  pwagner
 ! Fixed a bug preventing macros file from using its own macros properly
 !
