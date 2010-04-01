@@ -6,8 +6,8 @@
 \topmargin -0.5in
 \textheight 9.00in
 
-\newcommand{\docname}{\bf wvs-024r3}
-\newcommand{\docdate}{30 March 2010}
+\newcommand{\docname}{\bf wvs-024r4}
+\newcommand{\docdate}{31 March 2010}
 
 \begin{document}
 
@@ -36,7 +36,7 @@
 To: \>Bill\\
 Subject: \>PFA derivatives\\
 From: \>Van Snyder\\
-Reference: \>wvs-017r4\\
+Reference: \>wvs-017\\
 \end{tabbing}
 
 \parindent 0pt \parskip 3pt
@@ -45,21 +45,21 @@ Reference: \>wvs-017r4\\
 For non-PFA radiances for a particular channel $c$, we have
 
 \begin{equation}\label{lbl}
-I_c \approx \int \phi_c(\nu) \sum_{i=1}^{N_p} \Delta B_{in} \tau^s_{inc}
-  \text{d} \nu
+I_c = \int \text{d} \nu\, \phi_c(\nu) \int \text{d} \zeta\,
+ \Delta B(\nu,T(\zeta)) \tau^s(\nu,\zeta) 
  \approx \sum_{n=1}^{N_f} \phi_{nc} \Delta \nu_n
-               \sum_{i=1}^{N_p} \Delta B_{in} \tau^s_{inc}
+               \sum_{i=1}^{N_p} \Delta B_{in} \tau^s_{in}
 \end{equation}
 
-where $N_f$ is the number of frequencies in the channel, $\phi$ is the
-channel's filter function, $N_p$ is line-of-sight path length, and $s$
-indicates ``Strong (line-by-line) calculation.''
+where $n$ is the index of one of the $N_f$ frequencies in the channel,
+$\phi$ is the channel's filter function, $N_p$ is line-of-sight path
+length, and $s$ indicates ``Strong (line-by-line) calculation.''
 
 To combine PFA and non-PFA radiances for a particular channel $c$, we use
 
 \begin{equation}\label{combined}
 I_c \approx \sum_{n=1}^{N_f} \phi_{nc} \Delta \nu_n
-               \sum_{i=1}^{N_p} \Delta B_{ic} \tau^s_{inc} \tau^w_{ic}
+               \sum_{i=1}^{N_p} \Delta B_{ic} \tau^s_{in} \tau^w_{ic}
 \end{equation}
 
 where $w$ indicates ``Weak-line (PFA) calculation''.  Approximating
@@ -119,3 +119,6 @@ temperature dependence.
 % $Id$
 
 % $Log$
+% Revision 1.2  2010/03/30 22:57:59  vsnyder
+% Add channel index to strong tau and filter function, add integral in Equation 1
+%
