@@ -62,8 +62,9 @@ contains ! =====     Public Procedures     =============================
       ! Now try to fill it if we have any L1BFiles
       if (associated(filedatabase) ) then
         do instrumentModuleIndex = 1, size(modules)
-          call ConstructMinorFrameQuantity ( filedatabase, chunk, &
-            & instrumentModuleIndex, mifGeolocation(instrumentModuleIndex) )
+          call ConstructMinorFrameQuantity ( instrumentModuleIndex, &
+          mifGeolocation(instrumentModuleIndex), &
+          filedatabase=filedatabase, chunk=chunk)
         end do
       else
         mifGeolocation%noSurfs = 0
@@ -288,6 +289,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.64  2010/04/05 17:32:04  honghanh
+! Make filedatabase and chunk in ConstructMinorFrameQuantity optional
+!
 ! Revision 2.63  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
 !
