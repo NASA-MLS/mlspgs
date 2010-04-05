@@ -353,9 +353,10 @@ contains ! ============= Public procedures ===================================
 
     ! Now do the setup for the different families of quantities
     if ( isMinorFrame ) then
-      call ConstructMinorFrameQuantity ( filedatabase, chunk, &
-        & instrumentModule, qty, noChans=noChans, mifGeolocation=mifGeolocation, &
-        & regular=regular )
+      call ConstructMinorFrameQuantity ( instrumentModule, qty, &
+        noChans=noChans, filedatabase=filedatabase, &
+        chunk=chunk, mifGeolocation=mifGeolocation, &
+        regular=regular )
       ! Setup a minor frame quantity
     else if ( properties(p_majorFrame) ) then
       ! Setup a major frame quantity
@@ -459,8 +460,9 @@ contains ! ============= Public procedures ===================================
   ! --------------------------------  ConstructMinorFrameQuantity  -----
   ! I think we should make filedatabase and chunk optional as well
   ! because we don't need it when mifGeolocation is present -haley
-  subroutine ConstructMinorFrameQuantity ( filedatabase, chunk, instrumentModule, &
-    & qty, noChans, regular, instanceLen, mifGeolocation )
+  subroutine ConstructMinorFrameQuantity (instrumentModule, &
+    & qty, noChans, regular, instanceLen, &
+    filedatabase, chunk, mifGeolocation )
 
     use Chunks_m, only: MLSChunk_T
     use INIT_TABLES_MODULE, only: L_GEODALTITUDE, L_NONE
@@ -477,13 +479,13 @@ contains ! ============= Public procedures ===================================
     ! This routine constructs a minor frame based quantity.
 
     ! Dummy arguments
-    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-    type (MLSChunk_T), intent(in) :: chunk   ! The chunk under consideration
     integer, intent(in) :: instrumentModule  ! Database index
     type (QuantityTemplate_T) :: qty ! Resulting quantity
     integer, intent(in), optional :: noChans
     logical, intent(in), optional :: regular
     integer, intent(in), optional :: instanceLen
+    type (MLSFile_T), dimension(:), pointer, optional ::     FILEDATABASE
+    type (MLSChunk_T), intent(in), optional :: chunk   ! The chunk under consideration
     type (QuantityTemplate_T), intent(in), dimension(:), optional :: &
          & mifGeolocation
 
@@ -537,7 +539,8 @@ contains ! ============= Public procedures ===================================
         qty%instanceLen = 0
       end if
 
-    else ! ------------------------------------ Not Got mifGeolocation -----
+    else if (present(chunk) .and. present(filedatabase)) then
+      ! ------------------------------------ Not Got mifGeolocation -----
       ! We have no geolocation information, we have to read it ourselves
       ! from the L1BOA file.
 
@@ -652,6 +655,10 @@ contains ! ============= Public procedures ===================================
         qty%losAngle = 0.0
         call DeallocateL1BData(l1bfield)
       end if
+    else
+       call MLSMessage ( MLSMSG_Error, ModuleName, &
+                        "Must supply either mifGeolocation " &
+                        // "or both filedatabase and chunk")
     end if
     qty%frequencyCoordinate = L_None
     qty%instrumentModule = instrumentModule
@@ -1312,6 +1319,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.161  2010/04/05 17:32:04  honghanh
+! Make filedatabase and chunk in ConstructMinorFrameQuantity optional
+!
 ! Revision 2.160  2010/03/31 19:59:55  honghanh
 ! Removing l_geodAltitude quantityType as there is l_tngtgeodaltitude
 ! quantityType already
