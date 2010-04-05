@@ -519,9 +519,6 @@ contains ! ============= Public procedures ===================================
     ! quantity.  Otherwise, we have to read it all from the l1boa file
     ! ourselves.
 
-    L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
-    hdfversion = L1BFile%HDFVersion
-
     if ( present(mifGeolocation) ) then
       ! -------------------------------------- Got mifGeolocation ------------
       if ( .not. (present(noChans)) ) &
@@ -545,6 +542,8 @@ contains ! ============= Public procedures ===================================
       ! from the L1BOA file.
 
       ! First we read xxGeodalt to get the size of the quantity.
+      L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
+      hdfversion = L1BFile%HDFVersion
       if ( IsModuleSpacecraft(instrumentModule) ) then
         l1bItemName = 'scGeocAlt' 
       else
@@ -1319,8 +1318,8 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
-! Revision 2.161  2010/04/05 17:32:04  honghanh
-! Make filedatabase and chunk in ConstructMinorFrameQuantity optional
+! Revision 2.162  2010/04/05 17:40:55  honghanh
+! Fixed bug introduced by making filedatabase optional
 !
 ! Revision 2.160  2010/03/31 19:59:55  honghanh
 ! Removing l_geodAltitude quantityType as there is l_tngtgeodaltitude
