@@ -289,8 +289,10 @@ module CFM_QuantityTemplate_m
             call MLSMessage(MLSMSG_Error, ModuleName, &
             'Need either mifGeolocation or both filedatabase and ' &
             // 'chunk to create minor frame quantity')
-         call ConstructMinorFrameQuantity (filedatabase, chunk, qty%instrumentModule, &
-              qty, noChans=noChans, regular=qty%regular, mifGeoLocation=mifGeoLocation)
+         call ConstructMinorFrameQuantity (qty%instrumentModule, &
+              qty, noChans=noChans, regular=qty%regular, &
+              filedatabase=filedatabase, chunk=chunk, &
+              mifGeoLocation=mifGeoLocation)
       else if (properties(p_majorFrame)) then
          if (.not. present(mifGeoLocation)) &
             call MLSMessage(MLSMSG_Error, moduleName, "Missing needed mifGeoLocation")
