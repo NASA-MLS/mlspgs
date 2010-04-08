@@ -606,8 +606,9 @@ PRINT *, 'Updating baselines...'
 
              ENDIF
           ENDIF
-          DC_avg = SUM (baselineDC(:,avg_indx),2) * 0.5
-          IF (ANY (DC_avg == FILLVALUE)) DC_avg = 0.0    ! Nothing available
+          DC_avg = SUM (baselineDC(1:noChans,avg_indx),2) * 0.5
+
+          IF (ANY (DC_avg(1:noChans) == FILLVALUE)) DC_avg = 0.0 ! Nothing there
 
 ! DC RMS
 
@@ -635,7 +636,8 @@ PRINT *, 'Updating baselines...'
 
 ! Output updated baselines:
 
-          IF (ANY (baselineAC(:,mindx) == FILLVALUE)) THEN
+          IF (ANY (baselineAC(1:noChans,mindx) == FILLVALUE)) THEN
+
              Baseline(bandno)%offset = FILLVALUE
           ELSE
 
@@ -658,7 +660,7 @@ PRINT *, 'Updating baselines...'
                Baseline(bandno)%offset, lastIndex=mindx, &
                disable_attrib=.TRUE.)
 
-          IF (ANY (baselineAC(:,mindx) == FILLVALUE)) THEN
+          IF (ANY (baselineAC(1:noChans,mindx) == FILLVALUE)) THEN
              Baseline(bandno)%precision = FILLVALUE
           ELSE
              Baseline(bandno)%precision = SQRT ( &
@@ -743,6 +745,9 @@ PRINT *, 'Updating baselines...'
 END MODULE SpectralBaseline
 !=============================================================================
 ! $Log$
+! Revision 2.11  2010/04/08 20:32:36  perun
+! Fixed AC/DC baseline array tests.
+!
 ! Revision 2.10  2007/06/21 21:05:24  perun
 ! Correct rad and prec assignments
 !
