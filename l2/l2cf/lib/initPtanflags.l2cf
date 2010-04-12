@@ -13,9 +13,13 @@
 begin Fill
   ;; ------------------------------------ Temperature-InitPTan
   !define(flaggingBands,{1,32,34})
-  !define(flaggingRadiometers,{R1})!dnl
+  !define(flaggingRadiometers,{R1A})!dnl
   !makeQualityForOneProduct(product=Temperature_hr,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -999K)
+  !makeStatusForOneProduct(product=Temperature_hr,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -999K)
   !define(phaseTemperature,{InitPtan})
 end Fill
 
 ; $Log$
+; Revision 1.1  2008/03/22 00:12:35  pwagner
+; First commit
+;

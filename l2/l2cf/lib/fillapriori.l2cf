@@ -599,11 +599,12 @@ Fill, quantity=apriori.refGPH,$
   Fill, quantity=hReg.ch3coch3, method=profile, $
     profileValues= [  1mb:0.05ppbv, 0.68:0pptv ]
   Fill, quantity=hReg.co, method=profile, profileValues= $
-    [ 10mb:5ppbv,  3mb: 15ppbv, 1mb:50ppbv, 0.3mb: 150ppbv, 0.1mb:0.5ppmv, $
+    [ 100mb:15ppbv,  46mb:5ppbv, 10mb:5ppbv,   3mb: 15ppbv, 1mb:50ppbv, 0.3mb: 150ppbv, 0.1mb:0.5ppmv, $
       0.03mb: 1.5ppmv, 0.01mb:5ppmv, 0.003mb:15ppmv, 0.001mb: 50ppmv ]
   Fill, quantity=hReg.co_hr, method=profile, profileValues= $
-    [ 10mb:5ppbv,  3mb: 15ppbv, 1mb:50ppbv, 0.3mb: 150ppbv, 0.1mb:0.5ppmv, $
+    [ 100mb:15ppbv,  46mb:5ppbv, 10mb:5ppbv,  3mb: 15ppbv, 1mb:50ppbv, 0.3mb: 150ppbv, 0.1mb:0.5ppmv, $
       0.03mb: 1.5ppmv, 0.01mb:5ppmv, 0.003mb:15ppmv, 0.001mb: 50ppmv ]
+
   Fill, quantity=hReg.h2o, method=profile, $
      profileValues=[ 147mb:0ppmv, 121mb:2ppmv, 100mb:0.3ppmv, 10mb:0.3ppmv, 1mb:0.4ppmv, 0.1mb:3ppmv, $
      0.046mb:0ppmv ], logSpace=false
@@ -681,6 +682,9 @@ end Join
   })
 !divert(-1)
 ;$Log$
+;Revision 1.142  2010/02/10 00:46:54  pwagner
+;Tightened smoothing on RHi, H2O; hreg=vreg for H2O now
+;
 ;Revision 1.141  2009/07/28 20:08:17  pwagner
 ;Tightened RHi smoothing, raised its high bound to 2000
 ;
