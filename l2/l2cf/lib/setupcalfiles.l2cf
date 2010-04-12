@@ -129,7 +129,7 @@
   !define(antennaFile, {'!antennaPath/MLS-Aura_L2Cal-AAAP_v2-0-0_0000d000.txt'})
   })
   !ifdef(climatologyFile, {}, {
-  !define(climatologyFile, {'!climatologyPath/MLS-Aura_L2Cal-Climatologies_v1-7-6_0000d000.txt'})
+  !define(climatologyFile, {'!climatologyPath/MLS-Aura_L2Cal-Climatologies_v1-7-7_0000d000.txt'})
   })
   !ifdef(filterFile, {}, {
   !define(filterFile, {'!filterPath/MLS-Aura_L2Cal-Filters_v3-0-2_0000d000.txt'})
@@ -165,6 +165,9 @@
 !ifdef(outpathl1brad,{},{!define(outpathl1brad,!getdir(outpathl1brad))})
 !ifdef(outpathtmp,{},{!define(outpathtmp,!getdir(outpathtmp))})
 ;$Log$
+;Revision 1.43  2010/03/31 18:22:15  pwagner
+;New Spectroscopy, PFA, and l2pc versions consistent with ME-03 series
+;
 ;Revision 1.42  2010/02/10 00:47:42  pwagner
 ;New default Climatology version
 ;
