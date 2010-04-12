@@ -357,6 +357,7 @@ SUBDIRS := $(shell ${REECHO} -d blas lib $(LEVELS) $(OTHER_SUBDIRS))
 # because they are outside mlspgs
 EVERYTHING = $(SUBDIRS)  srclib \
    util sids tables notes tests scripts \
+   cfm doc \
    $(MakeFName) README.$(MakeFName) BEFORE.mls
      
 # This is in case tar doesn't summon GNU tar, you may still use it via
@@ -1174,6 +1175,9 @@ tools: chunktimes checkpvmup compare dateconverter heconvert h5subset h5cat hl \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.119  2010/01/28 01:13:12  pwagner
+# install-nrt auto installs l1, l2
+#
 # Revision 1.118  2009/12/09 01:12:55  pwagner
 # l3 and l3m no longer built by default
 #
