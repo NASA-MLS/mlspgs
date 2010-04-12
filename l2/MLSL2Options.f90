@@ -52,7 +52,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! Update these lines before delivery to sips     
   ! id to print out in response to "--version" command-line option       
   character(LEN=*), dimension(2), parameter :: CURRENT_VERSION_ID = (/ &    
-    & 'v3.20 swdev team               ' , &       
+    & 'v3.30 swdev team               ' , &       
     & 'See license terms for copyright'/)
      
   ! Set the following to 1 before delivering to sips;                       
@@ -155,6 +155,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.48  2010/04/12 22:20:23  pwagner
+! Changed vers. id to conform with v3.30 sips id
+!
 ! Revision 2.47  2009/11/05 00:31:21  pwagner
 ! Updated version id
 !
