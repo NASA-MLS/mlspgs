@@ -167,7 +167,7 @@ contains ! =====     Public Procedures     =============================
     use L2GPData, only: L2GPData_T, COL_SPECIES_HASH, COL_SPECIES_KEYS
     use L2AUXData, only: L2AUXData_T
     use L2PC_m, only: POPULATEL2PCBINBYNAME, LOADMATRIX, LOADVECTOR
-    use LinearizedForwardModel_m, only: FLUSHLOCKEDBINS
+    use L2PCBins_m, only: FLUSHLOCKEDBINS
     use ManipulateVectorQuantities, only: DOHGRIDSMATCH, &
       & FILLWITHCOMBINEDCHANNELS
     use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
@@ -2591,6 +2591,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.380  2010/04/13 01:43:09  vsnyder
+! Move FlushLockedBins from LinearizedForwardModel_m to L2PCBins_m
+!
 ! Revision 2.379  2010/03/26 23:16:56  vsnyder
 ! Add Threshold to StreamlineHessian
 !
