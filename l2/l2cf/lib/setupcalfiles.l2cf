@@ -34,7 +34,7 @@
 ; ! This may not always be the same as l2pcVersion
 !ifdef(pfaVersion,{},{!define(pfaVersion,!getdir(pfaVersion))})
 !ifelse(!pfaVersion, {}, {
-!define(pfaVersion,{FS-04})
+!define(pfaVersion,{ME-03})
 })
 
 ; Just in case the above paths were omitted from your overridepaths.sh file
@@ -83,10 +83,10 @@
 !define(signalsL2cf, {!signalsPath/MLS-Aura_L2Cal-Signals_v1-5-0_0000d000.l2cf})
 })
 !ifdef(spectroscopyL2cf, {}, {
-!define(spectroscopyL2cf, {!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy-PFA_v3-0-4_0000d000.l2cf})
+!define(spectroscopyL2cf, {!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy-PFA_v3-0-5_0000d000.l2cf})
 })
 !ifdef(spectroscopyFullL2cf, {}, {
-!define(spectroscopyFullL2cf, {!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy-all_v3-0-4_0000d000.l2cf})
+!define(spectroscopyFullL2cf, {!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy-all_v3-0-5_0000d000.l2cf})
 })
 !ifdef(spectroscopyRtvlL2cf, {}, {
 !define(spectroscopyRtvlL2cf,{!spectroscopyL2cf})
@@ -129,7 +129,7 @@
   !define(antennaFile, {'!antennaPath/MLS-Aura_L2Cal-AAAP_v2-0-0_0000d000.txt'})
   })
   !ifdef(climatologyFile, {}, {
-  !define(climatologyFile, {'!climatologyPath/MLS-Aura_L2Cal-Climatologies_v1-7-6_0000d000.txt'})
+  !define(climatologyFile, {'!climatologyPath/MLS-Aura_L2Cal-Climatologies_v1-7-7_0000d000.txt'})
   })
   !ifdef(filterFile, {}, {
   !define(filterFile, {'!filterPath/MLS-Aura_L2Cal-Filters_v3-0-2_0000d000.txt'})
@@ -154,8 +154,8 @@
     '!pfaPath/PFA_R1A_!pfaVersion.h5',$
     '!pfaPath/PFA_DACS_!pfaVersion.h5']})
   })
-  !define(spectroscopyHDF,{!spectroscopyHDFPath/MLS-Aura_L2Cal-Spectroscopy-PFA_v3-0-4_0000d000.h5})
-  !define(spectroscopyFullHDF,{!spectroscopyHDFPath/MLS-Aura_L2Cal-Spectroscopy-all_v3-0-4_0000d000.h5})
+  !define(spectroscopyHDF,{!spectroscopyHDFPath/MLS-Aura_L2Cal-Spectroscopy-PFA_v3-0-5_0000d000.h5})
+  !define(spectroscopyFullHDF,{!spectroscopyHDFPath/MLS-Aura_L2Cal-Spectroscopy-all_v3-0-5_0000d000.h5})
   !define(spectroscopyRtvlHDF,{!spectroscopyHDF})
 })
 ;; output paths
@@ -165,6 +165,12 @@
 !ifdef(outpathl1brad,{},{!define(outpathl1brad,!getdir(outpathl1brad))})
 !ifdef(outpathtmp,{},{!define(outpathtmp,!getdir(outpathtmp))})
 ;$Log$
+;Revision 1.43  2010/03/31 18:22:15  pwagner
+;New Spectroscopy, PFA, and l2pc versions consistent with ME-03 series
+;
+;Revision 1.42  2010/02/10 00:47:42  pwagner
+;New default Climatology version
+;
 ;Revision 1.41  2009/06/23 17:35:15  pwagner
 ;Climatology now at version 1.7.4
 ;
