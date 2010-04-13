@@ -64,7 +64,7 @@ contains ! ====     Public Procedures     ==============================
     use L2Parallel, only: GETCHUNKINFOFROMMASTER, L2MASTERTASK
     use L2ParInfo, only: PARALLEL, CLOSEPARALLEL
     use L2PC_m, only: DestroyL2PCDatabase, DestroyBinSelectorDatabase
-    use LinearizedForwardModel_m, only: FLUSHLOCKEDBINS
+    use L2PCBins_m, only: FLUSHLOCKEDBINS
     use MatrixModule_1, only: DestroyMatrixDatabase, Matrix_Database_T
     use MergeGridsModule, only: MergeGrids
     use MLSCommon, only: TAI93_RANGE_T, MLSFile_T
@@ -624,6 +624,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.171  2010/03/17 20:57:35  pwagner
+! Print about destroyed l2pc db only if -S'l2pc'
+!
 ! Revision 2.170  2010/02/25 18:20:44  pwagner
 ! Adds support for new Hessian database
 !
