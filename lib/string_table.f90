@@ -27,12 +27,20 @@ module STRING_TABLE
   public :: ALLOCATE_STRING_TABLE, CLEAR_STRING, COMPARE_STRINGS, CREATE_STRING
   public :: DESTROY_CHAR_TABLE, DESTROY_HASH_TABLE, DESTROY_STRING_TABLE
   public :: DISPLAY_STRING, DISPLAY_STRING_LIST, ENTER_STRING, FLOAT_VALUE
-  public :: GET_CHAR, GET_STRING, HOW_MANY_STRINGS, LOOKUP_AND_INSERT
-  public :: NEW_LINE, NUMERICAL_VALUE, OPEN_INPUT, STRING_LENGTH
-  public :: STRING_TABLE_SIZE, UNGET_CHAR
+  public :: GET_CHAR, GET_STRING, HOW_MANY_STRINGS, INDEX, INDEX_IN_STRING
+  public :: LEN, LOOKUP_AND_INSERT, NEW_LINE, NUMERICAL_VALUE, OPEN_INPUT
+  public :: STRING_LENGTH, STRING_TABLE_SIZE, UNGET_CHAR
 
   interface DISPLAY_STRING
     module procedure DISPLAY_STRING, DISPLAY_STRING_LIST
+  end interface
+
+  interface INDEX
+    module procedure INDEX_IN_STRING
+  end interface
+
+  interface LEN
+    module procedure STRING_LENGTH
   end interface
 
   ! Public parameters
@@ -426,22 +434,29 @@ contains
     call crash_burn
   end subroutine GET_CHAR
   ! ===========================================     GET_STRING     =====
-  subroutine GET_STRING ( STRING, STRING_TEXT, CAP, STRIP, NOERROR, IERR )
+  subroutine GET_STRING ( STRING, STRING_TEXT, CAP, STRIP, NOERROR, IERR, &
+    & START, END )
   ! Put as much as will fit of the string indexed by STRING into STRING_TEXT.
   ! If CAP is present and .TRUE., capitalize STRING_TEXT.
   ! If STRIP is present and .TRUE., remove quotes if any.
   ! If NOERROR is present and TRUE, return safely no matter what
   ! If IERR is present and error occurs, set it to 1 && return safely
+  ! If START is not present start at offset where offset is 2 if STRIP is
+  !   present and true and the string is quoted else 1, else start at
+  !   max(START,1) + offset.
+  ! If END is not present, end at the end of the string, or end-1 if STRIP
+  !   is present and true and the string is quoted, else end at
+  !   min(length,end)-offset.
     integer, intent(in) :: STRING
     character(len=*), intent(out) :: STRING_TEXT
     logical, intent(in), optional :: CAP
     logical, intent(in), optional :: STRIP
     logical, intent(in), optional :: NOERROR
     integer, intent(out), optional :: IERR
-    integer :: I, J, MY_IERR, offset
+    integer, intent(in), optional :: START
+    integer, intent(in), optional :: END
+    integer :: I, J, MY_END, MY_IERR, MY_START, Offset
     logical :: MY_CAP, MY_NOERROR, MY_STRIP
-
-    string_text=''         ! No matter what, return string_text
 
     my_noerror = .false.
     if ( present(noError) ) my_noerror = noerror
@@ -449,18 +464,23 @@ contains
     if ( my_noerror ) then
       call test_string ( string, 'GET_STRING', my_ierr )
     else
+      ! Won't return if there's an error and IERR is not present
       call test_string ( string, 'GET_STRING', ierr )
       my_ierr = 0
       if ( present(ierr) ) my_ierr = ierr
     end if
 
-    if ( my_ierr /= 0 ) return
+    if ( my_ierr /= 0 ) then
+      string_text=''     ! Don't leave string_text undefined
+      return
+    end if
 
     my_cap = .false.
     my_strip = .false.
-    offset = 0
     if ( present(cap) ) my_cap = cap
     if ( present(strip) ) my_strip = strip
+
+    offset = 0
     if (my_strip) then
       if ( ( (char_table(strings(string-1)+1) == '"') .and. &
         &    (char_table(strings(string)) == '"') ) .or.&
@@ -468,15 +488,21 @@ contains
         &    (char_table(strings(string)) == "'") ) ) &
         & offset=1
     end if
+    my_start = 1
+    if ( present(start) ) my_start = max(start, 1)
+    my_start = strings(string-1) + my_start + offset
+    my_end = strings(string) - offset
+    if ( present(end) ) my_end = min(strings(string-1) + end + offset, my_end)
+
     j = 0
     if ( my_cap ) then
-      do i = strings(string-1)+1+offset, strings(string)-offset
+      do i = my_start, my_end
         j = j + 1
         if ( j > len(string_text) ) exit
         string_text(j:j) = char(iacap(char_table(i)))
       end do
     else
-      do i = strings(string-1)+1+offset, strings(string)-offset
+      do i = my_start, my_end
         j = j + 1
         if ( j > len(string_text) ) exit
         string_text(j:j) = char_table(i)
@@ -485,7 +511,7 @@ contains
 !                            string_text(:strings(string)-strings(string-1))
     end if
 !    if ( present(ierr) ) ierr=0 ! Already zeroed by call to test_string
-    return
+    string_text(j+1:) = '' ! Fill the rest with blanks
   end subroutine GET_STRING
   ! =====================================     HOW_MANY_STRINGS     =====
   integer function HOW_MANY_STRINGS ()
@@ -493,6 +519,28 @@ contains
     how_many_strings = nstring
     return
   end function HOW_MANY_STRINGS
+  ! ======================================     INDEX_IN_STRING     =====
+  integer function INDEX_IN_STRING ( STRING, SUBSTRING ) ! generic INDEX
+  ! Works like intrinsic INDEX, but with integer string indices instead of
+  ! characters, and without the BACK argument.  Use the brute-force method
+  ! instead of a fancy substring method such as Knuth-Morris-Pratt or
+  ! Rabin-Karp.  The result value can be used as the START argument for
+  ! GET_STRING, provided GET_STRING is invoked with STRIP either absent or
+  ! false, or STRING is not quoted.
+    integer, intent(in) :: String
+    integer, intent(in) :: Substring
+    integer :: I, J
+    
+    index_in_string = 0
+ o: do i = 1, len(string) - len(substring) + 1
+      do j = 1, len(substring)
+        if ( char_table(strings(string-1)+i+j-1) /= &
+          &  char_table(strings(substring-1)+j) ) cycle o
+      end do
+      index_in_string = i
+      return
+    end do o
+  end function INDEX_IN_STRING
   ! ====================================     LOOKUP_AND_INSERT     =====
   subroutine LOOKUP_AND_INSERT ( STRING, FOUND, CASELESS, DEBUG )
   ! Look for the string built up by Add_Char.  If it is found return the
@@ -727,7 +775,7 @@ contains
 999 call crash_burn
   end subroutine OPEN_INPUT
  ! =========================================     STRING_LENGTH     =====
-  integer function STRING_LENGTH ( STRING )
+  integer function STRING_LENGTH ( STRING ) ! generic LEN
   ! Return the length of the string indexed by STRING
     integer, intent(in) :: STRING
     call test_string ( string, 'STRING_LENGTH' )
@@ -862,6 +910,12 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.25  2010/04/14 03:13:52  vsnyder
+! Add INDEX_IN_STRING, with a generic INDEX, working similarly to intrinsic
+! INDEX but with string indices instead of strings, and without the BACK
+! argument.  Add START and END arguments for GET_STRING.  Add a LEN generic
+! for STRING_LENGTH.
+!
 ! Revision 2.24  2009/10/01 19:42:14  vsnyder
 ! Simplify error testing in Get_String, improve comments
 !
