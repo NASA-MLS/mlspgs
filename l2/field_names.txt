@@ -30,6 +30,7 @@ absorption
 additional
 adopt
 allBooleans
+allFiles
 allForwardModels
 allGriddedData
 allHessians
@@ -142,6 +143,7 @@ extinction
 fgrid
 field
 fieldECR
+# file # Already defined in Init_Spectroscopy_m
 fileName
 filterShapes
 flags
@@ -474,6 +476,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.200  2010/04/16 01:39:34  vsnyder
+# Added /allFiles and file fields to dump file database
+#
 # Revision 2.199  2010/03/26 23:11:57  vsnyder
 # Add ignoreHessian
 #
