@@ -1312,6 +1312,7 @@ contains ! =====     Public procedures     =============================
                           ! s_makePFA, s_vector, s_vectorTemplate, etc.
       begin, s+s_dump, &
              begin, f+f_allBooleans, t+t_boolean, n+n_field_type, &
+             begin, f+f_allFiles, t+t_boolean, n+n_field_type, &
              begin, f+f_allForwardModels, t+t_boolean, n+n_field_type, &
              begin, f+f_allGriddedData, t+t_boolean, n+n_field_type, &
              begin, f+f_allHGrids, t+t_boolean, n+n_field_type, &
@@ -1330,8 +1331,9 @@ contains ! =====     Public procedures     =============================
              begin, f+f_crashBurn, t+t_boolean, n+n_field_type, &
              begin, f+f_DACSfilterShapes, t+t_boolean, n+n_field_type, &
              begin, f+f_details, t+t_numeric, n+n_field_type, &
-             begin, f+f_forwardModel, s+s_forwardModel, n+n_field_spec, &
+             begin, f+f_file, t+t_string, n+n_field_type, &
              begin, f+f_filterShapes, t+t_boolean, n+n_field_type, &
+             begin, f+f_forwardModel, s+s_forwardModel, n+n_field_spec, &
              begin, f+f_Grid, s+s_gridded, s+s_merge, s+s_Concatenate, &
                     s+s_ConvertEtaToP, s+s_wmoTrop, n+n_field_spec, &
              begin, f+f_hGrid, s+s_hgrid, n+n_field_spec/) )
@@ -1624,6 +1626,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.501  2010/04/16 01:39:34  vsnyder
+! Added /allFiles and file fields to dump file database
+!
 ! Revision 2.500  2010/03/26 23:12:12  vsnyder
 ! Add ignoreHessian field to forwardModel
 !
