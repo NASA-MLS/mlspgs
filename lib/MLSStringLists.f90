@@ -2784,6 +2784,8 @@ contains
   ! The returned value would be 2
   ! If the test switch were "abc" the returned value would be 0
   ! If the test switch were "xyz" the returned value would be -1
+  ! If the test switch were "hi2" the returned value would be -1
+  ! (because the start of test doesn't match the start of any list element)
   
   ! The behavior may be modified by options flag
   ! For which see comment above
@@ -2805,6 +2807,7 @@ contains
     CHARACTER (LEN=MAXELEMENTLENGTH)           :: listElement
     character(len=8) :: myOptions
     integer :: nElements
+    integer :: startOfDetails     ! index where the detail number would start
     character (len=len(test_switch))           :: switch
 
     ! Executable code
@@ -2827,11 +2830,15 @@ contains
     DO elem=1, nElements
       CALL GetStringElement(inList, listElement, elem, countEmpty)
       if ( index(myOptions, 'c') > 0 ) listElement = lowercase(listElement)
-      if (trim(listElement) /= ' ' .and. &
-          & index(trim(listElement), trim(switch)) > 0) then
+      if ( trim(listElement) /= ' ' .and. &
+          & index(trim(listElement), trim(switch)) == 1 ) then
+        detail = 0
+        startOfDetails = len_trim( switch ) + 1
+        if ( startOfDetails > len_trim( listElement ) ) exit
         ! Because we have sometimes allowed a "?" to be a switch
         ! (Perhaps too permissive of us)
-        call ReadIntsFromChars(trim(listElement), detail, ignore="*?")
+        call ReadIntsFromChars( trim(listElement(startOfDetails:)), detail, &
+          & ignore="*?")
         return
       endif
     ENDDO
@@ -3336,6 +3343,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.39  2010/04/16 23:38:34  pwagner
+! Repaired bug in switchDetail which, e.g., caused '-Sl2pc' to always return '2'
+!
 ! Revision 2.38  2009/06/23 18:22:49  pwagner
 ! Added ReadIntsfromList
 !
