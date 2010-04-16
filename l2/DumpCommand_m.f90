@@ -617,12 +617,12 @@ contains
     use ForwardModelConfig, only: Dump, ForwardModelConfig_T
     use GriddedData, only: Diff, Dump, GriddedData_T
     use HGridsDatabase, only: Dump, HGRID_T
-    use Init_Tables_Module, only: F_AllBooleans, F_AllForwardModels, &
-      & f_AllGriddedData, F_AllHGrids, F_AllL2PCs, F_AllLines, &
+    use Init_Tables_Module, only: F_AllBooleans, F_AllFiles, F_AllForwardModels, &
+      & F_AllGriddedData, F_AllHGrids, F_AllL2PCs, F_AllLines, &
       & F_AllPFA, F_AllQuantityTemplates, F_AllSignals, F_AllSpectra, &
       & F_AllVectors, F_AllVectorTemplates, F_AllVGrids, F_AntennaPatterns, &
       & F_Boolean, F_Clean, F_CrashBurn, F_Details, F_DACSFilterShapes, &
-      & F_FilterShapes, F_ForwardModel, F_GRID, &
+      & F_File, F_FilterShapes, F_ForwardModel, F_GRID, &
       & F_HGrid, F_L2PC, F_Lines, F_Mark, F_Mask, F_MieTables, &
       & F_OPTIONS, F_PfaData, F_PfaFiles, F_PFANum, F_PFAStru, F_PointingGrids, &
       & F_Quantity, F_Signals,  F_Spectroscopy, F_Stop, F_StopWithError, &
@@ -633,9 +633,9 @@ contains
     use L2PC_m, only: L2PCDatabase, dumpL2PC => Dump
     use Intrinsic, only: PHYQ_Dimensionless
     use MACHINE, only: NEVERCRASH
-    use MLSL2Options, only: NORMAL_EXIT_STATUS, RUNTIMEVALUES
     use MLSCommon, only: MLSFile_T
-    ! use MLSFiles, only: DumpMLSFile => Dump
+    use MLSFiles, only: DumpMLSFile => Dump, GetMLSFileByName
+    use MLSL2Options, only: NORMAL_EXIT_STATUS, RUNTIMEVALUES
     use MLSMessageModule, only: MLSMessage, MLSMessageCalls, MLSMessageExit, &
       & MLSMSG_CRASH, MLSMSG_ERROR
     use MLSSets, only: FindFirst
@@ -686,6 +686,7 @@ contains
     logical :: HaveQuantityTemplatesDB, HaveVectorTemplates, HaveVectors, &
       &        HaveForwardModelConfigs, HaveGriddedData, HaveHGrids
     character(len=80) :: NAMESTRING  ! E.g., 'L2PC-band15-SZASCALARHIRES'
+    type (MLSFile_T), pointer :: OneMLSFile
     character(len=80) :: OPTIONSSTRING  ! E.g., '-rbs' (see dump_0.f90)
     integer :: QuantityIndex
     integer :: QuantityIndex2
@@ -704,7 +705,9 @@ contains
 
     ! Error codes
     integer, parameter :: Dimless = 1
-    integer, parameter :: NoFWM = dimless + 1
+    integer, parameter :: NoFile = dimless + 1
+    integer, parameter :: NoFileDatabase = noFile + 1
+    integer, parameter :: NoFWM = noFileDatabase + 1
     integer, parameter :: noGriddedData = NoFWM + 1
     integer, parameter :: NoHGrid = noGriddedData + 1
     integer, parameter :: NoLines = noHGrid + 1
@@ -762,8 +765,8 @@ contains
       gson = son
       if (nsons(son) > 1) gson = subtree(2,son) ! Now value of said argument
       select case ( fieldIndex )
-      case ( f_allBooleans, f_allForwardModels, f_allGriddedData, &
-        & f_allHGrids, f_allLines, &
+      case ( f_allBooleans, f_allFiles, f_allForwardModels, f_allGriddedData, &
+        & f_allHGrids, f_allL2PCs, f_allLines, &
         & f_allPFA, f_allQuantityTemplates, f_allSignals, f_allSpectra, &
         & f_allVectors, f_allVectorTemplates, f_allVGrids, f_antennaPatterns, &
         & f_crashBurn, f_DACSfilterShapes, f_filterShapes, f_MieTables, &
@@ -773,6 +776,12 @@ contains
           case ( f_allBooleans )
             call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
             & 'Run-time Boolean flags' )
+          case ( f_allFiles )
+            if ( present(fileDataBase) ) then
+              call dumpMLSFile ( fileDataBase )
+            else
+              call announceError ( son, noFileDatabase )
+            end if
           case ( f_allForwardModels )
             if ( haveForwardModelConfigs ) then
               call dump ( forwardModelConfigs, where=son )
@@ -884,6 +893,21 @@ contains
         if ( units(1) /= phyq_dimensionless ) call AnnounceError ( gson, dimless )
         if ( type /= num_value ) call announceError ( gson, numeric )
         details = nint(values(1)) - DetailReduction
+      case ( f_file )
+        if ( present(fileDataBase) ) then
+          do i = 2, nsons(son)
+            gson = subtree(i,son)
+            call get_string ( sub_rosa(gson), nameString, strip=.true. )
+            oneMLSFile => getMLSFileByName ( fileDataBase, nameString )
+            if ( associated(oneMLSFile) ) then
+              call dumpMLSFile ( oneMLSFile )
+            else
+              call announceError ( gson, noFile )
+            end if
+          end do
+        else
+          call announceError ( son, noFileDatabase )
+        end if
       case ( f_forwardModel ) ! Dump forward model configs
         if ( details < -1 ) cycle
         if ( haveForwardModelConfigs ) then
@@ -1172,6 +1196,10 @@ contains
       select case ( what )
       case ( dimless )
         call output ( "The field is not unitless." )
+      case ( noFile )
+        call output ( "File not in database." )
+      case ( noFileDatabase )
+        call output ( "File database not provided." )
       case ( noFWM )
         call output ( "Can't dump Forward Model Configs here." )
       case ( noGriddedData )
@@ -1269,6 +1297,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.50  2010/04/16 01:39:34  vsnyder
+! Added /allFiles and file fields to dump file database
+!
 ! Revision 2.49  2010/02/04 23:12:44  vsnyder
 ! Remove USE or declaration for unreferenced names
 !
