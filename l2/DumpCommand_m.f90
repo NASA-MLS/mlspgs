@@ -802,7 +802,7 @@ contains
               call announceError ( son, noHGrid )
             end if
           case ( f_allL2PCs )
-            call dumpL2PC( L2PCDataBase )
+            call dumpL2PC( L2PCDataBase, details )
           case ( f_allLines )
             if ( associated(lines) ) then
               call dump_lines_database
@@ -902,7 +902,7 @@ contains
             if ( associated(oneMLSFile) ) then
               call dumpMLSFile ( oneMLSFile )
             else
-              call announceError ( gson, noFile )
+              call announceError ( gson, noFile, trim(nameString) )
             end if
           end do
         else
@@ -966,8 +966,7 @@ contains
         ! call dumpMLSFile( fileDataBase, details=1 )
         if ( fileIndex < 1 ) cycle
         call output ( ' L2PC short file name: ' // trim(nameString), advance='yes' )
-        call dumpL2PC ( &
-          & fileDataBase(fileIndex), details )
+        call dumpL2PC ( fileDataBase(fileIndex), details )
       case ( f_lines )
         do i = 2, nsons(son)
           what = decoration(decoration(subtree(i,son)))
@@ -1185,11 +1184,12 @@ contains
 
   contains
 
-    subroutine AnnounceError ( where, what )
+    subroutine AnnounceError ( where, what, string )
       use MoreTree, only: StartErrorMessage
       use Output_m, only: NewLine
 
       integer, intent(in) :: What, Where
+      character(len=*), intent(in), optional :: String
 
       call StartErrorMessage ( where )
 
@@ -1197,7 +1197,7 @@ contains
       case ( dimless )
         call output ( "The field is not unitless." )
       case ( noFile )
-        call output ( "File not in database." )
+        call output ( "File " // string // " not in database." )
       case ( noFileDatabase )
         call output ( "File database not provided." )
       case ( noFWM )
@@ -1297,6 +1297,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.51  2010/04/17 01:44:26  vsnyder
+! Add details to DumpL2PC calls, spiff up an error message
+!
 ! Revision 2.50  2010/04/16 01:39:34  vsnyder
 ! Added /allFiles and file fields to dump file database
 !
