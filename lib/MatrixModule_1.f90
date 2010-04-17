@@ -2410,6 +2410,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in), optional :: Details   ! Print details, default 1
     !  <= -3 => no details,
     !  -2..0 => Just the name, size and where created
+    !  == -1 => Structure of blocks but not their values
     !  == One => Details of matrix but not its blocks,
     !  >One => Details of the blocks, too.
     logical, intent(in), optional :: Clean     ! Print zeroes, count
@@ -2441,6 +2442,7 @@ contains ! =====     Public Procedures     =============================
       call output ( '      (the matrix has been destroyed)', advance='yes' )
       return
     end if
+    if ( my_details == -1 ) call dump_struct ( matrix )
     do j = 1, matrix%col%nb
       do i = 1, matrix%row%nb
         if ( associated(matrix%block(i,j)%values) ) &
@@ -2487,6 +2489,7 @@ contains ! =====     Public Procedures     =============================
     !  <= -4 => no output
     !  <= -3 => no details, just summarize the database 
     !  -2..0 => size of each matrix
+    !  == -1 => Structure of blocks but not their values
     !  == One => Details of matrix but not its blocks,
     !  >One => Details of the blocks, too.
 
@@ -2572,8 +2575,7 @@ contains ! =====     Public Procedures     =============================
     if ( present(name) ) call output ( name )
     if ( matrix%name > 0 ) then
       if ( present(name) ) call output ( ', ' )
-      call output ( 'Name = ' )
-      call display_string ( matrix%name, advance='yes' )
+      call display_string ( matrix%name, before='Name = ', advance='yes' )
     else
       if ( present(name) ) call output ( '', advance='yes' )
     end if
@@ -2599,11 +2601,8 @@ contains ! =====     Public Procedures     =============================
       end do ! j
       call output ( matrix%row%nelts(i), places=6, advance='yes' )
     end do ! i
-    call output ( 'Total matrix size: ' )
-    call output ( sum(matrix%row%nelts) )
-    call output ( ' rows, ' )
-    call output ( sum(matrix%col%nelts) )
-    call output ( ' columns, ' )
+    call output ( sum(matrix%row%nelts), before='Total matrix size: ' )
+    call output ( sum(matrix%col%nelts), before=' rows, ', after=' columns, ' )
     ! Convert size to bytes (is there a better way to do this to automatically
     ! deal with the case when we decide to switch to r4?)
     select case ( rm )
@@ -2643,6 +2642,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.118  2010/04/17 01:41:57  vsnyder
+! Dump_Matrix calls Dump_Struct if details == -1
+!
 ! Revision 2.117  2010/03/24 20:39:12  vsnyder
 ! Make Dump_RC public and part of Dump generic
 !
