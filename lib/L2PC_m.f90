@@ -30,9 +30,9 @@ module L2PC_m
   use ManipulateVectorQuantities, only: DOVECTORSMATCH
   use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
     & MATRIXELEMENT_T, M_UNKNOWN, DESTROYBLOCK
-  use MatrixModule_1, only: CREATEBLOCK, CREATEEMPTYMATRIX, &
-    & DESTROYMATRIX, MATRIX_T, DUMP, FINDBLOCK, MATRIX_DATABASE_T, &
-    & GETACTUALMATRIXFROMDATABASE, DUMP_STRUCT, COPYMATRIXVALUE
+  use MatrixModule_1, only: COPYMATRIXVALUE, CREATEBLOCK, CREATEEMPTYMATRIX, &
+    & DESTROYMATRIX, DUMP, DUMP_STRUCT, FINDBLOCK, GETACTUALMATRIXFROMDATABASE, &
+    & MATRIX_T, MATRIX_DATABASE_T
   use MLSCommon, only: R8, R4, MLSFile_T
   use MLSFiles, only: DumpMLSFile => Dump
   use MLSMessageModule, only: MLSMESSAGE, &
@@ -49,12 +49,12 @@ module L2PC_m
     & SETUPNEWQUANTITYTEMPLATE, INFLATEQUANTITYTEMPLATEDATABASE, &
     & DESTROYQUANTITYTEMPLATECONTENTS, COPYQUANTITYTEMPLATE, NULLIFYQUANTITYTEMPLATE, &
     & COPYQUANTITYTEMPLATE
-  use String_Table, only: GET_STRING
+  use String_Table, only: DISPLAY_STRING, GET_STRING
   use TOGGLES, only: SWITCHES
   use Tree, only: DECORATION, NSONS, SUBTREE
-  use VectorsModule, only: assignment(=), DESTROYVECTORINFO, COPYVECTOR, &
-    & VECTORTEMPLATE_T, VECTOR_T, CREATEVECTOR, ADDVECTORTODATABASE, &
-    & ADDVECTORTEMPLATETODATABASE, CONSTRUCTVECTORTEMPLATE, NULLIFYVECTORTEMPLATE
+  use VectorsModule, only: assignment(=), ADDVECTORTEMPLATETODATABASE, &
+    & ADDVECTORTODATABASE, CONSTRUCTVECTORTEMPLATE, COPYVECTOR, CREATEVECTOR, &
+    & DESTROYVECTORINFO, DUMP, NULLIFYVECTORTEMPLATE, VECTORTEMPLATE_T, VECTOR_T
 
   implicit NONE
   private
@@ -225,134 +225,29 @@ contains ! ============= Public Procedures ==========================
   subroutine DumpOneL2PC ( L2pc, details )
     ! This subroutine dumps an l2pc to stdout
 
+    use HessianModule_1, only: Dump
+
     ! Dummy arguments
     type (l2pc_t), intent(in), target :: L2pc
-    integer, intent(in), optional :: DETAILS ! <=0 => Don't dump multidim arrays
-    !                                        ! -1 Skip even 1-d arrays
-    !                                        ! -2 Skip all but size
-    !                                        ! >0 Dump even multi-dim arrays
-    !                                        ! Default 0
-
-    ! Local parameters
-    character (len=*), parameter :: rFmt = "(4(2x,1pg15.8))"
-    character (len=*), parameter :: iFmt = "(8(2x,i6))"
-
-    ! Local variables
-    integer :: AdjustedIndex            ! Index into quantities not skipped
-    integer :: BlockCol                 ! Index
-    integer :: BlockRow                 ! Index
-    integer :: myDetails
-    integer :: Quantity                 ! Loop counter
-    integer :: Vector                   ! Loop counter
-
-
-    character (len=132) :: Line, Word1, Word2 ! Line of text
-
-    type (MatrixElement_T), pointer :: M0 ! A Matrix0 within kStar
-    type (QuantityTemplate_T), pointer :: Qt  ! Temporary pointers
-    type (Vector_T), pointer :: V       ! Temporary pointer
+    integer, intent(in), optional :: DETAILS ! passed to Vector and Matrix dumps
 
     ! Executable code
-    myDetails = 0
-    if ( present(details) ) myDetails = details
-
     call output( '- Dump of L2PC -', advance='yes' )
-    call outputNamedValue( 'name as index in string table', l2pc%name )
     if ( l2pc%name > 0 ) then
-      call get_string ( l2pc%name, line )
-      call outputNamedValue( 'name', trim(line) )
+      call display_string ( l2pc%name, before='name: ' )
+      call output ( l2pc%name, before=' (', after=')', advance='yes' )
     else
       call output( '*** Uh-oh, name not found in string table', advance='yes' )
     endif
     ! First dump the xStar and yStar
-    do vector = 1, 2
-      ! Identify vector
-      if ( vector == 1 ) then
-        call output( 'xStar', advance='yes' )
-        v => l2pc%j%col%vec
-      else
-        call output( 'yStar', advance='yes' )
-        v => l2pc%j%row%vec
-      end if
-
-      call outputNamedValue( 'size', size(v%quantities) )
-      if ( myDetails < -1 ) return
-      ! Loop over quantities
-      do quantity = 1, size(v%quantities)
-          qt => v%quantities(quantity)%template
-
-          ! Write quantity name - will be ignored on the read (at least by
-          ! fortran, IDL pays attention
-          call get_string ( qt%name, line )
-          call outputNamedValue( 'quantity name', trim(line) )
-
-          ! Write quantity type
-          call get_string ( lit_indices(qt%quantityType), line )
-          call outputNamedValue( 'quantity type', trim(line) )
-
-          ! Write other info associated with type
-          select case ( qt%quantityType )
-          case (l_vmr)
-            call get_string ( lit_indices(qt%molecule), line )
-            call outputNamedValue( 'molecule', trim(line) )
-          case (l_radiance)
-            call GetSignalName ( qt%signal, line, sideband=qt%sideband )
-            call outputNamedValue( 'signal', trim(line) )
-          end select
-
-          ! Write out the dimensions for the quantity and the edges
-          call outputNamedValue( 'noChans', qt%noChans )
-          call outputNamedValue( 'noSurfs', qt%noSurfs )
-          call outputNamedValue( 'noInstances', qt%noInstances )
-          call outputNamedValue( 'coherent', qt%coherent )
-          call outputNamedValue( 'stacked', qt%stacked )
-          call get_string ( lit_indices(qt%verticalCoordinate), line )
-          call outputNamedValue( 'vertical coordinate', trim(line) )
-          if ( myDetails < 0 ) cycle
-          call dump( qt%surfs, 'surfs' )
-          call dump( qt%phi, 'phi' )
-
-      end do                            ! First loop over quantities
-      if ( myDetails < 1 ) return
-      ! Now do a second loop and write the values
-      adjustedIndex = 1
-      do quantity = 1, size ( v%quantities )
-          call dump( v%quantities(quantity)%values, 'values' )
-      end do                            ! Second loop over quantities
-
-    end do                              ! Loop over xStar/yStar
+    call dump ( l2pc%j%col%vec, details=details, name='xStar' )
+    call dump ( l2pc%j%row%vec, details=details, name='yStar' )
 
     ! Now dump kStar
-    call output( 'kStar', advance='yes' )
-    call outputNamedValue( 'row instances first', l2pc%j%row%instFirst )
-    call outputNamedValue( 'column instances first', l2pc%j%col%instFirst )
-    do blockRow = 1, l2pc%j%row%NB
-      do blockCol = 1, l2pc%j%col%NB
-        ! Print the type of the matrix
-          m0 => l2pc%j%block(blockRow, blockCol)
-          call outputNamedValue( 'row', blockRow )
-          call outputNamedValue( 'col', blockCol )
-          call outputNamedValue( 'kind', m0%kind )
-          call get_string ( &
-            & l2pc%j%row%vec%quantities(&
-            &    l2pc%j%row%quant(blockRow))%template%name, word1 )
-          call get_string ( &
-            & l2pc%j%col%vec%quantities(&
-            &    l2pc%j%col%quant(blockCol))%template%name, word2 )
-          call outputNamedValue( trim(word1), l2pc%j%row%inst(blockRow) )
-          call outputNamedValue( trim(word2), l2pc%j%col%inst(blockRow) )
-          select case (m0%kind)
-          case (M_Absent)
-          case (M_Banded, M_Column_sparse)
-            call outputNamedValue( 'no value', size(m0%values) )
-            call dump( m0%R1, 'R1' )
-            call dump( m0%R2, 'R2' )
-            call dump( m0%values, 'values' )
-          case (M_Full)
-            call dump( m0%values, 'values' )
-          end select
-      end do
-    end do
+    call dump ( l2pc%j, 'kStar', details )
+
+    ! Now dump the Hessian
+    if ( l2pc%goth ) call dump ( l2pc%h, 'hStar', details )
 
   end subroutine DumpOneL2PC
 
@@ -1079,9 +974,10 @@ contains ! ============= Public Procedures ==========================
 
   ! --------------------------------------- Populate L2PCBin --------
   subroutine PopulateL2PCBin ( bin )
-  use HDF5, only: H5GCLOSE_F, H5GOPEN_F, H5GGET_OBJ_INFO_IDX_F, &
-      & H5GN_MEMBERS_F
-  use MLSHDF5, only: GetHDF5Attribute, LoadFromHDF5DS
+    use HDF5, only: H5GCLOSE_F, H5GOPEN_F, H5GGET_OBJ_INFO_IDX_F, &
+        & H5GN_MEMBERS_F
+    use MLSHDF5, only: GetHDF5Attribute, LoadFromHDF5DS
+
     integer, intent(in) :: BIN ! The bin index to populate
 
     ! Local variables
@@ -1412,7 +1308,8 @@ contains ! ============= Public Procedures ==========================
     endif
     status = 1
     if ( nmembers > 3 ) call h5gOpen_f ( matrixID, 'HessianBlocks', hBlocksID, status )
-    if ( status == 0 .and. nmembers > 3 ) then
+    l2pc%goth = status == 0 .and. nmembers > 3 ! Got Hessian?
+    if ( l2pc%goth ) then
       MLSFile%fileID%sd_id = blocksID
 
       l2pc%h = CreateEmptyHessian ( stringIndex, l2pcVs(yStar), l2pcVs(xStar) )
@@ -1479,12 +1376,11 @@ contains ! ============= Public Procedures ==========================
         & 'Unable to close matrix group for input l2pc' , &
         & MLSFile=MLSFile )
     endif
-    if ( switchDetail( switches, 'l2pc' ) > 0 ) then
-      call dump_struct (l2pc%j)
-      call dump (l2pc)
-    endif
-    if ( index ( switches, 'l2pc' ) /= 0 ) &
-      & call output ( 'Done reading bin from l2pc file', advance='yes' )
+    i = switchDetail( switches, 'l2pc' )
+    if ( i >= 0 ) then
+      call dump ( l2pc, details=i-1 )
+      call output ( 'Done reading bin from l2pc file', advance='yes' )
+    end if
 
   end subroutine ReadOneHDF5L2PCRecord
 
@@ -1563,10 +1459,8 @@ contains ! ============= Public Procedures ==========================
     nullify ( quantityNames )
     call Allocate_test ( quantityNames, noQuantities, 'quantityNames', ModuleName )
     do quantity = 1, noQuantities
-      if ( index ( switches, 'l2pc' ) /= 0) then
-        call output ( 'Identifying quantity ' )
-        call output ( quantity, advance='yes' )
-      end if
+      if ( index ( switches, 'l2pc' ) /= 0) &
+        & call output ( quantity, before='Identifying quantity ', advance='yes' )
       call h5gget_obj_info_idx_f ( MLSFile%fileID%grp_id, name, quantity-1, thisName, &
         & objType, status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1592,8 +1486,7 @@ contains ! ============= Public Procedures ==========================
     do quantity = 1, noQuantities
       qt => l2pcQTs ( qtIndexOffset + quantity - 1 )
       if ( index ( switches, 'l2pc' ) /= 0 ) then
-        call output ( 'Reading quantity ' )
-        call output ( quantity )
+        call output ( quantity, before='Reading quantity ' )
         call output ( ': ' )
         call output ( trim(quantityNames(quantity)), advance='yes' )
       end if
@@ -1875,6 +1768,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.92  2010/04/17 01:43:35  vsnyder
+! Simplify dump.  Set l2pc%goth if there is a Hessian block.
+!
 ! Revision 2.91  2010/03/24 20:48:55  vsnyder
 ! Replace 'continue' by 'cycle'.  Call OptimizeBlock from WriteOneHDF5L2PC
 ! when writing a Hessian, to avoid trying to write empty arrays.  Add some
