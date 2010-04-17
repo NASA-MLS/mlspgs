@@ -1,4 +1,3 @@
-
 ! Copyright 2005, by the California Institute of Technology. ALL
 ! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 ! commercial use must be negotiated with the Office of Technology Transfer
@@ -62,18 +61,20 @@ contains ! =====     Public Procedures     =============================
     ! habit of blindly accepting quantities that might not be appropriate.
     ! Therefore, I have a list of 'acceptable' quantity types.
     select case ( l2pcQ%template%quantityType )
-    case ( l_temperature )
-      stateQ => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-        & quantityType=l_temperature, config=fmConf, &
+    case ( l_fieldStrength, l_fieldAzimuth, l_fieldElevation, l_temperature )
+      ! This is for quantities that are 'easy to get'
+      stateQ => GetQuantityForForwardModel ( FwdModelIn, FwdModelExtra,&
+        & quantityType = l2pcQ%template%quantityType, config=fmConf, &
         & foundInFirst = foundInFirst, noError=.true. )
     case ( l_vmr )
       ! Here we may need to be a little more intelligent
-      if ( l2pcQ%template%molecule /= l_extinction .and. l2pcQ%template%molecule /= l_extinctionv2 ) then
+      if ( l2pcQ%template%molecule /= l_extinction .and. &
+        &  l2pcQ%template%molecule /= l_extinctionv2 ) then
         stateQ => GetQuantityForForwardModel ( FwdModelIn, FwdModelExtra,&
           & quantityType = l_vmr, config=fmConf, &
           & molecule = l2pcQ%template%molecule, &
           & foundInFirst = foundInFirst, noError=.true., matchQty=l2pcQ )
-      else
+      else ! molecule == l_extinction or molecule == l_extinctionv2
         searchLoop: do vec = 1, 2
           ! Point to appropriate vector
           if ( vec == 1 ) then
@@ -96,11 +97,6 @@ contains ! =====     Public Procedures     =============================
         end do searchLoop
         foundInFirst = ( vec == 1 )
       end if
-    case ( l_fieldStrength, l_fieldAzimuth, l_fieldElevation )
-      ! This is for quantities that are 'easy to get'
-      stateQ => GetQuantityForForwardModel ( FwdModelIn, FwdModelExtra,&
-        & quantityType = l2pcQ%template%quantityType, config=fmConf, &
-        & foundInFirst = foundInFirst, noError=.true. )
     case default
       nullify ( stateQ )
     end select
@@ -383,8 +379,6 @@ contains ! =====     Public Procedures     =============================
     bestCost = huge ( cost(1) )
     l2pcBins = 0
     do bin = 1, noBins
-      ! Reuse the sideband variable here, we don't need it's old
-      ! definition anymore
       do tmpSideband = sidebandStart, sidebandStop
         if ( possible(tmpSideband,bin) .and. &
           & cost(bin) < bestCost(tmpSideband) ) then
@@ -434,6 +428,9 @@ contains ! =====     Public Procedures     =============================
 end module L2PCBins_m
 
 ! $Log$
+! Revision 2.2  2010/04/17 01:45:16  vsnyder
+! Simplify some stuff
+!
 ! Revision 2.1  2010/04/13 01:42:01  vsnyder
 ! Initial commit to move stuff here from LinearizedForwardModel_m
 !
