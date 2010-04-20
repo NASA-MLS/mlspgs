@@ -2235,13 +2235,12 @@ contains ! ===================================== Public Procedures =====
       ! We work out the chunk ends for each chunk according to how the
       ! maxLength field is specified.
       if ( ChunkDivideConfig%maxLengthFamily == PHYQ_MAFs ) then
+        maxLength = nint ( ChunkDivideConfig%maxLength )
+        noMAFsBelowHome = home - m1
+        noChunksBelowHome = noMAFsBelowHome / maxLength
+        if ( mod ( noMAFsBelowHome, maxLength ) /= 0 ) noChunksBelowHome = noChunksBelowHome + 1
+        noMAFsAtOrAboveHome = m2 - home + 1
         if ( ChunkDivideConfig%noChunks == 0 ) then
-           maxLength = nint ( ChunkDivideConfig%maxLength )
-           noMAFsBelowHome = home - m1
-           noChunksBelowHome = noMAFsBelowHome / maxLength
-           if ( mod ( noMAFsBelowHome, maxLength ) /= 0 ) &
-              noChunksBelowHome = noChunksBelowHome + 1
-           noMAFsAtOrAboveHome = m2 - home + 1
            ! If user did not request specific number of chunks choose them
            noChunks = noChunksBelowHome + noMAFsAtOrAboveHome / maxLength
            if ( mod ( noMAFsAtOrAboveHome, maxLength ) /= 0 ) &
@@ -2612,8 +2611,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
-! Revision 2.93  2010/03/25 20:16:06  honghanh
-! Fix a bug of using uninitialized variable
+! Revision 2.94  2010/04/20 17:32:23  honghanh
+! Abandon attempt to remove the requirement to have a maxMafLength
+! in ChunkDivide_Orbital
 !
 ! Revision 2.92  2010/03/23 23:53:08  honghanh
 ! Move most subroutine inside ChunkDivide out, including
