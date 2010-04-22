@@ -90,7 +90,7 @@ contains ! =====     Public Procedures     =============================
       & NullifyHessian, StreamlineHessian
     ! We need many things from Init_Tables_Module.  First the fields:
     use INIT_TABLES_MODULE, only: F_A, F_ADDITIONAL, F_ALLOWMISSING, &
-      & F_APRIORIPRECISION, F_AVOIDBRIGHTOBJECTS, &
+      & F_APRIORIPRECISION, F_ASPERCENTAGE, F_AVOIDBRIGHTOBJECTS, &
       & F_B, F_BADRANGE, F_BASELINEQUANTITY, F_BIN, F_BOUNDARYPRESSURE, &
       & F_BOXCARMETHOD, &
       & F_C, F_CENTERVERTICALLY, F_CHANNEL, F_COLUMNS, &
@@ -332,6 +332,7 @@ contains ! =====     Public Procedures     =============================
     integer :: APRPRECQTYINDEX          ! Index of apriori precision quantity
     integer :: APRPRECVCTRINDEX         ! Index of apriori precision vector
     integer :: AQTYINDEX                ! Index of a quantity in vector
+    logical :: ASPERCENTAGE             ! Flag for noRadsPerMIF
     integer :: AVECINDEX                ! Index of a vector
     character(len=256) :: AVOIDOBJECTS  ! Which bright objects to avoid
     real(r8) :: BADRANGE(2)             ! Range for 'missing' data value
@@ -565,6 +566,7 @@ contains ! =====     Public Procedures     =============================
       end if
       additional = .false.
       allowMissing = .false.
+      asPercentage = .false.
       boxCarMethod = l_mean
       c = 0.
       centerVertically = .false.
@@ -1101,6 +1103,8 @@ contains ! =====     Public Procedures     =============================
         case ( f_aprioriPrecision )
           aprPrecVctrIndex = decoration(decoration(subtree(1,gson)))
           aprPrecQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
+        case ( f_asPercentage )
+          asPercentage = get_boolean ( gson )
         case ( f_avoidBrightObjects )
           call get_string( sub_rosa(gson), extraObjects, strip=.true. )
           avoidObjects = catLists( avoidObjects, extraObjects )
@@ -2328,7 +2332,7 @@ contains ! =====     Public Procedures     =============================
           else
             measQty => GetVectorQtyByTemplateIndex( &
               & vectors(measVectorIndex), measQtyIndex)
-            call FillNoRadsPerMif ( key, quantity, measQty )
+            call FillNoRadsPerMif ( key, quantity, measQty, asPercentage )
           end if
         case default
           call Announce_error ( key, noSpecialFill )
@@ -2591,6 +2595,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.381  2010/04/22 23:36:46  pwagner
+! May fill num rads/MIF as a percentage
+!
 ! Revision 2.380  2010/04/13 01:43:09  vsnyder
 ! Move FlushLockedBins from LinearizedForwardModel_m to L2PCBins_m
 !
