@@ -384,6 +384,10 @@ contains
       chunksAbandoned = .true.
       call ExpandStringRange(trim(parallel%chunkRange), chunksAbandoned, &
         & sense=.false.)
+      if ( all(chunksAbandoned) ) then
+        call KillSlaves ( .true., &
+          & 'No chunks to process-was your request within range?' )
+      endif
     endif    
 
     machineRequestQueued = .false. ! Request one machine at a time from L2Q
@@ -2010,6 +2014,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.95  2010/04/22 23:34:47  pwagner
+! Print more useful error mesg if no chunks to process
+!
 ! Revision 2.94  2009/09/18 00:30:25  pwagner
 ! Dont print misleading lines about busy, avoided machines if using l2q
 !
