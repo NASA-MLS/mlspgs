@@ -54,6 +54,7 @@ aprioriFraction # how much of result is apriori, in [0..1]
 aprioriPrecision
 aprioriScale
 ascii
+asPercentage
 atmos
 atmos_der
 AuraInstrument
@@ -476,6 +477,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.201  2010/04/22 23:36:00  pwagner
+# May fill num rads/MIF as a percentage
+#
 # Revision 2.200  2010/04/16 01:39:34  vsnyder
 # Added /allFiles and file fields to dump file database
 #
