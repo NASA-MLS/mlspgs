@@ -1113,10 +1113,10 @@ contains ! ========= Public Procedures ============================
 
   function GetMaskBit ( node, single ) result ( maskBit )
     use Tree, only: NSONS, DECORATION, SUBTREE
-    use Init_Tables_Module, only: L_FILL, L_FULL_DERIVATIVES, &
-      & L_TIKHONOV, L_LINALG, L_SPARE, L_CLOUD
-    use VectorsModule, only: M_FILL, M_FULLDERIVATIVES, M_LINALG, &
-      & M_TIKHONOV, M_SPARE, M_CLOUD
+    use Init_Tables_Module, only: L_CLOUD, L_FILL, L_FULL_DERIVATIVES, &
+      & L_IGNORE, L_LINALG, L_SPARE, L_TIKHONOV
+    use VectorsModule, only: M_CLOUD, M_FILL, M_FULLDERIVATIVES, M_LINALG, &
+      & M_IGNORE, M_SPARE, M_TIKHONOV
 
     ! This routine parses the mask field in an l2cf command
     ! Dummy arguments
@@ -1139,6 +1139,8 @@ contains ! ========= Public Procedures ============================
         maskBit = ior(maskBit, m_fill)
       case ( l_full_derivatives )
         maskBit = ior(maskBit, m_fullDerivatives)
+      case ( l_ignore )
+        maskBit = ior(maskBit, m_Ignore)
       case ( l_linAlg )
         maskBit = ior(maskBit, m_linAlg)
       case ( l_Spare )
@@ -1162,6 +1164,9 @@ contains ! ========= Public Procedures ============================
 end module SubsetModule
  
 ! $Log$
+! Revision 2.19  2010/04/22 23:38:11  pwagner
+! Added new Ignore masking bit
+!
 ! Revision 2.18  2010/02/04 23:12:44  vsnyder
 ! Remove USE or declaration for unreferenced names
 !
