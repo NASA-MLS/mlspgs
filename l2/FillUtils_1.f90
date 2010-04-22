@@ -91,7 +91,7 @@ module FillUtils_1                     ! Procedures used by Fill
     & GetVectorQtyByTemplateIndex, GetVectorQuantityByType, &
     & isVectorQtyMasked, MaskVectorQty, &
     & ValidateVectorQuantity, Vector_T, &
-    & VectorValue_T, M_Fill, M_LinAlg, M_Cloud
+    & VectorValue_T, M_Cloud, M_Fill, M_Ignore, M_LinAlg
   use VGridsDatabase, only: GETUNITFORVERTICALCOORDINATE
 
   implicit none
@@ -2229,15 +2229,21 @@ contains ! =====     Public Procedures     =============================
     end subroutine FillLOSVelocity
 
     ! ------------------------------------- FillNoRadsPerMIF -----
-    subroutine FillNoRadsPerMif ( key, quantity, measQty )
+    subroutine FillNoRadsPerMif ( key, quantity, measQty, asPercentage )
+      ! Count number of valid (i.e., not masked) radiances
+      ! optionally compute it as a percentage of largest number possible
       integer, intent(in) :: KEY
       type(VectorValue_T), intent(inout) :: QUANTITY
       type(VectorValue_T), intent(in) :: MEASQTY
+      logical, intent(in), optional   :: asPercentage ! as % of 
       ! Local variables
-      integer :: MIF, MAF               ! Loop counters
-      integer :: I0, I1                 ! Indices
+      integer  :: MIF, MAF               ! Loop counters
+      integer  :: I0, I1                 ! Indices
+      logical  :: pct
 
       ! Executable code
+      pct = .false.
+      if ( present(asPercentage) ) pct = asPercentage
       ! Do some fairly limited checking.
       if ( .not. ValidateVectorQuantity ( measQty, quantityType=(/l_radiance/), &
         & signal=(/quantity%template%signal/), sideband=(/quantity%template%sideband/) ) ) &
@@ -2255,6 +2261,7 @@ contains ! =====     Public Procedures     =============================
       else
         quantity%values = measQty%template%noChans
       end if
+      if ( pct ) quantity%values = 100*quantity%values/measQty%template%noChans
     end subroutine FillNoRadsPerMIF
 
     ! ------------------------------------ FillPhiTanWithRefraction --
@@ -4674,8 +4681,10 @@ contains ! =====     Public Procedures     =============================
           end do
           do column=1, size(quantity%values(1, :))
             do row=1, size(quantity%values(:, 1))
-              if ( precisionQuantity%values(row, column) < 0.d0 ) &
-                & call MaskVectorQty(quantity, row, column, M_LinAlg)
+              if ( precisionQuantity%values(row, column) < 0.d0 ) then
+                call MaskVectorQty(quantity, row, column, M_Ignore)
+                call MaskVectorQty(quantity, row, column, M_LinAlg)
+              endif
             end do
           end do
         end if
@@ -6797,6 +6806,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.33  2010/04/22 23:36:00  pwagner
+! May fill num rads/MIF as a percentage
+!
 ! Revision 2.32  2010/02/04 23:12:44  vsnyder
 ! Remove USE or declaration for unreferenced names
 !
