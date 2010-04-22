@@ -140,7 +140,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   ! Types
   public :: VectorTemplate_T, VectorValue_T, Vector_T
   ! Parameters
-  public :: M_Cloud, M_Fill, M_FullDerivatives, M_LinAlg, M_Spare, M_Tikhonov
+  public :: M_Ignore, M_Cloud, M_Fill, M_FullDerivatives, M_LinAlg, M_Spare, M_Tikhonov
 
 ! =====     Defined Operators and Generic Identifiers     ==============
 
@@ -247,8 +247,9 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   integer, parameter :: M_Cloud = 2**4
   integer, parameter :: M_Fill = 2**2
   integer, parameter :: M_FullDerivatives = 2**1
+  integer, parameter :: M_Ignore = 2**5
   integer, parameter :: M_LinAlg = 2**0
-  integer, parameter :: M_Spare = 2**5
+  integer, parameter :: M_Spare = 2**6
   integer, parameter :: M_Tikhonov = 2**3    ! Where to do Tikhonov regularization
 
   character(len=16), dimension(6), parameter :: maskBitNames = (/ &
@@ -1286,6 +1287,8 @@ contains ! =====     Public Procedures     =============================
           call output ( chanOffset )
           ! Do a nice name for the mask
           select case ( masksToDump ( m ) )
+          case ( m_ignore )
+            call output ( 'Ignored: ' )
           case ( m_linAlg )
             call output ( 'Retrieved / used: ' )
           case ( m_tikhonov )
@@ -2127,6 +2130,11 @@ contains ! =====     Public Procedures     =============================
   ! Otherwise, go ahead.  If What is present, set the bits in
   ! mask indicated by What.  Otherwise, set the M_LinAlg bit.
   
+  ! Note that 
+  ! (1) if mask is not yet it associated, it will be created
+  ! (2) If mask already associated, any bits in it will not be reset
+  !    (i.e., we will be "or"-ing bits)
+  
   ! Formal args
     type (VectorValue_T), intent(inout) :: vectorQty
     integer, intent(in) ::              ROW
@@ -2648,6 +2656,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.147  2010/02/25 18:07:14  pwagner
+! Added extra dump when about to bomb
+!
 ! Revision 2.146  2010/02/04 23:08:00  vsnyder
 ! Remove USE or declaration for unused names
 !
