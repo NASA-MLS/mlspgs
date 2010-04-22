@@ -478,8 +478,8 @@ contains ! =====     Public procedures     =============================
              l+l_gloria, l+l_ncep, l+l_strat, l+l_surfaceHeight, n+n_dt_def, &
       begin, t+t_hGridType, l+l_explicit, l+l_fixed, l+l_fractional, &
              l+l_height, l+l_regular, l+l_l2gp, n+n_dt_def, &
-      begin, t+t_masks, l+l_cloud, l+l_fill, l+l_full_derivatives, l+l_linalg, &
-             l+l_spare, l+l_tikhonov, n+n_dt_def, &
+      begin, t+t_masks, l+l_cloud, l+l_fill, l+l_full_derivatives, l+l_ignore, &
+             l+l_linalg, l+l_spare, l+l_tikhonov, n+n_dt_def, &
       begin, t+t_maskUpdates, l+l_andMasks, l+l_copy, l+l_invert, l+l_orMasks, &
              n+n_dt_def, &
       begin, t+t_matrix, l+l_plain, l+l_cholesky, l+l_kronecker, l+l_spd, &
@@ -834,6 +834,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_allowMissing, t+t_boolean, n+n_field_type, &
              begin, f+f_aprioriPrecision, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
+             begin, f+f_asPercentage, t+t_boolean, n+n_field_type, &
              begin, f+f_b, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
              begin, f+f_badRange, t+t_numeric_range, n+n_field_type, &
@@ -1626,6 +1627,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.502  2010/04/22 23:36:21  pwagner
+! May fill num rads/MIF as a percentage
+!
 ! Revision 2.501  2010/04/16 01:39:34  vsnyder
 ! Added /allFiles and file fields to dump file database
 !
