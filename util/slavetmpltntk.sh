@@ -141,7 +141,7 @@ elif [ -r "$PGSBIN/pgs-env.ksh" ]
 then
 . $PGSBIN/pgs-env.ksh
 fi
-export
+
 PGSMEM_USESHM=ppggssmmeemmuusseesshhmm
 SLVPROG=ssllaavveessccrriipptt
 OTHEROPTS=ootthheerrooppttss
@@ -381,6 +381,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.4  2009/05/26 20:04:21  pwagner
+# Can pass 3 more options from master
+#
 # Revision 1.3  2008/07/31 23:57:10  pwagner
 # Pass --skipDirectWrite option to slave tasks
 #
