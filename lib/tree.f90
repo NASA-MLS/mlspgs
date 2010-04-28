@@ -13,6 +13,7 @@ module TREE
 
   use ERROR_HANDLER, only: COMPILER, ERROR_INTRO
   use MACHINE, only: IO_ERROR
+  use MLSMessageModule, only: STOPWITHERRORMSG
   use OUTPUT_M, only: NewLine, OUTPUT
   use STRING_TABLE, only: DISPLAY_STRING, LOOKUP_AND_INSERT
   use SYMBOL_TABLE, only: SET_SYMBOL, SYMBOL
@@ -147,7 +148,7 @@ contains
       end if
       call io_error ( 'TREE%ALLOCATE_TREE-E- Unable to allocate tree', &
         stat, ' ' )
-      stop
+      call StopWithErrorMsg ( 'TREE%ALLOCATE_TREE-E- Unable to allocate tree' )
     end if
     call init_tree
   end subroutine ALLOCATE_TREE
@@ -517,7 +518,7 @@ contains
       end if
       call io_error ( 'TREE%DOUBLE_TREE-E- Unable to allocate tree', &
         stat, ' ' )
-      stop
+      call StopWithErrorMsg ( 'TREE%DOUBLE_TREE-E- Unable to allocate old tree' )
     end if
     old_tree = the_tree
     deallocate ( the_tree )
@@ -529,7 +530,7 @@ contains
       end if
       call io_error ( 'TREE%DOUBLE_TREE-E- Unable to allocate tree', &
         stat, ' ' )
-      stop
+      call StopWithErrorMsg ( 'TREE%DOUBLE_TREE-E- Unable to allocate new tree' )
     end if
     new_sp = size(the_tree) - ( size(old_tree) - tree_sp )
     the_tree(:tree_point) = old_tree(:tree_point)
@@ -618,7 +619,7 @@ contains
     case ( underflow );     call output ( "Tree stack underflow.", &
                                                advance="yes" )
     end select
-    stop
+    call StopWithErrorMsg ( 'Possibly an error in the source code' )
   end subroutine TREE_ERROR
 
 !--------------------------- end bloc --------------------------------------
@@ -634,6 +635,9 @@ contains
 end module TREE
 
 ! $Log$
+! Revision 2.14  2010/04/28 00:13:47  pwagner
+! Replaced bare stop with StopWithErrorMsg
+!
 ! Revision 2.13  2009/09/29 23:22:44  vsnyder
 ! Arguments reversed in call to error_intro
 !
