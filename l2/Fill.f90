@@ -585,6 +585,7 @@ contains ! =====     Public Procedures     =============================
       ignoreZero = .false.
       ignoreNegative = .false.
       ignoreGeolocation = .false.
+      instancesNode = 0
       interpolate = .false.
       invert = .false.
       isPrecision = .false.
@@ -1640,7 +1641,7 @@ contains ! =====     Public Procedures     =============================
           & call Announce_Error ( key, noExplicitValuesGiven )
         call ExplicitFillVectorQuantity ( quantity, valuesNode, spreadFlag, &
           & vectors(vectorIndex)%globalUnit, dontmask, channel, heightNode, &
-          & options=options(1:1) )
+          & instancesNode, options=options(1:1) )
 
       case ( l_extractChannel )
         if ( .not. all(got ( (/f_sourceQuantity,f_channel/)))) &
@@ -1961,7 +1962,7 @@ contains ! =====     Public Procedures     =============================
               & c )
             call ExplicitFillVectorQuantity ( quantity, valuesNode, spreadFlag, &
               & vectors(vectorIndex)%globalUnit, dontmask, channel, heightNode, &
-              & options=options(1:1), extraQuantity=tempswapquantity )
+              & instancesNode, options=options(1:1), extraQuantity=tempswapquantity )
             call deallocate_test( tempswapquantity%values, 'tempswapquantity%values', &
               & moduleName )
             call deallocate_test( tempswapquantity%mask, 'tempswapquantity%mask', &
@@ -1982,7 +1983,7 @@ contains ! =====     Public Procedures     =============================
               & force, spreadflag, dontSumHeights, dontSumInstances )
             call ExplicitFillVectorQuantity ( quantity, valuesNode, spreadFlag, &
               & vectors(vectorIndex)%globalUnit, dontmask, channel, heightNode, &
-              & options=options(1:1), extraQuantity=tempswapquantity )
+              & instancesNode, options=options(1:1), extraQuantity=tempswapquantity )
             call deallocate_test( tempswapquantity%values, 'tempswapquantity%values', &
               & moduleName )
             call deallocate_test( tempswapquantity%mask, 'tempswapquantity%mask', &
@@ -1999,7 +2000,7 @@ contains ! =====     Public Procedures     =============================
           & call Announce_Error ( key, noExplicitValuesGiven )
         call ExplicitFillVectorQuantity ( quantity, valuesNode, spreadFlag, &
           & vectors(vectorIndex)%globalUnit, dontmask, channel, heightNode, &
-          & azEl=.true. )
+          & instancesNode, azEl=.true. )
 
       case ( l_magneticModel ) ! --------------------- Magnetic Model --
         if ( .not. got ( f_gphQuantity ) ) then
@@ -2381,7 +2382,7 @@ contains ! =====     Public Procedures     =============================
         if ( got(f_ifMissingGMAO) ) then
           if ( MissingGMAO ) call ExplicitFillVectorQuantity ( quantity, &
             & valuesNode, .true., phyq_Invalid, .true., channel, heightNode, &
-            & options='-v' )
+            & instancesNode, options=options(1:1) )
         elseif ( .not. all ( got ( (/ f_sourceQuantity, f_status /) ) ) ) then
           call Announce_Error ( key, no_error_code, &
           & 'Need sourceQuantity and status fields for status fill' )
@@ -2595,6 +2596,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.382  2010/04/28 16:24:11  pwagner
+! May specify instances range in explicit Fill
+!
 ! Revision 2.381  2010/04/22 23:36:46  pwagner
 ! May fill num rads/MIF as a percentage
 !
