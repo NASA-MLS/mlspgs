@@ -32,6 +32,7 @@ module BitStuff
 ! that the largest index is MAXBITNUMBER.
 
 !     (subroutines and functions)
+! BitEq              Generalized bits "==" (optionally ignoring leading bits)
 ! BitsToBooleans     Converts bits to an array of Boolean
 ! BooleansToBits     Converts an array of Boolean to bits
 ! CountBits          Returns the number of non-zero bits
@@ -47,6 +48,8 @@ module BitStuff
 ! WhichBitsAreSet    Which bit numbers are set?
 ! === (end of toc) ===
 ! === (start of api) ===
+! log biteq (bits i, log Booleans(:), [char* options])
+! log biteq (bits i, bits probe, int numBits, [char* options])
 ! BitsToBooleans ( bits i, log Booleans(:) )
 ! BooleansToBits ( log Booleans(:), bits i )
 ! int CountBits ( value )
@@ -63,6 +66,7 @@ module BitStuff
 ! WhichBitsAreSet ( bits i, int set(:), [int howMany], [int unset(:)] )
 ! === (end of api) ===
 
+  public :: biteq
   public :: BitsToBooleans, BooleansToBits
   public :: CountBits, CountBits_0, CountBits_1, CountBits_2
   public :: CountCharBits_0, CountCharBits_1, CountCharBits_2
@@ -70,6 +74,10 @@ module BitStuff
   public :: NegativeIfBitSet, NegativeIfBitPatternSet
   public :: Reverse
   public :: SetBits, WhichBitsAreSet
+
+  interface biteq
+    module procedure biteq_Boolean, biteq_bits
+  end interface
 
   interface CountBits
     module procedure countBits_0, countBits_1, countBits_2
@@ -110,8 +118,63 @@ module BitStuff
   integer, parameter, public :: MAXBITNUMBER = 30 ! The 31st is the sign bit
   integer, parameter, dimension(0:MAXBITNUMBER) :: BITINDX = &
     & (/ (ibitindx, ibitindx = 0, MAXBITNUMBER) /)
+  integer, parameter, dimension(0:MAXBITNUMBER) :: BITVALUES = &
+    & (/ (2**ibitindx, ibitindx = 0, MAXBITNUMBER) /)
 
 contains
+
+  ! -------------------------------------------------  biteq  -----
+  ! This family of functions generalizes bit "=="
+  ! ignoring leading bits
+  ! Unless bitnum is supplied, find max bit number n of probe or array bound
+  ! Then consider only bit numbers {0 .. n}
+  ! If bitnum contains a positive integer n, 
+  !   consider only bit numbers {0 .. n}
+  ! If bitnum contains a negative integer -n, 
+  !   consider only bit numbers {n+1 .. MAXBITNUMBER}
+  !
+  ! Note: when testing for bit numbers {0 .. n} we do comparisons mod 2**(n+1)
+  ! When testing for bit numbers {n+1 .. MAXBITNUMBER} we do comparisons
+  ! after dividing by 2**(n+1)
+  function biteq_Boolean ( i, Booleans, bitnum ) result (relation)
+    integer, intent(in)                :: i
+    logical, dimension(0:), intent(in) :: Booleans
+    integer, optional, intent(in)      :: bitnum
+    logical                            :: RELATION
+
+    ! Internal variables
+    integer :: mybitnum
+    integer :: probe
+    !----------Executable part----------!
+    relation = .FALSE.
+    call BooleansToBits ( Booleans, probe )
+    relation = biteq_bits ( i, probe, bitnum )
+  end function biteq_Boolean
+
+  elemental function biteq_bits ( i, probe, bitnum ) result (relation)
+    integer, intent(in)                 :: i
+    integer, intent(in)                 :: probe
+    integer, optional, intent(in)       :: bitnum
+    logical                             :: RELATION
+
+    ! Internal variables
+    integer :: mybitnum
+    !----------Executable part----------!
+    relation = .FALSE.
+    if ( present(bitnum) ) then
+      if ( abs(bitnum) >= MAXBITNUMBER ) then
+        ! illegal bitnum, so let relation = .false.
+      elseif ( bitnum >= 0 ) then
+        relation = ( mod(i, BitValues(bitnum+1)) == mod(probe, BitValues(bitnum+1)) )
+      elseif ( bitnum < 0 ) then
+        relation = ( i/BitValues(-bitnum+1) == probe/BitValues(-bitnum+1) )
+      endif
+    else
+      call MaxBitNumberSet( probe, mybitnum )
+      relation = ( mod(i, BitValues(mybitnum+1)) == mod(probe, BitValues(mybitnum+1)) )
+    endif
+    
+  end function biteq_bits
 
   ! ------------------------------------------------  BitsToBooleans  -----
   subroutine BitsToBooleans ( i, Booleans )
@@ -559,6 +622,20 @@ contains
     endif
   end subroutine WhichBitsAreSet
 
+! Private
+  elemental subroutine MaxBitNumberSet( i, bitnumber )
+    ! Find max bit number set by integer i interpreted as bits
+    ! Returns -1 if i == 0
+    ! Arguments
+    integer, intent(in)  :: i
+    integer, intent(out) :: bitnumber
+    bitnumber = -1
+    if ( i == 0 ) return
+    do bitnumber=0, MAXBITNUMBER-1
+      if ( abs(i) <= BitValues(bitnumber+1) ) return
+    enddo
+  end subroutine MaxBitNumberSet
+
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -572,6 +649,9 @@ contains
 end module BitStuff
 
 ! $Log$
+! Revision 2.16  2010/04/28 00:11:26  pwagner
+! Added biteq to generalize bitwise '=='
+!
 ! Revision 2.15  2010/02/04 23:08:00  vsnyder
 ! Remove USE or declaration for unused names
 !
