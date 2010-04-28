@@ -71,20 +71,22 @@ module FillUtils_1                     ! Procedures used by Fill
   use MLSSignals_m, only: GetFirstChannel, GetSignalName, GetModuleName, IsModuleSpacecraft, &
     & GetSignal, Signal_T
   use MLSStats1, only: MLSMIN, MLSMAX, MLSMEAN, MLSMEDIAN, MLSRMS, MLSSTDDEV
-  use MLSStringLists, only: catLists, GetStringElement, &
-    & NumStringElements, &
-    & ReplaceSubString, switchDetail
-  use MLSStrings, only: indexes, lowerCase, SplitNest
+  use MLSStringLists, only: CATLISTS, EXPANDSTRINGRANGE, GETSTRINGELEMENT, &
+    & NUMSTRINGELEMENTS, &
+    & REPLACESUBSTRING, SWITCHDETAIL
+  use MLSStrings, only: INDEXES, LOWERCASE, SPLITNEST
   use Molecules, only: L_H2O
-  use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, outputNamedValue
+  use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
   use QuantityTemplates, only: Epoch, QuantityTemplate_T
   use RHIFromH2O, only: H2OPrecFromRHI, RHIFromH2O_Factor, RHIPrecFromH2O
   use ScanModelModule, only: GetBasisGPH, Get2DHydrostaticTangentPressure, GetGPHPrecision
   use String_Table, only: Display_String, get_string
   use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
-  use TREE, only: NSONS, &
+  use TREE, only: NODE_ID, NSONS, &
     & SOURCE_REF, SUBTREE
+  use Tree_Types, only: N_COLON_LESS, N_LESS_COLON, &
+    & N_LESS_COLON_LESS
   use VectorsModule, only: &
     & ClearUnderMask, CopyVector, CreateMask, &
     & DestroyVectorInfo, Dump, &
@@ -464,7 +466,7 @@ contains ! =====     Public Procedures     =============================
 
     !=============================================== ExplicitFillVectorQuantity ==
     subroutine ExplicitFillVectorQuantity ( quantity, valuesNode, spreadFlag, &
-      & globalUnit, dontmask, channel, heightNode, &
+      & globalUnit, dontmask, channel, heightNode, instancesNode, &
       & AzEl, options, FillValue, extraQuantity )
 
       ! This routine is called from MLSL2Fill to fill values from an explicit
@@ -487,6 +489,7 @@ contains ! =====     Public Procedures     =============================
       logical, intent(in) :: DONTMASK     ! Don't bother with the mask
       integer, intent(in) :: CHANNEL      ! Fill specified channel?
       integer, intent(in) :: HEIGHTNODE   ! Fill (at) specified height?
+      integer, intent(in) :: INSTANCESNODE   ! Fill (at) specified instances?
       logical, intent(in), optional :: AzEl ! Values are in [Mag, Az, El]; the
         ! desired quantity is components of Mag in the coordinate system to
         ! which Az and El are referenced.  So the number of values has to be
@@ -507,6 +510,7 @@ contains ! =====     Public Procedures     =============================
 
       ! Local variables
       integer :: chan
+      logical, dimension(QUANTITY%template%noInstances) :: doThisInstance
       real(r8) :: HEIGHT                ! The height to consider
       character(len=8) :: heightRange   ! 'above', 'below', 'at'
       integer :: K                        ! Loop counter
@@ -514,15 +518,25 @@ contains ! =====     Public Procedures     =============================
       logical :: MyAzEl
       real(kind(quantity%values)) :: myFillValue
       character (len=8) :: myOptions
+      integer :: Node
       integer :: NoValues
       integer :: numChans
+      integer :: rangeID
+      integer :: s1
+      integer :: s2
+      integer :: son
+      character(len=16) :: str
       integer :: surf
       integer :: surface
       integer :: TestUnit                 ! Unit to use
+      integer :: TYPE                   ! Type of value returned by expr
+      integer :: UNITS(2)               ! Units returned by expr
       integer, dimension(2) :: unitAsArray ! Unit for value given
+      real(r8) :: VALUE(2)              ! Value returned by expr
       real (r8), pointer, dimension(:) :: VALUES
       real (r8), dimension(2) :: valueAsArray ! Value given
       logical :: Verbose
+      character(len=128) :: whichInstances
       character(len=2) :: whichToReplace ! '/=' (.ne. fillValue), '==', or ' ' (always)
 
       ! Executable code
@@ -530,6 +544,8 @@ contains ! =====     Public Procedures     =============================
       if ( present(azEl) ) myAzEl = azEl
       myOptions = ' '
       if ( present(options) ) myOptions = options
+      doThisInstance = .true.
+      whichInstances = ' '
 
       testUnit = quantity%template%unit
       if ( globalUnit /= phyq_Invalid ) testUnit = globalUnit
@@ -625,11 +641,15 @@ contains ! =====     Public Procedures     =============================
         if ( unitsError ) call Announce_error ( heightNode, wrongUnits, &
           & extraInfo=(/unitAsArray(1), PHYQ_Pressure/) )
         height = - log10 ( valueAsArray(1) )
-        call Hunt ( Quantity%template%surfs(:,1), height, surface, nearest=.true. )
-        call outputNamedValue( 'height', height )
-        call dump( Quantity%template%surfs(:,1), 'surfs' )
-        call outputNamedValue( 'surface', surface )
-        call outputNamedValue( 'surfs(surface)', Quantity%template%surfs(surface, 1) )
+        call Hunt ( Quantity%template%surfs(:,1), height, surface, &
+          & nearest=.true. )
+        if ( verbose ) then
+          call outputNamedValue( 'height', height )
+          call dump( Quantity%template%surfs(:,1), 'surfs' )
+          call outputNamedValue( 'surface', surface )
+          call outputNamedValue( 'surfs(surface)', &
+            & Quantity%template%surfs(surface, 1) )
+        endif
       endif
       numChans = quantity%template%instanceLen / quantity%template%noSurfs
       if ( numChans /= quantity%template%noChans ) then
@@ -640,10 +660,47 @@ contains ! =====     Public Procedures     =============================
         call announce_error ( heightNode, no_Error_Code, &
           & 'Inconsistent template instance length' )
       endif
+      ! Do we plan doing some instances or all?
+      if ( instancesNode /= 0 ) then
+        do j = 2, nsons(InstancesNode)
+          son = subtree ( j, InstancesNode )
+          rangeId = node_id ( son )
+          ! 
+          call expr ( son, units, value, type )
+          if ( any ( units /= phyq_dimensionless ) ) &
+            & call Announce_Error ( InstancesNode, no_error_code, &
+            & 'No units allowed in instances field during explicit fill' )
+          s1 = max ( min ( value(1), &
+            & real(quantity%template%noInstances, r8) ), 1._r8 )
+          s2 = max ( min ( value(2), &
+            & real(quantity%template%noInstances, r8) ), 1._r8 )
+          ! Now consider the open range issue
+          select case ( rangeId )
+          case ( n_colon_less )
+            s1 = min ( s1 + 1, quantity%template%noInstances )
+          case ( n_less_colon )
+            s2 = max ( s2 - 1, 1 )
+          case ( n_less_colon_less )
+            s1 = min ( s1 + 1, quantity%template%noInstances )
+            s2 = max ( s2 - 1, 1 )
+          end select
+          if ( s1 == s2 ) then
+            write( str, '(i5)' ) s1
+          else
+            write( str, '(i5, a1, i5)' ) s1, '-', s2
+          endif
+          whichInstances = catLists( whichInstances, str )
+        enddo
+        call ExpandStringRange( trim(whichInstances), doThisInstance )
+        if ( verbose ) then
+          call outputNamedValue( 'whichInstances', trim(whichInstances) )
+          call dump( doThisInstance )
+        endif
+      endif
       ! Now loop through the quantity
       k = 0
       do i = 1, quantity%template%noInstances
-        ! do j = 1, quantity%template%instanceLen
+        if ( .not. doThisInstance(i) ) cycle
         j = 0
         do surf = 1, quantity%template%noSurfs
           ! Have we specified which height to fill?
@@ -2230,13 +2287,25 @@ contains ! =====     Public Procedures     =============================
 
     ! ------------------------------------- FillNoRadsPerMIF -----
     subroutine FillNoRadsPerMif ( key, quantity, measQty, asPercentage )
+      use BitStuff, only: biteq
       ! Count number of valid (i.e., not masked) radiances
       ! optionally compute it as a percentage of largest number possible
+      ! The largest number possible takes into account
+      ! np = the number with negative precisions 
+      !      masked with bits m_linalg + m_ignore
+      ! ns = the number subsetted "do not use"
+      !      masked only with bit m_linalg
+      ! nv = the number valid
+      !      not masked with bit m_linalg (either alone or with others)
+      ! ni = total number of instances
+      ! Then ni = possible + ns
+      ! and pct = 100 * nv/possible
       integer, intent(in) :: KEY
       type(VectorValue_T), intent(inout) :: QUANTITY
       type(VectorValue_T), intent(in) :: MEASQTY
       logical, intent(in), optional   :: asPercentage ! as % of 
       ! Local variables
+      integer  :: possible
       integer  :: MIF, MAF               ! Loop counters
       integer  :: I0, I1                 ! Indices
       logical  :: pct
@@ -2244,6 +2313,7 @@ contains ! =====     Public Procedures     =============================
       ! Executable code
       pct = .false.
       if ( present(asPercentage) ) pct = asPercentage
+      possible = measQty%template%noChans
       ! Do some fairly limited checking.
       if ( .not. ValidateVectorQuantity ( measQty, quantityType=(/l_radiance/), &
         & signal=(/quantity%template%signal/), sideband=(/quantity%template%sideband/) ) ) &
@@ -2256,12 +2326,17 @@ contains ! =====     Public Procedures     =============================
             i1 = i0 + measQty%template%noChans - 1
             quantity%values ( mif, maf ) = count ( &
               & iand ( ichar ( measQty%mask ( i0:i1, maf ) ), M_LinAlg ) == 0 )
+            possible = measQty%template%noChans - &
+              & count( biteq( ichar(measQty%mask( i0:i1, maf )), M_linAlg) )
+            possible = max(possible, 1)
+            if ( pct ) &
+              & quantity%values( mif, maf ) = 100*quantity%values( mif, maf )/possible
           end do
         end do
       else
         quantity%values = measQty%template%noChans
+        if ( pct ) quantity%values = 100*quantity%values/possible
       end if
-      if ( pct ) quantity%values = 100*quantity%values/measQty%template%noChans
     end subroutine FillNoRadsPerMIF
 
     ! ------------------------------------ FillPhiTanWithRefraction --
@@ -6806,6 +6881,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.34  2010/04/28 16:23:52  pwagner
+! May specify instances range in explicit Fill
+!
 ! Revision 2.33  2010/04/22 23:36:00  pwagner
 ! May fill num rads/MIF as a percentage
 !
