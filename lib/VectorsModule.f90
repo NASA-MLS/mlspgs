@@ -252,9 +252,10 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   integer, parameter :: M_Spare = 2**6
   integer, parameter :: M_Tikhonov = 2**3    ! Where to do Tikhonov regularization
 
-  character(len=16), dimension(6), parameter :: maskBitNames = (/ &
+  character(len=16), dimension(7), parameter :: maskBitNames = (/ &
     & 'linear algebra  ', 'full derivatives', 'fill            ', &
-    & 'Tikhanov        ', 'cloud           ', 'spare           ' /)
+    & 'Tikhonov        ', 'cloud           ', 'ignore          ' , &
+    & 'spare           ' /)
 !      123456789012345678901234567890123456789012345678901234567890
   ! This type describes a vector.
 
@@ -2656,6 +2657,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.148  2010/04/22 23:38:57  pwagner
+! Added new Ignore masking bit
+!
 ! Revision 2.147  2010/02/25 18:07:14  pwagner
 ! Added extra dump when about to bomb
 !
