@@ -259,23 +259,27 @@ contains ! ========= Public Procedures ============================
   subroutine SetupSubset ( key, vectors )
 
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use dump_0, only: DUMP
     use Expr_m, only: EXPR, GETINDEXFLAGSFROMLIST
     use MLSCommon, only: R8
     use Intrinsic, only: PHYQ_LENGTH, PHYQ_PRESSURE, PHYQ_INVALID, PHYQ_DIMENSIONLESS
     use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST
-    use Init_Tables_Module, only: F_QUANTITY, F_PTANQUANTITY, F_CHANNELS, F_HEIGHT, &
-      & F_MASK, F_OPTICALDEPTH, F_OPTICALDEPTHCUTOFF, F_MAXVALUE, F_MINVALUE, &
-      & F_IGNORE, F_RESET, F_SURFACE, F_ADDITIONAL
-    use Init_Tables_Module, only: L_RADIANCE, L_OPTICALDEPTH, L_NONE, L_ZETA, L_PRESSURE
+    use Init_Tables_Module, only: F_ADDITIONAL, F_CHANNELS, F_HEIGHT, &
+      & F_IGNORE, F_INSTANCES, &
+      & F_MASK, F_MAXVALUE, F_MINVALUE, F_OPTICALDEPTH, F_OPTICALDEPTHCUTOFF, &
+      & F_PTANQUANTITY,  F_QUANTITY, F_RESET, F_SURFACE
+    use Init_Tables_Module, only: L_OPTICALDEPTH, L_NONE, &
+      & L_PRESSURE, L_RADIANCE, L_ZETA
     use Tree_Types, only: N_COLON_LESS, N_LESS_COLON, &
       & N_LESS_COLON_LESS
     use VectorsModule, only: GETVECTORQTYBYTEMPLATEINDEX, SETMASK, VECTORVALUE_T, &
       & VECTOR_T, CLEARMASK, CREATEMASK, M_LINALG, DUMPMASK
     use Tree, only: NSONS, SUBTREE, DECORATION, NODE_ID
+    use MLSStringLists, only: CATLISTS, EXPANDSTRINGRANGE, SWITCHDETAIL
     use MoreTree, only: GET_FIELD_ID, GET_BOOLEAN
     use String_Table, only: DISPLAY_STRING
     use Toggles, only: SWITCHES
-    use Output_M, only: OUTPUT
+    use Output_M, only: OUTPUT, OUTPUTNAMEDVALUE
     integer, intent(in) :: KEY        ! Tree node
     type (Vector_T), dimension(:) :: VECTORS
 
@@ -283,6 +287,7 @@ contains ! ========= Public Procedures ============================
     integer :: CHANNEL                ! Loop index
     integer :: CHANNELSNODE           ! Tree node for channels values
     integer :: COORDINATE             ! Vertical coordinate type
+    logical, dimension(:), pointer :: doThisInstance => null()
     integer :: FIELD                  ! Field type from tree
     integer :: GSON                   ! Tree node
     integer :: HEIGHT                 ! Loop counter
@@ -292,8 +297,11 @@ contains ! ========= Public Procedures ============================
     integer :: IND                    ! An array index
     integer :: INSTANCE               ! Loop counter
     integer :: INSTANCEOR1            ! For coherent quantities
-    integer :: MaskBit                ! Bits corresponding to Mask
+    integer :: INSTANCESNODE          ! Tree node for instance values
     integer :: MAINVECTORINDEX        ! Vector index of quantity to subset
+    integer :: MaskBit                ! Bits corresponding to Mask
+    integer :: MAXUNIT                ! Units for maxValue
+    integer :: MINUNIT                ! Units for minValue
     integer :: NODE                   ! Either heightNode or surfaceNode
     integer :: ODCUTOFFHEIGHT         ! `First' index optically thick
     integer :: QUANTITYINDEX          ! Index
@@ -302,13 +310,14 @@ contains ! ========= Public Procedures ============================
     integer :: SCANDIRECTION          ! +/-1 for up or down
     integer :: SON                    ! Tree node
     integer :: STATUS                 ! Flag
+    character(len=16) :: str
     integer :: SURFNODE               ! Tree node
     integer :: TESTUNIT               ! Either vector%globalUnit or qty tmplt unit
     integer :: TYPE                   ! Type of value returned by expr
     integer :: UNITS(2)               ! Units returned by expr
     integer :: VECTORINDEX            ! Index
-    integer :: MINUNIT                ! Units for minValue
-    integer :: MAXUNIT                ! Units for maxValue
+    logical :: VERBOSE
+    character(len=128) :: whichInstances
 
     real(r8), dimension(:), pointer :: THESEHEIGHTS ! Subset of heights
     real(r8) :: VALUE(2)              ! Value returned by expr
@@ -327,7 +336,7 @@ contains ! ========= Public Procedures ============================
     character(len=1), dimension(:), pointer :: ORIGINALMASK
 
     ! Executable code
-    nullify ( channels, qty, ptan, opticalDepth )
+    nullify ( channels, doThisInstance, qty, ptan, opticalDepth )
     got = .false.
     ignore = .false.
     reset = .false.
@@ -335,6 +344,7 @@ contains ! ========= Public Procedures ============================
     maskBit = m_linalg
     minUnit = 0
     maxUnit = 0
+    verbose = ( switchDetail(switches,'subset') > -1 )
     do j = 2, nsons(key) ! fields of the "subset" specification
       son = subtree(j, key)
       field = get_field_id(son)   ! tree_checker prevents duplicates
@@ -352,6 +362,8 @@ contains ! ========= Public Procedures ============================
         channelsNode = son
       case ( f_height )
         heightNode = son
+      case ( f_instances )
+        instancesNode = son
       case ( f_mask )
         if ( .not. got(f_mask) ) maskBit = 0 ! clear default first time
         maskBit = GetMaskBit ( son )
@@ -413,6 +425,47 @@ contains ! ========= Public Procedures ============================
     if ( got ( f_maxValue ) .and. ( maxUnit /= testUnit ) ) &
       & call AnnounceError ( key, WrongUnits, f_maxValue )
 
+    ! Process the instances field.
+    call Allocate_test ( doThisInstance, qty%template%noInstances, &
+      & 'doThisInstance', ModuleName )
+    doThisInstance = .true.
+    whichInstances = ' '
+    if ( got(f_instances) ) then
+      do j = 2, nsons(InstancesNode)
+        son = subtree ( j, InstancesNode )
+        rangeId = node_id ( son )
+        ! 
+        call expr ( son, units, value, type )
+        if ( any ( units /= phyq_dimensionless ) ) &
+          & call AnnounceError ( InstancesNode, &
+          & 'No units allowed in instances field during subset' )
+        s1 = max ( min ( value(1), &
+          & real(qty%template%noInstances, r8) ), 1._r8 )
+        s2 = max ( min ( value(2), &
+          & real(qty%template%noInstances, r8) ), 1._r8 )
+        ! Now consider the open range issue
+        select case ( rangeId )
+        case ( n_colon_less )
+          s1 = min ( s1 + 1, qty%template%noInstances )
+        case ( n_less_colon )
+          s2 = max ( s2 - 1, 1 )
+        case ( n_less_colon_less )
+          s1 = min ( s1 + 1, qty%template%noInstances )
+          s2 = max ( s2 - 1, 1 )
+        end select
+        if ( s1(1) == s2(1) ) then
+          write( str, '(i5)' ) s1(1)
+        else
+          write( str, '(i5, a1, i5)' ) s1(1), '-', s2(1)
+        endif
+        whichInstances = catLists( whichInstances, str )
+      enddo
+      call ExpandStringRange( trim(whichInstances), doThisInstance )
+      if ( verbose ) then
+        call outputNamedValue( 'whichInstances', trim(whichInstances) )
+        call dump( doThisInstance )
+      endif
+    endif
     ! Process the channels field.
     if ( qty%template%frequencyCoordinate /= l_none ) then
       call Allocate_test ( channels, qty%template%noChans, &
@@ -427,8 +480,9 @@ contains ! ========= Public Procedures ============================
       end if
     end if
 
-    ! Check that got one of ignore, height, reset
-    if ( count ( got ( (/ f_ignore, f_height, f_reset, f_surface /) ) ) /= 1 ) &
+    ! Check that got one of ignore, height, reset, instances
+    if ( count ( got ( &
+      & (/ f_height, f_ignore, f_instances, f_reset, f_surface /) ) ) /= 1 ) &
       & call announceError ( key, 'Subset must be one of ignore, height, surface or reset' )
 
     ! Preprocess the height stuff.  
@@ -475,9 +529,23 @@ contains ! ========= Public Procedures ============================
 
     ! Now we loop over the instances
     do instance = 1, qty%template%noInstances
-
       ! Possibly save original mask
       if ( additional ) originalMask = qty%mask ( :, instance )
+      if ( .not. doThisInstance(instance) ) then
+        ! Because this instance is outside the instances=.. field 
+        ! we will mask this instance (because subset picks out
+        ! a portion of a quantity not to mask)
+        !??? Make sure mask bit numbers begin at 1, even when
+        !??? channel numbers don't.
+        call SetMask ( qty%mask(:,instance), &
+          & what=maskBit )
+        ! If this is supposed to be an 'additional' mask, merge in the
+        ! original value
+        if ( additional ) &
+          & qty%mask(:,instance) = char ( ior ( &
+          & ichar ( qty%mask(:,instance) ), ichar ( originalMask ) ) )
+        cycle
+      endif
 
       instanceOr1 = instance
       if ( qty%template%coherent ) then
@@ -545,7 +613,7 @@ contains ! ========= Public Procedures ============================
           son = subtree ( j, node )
           rangeId = node_id ( son )
           if ( got ( f_height ) ) then
-            ! Get values for this ragne
+            ! Get values for this range
             call expr ( son, units, value, type )
             ! Now maybe do something nasty to value to get in right units.
             if ( coordinate == l_zeta .and. heightUnit == phyq_pressure ) then
@@ -691,6 +759,7 @@ contains ! ========= Public Procedures ============================
 
     ! Tidy up
     call Deallocate_test ( channels, 'channels', ModuleName )
+    call Deallocate_test ( dothisInstance, 'dothisInstance', ModuleName )
     if ( additional ) call Deallocate_test ( originalMask, &
       & 'originalMask', ModuleName )
 
@@ -1164,6 +1233,9 @@ contains ! ========= Public Procedures ============================
 end module SubsetModule
  
 ! $Log$
+! Revision 2.20  2010/04/28 16:24:43  pwagner
+! May specify instances range in Subset
+!
 ! Revision 2.19  2010/04/22 23:38:11  pwagner
 ! Added new Ignore masking bit
 !
