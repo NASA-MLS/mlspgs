@@ -1177,6 +1177,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_additional, t+t_boolean, n+n_field_type, &
              begin, f+f_channels, t+t_numeric, t+t_numeric_range, n+n_field_type, &
              begin, f+f_height, t+t_numeric_range, n+n_field_type, &
+             begin, f+f_instances, t+t_numeric, t+t_numeric_range, n+n_field_type, &
              begin, f+f_surface, t+t_numeric_range, n+n_field_type, &
              begin, f+f_ignore, t+t_boolean, n+n_field_type, &
              begin, f+f_mask, t+t_masks, n+n_field_type, &
@@ -1627,6 +1628,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.503  2010/04/28 00:14:52  pwagner
+! May specify instances range in Subset
+!
 ! Revision 2.502  2010/04/22 23:36:21  pwagner
 ! May fill num rads/MIF as a percentage
 !
