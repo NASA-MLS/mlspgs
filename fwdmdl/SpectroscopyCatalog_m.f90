@@ -34,7 +34,7 @@ module SpectroscopyCatalog_m
   end interface
 
   ! Private parameters
-  integer, parameter :: MaxContinuum = 6
+  integer, public, parameter :: MaxContinuum = 6
 
   ! Public types:
   type, public :: Line_T           ! One line in the spectrum for a species
@@ -173,7 +173,7 @@ contains ! =====  Public Procedures  ===================================
     integer, parameter :: WrongUnits = wrongSize + 1   ! Wrong physical units
 
     if ( toggle(gen) ) call trace_begin ( "Spectroscopy", root )
-
+    
     error = 0
     timing = .false.
 
@@ -415,6 +415,7 @@ contains ! =====  Public Procedures  ===================================
         call Write_Spectroscopy ( j, MLSFile%Name, fileType )
       end select
     end do ! i
+
 
     if ( index(switches,'speC') /= 0 ) then
       call dump_SpectCat_database ( catalog )
@@ -803,6 +804,8 @@ contains ! =====  Public Procedures  ===================================
   end subroutine Get_File_Name
 
 ! --------------------------------------------  Read_Spectroscopy  -----
+  ! Module-wise global variable LINES need to be associated before
+  ! calling this subroutine
   subroutine Read_Spectroscopy ( Where, FileName, FileType )
     use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
 !   use Declaration_Table, only: Declare, Decls, Get_Decl, Label
@@ -863,6 +866,9 @@ contains ! =====  Public Procedures  ===================================
     character(len=63) :: SpeciesName
     character(len=5) :: What
 
+    if (.not. associated(lines)) &
+       call MLSMessage(MLSMSG_Error, moduleName, "lines is NULL")
+
     error = .false.
     signalError = .false.
     if ( capitalize(fileType) == 'HDF5' ) then
@@ -872,19 +878,16 @@ contains ! =====  Public Procedures  ===================================
       ! Create or expand the Lines database
       call getHDF5DSDims ( fileID, 'Delta', Shp )
       nLines = shp(1)
-      line1 = 0
-      if ( associated(lines) ) line1 = size(lines)
+      line1 = size(lines)
       lineN = line1 + nLines
       allocate ( myLines(lineN), stat=iostat )
       if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
         & MLSMSG_Allocate // 'MyLines' )
-      if ( associated(lines) ) then
-        myLines(:line1) = lines
-        deallocate ( lines, stat=iostat )
-        if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      myLines(:line1) = lines
+      deallocate ( lines, stat=iostat )
+      if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
         & MLSMSG_DeAllocate // 'Lines' )
-        lines => myLines
-      end if
+      lines => myLines
       ! Fill in the expanded part
       nullify ( lineNames, polarizedIndices, polarizedList, &
         & qnIndices, qnList, signalIndices, signalList, &
@@ -899,7 +902,7 @@ contains ! =====  Public Procedures  ===================================
       end if
 
       call loadPtrFromHDF5DS ( fileID, 'PolarizedIndices', polarizedIndices, &
-        & lowBound=line1 )
+            lowBound=line1 )
       call loadPtrFromHDF5DS ( fileID, 'QNList', qnList )
       call loadPtrFromHDF5DS ( fileID, 'QNIndices', qnIndices, lowBound=line1 )
 
@@ -1466,6 +1469,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.48  2009/08/20 19:46:40  vsnyder
+! Cosmetic stuff
+!
 ! Revision 2.47  2009/06/23 18:26:10  pwagner
 ! Prevent Intel from optimizing ident string away
 !
