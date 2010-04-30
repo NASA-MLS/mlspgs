@@ -1011,13 +1011,16 @@ op:     do j = 2, nsons(theTree)
         & any( (/ info%atmos_der, info%do_conv, info%do_baseline, &
         &         info%do_freq_avg, info%do_1d, info%incl_cld, &
         &         info%temp_der /) ) ) &
-        & call AnnounceError ( IrrelevantFwmParameter, root )
+        & call AnnounceError ( IrrelevantFwmParameter, root, &
+          & "channels, frequency, lineCenter, lineWidth, lineWidth_TDep, "// &
+          & "molecules, moleculeDerivatives, signals" )
 
     case ( l_linear, l_polarLinear )
       if ( .not. all(got( (/f_signals/) )) ) & ! Maybe others later
         & call AnnounceError ( IncompleteLinearFwm, root )
       if ( any(got( (/f_do_conv,f_do_freq_avg,f_do_1d,f_incl_cld,f_frequency /) )) ) &
-        & call AnnounceError ( IrrelevantFwmParameter, root )
+        & call AnnounceError ( IrrelevantFwmParameter, root, &
+        & "do_conv, do_freq_avg, do_1d, incl_cld, frequency" )
 
     end select
 
@@ -1394,6 +1397,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.150  2010/04/30 01:53:26  vsnyder
+! Add description to 'Irrelevant parameter' error message
+!
 ! Revision 2.149  2010/03/26 23:16:12  vsnyder
 ! Add ignoreHessian field to forward model config
 !
