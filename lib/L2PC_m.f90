@@ -1621,7 +1621,7 @@ contains ! ============= Public Procedures ==========================
     ! Now create a vector for this vector template
     if ( index ( switches, 'l2pc' ) /= 0 ) &
       & call output ( 'Creating vector', advance='yes' )
-    v = CreateVector ( 0, l2pcVTs(vtIndex), l2pcQTs, vectorNameText='_v' )
+    v = CreateVector ( 0, l2pcVTs(vtIndex), l2pcQTs, vectorNameText='_v_'//name )
     if ( index ( switches, 'l2pc' ) /= 0 ) &
       & call output ( 'Adding vector to database', advance='yes' )
     vector = AddVectorToDatabase ( l2pcVs, v )
@@ -1768,6 +1768,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.93  2010/04/30 22:55:32  vsnyder
+! Give more meaningful names to vectors
+!
 ! Revision 2.92  2010/04/17 01:43:35  vsnyder
 ! Simplify dump.  Set l2pc%goth if there is a Hessian block.
 !
