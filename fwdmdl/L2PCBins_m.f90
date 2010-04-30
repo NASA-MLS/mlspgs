@@ -35,7 +35,7 @@ contains ! =====     Public Procedures     =============================
     use ForwardModelConfig, only: FORWARDMODELCONFIG_T
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use Intrinsic, only: L_FIELDAZIMUTH, L_FIELDELEVATION, L_FIELDSTRENGTH, &
-      & L_TEMPERATURE, L_VMR
+      & L_TEMPERATURE, L_TSCAT, L_VMR
     use ManipulateVectorQuantities, only: DOFGRIDSMATCH, DOHGRIDSMATCH, &
       & DOVGRIDSMATCH
     use Molecules, only: L_EXTINCTION, L_EXTINCTIONV2
@@ -61,7 +61,8 @@ contains ! =====     Public Procedures     =============================
     ! habit of blindly accepting quantities that might not be appropriate.
     ! Therefore, I have a list of 'acceptable' quantity types.
     select case ( l2pcQ%template%quantityType )
-    case ( l_fieldStrength, l_fieldAzimuth, l_fieldElevation, l_temperature )
+    case ( l_fieldStrength, l_fieldAzimuth, l_fieldElevation, l_temperature, &
+      &    l_TScat )
       ! This is for quantities that are 'easy to get'
       stateQ => GetQuantityForForwardModel ( FwdModelIn, FwdModelExtra,&
         & quantityType = l2pcQ%template%quantityType, config=fmConf, &
@@ -125,14 +126,21 @@ contains ! =====     Public Procedures     =============================
   end subroutine FlushLockedBins
 
   ! ---------------------------------------------  SelectL2PCBins  -----
-  subroutine SelectL2PCBins ( fmConf, FwdModelIn, FwdModelExtra, StateQ, &
+  subroutine SelectL2PCBins ( fmConf, FwdModelIn, FwdModelExtra, &
     & radiance, sideband, maf, &
     & l2pcBins, sidebandStart, sidebandStop, sidebandStep )
+
+    ! Selection criteria
+    ! 1.  Signal in L2PCdatabase(bin) == signal
+    ! 2.  L2PCdatabase(bin) matches some binSelectors(fmConf%binSelectors)
+    ! 3.  For folded-sideband case, prefer folded-sideband bin
+    ! 4.  From the eligible ones, pick the minimum cost, which depends
+    !     upon selectorType
 
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use ForwardModelConfig, only: FORWARDMODELCONFIG_T
     use Intrinsic, only: L_FIELDAZIMUTH, L_FIELDELEVATION, L_FIELDSTRENGTH, &
-      & L_LATITUDE, L_NAMEFRAGMENT, L_SZA, L_TEMPERATURE, L_VMR, L_ZETA
+      & L_LATITUDE, L_NAMEFRAGMENT, L_SZA, L_TEMPERATURE, L_TSCAT, L_VMR, L_ZETA
     use L2PC_M, only: BINSELECTORS, BINSELECTOR_T, L2PCDATABASE
     use ManipulateVectorQuantities, only: FINDONECLOSESTINSTANCE
     use MLSFillValues, only: ESSENTIALLYEQUAL
@@ -141,7 +149,7 @@ contains ! =====     Public Procedures     =============================
     use MLSSignals_m, only: GetSidebandLoop, GetSignalName, signals
     use Output_m, only: Output
     use QuantityTemplates, only: QuantityTemplate_T
-    use String_Table, only: Display_String, Get_String
+    use String_Table, only: Display_String, Get_String, Index, Len
     use Toggles, only: SWITCHES
     use VectorsModule, only: GETVECTORQUANTITYBYTYPE, VALIDATEVECTORQUANTITY, &
       & VectorValue_T, Vector_T
@@ -149,7 +157,6 @@ contains ! =====     Public Procedures     =============================
     type(forwardModelConfig_T), intent(in) :: FMCONF
     type(vector_T), intent(in) ::  FWDMODELIN
     type(vector_T), intent(in) ::  FWDMODELEXTRA
-    type(VectorValue_T), pointer :: STATEQ ! A state vector quantity
     type (VectorValue_T), intent(in) :: RADIANCE ! The radiance we're after
     integer, intent(in) :: SIDEBAND ! Which sideband (see below)
     integer, intent(in) :: MAF                      ! MAF index
@@ -162,9 +169,7 @@ contains ! =====     Public Procedures     =============================
     ! one we really want
 
     ! Local variables
-    character (len=132) :: BINNAME      ! The name of the bin
-    character (len=132) :: NAMEFRAGMENT ! Fragment of name to try to match
-
+    character(132) :: SignalName
     integer :: BIN                    ! Loop counter
     integer :: L2PCINSTANCE           ! Instance index
     integer :: MAF1                   ! Subset limit
@@ -185,8 +190,9 @@ contains ! =====     Public Procedures     =============================
     real(r8), dimension(size(l2pcDatabase)) :: COST ! Cost of each bin
     real(r8), dimension(-1:1) :: BESTCOST
     type (QuantityTemplate_T), pointer :: BINRAD ! Quantity template
-    type (BinSelector_T), pointer :: SEL ! One bin selector
-    type (VectorValue_T), pointer :: L2PCQ ! A quantity in the l2pc
+    type (BinSelector_T), pointer :: SEL         ! One bin selector
+    type (VectorValue_T), pointer :: L2PCQ       ! A quantity in the l2pc
+    type (VectorValue_T), pointer :: STATEQ      ! A state vector quantity
 
     ! Executable code
 
@@ -252,12 +258,9 @@ contains ! =====     Public Procedures     =============================
           if ( sel%nameFragment < 1 ) &
             & call MLSMessage ( MLSMSG_Error, ModuleName, &
             & 'l2pc selector name fragment missing from string table' )
-          call get_string ( l2pcDatabase(bin)%name, binName, strip=.true., cap=.true. )
-          call get_string ( sel%nameFragment, nameFragment, strip=.true., cap=.true. )
-          if ( len_trim(nameFragment) /= 0 ) then
-            possible ( :, bin ) = possible ( :, bin ) .and. &
-              & index ( trim(binName), trim(nameFragment) ) /= 0
-          end if
+          if ( len(sel%nameFragment) > 0 ) &
+            & possible ( :, bin ) = possible ( :, bin ) .and. &
+              & index ( l2pcDatabase(bin)%name, sel%nameFragment, caseless=.true. ) /= 0
         case ( l_latitude )
           ! When we say latitude, we really mean an empirical phi.
           thisCost = sqrt ( sum ( &
@@ -281,7 +284,8 @@ contains ! =====     Public Procedures     =============================
           else
             cost(bin) = cost(bin) + thisCost
           end if
-        case ( l_temperature, l_vmr, l_fieldStrength, l_fieldElevation, l_fieldAzimuth )
+        case ( l_temperature, l_fieldAzimuth, l_fieldElevation, l_fieldStrength, &
+          &    l_TScat, l_vmr )
           ! This one involves matching elements of xStar with x.
           if ( sel%selectorType == l_vmr ) then
             l2pcQ => GetVectorQuantityByType ( &
@@ -342,8 +346,8 @@ contains ! =====     Public Procedures     =============================
 
     if ( index ( switches, 'binsel' ) /= 0 ) then
       call output ( 'Choosing bin for ' )
-      call GetSignalName ( signal, namefragment, sideband=sideband )
-      call output ( trim(nameFragment), advance='yes' )
+      call GetSignalName ( signal, signalName, sideband=sideband )
+      call output ( trim(signalName), advance='yes' )
       do bin = 1, noBins
         if ( any ( possible ( :, bin ) ) ) then
           call output  ( 'Candidate: ' )
@@ -428,6 +432,10 @@ contains ! =====     Public Procedures     =============================
 end module L2PCBins_m
 
 ! $Log$
+! Revision 2.3  2010/04/30 23:57:07  vsnyder
+! Add TScat.  Remove StateQ from SelectL2PCbins calling sequence.  Use
+! INDEX from String_Table instead of fetching strings for intrinsic INDEX.
+!
 ! Revision 2.2  2010/04/17 01:45:16  vsnyder
 ! Simplify some stuff
 !
