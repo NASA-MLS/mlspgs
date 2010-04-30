@@ -251,7 +251,7 @@ contains ! =====     Public Procedures     =============================
     doChannel = .true.
     if ( associated ( signal%channels ) ) doChannel = signal%channels
 
-    call SelectL2PCBins ( fmConf, FwdModelIn, FwdModelExtra, StateQ, &
+    call SelectL2PCBins ( fmConf, FwdModelIn, FwdModelExtra, &
       & radiance, signal%sideband, maf, &
       & l2pcBins, sidebandStart, sidebandStop, sidebandStep )
 
@@ -777,6 +777,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.75  2010/04/13 01:42:30  vsnyder
+! Move FindMatchForL2PCQ, FlushLockedBins, SelectL2PCBins to L2PCBins_m
+!
 ! Revision 2.74  2010/03/26 23:13:12  vsnyder
 ! Add ignoreHessian field to forward model config
 !
