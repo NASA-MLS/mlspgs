@@ -441,7 +441,7 @@ contains ! =====     Public procedures     =============================
     call make_tree ( (/ &
       begin, t+t_binSelectorType, l+l_vmr, l+l_temperature, l+l_latitude, &
              l+l_fieldStrength, l+l_fieldElevation, l+l_fieldAzimuth, &
-             l+l_nameFragment, l+l_sza, n+n_dt_def, &
+             l+l_nameFragment, l+l_sza, l+l_TScat, n+n_dt_def, &
       begin, t+t_boxCarMethod, l+l_max, l+l_mean, l+l_min, n+n_dt_def, &
       begin, t+t_chunkDivideMethod, l+l_fixed, l+l_even, l+l_orbital, l+l_PE, n+n_dt_def, &
       begin, t+t_cloud_der, l+l_iwc_low_height, l+l_iwc_high_height, l+l_iwp, &
@@ -1628,6 +1628,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.504  2010/04/30 22:56:44  vsnyder
+! Add TScat to bin selector type
+!
 ! Revision 2.503  2010/04/28 00:14:52  pwagner
 ! May specify instances range in Subset
 !
