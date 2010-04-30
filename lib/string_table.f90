@@ -520,26 +520,48 @@ contains
     return
   end function HOW_MANY_STRINGS
   ! ======================================     INDEX_IN_STRING     =====
-  integer function INDEX_IN_STRING ( STRING, SUBSTRING ) ! generic INDEX
+  integer function INDEX_IN_STRING ( STRING, SUBSTRING, CASELESS )
   ! Works like intrinsic INDEX, but with integer string indices instead of
-  ! characters, and without the BACK argument.  Use the brute-force method
-  ! instead of a fancy substring method such as Knuth-Morris-Pratt or
-  ! Rabin-Karp.  The result value can be used as the START argument for
-  ! GET_STRING, provided GET_STRING is invoked with STRIP either absent or
-  ! false, or STRING is not quoted.
+  ! characters, without the BACK argument, and with the CASELESS argument.
+  ! Use the brute-force method instead of a fancy substring method such as
+  ! Knuth-Morris-Pratt or Rabin-Karp.  The result value can be used as the
+  ! START argument for GET_STRING, provided GET_STRING is invoked with
+  ! STRIP either absent or false, or STRING is not quoted.
+
     integer, intent(in) :: String
     integer, intent(in) :: Substring
+    logical, intent(in), optional :: Caseless ! Default false
+    character :: C1, C2
+    integer, parameter :: Diff = iachar('A') - iachar('a')
     integer :: I, J
-    
+    logical :: MyCaseless
+
+    myCaseless = .false.
+    if ( present(caseless) ) myCaseless = caseless
+
     index_in_string = 0
- o: do i = 1, len(string) - len(substring) + 1
-      do j = 1, len(substring)
-        if ( char_table(strings(string-1)+i+j-1) /= &
-          &  char_table(strings(substring-1)+j) ) cycle o
-      end do
-      index_in_string = i
-      return
-    end do o
+    if ( .not. myCaseless ) then ! case sensitive compare
+ o:   do i = 1, len(string) - len(substring) + 1
+        do j = 1, len(substring)
+          if ( char_table(strings(string-1)+i+j-1) /= &
+            &  char_table(strings(substring-1)+j) ) cycle o
+        end do
+        index_in_string = i
+        return
+      end do o
+    else ! compare in upper case
+ l:   do i = 1, len(string) - len(substring) + 1
+        do j = 1, len(substring)
+          c1 = char_table(strings(string-1)+i+j-1)
+          if ( c1 >= 'a' .and. c1 <= 'z' ) c1 = achar(iachar(c1)+diff)
+          c2 = char_table(strings(substring-1)+j)
+          if ( c2 >= 'a' .and. c2 <= 'z' ) c2 = achar(iachar(c2)+diff)
+          if ( c1 /= c2 ) cycle l
+        end do
+        index_in_string = i
+        return
+      end do l
+    end if
   end function INDEX_IN_STRING
   ! ====================================     LOOKUP_AND_INSERT     =====
   subroutine LOOKUP_AND_INSERT ( STRING, FOUND, CASELESS, DEBUG )
@@ -910,6 +932,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.26  2010/04/30 22:18:51  vsnyder
+! Add CASELESS to INDEX_IN_STRING
+!
 ! Revision 2.25  2010/04/14 03:13:52  vsnyder
 ! Add INDEX_IN_STRING, with a generic INDEX, working similarly to intrinsic
 ! INDEX but with string indices instead of strings, and without the BACK
