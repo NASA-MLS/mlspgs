@@ -225,7 +225,12 @@ program F90TEX
     end select
   end do
 
-  if ( state == 1 ) call output ( stop_code(sx), tex=.true. )
+  select case ( state )
+  case ( 1 ) ! doing code
+    call output ( stop_code(sx), tex=.true. )
+  case ( 2 ) ! doing LaTeX
+    if ( box ) call output ( '}}' )
+  end select
     
 ! Output the ending stuff
   call output ( 'label{lastpage}', tex=.true. )
@@ -293,6 +298,9 @@ contains
 end program F90TEX
 
 ! $Log$
+! Revision 1.8  2005/06/22 19:27:32  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 1.7  2005/06/13 23:36:08  vsnyder
 ! Repair minor bug in page heading
 !
