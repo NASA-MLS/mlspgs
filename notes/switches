@@ -6,6 +6,8 @@ Switches (set by -S option in mlsl2's command line):
   (where [n] appears, you may optionally suffix an integer specifying how
    detailed you want the extra printing to be: higher the n, more the info)
   0sl =>    Warn about no lines or continuua, else it's an error
+  42 =>     Print to unit 42 when doing TScat
+  alg =>    Show work in Algebra module (hoping for partial credit)
   ant =>    Dump antenna patterns
   apr[n] => Dump apriori file info 
   atb =>    Dump ATb vector during Newton iteration
@@ -20,15 +22,19 @@ Switches (set by -S option in mlsl2's command line):
   column => Extra diagnostics while integrating column abundances
   cov =>    Report details of a posteriori covariance calculation
   dacsfil => Dump DACS filter shapes after reading them
+  dbz =>    Dump Zeta in get_beta_path
   destroy => Warn before each destroy
   diag =>   Dump diagonal of factored normal equations
+  direct => Show automatic assignments to split directwrite files
+  dozm =>   Do minimum zeta only if requested
   dvec =>   Dump 'DX' vector during Newton iteration
-  dwtime => Show how long each directwrite takes
   dwreq[n] => Dump directwrite requests processed by master
                *Warning--may use more memory
+  dwtime => Show how long each directwrite takes
   erh =>    Stop with error if dump,/stop
   fac =>    L_infty norms of blocks of factors of normal equations during Newton iterations
   FAC =>    Factors of normal equations during Newton iterations
+  fgrid =>  Dump frequency grids after creating them
   filt =>   Dump filter shapes after reading them
   fmnan =>  Check forward model output for NaN
   fmNaN =>  Check forward model output for NaN and print if so
@@ -43,6 +49,7 @@ Switches (set by -S option in mlsl2's command line):
   fwmG =>   Dump Forward model config after Get_Species_Data finishes, then stop
   geom =>   Show geometry of chunks/hGrids
   glo[n] => Global settings, info on l1b files 
+  glob =>   Show when Bright Object in FOV affects radiance precision
   gridd =>  Dump gridded data quantities
   grids =>  Dump Forward Model grids
   gvec =>   Dump gradient vector during Newton iteration
@@ -52,6 +59,7 @@ Switches (set by -S option in mlsl2's command line):
   hphI =>   hphi, and stop if 1d approximation is used
   jac =>    L_infty norms of blocks Jacobian during Newton iterations
   JAC =>    Jacobian during Newton iterations
+  join =>   Intermediate steps while joining l2aux quantities
   l1b =>    l1b quantities dumped (only when filled from)
   l2aux =>  l2aux quantities (all) dumped
   l2gp =>   l2gp swaths (all) dumped
@@ -87,10 +95,14 @@ Switches (set by -S option in mlsl2's command line):
   point =>  Pointing grids
   pro[n] => Proclaim each product file l2gp, l2aux, l2dgg, l2pc, meta output
               and each file l2gp, l1brad, ncep, dao input; dump filedatabase
+  psct =>   Print TScat with more detail (should use switchDetail for this)
+  Psct =>   Print TScat with most detail (should use switchDetail for this)
+  ptb =>    Show perturbed quantities if used in Sids for Jacobean, Hessian
   ptg =>    Dump full forward model pointing angles
   qtmp =>   Quantity templates being constructed, destroyed
   rad =>    Radiances in ForwardModelInterface
   rcfx =>   Print RefCor fixup details
+  RCFX =>   Print RefCor fixup with more details
   red[n] => Reduce dumpCommand details level by n (n=2 by default)
   reg =>    Dump regularization matrix
   rtv =>    Dump retrieval configuration
@@ -103,16 +115,23 @@ Switches (set by -S option in mlsl2's command line):
   snoop =>  Show work done by fortran end of snooper
   spa =>    Sparsity structure of fac, jac, neq
   spec =>   Spectroscopy catalog
+  speC =>   Just dump Spectroscopy catalog, then stop
   sps =>    Species data in Get_Species_Data
+  stat =>   Dump results when a manipulation fill uses a statistical function
   strb =>   Dump state vector if retriever sees trouble
+  subset => Intermediate steps while creating subsetting mask
   svec =>   Final state vector after Newton iteration
   taul =>   Print LBL Tau in FullForwardModel
   taup =>   Print PFA Tau in FullForwardModel
   time =>   Summarize time consumed by each code section
   tps =>    Test_Parse_Signals
+  TScat =>  Print TScat matrix
   vir =>    Dump 'virgin' matrix (before forming KTK)
   xvec =>   'X' vector during Newton iteration
   walk =>   trace walkback on every warning message
+  zdet =>   Print while determining min(zeta)
+  zmor =>   Add more zeta points
+  ZMOR =>   Print while adding more zeta points
 ========================= end mlsl2 =========================
 
 The general pattern is to use upper-case letters for single-letter ones,
@@ -159,6 +178,14 @@ I have been substituting SwitchDetail for the "if ( index .." test in the
 modules that have come under my gaze from time to time, and this process will
 continue until they take my keyboard away.
 
+Here's a trick for finding all the switches referred to by switchdetail in
+our code so far:
+grep -i switchdetail */*.[fF]9* | grep -i 'switches' | sed 's/.*switches,//' \
+ | awk '{print $1}' | sed 's/)//' | sort | uniq
+
+The same command, but replacing "switchdetail" with "index" will show all the 
+switches referred to by the Test 1 method.
+
 (Add any more that are relevant to mlsl2,
 or separate sections for mlsl1 or mlsl3)
 
@@ -168,6 +195,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.70  2008/06/12 23:53:27  pwagner
+ Can print direct write timings
+
  Revision 1.69  2007/10/04 00:37:42  vsnyder
  Add erh, some cannonball polishing
 
