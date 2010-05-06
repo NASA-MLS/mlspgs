@@ -232,6 +232,7 @@ SHELL = /bin/sh
 # l2q            
 # machineok      
 # Mie_Tables
+# Mie_Tables_nohdf
 # MLS_h5ls       
 # Spartacus
 # utctotai       
@@ -392,6 +393,10 @@ else
  $(UTCDIR)/mls_UTCjdtoTAIjd.c \
  test.f90
 endif
+
+# Here are some miscellaneous variables for special tools
+MIESOURCESWITHHDF = $(shell ${REECHO} -excl $(MIE)/WriteNoHDF_m.f90 $(MIE)/*.f90 $(MIE)/math77/*.f)
+MIESOURCESWOHDF = $(shell ${REECHO} -excl $(MIE)/WriteHDF_m.f90 $(MIE)/*.f90 $(MIE)/math77/*.f)
 #----------------------- Build instructions
 
 # Automatic targets
@@ -831,7 +836,12 @@ machineok: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/machineok.c
 Mie_Tables: $(CONFDIR)/$(MLSCFILE) $(MIE)/Mie_Tables.f90 l1--itm
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ -M $(MAKE) -m fwdmdl \
-	-C $(MLSCFILE) $(MIE)/*.f90 $(MIE)/math77/*.f
+	-C $(MLSCFILE) $(MIESOURCESWITHHDF)
+
+Mie_Tables_nohdf: $(CONFDIR)/$(MLSCFILE) $(MIE)/Mie_Tables.f90 l1--itm
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m fwdmdl \
+	-C $(MLSCFILE) $(MIESOURCESWOHDF)
 
 MLS_h5ls: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/MLS_h5ls.f90 l1--itm
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
@@ -1175,11 +1185,15 @@ tools: chunktimes checkpvmup compare dateconverter heconvert h5subset h5cat hl \
   checkpvmup chunktimes CondenseLeakLog end_stmts f90tex heconvert init_gen \
   h5subset h5cat hl killmaster tellMasterToQuit \
   l1bdiff l1h5subset l2auxcat l2auxchi l2auxdump l2gpcat l2gpdiff l2gpdump \
-  Mie_Tables machineok MLS_h5ls utctotai WordSplit wrapLines tools
+  Mie_Tables Mie_Tables_nohdf machineok MLS_h5ls utctotai \
+  WordSplit wrapLines tools
   
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.121  2010/04/13 20:31:40  pwagner
+# Can now build tellMasterToQuit
+#
 # Revision 1.120  2010/04/12 23:33:07  pwagner
 # Tar up cfm and doc subdirectories, too
 #
