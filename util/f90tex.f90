@@ -33,7 +33,7 @@ program F90TEX
   character(len=132) :: IN_FILE, OUT_FILE         ! File names
   integer :: IN_UNIT = 10, OUT_UNIT = 11          ! Unit numbers
   integer :: IOSTAT                               ! I/O status
-  character(len=132) :: LINE                      ! From input
+  character(len=255) :: LINE                      ! From input
   character(len=23) :: NOW                        ! Date and time, formatted
   character :: NUMBER_STEP = '1'                  ! Line number step
   character(len=*), parameter :: START_CODE(2) = &
@@ -298,6 +298,9 @@ contains
 end program F90TEX
 
 ! $Log$
+! Revision 1.9  2010/05/01 00:42:36  vsnyder
+! Repair error if processing LaTeX at end of file
+!
 ! Revision 1.8  2005/06/22 19:27:32  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
