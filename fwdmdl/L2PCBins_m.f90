@@ -259,8 +259,9 @@ contains ! =====     Public Procedures     =============================
             & call MLSMessage ( MLSMSG_Error, ModuleName, &
             & 'l2pc selector name fragment missing from string table' )
           if ( len(sel%nameFragment) > 0 ) &
-            & possible ( :, bin ) = possible ( :, bin ) .and. &
-              & index ( l2pcDatabase(bin)%name, sel%nameFragment, caseless=.true. ) /= 0
+              & possible ( :, bin ) = possible ( :, bin ) .and. &                                 
+                & index ( l2pcDatabase(bin)%name, sel%nameFragment, &
+                  & caseless=.true., strip=.true. ) /= 0
         case ( l_latitude )
           ! When we say latitude, we really mean an empirical phi.
           thisCost = sqrt ( sum ( &
@@ -432,6 +433,9 @@ contains ! =====     Public Procedures     =============================
 end module L2PCBins_m
 
 ! $Log$
+! Revision 2.4  2010/05/07 02:24:47  vsnyder
+! Add strip=.true to a reference to string_table%index
+!
 ! Revision 2.3  2010/04/30 23:57:07  vsnyder
 ! Add TScat.  Remove StateQ from SelectL2PCbins calling sequence.  Use
 ! INDEX from String_Table instead of fetching strings for intrinsic INDEX.
