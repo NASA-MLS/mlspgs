@@ -520,29 +520,45 @@ contains
     return
   end function HOW_MANY_STRINGS
   ! ======================================     INDEX_IN_STRING     =====
-  integer function INDEX_IN_STRING ( STRING, SUBSTRING, CASELESS )
+  integer function INDEX_IN_STRING ( STRING, SUBSTRING, CASELESS, STRIP )
   ! Works like intrinsic INDEX, but with integer string indices instead of
   ! characters, without the BACK argument, and with the CASELESS argument.
+  ! If STRIP is present and true do not consider quotes or apostrophes at
+  ! the ends of the strings.
   ! Use the brute-force method instead of a fancy substring method such as
   ! Knuth-Morris-Pratt or Rabin-Karp.  The result value can be used as the
   ! START argument for GET_STRING, provided GET_STRING is invoked with
-  ! STRIP either absent or false, or STRING is not quoted.
+  ! STRIP having the same value, or STRING and SUBSTRING are not quoted.
 
     integer, intent(in) :: String
     integer, intent(in) :: Substring
     logical, intent(in), optional :: Caseless ! Default false
+    logical, intent(in), optional :: Strip    ! Default false
     character :: C1, C2
     integer, parameter :: Diff = iachar('A') - iachar('a')
-    integer :: I, J
-    logical :: MyCaseless
+    integer :: I, I1, I2, J, J1, J2
+    logical :: MyCaseless, MyStrip
+    character(len=*), parameter :: Quotes = '"'//"'"
 
     myCaseless = .false.
     if ( present(caseless) ) myCaseless = caseless
+    myStrip = .false.
+    if ( present(strip) ) myStrip = strip
 
     index_in_string = 0
+    i1 = 1
+    i2 = len(string) - len(substring) + 1
+    j1 = 1
+    j2 = len(substring)
+    if ( myStrip ) then
+      i1 = 1  + scan(char_table(strings(string-1)+1),   quotes)
+      i2 = i2 - scan(char_table(strings(string)),       quotes)
+      j1 = 1  + scan(char_table(strings(substring-1)+1),quotes)
+      j2 = j2 - scan(char_table(strings(substring)),    quotes)
+    end if
     if ( .not. myCaseless ) then ! case sensitive compare
- o:   do i = 1, len(string) - len(substring) + 1
-        do j = 1, len(substring)
+ o:   do i = i1, i2
+        do j = j1, j2
           if ( char_table(strings(string-1)+i+j-1) /= &
             &  char_table(strings(substring-1)+j) ) cycle o
         end do
@@ -550,8 +566,8 @@ contains
         return
       end do o
     else ! compare in upper case
- l:   do i = 1, len(string) - len(substring) + 1
-        do j = 1, len(substring)
+ l:   do i = i1, i2
+        do j = j1, j2
           c1 = char_table(strings(string-1)+i+j-1)
           if ( c1 >= 'a' .and. c1 <= 'z' ) c1 = achar(iachar(c1)+diff)
           c2 = char_table(strings(substring-1)+j)
@@ -932,6 +948,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.27  2010/05/07 02:23:46  vsnyder
+! Add STRIP optional argument to INDEX
+!
 ! Revision 2.26  2010/04/30 22:18:51  vsnyder
 ! Add CASELESS to INDEX_IN_STRING
 !
