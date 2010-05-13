@@ -47,14 +47,16 @@ contains
     use MatrixModule_1, only: AddToMatrix, CopyMatrix, CreateBlock, DestroyBlock, DestroyMatrix, FindBlock, &
       GetFromMatrixDatabase, Matrix_Database_T, Matrix_T, ScaleMatrix
     use MLSL2Timings, only: add_to_retrieval_timing
+    use MLSStringLists, only: switchDetail
     use MoreTree, only: Get_Field_Id, Get_Boolean
-    use Output_M, only: Output
+    use Output_M, only: Output, outputNamedValue
     use ScanModelModule, only: DestroyForwardModelIntermediate
     use Time_M, only: Time_Now
-    use Toggles, only: Gen, Toggle
+    use Toggles, only: Gen, Switches, Toggle
     use Trace_M, only: Trace_begin, Trace_end
     use Tree, only: Decoration, Nsons, Source_Ref, Subtree
-    use VectorsModule, only: CopyVector, DestroyVectorInfo, Vector_T, operator(-)
+    use VectorsModule, only: Vector_T, &
+      & CopyVector, DestroyVectorInfo, Dump, operator(-)
 
     ! Dummy arguments:
     integer, intent(in) :: Root         ! Of the relevant subtree of the AST
@@ -103,6 +105,7 @@ contains
     logical :: DOTHISONE                ! Flag
     logical :: DOTSCAT                  ! Flag
     logical :: MIRRORHESSIAN            ! Flag
+    logical :: SHOWPTB
     real ::    T1
     type (MatrixElement_T), pointer :: M0 ! A block from the jacobian
 
@@ -122,6 +125,7 @@ contains
     call time_now ( t1 )
 
     nullify ( configs, perturbation )
+    showptb = switchDetail( switches, 'ptb' ) > -1
 
     ! Process the fields of the "sids" specification
     doTScat = .false.
@@ -213,6 +217,10 @@ contains
       instance = 1
       element = 0
       loopEnd = perturbation%template%totalElements
+      if ( showptb ) then
+        call outputnamedValue( 'loopEnd', loopEnd )
+        call outputnamedValue( 'size(configs)', size(configs) )
+      endif
     else
       ! Alternatively do simple one shot run.
       loopEnd = 1
@@ -256,6 +264,10 @@ contains
         else ! because it's not optional in many places in the forward model
           call allocate_test ( fmStat%rows, 0, 'fmStat%rows', ModuleName )
         end if
+        
+        if ( showptb ) then
+          call dump( perturbation%quantities(quantity), details=-1 )
+        endif
 
         ! Loop over forward model configs
         do config = 1, size(configs)
@@ -430,6 +442,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.57  2010/05/13 23:48:19  pwagner
+! Added -Sptb to show perturbation
+!
 ! Revision 2.56  2010/03/29 18:40:09  pwagner
 ! Repaired error due to undefined ixHessian
 !
