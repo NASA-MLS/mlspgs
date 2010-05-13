@@ -372,14 +372,8 @@ contains
     ! Note that this leaves output files possibly as big
     ! as if you ran all the chunks anyway
     
-    ! Mostly superseded by commandline options like chunkRange
+    ! Why isn't '3' actually '2' in the following test?
     if ( size(chunks) < 3 ) then
-    elseif ( switchDetail(switches,'runfirstlast') > -1 ) then
-      chunksAbandoned(2:size(chunks)-1) = .true.
-    elseif ( switchDetail(switches,'runfirst') > -1 ) then
-      chunksAbandoned(2:size(chunks)) = .true.
-    elseif ( switchDetail(switches,'runlast') > -1 ) then
-      chunksAbandoned(1:size(chunks)-1) = .true.
     elseif ( parallel%chunkRange /= '' ) then
       chunksAbandoned = .true.
       call ExpandStringRange(trim(parallel%chunkRange), chunksAbandoned, &
@@ -2014,6 +2008,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.96  2010/05/13 23:47:19  pwagner
+! Dropped superseded options run[first][last]
+!
 ! Revision 2.95  2010/04/22 23:34:47  pwagner
 ! Print more useful error mesg if no chunks to process
 !
