@@ -279,8 +279,9 @@ contains ! =====     Public Procedures     =============================
     ! --------- Loop over sidebands ------------------------------------------------
     do sideband = sidebandStart, sidebandStop, sidebandStep
       ! Load this bin if necessary
+      ! But don't load Hessians if we've elected to ignore them
+      if ( fmConf%ignoreHessian ) l2pcDatabase(l2pcBins(sideband))%goth = .false.
       call PopulateL2PCBin ( l2pcBins(sideband) )
-
       ! Setup a sideband fraction array
       ! Note, this is *NOT* the same decision process as for the full forward model
       ! and deliberately so.
@@ -777,6 +778,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.76  2010/04/30 23:57:40  vsnyder
+! Remove StateQ from SelectL2PCBins call
+!
 ! Revision 2.75  2010/04/13 01:42:30  vsnyder
 ! Move FindMatchForL2PCQ, FlushLockedBins, SelectL2PCBins to L2PCBins_m
 !
