@@ -25,7 +25,7 @@ module L2PC_m
     & PHYQ_DIMENSIONLESS, PHYQ_TEMPERATURE, PHYQ_VMR
   use HessianModule_0, only: CreateBlock, HessianElement_T, &
     & H_Absent, H_Sparse, H_Full, H_Unknown, DestroyBlock
-  use HessianModule_1, only: Hessian_T, DestroyHessian, CreateEmptyHessian
+  use HessianModule_1, only: Hessian_T, CreateBlock, DestroyHessian, CreateEmptyHessian
   use machine, only: io_error
   use ManipulateVectorQuantities, only: DOVECTORSMATCH
   use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
@@ -1063,7 +1063,9 @@ contains ! ============= Public Procedures ==========================
       & 'Unable to close Blocks group for l2pc matrix '//trim(info%matrixName) )
 
     if ( l2pc%goth ) then
-      stop !!! CODE HERE
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to fully populate L2PC Bin when we have a Hessian matrix' )
+      !!! stop !!! CODE HERE
     endif
 
     if ( index ( switches, 'spa' ) /= 0 ) call dump_struct ( l2pc%j, 'Populated l2pc bin' )
@@ -1332,17 +1334,17 @@ contains ! ============= Public Procedures ==========================
 
               select case ( kind )
               case ( h_absent )
-                call CreateBlock ( l2pc%j, i, j, k, kind, noValues )
+                call CreateBlock ( l2pc%h, i, j, k, kind, noValues )
               case ( h_sparse )
                 call GetHDF5Attribute ( MLSFile, 'noValues', noValues )
-                call CreateBlock ( l2pc%j, i, j, k, kind, noValues )
+                call CreateBlock ( l2pc%h, i, j, k, kind, noValues )
                 h0 => l2pc%h%block ( i, j, k )
                 call LoadFromHDF5DS ( MLSFile, 'i', h0%tuples%i )
                 call LoadFromHDF5DS ( MLSFile, 'j', h0%tuples%j )
                 call LoadFromHDF5DS ( MLSFile, 'k', h0%tuples%k )
                 call LoadFromHDF5DS ( MLSFile, 'h', h0%tuples%h )
               case ( h_full )
-                call CreateBlock ( l2pc%j, i, j, k, kind )
+                call CreateBlock ( l2pc%h, i, j, k, kind )
                 h0 => l2pc%h%block ( i, j, k )                
                 call LoadFromHDF5DS ( MLSFile, 'values', h0%values )
               end select
@@ -1358,7 +1360,7 @@ contains ! ============= Public Procedures ==========================
         do i = 1, l2pc%h%row%NB
           do j = 1, l2pc%h%col%NB
             do k = 1, l2pc%h%col%NB
-              call CreateBlock ( l2pc%j, i, j, k, h_unknown )
+              call CreateBlock ( l2pc%h, i, j, k, h_unknown )
             end do
           end do
         end do
@@ -1768,6 +1770,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.94  2010/05/13 23:45:14  pwagner
+! Temporary expedients for l2pc files with Hessians; needs more code
+!
 ! Revision 2.93  2010/04/30 22:55:32  vsnyder
 ! Give more meaningful names to vectors
 !
