@@ -35,8 +35,8 @@ module HessianModule_1          ! High-level Hessians in the MLS PGS suite
     type(HessianElement_T), dimension(:,:,:), pointer :: BLOCK => NULL()
   end type Hessian_T
  
-  public :: AddHessianToDatabase, CreateEmptyHessian, DestroyHessian
-  public :: DestroyHessianDatabase, Dump, Hessian_T
+  public :: AddHessianToDatabase, CreateBlock, CreateEmptyHessian
+  public :: DestroyHessian, DestroyHessianDatabase, Dump, Hessian_T
   public :: InsertHessianPlane, Multiply, NullifyHessian
   public :: OptimizeHessian, StreamlineHessian
 
@@ -497,6 +497,9 @@ contains
 end module HessianModule_1
 
 ! $Log$
+! Revision 2.5  2010/05/14 22:45:33  pwagner
+! CreateBlock must be public
+!
 ! Revision 2.4  2010/03/26 23:15:45  vsnyder
 ! Add Threshold to StreamlineHessian
 !
