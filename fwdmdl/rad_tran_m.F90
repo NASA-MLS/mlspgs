@@ -307,8 +307,8 @@ contains
     real(rp), intent(inout) :: d_delta_df(ld,*) ! path x sve.  derivative of
       !              delta wrt mixing ratio state vector element. (K)
       !              Initially set to zero by caller.
-    integer, intent(out), target :: nz_d_delta_df(:,:) ! Nonzeros in d_delta_df
-    integer, intent(out) :: nnz_d_delta_df(:) ! Column lengths in nz_delta_df
+    integer, intent(inout), target :: nz_d_delta_df(:,:) ! Nonzeros in d_delta_df
+    integer, intent(inout) :: nnz_d_delta_df(:) ! Column lengths in nz_delta_df
     real(rp), intent(out) :: drad_df(:)      ! derivative of radiances wrt
       !              mixing ratio state vector element. (K)
 
@@ -458,7 +458,7 @@ contains
               do i = 1, n_inds
                 ii = inds(i)
                 iii = indices_c(ii)
-                singularity(ii) = eta_zxp_f(indices_c(ii),sv_i) &
+                singularity(ii) = eta_zxp_f(iii,sv_i) &
                           & * ( beta_path_c(ii,sps_i) + &
                           &     sps_path(iii,sps_i) * dBeta_df_c(ii) )
                 d_delta_df(ii,sv_i) = singularity(ii) * del_s(ii)
@@ -1182,6 +1182,10 @@ contains
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.7  2010/05/14 02:41:08  vsnyder
+! Changed intent for [n]nz_d_delta_df from out to inout.  Replaced
+! indices_c(ii) by iii at a place where iii == indices(ii)
+!
 ! Revision 2.6  2010/01/23 01:21:24  vsnyder
 ! Handle derivatives for betas that depend upon mixing ratio
 !
