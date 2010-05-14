@@ -546,15 +546,17 @@ contains
     if ( present(strip) ) myStrip = strip
 
     index_in_string = 0
-    i1 = 1
-    i2 = len(string) - len(substring) + 1
     j1 = 1
     j2 = len(substring)
     if ( myStrip ) then
-      i1 = 1  + scan(char_table(strings(string-1)+1),   quotes)
-      i2 = i2 - scan(char_table(strings(string)),       quotes)
       j1 = 1  + scan(char_table(strings(substring-1)+1),quotes)
       j2 = j2 - scan(char_table(strings(substring)),    quotes)
+    end if
+    i1 = 1
+    i2 = len(string) - j2 + j1
+    if ( myStrip ) then
+      i1 = 1  + scan(char_table(strings(string-1)+1),   quotes)
+      i2 = i2 - scan(char_table(strings(string)),       quotes)
     end if
     if ( .not. myCaseless ) then ! case sensitive compare
  o:   do i = i1, i2
@@ -948,6 +950,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.28  2010/05/14 02:15:47  vsnyder
+! Calculate length of STRING correctly if SUBSTRING is quoted
+!
 ! Revision 2.27  2010/05/07 02:23:46  vsnyder
 ! Add STRIP optional argument to INDEX
 !
