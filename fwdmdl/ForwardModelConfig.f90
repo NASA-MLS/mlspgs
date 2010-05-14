@@ -1285,6 +1285,9 @@ contains
     call output ( config%PhiWindow, before='  PhiWindow: ' )
     call display_string ( phyq_indices(config%windowUnits), before=' ', advance='yes' )
     call output ( config%Tolerance, before='  Tolerance: ', advance='yes' )
+    ! Bin selectors
+    if ( associated ( config%binSelectors ) ) &
+      & call dump ( config%binSelectors, name=  '  BinSelectors: ' )
 
     if ( associated(config%Beta_group) .and. dumpPFA ) &
       & call dump ( config%Beta_group, &
@@ -1386,6 +1389,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.105  2010/03/26 23:12:51  vsnyder
+! Add ignoreHessian field for quasi-linear model
+!
 ! Revision 2.104  2010/01/23 01:04:26  vsnyder
 ! Make sure Mie tables have been read if needed
 !
