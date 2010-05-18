@@ -1091,7 +1091,7 @@ contains
 
       ! Identify the appropriate state vector components
       ! VMRS are in beta_group%qty, gotten by get_species_data
-      gph => GetVectorQuantityByType ( fwdModelExtra, quantityType=l_gph )
+      gph => GetQuantityForForwardModel (fwdModelIn, fwdModelExtra, quantityType=l_gph )
       earthRefl => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
         & quantityType=l_earthRefl, config=fwdModelConf )
       losVel => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
@@ -4116,6 +4116,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.302  2010/03/24 20:50:02  vsnyder
+! Add more checks to TScat generation code
+!
 ! Revision 2.301  2010/02/05 03:29:19  vsnyder
 ! Remove unused stuff
 !
