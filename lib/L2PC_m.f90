@@ -19,14 +19,13 @@ module L2PC_m
 
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
   use dump_0, only: dump
-  use Intrinsic, only: L_CHANNEL, L_GEODALTITUDE, L_ZETA, L_NONE, L_VMR, &
+  use Intrinsic, only: L_CHANNEL, L_GEODALTITUDE, L_NONE, L_VMR, &
     & L_RADIANCE, L_NONE, L_INTERMEDIATEFREQUENCY, L_LATITUDE, L_FIELDAZIMUTH, &
     & L_ROWS, L_COLUMNS, L_ADOPTED, L_TEMPERATURE, L_TSCAT, Lit_Indices, &
     & PHYQ_DIMENSIONLESS, PHYQ_TEMPERATURE, PHYQ_VMR
   use HessianModule_0, only: CreateBlock, HessianElement_T, &
     & H_Absent, H_Sparse, H_Full, H_Unknown, DestroyBlock
   use HessianModule_1, only: Hessian_T, CreateBlock, DestroyHessian, CreateEmptyHessian
-  use machine, only: io_error
   use ManipulateVectorQuantities, only: DOVECTORSMATCH
   use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
     & MATRIXELEMENT_T, M_UNKNOWN, DESTROYBLOCK
@@ -263,13 +262,16 @@ contains ! ============= Public Procedures ==========================
     !                                        ! >0 Dump even multi-dim arrays
     !                                        ! Default 0
     ! Local variables
-    integer :: i
+    integer :: myDetails
     ! Executable
+    myDetails = 0
+    if ( present(details) ) myDetails = details
     call outputNamedValue ( 'fileID', L2PCInfo%fileID )
     call outputNamedValue ( 'binID', L2PCInfo%binID )
     call outputNamedValue ( 'blocksID', L2PCInfo%blocksID )
     call outputNamedValue ( 'hblocksID', L2PCInfo%hBlocksID )
     call outputNamedValue ( 'matrixName', trim(L2PCInfo%matrixName) )
+    if ( myDetails > 0 ) call dump( L2PCInfo%blockID, 'BlockID' )
   end subroutine DumpL2PCInfo
 
   ! ---------------------------------- LoadMatrix ----------
@@ -524,7 +526,6 @@ contains ! ============= Public Procedures ==========================
     integer :: I,J,K                    ! Loop counters
 
     type ( L2pc_t ), pointer :: L2PC
-    type ( MatrixElement_T), pointer :: M0
 
     ! Executable code
     if ( .not. associated ( l2pcDatabase ) ) return
@@ -1777,6 +1778,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.96  2010/05/19 17:51:41  pwagner
+! Details now used to dump or not L2PCInfo%blockID
+!
 ! Revision 2.95  2010/05/19 00:32:06  vsnyder
 ! Pass IgnoreHessian into PopulateL2PCBin
 !
