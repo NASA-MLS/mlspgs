@@ -19,9 +19,6 @@ module LinearizedForwardModel_m
   private
   public :: LinearizedForwardModel, LinearizedForwardModelAuto
 
-  ! This array is used to keep track of which bins to use for each (side)band.
-  integer, dimension(:,:), pointer, private, save :: lockedBins => NULL()
-
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
@@ -40,7 +37,7 @@ contains ! =====     Public Procedures     =============================
     use MatrixModule_1, only: MATRIX_T
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
     use MLSSignals_m, only: Signal_T
-    use VectorsModule, only: GETVECTORQUANTITYBYTYPE, VECTOR_T, VECTORVALUE_T
+    use VectorsModule, only: VECTOR_T, VECTORVALUE_T
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
 
     ! Dummy arguments
@@ -115,8 +112,7 @@ contains ! =====     Public Procedures     =============================
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use HessianModule_1, only: Multiply
     use Intrinsic, only: L_RADIANCE, L_TEMPERATURE, L_PTAN, L_VMR, &
-      & L_LIMBSIDEBANDFRACTION, L_ZETA, L_OPTICALDEPTH, L_LATITUDE, L_FIELDSTRENGTH, &
-      & L_FIELDELEVATION, L_FIELDAZIMUTH
+      & L_LIMBSIDEBANDFRACTION, L_OPTICALDEPTH
     use L2PC_m, only: L2PC_T, L2PCDATABASE, POPULATEL2PCBIN
     use L2PCBins_m, only: FindMatchForL2PCQ, SelectL2PCBins
     use ManipulateVectorQuantities, only: FINDONECLOSESTINSTANCE
@@ -125,20 +121,19 @@ contains ! =====     Public Procedures     =============================
     use MatrixModule_1, only: MATRIX_T, MULTIPLYMATRIXVECTORNOT, DUMP, &
       & FINDBLOCK, CREATEBLOCK
     use MLSCommon, only: r8, rm
-    use MLSSignals_m, only: Signal_T, GetSignalName
+    use MLSSignals_m, only: Signal_T
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
     use MLSNumerics, only: Coefficients_R8, HUNT, InterpolateArraySetup, &
       & InterpolateArrayTeardown, INTERPOLATEVALUES
     use Molecules, only: L_EXTINCTION, L_EXTINCTIONV2
     use Output_m, only: Output
-    use QuantityTemplates, only: QuantityTemplate_T
     use String_Table, only: Display_String, Get_String
     use Toggles, only: Emit, Levels, Switches, Toggle
     use Trace_m, only: Trace_begin, Trace_end
     use VectorsModule, only: assignment(=), OPERATOR(-), OPERATOR(+), &
       & CLONEVECTOR,  DESTROYVECTORINFO, DUMP, GETVECTORQUANTITYINDEXBYNAME, &
       & GETVECTORQUANTITYBYTYPE, M_LINALG, &
-      & VALIDATEVECTORQUANTITY, VECTOR_T, VECTORVALUE_T
+      & VECTOR_T, VECTORVALUE_T
     use Sort_m, only: SORTP
 
     ! Dummy arguments
@@ -792,6 +787,10 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.78  2010/05/19 00:33:46  vsnyder
+! Get rid of a temp, hopefully interpolate faster, pass ignoreHessian into
+! PopulateL2PCBin, cosmetic changes.
+!
 ! Revision 2.77  2010/05/13 23:46:00  pwagner
 ! Temporary expedients for l2pc files with Hessians; needs more code
 !
