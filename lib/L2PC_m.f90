@@ -273,7 +273,7 @@ contains ! ============= Public Procedures ==========================
   end subroutine DumpL2PCInfo
 
   ! ---------------------------------- LoadMatrix ----------
-  subroutine LoadMatrix ( matrix, name, message )
+  subroutine LoadMatrix ( matrix, name, message, IgnoreHessian )
     ! This function copies the matrix from the l2pc database into the
     ! given matrix (presumably from the main dabase)
 
@@ -281,6 +281,7 @@ contains ! ============= Public Procedures ==========================
     type(Matrix_T), intent(inout) :: MATRIX
     integer, intent(in) :: NAME
     character (len=*), intent(out) :: MESSAGE
+    logical, intent(in), optional :: IgnoreHessian
 
     ! Local variables
     integer :: I                        ! Index
@@ -293,7 +294,7 @@ contains ! ============= Public Procedures ==========================
       message = 'No such l2pc matrix'
       return
     end if
-    call PopulateL2PCBin ( i )
+    call PopulateL2PCBin ( i, ignoreHessian )
     source => l2pcDatabase(i)%j
     if ( .not. DoVectorsMatch ( matrix%row%vec, source%row%vec ) ) then
       message = 'Rows do not match for loading'
@@ -307,7 +308,7 @@ contains ! ============= Public Procedures ==========================
   end subroutine LoadMatrix
 
   ! ---------------------------------- LoadVector ----------
-  subroutine LoadVector ( vector, name, source, message )
+  subroutine LoadVector ( vector, name, source, message, IgnoreHessian )
     ! This function copies the matrix from the l2pc database into the
     ! given matrix (presumably from the main dabase)
 
@@ -316,6 +317,7 @@ contains ! ============= Public Procedures ==========================
     integer, intent(in) :: NAME
     integer, intent(in) :: SOURCE       ! l_rows or l_columns
     character (len=*), intent(out) :: MESSAGE
+    logical, intent(in), optional :: IgnoreHessian
 
     ! Local variables
     integer :: I                        ! Index
@@ -329,7 +331,7 @@ contains ! ============= Public Procedures ==========================
       message = 'No such l2pc matrix'
       return
     end if
-    call PopulateL2PCBin ( i )
+    call PopulateL2PCBin ( i, ignoreHessian )
     matrix => l2pcDatabase(i)%j
     select case ( source )
     case ( l_rows )
@@ -964,21 +966,23 @@ contains ! ============= Public Procedures ==========================
   end subroutine MakeMatrixPackMap
 
   ! --------------------------------------- PopulateL2PCBinByName ---
-  subroutine PopulateL2PCBinByName ( name )
+  subroutine PopulateL2PCBinByName ( name, IgnoreHessian )
     integer, intent(in) :: NAME         ! Name index
+    logical, intent(in), optional :: IgnoreHessian
     integer :: INDEX
     ! Executable code
     index = FindFirst ( l2pcDatabase%name, name )
-    if ( index /= 0 ) call PopulateL2PCBin ( index )
+    if ( index /= 0 ) call PopulateL2PCBin ( index, ignoreHessian )
   end subroutine PopulateL2PCBinByName
 
   ! --------------------------------------- Populate L2PCBin --------
-  subroutine PopulateL2PCBin ( bin )
+  subroutine PopulateL2PCBin ( bin, IgnoreHessian )
     use HDF5, only: H5GCLOSE_F, H5GOPEN_F, H5GGET_OBJ_INFO_IDX_F, &
         & H5GN_MEMBERS_F
     use MLSHDF5, only: GetHDF5Attribute, LoadFromHDF5DS
 
     integer, intent(in) :: BIN ! The bin index to populate
+    logical, intent(in), optional :: IgnoreHessian
 
     ! Local variables
     type(L2pc_t), pointer :: L2PC  ! This l2pc
@@ -989,9 +993,10 @@ contains ! ============= Public Procedures ==========================
     character ( len=64 ) :: NAME ! Name of a block
     integer :: BLOCKID   ! Group ID for a block
     integer :: BLOCKSID  ! Group ID for all the non-Hessian blocks
-    integer :: STATUS    ! Flag from HDF5
     integer :: KIND      ! Kind for this block
+    logical :: NoHessian ! Don't try to get the Hessian
     integer :: NOVALUES  ! Number of values for this block
+    integer :: STATUS    ! Flag from HDF5
     integer :: i, nmembers, objtype
     ! Executable code
 
@@ -1062,7 +1067,9 @@ contains ! ============= Public Procedures ==========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close Blocks group for l2pc matrix '//trim(info%matrixName) )
 
-    if ( l2pc%goth ) then
+    noHessian = .false. ! Assume we want the Hessian
+    if ( present(ignoreHessian) ) noHessian = ignoreHessian
+    if ( l2pc%goth .and. .not. noHessian ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to fully populate L2PC Bin when we have a Hessian matrix' )
       !!! stop !!! CODE HERE
@@ -1770,6 +1777,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.95  2010/05/19 00:32:06  vsnyder
+! Pass IgnoreHessian into PopulateL2PCBin
+!
 ! Revision 2.94  2010/05/13 23:45:14  pwagner
 ! Temporary expedients for l2pc files with Hessians; needs more code
 !
