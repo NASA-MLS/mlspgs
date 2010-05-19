@@ -17,7 +17,7 @@ module LinearizedForwardModel_m
 
   implicit none
   private
-  public :: LinearizedForwardModel
+  public :: LinearizedForwardModel, LinearizedForwardModelAuto
 
   ! This array is used to keep track of which bins to use for each (side)band.
   integer, dimension(:,:), pointer, private, save :: lockedBins => NULL()
@@ -54,8 +54,6 @@ contains ! =====     Public Procedures     =============================
     type(matrix_T), intent(inout), optional :: JACOBIAN
     type(vector_t), dimension(:), target, optional :: VECTORS ! Vectors database
 
-    integer :: NOCHANS                  ! Dimension
-    integer :: NOMIFS, NOMIFSJ          ! Number of minor frames
     type(VectorValue_T), pointer :: RADIANCE ! The radiance quantity to fill
     integer :: SIDEBAND
     type(Signal_T), pointer :: SIGNAL   ! Signal from the configuration
@@ -67,14 +65,14 @@ contains ! =====     Public Procedures     =============================
     signal => fmConf%signals(1)
     ! Probably access the sideband associated with the signal ...
     sideband = signal%sideband
-    ! ... but in certain rare circumstances (when we're called by the hybrid model)
-    ! we might want to force the folded one.
+    ! ... but in certain rare circumstances (when we're called by the hybrid
+    ! model) we might want to force the folded one.
     if ( fmConf%forceFoldedOutput ) sideband = 0
     radiance => GetQuantityForForwardModel (fwdModelOut, quantityType=l_radiance, &
       & signal=signal%index, sideband=sideband, noError=.true., config=fmConf )
 
-    ! Now, it's possible we're really being asked to deal with optical depth, not
-    ! radiance.
+    ! Now, it's possible we're really being asked to deal with optical depth,
+    ! not radiance.
     if ( .not. associated ( radiance ) ) &
       & radiance => GetQuantityForForwardModel (fwdModelOut, quantityType=l_opticalDepth, &
         & signal=signal%index, sideband=sideband, noError=.true., config=fmConf )
@@ -98,20 +96,17 @@ contains ! =====     Public Procedures     =============================
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'x/yStar supplied by vectors database argument not present' )
 
-    ! Set some dimensions
-    noChans = radiance%template%noChans
-    noMIFs = radiance%template%noSurfs
-    noMIFsJ = 0
-    if ( present(jacobian) ) noMifsJ = noMIFs
-
     call LinearizedForwardModelAuto ( fmConf, FwdModelIn, FwdModelExtra,&
-    & fmStat, radiance, noChans, noMifs, noMIFsJ, Jacobian, vectors )
+    & fmStat, radiance, noChans=radiance%template%noChans, &
+    & noMifs=radiance%template%noSurfs, &
+    & noMifsJ=merge( radiance%template%noSurfs,0,present(Jacobian) ), &
+    & Jacobian=Jacobian, Vectors=vectors )
 
   end subroutine LinearizedForwardModel
 
   ! ---------------------------------  LinearizedForwardModelAuto  -----
   subroutine LinearizedForwardModelAuto ( fmConf, FwdModelIn, FwdModelExtra,&
-    & fmStat, radiance, noChans, noMifs, noMIFsJ, Jacobian, vectors )
+    & fmStat, radiance, noChans, noMifs, noMifsJ, Jacobian, Vectors )
 
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use Dump_0, only: DUMP
@@ -132,18 +127,18 @@ contains ! =====     Public Procedures     =============================
     use MLSCommon, only: r8, rm
     use MLSSignals_m, only: Signal_T, GetSignalName
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
-    use MLSNumerics, only: HUNT, INTERPOLATEVALUES
+    use MLSNumerics, only: Coefficients_R8, HUNT, InterpolateArraySetup, &
+      & InterpolateArrayTeardown, INTERPOLATEVALUES
     use Molecules, only: L_EXTINCTION, L_EXTINCTIONV2
     use Output_m, only: Output
     use QuantityTemplates, only: QuantityTemplate_T
     use String_Table, only: Display_String, Get_String
-    use Toggles, only: Emit, Levels, Toggle
+    use Toggles, only: Emit, Levels, Switches, Toggle
     use Trace_m, only: Trace_begin, Trace_end
     use VectorsModule, only: assignment(=), OPERATOR(-), OPERATOR(+), &
-      & CLONEVECTOR, &
-      & DESTROYVECTORINFO, GETVECTORQUANTITYBYTYPE, VECTOR_T, &
-      & VECTORVALUE_T, DUMP, &
-      & VALIDATEVECTORQUANTITY, M_LINALG, GETVECTORQUANTITYINDEXBYNAME
+      & CLONEVECTOR,  DESTROYVECTORINFO, DUMP, GETVECTORQUANTITYINDEXBYNAME, &
+      & GETVECTORQUANTITYBYTYPE, M_LINALG, &
+      & VALIDATEVECTORQUANTITY, VECTOR_T, VECTORVALUE_T
     use Sort_m, only: SORTP
 
     ! Dummy arguments
@@ -153,7 +148,7 @@ contains ! =====     Public Procedures     =============================
     type(vector_T), intent(in), target ::  FWDMODELIN
     type(vector_T), intent(in), target ::  FWDMODELEXTRA
     type(forwardModelStatus_t), intent(inout) :: FMSTAT ! Reverse comm. stuff
-    type(VectorValue_T), intent(inout) :: RADIANCE ! The radiance quantity to fill
+    type(vectorvalue_t), intent(inout) :: RADIANCE ! The radiance quantity to fill
     integer, intent(in) :: NoChans, NoMifs, NoMifsJ ! Dimensions
     type(matrix_T), intent(inout), optional :: JACOBIAN
     type(vector_t), dimension(:), target, optional :: VECTORS ! Vectors database
@@ -178,6 +173,7 @@ contains ! =====     Public Procedures     =============================
     integer :: SIDEBANDSTART            ! For sideband loop
     integer :: SIDEBANDSTEP             ! For sideband loop
     integer :: SIDEBANDSTOP             ! For sideband loop
+    integer :: TOP                      ! For interpolating
     integer :: UPPER                    ! Array index
     integer :: XINSTANCE                ! Instance in x corresponding to xStarInstance
     integer :: XSTARINSTANCE            ! Loop counter
@@ -189,8 +185,8 @@ contains ! =====     Public Procedures     =============================
     logical :: PTANINFIRST              ! PTan was found in the first vector
 
     integer, dimension(-1:1) :: L2PCBINS ! Which l2pc to use
-    integer, dimension(NoMifsJ) :: mifPointingsLower ! Result of a hunt
-    integer, dimension(NoMifsJ) :: mifPointingsUpper ! mifPointingsLower+1
+    integer, dimension(noMIFsJ) :: mifPointingsLower ! Result of a hunt
+    integer, dimension(size(mifPointingsLower)) :: mifPointingsUpper ! mifPointingsLower+1
 
     logical, dimension(noChans) :: doChannel ! Do this channel?
 
@@ -199,22 +195,23 @@ contains ! =====     Public Procedures     =============================
     character (len=80) :: WORD          ! A word to output
 
     ! The `prime' quantities are important.
-    ! - yPrime (yP) is contains one maf of the relevant radiances, but on the
+    ! - yPrime (yP) contains one maf of the relevant radiances, but on the
     !   l2pc's vertical coordinates
     ! - xPrime (xP) is like xStar but contains state values
     ! - kPrime is the jacobian for these two.
 
-    real (r8), dimension(NoMifsJ) :: lowerWeight ! For interpolation
-    real (r8), dimension(NoMifsJ) :: upperWeight ! For interpolation
-    real (r8), dimension(merge(noMifs,0,radiance%template%quantityType==l_opticalDepth)) :: tangentTemperature ! For optical depth
+    real (r8), dimension(size(mifPointingsLower)) :: lowerWeight ! For interpolation
+    real (r8), dimension(size(mifPointingsLower)) :: upperWeight ! For interpolation
+    real (r8), dimension(merge(noMifs,0,radiance%template%quantityType==l_opticalDepth)) &
+      & :: tangentTemperature ! For optical depth
     real (r8), dimension(noChans) :: thisFraction ! Sideband fraction values
 
-    real (r8), dimension(:,:), pointer :: yPmapped ! Remapped values of yP
     real (r8), dimension(noMIFs,noChans) :: resultMapped ! Remapped values of result
     real (r8), dimension(noMIFs,noChans) :: dyByDX ! Raw dRad/dPtan
     real (rm), dimension(:,:), pointer :: dense  ! Densified matrix from l2pc
     real (rm), dimension(:,:), pointer :: kBit ! Remapped values of l2pc
 
+    type(coefficients_r8) :: Coeffs     ! For interpolation
     type(vector_T) :: XP                ! Same form as xStar, contents as x
     type(vector_T) :: YP                ! Same form as yStar,=kstar*(xp-xStar)
     type(vector_T) :: DELTAX            ! xp-xStar
@@ -244,7 +241,7 @@ contains ! =====     Public Procedures     =============================
     if ( toggle(emit) ) &
       & call trace_begin ( 'LinearizedForwardModel, MAF=', index=maf )
 
-    nullify ( dense, yPmapped )
+    nullify ( dense )
 
     signal => fmConf%signals(1)
 
@@ -280,8 +277,8 @@ contains ! =====     Public Procedures     =============================
     do sideband = sidebandStart, sidebandStop, sidebandStep
       ! Load this bin if necessary
       ! But don't load Hessians if we've elected to ignore them
-      if ( fmConf%ignoreHessian ) l2pcDatabase(l2pcBins(sideband))%goth = .false.
-      call PopulateL2PCBin ( l2pcBins(sideband) )
+      call PopulateL2PCBin ( l2pcBins(sideband), fmConf%ignoreHessian )
+
       ! Setup a sideband fraction array
       ! Note, this is *NOT* the same decision process as for the full forward model
       ! and deliberately so.
@@ -397,15 +394,19 @@ contains ! =====     Public Procedures     =============================
 
         ! Do we need derivatives for this?
         doDerivatives = present(jacobian) .and. foundInFirst
-        if (doDerivatives .and. (l2pcQ%template%quantityType==l_temperature) ) &
-          & doDerivatives = fmConf%temp_der
-        if (doDerivatives .and. &
-          & (l2pcQ%template%quantityType==l_vmr) .and. &
-          & associated(fmConf%molecules) ) then
-          doDerivatives = fmConf%atmos_der
-          if ( doDerivatives .and. .not. any (l2pcQ%template%molecule == &
-            & pack(fmConf%molecules, fmConf%moleculeDerivatives))) &
-            & doDerivatives = .false.
+        if ( doDerivatives ) then
+          select case ( l2pcQ%template%quantityType )
+          case ( l_temperature )
+            doDerivatives = fmConf%temp_der
+          case ( l_vmr )
+            doDerivatives = associated(fmConf%molecules) .and. fmConf%atmos_der
+            if ( doDerivatives ) then
+              doDerivatives = any( l2pcQ%template%molecule == &
+                & pack(fmConf%molecules, fmConf%moleculeDerivatives) )
+            end if
+          case default ! Can we get here?
+            doDerivatives = .false.
+          end select
         end if
 
         ! Loop over profiles
@@ -434,8 +435,8 @@ contains ! =====     Public Procedures     =============================
           xInstance = closestInstance + deltaInstance
           xInstance = max ( 1, min ( xInstance, stateQ%template%noInstances ) )
 
-          ! Fill this part of xP, if we have been supplied an xStar fill xP with the delta
-          ! otherwise, xP is just the direct state
+          ! Fill this part of xP, if we have been supplied an xStar fill xP with
+          ! the delta otherwise, xP is just the direct state
           if ( fmConf%xStar /= 0 ) then
             i = GetVectorQuantityIndexByName ( vectors(fmConf%xStar), stateQ%template%name )
             if ( i == 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -486,7 +487,7 @@ contains ! =====     Public Procedures     =============================
                   & M_Full, init=0.0_rm )
               case ( M_Banded, M_Column_Sparse )
                 call MLSMessage( MLSMSG_Error, ModuleName, &
-                  & "Not written code for adding to non full blocks" )
+                  & "Code not written for adding to non full blocks" )
               case default
               end select
 
@@ -558,27 +559,35 @@ contains ! =====     Public Procedures     =============================
         call dump ( l2pc%j%row%vec, name='l2pc%j%row%vec' )
       end if
 
-      ! Now, if no yStar has been supplied add yP to the one in the l2pc file
+      ! Now, if no yStar has been supplied add the one in the l2pc file to yP
       if ( fmConf%yStar == 0 ) yP = yP + l2pc%j%row%vec
 
       ! Now we interpolate yP to ptan
-      call allocate_test( ypMapped, radInL2PC%template%noSurfs, &
-        & noChans, 'ypMapped', ModuleName )
-
-      yPmapped = transpose ( &
-        & reshape ( yp%quantities(1)%values(:,1), &
-        &           (/radInL2PC%template%noChans, radInL2PC%template%noSurfs/) ) )
-
-      call InterpolateValues ( &
+      ! Do this using setup, loop, teardown instead of using the array
+      ! interpolator to avoid allocating and deallocating ypMapped and
+      ! ypMapped = transpose ( &
+      !   & reshape ( yp%quantities(1)%values(:,1), (/noChans, noPointings/) ) )
+      call InterpolateArraySetup ( &
         & xStarPtan%values(:,1), &      ! OldX
-        & yPmapped, &                   ! OldY
         & ptan%values(:,maf), &         ! NewX
-        & resultMapped, &               ! NewY
         & 'Spline', &                   ! use spline
-        & extrapolate='Constant', &     ! No extrapolation
-        & dyByDx=dyByDx )
+        & coeffs, &                     ! the coefficients
+        & extrapolate='Constant', &     ! no extrapolation
+        & dyByDx=.true. )               ! need more coefficients for this
 
-      call Deallocate_test ( ypMapped, 'ypMapped', ModuleName )
+      do chan = 1, noChans
+        top = chan + noPointings - 1
+        call InterpolateValues ( coeffs, &
+          & xStarPtan%values(:,1), &                       ! OldX
+          & yp%quantities(1)%values(chan:top:noChans,1), & ! OldY
+          & ptan%values(:,maf), &                          ! NewX
+          & resultMapped(:,chan), &                        ! NewY
+          & 'Spline', &                                    ! use spline
+          & extrapolate='Constant', &                      ! No extrapolation
+          & dyByDx=dyByDx(:,chan) )
+      end do
+
+      call InterpolateArrayTeardown ( coeffs )
 
       ! Either place or add, make decision outside loop!
       if ( sideband == sidebandStart ) then
@@ -673,6 +682,11 @@ contains ! =====     Public Procedures     =============================
     ! We also need to add on the impact of any perturbation in tangent pressure
     ! in the xStar/yStar supplied case too
     if ( fmConf%yStar /= 0 ) call Add_y_Star
+
+    if ( index(switches,'rad') + index(switches,'RAD') > 0 ) then
+      call dump ( radiance, name='Linearized radiances', details=1, options="c" )
+      if ( index(switches,'RAD') > 0 ) stop
+    end if
 
     if ( toggle(emit) ) call trace_end ( 'LinearizedForwardModel' )
 
@@ -778,6 +792,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.77  2010/05/13 23:46:00  pwagner
+! Temporary expedients for l2pc files with Hessians; needs more code
+!
 ! Revision 2.76  2010/04/30 23:57:40  vsnyder
 ! Remove StateQ from SelectL2PCBins call
 !
