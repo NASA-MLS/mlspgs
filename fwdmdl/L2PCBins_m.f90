@@ -137,7 +137,7 @@ contains ! =====     Public Procedures     =============================
     ! 4.  From the eligible ones, pick the minimum cost, which depends
     !     upon selectorType
 
-    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use Allocate_Deallocate, only: ALLOCATE_TEST
     use ForwardModelConfig, only: FORWARDMODELCONFIG_T
     use Intrinsic, only: L_FIELDAZIMUTH, L_FIELDELEVATION, L_FIELDSTRENGTH, &
       & L_LATITUDE, L_NAMEFRAGMENT, L_SZA, L_TEMPERATURE, L_TSCAT, L_VMR, L_ZETA
@@ -149,7 +149,7 @@ contains ! =====     Public Procedures     =============================
     use MLSSignals_m, only: GetSidebandLoop, GetSignalName, signals
     use Output_m, only: Output
     use QuantityTemplates, only: QuantityTemplate_T
-    use String_Table, only: Display_String, Get_String, Index, Len
+    use String_Table, only: Display_String, Index, Len
     use Toggles, only: SWITCHES
     use VectorsModule, only: GETVECTORQUANTITYBYTYPE, VALIDATEVECTORQUANTITY, &
       & VectorValue_T, Vector_T
@@ -433,6 +433,9 @@ contains ! =====     Public Procedures     =============================
 end module L2PCBins_m
 
 ! $Log$
+! Revision 2.5  2010/05/19 17:52:53  pwagner
+! Removed unused stuff
+!
 ! Revision 2.4  2010/05/07 02:24:47  vsnyder
 ! Add strip=.true to a reference to string_table%index
 !
