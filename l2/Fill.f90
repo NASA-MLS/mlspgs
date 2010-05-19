@@ -87,7 +87,7 @@ contains ! =====     Public Procedures     =============================
     use GLOBAL_SETTINGS, only: BrightObjects
     use GriddedData, only: GriddedData_T
     use HessianModule_1, only: AddHessianToDatabase, CreateEmptyHessian, Hessian_T, &
-      & NullifyHessian, StreamlineHessian
+      & StreamlineHessian
     ! We need many things from Init_Tables_Module.  First the fields:
     use INIT_TABLES_MODULE, only: F_A, F_ADDITIONAL, F_ALLOWMISSING, &
       & F_APRIORIPRECISION, F_ASPERCENTAGE, F_AVOIDBRIGHTOBJECTS, &
@@ -390,7 +390,6 @@ contains ! =====     Public Procedures     =============================
     integer :: GRIDINDEX                ! Index of requested grid
     integer :: GSON                     ! Descendant of Son
     integer :: HEIGHTNODE               ! Descendant of son
-    type (Hessian_T) :: Hessian         ! A Hessian to create
     integer :: HESSIANINDEX             ! An index into the hessians
     logical :: HIGHBOUND                ! Flag
     integer :: H2OQUANTITYINDEX         ! in the quantities database
@@ -2596,6 +2595,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.383  2010/05/19 17:53:19  pwagner
+! Removed unused stuff
+!
 ! Revision 2.382  2010/04/28 16:24:11  pwagner
 ! May specify instances range in explicit Fill
 !
