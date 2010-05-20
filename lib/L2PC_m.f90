@@ -35,7 +35,7 @@ module L2PC_m
   use MLSCommon, only: R8, R4, MLSFile_T
   use MLSFiles, only: DumpMLSFile => Dump
   use MLSMessageModule, only: MLSMESSAGE, &
-    & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, MLSMSG_ERROR
+    & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, MLSMSG_ERROR, MLSMSG_WARNING
   use MLSSets, only: FindFirst
   use MLSSignals_m, only: GETSIGNALNAME
   use MLSStringLists, only: switchDetail
@@ -988,12 +988,14 @@ contains ! ============= Public Procedures ==========================
     ! Local variables
     type(L2pc_t), pointer :: L2PC  ! This l2pc
     type(L2PCInfo_T), pointer :: INFO ! Info for this l2pc
+    type(HessianElement_T), pointer :: H0 
     type(MatrixElement_T), pointer :: M0 
-    integer :: BLOCKROW  ! Loop counter
     integer :: BLOCKCOL  ! Loop counter
     character ( len=64 ) :: NAME ! Name of a block
     integer :: BLOCKID   ! Group ID for a block
-    integer :: BLOCKSID  ! Group ID for all the non-Hessian blocks
+    integer :: BLOCKLAYER  ! Loop counter
+    integer :: BLOCKROW  ! Loop counter
+    integer :: BLOCKSID  ! Group ID for all the (non-)Hessian blocks
     integer :: KIND      ! Kind for this block
     logical :: NoHessian ! Don't try to get the Hessian
     integer :: NOVALUES  ! Number of values for this block
@@ -1019,7 +1021,8 @@ contains ! ============= Public Procedures ==========================
     if ( status /= 0 ) then
       call outputNamedValue( 'binID', info%binID )
       call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to open Blocks group for l2pc matrix block '//trim(info%matrixName) )
+        & 'Unable to open Blocks group for l2pc matrix block '//&
+        & trim(info%matrixName) )
     endif
     do blockRow = 1, l2pc%j%row%NB
       do blockCol = 1, l2pc%j%col%NB
@@ -1071,8 +1074,60 @@ contains ! ============= Public Procedures ==========================
     noHessian = .false. ! Assume we want the Hessian
     if ( present(ignoreHessian) ) noHessian = ignoreHessian
     if ( l2pc%goth .and. .not. noHessian ) then
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to fully populate L2PC Bin when we have a Hessian matrix' )
+      call h5gOpen_f ( info%binId, 'HessianBlocks', blocksId, status )
+      if ( status /= 0 ) then
+        call outputNamedValue( 'binID', info%binID )
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Unable to open HessianBlocks group for l2pc matrix block '//&
+          & trim(info%matrixName) )
+      endif
+      ! Now loop over the blocks and read them.
+      do blockRow = 1, l2pc%h%row%NB
+        do blockCol = 1, l2pc%h%col%NB
+          do blockLayer = 1, l2pc%h%col%NB
+            ! Skip blocks we know about or are absent
+            h0 => l2pc%h%block ( blockRow, blockCol, blockLayer )
+            if ( h0%kind /= h_unknown ) cycle
+            call CreateBlockName ( blockRow, blockCol, blockLayer, name )
+            call h5gOpen_f ( blocksId, trim(name), blockId, status )
+            if ( status /= 0 ) then
+              call outputNamedValue( 'Block name', trim(name) )
+              call outputNamedValue( 'Blocks ID', blocksId )
+              call MLSMessage ( MLSMSG_Error, ModuleName, &
+                & 'Unable to open group for l2pc Hessian block '//trim(name) )
+            elseif ( switchDetail( switches, 'l2pc' ) > 0 ) then
+              call outputNamedValue( 'Block name', trim(name) )
+              call outputNamedValue( 'Block ID', blockId )
+              call outputNamedValue( 'HessianBlocks ID', blocksId )
+            endif
+            select case (h0%kind)
+            case (h_full)
+              call CreateBlock ( l2pc%h, blockRow, blockCol, blockLayer, h0%kind )
+              h0 => l2pc%h%block ( blockRow, blockCol, blockLayer )
+              call LoadFromHDF5DS ( blockId, 'i', h0%values )
+            case (h_sparse)
+              call GetHDF5Attribute ( blockID, 'noValues', noValues )
+              call CreateBlock ( l2pc%h, blockRow, blockCol, blockLayer, kind, noValues )
+              h0 => l2pc%h%block ( blockRow, blockCol, blockLayer )
+              call LoadFromHDF5DS ( blockId, 'i', h0%tuples(1:h0%tuplesFilled)%i )
+              call LoadFromHDF5DS ( blockId, 'j', h0%tuples(1:h0%tuplesFilled)%j )
+              call LoadFromHDF5DS ( blockId, 'k', h0%tuples(1:h0%tuplesFilled)%k )
+              call LoadFromHDF5DS ( blockId, 'h', h0%tuples(1:h0%tuplesFilled)%h )
+            case default
+              call MLSMessage ( MLSMSG_Error, ModuleName, &
+                & 'Unrecognized kind for l2pc Hessian block '//trim(name) )
+            end select
+            call h5gClose_f ( blockId, status )
+            if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'Unable to close group for l2pc Hessian matrix block '//trim(name) )
+          end do
+        end do
+      end do
+      call h5gClose_f ( blocksId, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to close HessianBlocks group for l2pc matrix '//trim(info%matrixName) )
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      & 'Fully populating L2PC Bin when we have a Hessian matrix is untested' )
       !!! stop !!! CODE HERE
     endif
 
@@ -1778,6 +1833,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.97  2010/05/20 00:51:50  pwagner
+! Can populate Hessians; untested
+!
 ! Revision 2.96  2010/05/19 17:51:41  pwagner
 ! Details now used to dump or not L2PCInfo%blockID
 !
