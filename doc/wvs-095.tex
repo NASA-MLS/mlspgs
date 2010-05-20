@@ -1,0 +1,233 @@
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9in
+
+\newcommand{\docname}{wvs-095}
+\newcommand{\docdate}{20 May 2010}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\newcommand{\TS}{T_\text{scat}}
+\newcommand{\TSs}[1]{T_{\text{scat}_{#1}}}
+\newcommand{\DB}{\overline{\Delta B}}
+\newcommand{\MT}{\mathcal{T}}
+\newcommand{\hMT}{\hat{\mathcal{T}}}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill, Van\\
+Subject: \>Radiance and derivatives incorporating $\TSs{i}$\\
+From: \>Van Snyder\\
+Reference: \>\h{wvs-066}, \h{wvs-080}
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+When $\TS$ is taken into account, the factor $\Delta B_i$ that appears in
+the equation giving radiance at frequency $\nu_n$, \emph{viz.}
+
+\begin{equation}
+I_n = \sum \Delta B_{in} \MT_{in}\,,
+\end{equation}
+
+where $2 \Delta B_{in} = B_{i+1,n} - B_{i-1,n}$, is replaced by
+
+\begin{equation}\begin{split}\label{two}
+2 \DB_{in}
+ =\,& ( 1 - \omega_{0_{i+1,n}} ) B_{i+1,n} + \omega_{0_{i+1,n}} \TSs{i+1,c} -
+      ( 1 - \omega_{0_{i-1,n}} ) B_{i-1,n} - \omega_{0_{i-1,n}} \TSs{i-1,c} \\
+ =\,& \left[
+      ( 1 - \omega_{0_{i+1,n}} ) B_{i+1,n} -
+      ( 1 - \omega_{0_{i-1,n}} ) B_{i-1,n} \right] +
+      \left[
+      \omega_{0_{i+1,n}} \TSs{i+1,c} - \omega_{0_{i-1,n}} \TSs{i-1,c}
+      \right] \\
+ =\,& 2 \Delta B_{in}^g + 2 \Delta B_{in}^s\,,
+\end{split}\end{equation}
+
+where $2\Delta B_{in}^g = ( 1 - \omega_{0_{i+1,n}} ) B_{i+1,n} -
+                          ( 1 - \omega_{0_{i-1,n}} ) B_{i-1,n}$,
+      $2\Delta B_{in}^s = \omega_{0_{i+1,n}} \TSs{i+1,c} -
+                          \omega_{0_{i-1,n}} \TSs{i-1,c}$,
+      $c$ is a channel number,
+
+\begin{equation}\label{three}
+\omega_0 = \frac{\beta_{c\_s}}{\beta_{e}} \text{, and }
+\beta_e = \alpha_\text{gas} + \beta_{c\_s} + \beta_{c\_a} =
+          \alpha_\text{gas} + \beta_{c\_e}\,.
+\end{equation}
+
+When frequency averaging is carried out, the radiance in channel $c$ is
+
+\begin{equation}\begin{split}\label{four}
+I_c = \sum_{n=1}^{n_f} \phi_{nc} \Delta \nu_{nc} I_n
+    =\,& \sum_{n=1}^{n_f} \phi_{nc} \Delta \nu_{nc}
+          \sum_{i=1}^{n_p} \Delta B_{in}^g \MT_{in}
+       + \sum_{n=1}^{n_f} \phi_{nc} \Delta \nu_{nc}
+          \sum_{i=1}^{n_p} \Delta B_{in}^s \MT_{in} \\
+    =\,& \sum_{n=1}^{n_f} \phi_{nc} \Delta \nu_{nc}
+          \sum_{i=1}^{n_p} \Delta B_{in}^g \MT_{in}
+       + \sum_{i=1}^{n_p} \sum_{n=1}^{n_f}
+          \phi_{nc} \Delta \nu_{nc} \Delta B_{in}^s \MT_{in}\,.
+\end{split}\end{equation}
+
+In the final term, substitute the definition of $\Delta B_{in}^s$ from
+Equation (\ref{two}) and exchange the order of summation, giving
+
+\begin{equation}\begin{split}\label{five}
+\sum_{i=1}^{n_p} \sum_{n=1}^{n_f}
+          \phi_{nc} \Delta \nu_{nc} \Delta B_{in}^s \MT_{in}
+=\,&
+\sum_{i=1}^{n_p} \sum_{n=1}^{n_f}
+          \phi_{nc} \Delta \nu_{nc}
+            ( \omega_{0_{i+1,n}} \TSs{i+1,c} 
+            - \omega_{0_{i-1,n}}  \TSs{i-1,c} ) \MT_{in} \\
+=\,&
+\sum_{i=1}^{n_p} \TSs{i+1,c} \sum_{n=1}^{n_f}
+ \phi_{nc} \Delta \nu_{nc} \omega_{0_{i+1,n}} \MT_{in}
+-
+\sum_{i=1}^{n_p} \TSs{i-1,c} \sum_{n=1}^{n_f}
+ \phi_{nc} \Delta \nu_{nc} \omega_{0_{i-1,n}} \MT_{in}\,.
+\end{split}\end{equation}
+
+Defining the frequency-averaged values
+
+\begin{equation}\label{w0hat}
+\hMT_{i+1,c} =
+\sum_{n=1}^{n_f} \phi_{nc} \Delta \nu_{nc} \omega_{0_{i+1,n}} \MT_{in}
+\text{ and }
+\hMT_{i-1,c} =
+\sum_{n=1}^{n_f} \phi_{nc} \Delta \nu_{nc} \omega_{0_{i-1,n}} \MT_{in}
+\,,
+\end{equation}
+
+Equation (\ref{four}) becomes
+
+\begin{equation}\label{six}
+I_c = \sum_{n=1}^{n_f} \phi_{nc} \Delta \nu_{nc}
+       \sum_{i=1}^{n_p} \Delta B_{in}^g \MT_{in} +
+      \sum_{i=1}^{n_p} (\hMT_{i+1,c} \TSs{i+1,c} -
+                        \hMT_{i-1,c} \TSs{i-1,c})\,.
+\end{equation}
+
+From Equation (\ref{six})
+
+\begin{equation}\begin{split}
+\frac{\partial I_c}{\partial x} =\,&
+ \sum_{n=1}^{n_f} \phi_{nc} \Delta \nu_{nc}
+  \sum_{i=1}^{n_p} \left( \frac{\partial \Delta B_{in}^g}{\partial x} \MT_{in}
+                        + \Delta B_{in}^g \frac{\partial \MT_{in}}{\partial x}
+                   \right) \\
++\,&
+  \sum_{i=1}^{n_p} \left( \frac{\partial \hMT_{i+1,c}}{\partial x}
+                          \TSs{i+1,c} +
+                          \hMT_{i+1,c}
+                           \frac{\partial \TSs{i+1,c}}{\partial x}
+                        - \frac{\partial \hMT_{i+1,c}}{\partial x}
+                          \TSs{i-1,c} -
+                          \hMT_{i-1,c}
+                           \frac{\partial \TSs{i-1,c}}{\partial x}
+                   \right)\,.
+\end{split}\end{equation}
+
+From Equation (\ref{w0hat})
+
+\begin{equation}
+\frac{\partial \hMT_{ic}}{\partial x} =
+ \sum_{n=1}^{n_f} \phi_{nc} \Delta \nu_{nc}
+  \left( \frac{\partial \omega_{0_{in}}}{\partial x} \MT_{in} +
+         \omega_{0_{in}} \frac{\partial \MT_{in}}{\partial x}
+  \right).
+\end{equation}
+
+From Equation (\ref{three})
+
+\begin{equation}
+\frac{\partial \omega_0}{\partial x} =
+ \frac1{\beta_e^2} \left( \frac{\partial \beta_{c\_s}}{\partial x} -
+                          \frac{\partial \beta_e}{\partial x} \right)
+=
+ \frac1{\beta_e^2} \left( \frac{\partial \beta_{c\_s}}{\partial x} -
+                          \frac{\partial \beta_{c\_e}}{\partial x} -
+                          \frac{\partial \alpha_\text{gas}}{\partial x}
+                   \right) \,.
+\end{equation}
+
+$\alpha_\text{gas}$ depends upon frequency, temperature, and atmospheric
+constituent mixing ratios.
+
+$\beta_{c\_s}$ and $\beta_{c\_e}$ depend upon frequency, temperature and IWC.
+
+$B$ depends upon frequency and temperature.
+
+$\TS$ depends upon frequency, temperature, IWC and whatever molecules are
+specified when it is computed.
+
+When frequency averaging
+\label{lastpage}
+\end{document}
+
+% $Id$
+
+% $Log$
