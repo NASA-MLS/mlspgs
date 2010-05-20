@@ -87,13 +87,12 @@ contains ! =====     Public Procedures     =============================
       & MAXSWATHNAMESBUFSIZE, WRITEMASTERSFILEATTRIBUTES, CPL2GPDATA
     use L2PC_m, only: OUTPUTHDF5L2PC
     use L2ParInfo, only: parallel
-    use MatrixModule_1, only: DestroyMatrix, GETFROMMATRIXDATABASE, &
-      & MATRIX_DATABASE_T, MATRIX_T
+    use MatrixModule_1, only: MATRIX_DATABASE_T
     use MatrixTools, only: DumpBlocks
     use MLSCommon, only: MLSFile_T, TAI93_Range_T, FileNameLen, L2Metadata_T
     use MLSFiles, only: &
-      & AddInitializeMLSFile, close_MLSFile, Dump, GetMLSFileByName, &
-      & MLS_INQSWATH, open_MLSFile
+      & AddInitializeMLSFile, Dump, GetMLSFileByName, &
+      & MLS_INQSWATH
     use MLSL2Options, only: CATENATESPLITS, CHECKPATHS, &
       & DEFAULT_HDFVERSION_WRITE, &
       & PENALTY_FOR_NO_METADATA, SPECIALDUMPFILE, SKIPDIRECTWRITES, TOOLKIT
@@ -134,7 +133,6 @@ contains ! =====     Public Procedures     =============================
 
     type (MLSChunk_T) ::  AllChunks     ! in one
     logical :: ASCII                    ! Is this l2pc ascii?
-    integer :: DB_index
     logical :: Destroy                  ! matrices after outputting them
     logical :: create
     integer, dimension(:), pointer :: DONTPACK ! Quantities not to pack
@@ -150,7 +148,6 @@ contains ! =====     Public Procedures     =============================
     integer :: hdfVersion               ! 4 or 5 (corresp. to hdf4 or hdf5)
     integer :: HGridIndex
     type (HGrid_T), dimension(:), pointer :: HGrids => null()
-    integer :: IN_FIELD_NO              ! Index of sons of assign vertex
     character (len=FileNameLen) :: INPUTFILE_BASE    ! From the inputfile= field
     character (len=FileNameLen) :: inputPhysicalFilename
     integer :: INPUT_TYPE              ! L_L2AUX, L_L2GP, L_PC, L_L2DGG
@@ -187,7 +184,6 @@ contains ! =====     Public Procedures     =============================
     logical :: USINGOLDSUBMIT              ! Set if using the submit mechanism
     logical :: USINGSUBMIT              ! Set if using the submit mechanism
     double precision :: Value(2)        ! Value returned by EXPR
-    type (Matrix_T), pointer :: TMPMATRIX ! A pointer to a matrix to write into l2pc
     logical :: TIMING
     logical :: WriteCounterMAF          ! Add the counter MAF field
     logical :: WriteMetaDataOnly        ! Because it was a directWrite
@@ -1697,6 +1693,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.152  2010/05/20 00:32:32  pwagner
+! Remove unused stuff
+!
 ! Revision 2.151  2010/03/24 20:53:45  vsnyder
 ! Add DumpBlocks to Output section
 !
