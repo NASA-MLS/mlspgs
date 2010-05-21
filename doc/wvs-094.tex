@@ -5,8 +5,8 @@
 \topmargin -0.25in
 \textheight 9in
 
-\newcommand{\docname}{\bf wvs-094}
-\newcommand{\docdate}{5 May 2010}
+\newcommand{\docname}{wvs-094r1}
+\newcommand{\docdate}{20 May 2010}
 
 \usepackage{alltt}
 \usepackage{longtable}
@@ -16,14 +16,14 @@
 %\tracingcommands=1
 \newlength{\hW} % heading box width
 \newlength{\pW} % page number field width
-\settowidth{\hW}{\docname}
+\settowidth{\hW}{\bf\docname}
 \settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
 \ifdim \pW > \hW \setlength{\hW}{\pW} \fi
 \makeatletter
 \def\@biblabel#1{#1.}
 \newcommand{\ps@twolines}{%
   \renewcommand{\@oddhead}{%
-    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
                           Page \thepage\ of \pageref{lastpage}}}%
 \renewcommand{\@evenhead}{}%
 \renewcommand{\@oddfoot}{}%
@@ -64,11 +64,12 @@ The program is in the CVS archive in \dots/{\tt Mie}.
 
 \section{Input}
 
-All input uses Fortran NAMELIST, with name IN.  Each namelist block
-begins on a new line, with an ampersand followed by the namelist name
-(case insensitive), i.e., in this case {\tt \&in}, followed by \emph{name
-= value} fields preceded by blanks and an optional comma, terminated by
-slash (/).
+All input uses Fortran NAMELIST, with name IN.  Each namelist block begins
+on a new line, with an ampersand followed by the namelist name (case
+insensitive), i.e., in this case {\tt \&in}, followed by \emph{name =
+value} fields preceded by blanks and an optional comma, terminated by
+slash (/).  The program can process several input blocks in a single
+invocation.
 
 Namelist input can occupy as many lines as desired, the only restriction
 being that end-of-line cannot appear within a name or value.
@@ -291,5 +292,5 @@ E\_dP\_dT(:,:,:,:) & Error estimate in computing $\partial
 % $Id$
 
 % $Log$
-% Revision 1.1  2010/04/09 02:27:01  vsnyder
+% Revision 1.1  2010/05/20 23:49:17  vsnyder
 % Initial commit
