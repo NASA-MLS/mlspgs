@@ -5,7 +5,7 @@
 \topmargin -0.25in
 \textheight 9in
 
-\newcommand{\docname}{wvs-094r1}
+\newcommand{\docname}{wvs-094r2}
 \newcommand{\docdate}{20 May 2010}
 
 \usepackage{alltt}
@@ -240,7 +240,7 @@ Eest(:,:,:,:) & Error estimates for $\beta$ integrals; same dimensions as
 nFunc(:,:,:,:,:) & Quadrature status flags and numbers of integrand values.
           Dimensions are 2 $\times$ Temperature $\times$ IWC $\times$
           Frequency $\times$ 6.  Subscripts for the first dimension are 1
-          for the number of integrand values and 2 is for the quadrature
+          for the number of integrand values and 2 for the quadrature
           status flag.  Subscripts for the final dimension are for
           $\beta_{c\_e}$, $\beta_{c\_s}$,
           $\partial\beta_{c\_e}/\partial$IWC,
@@ -292,5 +292,8 @@ E\_dP\_dT(:,:,:,:) & Error estimate in computing $\partial
 % $Id$
 
 % $Log$
+% Revision 1.2  2010/05/21 00:02:19  vsnyder
+% State that the program can handle several input blocks
+%
 % Revision 1.1  2010/05/20 23:49:17  vsnyder
 % Initial commit
