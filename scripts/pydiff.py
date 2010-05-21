@@ -23,39 +23,26 @@
 #     treat s as the separator in (1) instead of ","
 #     (Note the "-" in front of s and reversal of a and b)
 import sys
-from pyutils import diff
+from pyutils import diff, mrClean
 
 # Find which usage (1) - (3)
 if len(sys.argv) > 3:
   if sys.argv[1][0] == "-":
 # usage (3)
     s = sys.argv[1][1]
-    l = sys.argv[3]
-    u = sys.argv[2]
+    l = mrClean(sys.argv[3],s)
+    u = mrClean(sys.argv[2],s)
   else:
 # usage (2)
     s = sys.argv[3][0]
-    l = sys.argv[1]
-    u = sys.argv[2]
+    l = mrClean(sys.argv[1],s)
+    u = mrClean(sys.argv[2],s)
 else:
 # usage (1)
   s = ","
   # read the args
-  l = sys.argv[1]
-  u = sys.argv[2]
-
-# remove unwanted chars
-l = l.replace("'",'')
-l = l.replace(' ','')
-l = l.replace(s,' ')  
-l = l.replace('[','')  
-l = l.replace(']','')
-
-u = u.replace("'",'')
-u = u.replace(' ','')
-u = u.replace(s,' ')  
-u = u.replace('[','')  
-u = u.replace(']','')
+  l = mrClean(sys.argv[1],s)
+  u = mrClean(sys.argv[2],s)
 
 # convert to lists
 # (instead of converting s to ' ' above, why not just split on s?)
@@ -66,3 +53,6 @@ u = u.split(' ')
 print diff(l,u),
 
 # $Log$
+# Revision 1.2  2010/05/15 00:30:45  pwagner
+# Added usages (2) and (3)
+#
