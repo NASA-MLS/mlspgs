@@ -1,3 +1,13 @@
+# First, a useful housekeeping aid
+def mrClean(a, s):
+  """Remove unwanted chars, replace separator with space"""
+  a = a.replace("'",'')
+  a = a.replace(' ','')
+  a = a.replace(s,' ')  
+  a = a.replace('[','')  
+  a = a.replace(']','')
+  return a.strip()
+
 def diff(l,u):
    """Return the difference of the lists l, u"""
    from sets import Set
@@ -14,17 +24,12 @@ def diff(l,u):
    w = str(w).replace("'","").replace('[','').replace(']','')
    return w
 
-def uniq(s):
-   """Return a list of the elements in s, but without duplicates."""
+def uniq(a):
+   """Return a list of the elements in a, but without duplicates."""
 
    alist = []
    
-   # remove unwanted chars
-   w = s.replace("'",'')
-   w = w.replace(' ','')
-   w = w.replace(',',' ')  
-   w = w.replace('[','')  
-   w = w.replace(']','')
+   w = mrClean(a, ',')
 
    # loop over each item and add to alist if not already present
    [alist.append(item) for item in w.split() if not alist.count(item)]
