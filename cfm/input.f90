@@ -4,9 +4,25 @@ module Input
    implicit none
 
    character(len=27) :: startTime = "2005-037T00:00:00.0000"
-   character(len=27) :: endTime = "2005-037T00:00:59.9999"
+   character(len=27) :: endTime = "2005-037T00:00:00.9999"
    character(len=100) :: l1boa = "/data/emls/l1b/v02.23/2005/037/MLS-Aura_L1BOA_v02-23-c01_2005d037.h5"
    character(len=100) :: spectroscopy = '/data/emls/l2cal/MLS-Aura_L2Cal-Spectroscopy-PFA_v3-0-4_0000d000.h5'
+   character(len=100) :: leapsecFile = '/software/toolkit/LF6.1/toolkit/database/common/TD/leapsec.dat'
+   character(len=100) :: antennaPatterns = '/data/emls/l2cal/MLS-Aura_L2Cal-AAAP_v2-0-0_0000d000.txt'
+   character(len=100) :: filterShapes = '/data/emls/l2cal/MLS-Aura_L2Cal-Filters_v3-0-2_0000d000.txt'
+   character(len=100) :: DACSFilterShapes = '/data/emls/l2cal/MLS-Aura_L2Cal-DACSFilters_v1-5-1_0000d000.txt'
+   character(len=100) :: pointingGrids = '/data/emls/l2cal/MLS-Aura_L2Cal-PFG_v3-0-0_0000d000.txt'
+   character(len=100), dimension(8) :: &
+   pfaFiles= (/'/data/emls/l2cal/PFA_R5V_FS-04.h5', &
+    '/data/emls/l2cal/PFA_R5H_FS-04.h5', &
+    '/data/emls/l2cal/PFA_R4_FS-04.h5 ', &
+    '/data/emls/l2cal/PFA_R3_FS-04.h5 ', &
+    '/data/emls/l2cal/PFA_R2_FS-04.h5 ', &
+    '/data/emls/l2cal/PFA_R1B_FS-04.h5', &
+    '/data/emls/l2cal/PFA_R1A_FS-04.h5', &
+    '/data/emls/l2cal/PFA_DACS_FS-04.h5' /)
+   character(len=100), dimension(1) :: &
+   l2pc = (/'/data/emls/l2cal/l2pc_30H6/MLS-Aura_L2Cal-L2PC-band7-LATSCALARHIRESO3HR_v3-00-HO-06_m02.h5'/)
    real(r8), dimension(37) :: &
    TemperatureInput= (/ 2.9128e+02,  2.9149e+02,  2.8439e+02,  2.7649e+02,  2.6942e+02, &
                 2.5727e+02,  2.4453e+02,  2.2941e+02,  2.1723e+02,  2.1070e+02, &
