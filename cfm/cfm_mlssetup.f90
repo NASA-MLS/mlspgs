@@ -1,78 +1,111 @@
 module CFM_MLSSetup_m
 
-   use CFM_Tree_Walker_m, only : Walk_Tree
    use ForwardModelConfig, only: ForwardModelConfig_T, dump
-   use SpectroscopyCatalog_m, only: dump
    use QuantityTemplates, only: QuantityTemplate_T
-   use VGridsDatabase, only: VGrid_T
    use LEXER_CORE, only: INIT_LEXER
    use DECLARATION_TABLE, only: ALLOCATE_DECL, DEALLOCATE_DECL
    use TREE, only: ALLOCATE_TREE, DEALLOCATE_TREE
-   use INIT_TABLES_MODULE, only: INIT_TABLES
-   use PARSER, only: CONFIGURATION
-   use TREE_CHECKER, only: CHECK_TREE
+   use tree, only: nsons, subtree, decoration
    use H5LIB, ONLY: h5open_f, h5close_f
-   ! We don't message here, but don't know why I have to use
-   ! MLSMessageConfig, but this is no time to find out
-   use MLSMessageModule, only: MLSMessageConfig!, MLSMSG_Allocate, &
-!                               MLSMessage, MLSMSG_Error, MLSMSG_Deallocate, &
-!                               MLSMSG_Warning
-   use STRING_TABLE, only: DESTROY_CHAR_TABLE, DESTROY_HASH_TABLE, &
-    & DESTROY_STRING_TABLE
+   use MLSMessageModule, only: MLSMessageConfig, &
+                               MLSMessage, MLSMSG_Error, MLSMSG_Deallocate, &
+                               MLSMSG_Allocate!, MLSMSG_Warning
    use SYMBOL_TABLE, only: DESTROY_SYMBOL_TABLE
-   use Chunks_m, only: MLSChunk_T
    use L1BData, only: findMaxMaf, NAME_LEN, READL1BDATA, L1BDATA_T, &
                       DEALLOCATEL1BDATA, AssembleL1BQtyName
-   use MLSFiles, only: InitializeMLSFile, mls_openFile, &
-                       mls_closeFile, GetMLSFileByType
    use MLSCommon, only: MLSFile_T, TAI93_Range_T, r8
-   use SDPToolkit, only: PGS_S_SUCCESS
-   use Intrinsic, only: l_hdf, l_ascii, lit_indices
-   use Hdf, only: DFACC_RDONLY
+   use Intrinsic, only: l_hdf, lit_indices
    use MLSNumerics, only: Hunt
    use ChunkDivide_m, only: ChunkDivideConfig_T, &
                             GetChunkFromTimeRange => CFM_ChunkDivide
-   use Init_Tables_Module, only: l_none, phyq_mafs, phyq_time, phyq_angle, &
-                                 l_orbital, l_fixed, l_both, l_either, &
-                                 l_ghz
-   use Allocate_Deallocate, only: allocate_test, deallocate_test
    use MLSSignals_m, only: MODULES
    use String_Table, only: get_string
    use MLSFillValues, only: ISFILLVALUE
    use MLSSets, only: FINDFIRST
-   use SDPToolkit, only: pgs_td_utctotai, PGS_S_SUCCESS, PGSTD_E_NO_LEAP_SECS
+   use Chunks_m, only: MLSChunk_T ! To also be referenced outside
+   use CFM_VGrid_m, only: VGrid_T
+   use CFM_HGrid_m, only: HGrid_T
+   use CFM_Vector_m, only: GetVectorQtyByTemplateIndex ! being used in many functions
 
    implicit none
 
    private
    public :: CFM_MLSSetup, CFM_MLSCleanup
    public :: MLSChunk_T
+   public :: GetRefGPHIndexInStateExtra, GetPhitanGHzIndexInStateExtra
 
-   type MAFRange_T
-      integer, dimension(2) :: L1BCover ! Range found in L1B files
-      integer, dimension(2) :: L2Cover  ! Range covered by L2 ProcessingRange
-      integer, dimension(2) :: Expanded ! L2Cover plus prior/post overlaps
-   end type
+!---------------------------- RCS Ident Info -------------------------------
+   character(len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+   private :: not_used_here
+!---------------------------------------------------------------------------
 
-   character(len=20), parameter :: moduleName = "CFM_MLSSetup"
    integer, parameter :: CCSDSLen = 27
-   type(MLSFile_T), dimension(:), save, pointer :: myFiledatabase => NULL()
    type(ChunkDivideConfig_T), save :: chunkDivideConfig  ! Using default options
+   integer, parameter :: empiricalGeometry_noIterations = 10
+   real(r8), dimension(21), parameter :: empircalGeometry_terms = (/ &
+   -1.06863, 43.0943, -16.2062, 8.12730, -4.58416, 2.75786, -1.72880, &
+    1.11523, -0.733464, 0.489792, -0.331852, 0.227522, -0.156428, &
+    0.108031, -0.0757825, 0.0536980, -0.0375161, 0.0260555, &
+   -0.0188811, 0.0138453, -0.00959350 /)
+   character(len=20), dimension(62), parameter :: signalNames = (/ &
+   'R1A:118.B1LF:PT', 'R2:190.B2LF:H2O', 'R2:190.B3LF:N2O', &
+   'R2:190.B4LF:HNO3', 'R2:190.B5LF:ClO', 'R2:190.B6LF:O3', &
+   'R3:240.B7LF:O3', 'R3:240.B8LF:PT', 'R3:240.B9LF:CO', &
+   'R4:640.B10LF:ClO', 'R4:640.B11LF:BrO', 'R4:640.B12LF:N2O', &
+   'R4:640.B13LF:HCl', 'R4:640.B14LF:O3', 'R5H:2T5.B15LF:OH', &
+   'R5H:2T5.B16LF:OH', 'R5H:2T5.B17LF:PT', 'R5V:2T5.B18LF:OH', &
+   'R5V:2T5.B19LF:OH', 'R5V:2T5.B20LF:PT', 'R1B:118.B21LF:PT', &
+   'R1A:118.B22LD:PT', 'R2:190.B23LD:H2O', 'R3:240.B24LD:O3', &
+   'R3:240.B25LD:CO', 'R1B:118.B26LD:PT', 'R2:190.B27LM:HCN', &
+   'R4:640.B28LM:HO2', 'R4:640.B29LM:HOCl', 'R4:640.B30LM:HO2', &
+   'R4:640.B31LM:BrO', 'R1A:118.B32LW:PT', 'R3:240.B33LW:O3', &
+   'R1B:118.B34LW:PT', 'R2:190.B2UF:H2O', 'R2:190.B3UF:N2O', &
+   'R2:190.B4UF:HNO3', 'R2:190.B5UF:ClO', 'R2:190.B6UF:O3', &
+   'R3:240.B7UF:O3', 'R3:240.B8UF:PT', 'R3:240.B9UF:CO', &
+   'R4:640.B10UF:ClO', 'R4:640.B11UF:BrO', 'R4:640.B12UF:N2O', &
+   'R4:640.B13UF:HCl', 'R4:640.B14UF:O3', 'R5H:2T5.B15UF:OH', &
+   'R5H:2T5.B16UF:OH', 'R5H:2T5.B17UF:PT', 'R5V:2T5.B18UF:OH', &
+   'R5V:2T5.B19UF:OH', 'R5V:2T5.B20UF:PT', 'R2:190.B23UD:H2O', &
+   'R3:240.B24UD:O3', 'R3:240.B25UD:CO', 'R2:190.B27UM:HCN', &
+   'R4:640.B28UM:HO2', 'R4:640.B29UM:HOCl', 'R4:640.B30UM:HO2', &
+   'R4:640.B31UM:BrO', 'R3:240.B33UW:O3' /)
+
+   integer, save :: refGPH_index, phitanGHz_index
 
    contains
 
-   ! Parse the L2CF given in standard input, and use it to read
-   ! ForwardModelConfig(s), then put them in ForwardModelConfigDatabase.
-   ! Also reads Spectroscopy, MLSSignals.
+   ! Read the signal file and populate the signal database
+   ! Read the config file for forward model configuration(s),
+   ! then put them in ForwardModelConfigDatabase.
    ! Reads L1BOA file and put it into the filedatabase.
-   ! Uses the startTime and endTime to create a MLSChunk_T object
-   ! that uses by other subroutines that read data from L1BOA.
+   ! Uses the startTime, endTime and leapsec file to create a
+   ! MLSChunk_T object that uses by other subroutines that read
+   ! data from L1BOA.
+   ! Construct the quantity template databases, which will include
+   ! the quantities inside stateVectorExtra
+   ! Create stateVectorExtra that is the second input to the forward
+   ! model.
    ! Note: the use of a filedatabase, instead of just one MLSFile_T
    ! object to store L1BOA is for convenience when wrapping
    ! existing code in MLSPGS.
    ! CFM_MLSSetup is to be called only once before CFM_MLSCleanup is called.
-   subroutine CFM_MLSSetup (startTime, endTime, l1boa, retVal, &
-      filedatabase, fakeChunk, ForwardModelConfigDatabase)
+   subroutine CFM_MLSSetup (startTime, endTime, l1boa, leapsecFile, signalFileName, &
+      configFileName, filedatabase, qtyTemplates, fakeChunk, ForwardModelConfigDatabase, &
+      stateVectorExtra)
+      use CFM_Tree_Walker_m, only : Walk_Tree
+      use CFM_Vector_m, only: Vector_T
+      use string_table, only: AddInUnit
+      use MLSFiles, only: AddFileToDatabase, InitializeMLSFile, mls_openFile
+      use io_stuff, only: get_lun
+      use SDPToolkit, only: mls_utctotai
+      use EmpiricalGeometry, only: CFM_InitEmpiricalGeometry
+      use Hdf, only: DFACC_RDONLY
+      use INIT_TABLES_MODULE, only: INIT_TABLES, l_ghz, &
+                                    l_none, phyq_mafs, phyq_time, phyq_angle, &
+                                    l_orbital, l_fixed, l_both, l_either
+      use PARSER, only: CONFIGURATION
+      use TREE_CHECKER, only: CHECK_TREE
 
       ! The start time of the data to be read in the format
       ! yyyy-doyThh:mm:ss.zzzz
@@ -81,31 +114,64 @@ module CFM_MLSSetup_m
       character(len=CCSDSlen), intent(in) :: endTime
       ! The file name of L1BOA file.
       character(len=*), intent(in) :: l1boa
-      ! Return value: 0 if successful, non-zero if error(s) is encountered.
-      integer, intent(out) :: retVal
+      ! The name of leapsec file
+      character(len=*), intent(in) :: leapsecFile
+      ! The name of the signal database file
+      character(len=*), intent(in) :: signalFileName
+      ! The name of the forward model configuration file
+      character(len=*), intent(in) :: configFileName
       ! Output: An array of MLSFile_T object, representing open file(s),
       ! including L1BOA.
       type (MLSFile_T), dimension(:), pointer :: filedatabase
+      ! The quantity template database, which is nullified by this
+      ! subroutine.
+      type(QuantityTemplate_T), dimension(:), pointer :: qtyTemplates
       ! Output: A data holder that holds the startTime and endTime
       ! in a way that can be understood by other subroutines.
       type (MLSChunk_T), intent(out) :: fakeChunk
-      ! Output: to store all ForwardModelConfig_T objects declared in L2CF.
+      ! Output: to store all ForwardModelConfig_T objects declared in
+      ! the config file.
       ! This argument will be nullified inside this subroutine.
-      type (ForwardModelConfig_T), pointer, optional :: ForwardModelConfigDatabase(:)
+      type (ForwardModelConfig_T), pointer :: ForwardModelConfigDatabase(:)
+      ! A vector filled with quantities that can be supplied by MLS
+      ! and needed for the forward model.
+      type (Vector_T), intent(out) :: stateVectorExtra
 
       integer :: Root
       integer :: First_Section
       integer :: error
       type (MLSFile_T), target :: l1bfile
       type (TAI93_Range_T) :: processingRange
-      type (ForwardModelConfig_T), pointer :: dummy1(:) => NULL()
+      integer :: signalIn, configIn
 
       !Executables
-      retVal = 0
-      if (present(ForwardModelConfigDatabase)) nullify (ForwardModelConfigDatabase)
+      nullify(filedatabase)
 
+      ! Set this, so we don't have the missing log error
       MLSMessageConfig%useToolkit = .false.
       MLSMessageConfig%logFileUnit = -1
+
+      ! Set up empirical geometry before reading the L2CFs, which include
+      ! global_setting, where vGrids can be defined.
+      call CFM_InitEmpiricalGeometry (empiricalGeometry_noIterations, &
+                                      empircalGeometry_terms)
+
+      call get_lun(signalIn)
+      open (unit=signalIn, file=trim(signalFileName), status='OLD', &
+      iostat=error)
+      if (error /= 0) &
+         call MLSMessage (MLSMSG_Error, moduleName, &
+         'Error opening ' // trim(signalFileName))
+
+      call get_lun(configIn)
+      open(unit=configIn, file=trim(configFileName), status='OLD', &
+      iostat=error)
+      if (error /= 0) &
+         call MLSMessage (MLSMSG_Error, moduleName, &
+         'Error opening ' // trim(configFileName))
+
+      call AddInUnit(signalIn)
+      call AddInUnit(configIn)
 
       call init_lexer ( n_chars=80000, n_symbols=4000, hash_table_size=611957 )
       call allocate_decl ( ndecls=8000 )
@@ -113,95 +179,109 @@ module CFM_MLSSetup_m
       call init_tables
       call configuration(Root)
       if (Root <= 0) then
-         print *, 'A syntax error occurred -- there is no abstract syntax tree'
-         retVal = 2
-         return
+         call MLSMessage (MLSMSG_Error, moduleName, &
+         'A syntax error occurred -- there is no abstract syntax tree')
       end if
 
       call check_tree ( root, error, first_section )
-      if (error /= 0) then
-         print *, "Error in tree"
-         retVal = 3
-         return
-      end if
+      if (error /= 0) &
+         call MLSMessage (MLSMSG_Error, moduleName, "Error in tree")
+
+      nullify(ForwardModelConfigDatabase)
+      call Walk_Tree ( Root, First_Section, &
+         ForwardModelConfigDatabase=ForwardModelConfigDatabase )
+
+      close (signalIn, iostat=error)
+      if (error /= 0) &
+         call MLSMessage (MLSMSG_Error, moduleName, &
+         "Error closing " // trim(signalFileName))
+
+      close (configIn, iostat=error)
+      if (error /= 0) &
+         call MLSMessage (MLSMSG_Error, moduleName, &
+         'Error closing ' // trim(configFileName))
 
       ! We have to call this before opening any HDF5 file
       call h5open_f(error)
-      if (error /= 0) then
-         print *, "Error in initialize hdf5 library"
-         retVal = 4
-         return
-      end if
-
-      if (present(ForwardModelConfigDatabase)) then
-         nullify(ForwardModelConfigDatabase)
-         call Walk_Tree ( Root, First_Section, ForwardModelConfigDatabase )
-      else
-         call Walk_Tree ( Root, First_Section, dummy1 )
-         deallocate (dummy1)
-      end if
-
-      ! Create filedatabase
-      nullify(filedatabase)
-      allocate(filedatabase(1), stat=error)
-      if (error /= 0) return
-      myFiledatabase => filedatabase ! Remember what you allocate
-                                     ! so you can deallocate later
+      if (error /= 0) &
+         call MLSMessage (MLSMSG_Error, moduleName, "Error in initialize hdf5 library")
 
       error = InitializeMLSFile(l1bfile, content='l1boa', &
       name=trim(l1boa), shortName='L1BOA', type=l_hdf, access=DFACC_RDONLY)
-      if (error == 0) then
-         call mls_openFile(L1BFile, error)
-         if (error /= PGS_S_SUCCESS ) then
-            error = -1
-            return
-         else
-            filedatabase(1) = l1bfile
-         end if
+      if (error /= 0) &
+         call MLSMessage (MLSMSG_Error, moduleName, &
+         "Error initializing " // trim(l1boa))
 
-         ! Get the start time and end time encoded
-         error = pgs_td_utctotai (startTime, processingrange%starttime)
-         if (error /= PGS_S_SUCCESS .and. error /= PGSTD_E_NO_LEAP_SECS) then
-            print *, "Could not convert UTC Start time to TAI"
-            retVal = 1
-            return
-         end if
+      call mls_openFile(L1BFile, error)
+      if (error /= 0 ) &
+         call MLSMessage (MLSMSG_Error, moduleName, &
+         "Error opening " // trim(l1boa))
 
-         error = pgs_td_utctotai (endtime, processingrange%endtime)
-         if (error /= PGS_S_SUCCESS .and. error /= PGSTD_E_NO_LEAP_SECS) then
-            print *, "Could not convert UTC End time to TAI"
-            retVal = 1
-            return
-         end if
+      ! Just something to capture the output of the function
+      ! in order to not get compiling error
+      error = AddFileToDatabase(filedatabase, l1bfile)
 
-         ! Initialize ChunkDivideConfig
-         chunkDivideConfig%method = l_orbital
-         chunkDivideConfig%maxLengthFamily = phyq_mafs
-         chunkDivideConfig%skipL1BCheck = .true.
-         chunkDivideConfig%homeModule = l_ghz
-         chunkDivideConfig%criticalModules = l_ghz
-         chunkDivideConfig%homeGeodAngle = 0.0_r8
-         chunkDivideConfig%maxGap = 2.0_r8
-         chunkDivideConfig%maxGapFamily = phyq_mafs
-         chunkDivideConfig%maxOrbY = 50000.0_r8 ! Unit is meter
-         chunkDivideConfig%scanLowerLimit = (/-20000.0_r8, 10000.0_r8 /) ! unit is meter
-         chunkDivideConfig%scanUpperLimit = (/ 40000.0_r8, 200000.0_r8 /) ! unit is meter
-         chunkDivideConfig%lowerOverlap = 0.0
-         chunkDivideConfig%upperOverlap = 0.0
-         chunkDivideConfig%lowerOverlapFamily = phyq_mafs
-         chunkDivideConfig%upperOverlapFamily = phyq_mafs
-         chunkDivideConfig%noChunks = 1
-         ! Create a fake chunk out of the start time, end time, and L1BOA
-         fakeChunk = GetChunkFromTimeRange(processingRange, filedatabase, chunkDivideConfig)
-      end if
+      ! Get the start time and end time encoded
+      error = mls_utctotai (trim(leapsecFile), startTime, processingrange%starttime)
+      if (error /= 0) &
+         call MLSMessage (MLSMSG_Error, moduleName, &
+            "Could not convert UTC Start time to TAI")
 
-   end subroutine CFM_MLSSetup
+      error = mls_utctotai (trim(leapsecFile), endtime, processingrange%endtime)
+      if (error /= 0) &
+         call MLSMessage (MLSMSG_Error, moduleName, &
+            "Could not convert UTC End time to TAI")
+
+      ! Initialize ChunkDivideConfig
+      chunkDivideConfig%method = l_orbital
+      chunkDivideConfig%maxLength = 3500
+      chunkDivideConfig%maxLengthFamily = phyq_mafs
+      chunkDivideConfig%skipL1BCheck = .true.
+      chunkDivideConfig%homeModule = l_ghz
+      chunkDivideConfig%criticalModules = l_ghz
+      chunkDivideConfig%homeGeodAngle = 0.0_r8
+      chunkDivideConfig%maxGap = 2.0_r8
+      chunkDivideConfig%maxGapFamily = phyq_mafs
+      chunkDivideConfig%maxOrbY = 50000.0_r8 ! Unit is meter
+      chunkDivideConfig%scanLowerLimit = (/-20000.0_r8, 10000.0_r8 /) ! unit is meter
+      chunkDivideConfig%scanUpperLimit = (/ 40000.0_r8, 200000.0_r8 /) ! unit is meter
+      chunkDivideConfig%lowerOverlap = 0.0
+      chunkDivideConfig%upperOverlap = 0.0
+      chunkDivideConfig%lowerOverlapFamily = phyq_mafs
+      chunkDivideConfig%upperOverlapFamily = phyq_mafs
+      chunkDivideConfig%noChunks = 1
+      ! Create a fake chunk out of the start time, end time, and L1BOA
+      fakeChunk = GetChunkFromTimeRange(processingRange, filedatabase, chunkDivideConfig)
+
+      call CreateStateVectorExtra(filedatabase, fakeChunk, qtyTemplates, stateVectorExtra)
+
+   end subroutine
 
    ! Clean up allocated memory, close opened files
-   subroutine CFM_MLSCleanup
+   subroutine CFM_MLSCleanup (filedatabase, qtyTemplates, forwardModelConfigDatabase, &
+                              stateVectorExtra)
+      use ForwardModelConfig, only: DestroyFWMConfigDatabase
+      use MLSFiles, only: mls_closeFile
+      use STRING_TABLE, only: DESTROY_CHAR_TABLE, DESTROY_HASH_TABLE, &
+                              DESTROY_STRING_TABLE
+      use Chunks_m, only: MLSChunk_T
+      use CFM_QuantityTemplate_m, only: DestroyQuantityTemplateDatabase
+      use CFM_Vector_m, only: Vector_T, DestroyVectorInfo
+      use CFM_VectorTemplate_m, only: DestroyVectorTemplateInfo
+
+      ! The filedatabase created by CFM_MLSSetup
+      type (MLSFile_T), dimension(:), pointer :: filedatabase
+      ! The quantity template database created by CFM_MLSSetup
+      type(QuantityTemplate_T), dimension(:), pointer :: qtyTemplates
+      ! The forward model configurations created by CFM_MLSSetup
+      type (ForwardModelConfig_T), pointer :: ForwardModelConfigDatabase(:)
+      ! The vector created by CFM_MLSSetup
+      type(Vector_T) :: stateVectorExtra
 
       integer :: error
       integer :: i
+
+      call DestroyFWMConfigDatabase(forwardModelConfigDatabase)
 
       ! Clean up for the tree
       call destroy_char_table
@@ -211,13 +291,16 @@ module CFM_MLSSetup_m
       call deallocate_decl
       call deallocate_tree
 
-      ! Close open files
-      do i = 1, size(myFiledatabase)
-         call mls_closefile(myFiledatabase(i))
+      do i = 1, size(filedatabase)
+         call mls_closefile(filedatabase(i))
       end do
 
-      ! Deallocate filedatabase
-      if (associated(myFiledatabase)) deallocate(myFiledatabase)
+      deallocate(filedatabase)
+      nullify(filedatabase)
+
+      call DestroyVectorTemplateInfo(stateVectorExtra%template)
+      call DestroyVectorInfo(stateVectorExtra)
+      call DestroyQuantityTemplateDatabase (qtyTemplates)
 
       ! Have to call this, after we stops using HDF5 library
       call h5close_f (error)
@@ -227,5 +310,153 @@ module CFM_MLSSetup_m
       end if
 
    end subroutine CFM_MLSCleanup
+
+   ! Create stateVectorExtra with the given filedatabase, chunk, and quantity database.
+   ! StateVectorExtra will include the following quantities: O2, earth reflectivity,
+   ! LOS velocity of GHz module, spacecraft geocentric altitude, space radiance,
+   ! elevation offset, limb sideband fraction, reference GPH, phitan of GHz module
+   ! for every band. See CFM documentation for a list of bands.
+   subroutine CreateStateVectorExtra (filedatabase, fakeChunk, qtyTemplates, stateVectorExtra)
+      use CFM_VGrid_m, only: CreateVGrid, DestroyVGridContents
+      use CFM_HGrid_m, only: CreateRegularHGrid, DestroyHGridContents
+      use CFM_QuantityTemplate_m, only: CreateQtyTemplate, InitQuantityTemplates, &
+                                        AddQuantityTemplateToDatabase
+      use CFM_VectorTemplate_m, only: CreateVectorTemplate, VectorTemplate_T
+      use CFM_Vector_m, only: CreateVector, Vector_T, VectorValue_T
+      use INIT_TABLES_MODULE, only: phyq_pressure, l_logarithmic, l_zeta, &
+                                    phyq_vmr, l_vmr, l_earthRefl, l_losVel, &
+                                    l_scgeocalt, l_spaceradiance, l_elevOffset, &
+                                    l_limbsidebandFraction, l_explicit, l_refGPH, &
+                                    l_phitan, l_o2
+      use CFM_Fill_M, only: FillVectorQtyFromProfile, ExplicitFillVectorQuantity, &
+      FillVectorQuantityFromL1B, SpreadFillVectorQuantity
+      use Allocate_Deallocate, only: allocate_test, deallocate_test
+
+      type (MLSFile_T), dimension(:), pointer :: filedatabase
+      type (MLSChunk_T), intent(in) :: fakeChunk
+      type (QuantityTemplate_T), dimension(:), pointer :: qtyTemplates
+      type (Vector_T), intent(out) :: stateVectorExtra
+
+      type(QuantityTemplate_T) :: O2, earthRefl, losVelGHz, scGeocAlt, &
+                                  spaceRadiance, elevOffset, lsbFraction, &
+                                  refGPH, phitanGHz
+      type(VectorTemplate_T) :: stateTemplateExtra
+      type(VGrid_T) :: vGridStandard, vGridRefGPH
+      type(HGrid_T) :: hGridStandard
+      integer :: O2_index, earthRefl_index, losVelGHz_index, scGeocAlt_index, &
+                 spaceRadiance_index, elevOffset_index, lsbFraction_index
+      type(VectorValue_T) :: quantity
+      real(r8), dimension(17) :: o2_heights = &
+      (/1.0e+03_r8, 8.0131e-03_r8, 5.8925e-03_r8, 4.3241e-03_r8, 3.1594e-03_r8, &
+      2.2961e-03_r8, 1.6581e-03_r8, 1.1874e-03_r8, 8.4392e-04_r8, 5.9869e-04_r8, &
+      4.2472e-04_r8, 3.0332e-04_r8, 2.1863e-04_r8, 1.5948e-04_r8, 1.1809e-04_r8, &
+      8.8552e-05_r8, 6.6696e-05_r8/)
+      real(r8), dimension(17) :: o2_values = &
+      (/0.2095_r8, 0.2095_r8, 0.2092_r8, 0.2089_r8, 0.2086_r8, 0.2083_r8, &
+      0.2080_r8, 0.2070_r8, 0.2061_r8, 0.2051_r8, 0.2042_r8, 0.2032_r8, &
+      0.1915_r8, 0.1798_r8, 0.1681_r8, 0.1564_r8, 0.1447_r8/)
+      integer :: i
+      integer, dimension(:), pointer :: selected
+
+      ! Executables
+
+      nullify(qtyTemplates)
+      ! Create O2 for use in the forward model
+      vGridStandard = CreateVGrid (l_zeta, phyq_pressure, l_logarithmic, &
+                                   start=1000.0d0, formula="37:6")
+      vGridRefGPH = CreateVGrid (l_zeta, phyq_pressure, l_explicit, &
+                              values=(/100.0_r8/))
+
+      ! Have insetoverlaps, and not single
+      hGridStandard = CreateRegularHGrid("GHz", 0.0_r8, 1.5_r8, .true., &
+                                         filedatabase, fakeChunk)
+      ! Have to initialize before we start creating quantity templates
+      call InitQuantityTemplates
+      refGPH = CreateQtyTemplate(l_refGPH, avgrid=vGridRefGPH, ahgrid=hGridStandard)
+      O2 = CreateQtyTemplate(l_vmr, filedatabase=filedatabase, chunk=fakeChunk, &
+                             avgrid=vGridStandard, ahgrid=hGridStandard, &
+                             qMolecule=l_o2)
+      earthRefl = CreateQtyTemplate(l_earthRefl, filedatabase=filedatabase, chunk=fakeChunk)
+      losVelGHz = CreateQtyTemplate(l_losVel, filedatabase=filedatabase, chunk=fakeChunk, &
+                                    qInstModule="GHz")
+      scGeocAlt = CreateQtyTemplate(l_scgeocalt, filedatabase=filedatabase, chunk=fakeChunk, &
+                                    qInstModule="sc")
+      spaceRadiance = CreateQtyTemplate(l_spaceradiance, filedatabase=filedatabase, &
+                                        chunk=fakeChunk)
+      phitanGHz = CreateQtyTemplate(l_phitan, qInstModule="GHz", filedatabase=filedatabase, &
+                                    chunk=fakeChunk)
+
+      o2_index = AddQuantityTemplateToDatabase(qtyTemplates, o2)
+      earthRefl_index = AddQuantityTemplateToDatabase(qtyTemplates, earthRefl)
+      losVelGHz_index = AddQuantityTemplateToDatabase(qtyTemplates, losVelGHz)
+      scGeocAlt_index = AddQuantityTemplateToDatabase(qtyTemplates, scGeocAlt)
+      spaceRadiance_index = AddQuantityTemplateToDatabase(qtyTemplates, spaceRadiance)
+      refGPH_index = AddQuantityTemplateToDatabase(qtyTemplates, refGPH)
+      phitanGHz_index = AddQuantityTemplateToDatabase(qtyTemplates, phitanGHz)
+
+      do i = 1, size(signalNames)
+         ! Add sideband fraction
+         lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+         filedatabase=filedatabase, chunk=fakeChunk, qSignal=signalNames(i))
+         lsbFraction_index = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+         ! Add elevation Offset
+         elevOffset = CreateQtyTemplate(l_elevOffset, filedatabase=filedatabase, &
+         chunk=fakeChunk, qSignal=signalNames(i))
+         elevOffset_index = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+      end do
+
+      ! Don't need the grids anymore
+      call DestroyVGridContents(vGridStandard)
+      call DestroyHGridContents(hGridStandard)
+
+      ! Everything in the the quantity template database is selected
+      call allocate_test (selected, size(qtyTemplates), "selected", moduleName)
+      do i = 1, size(selected)
+         selected(i) = i
+      end do
+
+      stateTemplateExtra = CreateVectorTemplate(qtyTemplates, selected)
+
+      call deallocate_Test(selected, "selected", moduleName)
+
+      stateVectorExtra = CreateVector(stateTemplateExtra, qtyTemplates)
+
+      quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, o2_index)
+      call FillVectorQtyFromProfile (quantity, .false., o2_heights, &
+                                     o2_values, phyq_vmr)
+      quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, earthRefl_index)
+      call ExplicitFillVectorQuantity (quantity, (/0.05_r8/))
+      quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, spaceRadiance_index)
+      call ExplicitFillVectorQuantity (quantity, (/2.735_r8/))
+      quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, losVelGHz_index)
+      call FillVectorQuantityFromL1B (quantity, fakeChunk, filedatabase, .false.)
+      quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, scGeocAlt_index)
+      call FillVectorQuantityFromL1B (quantity, fakeChunk, filedatabase, .false.)
+      quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, refGPH_index) ! refGPH
+      call SpreadFillVectorQuantity (quantity, 16000.0_r8) ! unit is meter
+      quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, phitanGHz_index)
+      quantity%values = quantity%template%phi
+   end subroutine
+
+   ! Return the index of refGPH quantity in the stateVectorExtra
+   integer function GetRefGPHIndexInStateExtra result(index)
+      index = refGPH_index
+   end function
+
+   ! Return the index of phitan of GHz module in stateVectorExtra
+   integer function GetPhitanGHzIndexInStateExtra result(index)
+      index = phitanGHz_index
+   end function
+
+!--------------------------- end bloc --------------------------------------
+   logical function not_used_here()
+   character (len=*), parameter :: IdParm = &
+       "$Id$"
+   character (len=len(idParm)) :: Id = idParm
+      not_used_here = (id(1:1) == ModuleName(1:1))
+      print *, Id ! .mod files sometimes change if PRINT is added
+   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module
