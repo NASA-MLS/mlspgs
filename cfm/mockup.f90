@@ -74,7 +74,6 @@ program mockup
    integer :: geodAlt_index, orbincl_index, gph_index
    integer :: geocAlt_index
    character(len=256) :: signalFileName, configFileName
-   type (ForwardModelStatus_T) :: FmStat ! Status for forward model
 
    call getarg(1, signalFileName)
    call getarg(2, configFileName)
@@ -218,7 +217,7 @@ program mockup
 
    ! Call the forward model
    call ForwardModel (fakeChunk, forwardModelConfigDatabase(1), state, &
-                      stateExtra, measurement, fmStat)
+                      stateExtra, measurement)
 
    ! MLS radiances are stored in measurement vector
    ! do what you want with it
