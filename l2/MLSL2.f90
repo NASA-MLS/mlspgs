@@ -59,7 +59,7 @@ program MLSL2
   use SDPToolkit, only: UseSDPToolkit
   use SnoopMLSL2, only: SNOOPINGACTIVE, SNOOPNAME
   use STRING_TABLE, only: DESTROY_CHAR_TABLE, DESTROY_HASH_TABLE, &
-    & DESTROY_STRING_TABLE, DO_LISTING, GET_STRING, INUNIT
+    & DESTROY_STRING_TABLE, DO_LISTING, GET_STRING, ADDINUNIT
   use SYMBOL_TABLE, only: DESTROY_SYMBOL_TABLE
   use Time_M, only: Time_Now, time_config
   use TOGGLES, only: CON, EMIT, GEN, LEVELS, LEX, PAR, SYN, SWITCHES, TAB, &
@@ -80,7 +80,7 @@ program MLSL2
   ! Usage:
   ! mlsl2 [options] [<] [l2cf]
   ! where l2cf is an ascii file which comes from one of
-  ! (i)   a file named by a line in the pcf 
+  ! (i)   a file named by a line in the pcf
   !        (if and only if toolkit is TRUE)
   ! (ii)  a file named on the command line w/o the '<' redirection
   ! (iii) stdin or a file redirected as stdin using '<'
@@ -90,7 +90,7 @@ program MLSL2
   !    E.g., mlsl2 -m -p --nmeta -Sglo,jac
   !    For a list of available options enter 'mlsl2 --help'
   !    For a list of available switches enter 'mlsl2 -S"?"'
-  ! In case the l2cf is named, say, "file_name" by (ii), we will try: 
+  ! In case the l2cf is named, say, "file_name" by (ii), we will try:
   ! First, to find file_name in the current directory
   ! If that fails, we will try file_name.l2cf in the same directory
   ! If that fails, woe is us and we exit with an error
@@ -100,10 +100,10 @@ program MLSL2
   ! prior to any scientific tasks (processing data)
   ! The operational tasks are under the control of any and all of
   ! (a) hard-wired options (see MLSL2Options module)
-  ! (b) command-line options (see /mlspgs/notes/options and 
+  ! (b) command-line options (see /mlspgs/notes/options and
   !         /mlspgs/notes/switches)
-  ! (c) the l2cf 
-  ! (d) the pcf (unless the variable 'pcf' is FALSE) 
+  ! (c) the l2cf
+  ! (d) the pcf (unless the variable 'pcf' is FALSE)
   ! Tasks
   ! (1) Accept hard-wired options (see module MLSL2OPtions.f90)
   ! (2) Initialize parser structures
@@ -124,7 +124,7 @@ program MLSL2
   ! Three alternatives are available to manage these tasks
   ! (1) "submit", where you specify --submit "command" as
   !       a command-line option, and the master uses "command"
-  !       with a generic, non-mlsl2-aware batch queue system; 
+  !       with a generic, non-mlsl2-aware batch queue system;
   !       (this has been successfully tested via --submit mlssubmit)
   ! (2) l2q, where you specify --submit l2q as the command-line option;
   !      l2q is a special-purpose mlsl2-aware executable
@@ -181,6 +181,7 @@ program MLSL2
   logical :: Timing = .false.      ! -T option is set
   integer :: V                     ! Numeric value after an option
   character(len=2048) :: WORD      ! Some text
+  integer :: inunit = -1
 
 !---------------------------- RCS Ident Info ------------------------------
   character (len=*), parameter :: ModuleName= &
@@ -271,7 +272,6 @@ program MLSL2
         call getarg ( i, line )
         parallel%chunkRange = line
         command_line = trim(command_line) // ' ' // trim(parallel%chunkRange)
-        ! call outputNamedValue('chunkRange', trim(parallel%chunkRange) )
       else if ( lowercase(line(3+n:7+n)) == 'ckbk ' ) then
         checkBlocks = switch
       else if ( lowercase(line(3+n:14+n)) == 'countchunks ' ) then
@@ -517,10 +517,6 @@ program MLSL2
         call get_lun ( OutputOptions%prUnit, msg=.false. )
         close( unit=l2cf_unit )
         inquire( unit=OutputOptions%prUnit, exist=exist, opened=opened )
-        ! call outputnamedValue('l2cf unit', inunit )
-        ! call outputnamedValue('pr unit', OutputOptions%prUnit )
-        ! call outputnamedValue('exist', exist )
-        ! call outputnamedValue('opened', opened )
       else if ( lowercase(line(3+n:9+n)) ==  'stgmem ' ) then
         parallel%stageInMemory = .true.
       else if ( lowercase(line(3+n:12+n)) ==  'stopafter ' ) then
@@ -646,7 +642,7 @@ program MLSL2
           call option_usage
         end select
       end do
-    else    
+    else
       call AccumulateSlaveArguments(line)
       exit ! This must be the l2cf filename
     end if
@@ -658,7 +654,7 @@ program MLSL2
     & switchDetail(switches, 'help') > -1 ) then
    call switch_usage
   end if
-  
+
   ! Are any switches inappropriate for master or for slave?
     if ( parallel%master ) &
       & removeSwitches = catLists( trim(removeSwitches), 'bool,walk' )
@@ -706,7 +702,7 @@ program MLSL2
   if ( .not. toolkit ) then
      penalty_for_no_metadata = 0
   end if
-  
+
   if ( time_config%use_wall_clock ) call time_now(run_start_time)
   ! If checking paths, run as a single-chunk case in serial mode
   if ( checkPaths ) then
@@ -719,7 +715,7 @@ program MLSL2
     & // ' on front end' )
   end if
   ! If doing a range of chunks, the avoidance of unlimited dimensions
-  ! in directwrites of l2gp files currently fails 
+  ! in directwrites of l2gp files currently fails
   ! (when will this be fixed?)
   if ( parallel%chunkRange /= ' ' ) then
     ! avoidUnlimitedDims = .false.
@@ -768,8 +764,8 @@ program MLSL2
       call io_error ( "While opening L2CF", status, line )
       call MLSMessage ( MLSMSG_Error, moduleName, &
         & "Unable to open L2CF file: " // trim(line), MLSFile=MLSL2CF )
-    else if(switchDetail(switches, 'pro') >= 0) then                            
-      call announce_success(MLSL2CF%name, l2cf_unit)               
+    else if(switchDetail(switches, 'pro') >= 0) then
+      call announce_success(MLSL2CF%name, l2cf_unit)
     end if
     inunit = l2cf_unit
   else if ( TOOLKIT .and. .not. showDefaults ) then
@@ -784,8 +780,8 @@ program MLSL2
       call output(status, advance='yes')
       call MLSMessage ( MLSMSG_Error, moduleName, &
         & "Unable to open L2CF file named in pcf", MLSFile=MLSL2CF )
-    else if(switchDetail(switches, 'pro') >= 0) then                            
-      call announce_success(MLSL2CF%name, inunit)               
+    else if(switchDetail(switches, 'pro') >= 0) then
+      call announce_success(MLSL2CF%name, inunit)
     end if
   end if
   error = status
@@ -794,8 +790,9 @@ program MLSL2
   else
     inunit = MLSL2CF%FileID%f_id
   end if
+  if (inunit /= -1) call AddInUnit(inunit)
   numfiles = AddFileToDataBase(filedatabase, MLSL2CF)
-  
+
   call time_now ( t1 )
 
   if( switchDetail(switches, 'opt') >= 0 .or. showDefaults ) then
@@ -921,7 +918,7 @@ program MLSL2
     if ( parallel%slave .and. &
       & (SKIPDIRECTWRITES .or. SKIPRETRIEVAL .or. sectionsToSkip /= ' ' ) ) then
       ! call mls_h5close(error)
-      ! call MLSMessageExit 
+      ! call MLSMessageExit
     else if ( error == 0 ) then
       call Deallocate_filedatabase(filedatabase)
       call output('Deallocated filedatabase', advance='yes')
@@ -935,7 +932,7 @@ program MLSL2
       if (error /= 0) then
          call MLSMessage ( MLSMSG_Error, moduleName, &
           & "Unable to mls_close" )
-      end if    
+      end if
     end if
   end if
   if ( timing ) call sayTime ( 'Closing and deallocating' )
@@ -946,9 +943,9 @@ program MLSL2
      call MLSMessageExit(1)
   else if(NORMAL_EXIT_STATUS /= 0 .and. .not. parallel%slave) then
      call MLSMessageExit(NORMAL_EXIT_STATUS)
-  else                  
-     call MLSMessageExit 
-  end if                 
+  else
+     call MLSMessageExit
+  end if
 
 contains
   subroutine SayTime ( What )
@@ -969,7 +966,7 @@ contains
   ! are officially discouraged in favor of calls to MLSMessage.
   ! Unfortunately, we have not yet decided which method to use
   ! until *after* processing all the options.
-  
+
   subroutine Switch_usage
     print *, 'Switch usage: -S"sw1,sw2,..,swn" or -Ssw1 -Ssw2 ..'
     print *, ' where each of the swk may be one of the following'
@@ -1010,10 +1007,10 @@ contains
     end if
     call output ( ' mlsl2 called with command line options: ', advance='no' )
     call output ( trim(command_line), advance='yes' )
-    call output ( ' l2cf file:', advance='no' )  
-    call blanks ( 4, advance='no' )                                     
+    call output ( ' l2cf file:', advance='no' )
+    call blanks ( 4, advance='no' )
     call output ( trim(MLSL2CF%name), advance='yes' )
-    if( SwitchDetail(switches, 'opt1') > 0 .or. showDefaults ) then                                 
+    if( SwitchDetail(switches, 'opt1') > 0 .or. showDefaults ) then
       call blanks(70, fillChar='-', advance='yes')
       call output(' -------------- Summary of run time options'      , advance='no')
       call output(' -------------- ', advance='yes')
@@ -1066,7 +1063,7 @@ contains
       if ( parallel%slave ) then
       call outputNamedValue ( 'Master task number', parallel%masterTid, advance='yes', &
         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
-      end if                      
+      end if
       call outputNamedValue ( 'Preflight check paths?', checkPaths, advance='yes', &
         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
       call outputNamedValue ( 'Skip all direct writes?', SKIPDIRECTWRITES, advance='yes', &
@@ -1118,7 +1115,7 @@ contains
     include 'sharedpcf2.f9h'
     print *, 'Moved PCFIds'
     print *, 'mlspcf_l2cf_start: ', mlspcf_l2cf_start
-    
+
   end subroutine MovePCFIDs
 
   ! ---------------------------------------------  announce_success  -----
@@ -1149,6 +1146,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.173  2010/05/23 03:25:37  honghanh
+! Use AddInUnit instead of inunit to adapt with change in the string_table
+!
 ! Revision 2.172  2010/02/02 01:41:03  vsnyder
 ! Move declaration of Id to a place where it is more difficult for a
 ! compiler to notice it's not actually referenced.
