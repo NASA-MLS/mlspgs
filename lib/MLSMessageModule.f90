@@ -197,11 +197,11 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
     & (MLSMessageConfig%useToolkit .and. UseSDPToolkit) &
     & .or. &
     & severity >= MLSMSG_Severity_to_quit
-    if( log_it .and. loggedLength > 0 ) &
-      & ioerror = PGS_SMF_GenerateStatusReport ( loggedLine(1:maxLineLength) )
+    if( log_it .and. loggedLength > 0 .and. MLSMessageConfig%useToolkit) then
+      ioerror = PGS_SMF_GenerateStatusReport ( loggedLine(1:maxLineLength) )
+    end if
 
     ! Now, if we're also logging to a file then write to that too.
-
     select case ( MLSMessageConfig%logFileUnit  )
     case ( 0 :  )
       write ( UNIT=max(MLSMessageConfig%logFileUnit,1), FMT=* ) TRIM(line)
@@ -232,6 +232,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.40  2010/05/23 03:11:06  honghanh
+! Fix a bug on line 200, to check if useToolkit is true before we log
+!
 ! Revision 2.39  2009/06/23 18:25:42  pwagner
 ! Prevent Intel from optimizing ident string away
 !
