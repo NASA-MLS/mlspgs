@@ -27,11 +27,11 @@ module Chunks_m
 
   type MLSChunk_T
     logical :: abandoned = .false. ! Did we abandon this chunk's retrieval?
-    integer :: firstMAFIndex   ! Index of first MAF in the chunk
-    integer :: lastMAFIndex    ! Index of last MAF in the chunk
-    integer :: noMAFsLowerOverlap ! Number of MAFs in the lower overlap region
-    integer :: noMAFsUpperOverlap ! Number of MAFs in the upper overlap region
-    integer :: chunkNumber              ! Index of this chunk
+    integer :: firstMAFIndex = -1  ! Index of first MAF in the chunk
+    integer :: lastMAFIndex = -1   ! Index of last MAF in the chunk
+    integer :: noMAFsLowerOverlap = 0 ! Number of MAFs in the lower overlap region
+    integer :: noMAFsUpperOverlap = 0 ! Number of MAFs in the upper overlap region
+    integer :: chunkNumber = -1             ! Index of this chunk
     integer, dimension(:), pointer :: HGridOffsets => NULL()
     ! This for each chunk is the index of the first non-overlapped profile in 
     ! each hGrid into the relevant output (l2gp?) file.
@@ -96,6 +96,9 @@ contains ! =====     Private Procedures     ============================
 end module Chunks_m
 
 ! $Log$
+! Revision 2.6  2010/05/23 03:34:29  honghanh
+! Initialize firstMafIndex, lastMAfIndex and a couple of other variables
+!
 ! Revision 2.5  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
 !
