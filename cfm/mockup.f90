@@ -12,7 +12,8 @@ program mockup
                      Destroy_Ant_Patterns_Database, &
                      Destroy_SpectCat_Database, &
                      Destroy_Line_Database, &
-                     Destroy_Pointing_Grid_Database
+                     Destroy_Pointing_Grid_Database, &
+                     DestroyL2PCDatabase
    use CFM_VGrid_m, only: CreateVGrid, DestroyVGridContents, &
                         VGrid_T, Dump
    use CFM_HGrid_m, only: CreateRegularHGrid, HGrid_T, &
@@ -233,6 +234,7 @@ program mockup
    call Destroy_SpectCat_Database
    call Destroy_Line_Database
    call Destroy_Pointing_Grid_Database
+   call DestroyL2PCDatabase
 
    call CFM_MLSCleanup(filedatabase, qtyTemplates, &
    forwardModelConfigDatabase, stateExtra)
