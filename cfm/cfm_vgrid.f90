@@ -6,7 +6,7 @@ module CFM_VGrid_m
    use MLSStringLists, only: List2Array, NumStringElements
    use Intrinsic, only: l_zeta, &
                         phyq_dimensionless, phyq_pressure
-   use Init_tables_module, only: l_logarithmic
+   use Init_tables_module, only: l_logarithmic, l_explicit
    use Allocate_Deallocate, only: allocate_test, deallocate_test
    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
 
@@ -21,19 +21,25 @@ module CFM_VGrid_m
 
    ! Create a VGrid, from a given formula, a starting value, a type
    ! (currently only supported logarithmic type)
-   type(VGrid_T) function CreateVGrid (coordinate, type, start, &
-                 formula, unit) result (vGrid)
-      real(r8), intent(in) :: start
+   type(VGrid_T) function CreateVGrid (coordinate, unit, type, start, &
+                 formula, values) result (vGrid)
+      ! Currently only support l_zeta
+      integer, intent(in) :: coordinate
+      ! Must be either phyq_dimensionless or phyq_pressure
+      integer, intent(in) :: unit
+      ! Currently only support l_logarithmic (log-based vgrid)
+      integer, intent(in) :: type
+
+      ! If type is l_logarithmic, then start and formula
+      ! should be provided
+      ! The first value of surfaces
+      real(r8), intent(in), optional :: start
       ! The format of formula is
       ! "number_of_surfaces:num_decades_between_surfaces".
       ! For example, "37:6" or "25:8,12:6".
-      character(len=*), intent(in) :: formula
-      ! Currently only support l_zeta
-      integer, intent(in) :: coordinate
-      ! Currently only support l_logarithmic (log-based vgrid)
-      integer, intent(in) :: type
-      ! Must be either phyq_dimensionless or phyq_pressure
-      integer, intent(in) :: unit
+      character(len=*), intent(in), optional :: formula
+      ! If type is l_explicit, this must be present
+      real(r8), dimension(:), intent(in), optional :: values
 
       call nullifyVGrid(vGrid) ! for sun's still useless compiler
       vgrid%name = 0
@@ -41,6 +47,11 @@ module CFM_VGrid_m
 
       if (type == l_logarithmic) then
          call LogarithmicFormula(vgrid, -1.0d0, formula, start)
+      else if (type == l_explicit) then
+         if (.not. present(values)) &
+            call MLSMessage(MLSMSG_Error, moduleId, &
+            "Need values to create explicit VGrid")
+         call CreateExplicitVGrid(vgrid, values)
       else
          call MLSMessage (MLSMSG_Error, moduleId, "VGrid's type not supported")
       end if
@@ -130,6 +141,26 @@ module CFM_VGrid_m
       end do
 
       call deallocate_test(tokens, "tokens", moduleId)
+
+   end subroutine
+
+   ! Fill the given vgrid with the given values
+   subroutine CreateExplicitVGrid (vgrid, values)
+      ! The vgrid to be filled
+      type(VGrid_T) :: vgrid
+      ! The values to fill
+      real(r8), dimension(:), intent(in) :: values
+
+      integer :: i
+
+      vgrid%noSurfs = size(values)
+      call allocate_test(vgrid%surfs, vgrid%nosurfs, 1, "vgrid%surfs", &
+            moduleId)
+
+      do i = 1, vgrid%nosurfs
+         vgrid%surfs(i,1) = values(i)
+      end do
+      vGrid%surfs = 10.0**( nint ( log10(vGrid%surfs) * values(1)) / values(1))
 
    end subroutine
 
