@@ -17,8 +17,9 @@ module EmpiricalGeometry                ! For empirically obtaining orbit inform
   implicit none
   private
 
-  public :: EmpiricalLongitude, InitEmpiricalGeometry, ForgetOptimumLon0, &
-    & ChooseOptimumLon0
+  public :: EmpiricalLongitude, InitEmpiricalGeometry, &
+            ForgetOptimumLon0, CFM_InitEmpiricalGeometry, &
+            ChooseOptimumLon0
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -51,8 +52,7 @@ contains ! ========================= Public Procedures ====================
     integer :: term
     real(r8) :: useLon0
 
-    ! Exectuable code
-
+    ! Executable code
     if ( .not. associated ( empiricalTerms ) ) call MLSMessage ( &
       & MLSMSG_Error, ModuleName, 'EmpiricalGeomtry information not given in l2cf' )
 
@@ -127,6 +127,23 @@ contains ! ========================= Public Procedures ====================
 
   end subroutine InitEmpiricalGeometry
 
+  ! --------------------------- CFM_InitEmpiricalGeomtry ---------------------
+  ! This module is for the callable forward model (CFM), in which no tree
+  ! is available, to set up EmpiricalGeometry
+  subroutine CFM_InitEmpiricalGeometry (numberIterations, terms)
+     use Allocate_Deallocate, only: Allocate_test
+
+     integer, intent(in) :: numberIterations
+     real(r8), dimension(:), intent(in) :: terms
+
+     ! Executables
+     noIterations = numberIterations
+     call Allocate_Test ( empiricalTerms, size(terms), 'empiricalTerms', &
+          & ModuleName )
+     empiricalTerms = terms
+
+  end subroutine
+
   ! -------------------------------------------------- ChooseOptimumLon0 -----
   ! subroutine ChooseOptimumLon0 ( l1bInfo, chunk )
   subroutine ChooseOptimumLon0 ( filedatabase, chunk )
@@ -167,7 +184,7 @@ contains ! ========================= Public Procedures ====================
     nullify ( testPhi, testLon, guessLon )
     l1bItemName = AssembleL1BQtyName ( "GHz.tpGeodAngle", hdfVersion, .false. )
     call ReadL1BData ( L1BFile, trim(l1bItemName), tpGeodAngle, noMAFs, flag, &
-      & firstMAF = chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
+      & firstMAF = chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex)
     call Allocate_test ( testPhi, noMAFs, 'testPhi', ModuleName )
     testPhi = tpGeodAngle%DpField(1,1,:)
     call DeallocateL1BData ( tpGeodAngle )
@@ -220,6 +237,9 @@ contains ! ========================= Public Procedures ====================
 end module EmpiricalGeometry
 
 ! $Log$
+! Revision 2.16  2010/05/23 03:27:32  honghanh
+! Add an Init empirical geometry method for CFM
+!
 ! Revision 2.15  2010/02/04 23:12:44  vsnyder
 ! Remove USE or declaration for unreferenced names
 !
