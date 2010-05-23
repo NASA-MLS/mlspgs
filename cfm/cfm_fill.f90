@@ -16,9 +16,8 @@ module CFM_Fill_m
    use BitStuff, only: NegativeIfBitPatternSet
    use Chunks_m, only: MLSChunk_T
    use MLSStrings, only: writeIntsToChars
-   use FillUtils_1, only: fillerror, &
-      Orig_FillVectorQuantityFromL1B => FillVectorQuantityFromL1B, &
-      Orig_FillPhiTanWithRefraction => FillPhiTanWithRefraction
+   use FillUtils_1, only: fillerror, FromL1B, &
+                          PhiTanWithRefraction
 
    implicit none
 
@@ -129,7 +128,7 @@ module CFM_Fill_m
       integer, intent(in), optional :: BOMask
 
       fillError = 0
-      call Orig_FillVectorQuantityFromL1B(0, quantity, chunk, filedatabase, &
+      call FromL1B(0, quantity, chunk, filedatabase, &
          isPrecision, suffix, precisionQuantity, BOMask)
       if (fillError /= 0) then
          call MLSMessage (MLSMSG_Error, moduleName, "Can't Fill from L1B")
@@ -146,7 +145,7 @@ module CFM_Fill_m
       type(VectorValue_T), intent(in) :: refGPH
       type(VectorValue_T), intent(in) :: temperature
 
-      call Orig_FillPhiTanWithRefraction(0, quantity, h2o, orbIncl, &
+      call PhiTanWithRefraction(0, quantity, h2o, orbIncl, &
                                          ptan, refGPH, temperature)
    end subroutine
 
