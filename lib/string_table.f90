@@ -19,6 +19,8 @@ module STRING_TABLE
   use IO_STUFF, only: GET_LUN
   use MACHINE, only: CRASH_BURN, IO_ERROR
   use OUTPUT_M, only: BLANKS, OUTPUT
+  use MLSMessageModule, only: MLSMSG_DeAllocate, MLSMSG_Allocate, &
+                              MLSMSG_Error, MLSMessage
   implicit NONE
   private
 
@@ -29,7 +31,7 @@ module STRING_TABLE
   public :: DISPLAY_STRING, DISPLAY_STRING_LIST, ENTER_STRING, FLOAT_VALUE
   public :: GET_CHAR, GET_STRING, HOW_MANY_STRINGS, INDEX, INDEX_IN_STRING
   public :: LEN, LOOKUP_AND_INSERT, NEW_LINE, NUMERICAL_VALUE, OPEN_INPUT
-  public :: STRING_LENGTH, STRING_TABLE_SIZE, UNGET_CHAR
+  public :: STRING_LENGTH, STRING_TABLE_SIZE, UNGET_CHAR, ADDINUNIT
 
   interface DISPLAY_STRING
     module procedure DISPLAY_STRING, DISPLAY_STRING_LIST
@@ -49,7 +51,6 @@ module STRING_TABLE
 
   ! Public control variables
   logical, save, public :: DO_LISTING = .false.
-  integer, save, public :: INUNIT = -1       ! Input unit, * if < 0
 
   ! Public information variables
   integer, save, public :: SOURCE_LINE = 0   ! Current line number
@@ -66,6 +67,8 @@ module STRING_TABLE
   logical, save :: AT_EOF = .false.     ! Input is at EOF
   integer, save :: CUR_END = 0          ! Position of end of input
   integer, save :: CUR_POS = 1          ! Current position -- last one used
+  integer, save :: inunit_counter = 0
+  integer, dimension(:), pointer, save :: inunit_list => NULL() ! Input unit, * if null
 
   ! Tables
   character, allocatable, save :: CHAR_TABLE (:)
@@ -78,7 +81,7 @@ module STRING_TABLE
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  private :: not_used_here
 !---------------------------------------------------------------------------
 
 contains
@@ -403,8 +406,8 @@ contains
         end if
         ! Non-advancing input is used so that trailing blanks in
         ! the record can be distinguished from padding.
-        if ( inunit >= 0 ) then
-          read ( inunit, '(a)', advance='no', eor=100, end=200, err=400, &
+        if ( associated(inunit_list) ) then
+          read ( inunit_list(inunit_counter), '(a)', advance='no', eor=100, end=200, err=400, &
             iostat=iostat ) char_table(cur_end)
         else
           read ( *, '(a)', advance='no', eor=100, end=200, err=400, &
@@ -413,8 +416,13 @@ contains
       end do
 100   char_table(cur_end) = EOL
       go to 300
-200   char_table(cur_end) = EOF
-      at_eof = .true.
+200   call SetNextInUnit
+      if (inunit_counter == 0) then ! has no more file to read from
+        char_table(cur_end) = EOF
+        at_eof = .true.
+      else
+        char_table(cur_end) = EOL
+      end if
 300   continue
       source_line = source_line + 1
       if ( .not. at_eof ) then
@@ -641,13 +649,13 @@ contains
           call output('STRING_TABLE%LOOKUP_AND_INSERT-E- ', advance='no')
           call blanks(3)
           call output('hash_key was not found in table ', advance='yes')
-      
+
           call output('hash key: ', advance='no')
           call output(hash_key, advance='yes')
-      
+
           call output('hash table keys: ', advance='no')
           call output(hash_table(2,:), advance='yes')
-      
+
           call output('Compare ', advance='no')
           call output(hash_table(2,loc), advance='no')
           call blanks(1)
@@ -680,10 +688,10 @@ contains
           & 'incorrectly.', advance='yes')
           call output('Unfortunately, the program doesn''t know how' // &
           & 'to increase the hash table size.', advance='yes')
-      
+
           call output('status: ', advance='no')
           call output(status, advance='yes')
-      
+
           if(status == HASH_FULL) then
             call output( '(hash full)', advance='yes')
           else if(status == HASH_NOT_KEY) then
@@ -782,7 +790,7 @@ contains
     character(len=*), intent(in) :: FILE_NAME
     integer, optional, intent(out) :: STAT
 
-    integer :: IOSTAT
+    integer :: IOSTAT, inunit
     character(max(file_name_len,len(file_name))) :: MY_FILE
 
     call get_lun ( inunit )   ! get an unused I/O unit number
@@ -801,6 +809,7 @@ contains
       if ( iostat == 0 ) then
         at_eof = .false.
         source_line = 0
+        call AddInUnit(inunit)
         return
       end if
       if ( present(stat) ) then
@@ -937,6 +946,49 @@ contains
     return
   end subroutine TEST_STRING
 
+  ! Add another file for the tree to read from
+  subroutine AddInUnit (inunit)
+    integer, intent(in) :: inunit
+    integer, dimension(:), pointer :: temp_inunits
+    integer :: status
+
+    ! Executables
+    if (associated(inunit_list)) then
+      allocate(temp_inunits(size(inunit_list) + 1), stat=status)
+    else
+      allocate(temp_inunits(1), stat=status)
+    end if
+
+    if (status /= 0) &
+      call MLSMessage(MLSMSG_Error, moduleName, MLSMSG_Allocate // "temp_inunits")
+
+    if (associated(inunit_list)) then
+      temp_inunits(1:size(inunit_list)) = inunit_list
+      deallocate(inunit_list, stat=status)
+      if (status /= 0) &
+        call MLSMessage(MLSMSG_Error, moduleName, MLSMSG_DeAllocate // "inunit_list")
+    end if
+
+    temp_inunits(size(temp_inunits)) = inunit
+    inunit_list => temp_inunits
+    inunit_counter = 1
+  end subroutine
+
+  subroutine SetNextInUnit
+    integer :: status
+
+    if (.not. associated(inunit_list)) return
+    if (inunit_counter == size(inunit_list)) then
+      inunit_counter = 0
+      deallocate(inunit_list, stat=status)
+      if (status /= 0) &
+        call MLSMessage(MLSMSG_Error, moduleName, MLSMSG_DeAllocate // "inunit_list")
+      inunit_list => NULL()
+    else
+      inunit_counter = inunit_counter + 1
+    end if
+  end subroutine
+
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -950,6 +1002,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.29  2010/05/23 03:05:26  honghanh
+! Use an inunitList instead of an inunit to read from multiple l2cf
+!
 ! Revision 2.28  2010/05/14 02:15:47  vsnyder
 ! Calculate length of STRING correctly if SUBSTRING is quoted
 !
