@@ -72,7 +72,11 @@ module CFM_QuantityTemplate_m
 
    private
 
-   character(len=20) :: ModuleName = "CFM_QuantityTemplate"
+!---------------------------- RCS Ident Info -------------------------------
+   character(len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+   private :: not_used_here
+!---------------------------------------------------------------------------
 
    contains
 
@@ -457,5 +461,15 @@ module CFM_QuantityTemplate_m
     if ( mySeverity == 'fatal') &
       & call MLSMessage ( MLSMSG_Error, ModuleName, 'Problem in creating quantity' )
   end subroutine Announce_Error
+
+  !--------------------------- end bloc --------------------------------------
+   logical function not_used_here()
+   character (len=*), parameter :: IdParm = &
+       "$Id$"
+   character (len=len(idParm)) :: Id = idParm
+      not_used_here = (id(1:1) == ModuleName(1:1))
+      print *, Id ! .mod files sometimes change if PRINT is added
+   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module
