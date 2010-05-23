@@ -1,4 +1,4 @@
-! Copyright 2005, by the California Institute of Technology. ALL
+! C/pyright 2005, by the California Institute of Technology. ALL
 ! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 ! commercial use must be negotiated with the Office of Technology Transfer
 ! at the California Institute of Technology.
@@ -245,6 +245,7 @@ contains
         case ( p_cycle )
           call get_string ( sub_rosa_index, l2pcf%cycle, strip=.true. )
         case ( p_starttime )
+          if ( restricted ) call NotAllowed ( son, param_restricted )
           got(1) = .true.
           call get_string ( sub_rosa_index, name_string, strip=.true. )
           start_time_string = name_string
@@ -258,6 +259,7 @@ contains
             startTimeIsAbsolute = .true.
           end if
         case ( p_endtime )
+          if ( restricted ) call NotAllowed ( son, param_restricted )
           got(2) = .true.
           call get_string ( sub_rosa_index, name_string, strip=.true. )
           end_time_string = name_string
@@ -283,6 +285,7 @@ contains
             & '(Please check file name and path)' )    
           end if
         case ( p_PFAFile )
+          if ( restricted ) call NotAllowed ( son, param_restricted )
           do j = 2, nsons(son)
             if ( process_PFA_File ( sub_rosa(subtree(j,son)), &
               & source_ref(subtree(j,son)) ) /= 0 ) continue
@@ -309,7 +312,6 @@ contains
         if ( DEEBUG ) call display_string( spec_indices(spec_id), advance='yes' )
         select case ( spec_id )
         case ( s_binSelector )
-          if ( restricted ) call notAllowed ( son, spec_restricted )
           call decorate (son, AddBinSelectorToDatabase ( &
             & binSelectors, CreateBinSelectorFromMLSCFInfo ( son ) ) )
         case ( s_directWriteFile )
@@ -328,6 +330,7 @@ contains
               & 'Preceeding errors prevent doing a dump here.' )
           end if
         case ( s_empiricalGeometry )
+          if ( restricted ) call NotAllowed ( son, param_restricted )
           call InitEmpiricalGeometry ( son )
         case ( s_flushPFA )
           call flush_PFAData ( son, status )
@@ -339,14 +342,17 @@ contains
           if ( switchDetail(switches, 'fgrid') > -1 ) &
             & call dump( fgrids(size(fGrids) ) )
         case ( s_forwardModelGlobal ) !??? Begin temporary stuff for l2load
+          if ( restricted ) call notAllowed ( son, spec_restricted )
           if ( stopEarly .or. &
             & ( checkPaths .and. .not. CHECKL2PCMONTHCORRECT ) ) cycle
           call forwardModelGlobalSetup ( son, returnStatus, fileDataBase )
           error = max(error, returnStatus)
         case ( s_forwardModel )
-          if ( .not. stopEarly ) call decorate (son, AddForwardModelConfigToDatabase ( &
+          if ( .not. stopEarly ) then
+            call decorate (son, AddForwardModelConfigToDatabase ( &
             & forwardModelConfigDatabase, &
             & ConstructForwardModelConfig ( name, son, .true. ) ) )
+          end if
         case ( s_l1boa )
           if ( restricted ) call notAllowed ( son, spec_restricted )
           the_hdf_version = LEVEL1_HDFVERSION
@@ -425,7 +431,6 @@ contains
             timing = .true.
           end if
         case ( s_tGrid, s_vGrid )
-          if ( restricted ) call notAllowed ( son, spec_restricted )
           call decorate ( son, AddVGridToDatabase ( vGrids, &
             & CreateVGridFromMLSCFInfo ( name, son, l2gpDatabase, returnStatus ) ) )
           error = max(error, returnStatus)
@@ -1045,6 +1050,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.136  2010/02/04 23:12:44  vsnyder
+! Remove USE or declaration for unreferenced names
+!
 ! Revision 2.135  2009/10/05 23:40:35  pwagner
 ! Moved use statements to module scope to speedup Lahey; this is the last time we do that
 !
