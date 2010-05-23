@@ -1,0 +1,22 @@
+; -------------------------------------------- Global settings ------
+begin GlobalSettings
+
+    vGridTangentSids: vGrid, type=Logarithmic, coordinate=Zeta, $
+       start=1000mb, formula=[19:12]
+
+    ;; Now define any forward models that will be used in more than one phase.
+
+    ;; Define the scan models
+    sidsFwm: forwardModel, type=full,  $
+    signals = [ 'R3:240.B7F:O3' ], $
+    molecules = [ [ H2O, H2O ], [ O2, O2 ], [ O3, O3 ]], $
+    LSBlblMolecules = [O2,O3],$
+    USBlblMolecules = [O2,O3],$
+    phiWindow=0 degrees, $
+    /skipOverlaps, $
+    integrationGrid=vGridTangentSids,$
+        tangentGrid=vGridTangentSids, /do_conv, /do_freq_avg, $
+    /allLinesForRadiometer
+
+end GlobalSettings
+
