@@ -42,8 +42,7 @@ module CFM_QuantityTemplate_m
       PHYQ_DIMENSIONLESS, PHYQ_EXTINCTION, PHYQ_FREQUENCY,&
       PHYQ_GAUSS, PHYQ_IceDensity, PHYQ_LENGTH, &
       PHYQ_PRESSURE, PHYQ_TEMPERATURE, PHYQ_TIME, PHYQ_VELOCITY, &
-      PHYQ_VMR, PHYQ_ZETA
-    use Intrinsic, only: LIT_INDICES
+      PHYQ_VMR, PHYQ_ZETA, l_ghz
     use Output_M, only: OUTPUT
     use String_Table, only: DISPLAY_STRING
     use MLSCommon, only: r8
@@ -51,10 +50,9 @@ module CFM_QuantityTemplate_m
     use Molecules, only: GetMoleculeIndex
     use Chunks_m, only: MLSChunk_T
     use MLSCommon, only: MLSFile_T
-    use ConstructQuantityTemplates, only : AnyGoodSignalData, GetQtyTypeIndex, &
+    use ConstructQuantityTemplates, only : AnyGoodSignalData, &
             ConstructMajorFrameQuantity, ConstructMinorFrameQuantity, &
-            InitQuantityTemplates, &
-            unitstable, propertyTable, noProperties, &
+            InitQuantityTemplates, unitstable, propertyTable, noProperties, &
             p_majorFrame, p_minorFrame, p_mustBeZeta, p_fGrid, p_hGrid, &
             p_vgrid, p_radiometer, p_radiometerOptional, p_scModule, &
             p_signal, p_signalOptional, p_xyz, p_matrix3x3, p_flexibleVHGrid, &
@@ -81,13 +79,11 @@ module CFM_QuantityTemplate_m
    ! This subroutine design is prone to bugs, I'll fix it when I got some time. -haley
 
    ! Creating a quantity based on the optional inputs this subroutine is provided with.
-   type(QuantityTemplate_T) function CreateQtyTemplate (type, filedatabase, chunk, &
+   type(QuantityTemplate_T) function CreateQtyTemplate (quantityType, filedatabase, chunk, &
         avgrid, ahgrid, afgrid, qInstModule, qMolecule, qLogBasis, qMinValue, qSignal, &
-        qRadiometer, qBadValue, mifGeolocation) result(qty)
-      ! a case-insensitive string, one of the allowable strings for type
-      ! listed in the "Callable Forward Model Interface Requirements Document" (from
-      ! now on will be called CFM document).
-      character(len=*), intent(in) :: type
+        qRadiometer, qBadValue) result(qty)
+      ! an integer representing a quantity type, see CFM documentation appendix
+      integer, intent(in) :: quantityType
       ! is an array of open files (see CFM_MLSSetup)
       type (MLSFile_T), dimension(:), pointer, optional ::     FILEDATABASE
       ! an input holder, storing the time range of the data to be read
@@ -101,8 +97,8 @@ module CFM_QuantityTemplate_m
       type(FGrid_T), intent(in), optional :: afgrid
       ! instrument module, a case-insensitive string, either "THz" or "GHz"
       character(len=*), optional :: qInstModule
-      ! a case-insensitive string, one of the molecules listed in the CFM document.
-      character(len=*), optional :: qMolecule
+      ! an integer representing one of the molecules listed in the CFM document.
+      integer, optional :: qMolecule
       ! if type is "radiance", then a qSignal must be provided
       character(len=*), optional :: qSignal
       ! tells whether the value of avgrid and ahgrid
@@ -116,23 +112,20 @@ module CFM_QuantityTemplate_m
       ! a number to indicate that a data point shouldn't be used. Default
       ! is -huge(0.0_r8)
       real(r8), optional :: qBadValue
-      type (QuantityTemplate_T), dimension(:), intent(in), optional, target :: &
-      & MifGeolocation ! TARGET attribute needed so pointers to MifGeolocation
-                       ! created at lower levels in the call tree don't become
-                       ! undefined when those procedures return.
 
+      type (QuantityTemplate_T), dimension(:), pointer :: MifGeolocation
       logical, dimension(noProperties) :: PROPERTIES ! Properties for this quantity type
       character(len=127) :: signalString
       integer, dimension(:), pointer :: SignalInds ! From parse signal
       logical, pointer :: Channels(:)     ! From Parse_Signal
       integer :: s_index, temp
       type(Signal_T) :: signalInfo
-      integer :: quantityType, noChans, sideband, signal, radiometer
+      integer :: noChans, sideband, signal, radiometer, instrumentModule
+      logical :: isMinorFrame
 
       ! Executables
       call NullifyQuantityTemplate(qty)
-      qty%instrumentModule = 0
-      call GetQtyTypeIndex(type, quantityType)
+      instrumentModule = 0
       qty%name = 0
       qty%fGridIndex = 0 ! we're not getting fgrid from fgridDatabase
       qty%hGridIndex = 0 ! we're not getting hgrid from hgridDatabase
@@ -155,9 +148,11 @@ module CFM_QuantityTemplate_m
       qty%stacked = .true.
       qty%minorFrame = .false.
       qty%majorFrame = .false.
-      qty%sharedVGrid = .true.
-      qty%sharedHGrid = .true.
-      qty%sharedFGrid = .true.
+      ! Because some quantities are provided by MLS, and some are supplied
+      ! by GMAO, right now for simplicity, let's not share the grids
+      qty%sharedVGrid = .false.
+      qty%sharedHGrid = .false.
+      qty%sharedFGrid = .false.
       qty%badValue = huge(0.0_r8)   !Default bad value
       ! These field are not used in cfm
       qty%noInstancesLowerOverlap = 0
@@ -168,51 +163,54 @@ module CFM_QuantityTemplate_m
       !Sanity check
       if (.not. properties (p_flexibleVHGrid)) then
          if ( present ( ahGrid ) .neqv. properties ( p_hGrid ) ) &
-           & call Announce_error ( 0, trim ( merge ( 'unexpected', 'need      ', &
+           & call Announce_error ( trim ( merge ( 'unexpected', 'need      ', &
            & present(ahGrid) ) ) // ' hGrid for quantity type ', quantityType, &
            & severity='nonfatal' )
          if ( present ( avGrid ) .neqv. properties ( p_vGrid ) ) &
-           & call Announce_error ( 0, trim ( merge ( 'unexpected', 'need      ', &
+           & call Announce_error ( trim ( merge ( 'unexpected', 'need      ', &
            & present(avGrid) ) ) // ' vGrid for quantity type ', quantityType )
+         isMinorFrame = properties(p_minorFrame)
+      else
+         if (present(ahGrid) .neqv. present(avgrid)) &
+            call Announce_Error ( 'Must supply both or neither vGrid and hGrid ' &
+            // 'for quantity type ', quantityType, severity='fatal' )
+         isMinorFrame = .not. present(ahgrid)
       end if
       if ( present ( qMolecule ) .neqv. properties ( p_Molecule ) ) &
-         & call Announce_error ( 0, trim ( merge ( 'unexpected', 'need      ', &
+         & call Announce_error ( trim ( merge ( 'unexpected', 'need      ', &
          & present(qMolecule) ) ) // ' molecule for quantity type ', quantityType )
       if ( present ( qInstModule ) .neqv. ( properties ( p_Module ) .or. properties ( p_scModule) ) ) then
-         call Announce_error ( 0, trim ( merge ( 'unexpected', 'need      ', &
+         call Announce_error ( trim ( merge ( 'unexpected', 'need      ', &
          & present(qInstModule) ) ) // ' module for quantity type ', quantityType )
       end if
       if ( .not. properties ( p_signalOptional ) ) then
          if ( present ( qSignal ) .neqv. properties ( p_Signal ) ) &
-            & call Announce_error ( 0, trim ( merge ( 'unexpected', 'need      ', &
+            & call Announce_error ( trim ( merge ( 'unexpected', 'need      ', &
             & present(qSignal) ) ) // ' signal for quantity type ', quantityType )
       end if
       if ( properties ( p_mustBeZeta ) .and. present(avGrid) ) then
          if ( avGrid%verticalCoordinate /= l_zeta ) &
-           & call Announce_error ( 0, 'Expecting log pressure coordinates for', &
-           & qty%quantityType )
+           & call Announce_error ( 'Expecting log pressure coordinates for', &
+           & quantityType )
       end if
       if (.not. properties(p_fGridOptional)) then
          if ( present ( aFGrid ) .neqv. properties ( p_fGrid ) ) &
-           & call Announce_error ( 0, trim ( merge ( 'unexpected', 'need      ', &
+           & call Announce_error ( trim ( merge ( 'unexpected', 'need      ', &
            & present(aFGrid) ) ) // ' fGrid for quantity type ', quantityType )
       end if
       if ( .not. properties ( p_radiometerOptional ) ) then
          if ( present ( qRadiometer ) .neqv. properties ( p_Radiometer ) ) &
-           & call Announce_error ( 0, trim ( merge ( 'unexpected', 'need      ', &
+           & call Announce_error ( trim ( merge ( 'unexpected', 'need      ', &
            & present(qRadiometer) ) ) // ' radiometer for quantity type ', quantityType )
       end if
 
-     ! Set up a non major/minor frame quantity
-      qty%minorFrame = .not. present(ahgrid)
-
       if (present(qInstModule)) then
-         call GetModuleIndex (qInstModule, qty%instrumentModule)
+         call GetModuleIndex (qInstModule, instrumentModule)
       end if
       if (present (qRadiometer)) then
          call GetRadiometerIndex(qRadiometer, radiometer)
          ! Every radiometer pairs with only one instrument module
-         qty%instrumentModule = GetModuleFromRadiometer(radiometer)
+         instrumentModule = GetModuleFromRadiometer(radiometer)
          ! If the user happen to pass in the wrong instrumentModule,
          ! silently correct it, for simplicity
       end if
@@ -252,20 +250,22 @@ module CFM_QuantityTemplate_m
           call deallocate_test ( signalInds, 'signalInds', ModuleName )
           ! if the user has pass in the wrong instrumentModule or radiometer
           ! just silently correct it, for simplicity.
-          qty%instrumentModule = GetModuleFromSignal(signal)
+          instrumentModule = GetModuleFromSignal(signal)
           radiometer = GetRadiometerFromSignal(signal)
      end if
 
       ! After all the possible places where instrumentModule can be set
       if ( properties ( p_scModule ) ) then
-         if ( .not. IsModuleSpacecraft ( qty%instrumentModule ) ) &
-           & call Announce_error ( 0, 'Module must be spacecraft' )
+         if ( .not. IsModuleSpacecraft ( instrumentModule ) ) &
+           & call Announce_error ( 'Module must be spacecraft' )
       end if
 
       ! Now establish the frequency coordinate system
       if (present(afgrid)) then
          qty%frequencyCoordinate = afgrid%frequencyCoordinate
-         qty%frequencies => afgrid%values
+         call allocate_test(qty%frequencies, size(afgrid%values), &
+         "qty%frequencies", moduleName)
+         qty%frequencies = afgrid%values
          noChans = afgrid%noChans
       else if (properties(p_xyz)) then
          ! XYZ quantity (e.g. ECI/ECR stuff)
@@ -283,24 +283,26 @@ module CFM_QuantityTemplate_m
       end if
 
       ! Now do the setup for the different families of quantities
-      if (qty%minorFrame) then
-      if (.not. present(mifGeoLocation) .and. &
-          .not. (present(filedatabase) .and. present(chunk))) &
+      if (isMinorFrame) then
+         if (.not. (present(filedatabase) .and. present(chunk))) &
             call MLSMessage(MLSMSG_Error, ModuleName, &
             'Need either mifGeolocation or both filedatabase and ' &
             // 'chunk to create minor frame quantity')
-         call ConstructMinorFrameQuantity (qty%instrumentModule, &
+         call ConstructMinorFrameQuantity (instrumentModule, &
               qty, noChans=noChans, regular=qty%regular, &
-              filedatabase=filedatabase, chunk=chunk, &
-              mifGeoLocation=mifGeoLocation)
+              filedatabase=filedatabase, chunk=chunk)
       else if (properties(p_majorFrame)) then
-         if (.not. present(mifGeoLocation)) &
-            call MLSMessage(MLSMSG_Error, moduleName, "Missing needed mifGeoLocation")
-         if (.not. present(chunk)) &
-            call MLSMessage(MLSMSG_Error, moduleName, "Need chunk to create major frame quantity")
+         if (.not. present(chunk) .or. .not. present(filedatabase)) &
+            call MLSMessage(MLSMSG_Error, moduleName, "Need both chunk and filedatabase &
+            to create major frame quantity")
+         ! We have to construct this because ConstructMajorFrameQuantity
+         ! doesn't work with mifGeolocation. The proper fix should be
+         ! ConstructMajorFrameQuantity, but I've got no time to test that.
+         call ConstructMIFGeolocation (mifGeoLocation, filedatabase, chunk)
          ! Setup a major frame quantity
-         call ConstructMajorFrameQuantity (chunk, qty%instrumentModule, qty, &
+         call ConstructMajorFrameQuantity (chunk, instrumentModule, qty, &
               noChans, mifGeoLocation)
+         call DestroyQuantityTemplateDatabase (mifGeoLocation)
       else
          ! Setup the quantity template
          if (present(ahgrid)) then
@@ -312,7 +314,9 @@ module CFM_QuantityTemplate_m
 
          if (present(avGrid)) then
             qty%verticalCoordinate = avGrid%verticalCoordinate
-            qty%surfs => avGrid%surfs
+            call allocate_test(qty%surfs, size(avGrid%surfs,1), &
+            size(avGrid%surfs,2), "qty%surfs", moduleName)
+            qty%surfs = avGrid%surfs
             qty%noSurfs = avgrid%noSurfs
          else
             call SetupEmptyVGridForQuantity(qty)
@@ -324,7 +328,7 @@ module CFM_QuantityTemplate_m
      if (present(qBadValue)) qty%badValue = qBadValue
 
      if (present(qMolecule)) then
-         call GetMoleculeIndex(qMolecule, qty%molecule)
+         qty%molecule = qMolecule
      end if
 
      qty%quantityType = quantityType
@@ -333,6 +337,8 @@ module CFM_QuantityTemplate_m
      qty%sideband = sideband
      qty%signal = signal
      qty%radiometer = radiometer
+     qty%instrumentModule = instrumentModule
+     qty%minorFrame = isMinorFrame
 
    end function
 
@@ -351,13 +357,27 @@ module CFM_QuantityTemplate_m
     if ( .not. qty%stacked ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & "Cannot copy hGrids into unstacked quantities")
 
-    qty%phi => hGrid%phi
-    qty%geodLat => hGrid%geodLat
-    qty%lon => hGrid%lon
-    qty%time => hGrid%time
-    qty%solarTime => hGrid%solarTime
-    qty%solarZenith => hGrid%solarZenith
-    qty%losAngle => hGrid%losAngle
+    call allocate_test(qty%phi, size(hGrid%phi,1), size(hGrid%phi,2), &
+    "qty%phi", moduleName)
+    call allocate_test(qty%geodLat, size(hGrid%geodLat,1), size(hGrid%geodLat,2), &
+    "qty%geodLat", moduleName)
+    call allocate_test(qty%lon, size(hGrid%lon,1), size(hGrid%lon,2), &
+    "qty%lon", moduleName)
+    call allocate_test(qty%time, size(hGrid%time,1), size(hGrid%time,2), &
+    "qty%time", moduleName)
+    call allocate_test(qty%solarTime, size(hGrid%solarTime,1), &
+    size(hGrid%solarTime,2), "qty%solarTime", moduleName)
+    call allocate_test(qty%solarZenith, size(hGrid%solarZenith,1), &
+    size(hGrid%solarZenith,2), "qty%solarZenith", moduleName)
+    call allocate_test(qty%losAngle, size(hGrid%losAngle,1), &
+    size(hGrid%losAngle,2), "qty%losAngle", moduleName)
+    qty%phi = hGrid%phi
+    qty%geodLat = hGrid%geodLat
+    qty%lon = hGrid%lon
+    qty%time = hGrid%time
+    qty%solarTime = hGrid%solarTime
+    qty%solarZenith = hGrid%solarZenith
+    qty%losAngle = hGrid%losAngle
     qty%noInstancesLowerOverlap = hGrid%noProfsLowerOverlap
     qty%noInstancesUpperOverlap = hGrid%noProfsUpperOverlap
 
@@ -402,7 +422,7 @@ module CFM_QuantityTemplate_m
   end subroutine SetupEmptyVGridForQuantity
 
   ! -----------------------------------------------  Announce_Error  -----
-  subroutine Announce_Error ( where, message, extra, severity )
+  subroutine Announce_Error ( message, extra, severity )
 
     use LEXER_CORE, only: PRINT_SOURCE
     use OUTPUT_M, only: BLANKS, OUTPUT
@@ -411,7 +431,6 @@ module CFM_QuantityTemplate_m
     use String_Table, only: DISPLAY_STRING
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
 
-    integer, intent(in) :: WHERE   ! Tree node where error was noticed
     character (LEN=*), intent(in) :: MESSAGE
     integer, intent(in), optional :: EXTRA
     character(len=*), intent(in), optional :: SEVERITY ! 'nonfatal' or 'fatal'
@@ -429,14 +448,11 @@ module CFM_QuantityTemplate_m
       call output ( ' (fatal) ' )
     end if
     call output ( 'At ' )
-    if ( where > 0 ) then
-      call print_source ( source_ref(where) )
-    else
-      call output ( '(no lcf tree available)' )
-    end if
+    call output ( '(no lcf tree available)' )
     call output ( ': ' )
     call output ( message )
-    if ( present ( extra ) ) call display_string ( lit_indices ( extra ), strip=.true. )
+    if ( present ( extra ) ) &
+       call display_string ( lit_indices ( extra ), strip=.true. )
     call output ( '', advance='yes' )
     if ( mySeverity == 'fatal') &
       & call MLSMessage ( MLSMSG_Error, ModuleName, 'Problem in creating quantity' )
