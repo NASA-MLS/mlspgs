@@ -30,10 +30,9 @@ program mockup
                          DestroyVectorInfo, GetVectorQtyByTemplateIndex
    use CFM_Fill_m, only: ExplicitFillVectorQuantity, &
                          FillVectorQuantityFromL1B
-   use CFM_FWDMDL, only: ForwardModel
+   use CFM_FWDMDL, only: ForwardModel, FORWARDMODELSTATUS_T, &
+                         ForwardModelConfig_T
    use MLSCommon, only: MLSFile_T, r8
-   use ForwardModelConfig, only: ForwardModelConfig_T
-   use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
    use Init_tables_module, only: l_logarithmic, l_zeta, l_temperature, &
                                  L_IntermediateFrequency, l_vmr, l_gph, &
                                  l_ptan, l_radiance, l_orbitInclination, &
