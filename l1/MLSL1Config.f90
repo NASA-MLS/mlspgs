@@ -102,7 +102,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
       USE Parser, ONLY: Configuration
       USE SDPToolkit, ONLY: PGS_PC_GetReference, PGS_S_SUCCESS, &
            PGSd_IO_Gen_RSeqFrm, PGS_IO_Gen_openF, PGS_IO_Gen_closeF
-      USE STRING_TABLE, ONLY: l1cf_unit => inunit
+      USE STRING_TABLE, ONLY: AddInUnit
       USE Tree, ONLY: Allocate_Tree, Decoration, Nsons, Subtree
       USE Tree_checker, ONLY: Check_tree
 
@@ -112,6 +112,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
       INTEGER :: first_section   ! index of son of root of first n_cf_node
       INTEGER :: root            ! of the abstract syntax tree
       INTEGER :: son             ! of root
+      integer :: l1cf_unit
 
 !! Open config file:
 
@@ -127,7 +128,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
          CALL MLSMessage (MLSMSG_Error, ModuleName, &
               & "Could not open L1 Config file: " // physicalFilename)
       END IF
-
+      call AddInUnit(l1cf_unit)
       CALL MLSMessage (MLSMSG_Info, ModuleName, &
            & "Opened L1 Config file: " // physicalFilename)
 
@@ -831,6 +832,9 @@ MODULE MLSL1Config  ! Level 1 Configuration
 END MODULE MLSL1Config
 
 ! $Log$
+! Revision 2.31  2010/05/23 04:13:48  honghanh
+! Use AddInunit instead of inunit due to change in string_table
+!
 ! Revision 2.30  2008/03/04 20:01:54  perun
 ! Use optional YRDOY field in MarkChanBad entry to determine when to mark channel data bad.
 !
