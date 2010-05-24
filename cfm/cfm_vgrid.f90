@@ -54,11 +54,11 @@ module CFM_VGrid_m
          call LogarithmicFormula(vgrid, -1.0d0, formula, start)
       else if (type == l_explicit) then
          if (.not. present(values)) &
-            call MLSMessage(MLSMSG_Error, moduleId, &
+            call MLSMessage(MLSMSG_Error, ModuleName, &
             "Need values to create explicit VGrid")
          call CreateExplicitVGrid(vgrid, values)
       else
-         call MLSMessage (MLSMSG_Error, moduleId, "VGrid's type not supported")
+         call MLSMessage (MLSMSG_Error, ModuleName, "VGrid's type not supported")
       end if
 
       if (coordinate == l_zeta .and. &
@@ -82,7 +82,7 @@ module CFM_VGrid_m
 
       vgrid%noSurfs = 0
       numTokens = NumStringElements(formula, .false., ',')
-      call allocate_test(tokens, numTokens, "tokens", moduleId)
+      call allocate_test(tokens, numTokens, "tokens", ModuleName)
       call List2Array(formula, tokens, .false., ',', .true.)
 
       ! get the number of surfaces
@@ -92,7 +92,7 @@ module CFM_VGrid_m
          vgrid%nosurfs = vgrid%nosurfs + temp
       end do
       call allocate_test(vgrid%surfs, vgrid%nosurfs, 1, "vgrid%surfs", &
-            moduleId)
+            ModuleName)
 
       n = 0
       do i = 1, numTokens
@@ -118,7 +118,7 @@ module CFM_VGrid_m
 
       vgrid%noSurfs = 0
       numTokens = NumStringElements(formula, .false., ',')
-      call allocate_test(tokens, numTokens, "tokens", moduleId)
+      call allocate_test(tokens, numTokens, "tokens", ModuleName)
       call List2Array(formula, tokens, .false., ',', .true.)
 
       ! get the number of surfaces
@@ -128,7 +128,7 @@ module CFM_VGrid_m
          vgrid%nosurfs = vgrid%nosurfs + temp
       end do
       call allocate_test(vgrid%surfs, vgrid%nosurfs, 1, "vgrid%surfs", &
-            moduleId)
+            ModuleName)
 
       k = 1
       n = 1 ! One less surface the first time, since we have one at the start.
@@ -145,7 +145,7 @@ module CFM_VGrid_m
          n = 0
       end do
 
-      call deallocate_test(tokens, "tokens", moduleId)
+      call deallocate_test(tokens, "tokens", ModuleName)
 
    end subroutine
 
@@ -160,7 +160,7 @@ module CFM_VGrid_m
 
       vgrid%noSurfs = size(values)
       call allocate_test(vgrid%surfs, vgrid%nosurfs, 1, "vgrid%surfs", &
-            moduleId)
+            ModuleName)
 
       do i = 1, vgrid%nosurfs
          vgrid%surfs(i,1) = values(i)
