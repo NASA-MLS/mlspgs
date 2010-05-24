@@ -122,13 +122,13 @@ module FillUtils_1                     ! Procedures used by Fill
 
   ! Error codes for "announce_error"
   integer, parameter :: No_Error_code = 0
-  integer, parameter :: CantFillFromL2AUX = No_Error_code + 1
-  integer, parameter :: CantFillFromL1B = cantFillFromL2AUX + 1
+  integer, parameter :: CantFromL2AUX = No_Error_code + 1
+  integer, parameter :: CantFromL1B = cantFromL2AUX + 1
 
   ! Error codes for "Matrix" specification
-  integer, parameter :: MissingField = cantFillFromL1B + 1
+  integer, parameter :: MissingField = cantFromL1B + 1
 
-  ! More Error codes relating to FillVector
+  ! More Error codes relating to Vector
   integer, parameter :: NumChansisZero = missingField + 1
   integer, parameter :: NoSourceGridGiven= numChansisZero + 1
   integer, parameter :: NoSourceL2GPGiven= noSourceGridGiven + 1
@@ -140,7 +140,7 @@ module FillUtils_1                     ! Procedures used by Fill
   integer, parameter :: CantInterpolate3d = badlosGridFill + 1
   integer, parameter :: WrongUnits = CantInterpolate3d + 1
 
-  ! Error codes resulting from FillCovariance
+  ! Error codes resulting from Covariance
   integer, parameter :: NotSPD = WrongUnits + 1
   integer, parameter :: NotPlain = NotSPD + 1
   integer, parameter :: NotImplemented = notPlain + 1
@@ -169,22 +169,22 @@ module FillUtils_1                     ! Procedures used by Fill
   logical :: UNITSERROR               ! From expr
 
   public :: addGaussianNoise, ApplyBaseline, ComputeTotalPower, DeallocateStuff, &
-      & ExtractSingleChannel, FillCovariance, FillVectorQuantityFromGrid, &
-      & FillVectorQuantityFromL2GP, FillVectorQtyFromProfile, FillLOSVelocity, &
-      & FillChiSqChan, FillChiSqMMaf, FillChiSqMMif, FillChiSqRatio, &
-      & FillColAbundance, FillFoldedRadiance, FillPhiTanWithRefraction, &
-      & FillIWCFromExtinction, FillRHIFromH2O, FillNoRadsPerMIF, &
-      & FillRHIPrecisionFromOrToH2O, FillVectorQtyWithEstNoise, &
-      & FillVectorQtyHydrostatically, FillFromSplitSideband, FillGPHPrecision, &
-      & FillVectorQtyFromIsotope, FillQuantityFromAsciiFile, RotateMagneticField, &
-      & ExplicitFillVectorQuantity, FillVectorQuantityFromL1B, &
-      & FillVectorQuantityFromL2AUX, FillQuantityUsingMagneticModel, &
-      & FillQtyFromInterpolatedQty, FillQuantityFromLosGrid, &
-      & FillQuantityByManipulation, FillWithReflectorTemperature, &
-      & FillQtyWithReichlerWMOTP, &
-      & FillQtyWithWMOTropopause, FillWithBinResults, FillWithBoxcarFunction, &
-      & FillStatusQuantity, FillQualityFromChisq, FillConvergenceFromChisq, &
-      & FillUsingLeastSquares, OffsetRadianceQuantity, ResetUnusedRadiances, &
+      & ExtractSingleChannel, FillCovariance, FromGrid, &
+      & FromL2GP, FromProfile, LOSVelocity, &
+      & ChiSqChan, ChiSqMMaf, ChiSqMMif, ChiSqRatio, &
+      & ColAbundance, FoldedRadiance, PhiTanWithRefraction, &
+      & IWCFromExtinction, RHIFromOrToH2O, NoRadsPerMIF, &
+      & RHIPrecisionFromOrToH2O, WithEstNoise, &
+      & Hydrostatically, FromSplitSideband, GPHPrecision, &
+      & FromIsotope, FromAsciiFile, RotateMagneticField, &
+      & Explicit, FromL1B, &
+      & FromL2AUX, UsingMagneticModel, &
+      & FromInterpolatedQty, FromLosGrid, &
+      & ByManipulation, WithReflectorTemperature, &
+      & WithReichlerWMOTP, &
+      & WithWMOTropopause, WithBinResults, WithBoxcarFunction, &
+      & StatusQuantity, QualityFromChisq, ConvergenceFromChisq, &
+      & UsingLeastSquares, OffsetRadianceQuantity, ResetUnusedRadiances, &
       & ScaleOverlaps, SpreadChannelFill, TransferVectors, UncompressRadiance, &
       & ANNOUNCE_ERROR
 contains ! =====     Public Procedures     =============================
@@ -290,9 +290,9 @@ contains ! =====     Public Procedures     =============================
         call output ( " temperatureQuantity is not temperature", advance='yes' )
       case ( bothFractionAndLength )
         call output ( " config specifies both fraction and lengthScale", advance='yes' )
-      case ( cantFillFromL1B )
+      case ( cantFromL1B )
         call output ( " command could not be filled from L1B.", advance='yes' )
-      case ( cantFillFromL2AUX )
+      case ( cantFromL2AUX )
         call output ( " command could not be filled from L2AUX.", advance='yes' )
       case ( cantInterpolate3D )
         call output ( " program cannot interpolate 3d quantities (yet).", advance='yes' )
@@ -464,8 +464,8 @@ contains ! =====     Public Procedures     =============================
       call Deallocate_test ( Zetai, 'Zetai', ModuleName )
     end subroutine DeallocateStuff
 
-    !=============================================== ExplicitFillVectorQuantity ==
-    subroutine ExplicitFillVectorQuantity ( quantity, valuesNode, spreadFlag, &
+    !=============================================== Explicit ==
+    subroutine Explicit ( quantity, valuesNode, spreadFlag, &
       & globalUnit, dontmask, channel, heightNode, instancesNode, &
       & AzEl, options, FillValue, extraQuantity )
 
@@ -499,14 +499,14 @@ contains ! =====     Public Procedures     =============================
       ! option           meaning
       ! ------           -------
       !   v              verbose
-      !   e              replace only values in quantity == FillValue
-      !   n              replace only values in quantity != FillValue
+      !   e              replace only values in quantity == Value
+      !   n              replace only values in quantity != Value
       !   a              replace only values at heights above specified height
       !   b              replace only values at heights below specified height
       !                   (defaults to replacing all)
       character (len=*), optional, intent(in) :: options ! E.g., '-v'
       real(r8), intent(in), optional :: FillValue
-      type (VectorValue_T), optional :: EXTRAQUANTITY ! Instead of FillValue
+      type (VectorValue_T), optional :: EXTRAQUANTITY ! Instead of Value
 
       ! Local variables
       integer :: chan
@@ -516,9 +516,8 @@ contains ! =====     Public Procedures     =============================
       integer :: K                        ! Loop counter
       integer :: I,J                      ! Other indices
       logical :: MyAzEl
-      real(kind(quantity%values)) :: myFillValue
+      real(kind(quantity%values)) :: myValue
       character (len=8) :: myOptions
-      integer :: Node
       integer :: NoValues
       integer :: numChans
       integer :: rangeID
@@ -552,8 +551,8 @@ contains ! =====     Public Procedures     =============================
       noValues = -1 ! if we will ignore valuesNode
       if ( .not. present(ExtraQuantity) ) noValues = nsons(valuesNode) - 1
 
-      myFillValue = 0.
-      if ( present(FillValue) ) myFillValue = FillValue
+      myValue = 0.
+      if ( present(FillValue) ) myValue = FillValue
 
       whichToReplace = ' '
       if ( index(myOptions, 'e') > 0 ) then
@@ -725,9 +724,9 @@ contains ! =====     Public Procedures     =============================
             end if
             select case (whichToReplace)
             case ('/=')
-              if ( quantity%values(j,i) == myFillValue ) cycle
+              if ( quantity%values(j,i) == myValue ) cycle
             case ('==')
-              if ( quantity%values(j,i) /= myFillValue ) cycle
+              if ( quantity%values(j,i) /= myValue ) cycle
             end select
             ! Have we specified which channel to fill?
             if ( channel /= 0 ) then
@@ -749,7 +748,7 @@ contains ! =====     Public Procedures     =============================
       ! Tidy up
       if ( .not. present(extraQuantity) ) call Deallocate_test ( values, 'values', ModuleName )
 
-    end subroutine ExplicitFillVectorQuantity
+    end subroutine Explicit
 
     ! ------------------------------------------- ComputeTotalPower
     subroutine ComputeTotalPower ( key, vectors )
@@ -859,8 +858,8 @@ contains ! =====     Public Procedures     =============================
       end do
     end subroutine ExtractSingleChannel
 
-    ! ------------------------------------------- FillChiSqChan ---
-    subroutine FillChiSqChan ( key, qty, measQty, modelQty, noiseQty, &
+    ! ------------------------------------------- ChiSqChan ---
+    subroutine ChiSqChan ( key, qty, measQty, modelQty, noiseQty, &
     & dontMask, ignoreZero, ignoreNegative, multiplier, &
     & firstInstance, lastInstance )
       ! A special fill of chi squared
@@ -989,10 +988,10 @@ contains ! =====     Public Procedures     =============================
       end do
       call deallocate_test(values, &
         & 'chi^2 unsummed', ModuleName)
-    end subroutine FillChiSqChan
+    end subroutine ChiSqChan
 
-    ! ------------------------------------------- FillChiSqMMaf ---
-    subroutine FillChiSqMMaf ( key, qty, measQty, modelQty, noiseQty, &
+    ! ------------------------------------------- ChiSqMMaf ---
+    subroutine ChiSqMMaf ( key, qty, measQty, modelQty, noiseQty, &
     & dontMask, ignoreZero, ignoreNegative, multiplier, &
     & firstInstance, lastInstance )
       ! A special fill of chi squared
@@ -1127,10 +1126,10 @@ contains ! =====     Public Procedures     =============================
       end do
       call deallocate_test(values, &
         & 'chi^2 unsummed', ModuleName)
-    end subroutine FillChiSqMMaf
+    end subroutine ChiSqMMaf
 
-    ! ------------------------------------------- FillChiSqMMif ---
-    subroutine FillChiSqMMif ( key, qty, measQty, modelQty, noiseQty, &
+    ! ------------------------------------------- ChiSqMMif ---
+    subroutine ChiSqMMif ( key, qty, measQty, modelQty, noiseQty, &
     & dontMask, ignoreZero, ignoreNegative, multiplier, &
     & firstInstance, lastInstance )
       ! A special fill of chi squared
@@ -1261,10 +1260,10 @@ contains ! =====     Public Procedures     =============================
       end do
       call deallocate_test(values, &
         & 'chi^2 unsummed', ModuleName)
-    end subroutine FillChiSqMMif
+    end subroutine ChiSqMMif
 
-    ! ------------------------------------------- FillChiSqRatio ---
-    subroutine FillChiSqRatio ( key, qty, normQty, minNormQty, flagQty, &
+    ! ------------------------------------------- ChiSqRatio ---
+    subroutine ChiSqRatio ( key, qty, normQty, minNormQty, flagQty, &
     & dontMask, firstInstance, lastInstance )
       ! A special fill of the ratio
       !  chi squared Norm
@@ -1383,10 +1382,10 @@ contains ! =====     Public Procedures     =============================
             & normQty%values(1:qIndex, i) / minNormQty%values(1:qIndex, i)
         endif
       end do
-    end subroutine FillChiSqRatio
+    end subroutine ChiSqRatio
 
-    ! ------------------------------------------- FillColAbundance ---
-    subroutine FillColAbundance ( key, qty, bndPressQty, vmrQty, colmAbUnits, &
+    ! ------------------------------------------- ColAbundance ---
+    subroutine ColAbundance ( key, qty, bndPressQty, vmrQty, colmAbUnits, &
       & firstInstance, lastInstance )
       ! A special fill according to W.R.Read's idl code
       ! Similar to his hand-written notes, but with a small correction
@@ -1630,10 +1629,10 @@ contains ! =====     Public Procedures     =============================
         qty%values ( 1, instance ) = InverMg * columnSum
       end do
       call deallocateStuff(Zetab, Zetac, Zetai, Pb, Pc, Pi)
-    end subroutine FillColAbundance
+    end subroutine ColAbundance
 
-    ! -------------------------------------------- FillConvergenceFromChisq --------
-    subroutine FillConvergenceFromChisq ( key, quantity, sourceQuantity, scale )
+    ! -------------------------------------------- ConvergenceFromChisq --------
+    subroutine ConvergenceFromChisq ( key, quantity, sourceQuantity, scale )
       integer, intent(in) :: KEY        ! Tree node
       type ( VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
       type ( VectorValue_T), intent(in) :: SOURCEQUANTITY ! dnwt_ChisqRatio quantity on which it's based
@@ -1652,7 +1651,7 @@ contains ! =====     Public Procedures     =============================
         qIndex = findLast( sourceQuantity%values(:,1) /= 0._rv )
         quantity%values(1,:) = scale * sourceQuantity%values(qIndex,1)
       endif
-    end subroutine FillConvergenceFromChisq
+    end subroutine ConvergenceFromChisq
 
     !------------------------------------- FillCovariance ------------
 
@@ -1750,7 +1749,7 @@ contains ! =====     Public Procedures     =============================
           if ( qt%coherent ) surfs => qt%surfs(:,1)
           if ( .not. qt%regular ) &
             & call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & "Unable to handle irregular quantity in FillCovariance" )
+            & "Unable to handle irregular quantity in Covariance" )
           call Allocate_test ( m, n, n, 'M', ModuleName )
 
           ! Loop over the instances
@@ -1824,8 +1823,8 @@ contains ! =====     Public Procedures     =============================
 
     end subroutine FillCovariance
 
-    ! ------------------------------------- FillFoldedRadiance ---
-    subroutine FillFoldedRadiance ( radiance, lsb, usb, &
+    ! ------------------------------------- FoldedRadiance ---
+    subroutine FoldedRadiance ( radiance, lsb, usb, &
       & lsbFraction, usbFraction, key )
       type (VectorValue_T), intent(inout) :: RADIANCE
       type (VectorValue_T), pointer :: USB
@@ -1886,10 +1885,10 @@ contains ! =====     Public Procedures     =============================
         end do
       end do
 
-    end subroutine FillFoldedRadiance
+    end subroutine FoldedRadiance
 
-    ! ------------------------------------- FillFromSplitSideband ----
-    subroutine FillFromSplitSideband ( quantity, sourceQuantity, &
+    ! ------------------------------------- FromSplitSideband ----
+    subroutine FromSplitSideband ( quantity, sourceQuantity, &
       & lsbFraction, usbFraction, spreadFlag, usb, channel, key )
 
       type (VectorValue_T), intent(inout) :: QUANTITY
@@ -2077,10 +2076,10 @@ contains ! =====     Public Procedures     =============================
       call deallocate_test ( freq2, 'frequencies', ModuleName )
       call deallocate_test ( freqL2,'LSBfrequencies', ModuleName )
       call deallocate_test ( freqU2,'USBfrequencies', ModuleName )
-    end subroutine FillFromSplitSideband
+    end subroutine FromSplitSideband
 
-    ! ------------------------------------- FillGPHPrecision ----
-    subroutine FillGPHPrecision ( key, quantity, &
+    ! ------------------------------------- GPHPrecision ----
+    subroutine GPHPrecision ( key, quantity, &
       & tempPrecisionQuantity, refGPHPrecisionQuantity )
       ! Fill the GPH precision from the temperature and refGPH precision,
       ! ignoring the of diagonal elements (not available outside
@@ -2095,7 +2094,7 @@ contains ! =====     Public Procedures     =============================
       ! Executable code
 
       if ( toggle(gen) .and. levels(gen) > 0 ) &
-        & call trace_begin ( "FillGPHPrecision", key )
+        & call trace_begin ( "GPHPrecision", key )
 
       select case ( quantity%template%quantityType )
       case ( l_gph )
@@ -2108,7 +2107,7 @@ contains ! =====     Public Procedures     =============================
           call Announce_Error ( key, nonConformingHydrostatic, &
             & "case l_gph failed first test" )
           if ( toggle(gen) .and. levels(gen) > 0 ) &
-            & call trace_end ( "FillGPHPrecision")
+            & call trace_end ( "GPHPrecision")
           return
         end if
         if ( (any(quantity%template%surfs /= tempPrecisionQuantity%template%surfs)) .or. &
@@ -2117,21 +2116,21 @@ contains ! =====     Public Procedures     =============================
           call Announce_Error ( key, nonConformingHydrostatic, &
             &  "case l_gph failed second test" )
           if ( toggle(gen) .and. levels(gen) > 0 ) &
-            & call trace_end ( "FillGPHPrecision")
+            & call trace_end ( "GPHPrecision")
           return
         end if
         call GetGPHPrecision ( tempPrecisionQuantity, refGPHPrecisionQuantity, quantity%values )
       case default
-        call Announce_error ( 0, no_error_code, 'GPH precision needed for result of FillGPHPrecision' )
+        call Announce_error ( 0, no_error_code, 'GPH precision needed for result of GPHPrecision' )
       end select
 
       if ( toggle(gen) .and. levels(gen) > 0 ) &
-        & call trace_end ( "FillGPHPrecision" )
+        & call trace_end ( "GPHPrecision" )
 
-    end subroutine FillGPHPrecision
+    end subroutine GPHPrecision
 
-      ! ------------------------------------- FillIWCFromExtinction ----
-    subroutine FillIWCFromExtinction ( quantity, &
+      ! ------------------------------------- IWCFromExtinction ----
+    subroutine IWCFromExtinction ( quantity, &
      & sourceQuantity, temperatureQuantity)
       ! Actually, the meaning of the next two is reversed if invert is TRUE)
       type (VectorValue_T), intent(inout) :: QUANTITY ! (IWC) Quantity to fill
@@ -2147,7 +2146,7 @@ contains ! =====     Public Procedures     =============================
       real (r8), dimension(Temperaturequantity%template%noInstances) :: x1, y1
       integer :: i
 
-      call MLSMessageCalls( 'push', constantName='FillIWCFromExtinction' )
+      call MLSMessageCalls( 'push', constantName='IWCFromExtinction' )
       if ( .not. (quantity%template%coherent .and. sourceQuantity%template%coherent &
          .and. Temperaturequantity%template%coherent)) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -2202,10 +2201,10 @@ contains ! =====     Public Procedures     =============================
       end do
       call MLSMessageCalls( 'pop' )
 
-    end subroutine FillIWCFromExtinction
+    end subroutine IWCFromExtinction
 
-    ! ------------------------------------------- FillLOSVelocity ---
-    subroutine FillLOSVelocity ( key, qty, tngtECI, scECI, scVel)
+    ! ------------------------------------------- LOSVelocity ---
+    subroutine LOSVelocity ( key, qty, tngtECI, scECI, scVel)
       ! A special fill from geometry arguments
       use Geometry, only: OMEGA => W
       integer, intent(in) :: KEY
@@ -2283,10 +2282,10 @@ contains ! =====     Public Procedures     =============================
           ! minor frame quantity, they're OK with this sc one too.
         end do
       end do
-    end subroutine FillLOSVelocity
+    end subroutine LOSVelocity
 
-    ! ------------------------------------- FillNoRadsPerMIF -----
-    subroutine FillNoRadsPerMif ( key, quantity, measQty, asPercentage )
+    ! ------------------------------------- NoRadsPerMIF -----
+    subroutine NoRadsPerMif ( key, quantity, measQty, asPercentage )
       use BitStuff, only: biteq
       ! Count number of valid (i.e., not masked) radiances
       ! optionally compute it as a percentage of largest number possible
@@ -2337,10 +2336,10 @@ contains ! =====     Public Procedures     =============================
         quantity%values = measQty%template%noChans
         if ( pct ) quantity%values = 100*quantity%values/possible
       end if
-    end subroutine FillNoRadsPerMIF
+    end subroutine NoRadsPerMIF
 
-    ! ------------------------------------ FillPhiTanWithRefraction --
-    subroutine FillPhiTanWithRefraction ( key, quantity, &
+    ! ------------------------------------ PhiTanWithRefraction --
+    subroutine PhiTanWithRefraction ( key, quantity, &
       & h2o, orbIncline, ptan, refGPH, temperature )
 
       use Constants, only: DEG2RAD, RAD2DEG
@@ -2365,7 +2364,7 @@ contains ! =====     Public Procedures     =============================
       integer :: I, J ! Subscripts, loop inductors
 
       ! Executable code
-      call MLSMessageCalls( 'push', constantName='FillPhiTanWithRefraction' )
+      call MLSMessageCalls( 'push', constantName='PhiTanWithRefraction' )
       ! More sanity checks
       if ( quantity%template%instrumentModule /= ptan%template%instrumentModule ) &
         & call Announce_Error ( key, No_Error_Code, &
@@ -2440,10 +2439,10 @@ contains ! =====     Public Procedures     =============================
       end do ! j
 
       call MLSMessageCalls( 'pop' )
-    end subroutine FillPhiTanWithRefraction
+    end subroutine PhiTanWithRefraction
 
-      ! ------------------------------------- FillRHIFromH2O ----
-    subroutine FillRHIFromH2O ( key, quantity, &
+      ! ------------------------------------- RHIFromOrToH2O ----
+    subroutine RHIFromOrToH2O ( key, quantity, &
      & sourceQuantity, temperatureQuantity, &
      & dontMask, ignoreZero, ignoreNegative, interpolate, &
      & markUndefinedValues, invert )
@@ -2515,7 +2514,7 @@ contains ! =====     Public Procedures     =============================
       real (r8), dimension(quantity%template%noSurfs, quantity%template%noInstances) :: &
        &                                  values
       ! Executable statements
-      call MLSMessageCalls( 'push', constantName='FillRHIFromH2O' )
+      call MLSMessageCalls( 'push', constantName='RHIFromOrToH2O' )
       values = 0.
       ! Let any undefined values be so marked (but not necessarily masked)
       ! An exceptionally dubious step -- should remove this idea
@@ -2537,7 +2536,7 @@ contains ! =====     Public Procedures     =============================
       ! Check that all is well
       if ( invert .and. interpolate ) then
        call Announce_Error ( key, No_Error_code, &
-        & ' FillRHIFromH2O unable to invert and interpolate simultaneously' )
+        & ' RHIFromOrToH2O unable to invert and interpolate simultaneously' )
        return
       end if
       matched_sizes = .true.
@@ -2550,7 +2549,7 @@ contains ! =====     Public Procedures     =============================
       end do
       if ( .not. (matched_sizes .or. interpolate) ) then
        call Announce_Error ( key, No_Error_code, &
-        & 'Incompatible quantities in FillRHIFromH2O--' //&
+        & 'Incompatible quantities in RHIFromOrToH2O--' //&
         & '(unless interpolating, all must have same shape)' )
        return
       end if
@@ -2562,7 +2561,7 @@ contains ! =====     Public Procedures     =============================
        & )
       if ( .not. (matched_surfs .or. interpolate) ) then
        call Announce_Error ( key, No_Error_code, &
-        & 'Different vertical coords in FillRHIFromH2O--' //&
+        & 'Different vertical coords in RHIFromOrToH2O--' //&
         & '(unless interpolating, all must be on the same VGrid)' )
        return
       end if
@@ -2724,10 +2723,10 @@ contains ! =====     Public Procedures     =============================
         end if
       end if
       call MLSMessageCalls( 'pop' )
-    end subroutine FillRHIFromH2O
+    end subroutine RHIFromOrToH2O
 !MJF
-    ! ------------------------------------- FillRHIPrecisionFromOrToH2O ----
-    subroutine FillRHIPrecisionFromOrToH2O ( key, quantity, &
+    ! ------------------------------------- RHIPrecisionFromOrToH2O ----
+    subroutine RHIPrecisionFromOrToH2O ( key, quantity, &
      & sourcePrecisionQuantity, tempPrecisionQuantity, sourceQuantity, &
      & temperatureQuantity, &
      & dontMask, ignoreZero, ignoreNegative, interpolate, &
@@ -2818,7 +2817,7 @@ contains ! =====     Public Procedures     =============================
       real (r8), dimension(quantity%template%noSurfs, quantity%template%noInstances) :: &
        &                                  values
       ! Executable statements
-      call MLSMessageCalls( 'push', constantName='FillRHIPrecisionFromOrToH2O' )
+      call MLSMessageCalls( 'push', constantName='RHIPrecisionFromOrToH2O' )
       values = 0.
       ! Let any undefined values be so marked (but not necessarily masked)
       ! An exceptionally dubious step -- should remove this idea
@@ -2826,7 +2825,7 @@ contains ! =====     Public Procedures     =============================
       ! Will we convert %RHI to vmr?
       ! if ( invert ) then
       ! call Announce_Error ( key, No_Error_code, &
-      !  & ' FillRHIPrecisionFromOrToH2O unable to invert' )
+      !  & ' RHIPrecisionFromOrToH2O unable to invert' )
       ! return
       ! end if
       ! Do we need to internally convert the vmr units?
@@ -2840,7 +2839,7 @@ contains ! =====     Public Procedures     =============================
       ! Check that all is well
       if ( invert .and. interpolate ) then
        call Announce_Error ( key, No_Error_code, &
-        & ' FillRHIPrecisionFromOrToH2O unable to invert and interpolate simultaneously' )
+        & ' RHIPrecisionFromOrToH2O unable to invert and interpolate simultaneously' )
        return
       end if
       matched_sizes = .true.
@@ -2855,7 +2854,7 @@ contains ! =====     Public Procedures     =============================
       end do
       if ( .not. (matched_sizes .or. interpolate) ) then
        call Announce_Error ( key, No_Error_code, &
-        & 'Incompatible quantities in FillRHIPrecisionFromOrToH2O--' //&
+        & 'Incompatible quantities in RHIPrecisionFromOrToH2O--' //&
         & '(unless interpolating, all must have same shape)' )
        return
       end if
@@ -2869,7 +2868,7 @@ contains ! =====     Public Procedures     =============================
        & )
       if ( .not. (matched_surfs .or. interpolate) ) then
        call Announce_Error ( key, No_Error_code, &
-        & 'Different vertical coords in FillRHIPrecisionFromOrToH2O--' //&
+        & 'Different vertical coords in RHIPrecisionFromOrToH2O--' //&
         & '(unless interpolating, all must be on the same VGrid)' )
        return
       end if
@@ -3100,10 +3099,10 @@ contains ! =====     Public Procedures     =============================
         end if
       end if
       call MLSMessageCalls( 'pop' )
-    end subroutine FillRHIPrecisionFromOrToH2O
+    end subroutine RHIPrecisionFromOrToH2O
 !MJF
-    ! ----------------------------------- FillQuantityFromASCIIFile --------
-    subroutine FillQuantityFromAsciiFile ( key, quantity, filename, badRange )
+    ! ----------------------------------- FromASCIIFile --------
+    subroutine FromAsciiFile ( key, quantity, filename, badRange )
       use IO_stuff, only: GET_LUN
       use Machine, only: IO_Error
       use MoreMessage, only: MLSMessage
@@ -3146,10 +3145,10 @@ contains ! =====     Public Procedures     =============================
           quantity%mask = char(ior(ichar(quantity%mask),M_LinAlg))
         end where
       end if
-    end subroutine FillQuantityFromAsciiFile
+    end subroutine FromAsciiFile
 
-    ! ------------------------------------------- FillQtyFromInterpolatedQty
-    subroutine FillQtyFromInterpolatedQty ( qty, source, force, key, DONTMASK, &
+    ! ------------------------------------------- FromInterpolatedQty
+    subroutine FromInterpolatedQty ( qty, source, force, key, DONTMASK, &
       & ptan )
       type (VectorValue_T), intent(inout) :: QTY
       type (VectorValue_T), intent(in) :: SOURCE
@@ -3164,7 +3163,7 @@ contains ! =====     Public Procedures     =============================
       logical :: mySurfs, myNewValues
 
       ! Executable code
-      call MLSMessageCalls( 'push', constantName='FillQtyFromInterpolatedQty' )
+      call MLSMessageCalls( 'push', constantName='FromInterpolatedQty' )
       if ( .not. DoQtysDescribeSameThing ( qty, source ) .and. .not. force ) then
         call Announce_error ( key, no_error_code, &
           & 'Mismatch in quantities' )
@@ -3277,10 +3276,10 @@ contains ! =====     Public Procedures     =============================
       end if
       call MLSMessageCalls( 'pop' )
 
-    end subroutine FillQtyFromInterpolatedQty
+    end subroutine FromInterpolatedQty
 
-    !=============================== FillQuantityFromLosGrid ====
-    subroutine FillQuantityFromLosGrid ( key, Qty, LOS, &
+    !=============================== FromLosGrid ====
+    subroutine FromLosGrid ( key, Qty, LOS, &
       & Ptan, Re, noFineGrid, extinction, errorCode )
 
       ! This is to fill a l2gp type of quantity with a los grid type of quantity.
@@ -3314,14 +3313,14 @@ contains ! =====     Public Procedures     =============================
         & los%template%noSurfs,los%template%noInstances) :: beta
       real (r8) :: ds, ColTrans
 
-      if ( toggle(gen) ) call trace_begin ( "FillQuantityFromLosGrid", key )
+      if ( toggle(gen) ) call trace_begin ( "FromLosGrid", key )
 
       errorCode=0
 
       ! Make sure this quantity is appropriate
       !    if ( .not. ValidateVectorQuantity(qty, coherent=.TRUE., stacked=.TRUE., &
       !      & verticalCoordinate= (/ l_pressure, l_zeta /) ) ) then
-      !      call output ( " quantity vertical grid in FillQuantityFromLOSgrid is not valid")
+      !      call output ( " quantity vertical grid in FromLOSgrid is not valid")
       !    end if
 
       if ( qty%template%verticalCoordinate == l_pressure ) then
@@ -3445,10 +3444,10 @@ contains ! =====     Public Procedures     =============================
       ! average all non-zero bins
       where (cnt > 0) qty%values = out/cnt
 
-    end subroutine FillQuantityFromLosGrid
+    end subroutine FromLosGrid
 
-    ! --------------------------------------------- FillQuantityByManipulation ---
-    subroutine FillQuantityByManipulation ( quantity, a, b, &
+    ! --------------------------------------------- ByManipulation ---
+    subroutine ByManipulation ( quantity, a, b, &
       & manipulation, key, &
       & force, spreadflag, dontSumHeights, dontSumInstances, &
       & c )
@@ -3532,7 +3531,7 @@ contains ! =====     Public Procedures     =============================
       logical :: StatisticalFunction
       logical :: USESC
       ! Executable code
-      call MLSMessageCalls( 'push', constantName='FillQuantityByManipulation' )
+      call MLSMessageCalls( 'push', constantName='ByManipulation' )
 
       ! Currently we have a rather brain dead approach to this, so
       ! check that what the user has asked for, we can supply.
@@ -4519,10 +4518,10 @@ contains ! =====     Public Procedures     =============================
           str = trim(part1) // ' ' // adjustl(part2)
         endif
       end function catTwoOperands
-    end subroutine FillQuantityByManipulation
+    end subroutine ByManipulation
 
-    ! ----------------------------------------- FillVectorQuantityFromL1B ----
-    subroutine FillVectorQuantityFromL1B ( root, quantity, chunk, filedatabase, &
+    ! ----------------------------------------- FromL1B ----
+    subroutine FromL1B ( root, quantity, chunk, filedatabase, &
       & isPrecision, suffix, PrecisionQuantity, BOMask )
       use BitStuff, only: NegativeIfBitPatternSet
       use MLSFiles, only: HDFVERSION_5
@@ -4555,7 +4554,7 @@ contains ! =====     Public Procedures     =============================
       myBOMask = 0
       if ( present(BOMask) ) myBOMask = BOMask
       if ( toggle(gen) .and. levels(gen) > 0 ) &
-        & call trace_begin ("FillVectorQuantityFromL1B",root)
+        & call trace_begin ("FromL1B",root)
       ! print *, 'Filling vector quantity from l1b'
       L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
       L1BOAFile => GetMLSFileByType(filedatabase, content='l1boa')
@@ -4622,7 +4621,7 @@ contains ! =====     Public Procedures     =============================
         nameString = AssembleL1BQtyName('GeodAlt', this_hdfVersion, .TRUE., &
           & trim(nameString))
       case default
-        call Announce_Error ( root, cantFillFromL1B )
+        call Announce_Error ( root, cantFromL1B )
       end select
 
       ! Perhaps will need to read bright object status from l1bOA file
@@ -4668,17 +4667,18 @@ contains ! =====     Public Procedures     =============================
         L1BFile => GetL1bFile(filedatabase, namestring)
         if (associated(L1BFile)) then
            call ReadL1BData ( L1BFile, nameString, l1bData, noMAFs, flag, &
-              & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
-              & NeverFail= .false., &
-              & dontPad=DONTPAD )
-              ! If it didn't exist in the not-a-radiance case, then we'll fail here.
+             & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
+             & NeverFail= .false., &
+             & dontPad=DONTPAD )
+           ! If it didn't exist in the not-a-radiance case, then we'll fail here.
         else
            flag = 1 ! Just a trick, so we reuse the printing of error message
         end if
+        ! If it didn't exist in the not-a-radiance case, then we'll fail here.
         if ( flag /= 0 ) then
           call Announce_Error ( root, errorReadingL1B )
           if ( toggle(gen) .and. levels(gen) > 0 ) &
-            & call trace_end ( "FillVectorQuantityFromL1B")
+            & call trace_end ( "FromL1B")
           return
         end if
         if ( quantity%template%noInstances /= size ( l1bData%dpField, 3 ) .or. &
@@ -4700,7 +4700,7 @@ contains ! =====     Public Procedures     =============================
           call output ( size ( l1bData%dpField, 3 ), advance='yes' )
           call Announce_Error ( root, no_error_code, 'L1B data is wrong shape' )
           if ( toggle(gen) .and. levels(gen) > 0 ) &
-            & call trace_end ( "FillVectorQuantityFromL1B")
+            & call trace_end ( "FromL1B")
           return
         end if
 
@@ -4779,11 +4779,11 @@ contains ! =====     Public Procedures     =============================
           end do
         end do
       end if
-      if ( toggle(gen) .and. levels(gen) > 0 ) call trace_end( "FillVectorQuantityFromL1B" )
-    end subroutine FillVectorQuantityFromL1B
+      if ( toggle(gen) .and. levels(gen) > 0 ) call trace_end( "FromL1B" )
+    end subroutine FromL1B
 
-    ! ------------------------------------------- FillVectorQuantityFromL2AUX --
-    subroutine FillVectorQuantityFromL2AUX ( qty, l2aux, errorCode )
+    ! ------------------------------------------- FromL2AUX --
+    subroutine FromL2AUX ( qty, l2aux, errorCode )
       type ( VectorValue_T), intent(inout) :: QTY
       type ( L2AUXData_T), intent(in) :: L2AUX
       integer, intent(inout) :: ERRORCODE
@@ -4803,26 +4803,26 @@ contains ! =====     Public Procedures     =============================
       end if
       ! Check that the dimensions are appropriate
       if ( firstProfile < lbound ( l2aux%values, 3 ) ) then
-        errorCode = CantFillFromL2AUX
+        errorCode = CantFromL2AUX
         return
       end if
       if ( lastProfile > ubound ( l2aux%values, 3 ) ) then
-        errorCode = CantFillFromL2AUX
+        errorCode = CantFromL2AUX
         return
       end if
       if ( size ( l2aux%values, 1 ) /= qty%template%noChans .or. &
         &  size ( l2aux%values, 2 ) /= qty%template%noSurfs ) then
-        errorCode = CantFillFromL2AUX
+        errorCode = CantFromL2AUX
         return
       end if
       ! Do the fill
       qty%values = reshape ( l2aux%values ( :, :,  &
         & firstProfile : lastProfile ), &
         & (/ qty%template%instanceLen, qty%template%noInstances /) )
-    end subroutine FillVectorQuantityFromL2AUX
+    end subroutine FromL2AUX
 
-    ! --------------------------------------- FillQuantityUsingMagneticModel --
-    subroutine FillQuantityUsingMagneticModel ( qty, gphQty, key )
+    ! --------------------------------------- UsingMagneticModel --
+    subroutine UsingMagneticModel ( qty, gphQty, key )
       use Geometry, only: SecPerYear
       use IGRF_INT, only: FELDC, FELDCOF, To_Cart
       type (VectorValue_T), intent(inout) :: QTY
@@ -4887,10 +4887,10 @@ contains ! =====     Public Procedures     =============================
       if ( switchDetail(switches,'mag') > -1 ) &
         & call dump ( qty, options=options )
 
-    end subroutine FillQuantityUsingMagneticModel
+    end subroutine UsingMagneticModel
 
-    ! ------------------------------------- FillVectorQtyHydrostatically ----
-    subroutine FillVectorQtyHydrostatically ( key, quantity, &
+    ! ------------------------------------- Hydrostatically ----
+    subroutine Hydrostatically ( key, quantity, &
       & temperatureQuantity, refGPHQuantity, h2oQuantity, &
       & orbitInclinationQuantity, phiTanQuantity, geocAltitudeQuantity, maxIterations, &
       & phiWindow, phiWindowUnits, chunkNo )
@@ -4915,7 +4915,7 @@ contains ! =====     Public Procedures     =============================
       ! Executable code
 
       if ( toggle(gen) .and. levels(gen) > 0 ) &
-        & call trace_begin ( "FillVectorQtyHydrostatically", key )
+        & call trace_begin ( "Hydrostatically", key )
 
       select case ( quantity%template%quantityType )
       case ( l_gph )
@@ -4928,7 +4928,7 @@ contains ! =====     Public Procedures     =============================
           call Announce_Error ( key, nonConformingHydrostatic, &
             & "case l_gph failed first test" )
           if ( toggle(gen) .and. levels(gen) > 0 ) &
-            & call trace_end ( "FillVectorQtyHydrostatically")
+            & call trace_end ( "Hydrostatically")
           return
         end if
         if ( (any(quantity%template%surfs /= temperatureQuantity%template%surfs)) .or. &
@@ -4937,7 +4937,7 @@ contains ! =====     Public Procedures     =============================
           call Announce_Error ( key, nonConformingHydrostatic, &
             &  "case l_gph failed second test" )
           if ( toggle(gen) .and. levels(gen) > 0 ) &
-            & call trace_end ( "FillVectorQtyHydrostatically")
+            & call trace_end ( "Hydrostatically")
           return
         end if
         call GetBasisGPH ( temperatureQuantity, refGPHQuantity, quantity%values )
@@ -4949,7 +4949,7 @@ contains ! =====     Public Procedures     =============================
           call Announce_Error ( key, nonConformingHydrostatic, &
             & "case l_ptan failed first test" )
           if ( toggle(gen) .and. levels(gen) > 0 ) &
-            & call trace_end ( "FillVectorQtyHydrostatically")
+            & call trace_end ( "Hydrostatically")
           return
         end if
         if ( (any(refGPHquantity%template%phi /= temperatureQuantity%template%phi)) .or. &
@@ -4957,7 +4957,7 @@ contains ! =====     Public Procedures     =============================
           call Announce_Error ( key, nonConformingHydrostatic, &
             & "case l_ptan failed second test" )
           if ( toggle(gen) .and. levels(gen) > 0 )&
-            &  call trace_end ( "FillVectorQtyHydrostatically")
+            &  call trace_end ( "Hydrostatically")
           return
         end if
         if ( (.not. ValidateVectorQuantity(quantity, minorFrame=.true.) ) .or. &
@@ -4990,7 +4990,7 @@ contains ! =====     Public Procedures     =============================
            & geocAltitudeQuantity%template%instrumentModule, &
            & advance='yes')
            if ( toggle(gen) .and. levels(gen) > 0 ) &
-            & call trace_end ( "FillVectorQtyHydrostatically")
+            & call trace_end ( "Hydrostatically")
           return
         end if
         call Get2DHydrostaticTangentPressure ( quantity, temperatureQuantity,&
@@ -5002,13 +5002,13 @@ contains ! =====     Public Procedures     =============================
       end select
 
       if ( toggle(gen) .and. levels(gen) > 0 ) &
-        & call trace_end ( "FillVectorQtyHydrostatically" )
+        & call trace_end ( "Hydrostatically" )
 
-    end subroutine FillVectorQtyHydrostatically
+    end subroutine Hydrostatically
 
-    ! -------------------------------------- FillVectorQtyFromIsotope -----------
+    ! -------------------------------------- FromIsotope -----------
 
-    subroutine FillVectorQtyFromIsotope ( quantity, sourceQuantity, &
+    subroutine FromIsotope ( quantity, sourceQuantity, &
               & ratioQuantity )
       ! This routine fills one vector from another, given an appropriate
       ! isotope ratio.
@@ -5061,10 +5061,10 @@ contains ! =====     Public Procedures     =============================
 
       quantity%values = sourceQuantity%values * factor
 
-    end subroutine FillVectorQtyFromIsotope
+    end subroutine FromIsotope
 
-    ! ---------------------------------- FillVectorQtyWithEstdNoise ---
-    subroutine FillVectorQtyWithEstNoise ( quantity, radiance, &
+    ! ---------------------------------- WithEstdNoise ---
+    subroutine WithEstNoise ( quantity, radiance, &
       & sysTemp, nbw, integrationTime )
 
       use MLSSignals_m, only: signals
@@ -5139,10 +5139,10 @@ contains ! =====     Public Procedures     =============================
         end do
       end do
 
-    end subroutine FillVectorQtyWithEstNoise
+    end subroutine WithEstNoise
 
-    ! ----------------------------------------- FillWithReflectorTemperature ---
-    subroutine FillWithReflectorTemperature ( key, quantity, phiZero, termsNode )
+    ! ----------------------------------------- WithReflectorTemperature ---
+    subroutine WithReflectorTemperature ( key, quantity, phiZero, termsNode )
       use Constants, only: DEG2RAD
       integer, intent(in) :: KEY         ! Tree node for messages
       type (VectorValue_T), intent(inout) :: QUANTITY ! The quantity to fill
@@ -5179,10 +5179,10 @@ contains ! =====     Public Procedures     =============================
         end if
       end do
 
-    end subroutine FillWithReflectorTemperature
+    end subroutine WithReflectorTemperature
 
-    ! ----------------------------------------- FillQtyWithReichlerWMOTP -------------
-    subroutine FillQtyWithReichlerWMOTP ( tpPres, temperature )
+    ! ----------------------------------------- WithReichlerWMOTP -------------
+    subroutine WithReichlerWMOTP ( tpPres, temperature )
       use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
       use dump_0, only: dump
       use MLSFillValues, only: IsFillValue, RemoveFillValues
@@ -5191,7 +5191,7 @@ contains ! =====     Public Procedures     =============================
       use wmoTropopause, only: ExtraTropics, twmo
       ! Implements the algorithm published in GRL
       ! Loosely called the "Reichler" algorithm
-      ! Ideas the same as in FillQtyWithWMOTropopause
+      ! Ideas the same as in WithWMOTropopause
       ! But implemented differently
       ! 
       type (VectorValue_T), intent(inout) :: TPPRES ! Result
@@ -5295,10 +5295,10 @@ contains ! =====     Public Procedures     =============================
         call Deallocate_test ( xyPress, 'xyPress', ModuleName )
       end do instanceLoop
       if ( DEEBUG ) call dump( tpPres%values, 'tpPres%values' )
-    end subroutine FillQtyWithReichlerWMOTP
+    end subroutine WithReichlerWMOTP
 
-    ! ----------------------------------------- FillQtyWithWMOTropopause ------
-    subroutine FillQtyWithWMOTropopause ( tpPres, temperature, refGPH, grid )
+    ! ----------------------------------------- WithWMOTropopause ------
+    subroutine WithWMOTropopause ( tpPres, temperature, refGPH, grid )
       use Geometry, only: GEODTOGEOCLAT
       use Hydrostatic_M, only: HYDROSTATIC
       use VGridsDatabase, only: VGRID_T
@@ -5356,7 +5356,7 @@ contains ! =====     Public Procedures     =============================
       ! (ie describe the right quantities, and all on the same horizontal
       ! grid).
 
-      call MLSMessageCalls( 'push', constantName='FillQtyWithWMOTropopause' )
+      call MLSMessageCalls( 'push', constantName='WithWMOTropopause' )
       ! Loop over the instances
       tpPres%values = 0.0
       instanceLoop: do i = 1, temperature%template%noInstances
@@ -5441,10 +5441,10 @@ contains ! =====     Public Procedures     =============================
         end if
       end do instanceLoop
       call MLSMessageCalls( 'pop' )
-    end subroutine FillQtyWithWMOTropopause
+    end subroutine WithWMOTropopause
 
-    ! -------------------------------------------- FillQualityFromChisq --------
-    subroutine FillQualityFromChisq ( key, quantity, sourceQuantity, scale, heightNode )
+    ! -------------------------------------------- QualityFromChisq --------
+    subroutine QualityFromChisq ( key, quantity, sourceQuantity, scale, heightNode )
       integer, intent(in) :: KEY        ! Tree node
       type ( VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
       type ( VectorValue_T), intent(in) :: SOURCEQUANTITY ! Chisq like quantity on which it's based
@@ -5456,7 +5456,7 @@ contains ! =====     Public Procedures     =============================
       real(r8) :: HEIGHT                ! The height to consider
       integer :: SURFACE                ! Surface index
       ! Executable code
-      call MLSMessageCalls( 'push', constantName='FillQualityFromChisq' )
+      call MLSMessageCalls( 'push', constantName='QualityFromChisq' )
       ! Do some sanity checking
       if ( quantity%template%quantityType /= l_quality ) call Announce_error ( key, no_error_code, &
         & 'Quality quantity must be quality' )
@@ -5483,10 +5483,10 @@ contains ! =====     Public Procedures     =============================
         quantity%values(1,:) = scale / sourceQuantity%values(surface,:)
       end where
       call MLSMessageCalls( 'pop' )
-    end subroutine FillQualityFromChisq
+    end subroutine QualityFromChisq
 
-    ! -------------------------------------------- FillStatusQuantity --------
-    subroutine FillStatusQuantity ( key, quantity, sourceQuantity, statusValue, &
+    ! -------------------------------------------- StatusQuantity --------
+    subroutine StatusQuantity ( key, quantity, sourceQuantity, statusValue, &
       & minValue, maxValue, heightNode, additional, force, exact )
       integer, intent(in) :: KEY        ! Tree node
       type ( VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
@@ -5504,7 +5504,7 @@ contains ! =====     Public Procedures     =============================
       integer, dimension(2) :: UNITASARRAY ! From expr
       real(r8), dimension(2) :: VALUEASARRAY ! From expr
       ! Executable code
-      call MLSMessageCalls( 'push', constantName='FillStatusQuantity' )
+      call MLSMessageCalls( 'push', constantName='StatusQuantity' )
       ! Do some sanity checking
       if ( quantity%template%quantityType /= l_status ) call Announce_error ( key, no_error_code, &
         & 'Quality quantity must be quality' )
@@ -5552,10 +5552,10 @@ contains ! =====     Public Procedures     =============================
         endif
       endif
       call MLSMessageCalls( 'pop' )
-    end subroutine FillStatusQuantity
+    end subroutine StatusQuantity
 
-    ! ------------------------------------------ FillUsingLeastSquares -----
-    subroutine FillUsingLeastSquares  ( key, Quantity, SourceQuantity, ptanQuantity, &
+    ! ------------------------------------------ UsingLeastSquares -----
+    subroutine UsingLeastSquares  ( key, Quantity, SourceQuantity, ptanQuantity, &
       & channel, method, scaleInstances, scaleRatio, scaleSurfs )
       ! This fills a coherent Quantity from a a typically incoherent
       ! SourceQuantity using a least-squares approximation to a first-order
@@ -5732,10 +5732,10 @@ contains ! =====     Public Procedures     =============================
       if ( associated ( ptanQuantity ) .and. sourceQuantity%template%minorFrame ) &
         & call Deallocate_test ( sourceHeights, 'sourceHeights', ModuleName )
 
-    end subroutine FillUsingLeastSquares
+    end subroutine UsingLeastSquares
 
-    !=============================== FillVectorQuantityFromGrid ============
-    subroutine FillVectorQuantityFromGrid(quantity, grid, allowMissing, errorCode)
+    !=============================== FromGrid ============
+    subroutine FromGrid(quantity, grid, allowMissing, errorCode)
       use dump_0, only: dump
       use Griddeddata, only: dump
       ! Dummy arguments
@@ -5810,10 +5810,10 @@ contains ! =====     Public Procedures     =============================
           quantity%values(surf,instance) = newValue
         end do                            ! End surface loop
       end do                              ! End instance loop
-    end subroutine FillVectorQuantityFromGrid
+    end subroutine FromGrid
 
-    !=============================== FillVectorQuantityFromL2GP ==========
-    subroutine FillVectorQuantityFromL2GP ( quantity,l2gp, interpolate, profile, &
+    !=============================== FromL2GP ==========
+    subroutine FromL2GP ( quantity,l2gp, interpolate, profile, &
       & errorCode, ignoreGeolocation, fromPrecision )
       use MLSNumerics, only: COEFFICIENTS_R8, INTERPOLATEARRAYSETUP, &
         & INTERPOLATEARRAYTEARDOWN
@@ -5845,7 +5845,7 @@ contains ! =====     Public Procedures     =============================
       real (r8), dimension(quantity%template%noSurfs) :: outZeta
       real (r4), dimension(:,:,:), pointer :: SOURCE
 
-      call MLSMessageCalls( 'push', constantName='FillVectorQuantityFromL2GP' )
+      call MLSMessageCalls( 'push', constantName='FromL2GP' )
       errorCode=0
       ! Make sure this quantity is appropriate
       if ( .not. ValidateVectorQuantity(quantity, coherent=.TRUE., stacked=.TRUE., &
@@ -5981,10 +5981,10 @@ contains ! =====     Public Procedures     =============================
       end if
       call MLSMessageCalls( 'pop' )
 
-    end subroutine FillVectorQuantityFromL2GP
+    end subroutine FromL2GP
 
-    ! -------------------------------------- FillVectorQtyFromProfile --
-    subroutine FillVectorQtyFromProfile ( quantity, valuesNode, &
+    ! -------------------------------------- FromProfile --
+    subroutine FromProfile ( quantity, valuesNode, &
       & instancesNode, globalUnit, dontMask, ptan, logSpace )
       ! This fill is slightly complicated.  Given a values array along
       ! the lines of [ 1000mb : 1.0K, 100mb : 1.0K,  10mb : 2.0K] etc. it
@@ -6020,7 +6020,7 @@ contains ! =====     Public Procedures     =============================
       integer, dimension(:), pointer :: ININDS ! Indices
 
       ! Executable code
-      call MLSMessageCalls( 'push', constantName='FillVectorQtyFromProfile' )
+      call MLSMessageCalls( 'push', constantName='FromProfile' )
 
       ! Check the quantity is amenable to this type of fill
       if ( .not. ValidateVectorQuantity ( quantity, &
@@ -6074,7 +6074,6 @@ contains ! =====     Public Procedures     =============================
           & 'Non-positive input data in log profile fill (reset logSpace=false?)' )
         return
       end if
-
       if ( myLogSpace ) values = log ( values )
 
       ! Get the appropriate height coordinate for output, for pressure take log.
@@ -6161,10 +6160,10 @@ contains ! =====     Public Procedures     =============================
       call Deallocate_test ( outValues, 'outValues', ModuleName )
       call Deallocate_test ( instances, 'instances', ModuleName )
       call MLSMessageCalls( 'pop' )
-    end subroutine FillVectorQtyFromProfile
+    end subroutine FromProfile
 
-    ! -------------------------------------------- FillWithBinResults -----
-    subroutine FillWithBinResults ( key, quantity, sourceQuantity, ptanQuantity, &
+    ! -------------------------------------------- WithBinResults -----
+    subroutine WithBinResults ( key, quantity, sourceQuantity, ptanQuantity, &
       & channel, method, additional, excludeBelowBottom, centerVertically )
       ! This fills a coherent quantity with the max/min binned value of
       ! a typically incoherent one.  The bins are centered horizontally
@@ -6190,7 +6189,7 @@ contains ! =====     Public Procedures     =============================
       integer :: MYCHANNEL              ! Channel or 1
 
       ! Executable code
-      call MLSMessageCalls( 'push', constantName='FillWithBinResults' )
+      call MLSMessageCalls( 'push', constantName='WithBinResults' )
 
       ! Check the output quantity
       if ( .not. ValidateVectorQuantity ( quantity, &
@@ -6342,10 +6341,10 @@ contains ! =====     Public Procedures     =============================
       if ( associated ( ptanQuantity ) .and. sourceQuantity%template%minorFrame ) &
         & call Deallocate_test ( sourceHeights, 'sourceHeights', ModuleName )
       call MLSMessageCalls( 'pop' )
-    end subroutine FillWithBinResults
+    end subroutine WithBinResults
 
-    ! --------------------------------------------- FillWithBoxcarFunction  ----
-    subroutine FillWithBoxcarFunction ( key, quantity, sourceQuantity, width, method )
+    ! --------------------------------------------- WithBoxcarFunction  ----
+    subroutine WithBoxcarFunction ( key, quantity, sourceQuantity, width, method )
       integer, intent(in) :: KEY        ! Key for tree node
       type (VectorValue_T), intent(inout) :: QUANTITY
       type (VectorValue_T), intent(in), target :: SOURCEQUANTITY
@@ -6401,7 +6400,7 @@ contains ! =====     Public Procedures     =============================
         call Deallocate_test ( oldValues, 'oldValues', ModuleName )
       end if
 
-    end subroutine FillWithBoxcarFunction
+    end subroutine WithBoxcarFunction
 
     ! ----------------------------------------- offsetradiancequantity -----
     subroutine OffsetRadianceQuantity ( quantity, radianceQuantity, amount )
@@ -6658,7 +6657,7 @@ contains ! =====     Public Procedures     =============================
             & quantityType=sq%template%quantityType, &
             & molecule=sq%template%molecule )
           if ( associated ( dq ) ) then
-            call FillQtyFromInterpolatedQty( dq, sq, force=.false., key=0, &
+            call FromInterpolatedQty( dq, sq, force=.false., key=0, &
               & dontmask=.false. )
           end if
         end if
@@ -6885,8 +6884,11 @@ end module FillUtils_1
 
 !
 ! $Log$
-! Revision 2.36  2010/05/23 03:31:24  honghanh
-! Fix a bug in FromL1B to check if L1Bfile is associated before reading from it
+! Revision 2.37  2010/05/24 16:33:52  honghanh
+! Merge changes in version 2.35 and 2.36
+!
+! Revision 2.35  2010/05/19 23:06:45  pwagner
+! Shorten most Fill routine names
 !
 ! Revision 2.34  2010/04/28 16:23:52  pwagner
 ! May specify instances range in explicit Fill
@@ -6898,13 +6900,13 @@ end module FillUtils_1
 ! Remove USE or declaration for unreferenced names
 !
 ! Revision 2.31  2009/12/14 18:35:51  pwagner
-! Dont crash in FillVectorQuantityFromGrid if Grid is empty
+! Dont crash in FromGrid if Grid is empty
 !
 ! Revision 2.30  2009/10/27 22:14:24  pwagner
 ! Compiles with new api for Dump vector quantity
 !
 ! Revision 2.29  2009/09/01 17:14:02  pwagner
-! Reduce severity of profile mismatch in FillVectorQuantityFromL2GP to permit filling 1d sids with truth
+! Reduce severity of profile mismatch in FromL2GP to permit filling 1d sids with truth
 !
 ! Revision 2.28  2009/08/24 20:14:11  pwagner
 ! May Fill H2O precision from RHI precision
@@ -6916,7 +6918,7 @@ end module FillUtils_1
 ! Fixed bug affecting manipulations like 'a+b+c'
 !
 ! Revision 2.25  2009/06/30 15:19:05  pwagner
-! Fixed bug in ExplicitFillVectorQuantity
+! Fixed bug in Explicit
 !
 ! Revision 2.24  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
@@ -6931,13 +6933,13 @@ end module FillUtils_1
 ! name of bit in MaskVectorQty and isVectorQtyMasked now mandatory
 !
 ! Revision 2.20  2009/04/30 20:15:01  pwagner
-! Another fix to masking bit miscues in FillRHI..
+! Another fix to masking bit miscues in RHI..
 !
 ! Revision 2.19  2009/04/29 23:11:04  pwagner
-! ExplicitFillVectorQuantity can Fill from an optional extraQuantity
+! Explicit can Fill from an optional extraQuantity
 !
 ! Revision 2.18  2009/04/28 20:03:49  pwagner
-! Consider only mask of quantity being filled, not sources in FillRHi
+! Consider only mask of quantity being filled, not sources in RHi
 !
 ! Revision 2.17  2009/04/16 21:55:23  pwagner
 ! /exact keyword in status Fill to fix radiance bug
