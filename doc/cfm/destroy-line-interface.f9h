@@ -1,0 +1,4 @@
+! Together with Destroy_SpectCat_Database, these subroutines deallocate
+! memory allocated by Read_Spectroscopy
+subroutine Destroy_Line_Database
+end subroutine

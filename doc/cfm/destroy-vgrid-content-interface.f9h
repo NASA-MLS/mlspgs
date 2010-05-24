@@ -1,0 +1,4 @@
+! This routine destroys the array information created with the vGrid
+subroutine DestroyVGridContents ( vGrid )
+   type (vGrid_T), intent(inout) :: vGrid
+end subroutine

@@ -1,0 +1,3 @@
+! Deallocates memory allocated by ReadFilterShapes
+subroutine Destroy_Filter_Shapes_Database
+end subroutine

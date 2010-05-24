@@ -1,8 +1,11 @@
 !Relates an atmospheric state, representing by a state vector 
 !and an optional extra state vector, to MLS radiances, also 
 !representing by a vector.
-subroutine ForwardModel ( fmConfig, stateVector, stateVectorExtra, &
-   radiances, fmStat, Jacobian)
+subroutine ForwardModel (chunk,  fmConfig, stateVector, stateVectorExtra, &
+   radiances, Jacobian)
+   !Object carrying the MAFs to be computed over
+   type(MLSChunk_T), intent(in) :: chunk
+
    !An object containing the settings for the forward model.
    type(ForwardModelConfig_T), intent(inout) :: fmConfig
    
@@ -15,9 +18,6 @@ subroutine ForwardModel ( fmConfig, stateVector, stateVectorExtra, &
 
    !A vector to store the output of the forward model.
    type(Vector_T), intent(inout) :: radiances
-
-   !This object is used internally.
-   type(ForwardModelStatus_t), intent(inout) :: fmStat
 
    !The matrix equivalent of the forward model with the
    !specific setting in fmConfig.

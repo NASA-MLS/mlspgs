@@ -1,3 +1,12 @@
-!Deallocates memory and closes files that CFM MLSSetup allocated or opened.
-subroutine CFM_MLSCleanup
+! Clean up allocated memory, close opened files
+subroutine CFM_MLSCleanup (filedatabase, qtyTemplates, forwardModelConfigDatabase, &
+stateVectorExtra)
+   ! The filedatabase created by CFM_MLSSetup
+   type (MLSFile_T), dimension(:), pointer :: filedatabase
+   ! The quantity template database created by CFM_MLSSetup
+   type(QuantityTemplate_T), dimension(:), pointer :: qtyTemplates
+   ! The forward model configurations created by CFM_MLSSetup
+   type (ForwardModelConfig_T), pointer :: ForwardModelConfigDatabase(:)
+   ! The vector created by CFM_MLSSetup
+   type(Vector_T) :: stateVectorExtra
 end subroutine

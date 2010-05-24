@@ -1,0 +1,4 @@
+! This subroutine destroys a vector template created above
+subroutine DestroyVectorTemplateInfo ( VectorTemplate )
+   type (VectorTemplate_T), intent(inout) :: vectorTemplate
+end subroutine

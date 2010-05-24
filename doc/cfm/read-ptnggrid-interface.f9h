@@ -1,0 +1,4 @@
+! Read pointing grids and populate the pointing grid database
+subroutine ReadPointingGrids (fileName)
+   character(len=*), intent(in) :: filename
+end subroutine
