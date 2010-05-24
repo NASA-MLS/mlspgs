@@ -8,6 +8,7 @@ module CFM_IO_M
                                     Destroy_Line_Database
    use PointingGrid_m, only: Destroy_Pointing_Grid_Database
    use L2PC_m, only: DestroyL2PCDatabase
+   use PFADatabase_m, only: Destroy_PFADataBase
 
    implicit none
 
@@ -16,7 +17,7 @@ module CFM_IO_M
    public :: Destroy_Pointing_Grid_Database, Destroy_Ant_Patterns_Database
    public :: Destroy_DACS_Filter_Database, Destroy_Filter_Shapes_Database
    public :: Destroy_SpectCat_Database, Destroy_Line_Database
-   public :: DestroyL2PCDatabase
+   public :: DestroyL2PCDatabase, Destroy_PFADataBase
 
    private
    !---------------------------- RCS Ident Info -------------------------------
