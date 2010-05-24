@@ -19,7 +19,7 @@ module GetCF_M
   use MLSCF, only: MLSCF_T
   use OUTPUT_M, only: OUTPUT
   use PARSER, only: CONFIGURATION
-  use STRING_TABLE, only: DO_LISTING, IN_UNIT => INUNIT
+  use STRING_TABLE, only: DO_LISTING, ADDINUNIT
   use TABLE_DUMPER, only: DUMP_TABLE                 ! For debugging
   use TABLE_GENERATOR, only: GENERATE_TABLE
   use TOGGLES, only: SYN, TOGGLE
@@ -97,8 +97,7 @@ contains ! =====     Public Procedures     =============================
     integer :: HOW_MANY_SECTIONS     ! Set by Check_Tree
     integer :: ROOT                  ! of the abstract syntax tree
 
-    in_unit = -1
-    if ( present(inUnit) ) in_unit = inunit
+    if ( present(inUnit) ) call AddInUnit(inunit)
     do_dump = .false.
     if ( present(dump) ) do_dump = dump
     do_dump_early = .false.
@@ -145,6 +144,9 @@ contains ! =====     Public Procedures     =============================
 end module GetCF_M
 
 ! $Log$
+! Revision 1.3  2005/06/22 20:03:55  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 1.2  2001/04/26 02:31:25  vsnyder
 ! Moved *_indices declarations from init_tables_module to Intrinsic
 !
