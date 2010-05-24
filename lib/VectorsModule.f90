@@ -1894,12 +1894,13 @@ contains ! =====     Public Procedures     =============================
   end function GetVectorQuantityByType
 
   ! --------------------------------  GetVectorQtyByTemplateIndex  -----
+  ! Given a vector and an index into the quantity templates, find quantity
+  ! with matching template within vector.
   function GetVectorQtyByTemplateIndex ( vector, quantityIndex, indexInVector )
-    ! Given a vector and an index into the quantity templates, find quantity
-    ! with matching template within vector.
-
-    ! Dummy arguments
+    ! The vector where the quantity resides
     type (vector_T), intent(in) :: vector
+    ! The index of the quantity in the quantity database; this index
+    ! is returned by AddQuantityTemplateToDatabase
     integer, intent(in) :: quantityIndex
     integer, intent(out), optional :: indexInVector
     ! Result
@@ -2657,6 +2658,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.149  2010/04/28 00:12:20  pwagner
+! Correct maskBitNames used in dumping mask
+!
 ! Revision 2.148  2010/04/22 23:38:57  pwagner
 ! Added new Ignore masking bit
 !
