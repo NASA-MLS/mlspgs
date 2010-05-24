@@ -15,7 +15,12 @@ module CFM_VGrid_m
    public :: VGrid_T
 
    private
-   character(len=20) :: moduleId = "CFM_VGrid.f90"
+
+!---------------------------- RCS Ident Info -------------------------------
+   character(len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+   private :: not_used_here
+!---------------------------------------------------------------------------
 
    contains
 
@@ -163,5 +168,15 @@ module CFM_VGrid_m
       vGrid%surfs = 10.0**( nint ( log10(vGrid%surfs) * values(1)) / values(1))
 
    end subroutine
+
+!--------------------------- end bloc --------------------------------------
+   logical function not_used_here()
+   character (len=*), parameter :: IdParm = &
+       "$Id$"
+   character (len=len(idParm)) :: Id = idParm
+      not_used_here = (id(1:1) == ModuleName(1:1))
+      print *, Id ! .mod files sometimes change if PRINT is added
+   end function not_used_here
+!---------------------------------------------------------------------------
 
 end module
