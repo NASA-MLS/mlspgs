@@ -80,8 +80,6 @@ module CFM_QuantityTemplate_m
 
    contains
 
-   ! This subroutine design is prone to bugs, I'll fix it when I got some time. -haley
-
    ! Creating a quantity based on the optional inputs this subroutine is provided with.
    type(QuantityTemplate_T) function CreateQtyTemplate (quantityType, filedatabase, chunk, &
         avgrid, ahgrid, afgrid, qInstModule, qMolecule, qLogBasis, qMinValue, qSignal, &
