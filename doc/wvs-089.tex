@@ -5,7 +5,7 @@
 \topmargin -0.25in
 \textheight 9in
 
-\newcommand{\docname}{\bf wvs-089r1}
+\newcommand{\docname}{\bf wvs-089r2}
 \newcommand{\docdate}{24 May 2010}
 
 \usepackage{graphicx}
@@ -68,6 +68,9 @@
 \makeatother
 \pagestyle{twolines}
 
+\newcommand{\TS}{T_\text{scat}}
+\newcommand{\TSs}[1]{T_{\text{scat}_{#1}}}
+
 \vspace{-10pt}
 \begin{tabbing}
 \phantom{References: }\= \\
@@ -88,7 +91,7 @@ geodetic angles.
 
 The reference horizon is the line in the orbit plane from the scattering point
 $S_{jk}$ and perpendicular to the line in the orbit plane from the center of
-the Earth at $\phi_i$.  The angle $\chi$ is measured anticlockwise in the orbit
+the Earth at $\phi_i$.  The angle $\xi$ is measured anticlockwise in the orbit
 plane from that line.
 
 The points in the set $\{A_{mn}\}$, also in the orbit plane, include points in
@@ -97,41 +100,46 @@ addition to $\{S_{jk}\}$, on a grid specified by $\{\phi_m\} \times
 
 {\includegraphics[scale=0.90]{./wvs-089-pic.\GX}}
 
-$P_{jk}(\chi)$ is the Mie phase function, evaluated for IWC and T at $S_{jk}$;
-$\chi = 0$ at the reference horizon.
+$P_{jk}(\xi)$ is the Mie phase function, evaluated for IWC and T at $S_{jk}$;
+$\xi = 0$ at the reference horizon.
 
-The radiance arriving at $S_{jk}$ from direction $\chi$ in the orbit plane is
-$I_{ijk}(\chi)$.
+The radiance arriving at $S_{jk}$ from direction $\xi$ in the orbit plane is
+$I_{ijk}(\xi)$.
 
 The radiance arriving at $S_{jk}$ from all directions in the orbit plane,
 convolved with the Mie phase function, is
 
 \begin{equation}
-T_{\text{scat}} =
-\overline{I}_{ijk} = \int_{-\pi}^\pi I_{ijk}(\chi) P_{jk}(\chi)\, \text{d} \chi
+\TSs{ijk} =
+\overline{I}_{ijk} = \int_{-\pi}^\pi I_{ijk}(\xi) P_{jk}(\xi)\, \text{d} \xi
 \,.
 \end{equation}
 
 The derivative of phase-convolved radiance at $S_{jk}$ with respect to some
-quantity $x_{mn}$ at $A_{mn}$, where $x$ is either IWC or $T$, is
+quantity $x_{mn}$ at $A_{mn}$ is
 
 
 \begin{equation}\label{two}
 \frac{\partial\overline{I}_{ijk}}{\partial x_{mn}} =
  \int_{-\pi}^\pi
-  \left[ \frac{\partial I_{ijk}(\chi)}{\partial x_{mn}} P_{jk}(\chi) +
-         I_{ijk}(\chi) \frac{\partial P_{jk}(\chi)}{\partial x_{mn}}
-          \right] \, \text{d} \chi \,.
+  \left[ \frac{\partial I_{ijk}(\xi)}{\partial x_{mn}} P_{jk}(\xi) +
+         I_{ijk}(\xi) \frac{\partial P_{jk}(\xi)}{\partial x_{mn}}
+          \right] \, \text{d} \xi \,.
 \end{equation}
 
+$I_{ijk}(\xi)$ depends upon whatever quantities are specified at $A_{mn}$
+when $\TS$ is computed, i.e., throughout the entire atmosphere through
+which rays scattered at $S_{jk}$ propagate; $P_{jk}(\xi)$ depends only
+upon temperature and IWC at $S_{jk}$.
+
 If $S_{jk}$ and $A_{mn}$ are the same point, both terms are necessary.
-Otherwise $\frac{\partial P_{jk}(\chi)}{\partial x_{mn}} = 0$, and Equation
+Otherwise $\frac{\partial P_{jk}(\xi)}{\partial x_{mn}} = 0$, and Equation
 (\ref{two}) can be simplified to
 
 \begin{equation}
 \frac{\partial\overline{I}_{ijk}}{\partial x_{mn}} =
  \int_{-\pi}^\pi
-  \frac{\partial I_{ijk}(\chi)}{\partial x_{mn}} P_{jk}(\chi)\, \text{d} \chi \,.
+  \frac{\partial I_{ijk}(\xi)}{\partial x_{mn}} P_{jk}(\xi)\, \text{d} \xi \,.
 \end{equation}
 
 \label{lastpage}
@@ -139,6 +147,9 @@ Otherwise $\frac{\partial P_{jk}(\chi)}{\partial x_{mn}} = 0$, and Equation
 % $Id$
 
 % $Log$
+% Revision 1.2  2010/05/25 02:20:45  vsnyder
+% Added the picture
+%
 % Revision 1.1  2010/01/26 02:08:29  vsnyder
 % Initial commit
 %
