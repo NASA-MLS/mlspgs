@@ -65,13 +65,21 @@ changesyntax({@!})
 ; esyscmd, we need lower macros for temporarily replacing ',' with a different
 ; and hopefully innocuous character, "%". Therefore
 ; Note: if for some reason "%" is unsuitable, simply replace pctChar below
-!define(pctChar,{%})
+!define(pctChar,%)
 ;!define(sublist2pct,{%$1})
 !define(sublist2pct,{!pctChar$1})
 ; Replace each ',' with '%'
 !define(list2pct,{!forall({sublist2pct}, $@ ) })
 !define(pyScriptArgs0,{-!pctChar !list2pct(!shift($@))})
 !define(pyScriptArgs1,{-!pctChar !list2pct($1) !list2pct(!shift($@))})
+!define(pyScriptArgs11,{-1 -!pctChar $1 !list2pct(!shift($@))})
+!define(pyScriptArgs21,{-2 -!pctChar $1 !list2pct(!shift($@))})
+!define(pyScriptArgs31,{!dnl
+!ifelse($#,{1},
+{-3 -!pctChar $1 !list2pct(!keys) !list2pct(!values)},
+{-3 -!pctChar $1 $2 $3}
+)
+})
 
 ; Notes on the following macros 
 ; that use scripts in !home/mlspgs/scripts
@@ -95,6 +103,35 @@ changesyntax({@!})
 ; e.g., !removeDupItems(!l1) where l1 = {a,b,c,a} would print a, b, c
 !define(removeDupItems, 
 {!esyscmd(!home/mlspgs/scripts/pyuniq.py !pyScriptArgs0($@))}
+)
+
+; This macro gets the nth item from a list
+; e.g., if a is "p,q,r"
+;          n is "2"
+; !getNthItem(!n,!a) prints q
+!define(getNthItem, 
+{!esyscmd(!home/mlspgs/scripts/pylists.py !pyScriptArgs11($@))}
+)
+
+; This macro gets the item number which something occupies in a list
+; e.g., if a is "p,q,r"
+;          c is "q"
+; !getNumberOfItem(!c,!a) prints  2
+!define(getNumberOfItem, 
+{!esyscmd(!home/mlspgs/scripts/pylists.py !pyScriptArgs21($@))}
+)
+
+; This macro gets values[key] where {keys,values} is an associative array
+; e.g., if keys is "p,q,r" and values is "jack,queen,king"
+;          key is "q"
+; !getItemByKey(!key) prints queen
+; It can be called either with a single arg or with 3
+; i.e., with a single arg, the macros keys and values 
+; are subsitituted for args 2 and 3
+; An example with 3 args is
+; !getItemByKey(q,!list2pct(p,q,r),!list2pct(jack,queen,king)) prints queen
+!define(getItemByKey, 
+{!esyscmd(!home/mlspgs/scripts/pylists.py !pyScriptArgs31($@))}
 )
 
 ; We may never need a low macro to convert back from "%" to lists, but
@@ -199,6 +236,9 @@ changesyntax({@!})
 ;; (for things like flaggingBands)
 !define(nargs, {$#})
 ;$Log$
+;Revision 1.18  2010/05/19 17:54:30  pwagner
+;Now able to add, remove Items from list
+;
 ;Revision 1.17  2009/06/23 17:30:53  pwagner
 ;Should be added to ident file
 ;
