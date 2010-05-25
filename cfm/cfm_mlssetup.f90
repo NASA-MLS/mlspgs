@@ -410,12 +410,12 @@ module CFM_MLSSetup_m
    end subroutine
 
    ! Return the index of refGPH quantity in the stateVectorExtra
-   integer function GetRefGPHIndexInStateExtra
+   integer function GetRefGPHIndexInStateExtra()
       GetRefGPHIndexInStateExtra = refGPH_index
    end function
 
    ! Return the index of phitan of GHz module in stateVectorExtra
-   integer function GetPhitanGHzIndexInStateExtra
+   integer function GetPhitanGHzIndexInStateExtra()
       GetPhitanGHzIndexInStateExtra = phitanGHz_index
    end function
 
