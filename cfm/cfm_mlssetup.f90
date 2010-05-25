@@ -48,28 +48,6 @@ module CFM_MLSSetup_m
     1.11523, -0.733464, 0.489792, -0.331852, 0.227522, -0.156428, &
     0.108031, -0.0757825, 0.0536980, -0.0375161, 0.0260555, &
    -0.0188811, 0.0138453, -0.00959350 /)
-   character(len=20), dimension(62), parameter :: signalNames = (/ &
-   'R1A:118.B1LF:PT', 'R2:190.B2LF:H2O', 'R2:190.B3LF:N2O', &
-   'R2:190.B4LF:HNO3', 'R2:190.B5LF:ClO', 'R2:190.B6LF:O3', &
-   'R3:240.B7LF:O3', 'R3:240.B8LF:PT', 'R3:240.B9LF:CO', &
-   'R4:640.B10LF:ClO', 'R4:640.B11LF:BrO', 'R4:640.B12LF:N2O', &
-   'R4:640.B13LF:HCl', 'R4:640.B14LF:O3', 'R5H:2T5.B15LF:OH', &
-   'R5H:2T5.B16LF:OH', 'R5H:2T5.B17LF:PT', 'R5V:2T5.B18LF:OH', &
-   'R5V:2T5.B19LF:OH', 'R5V:2T5.B20LF:PT', 'R1B:118.B21LF:PT', &
-   'R1A:118.B22LD:PT', 'R2:190.B23LD:H2O', 'R3:240.B24LD:O3', &
-   'R3:240.B25LD:CO', 'R1B:118.B26LD:PT', 'R2:190.B27LM:HCN', &
-   'R4:640.B28LM:HO2', 'R4:640.B29LM:HOCl', 'R4:640.B30LM:HO2', &
-   'R4:640.B31LM:BrO', 'R1A:118.B32LW:PT', 'R3:240.B33LW:O3', &
-   'R1B:118.B34LW:PT', 'R2:190.B2UF:H2O', 'R2:190.B3UF:N2O', &
-   'R2:190.B4UF:HNO3', 'R2:190.B5UF:ClO', 'R2:190.B6UF:O3', &
-   'R3:240.B7UF:O3', 'R3:240.B8UF:PT', 'R3:240.B9UF:CO', &
-   'R4:640.B10UF:ClO', 'R4:640.B11UF:BrO', 'R4:640.B12UF:N2O', &
-   'R4:640.B13UF:HCl', 'R4:640.B14UF:O3', 'R5H:2T5.B15UF:OH', &
-   'R5H:2T5.B16UF:OH', 'R5H:2T5.B17UF:PT', 'R5V:2T5.B18UF:OH', &
-   'R5V:2T5.B19UF:OH', 'R5V:2T5.B20UF:PT', 'R2:190.B23UD:H2O', &
-   'R3:240.B24UD:O3', 'R3:240.B25UD:CO', 'R2:190.B27UM:HCN', &
-   'R4:640.B28UM:HO2', 'R4:640.B29UM:HOCl', 'R4:640.B30UM:HO2', &
-   'R4:640.B31UM:BrO', 'R3:240.B33UW:O3' /)
 
    integer, save :: refGPH_index, phitanGHz_index
 
@@ -264,7 +242,6 @@ module CFM_MLSSetup_m
       use MLSFiles, only: mls_closeFile
       use STRING_TABLE, only: DESTROY_CHAR_TABLE, DESTROY_HASH_TABLE, &
                               DESTROY_STRING_TABLE
-      use Chunks_m, only: MLSChunk_T
       use CFM_QuantityTemplate_m, only: DestroyQuantityTemplateDatabase
       use CFM_Vector_m, only: Vector_T, DestroyVectorInfo
       use CFM_VectorTemplate_m, only: DestroyVectorTemplateInfo
@@ -325,12 +302,13 @@ module CFM_MLSSetup_m
       use CFM_Vector_m, only: CreateVector, Vector_T, VectorValue_T
       use INIT_TABLES_MODULE, only: phyq_pressure, l_logarithmic, l_zeta, &
                                     phyq_vmr, l_vmr, l_earthRefl, l_losVel, &
-                                    l_scgeocalt, l_spaceradiance, l_elevOffset, &
-                                    l_limbsidebandFraction, l_explicit, l_refGPH, &
-                                    l_phitan, l_o2
+                                    l_scgeocalt, l_spaceradiance, l_explicit, &
+                                    l_refGPH, l_phitan, l_o2
       use CFM_Fill_M, only: FillVectorQtyFromProfile, ExplicitFillVectorQuantity, &
       FillVectorQuantityFromL1B, SpreadFillVectorQuantity
       use Allocate_Deallocate, only: allocate_test, deallocate_test
+      use CFM_LSF_M, only: CreateLimbSidebandFractions, FillLimbSidebandFractions
+      use CFM_EO_M, only: CreateElevationOffsets, FillElevationOffsets
 
       type (MLSFile_T), dimension(:), pointer :: filedatabase
       type (MLSChunk_T), intent(in) :: fakeChunk
@@ -338,13 +316,12 @@ module CFM_MLSSetup_m
       type (Vector_T), intent(out) :: stateVectorExtra
 
       type(QuantityTemplate_T) :: O2, earthRefl, losVelGHz, scGeocAlt, &
-                                  spaceRadiance, elevOffset, lsbFraction, &
-                                  refGPH, phitanGHz
+                                  spaceRadiance, refGPH, phitanGHz
       type(VectorTemplate_T) :: stateTemplateExtra
       type(VGrid_T) :: vGridStandard, vGridRefGPH
       type(HGrid_T) :: hGridStandard
       integer :: O2_index, earthRefl_index, losVelGHz_index, scGeocAlt_index, &
-                 spaceRadiance_index, elevOffset_index, lsbFraction_index
+                 spaceRadiance_index
       type(VectorValue_T) :: quantity
       real(r8), dimension(17) :: o2_heights = &
       (/1.0e+03_r8, 8.0131e-03_r8, 5.8925e-03_r8, 4.3241e-03_r8, 3.1594e-03_r8, &
@@ -393,18 +370,9 @@ module CFM_MLSSetup_m
       spaceRadiance_index = AddQuantityTemplateToDatabase(qtyTemplates, spaceRadiance)
       refGPH_index = AddQuantityTemplateToDatabase(qtyTemplates, refGPH)
       phitanGHz_index = AddQuantityTemplateToDatabase(qtyTemplates, phitanGHz)
-
-      do i = 1, size(signalNames)
-         ! Add sideband fraction
-         lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-         filedatabase=filedatabase, chunk=fakeChunk, qSignal=signalNames(i))
-         lsbFraction_index = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
-
-         ! Add elevation Offset
-         elevOffset = CreateQtyTemplate(l_elevOffset, filedatabase=filedatabase, &
-         chunk=fakeChunk, qSignal=signalNames(i))
-         elevOffset_index = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
-      end do
+      ! Add sideband fraction
+      call CreateLimbSidebandFractions (fakeChunk, filedatabase, qtyTemplates)
+      call CreateElevationOffsets (fakeChunk, filedatabase, qtyTemplates)
 
       ! Don't need the grids anymore
       call DestroyVGridContents(vGridStandard)
@@ -437,16 +405,18 @@ module CFM_MLSSetup_m
       call SpreadFillVectorQuantity (quantity, 16000.0_r8) ! unit is meter
       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, phitanGHz_index)
       quantity%values = quantity%template%phi
+      call FillLimbSidebandFractions(stateVectorExtra)
+      call FillElevationOffsets(stateVectorExtra)
    end subroutine
 
    ! Return the index of refGPH quantity in the stateVectorExtra
-   integer function GetRefGPHIndexInStateExtra result(index)
-      index = refGPH_index
+   integer function GetRefGPHIndexInStateExtra
+      GetRefGPHIndexInStateExtra = refGPH_index
    end function
 
    ! Return the index of phitan of GHz module in stateVectorExtra
-   integer function GetPhitanGHzIndexInStateExtra result(index)
-      index = phitanGHz_index
+   integer function GetPhitanGHzIndexInStateExtra
+      GetPhitanGHzIndexInStateExtra = phitanGHz_index
    end function
 
 !--------------------------- end bloc --------------------------------------

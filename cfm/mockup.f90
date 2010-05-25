@@ -220,6 +220,8 @@ program mockup
    call ForwardModel (fakeChunk, forwardModelConfigDatabase(1), state, &
                       stateExtra, measurement)
 
+   call dump(measurement, details=3)
+
    ! MLS radiances are stored in measurement vector
    ! do what you want with it
 

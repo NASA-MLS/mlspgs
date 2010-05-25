@@ -91,11 +91,14 @@ module CFM_QuantityTemplate_m
       ! an input holder, storing the time range of the data to be read
       ! (see CFM_MLSSetup)
       type (MLSChunk_T), intent(in), optional :: Chunk
-      ! the z-coordinate samples of the spacecraft's path
+      ! The z-coordinate samples of the spacecraft's path.
+      ! Information in this grid will be copied over.
       type(VGrid_T), intent(in), optional :: avgrid
       ! the (x,y) coordinate samples of the spacecraft's path
+      ! Information in this grid will be copied over.
       type(HGrid_T), intent(in), optional :: ahgrid
       ! the frequency in which the data is gathered
+      ! Information in this grid will be copied over.
       type(FGrid_T), intent(in), optional :: afgrid
       ! instrument module, a case-insensitive string, either "THz" or "GHz"
       character(len=*), optional :: qInstModule
