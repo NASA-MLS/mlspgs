@@ -13,14 +13,14 @@ module Input
    character(len=100) :: DACSFilterShapes = '/data/emls/l2cal/MLS-Aura_L2Cal-DACSFilters_v1-5-1_0000d000.txt'
    character(len=100) :: pointingGrids = '/data/emls/l2cal/MLS-Aura_L2Cal-PFG_v3-0-0_0000d000.txt'
    character(len=100), dimension(8) :: &
-   pfaFiles= (/'/data/emls/l2cal/PFA_R5V_FS-04.h5', &
-    '/data/emls/l2cal/PFA_R5H_FS-04.h5', &
-    '/data/emls/l2cal/PFA_R4_FS-04.h5 ', &
-    '/data/emls/l2cal/PFA_R3_FS-04.h5 ', &
-    '/data/emls/l2cal/PFA_R2_FS-04.h5 ', &
-    '/data/emls/l2cal/PFA_R1B_FS-04.h5', &
-    '/data/emls/l2cal/PFA_R1A_FS-04.h5', &
-    '/data/emls/l2cal/PFA_DACS_FS-04.h5' /)
+   pfaFiles= (/'/data/emls/l2cal/PFA_R5V_FS-04.h5                                                                   ', &
+               '/data/emls/l2cal/PFA_R5H_FS-04.h5                                                                   ', &
+               '/data/emls/l2cal/PFA_R4_FS-04.h5                                                                    ', &
+               '/data/emls/l2cal/PFA_R3_FS-04.h5                                                                    ', &
+               '/data/emls/l2cal/PFA_R2_FS-04.h5                                                                    ', &
+               '/data/emls/l2cal/PFA_R1B_FS-04.h5                                                                   ', &
+               '/data/emls/l2cal/PFA_R1A_FS-04.h5                                                                   ', &
+               '/data/emls/l2cal/PFA_DACS_FS-04.h5                                                                  ' /)
    character(len=100), dimension(1) :: &
    l2pc = (/'/data/emls/l2cal/l2pc_30H6/MLS-Aura_L2Cal-L2PC-band7-LATSCALARHIRESO3HR_v3-00-HO-06_m02.h5'/)
    real(r8), dimension(37) :: &
