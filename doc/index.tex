@@ -40,7 +40,11 @@
 \fi
 
 \hyperbaseurl{}
-\newcommand\hr[1]{\href{#1.dvi}{dvi} \href{#1.pdf}{pdf}}
+\ifx\dvidir\undefined
+  \newcommand\hr[1]{\href{#1.dvi}{dvi} \href{#1.pdf}{pdf}}
+\else
+  \newcommand\hr[1]{\href{\dvidir/#1.dvi}{dvi} \href{\pdfdir/#1.pdf}{pdf}}
+\fi
 \newcommand\h[1]{#1 \hr{#1}}
 \newcommand\hh[2]{#1 \hr{#2}}
 
@@ -172,6 +176,9 @@
 % $Id$
 
 % $Log$
+% Revision 1.9  2010/05/20 23:50:05  vsnyder
+% Add wvs-094, wvs-095
+%
 % Revision 1.8  2010/04/09 02:32:08  vsnyder
 % Add wvs-090 -091 -092 -093
 %
