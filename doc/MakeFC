@@ -24,7 +24,6 @@ MakeFName = MakeFC
 # then (re)name the Makefiles in /l2 /lib etc. also MakeFC
 
 # where to store .configure; 
-#CONFDIR=..
 CONFDIR=${HOME}/mlspgs
 
 UTILDIR=$(CONFDIR)/util
@@ -38,18 +37,20 @@ REECHO=$(UTILDIR)/reecho.sh
 SUBDIRS := $(shell ${REECHO} -d cfm)
 
 # Errors in the .tex sources require us to omit the following
-OMIT_SRCS := wvs-010.tex wvs-074.tex wvs-051-neural_body.tex
+OMIT_SRCS := wvs-010.tex wvs-074.tex wvs-051-neural_body.tex wvs-089.tex
 OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
 OMIT_SRCS_REV := 'wvs-004\*.tex' 'wvs-051\*.tex' 'wvs-063\*.tex'
 OMIT_PREFXD_REV := $(shell ${REECHO} -prefix=-d -escape -nlast $(OMIT_SRCS_REV))
 
 # Set paths for finding source files
 
-DVIDIR = ./dvi/
-LOGDIR = ./log/
-PDFDIR = ./pdf/
+DOCDIR = $(CONFDIR)/doc
+TEXDIR = $(DOCDIR)/tex
+DVIDIR = $(DOCDIR)/dvi
+LOGDIR = $(DOCDIR)/log
+PDFDIR = $(DOCDIR)/pdf
 
-vpath %.tex ./
+vpath %.tex $(DOCDIR)
 vpath %.dvi $(DVIDIR)
 vpath %.l2cf $(CONFDIR)/l2/l2cf/lib
 vpath %.log $(LOGDIR)
@@ -60,14 +61,24 @@ vpath %.pdf $(PDFDIR)
 .SUFFIXES:
 .SUFFIXES: .tex .dvi .pdf
 .tex.dvi:
-	echo "\end" | latex $<
-	echo "\end" | latex $<
+	echo "\def\dvidir{$(DVIDIR)}" | cat - $< > $*.temp
+	echo "\def\pdfdir{$(PDFDIR)}" | cat - $*.temp > $(TEXDIR)/$<
+	echo "\end" | latex $(TEXDIR)/$<
+	echo "\end" | latex $(TEXDIR)/$<
 	mv $@ $(DVIDIR)
-	mv $*.log $(LOGDIR)
 
 .dvi.pdf:
-	dvipdf $<
+	# dvipdf $(DVIDIR)/$<
+	if [ "$*" != "index" ]; then \
+	  echo "\end" | latex $(TEXDIR)/$*.tex; \
+	  mv $*.dvi $(DVIDIR); \
+	  dvipdf $(DVIDIR)/$<; \
+	else \
+	  pdflatex $(TEXDIR)/$*.tex; \
+	fi
 	mv $@ $(PDFDIR)
+	mv `${REECHO} $*.log $*.aux $*.out` $(LOGDIR)
+	rm -f $*.dvi $*.temp
 
 doc:
 
@@ -81,7 +92,7 @@ doc: ${NEAROBJS} ${OBJS}
 # ========================================================================
 
 clean:
-	rm -fr *.dvi *.pdf $(DVIDIR) $(PDFDIR)
+	rm -fr *.dvi *.pdf $(DVIDIR) $(PDFDIR) $(LOGDIR) $(TEXDIR)
 
 depends:
 	$(MAKE) -f $(MakeFName) internalupdate
@@ -91,6 +102,9 @@ depends:
 	$(UTILDIR)/makemakedep.sh -s tex -o pdf -p Makefile.dep.1 \
      $(OMIT_PREFXD) $(OMIT_PREFXD_REV)
 	cat Makefile.dep.1 Makefile.dep.2 > Makefile.dep
+	if [ ! -d $(TEXDIR) ] ; then \
+	  		mkdir $(TEXDIR) ;\
+			fi ; \
 	if [ ! -d $(DVIDIR) ] ; then \
 	  		mkdir $(DVIDIR) ;\
 			fi ; \
@@ -101,7 +115,7 @@ depends:
 	  		mkdir $(LOGDIR) ;\
 			fi
 	 for dir in $(SUBDIRS); do \
-	  $(MAKE) -f $(MakeFName) -C $$dir depends; \
+	  $(MAKE) -f $(MakeFName) -C $$dir DOCDIR=$(DOCDIR)/$$dir depends; \
 	done
 
 internalupdate:
@@ -115,10 +129,10 @@ internalupdate:
 	done
 
 cfm:
-	$(MAKE) -f $(MakeFName) -C $@
+	$(MAKE) -f $(MakeFName) -C $@ DOCDIR=$(DOCDIR)/cfm
 
 l2:
-	$(MAKE) -f $(MakeFName) -C $@
+	$(MAKE) -f $(MakeFName) -C $@  DOCDIR=$(DOCDIR)/l2
 
 tar:
 	rm -f doc.tgz
@@ -131,6 +145,9 @@ update: internalupdate
 
 # ========================================================================
 # $Log$
+# Revision 1.7  2010/02/26 02:01:49  pwagner
+# Fixed bug in if statement
+#
 # Revision 1.6  2010/01/06 17:34:22  pwagner
 # Should use MakeFC to make depends in SUBDIRS
 #
