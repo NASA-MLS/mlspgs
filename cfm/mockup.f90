@@ -119,7 +119,7 @@ program mockup
                           avgrid=vGridStandard, ahgrid=hGridStandard, qMolecule=l_o3)
    H2O = CreateQtyTemplate(l_vmr, filedatabase=filedatabase, chunk=fakeChunk, &
                            avgrid=vGridStandard, ahgrid=hGridStandard, qMolecule=l_h2o, &
-                           qLogBasis=.true., qMinValue=0.1_r8)
+                           qLogBasis=.true., qMinValue=0.1E-6_r8)
    ptanGHz = CreateQtyTemplate(l_ptan, filedatabase=filedatabase, &
                                chunk=fakeChunk, qInstModule=GHz)
    ! band 7 is the band whose radiances are to be computed
@@ -172,8 +172,7 @@ program mockup
    state = CreateVector(stateTemplate, qtyTemplates)
    measurement = CreateVector(measurementTemplate, qtyTemplates)
 
-!   call dump(state, details=2)
-!   call dump(measurement, details=2)
+   !call dump(measurement, details=3)
 
    ! supply temperature, GPH, H2O, and O3 data
    temperature_vv = GetVectorQtyByTemplateIndex(state, temperature_index)
@@ -212,9 +211,6 @@ program mockup
    ! calculate ptan
    call Get2DHydrostaticTangentPressure(ptanG_vv, temperature_vv, refGPH_vv, &
              h2o_vv, orbincl_vv, quantity, geocAlt_vv, 4, 0.0_r8, phyq_angle)
-
-   !call dump(stateExtra, details=2)
-   !call dump(state, details=2)
 
    ! Call the forward model
    call ForwardModel (fakeChunk, forwardModelConfigDatabase(1), state, &
