@@ -37,7 +37,7 @@ REECHO=$(UTILDIR)/reecho.sh
 SUBDIRS := $(shell ${REECHO} -d cfm)
 
 # Errors in the .tex sources require us to omit the following
-OMIT_SRCS := wvs-010.tex wvs-074.tex wvs-051-neural_body.tex wvs-089.tex
+OMIT_SRCS := wvs-010.tex wvs-074.tex wvs-051-neural_body.tex wvs-083.tex wvs-089.tex
 OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
 OMIT_SRCS_REV := 'wvs-004\*.tex' 'wvs-051\*.tex' 'wvs-063\*.tex'
 OMIT_PREFXD_REV := $(shell ${REECHO} -prefix=-d -escape -nlast $(OMIT_SRCS_REV))
@@ -145,6 +145,9 @@ update: internalupdate
 
 # ========================================================================
 # $Log$
+# Revision 1.8  2010/05/26 22:56:10  pwagner
+# Should work better, even for index
+#
 # Revision 1.7  2010/02/26 02:01:49  pwagner
 # Fixed bug in if statement
 #
