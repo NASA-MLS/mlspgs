@@ -84,6 +84,8 @@ program L2Q
   character(len=2048) :: LINE      ! Into which is read the command args
   integer, parameter :: LIST_UNIT = 20  ! Unit # for hosts file if not stdin
   character(len=MachineNameLen), dimension(:), pointer :: MACHINENAMES => null()
+  integer, parameter :: MASTERNAMELEN = 16
+  character(len=MasterNameLen) :: MASTERSNAME
   integer, parameter :: MAXNUMMASTERS = 100 ! Mas num running simultaneously
   integer, parameter :: MAXNUMMULTIPROCS = 8 ! For some architectures > 1000 
   integer :: RECL = 10000          ! Record length for list
@@ -143,7 +145,6 @@ program L2Q
     integer                       :: tid = 0
     integer                       :: numChunks = 0
     integer                       :: numHosts = 0
-    integer                       :: numFreed = 0
     integer, dimension(:), pointer:: hosts => null() ! hosts assigned to this master
     logical                       :: needs_host = .false.
     logical                       :: owes_thanks = .false.
@@ -489,7 +490,6 @@ contains
     endif      
     host%master_tid = master%tid
     host%free = .false.
-    ! host%tid = 0
     host%tid = AWAITINGTHANKS
     if ( options%debug ) then
        call output ('Number of machines free: ', advance='no')
@@ -510,15 +510,16 @@ contains
       call deallocate_test(master%hosts, 'master%hosts', moduleName)
       master%hosts => tempHosts
     endif
-    master%hosts(hcid) = hostsid
+    master%hosts(hcid) = hostsID
     ! Now use PVM to tell master he's got a new slave host
     call PVMFInitSend ( PvmDataDefault, bufferID )
     call PVMF90Pack ( trim(host%name), info )
+    mastersname = masterNameFun(master%Tid)
     if ( info /= 0 ) &
       & call myPVMErrorMessage ( info, 'packing host name' )
     if ( options%debug ) &
       & call proclaim('Sending new host ' // trim(host%name), &
-      & masterNameFun(master%Tid))
+      & mastersname)
     call PVMFSend ( master%tid, grantedTag, info )
     master%owes_thanks = .true.
     master%needs_host = .false.
@@ -839,7 +840,8 @@ contains
           if ( info /= 0 ) call myPVMErrorMessage ( info, 'setting up notify' )
           if ( options%verbose ) then
             ! call proclaim('New Master', aMaster%Name, signal=MasterTid, advance='no')
-            call proclaim('New Master', masterNameFun(masterTid), advance='no')
+            mastersname = masterNameFun(masterTid)
+            call proclaim('New Master', mastersname, advance='no')
             call output(' (', advance='no')
             call output(count(.not. masters%finished), advance='no')
             call output(' active ', advance='no')
@@ -856,17 +858,18 @@ contains
           if ( options%deferToElders ) &
             grandMastersID = FindFirst(.not. masters%finished .and. &
             &  masters%needs_host )
-              ! & masters%numChunks > (masters%numHosts+masters%numFreed) )
           if ( grandMastersID < 1 ) grandMastersID = size(masters) + 100
+          mastersname = masterNameFun(masterTid)
           if ( options%debug ) &
-            & call proclaim('Master requested host', masterNameFun(masterTid))
+            & call proclaim('Master requested host', mastersname)
           ! Any free hosts?
           nextFree = FindFirst( hosts%free .and. hosts%OK )
           if ( masters(mastersID)%owes_thanks ) then
             ! Don't assign hosts to ungrateful masters
+            mastersname = masterNameFun(masterTid)
             if ( options%verbose ) &
               & call proclaim('Ungrateful master requested another host', &
-              & masterNameFun(masterTid), advance='yes')
+              & mastersname, advance='yes')
             masters(mastersID)%needs_host = .true.
           elseif ( nextFree == 0 ) then
             ! No hosts free; master put into needs_host state
@@ -890,7 +893,8 @@ contains
             call releaseHostFromMaster( hosts(hostsID), masters(mastersID), &
               & hostsID )
             if ( options%debug ) then
-              call proclaim('Master ' // trim(masterNameFun(masterTid)) // &
+              mastersname = masterNameFun(masterTid)
+              call proclaim('Master ' // trim(mastersname) // &
                 & ' freed host', hosts(hostsID)%name, advance='no')
               call output(' (Still has ', advance='no')
               call output(masters(mastersID)%numHosts, advance='no')
@@ -920,8 +924,8 @@ contains
           if ( info /= 0 ) then
             call myPVMErrorMessage ( info, "unpacking machineName" )
           endif
-          hostsID = FindFirst(  hosts%name==machineName .and. hosts%tid == AWAITINGTHANKS )
-          ! hostsID = FindFirst(  hosts%name==machineName .and. hosts%tid < 1 )
+          hostsID = FindFirst(  hosts%name==machineName .and. &
+            & hosts%tid == AWAITINGTHANKS .and. hosts%master_tid == masterTid )
           if ( hostsID < 1 ) then
             call output(' mastersID ', advance='no')
             call output(mastersID , advance='yes')
@@ -942,7 +946,8 @@ contains
           ! masters(mastersID)%date = hosts(hostsID)%master_date
           hosts(hostsID)%master_name = masterNameFun(masterTID)
           if ( options%verbose ) then
-            call proclaim('Master ' // trim(masterNameFun(masterTID)) // &
+            mastersname = masterNameFun(masterTid)
+            call proclaim('Master ' // trim(mastersname) // &
             & ' thanks for host', hosts(hostsID)%Name, advance='no')
             call output(' ; tid ', advance='no')
             call output(tid, advance='no')
@@ -954,8 +959,9 @@ contains
         case ( sig_HostDied ) ! -------------- Done away with this host ------
           ! Find master's index into masters array
           mastersID = FindFirst(masters%tid, masterTid)
+          mastersname = masterNameFun(masterTid)
           if ( options%debug ) &
-            & call proclaim('Master ' // trim(masterNameFun(masterTID)) // &
+            & call proclaim('Master ' // trim(mastersname) // &
             & ' reports host died', advance='no')
           call IDHostFromMaster(sig_HostDied, tid, hostsID)
           if ( hostsID > 0 ) then
@@ -980,8 +986,10 @@ contains
         case ( sig_Finished ) ! ----------------- Done with this master ------
           ! Find master's index into masters array
           mastersID = FindFirst(masters%tid, masterTid)
-          numHosts = masters(mastersID)%numHosts
-          if ( numHosts > 0 .and. associated(masters(mastersID)%hosts) ) then
+          numHosts = 0
+          if ( associated(masters(mastersID)%hosts) ) &
+            & numHosts = size(masters(mastersID)%hosts) ! masters(mastersID)%numHosts
+          if ( numHosts > 0 ) then
             do host = 1, numHosts
               hostsID = masters(mastersID)%hosts(host)
               if ( hostsID > 0 .and. hostsID <= size(hosts) ) &
@@ -995,7 +1003,8 @@ contains
           ! call deAllocate_test(masters(mastersID)%hosts, 'hosts', moduleName )
           significantEvent = .true.
           if ( options%verbose ) then
-            call proclaim('Master ' // trim(masterNameFun(masterTid)) // &
+            mastersname = masterNameFun(masterTid)
+            call proclaim('Master ' // trim(mastersname) // &
               & ' Finished', advance='no')
             call output(' (', advance='no')
             call output(count(.not. masters%finished), advance='no')
@@ -1006,9 +1015,10 @@ contains
           dumpMasters = .true.
         case default
           write(SIGNALSTRING, *) signal
+          mastersname = masterNameFun(masterTid)
           if ( options%debug ) &
             & call proclaim( 'Unrecognized signal from Master ' // &
-            & masterNameFun(masterTid) )
+            & mastersname )
           call myMLSMessage( options%errorLevel, ModuleName, &
              & 'Unrecognized signal from master' )
         end select
@@ -1032,7 +1042,9 @@ contains
            & 'Exit signal from unrecognized master' )
         if ( .not. masters(mastersID)%finished ) then
           ! Otherwise we need to tidy up.
-          numHosts = masters(mastersID)%numHosts
+          numHosts = 0
+          if ( associated(masters(mastersID)%hosts) ) &
+            & numHosts = size(masters(mastersID)%hosts) ! masters(mastersID)%numHosts
           if ( numHosts > 0 ) then
             do host = 1, numHosts
               hostsID = masters(mastersID)%hosts(host)
@@ -1046,7 +1058,8 @@ contains
           masters(mastersID)%owes_thanks = .false.
           significantEvent = .true.
           if ( options%verbose ) then
-            call proclaim('Master Died', masterNameFun(masterTid))
+            mastersname = masterNameFun(masterTid)
+            call proclaim('Master Died', mastersname)
             call output(' (', advance='no')
             call output(count(.not. masters%finished), advance='no')
             call output(' active ', advance='no')
@@ -1251,7 +1264,6 @@ contains
         if ( options%deferToElders ) &
           grandMastersID = FindFirst(.not. masters%finished .and. &
             &  masters%needs_host )
-            ! & masters%numChunks > (masters%numHosts+masters%numFreed) )
         if ( grandMastersID < 1 ) grandMastersID = size(masters) + 100
         if ( mastersID > 0 .and. mastersID == grandMastersID ) then
           ! Find first free host
@@ -1532,7 +1544,7 @@ contains
    
   ! ---------------------------------------------  IDHostFromMaster  -----
   subroutine IDHostFromMaster(signal, tid, hostsID)
-    ! Figure out which master is talking about
+    ! Figure out which hosts ID a master is talking about
     ! Arguments
     integer, intent(in)  :: signal
     integer, intent(out) :: tid
@@ -2198,9 +2210,6 @@ contains
     elseif ( hostsID > size(hosts) ) then
       call myMLSMessage( options%errorLevel, ModuleName, &
         & 'Programming error--hostsID>size(hosts) in releaseHostFromMaster' )
-    elseif ( master%owes_thanks ) then
-      call myMLSMessage( MLSMSG_Warning, ModuleName, &
-        & 'master still owes thanks' )
     elseif ( .not. associated(master%hosts) ) then
       ! call myMLSMessage( MLSMSG_Warning, ModuleName, &
       !  & 'master lacks any hosts' )
@@ -2222,8 +2231,11 @@ contains
       call dump_his_hosts(master%hosts, sortUs=.true.)
       ! call myMLSMessage( MLSMSG_Warning, ModuleName, &
       !  & 'master lacks that host' )
-      call timestamp( '; master lacks that host', advance='yes' )
+      call timestamp( '; master lacks that host, or did he forget?', advance='yes' )
       return
+    elseif ( master%owes_thanks .and. .false. ) then
+      call myMLSMessage( MLSMSG_Warning, ModuleName, &
+        & 'master still owes thanks' )
     endif
     if ( host%tid > 0 ) then
       ! In case slave task is still running, try to kill it
@@ -2246,8 +2258,14 @@ contains
     host%master_name = ' '
     host%master_date = ' '
     hcid = 0
-    if( size(master%hosts) == 1 ) then
+    if( .not. associated(master%hosts) ) then
+      call myMLSMessage( MLSMSG_Warning, ModuleName, &
+        & 'this master has no hosts--how could it have released one?' )
+    elseif( size(master%hosts) < 2 ) then
       call deallocate_test(master%hosts, 'master%hosts', moduleName)
+    elseif( .not. any(master%hosts == hostsID) ) then
+      call myMLSMessage( MLSMSG_Warning, ModuleName, &
+        & 'this master does not have this host--how could it have released it?' )
     else
       ! We'll need a smaller hosts component in master, so ..
       nullify(tempHosts)
@@ -2263,7 +2281,6 @@ contains
       master%hosts => tempHosts
     endif
     master%numHosts = master%numHosts - 1
-    master%numFreed = master%numFreed + 1
   end subroutine releaseHostFromMaster
   
   ! ---------------------------------------------  rmMasterFromDatabase  -----
@@ -2353,6 +2370,9 @@ contains
 end program L2Q
 
 ! $Log$
+! Revision 1.29  2009/09/02 22:05:36  pwagner
+! Tried to fix bug preventing some hosts from being revived
+!
 ! Revision 1.28  2009/08/17 20:25:46  pwagner
 ! Should fix the forgotten needs_host when a master is killed
 !
