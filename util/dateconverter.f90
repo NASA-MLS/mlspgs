@@ -14,10 +14,10 @@ program dateconverter
 !=================================
 
    use dates_module, ONLY: adddaystoutc, addhourstoutc, addsecondstoutc, &
-     & dai_to_yyyymmdd, dateForm, reFormatDate, splitDateTime
+     & dai_to_yyyymmdd, dateForm, dayofweek, reFormatDate, splitDateTime
    use MACHINE, only: FILSEP, HP, IO_ERROR, GETARG
    use MLSStringLists, ONLY: StringElement
-   use MLSStrings, ONLY: lowerCase, readIntsFromChars
+   use MLSStrings, ONLY: lowerCase, ncopies, readIntsFromChars
 
    IMPLICIT NONE
 
@@ -38,6 +38,7 @@ program dateconverter
   type options_T
     integer     :: offset = 0                  ! How many days to add/subtract
     integer     :: hoursOffset = 0             ! How many hours to add/subtract
+    integer :: weekdayLength= 0     ! how many chars to output day-of-week
     double precision :: secondsOffset = 0.d0   ! How many seconds to add/subtract
     logical     :: utcFormat = .false.
     logical     :: verbose = .false.
@@ -60,8 +61,8 @@ program dateconverter
    integer, parameter ::          MAXDATES = 100
    character (LEN=MAXLISTLENGTH) :: converted_date
    character (LEN=MAXLISTLENGTH) :: converted_time
-   character (LEN=MAXLISTLENGTH) :: date
    integer                       :: dai
+   character (LEN=MAXLISTLENGTH) :: date
    character(len=MAXLISTLENGTH), dimension(MAXDATES) :: dates
    character(len=*), parameter   :: DOYFORMAT = 'yyyy-doy'
    integer :: ErrTyp
@@ -73,6 +74,7 @@ program dateconverter
    integer                       :: n_dates = 0
    character (LEN=MAXLISTLENGTH) :: time
    character (LEN=MAXLISTLENGTH) :: toForm
+   character (LEN=16           ) :: weekday
   ! Executable
   do      ! Loop over options
      call get_date(date, n_dates, options)
@@ -117,6 +119,7 @@ program dateconverter
     endif
     
     ! Process date
+    ! We will always have an intermediate_date in yyyy-mm-dd format
     if ( options%offset /= 0 ) then
       converted_date = reFormatDate( date, &
         & fromForm=trim(fromForm), toForm='yyyy-mm-dd' )
@@ -159,8 +162,15 @@ program dateconverter
       converted_date = reFormatDate(intermediate_date, &
         fromForm='yyyy-mm-dd', toForm=trim(toForm))
     else
-      converted_date = reFormatDate(date, &
-        & fromForm=trim(fromForm), toForm=trim(toForm))
+      intermediate_date = reFormatDate( date, &
+        & fromForm=trim(fromForm), toForm='yyyy-mm-dd' )
+      ! print *, 'intermediate: ' // trim(intermediate_date)
+      converted_date = reFormatDate(intermediate_date, &
+        & fromForm='yyyy-mm-dd', toForm=trim(toForm))
+    endif
+    if ( options%weekdayLength > 0 ) then
+      weekday = dayOfWeek( intermediate_date, fromForm='yyyy-mm-dd' )
+      converted_date = weekday(1:options%weekdayLength) // ' ' // converted_date
     endif
     if ( options%utcFormat ) then
       call print_string( trim(converted_date) // 'T' // trim(converted_time) // 'Z' )
@@ -227,6 +237,12 @@ contains
       elseif ( date(1:3) == '-v ' ) then
         options%verbose = .true.
         exit
+      elseif ( date(1:3) == '-w ' ) then
+        options%weekdayLength = 2
+        exit
+      elseif ( date(1:2) == '-W' ) then
+        options%weekdayLength = ncopies( date, 'W' )
+        exit
       elseif ( index('0123456789', date(2:2)) > 0 ) then
         call readIntsFromChars(date, options%offset)
         exit
@@ -272,6 +288,9 @@ contains
       write (*,*) '          -S number   => subtract "number" seconds'
       write (*,*) '          +S number   => add "number" seconds'
       write (*,*) '          -v          => switch on verbose mode'
+      write (*,*) '          -w          => print day-of-week in 2 characters'
+      write (*,*) '          -WW..       => print day-of-week'
+      write (*,*) '                         in count[W] characters'
       write (*,*) '          -h          => print brief help'
       stop
   end subroutine print_help
@@ -286,6 +305,9 @@ END PROGRAM dateconverter
 !==================
 
 ! $Log$
+! Revision 1.3  2007/08/17 00:44:30  pwagner
+! May add seconds offset; rely more completely on dates module
+!
 ! Revision 1.2  2007/05/10 23:41:42  pwagner
 ! Fixed error in declared char size of date; now assumed shape
 !
