@@ -1,14 +1,16 @@
 \documentclass[11pt]{article}
 \usepackage{alltt}
 \usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
 
 \textwidth 6.5in
 \oddsidemargin -0.25in
 %\evensidemargin -0.5in
-\topmargin -0.25in
+\topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-095r2}
+\newcommand{\docname}{wvs-095r3}
 \newcommand{\docdate}{2 June 2010}
 
 \ifx\pdfoutput\undefined
@@ -80,44 +82,49 @@
 To: \>Bill, Nathaniel, Van\\
 Subject: \>Radiance and derivatives incorporating $\TS$\\
 From: \>Van Snyder\\
-Reference: \>\h{wvs-066}, \h{wvs-080}
+Reference: \>\h{wvs-027}, \h{wvs-066}, \h{wvs-080}
 \end{tabbing}
 
 \parindent 0pt \parskip 6pt
 \vspace{-10pt}
 
-When $\TS$ is taken into account, the factor $\DB_{ij}$ that appears in
-the equation giving radiance at frequency $\nu_j$, \emph{viz.}
+When $\TS$ is taken into account, the factor $\DB_{ij} =
+\frac12\left(B_{i+1,j} - B_{i-1,j}\right)$ that appears in
+the equation giving radiance at frequency $\nu_j \in \{\nu_j, j = 1,
+\dots, n_f\}$, \emph{viz.}
 
 \begin{equation}\label{one}
-I_j = \int \frac{\partial B_j}{\partial s} \MT_j\,\text{d}s
- \approx \sum_{i=1}^{n_p} \DB_{ij} \MT_{ij}\,,
+I_j = \int \frac{\partial B_j(s)}{\partial s} \MT_j(s)\,\text{d}s
+ \approx \sum_{i=1}^{n_p} \DB_{ij} \MT_{ij}
 \end{equation}
 
-where $2 \DB_{ij} = B_{i+1,j} - B_{i-1,j}$, is replaced by
+is replaced by
 
 \begin{equation}\begin{split}\label{two}
-2 \oDB_{ij}
- =\,& ( 1 - \omega_{0_{i+1,j}} ) B_{i+1,j} + \omega_{0_{i+1,j}} \TSs{i+1,c} -
-      ( 1 - \omega_{0_{i-1,j}} ) B_{i-1,j} - \omega_{0_{i-1,j}} \TSs{i-1,c} \\
- =\,& \left[
+\oDB_{ij}
+ =\,& \frac12\left(
+      ( 1 - \omega_{0_{i+1,j}} ) B_{i+1,j} + \omega_{0_{i+1,j}} \TSs{i+1,c} -
+      ( 1 - \omega_{0_{i-1,j}} ) B_{i-1,j} - \omega_{0_{i-1,j}} \TSs{i-1,c}
+  \right) \\
+ =\,& \frac12\left(
+  \left[
       ( 1 - \omega_{0_{i+1,j}} ) B_{i+1,j} -
       ( 1 - \omega_{0_{i-1,j}} ) B_{i-1,j} \right] +
       \left[
       \omega_{0_{i+1,j}} \TSs{i+1,c} - \omega_{0_{i-1,j}} \TSs{i-1,c}
-      \right] \\
- =\,& 2 \DB_{ij}^g + 2 \DB_{ij}^s\,,
+      \right]  \right) \\
+ =\,& \DB_{ij}^g + \DB_{ij}^s\,,
 \end{split}\end{equation}
 
 where $c$ is a channel number,
 
 \begin{equation}\label{three}
 \begin{array}{rll}
-2\DB_{ij}^g \,= & ( 1 - \omega_{0_{i+1,j}} ) B_{i+1,j} -
-                ( 1 - \omega_{0_{i-1,j}} ) B_{i-1,j} &
+\DB_{ij}^g \,= & \frac12\left(( 1 - \omega_{0_{i+1,j}} ) B_{i+1,j} -
+                ( 1 - \omega_{0_{i-1,j}} ) B_{i-1,j}\right) &
                 \text{``gas,''} \\
-2\DB_{ij}^s \,= & \omega_{0_{i+1,j}} \TSs{i+1,c} -
-                 \omega_{0_{i-1,j}} \TSs{i-1,c} &
+\DB_{ij}^s \,= & \frac12\left( \omega_{0_{i+1,j}} \TSs{i+1,c} -
+                 \omega_{0_{i-1,j}} \TSs{i-1,c}\right) &
                  \text{``scattering,''} \\
 \omega_{0_{ij}} \,= & \frac{\beta_{{c\_s}_i}}{\beta_{e_{ij}}}
  \text{, and}\\
@@ -163,22 +170,24 @@ of summation, giving
 \begin{equation}\begin{split}\label{five}
 \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc}
   \IF{\sum_{i=1}^{n_p} \DB_{ij}^s \MT_{ij}}=\,&
-\sum_{i=1}^{n_p} \sum_{n=1}^{n_c}
+\frac12\sum_{i=1}^{n_p} \sum_{n=1}^{n_c}
           \phi_{nc} \Delta \nu_{nc}
           \IF{( \omega_{0_{i+1,j}} \TSs{i+1,c} 
             - \omega_{0_{i-1,j}} \TSs{i-1,c} ) \MT_{ij}} \\
 =\,&
-\sum_{i=1}^{n_p} \TSs{i+1,c} \sum_{n=1}^{n_c}
- \phi_{nc} \Delta \nu_{nc} \IF{\omega_{0_{i+1,j}} \MT_{ij}}
+\frac12\sum_{i=1}^{n_p}
+ \left( \TSs{i+1,c} \sum_{n=1}^{n_c}
+ \phi_{nc} \Delta \nu_{nc} \IF{\omega_{0_{i+1,j}} \MT_{ij}} \right.
 - \\
 \,&
-\sum_{i=1}^{n_p} \TSs{i-1,c} \sum_{n=1}^{n_c}
- \phi_{nc} \Delta \nu_{nc} \IF{\omega_{0_{i-1,j}} \MT_{ij}}\,.
+\phantom{\frac12\sum_{i=1}^{n_p}\left(\right.}
+ \left. \TSs{i-1,c} \sum_{n=1}^{n_c}
+ \phi_{nc} \Delta \nu_{nc} \IF{\omega_{0_{i-1,j}} \MT_{ij}} \right)\,.
 \end{split}\end{equation}
 
 Defining the frequency-averaged values
 
-\begin{equation}\label{w0hat}
+\begin{equation}\label{six}
 \hMT_{i\pm1,c} =
 \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc} \IF{\omega_{0_{i\pm1,j}} \MT_{ij}}
 \,,
@@ -189,8 +198,10 @@ Equation (\ref{four}) becomes
 \begin{equation}\label{seven}
 I_c = \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc}
        \IF{\sum_{i=1}^{n_p} \DB_{ij}^g \MT_{ij}} +
-      \sum_{i=1}^{n_p} (\hMT_{i+1,c} \TSs{i+1,c} -
-                        \hMT_{i-1,c} \TSs{i-1,c})\,.
+      \frac12\left(
+      \sum_{i=1}^{n_p} \hMT_{i+1,c} \TSs{i+1,c} -
+                       \hMT_{i-1,c} \TSs{i-1,c}
+      \right)\,.
 \end{equation}
 
 That is, the ``gas'' terms ($\DB_{ij}^g \MT_{ij}$) are frequency averaged
@@ -201,7 +212,7 @@ $\TSs{i\pm1,c}$ factors (which are channel averages), then their products
 are integrated along the path.  This is necessary because path
 integration is done (by the {\tt Frequency\_Loop} subroutine of the full
 forward model) for $\{\nu_j\}$, some of which appear in more than one
-channel.  Therefore, in computing a product ${\omega_0}_{i\pm1,j}
+channel.  Therefore, in computing a product $\omega_{0_{i\pm1,j}}
 \MT_{ij} \TSs{i+1,c}$, we do not know what $c$ to use for a particular
 $j$.
 
@@ -215,6 +226,7 @@ Derivatives are treated similarly.  From Equation (\ref{seven})
                         + \DB_{ij}^g \frac{\partial \MT_{ij}}{\partial x}
       } \\
 +\,&
+  \frac12
   \sum_{i=1}^{n_p} \left( \frac{\partial \hMT_{i+1,c}}{\partial x}
                           \TSs{i+1,c} +
                           \hMT_{i+1,c}
@@ -229,27 +241,128 @@ Derivatives are treated similarly.  From Equation (\ref{seven})
 where $x$ is either a mixing ratio of some specie, or temperature, at
 some point in the atmosphere.
 
-From Equation (\ref{w0hat})
+\begin{minipage}{4.75in}
+Assume the $k^{\text{th}}$ mixing ratio is represented on the red grid
+and temperature on the blue grid, and we wish to have both at $l$, a point
+on the integration path.
+
+\vskip 3pt
+Assume linear interpolation coefficients $\eta^k_{ml}$ and $\eta^T_{\mu
+l}$ to interpolate the $k^{\text{th}}$ mixing ratio from points $m$ and
+temperature from points $\mu$ to $l$, respectively.  Then $f^k_l = \sum_m
+\eta^k_{ml} f^k_m$ and $T_l = \sum_\mu \eta^T_{\mu l} T_\mu$;
+$m$ and $\mu$ are simply indices that count the points in the grid, not
+co\"{o}rdinates.
+\end{minipage}
+\hspace*{0.1in}
+\parbox{1.5in}{
+\includegraphics[scale=1]{eta.eps}
+}
+
+The coefficients $\eta^k_{ml}$ and $\eta^T_{\mu l}$ are actually products
+of coefficients that interpolate in $\zeta$ and $\phi$, e.g.,
+$\eta^k_{ml} = \eta^k(\zeta_m,\zeta_l) \eta^k(\phi_m,\phi_l)$, where
+$\eta^k(\zeta_m,\zeta_l) = (\zeta^k_{m+1}-\zeta_l) /
+(\zeta^k_{m+1}-\zeta^k_m)$ if $\zeta^k_m < \zeta \leq \zeta^k_{m+1}$ and
+$(\zeta_l-\zeta^k_{m-1}) / (\zeta^k_m-\zeta^k_{m-1})$ if $\zeta^k_{m-1} <
+\zeta \leq \zeta^k_m$.  For each $k$ and $m$ at most four of
+$\{\eta^k_{ml}\}$ are nonzero, and for each $\mu$ at most four of
+$\{\eta^T_{\mu l}\}$ are nonzero.
+
+$\MT_{ij} = \exp(-\delta_{ij}) =
+\exp\left(-\int_0^{s_i} \alpha_j(s)\, \text{d} s \right) =
+\exp(-\sum_{k=1}^{n_s} \delta^k_{ij})$, where
 
 \begin{equation}\label{nine}
-\frac{\partial \hMT_{i\pm1,c}}{\partial x} =
- \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc}
-  \IF{\frac{\partial \omega_{0_{i\pm1,j}}}{\partial x} \MT_{ij} +
-         \omega_{0_{i\pm1,j}} \frac{\partial \MT_{ij}}{\partial x}}.
+\delta^k_{ij}
+= \int_0^{s_i} \beta^k_j(s)\, \text{d} s
+\approx
+  \sum_{l=1}^i f^k_l \beta^k_{lj}(T_l,\nu_j)
+  \Delta s_l
+= \sum_{l=1}^i \sum_m \eta^k_{ml} f^k_m
+  \beta^k_{lj}\left(\sum_\mu \eta^T_{\mu l} T_\mu,\nu_j\right)
+  \Delta s_l
 \end{equation}
+
+in which $i$ and $l$ index points on the integration path, and $m$ and
+$\mu$ index points in the solution grids.
+
+From Equation (\ref{nine}),
+
+\begin{equation}\begin{split}\label{ten}
+\frac{\partial \MT_{ij}}{\partial f^k_m} =\,&
+ - \MT_{ij} \frac{\partial \delta^k_{ij}}{\partial f^k_l}
+            \frac{\partial f^k_l}{\partial f^k_m} =
+ - \MT_{ij} \sum_{l=1}^{n_p} \eta^k_{ml} \beta^k_{lj} \Delta s_l
+ \text{ and }\\
+\frac{\partial \MT_{ij}}{\partial T_\mu} =\,&
+ - \MT_{ij} \frac{\partial \delta_{ij}}{\partial T_l}
+            \frac{\partial T_l}{\partial T_\mu} =
+ - \MT_{ij} \sum_l \eta^T_{\mu l}
+    \frac{\partial \alpha_{lj}}{\partial T_l} \Delta s_l =
+ - \MT_{ij} \sum_{k,l} f^k_l \eta^T_{\mu l}
+    \frac{\partial \beta^k_{lj}}{\partial T_l} \Delta s_l
+\,.
+\end{split}\end{equation}
+
+The full forward model operates by integrating along the path first,
+producing $I_j$ and derivatives for frequency $\nu_j$.  After doing this
+for all $\{\nu_j\}$, it interpolates $I_j$ to $\!\IF{I_j}$ and does the
+frequency averaging.  That is, the order of summations is as in Equation
+(\ref{four}).
+
+From Equations (\ref{three}), (\ref{six}) and (\ref{ten}),
+
+\begin{equation}\begin{split}\label{eleven}
+\frac{\partial \hMT_{i\pm1,c}}{\partial f^k_m} =\,&
+ \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc}
+  \IF{\MT_{ij} \sum_{l=1}^{n_p}\left[\frac{\partial \omega_{0_{i\pm1,j}}}
+                                            {\partial f^k_l} -
+         \omega_{0_{i\pm1,j}}
+          \beta^k_{lj} \right] \eta^k_{ml} \Delta s_l}\text{ and}\\
+\frac{\partial \hMT_{i\pm1,c}}{\partial T_\mu} =\,&
+ \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc}
+  \IF{\MT_{ij} \sum_{l=1}^{n_p}\left[\frac{\partial \omega_{0_{i\pm1,j}}}
+                                            {\partial T_l} -
+         \omega_{0_{i\pm1,j}}
+           \sum_k f^k_l \frac{\partial \beta^k_{lj}}{\partial T_l}
+           \right] \eta^T_{\mu l} \Delta s_l} .
+\end{split}\end{equation}
 
 From Equation (\ref{three})
 
-\begin{equation}
-\frac{\partial \omega_0}{\partial x} =
- \frac1{\beta_e^2} \left( \frac{\partial \beta_{c\_s}}{\partial x} -
-                          \frac{\partial \beta_e}{\partial x} \right)
+\begin{equation}\begin{split}\label{twelve}
+\frac{\partial \omega_{0_{ij}}}{\partial f^k_m} =\,&
+ \frac1{\beta_{e_{ij}}}   \frac{\partial \beta_{{c\_s}_i}}{\partial f^k_m} -
+ \frac1{\beta_{e_{ij}}^2} \frac{\partial \beta_{e_{ij}}}{\partial f^k_m}
 =
- \frac1{\beta_e^2} \left( \frac{\partial \beta_{c\_s}}{\partial x} -
-                          \frac{\partial \beta_{c\_e}}{\partial x} -
-                          \frac{\partial \alpha_\text{gas}}{\partial x}
-                   \right) \,.
-\end{equation}
+ \frac1{\beta_{e_{ij}}}   \frac{\partial \beta_{{c\_s}_i}}{\partial f^k_m} -
+ \frac1{\beta_{e_{ij}}^2}
+                   \left( \frac{\partial \beta_{{c\_e}_i}}{\partial f^k_m} +
+                          \frac{\partial \alpha_{\text{gas}_{ij}}}{\partial f^k_m}
+                   \right) \\
+=\,&
+ \sum_{l=1}^{n_p} \eta^k_{ml} \left[
+ \frac1{\beta_{e_{lj}}}   \frac{\partial \beta_{{c\_s}_l}}{\partial f^k_l} -
+ \frac1{\beta_{e_{lj}}^2}
+                   \left( \frac{\partial \beta_{{c\_e}_l}}{\partial f^k_l} +
+                          \beta^k_{lj}
+                   \right)\right] \text{ and}\\
+\frac{\partial \omega_{0_{ij}}}{\partial T_\mu} =\,&
+ \frac1{\beta_{e_{ij}}}   \frac{\partial \beta_{{c\_s}_i}}{\partial T_\mu} -
+ \frac1{\beta_{e_{ij}}^2}
+                   \left( \frac{\partial \beta_{{c\_e}_i}}{\partial T_\mu} -
+                          \frac{\partial\alpha_{\text{gas}_{ij}}}{\partial T_\mu}
+                   \right)\\
+=\,&
+ \sum_{l=1}^{n_p} \eta^T_{\mu l} \left[
+ \frac1{\beta_{e_{lj}}}   \frac{\partial \beta_{{c\_s}_l}}{\partial T_l} -
+ \frac1{\beta_{e_{lj}}^2}
+                   \left( \frac{\partial \beta_{{c\_e}_l}}{\partial T_l} -
+                          \frac{\partial\alpha_{\text{gas}_{lj}}}{\partial T_l}
+                   \right) \right]
+ \,.
+\end{split}\end{equation}
 
 $\alpha_\text{gas}$ depends upon temperature and atmospheric constituent
 mixing ratios along the path, and frequency.
@@ -265,55 +378,88 @@ the second term in Equation (\ref{eight}) will produce nonzeros in the
 Jacobian for every element in the state vector upon which $\TS$ depends,
 not just those near the path.
 
-In discretized form, $\MT_{ij} = \exp(-\delta_{ij})$, where $\delta_{ij}
-= \sum_{l=1}^j \sum_{k=1}^{n_s} \eta^k_l f^k_l \beta^k_{lj}$, in which
-$\eta^k_l$ is an interpolating coefficient from the solution grid to the
-integration path, $f^k_l$ is the volume mixing ratio for the
-$k^{\text{th}}$ species at the $l^{\text{th}}$ point on the path, and
-$\beta^k_{lj}$ (which depends upon frequency and temperature) is the
-absorption cross section of that species at that point.
+There are several possibilities to perform the frequency averaging as
+described in Equation (\ref{eleven}).  One method is to create
+three-dimensional arrays to store $\left[ \frac{\partial
+\omega_{0_{i\pm1,j}}}{\partial f^k_l} - \omega_{0_{i\pm1,j}}
+\frac{\partial \delta_{ij}}{\partial f^k_l} \right] \MT_{ij}$ and
+similarly for temperature derivatives, having extents $n_p^2 \times n_s
+\times n_f$ and $n_p^2 \times n_f$, and to provide data structures that
+keep track of nonzero elements.  Assuming $n_p\approx 150,\, n_s \approx
+20$, and $n_f \approx 500$, these arrays would have $\approx
+225\times10^6$ and $\approx 10^7$ elements, so this is clearly
+impractical.
 
-From this,
+The forward model already stores $\eta^k_{il}$ and $f^k_l$, and
+$\beta^k_{lj}$, $\frac{\partial \beta^k_{lj}}{\partial T_l}$ and
+$\MT_{ij}$ for each frequency.  From Equation (\ref{twelve}),
+$\frac{\partial \omega_{0_{ij}}}{\partial f^k_l}$ is only nonzero when $l
+= i$. From Equations (\ref{three}) and (\ref{twelve}), $\omega_{0_{ij}}$ and
+$\frac{\partial \omega_{0_{ij}}}{\partial f^k_l}$ depend upon quantities
+the forward model already computes, plus $\beta_{c\_s_i}$,
+$\beta_{c\_e_i}$ and their derivatives with respect to temperature and
+IWC.
 
-\begin{equation}
-\frac{\partial \MT_{ij}}{\partial f^k_l} =
- - \MT_{ij} \frac{\partial \delta_{ij}}{\partial f^k_l} =
- - \MT_{ij} \eta^k_l \beta^k_{lj}
- \text{ and }
-\frac{\partial \MT_{ij}}{\partial T_l} =
- - \MT_{ij} \frac{\partial \delta_{ij}}{\partial T_l} =
- - \MT_{ij} \eta^k_l f^k_l \frac{\partial \beta^k_{lj}}{\partial T_l}
-\end{equation}
+From Equation (\ref{ten}), $\frac{\partial \delta_{ij}}{\partial
+f^k_l} \MT_{ij}$ and $\frac{\partial \delta_{ij}}{\partial T_i} \MT_{ij}$
+are outer products $\eta^k_{il} \beta^k_{lj} \MT_{ij}$ and $\eta^k_{il} f^k_l
+\frac{\partial\beta^k_{lj}}{\partial T_l} \MT_{ij}$, which are all
+lower-dimensional quantities.  Arrays to represent the factors of the
+outer products for all frequencies would have tractable extents $n_p
+\times n_s \times n_f \approx 1.5\times10^6$ and $n_p \times n_f \approx
+75\times10^3$.
 
-The full forward model operates by integrating along the path first,
-producing $I_j$ and derivatives for frequency $\nu_j$.  After doing this
-for all $\{\nu_j\}$, it interpolates $I_j$ to $\!\IF{I_j}$ and does the
-frequency averaging.  That is, the order of summations is as in Equation
-(\ref{four}).
+Changes to storage in the forward model would be:
 
-Along the way the forward model calculates an array {\tt d\_delta\_df} $=
-\frac{\partial \delta_{ij}}{\partial f^k_l} = \eta^k_l \beta^k_{lj}$ as
-an intermediate result for each frequency.  This is a two-dimensional
-array having extents path length $\times$ state vector size. 
-Measurements of program performance showed that a statement {\tt
-d\_delta\_df = 0} was consuming a significant fraction of the cost of
-executing the forward model.  Therefore a data structure was developed to
-keep track of the nonzero elements.
+\begin{itemize}
 
-In order to perform the frequency averaging as described in Equation
-(\ref{nine}) one of two things will be necessary.  One method is to
-expand {\tt d\_delta\_df} to a three-dimensional array having extents
-path length $\times$ state vector size $\times$ frequencies, and to
-expand the data structure that keeps track of nonzero elements
-similarly.  Then interpolate {\tt d\_delta\_df} to the filter function
-frequencies giving $\!\IF{\frac{\partial \delta_{ij}}{\partial f^k_l}} =
-\IF{\eta^k_l \beta^k_{lj} }$, then frequency average those values giving
-$\frac{\partial \delta_{ic}}{\partial f^k_l}$.
+\item Provide new arrays to represent
+  $\beta_{c\_s_i}$, $\beta_{c\_e_i}$, and their derivatives with respect
+  to temperature and IWC, and
+
+\item Expand the arrays that represent $\beta^k_{ij}$, $\frac{\partial
+  \beta^k_{ij}}{\partial T_i}$, and $\MT_{ij}$ within {\tt
+  Frequency\_Loop} by adding a frequency dimension, and allocate them
+  outside that subroutine.
+
+\end{itemize}
+
+Equations (\ref{seven}) and (\ref{eight}) could then be evaluated in
+stages:
+
+\begin{enumerate}
+
+\item Evaluate $\beta_{c\_s_i}$, $\beta_{c\_e_i}$, and their derivatives
+  with respect to $T_i$ and IWC$_i$, independently of frequency,
+
+\item Evaluate the first term in each equation using a small modification
+  of the {\tt Frequency\_Loop} subroutine to include the $\omega_0$ terms
+  in $\Delta B^s_{ij}$, saving quantities enumerated above necessary to
+  compute $\frac{\partial \omega_{0_{ij}}}{\partial f^k_i}$,
+  $\frac{\partial \omega_{0_{ij}}}{\partial T_i}$, $\frac{\partial
+  \delta_{ij}}{\partial f^k_l}$ and $\frac{\partial \delta_{ij}}{\partial
+  T_i}$,
+
+\item Compute $\frac{\partial \omega_{0_{ij}}}{\partial f^k_i}$,
+  $\frac{\partial \omega_{0_{ij}}}{\partial T_i}$, $\frac{\partial
+  \delta_{ij}}{\partial f^k_l}$ and $\frac{\partial \delta_{ij}}{\partial
+  T_i}$, and frequency average them separately at each point along the
+  path, similarly to how {\tt Inc\_Rad\_Path} is handled for PFA (see
+  wvs-027), and
+
+\item Evaluate the second term in a second invocation of {\tt
+  Frequency\_Loop}, modified to use the linear forward model to compute
+  the $\TSs{ic}$, $\frac{\partial \TSs{ic}}{\partial f^k_i}$ and
+  $\frac{\partial \TSs{ic}}{\partial T_i}$ terms in Equations
+  (\ref{seven}) and (\ref{eight}).  This is also similar to how PFA
+  computations are done.
+
+\end{enumerate}
 
 A second method is to compute coefficients to interpolate linearly from
 $\{\nu_j\}$ to $\{\nu_{nc}\}$, combine those coefficients with
 $\phi_{nc}$ and $\Delta \nu_{nc}$, and use them to frequency average
-${\omega_0}_{i\pm1,j} \MT_{i\pm1,j}$ as they are calculated during path
+$\omega_{0_{i\pm1,j}} \MT_{i\pm1,j}$ as they are calculated during path
 integration.
 
 In linear interpolation form we can write
@@ -328,11 +474,11 @@ n_f\}$ at which Equation (\ref{one}) is evaluated and $\eta_{nj} =
 \frac{\nu_{j+1}-\nu_n}{\nu_{j+1}-\nu_j}$ is the linear interpolating
 coefficient from those frequencies to the filter function frequencies
 $\{\nu_{nc},\, n = 1, \cdots, n_c\}$.  To avoid carrying these quantities
-through the path integration (because $n_c >> n_f$) we can frequency
+through the path integration (because $n_c << n_f$) we can frequency
 average $\!\IF{\omega_{0_{i\pm1,j}}\MT_{ij}}$ to get, by exchanging the
 order of summation,
 
-\begin{equation}\begin{split}\label{thirteen}
+\begin{equation}\begin{split}\label{fourteen}
 \hMT_{i\pm1,c} =\,& \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc}
  \IF{\omega_{0_{i\pm1,j}}\MT_{ij}}
  = \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc}
@@ -351,9 +497,9 @@ h_{jc} = \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc} \eta_{nj}\,.
 Before the {\tt Frequency\_Loop} subroutine in the full forward model is
 invoked, compute $h_{jc}$ from the pointing frequency grid and the filter
 function's frequency grids for all channels.  During path integration in
-{\tt Frequency\_Loop}, evaluate Equation (\ref{thirteen}) to produce the
+{\tt Frequency\_Loop}, evaluate Equation (\ref{fourteen}) to produce the
 channel-averaged quantity $\hMT_{i\pm1,c}$.  This method also applies to
-evaluating Equation (\ref{nine}).
+evaluating Equation (\ref{eleven}).
 
 Because of the use of linear interpolation between $\{\nu_j\}$ and
 $\{\nu_{nc}\}$, this scheme is somewhat less accurate than the first
@@ -363,7 +509,7 @@ A third method is to divide references to {\tt Frequency\_Loop} into sets
 of frequencies that appear in each channel and compute the
 frequency-averaged channel radiance for each channel after invocation of
 {\tt Frequency\_Loop} for the subset of $\{\nu_j\}$ that appear within
-that channel.  This would allow forming products ${\omega_0}_{i\pm1,j}
+that channel.  This would allow forming products $\omega_{0_{i\pm1,j}}
 \MT_{ij} \TSs{i+1,c}$ during path integration, and would not require
 frequency averaging during path integration.
 
@@ -374,12 +520,29 @@ keep track of results for frequencies that appear in more than one
 channel and reuse those results instead of repeating the path
 integrations.
 
+A fourth method is to interpolate $\TSs{i\pm1,c}$ and its derivatives
+from adjacent channel centers to the element of $\{\nu_j\}$ for which
+{\tt Frequency\_Loop} is invoked.  In principle this requires invoking
+the linear forward model twice per path point and frequency, but if
+storage permits it might be possible to invoke the linear forward model
+for every path point for the two channels surrounding a subset of
+$\{\nu_j\}$, and interpolate in those retained results.  The amount of
+storage necessary for $\TSs{i\pm1,c}$ for two channels is $2 n_p$.  The
+amount of storage necessary for $\frac{\partial \TSs{i\pm1,c}}{\partial
+f^k_l}$ and $\frac{\partial \TSs{i\pm1,c}}{\partial T}$ is $2 n_p^2
+(\hat{n}_s+1)$, where $\hat{n}_s$ is the number of species upon which
+$\TSs{i\pm1,c}$ depends, i.e., the number of values of $k$.  Since $l \leq
+i$ this could be halved at some expense to clarity of the software.
+
 \label{lastpage}
 \end{document}
 
 % $Id$
 
 % $Log$
+% Revision 1.2  2010/06/03 00:08:09  vsnyder
+% Three ideas for combining channel quantities with single-frequency quantities
+%
 % Revision 1.1  2010/05/20 23:49:47  vsnyder
 % Initial commit
 %
