@@ -173,7 +173,6 @@ contains ! =====     Public Procedures     =============================
     integer :: XINSTANCE                ! Instance in x corresponding to xStarInstance
     integer :: XSTARINSTANCE            ! Loop counter
 
-    logical :: ANYBLOCKS                ! Flag for checking derivatives
     logical :: DODERIVATIVES            ! Flag
     logical :: DOELEMENT                ! Flag
     logical :: FOUNDINFIRST             ! Flag for state quantities
@@ -361,19 +360,14 @@ contains ! =====     Public Procedures     =============================
         ! If it's not in the state vector, and the l2pc does contain
         ! derivative information for this then make a fuss.
         if ( .not. associated(stateQ) ) then
-          anyBlocks = .false.
           do xStarInstance = 1, l2pcQ%template%noInstances
             colLBlock = FindBlock ( l2pc%j%col, l2pcQ%index, xStarInstance )
             if ( l2pc%j%block(rowLBlock,colLBlock)%kind /= M_Absent ) then
-              anyBlocks = .true.
-              exit
+              call get_string ( l2pcQ%template%name, word, strip=.true. )
+              call MLSMessage ( MLSMSG_Error, ModuleName, &
+                &  "No quantity in state vectors found to match "//trim(word) )
             end if
           end do
-          if ( anyBlocks ) then
-            call get_string ( l2pcQ%template%name, word, strip=.true. )
-            call MLSMessage ( MLSMSG_Error, ModuleName, &
-              &  "No quantity in state vectors found to match "//trim(word) )
-          end if
           cycle quantityLoop            ! Go to next l2pc quantity
         end if
 
@@ -451,7 +445,7 @@ contains ! =====     Public Procedures     =============================
           if ( present ( jacobian ) ) fmStat%rows(rowJBlock) = .true.
           ! We want to set the row flag even if we don't compute derivatives
           ! as we want our contribution to the radiances known.
-          if (doDerivatives) then
+          if ( doDerivatives ) then
             colLBlock = FindBlock ( l2pc%j%col, l2pcQ%index, xStarInstance )
             colJBlock = FindBlock ( jacobian%col, stateQ%index, xInstance )
             l2pcBlock => l2pc%j%block(rowLBlock,colLBlock)
@@ -787,6 +781,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.79  2010/05/19 17:52:53  pwagner
+! Removed unused stuff
+!
 ! Revision 2.78  2010/05/19 00:33:46  vsnyder
 ! Get rid of a temp, hopefully interpolate faster, pass ignoreHessian into
 ! PopulateL2PCBin, cosmetic changes.
