@@ -28,20 +28,20 @@ module Non_scat_ext
 
 contains
 
-      SUBROUTINE GET_BETA_CLEAR ( L, F, T, P, VMR, NU, NS, Ext_coeff )
+      SUBROUTINE GET_BETA_CLEAR ( L, F, T, P, VMR_H2O, VMR_O3, VmR_N2O, &
+        &                         NU, Ext_coeff )
 
 !========================================================================
 
       INCLUDE 'spectra.f9h' 
 
-      INTEGER, intent(in) :: NS                ! NO. OF CHEMICAL SPECIES
       INTEGER, intent(in) :: NU                ! 2 x NO. OF pts
       INTEGER, intent(in) :: L                 ! NO. OF (levels?)
       REAL(r8), intent(in) :: F                ! Frequency
       REAL(r8), intent(in) :: T(L)
       REAL(r8), intent(in) :: P(L)
 !!     REAL(r8), intent(in) :: Z(L)
-      REAL(r8), intent(in) :: VMR(NS,L)
+      REAL(r8), intent(in) :: VMR_H2O(:), VMR_O3(:), VMR_N2O(:)
       REAL(r8), intent(out) :: Ext_coeff(L)
 
 ! local variables
@@ -67,7 +67,7 @@ contains
       DO I=1,L
 
         CALL GET_BETA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,GAMMA,N2,NMOL,NCNT,  &
-          &           T(I),P(I),F,VMR(1,I),VMR(:NS-1,I),Ext_coeff(I),NS )   
+          &           T(I),P(I),F,VMR_H2O(I),VMR_O3(I),VMR_N2O(I),Ext_coeff(I) )
 
       ENDDO
 
@@ -88,6 +88,9 @@ contains
 end module Non_scat_ext
 
 ! $Log$
+! Revision 2.6  2010/06/07 23:21:30  vsnyder
+! Changed some calling sequences
+!
 ! Revision 2.5  2009/06/23 18:26:11  pwagner
 ! Prevent Intel from optimizing ident string away
 !
