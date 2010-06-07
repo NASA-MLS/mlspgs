@@ -179,9 +179,10 @@ module ForwardModelConfig
     logical :: Spect_Der              ! Do spectroscopy derivatives
     logical :: SwitchingMirror        ! Model radiance at the switching mirror
     logical :: Temp_Der               ! Do temperature derivatives
+    logical :: UseTScat               ! Use TScat tables + linear model in full model
     ! Now the reals
-    real (r8) :: PhaseFrqTol          ! MHz, how close to channel must scattering
-                                      ! phase function be?
+    real (r8) :: FrqTol               ! MHz, how close to desired frequency must
+                                      ! Mie table be?
     real (r8) :: PhiWindow            ! Window size for examining stuff
     real (r8) :: Tolerance            ! Accuracy desired when choosing approximations
     real :: sum_DeltaTime = 0.0       ! sum of delta time calling FullForwardModel 
@@ -191,6 +192,8 @@ module ForwardModelConfig
     integer, dimension(:), pointer :: Molecules=>NULL() ! Which molecules to consider
     logical, dimension(:), pointer :: MoleculeDerivatives=>NULL() ! Want Jacobians
     integer, dimension(:), pointer :: SpecificQuantities=>NULL() ! Specific quantities to use
+    integer, dimension(:), pointer :: TScatMolecules=>NULL() ! Which molecules to consider
+    logical, dimension(:), pointer :: TScatMoleculeDerivatives=>NULL() ! Want Jacobians
     ! Now the derived types
     type (beta_group_t), dimension(:), pointer :: Beta_Group => NULL() ! q.v. above
     type (spectroParam_t), dimension(:), pointer :: LineCenter => NULL()
@@ -255,6 +258,8 @@ contains
     use MLSSets, only: FindFirst
 !   use Output_m, only: Output
     use PFADataBase_m, only: Dump
+    use Read_Mie_m, only: F_s
+    use Output_m, only: Output
     use SpectroscopyCatalog_m, only: Dump
     use Toggles, only: Switches
 
@@ -290,6 +295,11 @@ contains
     ! compared to the LBL stuff), so it is useful to allocate and destroy
     ! it separately for each forward model run.
     call PFA_Stuff ! Below
+
+    if ( fwdModelConf%useTScat .and. .not. associated(f_s) ) then
+      call output ( 'UseTScat requested but no Mie tables loaded', advance='yes' )
+      error = .true.
+    end if
 
     if ( dumpFwm > 0 .or. error ) then
       call dump ( fwdModelConf, 'DeriveFromForwardModelConfig' )
@@ -780,7 +790,8 @@ contains
       & config%forceSidebandFraction,  config%globalConfig, &
       & config%ignoreHessian, config%incl_cld, config%lockBins, &
       & config%polarized, config%refract, config%skipOverlaps, &
-      & config%spect_Der, config%switchingMirror,  config%temp_Der /), &
+      & config%spect_Der, config%switchingMirror, config%temp_Der, &
+      & config%useTScat /), &
       & msg ="Packing fwmConfig logicals" )
 
     ! Now pack the reals
@@ -911,6 +922,7 @@ contains
     config%spect_der             = ls(i) ; i = i + 1
     config%switchingMirror       = ls(i) ; i = i + 1
     config%temp_der              = ls(i) ; i = i + 1
+    config%useTScat              = ls(i) ; i = i + 1
 
     ! Now the real scalars
     call PVMIDLUnpack ( rs, msg = "Unpacking fwmConfig reals" )
@@ -1389,6 +1401,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.106  2010/05/14 02:18:16  vsnyder
+! Dump BinSelectors
+!
 ! Revision 2.105  2010/03/26 23:12:51  vsnyder
 ! Add ignoreHessian field for quasi-linear model
 !
