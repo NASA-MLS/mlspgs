@@ -27,7 +27,8 @@ module ScatSourceFunc
       
 contains
 
-   subroutine T_SCAT ( TEMP_AIR, FREQ, Z, Pres, VMRin, NS, NU, NUA, NAB, NR, NC, &
+   subroutine T_SCAT ( TEMP_AIR, FREQ, Z, Pres, VMR_H2O, VMR_O3, VMR_N2O, &
+                     & NU, NUA, NAB, NR, NC, &
                      & TB_SCAT, Scat_alb, Cloud_ext, THETA )  
 
       use Cloud_extinction,    only: Get_beta_cloud
@@ -49,12 +50,12 @@ contains
       integer, intent(in) :: NAB          ! Number of AB terms
       integer, intent(in) :: NR           ! Number of size bins
       integer, intent(in) :: NC           ! Number of cloud species
-      integer, intent(in) :: NS           ! Number of chemical species
-      real(rk), intent(in) :: VMRin(NS, size(Z) )        ! VMR
-      
+      real(rk), intent(in) :: VMR_H2O(:), VMR_O3(:), VMR_N2O(:)
+
       real(rk), intent(inout) :: TB_scat(:,:)   ! TB FROM SCATTERING PHASE FUNCTION
-      real(rk), intent(inout) :: Scat_alb(:,:) ! Single Scattering albedo 
+      real(rk), intent(inout) :: Scat_alb(:,:)  ! Single Scattering albedo 
       real(rk), intent(inout) :: Cloud_ext(:,:) ! Cloud extinction
+      real(rk) , intent(inout) :: THETA(:)      ! SCATTERING ANGLES
 
     ! Local variables
       real(rk), parameter :: COLD = 2.7_rk   ! kelvins
@@ -77,7 +78,6 @@ contains
       real(rk) :: TB0 ( NU )   ! TB AT THE SURFACE
       real(rk) :: TEMP( size(temp_air) )  ! BRIGHTNESS TEMPERATURE FROM TEMP_AIR
       real(rk) :: THETAI(NU,NU,NUA) ! ANGLES FOR INCIDENT TB
-      real(rk) , intent(inout) :: THETA(:)    ! SCATTERING ANGLES
       real(rk) :: TSCAT(NU,size(Z))
       real(rk) :: Tsource
       real(rk) :: TSPACE                  ! COSMIC BACKGROUND RADIANCE
@@ -134,7 +134,8 @@ contains
       dtau =0.0
       ext_air=0.0
 
-      CALL get_beta_clear ( L, FREQ, TEMP_AIR, Pres, VMRin, NU, NS, ext_air )
+      CALL get_beta_clear ( L, FREQ, TEMP_AIR, Pres, VMR_H2O, VMR_O3, VMR_N2O, &
+        & NU, ext_air )
 
       do I=1, L-1
         mid_Z(I) = Z(I) +(Z(I+1)-Z(I))/2.
@@ -386,6 +387,9 @@ contains
 end module ScatSourceFunc
 
 ! $Log$
+! Revision 2.17  2009/06/23 18:26:10  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.16  2009/05/13 20:03:01  vsnyder
 ! Get constants from Constants, kinds from MLSKinds
 !
