@@ -11,16 +11,22 @@
 
 module Get_Eta_Matrix_m
 
-  use MLSCommon, only: RP, IP
+  use MLSKinds, only: RP, IP
 
   implicit NONE
 
   private
+  public :: Eta_D_T, Eta_S_T
   public :: Dump, Dump_Eta_Column_Sparse
   public :: Eta_Func, Eta_Func_1d, Eta_Func_2d
   public :: Get_Eta_Column_Sparse, Get_Eta_Column_Sparse_fl_nz, Get_Eta_Sparse
   public :: Get_Eta_Sparse_1d, Get_Eta_Sparse_1d_fl, Get_Eta_Sparse_1d_nz
-  public :: Get_Eta_Sparse_2d, Get_Eta_Sparse_2d_fl_nz, Get_Eta_Sparse_2d_nz
+  public :: Get_Eta_Sparse_2d, Get_Eta_Sparse_2d_fl, Get_Eta_Sparse_2d_fl_nz
+  public :: Get_Eta_Sparse_2d_nz
+  public :: Get_Eta_Stru, Get_Eta_Stru_D_D, Get_Eta_Stru_D_S, Get_Eta_Stru_S_S
+  public :: Interpolate_Stru
+  public :: Interpolate_Stru_1D_D, Interpolate_Stru_1D_S
+  public :: Interpolate_Stru_2D_D, Interpolate_Stru_2D_S
   public :: Multiply_Eta_Column_Sparse
   public :: Select_NZ_List
 
@@ -35,9 +41,28 @@ module Get_Eta_Matrix_m
   interface Get_Eta_Sparse
     module procedure Get_Eta_Column_Sparse, Get_Eta_Column_Sparse_fl_nz
     module procedure Get_Eta_Sparse_1d, Get_Eta_Sparse_1d_fl, Get_Eta_Sparse_1d_nz
-    module procedure Get_Eta_Sparse_2d, Get_Eta_Sparse_2d_fl_nz
-    module procedure Get_Eta_Sparse_2d_nz
+    module procedure Get_Eta_Sparse_2d, Get_Eta_Sparse_2d_fl, Get_Eta_Sparse_2d_nz
+    module procedure Get_Eta_Sparse_2d_fl_nz
   end interface
+
+  interface Get_Eta_Stru
+    module procedure Get_Eta_Stru_D_D, Get_Eta_Stru_D_S, Get_Eta_Stru_S_S
+  end interface
+
+  interface Interpolate_Stru
+    module procedure Interpolate_Stru_1D_D, Interpolate_Stru_1D_S
+    module procedure Interpolate_Stru_2D_D, Interpolate_Stru_2D_S
+  end interface
+
+  type :: Eta_S_T
+    integer :: L
+    real :: Eta
+  end type Eta_S_T
+
+  type :: Eta_D_T
+    integer :: L
+    double precision :: Eta
+  end type Eta_D_T
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -479,6 +504,138 @@ contains
     end if
 
   end subroutine Get_Eta_Sparse_2d
+
+!------------------------------------------  Get_Eta_Sparse_2d_fl  -----
+  subroutine Get_Eta_Sparse_2d_fl ( Basis, Grid, Eta, First, Last, Sorted )
+
+! Compute the eta matrix.  Basis is assumed to be sorted.  Grid need not
+! be sorted, but if it is, Sorted can be set .true. to suppress sorting it
+! here.
+
+!   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use Sort_m, only: SortP
+
+! Inputs
+
+    real(rp), intent(in) :: Basis(:) ! basis break points
+    real(rp), intent(in) :: Grid(:)  ! grid values
+    logical, optional, intent(in) :: Sorted ! "Grid is sorted"
+
+! Outputs
+
+    real(rp), intent(out) :: Eta(:,:) ! representation basis function
+    integer, intent(out) :: First(:)  ! First nonzero in each row of Eta
+    integer, intent(out) :: Last(:)   ! Last nonzero in each row of Eta
+
+! Internals
+
+    integer(ip) :: I, J, N_coeffs, N_Grid, P(size(grid)), PI
+    real(rp) :: Del_basis
+    logical :: MySorted
+
+! The first coefficient is one for all values of grid below basis(1)
+! until grid = basis(1),then it ramps down in the usual triangular sense,
+! then the last coefficient is one for all values of grid above basis(n_coeffs).
+! I is the independent variable grid index and J is the coefficient index
+
+    n_coeffs = size(basis)
+    eta = 0.0_rp
+
+! Things below go more efficiently if Grid is sorted
+
+    n_grid = size(grid)
+
+    mySorted = n_grid == 1
+    if ( .not. mySorted ) then
+      if ( grid(1) <= grid(2) .and. present(sorted) ) mySorted = sorted
+    end if
+
+    if ( mySorted ) then
+
+! first basis calculation
+
+      do i = 1, n_grid
+        if ( grid(i) > basis(1) ) exit
+        eta(i,1) = 1.0_rp
+        first(i) = 1
+        last(i) = 1
+      end do
+
+! Normal triangular function for j=2 to j=n_coeffs-1.  Both Basis and
+! Grid(p(:)) are sorted, so we don't need to start from i=1.
+
+      do j = 2, n_coeffs
+        del_basis = 1.0_rp / ( basis(j) - basis(j-1) )
+        do while ( i <= n_grid )
+          if ( grid(i) > basis(j) ) exit
+!         if ( basis(j-1) <= grid(i) ) then
+            eta(i,j-1) = (basis(j) - grid(i)) * del_basis
+            eta(i,j  ) = (grid(i) - basis(j-1)) * del_basis
+            first(i) = j - 1
+            last(i) = j
+!         else
+!           call MLSMessage ( MLSMSG_Error, ModuleName, &
+!             & "Grid probably out of order" )
+!         end if
+          i = i + 1
+        end do
+      end do
+
+! last basis calculation
+
+      do i = i, n_grid
+        eta(i,n_coeffs) = 1.0_rp
+        first(i) = n_coeffs
+        last(i) = n_coeffs
+      end do
+
+    else
+
+      call sortp ( grid, 1, n_grid, p ) ! grid(p(:)) are now sorted
+
+! first basis calculation
+
+      do i = 1, n_grid
+        pi = p(i)
+        if ( grid(pi) > basis(1) ) exit
+        eta(pi,1) = 1.0_rp
+        first(pi) = 1
+        last(pi) = 1
+      end do
+
+! Normal triangular function for j=2 to j=n_coeffs-1.  Both Basis and
+! Grid(p(:)) are sorted, so we don't need to start from i=1.
+
+      do j = 2, n_coeffs
+        del_basis = 1.0_rp / ( basis(j) - basis(j-1) )
+        do while ( i <= n_grid )
+          pi = p(i)
+          if ( grid(pi) > basis(j) ) exit
+!         if ( basis(j-1) <= grid(pi) ) then
+            eta(pi,j-1) = (basis(j) - grid(pi)) * del_basis
+            eta(pi,j  ) = (grid(pi) - basis(j-1)) * del_basis
+            first(pi) = j - 1
+            last(pi) = j
+!         else
+!           call MLSMessage ( MLSMSG_Error, ModuleName, &
+!             & "Why does the grid appear to be out of order?" )
+!         end if
+          i = i + 1
+        end do
+      end do
+
+! last basis calculation
+
+      do i = i, n_grid
+        pi = p(i)
+        eta(pi,n_coeffs) = 1.0_rp
+        first(pi) = n_coeffs
+        last(pi) = n_coeffs
+      end do
+
+    end if
+
+  end subroutine Get_Eta_Sparse_2d_fl
 
 !---------------------------------------  Get_Eta_Sparse_2d_fl_nz  -----
   subroutine Get_Eta_Sparse_2d_fl_nz ( Basis, Grid, Eta, Not_zero, First, Last, &
@@ -1018,6 +1175,100 @@ contains
 
   end subroutine Get_Eta_Column_Sparse_fl_nz
 
+! ---------------------------------------------  Get_Eta_Stru_D_D  -----
+  subroutine Get_Eta_Stru_D_D ( Basis, Grid, Eta )
+    ! Compute linear interpolating coefficients from Basis to Grid. It is
+    ! assumed that Basis(:) is sorted, but it is not assumed that Grid(:)
+    ! is sorted.  It is assumed that Grid(:) changes slowly and smoothly.
+    ! It is assumed that Size(Grid) == SIze(Eta).
+    ! To interpolate from some T whose coordinates are Basis(:) to
+    ! a value corresponding to Grid(k), compute
+    ! Basis(eta(k)%l)*eta(k)%eta + Basis(eta(k)%l+1)*(1.0-eta(k)%eta).
+    ! If Grid(k) < Basis(1) then Eta(k)%L = 1 and Eta(k)%Eta = 1.0.
+    ! If Grid(k) >= Basis(size(basis)) then Eta(k)%L = size(basis-1) and
+    ! Eta(k)%Eta = 0.0.  That is, outside the range of Basis(:), constant
+    ! extrapolation is used.
+    integer, parameter :: KB = kind(0.0d0)
+    integer, parameter :: KG = kind(0.0d0)
+    include "Get_Eta_Stru.f9h"
+  end subroutine Get_Eta_Stru_D_D
+
+! ---------------------------------------------  Get_Eta_Stru_D_S  -----
+  subroutine Get_Eta_Stru_D_S ( Basis, Grid, Eta )
+    ! Compute linear interpolating coefficients from Basis to Grid. It is
+    ! assumed that Basis(:) is sorted, but it is not assumed that Grid(:)
+    ! is sorted.  It is assumed that Grid(:) changes slowly and smoothly.
+    ! It is assumed that Size(Grid) == SIze(Eta).
+    ! To interpolate from some T whose coordinates are Basis(:) to
+    ! a value corresponding to Grid(k), compute
+    ! Basis(eta(k)%l)*eta(k)%eta + Basis(eta(k)%l+1)*(1.0-eta(k)%eta).
+    ! If Grid(k) < Basis(1) then Eta(k)%L = 1 and Eta(k)%Eta = 1.0.
+    ! If Grid(k) >= Basis(size(basis)) then Eta(k)%L = size(basis-1) and
+    ! Eta(k)%Eta = 0.0.  That is, outside the range of Basis(:), constant
+    ! extrapolation is used.
+    integer, parameter :: KB = kind(0.0d0)
+    integer, parameter :: KG = kind(0.0e0)
+    include "Get_Eta_Stru.f9h"
+  end subroutine Get_Eta_Stru_D_S
+
+! ---------------------------------------------  Get_Eta_Stru_S_S  -----
+  subroutine Get_Eta_Stru_S_S ( Basis, Grid, Eta )
+    ! Compute linear interpolating coefficients from Basis to Grid. It is
+    ! assumed that Basis(:) is sorted, but it is not assumed that Grid(:)
+    ! is sorted.  It is assumed that Grid(:) changes slowly and smoothly.
+    ! It is assumed that Size(Grid) == SIze(Eta).
+    ! To interpolate from some T whose coordinates are Basis(:) to
+    ! a value corresponding to Grid(k), compute
+    ! Basis(eta(k)%l)*eta(k)%eta + Basis(eta(k)%l+1)*(1.0-eta(k)%eta).
+    ! If Grid(k) < Basis(1) then Eta(k)%L = 1 and Eta(k)%Eta = 1.0.
+    ! If Grid(k) >= Basis(size(basis)) then Eta(k)%L = size(basis-1) and
+    ! Eta(k)%Eta = 0.0.  That is, outside the range of Basis(:), constant
+    ! extrapolation is used.
+    integer, parameter :: KB = kind(0.0e0)
+    integer, parameter :: KG = kind(0.0e0)
+    include "Get_Eta_Stru.f9h"
+  end subroutine Get_Eta_Stru_S_S
+
+! ----------------------------------------  Interpolate_Stru_1D_D  -----
+  subroutine Interpolate_Stru_1D_D ( From, Eta, To )
+    ! Interpolate from From to To using interpolating coefficients Eta
+    integer, parameter :: RK = kind(0.0d0)
+    real(rk), intent(in) :: From(:)
+    type (eta_d_t), intent(in) :: Eta(:) ! Gotten from Get_Eta_Stru
+    real(rk), intent(out) :: To(:)       ! Eta and To assumed same length
+    include "Interpolate_Stru_1D.f9h"
+  end subroutine Interpolate_Stru_1D_D
+
+! ----------------------------------------  Interpolate_Stru_1D_S  -----
+  subroutine Interpolate_Stru_1D_S ( From, Eta, To )
+    ! Interpolate from From to To using interpolating coefficients Eta
+    integer, parameter :: RK = kind(0.0e0)
+    real(rk), intent(in) :: From(:)
+    type (eta_s_t), intent(in) :: Eta(:) ! Gotten from Get_Eta_Stru
+    real(rk), intent(out) :: To(:)       ! Eta and To assumed same length
+    include "Interpolate_Stru_1D.f9h"
+  end subroutine Interpolate_Stru_1D_S
+
+! ----------------------------------------  Interpolate_Stru_2D_D  -----
+  subroutine Interpolate_Stru_2D_D ( From, Eta_1, Eta_2, To )
+    ! Interpolate from From to To using interpolating coefficients Eta
+    integer, parameter :: RK = kind(0.0d0)
+    real(rk), intent(in) :: From(:,:)
+    type (eta_d_t), intent(in) :: Eta_1(:), Eta_2(:) ! Gotten from Get_Eta_Stru
+    real(rk), intent(out) :: To(:)       ! Eta's and To assumed same length
+    include "Interpolate_Stru_2D.f9h"
+  end subroutine Interpolate_Stru_2D_D
+
+! ----------------------------------------  Interpolate_Stru_2D_S  -----
+  subroutine Interpolate_Stru_2D_S ( From, Eta_1, Eta_2, To )
+    ! Interpolate from From to To using interpolating coefficients Eta
+    integer, parameter :: RK = kind(0.0e0)
+    real(rk), intent(in) :: From(:,:)
+    type (eta_s_t), intent(in) :: Eta_1(:), Eta_2(:) ! Gotten from Get_Eta_Stru
+    real(rk), intent(out) :: To(:)       ! Eta's and To assumed same length
+    include "Interpolate_Stru_2D.f9h"
+  end subroutine Interpolate_Stru_2D_S
+
 ! -----------------------------------  Multiply_Eta_Column_Sparse  -----
   subroutine Multiply_Eta_Column_Sparse (Eta_1, NZ_1, NNZ_1, Eta_2, NZ_2, NNZ_2, &
     & Eta_P, NZ_P, NNZ_P, Not_Zero_P )
@@ -1140,6 +1391,9 @@ contains
 end module Get_Eta_Matrix_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.22  2009/06/23 18:26:11  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.21  2009/04/17 22:41:26  vsnyder
 ! Repair bug when n_grid == 1
 !
