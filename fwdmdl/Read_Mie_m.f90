@@ -17,7 +17,7 @@ module Read_Mie_m
 
   implicit NONE
   private
-  public :: Destroy_Mie, Dump_Mie, Read_Mie
+  public :: Destroy_Log_Mie, Destroy_Mie, Dump_Mie, Log_Mie, Read_Mie
 
   ! Coordinates
   real(rp), public, pointer :: F_s(:) => NULL()     ! MHz
@@ -25,16 +25,18 @@ module Read_Mie_m
   real(rp), public, pointer :: T_s(:) => NULL()     ! K
   real(rp), public, pointer :: Theta_s(:) => NULL() ! Radians above horizon
   ! Betas
-  real(r8), public, pointer :: Beta_c_a(:,:,:) => NULL()  ! T X IWC X F
-  real(r8), public, pointer :: Beta_c_e(:,:,:) => NULL()  ! T X IWC X F
-  real(r8), public, pointer :: Beta_c_s(:,:,:) => NULL()  ! T X IWC X F
+  real(r8), public, pointer :: Beta_c_a(:,:,:) => NULL()      ! T X IWC X F
+  real(r8), public, pointer :: Beta_c_e(:,:,:) => NULL()      ! T X IWC X F
+  real(r8), public, pointer :: Beta_c_s(:,:,:) => NULL()      ! T X IWC X F
+  real(r8), public, pointer :: Log_Beta_c_e(:,:,:) => NULL()  ! T X IWC X F
+  real(r8), public, pointer :: Log_Beta_c_s(:,:,:) => NULL()  ! T X IWC X F
   ! Beta derivatives
-  real(r8), public, pointer :: dBeta_dIWC_c_a(:,:,:) => NULL() ! T X IWC X F
-  real(r8), public, pointer :: dBeta_dT_c_a(:,:,:) => NULL()   ! T X IWC X F
-  real(r8), public, pointer :: dBeta_dIWC_c_e(:,:,:) => NULL() ! T X IWC X F
-  real(r8), public, pointer :: dBeta_dT_c_e(:,:,:) => NULL()   ! T X IWC X F
-  real(r8), public, pointer :: dBeta_dIWC_c_s(:,:,:) => NULL() ! T X IWC X F
-  real(r8), public, pointer :: dBeta_dT_c_s(:,:,:) => NULL()   ! T X IWC X F
+  real(r8), public, pointer :: dBeta_dIWC_c_a(:,:,:) => NULL()     ! T X IWC X F
+  real(r8), public, pointer :: dBeta_dT_c_a(:,:,:) => NULL()       ! T X IWC X F
+  real(r8), public, pointer :: dBeta_dIWC_c_e(:,:,:) => NULL()     ! T X IWC X F
+  real(r8), public, pointer :: dBeta_dT_c_e(:,:,:) => NULL()       ! T X IWC X F
+  real(r8), public, pointer :: dBeta_dIWC_c_s(:,:,:) => NULL()     ! T X IWC X F
+  real(r8), public, pointer :: dBeta_dT_c_s(:,:,:) => NULL()       ! T X IWC X F
   ! Phase
   real(r8), public, pointer :: P(:,:,:,:) => NULL()       ! T X IWC X Theta X F
   ! Phase Derivatives
@@ -49,6 +51,27 @@ module Read_Mie_m
 
 contains
 
+  ! --------------------------------------------- Destroy_Log_Mie  -----
+  subroutine Destroy_Log_Mie
+  ! Deallocate the Log Mie tables
+
+    use Allocate_Deallocate, only: E_dp, MEMORY_UNITS, Test_DeAllocate
+
+    integer :: Status
+    real :: S
+
+    if ( associated(log_beta_c_e) ) then
+      s = (e_dp * size(log_beta_c_e) ) / MEMORY_UNITS
+      deallocate ( log_beta_c_e, stat=status )
+      call test_deallocate ( status, moduleName, 'log_beta_c_e', s )
+    end if
+    if ( associated(log_beta_c_s) ) then
+      s = (e_dp * size(log_beta_c_s) ) / MEMORY_UNITS
+      deallocate ( log_beta_c_s, stat=status )
+      call test_deallocate ( status, moduleName, 'log_beta_c_s', s )
+    end if
+  end subroutine Destroy_Log_Mie
+  
   ! ------------------------------------------------  Destroy_Mie  -----
   subroutine Destroy_Mie
   ! Deallocate the Mie tables
@@ -111,6 +134,8 @@ contains
       end if
     end if
 
+    call destroy_log_mie
+
   end subroutine Destroy_Mie
 
   ! ---------------------------------------------------  Dump_Mie  -----
@@ -135,8 +160,16 @@ contains
       call dump ( beta_c_a(:,:,i_f) )
       call output ( f_s(i_f), before='Beta_c_e(T X IWC), F = ', advance='yes' )
       call dump ( beta_c_e(:,:,i_f) )
+      if ( associated(log_beta_c_e) ) then
+        call output ( f_s(i_f), before='Log_Beta_c_e(T X IWC), F = ', advance='yes' )
+        call dump ( log_beta_c_e(:,:,i_f) )
+      end if
       call output ( f_s(i_f), before='Beta_c_s(T X IWC), F = ', advance='yes' )
       call dump ( beta_c_s(:,:,i_f) )
+      if ( associated(log_beta_c_s) ) then
+        call output ( f_s(i_f), before='Log_Beta_c_s(T X IWC), F = ', advance='yes' )
+        call dump ( log_beta_c_s(:,:,i_f) )
+      end if
       if ( associated(dBeta_dIWC_c_a) .and. details >= 2 ) then
         call output ( f_s(i_f), before='dBeta_dIWC_c_a(T X IWC), F = ', advance='yes' )
         call dump ( dBeta_dIWC_c_a(:,:,i_f) )
@@ -166,6 +199,37 @@ contains
       end do
     end do
   end subroutine Dump_Mie
+
+  ! ----------------------------------------------------  Log_Mie  -----
+  subroutine Log_Mie
+  ! If any of Log_Beta_c_a, Log_Beta_c_e, Log_dBeta_dIWC_c_a, Log_dBeta_dT_c_a
+  ! are not associated, allocate them and compute them.  Read_Mie has to
+  ! be called first.
+
+    use Allocate_Deallocate, only: Test_Allocate
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    integer :: Status
+
+    if ( .not. associated(beta_c_e) ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      & 'Cannot compute log(beta...) before allocating beta.')
+
+    if ( .not. associated(log_beta_c_e) ) then
+      allocate ( &
+        & log_beta_c_e(ubound(beta_c_e,1),ubound(beta_c_e,2),ubound(beta_c_e,3)), &
+        & stat=status )
+      call test_allocate ( status, moduleName, 'Log_Beta_c_e', (/ 1,1,1 /), &
+          & ubound(beta_c_e) )
+      log_beta_c_e = log(beta_c_e)
+    end if
+    if ( .not. associated(log_beta_c_s) ) then
+      allocate ( &
+        & log_beta_c_s(ubound(beta_c_s,1),ubound(beta_c_s,2),ubound(beta_c_s,3)), &
+        & stat=status )
+      call test_allocate ( status, moduleName, 'Log_Beta_c_s', (/ 1,1,1 /), &
+          & ubound(beta_c_s) )
+      log_beta_c_s = log(beta_c_s)
+    end if
+  end subroutine Log_Mie
 
   ! ---------------------------------------------------  Read_Mie  -----
   subroutine Read_Mie ( FileName )
@@ -333,6 +397,9 @@ contains
 end module Read_Mie_m
 
 ! $Log$
+! Revision 2.9  2010/06/07 23:13:02  vsnyder
+! Added ability to compute and store Log_Beta_c_e and Log_Beta_c_s
+!
 ! Revision 2.8  2010/01/14 02:24:06  vsnyder
 ! Add some comments
 !
