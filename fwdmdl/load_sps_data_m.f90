@@ -63,10 +63,10 @@ contains
   ! ----------------------------------------------  Load_SPS_Data  -----
 
   subroutine Load_Sps_Data ( FwdModelConf, Phitan, MAF, &
-    & Grids_x, h2o_ind, ext_ind, QtyStuffIn )
+    & Grids_x, s_ind, QtyStuffIn )
 
     use ForwardModelConfig, only: ForwardModelConfig_t, QtyStuff_T
-    use Molecules, only: l_extinction, l_h2o
+    use Molecules, only: First_Molecule, Last_Molecule
     use VectorsModule, only: VectorValue_T
 
     type (forwardModelConfig_T), intent(in) :: fwdModelConf
@@ -75,36 +75,31 @@ contains
 
     type (Grids_T), intent(out) :: Grids_x   ! All the coordinates
 
-    integer, intent(out), optional :: H2O_IND
-    integer, intent(out), optional :: EXT_IND
+    ! Indices of species in Grids_x
+    integer, intent(out), optional :: S_ind(First_Molecule:Last_Molecule)
 
     type (qtyStuff_t), intent(in), optional , target :: QtyStuffIn(:)
-! Local variables:
 
-    integer :: kk, mol, my_ext_ind, my_h2o_ind, no_mol, no_qty
+    ! Local variables:
+
+    integer :: mol, no_mol
 
     type (qtyStuff_t), pointer :: QtyStuff(:)
 
-! Begin code:
+    ! Begin code:
 
     qtyStuff => fwdModelConf%beta_group%qty
     if ( present(qtyStuffIn) ) qtyStuff => qtyStuffIn
 
-    no_mol = size( qtyStuff )
+    if ( present(s_ind) ) s_ind = 0 ! zero means molecule not in grids_x
 
-    ! Get number of molecules that appear in the state vector
-    no_qty = 0
-    do mol = 1, no_mol
-      if ( associated(qtyStuff(mol)%qty) ) no_qty = no_qty + 1
-    end do
+    no_mol = size( qtyStuff )
 
     call create_grids_1 ( Grids_x, no_mol )
 
     grids_x%min_val = -huge(0.0_r8)
 
     grids_x%p_len = 0
-    my_ext_ind = 0
-    my_h2o_ind = 0
 
     do mol = 1, no_mol
 
@@ -116,14 +111,12 @@ contains
         cycle
       end if
 
-      if ( .not. present(qtyStuffIn) ) then
-        kk = FwdModelConf%molecules(mol)
-        if ( kk == l_h2o ) my_h2o_ind = mol        ! memorize h2o index
-        if ( kk == l_extinction ) my_ext_ind = mol ! memorize extiction ix
+      ! Remember positions of molecules in grids_x
+      if ( present(s_ind) .and. .not. present(qtyStuffIn) ) &
+        & s_ind(FwdModelConf%molecules(mol)) = mol
         ! Note the ambiguity here as to whether it's extinction or extinctionv2 with whoever
         ! is last winning.
-        ! Also note, however, this option is never actually invoked
-      end if
+        ! Also note, however, that s_ind(l_extinction) is never actually used
 
       call fill_grids_1 ( grids_x, mol, qtyStuff(mol)%qty, phitan, maf, &
         &                 fwdModelConf )
@@ -145,9 +138,6 @@ contains
 ! ** ZEBUG - Simulate qty%values for EXTINCTION, using the N2 function
 !  (Some code here ...)
 ! ** END ZEBUG
-
-    if ( present(ext_ind) ) ext_ind = my_ext_ind
-    if ( present(h2o_ind) ) h2o_ind = my_h2o_ind
 
   end subroutine Load_Sps_Data
 
@@ -602,6 +592,9 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.75  2009/12/22 02:13:38  vsnyder
+! Add species names
+!
 ! Revision 2.74  2009/06/23 18:26:11  pwagner
 ! Prevent Intel from optimizing ident string away
 !
