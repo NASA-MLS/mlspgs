@@ -387,17 +387,18 @@ contains ! =====     Public Procedures     =============================
     use Init_Tables_Module, only: F_ALLLINESFORRADIOMETER, F_ALLLINESINCATALOG, &
       & F_ATMOS_DER, F_BINSELECTORS, F_CHANNELS, F_CLOUD_DER, &
       & F_DEFAULT_spectroscopy, F_DIFFERENTIALSCAN, F_DO_BASELINE, F_DO_CONV, &
-      & F_DO_FREQ_AVG, F_DO_1D, F_FORCESIDEBANDFRACTION, F_FREQUENCY, &
+      & F_DO_FREQ_AVG, F_DO_1D, F_FORCESIDEBANDFRACTION, F_FREQUENCY, F_FRQTOL, &
       & F_I_SATURATION, F_INCL_CLD, F_IGNOREHESSIAN, F_INTEGRATIONGRID, &
       & F_LINEARSIDEBAND, F_LINECENTER, F_LINEWIDTH, F_LINEWIDTH_TDEP, &
       & F_LOCKBINS, F_LSBLBLMOLECULES, F_LSBPFAMOLECULES, F_MODULE, &
       & F_MOLECULES, F_MOLECULEDERIVATIVES, F_NABTERMS, F_NAZIMUTHANGLES, &
       & F_NCLOUDSPECIES, F_NMODELSURFS, F_NO_DUP_MOL, F_NSCATTERINGANGLES, &
-      & F_NSIZEBINS, F_PATHNORM, F_PHASEFRQTOL, F_PHIWINDOW, F_POLARIZED, &
+      & F_NSIZEBINS, F_PATHNORM, F_PHIWINDOW, F_POLARIZED, &
       & F_REFRACT, F_SCANAVERAGE, F_SIGNALS, F_SKIPOVERLAPS, &
       & F_SPECIFICQUANTITIES, F_SPECT_DER, F_SWITCHINGMIRROR, F_TANGENTGRID, &
-      & F_TEMP_DER, F_TOLERANCE, F_TScatMIF, F_TYPE, &
-      & F_USBLBLMOLECULES, F_USBPFAMOLECULES, F_XSTAR, F_YSTAR
+      & F_TEMP_DER, F_TOLERANCE, F_TScatMIF, F_TScatMoleculeDerivatives, &
+      & F_TScatMolecules, F_TYPE, &
+      & F_USBLBLMOLECULES, F_USBPFAMOLECULES, F_UseTScat, F_XSTAR, F_YSTAR
     use Intrinsic, only: L_NONE, L_CLEAR, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, &
       & PHYQ_FREQUENCY, PHYQ_PROFILES, PHYQ_TEMPERATURE
     use L2PC_m, only: BINSELECTORS, DEFAULTSELECTOR_LATITUDE, CREATEDEFAULTBINSELECTORS
@@ -434,7 +435,7 @@ contains ! =====     Public Procedures     =============================
     type(spectroParam_t), pointer :: LineStru(:)
     integer :: LineTrees(3)             ! Tree indices of f_line...
     integer :: M                        ! Max LBL molecules in either sideband
-    integer :: MoleculeTree             ! Tree index of f_molecules
+    integer :: MoleculeTree             ! Tree index of f_Molecules
     integer, dimension(:), pointer :: MyMolecules ! In a LineTree
     integer :: NELTS                    ! Number of elements of an array tree
     logical :: No_Dup_Mol               ! Duplicate molecules => error
@@ -451,6 +452,8 @@ contains ! =====     Public Procedures     =============================
     integer, pointer :: TempLBL(:), TempPFA(:) ! Used to separate LBL and PFA
     integer :: TheTree                  ! Either pfaTrees(s) or lblTrees(s)
     integer :: THISMOLECULE             ! Tree index.
+    integer :: TScatDerivTree           ! Tree index of f_TScatMoleculeDerivatives
+    integer :: TScatMoleculeTree        ! Tree index of f_TScatMolecules
     integer :: type                     ! Type of value returned by EXPR
     real (r8) :: Value(2)               ! Value returned by EXPR
     integer :: WANTED                   ! Which signal do we want?
@@ -481,6 +484,7 @@ contains ! =====     Public Procedures     =============================
     info%do_path_norm = .false.
     info%forceFoldedOutput = .false.
     info%forceSidebandFraction = .false.
+    info%frqTol = 600.0 ! MHz
     info%GenerateTScat = .false.
     info%globalConfig = global
     info%incl_cld = .false.
@@ -496,7 +500,6 @@ contains ! =====     Public Procedures     =============================
     info%num_azimuth_angles = 8
     info%num_scattering_angles = 16
     info%num_size_bins = 40
-    info%phaseFrqTol = 25000.0 ! MHz
     info%phiwindow = 5
     info%polarized = .false.
     info%refract = index(switches,'norf') == 0 ! Default .true.
@@ -508,6 +511,7 @@ contains ! =====     Public Procedures     =============================
     info%switchingMirror= .false.
     info%temp_der = .false.
     info%TScatMIF = 1
+    info%useTScat = .false.
     info%where = root
     info%windowUnits = phyq_profiles
     info%xStar = 0
@@ -552,6 +556,11 @@ contains ! =====     Public Procedures     =============================
         info%do_1d = get_boolean(son)
       case ( f_forceSidebandFraction )
         info%forceSidebandFraction = get_boolean(son)
+      case ( f_frqTol )
+        call expr ( subtree(2,son), expr_units, value, type )
+        info%frqTol = value(1)
+        if ( expr_units(1) /= PHYQ_Frequency ) &
+          & call AnnounceError ( WrongUnitsForFrqTol, son )
       case ( f_i_saturation )
         info%i_saturation = decoration(subtree(2,son))
       case ( f_ignoreHessian )
@@ -605,11 +614,6 @@ contains ! =====     Public Procedures     =============================
         info%NUM_SIZE_BINS = nint( value(1) )
       case ( f_pathNorm )
         info%do_path_norm = get_boolean(son)
-      case ( f_phaseFrqTol )
-        call expr ( subtree(2,son), expr_units, value, type )
-        info%phaseFrqTol = value(1)
-        if ( expr_units(1) /= PHYQ_Frequency ) &
-          & call AnnounceError ( WrongUnitsForFrqTol, son )
       case ( f_phiWindow )
         call expr ( subtree(2,son), expr_units, value, type )
         info%phiWindow = value(1)
@@ -690,12 +694,18 @@ contains ! =====     Public Procedures     =============================
         info%TScatMIF = nint(value(1))
         if ( expr_units(1) /= phyq_dimensionless ) &
           & call AnnounceError ( TScatMIF, root )
+      case ( f_TScatMoleculeDerivatives )
+        TScatDerivTree = son
+      case ( f_TScatMolecules )
+        TScatMoleculeTree = son
       case ( f_type )
         info%fwmType = decoration(subtree(2,son))
       case ( f_usbLBLMolecules )
         LBLTrees(2) = son
       case ( f_usbPFAMolecules )
         PFATrees(2) = son
+      case ( f_useTScat )
+        info%useTScat = get_boolean(son)
       case ( f_xStar )
         info%xStar = decoration ( decoration ( subtree ( 2, son ) ) )
       case ( f_yStar )
@@ -936,7 +946,7 @@ op:     do j = 2, nsons(theTree)
     info%moleculeDerivatives => info%beta_group%derivatives
     info%moleculeDerivatives = .false.
 
-    ! Now some more error checking
+    ! Get info%moleculeDerivatives 
     if ( got(f_moleculeDerivatives) ) then
       if ( .not. associated(info%molecules) ) &
         & call announceError ( derivSansMolecules, derivTree )
@@ -949,6 +959,30 @@ op:     do j = 2, nsons(theTree)
       end do                          ! End loop over listed species
     end if
 
+    ! Get info%TScatMolecules and info%TScatMoleculeDerivatives
+    if ( got(f_TScatMolecules) ) then
+      call allocate_test ( info%TScatMolecules, nsons(TScatMoleculeTree)-1, &
+        & 'TScatMolecules', moduleName )
+      do j = 2, nsons(TScatMoleculeTree)
+        info%TScatMolecules(j-1) = decoration( subtree( j, TScatMoleculeTree ) )
+      end do
+    end if
+    if ( got(f_TScatMoleculeDerivatives) ) then
+      call allocate_test ( info%TScatMoleculeDerivatives, &
+        & nsons(TScatDerivTree)-1, 'TScatMoleculeDerivatives', moduleName, &
+        & fill=.false. )
+      if ( .not. associated(info%TScatMolecules) ) &
+        & call announceError ( derivSansMolecules, derivTree )
+      do j = 2, nsons(TScatDerivTree)
+        thisMolecule = decoration( subtree( j, TScatDerivTree ) )
+        if ( .not. any(info%TScatMolecules == thisMolecule) ) &
+          & call announceError ( derivSansMolecules, subtree(j,TScatDerivTree) )
+        if ( got(f_TScatMolecules) ) where ( info%TScatMolecules == thisMolecule ) &
+            & info%TScatMoleculeDerivatives = .true.
+      end do                          ! End loop over listed species
+    end if
+      
+    ! Now some more error checking
     ! If any PFA and any LBL, need to do frequency averaging too
     if ( any(info%anyPFA(s1:s2)) .and. any(info%anyLBL(s1:s2)) &
       & .and. .not. info%do_freq_avg ) &
@@ -1372,7 +1406,7 @@ op:     do j = 2, nsons(theTree)
       call output ( 'Bin Selectors can only have one cost', &
         & advance='yes' )
     case ( WrongUnitsForFrqTol )
-      call output ( 'PhaseFrqTol units must be frequency', advance='yes' )
+      call output ( 'FrqTol units must be frequency', advance='yes' )
     case ( WrongUnitsForWindow )
       call output ( 'PhiWindow must be in degrees or profiles', &
         & advance='yes' )
@@ -1397,6 +1431,10 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.151  2010/06/07 23:30:12  vsnyder
+! Add TScatMolecules, TScatMoleculeDerivatives, Use_Tscat.  Change
+! PhaseFrqTol to FrqTol.
+!
 ! Revision 2.150  2010/04/30 01:53:26  vsnyder
 ! Add description to 'Irrelevant parameter' error message
 !
