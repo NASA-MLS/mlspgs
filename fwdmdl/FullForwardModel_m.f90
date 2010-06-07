@@ -51,7 +51,7 @@ contains
       & Load_One_Item_Grid, Load_Sps_Data
     use MatrixModule_1, only: MATRIX_T
     use MLSKinds, only: RP
-    use Molecules, only: L_CLOUD_A
+    use Molecules, only: First_Molecule, Last_Molecule, L_CLOUD_A
     use Toggles, only: Switches
     use VectorsModule, only: Vector_T, VectorValue_T
 
@@ -80,7 +80,7 @@ contains
     integer :: NoUsedChannels   ! Number of channels used
     integer :: No_sv_p_T        ! number of phi basis for temperature
     integer :: N_T_zeta         ! Number of zetas for temperature
-    integer :: H2O_IND          ! Index of h2o inside f array, else zero
+    integer :: S_IND(First_Molecule:Last_Molecule) ! Indices of species in Grids_f
     integer :: Sv_T_len         ! Number of t_phi*t_zeta in the window
     integer :: Nlvl             ! Number of levels in coarse zeta grid
     integer :: NO_TAN_HTS       ! Number of tangent heights
@@ -103,6 +103,7 @@ contains
     integer :: S_T  ! Multiplier for temp derivative sizes, 0 or 1
     integer :: S_TD ! Multiplier for temp dependence deriv sizes, 0 or 1
     integer :: S_TG ! Multiplier for TScat generation sizes, 0 or 1
+    integer :: S_TS ! Multiplier for using TScat tables, 0 or 1
 
     logical :: temp_der, atmos_der, spect_der, ptan_der ! Flags for various derivatives
     logical :: Spect_Der_Center, Spect_Der_Width, Spect_Der_Width_TDep
@@ -138,7 +139,7 @@ contains
     sv_t_len = grids_tmp%p_len   ! zeta X phi == n_t_zeta * no_sv_p_t
 
     call load_sps_data ( FwdModelConf, phitan, fmStat%maf, grids_f, &
-      & h2o_ind )
+      & s_ind )
 
     temp_der = present ( jacobian ) .and. FwdModelConf%temp_der
     atmos_der = present ( jacobian ) .and. FwdModelConf%atmos_der
@@ -168,7 +169,7 @@ contains
     end if
 
     nullify ( cloudIce )
-    if ( FwdModelConf%incl_cld ) then
+    if ( FwdModelConf%incl_cld .or. FwdModelConf%useTScat ) then
       ! Try type l_cloudIce first
       cloudIce => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra,  &
         & quantityType=l_cloudIce, config=fwdModelConf, noError=.true. )
@@ -228,6 +229,7 @@ contains
     s_t = merge(1,0,temp_der)
     s_td = merge(1,0,spect_der_width_TDep)
     s_tg = merge(1,0,FwdModelConf%GenerateTScat)
+    s_ts = merge(1,0,FwdModelConf%useTScat)
 
     call FullForwardModelAuto ( FwdModelConf, FwdModelIn, FwdModelExtra,       &
                               & FwdModelOut, FmStat, z_psig, tan_press,        &
@@ -237,9 +239,9 @@ contains
                               & no_mol, noUsedChannels, no_sv_p_t, n_t_zeta,   &
                               & sv_t_len, nlvl, no_tan_hts,                    &
                               & surfaceTangentIndex,                           &
-                              & max_c, maxVert, max_f, H2O_ind, ptan_der,      &
+                              & max_c, maxVert, max_f, s_ind, ptan_der,        &
                               & s_t, s_a, s_lc, s_lw, s_td, s_p, s_pfa, s_i,   &
-                              & s_tg,                                          &
+                              & s_tg, s_ts,                                    &
                               ! Optional:
                               & Jacobian )
 
@@ -268,9 +270,9 @@ contains
                               & no_mol, noUsedChannels, no_sv_p_t, n_t_zeta,   &
                               & sv_t_len, nlvl, no_tan_hts,                    &
                               & surfaceTangentIndex,                           &
-                              & max_c, maxVert, max_f, H2O_ind, ptan_der,      &
+                              & max_c, maxVert, max_f, S_ind, ptan_der,        &
                               & s_t, s_a, s_lc, s_lw, s_td, s_p, s_pfa, s_i,   &
-                              & s_tg,                                          &
+                              & s_tg, s_ts,                                    &
                               ! Optional:
                               & Jacobian )
 
@@ -295,6 +297,7 @@ contains
                                     &   B_Ptg_Angles, B_Refraction
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use Geometry, only: Get_R_Eq
+    use Get_Eta_Matrix_m, only: Eta_D_T ! Type for eta struct
     use GLnp, only: GX, NGP1
     use Intrinsic, only: L_A, L_RADIANCE, L_TScat, L_VMR
     use Load_Sps_Data_m, only: DestroyGrids_t, Dump, Grids_T
@@ -304,7 +307,8 @@ contains
     use MLSNumerics, only: Hunt, InterpolateValues
     use MLSSignals_m, only: AreSignalsSuperset, GetNameOfSignal, MatchSignal, &
       & Radiometers, Signal_t
-    use Molecules, only: L_CLOUD_A, L_H2O, L_N2O, L_O3
+    use Molecules, only: First_Molecule, Last_Molecule, &
+      & L_CLOUD_A, L_H2O, L_N2O, L_O3
     use Output_m, only: Output
     use Path_Contrib_M, only: Get_GL_Inds
     use Physics, only: SpeedOfLight
@@ -354,7 +358,7 @@ contains
                                             ! per level, except the last,
                                             ! where there's no GL space.
     integer, intent(in) :: MAX_F            ! Length of longest possible path (all npf<max_f)
-    integer, intent(in) :: H2O_IND          ! Index of h2o inside f array, else zero
+    integer, intent(in) :: S_IND(First_Molecule:Last_Molecule) ! Indices of species in Grids_f
     logical, intent(in) :: PTAN_Der
     integer, intent(in) :: S_T  ! Multiplier for temp derivative sizes, 0 or 1
     integer, intent(in) :: S_A  ! Multiplier for atmos derivative sizes, 0 or 1
@@ -365,6 +369,7 @@ contains
     integer, intent(in) :: S_PFA ! Multiplier for PFA sizes, 0 or 1
     integer, intent(in) :: S_I  ! Multiplier for ice/cloud sizes, 0 or 1
     integer, intent(in) :: S_TG ! Multiplier for TScat generation sizes, 0 or 1
+    integer, intent(in) :: S_TS ! Multiplier for using TScat tables, 0 or 1
 
     type(matrix_T), intent(inout), optional :: Jacobian
 
@@ -376,10 +381,12 @@ contains
     integer :: Frq_Avg_Sel        ! Summarizes combinations of PFA, LBL,
                                   ! Frequency averaging and derivatives.
                                   ! See Frequency_Average below.
+    integer :: H2O_Ind            ! S_Ind(L_H2O) = index of H2O in Grids_f
     integer :: IER                ! Status flag from allocates
     integer :: I                  ! Loop index and other uses.
     integer :: INST               ! Instance of temperature nearest to MAF
     integer :: I_Cloud_A          ! Which beta group, if any, is Cloud_A
+    integer :: IWC_Ind            ! S_Ind(L_IWC) = index of IWC in Grids_f
     integer :: J                  ! Loop index and other uses.
     integer :: K                  ! Loop index and other uses.
     integer :: MAF                ! MAF under consideration
@@ -467,6 +474,8 @@ contains
     real(rp) :: ALPHA_PATH_F(max_f)   ! fine grid absorption coefficient
     real(rp) :: B(max_c)              ! Planck radiation function
     real(rp) :: BETA_PATH_cloud_C(s_i*max_c) ! Beta on path coarse
+    real(rp) :: Beta_c_e_path_C(s_ts*max_c)  ! Beta_c_e on path coarse
+    real(rp) :: Beta_c_s_path_C(s_ts*max_c)  ! Beta_c_s on path coarse
     real(r8), target :: ChannelCenters(noUsedChannels) ! for PFA or non-frequency-averaging
     real(rp) :: DALPHA_DT_PATH_C(max_c)   ! dAlpha/dT on coarse grid
     real(rp) :: DALPHA_DT_PATH_F(max_f)   ! dAlpha/dT on fine grid
@@ -499,7 +508,7 @@ contains
     real(rp) :: T_PATH_C(max_c)       ! T_PATH on coarse grid
     real(rp) :: T_PATH_F(max_f)       ! T_PATH on fine grid
     real(rp) :: TT_PATH_C(s_i*max_c)  ! tscat on path coarse
-    real(rp) :: W0_PATH_C(s_i*max_c)  ! w0 on path coarse
+    real(rp) :: W0_PATH_C(max(s_i,s_ts)*max_c)  ! w0 on path coarse
     real(rp) :: Z_COARSE(max_c)       ! Z_PSIG & Z_min & surface zeta on path
     real(rp) :: Z_GLGRID(maxvert)     ! Zeta on initial glGrid surfs
     real(rp) :: Z_PATH(max_f)         ! Zeta on fine grid path tangent grid and
@@ -538,7 +547,7 @@ contains
     real(rp) :: ETA_ZXP_V(max_f,size(grids_v%values)) ! Eta_z x Eta_p for V
     real(rp) :: ETA_ZXP_W(max_f,size(grids_w%values)) ! Eta_z x Eta_p for W
     real(rp) :: H_GLGRID(maxVert,no_sv_p_t)        ! H on glGrid surfs
-    real(rp) :: IWC_PATH(max_f,s_i)                ! IWC on path
+    real(rp) :: IWC_PATH(max_f,max(s_i,s_ts))      ! IWC on path
     real(rp), target :: MAG_PATH(s_p*max_f,4)      ! Magnetic field on path
     real(rp), target :: RAD_AVG_PATH(max_c,s_pfa*noUsedChannels) ! Freq. Avgd.
                                                    ! LBL radiance along the path
@@ -670,6 +679,9 @@ contains
     real(rp) :: Salb_PATH(max_f,s_i)    ! Single Scattering Albedo on path
     real(rp) :: Tscat_PATH(max_f,s_i*fwdModelConf%num_scattering_angles) ! TScat on path
 
+    ! Fine path X frequency X 2, final subscript = 1 for j=i+1, 2 for j=i-1
+    real(rp), pointer :: W0_FRQ_PATH(:,:,:) ! omega_0(j) * Tau(i)
+
     ! Incremental opacity derivatives, Path X SVE:
     real(rp), pointer :: INC_RAD_PATH(:,:) ! Incremental radiance along the path
     real(rp), pointer :: K_ATMOS_FRQ(:,:)  ! dI/dVMR, ptg.frq X vmr-SV
@@ -693,6 +705,9 @@ contains
 
 ! *** Beta & Molecules grouping variables:
     type (Beta_Group_T), pointer :: Beta_Group(:) ! from FwdModelConf%Beta_Group
+
+    ! Interpolation factors to put Mie beta_c_e and beta_c_s into path
+    type (Eta_d_t), dimension(s_ts*max_c) :: Eta_T_path_C, Eta_IWC_path_C
 
 ! Channel information from the signals database as specified by fwdModelConf
     type (Channels_T), pointer, dimension(:) :: Channels 
@@ -772,7 +787,8 @@ contains
     ! associated.
 
     nullify ( frequencies, inc_rad_path, k_atmos_frq, k_spect_dn_frq, &
-      & k_spect_dv_frq, k_spect_dw_frq, k_temp_frq, RadV, t_script_lbl )
+      & k_spect_dv_frq, k_spect_dw_frq, k_temp_frq, RadV, t_script_lbl, &
+      & w0_frq_path )
 
     ! Nullify pointers that are used to control whether calculations get done
     nullify ( linecenter_ix, linewidth_ix, linewidth_tdep_ix )
@@ -808,6 +824,8 @@ contains
     eta_zxp_t = 0.0
     nnz_zxp_t = 0
     do_calc_t = .false.
+
+    h2o_ind = s_ind(l_h2o)
 
     call both_sidebands_setup
 
@@ -924,16 +942,16 @@ contains
 
       ! Frequency averaging and any LBL:
       if ( .not. associated(frequencies,channelCenters) ) &
-        & call deallocate_test ( frequencies, 'frequencies', moduleName )
+        & call deallocate_test ( frequencies, 'frequencies',   moduleName )
       
-      call deallocate_test ( inc_rad_path,   'Inc_Rad_Path',   moduleName )
-
       ! Deallocate maxNoPtgFreqs-sized stuff
+      call deallocate_test ( inc_rad_path,   'Inc_Rad_Path',   moduleName )
       call deallocate_test ( radv, 'RadV', moduleName )
       if ( FwdModelConf%anyLBL(sx) ) then
-        call deallocate_test ( t_script_LBL, 'T_Script_LBL', moduleName )
+        call deallocate_test ( t_script_LBL, 'T_Script_LBL',   moduleName )
         call destroy_tau ( tau_LBL, "Tau_LBL", moduleName )
       end if
+      call deallocate_test ( w0_frq_path,    'W0_Frq_Path',    moduleName )
 
       call DestroyCompleteSlabs ( gl_slabs )
       if ( temp_der ) &
@@ -1782,14 +1800,17 @@ contains
       use Get_Beta_Path_m, only: Get_Beta_Path, Get_Beta_Path_Cloud, &
         & Get_Beta_Path_PFA, Get_Beta_Path_Polarized
       use Get_d_Deltau_pol_m, only: Get_d_Deltau_pol_df, Get_d_Deltau_pol_dT
-      use Get_Eta_Matrix_m, only: Select_NZ_List
+      use Get_Eta_Matrix_m, only: Get_Eta_Stru, Interpolate_Stru, Select_NZ_List
       use Load_Sps_Data_m, only:  Load_One_Item_Grid
       use Mcrt_m, only: Mcrt_der
+      use Read_Mie_m, only: dBeta_dIWC_c_e, dBeta_dIWC_c_s, &
+        & dBeta_dIWC_c_e, dBeta_dT_c_s, Log_Beta_c_e, Log_Beta_c_s, Log_Mie
       use Opacity_m, only: Opacity
       use Path_Contrib_M, only: Path_Contrib
       use Physics, only: H_OVER_K
       use RAD_TRAN_M, only: RAD_TRAN_POL, DRAD_TRAN_DF, &
         & DRAD_TRAN_DT, DRAD_TRAN_DX
+      use Read_Mie_m, only: F_s, IWC_s, T_s ! Mie table coordinates
       use ScatSourceFunc, only: T_SCAT, Interp_Tscat, Convert_Grid
       use Tau_M, only: Get_Tau
 
@@ -1824,8 +1845,9 @@ contains
       integer :: FRQ_I                    ! Frequency loop index
       real(r8) :: FRQ                     ! Frequency
       real(r8) :: FRQHK                   ! 0.5 * Frq * H_Over_K
-      integer :: J, L                     ! Loop inductor and subscript
       integer :: I_STOP                   ! Stop path integration before I_End
+      integer :: J, L                     ! Loop inductor and subscript
+      integer :: Mie_Frq_Index            ! Index of Frq in F_s in Read_Mie
       integer :: P_Stop                   ! Where to stop in polarized case
       logical :: PFA_or_not_pol           ! PFA .or. .not. fwdModelConf%polarized
 
@@ -1901,12 +1923,12 @@ contains
           ! ??? We have a different frequency grid for each pointing, ???
           ! ??? so is this the wrong idea in the first place?         ???
 
-            call T_scat ( temp%values(:,inst), Frq, GPH%values(:,inst),    & 
-               & 10.0**(-temp%template%surfs), vmrArray, nspec,            &
-               & fwdModelConf%num_scattering_angles,                       &
-               & fwdModelConf%num_azimuth_angles,                          &
-               & fwdModelConf%num_ab_terms, fwdModelConf%num_size_bins,    &
-               & fwdModelConf%no_cloud_species,                            &
+            call T_scat ( temp%values(:,inst), Frq, GPH%values(:,inst),      & 
+               & 10.0**(-temp%template%surfs), vmrArray(1,:), vmrArray(2,:), &
+               & vmrArray(3,:),fwdModelConf%num_scattering_angles,           &
+               & fwdModelConf%num_azimuth_angles,                            &
+               & fwdModelConf%num_ab_terms, fwdModelConf%num_size_bins,      &
+               & fwdModelConf%no_cloud_species,                              &
                & scat_src%values, scat_alb%values, cld_ext%values, Scat_ang )
 
           end if
@@ -1916,11 +1938,11 @@ contains
           call load_one_item_grid ( grids_tscat, scat_src, phitan, maf, &
             & fwdModelConf, .false., .true. )
 
-          call comp_eta_docalc_no_frq ( Grids_Tscat, z_path(1:npf), &
+          call comp_eta_docalc_no_frq ( grids_tscat, z_path(1:npf), &
             &  phi_path(1:npf), eta_tscat_zp(1:npf,:),              &
             &  do_calc_tscat_zp(1:npf,:), tan_pt=tan_pt_f )
 
-          call comp_sps_path_frq ( Grids_tscat,                &
+          call comp_sps_path_frq ( grids_tscat,                &
             & frq_0, eta_tscat_zp(1:npf,:),                    &
             & do_calc_tscat_zp(1:npf,:), tscat_path(1:npf,:),  &
             & do_calc_tscat(1:npf,:), eta_tscat(1:npf,:) )
@@ -2018,6 +2040,29 @@ contains
             & B(i_start:i_end) )
 
         end if ! end of check cld 
+
+        if ( fwdModelConf%useTScat .and. .not. pfa ) then
+          ! Determine the frequency subscript for the Mie tables.
+          ! We expect size(F_s) to be small.
+          Mie_frq_index = minloc(abs(f_s-frq),1)
+          if ( abs(f_s(Mie_frq_index)-frq) > fwdModelConf%frqTol ) &
+            & call MLSMessage ( MLSMSG_Error, moduleName, &
+              & "UseTScat requested but no Mie tables near enough to Frq" )
+          call log_Mie ! Get log_beta_c_e and log_beta_c_s if not done yet
+          ! Interpolate Mie beta_c_e and beta_c_s to T and IWC on path
+          ! First get interpolating coefficients from Mie tables to T and
+          ! IWC on the coarse path.
+          call get_eta_stru ( t_s, t_path_c, eta_t_path_c )
+          call get_eta_stru ( iwc_s, iwc_path(c_inds,1), eta_iwc_path_c )
+          call interpolate_stru ( log_beta_c_e(:,:,Mie_frq_index), &
+            & eta_t_path_c, eta_iwc_path_c, &
+            & beta_c_e_path_c ) ! Actually getting log(beta_c_e_path_c)
+          call interpolate_stru ( log_beta_c_s(:,:,Mie_frq_index), &
+            & eta_t_path_c, eta_iwc_path_c, &
+            & beta_c_s_path_c ) ! Actually getting log(beta_c_s_path_c)
+          ! Get W0_Path
+          w0_path_c = exp(beta_c_s_path_c) / ( alpha_path_c + exp(beta_c_e_path_c) )
+        end if
 
         if ( .not. fwdModelConf%polarized ) then
           ! Determine where to use Gauss-Legendre for scalar instead of a trapezoid.
@@ -2156,9 +2201,12 @@ contains
             & tan_pt_c, alpha_path_f(1:ngl), dsdz_gw_path, tau )
           i_stop = tau%i_stop(frq_i)
 
-          ! Get incremental radiance and radiance from Tau and T_Script
-          ! Don't clobber them if doing PFA and already did LBL.
           if ( .not. pfa .or. .not. fwdModelConf%anyLBL(sx) ) then
+            ! Not doing PFA, or doing PFA but haven't done LBL.
+            ! Get incremental radiance and radiance from Tau and T_Script.
+            ! Don't clobber them if doing PFA and already did LBL.  If
+            ! doing LBL, inc_rad_path will be frequency averaged to give
+            ! Rad_Avg_Path.
             radV(frq_i) = 0.0
             do j = i_start, i_stop
               inc_rad_path_slice(j) = t_script(j,frq_i) * tau%tau(j,frq_i)
@@ -2167,8 +2215,11 @@ contains
           end if
 
           if ( pfa .and. frq_avg_sel == 15 ) then ! See Frequency_Average.
-            ! Multiply Rad_Avg_Path by Tau to combine LBL and PFA.  Then
-            ! sum to give RadV.  Remember, if PFA, Frq_I is a channel number.
+            ! Doing PFA and did LBL and need derivatives and will frequency
+            ! average.  Multiply Rad_Avg_Path by Tau to combine LBL and PFA. 
+            ! Then sum to give RadV.  Rad_Avg_Path is channel-averaged LBL
+            ! radiance. Remember, when doing PFA, Frq_I is a channel number.
+            ! See wvs-026.
             radV(frq_i) = 0.0
             do j = i_start, i_stop
               Rad_Avg_Path(j,frq_i) = Rad_Avg_Path(j,frq_i) * tau%tau(j,frq_i)
@@ -2515,6 +2566,9 @@ contains
       call allocate_test ( inc_rad_path, max_c, maxNoPtgFreqs, 'Inc_Rad_path', &
         & moduleName )
 
+      if ( FwdModelConf%useTScat ) call allocate_test ( w0_frq_path, &
+        max_f, maxNoPtgFreqs, 2, 'W0_Frq_path', moduleName )
+
       if ( temp_der ) &
         & call allocate_test ( k_temp_frq, max(maxNoPtgFreqs,noUsedChannels), &
                              & sv_t_len, 'k_temp_frq', moduleName )
@@ -2676,7 +2730,7 @@ contains
         ! Choose which frequency panel of phase function to use
         ! (don't interpolate).  Make sure it's close enough.
         freq_ix(f_i) = minloc(abs(channelCenters(f_i)-f_s),1)
-        if ( abs(channelCenters(f_i)-f_s(freq_ix(f_i))) > fwdModelConf%phaseFrqTol ) then
+        if ( abs(channelCenters(f_i)-f_s(freq_ix(f_i))) > fwdModelConf%frqTol ) then
           call output ( freq_ix(f_i), before="freq_ix(f_i) = ", after=", " )
           call dump ( f_s, name="F_s" )
           call dump ( channelCenters, name="ChannelCenters" )
@@ -3595,13 +3649,7 @@ contains
       end if
 
       ! Special path quantities for cloud model
-      if ( fwdModelConf%Incl_Cld ) then ! s_i == 1 here
-
-        !set cloud parameters to zero
-        iwc_path(1:npf,1) = 0.
-        WC(1,1:npf)=iwc_path(1:npf,1)
-        WC(2,1:npf)=0.
-        IPSD(1:npf)=1000
+      if ( fwdModelConf%Incl_Cld .or. fwdModelConf%useTScat ) then ! s_i == 1 or s_ts == 1 here
 
         call comp_eta_docalc_no_frq ( Grids_Iwc, z_path(1:npf), &
           &  phi_path(1:npf), eta_iwc_zp(1:npf,:), tan_pt=tan_pt_f )
@@ -3609,7 +3657,12 @@ contains
         ! Compute IWC_PATH
         call comp_sps_path_no_frq ( Grids_iwc, eta_iwc_zp(1:npf,:), &
           & iwc_path(1:npf,:) )
-        WC(1,1:npf)=iwc_path(1:npf,1)
+        if ( fwdModelConf%Incl_Cld ) then
+          !set some cloud parameters to zero
+          WC(1,1:npf)=iwc_path(1:npf,1)
+          WC(2,1:npf)=0.
+          IPSD(1:npf)=1000
+        end if
       end if
 
       ! Special path quantities for Polarized (magnetic) model
@@ -3944,9 +3997,26 @@ contains
       if ( temp_der ) k_temp_TScat(:,i_r,:) = k_temp(:,ptg_i,:)
     end subroutine One_TScat_Pointing
 
+  ! ...............................................  TScat_Config  .....
+    subroutine TScat_Config ( TScat_Conf, FmConf, Signal )
+      ! Create an ersatz ForwardModelConfig to drive the linearized
+      ! model's computation of TScat radiances during clear-sky path
+      ! integration.
+      type(forwardModelConfig_T), intent(out) :: TScat_Conf
+      type(forwardModelConfig_T), intent(in) :: FMconf
+      type(signal_t), target :: Signal(1)
+      TScat_conf = fmConf
+      TScat_conf%signals => signal ! Linearized model requires only one signal
+      TScat_conf%molecules => fmConf%TScatMolecules
+      TScat_conf%moleculeDerivatives => fmConf%TScatMoleculeDerivatives
+      TScat_conf%phiWindow = 0.0
+      TScat_conf%xStar = 0
+      TScat_conf%yStar = 0
+    end subroutine TScat_Config
+
   ! ................................................  TScat_Setup  .....
     subroutine TScat_Setup
-      ! Get ready for TScat computation
+      ! Get ready for computation of TScat table
       use Intrinsic, only: L_ScatteringAngle
       use Read_Mie_m, only: dP_dT, F_s, P
       logical :: Error
@@ -4116,6 +4186,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.303  2010/05/18 18:13:35  honghanh
+! Change both_sidebands_setup to get GPH quantity with GetQuantityForForwardModel as the rest of the quantity
+!
 ! Revision 2.302  2010/03/24 20:50:02  vsnyder
 ! Add more checks to TScat generation code
 !
