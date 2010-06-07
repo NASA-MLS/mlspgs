@@ -156,6 +156,7 @@ forwardModel
 fraction
 frequencies
 fromPrecision
+frqTol # for selecting Mie tables
 fuzz
 fwdModelExtra
 fwdModelIn
@@ -306,7 +307,6 @@ pfaData
 pfaFiles
 pfaNum # Dump a PFA table given its index in the database, gotten by pfaStru
 pfaStru
-phaseFrqTol # for selecting scattering phase function
 phaseName
 phiTan
 phiWindow
@@ -445,6 +445,8 @@ truthForwardModel
 truthIn
 TScat
 TScatMIF
+TScatMoleculeDerivatives
+TScatMolecules
 type
 
 unit
@@ -453,6 +455,7 @@ usb
 usbFraction
 usbLBLMolecules
 usbPFAMolecules
+useTScat # Use TScat tables + linear model
 
 values
 vector
@@ -477,6 +480,10 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.202  2010/06/07 23:27:26  vsnyder
+# Add TScatMolecules, TScatMoleculeDerivatives, UseTScat.  Change name
+# of PhaseFrqTol to FrqTol.
+#
 # Revision 2.201  2010/04/22 23:36:00  pwagner
 # May fill num rads/MIF as a percentage
 #
