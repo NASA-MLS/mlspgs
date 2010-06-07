@@ -83,6 +83,8 @@ module MLSNumerics              ! Some low level numerical stuff
 !    [int b], [char* options] )
 ! Battleship( log extern fun, int root, [int n1], [int maxPhase1], [int ns(:)], &
 !    [log b], [char* options] )
+! BivariateLinearInterpolation ( real X_Basis(:), real Y_Basis(:),
+!    real Table_2d(:,:), real X_Grid(:), real Y_Grid(:), real Out(:) )
 ! ClosestElement ( nprec test, nprec array, int indices, [char* options] )
 ! Destroy ( UnifDiscreteFn_nprec UDF )
 ! nprec  dFdxApproximate ( nprec x, UnifDiscreteFn_nprec UDF )
@@ -123,7 +125,7 @@ module MLSNumerics              ! Some low level numerical stuff
 ! multidimensional arrays up to rank 3. In a scalar context A and B may be scalars
 ! === (end of api) ===
 
-  public :: Battleship
+  public :: Battleship, BivariateLinearInterpolation
   public :: ClosestElement
   public :: Destroy, dFdxApproximate, d2Fdx2Approximate, Dump
   public :: FApproximate, FillLookUpTable, FindInRange, FInvApproximate
@@ -310,6 +312,11 @@ module MLSNumerics              ! Some low level numerical stuff
   
   interface Battleship
     module procedure Battleship_int, Battleship_log
+  end interface
+
+  interface BivariateLinearInterpolation
+    module procedure BivariateLinearInterp_D_D, BivariateLinearInterp_D_S
+    module procedure BivariateLinearInterp_S_S
   end interface
 
   interface ClosestElement
@@ -694,7 +701,76 @@ contains
     enddo
   end subroutine Battleship_log
 
-! -------------------------------------------------  ClosestElement  -----
+! ------------------------------------  BivariateLinearInterp_D_D  -----
+  subroutine BivariateLinearInterp_D_D ( X_Basis, Y_Basis, Table_2d, &
+      & X_Grid, Y_Grid, Out )
+
+      ! Interpolate linearly in Table_2d whose coordinates are (X_Basis,Y_Basis),
+      ! which are assumed to be sorted, to Out at each (X_Grid,Y_Grid), which
+      ! are not necessarily sorted.  The Hunt routine assumes X_Grid and Y_Grid
+      ! change slowly and smoothly.
+
+      integer, parameter :: KT = kind(0.0d0) ! Kind for table and basis
+      integer, parameter :: KO = kind(0.0d0) ! Kind for out and grids
+
+      ! Extents for Table_2d are (size(X_basis,1),size(Y_Basis,1))
+      real(kt), intent(in) :: X_Basis(:), Y_Basis(:), Table_2D(:,:)
+
+      ! Extents for X_Grid, Y_Grid, Out are all the same.
+      real(ko), intent(in) :: X_Grid(:), Y_Grid(:)
+      real(ko), intent(out) :: Out(:)
+
+      include "BivariateLinearInterpolation.f9h"
+
+    end subroutine BivariateLinearInterp_D_D
+
+! ------------------------------------  BivariateLinearInterp_D_S  -----
+  subroutine BivariateLinearInterp_D_S ( X_Basis, Y_Basis, Table_2d, &
+      & X_Grid, Y_Grid, Out )
+
+      ! Interpolate linearly in Table_2d whose coordinates are (X_Basis,Y_Basis),
+      ! which are assumed to be sorted, to Out at each (X_Grid,Y_Grid), which
+      ! are not necessarily sorted.  The Hunt routine assumes X_Grid and Y_Grid
+      ! change slowly and smoothly.
+
+      integer, parameter :: KT = kind(0.0d0) ! Kind for table and basis
+      integer, parameter :: KO = kind(0.0e0) ! Kind for out and grids
+
+      ! Extents for Table_2d are (size(X_basis,1),size(Y_Basis,1))
+      real(kt), intent(in) :: X_Basis(:), Y_Basis(:), Table_2D(:,:)
+
+      ! Extents for X_Grid, Y_Grid, Out are all the same.
+      real(ko), intent(in) :: X_Grid(:), Y_Grid(:)
+      real(ko), intent(out) :: Out(:)
+
+      include "BivariateLinearInterpolation.f9h"
+
+    end subroutine BivariateLinearInterp_D_S
+
+! ------------------------------------  BivariateLinearInterp_S_S  -----
+  subroutine BivariateLinearInterp_S_S ( X_Basis, Y_Basis, Table_2d, &
+      & X_Grid, Y_Grid, Out )
+
+      ! Interpolate linearly in Table_2d whose coordinates are (X_Basis,Y_Basis),
+      ! which are assumed to be sorted, to Out at each (X_Grid,Y_Grid), which
+      ! are not necessarily sorted.  The Hunt routine assumes X_Grid and Y_Grid
+      ! change slowly and smoothly.
+
+      integer, parameter :: KT = kind(0.0e0) ! Kind for table and basis
+      integer, parameter :: KO = kind(0.0e0) ! Kind for out and grids
+
+      ! Extents for Table_2d are (size(X_basis,1),size(Y_Basis,1))
+      real(kt), intent(in) :: X_Basis(:), Y_Basis(:), Table_2D(:,:)
+
+      ! Extents for X_Grid, Y_Grid, Out are all the same.
+      real(ko), intent(in) :: X_Grid(:), Y_Grid(:)
+      real(ko), intent(out) :: Out(:)
+
+      include "BivariateLinearInterpolation.f9h"
+
+    end subroutine BivariateLinearInterp_S_S
+
+! -----------------------------------------------  ClosestElement  -----
 
   ! This family of routines finds the element within a multidimensional
   ! array nearest a test value
@@ -2211,6 +2287,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.65  2010/06/07 23:31:49  vsnyder
+! Add BivariateLinearInterpolation
+!
 ! Revision 2.64  2009/12/08 21:43:14  vsnyder
 ! Get Symm_Tri
 !
