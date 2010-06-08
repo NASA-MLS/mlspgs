@@ -10,8 +10,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-095r3}
-\newcommand{\docdate}{4 June 2010}
+\newcommand{\docname}{wvs-095r4}
+\newcommand{\docdate}{8 June 2010}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -308,59 +308,68 @@ From Equation (\ref{nine}),
 The full forward model operates by integrating along the path first,
 producing $I_j$ and derivatives for frequency $\nu_j$.  After doing this
 for all $\{\nu_j\}$, it interpolates $I_j$ to $\!\IF{I_j}$ and does the
-frequency averaging.  That is, the order of summations is as in Equation
-(\ref{four}).
+frequency averaging, and similarly for derivatives.  That is, the order
+of summations is as in Equation (\ref{four}).
 
 From Equations (\ref{three}), (\ref{six}) and (\ref{ten}),
 
 \begin{equation}\begin{split}\label{eleven}
 \frac{\partial \hMT_{i\pm1,c}}{\partial f^k_m} =\,&
  \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc}
-  \IF{\MT_{ij} \sum_{l=1}^{n_p}\left[\frac{\partial \omega_{0_{i\pm1,j}}}
-                                            {\partial f^k_l} -
-         \omega_{0_{i\pm1,j}}
-          \beta^k_{lj} \right] \eta^k_{ml} \Delta s_l}\text{ and}\\
+  \IF{\MT_{ij}
+   \sum_{l=1}^{n_p} \eta^k_{ml}
+    \left[
+        \frac{\partial \omega_{0_{i\pm1,j}}} {\partial f^k_l} -
+         \Delta s_l \omega_{0_{i\pm1,j}}
+          \beta^k_{lj}
+    \right]}\text{ and}\\
 \frac{\partial \hMT_{i\pm1,c}}{\partial T_\mu} =\,&
  \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc}
-  \IF{\MT_{ij} \sum_{l=1}^{n_p}\left[\frac{\partial \omega_{0_{i\pm1,j}}}
-                                            {\partial T_l} -
-         \omega_{0_{i\pm1,j}}
+  \IF{\MT_{ij}
+   \sum_{l=1}^{n_p} \eta^T_{\mu l}
+     \left[
+        \frac{\partial \omega_{0_{i\pm1,j}}}{\partial T_l} -
+         \Delta s_l \omega_{0_{i\pm1,j}}
            \sum_k f^k_l \frac{\partial \beta^k_{lj}}{\partial T_l}
-           \right] \eta^T_{\mu l} \Delta s_l} .
+      \right]} .
 \end{split}\end{equation}
 
 From Equation (\ref{three})
 
 \begin{equation}\begin{split}\label{twelve}
-\frac{\partial \omega_{0_{ij}}}{\partial f^k_m} =\,&
- \frac1{\beta_{e_{ij}}}   \frac{\partial \beta_{{c\_s}_i}}{\partial f^k_m} -
- \frac1{\beta_{e_{ij}}^2} \frac{\partial \beta_{e_{ij}}}{\partial f^k_m}
+\frac{\partial \omega_{0_{ij}}}{\partial f^k_l} =\,&
+ \frac1{\beta_{e_{ij}}}   \frac{\partial \beta_{{c\_s}_i}}{\partial f^k_l} -
+ \frac1{\beta_{e_{ij}}^2} \frac{\partial \beta_{e_{ij}}}{\partial f^k_l}
 =
- \frac1{\beta_{e_{ij}}}   \frac{\partial \beta_{{c\_s}_i}}{\partial f^k_m} -
+ \frac1{\beta_{e_{ij}}}   \frac{\partial \beta_{{c\_s}_i}}{\partial f^k_l} -
  \frac1{\beta_{e_{ij}}^2}
-                   \left( \frac{\partial \beta_{{c\_e}_i}}{\partial f^k_m} +
-                          \frac{\partial \alpha_{\text{gas}_{ij}}}{\partial f^k_m}
+                   \left( \frac{\partial \beta_{{c\_e}_i}}{\partial f^k_l} +
+                          \frac{\partial \alpha_{\text{gas}_{ij}}}{\partial f^k_l}
                    \right) \\
 =\,&
- \sum_{l=1}^{n_p} \eta^k_{ml} \left[
  \frac1{\beta_{e_{lj}}}   \frac{\partial \beta_{{c\_s}_l}}{\partial f^k_l} -
  \frac1{\beta_{e_{lj}}^2}
                    \left( \frac{\partial \beta_{{c\_e}_l}}{\partial f^k_l} +
                           \beta^k_{lj}
-                   \right)\right] \text{ and}\\
-\frac{\partial \omega_{0_{ij}}}{\partial T_\mu} =\,&
- \frac1{\beta_{e_{ij}}}   \frac{\partial \beta_{{c\_s}_i}}{\partial T_\mu} -
+                   \right) \text{ and }
+ \frac{\partial \omega_{0_{ij}}}{\partial f^k_m} =
+ \sum_{l=1}^{n_p} \eta^k_{ml} \frac{\partial \omega_{0_{ij}}}{\partial f^k_l}\,,
+\\
+\frac{\partial \omega_{0_{ij}}}{\partial T_l} =\,&
+ \frac1{\beta_{e_{ij}}}   \frac{\partial \beta_{{c\_s}_i}}{\partial T_l} -
  \frac1{\beta_{e_{ij}}^2}
-                   \left( \frac{\partial \beta_{{c\_e}_i}}{\partial T_\mu} -
-                          \frac{\partial\alpha_{\text{gas}_{ij}}}{\partial T_\mu}
+                   \left( \frac{\partial \beta_{{c\_e}_i}}{\partial T_l} -
+                          \frac{\partial\alpha_{\text{gas}_{ij}}}{\partial T_l}
                    \right)\\
 =\,&
- \sum_{l=1}^{n_p} \eta^T_{\mu l} \left[
  \frac1{\beta_{e_{lj}}}   \frac{\partial \beta_{{c\_s}_l}}{\partial T_l} -
  \frac1{\beta_{e_{lj}}^2}
                    \left( \frac{\partial \beta_{{c\_e}_l}}{\partial T_l} -
                           \frac{\partial\alpha_{\text{gas}_{lj}}}{\partial T_l}
-                   \right) \right]
+                   \right) \text{ and }
+ \frac{\partial \omega_{0_{ij}}}{\partial T_\mu} =
+   \sum_{l=1}^{n_p} \eta^T_{\mu l}
+    \frac{\partial \omega_{0_{ij}}}{\partial T_l}
  \,.
 \end{split}\end{equation}
 
@@ -540,6 +549,9 @@ i$ this could be halved at some expense to clarity of the software.
 % $Id$
 
 % $Log$
+% Revision 1.4  2010/06/04 23:17:05  vsnyder
+% Correct date, change file name of graphic
+%
 % Revision 1.3  2010/06/04 23:14:19  vsnyder
 % Sunstantial revision of radiative transfer, added fourth method
 %
