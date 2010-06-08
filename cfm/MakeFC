@@ -126,6 +126,8 @@ LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
    $(libblas_objs)/libmlspack.a $(REECHO)
 
 OMIT_SRCS := $(OMIT) 
+LIBRARY=libcfm.a
+FULLLIBRARY=libcfm_all.a
 PROG=mockup
 
 OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
@@ -134,6 +136,14 @@ OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
 
 $(PROG): $(PROG_prereqs)
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
+        UNPREFXDPTHS="$(ADD2PATHS) $(HDF5)/../fortran/src $(HDF5)/../include" \
+
+$(LIBRARY): $(PROG_prereqs)
+	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(LIBRARY) \
+        UNPREFXDPTHS="$(ADD2PATHS) $(HDF5)/../fortran/src $(HDF5)/../include" \
+
+$(FULLLIBRARY): $(PROG_prereqs)
+	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(FULLLIBRARY) \
         UNPREFXDPTHS="$(ADD2PATHS) $(HDF5)/../fortran/src $(HDF5)/../include" \
 
 $(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG_prereqs)
@@ -223,3 +233,6 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mockup
 
 # $Log$
+# Revision 1.1  2010/02/17 16:41:33  honghanh
+# An example of using CFM_MLSSetup and creating a VGrid
+#
