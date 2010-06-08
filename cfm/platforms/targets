@@ -52,6 +52,21 @@ dir4 = $(clouddir)/
 MODPATHS = $(dir1) $(dir2) $(dir3) $(dir4) $(blaslib)
 
 UTILDIR=$(CONFDIR)/util
+# For building libcfm_all.a we will need the locations of the zlib and szlib
+# directories
+# We will assume that they share a common grandparent directory:
+# e.g. /software/toolkit/ifc11
+# under which we will be able to find 
+# fftw  hdf  hdf5  hdfeos  hdfeos5  pvm3  szip  toolkit  zlib
+ifndef SZLIB
+  # LIBROOT = $(HDFLIB)/../..
+  LIBROOT = $(shell echo $(HDFLIB) | sed 's:/[^/]*/[^/]*$$::g')
+  SZIP_PATH = $(LIBROOT)/szip*/lib
+  Z_PATH = $(LIBROOT)/zlib*
+else
+  SZIP_PATH = $(SZLIB)
+  Z_PATH = $(ZLIB)
+endif
 
 # reecho.sh can filter out globbed file expansions that fail
 # e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
@@ -158,6 +173,47 @@ utctotai_message=Building $(PROG_NAME) with toolkitless utc to tai conversion
 prereqs=$(ALLOBJS) $(PVM_OBJS) $(libdir)/libmls.a libcfm.a \
 	 $(fwdmdldir)/libfwdmdl.a $(clouddir)/libcloud.a $(CONFDIR)/$(MLSCFILE)
 
+# If we wish to build a fully standalone library, we'll create separate
+# subdirectories for each of the libraries we will burst
+libcloud_dir    := cloud
+libfwdmdl_dir   := fwdmdl
+libmls_dir      := mls
+libmlspack_dir  := mlspack
+libutctotai_dir := utctotai
+
+libgctp_dir     := gctp
+libhdf_dir      := hdf
+libhdf5_dir     := hdf5
+libhdfeos_dir   := hdfeos
+libhdfeos5_dir  := hdfeos5
+libpgstk_dir    := pgstk
+libpvm_dir      := pvm
+libsz_dir       := szip
+libz_dir        := zlib
+
+# These are the contents of libraries built within the mlspgs ditribution
+libcloud_objs := $(shell ${REECHO} -dir ${clouddir} -path cloud -libart cloud)
+libfwdmdl_objs := $(shell ${REECHO} -dir ${fwdmdldir} -path fwdmdl -libart fwdmdl)
+libmls_objs := $(shell ${REECHO} -dir ${libdir} -path mls -libart mls)
+libmlspack_objs := $(shell ${REECHO} -dir ${mlspack_dir} -path mlspack -libart mlspack)
+libutctotai_objs := $(shell ${REECHO} -dir ${INSTALLDIR} -path utctotai -libart utctotai)
+
+# These are the contents of libraries built outside the mlspgs ditribution
+# but required to link properly
+libgctp_objs := $(shell ${REECHO} -dir ${GCTP} -path gctp -libart Gctp)
+libhdf_objs_1 := $(shell ${REECHO} -dir ${HDF} -path hdf -libart mfhdf)
+libhdf_objs_2 := $(shell ${REECHO} -dir ${HDF} -path hdf -libart df)
+libhdf_objs_3 := $(shell ${REECHO} -dir ${HDF} -path hdf -libart jpeg)
+libhdf5_objs_1 := $(shell ${REECHO} -dir ${HDF5} -path hdf5 -libart hdf5_fortran)
+libhdf5_objs_2 := $(shell ${REECHO} -dir ${HDF5} -path hdf5 -libart hdf5)
+libhdfeos_objs := $(shell ${REECHO} -dir ${HDFEOS} -path hdfeos -libart hdfeos)
+libhdfeos5_objs := $(shell ${REECHO} -dir ${HDFEOS5} -path hdfeos5 -libart he5_hdfeos)
+libpgstk_objs := $(shell ${REECHO} -dir ${PGSTK} -path pgstk -libart PGSTK)
+libpvm_objs_1 := $(shell ${REECHO} -dir ${PVM_PATH} -path pvm -libart fpvm3)
+libpvm_objs_2 := $(shell ${REECHO} -dir ${PVM_PATH} -path pvm -libart gpvm3)
+libpvm_objs_3 := $(shell ${REECHO} -dir ${PVM_PATH} -path pvm -libart pvm3)
+libsz_objs := $(shell ${REECHO} -dir ${SZIP_PATH} -path szip -libart sz)
+libz_objs := $(shell ${REECHO} -dir ${Z_PATH} -path zlib -escape '\*.o')
 # ========================================================================
 libcfm.a: $(libl2_objs) $(ALLOBJS) 
 ifeq ($(delete_lib_first),yes)
@@ -166,7 +222,37 @@ endif
 	ar ru $@ $?
 	ar d $@ $(dir2)/$(l2_driver) $(PROG_NAME).o MLSL2.o
 
+libcfm_all.a: $(libl2_objs) $(ALLOBJS) \
+  $(libcloud_objs) $(libfwdmdl_objs) $(libmls_objs) \
+  $(libmlspack_objs) $(libutctotai_objs) \
+  $(libhdf_objs_1) $(libhdf_objs_2) $(libhdf_objs_3) \
+  $(libhdf5_objs_1) $(libhdf5_objs_2) \
+  $(libhdfeos_objs) $(libhdfeos5_objs) $(libgctp_objs) \
+  $(libpgstk_objs) $(libpvm_objs_1) $(libpvm_objs_2) $(libpvm_objs_3) \
+  $(libsz_objs) $(libz_objs)
+ifeq ($(delete_lib_first),yes)
+		rm -f $@
+endif
+	@echo "libsz_objs       $(libsz_objs)"
+	@echo "libz_objs        $(libz_objs)"
+	ar ru $@ $?
+	ar d $@ $(dir2)/$(l2_driver) $(PROG_NAME).o MLSL2.o
+
 $(PROG_NAME): $(prereqs)
+	@echo "libcloud_objs    $(libcloud_objs)"
+	@echo "libfwdmdl_objs   $(libfwdmdl_objs)"
+	@echo "libmls_objs 	   $(libmls_objs)"
+	@echo "libmlspack_objs  $(libmlspack_objs)"
+	@echo "libutctotai_objs $(libutctotai_objs)"
+	@echo "libgctp_objs     $(libgctp_objs)"
+	@echo "libhdf_objs_1    $(libhdf_objs_1)"
+	@echo "libhdf5_objs_1   $(libhdf5_objs_1)"
+	@echo "libhdfeos_objs   $(libhdfeos_objs)"
+	@echo "libhdfeos5_objs  $(libhdfeos5_objs)"
+	@echo "libpgstk_objs    $(libpgstk_objs)"
+	@echo "libpvm_objs_1    $(libpvm_objs_1)"
+	@echo "libsz_objs       $(libsz_objs)"
+	@echo "libz_objs        $(libz_objs)"
 		@echo "$(pvm_message)"
 		@echo "$(blas_message)"
 		@echo "$(lapack_message)"
@@ -198,6 +284,87 @@ $(PROG_NAME): $(prereqs)
         $(l_specials) $(LAFTER) \
 
 # ========================================================================
+# Now we must teach make some trickery involving the ar command 
+# to extract objects from a library
+# inside mlspgs
+$(libcloud_objs): ${clouddir}/libcloud.a
+	if [ ! -d "$(libcloud_dir)" ]; then mkdir "$(libcloud_dir)"; fi
+	cd "$(libcloud_dir)"; ar x ../$?
+
+$(libfwdmdl_objs): ${fwdmdldir}/libfwdmdl.a
+	if [ ! -d "$(libfwdmdl_dir)" ]; then mkdir "$(libfwdmdl_dir)"; fi
+	cd "$(libfwdmdl_dir)"; ar x ../$?
+
+$(libmls_objs): ${libdir}/libmls.a
+	if [ ! -d "$(libmls_dir)" ]; then mkdir "$(libmls_dir)"; fi
+	cd "$(libmls_dir)"; ar x ../$?
+
+$(libmlspack_objs): ${mlspack_dir}/libmlspack.a
+	if [ ! -d "$(libmlspack_dir)" ]; then mkdir "$(libmlspack_dir)"; fi
+	cd "$(libmlspack_dir)"; ar x ../$?
+
+$(libutctotai_objs): ${INSTALLDIR}/libutctotai.a
+	if [ ! -d "$(libutctotai_dir)" ]; then mkdir "$(libutctotai_dir)"; fi
+	cd "$(libutctotai_dir)"; ar x ../$?
+
+# outside mlspgs
+$(libgctp_objs): ${GCTP}/libGctp.a
+	if [ ! -d "$(libgctp_dir)" ]; then mkdir "$(libgctp_dir)"; fi
+	cd "$(libgctp_dir)"; ar x $?
+
+$(libhdf_objs_1): ${HDF}/libmfhdf.a
+	if [ ! -d "$(libhdf_dir)" ]; then mkdir "$(libhdf_dir)"; fi
+	cd "$(libhdf_dir)"; ar x $?
+
+$(libhdf_objs_2): ${HDF}/libdf.a
+	if [ ! -d "$(libhdf_dir)" ]; then mkdir "$(libhdf_dir)"; fi
+	cd "$(libhdf_dir)"; ar x $?
+
+$(libhdf_objs_3): ${HDF}/libjpeg.a
+	if [ ! -d "$(libhdf_dir)" ]; then mkdir "$(libhdf_dir)"; fi
+	cd "$(libhdf_dir)"; ar x $?
+
+$(libhdf5_objs_1): ${HDF5}/libhdf5_fortran.a
+	if [ ! -d "$(libhdf5_dir)" ]; then mkdir "$(libhdf5_dir)"; fi
+	cd "$(libhdf5_dir)"; ar x $?
+
+$(libhdf5_objs_2): ${HDF5}/libhdf5.a
+	if [ ! -d "$(libhdf5_dir)" ]; then mkdir "$(libhdf5_dir)"; fi
+	cd "$(libhdf5_dir)"; ar x $?
+
+$(libhdfeos_objs): ${HDFEOS}/libhdfeos.a
+	if [ ! -d "$(libhdfeos_dir)" ]; then mkdir "$(libhdfeos_dir)"; fi
+	cd "$(libhdfeos_dir)"; ar x $?
+
+$(libhdfeos5_objs): ${HDFEOS5}/libhe5_hdfeos.a
+	if [ ! -d "$(libhdfeos5_dir)" ]; then mkdir "$(libhdfeos5_dir)"; fi
+	cd "$(libhdfeos5_dir)"; ar x $?
+
+$(libpgstk_objs): ${PGSTK}/libPGSTK.a
+	if [ ! -d "$(libpgstk_dir)" ]; then mkdir "$(libpgstk_dir)"; fi
+	cd "$(libpgstk_dir)"; ar x $?
+
+$(libpvm_objs_1): ${PVM_PATH}/libfpvm3.a
+	if [ ! -d "$(libpvm_dir)" ]; then mkdir "$(libpvm_dir)"; fi
+	cd "$(libpvm_dir)"; ar x $?
+
+$(libpvm_objs_2): ${PVM_PATH}/libgpvm3.a
+	if [ ! -d "$(libpvm_dir)" ]; then mkdir "$(libpvm_dir)"; fi
+	cd "$(libpvm_dir)"; ar x $?
+
+$(libpvm_objs_3): ${PVM_PATH}/libpvm3.a
+	if [ ! -d "$(libpvm_dir)" ]; then mkdir "$(libpvm_dir)"; fi
+	cd "$(libpvm_dir)"; ar x $?
+
+$(libsz_objs): ${SZIP_PATH}/libsz.a
+	if [ ! -d "$(libsz_dir)" ]; then mkdir "$(libsz_dir)"; fi
+	cd "$(libsz_dir)"; ar x $?
+
+$(libz_objs): ${Z_PATH}/libz.so
+	if [ ! -d "$(libz_dir)" ]; then mkdir "$(libz_dir)"; fi
+	cp $(Z_PATH)/*.o $(libz_dir)
+
+# ========================================================================
 
 clean:
 	rm -f *.o *.mod $(PROG_NAME)
@@ -208,3 +375,6 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.1  2010/02/17 16:41:40  honghanh
+# An example of using CFM_MLSSetup and creating a VGrid
+#
