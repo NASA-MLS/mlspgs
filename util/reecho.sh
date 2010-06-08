@@ -41,8 +41,11 @@
 #                (used with -escape option)
 # -reverse      reverse the order of globbed matches (used with -escape option)
 # -lib          reecho each arg "x" if the file "libx.a" exists or ...
+# -libart       reecho objects "ar -t" returns for
+#               each arg "x" if the file "libx.a" exists or ...
 # -unique       remove duplicate matches before output
 # -h[elp]       print brief help message; exit
+# -path "path"  print "path" in front of each arg; e.g. "path/arg1 path/arg2 .."
 # -prefix=xxx   reecho xxx in front of each arg (separated by a space)
 #               e.g. '-I a-dir -I b-dir -I c-dir ..'
 # -prefixn=xxx  reecho xxx in front of each arg (without a separating space)
@@ -252,6 +255,12 @@ extant_files()
                     extant_files_result="$extant_files_result $file"
                 fi
               fi
+           elif [ "$ar_list" = "yes" ]
+           then
+              if [ $the_opt "$file" ]
+              then
+                    extant_files_result="$extant_files_result `ar t $file`"
+              fi
            elif [ $the_sense = "yes" ]
            then
               if [ $the_opt "$file" ]
@@ -327,6 +336,7 @@ reecho_args()
 
   new_dir=""
   new_list="no"
+  ar_list="no"
   as_lib="no"
   the_opt="-f"
   the_sense="yes"
@@ -421,6 +431,12 @@ reecho_args()
          the_sense="no"
          shift
          ;;
+      -path )
+         shift
+         the_prefix="$1/"
+         separate_prefix="no"
+         shift
+         ;;
       -prefix=* )
          the_prefix=`echo $1 | sed 's/-prefix=//'`
          shift
@@ -458,6 +474,11 @@ reecho_args()
          ;;
       -lib )
          as_lib="yes"
+         shift
+         ;;
+      -libart )
+         as_lib="yes"
+         ar_list="yes"
          shift
          ;;
       -excl )
@@ -508,6 +529,7 @@ reecho_args()
      echo "the_suffix $the_suffix"
      echo "separate_suffix? $separate_suffix"
      echo "as lib? $as_lib"
+     echo "ar -t lib? $ar_list"
      echo "new_dir $new_dir"
      echo "remaining args $@"
   fi
@@ -681,6 +703,9 @@ done
 echo $result
 exit
 # $Log$
+# Revision 1.9  2009/09/22 17:44:15  pwagner
+# Added -escape, -[n]first, -[n]last, and -reverse options
+#
 # Revision 1.8  2007/05/29 17:41:20  pwagner
 # New --set opts for multiple option sets
 #
