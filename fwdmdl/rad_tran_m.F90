@@ -381,136 +381,12 @@ contains
             call get_inds ( do_gl, do_calc, more_inds, all_inds )
           end if
 
-          if ( grids_f%lin_log(sps_i) ) then
-          ! sps_path is actually exp(mixing ratio) here
-
-            if ( sps_i /= i_dBeta_df ) then ! don't want the test in the loop
-              do i = 1, n_inds ! Don't trust the compiler to fuse loops
-                ii = inds(i)
-                iii = indices_c(ii)
-                singularity(ii) = eta_zxp_f(iii,sv_i) * sps_path(iii,sps_i) * &
-                          & beta_path_c(ii,sps_i)
-                d_delta_df(ii,sv_i) = singularity(ii) * del_s(ii)
-              end do ! i
-            else ! beta is a function of mixing ratio
-              do i = 1, n_inds ! Don't trust the compiler to fuse loops
-                ii = inds(i)
-                iii = indices_c(ii)
-                singularity(ii) = eta_zxp_f(iii,sv_i) * sps_path(iii,sps_i) * &
-                          & ( beta_path_c(ii,sps_i) + dBeta_df_c(ii) )
-                d_delta_df(ii,sv_i) = singularity(ii) * del_s(ii)
-              end do ! i
-            end if
-
-      !{ Apply Gauss-Legendre quadrature to the panels indicated by
-      !  {\tt more\_inds}.  We remove a singularity (which actually only
-      !  occurs at the tangent point) by writing
-      !  $\int_{\zeta_i}^{\zeta_{i-1}} G(\zeta) \frac{\text{d}s}{\text{d}h}
-      !   \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta =
-      !  G(\zeta_i) \int_{\zeta_i}^{\zeta_{i-1}} \frac{\text{d}s}{\text{d}h}
-      !   \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta +
-      !  \int_{\zeta_i}^{\zeta_{i-1}} \left[ G(\zeta) - G(\zeta_i) \right]
-      !   \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
-      !   \text{d}\zeta$.  The first integral is easy -- it's just
-      !  $G(\zeta_i) (\zeta_{i-1}-\zeta_i)$.  Here, it is {\tt d\_delta\_df}.
-      !  In the second integral, $G(\zeta)$ is {\tt beta\_path\_f * eta\_zxp\_f *
-      !  sps\_path} -- which have already been evaluated at the appropriate
-      !  abscissae~-- and $G(\zeta_i)$ is {\tt singularity}.  The weights
-      !  are {\tt gw}.
-
-            if ( sps_i /= i_dBeta_df ) then ! don't want the test in the loop
-              do i = 1, no_to_gl
-                aa = all_inds(i)
-                ga = gl_inds(aa)
-                ii = more_inds(i)
-                d_delta_df(ii,sv_i) = d_delta_df(ii,sv_i) + &
-                  & del_zeta(ii) * &
-                  & sum( (eta_zxp_f(ga:ga+ng-1,sv_i) * sps_path(ga:ga+ng-1,sps_i) &
-                       &  * beta_path_f(aa:aa+ng-1,sps_i) - &
-                       &  singularity(ii)) * ds_dz_gw(ga:ga+ng-1) )
-              end do
-            else ! beta is a function of mixing ratio
-              do i = 1, no_to_gl
-                aa = all_inds(i)
-                ga = gl_inds(aa)
-                ii = more_inds(i)
-                d_delta_df(ii,sv_i) = d_delta_df(ii,sv_i) + &
-                  & del_zeta(ii) * &
-                  & sum( (eta_zxp_f(ga:ga+ng-1,sv_i) * sps_path(ga:ga+ng-1,sps_i) &
-                       &  * ( beta_path_f(aa:aa+ng-1,sps_i) + dBeta_df_f(aa:aa+ng-1) ) &
-                       &  - singularity(ii)) * ds_dz_gw(ga:ga+ng-1) )
-              end do
-            end if
-
-            ! Refraction correction
-            d_delta_df(inds,sv_i) = ref_cor(inds) * d_delta_df(inds,sv_i) * &
-                                  & exp(-grids_f%values(sv_i))
-
-          else
-
-            if ( sps_i /= i_dBeta_df ) then ! don't want the test in the loop
-              do i = 1, n_inds
-                ii = inds(i)
-                singularity(ii) = eta_zxp_f(indices_c(ii),sv_i) &
-                          & * beta_path_c(ii,sps_i)
-                d_delta_df(ii,sv_i) = singularity(ii) * del_s(ii)
-              end do ! i
-            else
-              do i = 1, n_inds
-                ii = inds(i)
-                iii = indices_c(ii)
-                singularity(ii) = eta_zxp_f(iii,sv_i) &
-                          & * ( beta_path_c(ii,sps_i) + &
-                          &     sps_path(iii,sps_i) * dBeta_df_c(ii) )
-                d_delta_df(ii,sv_i) = singularity(ii) * del_s(ii)
-              end do ! i
-            end if
-
-      !{ Apply Gauss-Legendre quadrature to the panels indicated by
-      !  {\tt more\_inds}.  We remove a singularity (which actually only
-      !  occurs at the tangent point) by writing
-      !  $\int_{\zeta_i}^{\zeta_{i-1}} G(\zeta) \frac{\text{d}s}{\text{d}h}
-      !   \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta =
-      !  G(\zeta_i) \int_{\zeta_i}^{\zeta_{i-1}} \frac{\text{d}s}{\text{d}h}
-      !   \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta +
-      !  \int_{\zeta_i}^{\zeta_{i-1}} \left[ G(\zeta) - G(\zeta_i) \right]
-      !   \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
-      !   \text{d}\zeta$.  The first integral is easy -- it's just
-      !  $G(\zeta_i) (\zeta_{i-1}-\zeta_i)$.  Here, it is {\tt d\_delta\_df}.
-      !  In the second integral, $G(\zeta)$ is {\tt beta\_path\_f *
-      !  eta\_zxp\_f}~-- which have already been evaluated at the appropriate
-      !  abscissae~-- and $G(\zeta_i)$ is {\tt singularity}.  The weights
-      !  are {\tt gw}.
-
-            if ( sps_i /= i_dBeta_df ) then ! don't want the test in the loop
-              do i = 1, no_to_gl
-                aa = all_inds(i)
-                ga = gl_inds(aa)
-                ii = more_inds(i)
-                d_delta_df(ii,sv_i) = d_delta_df(ii,sv_i) + &
-                  & del_zeta(ii) * &
-                  & sum( (eta_zxp_f(ga:ga+ng-1,sv_i) * beta_path_f(aa:aa+ng-1,sps_i) - &
-                       &  singularity(ii)) * ds_dz_gw(ga:ga+ng-1) )
-              end do
-            else
-              do i = 1, no_to_gl
-                aa = all_inds(i)
-                ga = gl_inds(aa)
-                ii = more_inds(i)
-                d_delta_df(ii,sv_i) = d_delta_df(ii,sv_i) + &
-                  & del_zeta(ii) * &
-                  & sum( (eta_zxp_f(ga:ga+ng-1,sv_i) &
-                       &  * ( beta_path_f(aa:aa+ng-1,sps_i) &
-                       &      + dBeta_df_f(aa:aa+ng-1) ) &
-                       &  - singularity(ii)) &
-                       & * ds_dz_gw(ga:ga+ng-1) )
-              end do
-            end if
-
-            ! Refraction correction
-            d_delta_df(inds,sv_i) = ref_cor(inds) * d_delta_df(inds,sv_i)
-
-          end if
+          call get_d_delta_df( max_f, indices_c, gl_inds, del_zeta, Grids_f,   &
+                             & beta_path_c, eta_zxp_f, sps_path,               &
+                             & beta_path_f, del_s, ref_cor,                    &
+                             & ds_dz_gw, inc_rad_path, dBeta_df_c, dBeta_df_f, &
+                             & i_dBeta_df, LD, sv_i,                           &
+                             & d_delta_df(:,sv_i) )
 
           i_begin = max(i_start,min(inds(1),i_stop))
 
@@ -1596,6 +1472,9 @@ contains
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.9  2010/06/09 23:13:01  yanovsky
+! Removed code implementing d_delta_df computations from drad_tran_df. Drad_tran_df now calls get_d_delta_df
+!
 ! Revision 2.8  2010/06/09 22:04:14  yanovsky
 ! Added d2Rad_tran_df2 and get_d_delta_df subroutines
 !
