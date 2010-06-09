@@ -862,10 +862,12 @@ contains
     ! Dummy arguments
     type ( ForwardModelConfig_T ), intent(out) :: CONFIG
     ! Local variables
+    integer, parameter     :: ISMAX = 10
+    integer, parameter     :: LSMAX = 26
     integer :: INFO                     ! Flag from PVM
     logical :: FLAG                     ! A flag from the sender
-    logical, dimension(25) :: LS        ! Temporary array, for logical scalars
-    integer, dimension(10) :: IS        ! Temporary array, for integer scalars
+    logical, dimension(LSMAX) :: LS     ! Temporary array, for logical scalars
+    integer, dimension(ISMAX) :: IS     ! Temporary array, for integer scalars
     real(r8), dimension(2) :: RS        ! Temporary array, for real scalars
     integer :: I                        ! Loop counter
     integer :: N                        ! Array size
@@ -880,7 +882,9 @@ contains
       msg = "Unpacking fwmConfig instrumentModule" )
     call PVMUnpackLitIndex ( config%windowUnits, msg = "Unpacking fwmConfig windowUnits" )
 
-    ! Now the integer scalars
+    ! Now the integer scalars. Array IS has to be long enough for this.
+    ! If you add any items here, don't forget to make IS longer at the top
+    ! of the program unit.
     call PVMIDLUnpack ( is, msg = "Unpacking fwmConfig integers" )
     i = 1
     config%linearsideband        = is(i) ; i = i + 1
@@ -892,7 +896,10 @@ contains
     config%num_size_bins         = is(i) ; i = i + 1
     config%sideBandStart         = is(i) ; i = i + 1
     config%sideBandStop          = is(i) ; i = i + 1
-    config%surfaceTangentIndex   = is(i) ; i = i + 1
+    config%surfaceTangentIndex   = is(i) ! ; i = i + 1
+    if ( i > LSMAX ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName // 'PVMUnpackFWMConfig', &
+      & 'programming error--ISMAX too small' )
 
     ! Now the logical scalars. Array LS has to be long enough for this.
     ! If you add any items here, don't forget to make LS longer at the top
@@ -922,7 +929,10 @@ contains
     config%spect_der             = ls(i) ; i = i + 1
     config%switchingMirror       = ls(i) ; i = i + 1
     config%temp_der              = ls(i) ; i = i + 1
-    config%useTScat              = ls(i) ; i = i + 1
+    config%useTScat              = ls(i) !  ; i = i + 1
+    if ( i > LSMAX ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName // 'PVMUnpackFWMConfig', &
+      & 'programming error--LSMAX too small' )
 
     ! Now the real scalars
     call PVMIDLUnpack ( rs, msg = "Unpacking fwmConfig reals" )
@@ -1401,6 +1411,11 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.107  2010/06/07 23:20:51  vsnyder
+! Add UseTScat, TScatMolecules, TScatMoleculeDerivatives, change name
+! of PhaseFrqTol to FrqTol, check that Mie tables are loaded of UseTScat
+! is selected.
+!
 ! Revision 2.106  2010/05/14 02:18:16  vsnyder
 ! Dump BinSelectors
 !
