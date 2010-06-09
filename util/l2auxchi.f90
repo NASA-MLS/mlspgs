@@ -14,18 +14,18 @@ program l2auxchi ! dumps chi^sq read from L2AUX files
 !=================================
 
    use Dump_0, only: DUMP
-   use Hdf, only: DFACC_CREATE, DFACC_READ
+   use Hdf, only: DFACC_READ
    use HDF5, only: h5fis_hdf5_f, &
-     & H5GCLOSE_F, H5GOPEN_F, H5DOPEN_F, H5DCLOSE_F, h5gcreate_f
+     & H5GCLOSE_F, H5GOPEN_F
    use L1BData, only: L1BData_T, NAME_LEN, &
-     & DeallocateL1BData, Diff, ReadL1BData
-   use MACHINE, only: FILSEP, HP, IO_ERROR, GETARG
+     & DeallocateL1BData, ReadL1BData
+   use MACHINE, only: HP, GETARG
    use MLSCommon, only: R8
    use MLSFiles, only: FILENOTFOUND, WILDCARDHDFVERSION, &
      & mls_exists, mls_hdf_version, mls_sfstart, mls_sfend, &
-     & HDFVERSION_4, HDFVERSION_5
-   use MLSHDF5, only: GetAllHDF5DSNames, saveAsHDF5DS, &
-     & IsHDF5AttributePresent, mls_h5open, mls_h5close
+     & HDFVERSION_5
+   use MLSHDF5, only: GetAllHDF5DSNames, &
+     & mls_h5open, mls_h5close
    use MLSMessageModule, only: MLSMessageConfig, MLSMSG_Error, MLSMSG_Warning, &
      & MLSMessage
    use MLSStats1, only: FILLVALUERELATION, Stat_T, STATISTICS
@@ -70,11 +70,10 @@ program l2auxchi ! dumps chi^sq read from L2AUX files
   integer, parameter ::          MAXDS = 500
   integer, parameter ::          MAXSDNAMESBUFSIZE = MAXDS*NAME_LEN
   integer, parameter ::          MAXFILES = 100
-  logical ::          columnsOnly
   character(len=255) :: filename          ! input filename
   character(len=255), dimension(MAXFILES) :: filenames
   integer            :: n_filenames
-  integer     ::  i, count, status, error ! Counting indices & Error flags
+  integer     ::  i, error ! Counting indices & Error flags
   logical     :: is_hdf5
   character (len=MAXSDNAMESBUFSIZE) :: mySdList
   character (len=MAXSDNAMESBUFSIZE) :: names
@@ -133,7 +132,6 @@ program l2auxchi ! dumps chi^sq read from L2AUX files
   call resumeOutput
   if ( options%tabulate ) call tabulate ( table, names )
   if ( options%silent .and. options%numDiffs > 0 ) then
-    ! write(string, '(i)') options%numDiffs
     call WriteIntsToChars ( options%numDiffs, string )
     call print_string(string)
   endif
@@ -285,9 +283,7 @@ contains
     character (len=MAXSDNAMESBUFSIZE) :: mySdList
     integer :: NoMAFs
     integer :: noSds
-    integer :: numDiffs
     integer :: sdfid1
-    integer :: sdfid2
     character (len=80) :: sdName
     integer, dimension(3) :: shp
     integer :: status
@@ -355,7 +351,7 @@ contains
       endif
       shp = shape(L1bData%DpField)
       call dump( L1bData%DpField, name=trim(sdName), &
-        & stats=.true., FillValue=options%referenceValue )
+        & options="-rs", FillValue=options%referenceValue )
       L1BStat%count = 0
       call statistics(&
         & reshape( L1bData%DpField, (/ product(shp) /) ), &
@@ -424,6 +420,9 @@ end program l2auxchi
 !==================
 
 ! $Log$
+! Revision 1.4  2009/04/13 20:43:17  pwagner
+! Fixed a bug preventing macros file from using its own macros properly
+!
 ! Revision 1.3  2006/08/23 00:00:37  pwagner
 ! Many untested changes; compiles successfully
 !
