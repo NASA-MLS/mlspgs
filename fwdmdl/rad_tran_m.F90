@@ -15,6 +15,7 @@ module RAD_TRAN_M
   private
   public :: RAD_TRAN, RAD_TRAN_POL
   public :: DRAD_TRAN_DF, DRAD_TRAN_DT, DRAD_TRAN_DX
+  public :: D2RAD_TRAN_DF2
   public :: Get_Do_Calc
   private ::  Get_Do_Calc_Indexed, Get_Inds
 
@@ -990,6 +991,419 @@ contains
 
   end subroutine DRad_tran_dx
 
+
+!--------------------------------------------------  D2Rad_tran_df2  -----
+! This is the radiative transfer second derivative wrt mixing ratio model
+
+  subroutine d2Rad_tran_df2 ( max_f, indices_c, gl_inds, del_zeta, Grids_f, &
+                            & beta_path_c, eta_zxp_f, sps_path, do_calc_f,    &
+                            & beta_path_f, do_gl, del_s, ref_cor,             &
+                            & ds_dz_gw, inc_rad_path, dBeta_df_c, dBeta_df_f, &
+                            & i_dBeta_df, i_start, tan_pt, i_stop, LD,        &
+                            & d_delta_df,                                     &
+			    & nz_d_delta_df, nnz_d_delta_df,                  &
+                            & d2rad_df2 )
+
+    use GLNP, only: NG
+    use LOAD_SPS_DATA_M, ONLY: GRIDS_T
+    use MLSKinds, only: RP, IP
+    use SCRT_DN_M, ONLY: D2SCRT_DX2
+
+! Inputs
+
+    integer, intent(in) :: Max_f            ! Leading dimension of Beta_Path_f
+    integer(ip), intent(in) :: indices_c(:) ! coarse grid indicies
+    integer(ip), intent(in) :: gl_inds(:)   ! Gauss-Legendre grid indices
+    real(rp), intent(in) :: del_zeta(:)     ! path -log(P) differences on the
+      !              main grid.  This is for the whole coarse path, not just
+      !              the part up to the black-out
+    type (Grids_T), intent(in) :: Grids_f    ! All the coordinates
+    real(rp), intent(in) :: beta_path_c(:,:) ! cross section for each species
+      !                                        on coarse grid.
+    real(rp), intent(in) :: eta_zxp_f(max_f,*)   ! representation basis function.
+    real(rp), intent(in) :: sps_path(:,:)    ! Path species function.
+    logical, intent(in) :: do_calc_f(:,:)    ! A logical indicating where the
+      !                                        representation basis function is
+      !                                        not zero.
+    real(rp), intent(in) :: beta_path_f(max_f,*) ! cross section for each species
+      !                                        on gl grid.
+    logical, intent(in) :: do_gl(:)          ! A logical indicating where to
+      !                                        do gl integrations
+    real(rp), intent(in) :: ref_cor(:)       ! refracted to unrefracted path
+      !                                        length ratios.
+    real(rp), intent(in) :: del_s(:)         ! unrefracted path length.
+    real(rp), intent(in) :: ds_dz_gw(:)      ! path length wrt zeta derivative *
+      !              gw on the entire grid.  Only the gl_inds part is used.
+    real(rp), intent(in) :: inc_rad_path(:)  ! incremental radiance along the
+                                             ! path.  t_script * tau.
+    real(rp), intent(in) :: dBeta_df_c(*)    ! In case beta depends on mixing ratio
+    real(rp), intent(in) :: dBeta_df_f(*)    ! In case beta depends on mixing ratio
+    integer, intent(in) :: I_dBeta_df        ! If nonzero, which beta depends on mixing ratio
+    integer, intent(in) :: I_start           ! path_start_index + 1
+    integer, intent(in) :: tan_pt            ! Tangent point index in Del_Zeta
+    integer, intent(in) :: I_stop            ! path stop index
+
+    integer, intent(in) :: LD                ! Leading dimension of D_Delta_dF
+
+! Outputs
+
+    real(rp), intent(inout) :: d_delta_df(ld,*) ! path x sve.  derivative of
+      !              delta wrt mixing ratio state vector element. (K)
+      !              Initially set to zero by caller.
+    integer, intent(inout), target :: nz_d_delta_df(:,:)  ! Nonzeros in d_delta_df
+    integer, intent(inout) :: nnz_d_delta_df(:)           ! Column lengths in nz_delta_df
+    real(rp), intent(out) :: d2rad_df2(:,:)    ! second derivative of radiances wrt
+	                                       ! mixing ratio state vector element. (K)
+
+! Internals
+
+    integer(ip) :: AA, GA, I, II, III
+    integer(ip) :: i_begin
+    integer(ip) :: n_inds_q, n_inds_r
+    integer(ip) :: no_to_gl_q, no_to_gl_r
+    integer(ip) :: npc
+    integer(ip) :: sps_i, sps_j          ! species indices
+    integer(ip) :: sps_n
+    integer(ip) :: q, r                 ! state vector indices: sv_i, sv_j
+    integer(ip), target, dimension(1:size(inc_rad_path)) ::  all_inds_B_q,  all_inds_B_r
+    integer(ip), target, dimension(1:size(inc_rad_path)) :: more_inds_B_q, more_inds_B_r
+    integer(ip), pointer :: all_inds_q(:), all_inds_r(:)  ! all_inds => part of all_inds_B;
+                                         ! Indices on GL grid for stuff
+                                         ! used to make GL corrections
+    integer(ip), pointer :: inds_q(:), inds_r(:)      ! inds => part_of_nz_d_delta_df;
+                                         ! Indices on coarse path where do_calc.
+    integer(ip), pointer :: more_inds_q(:), more_inds_r(:) ! more_inds => part of more_inds_B;
+                                         ! Indices on the coarse path where GL
+                                         ! corrections get applied.
+
+    real(rp) :: singularity(1:size(inc_rad_path)) ! integrand on left edge of coarse
+                                         ! grid panel -- singular at tangent pt.
+    logical :: do_calc_q(1:size(inc_rad_path)) ! Flags on coarse path where do_calc_c
+                                         ! or (do_gl and any corresponding
+                                         ! do_calc_f).
+    logical :: do_calc_r(1:size(inc_rad_path)) ! Flags on coarse path where do_calc_c
+                                         ! or (do_gl and any corresponding
+                                         ! do_calc_f).
+
+! Begin code
+
+    ! d_delta_df is set to zero by the caller outside of all its loops.
+    ! We keep track of where we create nonzeros, and replace them by zeros
+    ! on the next call.  This is done because the vast majority of
+    ! d_delta_df elements are zero.
+
+    npc = size(indices_c)
+
+    sps_n = ubound(Grids_f%l_z,1)
+
+    do sps_i = 1, sps_n
+      do sps_j = 1, sps_n
+
+        do q = Grids_f%l_v(sps_i-1)+1, Grids_f%l_v(sps_i)
+	  do r = Grids_f%l_v(sps_j-1)+1, Grids_f%l_v(sps_j)
+            
+            d_delta_df(nz_d_delta_df(:nnz_d_delta_df(q),q),q) = 0.0
+	    nnz_d_delta_df(q) = 0
+			
+	    d_delta_df(nz_d_delta_df(:nnz_d_delta_df(r),r),r) = 0.0
+            nnz_d_delta_df(r) = 0
+            	
+            !
+            ! Skip the masked derivatives, according to the l2cf inputs
+            !
+            if ( ( .not. Grids_f%deriv_flags(q) ) .or. ( .not. Grids_f%deriv_flags(r) ) ) then
+              d2rad_df2(q,r) = 0.0
+              cycle
+            end if
+            	  
+            !
+            ! find where the non zeros are along the path (for q)
+            !
+            call get_do_calc_indexed ( size(do_gl), do_calc_f(:,q), indices_c, &
+              & gl_inds, do_gl, do_calc_q, n_inds_q, nz_d_delta_df(:,q) )
+            
+            nnz_d_delta_df(q) = n_inds_q
+            if ( n_inds_q > 0 ) then
+            
+              inds_q => nz_d_delta_df(1:n_inds_q,q)					  		  
+              
+              no_to_gl_q = count(do_gl(inds_q))			
+              
+              if ( no_to_gl_q > 0 ) then
+              
+              ! see if anything needs to be gl-d (for q)
+              
+                 all_inds_q =>  all_inds_B_q(1:no_to_gl_q)
+                more_inds_q => more_inds_B_q(1:no_to_gl_q)
+                
+                call get_inds ( do_gl, do_calc_q, more_inds_q, all_inds_q )
+              end if
+              
+              call get_d_delta_df( max_f, indices_c, gl_inds, del_zeta, Grids_f,   &
+                                 & beta_path_c, eta_zxp_f, sps_path,               &
+                                 & beta_path_f, del_s, ref_cor,                    &
+                                 & ds_dz_gw, inc_rad_path, dBeta_df_c, dBeta_df_f, &
+                                 & i_dBeta_df, LD, q,                              &
+                                 & d_delta_df(:,q) )
+              
+              !
+              ! find where the non zeros are along the path (for r)
+              !
+              call get_do_calc_indexed ( size(do_gl), do_calc_f(:,r), indices_c, &
+                & gl_inds, do_gl, do_calc_r, n_inds_r, nz_d_delta_df(:,r) )
+              
+              nnz_d_delta_df(r) = n_inds_r
+              if ( n_inds_r > 0 ) then
+              
+                inds_r => nz_d_delta_df(1:n_inds_r,r)
+                
+                no_to_gl_r = count(do_gl(inds_r))
+                		
+                if ( no_to_gl_r > 0 ) then
+                
+                ! see if anything needs to be gl-d (for r)
+                
+                   all_inds_r =>  all_inds_B_r(1:no_to_gl_r)
+                  more_inds_r => more_inds_B_r(1:no_to_gl_r)
+                  
+                  call get_inds ( do_gl, do_calc_r, more_inds_r, all_inds_r )
+                end if
+                
+                call get_d_delta_df( max_f, indices_c, gl_inds, del_zeta, Grids_f,   &
+                                   & beta_path_c, eta_zxp_f, sps_path,               &
+                                   & beta_path_f, del_s, ref_cor,                    &
+                                   & ds_dz_gw, inc_rad_path, dBeta_df_c, dBeta_df_f, &
+                                   & i_dBeta_df, LD, r,                              &
+                                   & d_delta_df(:,r) )
+                
+                ! i_begin = max(i_start,min(inds(1),i_stop))
+                
+                i_begin = max(i_start,min(max(inds_q(1),inds_r(1)),i_stop))
+                
+                call d2scrt_dx2 ( tan_pt, d_delta_df(:,q), d_delta_df(:,r), inc_rad_path, &
+                                &  i_begin, i_stop, d2rad_df2(q,r) )
+              
+              else
+                d2rad_df2(q,r) = 0.0
+              end if  ! if/else ( n_inds_r > 0 )
+            	  
+            else
+              d2rad_df2(q,:) = 0.0
+            end if  ! if/else ( n_inds_q > 0 )
+	    
+          end do ! sv_j
+
+        end do ! sv_i
+
+      end do ! sps_j
+
+    end do ! sps_i
+
+  end subroutine d2rad_tran_df2
+
+
+  !--------------------------------------------------  get_d_delta_df  -----
+  
+  
+  subroutine get_d_delta_df( max_f, indices_c, gl_inds, del_zeta, Grids_f,   &
+                           & beta_path_c, eta_zxp_f, sps_path,               &
+                           & beta_path_f, del_s, ref_cor,                    &
+                           & ds_dz_gw, inc_rad_path, dBeta_df_c, dBeta_df_f, &
+                           & i_dBeta_df, LD, q,                              &
+                           & d_delta_df )
+    
+    use GLNP, only: NG
+    use LOAD_SPS_DATA_M, ONLY: GRIDS_T
+    use MLSKinds, only: RP, IP
+    
+! Inputs
+    
+    integer, intent(in) :: Max_f            ! Leading dimension of Beta_Path_f
+    integer(ip), intent(in) :: indices_c(:) ! coarse grid indicies
+    integer(ip), intent(in) :: gl_inds(:)   ! Gauss-Legendre grid indices
+    real(rp), intent(in) :: del_zeta(:)     ! path -log(P) differences on the
+      !              main grid.  This is for the whole coarse path, not just
+      !              the part up to the black-out
+    type (Grids_T), intent(in) :: Grids_f    ! All the coordinates
+    real(rp), intent(in) :: beta_path_c(:,:) ! cross section for each species
+      !                                        on coarse grid.
+    real(rp), intent(in) :: eta_zxp_f(max_f,*)   ! representation basis function.
+    real(rp), intent(in) :: sps_path(:,:)    ! Path species function.
+    real(rp), intent(in) :: beta_path_f(max_f,*) ! cross section for each species
+      !                                        on gl grid.
+    real(rp), intent(in) :: ref_cor(:)       ! refracted to unrefracted path
+      !                                        length ratios.
+    real(rp), intent(in) :: del_s(:)         ! unrefracted path length.
+    real(rp), intent(in) :: ds_dz_gw(:)      ! path length wrt zeta derivative *
+      !              gw on the entire grid.  Only the gl_inds part is used.
+    real(rp), intent(in) :: inc_rad_path(:)  ! incremental radiance along the
+                                             ! path.  t_script * tau.
+    real(rp), intent(in) :: dBeta_df_c(*)    ! In case beta depends on mixing ratio
+    real(rp), intent(in) :: dBeta_df_f(*)    ! In case beta depends on mixing ratio
+    integer, intent(in) :: I_dBeta_df        ! If nonzero, which beta depends on mixing ratio
+    
+    integer, intent(in) :: LD                ! Leading dimension of D_Delta_dF
+    
+    integer, intent(in) :: q				 ! state vector element (sv_i)
+
+    ! Outputs
+    
+    real(rp), intent(inout) :: d_delta_df(ld) ! ld is path.  derivative of
+      !              delta wrt mixing ratio state vector element.
+    
+! Internals
+
+    integer(ip) :: AA, GA, I, II, III
+    integer(ip) :: n_inds, no_to_gl, sps_i
+    integer(ip), pointer :: all_inds(:)  ! all_inds => part of all_inds_B;
+                                         ! Indices on GL grid for stuff
+                                         ! used to make GL corrections
+    integer(ip), pointer :: inds(:)      ! inds => part_of_nz_d_delta_df;
+                                         ! Indices on coarse path where do_calc.
+    integer(ip), pointer :: more_inds(:) ! more_inds => part of more_inds_B;
+                                         ! Indices on the coarse path where GL
+                                         ! corrections get applied.
+
+    real(rp) :: singularity(1:size(inc_rad_path)) ! integrand on left edge of coarse
+                                         ! grid panel -- singular at tangent pt.
+
+! Begin code
+
+
+                if ( grids_f%lin_log(sps_i) ) then
+                ! sps_path is actually exp(mixing ratio) here
+
+                  if ( sps_i /= i_dBeta_df ) then ! don't want the test in the loop
+                    do i = 1, n_inds ! Don't trust the compiler to fuse loops
+                      ii = inds(i)
+                      iii = indices_c(ii)
+                      singularity(ii) = eta_zxp_f(iii,q) * sps_path(iii,sps_i) * &
+                                & beta_path_c(ii,sps_i)
+                      d_delta_df(ii) = singularity(ii) * del_s(ii)
+                    end do ! i
+                  else ! beta is a function of mixing ratio
+                    do i = 1, n_inds ! Don't trust the compiler to fuse loops
+                      ii = inds(i)
+                      iii = indices_c(ii)
+                      singularity(ii) = eta_zxp_f(iii,q) * sps_path(iii,sps_i) * &
+                                & ( beta_path_c(ii,sps_i) + dBeta_df_c(ii) )
+                      d_delta_df(ii) = singularity(ii) * del_s(ii)
+                    end do ! i
+                  end if
+
+      !{ Apply Gauss-Legendre quadrature to the panels indicated by
+      !  {\tt more\_inds}.  We remove a singularity (which actually only
+      !  occurs at the tangent point) by writing
+      !  $\int_{\zeta_i}^{\zeta_{i-1}} G(\zeta) \frac{\text{d}s}{\text{d}h}
+      !   \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta =
+      !  G(\zeta_i) \int_{\zeta_i}^{\zeta_{i-1}} \frac{\text{d}s}{\text{d}h}
+      !   \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta +
+      !  \int_{\zeta_i}^{\zeta_{i-1}} \left[ G(\zeta) - G(\zeta_i) \right]
+      !   \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
+      !   \text{d}\zeta$.  The first integral is easy -- it's just
+      !  $G(\zeta_i) (\zeta_{i-1}-\zeta_i)$.  Here, it is {\tt d\_delta\_df}.
+      !  In the second integral, $G(\zeta)$ is {\tt beta\_path\_f * eta\_zxp\_f *
+      !  sps\_path} -- which have already been evaluated at the appropriate
+      !  abscissae~-- and $G(\zeta_i)$ is {\tt singularity}.  The weights
+      !  are {\tt gw}.
+
+                  if ( sps_i /= i_dBeta_df ) then ! don't want the test in the loop
+                    do i = 1, no_to_gl
+                      aa = all_inds(i)
+                      ga = gl_inds(aa)
+                      ii = more_inds(i)
+                      d_delta_df(ii) = d_delta_df(ii) + &
+                        & del_zeta(ii) * &
+                        & sum( (eta_zxp_f(ga:ga+ng-1,q) * sps_path(ga:ga+ng-1,sps_i) &
+                             &  * beta_path_f(aa:aa+ng-1,sps_i) - &
+                             &  singularity(ii)) * ds_dz_gw(ga:ga+ng-1) )
+                    end do
+                  else ! beta is a function of mixing ratio
+                    do i = 1, no_to_gl
+                      aa = all_inds(i)
+                      ga = gl_inds(aa)
+                      ii = more_inds(i)
+                      d_delta_df(ii) = d_delta_df(ii) + &
+                        & del_zeta(ii) * &
+                        & sum( (eta_zxp_f(ga:ga+ng-1,q) * sps_path(ga:ga+ng-1,sps_i) &
+                             &  * ( beta_path_f(aa:aa+ng-1,sps_i) + dBeta_df_f(aa:aa+ng-1) ) &
+                             &  - singularity(ii)) * ds_dz_gw(ga:ga+ng-1) )
+                    end do
+                  end if
+
+                  ! Refraction correction
+                  d_delta_df(inds) = ref_cor(inds) * d_delta_df(inds) * &
+                                      & exp(-grids_f%values(q))
+
+                else
+
+                  if ( sps_i /= i_dBeta_df ) then ! don't want the test in the loop
+                    do i = 1, n_inds
+                      ii = inds(i)
+                      singularity(ii) = eta_zxp_f(indices_c(ii),q) &
+                                & * beta_path_c(ii,sps_i)
+                      d_delta_df(ii) = singularity(ii) * del_s(ii)
+                    end do ! i
+                  else
+                    do i = 1, n_inds
+                      ii = inds(i)
+                      iii = indices_c(ii)
+                      singularity(ii) = eta_zxp_f(indices_c(ii),q) &
+                                & * ( beta_path_c(ii,sps_i) + &
+                                &     sps_path(iii,sps_i) * dBeta_df_c(ii) )
+                      d_delta_df(ii) = singularity(ii) * del_s(ii)
+                    end do ! i
+                  end if
+
+      !{ Apply Gauss-Legendre quadrature to the panels indicated by
+      !  {\tt more\_inds}.  We remove a singularity (which actually only
+      !  occurs at the tangent point) by writing
+      !  $\int_{\zeta_i}^{\zeta_{i-1}} G(\zeta) \frac{\text{d}s}{\text{d}h}
+      !   \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta =
+      !  G(\zeta_i) \int_{\zeta_i}^{\zeta_{i-1}} \frac{\text{d}s}{\text{d}h}
+      !   \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta +
+      !  \int_{\zeta_i}^{\zeta_{i-1}} \left[ G(\zeta) - G(\zeta_i) \right]
+      !   \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
+      !   \text{d}\zeta$.  The first integral is easy -- it's just
+      !  $G(\zeta_i) (\zeta_{i-1}-\zeta_i)$.  Here, it is {\tt d\_delta\_df}.
+      !  In the second integral, $G(\zeta)$ is {\tt beta\_path\_f *
+      !  eta\_zxp\_f}~-- which have already been evaluated at the appropriate
+      !  abscissae~-- and $G(\zeta_i)$ is {\tt singularity}.  The weights
+      !  are {\tt gw}.
+
+                  if ( sps_i /= i_dBeta_df ) then ! don't want the test in the loop
+                    do i = 1, no_to_gl
+                      aa = all_inds(i)
+                      ga = gl_inds(aa)
+                      ii = more_inds(i)
+                      d_delta_df(ii) = d_delta_df(ii) + &
+                        & del_zeta(ii) * &
+                        & sum( (eta_zxp_f(ga:ga+ng-1,q) * beta_path_f(aa:aa+ng-1,sps_i) - &
+                             &  singularity(ii)) * ds_dz_gw(ga:ga+ng-1) )
+                    end do
+                  else
+                    do i = 1, no_to_gl
+                      aa = all_inds(i)
+                      ga = gl_inds(aa)
+                      ii = more_inds(i)
+                      d_delta_df(ii) = d_delta_df(ii) + &
+                        & del_zeta(ii) * &
+                        & sum( (eta_zxp_f(ga:ga+ng-1,q) &
+                             &  * ( beta_path_f(aa:aa+ng-1,sps_i) &
+                             &      + dBeta_df_f(aa:aa+ng-1) ) &
+                             &  - singularity(ii)) &
+                             & * ds_dz_gw(ga:ga+ng-1) )
+                    end do
+                  end if
+
+                  ! Refraction correction
+                  d_delta_df(inds) = ref_cor(inds) * d_delta_df(inds)
+
+                end if  ! if/else ( grids_f%lin_log(sps_i) )
+  
+  
+  end subroutine get_d_delta_df
+
   ! ------------------------------------------------  Get_Do_Calc  -----
   subroutine Get_Do_Calc ( Do_Calc_c, Do_Calc_f, Do_GL, Do_Calc, N_Inds, Inds )
 
@@ -1182,6 +1596,9 @@ contains
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.8  2010/06/09 22:04:14  yanovsky
+! Added d2Rad_tran_df2 and get_d_delta_df subroutines
+!
 ! Revision 2.7  2010/05/14 02:41:08  vsnyder
 ! Changed intent for [n]nz_d_delta_df from out to inout.  Replaced
 ! indices_c(ii) by iii at a place where iii == indices(ii)
