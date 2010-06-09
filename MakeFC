@@ -197,18 +197,24 @@ SHELL = /bin/sh
 # help--toolkit  -- prints how to set paths for the mandatory libraries
 # install        -- mv programs mlsl* from sub-subs to INSTALLDIR
 #                    also create shell scripts in INSTALLDIR for each program
+# install-all    -- build and install mlsl*, tools, libraries
+# install-cfm    -- build callable forward model library, move it to INSTALLDIR
+# install-fullcfm -- same as above for full, standalone version
 # install-ln     -- mv program mlsln from sub-subs to INSTALLDIR
 #                    also create shell script in INSTALLDIR for the program
 #                    where ln is one of {l1 l2 l3 l3d l3m nrt}
+# install-nrt    -- build near-real time executables, script, move to INSTALLDIR
 # makefile       -- allows you to summon this custom Makefile with shorter
 #                    "make" rather than laborious "make -f $(MakeFName)"
 # mostlyclean    -- deletes uniquely-named sub-sub-directories
+# tools          -- build and install programs in the list below
 # update         -- replaces customized Makefiles with latest versions
 #                    also recalculates dependenencies, removes orphaned .o, .mod
 #
 # The following targets refer to programs whose sources are in the 
 # util directory. You may or may not be interested in building and running them.
 # To build and install each enter "make prog-name" where prog-name is any of:
+# --- tools ---
 # chunktimes     
 # checkpvmup     
 # CondenseLeakLog
@@ -656,8 +662,19 @@ install:
 		;; \
 	esac ; \
 	done
+	@cp $(MLSBIN)/mlsnrt.sh $(INSTALLDIR)
 
 # install the mls programs from $(LEVELS) into $(INSTALLDIR)
+install-cfm:
+	@$(MAKE) -f $(MakeFName) cfm
+	cp cfm/$(MLSCONFG)/libcfm.a $(INSTALLDIR)
+	@echo "This cfm library needs other toolkit libraries to link properly"; \
+	echo "install-fullcfm to install stand-alone version"
+
+install-fullcfm:
+	@cd cfm; $(MAKE) -f $(MakeFName) libcfm_all.a
+	cp cfm/$(MLSCONFG)/libcfm_all.a $(INSTALLDIR)
+
 install-l1:
 	@$(MAKE) -f $(MakeFName) install LEVELS=l1
 
@@ -1162,6 +1179,8 @@ l3m: l3
 
 install: $(LEVELS)
 
+install-all: install tools install-cfm install-fullcfm
+
 update:
 
 # Make most the source-file tools in the util directory
@@ -1177,7 +1196,8 @@ tools: chunktimes checkpvmup compare dateconverter heconvert h5subset h5cat hl \
   firsthelp  ghostbuster help--brief help--convert help--depends help--fopts\
   help help--ghostbuster help--mlsconfigure help--Makefile help--platform\
   help--pvm help--reecho help--scripts help--toolkit \
-  install install-l1 install-l2 install-l3 install-l3d install-l3m install-nrt \
+  install install-all install-cfm install-fullcfm \
+  install-l1 install-l2 install-l3 install-l3d install-l3m install-nrt \
   internalcleanup internaldepends internalmftests internalsaymake \
   internaladd_copy internalreset_copy show_copy internalupdate levels l2q \
   makefile mostlyclean Spartacus $(SUBDIRS) subdirs\
@@ -1191,6 +1211,9 @@ tools: chunktimes checkpvmup compare dateconverter heconvert h5subset h5cat hl \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.122  2010/05/06 17:44:51  pwagner
+# Mie_Tables again builds correctly
+#
 # Revision 1.121  2010/04/13 20:31:40  pwagner
 # Can now build tellMasterToQuit
 #
