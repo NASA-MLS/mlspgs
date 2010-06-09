@@ -15,7 +15,7 @@ module SCRT_DN_M
 
   implicit NONE
   private
-  public :: SCRT, SCRT_PFA, DSCRT_DX, DSCRT_DT
+  public :: SCRT, SCRT_PFA, DSCRT_DX, DSCRT_DT, D2SCRT_DX2
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -257,6 +257,72 @@ contains
 
   end subroutine DSCRT_DX
 
+
+!------------------------------------------------------  D2SCRT_DX2  -----
+! Compute the scalarized condensed radiative transfer second derivatives,
+! without derivatives of the differential Temperatures w.r.t. species.
+
+  subroutine D2SCRT_DX2 ( TAN_PT, D_DELTA_DX_q, D_DELTA_DX_r, INC_RAD_PATH, I_START, I_END, D2RAD_DX2 )
+    use MLSKinds, only: IP, RP
+
+!{ $\frac{ \partial^2 I(x) }{ \partial f_q^k \partial f_{\tilde{q}}^{\tilde{k}} } = 
+! \sum_{i=1}^{2N} \triangle B_i W_{i, q}^{k} W_{i, \tilde{q}}^{\tilde{k}} \, \tau_i$
+
+! Inputs
+
+
+    integer, intent(in) :: Tan_pt            ! Tangent point index in inc_rad_path
+    real(rp), intent(in) :: d_delta_dx_q(:)  ! path opacity derivatives wrt x_q
+    real(rp), intent(in) :: d_delta_dx_r(:)  ! path opacity derivatives wrt x_r
+    real(rp), intent(in) :: inc_rad_path(:)  ! incremental radiance along the
+                                             ! path.  t_script * tau.
+
+    integer(ip), intent(in) :: i_start    ! where non-zeros on the path begin
+    integer(ip), intent(in) :: i_end      ! where non-zeros on path end
+
+! Output
+
+    real(rp), intent(out) :: d2rad_dx2      ! radiance derivative wrt x
+
+! internals
+
+    integer(ip) :: i, n_path
+    real(rp) :: wq
+    real(rp) :: wr
+
+    d2rad_dx2 = 0.0_rp
+    wq = 0.0_rp
+    wr = 0.0_rp
+    n_path = size(inc_rad_path)
+
+!{ $W_{i,q} = \sum_{j=2}^i \frac{\partial \Delta \delta_{j \rightarrow j - 1}}
+!                           {\partial x_q}$,
+!  where the derivatives are given by d\_delta\_dx\_q and d\_delta\_dx\_r.
+
+    do i = max(2,i_start), min(i_end,tan_pt)
+      wq = wq + d_delta_dx_q(i)
+      wr = wr + d_delta_dx_r(i)
+      d2rad_dx2 = d2rad_dx2 + inc_rad_path(i) * wq * wr
+    end do
+
+    if ( i_end <= tan_pt ) return
+
+! Tangent point or bounce off the earth's surface
+
+    if ( i_start <= tan_pt ) d2rad_dx2 = d2rad_dx2 + inc_rad_path(tan_pt+1) * wq * wr
+
+! Same as above, but don't add in the zero-emission layer at the 
+! tangent point or earth's surface
+
+    do i = max(i_start,tan_pt+2) , min(n_path,i_end)
+      wq = wq + d_delta_dx_q(i-1)
+      wr = wr + d_delta_dx_r(i-1)
+      d2rad_dx2 = d2rad_dx2 + inc_rad_path(i) * wq * wr
+    end do
+
+  end subroutine D2SCRT_DX2
+
+
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -269,6 +335,9 @@ contains
 
 end module SCRT_DN_M
 ! $Log$
+! Revision 2.15  2010/03/09 00:17:39  vsnyder
+! Repair TeXnicalities
+!
 ! Revision 2.14  2009/06/23 18:26:11  pwagner
 ! Prevent Intel from optimizing ident string away
 !
