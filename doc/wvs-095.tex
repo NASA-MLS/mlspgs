@@ -10,8 +10,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-095r4}
-\newcommand{\docdate}{8 June 2010}
+\newcommand{\docname}{wvs-095r6}
+\newcommand{\docdate}{11 June 2010}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -152,7 +152,8 @@ $\!\IF{I_j}$ at those frequencies, where the function $\!\IF{\cdot}$
 interpolates from $\{\nu_j\}$ to $\{\nu_{nc}\}$.
 
 Assuming rectangular quadrature (Simpson's quadrature is actually used),
-when frequency averaging is carried out, the radiance in channel $c$ is
+when frequency averaging is carried out over the $n_c$ frequencies in
+channel $c$, the radiance in channel $c$ is
 
 \begin{equation}\label{four}
 I_c = \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc} \IF{I_j}
@@ -250,9 +251,8 @@ on the integration path.
 Assume linear interpolation coefficients $\eta^k_{ml}$ and $\eta^T_{\mu
 l}$ to interpolate the $k^{\text{th}}$ mixing ratio from points $m$ and
 temperature from points $\mu$ to $l$, respectively.  Then $f^k_l = \sum_m
-\eta^k_{ml} f^k_m$ and $T_l = \sum_\mu \eta^T_{\mu l} T_\mu$;
-$m$ and $\mu$ are simply indices that count the points in the grid, not
-co\"{o}rdinates.
+\eta^k_{ml} f^k_m$ and $T_l = \sum_\mu \eta^T_{\mu l} T_\mu$; $m$ and
+$\mu$ are indices in the state vector, which is a two-dimensional quantity.
 \end{minipage}
 \hspace*{0.1in}
 \parbox{1.5in}{
@@ -287,22 +287,86 @@ $\MT_{ij} = \exp(-\delta_{ij}) =
 in which $i$ and $l$ index points on the integration path, and $m$ and
 $\mu$ index points in the solution grids.
 
-From Equation (\ref{nine}),
+From Equation (\ref{three})
 
 \begin{equation}\begin{split}\label{ten}
+\frac{\partial \omega_{0_{ij}}}{\partial f^k_i} =\,&
+ \frac1{\beta_{e_{ij}}}   \frac{\partial \beta_{{c\_s}_i}}{\partial f^k_i} -
+ \frac{\beta_{{c\_s}_i}}{\beta_{e_{ij}}^2}
+  \frac{\partial \beta_{e_{ij}}}{\partial f^k_i}
+=
+ \frac1{\beta_{e_{ij}}}   \frac{\partial \beta_{{c\_s}_i}}{\partial f^k_i} -
+ \frac{\beta_{{c\_s}_i}}{\beta_{e_{ij}}^2}
+                   \left( \frac{\partial \beta_{{c\_e}_i}}{\partial f^k_i} +
+                          \frac{\partial \alpha_{\text{gas}_{ij}}}{\partial f^k_i}
+                   \right) \\
+=\,&
+ \frac1{\beta_{e_{ij}}}   \frac{\partial \beta_{{c\_s}_i}}{\partial f^k_i} -
+ \frac{\beta_{{c\_s}_i}}{\beta_{e_{ij}}^2}
+                   \left( \frac{\partial \beta_{{c\_e}_i}}{\partial f^k_i} +
+                          \beta^k_{ij}
+                   \right) \text{ and }
+ \frac{\partial \omega_{0_{ij}}}{\partial f^k_m} =
+ \sum_{l=1}^{n_p} \eta^k_{ml} \frac{\partial \omega_{0_{ij}}}{\partial f^k_i}\,,
+\\
+\frac{\partial \omega_{0_{ij}}}{\partial T_i} =\,&
+ \frac1{\beta_{e_{ij}}}   \frac{\partial \beta_{{c\_s}_i}}{\partial T_i} -
+ \frac{\beta_{{c\_s}_i}}{\beta_{e_{ij}}^2}
+                   \left( \frac{\partial \beta_{{c\_e}_i}}{\partial T_i} -
+                          \frac{\partial\alpha_{\text{gas}_{ij}}}{\partial T_i}
+                   \right)\\
+=\,&
+ \frac1{\beta_{e_{ij}}}   \frac{\partial \beta_{{c\_s}_i}}{\partial T_i} -
+ \frac{\beta_{{c\_s}_i}}{\beta_{e_{ij}}^2}
+                   \left( \frac{\partial \beta_{{c\_e}_i}}{\partial T_i} -
+                          \frac{\partial\alpha_{\text{gas}_{ij}}}{\partial T_i}
+                   \right) \text{ and }
+ \frac{\partial \omega_{0_{ij}}}{\partial T_\mu} =
+   \sum_{l=1}^{n_p} \eta^T_{\mu i}
+    \frac{\partial \omega_{0_{ij}}}{\partial T_i}
+ \,.
+\end{split}\end{equation}
+
+From Equation (\ref{nine}),
+
+\begin{equation}\begin{split}\label{eleven}
 \frac{\partial \MT_{ij}}{\partial f^k_m} =\,&
- - \MT_{ij} \frac{\partial \delta^k_{ij}}{\partial f^k_l}
-            \frac{\partial f^k_l}{\partial f^k_m} =
- - \MT_{ij} \sum_{l=1}^{n_p} \eta^k_{ml} \beta^k_{lj} \Delta s_l
+ - \MT_{ij} \frac{\partial \delta^k_{ij}}{\partial f^k_m}
+ \text{ where }
+  \frac{\partial \delta^k_{ij}}{\partial f^k_m} = 
+    \sum_{l=1}^i \frac{\partial \delta^k_{ij}}{\partial f^k_l}
+                 \frac{\partial f^k_l}{\partial f^k_m} =
+    \sum_{l=1}^i \eta^k_{ml} \beta^k_{lj} \Delta s_l
  \text{ and }\\
 \frac{\partial \MT_{ij}}{\partial T_\mu} =\,&
- - \MT_{ij} \frac{\partial \delta_{ij}}{\partial T_l}
-            \frac{\partial T_l}{\partial T_\mu} =
- - \MT_{ij} \sum_l \eta^T_{\mu l}
-    \frac{\partial \alpha_{lj}}{\partial T_l} \Delta s_l =
- - \MT_{ij} \sum_{k,l} f^k_l \eta^T_{\mu l}
-    \frac{\partial \beta^k_{lj}}{\partial T_l} \Delta s_l
+ - \MT_{ij} \frac{\partial \delta_{ij}}{\partial T_\mu}
+  \text{ where }
+    \frac{\partial \delta_{ij}}{\partial T_\mu} =
+     \sum_{l=1}^i \frac{\partial T_l}{\partial T_\mu}
+     \frac{\partial \alpha_{lj}}{\partial T_l} \Delta s_l =
+    \sum_{l=1}^i \eta^T_{\mu l}
+      \Delta s_l
+      \sum_{k=1}^{n_s} f^k_l \frac{\partial \beta^k_{lj}}{\partial T_l}
 \,.
+\end{split}\end{equation}
+
+From Equations (\ref{six}), (\ref{ten}) and (\ref{eleven}),
+
+\begin{equation}\begin{split}\label{twelve}
+\frac{\partial \hMT_{i\pm1,c}}{\partial f^k_m} =\,&
+ \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc}
+  \IF{\MT_{ij}
+    \left[
+       \frac{\partial \omega_{0_{i\pm1,j}}} {\partial f^k_m} -
+        \omega_{0_{i\pm1,j}} \frac{\partial \delta^k_{ij}}{\partial f^k_m}
+    \right]}\text{ and}\\
+\frac{\partial \hMT_{i\pm1,c}}{\partial T_\mu} =\,&
+ \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc}
+  \IF{\MT_{ij}
+     \left[
+       \frac{\partial \omega_{0_{i\pm1,j}}}{\partial T_\mu} -
+         \omega_{0_{i\pm1,j}}\frac{\partial \delta_{ij}}{\partial T_\mu}
+      \right]} .
 \end{split}\end{equation}
 
 The full forward model operates by integrating along the path first,
@@ -310,68 +374,6 @@ producing $I_j$ and derivatives for frequency $\nu_j$.  After doing this
 for all $\{\nu_j\}$, it interpolates $I_j$ to $\!\IF{I_j}$ and does the
 frequency averaging, and similarly for derivatives.  That is, the order
 of summations is as in Equation (\ref{four}).
-
-From Equations (\ref{three}), (\ref{six}) and (\ref{ten}),
-
-\begin{equation}\begin{split}\label{eleven}
-\frac{\partial \hMT_{i\pm1,c}}{\partial f^k_m} =\,&
- \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc}
-  \IF{\MT_{ij}
-   \sum_{l=1}^{n_p} \eta^k_{ml}
-    \left[
-        \frac{\partial \omega_{0_{i\pm1,j}}} {\partial f^k_l} -
-         \Delta s_l \omega_{0_{i\pm1,j}}
-          \beta^k_{lj}
-    \right]}\text{ and}\\
-\frac{\partial \hMT_{i\pm1,c}}{\partial T_\mu} =\,&
- \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc}
-  \IF{\MT_{ij}
-   \sum_{l=1}^{n_p} \eta^T_{\mu l}
-     \left[
-        \frac{\partial \omega_{0_{i\pm1,j}}}{\partial T_l} -
-         \Delta s_l \omega_{0_{i\pm1,j}}
-           \sum_k f^k_l \frac{\partial \beta^k_{lj}}{\partial T_l}
-      \right]} .
-\end{split}\end{equation}
-
-From Equation (\ref{three})
-
-\begin{equation}\begin{split}\label{twelve}
-\frac{\partial \omega_{0_{ij}}}{\partial f^k_l} =\,&
- \frac1{\beta_{e_{ij}}}   \frac{\partial \beta_{{c\_s}_i}}{\partial f^k_l} -
- \frac1{\beta_{e_{ij}}^2} \frac{\partial \beta_{e_{ij}}}{\partial f^k_l}
-=
- \frac1{\beta_{e_{ij}}}   \frac{\partial \beta_{{c\_s}_i}}{\partial f^k_l} -
- \frac1{\beta_{e_{ij}}^2}
-                   \left( \frac{\partial \beta_{{c\_e}_i}}{\partial f^k_l} +
-                          \frac{\partial \alpha_{\text{gas}_{ij}}}{\partial f^k_l}
-                   \right) \\
-=\,&
- \frac1{\beta_{e_{lj}}}   \frac{\partial \beta_{{c\_s}_l}}{\partial f^k_l} -
- \frac1{\beta_{e_{lj}}^2}
-                   \left( \frac{\partial \beta_{{c\_e}_l}}{\partial f^k_l} +
-                          \beta^k_{lj}
-                   \right) \text{ and }
- \frac{\partial \omega_{0_{ij}}}{\partial f^k_m} =
- \sum_{l=1}^{n_p} \eta^k_{ml} \frac{\partial \omega_{0_{ij}}}{\partial f^k_l}\,,
-\\
-\frac{\partial \omega_{0_{ij}}}{\partial T_l} =\,&
- \frac1{\beta_{e_{ij}}}   \frac{\partial \beta_{{c\_s}_i}}{\partial T_l} -
- \frac1{\beta_{e_{ij}}^2}
-                   \left( \frac{\partial \beta_{{c\_e}_i}}{\partial T_l} -
-                          \frac{\partial\alpha_{\text{gas}_{ij}}}{\partial T_l}
-                   \right)\\
-=\,&
- \frac1{\beta_{e_{lj}}}   \frac{\partial \beta_{{c\_s}_l}}{\partial T_l} -
- \frac1{\beta_{e_{lj}}^2}
-                   \left( \frac{\partial \beta_{{c\_e}_l}}{\partial T_l} -
-                          \frac{\partial\alpha_{\text{gas}_{lj}}}{\partial T_l}
-                   \right) \text{ and }
- \frac{\partial \omega_{0_{ij}}}{\partial T_\mu} =
-   \sum_{l=1}^{n_p} \eta^T_{\mu l}
-    \frac{\partial \omega_{0_{ij}}}{\partial T_l}
- \,.
-\end{split}\end{equation}
 
 $\alpha_\text{gas}$ depends upon temperature and atmospheric constituent
 mixing ratios along the path, and frequency.
@@ -388,7 +390,7 @@ Jacobian for every element in the state vector upon which $\TS$ depends,
 not just those near the path.
 
 There are several possibilities to perform the frequency averaging as
-described in Equation (\ref{eleven}).  One method is to create
+described in Equation (\ref{twelve}).  One method is to create
 three-dimensional arrays to store $\left[ \frac{\partial
 \omega_{0_{i\pm1,j}}}{\partial f^k_l} - \omega_{0_{i\pm1,j}}
 \frac{\partial \delta_{ij}}{\partial f^k_l} \right] \MT_{ij}$ and
@@ -401,15 +403,15 @@ impractical.
 
 The forward model already stores $\eta^k_{il}$ and $f^k_l$, and
 $\beta^k_{lj}$, $\frac{\partial \beta^k_{lj}}{\partial T_l}$ and
-$\MT_{ij}$ for each frequency.  From Equation (\ref{twelve}),
+$\MT_{ij}$ for each frequency.  From Equation (\ref{ten}),
 $\frac{\partial \omega_{0_{ij}}}{\partial f^k_l}$ is only nonzero when $l
-= i$. From Equations (\ref{three}) and (\ref{twelve}), $\omega_{0_{ij}}$ and
+= i$. From Equations (\ref{three}) and (\ref{ten}), $\omega_{0_{ij}}$ and
 $\frac{\partial \omega_{0_{ij}}}{\partial f^k_l}$ depend upon quantities
 the forward model already computes, plus $\beta_{c\_s_i}$,
 $\beta_{c\_e_i}$ and their derivatives with respect to temperature and
 IWC.
 
-From Equation (\ref{ten}), $\frac{\partial \delta_{ij}}{\partial
+From Equation (\ref{eleven}), $\frac{\partial \delta_{ij}}{\partial
 f^k_l} \MT_{ij}$ and $\frac{\partial \delta_{ij}}{\partial T_i} \MT_{ij}$
 are outer products $\eta^k_{il} \beta^k_{lj} \MT_{ij}$ and $\eta^k_{il} f^k_l
 \frac{\partial\beta^k_{lj}}{\partial T_l} \MT_{ij}$, which are all
@@ -508,7 +510,7 @@ invoked, compute $h_{jc}$ from the pointing frequency grid and the filter
 function's frequency grids for all channels.  During path integration in
 {\tt Frequency\_Loop}, evaluate Equation (\ref{fourteen}) to produce the
 channel-averaged quantity $\hMT_{i\pm1,c}$.  This method also applies to
-evaluating Equation (\ref{eleven}).
+evaluating Equation (\ref{twelve}).
 
 Because of the use of linear interpolation between $\{\nu_j\}$ and
 $\{\nu_{nc}\}$, this scheme is somewhat less accurate than the first
@@ -549,6 +551,9 @@ i$ this could be halved at some expense to clarity of the software.
 % $Id$
 
 % $Log$
+% Revision 1.5  2010/06/08 23:35:56  vsnyder
+% Corrected Equations 10-11
+%
 % Revision 1.4  2010/06/04 23:17:05  vsnyder
 % Correct date, change file name of graphic
 %
