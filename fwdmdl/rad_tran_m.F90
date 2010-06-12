@@ -1068,75 +1068,38 @@ contains
 
       do sv_i = Grids_f%l_v(sps_i-1)+1, Grids_f%l_v(sps_i)
 
-        d_delta_dx = 0.0_rp
-
 ! find where the non zeros are along the path
 
         call get_do_calc_indexed ( size(do_gl), do_calc_f(:,sv_i), indices_c, &
           & gl_inds, do_gl, do_calc, n_inds, inds_B )
 
-        if ( n_inds > 0 ) then
+        d_delta_dx = 0.0_rp
 
-          inds => inds_B(1:n_inds)
+        if ( n_inds == 0 ) then
+           drad_dx(sv_i) = 0.0
+           cycle
+        end if
 
-          do i = 1, n_inds ! Don't trust the compiler to fuse loops
-            ii = inds(i)
-            iii = indices_c(ii)
-            singularity(ii) = dbeta_path_c(ii,sps_i) &
-                            &  * eta_zxp(iii,sv_i) * sps_path(iii,sps_m)
-            d_delta_dx(ii) = singularity(ii) * del_s(ii)
-          end do ! i
 
-          no_to_gl = count(do_gl(inds))
-          if ( no_to_gl > 0 ) then
+        inds => inds_B(1:n_inds)
+
+        no_to_gl = count(do_gl(inds))
+
+        all_inds => all_inds_B(1:no_to_gl)
+        more_inds => more_inds_B(1:no_to_gl)
 
 ! see if anything needs to be gl-d
+        if ( no_to_gl > 0 ) &
+          & call get_inds ( do_gl, do_calc, more_inds, all_inds )
 
-            all_inds => all_inds_B(1:no_to_gl)
-            more_inds => more_inds_B(1:no_to_gl)
-
-            call get_inds ( do_gl, do_calc, more_inds, all_inds )
-
-      !{ Apply Gauss-Legendre quadrature to the panels indicated by
-      !  {\tt more\_inds}.  We remove a singularity (which actually only
-      !  occurs at the tangent point) by writing
-      !  $\int_{\zeta_i}^{\zeta_{i-1}} G(\zeta) \frac{\text{d}s}{\text{d}h}
-      !   \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta =
-      !  G(\zeta_i) \int_{\zeta_i}^{\zeta_{i-1}} \frac{\text{d}s}{\text{d}h}
-      !   \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta +
-      !  \int_{\zeta_i}^{\zeta_{i-1}} \left[ G(\zeta) - G(\zeta_i) \right]
-      !   \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
-      !   \text{d}\zeta$.  The first integral is easy -- it's just
-      !  $G(\zeta_i) (\zeta_{i-1}-\zeta_i)$.  Here, it is {\tt d\_delta\_dx}.
-      !  In the second integral, $G(\zeta)$ is {\tt dbeta\_path\_f *
-      !  eta\_zxp\_f\_f * sps\_path\_f}~-- which have already been evaluated at
-      !  the appropriate abscissae~-- and $G(\zeta_i)$ is {\tt
-      !  singularity}.  The weights are {\tt gw}.
-
-            do i = 1, no_to_gl
-              aa = all_inds(i)
-              ga = gl_inds(aa)
-              ii = more_inds(i)
-              d_delta_dx(ii) = d_delta_dx(ii) + &
-                & del_zeta(ii) * &
-                & sum( (dbeta_path_f(aa:aa+ng-1,sps_i) &
-                     &   * eta_zxp(ga:ga+ng-1,sv_i) * sps_path(ga:ga+ng-1,sps_m) - &
-                     &  singularity(ii)) * ds_dz_gw(ga:ga+ng-1) )
-            end do
-
-          end if
-
-          ! Refraction correction
-          d_delta_dx(inds) = ref_cor(inds) * d_delta_dx(inds)
-
-          i_start = min(inds(1),i_stop)
-
-          call dscrt_dx ( tan_pt, d_delta_dx, inc_rad_path, i_start, i_stop, &
-                       &  drad_dx(sv_i) )
-
-        else
-          drad_dx(sv_i) = 0.0
-        end if
+        ! We're not really computing d_delta_df for lin-log mixing
+        ! ratio.  It turns out that get_d_delta_df_linlog does the
+        ! correct computation if we substitute dbeta_path for beta_path.
+        call get_d_delta_df_linlog ( inds, indices_c, gl_inds, &
+          & all_inds, more_inds, eta_zxp(:,sv_i), sps_path(:,sps_m), &
+          & dbeta_path_c(:,sps_i), dbeta_path_f(:,sps_i), del_s, del_zeta, &
+          & ds_dz_gw, ref_cor, grids_f%values(sv_i), singularity, &
+          & d_delta_dx )
 
       end do
 
@@ -1663,6 +1626,10 @@ contains
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.11  2010/06/12 01:27:59  vsnyder
+! Use get_d_delta_df_linlog in drad_tran_dx because it does the right
+! calculation if it's given dbeta_df instead of beta.
+!
 ! Revision 2.10  2010/06/11 02:20:46  vsnyder
 ! Integrated Igor's latest changes with mine
 !
