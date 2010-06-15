@@ -14,10 +14,10 @@ module cfm_eo_m  ! This module is to help cfm_mlssetup subroutine.
    private :: not_used_here
 !---------------------------------------------------------------------------
 
-    real(r8), dimension(4), parameter :: velev32L = (/0.0200, 0.0215, 0.0186, 0.0172/)
-    real(r8), dimension(4), parameter :: velev33L = (/-0.0002, 0.0003, 0.0003, 0.0001/)
-    real(r8), dimension(4), parameter :: velev34L = (/0.0057, 0.0057, 0.0060, 0.0063/)
-    real(r8), dimension(4), parameter :: velev33U = (/0.0001, 0.0002, -0.0000, -0.0001/)
+    real(r8), dimension(4), parameter :: velev32L = (/0.0200_r8, 0.0215_r8, 0.0186_r8, 0.0172_r8/)
+    real(r8), dimension(4), parameter :: velev33L = (/-0.0002_r8, 0.0003_r8, 0.0003_r8, 0.0001_r8/)
+    real(r8), dimension(4), parameter :: velev34L = (/0.0057_r8, 0.0057_r8, 0.0060_r8, 0.0063_r8/)
+    real(r8), dimension(4), parameter :: velev33U = (/0.0001_r8, 0.0002_r8, -0.0000_r8, -0.0001_r8/)
 
     integer :: elev1L = 0
     integer :: elev2L = 0
@@ -352,7 +352,7 @@ module cfm_eo_m  ! This module is to help cfm_mlssetup subroutine.
     end subroutine
 
     subroutine FillElevationOffsets (stateVectorExtra)
-       use CFM_Vector_m, only: Vector_T, VectorValue_T
+       use CFM_Vector_m, only: Vector_T, VectorValue_T, Dump
        use CFM_Vector_m, only: GetVectorQtyByTemplateIndex
        use CFM_Fill_M, only: SpreadFillVectorQuantity, ExplicitFillVectorQuantity
 
@@ -374,6 +374,8 @@ module cfm_eo_m  ! This module is to help cfm_mlssetup subroutine.
        call SpreadFillVectorQuantity (quantity, 0.0144_r8)
        quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev7L)
        call SpreadFillVectorQuantity (quantity, -0.0002_r8)
+       !print *, "Elevation offset 7L"
+       !call dump(quantity, details=3)
        quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev8L)
        call SpreadFillVectorQuantity (quantity, -0.0000_r8)
        quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev9L)
@@ -442,6 +444,8 @@ module cfm_eo_m  ! This module is to help cfm_mlssetup subroutine.
        call SpreadFillVectorQuantity (quantity, 0.0130_r8)
        quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev7U)
        call SpreadFillVectorQuantity (quantity, 0.0001_r8)
+       !print *, "Elevation offset 7U"
+       !call dump(quantity, details=3)
        quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev8U)
        call SpreadFillVectorQuantity (quantity, 0.0003_r8)
        quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev9U)
