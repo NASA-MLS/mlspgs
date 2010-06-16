@@ -43,7 +43,7 @@ module cfm          ! callable forward model
                          DestroyVectorInfo, GetVectorQtyByTemplateIndex
    use CFM_Fill_m, only: ExplicitFillVectorQuantity, &
                          FillVectorQuantityFromL1B
-   use CFM_FWDMDL, only: ForwardModel, FORWARDMODELSTATUS_T, &
+   use CFM_FWDMDL_M, only: ForwardModel, FORWARDMODELSTATUS_T, &
                          ForwardModelConfig_T
    use MLSCommon, only: MLSFile_T, r8
    use Init_tables_module, only: l_logarithmic, l_zeta, l_temperature, &
@@ -79,3 +79,6 @@ contains
 end module cfm
 
 ! $Log$
+! Revision 1.1  2010/06/03 23:31:57  pwagner
+! First commit
+!
