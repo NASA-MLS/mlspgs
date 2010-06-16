@@ -1,4 +1,4 @@
-module CFM_FWDMDL
+module CFM_FWDMDL_M
    use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
    use ForwardModelConfig, only: ForwardModelConfig_T
 
@@ -21,7 +21,7 @@ module CFM_FWDMDL
       ! the chunk carries the MAF to compute over
       type(MLSChunk_T), intent(in) :: fakeChunk
       ! Configuration information for the forward model
-      type(ForwardModelConfig_T), intent(inout) :: CONFIG
+      type(ForwardModelConfig_T), dimension(:), intent(inout) :: CONFIG
       ! Atmospheric input
       type(vector_T), intent(in) ::  FWDMODELIN, FwdModelExtra
       ! This is the output vector where radiances are stored
@@ -31,15 +31,18 @@ module CFM_FWDMDL
       type(matrix_T), intent(inout), optional :: JACOBIAN
 
       type(forwardModelStatus_t) :: FMSTAT ! Reverse comm. stuff
+      integer :: i
 
-      fmStat%maf = 0
       fmStat%newScanHydros = .true.
 
-      ! Loop over MAFs
-      do while (fmStat%maf < fakeChunk%lastMAFIndex-fakeChunk%firstMAFIndex+1)
-         fmStat%maf = fmStat%maf + 1
-         call ForwardModelOrig (config, fwdmodelIn, fwdModelExtra, fwdModelOut, &
-                                fmStat, Jacobian)
+      do i=1, size(config)
+         fmStat%maf = 0
+         ! Loop over MAFs
+         do while (fmStat%maf < fakeChunk%lastMAFIndex-fakeChunk%firstMAFIndex+1)
+            fmStat%maf = fmStat%maf + 1
+            call ForwardModelOrig (config(i), fwdmodelIn, fwdModelExtra, fwdModelOut, &
+                                   fmStat, Jacobian)
+         end do
       end do
 
    end subroutine

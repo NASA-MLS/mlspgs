@@ -22,10 +22,11 @@ module Input
    '/data/emls/l2cal/PFA_R1B_FS-04.h5                                                                   ', &
    '/data/emls/l2cal/PFA_R1A_FS-04.h5                                                                   ', &
    '/data/emls/l2cal/PFA_DACS_FS-04.h5                                                                  ' /)
-   character(len=100), dimension(2) :: &
+   character(len=100), dimension(3) :: &
    l2pc = (/ &
    '/data/emls/l2cal/l2pc_30H6/MLS-Aura_L2Cal-L2PC-band7-LATSCALARHIRESO3HR_v3-00-HO-06_m02.h5          ', &
-   '/data/emls/l2cal/l2pc_30H6/MLS-Aura_L2Cal-L2PC-band2-LATSCALARHIRES_v3-00-HO-06_m02.h5              '/)
+   '/data/emls/l2cal/l2pc_30H6/MLS-Aura_L2Cal-L2PC-band2-LATSCALARHIRES_v3-00-HO-06_m02.h5              ', &
+   '/data/emls/l2cal/l2pc_30H6/MLS-Aura_L2Cal-L2PC-band8-LATSCALARHIRESO3HR_v3-00-HO-06_m02.h5          '/)
    real(r8), dimension(37) :: &
    TemperatureInput= (/ 2.9128e+02_r8,  2.9149e+02_r8,  2.8439e+02_r8,  2.7649e+02_r8,  2.6942e+02_r8, &
                 2.5727e+02_r8,  2.4453e+02_r8,  2.2941e+02_r8,  2.1723e+02_r8,  2.1070e+02_r8, &
@@ -35,15 +36,6 @@ module Input
                 2.4973e+02_r8,  2.5171e+02_r8,  2.6056e+02_r8,  2.7136e+02_r8,  2.6748e+02_r8, &
                 1.7861e+02_r8,  1.6997e+02_r8,  1.8009e+02_r8,  2.0964e+02_r8,  2.8234e+02_r8, &
                 3.8117e+02_r8,  3.8117e+02_r8 /)
-   real(r8), dimension(37) :: &
-   GPHInput        = (/ 3.0347e+02_r8,  1.9401e+03_r8,  3.5574e+03_r8,  5.1326e+03_r8,  6.6657e+03_r8, &
-                8.1449e+03_r8,  9.5541e+03_r8,  1.0885e+04_r8,  1.2139e+04_r8,  1.3341e+04_r8, &
-                1.4513e+04_r8,  1.5659e+04_r8,  1.6776e+04_r8,  1.7854e+04_r8,  1.8920e+04_r8, &
-                2.0024e+04_r8,  2.1181e+04_r8,  2.2362e+04_r8,  2.3546e+04_r8,  2.4752e+04_r8, &
-                2.5985e+04_r8,  2.8483e+04_r8,  3.1000e+04_r8,  3.3577e+04_r8,  3.6281e+04_r8, &
-                3.9070e+04_r8,  4.1887e+04_r8,  4.4764e+04_r8,  4.7752e+04_r8,  5.0778e+04_r8, &
-                5.3718e+04_r8,  5.6560e+04_r8,  5.9348e+04_r8,  6.2052e+04_r8,  6.4649e+04_r8, &
-                1.1777e+05_r8,  1.2727e+05_r8 /)
    real(r8), dimension(37) :: &
    H2OInput        = (/ 2.3632e-02_r8,  2.9074e-02_r8,  2.0823e-02_r8,  1.3613e-02_r8,  9.2022e-03_r8, &
                 3.7962e-03_r8,  3.1691e-03_r8,  3.1161e-04_r8,  3.4557e-05_r8,  1.8799e-05_r8, &
