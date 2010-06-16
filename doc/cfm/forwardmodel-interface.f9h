@@ -6,8 +6,8 @@ subroutine ForwardModel (chunk,  fmConfig, stateVector, stateVectorExtra, &
    !Object carrying the MAFs to be computed over
    type(MLSChunk_T), intent(in) :: chunk
 
-   !An object containing the settings for the forward model.
-   type(ForwardModelConfig_T), intent(inout) :: fmConfig
+   !An array of objects containing the settings for the forward model.
+   type(ForwardModelConfig_T), dimension(:), intent(inout) :: fmConfig
    
    !A vector describing an atmospheric state.
    type(vector_T), intent(in) ::  stateVector

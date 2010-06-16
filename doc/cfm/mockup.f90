@@ -31,7 +31,7 @@ program mockup
                          DestroyVectorInfo, GetVectorQtyByTemplateIndex
    use CFM_Fill_m, only: ExplicitFillVectorQuantity, &
                          FillVectorQuantityFromL1B
-   use CFM_FWDMDL, only: ForwardModel, FORWARDMODELSTATUS_T, &
+   use CFM_FWDMDL_M, only: ForwardModel, FORWARDMODELSTATUS_T, &
                          ForwardModelConfig_T
    use MLSCommon, only: MLSFile_T, r8
    use Init_tables_module, only: l_logarithmic, l_zeta, l_temperature, &
@@ -61,19 +61,20 @@ program mockup
    type(HGrid_T) :: hGridStandard
    type(FGrid_T) :: fGridStandard
    type(QuantityTemplate_T) :: temperature, GPH, H2O, O3, ptanGHz, band7, &
-                               geodAltitude, orbincl, geocAlt, refGPH
+                               geodAltitude, orbincl, geocAlt, refGPH, band2, &
+                               band8
    type(QuantityTemplate_T), dimension(:), pointer :: qtyTemplates
    type(VectorTemplate_T) :: stateTemplate, measurementTemplate
    type(Vector_T) :: state, measurement, stateExtra
    character(len=3) :: GHz = "GHz"
    character(len=2) :: sc = "sc"
-   integer :: stateSelected(8), measurementSelected(1)
+   integer :: stateSelected(8), measurementSelected(3)
    type(VectorValue_T) :: quantity, h2o_vv, orbincl_vv, geocAlt_vv, &
                           ptanG_vv, temperature_vv, refGPH_vv
-   integer :: temperature_index, h2o_index
+   integer :: temperature_index, h2o_index, band2_index
    integer :: o3_index, ptanGHz_index, band7_index
    integer :: geodAlt_index, orbincl_index, gph_index
-   integer :: geocAlt_index
+   integer :: geocAlt_index, band8_index
    character(len=256) :: signalFileName, configFileName
 
    call getarg(1, signalFileName)
@@ -122,10 +123,14 @@ program mockup
                            qLogBasis=.true., qMinValue=0.1E-6_r8)
    ptanGHz = CreateQtyTemplate(l_ptan, filedatabase=filedatabase, &
                                chunk=fakeChunk, qInstModule=GHz)
-   ! band 7 is the band whose radiances are to be computed
+   ! band 2,7,8 is the band whose radiances are to be computed
    ! see CFM document for a list of signals corresponding to bands
    band7 = CreateQtyTemplate(l_radiance, filedatabase=filedatabase, chunk=fakeChunk, &
                              qSignal="R3:240.B7F:O3")
+   band2 = CreateQtyTemplate(l_radiance, filedatabase=filedatabase, chunk=fakeChunk, &
+                             qSignal="R2:190.B2F:H2O")
+   band8 = CreateQtyTemplate(l_radiance, filedatabase=filedatabase, chunk=fakeChunk, &
+                             qSignal="R3:240.B8F:PT")
    geodAltitude = CreateQtyTemplate(l_tngtgeodalt, filedatabase=filedatabase, &
                                     chunk=fakeChunk, qInstModule=GHz)
    geocAlt = CreateQtyTemplate(l_tngtgeocalt, filedatabase=filedatabase, &
@@ -142,6 +147,8 @@ program mockup
    geodAlt_index = AddQuantityTemplateToDatabase(qtyTemplates, geodAltitude)
    geocAlt_index = AddQuantityTemplatetoDatabase(qtyTemplates, geocAlt)
    orbincl_index = AddQuantityTemplateToDatabase(qtyTemplates, orbIncl)
+   band2_index = AddQuantityTemplateToDatabase(qtyTemplates, band2)
+   band8_index = AddQuantityTemplateToDatabase(qtyTemplates, band8)
 
    ! We no longer need vGrid because the quantity templates have copied it
    call DestroyVGridContents(vGridStandard)
@@ -159,13 +166,13 @@ program mockup
 !   call dump(geodAltitude, details=2)
 
    ! The numbers are the order that quantities template were added
-   stateSelected = (/temperature_index,gph_index,o3_index,h2o_index, &
+   stateSelected = (/temperature_index,o3_index,h2o_index, &
                      ptanGHz_index,geodAlt_index, &
-                     geocAlt_index,orbincl_index/)
+                     geocAlt_index,orbincl_index, gph_index/)
    stateTemplate = CreateVectorTemplate(qtyTemplates, stateSelected)
 !   call dump(stateTemplate, details=2, quantities=qtyTemplates)
 
-   measurementSelected = (/band7_index/)
+   measurementSelected = (/band7_index, band2_index, band8_index/)
    measurementTemplate = CreateVectorTemplate(qtyTemplates, measurementSelected)
 !   call dump(measurementTemplate, details=2, quantities=qtyTemplates)
 
@@ -177,9 +184,6 @@ program mockup
    ! supply temperature, GPH, H2O, and O3 data
    temperature_vv = GetVectorQtyByTemplateIndex(state, temperature_index)
    call ExplicitFillVectorQuantity(temperature_vv, TemperatureInput)
-
-   quantity = GetVectorQtyByTemplateIndex(state, gph_index)
-   call ExplicitFillVectorQuantity(quantity, GPHInput)
 
    h2o_vv = GetVectorQtyByTemplateIndex(state, h2o_index)
    call ExplicitFillVectorQuantity(h2o_vv, H2OInput)
@@ -209,11 +213,14 @@ program mockup
    quantity = GetVectorQtyByTemplateIndex (stateExtra, GetPhitanGHzIndexInStateExtra())
 
    ! calculate ptan
+   !call dump(temperature_vv, details=3)
    call Get2DHydrostaticTangentPressure(ptanG_vv, temperature_vv, refGPH_vv, &
              h2o_vv, orbincl_vv, quantity, geocAlt_vv, 4, 0.0_r8, phyq_angle)
 
+   ! GPH is filled by the forward model
+
    ! Call the forward model
-   call ForwardModel (fakeChunk, forwardModelConfigDatabase(1), state, &
+   call ForwardModel (fakeChunk, forwardModelConfigDatabase, state, &
                       stateExtra, measurement)
 
    call dump(measurement, details=3)
