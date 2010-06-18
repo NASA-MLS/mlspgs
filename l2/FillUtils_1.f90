@@ -66,7 +66,6 @@ module FillUtils_1                     ! Procedures used by Fill
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, &
     & MLSMSG_Allocate, MLSMSG_Deallocate, MLSMessageCalls
   use MLSNumerics, only: InterpolateValues, Hunt
-  use MLSRandomNumber, only: drang
   use MLSSets, only: FindFirst, FindLast
   use MLSSignals_m, only: GetFirstChannel, GetSignalName, GetModuleName, IsModuleSpacecraft, &
     & GetSignal, Signal_T
@@ -192,6 +191,7 @@ contains ! =====     Public Procedures     =============================
     ! ------------------------------------------- addGaussianNoise ---
     subroutine addGaussianNoise ( key, quantity, sourceQuantity, &
               & noiseQty, multiplier )
+      use MLSRandomNumber, only: drang
       ! A special fill: quantity = sourceQuantity + g() noiseQty
       ! where g() is a random number generator with mean 0 and std. dev. 1
       ! Generalized into ( a sourceQuantity + b g() noiseQty )
@@ -249,9 +249,7 @@ contains ! =====     Public Procedures     =============================
 
       use Dump_0, only: Dump
       use Intrinsic, only: Field_indices, PHYQ_Indices
-      use MLSMessageModule, only: MLSMSG_Warning, MLSMessage
       use MoreTree, only: Get_Field_Id, StartErrorMessage
-      use String_Table, only: Display_String
 
       integer, intent(in) :: where   ! Tree node where error was noticed
       integer, intent(in) :: CODE    ! Code for error message
@@ -755,7 +753,6 @@ contains ! =====     Public Procedures     =============================
       use MoreTree, only: Get_Field_Id
       use Init_tables_module, only: F_MEASUREMENTS, F_TOTALPOWERVECTOR, F_WEIGHTSVECTOR
       use Tree, only: DECORATION, SUBTREE
-      use VectorsModule, only: GETVECTORQUANTITYBYTYPE
 
       ! Arguments
       integer, intent(in) :: KEY        ! Tree node
@@ -3451,7 +3448,6 @@ contains ! =====     Public Procedures     =============================
       & manipulation, key, &
       & force, spreadflag, dontSumHeights, dontSumInstances, &
       & c )
-      use String_table, only: GET_STRING
       type (VectorValue_T), intent(inout) :: QUANTITY
       type (VectorValue_T), pointer :: A
       type (VectorValue_T), pointer :: B
@@ -4521,18 +4517,29 @@ contains ! =====     Public Procedures     =============================
     end subroutine ByManipulation
 
     ! ----------------------------------------- FromL1B ----
+    ! Fills a quantity that is stored as a dataset in either the
+    ! l1boa file (lat, lons, etc.)
+    ! l1brad file (radiances, radiance precisions, etc.)
+    ! Optionally supply PrecisionQuantity when reading a radiance
+    ! so that we mask radiances where the corresponding precisions
+    ! are negative or masked themselves
+    
+    ! Naming conventions:
+    ! l1boa datasets are named differently depending on hdfversion
+    ! if 4, they are some way I have forgotten
+    ! If 5, they are divided among 3 groups: GHz, THz, and spacecraft
+    
+    ! radiances are named the same independent of hdf version
     subroutine FromL1B ( root, quantity, chunk, filedatabase, &
       & isPrecision, suffix, PrecisionQuantity, BOMask )
       use BitStuff, only: NegativeIfBitPatternSet
       use MLSFiles, only: HDFVERSION_5
-      use MLSStrings, only: lowercase
-      use output_m, only: blanks, output
       integer, intent(in) :: root
       type (VectorValue_T), INTENT(INOUT) ::        QUANTITY
       type (MLSChunk_T), INTENT(IN) ::              CHUNK
       type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
       logical, intent(in)               ::          ISPRECISION
-      integer, intent(in), optional :: SUFFIX
+      integer, intent(in)                        :: SUFFIX
       type (VectorValue_T), INTENT(IN), optional :: PRECISIONQUANTITY
       integer, intent(in), optional :: BOMask ! A pattern of bits--
                                               ! set prec. neg. if matched
@@ -4548,7 +4555,6 @@ contains ! =====     Public Procedures     =============================
       type (MLSFile_T), pointer             :: L1BOAFile
       integer                               :: ROW, COLUMN
       integer                               :: myBOMask
-      integer                               :: this_hdfVersion
 
       ! Executable code
       myBOMask = 0
@@ -4556,69 +4562,66 @@ contains ! =====     Public Procedures     =============================
       if ( toggle(gen) .and. levels(gen) > 0 ) &
         & call trace_begin ("FromL1B",root)
       ! print *, 'Filling vector quantity from l1b'
-      L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
+      ! L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
       L1BOAFile => GetMLSFileByType(filedatabase, content='l1boa')
-      this_hdfVersion = L1BFile%HDFVersion
       ! fileID = L1BFile%FileID%f_id
 
       select case ( quantity%template%quantityType )
       case ( l_ECRtoFOV )
         call GetModuleName( quantity%template%instrumentModule, nameString )
-        nameString = AssembleL1BQtyName('ECRtoFOV', this_hdfVersion, .TRUE., &
+        nameString = AssembleL1BQtyName('ECRtoFOV', L1BOAFile%HDFVersion, .TRUE., &
           & trim(nameString))
       case ( l_L1BMAFBaseline )
         call GetSignalName ( quantity%template%signal, nameString, &
           & sideband=quantity%template%sideband, noChannels=.TRUE. )
-        nameString = AssembleL1BQtyName(nameString, this_hdfVersion, .FALSE.)
+        nameString = AssembleL1BQtyName(nameString, L1BOAFile%HDFVersion, .FALSE.)
       case ( l_l1bMIF_TAI )
-        if ( this_hdfVersion == HDFVERSION_5 ) then
+        if ( L1BOAFile%HDFVersion == HDFVERSION_5 ) then
           call GetModuleName ( quantity%template%instrumentModule, nameString )
-          nameString = AssembleL1BQtyName ('MIF_TAI', this_hdfVersion, .FALSE., &
+          nameString = AssembleL1BQtyName ('MIF_TAI', L1BOAFile%HDFVersion, .FALSE., &
             & trim(nameString) )
         else ! ??? MIF_TAI is goofy in HDF4 files -- no sc, no tp, no GHz....
           nameString = 'MIF_TAI'
         end if
       case ( l_LosVel )
         call GetModuleName ( quantity%template%instrumentModule, nameString )
-        nameString = AssembleL1BQtyName ('LosVel', this_hdfVersion, .TRUE., &
+        nameString = AssembleL1BQtyName ('LosVel', L1BOAFile%HDFVersion, .TRUE., &
           & trim(nameString) )
       case ( l_orbitInclination )
-        nameString = AssembleL1BQtyName('OrbIncl', this_hdfVersion, .FALSE., &
+        nameString = AssembleL1BQtyName('OrbIncl', L1BOAFile%HDFVersion, .FALSE., &
           & 'sc')
       case ( l_ptan )
         call GetModuleName( quantity%template%instrumentModule,nameString )
-        nameString = AssembleL1BQtyName('ptan', this_hdfVersion, .FALSE., &
+        nameString = AssembleL1BQtyName('ptan', L1BOAFile%HDFVersion, .FALSE., &
           & trim(nameString))
       case ( l_radiance )
         call GetSignalName ( quantity%template%signal, nameString, &
           & sideband=quantity%template%sideband, noChannels=.TRUE. )
-        nameString = AssembleL1BQtyName(nameString, this_hdfVersion, .FALSE.)
-        L1BFile => GetL1bFile(filedatabase, namestring)
-        ! fileID = FindL1BData (filedatabase, nameString )
+        nameString = AssembleL1BQtyName(nameString, L1BOAFile%HDFVersion, .FALSE.)
       case ( l_scECI )
-        nameString = AssembleL1BQtyName('ECI', this_hdfVersion, .FALSE., 'sc')
+        nameString = AssembleL1BQtyName('ECI', L1BOAFile%HDFVersion, .FALSE., 'sc')
       case ( l_scGeocAlt )
-        nameString = AssembleL1BQtyName('GeocAlt', this_hdfVersion, .FALSE., &
+        nameString = AssembleL1BQtyName('GeocAlt', L1BOAFile%HDFVersion, .FALSE., &
           & 'sc')
       case ( l_scVel )
-        nameString = AssembleL1BQtyName('Vel', this_hdfVersion, .FALSE., 'sc')
+        nameString = AssembleL1BQtyName('Vel', L1BOAFile%HDFVersion, .FALSE., 'sc')
       case ( l_scVelECI )
-        nameString = AssembleL1BQtyName('VelECI', this_hdfVersion, .FALSE., &
+        nameString = AssembleL1BQtyName('VelECI', L1BOAFile%HDFVersion, .FALSE., &
           & 'sc')
       case ( l_scVelECR )
-        nameString = AssembleL1BQtyName('VelECR', this_hdfVersion, .FALSE., &
+        nameString = AssembleL1BQtyName('VelECR', L1BOAFile%HDFVersion, .FALSE., &
           & 'sc')
       case ( l_tngtECI )
         call GetModuleName( quantity%template%instrumentModule,nameString )
-        nameString = AssembleL1BQtyName('ECI', this_hdfVersion, .TRUE., &
+        nameString = AssembleL1BQtyName('ECI', L1BOAFile%HDFVersion, .TRUE., &
           & trim(nameString))
       case ( l_tngtGeocAlt )
         call GetModuleName( quantity%template%instrumentModule,nameString )
-        nameString = AssembleL1BQtyName('GeocAlt', this_hdfVersion, .TRUE., &
+        nameString = AssembleL1BQtyName('GeocAlt', L1BOAFile%HDFVersion, .TRUE., &
           & trim(nameString))
       case ( l_tngtGeodAlt )
         call GetModuleName( quantity%template%instrumentModule,nameString )
-        nameString = AssembleL1BQtyName('GeodAlt', this_hdfVersion, .TRUE., &
+        nameString = AssembleL1BQtyName('GeodAlt', L1BOAFile%HDFVersion, .TRUE., &
           & trim(nameString))
       case default
         call Announce_Error ( root, cantFromL1B )
@@ -4627,7 +4630,7 @@ contains ! =====     Public Procedures     =============================
       ! Perhaps will need to read bright object status from l1bOA file
       if ( isPrecision .and. myBOMask /= 0 ) then
         call GetModuleName ( quantity%template%instrumentModule, moduleNameString )
-        moduleNameString = AssembleL1BQtyName('BO_stat', this_hdfVersion, .TRUE., &
+        moduleNameString = AssembleL1BQtyName('BO_stat', L1BOAFile%HDFVersion, .TRUE., &
           & trim(moduleNameString))
         call ReadL1BData ( L1BOAFile, moduleNameString, BO_stat, noMAFs, &
           & flag=BO_error, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
@@ -4635,55 +4638,72 @@ contains ! =====     Public Procedures     =============================
           & dontPad=DONTPAD )
       end if
 
-      if ( present ( suffix ) ) then
-        if ( suffix /= 0 ) then
-          call Get_String ( suffix, &
-            & nameString(len_trim(nameString)+1:), strip=.true. )
-          ! Look for the field again
-          L1BFile => GetL1bFile(filedatabase, namestring)
-          ! fileID = FindL1BData (filedatabase, nameString )
-          ! Note we won't find it if it's in the OA file, I'm going to ignore that
-          ! possibility for the moment.
-
-        end if
+      ! Possibly modify namestring based on whether a suffix field was supplied
+      ! or a /isPrecision switch was set
+      
+      if ( suffix /= 0 ) then
+        call Get_String ( suffix, &
+          & nameString(len_trim(nameString)+1:), strip=.true. )
+      elseif ( isPrecision ) then
+        nameString = trim(nameString) // PRECISIONSUFFIX
       end if
 
-      ! If the quantity exists (or it doesn't exist but it's not a radiance)
-      if ( index(lowercase(namestring), 'baseline') > 0 .and. .false. ) then
-        call output('namestring: ', advance='no')
-        call output(trim(namestring), advance='yes')
-        call output('associated(L1BFile): ', advance='no')
-        call output(associated(L1BFile), advance='yes')
-        call output('qty type: ', advance='no')
-        call output(quantity%template%quantityType, advance='no')
-        call blanks(3)
-        call output(l_radiance, advance='no')
-        call blanks(3)
-        call output(l_L1BMAFBaseline, advance='yes')
-      endif
-      if ( quantity%template%quantityType /= l_radiance .and. &
-        & quantity%template%quantityType /= l_L1BMAFBaseline ) then
-        if ( isPrecision ) nameString = trim(nameString) // PRECISIONSUFFIX
-        L1BFile => GetL1bFile(filedatabase, namestring)
-        if (associated(L1BFile)) then
-           call ReadL1BData ( L1BFile, nameString, l1bData, noMAFs, flag, &
-             & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
-             & NeverFail= .false., &
-             & dontPad=DONTPAD )
-           ! If it didn't exist in the not-a-radiance case, then we'll fail here.
+      L1BFile => GetL1bFile(filedatabase, namestring)
+      if (associated(L1BFile)) then
+        call ReadL1BData ( L1BFile, nameString, l1bData, noMAFs, flag, &
+          & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
+          & NeverFail= .false., &
+          & dontPad=DONTPAD )
+      else
+         flag = 1 ! Just a trick, so we reuse the printing of error message
+      end if
+      ! If it didn't exist in the not-a-radiance case, then we'll fail here.
+      if ( flag /= 0 ) then
+        if ( any(quantity%template%quantityType == &
+          & (/ l_radiance, l_L1BMAFBaseline /) ) ) then
+          ! This is the case where it's a radiance we're after and it's missing
+          ! and we will allow this because we permit level 1 to omit certain
+          ! bands when they are turned off
+          quantity%values = DEFAULTUNDEFINEDVALUE ! -1.0
+          do column=1, size(quantity%values(1,:))
+            do row=1, size(quantity%values(:,1))
+              call MaskVectorQty ( quantity, row, column, M_LinAlg )
+            end do
+          end do
         else
-           flag = 1 ! Just a trick, so we reuse the printing of error message
-        end if
-        ! If it didn't exist in the not-a-radiance case, then we'll fail here.
-        if ( flag /= 0 ) then
           call Announce_Error ( root, errorReadingL1B )
-          if ( toggle(gen) .and. levels(gen) > 0 ) &
-            & call trace_end ( "FromL1B")
-          return
-        end if
-        if ( quantity%template%noInstances /= size ( l1bData%dpField, 3 ) .or. &
-          &  quantity%template%instanceLen /= &
-          &   size ( l1bData%dpField, 1 ) * size ( l1bData%dpField, 2 ) ) then
+        endif
+        if ( toggle(gen) .and. levels(gen) > 0 ) &
+          & call trace_end ( "FromL1B")
+        return
+      end if
+      if ( quantity%template%noInstances /= size ( l1bData%dpField, 3 ) .or. &
+        &  quantity%template%instanceLen /= &
+        &   size ( l1bData%dpField, 1 ) * size ( l1bData%dpField, 2 ) ) then
+        call output ( 'Quantity shape:' )
+        call output ( quantity%template%instanceLen )
+        call output ( ' ( ' )
+        call output ( quantity%template%noChans )
+        call output ( ', ' )
+        call output ( quantity%template%noSurfs )
+        call output ( ' ), ' )
+        call output ( quantity%template%noInstances, advance='yes' )
+        call output ( 'L1B shape:' )
+        call output ( size ( l1bData%dpField, 1 ) )
+        call output ( ', ' )
+        call output ( size ( l1bData%dpField, 2 ) )
+        call output ( ', ' )
+        call output ( size ( l1bData%dpField, 3 ), advance='yes' )
+        call Announce_Error ( root, no_error_code, 'L1B data is wrong shape' )
+        if ( toggle(gen) .and. levels(gen) > 0 ) &
+          & call trace_end ( "FromL1B")
+        return
+      end if
+
+      if ( isPrecision .and. myBOMask /= 0 .and. BO_error == 0 ) then
+        noMAFs = size(l1bData%dpField, 3)
+        maxMIFs = l1bData%maxMIFs
+        if ( switchDetail(switches, 'glob') > 0 ) then ! e.g., 'glob1'
           call output ( 'Quantity shape:' )
           call output ( quantity%template%instanceLen )
           call output ( ' ( ' )
@@ -4698,87 +4718,54 @@ contains ! =====     Public Procedures     =============================
           call output ( size ( l1bData%dpField, 2 ) )
           call output ( ', ' )
           call output ( size ( l1bData%dpField, 3 ), advance='yes' )
-          call Announce_Error ( root, no_error_code, 'L1B data is wrong shape' )
-          if ( toggle(gen) .and. levels(gen) > 0 ) &
-            & call trace_end ( "FromL1B")
-          return
-        end if
+          call outputNamedValue( 'shape' // trim(namestring), shape(l1bData%dpField) )
+          call outputNamedValue( 'shape(BO_stat)', shape(BO_stat%intField) )
+          call outputNamedValue( 'noMAFs', noMAFs )
+          call outputNamedValue( 'maxMIFs', maxMIFs )
+          call outputNamedValue( 'noChans', quantity%template%noChans )
+        endif
+        if ( switchDetail(switches, 'glob') > 1 ) then ! e.g., 'glob2'
+          call dump( l1bData%dpField(1,:,:), '(Before applying bright object mask)' )
+        endif
+        do channel = 1, quantity%template%noChans
+        l1bData%dpField(channel,:,:) = &
+          & NegativeIfBitPatternSet( l1bData%dpField(channel,:,:), &
+          & BO_stat%intField(1, 1:maxMIFs, 1:noMAFs), myBOMask )
+        enddo
+        if ( switchDetail(switches, 'glob') > 1 ) &
+          & call dump( l1bData%dpField(1,:,:), '(After applying bright object mask)' )
+        call DeallocateL1BData(BO_stat)
+      end if
 
-        if ( isPrecision .and. myBOMask /= 0 .and. BO_error == 0 ) then
-          noMAFs = size(l1bData%dpField, 3)
-          maxMIFs = l1bData%maxMIFs
-          if ( switchDetail(switches, 'glob') > 0 ) then ! e.g., 'glob1'
-            call output ( 'Quantity shape:' )
-            call output ( quantity%template%instanceLen )
-            call output ( ' ( ' )
-            call output ( quantity%template%noChans )
-            call output ( ', ' )
-            call output ( quantity%template%noSurfs )
-            call output ( ' ), ' )
-            call output ( quantity%template%noInstances, advance='yes' )
-            call output ( 'L1B shape:' )
-            call output ( size ( l1bData%dpField, 1 ) )
-            call output ( ', ' )
-            call output ( size ( l1bData%dpField, 2 ) )
-            call output ( ', ' )
-            call output ( size ( l1bData%dpField, 3 ), advance='yes' )
-            call outputNamedValue( 'shape' // trim(namestring), shape(l1bData%dpField) )
-            call outputNamedValue( 'shape(BO_stat)', shape(BO_stat%intField) )
-            call outputNamedValue( 'noMAFs', noMAFs )
-            call outputNamedValue( 'maxMIFs', maxMIFs )
-            call outputNamedValue( 'noChans', quantity%template%noChans )
-          endif
-          if ( switchDetail(switches, 'glob') > 1 ) then ! e.g., 'glob2'
-            call dump( l1bData%dpField(1,:,:), '(Before applying bright object mask)' )
-          endif
-          do channel = 1, quantity%template%noChans
-          l1bData%dpField(channel,:,:) = &
-            & NegativeIfBitPatternSet( l1bData%dpField(channel,:,:), &
-            & BO_stat%intField(1, 1:maxMIFs, 1:noMAFs), myBOMask )
-          enddo
-          if ( switchDetail(switches, 'glob') > 1 ) &
-            & call dump( l1bData%dpField(1,:,:), '(After applying bright object mask)' )
-          call DeallocateL1BData(BO_stat)
-        end if
-
-        quantity%values = RESHAPE(l1bData%dpField, &
-          & (/ quantity%template%instanceLen, quantity%template%noInstances /) )
-        if ( isPrecision ) then
-          do column=1, size(quantity%values(1, :))
-            do row=1, size(quantity%values(:, 1))
-              if ( quantity%values(row, column) < 0.d0 ) &
-                & call MaskVectorQty(quantity, row, column, M_LinAlg)
-            end do
+      quantity%values = RESHAPE(l1bData%dpField, &
+        & (/ quantity%template%instanceLen, quantity%template%noInstances /) )
+      if ( isPrecision ) then
+        do column=1, size(quantity%values(1, :))
+          do row=1, size(quantity%values(:, 1))
+            if ( quantity%values(row, column) < 0.d0 ) &
+              & call MaskVectorQty(quantity, row, column, M_LinAlg)
           end do
-        else if ( present(precisionQuantity) ) then
-          do column=1, size(quantity%values(1, :))
-            do row=1, size(quantity%values(:, 1))
-              if ( isVectorQtyMasked(precisionQuantity, row, column, M_LinAlg) ) &
-                & call MaskVectorQty(quantity, row, column, M_LinAlg)
-            end do
+        end do
+      else if ( present(precisionQuantity) ) then
+        do column=1, size(quantity%values(1, :))
+          do row=1, size(quantity%values(:, 1))
+            if ( isVectorQtyMasked(precisionQuantity, row, column, M_LinAlg) ) &
+              & call MaskVectorQty(quantity, row, column, M_LinAlg)
           end do
-          do column=1, size(quantity%values(1, :))
-            do row=1, size(quantity%values(:, 1))
-              if ( precisionQuantity%values(row, column) < 0.d0 ) then
-                call MaskVectorQty(quantity, row, column, M_Ignore)
-                call MaskVectorQty(quantity, row, column, M_LinAlg)
-              endif
-            end do
-          end do
-        end if
-
-        if ( switchDetail(switches, 'l1b') > -1 ) &
-          & call Dump( l1bData )
-        call DeallocateL1BData(l1bData)
-      else
-        ! This is the case where it's a radiance we're after and it's missing
-        quantity%values = DEFAULTUNDEFINEDVALUE ! -1.0
-        do column=1, size(quantity%values(1,:))
-          do row=1, size(quantity%values(:,1))
-            call MaskVectorQty ( quantity, row, column, M_LinAlg )
+        end do
+        do column=1, size(quantity%values(1, :))
+          do row=1, size(quantity%values(:, 1))
+            if ( precisionQuantity%values(row, column) < 0.d0 ) then
+              call MaskVectorQty(quantity, row, column, M_Ignore)
+              call MaskVectorQty(quantity, row, column, M_LinAlg)
+            endif
           end do
         end do
       end if
+
+      if ( switchDetail(switches, 'l1b') > -1 ) &
+        & call Dump( l1bData )
+      call DeallocateL1BData(l1bData)
       if ( toggle(gen) .and. levels(gen) > 0 ) call trace_end( "FromL1B" )
     end subroutine FromL1B
 
@@ -5186,7 +5173,6 @@ contains ! =====     Public Procedures     =============================
       use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
       use dump_0, only: dump
       use MLSFillValues, only: IsFillValue, RemoveFillValues
-      use output_m, only: output
       
       use wmoTropopause, only: ExtraTropics, twmo
       ! Implements the algorithm published in GRL
@@ -5563,7 +5549,6 @@ contains ! =====     Public Procedures     =============================
 
       use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
       use HFTI_M, only: HFTI
-      use MLSKinds, only: R8
 
       integer, intent(in) :: KEY        ! Tree node
       type (VectorValue_T), intent(inout) :: QUANTITY
@@ -6884,6 +6869,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.38  2010/06/18 16:48:34  pwagner
+! Corrected error that prevented filling radiances qty from l1b
+!
 ! Revision 2.37  2010/05/24 16:33:52  honghanh
 ! Merge changes in version 2.35 and 2.36
 !
