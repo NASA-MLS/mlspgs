@@ -1516,6 +1516,7 @@ contains ! =====     Public Procedures     =============================
       endif
       call SetupNewL2GPRecord ( tl2gp1, proto=l2gp1, which=which1(1:how_many) )
       call SetupNewL2GPRecord ( tl2gp2, proto=l2gp2, which=which2(1:how_many) )
+      print *, 'About to enter ..atLast having matched times'
       call DiffL2GPData_atlast ( tL2gp1, tL2gp2, &
       & Details, options, fields, numDiffs )
       call DestroyL2GPContents( tL2gp1 )
@@ -1715,23 +1716,23 @@ contains ! =====     Public Procedures     =============================
       endif
 
       if ( any(l2gp1%l2gpValue /= l2gp2Temp%l2gpValue) .and. &
-        & SwitchDetail(lowercase(myFields), 'value', '-c') > -1 ) then
+        & SwitchDetail(lowercase(myFields), 'l2gpvalue', '-c') > -1 ) then
         call diff ( l2gp1%l2gpValue, 'l2gp%l2gpValue', &
           &         l2gp2Temp%l2gpValue, ' ', &
           & options=options, fillValue=l2gp1%MissingValue )
         myNumDiffs = myNumDiffs + count( l2gp1%l2gpValue /= l2gp2Temp%l2gpValue )
       elseif ( all(l2gp1%l2gpValue == l2gp2Temp%l2gpValue) .and. &
-        & SwitchDetail(lowercase(myFields), 'value', '-c') > -1 .and. myVerbose ) then
+        & SwitchDetail(lowercase(myFields), 'l2gpvalue', '-c') > -1 .and. myVerbose ) then
         call output('(values fields equal)', advance='yes')
       endif
       if ( any(l2gp1%l2gpPrecision /= l2gp2Temp%l2gpPrecision) .and. &
-        & SwitchDetail(lowercase(myFields), 'precision', '-c') > -1 ) then
+        & SwitchDetail(lowercase(myFields), 'l2gpprecision', '-c') > -1 ) then
         call diff ( l2gp1%l2gpPrecision, 'l2gp%l2gpPrecision', &
           &         l2gp2Temp%l2gpPrecision, ' ', &
           & options=options, fillValue=l2gp1%MissingValue )
         myNumDiffs = myNumDiffs + count( l2gp1%l2gpPrecision /= l2gp2Temp%l2gpPrecision )
       elseif ( all(l2gp1%l2gpPrecision == l2gp2Temp%l2gpPrecision) .and. &
-        & SwitchDetail(lowercase(myFields), 'precision', '-c') > -1 .and. myVerbose ) then
+        & SwitchDetail(lowercase(myFields), 'l2gpprecision', '-c') > -1 .and. myVerbose ) then
         call output('(precision fields equal)', advance='yes')
       endif
       
@@ -1765,6 +1766,8 @@ contains ! =====     Public Procedures     =============================
         & SwitchDetail(lowercase(myFields), 'convergence', '-c') > -1 .and. myVerbose ) then
         call output('(convergence fields equal)', advance='yes')
       endif
+      call doneHere
+      return
 
 contains
     subroutine diffGeoLocations( l2gp1, l2gp2 )
@@ -1859,6 +1862,7 @@ contains
       
       call resumeOutput
       if ( present(numDiffs) ) numDiffs = myNumDiffs
+      ! print *, 'myNumDiffs: ', myNumDiffs
     end subroutine doneHere
   end subroutine DiffL2GPData_atlast
     
@@ -4930,6 +4934,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.174  2010/02/12 00:25:46  pwagner
+! Fixed bug when number of dims is 4 (but what if 5 or more?)
+!
 ! Revision 2.173  2010/02/04 23:08:00  vsnyder
 ! Remove USE or declaration for unused names
 !
