@@ -1602,209 +1602,213 @@ contains ! =====     Public Procedures     =============================
     endif
     if ( myFields == '*' .or. lowercase(myFields) == 'all' ) &
       & myFields = DEFAULTFIELDS
-      if ( trim(l2gp1%name) /= trim(l2gp2%name) ) then
-        call output('(1) name: ' // trim(l2gp1%name), advance='yes')
-        call output('(2) name: ' // trim(l2gp2%name), advance='yes')
-        myNumDiffs = myNumDiffs + 1
-      endif
-      if ( myDetails < -1 ) then
-        call doneHere
-        return
-      endif
-      if ( L2gp1%MissingValue /= L2gp2%MissingValue ) then
-        call output(' (1) MissingValue = ', advance='no')
-        call output(L2gp1%nTimes, advance='yes')
-        call output(' (2) MissingValue = ', advance='no')
-        call output(L2gp2%nTimes, advance='yes')
-        myNumDiffs = myNumDiffs + 1
-      endif
-      if ( L2gp1%nTimes /= L2gp2%nTimes ) then
-        call output(' (1) nTimes = ', advance='no')
-        call output(L2gp1%nTimes, advance='yes')
-        call output(' (2) nTimes = ', advance='no')
-        call output(L2gp2%nTimes, advance='yes')
-        ShapesDontMatch = .true.
-        myNumDiffs = myNumDiffs + 1
-      endif
-      if ( L2gp1%nLevels /= L2gp2%nLevels ) then
-        call output(' (1) nLevels = ', advance='no')
-        call output(L2gp1%nLevels, advance='yes')
-        call output(' (2) nLevels = ', advance='no')
-        call output(L2gp2%nLevels, advance='yes')
-        ShapesDontMatch = .true.
-        myNumDiffs = myNumDiffs + 1
-      endif
-      if ( L2gp1%nFreqs /= L2gp2%nFreqs ) then
-        call output(' (1) nFreqs = ', advance='no')
-        call output(L2gp1%nFreqs, advance='yes')
-        call output(' (2) nFreqs = ', advance='no')
-        call output(L2gp2%nFreqs, advance='yes')
-        ShapesDontMatch = .true.
-        myNumDiffs = myNumDiffs + 1
-      endif
-      if ( myDetails < 0 )  then
-        if ( myVerbose ) &
-          & call output ( '(Data shapes and swath names match)', advance='yes' )
-        call doneHere
-        return
-      endif
-      if ( ShapesDontMatch ) then
-        call output('Skipping further details because shapes dont match',&
-          & advance='yes')
-        call doneHere
-        return
-      endif
-      
-      badChunks = badChunks .or. &
-        & ( &
-        & any( mod ( l2gp1%status, 2 ) == 1 ) &
-        & .or. &
-        & any( mod ( l2gp2%status, 2 ) == 1 ) &
-        & .or. &
-        & any( IsFillValue ( l2gp1%l2gpValue, l2gp1%MissingValue ) ) &
-        & .or. &
-        & any( IsFillValue ( l2gp2%l2gpValue, l2gp2%MissingValue ) ) &
-        & )
-      if ( present ( options ) ) then
-        badChunks = (index(options, 'i' ) > 0) .and. badChunks
-      else
-        badChunks = .false.
-      endif
-      ! OK, we'll try what you suggest
-      call SetupNewL2GPRecord ( l2gp2Temp, proto=l2gp2 )
-      if ( badChunks ) then
-        do instance=1, L2gp1%nTimes
-          if ( l2gp1%geodAngle(instance) /= l2gp2%geodAngle(instance) &
-            & .or. &
-            & l2gp1%solarZenith(instance) /= l2gp2%solarZenith(instance) &
-            & .or. &
-            & l2gp1%time(instance) /= l2gp2%time(instance) &
-            & .or. &
-            & mod(l2gp1%status(instance), 2) == 1 &
-            & .or. &
-            & mod(l2gp2%status(instance), 2) == 1 &
-            & .or. &
-            & any( IsFillValue ( l2gp1%l2gpValue(:,:,instance), l2gp1%MissingValue ) ) &
-            & .or. &
-            & any( IsFillValue ( l2gp2%l2gpValue(:,:,instance), l2gp2%MissingValue ) ) &
-            & ) then
-            l2gp2Temp%l2gpValue(:,:,instance) = l2gp1%l2gpValue(:,:,instance)
-            l2gp2Temp%l2gpPrecision(:,:,instance) = l2gp1%l2gpPrecision(:,:,instance)
-            l2gp2Temp%status(instance) = l2gp1%status(instance)
-            l2gp2Temp%quality(instance) = l2gp1%quality(instance)
-            l2gp2Temp%convergence(instance) = l2gp1%convergence(instance)
-            ! Also geolocations will be reset to avoid displaying bogus diffs
-            l2gp2Temp%latitude(instance) = l2gp1%latitude(instance)
-            l2gp2Temp%longitude(instance) = l2gp1%longitude(instance)
-            l2gp2Temp%solarTime(instance) = l2gp1%solarTime(instance)
-            l2gp2Temp%chunkNumber(instance) = l2gp1%chunkNumber(instance)
-            l2gp2Temp%geodAngle(instance) = l2gp1%geodAngle(instance)
-            l2gp2Temp%solarZenith(instance) = l2gp1%solarZenith(instance)
-            l2gp2Temp%time(instance) = l2gp1%time(instance)
-            l2gp2Temp%losAngle(instance) = l2gp1%losAngle(instance)
-            badInstances = badInstances + 1
-          endif
-        enddo
-        call output('Number of bad instances of l2gp2 reset to l2gp1 ', advance='no')
-        call output(badInstances, advance='yes')
-      endif
-
-      call diffGeoLocations( l2gp1, l2gp2Temp )
-      if ( myDetails < 1 )  then
-        call doneHere
-        return
-      endif
-
-      if ( any(l2gp1%l2gpValue /= l2gp2Temp%l2gpValue) .and. &
-        & SwitchDetail(lowercase(myFields), 'l2gpvalue', '-c') > -1 ) then
-        call diff ( l2gp1%l2gpValue, 'l2gp%l2gpValue', &
-          &         l2gp2Temp%l2gpValue, ' ', &
-          & options=options, fillValue=l2gp1%MissingValue )
-        myNumDiffs = myNumDiffs + count( l2gp1%l2gpValue /= l2gp2Temp%l2gpValue )
-      elseif ( all(l2gp1%l2gpValue == l2gp2Temp%l2gpValue) .and. &
-        & SwitchDetail(lowercase(myFields), 'l2gpvalue', '-c') > -1 .and. myVerbose ) then
-        call output('(values fields equal)', advance='yes')
-      endif
-      if ( any(l2gp1%l2gpPrecision /= l2gp2Temp%l2gpPrecision) .and. &
-        & SwitchDetail(lowercase(myFields), 'l2gpprecision', '-c') > -1 ) then
-        call diff ( l2gp1%l2gpPrecision, 'l2gp%l2gpPrecision', &
-          &         l2gp2Temp%l2gpPrecision, ' ', &
-          & options=options, fillValue=l2gp1%MissingValue )
-        myNumDiffs = myNumDiffs + count( l2gp1%l2gpPrecision /= l2gp2Temp%l2gpPrecision )
-      elseif ( all(l2gp1%l2gpPrecision == l2gp2Temp%l2gpPrecision) .and. &
-        & SwitchDetail(lowercase(myFields), 'l2gpprecision', '-c') > -1 .and. myVerbose ) then
-        call output('(precision fields equal)', advance='yes')
-      endif
-      
-      if ( any(l2gp1%status /= l2gp2Temp%status) .and. &
-        & SwitchDetail(lowercase(myFields), 'status', '-c') > -1 ) then
-        call diff ( l2gp1%status, 'l2gp%status', &
-          &         l2gp2Temp%status, ' ', &
-          & options=options )
-        myNumDiffs = myNumDiffs + count( l2gp1%status /= l2gp2Temp%status )
-      elseif ( all(l2gp1%status == l2gp2Temp%status) .and. &
-        & SwitchDetail(lowercase(myFields), 'status', '-c') > -1 .and. myVerbose ) then
-        call output('(status fields equal)', advance='yes')
-      endif
-      if ( any(l2gp1%quality /= l2gp2Temp%quality) .and. &
-        & SwitchDetail(lowercase(myFields), 'quality', '-c') > -1 ) then
-        call diff ( l2gp1%quality, 'l2gp%quality', &
-          &         l2gp2Temp%quality, ' ', &
-          & options=options )
-        myNumDiffs = myNumDiffs + count( l2gp1%quality /= l2gp2Temp%quality )
-      elseif ( all(l2gp1%quality == l2gp2Temp%quality) .and. &
-        & SwitchDetail(lowercase(myFields), 'quality', '-c') > -1 .and. myVerbose ) then
-        call output('(quality fields equal)', advance='yes')
-      endif
-      if ( any(l2gp1%convergence /= l2gp2Temp%convergence) .and. &
-        & SwitchDetail(lowercase(myFields), 'convergence', '-c') > -1 ) then
-        call diff ( l2gp1%convergence, 'l2gp%convergence', &
-          &         l2gp2Temp%convergence, ' ', &
-          & options=options )
-        myNumDiffs = myNumDiffs + count( l2gp1%convergence /= l2gp2Temp%convergence )
-      elseif ( all(l2gp1%convergence == l2gp2Temp%convergence) .and. &
-        & SwitchDetail(lowercase(myFields), 'convergence', '-c') > -1 .and. myVerbose ) then
-        call output('(convergence fields equal)', advance='yes')
-      endif
+    if ( DEEBUG ) then
+      call output( 'myFields: ', advance='no' )
+      call output( myFields, advance='yes' )
+    endif
+    if ( trim(l2gp1%name) /= trim(l2gp2%name) ) then
+      call output('(1) name: ' // trim(l2gp1%name), advance='yes')
+      call output('(2) name: ' // trim(l2gp2%name), advance='yes')
+      myNumDiffs = myNumDiffs + 1
+    endif
+    if ( myDetails < -1 ) then
       call doneHere
       return
+    endif
+    if ( L2gp1%MissingValue /= L2gp2%MissingValue ) then
+      call output(' (1) MissingValue = ', advance='no')
+      call output(L2gp1%nTimes, advance='yes')
+      call output(' (2) MissingValue = ', advance='no')
+      call output(L2gp2%nTimes, advance='yes')
+      myNumDiffs = myNumDiffs + 1
+    endif
+    if ( L2gp1%nTimes /= L2gp2%nTimes ) then
+      call output(' (1) nTimes = ', advance='no')
+      call output(L2gp1%nTimes, advance='yes')
+      call output(' (2) nTimes = ', advance='no')
+      call output(L2gp2%nTimes, advance='yes')
+      ShapesDontMatch = .true.
+      myNumDiffs = myNumDiffs + 1
+    endif
+    if ( L2gp1%nLevels /= L2gp2%nLevels ) then
+      call output(' (1) nLevels = ', advance='no')
+      call output(L2gp1%nLevels, advance='yes')
+      call output(' (2) nLevels = ', advance='no')
+      call output(L2gp2%nLevels, advance='yes')
+      ShapesDontMatch = .true.
+      myNumDiffs = myNumDiffs + 1
+    endif
+    if ( L2gp1%nFreqs /= L2gp2%nFreqs ) then
+      call output(' (1) nFreqs = ', advance='no')
+      call output(L2gp1%nFreqs, advance='yes')
+      call output(' (2) nFreqs = ', advance='no')
+      call output(L2gp2%nFreqs, advance='yes')
+      ShapesDontMatch = .true.
+      myNumDiffs = myNumDiffs + 1
+    endif
+    if ( myDetails < 0 )  then
+      if ( myVerbose ) &
+        & call output ( '(Data shapes and swath names match)', advance='yes' )
+      call doneHere
+      return
+    endif
+    if ( ShapesDontMatch ) then
+      call output('Skipping further details because shapes dont match',&
+        & advance='yes')
+      call doneHere
+      return
+    endif
 
-contains
+    badChunks = badChunks .or. &
+      & ( &
+      & any( mod ( l2gp1%status, 2 ) == 1 ) &
+      & .or. &
+      & any( mod ( l2gp2%status, 2 ) == 1 ) &
+      & .or. &
+      & any( IsFillValue ( l2gp1%l2gpValue, l2gp1%MissingValue ) ) &
+      & .or. &
+      & any( IsFillValue ( l2gp2%l2gpValue, l2gp2%MissingValue ) ) &
+      & )
+    if ( present ( options ) ) then
+      badChunks = (index(options, 'i' ) > 0) .and. badChunks
+    else
+      badChunks = .false.
+    endif
+    ! OK, we'll try what you suggest
+    call SetupNewL2GPRecord ( l2gp2Temp, proto=l2gp2 )
+    if ( badChunks ) then
+      do instance=1, L2gp1%nTimes
+        if ( l2gp1%geodAngle(instance) /= l2gp2%geodAngle(instance) &
+          & .or. &
+          & l2gp1%solarZenith(instance) /= l2gp2%solarZenith(instance) &
+          & .or. &
+          & l2gp1%time(instance) /= l2gp2%time(instance) &
+          & .or. &
+          & mod(l2gp1%status(instance), 2) == 1 &
+          & .or. &
+          & mod(l2gp2%status(instance), 2) == 1 &
+          & .or. &
+          & any( IsFillValue ( l2gp1%l2gpValue(:,:,instance), l2gp1%MissingValue ) ) &
+          & .or. &
+          & any( IsFillValue ( l2gp2%l2gpValue(:,:,instance), l2gp2%MissingValue ) ) &
+          & ) then
+          l2gp2Temp%l2gpValue(:,:,instance) = l2gp1%l2gpValue(:,:,instance)
+          l2gp2Temp%l2gpPrecision(:,:,instance) = l2gp1%l2gpPrecision(:,:,instance)
+          l2gp2Temp%status(instance) = l2gp1%status(instance)
+          l2gp2Temp%quality(instance) = l2gp1%quality(instance)
+          l2gp2Temp%convergence(instance) = l2gp1%convergence(instance)
+          ! Also geolocations will be reset to avoid displaying bogus diffs
+          l2gp2Temp%latitude(instance) = l2gp1%latitude(instance)
+          l2gp2Temp%longitude(instance) = l2gp1%longitude(instance)
+          l2gp2Temp%solarTime(instance) = l2gp1%solarTime(instance)
+          l2gp2Temp%chunkNumber(instance) = l2gp1%chunkNumber(instance)
+          l2gp2Temp%geodAngle(instance) = l2gp1%geodAngle(instance)
+          l2gp2Temp%solarZenith(instance) = l2gp1%solarZenith(instance)
+          l2gp2Temp%time(instance) = l2gp1%time(instance)
+          l2gp2Temp%losAngle(instance) = l2gp1%losAngle(instance)
+          badInstances = badInstances + 1
+        endif
+      enddo
+      call output('Number of bad instances of l2gp2 reset to l2gp1 ', advance='no')
+      call output(badInstances, advance='yes')
+    endif
+
+    call diffGeoLocations( l2gp1, l2gp2Temp )
+    if ( myDetails < 1 )  then
+      call doneHere
+      return
+    endif
+
+    if ( any(l2gp1%l2gpValue /= l2gp2Temp%l2gpValue) .and. &
+      & SwitchDetail(lowercase(myFields), 'l2gpvalue', '-fc') > -1 ) then
+      call diff ( l2gp1%l2gpValue, 'l2gp%l2gpValue', &
+        &         l2gp2Temp%l2gpValue, ' ', &
+        & options=options, fillValue=l2gp1%MissingValue )
+      myNumDiffs = myNumDiffs + count( l2gp1%l2gpValue /= l2gp2Temp%l2gpValue )
+    elseif ( all(l2gp1%l2gpValue == l2gp2Temp%l2gpValue) .and. &
+      & SwitchDetail(lowercase(myFields), 'l2gpvalue', '-fc') > -1 .and. myVerbose ) then
+      call output('(values fields equal)', advance='yes')
+    endif
+    if ( any(l2gp1%l2gpPrecision /= l2gp2Temp%l2gpPrecision) .and. &
+      & SwitchDetail(lowercase(myFields), 'l2gpprecision', '-fc') > -1 ) then
+      call diff ( l2gp1%l2gpPrecision, 'l2gp%l2gpPrecision', &
+        &         l2gp2Temp%l2gpPrecision, ' ', &
+        & options=options, fillValue=l2gp1%MissingValue )
+      myNumDiffs = myNumDiffs + count( l2gp1%l2gpPrecision /= l2gp2Temp%l2gpPrecision )
+    elseif ( all(l2gp1%l2gpPrecision == l2gp2Temp%l2gpPrecision) .and. &
+      & SwitchDetail(lowercase(myFields), 'l2gpprecision', '-fc') > -1 .and. myVerbose ) then
+      call output('(precision fields equal)', advance='yes')
+    endif
+
+    if ( any(l2gp1%status /= l2gp2Temp%status) .and. &
+      & SwitchDetail(lowercase(myFields), 'status', '-fc') > -1 ) then
+      call diff ( l2gp1%status, 'l2gp%status', &
+        &         l2gp2Temp%status, ' ', &
+        & options=options )
+      myNumDiffs = myNumDiffs + count( l2gp1%status /= l2gp2Temp%status )
+    elseif ( all(l2gp1%status == l2gp2Temp%status) .and. &
+      & SwitchDetail(lowercase(myFields), 'status', '-fc') > -1 .and. myVerbose ) then
+      call output('(status fields equal)', advance='yes')
+    endif
+    if ( any(l2gp1%quality /= l2gp2Temp%quality) .and. &
+      & SwitchDetail(lowercase(myFields), 'quality', '-fc') > -1 ) then
+      call diff ( l2gp1%quality, 'l2gp%quality', &
+        &         l2gp2Temp%quality, ' ', &
+        & options=options )
+      myNumDiffs = myNumDiffs + count( l2gp1%quality /= l2gp2Temp%quality )
+    elseif ( all(l2gp1%quality == l2gp2Temp%quality) .and. &
+      & SwitchDetail(lowercase(myFields), 'quality', '-fc') > -1 .and. myVerbose ) then
+      call output('(quality fields equal)', advance='yes')
+    endif
+    if ( any(l2gp1%convergence /= l2gp2Temp%convergence) .and. &
+      & SwitchDetail(lowercase(myFields), 'convergence', '-fc') > -1 ) then
+      call diff ( l2gp1%convergence, 'l2gp%convergence', &
+        &         l2gp2Temp%convergence, ' ', &
+        & options=options )
+      myNumDiffs = myNumDiffs + count( l2gp1%convergence /= l2gp2Temp%convergence )
+    elseif ( all(l2gp1%convergence == l2gp2Temp%convergence) .and. &
+      & SwitchDetail(lowercase(myFields), 'convergence', '-fc') > -1 .and. myVerbose ) then
+      call output('(convergence fields equal)', advance='yes')
+    endif
+    call doneHere
+    return
+
+  contains
     subroutine diffGeoLocations( l2gp1, l2gp2 )
       ! Args
       type(L2GPData_T) :: l2gp1
       type(L2GPData_T) :: l2gp2
       ! Executable
       if ( any(l2gp1%pressures /= l2gp2%pressures) .and. &
-        & SwitchDetail(lowercase(myFields), 'pressure', '-c') > -1 ) then
+        & SwitchDetail(lowercase(myFields), 'pressure', '-fc') > -1 ) then
           call diff ( l2gp1%pressures, 'l2gp%pressures', &
             &         l2gp2%pressures, ' ', &
             & options=options )
         myNumDiffs = myNumDiffs + count( l2gp1%pressures /= l2gp2%pressures )
       endif
       if ( any(l2gp1%latitude /= l2gp2%latitude) .and. &
-        & SwitchDetail(lowercase(myFields), 'lat', '-c') > -1 ) then
+        & SwitchDetail(lowercase(myFields), 'lat', '-fc') > -1 ) then
           call diff ( l2gp1%latitude, 'l2gp%latitude', &
             &         l2gp2%latitude, ' ', &
             & options=options )
         myNumDiffs = myNumDiffs + count( l2gp1%latitude /= l2gp2%latitude )
       endif
       if ( any(l2gp1%longitude /= l2gp2%longitude) .and. &
-        & SwitchDetail(lowercase(myFields), 'lon', '-c') > -1 ) then
+        & SwitchDetail(lowercase(myFields), 'lon', '-fc') > -1 ) then
           call diff ( l2gp1%longitude, 'l2gp%longitude', &
             &         l2gp2%longitude, ' ', &
             & options=options )
         myNumDiffs = myNumDiffs + count( l2gp1%longitude /= l2gp2%longitude )
       endif
       if ( any(l2gp1%solarTime /= l2gp2%solarTime) .and. &
-        & SwitchDetail(lowercase(myFields), 'solartime', '-c') > -1 ) then
+        & SwitchDetail(lowercase(myFields), 'solartime', '-fc') > -1 ) then
           call diff ( l2gp1%solarTime, 'l2gp%solarTime', &
             &         l2gp2%solarTime, ' ', &
             & options=options )
         myNumDiffs = myNumDiffs + count( l2gp1%solarTime /= l2gp2%solarTime )
       endif
       if ( any(l2gp1%solarZenith /= l2gp2%solarZenith) .and. &
-        & SwitchDetail(lowercase(myFields), 'solarzenith', '-c') > -1 ) then
+        & SwitchDetail(lowercase(myFields), 'solarzenith', '-fc') > -1 ) then
           call diff ( l2gp1%solarZenith, 'l2gp%solarZenith', &
             &         l2gp2%solarZenith, ' ', &
             & options=options )
@@ -1812,14 +1816,14 @@ contains
         myNumDiffs = myNumDiffs + count( l2gp1%solarZenith /= l2gp2%solarZenith )
       endif
       if ( any(l2gp1%losAngle /= l2gp2%losAngle) .and. &
-        & SwitchDetail(lowercase(myFields), 'losangle', '-c') > -1 ) then
+        & SwitchDetail(lowercase(myFields), 'losangle', '-fc') > -1 ) then
           call diff ( l2gp1%losAngle, 'l2gp%losAngle', &
             &         l2gp2%losAngle, ' ', &
             & options=options )
         myNumDiffs = myNumDiffs + count( l2gp1%losAngle /= l2gp2%losAngle )
       endif
       if ( any(l2gp1%geodAngle /= l2gp2%geodAngle) .and. &
-        & SwitchDetail(lowercase(myFields), 'geodangle', '-c') > -1 ) then
+        & SwitchDetail(lowercase(myFields), 'geodangle', '-fc') > -1 ) then
           call diff ( l2gp1%geodAngle, 'l2gp%geodAngle', &
             &         l2gp2%geodAngle, ' ', &
             & options=options )
@@ -1827,7 +1831,7 @@ contains
         myNumDiffs = myNumDiffs + count( l2gp1%geodAngle /= l2gp2%geodAngle )
       endif
       if ( any(l2gp1%time /= l2gp2%time) .and. &
-        & SwitchDetail(lowercase(myFields), 'time', '-c') > -1 ) then
+        & SwitchDetail(lowercase(myFields), 'time', '-fc') > -1 ) then
           call diff ( l2gp1%time, 'l2gp%time', &
             &         l2gp2%time, ' ', &
             & options=options )
@@ -1835,7 +1839,7 @@ contains
         myNumDiffs = myNumDiffs + count( l2gp1%time /= l2gp2%time )
       endif
       if ( any(l2gp1%chunkNumber /= l2gp2%chunkNumber) .and. &
-        & SwitchDetail(lowercase(myFields), 'chunknumber', '-c') > -1 ) then
+        & SwitchDetail(lowercase(myFields), 'chunknumber', '-fc') > -1 ) then
         call diff ( l2gp1%chunkNumber, 'l2gp1%chunkNumber', &
           &         l2gp2%chunkNumber, 'l2gp2%chunkNumber', &
             & options=options )
@@ -1846,7 +1850,7 @@ contains
       
       if ( associated(l2gp1%frequency) .and.  associated(l2gp2%frequency)) then
         if ( any(l2gp1%frequency /= l2gp2%frequency) .and. &
-          & SwitchDetail(lowercase(myFields), 'freq', '-c') > -1 ) then
+          & SwitchDetail(lowercase(myFields), 'freq', '-fc') > -1 ) then
           call diff ( l2gp1%frequency, 'l2gp%frequency', &
             &         l2gp2%frequency, ' ', &
             & options=options )
@@ -4644,51 +4648,51 @@ contains
       ! Not a special case
     end select
 
-    if ( SwitchDetail(myFields, 'pressure', '-wc') > -1 ) then
+    if ( SwitchDetail(myFields, 'pressure', '-wfc') > -1 ) then
       call ReplaceFillValues ( l2gp1%pressures, l2gp1%MissingValue, l2gp2%pressures )
     endif
-    if ( SwitchDetail(myFields, 'latitude', '-wc') > -1 ) then
+    if ( SwitchDetail(myFields, 'latitude', '-wfc') > -1 ) then
       call ReplaceFillValues ( l2gp1%latitude, l2gp1%MissingValue, l2gp2%latitude )
     endif
-    if ( SwitchDetail(myFields, 'longitude', '-wc') > -1 ) then
+    if ( SwitchDetail(myFields, 'longitude', '-wfc') > -1 ) then
       call ReplaceFillValues ( l2gp1%longitude, l2gp1%MissingValue, l2gp2%longitude )
     endif
-    if ( SwitchDetail(myFields, 'solartime', '-wc') > -1 ) then
+    if ( SwitchDetail(myFields, 'solartime', '-wfc') > -1 ) then
       call ReplaceFillValues ( l2gp1%solartime, l2gp1%MissingValue, l2gp2%solartime )
     endif
-    if ( SwitchDetail(myFields, 'solarzenith', '-wc') > -1 ) then
+    if ( SwitchDetail(myFields, 'solarzenith', '-wfc') > -1 ) then
       call ReplaceFillValues ( l2gp1%solarzenith, l2gp1%MissingValue, l2gp2%solarzenith )
     endif
-    if ( SwitchDetail(myFields, 'LineOfSightAngle', '-wc') > -1 ) then
+    if ( SwitchDetail(myFields, 'LineOfSightAngle', '-wfc') > -1 ) then
       call ReplaceFillValues ( l2gp1%losangle, l2gp1%MissingValue, l2gp2%losangle )
     endif
-    if ( SwitchDetail(myFields, 'OrbitGeodeticAngle', '-wc') > -1 ) then
+    if ( SwitchDetail(myFields, 'OrbitGeodeticAngle', '-wfc') > -1 ) then
       call ReplaceFillValues ( l2gp1%geodangle, l2gp1%MissingValue, l2gp2%geodangle )
     endif
-    if ( SwitchDetail(myFields, 'time', '-wc') > -1 ) then
+    if ( SwitchDetail(myFields, 'time', '-wfc') > -1 ) then
       call ReplaceFillValues ( l2gp1%time, real(l2gp1%MissingValue, r8), &
         & l2gp2%time )
     endif
-    if ( SwitchDetail(myFields, 'chunknumber', '-wc') > -1 ) then
+    if ( SwitchDetail(myFields, 'chunknumber', '-wfc') > -1 ) then
       call ReplaceFillValues ( l2gp1%chunknumber, int(l2gp1%MissingValue), &
         & l2gp2%chunknumber )
     endif
-    if ( SwitchDetail(myFields, 'frequency', '-wc') > -1 ) then
+    if ( SwitchDetail(myFields, 'frequency', '-wfc') > -1 ) then
       call ReplaceFillValues ( l2gp1%frequency, l2gp1%MissingValue, l2gp2%frequency )
     endif
-    if ( SwitchDetail(myFields, 'l2gpvalue', '-wc') > -1 ) then
+    if ( SwitchDetail(myFields, 'l2gpvalue', '-wfc') > -1 ) then
       call ReplaceFillValues ( l2gp1%l2gpvalue, l2gp1%MissingValue, l2gp2%l2gpvalue )
     endif
-    if ( SwitchDetail(myFields, 'l2gpprecision', '-wc') > -1 ) then
+    if ( SwitchDetail(myFields, 'l2gpprecision', '-wfc') > -1 ) then
       call ReplaceFillValues ( l2gp1%l2gpprecision, l2gp1%MissingValue, l2gp2%l2gpprecision )
     endif
-    if ( SwitchDetail(myFields, 'status', '-wc') > -1 ) then
+    if ( SwitchDetail(myFields, 'status', '-wfc') > -1 ) then
       call ReplaceFillValues ( l2gp1%status, l2gp1%MissingStatus, l2gp2%status )
     endif
-    if ( SwitchDetail(myFields, 'quality', '-wc') > -1 ) then
+    if ( SwitchDetail(myFields, 'quality', '-wfc') > -1 ) then
       call ReplaceFillValues ( l2gp1%quality, l2gp1%MissingValue, l2gp2%quality )
     endif
-    if ( SwitchDetail(myFields, 'convergence', '-wc') > -1 ) then
+    if ( SwitchDetail(myFields, 'convergence', '-wfc') > -1 ) then
       call ReplaceFillValues ( l2gp1%convergence, l2gp1%MissingValue, l2gp2%convergence )
     endif
 
@@ -4783,33 +4787,33 @@ contains
     if ( DEEBUG ) print *, 'shape l2gp%latitude: ', shape(l2gp%latitude)
     if ( DEEBUG ) print *, 'shape HGrid%geodLat: ', shape(HGrid%geodLat)
     
-    if ( SwitchDetail(myFields, 'latitude', '-wc') > -1 ) then
+    if ( SwitchDetail(myFields, 'latitude', '-wfc') > -1 ) then
       call ReplaceFillValues ( l2gp%latitude, l2gp%MissingValue, &
         & real(hgrid%geodLat(1,HGp1:HGpn), rgp) )
     endif
     if ( DEEBUG ) print *, 'shape l2gp%longitude: ', shape(l2gp%longitude)
     if ( DEEBUG ) print *, 'shape HGrid%lon: ', shape(HGrid%lon)
-    if ( SwitchDetail(myFields, 'longitude', '-wc') > -1 ) then
+    if ( SwitchDetail(myFields, 'longitude', '-wfc') > -1 ) then
       call ReplaceFillValues ( l2gp%longitude, l2gp%MissingValue, &
         & real(hgrid%lon(1,HGp1:HGpn), rgp) )
     endif
-    if ( SwitchDetail(myFields, 'solartime', '-wc') > -1 ) then
+    if ( SwitchDetail(myFields, 'solartime', '-wfc') > -1 ) then
       call ReplaceFillValues ( l2gp%solartime, l2gp%MissingValue, &
         & real(hgrid%solartime(1,HGp1:HGpn), rgp) )
     endif
-    if ( SwitchDetail(myFields, 'solarzenith', '-wc') > -1 ) then
+    if ( SwitchDetail(myFields, 'solarzenith', '-wfc') > -1 ) then
       call ReplaceFillValues ( l2gp%solarzenith, l2gp%MissingValue, &
         & real(hgrid%solarzenith(1,HGp1:HGpn), rgp) )
     endif
-    if ( SwitchDetail(myFields, 'LineOfSightAngle', '-wc') > -1 ) then
+    if ( SwitchDetail(myFields, 'LineOfSightAngle', '-wfc') > -1 ) then
       call ReplaceFillValues ( l2gp%losangle, l2gp%MissingValue, &
         & real(hgrid%losangle(1,HGp1:HGpn), rgp) )
     endif
-    if ( SwitchDetail(myFields, 'OrbitGeodeticAngle', '-wc') > -1 ) then
+    if ( SwitchDetail(myFields, 'OrbitGeodeticAngle', '-wfc') > -1 ) then
       call ReplaceFillValues ( l2gp%geodAngle, l2gp%MissingValue, &
         & real(hgrid%phi(1,HGp1:HGpn), rgp) )
     endif
-    if ( SwitchDetail(myFields, 'time', '-wc') > -1 ) then
+    if ( SwitchDetail(myFields, 'time', '-wfc') > -1 ) then
       call ReplaceFillValues ( l2gp%time, real(l2gp%MissingValue, r8), &
         & hgrid%time(1,HGp1:HGpn) )
     endif
@@ -4934,6 +4938,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.175  2010/06/19 00:11:05  pwagner
+! Diffs were checking wrong default field names; fixed
+!
 ! Revision 2.174  2010/02/12 00:25:46  pwagner
 ! Fixed bug when number of dims is 4 (but what if 5 or more?)
 !
