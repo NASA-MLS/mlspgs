@@ -50,6 +50,7 @@ module HessianModule_0          ! Low-level Hessians in the MLS PGS suite
     type(tuple_t), pointer :: Tuples(:) => NULL() ! Some may not be filled (yet)
     integer :: TuplesFilled = 0 ! Number of tuples filled
     real(rm), pointer :: Values(:,:,:) => NULL() ! for full explicit representation
+                        ! first subscript is "upper", others are "lower".
   end type HessianElement_T
 
   interface ClearBlock
@@ -296,7 +297,7 @@ contains
   ! ----------------------------------- Hessian_Vec_Vec_Multiply_D -----
   subroutine Hessian_Vec_Vec_Multiply_D ( H, V1, V2, P, Update )
   !{ Multiply a Hessian {\tt H} by {\tt V1} and {\tt V2}, with a factor of
-  !  $\frac12$, giving {\tt P}: $P^i = \frac12 H^i_{jk} V_1^i V_2^j$ or
+  !  $\frac12$, giving {\tt P}: $P^i = \frac12 H^i_{jk} V_1^j V_2^k$ or
   !  $P^i = P^i + \frac12 H^i_{jk} V_1^j V_2^k$, depending upon {\tt
   !  Update}.  This is the second-order term of a Taylor series.  {\tt P}
   !  is initially set to zero unless {\tt Update} is present and true.
@@ -318,7 +319,7 @@ contains
   ! ----------------------------------- Hessian_Vec_Vec_Multiply_S -----
   subroutine Hessian_Vec_Vec_Multiply_S ( H, V1, V2, P, Update )
     !{ Multiply a Hessian {\tt H} by {\tt V1} and {\tt V2}, with a factor of
-    !  $\frac12$, giving {\tt P}: $P^i = \frac12 H^i_{jk} V_1^i V_2^j$ or
+    !  $\frac12$, giving {\tt P}: $P^i = \frac12 H^i_{jk} V_1^j V_2^k$ or
     !  $P^i = P^i + \frac12 H^i_{jk} V_1^j V_2^k$, depending upon {\tt
     !  Update}.  This is the second-order term of a Taylor series.  {\tt P}
     !  is initially set to zero unless {\tt Update} is present and true.
@@ -721,6 +722,9 @@ o:    do while ( i < n )
 end module HessianModule_0
 
 ! $Log$
+! Revision 2.5  2010/06/22 22:45:38  vsnyder
+! Correct LaTeX comments for multiply
+!
 ! Revision 2.4  2010/03/26 23:15:45  vsnyder
 ! Add Threshold to StreamlineHessian
 !
