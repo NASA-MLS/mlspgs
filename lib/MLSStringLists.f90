@@ -129,6 +129,7 @@ module MLSStringLists               ! Module to treat string lists
 ! int StringElementNum(strlist inList, char* test_string, log countEmpty, &
 !   & [char inseparator], [log part_match])
 ! int SwitchDetail(strlist inList, char* test_switch, [char* options])
+!      by default, options is "-f" to ignore leading spaces
 ! char* unquote (char* str, [char* quotes], [char* cquotes], [log strict])
 ! wrap ( char* str, char* outstr, int width, [char inseparator], &
 !   & [char break], [char mode], [char* quotes], [int addedLines] )
@@ -2789,6 +2790,9 @@ contains
   
   ! The behavior may be modified by options flag
   ! For which see comment above
+  
+  ! Note:
+  ! By default, options automatically includes "f", for backwards compatibility
   !
   ! If the string list contains a "*" and one of the options is "w" then
   ! the test switch is automatically present
@@ -2811,8 +2815,8 @@ contains
     character (len=len(test_switch))           :: switch
 
     ! Executable code
-    myOptions = ''
-    if ( present(options) ) myOptions = lowercase(options)
+    myOptions = '-f'
+    if ( present(options) ) myOptions = trim(lowercase(options))
     detail = -1
 
     nElements = NumStringElements(inList, countEmpty)
@@ -2824,12 +2828,13 @@ contains
     else
       switch = test_switch
     endif
+    if ( index(myOptions, 'f') > 0 ) switch = adjustl(switch)
 
-   ! Check for matches--snipping off any leading blanks
-   ! (That means 'f' is by default on, contradicting notes above)
+   ! Check for matches
     DO elem=1, nElements
       CALL GetStringElement(inList, listElement, elem, countEmpty)
       if ( index(myOptions, 'c') > 0 ) listElement = lowercase(listElement)
+      if ( index(myOptions, 'f') > 0 ) listElement = adjustl(listElement)
       if ( trim(listElement) /= ' ' .and. &
           & index(trim(listElement), trim(switch)) == 1 ) then
         detail = 0
@@ -3343,6 +3348,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.40  2010/06/22 16:51:32  pwagner
+! default options for switchDetail is '-f'
+!
 ! Revision 2.39  2010/04/16 23:38:34  pwagner
 ! Repaired bug in switchDetail which, e.g., caused '-Sl2pc' to always return '2'
 !
