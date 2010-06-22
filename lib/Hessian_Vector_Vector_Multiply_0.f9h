@@ -9,7 +9,11 @@
 ! export authority as may be required before exporting such information to
 ! foreign countries or providing access to foreign persons.
 
-! $Id$
+! subroutine Hessian_Vec_Vec_Multiply_D ( H, V1, V2, P, Update )
+!   type(HessianElement_T), intent(in) :: H
+!   real(rk), intent(in) :: V1(:), V2(:)
+!   real(rk), intent(inout) :: P(:)
+!   logical, intent(in), optional :: Update
     myUpdate = .false.
     if ( present(update) ) myUpdate = update
     if ( .not. myUpdate ) p = 0
@@ -20,19 +24,25 @@
         p(i) = p(i) + 0.5 * h%tuples(n)%h * v1(h%tuples(n)%j) * v2(h%tuples(n)%k)
       end do
     else if ( associated(h%values) ) then ! Then try the dense represenation
-      if ( size(h%values,3) /= size(p) .or. size(h%values,1) /= size(v1) .or. &
-        &  size(h%values,2) /= size(v2) ) &
+      if ( size(h%values,1) /= size(p) .or. &
+        &  size(h%values,2) /= size(v1) .or. &
+        &  size(h%values,3) /= size(v2) ) &
         call MLSMessage ( MLSMSG_Error, moduleName, &
           & "Dimensions of Hessian and vectors incompatible in multiply" )
       do i = 1, size(h%values,1)
         do k = 1, size(h%values,3)
-          p(i) = p(i) + 0.5 * dot_product(h%values(i,:,k), v1(:)) * v1(k)
+          ! Summation on j is done by dot_product
+          p(i) = p(i) + 0.5 * dot_product(h%values(i,:,k), v1(:)) * v2(k)
         end do
       end do
     end if
 
 ! $Id$
 ! $Log$
+! Revision 2.3  2010/06/22 22:44:53  vsnyder
+! Remove extraneous CVS Id line.  Add comments for the subroutine header
+! and for the summation on j.  Correct bugs in the dense case.
+!
 ! Revision 2.2  2010/02/25 18:16:46  pwagner
 ! Conforms with changed Hessian structure
 !
