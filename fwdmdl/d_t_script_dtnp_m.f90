@@ -32,29 +32,31 @@ contains
 !{ \parskip 5pt
 !  Given $T$, $\nu$ and the Planck function
 !  $B = \frac{\frac{h \nu}k}{exp\left(\frac{h \nu}{k T}\right)-1}$,
-!  compute $\frac{\text{d} B}{\text{d} T}$.  Then difference it along
-!  the path to get {\tt dT\_scr\_dT} = $\frac{\text{d} \Delta B}{\text{d} T}$.
-!  $\Delta B$  is called ``T script'' (not Tau) in many notes and reports.
+!  compute $\frac{\text{d} B}{\text{d} T}$.
 !
-! B satisfies the differential equation
-! $\frac{\text{d} B}{\text{d} T} =
-!  \frac{B}{T^2} \left( \frac{h\nu}k + B \right)$.
+!  B satisfies the differential equation
+!  $\frac{\text{d} B}{\text{d} T} =
+!   \frac{B}{T^2} \left( \frac{h\nu}k + B \right)$.
 !
-! The old way was to compute $\frac{\text{d} B}{\text{d} T} =
+!  The old way was to compute $\frac{\text{d} B}{\text{d} T} =
 !   \exp \left ( \frac{h \nu}{k T} \right )
 !   \left ( \frac{h \nu}
 !     {k T \left [ \exp \left ( \frac{h \nu}{k T} \right ) - 1 \right ]}
 !     \right ) ^2$.  Dividing numerator and denominator by
 !     $\exp \left ( \frac{h \nu}{k T} \right )$ gives
 !     $\frac{\left ( \frac{h \nu}{k T} \right )^2}
-!           { 2 \left [ \cosh \left ( \frac{h \nu}{k T} \right ) - 1 \right ]}$.
-!   $2 ( \cosh x \, - \, 1) / x^2$ has substantial cancellation near $x = 0$,
+!           { 2 \left [ \cosh \left ( \frac{h \nu}{k T} \right ) - 1 \right ]}$,
+!   which is substantially more expensive than using the differential equation.
+!   $2 ( \cosh x \, - \, 1) / x^2$ has substantial cancellation for small $x$,
 !   so a specially-developed procedure should be used to evaluate it.
 !
-! From $\frac{\text{d} B}{\text{d} T}$ compute
-! $\frac{\text{d} B}{\text{d} T_{np}} =
-!  \frac{\text{d} B}{\text{d} T} \eta_n \eta_p$ where
-! $\eta_n$ = Eta(n,zeta) and $\eta_p$ = Eta(p,phi).
+!  From $\frac{\text{d} B}{\text{d} T}$ compute
+!  $\frac{\text{d} B}{\text{d} T_{np}} =
+!   \frac{\text{d} B}{\text{d} T} \eta_n \eta_p$ where
+!  $\eta_n$ = Eta(n,zeta) and $\eta_p$ = Eta(p,phi).
+!  Then difference $\frac{\text{d} B}{\text{d} T_{np}}$ along
+!  the path to get {\tt dT\_scr\_dT} = $\frac{\text{d} \Delta B}{\text{d} T}$.
+!  $\Delta B$  is called ``T script'' (not Tau) in many notes and reports.
 
 !   use DCOSH1_M, only: COSH1             ! In case RP is double
     use MLSCommon, only: R8, RP, IP
@@ -87,7 +89,7 @@ contains
     n_sv = size(eta_zxp,dim=2)
 
 !   dBdt = 0.5_rp / cosh1(h_o_k * nu / t_path) !{ \frac{a^2}{2 ( \cosh a - 1 )}
-    dBdt = 0.5 * b * ( h_o_k * nu + b ) / t_path**2
+    dBdt = 0.5 * B * ( h_o_k * nu + B ) / t_path**2
 
     ! Make sure the elements of dT_x_eta that we use have defined values
     dT_x_eta(1:2,:) = 0.0
@@ -134,6 +136,9 @@ contains
 
 end module D_T_SCRIPT_DTNP_M
 ! $Log$
+! Revision 2.9  2010/06/23 02:28:39  vsnyder
+! Correct nomenclature: T_Script should be B
+!
 ! Revision 2.8  2009/06/23 18:26:11  pwagner
 ! Prevent Intel from optimizing ident string away
 !
