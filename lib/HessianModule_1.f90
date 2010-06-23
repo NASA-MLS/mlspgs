@@ -141,14 +141,14 @@ contains
 
   ! ----------------------------------------- CreateHessianBlock_1 -----
   subroutine CreateHessianBlock_1 ( H, RowNum, ColNum1, ColNum2, Kind, InitTuples )
-  ! Create the hessian block Z%Block(RowNum,ColNum), which sprang into
+  ! Create the hessian block H%Block(RowNum,ColNum), which sprang into
   ! existence with kind M_Absent.  Create it with the specified Kind.
   ! See HessianModule_0 for a list of the kinds.  If the Kind is
   ! M_Sparse the initial number of tuples is required
-    type (Hessian_T), intent(inout) :: H       ! The matrix having the block
-    integer, intent(in) :: RowNum, ColNum1, ColNum2    ! Row and column of the block
-    integer, intent(in) :: Kind         ! Kind of block, see MatrixModule_0
-    integer, intent(in), optional :: InitTuples  ! Number of nonzeros
+    type (Hessian_T), intent(inout) :: H ! The matrix having the block
+    integer, intent(in) :: RowNum, ColNum1, ColNum2 ! Row and column of the block
+    integer, intent(in) :: Kind          ! Kind of block, see HessianModule_0
+    integer, intent(in), optional :: InitTuples     ! Number of nonzeros
     call createBlock ( h%block ( rowNum, colNum1, colNum2 ), &
       & h%row%nelts ( rowNum ), &
       & h%col%nelts ( colNum1 ), &
@@ -315,11 +315,10 @@ contains
 
   ! ------------------------------- Hessian_Vector_Vector_Multiply -----
   subroutine Hessian_Vector_Vector_Multiply ( H, V, P, Update )
-  !{ Multiply a Hessian {\tt H} by {\tt V} twice, with a factor of $\frac12$,
-  !  giving {\tt P}: $P^k = \frac12 H^k_{ij} V^i V^j$ or $P^k = P^k + \frac12
-  !  H^k_{ij} V^i V^j$, depending upon {\tt Update}.  This is the
-  !  second-order term of a Taylor series.  {\tt P} is initially set to zero
-  !  unless {\tt Update} is present and true.
+  !{ Multiply Hessian {\tt H} by vector {\tt V} twice, with a factor of
+  !  $\frac12$, giving {\tt P}: $P^k = P^k + \frac12 H^k_{ij} V^i V^j$.
+  !  This is the  second-order term of a Taylor series.  {\tt P} is
+  !  initially set to zero unless {\tt Update} is present and true.
 
     use HessianModule_0, only: Multiply
     use VectorsModule, only: Vector_T
@@ -329,14 +328,21 @@ contains
     type(Vector_T), intent(inout) :: P
     logical, intent(in), optional :: Update
 
-    integer :: I, J, K, L
+    integer :: I, J, K                  ! Loop indices
     integer :: IQ, JQ, KQ               ! Quantity indices
     integer :: II, JI, KI               ! Instance indices
     logical :: MYUPDATE                 ! Copy of update
 
     myUpdate = .false.
     if ( present ( update ) ) myUpdate = update
-    ! Error checking on campatibility of H%row with P and H%col with V here.
+
+    ! Error checking assumes templates were created by L2CF.
+    if ( h%row%vec%template%name /= p%template%name ) &
+      & call MLSMessage ( MLSMSG_Error, moduleName, &
+        & "Row of Hessian (H) incompatible with product (P) vector." )
+    if ( h%col%vec%template%name /= v%template%name ) &
+      & call MLSMessage ( MLSMSG_Error, moduleName, &
+        & "Column of Hessian (H) incompatible with factor (V) vector." )
 
     do i = 1, h%row%nb
       iq = h%col%quant ( i )
@@ -345,15 +351,16 @@ contains
         jq = h%col%quant ( j )
         ji = h%col%inst ( j )
         do k = 1, h%col%nb
-          kq = h%col%quant ( k )
-          ki = h%col%inst ( k )
-          do l = 1, h%col%vec%quantities(kq)%template%instanceLen
-            call multiply ( h%block(i,j,k), &
-              & v%quantities(iq)%values(:,ii), &
-              & v%quantities(jq)%values(:,ji), &
-              & p%quantities(kq)%values(:,ki), &
-              & myUpdate )
-          end do
+          kq = h%row%quant ( k )
+          ki = h%row%inst ( k )
+          ! Rows of H%block (first subscript) correspond to quantities
+          ! of P; columns (second and third subscripts) correspond to
+          ! quantities of V.
+          call multiply ( h%block(k,i,j), &
+            & v%quantities(iq)%values(:,ii), &
+            & v%quantities(jq)%values(:,ji), &
+            & p%quantities(kq)%values(:,ki), &
+            & update )
         end do
       end do
     end do
@@ -497,6 +504,9 @@ contains
 end module HessianModule_1
 
 ! $Log$
+! Revision 2.6  2010/06/23 22:43:15  vsnyder
+! Remove nonsense loop, use h%row where it should be used, in multiply
+!
 ! Revision 2.5  2010/05/14 22:45:33  pwagner
 ! CreateBlock must be public
 !
