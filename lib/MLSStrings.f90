@@ -1105,11 +1105,18 @@ contains
     ! If the string is blank or contains one of forbiddens
     ! the int is STRINGCONTAINSFORBIDDENS
     
-    ! Then snip away any from the set ignore if present
+    ! Then snip away any from the set ignore before the first digit
+    ! if ingore is present.
     ! If ignore is '*', that means ignore all alphabetical chars
     ! If ignore contains '*', that means ignore all alphabetical chars
-    ! plus any other chars among ignore
+    ! plus any other chars among ignore.
+    ! Note that '*' will only escape alphabetical chars, if you want
+    ! to escape any other chars in addition to alphabeticals, you
+    ! should add that char to the escape string (e.g. ':*' to escape
+    ! alphabeticals and ':')
     ! If the string is composed entirely of ignorable chars, int is 0
+    ! If the string contains multiple numbers, separated by ignorables.
+    ! only the first number is returned.
     
     ! Finally attempt to read as an int what remains
     ! If that should fail as a last resort return STRINGCONTAINSFORBIDDENS
@@ -1117,6 +1124,7 @@ contains
     ! Examples:
     ! (1) if str='band13a' and ignore='*', int will be 13
     ! (2) if str='3 cm' and forbiddens='c', int will be left undefined
+    ! (3) if str='b7f2' and ignore='*', int will be 7
 
     ! Limitation: you're unable to "escape" a * so you'll have to
     ! preprocess the * away if you really want to read a string which has
@@ -2281,6 +2289,11 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.78  2010/06/23 20:42:21  honghanh
+! Change readAnIntFromChars to only read the first number in the string
+! if there are many numbers separated by ignored characters.
+! Update comment of the method.
+!
 ! Revision 2.77  2010/02/04 23:08:00  vsnyder
 ! Remove USE or declaration for unused names
 !
