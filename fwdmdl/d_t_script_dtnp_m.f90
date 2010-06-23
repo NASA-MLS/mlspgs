@@ -22,21 +22,23 @@ module D_T_SCRIPT_DTNP_M
 !---------------------------------------------------------------------------
 contains
 !-----------------------------------------------------------------------
-! Build the derivative of the t_script array w.r.t to Tnp
+! Build the derivative of the B array w.r.t to T_np
 ! (The 'n' zeta coeff. and the 'p' phi coefficient)
 
   ! -----------------------------------------------  DT_SCRIPT_DT  -----
-  subroutine DT_SCRIPT_DT ( T_PATH, T_SCRIPT, ETA_ZXP, NZ_ZXP, NNZ_ZXP, &
+  subroutine DT_SCRIPT_DT ( T_PATH, B, ETA_ZXP, NZ_ZXP, NNZ_ZXP, &
     &                       NU, DT_SCR_DT )
 
 !{ \parskip 5pt
-!  Given $T$, $\nu$ and
-!  $B = \frac{\frac{h \nu}k}{exp\left(\frac{h \nu}{k T}-1\right)}$,
-!  compute $\frac{\text{d} B}{\text{d} T}$.  $B$ is called ``T script''
-!  in many notes and reports.
+!  Given $T$, $\nu$ and the Planck function
+!  $B = \frac{\frac{h \nu}k}{exp\left(\frac{h \nu}{k T}\right)-1}$,
+!  compute $\frac{\text{d} B}{\text{d} T}$.  Then difference it along
+!  the path to get {\tt dT\_scr\_dT} = $\frac{\text{d} \Delta B}{\text{d} T}$.
+!  $\Delta B$  is called ``T script'' (not Tau) in many notes and reports.
 !
 ! B satisfies the differential equation
-! $\frac{\text{d} B}{\text{d} T} = B \frac{\frac{h\nu}k + B}{T^2}$.
+! $\frac{\text{d} B}{\text{d} T} =
+!  \frac{B}{T^2} \left( \frac{h\nu}k + B \right)$.
 !
 ! The old way was to compute $\frac{\text{d} B}{\text{d} T} =
 !   \exp \left ( \frac{h \nu}{k T} \right )
@@ -62,11 +64,11 @@ contains
 ! inputs
 
     real(rp), intent(in) :: t_path(:)     ! path temperatures K
-    real(rp), intent(in) :: t_script(:)   ! B, called "T script" in many notes
+    real(rp), intent(in) :: B(:)          ! Planck function
     real(rp), intent(in) :: eta_zxp(:,:)  ! path eta functions
     integer, intent(in) :: nz_zxp(:,:)    ! Where eta_zxp is not zero
     integer, intent(in) :: nnz_zxp(:)     ! Numbers of rows in nz_zxp
-    real(r8) :: nu                        ! calculation frequency (MHz)
+    real(r8), intent(in) :: nu            ! calculation frequency (MHz)
 
 ! output
 
@@ -76,7 +78,7 @@ contains
 
     integer(ip) :: j, n_path, n_sv, p_i, sv_i
 
-    real(rp) :: dstdt(1:size(t_path))     ! d "script T" / dT
+    real(rp) :: dBdt(1:size(t_path))     ! dB / dT
     real(rp) :: dT_x_eta(1:size(t_path),1:size(eta_zxp,2))
 
 ! Do this inefficiently for now because it is quick and easy
@@ -84,8 +86,8 @@ contains
     n_path = size(t_path)
     n_sv = size(eta_zxp,dim=2)
 
-!   dstdt = 0.5_rp / cosh1(h_o_k * nu / t_path) !{ \frac{a^2}{2 ( \cosh a - 1 )}
-    dstdt = 0.5 * t_script * ( h_o_k * nu + t_script ) / t_path**2
+!   dBdt = 0.5_rp / cosh1(h_o_k * nu / t_path) !{ \frac{a^2}{2 ( \cosh a - 1 )}
+    dBdt = 0.5 * b * ( h_o_k * nu + b ) / t_path**2
 
     ! Make sure the elements of dT_x_eta that we use have defined values
     dT_x_eta(1:2,:) = 0.0
@@ -93,7 +95,7 @@ contains
     ! Fill other nonzero elements of dT_x_eta
     do sv_i = 1, n_sv
       dT_x_eta(nz_zxp(:nnz_zxp(sv_i),sv_i),sv_i) = &
-        & dstdt(nz_zxp(:nnz_zxp(sv_i),sv_i)) * eta_zxp(nz_zxp(:nnz_zxp(sv_i),sv_i),sv_i)
+        & dBdt(nz_zxp(:nnz_zxp(sv_i),sv_i)) * eta_zxp(nz_zxp(:nnz_zxp(sv_i),sv_i),sv_i)
     end do
 
     do sv_i = 1 , n_sv
@@ -132,6 +134,9 @@ contains
 
 end module D_T_SCRIPT_DTNP_M
 ! $Log$
+! Revision 2.8  2009/06/23 18:26:11  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.7  2008/08/27 19:56:51  vsnyder
 ! Add PRINT to not_used_here
 !
