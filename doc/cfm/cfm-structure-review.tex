@@ -1,4 +1,4 @@
-\section{Review of overall structure}
+\section{Review of overall CFM structure}
 \label{sec:Review}
 
 This section introduces the various data entities and functionalities
@@ -25,9 +25,9 @@ intervals known as minor frames (MIFs).  During a standard scan, limb
 views are taken for the first 120 MIFs (114 for the THz antenna).  The
 remaining $\sim$26 MIFs in the MAF are spent performing calibration and
 antenna retraces.  The on board software attempts to lock the MLS scans
-to the Aura orbit, such that scans are made at the same latitudes each
-orbit.  In order to accomplish this, occasional `leap MIFs' must be
-added in selected MAFs.
+to the Aura orbit, such that scans are made at essentially the same
+latitudes each orbit.  In order to accomplish this, occasional `leap
+MIFs' must be added in selected MAFs.
 
 \subsubsection{Bands and channels}
 The other divisions of relevance for L1 data are band and channel.  MLS
@@ -54,21 +54,21 @@ bands.  The L1BRADD file contains the radiances for the four MLS digital
 autocorrelator spectrometers, also measuring GHz spectral regions.  The
 L1BRADT file contains radiances measured by the MLS THz bands.
 
-L1BRAD files are stored in HDF5 (not HDFEOS) and are flat files
-containing many HDF SDs.  The most important of these are radiances
-which are stored as arrays, named according to the signal designation
-nomenclature described above.  The arrays are dimensioned channel, MIF,
-MAF with channel the most rapidly changing index.  Precisions are stored
-for each radiance, in a separate SD with the name `\snippet{<signal>
-  precision}' (note the intervening space).  Radiances that the MLS
-Level~1 software deems should not be used are so indicated by having
-their precisions set negative.  The additional quantity
-`\snippet{<signal> Baseline}` values (dimensioned channel, MAF) should
-be added (for each MIF per channel/MAF) before radiances are used.
-Similarly, the `\snippet{<signal> Baseline precision}' should be added
-in quadrature to the precisions.  (The baseline `AC' and `DC' terms are
-diagnostic and may be ignored).  All numbers refer to brightness
-temperature in Kelvins.
+L1BRAD files are stored in HDF5 (not HDF-EOS) and are flat files
+containing many HDF arrays.  The most important of these are radiances
+which are named according to the signal designation nomenclature
+described above.  The arrays are dimensioned channel, MIF, MAF with
+channel the most rapidly changing index.  Precisions are stored for each
+radiance, in a separate SD with the name `\snippet{<signal> precision}'
+(note the intervening space).  Radiances that the MLS Level~1 software
+deems should not be used are so indicated by having their precisions set
+negative.  The additional quantity `\snippet{<signal> Baseline}' values
+(dimensioned channel, MAF) should be added (for each MIF per
+channel/MAF) before radiances are used.  Similarly, the
+`\snippet{<signal> Baseline precision}' should be added in quadrature to
+the precisions.  (The baseline `AC' and `DC' terms are diagnostic and
+may be ignored).  All numbers refer to brightness temperature in
+Kelvins.
 
 The L1BOA (orbit/attitude) file contains information on spacecraft
 location and the locations of the GHz and THz tangent points.  All
@@ -112,7 +112,7 @@ The heterogeneous nature of the MLS state and measurement vectors
 dictates that a flexible system be used for their description.  In the
 MLSCFM software vectors consist of `templates' and `values'.  Separating
 the vector template from its values allows for efficient storage of
-related quantities (e.g., the state, the initial guess, and the \emph{a
+related vectors (e.g., the state, the initial guess, and the \emph{a
   priori}, or the measurements and their forward model estimates).
 Separating the template from the values also aids more rigid error
 checking, such as only allowing to vectors to be added if they share a
@@ -186,7 +186,58 @@ The MLSCFM software contains two main modules for dealing with matrices.
 manipulating individual blocks, while \snippet{MatrixModule_1} contains
 the software that describes matrices as a collection of
 \snippet{Matrix_0} blocks, and the algorithms for operating upon these
-`\snippet{Matrix_1}' entities.  
+`\snippet{Matrix_1}' entities.
+
+\subsection{Defining coordinate systems}
+
+As discussed above, vector quantities describe geophysical, measurement,
+or other variables on up to three dimensions.  These three dimensions
+are known as \snippet{vGrid} (for vertical coordinates), \snippet{hGrid}
+(for horizontal coordinates) and \snippet{fGrid} (for frequency /
+channel descriptions).
+
+These grids can be specified prior to the construction of quantity
+templates.  However, they are not essential to the creation of vector
+quantities.  For example, minor frame quantities take their geolocation
+information (both horizontal and vertical) directly from the L1B
+information.  In addition, radiance quantities take their
+frequency/channel information directly from the MLS signals database.
+
+\tbd{The ability for minor frame quantities to take geolocation directly
+  from L1B implies that the calling code needs to provide that
+  information when needed.}
+
+\subsubsection{Vertical coordinates -- \snippet{vGrid}}
+
+MLS vector quantities can be described on a variety of vertical
+coordinates, including pressure (and more commonly
+$-\log_{10}\left[\text{Pressure / hPa}\right]$ (known as \snippet{zeta}
+in the software) and altitude (in meters).  Typically \snippet{vGrids}
+are used only to define coherent vector quantities (see discussion
+above).  Thus far, the only incoherent quantities in MLSL2 are minor
+frame quantities.  These have their vertical coordinates defined by MLS L1B
+tangent point altitude information (in meters).
+
+\subsubsection{Horizontal coordinates -- \snippet{hGrid}}
+
+The definition of horizontal coordinates differs from that of vertical
+and frequency coordinates, in that the coordinates change from scene to
+scene, and run to run, depending on the timespan of MLS data under
+consideration.
+
+\tbd{More discussion is needed of this.}
+
+
+\subsubsection{Frequency coordinates -- \snippet{fGrid}}
+
+As discussed above, few quantities have more than one channel.  The most
+significant group of multi-channeled quantities is radiances, these take
+their frequency information directly from MLS signals database.  Some
+state vector quantities are used to describe spectrally flat, or slowly
+varying, offsets to observed radiance or atmospheric emission/absorption
+(`baseline' and `extinction', respectively).  If a (typically slow)
+frequency variation is required for these, then this is described as a
+linear interpolation between tie points specified in a \snippet{fGrid}.
 
 \subsection{Sources of information for MLS state vector components}
 
@@ -224,11 +275,11 @@ proves to be practical is the subject of further investigations.
 
 \subsection{Defining forward models}
 
-In addition to defining vectors for the state and measurement vectors
-(and possibly defining Jacobian matrices to connect them), the CFM
-software also requires individual forward models to be defined.  There
-are several different types of forward models that can be defined.  In
-the context of the CFM, we anticipate that the `Full', `Linearized', `Baseline' and
+In addition to defining the state and measurement vectors (and possibly
+defining Jacobian matrices to connect them), the CFM software also
+requires individual forward models to be defined.  There are several
+different types of forward models that can be defined.  In the context
+of the CFM, we anticipate that the `Full', `Linearized', `Baseline' and
 `Scan2D' models will be of interest.
 
 \subsubsection{The `full' forward model}
@@ -241,7 +292,7 @@ within a given radiometer.  As the forward model computes for the full
 spectral range covered by all the channels requested, in cases where
 radiances from distinct spectral regions (e.g., groups of channels above
 and below, but not at, the line center) are to be computed, more
-efficiency is gained if separate full forward models are defined each
+efficiency is gained if separate full forward models are defined, each
 covering only adjacent channels.  Full forward models may be `scalar' or
 `polarized', the latter being needed for accurate modeling of the
 118\,GHz O\cs2 line in the mesosphere.
@@ -279,7 +330,17 @@ line centers and/or lower in the atmosphere).
 
 \subsubsection{The `baseline' forward model}
 
-\tbd{Include discussion of this forward model if needed.}
+Most MLS geophysical products derive from observations of spectral
+contrast (channel to channel changes in observed radiances).  Typically
+the `baseline' upon which these spectra sit is of less interest (and is
+typically more sensitive to errors in spectroscopy or instrument
+calibration).  The MLS data processing algorithms can retrieve a
+`baseline' offset term along with composition and temperature profiles
+etc.  This term is simply a spectrally-flat (or slowly varying with
+frequency) offset added to each forward model calculation.  This can be
+invoked by adding the \snippet{do_baseline} flag to a forward model, or,
+if desired, a separate `baseline' forward model can be manually invoked
+to add these terms.
 
 \subsubsection{The `scan' forward model}
 
@@ -287,13 +348,13 @@ Given knowledge, from the MLS state vector, of the atmospheric
 temperature profile on pressure surfaces, the geopotential height at one
 pressure surface, and MLS tangent point pressures for each minor frame,
 it is possible, through hydrostatic balance (and refraction
-calculations, for which a water vapor profile is needed for accuracy),
-to compute the expected tangent point altitudes for the MLS radiance
-observations.  Comparing these to the tangent point altitudes derived
-from the MLS antenna position encoder and the Aura attitude control
-system provides an additional constraint on the atmospheric temperature
-profiles, and enables retrieval of geopotential height (subject to
-inaccuracies in MLS/Aura pointing).
+calculations, for which a water vapor profile is also needed for
+accuracy), to compute the expected tangent point altitudes for the MLS
+radiance observations.  Comparing these to the tangent point altitudes
+derived from the MLS antenna position encoder and the Aura attitude
+control system provides an additional constraint on the atmospheric
+temperature profiles, and enables retrieval of geopotential height
+(subject to inaccuracies in MLS/Aura pointing).
 
 The `scan residual' model invokes these calculations as described in
 \citet{ReadEtal06}.  For a variety of reasons, this model is formulated
@@ -323,6 +384,7 @@ These are detailed in Table~\ref{tab:StateVectorNeeds}.
   types.  Cells with `?' indicate that the quantity may be required for
   some configurations.}
 \label{tab:StateVectorNeeds}
+\tbd{Check with Haley that this is complete}
 \begin{center}
 \begin{tabular}{lccc}
 \toprule

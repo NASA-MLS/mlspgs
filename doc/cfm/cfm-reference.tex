@@ -1,6 +1,11 @@
 \section{Reference}
 \label{sec:Reference}
 
+The reference section of this document mainly focuses on the data types
+(described in Section~\ref{sec:DataTypes}), and subroutines and
+functions (described in Section~ref{sec:Procedures}) that constitute the
+CFM software.
+
 \subsection{A note on tables and strings}
 
 The MLSL2 software makes heavy use of tables to hold commonly referred
@@ -15,6 +20,7 @@ relieves the calling code of having to be aware of the underlying
 tables.
 
 \subsection{Data types}
+\label{sec:DataTypes}
 
 \subsubsection{\snippet{HGrid\_T}}
 The \snippet{HGrid\_T} data type describes the `horizontal' coordinate
@@ -43,13 +49,17 @@ are \snippet{Baselines} and \snippet{Extinctions}.
 
 \subsubsection{\snippet{QuantityTemplate\_T}}
 The \snippet{QuantityTemplate\_T} type is arguably the most important
-derived type in the MLSCFM software.  It describes a collection of
+derived type in the MLSCFM software.  It lays out a collection of
 profiles (`instances') for a given quantity (temperature, composition,
 tangent pressure, radiance etc.).  See the discussion in
 Section~\ref{sec:QuantityTemplates} above.  Typically the geolocation
 information is a `shallow copy' (i.e., a pointer to) the source
 \snippet{HGrid\_T} and \snippet{VGrid\_T} information or, in the case of
 minor frame quantities, a minor frame geolocation repository.
+
+Note that this data type only describes the \emph{template} for a given
+quantity, not the individual values it takes in a given vector.  The
+latter are described in the \snippet{VectorValue_T}, below.
 
 \lstinputlisting{quantitytemplatetype.f9h}
 
@@ -64,11 +74,11 @@ with a small amount of summary information.
 
 The \snippet{VectorValue\_T} type contains the individual values for a
 single quantity within a vector.  The \snippet{mask} bitfield contains
-element by element flags.  Most of these are for internal use by the
-MLSL2 software.
-
-\tbd{Possibly describe the element by element Jacobian computation
-  capability within the \snippet{Mask} component if useful.}
+element by element flags intended for internal use by the MLSL2
+software.\footnote{Among the bits in \snippet{mask}, one indicates, on
+  an element by element basis, whether Jacobian computations are
+  desired.  Documentation on this can be added should this element by
+  element granularity be required.}
 
 \lstinputlisting{vectorvaluetype.f9h}
 
@@ -105,7 +115,8 @@ and columns.
 
 \lstinputlisting{matrixtype.f9h}
 
-\subsection{Procedures and functions}
+\subsection{Subroutines and functions}
+\label{sec:Procedures}
 
 This subsection describes the main routines it is anticipated a user of
 the CFM software will need to invoke.  They are presented in
@@ -230,8 +241,6 @@ illustrates their invocation and logical flow.
 
 \subsubsection{\snippet{Example}}
 \lstinputlisting{config.l2cf}
-
-\tbd{Perhaps Nathaniel can write something.}
 
 %%% Local Variables: 
 %%% mode: latex

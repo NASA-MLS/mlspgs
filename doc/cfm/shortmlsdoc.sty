@@ -6,15 +6,9 @@
 %
 \RequirePackage{graphicx}
 \RequirePackage{fancyhdr}
-\RequirePackage[nofancy]{rcsinfo}
 \RequirePackage{ifthen}
 \RequirePackage{geometry}
 \RequirePackage{calc}
-%
-\newboolean{norcs}
-\setboolean{norcs}{false}
-%
-\DeclareOption{norcs}{\setboolean{norcs}{true}}
 %
 \ProcessOptions\relax
 %
@@ -32,7 +26,9 @@
 % Now redefine the maketitle command
 %
 \newcommand{\@seriestitle}{** seriestitle macro not defined **}
+\newcommand{\@version}{** version not defined **}
 \newcommand{\seriestitle}[1]{\renewcommand{\@seriestitle}{#1}}
+\newcommand{\version}[1]{\renewcommand{\@version}{#1}}
 \renewcommand{\maketitle}{%
    \suppressfloats
    \noindent\begin{tabular}{@{}l@{}l@{}}%
@@ -40,16 +36,12 @@
        \Large\bfseries\@seriestitle\\
        \@title\\\vspace{2mm}
        \large\mdseries\@author\\
-       \ifthenelse{\boolean{norcs}}{}{%
-         \normalsize Version \rcsInfoRevision, }%
-       \normalsize\today} &
+       \@version} &
      \parbox[m]{1in}{\includegraphics[width=\linewidth]{jpllogo-red}}%
    \end{tabular}
    % 
    \lhead{\fancyplain{}\normalsize\textit{\@title}}
-   \chead{}\rhead{\fancyplain{}\normalsize\textit{\today%
-             \ifthenelse{\boolean{norcs}}{}{%
-               \ (v\rcsInfoRevision)}}}
+   \chead{}\rhead{\fancyplain{}\normalsize\textit{\today}}
    \cfoot{\thepage}\lfoot{}\rfoot{}
    \thispagestyle{plain}%
 %   \setlength{\headrulewidth}{0pt}
