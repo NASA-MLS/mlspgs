@@ -123,6 +123,7 @@ module L2PC_m
   type(L2PCInfo_T), dimension(:), pointer, save :: L2PCINFO => NULL()
 
   ! Default bin selectors (see CreateDefaultBinSelectors below)
+  logical, parameter :: DEEBUG = .false.
   integer, parameter :: DEFAULTSELECTOR_LATITUDE = 1
   integer, parameter :: DEFAULTSELECTOR_FIELDAZIMUTH = 2
   
@@ -1100,13 +1101,20 @@ contains ! ============= Public Procedures ==========================
               call outputNamedValue( 'Block ID', blockId )
               call outputNamedValue( 'HessianBlocks ID', blocksId )
             endif
-            select case (h0%kind)
+            call GetHDF5Attribute ( blockID, 'kind', kind )
+            if ( DEEBUG ) call outputNamedValue( 'kind', kind )
+            select case (kind)
+            case (h_absent)
+              call CreateBlock ( l2pc%h, blockRow, blockCol, blockLayer, h0%kind )
+              h0 => l2pc%h%block ( blockRow, blockCol, blockLayer )
+              ! call LoadFromHDF5DS ( blockId, 'i', h0%values )
             case (h_full)
               call CreateBlock ( l2pc%h, blockRow, blockCol, blockLayer, h0%kind )
               h0 => l2pc%h%block ( blockRow, blockCol, blockLayer )
               call LoadFromHDF5DS ( blockId, 'i', h0%values )
             case (h_sparse)
               call GetHDF5Attribute ( blockID, 'noValues', noValues )
+              if ( DEEBUG ) call outputNamedValue( 'noValues', noValues )
               call CreateBlock ( l2pc%h, blockRow, blockCol, blockLayer, kind, noValues )
               h0 => l2pc%h%block ( blockRow, blockCol, blockLayer )
               call LoadFromHDF5DS ( blockId, 'i', h0%tuples(1:h0%tuplesFilled)%i )
@@ -1114,8 +1122,12 @@ contains ! ============= Public Procedures ==========================
               call LoadFromHDF5DS ( blockId, 'k', h0%tuples(1:h0%tuplesFilled)%k )
               call LoadFromHDF5DS ( blockId, 'h', h0%tuples(1:h0%tuplesFilled)%h )
             case default
+              call outputNamedValue( 'h_full', h_full )
+              call outputNamedValue( 'h_sparse', h_sparse )
+              call outputNamedValue( 'h_unknown', h_unknown )
+              call outputNamedValue( 'kind', kind )
               call MLSMessage ( MLSMSG_Error, ModuleName, &
-                & 'Unrecognized kind for l2pc Hessian block '//trim(name) )
+                & 'Unexpected kind for l2pc Hessian block '//trim(name) )
             end select
             call h5gClose_f ( blockId, status )
             if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1398,6 +1410,7 @@ contains ! ============= Public Procedures ==========================
               select case ( kind )
               case ( h_absent )
                 call CreateBlock ( l2pc%h, i, j, k, kind, noValues )
+                h0 => l2pc%h%block ( i, j, k )
               case ( h_sparse )
                 call GetHDF5Attribute ( MLSFile, 'noValues', noValues )
                 call CreateBlock ( l2pc%h, i, j, k, kind, noValues )
@@ -1833,6 +1846,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.98  2010/06/28 17:00:49  pwagner
+! Fixed a few bugs
+!
 ! Revision 2.97  2010/05/20 00:51:50  pwagner
 ! Can populate Hessians; untested
 !
