@@ -23,6 +23,7 @@ module HessianModule_1          ! High-level Hessians in the MLS PGS suite
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
   use MatrixModule_1, only: DefineRCInfo, DestroyRCInfo, NullifyRCInfo, RC_Info
+  use Output_M, only: Output, outputNamedValue
   use VectorsModule, only: Vector_T
 
   implicit NONE
@@ -67,6 +68,8 @@ module HessianModule_1          ! High-level Hessians in the MLS PGS suite
   interface StreamlineHessian
     module procedure StreamlineHessian_1
   end interface
+
+  logical, parameter :: DEEBUG = .false.
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -344,18 +347,26 @@ contains
       & call MLSMessage ( MLSMSG_Error, moduleName, &
         & "Column of Hessian (H) incompatible with factor (V) vector." )
 
-    do i = 1, h%row%nb
+    if ( DEEBUG ) then
+      call output( "Performing H-v-v times", advance="yes" )
+      call outputNamedValue( "shape(h%block)", shape(h%block) )
+      call outputNamedValue( "max(h%block%1st index)", h%row%nb )
+      call outputNamedValue( "max(h%block%2nd index)", h%col%nb )
+      call outputNamedValue( "max(h%block%3rd index)", h%col%nb )
+    endif
+    do i = 1, h%col%nb
       iq = h%col%quant ( i )
       ii = h%col%inst ( i )
       do j = 1, h%col%nb
         jq = h%col%quant ( j )
         ji = h%col%inst ( j )
-        do k = 1, h%col%nb
+        do k = 1, h%row%nb
           kq = h%row%quant ( k )
           ki = h%row%inst ( k )
           ! Rows of H%block (first subscript) correspond to quantities
           ! of P; columns (second and third subscripts) correspond to
           ! quantities of V.
+          if ( DEEBUG ) call outputNamedValue( "(k,i,j)", (/k,i,j/) )
           call multiply ( h%block(k,i,j), &
             & v%quantities(iq)%values(:,ii), &
             & v%quantities(jq)%values(:,ji), &
@@ -504,6 +515,9 @@ contains
 end module HessianModule_1
 
 ! $Log$
+! Revision 2.7  2010/06/28 17:02:28  pwagner
+! Fixed a few bugs; added debugging output
+!
 ! Revision 2.6  2010/06/23 22:43:15  vsnyder
 ! Remove nonsense loop, use h%row where it should be used, in multiply
 !
