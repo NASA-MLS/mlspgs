@@ -6,6 +6,7 @@ module Input
    character(len=27) :: startTime = "2005-037T00:00:00.0000"
    character(len=27) :: endTime = "2005-037T00:00:00.9999"
    character(len=100) :: l1boa = "/data/emls/l1b/v02.23/2005/037/MLS-Aura_L1BOA_v02-23-c01_2005d037.h5"
+   character(len=100) :: l1brad = "/data/emls/l1b/v02.23/2005/037/MLS-Aura_L1BRADG_v02-23-c01_2005d037.h5"
    character(len=100) :: spectroscopy = '/data/emls/l2cal/MLS-Aura_L2Cal-Spectroscopy-PFA_v3-0-4_0000d000.h5'
    character(len=100) :: leapsecFile = '/software/toolkit/LF6.1/toolkit/database/common/TD/leapsec.dat'
    character(len=100) :: antennaPatterns = '/data/emls/l2cal/MLS-Aura_L2Cal-AAAP_v2-0-0_0000d000.txt'
@@ -54,4 +55,5 @@ module Input
                 1.2587e-06_r8,  4.0577e-07_r8,  1.1117e-06_r8,  2.3770e-06_r8,  1.4602e-06_r8, &
                 1.6944e-06_r8,  1.9545e-06_r8,  1.9545e-06_r8,  1.9545e-06_r8,  1.9545e-06_r8, &
                 1.9545e-06_r8,  1.9545e-06_r8 /)
+   real(r8) :: refGPHInput = 16000.0_r8
 end module

@@ -302,8 +302,7 @@ module CFM_MLSSetup_m
       use CFM_Vector_m, only: CreateVector, Vector_T, VectorValue_T
       use INIT_TABLES_MODULE, only: phyq_pressure, l_logarithmic, l_zeta, &
                                     phyq_vmr, l_vmr, l_earthRefl, l_losVel, &
-                                    l_scgeocalt, l_spaceradiance, l_explicit, &
-                                    l_refGPH, l_phitan, l_o2
+                                    l_scgeocalt, l_spaceradiance, l_phitan, l_o2
       use CFM_Fill_M, only: FillVectorQtyFromProfile, ExplicitFillVectorQuantity, &
       FillVectorQuantityFromL1B, SpreadFillVectorQuantity
       use Allocate_Deallocate, only: allocate_test, deallocate_test
@@ -318,7 +317,7 @@ module CFM_MLSSetup_m
       type(QuantityTemplate_T) :: O2, earthRefl, losVelGHz, scGeocAlt, &
                                   spaceRadiance, refGPH, phitanGHz
       type(VectorTemplate_T) :: stateTemplateExtra
-      type(VGrid_T) :: vGridStandard, vGridRefGPH
+      type(VGrid_T) :: vGridStandard
       type(HGrid_T) :: hGridStandard
       integer :: O2_index, earthRefl_index, losVelGHz_index, scGeocAlt_index, &
                  spaceRadiance_index
@@ -341,15 +340,12 @@ module CFM_MLSSetup_m
       ! Create O2 for use in the forward model
       vGridStandard = CreateVGrid (l_zeta, phyq_pressure, l_logarithmic, &
                                    start=1000.0d0, formula="37:6")
-      vGridRefGPH = CreateVGrid (l_zeta, phyq_pressure, l_explicit, &
-                              values=(/100.0_r8/))
 
       ! Have insetoverlaps, and not single
       hGridStandard = CreateRegularHGrid("GHz", 0.0_r8, 1.5_r8, .true., &
                                          filedatabase, fakeChunk)
       ! Have to initialize before we start creating quantity templates
       call InitQuantityTemplates
-      refGPH = CreateQtyTemplate(l_refGPH, avgrid=vGridRefGPH, ahgrid=hGridStandard)
       O2 = CreateQtyTemplate(l_vmr, filedatabase=filedatabase, chunk=fakeChunk, &
                              avgrid=vGridStandard, ahgrid=hGridStandard, &
                              qMolecule=l_o2)
@@ -368,7 +364,6 @@ module CFM_MLSSetup_m
       losVelGHz_index = AddQuantityTemplateToDatabase(qtyTemplates, losVelGHz)
       scGeocAlt_index = AddQuantityTemplateToDatabase(qtyTemplates, scGeocAlt)
       spaceRadiance_index = AddQuantityTemplateToDatabase(qtyTemplates, spaceRadiance)
-      refGPH_index = AddQuantityTemplateToDatabase(qtyTemplates, refGPH)
       phitanGHz_index = AddQuantityTemplateToDatabase(qtyTemplates, phitanGHz)
       ! Add sideband fraction
       call CreateLimbSidebandFractions (fakeChunk, filedatabase, qtyTemplates)
@@ -411,8 +406,6 @@ module CFM_MLSSetup_m
       call FillVectorQuantityFromL1B (quantity, fakeChunk, filedatabase, .false.)
       !print *, "scGeocAlt value"
       !call dump(quantity, details=3)
-      quantity => GetVectorQtyByTemplateIndex (stateVectorExtra, refGPH_index) ! refGPH
-      call SpreadFillVectorQuantity (quantity, 16000.0_r8) ! unit is meter
       quantity => GetVectorQtyByTemplateIndex (stateVectorExtra, phitanGHz_index)
       quantity%values = quantity%template%phi
       call FillLimbSidebandFractions(stateVectorExtra)

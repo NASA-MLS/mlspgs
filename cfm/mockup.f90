@@ -30,15 +30,15 @@ program mockup
                          Vector_T, VectorValue_T, &
                          DestroyVectorInfo, GetVectorQtyByTemplateIndex
    use CFM_Fill_m, only: ExplicitFillVectorQuantity, &
-                         FillVectorQuantityFromL1B
+                         FillVectorQuantityFromL1B, SpreadFillVectorQuantity
    use CFM_FWDMDL_M, only: ForwardModel, FORWARDMODELSTATUS_T, &
                          ForwardModelConfig_T
    use MLSCommon, only: MLSFile_T, r8
    use Init_tables_module, only: l_logarithmic, l_zeta, l_temperature, &
                                  L_IntermediateFrequency, l_vmr, l_gph, &
                                  l_ptan, l_radiance, l_orbitInclination, &
-                                 l_tngtgeodalt, l_tngtgeocalt, l_o3, &
-                                 phyq_pressure, phyq_angle, l_h2o
+                                 l_tngtgeodalt, l_tngtgeocalt, l_o3, l_refGPH, &
+                                 phyq_pressure, phyq_angle, l_h2o, l_explicit
    use MLSFiles, only: GetMLSFileByType, InitializeMLSFile, mls_openFile, &
                        AddFileToDatabase
    use ScanModelModule, only: Get2DHydrostaticTangentPressure
@@ -61,7 +61,7 @@ program mockup
    type(ForwardModelConfig_T), dimension(:), pointer :: forwardModelConfigDatabase
    type(MLSFile_T), dimension(:), pointer :: filedatabase
    type(MLSChunk_T) :: fakeChunk
-   type(VGrid_T) :: vGridStandard
+   type(VGrid_T) :: vGridStandard, vGridRefGPH
    type(HGrid_T) :: hGridStandard
    type(FGrid_T) :: fGridStandard
    type(QuantityTemplate_T) :: temperature, GPH, H2O, O3, ptanGHz, band7, &
@@ -72,13 +72,13 @@ program mockup
    type(Vector_T) :: state, measurement, stateExtra, observed, obsPrecision
    character(len=3) :: GHz = "GHz"
    character(len=2) :: sc = "sc"
-   integer :: stateSelected(8), measurementSelected(3)
+   integer :: stateSelected(9), measurementSelected(3)
    type(VectorValue_T), pointer :: quantity, h2o_vv, orbincl_vv, geocAlt_vv, &
                           ptanG_vv, temperature_vv, refGPH_vv, precQty
    integer :: temperature_index, h2o_index, band2_index
    integer :: o3_index, ptanGHz_index, band7_index
    integer :: geodAlt_index, orbincl_index, gph_index
-   integer :: geocAlt_index, band8_index
+   integer :: geocAlt_index, band8_index, refGPH_index
    character(len=256) :: signalFileName, configFileName
    type (MLSFile_T) :: l1bfile
 
@@ -107,6 +107,9 @@ program mockup
    vGridStandard = CreateVGrid (l_zeta, phyq_pressure, l_logarithmic, &
                                 start=1000.0d0, formula="37:6")
    !call dump(vGridStandard, details=2)
+
+   vGridRefGPH = CreateVGrid (l_zeta, phyq_pressure, l_explicit, &
+                              values=(/100.0_r8/))
 
    ! Have insetoverlaps, and not single
    hGridStandard = CreateRegularHGrid(GHz, 0.0_r8, 1.5_r8, .true., &
@@ -142,16 +145,18 @@ program mockup
                                chunk=fakeChunk, qInstModule=GHz)
    orbincl = CreateQtyTemplate(l_orbitInclination, filedatabase=filedatabase, &
                                chunk=fakeChunk, qInstModule=sc)
+   refGPH = CreateQtyTemplate(l_refGPH, avgrid=vGridRefGPH, ahgrid=hGridStandard)
 
    temperature_index = AddQuantityTemplateToDatabase(qtyTemplates, temperature)
    gph_index = AddQuantityTemplateToDatabase(qtyTemplates, GPH)
    o3_index = AddQuantityTemplateToDatabase(qtyTemplates, O3)
    h2o_index = AddQuantityTemplateToDatabase(qtyTemplates, H2O)
    ptanGHz_index = AddQuantityTemplateToDatabase(qtyTemplates, ptanGHz)
-   band7_index = AddQuantityTemplateToDatabase(qtyTemplates, band7)
    geodAlt_index = AddQuantityTemplateToDatabase(qtyTemplates, geodAltitude)
    geocAlt_index = AddQuantityTemplatetoDatabase(qtyTemplates, geocAlt)
    orbincl_index = AddQuantityTemplateToDatabase(qtyTemplates, orbIncl)
+   refGPH_index = AddQuantityTemplateToDatabase(qtyTemplates, refGPH)
+   band7_index = AddQuantityTemplateToDatabase(qtyTemplates, band7)
    band2_index = AddQuantityTemplateToDatabase(qtyTemplates, band2)
    band8_index = AddQuantityTemplateToDatabase(qtyTemplates, band8)
 
@@ -172,8 +177,8 @@ program mockup
 
    ! The numbers are the order that quantities template were added
    stateSelected = (/temperature_index,o3_index,h2o_index, &
-                     ptanGHz_index,geodAlt_index, &
-                     geocAlt_index,orbincl_index, gph_index/)
+                     ptanGHz_index,geodAlt_index, geocAlt_index, &
+                     orbincl_index, gph_index, refGPH_index/)
    stateTemplate = CreateVectorTemplate(qtyTemplates, stateSelected)
 !   call dump(stateTemplate, details=2, quantities=qtyTemplates)
 
@@ -184,7 +189,8 @@ program mockup
    state = CreateVector(stateTemplate, qtyTemplates)
    measurement = CreateVector(measurementTemplate, qtyTemplates)
 
-   !call dump(measurement, details=3)
+   refGPH_vv => GetVectorQtyByTemplateIndex (state, refGPH_index) ! refGPH
+   call SpreadFillVectorQuantity (refGPH_vv, refGPHInput) ! unit is meter
 
    ! supply temperature, GPH, H2O, and O3 data
    temperature_vv => GetVectorQtyByTemplateIndex(state, temperature_index)
@@ -211,8 +217,6 @@ program mockup
    call FillVectorQuantityFromL1B(geocAlt_vv, fakeChunk, filedatabase, &
       .false.)
 
-   refGPH_vv => GetVectorQtyByTemplateIndex(stateExtra, GetRefGPHIndexInStateExtra())
-
    ptanG_vv => GetVectorQtyByTemplateIndex (state, ptanGHz_index)
 
    quantity => GetVectorQtyByTemplateIndex (stateExtra, GetPhitanGHzIndexInStateExtra())
@@ -228,61 +232,61 @@ program mockup
    call ForwardModel (fakeChunk, forwardModelConfigDatabase, state, &
                       stateExtra, measurement)
 
-   !call dump(measurement, details=3)
+   call dump(measurement, details=3)
 
-   ! Create an identical vector as simulated radiance vector for observed radiances
-   observed = CreateVector(measurementTemplate, qtyTemplates)
-   obsPrecision = CreateVector(measurementTemplate, qtyTemplates)
-
-   ! Open l1brad
-   error = InitializeMLSFile(l1bfile, content='l1brad', &
-   name=trim(l1brad), shortName='L1BRAD', type=l_hdf, access=DFACC_RDONLY)
-   if (error /= 0) &
-      call MLSMessage (MLSMSG_Error, moduleName, &
-      "Error initializing " // trim(l1brad))
-
-   call mls_openFile(l1bfile, error)
-   if (error /= 0 ) &
-      call MLSMessage (MLSMSG_Error, moduleName, &
-      "Error opening " // trim(l1brad))
-
-   ! Add it to the filedatabase
-   error = AddFileToDatabase(filedatabase, l1bfile)
-
-   ! Fill band 2,7,8
-   quantity => GetVectorQtyByTemplateIndex(observed, band2_index)
-   precQty => GetVectorQtyByTemplateIndex(obsPrecision, band2_index)
-
-   ! However, only band 9 and 25 have BOMask=1
-   ! Because these bands have bright object status read from L1BOA file,
-   ! we always have to have L1BOA file in the filedatabase.
-   ! You have to fill the precision quantity first
-   call FillVectorQuantityFromL1B(precQty, fakeChunk, filedatabase, &
-   .true.)
-   call FillVectorQuantityFromL1B(quantity, fakeChunk, filedatabase, &
-   .false., precisionQuantity=precQty)
-
-   quantity => GetVectorQtyByTemplateIndex(observed, band7_index)
-   precQty => GetVectorQtyByTemplateIndex(obsPrecision, band7_index)
-   call FillVectorQuantityFromL1B(precQty, fakeChunk, filedatabase, &
-   .true.)
-   call FillVectorQuantityFromL1B(quantity, fakeChunk, filedatabase, &
-   .false., precisionQuantity=precQty)
-
-   quantity => GetVectorQtyByTemplateIndex(observed, band8_index)
-   precQty => GetVectorQtyByTemplateIndex(obsPrecision, band8_index)
-   call FillVectorQuantityFromL1B(precQty, fakeChunk, filedatabase, &
-   .true.)
-   call FillVectorQuantityFromL1B(quantity, fakeChunk, filedatabase, &
-   .false., precisionQuantity=precQty)
-
-   ! CFM_MLSCleanup will close all files in the filedatabase
-
-   call dump(observed, details=3)
-
-   ! Clean up allocated memory for creating observed radiance vector
-   call DestroyVectorInfo(observed)
-   call DestroyVectorInfo(obsPrecision)
+!   ! Create an identical vector as simulated radiance vector for observed radiances
+!   observed = CreateVector(measurementTemplate, qtyTemplates)
+!   obsPrecision = CreateVector(measurementTemplate, qtyTemplates)
+!
+!   ! Open l1brad
+!   error = InitializeMLSFile(l1bfile, content='l1brad', &
+!   name=trim(l1brad), shortName='L1BRAD', type=l_hdf, access=DFACC_RDONLY)
+!   if (error /= 0) &
+!      call MLSMessage (MLSMSG_Error, moduleName, &
+!      "Error initializing " // trim(l1brad))
+!
+!   call mls_openFile(l1bfile, error)
+!   if (error /= 0 ) &
+!      call MLSMessage (MLSMSG_Error, moduleName, &
+!      "Error opening " // trim(l1brad))
+!
+!   ! Add it to the filedatabase
+!   error = AddFileToDatabase(filedatabase, l1bfile)
+!
+!   ! Fill band 2,7,8
+!   quantity => GetVectorQtyByTemplateIndex(observed, band2_index)
+!   precQty => GetVectorQtyByTemplateIndex(obsPrecision, band2_index)
+!
+!   ! However, only band 9 and 25 have BOMask=1
+!   ! Because these bands have bright object status read from L1BOA file,
+!   ! we always have to have L1BOA file in the filedatabase.
+!   ! You have to fill the precision quantity first
+!   call FillVectorQuantityFromL1B(precQty, fakeChunk, filedatabase, &
+!   .true.)
+!   call FillVectorQuantityFromL1B(quantity, fakeChunk, filedatabase, &
+!   .false., precisionQuantity=precQty)
+!
+!   quantity => GetVectorQtyByTemplateIndex(observed, band7_index)
+!   precQty => GetVectorQtyByTemplateIndex(obsPrecision, band7_index)
+!   call FillVectorQuantityFromL1B(precQty, fakeChunk, filedatabase, &
+!   .true.)
+!   call FillVectorQuantityFromL1B(quantity, fakeChunk, filedatabase, &
+!   .false., precisionQuantity=precQty)
+!
+!   quantity => GetVectorQtyByTemplateIndex(observed, band8_index)
+!   precQty => GetVectorQtyByTemplateIndex(obsPrecision, band8_index)
+!   call FillVectorQuantityFromL1B(precQty, fakeChunk, filedatabase, &
+!   .true.)
+!   call FillVectorQuantityFromL1B(quantity, fakeChunk, filedatabase, &
+!   .false., precisionQuantity=precQty)
+!
+!   ! CFM_MLSCleanup will close all files in the filedatabase
+!
+!   call dump(observed, details=3)
+!
+!   ! Clean up allocated memory for creating observed radiance vector
+!   call DestroyVectorInfo(observed)
+!   call DestroyVectorInfo(obsPrecision)
 
    ! Clean up memory
    call DestroyVectorInfo (state)
