@@ -14,10 +14,11 @@ program dateconverter
 !=================================
 
    use dates_module, ONLY: adddaystoutc, addhourstoutc, addsecondstoutc, &
-     & dai_to_yyyymmdd, dateForm, dayofweek, reFormatDate, splitDateTime
+     & dai_to_yyyymmdd, dateForm, dayofweek, reFormatDate, splitDateTime, &
+     & yyyymmdd_to_dai
    use MACHINE, only: FILSEP, HP, IO_ERROR, GETARG
    use MLSStringLists, ONLY: StringElement
-   use MLSStrings, ONLY: lowerCase, ncopies, readIntsFromChars
+   use MLSStrings, ONLY: lowerCase, ncopies, readNumsFromChars
 
    IMPLICIT NONE
 
@@ -40,7 +41,7 @@ program dateconverter
     integer     :: hoursOffset = 0             ! How many hours to add/subtract
     integer :: weekdayLength= 0     ! how many chars to output day-of-week
     double precision :: secondsOffset = 0.d0   ! How many seconds to add/subtract
-    logical     :: utcFormat = .false.
+    logical     :: utcFormat = .false.         ! output date+time?
     logical     :: verbose = .false.
     character(len=255) :: outputFormat= ' '    ! output format
     character(len=255) :: inputFormat= ' '     ! input format
@@ -65,13 +66,17 @@ program dateconverter
    character (LEN=MAXLISTLENGTH) :: date
    character(len=MAXLISTLENGTH), dimension(MAXDATES) :: dates
    character(len=*), parameter   :: DOYFORMAT = 'yyyy-doy'
-   integer :: ErrTyp
+   integer                       :: ErrTyp
    character (LEN=MAXLISTLENGTH) :: fromForm
    integer                       :: i
    character (LEN=MAXLISTLENGTH) :: intermediate_date
    character (LEN=*), parameter  :: intermediateForm = 'yyyymmdd'
    character(len=*), parameter   :: MFORMAT = 'yyyy M dd'
    integer                       :: n_dates = 0
+   integer                       :: nDays
+   integer                       :: nDaysOffset
+   double precision              :: secondsperday = 24*3600.
+   double precision              :: tai
    character (LEN=MAXLISTLENGTH) :: time
    character (LEN=MAXLISTLENGTH) :: toForm
    character (LEN=16           ) :: weekday
@@ -96,6 +101,23 @@ program dateconverter
     date = dates(i)
     fromForm = options%inputFormat
     if ( len_trim(options%inputFormat) < 1 ) fromForm = dateForm(date)
+    if ( options%inputFormat == 'tai' ) then
+      call readNumsFromChars ( date, tai )
+      ! print *, 'tai: ', tai
+      call yyyymmdd_to_dai( 2001, 1, 1, nDaysOffset, startingDate='19930101' )
+      ! print *, 'nDaysOffset: ', nDaysOffset
+      nDays = tai/secondsperday - nDaysOffset
+      ! print *, 'nDays: ', nDays
+      intermediate_date = adddaystoutc( '2001-01-01T00:00:00', nDays )
+      ! print *, 'date (no seconds): ', intermediate_date
+      tai = tai - (nDays+nDaysOffset)*secondsperday
+      ! print *, '(+ seconds): ', tai
+      date = addsecondstoutc( intermediate_date, tai )
+      ! print *, 'date (+ seconds): ', date
+      fromForm = 'yyyy-mm-dd'
+      options%utcFormat = .true.
+      call splitDateTime ( date, ErrTyp, intermediate_date, converted_time )
+    endif
     ! Figure out logical format to convert it to
     if ( index(lowercase(options%outputFormat), 'utc' ) > 0 ) then
       toForm = 'yyyy-Doy'
@@ -202,13 +224,13 @@ contains
         call print_help
       elseif ( date(1:3) == '-H ' ) then
         call getarg ( i+1+hp, arg )
-        call readIntsFromChars(arg, options%hoursOffset)
+        call readNumsFromChars(arg, options%hoursOffset)
         options%hoursOffset = - options%hoursOffset ! Because we will subtract
         i = i + 1
         exit
       elseif ( date(1:3) == '+H ' ) then
         call getarg ( i+1+hp, arg )
-        call readIntsFromChars(arg, options%hoursOffset)
+        call readNumsFromChars(arg, options%hoursOffset)
         i = i + 1
         exit
       elseif ( date(1:3) == '-S ' ) then
@@ -244,7 +266,7 @@ contains
         options%weekdayLength = ncopies( date, 'W' )
         exit
       elseif ( index('0123456789', date(2:2)) > 0 ) then
-        call readIntsFromChars(date, options%offset)
+        call readNumsFromChars(date, options%offset)
         exit
       else
         call print_help
@@ -278,6 +300,9 @@ contains
       write (*,*) '                        a special code "utc" fuses date and time'
       write (*,*) '                        e.g., "2007-274T23:59:59.9999Z'
       write (*,*) '          -i format   => input format'
+      write (*,*) '                        if format is "tai", treat input as '
+      write (*,*) '                        (double-precision) seconds since'
+      write (*,*) '                        1993-01-01T00:00:00'
       write (*,*) '                        by default attempt to auto-recognize'
       write (*,*) '          -t time     => optional time-of-day (military-style)'
       write (*,*) '                        e.g., "06:53:10"'
@@ -305,6 +330,9 @@ END PROGRAM dateconverter
 !==================
 
 ! $Log$
+! Revision 1.4  2010/06/03 23:36:53  pwagner
+! Added option to print day-of-week
+!
 ! Revision 1.3  2007/08/17 00:44:30  pwagner
 ! May add seconds offset; rely more completely on dates module
 !
