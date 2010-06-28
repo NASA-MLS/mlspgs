@@ -280,6 +280,10 @@ program mockup
 
    call dump(observed, details=3)
 
+   ! Clean up allocated memory for creating observed radiance vector
+   call DestroyVectorInfo(observed)
+   call DestroyVectorInfo(obsPrecision)
+
    ! Clean up memory
    call DestroyVectorInfo (state)
    call DestroyVectorInfo (measurement)
