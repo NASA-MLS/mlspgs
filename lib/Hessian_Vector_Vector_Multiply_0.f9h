@@ -19,6 +19,18 @@
     if ( .not. myUpdate ) p = 0
 
     if ( associated(h%tuples) ) then ! First try the sparse representation
+      if ( DEEBUG ) then
+        call outputNamedValue( 'size(p)', size(p) )
+        call outputNamedValue( 'size(v1)', size(v1) )
+        call outputNamedValue( 'size(v2)', size(v2) )
+        call outputNamedValue( 'size(h%tuples)', size(h%tuples) )
+        call outputNamedValue( 'maxval(h%tuples%i)', maxval(h%tuples%i) )
+        call outputNamedValue( 'maxval(h%tuples%j)', maxval(h%tuples%j) )
+        call outputNamedValue( 'maxval(h%tuples%k)', maxval(h%tuples%k) )
+        call outputNamedValue( 'minval(h%tuples%i)', minval(h%tuples%i) )
+        call outputNamedValue( 'minval(h%tuples%j)', minval(h%tuples%j) )
+        call outputNamedValue( 'minval(h%tuples%k)', minval(h%tuples%k) )
+      endif
       do n = 1, size(h%tuples)
         i = h%tuples(n)%i
         p(i) = p(i) + 0.5 * h%tuples(n)%h * v1(h%tuples(n)%j) * v2(h%tuples(n)%k)
@@ -39,6 +51,9 @@
 
 ! $Id$
 ! $Log$
+! Revision 2.4  2010/06/28 17:02:58  pwagner
+! added debugging output
+!
 ! Revision 2.3  2010/06/22 22:44:53  vsnyder
 ! Remove extraneous CVS Id line.  Add comments for the subroutine header
 ! and for the summation on j.  Correct bugs in the dense case.
