@@ -1,7 +1,7 @@
 module CFM_MLSSetup_m
 
-   use ForwardModelConfig, only: ForwardModelConfig_T, dump
-   use QuantityTemplates, only: QuantityTemplate_T
+   use ForwardModelConfig, only: ForwardModelConfig_T
+   use QuantityTemplates, only: QuantityTemplate_T, Dump
    use LEXER_CORE, only: INIT_LEXER
    use DECLARATION_TABLE, only: ALLOCATE_DECL, DEALLOCATE_DECL
    use TREE, only: ALLOCATE_TREE, DEALLOCATE_TREE
@@ -298,7 +298,7 @@ module CFM_MLSSetup_m
       use CFM_HGrid_m, only: CreateRegularHGrid, DestroyHGridContents
       use CFM_QuantityTemplate_m, only: CreateQtyTemplate, InitQuantityTemplates, &
                                         AddQuantityTemplateToDatabase
-      use CFM_VectorTemplate_m, only: CreateVectorTemplate, VectorTemplate_T
+      use CFM_VectorTemplate_m, only: CreateVectorTemplate, VectorTemplate_T, Dump
       use CFM_Vector_m, only: CreateVector, Vector_T, VectorValue_T
       use INIT_TABLES_MODULE, only: phyq_pressure, l_logarithmic, l_zeta, &
                                     phyq_vmr, l_vmr, l_earthRefl, l_losVel, &
@@ -322,7 +322,7 @@ module CFM_MLSSetup_m
       type(HGrid_T) :: hGridStandard
       integer :: O2_index, earthRefl_index, losVelGHz_index, scGeocAlt_index, &
                  spaceRadiance_index
-      type(VectorValue_T) :: quantity
+      type(VectorValue_T), pointer :: quantity
       real(r8), dimension(17) :: o2_heights = &
       (/1.0e+03_r8, 8.0131e-03_r8, 5.8925e-03_r8, 4.3241e-03_r8, 3.1594e-03_r8, &
       2.2961e-03_r8, 1.6581e-03_r8, 1.1874e-03_r8, 8.4392e-04_r8, 5.9869e-04_r8, &
@@ -390,32 +390,42 @@ module CFM_MLSSetup_m
 
       stateVectorExtra = CreateVector(stateTemplateExtra, qtyTemplates)
 
-      quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, o2_index)
+      quantity => GetVectorQtyByTemplateIndex (stateVectorExtra, o2_index)
       call FillVectorQtyFromProfile (quantity, .false., o2_heights, &
                                      o2_values, phyq_vmr)
-      quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, earthRefl_index)
+      !print *, "O2 value"
+      !call dump(quantity, details=3)
+      quantity => GetVectorQtyByTemplateIndex (stateVectorExtra, earthRefl_index)
       call ExplicitFillVectorQuantity (quantity, (/0.05_r8/))
-      quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, spaceRadiance_index)
+      !print *, "Earth Reflectivity value"
+      !call dump(quantity, details=3)
+      quantity => GetVectorQtyByTemplateIndex (stateVectorExtra, spaceRadiance_index)
       call ExplicitFillVectorQuantity (quantity, (/2.735_r8/))
-      quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, losVelGHz_index)
+      !print *, "Space radiance"
+      !call dump(quantity, details=3)
+      quantity => GetVectorQtyByTemplateIndex (stateVectorExtra, losVelGHz_index)
       call FillVectorQuantityFromL1B (quantity, fakeChunk, filedatabase, .false.)
-      quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, scGeocAlt_index)
+      !print *, "LOS Velocity GHz"
+      !call dump(quantity, details=3)
+      quantity => GetVectorQtyByTemplateIndex (stateVectorExtra, scGeocAlt_index)
       call FillVectorQuantityFromL1B (quantity, fakeChunk, filedatabase, .false.)
-      quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, refGPH_index) ! refGPH
+      !print *, "scGeocAlt value"
+      !call dump(quantity, details=3)
+      quantity => GetVectorQtyByTemplateIndex (stateVectorExtra, refGPH_index) ! refGPH
       call SpreadFillVectorQuantity (quantity, 16000.0_r8) ! unit is meter
-      quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, phitanGHz_index)
+      quantity => GetVectorQtyByTemplateIndex (stateVectorExtra, phitanGHz_index)
       quantity%values = quantity%template%phi
       call FillLimbSidebandFractions(stateVectorExtra)
       call FillElevationOffsets(stateVectorExtra)
    end subroutine
 
    ! Return the index of refGPH quantity in the stateVectorExtra
-   integer function GetRefGPHIndexInStateExtra()
+   integer function GetRefGPHIndexInStateExtra
       GetRefGPHIndexInStateExtra = refGPH_index
    end function
 
    ! Return the index of phitan of GHz module in stateVectorExtra
-   integer function GetPhitanGHzIndexInStateExtra()
+   integer function GetPhitanGHzIndexInStateExtra
       GetPhitanGHzIndexInStateExtra = phitanGHz_index
    end function
 
