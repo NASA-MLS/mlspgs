@@ -16,7 +16,9 @@ module HessianModule_0          ! Low-level Hessians in the MLS PGS suite
 ! This module provides the elementary Hessian type.  Blocks of this
 ! type are used to compose block Hessians.
 
+  use DUMP_0, only: DUMP
   use MLSKinds, only: RM
+  use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
 
   implicit NONE
   private
@@ -46,11 +48,19 @@ module HessianModule_0          ! Low-level Hessians in the MLS PGS suite
     integer :: nRows    ! Extent of first dimensions of H
     integer :: nCols1   ! Extent of second dimension of H
     integer :: nCols2   ! Extent of third dimension of H
+    ! Some explanation of startegy of storing Hessians according to kind 
+    ! belongs here
     integer :: kind     ! One of H_Absent, H_Sparse, H_Full, H_Unknown
     type(tuple_t), pointer :: Tuples(:) => NULL() ! Some may not be filled (yet)
+    ! Some explanation of why and when TuplesFilled would differ from
+    ! size(tuples) would not be amiss
+    ! So far the only time the original code expanded TuplesFilled
+    ! beyond zero was during insertHessianPlane operations
+    ! Needless to say, this was exceptionally inconvenient when loading
+    ! the values(1:TuplesFilled) from a saved dataset
+    ! Therefore we also set TuplesFilled when we create a Hessian Block
     integer :: TuplesFilled = 0 ! Number of tuples filled
     real(rm), pointer :: Values(:,:,:) => NULL() ! for full explicit representation
-                        ! first subscript is "upper", others are "lower".
   end type HessianElement_T
 
   interface ClearBlock
@@ -91,6 +101,8 @@ module HessianModule_0          ! Low-level Hessians in the MLS PGS suite
   interface StreamlineHessian
     module procedure StreamlineHessian_0
   end interface
+
+  logical, parameter :: DEEBUG = .false.
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -196,10 +208,22 @@ contains
     h%nCols2 = nCols2
     h%kind = kind
     h%tuplesFilled = 0
+    if ( DEEBUG ) then
+      call output( 'Creating a Hessian Block', advance='yes' )
+      call outputNamedValue( 'nRows', nRows )
+      call outputNamedValue( 'nCols1', nCols1 )
+      call outputNamedValue( 'nCols2', nCols2 )
+      call outputNamedValue( 'kind', kind )
+    endif
 
     if ( kind == h_sparse ) then
+      h%tuplesFilled = 0
       if ( present ( initTuples ) ) then
+        if ( DEEBUG ) then
+          call outputNamedValue( 'initTuples', initTuples )
+        endif
         allocate ( h%tuples ( initTuples ), stat=stat )
+        h%tuplesFilled = initTuples
         call test_allocate ( stat, moduleName, "H%Tuples", &
           & (/1/), (/initTuples/) )
       end if
@@ -208,7 +232,9 @@ contains
       call Allocate_test ( h%values, nRows, nCols1, nCols2, 'values in CreateHessianBlock_0', &
         & moduleName )
     end if
-
+    if ( DEEBUG ) then
+      call dump( h%values, 'h%values' )
+    endif
   end subroutine CreateHessianBlock_0
 
   ! ---------------------------------------------- Densify_Hessian -----
@@ -242,8 +268,6 @@ contains
 
   ! ------------------------------------------- Dump_Hessian_Block -----
   subroutine Dump_Hessian_Block ( H, Name, Details, Indices, Clean )
-    use Dump_0, only: Dump
-    use Output_m, only: Output
     type(HessianElement_T), intent(in) :: H
     character(len=*), intent(in), optional :: NAME
     integer, intent(in), optional :: Details ! Print details, 0 => minimal,
@@ -312,6 +336,7 @@ contains
     integer :: I, K, N
     logical :: MyUpdate
 
+    ! logical, parameter :: DEEBUG = .true.
     include 'Hessian_Vector_Vector_Multiply_0.f9h'
 
   end subroutine Hessian_Vec_Vec_Multiply_D
@@ -334,6 +359,7 @@ contains
     integer :: I, K, N
     logical :: MyUpdate
 
+    ! logical, parameter :: DEEBUG = .true.
     include 'Hessian_Vector_Vector_Multiply_0.f9h'
 
   end subroutine Hessian_Vec_Vec_Multiply_S
@@ -722,6 +748,9 @@ o:    do while ( i < n )
 end module HessianModule_0
 
 ! $Log$
+! Revision 2.6  2010/06/28 17:01:56  pwagner
+! Fixed a few bugs; added debugging output
+!
 ! Revision 2.5  2010/06/22 22:45:38  vsnyder
 ! Correct LaTeX comments for multiply
 !
