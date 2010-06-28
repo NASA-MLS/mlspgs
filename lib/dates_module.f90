@@ -34,7 +34,7 @@ module dates_module
 !---------------------------------------------------------------------------
 
   ! Cal is calendar date as in "25 Jan 1998" or "25 1 1998"
-  ! Separators can be any non-alphanumerc character. Leading 0s no problem
+  ! Separators can be any non-alphanumeric character. Leading 0s no problem
   ! If you want the three items in an order that is not day/month/year then
   ! you can supply the optional second argument perm. This must be a 3-element
   ! integer array with elements 1,2,3 in any order
@@ -101,7 +101,7 @@ module dates_module
 ! === (start of api) ===
 ! char* adddaystoutc (char* utc, int days)
 ! char* addhourstoutc (char* utc, int hours)
-! char* addsecondstoutc (char* utc, dble hours)
+! char* addsecondstoutc (char* utc, dble seconds)
 ! buildCalendar ( int year, int month, int days(6, 7), [int daysOfYear(6,7)] )
 ! dai_to_yyyymmdd (int dai, int yyyy, int mm, int dd, [char* startingDate])
 ! dai_to_yyyymmdd (int dai, char* str, [char* startingDate])
@@ -169,9 +169,11 @@ module dates_module
   ! Be warned that the format we call TAI here is in DAYS
   ! while genuine TAI93 is in SECONDS. 
   
+  ! The toolkit's TAI93 accounts for leap seconds
+  
   ! PAW chose a different starting date for dai (better called dai01)
   ! which is January 1 2001
-  ! so try to keep distinct
+  ! so try to keep distinct the 3 numerical date types
   ! name             meaning                             numerical type
   ! tai93 (toolkit) seconds since midnight 1993 Jan 1        d.p.
   ! tai93 (here) days since midnight 1993 Jan 1              int
@@ -179,6 +181,16 @@ module dates_module
   !
   ! Also we allow several ways of encoding dates as strings
   ! which is perhaps the reason this module has grown so large
+  
+  ! Further notes and Limitations:
+  ! It would be useful for this module to supply functions converting among
+  ! our 3 numerical date types
+  ! E.g.,
+  !    tai93 (days) = dai01 + nDaysOffset
+  ! where we can 
+  !   call yyyymmdd_to_dai( 2001, 1, 1, nDaysOffset, startingDate='19930101' )
+  ! and, ignoring the effect of leap seconds, 
+  !   tai93 (toolkit) = SECONDSINADAY*tai93(days)
 ! === (end of api) ===
 
   !Here are the provided functions 
@@ -269,6 +281,8 @@ module dates_module
   ! This is a private type to be used internally
   ! Note we don't bother with leap seconds
   ! which rather limits its accuracy and usefulness
+  ! One easy improvement would be to incopoporate the starting
+  ! date--that would allow us to unify the different numerical date types
   type MLSDATE_TIME_T
     integer :: dai = 0                  ! days after 1 Jan 2001
     double precision :: seconds = 0.00  ! seconds after midnight
@@ -2220,6 +2234,9 @@ contains
 
 end module dates_module
 ! $Log$
+! Revision 2.21  2009/08/26 16:20:13  pwagner
+! Corrected utcForm function--was reversing 'a' and 'b'
+!
 ! Revision 2.20  2009/06/23 18:25:43  pwagner
 ! Prevent Intel from optimizing ident string away
 !
