@@ -303,20 +303,25 @@ module CFM_Fill_m
 
    end subroutine
 
+   ! Fill phitan quantity with phi values from the quantity's template
    subroutine FillPhitanQuantity (quantity)
+      ! phitan quantity
       type(VectorValue_T), intent(inout) :: quantity
 
       quantity%values = quantity%template%phi
    end subroutine
 
+   ! Compute and fill ptan quantity from other quantities
    subroutine FillPtanQuantity (ptan, temperature, refGPH, h2o, orbitInclination, &
                                 phitan, geocentricAltitude)
       use ScanModelModule, only: Get2DHydrostaticTangentPressure
       use Init_tables_module, only: phyq_angle
 
-      type(VectorValue_T), intent(inout) :: ptan, temperature, refGPH
-      type(VectorValue_T), intent(inout) :: h2o, orbitInclination, phitan
-      type(VectorValue_T), intent(inout) :: geocentricAltitude
+      type(VectorValue_T), intent(inout) :: ptan
+      ! Input quantities
+      type(VectorValue_T), intent(in) :: temperature, refGPH
+      type(VectorValue_T), intent(in) :: h2o, orbitInclination, phitan
+      type(VectorValue_T), intent(in) :: geocentricAltitude
 
       call Get2DHydrostaticTangentPressure(ptan, temperature, refGPH, &
       h2o, orbitInclination, phitan, geocentricAltitude, 4, 0.0_r8, phyq_angle)
@@ -335,3 +340,6 @@ module CFM_Fill_m
 end module
 
 ! $Log$
+! Revision 1.9  2010/06/29 15:53:45  honghanh
+! Add copyright comments and support for CVS log in the file
+!
