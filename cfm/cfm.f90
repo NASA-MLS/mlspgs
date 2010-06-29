@@ -82,6 +82,9 @@ contains
 end module cfm
 
 ! $Log$
+! Revision 1.4  2010/06/29 02:28:17  honghanh
+! Change mockup to import functions and literals from CFM module
+!
 ! Revision 1.2  2010/06/16 20:23:52  honghanh
 ! Update cfm_fwdmdl to cfm_fwdmdl_m
 !
