@@ -39,7 +39,7 @@ module CFM_HGrid_m
    ! Use the input given, and the L1BOA file to create a regular hGrid.
    type(HGrid_T) function CreateRegularHGrid (instrumentModuleName, origin, &
                   spacing, insetOverLaps, filedatabase, &
-                  fakeChunk) result(hgrid)
+                  chunk) result(hgrid)
       ! The (x,y) origin of coordinate
       real(r8), intent(in) :: origin
       real(r8), intent(in) :: spacing
@@ -50,7 +50,7 @@ module CFM_HGrid_m
       logical, intent(in) :: insetOverlaps
       ! Contains the time range of the data to be gotten out of L1BOA
       ! (see CFM_MLSSetup)
-      type(MLSChunk_T) :: fakeChunk
+      type(MLSChunk_T) :: chunk
 
       type(MLSFile_T), pointer :: l1bfile
       real(r8) :: minAngle, maxAngle
@@ -71,11 +71,11 @@ module CFM_HGrid_m
       real(r8), dimension(:), pointer :: TMPANGLE ! A temporary array for the single case
 
       L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
-      call ChooseOptimumLon0(filedatabase, fakeChunk)
+      call ChooseOptimumLon0(filedatabase, chunk)
       l1bItemName = AssembleL1BQtyName (instrumentModuleName // ".tpGeodAngle", &
                                         l1bfile%hdfVersion, .false.)
       call ReadL1BData (L1BFile, trim(l1bItemName), l1bField, noMafs, flag, &
-                        firstMaf=fakeChunk%firstMafIndex, lastMaf=fakeChunk%lastMafIndex, &
+                        firstMaf=chunk%firstMafIndex, lastMaf=chunk%lastMafIndex, &
                         dontPad=.true.)
       nullify (mif1GeodAngle)
       call Allocate_Test (mif1geodangle, nomafs, "mif1geodangle", modulename)
@@ -123,8 +123,8 @@ module CFM_HGrid_m
       l1bItemName = AssembleL1BQtyName ( "scOrbIncl", l1bfile%hdfVersion, .false. )
       call ReadL1BData ( L1BFile, l1bItemName, &
           & l1bField, noMAFs, flag, &
-          & firstMAF=fakeChunk%firstMAFIndex, &
-          & lastMAF=fakeChunk%lastMAFIndex, &
+          & firstMAF=chunk%firstMAFIndex, &
+          & lastMAF=chunk%lastMAFIndex, &
           & dontPad=.true. )
       incline = sum(l1bField%dpField(1,1,:)) / nomafs
       call deallocateL1bData(l1bfield)
@@ -135,9 +135,9 @@ module CFM_HGrid_m
 
       l1bitemname = AssembleL1BQtyName("MAFStartTimeTAI", l1bfile%hdfversion, .false.)
       call ReadL1BData(l1bfile, l1bItemName, l1bfield, nomafs, &
-                       flag, firstMaf=fakeChunk%firstMafIndex, &
-                       lastMaf=fakeChunk%lastMafIndex, dontpad=.true.)
-      if (fakeChunk%firstMafIndex /= fakeChunk%lastMafIndex) then
+                       flag, firstMaf=chunk%firstMafIndex, &
+                       lastMaf=chunk%lastMafIndex, dontpad=.true.)
+      if (chunk%firstMafIndex /= chunk%lastMafIndex) then
          call InterpolateValues(mif1GeodAngle, l1bfield%dpField(1,1,:), &
                                 hgrid%phi(1,:), hgrid%time(1,:), &
                                 method='Linear', extrapolate='Allow')
@@ -160,8 +160,8 @@ module CFM_HGrid_m
       l1bItemName = AssembleL1BQtyName(instrumentModuleName//".tpSolarZenith", &
                                        l1bfile%hdfVersion, .false. )
       call ReadL1BData (l1bfile, l1bitemname, l1bfield, nomafs, &
-                        flag, firstMaf=fakeChunk%firstMafIndex, &
-                        lastMaf=fakeChunk%lastMafIndex, dontpad=.true.)
+                        flag, firstMaf=chunk%firstMafIndex, &
+                        lastMaf=chunk%lastMafIndex, dontpad=.true.)
       call InterpolateValues (mif1GeodAngle, l1bField%dpField(1,1,:), &
                               hgrid%phi(1,:), hgrid%solarZenith(1,:), &
                               method='Linear', extrapolate='Allow')
@@ -172,8 +172,8 @@ module CFM_HGrid_m
       l1bitemname = AssembleL1BQtyName(instrumentModuleName//".tpLosAngle", &
                                        l1bfile%hdfVersion, .false.)
       call ReadL1BData(l1bfile, l1bitemname, l1bfield, nomafs, flag, &
-                       firstMaf=fakeChunk%firstMafIndex, &
-                       lastMaf=fakeChunk%lastMafIndex, dontPad=.true.)
+                       firstMaf=chunk%firstMafIndex, &
+                       lastMaf=chunk%lastMafIndex, dontPad=.true.)
       call InterpolateValues (mif1geodangle, l1bfield%dpField(1,1,:), &
                               hgrid%phi(1,:), hGrid%losAngle(1,:), &
                               method='Linear', extrapolate='Allow')
@@ -198,6 +198,10 @@ module CFM_HGrid_m
 end module
 
 ! $Log$
+! Revision 1.8  2010/06/29 16:40:23  honghanh
+! Remove all function/subroutine and user type forwarding from
+! all CFM modules except for from cfm.f90
+!
 ! Revision 1.7  2010/06/29 15:53:45  honghanh
 ! Add copyright comments and support for CVS log in the file
 !

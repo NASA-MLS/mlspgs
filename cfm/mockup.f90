@@ -60,7 +60,7 @@ program mockup
    integer :: error, i
    type(ForwardModelConfig_T), dimension(:), pointer :: forwardModelConfigDatabase
    type(MLSFile_T), dimension(:), pointer :: filedatabase
-   type(MLSChunk_T) :: fakeChunk
+   type(MLSChunk_T) :: chunk
    type(VGrid_T) :: vGridStandard, vGridRefGPH
    type(HGrid_T) :: hGridStandard
    type(FGrid_T) :: fGridStandard
@@ -86,7 +86,7 @@ program mockup
    call getarg(2, configFileName)
 
    call CFM_MLSSetup(startTime, endTime, l1boa, leapsecFile, signalFileName, &
-   configFileName, filedatabase, qtyTemplates, fakeChunk, &
+   configFileName, filedatabase, qtyTemplates, chunk, &
    forwardModelConfigDatabase, stateExtra)
 
    ! read MLS input data file
@@ -113,41 +113,41 @@ program mockup
 
    ! Have insetoverlaps, and not single
    hGridStandard = CreateRegularHGrid(GHz, 0.0_r8, 1.5_r8, .true., &
-        filedatabase, fakeChunk)
+        filedatabase, chunk)
    !call dump(hGridStandard)
 
    fGridStandard = CreateFGrid(L_IntermediateFrequency, (/0.0_r8/))
    !call dump(fGridStandard)
 
    temperature = CreateQtyTemplate(l_temperature, filedatabase=filedatabase, &
-                                   chunk=fakeChunk, &
+                                   chunk=chunk, &
                                    avgrid=vGridStandard, ahgrid=hGridStandard)
-   GPH = CreateQtyTemplate(l_gph, filedatabase=filedatabase, chunk=fakeChunk, &
+   GPH = CreateQtyTemplate(l_gph, filedatabase=filedatabase, chunk=chunk, &
                            avgrid=vGridStandard, ahgrid=hGridStandard)
-   O3 = CreateQtyTemplate(l_vmr, filedatabase=filedatabase, chunk=fakeChunk, &
+   O3 = CreateQtyTemplate(l_vmr, filedatabase=filedatabase, chunk=chunk, &
                           avgrid=vGridStandard, ahgrid=hGridStandard, qMolecule=l_o3)
-   H2O = CreateQtyTemplate(l_vmr, filedatabase=filedatabase, chunk=fakeChunk, &
+   H2O = CreateQtyTemplate(l_vmr, filedatabase=filedatabase, chunk=chunk, &
                            avgrid=vGridStandard, ahgrid=hGridStandard, qMolecule=l_h2o, &
                            qLogBasis=.true., qMinValue=0.1E-6_r8)
    ptanGHz = CreateQtyTemplate(l_ptan, filedatabase=filedatabase, &
-                               chunk=fakeChunk, qInstModule=GHz)
+                               chunk=chunk, qInstModule=GHz)
    ! band 2,7,8 is the band whose radiances are to be computed
    ! see CFM document for a list of signals corresponding to bands
-   band7 = CreateQtyTemplate(l_radiance, filedatabase=filedatabase, chunk=fakeChunk, &
+   band7 = CreateQtyTemplate(l_radiance, filedatabase=filedatabase, chunk=chunk, &
                              qSignal="R3:240.B7F:O3")
-   band2 = CreateQtyTemplate(l_radiance, filedatabase=filedatabase, chunk=fakeChunk, &
+   band2 = CreateQtyTemplate(l_radiance, filedatabase=filedatabase, chunk=chunk, &
                              qSignal="R2:190.B2F:H2O")
-   band8 = CreateQtyTemplate(l_radiance, filedatabase=filedatabase, chunk=fakeChunk, &
+   band8 = CreateQtyTemplate(l_radiance, filedatabase=filedatabase, chunk=chunk, &
                              qSignal="R3:240.B8F:PT")
    geodAltitude = CreateQtyTemplate(l_tngtgeodalt, filedatabase=filedatabase, &
-                                    chunk=fakeChunk, qInstModule=GHz)
+                                    chunk=chunk, qInstModule=GHz)
    geocAlt = CreateQtyTemplate(l_tngtgeocalt, filedatabase=filedatabase, &
-                               chunk=fakeChunk, qInstModule=GHz)
+                               chunk=chunk, qInstModule=GHz)
    orbincl = CreateQtyTemplate(l_orbitInclination, filedatabase=filedatabase, &
-                               chunk=fakeChunk, qInstModule=sc)
+                               chunk=chunk, qInstModule=sc)
    refGPH = CreateQtyTemplate(l_refGPH, avgrid=vGridRefGPH, ahgrid=hGridStandard)
    phitanGHz = CreateQtyTemplate(l_phitan, qInstModule="GHz", filedatabase=filedatabase, &
-                                 chunk=fakeChunk)
+                                 chunk=chunk)
 
    temperature_index = AddQuantityTemplateToDatabase(qtyTemplates, temperature)
    gph_index = AddQuantityTemplateToDatabase(qtyTemplates, GPH)
@@ -206,18 +206,18 @@ program mockup
    call ExplicitFillVectorQuantity(quantity, O3Input)
 
    quantity => GetVectorQtyByTemplateIndex(state, geodAlt_index)
-   call FillVectorQuantityFromL1B(quantity, fakeChunk, filedatabase, &
+   call FillVectorQuantityFromL1B(quantity, chunk, filedatabase, &
       .false.)
 
    ! Fill orbit inclination, tangent geocentric altitude with
    ! data from MLS L1B file, and use them, along with other
    ! quantities to calculate ptan
    orbincl_vv => GetVectorQtyByTemplateIndex (state, orbincl_index)
-   call FillVectorQuantityFromL1B(orbincl_vv, fakeChunk, filedatabase, &
+   call FillVectorQuantityFromL1B(orbincl_vv, chunk, filedatabase, &
       .false.)
 
    geocAlt_vv => GetVectorQtyByTemplateIndex (state, geocAlt_index)
-   call FillVectorQuantityFromL1B(geocAlt_vv, fakeChunk, filedatabase, &
+   call FillVectorQuantityFromL1B(geocAlt_vv, chunk, filedatabase, &
       .false.)
 
    ptanG_vv => GetVectorQtyByTemplateIndex (state, ptanGHz_index)
@@ -233,7 +233,7 @@ program mockup
    ! GPH is filled by the forward model
 
    ! Call the forward model
-   call ForwardModel (fakeChunk, forwardModelConfigDatabase, state, &
+   call ForwardModel (chunk, forwardModelConfigDatabase, state, &
                       stateExtra, measurement)
 
    call dump(measurement, details=3)
@@ -265,23 +265,23 @@ program mockup
    ! Because these bands have bright object status read from L1BOA file,
    ! we always have to have L1BOA file in the filedatabase.
    ! You have to fill the precision quantity first
-   call FillVectorQuantityFromL1B(precQty, fakeChunk, filedatabase, &
+   call FillVectorQuantityFromL1B(precQty, chunk, filedatabase, &
    .true.)
-   call FillVectorQuantityFromL1B(quantity, fakeChunk, filedatabase, &
+   call FillVectorQuantityFromL1B(quantity, chunk, filedatabase, &
    .false., precisionQuantity=precQty)
 
    quantity => GetVectorQtyByTemplateIndex(observed, band7_index)
    precQty => GetVectorQtyByTemplateIndex(obsPrecision, band7_index)
-   call FillVectorQuantityFromL1B(precQty, fakeChunk, filedatabase, &
+   call FillVectorQuantityFromL1B(precQty, chunk, filedatabase, &
    .true.)
-   call FillVectorQuantityFromL1B(quantity, fakeChunk, filedatabase, &
+   call FillVectorQuantityFromL1B(quantity, chunk, filedatabase, &
    .false., precisionQuantity=precQty)
 
    quantity => GetVectorQtyByTemplateIndex(observed, band8_index)
    precQty => GetVectorQtyByTemplateIndex(obsPrecision, band8_index)
-   call FillVectorQuantityFromL1B(precQty, fakeChunk, filedatabase, &
+   call FillVectorQuantityFromL1B(precQty, chunk, filedatabase, &
    .true.)
-   call FillVectorQuantityFromL1B(quantity, fakeChunk, filedatabase, &
+   call FillVectorQuantityFromL1B(quantity, chunk, filedatabase, &
    .false., precisionQuantity=precQty)
 
    ! CFM_MLSCleanup will close all files in the filedatabase
@@ -312,6 +312,10 @@ program mockup
 end program
 
 ! $Log$
+! Revision 1.33  2010/06/29 15:29:33  honghanh
+! Develop FillPtanQuantity to compute ptan, instead of using
+! Get2DHydrostaticTangentPressure
+!
 ! Revision 1.32  2010/06/29 02:28:17  honghanh
 ! Change mockup to import functions and literals from CFM module
 !

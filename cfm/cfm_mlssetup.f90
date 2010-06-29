@@ -75,7 +75,7 @@ module CFM_MLSSetup_m
    ! existing code in MLSPGS.
    ! CFM_MLSSetup is to be called only once before CFM_MLSCleanup is called.
    subroutine CFM_MLSSetup (startTime, endTime, l1boa, leapsecFile, signalFileName, &
-      configFileName, filedatabase, qtyTemplates, fakeChunk, ForwardModelConfigDatabase, &
+      configFileName, filedatabase, qtyTemplates, chunk, ForwardModelConfigDatabase, &
       stateVectorExtra)
       use CFM_Tree_Walker_m, only : Walk_Tree
       use VectorsModule, only: Vector_T
@@ -112,7 +112,7 @@ module CFM_MLSSetup_m
       type(QuantityTemplate_T), dimension(:), pointer :: qtyTemplates
       ! Output: A data holder that holds the startTime and endTime
       ! in a way that can be understood by other subroutines.
-      type (MLSChunk_T), intent(out) :: fakeChunk
+      type (MLSChunk_T), intent(out) :: chunk
       ! Output: to store all ForwardModelConfig_T objects declared in
       ! the config file.
       ! This argument will be nullified inside this subroutine.
@@ -235,9 +235,9 @@ module CFM_MLSSetup_m
       chunkDivideConfig%upperOverlapFamily = phyq_mafs
       chunkDivideConfig%noChunks = 1
       ! Create a fake chunk out of the start time, end time, and L1BOA
-      fakeChunk = GetChunkFromTimeRange(processingRange, filedatabase, chunkDivideConfig)
+      chunk = GetChunkFromTimeRange(processingRange, filedatabase, chunkDivideConfig)
 
-      call CreateStateVectorExtra(filedatabase, fakeChunk, qtyTemplates, stateVectorExtra)
+      call CreateStateVectorExtra(filedatabase, chunk, qtyTemplates, stateVectorExtra)
 
    end subroutine
 
@@ -299,7 +299,7 @@ module CFM_MLSSetup_m
    ! LOS velocity of GHz module, spacecraft geocentric altitude, space radiance,
    ! elevation offset, limb sideband fraction, reference GPH, phitan of GHz module
    ! for every band. See CFM documentation for a list of bands.
-   subroutine CreateStateVectorExtra (filedatabase, fakeChunk, qtyTemplates, stateVectorExtra)
+   subroutine CreateStateVectorExtra (filedatabase, chunk, qtyTemplates, stateVectorExtra)
       use CFM_VGrid_m, only: CreateVGrid
       use VGridsDatabase, only: DestroyVGridContents
       use CFM_HGrid_m, only: CreateRegularHGrid
@@ -320,7 +320,7 @@ module CFM_MLSSetup_m
       use CFM_EO_M, only: CreateElevationOffsets, FillElevationOffsets
 
       type (MLSFile_T), dimension(:), pointer :: filedatabase
-      type (MLSChunk_T), intent(in) :: fakeChunk
+      type (MLSChunk_T), intent(in) :: chunk
       type (QuantityTemplate_T), dimension(:), pointer :: qtyTemplates
       type (Vector_T), intent(out) :: stateVectorExtra
 
@@ -353,19 +353,19 @@ module CFM_MLSSetup_m
 
       ! Have insetoverlaps, and not single
       hGridStandard = CreateRegularHGrid("GHz", 0.0_r8, 1.5_r8, .true., &
-                                         filedatabase, fakeChunk)
+                                         filedatabase, chunk)
       ! Have to initialize before we start creating quantity templates
       call InitQuantityTemplates
-      O2 = CreateQtyTemplate(l_vmr, filedatabase=filedatabase, chunk=fakeChunk, &
+      O2 = CreateQtyTemplate(l_vmr, filedatabase=filedatabase, chunk=chunk, &
                              avgrid=vGridStandard, ahgrid=hGridStandard, &
                              qMolecule=l_o2)
-      earthRefl = CreateQtyTemplate(l_earthRefl, filedatabase=filedatabase, chunk=fakeChunk)
-      losVelGHz = CreateQtyTemplate(l_losVel, filedatabase=filedatabase, chunk=fakeChunk, &
+      earthRefl = CreateQtyTemplate(l_earthRefl, filedatabase=filedatabase, chunk=chunk)
+      losVelGHz = CreateQtyTemplate(l_losVel, filedatabase=filedatabase, chunk=chunk, &
                                     qInstModule="GHz")
-      scGeocAlt = CreateQtyTemplate(l_scgeocalt, filedatabase=filedatabase, chunk=fakeChunk, &
+      scGeocAlt = CreateQtyTemplate(l_scgeocalt, filedatabase=filedatabase, chunk=chunk, &
                                     qInstModule="sc")
       spaceRadiance = CreateQtyTemplate(l_spaceradiance, filedatabase=filedatabase, &
-                                        chunk=fakeChunk)
+                                        chunk=chunk)
 
       o2_index = AddQuantityTemplateToDatabase(qtyTemplates, o2)
       earthRefl_index = AddQuantityTemplateToDatabase(qtyTemplates, earthRefl)
@@ -373,8 +373,8 @@ module CFM_MLSSetup_m
       scGeocAlt_index = AddQuantityTemplateToDatabase(qtyTemplates, scGeocAlt)
       spaceRadiance_index = AddQuantityTemplateToDatabase(qtyTemplates, spaceRadiance)
       ! Add sideband fraction
-      call CreateLimbSidebandFractions (fakeChunk, filedatabase, qtyTemplates)
-      call CreateElevationOffsets (fakeChunk, filedatabase, qtyTemplates)
+      call CreateLimbSidebandFractions (chunk, filedatabase, qtyTemplates)
+      call CreateElevationOffsets (chunk, filedatabase, qtyTemplates)
 
       ! Don't need the grids anymore
       call DestroyVGridContents(vGridStandard)
@@ -406,11 +406,11 @@ module CFM_MLSSetup_m
       !print *, "Space radiance"
       !call dump(quantity, details=3)
       quantity => GetVectorQtyByTemplateIndex (stateVectorExtra, losVelGHz_index)
-      call FillVectorQuantityFromL1B (quantity, fakeChunk, filedatabase, .false.)
+      call FillVectorQuantityFromL1B (quantity, chunk, filedatabase, .false.)
       !print *, "LOS Velocity GHz"
       !call dump(quantity, details=3)
       quantity => GetVectorQtyByTemplateIndex (stateVectorExtra, scGeocAlt_index)
-      call FillVectorQuantityFromL1B (quantity, fakeChunk, filedatabase, .false.)
+      call FillVectorQuantityFromL1B (quantity, chunk, filedatabase, .false.)
       !print *, "scGeocAlt value"
       !call dump(quantity, details=3)
       call FillLimbSidebandFractions(stateVectorExtra)
@@ -430,6 +430,10 @@ module CFM_MLSSetup_m
 end module
 
 ! $Log$
+! Revision 1.16  2010/06/29 16:40:23  honghanh
+! Remove all function/subroutine and user type forwarding from
+! all CFM modules except for from cfm.f90
+!
 ! Revision 1.15  2010/06/29 15:53:45  honghanh
 ! Add copyright comments and support for CVS log in the file
 !

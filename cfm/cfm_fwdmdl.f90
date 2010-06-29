@@ -28,7 +28,7 @@ module CFM_FWDMDL_M
 
    ! Compute radiances based on atmospheric state information provided
    ! by fwdModelIn and fwdModelExtra
-   subroutine ForwardModel (fakeChunk, Config, FwdModelIn, FwdModelExtra, &
+   subroutine ForwardModel (chunk, Config, FwdModelIn, FwdModelExtra, &
                             FwdModelOut, Jacobian)
       use VectorsModule, only: Vector_T
       use MatrixModule_1, only: MATRIX_T
@@ -36,7 +36,7 @@ module CFM_FWDMDL_M
       use ForwardModelWrappers, only: ForwardModelOrig => ForwardModel
 
       ! the chunk carries the MAF to compute over
-      type(MLSChunk_T), intent(in) :: fakeChunk
+      type(MLSChunk_T), intent(in) :: chunk
       ! Configuration information for the forward model
       type(ForwardModelConfig_T), dimension(:), intent(inout) :: CONFIG
       ! Atmospheric input
@@ -55,7 +55,7 @@ module CFM_FWDMDL_M
       do i=1, size(config)
          fmStat%maf = 0
          ! Loop over MAFs
-         do while (fmStat%maf < fakeChunk%lastMAFIndex-fakeChunk%firstMAFIndex+1)
+         do while (fmStat%maf < chunk%lastMAFIndex-chunk%firstMAFIndex+1)
             fmStat%maf = fmStat%maf + 1
             call ForwardModelOrig (config(i), fwdmodelIn, fwdModelExtra, fwdModelOut, &
                                    fmStat, Jacobian)
@@ -77,3 +77,6 @@ module CFM_FWDMDL_M
 end module
 
 ! $Log$
+! Revision 1.3  2010/06/29 15:53:45  honghanh
+! Add copyright comments and support for CVS log in the file
+!
