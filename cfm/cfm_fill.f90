@@ -22,7 +22,7 @@ module CFM_Fill_m
    implicit none
 
    public :: ExplicitFillVectorQuantity, FillVectorQuantityFromL1B
-   public :: SpreadFillVectorQuantity
+   public :: SpreadFillVectorQuantity, FillPtanQuantity
    public :: FillVectorQtyFromProfile, FillPhitanQuantity
 
    private
@@ -297,6 +297,19 @@ module CFM_Fill_m
       type(VectorValue_T), intent(inout) :: quantity
 
       quantity%values = quantity%template%phi
+   end subroutine
+
+   subroutine FillPtanQuantity (ptan, temperature, refGPH, h2o, orbitInclination, &
+                                phitan, geocentricAltitude)
+      use ScanModelModule, only: Get2DHydrostaticTangentPressure
+      use Init_tables_module, only: phyq_angle
+
+      type(VectorValue_T), intent(inout) :: ptan, temperature, refGPH
+      type(VectorValue_T), intent(inout) :: h2o, orbitInclination, phitan
+      type(VectorValue_T), intent(inout) :: geocentricAltitude
+
+      call Get2DHydrostaticTangentPressure(ptan, temperature, refGPH, &
+      h2o, orbitInclination, phitan, geocentricAltitude, 4, 0.0_r8, phyq_angle)
    end subroutine
 
 !--------------------------- end bloc --------------------------------------

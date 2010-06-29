@@ -41,7 +41,7 @@ module cfm          ! callable forward model
                          DestroyVectorInfo, GetVectorQtyByTemplateIndex
    use CFM_Fill_m, only: ExplicitFillVectorQuantity, &
                          FillVectorQuantityFromL1B, FillPhitanQuantity, &
-                         SpreadFillVectorQuantity
+                         SpreadFillVectorQuantity, FillPtanQuantity
    use CFM_FWDMDL_M, only: ForwardModel, FORWARDMODELSTATUS_T, &
                          ForwardModelConfig_T
    use MLSCommon, only: MLSFile_T, r8
@@ -53,7 +53,6 @@ module cfm          ! callable forward model
                                  l_phitan, l_explicit
    use MLSFiles, only: GetMLSFileByType, InitializeMLSFile, mls_openFile, &
                        AddFileToDatabase
-   use ScanModelModule, only: Get2DHydrostaticTangentPressure
    use Intrinsic, only: l_hdf
    use Hdf, only: DFACC_RDONLY
    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
@@ -82,6 +81,9 @@ contains
 end module cfm
 
 ! $Log$
+! Revision 1.1  2010/06/29 02:34:03  honghanh
+! Change cfm_m.f90 to cfm.f90 to match the naming scheme of cfm directory
+!
 ! Revision 1.4  2010/06/29 02:28:17  honghanh
 ! Change mockup to import functions and literals from CFM module
 !

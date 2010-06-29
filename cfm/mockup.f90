@@ -28,10 +28,10 @@ program mockup
       DestroyVectorInfo, DestroyVectorTemplateInfo, DestroyVGridContents, &
       DFACC_RDONLY, Dump, &
       ExplicitFillVectorQuantity, &
-      FGrid_T, FillPhitanQuantity, FillVectorQuantityFromL1B, &
-      ForwardModel, ForwardModelConfig_T, FORWARDMODELSTATUS_T, &
-      Get2DHydrostaticTangentPressure, GetMLSFileByType, &
-      GetVectorQtyByTemplateIndex, &
+      FGrid_T, FillPhitanQuantity, FillPtanQuantity, &
+      FillVectorQuantityFromL1B, ForwardModel, ForwardModelConfig_T, &
+      FORWARDMODELSTATUS_T, &
+      GetMLSFileByType, GetVectorQtyByTemplateIndex, &
       HGrid_T, &
       InitializeMLSFile, &
       l_explicit, l_gph, l_h2o, l_hdf, L_IntermediateFrequency, &
@@ -227,8 +227,8 @@ program mockup
 
    ! calculate ptan
    !call dump(temperature_vv, details=3)
-   call Get2DHydrostaticTangentPressure(ptanG_vv, temperature_vv, refGPH_vv, &
-             h2o_vv, orbincl_vv, quantity, geocAlt_vv, 4, 0.0_r8, phyq_angle)
+   call FillPtanQuantity (ptanG_vv, temperature_vv, refGPH_vv, &
+                          h2o_vv, orbincl_vv, quantity, geocAlt_vv)
 
    ! GPH is filled by the forward model
 
@@ -312,3 +312,6 @@ program mockup
 end program
 
 ! $Log$
+! Revision 1.32  2010/06/29 02:28:17  honghanh
+! Change mockup to import functions and literals from CFM module
+!
