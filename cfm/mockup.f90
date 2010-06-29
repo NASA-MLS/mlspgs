@@ -39,6 +39,7 @@ program mockup
       l_radiance, l_refGPH, l_temperature, l_tngtgeocalt, &
       l_tngtgeodalt, l_vmr, l_zeta, &
       MLSChunk_T, MLSFile_T, MLSMessage, MLSMSG_Error, mls_openFile, &
+      operator(+), operator(-), &
       phyq_angle, phyq_pressure, &
       QuantityTemplate_T, &
       r8, ReadAntennaPatterns, ReadDACSFilterShapes, ReadFilterShapes, &
@@ -70,6 +71,7 @@ program mockup
    type(QuantityTemplate_T), dimension(:), pointer :: qtyTemplates
    type(VectorTemplate_T) :: stateTemplate, measurementTemplate
    type(Vector_T) :: state, measurement, stateExtra, observed, obsPrecision
+   type(Vector_T) :: diffVector
    character(len=3) :: GHz = "GHz"
    character(len=2) :: sc = "sc"
    integer :: stateSelected(10), measurementSelected(3)
@@ -236,7 +238,7 @@ program mockup
    call ForwardModel (chunk, forwardModelConfigDatabase, state, &
                       stateExtra, measurement)
 
-   call dump(measurement, details=3)
+!   call dump(measurement, details=3)
 
    ! Create an identical vector as simulated radiance vector for observed radiances
    observed = CreateVector(measurementTemplate, qtyTemplates)
@@ -288,9 +290,16 @@ program mockup
 
 !   call dump(observed, details=3)
 
+    diffVector = observed - measurement
+
+    call dump(diffVector, details=3)
+
    ! Clean up allocated memory for creating observed radiance vector
    call DestroyVectorInfo(observed)
    call DestroyVectorInfo(obsPrecision)
+   ! the subtraction create internal field for diffVector
+   ! and we need to clean that up
+   call DestroyVectorInfo(diffVector)
 
    ! Clean up memory
    call DestroyVectorInfo (state)
@@ -312,6 +321,11 @@ program mockup
 end program
 
 ! $Log$
+! Revision 1.34  2010/06/29 17:02:47  honghanh
+! Change the identifier 'fakeChunk' to 'chunk' because
+! since it is created with ChunkDivide, it's as real as a chunk
+! can get.
+!
 ! Revision 1.33  2010/06/29 15:29:33  honghanh
 ! Develop FillPtanQuantity to compute ptan, instead of using
 ! Get2DHydrostaticTangentPressure

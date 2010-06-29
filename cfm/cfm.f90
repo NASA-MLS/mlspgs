@@ -39,7 +39,8 @@ module cfm          ! callable forward model
    use CFM_VectorTemplate_m, only: CreateVectorTemplate
    use VectorsModule, only: Dump, Vector_T, VectorValue_T, &
                             VectorTemplate_T, DestroyVectorTemplateInfo, &
-                            DestroyVectorInfo, GetVectorQtyByTemplateIndex
+                            DestroyVectorInfo, GetVectorQtyByTemplateIndex, &
+                            operator(+), operator(-)
    use CFM_Vector_m, only: CreateVector
    use CFM_Fill_m, only: ExplicitFillVectorQuantity, &
                          FillVectorQuantityFromL1B, FillPhitanQuantity, &
@@ -84,6 +85,10 @@ contains
 end module cfm
 
 ! $Log$
+! Revision 1.3  2010/06/29 16:40:23  honghanh
+! Remove all function/subroutine and user type forwarding from
+! all CFM modules except for from cfm.f90
+!
 ! Revision 1.2  2010/06/29 15:29:34  honghanh
 ! Develop FillPtanQuantity to compute ptan, instead of using
 ! Get2DHydrostaticTangentPressure
