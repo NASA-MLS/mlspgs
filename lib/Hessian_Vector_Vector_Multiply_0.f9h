@@ -9,9 +9,10 @@
 ! export authority as may be required before exporting such information to
 ! foreign countries or providing access to foreign persons.
 
-! subroutine Hessian_Vec_Vec_Multiply_D ( H, V1, V2, P, Update )
+! subroutine Hessian_Vec_Vec_Multiply_D ( H, V1, V2, SCALAR, P, Update )
 !   type(HessianElement_T), intent(in) :: H
 !   real(rk), intent(in) :: V1(:), V2(:)
+!   real(rk), intent(in) :: Scalar
 !   real(rk), intent(inout) :: P(:)
 !   logical, intent(in), optional :: Update
     myUpdate = .false.
@@ -33,7 +34,7 @@
       endif
       do n = 1, size(h%tuples)
         i = h%tuples(n)%i
-        p(i) = p(i) + 0.5 * h%tuples(n)%h * v1(h%tuples(n)%j) * v2(h%tuples(n)%k)
+        p(i) = p(i) + scalar * h%tuples(n)%h * v1(h%tuples(n)%j) * v2(h%tuples(n)%k)
       end do
     else if ( associated(h%values) ) then ! Then try the dense represenation
       if ( size(h%values,1) /= size(p) .or. &
@@ -44,13 +45,16 @@
       do i = 1, size(h%values,1)
         do k = 1, size(h%values,3)
           ! Summation on j is done by dot_product
-          p(i) = p(i) + 0.5 * dot_product(h%values(i,:,k), v1(:)) * v2(k)
+          p(i) = p(i) + scalar * dot_product(h%values(i,:,k), v1(:)) * v2(k)
         end do
       end do
     end if
 
 ! $Id$
 ! $Log$
+! Revision 2.5  2010/06/29 19:56:40  vsnyder
+! Add SCALAR argument instead of buried 0.5 factor
+!
 ! Revision 2.4  2010/06/28 17:02:58  pwagner
 ! added debugging output
 !
