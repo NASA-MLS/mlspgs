@@ -120,7 +120,7 @@ contains ! =====     Public Procedures     =============================
       & MATRIXELEMENT_T, CREATEBLOCK, DENSIFY, CHECKFORSIMPLEBANDEDLAYOUT
     use MatrixModule_1, only: MATRIX_T, MULTIPLYMATRIXVECTORNOT, DUMP, &
       & FINDBLOCK, CREATEBLOCK
-    use MLSCommon, only: r8, rm
+    use MLSKinds, only: R8, RM, RV
     use MLSSignals_m, only: Signal_T
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
     use MLSNumerics, only: Coefficients_R8, HUNT, InterpolateArraySetup, &
@@ -541,7 +541,7 @@ contains ! =====     Public Procedures     =============================
       call MultiplyMatrixVectorNoT ( l2pc%j, deltaX, yP, update = .false. )
       if ( .not. fmConf%ignoreHessian .and. l2pc%goth ) &
         ! We have a Hessian and want to use it; add a term to the Taylor series
-        & call Multiply ( l2pc%h, deltaX, yP, update = .true. )
+        & call Multiply ( l2pc%h, deltaX, yP, 0.5_rv, update = .true. )
 
       if ( toggle(emit) .and. levels(emit) > 8 ) then
         call dump ( yp, name='yP' )
@@ -781,6 +781,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.80  2010/06/07 23:25:18  vsnyder
+! Revise how failure to find desired blocks is handled
+!
 ! Revision 2.79  2010/05/19 17:52:53  pwagner
 ! Removed unused stuff
 !
