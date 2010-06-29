@@ -40,7 +40,8 @@ module cfm          ! callable forward model
                          Vector_T, VectorValue_T, &
                          DestroyVectorInfo, GetVectorQtyByTemplateIndex
    use CFM_Fill_m, only: ExplicitFillVectorQuantity, &
-                         FillVectorQuantityFromL1B
+                         FillVectorQuantityFromL1B, FillPhitanQuantity, &
+                         SpreadFillVectorQuantity
    use CFM_FWDMDL_M, only: ForwardModel, FORWARDMODELSTATUS_T, &
                          ForwardModelConfig_T
    use MLSCommon, only: MLSFile_T, r8
@@ -48,10 +49,14 @@ module cfm          ! callable forward model
                                  L_IntermediateFrequency, l_vmr, l_gph, &
                                  l_ptan, l_radiance, l_orbitInclination, &
                                  l_tngtgeodalt, l_tngtgeocalt, l_o3, &
-                                 phyq_pressure, phyq_angle, l_h2o
-   use MLSFiles, only: GetMLSFileByType
+                                 phyq_pressure, phyq_angle, l_h2o, l_refgph, &
+                                 l_phitan, l_explicit
+   use MLSFiles, only: GetMLSFileByType, InitializeMLSFile, mls_openFile, &
+                       AddFileToDatabase
    use ScanModelModule, only: Get2DHydrostaticTangentPressure
-   use machine, only: getarg
+   use Intrinsic, only: l_hdf
+   use Hdf, only: DFACC_RDONLY
+   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
 
    implicit none
    public

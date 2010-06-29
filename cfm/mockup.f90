@@ -1,50 +1,51 @@
+! Copyright 2010, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! This program is meant to serve as an example, and proof that the CFM library
+! is working. Consequently, the design of this program does not follow good
+! software design principles. This program should not be used as a part in
+! any programs or software suite meant for long-term use.
 program mockup
    use input   ! Provides hard-coded input for testing purposes only
 
-   use CFM_MLSSetup_m, only: CFM_MLSCleanup, MLSChunk_T, CFM_MLSSetup
-   use CFM_IO_M, only: Read_Spectroscopy, ReadDACSFilterShapes, &
-                     ReadAntennaPatterns, ReadFilterShapes, &
-                     ReadPointingGrids, ReadPFAFile, ReadHDF5L2PC, &
-                     Destroy_DACS_Filter_Database, &
-                     Destroy_Filter_Shapes_Database, &
-                     Destroy_Ant_Patterns_Database, &
-                     Destroy_SpectCat_Database, &
-                     Destroy_Line_Database, ReadObservedRadiances, &
-                     Destroy_Pointing_Grid_Database, &
-                     DestroyL2PCDatabase, Destroy_PFADataBase
-   use CFM_VGrid_m, only: CreateVGrid, DestroyVGridContents, &
-                        VGrid_T, Dump
-   use CFM_HGrid_m, only: CreateRegularHGrid, HGrid_T, &
-                        DestroyHGridContents, Dump
-   use CFM_FGrid_m, only: CreateFGrid, FGrid_T, DestroyFGridContents, &
-                        Dump
-   use CFM_QuantityTemplate_m, only: CreateQtyTemplate, Dump, &
-                        AddQuantityTemplateToDatabase, &
-                        DestroyQuantityTemplateDatabase, &
-                        QuantityTemplate_T
-   use CFM_VectorTemplate_m, only: CreateVectorTemplate, Dump, &
-                        VectorTemplate_T, DestroyVectorTemplateInfo
-   use CFM_Vector_m, only: CreateVector, Dump, &
-                         Vector_T, VectorValue_T, &
-                         DestroyVectorInfo, GetVectorQtyByTemplateIndex
-   use CFM_Fill_m, only: ExplicitFillVectorQuantity, FillPhitanQuantity, &
-                         FillVectorQuantityFromL1B, SpreadFillVectorQuantity
-   use CFM_FWDMDL_M, only: ForwardModel, FORWARDMODELSTATUS_T, &
-                         ForwardModelConfig_T
-   use MLSCommon, only: MLSFile_T, r8
-   use Init_tables_module, only: l_logarithmic, l_zeta, l_temperature, &
-                                 L_IntermediateFrequency, l_vmr, l_gph, &
-                                 l_ptan, l_radiance, l_orbitInclination, &
-                                 l_tngtgeodalt, l_tngtgeocalt, l_o3, l_refGPH, &
-                                 phyq_pressure, phyq_angle, l_h2o, l_explicit, &
-                                 l_phitan
-   use MLSFiles, only: GetMLSFileByType, InitializeMLSFile, mls_openFile, &
-                       AddFileToDatabase
-   use ScanModelModule, only: Get2DHydrostaticTangentPressure
+   use CFM, only: & ! Alphabetized, case-insensitive list (underscores are ignored though)
+      AddFileToDatabase, AddQuantityTemplateToDatabase, &
+      CFM_MLSCleanup, CFM_MLSSetup, CreateFGrid, CreateQtyTemplate, &
+      CreateRegularHGrid, CreateVector, CreateVectorTemplate, CreateVGrid, &
+      Destroy_Ant_Patterns_Database, DestroyFGridContents, &
+      Destroy_DACS_Filter_Database, Destroy_Filter_Shapes_Database, &
+      DestroyHGridContents, DestroyL2PCDatabase, Destroy_Line_Database, &
+      Destroy_PFADataBase, Destroy_Pointing_Grid_Database, &
+      DestroyQuantityTemplateDatabase, Destroy_SpectCat_Database, &
+      DestroyVectorInfo, DestroyVectorTemplateInfo, DestroyVGridContents, &
+      DFACC_RDONLY, Dump, &
+      ExplicitFillVectorQuantity, &
+      FGrid_T, FillPhitanQuantity, FillVectorQuantityFromL1B, &
+      ForwardModel, ForwardModelConfig_T, FORWARDMODELSTATUS_T, &
+      Get2DHydrostaticTangentPressure, GetMLSFileByType, &
+      GetVectorQtyByTemplateIndex, &
+      HGrid_T, &
+      InitializeMLSFile, &
+      l_explicit, l_gph, l_h2o, l_hdf, L_IntermediateFrequency, &
+      l_logarithmic, l_o3, l_orbitInclination, l_phitan, l_ptan, &
+      l_radiance, l_refGPH, l_temperature, l_tngtgeocalt, &
+      l_tngtgeodalt, l_vmr, l_zeta, &
+      MLSChunk_T, MLSFile_T, MLSMessage, MLSMSG_Error, mls_openFile, &
+      phyq_angle, phyq_pressure, &
+      QuantityTemplate_T, &
+      r8, ReadAntennaPatterns, ReadDACSFilterShapes, ReadFilterShapes, &
+      ReadHDF5L2PC, ReadPFAFile, ReadPointingGrids, Read_Spectroscopy, &
+      SpreadFillVectorQuantity, &
+      Vector_T, VectorTemplate_T, VectorValue_T, VGrid_T
    use machine, only: getarg
-   use Hdf, only: DFACC_RDONLY
-   use Intrinsic, only: l_hdf
-   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
 
    implicit none
 
@@ -237,59 +238,59 @@ program mockup
 
    call dump(measurement, details=3)
 
-!   ! Create an identical vector as simulated radiance vector for observed radiances
-!   observed = CreateVector(measurementTemplate, qtyTemplates)
-!   obsPrecision = CreateVector(measurementTemplate, qtyTemplates)
-!
-!   ! Open l1brad
-!   error = InitializeMLSFile(l1bfile, content='l1brad', &
-!   name=trim(l1brad), shortName='L1BRAD', type=l_hdf, access=DFACC_RDONLY)
-!   if (error /= 0) &
-!      call MLSMessage (MLSMSG_Error, moduleName, &
-!      "Error initializing " // trim(l1brad))
-!
-!   call mls_openFile(l1bfile, error)
-!   if (error /= 0 ) &
-!      call MLSMessage (MLSMSG_Error, moduleName, &
-!      "Error opening " // trim(l1brad))
-!
-!   ! Add it to the filedatabase
-!   error = AddFileToDatabase(filedatabase, l1bfile)
-!
-!   ! Fill band 2,7,8
-!   quantity => GetVectorQtyByTemplateIndex(observed, band2_index)
-!   precQty => GetVectorQtyByTemplateIndex(obsPrecision, band2_index)
-!
-!   ! However, only band 9 and 25 have BOMask=1
-!   ! Because these bands have bright object status read from L1BOA file,
-!   ! we always have to have L1BOA file in the filedatabase.
-!   ! You have to fill the precision quantity first
-!   call FillVectorQuantityFromL1B(precQty, fakeChunk, filedatabase, &
-!   .true.)
-!   call FillVectorQuantityFromL1B(quantity, fakeChunk, filedatabase, &
-!   .false., precisionQuantity=precQty)
-!
-!   quantity => GetVectorQtyByTemplateIndex(observed, band7_index)
-!   precQty => GetVectorQtyByTemplateIndex(obsPrecision, band7_index)
-!   call FillVectorQuantityFromL1B(precQty, fakeChunk, filedatabase, &
-!   .true.)
-!   call FillVectorQuantityFromL1B(quantity, fakeChunk, filedatabase, &
-!   .false., precisionQuantity=precQty)
-!
-!   quantity => GetVectorQtyByTemplateIndex(observed, band8_index)
-!   precQty => GetVectorQtyByTemplateIndex(obsPrecision, band8_index)
-!   call FillVectorQuantityFromL1B(precQty, fakeChunk, filedatabase, &
-!   .true.)
-!   call FillVectorQuantityFromL1B(quantity, fakeChunk, filedatabase, &
-!   .false., precisionQuantity=precQty)
-!
-!   ! CFM_MLSCleanup will close all files in the filedatabase
-!
+   ! Create an identical vector as simulated radiance vector for observed radiances
+   observed = CreateVector(measurementTemplate, qtyTemplates)
+   obsPrecision = CreateVector(measurementTemplate, qtyTemplates)
+
+   ! Open l1brad
+   error = InitializeMLSFile(l1bfile, content='l1brad', &
+   name=trim(l1brad), shortName='L1BRAD', type=l_hdf, access=DFACC_RDONLY)
+   if (error /= 0) &
+      call MLSMessage (MLSMSG_Error, moduleName, &
+      "Error initializing " // trim(l1brad))
+
+   call mls_openFile(l1bfile, error)
+   if (error /= 0 ) &
+      call MLSMessage (MLSMSG_Error, moduleName, &
+      "Error opening " // trim(l1brad))
+
+   ! Add it to the filedatabase
+   error = AddFileToDatabase(filedatabase, l1bfile)
+
+   ! Fill band 2,7,8
+   quantity => GetVectorQtyByTemplateIndex(observed, band2_index)
+   precQty => GetVectorQtyByTemplateIndex(obsPrecision, band2_index)
+
+   ! However, only band 9 and 25 have BOMask=1
+   ! Because these bands have bright object status read from L1BOA file,
+   ! we always have to have L1BOA file in the filedatabase.
+   ! You have to fill the precision quantity first
+   call FillVectorQuantityFromL1B(precQty, fakeChunk, filedatabase, &
+   .true.)
+   call FillVectorQuantityFromL1B(quantity, fakeChunk, filedatabase, &
+   .false., precisionQuantity=precQty)
+
+   quantity => GetVectorQtyByTemplateIndex(observed, band7_index)
+   precQty => GetVectorQtyByTemplateIndex(obsPrecision, band7_index)
+   call FillVectorQuantityFromL1B(precQty, fakeChunk, filedatabase, &
+   .true.)
+   call FillVectorQuantityFromL1B(quantity, fakeChunk, filedatabase, &
+   .false., precisionQuantity=precQty)
+
+   quantity => GetVectorQtyByTemplateIndex(observed, band8_index)
+   precQty => GetVectorQtyByTemplateIndex(obsPrecision, band8_index)
+   call FillVectorQuantityFromL1B(precQty, fakeChunk, filedatabase, &
+   .true.)
+   call FillVectorQuantityFromL1B(quantity, fakeChunk, filedatabase, &
+   .false., precisionQuantity=precQty)
+
+   ! CFM_MLSCleanup will close all files in the filedatabase
+
 !   call dump(observed, details=3)
-!
-!   ! Clean up allocated memory for creating observed radiance vector
-!   call DestroyVectorInfo(observed)
-!   call DestroyVectorInfo(obsPrecision)
+
+   ! Clean up allocated memory for creating observed radiance vector
+   call DestroyVectorInfo(observed)
+   call DestroyVectorInfo(obsPrecision)
 
    ! Clean up memory
    call DestroyVectorInfo (state)
@@ -309,3 +310,5 @@ program mockup
    forwardModelConfigDatabase, stateExtra)
 
 end program
+
+! $Log$
