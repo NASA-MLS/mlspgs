@@ -146,6 +146,7 @@ STATIC_LINK := $(shell echo $(LDOPTS) | grep -e "-static")
 ALLOBJS = $(OBJS)
 
 PROG_NAME=mockup
+PROG2_NAME=mockup2
 
 include $(srclib)/targets.h
 
@@ -283,6 +284,11 @@ $(PROG_NAME): $(prereqs)
         $(hdf5_linker_line) \
         $(l_specials) $(LAFTER) \
 
+$(PROG2_NAME): $(prereqs) libcfm_all.a
+		$(FC) $(LDOPTS) -o $(PROG2_NAME) $(PROG_NAME).o $(PVM_OBJS)  \
+                      -L./ -lcfm_all \
+        $(l_specials) $(LAFTER) \
+
 # ========================================================================
 # Now we must teach make some trickery involving the ar command 
 # to extract objects from a library
@@ -375,6 +381,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.2  2010/06/08 23:27:55  pwagner
+# Added some sense and much trickery to build full library libcfm_all.a
+#
 # Revision 1.1  2010/02/17 16:41:40  honghanh
 # An example of using CFM_MLSSetup and creating a VGrid
 #
