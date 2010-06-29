@@ -37,7 +37,8 @@ REECHO=$(UTILDIR)/reecho.sh
 SUBDIRS := $(shell ${REECHO} -d cfm)
 
 # Errors in the .tex sources require us to omit the following
-OMIT_SRCS := wvs-010.tex wvs-074.tex wvs-051-neural_body.tex wvs-083.tex wvs-089.tex
+OMIT_SRCS := wvs-010.tex wvs-074.tex wvs-051-neural_body.tex wvs-083.tex \
+     wvs-089.tex wvs-095.tex
 OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
 OMIT_SRCS_REV := 'wvs-004\*.tex' 'wvs-051\*.tex' 'wvs-063\*.tex'
 OMIT_PREFXD_REV := $(shell ${REECHO} -prefix=-d -escape -nlast $(OMIT_SRCS_REV))
@@ -63,13 +64,14 @@ vpath %.pdf $(PDFDIR)
 .tex.dvi:
 	echo "\def\dvidir{$(DVIDIR)}" | cat - $< > $*.temp
 	echo "\def\pdfdir{$(PDFDIR)}" | cat - $*.temp > $(TEXDIR)/$<
-	echo "\end" | latex $(TEXDIR)/$<
+	echo "\end" | latex $(TEXDIR)/$<; \
 	echo "\end" | latex $(TEXDIR)/$<
 	mv $@ $(DVIDIR)
 
 .dvi.pdf:
 	# dvipdf $(DVIDIR)/$<
 	if [ "$*" != "index" ]; then \
+	  echo "\end" | latex $(TEXDIR)/$*.tex; \
 	  echo "\end" | latex $(TEXDIR)/$*.tex; \
 	  mv $*.dvi $(DVIDIR); \
 	  dvipdf $(DVIDIR)/$<; \
@@ -145,6 +147,9 @@ update: internalupdate
 
 # ========================================================================
 # $Log$
+# Revision 1.9  2010/06/03 23:32:47  pwagner
+# Because wvs-083.tex needs a graphic
+#
 # Revision 1.8  2010/05/26 22:56:10  pwagner
 # Should work better, even for index
 #
