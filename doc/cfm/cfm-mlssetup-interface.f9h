@@ -14,7 +14,7 @@
 ! existing code in MLSPGS.
 ! CFM_MLSSetup is to be called only once before CFM_MLSCleanup is called.
 subroutine CFM_MLSSetup (startTime, endTime, l1boa, leapsecFile, signalFileName, &
-configFileName, filedatabase, qtyTemplates, fakeChunk, ForwardModelConfigDatabase, &
+configFileName, filedatabase, qtyTemplates, chunk, ForwardModelConfigDatabase, &
 stateVectorExtra)
    ! The start time of the data to be read in the format
    ! yyyy-doyThh:mm:ss.zzzz
@@ -37,7 +37,7 @@ stateVectorExtra)
    type(QuantityTemplate_T), dimension(:), pointer :: qtyTemplates
    ! Output: A data holder that holds the startTime and endTime
    ! in a way that can be understood by other subroutines.
-   type (MLSChunk_T), intent(out) :: fakeChunk
+   type (MLSChunk_T), intent(out) :: chunk
    ! Output: to store all ForwardModelConfig_T objects declared in
    ! the config file.
    ! This argument will be nullified inside this subroutine.

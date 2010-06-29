@@ -136,6 +136,16 @@ illustrates their invocation and logical flow.
 \lstinputlisting{creatfgrid-interface.f9h}
 
 \subsubsection{\snippet{CreateRegularHGrid}}
+
+This routine bears extra discussion.  It creates an \snippet{hGrid},
+i.e., a horizontal coordinate system for a given range of major frames
+(contained in the \snippet{chunk} argument).  The grid is spaced by
+\snippet{spacing} degrees great circle angle, and aligned such that,
+were it to encompass a whole orbit, one of the profiles would be at
+angle \snippet{origin}.  The \snippet{insetOverlaps} argument indicates
+whether the range of this \snippet{hGrid} should be forced to be
+narrower than the span of the major frames.
+
 \lstinputlisting{creathgrid-interface.f9h}
 
 \subsubsection{\snippet{CreateQuantityTemplate}}

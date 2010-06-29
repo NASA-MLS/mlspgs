@@ -203,10 +203,6 @@ information (both horizontal and vertical) directly from the L1B
 information.  In addition, radiance quantities take their
 frequency/channel information directly from the MLS signals database.
 
-\tbd{The ability for minor frame quantities to take geolocation directly
-  from L1B implies that the calling code needs to provide that
-  information when needed.}
-
 \subsubsection{Vertical coordinates -- \snippet{vGrid}}
 
 MLS vector quantities can be described on a variety of vertical
@@ -223,9 +219,18 @@ tangent point altitude information (in meters).
 The definition of horizontal coordinates differs from that of vertical
 and frequency coordinates, in that the coordinates change from scene to
 scene, and run to run, depending on the timespan of MLS data under
-consideration.
+consideration.  There are several types of \snippet{hGrids} in the L2
+software, but for the purposes of the CFM, only `regular' grids are of
+interest.
 
-\tbd{More discussion is needed of this.}
+These are created for a given `chunk' (i.e., range of MAFs from the L1
+file), and distribute profiles with a requested geodetic angle spacing
+along the orbit.  The absolute offset of this even spacing can also be
+specified.  Typically this is set to zero degrees meaning that this even
+spacing would place a profile exactly on the equator (were the MAFs in
+the supplied chunk to encompass the equator).  More information on this
+is given in the documentation for \snippet{CreateRegularHGrid} on
+page~\pageref{procedure:CreateRegularHGrid}.
 
 
 \subsubsection{Frequency coordinates -- \snippet{fGrid}}
@@ -396,10 +401,11 @@ Tangent pressure & Y & Y & Y \\
 Composition & Y & Y & Y \\
 Space radiance & Y \\
 Earth reflectivity & Y \\
-Surface altitude & Y \\
+Spacecraft altitude & Y \\
 Orbital inclination & Y \\
 Line of sight velocity & Y \\
 Spacecraft altitude & Y \\
+Field of view offsets & Y \\
 Sideband fractions & Y & ? \\
 Magnetic field & ? \\
 \bottomrule

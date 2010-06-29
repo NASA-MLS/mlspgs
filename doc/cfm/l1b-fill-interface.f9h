@@ -3,7 +3,7 @@ subroutine FillVectorQuantityFromL1B (quantity, chunk, filedatabase, &
    isPrecision)
    ! The quantity to be filled
    type(VectorValue_T), intent(inout) :: quantity
-   ! fake chunk object carrying needed information
+   ! chunk object carrying needed information
    type(MLSChunk_T), intent(in) :: chunk
    ! the filedatabase containing L1B files
    type(MLSFile_T), dimension(:), pointer :: filedatabase
