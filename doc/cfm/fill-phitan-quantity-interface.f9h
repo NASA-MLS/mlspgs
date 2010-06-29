@@ -1,0 +1,5 @@
+! Fill phitan quantity with phi values from the quantity's template
+subroutine FillPhitanQuantity (quantity)
+   ! phitan quantity
+   type(VectorValue_T), intent(inout) :: quantity
+end subroutine
