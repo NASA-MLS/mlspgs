@@ -32,7 +32,6 @@ module CFM_MLSSetup_m
    private
    public :: CFM_MLSSetup, CFM_MLSCleanup
    public :: MLSChunk_T
-   public :: GetRefGPHIndexInStateExtra, GetPhitanGHzIndexInStateExtra
 
 !---------------------------- RCS Ident Info -------------------------------
    character(len=*), private, parameter :: ModuleName= &
@@ -48,8 +47,6 @@ module CFM_MLSSetup_m
     1.11523, -0.733464, 0.489792, -0.331852, 0.227522, -0.156428, &
     0.108031, -0.0757825, 0.0536980, -0.0375161, 0.0260555, &
    -0.0188811, 0.0138453, -0.00959350 /)
-
-   integer, save :: refGPH_index, phitanGHz_index
 
    contains
 
@@ -302,7 +299,7 @@ module CFM_MLSSetup_m
       use CFM_Vector_m, only: CreateVector, Vector_T, VectorValue_T
       use INIT_TABLES_MODULE, only: phyq_pressure, l_logarithmic, l_zeta, &
                                     phyq_vmr, l_vmr, l_earthRefl, l_losVel, &
-                                    l_scgeocalt, l_spaceradiance, l_phitan, l_o2
+                                    l_scgeocalt, l_spaceradiance, l_o2
       use CFM_Fill_M, only: FillVectorQtyFromProfile, ExplicitFillVectorQuantity, &
       FillVectorQuantityFromL1B, SpreadFillVectorQuantity
       use Allocate_Deallocate, only: allocate_test, deallocate_test
@@ -315,7 +312,7 @@ module CFM_MLSSetup_m
       type (Vector_T), intent(out) :: stateVectorExtra
 
       type(QuantityTemplate_T) :: O2, earthRefl, losVelGHz, scGeocAlt, &
-                                  spaceRadiance, refGPH, phitanGHz
+                                  spaceRadiance
       type(VectorTemplate_T) :: stateTemplateExtra
       type(VGrid_T) :: vGridStandard
       type(HGrid_T) :: hGridStandard
@@ -356,15 +353,12 @@ module CFM_MLSSetup_m
                                     qInstModule="sc")
       spaceRadiance = CreateQtyTemplate(l_spaceradiance, filedatabase=filedatabase, &
                                         chunk=fakeChunk)
-      phitanGHz = CreateQtyTemplate(l_phitan, qInstModule="GHz", filedatabase=filedatabase, &
-                                    chunk=fakeChunk)
 
       o2_index = AddQuantityTemplateToDatabase(qtyTemplates, o2)
       earthRefl_index = AddQuantityTemplateToDatabase(qtyTemplates, earthRefl)
       losVelGHz_index = AddQuantityTemplateToDatabase(qtyTemplates, losVelGHz)
       scGeocAlt_index = AddQuantityTemplateToDatabase(qtyTemplates, scGeocAlt)
       spaceRadiance_index = AddQuantityTemplateToDatabase(qtyTemplates, spaceRadiance)
-      phitanGHz_index = AddQuantityTemplateToDatabase(qtyTemplates, phitanGHz)
       ! Add sideband fraction
       call CreateLimbSidebandFractions (fakeChunk, filedatabase, qtyTemplates)
       call CreateElevationOffsets (fakeChunk, filedatabase, qtyTemplates)
@@ -406,21 +400,9 @@ module CFM_MLSSetup_m
       call FillVectorQuantityFromL1B (quantity, fakeChunk, filedatabase, .false.)
       !print *, "scGeocAlt value"
       !call dump(quantity, details=3)
-      quantity => GetVectorQtyByTemplateIndex (stateVectorExtra, phitanGHz_index)
-      quantity%values = quantity%template%phi
       call FillLimbSidebandFractions(stateVectorExtra)
       call FillElevationOffsets(stateVectorExtra)
    end subroutine
-
-   ! Return the index of refGPH quantity in the stateVectorExtra
-   integer function GetRefGPHIndexInStateExtra
-      GetRefGPHIndexInStateExtra = refGPH_index
-   end function
-
-   ! Return the index of phitan of GHz module in stateVectorExtra
-   integer function GetPhitanGHzIndexInStateExtra
-      GetPhitanGHzIndexInStateExtra = phitanGHz_index
-   end function
 
 !--------------------------- end bloc --------------------------------------
    logical function not_used_here()
@@ -433,3 +415,5 @@ module CFM_MLSSetup_m
 !---------------------------------------------------------------------------
 
 end module
+
+! $Log$

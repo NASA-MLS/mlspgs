@@ -1,4 +1,4 @@
-! Copyright 2005, by the California Institute of Technology. ALL
+! Copyright 2010, by the California Institute of Technology. ALL
 ! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 ! commercial use must be negotiated with the Office of Technology Transfer
 ! at the California Institute of Technology.
@@ -13,9 +13,7 @@ module cfm          ! callable forward model
   ! This module merely unifies all the .mod files that
   ! will be USEd by any fortran90 program that is compiled
   ! and with the callable forward model and links against libcfm.a or libcfm_all.a
-   use CFM_MLSSetup_m, only: CFM_MLSCleanup, MLSChunk_T, CFM_MLSSetup, &
-                             GetRefGPHIndexInStateExtra, &
-                             GetPhitanGHzIndexInStateExtra
+   use CFM_MLSSetup_m, only: CFM_MLSCleanup, MLSChunk_T, CFM_MLSSetup
    use CFM_IO_M, only: Read_Spectroscopy, ReadDACSFilterShapes, &
                      ReadAntennaPatterns, ReadFilterShapes, &
                      ReadPointingGrids, ReadPFAFile, ReadHDF5L2PC, &
@@ -79,6 +77,9 @@ contains
 end module cfm
 
 ! $Log$
+! Revision 1.2  2010/06/16 20:23:52  honghanh
+! Update cfm_fwdmdl to cfm_fwdmdl_m
+!
 ! Revision 1.1  2010/06/03 23:31:57  pwagner
 ! First commit
 !

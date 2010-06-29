@@ -8,7 +8,7 @@ module CFM_Fill_m
        L_TNGTECI, L_SCVELECI, L_SCECI
    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
    use MLSFiles, only: GetMLSFileByType, HDFVERSION_5
-   use VectorsModule, only: VectorValue_T, M_LINALG, M_fill, MaskVectorQty
+   use VectorsModule, only: VectorValue_T, M_LINALG, M_fill, MaskVectorQty, Dump
    use L1BData, only: GetL1BFile, ASSEMBLEL1BQTYNAME, L1BData_T, &
              DeallocateL1BData, ReadL1BData
    use MLSCommon, only: MLSFile_T, DEFAULTUNDEFINEDVALUE, r8
@@ -23,7 +23,7 @@ module CFM_Fill_m
 
    public :: ExplicitFillVectorQuantity, FillVectorQuantityFromL1B
    public :: SpreadFillVectorQuantity
-   public :: FillVectorQtyFromProfile
+   public :: FillVectorQtyFromProfile, FillPhitanQuantity
 
    private
 
@@ -125,11 +125,18 @@ module CFM_Fill_m
       ! for now, don't use the optional arguments
       integer, intent(in), optional :: suffix
       type(VectorValue_T), intent(in), optional :: precisionQuantity
+      ! If isPrecision is .true. and BOMask is not 0, then
+      ! bright object status is read from L1BOA file
       integer, intent(in), optional :: BOMask
 
       fillError = 0
-      call FromL1B(0, quantity, chunk, filedatabase, &
-         isPrecision, suffix, precisionQuantity, BOMask)
+      if (present (suffix)) then
+         call FromL1B(0, quantity, chunk, filedatabase, &
+            isPrecision, suffix, precisionQuantity, BOMask)
+      else
+         call FromL1B(0, quantity, chunk, filedatabase, &
+            isPrecision, 0, precisionQuantity, BOMask)
+      end if
       if (fillError /= 0) then
          call MLSMessage (MLSMSG_Error, moduleName, "Can't Fill from L1B")
       end if
@@ -284,6 +291,12 @@ module CFM_Fill_m
       call Deallocate_test ( duplicated, 'duplicated', ModuleName )
       call Deallocate_test ( outValues, 'outValues', ModuleName )
 
+   end subroutine
+
+   subroutine FillPhitanQuantity (quantity)
+      type(VectorValue_T), intent(inout) :: quantity
+
+      quantity%values = quantity%template%phi
    end subroutine
 
 !--------------------------- end bloc --------------------------------------

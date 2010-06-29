@@ -1,9 +1,7 @@
 program mockup
    use input   ! Provides hard-coded input for testing purposes only
 
-   use CFM_MLSSetup_m, only: CFM_MLSCleanup, MLSChunk_T, CFM_MLSSetup, &
-                             GetRefGPHIndexInStateExtra, &
-                             GetPhitanGHzIndexInStateExtra
+   use CFM_MLSSetup_m, only: CFM_MLSCleanup, MLSChunk_T, CFM_MLSSetup
    use CFM_IO_M, only: Read_Spectroscopy, ReadDACSFilterShapes, &
                      ReadAntennaPatterns, ReadFilterShapes, &
                      ReadPointingGrids, ReadPFAFile, ReadHDF5L2PC, &
@@ -29,7 +27,7 @@ program mockup
    use CFM_Vector_m, only: CreateVector, Dump, &
                          Vector_T, VectorValue_T, &
                          DestroyVectorInfo, GetVectorQtyByTemplateIndex
-   use CFM_Fill_m, only: ExplicitFillVectorQuantity, &
+   use CFM_Fill_m, only: ExplicitFillVectorQuantity, FillPhitanQuantity, &
                          FillVectorQuantityFromL1B, SpreadFillVectorQuantity
    use CFM_FWDMDL_M, only: ForwardModel, FORWARDMODELSTATUS_T, &
                          ForwardModelConfig_T
@@ -38,7 +36,8 @@ program mockup
                                  L_IntermediateFrequency, l_vmr, l_gph, &
                                  l_ptan, l_radiance, l_orbitInclination, &
                                  l_tngtgeodalt, l_tngtgeocalt, l_o3, l_refGPH, &
-                                 phyq_pressure, phyq_angle, l_h2o, l_explicit
+                                 phyq_pressure, phyq_angle, l_h2o, l_explicit, &
+                                 l_phitan
    use MLSFiles, only: GetMLSFileByType, InitializeMLSFile, mls_openFile, &
                        AddFileToDatabase
    use ScanModelModule, only: Get2DHydrostaticTangentPressure
@@ -66,17 +65,17 @@ program mockup
    type(FGrid_T) :: fGridStandard
    type(QuantityTemplate_T) :: temperature, GPH, H2O, O3, ptanGHz, band7, &
                                geodAltitude, orbincl, geocAlt, refGPH, band2, &
-                               band8
+                               band8, phitanGHz
    type(QuantityTemplate_T), dimension(:), pointer :: qtyTemplates
    type(VectorTemplate_T) :: stateTemplate, measurementTemplate
    type(Vector_T) :: state, measurement, stateExtra, observed, obsPrecision
    character(len=3) :: GHz = "GHz"
    character(len=2) :: sc = "sc"
-   integer :: stateSelected(9), measurementSelected(3)
+   integer :: stateSelected(10), measurementSelected(3)
    type(VectorValue_T), pointer :: quantity, h2o_vv, orbincl_vv, geocAlt_vv, &
                           ptanG_vv, temperature_vv, refGPH_vv, precQty
    integer :: temperature_index, h2o_index, band2_index
-   integer :: o3_index, ptanGHz_index, band7_index
+   integer :: o3_index, ptanGHz_index, band7_index, phitanGHz_index
    integer :: geodAlt_index, orbincl_index, gph_index
    integer :: geocAlt_index, band8_index, refGPH_index
    character(len=256) :: signalFileName, configFileName
@@ -146,6 +145,8 @@ program mockup
    orbincl = CreateQtyTemplate(l_orbitInclination, filedatabase=filedatabase, &
                                chunk=fakeChunk, qInstModule=sc)
    refGPH = CreateQtyTemplate(l_refGPH, avgrid=vGridRefGPH, ahgrid=hGridStandard)
+   phitanGHz = CreateQtyTemplate(l_phitan, qInstModule="GHz", filedatabase=filedatabase, &
+                                 chunk=fakeChunk)
 
    temperature_index = AddQuantityTemplateToDatabase(qtyTemplates, temperature)
    gph_index = AddQuantityTemplateToDatabase(qtyTemplates, GPH)
@@ -156,6 +157,7 @@ program mockup
    geocAlt_index = AddQuantityTemplatetoDatabase(qtyTemplates, geocAlt)
    orbincl_index = AddQuantityTemplateToDatabase(qtyTemplates, orbIncl)
    refGPH_index = AddQuantityTemplateToDatabase(qtyTemplates, refGPH)
+   phitanGHz_index = AddQuantityTemplateToDatabase(qtyTemplates, phitanGHz)
    band7_index = AddQuantityTemplateToDatabase(qtyTemplates, band7)
    band2_index = AddQuantityTemplateToDatabase(qtyTemplates, band2)
    band8_index = AddQuantityTemplateToDatabase(qtyTemplates, band8)
@@ -176,7 +178,7 @@ program mockup
 !   call dump(geodAltitude, details=2)
 
    ! The numbers are the order that quantities template were added
-   stateSelected = (/temperature_index,o3_index,h2o_index, &
+   stateSelected = (/temperature_index,o3_index,h2o_index, phitanGHz_index, &
                      ptanGHz_index,geodAlt_index, geocAlt_index, &
                      orbincl_index, gph_index, refGPH_index/)
    stateTemplate = CreateVectorTemplate(qtyTemplates, stateSelected)
@@ -219,7 +221,8 @@ program mockup
 
    ptanG_vv => GetVectorQtyByTemplateIndex (state, ptanGHz_index)
 
-   quantity => GetVectorQtyByTemplateIndex (stateExtra, GetPhitanGHzIndexInStateExtra())
+   quantity => GetVectorQtyByTemplateIndex (state, phitanGHz_index)
+   call FillPhitanQuantity(quantity)
 
    ! calculate ptan
    !call dump(temperature_vv, details=3)
