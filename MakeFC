@@ -664,16 +664,22 @@ install:
 	done
 	@cp $(MLSBIN)/mlsnrt.sh $(INSTALLDIR)
 
-# install the mls programs from $(LEVELS) into $(INSTALLDIR)
+# install the mls programs, libraries, etc. from $(LEVELS) into $(INSTALLDIR)
 install-cfm:
 	@$(MAKE) -f $(MakeFName) cfm
-	cp cfm/$(MLSCONFG)/libcfm.a $(INSTALLDIR)
+	cp cfm/$(MLSCONFG)/libcfm.a $(INSTALLDIR); \
+   if [ -f cfm/$(MLSCONFG)/cfm.mod ] ; then \
+     cp cfm/$(MLSCONFG)/cfm.mod $(INSTALLDIR) ; \
+   fi
 	@echo "This cfm library needs other toolkit libraries to link properly"; \
 	echo "install-fullcfm to install stand-alone version"
 
 install-fullcfm:
 	@cd cfm; $(MAKE) -f $(MakeFName) libcfm_all.a
-	cp cfm/$(MLSCONFG)/libcfm_all.a $(INSTALLDIR)
+	cp cfm/$(MLSCONFG)/libcfm_all.a $(INSTALLDIR); \
+   if [ -f cfm/$(MLSCONFG)/cfm.mod ] ; then \
+     cp cfm/$(MLSCONFG)/cfm.mod $(INSTALLDIR) ; \
+   fi
 
 install-l1:
 	@$(MAKE) -f $(MakeFName) install LEVELS=l1
@@ -1211,6 +1217,9 @@ tools: chunktimes checkpvmup compare dateconverter heconvert h5subset h5cat hl \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.123  2010/06/09 20:09:51  pwagner
+# New targets, install-cfm, install-fullcfm, install-all
+#
 # Revision 1.122  2010/05/06 17:44:51  pwagner
 # Mie_Tables again builds correctly
 #
