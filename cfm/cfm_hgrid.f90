@@ -10,7 +10,7 @@
 ! foreign countries or providing access to foreign persons.
 module CFM_HGrid_m
    use HGridsDatabase, only: HGrid_T, CreateEmptyHGrid, TrimHGrid, &
-                             FindClosestMatch, DestroyHGridContents, Dump
+                             FindClosestMatch
    use MLSKinds, only: R8
    use L1BData, only: L1BData_T, ReadL1BData, DeallocateL1BData, AssembleL1BQtyName
    use MLSCommon, only: NameLen, MLSFile_T
@@ -24,8 +24,7 @@ module CFM_HGrid_m
 
    implicit none
 
-   public :: CreateRegularHGrid, DestroyHGridContents, Dump
-   public :: HGrid_T
+   public :: CreateRegularHGrid
 
 !---------------------------- RCS Ident Info -------------------------------
    character(len=*), private, parameter :: ModuleName= &
@@ -199,3 +198,6 @@ module CFM_HGrid_m
 end module
 
 ! $Log$
+! Revision 1.7  2010/06/29 15:53:45  honghanh
+! Add copyright comments and support for CVS log in the file
+!

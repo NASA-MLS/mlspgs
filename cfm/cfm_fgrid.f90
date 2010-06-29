@@ -9,16 +9,14 @@
 ! export authority as may be required before exporting such information to
 ! foreign countries or providing access to foreign persons.
 module CFM_FGrid_m
-   use FGrid, only: FGrid_T, nullifyFGrid, &
-                    DestroyFGridContents, Dump
+   use FGrid, only: FGrid_T, nullifyFGrid
    use Allocate_Deallocate, only : allocate_test, Deallocate_test
    use Intrinsic, only: l_none
    use MLSCommon, only: r8
 
    implicit none
 
-   public :: CreateFGrid, DestroyFGridContents, Dump
-   public :: FGrid_T
+   public :: CreateFGrid
 
 !---------------------------- RCS Ident Info -------------------------------
    character(len=*), private, parameter :: ModuleName= &
@@ -62,3 +60,6 @@ module CFM_FGrid_m
 end module
 
 ! $Log$
+! Revision 1.5  2010/06/29 15:53:45  honghanh
+! Add copyright comments and support for CVS log in the file
+!

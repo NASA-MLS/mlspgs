@@ -96,8 +96,9 @@ module cfm_eo_m  ! This module is to help cfm_mlssetup subroutine.
     contains
 
     subroutine CreateElevationOffsets (fakeChunk, filedatabase, qtyTemplates)
-       use CFM_QuantityTemplate_m, only: CreateQtyTemplate, AddQuantityTemplateToDatabase, &
-                                         QuantityTemplate_T
+       use CFM_QuantityTemplate_m, only: CreateQtyTemplate
+       use QuantityTemplates, only: AddQuantityTemplateToDatabase, &
+                                    QuantityTemplate_T
        use INIT_TABLES_MODULE, only: l_elevOffset
        use Chunks_m, only: MLSChunk_T
        use MLSCommon, only: MLSFile_T
@@ -362,8 +363,8 @@ module cfm_eo_m  ! This module is to help cfm_mlssetup subroutine.
     end subroutine
 
     subroutine FillElevationOffsets (stateVectorExtra)
-       use CFM_Vector_m, only: Vector_T, VectorValue_T, Dump
-       use CFM_Vector_m, only: GetVectorQtyByTemplateIndex
+       use VectorsModule, only: Vector_T, VectorValue_T, &
+                                GetVectorQtyByTemplateIndex
        use CFM_Fill_M, only: SpreadFillVectorQuantity, ExplicitFillVectorQuantity
 
        type (Vector_T), intent(in) :: stateVectorExtra
@@ -515,3 +516,6 @@ module cfm_eo_m  ! This module is to help cfm_mlssetup subroutine.
 end module
 
 ! $Log$
+! Revision 1.3  2010/06/29 15:53:45  honghanh
+! Add copyright comments and support for CVS log in the file
+!

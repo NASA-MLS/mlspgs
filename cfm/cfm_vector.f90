@@ -9,9 +9,7 @@
 ! export authority as may be required before exporting such information to
 ! foreign countries or providing access to foreign persons.
 module CFM_Vector_m
-   use VectorsModule, only: Vector_T, VectorTemplate_T, VectorValue_T, &
-                            DestroyVectorInfo, GetVectorQtyByTemplateIndex, &
-                            Dump
+   use VectorsModule, only: Vector_T, VectorTemplate_T, VectorValue_T
    use QuantityTemplates, only: QuantityTemplate_T
    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
          MLSMSG_Error, MLSMSG_Warning
@@ -20,9 +18,7 @@ module CFM_Vector_m
 
    implicit none
 
-   public :: CreateVector, DestroyVectorInfo, GetVectorQtyByTemplateIndex
-   public :: Dump
-   public :: Vector_T, VectorValue_T
+   public :: CreateVector
 
 !---------------------------- RCS Ident Info -------------------------------
    character(len=*), private, parameter :: ModuleName= &
@@ -85,3 +81,6 @@ module CFM_Vector_m
 end module
 
 ! $Log$
+! Revision 1.5  2010/06/29 15:53:45  honghanh
+! Add copyright comments and support for CVS log in the file
+!

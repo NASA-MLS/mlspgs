@@ -15,8 +15,7 @@ module CFM_QuantityTemplate_m
    use VGridsDatabase, only: VGrids, VGrid_T
    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
    use QuantityTemplates, only: QuantityTemplate_T, NullifyQuantityTemplate, &
-                                DestroyQuantityTemplateDatabase, &
-                                AddQuantityTemplateToDatabase, Dump
+                                DestroyQuantityTemplateDatabase
    use Init_Tables_Module, only: FIRST_LIT, LAST_LIT, L_ADOPTED, &
       L_BASELINE, L_BOUNDARYPRESSURE, L_CALSIDEBANDFRACTION, &
       L_CHISQBINNED, L_CHISQCHAN, L_CHISQMMAF, L_CHISQMMIF, L_CLOUDICE, &
@@ -75,10 +74,7 @@ module CFM_QuantityTemplate_m
 
    implicit none
 
-   public :: CreateQtyTemplate, DestroyQuantityTemplateDatabase
-   public :: AddQuantityTemplateToDatabase
-   public :: QuantityTemplate_T, Dump
-   public :: InitQuantityTemplates, ConstructMIFGeolocation
+   public :: CreateQtyTemplate
 
    private
 
@@ -486,3 +482,6 @@ module CFM_QuantityTemplate_m
 end module
 
 ! $Log$
+! Revision 1.13  2010/06/29 15:53:45  honghanh
+! Add copyright comments and support for CVS log in the file
+!

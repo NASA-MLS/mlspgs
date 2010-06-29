@@ -9,8 +9,7 @@
 ! export authority as may be required before exporting such information to
 ! foreign countries or providing access to foreign persons.
 module CFM_VectorTemplate_m
-   use VectorsModule, only: VectorTemplate_T, NullifyVectorTemplate, &
-                            DestroyVectorTemplateInfo, Dump
+   use VectorsModule, only: VectorTemplate_T, NullifyVectorTemplate
    use QuantityTemplates, only: QuantityTemplate_T
    use Allocate_Deallocate, only: Allocate_test
 
@@ -18,14 +17,7 @@ module CFM_VectorTemplate_m
 
    private
 
-   public :: CreateVectorTemplate, DestroyVectorTemplateInfo
-   ! Please see mockup.f90 for examples of using Dump subroutines.
-   ! Details level typically range from -3 to 3, for most subroutines
-   ! the domain for the details argument can be smaller. However,
-   ! passing a too big or too small number won't cause the subroutine
-   ! to crash. This applies to all Dump subroutines from all modules.
-   public :: Dump
-   public :: VectorTemplate_T
+   public :: CreateVectorTemplate
 
 !---------------------------- RCS Ident Info -------------------------------
    character(len=*), private, parameter :: ModuleName= &
@@ -70,3 +62,6 @@ module CFM_VectorTemplate_m
 end module
 
 ! $Log$
+! Revision 1.5  2010/06/29 15:53:45  honghanh
+! Add copyright comments and support for CVS log in the file
+!

@@ -9,8 +9,7 @@
 ! export authority as may be required before exporting such information to
 ! foreign countries or providing access to foreign persons.
 module CFM_VGrid_m
-   use VGridsDatabase, only: VGrid_T, NullifyVGrid, &
-                             DestroyVGridContents, Dump
+   use VGridsDatabase, only: VGrid_T, NullifyVGrid
    use MLSCommon, only: r8
    use MLSStrings, only: ReadIntsFromChars
    use MLSStringLists, only: List2Array, NumStringElements
@@ -21,8 +20,7 @@ module CFM_VGrid_m
    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
 
    implicit none
-   public :: CreateVGrid, DestroyVGridContents, Dump
-   public :: VGrid_T
+   public :: CreateVGrid
 
    private
 
@@ -192,3 +190,6 @@ module CFM_VGrid_m
 end module
 
 ! $Log$
+! Revision 1.9  2010/06/29 15:53:45  honghanh
+! Add copyright comments and support for CVS log in the file
+!

@@ -13,37 +13,40 @@ module cfm          ! callable forward model
   ! This module merely unifies all the .mod files that
   ! will be USEd by any fortran90 program that is compiled
   ! and with the callable forward model and links against libcfm.a or libcfm_all.a
-   use CFM_MLSSetup_m, only: CFM_MLSCleanup, MLSChunk_T, CFM_MLSSetup
+   use CFM_MLSSetup_m, only: CFM_MLSCleanup, CFM_MLSSetup
+   use Chunks_m, only: MLSChunk_T
    use CFM_IO_M, only: Read_Spectroscopy, ReadDACSFilterShapes, &
                      ReadAntennaPatterns, ReadFilterShapes, &
-                     ReadPointingGrids, ReadPFAFile, ReadHDF5L2PC, &
-                     Destroy_DACS_Filter_Database, &
-                     Destroy_Filter_Shapes_Database, &
-                     Destroy_Ant_Patterns_Database, &
-                     Destroy_SpectCat_Database, &
-                     Destroy_Line_Database, &
-                     Destroy_Pointing_Grid_Database, &
-                     DestroyL2PCDatabase, Destroy_PFADataBase
-   use CFM_VGrid_m, only: CreateVGrid, DestroyVGridContents, &
-                        VGrid_T, Dump
-   use CFM_HGrid_m, only: CreateRegularHGrid, HGrid_T, &
-                        DestroyHGridContents, Dump
-   use CFM_FGrid_m, only: CreateFGrid, FGrid_T, DestroyFGridContents, &
-                        Dump
-   use CFM_QuantityTemplate_m, only: CreateQtyTemplate, Dump, &
-                        AddQuantityTemplateToDatabase, &
-                        DestroyQuantityTemplateDatabase, &
-                        QuantityTemplate_T
-   use CFM_VectorTemplate_m, only: CreateVectorTemplate, Dump, &
-                        VectorTemplate_T, DestroyVectorTemplateInfo
-   use CFM_Vector_m, only: CreateVector, Dump, &
-                         Vector_T, VectorValue_T, &
-                         DestroyVectorInfo, GetVectorQtyByTemplateIndex
+                     ReadPointingGrids, ReadPFAFile, ReadHDF5L2PC
+   use PFADatabase_m, only: Destroy_PFADataBase
+   use L2PC_m, only: DestroyL2PCDatabase
+   use FilterShapes_m, only: Destroy_DACS_Filter_Database, &
+                             Destroy_Filter_Shapes_Database
+   use AntennaPatterns_m, only: Destroy_Ant_Patterns_Database
+   use SpectroscopyCatalog_m, only: Destroy_SpectCat_Database, &
+                                    Destroy_Line_Database
+   use PointingGrid_m, only: Destroy_Pointing_Grid_Database
+   use CFM_VGrid_m, only: CreateVGrid
+   use VGridsDatabase, only: DestroyVGridContents, VGrid_T, Dump
+   use CFM_HGrid_m, only: CreateRegularHGrid
+   use HGridsDatabase, only: DestroyHGridContents, HGrid_T, Dump
+   use CFM_FGrid_m, only: CreateFGrid
+   use FGrid, only: FGrid_T, DestroyFGridContents,  Dump
+   use CFM_QuantityTemplate_m, only: CreateQtyTemplate
+   use QuantityTemplates, only: Dump, AddQuantityTemplateToDatabase, &
+                                DestroyQuantityTemplateDatabase, &
+                                QuantityTemplate_T
+   use CFM_VectorTemplate_m, only: CreateVectorTemplate
+   use VectorsModule, only: Dump, Vector_T, VectorValue_T, &
+                            VectorTemplate_T, DestroyVectorTemplateInfo, &
+                            DestroyVectorInfo, GetVectorQtyByTemplateIndex
+   use CFM_Vector_m, only: CreateVector
    use CFM_Fill_m, only: ExplicitFillVectorQuantity, &
                          FillVectorQuantityFromL1B, FillPhitanQuantity, &
                          SpreadFillVectorQuantity, FillPtanQuantity
-   use CFM_FWDMDL_M, only: ForwardModel, FORWARDMODELSTATUS_T, &
-                         ForwardModelConfig_T
+   use ForwardModelConfig, only: ForwardModelConfig_T
+   use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
+   use CFM_FWDMDL_M, only: ForwardModel
    use MLSCommon, only: MLSFile_T, r8
    use Init_tables_module, only: l_logarithmic, l_zeta, l_temperature, &
                                  L_IntermediateFrequency, l_vmr, l_gph, &
@@ -81,6 +84,10 @@ contains
 end module cfm
 
 ! $Log$
+! Revision 1.2  2010/06/29 15:29:34  honghanh
+! Develop FillPtanQuantity to compute ptan, instead of using
+! Get2DHydrostaticTangentPressure
+!
 ! Revision 1.1  2010/06/29 02:34:03  honghanh
 ! Change cfm_m.f90 to cfm.f90 to match the naming scheme of cfm directory
 !

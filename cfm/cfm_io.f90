@@ -9,25 +9,11 @@
 ! export authority as may be required before exporting such information to
 ! foreign countries or providing access to foreign persons.
 module CFM_IO_M
-   ! To be referenced from the outside
-   use Read_Mie_m, only: Read_Mie
-   use FilterShapes_m, only: Destroy_DACS_Filter_Database, &
-                             Destroy_Filter_Shapes_Database
-   use AntennaPatterns_m, only: Destroy_Ant_Patterns_Database
-   use SpectroscopyCatalog_m, only: Destroy_SpectCat_Database, &
-                                    Destroy_Line_Database
-   use PointingGrid_m, only: Destroy_Pointing_Grid_Database
-   use L2PC_m, only: DestroyL2PCDatabase
-   use PFADatabase_m, only: Destroy_PFADataBase
 
    implicit none
 
    public :: Read_Spectroscopy, ReadDACSFilterShapes, ReadAntennaPatterns
    public :: ReadFilterShapes, ReadPointingGrids, ReadPFAFile, ReadHDF5L2PC
-   public :: Destroy_Pointing_Grid_Database, Destroy_Ant_Patterns_Database
-   public :: Destroy_DACS_Filter_Database, Destroy_Filter_Shapes_Database
-   public :: Destroy_SpectCat_Database, Destroy_Line_Database
-   public :: DestroyL2PCDatabase, Destroy_PFADataBase
 
    private
    !---------------------------- RCS Ident Info -------------------------------
@@ -393,3 +379,6 @@ module CFM_IO_M
 end module
 
 ! $Log$
+! Revision 1.3  2010/06/29 15:53:45  honghanh
+! Add copyright comments and support for CVS log in the file
+!

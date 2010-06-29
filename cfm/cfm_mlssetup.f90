@@ -33,15 +33,14 @@ module CFM_MLSSetup_m
    use MLSFillValues, only: ISFILLVALUE
    use MLSSets, only: FINDFIRST
    use Chunks_m, only: MLSChunk_T ! To also be referenced outside
-   use CFM_VGrid_m, only: VGrid_T
-   use CFM_HGrid_m, only: HGrid_T
-   use CFM_Vector_m, only: GetVectorQtyByTemplateIndex ! being used in many functions
+   use VGridsDatabase, only: VGrid_T
+   use HGridsDatabase, only: HGrid_T
+   use VectorsModule, only: GetVectorQtyByTemplateIndex ! being used in many functions
 
    implicit none
 
    private
    public :: CFM_MLSSetup, CFM_MLSCleanup
-   public :: MLSChunk_T
 
 !---------------------------- RCS Ident Info -------------------------------
    character(len=*), private, parameter :: ModuleName= &
@@ -79,7 +78,7 @@ module CFM_MLSSetup_m
       configFileName, filedatabase, qtyTemplates, fakeChunk, ForwardModelConfigDatabase, &
       stateVectorExtra)
       use CFM_Tree_Walker_m, only : Walk_Tree
-      use CFM_Vector_m, only: Vector_T
+      use VectorsModule, only: Vector_T
       use string_table, only: AddInUnit
       use MLSFiles, only: AddFileToDatabase, InitializeMLSFile, mls_openFile
       use io_stuff, only: get_lun
@@ -249,9 +248,9 @@ module CFM_MLSSetup_m
       use MLSFiles, only: mls_closeFile
       use STRING_TABLE, only: DESTROY_CHAR_TABLE, DESTROY_HASH_TABLE, &
                               DESTROY_STRING_TABLE
-      use CFM_QuantityTemplate_m, only: DestroyQuantityTemplateDatabase
-      use CFM_Vector_m, only: Vector_T, DestroyVectorInfo
-      use CFM_VectorTemplate_m, only: DestroyVectorTemplateInfo
+      use QuantityTemplates, only: DestroyQuantityTemplateDatabase
+      use VectorsModule, only: Vector_T, DestroyVectorInfo
+      use VectorsModule, only: DestroyVectorTemplateInfo
 
       ! The filedatabase created by CFM_MLSSetup
       type (MLSFile_T), dimension(:), pointer :: filedatabase
@@ -301,12 +300,16 @@ module CFM_MLSSetup_m
    ! elevation offset, limb sideband fraction, reference GPH, phitan of GHz module
    ! for every band. See CFM documentation for a list of bands.
    subroutine CreateStateVectorExtra (filedatabase, fakeChunk, qtyTemplates, stateVectorExtra)
-      use CFM_VGrid_m, only: CreateVGrid, DestroyVGridContents
-      use CFM_HGrid_m, only: CreateRegularHGrid, DestroyHGridContents
-      use CFM_QuantityTemplate_m, only: CreateQtyTemplate, InitQuantityTemplates, &
-                                        AddQuantityTemplateToDatabase
-      use CFM_VectorTemplate_m, only: CreateVectorTemplate, VectorTemplate_T, Dump
-      use CFM_Vector_m, only: CreateVector, Vector_T, VectorValue_T
+      use CFM_VGrid_m, only: CreateVGrid
+      use VGridsDatabase, only: DestroyVGridContents
+      use CFM_HGrid_m, only: CreateRegularHGrid
+      use HGridsDatabase, only: DestroyHGridContents
+      use CFM_QuantityTemplate_m, only: CreateQtyTemplate
+      use ConstructQuantityTemplates, only: InitQuantityTemplates
+      use QuantityTemplates, only: AddQuantityTemplateToDatabase
+      use CFM_VectorTemplate_m, only: CreateVectorTemplate
+      use VectorsModule, only: VectorTemplate_T, Dump, Vector_T, VectorValue_T
+      use CFM_Vector_m, only: CreateVector
       use INIT_TABLES_MODULE, only: phyq_pressure, l_logarithmic, l_zeta, &
                                     phyq_vmr, l_vmr, l_earthRefl, l_losVel, &
                                     l_scgeocalt, l_spaceradiance, l_o2
@@ -427,3 +430,6 @@ module CFM_MLSSetup_m
 end module
 
 ! $Log$
+! Revision 1.15  2010/06/29 15:53:45  honghanh
+! Add copyright comments and support for CVS log in the file
+!
