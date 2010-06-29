@@ -319,17 +319,19 @@ contains
   end subroutine Dump_Hessian_Block
 
   ! ----------------------------------- Hessian_Vec_Vec_Multiply_D -----
-  subroutine Hessian_Vec_Vec_Multiply_D ( H, V1, V2, P, Update )
+  subroutine Hessian_Vec_Vec_Multiply_D ( H, V1, V2, SCALAR, P, Update )
   !{ Multiply a Hessian {\tt H} by {\tt V1} and {\tt V2}, with a factor of
-  !  $\frac12$, giving {\tt P}: $P^i = \frac12 H^i_{jk} V_1^j V_2^k$ or
-  !  $P^i = P^i + \frac12 H^i_{jk} V_1^j V_2^k$, depending upon {\tt
-  !  Update}.  This is the second-order term of a Taylor series.  {\tt P}
-  !  is initially set to zero unless {\tt Update} is present and true.
+  !  {\tt SCALAR}, giving {\tt P}:
+  !  $P^i = \text{\tt SCALAR} H^i_{jk} V_1^j V_2^k$ or
+  !  $P^i = P^i + \text{\tt SCALAR} H^i_{jk} V_1^j V_2^k$, depending upon
+  !  {\tt Update}.  {\tt P} is initially set to zero unless {\tt Update}
+  !  is present and true.
 
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     integer, parameter :: RK = kind(0.0d0)
     type(HessianElement_T), intent(in) :: H
     real(rk), intent(in) :: V1(:), V2(:)
+    real(rk), intent(in) :: Scalar
     real(rk), intent(inout) :: P(:)
     logical, intent(in), optional :: Update
 
@@ -342,17 +344,19 @@ contains
   end subroutine Hessian_Vec_Vec_Multiply_D
 
   ! ----------------------------------- Hessian_Vec_Vec_Multiply_S -----
-  subroutine Hessian_Vec_Vec_Multiply_S ( H, V1, V2, P, Update )
+  subroutine Hessian_Vec_Vec_Multiply_S ( H, V1, V2, SCALAR, P, Update )
     !{ Multiply a Hessian {\tt H} by {\tt V1} and {\tt V2}, with a factor of
-    !  $\frac12$, giving {\tt P}: $P^i = \frac12 H^i_{jk} V_1^j V_2^k$ or
-    !  $P^i = P^i + \frac12 H^i_{jk} V_1^j V_2^k$, depending upon {\tt
-    !  Update}.  This is the second-order term of a Taylor series.  {\tt P}
-    !  is initially set to zero unless {\tt Update} is present and true.
+    !  {\tt SCALAR}, giving {\tt P}:
+    !  $P^i = \text{\tt SCALAR} H^i_{jk} V_1^j V_2^k$ or
+    !  $P^i = P^i + \text{\tt SCALAR} H^i_{jk} V_1^j V_2^k$, depending upon
+    !  {\tt Update}.  {\tt P} is initially set to zero unless {\tt Update}
+    !  is present and true.
 
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     integer, parameter :: RK = kind(0.0e0)
     type(HessianElement_T), intent(in) :: H
     real(rk), intent(in) :: V1(:), V2(:)
+    real(rk), intent(in) :: Scalar
     real(rk), intent(inout) :: P(:)
     logical, intent(in), optional :: Update
 
@@ -748,6 +752,9 @@ o:    do while ( i < n )
 end module HessianModule_0
 
 ! $Log$
+! Revision 2.7  2010/06/29 19:56:40  vsnyder
+! Add SCALAR argument instead of buried 0.5 factor
+!
 ! Revision 2.6  2010/06/28 17:01:56  pwagner
 ! Fixed a few bugs; added debugging output
 !
