@@ -317,18 +317,20 @@ contains
   end subroutine Dump_Hessian_Database
 
   ! ------------------------------- Hessian_Vector_Vector_Multiply -----
-  subroutine Hessian_Vector_Vector_Multiply ( H, V, P, Update )
+  subroutine Hessian_Vector_Vector_Multiply ( H, V, P, Scalar, Update )
   !{ Multiply Hessian {\tt H} by vector {\tt V} twice, with a factor of
   !  $\frac12$, giving {\tt P}: $P^k = P^k + \frac12 H^k_{ij} V^i V^j$.
   !  This is the  second-order term of a Taylor series.  {\tt P} is
   !  initially set to zero unless {\tt Update} is present and true.
 
     use HessianModule_0, only: Multiply
+    use MLSKinds, only: RV
     use VectorsModule, only: Vector_T
 
     type(Hessian_T), intent(in) :: H
     type(Vector_T), intent(in) :: V
     type(Vector_T), intent(inout) :: P
+    real(rv), intent(in) :: Scalar
     logical, intent(in), optional :: Update
 
     integer :: I, J, K                  ! Loop indices
@@ -369,7 +371,7 @@ contains
           if ( DEEBUG ) call outputNamedValue( "(k,i,j)", (/k,i,j/) )
           call multiply ( h%block(k,i,j), &
             & v%quantities(iq)%values(:,ii), &
-            & v%quantities(jq)%values(:,ji), &
+            & v%quantities(jq)%values(:,ji), scalar, &
             & p%quantities(kq)%values(:,ki), &
             & update )
         end do
@@ -515,6 +517,9 @@ contains
 end module HessianModule_1
 
 ! $Log$
+! Revision 2.8  2010/06/29 19:56:40  vsnyder
+! Add SCALAR argument instead of buried 0.5 factor
+!
 ! Revision 2.7  2010/06/28 17:02:28  pwagner
 ! Fixed a few bugs; added debugging output
 !
