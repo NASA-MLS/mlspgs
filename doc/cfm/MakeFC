@@ -52,8 +52,8 @@ vpath %.pdf $(PDFDIR)
 .SUFFIXES:
 .SUFFIXES: .tex .dvi .pdf
 .tex.dvi:
-	echo "\end" | latex $<
-	echo "\end" | latex $<
+	latex $<
+	latex $<
 	mv $@ $(DVIDIR)
 	mv $*.log $(LOGDIR)
 
@@ -116,6 +116,7 @@ depends:
 			fi
 internalupdate:
 	cp MakeFC Makefile
+	rm -f *.toc
 
 tar:
 	rm -f cfm.tgz
@@ -128,6 +129,9 @@ update: internalupdate
 
 # ========================================================================
 # $Log$
+# Revision 1.2  2010/01/06 17:35:48  pwagner
+# Does a better job of building only when it must
+#
 # Revision 1.1  2010/01/05 19:21:26  pwagner
 # First commit
 #
