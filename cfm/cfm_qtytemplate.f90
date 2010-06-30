@@ -302,8 +302,8 @@ module CFM_QuantityTemplate_m
               filedatabase=filedatabase, chunk=chunk)
       else if (properties(p_majorFrame)) then
          if (.not. present(chunk) .or. .not. present(filedatabase)) &
-            call MLSMessage(MLSMSG_Error, moduleName, "Need both chunk and filedatabase &
-            to create major frame quantity")
+           & call MLSMessage(MLSMSG_Error, moduleName, &
+           & "Need both chunk and filedatabase to create major frame quantity")
          ! Setup a major frame quantity
          call ConstructMajorFrameQuantity (instrumentModule, qty, &
               noChans, filedatabase, chunk)
@@ -613,6 +613,9 @@ module CFM_QuantityTemplate_m
 end module
 
 ! $Log$
+! Revision 1.15  2010/06/30 08:11:25  honghanh
+! Fix bug for creating major frame quantity
+!
 ! Revision 1.14  2010/06/29 16:40:23  honghanh
 ! Remove all function/subroutine and user type forwarding from
 ! all CFM modules except for from cfm.f90
