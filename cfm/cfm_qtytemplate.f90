@@ -13,7 +13,7 @@ module CFM_QuantityTemplate_m
    use FGrid, only: fGrid_T
    use HGridsDatabase, only: hGrid_T
    use VGridsDatabase, only: VGrids, VGrid_T
-   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, MLSMSG_L1BRead
    use QuantityTemplates, only: QuantityTemplate_T, NullifyQuantityTemplate, &
                                 DestroyQuantityTemplateDatabase
    use Init_Tables_Module, only: FIRST_LIT, LAST_LIT, L_ADOPTED, &
@@ -54,13 +54,12 @@ module CFM_QuantityTemplate_m
       PHYQ_VMR, PHYQ_ZETA, l_ghz
     use Output_M, only: OUTPUT
     use String_Table, only: DISPLAY_STRING
-    use MLSCommon, only: r8
+    use MLSCommon, only: r8, NameLen, MLSFile_T
     use MLSSignals_m, only: GetModuleIndex
     use Molecules, only: GetMoleculeIndex
     use Chunks_m, only: MLSChunk_T
-    use MLSCommon, only: MLSFile_T
     use ConstructQuantityTemplates, only : AnyGoodSignalData, &
-            ConstructMajorFrameQuantity, ConstructMinorFrameQuantity, &
+            ConstructMinorFrameQuantity, &
             InitQuantityTemplates, unitstable, propertyTable, noProperties, &
             p_majorFrame, p_minorFrame, p_mustBeZeta, p_fGrid, p_hGrid, &
             p_vgrid, p_radiometer, p_radiometerOptional, p_scModule, &
@@ -124,7 +123,6 @@ module CFM_QuantityTemplate_m
       ! is -huge(0.0_r8)
       real(r8), optional :: qBadValue
 
-      type (QuantityTemplate_T), dimension(:), pointer :: MifGeolocation
       logical, dimension(noProperties) :: PROPERTIES ! Properties for this quantity type
       character(len=127) :: signalString
       integer, dimension(:), pointer :: SignalInds ! From parse signal
@@ -230,23 +228,23 @@ module CFM_QuantityTemplate_m
 
       if (present(qMinValue)) qty%minValue = qMinValue
 
-     if (present(qSignal)) then
-          if (.not. (present(filedatabase) .and. present(chunk))) &
+      if (present(qSignal)) then
+         if (.not. (present(filedatabase) .and. present(chunk))) &
             call MLSMessage(MLSMSG_Error, ModuleName, &
             'Need filedatabase and chunk to check for good signal data')
-          nullify ( channels, signalInds )
-          signalString = qSignal
-          !??? Here we would do intelligent stuff to work out which bands
-          !??? are present, for the moment choose the first
-          call parse_Signal ( signalString, signalInds, &
+         nullify ( channels, signalInds )
+         signalString = qSignal
+         !??? Here we would do intelligent stuff to work out which bands
+         !??? are present, for the moment choose the first
+         call parse_Signal ( signalString, signalInds, &
             & sideband=sideband, channels=channels )
-          if ( .not. associated(signalInds) ) then ! A parse error occurred
+         if ( .not. associated(signalInds) ) then ! A parse error occurred
             call MLSMessage ( MLSMSG_Error, ModuleName,&
               & 'Unable to parse signal string' )
-          end if
-          if ( size(signalInds) == 1 .or. .not. associated(filedatabase) ) then
+         end if
+         if ( size(signalInds) == 1 .or. .not. associated(filedatabase) ) then
             signal = signalInds(1)
-          else
+         else
             ! Seek a signal with any precision values !< 0
             do s_index=1, size(signalInds)
               if ( AnyGoodSignalData ( signalInds(s_index), sideband, &
@@ -257,13 +255,13 @@ module CFM_QuantityTemplate_m
             else
               signal = signalInds(s_index)
             end if
-          end if
-          call deallocate_test ( signalInds, 'signalInds', ModuleName )
-          ! if the user has pass in the wrong instrumentModule or radiometer
-          ! just silently correct it, for simplicity.
-          instrumentModule = GetModuleFromSignal(signal)
-          radiometer = GetRadiometerFromSignal(signal)
-     end if
+         end if
+         call deallocate_test ( signalInds, 'signalInds', ModuleName )
+         ! if the user has pass in the wrong instrumentModule or radiometer
+         ! just silently correct it, for simplicity.
+         instrumentModule = GetModuleFromSignal(signal)
+         radiometer = GetRadiometerFromSignal(signal)
+      end if
 
       ! After all the possible places where instrumentModule can be set
       if ( properties ( p_scModule ) ) then
@@ -306,14 +304,9 @@ module CFM_QuantityTemplate_m
          if (.not. present(chunk) .or. .not. present(filedatabase)) &
             call MLSMessage(MLSMSG_Error, moduleName, "Need both chunk and filedatabase &
             to create major frame quantity")
-         ! We have to construct this because ConstructMajorFrameQuantity
-         ! doesn't work with mifGeolocation. The proper fix should be
-         ! ConstructMajorFrameQuantity, but I've got no time to test that.
-         call ConstructMIFGeolocation (mifGeoLocation, filedatabase, chunk)
          ! Setup a major frame quantity
-         call ConstructMajorFrameQuantity (chunk, instrumentModule, qty, &
-              noChans, mifGeoLocation)
-         call DestroyQuantityTemplateDatabase (mifGeoLocation)
+         call ConstructMajorFrameQuantity (instrumentModule, qty, &
+              noChans, filedatabase, chunk)
       else
          ! Setup the quantity template
          if (present(ahgrid)) then
@@ -432,44 +425,182 @@ module CFM_QuantityTemplate_m
     qty%surfs = 0. ! We used to have impossible values for bnd. prs.
   end subroutine SetupEmptyVGridForQuantity
 
-  ! -----------------------------------------------  Announce_Error  -----
-  subroutine Announce_Error ( message, extra, severity )
+  subroutine ConstructMajorFrameQuantity (instrumentModule, qty, noChans, filedatabase, chunk)
+     use L1BData, only: L1BData_T, READL1BDATA, DEALLOCATEL1BDATA, AssembleL1BQtyName
+     use QuantityTemplates, only: SetupNewQuantityTemplate
+     use MLSFiles, only: GetMLSFileByType
+     use MLSSignals_m, only: GetModuleName
 
-    use LEXER_CORE, only: PRINT_SOURCE
-    use OUTPUT_M, only: BLANKS, OUTPUT
-    use TREE, only: SOURCE_REF
-    use Intrinsic, only: LIT_INDICES
-    use String_Table, only: DISPLAY_STRING
-    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
+     type (MLSChunk_T), intent(in) :: CHUNK
+     integer, intent(in) :: INSTRUMENTMODULE
+     type (QuantityTemplate_T), intent(out) :: QTY
+     integer, intent(in) :: NOCHANS
+     type (MLSFile_T), dimension(:), pointer, optional ::     FILEDATABASE
 
-    character (LEN=*), intent(in) :: MESSAGE
-    integer, intent(in), optional :: EXTRA
-    character(len=*), intent(in), optional :: SEVERITY ! 'nonfatal' or 'fatal'
-    character(len=8) :: mySeverity
+     type (L1BData_T) :: l1bField
+     type (MLSFile_T), pointer :: L1BFile
+     character (len=NameLen) :: l1bItemName, moduleName
+     integer :: hdfVersion, noMafs, l1bFlag, mafIndex, mifIndex, noSurfs
+     real(r8), parameter :: SIXTH = 1.0_r8 / 6.0_r8
 
-    mySeverity = 'fatal'
-    if ( present(severity) ) then
-      if (index('WwNn', severity(1:1)) > 0 ) mySeverity='warning'
-    end if
-    if ( mySeverity /= 'fatal' ) then
-      call blanks(5)
-      call output ( ' (warning) ' )
-    else
-      call blanks(5, fillChar='*')
-      call output ( ' (fatal) ' )
-    end if
-    call output ( 'At ' )
-    call output ( '(no lcf tree available)' )
-    call output ( ': ' )
-    call output ( message )
-    if ( present ( extra ) ) &
-       call display_string ( lit_indices ( extra ), strip=.true. )
-    call output ( '', advance='yes' )
-    if ( mySeverity == 'fatal') &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, 'Problem in creating quantity' )
-  end subroutine Announce_Error
+     ! Executables
+     L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
+     hdfversion = L1BFile%HDFVersion
 
-  !--------------------------- end bloc --------------------------------------
+     ! Read NoMafs
+     if ( IsModuleSpacecraft(instrumentModule) ) then
+        l1bItemName = 'scGeocAlt'
+     else
+        call GetModuleName ( instrumentModule, moduleName)
+        l1bItemName = TRIM(moduleName) // ".tpGeodAlt"
+     end if
+     l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
+
+     call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
+                        l1bFlag, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
+     if ( l1bFlag==-1 ) &
+        call MLSMessage ( MLSMSG_Error, ModuleName, MLSMSG_L1BRead//l1bItemName )
+     noSurfs=l1bField%maxMIFs
+     call DeallocateL1BData ( l1bField )
+
+     call SetupNewQuantityTemplate ( qty, noInstances=noMafs, &
+      & noSurfs=1, coherent=.true., stacked=.true., regular=.true., &
+      & noChans=noChans, sharedHGrid=.false., sharedVGrid=.false. )
+     call SetupEmptyVGridForQuantity(qty)
+
+     qty%majorFrame = .true.
+     qty%minorFrame = .false.
+     qty%instanceOffset = chunk%firstMAFIndex + chunk%noMAFsLowerOverlap
+     qty%instrumentModule = instrumentModule
+     qty%noInstancesLowerOverlap = chunk%noMAFsLowerOverlap
+     qty%noInstancesUpperOverlap = chunk%noMAFsUpperOverlap
+
+     if ( IsModuleSpacecraft(instrumentModule) ) then
+        ! just zero stuff out.
+        qty%phi = 0.0
+        qty%geodLat = 0.0
+        qty%lon = 0.0
+        qty%time = 0.0
+        qty%solarTime = 0.0
+        qty%solarZenith = 0.0
+        qty%losAngle = 0.0
+     else
+        l1bItemName = TRIM(moduleName) // '.tpGeodLat'
+        l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
+        call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
+                           l1bFlag, firstMAF=chunk%firstMafIndex, &
+                           lastMAF=chunk%lastMafIndex )
+        if ( l1bFlag == -1 ) &
+           call MLSMessage ( MLSMSG_Error, ModuleName, MLSMSG_L1BRead//l1bItemName )
+        qty%geodLat = l1bField%dpField(1,1:1,:)
+        call DeallocateL1BData ( l1bField )
+
+        l1bItemName = TRIM(moduleName) // '.tpLon'
+        l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
+        call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
+                           l1bFlag, firstMAF=chunk%firstMafIndex, &
+                           lastMAF=chunk%lastMafIndex )
+        if ( l1bFlag == -1 ) &
+           call MLSMessage ( MLSMSG_Error, ModuleName, MLSMSG_L1BRead//l1bItemName )
+        qty%lon = l1bField%dpField(1,1:1,:)
+        call DeallocateL1BData ( l1bField )
+
+        l1bItemName = TRIM(moduleName) // '.tpGeodAngle'
+        l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
+        call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
+                           l1bFlag, firstMAF=chunk%firstMafIndex, &
+                           lastMAF=chunk%lastMafIndex )
+        if ( l1bFlag == -1 ) &
+           call MLSMessage ( MLSMSG_Error, ModuleName, MLSMSG_L1BRead//l1bItemName )
+        qty%phi = l1bField%dpField(1,1:1,:)
+        call DeallocateL1BData ( l1bField )
+
+        l1bItemName = TRIM(moduleName) // '.tpSolarZenith'
+        l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
+        call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
+                           l1bFlag, firstMAF=chunk%firstMafIndex, &
+                           lastMAF=chunk%lastMafIndex )
+        if ( l1bFlag == -1 ) &
+           call MLSMessage ( MLSMSG_Error, ModuleName, MLSMSG_L1BRead//l1bItemName )
+        qty%solarZenith = l1bField%dpField(1,1:1,:)
+        call DeallocateL1BData ( l1bField )
+
+        l1bItemName = TRIM(moduleName) // '.tpSolarTime'
+        l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
+        call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
+                           l1bFlag, firstMAF=chunk%firstMafIndex, &
+                           lastMAF=chunk%lastMafIndex )
+        if ( l1bFlag == -1 ) &
+           call MLSMessage ( MLSMSG_Error, ModuleName, MLSMSG_L1BRead//l1bItemName )
+        qty%solarTime = l1bField%dpField(1,1:1,:)
+        call DeallocateL1BData ( l1bField )
+
+        l1bItemName = TRIM(moduleName) // '.tpLosAngle'
+        l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
+        call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
+                           l1bFlag, firstMAF=chunk%firstMafIndex, &
+                           lastMAF=chunk%lastMafIndex )
+        if ( l1bFlag == -1 ) &
+           call MLSMessage ( MLSMSG_Error, ModuleName, MLSMSG_L1BRead//l1bItemName )
+        qty%losAngle = l1bField%dpField(1,1:1,:)
+        call DeallocateL1BData ( l1bField )
+
+        l1bItemName = "MAFStartTimeTAI"
+        l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
+        call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
+                           l1bFlag, firstMAF=chunk%firstMafIndex, &
+                           lastMAF=chunk%lastMafIndex )
+        if ( l1bFlag == -1 ) &
+           call MLSMessage ( MLSMSG_Error, ModuleName, MLSMSG_L1BRead//l1bItemName )
+        do mafIndex = 1, noMAFs
+           do mifIndex = 1, noSurfs
+              qty%time(mifIndex,mafIndex) = &
+              l1bField%dpField(1,1,mafIndex) + (mifIndex-1) * sixth
+           end do
+        end do
+        call DeallocateL1BData ( l1bField )
+
+     end if
+  end subroutine
+
+   ! -----------------------------------------------  Announce_Error  -----
+   subroutine Announce_Error ( message, extra, severity )
+
+      use LEXER_CORE, only: PRINT_SOURCE
+      use OUTPUT_M, only: BLANKS, OUTPUT
+      use TREE, only: SOURCE_REF
+      use Intrinsic, only: LIT_INDICES
+      use String_Table, only: DISPLAY_STRING
+      use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
+
+      character (LEN=*), intent(in) :: MESSAGE
+      integer, intent(in), optional :: EXTRA
+      character(len=*), intent(in), optional :: SEVERITY ! 'nonfatal' or 'fatal'
+      character(len=8) :: mySeverity
+
+      mySeverity = 'fatal'
+      if ( present(severity) ) then
+         if (index('WwNn', severity(1:1)) > 0 ) mySeverity='warning'
+      end if
+      if ( mySeverity /= 'fatal' ) then
+         call blanks(5)
+         call output ( ' (warning) ' )
+      else
+         call blanks(5, fillChar='*')
+         call output ( ' (fatal) ' )
+      end if
+      call output ( 'At ' )
+      call output ( '(no lcf tree available)' )
+      call output ( ': ' )
+      call output ( message )
+      if ( present ( extra ) ) &
+         call display_string ( lit_indices ( extra ), strip=.true. )
+      call output ( '', advance='yes' )
+      if ( mySeverity == 'fatal') &
+         call MLSMessage ( MLSMSG_Error, ModuleName, 'Problem in creating quantity' )
+   end subroutine Announce_Error
+
+!--------------------------- end bloc --------------------------------------
    logical function not_used_here()
    character (len=*), parameter :: IdParm = &
        "$Id$"
@@ -482,6 +613,10 @@ module CFM_QuantityTemplate_m
 end module
 
 ! $Log$
+! Revision 1.14  2010/06/29 16:40:23  honghanh
+! Remove all function/subroutine and user type forwarding from
+! all CFM modules except for from cfm.f90
+!
 ! Revision 1.13  2010/06/29 15:53:45  honghanh
 ! Add copyright comments and support for CVS log in the file
 !
