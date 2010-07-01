@@ -835,8 +835,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_aprioriPrecision, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
              begin, f+f_asPercentage, t+t_boolean, n+n_field_type, &
-             begin, f+f_b, s+s_vector, f+f_template, &
-                    f+f_quantities, n+n_dot, &
+             begin, f+f_b, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
              begin, f+f_badRange, t+t_numeric_range, n+n_field_type, &
              begin, f+f_baselineQuantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
@@ -1075,9 +1074,13 @@ contains ! =====     Public procedures     =============================
              np+n_spec_def /) )
     call make_tree( (/ &
       begin, s+s_transfer, &
-             begin, f+f_source, s+s_vector, nr+n_field_spec, &
+             begin, f+f_a, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
+             begin, f+f_b, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
+             begin, f+f_c, t+t_numeric, n+n_field_type, &
+             begin, f+f_source, s+s_vector, n+n_field_spec, &
              begin, f+f_destination, s+s_vector, nr+n_field_spec, &
              begin, f+f_interpolate, t+t_boolean, n+n_field_type, &
+             begin, f+f_manipulation, t+t_string, n+n_field_type, &
              begin, f+f_skipMask, t+t_boolean, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree( (/ &
@@ -1631,6 +1634,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.506  2010/07/01 00:49:01  pwagner
+! Transfer between vectors may now also manipulate
+!
 ! Revision 2.505  2010/06/07 23:28:50  vsnyder
 ! Add TScatMolecules, TScatMoleculeDerivatives, Use_Tscat.  Change
 ! PhaseFrqTol to FrqTol.
