@@ -75,7 +75,7 @@ contains ! =====     Public Procedures     =============================
       & Explicit, FromL1B, &
       & FromL2AUX, UsingMagneticModel, &
       & FromInterpolatedQty, FromLosGrid, &
-      & ByManipulation, WithReflectorTemperature, &
+      & ByManipulation, ManipulateVectors, WithReflectorTemperature, &
       & WithReichlerWMOTP, &
       & WithWMOTropopause, WithBinResults, WithBoxcarFunction, &
       & StatusQuantity, QualityFromChisq, ConvergenceFromChisq, &
@@ -968,19 +968,41 @@ contains ! =====     Public Procedures     =============================
             fieldValue = gson
           end if
           select case ( fieldIndex )
+          case ( f_a )
+            aVecIndex = decoration(fieldValue)
+          case ( f_b )
+            bVecIndex = decoration(fieldValue)
+          case(f_c)
+            call expr ( gson , unitAsArray, valueAsArray )
+            c = valueAsArray(1)
           case ( f_source )
             sourceVectorIndex = decoration(fieldValue)
           case ( f_destination )
             destinationVectorIndex = decoration(fieldValue)
           case ( f_interpolate )
             interpolate = get_boolean ( fieldValue )
+          case ( f_manipulation )
+            manipulation = sub_rosa ( gson )
           case ( f_skipMask )
             skipMask = get_boolean ( fieldValue )
           case default ! Can't get here if type checker worked
           end select
         end do
-        call TransferVectors ( vectors(sourceVectorIndex), &
-          & vectors(destinationVectorIndex), skipMask, interpolate )
+        if ( got(f_a) ) then
+          if ( .not. got(f_b) ) bVecIndex = aVecIndex
+          if ( got(f_c) ) then
+            call ManipulateVectors ( manipulation, &
+              & vectors(destinationVectorIndex), &
+              & vectors(aVecIndex), vectors(bVecIndex), c )
+          else
+            call ManipulateVectors ( manipulation, &
+              & vectors(destinationVectorIndex), &
+              & vectors(aVecIndex), vectors(bVecIndex) )
+          endif
+        else
+          call TransferVectors ( vectors(sourceVectorIndex), &
+            & vectors(destinationVectorIndex), skipMask, interpolate )
+        endif
 
       case ( s_time ) ! ===================================  Time  =====
         if ( timing ) then
@@ -2595,6 +2617,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.385  2010/07/01 00:49:19  pwagner
+! Transfer between vectors may now also manipulate
+!
 ! Revision 2.384  2010/05/19 23:06:45  pwagner
 ! Shorten most Fill routine names
 !
