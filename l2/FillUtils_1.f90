@@ -179,7 +179,7 @@ module FillUtils_1                     ! Procedures used by Fill
       & Explicit, FromL1B, &
       & FromL2AUX, UsingMagneticModel, &
       & FromInterpolatedQty, FromLosGrid, &
-      & ByManipulation, WithReflectorTemperature, &
+      & ByManipulation, ManipulateVectors, WithReflectorTemperature, &
       & WithReichlerWMOTP, &
       & WithWMOTropopause, WithBinResults, WithBoxcarFunction, &
       & StatusQuantity, QualityFromChisq, ConvergenceFromChisq, &
@@ -6147,6 +6147,38 @@ contains ! =====     Public Procedures     =============================
       call MLSMessageCalls( 'pop' )
     end subroutine FromProfile
 
+    ! ---------------------------------------------- ManipulateVectors -----
+    subroutine ManipulateVectors ( manipulation, dest, a, b, c )
+      ! Manipulate common items in a, b, copying result to those in dest
+      integer, intent(in) :: MANIPULATION
+      type (Vector_T), intent(in) :: A, B
+      type (Vector_T), intent(inout) :: DEST
+      real(rv), optional            :: C  ! constant "c" in manipulation
+
+      ! Local variables
+      type (VectorValue_T), pointer :: DQ ! Destination quantity
+      type (VectorValue_T), pointer :: AQ, BQ ! Source quantities
+      integer :: SQI                      ! Quantity index in source
+
+      ! Executable code
+
+      ! First copy those things in source, loop over them
+      dest%globalUnit = a%globalUnit
+      do sqi = 1, size ( a%quantities )
+        ! Try to find this in dest
+        aq => a%quantities(sqi)
+        bq => b%quantities(sqi)
+        dq => GetVectorQtyByTemplateIndex ( dest, a%template%quantities(sqi) )
+        if ( associated ( dq ) ) then
+          call ByManipulation ( dq, aq, bq, &
+            & manipulation, key=0, &
+            & force=.true., spreadflag=.false., dontSumHeights=.true., &
+            & dontSumInstances=.true., &
+            & c=c )
+        end if
+      end do
+    end subroutine ManipulateVectors
+
     ! -------------------------------------------- WithBinResults -----
     subroutine WithBinResults ( key, quantity, sourceQuantity, ptanQuantity, &
       & channel, method, additional, excludeBelowBottom, centerVertically )
@@ -6869,6 +6901,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.39  2010/07/01 00:49:33  pwagner
+! Transfer between vectors may now also manipulate
+!
 ! Revision 2.38  2010/06/18 16:48:34  pwagner
 ! Corrected error that prevented filling radiances qty from l1b
 !
