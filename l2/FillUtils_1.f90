@@ -6169,12 +6169,15 @@ contains ! =====     Public Procedures     =============================
         aq => a%quantities(sqi)
         bq => b%quantities(sqi)
         dq => GetVectorQtyByTemplateIndex ( dest, a%template%quantities(sqi) )
-        if ( associated ( dq ) ) then
+        if ( all( (/ associated(aq), associated(bq), associated(dq) /) ) ) then
           call ByManipulation ( dq, aq, bq, &
             & manipulation, key=0, &
             & force=.true., spreadflag=.false., dontSumHeights=.true., &
             & dontSumInstances=.true., &
             & c=c )
+        else
+          call MLSMessage ( MLSMSG_Warning, ModuleName // '%ManipulateVectors', &
+          & 'dq not associated' )
         end if
       end do
     end subroutine ManipulateVectors
@@ -6901,6 +6904,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.40  2010/07/06 16:05:37  pwagner
+! Better error checking in MaanipulateVectors
+!
 ! Revision 2.39  2010/07/01 00:49:33  pwagner
 ! Transfer between vectors may now also manipulate
 !
