@@ -1074,8 +1074,8 @@ contains ! =====     Public procedures     =============================
              np+n_spec_def /) )
     call make_tree( (/ &
       begin, s+s_transfer, &
-             begin, f+f_a, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
-             begin, f+f_b, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
+             begin, f+f_a, s+s_vector, n+n_field_spec, &
+             begin, f+f_b, s+s_vector, n+n_field_spec, &
              begin, f+f_c, t+t_numeric, n+n_field_type, &
              begin, f+f_source, s+s_vector, n+n_field_spec, &
              begin, f+f_destination, s+s_vector, nr+n_field_spec, &
@@ -1634,6 +1634,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.507  2010/07/06 16:04:32  pwagner
+! Fixed bug in a, b fields of transfer command: are vectors, not quantities
+!
 ! Revision 2.506  2010/07/01 00:49:01  pwagner
 ! Transfer between vectors may now also manipulate
 !
