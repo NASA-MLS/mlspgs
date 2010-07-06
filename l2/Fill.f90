@@ -961,6 +961,7 @@ contains ! =====     Public Procedures     =============================
         do j = 2, nsons(key)
           gson = subtree(j,key)  ! The argument
           fieldIndex = get_field_id(gson)
+          got(fieldIndex) = .true.
           if ( nsons(gson) > 1 ) then
             gson = subtree(2,gson) ! Now the value of said argument
             fieldValue = decoration(gson) ! The field's value
@@ -999,9 +1000,12 @@ contains ! =====     Public Procedures     =============================
               & vectors(destinationVectorIndex), &
               & vectors(aVecIndex), vectors(bVecIndex) )
           endif
-        else
+        else if ( got(f_source) ) then
           call TransferVectors ( vectors(sourceVectorIndex), &
             & vectors(destinationVectorIndex), skipMask, interpolate )
+        else
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Transfer command requires either source or a field' )
         endif
 
       case ( s_time ) ! ===================================  Time  =====
@@ -2617,6 +2621,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.386  2010/07/06 16:06:06  pwagner
+! Better error checking in Transfer
+!
 ! Revision 2.385  2010/07/01 00:49:19  pwagner
 ! Transfer between vectors may now also manipulate
 !
