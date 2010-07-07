@@ -440,8 +440,7 @@ module CFM_QuantityTemplate_m
      type (L1BData_T) :: l1bField
      type (MLSFile_T), pointer :: L1BFile
      character (len=NameLen) :: l1bItemName, moduleName
-     integer :: hdfVersion, noMafs, l1bFlag, mafIndex, mifIndex, noSurfs
-     real(r8), parameter :: SIXTH = 1.0_r8 / 6.0_r8
+     integer :: hdfVersion, noMafs, l1bFlag, mafIndex
 
      ! Executables
      L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
@@ -456,11 +455,11 @@ module CFM_QuantityTemplate_m
      end if
      l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
 
+     ! find noMafs
      call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
                         l1bFlag, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
      if ( l1bFlag==-1 ) &
         call MLSMessage ( MLSMSG_Error, ModuleName, MLSMSG_L1BRead//l1bItemName )
-     noSurfs=l1bField%maxMIFs
      call DeallocateL1BData ( l1bField )
 
      call SetupNewQuantityTemplate ( qty, noInstances=noMafs, &
@@ -553,10 +552,7 @@ module CFM_QuantityTemplate_m
         if ( l1bFlag == -1 ) &
            call MLSMessage ( MLSMSG_Error, ModuleName, MLSMSG_L1BRead//l1bItemName )
         do mafIndex = 1, noMAFs
-           do mifIndex = 1, noSurfs
-              qty%time(mifIndex,mafIndex) = &
-              l1bField%dpField(1,1,mafIndex) + (mifIndex-1) * sixth
-           end do
+           qty%time(1,mafIndex) = l1bField%dpField(1,1,mafIndex)
         end do
         call DeallocateL1BData ( l1bField )
 
@@ -613,6 +609,9 @@ module CFM_QuantityTemplate_m
 end module
 
 ! $Log$
+! Revision 1.16  2010/06/30 17:45:12  pwagner
+! NAG happy only if continued comment begins with ampsnd
+!
 ! Revision 1.15  2010/06/30 08:11:25  honghanh
 ! Fix bug for creating major frame quantity
 !
