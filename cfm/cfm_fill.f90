@@ -28,12 +28,14 @@ module CFM_Fill_m
    use MLSStrings, only: writeIntsToChars
    use FillUtils_1, only: fillerror, FromL1B, &
                           PhiTanWithRefraction
+   use string_table, only: create_string
 
    implicit none
 
    public :: ExplicitFillVectorQuantity, FillVectorQuantityFromL1B
    public :: SpreadFillVectorQuantity, FillPtanQuantity
    public :: FillVectorQtyFromProfile, FillPhitanQuantity
+   public :: ApplyBaseline
 
    private
 
@@ -132,21 +134,21 @@ module CFM_Fill_m
       type(MLSFile_T), dimension(:), pointer :: filedatabase
       ! is this a precision quantity
       logical, intent(in) :: isPrecision
-      ! for now, don't use the optional arguments
-      integer, intent(in), optional :: suffix
+      character(len=*), intent(in), optional :: suffix
       type(VectorValue_T), intent(in), optional :: precisionQuantity
       ! If isPrecision is .true. and BOMask is not 0, then
       ! bright object status is read from L1BOA file
       integer, intent(in), optional :: BOMask
+      integer :: i
 
       fillError = 0
+      i = 0
       if (present (suffix)) then
-         call FromL1B(0, quantity, chunk, filedatabase, &
-            isPrecision, suffix, precisionQuantity, BOMask)
-      else
-         call FromL1B(0, quantity, chunk, filedatabase, &
-            isPrecision, 0, precisionQuantity, BOMask)
+         i = create_string(suffix)
       end if
+
+      call FromL1B(0, quantity, chunk, filedatabase, &
+                   isPrecision, i, precisionQuantity, BOMask)
       if (fillError /= 0) then
          call MLSMessage (MLSMSG_Error, moduleName, "Can't Fill from L1B")
       end if
@@ -325,6 +327,19 @@ module CFM_Fill_m
 
       call Get2DHydrostaticTangentPressure(ptan, temperature, refGPH, &
       h2o, orbitInclination, phitan, geocentricAltitude, 4, 0.0_r8, phyq_angle)
+   end subroutine
+
+   subroutine ApplyBaseline (quantity, baselineQuantity, quadrature, dontmask)
+      use FillUtils_1, only: Orig_ApplyBaseline => ApplyBaseline
+
+      ! Radiance quantity to modify
+      type(VectorValue_T), intent(inout) :: quantity
+      ! L1B MAF baseline to use
+      type(VectorValue_T), intent(in) :: baselineQuantity
+      logical, intent(in) :: quadrature
+      logical, intent(in) :: dontmask
+
+      call Orig_ApplyBaseline (0, quantity, baselineQuantity, quadrature, dontmask)
    end subroutine
 
 !--------------------------- end bloc --------------------------------------

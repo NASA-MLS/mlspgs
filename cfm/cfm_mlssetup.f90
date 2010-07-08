@@ -29,7 +29,6 @@ module CFM_MLSSetup_m
    use ChunkDivide_m, only: ChunkDivideConfig_T, &
                             GetChunkFromTimeRange => CFM_ChunkDivide
    use MLSSignals_m, only: MODULES
-   use String_Table, only: get_string
    use MLSFillValues, only: ISFILLVALUE
    use MLSSets, only: FINDFIRST
    use Chunks_m, only: MLSChunk_T ! To also be referenced outside
@@ -430,6 +429,11 @@ module CFM_MLSSetup_m
 end module
 
 ! $Log$
+! Revision 1.17  2010/06/29 17:02:47  honghanh
+! Change the identifier 'fakeChunk' to 'chunk' because
+! since it is created with ChunkDivide, it's as real as a chunk
+! can get.
+!
 ! Revision 1.16  2010/06/29 16:40:23  honghanh
 ! Remove all function/subroutine and user type forwarding from
 ! all CFM modules except for from cfm.f90

@@ -17,7 +17,7 @@ program mockup
    use input   ! Provides hard-coded input for testing purposes only
 
    use CFM, only: & ! Alphabetized, case-insensitive list (underscores are ignored though)
-      AddFileToDatabase, AddQuantityTemplateToDatabase, &
+      AddFileToDatabase, AddQuantityTemplateToDatabase, ApplyBaseline, &
       CFM_MLSCleanup, CFM_MLSSetup, CreateFGrid, CreateQtyTemplate, &
       CreateRegularHGrid, CreateVector, CreateVectorTemplate, CreateVGrid, &
       Destroy_Ant_Patterns_Database, DestroyFGridContents, &
@@ -37,7 +37,7 @@ program mockup
       l_explicit, l_gph, l_h2o, l_hdf, L_IntermediateFrequency, &
       l_logarithmic, l_o3, l_orbitInclination, l_phitan, l_ptan, &
       l_radiance, l_refGPH, l_temperature, l_tngtgeocalt, &
-      l_tngtgeodalt, l_vmr, l_zeta, &
+      l_tngtgeodalt, l_vmr, l_zeta, l_l1bMAFBaseline, &
       MLSChunk_T, MLSFile_T, MLSMessage, MLSMSG_Error, mls_openFile, &
       operator(+), operator(-), &
       phyq_angle, phyq_pressure, &
@@ -67,20 +67,22 @@ program mockup
    type(FGrid_T) :: fGridStandard
    type(QuantityTemplate_T) :: temperature, GPH, H2O, O3, ptanGHz, band7, &
                                geodAltitude, orbincl, geocAlt, refGPH, band2, &
-                               band8, phitanGHz
+                               band8, phitanGHz, baseline7, baseline2, baseline8
    type(QuantityTemplate_T), dimension(:), pointer :: qtyTemplates
-   type(VectorTemplate_T) :: stateTemplate, measurementTemplate
+   type(VectorTemplate_T) :: stateTemplate, measurementTemplate, correctionTemplate
    type(Vector_T) :: state, measurement, stateExtra, observed, obsPrecision
-   type(Vector_T) :: diffVector
+   type(Vector_T) :: diffVector, corrections, correctionNoise
    character(len=3) :: GHz = "GHz"
    character(len=2) :: sc = "sc"
-   integer :: stateSelected(10), measurementSelected(3)
+   integer :: stateSelected(10), measurementSelected(3), baselineSelected(3)
    type(VectorValue_T), pointer :: quantity, h2o_vv, orbincl_vv, geocAlt_vv, &
                           ptanG_vv, temperature_vv, refGPH_vv, precQty
+   type(VectorValue_T), pointer :: band2L1BMAFBaseline, band7L1BMAFBaseline, band8L1BMAFBaseline
    integer :: temperature_index, h2o_index, band2_index
    integer :: o3_index, ptanGHz_index, band7_index, phitanGHz_index
    integer :: geodAlt_index, orbincl_index, gph_index
    integer :: geocAlt_index, band8_index, refGPH_index
+   integer :: baseline7_index, baseline2_index, baseline8_index
    character(len=256) :: signalFileName, configFileName
    type (MLSFile_T) :: l1bfile
 
@@ -238,7 +240,7 @@ program mockup
    call ForwardModel (chunk, forwardModelConfigDatabase, state, &
                       stateExtra, measurement)
 
-!   call dump(measurement, details=3)
+   !call dump(measurement, details=3)
 
    ! Create an identical vector as simulated radiance vector for observed radiances
    observed = CreateVector(measurementTemplate, qtyTemplates)
@@ -286,13 +288,63 @@ program mockup
    call FillVectorQuantityFromL1B(quantity, chunk, filedatabase, &
    .false., precisionQuantity=precQty)
 
+   ! For applying baseline corrections
+   baseline2 = CreateQtyTemplate(l_L1BMAFBaseline, filedatabase=filedatabase, &
+                                 chunk=chunk, qSignal="R2:190.B2F:H2O")
+   baseline7 = CreateQtyTemplate(l_L1BMAFBaseline, filedatabase=filedatabase, &
+                                 chunk=chunk, qSignal="R3:240.B7F:O3")
+   baseline8 = CreateQtyTemplate(l_L1BMAFBaseline, filedatabase=filedatabase, &
+                                 chunk=chunk, qSignal="R3:240.B8F:PT")
+   baseline2_index = AddQuantityTemplateToDatabase(qtyTemplates, baseline2)
+   baseline7_index = AddQuantityTemplateToDatabase(qtyTemplates, baseline7)
+   baseline8_index = AddQuantityTemplateToDatabase(qtyTemplates, baseline8)
+   baselineSelected = (/baseline2_index, baseline7_index, baseline8_index/)
+   correctionTemplate = CreateVectorTemplate(qtyTemplates, baselineSelected)
+   corrections = CreateVector(correctionTemplate, qtyTemplates)
+   correctionNoise = CreateVector(correctionTemplate, qtyTemplates)
+
+   band2L1BMAFBaseline => GetVectorQtyByTemplateIndex(corrections, baseline2_index)
+   band7L1BMAFBaseline => GetVectorQtyByTemplateIndex(corrections, baseline7_index)
+   band8L1BMAFBaseline => GetVectorQtyByTemplateIndex(corrections, baseline8_index)
+   call FillVectorQuantityFromL1B(band2L1BMAFBaseline, chunk, filedatabase, &
+   .false., suffix=' Baseline')
+   call FillVectorQuantityFromL1B(band7L1BMAFBaseline, chunk, filedatabase, &
+   .false., suffix=' Baseline')
+   call FillVectorQuantityFromL1B(band8L1BMAFBaseline, chunk, filedatabase, &
+   .false., suffix=' Baseline')
+
+   quantity => GetVectorQtyByTemplateIndex(observed, band2_index)
+   call ApplyBaseline(quantity, band2L1BMAFBaseline, .false., .false.)
+   quantity => GetVectorQtyByTemplateIndex(observed, band7_index)
+   call ApplyBaseline(quantity, band7L1BMAFBaseline, .false., .false.)
+   quantity => GetVectorQtyByTemplateIndex(observed, band8_index)
+   call ApplyBaseline(quantity, band8L1BMAFBaseline, .false., .false.)
+
+   band2L1BMAFBaseline => GetVectorQtyByTemplateIndex(correctionNoise, baseline2_index)
+   band7L1BMAFBaseline => GetVectorQtyByTemplateIndex(correctionNoise, baseline7_index)
+   band8L1BMAFBaseline => GetVectorQtyByTemplateIndex(correctionNoise, baseline8_index)
+   call FillVectorQuantityFromL1B(band2L1BMAFBaseline, chunk, filedatabase, &
+   .false., suffix=' Baseline precision')
+   call FillVectorQuantityFromL1B(band7L1BMAFBaseline, chunk, filedatabase, &
+   .false., suffix=' Baseline precision')
+   call FillVectorQuantityFromL1B(band8L1BMAFBaseline, chunk, filedatabase, &
+   .false., suffix=' Baseline precision')
+
+   ! quadrature is true because this is precision
+   quantity => GetVectorQtyByTemplateIndex(obsPrecision, band2_index)
+   call ApplyBaseline(quantity, band2L1BMAFBaseline, .true., .false.)
+   quantity => GetVectorQtyByTemplateIndex(obsPrecision, band7_index)
+   call ApplyBaseline(quantity, band7L1BMAFBaseline, .true., .false.)
+   quantity => GetVectorQtyByTemplateIndex(obsPrecision, band8_index)
+   call ApplyBaseline(quantity, band8L1BMAFBaseline, .true., .false.)
+
    ! CFM_MLSCleanup will close all files in the filedatabase
 
-!   call dump(observed, details=3)
+   call dump(obsPrecision, details=3)
 
-    diffVector = observed - measurement
+   diffVector = observed - measurement
 
-    call dump(diffVector, details=3)
+    !call dump(diffVector, details=3)
 
    ! Clean up allocated memory for creating observed radiance vector
    call DestroyVectorInfo(observed)
@@ -300,6 +352,11 @@ program mockup
    ! the subtraction create internal field for diffVector
    ! and we need to clean that up
    call DestroyVectorInfo(diffVector)
+
+   ! Clean up For baseline
+   call DestroyVectorInfo(corrections)
+   call DestroyVectorInfo(correctionNoise)
+   call DestroyVectorTemplateInfo(correctionTemplate)
 
    ! Clean up memory
    call DestroyVectorInfo (state)

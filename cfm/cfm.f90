@@ -42,7 +42,7 @@ module cfm          ! callable forward model
                             DestroyVectorInfo, GetVectorQtyByTemplateIndex, &
                             operator(+), operator(-)
    use CFM_Vector_m, only: CreateVector
-   use CFM_Fill_m, only: ExplicitFillVectorQuantity, &
+   use CFM_Fill_m, only: ExplicitFillVectorQuantity, ApplyBaseline, &
                          FillVectorQuantityFromL1B, FillPhitanQuantity, &
                          SpreadFillVectorQuantity, FillPtanQuantity
    use ForwardModelConfig, only: ForwardModelConfig_T
@@ -54,7 +54,7 @@ module cfm          ! callable forward model
                                  l_ptan, l_radiance, l_orbitInclination, &
                                  l_tngtgeodalt, l_tngtgeocalt, l_o3, &
                                  phyq_pressure, phyq_angle, l_h2o, l_refgph, &
-                                 l_phitan, l_explicit
+                                 l_phitan, l_explicit, l_l1bMAFBaseline
    use MLSFiles, only: GetMLSFileByType, InitializeMLSFile, mls_openFile, &
                        AddFileToDatabase
    use Intrinsic, only: l_hdf

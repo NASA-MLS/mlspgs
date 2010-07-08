@@ -41,7 +41,6 @@ module CFM_IO_M
    end subroutine
 
    subroutine Read_HDF5_Spectroscopy (filename)
-      use HDF5, only: H5F_ACC_RDONLY_F, H5FOpen_F, H5FClose_F, HSize_T
       use MLSHDF5, only: LoadFromHDF5DS, LoadPtrFromHDF5DS, GetHDF5DSDims, &
                          IsHDF5DSPresent
       use SpectroscopyCatalog_m, only: Line_T, Lines, catalog_T, &
@@ -56,6 +55,7 @@ module CFM_IO_M
       use MLSSignals_m, only: MaxSigLen
       use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
       use Parse_Signal_m, only: Parse_Signal
+      use HDF5, only: H5F_ACC_RDONLY_F, H5FOpen_F, H5FClose_F, HSize_T
 
       character(len=*) :: filename
       ! Local variables
@@ -379,6 +379,10 @@ module CFM_IO_M
 end module
 
 ! $Log$
+! Revision 1.4  2010/06/29 16:40:23  honghanh
+! Remove all function/subroutine and user type forwarding from
+! all CFM modules except for from cfm.f90
+!
 ! Revision 1.3  2010/06/29 15:53:45  honghanh
 ! Add copyright comments and support for CVS log in the file
 !
