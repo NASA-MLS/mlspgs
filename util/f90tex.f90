@@ -139,8 +139,6 @@ program F90TEX
   call output ( 'documentclass[11pt,twoside]{article}', tex=.true. )
   call output ( 'usepackage[fleqn]{amsmath}', tex=.true. )
   if ( sx == 1 ) call output ( 'usepackage{listings}', tex=.true. )
-  call output ( 'usepackage[strings]{underscore}', tex=.true. )
-  call output ( 'usepackage[USenglish]{babel}', tex=.true. )
   call output ( 'textwidth ' // width, tex=.true. )
   call output ( 'oddsidemargin -0.25in', tex=.true. )
   call output ( 'evensidemargin -0.25in', tex=.true. )
@@ -300,9 +298,6 @@ contains
 end program F90TEX
 
 ! $Log$
-! Revision 1.10  2010/05/06 02:40:35  vsnyder
-! Increase LINE from 132 to 255
-!
 ! Revision 1.9  2010/05/01 00:42:36  vsnyder
 ! Repair error if processing LaTeX at end of file
 !
