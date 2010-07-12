@@ -1,0 +1,11 @@
+!Adds a given MLSFile_T object to a given array (database) by allocating
+!a new array, and deallocating the old array if database is associated.
+!Returns the index of the new item
+!Abort the program if there is any error.
+integer function AddFileToDatabase (database, item)
+   !A one-dimensional array of MLSFile_T objects, or a NULL pointer.
+   type (MLSFile_T), dimension(:), pointer :: database
+   
+   !A file to be added.
+   type (MLSFile_T), intent(in) :: item
+end function 
