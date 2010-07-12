@@ -1,6 +1,6 @@
 !Adds a given template to a given array (database) by allocating
 !a new array, and deallocating the old array if database is associated.
-!Returns the new size of the database
+!Returns the index of the new item
 !Abort the program if there is any error.
 integer function AddQuantityTemplateToDatabase (database, item)
    !A one-dimensional array of QuantityTemplate_T objects, or a NULL pointer.
