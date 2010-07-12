@@ -340,11 +340,9 @@ program mockup
 
    ! CFM_MLSCleanup will close all files in the filedatabase
 
-   call dump(obsPrecision, details=3)
-
    diffVector = observed - measurement
 
-    !call dump(diffVector, details=3)
+   call dump(diffVector, details=3)
 
    ! Clean up allocated memory for creating observed radiance vector
    call DestroyVectorInfo(observed)
@@ -378,6 +376,9 @@ program mockup
 end program
 
 ! $Log$
+! Revision 1.36  2010/07/08 21:39:16  honghanh
+! Add ApplyBaseline to cfm_fill_m
+!
 ! Revision 1.34  2010/06/29 17:02:47  honghanh
 ! Change the identifier 'fakeChunk' to 'chunk' because
 ! since it is created with ChunkDivide, it's as real as a chunk
