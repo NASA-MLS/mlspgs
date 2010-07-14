@@ -122,6 +122,7 @@ libfwdmdl_f90 := $(shell ${REECHO} $(libfwdmdl_sources)/*.c $(libfwdmdl_sources)
 libcloud_f90 := $(shell ${REECHO} $(libcloud_sources)/*.f90 $(libcloud_sources)/*.f $(libcloud_sources)/*.c)
 libcfm_f90 := $(shell ${REECHO} $(libcfm_sources)/*.f90 $(libcfm_sources)/*.f $(libcfm_sources)/*.c)
 he5lib_f := $(shell ${REECHO} $(he5lib)/*.c $(he5lib)/*.f $(he5lib)/*.f90)
+testscfm_f90 := $(shell ${REECHO} *.f90)
 
 # In the long run just evict the stuff that assumes l2_NEEDS_fwdmdl is undefined
 l2_NEEDS_fwdmdl = true
@@ -133,7 +134,7 @@ PROG_prereqs:=$(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
   $(libmls_objs)/libmls.a \
   $(libfwdmdl_objs)/libfwdmdl.a \
   $(libcloud_objs)/libcloud.a  \
-  $(libcfm_objs)/libcfm_all.a                                   
+  $(libcfm_objs)/libcfm_all.a  $(testscfm_f90)                                
 
 ifdef HDFVERSIONS
    PROG_prereqs := $(PROG_prereqs) $(he5lib_objs)/libhe5.a
@@ -147,19 +148,22 @@ LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
    $(libblas_objs)/libmlspack.a $(REECHO)
 
 OMIT_SRCS := $(OMIT) 
-PROG=test
+PROG=all
 
 OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
 
 #----------------------- Build instructions
 
 $(PROG): $(PROG_prereqs)
-	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
-        UNPREFXDPTHS="$(ADD2PATHS)" \
+	PROGS=`echo $(testscfm_f90) | sed 's/.f90//g'` ;\
+	for program in $$PROGS ; do \
+	  cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $$program \
+      	 UNPREFXDPTHS="$(ADD2PATHS)"; \
+	  cd ../; \
+	done
 
-$(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG_prereqs)
-	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
-        UNPREFXDPTHS="$(ADD2PATHS)" \
+show:
+	  cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) show
 
 $(libblas_objs)/libmlspack.a: $(blaslib_f) \
    $(libblas_objs)
@@ -206,7 +210,7 @@ depends:
      mv $$temp_name_1 Makefile.dep
 
 ghostbuster:
-	$(MLSBIN)/ghostbuster.sh -lib $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
+	echo $(MLSBIN)/ghostbuster.sh -lib $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
 
 update:
 	@cd ../.. ; \
@@ -248,3 +252,6 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude test
 
 # $Log$
+# Revision 1.1  2010/07/09 21:28:46  pwagner
+# First commit
+#

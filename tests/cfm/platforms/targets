@@ -80,6 +80,10 @@ INC_PATHS := $(EXTRA_PATHS) \
   $(shell ${REECHO} ${PATH_OPTS} \
   $(UNPREFXDPTHS) $(MODPATHS) $(PGSINC) $(srclib) $S)
 
+testscfm_f90 := $(shell ${REECHO} -dir ../ *.f90)
+PROGS := $(shell echo $(testscfm_f90) | sed 's/.f90//g')
+
+all: $(PROGS)
 # Define some suffix rules
 
 .SUFFIXES:
@@ -135,7 +139,7 @@ endif
 STATIC_LINK := $(shell echo $(LDOPTS) | grep -e "-static")
 ALLOBJS = $(OBJS)
 
-PROG_NAME=test
+PROG_NAME=all
 
 include $(srclib)/targets.h
 
@@ -164,11 +168,17 @@ cfm_linker_line=-L${cfmdir} -lcfm_all
 prereqs=$(ALLOBJS)
 # ========================================================================
 
-$(PROG_NAME): $(prereqs) $(cfmdir)/libcfm_all.a
-		$(FC) $(LDOPTS) -o $(PROG_NAME) $(ALLOBJS) \
-                      $(cfm_linker_line) \
-        $(l_specials) $(LAFTER) \
+show: $(prereqs) $(cfmdir)/libcfm_all.a
+	echo $(PROGS)
+	echo $(FC)
+	echo $(testscfm_f90)
 
+$(PROGS): $(prereqs) $(cfmdir)/libcfm_all.a
+	for program in $(PROGS) ; do \
+		$(FC) $(LDOPTS) -o $$program $$program.o \
+                      $(cfm_linker_line) \
+        $(l_specials) $(LAFTER); \
+	done
 # ========================================================================
 
 clean:
@@ -180,3 +190,6 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.1  2010/07/09 21:29:49  pwagner
+# First commit
+#
