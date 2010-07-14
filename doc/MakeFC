@@ -34,7 +34,7 @@ UTILDIR=$(CONFDIR)/util
 REECHO=$(UTILDIR)/reecho.sh
 
 # l2 won't build yet (it lacks certain files, e.g. l2cf_Fill_BinMax.tex)
-SUBDIRS := $(shell ${REECHO} -d cfm)
+#SUBDIRS := $(shell ${REECHO} -d cfm)
 
 # Errors in the .tex sources require us to omit the following
 OMIT_SRCS := wvs-010.tex wvs-074.tex wvs-051-neural_body.tex wvs-083.tex \
@@ -116,14 +116,14 @@ depends:
 	if [ ! -d $(LOGDIR) ] ; then \
 	  		mkdir $(LOGDIR) ;\
 			fi
-	 for dir in $(SUBDIRS); do \
+	 for dir in $(shell ${REECHO} -d cfm); do \
 	  $(MAKE) -f $(MakeFName) -C $$dir DOCDIR=$(DOCDIR)/$$dir depends; \
 	done
 
 internalupdate:
-	@echo "Copying or linking MakeFC to Makefile in $(SUBDIRS)" ; \
+	@echo "Copying or linking MakeFC to Makefile in $(shell ${REECHO} -d cfm)" ; \
 	cp MakeFC Makefile
-	 for dir in $(SUBDIRS); do \
+	 for dir in $(shell ${REECHO} -d cfm); do \
 	  if [ ! -f $$dir/MakeFC ]; then \
 	  cp MakeFC $$dir; \
 	  cp MakeFC $$dir/Makefile; \
@@ -147,6 +147,9 @@ update: internalupdate
 
 # ========================================================================
 # $Log$
+# Revision 1.10  2010/06/29 20:58:27  pwagner
+# Must omit wvs-095.tex
+#
 # Revision 1.9  2010/06/03 23:32:47  pwagner
 # Because wvs-083.tex needs a graphic
 #
