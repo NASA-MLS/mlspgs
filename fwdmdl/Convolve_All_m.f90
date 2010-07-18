@@ -22,6 +22,7 @@ module Convolve_All_m
   implicit NONE
   private
   public :: CONVOLVE_OTHER_DERIV, CONVOLVE_RADIANCE, CONVOLVE_TEMPERATURE_DERIV
+  public :: CONVOLVE_OTHER_SECOND_DERIV
   public :: INTERPOLATE_RADIANCE, INTERPOLATE_OTHER_DERIV
   public :: INTERPOLATE_TEMPERATURE_DERIV
   public :: STORE_OTHER_DERIV, STORE_TEMPERATURE_DERIV
@@ -296,6 +297,119 @@ contains
     end do
 
   end subroutine Convolve_Other_Deriv
+
+  ! Added by IGOR
+
+  ! -------------------------------------  Convolve_Other_Second_Deriv -----
+  subroutine Convolve_Other_Second_Deriv ( Convolve_Support, MAF, Channel, &
+             & SbRatio, Update, Radiance, Qtys, Grids_f, &
+             & MIF_Times, DeadTime, d2I_df2, Hessian, RowFlags )
+
+    use ForwardModelConfig, only: QtyStuff_T
+    use Fov_Convolve_m, only: Convolve_Support_T, &
+      & FOV_Convolve_3d
+    use Load_sps_data_m, only: Grids_T
+    use MatrixModule_1, only: FINDBLOCK
+    use HessianModule_1, only: HESSIAN_T
+    use MLSKinds, only: R8, RP, RV
+    use VectorsModule, only: VectorValue_T
+
+    ! Inputs
+    type(convolve_support_t), intent(in) :: Convolve_Support
+    integer, intent(in) :: MAF
+    integer, intent(in) :: CHANNEL
+    real(r8), intent(in) :: SbRatio
+    logical, intent(in) :: Update      ! "add to Jacobian, don't overwrite"
+    type (VectorValue_T), intent(in) :: RADIANCE ! Only for some indices
+    type(QtyStuff_T), intent(in) :: Qtys(:)
+    type (Grids_T), intent(in) :: Grids_f
+    real(rv), pointer :: MIF_Times(:,:) ! Disassociated if no scan average, q.v.
+    real(rv), pointer :: DeadTime(:,:)  ! Disassociated if no scan average, q.v.
+    real(rp), intent(in) :: d2I_df2(:,:,:) ! mixing ratio derivatives or any
+    !                                    parameter for which a simple
+    !                                    convolution will suffice
+
+    ! Outputs
+    type (Hessian_t), intent(inout) :: Hessian
+    logical, intent(inout) :: rowFlags(:) ! Flag to calling code
+
+    ! Local variables
+    integer :: Row, Col1, Col2
+    integer :: JF_I, JF_J
+    integer :: KI, KJ
+    integer :: NFZ_I, NFZ_J
+    integer :: NoChans
+    integer :: SPS_I, SPS_J             ! species indices
+    integer :: q, r                     ! state vector indices
+    real(r8) :: d2rad_df2_out(size(convolve_support%del_chi_out), size(d2i_df2,dim=2), size(d2i_df2,dim=3))
+    real(rv), pointer :: MIF_Times_for_MAF(:)
+
+    nullify ( MIF_Times_for_MAF )
+    if ( associated(MIF_Times) ) MIF_Times_for_MAF => MIF_Times(:,maf)
+    noChans = Radiance%template%noChans
+
+    ! do the convolution
+
+    call fov_convolve_3d ( convolve_support, d2i_df2, MIF_Times_for_MAF, DeadTime, grids_f%deriv_flags, d2rad_df2_out )
+
+    ! load second derivatives into Hessian
+    ! First, find index location in Hessian and set the derivative flags
+
+    row = FindBlock( Hessian%row, radiance%index, maf )
+    rowFlags(row) = .TRUE.
+
+    do sps_i = 1, size(qtys)
+
+      if ( .not. qtys(sps_i)%foundInFirst ) cycle
+
+      q = grids_f%l_v(sps_i-1)
+      nfz_i = (Grids_f%l_f(sps_i) - Grids_f%l_f(sps_i-1)) * &
+            & (Grids_f%l_z(sps_i) - Grids_f%l_z(sps_i-1))
+
+      do jf_i = Grids_f%windowStart(sps_i), Grids_f%windowfinish(sps_i)
+
+        col1 = FindBlock ( Hessian%col, qtys(sps_i)%qty%index, jf_i)
+
+        do sps_j = 1, size(qtys)
+
+          if ( .not. qtys(sps_j)%foundInFirst ) cycle
+
+          r = grids_f%l_v(sps_j-1)
+          nfz_j = (Grids_f%l_f(sps_j) - Grids_f%l_f(sps_j-1)) * &
+                & (Grids_f%l_z(sps_j) - Grids_f%l_z(sps_j-1))
+
+          do jf_j = Grids_f%windowStart(sps_j), Grids_f%windowfinish(sps_j)
+
+            col2 = FindBlock ( Hessian%col, qtys(sps_j)%qty%index, jf_j)
+        
+            call getFullBlock_Hessian ( hessian, row, col1, col2, 'atmospheric' )
+
+            do ki = 1, nfz_i
+
+              q = q + 1
+
+              do kj = 1, nfz_j
+            
+                r = r + 1
+
+                ! load derivatives for this (zeta & phi) if needed:
+
+                if ( Grids_f%deriv_flags(q) .and. Grids_f%deriv_flags(r) ) &
+                    & call loadMatrixValue ( d2rad_df2_out(:,q,r), hessian%block(row,col1,col2)%values(channel::noChans,ki,kj), sbRatio, update )
+
+              end do
+   
+            end do
+        
+          end do
+
+        end do
+
+      end do
+
+    end do
+
+  end subroutine Convolve_Other_Second_Deriv
 
   ! ---------------------------------------  Interpolate_Radiance  -----
   subroutine Interpolate_Radiance ( Coeffs, MAF, Channel, Chi_In, Rad_In, &
@@ -838,6 +952,37 @@ contains
     end select
   end subroutine GetFullBlock
 
+
+  !
+  ! Added by IGOR
+  !
+  subroutine GetFullBlock_Hessian ( Hessian, Row, Col1, Col2, What )
+    use HessianModule_0, only: H_ABSENT, H_FULL
+    use HessianModule_1, only: CREATEBLOCK, HESSIAN_T
+    use MLSKinds, only: RM
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use String_Table, only: Get_String
+    type (Hessian_t), intent(inout) :: Hessian
+    integer, intent(in) :: Row, Col1, Col2
+    character(len=*), intent(in) :: What
+    character(len=63) :: ForWhom
+    if ( hessian%name /= 0 ) then
+      call get_string ( hessian%name, forWhom )
+      forWhom = trim(forWhom) // " in GetFullBlock"
+    else
+      forWhom = "GetFullBlock"
+    end if
+    select case ( Hessian%block(row,col1,col2)%kind )
+      case ( h_absent )
+        call CreateBlock ( Hessian, row, col1, col2, h_full, inittuples=0 )
+      case ( h_full )
+      case default
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Wrong matrix block type for ' // what // ' second derivative matrix' )
+    end select
+  end subroutine GetFullBlock_Hessian
+
+
   subroutine LoadMatrixValue ( In, Out, SbRatio, Update )
     ! If Update add SbRatio*In to Out else assign SbRatio*In to Out.
     ! Identical to LoadVectorValue except for kind of Out.
@@ -885,6 +1030,9 @@ contains
 end module Convolve_All_m
 
 ! $Log$
+! Revision 2.12  2010/07/18 23:39:19  yanovsky
+! Add Convolve_Other_Second_Deriv and GetFullBlock_Hessian
+!
 ! Revision 2.11  2010/02/05 03:18:11  vsnyder
 ! Remove USE for unreferenced names
 !
