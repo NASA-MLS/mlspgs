@@ -19,7 +19,7 @@ module FOV_Convolve_m
 
   implicit NONE
   private
-  public :: FOV_Convolve_Setup, FOV_Convolve_1D, FOV_Convolve_2d
+  public :: FOV_Convolve_Setup, FOV_Convolve_1D, FOV_Convolve_2d, FOV_Convolve_3d
   public :: FOV_Convolve_Temp_Derivs, FOV_Convolve_Teardown
   public :: Dump, Dump_Convolve_Support
 
@@ -271,6 +271,52 @@ contains
     end do
 
   end subroutine FOV_Convolve_2d
+
+
+  ! --------------------------------------------  FOV_Convolve_2d  -----
+  subroutine FOV_Convolve_3d ( Convolve_Support, d2I_df2, MIF_Times, DeadTime, &
+    & deriv_flag, d2Rad_df2_out )
+
+    use MLSKinds, only: Rp, Rv
+
+    ! Inputs
+
+    type(convolve_support_t), intent(in) :: Convolve_Support
+    real(rp), intent(in) :: d2i_df2(:,:,:) ! mixing ratio SECOND derivatives or any
+    !                                 parameter where a simple convolution
+    !                                 will suffice
+    real(rv), pointer :: MIF_Times(:)   ! Disassociated if no scan average, q.v.
+    real(rv), pointer :: DeadTime(:,:)  ! Disassociated if no scan average, q.v.
+    logical, optional, intent(in) :: deriv_flag(:) ! Flag to indicate which of
+    !                                 d2i_df2 are to be calculated.  Deafult true.
+
+    ! outputs
+
+    real(rp), intent(out) :: d2rad_df2_out(:,:,:) ! output radiance
+    !                                 derivatives for input di_df.
+
+    integer :: I, J, N_Coeffs
+
+    ! nominally the mixing ratio SECOND derivatives but can be used for any
+    ! quantity requiring a simple convolution.
+
+    n_coeffs = size(d2i_df2,dim=2)
+
+    do i = 1, n_coeffs
+      do j = 1, n_coeffs
+        if ( present(deriv_flag) ) then
+          if ( (.not. deriv_flag(i)) .or. (.not. deriv_flag(j)) ) then
+            d2rad_df2_out(:,i,j) = 0.0
+            cycle
+          end if
+        end if
+
+        call fov_convolve_1d ( convolve_support, d2i_df2(:,i,j), MIF_Times, DeadTime, d2rad_df2_out(:,i,j) )
+
+      end do
+    end do
+
+  end subroutine FOV_Convolve_3d
 
   ! -----------------------------------  FOV_Convolve_Temp_Derivs  -----
   subroutine FOV_Convolve_Temp_Derivs ( Convolve_Support, Rad_In, &
@@ -541,6 +587,9 @@ contains
 end module FOV_Convolve_m
 
 ! $Log$
+! Revision 2.11  2010/07/19 18:21:09  yanovsky
+! Add FOV_Convolve_3d subroutine
+!
 ! Revision 2.10  2010/02/05 03:19:05  vsnyder
 ! Remove USE for unreferenced name
 !
