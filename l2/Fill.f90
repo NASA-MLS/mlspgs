@@ -147,7 +147,7 @@ contains ! =====     Public Procedures     =============================
       & L_RECTANGLEFROMLOS, L_REFGPH, L_REFRACT, &
       & L_REFLECTORTEMPMODEL, L_RESETUNUSEDRADIANCES, L_RHI, &
       & L_RHIFROMH2O, L_RHIPRECISIONFROMH2O, L_ROTATEFIELD, L_SCALEOVERLAPS, &
-      & L_SECTIONTIMING, L_SPD, L_SPECIAL, L_SPREADCHANNEL, &
+      & L_SECTIONTIMING, L_SPD, L_SPREADCHANNEL, &
       & L_SPLITSIDEBAND, L_STATUS, L_SWAPVALUES, &
       & L_TEMPERATURE, L_TNGTGEODALT, &
       & L_TNGTGEOCALT, L_UNCOMPRESSRADIANCE, L_VECTOR, L_VGRID, L_VMR, L_WMOTROPOPAUSE, &
@@ -1109,10 +1109,12 @@ contains ! =====     Public Procedures     =============================
     ! ------------------------------------------------ fillCommand -----
     subroutine fillCommand
     ! Now we're on actual Fill instructions.
+      integer :: jj
       ! Loop over the instructions to the Fill command
       BOMask = 0
       AvoidObjects = ' '
       got = .false.
+      multiplier = 1.
       do j = 2, nsons(key)
         gson = subtree(j,key) ! The argument
         fieldIndex = get_field_id(gson)
@@ -1282,6 +1284,16 @@ contains ! =====     Public Procedures     =============================
           modelQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
         case ( f_multiplier ) ! For scaling noise part of addnoise
           multiplierNode=subtree(j,key)
+          ! Either multiplier = [a, b] or multiplier = b are possible
+          multiplier = UNDEFINED_VALUE
+          do jj=1, min(nsons(multiplierNode)-1, 2)
+            call expr(subtree(jj+1,multiplierNode),unitAsArray,valueAsArray)
+            multiplier(jj) = valueAsArray(1)
+          end do
+          if ( DEEBUG ) then
+            call output('Using multipliers: ', advance='no')
+            call output(multiplier, advance='yes')
+          end if
         case ( f_noFineGrid )      ! For cloud extinction fill
           call expr_check ( gson , unitAsArray, valueAsArray, &
             & (/PHYQ_Dimensionless/), unitsError )
@@ -1612,6 +1624,51 @@ contains ! =====     Public Procedures     =============================
         call WithBoxcarFunction ( key, quantity, sourceQuantity, width, &
           & boxCarMethod )
 
+      case ( l_chiSQChan )
+        if ( .not. any(got( (/f_measurements, f_model, f_noise/) )) ) then
+          call Announce_error ( key, No_Error_code, &
+          & 'Missing a required field to fill chi^2 on channels'  )
+        else
+          measQty => GetVectorQtyByTemplateIndex( &
+            & vectors(measVectorIndex), measQtyIndex)
+          modelQty => GetVectorQtyByTemplateIndex( &
+            & vectors(modelVectorIndex), modelQtyIndex)
+          noiseQty => GetVectorQtyByTemplateIndex( &
+            & vectors(noiseVectorIndex), noiseQtyIndex)
+          call ChiSqChan ( key, quantity, &
+            & measQty, modelQty, noiseQty, &
+            & dontMask, ignoreZero, ignoreNegative, multiplier )
+        end if
+      case ( l_chiSQMMaf )
+        if ( .not. any(got( (/f_measurements, f_model, f_noise/) )) ) then
+          call Announce_error ( key, No_Error_code, &
+          & 'Missing a required field to fill chi^2 on MAFs'  )
+        else
+          measQty => GetVectorQtyByTemplateIndex( &
+            & vectors(measVectorIndex), measQtyIndex)
+          modelQty => GetVectorQtyByTemplateIndex( &
+            & vectors(modelVectorIndex), modelQtyIndex)
+          noiseQty => GetVectorQtyByTemplateIndex( &
+            & vectors(noiseVectorIndex), noiseQtyIndex)
+          call ChiSqMMaf ( key, quantity, &
+            & measQty, modelQty, noiseQty, &
+            & dontMask, ignoreZero, ignoreNegative, multiplier )
+        end if
+      case ( l_chiSQMMif )
+        if ( .not. any(got( (/f_measurements, f_model, f_noise/) )) ) then
+          call Announce_error ( key, No_Error_code, &
+          & 'Missing a required field to fill chi^2 on MIFs'  )
+        else
+          measQty => GetVectorQtyByTemplateIndex( &
+            & vectors(measVectorIndex), measQtyIndex)
+          modelQty => GetVectorQtyByTemplateIndex( &
+            & vectors(modelVectorIndex), modelQtyIndex)
+          noiseQty => GetVectorQtyByTemplateIndex( &
+            & vectors(noiseVectorIndex), noiseQtyIndex)
+          call ChiSqMMif ( key, quantity, &
+            & measQty, modelQty, noiseQty, &
+            & dontMask, ignoreZero, ignoreNegative, multiplier )
+        end if
       case ( l_chiSqRatio ) ! ----------- Fill with convergence ratio ---
         if ( .not. all(got( (/ f_normQty, &
           & f_minNormQty, f_flags /)))) &
@@ -1625,6 +1682,39 @@ contains ! =====     Public Procedures     =============================
           & vectors(flagVectorIndex), flagQtyIndex )
         call ChiSqRatio ( key, &
           & quantity, normQty, minNormQty, flagQty, dontMask )
+
+      case ( l_columnAbundance )
+        if ( .not. any(got( (/f_vmrQuantity, f_boundaryPressure/) )) ) then
+          call Announce_error ( key, No_Error_code, &
+          & 'Missing a required field to fill column abundance'  )
+        elseif ( .not. &
+          & any( colmabunits == (/l_dobsonUnits, l_DU, l_molcm2/) ) ) then
+          call Announce_error ( key, No_Error_code, &
+          & 'Wrong units to fill column abundance'  )
+        else
+          bndPressQty => GetVectorQtyByTemplateIndex( &
+            & vectors(bndPressVctrIndex), bndPressQtyIndex)
+          vmrQty => GetVectorQtyByTemplateIndex( &
+            & vectors(vmrQtyVctrIndex), vmrQtyIndex)
+          if ( got(f_unit) ) then
+            ! Switch column species hash to explicit unit
+            call get_string( lit_indices(colmabunits), explicitUnit, &
+              & strip=.true. )
+            call get_string( lit_indices(quantity%template%molecule), mol, &
+              & strip=.true. )
+            call PutHashElement( col_species_keys, col_species_hash, &
+              & lowerCase(mol), ExplicitUnit, countEmpty=.true. )
+          else
+            call get_string( lit_indices(quantity%template%molecule), mol, &
+              & strip=.true. )
+            call GetHashElement (col_species_keys, &
+              & col_species_hash, trim(lowercase(mol)), &
+              & ExplicitUnit, .true.)
+            if ( index(lowerCase(ExplicitUnit), 'd') > 0 ) colmabunits = l_DU
+          end if
+          call ColAbundance ( key, quantity, &
+            & bndPressQty, vmrQty, colmAbUnits )
+        end if
 
       case ( l_combineChannels )
         if ( .not. got ( f_sourceQuantity ) ) &
@@ -1960,6 +2050,20 @@ contains ! =====     Public Procedures     =============================
             end if
           end if
 
+      case ( l_losVel )
+        if ( .not. any(got( &
+        & (/f_tngtECI, f_scECI, f_scVel, f_scVelECI, f_scVelECR/) )) ) then
+          call Announce_error ( key, badlosVelFill )
+        else
+          tngtECIQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(tngtECIVectorIndex), tngtECIQuantityIndex)
+          scECIQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(scECIVectorIndex), scECIQuantityIndex)
+          scVelQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(scVelVectorIndex), scVelQuantityIndex)
+          call LOSVelocity ( key, quantity, tngtECIQuantity, &
+            & scECIquantity, scVelQuantity )
+        end if
       case ( l_manipulate ) ! ---------------------------- Manipulate --
         if ( .not. got ( f_a ) ) &
           & call Announce_error ( key, no_Error_Code,'aQuantity not supplied' )
@@ -2046,6 +2150,16 @@ contains ! =====     Public Procedures     =============================
           & aprioriPrecision%values > 0.0_r8 )
           quantity%values = - quantity%values
         end where
+
+      case ( l_noRadsPerMIF )
+        if ( .not. got ( f_measurements ) ) then
+          call Announce_error ( key, No_Error_code, &
+          & 'Missing a required field to fill noRadsPerMIF on MIFs'  )
+        else
+          measQty => GetVectorQtyByTemplateIndex( &
+            & vectors(measVectorIndex), measQtyIndex)
+          call NoRadsPerMif ( key, quantity, measQty, asPercentage )
+        end if
 
       case ( l_offsetRadiance ) ! ------------------- Offset radiance --
         if ( .not. got ( f_radianceQuantity ) ) &
@@ -2241,128 +2355,6 @@ contains ! =====     Public Procedures     =============================
         else
           call ScaleOverlaps ( quantity, multiplierNode, dontMask )
         end if
-
-      case ( l_special ) ! -  Special fills for some quantities  -----
-          ! Either multiplier = [a, b] or multiplier = b are possible
-        if ( got(f_multiplier) ) then
-          multiplier = UNDEFINED_VALUE
-          do j=1, min(nsons(multiplierNode)-1, 2)
-            call expr(subtree(j+1,multiplierNode),unitAsArray,valueAsArray)
-            multiplier(j) = valueAsArray(1)
-          end do
-        else
-          multiplier = 1.
-        end if
-
-        if ( DEEBUG ) then
-          call output('Using multipliers: ', advance='no')
-          call output(multiplier, advance='yes')
-        end if
-
-        select case ( quantity%template%quantityType )
-        case ( l_losVel )
-          if ( .not. any(got( &
-          & (/f_tngtECI, f_scECI, f_scVel, f_scVelECI, f_scVelECR/) )) ) then
-            call Announce_error ( key, badlosVelFill )
-          else
-            tngtECIQuantity => GetVectorQtyByTemplateIndex( &
-              & vectors(tngtECIVectorIndex), tngtECIQuantityIndex)
-            scECIQuantity => GetVectorQtyByTemplateIndex( &
-              & vectors(scECIVectorIndex), scECIQuantityIndex)
-            scVelQuantity => GetVectorQtyByTemplateIndex( &
-              & vectors(scVelVectorIndex), scVelQuantityIndex)
-            call LOSVelocity ( key, quantity, tngtECIQuantity, &
-              & scECIquantity, scVelQuantity )
-          end if
-        case ( l_columnAbundance )
-          if ( .not. any(got( (/f_vmrQuantity, f_boundaryPressure/) )) ) then
-            call Announce_error ( key, No_Error_code, &
-            & 'Missing a required field to fill column abundance'  )
-          elseif ( .not. &
-            & any( colmabunits == (/l_dobsonUnits, l_DU, l_molcm2/) ) ) then
-            call Announce_error ( key, No_Error_code, &
-            & 'Wrong units to fill column abundance'  )
-          else
-            bndPressQty => GetVectorQtyByTemplateIndex( &
-              & vectors(bndPressVctrIndex), bndPressQtyIndex)
-            vmrQty => GetVectorQtyByTemplateIndex( &
-              & vectors(vmrQtyVctrIndex), vmrQtyIndex)
-            if ( got(f_unit) ) then
-              ! Switch column species hash to explicit unit
-              call get_string( lit_indices(colmabunits), explicitUnit, &
-                & strip=.true. )
-              call get_string( lit_indices(quantity%template%molecule), mol, &
-                & strip=.true. )
-              call PutHashElement( col_species_keys, col_species_hash, &
-                & lowerCase(mol), ExplicitUnit, countEmpty=.true. )
-            else
-              call get_string( lit_indices(quantity%template%molecule), mol, &
-                & strip=.true. )
-              call GetHashElement (col_species_keys, &
-                & col_species_hash, trim(lowercase(mol)), &
-                & ExplicitUnit, .true.)
-              if ( index(lowerCase(ExplicitUnit), 'd') > 0 ) colmabunits = l_DU
-            end if
-            call ColAbundance ( key, quantity, &
-              & bndPressQty, vmrQty, colmAbUnits )
-          end if
-        case ( l_chiSQChan )
-          if ( .not. any(got( (/f_measurements, f_model, f_noise/) )) ) then
-            call Announce_error ( key, No_Error_code, &
-            & 'Missing a required field to fill chi^2 on channels'  )
-          else
-            measQty => GetVectorQtyByTemplateIndex( &
-              & vectors(measVectorIndex), measQtyIndex)
-            modelQty => GetVectorQtyByTemplateIndex( &
-              & vectors(modelVectorIndex), modelQtyIndex)
-            noiseQty => GetVectorQtyByTemplateIndex( &
-              & vectors(noiseVectorIndex), noiseQtyIndex)
-            call ChiSqChan ( key, quantity, &
-              & measQty, modelQty, noiseQty, &
-              & dontMask, ignoreZero, ignoreNegative, multiplier )
-          end if
-        case ( l_chiSQMMaf )
-          if ( .not. any(got( (/f_measurements, f_model, f_noise/) )) ) then
-            call Announce_error ( key, No_Error_code, &
-            & 'Missing a required field to fill chi^2 on MAFs'  )
-          else
-            measQty => GetVectorQtyByTemplateIndex( &
-              & vectors(measVectorIndex), measQtyIndex)
-            modelQty => GetVectorQtyByTemplateIndex( &
-              & vectors(modelVectorIndex), modelQtyIndex)
-            noiseQty => GetVectorQtyByTemplateIndex( &
-              & vectors(noiseVectorIndex), noiseQtyIndex)
-            call ChiSqMMaf ( key, quantity, &
-              & measQty, modelQty, noiseQty, &
-              & dontMask, ignoreZero, ignoreNegative, multiplier )
-          end if
-        case ( l_chiSQMMif )
-          if ( .not. any(got( (/f_measurements, f_model, f_noise/) )) ) then
-            call Announce_error ( key, No_Error_code, &
-            & 'Missing a required field to fill chi^2 on MIFs'  )
-          else
-            measQty => GetVectorQtyByTemplateIndex( &
-              & vectors(measVectorIndex), measQtyIndex)
-            modelQty => GetVectorQtyByTemplateIndex( &
-              & vectors(modelVectorIndex), modelQtyIndex)
-            noiseQty => GetVectorQtyByTemplateIndex( &
-              & vectors(noiseVectorIndex), noiseQtyIndex)
-            call ChiSqMMif ( key, quantity, &
-              & measQty, modelQty, noiseQty, &
-              & dontMask, ignoreZero, ignoreNegative, multiplier )
-          end if
-        case ( l_noRadsPerMIF )
-          if ( .not. got ( f_measurements ) ) then
-            call Announce_error ( key, No_Error_code, &
-            & 'Missing a required field to fill noRadsPerMIF on MIFs'  )
-          else
-            measQty => GetVectorQtyByTemplateIndex( &
-              & vectors(measVectorIndex), measQtyIndex)
-            call NoRadsPerMif ( key, quantity, measQty, asPercentage )
-          end if
-        case default
-          call Announce_error ( key, noSpecialFill )
-        end select ! quantity types in special fill cases
 
       case ( l_splitSideband ) ! --------------- Split the sidebands
         if ( .not. got(f_sourceQuantity) ) &
@@ -2621,6 +2613,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.387  2010/07/22 17:42:24  pwagner
+! Replaced method=special fills with unique names
+!
 ! Revision 2.386  2010/07/06 16:06:06  pwagner
 ! Better error checking in Transfer
 !
