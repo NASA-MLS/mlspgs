@@ -289,6 +289,16 @@ $(PROG2_NAME): $(prereqs) libcfm_all.a
                       -L./ -lcfm_all \
         $(l_specials) $(LAFTER) \
 
+libcfm.so: $(prereqs) libcfm.a
+		$(FC) $(LDOPTS) -o libcfm.so $(PVM_OBJS)  \
+                      -L./ -lcfm \
+        $(l_specials) $(LAFTER) \
+
+libcfm_all.so: $(prereqs) libcfm_all.a
+		$(FC) $(LDOPTS) -o libcfm_all.so $(PVM_OBJS)  \
+                      -L./ -lcfm_all \
+        $(l_specials) $(LAFTER) \
+
 # ========================================================================
 # Now we must teach make some trickery involving the ar command 
 # to extract objects from a library
@@ -381,6 +391,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.3  2010/06/29 16:49:51  pwagner
+# Now builds mockup2 using libcfm_all.a
+#
 # Revision 1.2  2010/06/08 23:27:55  pwagner
 # Added some sense and much trickery to build full library libcfm_all.a
 #

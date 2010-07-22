@@ -128,6 +128,8 @@ LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
 OMIT_SRCS := $(OMIT) 
 LIBRARY=libcfm.a
 FULLLIBRARY=libcfm_all.a
+SHAREDLIB=libcfm.so 
+SHAREDFULLLIB=libcfm_all.so
 PROG=mockup
 PROG2=mockup2
 
@@ -149,6 +151,14 @@ $(LIBRARY): $(PROG_prereqs)
 
 $(FULLLIBRARY): $(PROG_prereqs)
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(FULLLIBRARY) \
+        UNPREFXDPTHS="$(ADD2PATHS) $(HDF5)/../fortran/src $(HDF5)/../include" \
+
+$(SHAREDLIB): $(PROG_prereqs)
+	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(SHAREDLIB) \
+        UNPREFXDPTHS="$(ADD2PATHS) $(HDF5)/../fortran/src $(HDF5)/../include" \
+
+$(SHAREDFULLLIB): $(PROG_prereqs)
+	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(SHAREDFULLLIB) \
         UNPREFXDPTHS="$(ADD2PATHS) $(HDF5)/../fortran/src $(HDF5)/../include" \
 
 $(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG_prereqs)
@@ -238,6 +248,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mockup
 
 # $Log$
+# Revision 1.3  2010/06/29 16:49:29  pwagner
+# Now builds mockup2 using libcfm_all.a
+#
 # Revision 1.2  2010/06/08 23:26:40  pwagner
 # Added LIBRARY and FULLLIBRARY targets
 #
