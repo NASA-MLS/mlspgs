@@ -30,9 +30,9 @@ begin Fill
   ;; --------------------------------------------- Now the columns
 
   !define(fillOneColumn,{!dnl
-  Fill, quantity=state.column_$1, method=special, vmrQuantity=state.$1, $
+  Fill, quantity=state.column_$1, method=columnAbundance, vmrQuantity=state.$1, $
     boundaryPressure=state.tpPressure
-  Fill, quantity=outputPrecision.column_$1, method=special, vmrQuantity=outputPrecision.$1, $
+  Fill, quantity=outputPrecision.column_$1, method=columnAbundance, vmrQuantity=outputPrecision.$1, $
     boundaryPressure=state.tpPressure!nl})
 
   !forall(fillOneColumn,!allStandardProductsWithColumns)

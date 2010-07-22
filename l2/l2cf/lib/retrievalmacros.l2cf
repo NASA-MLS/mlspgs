@@ -435,16 +435,16 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
 ; --------------------------------------------------------------- Filling diagnostics
 ;; This macro is used to fill radiance chi squares
 !define(fillMinorFrameDiagnostics,{!dnl
-   Fill, quantity=minorFrameDiagnostics.chisqMMAF$1, method=special, $
+   Fill, quantity=minorFrameDiagnostics.chisqMMAF$1, method=chisqMMAF, $
      measurements=y!phase.band$1, model=f!phase.band$1, $
      noise=yNoise!phase.band$1, /ignoreZero, /ignoreNegative
-   Fill, quantity=minorFrameDiagnostics.chisqMMIF$1, method=special, $
+   Fill, quantity=minorFrameDiagnostics.chisqMMIF$1, method=chisqMMIF, $
      measurements=y!phase.band$1, model=f!phase.band$1, $
      noise=yNoise!phase.band$1, /ignoreZero, /ignoreNegative
-   Fill, quantity=minorFrameDiagnostics.chisqChan$1, method=special, $
+   Fill, quantity=minorFrameDiagnostics.chisqChan$1, method=chisqChan, $
      measurements=y!phase.band$1, model=f!phase.band$1, $
      noise=yNoise!phase.band$1, /ignoreZero, /ignoreNegative
-   Fill, quantity=minorFrameDiagnostics.noRadsPerMIF$1, method=special, $
+   Fill, quantity=minorFrameDiagnostics.noRadsPerMIF$1, method=noRadsPerMIF, $
      measurements=y!phase.band$1!asPercentage!nl})
 
 !define(fillMappedDiagnostics,{!dnl
@@ -597,9 +597,9 @@ Begin Fill
     internalVgrid=vGridWMO
   Fill, quantity=standardProducts.!theQuantity, method=vector, sourceQuantity=tempVectorState.!theQuantity
   Fill, quantity=standardPrecision.!theQuantity, method=vector, sourceQuantity=tempVectorPrecision.!theQuantity
-  Fill, quantity=tempVectorState.column_$1, method=special, vmrQuantity=tempVectorState.!theQuantity, $
+  Fill, quantity=tempVectorState.column_$1, method=columnAbundance, vmrQuantity=tempVectorState.!theQuantity, $
     boundaryPressure=tempVectorState.tpPressure !theUnits
-  Fill, quantity=tempVectorPrecision.column_$1, method=special, vmrQuantity=tempVectorPrecision.!theQuantity, $
+  Fill, quantity=tempVectorPrecision.column_$1, method=columnAbundance, vmrQuantity=tempVectorPrecision.!theQuantity, $
     boundaryPressure=tempVectorState.tpPressure !theUnits
 
 !ifdef(pTop$1, {!dnl
@@ -653,9 +653,9 @@ Begin Fill
 ;; ------------------------------------------ tpPressure (using GEOS5 grids)
   Fill, quantity=tempVectorState.tpPressure, method=gridded, $
     sourceGrid=geos5EtaWMOPTrop
-  Fill, quantity=tempVectorState.column_$1, method=special, vmrQuantity=tempVectorState.!theQuantity, $
+  Fill, quantity=tempVectorState.column_$1, method=columnAbundance, vmrQuantity=tempVectorState.!theQuantity, $
     boundaryPressure=tempVectorState.tpPressure !theUnits
-  Fill, quantity=tempVectorPrecision.column_$1, method=special, vmrQuantity=tempVectorPrecision.!theQuantity, $
+  Fill, quantity=tempVectorPrecision.column_$1, method=columnAbundance, vmrQuantity=tempVectorPrecision.!theQuantity, $
     boundaryPressure=tempVectorState.tpPressure !theUnits
 End Fill
 Begin Join
@@ -1151,6 +1151,9 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
 })})
 
 ; $Log$
+; Revision 1.143  2010/04/28 18:23:37  pwagner
+; May set too few radiances status by percentage
+;
 ; Revision 1.142  2009/10/13 00:17:42  pwagner
 ; Reduced minRads for Bands 15, 16, 18, 19 because of v3.1 OH issue (item 18)
 ;
