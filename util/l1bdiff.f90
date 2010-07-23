@@ -68,6 +68,7 @@ program l1bdiff ! diffs two l1b or L2AUX files
     logical     :: oneD = .true.
     logical     :: l2aux = .false.
     logical     :: ascii = .false. ! If true, diff even character fields
+    integer     :: hdfVersion = HDFVERSION_5
     integer     :: maf1 = 0
     integer     :: maf2 = 0
     integer     :: moff = 0
@@ -106,7 +107,7 @@ program l1bdiff ! diffs two l1b or L2AUX files
      if ( filename(1:1) == '-' ) cycle
      if ( filename == ' ' ) exit
      call h5fis_hdf5_f(trim(filename), is_hdf5, error)
-     if ( .not. is_hdf5 ) then
+     if ( options%hdfVersion==HDFVERSION_5 .and. .not. is_hdf5 ) then
        print *, 'Sorry--not recognized as hdf5 file: ', trim(filename)
        cycle
      endif
@@ -147,7 +148,7 @@ program l1bdiff ! diffs two l1b or L2AUX files
       if ( options%verbose ) then
         print *, 'diffing from: ', trim(filenames(i))
       endif
-      call mySelfDiff(trim(filenames(i)), HDFVERSION_5, options)
+      call mySelfDiff(trim(filenames(i)), options%hdfVersion, options)
       if ( options%timing ) call sayTime('diffing this file', tFile)
     else 
       if ( options%verbose ) then
@@ -155,7 +156,7 @@ program l1bdiff ! diffs two l1b or L2AUX files
       endif
       call myDiff(trim(filenames(i)), &
       & trim(options%referenceFileName), (i==1), &
-      & HDFVERSION_5, options)
+      & options%hdfVersion, options)
       if ( options%timing ) call sayTime('diffing this file', tFile)
     endif
   enddo
@@ -207,6 +208,11 @@ contains
         exit
       elseif ( filename(1:5) == '-half' ) then
         options%halfWaves = .true.
+        exit
+      else if ( filename(1:4) == '-hdf' ) then
+        call getarg ( i+1+hp, number )
+        read(number, *) options%hdfVersion
+        i = i + 1
         exit
       elseif ( filename(1:6) == '-self ' ) then
         options%self = .true.
@@ -282,6 +288,7 @@ contains
       write (*,*) '                         show no. of 1/2 waves'
       write (*,*) '                         (2) (otherwise)'
       write (*,*) '                         diff 1/2 of channels (so DACS wont crash)'
+      write (*,*) '          -hdf version=> hdf version (default is 5)'
       write (*,*) '          -silent     => switch on silent mode'
       write (*,*) '                        (printing only if diffs found)'
       write (*,*) '          -unique     => dump only unique elements'
@@ -327,6 +334,8 @@ contains
 
     ! Local
     logical, parameter            :: countEmpty = .true.
+    integer :: data_type
+    integer, dimension(7) :: dimsizes
     logical :: file_exists
     integer :: file_access
     integer :: firstChannel
@@ -346,18 +355,25 @@ contains
     integer :: NoMAFs
     integer :: noSds
     integer :: nsize
+    integer :: num_Attrs
     integer :: numDiffs
+    integer :: rank
     integer :: sdfid1
     integer :: sdfid2
     character (len=80) :: sdName
+    integer :: sds_id
     real :: stime
     integer :: status
     integer :: the_hdfVersion
     
+    ! hdf4 externals
+    integer :: sfstart, sffinfo, sfselect, sfginfo, sfend
+    external :: sfstart, sffinfo, sfselect, sfginfo, sfend
+    
     ! Executable code
     numDiffs = 0
     stime = t2
-    the_hdfVersion = HDFVERSION_5
+    ! the_hdfVersion = HDFVERSION_5
     the_hdfVersion = hdfVersion
     file_exists = ( mls_exists(trim(File1)) == 0 )
     if ( .not. file_exists ) then
@@ -372,64 +388,77 @@ contains
           & 'File 1 not found; make sure the name and path are correct' &
           & // trim(file1) )
     endif
-    call GetAllHDF5DSNames (trim(File1), '/', mysdList)
-    if ( options%verbose) then
-      call output ( '============ DS names in ', advance='no' )
-      call output ( trim(file1) //' ============', advance='yes' )
-    endif
-    if ( mysdList == ' ' ) then
-      call MLSMessage ( MLSMSG_Warning, ModuleName, &
-        & 'No way yet to find sdList in ' // trim(File1) )
-      return
-    else
-      if ( options%verbose ) call dump(mysdList, 'DS names')
-    endif
-    if ( options%sdList /= '*' ) then
-      call output( ' Selected SDs to diff', advance='yes' )
-      mySDList = options%sdList
-      call dump(mysdList, 'DS names')
-    endif
+    if ( options%verbose ) print *, 'the hdf version: ', the_hdfVersion
+    if ( the_hdfVersion == HDFVERSION_5 ) then
+      call GetAllHDF5DSNames (trim(File1), '/', mysdList)
+      if ( options%verbose ) then
+        call output ( '============ DS names in ', advance='no' )
+        call output ( trim(file1) //' ============', advance='yes' )
+      endif
+      if ( mysdList == ' ' ) then
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & 'No way yet to find sdList in ' // trim(File1) )
+        return
+      else
+        if ( options%verbose ) call dump(mysdList, 'DS names')
+      endif
+      if ( options%sdList /= '*' ) then
+        call output( ' Selected SDs to diff', advance='yes' )
+        mySDList = options%sdList
+        call dump(mysdList, 'DS names')
+      endif
 
-    isl1boa = (index(trim(mysdList), '/GHz') > 0)
-    file_access = DFACC_READ
-    sdfid1 = mls_sfstart(File1, DFACC_READ, hdfVersion=hdfVersion)
-    if (sdfid1 == -1 ) then
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-      &  'Failed to open l1b file ' // trim(File1) )
-    end if
-	 call h5gOpen_f (sdfid1,'/', grpID, status)
-    if ( status /= 0 ) then
-	   call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          	& 'Unable to open group to read attribute in l2aux file' )
-    endif
-    sdfId2 = mls_sfstart(trim(file2), file_access, &
-              & hdfVersion=hdfVersion)
-    if (sdfid2 == -1 ) then
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Failed to open l1b ' // trim(File2) )
-    end if
-    noSds = NumStringElements(trim(mysdList), countEmpty)
-    if ( noSds < 1 ) then
-      call MLSMessage ( MLSMSG_Warning, ModuleName, &
-        & 'No sdNames cp to file--unable to count sdNames in ' // trim(mysdList) )
-    endif
-    ! May need to create groups '/sc', '/GHz', and '/THz'
-    if ( isL1boa .and. file_access == DFACC_CREATE ) then
-      call h5gcreate_f(sdfId2, '/sc', grpID, status)
+      isl1boa = (index(trim(mysdList), '/GHz') > 0)
+      file_access = DFACC_READ
+      sdfid1 = mls_sfstart(File1, DFACC_READ, hdfVersion=hdfVersion)
+      if (sdfid1 == -1 ) then
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+        &  'Failed to open l1b file ' // trim(File1) )
+      end if
+	   call h5gOpen_f (sdfid1,'/', grpID, status)
       if ( status /= 0 ) then
 	     call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          	& 'Unable to create group /sc in ' // trim(File2) )
+          	  & 'Unable to open group to read attribute in l2aux file' )
       endif
-      call h5gcreate_f(sdfId2, '/GHz', grpID, status)
-      if ( status /= 0 ) then
-	     call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          	& 'Unable to create group /GHz in ' // trim(File2) )
+      sdfId2 = mls_sfstart(trim(file2), file_access, &
+                & hdfVersion=hdfVersion)
+      if (sdfid2 == -1 ) then
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Failed to open l1b ' // trim(File2) )
+      end if
+      noSds = NumStringElements(trim(mysdList), countEmpty)
+      if ( noSds < 1 ) then
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & 'No sdNames cp to file--unable to count sdNames in ' // trim(mysdList) )
       endif
-      call h5gcreate_f(sdfId2, '/THz', grpID, status)
-      if ( status /= 0 ) then
-	     call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          	& 'Unable to create group /THz in ' // trim(File2) )
+      ! May need to create groups '/sc', '/GHz', and '/THz'
+      if ( isL1boa .and. file_access == DFACC_CREATE ) then
+        call h5gcreate_f(sdfId2, '/sc', grpID, status)
+        if ( status /= 0 ) then
+	       call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          	  & 'Unable to create group /sc in ' // trim(File2) )
+        endif
+        call h5gcreate_f(sdfId2, '/GHz', grpID, status)
+        if ( status /= 0 ) then
+	       call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          	  & 'Unable to create group /GHz in ' // trim(File2) )
+        endif
+        call h5gcreate_f(sdfId2, '/THz', grpID, status)
+        if ( status /= 0 ) then
+	       call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          	  & 'Unable to create group /THz in ' // trim(File2) )
+        endif
       endif
+    else
+      sdfid1 = sfstart( trim(File1), DFACC_READ )
+      status = sffinfo( sdfid1, noSds, nsize ) 
+      ! print *, 'status ', status
+      ! print *, 'noSds ', noSds
+      mysdList = '*'
+      sdfid2 = sfstart( trim(File2), DFACC_READ )
+      status = sffinfo( sdfid1, noSds, nsize ) 
+      ! print *, 'status ', status
+      ! print *, 'noSds ', noSds
     endif
     if ( options%halfwaves ) then
       nHalves = 2
@@ -439,7 +468,13 @@ contains
     ! Loop over sdNames in file 1
     ! (But skip PCF and HDFEOS INFORMATION/coremetadata.0)
     do i = 1, noSds
-      call GetStringElement (trim(mysdList), sdName, i, countEmpty )
+      if ( the_hdfversion == HDFVERSION_5 ) then
+        call GetStringElement (trim(mysdList), sdName, i, countEmpty )
+      else
+        sds_id = sfselect( sdfid1, i-1 ) ! "c" arrays begin with index 0
+        status = sfginfo( sds_id, sdName, rank, dimsizes, data_type, num_attrs ) 
+        ! print *, 'sdName: ', sdName
+      endif
       if ( sdName == 'PCF' .or. &
         &  sdName == 'HDFEOS INFORMATION/coremetadata.0' .or. &
         &  sdName == 'l2cf' .or. &
@@ -603,21 +638,27 @@ contains
         if ( options%timing ) call SayTime( 'Doing the diff', stime )
         stime = t2
       enddo ! Loop of halves
-      ! print *, 'After ' // trim(sdName) // ' ', options%numDiffs
+      print *, 'After ' // trim(sdName) // ' ', options%numDiffs
     enddo ! Loop of datasets
-	 call h5gClose_f (grpID, status)
+	 if ( the_hdfVersion == HDFVERSION_5) call h5gClose_f (grpID, status)
     if ( status /= 0 ) then
 	   call MLSMessage ( MLSMSG_Warning, ModuleName, &
        & 'Unable to close group in l2aux file: ' // trim(File1) // ' after diffing' )
     endif
-	 status = mls_sfend(sdfid1, hdfVersion=the_hdfVersion)
-    if ( status /= 0 ) &
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-       & "Unable to close L2aux file: " // trim(File1) // ' after diffing')
-	 status = mls_sfend(sdfid2, hdfVersion=the_hdfVersion)
-    if ( status /= 0 ) &
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-       & "Unable to close L2aux file: " // trim(File2) // ' after diffing')
+    if ( the_hdfVersion == HDFVERSION_5 ) then
+	   status = mls_sfend(sdfid1, hdfVersion=the_hdfVersion)
+      if ( status /= 0 ) &
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+         & "Unable to close L2aux file: " // trim(File1) // ' after diffing')
+	   status = mls_sfend(sdfid2, hdfVersion=the_hdfVersion)
+      if ( status /= 0 ) &
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+         & "Unable to close L2aux file: " // trim(File2) // ' after diffing')
+    else
+      ! print *, 'Ending MyDiff'
+      status = sfend( sdfid1 )
+      status = sfend( sdfid2 )
+    endif
   end subroutine myDiff
 
   ! ---------------------- mySelfDiff  ---------------------------
@@ -651,7 +692,7 @@ contains
     integer :: the_hdfVersion
     
     ! Executable code
-    the_hdfVersion = HDFVERSION_5
+    ! the_hdfVersion = HDFVERSION_5
     the_hdfVersion = hdfVersion
     file_exists = ( mls_exists(trim(File1)) == 0 )
     if ( .not. file_exists ) then
@@ -766,6 +807,9 @@ end program l1bdiff
 !==================
 
 ! $Log$
+! Revision 1.18  2009/11/20 23:00:50  pwagner
+! Should not segfault when diffing DACS datasets
+!
 ! Revision 1.17  2009/11/02 19:54:06  pwagner
 ! Fixed bug causing goldbrick to print excessively
 !
