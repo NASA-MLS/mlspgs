@@ -73,6 +73,8 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
     character(len=1024) :: datasets   = '*'
     character(len=1)    :: fillValueRelation = '='
     real                :: fillValue  = 0.e0
+    integer             :: firstMAF = -1
+    integer             :: lastMAF = -1
   end type options_T
   
   type ( options_T ) :: options
@@ -213,6 +215,8 @@ contains
      print *, 'root                ', trim_safe(options%root)
      print *, 'fillValue           ', options%fillValue
      print *, 'fillValueRelation   ', options%fillValueRelation
+     print *, 'first maf           ', options%firstMAF
+     print *, 'last maf            ', options%lastMAF
      print *, 'DSName              ', trim_safe(options%DSName)
      print *, 'attributes          ', trim_safe(options%attributes)
      print *, 'datasets            ', trim_safe(options%datasets)
@@ -269,16 +273,26 @@ contains
       elseif ( filename(1:3) == '-v ' ) then
         options%verbose = .true.
         exit
-      elseif ( filename(1:3) == '-la ' ) then
+      elseif ( filename(1:4) == '-la ' ) then
         options%la = .true.
         options%datasets = ''
         exit
-      elseif ( filename(1:3) == '-ls ' ) then
+      elseif ( filename(1:4) == '-ls ' ) then
         options%ls = .true.
         options%datasets = ''
         exit
       else if ( filename(1:3) == '-r ' ) then
         call getarg ( i+1+hp, options%root )
+        i = i + 1
+        exit
+      else if ( filename(1:7) == '-first ' ) then
+        call getarg ( i+1+hp, number )
+        read(number, *) options%firstMAF
+        i = i + 1
+        exit
+      else if ( filename(1:6) == '-last ' ) then
+        call getarg ( i+1+hp, number )
+        read(number, *) options%lastMAF
         i = i + 1
         exit
       else if ( filename(1:4) == '-fv ' ) then
@@ -358,6 +372,8 @@ contains
       write (*,*) '                             (default is "/")'
       write (*,*) '          -rd DSName      => limit attributes to root/DSName'
       write (*,*) '                             (default is group attributes at root)'
+      write (*,*) '          -first maf1     => read l1b starting with maf1'
+      write (*,*) '          -last maf1      => read l1b ending with maf1'
       write (*,*) '          -fv value       => filter rms, % around value'
       write (*,*) '          -fvr relation   => one of {"=","<",">"}'
       write (*,*) '                              we filter values standing in'
@@ -483,17 +499,29 @@ contains
       if ( iPrec < 1 ) cycle
       ! Allocate and fill l2aux
       if ( options%verbose ) print *, 'About to read ', trim(sdName)
-      call ReadL1BData ( sdfid1, trim(sdName), L1bRadiance, NoMAFs, status, &
-        & hdfVersion=the_hdfVersion, NEVERFAIL=.true., L2AUX=.true. )
+      if ( options%firstMAF > -1 ) then
+        call ReadL1BData ( sdfid1, trim(sdName), L1bRadiance, &
+          & NoMAFs, status, firstMAF=options%firstMAF, lastMAF=options%lastMAF, &
+          & hdfVersion=the_hdfVersion, NEVERFAIL=.true., L2AUX=.true. )
+      else
+        call ReadL1BData ( sdfid1, trim(sdName), L1bRadiance, NoMAFs, status, &
+          & hdfVersion=the_hdfVersion, NEVERFAIL=.true., L2AUX=.true. )
+      endif
       if ( status /= 0 ) then
 	     call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'Unable to find ' // trim(sdName) // ' in ' // trim(File1) )
         cycle
       endif
       if ( options%verbose ) print *, 'About to read ', trim(sdName) // PRECISIONSUFFIX
-      call ReadL1BData ( sdfid1, trim(sdName)  // PRECISIONSUFFIX, L1bPrecision, &
-        & NoMAFs, status, &
-        & hdfVersion=the_hdfVersion, NEVERFAIL=.true., L2AUX=.true. )
+      if ( options%firstMAF > -1 ) then
+        call ReadL1BData ( sdfid1, trim(sdName)  // PRECISIONSUFFIX, L1bPrecision, &
+          & NoMAFs, status, firstMAF=options%firstMAF, lastMAF=options%lastMAF, &
+          & hdfVersion=the_hdfVersion, NEVERFAIL=.true., L2AUX=.true. )
+      else
+        call ReadL1BData ( sdfid1, trim(sdName)  // PRECISIONSUFFIX, L1bPrecision, &
+          & NoMAFs, status, &
+          & hdfVersion=the_hdfVersion, NEVERFAIL=.true., L2AUX=.true. )
+      endif
       if ( status /= 0 ) then
 	     call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'Unable to find ' // trim(sdName)  // PRECISIONSUFFIX // &
@@ -561,6 +589,9 @@ end program l2auxdump
 !==================
 
 ! $Log$
+! Revision 1.11  2010/03/11 23:35:55  pwagner
+! verbose output looks better
+!
 ! Revision 1.10  2009/11/20 23:03:38  pwagner
 ! -shape option just dumps array rank, shape
 !
