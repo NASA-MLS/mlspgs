@@ -10,8 +10,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-095r6}
-\newcommand{\docdate}{11 June 2010}
+\newcommand{\docname}{wvs-095r7}
+\newcommand{\docdate}{1 July 2010}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -82,16 +82,19 @@
 To: \>Bill, Nathaniel, Van\\
 Subject: \>Radiance and derivatives incorporating $\TS$\\
 From: \>Van Snyder\\
-Reference: \>\h{wvs-027}, \h{wvs-066}, \h{wvs-080}
+Reference: \>\h{wvs-027}, \h{wvs-066}, \h{wvs-080}, JPL D-18130
 \end{tabbing}
 
 \parindent 0pt \parskip 6pt
 \vspace{-10pt}
 
+\section{Analysis}
+
 When $\TS$ is taken into account, the factor $\DB_{ij} =
 \frac12\left(B_{i+1,j} - B_{i-1,j}\right)$ that appears in
-the equation giving radiance at frequency $\nu_j \in \{\nu_j, j = 1,
-\dots, n_f\}$, \emph{viz.}
+Equation (10.1) in the 19 August 2004 ATBD, JPL D-18130 (ignoring the special
+forms at the ends of the path for now), giving radiance at frequency $\nu_j
+\in \{\nu_j | j = 1, \dots, n_f\}$, \emph{viz.}
 
 \begin{equation}\label{one}
 I_j = \int \frac{\partial B_j(s)}{\partial s} \MT_j(s)\,\text{d}s
@@ -120,12 +123,23 @@ where $c$ is a channel number,
 
 \begin{equation}\label{three}
 \begin{array}{rll}
+\DB_{1j}^g \,= & \frac12\left(( 1 - \omega_{0_{2j}} ) B_{2j} +
+                 ( 1 - \omega_{0_{1j}} ) B_{1j}\right) & \\
 \DB_{ij}^g \,= & \frac12\left(( 1 - \omega_{0_{i+1,j}} ) B_{i+1,j} -
-                ( 1 - \omega_{0_{i-1,j}} ) B_{i-1,j}\right) &
-                \text{``gas,''} \\
+                 ( 1 - \omega_{0_{i-1,j}} ) B_{i-1,j}\right),
+                 i = 2 \dots n_p-1 &
+                 \text{ ``gas,''} \\
+\DB_{n_pj}^g \,= & B_{\text{space}} -
+                 \frac12\left(( 1 - \omega_{0_{n_p,j}} ) B_{n_pj} +
+                 ( 1 - \omega_{0_{n_p-1,j}} ) B_{n_p-1,j}\right) & \\
+\DB_{1j}^s \,= & \frac12\left( \omega_{0_{2j}} \TSs{2c} +
+                 \omega_{0_{1j}} \TSs{1c}\right) & \\
 \DB_{ij}^s \,= & \frac12\left( \omega_{0_{i+1,j}} \TSs{i+1,c} -
-                 \omega_{0_{i-1,j}} \TSs{i-1,c}\right) &
+                 \omega_{0_{i-1,j}} \TSs{i-1,c}\right),
+                 i = 2 \dots n_p-1 &
                  \text{``scattering,''} \\
+\DB_{n_pj}^s \,= & \frac12\left( \omega_{0_{n_pj}} \TSs{n_pc} +
+                 \omega_{0_{n_p-1,j}} \TSs{n_p-1,c}\right) & \\
 \omega_{0_{ij}} \,= & \frac{\beta_{{c\_s}_i}}{\beta_{e_{ij}}}
  \text{, and}\\
 \beta_{e_{ij}} \,= & \alpha_{\text{gas}_{ij}} + \beta_{{c\_s}_i} +
@@ -169,73 +183,77 @@ and therefore unaffected by $\!\IF{\cdot}$, and exchange the order
 of summation, giving
 
 \begin{equation}\begin{split}\label{five}
-\sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc}
-  \IF{\sum_{i=1}^{n_p} \DB_{ij}^s \MT_{ij}}=\,&
-\frac12\sum_{i=1}^{n_p} \sum_{n=1}^{n_c}
-          \phi_{nc} \Delta \nu_{nc}
-          \IF{( \omega_{0_{i+1,j}} \TSs{i+1,c} 
-            - \omega_{0_{i-1,j}} \TSs{i-1,c} ) \MT_{ij}} \\
-=\,&
-\frac12\sum_{i=1}^{n_p}
- \left( \TSs{i+1,c} \sum_{n=1}^{n_c}
- \phi_{nc} \Delta \nu_{nc} \IF{\omega_{0_{i+1,j}} \MT_{ij}} \right.
-- \\
-\,&
-\phantom{\frac12\sum_{i=1}^{n_p}\left(\right.}
- \left. \TSs{i-1,c} \sum_{n=1}^{n_c}
- \phi_{nc} \Delta \nu_{nc} \IF{\omega_{0_{i-1,j}} \MT_{ij}} \right)\,.
+&
+ \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc}
+  \IF{\sum_{i=1}^{n_p} \DB_{ij}^s \MT_{ij}}=
+ \sum_{i=1}^{n_p} \TSs{ic} \sum_{n=1}^{n_c} \phi_n \nu_n
+  \IF{\omega_{0_{ij}} \Delta \MT_{ij}} \\
+& \renewcommand{\arraystretch}{1.25}
+ \text{ where } \ \Delta \MT_{ij} =
+ \left\{ \begin{array}{ll}
+  \frac12 ( \MT_{1j} - \MT_{2j} )         & i = 1 \\
+  \frac12 ( \MT_{i-1,j} - \MT_{i+1,j} )   & i = 2 \dots n_p-1 \\
+  \frac12 ( \MT_{n_p-1,j} + \MT_{n_p,j} ) & i = n
+ \end{array} \right.
 \end{split}\end{equation}
 
-Defining the frequency-averaged values
+(see the appendix for this development).   Defining the frequency-averaged
+values
 
 \begin{equation}\label{six}
-\hMT_{i\pm1,c} =
-\sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc} \IF{\omega_{0_{i\pm1,j}} \MT_{ij}}
+\hMT_{ic} =
+\sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc}
+ \IF{\omega_{0_{ij}} \Delta \MT_{ij}}
 \,,
 \end{equation}
 
-Equation (\ref{four}) becomes
+Equation (\ref{four}) becomes $I_c = I_c^g + I_c^s$ where
 
-\begin{equation}\label{seven}
-I_c = \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc}
-       \IF{\sum_{i=1}^{n_p} \DB_{ij}^g \MT_{ij}} +
-      \frac12\left(
-      \sum_{i=1}^{n_p} \hMT_{i+1,c} \TSs{i+1,c} -
-                       \hMT_{i-1,c} \TSs{i-1,c}
-      \right)\,.
-\end{equation}
+\begin{equation}\begin{split}\label{seven}
+ I_c^g =\,& \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc}
+           \IF{\sum_{i=1}^{n_p} \DB_{ij}^g \MT_{ij}}
+\text{ and } \\
+ I_c^s =\,& \sum_{i=1}^{n_p} \TSs{ic}
+  \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc}
+   \IF{\omega_{0_{ij}} \Delta \MT_{ij}}
+       = \sum_{i=1}^{n_p} \TSs{ic}\, \hMT_{ic}
+\end{split}\end{equation}
 
 That is, the ``gas'' terms ($\DB_{ij}^g \MT_{ij}$) are frequency averaged
-\emph{after} path integration, while the $\omega_{0_{i\pm1,j}} \MT_{ij}$
+\emph{after} path integration, while the $\omega_{0_{ij}} \Delta \MT_{ij}$
 factors in the ``scattering'' terms are frequency averaged \emph{before}
-path integration to give $\hMT_{i\pm1,c}$, then multiplied by the
-$\TSs{i\pm1,c}$ factors (which are channel averages), then their products
+path integration to give $\hMT_{ic}$, then multiplied by the
+$\TSs{ic}$ factors (which are channel averages), then their products
 are integrated along the path.  This is necessary because path
-integration is done (by the {\tt Frequency\_Loop} subroutine of the full
+integration is done (by the {\tt One\_Frequency} subrou\-tine of the full
 forward model) for $\{\nu_j\}$, some of which appear in more than one
-channel.  Therefore, in computing a product $\omega_{0_{i\pm1,j}}
-\MT_{ij} \TSs{i+1,c}$, we do not know what $c$ to use for a particular
+channel.  Therefore, in computing a product $\omega_{0_{ij}}
+\Delta \MT_{ij} \TSs{ic}$, we would not know what $c$ to use for a particular
 $j$.
 
 Derivatives are treated similarly.  From Equation (\ref{seven})
+$\frac{\partial I_c}{\partial x} = \frac{\partial I^g_c}{\partial x} +
+\frac{\partial I^s_c}{\partial x}$ where
 
 \begin{equation}\begin{split}\label{eight}
-\frac{\partial I_c}{\partial x} =\,&
+\frac{\partial I^g_c}{\partial x} =\,&
  \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc}
   \IF{ \sum_{i=1}^{n_p}
    \frac{\partial \DB_{ij}^g}{\partial x} \MT_{ij}
-                        + \DB_{ij}^g \frac{\partial \MT_{ij}}{\partial x}
+   + \DB_{ij}^g \frac{\partial \MT_{ij}}{\partial x}
       } \\
-+\,&
+=\,&
+ \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc}
+  \IF{ \MT_{ij} \left( \sum_{i=1}^{n_p}
+   \frac{\partial \DB_{ij}^g}{\partial x}
+ - \DB_{ij}^g \frac{\partial \delta_{ij}}{\partial x}
+   \right)   } \text{ and} \\
+\frac{\partial I^s_c}{\partial x} =\,&
   \frac12
-  \sum_{i=1}^{n_p} \left( \frac{\partial \hMT_{i+1,c}}{\partial x}
-                          \TSs{i+1,c} +
-                          \hMT_{i+1,c}
-                           \frac{\partial \TSs{i+1,c}}{\partial x}
-                        - \frac{\partial \hMT_{i+1,c}}{\partial x}
-                          \TSs{i-1,c} -
-                          \hMT_{i-1,c}
-                           \frac{\partial \TSs{i-1,c}}{\partial x}
+  \sum_{i=1}^{n_p} \left( \frac{\partial \hMT_{ic}}{\partial x}
+                          \TSs{ic} +
+                          \hMT_{ic}
+                           \frac{\partial \TSs{ic}}{\partial x}
                    \right)
 \end{split}\end{equation}
 
@@ -290,24 +308,24 @@ $\mu$ index points in the solution grids.
 From Equation (\ref{three})
 
 \begin{equation}\begin{split}\label{ten}
-\frac{\partial \omega_{0_{ij}}}{\partial f^k_i} =\,&
- \frac1{\beta_{e_{ij}}}   \frac{\partial \beta_{{c\_s}_i}}{\partial f^k_i} -
- \frac{\beta_{{c\_s}_i}}{\beta_{e_{ij}}^2}
-  \frac{\partial \beta_{e_{ij}}}{\partial f^k_i}
+\frac{\partial \omega_{0_{ij}}}{\partial f^{\text{IWC}}_i} =\,&
+ \frac1{\beta_{e_{ij}}}   \frac{\partial \beta_{{c\_s}_i}}{\partial f^{\text{IWC}}_i} -
+  \frac{\beta_{{c\_s}_i}}{\beta_{e_{ij}}^2}
+   \frac{\partial \beta_{e_{ij}}}{\partial f^{\text{IWC}}_i}
 =
- \frac1{\beta_{e_{ij}}}   \frac{\partial \beta_{{c\_s}_i}}{\partial f^k_i} -
- \frac{\beta_{{c\_s}_i}}{\beta_{e_{ij}}^2}
-                   \left( \frac{\partial \beta_{{c\_e}_i}}{\partial f^k_i} +
-                          \frac{\partial \alpha_{\text{gas}_{ij}}}{\partial f^k_i}
-                   \right) \\
+ \frac1{\beta_{e_{ij}}} \left( \frac{\partial \beta_{{c\_s}_i}}{\partial f^{\text{IWC}}_i} -
+  \omega_{0_{ij}}
+                   \left( \frac{\partial \beta_{{c\_e}_i}}{\partial f^{\text{IWC}}_i} +
+                          \frac{\partial \alpha_{\text{gas}_{ij}}}{\partial f^{\text{IWC}}_i}
+                   \right) \right) \\
 =\,&
- \frac1{\beta_{e_{ij}}}   \frac{\partial \beta_{{c\_s}_i}}{\partial f^k_i} -
- \frac{\beta_{{c\_s}_i}}{\beta_{e_{ij}}^2}
-                   \left( \frac{\partial \beta_{{c\_e}_i}}{\partial f^k_i} +
-                          \beta^k_{ij}
-                   \right) \text{ and }
- \frac{\partial \omega_{0_{ij}}}{\partial f^k_m} =
- \sum_{l=1}^{n_p} \eta^k_{ml} \frac{\partial \omega_{0_{ij}}}{\partial f^k_i}\,,
+ \frac1{\beta_{e_{ij}}} \left( \frac{\partial \beta_{{c\_s}_i}}{\partial f^{\text{IWC}}_i} -
+  \omega_{0_{ij}}
+                   \frac{\partial \beta_{{c\_e}_i}}{\partial f^{\text{IWC}}_i}
+                   \right) \,
+  \text{ and }
+ \frac{\partial \omega_{0_{ij}}}{\partial f^{\text{IWC}}_m} =
+ \sum_{l=1}^{n_p} \eta^{\text{IWC}}_{ml} \frac{\partial \omega_{0_{ij}}}{\partial f^{\text{IWC}}_i}\,,
 \\
 \frac{\partial \omega_{0_{ij}}}{\partial T_i} =\,&
  \frac1{\beta_{e_{ij}}}   \frac{\partial \beta_{{c\_s}_i}}{\partial T_i} -
@@ -316,18 +334,22 @@ From Equation (\ref{three})
                           \frac{\partial\alpha_{\text{gas}_{ij}}}{\partial T_i}
                    \right)\\
 =\,&
- \frac1{\beta_{e_{ij}}}   \frac{\partial \beta_{{c\_s}_i}}{\partial T_i} -
- \frac{\beta_{{c\_s}_i}}{\beta_{e_{ij}}^2}
+ \frac1{\beta_{e_{ij}}} \left( \frac{\partial \beta_{{c\_s}_i}}{\partial T_i} -
+ \omega_{0_{ij}}
                    \left( \frac{\partial \beta_{{c\_e}_i}}{\partial T_i} -
                           \frac{\partial\alpha_{\text{gas}_{ij}}}{\partial T_i}
-                   \right) \text{ and }
+                   \right) \right)
+ \text{ and }
  \frac{\partial \omega_{0_{ij}}}{\partial T_\mu} =
    \sum_{l=1}^{n_p} \eta^T_{\mu i}
     \frac{\partial \omega_{0_{ij}}}{\partial T_i}
- \,.
+ \,,
 \end{split}\end{equation}
 
-From Equation (\ref{nine}),
+the former being limited to IWC and simplified because
+$\frac{\partial\omega_{0_{ij}}}{\partial f^k_i} = 0$ for $k \neq$ IWC, and
+$\frac{\partial\alpha_{\text{gas}_{ij}}}{\partial f^{\text{IWC}}_i} =
+\beta^{\text{IWC}}_{ij} = 0$.  From Equation (\ref{nine}),
 
 \begin{equation}\begin{split}\label{eleven}
 \frac{\partial \MT_{ij}}{\partial f^k_m} =\,&
@@ -350,23 +372,56 @@ From Equation (\ref{nine}),
 \,.
 \end{split}\end{equation}
 
-From Equations (\ref{six}), (\ref{ten}) and (\ref{eleven}),
+In order to compute the derivatives of $\hMT_{ic}$ defined in Equation
+(\ref{six}), \emph{viz.} $\frac{\partial\hMT_{ic}}{\partial x}$, where
+$x$ is either $f^k_m$ or $T_\mu$, use Equations (\ref{ten}) and
+(\ref{eleven}) to compute
 
-\begin{equation}\begin{split}\label{twelve}
-\frac{\partial \hMT_{i\pm1,c}}{\partial f^k_m} =\,&
- \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc}
-  \IF{\MT_{ij}
-    \left[
-       \frac{\partial \omega_{0_{i\pm1,j}}} {\partial f^k_m} -
-        \omega_{0_{i\pm1,j}} \frac{\partial \delta^k_{ij}}{\partial f^k_m}
-    \right]}\text{ and}\\
-\frac{\partial \hMT_{i\pm1,c}}{\partial T_\mu} =\,&
- \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc}
-  \IF{\MT_{ij}
-     \left[
-       \frac{\partial \omega_{0_{i\pm1,j}}}{\partial T_\mu} -
-         \omega_{0_{i\pm1,j}}\frac{\partial \delta_{ij}}{\partial T_\mu}
-      \right]} .
+\begin{equation}\begin{split}
+2\frac{\partial}{\partial x} \left( \omega_{0_{ij}} \Delta \MT_{ij} \right)
+=\,&
+ 2 \left(
+ \frac{\partial \omega_{0_{ij}}}{\partial x} \Delta \MT_{ij} +
+ \omega_{0_{ij}} \frac{\partial \Delta \MT_{ij}}{\partial x}
+ \right) \\
+=\,& \left\{ \begin{array}{ll}
+ \frac{\partial \omega_{0_{1j}}}{\partial x} ( \MT_{1j} - \MT_{2j} )
+ - \omega_{0_{1j}} \left( \MT_{1j} \frac{\partial \delta^k_{1j}}{\partial x} -
+                          \MT_{2j} \frac{\partial \delta^k_{2j}}{\partial x}
+                   \right) & i = 1 \\
+ \frac{\partial \omega_{0_{ij}}}{\partial x} ( \MT_{i-1,j} - \MT_{i+1,j} )
+ - \omega_{0_{ij}}
+     \left( \MT_{i-1,j} \frac{\partial \delta^k_{i-1,j}}{\partial x} -
+            \MT_{i+1,j} \frac{\partial \delta^k_{i+1,j}}{\partial x}
+     \right) & i = 2 \dots n_p-1 \\
+ \frac{\partial \omega_{0_{n_p j}}}{\partial x} ( \MT_{n_p-1, j} - \MT_{n_p j} )
+ - \omega_{0_{n_p j}}
+     \left( \MT_{n_p-1,j} \frac{\partial \delta^k_{n_p-1,j}}{\partial x} +
+            \MT_{n_p j} \frac{\partial \delta^k_{n_p j}}{\partial x}
+     \right) & i = n_p \\
+ \end{array}
+ \right. \\
+=\,& \left\{ \begin{array}{ll}
+ \MT_{1j} \left( \frac{\partial \omega_{0_{1j}}}{\partial x} -
+                 \omega_{0_{1j}} \frac{\partial \delta^k_{1j}}{\partial x}
+          \right) -
+ \MT_{2j} \left( \frac{\partial \omega_{0_{1j}}}{\partial x} -
+                 \omega_{0_{1j}} \frac{\partial \delta^k_{2j}}{\partial x}
+          \right)  & i = 1 \\
+ \MT_{i-1,j} \left( \frac{\partial \omega_{0_{ij}}}{\partial x} -
+                 \omega_{0_{ij}} \frac{\partial \delta^k_{i-1,j}}{\partial x}
+          \right) -
+ \MT_{i+1,j} \left( \frac{\partial \omega_{0_{ij}}}{\partial x} -
+                 \omega_{0_{ij}} \frac{\partial \delta^k_{i+1,j}}{\partial x}
+          \right)  & i = 2 \dots n_p-1 \\
+ \MT_{n_p-1,j} \left( \frac{\partial \omega_{0_{n_p j}}}{\partial x} -
+                 \omega_{0_{n_p j}} \frac{\partial \delta^k_{n_p-1,j}}{\partial x}
+          \right) +
+ \MT_{n_p j} \left( \frac{\partial \omega_{0_{n_p j}}}{\partial x} -
+                 \omega_{0_{n_p j}} \frac{\partial \delta^k_{n_p j}}{\partial x}
+          \right)  & i = n_p\,. \\
+ \end{array}
+ \right. \\
 \end{split}\end{equation}
 
 The full forward model operates by integrating along the path first,
@@ -388,6 +443,8 @@ when it is computed, throughout the atmosphere, and frequency.  Therefore,
 the second term in Equation (\ref{eight}) will produce nonzeros in the
 Jacobian for every element in the state vector upon which $\TS$ depends,
 not just those near the path.
+
+\section{Implementation alternatives}
 
 There are several possibilities to perform the frequency averaging as
 described in Equation (\ref{twelve}).  One method is to create
@@ -430,7 +487,7 @@ Changes to storage in the forward model would be:
 
 \item Expand the arrays that represent $\beta^k_{ij}$, $\frac{\partial
   \beta^k_{ij}}{\partial T_i}$, and $\MT_{ij}$ within {\tt
-  Frequency\_Loop} by adding a frequency dimension, and allocate them
+  One\_Frequency} by adding a frequency dimension, and allocate them
   outside that subroutine.
 
 \end{itemize}
@@ -444,7 +501,7 @@ stages:
   with respect to $T_i$ and IWC$_i$, independently of frequency,
 
 \item Evaluate the first term in each equation using a small modification
-  of the {\tt Frequency\_Loop} subroutine to include the $\omega_0$ terms
+  of the {\tt One\_Frequency} subroutine to include the $\omega_0$ terms
   in $\Delta B^s_{ij}$, saving quantities enumerated above necessary to
   compute $\frac{\partial \omega_{0_{ij}}}{\partial f^k_i}$,
   $\frac{\partial \omega_{0_{ij}}}{\partial T_i}$, $\frac{\partial
@@ -459,7 +516,7 @@ stages:
   wvs-027), and
 
 \item Evaluate the second term in a second invocation of {\tt
-  Frequency\_Loop}, modified to use the linear forward model to compute
+  One\_Frequency}, modified to use the linear forward model to compute
   the $\TSs{ic}$, $\frac{\partial \TSs{ic}}{\partial f^k_i}$ and
   $\frac{\partial \TSs{ic}}{\partial T_i}$ terms in Equations
   (\ref{seven}) and (\ref{eight}).  This is also similar to how PFA
@@ -505,10 +562,10 @@ where
 h_{jc} = \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc} \eta_{nj}\,.
 \end{equation}
 
-Before the {\tt Frequency\_Loop} subroutine in the full forward model is
+Before the {\tt One\_Frequency} subroutine in the full forward model is
 invoked, compute $h_{jc}$ from the pointing frequency grid and the filter
 function's frequency grids for all channels.  During path integration in
-{\tt Frequency\_Loop}, evaluate Equation (\ref{fourteen}) to produce the
+{\tt One\_Frequency}, evaluate Equation (\ref{fourteen}) to produce the
 channel-averaged quantity $\hMT_{i\pm1,c}$.  This method also applies to
 evaluating Equation (\ref{twelve}).
 
@@ -516,10 +573,10 @@ Because of the use of linear interpolation between $\{\nu_j\}$ and
 $\{\nu_{nc}\}$, this scheme is somewhat less accurate than the first
 method.
 
-A third method is to divide references to {\tt Frequency\_Loop} into sets
+A third method is to divide references to {\tt One\_Frequency} into sets
 of frequencies that appear in each channel and compute the
 frequency-averaged channel radiance for each channel after invocation of
-{\tt Frequency\_Loop} for the subset of $\{\nu_j\}$ that appear within
+{\tt One\_Frequency} for the subset of $\{\nu_j\}$ that appear within
 that channel.  This would allow forming products $\omega_{0_{i\pm1,j}}
 \MT_{ij} \TSs{i+1,c}$ during path integration, and would not require
 frequency averaging during path integration.
@@ -533,7 +590,7 @@ integrations.
 
 A fourth method is to interpolate $\TSs{i\pm1,c}$ and its derivatives
 from adjacent channel centers to the element of $\{\nu_j\}$ for which
-{\tt Frequency\_Loop} is invoked.  In principle this requires invoking
+{\tt One\_Frequency} is invoked.  In principle this requires invoking
 the linear forward model twice per path point and frequency, but if
 storage permits it might be possible to invoke the linear forward model
 for every path point for the two channels surrounding a subset of
@@ -545,12 +602,118 @@ f^k_l}$ and $\frac{\partial \TSs{i\pm1,c}}{\partial T}$ is $2 n_p^2
 $\TSs{i\pm1,c}$ depends, i.e., the number of values of $k$.  Since $l \leq
 i$ this could be halved at some expense to clarity of the software.
 
+\section*{Appendix -- development of $\Delta \hMT_{ic}$}
+
+Using the definition of $\Delta B^s_{ij}$ from Equation (\ref{three}) and
+expanding $\DB_{ij}^s \MT_{ij}$ in the second term of Equation
+(\ref{four})
+
+\begin{equation}\begin{split}
+2 \sum_{n=1}^{n_c} & \phi_{nc} \Delta \nu_{nc}
+           \IF{\sum_{i=1}^{n_p} \DB_{ij}^s \MT_{ij}} = \\
+  & \sum_{n=1}^{n_c} \phi_n \nu_n \IF{(\omega_{0_{1j}} \TSs{1c} +
+                                       \omega_{0_{2j}} \TSs{2c}) \MT_{1j}} \\
++ & \sum_{n=1}^{n_c} \sum_{i=2}^{n_p-1} \phi_n \nu_n
+     \IF{(\omega_{0_{i+1,j}} \TSs{i+1,c} -
+          \omega_{0_{i-1,j}} \TSs{i-1,c}) \MT_{ij}} \\
++ & \sum_{n=1}^{n_c} \phi_n \nu_n
+      \IF{(\omega_{0_{n_p-1,j}} \TSs{n_p-1,c} +
+           \omega_{0_{n_pj}} \TSs{n_pc}) \MT_{n_pj}} \,.
+\end{split}\end{equation}
+
+Using the fact that $\TSs{ij}$ is a channel quantity, and can therefore be
+factored out of the frequency averaging operator, gives
+
+\begin{equation}\begin{split}
+2 \sum_{n=1}^{n_c} & \phi_{nc} \Delta \nu_{nc}
+           \IF{\sum_{i=1}^{n_p} \DB_{ij}^s \MT_{ij}} = \\
+  & \TSs{1c} \sum_{n=1}^{n_c} \phi_n \nu_n \IF{\omega_{0_{1j}} \MT_{1j}}
++   \TSs{2c} \sum_{n=1}^{n_c} \phi_n \nu_n \IF{\omega_{0_{2j}} \MT_{1j}} \\
++ & \sum_{i=2}^{n_p-1} \TSs{i+1,c}
+     \sum_{n=1}^{n_c} \phi_n \nu_n \IF{\omega_{0_{i+1,j}} \MT_{ij}}
+-   \sum_{i=2}^{n_p-1} \TSs{i-1,c}
+     \sum_{n=1}^{n_c} \phi_n \nu_n \IF{\omega_{0_{i-1,j}} \MT_{ij}} \\
++ & \TSs{n_p-1,c}
+     \sum_{n=1}^{n_c} \phi_n \nu_n \IF{\omega_{0_{n_p-1,j}} \MT_{n_p j}}
++   \TSs{n_p c}
+     \sum_{n=1}^{n_c} \phi_n \nu_n \IF{\omega_{0_{n_p j}} \MT_{n_p j}} \\
+\end{split}\end{equation}
+
+To simplify the notation, let $S_{kl} = \sum_n \phi_n \nu_n
+\IF{\omega_{0_{kj}} \MT_{lj}}$, giving
+
+\begin{equation}
+  \TSs{1c} S_{11} + \TSs{2c} S_{21}
++ \sum_{i=2}^{n_p-1} \TSs{i+1,c} S_{i+1,i} -
+  \sum_{i=2}^{n_p-1} \TSs{i-1,c} S_{i-1,i}
++ \TSs{n-1,c} S_{n-1,n} + \TSs{nc} S_{nn}
+\end{equation}
+
+Shift the indices of summation to get $\TS$ with the same subscripts in
+the sums, giving
+
+\begin{equation}
+  \TSs{1c} S_{11} + \TSs{2c} S_{21}
++ \sum_{i=3}^{n_p} \TSs{i,c} S_{i,i-1} -
+  \sum_{i=1}^{n_p-2} \TSs{i,c} S_{i,i+1}
++ \TSs{n-1,c} S_{n-1,n} + \TSs{nc} S_{nn}
+\end{equation}
+
+Move some terms out of the sums to put the summations over the same
+ranges, giving
+
+\begin{equation}\begin{split}
+  & \TSs{1c} S_{11} + \TSs{2c} S_{21}
+-   \TSs{1c} S_{12} - \TSs{2c} S_{23} \\
++ & \sum_{i=3}^{n_p-2} \TSs{ic} S_{i,i-1} -
+    \sum_{i=3}^{n_p-2} \TSs{ic} S_{i,i+1} \\
++ & \TSs{n-1,c} S_{n-1,n-2} + \TSs{nc} S_{n,n-1}
++   \TSs{n-1,c} S_{n-1,n} + \TSs{nc} S_{nn}
+\end{split}\end{equation}
+
+Collect factors of $\TS$ with the same subscripts, giving
+
+\begin{equation}\begin{split}
+  & \TSs{1c} ( S_{11} - S_{12} )
++   \TSs{2c} ( S_{21} - S_{23} ) \\
++ & \sum_{i=3}^{n_p-2} \TSs{ic} ( S_{i,i-1} - S_{i,i+1} ) \\
++ & \TSs{n-1,c} ( S_{n-1,n-2} + S_{n-1,n} )
++   \TSs{nc} ( S_{n,n-1} + S_{nn} )
+\end{split}\end{equation}
+
+Observe that the second and penultimate terms fit the pattern of the
+summation, giving
+
+\begin{equation}
+  \TSs{1c} ( S_{11} - S_{12} )
++ \sum_{i=2}^{n_p-1} \TSs{ic} ( S_{i,i-1} - S_{i,i+1} )
++ \TSs{nc} ( S_{n,n-1} + S_{nn} )
+\end{equation}
+
+Substituting the definition of $S_{kl}$ and observing that $\IF{\cdot}$
+is a linear operator gives Equation (\ref{five}):
+
+\begin{equation}
+\sum_{i=1}^{n_p} \TSs{ic} \sum_{n=1}^{n_c} \phi_n \nu_n
+ \IF{\omega_{0_{ij}} \Delta \MT_{ij}}
+ \renewcommand{\arraystretch}{1.25}
+ \text{ where } \ \Delta \MT_{ij} =
+ \left\{ \begin{array}{ll}
+  \frac12 ( \MT_{1j} - \MT_{2j} )         & i = 1 \\
+  \frac12 ( \MT_{i-1,j} - \MT_{i+1,j} )   & i = 2 \dots n_p-1 \\
+  \frac12 ( \MT_{n_p-1,j} + \MT_{n_p,j} ) & i = n\,.
+ \end{array} \right.
+\end{equation}
+
 \label{lastpage}
 \end{document}
 
 % $Id$
 
 % $Log$
+% Revision 1.6  2010/06/11 23:58:36  vsnyder
+% Correct some subscripts in Equation 10
+%
 % Revision 1.5  2010/06/08 23:35:56  vsnyder
 % Corrected Equations 10-11
 %
