@@ -10,8 +10,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-095r7}
-\newcommand{\docdate}{1 July 2010}
+\newcommand{\docname}{wvs-095r8}
+\newcommand{\docdate}{26 July 2010}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -377,7 +377,7 @@ In order to compute the derivatives of $\hMT_{ic}$ defined in Equation
 $x$ is either $f^k_m$ or $T_\mu$, use Equations (\ref{ten}) and
 (\ref{eleven}) to compute
 
-\begin{equation}\begin{split}
+\begin{equation}\begin{split}\label{twelve}
 2\frac{\partial}{\partial x} \left( \omega_{0_{ij}} \Delta \MT_{ij} \right)
 =\,&
  2 \left(
@@ -447,15 +447,14 @@ not just those near the path.
 \section{Implementation alternatives}
 
 There are several possibilities to perform the frequency averaging as
-described in Equation (\ref{twelve}).  One method is to create
-three-dimensional arrays to store $\left[ \frac{\partial
-\omega_{0_{i\pm1,j}}}{\partial f^k_l} - \omega_{0_{i\pm1,j}}
-\frac{\partial \delta_{ij}}{\partial f^k_l} \right] \MT_{ij}$ and
-similarly for temperature derivatives, having extents $n_p^2 \times n_s
-\times n_f$ and $n_p^2 \times n_f$, and to provide data structures that
-keep track of nonzero elements.  Assuming $n_p\approx 150,\, n_s \approx
-20$, and $n_f \approx 500$, these arrays would have $\approx
-225\times10^6$ and $\approx 10^7$ elements, so this is clearly
+described in Equation (\ref{twelve}).  One method is to create arrays to
+store $\left[ \frac{\partial \omega_{0_{ij}}}{\partial f^k_l} -
+\omega_{0_{ij}} \frac{\partial \delta_{i\pm1,j}}{\partial f^k_l} \right]
+\MT_{i\pm1,j}$ and similarly for temperature derivatives, having extents
+$n_p^2 \times n_s \times n_f$ and $n_p^2 \times n_f$, and to provide data
+structures that keep track of nonzero elements.  Assuming $n_p\approx
+150,\, n_s \approx 20$, and $n_f \approx 500$, these arrays would have
+$\approx 225\times10^6$ and $\approx 10^7$ elements, so this is clearly
 impractical.
 
 The forward model already stores $\eta^k_{il}$ and $f^k_l$, and
@@ -547,13 +546,13 @@ average $\!\IF{\omega_{0_{i\pm1,j}}\MT_{ij}}$ to get, by exchanging the
 order of summation,
 
 \begin{equation}\begin{split}\label{fourteen}
-\hMT_{i\pm1,c} =\,& \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc}
- \IF{\omega_{0_{i\pm1,j}}\MT_{ij}}
+\hMT_{ic} =\,& \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc}
+ \IF{\omega_{0_{i\j}}\Delta \MT_{ij}}
  = \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc}
-    \sum_{j=1}^{n_f} \eta_{nj} \omega_{0_{i\pm1,j}} \MT_{ij} \\
- =\,& \sum_{j=1}^{n_f} \omega_{0_{i\pm1,j}} \MT_{ij}
+    \sum_{j=1}^{n_f} \eta_{nj} \omega_{0_{ij}} \Delta \MT_{ij} \\
+ =\,& \sum_{j=1}^{n_f} \omega_{0_{ij}} \Delta \MT_{ij}
     \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc} \eta_{nj}
- = \sum_{j=1}^{n_f} h_{jc} \omega_{0_{i\pm1,j}} \MT_{ij}\,,
+ = \sum_{j=1}^{n_f} h_{jc} \omega_{0_{ij}} \Delta \MT_{ij}\,,
 \end{split}\end{equation}
 
 where
@@ -711,6 +710,9 @@ is a linear operator gives Equation (\ref{five}):
 % $Id$
 
 % $Log$
+% Revision 1.7  2010/07/26 20:57:13  vsnyder
+% Substantial revision and reorganization
+%
 % Revision 1.6  2010/06/11 23:58:36  vsnyder
 % Correct some subscripts in Equation 10
 %
