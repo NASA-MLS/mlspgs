@@ -341,7 +341,8 @@ contains
     integer :: NoChans
     integer :: SPS_I, SPS_J             ! species indices
     integer :: q, r                     ! state vector indices
-    real(r8) :: d2rad_df2_out(size(convolve_support%del_chi_out), size(d2i_df2,dim=2), size(d2i_df2,dim=3))
+    real(r8) :: d2rad_df2_out( size(convolve_support%del_chi_out), &
+                             & size(d2i_df2,dim=2), size(d2i_df2,dim=3))
     real(rv), pointer :: MIF_Times_for_MAF(:)
 
     nullify ( MIF_Times_for_MAF )
@@ -350,7 +351,8 @@ contains
 
     ! do the convolution
 
-    call fov_convolve_3d ( convolve_support, d2i_df2, MIF_Times_for_MAF, DeadTime, grids_f%deriv_flags, d2rad_df2_out )
+    call fov_convolve_3d ( convolve_support, d2i_df2, MIF_Times_for_MAF, &
+                         & DeadTime, grids_f%deriv_flags, d2rad_df2_out )
 
     ! load second derivatives into Hessian
     ! First, find index location in Hessian and set the derivative flags
@@ -395,7 +397,9 @@ contains
                 ! load derivatives for this (zeta & phi) if needed:
 
                 if ( Grids_f%deriv_flags(q) .and. Grids_f%deriv_flags(r) ) &
-                    & call loadMatrixValue ( d2rad_df2_out(:,q,r), hessian%block(row,col1,col2)%values(channel::noChans,ki,kj), sbRatio, update )
+                    & call loadMatrixValue ( d2rad_df2_out(:,q,r), &
+                    & hessian%block(row,col1,col2)%values(channel::noChans,ki,kj), &
+                    & sbRatio, update )
 
               end do
    
@@ -1030,6 +1034,9 @@ contains
 end module Convolve_All_m
 
 ! $Log$
+! Revision 2.13  2010/07/27 01:12:56  vsnyder
+! Fold some lines the compiler said were too long
+!
 ! Revision 2.12  2010/07/18 23:39:19  yanovsky
 ! Add Convolve_Other_Second_Deriv and GetFullBlock_Hessian
 !
