@@ -313,8 +313,9 @@ parser, as described in following sections.  The grammar in section
 \ref{alt} is not suitable for construction of a parser using the methods
 discussed here, but it may be easier to read.
 
-$T$ = \{ `begin' `EOF' `EOS' `end' `name' `number' `string' `unit' `(' `)'
-         '[' ']' `+' `$-$' `*' `/' `.' `:' `=' \}
+$T$ = \{ 'and' `begin' `EOF' `EOS' `end' `name' `number' 'or' `string'
+         `unit' `(' `)' '[' ']' `+' `$-$' `*' `/' `.' `:' `$<$:' `:$<$'
+         `$<$:$<$' `=' \}
 
 $N$ = \{ cf one\_cf spec spec\_rest field\_list expr value limit lterm
          lfactor term factor primary \}
@@ -375,8 +376,8 @@ left-hand side as the first production.  We put quotation marks around
 terminal symbols.  Thus, it isn't necessary explicitly to give $T$, $N$
 and $S$, and in following grammars, we will not do so.
 
-By way of example, let us start with ``expr'' instead of the starting
-symbol, and derive the phrase $a + b * c$ in a leftmost fashion:
+By way of example, let us derive the phrase $a + b * c$ from ``expr'' in a
+leftmost fashion:
 
 expr~$\Rightarrow$ limit~$\Rightarrow$ lterm~$\Rightarrow$
 lfactor~$\Rightarrow$ term `+' term~$\Rightarrow$ factor `+'
@@ -388,7 +389,7 @@ primary~$\Rightarrow$ `name(a)' `+' `name(b)' `*' `name(c)'
 
 At this point, the sequence consists entirely of terminal symbols, and so
 we have a phrase that can be derived from the nonterminal symbol expr,
-i.e. expr $\Rightarrow^* a + b * c$.
+i.e., expr $\Rightarrow^* a + b * c$.
 
 The symbol `name' is terminal from the point of view of the grammar, but
 has an internal structure deduced from the lexicon, so it is actually
@@ -920,6 +921,9 @@ unit$_{xy}$ $\rightarrow \lambda$ \{ $y \leftarrow x$ \} \\
 
 \section{An alternative parsing method}\label{alt}
 
+The disinterested reader can skip this section without missing anything
+important.
+
 There is a more powerful class of grammars and their associated parsers,
 known as $LR(1)$.  The $L$ means that the input is examined
 left-to-right.  The $R$ means that the reverse of a rightmost derivation
@@ -1085,8 +1089,8 @@ symbol is found in the string table is noted.  The definition of ``new''
 depends on the category of symbol.  If it is a character literal, i.e.
 enclosed in quotes or apostrophes, comparison to previous symbols is case
 sensitive.  Otherwise, it is caseless.  Subject to this definition of
-equality, no duplicates are allowed.  For all subsequent processing,
-each symbol is denoted by its index in the string table.
+equality, no duplicates appear in the symbol table.  For all subsequent
+processing, each symbol is denoted by its index in the string table.
 
 \vspace{-3pt}
 \subsection{Procedures to access symbols}
@@ -1313,17 +1317,18 @@ the terms, the units if any of the factor with units, or the units if any
 of the numerator.
 
 \section{Sections, specifications, fields}
-The relation between sections and the specifications they can have in
-them, the relation between specifications and the named fields they can
-have in them, and the types of values in fields are checked.  These
-relations are spelled out in the \emph{EOS MLS Software documentation
+
+The relationship between sections and the specifications they can have in
+them, the relationship between specifications and the named fields they
+can have in them, and the types of values in fields are checked.  These
+relationships are spelled out in the \emph{EOS MLS Software documentation
 series, Quick reference for the syntax of the L2CF}, document number TBD,
 or other documents relevant to different MLS software subsystems.
 
-These relations are encoded by putting trees that describe them into the
-parser's tree space before the parser is run.  This is done in {\tt
-init\_tables\_module}.  After the parser finishes, they become part of
-the abstract syntax tree, as ``left-hand brothers'' of the tree that
+The allowed relationships are encoded by putting trees that describe them
+into the parser's tree space before the parser is run.  This is done in
+{\tt init\_tables\_module}.  After the parser finishes, they become part
+of the abstract syntax tree, as ``left-hand brothers'' of the tree that
 results from parsing the input.  The type checker processes them in the
 same way that it processes parser output.  Examples of these are shown in
 chapter \ref{trees}.
@@ -1522,7 +1527,7 @@ the identifier is an allowed argument name of the specification.  Suppose
 one has a variable, say {\tt son}, that indexes the argument (the {\tt
 n\_asg} vertex).  The index of the field name, a parameter beginning with
 {\tt f\_} from {\tt init\_tables\_module}, can be gotten by {\tt
-decoration(subtree(1,son))}, or by the {\tt get\_field\_id} function from
+decoration(subtree(1, son))}, or by the {\tt get\_field\_id} function from
 the {\tt MoreTree} module.
 
 There are three categories for the values of the \emph{vals}:
@@ -1712,7 +1717,7 @@ different type declarations.)
 
 \chapter{Some pictures of trees}\label{trees}
 
-\label{toptree}\epsfig{file=tree.2.eps}\newpage
+\label{toptree}\epsfig{file=tree.2.eps,angle=270}\newpage
 \label{bigtree}\epsfig{file=tree.1.eps}\newpage
 \label{dottree}\epsfig{file=tree.3.eps}
 
@@ -1721,6 +1726,9 @@ different type declarations.)
 \end{document}
 
 % $Log$
+% Revision 1.2  2009/09/18 00:06:17  vsnyder
+% Get pictures from . instead of ./cf
+%
 % Revision 1.1  2008/06/11 20:14:50  vsnyder
 % Initial commit
 %
