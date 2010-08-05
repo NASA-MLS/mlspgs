@@ -37,7 +37,7 @@ contains
   subroutine INIT_LEXER ( N_CHARS, N_SYMBOLS, HASH_TABLE_SIZE, STAT )
   ! Allocate the character, symbol and hash tables, which automatically
   ! initializes them.
-    use STRING_TABLE, only: ALLOCATE_HASH_TABLE
+    use STRING_TABLE, only: ALLOCATE_HASH_TABLE, INIT_STRING_TABLE
     use SYMBOL_TABLE, only: ALLOCATE_SYMBOL_TABLE
     use TOGGLES, only: INIT_TOGGLE
 
@@ -47,6 +47,13 @@ contains
     integer, intent(in) :: HASH_TABLE_SIZE   ! Duh
     integer, intent(out), optional :: STAT   ! Status from a called routine
     integer :: MY_STAT
+
+    ! Since Lexer is the one using get_char subroutine,
+    ! which uses the variables being initialize in
+    ! init_string_table, init_string_table may as well
+    ! be called here
+    call init_string_table
+
     call allocate_hash_table ( hash_table_size, my_stat )
     if (my_stat == 0 ) &
       call allocate_symbol_table ( n_chars, n_symbols, my_stat )
@@ -83,6 +90,9 @@ contains
 end module LEXER_CORE
 
 ! $Log$
+! Revision 2.7  2010/08/05 17:45:34  honghanh
+! Adding subroutine init_string_table in string_table module
+!
 ! Revision 2.6  2010/03/18 02:36:39  vsnyder
 ! Move USE from module scope to procedure scope
 !
