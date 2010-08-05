@@ -153,13 +153,14 @@ module CFM_MLSSetup_m
          call MLSMessage (MLSMSG_Error, moduleName, &
          'Error opening ' // trim(configFileName))
 
-      call AddInUnit(signalIn)
-      call AddInUnit(configIn)
-
       call init_lexer ( n_chars=80000, n_symbols=4000, hash_table_size=611957 )
       call allocate_decl ( ndecls=8000 )
       call allocate_tree ( n_tree=2000000 )
       call init_tables
+
+      call AddInUnit(signalIn)
+      call AddInUnit(configIn)
+
       call configuration(Root)
       if (Root <= 0) then
          call MLSMessage (MLSMSG_Error, moduleName, &
@@ -429,6 +430,9 @@ module CFM_MLSSetup_m
 end module
 
 ! $Log$
+! Revision 1.18  2010/07/08 21:39:16  honghanh
+! Add ApplyBaseline to cfm_fill_m
+!
 ! Revision 1.17  2010/06/29 17:02:47  honghanh
 ! Change the identifier 'fakeChunk' to 'chunk' because
 ! since it is created with ChunkDivide, it's as real as a chunk
