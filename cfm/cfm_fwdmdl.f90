@@ -34,6 +34,7 @@ module CFM_FWDMDL_M
       use MatrixModule_1, only: MATRIX_T
       use Chunks_m, only: MLSChunk_T
       use ForwardModelWrappers, only: ForwardModelOrig => ForwardModel
+      use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
 
       ! the chunk carries the MAF to compute over
       type(MLSChunk_T), intent(in) :: chunk
@@ -51,6 +52,9 @@ module CFM_FWDMDL_M
       integer :: i
 
       fmStat%newScanHydros = .true.
+      if (present(jacobian)) then
+         call allocate_test(fmstat%rows, jacobian%row%nb, "fmStat%rows", moduleName)
+      end if
 
       do i=1, size(config)
          fmStat%maf = 0
@@ -61,6 +65,10 @@ module CFM_FWDMDL_M
                                    fmStat, Jacobian)
          end do
       end do
+
+      if (present(jacobian)) then
+         call deallocate_test(fmStat%rows, "fmStat%rows", moduleName)
+      end if
 
    end subroutine
 
@@ -77,6 +85,11 @@ module CFM_FWDMDL_M
 end module
 
 ! $Log$
+! Revision 1.4  2010/06/29 17:02:47  honghanh
+! Change the identifier 'fakeChunk' to 'chunk' because
+! since it is created with ChunkDivide, it's as real as a chunk
+! can get.
+!
 ! Revision 1.3  2010/06/29 15:53:45  honghanh
 ! Add copyright comments and support for CVS log in the file
 !

@@ -18,6 +18,7 @@ module cfm          ! callable forward model
    use CFM_IO_M, only: Read_Spectroscopy, ReadDACSFilterShapes, &
                      ReadAntennaPatterns, ReadFilterShapes, &
                      ReadPointingGrids, ReadPFAFile, ReadHDF5L2PC
+   use CFM_Matrix_M, only: CreatePlainMatrix
    use PFADatabase_m, only: Destroy_PFADataBase
    use L2PC_m, only: DestroyL2PCDatabase
    use FilterShapes_m, only: Destroy_DACS_Filter_Database, &
@@ -31,7 +32,7 @@ module cfm          ! callable forward model
    use CFM_HGrid_m, only: CreateRegularHGrid
    use HGridsDatabase, only: DestroyHGridContents, HGrid_T, Dump
    use CFM_FGrid_m, only: CreateFGrid
-   use FGrid, only: FGrid_T, DestroyFGridContents,  Dump
+   use FGrid, only: FGrid_T, DestroyFGridContents, Dump
    use CFM_QuantityTemplate_m, only: CreateQtyTemplate
    use QuantityTemplates, only: Dump, AddQuantityTemplateToDatabase, &
                                 DestroyQuantityTemplateDatabase, &
@@ -54,12 +55,14 @@ module cfm          ! callable forward model
                                  l_ptan, l_radiance, l_orbitInclination, &
                                  l_tngtgeodalt, l_tngtgeocalt, l_o3, &
                                  phyq_pressure, phyq_angle, l_h2o, l_refgph, &
-                                 l_phitan, l_explicit, l_l1bMAFBaseline
+                                 l_phitan, l_explicit, l_l1bMAFBaseline, &
+                                 l_frequency, l_usbFrequency, l_lsbFrequency
    use MLSFiles, only: GetMLSFileByType, InitializeMLSFile, mls_openFile, &
                        AddFileToDatabase
    use Intrinsic, only: l_hdf
    use Hdf, only: DFACC_RDONLY
    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+   use MatrixModule_1, only: Matrix_T
 
    implicit none
    public

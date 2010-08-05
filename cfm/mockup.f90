@@ -18,8 +18,9 @@ program mockup
 
    use CFM, only: & ! Alphabetized, case-insensitive list (underscores are ignored though)
       AddFileToDatabase, AddQuantityTemplateToDatabase, ApplyBaseline, &
-      CFM_MLSCleanup, CFM_MLSSetup, CreateFGrid, CreateQtyTemplate, &
-      CreateRegularHGrid, CreateVector, CreateVectorTemplate, CreateVGrid, &
+      CFM_MLSCleanup, CFM_MLSSetup, CreateFGrid, CreatePlainMatrix, &
+      CreateQtyTemplate, CreateRegularHGrid, CreateVector, &
+      CreateVectorTemplate, CreateVGrid, &
       Destroy_Ant_Patterns_Database, DestroyFGridContents, &
       Destroy_DACS_Filter_Database, Destroy_Filter_Shapes_Database, &
       DestroyHGridContents, DestroyL2PCDatabase, Destroy_Line_Database, &
@@ -38,7 +39,8 @@ program mockup
       l_logarithmic, l_o3, l_orbitInclination, l_phitan, l_ptan, &
       l_radiance, l_refGPH, l_temperature, l_tngtgeocalt, &
       l_tngtgeodalt, l_vmr, l_zeta, l_l1bMAFBaseline, &
-      MLSChunk_T, MLSFile_T, MLSMessage, MLSMSG_Error, mls_openFile, &
+      Matrix_T, MLSChunk_T, MLSFile_T, MLSMessage, MLSMSG_Error, &
+      mls_openFile, &
       operator(+), operator(-), &
       phyq_angle, phyq_pressure, &
       QuantityTemplate_T, &
@@ -85,6 +87,7 @@ program mockup
    integer :: baseline7_index, baseline2_index, baseline8_index
    character(len=256) :: signalFileName, configFileName
    type (MLSFile_T) :: l1bfile
+   type(Matrix_T) :: jacobian
 
    call getarg(1, signalFileName)
    call getarg(2, configFileName)
@@ -236,11 +239,14 @@ program mockup
 
    ! GPH is filled by the forward model
 
+   ! Create jacobian
+   jacobian = CreatePlainMatrix(measurement, state)
+
    ! Call the forward model
    call ForwardModel (chunk, forwardModelConfigDatabase, state, &
-                      stateExtra, measurement)
+                      stateExtra, measurement, jacobian)
 
-   !call dump(measurement, details=3)
+   call dump(measurement, details=3)
 
    ! Create an identical vector as simulated radiance vector for observed radiances
    observed = CreateVector(measurementTemplate, qtyTemplates)
@@ -342,7 +348,7 @@ program mockup
 
    diffVector = observed - measurement
 
-   call dump(diffVector, details=3)
+   !call dump(diffVector, details=3)
 
    ! Clean up allocated memory for creating observed radiance vector
    call DestroyVectorInfo(observed)
