@@ -32,6 +32,7 @@ module STRING_TABLE
   public :: GET_CHAR, GET_STRING, HOW_MANY_STRINGS, INDEX, INDEX_IN_STRING
   public :: LEN, LOOKUP_AND_INSERT, NEW_LINE, NUMERICAL_VALUE, OPEN_INPUT
   public :: STRING_LENGTH, STRING_TABLE_SIZE, UNGET_CHAR, ADDINUNIT
+  public :: INIT_STRING_TABLE
 
   interface DISPLAY_STRING
     module procedure DISPLAY_STRING, DISPLAY_STRING_LIST
@@ -978,6 +979,7 @@ contains
     integer :: status
 
     if (.not. associated(inunit_list)) return
+
     if (inunit_counter == size(inunit_list)) then
       inunit_counter = 0
       deallocate(inunit_list, stat=status)
@@ -987,6 +989,17 @@ contains
     else
       inunit_counter = inunit_counter + 1
     end if
+
+  end subroutine
+
+  subroutine init_string_table
+    source_line = 0
+    ! no need to initialize source_column
+    at_eof = .false.
+    cur_end = 0
+    cur_pos = 1
+    inunit_counter = 0
+    inunit_list => NULL()
   end subroutine
 
 !--------------------------- end bloc --------------------------------------
@@ -1002,6 +1015,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.30  2010/08/05 17:45:34  honghanh
+! Adding subroutine init_string_table in string_table module
+!
 ! Revision 2.29  2010/05/23 03:05:26  honghanh
 ! Use an inunitList instead of an inunit to read from multiple l2cf
 !
