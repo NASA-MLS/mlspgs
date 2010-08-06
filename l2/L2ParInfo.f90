@@ -219,6 +219,7 @@ contains ! ==================================================================
     integer :: INFO                     ! From PVM
     ! Executable code
     if ( parallel%master .or. parallel%slave ) then
+      call output ( 'About to get my tid', advance='yes' )
       call PVMFMyTid ( parallel%myTid )
       call output ( 'Task ID: ' )
       call output ( trim(GetNiceTidString ( parallel%myTid ) ), advance='yes' )
@@ -831,6 +832,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.54  2010/08/06 23:08:48  pwagner
+! Pass Hessians, matrices to DumpCommand
+!
 ! Revision 2.53  2009/07/21 20:35:38  pwagner
 ! Nullify pointers before call ing allocate_test with them
 !
