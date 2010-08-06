@@ -26,7 +26,8 @@ module SidsModule
 
 contains
 
-  subroutine SIDS ( Root, VectorDatabase, MatrixDatabase, HessianDatabase, configDatabase, chunk)
+  subroutine SIDS ( Root, VectorDatabase, MatrixDatabase, HessianDatabase, &
+    & configDatabase, chunk)
 
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use Chunks_m, only: MLSChunk_T
@@ -35,17 +36,19 @@ contains
     use ForwardModelWrappers, only: ForwardModel
     use ForwardModelIntermediate, only: ForwardModelStatus_T
     use HessianModule_1, only: Hessian_T, InsertHessianPlane
-    use Init_Tables_Module, only: f_destroyjacobian, f_forwardModel, f_fwdModelExtra, &
-      f_fwdModelIn, f_fwdModelOut, f_hessian, f_jacobian, f_mirrorHessian, &
-      f_perturbation, f_singleMAF, f_TScat
+    use Init_Tables_Module, only: f_destroyjacobian, f_forwardModel, &
+      & f_fwdModelExtra, f_fwdModelIn, f_fwdModelOut, &
+      & f_hessian, f_jacobian, f_mirrorHessian, &
+      & f_perturbation, f_singleMAF, f_TScat
     use Intrinsic, only: PHYQ_DIMENSIONLESS
     use Lexer_Core, only: Print_Source
     use MLSCommon, only: R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
     use MatrixModule_0, only: M_Absent, M_Full, M_Banded, M_Column_Sparse, &
       & MatrixElement_T
-    use MatrixModule_1, only: AddToMatrix, CopyMatrix, CreateBlock, DestroyBlock, DestroyMatrix, FindBlock, &
-      GetFromMatrixDatabase, Matrix_Database_T, Matrix_T, ScaleMatrix
+    use MatrixModule_1, only: AddToMatrix, CopyMatrix, CreateBlock, &
+      & DestroyBlock, DestroyMatrix, Dump, FindBlock, &
+      & GetFromMatrixDatabase, Matrix_Database_T, Matrix_T, ScaleMatrix
     use MLSL2Timings, only: add_to_retrieval_timing
     use MLSStringLists, only: switchDetail
     use MoreTree, only: Get_Field_Id, Get_Boolean
@@ -356,6 +359,10 @@ contains
               call AddToMatrix ( jacobian, saveJacobian, -1.0_r8 )
               call ScaleMatrix ( jacobian, 1.0/thisPtb )
               ! Insert this difference
+              if ( switchDetail( switches, 'hess' ) > 0 ) then
+                call output ( 'Inserting Jacobian num. deriv.  into hessian', advance='yes' )
+                call dump( jacobian, details=1 )
+              endif
               call InsertHessianPlane ( hessian, jacobian, col, element, mirror=mirrorHessian )
             end if
           end if                         ! Not very first run
@@ -442,6 +449,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.58  2010/08/06 23:04:24  pwagner
+! Added 'hess' switch
+!
 ! Revision 2.57  2010/05/13 23:48:19  pwagner
 ! Added -Sptb to show perturbation
 !
