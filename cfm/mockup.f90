@@ -246,7 +246,7 @@ program mockup
    call ForwardModel (chunk, forwardModelConfigDatabase, state, &
                       stateExtra, measurement, jacobian)
 
-   call dump(measurement, details=3)
+   !call dump(measurement, details=3)
 
    ! Create an identical vector as simulated radiance vector for observed radiances
    observed = CreateVector(measurementTemplate, qtyTemplates)
@@ -348,7 +348,7 @@ program mockup
 
    diffVector = observed - measurement
 
-   !call dump(diffVector, details=3)
+   call dump(diffVector, details=3)
 
    ! Clean up allocated memory for creating observed radiance vector
    call DestroyVectorInfo(observed)
@@ -382,6 +382,9 @@ program mockup
 end program
 
 ! $Log$
+! Revision 1.38  2010/08/05 16:23:03  honghanh
+! Added Jacobian to forwardModel subroutine
+!
 ! Revision 1.36  2010/07/08 21:39:16  honghanh
 ! Add ApplyBaseline to cfm_fill_m
 !
