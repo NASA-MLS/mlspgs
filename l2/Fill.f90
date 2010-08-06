@@ -706,6 +706,15 @@ contains ! =====     Public Procedures     =============================
         if ( got(f_columns) .and. got(f_rows) ) then
           ! We decorate with a negative number to differentiate hessians from
           ! Jacobians when it comes time to write them out
+          ! *******************************************
+          ! The above is an enormously bad idea
+          ! The pronounced justification fails because
+          ! Hessians and Jacobians are stored in separate databases
+          ! databases.
+          ! Long term: Don't decorate with a negative number
+          ! which was an unacceptably crude hack even if it had been
+          ! necessary, which it was not
+          ! *******************************************
           call decorate ( key, -addHessianToDatabase(hessians, &
             & createEmptyHessian ( vectorName, &
             & vectors(rowVector), vectors(colVector), where=source_ref(key) )) )
@@ -2613,6 +2622,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.388  2010/08/06 23:08:48  pwagner
+! Pass Hessians, matrices to DumpCommand
+!
 ! Revision 2.387  2010/07/22 17:42:24  pwagner
 ! Replaced method=special fills with unique names
 !
