@@ -320,7 +320,8 @@ contains
       case ( s_diff, s_dump )
         if ( .not. SKIPRETRIEVAL ) &
           & call dumpCommand ( key, forwardModelConfigs=configDatabase, &
-          & vectors=vectorDatabase, FileDataBase=FileDataBase )
+          & vectors=vectorDatabase, FileDataBase=FileDataBase, &
+          & MatrixDatabase=MatrixDatabase, Hessiandatabase=HessianDatabase )
       case ( s_dumpblocks )
         if ( .not. SKIPRETRIEVAL ) &
           & call DumpBlocks ( key, matrixDatabase, hessianDatabase )
@@ -2811,6 +2812,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.310  2010/08/06 23:08:48  pwagner
+! Pass Hessians, matrices to DumpCommand
+!
 ! Revision 2.309  2010/03/24 20:56:46  vsnyder
 ! Add Hessian database to DumpBlocks call
 !
