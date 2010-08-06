@@ -54,6 +54,7 @@ Switches (set by -S option in mlsl2's command line):
   grids =>  Dump Forward Model grids
   gvec =>   Dump gradient vector during Newton iteration
   help =>   Display this screen (or "?")
+  hess =>   Intermediate steps while computing hessians
   hgrid =>  Information on HGrid construction (at least for regular)
   hphi =>   Trace H/Phi iteration in metrics
   hphI =>   hphi, and stop if 1d approximation is used
@@ -138,7 +139,7 @@ The general pattern is to use upper-case letters for single-letter ones,
 and lower-case letters for strings. Switches are case-sensitive.
 
 The -S option sets the "switches" array in toggles_core.f90.
-
+`
                 T e s t   1
 In places, it's still tested by the older construct 
 "if ( index(switches,'foo') /= 0 ) then ..." 
@@ -176,10 +177,12 @@ inadvertently set the other two.
 
 I have been substituting SwitchDetail for the "if ( index .." test in the
 modules that have come under my gaze from time to time, and this process will
-continue until they take my keyboard away.
+continue until they take my keyboard away. When I'm done, we will be able to
+delete the T e s t   1 section above.
 
 Here's a trick for finding all the switches referred to by switchdetail in
 our code so far:
+cd ~/mlspgs
 grep -i switchdetail */*.[fF]9* | grep -i 'switches' | sed 's/.*switches,//' \
  | awk '{print $1}' | sed 's/)//' | sort | uniq
 
@@ -195,6 +198,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.71  2010/05/05 18:08:46  pwagner
+ Brought up-to-date with TScat and other stuff
+
  Revision 1.70  2008/06/12 23:53:27  pwagner
  Can print direct write timings
 
