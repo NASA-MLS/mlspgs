@@ -11,8 +11,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-095r9}
-\newcommand{\docdate}{29 July 2010}
+\newcommand{\docname}{wvs-095r12}
+\newcommand{\docdate}{5 August 2010}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -156,7 +156,7 @@ We consistently use indices in the following way
 \begin{longtable}{|ll|ll|ll|ll|}
 \hline
 $i$, $l$ & path position & $n_p$ & path length &
-$k$ & specie & $\mu$ & point in temperature grid \\
+$k$ & species & $\mu$ & point in temperature grid \\
 $j, n$ & frequency & $n_c$ & filter table size &
 $c$ & channel & $m$ & point in species grid \\
 \hline
@@ -193,7 +193,7 @@ I_c = \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc} \IF{I_j}
 \end{equation}
 
 In the final term, substitute the definition of $\DB_{ij}^s$ from
-Equation (\ref{two}), observe that $\TSs{i\pm1,c}$ is a channel quantity
+Equation (\ref{three}), observe that $\TSs{i\pm1,c}$ is a channel quantity
 and therefore unaffected by $\!\IF{\cdot}$, and exchange the order
 of summation, giving
 
@@ -212,8 +212,8 @@ of summation, giving
  \end{array} \right.
 \end{split}\end{equation}
 
-(see the appendix for this development).   Defining the frequency-averaged
-values
+(see the appendix for development of $\Delta \MT_{ij}$).   Defining the
+frequency-averaged values
 
 \begin{equation}\label{six}
 \hMT_{ic} =
@@ -272,8 +272,33 @@ $\frac{\partial I_c}{\partial x} = \frac{\partial I^g_c}{\partial x} +
                    \right)
 \end{split}\end{equation}
 
-where $x$ is either a mixing ratio of some specie, or temperature, at
-some point in the atmosphere.
+where $x$ is either the mixing ratio $f^k_m$ of species $k$  at point $m$
+in the atmosphere, or temperature $T_\mu$ at point $\mu$ in the
+atmosphere, and since $B = \frac{h\nu}k \left( \exp\left(
+\frac{h\nu}{kT}\right)+1\right)^{-1}$, $\frac{\partial B_{ij}}{\partial
+f^k_m} = 0$ and $\frac{\partial B_{ij}}{\partial T_\mu} =
+\frac{B_{ij}}{T_\mu^2} \left( \frac{h\nu}k + B_{ij} \right)$, so
+derivatives of the terms of the form $\left( 1 - \omega_{0_{ij}} \right)
+B_{ij}$ in the definition of $\DB_{ij}^g$ in Equation (\ref{three}) are
+
+\begin{equation}\begin{split}
+\frac{\partial \left( 1 - \omega_{0_{ij}} \right) B_{ij}}{\partial f^k_m}
+=\,&
+ - \frac{\partial \omega_{0_{ij}}}{\partial f^k_i}B_{ij} \eta^k_{im}
+\text{ and}\\
+\frac{\partial \left( 1 - \omega_{0_{ij}} \right) B_{ij}}{\partial T_\mu}
+=\,&
+ \left(
+  ( 1-\omega_{0_{ij}} ) \frac{\partial B_{ij}}{\partial T_i} -
+  \frac{\partial \omega_{0_{ij}}}{\partial T_i}B_{ij}
+ \right) \eta^T_{\mu i} \\
+=\,&
+ \left(
+  ( 1-\omega_{0_{ij}} )
+   \frac{B_{ij}}{T_i^2} \left( \frac{h\nu}k + B_{ij} \right) -
+  \frac{\partial \omega_{0_{ij}}}{\partial T_i} B_{ij}
+ \right) \eta^T_{\mu i} \,.
+\end{split}\end{equation}
 
 \begin{minipage}{4.75in}
 Assume the $k^{\text{th}}$ mixing ratio is represented on the red grid
@@ -306,89 +331,102 @@ $\MT_{ij} = \exp(-\delta_{ij}) =
 \exp\left(-\int_0^{s_i} \alpha_j(s)\, \text{d} s \right) =
 \exp(-\sum_{k=1}^{n_s} \delta^k_{ij})$, where
 
-\begin{equation}\label{nine}
+\begin{equation}\label{ten}
 \delta^k_{ij}
-= \int_0^{s_i} \beta^k_j(s)\, \text{d} s
+= \int_0^{s_i} f^k(s) \beta^k_j(s)\, \text{d} s
 \approx
   \sum_{l=1}^i f^k_l \beta^k_{lj}(T_l,\nu_j)
   \Delta s_l
 = \sum_{l=1}^i \sum_m \eta^k_{ml} f^k_m
   \beta^k_{lj}\left(\sum_\mu \eta^T_{\mu l} T_\mu,\nu_j\right)
-  \Delta s_l
+  \Delta s_l \,.
 \end{equation}
-
-in which $i$ and $l$ index points on the integration path, and $m$ and
-$\mu$ index points in the solution grids.
 
 From Equation (\ref{three})
 
-\begin{equation}\begin{split}\label{ten}
-\frac{\partial \omega_{0_{ij}}}{\partial f^k_i} =\,&
- \frac1{\beta_{e_{ij}}} \left(
-  \frac{\partial \beta{{c\_s}_i}}{\partial f^k_i} -
-   \omega_{0_{ij}} \left (
-    \frac{\partial \alpha_{ij}}{\partial f^k_i} +
-    \frac{\partial \beta_{{c\_e}_i}}{\partial f^k_i}
-   \right) \right)  \text{ and }
- \frac{\partial \omega_{0_{ij}}}{\partial f^k_m} =
- \sum_{l=1}^{n_p} \eta^k_{ml}
-  \frac{\partial \omega_{0_{ij}}}{\partial f^k_i} \,,
-\\
-\frac{\partial \omega_{0_{ij}}}{\partial f^{\text{IWC}}_i}
-=\,&
- \frac1{\beta_{e_{ij}}} \left( \frac{\partial \beta_{{c\_s}_i}}{\partial f^{\text{IWC}}_i} -
-  \omega_{0_{ij}}
-                   \frac{\partial \beta_{{c\_e}_i}}{\partial f^{\text{IWC}}_i}
-                   \right) \,,\,
-\frac{\partial \omega_{0_{ij}}}{\partial f^{k \neq \text{IWC}}_i}
-=
- - \frac{\omega_{0_{ij}}}{\beta_{e_{ij}}} \beta^{k \neq \text{IWC}}_{ij}
-    \,, \\
-\end{split}\end{equation}
 \begin{equation}\begin{split}\label{eleven}
+\frac{\partial \omega_{0_{ij}}}{\partial f^k_m} =\,&
+  \frac{\partial \omega_{0_{ij}}}{\partial f^k_i} \eta^k_{im}
+  \text{ where } \eta^k_{im} = \frac{\partial f^k_i}{\partial f^k_m}
+  \text{ and} \\
+  \frac{\partial \omega_{0_{ij}}}{\partial f^k_i}
+=\,&
+  \frac1{\beta_{e_{ij}}} \left(
+   \frac{\partial \beta{{c\_s}_i}}{\partial f^k_i} -
+    \omega_{0_{ij}} \left (
+     \frac{\partial \alpha_{ij}}{\partial f^k_i} +
+     \frac{\partial \beta_{{c\_e}_i}}{\partial f^k_i}
+    \right) \right)
+\,.
+\end{split}\end{equation}
+
+The $k=$ IWC and $k \neq$ IWC cases simplify differently:
+
+\begin{equation}\begin{split}\label{twelve}
+\frac{\partial \omega_{0_{ij}}}{\partial f^{\text{IWC}}_m}
+=\,&
+  \frac1{\beta_{e_{ij}}} \left(
+   \frac{\partial \beta_{{c\_s}_i}}{\partial f^{\text{IWC}}_i} -
+    \omega_{0_{ij}}
+     \frac{\partial \beta_{{c\_e}_i}}{\partial f^{\text{IWC}}_i}
+   \right) \eta^{\text{IWC}}_{im} \\
+%
+\frac{\partial \omega_{0_{ij}}}{\partial f^{k \neq \text{IWC}}_m}
+=\,&
+ - \frac{\omega_{0_{ij}}}{\beta_{e_{ij}}} \beta^k_{ij}
+   \eta^k_{im}
+    \,.
+\end{split}\end{equation}
+
+\begin{equation}\begin{split}\label{thirteen}
+\frac{\partial \omega_{0_{ij}}}{\partial T_\mu}
+=\,&
+  \frac{\partial \omega_{0_{ij}}}{\partial T_i} \eta^T_{\mu l}
+ \text{ where }
+  \eta^T_{\mu l} = \frac{\partial T_i}{\partial T_\mu} \text{ and}\\
 \frac{\partial \omega_{0_{ij}}}{\partial T_i}
 =\,&
  \frac1{\beta_{e_{ij}}} \left( \frac{\partial \beta_{{c\_s}_i}}{\partial T_i} -
- \omega_{0_{ij}}
-                   \left( \frac{\partial \beta_{{c\_e}_i}}{\partial T_i} +
-                          \frac{\partial\alpha_{\text{gas}_{ij}}}{\partial T_i}
-                   \right) \right)
- \text{ and }
- \frac{\partial \omega_{0_{ij}}}{\partial T_\mu} =
-   \sum_{l=1}^{n_p} \eta^T_{\mu l}
-    \frac{\partial \omega_{0_{ij}}}{\partial T_i}
+  \omega_{0_{ij}}
+                  \left( \frac{\partial \beta_{{c\_e}_i}}{\partial T_i} +
+                         \frac{\partial\alpha_{\text{gas}_{ij}}}{\partial T_i}
+                  \right) \right)
  \,.
 \end{split}\end{equation}
 
-From Equation (\ref{nine}),
+From Equation (\ref{ten}),
 
-\begin{equation}\begin{split}\label{twelve}
-\frac{\partial \MT_{ij}}{\partial f^k_m} =\,&
+\begin{equation}\begin{split}\label{fourteen}
+\frac{\partial \MT_{ij}}{\partial f^k_m} =
  - \MT_{ij} \frac{\partial \delta^k_{ij}}{\partial f^k_m}
  \text{ where }
-  \frac{\partial \delta^k_{ij}}{\partial f^k_m} = 
-    \sum_{l=1}^i \frac{\partial \delta^k_{ij}}{\partial f^k_l}
-                 \frac{\partial f^k_l}{\partial f^k_m} =
+  \frac{\partial \delta^k_{ij}}{\partial f^k_m} =\,& 
+    \sum_{l=1}^i \frac{\partial f^k_l}{\partial f^k_m}
+                 \frac{\partial \alpha_{lj}}{\partial f^k_l} \Delta s_l =
     \sum_{l=1}^i \eta^k_{ml} \beta^k_{lj} \Delta s_l
  \text{ and }\\
-\frac{\partial \MT_{ij}}{\partial T_\mu} =\,&
+\frac{\partial \MT_{ij}}{\partial T_\mu} =
  - \MT_{ij} \frac{\partial \delta_{ij}}{\partial T_\mu}
   \text{ where }
-    \frac{\partial \delta_{ij}}{\partial T_\mu} =
+    \frac{\partial \delta_{ij}}{\partial T_\mu} =\,&
      \sum_{l=1}^i \frac{\partial T_l}{\partial T_\mu}
-     \frac{\partial \alpha_{lj}}{\partial T_l} \Delta s_l =
-    \sum_{l=1}^i \eta^T_{\mu l}
+     \left(
+     \frac{\partial \alpha_{lj}}{\partial T_l} \Delta s_l +
+     \alpha_{lj} \frac{\partial \Delta s_l}{\partial T_l} \right) = \\
+    \,&
+    \sum_{l=1}^i \eta^T_{\mu l} \left(
       \Delta s_l
-      \sum_{k=1}^{n_s} f^k_l \frac{\partial \beta^k_{lj}}{\partial T_l}
+      \sum_{k=1}^{n_s} f^k_l \frac{\partial \beta^k_{lj}}{\partial T_l} +
+      \alpha_{lj} \frac{\partial \Delta s_l}{\partial T_l} \right)
 \,.
 \end{split}\end{equation}
 
 In order to compute the derivatives of $\hMT_{ic}$ defined in Equation
 (\ref{six}), \emph{viz.} $\frac{\partial\hMT_{ic}}{\partial x}$, where
-$x$ is either $f^k_m$ or $T_\mu$, use Equations (\ref{ten}),
-(\ref{eleven}) and (\ref{twelve}) to compute
+$x$ is either $f^k_m$ or $T_\mu$, use Equations (\ref{twelve}),
+(\ref{thirteen}) and (\ref{fourteen}) to compute
 
-\begin{equation}\begin{split}\label{thirteen}
+\begin{equation}\begin{split}\label{fifteen}
 2\frac{\partial}{\partial x} \left( \omega_{0_{ij}} \Delta \MT_{ij} \right)
 =\,&
  2 \left(
@@ -427,7 +465,7 @@ $x$ is either $f^k_m$ or $T_\mu$, use Equations (\ref{ten}),
           \right)  & i = 2 \dots n_p-1 \\
  \MT_{n_p-1,j} \left( \frac{\partial \omega_{0_{n_p j}}}{\partial x} -
                  \omega_{0_{n_p j}} \frac{\partial \delta^k_{n_p-1,j}}{\partial x}
-          \right) +
+          \right) -
  \MT_{n_p j} \left( \frac{\partial \omega_{0_{n_p j}}}{\partial x} -
                  \omega_{0_{n_p j}} \frac{\partial \delta^k_{n_p j}}{\partial x}
           \right)  & i = n_p\,. \\
@@ -450,35 +488,39 @@ the path, and frequency.
 $B$ depends upon temperature along the path, and frequency.
 
 $\TS$ depends upon temperature, IWC and whatever molecules are specified
-when it is computed, throughout the atmosphere, and frequency.  Therefore,
-the second term in Equation (\ref{eight}) will produce nonzeros in the
-Jacobian for every element in the state vector upon which $\TS$ depends,
-not just those near the path.
+when it is computed, throughout the atmosphere, and frequency. 
+Therefore, the second term in the definition of $\frac{\partial
+I^s_c}{\partial x}$ in Equation (\ref{eight}) will produce nonzeros in
+the Jacobian for every element in the state vector upon which $\TS$
+depends, not just those near the path.
 
+\newpage
 \section{Implementation alternatives}
 
-There are several possibilities to perform the frequency averaging as
-described in Equation (\ref{thirteen}).  One method is to create arrays to
-store $\left[ \frac{\partial \omega_{0_{ij}}}{\partial f^k_l} -
+There are several possibilities to perform the frequency averaging of the
+derivative in Equation (\ref{fifteen}).  One method is to create arrays
+to store $\left[ \frac{\partial \omega_{0_{ij}}}{\partial f^k_l} -
 \omega_{0_{ij}} \frac{\partial \delta_{i\pm1,j}}{\partial f^k_l} \right]
 \MT_{i\pm1,j}$ and similarly for temperature derivatives, having extents
 $n_p^2 \times n_s \times n_f$ and $n_p^2 \times n_f$, and to provide data
 structures that keep track of nonzero elements.  Assuming $n_p\approx
 150,\, n_s \approx 20$, and $n_f \approx 500$, these arrays would have
-$\approx 225\times10^6$ and $\approx 10^7$ elements, so this is clearly
+$\approx 2.25\times10^8$ and $\approx 10^7$ elements, so this is clearly
 impractical.
 
-The forward model already stores $\eta^k_{il}$ and $f^k_l$, and
+\subsection{Preferred method}
+
+The forward model already stores $\eta^k_{il}$ and $f^k_l$, and computes
 $\beta^k_{lj}$, $\frac{\partial \beta^k_{lj}}{\partial T_l}$ and
-$\MT_{ij}$ for each frequency.  From Equation (\ref{ten}),
+$\MT_{ij}$ for each frequency.  From Equation (\ref{eleven}),
 $\frac{\partial \omega_{0_{ij}}}{\partial f^k_l}$ is only nonzero when $l
-= i$. From Equations (\ref{three}) and (\ref{ten}), $\omega_{0_{ij}}$ and
+= i$. From Equations (\ref{three}) and (\ref{eleven}), $\omega_{0_{ij}}$ and
 $\frac{\partial \omega_{0_{ij}}}{\partial f^k_l}$ depend upon quantities
 the forward model already computes, plus $\beta_{c\_s_i}$,
 $\beta_{c\_e_i}$ and their derivatives with respect to temperature and
 IWC.
 
-From Equation (\ref{twelve}), $\frac{\partial \delta_{ij}}{\partial
+From Equation (\ref{fourteen}), $\frac{\partial \delta_{ij}}{\partial
 f^k_m} \MT_{ij}$ and $\frac{\partial \delta_{ij}}{\partial T_\mu}
 \MT_{ij}$ are sums of outer products of $\eta^k_{ml}$, $\beta^k_{lj}$,
 $\Delta s_l$, $\eta^T_{\mu l}$, $f^k_l$,
@@ -535,6 +577,8 @@ stages:
 
 \end{enumerate}
 
+\subsection{Other methods}
+
 A second method is to compute coefficients to interpolate linearly from
 $\{\nu_j\}$ to $\{\nu_{nc}\}$, combine those coefficients with
 $\phi_{nc}$ and $\Delta \nu_{nc}$, and use them to frequency average
@@ -557,7 +601,7 @@ through the path integration (because $n_c << n_f$) we can frequency
 average $\!\IF{\omega_{0_{i\pm1,j}}\MT_{ij}}$ to get, by exchanging the
 order of summation,
 
-\begin{equation}\begin{split}\label{fifteen}
+\begin{equation}\begin{split}\label{seventeen}
 \hMT_{ic} =\,& \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc}
  \IF{\omega_{0_{i\j}}\Delta \MT_{ij}}
  = \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc}
@@ -576,9 +620,9 @@ h_{jc} = \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc} \eta_{nj}\,.
 Before the {\tt One\_Frequency} subroutine in the full forward model is
 invoked, compute $h_{jc}$ from the pointing frequency grid and the filter
 function's frequency grids for all channels.  During path integration in
-{\tt One\_Frequency}, evaluate Equation (\ref{fifteen}) to produce the
+{\tt One\_Frequency}, evaluate Equation (\ref{seventeen}) to produce the
 channel-averaged quantity $\hMT_{i\pm1,c}$.  This method also applies to
-evaluating Equation (\ref{thirteen}).
+evaluating Equation (\ref{fifteen}).
 
 Because of the use of linear interpolation between $\{\nu_j\}$ and
 $\{\nu_{nc}\}$, this scheme is somewhat less accurate than the first
@@ -613,6 +657,7 @@ f^k_l}$ and $\frac{\partial \TSs{i\pm1,c}}{\partial T}$ is $2 n_p^2
 $\TSs{i\pm1,c}$ depends, i.e., the number of values of $k$.  Since $l \leq
 i$ this could be halved at some expense to clarity of the software.
 
+\newpage
 \section*{Appendix -- development of $\Delta \hMT_{ic}$}
 
 Using the definition of $\Delta B^s_{ij}$ from Equation (\ref{three}) and
@@ -634,7 +679,7 @@ expanding $\DB_{ij}^s \MT_{ij}$ in the second term of Equation
 \end{split}\end{equation}
 
 Using the fact that $\TSs{ij}$ is a channel quantity, and can therefore be
-factored out of the frequency averaging operator, gives
+factored out of the frequency interpolating operator, gives
 
 \begin{equation}\begin{split}
 2 \sum_{n=1}^{n_c} & \phi_{nc} \Delta \nu_{nc}
@@ -729,6 +774,9 @@ is a linear operator gives Equation (\ref{five}):
 % $Id$
 
 % $Log$
+% Revision 1.9  2010/07/30 01:33:38  vsnyder
+% Correct some sign errors, include a nonzero derivative in Equation 10
+%
 % Revision 1.8  2010/07/27 22:53:10  vsnyder
 % Correct a dangling equation reference
 %
