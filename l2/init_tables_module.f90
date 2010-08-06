@@ -1318,15 +1318,16 @@ contains ! =====     Public procedures     =============================
                     s+s_ConvertEtaToP, s+s_wmoTrop, n+n_field_spec, &
              np+n_spec_def /) )
     call make_tree ( (/ & ! Must be AFTER s_forwardModel, s_hGrid, s_pfaData,
-                          ! s_makePFA, s_vector, s_vectorTemplate, etc.
-      begin, s+s_dump, &
+        begin, s+s_dump, & ! s_makePFA, s_vector, s_vectorTemplate, etc.
              begin, f+f_allBooleans, t+t_boolean, n+n_field_type, &
              begin, f+f_allFiles, t+t_boolean, n+n_field_type, &
              begin, f+f_allForwardModels, t+t_boolean, n+n_field_type, &
              begin, f+f_allGriddedData, t+t_boolean, n+n_field_type, &
+             begin, f+f_allHessians, t+t_boolean, n+n_field_type, &
              begin, f+f_allHGrids, t+t_boolean, n+n_field_type, &
              begin, f+f_allL2PCs, t+t_boolean, n+n_field_type, &
              begin, f+f_allLines, t+t_boolean, n+n_field_type, &
+             begin, f+f_allMatrices, t+t_boolean, n+n_field_type, &
              begin, f+f_allPFA, t+t_boolean, n+n_field_type, &
              begin, f+f_allQuantityTemplates, t+t_boolean, n+n_field_type, &
              begin, f+f_allSignals, t+t_boolean, n+n_field_type, &
@@ -1347,11 +1348,13 @@ contains ! =====     Public procedures     =============================
                     s+s_ConvertEtaToP, s+s_wmoTrop, n+n_field_spec, &
              begin, f+f_hGrid, s+s_hgrid, n+n_field_spec/) )
     call make_tree ( (/ & ! Continuing for s_dump...
+             begin, f+f_hessian, s+s_hessian, n+n_field_spec, &
              begin, f+f_l2pc, t+t_string, n+n_field_type, &
              begin, f+f_lines, s+s_line, n+n_field_spec, &
              begin, f+f_mark, t+t_boolean, n+n_field_type, &
              begin, f+f_mask, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
+             begin, f+f_matrix, s+s_matrix, n+n_field_type, &
              begin, f+f_MieTables, t+t_boolean, n+n_field_type, &
              begin, f+f_options, t+t_string, n+n_field_type, &
              begin, f+f_pfaData, s+s_makePFA, s+s_pfaData, s+s_readPFA, &
@@ -1635,6 +1638,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.509  2010/08/06 23:01:01  pwagner
+! May dump some or all matrices, hessians
+!
 ! Revision 2.508  2010/07/22 17:38:41  pwagner
 ! Replaced method=special fills with unique names
 !
