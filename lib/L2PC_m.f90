@@ -752,6 +752,8 @@ contains ! ============= Public Procedures ==========================
 !             if ( h0%kind == h_absent ) cycle
               ! Get a name for this group for the block
               call CreateBlockName ( rowBlockMap(i), colBlockMap(j), colBlockMap(k), name )
+              if ( switchDetail( switches, 'hess' ) > -1 ) &
+                & call outputNamedValue( 'Block name', trim(name) )
               ! Create a group for this block
               call h5gCreate_f ( blocksGID, trim(name), blockGID, status )
               if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -763,12 +765,16 @@ contains ! ============= Public Procedures ==========================
                 &    hessian%row%quant(i))%template%name, name )
               call MakeHDF5Attribute ( blockGID, 'rowQuantity', trim(name) )
               call MakeHDF5Attribute ( blockGID, 'rowInstance', hessian%row%inst(i) )
+              if ( switchDetail( switches, 'hess' ) > -1 ) &
+                & call outputNamedValue( 'Row name', trim(name) )
               ! First column name
               call get_string ( &
                 & hessian%col%vec%quantities(&
                 &    hessian%col%quant(j))%template%name, name )
               call MakeHDF5Attribute ( blockGID, 'col1Quantity', trim(name) )
               call MakeHDF5Attribute ( blockGID, 'col1Instance', hessian%col%inst(j) )
+              if ( switchDetail( switches, 'hess' ) > -1 ) &
+                & call outputNamedValue( '1st column name', trim(name) )
               ! Second column name
               call get_string ( &
                 & hessian%col%vec%quantities(&
@@ -777,6 +783,8 @@ contains ! ============= Public Procedures ==========================
               call MakeHDF5Attribute ( blockGID, 'col2Instance', hessian%col%inst(j) )
 
               call MakeHDF5Attribute ( blockGID, 'kind', h0%kind )
+              if ( switchDetail( switches, 'hess' ) > -1 ) &
+                & call outputNamedValue( '2nd column name', trim(name) )
               ! Write the datasets
 
               if ( h0%kind == h_full ) then
@@ -788,6 +796,10 @@ contains ! ============= Public Procedures ==========================
                 call SaveAsHDF5DS ( blockGID, 'j', h0%tuples(1:h0%tuplesFilled)%j )
                 call SaveAsHDF5DS ( blockGID, 'k', h0%tuples(1:h0%tuplesFilled)%k )
                 call SaveAsHDF5DS ( blockGID, 'h', h0%tuples(1:h0%tuplesFilled)%h )
+                if ( switchDetail( switches, 'hess' ) > -1 ) then
+                  call outputNamedValue( 'noValues', h0%tuplesFilled )
+                  call dump( h0%tuples(1:h0%tuplesFilled)%h, 'h)%tuple values' )
+                end if
               end if
               ! Close group for block
               call h5gClose_f ( blockGID, status )
@@ -835,7 +847,7 @@ contains ! ============= Public Procedures ==========================
     if ( .not. associated(l2pcInfo) ) return
     call h5eSet_auto_f ( 0, status )
     do i = 1, size ( l2pcInfo )
-      if ( index ( switches, 'l2pc' ) > 0 ) &
+      if ( switchDetail ( switches, 'l2pc' ) > -1 ) &
         & call outputNamedValue( 'Destroying l2pc db entry number ', i )
       call h5gClose_f ( l2pcInfo(i)%blocksID, status )
       if ( status /= 0 .and. DIEIFDESTROYFAILS ) then
@@ -1009,7 +1021,7 @@ contains ! ============= Public Procedures ==========================
     info => l2pcInfo ( bin )
 
     call h5gn_members_f( info%binID, 'Blocks', nmembers, status )
-    if ( index ( switches, 'l2pc' ) > 0 ) then
+    if ( switchDetail ( switches, 'l2pc' ) > -1 ) then
       call outputNamedValue ( 'nmembers under ' // 'Blocks', nmembers )
       do i=0, nmembers-1
         call h5gget_obj_info_idx_f( info%binID, 'Blocks', i, &
@@ -1143,7 +1155,7 @@ contains ! ============= Public Procedures ==========================
       !!! stop !!! CODE HERE
     endif
 
-    if ( index ( switches, 'spa' ) /= 0 ) call dump_struct ( l2pc%j, 'Populated l2pc bin' )
+    if ( switchdetail ( switches, 'spa' ) > -1 ) call dump_struct ( l2pc%j, 'Populated l2pc bin' )
 
   end subroutine PopulateL2PCBin
 
@@ -1180,7 +1192,7 @@ contains ! ============= Public Procedures ==========================
       & 'Unable to get number of bins from input l2pc file:'//trim(MLSFile%name), &
       & MLSFile=MLSFile )
 
-    if ( index ( switches, 'l2pc' ) /= 0 ) then
+    if ( switchDetail ( switches, 'l2pc' ) > -1 ) then
       call output ( 'Reading l2pc ' )
       call output ( trim(MLSFile%name), advance='yes' )
       call output ( 'Number of bins: ' )
@@ -1193,7 +1205,7 @@ contains ! ============= Public Procedures ==========================
         & shallow=.true., info=Info )
       dummy = AddL2PCToDatabase ( l2pcDatabase, L2PC )
       dummy = AddFileIDToDatabase ( fileIDDatabase, MLSFile%fileID%f_id )
-      if ( index ( switches, 'spa' ) /= 0 ) call Dump_struct ( l2pc%j, 'One l2pc bin' ) 
+      if ( switchDetail ( switches, 'spa' ) > -1 ) call Dump_struct ( l2pc%j, 'One l2pc bin' ) 
 
       ! Now nullify the pointers in l2pc so we don't clobber the one we've written
       nullify ( l2pc%j%block )
@@ -1255,7 +1267,7 @@ contains ! ============= Public Procedures ==========================
     myShallow = .false.
     if ( present ( shallow ) ) myShallow = shallow
 
-    if ( index ( switches, 'l2pc' ) /= 0 ) &
+    if ( switchDetail ( switches, 'l2pc' ) > -1 ) &
       & call output ( 'Reading bin from l2pc file', advance='yes' )
 
     call h5gGet_obj_info_idx_f ( MLSFile%fileID%f_id, '/', l2pcIndex, matrixName, &
@@ -1263,7 +1275,7 @@ contains ! ============= Public Procedures ==========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to get information on matrix in input l2pc file', &
       & MLSFile=MLSFile )
-    if ( index ( switches, 'l2pc' ) /= 0 ) &
+    if ( switchDetail ( switches, 'l2pc' ) > -1 ) &
       & call outputNamedValue ( 'Reading matrix', matrixName )
     call h5gOpen_f ( MLSFile%fileID%f_id, trim(matrixName), matrixId, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1375,7 +1387,7 @@ contains ! ============= Public Procedures ==========================
     ! Look for any Hessian blocks
     ! We begin by assuming there are none
     call h5gn_members_f( MLSFile%fileID%f_id, trim(matrixName), nmembers, status )
-    if ( index ( switches, 'l2pc' ) > 0 ) then
+    if ( switchDetail ( switches, 'l2pc' ) > -1 ) then
       call outputNamedValue ( 'nmembers under ' // trim(matrixName), nmembers )
       do i=0, nmembers-1
         call h5gget_obj_info_idx_f( MLSFile%fileID%f_id, trim(matrixName), i, &
@@ -1518,7 +1530,7 @@ contains ! ============= Public Procedures ==========================
     ! Executable code
     nullify ( sigInds, qtInds )
 
-    if ( index ( switches, 'l2pc' ) /= 0 ) then
+    if ( switchDetail ( switches, 'l2pc' ) > -1 ) then
       call output ( 'Reading ' )
       call output ( trim(name) )
       call output ( ' vector from l2pc', advance='yes' )
@@ -1537,7 +1549,7 @@ contains ! ============= Public Procedures ==========================
     nullify ( quantityNames )
     call Allocate_test ( quantityNames, noQuantities, 'quantityNames', ModuleName )
     do quantity = 1, noQuantities
-      if ( index ( switches, 'l2pc' ) /= 0) &
+      if ( switchDetail (switches, 'l2pc' ) > -1) &
         & call output ( quantity, before='Identifying quantity ', advance='yes' )
       call h5gget_obj_info_idx_f ( MLSFile%fileID%grp_id, name, quantity-1, thisName, &
         & objType, status )
@@ -1563,7 +1575,7 @@ contains ! ============= Public Procedures ==========================
     ! Now go through quantities in order
     do quantity = 1, noQuantities
       qt => l2pcQTs ( qtIndexOffset + quantity - 1 )
-      if ( index ( switches, 'l2pc' ) /= 0 ) then
+      if ( switchDetail (switches, 'l2pc' ) > -1 ) then
         call output ( quantity, before='Reading quantity ' )
         call output ( ': ' )
         call output ( trim(quantityNames(quantity)), advance='yes' )
@@ -1697,16 +1709,16 @@ contains ! ============= Public Procedures ==========================
     call deallocate_test ( qtInds, 'qtInds', ModuleName )
 
     ! Now create a vector for this vector template
-    if ( index ( switches, 'l2pc' ) /= 0 ) &
+    if ( switchDetail (switches, 'l2pc' ) > -1 ) &
       & call output ( 'Creating vector', advance='yes' )
     v = CreateVector ( 0, l2pcVTs(vtIndex), l2pcQTs, vectorNameText='_v_'//name )
-    if ( index ( switches, 'l2pc' ) /= 0 ) &
+    if ( switchDetail (switches, 'l2pc' ) > -1 ) &
       & call output ( 'Adding vector to database', advance='yes' )
     vector = AddVectorToDatabase ( l2pcVs, v )
 
     ! Now go through the quantities again and read the values
     do quantity = 1, noQuantities
-      if ( index ( switches, 'l2pc' ) /= 0 ) then
+      if ( switchDetail (switches, 'l2pc' ) > -1 ) then
         call output ( 'Reading values for ' )
         call output ( trim(quantityNames(quantity)), advance='yes' )
       end if
@@ -1846,6 +1858,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.99  2010/08/06 22:58:40  pwagner
+! Added new 'hess' switch; using only switchDetail now
+!
 ! Revision 2.98  2010/06/28 17:00:49  pwagner
 ! Fixed a few bugs
 !
