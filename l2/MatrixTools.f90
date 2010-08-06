@@ -151,7 +151,7 @@ contains ! =====  Public procedures  ===================================
     ! Executable code
 
     ! Don't do it if the "nodb" switch is set.
-    if ( index(switches, 'nodb') /= 0 ) return
+    if ( switchDetail(switches, 'nodb') > -1 ) return
 
     ! Nor if we reduce the details level sufficiently
     DetailReduction = switchDetail(switches, 'red')
@@ -216,6 +216,10 @@ contains ! =====  Public procedures  ===================================
         ! the Hessian spec is processed.
         hessianIndex = -decoration(decoration(subtree(2,son)))
       case ( f_matrix )
+        ! And yet the corresponding index for the matrix is not the negative
+        ! Whatever justification was invoked for the Hessian's sign change 
+        ! was cheerfully ignored in the matrix's case.
+        ! Long term--let's forget the sign changes.
         matrixIndex = decoration(decoration(subtree(2,son)))
       case ( f_rowQuantity )
         rowQuantityNode = son
@@ -950,6 +954,9 @@ contains ! =====  Public procedures  ===================================
 end module MatrixTools
 
 ! $Log$
+! Revision 1.32  2010/03/24 20:51:43  vsnyder
+! Add code to dump Hessians.  Spiff up some error messages.
+!
 ! Revision 1.31  2010/02/10 20:00:25  vsnyder
 ! More output from the dump
 !
