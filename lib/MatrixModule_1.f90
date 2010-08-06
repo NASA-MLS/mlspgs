@@ -1221,17 +1221,29 @@ contains ! =====     Public Procedures     =============================
       call output ( r_or_c )
       call output ( 's in each block' )
       call output ( ':', advance='yes' )
-      call dump ( rc%nelts )
+      if ( .not. associated(rc%nelts) ) then
+        call output( 'numbers not associated', advance='yes' )
+      else
+        call dump ( rc%nelts )
+      endif
       call output ( 'Instance indices for blocks in the ' )
       call output ( r_or_c )
       call output ( 's' )
       call output ( ':', advance='yes' )
-      call dump ( rc%inst )
+      if ( .not. associated(rc%inst) ) then
+        call output( 'indices not associated', advance='yes' )
+      else
+        call dump ( rc%inst )
+      endif
       call output ( 'Quantity indices for blocks in the ' )
       call output ( r_or_c )
       call output ( 's' )
       call output ( ':', advance='yes' )
-      call dump ( rc%quant )
+      if ( .not. associated(rc%quant) ) then
+        call output( 'indices not associated', advance='yes' )
+      else
+        call dump ( rc%quant )
+      endif
     end if
   end subroutine Dump_RC
 
@@ -2642,6 +2654,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.119  2010/08/06 22:59:53  pwagner
+! Should crash less easily
+!
 ! Revision 2.118  2010/04/17 01:41:57  vsnyder
 ! Dump_Matrix calls Dump_Struct if details == -1
 !
