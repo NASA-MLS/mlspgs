@@ -603,7 +603,7 @@ contains
   ! ------------------------- DumpCommand ------------------------
   subroutine DumpCommand ( Root, QuantityTemplatesDB, &
     & VectorTemplates, Vectors, ForwardModelConfigs, HGrids, griddedDataBase, &
-    & FileDataBase )
+    & FileDataBase, MatrixDatabase, HessianDatabase )
 
   ! Process a "dump" command
 
@@ -616,14 +616,16 @@ contains
       & Dump_DACS_Filter_Database
     use ForwardModelConfig, only: Dump, ForwardModelConfig_T
     use GriddedData, only: Diff, Dump, GriddedData_T
+    use HessianModule_1, only: Hessian_T, Dump
     use HGridsDatabase, only: Dump, HGRID_T
     use Init_Tables_Module, only: F_AllBooleans, F_AllFiles, F_AllForwardModels, &
-      & F_AllGriddedData, F_AllHGrids, F_AllL2PCs, F_AllLines, &
+      & F_AllGriddedData, F_AllHessians, F_AllHGrids, &
+      & F_AllL2PCs, F_AllLines, F_AllMatrices, &
       & F_AllPFA, F_AllQuantityTemplates, F_AllSignals, F_AllSpectra, &
       & F_AllVectors, F_AllVectorTemplates, F_AllVGrids, F_AntennaPatterns, &
       & F_Boolean, F_Clean, F_CrashBurn, F_Details, F_DACSFilterShapes, &
-      & F_File, F_FilterShapes, F_ForwardModel, F_GRID, &
-      & F_HGrid, F_L2PC, F_Lines, F_Mark, F_Mask, F_MieTables, &
+      & F_File, F_FilterShapes, F_ForwardModel, F_GRID, F_HESSIAN, &
+      & F_HGrid, F_L2PC, F_Lines, F_Mark, F_Mask, F_MATRIX, F_MieTables, &
       & F_OPTIONS, F_PfaData, F_PfaFiles, F_PFANum, F_PFAStru, F_PointingGrids, &
       & F_Quantity, F_Signals,  F_Spectroscopy, F_Stop, F_StopWithError, &
       & F_Template, F_Text, F_TGrid, &
@@ -633,6 +635,8 @@ contains
     use L2PC_m, only: L2PCDatabase, dumpL2PC => Dump
     use Intrinsic, only: PHYQ_Dimensionless
     use MACHINE, only: NEVERCRASH
+    use MatrixModule_1, only: Matrix_T, Matrix_Database_T, &
+      & Dump, GetFromMatrixDatabase
     use MLSCommon, only: MLSFile_T
     use MLSFiles, only: DumpMLSFile => Dump, GetMLSFileByName
     use MLSL2Options, only: NORMAL_EXIT_STATUS, RUNTIMEVALUES
@@ -669,6 +673,8 @@ contains
     type (HGrid_T), dimension(:), pointer, optional              :: HGrids
     type (GriddedData_T), dimension(:), pointer, optional        :: griddedDataBase
     type (MLSFile_T), dimension(:), pointer, optional            :: FileDataBase
+    type (Matrix_Database_T), dimension(:), pointer, optional    :: MatrixDataBase
+    type (Hessian_T), dimension(:), pointer, optional            :: HessianDataBase
 
     character(len=80) :: BOOLEANSTRING  ! E.g., 'BAND13_OK'
     logical :: Clean
@@ -684,7 +690,9 @@ contains
     logical :: GotOne ! of something -- used to test loop completion
     integer :: GSON, I, J, K, L, Look
     logical :: HaveQuantityTemplatesDB, HaveVectorTemplates, HaveVectors, &
-      &        HaveForwardModelConfigs, HaveGriddedData, HaveHGrids
+             & HaveForwardModelConfigs, HaveGriddedData, HaveHGrids, &
+             & HaveMatrices, HaveHessians
+    type (Matrix_T), pointer :: matrix
     character(len=80) :: NAMESTRING  ! E.g., 'L2PC-band15-SZASCALARHIRES'
     type (MLSFile_T), pointer :: OneMLSFile
     character(len=80) :: OPTIONSSTRING  ! E.g., '-rbs' (see dump_0.f90)
@@ -746,6 +754,10 @@ contains
     if ( haveHGrids ) haveHGrids = associated(hGrids)
     haveGriddedData = present(griddedDataBase)
     if ( haveGriddedData ) haveGriddedData = associated(griddedDataBase)
+    haveMatrices = present(MatrixDatabase)
+    if ( haveMatrices ) haveMatrices = size(MatrixDatabase) > 0
+    HaveHessians = present(HessianDatabase)
+    if ( HaveHessians ) HaveHessians = size(HessianDatabase) > 0
     
     DetailReduction = switchDetail(switches, 'red')
     if ( DetailReduction < 0 ) then ! The 'red' switch is absent
@@ -766,7 +778,7 @@ contains
       if (nsons(son) > 1) gson = subtree(2,son) ! Now value of said argument
       select case ( fieldIndex )
       case ( f_allBooleans, f_allFiles, f_allForwardModels, f_allGriddedData, &
-        & f_allHGrids, f_allL2PCs, f_allLines, &
+        & f_allHessians, f_allHGrids, f_allL2PCs, f_allLines, f_allMatrices, &
         & f_allPFA, f_allQuantityTemplates, f_allSignals, f_allSpectra, &
         & f_allVectors, f_allVectorTemplates, f_allVGrids, f_antennaPatterns, &
         & f_crashBurn, f_DACSfilterShapes, f_filterShapes, f_MieTables, &
@@ -795,6 +807,13 @@ contains
             else
               call announceError ( son, noGriddedData )
             end if
+          case ( f_allHessians )
+            if ( details < -1 ) cycle
+            if ( haveHessians ) then
+              call dump ( HessianDataBase, details )
+            else
+              call announceError ( son, 0, 'Unable to dump HessianDB here; empty or absent' )
+            end if
           case ( f_allHGrids )
             if ( haveHGrids ) then
               call dump ( hGrids )
@@ -808,6 +827,13 @@ contains
               call dump_lines_database
             else
               call announceError ( son, noLines )
+            end if
+          case ( f_allMatrices )
+            if ( details < -1 ) cycle
+            if ( haveMatrices ) then
+              call dump ( MatrixDataBase, details )
+            else
+              call announceError ( son, 0, 'Unable to dump MatrixDB here; empty or absent' )
             end if
           case ( f_allPFA )
             if ( details < -1 ) cycle
@@ -946,6 +972,29 @@ contains
           call announceError ( gson, noGriddedData )
         end if
         GotFirst = .true.
+      case ( f_hessian ) ! Dump hessian
+        if ( details < -1 ) cycle
+        if ( haveHessians ) then
+          do i = 2, nsons(son)
+            call dump ( & ! The decoration is the negative of the index; see Fill, where
+                          ! the Hessian spec is processed.
+                          ! Well, that's a nasty trick.
+              & HessianDatabase(-decoration(decoration(subtree(i,son)))), details=details )
+          end do
+        else
+          call announceError ( gson, 0, 'Unable to dump Hessian here; db empty or absent' )
+        end if
+      case ( f_matrix ) ! Dump hessian
+        if ( details < -1 ) cycle
+        if ( haveMatrices ) then
+          do i = 2, nsons(son)
+            call getFromMatrixDatabase ( &
+              & matrixDatabase(decoration(decoration(subtree(i,son)))), matrix )
+            call dump ( Matrix, details=details )
+          end do
+        else
+          call announceError ( gson, 0, 'Unable to dump matrix here; db empty or absent' )
+        end if
       case ( f_hGrid )    ! Dump HGrids
         if ( details < -1 ) cycle
         if ( haveHGrids ) then
@@ -1224,6 +1273,9 @@ contains
         call output ( "Program stopped by /stop field on DUMP statement." )
       case ( unknown )
         call output ( "Can't figure out what kind of template it is." )
+      case default
+        if ( present(string) ) call output ( string )
+        call output ( "No reserved error flag for this" )
       end select
       call newLine
     end subroutine AnnounceError
@@ -1297,6 +1349,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.52  2010/08/06 23:08:48  pwagner
+! Pass Hessians, matrices to DumpCommand
+!
 ! Revision 2.51  2010/04/17 01:44:26  vsnyder
 ! Add details to DumpL2PC calls, spiff up an error message
 !
