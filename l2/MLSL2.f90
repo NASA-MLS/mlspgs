@@ -741,6 +741,7 @@ program MLSL2
     if ( parallel%masterTid <= 0 ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'masterTid of this slave <= 0' )
+    call dump_settings
     call InitParallel ( iChunks(1), slaveMAF )
     if ( parallel%myTid <= 0 ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1146,6 +1147,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.174  2010/08/06 23:08:48  pwagner
+! Pass Hessians, matrices to DumpCommand
+!
 ! Revision 2.173  2010/05/23 03:25:37  honghanh
 ! Use AddInUnit instead of inunit to adapt with change in the string_table
 !
