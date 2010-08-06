@@ -128,16 +128,16 @@ MODULE MLSL1Config  ! Level 1 Configuration
          CALL MLSMessage (MLSMSG_Error, ModuleName, &
               & "Could not open L1 Config file: " // physicalFilename)
       END IF
-      call AddInUnit(l1cf_unit)
-      CALL MLSMessage (MLSMSG_Info, ModuleName, &
-           & "Opened L1 Config file: " // physicalFilename)
-
 !! Initialize the lexer, symbol table and tree checker's tables:
 
       CALL Init_Lexer (n_chars=10000, n_symbols=1000, hash_table_size=1003)
       CALL Allocate_Decl (ndecls=1000)
       CALL Allocate_Tree (n_tree=10000)
       CALL Init_tables
+
+      call AddInUnit(l1cf_unit)
+      CALL MLSMessage (MLSMSG_Info, ModuleName, &
+           & "Opened L1 Config file: " // physicalFilename)
 
 !! Produce the abstract syntax tree
 
@@ -832,6 +832,9 @@ MODULE MLSL1Config  ! Level 1 Configuration
 END MODULE MLSL1Config
 
 ! $Log$
+! Revision 2.32  2010/08/06 17:53:43  pwagner
+! Moved call to AddInUnit after init_lexer
+!
 ! Revision 2.31  2010/05/23 04:13:48  honghanh
 ! Use AddInunit instead of inunit due to change in string_table
 !
