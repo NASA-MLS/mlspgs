@@ -1,0 +1,478 @@
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-096}
+\newcommand{\docdate}{9 August 2010}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\newcommand{\TS}{T_\text{scat}}
+\newcommand{\TSs}[1]{T_{\text{scat}_{#1}}}
+\newcommand{\DB}{\Delta B}
+\newcommand{\MT}{\mathcal{T}}
+\newcommand{\IF}[1]{\,\mathcal{A}_n\!\left(#1\right)} % Interpolation Function
+\newcommand{\FA}[1]{\,\mathcal{F}_c\!\left(#1\right)} % Frequency averaging
+\newcommand{\ER}[1]{Equation (\ref{#1})} % Equation reference
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill, Nathaniel, Van\\
+Subject: \>Combining LBL, PFA and $\TS$\\
+From: \>Van Snyder\\
+Reference: \>\h{wvs-027}, \h{wvs-095}
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+Recall from wvs-027 that we combine LBL and PFA calculations by
+
+\begin{equation}\label{combined}
+I_c \approx \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc}
+               \sum_{i=1}^{n_p} \IF{\DB_{ij} \MT^s_{ij}} \MT^w_{ic}
+\end{equation}
+
+where $\IF{\cdot}$ interpolates from the $\{\nu_j\}$ results for
+frequencies at which the LBL calculation is carried out to the $\{\nu_n\}$
+frequencies at which the channel response is tabulated, superscript $s$
+refers to strong lines (processed by LBL calculations), and superscript
+$w$ applies to weak lines or tails of distant strong lines (processed by
+PFA calculations).
+
+Since we can't always know the channel to which the result of a
+single-frequency path integration contributes, the order of summation in
+\ER{combined}\ is exchanged, with the result that the incremental
+radiance $\DB_{ij} \MT_{ij}^s$ for LBL is frequency averaged at every
+point on the path giving a frequency-averaged incremental radiance
+
+\begin{equation}\label{incrad}
+\overline{I^s_{ic}} \approx
+ \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc} \IF{\DB_{ij} \MT^s_{ij}}
+ =
+ \Delta B_{ic} \FA{\MT^s_{ij}}\,,
+\end{equation}
+
+where$\FA{\cdot} = \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc} \IF{\cdot}$
+denotes frequency averaging. Replacing $\DB_{ic}$ in \ER{combined}\ by
+$\DB_{ij}$ and then factoring it out of the frequency averaging is
+reasonable because it varies slowly within one channel.
+
+This is then combined with PFA $\MT^w_{ic}$ and integrated along the path
+to get channel-averaged combined LBL and PFA radiance, giving a revision
+of \ER{combined}\ of the form
+
+\begin{equation}\label{three}
+I_c \approx \sum_{i=1}^{n_p} \overline{I^s_{ic}} \MT^w_{ic}.
+\end{equation}
+
+When scattering is taken into consideration, \ER{combined}\ becomes
+
+\begin{equation}\label{scattering}
+I_c \approx \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc}
+               \sum_{i=1}^{n_p}
+                \IF{(\DB^g_{ij} + \DB^\sigma_{ij}) \MT^s_{ij}}
+                \MT^w_{ic}\,,
+\end{equation}
+
+where superscript $g$ refers to gas-phase calculations and superscript
+$\sigma$ refers to scattering calculations. For the gas-phase part of the
+calculation,
+
+\begin{equation}\label{DBg}
+\DB_{ij}^g = \frac12\left(( 1 - \omega_{0_{i+1,j}} ) B_{i+1,j} -
+                 ( 1 - \omega_{0_{i-1,j}} ) B_{i-1,j}\right),
+                 i = 2 \dots n_p-1
+\end{equation}
+
+(ignoring special treatment at the ends of the path).  Since
+$\omega_{0_{ij}}$ depends upon $\alpha_{\text{gas}_{ij}}$ it does not
+necessarily vary slowly within one channel, and therefore $\DB_{ij}^g$
+does not necessarily vary slowly within one channel.
+
+Rewriting \ER{DBg}\ as
+
+\begin{equation}
+\DB^g_{ij} = \DB_{ij} - \frac12 \left(
+ \omega_{0_{i+1,j}} B_{i+1,j} - \omega_{0_{i-1,j}} B_{i-1,j} \right)
+\end{equation}
+
+and substituting into \ER{incrad}\ we have
+
+\begin{equation}\begin{split}\label{seven}
+\overline{I^s_{ic}}
+=\,& \DB_{ic} \FA{\MT^s_{ij}} - \\
+   & \frac12 \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc}
+     \IF{\omega_{0_{i+1,j}} B_{i+1,j} \MT^s_{ij}} -
+     \IF{\omega_{0_{i-1,j}} B_{i-1,j} \MT^s_{ij}} \\
+=\,& \DB_{ic} \FA{\MT^s_{ij}} -
+     \frac12 \left ( B_{i+1,c} \FA{\omega_{0_{i+1,j}} \MT^s_{ij}} -
+                     B_{i-1,c} \FA{\omega_{0_{i-1,j}} \MT^s_{ij}} \right )
+\end{split}\end{equation}
+
+where again we justify factoring $B_{i\pm1,j}$ out of frequency averaging.
+
+For the scattering part of the calculation, $\DB_{ij}$ is replaced by
+
+\begin{equation}
+\DB_{ij}^\sigma = \frac12\left( \omega_{0_{i+1,j}} \TSs{i+1,c} -
+                 \omega_{0_{i-1,j}} \TSs{i-1,c}\right),
+                 i = 2 \dots n_p-1
+\end{equation}
+
+(again ignoring special treatment at the ends of the path).  The
+scattering part of \ER{scattering}\ becomes
+
+\begin{equation}\begin{split}\label{nine}
+I^\sigma_c \approx\,& \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc}
+               \sum_{i=1}^{n_p} \IF{\DB_{ij}^\sigma \MT^s_{ij}} \MT^w_{ic}
+               \\
+=\,&
+ \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc}
+  \sum_{i=1}^{n_p} \IF{\frac12\left( \omega_{0_{i+1,j}} \TSs{i+1,c} -
+   \omega_{0_{i-1,j}} \TSs{i-1,c}\right) \MT^s_{ij}} \MT^w_{ic} \\
+=\,&
+ \frac12 \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc}
+  \sum_{i=1}^{n_p} \IF{\omega_{0_{i+1,j}} \TSs{i+1,c} \MT^s_{ij}} -
+   \IF{\omega_{0_{i-1,j}} \TSs{i-1,c} \MT^s_{ij}} \MT^w_{ic} \\
+=\,&
+ \frac12 \sum_{i=1}^{n_p} \left(
+  \TSs{i+1,c} \FA{\omega_{0_{i+1,j}} \MT^s_{ij}} -
+  \TSs{i-1,c} \FA{\omega_{0_{i-1,j}} \MT^s_{ij}}
+  \right)  \MT^w_{ic}
+\end{split}\end{equation}
+
+(again ignoring special treatment at the ends of the path).  That is, the
+single-frequency quantities $\omega_{0_{i\pm1,j}} \MT^s_{ij}$ must be
+frequency averaged at every point along the path before being combined
+with the channel quantities $\TSs{i\pm1,c}$ and $\MT^w_{ic}$.
+
+Substituting \ER{seven}\ and \ER{nine}\ into \ER{three}, we have
+
+\begin{equation}\begin{split}\label{final}
+\overline{I^s_{ic}}
+=\,&
+ \DB_{ic} \FA{\MT^s_{ij}} - \\
+&
+     \frac12 \left( B_{i+1,c} \FA{\omega_{0_{i+1,j}} \MT^s_{ij}} -
+                    B_{i-1,c} \FA{\omega_{0_{i-1,j}} \MT^s_{ij}} \right)
+                    + \\
+&
+     \frac12 \left( \TSs{i+1,c} \FA{\omega_{0_{i+1,j}} \MT^s_{ij}} -
+                    \TSs{i-1,c} \FA{\omega_{0_{i-1,j}} \MT^s_{ij}} \right)
+                    \\
+=\,&
+ \DB_{ic} \FA{\MT^s_{ij}} + \\
+&
+     \frac12 \left( \left( \TSs{i+1,c} - B_{i+1,c} \right)
+                          \FA{\omega_{0_{i+1,j}} \MT^s_{ij}} -
+                    \left( \TSs{i-1,c} - B_{i-1,c} \right)
+                          \FA{\omega_{0_{i-1,j}} \MT^s_{ij}}
+             \right)
+\end{split}\end{equation}
+
+(again ignoring special treatment at the ends of the path).
+
+Recall the definitions
+
+\begin{equation}\begin{split}
+\MT_{ij} =\,& \exp \left( - \sum_{l=2}^i ( \alpha^s_{lj} + \alpha^w_{lj} )
+ \Delta s_l \right) \text{, and} \\
+\MT^s_{ij} =\,& \exp \left( - \sum_{l=2}^i \alpha^s_{lj} \Delta s_l \right)
+\text{ and }
+\MT^w_{ij} = \exp \left( - \sum_{l=2}^i \alpha^w_{lj} \Delta s_l \right)
+\text{ from which}\\
+\MT_{ij} =\,& \MT^s_{ij} \MT^w_{ij}\,.
+\end{split}\end{equation}
+
+In \ER{final}\ we need\footnote{We use $\beta_{c\_s_i}$ and
+$\beta_{c\_e_i}$ instead of $\beta_{c\_s_{ij}}$ and $\beta_{c\_e_{ij}}$
+because they vary slowly with frequency; we simply interpolate in the
+table for them that is closest in frequency to $\nu_j$.}
+
+\begin{equation}\label{twelve}
+\omega_{0_{i\pm1,j}} \MT_{ij} =
+ \frac{\beta_{c\_s_{i\pm1}}}
+     {\alpha^s_{i\pm1,j} + \alpha^w_{i\pm1,c} + \beta_{c\_e_{i\pm1}}}
+ \exp \left( - \sum_{l=2}^i ( \alpha^s_{lj} + \alpha^w_{lc} )
+  \Delta s_l \right)\,.
+\end{equation}
+
+This quantity cannot be factored as functions only of $\alpha^s_{lj}$ and
+of $\alpha^w_{lc}$, and therefore we cannot separately frequency average
+a quantity that is a function only of $\alpha^s_{lj}$, giving a channel
+quantity that we can then multiply by a function only of $\alpha^w_{lc}$.
+
+If $\alpha^w_{ic}$ is sufficiently smaller than $\alpha^s_{ij} +
+\beta_{c\_e_i}$ that we can neglect $\alpha^w_{ic}$ in the definition of
+$\omega_{0_{ij}}$ we can use \ER{final}.  Otherwise, the approximation
+
+\begin{equation} \begin{split}\label{thirteen}
+\omega_{0_{ij}}
+= \,&
+ \frac{\beta_{c\_s_i}}{\beta_{c\_e_i}}
+ \sum_{p=0}^\infty \left(- \frac{\alpha^s_{ij} + \alpha^w_{ic}}
+                                {\beta_{c\_e_i}}
+                   \right)^p
+\approx
+ \frac{\beta_{c\_s_i}}
+      {\beta_{c\_e_i}}
+ \left( 1 - \frac{\alpha^s_{ij} + \alpha^w_{ic}}
+                 {\beta_{c\_e_i}}
+ \right) \,
+=
+ \omega^w_{0_{ic}} - r_i \alpha^s_{ij}
+ \text{ where}\\
+ \omega^w_{0_{ic}}
+=\,&
+ \frac{\beta_{c\_s_i}}
+      {\beta_{c\_e_i}}
+      \left( 1 - \frac{\alpha^w_{ic}}
+                      {\beta_{c\_e_i}} \right)
+ \text{ and }
+ r_i
+=
+ \frac{\beta_{c\_s_i}}
+      {\beta_{c\_e_i}^2}
+\end{split}\end{equation}
+
+might be good enough, assuming $\alpha^s_{ij} + \alpha^w_{ic} <
+\beta_{c\_e_i}$ (otherwise the series doesn't converge).  If
+$\alpha^w_{ic}$ cannot be ignored in the definition of $\omega_{0_ij}$
+but \ER{thirteen}\ is good enough, \ER{final}\ becomes
+
+\begin{equation}\begin{split}\label{fourteen}
+\overline{I^s_{ic}} =\,&
+ \left( \DB_{ic} +
+  \frac12 \left( \omega^w_{0_{i+1,c}} - \omega^w_{0_{i-1,c}} \right)
+ \right) \FA{\MT^s_{ij}} - \\
+&
+ \frac12\left( \left( r_{i+1}
+                      \TSs{i+1,c} - B_{i+1,c} \right)
+                          \FA{\alpha^s_{i+1,j} \MT^s_{ij}} - \right.\\
+& \left. \phantom{\frac12\left(\right.}\!\!
+               \left( r_{i-1}
+                      \TSs{i-1,c} - B_{i-1,c} \right)
+                          \FA{\alpha^s_{i-1,j} \MT^s_{ij}}
+         \right)
+\end{split}\end{equation}
+
+(again ignoring special treatment at the ends of the path).
+
+If \ER{thirteen}\ does not converge,
+
+\begin{equation}
+\alpha^s_{ic} \approx
+ \frac{\ln \left( \FA{\MT^s_{ij}} \right) -
+       \ln \left( \FA{\MT^s_{i-1,j}} \right)}{\Delta s_i}
+\end{equation}
+
+might be used in place of $\alpha^s_{ij}$ in the definition of
+$\omega_{0_{ij}}$, giving instead an approximation to $\omega_{0_{ic}}$:
+
+\begin{equation}
+\omega_{0_{ic}} \approx
+ \frac{\beta_{c\_s_i}}
+      {\frac{\ln \left( \FA{\MT^s_{ij}} \right) -
+             \ln \left( \FA{\MT^s_{i-1,j}} \right)}{\Delta s_i} +
+       \alpha^w_{ic} + \beta_{c\_e_i}} =
+ \frac{\beta_{c\_s_i} \Delta s_i}
+      {\ln \left( \FA{\MT^s_{ij}} \right) -
+       \ln \left( \FA{\MT^s_{i-1,j}} \right) +
+       \Delta s_i ( \alpha^w_{ic} + \beta_{c\_e_i} ) }.
+\end{equation}
+
+Since $\omega_{0_{ic}}$ is a channel quantity, $\FA{\omega_{0_{i\pm1,j}} \MT^s_{ij}}$ becomes $\omega_{0_{i\pm1,c}}
+\FA{\MT^s_{ij}}$, resulting in the need to frequency average only
+$\MT^s_{ij}$ at every point on the path,\footnote{The forward model
+currently averages $\DB_{ij} \MT^s_{ij}$ to combine LBL and PFA; it could
+average $\MT^s_{ij}$ and combine that with $\DB_{ic}$ during the PFA step
+because $\DB_{ij}$ changes very slowly with frequency.  That is,
+\ER{incrad} would become $\overline{I^s_{ic}} \approx \FA{\MT^s_{ic}}$,
+and \ER{three} would become $\sum_{i=1}^{n_p} \DB_{ic} \FA{\MT^s_{ic}}
+\MT^w_{ic}$.} and \ER{final}\ becomes simpler:
+
+\begin{equation}
+\overline{I^s_{ic}}
+=
+\FA{\MT^s_{ij}} \left[ \DB_{ic} + \Delta W_{ic} \right]
+\text{ where }
+W_{ic} = (\TSs{ic} - B_{ic}) \omega_{0_{ic}}
+\end{equation}
+
+and $\Delta W_{ic} = \frac12 (W_{i+1,c} - W_{i-1,c})$ (again ignoring
+special treatment at the ends of the path).
+
+The derivatives of $\omega_{0_{i\pm1,c}}$ become more complicated because
+they depend upon $\FA{\MT^s_{ij}}$ and $\Delta s_i$:
+
+\begin{equation}\label{d_omega}
+\frac{\partial \omega_{0_{ic}}}{\partial x}
+\approx
+\frac{\omega_{0_{ic}}}{\beta_{c\_s_i}} \left[
+ \frac{\alpha^s_{ic}}{\Delta s_i}
+  \frac{\partial \Delta s_i}{\partial x} +
+ \frac{\partial \beta_{c\_s_i}}{\partial x} -
+\omega_{0_{ic}}
+  \left( \frac1{\Delta s_i} \Delta
+         \frac{\partial \ln \left( \FA{\MT^s_{ij} }\right)}{\partial x} +
+         \frac{\partial \alpha^w_{ic}}{\partial x} +
+         \frac{\partial \beta_{c\_e_i}}{\partial x}
+  \right)
+ \right]
+\end{equation}
+
+where $\Delta\frac{\partial \ln \left( \FA{\MT^s_{ij} }\right)}{\partial
+x} = \frac{\partial \ln \left( \FA{\MT^s_{ij} }\right)}{\partial
+x} - \frac{\partial \ln \left( \FA{\MT^s_{i-1,j} }\right)}{\partial
+x}$.  (The derivative $\frac{\partial \Delta s_i}{\partial x}$ is zero if
+$x \neq T$).
+
+Since $\MT^s_{ij} = \exp(-\delta^s_{ij})$, $\frac{\partial
+\MT^s_{ij}}{\partial x} = -\MT^s_{ij} \frac{\partial
+\delta^s_{ij}}{\partial x}$.  Therefore
+
+\begin{equation}
+\frac{\partial \ln \left( \FA{\MT^s_{ij} }\right)}{\partial x} =
+\frac1{\FA{\MT^s_{ij}}}
+ \frac{\partial \FA{\MT^s_{ij}}}{\partial x} =
+\frac1{\FA{\MT^s_{ij}}}
+ \FA{\frac{\partial \MT^s_{ij}}{\partial x}} =
+\frac1{\FA{\MT^s_{ij}}}
+ \FA{\MT^s_{ij} \frac{\partial \delta^s_{ij}}{\partial x}}.
+\end{equation}
+
+If the approximation
+$\FA{\MT^s_{ij} \frac{\partial \delta^s_{ij}}{\partial x}} \approx
+ \FA{\MT^s_{ij}} \FA{\frac{\partial \delta^s_{ij}}{\partial x}}$
+is justified then
+$\frac{\partial \ln \left( \FA{\MT^s_{ij} }\right)}{\partial x} \approx
+ \FA{\frac{\partial \delta^s_{ij}}{\partial x}}$ and
+
+\begin{equation}
+\Delta \frac{\partial \ln \left( \FA{\MT^s_{ij} }\right)}{\partial x}
+\approx
+\Delta \frac{\partial \FA{\delta^s_{ij}}}{\partial x} =
+\frac{\partial \FA{ \Delta \delta^s_{ij}}}{\partial x} =
+\frac{\partial \FA{ \alpha^s_{ij}}}{\partial x} =
+\FA{\frac{\partial \alpha^s_{ij}}{\partial x}},
+\end{equation}
+
+and \ER{d_omega} becomes
+
+\begin{equation}
+\frac{\partial \omega_{0_{ic}}}{\partial x}
+\approx
+\frac{\omega_{0_{ic}}}{\beta_{c\_s_i}} \left[
+ \frac{\alpha^s_{ic}}{\Delta s_i}
+  \frac{\partial \Delta s_i}{\partial x} +
+ \frac{\partial \beta_{c\_s_i}}{\partial x} -
+\omega_{0_{ic}}
+  \left( \frac1{\Delta s_i}
+         \FA{\frac{\partial \alpha^s_{ij}}{\partial x}} +
+         \frac{\partial \alpha^w_{ic}}{\partial x} +
+         \frac{\partial \beta_{c\_e_i}}{\partial x}
+  \right)
+ \right]
+\end{equation}
+
+where $\frac{\partial \alpha^s_{ij}}{\partial x}$ is given in wvs-095.
+The derivative $\frac{\partial I_c}{\partial x}$ where $I_c$ is given by
+\ER{three} is calculated as explained as in wvs-027.
+
+In wvs-095, the quantity
+
+\begin{equation}
+I^\sigma_c = \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc}
+  \IF{\sum_{i=1}^{n_p} \DB_{ij}^\sigma \MT_{ij}^s}
+\end{equation}
+
+was rearranged using partial summation to give
+
+\begin{equation}
+I^\sigma_c = \sum_{i=1}^{n_p} \TSs{ic} \sum_{n=1}^{n_c} \phi_{nc} \nu_{nc}
+  \IF{\omega_{0_{ij}} \Delta \MT_{ij}^s} \text{ where }
+  \Delta \MT_{ij}^s = \frac12 \left( \MT_{i-1,j} - \MT_{i+1,j} \right)
+\end{equation}
+
+(again ignoring special treatment at the ends of the path).  From
+Equations (\ref{final}) and (\ref{fourteen}), it is clear that the
+formulation based upon $\Delta \MT_{ij}$ is no longer useful.
+
+If the derivatives of $\omega_{0_{ij}}$ can be calculated sufficiently
+accurately by ignoring $\alpha^w_{ic}$, the derivative expressions in
+Equations (12) and (13) in wvs-095 remain useful in the context of
+\ER{final}\ or \ER{fourteen}.  Otherwise, those derivative expressions
+will need to be formulated in terms of \ER{thirteen}\ above, the strong
+and weak parts separated, and the strong parts separately frequency
+averaged.
+
+\label{lastpage}
+\end{document}
+
+% $Id$
+
+% $Log$
