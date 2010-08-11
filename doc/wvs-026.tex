@@ -6,8 +6,8 @@
 \topmargin -0.5in
 \textheight 9.00in
 
-\newcommand{\docname}{\bf wvs-026r2}
-\newcommand{\docdate}{17 October 2005}
+\newcommand{\docname}{\bf wvs-026r3}
+\newcommand{\docdate}{10 August 2010}
 
 \begin{document}
 
@@ -177,7 +177,7 @@ This introduces a minor inconsistency between the radiance and its derivatives.
 Experiments will show whether this confuses the nonlinear solver.
 
 As explained in wvs-025, it is possible to eliminate the frequency dimension
-altogether from array quantities other then the pointing frequency grids
+altogether from array quantities other than the pointing frequency grids
 themselves, while preserving the fidelity of the approximations.
 
 The frequency-averaged radiance due to strong lines, in each channel at each
@@ -198,7 +198,7 @@ this is therefore a good approximation.
 Exchanging the order of summation in the second term in Equation (\ref{simple})
 and substituting $\overline{I^s_{ic}}$,
 
-\begin{equation}
+\begin{equation}\label{deriv}
 \frac{\partial I_c}{\partial x_k}
 \approx \sum_{n=1}^{N_f} \phi_{nc} \Delta \nu_{nc} \sum_{i=1}^{N_p}
  \left(
@@ -215,6 +215,13 @@ The first term is now simply the line-by-line derivative, and the second term
 is a PFA correction.  The inner sum within the second term can be evaluated
 within the frequency loop, thereby not needing to provide a $c$ dimension for
 $\frac{\partial \delta^w_{jc}}{\partial x_k}$.
+
+Observe in Equation (\ref{deriv}) that when $x_k$ is a mixing ratio,
+$\frac{\partial \Delta B_{in}}{\partial x_k} = 0$.  Further, there are no
+molecules that are both PFA and LBL, so either $\frac{\partial
+\delta^s_{jn}}{\partial x_k} = 0$ or $\frac{\partial \delta^w_{jc}}{\partial
+x_k} = 0$.  The only time that Equation (\ref{deriv}) actually ``combines''
+derivatives is when $x_k = T$.
 
 The frequency-averaged radiance, including the contribution from PFA (weak)
 lines can be gotten by exchanging the order of summation in Equation
