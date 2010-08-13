@@ -20,7 +20,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use DOT_M, only: DOT
-  use DUMP_0, only: DUMP
+  use DUMP_0, only: DIFF, DUMP
   use Gemm_M, only: GEMM
   use Gemv_M, only: GEMV
   use MLSKinds, only: RM, R4, R8
@@ -34,7 +34,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   public :: Assignment(=), CholeskyFactor
   public :: CholeskyFactor_0, ClearLower, ClearLower_0, ClearRows, ClearRows_0, CloneBlock, ColumnScale
   public :: Col_L1, CopyBlock, CreateBlock, CreateBlock_0, CyclicJacobi
-  public :: DenseCholesky, DenseCyclicJacobi, Densify, DestroyBlock, DestroyBlock_0, Dump
+  public :: DenseCholesky, DenseCyclicJacobi, Densify, DestroyBlock, DestroyBlock_0, Diff, Dump
   public :: FrobeniusNorm, GetDiagonal, GetMatrixElement, GetMatrixElement_0
   public :: GetVectorFromColumn
   public :: InvertCholesky, InvertCholesky_0
@@ -93,6 +93,10 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
 
   interface DestroyBlock
     module procedure DestroyBlock_0
+  end interface
+
+  interface DIFF
+    module procedure DIFF_MATRIX_BLOCKS
   end interface
 
   interface DUMP
@@ -3409,6 +3413,47 @@ contains ! =====     Public Procedures     =============================
     call destroyBlock ( emptyBlock )
   end subroutine CreateEmptyBlock
 
+  ! ------------------------------------------- Diff_matrix_Blocks -----
+  subroutine Diff_matrix_Blocks ( matrix_block1, matrix_block2, &
+    & Details, Bounds, Clean )
+    type(MatrixElement_T), intent(in) :: matrix_block1, matrix_block2
+    integer, intent(in), optional :: Details ! Print details, 0 => minimal,
+                                             ! 1 => values, default 1
+    integer, intent(in), optional :: BOUNDS(4) ! Diff only Bounds(1):Bounds(2)
+                                               !        X  Bounds(3):Bounds(4)
+    logical, intent(in), optional :: CLEAN   ! print \size
+
+    integer :: I
+    integer :: My_Details
+    logical :: My_Clean
+
+    my_Details = 1
+    if ( present(details) ) my_Details = details
+    my_Clean = .false.
+    if ( present(clean) ) my_Clean = clean
+
+    if ( matrix_block1%nRows /= matrix_block2%nRows .or. &
+      & matrix_block1%nCols /= matrix_block2%nCols ) then
+      call output ( 'the matrix blocks have different shapes', advance='yes' )
+      return
+    endif
+    call output ( ' has ' )
+    call output ( matrix_block1%nRows, after=' Rows, ' )
+    call output ( matrix_block1%nCols, after = ' Columns, ' )
+    if ( matrix_block1%kind /= matrix_block2%kind ) then
+      call output ( 'the matrix blocks are of different kind', advance='yes' )
+      return
+    endif
+    select case ( matrix_block1%kind )
+    case ( m_absent )
+      call output ( 'Absent, therefore the matrix blocks are equal' )
+    case default
+      call diff ( matrix_block1%values, 'matrix 1 block ', &
+        & matrix_block2%values, 'matrix 2 block ' )
+    end select
+
+  end subroutine Diff_matrix_Blocks
+
   ! ------------------------------------------  DUMP_MATRIX_BLOCK  -----
   subroutine DUMP_MATRIX_BLOCK ( MATRIX_BLOCK, NAME, DETAILS, BOUNDS, CLEAN )
     type(MatrixElement_T), intent(in) :: MATRIX_BLOCK
@@ -3562,6 +3607,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.6  2010/08/13 22:03:28  pwagner
+! Added diff
+!
 ! Revision 2.5  2010/02/04 23:08:00  vsnyder
 ! Remove USE or declaration for unused names
 !
