@@ -16,7 +16,7 @@ module HessianModule_0          ! Low-level Hessians in the MLS PGS suite
 ! This module provides the elementary Hessian type.  Blocks of this
 ! type are used to compose block Hessians.
 
-  use DUMP_0, only: DUMP
+  use DUMP_0, only: DIFF, DUMP
   use MLSKinds, only: RM
   use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
 
@@ -25,7 +25,7 @@ module HessianModule_0          ! Low-level Hessians in the MLS PGS suite
 
   public :: H_Absent, H_Sparse, H_Full, H_Unknown
   public :: HessianElement_T, Tuple_T
-  public :: ClearBlock, CreateBlock, Densify, DestroyBlock, Dump
+  public :: ClearBlock, CreateBlock, Densify, DestroyBlock, Diff, Dump
   public :: InsertHessianPlane, Multiply, OptimizeBlock, Sparsify
   public :: StreamlineHessian
 
@@ -79,6 +79,10 @@ module HessianModule_0          ! Low-level Hessians in the MLS PGS suite
     module procedure ClearHessianBlock_0
   end interface
 
+  interface Diff
+    module procedure Diff_Hessian_Blocks
+  end interface
+
   interface Dump
     module procedure Dump_Hessian_Block
   end interface
@@ -103,6 +107,7 @@ module HessianModule_0          ! Low-level Hessians in the MLS PGS suite
   end interface
 
   logical, parameter :: DEEBUG = .false.
+  logical, parameter :: DUMPASUNSPARSIFIED = .true.
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -266,8 +271,82 @@ contains
 
   end subroutine Densify_Hessian
 
+  ! ------------------------------------------- Diff_Hessian_Blocks -----
+  subroutine Diff_Hessian_Blocks ( H1, H2, Details, Indices, Clean )
+    use Allocate_Deallocate, only: Deallocate_Test, Allocate_Test
+    use MLSFillValues, only: Repopulate
+    type(HessianElement_T), intent(in) :: H1, H2
+    integer, intent(in), optional :: Details ! Print details, 0 => minimal,
+                                             ! 1 => values, default 1
+    integer, intent(in), optional :: Indices(:) ! 3 indices of the block
+    logical, intent(in), optional :: CLEAN   ! print \size
+
+    integer :: I
+    integer :: My_Details
+    logical :: My_Clean
+    ! These are in case we need to diff two blocks stored sparsely
+    real(rm), pointer :: h1array(:,:,:) => NULL()
+    real(rm), pointer :: h2array(:,:,:) => NULL()
+
+    my_Details = 1
+    if ( present(details) ) my_Details = details
+    my_Clean = .false.
+    if ( present(clean) ) my_Clean = clean
+
+    if ( present(indices) ) then
+      call output ( indices(1), before = ' (', after=', ' )
+      call output ( indices(2), after=', ' )
+      call output ( indices(3), after=')' )
+    end if
+    if ( h1%nRows /= h2%nRows .or. h1%nCols1 /= h2%nCols1 .or. &
+      & h1%nCols2 /= h2%nCols2 ) then
+      call output ( 'the hessian blocks have different shapes', advance='yes' )
+      return
+    endif
+    call output ( ' has ' )
+    call output ( h1%nRows, after=' Rows, ' )
+    call output ( h1%nCols1, after = ' First Columns, ' )
+    call output ( h1%nCols2, after = ' Second Columns, is ' )
+    if ( h1%kind /= h2%kind ) then
+      call output ( 'the hessian blocks are of different kind', advance='yes' )
+      return
+    endif
+    select case ( h1%kind )
+    case ( h_absent )
+      call output ( 'both absent, therefore identical', advance='yes' )
+    case ( h_sparse )
+      call output ( size(h1%tuples), before='sparse with ', &
+        & after=' nonzero elements', advance='yes' )
+      if ( my_details > 0 ) then
+        ! We know how to diff full arrays, so 
+        ! temporarily convert sparse representation to full
+        call output ( '(Diffing as if full)', advance='yes' )
+        call allocate_test( h1array, h1%nRows, h1%nCols1, h1%nCols2, &
+          & "h1array in Diff_Hessian_Blocks", ModuleName, fill=0.0_rm )
+        call allocate_test( h2array, h2%nRows, h2%nCols2, h2%nCols2, &
+          & "h2array in Diff_Hessian_Blocks", ModuleName, fill=0.0_rm )
+        call Repopulate( h1array, h1%tuples%i, h1%tuples%j, h1%tuples%k, &
+          & h1%tuplesFilled, h1%tuples%h )
+        call Repopulate( h2array, h2%tuples%i, h2%tuples%j, h2%tuples%k, &
+          & h2%tuplesFilled, h2%tuples%h )
+        call Diff ( h1array, 'Hessian 1 values', h2array, 'Hessian 2 values' )
+        call deallocate_test ( h1array, moduleName, "h1array in Diff_Hessian_Blocks" )
+        call deallocate_test ( h2array, moduleName, "h2array in Diff_Hessian_Blocks" )
+      end if
+    case ( h_full )
+      call output ( 'full', advance='yes' )
+      if ( details > 0 ) &
+        & call Diff ( h1%values, 'Hessian 1 values', h2%values, 'Hessian 2 values', options=merge('c',' ',my_clean) )
+    case ( h_unknown )
+      call output ( 'of unknown form, no method to Diff', advance='yes' )
+    end select
+
+  end subroutine Diff_Hessian_Blocks
+
   ! ------------------------------------------- Dump_Hessian_Block -----
   subroutine Dump_Hessian_Block ( H, Name, Details, Indices, Clean )
+    use Allocate_Deallocate, only: Deallocate_Test, Allocate_Test
+    use MLSFillValues, only: Repopulate
     type(HessianElement_T), intent(in) :: H
     character(len=*), intent(in), optional :: NAME
     integer, intent(in), optional :: Details ! Print details, 0 => minimal,
@@ -278,6 +357,8 @@ contains
     integer :: I
     integer :: My_Details
     logical :: My_Clean
+    ! In case we need to dump as full blocks stored sparsely
+    real(rm), pointer :: harray(:,:,:) => NULL()
 
     my_Details = 1
     if ( present(details) ) my_Details = details
@@ -301,19 +382,34 @@ contains
       call output ( size(h%tuples), before='sparse with ', &
         & after=' nonzero elements', advance='yes' )
       if ( my_details > 0 ) then
-        do i = 1, size(h%tuples)
-          call output ( h%tuples(i)%i, format='(i5)' )
-          call output ( h%tuples(i)%j, format='(i5)' )
-          call output ( h%tuples(i)%k, format='(i5)' )
-          call output ( '   ' )
-          call output ( h%tuples(i)%h, advance='yes' )
-        end do
+        if ( DUMPASUNSPARSIFIED ) then
+          ! temporarily convert sparse representation to full
+          call output ( '(Dumping as if full)', advance='yes' )
+          call allocate_test( harray, h%nRows, h%nCols1, h%nCols2, &
+            & "harray in Dump_Hessian_Blocks", ModuleName, fill=0.0_rm )
+          call Repopulate( harray, h%tuples%i, h%tuples%j, h%tuples%k, &
+            & h%tuplesFilled, h%tuples%h )
+          call Dump ( harray, 'Hessian values' )
+          call deallocate_test ( harray, moduleName, "harray in Dump_Hessian_Blocks" )
+        else
+          do i = 1, size(h%tuples)
+            call output ( h%tuples(i)%i, format='(i5)' )
+            call output ( h%tuples(i)%j, format='(i5)' )
+            call output ( h%tuples(i)%k, format='(i5)' )
+            call output ( '   ' )
+            call output ( h%tuples(i)%h, advance='yes' )
+          end do
+        end if
       end if
     case ( h_full )
       call output ( 'full', advance='yes' )
       if ( details > 0 ) call dump ( h%values, options=merge('c',' ',my_clean) )
     case ( h_unknown )
       call output ( 'of unknown form, nothing to dump', advance='yes' )
+      call outputNamedValue ( 'h_unknown', h_unknown )
+      call outputNamedValue ( 'h_absent', h_absent )
+      call outputNamedValue ( 'h_sparse', h_sparse )
+      call outputNamedValue ( 'h_full', h_full )
     end select
 
   end subroutine Dump_Hessian_Block
@@ -557,7 +653,12 @@ contains
     integer :: I,J,K    ! Loop counters
     integer :: MaxRank  ! Used to place a tuple out of the running
     integer :: STATUS   ! Flag from allocate
+    logical, parameter :: DEEBUG = .true.
 
+    if ( DEEBUG .and. any( h%kind == (/ h_full, h_sparse /) ) ) then
+      call output( 'Before optimizing Hessian block', advance='yes' )
+      call dump( h, details=0 )
+    endif
     if ( h%kind == h_Absent .or. h%kind == h_Unknown ) return
     if ( h%kind == h_Full ) then
       n = count(h%values /= 0.0)
@@ -649,6 +750,10 @@ o:    do while ( i < n )
     call Deallocate_Test ( rank, "Rank in OptimizeBlock", ModuleName )
     call Deallocate_Test ( order, "Order in OptimizeBlock", ModuleName )
 
+    if ( DEEBUG ) then
+      call output( 'After optimizing Hessian block', advance='yes' )
+      call dump( h, details=0 )
+    endif
   end subroutine OptimizeBlock
 
   ! --------------------------------------------- Sparsify_Hessian -----
@@ -752,6 +857,9 @@ o:    do while ( i < n )
 end module HessianModule_0
 
 ! $Log$
+! Revision 2.8  2010/08/13 22:05:32  pwagner
+! Added diff; dumps sparse as if full
+!
 ! Revision 2.7  2010/06/29 19:56:40  vsnyder
 ! Add SCALAR argument instead of buried 0.5 factor
 !
