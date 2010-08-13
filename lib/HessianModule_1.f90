@@ -17,8 +17,10 @@ module HessianModule_1          ! High-level Hessians in the MLS PGS suite
 ! type are used to compose block Hessians.
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, Test_Deallocate
-  use HessianModule_0, only: ClearBlock, CreateBlock, DestroyBlock, HessianElement_T, H_Absent, &
+  use HessianModule_0, only: ClearBlock, CreateBlock, &
+    & DestroyBlock, HessianElement_T, H_Absent, &
     & H_Sparse, H_Full, OptimizeBlock
+  use LEXER_CORE, only: INIT_LEXER
   use MLSKinds, only: RM
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
@@ -37,12 +39,16 @@ module HessianModule_1          ! High-level Hessians in the MLS PGS suite
   end type Hessian_T
  
   public :: AddHessianToDatabase, CreateBlock, CreateEmptyHessian
-  public :: DestroyHessian, DestroyHessianDatabase, Dump, Hessian_T
+  public :: DestroyHessian, DestroyHessianDatabase, Diff, Dump, Hessian_T
   public :: InsertHessianPlane, Multiply, NullifyHessian
   public :: OptimizeHessian, StreamlineHessian
 
   interface CreateBlock
     module procedure CreateHessianBlock_1
+  end interface
+
+  interface Diff
+    module procedure Diff_Hessians
   end interface
 
   interface Dump
@@ -70,6 +76,7 @@ module HessianModule_1          ! High-level Hessians in the MLS PGS suite
   end interface
 
   logical, parameter :: DEEBUG = .false.
+  logical, parameter :: HIDEBSENTBLOCKS = .true.
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -207,6 +214,103 @@ contains
     end if
   end subroutine DestroyHessianDatabase
 
+  ! ------------------------------------------------- Diff_Hessians -----
+  ! Diff two Hessians, presumed to match somehow
+  subroutine Diff_Hessians ( H1, H2, Details, Clean )
+    use HessianModule_0, only: Diff
+    use Lexer_core, only: Print_Source
+    use Output_m, only: Output, NewLine
+    use String_Table, only: Display_String
+
+    type (Hessian_T), intent(in) :: H1, H2
+    integer, intent(in), optional :: Details ! Print details, default 1
+      ! <= -3 => no output
+      ! -2 => Just name, size, and where created
+      ! -1 => Just row and col info for each block
+      ! 0 => Dimensions of each block,
+      ! 1 => Values in each block
+    logical, intent(in), optional :: CLEAN   ! print \size
+
+    integer :: I, J, K    ! Subscripts, loop inductors
+    integer :: My_Details
+    integer :: TotalSize  ! of all blocks
+
+    my_details = 1
+    if ( present(details) ) my_details = details
+    if ( my_details <= -3 ) return
+    if ( h1%name > 0 .and. h2%name > 0 ) then
+      call output ( 'Diffing ' )
+      call display_string ( h1%name )
+      call output ( ' and ' )
+      call display_string ( h2%name )
+    end if
+    if ( h1%where > 0 .and. h2%where > 0 ) then
+      call output ( ', created at ' )
+      call print_source ( h1%where )
+      call output ( ' and ' )
+      call print_source ( h2%where )
+    end if
+    call newLine
+    if ( .not. associated(h1%block) .or. .not. associated(h2%block) ) then
+      call output ( '(the hessians have been destroyed)', advance='yes' )
+      return
+    end if
+    ! Check that the two Hessians match somehow
+    if ( h1%col%nb /= h1%col%nb .or. h1%row%nb /= h2%row%nb ) then
+      call output ( 'the hessians have different shapes', advance='yes' )
+      return
+    endif
+    if ( my_Details < -1 ) return
+    totalSize = 0
+    do k = 1, h1%col%nb
+      do j = 1, h1%col%nb
+        do i = 1, h1%row%nb
+          if ( h1%block(i,j,k)%kind /= h2%block(i,j,k)%kind ) then
+            call output ( 'the hessians at (i,j,k) ')
+            call output( (/ i,j,k /) )
+            call output( 'are of different kinds', advance='yes' )
+            cycle
+          endif
+          if ( my_details < 0 .or. &
+            & ( HIDEBSENTBLOCKS .and. h1%block(i,j,k)%kind == h_absent ) ) cycle
+          call output ( i, before='Block at row ' )
+          call output ( j, before=' and columns ' )
+          call output ( k, before=', ', after=' (' )
+          if ( h1%row%vec%quantities(h1%row%quant(i))%template%name /= 0 ) then
+            call display_string ( &
+              & h1%row%vec%quantities(h1%row%quant(i))%template%name )
+            call output ( ':' )
+          else
+            call output ( '<No template>:' )
+          end if
+          call output ( h1%row%Inst(i) )
+          call output (' , ')
+          if ( h1%col%vec%quantities(h1%col%quant(j))%template%name /= 0 ) then
+            call display_string ( &
+              & h1%col%vec%quantities(h1%col%quant(j))%template%name )
+            call output ( ':' )
+          else
+            call output ( '<No template>:' )
+          end if
+          call output ( h1%col%Inst(j) )
+          call output (' , ')
+          if ( h1%col%vec%quantities(h1%col%quant(k))%template%name /= 0 ) then
+            call display_string ( &
+              & h1%col%vec%quantities(h1%col%quant(k))%template%name )
+            call output ( ':' )
+          else
+            call output ( '<No template>:' )
+          end if
+          call output ( h1%col%Inst(k) )
+          call output ( ' )' )
+          call newLine
+          call Diff ( h1%block(i,j,k), h2%block(i,j,k), details=my_details, clean=clean )
+        end do
+      end do
+    end do
+
+  end subroutine Diff_Hessians
+
   ! ------------------------------------------------- Dump_Hessian -----
   subroutine Dump_Hessian ( H, Name, Details, Clean )
     use HessianModule_0, only: Dump
@@ -255,6 +359,7 @@ contains
     do k = 1, h%col%nb
       do j = 1, h%col%nb
         do i = 1, h%row%nb
+          if ( HIDEBSENTBLOCKS .and. h%block(i,j,k)%kind == h_absent ) cycle
           select case ( h%block(i,j,k)%kind )
           case ( h_sparse )
             if ( associated(h%block(i,j,k)%tuples) ) &
@@ -517,6 +622,9 @@ contains
 end module HessianModule_1
 
 ! $Log$
+! Revision 2.9  2010/08/13 22:06:22  pwagner
+! Added diff; skips mention of absent blocks
+!
 ! Revision 2.8  2010/06/29 19:56:40  vsnyder
 ! Add SCALAR argument instead of buried 0.5 factor
 !
