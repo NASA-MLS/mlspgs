@@ -616,7 +616,7 @@ contains
       & Dump_DACS_Filter_Database
     use ForwardModelConfig, only: Dump, ForwardModelConfig_T
     use GriddedData, only: Diff, Dump, GriddedData_T
-    use HessianModule_1, only: Hessian_T, Dump
+    use HessianModule_1, only: Hessian_T, Diff, Dump
     use HGridsDatabase, only: Dump, HGRID_T
     use Init_Tables_Module, only: F_AllBooleans, F_AllFiles, F_AllForwardModels, &
       & F_AllGriddedData, F_AllHessians, F_AllHGrids, &
@@ -636,7 +636,7 @@ contains
     use Intrinsic, only: PHYQ_Dimensionless
     use MACHINE, only: NEVERCRASH
     use MatrixModule_1, only: Matrix_T, Matrix_Database_T, &
-      & Dump, GetFromMatrixDatabase
+      & Diff, Dump, GetFromMatrixDatabase
     use MLSCommon, only: MLSFile_T
     use MLSFiles, only: DumpMLSFile => Dump, GetMLSFileByName
     use MLSL2Options, only: NORMAL_EXIT_STATUS, RUNTIMEVALUES
@@ -692,7 +692,12 @@ contains
     logical :: HaveQuantityTemplatesDB, HaveVectorTemplates, HaveVectors, &
              & HaveForwardModelConfigs, HaveGriddedData, HaveHGrids, &
              & HaveMatrices, HaveHessians
+    integer :: hessianIndex
+    integer :: hessianIndex2
     type (Matrix_T), pointer :: matrix
+    type (Matrix_T), pointer :: matrix2
+    integer :: MatrixIndex
+    integer :: MatrixIndex2
     character(len=80) :: NAMESTRING  ! E.g., 'L2PC-band15-SZASCALARHIRES'
     type (MLSFile_T), pointer :: OneMLSFile
     character(len=80) :: OPTIONSSTRING  ! E.g., '-rbs' (see dump_0.f90)
@@ -703,10 +708,10 @@ contains
     character :: TempText*20, Text*255
     type(time_t) :: Time
     character(10) :: TimeOfDay
+    integer :: Type     ! of the Details expr -- has to be num_value
     logical :: tvalue
     integer :: VectorIndex
     integer :: VectorIndex2
-    integer :: Type     ! of the Details expr -- has to be num_value
     integer :: Units(2) ! of the Details expr -- has to be phyq_dimensionless
     double precision :: Values(2) ! of the Details expr
     integer :: What
@@ -972,25 +977,50 @@ contains
           call announceError ( gson, noGriddedData )
         end if
         GotFirst = .true.
-      case ( f_hessian ) ! Dump hessian
+      case ( f_hessian ) ! Diff or Dump hessians
         if ( details < -1 ) cycle
         if ( haveHessians ) then
           do i = 2, nsons(son)
-            call dump ( & ! The decoration is the negative of the index; see Fill, where
-                          ! the Hessian spec is processed.
-                          ! Well, that's a nasty trick.
-              & HessianDatabase(-decoration(decoration(subtree(i,son)))), details=details )
+            gson = subtree(i,son)
+            ! The decoration is the negative of the index; see Fill, where
+            ! the Hessian spec is processed.
+            ! Well, that's a nasty trick.
+            if ( gotFirst ) then
+              hessianIndex2 = -decoration(decoration(gson))
+            else
+              hessianIndex = -decoration(decoration(gson))
+            endif
+            if ( DiffOrDump == s_diff ) then
+              call diff ( HessianDatabase(hessianIndex), &
+                &         HessianDatabase(hessianIndex2), details=details )
+            else
+              call dump ( HessianDatabase(hessianIndex), details=details )
+            endif
           end do
         else
           call announceError ( gson, 0, 'Unable to dump Hessian here; db empty or absent' )
         end if
-      case ( f_matrix ) ! Dump hessian
+      case ( f_matrix ) ! Diff or Dump matrices
         if ( details < -1 ) cycle
         if ( haveMatrices ) then
           do i = 2, nsons(son)
-            call getFromMatrixDatabase ( &
-              & matrixDatabase(decoration(decoration(subtree(i,son)))), matrix )
-            call dump ( Matrix, details=details )
+            gson = subtree(i,son)
+            if ( gotFirst ) then
+              matrixIndex2 = decoration(decoration(gson))
+            else
+              matrixIndex = decoration(decoration(gson))
+            endif
+            if ( DiffOrDump == s_diff ) then
+              call getFromMatrixDatabase ( &
+                & matrixDatabase(matrixIndex), matrix )
+              call getFromMatrixDatabase ( &
+                & matrixDatabase(matrixIndex2), matrix2 )
+              call diff ( Matrix, Matrix2, details=details )
+            else
+              call getFromMatrixDatabase ( &
+                & matrixDatabase(matrixIndex), matrix )
+              call dump ( Matrix, details=details )
+            endif
           end do
         else
           call announceError ( gson, 0, 'Unable to dump matrix here; db empty or absent' )
@@ -1349,6 +1379,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.53  2010/08/13 22:08:57  pwagner
+! May diff hessians, matrices
+!
 ! Revision 2.52  2010/08/06 23:08:48  pwagner
 ! Pass Hessians, matrices to DumpCommand
 !
