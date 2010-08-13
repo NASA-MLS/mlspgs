@@ -28,7 +28,7 @@
     i = 0
     j = 0
     k = 0
-    call Decimate( reshape(array, (/ product(shape(array)) /)), &
+    call Depopulate( reshape(array, (/ product(shape(array)) /)), &
       & iflat, n, testvalue=testvalue, options=options )
     if ( n < 1 ) return
     do s = 1, n
@@ -43,3 +43,6 @@
       enddo
     endif
 ! $Log$
+! Revision 1.1  2010/02/17 22:28:40  pwagner
+! First commit
+!
