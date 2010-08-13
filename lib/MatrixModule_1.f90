@@ -21,7 +21,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   use MatrixModule_0, only: Add_Matrix_Blocks, Assignment(=), CheckIntegrity, & 
     & CholeskyFactor, ClearLower, ClearRows, ColumnScale, Col_L1, CopyBlock, &
     & CreateBlock, CyclicJacobi, DenseCyclicJacobi, Densify, &
-    & DestroyBlock, Dump, FrobeniusNorm, GetDiagonal, GetMatrixElement, GetVectorFromColumn, & 
+    & DestroyBlock, Diff, Dump, FrobeniusNorm, GetDiagonal, GetMatrixElement, GetVectorFromColumn, & 
     & InvertCholesky, M_Absent, M_Column_Sparse, M_Banded, M_Full, M_Unknown, &            
     & MatrixElement_T, MaxAbsVal, MinDiag, Multiply, MultiplyMatrix_XTY, MultiplyMatrix_XY, &       
     & MultiplyMatrix_XY_T, MultiplyMatrixVectorNoT, NullifyMatrix, operator(+), &              
@@ -44,7 +44,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   public :: ClearLower, ClearLower_1, ClearMatrix, ClearRows, ClearRows_1, ColumnScale, ColumnScale_1
   public :: CopyMatrix, CopyMatrixValue, CreateBlock, CreateBlock_1, CreateEmptyMatrix
   public :: CyclicJacobi, DefineRCInfo, DestroyBlock, DestroyBlock_1, DestroyMatrix
-  public :: DestroyMatrixInDatabase, DestroyMatrixDatabase, DestroyRCInfo, Dump, Dump_Linf
+  public :: DestroyMatrixInDatabase, DestroyMatrixDatabase, DestroyRCInfo, Diff, Dump, Dump_Linf
   public :: Dump_RC, Dump_Struct, FindBlock, FrobeniusNorm, GetActualMatrixFromDatabase
   public :: GetDiagonal, GetDiagonal_1, GetFromMatrixDatabase, GetKindFromMatrixDatabase
   public :: GetMatrixElement, GetMatrixElement_1, GetVectorFromColumn
@@ -113,6 +113,10 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   interface DestroyMatrix
     module procedure DestroyMatrix
     module procedure DestroyMatrixInDatabase
+  end interface
+
+  interface Diff
+    module procedure Diff_Matrices
   end interface
 
   interface Dump
@@ -2367,6 +2371,88 @@ contains ! =====     Public Procedures     =============================
     call deallocate_test ( rc%quant, "rc%quant in DestroyRCInfo", moduleName )
   end subroutine DestroyRCInfo
 
+  ! ------------------------------------------------  Diff_Matrices  -----
+  subroutine Diff_Matrices ( Matrix1, Matrix2, Details, clean )
+    use Lexer_core, only: Print_Source
+    use Output_m, only: newLine
+    type(Matrix_T), intent(in) :: Matrix1, Matrix2
+    integer, intent(in), optional :: Details   ! Print details, default 1
+    !  <= -3 => no details,
+    !  -2..0 => Just the name, size and where created
+    !  == -1 => Structure of blocks but not their values
+    !  == One => Details of matrix but not its blocks,
+    !  >One => Details of the blocks, too.
+    logical, intent(in), optional :: Clean     ! Print zeroes, count
+
+    integer :: I, J                ! Subscripts, loop inductors
+    integer :: MY_DETAILS          ! True if DETAILS is absent, else DETAILS
+
+    my_details = 1
+    if ( present(details) ) my_details = details
+    if ( my_details <= -3 ) return
+    if ( matrix1%name > 0 .and. matrix2%name > 0 ) then
+      call output ( 'Diffing ' )
+      call display_string ( matrix1%name )
+      call output ( ' and ' )
+      call display_string ( matrix2%name )
+    end if
+    if ( matrix1%where > 0 .and. matrix2%where > 0 ) then
+      call output ( ', created at ' )
+      call print_source ( matrix1%where )
+      call output ( ' and ' )
+      call print_source ( matrix2%where )
+    end if
+    call newLine
+    if ( .not. associated(matrix1%block) .or. .not. associated(matrix2%block) ) then
+      call output ( '(the matrices have been destroyed)', advance='yes' )
+      return
+    end if
+    ! Check that the two matrices match somehow
+    if ( matrix1%col%nb /= matrix1%col%nb .or. matrix1%row%nb /= matrix2%row%nb ) then
+      call output ( 'the matrices have different shapes', advance='yes' )
+      return
+    endif
+    do j = 1, matrix1%col%nb
+      do i = 1, matrix1%row%nb
+        if ( matrix1%block(i,j)%kind /= matrix2%block(i,j)%kind ) then
+          call output ( 'the matrices at (i,j) ')
+          call output( (/ i,j /) )
+          call output( 'are of different kinds', advance='yes' )
+          cycle
+        endif
+        if ( my_details < 1 ) cycle
+        call output ( i, before='Block at row ' )
+        call output ( j, before=' and column ' )
+        call output ( ' ( ' )
+        if ( matrix1%row%vec%quantities(matrix1%row%quant(i))%template%name /= 0 ) then
+          call display_string ( &
+            & matrix1%row%vec%quantities(matrix1%row%quant(i))%template%name )
+          call output ( ':' )
+        else
+          call output ( '<No template>' )
+        end if
+        call output ( matrix1%row%Inst(i) )
+        call output (' , ')
+        if ( matrix1%col%vec%quantities(matrix1%col%quant(j))%template%name /= 0 ) then
+          call display_string ( &
+            & matrix1%col%vec%quantities(matrix1%col%quant(j))%template%name )
+          call output ( ':' )
+        else
+          call output ( '<No template>' )
+        end if
+        call output ( matrix1%col%Inst(j) )
+        call output ( ' )' )
+        if ( matrix1%block(i,j)%kind == m_absent ) then
+          call output ( ' [absent--therefore matrices equal]', advance='yes' )
+        else
+          call output ( '', advance='yes' )
+          call Diff ( matrix1%block(i,j), matrix2%block(i,j), &
+            & details=my_details, clean=clean )
+        end if
+      end do
+    end do
+  end subroutine Diff_Matrices
+
   ! --------------------------------------------------  Dump_Linf  -----
   subroutine Dump_Linf ( Matrix, Name, Upper )
     type(Matrix_T), intent(in) :: Matrix
@@ -2654,6 +2740,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.120  2010/08/13 22:04:08  pwagner
+! Added diff
+!
 ! Revision 2.119  2010/08/06 22:59:53  pwagner
 ! Should crash less easily
 !
