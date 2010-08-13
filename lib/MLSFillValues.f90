@@ -25,7 +25,7 @@ module MLSFillValues              ! Some FillValue-related stuff
 
   private
 
-  public :: Decimate
+  public :: Depopulate, Repopulate
   public :: EmbedArray, EssentiallyEqual, ExtractArray
   public :: extremum
   public :: FillFunction, InfFunction, NaNFunction
@@ -56,15 +56,15 @@ module MLSFillValues              ! Some FillValue-related stuff
 !     - - - - - - - -
 
 !         Functions, operations, routines
-! Decimate                     Finds locations of non-zero values in presumably
+! Depopulate                   Finds locations of non-zero values in presumably
 !                                sparse array
 ! EmbedArray                   Replace a bloc of elements in the larger array
 !                              with the smaller
-! EssentiallyEqual         Returns true if two real arguments 'close enough'
-!                            (See comments below for interpretation
-!                             of array versions)
+! EssentiallyEqual             Returns true if two real arguments 'close enough'
+!                               (See comments below for interpretation
+!                                of array versions)
 ! ExtractArray                 Extract a bloc of elements from the larger array
-!                               (optionally allocates bloc first)
+!                                (optionally allocates bloc first)
 ! Extremum                     Returns the value farther from 0
 ! FillFunction                 Returns the Fill value
 ! GatherArray                  Gather a subset of elements from a larger array
@@ -82,6 +82,8 @@ module MLSFillValues              ! Some FillValue-related stuff
 !                                returning a new array smaller in size
 ! ReorderFillValues            Reorders FillValue entries at the end of an array
 ! ReplaceFillValues            Replaces FillValue entries in an array
+! Repopulate                   Restores non-zero values in presumably
+!                                sparse array to their proper locations
 ! RoundUpOrDown                Rounds an arg up or down depending on fraction
 ! WhereAreTheFills             Find which array elements are Fill values
 ! WhereAreTheInfs              Find which array elements are Inf
@@ -89,11 +91,11 @@ module MLSFillValues              ! Some FillValue-related stuff
 ! === (end of toc) ===                                                   
 
 ! === (start of api) ===
-! Decimate ( array[:], int i[:], int n, &
+! Depopulate ( array[:], int i[:], int n, &
 !   & [nprec testvalue], [nprec values[:], [char* options] )
-! Decimate ( array[:,:], int i[:], int j[:], int n, &
+! Depopulate ( array[:,:], int i[:], int j[:], int n, &
 !   & [nprec testvalue], [nprec values[:], [char* options] )
-! Decimate ( array[:,:,:], int i[:], int j[:],  int k[:], int n, &
+! Depopulate ( array[:,:,:], int i[:], int j[:],  int k[:], int n, &
 !   & [nprec testvalue], [nprec values[:], [char* options] )
 ! EmbedArray ( bloc, array, int range[2], [char* options] )
 ! log EssentiallyEqual ( nprec A, nprec B, &
@@ -114,6 +116,12 @@ module MLSFillValues              ! Some FillValue-related stuff
 ! RemoveFillValues ( array, FillValue, newArray, [second], [newSecond] )
 ! ReorderFillValues ( values, FillValue )
 ! ReplaceFillValues ( values, FillValue, [newValues], [newFill], [char* options] )
+! Repopulate ( array[:], int i[:], int n, &
+!   & [nprec values[:], [char* options] )
+! Repopulate ( array[:,:], int i[:], int j[:], int n, &
+!   & [nprec values[:], [char* options] )
+! Repopulate ( array[:,:,:], int i[:], int j[:],  int k[:], int n, &
+!   & [nprec values[:], [char* options] )
 ! log IsMonotonic ( array, [char* direction] )
 ! Monotonize_1dint( values, [Period], [FillValue], [log strict] )
 ! nprec roundUpOrDown( nprec value )
@@ -127,11 +135,11 @@ module MLSFillValues              ! Some FillValue-related stuff
     module procedure BridgeMissingValues_3dr4, BridgeMissingValues_3dr8, BridgeMissingValues_3dint
   end interface
 
-  interface Decimate
-    module procedure Decimate_1d_r4, Decimate_1d_r8
-    module procedure Decimate_2d_r4, Decimate_2d_r8
-    module procedure Decimate_3d_r4, Decimate_3d_r8
-    module procedure Decimate_1d_int
+  interface Depopulate
+    module procedure Depopulate_1d_r4, Depopulate_1d_r8
+    module procedure Depopulate_2d_r4, Depopulate_2d_r8
+    module procedure Depopulate_3d_r4, Depopulate_3d_r8
+    module procedure Depopulate_1d_int
   end interface
 
   interface EmbedArray
@@ -225,6 +233,13 @@ module MLSFillValues              ! Some FillValue-related stuff
     module procedure ReplaceFill3d_r4, ReplaceFill3d_r8, ReplaceFill3d_int
   end interface
 
+  interface Repopulate
+    module procedure Repopulate_1d_r4, Repopulate_1d_r8
+    module procedure Repopulate_2d_r4, Repopulate_2d_r8
+    module procedure Repopulate_3d_r4, Repopulate_3d_r8
+    module procedure Repopulate_1d_int
+  end interface
+
   interface roundUpOrDown
     module procedure roundUpOrDown_r4, roundUpOrDown_r8, roundUpOrDown_int
   end interface
@@ -282,14 +297,14 @@ module MLSFillValues              ! Some FillValue-related stuff
   ! where obviously 100000 is an arbitrary number
   ! Should we study this more carefully?
   real, parameter, private :: FILLVALUETOLERANCE = 0.2 ! Poss. could make it 1
-  integer, parameter       :: MAXDECIMATED = 10000
+  integer, parameter       :: MAXDEPOPULATED = 1000000
   character(len=3), save :: NaNString = 'NaN'
   character(len=3), save :: InfString = 'Inf'
   logical, parameter ::   DEEBUG = .false.
 
 contains
 
-  ! ---------------------------------------------  Decimate  -----
+  ! ---------------------------------------------  Depopulate  -----
   ! This family of routines returns just those values of an array[i,j,..]
   ! depending upon options:
   ! options             which 
@@ -299,7 +314,8 @@ contains
   ! If testvalue is not supplied, it defaults to 0
   ! Optionally we return just the indices i for 1-d arrays, (i,j) for 2-d,
   ! (i,j,k) for 3-d, etc.
-  subroutine Decimate_1d_int ( iarray, i, n, itestvalue, ivalues, options )
+  ! See also Repopulate
+  subroutine Depopulate_1d_int ( iarray, i, n, itestvalue, ivalues, options )
     integer, dimension(:), intent(out) :: i
     integer, dimension(:), intent(in) :: iarray ! The larger array
     integer, intent(out) :: n
@@ -310,44 +326,44 @@ contains
     ! Local variables
     real(rk), dimension(size(iarray)) :: array ! The sparse array
     real(rk) :: testvalue
-    real(rk), dimension(MAXDECIMATED) :: values
+    real(rk), dimension(MAXDepopulateD) :: values
     ! Executable
     testvalue = 0._rk
     if ( present(itestvalue) ) testvalue = real( itestvalue, rk )
     array = iarray
-    call Decimate ( array, i, n, testvalue, values, options )
+    call Depopulate ( array, i, n, testvalue, values, options )
     if ( present(ivalues) ) ivalues = values(1:size(ivalues))
-  end subroutine Decimate_1d_int
+  end subroutine Depopulate_1d_int
 
-  subroutine Decimate_1d_r4 ( array, i, n, testvalue, values, options )
+  subroutine Depopulate_1d_r4 ( array, i, n, testvalue, values, options )
     integer, parameter :: RK = R4
     include 'Decimate_1d.f9h'
-  end subroutine Decimate_1d_r4
+  end subroutine Depopulate_1d_r4
 
-  subroutine Decimate_2d_r4 ( array, i, j, n, testvalue, values, options )
+  subroutine Depopulate_2d_r4 ( array, i, j, n, testvalue, values, options )
     integer, parameter :: RK = R4
     include 'Decimate_2d.f9h'
-  end subroutine Decimate_2d_r4
+  end subroutine Depopulate_2d_r4
 
-  subroutine Decimate_3d_r4 ( array, i, j, k, n, testvalue, values, options )
+  subroutine Depopulate_3d_r4 ( array, i, j, k, n, testvalue, values, options )
     integer, parameter :: RK = R4
     include 'Decimate_3d.f9h'
-  end subroutine Decimate_3d_r4
+  end subroutine Depopulate_3d_r4
 
-  subroutine Decimate_1d_r8 ( array, i, n, testvalue, values, options )
+  subroutine Depopulate_1d_r8 ( array, i, n, testvalue, values, options )
     integer, parameter :: RK = r8
     include 'Decimate_1d.f9h'
-  end subroutine Decimate_1d_r8
+  end subroutine Depopulate_1d_r8
 
-  subroutine Decimate_2d_r8 ( array, i, j, n, testvalue, values, options )
+  subroutine Depopulate_2d_r8 ( array, i, j, n, testvalue, values, options )
     integer, parameter :: RK = r8
     include 'Decimate_2d.f9h'
-  end subroutine Decimate_2d_r8
+  end subroutine Depopulate_2d_r8
 
-  subroutine Decimate_3d_r8 ( array, i, j, k, n, testvalue, values, options )
+  subroutine Depopulate_3d_r8 ( array, i, j, k, n, testvalue, values, options )
     integer, parameter :: RK = r8
     include 'Decimate_3d.f9h'
-  end subroutine Decimate_3d_r8
+  end subroutine Depopulate_3d_r8
 
   ! ---------------------------------------------  EmbedArray  -----
   ! This family of routines replace a bloc of elements in a larger
@@ -1333,6 +1349,64 @@ contains
     ! More local variables and executable
     include 'ReplaceFillValues.f9h'
   end subroutine ReplaceFill3d_r8
+
+  ! ---------------------------------------------  Repopulate  -----
+  ! This family of routines restores non-zero values of a presumably
+  ! sparse array to their proper locations, depending on options
+  ! options             does which 
+  !   ' '              replaces value at (i, j, ..)
+  !   '+'              added to value at (i, j, ..)
+  !   '-'              subtracted from value at (i, j, ..)
+  !   '>'              replaces value at (i, j, ..) only if bigger
+  !   '<'              replaces value at (i, j, ..) only if smaller
+  ! See Depopulate
+  subroutine Repopulate_1d_int ( iarray, i, n, ivalues, options )
+    integer, dimension(:), intent(in) :: i
+    integer, dimension(:), intent(inout) :: iarray ! The larger array
+    integer, intent(in) :: n
+    integer, parameter :: RK = R4
+    integer, dimension(:), intent(in) :: ivalues
+    character(len=*), intent(in), optional :: options
+    ! Local variables
+    real(rk), dimension(size(iarray)) :: array ! The sparse array
+    real(rk) :: testvalue
+    real(rk), dimension(size(ivalues)) :: values
+    ! Executable
+    values = ivalues
+    array = iarray
+    call Repopulate ( array, i, n, values, options )
+    iarray = array
+  end subroutine Repopulate_1d_int
+
+  subroutine Repopulate_1d_r4 ( array, i, n, values, options )
+    integer, parameter :: RK = R4
+    include 'Repopulate_1d.f9h'
+  end subroutine Repopulate_1d_r4
+
+  subroutine Repopulate_2d_r4 ( array, i, j, n, values, options )
+    integer, parameter :: RK = R4
+    include 'Repopulate_2d.f9h'
+  end subroutine Repopulate_2d_r4
+
+  subroutine Repopulate_3d_r4 ( array, i, j, k, n, values, options )
+    integer, parameter :: RK = R4
+    include 'Repopulate_3d.f9h'
+  end subroutine Repopulate_3d_r4
+
+  subroutine Repopulate_1d_r8 ( array, i, n, values, options )
+    integer, parameter :: RK = r8
+    include 'Repopulate_1d.f9h'
+  end subroutine Repopulate_1d_r8
+
+  subroutine Repopulate_2d_r8 ( array, i, j, n, values, options )
+    integer, parameter :: RK = r8
+    include 'Repopulate_2d.f9h'
+  end subroutine Repopulate_2d_r8
+
+  subroutine Repopulate_3d_r8 ( array, i, j, k, n, values, options )
+    integer, parameter :: RK = r8
+    include 'Repopulate_3d.f9h'
+  end subroutine Repopulate_3d_r8
 
 ! ------------------------------------------------- IsMonotonic ---
 
@@ -2466,8 +2540,11 @@ end module MLSFillValues
 
 !
 ! $Log$
+! Revision 2.20  2010/08/13 22:02:41  pwagner
+! Renamed Repopulate; renamed decimate to Depopulate
+!
 ! Revision 2.19  2010/02/17 22:30:53  pwagner
-! Added Decimate routines to pick out non-zeros in sparse arrays
+! Added Depopulate routines to pick out non-zeros in sparse arrays
 !
 ! Revision 2.18  2009/06/23 18:25:42  pwagner
 ! Prevent Intel from optimizing ident string away
