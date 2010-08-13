@@ -188,6 +188,9 @@ contains ! ============= Public Procedures ==========================
     !                                        ! -1 Skip even 1-d arrays
     !                                        ! -2 Skip all but size
     !                                        ! >0 Dump even multi-dim arrays
+    !                                        ! 1 matrices only
+    !                                        ! 2 hessians only
+    !                                        ! 3 both matrices and hessians
     !                                        ! Default 0
     ! Local variables
     integer :: i
@@ -207,6 +210,9 @@ contains ! ============= Public Procedures ==========================
     !                                        ! -1 Skip even 1-d arrays
     !                                        ! -2 Skip all but size
     !                                        ! >0 Dump even multi-dim arrays
+    !                                        ! 1 matrices only
+    !                                        ! 2 hessians only
+    !                                        ! 3 both matrices and hessians
     !                                        ! Default 0
     ! Local variables
     integer :: i
@@ -240,14 +246,16 @@ contains ! ============= Public Procedures ==========================
       call output( '*** Uh-oh, name not found in string table', advance='yes' )
     endif
     ! First dump the xStar and yStar
-    call dump ( l2pc%j%col%vec, details=details, name='xStar' )
-    call dump ( l2pc%j%row%vec, details=details, name='yStar' )
+    if ( details == 1 .or. details > 2 ) then
+      call dump ( l2pc%j%col%vec, details=details, name='xStar' )
+      call dump ( l2pc%j%row%vec, details=details, name='yStar' )
 
-    ! Now dump kStar
-    call dump ( l2pc%j, 'kStar', details )
+      ! Now dump kStar
+      call dump ( l2pc%j, 'kStar', details )
+    endif
 
     ! Now dump the Hessian
-    if ( l2pc%goth ) call dump ( l2pc%h, 'hStar', details )
+    if ( l2pc%goth .and. details > 1 ) call dump ( l2pc%h, 'hStar', details )
 
   end subroutine DumpOneL2PC
 
@@ -1159,25 +1167,29 @@ contains ! ============= Public Procedures ==========================
 
   end subroutine PopulateL2PCBin
 
-  ! --------------------------------------- ReadCompleteHDF5L2PC -------
-  subroutine ReadCompleteHDF5L2PCFile ( MLSFile, Where )
+  ! --------------------------------------- ReadCompleteHDF5L2PCFile -------
+  subroutine ReadCompleteHDF5L2PCFile ( MLSFile, Where, Shallow )
     use HDF5, only: H5F_ACC_RDONLY_F, h5fopen_f, H5GN_MEMBERS_F
     use Trace_M, only: Trace_begin, Trace_end
     use Toggles, only: Toggle, gen
     type (MLSFile_T), pointer   :: MLSFile
     integer, intent(in) :: Where ! In the L2CF tree, for tracing
+    logical, optional   :: Shallow
     ! character (len=*), intent(in) :: FILENAME
 
     ! Local variables
+    integer :: BIN             ! Loop counter
+    integer :: DUMMY           ! Ignored return from AddToDatabase
     integer :: FILEID          ! From hdf5
     type (L2PCInfo_T) :: INFO  ! Info for one bin
     type (L2pc_t) :: L2PC    ! The l2pc read from one bin
-    integer :: STATUS          ! Flag from HDF5
+    logical :: MYSHALLOW                ! Value of shallow
     integer :: NOBINS          ! Number of bins
-    integer :: BIN             ! Loop counter
-    integer :: DUMMY           ! Ignored return from AddToDatabase
+    integer :: STATUS          ! Flag from HDF5
 
     ! Executable code
+    myShallow = .true.
+    if ( present ( shallow ) ) myShallow = shallow
 
     if ( toggle (gen) ) call trace_begin ( "ReadCompleteHDF5L2PC", where )
     call h5fopen_f ( MLSFile%name, H5F_ACC_RDONLY_F, fileID, status )
@@ -1202,7 +1214,7 @@ contains ! ============= Public Procedures ==========================
     ! Don't forget HDF5 numbers things from zero
     do bin = 0, noBins-1
       call ReadOneHDF5L2PCRecord ( L2PC, MLSFile, bin, &
-        & shallow=.true., info=Info )
+        & shallow=myShallow, info=Info )
       dummy = AddL2PCToDatabase ( l2pcDatabase, L2PC )
       dummy = AddFileIDToDatabase ( fileIDDatabase, MLSFile%fileID%f_id )
       if ( switchDetail ( switches, 'spa' ) > -1 ) call Dump_struct ( l2pc%j, 'One l2pc bin' ) 
@@ -1398,26 +1410,38 @@ contains ! ============= Public Procedures ==========================
     status = 1
     if ( nmembers > 3 ) call h5gOpen_f ( matrixID, 'HessianBlocks', hBlocksID, status )
     l2pc%goth = status == 0 .and. nmembers > 3 ! Got Hessian?
+    if ( switchDetail( switches, 'hess' ) > -1 ) &
+                & call outputNamedValue( 'got hessian?', l2pc%goth )
     if ( l2pc%goth ) then
-      MLSFile%fileID%sd_id = blocksID
+      MLSFile%fileID%sd_id = hblocksID
 
       l2pc%h = CreateEmptyHessian ( stringIndex, l2pcVs(yStar), l2pcVs(xStar) )
+      if ( switchDetail( switches, 'hess' ) > -1 ) &
+                & call output( 'Creating empty hessian', advance='yes' )
       if ( present ( info ) ) info%hBlocksID = hBlocksID
 
       ! Loop over blocks and read them
       if ( .not. myShallow ) then
+        if ( switchDetail( switches, 'hess' ) > -1 ) then
+          call output( 'trying to read this hessian blodk', advance='yes' )
+          call outputNamedValue( 'l2pc%h%row%NB', l2pc%h%row%NB )
+          call outputNamedValue( 'l2pc%h%col%NB', l2pc%h%col%NB )
+          call outputNamedValue( 'hblocksId', hblocksId )
+        endif
         do i = 1, l2pc%h%row%NB
           do j = 1, l2pc%h%col%NB
             do k = 1, l2pc%h%col%NB
               ! Access this block
               call CreateBlockName ( i, j, k, name )
-              call h5gOpen_f ( blocksId, trim(name), blockId, status )
+              call h5gOpen_f ( hblocksId, trim(name), blockId, status )
               if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-                & 'Unable to open group for l2pc matrix block '//trim(name) , &
+                & 'Unable to open group for l2pc hessian block '//trim(name) , &
                 & MLSFile=MLSFile )
               ! Could check it's the block we're expecting but I think I'll be lazy
               MLSFile%fileID%sd_id = blockID
               call GetHDF5Attribute ( MLSFile, 'kind', kind )
+              if ( switchDetail( switches, 'hess' ) > -1 ) &
+                & call outputNamedValue( 'kind', kind )
 
               select case ( kind )
               case ( h_absent )
@@ -1444,7 +1468,9 @@ contains ! ============= Public Procedures ==========================
           end do
         end do
       else
-        ! Otherwise, flag the whole matrix as unknown
+        if ( switchDetail( switches, 'hess' ) > -1 ) &
+                  & call output( 'flagging hessian as unknown', advance='yes' )
+        ! Otherwise, flag the whole hessian as unknown
         do i = 1, l2pc%h%row%NB
           do j = 1, l2pc%h%col%NB
             do k = 1, l2pc%h%col%NB
@@ -1457,7 +1483,7 @@ contains ! ============= Public Procedures ==========================
 
     ! finish up, though if in shallow mode, then keep the groups open
     if ( .not. myShallow ) then
-      call h5gClose_f ( blocksID, status )
+      call h5gClose_f ( hblocksID, status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to close Blocks group for input l2pc' , &
         & MLSFile=MLSFile )
@@ -1858,6 +1884,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.100  2010/08/13 22:22:59  pwagner
+! details now can choose between matrices, hessians; fixed a bug in reading HessianBlocks
+!
 ! Revision 2.99  2010/08/06 22:58:40  pwagner
 ! Added new 'hess' switch; using only switchDetail now
 !
