@@ -1308,6 +1308,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_Clean, t+t_boolean, n+n_field_type, &
              begin, f+f_crashBurn, t+t_boolean, n+n_field_type, &
              begin, f+f_details, t+t_numeric, n+n_field_type, &
+             begin, f+f_hessian, s+s_hessian, n+n_field_spec, &
+             begin, f+f_matrix, s+s_matrix, n+n_field_type, &
              begin, f+f_options, t+t_string, n+n_field_type, &
              begin, f+f_quantity, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
@@ -1638,6 +1640,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.510  2010/08/13 22:08:17  pwagner
+! May diff hessians, matrices
+!
 ! Revision 2.509  2010/08/06 23:01:01  pwagner
 ! May dump some or all matrices, hessians
 !
