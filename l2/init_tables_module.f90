@@ -1233,6 +1233,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_allLinesForRadiometer, t+t_boolean, n+n_field_type, &
              begin, f+f_allLinesInCatalog, t+t_boolean, n+n_field_type, &
              begin, f+f_atmos_der, t+t_boolean, n+n_field_type, &
+             begin, f+f_atmos_second_der, t+t_boolean, n+n_field_type, &
              begin, f+f_binSelectors, s+s_binSelector, n+n_field_spec, &
              begin, f+f_cloud_der, t+t_cloud_der, n+n_field_type, &
              begin, f+f_default_spectroscopy, t+t_boolean, n+n_field_type, &
@@ -1256,6 +1257,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_lsbPFAMolecules, t+t_molecule, n+e+n_field_type, &
              begin, f+f_module, s+s_module, n+n_field_spec, &
              begin, f+f_moleculeDerivatives, t+t_molecule, n+n_field_type, &
+             begin, f+f_moleculeSecondDerivatives, t+t_molecule, n+n_field_type, &  ! Added by IGOR
              begin, f+f_molecules, t+t_molecule, n+n_field_type, &
              begin, f+f_nabterms, t+t_numeric, n+n_field_type, &
              begin, f+f_nazimuthangles, t+t_numeric, n+n_field_type, &
@@ -1640,6 +1642,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.511  2010/08/16 19:16:02  yanovsky
+! Add f_atmos_second_der, f_moleculeSecondDerivatives
+!
 ! Revision 2.510  2010/08/13 22:08:17  pwagner
 ! May diff hessians, matrices
 !
