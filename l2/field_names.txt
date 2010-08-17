@@ -57,6 +57,7 @@ ascii
 asPercentage
 atmos
 atmos_der
+atmos_second_der
 AuraInstrument
 autofill
 average
@@ -263,6 +264,7 @@ mirrorHessian
 missingValue
 moleculeDerivatives
 molecules
+moleculeSecondDerivatives
 multiplier
 muMin
 
@@ -480,6 +482,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.203  2010/08/17 16:37:33  yanovsky
+# Add atmos_second_der, moleculeSecondDerivatives
+#
 # Revision 2.202  2010/06/07 23:27:26  vsnyder
 # Add TScatMolecules, TScatMoleculeDerivatives, UseTScat.  Change name
 # of PhaseFrqTol to FrqTol.
