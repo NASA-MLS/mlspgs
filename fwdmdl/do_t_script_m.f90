@@ -56,7 +56,13 @@ contains
 !------------------------------------------------  Two_D_T_Script  -----
   subroutine Two_D_T_Script ( t_grid, t_space, nu, t_scr, B )
 
-! This routine builds the t_script array.  In some notes it's called Delta B.
+
+!{ This routine builds the t_script array.
+!  In some notes and reports it's called $\Delta B_i =
+!  \frac12 ( B_{i+1} - B_{i-1} )$
+!  for $i = 2 \dots n-1$, $\Delta B_1 = \frac12 ( B_2 + B_1 )$, and
+!  $\Delta B_{n} = B_{\text{space}} - \frac12 ( B_{n} + B_{n-1} )$,
+!  where $n$ = {\tt n_path}.
 
     use D_STAT_TEMP_M, only: STAT_TEMP
     use MLSKinds, only: R8, RP
@@ -95,6 +101,8 @@ contains
   subroutine Two_D_T_Script_Cloud ( t_grid, t_scat, w0, t_space, nu, t_scr, B )
 
 ! This routine builds the t_script array.  In some notes it's called Delta B.
+! This one combines B with TScat.  In the case of using tabulated TScat, TScat
+! is a channel quantity so we can't produce both terms at once.
 
     use D_STAT_TEMP_M, only: STAT_TEMP
     use MLSKinds, only: R8, RP
@@ -107,8 +115,6 @@ contains
     real(r8), intent(in) :: nu        ! Frequency
     real(rp), intent(in) :: t_space   ! farside boundary temperature
     !                                   usually cosmic space (2.7K).
-
-!    real(rp) :: t_tmp(size(t_grid)) ! path temperatures modified by scattering
 
 ! Outputs:
 
@@ -145,6 +151,9 @@ contains
 end module DO_T_SCRIPT_M
 
 ! $Log$
+! Revision 2.12  2009/06/23 18:26:11  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.11  2005/11/01 23:02:21  vsnyder
 ! PFA Derivatives
 !
