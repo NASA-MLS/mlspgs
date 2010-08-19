@@ -32,7 +32,7 @@ contains
 !{ Accumulate the incremental opacities multiplied by the differential
 !  temperatures to get radiative transfer:
 !  $I(\mathbf{x}) = \sum_{i=1}^{2N} \Delta B_i \tau_i$
-!  In the code below, $\Delta B$ is called t\_script.
+!  In the code below, $\Delta B$ is called t_script.
 
 ! inputs:
 
@@ -63,10 +63,10 @@ contains
     total_opacity = 0.0_rp
     radiance = t_script(1)
 
-!{ Compute $\tau_i$ for $2 \leq i \leq t$, where $t$ is given by half\_path.
+!{ Compute $\tau_i$ for $2 \leq i \leq t$, where $t$ is given by half_path.
 !  $\tau_i = \exp \left \{ - \sum_{j=2}^i \Delta \delta_{j \rightarrow j-1} \right \}$.
 !  $\Delta \delta_{j \rightarrow j-1}$ is given by incoptdepth and
-!  $- \sum_{j=2}^i \Delta \delta_{j \rightarrow j-1}$ is given by total\_opacity.
+!  $- \sum_{j=2}^i \Delta \delta_{j \rightarrow j-1}$ is given by total_opacity.
 
     do i_stop = 2, tan_pt
       total_opacity = total_opacity - incoptdepth(i_stop)
@@ -87,7 +87,7 @@ contains
     inc_rad_path(tan_pt+1) = t_script(tan_pt+1) * tau(tan_pt+1)
     radiance = radiance + inc_rad_path(tan_pt+1)
 
-!{ Compute $\tau_i$ for $i > 2 N - t + 1$, where $t$ is given by half\_path.\\
+!{ Compute $\tau_i$ for $i > 2 N - t + 1$, where $t$ is given by half_path.\\
 !  $\tau_i = \tau_{2N - t + 1} \exp \left \{ - \sum_{j=2N - t + 1}^i
 !    \Delta \delta_{j-1 \rightarrow j} \right \}$.
 
@@ -144,14 +144,20 @@ contains
   end subroutine SCRT_PFA
 
 !------------------------------------------------------  DSCRT_DT  -----
-! Compute the scalarized condensed radiative transfer derivatives.
+! Compute the scalarized condensed radiative transfer derivatives,
+! with derivatives of the differential Temperatures.
 
   subroutine DSCRT_DT ( TAN_PT, D_DELTA_DT, TAU, INC_RAD_PATH, DT_SCRIPT_DT, &
                       & I_START, I_END, DRAD_DT )
     use MLSKinds, only: IP, RP
 
-!{ $\frac{\text{d}I(\mathbf{x})}{\text{d}x_k} = \sum_{i=1}^{2N} Q_i \tau_i$,
-!  where $Q_i = \frac{\partial \Delta B_i}{\partial x_k} - \Delta B_i W_i$.
+!{ $\frac{\text{d}I(\mathbf{x})}{\text{d}x} = \sum_{i=1}^{2N} Q_i \tau_i$,
+!  where $Q_i = \frac{\partial \Delta B_i}{\partial x} - \Delta B_i W_i$
+!  and $W_i$ is given below. The only difference from {\tt DSCRT_DX} is
+!  that $\frac{\partial \Delta B_i}{\partial x}$ is not assumed to be zero
+!  here. This works for any $x$, not just temperature.  $\Delta B$ is
+!  called T-script in some notes, so {\tt DT_SCRIPT_DT} is
+!  $\frac{\partial \Delta B_i}{\partial x}$.
 
     integer, intent(in) :: Tan_pt           ! Tangent point index in inc_rad_path
     integer(ip), intent(in) :: i_start      ! where non-zeros on the path begin
@@ -173,7 +179,7 @@ contains
 
 !{ $-W_i = -\sum_{j=2}^i \frac{\partial \Delta \delta_{j \rightarrow j - 1}}
 !                           {\partial x_k}$,
-!  where the derivative is given by d\_delta\_dt.
+!  where the derivative is given by {\tt D_DELTA_DT}.
 
     do i = max(2,i_start), min(i_end,tan_pt)
       w = w - d_delta_dt(i)
@@ -199,15 +205,15 @@ contains
 
 !------------------------------------------------------  DSCRT_DX  -----
 ! Compute the scalarized condensed radiative transfer derivatives,
-! without derivatives of the differential Temperatures w.r.t. species.
+! without derivatives of the differential Temperatures.
 
   subroutine DSCRT_DX ( TAN_PT, D_DELTA_DX, INC_RAD_PATH, I_START, I_END, DRAD_DX )
     use MLSKinds, only: IP, RP
 
 !{ $\frac{\partial I(\mathbf{x})}{\partial x_k} = \sum_{i=1}^{2N} Q_i \tau_i$,
 !  where $Q_i = \frac{\partial \Delta B_i}{\partial x_k} - \Delta B_i W_i$
-!  and $W_i$ is given below.
-!  We assume $\frac{\partial \Delta B_i}{\partial x_k}$ is zero here.
+!  and $W_i$ is given below. The only difference from {\tt DSCRT_DT} is
+!  that $\frac{\partial \Delta B_i}{\partial x}$ is assumed to be zero here.
 
 ! Inputs
 
@@ -234,7 +240,7 @@ contains
 
 !{ $-W_i = -\sum_{j=2}^i \frac{\partial \Delta \delta_{j \rightarrow j - 1}}
 !                           {\partial x_k}$,
-!  where the derivative is given by d\_delta\_dx.
+!  where the derivative is given by d_delta_dx.
 
     do i = max(2,i_start), min(i_end,tan_pt)
       w = w - d_delta_dx(i)
@@ -297,7 +303,7 @@ contains
 
 !{ $W_{i,q} = \sum_{j=2}^i \frac{\partial \Delta \delta_{j \rightarrow j - 1}}
 !                           {\partial x_q}$,
-!  where the derivatives are given by d\_delta\_dx\_q and d\_delta\_dx\_r.
+!  where the derivatives are given by d_delta_dx_q and d_delta_dx_r.
 
     do i = max(2,i_start), min(i_end,tan_pt)
       wq = wq + d_delta_dx_q(i)
@@ -335,6 +341,9 @@ contains
 
 end module SCRT_DN_M
 ! $Log$
+! Revision 2.16  2010/06/09 22:09:04  yanovsky
+! d2scrt_dx2 subroutine
+!
 ! Revision 2.15  2010/03/09 00:17:39  vsnyder
 ! Repair TeXnicalities
 !
