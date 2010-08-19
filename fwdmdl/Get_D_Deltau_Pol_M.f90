@@ -23,8 +23,8 @@ module Get_D_Deltau_Pol_M
 contains
 
 ! ------------------------------------------  Get_D_Deltau_Pol_DF  -----
-  subroutine Get_D_Deltau_Pol_DF ( CT, STCP, STSP, indices_c, Grids_f, &
-               &  beta_path_pol, tanh1_c, eta_zxp_f, do_calc_f, sps_path, &
+  subroutine Get_D_Deltau_Pol_DF ( CT, STCP, STSP, indices_c, Grids_f,  &
+               &  beta_path_pol, tanh1_c, eta_zxp, do_calc_f, sps_path, &
                &  Del_S, incoptdepth, ref_cor, &
                &  d_delta_df, D_Deltau_Pol_DF  )
 
@@ -49,10 +49,10 @@ contains
 !                                              cross section for each species
 !                                              on coarse grid.
     real(rp), intent(in) :: Tanh1_c(:)       ! tanh(h nu / k T) on coarse path
-    real(rp), intent(in) :: eta_zxp_f(:,:)   ! fine path x sve
+    real(rp), intent(in) :: eta_zxp(:,:)     ! composite path x sve
 !                                              representation basis function.
     logical, intent(in) :: do_calc_f(:,:)    ! A logical indicating where
-!                                              eta_zxp_f is not zero.
+!                                              eta_zxp is not zero.
     real(rp), intent(in) :: sps_path(:,:)    ! fine path x species.
 !                                              Path species function.
     real(rp), intent(in) :: Del_S(:)        ! unrefracted path length.  This
@@ -127,7 +127,7 @@ contains
         do p_i = 1, n_inds
           ii = inds(p_i)
           d_delta_df_pol(:,ii) = d_delta_df_pol(:,ii) * &
-            & ( eta_zxp_f(indices_c(ii),sv_i) * del_s(ii) * &
+            & ( eta_zxp(indices_c(ii),sv_i) * del_s(ii) * &
             &   ref_cor(ii) * tanh1_c(ii) )
         end do ! p_i
 
@@ -147,7 +147,7 @@ contains
 ! I think these are mostly redundant to each other so WGR has
 ! replaced them with only one (left original uncommented in case I
 ! am wrong)
-!          if ( eta_zxp_f(indices_c(p_i),sv_i) /= 0.0 &
+!          if ( eta_zxp(indices_c(p_i),sv_i) /= 0.0 &
 !            & .or. d_delta_df(p_i,sv_i) /= 0.0 &
 !            & .or. do_calc_f(indices_c(p_i),sv_i) ) then
           if (do_calc_f(indices_c(p_i),sv_i) ) then
@@ -211,7 +211,7 @@ contains
                 & Alpha_Path_C, Alpha_Path_F, &
                 & dAlpha_dT_path_c, dAlpha_dT_path_f, &
                 & dAlpha_dT_polarized_path_c, dAlpha_dT_polarized_path_f, &
-                & Eta_zxp, Eta_zxp_F, Del_S, GL_Inds, &
+                & Eta_zxp_c, Eta_zxp, Del_S, GL_Inds, &
                 & Del_Zeta, Do_Calc_T_c, Do_Calc_T_f, Do_GL, &
                 & ds_dh, dh_dz_gw, ds_dz_gw, Incoptdepth, Ref_cor, &
                 & H_path_c, H_path_f, dH_dt_path_c, dH_dt_path_f, H_tan, dH_dt_tan, &
@@ -242,10 +242,10 @@ contains
     complex(rp), intent(in) :: dAlpha_dT_polarized_path_f(-1:,:) ! -1:1 x path
     real(rp), intent(in) :: dAlpha_dT_path_c(:) ! nonpolarized dAlpha_dT
     real(rp), intent(in) :: dAlpha_dT_path_f(:) ! nonpolarized dAlpha_dT
-    real(rp), intent(in) :: Eta_zxp(:,:)    ! representation basis function
+    real(rp), intent(in) :: Eta_zxp_c(:,:)  ! representation basis function
       !                                       on coarse grid.  path x sve
-    real(rp), intent(in) :: Eta_zxp_f(:,:)  ! representation basis function
-      !                                       on fine grid.  path x sve
+    real(rp), intent(in) :: Eta_zxp(:,:)    ! representation basis function
+      !                                       on composite grid.  path x sve
     real(rp), intent(in) :: Del_S(:)        ! unrefracted path length.  This
       !                                       is for the whole coarse path, not
       !                                       just the part up to the black-out
@@ -308,6 +308,7 @@ contains
                                      ! sigma +/- or pi.
     real(rp) :: Fa, Fb               ! Hydrostatic integrand at ends of
                                      ! path segment
+    integer :: GA                    ! GL_inds(a)
     integer :: H_Stop                ! Stop point for hydrostatic parts
     integer :: I_stop                ! Stop point, which may be before N_Path
     integer :: L
@@ -325,7 +326,7 @@ contains
     a = 1
     b = 1 + ng
 
-    do sv_i = 1, size(eta_zxp,2) ! state vector elements
+    do sv_i = 1, size(eta_zxp_c,2) ! state vector elements
       if ( .not. deriv_flags(sv_i)) then
         d_deltau_pol_dT(:,:,:,sv_i) = 0.0_rp
         cycle
@@ -347,7 +348,7 @@ contains
           !    \frac{\partial \alpha}{\partial T}
           !    \frac{\partial T}{\partial T_i} \text{d}s =
           !    \frac{\partial \alpha}{\partial T} \eta_i \text{d}s$
-          singularity(:,p_i) = eta_zxp(p_i,sv_i) * &
+          singularity(:,p_i) = eta_zxp_c(p_i,sv_i) * &
             & ( dAlpha_dT_polarized_path_c(:,p_i) + &
             &   (/ 0.25, 0.50, 0.25 /) * dAlpha_dT_path_c(p_i) )
           d_alpha_dT_eta(:,p_i) = singularity(:,p_i) * del_s(p_i)
@@ -358,14 +359,15 @@ contains
         ! Do GL if needed here
         if ( do_gl(p_i) ) then
           b = a + ng
+          ga = gl_inds(a)
           if ( do_calc(p_i) ) then
-            f = ds_dz_gw(gl_inds(a:b-1))
+            f = ds_dz_gw(ga:ga+ng-1)
             do l = -1, 1
               d_alpha_dT_eta(l,p_i) = d_alpha_dT_eta(l,p_i) + &
                  & del_zeta(p_i) * &
                  & sum( ( ( dAlpha_dT_polarized_path_f(l,a:b-1) + &
                  &          (0.5-0.25*abs(l)) * dAlpha_dT_path_f(a:b-1) ) * &
-                 &        eta_zxp_f(a:b-1,sv_i) - &
+                 &        eta_zxp(ga:ga+ng-1,sv_i) - &
                  &        singularity(l,p_i) ) * f )
             end do ! l
           end if
@@ -459,14 +461,15 @@ contains
       do p_i = 1, i_stop             ! along the path
         if ( do_gl(p_i) ) then
           b = a + ng
+          ga = gl_inds(a)
           ! Don't test do_calc: There may be GL corrections even if
           ! dh_dt_path_c (from whence came do_calc) is zero.
           f = (((2.0_rp*h_path_f(a:b-1)**2 - 3.0_rp*h_tan**2)      &     
             &   * dh_dt_path_f(a:b-1,sv_i) +                       &     
             &   h_path_f(a:b-1) * h_tan * dh_dt_tan(sv_i)) /       &     
             &  (sqrt(h_path_f(a:b-1)**2 - h_tan**2))**3            &     
-            &  + eta_zxp_f(a:b-1,sv_i) * ds_dh(gl_inds(a:b-1)) /   &     
-            &  t_path_f(a:b-1)) * dh_dz_gw(gl_inds(a:b-1))
+            &  + eta_zxp(ga:ga+ng-1,sv_i) * ds_dh(ga:ga+ng-1) /   &     
+            &  t_path_f(a:b-1)) * dh_dz_gw(ga:ga+ng-1)
           do l = -1, 1
             d_alpha_dT_eta(l,p_i) = d_alpha_dT_eta(l,p_i) + &
                & del_zeta(p_i) * &
@@ -517,6 +520,9 @@ contains
 end module Get_D_Deltau_Pol_M
 
 ! $Log$
+! Revision 2.40  2010/08/19 02:11:16  vsnyder
+! Change some variable names, organize some stuff more like dRad_tran_df
+!
 ! Revision 2.39  2009/06/23 18:26:10  pwagner
 ! Prevent Intel from optimizing ident string away
 !
