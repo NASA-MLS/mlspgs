@@ -13,6 +13,7 @@ module FullForwardModel_m
 
   ! This module contains the `full' forward model.
 
+  use GLnp, only: NGP1
   implicit NONE
   private
   public :: FullForwardModel
@@ -22,8 +23,8 @@ module FullForwardModel_m
     & "$RCSfile$"
 !------------------------------------------------------------------------------
 
-  integer, private, parameter :: Max_New = 4 ! Maximum new points in coarse
-    ! path in addition to ones derived from the preselected zeta grid:
+  integer, private, parameter :: Max_New = NGP1 ! Maximum new points in
+    ! coarse path in addition to ones derived from the preselected zeta grid:
     ! the minimum zeta point plus three H_Glgrid intersections below the
     ! tangent zeta.
 
@@ -44,7 +45,6 @@ contains
     use ForwardModelIntermediate, only: ForwardModelStatus_t
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use Get_Species_Data_M, only:  Get_Species_Data
-    use GLnp, only: NGP1
     use Intrinsic, only: L_CLOUDICE, L_MAGNETICFIELD, &
       & L_PHITAN, L_PTAN, L_TEMPERATURE, L_TSCAT, L_VMR
     use Load_Sps_Data_m, only: DestroyGrids_t, Dump, EmptyGrids_T, Grids_T, &
@@ -298,7 +298,7 @@ contains
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use Geometry, only: Get_R_Eq
     use Get_Eta_Matrix_m, only: Eta_D_T ! Type for eta struct
-    use GLnp, only: GX, NGP1
+    use GLnp, only: GX
     use Intrinsic, only: L_A, L_RADIANCE, L_TScat, L_VMR
     use Load_Sps_Data_m, only: DestroyGrids_t, Dump, Grids_T
     use MatrixModule_1, only: MATRIX_T
@@ -406,6 +406,7 @@ contains
     integer :: NZ_IF              ! Effective size of Z_GLgrid and cohorts
     integer :: NZ_IG              ! Effective size of Zetas, size(z_psig) <=
                                   ! nz_ig <= size(z_psig)+2
+    integer :: Prev_Mie_Frq_Ind   ! From a previous execution of One_Frequency
     integer :: PTG_I              ! Loop counter for the pointings
     integer :: SIDEBAND           ! Either zero or from firstSignal
     integer :: SIGIND             ! Signal index, loop counter
@@ -475,9 +476,10 @@ contains
     real(rp) :: ALPHA_PATH_F(max_f)   ! fine grid absorption coefficient
     real(rp) :: B(max_c)              ! Planck radiation function
     real(rp) :: BETA_PATH_cloud_C(s_i*max_c) ! Beta on path coarse
-    real(rp) :: Beta_c_e_path_C(s_ts*max_c)  ! Beta_c_e on path coarse
-    real(rp) :: Beta_c_s_path_C(s_ts*max_c)  ! Beta_c_s on path coarse
+    real(rp) :: Beta_c_e_path_c(s_ts*max_c)  ! Beta_c_e on coarse path
+    real(rp) :: Beta_c_s_path_c(s_ts*max_c)  ! Beta_c_s on coarse path
     real(r8), target :: ChannelCenters(noUsedChannels) ! for PFA or non-frequency-averaging
+    real(rp) :: DALPHA_DT_PATH_A(max_c,s_ts*noUsedChannels) ! Frequency averaged
     ! dAlpha_dT_Path_C has a frequency dimension because it's needed to
     ! compute d_W0/dT.
 !   real(rp) :: DALPHA_DT_PATH_C(max_c)   ! dAlpha/dT on coarse grid
@@ -486,6 +488,10 @@ contains
                                       !  (2:npc-1)
     real(rp) :: DEL_ZETA(max_c)       ! Integration lengths in Zeta coords
                                       !  along coarse path, (2:npc-1)
+    real(rp) :: dBeta_c_e_dIWC_path_C(s_ts*max_c)  ! on coarse path
+    real(rp) :: dBeta_c_s_dIWC_path_C(s_ts*max_c)  ! on coarse path
+    real(rp) :: dBeta_c_e_dT_path_C(s_ts*max_c)    ! on coarse path
+    real(rp) :: dBeta_c_s_dT_path_C(s_ts*max_c)    ! on coarse path
     real(rp) :: DHDZ_PATH(max_f)      ! dH/dZ on fine path (1:npf)
     real(rp) :: DHDZ_GW_PATH(max_f)   ! dH/dZ * GW on fine path (1:npf)
     real(rp) :: DSDH_PATH(max_f)      ! dS/dH on fine path (1:tan_pt_f-1,tan_pt_f+2:npf)
@@ -516,6 +522,8 @@ contains
     real(rp) :: Z_GLGRID(maxvert)     ! Zeta on initial glGrid surfs
     real(rp) :: Z_PATH(max_f)         ! Zeta on fine grid path tangent grid and
                                       ! species grids, sans duplicates.
+    real(rp) :: BETA_PATH_A(max_c,no_mol,s_ts*noUsedChannels)  ! Frequency averaged
+                                      ! Beta on path coarse
     ! BETA_PATH_C has a frequency dimension.  It is d_Alpha/dVMR, which is
     ! needed to compute d_W0/dVMR.
 !   real(rp) :: BETA_PATH_C(max_c,no_mol)  ! Beta on path coarse
@@ -548,7 +556,6 @@ contains
     real(rp) :: ETA_ZXP_N(max_f,size(grids_n%values)) ! Eta_z x Eta_p for N
     real(rp) :: ETA_ZXP_T(max_f,s_t*sv_t_len)      ! Eta_t_z x Eta_t_p
     real(rp) :: ETA_ZXP_T_C(max_c,s_t*sv_t_len)    ! ETA_ZXP_T on coarse grid
-    real(rp) :: ETA_ZXP_T_F(max_f,s_t*sv_t_len)    ! ETA_ZXP_T on fine grid
     real(rp) :: ETA_ZXP_V(max_f,size(grids_v%values)) ! Eta_z x Eta_p for V
     real(rp) :: ETA_ZXP_W(max_f,size(grids_w%values)) ! Eta_z x Eta_p for W
     real(rp) :: H_GLGRID(maxVert,no_sv_p_t)        ! H on glGrid surfs
@@ -561,9 +568,9 @@ contains
     real(rp) :: SPECT_V_PATH(max_f,size(fwdModelConf%lineCenter)) ! Line Center
     real(rp) :: SPECT_W_PATH(max_f,size(fwdModelConf%lineWidth)) ! Line Width
     real(rp) :: SPS_PATH(max_f,no_mol)             ! species on path
+    real(rp) :: TT_PATH(max_f,s_i)                 ! TScat on path along the LOS
     real(rp) :: T_GLGRID(maxVert,no_sv_p_t)        ! Temp on glGrid surfs
     real(rp) :: T_SCRIPT_PFA(max_c,s_pfa*noUsedChannels) ! Delta_B in some notes
-    real(rp) :: TT_PATH(max_f,s_i)                 ! TScat on path along the LOS
     real(r8) :: VMRARRAY(no_mol,s_i*n_t_zeta)      ! The VMRs
 
     ! Temporary space for DACS radiances if we're doing frequency averaging
@@ -684,9 +691,6 @@ contains
     real(rp) :: Salb_PATH(max_f,s_i)    ! Single Scattering Albedo on path
     real(rp) :: Tscat_PATH(max_f,s_i*fwdModelConf%num_scattering_angles) ! TScat on path
 
-    ! Fine path X frequency X 2, final subscript = 1 for j=i+1, 2 for j=i-1
-    real(rp), pointer :: W0_FRQ_PATH(:,:,:) ! omega_0(j) * Tau(i)
-
     ! dAlpha/dT on coarse grid, which is needed to compute d_W0/dT
     real(rp), pointer :: DALPHA_DT_PATH_C(:,:) ! (max_c,max_frq)
     ! Beta on path coarse, which is needed to compute d_W0/dVMR
@@ -698,7 +702,7 @@ contains
     real(rp), pointer :: K_SPECT_DV_FRQ(:,:) ! ****
     real(rp), pointer :: K_SPECT_DW_FRQ(:,:) ! ****
     real(rp), pointer :: K_TEMP_FRQ(:,:)   ! dI/dT, ptg.frq X T-SV
-    real(rp), pointer :: T_SCRIPT_LBL(:,:) ! Delta_B in some notes
+    real(rp), pointer :: T_SCRIPT_LBL(:,:) ! Delta_B in some notes, Path X Frq
 
     ! Used only to schlep from Convolution_Setup to Convolution
     real(rp) :: DH_DZ_OUT(ptan%template%nosurfs)
@@ -797,7 +801,7 @@ contains
 
     nullify ( dAlpha_dT_path_c, beta_path_c, frequencies, inc_rad_path, &
       & k_atmos_frq, k_spect_dn_frq, k_spect_dv_frq, k_spect_dw_frq, &
-      & k_temp_frq, RadV, t_script_lbl, w0_frq_path )
+      & k_temp_frq, RadV, t_script_lbl )
 
     ! Nullify pointers that are used to control whether calculations get done
     nullify ( linecenter_ix, linewidth_ix, linewidth_tdep_ix )
@@ -951,31 +955,27 @@ contains
 
       ! Frequency averaging and any LBL:
       if ( .not. associated(frequencies,channelCenters) ) &
-        & call deallocate_test ( frequencies, 'frequencies',   moduleName )
+        & call deallocate_test ( frequencies, 'frequencies',       moduleName )
       
       ! Deallocate maxNoPtgFreqs-sized stuff
-      call deallocate_test ( dAlpha_dT_path_c, 'dAlpha_dT_path_c',   moduleName )
-      call deallocate_test ( beta_path_c,      'Beta_Path_C',        moduleName )
-      call deallocate_test ( inc_rad_path,     'Inc_Rad_Path',       moduleName )
-      call deallocate_test ( radv, 'RadV', moduleName )
+      call deallocate_test ( dAlpha_dT_path_c, 'dAlpha_dT_path_c', moduleName )
+      call deallocate_test ( beta_path_c,      'Beta_Path_C',      moduleName )
+      call deallocate_test ( inc_rad_path,     'Inc_Rad_Path',     moduleName )
+      call deallocate_test ( radv,             'RadV',             moduleName )
       if ( FwdModelConf%anyLBL(sx) ) then
-        call deallocate_test ( t_script_LBL, 'T_Script_LBL',   moduleName )
-        call destroy_tau ( tau_LBL, "Tau_LBL", moduleName )
+        call deallocate_test ( t_script_LBL,   'T_Script_LBL',     moduleName )
+        call destroy_tau ( tau_LBL,            'Tau_LBL',          moduleName )
       end if
-      call deallocate_test ( w0_frq_path,    'W0_Frq_Path',    moduleName )
 
       call DestroyCompleteSlabs ( gl_slabs )
       if ( temp_der ) &
-        & call deallocate_test ( k_temp_frq,   'k_temp_frq',     moduleName )
+        & call deallocate_test ( k_temp_frq,   'k_temp_frq',       moduleName )
 
-      if ( atmos_der ) &
-        & call deallocate_test ( k_atmos_frq,  'k_atmos_frq',    moduleName )
+      call deallocate_test ( k_atmos_frq,  'k_atmos_frq',      moduleName )
 
-      if ( spect_der ) then
-        call deallocate_test ( k_spect_dw_frq, 'k_spect_dw_frq', moduleName )
-        call deallocate_test ( k_spect_dn_frq, 'k_spect_dn_frq', moduleName )
-        call deallocate_test ( k_spect_dv_frq, 'k_spect_dv_frq', moduleName )
-      end if
+      call deallocate_test ( k_spect_dw_frq, 'k_spect_dw_frq',   moduleName )
+      call deallocate_test ( k_spect_dn_frq, 'k_spect_dn_frq',   moduleName )
+      call deallocate_test ( k_spect_dv_frq, 'k_spect_dv_frq',   moduleName )
 
       if ( toggle(emit) .and. levels(emit) > 1 ) &
         & call trace_end ( 'ForwardModel.Sideband ',index=thisSideband )
@@ -1622,10 +1622,10 @@ contains
         ! For every channel, we've frequency averaged the incremental radiance
         ! at every point along the path, giving Rad_Avg_Path for every channel
         ! and every point along the path.  Rad_Avg_Path was multiplied by
-        ! Tau_PFA in Frequency_Loop to combine LBL and PFA contributions.
+        ! Tau_PFA in One_Frequency to combine LBL and PFA contributions.
         do c = 1, noUsedChannels
           if ( channels(c)%dacs == 0 ) then
-            radiances(c,ptg_i) = radV(c) ! Computed in Frequency_Loop
+            radiances(c,ptg_i) = radV(c) ! Computed in One_Frequency
           else
             radiances(c,ptg_i) = DACsStaging(channels(c)%used,channels(c)%dacs)
           end if
@@ -1771,13 +1771,14 @@ contains
     end subroutine Frequency_Average_Derivatives
 
   ! .....................................  Frequency_Avg_Rad_Path  .....
-    subroutine Frequency_Avg_Path ( Path_Freq, Path_Chan )
+    subroutine Frequency_Avg_Path ( Frequencies, Path_Freq, Path_Chan )
       ! For every channel, frequency average Path_Freq at every point
       ! along the path, giving Path_Chan for every channel and every
       ! point along the path.
 
       use Freq_Avg_m, only: Freq_Avg
 
+      real(r8), intent(in) :: Frequencies(:)
       real(rp), intent(in) :: Path_Freq(:,:)  ! Path X Frequencies
       real(rp), intent(out) :: Path_Chan(:,:) ! Path X Channels
 
@@ -1786,7 +1787,7 @@ contains
       do c = 1, noUsedChannels
         shapeInd = channels(c)%shapeInds(sx)
         if ( channels(c)%dacs == 0 ) then
-          do p = 1, npc
+          do p = 1, size(path_freq,1)
             call Freq_Avg ( frequencies,            &
                     & FilterShapes(shapeInd)%FilterGrid,  &
                     & FilterShapes(shapeInd)%FilterShape, &
@@ -1795,695 +1796,6 @@ contains
         end if
       end do
     end subroutine Frequency_Avg_Path
-
-  ! .............................................  Frequency_Loop  .....
-    subroutine Frequency_Loop ( Ptg_i, Frq_i, Alpha_Path_c, Beta_Path_c,     &
-      & C_Inds, Del_S, Del_Zeta, Do_Calc_fzp, Do_Calc_zp, Do_GL, Frq,        &
-      & H_Path_C, Tan_Ht, IncOptDepth, P_Path, PFA, Ref_Corr, Sps_Path,      &
-      & Tau, T_Path_c, T_Script, Tanh1_c, TT_Path_c, W0_Path_c, Z_Path,      &
-      & I_Start, I_End, Inc_Rad_Path, RadV, dAlpha_dT_Path_C, K_Atmos_Frq,   &
-      & K_Spect_dN_Frq, K_Spect_dV_Frq, K_Spect_dW_Frq, K_Temp_Frq )
-
-      ! Having arguments instead of using host association serves two
-      ! purposes:  The array sizes are implicit, so we don't need explicitly
-      ! to mention them, and the pointer attribute gets stripped during the
-      ! trip through the CALL statement -- hopefully thereby helping optimizers.
-      use CS_Expmat_m, only: CS_Expmat
-      use DO_T_SCRIPT_M, only: TWO_D_T_SCRIPT, TWO_D_T_SCRIPT_CLOUD
-      use D_T_SCRIPT_DTNP_M, only: DT_SCRIPT_DT
-      use Dump_Path_m, only: Dump_Path
-      use Get_Beta_Path_m, only: Get_Beta_Path, Get_Beta_Path_Cloud, &
-        & Get_Beta_Path_PFA, Get_Beta_Path_Polarized
-      use Get_d_Deltau_pol_m, only: Get_d_Deltau_pol_df, Get_d_Deltau_pol_dT
-      use Get_Eta_Matrix_m, only: Get_Eta_Stru, Interpolate_Stru, Select_NZ_List
-      use Load_Sps_Data_m, only:  Load_One_Item_Grid
-      use Mcrt_m, only: Mcrt_der
-      use Opacity_m, only: Opacity
-      use Path_Contrib_M, only: Path_Contrib
-      use Physics, only: H_OVER_K
-      use RAD_TRAN_M, only: RAD_TRAN_POL, DRAD_TRAN_DF, &
-        & DRAD_TRAN_DT, DRAD_TRAN_DX
-      use Read_Mie_m, only: dBeta_dIWC_c_e, dBeta_dIWC_c_s, &
-        & dBeta_dIWC_c_e, dBeta_dT_c_s, F_s, IWC_s, Log_Beta_c_e, Log_Beta_c_s, &
-        & Log_Mie, T_s
-      use ScatSourceFunc, only: T_SCAT, Interp_Tscat, Convert_Grid
-      use Tau_M, only: Get_Tau
-
-      integer, intent(in) :: Ptg_i        ! Pointing index
-      integer, intent(in) :: Frq_i        ! Frequency loop index
-      real(rp), intent(out) :: Alpha_Path_c(:) ! \sum Beta_Path * mixing ratio
-      real(rp), intent(out) :: Beta_Path_c(:,:) ! path x species
-      real(rp), intent(in) :: Del_S(:)    ! Integration lengths along path
-      real(rp), intent(in) :: Del_Zeta(:) ! Integration lengths in Zeta coords
-      integer, intent(in) :: C_Inds(:)    ! Selectors from complete path to coarse path
-      logical, intent(inout) :: Do_Calc_fzp(:,:) ! 'Avoid zeros' indicator
-      logical, intent(in) :: Do_Calc_zp(:,:) ! 'Avoid zeros' indicator
-      logical, intent(out) :: Do_GL(:)    ! Where to do GL correction
-      real(r8), intent(in) :: Frq         ! The frequency
-      real(rp), intent(in) :: H_Path_C(:) ! Heights on coarse path
-      real(rp), intent(in) :: Tan_Ht      ! Geometric tangent height, km, 
-                                          ! from equivalent Earth center
-      real(rp), intent(out) :: IncOptDepth(:)  ! Incremental optical depth
-      real(rp), intent(in) :: P_Path(:)   ! Pressures along complete path
-      logical, intent(in) :: PFA          ! Are we doing PFA or not?
-      real(rp), intent(in) :: Ref_Corr(:) ! Refraction correction
-      real(rp), intent(inout) :: Sps_Path(:,:) ! Species on path
-      type(tau_t), intent(inout) :: Tau   ! Optical depth, inout so as not to
-                                          ! undefine components' association status
-      real(rp), intent(in) :: T_Path_c(:) ! Temperature on coarse path
-      real(rp), intent(out) :: T_Script(:)! Planck function, Delta_B in some notes
-      real(rp), intent(out) :: TT_Path_c(:) ! tscat on coarse path
-      real(rp), intent(out) :: Tanh1_c(:) ! tanh(frqhk/t_path_c)
-      real(rp), intent(out) :: W0_Path_c(:) ! w0 on coarse path
-      real(rp), intent(in) :: Z_Path(:)   ! -Log10(Pressures) along complete path
-      integer, intent(in) :: I_Start, I_End ! Bounds for coarse path integration
-      real(rp), intent(out) :: RadV       ! Radiance
-      real(rp), intent(out) :: dAlpha_dT_Path_c(:) ! dAlpha/dT on coarse path
-      real(rp), intent(out) :: INC_RAD_PATH(:) ! Incremental radiance along the path
-      real(rp), intent(out) :: K_ATMOS_FRQ(:)  ! dI/dVMR, ptg.frq X vmr-SV
-      real(rp), intent(out) :: K_SPECT_DN_FRQ(:) ! ****
-      real(rp), intent(out) :: K_SPECT_DV_FRQ(:) ! ****
-      real(rp), intent(out) :: K_SPECT_DW_FRQ(:) ! ****
-      real(rp), intent(out) :: K_TEMP_FRQ(:)   ! dI/dT, ptg.frq X T-SV
-
-      real(r8) :: FRQHK                   ! 0.5 * Frq * H_Over_K
-      integer :: I_STOP                   ! Stop path integration before I_End
-      integer :: J, L                     ! Loop inductor and subscript
-      integer :: Mie_Frq_Index            ! Index of Frq in F_s in Read_Mie
-      integer :: P_Stop                   ! Where to stop in polarized case
-      logical :: PFA_or_not_pol           ! PFA .or. .not. fwdModelConf%polarized
-
-      ! Loop over frequencies ----------------------------------------------
-
-      if ( toggle(emit) .and. levels(emit) > 4 ) &
-        & call Trace_Begin ( 'ForwardModel.FrequencyLoop' )
-
-      pfa_or_not_pol = pfa .or. .not. fwdModelConf%polarized
-
-      if ( toggle(emit) .and. levels(emit) > 5 ) &
-        & call Trace_Begin ( 'ForwardModel.Frequency ', index=frq_i )
-
-      do_gl = .false.
-
-      ! Set up path quantities --------------------------------------
-
-      ! Compute the sps_path for this Frequency
-      call comp_sps_path_frq ( Grids_f, Frq, eta_zp(:npf,:), &
-        & do_calc_zp, sps_path,                              &
-        & do_calc_fzp, eta_fzp(:npf,:),                      &
-        & firstSignal%lo, thisSideband )
-!         ! Send all of eta_zp so comp_sps_path_frq_nz doesn't get an array
-!         ! bounds error when it's clearing parts indexed by nz_zp.
-! I don't know why this doesn't work
-!         call comp_sps_path_frq_nz ( Grids_f, Frq, eta_zp, nz_zp, nnz_zp, &
-!           & do_calc_zp, sps_path,                                        &
-!           & do_calc_fzp, eta_fzp(:npf,:), nz_fzp, nnz_fzp,               &
-!           & firstSignal%lo, thisSideband )
-
-      if ( pfa ) then
-        call get_beta_path_PFA ( frq, frq_i, z_path, c_inds, t_path_c, &
-          & beta_group, sx, vel_rel, sps_path, beta_path_c,            &
-          & t_der_path_flags, dbeta_dT_path_c, dbeta_dw_path_c,        &
-          & dbeta_dn_path_c, dbeta_dv_path_c, dbeta_dIWC_path_c )
-      else
-        frqhk = 0.5_r8 * frq * h_over_k    ! h nu / 2 k
-        tanh1_c = tanh( frqhk / t_path_c ) ! tanh ( h nu / 2 k T )
-        ! dTanh_dT = -h nu / (2 k T**2) 1/tanh1 d(tanh1)/dT
-        if ( temp_der ) dTanh_dT_c(:npc) = &
-            & frqhk / t_path_c**2 * ( tanh1_c - 1.0_rp / tanh1_c )
-        call get_beta_path ( Frq, firstSignal%lo, p_path, t_path_c,      &
-          &  tanh1_c, beta_group, sx, fwdModelConf%polarized, gl_slabs,  &
-          &  c_inds, beta_path_c, t_der_path_flags, dTanh_dT_c, vel_rel, &
-          &  dbeta_dT_path_c, dbeta_dw_path_c, dbeta_dn_path_c,          &
-          &  dbeta_dv_path_c, sps_path )
-      end if
-
-      if ( FwdModelConf%incl_cld .and. .not. pfa ) then
-        ! Compute Scattering source function based on temp prof at all
-        ! angles U for each temperature layer assuming a plane parallel
-        ! atmosphere.
-
-        if ( ptg_i == 1 ) then
-        ! ??? Can this work?  On all pointings after the first one, ???
-        ! ??? it uses the result for the last frequency.            ???
-        ! ??? We have a different frequency grid for each pointing, ???
-        ! ??? so is this the wrong idea in the first place?         ???
-
-          call T_scat ( temp%values(:,inst), Frq, GPH%values(:,inst),      & 
-             & 10.0**(-temp%template%surfs), vmrArray(1,:), vmrArray(2,:), &
-             & vmrArray(3,:),fwdModelConf%num_scattering_angles,           &
-             & fwdModelConf%num_azimuth_angles,                            &
-             & fwdModelConf%num_ab_terms, fwdModelConf%num_size_bins,      &
-             & fwdModelConf%no_cloud_species,                              &
-             & scat_src%values, scat_alb%values, cld_ext%values, Scat_ang )
-
-        end if
-
-        scat_src%template = temp%template
-
-        call load_one_item_grid ( grids_tscat, scat_src, phitan, maf, &
-          & fwdModelConf, .false., .true. )
-
-        call comp_eta_docalc_no_frq ( grids_tscat, z_path(1:npf), &
-          &  phi_path(1:npf), eta_tscat_zp(1:npf,:),              &
-          &  do_calc_tscat_zp(1:npf,:), tan_pt=tan_pt_f )
-
-        call comp_sps_path_frq ( grids_tscat,                &
-          & frq_0, eta_tscat_zp(1:npf,:),                    &
-          & do_calc_tscat_zp(1:npf,:), tscat_path(1:npf,:),  &
-          & do_calc_tscat(1:npf,:), eta_tscat(1:npf,:) )
-
-! I don't know why this doesn't work
-!           call comp_sps_path_no_frq ( Grids_tscat, eta_tscat_zp(1:npf,:), &
-!             & tscat_path(1:npf,:) )
-
-        ! project Tscat onto LOS
-        call interp_tscat ( tscat_path(1:npf,:), Scat_ang(:), &
-          & phi_path(1:npf), tt_path(1:npf,:) )
-
-        if ( .not. cld_fine ) then                 ! interpolate onto gl grids along the LOS
-
-          scat_alb%template = temp%template
-          cld_ext%template  = temp%template
-
-          call load_one_item_grid ( grids_salb,  scat_alb, phitan, maf, fwdModelConf, .false.)
-          call load_one_item_grid ( grids_cext,  cld_ext,  phitan, maf, fwdModelConf, .false.)             
-
-          where ( abs(grids_salb%values) < TOL ) grids_salb%values = 0.0
-          where ( abs(grids_cext%values) < TOL ) grids_cext%values = 0.0
-
-          call comp_eta_docalc_no_frq ( Grids_salb, z_path(1:npf), &
-            &  phi_path(1:npf), eta_salb_zp(1:npf,:),              &
-            &  do_calc_salb_zp(1:npf,:), tan_pt=tan_pt_f )
-
-          call comp_sps_path_frq ( Grids_salb,               &
-            & frq_0, eta_salb_zp(1:npf,:),                   &
-            & do_calc_salb_zp(1:npf,:), salb_path(1:npf,:),  &
-            & do_calc_salb(1:npf,:), eta_salb(1:npf,:) )
-
-! I don't know why this doesn't work
-!             call comp_sps_path_no_frq ( Grids_salb, eta_salb_zp(1:npf,:), &
-!               & salb_path(1:npf,:) )
-
-          call comp_eta_docalc_no_frq ( Grids_cext, z_path(1:npf), &
-            &  phi_path(1:npf), eta_cext_zp(1:npf,:),              &
-            &  do_calc_cext_zp(1:npf,:), tan_pt=tan_pt_f )
-
-          call comp_sps_path_frq ( Grids_cext,               &
-            & frq_0, eta_cext_zp(1:npf,:),                   &
-            & do_calc_cext_zp(1:npf,:), cext_path(1:npf,:),  &
-            & do_calc_cext(1:npf,:), eta_cext(1:npf,:) )
-
-! I don't know why this doesn't work
-!             call comp_sps_path_no_frq ( Grids_cext,  eta_cext_zp(1:npf,:), &
-!               & cext_path(1:npf,:) )
-
-          call convert_grid ( salb_path(1:npf,:), cext_path(1:npf,:),  & 
-                            & tt_path(1:npf,:), c_inds,                & 
-                            & beta_path_cloud_c(1:npc), w0_path_c,     & 
-                            & tt_path_c )
-
-        else
-
-          ! cld_fine              re-compute cext and w0 along the LOS
-          call get_beta_path_cloud ( Frq, t_path(1:npf), tt_path(1:npf,:), &
-            &  c_inds, beta_path_cloud_c(1:npc), w0_path_c, tt_path_c,     &
-            &  IPSD(1:npf),  WC(:,1:npf), fwdModelConf )
-
-        end if
-
-        do j = 1, npc ! Don't trust compilers to fuse loops
-          alpha_path_c(j) = dot_product( sps_path(c_inds(j),:), &
-                                &        beta_path_c(j,:) )     &
-                                & + beta_path_cloud_c(j)
-          incoptdepth(j) = alpha_path_c(j) * del_s(j)
-        end do
-
-        ! Needed to compute inc_rad_path and by rad_tran_pol
-        call two_d_t_script_cloud ( t_path_c, tt_path_c, w0_path_c, &  
-          & spaceRadiance%values(1,1), frq, t_script, B(:npc) )
-
-      else ! Not cloud model
-
-        !{ {\tt incoptdepth} is $\Delta \delta_{s\rightarrow s-1} =
-        !  \int_{\zeta_i}^{\zeta_{i-1}} G(\zeta) \frac{\text{d}s}{\text{d}h}
-        !    \frac{\text{d}h}{\text{d}\zeta} \text{d} \zeta$ where
-        !  $G(\zeta)$ is {\tt alpha\_path\_c}, which is approximated
-        !  here by the rectangle rule, \emph{viz.}
-        !  $\Delta \delta_{i\rightarrow i-1} \approx G(\zeta_i) \delta s_i$.
-
-        do j = i_start, i_end ! Don't trust compilers to fuse loops
-          alpha_path_c(j) = dot_product( sps_path(c_inds(j),:), &
-                                       & beta_path_c(j,:) )
-          incoptdepth(j) = alpha_path_c(j) * del_s(j)
-        end do
-        incoptdepth(i_end+1:npc) = 0.0 ! if not integrating full path
-
-        ! T_Script and B needed to compute inc_rad_path and by rad_tran_pol
-        call two_d_t_script ( t_path_c(i_start:i_end), &  
-          & spaceRadiance%values(1,1), frq, &
-          & t_script(i_start:i_end), &
-          & B(i_start:i_end) )
-
-      end if ! end of check cld 
-
-      if ( fwdModelConf%useTScat .and. .not. pfa ) then
-        ! Determine the frequency subscript for the Mie tables.
-        ! We expect size(F_s) to be small.
-        Mie_frq_index = minloc(abs(f_s-frq),1)
-        if ( abs(f_s(Mie_frq_index)-frq) > fwdModelConf%frqTol ) &
-          & call MLSMessage ( MLSMSG_Error, moduleName, &
-            & "UseTScat requested but no Mie tables near enough to Frq" )
-        call log_Mie ! Get log_beta_c_e and log_beta_c_s if not done yet
-        ! Interpolate Mie beta_c_e and beta_c_s to T and IWC on path
-        ! First get interpolating coefficients from Mie tables to T and
-        ! IWC on the coarse path.
-        call get_eta_stru ( t_s, t_path_c, eta_t_path_c )
-        call get_eta_stru ( iwc_s, iwc_path(c_inds,1), eta_iwc_path_c )
-        call interpolate_stru ( log_beta_c_e(:,:,Mie_frq_index), &
-          & eta_t_path_c, eta_iwc_path_c, &
-          & beta_c_e_path_c ) ! Actually getting log(beta_c_e_path_c)
-        call interpolate_stru ( log_beta_c_s(:,:,Mie_frq_index), &
-          & eta_t_path_c, eta_iwc_path_c, &
-          & beta_c_s_path_c ) ! Actually getting log(beta_c_s_path_c)
-        ! Get W0_Path
-        w0_path_c = exp(beta_c_s_path_c) / ( alpha_path_c + exp(beta_c_e_path_c) )
-      end if
-
-      if ( .not. fwdModelConf%polarized ) then
-        ! Determine where to use Gauss-Legendre for scalar instead of a trapezoid.
-
-        call path_contrib ( incoptdepth, tan_pt_c, i_start, i_end, &
-          &                 e_rflty, fwdModelConf%tolerance, do_gl )
-
-      else ! Extra stuff for polarized case
-           ! Can't be doing TScat, so process the whole path
-
-        call get_beta_path_polarized ( frq, h, beta_group%lbl(sx), gl_slabs, &
-          & c_inds, beta_path_polarized, dBeta_dT_polarized_path_c )
-
-        ! We put an explicit extent of -1:1 for the first dimension in
-        ! the hope a clever compiler will do better optimization with
-        ! a constant extent.
-        ! Add contributions from nonpolarized molecules 1/4 1/2 1/4
-        ! to alpha here
-
-        do j = 1, npc
-          alpha_path_polarized(-1:1,j) = &
-            & matmul( beta_path_polarized(-1:1,j,:),       &
-            &         sps_path(c_inds(j),:) ) * tanh1_c(j) &
-            & + 0.25 * alpha_path_c(j)
-          alpha_path_polarized(0,j) = alpha_path_polarized(0,j) + &
-            & 0.25 * alpha_path_c(j)
-        end do
-
-        ! Turn sigma-, pi, sigma+ into 2X2 matrix incoptdepth_pol
-        call opacity ( ct(1:npc), stcp(1:npc), stsp(1:npc), &
-          & alpha_path_polarized(:,1:npc), incoptdepth_pol(:,:,1:npc) )
-
-        ! We don't add unpolarized incremental optical depth to diagonal
-        ! of polarized incremental optical depth because we added the
-        ! scalar alpha_path to the sigma-, pi and sigma+ parts of
-        ! alpha_path_polarized above.  If we did add it here, we would
-        ! need 0.5 factors to scale unpolarized "power absorption" to
-        ! get "field absorption"
-
-        do j = 2, npc-1
-          incoptdepth_pol(1,1,j) = - incoptdepth_pol(1,1,j) * del_s(j)
-          incoptdepth_pol(2,1,j) = - incoptdepth_pol(2,1,j) * del_s(j)
-          incoptdepth_pol(1,2,j) = - incoptdepth_pol(1,2,j) * del_s(j)
-          incoptdepth_pol(2,2,j) = - incoptdepth_pol(2,2,j) * del_s(j)
-
-          ! deltau_pol = exp(incoptdepth_pol)
-          call cs_expmat ( incoptdepth_pol(:,:,j), deltau_pol(:,:,j) )
-        end do
-
-        ! Determine where to do GL
-        call path_contrib ( deltau_pol(:,:,1:npc), tan_pt_c, e_rflty, &
-           & fwdModelConf%tolerance, do_gl )
-
-      end if
-
-      !{ We want $\Delta \delta_{s\rightarrow s-1} =
-      ! \int_{\zeta_i}^{\zeta_{i-1}} G(\zeta) \frac{\text{d}s}{\text{d}h}
-      !   \frac{\text{d}h}{\text{d}\zeta} \text{d} \zeta$ where
-      ! $G(\zeta)$ is {\tt alpha\_path\_c}, but $\frac{\text{d}s}{\text{d}h}$
-      ! is singular at the tangent point, so we compute
-      ! $\Delta \delta_{s\rightarrow s-1} = G(\zeta_i) \delta s_i +
-      ! \int_{\zeta_i}^{\zeta_{i-1}} \left(G(\zeta)-G(\zeta_i)\right)
-      ! \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
-      ! \text{d} \zeta$.
-      !
-      ! Where we do GL, the second integral is approximated using GL (in
-      ! {\tt Get\_Tau}).  Where we don't do GL, approximate it using the
-      ! trapezoid rule (here).  There is already a factor of 0.5 in
-      ! {\tt del\_zeta}, to compensate for the GL weights summing to 2.0.
-
-      do j = i_start+1, tan_pt_c
-        if ( .not. do_gl(j) ) &
-          & incoptdepth(j) = incoptdepth(j) + &
-            & ( alpha_path_c(j-1) - alpha_path_c(j) ) * dsdz_c(j-1)*del_zeta(j)
-      end do
-      do j = tan_pt_c+1, i_end-1
-        if ( .not. do_gl(j) ) &
-          & incoptdepth(j) = incoptdepth(j) + &
-            & ( alpha_path_c(j+1) - alpha_path_c(j) ) * dsdz_c(j+1)*del_zeta(j)
-      end do
-
-      call get_GL_inds ( do_gl, tan_pt_c, gl_inds_b, cg_inds_b, ngl, ncg )
-      cg_inds => cg_inds_b(:ncg)
-      gl_inds => gl_inds_b(:ngl)
-      ! ngl is ng * count(do_gl)
-      t_path_f(:ngl) = t_path(gl_inds)
-
-      if ( pfa ) then
-
-        call get_beta_path_PFA ( frq, frq_i, z_path, gl_inds, t_path_f(:ngl), &
-          & beta_group, sx, vel_rel, sps_path, beta_path_f(:ngl,:),           &
-          & t_der_path_flags, dbeta_dT_path_f, dbeta_dw_path_f,               &
-          & dbeta_dn_path_f, dbeta_dv_path_f, dbeta_dIWC_path_f )
-
-      else
-
-        tanh1_f(1:ngl) = tanh( frqhk / t_path_f(:ngl) )
-        ! dTanh_dT = -h nu / (2 k T**2) 1/tanh1 d(tanh1)/dT
-        if ( temp_der ) &
-          & dTanh_dT_f(1:ngl) = frqhk / t_path_f(1:ngl)**2 * &
-            & ( tanh1_f(1:ngl) - 1.0_rp / tanh1_f(1:ngl) )
-
-        ! The derivatives that get_beta_path computes depend on which
-        ! derivative arrays are allocated, not which ones are present.
-        ! This avoids having four paths through the code, each with a
-        ! different set of optional arguments.
-
-        call get_beta_path ( Frq, firstSignal%lo, p_path, t_path_f(:ngl),    &
-          & tanh1_f(1:ngl), beta_group, sx, fwdModelConf%polarized, gl_slabs,&
-          & gl_inds, beta_path_f(:ngl,:), t_der_path_flags, dTanh_dT_f,      &
-          & vel_rel, dbeta_dT_path_f, dbeta_dw_path_f, dbeta_dn_path_f,      &
-          & dbeta_dv_path_f, sps_path )
-
-      end if ! .not. pfa
-
-      do j = 1, ngl ! loop around dot_product instead of doing sum(a*b,2)
-                    ! to avoid path-length array temps
-        alpha_path_f(j) = dot_product( sps_path(gl_inds(j),:),  &
-                                     & beta_path_f(j,:) )
-      end do
-
-      if ( print_incopt ) then
-        call dump ( beta_path_c(i_start+1:i_end-1,:), name="Beta_Path" )
-        call dump ( sps_path(c_inds(i_start+1:i_end-1),:), name="SPS_Path" )
-        call dump ( alpha_path_c(i_start+1:i_end-1), name="Alpha_Path_C" )
-        call dump ( incoptdepth(i_start+1:i_end-1), name="Incoptdepth" )
-        call dump ( del_s(i_start+1:i_end-1), name="Del_s" )
-      end if
-
-      if ( .not. fwdModelConf%polarized ) then
-
-      ! Compute SCALAR radiative transfer --------------------------
-
-        call get_tau ( frq_i, gl_inds, cg_inds, i_start, e_rflty,  &
-          & del_zeta, alpha_path_c, ref_corr, incoptdepth(:i_end), &
-          & tan_pt_c, alpha_path_f(1:ngl), dsdz_gw_path, tau )
-        i_stop = tau%i_stop(frq_i)
-
-        if ( .not. pfa .or. .not. fwdModelConf%anyLBL(sx) ) then
-          ! Not doing PFA, or doing PFA but haven't done LBL.
-          ! Get incremental radiance and radiance from Tau and T_Script.
-          ! Don't clobber them if doing PFA and already did LBL.  If
-          ! doing LBL, inc_rad_path will be frequency averaged to give
-          ! Rad_Avg_Path.
-          radV = 0.0
-          do j = i_start, i_stop
-            inc_rad_path(j) = t_script(j) * tau%tau(j,frq_i)
-            radV = radV + inc_rad_path(j)
-          end do ! j
-        end if
-
-        if ( pfa .and. frq_avg_sel == 15 ) then ! See Frequency_Average.
-          ! Doing PFA and did LBL and need derivatives and will frequency
-          ! average.  Multiply Inc_Rad_Path by Tau to combine LBL and PFA. 
-          ! Then sum to give RadV.  Inc_Rad_Path is channel-averaged LBL
-          ! radiance. Remember, when doing PFA, Frq_I is a channel number.
-          ! See wvs-026.
-          radV = 0.0
-          do j = i_start, i_stop
-            inc_rad_path(j) = inc_rad_path(j) * tau%tau(j,frq_i)
-            radV = radV + inc_rad_path(j)
-          end do ! j
-        end if
-
-        inc_rad_path(i_stop+1:) = 0
-
-        if ( print_incopt ) then
-          call dump ( tau%tau(i_start:i_stop,frq_i), name="Tau" )
-          call dump ( inc_rad_path(i_start:i_stop), name="Inc_Rad_Path" )
-          call output ( frq_i, before="RadV(" )
-          call output ( radV, before=") = ", advance="yes" )
-        end if
-
-        if ( print_path ) call dump_path ( fwdModelConf, i_start, i_end, &
-          & phi_path(c_inds), z_path(c_inds), sps_path(c_inds,:), beta_path_c, &
-          & alpha_path_c, incoptdepth, frq_i, tau, inc_rad_path )
-
-      else ! Polarized model; can't combine with PFA or TScat
-
-      ! Compute POLARIZED radiative transfer -----------------------------
-
-        i_stop = npc ! needed by drad_tran_df
-
-        ! Get the corrections to integrals for layers that need GL for
-        ! the polarized species.
-        call get_beta_path_polarized ( frq, h,beta_group%lbl(sx), gl_slabs, &
-          & gl_inds, beta_path_polarized_f, dBeta_dT_polarized_path_f )
-
-        ! We put an explicit extent of -1:1 for the first dimension in
-        ! the hope a clever compiler will do better optimization with
-        ! a constant extent.
-        ! Add contributions from nonpolarized molecules 1/4 1/2 1/4
-        ! to alpha here.
-        do j = 1, ngl
-          alpha_path_polarized_f(-1:1,j) = &
-            & matmul( beta_path_polarized_f(-1:1,j,:), &
-            &         sps_path(gl_inds(j),:) ) * tanh1_f(j) &
-            & + 0.25 * alpha_path_f(j)
-          alpha_path_polarized_f(0,j) = alpha_path_polarized_f(0,j) +               &
-            & 0.25 * alpha_path_f(j)
-        end do
-
-        call rad_tran_pol ( tan_pt_c, gl_inds, cg_inds, e_rflty, del_zeta,        &
-          & alpha_path_polarized(:,1:npc), ref_corr, incoptdepth_pol(:,:,1:npc),  &
-          & deltau_pol(:,:,1:npc), alpha_path_polarized_f(:,1:ngl), dsdz_gw_path, &
-          & ct, stcp, stsp, t_script, dump_rad_pol, prod_pol(:,:,1:npc),          &
-          & tau_pol(:,:,1:npc), rad_pol, p_stop )
-
-        if ( p_stop < 0 ) then ! exp(incoptdepth_pol(:,:,-p_stop)) failed
-          call output ( 'Exp(incoptdepth_pol(:,:,' )
-          call output ( -p_stop )
-          call output ( ') failed.  Value is', advance='yes' )
-          call dump ( incoptdepth_pol(:,:,-p_stop), options='c' ) ! clean=.TRUE.
-          call output ( thisSideband, before='thisSideband = ' )
-          call output ( ptg_i, before=', ptg_i = ' )
-          call output ( frq_i, before=', frq_i = ', advance='true' )
-          call dump ( t_path_c(:npc), name='T_Path' )
-          call dump ( ref_corr(:npc), name='Ref_Corr' )
-          call dump ( n_path_c(:npc), name='N_Path' )
-          call dump ( h_path_c(:npc), name='H_Path' )
-          call Announce_Error ( 'exp(incoptdepth_pol) failed' )
-        end if
-
-        if ( radiometers(firstSignal%radiometer)%polarization == l_a ) then
-          radV = real(rad_pol(1,1))
-        else
-          radV = real(rad_pol(2,2))
-        end if
-
-      end if
-
-      ! Compute derivatives if needed ----------------------------------
-
-      if ( atmos_der ) then
-
-        call drad_tran_df ( max_f, c_inds, gl_inds, del_zeta, Grids_f, &
-          &  beta_path_c, eta_fzp, sps_path, do_calc_fzp,              &
-          &  beta_path_f, do_gl, del_s, ref_corr, dsdz_gw_path,        &
-          &  inc_rad_path, dBeta_dIWC_path_c, dBeta_dIWC_path_f,       &
-          &  i_cloud_a, i_start, tan_pt_c, i_stop, size(d_delta_df,1), &
-          &  d_delta_df, nz_d_delta_df, nnz_d_delta_df, k_atmos_frq )
-
-        if ( .not. pfa_or_not_pol ) then ! polarized and not PFA
-
-          ! VMR derivatives for polarized radiance.
-          ! Compute DE / Df from D Incoptdepth_pol / Df and put
-          ! into DE_DF.
-          call Get_D_Deltau_Pol_DF ( ct, stcp, stsp, c_inds(1:p_stop),    &
-            &  Grids_f, beta_path_polarized(:,1:p_stop,:), tanh1_c(:npc), &
-            &  eta_fzp(:npf,:), do_calc_fzp, sps_path, del_s,             &
-            &  incoptdepth_pol(:,:,1:p_stop), ref_corr(1:p_stop),         &
-            &  d_delta_df(1:npc,:), de_df(:,:,1:p_stop,:) )
-
-          ! Compute D radiance / Df from Tau, Prod, T_Script
-          ! and DE / Df.
-          call mcrt_der ( t_script, sqrt(e_rflty),             &
-            & deltau_pol(:,:,1:npc), de_df(:,:,1:npc,:),       &
-            & prod_pol(:,:,1:npc), tau_pol(:,:,1:npc), p_stop, &
-            & tan_pt_c, d_rad_pol_df )
-
-          if ( radiometers(firstSignal%radiometer)%polarization == l_a ) then
-            k_atmos_frq(:) = real(d_rad_pol_df(1,1,:))
-          else
-            k_atmos_frq(:) = real(d_rad_pol_df(2,2,:))
-          end if
-
-        end if ! polarized and not PFA
-
-      end if ! atmos_der
-
-      if ( temp_der ) then
-
-        ! put indices of nonzeros in nz_zxp_t that are in c_inds into nz_zxp_t_c
-        call select_nz_list ( nz_zxp_t, nnz_zxp_t, c_inds(:i_stop), i_start, &
-          & nz_zxp_t_c, nnz_zxp_t_c )
-
-        ! get d Delta B / d T * d T / eta
-        call dt_script_dt ( t_path_c, B(:npc), eta_zxp_t_c(1:npc,:), &
-                          & nz_zxp_t_c, nnz_zxp_t_c, frq, d_t_scr_dt(1:npc,:) )
-
-        dh_dt_path_f(:ngl,:) = dh_dt_path(gl_inds,:)
-        do_calc_t_f(:ngl,:) = do_calc_t(gl_inds,:)
-        eta_zxp_t_f(:ngl,:) = eta_zxp_t(gl_inds,:)
-        h_path_f(:ngl) = h_path(gl_inds)
-        dAlpha_dT_path_c(:npc) = sum( sps_path(c_inds,:) *  &
-                                      dBeta_dT_path_c(1:npc,:),dim=2 )
-        dAlpha_dT_path_f(:ngl) = sum( sps_path(gl_inds,:) * &
-                                      dBeta_dT_path_f(1:ngl,:),dim=2 )
-
-        if ( pfa_or_not_pol ) then
-
-          call drad_tran_dt ( del_zeta, h_path_c,                          &
-            & dh_dt_path_c(1:npc,:), alpha_path_c,                         &
-            & dAlpha_dT_path_c(:npc), eta_zxp_t_c(1:npc,:),                &
-            & do_calc_t_c(1:npc,:), do_calc_hyd_c(1:npc,:), del_s,         &
-            & ref_corr, tan_ht, dh_dt_path(tan_pt_f,:),                    &
-            & do_gl, gl_inds, h_path_f(:ngl), t_path_f(:ngl),              &
-            & dh_dt_path_f(:ngl,:), alpha_path_f(1:ngl),                   &
-            & dAlpha_dT_path_f(:ngl), eta_zxp_t_f(:ngl,:),                 &
-            & do_calc_t_f(:ngl,:), dsdh_path, dhdz_gw_path, dsdz_gw_path,  &
-            & d_t_scr_dt(1:npc,:), tau%tau(:npc,frq_i),                    &
-            & inc_rad_path, i_start, tan_pt_c, i_stop,                     &
-            & grids_tmp%deriv_flags, pfa .and. frq_avg_sel == 15,          &
-            & k_temp_frq )
-
-        else ! pol and not pfa
-
-          ! Temperature derivatives for polarized radiance
-          ! Compute DE / DT from D Incoptdepth_Pol / DT and put
-          ! into DE_DT.
-
-          dAlpha_dT_polarized_path_c(:,1:npc) = 0.0
-          dAlpha_dT_polarized_path_f(:,1:ngl) = 0.0
-          do j = 1, no_mol
-            do l = -1, 1
-              dAlpha_dT_polarized_path_c(l,1:npc) = &
-            & dAlpha_dT_polarized_path_c(l,1:npc) + &
-                & sps_path(c_inds,j) * dBeta_dT_polarized_path_c(l,1:npc,j)
-              dAlpha_dT_polarized_path_f(l,1:ngl) = &
-            & dAlpha_dT_polarized_path_f(l,1:ngl) + &
-                & sps_path(gl_inds,j) * dBeta_dT_polarized_path_f(l,1:ngl,j)
-            end do ! l
-          end do ! j
-          do l = -1, 1
-            dAlpha_dT_polarized_path_c(l,1:npc) =               &
-              & dAlpha_dT_polarized_path_c(l,1:npc) * tanh1_c + &
-              & alpha_path_polarized(l,:npc) * dTanh_dT_c(:npc)
-            dAlpha_dT_polarized_path_f(l,1:ngl) =                     &
-              & dAlpha_dT_polarized_path_f(l,1:ngl) * tanh1_f(:ngl) + &
-              & alpha_path_polarized_f(l,:ngl) * dTanh_dT_f(:ngl)
-          end do
-
-          call get_d_deltau_pol_dT ( ct, stcp, stsp, tan_pt_c,            &
-            & t_path_f(:ngl), alpha_path_polarized(:,1:p_stop),           &
-            & alpha_path_polarized_f(:,1:ngl),                            &
-            & dAlpha_dT_path_c(:npc), dAlpha_dT_path_f(:ngl),             &
-            & dAlpha_dT_polarized_path_c, dAlpha_dT_polarized_path_f,     &
-            & eta_zxp_t_c(1:p_stop,:), eta_zxp_t_f(:ngl,:), del_s,        &
-            & gl_inds, del_zeta, do_calc_t_c(1:p_stop,:),                 &
-            & do_calc_t_f(:ngl,:), do_gl(1:p_stop), dsdh_path,            &
-            & dhdz_gw_path, dsdz_gw_path, incoptdepth_pol(:,:,1:p_stop),  &
-            & ref_corr(1:p_stop), h_path_c, h_path_f(:ngl),               &
-            & dh_dt_path_c(1:p_stop,:),dh_dt_path_f(:ngl,:),              &
-            & tan_ht, dh_dt_path(tan_pt_f,:),                             &
-            & do_calc_hyd_c(1:p_stop,:), grids_tmp%deriv_flags,           &
-            & de_dt(:,:,1:p_stop,:) )
-
-          ! Compute D radiance / DT from Tau, Prod, T_Script, D_T_Scr_dT
-          ! and DE / DT.
-
-          call mcrt_der ( t_script, sqrt(e_rflty),             &
-            & deltau_pol(:,:,1:npc), de_dt(:,:,1:npc,:),       &      
-            & prod_pol(:,:,1:npc), tau_pol(:,:,1:npc), p_stop, &      
-            & tan_pt_c, d_rad_pol_dt, d_t_scr_dt(1:npc,:) )
-
-          if ( radiometers(firstSignal%radiometer)%polarization == l_a ) then
-            k_temp_frq(:) = real(d_rad_pol_dt(1,1,:))
-          else
-            k_temp_frq(:) = real(d_rad_pol_dt(2,2,:))
-          end if
-
-        end if
-
-      end if
-
-      if ( spect_der ) then
-
-        if ( fwdModelConf%polarized ) then
-          call Announce_Error ( &
-            & "Spectroscopic derivatives for Polarized species not implemented yet." )
-        else if ( pfa ) then
-          call Announce_Error ( &
-            & "Spectroscopic derivatives for PFA not implemented yet." )
-        else
-
-          ! Spectroscopic derivative  wrt: W
-
-          if ( spect_der_width ) &
-            & call drad_tran_dx ( c_inds, gl_inds, del_zeta, grids_w,      &
-              &  eta_zxp_w, sps_path, fwdModelConf%lineWidth%beta(sx),     &
-              &  do_calc_w, dbeta_dw_path_c, dbeta_dw_path_f, do_gl, del_s,&
-              &  ref_corr, dhdz_gw_path, inc_rad_path, tan_pt_c,           &
-              &  i_stop, k_spect_dw_frq )
-
-          ! Spectroscopic derivative  wrt: N
-
-          if ( spect_der_width_TDep ) &
-            & call drad_tran_dx ( c_inds, gl_inds, del_zeta, grids_n,      &
-              &  eta_zxp_n, sps_path, fwdModelConf%lineWidth_tDep%beta(sx),&
-              &  do_calc_n, dbeta_dn_path_c, dbeta_dn_path_f, do_gl, del_s,&
-              &  ref_corr, dhdz_gw_path, inc_rad_path, tan_pt_c,           &
-              &  i_stop, k_spect_dn_frq )
-
-          ! Spectroscopic derivative  wrt: Nu0
-
-          if ( spect_der_center ) &
-            & call drad_tran_dx ( c_inds, gl_inds, del_zeta, grids_v,      &
-              &  eta_zxp_v, sps_path, fwdModelConf%lineCenter%beta(sx),    &
-              &  do_calc_v, dbeta_dv_path_c, dbeta_dv_path_f, do_gl, del_s,&
-              &  ref_corr, dhdz_gw_path, inc_rad_path, tan_pt_c,           &
-              &  i_stop, k_spect_dv_frq )
-
-        end if
-
-      end if
-
-      ! End of frequency loop ----------------------------------------------
-
-      if ( toggle(emit) .and. levels(emit) > 5 ) &
-        & call Trace_End ( 'ForwardModel.Frequency ', index=frq_i )
-
-      if ( toggle(emit) .and. levels(emit) > 4 ) &
-        & call Trace_End ( 'ForwardModel.FrequencyLoop' )
-
-    end subroutine Frequency_Loop
 
   ! ..........................................  Frequency_Setup_1  .....
     subroutine Frequency_Setup_1 ( Tan_Press, Grids )
@@ -2501,6 +1813,7 @@ contains
       integer :: MINSUPERSET       ! Min. value of superset > 0
       real(rp) :: R1, R2           ! real variables for various uses
       integer :: SUPERSET          ! Output from AreSignalsSuperset
+      integer :: SV_Dim            ! Second dimension of K_*_FRQ, or zero
 
       nullify ( whichPointingGrid )
 
@@ -2546,13 +1859,14 @@ contains
           max_ch_freq_grid = MAX(r1, r2, max_ch_freq_grid)
         end do
 
-        if ( FwdModelConf%anyPFA(sx) ) call get_channel_centers ( channelCenters )
+        if ( FwdModelConf%anyPFA(sx) ) &
+          & call get_channel_centers ( thisSideband, channelCenters )
 
       else ! ----------------------------- Not frequency averaging -----
 
         noFreqs = noUsedChannels
         maxNoPtgFreqs = noUsedChannels
-        call get_channel_centers ( channelCenters )
+        call get_channel_centers ( thisSideband, channelCenters )
         frequencies => channelCenters
 
       end if ! ----------------- Either frequency averaging or not -----
@@ -2575,26 +1889,40 @@ contains
       call allocate_test ( inc_rad_path, max_c, maxNoPtgFreqs, 'Inc_Rad_path', &
         & moduleName )
 
-      if ( FwdModelConf%useTScat ) call allocate_test ( w0_frq_path, &
-        max_f, maxNoPtgFreqs, 2, 'W0_Frq_path', moduleName )
+      call allocate_test ( k_temp_frq, max(maxNoPtgFreqs,noUsedChannels), &
+                         & merge(sv_t_len,0,temp_der), 'k_temp_frq', &
+                         & moduleName )
 
-      if ( temp_der ) &
-        & call allocate_test ( k_temp_frq, max(maxNoPtgFreqs,noUsedChannels), &
-                             & sv_t_len, 'k_temp_frq', moduleName )
+      ! Allocate temporary derivative arrays with zero size if they're
+      ! not needed.  We can't simply leave them unallocated since they're
+      ! used as actual arguments to One_Frequency.  They are allocated with
+      ! zero extent in second dimension if they're not needed, because the
+      ! first dimension is subscripted.
 
-      if ( atmos_der ) &
-        & call allocate_test ( k_atmos_frq, max(maxNoPtgFreqs,noUsedChannels), &
-                             & size(grids_f%values), 'k_atmos_frq', moduleName )
+      ! SV_Dim is calculated as it is here because if the various flags
+      ! indicating requests for derivatives are false the VALUES component
+      ! of the Grids_t structures might not be associated.  In those cases,
+      ! invoking the MERGE intrinsic function might require accessing an
+      ! undefined or disassociated pointer.
+      sv_dim = 0
+      if ( atmos_der ) sv_dim = size(grids_f%values)
+      call allocate_test ( k_atmos_frq, max(maxNoPtgFreqs,noUsedChannels), &
+                         & sv_dim, 'k_atmos_frq', moduleName )
 
-      if ( spect_der_width ) &
-        & call allocate_test ( k_spect_dw_frq, max(maxNoPtgFreqs,noUsedChannels), &
-                             & size(grids_w%values), 'k_spect_dw_frq', moduleName )
-      if ( spect_der_width_TDep ) &
-        & call allocate_test ( k_spect_dn_frq, max(maxNoPtgFreqs,noUsedChannels), &
-                             & size(grids_n%values), 'k_spect_dn_frq', moduleName )
-      if ( spect_der_center ) &
-        & call allocate_test ( k_spect_dv_frq, max(maxNoPtgFreqs,noUsedChannels), &
-                             & size(grids_v%values), 'k_spect_dv_frq', moduleName )
+      sv_dim = 0
+      if ( spect_der_width ) sv_dim = size(grids_w%values)
+      call allocate_test ( k_spect_dw_frq, max(maxNoPtgFreqs,noUsedChannels), &
+                         & sv_dim, 'k_spect_dw_frq', moduleName )
+
+      sv_dim = 0
+      if ( spect_der_width_TDep ) sv_dim = size(grids_n%values)
+      call allocate_test ( k_spect_dn_frq, max(maxNoPtgFreqs,noUsedChannels), &
+                         & sv_dim, 'k_spect_dn_frq', moduleName )
+
+      sv_dim = 0
+      if ( spect_der_center ) sv_dim = size(grids_v%values)
+      call allocate_test ( k_spect_dv_frq, max(maxNoPtgFreqs,noUsedChannels), &
+                         & sv_dim, 'k_spect_dv_frq', moduleName )
 
     end subroutine Frequency_Setup_1
 
@@ -2720,7 +2048,8 @@ contains
 
       ! Get channel centers if we don't already have them
       if ( fwdModelConf%do_freq_avg .and. fwdModelConf%anyLBL(sx) .and. .not. &
-        &  fwdModelConf%anyPFA(sx) ) call get_channel_centers ( channelCenters )
+        &  fwdModelConf%anyPFA(sx) ) &
+          & call get_channel_centers ( thisSideband, channelCenters )
 
       if ( print_TScat .or. print_TScat_detail > 0 ) &
         & call output ( "Signals used for TScat computation:", advance="yes" )
@@ -3172,11 +2501,12 @@ contains
     end subroutine Generate_TScat
 
   ! ........................................  Get_Channel_Centers  .....
-    subroutine Get_Channel_Centers ( channelCenters )
-      real(r8) :: ChannelCenters(:)
+    subroutine Get_Channel_Centers ( ThisSideband, ChannelCenters )
+
+      integer, intent(in) :: ThisSideband ! +1 for USB, -1 for LSB
+      real(r8), intent(out) :: ChannelCenters(:)
 
       integer :: Channel           ! Loop inductor and subscript
-      real(r8) :: Dir              ! +1 for USB, -1 for LSB
       integer :: Sig               ! Subscript for fwdModelConf%signals
 
       select case ( thisSideband )
@@ -3188,10 +2518,9 @@ contains
         call Announce_Error ( 'Bad value of signal%sideband' )
       end select
 
-      dir = thisSideband
       do channel = 1, noUsedChannels
         sig = channels(channel)%signal
-        channelCenters(channel) = firstSignal%lo + dir * &
+        channelCenters(channel) = firstSignal%lo + thisSideband * &
           & ( fwdModelConf%signals(sig)%centerFrequency + &
           &   fwdModelConf%signals(sig)%direction * &
           &   fwdModelConf%signals(sig)%frequencies(channels(channel)%used) )
@@ -3203,7 +2532,8 @@ contains
     subroutine Interpolate_P_to_theta_e ( P, Eta_t_iwc, Theta_e, Beg_Pos_Theta, &
       &                                   Xis, Coeffs, P_on_Xi )
 
-      ! Interpolate P or dP_dT or dP_dIWC from Theta to Xi, for TScat generation.
+      ! Interpolate P or dP_dT or dP_dIWC from Theta to Xi, for TScat
+      ! generation, using periodic spline interpolation.
 
       use MLSKinds, only: Rp
       use MLSNumerics, only: Coefficients_r8, InterpolateValues
@@ -3244,6 +2574,685 @@ contains
 
     end subroutine Interpolate_P_to_theta_e
 
+  ! ..............................................  One_Frequency  .....
+    subroutine One_Frequency ( Ptg_i, Frq_i, Alpha_Path_c, Beta_Path_c,     &
+      & C_Inds, Del_S, Del_Zeta, Do_Calc_fzp, Do_Calc_zp, Do_GL, Frq,       &
+      & H_Path_C, Tan_Ht, IncOptDepth, P_Path, PFA, Ref_Corr, Sps_Path,     &
+      & Tau, T_Path_c, T_Script, Tanh1_c, TT_Path_c, W0_Path_c,             &
+      & Z_Path, I_Start, I_End, Inc_Rad_Path, RadV, dAlpha_dT_Path_C,       &
+      & K_Atmos_Frq, K_Spect_dN_Frq, K_Spect_dV_Frq, K_Spect_dW_Frq,        &
+      & K_Temp_Frq )
+
+      ! Having arguments instead of using host association serves two
+      ! purposes:  The array sizes are implicit, so we don't need explicitly
+      ! to mention them, and the pointer attribute gets stripped during the
+      ! trip through the CALL statement -- hopefully thereby helping optimizers.
+      use CS_Expmat_m, only: CS_Expmat
+      use DO_T_SCRIPT_M, only: TWO_D_T_SCRIPT, TWO_D_T_SCRIPT_CLOUD
+      use D_T_SCRIPT_DTNP_M, only: DT_SCRIPT_DT
+      use Dump_Path_m, only: Dump_Path
+      use Get_Beta_Path_m, only: Get_Beta_Path, Get_Beta_Path_Cloud, &
+        & Get_Beta_Path_PFA, Get_Beta_Path_Polarized
+      use Get_d_Deltau_pol_m, only: Get_d_Deltau_pol_df, Get_d_Deltau_pol_dT
+      use Get_Eta_Matrix_m, only: Interpolate_Stru, Select_NZ_List
+      use Interpolate_Mie_m, only: Interpolate_Mie
+      use Load_Sps_Data_m, only:  Load_One_Item_Grid
+      use Mcrt_m, only: Mcrt_der
+      use Opacity_m, only: Opacity
+      use Path_Contrib_M, only: Path_Contrib
+      use Physics, only: H_OVER_K
+      use RAD_TRAN_M, only: RAD_TRAN_POL, DRAD_TRAN_DF, &
+        & DRAD_TRAN_DT, DRAD_TRAN_DX
+      use Read_Mie_m, only: F_s
+      use ScatSourceFunc, only: T_SCAT, Interp_Tscat, Convert_Grid
+      use Tau_M, only: Get_Tau
+
+      integer, intent(in) :: Ptg_i        ! Pointing index
+      integer, intent(in) :: Frq_i        ! Frequency loop index
+      real(rp), intent(out) :: Alpha_Path_c(:) ! \sum Beta_Path * mixing ratio
+      real(rp), intent(out) :: Beta_Path_c(:,:) ! path x species
+      real(rp), intent(in) :: Del_S(:)    ! Integration lengths along path
+      real(rp), intent(in) :: Del_Zeta(:) ! Integration lengths in Zeta coords
+      integer, intent(in) :: C_Inds(:)    ! Selectors from complete path to coarse path
+      logical, intent(inout) :: Do_Calc_fzp(:,:) ! 'Avoid zeros' indicator
+      logical, intent(in) :: Do_Calc_zp(:,:) ! 'Avoid zeros' indicator
+      logical, intent(out) :: Do_GL(:)    ! Where to do GL correction
+      real(r8), intent(in) :: Frq         ! The frequency
+      real(rp), intent(in) :: H_Path_C(:) ! Heights on coarse path
+      real(rp), intent(in) :: Tan_Ht      ! Geometric tangent height, km, 
+                                          ! from equivalent Earth center
+      real(rp), intent(out) :: IncOptDepth(:)  ! Incremental optical depth
+      real(rp), intent(in) :: P_Path(:)   ! Pressures along complete path
+      logical, intent(in) :: PFA          ! Are we doing PFA or not?
+      real(rp), intent(in) :: Ref_Corr(:) ! Refraction correction
+      real(rp), intent(inout) :: Sps_Path(:,:) ! Species on path
+      type(tau_t), intent(inout) :: Tau   ! Optical depth, inout so as not to
+                                          ! undefine components' association status
+      real(rp), intent(in) :: T_Path_c(:) ! Temperature on coarse path
+      real(rp), intent(out) :: T_Script(:)! Planck function, Delta_B in some notes
+      real(rp), intent(out) :: TT_Path_c(:) ! tscat on coarse path
+      real(rp), intent(out) :: Tanh1_c(:) ! tanh(frqhk/t_path_c)
+      real(rp), intent(out) :: W0_Path_c(:) ! w0 on coarse path
+      real(rp), intent(in) :: Z_Path(:)   ! -Log10(Pressures) along complete path
+      integer, intent(in) :: I_Start, I_End ! Bounds for coarse path integration
+      real(rp), intent(out) :: RadV       ! Radiance
+      real(rp), intent(out) :: dAlpha_dT_Path_c(:) ! dAlpha/dT on coarse path
+      ! INC_RAD_PATH is (out) if .not. PFA, and (inout) if PFA
+      real(rp), intent(inout) :: INC_RAD_PATH(:) ! Incremental radiance along the path
+      real(rp), intent(out) :: K_ATMOS_FRQ(:)  ! dI/dVMR, ptg.frq X vmr-SV
+      real(rp), intent(out) :: K_SPECT_DN_FRQ(:) ! ****
+      real(rp), intent(out) :: K_SPECT_DV_FRQ(:) ! ****
+      real(rp), intent(out) :: K_SPECT_DW_FRQ(:) ! ****
+      real(rp), intent(out) :: K_TEMP_FRQ(:)   ! dI/dT, ptg.frq X T-SV
+
+      real(r8) :: FRQHK                   ! 0.5 * Frq * H_Over_K
+      integer :: I_STOP                   ! Stop path integration before I_End
+      integer :: J, L                     ! Loop inductor and subscript
+      integer :: Mie_Frq_Index            ! Index of Frq in F_s in Read_Mie
+      integer :: P_Stop                   ! Where to stop in polarized case
+      logical :: PFA_or_not_pol           ! PFA .or. .not. fwdModelConf%polarized
+
+      if ( toggle(emit) .and. levels(emit) > 4 ) &
+        & call Trace_Begin ( 'ForwardModel.One_Frequency', index=frq_i )
+
+      pfa_or_not_pol = pfa .or. .not. fwdModelConf%polarized
+
+      do_gl = .false.
+
+      ! Set up path quantities --------------------------------------
+
+      ! Compute the sps_path for this Frequency
+      call comp_sps_path_frq ( Grids_f, Frq, eta_zp(:npf,:), &
+        & do_calc_zp, sps_path,                              &
+        & do_calc_fzp, eta_fzp(:npf,:),                      &
+        & firstSignal%lo, thisSideband )
+!         ! Send all of eta_zp so comp_sps_path_frq_nz doesn't get an array
+!         ! bounds error when it's clearing parts indexed by nz_zp.
+! I don't know why this doesn't work
+!         call comp_sps_path_frq_nz ( Grids_f, Frq, eta_zp, nz_zp, nnz_zp, &
+!           & do_calc_zp, sps_path,                                        &
+!           & do_calc_fzp, eta_fzp(:npf,:), nz_fzp, nnz_fzp,               &
+!           & firstSignal%lo, thisSideband )
+
+      if ( pfa ) then
+        call get_beta_path_PFA ( frq, frq_i, z_path, c_inds, t_path_c, &
+          & beta_group, sx, vel_rel, sps_path, beta_path_c,            &
+          & t_der_path_flags, dbeta_dT_path_c, dbeta_dw_path_c,        &
+          & dbeta_dn_path_c, dbeta_dv_path_c, dbeta_dIWC_path_c )
+      else
+        frqhk = 0.5_r8 * frq * h_over_k    ! h nu / 2 k
+        tanh1_c = tanh( frqhk / t_path_c ) ! tanh ( h nu / 2 k T )
+        ! dTanh_dT = -h nu / (2 k T**2) 1/tanh1 d(tanh1)/dT
+        if ( temp_der ) dTanh_dT_c(:npc) = &
+            & frqhk / t_path_c**2 * ( tanh1_c - 1.0_rp / tanh1_c )
+        call get_beta_path ( Frq, firstSignal%lo, p_path, t_path_c,      &
+          &  tanh1_c, beta_group, sx, fwdModelConf%polarized, gl_slabs,  &
+          &  c_inds, beta_path_c, t_der_path_flags, dTanh_dT_c, vel_rel, &
+          &  dbeta_dT_path_c, dbeta_dw_path_c, dbeta_dn_path_c,          &
+          &  dbeta_dv_path_c, sps_path )
+      end if
+
+      if ( FwdModelConf%incl_cld .and. .not. pfa ) then
+        ! Compute Scattering source function based on temp prof at all
+        ! angles U for each temperature layer assuming a plane parallel
+        ! atmosphere.
+
+        if ( ptg_i == 1 ) then
+        ! ??? Can this work?  On all pointings after the first one, ???
+        ! ??? it uses the result for the last frequency.            ???
+        ! ??? We have a different frequency grid for each pointing, ???
+        ! ??? so is this the wrong idea in the first place?         ???
+
+          call T_scat ( temp%values(:,inst), Frq, GPH%values(:,inst),      & 
+             & 10.0**(-temp%template%surfs), vmrArray(1,:), vmrArray(2,:), &
+             & vmrArray(3,:),fwdModelConf%num_scattering_angles,           &
+             & fwdModelConf%num_azimuth_angles,                            &
+             & fwdModelConf%num_ab_terms, fwdModelConf%num_size_bins,      &
+             & fwdModelConf%no_cloud_species,                              &
+             & scat_src%values, scat_alb%values, cld_ext%values, Scat_ang )
+
+        end if
+
+        scat_src%template = temp%template
+
+        call load_one_item_grid ( grids_tscat, scat_src, phitan, maf, &
+          & fwdModelConf, .false., .true. )
+
+        call comp_eta_docalc_no_frq ( grids_tscat, z_path(1:npf), &
+          &  phi_path(1:npf), eta_tscat_zp(1:npf,:),              &
+          &  do_calc_tscat_zp(1:npf,:), tan_pt=tan_pt_f )
+
+        call comp_sps_path_frq ( grids_tscat,                &
+          & frq_0, eta_tscat_zp(1:npf,:),                    &
+          & do_calc_tscat_zp(1:npf,:), tscat_path(1:npf,:),  &
+          & do_calc_tscat(1:npf,:), eta_tscat(1:npf,:) )
+
+! I don't know why this doesn't work
+!           call comp_sps_path_no_frq ( Grids_tscat, eta_tscat_zp(1:npf,:), &
+!             & tscat_path(1:npf,:) )
+
+        ! project Tscat onto LOS
+        call interp_tscat ( tscat_path(1:npf,:), Scat_ang(:), &
+          & phi_path(1:npf), tt_path(1:npf,:) )
+
+        if ( .not. cld_fine ) then                 ! interpolate onto gl grids along the LOS
+
+          scat_alb%template = temp%template
+          cld_ext%template  = temp%template
+
+          call load_one_item_grid ( grids_salb,  scat_alb, phitan, maf, fwdModelConf, .false.)
+          call load_one_item_grid ( grids_cext,  cld_ext,  phitan, maf, fwdModelConf, .false.)             
+
+          where ( abs(grids_salb%values) < TOL ) grids_salb%values = 0.0
+          where ( abs(grids_cext%values) < TOL ) grids_cext%values = 0.0
+
+          call comp_eta_docalc_no_frq ( Grids_salb, z_path(1:npf), &
+            &  phi_path(1:npf), eta_salb_zp(1:npf,:),              &
+            &  do_calc_salb_zp(1:npf,:), tan_pt=tan_pt_f )
+
+          call comp_sps_path_frq ( Grids_salb,               &
+            & frq_0, eta_salb_zp(1:npf,:),                   &
+            & do_calc_salb_zp(1:npf,:), salb_path(1:npf,:),  &
+            & do_calc_salb(1:npf,:), eta_salb(1:npf,:) )
+
+! I don't know why this doesn't work
+!             call comp_sps_path_no_frq ( Grids_salb, eta_salb_zp(1:npf,:), &
+!               & salb_path(1:npf,:) )
+
+          call comp_eta_docalc_no_frq ( Grids_cext, z_path(1:npf), &
+            &  phi_path(1:npf), eta_cext_zp(1:npf,:),              &
+            &  do_calc_cext_zp(1:npf,:), tan_pt=tan_pt_f )
+
+          call comp_sps_path_frq ( Grids_cext,               &
+            & frq_0, eta_cext_zp(1:npf,:),                   &
+            & do_calc_cext_zp(1:npf,:), cext_path(1:npf,:),  &
+            & do_calc_cext(1:npf,:), eta_cext(1:npf,:) )
+
+! I don't know why this doesn't work
+!             call comp_sps_path_no_frq ( Grids_cext,  eta_cext_zp(1:npf,:), &
+!               & cext_path(1:npf,:) )
+
+          call convert_grid ( salb_path(1:npf,:), cext_path(1:npf,:),  & 
+                            & tt_path(1:npf,:), c_inds,                & 
+                            & beta_path_cloud_c(1:npc), w0_path_c,     & 
+                            & tt_path_c )
+
+        else
+
+          ! cld_fine              re-compute cext and w0 along the LOS
+          call get_beta_path_cloud ( Frq, t_path(1:npf), tt_path(1:npf,:), &
+            &  c_inds, beta_path_cloud_c(1:npc), w0_path_c, tt_path_c,     &
+            &  IPSD(1:npf),  WC(:,1:npf), fwdModelConf )
+
+        end if
+
+        do j = 1, npc ! Don't trust compilers to fuse loops
+          alpha_path_c(j) = dot_product( sps_path(c_inds(j),:), &
+                                &        beta_path_c(j,:) )     &
+                                & + beta_path_cloud_c(j)
+          incoptdepth(j) = alpha_path_c(j) * del_s(j)
+        end do
+
+        ! Needed to compute inc_rad_path and by rad_tran_pol
+        call two_d_t_script_cloud ( t_path_c, tt_path_c, w0_path_c, &  
+          & spaceRadiance%values(1,1), frq, t_script, B(:npc) )
+
+      else ! Not full cloud model
+
+        !{ {\tt incoptdepth} is $\Delta \delta_{s\rightarrow s-1} =
+        !  \int_{\zeta_i}^{\zeta_{i-1}} G(\zeta) \frac{\text{d}s}{\text{d}h}
+        !    \frac{\text{d}h}{\text{d}\zeta} \text{d} \zeta$ where
+        !  $G(\zeta)$ is {\tt alpha_path_c}, which is approximated
+        !  here by the rectangle rule, \emph{viz.}
+        !  $\Delta \delta_{i\rightarrow i-1} \approx G(\zeta_i) \delta s_i$.
+
+        do j = i_start, i_end ! Don't trust compilers to fuse loops
+          alpha_path_c(j) = dot_product( sps_path(c_inds(j),:), &
+                                       & beta_path_c(j,:) )
+          incoptdepth(j) = alpha_path_c(j) * del_s(j)
+        end do
+        incoptdepth(i_end+1:npc) = 0.0 ! if not integrating full path
+
+        if ( fwdModelConf%useTScat .and. .not. pfa ) then
+          ! Determine the frequency subscript for the Mie tables.
+          ! We expect size(F_s) to be small, so MINLOC is fast enough.
+          Mie_frq_index = minloc(abs(f_s-frq),1)
+          if ( abs(f_s(Mie_frq_index)-frq) > fwdModelConf%frqTol ) &
+            & call MLSMessage ( MLSMSG_Error, moduleName, &
+              & "UseTScat requested but no Mie tables near enough to Frq" )
+          ! Each Mie table applies to many frequencies, so don't interpolate
+          ! again if not needed.
+          if ( Mie_frq_index /= prev_Mie_frq_ind ) then
+            call interpolate_Mie ( Mie_frq_index, eta_T_path_c, eta_IWC_path_c, &
+              & atmos_der, temp_der, beta_c_e_path_c(:npc), beta_c_s_path_c(:npc), &
+              & dBeta_c_e_dIWC_path_c(:npc), dBeta_c_s_dIWC_path_c(:npc), &
+              & dBeta_c_e_dT_path_c(:npc), dBeta_c_s_dT_path_c(:npc) )
+            prev_Mie_frq_ind = Mie_frq_index
+          end if
+          ! Ignore contribution of PFA alpha to w0.
+          w0_path_c = beta_c_s_path_c(:npc) / ( alpha_path_c + beta_c_e_path_c(:npc) )
+
+        end if ! Not TScat model
+
+        !{ Compute $\Delta B_{ij}$ for $j$ = Frq_i.  See page 42 in
+        !  19 August 2004 ATBD JPL D-18130.
+        !  T_Script and B needed to compute inc_rad_path by rad_tran_pol
+        call two_d_t_script ( t_path_c(i_start:i_end), &  
+          & spaceRadiance%values(1,1), frq, &
+          & t_script(i_start:i_end), &
+          & B(i_start:i_end) )
+
+      end if ! end of check cld
+
+      if ( .not. fwdModelConf%polarized ) then
+        ! Determine where to use Gauss-Legendre for scalar instead of a trapezoid.
+
+        call path_contrib ( incoptdepth, tan_pt_c, i_start, i_end, &
+          &                 e_rflty, fwdModelConf%tolerance, do_gl )
+
+      else ! Extra stuff for polarized case
+           ! Can't be doing TScat, so process the whole path
+
+        call get_beta_path_polarized ( frq, h, beta_group%lbl(sx), gl_slabs, &
+          & c_inds, beta_path_polarized, dBeta_dT_polarized_path_c )
+
+        ! We put an explicit extent of -1:1 for the first dimension in
+        ! the hope a clever compiler will do better optimization with
+        ! a constant extent.
+        ! Add contributions from nonpolarized molecules 1/4 1/2 1/4
+        ! to alpha here
+
+        do j = 1, npc
+          alpha_path_polarized(-1:1,j) = &
+            & matmul( beta_path_polarized(-1:1,j,:),       &
+            &         sps_path(c_inds(j),:) ) * tanh1_c(j) &
+            & + 0.25 * alpha_path_c(j)
+          alpha_path_polarized(0,j) = alpha_path_polarized(0,j) + &
+            & 0.25 * alpha_path_c(j)
+        end do
+
+        ! Turn sigma-, pi, sigma+ into 2X2 matrix incoptdepth_pol
+        call opacity ( ct(1:npc), stcp(1:npc), stsp(1:npc), &
+          & alpha_path_polarized(:,1:npc), incoptdepth_pol(:,:,1:npc) )
+
+        ! We don't add unpolarized incremental optical depth to diagonal
+        ! of polarized incremental optical depth because we added the
+        ! scalar alpha_path to the sigma-, pi and sigma+ parts of
+        ! alpha_path_polarized above.  If we did add it here, we would
+        ! need 0.5 factors to scale unpolarized "power absorption" to
+        ! get "field absorption"
+
+        do j = 2, npc-1
+          incoptdepth_pol(1,1,j) = - incoptdepth_pol(1,1,j) * del_s(j)
+          incoptdepth_pol(2,1,j) = - incoptdepth_pol(2,1,j) * del_s(j)
+          incoptdepth_pol(1,2,j) = - incoptdepth_pol(1,2,j) * del_s(j)
+          incoptdepth_pol(2,2,j) = - incoptdepth_pol(2,2,j) * del_s(j)
+
+          ! deltau_pol = exp(incoptdepth_pol)
+          call cs_expmat ( incoptdepth_pol(:,:,j), deltau_pol(:,:,j) )
+        end do
+
+        ! Determine where to do GL
+        call path_contrib ( deltau_pol(:,:,1:npc), tan_pt_c, e_rflty, &
+           & fwdModelConf%tolerance, do_gl )
+
+      end if
+
+      !{ We want $\Delta \delta_{s\rightarrow s-1} =
+      ! \int_{\zeta_i}^{\zeta_{i-1}} G(\zeta) \frac{\text{d}s}{\text{d}h}
+      !   \frac{\text{d}h}{\text{d}\zeta} \text{d} \zeta$ where
+      ! $G(\zeta)$ is {\tt alpha_path_c}, but $\frac{\text{d}s}{\text{d}h}$
+      ! is singular at the tangent point, so we compute
+      ! $\Delta \delta_{s\rightarrow s-1} = G(\zeta_i) \delta s_i +
+      ! \int_{\zeta_i}^{\zeta_{i-1}} \left(G(\zeta)-G(\zeta_i)\right)
+      ! \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
+      ! \text{d} \zeta$.
+      !
+      ! Where we do GL, the second integral is approximated using GL (in
+      ! {\tt Get_Tau}).  Where we don't do GL, approximate it using the
+      ! trapezoid rule (here).  There is already a factor of 0.5 in
+      ! {\tt del_zeta}, to compensate for the GL weights summing to 2.0.
+
+      do j = i_start+1, tan_pt_c
+        if ( .not. do_gl(j) ) &
+          & incoptdepth(j) = incoptdepth(j) + &
+            & ( alpha_path_c(j-1) - alpha_path_c(j) ) * dsdz_c(j-1)*del_zeta(j)
+      end do
+      do j = tan_pt_c+1, i_end-1
+        if ( .not. do_gl(j) ) &
+          & incoptdepth(j) = incoptdepth(j) + &
+            & ( alpha_path_c(j+1) - alpha_path_c(j) ) * dsdz_c(j+1)*del_zeta(j)
+      end do
+
+      call get_GL_inds ( do_gl, tan_pt_c, gl_inds_b, cg_inds_b, ngl, ncg )
+      cg_inds => cg_inds_b(:ncg)
+      gl_inds => gl_inds_b(:ngl)
+      ! ngl is ng * count(do_gl)
+      t_path_f(:ngl) = t_path(gl_inds)
+
+      if ( pfa ) then
+
+        call get_beta_path_PFA ( frq, frq_i, z_path, gl_inds, t_path_f(:ngl), &
+          & beta_group, sx, vel_rel, sps_path, beta_path_f(:ngl,:),           &
+          & t_der_path_flags, dbeta_dT_path_f, dbeta_dw_path_f,               &
+          & dbeta_dn_path_f, dbeta_dv_path_f, dbeta_dIWC_path_f )
+
+      else
+
+        tanh1_f(1:ngl) = tanh( frqhk / t_path_f(:ngl) )
+        ! dTanh_dT = -h nu / (2 k T**2) 1/tanh1 d(tanh1)/dT
+        if ( temp_der ) &
+          & dTanh_dT_f(1:ngl) = frqhk / t_path_f(1:ngl)**2 * &
+            & ( tanh1_f(1:ngl) - 1.0_rp / tanh1_f(1:ngl) )
+
+        ! The derivatives that get_beta_path computes depend on which
+        ! derivative arrays are allocated, not which ones are present.
+        ! This avoids having four paths through the code, each with a
+        ! different set of optional arguments.
+
+        call get_beta_path ( Frq, firstSignal%lo, p_path, t_path_f(:ngl),    &
+          & tanh1_f(1:ngl), beta_group, sx, fwdModelConf%polarized, gl_slabs,&
+          & gl_inds, beta_path_f(:ngl,:), t_der_path_flags, dTanh_dT_f,      &
+          & vel_rel, dbeta_dT_path_f, dbeta_dw_path_f, dbeta_dn_path_f,      &
+          & dbeta_dv_path_f, sps_path )
+
+      end if ! .not. pfa
+
+      do j = 1, ngl ! loop around dot_product instead of doing sum(a*b,2)
+                    ! to avoid path-length array temps
+        alpha_path_f(j) = dot_product( sps_path(gl_inds(j),:),  &
+                                     & beta_path_f(j,:) )
+      end do
+
+      if ( print_incopt ) then
+        call dump ( beta_path_c(i_start+1:i_end-1,:), name="Beta_Path" )
+        call dump ( sps_path(c_inds(i_start+1:i_end-1),:), name="SPS_Path" )
+        call dump ( alpha_path_c(i_start+1:i_end-1), name="Alpha_Path_C" )
+        call dump ( incoptdepth(i_start+1:i_end-1), name="Incoptdepth" )
+        call dump ( del_s(i_start+1:i_end-1), name="Del_s" )
+      end if
+
+      if ( .not. fwdModelConf%polarized ) then
+
+      ! Compute SCALAR radiative transfer --------------------------
+
+        call get_tau ( frq_i, gl_inds, cg_inds, i_start, e_rflty,  &
+          & del_zeta, alpha_path_c, ref_corr, incoptdepth(:i_end), &
+          & tan_pt_c, alpha_path_f(1:ngl), dsdz_gw_path, tau )
+        i_stop = tau%i_stop(frq_i)
+
+        if ( .not. pfa .or. .not. fwdModelConf%anyLBL(sx) ) then
+          ! Not doing PFA, or doing PFA but haven't done LBL.
+          ! Get incremental radiance and radiance from Tau and T_Script.
+          ! Don't clobber them if doing PFA and already did LBL.  If
+          ! doing LBL, inc_rad_path will be frequency averaged to give
+          ! Rad_Avg_Path.
+          radV = 0.0
+          do j = i_start, i_stop
+            inc_rad_path(j) = t_script(j) * tau%tau(j,frq_i)
+            radV = radV + inc_rad_path(j)
+          end do ! j
+        end if
+
+        if ( pfa .and. frq_avg_sel == 15 ) then ! See Frequency_Average.
+          ! Doing PFA and did LBL and need derivatives and will frequency
+          ! average.  Multiply Inc_Rad_Path by Tau to combine LBL and PFA. 
+          ! Then sum to give RadV.  Inc_Rad_Path is channel-averaged LBL
+          ! radiance. Remember, when doing PFA, Frq_I is a channel number,
+          ! and tau is tau_PFA.  See wvs-026.
+          radV = 0.0
+          do j = i_start, i_stop
+            inc_rad_path(j) = inc_rad_path(j) * tau%tau(j,frq_i)
+            radV = radV + inc_rad_path(j)
+          end do ! j
+        end if
+
+        inc_rad_path(i_stop+1:) = 0
+
+        if ( print_incopt ) then
+          call dump ( tau%tau(i_start:i_stop,frq_i), name="Tau" )
+          call dump ( inc_rad_path(i_start:i_stop), name="Inc_Rad_Path" )
+          call output ( frq_i, before="RadV(" )
+          call output ( radV, before=") = ", advance="yes" )
+        end if
+
+        if ( print_path ) call dump_path ( fwdModelConf, i_start, i_end, &
+          & phi_path(c_inds), z_path(c_inds), sps_path(c_inds,:), beta_path_c, &
+          & alpha_path_c, incoptdepth, frq_i, tau, inc_rad_path )
+
+      else ! Polarized model; can't combine with PFA or TScat
+
+      ! Compute POLARIZED radiative transfer -----------------------------
+
+        i_stop = npc ! needed by drad_tran_df
+
+        ! Get the corrections to integrals for layers that need GL for
+        ! the polarized species.
+        call get_beta_path_polarized ( frq, h,beta_group%lbl(sx), gl_slabs, &
+          & gl_inds, beta_path_polarized_f, dBeta_dT_polarized_path_f )
+
+        ! We put an explicit extent of -1:1 for the first dimension in
+        ! the hope a clever compiler will do better optimization with
+        ! a constant extent.
+        ! Add contributions from nonpolarized molecules 1/4 1/2 1/4
+        ! to alpha here.
+        do j = 1, ngl
+          alpha_path_polarized_f(-1:1,j) = &
+            & matmul( beta_path_polarized_f(-1:1,j,:), &
+            &         sps_path(gl_inds(j),:) ) * tanh1_f(j) &
+            & + 0.25 * alpha_path_f(j)
+          alpha_path_polarized_f(0,j) = alpha_path_polarized_f(0,j) +               &
+            & 0.25 * alpha_path_f(j)
+        end do
+
+        call rad_tran_pol ( tan_pt_c, gl_inds, cg_inds, e_rflty, del_zeta,        &
+          & alpha_path_polarized(:,1:npc), ref_corr, incoptdepth_pol(:,:,1:npc),  &
+          & deltau_pol(:,:,1:npc), alpha_path_polarized_f(:,1:ngl), dsdz_gw_path, &
+          & ct, stcp, stsp, t_script, dump_rad_pol, prod_pol(:,:,1:npc),          &
+          & tau_pol(:,:,1:npc), rad_pol, p_stop )
+
+        if ( p_stop < 0 ) then ! exp(incoptdepth_pol(:,:,-p_stop)) failed
+          call output ( 'Exp(incoptdepth_pol(:,:,' )
+          call output ( -p_stop )
+          call output ( ') failed.  Value is', advance='yes' )
+          call dump ( incoptdepth_pol(:,:,-p_stop), options='c' ) ! clean=.TRUE.
+          call output ( thisSideband, before='thisSideband = ' )
+          call output ( ptg_i, before=', ptg_i = ' )
+          call output ( frq_i, before=', frq_i = ', advance='true' )
+          call dump ( t_path_c(:npc), name='T_Path' )
+          call dump ( ref_corr(:npc), name='Ref_Corr' )
+          call dump ( n_path_c(:npc), name='N_Path' )
+          call dump ( h_path_c(:npc), name='H_Path' )
+          call Announce_Error ( 'exp(incoptdepth_pol) failed' )
+        end if
+
+        if ( radiometers(firstSignal%radiometer)%polarization == l_a ) then
+          radV = real(rad_pol(1,1))
+        else
+          radV = real(rad_pol(2,2))
+        end if
+
+      end if
+
+      ! Compute derivatives if needed ----------------------------------
+
+      if ( atmos_der ) then
+
+        call drad_tran_df ( max_f, c_inds, gl_inds, del_zeta, Grids_f, &
+          &  beta_path_c, eta_fzp, sps_path, do_calc_fzp,              &
+          &  beta_path_f, do_gl, del_s, ref_corr, dsdz_gw_path,        &
+          &  inc_rad_path, dBeta_dIWC_path_c, dBeta_dIWC_path_f,       &
+          &  i_cloud_a, i_start, tan_pt_c, i_stop, size(d_delta_df,1), &
+          &  d_delta_df, nz_d_delta_df, nnz_d_delta_df, k_atmos_frq )
+
+        if ( .not. pfa_or_not_pol ) then ! polarized and not PFA
+
+          ! VMR derivatives for polarized radiance.
+          ! Compute DE / Df from D Incoptdepth_pol / Df and put it
+          ! into DE_DF.
+          call Get_D_Deltau_Pol_DF ( ct, stcp, stsp, c_inds(1:p_stop),    &
+            &  Grids_f, beta_path_polarized(:,1:p_stop,:), tanh1_c(:npc), &
+            &  eta_fzp, do_calc_fzp, sps_path, del_s,                     &
+            &  incoptdepth_pol(:,:,1:p_stop), ref_corr(1:p_stop),         &
+            &  d_delta_df(1:npc,:), de_df(:,:,1:p_stop,:) )
+
+          ! Compute D radiance / Df from Tau, Prod, T_Script
+          ! and DE / Df.
+          call mcrt_der ( t_script, sqrt(e_rflty),             &
+            & deltau_pol(:,:,1:npc), de_df(:,:,1:npc,:),       &
+            & prod_pol(:,:,1:npc), tau_pol(:,:,1:npc), p_stop, &
+            & tan_pt_c, d_rad_pol_df )
+
+          if ( radiometers(firstSignal%radiometer)%polarization == l_a ) then
+            k_atmos_frq(:) = real(d_rad_pol_df(1,1,:))
+          else
+            k_atmos_frq(:) = real(d_rad_pol_df(2,2,:))
+          end if
+
+        end if ! polarized and not PFA
+
+      end if ! atmos_der
+
+      if ( temp_der ) then
+
+        ! put indices of nonzeros in nz_zxp_t that are in c_inds into nz_zxp_t_c
+        call select_nz_list ( nz_zxp_t, nnz_zxp_t, c_inds(:i_stop), i_start, &
+          & nz_zxp_t_c, nnz_zxp_t_c )
+
+        ! get d Delta B / d T * d T / eta
+        call dt_script_dt ( t_path_c, B(:npc), eta_zxp_t_c(1:npc,:), &
+                          & nz_zxp_t_c, nnz_zxp_t_c, frq, d_t_scr_dt(1:npc,:) )
+
+        dh_dt_path_f(:ngl,:) = dh_dt_path(gl_inds,:)
+        do_calc_t_f(:ngl,:) = do_calc_t(gl_inds,:)
+        h_path_f(:ngl) = h_path(gl_inds)
+        dAlpha_dT_path_c(:npc) = sum( sps_path(c_inds,:) *  &
+                                      dBeta_dT_path_c(1:npc,:),dim=2 )
+        dAlpha_dT_path_f(:ngl) = sum( sps_path(gl_inds,:) * &
+                                      dBeta_dT_path_f(1:ngl,:),dim=2 )
+
+        if ( pfa_or_not_pol ) then
+
+          call drad_tran_dt ( c_inds, gl_inds, del_zeta, h_path_c,         &
+            & dh_dt_path_c(1:npc,:), alpha_path_c,                         &
+            & dAlpha_dT_path_c(:npc), eta_zxp_t,                           &
+            & do_calc_t_c(1:npc,:), do_calc_hyd_c(1:npc,:), del_s,         &
+            & ref_corr, tan_ht, dh_dt_path(tan_pt_f,:),                    &
+            & do_gl, h_path_f(:ngl), t_path_f(:ngl),                       &
+            & dh_dt_path_f(:ngl,:), alpha_path_f(1:ngl),                   &
+            & dAlpha_dT_path_f(:ngl),                                      &
+            & do_calc_t_f(:ngl,:), dsdh_path, dhdz_gw_path, dsdz_gw_path,  &
+            & d_t_scr_dt(1:npc,:), tau%tau(:npc,frq_i),                    &
+            & inc_rad_path, i_start, tan_pt_c, i_stop,                     &
+            & grids_tmp%deriv_flags, pfa .and. frq_avg_sel == 15,          &
+            & k_temp_frq )
+
+        else ! pol and not pfa
+
+          ! Temperature derivatives for polarized radiance
+          ! Compute DE / DT from D Incoptdepth_Pol / DT and put
+          ! into DE_DT.
+
+          dAlpha_dT_polarized_path_c(:,1:npc) = 0.0
+          dAlpha_dT_polarized_path_f(:,1:ngl) = 0.0
+          do j = 1, no_mol
+            do l = -1, 1
+              dAlpha_dT_polarized_path_c(l,1:npc) = &
+            & dAlpha_dT_polarized_path_c(l,1:npc) + &
+                & sps_path(c_inds,j) * dBeta_dT_polarized_path_c(l,1:npc,j)
+              dAlpha_dT_polarized_path_f(l,1:ngl) = &
+            & dAlpha_dT_polarized_path_f(l,1:ngl) + &
+                & sps_path(gl_inds,j) * dBeta_dT_polarized_path_f(l,1:ngl,j)
+            end do ! l
+          end do ! j
+          do l = -1, 1
+            dAlpha_dT_polarized_path_c(l,1:npc) =               &
+              & dAlpha_dT_polarized_path_c(l,1:npc) * tanh1_c + &
+              & alpha_path_polarized(l,:npc) * dTanh_dT_c(:npc)
+            dAlpha_dT_polarized_path_f(l,1:ngl) =                     &
+              & dAlpha_dT_polarized_path_f(l,1:ngl) * tanh1_f(:ngl) + &
+              & alpha_path_polarized_f(l,:ngl) * dTanh_dT_f(:ngl)
+          end do
+
+          call get_d_deltau_pol_dT ( ct, stcp, stsp, tan_pt_c,            &
+            & t_path_f(:ngl), alpha_path_polarized(:,1:p_stop),           &
+            & alpha_path_polarized_f(:,1:ngl),                            &
+            & dAlpha_dT_path_c(:npc), dAlpha_dT_path_f(:ngl),             &
+            & dAlpha_dT_polarized_path_c, dAlpha_dT_polarized_path_f,     &
+            & eta_zxp_t_c(1:p_stop,:), eta_zxp_t(:ngl,:), del_s,          &
+            & gl_inds, del_zeta, do_calc_t_c(1:p_stop,:),                 &
+            & do_calc_t_f(:ngl,:), do_gl(1:p_stop), dsdh_path,            &
+            & dhdz_gw_path, dsdz_gw_path, incoptdepth_pol(:,:,1:p_stop),  &
+            & ref_corr(1:p_stop), h_path_c(1:p_stop), h_path_f(:ngl),     &
+            & dh_dt_path_c(1:p_stop,:),dh_dt_path_f(:ngl,:),              &
+            & tan_ht, dh_dt_path(tan_pt_f,:),                             &
+            & do_calc_hyd_c(1:p_stop,:), grids_tmp%deriv_flags,           &
+            & de_dt(:,:,1:p_stop,:) )
+
+          ! Compute D radiance / DT from Tau, Prod, T_Script, D_T_Scr_dT
+          ! and DE / DT.
+
+          call mcrt_der ( t_script, sqrt(e_rflty),             &
+            & deltau_pol(:,:,1:npc), de_dt(:,:,1:npc,:),       &      
+            & prod_pol(:,:,1:npc), tau_pol(:,:,1:npc), p_stop, &      
+            & tan_pt_c, d_rad_pol_dt, d_t_scr_dt(1:npc,:) )
+
+          if ( radiometers(firstSignal%radiometer)%polarization == l_a ) then
+            k_temp_frq(:) = real(d_rad_pol_dt(1,1,:))
+          else
+            k_temp_frq(:) = real(d_rad_pol_dt(2,2,:))
+          end if
+
+        end if
+
+      end if
+
+      if ( spect_der ) then
+
+        if ( fwdModelConf%polarized ) then
+          call Announce_Error ( &
+            & "Spectroscopic derivatives for Polarized species not implemented yet." )
+        else if ( pfa ) then
+          call Announce_Error ( &
+            & "Spectroscopic derivatives for PFA not implemented yet." )
+        else
+
+          ! Spectroscopic derivative  wrt: W
+
+          if ( spect_der_width ) &
+            & call drad_tran_dx ( c_inds, gl_inds, del_zeta, grids_w,      &
+              &  eta_zxp_w, sps_path, fwdModelConf%lineWidth%beta(sx),     &
+              &  do_calc_w, dbeta_dw_path_c, dbeta_dw_path_f, do_gl, del_s,&
+              &  ref_corr, dhdz_gw_path, inc_rad_path, tan_pt_c,           &
+              &  i_stop, k_spect_dw_frq )
+
+          ! Spectroscopic derivative  wrt: N
+
+          if ( spect_der_width_TDep ) &
+            & call drad_tran_dx ( c_inds, gl_inds, del_zeta, grids_n,      &
+              &  eta_zxp_n, sps_path, fwdModelConf%lineWidth_tDep%beta(sx),&
+              &  do_calc_n, dbeta_dn_path_c, dbeta_dn_path_f, do_gl, del_s,&
+              &  ref_corr, dhdz_gw_path, inc_rad_path, tan_pt_c,           &
+              &  i_stop, k_spect_dn_frq )
+
+          ! Spectroscopic derivative  wrt: Nu0
+
+          if ( spect_der_center ) &
+            & call drad_tran_dx ( c_inds, gl_inds, del_zeta, grids_v,      &
+              &  eta_zxp_v, sps_path, fwdModelConf%lineCenter%beta(sx),    &
+              &  do_calc_v, dbeta_dv_path_c, dbeta_dv_path_f, do_gl, del_s,&
+              &  ref_corr, dhdz_gw_path, inc_rad_path, tan_pt_c,           &
+              &  i_stop, k_spect_dv_frq )
+
+        end if
+
+      end if
+
+      if ( toggle(emit) .and. levels(emit) > 4 ) &
+        & call Trace_End ( 'ForwardModel.One_Frequency, index=frq_i' )
+
+    end subroutine One_Frequency
+
   ! ...............................................  One_Pointing  .....
     subroutine One_Pointing ( Ptg_i, Vel_Rel, Tan_Phi, Tan_Press, Est_SCGeocAlt, &
       & Use_R_Eq, Scat_Zeta, Scat_Phi, Scat_Ht, Xi, Scat_Index, Scat_Tan_Ht,     &
@@ -3253,11 +3262,13 @@ contains
       use Constants, only: Pi
       use Geometry, only: MaxRefraction
       use Get_Chi_Angles_m, only: Get_Chi_Angles
+      use Get_Eta_Matrix_m, only: Get_Eta_Stru
       use GLnp, only: GW, NG
       use Metrics_m, only: Height_Metrics, More_Metrics, More_Points, &
         & Tangent_Metrics
       use Min_Zeta_m, only: Get_Min_Zeta
       use Phi_Refractive_Correction_m, only: Phi_Refractive_Correction
+      use Read_Mie_m, only: IWC_s, T_s
       use REFRACTION_M, only: REFRACTIVE_INDEX, COMP_REFCOR
       use SLABS_SW_M, only: GET_GL_SLABS_ARRAYS
 
@@ -3286,6 +3297,7 @@ contains
 
       integer :: I_start, I_end ! Boundaries of coarse path to use
       character(100) :: Line    ! Of output
+      integer :: Mol            ! Loop index for frequency averaging
       logical :: MyRev          ! "Reverse the integration path"
       real(rp) :: R_EQ          ! Equivalent Earth Radius at true surface
       real(rp) :: REQ_S  ! Equivalent Earth Radius at height reference surface
@@ -3798,6 +3810,17 @@ contains
           &  spect_n_path, lineWidth_TDep_ix )
       end if
 
+      if ( fwdModelConf%useTScat ) then
+        ! Get interpolating coefficients for Mie tables onto path
+        ! Make sure Mie tables have been loaded.
+        if ( .not. associated(t_s) ) call MLSMessage ( MLSMSG_Error, &
+          & moduleName, "UseTScat requested but no Mie tables loaded" )
+        call get_eta_stru ( t_s, t_path_c, eta_t_path_c )
+        call get_eta_stru ( iwc_s, iwc_path(c_inds,1), eta_iwc_path_c )
+        ! We don't have Mie tables for this path
+        prev_Mie_frq_ind = -1
+      end if
+
       if ( toggle(emit) .and. levels(emit) > 4 ) &
         & call Trace_End ( 'ForwardModel.MetricsEtc' )
 
@@ -3885,34 +3908,35 @@ contains
 !{{\bfseries Program variables}
 ! 
 ! \begin{tabular}{llll}
-! $\Delta B_{in}$ is {\tt T\_Script\_LBL} &
-! $\Delta B_{ic}$ is {\tt T\_Script\_PFA} &
-! $\tau^s_{in}$ is {\tt Tau\_LBL} &
-! $\tau^w_{ic}$ is {\tt Tau\_PFA}
+! $\Delta B_{in}$ is {\tt T_Script_LBL} &
+! $\Delta B_{ic}$ is {\tt T_Script_PFA} &
+! $\tau^s_{in}$ is {\tt Tau_LBL} &
+! $\tau^w_{ic}$ is {\tt Tau_PFA}
 ! \\
-! $\delta I^\sigma_{iq}$ is {\tt Inc\_Rad\_Path} &
-! $\overline{\delta I^s_{ic}}$ is {\tt Rad\_Avg\_Path} & 
-! $I_{ic}$ is also {\tt Rad\_Avg\_Path} &
+! $\delta I^\sigma_{iq}$ is {\tt Inc_Rad_Path} &
+! $\overline{\delta I^s_{ic}}$ is {\tt Rad_Avg_Path} & 
+! $I_{ic}$ is also {\tt Rad_Avg_Path} &
 ! \\
 ! $\sum_{i=1}^{N_p} \delta I^\sigma_{iq}$ is {\tt RadV} & 
 ! $I_c$ or $I^s_c$ is {\tt Radiances} &
-! $\frac{\partial I^\sigma_q}{\partial x_k}$ is {\tt K\_}$x${\tt\_FRQ} &
-! $\frac{\partial I_c}{\partial x_k}$ is {\tt K\_}$x$
+! $\frac{\partial I^\sigma_q}{\partial x_k}$ is {\tt K_}$x${\tt_FRQ} &
+! $\frac{\partial I_c}{\partial x_k}$ is {\tt K_}$x$
 ! \\
 ! \end{tabular}
 
       if ( FwdModelConf%anyLBL(sx) ) then
         do frq_i = 1, size(frequencies)
-          call frequency_loop ( ptg_i, frq_i, alpha_path_c(:npc),                &
-            & beta_path_c(:npc,:,frq_i), c_inds(:npc), del_s(:npc),              &
-            & del_zeta(:npc), do_calc_fzp(:npf,:), do_calc_zp(:npf,:),           &
-            & do_GL(:npc), frequencies(frq_i), h_path_c, tan_ht,                 &
-            & incoptdepth(:npc), p_path(:npf), pfaFalse, ref_corr(:npc),         &
-            & sps_path(:npf,:), tau_lbl, t_path_c(:npc),                         &
-            & t_script_lbl(:npc,frq_i), tanh1_c(:npc), tt_path_c(:s_i*npc),      &
-            & w0_path_c(:s_i*npc), z_path(:npf), i_start, i_end,                 &
-            & inc_rad_path(:,frq_i), RadV(frq_i), dAlpha_dT_path_c(:npc,frq_i),  &
-            & K_Atmos_Frq(frq_i,:), K_Spect_dN_Frq(frq_i,:),                     &
+          call one_frequency ( ptg_i, frq_i, alpha_path_c(:npc),                &
+            & beta_path_c(:npc,:,frq_i), c_inds(:npc), del_s(:npc),             &
+            & del_zeta(:npc), do_calc_fzp(:npf,:), do_calc_zp(:npf,:),          &
+            & do_GL(:npc), frequencies(frq_i), h_path_c, tan_ht,                &
+            & incoptdepth(:npc), p_path(:npf), pfaFalse, ref_corr(:npc),        &
+            & sps_path(:npf,:), tau_lbl, t_path_c(:npc),                        &
+            & t_script_lbl(:npc,frq_i), tanh1_c(:npc), tt_path_c(:s_i*npc),     &
+            & w0_path_c(:max(s_i,s_ts)*npc),                                    &
+            & z_path(:npf), i_start, i_end, inc_rad_path(:,frq_i), RadV(frq_i), &
+            & dAlpha_dT_path_c(:npc,frq_i),                                     &
+            & K_Atmos_Frq(frq_i,:), K_Spect_dN_Frq(frq_i,:),                    &
             & K_Spect_dV_Frq(frq_i,:), K_Spect_dW_Frq(frq_i,:), K_Temp_Frq(frq_i,:) )
         end do
         if ( print_TauL ) then
@@ -3927,27 +3951,41 @@ contains
         end if
       end if
 
+      if ( FwdModelConf%useTScat ) then
+        ! Frequency average some quantities along the path so we can combine
+        ! them with TScat table quantities, which are channel quantities.
+        do mol = 1, no_mol
+          call frequency_avg_path ( frequencies, &
+            & beta_path_c(:npc,mol,:), beta_path_a(:npc,mol,:) )
+        end do
+        call frequency_avg_path ( frequencies, &
+          & dAlpha_dT_path_c(:npc,:), dAlpha_dT_path_a(:npc,:) )
+        !{ Compute $\tau^s_{ic}$ given by Equation (6) in wvs-095
+      end if
+
       ! Handle PFA molecules
       if ( FwdModelConf%anyPFA(sx) ) then
         if ( frq_avg_sel == 15 ) then ! FRQ_avg + LBL + PFA + Derivs
           ! For every channel, frequency average the incremental radiance at
           ! every point along the path, giving Rad_Avg_Path for every channel
           ! and every point along the path.
-          call frequency_avg_path ( inc_rad_path, rad_avg_path )
-          ! Multiply by Tau_PFA to combine PFA contribution in Frequency_Loop.
+          call frequency_avg_path ( frequencies, &
+            & inc_rad_path(:npc,:), rad_avg_path(:npc,:) )
+          ! Multiply by Tau_PFA to combine PFA contribution in One_Frequency.
           call frequency_average_derivatives ( ptg_i, .false. )
         end if
         do frq_i = 1, size(channelCenters)
-          call frequency_loop ( ptg_i, frq_i, alpha_path_c(:npc),                &
-            & beta_path_c(:npc,:,frq_i), c_inds(:npc), del_s(:npc),              &
-            & del_zeta(:npc), do_calc_fzp(:npf,:), do_calc_zp(:npf,:),           &
-            & do_GL(:npc),  channelCenters(frq_i), h_path_c, tan_ht,             &
-            & incoptdepth(:npc), p_path(:npf), pfaTrue, ref_corr(:npc),          &
-            & sps_path(:npf,:), tau_pfa, t_path_c(:npc),                         &
-            & t_script_pfa(:npc,frq_i), tanh1_c(:npc), tt_path_c(:s_i*npc),      &
-            & w0_path_c(:s_i*npc), z_path(:npf), i_start, i_end,                 &
-            & rad_avg_path(:,frq_i), RadV(frq_i), dAlpha_dT_path_c(:npc,frq_i),  &
-            & K_Atmos_Frq(frq_i,:), K_Spect_dN_Frq(frq_i,:),                     &
+          call one_frequency ( ptg_i, frq_i, alpha_path_c(:npc),                &
+            & beta_path_c(:npc,:,frq_i), c_inds(:npc), del_s(:npc),             &
+            & del_zeta(:npc), do_calc_fzp(:npf,:), do_calc_zp(:npf,:),          &
+            & do_GL(:npc),  channelCenters(frq_i), h_path_c, tan_ht,            &
+            & incoptdepth(:npc), p_path(:npf), pfaTrue, ref_corr(:npc),         &
+            & sps_path(:npf,:), tau_pfa, t_path_c(:npc),                        &
+            & t_script_pfa(:npc,frq_i), tanh1_c(:npc), tt_path_c(:s_i*npc),     &
+            & w0_path_c(:max(s_i,s_ts)*npc),                                    &
+            & z_path(:npf), i_start, i_end, rad_avg_path(:,frq_i), RadV(frq_i), &
+            & dAlpha_dT_path_c(:npc,frq_i),                                     &
+            & K_Atmos_Frq(frq_i,:), K_Spect_dN_Frq(frq_i,:),                    &
             & K_Spect_dV_Frq(frq_i,:), K_Spect_dW_Frq(frq_i,:), K_Temp_Frq(frq_i,:) )
         end do
         if ( print_TauP ) then
@@ -3957,7 +3995,7 @@ contains
           call dump ( t_script_pfa(2:npc-1,:), 'T_Script_PFA' )
         end if
 
-      end if
+      end if ! FwdModelConf%anyPFA(sx)
 
       call frequency_average ( ptg_i )! or maybe just store
 
@@ -4207,6 +4245,12 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.305  2010/06/12 01:30:54  vsnyder
+! Give frequency dimension to alpha_path_c and beta_path_c.  Make
+! Frequency_Loop the body of the frequency loop instead of doing the
+! loop in it.  Pass in lower-dimensional sections of several arrays,
+! with the section selected according to the frequency loop index.
+!
 ! Revision 2.304  2010/06/07 23:23:53  vsnyder
 ! Numerous changes inching toward using TScat tables, some of which will
 ! almost certainly prove to have been dead ends.
