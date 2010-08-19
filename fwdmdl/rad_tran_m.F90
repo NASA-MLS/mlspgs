@@ -16,8 +16,8 @@ module RAD_TRAN_M
   public :: RAD_TRAN, RAD_TRAN_POL
   public :: DRAD_TRAN_DF, DRAD_TRAN_DT, DRAD_TRAN_DX
   public :: D2RAD_TRAN_DF2
-  public :: Get_d_delta_df, Get_d_delta_df_linlog, Get_d_delta_df_f
-  public :: Get_d_delta_df_linlog_f
+  public :: Get_d_delta_df_f, Get_d_delta_df_linlog
+  public :: Get_d_delta_df_linlog_f, Get_d_delta_dx
   public :: Get_Do_Calc
   private ::  Get_Do_Calc_Indexed, Get_Inds
 
@@ -257,7 +257,7 @@ contains
 ! This is the radiative transfer derivative wrt mixing ratio model
 
   subroutine DRad_tran_df ( max_f, indices_c, gl_inds, del_zeta, Grids_f,   &
-                          & beta_path_c, eta_zxp_f, sps_path, do_calc_f,    &
+                          & beta_path_c, eta_zxp, sps_path, do_calc_f,      &
                           & beta_path_f, do_gl, del_s, ref_cor,             &
                           & ds_dz_gw, inc_rad_path, dBeta_df_c, dBeta_df_f, &
                           & i_dBeta_df, i_start, tan_pt, i_stop, LD,        &
@@ -280,7 +280,7 @@ contains
     type (Grids_T), intent(in) :: Grids_f    ! All the coordinates
     real(rp), intent(in) :: beta_path_c(:,:) ! cross section for each species
       !                                        on coarse grid.
-    real(rp), intent(in) :: eta_zxp_f(max_f,*)   ! representation basis function.
+    real(rp), intent(in) :: eta_zxp(max_f,*) ! representation basis function.
     real(rp), intent(in) :: sps_path(:,:)    ! Path species function.
     logical, intent(in) :: do_calc_f(:,:)    ! A logical indicating where the
       !                                        representation basis function is
@@ -389,26 +389,26 @@ contains
 
         select case ( what )
         case ( 0 ) ! linear beta, no mixing ratio dependence
-          call get_d_delta_df ( inds, indices_c, gl_inds, &
-            & all_inds, more_inds, eta_zxp_f(:,sv_i), sps_path(:,sps_i), &
+          call get_d_delta_dx ( inds, indices_c, gl_inds, &
+            & all_inds, more_inds, eta_zxp(:,sv_i), &
             & beta_path_c(:,sps_i), beta_path_f(:,sps_i), del_s, del_zeta, &
-            & ds_dz_gw, ref_cor, singularity, d_delta_df(:,sv_i) )
+            & ds_dz_gw, singularity, d_delta_df(:,sv_i), ref_cor )
         case ( 1 ) ! log linear beta, no mixing ratio dependence
           call get_d_delta_df_linlog ( inds, indices_c, gl_inds, &
-            & all_inds, more_inds, eta_zxp_f(:,sv_i), sps_path(:,sps_i), &
+            & all_inds, more_inds, eta_zxp(:,sv_i), sps_path(:,sps_i), &
             & beta_path_c(:,sps_i), beta_path_f(:,sps_i), del_s, del_zeta, &
             & ds_dz_gw, ref_cor, grids_f%values(sv_i), singularity, &
             & d_delta_df(:,sv_i) )
         case ( 2 ) ! linear beta, mixing ratio dependence
           call Get_d_delta_df_f ( Inds, Indices_c, GL_Inds, &
-            & All_inds, More_inds, Eta_zxp_f(:,sv_i), Sps_path(:,sps_i), &
+            & All_inds, More_inds, eta_zxp(:,sv_i), Sps_path(:,sps_i), &
             & Beta_path_c(:,sps_i), Beta_path_f(:,sps_i), &
             & dBeta_df_c, dBeta_df_f, &
             & Del_s, del_zeta, ds_dz_gw, ref_cor, Singularity, &
             & d_delta_df(:,sv_i) )
         case ( 3 ) ! log linear beta, mixing ratio dependence
           call Get_d_delta_df_linlog_f ( Inds, Indices_c, GL_Inds, &
-            & All_inds, More_inds, Eta_zxp_f(:,sv_i), Sps_path(:,sps_i), &
+            & All_inds, More_inds, eta_zxp(:,sv_i), Sps_path(:,sps_i), &
             & Beta_path_c(:,sps_i), Beta_path_f(:,sps_i), &
             & dBeta_df_c, dBeta_df_f, &
             & Del_s, del_zeta, ds_dz_gw, ref_cor, grids_f%values(sv_i), &
@@ -429,8 +429,8 @@ contains
 !------------------------------------------------  D2Rad_tran_df2  -----
 ! This is the radiative transfer second derivative wrt mixing ratio model
 
-  subroutine d2Rad_tran_df2 ( max_f, indices_c, gl_inds, del_zeta, Grids_f, &
-                            & beta_path_c, eta_zxp_f, sps_path, do_calc_f,    &
+  subroutine d2Rad_tran_df2 ( max_f, indices_c, gl_inds, del_zeta, Grids_f,   &
+                            & beta_path_c, eta_zxp, sps_path, do_calc_f,      &
                             & beta_path_f, do_gl, del_s, ref_cor,             &
                             & ds_dz_gw, inc_rad_path, dBeta_df_c, dBeta_df_f, &
                             & i_dBeta_df, i_start, tan_pt, i_stop, LD,        &
@@ -454,7 +454,7 @@ contains
     type (Grids_T), intent(in) :: Grids_f    ! All the coordinates
     real(rp), intent(in) :: beta_path_c(:,:) ! cross section for each species
       !                                        on coarse grid.
-    real(rp), intent(in) :: eta_zxp_f(max_f,*)   ! representation basis function.
+    real(rp), intent(in) :: eta_zxp(max_f,*)   ! representation basis function.
     real(rp), intent(in) :: sps_path(:,:)    ! Path species function.
     logical, intent(in) :: do_calc_f(:,:)    ! A logical indicating where the
       !                                        representation basis function is
@@ -586,26 +586,26 @@ contains
 
             select case ( what_i )
             case ( 0 ) ! linear beta, no mixing ratio dependence
-              call get_d_delta_df ( inds_q, indices_c, gl_inds, &
-                & all_inds_q, more_inds_q, eta_zxp_f(:,q), sps_path(:,sps_i), &
+              call get_d_delta_dx ( inds_q, indices_c, gl_inds, &
+                & all_inds_q, more_inds_q, eta_zxp(:,q), &
                 & beta_path_c(:,sps_i), beta_path_f(:,sps_i), del_s, del_zeta, &
-                & ds_dz_gw, ref_cor, singularity, d_delta_df(:,q) )
+                & ds_dz_gw, singularity, d_delta_df(:,q), ref_cor )
             case ( 1 ) ! log linear beta, no mixing ratio dependence
               call get_d_delta_df_linlog ( inds_q, indices_c, gl_inds, &
-                & all_inds_q, more_inds_q, eta_zxp_f(:,q), sps_path(:,sps_i), &
+                & all_inds_q, more_inds_q, eta_zxp(:,q), sps_path(:,sps_i), &
                 & beta_path_c(:,sps_i), beta_path_f(:,sps_i), del_s, del_zeta, &
                 & ds_dz_gw, ref_cor, grids_f%values(q), singularity, &
                 & d_delta_df(:,q) )
             case ( 2 ) ! linear beta, mixing ratio dependence
               call get_d_delta_df_f ( inds_q, indices_c, gl_inds, &
-                & all_inds_q, more_inds_q, eta_zxp_f(:,q), sps_path(:,sps_i), &
+                & all_inds_q, more_inds_q, eta_zxp(:,q), sps_path(:,sps_i), &
                 & beta_path_c(:,sps_i), beta_path_f(:,sps_i), &
                 & dbeta_df_c, dbeta_df_f, &
                 & del_s, del_zeta, ds_dz_gw, ref_cor, singularity, &
                 & d_delta_df(:,q) )
             case ( 3 ) ! log linear beta, mixing ratio dependence
               call get_d_delta_df_linlog_f ( inds_q, indices_c, gl_inds, &
-                & all_inds_q, more_inds_q, eta_zxp_f(:,q), sps_path(:,sps_i), &
+                & all_inds_q, more_inds_q, eta_zxp(:,q), sps_path(:,sps_i), &
                 & beta_path_c(:,sps_i), beta_path_f(:,sps_i), &
                 & dbeta_df_c, dbeta_df_f, &
                 & del_s, del_zeta, ds_dz_gw, ref_cor, grids_f%values(q), &
@@ -637,26 +637,26 @@ contains
 
             select case ( what_j )
             case ( 0 ) ! linear beta, no mixing ratio dependence
-              call get_d_delta_df ( inds_r, indices_c, gl_inds, &
-                & all_inds_r, more_inds_r, eta_zxp_f(:,r), sps_path(:,sps_j), &
+              call get_d_delta_dx ( inds_r, indices_c, gl_inds, &
+                & all_inds_r, more_inds_r, eta_zxp(:,r), &
                 & beta_path_c(:,sps_j), beta_path_f(:,sps_j), del_s, del_zeta, &
-                & ds_dz_gw, ref_cor, singularity, d_delta_df(:,r) )
+                & ds_dz_gw, singularity, d_delta_df(:,r), ref_cor )
             case ( 1 ) ! log linear beta, no mixing ratio dependence
               call get_d_delta_df_linlog ( inds_r, indices_c, gl_inds, &
-                & all_inds_r, more_inds_r, eta_zxp_f(:,r), sps_path(:,sps_j), &
+                & all_inds_r, more_inds_r, eta_zxp(:,r), sps_path(:,sps_j), &
                 & beta_path_c(:,sps_j), beta_path_f(:,sps_j), del_s, del_zeta, &
                 & ds_dz_gw, ref_cor, grids_f%values(r), singularity, &
                 & d_delta_df(:,r) )
             case ( 2 ) ! linear beta, mixing ratio dependence
               call Get_d_delta_df_f ( inds_r, Indices_c, gl_inds, &
-                & All_inds_r, More_inds_r, Eta_zxp_f(:,r), Sps_path(:,sps_j), &
+                & All_inds_r, More_inds_r, eta_zxp(:,r), Sps_path(:,sps_j), &
                 & Beta_path_c(:,sps_j), Beta_path_f(:,sps_j), &
                 & dBeta_df_c, dBeta_df_f, &
                 & Del_s, del_zeta, ds_dz_gw, ref_cor, Singularity, &
                 & d_delta_df(:,r) )
             case ( 3 ) ! log linear beta, mixing ratio dependence
               call Get_d_delta_df_linlog_f ( inds_r, Indices_c, gl_inds, &
-                & All_inds_r, More_inds_r, Eta_zxp_f(:,r), Sps_path(:,sps_j), &
+                & All_inds_r, More_inds_r, eta_zxp(:,r), Sps_path(:,sps_j), &
                 & Beta_path_c(:,sps_j), Beta_path_f(:,sps_j), &
                 & dBeta_df_c, dBeta_df_f, &
                 & Del_s, del_zeta, ds_dz_gw, ref_cor, grids_f%values(r), &
@@ -683,13 +683,13 @@ contains
 !--------------------------------------------------  drad_tran_dt  -----
 ! This is the radiative transfer derivative wrt temperature model
 
-  subroutine DRad_tran_dt ( del_zeta, h_path_c, dh_dt_path_c, &
-                         &  alpha_path_c, dAlpha_dT_path_c, &
-                         &  eta_zxp_c, do_calc_t_c, &
+  subroutine DRad_tran_dt ( indices_c, gl_inds, del_zeta, h_path_c, &
+                         &  dh_dt_path_c, alpha_path_c, dAlpha_dT_path_c, &
+                         &  eta_zxp, do_calc_t_c, &
                          &  do_calc_hyd_c, del_s, ref_cor, h_tan, dh_dt_tan, &
-                         &  do_gl, gl_inds, h_path_f, t_path_f, dh_dt_path_f, &
+                         &  do_gl, h_path_f, t_path_f, dh_dt_path_f, &
                          &  alpha_path_f, dAlpha_dT_path_f, &
-                         &  eta_zxp_f, do_calc_t_f, &
+                         &  do_calc_t_f, &
                          &  ds_dh, dh_dz_gw, ds_dz_gw, dt_scr_dt, &
                          &  tau, inc_rad_path, i_start, tan_pt, i_stop, &
                          &  deriv_flags, pfa_update, drad_dt )
@@ -700,6 +700,8 @@ contains
 
 ! Inputs
 
+    integer(ip), intent(in) :: indices_c(:) ! coarse grid indicies
+    integer(ip), intent(in) :: gl_inds(:)   ! Gauss-Legendre grid indices
     real(rp), intent(in) :: del_zeta(:)     ! path -log(P) differences on the
       !              main grid.  This is for the whole coarse path, not just
       !              the part up to the black-out
@@ -709,8 +711,8 @@ contains
     real(rp), intent(in) :: alpha_path_c(:) ! path absorption(km^-1)
 !                                             on main grid.
     real(rp), intent(in) :: dAlpha_dT_path_c(:) ! path dAlpha/dT on main grid
-    real(rp), intent(in) :: eta_zxp_c(:,:)  ! representation basis function
-!                                              main grid.
+    real(rp), intent(in) :: eta_zxp(:,:)    ! representation basis function
+!                                              combined grid.
     logical, intent(in) :: do_calc_t_c(:,:) ! Indicates where the
 !                    representation basis function is not zero on main grid.
     logical, intent(in) :: do_calc_hyd_c(:,:) ! Indicates where dh_dt is not
@@ -723,15 +725,12 @@ contains
 !                                             temperature at the tangent (km/K).
     logical, intent(in) :: do_gl(:)         ! Indicates where on the coarse path
 !                                             to do gl integrations.
-    integer, intent(in) :: GL_Inds(:)       ! Where is do_gl true?
     real(rp), intent(in) :: h_path_f(:)     ! path heights + req on gl grid km.
     real(rp), intent(in) :: t_path_f(:)     ! path temperature(K) on gl grid.
     real(rp), intent(in) :: dh_dt_path_f(:,:) ! derivative of path height wrt
 !                                               temperature(km/K) on gl grid.
     real(rp), intent(in) :: alpha_path_f(:) ! path absorption(km^-1) on gl grid.
     real(rp), intent(in) :: dAlpha_dT_path_f(:) ! path dAlpha/dT on gl grid
-    real(rp), intent(in) :: eta_zxp_f(:,:)  ! representation basis function
-!                                             gl grid.
     logical, intent(in) :: do_calc_t_f(:,:) ! Indicates where the
 !                    representation basis function is not zero on gl grid.
     real(rp), intent(in) :: ds_dh(:)        ! path length wrt height derivative
@@ -762,7 +761,7 @@ contains
 ! Internals
 
     integer(ip) :: A, AA, B, GA
-    integer(ip) :: i, ii, i_begin, n_inds, n_path, no_to_gl, p_i, sv_i
+    integer(ip) :: i, i_begin, n_inds, n_path, no_to_gl, p_i, sv_i
     integer(ip), target, dimension(1:size(inc_rad_path)) :: all_inds_B
     integer(ip), target, dimension(1:size(inc_rad_path)) :: inds_B, more_inds_B
     integer(ip), pointer :: all_inds(:)  ! all_inds => part of all_inds_B;
@@ -774,7 +773,7 @@ contains
                                          ! Indices on the coarse path where GL
                                          ! corrections get applied.
 
-    real(rp) :: d_delta_dt(size(eta_zxp_c,1),size(eta_zxp_c,2)) ! path x sve.
+    real(rp) :: d_delta_dt(size(indices_c,1),size(eta_zxp,2)) ! path x sve.
       ! derivative of delta (incremental opacity) wrt temperature. (K)
 
     real(rp) :: fa, fb
@@ -794,7 +793,7 @@ contains
 
     d_delta_dt = 0.0_rp
 
-    do sv_i = 1 , size(eta_zxp_c,dim=2)
+    do sv_i = 1, size(eta_zxp,dim=2)
       drad_dt(sv_i) = 0.0
       if ( .not. deriv_flags(sv_i)) cycle
       i_begin = i_start
@@ -806,53 +805,24 @@ contains
         & do_calc, n_inds, inds_B )
 
       if ( n_inds > 0 ) then
+
         inds => inds_B(1:n_inds)
 
-        i_begin = max(inds(1)-1, i_start)
-
-        do i = 1, n_inds ! Don't trust the compiler to fuse loops
-          ii = inds(i)
-          singularity(ii) = dAlpha_dT_path_c(ii) * eta_zxp_c(ii,sv_i)
-          d_delta_dt(ii,sv_i) = singularity(ii) * del_s(ii)
-        end do ! i
-
-! see if anything needs to be gl-d
-
         no_to_gl = count(do_gl(inds))
-        if ( no_to_gl > 0 ) then
 
-          all_inds => all_inds_B(1:no_to_gl)
-          more_inds => more_inds_B(1:no_to_gl)
+        all_inds => all_inds_B(1:no_to_gl)
+        more_inds => more_inds_B(1:no_to_gl)
 
-          call get_inds ( do_gl, do_calc, more_inds, all_inds )
+        ! see if anything needs to be gl-d
+        if ( no_to_gl > 0 ) &
+          & call get_inds ( do_gl, do_calc, more_inds, all_inds )
 
-      !{ Apply Gauss-Legendre quadrature to the panels indicated by
-      !  {\tt more\_inds}.  We remove a singularity (which actually only
-      !  occurs at the tangent point) by writing
-      !  $\int_{\zeta_i}^{\zeta_{i-1}} G(\zeta) \frac{\text{d}s}{\text{d}h}
-      !   \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta =
-      !  G(\zeta_i) \int_{\zeta_i}^{\zeta_{i-1}} \frac{\text{d}s}{\text{d}h}
-      !   \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta +
-      !  \int_{\zeta_i}^{\zeta_{i-1}} \left[ G(\zeta) - G(\zeta_i) \right]
-      !   \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
-      !   \text{d}\zeta$.  The first integral is easy -- it's just
-      !  $G(\zeta_i) (\zeta_{i-1}-\zeta_i)$.  Here, it is {\tt d\_delta\_dt}.
-      !  In the second integral, $G(\zeta)$ is {\tt alphaxn\_path\_f *
-      !  eta\_zxp\_f / t\_path\_f}~-- which have already been evaluated at
-      !  the appropriate abscissae~-- and $G(\zeta_i)$ is {\tt
-      !  singularity}.  The weights are {\tt gw}.
+        call get_d_delta_dx ( inds, indices_c, gl_inds, &
+          & all_inds, more_inds, eta_zxp(:,sv_i), &
+          & dAlpha_dT_path_c, dAlpha_dT_path_f, del_s, del_zeta, &
+          & ds_dz_gw, singularity, d_delta_dt(:,sv_i) ) ! No ref_cor yet
 
-          do i = 1, no_to_gl
-            aa = all_inds(i)
-            ga = gl_inds(aa)
-            ii = more_inds(i)
-            d_delta_dt(ii,sv_i) = d_delta_dt(ii,sv_i) + &
-              & del_zeta(ii) * &
-              & sum( (dAlpha_dT_path_f(aa:aa+ng-1) * eta_zxp_f(aa:aa+ng-1,sv_i) - &
-                   &  singularity(ii)) * &
-                   & ds_dz_gw(ga:ga+ng-1) )
-          end do
-        end if ! no_to_gl > 0
+        i_begin = max(inds(1)-1, i_start)
 
       end if ! n_inds > 0
 
@@ -944,6 +914,7 @@ contains
         do p_i = 2, n_path-1           ! along the path
           if ( do_gl(p_i) ) then
             b = a + ng
+            ga = gl_inds(a)
             ! Don't test do_calc: There may be GL corrections even if
             ! dh_dt_path_c (from whence came do_calc) is zero.
             d_delta_dt(p_i,sv_i) = d_delta_dt(p_i,sv_i) + &
@@ -953,8 +924,8 @@ contains
               &   * dh_dt_path_f(a:b-1,sv_i) +                       &     
               &   h_path_f(a:b-1) * h_tan * dh_dt_tan(sv_i)) /       &     
               &  (sqrt(h_path_f(a:b-1)**2 - h_tan**2))**3            &     
-              &  + eta_zxp_f(a:b-1,sv_i) * ds_dh(gl_inds(a:b-1)) /   &     
-              &  t_path_f(a:b-1)) * dh_dz_gw(gl_inds(a:b-1)) )
+              &  + eta_zxp(ga:ga+ng-1,sv_i) * ds_dh(ga:ga+ng-1) /   &     
+              &  t_path_f(a:b-1)) * dh_dz_gw(ga:ga+ng-1) )
             a = b
           end if
         end do ! p_i
@@ -1144,51 +1115,49 @@ contains
     end if
   end subroutine Get_Do_Calc
 
-  ! .............................................  Get_d_delta_df  .....
-  subroutine Get_d_delta_df ( Inds, Indices_c, GL_Inds, &
-    & All_inds, More_inds, Eta_zxp_f, Sps_path, &
-    & Beta_path_c, Beta_path_f, Del_s, Del_Zeta, ds_dz_gw, Ref_cor, &
-    & Singularity, d_delta_df )
+  ! .............................................  Get_d_delta_dx  .....
+  subroutine Get_d_delta_dx ( Inds, Indices_c, GL_Inds, &
+    & All_inds, More_inds, eta_zxp, &
+    & dAlpha_dx_path_c, dAlpha_dx_path_f, Del_s, Del_Zeta, ds_dz_gw, &
+    & Singularity, d_delta_dx, Ref_cor )
 
-    ! Get d_delta_df for species for which beta does not depend upon
-    ! mixing ratio.
+    ! Get d_delta_dx.  For species for which beta does not depend upon
+    ! mixing ratio this gets d_delta_df if dAlpha_dx_path_* is beta_path_*.
 
     use GLNP, only: NG
     use MLSKinds, only: RP, IP
 
     integer(ip), intent(in) :: Inds(:) ! Indices on coarse path needing calc
-    integer(ip), intent(in) :: Indices_c(:) ! Subset from gl to coarse
-    integer(ip), intent(in) :: GL_Inds(:)   ! Gauss-Legendre grid indices
-    integer(ip), intent(in) :: All_inds(:)  ! Indices on GL grid for stuff
-                                            ! used to make GL corrections
-    integer(ip), intent(in) :: More_inds(:) ! Indices on the coarse path where
-                                            ! GL corrections get applied.
-    real(rp), intent(in) :: Eta_zxp_f(*)    ! representation basis function.
-    real(rp), intent(in) :: Sps_path(:)     ! Path mixing ratios
-    real(rp), intent(in) :: Beta_path_c(*)  ! cross section on coarse grid.
-    real(rp), intent(in) :: Beta_path_f(*)  ! cross section on GL grid.
-    real(rp), intent(in) :: Del_s(:)        ! unrefracted path length.
-    real(rp), intent(in) :: Del_zeta(:)     ! path -log(P) differences on the
+    integer(ip), intent(in) :: Indices_c(:)  ! Subset from gl to coarse
+    integer(ip), intent(in) :: GL_Inds(:)    ! Gauss-Legendre grid indices
+    integer(ip), intent(in) :: All_inds(:)   ! Indices on GL grid for stuff
+                                             ! used to make GL corrections
+    integer(ip), intent(in) :: More_inds(:)  ! Indices on the coarse path where
+                                             ! GL corrections get applied.
+    real(rp), intent(in) :: eta_zxp(*)       ! representation basis function.
+    real(rp), intent(in) :: dAlpha_dx_path_c(*) ! on coarse grid.
+    real(rp), intent(in) :: dAlpha_dx_path_f(*) ! cross section on GL grid.
+    real(rp), intent(in) :: Del_s(:)         ! unrefracted path length.
+    real(rp), intent(in) :: Del_zeta(:)      ! path -log(P) differences on the
       !              main grid.  This is for the whole coarse path, not just
       !              the part up to the black-out
     real(rp), intent(in) :: ds_dz_gw(:)     ! ds/dh * dh/dz * GL weights
-    real(rp), intent(in) :: Ref_cor(:)      ! refracted to unrefracted path
-                                            !  length ratios.
     real(rp), intent(out) :: singularity(:) ! integrand on left edge of coarse
                                ! grid panel -- singular at tangent pt.
                                ! Actually just work space we don't want
                                ! to allocate on every invocation.
-    real(rp), intent(inout) :: d_delta_df(:) ! Derivative of delta w.r.t.
-                               ! Sps_Path.  intent(inout) so the unreferenced
+    real(rp), intent(inout) :: d_delta_dx(:) ! Derivative of delta.
+                               ! intent(inout) so the unreferenced
                                ! elements do not become undefined.
+    real(rp), intent(in), optional :: Ref_cor(:) ! refracted to unrefracted
+                                            !  path length ratios.
 
     integer :: AA, GA, I, II
 
     do i = 1, size(inds)
       ii = inds(i)
-      singularity(ii) = eta_zxp_f(indices_c(ii)) &
-                & * beta_path_c(ii)
-      d_delta_df(ii) = singularity(ii) * del_s(ii)
+      singularity(ii) = dAlpha_dx_path_c(ii) * eta_zxp(indices_c(ii))
+      d_delta_dx(ii) = singularity(ii) * del_s(ii)
     end do ! i
 
     !{ Apply Gauss-Legendre quadrature to the panels indicated by
@@ -1202,29 +1171,29 @@ contains
     !   \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
     !   \text{d}\zeta$.  The first integral is easy -- it's just
     !  $G(\zeta_i) (\zeta_{i-1}-\zeta_i)$.  Here, it is {\tt d\_delta\_df}.
-    !  In the second integral, $G(\zeta)$ is {\tt beta\_path\_f * eta\_zxp\_f *
-    !  sps\_path} -- which have already been evaluated at the appropriate
-    !  abscissae~-- and $G(\zeta_i)$ is {\tt singularity}.  The weights
-    !  are {\tt gw}.
+    !  In the second integral, $G(\zeta)$ is {\tt dAlpha_dx_path\_f
+    !  * eta\_zxp\_f * sps\_path} -- which have already been evaluated at
+    !  the appropriate abscissae~-- and $G(\zeta_i)$ is {\tt singularity}.
+    !  The weights  are {\tt gw}.
 
     do i = 1, size(all_inds)
       aa = all_inds(i)
       ga = gl_inds(aa)
       ii = more_inds(i)
-      d_delta_df(ii) = d_delta_df(ii) + &
+      d_delta_dx(ii) = d_delta_dx(ii) + &
         & del_zeta(ii) * &
-        & sum( (eta_zxp_f(ga:ga+ng-1) * beta_path_f(aa:aa+ng-1) - &
+        & sum( (eta_zxp(ga:ga+ng-1) * dAlpha_dx_path_f(aa:aa+ng-1) - &
              &  singularity(ii)) * ds_dz_gw(ga:ga+ng-1) )
     end do
 
     ! Refraction correction
-    d_delta_df(inds) = ref_cor(inds) * d_delta_df(inds)
+    if ( present(ref_cor) ) d_delta_dx(inds) = ref_cor(inds) * d_delta_dx(inds)
 
-  end subroutine Get_d_delta_df
+  end subroutine Get_d_delta_dx
 
   ! ...........................................  Get_d_delta_df_f  .....
   subroutine Get_d_delta_df_f ( Inds, Indices_c, GL_Inds, &
-    & All_inds, More_inds, Eta_zxp_f, Sps_path, &
+    & All_inds, More_inds, Eta_zxp, Sps_path, &
     & Beta_path_c, Beta_path_f, dBeta_df_c, dBeta_df_f, &
     & Del_s, Del_Zeta, ds_dz_gw, Ref_cor, Singularity, d_delta_df )
 
@@ -1241,7 +1210,7 @@ contains
                                             ! used to make GL corrections
     integer(ip), intent(in) :: More_inds(:) ! Indices on the coarse path where
                                             ! GL corrections get applied.
-    real(rp), intent(in) :: Eta_zxp_f(*)    ! representation basis function.
+    real(rp), intent(in) :: Eta_zxp(*)      ! representation basis function.
     real(rp), intent(in) :: Sps_path(:)     ! Path mixing ratios
     real(rp), intent(in) :: Beta_path_c(*)  ! cross section on coarse grid.
     real(rp), intent(in) :: Beta_path_f(*)  ! cross section on GL grid.
@@ -1267,7 +1236,7 @@ contains
     do i = 1, size(inds)
       ii = inds(i)
       iii = indices_c(ii)
-      singularity(ii) = eta_zxp_f(iii) &
+      singularity(ii) = eta_zxp(iii) &
                 & * ( beta_path_c(ii) + &
                 &     sps_path(iii) * dBeta_df_c(ii) )
       d_delta_df(ii) = singularity(ii) * del_s(ii)
@@ -1295,7 +1264,7 @@ contains
       ii = more_inds(i)
       d_delta_df(ii) = d_delta_df(ii) + &
         & del_zeta(ii) * &
-        & sum( (eta_zxp_f(ga:ga+ng-1) &
+        & sum( (eta_zxp(ga:ga+ng-1) &
              &  * ( beta_path_f(aa:aa+ng-1) &
              &      + dBeta_df_f(aa:aa+ng-1) ) &
              &  - singularity(ii)) &
@@ -1309,7 +1278,7 @@ contains
 
   ! ......................................  Get_d_delta_df_linlog  .....
   subroutine Get_d_delta_df_linlog ( Inds, Indices_c, GL_Inds, &
-    & All_inds, More_inds, Eta_zxp_f, Sps_path, &
+    & All_inds, More_inds, Eta_zxp, Sps_path, &
     & Beta_path_c, Beta_path_f, Del_s, Del_Zeta, ds_dz_gw, Ref_cor, &
     & Grids_v, Singularity, d_delta_df )
 
@@ -1326,7 +1295,7 @@ contains
                                             ! used to make GL corrections
     integer(ip), intent(in) :: More_inds(:) ! Indices on the coarse path where
                                             ! GL corrections get applied.
-    real(rp), intent(in) :: Eta_zxp_f(*)    ! representation basis function.
+    real(rp), intent(in) :: Eta_zxp(*)      ! representation basis function.
     real(rp), intent(in) :: Sps_path(:)     ! exp(Path mixing ratios)
     real(rp), intent(in) :: Beta_path_c(*)  ! cross section on coarse grid.
     real(rp), intent(in) :: Beta_path_f(*)  ! cross section on GL grid.
@@ -1351,7 +1320,7 @@ contains
     do i = 1, size(inds)
       ii = inds(i)
       iii = indices_c(ii)
-      singularity(ii) = eta_zxp_f(iii) * sps_path(iii) * &
+      singularity(ii) = eta_zxp(iii) * sps_path(iii) * &
                 & beta_path_c(ii)
       d_delta_df(ii) = singularity(ii) * del_s(ii)
     end do ! i
@@ -1378,7 +1347,7 @@ contains
       ii = more_inds(i)
       d_delta_df(ii) = d_delta_df(ii) + &
         & del_zeta(ii) * &
-        & sum( (eta_zxp_f(ga:ga+ng-1) * sps_path(ga:ga+ng-1) &
+        & sum( (eta_zxp(ga:ga+ng-1) * sps_path(ga:ga+ng-1) &
              &  * beta_path_f(aa:aa+ng-1) - &
              &  singularity(ii)) * ds_dz_gw(ga:ga+ng-1) )
     end do
@@ -1390,7 +1359,7 @@ contains
 
   ! ....................................  Get_d_delta_df_linlog_f  .....
   subroutine Get_d_delta_df_linlog_f ( Inds, Indices_c, GL_Inds, &
-    & All_inds, More_inds, Eta_zxp_f, Sps_path, &
+    & All_inds, More_inds, Eta_zxp, Sps_path, &
     & Beta_path_c, Beta_path_f, dBeta_df_c, dBeta_df_f, &
     & Del_s, Del_Zeta, ds_dz_gw, Ref_cor, Grids_v,  Singularity, d_delta_df )
 
@@ -1407,7 +1376,7 @@ contains
                                             ! used to make GL corrections
     integer(ip), intent(in) :: More_inds(:) ! Indices on the coarse path where
                                             ! GL corrections get applied.
-    real(rp), intent(in) :: Eta_zxp_f(*)    ! representation basis function.
+    real(rp), intent(in) :: Eta_zxp(*)      ! representation basis function.
     real(rp), intent(in) :: Sps_path(:)     ! exp(Path mixing ratios)
     real(rp), intent(in) :: Beta_path_c(*)  ! cross section on coarse grid.
     real(rp), intent(in) :: Beta_path_f(*)  ! cross section on GL grid.
@@ -1434,7 +1403,7 @@ contains
     do i = 1, size(inds)
       ii = inds(i)
       iii = indices_c(ii)
-      singularity(ii) = eta_zxp_f(iii) * sps_path(iii) * &
+      singularity(ii) = eta_zxp(iii) * sps_path(iii) * &
                 & ( beta_path_c(ii) + dBeta_df_c(ii) )
       d_delta_df(ii) = singularity(ii) * del_s(ii)
     end do ! i
@@ -1461,7 +1430,7 @@ contains
       ii = more_inds(i)
       d_delta_df(ii) = d_delta_df(ii) + &
         & del_zeta(ii) * &
-        & sum( (eta_zxp_f(ga:ga+ng-1) * sps_path(ga:ga+ng-1) &
+        & sum( (eta_zxp(ga:ga+ng-1) * sps_path(ga:ga+ng-1) &
              &  * ( beta_path_f(aa:aa+ng-1) + dBeta_df_f(aa:aa+ng-1) ) &
              &  - singularity(ii)) * ds_dz_gw(ga:ga+ng-1) )
     end do
@@ -1626,6 +1595,9 @@ contains
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.12  2010/08/19 02:04:03  vsnyder
+! Change some variable names, restructure dRad_tran_dT
+!
 ! Revision 2.11  2010/06/12 01:27:59  vsnyder
 ! Use get_d_delta_df_linlog in drad_tran_dx because it does the right
 ! calculation if it's given dbeta_df instead of beta.
