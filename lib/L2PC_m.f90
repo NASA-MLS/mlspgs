@@ -228,7 +228,7 @@ contains ! ============= Public Procedures ==========================
   end subroutine DumpL2PCFile
 
   ! --------------------------------------- DumpOneL2PC ---------------
-  subroutine DumpOneL2PC ( L2pc, details )
+  subroutine DumpOneL2PC ( L2pc, details, onlyTheseBlocks )
     ! This subroutine dumps an l2pc to stdout
 
     use HessianModule_1, only: Dump
@@ -236,6 +236,7 @@ contains ! ============= Public Procedures ==========================
     ! Dummy arguments
     type (l2pc_t), intent(in), target :: L2pc
     integer, intent(in), optional :: DETAILS ! passed to Vector and Matrix dumps
+    character(len=*), dimension(3), intent(in), optional :: ONLYTHESEBLOCKS ! passed to Vector and Matrix dumps
 
     ! Executable code
     call output( '- Dump of L2PC -', advance='yes' )
@@ -255,7 +256,8 @@ contains ! ============= Public Procedures ==========================
     endif
 
     ! Now dump the Hessian
-    if ( l2pc%goth .and. details > 1 ) call dump ( l2pc%h, 'hStar', details )
+    if ( l2pc%goth .and. details > 1 ) &
+      & call dump ( l2pc%h, 'hStar', details, onlyTheseBlocks )
 
   end subroutine DumpOneL2PC
 
@@ -756,8 +758,10 @@ contains ! ============= Public Procedures ==========================
               ! Identify the block
               h0 => hessian%block ( i, j, k )
               call optimizeBlock ( h0 )
-              ! Skip the absent ones in order to make life simpler
-!             if ( h0%kind == h_absent ) cycle
+              if ( h0%kind == h_sparse .and. &
+                & (h0%tuplesFilled < 1 .or. .not. associated(h0%tuples) ) &
+                & ) &
+                & h0%kind = h_absent
               ! Get a name for this group for the block
               call CreateBlockName ( rowBlockMap(i), colBlockMap(j), colBlockMap(k), name )
               if ( switchDetail( switches, 'hess' ) > -1 ) &
@@ -872,8 +876,11 @@ contains ! ============= Public Procedures ==========================
       if ( status /= 0 .and. DIEIFDESTROYFAILS ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to close matrix group for preserved input l2pc' )
       ! Close the file?
-      if ( count ( l2pcInfo%fileID == l2pcInfo(i)%fileID ) == 1 ) then
+      if ( count ( l2pcInfo%fileID == l2pcInfo(i)%fileID ) == 1 .and. &
+        & all(l2pcInfo%fileID > 0 ) ) then
         ! We're the only one (left?) with this file, close it.
+        if ( switchDetail( switches, 'l2pc' ) > -1 ) &
+          & call outputNamedValue('Closing hdf5 fileID', l2pcInfo(i)%fileID )
         call h5fClose_f ( l2pcInfo(i)%fileID, status )
         if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'Unable to close hdf5 preserved input l2pc file' )
@@ -1423,7 +1430,7 @@ contains ! ============= Public Procedures ==========================
       ! Loop over blocks and read them
       if ( .not. myShallow ) then
         if ( switchDetail( switches, 'hess' ) > -1 ) then
-          call output( 'trying to read this hessian blodk', advance='yes' )
+          call output( 'trying to read this hessian block', advance='yes' )
           call outputNamedValue( 'l2pc%h%row%NB', l2pc%h%row%NB )
           call outputNamedValue( 'l2pc%h%col%NB', l2pc%h%col%NB )
           call outputNamedValue( 'hblocksId', hblocksId )
@@ -1440,7 +1447,7 @@ contains ! ============= Public Procedures ==========================
               ! Could check it's the block we're expecting but I think I'll be lazy
               MLSFile%fileID%sd_id = blockID
               call GetHDF5Attribute ( MLSFile, 'kind', kind )
-              if ( switchDetail( switches, 'hess' ) > -1 ) &
+              if ( switchDetail( switches, 'hess' ) > 1 ) &
                 & call outputNamedValue( 'kind', kind )
 
               select case ( kind )
@@ -1884,6 +1891,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.101  2010/08/20 23:19:50  pwagner
+! May specify which blocks to dump by name; dont dump empty blocks
+!
 ! Revision 2.100  2010/08/13 22:22:59  pwagner
 ! details now can choose between matrices, hessians; fixed a bug in reading HessianBlocks
 !
