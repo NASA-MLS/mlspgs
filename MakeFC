@@ -235,6 +235,7 @@ SHELL = /bin/sh
 # l2gpcat        
 # l2gpdiff       
 # l2gpdump       
+# l2pcdump       
 # l2q            
 # machineok      
 # Mie_Tables
@@ -845,6 +846,11 @@ l2gpdump: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l2gpdump.f90 l1--itm
    -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
 	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
+l2pcdump: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l2pcdump.f90 l2
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m l2 \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
 l2q: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l2q.f90 l2
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ -M $(MAKE) -m l2 \
@@ -1192,8 +1198,8 @@ update:
 # Make most the source-file tools in the util directory
 tools: chunktimes checkpvmup compare dateconverter heconvert h5subset h5cat hl \
   killmaster \
-  l1bdiff l1h5subset l2auxcat l2auxchi l2auxdump l2gpcat l2q l2gpdiff l2gpdump \
-  machineok Spartacus tellMasterToQuit WordSplit wrapLines
+  l1bdiff l1h5subset l2auxcat l2auxchi l2auxdump l2gpcat l2gpdiff l2gpdump \
+  l2pcdump l2q machineok Spartacus tellMasterToQuit WordSplit wrapLines
 
 .PHONY: all configure clean clean_config\
   configure_pvm configure_fopts configure_full configure_help configure_subdirs\
@@ -1211,12 +1217,15 @@ tools: chunktimes checkpvmup compare dateconverter heconvert h5subset h5cat hl \
   checkpvmup chunktimes CondenseLeakLog end_stmts f90tex heconvert init_gen \
   h5subset h5cat hl killmaster tellMasterToQuit \
   l1bdiff l1h5subset l2auxcat l2auxchi l2auxdump l2gpcat l2gpdiff l2gpdump \
-  Mie_Tables Mie_Tables_nohdf machineok MLS_h5ls utctotai \
+  l2pcdump Mie_Tables Mie_Tables_nohdf machineok MLS_h5ls utctotai \
   WordSplit wrapLines tools
   
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.124  2010/06/29 20:11:34  pwagner
+# install-cfm also copies cfm.mod into INSTALLDIR
+#
 # Revision 1.123  2010/06/09 20:09:51  pwagner
 # New targets, install-cfm, install-fullcfm, install-all
 #
