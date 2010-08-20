@@ -106,7 +106,9 @@ module HessianModule_0          ! Low-level Hessians in the MLS PGS suite
     module procedure StreamlineHessian_0
   end interface
 
+  real(rm), parameter:: AUGMENTFACTOR = 1.0
   logical, parameter :: DEEBUG = .false.
+  logical, parameter :: DONTOPTIMIZE = .true.
   logical, parameter :: DUMPASUNSPARSIFIED = .true.
 
 !---------------------------- RCS Module Info ------------------------------
@@ -120,8 +122,13 @@ contains
   ! ----------------------------------------------- AugmentHessian -----
   subroutine AugmentHessian ( H, N, factor )
     ! Make space for N extra elements in the Hessian tuple if it's not already there
-    ! If Geometric is present then don't merely add 'just enough' values, but
+    ! If factor is present then don't merely add 'just enough' values, but
     ! increase the number by this fraction
+    ! ????????????? Why is that a good idea ?????????????
+    ! Among other consequences, h%tuplesFilled will be smaller
+    ! than h%tuples, and sibsequent elemental procedures passed
+    ! h%tuples w/o an array subsection will be operating
+    ! with undefined values (paw)
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     
@@ -130,11 +137,14 @@ contains
     real(rm), intent(in), optional :: FACTOR
 
     ! Local variables
+    real(rm) :: myFactor
     type(tuple_t), dimension(:), pointer :: oldTuple  ! Used to expand 'in place'
     integer :: stat                     ! Status from allocates etc
     integer :: space                    ! How many tuples are free
     integer :: extra                    ! How many to add
 
+    myFactor = 1.0_rm
+    if ( present(factor) ) myFactor = factor
     if ( h%kind == h_full ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
       & "Attempt to agument an already densified Hessian block" )
@@ -153,7 +163,7 @@ contains
       oldTuple => h%tuples
 
       ! Work out how much to add
-      if ( present ( factor ) ) then
+      if ( myFactor > 1.0_rm ) then
         extra = max ( N, nint ( size ( h%tuples ) * factor ) )
       else
         extra = N
@@ -379,8 +389,21 @@ contains
     case ( h_absent )
       call output ( 'absent', advance='yes' )
     case ( h_sparse )
+      if ( h%TuplesFilled < 1 ) then
+        call output( '(0 tuplesFilled)', advance='yes' )
+        return
+      elseif ( .not. associated (h%tuples) ) then
+        call output( '(tuplesFilled > 0 yet h%tuples not associated; how?)', advance='yes' )
+        return
+      endif
       call output ( size(h%tuples), before='sparse with ', &
         & after=' nonzero elements', advance='yes' )
+      call outputNamedValue( 'Min, max row numbers', &
+        & (/ minval(h%tuples(1:h%TuplesFilled)%i), maxval(h%tuples(1:h%TuplesFilled)%i) /) )
+      call outputNamedValue( 'Min, max 1st col numbers', &
+        & (/ minval(h%tuples(1:h%TuplesFilled)%j), maxval(h%tuples(1:h%TuplesFilled)%j) /) )
+      call outputNamedValue( 'Min, max 2nd col numbers', &
+        & (/ minval(h%tuples(1:h%TuplesFilled)%k), maxval(h%tuples(1:h%TuplesFilled)%k) /) )
       if ( my_details > 0 ) then
         if ( DUMPASUNSPARSIFIED ) then
           ! temporarily convert sparse representation to full
@@ -504,7 +527,7 @@ contains
       end if
     else
       ! Otherwise make space for the new entries
-      call AugmentHessian ( H, count ( plane /= 0 ), factor=1.2 )
+      call AugmentHessian ( H, count ( plane /= 0 ), factor=AUGMENTFACTOR )
       
       n = h%tuplesFilled
       if ( myMirroring ) then
@@ -540,6 +563,8 @@ contains
     ! or the (:,k,:) plane if mirroring is present and true
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MatrixModule_0, only: MatrixElement_T, M_Full, M_Absent, M_Column_Sparse, M_Banded 
+    use MLSStringLists, only: switchDetail
+    use Toggles, only: Switches
 
     type(HessianElement_T), intent(inout) :: H
     type(MatrixElement_T), intent(in) :: PLANE
@@ -573,10 +598,14 @@ contains
     ! If the Hessian is dense and the matrix is full then get the other routine to do this
     if ( plane%kind == M_Full ) then
       call InsertHessianPlane ( h, plane%values, k, mirroring )
+      if ( switchDetail( switches, 'hess' ) > 0 ) then
+        call output( 'Full plane of hessian values inserted at ')
+        call output( k, advance='yes' )
+      endif
     else
       ! Otherwise make space for the new entries
       if ( h%kind == H_Sparse .or. h%kind == H_Absent ) &
-        & call AugmentHessian ( H, size ( plane%values, 1 ), factor=1.2 )
+        & call AugmentHessian ( H, size ( plane%values, 1 ), factor=AUGMENTFACTOR )
       
       n = h%tuplesFilled
       if ( myMirroring ) then
@@ -608,6 +637,10 @@ contains
             end if
           end do
         end do
+        if ( switchDetail( switches, 'hess' ) > 0 ) then
+          call output( 'Banded plane of hessian values inserted at ')
+          call output( oneTuple%k, advance='yes' )
+        endif
       case ( M_Column_Sparse )
         do j = 1, plane%nCols
           if ( myMirroring ) then
@@ -626,6 +659,10 @@ contains
             end if
           end do
         end do
+        if ( switchDetail( switches, 'hess' ) > 0 ) then
+          call output( 'column sparse plane of hessian values inserted at ')
+          call output( oneTuple%k, advance='yes' )
+        endif
       end select
       if ( h%kind == H_Sparse ) h%tuplesFilled = n
     end if
@@ -655,8 +692,17 @@ contains
     integer :: STATUS   ! Flag from allocate
     logical, parameter :: DEEBUG = .true.
 
-    if ( DEEBUG .and. any( h%kind == (/ h_full, h_sparse /) ) ) then
+    if ( DONTOPTIMIZE ) then
+       call MLSMessage ( MLSMSG_Warning, ModuleName, &
+         & "Skipping buggy optimizeBlocks (paw)" )
+       return
+    elseif ( DEEBUG .and. any( h%kind == (/ h_full, h_sparse /) ) .and. &
+      & h%tuplesFilled > 0 ) then
       call output( 'Before optimizing Hessian block', advance='yes' )
+      call outputnamedValue( 'h%tuplesFilled', h%tuplesFilled )
+      call outputnamedValue( 'count(h%values /= 0.0)', count(h%values /= 0.0) )
+      n = count ( h%tuples ( 1:h%tuplesFilled ) % h /= 0 )
+      call outputnamedValue( 'count(h%tuplevalues /= 0.0)', n )
       call dump( h, details=0 )
     endif
     if ( h%kind == h_Absent .or. h%kind == h_Unknown ) return
@@ -704,6 +750,10 @@ contains
 
     ! If the first sorted one has a zero value, they all do, since zeros
     ! were given maxRank.
+    ! ?????????? Why ???????????
+    ! We did not sort by value, remember, but by "rank"
+    ! This is just one of what are many unjustified assumptions here
+    ! They pretty much doom this subroutine (paw)
     if ( h%tuples(order(1))%h == 0.0 ) then
       call clearBlock ( h )
     else
@@ -750,8 +800,18 @@ o:    do while ( i < n )
     call Deallocate_Test ( rank, "Rank in OptimizeBlock", ModuleName )
     call Deallocate_Test ( order, "Order in OptimizeBlock", ModuleName )
 
-    if ( DEEBUG ) then
+    if ( DEEBUG .and. any( h%kind == (/ h_full, h_sparse /) ) .and. &
+      & h%tuplesFilled > 0 ) then
       call output( 'After optimizing Hessian block', advance='yes' )
+      call outputnamedValue( 'h%tuplesFilled', h%tuplesFilled )
+      call outputnamedValue( 'count(h%values /= 0.0)', count(h%values /= 0.0) )
+      if ( associated(h%tuples) ) then
+        n = count ( h%tuples ( 1:h%tuplesFilled ) % h /= 0 )
+        call outputnamedValue( 'count(h%tuplevalues /= 0.0)', n )
+      elseif ( h%tuplesFilled > 0 ) then
+        call MLSMessage ( MLSMSG_Warning, ModuleName // "optimizeBlocks", &
+         & "How is it that h%tuplesFilled > 0 but h%tuples is not associated" )
+      endif
       call dump( h, details=0 )
     endif
   end subroutine OptimizeBlock
@@ -804,7 +864,11 @@ o:    do while ( i < n )
     ! Remove elements that are separated vertically by than ScaleHeight or
     ! that are smaller in magnitude than the maximum in the block by a factor
     ! of threshold
+    ! This will make the Hessians, and the containing L2PC files much smaller
+    ! However, some of the assumptions are dubious
+    ! On balance, StreamlineHessian_0 might not be worth the risk (paw)
     use MLSKinds, only: R8
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
     use QuantityTemplates, only: QuantityTemplate_T
     type (HessianElement_T), intent(inout) :: H
     type (QuantityTemplate_T), intent(in) :: Q1, Q2 ! For 1st, 2nd cols of H
@@ -814,10 +878,15 @@ o:    do while ( i < n )
     integer :: J, K    ! Subscripts
     integer :: S1, S2  ! Surface indices for 1st, 2nd cols of H
 
+    call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      & "Streamlining Hessians is probably buggy--use with caution (paw)" )
+
     select case ( h%kind )
     case ( h_absent )
       return
     case ( h_sparse )
+      ! Note that this cutoff won't be right if h%tuples is
+      ! longer than h%tuplesFilled (paw)
       cutoff = threshold * maxval(abs(h%tuples%h))
       where ( abs( h%tuples%h ) < cutoff .or. &
         &     abs( q1%surfs( (h%tuples%j-1 ) / q1%noChans + 1, 1) -   &
@@ -857,6 +926,9 @@ o:    do while ( i < n )
 end module HessianModule_0
 
 ! $Log$
+! Revision 2.9  2010/08/20 23:06:05  pwagner
+! Sets Augmenting factor to 1.0; skips optimizing blocks
+!
 ! Revision 2.8  2010/08/13 22:05:32  pwagner
 ! Added diff; dumps sparse as if full
 !
