@@ -312,12 +312,13 @@ contains
   end subroutine Diff_Hessians
 
   ! ------------------------------------------------- Dump_Hessian -----
-  subroutine Dump_Hessian ( H, Name, Details, Clean )
+  subroutine Dump_Hessian ( H, Name, Details, onlyTheseBlocks, Clean )
     use HessianModule_0, only: Dump
     use Lexer_core, only: Print_Source
     use MatrixModule_1, only: Dump_RC
+    use MLSStringLists, only: switchDetail
     use Output_m, only: Output, NewLine
-    use String_Table, only: Display_String
+    use String_Table, only: Display_String, GET_STRING
 
     type (Hessian_T), intent(in) :: H
     character(len=*), intent(in), optional :: NAME
@@ -327,16 +328,20 @@ contains
       ! -1 => Just row and col info for each block
       ! 0 => Dimensions of each block,
       ! 1 => Values in each block
+    character(len=*), dimension(3), intent(in), optional :: onlyTheseBlocks
     logical, intent(in), optional :: CLEAN   ! print \size
 
     integer :: I, J, K    ! Subscripts, loop inductors
     integer :: My_Details
+    character(len=32), dimension(3) :: myBlocks
     integer :: TotalSize  ! of all blocks
 
     my_details = 1
     if ( present(details) ) my_details = details
     if ( my_details <= -3 ) return
     if ( present(name) ) call output ( name )
+    myBlocks = '*'
+    if ( present(onlyTheseBlocks) ) myBlocks = onlyTheseBlocks
     if ( h%name > 0 ) then
       if ( present(name) ) call output ( ', ' )
       call output ( 'Name = ' )
@@ -369,6 +374,15 @@ contains
               & totalSize = totalSize + size(h%block(i,j,k)%values)
           end select
           if ( my_details < 0 ) cycle
+          if ( skipThisBlock ( &
+            & 1, h%row%vec%quantities(h%row%quant(i))%template%name &
+            &  ) ) cycle
+          if ( skipThisBlock ( &
+            & 2, h%col%vec%quantities(h%col%quant(j))%template%name &
+            &  ) ) cycle
+          if ( skipThisBlock ( &
+            & 3, h%col%vec%quantities(h%col%quant(k))%template%name &
+            &  ) ) cycle
           call output ( i, before='Block at row ' )
           call output ( j, before=' and columns ' )
           call output ( k, before=', ', after=' (' )
@@ -404,6 +418,21 @@ contains
         end do
       end do
     end do
+    contains
+    function skipThisBlock ( s, tid ) result( doWe )
+      ! Return TRUE only if we are to skip dumping this block
+      integer, intent(in) :: s ! 1 : i; 2 : j; 3 : k
+      integer, intent(in) :: tid ! qty template id
+      logical :: doWe
+      character(len=32)  ::     templateNameStr
+      ! Executable
+      templateNameStr = '(not found)'
+      ! call outputNamedValue( 'Checking whether to skip this block', (/ s, tid /) )
+      if ( tid > 0 ) call get_string ( tid, templateNameStr )
+      doWe = ( myBlocks(s) /= '*' .and. &
+        & SwitchDetail( myBlocks(s), trim(templateNameStr), options='-wcf' ) < 0 &
+        & )
+    end function skipThisBlock
 
   end subroutine Dump_Hessian
 
@@ -622,6 +651,9 @@ contains
 end module HessianModule_1
 
 ! $Log$
+! Revision 2.10  2010/08/20 23:17:48  pwagner
+! May specify which blocks to dump by name
+!
 ! Revision 2.9  2010/08/13 22:06:22  pwagner
 ! Added diff; skips mention of absent blocks
 !
