@@ -1,14 +1,3 @@
-! Copyright 2005, by the California Institute of Technology. ALL
-! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
-! commercial use must be negotiated with the Office of Technology Transfer
-! at the California Institute of Technology.
-
-! This software may be subject to U.S. export control laws. By accepting this
-! software, the user agrees to comply with all applicable U.S. export laws and
-! regulations. User has the responsibility to obtain export licenses, or other
-! export authority as may be required before exporting such information to
-! foreign countries or providing access to foreign persons.
-
 program F90TEX
 
 !{ Read a Fortran 90 program.  Write a LaTeX file.  Start the output with
@@ -17,13 +6,23 @@ program F90TEX
 ! {\tt$\backslash$end}\{\emph{verbatim}\} where \emph{verbatim} is given
 ! by the variable {\tt CODE\_STYLE}.  When a comment begins with !\{, end
 ! the {\tt$\backslash$begin}\{\emph{verbatim}\} wrapper, and start it
-! again at the end of the comment.
+! again at the end of the comment.  \emph{verbatim} is {\tt verbatim} if
+! the {\tt -v} option is specified (default) or {\tt lstlisting} if the
+! {\tt -l} option is specified.
+!
+! A block beginning with !\{ is put in a box if the {\tt -b} option is
+! specified (default) and not put in a box if the {\tt -nb} option is
+! specified.  If {\tt -nb} is not specified, {\tt$\backslash$newpage} only
+! works if it's the first line of the !\{ block, and there's nothing else on
+! the line.
 
+!>> 2010-08-21 F90TEX WV Snyder Added -u option for usepackage
+!>> 2003-10-28 F90TEX WV Snyder Stuff to make \newpage work
 !>> 2000-04-07 F90TEX WV Snyder Original code
 
 ! =====     Declarations     ===========================================
 
-  use MACHINE, only: FILSEP, HP, IO_ERROR, GETARG
+  use MACHINE, only: FILSEP, HP, IO_ERROR
 
   implicit NONE
 
@@ -33,9 +32,13 @@ program F90TEX
   character(len=132) :: IN_FILE, OUT_FILE         ! File names
   integer :: IN_UNIT = 10, OUT_UNIT = 11          ! Unit numbers
   integer :: IOSTAT                               ! I/O status
-  character(len=255) :: LINE                      ! From input
+  character(len=132) :: LINE                      ! From input
   character(len=23) :: NOW                        ! Date and time, formatted
   character :: NUMBER_STEP = '1'                  ! Line number step
+  integer :: Number_Packages = 0                  ! Number of packages to use
+  character(len=32) :: Packages(99)               ! LaTeX packages to use
+  logical :: Running = .true.                     ! Running line numbers
+                                                  !  else pagewise
   character(len=*), parameter :: START_CODE(2) = &
     (/ 'begin{lstlisting}[texcl]{ }', &
        'begin{verbatim}            ' /)
@@ -48,13 +51,13 @@ program F90TEX
   character(len=*), parameter :: WIDTH = '6.25in' ! of TeX page
   character(len=*), parameter :: WIDTHP = '6in'   ! of TeX parbox inside fbox
 
-!---------------------------- RCS Ident Info ------------------------------
+!---------------------------- RCS Module Info --------------------------
   character (len=*), parameter :: ModuleName= &
        "$RCSfile$"
   character (len=*), parameter :: IdParm = &
        "$Id$"
   character (len=len(idParm)) :: Id = idParm
-!---------------------------------------------------------------------------
+!-----------------------------------------------------------------------
 
 ! =====     Executable Statements     ==================================
 
@@ -83,6 +86,16 @@ program F90TEX
     else if ( in_file(1:3) == '-n ' ) then
       i = i + 1
       call getarg ( i+hp, number_step )
+    else if ( in_file(1:3) == '-p ' ) then
+      running = .false.
+    else if ( in_file(1:3) == '-u ' ) then
+      if ( number_packages == ubound(packages,1) ) then
+        print *, 'More than ', ubound(packages,1), ' ignored'
+      else
+        number_packages = number_packages + 1
+        i = i + 1
+        call getarg ( i+hp, packages(number_packages) )
+      end if
     else
       call getarg ( 0+hp, in_file )
       write (*,*) &
@@ -102,6 +115,9 @@ program F90TEX
       write (*,*) '          -v => use verbatim (default)'
       write (*,*) '          -n x => line number step is x (default ', &
       &                              number_step, ', 0 => no line numbers)'
+      write (*,*) '          -p => pagewise line numbers, default running'
+      write (*,*) '          -u package => use LaTeX package; this option'
+      write (*,*) '                        can appear up to 99 times'
       write (*,*) '          -<anything else> => this output'
       write (*,*) '          -  => no more options'
       stop
@@ -139,30 +155,41 @@ program F90TEX
   call output ( 'documentclass[11pt,twoside]{article}', tex=.true. )
   call output ( 'usepackage[fleqn]{amsmath}', tex=.true. )
   if ( sx == 1 ) call output ( 'usepackage{listings}', tex=.true. )
-  call output ( 'usepackage[strings]{underscore}', tex=.true. )
-  call output ( 'usepackage[USenglish]{babel}', tex=.true. )
+  do i = 1, number_packages
+    call output ( 'usepackage{' // trim(packages(i)) // '}', tex=.true. )
+  end do
   call output ( 'textwidth ' // width, tex=.true. )
   call output ( 'oddsidemargin -0.25in', tex=.true. )
   call output ( 'evensidemargin -0.25in', tex=.true. )
   call output ( 'topmargin -0.5in', tex=.true. )
   call output ( 'textheight 9.25in', tex=.true. )
+  if ( sx == 2 .and. number_step /= '0' ) then
+    call output ( 'usepackage{lineno}', tex=.true. )
+    call output ( 'def\linenumberfont{\normalfont\footnotesize\sffamily}', tex=.true. )
+  end if
   call output ( '' )
   call output ( 'begin{document}', tex=.true. )
+  if ( sx == 2 .and. number_step /= '0' ) then
+    if ( running ) then
+      call output ( 'runninglinenumbers', tex=.true. )
+    else
+      call output ( 'pagewiselinenumbers', tex=.true. )
+    end if
+    call output ( 'modulolinenumbers[' // number_step // ']', tex=.true. )
+  end if
   call output ( '' )
   call output ( 'makeatletter', tex=.true. )
   call output ( 'def\@biblabel#1{#1.}', tex=.true. )
   call output ( 'newcommand{\ps@twolines}{%', tex=.true. )
   call output ( '  \renewcommand{\@oddhead}{%' )
   call output ( '    \parbox{' // width // '}{{\bf \Large \hfill%' )
-  call output ( trim(in_file), adv='no', und=.true. )
-  call output ( '%' )
+  call output ( trim(in_file) // '%', und=.true. )
   call output ( '    }\newline%' )
   call output ( '    ' // now // &
   &             '\hfill Page \thepage\ of \pageref{lastpage}}}%' )
   call output ( '  \renewcommand{\@evenhead}{%' )
   call output ( '    \parbox{' // width // '}{{\bf \Large %' )
-  call output ( trim(in_file), adv='no', und=.true. )
-  call output ( '%' )
+  call output ( trim(in_file) // '%', und=.true. )
   call output ( '    }\newline%' )
   call output ( '    Page \thepage\ of \pageref{lastpage} \hfill ' // &
   &             now // '}}%' )
@@ -188,7 +215,7 @@ program F90TEX
       read ( *, '(a)', iostat=iostat ) line
     end if
     if ( iostat /= 0 ) exit
-    i = max(fnb(line),1) ! fnb == first nonblank
+    i = verify(line,' ') ! first nonblank
     select case ( state )
     case ( 0 ) ! begin
       if ( line(i:i+1) /= '!{' ) then
@@ -197,28 +224,38 @@ program F90TEX
         call output ( start_code(sx), tex=.true. )
         call output ( trim(line) )
       else
-        if ( box ) &
+        if ( adjustl(line(i+2:)) == '\newpage' ) then
+          state = 3
+        else if ( box .and. adjustl(line(i+2:)) /= '\newpage' ) then
           call output ( 'framebox[' // width // '][l]{\parbox{' // &
                         widthp // '}{', tex=.true. )
+          state = 2
+        end if
         call output ( trim(line(i+2:)) )
-        state = 2
       end if
     case ( 1 ) ! doing code
       if ( line(i:i+1) /= '!{' ) then
         call output ( trim(line) )
       else
         call output ( stop_code(sx), tex=.true. )
-        if ( box ) &
+        if ( adjustl(line(i+2:)) == '\newpage' ) then
+          state = 3
+        else if ( box ) then
           call output ( 'framebox[' // width // '][l]{\parbox{' // &
                         widthp // '}{', tex=.true. )
+          state = 2
+        end if
         call output ( trim(line(i+2:)) )
-        state = 2
       end if
-    case ( 2 ) ! doing LaTeX
+    case ( 2, 3 ) ! doing LaTeX, 3 = first line is \newpage
       if ( line(i:i) == '!' ) then
+        if ( state == 3 ) &
+          & call output ( 'framebox[' // width // '][l]{\parbox{' // &
+                        widthp // '}{', tex=.true. )
         call output ( trim(line(i+1:)) )
+        state = 2
       else
-        if ( box ) call output ( '}}' )
+        if ( box .and. state == 2 ) call output ( '}}' )
         state = 1
         if ( sx == 2 ) call output ( '{\tt', adv='no' )
         call output ( start_code(sx), tex=.true. )
@@ -227,12 +264,7 @@ program F90TEX
     end select
   end do
 
-  select case ( state )
-  case ( 1 ) ! doing code
-    call output ( stop_code(sx), tex=.true. )
-  case ( 2 ) ! doing LaTeX
-    if ( box ) call output ( '}}' )
-  end select
+  if ( state == 1 ) call output ( stop_code(sx), tex=.true. )
     
 ! Output the ending stuff
   call output ( 'label{lastpage}', tex=.true. )
@@ -240,21 +272,8 @@ program F90TEX
 
   stop
 
+!{\newpage
 contains
-! ----------------------------------------------------     FNB     -----
-  integer function FNB ( TEXT )
-  ! Find the position of the first nonblank in TEXT
-    character(len=*), intent(in) :: TEXT
-    integer :: I
-    do i = 1, len(text)
-      if ( text(i:i) /= ' ' ) then
-        fnb = i
-        return
-      end if
-    end do
-    fnb = 0
-    return
-  end function FNB
 ! -------------------------------------------------     OUTPUT     -----
   subroutine OUTPUT ( TEXT, ADV, UND, TEX )
   ! Output text to OUT_UNIT if it's positive, else to unit *.  Put a "\"
@@ -269,7 +288,7 @@ contains
     advance = 'yes'
     if ( present(adv) ) advance = adv
     under = sx == 1
-    i = fnb(text)
+    i = verify(text,' ') ! first nonblank
     if ( i > 0 ) then
       if ( text(i:i) /= '!' ) under = .false.
     end if
@@ -277,14 +296,11 @@ contains
     if ( out_unit >= 0 ) then
       if ( present(tex) ) write ( out_unit, '(a)', advance='no' ) '\'
       do i = 1, len(text)
-        ! Account for a bug in lstlisting, which requires \ some stuff
-        ! after !
-        if ( sx == 1 .and. text(i:i) == '!' ) under = .true.
-        if ( under .and. scan(text(i:i),'_^%&') /= 0 ) &
+        if ( under .and. text(i:i) == '_' ) &
           write ( out_unit, '(a)', advance='no' ) '\'
         write ( out_unit, '(a)', advance='no' ) text(i:i)
       end do
-      write ( out_unit, '(a)', advance=advance )
+      write ( out_unit, '(a)' )
     else
       if ( present(tex) ) write ( *, '(a)', advance='no' ) '\'
       do i = 1, len(text)
@@ -292,7 +308,7 @@ contains
           write ( *, '(a)', advance='no' ) '\'
         write ( *, '(a)', advance='no' ) text(i:i)
       end do
-      write ( *, '(a)', advance=advance )
+      write ( *, '(a)' )
     end if
     return
   end subroutine OUTPUT
@@ -300,33 +316,3 @@ contains
 end program F90TEX
 
 ! $Log$
-! Revision 1.10  2010/05/06 02:40:35  vsnyder
-! Increase LINE from 132 to 255
-!
-! Revision 1.9  2010/05/01 00:42:36  vsnyder
-! Repair error if processing LaTeX at end of file
-!
-! Revision 1.8  2005/06/22 19:27:32  pwagner
-! Reworded Copyright statement, moved rcs id
-!
-! Revision 1.7  2005/06/13 23:36:08  vsnyder
-! Repair minor bug in page heading
-!
-! Revision 1.6  2004/09/22 20:18:48  vsnyder
-! Account for bugs in lstlisting
-!
-! Revision 1.5  2004/09/22 19:19:24  vsnyder
-! Repair minor bug in advancing
-!
-! Revision 1.4  2001/06/14 23:06:48  pwagner
-! Added GETARG to machine modules used
-!
-! Revision 1.3  2001/06/01 21:50:16  vsnyder
-! Remove 'private' from CVS stuff (oops!)
-!
-! Revision 1.2  2001/06/01 21:49:23  vsnyder
-! Fix up CVS log variable
-!
-! Revision 1.1  2001/06/01 21:47:22 vsnyder
-! Initial commit
-!
