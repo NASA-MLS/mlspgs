@@ -45,12 +45,19 @@ module HessianModule_0          ! Low-level Hessians in the MLS PGS suite
   end type Tuple_T
 
   type HessianElement_T
-    integer :: nRows    ! Extent of first dimensions of H
-    integer :: nCols1   ! Extent of second dimension of H
-    integer :: nCols2   ! Extent of third dimension of H
-    ! Some explanation of startegy of storing Hessians according to kind 
-    ! belongs here
-    integer :: kind     ! One of H_Absent, H_Sparse, H_Full, H_Unknown
+    integer :: nRows = 0   ! Extent of first dimensions of H
+    integer :: nCols1 = 0  ! Extent of second dimension of H
+    integer :: nCols2 = 0  ! Extent of third dimension of H
+    integer :: Kind = H_Absent  ! One of H_Absent, H_Sparse, H_Full, H_Unknown
+    ! If Kind == H_Sparse the Tuples component is associated with an array of
+    ! tuples, each one giving a row index, two column indices, and a value, and
+    ! the Values component is null.  All values other than the ones described
+    ! by tuples are assumed to be zero.
+    ! If Kind == H_Full the Values component is associated with an array of
+    ! shape (nRows,nCols1,nCols2), each element containing a value, and the
+    ! Tuples component is null.
+    ! Otherwise, both Tuples and Values are null, and nRows == nCols1 ==
+    ! nCols2 == 0.
     type(tuple_t), pointer :: Tuples(:) => NULL() ! Some may not be filled (yet)
     ! Some explanation of why and when TuplesFilled would differ from
     ! size(tuples) would not be amiss
@@ -926,6 +933,9 @@ o:    do while ( i < n )
 end module HessianModule_0
 
 ! $Log$
+! Revision 2.10  2010/08/24 18:04:22  yanovsky
+! Add default initialization to the components of HessianElement_T
+!
 ! Revision 2.9  2010/08/20 23:06:05  pwagner
 ! Sets Augmenting factor to 1.0; skips optimizing blocks
 !
