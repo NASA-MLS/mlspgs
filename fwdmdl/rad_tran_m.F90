@@ -38,14 +38,14 @@ contains
                      &  tau, inc_rad_path, rad, i_stop )
 
     use GLNP, only: NG
-    use MLSKinds, only: RP, IP
+    use MLSKinds, only: RP
     use SCRT_DN_M, ONLY: SCRT
 
   ! inputs
 
     integer, intent(in) :: Tan_pt            ! Tangent point index in Del_Zeta
-    integer(ip), intent(in) :: gl_inds(:)    ! Gauss-Legendre grid indices
-    integer(ip), intent(in) :: more_inds(:)  ! Places in the coarse path
+    integer, intent(in) :: gl_inds(:)        ! Gauss-Legendre grid indices
+    integer, intent(in) :: more_inds(:)      ! Places in the coarse path
   !                                            where GL is needed
     real(rp), intent(in) :: e_rflty          ! earth reflectivity value (0--1).
     real(rp), intent(in) :: del_zeta(:)      ! path -log(P) differences on the
@@ -69,7 +69,7 @@ contains
     real(rp), intent(out) :: inc_rad_path(:) ! incremental radiance along the
                                              ! path.  t_script * tau.
     real(rp), intent(out) :: rad             ! radiance (K)
-    integer(ip), intent(out) :: i_stop       ! path stop index
+    integer, intent(out) :: i_stop           ! path stop index
 
   ! Internals
 
@@ -130,14 +130,14 @@ contains
     use Dump_0, only: Dump, Dump_2x2xN
     use GLNP, ONLY: Ng
     use MCRT_M, ONLY: MCRT
-    use MLSKinds, only: RP, IP
+    use MLSKinds, only: RP
     use Opacity_m, only: Opacity
 
   ! inputs
 
     integer, intent(in) :: Tan_pt            ! Tangent point index in Del_Zeta
-    integer(ip), intent(in) :: gl_inds(:)    ! Gauss-Legendre grid indices
-    integer(ip), intent(in) :: more_inds(:)  ! Places in the coarse path
+    integer, intent(in) :: gl_inds(:)        ! Gauss-Legendre grid indices
+    integer, intent(in) :: more_inds(:)      ! Places in the coarse path
   !                                            where GL is needed
     real(rp), intent(in) :: e_rflty          ! earth reflectivity value (0--1).
     real(rp), intent(in) :: del_zeta(:)      ! path -log(P) differences on the
@@ -168,7 +168,7 @@ contains
     complex(rp), intent(out) :: prod_pol(:,:,:) ! product of E matrices. 2x2xPath
     complex(rp), intent(out) :: tau_pol(:,:,:)  ! transmission function. 2x2xPath
     complex(rp), intent(out) :: rad_pol(:,:)    ! radiance (K). 2x2.
-    integer(ip), intent(out) :: p_stop       ! path stop index if >= 0, else
+    integer, intent(out) :: p_stop           ! path stop index if >= 0, else
       !              -index in incoptdepth_pol where cs_expmat failed.
 
   ! Internals
@@ -176,7 +176,7 @@ contains
     real(rp), save :: E_Stop  = 1.0_rp ! X for which Exp(X) is too small to worry
     complex(rp) :: gl_delta_polarized(-1:1,size(gl_inds)/ng)
     complex(rp) :: incoptdepth_pol_gl(2,2,size(gl_inds)/ng)
-    integer(ip) :: N_PATH
+    integer :: N_PATH
     integer :: Status ! from cs_expmat
 
   ! Begin code
@@ -266,14 +266,14 @@ contains
 
     use GLNP, only: NG
     use LOAD_SPS_DATA_M, ONLY: GRIDS_T
-    use MLSKinds, only: RP, IP
+    use MLSKinds, only: RP
     use SCRT_DN_M, ONLY: DSCRT_DX
 
 ! Inputs
 
     integer, intent(in) :: Max_f            ! Leading dimension of Beta_Path_f
-    integer(ip), intent(in) :: indices_c(:) ! coarse grid indicies
-    integer(ip), intent(in) :: gl_inds(:)   ! Gauss-Legendre grid indices
+    integer, intent(in) :: indices_c(:)     ! coarse grid indicies
+    integer, intent(in) :: gl_inds(:)       ! Gauss-Legendre grid indices
     real(rp), intent(in) :: del_zeta(:)     ! path -log(P) differences on the
       !              main grid.  This is for the whole coarse path, not just
       !              the part up to the black-out
@@ -317,18 +317,18 @@ contains
 
 ! Internals
 
-    integer(ip) :: AA, GA, I, II, III
-    integer(ip) :: i_begin, n_inds, no_to_gl, sps_i, sv_i
-    integer(ip), target, dimension(1:size(inc_rad_path)) :: all_inds_B
-    integer(ip), target, dimension(1:size(inc_rad_path)) :: more_inds_B
-    integer(ip), pointer :: all_inds(:)  ! all_inds => part of all_inds_B;
-                                         ! Indices on GL grid for stuff
-                                         ! used to make GL corrections
-    integer(ip), pointer :: inds(:)      ! inds => part_of_nz_d_delta_df;
-                                         ! Indices on coarse path where do_calc.
-    integer(ip), pointer :: more_inds(:) ! more_inds => part of more_inds_B;
-                                         ! Indices on the coarse path where GL
-                                         ! corrections get applied.
+    integer :: AA, GA, I, II, III
+    integer :: i_begin, n_inds, no_to_gl, sps_i, sv_i
+    integer, target, dimension(1:size(inc_rad_path)) :: all_inds_B
+    integer, target, dimension(1:size(inc_rad_path)) :: more_inds_B
+    integer, pointer :: all_inds(:)  ! all_inds => part of all_inds_B;
+                                     ! Indices on GL grid for stuff
+                                     ! used to make GL corrections
+    integer, pointer :: inds(:)      ! inds => part_of_nz_d_delta_df;
+                                     ! Indices on coarse path where do_calc.
+    integer, pointer :: more_inds(:) ! more_inds => part of more_inds_B;
+                                     ! Indices on the coarse path where GL
+                                     ! corrections get applied.
 
     integer :: What ! 0 = linear beta, no mixing ratio dependence
                     ! 1 = log linear beta, no mixing ratio dependence
@@ -440,15 +440,15 @@ contains
 
     use GLNP, only: NG
     use LOAD_SPS_DATA_M, ONLY: GRIDS_T
-    use MLSKinds, only: RP, IP
+    use MLSKinds, only: RP
     use SCRT_DN_M, ONLY: D2SCRT_DX2
 
 ! Inputs
 
-    integer, intent(in) :: Max_f            ! Leading dimension of Beta_Path_f
-    integer(ip), intent(in) :: indices_c(:) ! coarse grid indicies
-    integer(ip), intent(in) :: gl_inds(:)   ! Gauss-Legendre grid indices
-    real(rp), intent(in) :: del_zeta(:)     ! path -log(P) differences on the
+    integer, intent(in) :: Max_f             ! Leading dimension of Beta_Path_f
+    integer, intent(in) :: indices_c(:)      ! coarse grid indicies
+    integer, intent(in) :: gl_inds(:)        ! Gauss-Legendre grid indices
+    real(rp), intent(in) :: del_zeta(:)      ! path -log(P) differences on the
       !              main grid.  This is for the whole coarse path, not just
       !              the part up to the black-out
     type (Grids_T), intent(in) :: Grids_f    ! All the coordinates
@@ -491,32 +491,32 @@ contains
 
 ! Internals
 
-    integer(ip) :: AA, GA, I, II, III
-    integer(ip) :: i_begin
-    integer(ip) :: n_inds_q, n_inds_r
-    integer(ip) :: no_to_gl_q, no_to_gl_r
-    integer(ip) :: sps_i, sps_j          ! species indices
-    integer(ip) :: sps_n
-    integer(ip) :: q, r                 ! state vector indices: sv_i, sv_j
-    integer(ip), target, dimension(1:size(inc_rad_path)) ::  all_inds_B_q,  all_inds_B_r
-    integer(ip), target, dimension(1:size(inc_rad_path)) :: more_inds_B_q, more_inds_B_r
-    integer(ip), pointer :: all_inds_q(:), all_inds_r(:)  ! all_inds => part of all_inds_B;
-                                         ! Indices on GL grid for stuff
-                                         ! used to make GL corrections
-    integer(ip), pointer :: inds_q(:), inds_r(:)      ! inds => part_of_nz_d_delta_df;
-                                         ! Indices on coarse path where do_calc.
-    integer(ip), pointer :: more_inds_q(:), more_inds_r(:) ! more_inds => part of more_inds_B;
-                                         ! Indices on the coarse path where GL
-                                         ! corrections get applied.
+    integer :: AA, GA, I, II, III
+    integer :: i_begin
+    integer :: n_inds_q, n_inds_r
+    integer :: no_to_gl_q, no_to_gl_r
+    integer :: sps_i, sps_j          ! species indices
+    integer :: sps_n
+    integer :: q, r                  ! state vector indices: sv_i, sv_j
+    integer, target, dimension(1:size(inc_rad_path)) ::  all_inds_B_q,  all_inds_B_r
+    integer, target, dimension(1:size(inc_rad_path)) :: more_inds_B_q, more_inds_B_r
+    integer, pointer :: all_inds_q(:), all_inds_r(:)  ! all_inds => part of all_inds_B;
+                                     ! Indices on GL grid for stuff
+                                     ! used to make GL corrections
+    integer, pointer :: inds_q(:), inds_r(:)      ! inds => part_of_nz_d_delta_df;
+                                     ! Indices on coarse path where do_calc.
+    integer, pointer :: more_inds_q(:), more_inds_r(:) ! more_inds => part of more_inds_B;
+                                     ! Indices on the coarse path where GL
+                                     ! corrections get applied.
 
     real(rp) :: singularity(1:size(inc_rad_path)) ! integrand on left edge of coarse
-                                         ! grid panel -- singular at tangent pt.
+                                     ! grid panel -- singular at tangent pt.
     logical :: do_calc_q(1:size(inc_rad_path)) ! Flags on coarse path where do_calc_c
-                                         ! or (do_gl and any corresponding
-                                         ! do_calc_f).
+                                     ! or (do_gl and any corresponding
+                                     ! do_calc_f).
     logical :: do_calc_r(1:size(inc_rad_path)) ! Flags on coarse path where do_calc_c
-                                         ! or (do_gl and any corresponding
-                                         ! do_calc_f).
+                                     ! or (do_gl and any corresponding
+                                     ! do_calc_f).
 
     integer :: What_i, What_j
                ! 0 = linear beta, no mixing ratio dependence
@@ -695,7 +695,7 @@ contains
                          &  deriv_flags, pfa_update, drad_dt )
 
     use GLNP, only: NG
-    use MLSKinds, only: RP, IP
+    use MLSKinds, only: RP
     use SCRT_DN_M, ONLY: DSCRT_DT, DSCRT_DX
 
 ! Inputs
@@ -760,18 +760,18 @@ contains
 
 ! Internals
 
-    integer(ip) :: A, AA, B, GA
-    integer(ip) :: i, i_begin, n_inds, n_path, no_to_gl, p_i, sv_i
-    integer(ip), target, dimension(1:size(inc_rad_path)) :: all_inds_B
-    integer(ip), target, dimension(1:size(inc_rad_path)) :: inds_B, more_inds_B
-    integer(ip), pointer :: all_inds(:)  ! all_inds => part of all_inds_B;
-                                         ! Indices on GL grid for stuff
-                                         ! used to make GL corrections
-    integer(ip), pointer :: inds(:)      ! inds => part_of_inds_B;  Indices
-                                         ! on coarse path where do_calc.
-    integer(ip), pointer :: more_inds(:) ! more_inds => part of more_inds_B;
-                                         ! Indices on the coarse path where GL
-                                         ! corrections get applied.
+    integer :: A, AA, B, GA
+    integer :: i, i_begin, n_inds, n_path, no_to_gl, p_i, sv_i
+    integer, target, dimension(1:size(inc_rad_path)) :: all_inds_B
+    integer, target, dimension(1:size(inc_rad_path)) :: inds_B, more_inds_B
+    integer, pointer :: all_inds(:)  ! all_inds => part of all_inds_B;
+                                     ! Indices on GL grid for stuff
+                                     ! used to make GL corrections
+    integer, pointer :: inds(:)      ! inds => part_of_inds_B;  Indices
+                                     ! on coarse path where do_calc.
+    integer, pointer :: more_inds(:) ! more_inds => part of more_inds_B;
+                                     ! Indices on the coarse path where GL
+                                     ! corrections get applied.
 
     real(rp) :: d_delta_dt(size(indices_c,1),size(eta_zxp,2)) ! path x sve.
       ! derivative of delta (incremental opacity) wrt temperature. (K)
@@ -968,13 +968,13 @@ contains
                          &  i_stop, drad_dx )
     use GLNP, only: NG
     use LOAD_SPS_DATA_M, ONLY: GRIDS_T
-    use MLSKinds, only: RP, IP
+    use MLSKinds, only: RP
     use SCRT_DN_M, ONLY: DSCRT_DX
 
 ! Inputs
 
-    integer(ip), intent(in) :: indices_c(:)  ! coarse grid indicies
-    integer(ip), intent(in) :: gl_inds(:)    ! Gauss-Legendre grid indicies
+    integer, intent(in) :: indices_c(:)      ! coarse grid indicies
+    integer, intent(in) :: gl_inds(:)        ! Gauss-Legendre grid indicies
     real(rp), intent(in) :: del_zeta(:)      ! path -log(P) differences on the
       !              main grid.  This is for the whole coarse path, not just
       !              the part up to the black-out
@@ -999,7 +999,7 @@ contains
     real(rp), intent(in) :: inc_rad_path(:)  ! incremental radiance along the
                                              ! path.  t_script * tau.
     integer, intent(in) :: Tan_pt            ! Tangent point index in inc_rad_path
-    integer(ip), intent(in) :: i_stop        ! path stop index
+    integer, intent(in) :: i_stop            ! path stop index
 
 ! Outputs
 
@@ -1007,18 +1007,18 @@ contains
 !                                              state vector element. (K)
 ! Internals
 
-    integer(ip) :: AA, GA, I, II, III
-    integer(ip) :: i_start, n_inds, no_to_gl, sps_i, sps_m, sps_n, sv_i
-    integer(ip), target, dimension(1:size(inc_rad_path)) :: all_inds_B
-    integer(ip), target, dimension(1:size(inc_rad_path)) :: inds_B, more_inds_B
-    integer(ip), pointer :: all_inds(:)  ! all_inds => part of all_inds_B;
-                                         ! Indices on GL grid for stuff
-                                         ! used to make GL corrections
-    integer(ip), pointer :: inds(:)      ! inds => part_of_inds_B;  Indices
-                                         ! on coarse path where do_calc.
-    integer(ip), pointer :: more_inds(:) ! more_inds => part of more_inds_B;
-                                         ! Indices on the coarse path where GL
-                                         ! corrections get applied.
+    integer :: AA, GA, I, II, III
+    integer :: i_start, n_inds, no_to_gl, sps_i, sps_m, sps_n, sv_i
+    integer, target, dimension(1:size(inc_rad_path)) :: all_inds_B
+    integer, target, dimension(1:size(inc_rad_path)) :: inds_B, more_inds_B
+    integer, pointer :: all_inds(:)  ! all_inds => part of all_inds_B;
+                                     ! Indices on GL grid for stuff
+                                     ! used to make GL corrections
+    integer, pointer :: inds(:)      ! inds => part_of_inds_B;  Indices
+                                     ! on coarse path where do_calc.
+    integer, pointer :: more_inds(:) ! more_inds => part of more_inds_B;
+                                     ! Indices on the coarse path where GL
+                                     ! corrections get applied.
 
     real(rp) :: d_delta_dx(1:size(inc_rad_path))  ! derivative of delta
       !              wrt spectroscopy parameter. (K)
@@ -1125,23 +1125,23 @@ contains
     ! mixing ratio this gets d_delta_df if dAlpha_dx_path_* is beta_path_*.
 
     use GLNP, only: NG
-    use MLSKinds, only: RP, IP
+    use MLSKinds, only: RP
 
-    integer(ip), intent(in) :: Inds(:) ! Indices on coarse path needing calc
-    integer(ip), intent(in) :: Indices_c(:)  ! Subset from gl to coarse
-    integer(ip), intent(in) :: GL_Inds(:)    ! Gauss-Legendre grid indices
-    integer(ip), intent(in) :: All_inds(:)   ! Indices on GL grid for stuff
-                                             ! used to make GL corrections
-    integer(ip), intent(in) :: More_inds(:)  ! Indices on the coarse path where
-                                             ! GL corrections get applied.
-    real(rp), intent(in) :: eta_zxp(*)       ! representation basis function.
+    integer, intent(in) :: Inds(:)       ! Indices on coarse path needing calc
+    integer, intent(in) :: Indices_c(:)  ! Subset from gl to coarse
+    integer, intent(in) :: GL_Inds(:)    ! Gauss-Legendre grid indices
+    integer, intent(in) :: All_inds(:)   ! Indices on GL grid for stuff
+                                         ! used to make GL corrections
+    integer, intent(in) :: More_inds(:)  ! Indices on the coarse path where
+                                         ! GL corrections get applied.
+    real(rp), intent(in) :: eta_zxp(*)   ! representation basis function.
     real(rp), intent(in) :: dAlpha_dx_path_c(*) ! on coarse grid.
     real(rp), intent(in) :: dAlpha_dx_path_f(*) ! cross section on GL grid.
-    real(rp), intent(in) :: Del_s(:)         ! unrefracted path length.
-    real(rp), intent(in) :: Del_zeta(:)      ! path -log(P) differences on the
+    real(rp), intent(in) :: Del_s(:)     ! unrefracted path length.
+    real(rp), intent(in) :: Del_zeta(:)  ! path -log(P) differences on the
       !              main grid.  This is for the whole coarse path, not just
       !              the part up to the black-out
-    real(rp), intent(in) :: ds_dz_gw(:)     ! ds/dh * dh/dz * GL weights
+    real(rp), intent(in) :: ds_dz_gw(:)  ! ds/dh * dh/dz * GL weights
     real(rp), intent(out) :: singularity(:) ! integrand on left edge of coarse
                                ! grid panel -- singular at tangent pt.
                                ! Actually just work space we don't want
@@ -1150,7 +1150,7 @@ contains
                                ! intent(inout) so the unreferenced
                                ! elements do not become undefined.
     real(rp), intent(in), optional :: Ref_cor(:) ! refracted to unrefracted
-                                            !  path length ratios.
+                                           !  path length ratios.
 
     integer :: AA, GA, I, II
 
@@ -1201,23 +1201,23 @@ contains
     ! depends upon mixing ratio.
 
     use GLNP, only: NG
-    use MLSKinds, only: RP, IP
+    use MLSKinds, only: RP
 
-    integer(ip), intent(in) :: Inds(:) ! Indices on coarse path needing calc
-    integer(ip), intent(in) :: Indices_c(:) ! Subset from gl to coarse
-    integer(ip), intent(in) :: GL_Inds(:)   ! Gauss-Legendre grid indices
-    integer(ip), intent(in) :: All_inds(:)  ! Indices on GL grid for stuff
-                                            ! used to make GL corrections
-    integer(ip), intent(in) :: More_inds(:) ! Indices on the coarse path where
-                                            ! GL corrections get applied.
-    real(rp), intent(in) :: Eta_zxp(*)      ! representation basis function.
-    real(rp), intent(in) :: Sps_path(:)     ! Path mixing ratios
+    integer, intent(in) :: Inds(:) ! Indices on coarse path needing calc
+    integer, intent(in) :: Indices_c(:) ! Subset from gl to coarse
+    integer, intent(in) :: GL_Inds(:)   ! Gauss-Legendre grid indices
+    integer, intent(in) :: All_inds(:)  ! Indices on GL grid for stuff
+                                        ! used to make GL corrections
+    integer, intent(in) :: More_inds(:) ! Indices on the coarse path where
+                                        ! GL corrections get applied.
+    real(rp), intent(in) :: Eta_zxp(*)  ! representation basis function.
+    real(rp), intent(in) :: Sps_path(:) ! Path mixing ratios
     real(rp), intent(in) :: Beta_path_c(*)  ! cross section on coarse grid.
     real(rp), intent(in) :: Beta_path_f(*)  ! cross section on GL grid.
     real(rp), intent(in) :: dBeta_df_c(*)   ! beta depends on mixing ratio
     real(rp), intent(in) :: dBeta_df_f(*)   ! beta depends on mixing ratio
-    real(rp), intent(in) :: Del_s(:)        ! unrefracted path length.
-    real(rp), intent(in) :: Del_zeta(:)     ! path -log(P) differences on the
+    real(rp), intent(in) :: Del_s(:)    ! unrefracted path length.
+    real(rp), intent(in) :: Del_zeta(:) ! path -log(P) differences on the
       !              main grid.  This is for the whole coarse path, not just
       !              the part up to the black-out
     real(rp), intent(in) :: ds_dz_gw(:)     ! ds/dh * dh/dz * GL weights
@@ -1286,27 +1286,27 @@ contains
     ! does not depend upon mixing ratio.
 
     use GLNP, only: NG
-    use MLSKinds, only: RP, IP
+    use MLSKinds, only: RP
 
-    integer(ip), intent(in) :: Inds(:) ! Indices on coarse path needing calc
-    integer(ip), intent(in) :: Indices_c(:) ! Subset from gl to coarse
-    integer(ip), intent(in) :: GL_Inds(:)   ! Gauss-Legendre grid indices
-    integer(ip), intent(in) :: All_inds(:)  ! Indices on GL grid for stuff
-                                            ! used to make GL corrections
-    integer(ip), intent(in) :: More_inds(:) ! Indices on the coarse path where
-                                            ! GL corrections get applied.
-    real(rp), intent(in) :: Eta_zxp(*)      ! representation basis function.
-    real(rp), intent(in) :: Sps_path(:)     ! exp(Path mixing ratios)
+    integer, intent(in) :: Inds(:) ! Indices on coarse path needing calc
+    integer, intent(in) :: Indices_c(:) ! Subset from gl to coarse
+    integer, intent(in) :: GL_Inds(:)   ! Gauss-Legendre grid indices
+    integer, intent(in) :: All_inds(:)  ! Indices on GL grid for stuff
+                                        ! used to make GL corrections
+    integer, intent(in) :: More_inds(:) ! Indices on the coarse path where
+                                        ! GL corrections get applied.
+    real(rp), intent(in) :: Eta_zxp(*)  ! representation basis function.
+    real(rp), intent(in) :: Sps_path(:) ! exp(Path mixing ratios)
     real(rp), intent(in) :: Beta_path_c(*)  ! cross section on coarse grid.
     real(rp), intent(in) :: Beta_path_f(*)  ! cross section on GL grid.
-    real(rp), intent(in) :: Del_s(:)        ! unrefracted path length.
-    real(rp), intent(in) :: Del_zeta(:)     ! path -log(P) differences on the
+    real(rp), intent(in) :: Del_s(:)    ! unrefracted path length.
+    real(rp), intent(in) :: Del_zeta(:) ! path -log(P) differences on the
       !              main grid.  This is for the whole coarse path, not just
       !              the part up to the black-out
-    real(rp), intent(in) :: ds_dz_gw(:)     ! ds/dh * dh/dz * GL weights
-    real(rp), intent(in) :: ref_cor(:)      ! refracted to unrefracted path
-                                            !  length ratios.
-    real(rp), intent(in) :: Grids_v         ! Grids_f%values(sv_i)
+    real(rp), intent(in) :: ds_dz_gw(:) ! ds/dh * dh/dz * GL weights
+    real(rp), intent(in) :: ref_cor(:)  ! refracted to unrefracted path
+                                        !  length ratios.
+    real(rp), intent(in) :: Grids_v     ! Grids_f%values(sv_i)
     real(rp), intent(out) :: singularity(:) ! integrand on left edge of coarse
                                ! grid panel -- singular at tangent pt.
                                ! Actually just work space we don't want
@@ -1367,29 +1367,29 @@ contains
     ! depends upon mixing ratio.
 
     use GLNP, only: NG
-    use MLSKinds, only: RP, IP
+    use MLSKinds, only: RP
 
-    integer(ip), intent(in) :: Inds(:) ! Indices on coarse path needing calc
-    integer(ip), intent(in) :: Indices_c(:) ! Subset from gl to coarse
-    integer(ip), intent(in) :: GL_Inds(:)   ! Gauss-Legendre grid indices
-    integer(ip), intent(in) :: All_inds(:)  ! Indices on GL grid for stuff
-                                            ! used to make GL corrections
-    integer(ip), intent(in) :: More_inds(:) ! Indices on the coarse path where
-                                            ! GL corrections get applied.
-    real(rp), intent(in) :: Eta_zxp(*)      ! representation basis function.
-    real(rp), intent(in) :: Sps_path(:)     ! exp(Path mixing ratios)
+    integer, intent(in) :: Inds(:) ! Indices on coarse path needing calc
+    integer, intent(in) :: Indices_c(:) ! Subset from gl to coarse
+    integer, intent(in) :: GL_Inds(:)   ! Gauss-Legendre grid indices
+    integer, intent(in) :: All_inds(:)  ! Indices on GL grid for stuff
+                                        ! used to make GL corrections
+    integer, intent(in) :: More_inds(:) ! Indices on the coarse path where
+                                        ! GL corrections get applied.
+    real(rp), intent(in) :: Eta_zxp(*)  ! representation basis function.
+    real(rp), intent(in) :: Sps_path(:) ! exp(Path mixing ratios)
     real(rp), intent(in) :: Beta_path_c(*)  ! cross section on coarse grid.
     real(rp), intent(in) :: Beta_path_f(*)  ! cross section on GL grid.
     real(rp), intent(in) :: dBeta_df_c(*)   ! beta depends on mixing ratio
     real(rp), intent(in) :: dBeta_df_f(*)   ! beta depends on mixing ratio
-    real(rp), intent(in) :: Del_s(:)        ! unrefracted path length.
-    real(rp), intent(in) :: Del_zeta(:)     ! path -log(P) differences on the
+    real(rp), intent(in) :: Del_s(:)    ! unrefracted path length.
+    real(rp), intent(in) :: Del_zeta(:) ! path -log(P) differences on the
       !              main grid.  This is for the whole coarse path, not just
       !              the part up to the black-out
-    real(rp), intent(in) :: ds_dz_gw(:)     ! ds/dh * dh/dz * GL weights
-    real(rp), intent(in) :: ref_cor(:)      ! refracted to unrefracted path
-                                            !  length ratios.
-    real(rp), intent(in) :: Grids_v         ! Grids_f%values(sv_i)
+    real(rp), intent(in) :: ds_dz_gw(:) ! ds/dh * dh/dz * GL weights
+    real(rp), intent(in) :: ref_cor(:)  ! refracted to unrefracted path
+                                        !  length ratios.
+    real(rp), intent(in) :: Grids_v     ! Grids_f%values(sv_i)
     real(rp), intent(out) :: singularity(:) ! integrand on left edge of coarse
                                ! grid panel -- singular at tangent pt.
                                ! Actually just work space we don't want
@@ -1450,15 +1450,14 @@ contains
   ! Do_Calc_All(f_inds) flags are set.
 
     use GLNP, ONLY: Ng
-    use MLSKinds, only: IP
 
     integer, intent(in) :: N ! sizes on coarse grid
 
 #if (defined NAG) || defined (IFC)
 !     Assumed-shape arguments are slower than assumed size
     logical, intent(in) :: Do_Calc_all(*) ! On the entire path
-    integer(ip), intent(in) :: C_Inds(*)  ! Indices in Do_Calc_All for coarse grid
-    integer(ip), intent(in) :: F_Inds(*)  ! Indices in Do_Calc_All for find grid
+    integer, intent(in) :: C_Inds(*)      ! Indices in Do_Calc_All for coarse grid
+    integer, intent(in) :: F_Inds(*)      ! Indices in Do_Calc_All for find grid
     logical, intent(in) :: Do_GL(*)       ! Where on coarse grid to do GL
     logical, intent(out) :: Do_Calc(*)    ! Where on coarse grid to do calc.
     integer, intent(out) :: N_Inds        ! count(do_calc)
@@ -1466,8 +1465,8 @@ contains
 #elif defined LF95
 !     Assumed-shape arguments are faster than assumed size
     logical, intent(in) :: Do_Calc_all(:) ! On the entire path
-    integer(ip), intent(in) :: C_Inds(:)  ! Indices in Do_Calc_All for coarse grid
-    integer(ip), intent(in) :: F_Inds(:)  ! Indices in Do_Calc_All for find grid
+    integer, intent(in) :: C_Inds(:)      ! Indices in Do_Calc_All for coarse grid
+    integer, intent(in) :: F_Inds(:)      ! Indices in Do_Calc_All for find grid
     logical, intent(in) :: Do_GL(:)       ! Where on coarse grid to do GL
     logical, intent(out) :: Do_Calc(:)    ! Where on coarse grid to do calc.
     integer, intent(out) :: N_Inds        ! count(do_calc)
@@ -1475,8 +1474,8 @@ contains
 #else
 !     Assumed-shape arguments are faster than assumed size
     logical, intent(in) :: Do_Calc_all(:) ! On the entire path
-    integer(ip), intent(in) :: C_Inds(:)  ! Indices in Do_Calc_All for coarse grid
-    integer(ip), intent(in) :: F_Inds(:)  ! Indices in Do_Calc_All for fine grid
+    integer, intent(in) :: C_Inds(:)      ! Indices in Do_Calc_All for coarse grid
+    integer, intent(in) :: F_Inds(:)      ! Indices in Do_Calc_All for fine grid
     logical, intent(in) :: Do_GL(:)       ! Where on coarse grid to do GL
     logical, intent(out) :: Do_Calc(:)    ! Where on coarse grid to do calc.
     integer, intent(out) :: N_Inds        ! count(do_calc)
@@ -1533,7 +1532,6 @@ contains
     ! All_Inds are the corresponding places in the GL-extracted fine path.
 
     use GLNP, ONLY: Ng
-    use MLSKinds, only: IP
 
     implicit NONE
 
@@ -1543,8 +1541,8 @@ contains
     logical, intent(in) :: Do_Calc(:)
 
   ! Outputs
-    integer(ip), intent(out) :: More_Inds(:)
-    integer(ip), intent(out) :: All_Inds(:)
+    integer, intent(out) :: More_Inds(:)
+    integer, intent(out) :: All_Inds(:)
 
     integer :: I, J, K, L, P_I
 
@@ -1595,6 +1593,9 @@ contains
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.14  2010/08/27 23:17:11  vsnyder
+! Remove '(ip)' from all integer declarations
+!
 ! Revision 2.13  2010/08/27 05:51:03  yanovsky
 ! Changed types of indices_c and gl_inds dummy arguments from integer(ip) to integer.
 !
