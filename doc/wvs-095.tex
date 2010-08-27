@@ -11,7 +11,7 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-095r12}
+\newcommand{\docname}{wvs-095r13}
 \newcommand{\docdate}{5 August 2010}
 
 \ifx\pdfoutput\undefined
@@ -74,7 +74,7 @@
 \newcommand{\DB}{\Delta B}
 \newcommand{\oDB}{\overline{\DB}}
 \newcommand{\MT}{\mathcal{T}}
-\newcommand{\hMT}{\mathcal{T}^s}
+\newcommand{\hMT}{\MT^s}
 \newcommand{\IF}[1]{\,\mathcal{A}_n\!\left(#1\right)} % Interpolation Function
 
 \vspace{-10pt}
@@ -709,7 +709,7 @@ To simplify the notation, let $S_{kl} = \sum_n \phi_{nc} \Delta \nu_{nc}
   \TSs{1c} S_{11} + \TSs{2c} S_{21}
 + \sum_{i=2}^{n_p-1} \TSs{i+1,c} S_{i+1,i} -
   \sum_{i=2}^{n_p-1} \TSs{i-1,c} S_{i-1,i}
-- \TSs{n-1,c} S_{n-1,n} - \TSs{nc} S_{nn}
+- \TSs{n_p-1,c} S_{n_p-1,n_p} - \TSs{n_p c} S_{n_p n_p}
 \end{equation}
 
 Shift the indices of summation to get $\TS$ with the same subscripts in
@@ -719,7 +719,7 @@ the sums, giving
   \TSs{1c} S_{11} + \TSs{2c} S_{21}
 + \sum_{i=3}^{n_p} \TSs{i,c} S_{i,i-1} -
   \sum_{i=1}^{n_p-2} \TSs{i,c} S_{i,i+1}
-- \TSs{n-1,c} S_{n-1,n} - \TSs{nc} S_{nn}
+- \TSs{n_p-1,c} S_{n_p-1,n_p} - \TSs{n_p c} S_{n_p n_p}
 \end{equation}
 
 Move some terms out of the sums to put the summations over the same
@@ -774,6 +774,9 @@ is a linear operator gives Equation (\ref{five}):
 % $Id$
 
 % $Log$
+% Revision 1.10  2010/08/06 02:01:08  vsnyder
+% Fix some indexing errors, add def of dB/dT
+%
 % Revision 1.9  2010/07/30 01:33:38  vsnyder
 % Correct some sign errors, include a nonzero derivative in Equation 10
 %
