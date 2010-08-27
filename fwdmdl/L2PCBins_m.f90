@@ -161,12 +161,14 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: SIDEBAND ! Which sideband (see below)
     integer, intent(in) :: MAF                      ! MAF index
     integer, dimension(-1:1), intent(out) :: L2PCBINS ! Result
-    integer, intent(out) :: SIDEBANDSTART ! Resulting loop indices
-    integer, intent(out) :: SIDEBANDSTOP
-    integer, intent(out) :: SIDEBANDSTEP
+    integer, intent(out), optional :: SIDEBANDSTART ! Resulting loop indices
+    integer, intent(out), optional :: SIDEBANDSTOP
+    integer, intent(out), optional :: SIDEBANDSTEP
     ! We supply the sideband separately because when the Linearized model is
     ! being invoked by the hybrid model, the sideband in radiance is not the
-    ! one we really want
+    ! one we really want.
+    ! When invoked for TScat from the full forward model, it's already
+    ! decided which sideband it's working on.
 
     ! Local variables
     character(132) :: SignalName
@@ -209,9 +211,10 @@ contains ! =====     Public Procedures     =============================
         l2pcBins = lockedBins ( :, signal )
         ! If got folded, use that by preference (3rd argument below).
         ! Assert that sidebands are present if needed here.
-        call GetSidebandLoop ( signal, sideband, &
-          & (lockedBins(0,signal)==0), sidebandStart, sidebandStop, &
-          & sidebandStep )
+        if ( present(sidebandStart) ) &
+          & call GetSidebandLoop ( signal, sideband, &
+            & (lockedBins(0,signal)==0), sidebandStart, sidebandStop, &
+            & sidebandStep )
         return
       end if
     end if
@@ -376,27 +379,43 @@ contains ! =====     Public Procedures     =============================
       end if
     end if
 
-    ! Work out the range of the sideband loop
-    call GetSidebandLoop ( signal, sideband, split, &
-      & sidebandStart, sidebandStop, sidebandStep )
+    if ( present(sidebandStart) ) then
+      ! Work out the range of the sideband loop
+      call GetSidebandLoop ( signal, sideband, split, &
+        & sidebandStart, sidebandStop, sidebandStep )
 
-    ! Choose the bin(s)
-    bestCost = huge ( cost(1) )
-    l2pcBins = 0
-    do bin = 1, noBins
-      do tmpSideband = sidebandStart, sidebandStop
-        if ( possible(tmpSideband,bin) .and. &
-          & cost(bin) < bestCost(tmpSideband) ) then
-          bestCost(tmpSideband) = cost(bin)
-          l2pcBins(tmpSideband) = bin
+      ! Choose the bin(s)
+      bestCost = huge ( cost(1) )
+      l2pcBins = 0
+      do bin = 1, noBins
+        do tmpSideband = sidebandStart, sidebandStop
+          if ( possible(tmpSideband,bin) .and. &
+            & cost(bin) < bestCost(tmpSideband) ) then
+            bestCost(tmpSideband) = cost(bin)
+            l2pcBins(tmpSideband) = bin
+          end if
+        end do
+      end do
+
+      ! Check that we've got the bins we need
+      if (any(l2pcBins ((/sidebandStart,sidebandStop/)) == 0 )) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to find l2pc bins to match request' )
+
+    else
+
+      ! Choose the bin(s)
+      bestCost = huge ( cost(1) )
+      l2pcBins = 0
+      do bin = 1, noBins
+        if ( possible(sideband,bin) .and. &
+          & cost(bin) < bestCost(sideband) ) then
+          bestCost(sideband) = cost(bin)
+          l2pcBins(sideband) = bin
         end if
       end do
-    end do
 
-    ! Check that we've got the bins we need
-    if (any(l2pcBins ((/sidebandStart,sidebandStop/)) == 0 )) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to find l2pc bins to match request' )
+    end if
 
     ! Record this in the 'locked bins' information
     if ( fmConf%lockBins ) lockedBins ( :, signal ) = l2pcBins
@@ -433,6 +452,9 @@ contains ! =====     Public Procedures     =============================
 end module L2PCBins_m
 
 ! $Log$
+! Revision 2.6  2010/08/27 23:42:10  vsnyder
+! Make SidebandStart etc. optional
+!
 ! Revision 2.5  2010/05/19 17:52:53  pwagner
 ! Removed unused stuff
 !
