@@ -29,13 +29,14 @@ contains ! ============= Public Procedures ==========================
 
   !----------------------------------------- ForwardModel -----------
   subroutine ForwardModel ( Config, FwdModelIn, FwdModelExtra, &
-    FwdModelOut, fmStat, Jacobian, vectors )
+    FwdModelOut, fmStat, Jacobian, Hessian, vectors )
 
     use BaselineForwardModel_m, only: BASELINEFORWARDMODEL
     use ForwardModelConfig, only: ForwardModelConfig_T
     use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
     use FullCloudForwardModel, only: FULLCLOUDFORWARDMODELWRAPPER
     use FullForwardModel_m, only: FULLFORWARDMODEL
+    use HessianModule_1, only: HESSIAN_T
     use HybridForwardModel_m, only: HYBRIDFORWARDMODEL
     use Init_tables_module, only: L_LINEAR, L_SCAN, L_SCAN2D, L_FULL, L_CLOUDFULL, &
       & L_SWITCHINGMIRROR, L_HYBRID, L_POLARLINEAR, L_BASELINE
@@ -57,7 +58,8 @@ contains ! ============= Public Procedures ==========================
     type(vector_T), intent(in) ::  FWDMODELIN, FwdModelExtra
     type(vector_T), intent(inout) :: FWDMODELOUT  ! Radiances, etc.
     type(forwardModelStatus_t), intent(inout) :: FMSTAT ! Reverse comm. stuff
-    type(matrix_T), intent(inout), optional :: JACOBIAN
+    type(matrix_T),  intent(inout), optional :: JACOBIAN
+    type(hessian_T), intent(inout), optional :: HESSIAN
     type(Vector_t), dimension(:), target, optional :: VECTORS ! Vectors database
 
     ! Local variables
@@ -94,7 +96,7 @@ contains ! ============= Public Procedures ==========================
     case ( l_full )
       call MLSMessageCalls( 'push', constantName='FullForwardModel' )
       call FullForwardModel ( config, FwdModelIn, FwdModelExtra, &
-        FwdModelOut, fmStat, Jacobian )
+        FwdModelOut, fmStat, Jacobian, Hessian )
       call add_to_retrieval_timing( 'full_fwm' )
     case ( l_linear )
       call MLSMessageCalls( 'push', constantName='LinearizedForwardModel' )
@@ -183,8 +185,22 @@ contains ! ============= Public Procedures ==========================
           end if
           call MLSMessage ( k, ModuleName, 'Problem (NANs?) found in Jacobians' )
         end if
-      end if
       
+      ! Check Hessians if relevant
+
+
+        if ( present( Hessian ) ) then
+          if ( hessian%col%vec%template%name /= jacobian%col%vec%template%name &
+            & .or. hessian%row%vec%template%name /= jacobian%row%vec%template%name &
+            & .or. (hessian%col%instFirst .neqv. jacobian%col%instFirst) &
+            & .or. (hessian%row%instFirst .neqv. jacobian%row%instFirst) )&
+            & call MLSMessage( MLSMSG_Error, ModuleName, 'Hessian is not compatible with Jacobian' )
+        end if
+
+      else if ( present( Hessian ) ) then      
+        call MLSMessage ( MLSMSG_Error, ModuleName, 'Hessian is present without Jacobian' )
+      end if
+
     end if
       
     ! Do the timing stuff
@@ -218,6 +234,10 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.33  2010/08/27 06:25:38  yanovsky
+! ForwardModel subroutine has Hessian as dummy argument.
+! Actual argument Hessian is passed in a call to FullForwardModel subroutine.
+!
 ! Revision 2.32  2009/11/18 22:18:07  livesey
 ! Added ability to check Jacobians as well as radiances is the various
 ! fmNAN flags are set
