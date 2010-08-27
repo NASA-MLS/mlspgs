@@ -700,8 +700,8 @@ contains
 
 ! Inputs
 
-    integer(ip), intent(in) :: indices_c(:) ! coarse grid indicies
-    integer(ip), intent(in) :: gl_inds(:)   ! Gauss-Legendre grid indices
+    integer, intent(in) :: indices_c(:) ! coarse grid indicies
+    integer, intent(in) :: gl_inds(:)   ! Gauss-Legendre grid indices
     real(rp), intent(in) :: del_zeta(:)     ! path -log(P) differences on the
       !              main grid.  This is for the whole coarse path, not just
       !              the part up to the black-out
@@ -1595,6 +1595,9 @@ contains
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.13  2010/08/27 05:51:03  yanovsky
+! Changed types of indices_c and gl_inds dummy arguments from integer(ip) to integer.
+!
 ! Revision 2.12  2010/08/19 02:04:03  vsnyder
 ! Change some variable names, restructure dRad_tran_dT
 !
@@ -1604,6 +1607,13 @@ end module RAD_TRAN_M
 !
 ! Revision 2.10  2010/06/11 02:20:46  vsnyder
 ! Integrated Igor's latest changes with mine
+!
+! Revision 2.9  2010/06/09 23:13:01  yanovsky
+! Removed code implementing d_delta_df computations from drad_tran_df. 
+! Drad_tran_df now calls get_d_delta_df
+!
+! Revision 2.8  2010/06/09 22:04:14  yanovsky
+! Added d2Rad_tran_df2 and get_d_delta_df subroutines
 !
 ! Revision 2.7  2010/05/14 02:41:08  vsnyder
 ! Changed intent for [n]nz_d_delta_df from out to inout.  Replaced
