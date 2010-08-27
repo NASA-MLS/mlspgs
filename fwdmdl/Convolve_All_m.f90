@@ -248,7 +248,13 @@ contains
     logical, intent(inout) :: rowFlags(:) ! Flag to calling code
 
     ! Local variables
-    integer :: Col, JF, K, NFZ, NoChans, Row, SPS_I, SV_F
+    integer :: Row, Col
+    integer :: JF
+    integer :: K
+    integer :: NFZ    ! # frequency elements times # z elements in a specie
+    integer :: NoChans
+    integer :: SPS_I  ! species index
+    integer :: SV_F   ! index of final element in a state vector
     real(r8) :: drad_df_out(size(convolve_support%del_chi_out), &
       &                     size(di_df,dim=2))
     real(rv), pointer :: MIF_Times_for_MAF(:)
@@ -298,8 +304,6 @@ contains
 
   end subroutine Convolve_Other_Deriv
 
-  ! Added by IGOR
-
   ! -------------------------------------  Convolve_Other_Second_Deriv -----
   subroutine Convolve_Other_Second_Deriv ( Convolve_Support, MAF, Channel, &
              & SbRatio, Update, Radiance, Qtys, Grids_f, &
@@ -318,7 +322,7 @@ contains
     type(convolve_support_t), intent(in) :: Convolve_Support
     integer, intent(in) :: MAF
     integer, intent(in) :: CHANNEL
-    real(r8), intent(in) :: SbRatio
+    real(r8), intent(in) :: SbRatio    ! Sideband ratio
     logical, intent(in) :: Update      ! "add to Jacobian, don't overwrite"
     type (VectorValue_T), intent(in) :: RADIANCE ! Only for some indices
     type(QtyStuff_T), intent(in) :: Qtys(:)
@@ -337,10 +341,10 @@ contains
     integer :: Row, Col1, Col2
     integer :: JF_I, JF_J
     integer :: KI, KJ
-    integer :: NFZ_I, NFZ_J
+    integer :: NFZ_I, NFZ_J ! # frequency elements times # z elements in species
     integer :: NoChans
-    integer :: SPS_I, SPS_J             ! species indices
-    integer :: q, r                     ! state vector indices
+    integer :: SPS_I, SPS_J ! species indices
+    integer :: q, r         ! indices of final elements in state vectors
     real(r8) :: d2rad_df2_out( size(convolve_support%del_chi_out), &
                              & size(d2i_df2,dim=2), size(d2i_df2,dim=3))
     real(rv), pointer :: MIF_Times_for_MAF(:)
@@ -372,23 +376,23 @@ contains
 
         col1 = FindBlock ( Hessian%col, qtys(sps_i)%qty%index, jf_i)
 
-        do sps_j = 1, size(qtys)
+        do ki = 1, nfz_i
 
-          if ( .not. qtys(sps_j)%foundInFirst ) cycle
+          q = q + 1
 
-          r = grids_f%l_v(sps_j-1)
-          nfz_j = (Grids_f%l_f(sps_j) - Grids_f%l_f(sps_j-1)) * &
-                & (Grids_f%l_z(sps_j) - Grids_f%l_z(sps_j-1))
+          do sps_j = 1, size(qtys)
 
-          do jf_j = Grids_f%windowStart(sps_j), Grids_f%windowfinish(sps_j)
+            if ( .not. qtys(sps_j)%foundInFirst ) cycle
 
-            col2 = FindBlock ( Hessian%col, qtys(sps_j)%qty%index, jf_j)
+            r = grids_f%l_v(sps_j-1)
+            nfz_j = (Grids_f%l_f(sps_j) - Grids_f%l_f(sps_j-1)) * &
+                  & (Grids_f%l_z(sps_j) - Grids_f%l_z(sps_j-1))
+
+            do jf_j = Grids_f%windowStart(sps_j), Grids_f%windowfinish(sps_j)
+
+              col2 = FindBlock ( Hessian%col, qtys(sps_j)%qty%index, jf_j)
         
-            call getFullBlock_Hessian ( hessian, row, col1, col2, 'atmospheric' )
-
-            do ki = 1, nfz_i
-
-              q = q + 1
+              call getFullBlock_Hessian ( hessian, row, col1, col2, 'atmospheric' )
 
               do kj = 1, nfz_j
             
@@ -930,6 +934,7 @@ contains
     end select
   end subroutine GetBandedBlock
 
+
   subroutine GetFullBlock ( Jacobian, Row, Col, What )
     use MatrixModule_0, only: M_ABSENT, M_FULL
     use MatrixModule_1, only: CREATEBLOCK, MATRIX_T
@@ -957,9 +962,6 @@ contains
   end subroutine GetFullBlock
 
 
-  !
-  ! Added by IGOR
-  !
   subroutine GetFullBlock_Hessian ( Hessian, Row, Col1, Col2, What )
     use HessianModule_0, only: H_ABSENT, H_FULL
     use HessianModule_1, only: CREATEBLOCK, HESSIAN_T
@@ -1034,6 +1036,9 @@ contains
 end module Convolve_All_m
 
 ! $Log$
+! Revision 2.14  2010/08/27 05:53:23  yanovsky
+! Fixed the order of do loops in Convolve_Other_Second_Deriv subroutine.  Added comments.
+!
 ! Revision 2.13  2010/07/27 01:12:56  vsnyder
 ! Fold some lines the compiler said were too long
 !
