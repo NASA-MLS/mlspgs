@@ -19,13 +19,13 @@ module L2PC_m
 
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
   use dump_0, only: dump
+  use HessianModule_0, only: CreateBlock, HessianElement_T, &
+    & H_Absent, H_Sparse, H_Full, H_Unknown, DestroyBlock
+  use HessianModule_1, only: Hessian_T, CreateBlock, DestroyHessian, CreateEmptyHessian
   use Intrinsic, only: L_CHANNEL, L_GEODALTITUDE, L_NONE, L_VMR, &
     & L_RADIANCE, L_NONE, L_INTERMEDIATEFREQUENCY, L_LATITUDE, L_FIELDAZIMUTH, &
     & L_ROWS, L_COLUMNS, L_ADOPTED, L_TEMPERATURE, L_TSCAT, Lit_Indices, &
     & PHYQ_DIMENSIONLESS, PHYQ_TEMPERATURE, PHYQ_VMR
-  use HessianModule_0, only: CreateBlock, HessianElement_T, &
-    & H_Absent, H_Sparse, H_Full, H_Unknown, DestroyBlock
-  use HessianModule_1, only: Hessian_T, CreateBlock, DestroyHessian, CreateEmptyHessian
   use ManipulateVectorQuantities, only: DOVECTORSMATCH
   use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
     & MATRIXELEMENT_T, M_UNKNOWN, DESTROYBLOCK
@@ -38,7 +38,7 @@ module L2PC_m
     & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, MLSMSG_ERROR, MLSMSG_WARNING
   use MLSSets, only: FindFirst
   use MLSSignals_m, only: GETSIGNALNAME
-  use MLSStringLists, only: switchDetail
+  use MLSStringLists, only: SWITCHDETAIL
   use MLSStrings, only: writeIntsToChars
   use Molecules, only: L_EXTINCTION
   use MoreTree, only: GetStringIndexFromString, GetLitIndexFromString
@@ -55,7 +55,7 @@ module L2PC_m
     & ADDVECTORTODATABASE, CONSTRUCTVECTORTEMPLATE, COPYVECTOR, CREATEVECTOR, &
     & DESTROYVECTORINFO, DUMP, NULLIFYVECTORTEMPLATE, VECTORTEMPLATE_T, VECTOR_T
 
-  implicit NONE
+  implicit none
   private
 
   public :: AddBinSelectorToDatabase, AddL2PCToDatabase, AdoptVectorTemplate, &
@@ -237,8 +237,13 @@ contains ! ============= Public Procedures ==========================
     type (l2pc_t), intent(in), target :: L2pc
     integer, intent(in), optional :: DETAILS ! passed to Vector and Matrix dumps
     character(len=*), dimension(3), intent(in), optional :: ONLYTHESEBLOCKS ! passed to Vector and Matrix dumps
+    ! Local variables
+    integer :: myDetails
 
     ! Executable code
+    myDetails = 0
+    if ( present(details) ) myDetails = details
+    call outputNamedValue( 'myDetails', myDetails )
     call output( '- Dump of L2PC -', advance='yes' )
     if ( l2pc%name > 0 ) then
       call display_string ( l2pc%name, before='name: ' )
@@ -247,7 +252,7 @@ contains ! ============= Public Procedures ==========================
       call output( '*** Uh-oh, name not found in string table', advance='yes' )
     endif
     ! First dump the xStar and yStar
-    if ( details == 1 .or. details > 2 ) then
+    if ( myDetails == 1 .or. myDetails > 2 ) then
       call dump ( l2pc%j%col%vec, details=details, name='xStar' )
       call dump ( l2pc%j%row%vec, details=details, name='yStar' )
 
@@ -256,7 +261,7 @@ contains ! ============= Public Procedures ==========================
     endif
 
     ! Now dump the Hessian
-    if ( l2pc%goth .and. details > 1 ) &
+    if ( l2pc%goth .and. myDetails > 1 ) &
       & call dump ( l2pc%h, 'hStar', details, onlyTheseBlocks )
 
   end subroutine DumpOneL2PC
@@ -497,6 +502,10 @@ contains ! ============= Public Procedures ==========================
             v => l2pc%h%row%vec
           end if
         end if
+        if ( .not. associated(v) ) cycle
+        if ( .not. associated(v%quantities) ) cycle
+        if ( switchDetail( switches, 'l2pc') > -1 ) &
+          & call output( ' About to destroy vectors', advance='yes' )
 
         do quantity = 1, size(v%quantities)
           call DestroyQuantityTemplateContents (v%quantities(quantity)%template )
@@ -506,7 +515,11 @@ contains ! ============= Public Procedures ==========================
     end do
 
     ! Destory kStar
+    if ( switchDetail( switches, 'l2pc') > -1 ) &
+      & call output( ' About to destroy matrix', advance='yes' )
     call DestroyMatrix ( l2pc%j )
+    if ( switchDetail( switches, 'l2pc') > -1 ) &
+      & call output( ' About to destroy hessian', advance='yes' )
     if ( l2pc%goth ) call DestroyHessian ( l2pc%h )
 
   end subroutine DestroyL2PC
@@ -615,6 +628,7 @@ contains ! ============= Public Procedures ==========================
   subroutine WriteOneHDF5L2PC ( JACOBIAN, fileID, packed, dontPack, hessian )
     use HessianModule_0, only: OptimizeBlock
     use HDF5, only: H5GCLOSE_F, H5GCREATE_F
+    use MLSCOMMON, only: RM
     use MLSHDF5, only: MakeHDF5Attribute, SaveAsHDF5DS
     ! This subroutine writes an l2pc to a file in hdf5 format
 
@@ -758,10 +772,18 @@ contains ! ============= Public Procedures ==========================
               ! Identify the block
               h0 => hessian%block ( i, j, k )
               call optimizeBlock ( h0 )
+              ! Change kind of Hessian to absent if number of nonzero values is 0
               if ( h0%kind == h_sparse .and. &
                 & (h0%tuplesFilled < 1 .or. .not. associated(h0%tuples) ) &
                 & ) &
                 & h0%kind = h_absent
+              if ( h0%kind == h_full ) then
+                if ( associated(h0%values) ) then
+                  if ( count(h0%values /= 0._rm) < 1 ) h0%kind = h_absent
+                else
+                  h0%kind = h_absent
+                endif
+              endif
               ! Get a name for this group for the block
               call CreateBlockName ( rowBlockMap(i), colBlockMap(j), colBlockMap(k), name )
               if ( switchDetail( switches, 'hess' ) > -1 ) &
@@ -798,11 +820,10 @@ contains ! ============= Public Procedures ==========================
               if ( switchDetail( switches, 'hess' ) > -1 ) &
                 & call outputNamedValue( '2nd column name', trim(name) )
               ! Write the datasets
-
-              if ( h0%kind == h_full ) then
+              select case ( h0%kind )
+              case ( h_full )
                 call SaveAsHDF5DS ( blockGID, 'values', real ( h0%values, r4 ) )
-              end if
-              if ( h0%kind == h_sparse ) then
+              case ( h_sparse )
                 call MakeHDF5Attribute ( blockGID, 'noValues', h0%tuplesFilled )
                 call SaveAsHDF5DS ( blockGID, 'i', h0%tuples(1:h0%tuplesFilled)%i )
                 call SaveAsHDF5DS ( blockGID, 'j', h0%tuples(1:h0%tuplesFilled)%j )
@@ -812,7 +833,7 @@ contains ! ============= Public Procedures ==========================
                   call outputNamedValue( 'noValues', h0%tuplesFilled )
                   call dump( h0%tuples(1:h0%tuplesFilled)%h, 'h)%tuple values' )
                 end if
-              end if
+              end select
               ! Close group for block
               call h5gClose_f ( blockGID, status )
               if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1006,9 +1027,9 @@ contains ! ============= Public Procedures ==========================
 
   ! --------------------------------------- Populate L2PCBin --------
   subroutine PopulateL2PCBin ( bin, IgnoreHessian )
-    use HDF5, only: H5GCLOSE_F, H5GOPEN_F, H5GGET_OBJ_INFO_IDX_F, &
+    use HDF5, only: HSIZE_T, H5GCLOSE_F, H5GOPEN_F, H5GGET_OBJ_INFO_IDX_F, &
         & H5GN_MEMBERS_F
-    use MLSHDF5, only: GetHDF5Attribute, LoadFromHDF5DS
+    use MLSHDF5, only: GetHDF5Attribute, GetHDF5DSDims, LoadFromHDF5DS
 
     integer, intent(in) :: BIN ! The bin index to populate
     logical, intent(in), optional :: IgnoreHessian
@@ -1024,6 +1045,8 @@ contains ! ============= Public Procedures ==========================
     integer :: BLOCKLAYER  ! Loop counter
     integer :: BLOCKROW  ! Loop counter
     integer :: BLOCKSID  ! Group ID for all the (non-)Hessian blocks
+    integer, dimension(3) :: DIMS
+    integer(kind=hSize_t), dimension(3) :: HDIMS ! dimensions for l2pc%h%values
     integer :: KIND      ! Kind for this block
     logical :: NoHessian ! Don't try to get the Hessian
     integer :: NOVALUES  ! Number of values for this block
@@ -1138,7 +1161,15 @@ contains ! ============= Public Procedures ==========================
             case (h_full)
               call CreateBlock ( l2pc%h, blockRow, blockCol, blockLayer, h0%kind )
               h0 => l2pc%h%block ( blockRow, blockCol, blockLayer )
-              call LoadFromHDF5DS ( blockId, 'i', h0%values )
+              if ( any(shape(h0%values) == 0) ) then
+                call GetHDF5DSDims ( blockId, 'values', HDIMS )
+                dims = hdims
+                call DeAllocate_test ( h0%values, &
+                  & 'h0%values', moduleName // 'PopulateOneL2PC' )
+                call Allocate_test ( h0%values, dims(1), dims(2), dims(3),&
+                  & 'h0%values', moduleName // 'PopulateOneL2PC' )
+              endif
+              call LoadFromHDF5DS ( blockId, 'values', h0%values )
             case (h_sparse)
               call GetHDF5Attribute ( blockID, 'noValues', noValues )
               if ( DEEBUG ) call outputNamedValue( 'noValues', noValues )
@@ -1891,6 +1922,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.102  2010/08/27 21:55:35  pwagner
+! WIll not try to write empty Hessian blocks
+!
 ! Revision 2.101  2010/08/20 23:19:50  pwagner
 ! May specify which blocks to dump by name; dont dump empty blocks
 !
