@@ -97,7 +97,8 @@ module ForwardModelConfig
 
   type, public :: Beta_Group_T
     ! For the group as a whole:
-    logical :: Derivatives = .false.  ! "Compute derivatives w.r.t. mixing ratio"
+    logical :: Derivatives = .false.        ! "Compute derivatives w.r.t. mixing ratio"
+    logical :: SecondDerivatives = .false.  ! "Compute second derivatives w.r.t. mixing ratio"
     logical :: Group = .false.        ! "Molecule group", i.e., [m,m1,...,mn]
     integer :: Molecule               ! Group name, i.e., "m".
     type(qtyStuff_t) :: Qty           ! The Qty's vector and foundInFirst, filled
@@ -156,6 +157,7 @@ module ForwardModelConfig
     logical :: AnyLBL(2)              ! "there are LBL molecules in the sideband"
     logical :: AnyPFA(2)              ! "there are PFA molecules in the sideband"
     logical :: Atmos_der              ! Do atmospheric derivatives
+    logical :: Atmos_second_der       ! Do atmospheric second derivatives
     logical :: Default_spectroscopy   ! Using Bill's spectroscopy data
     logical :: DifferentialScan       ! Differential scan model
     logical :: Do_1d                  ! Do 1D forward model calculation
@@ -191,6 +193,7 @@ module ForwardModelConfig
     integer, dimension(:), pointer :: BinSelectors=>NULL() ! List of relevant bin selectors
     integer, dimension(:), pointer :: Molecules=>NULL() ! Which molecules to consider
     logical, dimension(:), pointer :: MoleculeDerivatives=>NULL() ! Want Jacobians
+    logical, dimension(:), pointer :: MoleculeSecondDerivatives=>NULL() ! Want Hessians
     integer, dimension(:), pointer :: SpecificQuantities=>NULL() ! Specific quantities to use
     integer, dimension(:), pointer :: TScatMolecules=>NULL() ! Which molecules to consider
     logical, dimension(:), pointer :: TScatMoleculeDerivatives=>NULL() ! Want Jacobians
@@ -784,7 +787,7 @@ contains
     ! Now the logical scalars
     call PVMIDLPack ( (/ &
       & config%allLinesForRadiometer, config%allLinesInCatalog, config%anyLBL, &
-      & config%anyPFA,  config%atmos_der, config%default_spectroscopy, &
+      & config%anyPFA,  config%atmos_der, config%atmos_second_der, config%default_spectroscopy, &
       & config%differentialScan, config%do_1d, config%do_baseline, &
       & config%do_conv, config%do_freq_avg,  config%forceFoldedOutput, &
       & config%forceSidebandFraction,  config%globalConfig, &
@@ -817,6 +820,7 @@ contains
           call PVMIDLPack ( (config%molecules(i) > 0.0), msg = "Packing molecule sign" )
         end do
         call PVMIDLPack ( config%moleculeDerivatives, msg = "Packing molecule derivatives" )
+        call PVMIDLPack ( config%moleculeSecondDerivatives, msg = "Packing molecule second derivatives" )
       end if
     else
       call PVMIDLPack ( 0, msg = "Packing 0 molecules" )
@@ -863,7 +867,7 @@ contains
     type ( ForwardModelConfig_T ), intent(out) :: CONFIG
     ! Local variables
     integer, parameter     :: ISMAX = 10
-    integer, parameter     :: LSMAX = 26
+    integer, parameter     :: LSMAX = 27
     integer :: INFO                     ! Flag from PVM
     logical :: FLAG                     ! A flag from the sender
     logical, dimension(LSMAX) :: LS     ! Temporary array, for logical scalars
@@ -911,6 +915,7 @@ contains
     config%anyLBL                = ls(i:i+1) ; i = i + 2
     config%anyPFA                = ls(i:i+1) ; i = i + 2
     config%atmos_der             = ls(i) ; i = i + 1
+    config%atmos_second_der      = ls(i) ; i = i + 1
     config%default_spectroscopy  = ls(i) ; i = i + 1
     config%differentialScan      = ls(i) ; i = i + 1
     config%do_1d                 = ls(i) ; i = i + 1
@@ -955,6 +960,8 @@ contains
       call Allocate_test ( config%molecules, n, 'config%molecules', ModuleName )
       call Allocate_test ( config%moleculeDerivatives, &
         & n, 'config%moleculeDerivatives', ModuleName )
+      call Allocate_test ( config%moleculeSecondDerivatives, &
+        & n, 'config%moleculeSecondDerivatives', ModuleName )
       do i = 1, n - 1
         call PVMUnpackLitIndex ( config%molecules(i), msg = "Unpacking a molecule" )
         call PVMIDLUnpack ( flag, msg = "Unpacking a molecule sign flag" )
@@ -962,6 +969,7 @@ contains
       end do
       config%molecules(n) = huge(config%molecules(n)) ! Sentinel
       call PVMIDLUnpack ( config%moleculeDerivatives, msg = "Unpacking moleculeDerivatives" )
+      call PVMIDLUnpack ( config%moleculeSecondDerivatives, msg = "Unpacking moleculeSecondDerivatives" )
     end if
 
     ! Specific quantities
@@ -1144,6 +1152,7 @@ contains
       call output ( b, before='  Beta group ', after=': ' )
       call display_string ( lit_indices(beta_group(b)%molecule) )
       if ( beta_group(b)%derivatives ) call output ( ' with derivative' )
+      if ( beta_group(b)%secondDerivatives ) call output ( ' with second derivative' )
       call newLine
       do s = s1, s2
         call output ( '  ' // sb(s) // 'er sideband:', advance='yes' )
@@ -1263,6 +1272,7 @@ contains
     call output ( config%anyPFA(1), before='  AnyPFA: ' )
     call output ( config%anyPFA(2), advance='yes' )
     call output ( config%atmos_der, before='  Atmos_der: ', advance='yes' )
+    call output ( config%atmos_second_der, before='  Atmos_second_der: ', advance='yes' )
     call output ( config%default_spectroscopy, before='  Default_spectroscopy: ', advance='yes' )
     call output ( config%DifferentialScan, before='  DifferentialScan: ', advance='yes' )
     call output ( config%do_1d, before='  Do_1D: ', advance='yes' )
@@ -1319,11 +1329,21 @@ contains
       do j = 1, size(config%molecules)
         call display_string ( lit_indices(config%molecules(j)), before='    ' )
         call output ( j, before=':' )
+
         if (config%moleculeDerivatives(j)) then
-          call output (' compute derivatives', advance='yes')
+          call output (' compute derivatives' )
         else
-          call output (' no derivatives', advance='yes')
+          call output (' no derivatives' )
         end if
+
+        if (config%moleculeSecondDerivatives(j)) then
+          call output (' compute second derivatives' )
+        else
+          call output (' no second derivatives' )
+        end if  
+
+        call newline
+
       end do
     end if
     if ( size(config%lineCenter) > 0 .or. size(config%lineWidth) > 0 .or. &
@@ -1411,6 +1431,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.108  2010/06/09 16:33:59  pwagner
+! Complain if IS, LS array bounds exceeded
+!
 ! Revision 2.107  2010/06/07 23:20:51  vsnyder
 ! Add UseTScat, TScatMolecules, TScatMoleculeDerivatives, change name
 ! of PhaseFrqTol to FrqTol, check that Mie tables are loaded of UseTScat
