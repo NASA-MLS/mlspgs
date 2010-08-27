@@ -39,7 +39,10 @@ module ForwardModelSupport
   integer, parameter :: CloudNot               = CloudNeeds + 1
   integer, parameter :: DerivSansMolecules     = CloudNot  + 1
   integer, parameter :: DuplicateMolecule      = DerivSansMolecules + 1
-  integer, parameter :: IncompleteBinSelectors = DuplicateMolecule + 1
+  integer, parameter :: FirstSansFirst1        = DuplicateMolecule + 1
+  integer, parameter :: FirstSansFirst2        = FirstSansFirst1 + 1
+  integer, parameter :: Hess_notJac            = FirstSansFirst2 + 1
+  integer, parameter :: IncompleteBinSelectors = Hess_notJac + 1
   integer, parameter :: IncompleteFullFwm      = IncompleteBinSelectors + 1
   integer, parameter :: IncompleteLinearFwm    = IncompleteFullFwm + 1
   integer, parameter :: IrrelevantFwmParameter = IncompleteLinearFwm + 1
@@ -57,7 +60,10 @@ module ForwardModelSupport
   integer, parameter :: PFANotMolecule         = PFANeedsFreqAvg + 1
   integer, parameter :: PFATwice               = PFANotMolecule + 1
   integer, parameter :: PolarizedAndAllLines   = PFATwice + 1
-  integer, parameter :: TangentNotSubset       = PolarizedAndAllLines + 1
+  integer, parameter :: SecondSansFirst        = PolarizedAndAllLines + 1
+  integer, parameter :: SecondSansSecond1      = SecondSansFirst + 1
+  integer, parameter :: SecondSansSecond2      = SecondSansSecond1 + 1
+  integer, parameter :: TangentNotSubset       = SecondSansSecond2 + 1
   integer, parameter :: ToleranceNotK          = TangentNotSubset + 1
   integer, parameter :: TooManyCosts           = ToleranceNotK + 1
   integer, parameter :: TooManyHeights         = TooManyCosts + 1
@@ -385,13 +391,14 @@ contains ! =====     Public Procedures     =============================
     use Init_Tables_Module, only: L_FULL, L_SCAN, L_LINEAR, L_CLOUDFULL, L_HYBRID, &
       & L_POLARLINEAR
     use Init_Tables_Module, only: F_ALLLINESFORRADIOMETER, F_ALLLINESINCATALOG, &
-      & F_ATMOS_DER, F_BINSELECTORS, F_CHANNELS, F_CLOUD_DER, &
+      & F_ATMOS_DER, F_ATMOS_SECOND_DER, F_BINSELECTORS, F_CHANNELS, F_CLOUD_DER, &
       & F_DEFAULT_spectroscopy, F_DIFFERENTIALSCAN, F_DO_BASELINE, F_DO_CONV, &
       & F_DO_FREQ_AVG, F_DO_1D, F_FORCESIDEBANDFRACTION, F_FREQUENCY, F_FRQTOL, &
       & F_I_SATURATION, F_INCL_CLD, F_IGNOREHESSIAN, F_INTEGRATIONGRID, &
       & F_LINEARSIDEBAND, F_LINECENTER, F_LINEWIDTH, F_LINEWIDTH_TDEP, &
       & F_LOCKBINS, F_LSBLBLMOLECULES, F_LSBPFAMOLECULES, F_MODULE, &
-      & F_MOLECULES, F_MOLECULEDERIVATIVES, F_NABTERMS, F_NAZIMUTHANGLES, &
+      & F_MOLECULES, F_MOLECULEDERIVATIVES, F_MOLECULESECONDDERIVATIVES, &
+      & F_NABTERMS, F_NAZIMUTHANGLES, &
       & F_NCLOUDSPECIES, F_NMODELSURFS, F_NO_DUP_MOL, F_NSCATTERINGANGLES, &
       & F_NSIZEBINS, F_PATHNORM, F_PHIWINDOW, F_POLARIZED, &
       & F_REFRACT, F_SCANAVERAGE, F_SIGNALS, F_SKIPOVERLAPS, &
@@ -443,6 +450,7 @@ contains ! =====     Public Procedures     =============================
     integer :: PFATrees(2)              ! Tree indices of f_[lu]sbPFAMolecules
     integer :: S                        ! Sideband index, for PFAtrees
     integer :: S1, S2                   ! Sideband Start/Stop (1..2, not -1..1).
+    integer :: SecondDerivTree          ! Tree index of f_MoleculeSecondDerivatives
     integer :: SIDEBAND                 ! Returned from Parse_Signal
     integer, dimension(:), pointer :: SIGNALINDS ! From Parse_Signal
     character (len=80) :: SIGNALSTRING  ! E.g. R1A....
@@ -474,6 +482,7 @@ contains ! =====     Public Procedures     =============================
     info%anyLBL = .false.
     info%anyPFA = .false.
     info%atmos_der = .false.
+    info%atmos_second_der = .false.
     info%cloud_der = l_none
     info%default_spectroscopy = .false.
     info%differentialScan = .false.
@@ -534,6 +543,8 @@ contains ! =====     Public Procedures     =============================
         info%allLinesInCatalog = get_boolean(son)
       case ( f_atmos_der )
         info%atmos_der = get_boolean(son)
+      case ( f_atmos_second_der )
+        info%atmos_second_der = get_boolean(son)
       case  ( f_binSelectors )
         call Allocate_test ( info%binSelectors, nsons(son)-1, &
           & 'info%binSelectors', ModuleName )
@@ -626,6 +637,8 @@ contains ! =====     Public Procedures     =============================
         info%refract = get_boolean(son)
       case ( f_scanAverage )
         info%scanAverage = get_boolean(son)
+      case ( f_moleculeSecondDerivatives )
+        secondDerivTree = son
       case ( f_signals )
         info%noUsedChannels = 0
         allocate ( info%signals (nsons(son)-1), stat = status )
@@ -722,6 +735,10 @@ contains ! =====     Public Procedures     =============================
       & call announceError ( LBLandPFA, lblTrees(1) )
     if ( ( got(f_usbPFAMolecules) .and. got(f_usbLBLMolecules) ) ) &
       & call announceError ( LBLandPFA, lblTrees(2) )
+
+    if ( ( .not. info%atmos_der ) .and. info%atmos_second_der ) then
+      call announceError( Hess_notJac, root )
+    end if
 
     s1 = (info%sidebandStart+3)/2; s2 = (info%sidebandStop+3)/2
 
@@ -946,10 +963,17 @@ op:     do j = 2, nsons(theTree)
     info%moleculeDerivatives => info%beta_group%derivatives
     info%moleculeDerivatives = .false.
 
+    info%moleculeSecondDerivatives => info%beta_group%secondDerivatives
+    info%moleculeSecondDerivatives = .false.
+
     ! Get info%moleculeDerivatives 
     if ( got(f_moleculeDerivatives) ) then
       if ( .not. associated(info%molecules) ) &
         & call announceError ( derivSansMolecules, derivTree )
+      
+      if ( .not. info%atmos_der ) &
+        & call announceError ( firstSansFirst1, derivTree )
+
       do j = 2, nsons(derivTree)
         thisMolecule = decoration( subtree( j, derivTree ) )
         if ( .not. any(info%molecules == thisMolecule) ) &
@@ -957,6 +981,31 @@ op:     do j = 2, nsons(theTree)
         if ( got(f_molecules) ) where ( info%molecules == thisMolecule ) &
           & info%moleculeDerivatives = .true.
       end do                          ! End loop over listed species
+    else if ( info%atmos_der ) then
+      call announceError ( firstSansFirst2, derivTree )
+    end if
+
+    ! Get info%moleculeSecondDerivatives 
+    if ( got(f_moleculeSecondDerivatives) ) then
+      if ( .not. got(f_moleculeDerivatives) ) &
+        & call announceError ( secondSansFirst, secondDerivTree )
+
+      if ( .not. info%atmos_second_der ) &
+        & call announceError ( secondSansSecond1, secondDerivTree )
+
+      do j = 2, nsons(secondDerivTree)
+        thisMolecule = decoration( subtree( j, secondDerivTree ) )
+        if ( .not. any(info%molecules == thisMolecule) ) &
+          & call announceError ( derivSansMolecules, subtree(j,secondDerivTree) )
+        if ( got(f_molecules) ) where ( info%molecules == thisMolecule ) &
+          & info%moleculeSecondDerivatives = .true.
+      end do                          ! End loop over listed species
+    else if ( info%atmos_second_der ) then
+       call announceError ( secondSansSecond2, secondDerivTree )
+    end if
+
+    if ( (.not. got(f_moleculeSecondDerivatives)) .and. info%atmos_second_der ) then
+      info%moleculeSecondDerivatives = info%moleculeDerivatives
     end if
 
     ! Get info%TScatMolecules and info%TScatMoleculeDerivatives
@@ -1329,13 +1378,22 @@ op:     do j = 2, nsons(theTree)
       call output ( 'Cloud forward model needs both H2O and O3 molecules', &
         & advance='yes' )
     case ( CloudNot )
-      call display_string ( what, before='Cloud formard model cannot accept the ' )
+      call display_string ( what, before='Cloud forward model cannot accept the ' )
       call output ( ' molecule', advance='yes' )
     case ( DerivSansMolecules )
       call output ( 'Derivative(s) requested for molecule(s) not specified.', &
         & advance='yes')
     case ( DuplicateMolecule )
       call display_string ( lit_indices(what), before='Duplicate molecule ', &
+        & advance='yes' )
+    case ( FirstSansFirst1 )
+      call output ('moleculeDerivatives IS present, but atmos_der is NOT present', &
+        & advance='yes' )
+    case ( FirstSansFirst2 )
+      call output ('atmos_der IS present, but moleculeDerivatives is NOT present', &
+        & advance='yes' )
+    case ( Hess_notJac )
+      call output ('Atmospheric Jacobian not present, while atmospheric Hessian present', &
         & advance='yes' )
     case ( IncompleteBinSelectors )
       call output ('Must have some binSelectors for the polarlinear model',advance='yes' )
@@ -1391,9 +1449,18 @@ op:     do j = 2, nsons(theTree)
     case ( PolarizedAndAllLines )
       call output ( 'Cannot specify both polarized and allLinesInCatalog', &
         & advance='yes' )
+    case ( SecondSansFirst )
+      call output ('Second requests molecule with no first derivative', &
+        & advance='yes' )
+    case ( SecondSansSecond1 )
+      call output ('moleculeSecondDerivatives IS present, but atmos_second_der is NOT present', &
+        & advance='yes' )
+    case ( SecondSansSecond2 )
+      call output ('atmos_second_der IS present, but moleculeSecondDerivatives is NOT present', &
+        & advance='yes' )
     case ( TangentNotSubset )
-      call output ('Non subsurface tangent grid not a subset of integration&
-        & grid', advance='yes' )
+      call output ('Non subsurface tangent grid not a subset of integration grid', &
+        & advance='yes' )
     case ( ToleranceNotK )
       call output ( 'Tolerance does not have dimensions of temperature/radiance', &
         & advance='yes' )
@@ -1431,6 +1498,11 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.152  2010/08/27 06:20:47  yanovsky
+! Added atmos_second_der, moleculeSecondDerivatives.
+! Added error handling: Hess_notJac, SecondDerivTree, FirstSansFirst1,
+! FirstSansFirst2, SecondSansFirst, SecondSansSecond1, SecondSansSecond2.
+!
 ! Revision 2.151  2010/06/07 23:30:12  vsnyder
 ! Add TScatMolecules, TScatMoleculeDerivatives, Use_Tscat.  Change
 ! PhaseFrqTol to FrqTol.
