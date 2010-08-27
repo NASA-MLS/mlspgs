@@ -94,11 +94,9 @@ SHELL = /bin/sh
 ifndef DONTBUILDPREQS
 libblas_f90 := $(shell ${REECHO} $(libblas_sources)/*.c $(libblas_sources)/*.f \
   $(libblas_sources)/*.[Ff]9? $(srclib)/*.[Ff]9?)
-# BLAS_PREQS := $(libblas_f90) $(libblas_objs)
 BLAS_PREQS := $(libblas_f90) $(libblas_objs)/Makefile
 endif
 PROG=libmls.a
-#PROG=all
 
 #In case this is called with "make libmls.a"
 libmls.a:
@@ -109,14 +107,7 @@ testdir = tests
 
 testsubdirs = $(testdir)/multiply $(testdir)/sparsify $(testdir)/test_cf_parser
 
-#OMIT_SRCS := -d test_cholesky.f90 -d test_multiply.f90 \
-#        -d test_sparsify.f90
-#OMIT_SRCS := $(OMIT_SRCS) -d sbinom.f
 OMIT_SRCS := $(OMIT) sbinom.f
-
-ifdef HDFVERSIONS
-   OMIT_SRCS := $(OMIT_SRCS) L2GPData.f90 MLSFiles.f90
-endif
 
 #PVM and PVMIDL require PVM_ROOT
 ifdef PVM_ROOT
@@ -137,7 +128,6 @@ OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
 #of massive recompilation
 #These are configurations for which I have tested CASCADE-avoidance
 CAN_AVOID="NAG.Linux LF95.Linux NAG.Sun Sun.Sun IFC.Linux Abs.Linux Sunst.Linux"
-#CAN_AVOID=""
 ifndef CASCADE
   WE_CAN := $(shell echo $(CAN_AVOID) | grep $(MLSF95).$(MLSPLAT))
 ifndef WE_CAN
@@ -169,6 +159,32 @@ ifdef NOCLEANING
    RECFG = -nd
 endif
 
+ifdef HDFINC
+   IHDFINC := -I $(HDFINC)
+else
+   IHDFINC := -I $(HDF)/../include
+endif
+
+ifdef HDF5INC
+   IHDF5INC := -I $(HDF5INC)
+   ADD2PATHS := $(ADD2PATHS) $(HDF5INC)
+else
+   IHDF5INC := -I $(HDF5)/../fortran/src -I $(HDF5)/../include
+   ADD2PATHS := $(ADD2PATHS) $(HDF5)/../fortran/src $(HDF5)/../include
+endif
+
+ifdef HDFEOSINC
+   IHDFEOSINC := -I $(HDFEOSINC)
+else
+   IHDFEOSINC := -I $(HDFEOS)/../../include
+endif
+
+ifdef HDFEOS5INC
+   IHDFEOS5INC := $(HDFEOS5INC)/hdfeos5.inc
+else
+   IHDFEOS5INC := $(HDFEOS5)/../../include/hdfeos5.inc
+endif
+
 #----------------------- Build instructions
 
 $(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
@@ -181,7 +197,7 @@ $(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
 		;; \
 	*) \
 		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
-      UNPREFXDPTHS="$(HDF5)/../fortran/src $(HDF5)/../include" ; \
+      UNPREFXDPTHS="$(ADD2PATHS)" ; \
         return_status=`expr $$?` ; \
         if [ $$return_status != "0" ]; then \
 		     exit 2 ; \
@@ -200,7 +216,7 @@ $(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
 		;; \
 	*) \
 		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
-      UNPREFXDPTHS="$(HDF5)/../fortran/src $(HDF5)/../include" ; \
+      UNPREFXDPTHS="$(ADD2PATHS)" ; \
         return_status=`expr $$?` ; \
         if [ $$return_status != "0" ]; then \
 		     exit 2 ; \
@@ -217,8 +233,8 @@ $(libblas_objs)/libmlspack.a: $(BLAS_PREQS)
 	$(MAKE) -f $(MakeFName) libmlspack.a -C $(libblas_sources) \
      DONTBUILDPREQS=TRUE
 
-hdfeos5.f9h: $(HDFEOS5)/../../include/hdfeos5.inc
-	@sed 's/^C/!/' $(HDFEOS5)/../../include/hdfeos5.inc > temp ; \
+hdfeos5.f9h: $(IHDFEOS5INC)
+	@sed 's/^C/!/' $(IHDFEOS5INC) > temp ; \
 	mv temp hdfeos5.f9h
 
 .PHONY: configure depends clean alltests tar tarz targ mostlyclean \
@@ -315,6 +331,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.58  2010/08/27 20:56:39  pwagner
+# Uses optional HDF*INC Makefile variables
+#
 # Revision 2.57  2009/10/08 23:07:24  pwagner
 # Added workarounds for buggy Intel v11 handling of strings
 #
