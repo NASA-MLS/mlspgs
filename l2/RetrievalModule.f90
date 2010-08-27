@@ -165,6 +165,7 @@ contains
     integer :: IxCovariance             ! Index in tree of outputCovariance
     integer :: IxJacobian               ! Index in tree of Jacobian matrix
     type(matrix_T), pointer :: Jacobian ! The Jacobian matrix
+    type(hessian_T), pointer :: Hessian ! The Hessian                              ! Added by IGOR  -   Need to define Hessian related quantities (similar to Jacobian)
     integer :: Jacobian_Cols            ! Number of columns of the Jacobian.
     integer :: Jacobian_Rows            ! (Number of rows of Jacobian) -
                                         ! (masked-off rows of Jacobian)
@@ -1851,7 +1852,7 @@ NEWT: do ! Newton iteration
               ! Otherwise, we call the forward model as ususal
               do k = 1, size(configIndices)
                 call forwardModel ( configDatabase(configIndices(k)), &
-                  & v(x), fwdModelExtra, v(f_rowScaled), fmStat, jacobian, vectorDatabase )
+                  & v(x), fwdModelExtra, v(f_rowScaled), fmStat, jacobian, hessian, vectorDatabase )      ! Changed by IGOR - added 'hessian'
               end do ! k
               ! Forward model calls add_to_retrieval_timing
             end if
@@ -2812,8 +2813,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
-! Revision 2.310  2010/08/06 23:08:48  pwagner
-! Pass Hessians, matrices to DumpCommand
+! Revision 2.311  2010/08/27 06:31:45  yanovsky
+! Added   type(hessian_T), pointer :: Hessian  in Retrieve subroutine.
+! Hessian is an actual argument in a call to forwardModel.
 !
 ! Revision 2.309  2010/03/24 20:56:46  vsnyder
 ! Add Hessian database to DumpBlocks call
