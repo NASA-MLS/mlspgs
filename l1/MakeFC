@@ -117,12 +117,6 @@ PROG_prereqs := $(CONFDIR)/$(MLSCFILE) \
    $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a \
    $(INSTALLDIR)/libutctotai.a
 
-ifdef HDFVERSIONS
-   PROG_prereqs := $(PROG_prereqs)
-   ADD2PATHS := $(ADD2PATHS) \
-   $(HDF5)/../fortran/src $(HDF5)/../include
-endif
-
 ifndef DONTBUILDPREQS
 BLAS_PREQS := $(blaslib_f) $(libblas_objs)
 LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
@@ -176,11 +170,17 @@ ifdef NOCLEANING
    RECFG = -nd
 endif
 
+ifdef HDF5INC
+   ADD2PATHS := $(ADD2PATHS) $(HDF5INC)
+else
+   ADD2PATHS := $(ADD2PATHS) $(HDF5)/../fortran/src $(HDF5)/../include
+endif
+
 #----------------------- Build instructions
 
 $(PROG):  $(PROG_prereqs)
 	@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
-        UNPREFXDPTHS="$(ADD2PATHS) $(HDF5)/../fortran/src $(HDF5)/../include" ;\
+        UNPREFXDPTHS="$(ADD2PATHS)" ;\
         return_status=`expr $$?` ; \
         if [ $$return_status != "0" ]; then \
 		     exit 2 ; \
@@ -195,7 +195,7 @@ $(PLATFORMS)/$(MLSCONFG)/mlsl1log \
 $(PLATFORMS)/$(MLSCONFG)/mlslg \
 $(PLATFORMS)/$(MLSCONFG)/mlsl1t : $(PROG)
 	@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
-        UNPREFXDPTHS="$(ADD2PATHS) $(HDF5)/../fortran/src $(HDF5)/../include" ;\
+        UNPREFXDPTHS="$(ADD2PATHS)" ;\
         return_status=`expr $$?` ; \
         if [ $$return_status != "0" ]; then \
 		     exit 2 ; \
@@ -307,6 +307,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl1
 
 # $Log$
+# Revision 2.57  2010/08/27 20:56:39  pwagner
+# Uses optional HDF*INC Makefile variables
+#
 # Revision 2.56  2008/07/11 23:59:19  pwagner
 # 1st changes to get sunstudio to link mlsl2
 #
