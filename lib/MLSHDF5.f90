@@ -534,6 +534,7 @@ contains ! ======================= Public Procedures =========================
     character(len=MAXCHFIELDLENGTH), dimension(1) :: chValue
     character(len=MAXCHFIELDLENGTH), dimension(:), pointer :: ch1dArray
     character(len=1), dimension(:,:,:), pointer :: chArray
+    character(len=80), dimension(:), pointer :: chLongArray
     ! logical, parameter :: DEEBUG = .false.
     integer, dimension(7) :: dims
     logical :: dontPrintName
@@ -712,6 +713,12 @@ contains ! ======================= Public Procedures =========================
             ! call dump ( trim(chValue(1)), trim(namePrinted) )
             if ( len_trim(namePrinted) > 0 ) call output( 'name: ' // trim(name), advance='yes' )
             call output( trim(chValue(1)), advance='yes' )
+          elseif ( dims(1) > 999 ) then
+            ! In case we have a very long array, e.g. dates
+            call allocate_test( chLongArray, dims(1), 'chLongArray', ModuleName )
+            call LoadFromHDF5DS ( groupID, name, chLongArray )
+            call dump ( chLongArray, trim(namePrinted) )
+            call deallocate_test( chLongArray, 'chLongArray', ModuleName )
           else
             call allocate_test( ch1dArray, dims(1), 'ch1dArray', ModuleName )
             call LoadFromHDF5DS ( groupID, name, ch1dArray )
@@ -5060,6 +5067,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.100  2010/08/27 20:59:06  pwagner
+! Reduced character length array name chLongArray for long arrays so we dont exhaust memory
+!
 ! Revision 2.99  2010/02/04 23:08:00  vsnyder
 ! Remove USE or declaration for unused names
 !
