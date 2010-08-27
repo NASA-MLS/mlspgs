@@ -169,10 +169,6 @@ else
    tk_message=Building mlslib without toolkit; using SDPToolkitSubstitute
 endif
 
-ifdef HDFVERSIONS
-   he5lib_message=mlslib will support files with either hdf version
-endif
-
 libmls.a: ${OBJS} ${MACH_OBJS} ${PVM_OBJS}
 		@if [ "$(MODULES)" != "" -a "$(MARK_ALL_AS_UPTODATE)" = "yes" ]; then \
 		 $(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -fyes ; \
@@ -181,7 +177,6 @@ libmls.a: ${OBJS} ${MACH_OBJS} ${PVM_OBJS}
 		@echo "$(blas_message)"
 		@echo "$(lapack_message)"
 		@echo "$(tk_message)"
-		@echo "$(he5lib_message)"
 ifeq ($(delete_lib_first),yes)
 		rm -f $@
 endif
@@ -203,6 +198,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.53  2009/12/01 21:33:15  pwagner
+# May use the REECHOMACHOPTS mechanism to exclude certain files from machines
+#
 # Revision 1.52  2009/07/17 20:27:32  pwagner
 # Added COPTS as cc options
 #

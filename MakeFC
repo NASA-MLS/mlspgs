@@ -404,6 +404,31 @@ endif
 # Here are some miscellaneous variables for special tools
 MIESOURCESWITHHDF = $(shell ${REECHO} -excl $(MIE)/WriteNoHDF_m.f90 $(MIE)/*.f90 $(MIE)/math77/*.f)
 MIESOURCESWOHDF = $(shell ${REECHO} -excl $(MIE)/WriteHDF_m.f90 $(MIE)/*.f90 $(MIE)/math77/*.f)
+
+ifdef HDFINC
+   IHDFINC := -I $(HDFINC)
+else
+   IHDFINC := -I $(HDF)/../include
+endif
+
+ifdef HDF5INC
+   IHDF5INC := -I $(HDF5INC)
+else
+   IHDF5INC := -I $(HDF5)/../fortran/src -I $(HDF5)/../include
+endif
+
+ifdef HDFEOSINC
+   IHDFEOSINC := -I $(HDFEOSINC)
+else
+   IHDFEOSINC := -I $(HDFEOS)/../include
+endif
+
+ifdef HDFEOS5INC
+   IHDFEOS5INC := -I $(HDFEOS5INC)
+else
+   IHDFEOS5INC := -I $(HDFEOS5)/../include
+endif
+
 #----------------------- Build instructions
 
 # Automatic targets
@@ -765,9 +790,9 @@ heconvert: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/convert.c $(MLSBIN)/HE5_HdfEosDef.h
       -c $(MLSCONFG) -p $@ -M $(MAKE) \
 	   -C $(MLSCFILE) $(MLSBIN)/convert.c \
       -I $(MLSBIN) \
-      -I $(HDFEOS5)/../../include \
-      -I $(HDFEOS)/../../include \
-      -I $(HDF)/../include -I $(HDF5)/../include -I $(HDF5)/../src \
+      $(IHDFEOS5INC) \
+      $(IHDFEOSINC) \
+      $(IHDFINC) $(IHDF5INC) \
       $(UTIL_OPTS) -main convert.c
    
 init_gen: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/init_gen.f90
@@ -779,7 +804,7 @@ h5subset: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/h5subset.c
 	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
       -c $(MLSCONFG) -p $@ -M $(MAKE) \
 	   -C $(MLSCFILE) \
-      -i "-I $(HDF5)/../include" \
+      -i "$(IHDF5INC)" \
       $(UTIL_OPTS) -main h5subset.c\
       $(MLSBIN)/$@.c
 
@@ -787,7 +812,7 @@ h5cat: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/h5cat.c
 	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
       -c $(MLSCONFG) -p $@ -M $(MAKE) \
 	   -C $(MLSCFILE) \
-      -i "-I $(HDF5)/../include" \
+      -i "$(IHDF5INC)" \
       $(MLSBIN)/$@.c \
       $(UTIL_OPTS) -main h5cat.c
 
@@ -812,7 +837,7 @@ l1h5subset: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l1h5subset.c
 	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
       -c $(MLSCONFG) -p $@ -M $(MAKE) \
 	   -C $(MLSCFILE) \
-      -i "-I $(HDF5)/../include" \
+      -i "$(IHDF5INC)" \
       $(UTIL_OPTS) -main l1h5subset.c\
       $(MLSBIN)/$@.c
 
@@ -1223,6 +1248,9 @@ tools: chunktimes checkpvmup compare dateconverter heconvert h5subset h5cat hl \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.125  2010/08/20 23:40:52  pwagner
+# Can now build l2pcdump
+#
 # Revision 1.124  2010/06/29 20:11:34  pwagner
 # install-cfm also copies cfm.mod into INSTALLDIR
 #

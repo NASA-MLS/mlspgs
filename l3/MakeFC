@@ -116,10 +116,6 @@ PROG_prereqs := $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
 	  $(libmls_objs)/libmls.a $(REECHO) \
      $(INSTALLDIR)/libutctotai.a
 
-ifdef HDFVERSIONS
-   PROG_prereqs := $(PROG_prereqs)
-endif
-
 ifndef DONTBUILDPREQS
 ifdef BLAS
    LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
@@ -174,12 +170,17 @@ ifdef NOCLEANING
    RECFG = -nd
 endif
 
+ifdef HDF5INC
+   ADD2PATHS := $(ADD2PATHS) $(HDF5INC)
+else
+   ADD2PATHS := $(ADD2PATHS) $(HDF5)/../fortran/src $(HDF5)/../include
+endif
+
 #----------------------- Build instructions
 
-#$(PROG): $(PLATFORMS)/$(MLSCONFG)/libmlsl3.a
 $(PROG): $(PROG_prereqs)
 		@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
-      UNPREFXDPTHS="$(HDF5)/../fortran/src $(HDF5)/../include" ; \
+      UNPREFXDPTHS="$(ADD2PATHS)" ; \
         return_status=`expr $$?` ; \
         if [ $$return_status != "0" ]; then \
 		     exit 2 ; \
@@ -190,7 +191,7 @@ $(PROG): $(PROG_prereqs)
 
 $(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
 		@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
-      UNPREFXDPTHS="$(HDF5)/../fortran/src $(HDF5)/../include" ; \
+      UNPREFXDPTHS="$(ADD2PATHS)" ; \
         return_status=`expr $$?` ; \
         if [ $$return_status != "0" ]; then \
 		     exit 2 ; \
@@ -198,19 +199,6 @@ $(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
 		     $(MAKE) mark_all_as_uptodate \
            MARK_ALL_AS_UPTODATE= ;\
          fi
-
-# > $(PLATFORMS)/$(MLSCONFG)/libmlsl3.a: $(PROG_prereqs)
-# > 	@case "$(FFTW_ROOT)" in \
-# > 	"") \
-# > 		echo "Sorry--FFTW_ROOT must be defined to build mlsl3" ; \
-# > 		echo "Try make configure_pvm" ; \
-# > 		exit 2 ; \
-# > 		;; \
-# > 	*) \
-# > 		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) libmlsl3.a  \
-# >       UNPREFXDPTHS="$(HDF5)/../fortran/src $(HDF5)/../include"; \
-# > 		;; \
-# > 	esac 
 
 $(libmls_objs)/libmls.a: $(LIB_prereqs)
 	@if [ "$(NOHUNTING)" != "" ] ; then \
@@ -314,6 +302,9 @@ targ:
    --exclude \*.mod --exclude $(PROG)
 
 # $Log$
+# Revision 1.54  2008/07/11 23:59:19  pwagner
+# 1st changes to get sunstudio to link mlsl2
+#
 # Revision 1.53  2008/04/22 17:20:37  pwagner
 # CASCADE no longer affects where Makefile.dep goes
 #

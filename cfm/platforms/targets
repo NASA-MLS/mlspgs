@@ -263,11 +263,10 @@ $(PROG_NAME): $(prereqs)
 		@echo "$(mlspack_message)"
 		@echo "$(utctotai_message)"
 		$(FC) $(LDOPTS) -o $(PROG_NAME) $(PROG_NAME).o $(PVM_OBJS)  \
-                      -L./ -lcfm \
+      -L./ -lcfm \
         $(cloud_linker_line) \
         $(fwdmdl_linker_line) \
-        $(he5lib_linker_line) \
-                      -L${libdir} -lmls \
+      -L${libdir} -lmls \
         $(utctotai_linker_line) \
 		-L${PGSTK} -lPGSTK \
         -L${HDFEOS} -lhdfeos \
@@ -391,6 +390,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.4  2010/07/22 17:44:00  pwagner
+# May make shared object libraries
+#
 # Revision 1.3  2010/06/29 16:49:51  pwagner
 # Now builds mockup2 using libcfm_all.a
 #

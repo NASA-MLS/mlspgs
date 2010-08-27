@@ -42,12 +42,6 @@ libfwdmdl_sources=../fwdmdl
 # where forward model objects and libfwdmdl.a are stored
 libfwdmdl_objs=$(libfwdmdl_sources)/$(MLSCONFG)
 
-# where sources (but not OBJS) used for hdf5 file versions are stored
-he5lib=../he5lib
-
-# where he5 objects and libhe5.a are stored
-he5lib_objs=$(he5lib)/$(MLSCONFG)
-
 # where the platforms directory is
 PLATFORMS = .
 
@@ -100,7 +94,6 @@ libfwdmdl_f90 := $(shell ${REECHO} $(libfwdmdl_sources)/*.c \
   $(libfwdmdl_sources)/*.f9h)
 blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.f90 \
   $(blaslib)/*.f9h $(srclib)/*.f9h)
-he5lib_f := $(shell ${REECHO} $(he5lib)/*.c $(he5lib)/*.f $(he5lib)/*.f90)
 machinelib := $(libmls_sources)/machines/$(MLSCONFG)/
 machine_f := $(shell ${REECHO} $(machinelib)/*.c $(machinelib)/*.f \
   $(machinelib)/*.f90)
@@ -117,7 +110,6 @@ else
 endif
 
 FM_LIB_prereqs=$(libfwdmdl_f90) $(libmls_objs)/libmls.a $(libfwdmdl_objs)
-HE5_LIB_prereqs=$(libmls_objs)/libmls.a $(he5lib_f)
 endif
 
 #Where else to look for USEd and INCLUDED files to add to dependency list
@@ -127,11 +119,6 @@ depends_where:=$(libmls_sources) $(srclib) $(libfwdmdl_sources)
 OMIT_SRCS := $(OMIT)
 
 PROG_prereqs=$(PLATFORMS)/$(MLSCONFG) $(libfwdmdl_objs)/libfwdmdl.a
-
-ifdef HDFVERSIONS
-   PROG_prereqs := $(PROG_prereqs) $(he5lib_objs)/libhe5.a
-   ADD2PATHS := $(ADD2PATHS) $(he5lib)
-endif
 
 PROG=libcloud.a
 
@@ -171,11 +158,17 @@ ifdef NOCLEANING
    RECFG = -nd
 endif
 
+ifdef HDF5INC
+   ADD2PATHS := $(ADD2PATHS) $(HDF5INC)
+else
+   ADD2PATHS := $(ADD2PATHS) $(HDF5)/../fortran/src $(HDF5)/../include
+endif
+
 #----------------------- Build instructions
 
 $(PROG): $(PROG_prereqs)
 	@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
-        UNPREFXDPTHS="$(ADD2PATHS) $(HDF5)/../fortran/src $(HDF5)/../include" ; \
+        UNPREFXDPTHS="$(ADD2PATHS)" ; \
         return_status=`expr $$?` ; \
         if [ $$return_status != "0" ]; then \
 		     exit 2 ; \
@@ -186,7 +179,7 @@ $(PROG): $(PROG_prereqs)
 
 $(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
 	@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
-        UNPREFXDPTHS="$(ADD2PATHS) $(HDF5)/../fortran/src $(HDF5)/../include" ; \
+        UNPREFXDPTHS="$(ADD2PATHS)" ; \
         return_status=`expr $$?` ; \
         if [ $$return_status != "0" ]; then \
 		     exit 2 ; \
@@ -207,13 +200,6 @@ $(libfwdmdl_objs)/libfwdmdl.a: $(FM_LIB_prereqs)
 	   rm -f $(libfwdmdl_objs)/libfwdmdl.a ; \
 	fi ; \
 	$(MAKE) -f $(MakeFName) libfwdmdl.a -C $(libfwdmdl_sources) \
-     MARK_ALL_AS_UPTODATE=no DONTBUILDPREQS=TRUE
-
-$(he5lib_objs)/libhe5.a: $(HE5_LIB_prereqs)
-	@if [ "$(NOHUNTING)" != "" ] ; then \
-	   rm -f $(he5lib_objs)/libhe5.a ; \
-	fi ; \
-	$(MAKE) -f $(MakeFName) libhe5.a -C $(he5lib) \
      MARK_ALL_AS_UPTODATE=no DONTBUILDPREQS=TRUE
 
 .PHONY: clean configure depends depends--mod ghostbuster mostlyclean \
@@ -285,6 +271,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 1.31  2008/07/11 23:59:19  pwagner
+# 1st changes to get sunstudio to link mlsl2
+#
 # Revision 1.30  2008/04/22 17:20:01  pwagner
 # CASCADE no longer affects where Makefile.dep goes
 #

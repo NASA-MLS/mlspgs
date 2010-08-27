@@ -155,12 +155,18 @@ ifdef NOCLEANING
    RECFG = -nd
 endif
 
+ifdef HDF5INC
+   ADD2PATHS := $(ADD2PATHS) $(HDF5INC)
+else
+   ADD2PATHS := $(ADD2PATHS) $(HDF5)/../fortran/src $(HDF5)/../include
+endif
+
 #----------------------- Build instructions
 
 $(PROG): $(CONFDIR)/$(MLSCFILE) \
    $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
 	@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
-      UNPREFXDPTHS="$(HDF5)/../fortran/src $(HDF5)/../include" ; \
+      UNPREFXDPTHS="$(ADD2PATHS)" ; \
         return_status=`expr $$?` ; \
         if [ $$return_status != "0" ]; then \
 		     exit 2 ; \
@@ -171,7 +177,7 @@ $(PROG): $(CONFDIR)/$(MLSCFILE) \
 
 $(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
 	@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
-      UNPREFXDPTHS="$(HDF5)/../fortran/src $(HDF5)/../include" ; \
+      UNPREFXDPTHS="$(ADD2PATHS)" ; \
         return_status=`expr $$?` ; \
         if [ $$return_status != "0" ]; then \
 		     exit 2 ; \
@@ -270,6 +276,9 @@ targ:
 	$(TAR) hcvzf ../fwdmdl.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
 
 # $Log$
+# Revision 2.25  2008/07/11 23:59:19  pwagner
+# 1st changes to get sunstudio to link mlsl2
+#
 # Revision 2.24  2008/04/22 17:19:42  pwagner
 # CASCADE no longer affects where Makefile.dep goes
 #
