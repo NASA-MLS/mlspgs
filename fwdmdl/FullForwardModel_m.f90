@@ -33,7 +33,7 @@ contains
   ! -------------------------------------------- FullForwardModel -----
 
   subroutine FullForwardModel ( FwdModelConf, FwdModelIn, FwdModelExtra, &
-                             &  FwdModelOut, FmStat, Jacobian )
+                             &  FwdModelOut, FmStat, Jacobian, Hessian )
 
   ! This gets a little bit of data and then computes the sizes for quantities
   ! in the full forward model proper, FullForwardModelAuto.
@@ -45,6 +45,7 @@ contains
     use ForwardModelIntermediate, only: ForwardModelStatus_t
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use Get_Species_Data_M, only:  Get_Species_Data
+    use HessianModule_1, only: HESSIAN_T
     use Intrinsic, only: L_CLOUDICE, L_MAGNETICFIELD, &
       & L_PHITAN, L_PTAN, L_TEMPERATURE, L_TSCAT, L_VMR
     use Load_Sps_Data_m, only: DestroyGrids_t, Dump, EmptyGrids_T, Grids_T, &
@@ -60,6 +61,7 @@ contains
     type(vector_T), intent(inout) :: FwdModelOut  ! Radiances, etc.
     type(forwardModelStatus_t), intent(inout) :: FmStat ! Reverse comm. stuff
     type(matrix_T), intent(inout), optional :: Jacobian
+    type(hessian_T), intent(inout), optional :: Hessian
 
     real(rp), pointer :: Z_PSIG(:)       ! Surfs from Temperature, tangent grid
                                          ! and species grids, sans duplicates.
@@ -95,6 +97,7 @@ contains
     integer :: MAX_F            ! Length of longest possible fine path
                                 ! (all npf<max_f)
     integer :: S_A  ! Multiplier for atmos derivative sizes, 0 or 1
+    integer :: S_H  ! Multiplier for atmos second derivative sizes, 0 or 1
     integer :: S_I  ! Multiplier for ice/cloud sizes, 0 or 1
     integer :: S_LC ! Multiplier for line center deriv sizes, 0 or 1
     integer :: S_LW ! Multiplier for line width deriv sizes, 0 or 1
@@ -105,7 +108,7 @@ contains
     integer :: S_TG ! Multiplier for TScat generation sizes, 0 or 1
     integer :: S_TS ! Multiplier for using TScat tables, 0 or 1
 
-    logical :: temp_der, atmos_der, spect_der, ptan_der ! Flags for various derivatives
+    logical :: temp_der, atmos_der, atmos_second_der, spect_der, ptan_der ! Flags for various derivatives
     logical :: Spect_Der_Center, Spect_Der_Width, Spect_Der_Width_TDep
 
     nullify ( z_psig, tan_press )
@@ -142,7 +145,9 @@ contains
       & s_ind )
 
     temp_der = present ( jacobian ) .and. FwdModelConf%temp_der
-    atmos_der = present ( jacobian ) .and. FwdModelConf%atmos_der
+    atmos_der = present ( jacobian ) .and. FwdModelConf%atmos_der      
+    atmos_second_der = present (hessian ) .and. FwdModelConf%atmos_second_der
+
     ptan_der = ptan_der .and. present ( jacobian )
 
     spect_der = present ( jacobian ) .and. FwdModelConf%spect_der
@@ -221,6 +226,7 @@ contains
     end if
 
     s_a = merge(1,0,atmos_der)
+    s_h = merge(1,0,atmos_second_der)
     s_i = merge(1,0,FwdModelConf%incl_cld)
     s_lc = merge(1,0,spect_der_center)
     s_lw = merge(1,0,spect_der_width)
@@ -240,10 +246,10 @@ contains
                               & sv_t_len, nlvl, no_tan_hts,                    &
                               & surfaceTangentIndex,                           &
                               & max_c, maxVert, max_f, s_ind, ptan_der,        &
-                              & s_t, s_a, s_lc, s_lw, s_td, s_p, s_pfa, s_i,   &
-                              & s_tg, s_ts,                                    &
+                              & s_t, s_a, s_h, s_lc, s_lw, s_td, s_p, s_pfa,   &
+                              & s_i, s_tg, s_ts,                               &
                               ! Optional:
-                              & Jacobian )
+                              & Jacobian, Hessian )
 
     call destroygrids_t ( grids_f )
     call destroygrids_t ( grids_iwc )
@@ -271,10 +277,10 @@ contains
                               & sv_t_len, nlvl, no_tan_hts,                    &
                               & surfaceTangentIndex,                           &
                               & max_c, maxVert, max_f, S_ind, ptan_der,        &
-                              & s_t, s_a, s_lc, s_lw, s_td, s_p, s_pfa, s_i,   &
-                              & s_tg, s_ts,                                    &
+                              & s_t, s_a, s_h, s_lc, s_lw, s_td, s_p, s_pfa,   &
+                              & s_i, s_tg, s_ts,                               &
                               ! Optional:
-                              & Jacobian )
+                              & Jacobian, Hessian )
 
   ! This is the full radiative transfer forward model, the workhorse code.
   ! It's called FullForwardModelAuto because most of the variable-size
@@ -298,7 +304,8 @@ contains
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use Geometry, only: Get_R_Eq
     use Get_Eta_Matrix_m, only: Eta_D_T ! Type for eta struct
-    use GLnp, only: GX
+    use GLnp, only: GX, NGP1
+    use HessianModule_1, only: HESSIAN_T
     use Intrinsic, only: L_A, L_RADIANCE, L_TScat, L_VMR
     use Load_Sps_Data_m, only: DestroyGrids_t, Dump, Grids_T
     use MatrixModule_1, only: MATRIX_T
@@ -362,6 +369,7 @@ contains
     logical, intent(in) :: PTAN_Der
     integer, intent(in) :: S_T  ! Multiplier for temp derivative sizes, 0 or 1
     integer, intent(in) :: S_A  ! Multiplier for atmos derivative sizes, 0 or 1
+    integer, intent(in) :: S_H  ! Multiplier for atmos second derivative sizes, 0 or 1
     integer, intent(in) :: S_LC ! Multiplier for line center deriv sizes, 0 or 1
     integer, intent(in) :: S_LW ! Multiplier for line width deriv sizes, 0 or 1
     integer, intent(in) :: S_TD ! Multiplier for temp dependence deriv sizes, 0 or 1
@@ -371,7 +379,8 @@ contains
     integer, intent(in) :: S_TG ! Multiplier for TScat generation sizes, 0 or 1
     integer, intent(in) :: S_TS ! Multiplier for using TScat tables, 0 or 1
 
-    type(matrix_T), intent(inout), optional :: Jacobian
+    type(matrix_T),  intent(inout), optional :: Jacobian
+    type(hessian_T), intent(inout), optional :: Hessian
 
     ! Now define local variables, group by type and then
     ! alphabetically
@@ -443,6 +452,7 @@ contains
     logical :: Print_TScat        ! For debugging, from -STScat
     integer :: Print_TScat_Detail ! For debugging, from -S[pP]sct
     logical :: temp_der, atmos_der, spect_der ! Flags for various derivatives
+    logical :: atmos_second_der   ! Flag for atmos second derivatives
     logical :: Spect_Der_Center, Spect_Der_Width, Spect_Der_Width_TDep
 
     character (len=127) :: SigName      ! Name of a Signal
@@ -584,6 +594,11 @@ contains
       &   max(sv_t_len,size(grids_f%values), &
       &       size(grids_w%values), size(grids_n%values), size(grids_v%values)), &
       & size(fwdModelConf%usedDACSSignals) )
+    
+    real(rp) :: DACsStaging3( lbound(DACsStaging2,1):ubound(DACsStaging2,1), &
+                            & lbound(DACsStaging2,2):ubound(DACsStaging2,2), &
+                            & lbound(DACsStaging2,2):ubound(DACsStaging2,2), &
+                            & size(fwdModelConf%usedDACSSignals)                )
 
     real(rp), target :: DH_DT_GLGRID(maxVert,n_t_zeta,s_t*no_sv_p_t)
 
@@ -614,6 +629,7 @@ contains
     real(rp) :: TAN_PHI(no_tan_hts)
     real(rp) :: DDHIDHIDTL0(maxVert,n_t_zeta,s_t*no_sv_p_t)
     real(r4) :: K_ATMOS(noUsedChannels,no_tan_hts,s_a*size(grids_f%values))
+    real(r4) :: H_ATMOS(noUsedChannels,no_tan_hts,s_h*size(grids_f%values),s_h*size(grids_f%values))
     ! Channels x pointings x grid values == frequencies x surfaces x instances x molecules:
     real(r4) :: K_SPECT_DN(noUsedChannels,no_tan_hts,s_td*size(grids_n%values))
     real(r4) :: K_SPECT_DV(noUsedChannels,no_tan_hts,s_lc*size(grids_v%values))
@@ -703,6 +719,7 @@ contains
     real(rp), pointer :: K_SPECT_DW_FRQ(:,:) ! ****
     real(rp), pointer :: K_TEMP_FRQ(:,:)   ! dI/dT, ptg.frq X T-SV
     real(rp), pointer :: T_SCRIPT_LBL(:,:) ! Delta_B in some notes, Path X Frq
+    real(rp), pointer :: H_ATMOS_FRQ(:,:,:)  ! d2I/(dVMRq dVMRr), ptg.frq X vmr-SVq X vmr-SVr
 
     ! Used only to schlep from Convolution_Setup to Convolution
     real(rp) :: DH_DZ_OUT(ptan%template%nosurfs)
@@ -801,7 +818,7 @@ contains
 
     nullify ( dAlpha_dT_path_c, beta_path_c, frequencies, inc_rad_path, &
       & k_atmos_frq, k_spect_dn_frq, k_spect_dv_frq, k_spect_dw_frq, &
-      & k_temp_frq, RadV, t_script_lbl )
+      & k_temp_frq, h_atmos_frq, RadV, t_script_lbl )
 
     ! Nullify pointers that are used to control whether calculations get done
     nullify ( linecenter_ix, linewidth_ix, linewidth_tdep_ix )
@@ -971,11 +988,12 @@ contains
       if ( temp_der ) &
         & call deallocate_test ( k_temp_frq,   'k_temp_frq',       moduleName )
 
-      call deallocate_test ( k_atmos_frq,  'k_atmos_frq',      moduleName )
+      call deallocate_test ( k_atmos_frq,  'k_atmos_frq',          moduleName )
+      call deallocate_test ( h_atmos_frq,  'h_atmos_frq',          moduleName )
 
-      call deallocate_test ( k_spect_dw_frq, 'k_spect_dw_frq',   moduleName )
-      call deallocate_test ( k_spect_dn_frq, 'k_spect_dn_frq',   moduleName )
-      call deallocate_test ( k_spect_dv_frq, 'k_spect_dv_frq',   moduleName )
+      call deallocate_test ( k_spect_dw_frq, 'k_spect_dw_frq',     moduleName )
+      call deallocate_test ( k_spect_dn_frq, 'k_spect_dn_frq',     moduleName )
+      call deallocate_test ( k_spect_dv_frq, 'k_spect_dv_frq',     moduleName )
 
       if ( toggle(emit) .and. levels(emit) > 1 ) &
         & call trace_end ( 'ForwardModel.Sideband ',index=thisSideband )
@@ -1092,6 +1110,7 @@ contains
 
       temp_der = present ( jacobian ) .and. FwdModelConf%temp_der
       atmos_der = present ( jacobian ) .and. FwdModelConf%atmos_der
+      atmos_second_der = present ( hessian ) .and. FwdModelConf%atmos_second_der
 
       spect_der = present ( jacobian ) .and. FwdModelConf%spect_der
       spect_der_center = spect_der .and. size(fwdModelConf%lineCenter) > 0
@@ -1260,7 +1279,7 @@ contains
       use AntennaPatterns_m, only: ANTENNAPATTERNS
       use Intrinsic, only: L_ELEVOFFSET, L_LIMBSIDEBANDFRACTION
       use Convolve_All_m, only: Convolve_Radiance, Convolve_Temperature_Deriv, &
-        & Convolve_Other_Deriv, Interpolate_Radiance, &
+        & Convolve_Other_Deriv, Convolve_Other_Second_Deriv, Interpolate_Radiance, &
         & Interpolate_Temperature_Deriv, Interpolate_Other_Deriv
       use FOV_Convolve_m, only: Convolve_Support_T, FOV_Convolve_Setup, &
         & FOV_Convolve_Teardown, No_FFT
@@ -1403,6 +1422,13 @@ contains
               & thisFraction, update, thisRadiance, beta_group%qty, Grids_f, &
               & L1BMIF_TAI, MIFDeadTime, real(k_atmos(i,:,:),kind=rp), &
               & Jacobian, fmStat%rows )
+            
+              if (atmos_second_der ) then
+                  call convolve_other_second_deriv ( convolve_support, maf, chanInd, &
+                  & thisFraction, update, thisRadiance, beta_group%qty, Grids_f, &
+                  & L1BMIF_TAI, MIFDeadTime, real(h_atmos(i,:,:,:),kind=rp), &
+                  & Hessian, fmStat%rows )
+            end if
           end if
 
           if ( spect_der_center ) &
@@ -1634,7 +1660,15 @@ contains
                             ! PFA and no frequency averaging
       end select
 
-      if ( any_der ) call frequency_average_derivatives ( ptg_i, frq_avg_sel == 15 )
+      if ( any_der ) then
+        call frequency_average_derivatives ( ptg_i, frq_avg_sel == 15 )
+        
+        if ( atmos_second_der ) then
+          call frequency_average_second_derivatives ( ptg_i, frq_avg_sel == 15 )
+        end if
+      
+      end if
+
 
       if ( toggle(emit) .and. levels(emit) > 4 ) &
         & call trace_end ( 'ForwardModel.FrequencyAvg' )
@@ -1770,6 +1804,7 @@ contains
 
     end subroutine Frequency_Average_Derivatives
 
+
   ! .....................................  Frequency_Avg_Rad_Path  .....
     subroutine Frequency_Avg_Path ( Frequencies, Path_Freq, Path_Chan )
       ! For every channel, frequency average Path_Freq at every point
@@ -1796,6 +1831,128 @@ contains
         end if
       end do
     end subroutine Frequency_Avg_Path
+
+
+  ! ...............................  Frequency_Average_Second_Derivative  .....
+    subroutine Frequency_Average_Second_Derivative ( Grids, H_Frq, H, Mol1, Mol2, Combine )
+
+      ! Frequency average or simply copy H_Frq to give H, the final HESSIAN
+
+      use Freq_Avg_m, only: Freq_Avg, Freq_Avg_DACS
+
+      type(grids_T), intent(in) :: Grids
+      real(rp), intent(in) :: H_FRQ(:,:,:)    ! To be averaged  Frq X Grid X Grid
+      real(r4), intent(inout) :: H(:,:,:)     ! Averaged        Chan X Grid X Grid
+      integer, intent(in) :: Mol1, Mol2       ! Which molecules
+      logical, intent(in) :: Combine        ! "Combine LBL and PFA"
+
+      integer :: C, ShapeInd
+      real(rp) :: H_AVG      ! Frequency-averaged value
+      integer :: SV_Q, SV_R  ! State-vector indexes
+
+      if ( combine ) then
+        ! Simply add newly-computed PFA derivatives in K_frq to
+        ! previously-averaged LBL derivatives in K.  Remember that
+        ! for PFA, the frequency dimension has extent noUsedChannels,
+        ! not maxNoPtgFreqs.  The first dimension of K_frq is at least
+        ! noUsedChannels, so we're guaranteed this will fit.
+        do c = 1, noUsedChannels
+          do sv_q = grids%l_v(mol1-1)+1, grids%l_v(mol1)
+            do sv_r = grids%l_v(mol2-1)+1, grids%l_v(mol2)
+              h(c,sv_q,sv_r) = h(c,sv_q,sv_r) + h_frq(c,sv_q,sv_r)
+            end do
+          end do
+        end do
+        return
+      end if
+
+      ! Only possible values for Frq_avg_sel here are 3, 11, 13, 15.
+      ! See Frequency_Average for definition of Frq_avg_sel.
+
+      select case ( frq_avg_sel )
+      case ( 11, 15 ) ! See Frequency_Average.
+        ! Do DACs stuff for all DACs channels first
+        do c = 1, noUsedDACS
+          shapeInd = MatchSignal ( dacsFilterShapes%filter%signal, &
+            & fwdModelConf%signals(usedDacsSignals(c)), sideband = thisSideband )
+          
+          do sv_q = grids%l_v(mol1-1)+1, grids%l_v(mol1)
+            do sv_r = grids%l_v(mol2-1)+1, grids%l_v(mol2)
+              call Freq_Avg_DACS ( frequencies, DACSFilterShapes(shapeInd), h_frq(:,sv_q,sv_r), DACsStaging3(:,sv_q,sv_r,c) )
+            end do
+          end do                  ! Surface loop X Instance loop
+        
+        end do
+        
+       ! Now go through channel by channel
+        do c = 1, noUsedChannels
+          shapeInd = channels(c)%shapeInds(sx)
+          do sv_q = grids%l_v(mol1-1)+1, grids%l_v(mol1)
+            do sv_r = grids%l_v(mol2-1)+1, grids%l_v(mol2)
+              if ( grids%deriv_flags(sv_q) .and. grids%deriv_flags(sv_r) ) then
+                if ( channels(c)%dacs == 0 ) then
+                  call Freq_Avg ( frequencies,            &
+                    & FilterShapes(shapeInd)%FilterGrid,  &
+                    & FilterShapes(shapeInd)%FilterShape, &
+                    & h_frq(:,sv_q,sv_r), h_avg )
+                else
+                  h_avg = DACsStaging3 ( channels(c)%used, sv_q, sv_r, channels(c)%dacs )
+                end if
+              else
+                h_avg = 0.0
+              end if
+              h(c,sv_q,sv_r) = h_avg
+            end do              ! Grid loop 2
+          end do                ! Grid loop 1  
+        end do                  ! Channel loop
+      case ( 3, 13 )            ! Not frequency averaging, or PFA alone; copy.
+        do sv_q = grids%l_v(mol1-1)+1, grids%l_v(mol1)
+          do sv_r = grids%l_v(mol2-1)+1, grids%l_v(mol2)
+            if ( grids%deriv_flags(sv_q) .and. grids%deriv_flags(sv_r) ) then
+              h(:,sv_q,sv_r) = min ( max ( h_frq(:,sv_q,sv_r), &
+                            &   real(-huge(0.0_r4), rp ) ), &
+                            &   real( huge(0.0_r4), rp ) )
+            else
+              h(:,sv_q,sv_r) = 0.0
+            end if
+          end do
+        end do
+      case default             ! Impossible
+      end select               ! Frequency averaging or not
+    end subroutine Frequency_Average_Second_Derivative
+
+
+  ! ..............................  Frequency_Average_Second_Derivatives  .....
+    subroutine Frequency_Average_Second_Derivatives ( Ptg_i, Combine )
+      integer, intent(in) :: Ptg_i          ! Pointing index
+      logical, intent(in) :: Combine        ! "Combine LBL and PFA"
+
+      integer :: K, KK  ! Loop inductor
+      integer :: UB     ! Upper bound for first dimension of h_..._frq
+
+      ub = noFreqs
+      if ( combine ) ub = max(ub,noUsedChannels)
+
+      ! Frequency Average the atmospheric (ONLY) SECOND derivatives
+      ! with the appropriate filter shapes
+      if ( atmos_second_der ) then
+
+        do k = 1, no_mol
+          do kk = 1, no_mol
+
+            if ( fwdModelConf%moleculeSecondDerivatives(k) .and. fwdModelConf%moleculeSecondDerivatives(kk) ) then
+              call frequency_average_second_derivative ( grids_f, h_atmos_frq(:ub,:,:), h_atmos(:,ptg_i,:,:), k, kk, combine )
+            else
+              h_atmos(:, ptg_i, grids_f%l_v(k-1)+1:grids_f%l_v(k), grids_f%l_v(kk-1)+1:grids_f%l_v(kk)) = 0.0
+            end if
+
+          end do                      ! Loop over major molecules
+        end do                        ! Loop over major molecules
+
+      end if                          ! Want derivatives for atmos
+
+    end subroutine Frequency_Average_Second_Derivatives
+
 
   ! ..........................................  Frequency_Setup_1  .....
     subroutine Frequency_Setup_1 ( Tan_Press, Grids )
@@ -1908,6 +2065,12 @@ contains
       if ( atmos_der ) sv_dim = size(grids_f%values)
       call allocate_test ( k_atmos_frq, max(maxNoPtgFreqs,noUsedChannels), &
                          & sv_dim, 'k_atmos_frq', moduleName )
+
+      sv_dim = 0
+      if ( atmos_second_der ) sv_dim = size(grids_f%values)
+      call allocate_test ( h_atmos_frq, max(maxNoPtgFreqs,noUsedChannels), &
+                         & max(maxNoPtgFreqs,noUsedChannels), &
+                         & sv_dim, 'h_atmos_frq', moduleName )
 
       sv_dim = 0
       if ( spect_der_width ) sv_dim = size(grids_w%values)
@@ -2580,8 +2743,8 @@ contains
       & H_Path_C, Tan_Ht, IncOptDepth, P_Path, PFA, Ref_Corr, Sps_Path,     &
       & Tau, T_Path_c, T_Script, Tanh1_c, TT_Path_c, W0_Path_c,             &
       & Z_Path, I_Start, I_End, Inc_Rad_Path, RadV, dAlpha_dT_Path_C,       &
-      & K_Atmos_Frq, K_Spect_dN_Frq, K_Spect_dV_Frq, K_Spect_dW_Frq,        &
-      & K_Temp_Frq )
+      & K_Atmos_Frq, H_Atmos_Frq, K_Spect_dN_Frq, K_Spect_dV_Frq,           &
+      & K_Spect_dW_Frq, K_Temp_Frq )
 
       ! Having arguments instead of using host association serves two
       ! purposes:  The array sizes are implicit, so we don't need explicitly
@@ -2602,7 +2765,7 @@ contains
       use Path_Contrib_M, only: Path_Contrib
       use Physics, only: H_OVER_K
       use RAD_TRAN_M, only: RAD_TRAN_POL, DRAD_TRAN_DF, &
-        & DRAD_TRAN_DT, DRAD_TRAN_DX
+        & D2RAD_TRAN_DF2, DRAD_TRAN_DT, DRAD_TRAN_DX
       use Read_Mie_m, only: F_s
       use ScatSourceFunc, only: T_SCAT, Interp_Tscat, Convert_Grid
       use Tau_M, only: Get_Tau
@@ -2640,6 +2803,7 @@ contains
       ! INC_RAD_PATH is (out) if .not. PFA, and (inout) if PFA
       real(rp), intent(inout) :: INC_RAD_PATH(:) ! Incremental radiance along the path
       real(rp), intent(out) :: K_ATMOS_FRQ(:)  ! dI/dVMR, ptg.frq X vmr-SV
+      real(rp), intent(out) :: H_ATMOS_FRQ(:,:) ! d2I/(dVMRq dVMRr), ptg.frq X vmr-SVq X vmr-SVr
       real(rp), intent(out) :: K_SPECT_DN_FRQ(:) ! ****
       real(rp), intent(out) :: K_SPECT_DV_FRQ(:) ! ****
       real(rp), intent(out) :: K_SPECT_DW_FRQ(:) ! ****
@@ -3084,6 +3248,15 @@ contains
           &  inc_rad_path, dBeta_dIWC_path_c, dBeta_dIWC_path_f,       &
           &  i_cloud_a, i_start, tan_pt_c, i_stop, size(d_delta_df,1), &
           &  d_delta_df, nz_d_delta_df, nnz_d_delta_df, k_atmos_frq )
+
+          if ( atmos_second_der ) then
+          call d2rad_tran_df2 ( max_f, c_inds, gl_inds, del_zeta, Grids_f, &
+            &  beta_path_c, eta_fzp, sps_path, do_calc_fzp,                &
+            &  beta_path_f, do_gl, del_s, ref_corr, dsdz_gw_path,          &
+            &  inc_rad_path, dBeta_dIWC_path_c, dBeta_dIWC_path_f,         &
+            &  i_cloud_a, i_start, tan_pt_c, i_stop, size(d_delta_df,1),   &
+            &  d_delta_df, nz_d_delta_df, nnz_d_delta_df, h_atmos_frq )
+        end if ! atmos_second_der
 
         if ( .not. pfa_or_not_pol ) then ! polarized and not PFA
 
@@ -3936,8 +4109,9 @@ contains
             & w0_path_c(:max(s_i,s_ts)*npc),                                    &
             & z_path(:npf), i_start, i_end, inc_rad_path(:,frq_i), RadV(frq_i), &
             & dAlpha_dT_path_c(:npc,frq_i),                                     &
-            & K_Atmos_Frq(frq_i,:), K_Spect_dN_Frq(frq_i,:),                    &
-            & K_Spect_dV_Frq(frq_i,:), K_Spect_dW_Frq(frq_i,:), K_Temp_Frq(frq_i,:) )
+            & K_Atmos_Frq(frq_i,:), H_Atmos_Frq(frq_i,:,:),                     &
+            & K_Spect_dN_Frq(frq_i,:), K_Spect_dV_Frq(frq_i,:),                 &
+            & K_Spect_dW_Frq(frq_i,:), K_Temp_Frq(frq_i,:) )
         end do
         if ( print_TauL ) then
           call output ( thisSideband, before='Sideband ' )
@@ -3985,8 +4159,9 @@ contains
             & w0_path_c(:max(s_i,s_ts)*npc),                                    &
             & z_path(:npf), i_start, i_end, rad_avg_path(:,frq_i), RadV(frq_i), &
             & dAlpha_dT_path_c(:npc,frq_i),                                     &
-            & K_Atmos_Frq(frq_i,:), K_Spect_dN_Frq(frq_i,:),                    &
-            & K_Spect_dV_Frq(frq_i,:), K_Spect_dW_Frq(frq_i,:), K_Temp_Frq(frq_i,:) )
+            & K_Atmos_Frq(frq_i,:), H_Atmos_Frq(frq_i,:,:),                     &
+            & K_Spect_dN_Frq(frq_i,:), K_Spect_dV_Frq(frq_i,:),                 &
+            & K_Spect_dW_Frq(frq_i,:), K_Temp_Frq(frq_i,:) )
         end do
         if ( print_TauP ) then
           call output ( thisSideband, before='Sideband ' )
@@ -4245,6 +4420,14 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.306  2010/08/19 02:14:03  vsnyder
+! Substantial changes, the most significant being to put the body of the
+! frequency loop in a subroutine of its own called One_Frequency, delete
+! the subroutine Frequency_Loop, put the frequency loop around the calls
+! to One_Frequency, and pass in sections of some arrays that used to be
+! accessed by host association, and subscripted with the frequency index.
+! Also, some other stuff inching toward TScat processing.
+!
 ! Revision 2.305  2010/06/12 01:30:54  vsnyder
 ! Give frequency dimension to alpha_path_c and beta_path_c.  Make
 ! Frequency_Loop the body of the frequency loop instead of doing the
