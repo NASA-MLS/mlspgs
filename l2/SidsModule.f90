@@ -296,9 +296,15 @@ contains
             fmStat%maf = maf
               call add_to_retrieval_timing( 'sids', t1 )
             if ( getAnaJac ) then
-              call forwardModel ( configDatabase(configs(config)), &
-                & FwdModelIn, FwdModelExtra, &
-                & FwdModelOut, fmStat, Jacobian, vectorDatabase )
+              if ( associated ( Hessian ) ) then
+                call forwardModel ( configDatabase(configs(config)), &
+                  & FwdModelIn, FwdModelExtra, &
+                  & FwdModelOut, fmStat, Jacobian, Hessian, vectorDatabase )
+              else
+                call forwardModel ( configDatabase(configs(config)), &
+                  & FwdModelIn, FwdModelExtra, &
+                  & FwdModelOut, fmStat, Jacobian, vectors=vectorDatabase )
+              end if
             else
               call forwardModel ( configDatabase(configs(config)), &
                 & FwdModelIn, FwdModelExtra, &
@@ -449,6 +455,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.59  2010/08/27 06:36:41  yanovsky
+! Can now call forwardModel with Hessian as argument
+!
 ! Revision 2.58  2010/08/06 23:04:24  pwagner
 ! Added 'hess' switch
 !
