@@ -209,6 +209,8 @@ because it is very important. E.g., an empty value for the toolkit path will
 even prevent successfully compiling any of the mls sources. Fortunately, the
 configuration will have to done only this once.
 
+See below for a list and explanation of the Makefile canonical variables.
+
 BUILDING ONLY PARTS OF THE SOFTWARE
 If you wish to build only lib, for example, you may specify that target,
 i.e.
@@ -736,6 +738,38 @@ REECHOMACHOPTS     extra command line options used when reechoing contents of
 REECHOMACHOPTS=-excl ieee_arithmetic.f90
                     says to use internal ieee_arithmetic support
 
+MAKEFILE CANONICAL VARIABLES
+These either are defined explicitly by the .configure file, or assume default
+values. Sometimes the default values work quite well. Other times, e.g. for the 
+case where GMAO assembled all the Baselibs in a single subdirectory, leaving
+all the include files back in the source directories, you must carefully
+define HDF5INC to indicate this separation because the default value
+""$HDF5/../../src $HDF5/../../include" won't work.
+
+All the settings above count as canonical variables. In addition to 
+those are the following
+MLSF95          One of NAG, LF95, IFC, ..
+MLSPLAT         One of Linux, Sun, SGI
+MLSCONFG        Name of subdirectory where compiled objects to be stored
+MLSTKROOT       Top level of toolkit directory
+PGSINC          Location of toolkit include files
+PGSTK           Location of toolkit libraries
+HDFEOS          Location of hdfeos(2) libraries
+HDFEOSINC       Location of hdfeos(2) include files
+HDFEOS5         Location of hdfeos(5) libraries
+HDFEOS5INC      Location of hdfeos(5) include files
+HDF             Location of hdf4 libraries
+HDFINC          Location of hdf4 include files
+HDF5            Location of hdf5 libraries
+HDF5INC         Location of hdf5 include files and .mod files
+GCTP            Location of libGctp.a (usu. same as HDFEOS)
+PGSLIB          Same as PGSTK
+HDFEOS_LIB      Same as HDFEOS
+HDFLIB          Same as HDF
+COPTS           Options to c compiler when compiling .c sources
+FOPTS           Options to Fortran compiler when compiling .f90 sources
+LDOPTS          Options to Fortran compiler when linking
+
 ASSORTED COMMENTS
 The sources currently must reside directly under the mlslevels, and this fact
 is "hard-wired" into the Makefiles.  It may become desirable to segregate them
@@ -803,29 +837,33 @@ MLSINSTALLDIR      install puts all the executables here instead of
 
 EXAMPLE OF A .configure FILE
 #	.configure for mls
-TK=/software/toolkit/NAG
-MLSF95=NAG
+USEMYFC=yes
+FC=/usr/local/intel/11.1/056/bin/intel64/ifort
+MLSF95=IFC
 MLSPLAT=Linux
-MLSCONFG=NAG.Linux
-PGSINC=${TK}/toolkit/include
-PGSTK=${TK}/toolkit/lib/linux
-HDFEOS=${TK}/hdfeos/lib/linux
-HDFEOS5=${TK}/hdfeos5/lib/linux
-HDF=${TK}/hdf/lib
-HDF5=${TK}/hdf5/lib
-GCTP=${TK}/hdfeos/lib/linux
-PGSLIB=${TK}/toolkit/lib/linux
-HDFEOS_LIB=${TK}/hdfeos/lib/linux
-HDFLIB=${TK}/hdf/lib
+MLSCONFG=IFC.Linux.ifc11-64
+MLSTKROOT=/software/toolkit/ifc11-64
+PGSINC=${MLSTKROOT}/toolkit/include
+PGSTK=${MLSTKROOT}/toolkit/lib/linux
+HDFEOS=${MLSTKROOT}/hdfeos/lib/linux
+HDFEOS5=${MLSTKROOT}/hdfeos5/lib/linux
+HDF=${MLSTKROOT}/hdf/lib
+HDF5=${MLSTKROOT}/hdf5/lib
+GCTP=${MLSTKROOT}/hdfeos/lib/linux
+PGSLIB=${MLSTKROOT}/toolkit/lib/linux
+HDFEOS_LIB=${MLSTKROOT}/hdfeos/lib/linux
+HDFLIB=${MLSTKROOT}/hdf/lib
 BLAS=
 LIB_BLAS=
 LAPACK=
 LIB_LAPACK=f95
-PVM_ROOT=${TK}/pvm3
+PVM_ROOT=${MLSTKROOT}/pvm3
 PVM_ARCH=LINUX
-FFTW_ROOT=${TK}/fftw/lib
-FOPTS=-O2 -C=none
-LDOPTS=-Bstatic
+FFTW_ROOT=${MLSTKROOT}/fftw/lib
+COPTS=-D H5_USE_16_API
+FOPTS=-vec-report0 -traceback -xSSSe3
+LDOPTS=-static -xSSSe3
+REECHOMACHOPTS=-excl ieee_arithmetic.f90
 export MLSF95
 export MLSPLAT
 export MLSCONFG
@@ -846,13 +884,17 @@ export LIB_LAPACK
 export PVM_ROOT
 export PVM_ARCH
 export FFTW_ROOT
+export COPTS
 export FOPTS
 export LDOPTS
 
--pw                           2000-Oct-24 to 2009-Dec-08
+-pw                           2000-Oct-24 to 2010-Aug-27
 EOF
 exit
 # $Log$
+# Revision 1.41  2009/12/09 01:13:42  pwagner
+# Brought up-to-date with cfm, doc, and 64-bit Intel
+#
 # Revision 1.40  2007/05/29 18:04:14  pwagner
 # compiler-specific settings now in srclib, not platforms
 #
