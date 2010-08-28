@@ -24,9 +24,9 @@
         more << EOF
 NOTE
 It is possible that you won't need to read this document. If you obtained the
-mls software as part of a shrinkwrap package, look there for the files
+mls software as part of a shrinkwrap package, look there for the files build or
 build-xxx (where xxx might be "nag"), env.linux, and f90. After judiciously
-editing these, just cd to their directory and type "build-xxx".
+editing these, just cd to their directory and type "build[-xxx]".
 
 SUMMARY
 Before building the mls software you will need the following
@@ -35,6 +35,7 @@ Before building the mls software you will need the following
     (a) PGSTK
     (b) HDFEOS
     (c) HDF
+    .. .. ..
  (3) mls software (probably where you're reading this)
  (4) PVM--a library to emulate parallel virtual machines
  (5) FFTW--a library to accomplish fast Fourier tranforms
@@ -68,14 +69,17 @@ Additional information on how to build it for the linux OS can be found at
 
 After building this successfully, keep careful note of its location. An easy
 way to do this is to source pgs-env.csh or pgs-dev-env.csh in your login shell,
-assuming you use the csh or tcsh shells. That way automatically defines three
+assuming you use the csh or tcsh shells. That automatically defines other
 environment variables that will make configuring the mls software easier:
 	HDFEOS_LIB
+	HDFEOS5_LIB
 	HDFLIB
+	HDF5LIB
 	PGSLIB
-If you get the latest version of the toolkit, you will automatically build two
-added libraries: hdf5 and hdfeos5. These too will be needed for correctly
-building the mls software if you use the latest version.
+   ZLIBHOME
+   SZIPHOME
+If you get the latest version of the toolkit, you will automatically build these
+added libraries. They are all needed for correctly building the mls software.
 
 PVM
 The distribution to build the libraries and ancillary files making up the PVM
@@ -165,11 +169,14 @@ You have to choose one of the two options:
 
 Note that (b) will always be available, and is the built-in default
 
--pw                           2001-Feb-28 to 2004-Mar-31
+-pw                           2001-Feb-28 to 2010-Aug-27
 EOF
 
 exit
 # $Log$
+# Revision 1.7  2005/06/23 23:00:53  pwagner
+# Reworded Copyright statement
+#
 # Revision 1.6  2004/03/31 19:02:32  pwagner
 # Updated to at least mention shrinkwraps
 #
