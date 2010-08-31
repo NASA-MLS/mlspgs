@@ -1686,7 +1686,6 @@ contains ! ============= Public Procedures ==========================
         if ( quantityType == l_radiance ) then
           call Parse_Signal ( word, sigInds, sideband=sideband )
         else
-          nullify ( qt%channels )
           call Parse_Signal ( word, sigInds, sideband=sideband, channels=qt%channels )
         end if
         signal = sigInds(1)
@@ -1922,6 +1921,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.103  2010/08/31 02:05:38  vsnyder
+! Don't nullufy qt%channels before allocating, to avoid leaking memory
+!
 ! Revision 2.102  2010/08/27 21:55:35  pwagner
 ! WIll not try to write empty Hessian blocks
 !
