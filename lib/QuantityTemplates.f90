@@ -531,6 +531,8 @@ contains ! =====     Public Procedures     =============================
     end if
     
     if ( .not. qty%sharedFGrid ) then
+      if ( verbose ) call output( 'About to deallocate channels', advance='yes' )
+      call deallocate_test ( qty%channels, trim(what) // "%channels", ModuleName )
       if ( verbose ) call output( 'About to deallocate freqs', advance='yes' )
       call deallocate_test ( qty%frequencies, trim(what) // "%frequencies", ModuleName )
     end if
@@ -968,6 +970,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.55  2010/02/04 23:08:00  vsnyder
+! Remove USE or declaration for unused names
+!
 ! Revision 2.54  2009/09/25 02:42:07  vsnyder
 ! Added badValue to SetupNewQuantityTemplate, dump channels field of
 ! quantity if it's associated.
