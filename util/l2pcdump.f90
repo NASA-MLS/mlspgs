@@ -20,7 +20,8 @@ program l2pcdump ! dumps datasets, attributes from l2pc files
    use HDF5, only: h5fis_hdf5_f, h5gclose_f, h5gopen_f
    use INIT_TABLES_MODULE, only: INIT_TABLES
    use Intrinsic, only: l_hdf
-   use L2PC_m, only: Dump, L2PCDatabase, ReadCompleteHDF5L2PCFile
+   use L2PC_m, only: DestroyL2PC, Dump, L2PCDatabase, &
+     & ReadCompleteHDF5L2PCFile, PopulateL2PCBin
    use LEXER_CORE, only: INIT_LEXER
    use MACHINE, only: HP, GETARG
    use MLSCommon, only: R8, MLSFile_T
@@ -33,8 +34,8 @@ program l2pcdump ! dumps datasets, attributes from l2pc files
    use MLSMessageModule, only: MLSMessageConfig, MLSMSG_Error, MLSMSG_Warning, &
      & dumpConfig, MLSMessage
    use MLSStats1, only: FILLVALUERELATION, Stat_T, dump, STATISTICS
-   use MLSStringLists, only: catLists, GetStringElement, NumStringElements, &
-     & StringElementNum
+   use MLSStringLists, only: catLists, GetStringElement, List2Array, &
+     & NumStringElements, StringElementNum
    use MLSStrings, only: lowercase, trim_safe
    use output_m, only: dump, outputOptions, output
    use Time_M, only: Time_Now, time_config
@@ -67,7 +68,7 @@ program l2pcdump ! dumps datasets, attributes from l2pc files
     logical             :: la                 = .false.
     logical             :: ls                 = .false.
     logical             :: timereads          = .false. ! Just time how long to read
-    character(len=128)  :: DSName      = '' ! Extra dataset if attributes under one
+    character(len=32), dimension(3)  :: blockNames  = (/ '*', '*', '*' /) ! If not all
     character(len=128)  :: root        = '/'
     character(len=1024) :: attributes = ''
   end type options_T
@@ -130,25 +131,22 @@ program l2pcdump ! dumps datasets, attributes from l2pc files
     status = InitializeMLSFile ( MLSFileT, type=l_hdf, access=DFACC_READ, &
      & name=filenames(i), HDFVersion=hdfVersion )
     MLSFile => MLSFileT
-    call ReadCompleteHDF5L2PCFile ( MLSFile, 0, shallow=.false. )
+    call ReadCompleteHDF5L2PCFile ( MLSFile, 0, shallow=.true. )
     j2 = size( L2PCDatabase )
     if ( options%verbose ) print *, 'Size of l2pc database: ', j2
     do j = j1, j2
-      call Dump( L2PCDataBase(j), details=options%details )
+      print *, 'j: ', j
+      call PopulateL2PCBin( j )
+      ! Maybe it can't print name?
+      L2PCDataBase(j)%j%name = 0
+      L2PCDataBase(j)%h%name = 0
+      print *, 'About to dump'
+      call Dump( L2PCDataBase(j), &
+        & details=options%details, onlyTheseBlocks=options%blockNames )
+      print *, 'About to destroy'
+      call DestroyL2PC( L2PCDataBase(j) )
     enddo
-    if ( options%attributes /= ' ' ) then
-      if ( options%DSName /= ' ' ) then
-        call DumpHDF5Attributes ( sdfid1, trim(options%attributes), &
-          & DSName=trim(options%root) // '/' // trim(options%DSName), &
-          & options=dumpOptions )
-      else
-        ! print *, 'Trying to dump ', trim(options%attributes), ' from ', trim(options%root)
-        call DumpHDF5Attributes ( sdfid1, trim(options%attributes), &
-          & groupName=trim(options%root), options=dumpOptions )
-      endif
-    endif
     ! print *, 'About to mls_sfend on ', sdfid1
-	 status = mls_sfend(sdfid1, hdfVersion=hdfVersion)
     if ( .not. options%laconic ) call sayTime('reading this file', tFile)
   enddo
   call deallocate_decl
@@ -166,14 +164,14 @@ contains
      ! Local variables
      integer :: i
      print *, 'details             ', options%details
+     print *, 'blockNames          ', trim(options%blockNames(1))
+     print *, '                    ', trim(options%blockNames(2))
+     print *, '                    ', trim(options%blockNames(3))
      print *, 'laconic?            ', options%laconic
      print *, 'verbose?            ', options%verbose
      print *, 'list attributes  ?  ', options%la   
      print *, 'list datasets  ?    ', options%ls
      print *, 'just time reads?    ', options%timereads
-     print *, 'root                ', trim_safe(options%root)
-     print *, 'DSName              ', trim_safe(options%DSName)
-     print *, 'attributes          ', trim_safe(options%attributes)
      print *, 'num files           ', n_filenames
      print *, 'switches            ', trim_safe(switches)
      do i=1, n_filenames
@@ -191,6 +189,7 @@ contains
      integer ::                         error = 1
      integer, save ::                   i = 1
      character(LEN=16)       :: number
+     character(LEN=96)       :: blocknames
   ! Get inputfile name, process command-line args
   ! (which always start with -)
     do
@@ -221,8 +220,9 @@ contains
         call getarg ( i+1+hp, options%root )
         i = i + 1
         exit
-      else if ( filename(1:3) == '-rd ' ) then
-        call getarg ( i+1+hp, options%DSName )
+      else if ( filename(1:3) == '-bl' ) then
+        call getarg ( i+1+hp, blockNames )
+        call List2Array ( blockNames, options%blockNames, .true. )
         i = i + 1
         exit
       else if ( filename(1:3) == '-t ' ) then
@@ -271,8 +271,7 @@ contains
       write (*,*) '          -D              => dump all datasets (default)'
       write (*,*) '          -nA             => do not dump attributes (default)'
       write (*,*) '          -nD             => do not dump datasets'
-      write (*,*) '          -a a1,a2,..     => dump just attributes named a1,a2,..'
-      write (*,*) '          -d d1,d2,..     => dump just datasets named a1,a2,..'
+      write (*,*) '          -bl[ocks] b1,b2,.. => dump just blocks named b1,b2,..'
       write (*,*) '          -h              => print brief help'
       stop
   end subroutine print_help
@@ -297,3 +296,6 @@ end program l2pcdump
 !==================
 
 ! $Log$
+! Revision 1.1  2010/08/14 00:11:59  pwagner
+! First commit
+!
