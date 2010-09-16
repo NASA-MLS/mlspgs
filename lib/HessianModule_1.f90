@@ -317,13 +317,13 @@ contains
     use Lexer_core, only: Print_Source
     use MatrixModule_1, only: Dump_RC
     use MLSStringLists, only: switchDetail
-    use Output_m, only: Output, NewLine
+    use Output_m, only: Output, NewLine, resumeOutput, suspendOutput
     use String_Table, only: Display_String, GET_STRING
 
     type (Hessian_T), intent(in) :: H
     character(len=*), intent(in), optional :: NAME
     integer, intent(in), optional :: Details ! Print details, default 1
-      ! <= -3 => no output
+      ! <= -3 => no output, exceept warning, error messages
       ! -2 => Just name, size, and where created
       ! -1 => Just row and col info for each block
       ! 0 => Dimensions of each block,
@@ -338,7 +338,7 @@ contains
 
     my_details = 1
     if ( present(details) ) my_details = details
-    if ( my_details <= -3 ) return
+    if ( my_details <= -3 ) call suspendOutput !  return
     if ( present(name) ) call output ( name )
     myBlocks = '*'
     if ( present(onlyTheseBlocks) ) myBlocks = onlyTheseBlocks
@@ -358,6 +358,7 @@ contains
     end if
     if ( .not. associated(h%block) ) then
       call output ( '      (the hessian has been destroyed)', advance='yes' )
+      if ( my_details <= -3 ) call resumeOutput
       return
     end if
     totalSize = 0
@@ -373,7 +374,7 @@ contains
             if ( associated(h%block(i,j,k)%values) ) &
               & totalSize = totalSize + size(h%block(i,j,k)%values)
           end select
-          if ( my_details < 0 ) cycle
+          if ( my_details < 0 .and. my_details > -3 ) cycle
           if ( skipThisBlock ( &
             & 1, h%row%vec%quantities(h%row%quant(i))%template%name &
             &  ) ) cycle
@@ -418,6 +419,7 @@ contains
         end do
       end do
     end do
+    if ( my_details <= -3 ) call resumeOutput
     contains
     function skipThisBlock ( s, tid ) result( doWe )
       ! Return TRUE only if we are to skip dumping this block
@@ -651,6 +653,9 @@ contains
 end module HessianModule_1
 
 ! $Log$
+! Revision 2.11  2010/09/16 23:54:57  pwagner
+! dump with details=-3 warns of NaNs
+!
 ! Revision 2.10  2010/08/20 23:17:48  pwagner
 ! May specify which blocks to dump by name
 !

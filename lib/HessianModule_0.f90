@@ -363,11 +363,12 @@ contains
   ! ------------------------------------------- Dump_Hessian_Block -----
   subroutine Dump_Hessian_Block ( H, Name, Details, Indices, Clean )
     use Allocate_Deallocate, only: Deallocate_Test, Allocate_Test
-    use MLSFillValues, only: Repopulate
+    use MLSFillValues, only: isNaN, Repopulate
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
     type(HessianElement_T), intent(in) :: H
     character(len=*), intent(in), optional :: NAME
-    integer, intent(in), optional :: Details ! Print details, 0 => minimal,
-                                             ! 1 => values, default 1
+    integer, intent(in), optional :: Details ! Print details, -3, just check for NaNs,
+                                             !  0 => minimal, 1 => values, default 1
     integer, intent(in), optional :: Indices(:) ! 3 indices of the block
     logical, intent(in), optional :: CLEAN   ! print \size
 
@@ -411,7 +412,12 @@ contains
         & (/ minval(h%tuples(1:h%TuplesFilled)%j), maxval(h%tuples(1:h%TuplesFilled)%j) /) )
       call outputNamedValue( 'Min, max 2nd col numbers', &
         & (/ minval(h%tuples(1:h%TuplesFilled)%k), maxval(h%tuples(1:h%TuplesFilled)%k) /) )
-      if ( my_details > 0 ) then
+      if ( my_details < -2 ) then
+        ! Check for NaNs
+        if ( any(isNaN(h%tuples%h)) ) &
+          & call MLSMessage( MLSMSG_Warning, ModuleName, &
+          & 'NaNs found in sparse Hessian block' )
+      elseif ( my_details > 0 ) then
         if ( DUMPASUNSPARSIFIED ) then
           ! temporarily convert sparse representation to full
           call output ( '(Dumping as if full)', advance='yes' )
@@ -433,7 +439,14 @@ contains
       end if
     case ( h_full )
       call output ( 'full', advance='yes' )
-      if ( details > 0 ) call dump ( h%values, options=merge('c',' ',my_clean) )
+      if ( my_details < -2 ) then
+        ! Check for NaNs
+        if ( any(isNaN(h%values)) ) &
+          & call MLSMessage( MLSMSG_Warning, ModuleName, &
+          & 'NaNs found in full Hessian block' )
+      elseif ( details > 0 ) then
+        call dump ( h%values, options=merge('c',' ',my_clean) )
+      endif
     case ( h_unknown )
       call output ( 'of unknown form, nothing to dump', advance='yes' )
       call outputNamedValue ( 'h_unknown', h_unknown )
@@ -933,6 +946,9 @@ o:    do while ( i < n )
 end module HessianModule_0
 
 ! $Log$
+! Revision 2.11  2010/09/16 23:54:43  pwagner
+! dump with details=-3 warns of NaNs
+!
 ! Revision 2.10  2010/08/24 18:04:22  yanovsky
 ! Add default initialization to the components of HessianElement_T
 !
