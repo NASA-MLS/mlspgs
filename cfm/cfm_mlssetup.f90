@@ -251,6 +251,10 @@ module CFM_MLSSetup_m
       use QuantityTemplates, only: DestroyQuantityTemplateDatabase
       use VectorsModule, only: Vector_T, DestroyVectorInfo
       use VectorsModule, only: DestroyVectorTemplateInfo
+      use MLSSignals_m, only: modules, bands, radiometers, spectrometerTypes, &
+                              signals, DestroyBandDatabase, DestroySignalDatabase, &
+                              DestroySpectrometerTypeDatabase, DestroyModuleDatabase, &
+                              DestroyRadiometerDatabase
 
       ! The filedatabase created by CFM_MLSSetup
       type (MLSFile_T), dimension(:), pointer :: filedatabase
@@ -284,6 +288,13 @@ module CFM_MLSSetup_m
       call DestroyVectorTemplateInfo(stateVectorExtra%template)
       call DestroyVectorInfo(stateVectorExtra)
       call DestroyQuantityTemplateDatabase (qtyTemplates)
+
+      ! Destroy signal and related database
+      call DestroyBandDatabase(bands)
+      call DestroySpectrometerTypeDatabase(spectrometerTypes)
+      call DestroySignalDatabase(signals)
+      call DestroyRadiometerDatabase(radiometers)
+      call DestroyModuleDatabase(modules)
 
       ! Have to call this, after we stops using HDF5 library
       call h5close_f (error)

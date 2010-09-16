@@ -46,7 +46,7 @@ module cfm          ! callable forward model
    use CFM_Fill_m, only: ExplicitFillVectorQuantity, ApplyBaseline, &
                          FillVectorQuantityFromL1B, FillPhitanQuantity, &
                          SpreadFillVectorQuantity, FillPtanQuantity
-   use ForwardModelConfig, only: ForwardModelConfig_T
+   use ForwardModelConfig, only: ForwardModelConfig_T, Dump
    use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
    use CFM_FWDMDL_M, only: ForwardModel
    use MLSCommon, only: MLSFile_T, r8
@@ -56,7 +56,8 @@ module cfm          ! callable forward model
                                  l_tngtgeodalt, l_tngtgeocalt, l_o3, &
                                  phyq_pressure, phyq_angle, l_h2o, l_refgph, &
                                  l_phitan, l_explicit, l_l1bMAFBaseline, &
-                                 l_frequency, l_usbFrequency, l_lsbFrequency
+                                 l_frequency, l_usbFrequency, l_lsbFrequency, &
+                                 l_ghz
    use MLSFiles, only: GetMLSFileByType, InitializeMLSFile, mls_openFile, &
                        AddFileToDatabase
    use Intrinsic, only: l_hdf
