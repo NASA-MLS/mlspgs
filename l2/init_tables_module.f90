@@ -1165,6 +1165,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_hdfVersion, t+t_numeric, n+n_field_type, &
              begin, f+f_metaDataOnly, t+t_boolean, n+n_field_type, &
              begin, f+f_metaName, t+t_string, n+n_field_type, &
+             begin, f+f_moleculeSecondDerivatives, t+t_molecule, n+n_field_type, &
              begin, f+f_overlaps, s+s_l2aux, s+s_l2gp, n+n_field_spec, &
              begin, f+f_packed, t+t_boolean, n+n_field_type, &
              begin, f+f_quantities, s+s_l2aux, s+s_l2gp, s+s_matrix, s+s_hessian, &
@@ -1257,7 +1258,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_lsbPFAMolecules, t+t_molecule, n+e+n_field_type, &
              begin, f+f_module, s+s_module, n+n_field_spec, &
              begin, f+f_moleculeDerivatives, t+t_molecule, n+n_field_type, &
-             begin, f+f_moleculeSecondDerivatives, t+t_molecule, n+n_field_type, &  ! Added by IGOR
+             begin, f+f_moleculeSecondDerivatives, t+t_molecule, n+n_field_type, &
              begin, f+f_molecules, t+t_molecule, n+n_field_type, &
              begin, f+f_nabterms, t+t_numeric, n+n_field_type, &
              begin, f+f_nazimuthangles, t+t_numeric, n+n_field_type, &
@@ -1642,6 +1643,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.512  2010/09/17 00:09:55  pwagner
+! Can constrain writing l2pc blocks by name
+!
 ! Revision 2.511  2010/08/16 19:16:02  yanovsky
 ! Add f_atmos_second_der, f_moleculeSecondDerivatives
 !
