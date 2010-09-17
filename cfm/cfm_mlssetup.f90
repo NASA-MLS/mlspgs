@@ -255,6 +255,7 @@ module CFM_MLSSetup_m
                               signals, DestroyBandDatabase, DestroySignalDatabase, &
                               DestroySpectrometerTypeDatabase, DestroyModuleDatabase, &
                               DestroyRadiometerDatabase
+      use EmpiricalGeometry, only: CFM_ResetEmpiricalGeometry
 
       ! The filedatabase created by CFM_MLSSetup
       type (MLSFile_T), dimension(:), pointer :: filedatabase
@@ -295,6 +296,9 @@ module CFM_MLSSetup_m
       call DestroySignalDatabase(signals)
       call DestroyRadiometerDatabase(radiometers)
       call DestroyModuleDatabase(modules)
+
+      ! Reset EmpiricalGeometry because something is allocated
+      call CFM_ResetEmpiricalGeometry
 
       ! Have to call this, after we stops using HDF5 library
       call h5close_f (error)
