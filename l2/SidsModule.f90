@@ -128,8 +128,6 @@ contains
     call time_now ( t1 )
 
     nullify ( configs, perturbation )
-    showptb = switchDetail( switches, 'ptb' ) > -1
-
     ! Process the fields of the "sids" specification
     doTScat = .false.
     error = 0
@@ -173,6 +171,8 @@ contains
         doTScat = Get_boolean(son)
       end select
     end do ! i = 2, nsons(root)
+
+    showptb = switchDetail( switches, 'ptb' ) > -1 .and. associated( perturbation)
 
     ! Now if we weren't given a forward model extra, point it to the forwardModelIn
     ! This seems rather cheesy.  However, the alternative is changing a lot of
@@ -455,6 +455,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.60  2010/09/17 00:08:18  pwagner
+! Should not crash if 'ptb' switch set but no perturbation asoociated
+!
 ! Revision 2.59  2010/08/27 06:36:41  yanovsky
 ! Can now call forwardModel with Hessian as argument
 !
