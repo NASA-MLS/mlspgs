@@ -504,7 +504,7 @@ contains ! =====     Public Procedures     =============================
     end if
     if ( qty%name == 0 ) then
       what = "qty"
-    else
+    elseif ( verbose ) then
       call get_string ( qty%name, what )
     end if
 
@@ -970,6 +970,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.56  2010/08/31 02:05:10  vsnyder
+! Deallocate channels component in DestroyQuantityTemplateContents
+!
 ! Revision 2.55  2010/02/04 23:08:00  vsnyder
 ! Remove USE or declaration for unused names
 !
