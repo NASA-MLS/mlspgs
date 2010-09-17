@@ -75,7 +75,8 @@ contains ! =====     Public Procedures     =============================
     use INIT_TABLES_MODULE, only: F_CREATE, F_DESTROY, F_DONTPACK, &
       & F_EXCLUDE, F_FILE, F_HDFVERSION, F_HGRID, &
       & F_IFANYCRASHEDCHUNKS, F_INPUTFILE, F_INPUTTYPE, &
-      & F_METADATAONLY, F_METANAME, F_OVERLAPS, F_PACKED, &
+      & F_METADATAONLY, F_METANAME, F_MOLECULESECONDDERIVATIVES, &
+      & F_OVERLAPS, F_PACKED, &
       & F_QUANTITIES, F_RENAME, F_REPAIRGEOLOCATIONS, &
       & F_SWATH, F_TYPE, F_WRITECOUNTERMAF, &
       & FIELD_FIRST, FIELD_LAST, &
@@ -174,6 +175,7 @@ contains ! =====     Public Procedures     =============================
     logical :: RepairGeoLocations
     character (len=MAXSWATHNAMESBUFSIZE) :: sdList
     character (len=MAXSWATHNAMESBUFSIZE) :: sdListThere
+    integer :: SECONDDERIVNODE
     logical :: skipCopy
     integer :: SON                      ! Of Root -- spec_args or named node
     integer :: SPEC_NO                  ! Index of son of Root
@@ -592,12 +594,13 @@ contains ! =====     Public Procedures     =============================
           ! I intend to completely ignore the PCF file in this case,
           ! it's not worth the effort!
           ! In that case, I will ignore the possibility of checkPaths being true
-          if ( .not. canWriteL2PC ) call MLSMessage(MLSMSG_Error,ModuleName,&
-            & "Cannot write l2pc files with multi chunk l2cf's")
+          if ( .not. canWriteL2PC ) call MLSMessage( MLSMSG_Error, ModuleName, &
+            & "Cannot write l2pc files with multi chunk l2cf's" )
           recLen = 0
           ascii = .false.
           destroy = .false.
           packed = .false.
+          secondDerivNode = 0
           do field_no = 2, nsons(key) ! Skip "output" name
             gson = subtree(field_no,key)
             select case ( decoration(subtree(1,gson)) )
@@ -608,6 +611,8 @@ contains ! =====     Public Procedures     =============================
               do node = 2, nsons(gson)
                 dontPack(node-1) = decoration(decoration(subtree(node,gson)))
               end do
+            case ( f_moleculeSecondDerivatives )
+              secondDerivNode = gson
             case ( f_overlaps )
               ! ??? More work needed here
             case ( f_packed )
@@ -617,8 +622,8 @@ contains ! =====     Public Procedures     =============================
             end select
           end do ! field_no = 2, nsons(key)
 
-          call OutputHDF5L2PC ( trim(file_base), matrices, hessians, quantitiesNode, packed, &
-            & dontPack )
+          call OutputHDF5L2PC ( trim(file_base), matrices, hessians, &
+            & quantitiesNode, secondDerivNode, packed, dontPack )
 
           ! We used to destroy the written out matrix here, but I don't want to do that anymore
           ! (NJL, 13 Feb 2010)
@@ -1693,6 +1698,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.153  2010/09/17 00:07:18  pwagner
+! Can constrain writing l2pc blocks by name
+!
 ! Revision 2.152  2010/05/20 00:32:32  pwagner
 ! Remove unused stuff
 !
