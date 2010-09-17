@@ -796,7 +796,7 @@ program MLSL2
 
   call time_now ( t1 )
 
-  if( switchDetail(switches, 'opt') >= 0 .or. showDefaults ) then
+  if( switchDetail(switches, 'opt') > 0 .or. showDefaults ) then
     do j=1, size(current_version_id)
       call output(trim(current_version_id(j)), advance='yes')
     end do
@@ -1011,7 +1011,7 @@ contains
     call output ( ' l2cf file:', advance='no' )
     call blanks ( 4, advance='no' )
     call output ( trim(MLSL2CF%name), advance='yes' )
-    if( SwitchDetail(switches, 'opt1') > 0 .or. showDefaults ) then
+    if( SwitchDetail(switches, 'opt') > 0 .or. showDefaults ) then
       call blanks(70, fillChar='-', advance='yes')
       call output(' -------------- Summary of run time options'      , advance='no')
       call output(' -------------- ', advance='yes')
@@ -1147,6 +1147,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.175  2010/09/17 00:11:19  pwagner
+! Fixed misuse of switchDetail function
+!
 ! Revision 2.174  2010/08/06 23:08:48  pwagner
 ! Pass Hessians, matrices to DumpCommand
 !
