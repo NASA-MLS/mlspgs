@@ -19,7 +19,7 @@ module EmpiricalGeometry                ! For empirically obtaining orbit inform
 
   public :: EmpiricalLongitude, InitEmpiricalGeometry, &
             ForgetOptimumLon0, CFM_InitEmpiricalGeometry, &
-            ChooseOptimumLon0
+            ChooseOptimumLon0, CFM_ResetEmpiricalGeometry
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -144,6 +144,18 @@ contains ! ========================= Public Procedures ====================
 
   end subroutine
 
+  ! --------------------------- CFM_ResetEmpiricalGeomtry ---------------------
+  ! This module is for the callable forward model (CFM), in which EmpiricalGeometry
+  ! is expected to call multiple times.
+  subroutine CFM_ResetEmpiricalGeometry
+     use Allocate_Deallocate, only: Deallocate_test
+
+     ! Excutables
+     call Deallocate_test (empiricalTerms, 'empiricalTerms', ModuleName)
+     empiricalTerms => NULL()
+     call ForgetOptimumLon0
+  end subroutine
+
   ! -------------------------------------------------- ChooseOptimumLon0 -----
   ! subroutine ChooseOptimumLon0 ( l1bInfo, chunk )
   subroutine ChooseOptimumLon0 ( filedatabase, chunk )
@@ -237,8 +249,8 @@ contains ! ========================= Public Procedures ====================
 end module EmpiricalGeometry
 
 ! $Log$
-! Revision 2.16  2010/05/23 03:27:32  honghanh
-! Add an Init empirical geometry method for CFM
+! Revision 2.17  2010/09/17 16:47:08  honghanh
+! Add subroutine to deallocate empiricalTerms
 !
 ! Revision 2.15  2010/02/04 23:12:44  vsnyder
 ! Remove USE or declaration for unreferenced names
