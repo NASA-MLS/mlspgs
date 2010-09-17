@@ -573,22 +573,30 @@ contains ! ============= Public Procedures ==========================
   end subroutine FlushL2PCBins
 
   ! --------------------------------------------- OutputHDF5L2PC
-  subroutine OutputHDF5L2PC ( filename, matrices, hessians, quantitiesNode, packed, dontPack )
+  subroutine OutputHDF5L2PC ( filename, matrices, hessians, &
+    & quantitiesNode, secondDerivNode, packed, dontPack )
   use HDF5, only: H5FCREATE_F, H5FClose_F, H5F_ACC_TRUNC_F
+  use MLSStringLists, only: catLists
+  use tree, only: sub_rosa
     character (len=*), intent(in) :: FILENAME
     type (Matrix_Database_T), dimension(:), pointer :: MATRICES
     type (Hessian_T), dimension(:), pointer :: HESSIANS
     integer, intent(in) :: QUANTITIESNODE
+    integer, intent(in) :: SECONDDERIVNODE
     logical, intent(in) :: PACKED
     integer, dimension(:), pointer :: DONTPACK
 
     ! Local variables
-    integer :: FILEID                   ! ID of file
-    integer :: STATUS                   ! From HDF
-    integer :: FIELD                    ! Node index
     integer :: DB_INDEX                 ! Index of matrix
-    integer :: NXT_INDEX                ! Index of next matrix (Hessian?)
+    integer :: FIELD                    ! Node index
+    integer :: FILEID                   ! ID of file
     logical :: GOTH                     ! True if there is a Hessian
+    integer :: J
+    integer :: NXT_INDEX                ! Index of next matrix (Hessian?)
+    integer :: STATUS                   ! From HDF
+    integer :: THISMOLECULE
+    character(len=32) :: moleculeName
+    character(len=32), dimension(3) :: ONLYTHESEBLOCKS ! passed to Vector and Matrix dumps
     type (Matrix_T), pointer :: tmpMatrix
     type (Hessian_T), pointer :: tmpHessian
 
@@ -597,6 +605,16 @@ contains ! ============= Public Procedures ==========================
       & status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open hdf5 l2pc file for output.' )
+    ONLYTHESEBLOCKS = '*'
+    if ( SECONDDERIVNODE > 0 ) then
+      ONLYTHESEBLOCKS(2) = ' '
+      do j = 2, nsons(secondDerivNode)
+        thisMolecule = decoration( subtree( j, secondDerivNode ) )
+        call get_string( sub_rosa(thisMolecule), moleculeName )
+        onlyTheseBlocks(2) = catLists( onlyTheseBlocks(2), thisMolecule )
+      end do
+      onlyTheseBlocks(3) = onlyTheseBlocks(2)
+    endif
     field = 2
     do
       if ( field > nsons(quantitiesNode) ) exit
@@ -612,7 +630,8 @@ contains ! ============= Public Procedures ==========================
         end if
       end if
       if ( goth ) then
-        call writeOneHDF5L2PC ( tmpMatrix, fileID, packed, dontPack, hessian=tmpHessian )
+        call writeOneHDF5L2PC ( tmpMatrix, fileID, packed, dontPack, &
+          & hessian=tmpHessian, onlyTheseBlocks=onlyTheseBlocks )
       else
         call writeOneHDF5L2PC ( tmpMatrix, fileID, packed, dontPack )
       end if
@@ -625,7 +644,8 @@ contains ! ============= Public Procedures ==========================
   end subroutine OutputHDF5L2PC
 
   ! --------------------------------------- WriteOneHDF5L2PC -----------
-  subroutine WriteOneHDF5L2PC ( JACOBIAN, fileID, packed, dontPack, hessian )
+  subroutine WriteOneHDF5L2PC ( JACOBIAN, fileID, packed, dontPack, &
+    & hessian, onlyTheseBlocks )
     use HessianModule_0, only: OptimizeBlock
     use HDF5, only: H5GCLOSE_F, H5GCREATE_F
     use MLSCOMMON, only: RM
@@ -638,6 +658,7 @@ contains ! ============= Public Procedures ==========================
     logical, intent(in) :: PACKED
     integer, dimension(:), pointer :: DONTPACK
     type (Hessian_T), intent(in), optional :: HESSIAN
+    character(len=*), dimension(3), intent(in), optional :: ONLYTHESEBLOCKS ! passed to Vector and Matrix dumps
 
     ! Local variables
     integer :: I, J, K                  ! Loop index (row, col, col)
@@ -1921,6 +1942,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.104  2010/09/17 00:02:57  pwagner
+! Can constrain which blocks dumped by name
+!
 ! Revision 2.103  2010/08/31 02:05:38  vsnyder
 ! Don't nullufy qt%channels before allocating, to avoid leaking memory
 !
