@@ -1,0 +1,77 @@
+\section{Finite Difference Approximations for Jacobians}
+
+
+\subsection*{Mixing Ratio Jacobian}
+
+\begin{eqnarray*}
+\frac{\partial I_l}{\partial f_q^k} &\approx& \frac{I_l(f_q^k + \epsilon_q^k) - I_l(f_q^k)}{f_q^k + \epsilon_q^k - f_q^k} = \frac{I_l(f_q^k + \epsilon_q^k) - I_l(f_q^k)}{\epsilon_q^k},
+\end{eqnarray*}
+where $\epsilon_q^k = 0.05 f_q^k$, i.e. is about $5\%$ of the value of $f_q^k$. Hence,
+\begin{eqnarray*}
+\frac{\partial I_l}{\partial f_q^k} &\approx& \frac{I_l(1.05 f_q^k) - I_l(f_q^k)}{0.05 f_q^k}.
+\end{eqnarray*}
+
+
+\subsection*{Temperature Jacobian}
+
+\begin{eqnarray*}
+\frac{\partial I_l}{\partial f_q^T} &\approx& \frac{I_l(f_q^T + \epsilon_q^T) - I_l(f_q^T)}{f_q^T + \epsilon_q^T - f_q^T} = \frac{I_l(f_q^T + \epsilon_q^T) - I_l(f_q^T)}{\epsilon_q^T},
+\end{eqnarray*}
+where $\epsilon_q^T = 0.05 f_q^T$.
+\begin{eqnarray*}
+\frac{\partial I_l}{\partial f_q^T} &\approx& \frac{I_l(1.05 f_q^T) - I_l(f_q^T)}{0.05 f_q^T}.
+\end{eqnarray*}
+
+
+\subsection*{Antenna Radiance Mixing Ratio Jacobian}
+
+\begin{eqnarray*}
+\frac{\partial I^A_l}{\partial f_q^k} &\approx& \frac{I^A_l(f_q^k + \epsilon_q^k) - I^A_l(f_q^k)}{\epsilon_q^k}.
+\end{eqnarray*}
+
+
+\subsection*{Antenna Radiance Temperature Jacobian}
+
+\begin{eqnarray*}
+\frac{\partial I^A_l}{\partial f_q^T} &\approx& \frac{I^A_l(f_q^T + \epsilon_q^T) - I^A_l(f_q^T)}{\epsilon_q^T}.
+\end{eqnarray*}
+
+
+\subsection*{Derivative of Height with respect to Temperature}
+
+\begin{eqnarray*}
+\frac{\partial h_l}{\partial f_q^T} &\approx& \frac{h_l(f_q^T + \epsilon_q^T) - h_l(f_q^T)}{f_q^T + \epsilon_q^T - f_q^T} = \frac{h_l(f_q^T + \epsilon_q^T) - h_l(f_q^T)}{\epsilon_q^T}.
+\end{eqnarray*}
+
+
+\subsection*{Derivative of Absorption Coefficient with respect to Temperature}
+
+\begin{eqnarray*}
+\frac{\partial \beta_l}{\partial f_q^T} &\approx& \frac{\beta_l(f_q^T + \epsilon_q^T) - \beta_l(f_q^T)}{f_q^T + \epsilon_q^T - f_q^T} = \frac{\beta_l(f_q^T + \epsilon_q^T) - \beta_l(f_q^T)}{\epsilon_q^T}.
+\end{eqnarray*}
+
+
+\subsection*{Derivative of Source Function with respect to Temperature (has not been tested)}
+
+\begin{eqnarray*}
+\frac{\partial \triangle B_i}{\partial f_q^T} &\approx& \frac{\triangle B_i(f_q^T + \epsilon_q^T) - \triangle B_i(f_q^T)}{f_q^T + \epsilon_q^T - f_q^T} = \frac{\triangle B_i(f_q^T + \epsilon_q^T) - \triangle B_i(f_q^T)}{\epsilon_q^T}.
+\end{eqnarray*}
+
+
+\section{Finite Difference Approximations for Hessians}
+
+\subsection*{Radiance Hessians}
+
+\begin{eqnarray*}
+\displaystyle  \frac{\partial^2 I_l}{\partial f_q^2}  
+&\approx&  D_0^q \bigg[ \frac{\partial I_l}{\partial f_q}(\vf) \bigg] \ = \ \frac{ \displaystyle  \frac{\partial I_l}{\partial f_q}(f_q + \epsilon_q) - \frac{\partial I_l}{\partial f_q}(f_q - \epsilon_q)}{2 \epsilon_q} \\
+&\approx& D_-^q D_+^q \Big[ I_l(\vf) \Big] \ = \ \frac{I_l(f_q + \epsilon_q) - 2 I_l(f_q) + I_l(f_q - \epsilon_q)}{\epsilon_q^2}, \\
+\displaystyle  \frac{\partial^2 I_l}{\partial f_q \partial f_{\tilde{q}}} 
+&\approx&  D_0^{\tilde{q}} \bigg[ \frac{\partial I_l}{\partial f_q}(\vf) \bigg] \ = \ \frac{ \displaystyle  \frac{\partial I_l}{\partial f_q}(f_q, f_{\tilde{q}} + \epsilon_{\tilde{q}}) - \frac{\partial I_l}{\partial f_q}(f_q, f_{\tilde{q}} - \epsilon_{\tilde{q}})}{2 \epsilon_{\tilde{q}}} \\
+&\approx&  D_+^q D_+^{\tilde{q}} \Big[ I_l(\vf) \Big] \ = \ \frac{ I_l(f_q + \epsilon_q,f_{\tilde{q}} + \epsilon_{\tilde{q}}) - I_l(f_q, f_{\tilde{q}} + \epsilon_{\tilde{q}}) - I_l(f_q + \epsilon_q,f_{\tilde{q}}) + I_l(f_q,f_{\tilde{q}}) }{\epsilon_q \epsilon_{\tilde{q}}} \\
+&\approx&  D_0^q D_0^{\tilde{q}} \Big[ I_l(\vf) \Big] \ = \ \frac{ I_l(f_q + \epsilon_q,f_{\tilde{q}} + \epsilon_{\tilde{q}}) - I_l(f_q - \epsilon_q, f_{\tilde{q}} + \epsilon_{\tilde{q}}) - I_l(f_q + \epsilon_q,f_{\tilde{q}} - \epsilon_{\tilde{q}}) + I_l(f_q - \epsilon_q,f_{\tilde{q}} - \epsilon_{\tilde{q}}) }{4 \epsilon_q \epsilon_{\tilde{q}}},
+\end{eqnarray*}
+where $f_q = f_q^k$ for mixing ratios and $f_q = f_q^T$ for temperatures. If antenna radiance Jacobians are computed, then $I=I^A$ in the above formulas.
+
+
+% $Id$

@@ -1,0 +1,393 @@
+\section{Derivatives}
+
+\subsection{Radiative Transfer Derivative}
+
+Since
+\begin{eqnarray*}
+I(\vx) = \sum_{i=1}^{2N} \triangle B_i \mathcal{T}_i,
+\end{eqnarray*}
+with
+\begin{eqnarray*}
+\mathcal{T}_{i} &=& \exp \Big( -\sum_{j=2}^{i} \triangle \delta_{j \rightarrow j-1} \Big),
+\end{eqnarray*}
+the {\bf derivative of the radiative transfer} is
+\begin{eqnarray*}
+\frac{\partial I(\vx)}{\partial x_k} &=& \frac{\partial}{\partial x_k} \sum_{i=1}^{2N} \triangle B_i \mathcal{T}_i \\
+&=& \sum_{i=1}^{2N} \bigg[ \frac{\partial \triangle B_i}{\partial x_k} \mathcal{T}_i + \triangle B_i  \frac{\partial \mathcal{T}_i}{\partial x_k} \bigg] \\
+&=& \sum_{i=1}^{2N} \bigg[ \frac{\partial \triangle B_i}{\partial x_k} \exp \Big( -\sum_{j=2}^{i} \triangle \delta_{j \rightarrow j-1} \Big) + \triangle B_i  \frac{\partial}{\partial x_k} \exp \Big( -\sum_{j=2}^{i} \triangle \delta_{j \rightarrow j-1} \Big) \bigg] \\
+&=& \sum_{i=1}^{2N} \bigg[ \frac{\partial \triangle B_i}{\partial x_k} \exp \Big( -\sum_{j=2}^{i} \triangle \delta_{j \rightarrow j-1} \Big) - \triangle B_i  \Big( \sum_{j=2}^{i}  \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial x_k} \Big) \exp \Big( -\sum_{j=2}^{i} \triangle \delta_{j \rightarrow j-1} \Big) \bigg] \\
+&=& \sum_{i=1}^{2N} \bigg[ \frac{\partial \triangle B_i}{\partial x_k} - \triangle B_i  \Big( \sum_{j=2}^{i} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial x_k} \Big) \bigg] \mathcal{T}_i \\
+&=& \sum_{i=1}^{2N} \bigg[ \frac{\partial \triangle B_i}{\partial x_k} - \triangle B_i \mathcal{W}_i \bigg]  \mathcal{T}_i,
+\end{eqnarray*}
+where
+\begin{eqnarray*}
+\mathcal{W}_1 &=& 0, \\
+\mathcal{W}_i &=& \sum_{j=2}^{i} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial x_k} \\
+&=& \sum_{j=2}^{i-1} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial x_k} + \frac{\partial \triangle \delta_{i \rightarrow i-1}}{\partial x_k}\\
+&=& \mathcal{W}_{i-1} + \frac{\partial \triangle \delta_{i \rightarrow i-1}}{\partial x_k}.
+\end{eqnarray*}
+
+
+\subsection{Radiative Transfer Second Derivative}
+
+
+The {\bf second derivative of the radiative transfer} is
+\begin{eqnarray*}
+\frac{\partial^2 I(\vx)}{\partial x \partial y} &=& \frac{\partial}{\partial y} \Big( \frac{\partial I}{\partial x} \Big) \ = \  \frac{\partial}{\partial y} \bigg(  \sum_{i=1}^{2N} \bigg[ \frac{\partial \triangle B_i}{\partial x} - \triangle B_i  \sum_{j=2}^{i} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial x} \bigg] \mathcal{T}_i \bigg) \\
+&=& \sum_{i=1}^{2N} \Bigg(  \bigg[ \frac{\partial^2 \triangle B_i}{\partial x \partial y} - \frac{\partial \triangle B_i}{\partial y} \sum_{j=2}^{i} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial x} - \triangle B_i  \sum_{j=2}^{i} \frac{\partial^2 \triangle \delta_{j \rightarrow j-1}}{\partial x \partial y} \bigg] \mathcal{T}_i \\
+&& \ \ \ \ \ - \bigg[ \frac{\partial \triangle B_i}{\partial x} - \triangle B_i  \sum_{j=2}^{i} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial x} \bigg] \sum_{j=2}^{i} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial y} \, \mathcal{T}_i \Bigg) \\
+&=& \sum_{i=1}^{2N} \Bigg[ \frac{\partial^2 \triangle B_i}{\partial x \partial y} - \frac{\partial \triangle B_i}{\partial y} \sum_{j=2}^{i} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial x} - \frac{\partial \triangle B_i}{\partial x} \sum_{j=2}^{i} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial y} \\
+&& \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ + \; \triangle B_i \bigg(  \Big( \sum_{j=2}^{i} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial x} \Big) \Big( \sum_{j=2}^{i} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial y} \Big) - \sum_{j=2}^{i} \frac{\partial^2 \triangle \delta_{j \rightarrow j-1}}{\partial x \partial y} \bigg)  \Bigg] \, \mathcal{T}_i,
+\end{eqnarray*}
+or
+\begin{eqnarray*}
+\frac{\partial^2 I(\vx)}{\partial x \partial y} &=& \sum_{i=1}^{2N} \Bigg[ \frac{\partial^2 \triangle B_i}{\partial x \partial y} - \frac{\partial \triangle B_i}{\partial y} \mathcal{W}_i^x - \frac{\partial \triangle B_i}{\partial x} \mathcal{W}_i^y + \triangle B_i \bigg(  \mathcal{W}_i^{x} \, \mathcal{W}_i^{y} - \partial \mathcal{W}^{x,y}_i \bigg)  \Bigg] \, \mathcal{T}_i,
+\end{eqnarray*}
+where
+\begin{eqnarray*}
+\mathcal{W}_1^x &=& 0, \ \ \ \mathcal{W}_1^y \ = \ 0, \ \ \ \partial \mathcal{W}^{x,y}_1 \ = \ 0, \\
+\mathcal{W}_i^x &=& \sum_{j=2}^{i} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial x} \ = \ \sum_{j=2}^{i-1} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial x} + \frac{\partial \triangle \delta_{i \rightarrow i-1}}{\partial x}\\
+&=& \mathcal{W}_{i-1}^x + \frac{\partial \triangle \delta_{i \rightarrow i-1}}{\partial x}, \\
+\mathcal{W}_i^y &=& \sum_{j=2}^{i} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial y} \ = \ \sum_{j=2}^{i-1} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial y} + \frac{\partial \triangle \delta_{i \rightarrow i-1}}{\partial y}\\
+&=& \mathcal{W}_{i-1}^y + \frac{\partial \triangle \delta_{i \rightarrow i-1}}{\partial y}, \\
+\partial \mathcal{W}^{x,y}_i &=& \sum_{j=2}^{i} \frac{\partial^2 \triangle \delta_{j \rightarrow j-1}}{\partial x \partial y} \\
+&=& \partial \mathcal{W}_{i-1}^{x,y} + \frac{\partial^2 \triangle \delta_{i \rightarrow i-1}}{\partial x \partial y}.
+\end{eqnarray*}
+For $x = y$, the second derivative of the radiative transfer is
+\begin{eqnarray*}
+\frac{\partial^2 I(\vx)}{\partial x^2} &=& \sum_{i=1}^{2N} \Bigg[ \frac{\partial^2 \triangle B_i}{\partial x^2} - 2 \frac{\partial \triangle B_i}{\partial x} \sum_{j=2}^{i} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial x} + \triangle B_i \bigg(  \Big( \sum_{j=2}^{i} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial x} \Big)^2 - \sum_{j=2}^{i} \frac{\partial^2 \triangle \delta_{j \rightarrow j-1}}{\partial x^2} \bigg)  \Bigg] \, \mathcal{T}_i,
+\end{eqnarray*}
+or
+\begin{eqnarray*}
+\frac{\partial^2 I(\vx)}{\partial x^2} &=& \sum_{i=1}^{2N} \Bigg[ \frac{\partial^2 \triangle B_i}{\partial x^2} - 2 \frac{\partial \triangle B_i}{\partial x} \mathcal{W}_i + \triangle B_i \bigg(  \mathcal{W}_i^2 - \frac{\partial \mathcal{W}_i }{\partial x} \bigg)  \Bigg] \, \mathcal{T}_i,
+\end{eqnarray*}
+where
+\begin{eqnarray*}
+\mathcal{W}_1^x &=& 0, \ \ \ \ \ \ \partial \mathcal{W}^{x,x}_1 \ = \ 0, \\
+\mathcal{W}_i^x &=& \sum_{j=2}^{i} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial x} \ = \ \sum_{j=2}^{i-1} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial x} + \frac{\partial \triangle \delta_{i \rightarrow i-1}}{\partial x} \\
+&=& \mathcal{W}_{i-1}^x + \frac{\partial \triangle \delta_{i \rightarrow i-1}}{\partial x}, \\
+\partial \mathcal{W}^{x,x}_i &=& \sum_{j=2}^{i} \frac{\partial^2 \triangle \delta_{j \rightarrow j-1}}{\partial x^2} \\
+&=& \partial \mathcal{W}_{i-1}^{x,x} + \frac{\partial^2 \triangle \delta_{i \rightarrow i-1}}{\partial x^2}.
+\end{eqnarray*}
+
+
+\subsection{Mixing Ratio Derivatives}
+\label{sec:Mixing_Ratio_Derivatives}
+
+For $k$ and $\tilde{k}$ state vector components (mixing ratio species), $x = f_q^k$ and $y = f_{\tilde{q}}^{\tilde{k}}$ above.  Here, $q$ and $\tilde{q}$ are breakpoints where $f^k$ and $f^{\tilde{k}}$ are known.  Note that since $\displaystyle \frac{\partial \triangle B_i}{\partial f_q^k} = 0$ for all $k$ and $q$, we have
+\begin{eqnarray}
+\frac{\partial I(\vx)}{\partial f_q^k} &=& - \sum_{i=1}^{2N} \triangle B_i \mathcal{W}_{i, q}^k \mathcal{T}_i,
+\label{eqn:Mixing_Ratio_First_Derivative}
+\end{eqnarray}
+where
+\begin{eqnarray*}
+\mathcal{W}_{1, q}^k &=& 0, \\
+\mathcal{W}_{i, q}^k &=& \mathcal{W}_{i-1, q}^k + \frac{\partial \triangle \delta_{i \rightarrow i-1}}{\partial f_q^k}.
+\end{eqnarray*}
+
+
+\subsection{Mixing Ratio Second Derivatives}
+\label{sec:Mixing_Ratio_Second_Derivatives}
+
+Note that since $\displaystyle \frac{\partial \triangle B_i}{\partial f_q^k} = 0$ and $\displaystyle \frac{\partial^2 \triangle B_i}{\partial f_q^{k} \partial f_{\tilde{q}}^{\tilde{k}}} = 0$, we have
+\begin{eqnarray*}
+\frac{\partial^2 I(\vx)}{\partial f_q^{k} \partial f_{\tilde{q}}^{\tilde{k}}} &=& \sum_{i=1}^{2N} \triangle B_i \bigg(  \mathcal{W}_{i, q}^{k} \, \mathcal{W}_{i, \tilde{q}}^{\tilde{k}} - \partial \mathcal{W}_{i, q,\tilde{q}}^{k,{\tilde{k}}} \bigg) \, \mathcal{T}_i,
+\end{eqnarray*}
+where
+\begin{eqnarray*}
+\mathcal{W}_{1, q}^k &=& 0, \ \ \ \partial \mathcal{W}_{1, q, \tilde{q}}^k \ = \ 0, \\
+\mathcal{W}_{i, q}^k &=& \mathcal{W}_{i-1, q}^k + \frac{\partial \triangle \delta_{i \rightarrow i-1}}{\partial f_q^k}, \\
+\partial \mathcal{W}_{i, q,\tilde{q}}^{k,{\tilde{k}}} &=& \partial \mathcal{W}_{i-1, q,\tilde{q}}^{k,{\tilde{k}}} + \frac{\partial^2 \triangle \delta_{i \rightarrow i-1}}{\partial f_q^{k} \partial f_{\tilde{q}}^{\tilde{k}}}.
+\end{eqnarray*}
+
+
+
+\subsubsection*{Opacity Derivatives}
+
+The species incremental opacity integral is
+\begin{eqnarray*}
+\triangle \delta_{i \rightarrow i-1}^k = \int_{\zeta_i}^{\zeta_{i-1}} F^{k}(\zeta) \, \beta^k \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \, d\zeta,
+\end{eqnarray*}
+where mixing ratios are given by
+\begin{eqnarray*}
+F^{k}(\zeta) &=& \sum_{q=1}^Q \eta_q^k(\zeta) f_q^{k},
+\end{eqnarray*}
+and
+\begin{eqnarray*}
+\frac{\partial F^{k}}{\partial f_q^{k}} &=& \eta_q^k(\zeta),
+\end{eqnarray*}
+\begin{eqnarray*}
+\frac{\partial F^{k}}{\partial f_q^{\tilde{k}}} &=& 0, \ \ \mbox{for } k \not= \tilde{k}.
+\end{eqnarray*}
+The {\bf opacity derivative} with respect to mixing ratio using the linear basis is
+\begin{eqnarray*}
+\frac{\partial \triangle \delta_{i \rightarrow i-1}^k}{\partial f_{q}^k} = \int_{\zeta_i}^{\zeta_{i-1}} \eta_q^k(\zeta) \, \beta^k \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \, d\zeta,
+\end{eqnarray*}
+\begin{eqnarray*}
+\frac{\partial \triangle \delta_{i \rightarrow i-1}^k}{\partial f_{q}^{\tilde{k}}} = 0, \ \ \mbox{for } k \not= \tilde{k},
+\end{eqnarray*}
+where $k$ and $\tilde{k}$ are molecules.  Note that $\displaystyle \frac{\partial \triangle \delta_{i \rightarrow i-1}}{\partial f_{q}^k} = \frac{\partial}{\partial f_{q}^k} \Big( \sum_{k} \triangle \delta_{i \rightarrow i-1}^k \Big) = \frac{\partial \triangle \delta_{i \rightarrow i-1}^k}{\partial f_{q}^k}$.
+
+
+\subsubsection*{Opacity Second Order Derivatives}
+
+
+The {\bf opacity second order derivative} with respect to mixing ratios for molecules $k$ and ${\tilde{k}}$ is identically $0$:
+\begin{eqnarray*}
+\frac{\partial^2 \triangle \delta_{i \rightarrow i-1}^k}{\partial f_{q}^{k} \partial f_{\tilde{q}}^{\tilde{k}}} = \int_{\zeta_i}^{\zeta_{i-1}} \frac{\partial \eta_q^k(\zeta)}{\partial f_{\tilde{q}}^{\tilde{k}}} \, \beta^k \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \, d\zeta \ = \ 0,
+\end{eqnarray*}
+for all $k, \, \tilde{k}$ and $q, \, \tilde{q}$.
+Thus,
+\begin{eqnarray*}
+\partial \mathcal{W}_{i, q, \tilde{q}}^{k, \tilde{k}} &=& 0,
+\end{eqnarray*}
+and 
+\begin{eqnarray}
+\frac{\partial^2 I(\vx)}{\partial f_q^{k} \partial f_{\tilde{q}}^{k}} &=& \sum_{i=1}^{2N} \triangle B_i \mathcal{W}_{i, q}^{k} \mathcal{W}_{i, \tilde{q}}^{\tilde{k}} \, \mathcal{T}_i.
+\label{eqn:Mixing_Ratio_Second_Derivative}
+\end{eqnarray}
+\ \\
+{\bfseries Remark:} Since
+\begin{eqnarray*}
+\frac{\partial I}{\partial f_q^k} \; = \; \sum_{i=1}^{2N} \triangle B_i \frac{\partial \mathcal{T}_i}{\partial f_q^k} \ \ \ \ \ \mbox{and} \ \ \ \ \ \frac{\partial^2 I}{\partial f_q^{k} \partial f_{\tilde{q}}^{\tilde{k}} } \; = \; \sum_{i=1}^{2N} \triangle B_i \frac{\partial^2 \mathcal{T}_i}{\partial f_q^{k} \partial f_{\tilde{q}}^{\tilde{k}} },
+\end{eqnarray*}
+radiative transfer mixing ratio first and second derivatives can be computed after evaluating derivatives of $\mathcal{T}_i$:
+\begin{eqnarray*}
+\frac{\partial \mathcal{T}_i}{\partial f_q^k} &=& \frac{\partial}{\partial f_q^k} \bigg[ \exp \Big( -\sum_{j=2}^{i} \triangle \delta_{j \rightarrow j-1} \Big) \bigg] \\
+&=& \frac{\partial}{\partial f_q^k} \bigg[ \exp \Big( -\sum_{j=2}^{i} \sum_k \int_{\zeta_i}^{\zeta_{i-1}} F^{k}(\zeta) \, \beta^k \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \, d\zeta \Big) \bigg] \\
+&=& - \mathcal{T}_i \; \sum_{j=2}^i \int_{\zeta_i}^{\zeta_{i-1}} \eta_q^k \beta^k \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \, d\zeta, \\
+\frac{\partial^2 \mathcal{T}_i}{\partial f_q^{k} \partial f_{\tilde{q}}^{\tilde{k}} } &=& \mathcal{T}_i \; \bigg( \sum_{j=2}^i \int_{\zeta_i}^{\zeta_{i-1}} \eta_q^k \beta^k \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \, d\zeta \bigg) \bigg( \sum_{j=2}^i \int_{\zeta_i}^{\zeta_{i-1}} \eta_{\tilde{q}}^{\tilde{k}} \beta^{\tilde{k}} \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \, d\zeta \bigg),
+\end{eqnarray*}
+which are consistent with results obtained in (\ref{eqn:Mixing_Ratio_First_Derivative}) and (\ref{eqn:Mixing_Ratio_Second_Derivative}).
+
+
+\subsubsection*{Examples}
+
+
+\subsubsection*{$O_3$ molecules}
+
+
+The opacity derivative with respect to $O_3$ mixing ratio using the linear basis is
+\begin{eqnarray*}
+\frac{\partial \triangle \delta_{i \rightarrow i-1}^{O_3}}{\partial f_{q}^{O_3}} = \int_{\zeta_i}^{\zeta_{i-1}} \eta_q^{O_3}(\zeta) \, \beta^{O_3} \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \, d\zeta.
+\end{eqnarray*}
+The {\bf derivative of the radiative transfer} is
+\begin{eqnarray*}
+\frac{\partial I(\vx)}{\partial f_q^{O_3}} &=& - \sum_{i=1}^{2N} \triangle B_i \mathcal{W}_{i, q}^{O_3} \mathcal{T}_i,
+\end{eqnarray*}
+where
+\begin{eqnarray*}
+\mathcal{W}_{1, q}^{O_3} &=& 0, \\
+\mathcal{W}_{i, q}^{O_3} &=& \mathcal{W}_{i-1, q}^{O_3} + \frac{\partial \triangle \delta_{i \rightarrow i-1}}{\partial f_q^{O_3}}.
+\end{eqnarray*}
+
+\ \\
+For all $i$ and $q$, calculate
+\begin{eqnarray*}
+\frac{\partial \triangle \delta_{i \rightarrow i-1}^{O_3}}{\partial f_{q}^{O_3}} = \int_{\zeta_i}^{\zeta_{i-1}} \eta_q^{O_3}(\zeta) \, \beta^{O_3} \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \, d\zeta.
+\end{eqnarray*}
+Given $W_{i,q}^{O_3}$, compute
+\begin{eqnarray*}
+\frac{\partial I_l}{\partial f_q^{O_3}} &=& - \sum_{i=1}^{2N} \triangle B_i \mathcal{W}_{i, q}^{O_3} \mathcal{T}_i,
+\end{eqnarray*}
+where $l$ is the level number (path) above the Earth surface.  For a higher level $l$, there are more $i$'s with $\mathcal{T}_i = 0$.
+
+
+\subsubsection*{$O_3$ and $N_2$ molecules}
+
+The opacity derivatives with respect to $O_3$ and $N_2$ mixing ratios using the linear basis are
+\begin{eqnarray*}
+\frac{\partial \triangle \delta_{i \rightarrow i-1}^{O_3}}{\partial f_{q}^{O_3}} &=& \int_{\zeta_i}^{\zeta_{i-1}} \eta_q^{O_3}(\zeta) \, \beta^{O_3} \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \, d\zeta, \\
+\frac{\partial \triangle \delta_{i \rightarrow i-1}^{N_2}}{\partial f_{q}^{N_2}} &=& \int_{\zeta_i}^{\zeta_{i-1}} \eta_q^{N_2}(\zeta) \, \beta^{N_2} \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \, d\zeta.
+\end{eqnarray*}
+Since {\bf incremental opacity} is given by
+\begin{eqnarray*}
+\triangle \delta_{i \rightarrow i-1} = \triangle \delta_{i \rightarrow i-1}^{O_3} + \triangle \delta_{i \rightarrow i-1}^{N_2},
+\end{eqnarray*}
+we have
+\begin{eqnarray*}
+\frac{\partial \triangle \delta_{i \rightarrow i-1}}{\partial f_{q}^{O_3}} &=& \int_{\zeta_i}^{\zeta_{i-1}} \eta_q^{O_3}(\zeta) \beta^{O_3} \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \, d\zeta, \\
+\frac{\partial \triangle \delta_{i \rightarrow i-1}}{\partial f_{q}^{N_2}} &=& \int_{\zeta_i}^{\zeta_{i-1}} \eta_q^{N_2}(\zeta) \beta^{N_2} \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \, d\zeta.
+\end{eqnarray*}
+The derivative of the radiative transfer is
+\begin{eqnarray*}
+\frac{\partial I(\vx)}{\partial f_q^{k}} &=& - \sum_{i=1}^{2N} \triangle B_i \mathcal{W}_{i, q}^k \mathcal{T}_i,
+\end{eqnarray*}
+where
+\begin{eqnarray*}
+\mathcal{W}_{1, q}^k &=& 0, \\
+\mathcal{W}_{i, q}^k &=& \mathcal{W}_{i-1, q}^k + \frac{\partial \triangle \delta_{i \rightarrow i-1}}{\partial f_q^{k}},
+\end{eqnarray*}
+where $k$ is either $O_3$ or $N_2$.
+
+
+\pagebreak
+
+
+\subsection{Temperature Derivative}
+
+
+The hydrostatic relation is
+\begin{equation*}
+h(\zeta) = \frac{g^{\oplus} {H^{\oplus}}^2}{g^{\oplus} H^{\oplus} - k \ln 10 \sum_{q=1}^Q f_q^T  P_q(\zeta)} - H^{\oplus}
+\end{equation*}
+The {\bf temperature} representation is of the form
+\begin{eqnarray*}
+T(\zeta) = \sum_{q=1}^Q \eta_q^T(\zeta) f_q^T.
+\end{eqnarray*}
+The species incremental opacity integral is
+\begin{eqnarray*}
+\triangle \delta_{i \rightarrow i-1}^k = \int_{\zeta_i}^{\zeta_{i-1}} F^{k}(\zeta) \, \beta^k \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \, d\zeta.
+\end{eqnarray*}
+Substituting
+\begin{eqnarray*}
+\frac{ds}{dh} &=& \frac{R}{\sqrt{R^2 - R_t^2}} \, = \, \frac{h+H^{\oplus}}{ \sqrt{(h+H^{\oplus})^2-(h_t+H^{\oplus})^2} }, \\
+\frac{dh}{d\zeta} &=& \frac{(h+H^{\oplus})^2 k T \log 10}{g_0 H^{\oplus \, 2} m},
+\end{eqnarray*}
+into the species incremental opacity integral and differentiating with respect to $f_q^T$ gives
+\begin{eqnarray*}
+\frac{\partial \triangle \delta_{i \rightarrow i-1}^k}{\partial f_q^T} &=& \frac{\partial }{\partial f_q^T} \int_{\zeta_i}^{\zeta_{i-1}} F^{k}(\zeta) \, \beta^k \big(P (\zeta),T(\zeta),\zeta \big) \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \, d\zeta \\
+\ \\
+\ \\
+&=& \frac{\partial }{\partial f_q^T} \int_{\zeta_i}^{\zeta_{i-1}} F^{k}(\zeta) \, \beta^k \big(P (\zeta),T(\zeta),\zeta \big) \, \frac{h+H^{\oplus}}{ \sqrt{(h+H^{\oplus})^2-(h_t+H^{\oplus})^2} } \, \frac{(h+H^{\oplus})^2 k T \log 10}{g_0 H^{\oplus \, 2} m} \, d\zeta \\
+\ \\
+\ \\
+&=& \int_{\zeta_i}^{\zeta_{i-1}} \Bigg\{ F^{k} \, \frac{\partial \beta^k}{\partial f_q^T} \, \frac{h+H^{\oplus}}{ \sqrt{(h+H^{\oplus})^2-(h_t+H^{\oplus})^2} } \, \frac{(h+H^{\oplus})^2 k T \log 10}{g_0 H^{\oplus \, 2} m} \\
+&& + F^{k} \beta^k \frac{\partial}{\partial f_q^T} \bigg[ \frac{(h+H^{\oplus})^3}{ \sqrt{(h+H^{\oplus})^2-(h_t+H^{\oplus})^2} } \bigg] \, \frac{k T \log 10}{g_0 H^{\oplus \, 2} m} \\
+&& + F^{k} \beta^k \frac{(h+H^{\oplus})^3}{ \sqrt{(h+H^{\oplus})^2-(h_t+H^{\oplus})^2} } \, \frac{\partial }{\partial f_q^T} \bigg[ \frac{k T \log 10}{g_0 H^{\oplus \, 2} m} \bigg] \, \Bigg\} \, d\zeta \\
+\ \\
+\ \\
+&=& \int_{\zeta_i}^{\zeta_{i-1}} \Bigg\{ F^{k} \, \underbrace{\frac{\partial \beta^k}{\partial T} \frac{\partial T}{\partial f_q^T}}_{\partial \beta^k / \partial f_q^T} \, \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \\
+&& + F^{k} \beta^k \frac{2(h+H^{\oplus})^2 \frac{\partial h}{\partial f_q^T} - 3(h_t+H^{\oplus})^2 \frac{\partial h}{\partial f_q^T} + (h+H^{\oplus})(h_t+H^{\oplus})\frac{\partial h_t}{\partial f_q^T}  }{ \Big( (h+H^{\oplus})^2-(h_t+H^{\oplus})^2 \Big)^{\frac{3}{2}} } (h+H^{\oplus})^2 \, \frac{k T \log 10}{g_0 H^{\oplus \, 2} m} \\
+&& + F^{k} \beta^k \underbrace{ \frac{(h+H^{\oplus})^3}{ \sqrt{(h+H^{\oplus})^2-(h_t+H^{\oplus})^2} } }_{ \frac{ds}{dh} (h+H^{\oplus})^2 } \, \eta_q^T(\zeta)  \underbrace{ \bigg[ \frac{k \log 10}{g_0 H^{\oplus \, 2} m} \bigg] }_{ \frac{dh}{d\zeta} / T / (h+H^{\oplus})^2 }\, \Bigg\} \, d\zeta.
+\end{eqnarray*}
+Approximation:
+\begin{equation*}
+\beta^k = \beta_{0}^k \bigg( \frac{T}{T_{0}} \bigg)^{n^k}.
+\end{equation*}
+Then,
+\begin{equation*}
+\frac{\partial \beta^k}{\partial T} = n^k \beta_{0}^k \bigg( \frac{T}{T_{0}} \bigg)^{n^k-1} \frac{1}{T_0} = \frac{n^k \beta^k}{T}.
+\end{equation*}
+Here, $n^k$ is calculated from
+\begin{eqnarray*}
+\frac{\beta_1^k}{\beta_2^k} &=& \bigg( \frac{T_1}{T_2} \bigg)^{n^k}, \ \ \ \ \ \ \ \ \ \mbox{or} \\
+n^k &=& \frac{ \displaystyle \log \frac{\beta^k(T_0 + \epsilon, P, \nu)}{\beta^k(T_0 - \epsilon, P, \nu)} }{ \displaystyle \log \bigg( \frac{T_0 + \epsilon}{T_0 - \epsilon} \bigg) },
+\end{eqnarray*}
+with, for example, $T_0 = 230$ and $\epsilon = 5$. \\
+Thus, the {\bf temperature derivative of the incremental opacity} equation is
+\begin{eqnarray*}
+\frac{\partial \triangle \delta_{i \rightarrow i-1}^k}{\partial f_q^T}
+&=& \int_{\zeta_i}^{\zeta_{i-1}} \Bigg\{ F^{k} \beta^k \, \frac{n^k}{T} \, \eta_q^T(\zeta) \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \\
+&& + F^{k} \beta^k \frac{ \displaystyle 2(h+H^{\oplus})^2 \frac{\partial h}{\partial f_q^T} - 3(h_t+H^{\oplus})^2 \frac{\partial h }{\partial f_q^T} + (h+H^{\oplus})(h_t+H^{\oplus})\frac{\partial h_t}{\partial f_q^T}  }{ \Big( (h+H^{\oplus})^2-(h_t+H^{\oplus})^2 \Big)^{\frac{3}{2}} } \, \frac{dh}{d\zeta} \\
+&& + F^{k} \beta^k \, \frac{\eta_q^T(\zeta)}{T}  \frac{ds}{dh} \, \frac{dh}{d\zeta} \, \Bigg\} \, d\zeta.
+\end{eqnarray*}
+
+\begin{eqnarray*}
+\frac{\partial h}{\partial f_q^T} &=& \frac{ g^{\oplus} {H^{\oplus}}^2 k \; \log 10 \; P_q(\zeta) }{ \Big[ g^{\oplus} H^{\oplus} - k \log 10 \sum_{q=1}^Q f_q^T P_q(\zeta) \Big]^2 }, \\ \\
+\frac{\partial h_t}{\partial f_q^T} &=& \frac{ g^{\oplus} {H^{\oplus}}^2 k \; \log 10 \; P_q(\zeta_t) }{ \Big[ g^{\oplus} H^{\oplus} - k \log 10 \sum_{q=1}^Q f_q^T P_q(\zeta_t) \Big]^2 }.
+\end{eqnarray*}
+Since {\bf incremental opacity} is given by
+\begin{eqnarray*}
+\triangle \delta_{i \rightarrow i-1} = \triangle \delta_{i \rightarrow i-1}^{O_3} + \triangle \delta_{i \rightarrow i-1}^{N_2},
+\end{eqnarray*}
+we have
+\begin{eqnarray*}
+\frac{\partial \triangle \delta_{i \rightarrow i-1}}{\partial f_{q}^{T}} &=& \frac{\partial \triangle \delta_{i \rightarrow i-1}^{O_3}}{\partial f_{q}^{T}} + \frac{\partial \triangle \delta_{i \rightarrow i-1}^{N_2}}{\partial f_{q}^{T}}.
+\end{eqnarray*}
+The {\bf temperature derivative} of radiance is given as
+\begin{eqnarray*}
+\frac{\partial I(\vx)}{\partial f_q^T} &=& \sum_{i=1}^{2N} \bigg[ \frac{\partial \triangle B_i}{\partial f_q^T} - \triangle B_i \mathcal{W}_i \bigg]  \mathcal{T}_i,
+\end{eqnarray*}
+where
+\begin{eqnarray*}
+\mathcal{W}_{1, q} &=& 0, \\
+\mathcal{W}_{i, q} &=& \sum_{j=2}^{i} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial f_q^T} \\
+&=& \sum_{j=2}^{i-1} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial f_q^T} + \frac{\partial \triangle \delta_{i \rightarrow i-1}}{\partial f_q^T}\\
+&=& \mathcal{W}_{i-1, q} + \frac{\partial \triangle \delta_{i \rightarrow i-1}}{\partial f_q^T}.
+\end{eqnarray*}
+
+
+%\begin{comment}
+
+\clearpage
+
+
+\subsection{Temperature Second Derivative}
+
+
+\begin{eqnarray*}
+\frac{\partial^2 \triangle \delta_{i \rightarrow i-1}^k}{\partial f_q^T \partial f_{\tilde{q}}^T}
+&=& \frac{\partial}{\partial f_{\tilde{q}}^T} \int_{\zeta_i}^{\zeta_{i-1}} \Bigg\{ F^{k} \beta^k \, \frac{n^k}{T} \, \eta_q^T(\zeta) \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \\
+&& + F^{k} \beta^k \frac{ \displaystyle 2(h+H^{\oplus})^2 \frac{\partial h}{\partial f_q^T} - 3(h_t+H^{\oplus})^2 \frac{\partial h }{\partial f_q^T} + (h+H^{\oplus})(h_t+H^{\oplus})\frac{\partial h_t}{\partial f_q^T}  }{ \Big( (h+H^{\oplus})^2-(h_t+H^{\oplus})^2 \Big)^{\frac{3}{2}} } \, \frac{dh}{d\zeta} \\
+&& + F^{k} \beta^k \, \frac{\eta_q^T(\zeta)}{T}  \frac{ds}{dh} \, \frac{dh}{d\zeta} \, \Bigg\} \, d\zeta \\
+\ \\
+\ \\
+&=& \int_{\zeta_i}^{\zeta_{i-1}} \Bigg\{ \frac{\partial}{\partial f_{\tilde{q}}^T} \bigg[ F^{k} \beta^k \, \frac{n^k}{T} \, \eta_q^T(\zeta) \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \bigg] d\zeta \\
+&& + \frac{\partial}{\partial f_{\tilde{q}}^T}  \Bigg[ F^{k} \beta^k \frac{ \displaystyle 2(h+H^{\oplus})^2 \frac{\partial h}{\partial f_q^T} - 3(h_t+H^{\oplus})^2 \frac{\partial h }{\partial f_q^T} + (h+H^{\oplus})(h_t+H^{\oplus})\frac{\partial h_t}{\partial f_q^T}  }{ \Big( (h+H^{\oplus})^2-(h_t+H^{\oplus})^2 \Big)^{\frac{3}{2}} } \, \frac{dh}{d\zeta} \Bigg] \\
+&& + \frac{\partial}{\partial f_{\tilde{q}}^T}  \bigg[ F^{k} \beta^k \, \frac{\eta_q^T(\zeta)}{T}  \frac{ds}{dh} \, \frac{dh}{d\zeta} \bigg] \, \Bigg\} \ d\zeta \\
+\end{eqnarray*}
+
+%\end{comment}
+
+
+\clearpage
+
+
+\subsection{The Planck Radiation Function Derivative}
+
+
+\subsubsection{Analytical Expression for the Source Function Derivative for Temperature}
+
+The Planck radiation function $B$ expressed in temperature units is given by
+\begin{eqnarray*}
+B(\zeta) \ = \ \frac{\vh \nu}{k \big[ \exp\big( \frac{\vh \nu}{k T(\zeta)} \big) - 1 \big]},
+\end{eqnarray*}
+or, in discrete form
+\begin{eqnarray*}
+B_i \ = \ \frac{\vh \nu}{k \big[ \exp\big( \frac{\vh \nu}{k T_i} \big) - 1 \big]},
+\end{eqnarray*}
+where $\vh$ is Planck's constant, $k$ is Boltzmann's constant, $\nu$ is the radiation frequency, and $T$ is temperature. The derivative of $B$ with respect to $\zeta$ can be approximated by
+\begin{eqnarray*}
+\frac{dB}{d\zeta} \ \approx \ \frac{\triangle B}{\triangle \zeta}.
+\end{eqnarray*}
+The differential source function can be approximated as $dB \approx \triangle B$:
+\begin{eqnarray*}
+\triangle B_1 &=& \frac{B_1 + B_2}{2}, \\
+\triangle B_i &=& \frac{B_{i+1} - B_{i-1}}{2}, \\
+\triangle B_{2N} &=& I_0 - \frac{B_{2N-1} + B_{2N}}{2},
+\end{eqnarray*}
+where $I_0 = 2.7$ is the background cosmic radiance incident on the atmosphere. Note that $\displaystyle \sum_{i=1}^{2N} \triangle B_i = I_0$. \\
+The source function Jacobian for temperature is
+\begin{equation}
+\frac{\partial \triangle B_i}{\partial f_q^T} \ = \ \frac{ \displaystyle \frac{\partial B_{i+1}}{\partial f_q^T} - \frac{\partial B_{i-1}}{\partial f_q^T}}{2},
+\end{equation}
+where
+\begin{eqnarray*}
+\frac{\partial B_i}{\partial f_q^T} &=& -\frac{\vh \nu}{k \big[ \exp\big( \frac{\vh \nu}{k T_i} \big) - 1 \big]^2} \cdot \frac{- \vh \nu}{k T_i^2} \exp\Big( \frac{\vh \nu}{k T_i} \Big) \, \eta_q^T(\zeta_i) \\
+&=& \frac{B_i^2 \exp\big( \frac{\vh \nu}{k T_i} \big)}{T_i^2} \, \eta_q^T(\zeta_i).
+\end{eqnarray*}
+
+
+\subsubsection{Approximation of the Source Function Derivative for Temperature}
+
+
+The Planck radiation function $B$ can be approximated by $T$:
+\begin{eqnarray*}
+B(\zeta) \ = \ \frac{\vh \nu}{k \big[ \exp\big( \frac{\vh \nu}{k T(\zeta)} \big) - 1 \big]} \ \approx \ T(\zeta).
+\end{eqnarray*}
+Hence,
+\begin{eqnarray*}
+\triangle B_1 &=& \frac{T_1 + T_2}{2}, \\
+\triangle B_i &=& \frac{T_{i+1} - T_{i-1}}{2}, \\
+\triangle B_{2N} &=& T_{space} - \frac{T_{2N-1} + T_{2N}}{2},
+\end{eqnarray*}
+where $T_{space} = 2.7$. Since $\displaystyle \frac{\partial T(\zeta)}{\partial f_q^T} = \eta_q^T(\zeta)$, the source function Jacobian for temperature can be approximated by
+\begin{eqnarray*}
+\frac{\partial \triangle B_1}{\partial f_q^T} &=& \frac{ \eta_q^T(\zeta_{1}) + \eta_q^T(\zeta_{2})}{2}, \\
+\frac{\partial \triangle B_i}{\partial f_q^T} &=& \frac{ \eta_q^T(\zeta_{i+1}) - \eta_q^T(\zeta_{i-1})}{2}, \\
+\frac{\partial \triangle B_{2N}}{\partial f_q^T} &=& -\frac{ \eta_q^T(\zeta_{2N-1}) + \eta_q^T(\zeta_{2N})}{2}.
+\end{eqnarray*}
+
+
+% $Id$

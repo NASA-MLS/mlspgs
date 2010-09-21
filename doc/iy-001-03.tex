@@ -1,0 +1,106 @@
+\section{Radiative Transfer}
+
+The atmospheric representation for the $k$th state vector component are function of the form
+\begin{eqnarray*}
+F^{k} &=& \sum_{q=1}^Q \eta_q^k(\zeta) f_q^{k},
+\end{eqnarray*}
+where $k$ is a molecule, where $F^{k}$ is the continuous representation, $f_q^{k}$ are its values at breakpoints $q$, and $M$ are the total number of vertical breakpoints. The functions $\eta_q^k(\zeta)$ represent a piecewise-linear interpolation.  In this calculations, $F^{k}$ represent {\bf mixing ratios}. For example,
+\begin{eqnarray*}
+F^{O_3} &=& \sum_{q=1}^Q \eta_q^{O_3}(\zeta) f_q^{O_3}, \\
+F^{N_2} &=& 0.8.
+\end{eqnarray*}
+The {\bf temperature} representation is of the form
+\begin{eqnarray*}
+T(\zeta) &=& \sum_{q=1}^Q \eta_q^T(\zeta) f_q^T
+\end{eqnarray*}
+For each of the levels $h_t = h_1, \ h_2, \ h_3, \ldots$, the {\bf path length} is given by
+\begin{eqnarray}
+s = \pm \sqrt{(h+H^{\oplus})^2-(h_t+H^{\oplus})^2}.
+\end{eqnarray}
+The choice of the sign depends on which side of the tangent $h$ is.
+\ \\
+The {\bf incremental opacity} is given by
+\begin{eqnarray*}
+\triangle \delta_{i \rightarrow i-1} = \sum_{k=1}^{NS} \triangle \delta_{i \rightarrow i-1}^k,
+\end{eqnarray*}
+where $k$ is a molecule and $NS$ is the total number of molecules considered. The {\bf species incremental opacity} integral is
+\begin{eqnarray*}
+\triangle \delta_{i \rightarrow i-1}^k = \int_{\zeta_i}^{\zeta_{i-1}} F^{k}(\zeta) \, \beta^k \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \, d\zeta,
+\end{eqnarray*}
+where
+\begin{eqnarray}
+\frac{ds}{dh} &=& \frac{R}{\sqrt{R^2 - R_t^2}} \, = \, \frac{h+H^{\oplus}}{ \sqrt{(h+H^{\oplus})^2-(h_t+H^{\oplus})^2} }, \\
+\frac{dh}{d\zeta} &=& \frac{(h+H^{\oplus})^2 k T \log 10}{g_0 H^{\oplus \, 2} m}.
+\end{eqnarray}
+Here, we can write
+\begin{eqnarray*}
+\triangle \delta_{i \rightarrow i-1}^k = \int_{\zeta_{i}}^{\zeta_{i-1}} \alpha^k(s) \, ds,
+\end{eqnarray*}
+where $\alpha^k = F^{k} \beta^k$ is {\bf absorption coefficient} (with respect to molecule $k$), and
+\begin{eqnarray*}
+ds = \frac{ds}{dh} \frac{dh}{d\zeta} d\zeta.
+\end{eqnarray*}
+The {\bf transmission function} is defined as
+\begin{eqnarray*}
+\mathcal{T}_1 &=& 1, \\
+\mathcal{T}_2 &=& \exp \big( -\triangle \delta_{2 \rightarrow 1} \big), \\
+\mathcal{T}_3 &=& \exp \big( -\triangle \delta_{2 \rightarrow 1} - \triangle \delta_{3 \rightarrow 2} \big), \\
+... && ... \\
+\mathcal{T}_i &=& \exp \Big( -\sum_{j=2}^i \triangle \delta_{j \rightarrow j-1} \Big).
+\end{eqnarray*}
+The transmission function can be written in several alternative forms:
+\begin{eqnarray*}
+\mathcal{T}_i &=& \exp \Big( -\sum_{j=2}^i \triangle \delta_{j \rightarrow j-1} \Big) \\
+&=& \exp \Big( -\sum_{j=2}^i \sum_k \triangle \delta_{j \rightarrow j-1}^k \Big) \\
+&=& \exp \bigg( -\sum_{j=2}^i \int_{\zeta_{j}}^{\zeta_{j-1}} \sum_k \underbrace{F^{k}(\zeta) \beta^{k}(\zeta,T)}_{\alpha^{k}}  \underbrace{ \frac{h+H^{\oplus}}{ \sqrt{(h+H^{\oplus})^2-(h_t+H^{\oplus})^2} } \, \frac{(h+H^{\oplus})^2 k T \log 10}{g_0 H^{\oplus \, 2} m} \, d\zeta }_{ds} \bigg).
+\end{eqnarray*}
+
+The quantities can be calculated as follows: \\
+$h_t$ is calculated using Hydrostatic Model, \\
+$h$ is linearly interpolated / averaged (or can be calculated exactly), \\
+$T$ is linearly interpolated /averaged, \\
+$F_{O^3}$ is linearly interpolated, \\
+$\beta^k(\zeta,T)$ is calculated using quadrature rule, with midpoint $\zeta$ evaluated exactly.
+
+\ \\
+\ \\
+For each of the levels $h_t = h_1, \ h_2, \ h_3, \ldots$, the path length is given by
+\begin{eqnarray*}
+s_i = \pm \sqrt{(h_i+H^{\oplus})^2-(h_t+H^{\oplus})^2}, \ \ \ \ \ i = 1, \ldots, N
+\end{eqnarray*}
+{\bf Approximation:}
+By convention, $\mathcal{T}_1 = 1$.
+\begin{eqnarray*}
+\triangle s_{i+1 \rightarrow i} &\approx& s_{i+1} - s_i \\
+&=& \pm \Big( \sqrt{(h_{i+1}+H^{\oplus})^2 - (h_t+H^{\oplus})^2} -  \sqrt{(h_{i}+H^{\oplus})^2 - (h_t+H^{\oplus})^2} \Big), \ \ \ \ \ i = 1, \ldots, N-1, \\
+\triangle \delta_{i+1 \rightarrow i}^k &\approx& \frac{F_i^{k}\beta_i^{k} + F_{i+1}^{k}\beta_{i+1}^{}}{2} \, \triangle s_{i+1 \rightarrow i}, \ \ \ \ \ i = 1, \ldots, N-1.
+\end{eqnarray*}
+Note that $\triangle s_{i+1 \rightarrow i} > 0$.
+
+The radiative transfer equation is
+\begin{eqnarray*}
+I(\vx) = \sum_{i=1}^{2N} \triangle B_i \mathcal{T}_i,
+\end{eqnarray*}
+where \footnote{Notation: In the algorithm, $\triangle s_{j+1 \rightarrow j} = \triangle s(j)$, \ $\triangle \delta_{j+1 \rightarrow j} = \triangle \delta(j)$, \ and $\mathcal{T}(i+1) = \exp \Big( - \sum_{j=1}^{i} \triangle \delta(j) \Big)$.  Note, $\mathcal{T}(i) = \exp \big( - \big( \delta_{2 \rightarrow 1} + \ldots \delta_{i \rightarrow i-1} \big) \big) = \exp \big( - \big( \triangle \delta(1) + \ldots + \triangle \delta(i-1) \big) \big) = \exp \Big( - \sum_{j=1}^{i-1} \triangle \delta(j) \Big)$.}
+\begin{eqnarray*}
+\mathcal{T}_{1} &=& 1, \\
+\mathcal{T}_{i+1} &=& \exp \Big( -\sum_{j=1}^{i} \triangle \delta_{j+1 \rightarrow j} \Big), \ \ \ \ \ i \geq 1,
+\end{eqnarray*}
+and $\triangle B_i$ is the source function in differential temperature format given by
+\begin{eqnarray*}
+\triangle B_1 &=& \frac{T_1 + T_2}{2}, \\
+\triangle B_i &=& \frac{T_{i+1} - T_{i-1}}{2}, \\
+\triangle B_{2N} &=& T_{space} - \frac{T_{2N-1} + T_{2N}}{2},
+\end{eqnarray*}
+where $T_{space} = 2.7$.
+
+
+\subsubsection*{Example: $O_3$ and $N_2$ molecules}
+
+
+\begin{eqnarray*}
+\mathcal{T}_i =  \exp \Bigg[ - \sum_{j=2}^{i} \int_{\zeta_{j}}^{\zeta_{j-1}} \bigg[ \underbrace{F^{O_3}(\zeta) \beta^{O_3}(\zeta,T)}_{\alpha^{O_3}} + \underbrace{F^{N_2}(\zeta) \beta^{N_2}(\zeta,T)}_{\alpha^{N_2}} \bigg] \underbrace{ \frac{h+H^{\oplus}}{ \sqrt{(h+H^{\oplus})^2-(h_t+H^{\oplus})^2} } \, \frac{(h+H^{\oplus})^2 k T \log 10}{g_0 H^{\oplus \, 2} m} \, d\zeta }_{ds} \Bigg].
+\end{eqnarray*}
+
+
+% $Id$
