@@ -1,0 +1,182 @@
+\documentclass[fleqn,10pt]{article}
+\usepackage[dvips]{graphics,color}
+\usepackage{amscd, amsfonts, amsmath, amssymb}
+\usepackage{amsthm}
+\usepackage{eucal}
+\usepackage{pifont}
+
+
+\usepackage{epsfig}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{verbatim}
+
+\setlength{\topmargin}{-1.5cm}
+\setlength{\headheight}{0.5cm}
+\setlength{\headsep}{0.7cm}
+\setlength{\topskip}{0.5cm}
+\setlength{\textheight}{23.0cm}
+\setlength{\footskip}{0.5cm}
+\setlength{\oddsidemargin}{0.5cm}
+\setlength{\evensidemargin}{0.5cm}
+\setlength{\textwidth}{14.5cm}
+
+
+
+
+\setcounter{tocdepth}{5}
+
+
+
+%\numberwithin{equation}{section}
+
+%\pagestyle{headings}
+%\markboth{Igor}{Yanovsky}
+
+
+
+\def\pdf{p}
+\def\vx{{\bf x}}
+\def\vy{{\bf y}}
+\def\vg{{\bf g}}
+\def\g{g}
+\def\vh{{\bf h}}
+\def\vf{{\bf f}}
+\def\vu{{\bf u}}
+\def\vv{{\bf v}}
+\def\vnabla{{\bf \nabla}}
+\def\vid{{\bf id}}
+\def\va{{\bf a}}
+\def\vr{{\bf r}}
+\def\vb{{\bf b}}
+
+\def\ff{\mbox f}
+
+\def\D{\mathcal{D}}
+\def\E{\mathcal{E}}
+
+\def\trace{\mbox{trace}}
+\def\divergence{\mbox{div}}
+
+\def\I{\mathcal{I}}
+\def\R{\mathcal{R}}
+\def\S{\mathcal{S}}
+\def\T{\mathcal{T}}
+
+
+\def\m{\mbox{m}}
+\def\km{\mbox{km}}
+\def\nm{\mbox{nm}}
+\def\cm{\mbox{cm}}
+\def\s{\mbox{s}}
+\def\kg{\mbox{kg}}
+\def\K{\mbox{K}}
+\def\N{\mbox{N}}
+\def\J{\mbox{J}}
+\def\Pa{\mbox{Pa}}
+\def\hPa{\mbox{hPa}}
+\def\Hz{\mbox{Hz}}
+\def\MHz{\mbox{MHz}}
+\def\AMU{\mbox{AMU}}
+
+\def\NH{\mbox{NH}}
+\def\NP{\mbox{NP}}
+
+\def\tq{f_q^T}
+
+\def\btau{\mbox{{\mathversion{bold}$\mathcal{T}$}}}
+
+\begin{document}
+
+
+
+\title{Radiative Transfer and Second Order Model for the Microwave Limb Sounder (MLS)}
+\author{Igor Yanovsky \\
+iy-001 \footnote{This document was written as part of MLS NRT task, under supervision of William Read, Van Snyder, Paul Wagner, and Nathaniel Livesey. The principal investigator for the project is Alyn Lambert.} }
+%\small{(under supervision of William Read, Van Snyder, and Paul Wagner)}  \\
+%\small{(PI: Alyn Lambert )} }
+
+
+\maketitle
+
+\tableofcontents
+
+%\begin{comment}
+
+\input{iy-001-01}   % Hydrostatic Model
+
+\input{iy-001-02}   % Absorption
+
+\pagebreak
+
+\input{iy-001-03}   % Radiative Transfer
+
+\input{iy-001-04}   % Derivatives
+
+\pagebreak
+
+\input{iy-001-05}   % Antenna Radiance
+
+\input{iy-001-06}   % Finite Difference
+
+\pagebreak
+
+\input{iy-001-07}   % Frequency Averaging
+
+\input{iy-001-08}   % Polarized Radiative Transfer
+
+\mbox{   }
+\clearpage
+
+\input{iy-001-09}   % Appendix
+
+\section{Glossary}
+MIF - minor frame; a smallest unit of L1 data  \\
+MAF - major frame; MAF contains 135 MIFs; ; there are 3500 MAFs in a day \\
+\ \\
+RC info - tells how a row or a column is laid out (this is only information, not data)
+ 
+
+\begin{comment}
+
+\clearpage
+
+Let $B_i$ denote the bands, $c_i$ the channels, $p_i$ the pointings, and $s_i$ the locations in the atmosphere.
+
+\begin{eqnarray}
+I &=& \left[ \begin{array}{ccc}
+\left[ \begin{array}{ccc}
+c_1p_1 \\ c_1p_2 \\ \vdots \\ c_2p_1 \\ c_2p_2 \\ \vdots \\ c_np_m 
+\end{array} \right]  {B_1 \atop \mbox{VectorValue\_T}} \\ \\
+\left[ \begin{array}{ccc}
+c_1p_1 \\ c_1p_2 \\ \vdots \\ c_2p_1 \\ c_2p_2 \\ \vdots \\ c_np_m 
+\end{array} \right]  {B_2 \atop \mbox{VectorValue\_T}} \\
+\vdots
+\end{array} \right] \mbox{Vector\_T}
+\end{eqnarray}
+
+VectorTemplate\_T contains geolocation information, and other information, for a specific Vector\_T.
+
+VectorValue\_T\%values$\underbrace{(:,:)}_{(1:mn,1)}$
+
+\clearpage
+
+\section{Interpreting 1D and 2D Scans}
+
+In 1D case, state vector values are functions of height (of $\xi$) and not functions of angle ($\phi$).  That is, in different locations around the Earch, the quantities are homogeneous at the same heights from the surface of the Earth.  We can not make such an assumption in 2D case.
+
+In 1D, a single scan line of radiances (and convolved radiances) can be thought of being constructed as the space craft circles the earth, sequentially scanning higher tangent lines of a scan line.
+
+In 2D, the radiances at all tangent heights of a single scan line are being calculated via different pointings.  That is, we can assume that the sensor points at different tangent heights from a single position.  As the space craft orbits the Earth, neighboring scan lines are being calculated in a similar manner.
+
+\clearpage
+
+\input{FORTRAN_Forward_Model_Code}
+
+\end{comment}
+
+\end{document}
+
+
+% $Id$
+
