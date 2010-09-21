@@ -68,19 +68,14 @@ module cfm          ! callable forward model
    implicit none
    public
 
-!---------------------------- RCS Ident Info ------------------------------
-   character (len=*), parameter :: ModuleName= &
-       "$RCSfile$"
-   character (len=*), parameter :: IdParm = &
-       "$Id$"
-   character (len=len(idParm)) :: Id = idParm
-!---------------------------------------------------------------------------
 contains
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-  character (len=*), parameter :: IdParm = &
-       "$Id$"
-  character (len=len(idParm)) :: Id = idParm
+    character (len=*), parameter :: ModuleName= &
+         "$RCSfile$"
+    character (len=*), parameter :: IdParm = &
+         "$Id$"
+    character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
     print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
