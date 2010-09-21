@@ -67,7 +67,8 @@ program mockup
       character(len=2) :: sc = "sc"
       integer :: stateSelected(10), measurementSelected(3)
       type(VectorValue_T), pointer :: quantity, h2o_vv, orbincl_vv, geocAlt_vv, &
-                                      ptanG_vv, temperature_vv, refGPH_vv
+                                      ptanG_vv, temperature_vv, refGPH_vv, &
+                                      phitan_vv
       integer :: temperature_index, h2o_index, band2_index
       integer :: o3_index, ptanGHz_index, band7_index, phitanGHz_index
       integer :: geodAlt_index, orbincl_index, gph_index
@@ -198,13 +199,13 @@ program mockup
 
       ptanG_vv => GetVectorQtyByTemplateIndex (state, ptanGHz_index)
 
-      quantity => GetVectorQtyByTemplateIndex (state, phitanGHz_index)
-      call FillPhitanQuantity(quantity)
+      phitan_vv => GetVectorQtyByTemplateIndex (state, phitanGHz_index)
+      call FillPhitanQuantity(phitan_vv)
 
       ! calculate ptan
       !call dump(temperature_vv, details=3)
       call FillPtanQuantity (ptanG_vv, temperature_vv, refGPH_vv, &
-                             h2o_vv, orbincl_vv, quantity, geocAlt_vv)
+                             h2o_vv, orbincl_vv, phitan_vv, geocAlt_vv)
 
       ! GPH is filled by the forward model
 
@@ -218,6 +219,21 @@ program mockup
       !call ForwardModel (chunk, forwardModelConfigDatabase, state, &
       !                   stateExtra, measurement, jacobian)
 
+      call dump(measurement, details=3)
+
+      ! Re-supply temperature, GPH, H2O, and O3 data
+      call ExplicitFillVectorQuantity(temperature_vv, TemperatureInput2)
+      call ExplicitFillVectorQuantity(h2o_vv, H2OInput2)
+      quantity => GetVectorQtyByTemplateIndex(state, o3_index)
+      call ExplicitFillVectorQuantity(quantity, O3Input2)
+
+      ! Re-calculate ptan
+      call FillPtanQuantity (ptanG_vv, temperature_vv, refGPH_vv, &
+                             h2o_vv, orbincl_vv, phitan_vv, geocAlt_vv)
+
+      ! call the forward model the second time
+      call ForwardModel (chunk, forwardModelConfigDatabase, state, &
+                         stateExtra, measurement)
       call dump(measurement, details=3)
 
       call DestroyVectorInfo (state)
