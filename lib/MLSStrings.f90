@@ -503,7 +503,6 @@ contains
 
   ! ------------------------------------------------  HHMMSS_value  -----
   function HHMMSS_value ( str, ErrTyp, separator, strict ) result ( value )
-    use MLSCommon, only: R8
     ! Function that returns the value in seconds of a string 'hh:mm:ss'
     ! where the field separator ':' divides the string into two
     ! integer-like strings 'hh' and 'mm', as well as one float-like
@@ -537,7 +536,7 @@ contains
     integer, intent(out) :: ErrTyp
     character(len=1), intent(in), optional :: Separator
     logical, intent(in), optional :: Strict
-    real(r8) :: value
+    double precision :: value
     !----------Locals----------!
     character(len=1), parameter :: Colon=':'
     character(len=1) :: MyColon
@@ -555,7 +554,7 @@ contains
     if ( present(strict) ) myStrict = strict
 
     s2 = len_trim(str)
-    value = 0.0_r8
+    value = 0.0
     errTyp = INVALIDHHMMSSSTRING
     if ( s2 == 0 ) then
       if ( .not. myStrict ) errTyp = 0
@@ -2289,6 +2288,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.79  2010/09/24 23:45:45  pwagner
+! Removed dependence on MLSCommon by substituting double for r8
+!
 ! Revision 2.78  2010/06/23 20:42:21  honghanh
 ! Change readAnIntFromChars to only read the first number in the string
 ! if there are many numbers separated by ignored characters.
