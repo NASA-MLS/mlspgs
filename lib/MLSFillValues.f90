@@ -13,7 +13,8 @@
 module MLSFillValues              ! Some FillValue-related stuff
 !=============================================================================
 
-  use ieee_arithmetic, only: ieee_is_finite, ieee_is_nan
+  use ieee_arithmetic, only: isFinite => ieee_is_finite, isNaN => ieee_is_nan, &
+    & ieee_is_finite, ieee_is_nan
   use MLSCommon, only: fill_signal, inf_signal, nan_signal, undefinedvalue, &
     & is_what_ieee
   use MLSKinds ! Everything
@@ -201,7 +202,7 @@ module MLSFillValues              ! Some FillValue-related stuff
   end interface
 
   interface IsFinite
-    module procedure IsFinite_REAL, IsFinite_DOUBLE, IsFinite_INTEGER
+    module procedure IsFinite_INTEGER
   end interface
   
   interface IsInfinite
@@ -209,7 +210,7 @@ module MLSFillValues              ! Some FillValue-related stuff
   end interface
   
   interface IsNaN
-    module procedure IsNaN_REAL, IsNaN_DOUBLE, IsNaN_INTEGER
+    module procedure IsNaN_INTEGER
   end interface
   
   interface output
@@ -953,14 +954,6 @@ contains
 ! ------------------------------------------------- IsFinite ---
 
   ! This family of routines checks to see if an arg is finite
-  elemental logical function IsFinite_REAL ( A ) result( finite )
-    real, intent(in) :: A
-    finite = ieee_is_finite(a)
-  end function isfinite_real
-  elemental logical function IsFinite_DOUBLE ( A ) result( finite )
-    double precision, intent(in) :: A
-    finite = ieee_is_finite(a)
-  end function isfinite_DOUBLE
   elemental logical function IsFinite_INTEGER ( A ) result( finite )
     integer, intent(in) :: A
     finite = .true.
@@ -985,14 +978,6 @@ contains
 ! ------------------------------------------------- IsNaN ---
 
   ! This family of routines checks to see if an arg is NaN
-  elemental logical function IsNaN_REAL ( A ) result( NaN )
-    real, intent(in) :: A
-    NaN = ieee_is_NaN(a)
-  end function isNaN_real
-  elemental logical function IsNaN_DOUBLE ( A ) result( NaN )
-    double precision, intent(in) :: A
-    NaN = ieee_is_NaN(a)
-  end function isNaN_DOUBLE
   elemental logical function IsNaN_INTEGER ( A ) result( NaN )
     integer, intent(in) :: A
     NaN = .false.
@@ -2540,6 +2525,9 @@ end module MLSFillValues
 
 !
 ! $Log$
+! Revision 2.21  2010/09/24 23:44:48  pwagner
+! removed all but integervalued isFinite, isNaN in favor of ieee_arithmetic-supplied versions
+!
 ! Revision 2.20  2010/08/13 22:02:41  pwagner
 ! Renamed Repopulate; renamed decimate to Depopulate
 !
