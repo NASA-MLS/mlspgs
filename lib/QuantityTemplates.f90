@@ -33,7 +33,7 @@ module QuantityTemplates         ! Quantities within vectors
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  private :: not_used_here
 !---------------------------------------------------------------------------
 
   logical, parameter, private :: DEEBUG = .FALSE.           ! Usually FALSE
@@ -121,7 +121,7 @@ module QuantityTemplates         ! Quantities within vectors
     ! (noSurfs, noInstances) for unstacked ones.  The PHI coordinate for the
     ! (i,j) value is phi(1,j) for a stacked quantity and phi(i,j) for an
     ! unstacked one.
-    
+
     ! These other coordinates are dimensioned in the same manner:
     real(r8), dimension(:,:), pointer :: geodLat => NULL()
     real(r8), dimension(:,:), pointer :: lon => NULL()
@@ -136,15 +136,17 @@ module QuantityTemplates         ! Quantities within vectors
 
     ! Some quantities are on abritrary freqency grids; these quantities refer
     ! to those.
+    integer, pointer :: ChanInds(:) => NULL() ! Indices of values of Channels
+                                        ! that are true
     logical, pointer :: Channels(:) => NULL() ! If /keepChannels is set
-    integer :: frequencyCoordinate ! An enumerated type, e.g. FG_USBFreq
-    logical :: sharedFGrid              ! Set of frequencies are a pointer not a copy
     integer :: fGridIndex               ! Index of any fGrid Index used
     real(r8), dimension(:), pointer :: frequencies => NULL() ! List of frequencies
-                                                   ! (noChans)
+                                        ! for Channels(ChanInds)
+    integer :: frequencyCoordinate      ! An enumerated type, e.g. FG_USBFreq
     real(r8) :: lo                      ! Local oscillator
-    integer :: signal                   ! Index into signals database
+    logical :: sharedFGrid              ! Set of frequencies are a pointer not a copy
     integer :: sideband                 ! Associated sideband -1, 0, +1
+    integer :: signal                   ! Index into signals database
 
     ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     ! Some families of quantities require special additional information.
@@ -176,7 +178,7 @@ module QuantityTemplates         ! Quantities within vectors
   end interface
 
   private :: CheckIntegrity_QuantityTemplate
-  
+
 contains ! =====     Public Procedures     =============================
 
   ! Subroutines to deal with these quantitites
@@ -203,14 +205,14 @@ contains ! =====     Public Procedures     =============================
   logical function CheckIntegrity_QuantityTemplate ( qty, noError )
     type (QuantityTemplate_T), intent(in) :: QTY
     logical, intent(in), optional :: NOERROR
-    
+
     ! Local variables
     integer :: NOINSTANCESOR1           ! Test value
     integer :: NOSURFSOR1               ! Test value
 
     integer :: MESSAGETYPE
     character ( len=132 ) :: NAME
-    
+
     ! Executable code
     messageType = MLSMSG_Error
     if ( present ( noError ) ) then
@@ -263,21 +265,21 @@ contains ! =====     Public Procedures     =============================
       & qty%noInstances ) then
       call MLSMessage ( messageType, ModuleName, &
         & 'Too much overlap for quantity template '//trim(name) )
-      CheckIntegrity_QuantityTemplate = .false.      
+      CheckIntegrity_QuantityTemplate = .false.
     end if
 
     ! Check the surfaces stuff
     if ( qty%noSurfs < 0 ) then
       call MLSMessage ( messageType, ModuleName, &
         & 'Bad noSurfs for quantity template '//trim(name) )
-      CheckIntegrity_QuantityTemplate = .false.      
+      CheckIntegrity_QuantityTemplate = .false.
     end if
 
     ! Check the channels stuff
     if ( qty%noChans < 0 ) then
       call MLSMessage ( messageType, ModuleName, &
         & 'Bad noChans for quantity template '//trim(name) )
-      CheckIntegrity_QuantityTemplate = .false.      
+      CheckIntegrity_QuantityTemplate = .false.
     end if
 
     ! Check the instanceLen
@@ -293,132 +295,132 @@ contains ! =====     Public Procedures     =============================
     if ( .not. associated ( qty%surfs ) ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'The quantity template '//trim(name)// ' does not have surfs associated' )
-      CheckIntegrity_QuantityTemplate = .false.      
+      CheckIntegrity_QuantityTemplate = .false.
     end if
 
     if ( .not. associated ( qty%phi ) ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'The quantity template '//trim(name)// ' does not have phi associated' )
-      CheckIntegrity_QuantityTemplate = .false.      
+      CheckIntegrity_QuantityTemplate = .false.
     end if
 
     if ( .not. associated ( qty%geodLat ) ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'The quantity template '//trim(name)// ' does not have geodLat associated' )
-      CheckIntegrity_QuantityTemplate = .false.      
+      CheckIntegrity_QuantityTemplate = .false.
     end if
     if ( .not. associated ( qty%lon ) ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'The quantity template '//trim(name)// ' does not have lon associated' )
-      CheckIntegrity_QuantityTemplate = .false.      
+      CheckIntegrity_QuantityTemplate = .false.
     end if
     if ( .not. associated ( qty%time ) ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'The quantity template '//trim(name)// ' does not have time associated' )
-      CheckIntegrity_QuantityTemplate = .false.      
+      CheckIntegrity_QuantityTemplate = .false.
     end if
     if ( .not. associated ( qty%solarTime ) ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'The quantity template '//trim(name)// ' does not have solarTime associated' )
-      CheckIntegrity_QuantityTemplate = .false.      
+      CheckIntegrity_QuantityTemplate = .false.
     end if
     if ( .not. associated ( qty%solarZenith ) ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'The quantity template '//trim(name)// ' does not have solarZenith associated' )
-      CheckIntegrity_QuantityTemplate = .false.      
+      CheckIntegrity_QuantityTemplate = .false.
     end if
     if ( .not. associated ( qty%losAngle ) ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'The quantity template '//trim(name)// ' does not have losAngle associated' )
-      CheckIntegrity_QuantityTemplate = .false.      
+      CheckIntegrity_QuantityTemplate = .false.
     end if
 
     ! Check the array lower bounds
     if ( any ( lbound ( qty%surfs ) /= 1 ) ) then
       call MLSMessage ( messageType, ModuleName, &
         & 'Bad lbound for surfs array in quantity template '//trim(name) )
-      CheckIntegrity_QuantityTemplate = .false.      
+      CheckIntegrity_QuantityTemplate = .false.
     end if
 
     if ( any ( lbound ( qty%phi ) /= 1 ) ) then
       call MLSMessage ( messageType, ModuleName, &
         & 'Bad lbound for phi array in quantity template '//trim(name) )
-      CheckIntegrity_QuantityTemplate = .false.      
+      CheckIntegrity_QuantityTemplate = .false.
     end if
 
     if ( any ( lbound ( qty%geodLat ) /= 1 ) ) then
       call MLSMessage ( messageType, ModuleName, &
         & 'Bad lbound for geodLat array in quantity template '//trim(name) )
-      CheckIntegrity_QuantityTemplate = .false.      
+      CheckIntegrity_QuantityTemplate = .false.
     end if
     if ( any ( lbound ( qty%lon ) /= (/1,1/) ) ) then
       call MLSMessage ( messageType, ModuleName, &
         & 'Bad lbound for lon array in quantity template '//trim(name) )
-      CheckIntegrity_QuantityTemplate = .false.      
+      CheckIntegrity_QuantityTemplate = .false.
     end if
     if ( any ( lbound ( qty%time ) /= 1 ) ) then
       call MLSMessage ( messageType, ModuleName, &
         & 'Bad lbound for time array in quantity template '//trim(name) )
-      CheckIntegrity_QuantityTemplate = .false.      
+      CheckIntegrity_QuantityTemplate = .false.
     end if
     if ( any ( lbound ( qty%solarTime ) /= 1 ) ) then
       call MLSMessage ( messageType, ModuleName, &
         & 'Bad lbound for solarTime array in quantity template '//trim(name) )
-      CheckIntegrity_QuantityTemplate = .false.      
+      CheckIntegrity_QuantityTemplate = .false.
     end if
     if ( any ( lbound ( qty%solarZenith ) /= 1 ) ) then
       call MLSMessage ( messageType, ModuleName, &
         & 'Bad lbound for solarZenith array in quantity template '//trim(name) )
-      CheckIntegrity_QuantityTemplate = .false.      
+      CheckIntegrity_QuantityTemplate = .false.
     end if
     if ( any ( lbound ( qty%losAngle ) /= 1 ) ) then
       call MLSMessage ( messageType, ModuleName, &
         & 'Bad lbound for losAngle array in quantity template '//trim(name) )
-      CheckIntegrity_QuantityTemplate = .false.      
+      CheckIntegrity_QuantityTemplate = .false.
     end if
 
     ! Check the array upper bounds
     if ( any ( ubound ( qty%surfs ) /= (/qty%noSurfs, noInstancesOr1/) ) ) then
       call MLSMessage ( messageType, ModuleName, &
         & 'Bad ubound for surfs array in quantity template '//trim(name) )
-      CheckIntegrity_QuantityTemplate = .false.      
+      CheckIntegrity_QuantityTemplate = .false.
     end if
 
     if ( any ( ubound ( qty%phi ) /= (/noSurfsOr1, qty%noInstances/) ) ) then
       call MLSMessage ( messageType, ModuleName, &
         & 'Bad ubound for phi array in quantity template '//trim(name) )
-      CheckIntegrity_QuantityTemplate = .false.      
+      CheckIntegrity_QuantityTemplate = .false.
     end if
 
     if ( any ( ubound ( qty%geodLat ) /= (/noSurfsOr1, qty%noInstances/) ) ) then
       call MLSMessage ( messageType, ModuleName, &
         & 'Bad ubound for geodLat array in quantity template '//trim(name) )
-      CheckIntegrity_QuantityTemplate = .false.      
+      CheckIntegrity_QuantityTemplate = .false.
     end if
     if ( any ( ubound ( qty%lon ) /= (/noSurfsOr1, qty%noInstances/) ) ) then
       call MLSMessage ( messageType, ModuleName, &
         & 'Bad ubound for lon array in quantity template '//trim(name) )
-      CheckIntegrity_QuantityTemplate = .false.      
+      CheckIntegrity_QuantityTemplate = .false.
     end if
     if ( any ( ubound ( qty%time ) /= (/noSurfsOr1, qty%noInstances/) ) ) then
       call MLSMessage ( messageType, ModuleName, &
         & 'Bad ubound for time array in quantity template '//trim(name) )
-      CheckIntegrity_QuantityTemplate = .false.      
+      CheckIntegrity_QuantityTemplate = .false.
     end if
     if ( any ( ubound ( qty%solarTime ) /= (/noSurfsOr1, qty%noInstances/) ) ) then
       call MLSMessage ( messageType, ModuleName, &
         & 'Bad ubound for solarTime array in quantity template '//trim(name) )
-      CheckIntegrity_QuantityTemplate = .false.      
+      CheckIntegrity_QuantityTemplate = .false.
     end if
     if ( any ( ubound ( qty%solarZenith ) /= (/noSurfsOr1, qty%noInstances/) ) ) then
       call MLSMessage ( messageType, ModuleName, &
         & 'Bad ubound for solarZenith array in quantity template '//trim(name) )
-      CheckIntegrity_QuantityTemplate = .false.      
+      CheckIntegrity_QuantityTemplate = .false.
     end if
     if ( any ( ubound ( qty%losAngle ) /= (/noSurfsOr1, qty%noInstances/) ) ) then
       call MLSMessage ( messageType, ModuleName, &
         & 'Bad ubound for losAngle array in quantity template '//trim(name) )
-      CheckIntegrity_QuantityTemplate = .false.      
+      CheckIntegrity_QuantityTemplate = .false.
     end if
 
     ! Check irregular stuff
@@ -485,7 +487,7 @@ contains ! =====     Public Procedures     =============================
       z%surfIndex = a%surfIndex
       z%chanIndex = a%chanIndex
     end if
-   
+
   end subroutine CopyQuantityTemplate
 
   ! ----------------------------  DestroyQuantityTemplateContents  -----
@@ -529,8 +531,10 @@ contains ! =====     Public Procedures     =============================
       if ( verbose ) call output( 'About to deallocate losangle', advance='yes' )
       call deallocate_test ( qty%losAngle, trim(what) // '%losAngle', ModuleName )
     end if
-    
+
     if ( .not. qty%sharedFGrid ) then
+      if ( verbose ) call output( 'About to deallocate chanInds', advance='yes' )
+      call deallocate_test ( qty%chanInds, trim(what) // "%chanInds", ModuleName )
       if ( verbose ) call output( 'About to deallocate channels', advance='yes' )
       call deallocate_test ( qty%channels, trim(what) // "%channels", ModuleName )
       if ( verbose ) call output( 'About to deallocate freqs', advance='yes' )
@@ -614,7 +618,7 @@ contains ! =====     Public Procedures     =============================
     else
       call output ('linear-')
     end if
-    call output ('basis ' )  
+    call output ('basis ' )
     if ( .not. quantity_template%minorFrame ) call output ( 'non' )
     call output ( 'minorFrame', advance='yes' )
     call output ( '      NoInstancesLowerOverlap = ' )
@@ -781,7 +785,7 @@ contains ! =====     Public Procedures     =============================
     ! and therefore undergoes default initialization as a consequence of
     ! argument association. Since all pointers within it have default
     ! initialization, they therefore become nullified.
-    
+
     ! All non-pointer components of course become undefined and so must
     ! be explicitly defined after the call.
 
@@ -900,7 +904,7 @@ contains ! =====     Public Procedures     =============================
     end if
 
     ! Now we allocate all the arrays we're going to need if necessary
-    if ( qty%coherent ) then 
+    if ( qty%coherent ) then
       noInstancesToAllocate = 1
     else
       noInstancesToAllocate = qty%noInstances
@@ -970,6 +974,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.57  2010/09/17 00:04:54  pwagner
+! Workaround for obscure crashes when called from outside mlsl2
+!
 ! Revision 2.56  2010/08/31 02:05:10  vsnyder
 ! Deallocate channels component in DestroyQuantityTemplateContents
 !
