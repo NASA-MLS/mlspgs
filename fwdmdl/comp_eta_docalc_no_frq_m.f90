@@ -15,7 +15,7 @@ module Comp_Eta_Docalc_No_Frq_m
 
   implicit NONE
   private
-  public :: Comp_Eta_Docalc_No_Frq
+  public :: Comp_Eta_Docalc_No_Frq, Comp_Eta_fzp
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -31,7 +31,7 @@ contains
                                   &   eta_zp, do_calc_zp, sps, tan_pt, &
                                   &   nz_zp, nnz_zp )
 
-    use MLSCommon, only: RP, IP
+    use MLSCommon, only: RP
     use Get_Eta_Matrix_m, only: Get_Eta_Sparse, Multiply_Eta_Column_Sparse
     use Load_Sps_Data_m, only: Grids_T
 
@@ -65,9 +65,9 @@ contains
 
 ! Internal declarations:
 
-    integer(ip) :: N_p, N_z, N_v
-    integer(ip) :: Sps_1, Sps_n, Sps_i
-    integer(ip) :: My_Tan, P_inda, V_Inda, V_Indb, Z_inda, P_indb, Z_indb
+    integer :: N_p, N_z, N_v
+    integer :: Sps_1, Sps_n, Sps_i
+    integer :: My_Tan, P_inda, V_Inda, V_Indb, Z_inda, P_indb, Z_indb
 
     real(rp) :: Eta_p(1:size(path_phi), &  ! size(path_phi) == size(path_zeta)
       & maxval(Grids_x%l_p(1:ubound(Grids_x%l_p,1))-Grids_x%l_p(0:ubound(Grids_x%l_p,1)-1)))
@@ -159,6 +159,73 @@ contains
 
   end subroutine Comp_Eta_Docalc_No_Frq
 
+! -------------------------------------------------  Comp_Eta_fzp  -----
+  subroutine Comp_Eta_fzp ( Grids_x, Frq, Eta_zp, Do_Calc_zp, Sideband, &
+                          & Eta_fzp, Not_Zero_f, Do_Calc_fzp, LO )
+    use MLSCommon, only: RP, R8
+    use Get_Eta_Matrix_m, only: Get_Eta_Sparse
+    use Load_Sps_Data_m, only: Grids_T
+    type(grids_t), intent(in) :: Grids_x     ! All the needed coordinates
+    real(r8), intent(in) :: Frq  ! Frequency at which to compute the values
+    real(rp), intent(in) :: Eta_zp(:,:)      ! Zeta, Phi interpolating factors
+    logical, intent(out) :: Do_Calc_zp(:,:)  ! Where Eta_zp is nonzero
+    integer, intent(in) :: Sideband          ! -1, 1 or 0.  Zero means
+                                             ! Grids_x%frq_basis is absolute,
+                                             ! not I.F.
+    real(rp), intent(out) :: Eta_fzp(:,:)    ! F, Zeta, Phi interpolating factors
+    logical, intent(out) :: Not_Zero_f(:)    ! Where eta_f is nonzero
+    logical, intent(out) :: Do_Calc_fzp(:,:) ! Where Eta_fzp is nonzero
+    real(r8), intent(in), optional :: LO     ! Local oscillator freq, not
+                                             ! needed if Sideband == 0
+
+    integer :: F_Inda, F_Indb, N_f, Sps_I, SV_f, SV_zp, V_Inda, W_Inda, W_Indb
+    real(rp) :: eta_f(1:maxval(grids_x%l_f(1:)-grids_x%l_f(0:ubound(grids_x%l_f,1)-1)))
+
+    f_inda = 0
+    w_inda = 0
+
+    do sps_i = 1, ubound(grids_x%l_z,1)
+
+      f_indb = grids_x%l_f(sps_i)
+      n_f = f_indb - f_inda
+
+      w_indb = w_inda + (Grids_x%l_z(sps_i) - Grids_x%l_z(sps_i-1)) * &
+                        (Grids_x%l_p(sps_i) - Grids_x%l_p(sps_i-1))
+
+      if ( sideband == -1 ) then
+        call get_eta_sparse ( lo-Grids_x%frq_basis(f_indb:f_inda+1:-1), &
+          & Frq, eta_f(n_f:1:-1), not_zero_f(f_indb:f_inda+1:-1) )
+      else if ( sideband == +1 ) then
+        call get_eta_sparse ( lo+Grids_x%frq_basis(f_inda+1:f_indb), &
+          & Frq, eta_f(1:n_f), not_zero_f(f_inda+1:f_indb) )
+      else ! sideband == 0 means Grids_x%frq_basis is absolute, not in I.F.
+           ! It doesn't mean folded-sideband calculation.
+        call get_eta_sparse ( Grids_x%frq_basis(f_inda+1:f_indb), &
+          & Frq, eta_f(1:n_f), not_zero_f(f_inda+1:f_indb) )
+      end if
+
+      v_inda = grids_x%l_v(sps_i-1)
+      ! Grids_X%Values are really 3-d: Frequencies X Zeta X Phi
+      do sv_zp = w_inda + 1, w_indb
+        do sv_f = 1, n_f
+          v_inda = v_inda + 1
+          if ( not_zero_f(sv_f+f_inda) ) then
+            eta_fzp(:,v_inda) = eta_f(sv_f) * eta_zp(:,sv_zp)
+            do_calc_fzp(:,v_inda) = do_calc_zp(:,sv_zp) .and. Grids_x%deriv_flags(v_inda)
+          else
+            eta_fzp (:, v_inda) = 0.0_r8
+            do_calc_fzp (:, v_inda) = .false.
+          end if
+        end do ! sv_f
+      end do ! sv_zp
+
+      f_inda = f_indb
+      w_inda = w_indb
+
+    end do
+
+  end subroutine Comp_Eta_fzp
+
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -172,6 +239,9 @@ contains
 end module Comp_Eta_Docalc_No_Frq_m
 
 ! $Log$
+! Revision 2.14  2010/09/25 01:09:34  vsnyder
+! Add Comp_Eta_fzp
+!
 ! Revision 2.13  2009/06/23 18:26:10  pwagner
 ! Prevent Intel from optimizing ident string away
 !
