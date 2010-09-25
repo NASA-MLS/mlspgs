@@ -18,15 +18,15 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use DUMP_0, only: DUMP
-  use MatrixModule_0, only: Add_Matrix_Blocks, Assignment(=), CheckIntegrity, & 
+  use MatrixModule_0, only: Add_Matrix_Blocks, Assignment(=), CheckIntegrity, &
     & CholeskyFactor, ClearLower, ClearRows, ColumnScale, Col_L1, CopyBlock, &
     & CreateBlock, CyclicJacobi, DenseCyclicJacobi, Densify, &
-    & DestroyBlock, Diff, Dump, FrobeniusNorm, GetDiagonal, GetMatrixElement, GetVectorFromColumn, & 
-    & InvertCholesky, M_Absent, M_Column_Sparse, M_Banded, M_Full, M_Unknown, &            
-    & MatrixElement_T, MaxAbsVal, MinDiag, Multiply, MultiplyMatrix_XTY, MultiplyMatrix_XY, &       
-    & MultiplyMatrix_XY_T, MultiplyMatrixVectorNoT, NullifyMatrix, operator(+), &              
-    & ReflectMatrix, RowScale, ScaleBlock, SolveCholesky, &     
-    & Sparsify, Spill, TransposeMatrix, UpdateDiagonal                                    
+    & DestroyBlock, Diff, Dump, FrobeniusNorm, GetDiagonal, GetMatrixElement, GetVectorFromColumn, &
+    & InvertCholesky, M_Absent, M_Column_Sparse, M_Banded, M_Full, M_Unknown, &
+    & MatrixElement_T, MaxAbsVal, MinDiag, Multiply, MultiplyMatrix_XTY, MultiplyMatrix_XY, &
+    & MultiplyMatrix_XY_T, MultiplyMatrixVectorNoT, NullifyMatrix, operator(+), &
+    & ReflectMatrix, RowScale, ScaleBlock, SolveCholesky, &
+    & Sparsify, Spill, TransposeMatrix, UpdateDiagonal
   use MLSKinds, only: RM, RV, R8, R4
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
@@ -81,7 +81,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   interface CheckIntegrity
     module procedure CheckIntegrity_RC, CheckIntegrity_1
   end interface
-  
+
   interface CholeskyFactor
     module procedure CholeskyFactor_1
   end interface
@@ -269,7 +269,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  private :: not_used_here
 !---------------------------------------------------------------------------
 
 contains ! =====     Public Procedures     =============================
@@ -315,7 +315,7 @@ contains ! =====     Public Procedures     =============================
   ! It is important to invoke DestroyMatrix using the result of this
   ! function after it is no longer needed. Otherwise, a memory leak will
   ! result.  Also see AssignMatrix.
-  ! !!!!! ===== END NOTE ===== !!!!! 
+  ! !!!!! ===== END NOTE ===== !!!!!
 
     integer :: I, J      ! Subscripts for [XYZ]%Block
 
@@ -419,7 +419,7 @@ contains ! =====     Public Procedures     =============================
     ! Local variables
     integer :: MESSAGETYPE
     integer :: I                        ! Loop counter
-    
+
     ! Executable code
 
     messageType = MLSMSG_Error
@@ -523,7 +523,7 @@ contains ! =====     Public Procedures     =============================
     integer :: MESSAGETYPE
     character ( len=132 ) :: NAME
     integer :: ROW, COL                 ! Loop counters
-    
+
     ! Executable code
 
     messageType = MLSMSG_Error
@@ -555,7 +555,7 @@ contains ! =====     Public Procedures     =============================
     do row = 1, matrix%row%nb
       do col = 1, matrix%col%nb
         call output ( 'Checking integrity of block ' )
-        call DescribeBlock ( matrix, row, col )    
+        call DescribeBlock ( matrix, row, col )
 
         if ( matrix%block(row,col)%nRows /= matrix%row%nelts(row) ) then
           call MLSMessage ( messageType, ModuleName, &
@@ -571,7 +571,7 @@ contains ! =====     Public Procedures     =============================
           & CheckIntegrity ( matrix%block(row,col), .true. )
       end do
     end do
-    
+
   end function CheckIntegrity_1
 
   ! -------------------------------------------  CholeskyFactor_1  -----
@@ -609,9 +609,9 @@ contains ! =====     Public Procedures     =============================
 !    = X_{ij} - \sum_{k=1}^i Z_{ki}^T Z_{kj} + Z_{ii}^T Z_{ij}
 !    = Z_{ii}^T Z_{ij}
 !  \end{equation*}
-!  
+!
 !  Rearranging, we have the following algorithm:
-!  
+!
 !  {\bf do} $i = 1, N$\\
 !  \hspace*{0.25in} $S= X_{ii} - \sum_{k=1}^{i-1} Z_{ki}^T Z_{ki}$\\
 !  \hspace*{0.25in} $Z_{ii} = $ Cholesky factor of $S$\\
@@ -887,7 +887,7 @@ contains ! =====     Public Procedures     =============================
     ! Implements the blockwise cyclic Jacobi algoritm (Golub and VanLoan 3rd ed.
     ! Section 8.4.8).  Note that while the matrix is expected to be
     ! symmetric, we do need to have both halves stored.
-    type(Matrix_T), intent(inout) :: A ! Matrix to diagonalize, 
+    type(Matrix_T), intent(inout) :: A ! Matrix to diagonalize,
               ! returned with eigen values on diagonal, ~0 off diagonal.
     type(Matrix_T), intent(inout) :: V ! Eigen vector matrix output, assumed created
               ! appropriately
@@ -970,7 +970,7 @@ contains ! =====     Public Procedures     =============================
             !  Mqj = Vpq^T * tau1 + Vqq^T * tau2
             call MultiplyMatrix_XTY ( Vpp, tau1, result1 )
             call MultiplyMatrix_XTY ( Vqp, tau2, result1, update=.true. )
-            
+
             call MultiplyMatrix_XTY ( Vpq, tau1, result2 )
             call MultiplyMatrix_XTY ( Vqq, tau2, result2, update=.true. )
             ! Assign result.  This uses defined assignment, which destroys the LHS
@@ -1047,16 +1047,16 @@ contains ! =====     Public Procedures     =============================
       end do ! End loop over p
     end do ! End sweep loop
   end subroutine CyclicJacobi_1
-          
+
   ! ----------------------------------------------------- DefineRCInfo -----------------
   subroutine DefineRCInfo ( RC, Vec, QuanFirst )
     type(RC_Info), intent(out) :: RC
     type(Vector_T), intent(in) :: Vec
     logical, intent(in), optional :: QuanFirst
-    
+
     integer :: I, J, N      ! Subscripts or loop inductors
     logical :: NEW          ! Was an instance seen?
-    
+
     rc%vec = vec
     rc%instFirst = .true.
     if ( present(quanFirst) ) rc%instFirst = .not. quanFirst
@@ -1098,7 +1098,7 @@ contains ! =====     Public Procedures     =============================
       end do ! i
     end if
   end subroutine DefineRCInfo
-  
+
   ! ---------------------------------------------  DestroyBlock_1  -----
   subroutine DestroyBlock_1 ( A )
   ! Destroy the "block" component of a matrix.  This leaves its structure
@@ -1273,7 +1273,7 @@ contains ! =====     Public Procedures     =============================
 
   ! --------------------------------------------------  FrobeniusNorm_1 ---
   real(rm) function FrobeniusNorm_1 ( M, lowerOff )
-    ! Compute the Frobenius norm of the matrix (sum of square of all 
+    ! Compute the Frobenius norm of the matrix (sum of square of all
     ! elements).  Possibly only those below diagonal
     type ( matrix_t ), intent(in) :: M
     logical, optional, intent(in) :: LOWEROFF
@@ -1475,7 +1475,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------ Describe Block -----
   subroutine DescribeBlock ( matrix, row, col )
-    ! Print the row and column indices of a block and 
+    ! Print the row and column indices of a block and
     ! identify which quantity/instance they are.
     type(Matrix_T), intent(in) :: MATRIX
     integer, intent(in), optional :: ROW         ! Row index
@@ -1510,7 +1510,7 @@ contains ! =====     Public Procedures     =============================
         & matrix%col%quant(col) )%template%name, before='col ' )
       call output ( matrix%col%inst(col), before='[' )
     end if
-    call output ( '] )', advance='yes' )       
+    call output ( '] )', advance='yes' )
   end subroutine DescribeBlock
 
   ! -------------------------------------------  InvertCholesky_1  -----
@@ -1639,7 +1639,7 @@ contains ! =====     Public Procedures     =============================
   ! It is important to invoke DestroyMatrix using the result of this
   ! function after it is no longer needed. Otherwise, a memory leak will
   ! result.  Also see AssignMatrix.
-  ! !!!!! ===== END NOTE ===== !!!!! 
+  ! !!!!! ===== END NOTE ===== !!!!!
 
     integer :: I, J, K             ! Subscripts for [XYZ]%Block
     logical :: MYUSEMASK
@@ -1821,9 +1821,8 @@ contains ! =====     Public Procedures     =============================
   end subroutine MultiplyMatrixVector_1
 
   ! ----------------------------------  MultiplyMatrixVectorNoT_1  -----
-  subroutine MultiplyMatrixVectorNoT_1 ( A, V, Z, UPDATE, Clone )
-  ! Z = A V if UPDATE is absent or false.  Z is first cloned from the
-  !     rows-labeling of A.
+  subroutine MultiplyMatrixVectorNoT_1 ( A, V, Z, UPDATE, Clone, Instance, Row )
+  ! Z = A V if UPDATE is absent or false.
   ! Z = Z + A V if UPDATE is presend and true.
   ! If Clone is present and true and Update is absent or false, clone Z
   ! to be like A%Row%Vec.
@@ -1832,6 +1831,8 @@ contains ! =====     Public Procedures     =============================
     type(Vector_T), intent(inout) :: Z
     logical, intent(in), optional :: UPDATE
     logical, intent(in), optional :: Clone
+    integer, intent(in), optional :: Instance ! Only do this instance
+    integer, intent(in), optional :: Row      ! Only do this row
 
     logical :: DO_UPDATE      ! Tells MatrixModule_0 % multiplyMatrixVectorNoT
     !                           whether to clear an element of Z, or add to it
@@ -1839,6 +1840,7 @@ contains ! =====     Public Procedures     =============================
     integer :: K, L, M, N     ! Subscripts
     logical :: My_Clone       ! My copy of Clone or false if it's absent
     logical :: MY_UPDATE      ! My copy of UPDATE or false if it's absent
+    integer :: Row1, RowN
 
     if ( a%col%vec%template%name /= v%template%name ) &
       call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1854,13 +1856,22 @@ contains ! =====     Public Procedures     =============================
     ! Copy characteristics, allocate values:
     if ( my_clone .and. .not. my_update ) &
       & call cloneVector ( z, a%row%vec, vectorNameText='_z' )
-    do i = 1, a%row%nb
+    row1 = 1
+    rowN = a%row%nb
+    if ( present(row) ) then
+      row1 = row
+      rowN = row
+    end if
+    do i = row1, rowN
       m = a%row%quant(i)
       n = a%row%inst(i)
       do_update = my_update
       do j = 1, a%col%nb
         k = a%col%quant(j)
         l = a%col%inst(j)
+        if ( present(instance) ) then
+          if ( l /= instance ) cycle
+        end if
         call multiplyMatrixVectorNoT ( a%block(i,j), &
           & v%quantities(k)%values(:,l), z%quantities(m)%values(:,n), &
           & do_update )
@@ -1928,7 +1939,7 @@ contains ! =====     Public Procedures     =============================
   ! RHS_IN. If ROW_BLOCK is present, it specifies that only that row of
   ! blocks of A is to be accumulated.
   ! Only the upper triangle of A^T A is formed or updated.
-  
+
   ! If UseMask is present and true, the column mask is used to suppress
   ! columns of the normal equations.
 
@@ -1948,7 +1959,7 @@ contains ! =====     Public Procedures     =============================
   ! It is important to invoke DestroyMatrix using the Z argument of this
   ! subroutine after it is no longer needed. Otherwise, a memory leak will
   ! result.  Also see AssignMatrix.
-  ! !!!!! ===== END NOTE ===== !!!!! 
+  ! !!!!! ===== END NOTE ===== !!!!!
 
     logical :: DO_UPDATE
     integer :: I, J, K             ! Subscripts for [AZ]%Block
@@ -2272,7 +2283,7 @@ contains ! =====     Public Procedures     =============================
         myLambda = 1.0_rm / myLambda
       end if
     end if
-    
+
     do i = 1, min(a%row%nb,a%col%nb)
       call updateDiagonal ( a%block(i,i), myLambda )
     end do
@@ -2585,7 +2596,7 @@ contains ! =====     Public Procedures     =============================
     type(Matrix_Database_T), dimension(:), pointer :: MatrixDatabase
     integer, intent(in), optional :: Details   ! Print details, default 1
     !  <= -4 => no output
-    !  <= -3 => no details, just summarize the database 
+    !  <= -3 => no details, just summarize the database
     !  -2..0 => size of each matrix
     !  == -1 => Structure of blocks but not their values
     !  == One => Details of matrix but not its blocks,
@@ -2740,6 +2751,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.121  2010/09/25 01:15:23  vsnyder
+! Add an 'Instance' argument to MultiplyMatrixVectorNoT_1
+!
 ! Revision 2.120  2010/08/13 22:04:08  pwagner
 ! Added diff
 !
