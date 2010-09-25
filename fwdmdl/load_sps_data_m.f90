@@ -16,7 +16,8 @@ module LOAD_SPS_DATA_M
   implicit NONE
 
   private
-  public :: Load_Sps_Data, Load_One_Item_Grid, Modify_Values_For_Supersat
+  public :: Load_Sps_Data, Load_One_Item_Grid, Load_Grid_From_Vector
+  public :: Modify_Values_For_Supersat
   public :: Create_Grids_1, Create_Grids_2, Fill_Grids_1, Fill_Grids_2
   public :: EmptyGrids_t, Destroygrids_t, Dump, Dump_Grids
 
@@ -140,6 +141,38 @@ contains
 ! ** END ZEBUG
 
   end subroutine Load_Sps_Data
+
+  ! --------------------------------------  Load_Grid_From_Vector  -----
+  subroutine Load_Grid_From_Vector ( Grids_X, Vector, Phitan, Maf, &
+    & FwdModelConf, SetDerivFlags )
+
+    use ForwardModelConfig, only: ForwardModelConfig_t
+    use VectorsModule, only: Vector_T, VectorValue_T
+
+    type(grids_t), intent(out) :: Grids_X
+    type(vector_t), intent(in) :: Vector
+    type(vectorValue_t), intent(in) :: Phitan
+    integer, intent(in) :: Maf
+    type(forwardModelConfig_t), intent(in) :: FwdModelConf
+    logical, intent(in) :: SetDerivFlags(:) ! size(vector%quantities)
+
+    integer :: Qty
+
+    call create_grids_1 ( Grids_x, size(vector%quantities) )
+    do qty = 1, size(vector%quantities)
+      call fill_grids_1 ( grids_x, qty, vector%quantities(qty), phitan, maf, &
+        &                 fwdModelConf )
+    end do
+
+    ! Allocate space for the zeta, phi, freq. basis and value components.
+    call create_grids_2 ( Grids_x )
+
+    do qty = 1, size(vector%quantities)
+      ! Fill the zeta, phi, freq. basis and value components.
+      call fill_grids_2 ( grids_x, qty, vector%quantities(qty), setDerivFlags(qty) )
+    end do
+
+  end subroutine Load_Grid_From_Vector
 
   ! -----------------------------------------  Load_One_Item_Grid  -----
   subroutine Load_One_Item_Grid ( Grids_X, Qty, Phitan, Maf, FwdModelConf, &
@@ -381,13 +414,19 @@ contains
 
     grids_x%names(ii) = qty%template%name
 
-    kf = qty%template%noChans ! == 1 if qty%template%frequencyCoordinate == l_none
     call FindInstanceWindow ( qty, phitan, maf, fwdModelConf%phiWindow, &
       & fwdModelConf%windowUnits, grids_x%windowStart(ii), grids_x%windowFinish(ii) )
+
+    if ( associated(qty%template%frequencies) ) then
+      kf = size(qty%template%frequencies)
+    else
+      kf = qty%template%noChans ! == 1 if qty%template%frequencyCoordinate == l_none
+    end if
 
     kp = grids_x%windowFinish(ii) - grids_x%windowStart(ii) + 1
 
     kz = qty%template%noSurfs
+
     grids_x%l_f(ii) = grids_x%l_f(ii-1) + kf
     grids_x%l_p(ii) = grids_x%l_p(ii-1) + kp
     grids_x%l_v(ii) = grids_x%l_v(ii-1) + kz * kp * kf
@@ -401,7 +440,7 @@ contains
   ! Fill the zeta, phi, freq. basis and value components for the II'th
   ! "molecule" in Grids_x.
 
-    use Intrinsic, only: L_IntermediateFrequency
+    use Intrinsic, only: L_Channel, L_IntermediateFrequency
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use Constants, only: Deg2Rad
     use VectorsModule, only: VectorValue_T, M_FullDerivatives
@@ -411,7 +450,8 @@ contains
     type(vectorValue_T), intent(in) :: QTY     ! An arbitrary vector quantity
     logical, intent(in) :: SetDerivFlags
 
-    integer :: KF, KZ, PF, PP, PV, PZ, QF, QP, QV, QZ, WF1, WF2
+    integer :: I, KF, KZ, PF, PP, PV, PZ, QF, QP, QV, QZ, WF, WS
+    logical :: PackFrq ! Need to pack the frequency "dimension"
 
     pf = Grids_x%l_f(ii-1)
     pp = Grids_x%l_p(ii-1)
@@ -425,13 +465,14 @@ contains
 
     kz = qz - pz
     kf = qf - pf
-    wf1 = Grids_x%windowStart(ii)
-    wf2 = Grids_x%windowFinish(ii)
+    ws = Grids_x%windowStart(ii)
+    wf = Grids_x%windowFinish(ii)
 
     Grids_x%zet_basis(pz+1:qz) = qty%template%surfs(1:kz,1)
-    Grids_x%phi_basis(pp+1:qp) = qty%template%phi(1,wf1:wf2)*Deg2Rad
+    Grids_x%phi_basis(pp+1:qp) = qty%template%phi(1,ws:wf)*Deg2Rad
     if ( associated ( qty%template%frequencies ) ) then
-      if ( qty%template%frequencyCoordinate /= l_intermediateFrequency ) &
+      if ( qty%template%frequencyCoordinate /= l_intermediateFrequency .and. &
+         & qty%template%frequencyCoordinate /= l_channel ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unexpected frequency coordinate for quantity' )
       Grids_x%frq_basis(pf+1:qf) = qty%template%frequencies
@@ -439,9 +480,21 @@ contains
       Grids_x%frq_basis(pf+1:qf) = 0.0
     end if
 
-    ! qv - pv == (wf2 - wf1 + 1) * kf * kz here
-    Grids_x%values(pv+1:qv) = reshape(qty%values(1:kf*kz,wf1:wf2), &
-                                    & (/qv-pv/))
+    packFrq = .false.
+    if ( associated(qty%template%frequencies) ) &
+      & packFrq = size(qty%template%frequencies) /= qty%template%noChans
+
+    if ( packFrq ) then ! Only the values for which we have frequencies
+      Grids_x%values(pv+1:qv) = &
+        & reshape(qty%values( pack( (/ ( i, i = 1, kf*kz ) /), &
+          &                         (/ ( qty%template%channels, i = 1, kz ) /) ), &
+          &                   ws:wf ), &
+          &       (/qv-pv/) )
+    else ! All the values
+      ! qv - pv == (wf - ws + 1) * kf * kz here
+      Grids_x%values(pv+1:qv) = reshape(qty%values(1:kf*kz,ws:wf), &
+                                      & (/qv-pv/))
+    end if
     !  mixing ratio values are manipulated if it's log basis
     Grids_x%lin_log(ii) = qty%template%logBasis
     if ( qty%template%logBasis ) then
@@ -592,6 +645,9 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.76  2010/06/07 23:22:53  vsnyder
+! Replaced H2O_ind with S_Ind
+!
 ! Revision 2.75  2009/12/22 02:13:38  vsnyder
 ! Add species names
 !
