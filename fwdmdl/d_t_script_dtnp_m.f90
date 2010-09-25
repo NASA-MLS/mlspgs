@@ -13,7 +13,7 @@ module D_T_SCRIPT_DTNP_M
 
   implicit NONE
   private
-  public :: DT_SCRIPT_DT
+  public :: DT_SCRIPT_DT, DT_SCRIPT_DT_W0, DT_SCRIPT_DF_W0, DT_SCRIPT
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -22,12 +22,12 @@ module D_T_SCRIPT_DTNP_M
 !---------------------------------------------------------------------------
 contains
 !-----------------------------------------------------------------------
-! Build the derivative of the B array w.r.t to T_np
-! (The 'n' zeta coeff. and the 'p' phi coefficient)
 
   ! -----------------------------------------------  DT_SCRIPT_DT  -----
   subroutine DT_SCRIPT_DT ( T_PATH, B, ETA_ZXP, NZ_ZXP, NNZ_ZXP, &
     &                       NU, DT_SCR_DT )
+    ! Build the derivative of the B array w.r.t to T_np
+    ! (The 'n' zeta coeff. and the 'p' phi coefficient)
 
 !{ \parskip 5pt
 !  Given $T$, $\nu$ and the Planck function
@@ -55,13 +55,12 @@ contains
 !   \frac{\text{d} B}{\text{d} T} \eta_n \eta_p$ where
 !  $\eta_n$ = Eta(n,zeta) and $\eta_p$ = Eta(p,phi).
 !  Then difference $\frac{\text{d} B}{\text{d} T_{np}}$ along
-!  the path to get {\tt dT\_scr\_dT} = $\frac{\text{d} \Delta B}{\text{d} T}$.
+!  the path to get {\tt dT\_scr\_dT} = $\frac{\text{d} \Delta B}{\text{d} T}$,
+!  where $\Delta B = \frac12 \left( B_{i+1} - B_{i-1} \right)$.
 !  $\Delta B$  is called ``T script'' (not Tau) in many notes and reports.
 
-!   use DCOSH1_M, only: COSH1             ! In case RP is double
-    use MLSCommon, only: R8, RP, IP
+    use MLSCommon, only: R8, RP
     use PHYSICS, only: H_O_K => h_over_k
-!   use SCOSH1_M, only: COSH1             ! In case RP is single
 
 ! inputs
 
@@ -74,22 +73,160 @@ contains
 
 ! output
 
-    real(rp), intent(out) :: dt_scr_dt(:,:) ! path dt_script temperature
+    real(rp), intent(out) :: dT_scr_dT(:,:) ! path dt_script temperature
 !                                           derivative
+
 ! internals
 
-    integer(ip) :: j, n_path, n_sv, p_i, sv_i
+    real(rp) :: dBdT(size(B))
 
-    real(rp) :: dBdt(1:size(t_path))     ! dB / dT
-    real(rp) :: dT_x_eta(1:size(t_path),1:size(eta_zxp,2))
+    dBdT = B * ( h_o_k * nu + B ) / t_path**2
+    call dT_script ( dBdT, eta_zxp, nz_zxp, nnz_zxp, dT_scr_dT )
 
-! Do this inefficiently for now because it is quick and easy
+  end subroutine DT_SCRIPT_DT
 
-    n_path = size(t_path)
+  ! --------------------------------------------  DT_SCRIPT_DT_W0  -----
+  subroutine DT_SCRIPT_DT_W0 ( T_PATH, B, W0, dW0_dT, &
+    &                          ETA_ZXP, NZ_ZXP, NNZ_ZXP, &
+    &                          NU, DT_SCR_DT )
+    ! Build the derivative of the B array w.r.t to T_np
+    ! (The 'n' zeta coeff. and the 'p' phi coefficient)
+
+!{ \parskip 5pt
+!  Given $T$, $\nu$, $\omega_0$, $\frac{\partial \omega_0}{\partial T}$,
+!  and the Planck function
+!  $B = \frac{\frac{h \nu}k}{exp\left(\frac{h \nu}{k T}\right)-1}$,
+!  compute \\
+!  $\frac{\partial (1-\omega_0) B}{\partial T} =
+!  -B \frac{\partial \omega_0}{\partial T} +
+!     (1-\omega_0) \frac{\partial B}{\partial T}$.
+!
+!  B satisfies the differential equation
+!  $\frac{\text{d} B}{\text{d} T} =
+!   \frac{B}{T^2} \left( \frac{h\nu}k + B \right)$, so\\
+!  $\frac{\partial (1-\omega_0) B}{\partial T} =
+!   B \left( \frac{1-\omega_0}{T^2} \left(\frac{h \nu}k + B \right) -
+!   \frac{\partial \omega_0}{\partial T} \right)$.
+!
+!  From $\frac{\partial (1-\omega_0) B}{\partial T}$ compute
+!  $\frac{\partial (1-\omega_0) B}{\partial T_{np}} =
+!   \frac{\partial (1-\omega_0) B}{\partial T} \eta_n \eta_p$ where
+!  $\eta_n$ = Eta(n,zeta) and $\eta_p$ = Eta(p,phi).
+!  Then difference $\frac{\partial (1-\omega_0) B}{\partial T_{np}}$ along
+!  the path to get {\tt dT\_scr\_dT} =
+!  $\frac{\partial \Delta (1-\omega_0) B}{\partial T}$, where
+!  $\Delta (1-\omega_0) B = \frac12 \left( (1-\omega_{0_{i+1}}) B_{i+1} -
+!                                          (1-\omega_{0_{i-1}}) B_{i-1} \right)$.
+!  $\Delta B$  is called ``T script'' (not Tau) in many notes and reports.
+
+    use MLSCommon, only: R8, RP
+    use PHYSICS, only: H_O_K => h_over_k
+
+! inputs
+
+    real(rp), intent(in) :: T_path(:)     ! path temperatures K
+    real(rp), intent(in) :: B(:)          ! Planck function
+    real(rp), intent(in) :: W0(:)         ! \omega_0
+    real(rp), intent(in) :: dW0_dT(:)     ! \frac{\partial \omega_0}{\partial T}
+    real(rp), intent(in) :: eta_zxp(:,:)  ! path eta functions
+    integer, intent(in) :: nz_zxp(:,:)    ! Where eta_zxp is not zero
+    integer, intent(in) :: nnz_zxp(:)     ! Numbers of rows in nz_zxp
+    real(r8), intent(in) :: nu            ! calculation frequency (MHz)
+
+! output
+
+    real(rp), intent(out) :: dT_scr_dT(:,:) ! path dt_script temperature
+!                                           derivative
+
+! internals
+
+    real(rp) :: dBdT(size(B))
+
+    dBdT = B * ( ( 1.0_rp - w0 ) * &
+         &       ( h_o_k * nu + B ) / t_path**2 - dW0_dT )
+    call dT_script ( dBdT, eta_zxp, nz_zxp, nnz_zxp, dT_scr_dT )
+
+  end subroutine DT_SCRIPT_DT_W0
+
+  ! --------------------------------------------  DT_SCRIPT_DF_W0  -----
+  subroutine DT_SCRIPT_DF_W0 ( B, dW0_dX, ETA_ZXP, NZ_ZXP, NNZ_ZXP, &
+    &                          DT_SCR_DF )
+    ! Build the derivative of the B array w.r.t to mixing ratio F_np
+    ! (The 'n' zeta coeff. and the 'p' phi coefficient)
+
+!{ \parskip 5pt
+!  Given $\frac{\partial \omega_0}{\partial f}$ and the Planck function
+!  $B = \frac{\frac{h \nu}k}{exp\left(\frac{h \nu}{k T}\right)-1}$,
+!  compute \\
+!  $\frac{\partial (1-\omega_0) B}{\partial f} =
+!  -B \frac{\partial \omega_0}{\partial f}$
+!  ($B$ does not depend upon $f$).
+!
+!  From $\frac{\partial (1-\omega_0) B}{\partial f}$ compute
+!  $\frac{\partial (1-\omega_0) B}{\partial f_{np}} =
+!   \frac{\partial (1-\omega_0) B}{\partial f} \eta_n \eta_p$ where
+!  $\eta_n$ = Eta(n,zeta) and $\eta_p$ = Eta(p,phi).
+!  Then difference $\frac{\partial (1-\omega_0) B}{\partial f_{np}}$ along
+!  the path to get {\tt dT\_scr\_df} =
+!  $\frac{\partial \Delta (1-\omega_0) B}{\partial f}$, where
+!  $\Delta (1-\omega_0) B = \frac12 \left( (1-\omega_{0_{i+1}}) B_{i+1} -
+!                                          (1-\omega_{0_{i-1}}) B_{i-1} \right)$.
+!  $\Delta B$  is called ``T script'' (not Tau) in many notes and reports.
+
+    use MLSCommon, only: RP
+
+! inputs
+
+    real(rp), intent(in) :: B(:)          ! Planck function
+    real(rp), intent(in) :: dW0_dX(:)     ! \frac{\partial \omega_0}{\partial X}
+    real(rp), intent(in) :: eta_zxp(:,:)  ! path eta functions
+    integer, intent(in) :: nz_zxp(:,:)    ! Where eta_zxp is not zero
+    integer, intent(in) :: nnz_zxp(:)     ! Numbers of rows in nz_zxp
+
+! output
+
+    real(rp), intent(out) :: DT_SCR_DF(:,:) ! path dt_script temperature
+!                                           derivative
+
+    call dT_script ( -B * dW0_dX, eta_zxp, nz_zxp, nnz_zxp, dT_scr_df )
+
+  end subroutine DT_SCRIPT_DF_W0
+
+  ! --------------------------------------------------  DT_SCRIPT  -----
+  subroutine DT_SCRIPT ( dBdx, ETA_ZXP, NZ_ZXP, NNZ_ZXP, DT_SCR )
+
+!{ From {\tt dBdx} = $\frac{\partial B}{\partial x}$ compute
+!  $\frac{\partial B}{\partial x_{np}} =
+!   \frac{\partial B}{\partial x} \eta_n \eta_p$ where
+!  $\eta_n$ = Eta(n,zeta), $\eta_p$ = Eta(p,phi), and $\eta_n \eta_p$ =
+!  {\tt ETA\_ZXP}.
+!  Then difference $\frac{\partial B}{\partial x_{np}}$ along
+!  the path to get {\tt dT\_scr} =
+!  $\frac{\partial \Delta B}{\partial x_{np}}$, where
+!  $\Delta B = \frac12 \left( B_{i+1} - B_{i-1} \right)$.
+!  $\Delta B$ is called ``T script'' (not Tau) in many notes and reports.
+
+    use MLSCommon, only: RP
+
+! inputs
+
+    real(rp), intent(in) :: dBdx(:)       ! Derivative of Planck function
+    real(rp), intent(in) :: eta_zxp(:,:)  ! path eta functions
+    integer, intent(in) :: nz_zxp(:,:)    ! Where eta_zxp is not zero
+    integer, intent(in) :: nnz_zxp(:)     ! Numbers of rows in nz_zxp
+
+! output
+
+    real(rp), intent(out) :: dt_scr(:,:)  ! path dt_script dx derivative
+
+! internals
+
+    integer :: j, n_path, n_sv, p_i, sv_i
+
+    real(rp) :: dT_x_eta(1:size(dBdx),1:size(eta_zxp,2))
+
+    n_path = size(dBdx)
     n_sv = size(eta_zxp,dim=2)
-
-!   dBdt = 0.5_rp / cosh1(h_o_k * nu / t_path) !{ \frac{a^2}{2 ( \cosh a - 1 )}
-    dBdt = 0.5 * B * ( h_o_k * nu + B ) / t_path**2
 
     ! Make sure the elements of dT_x_eta that we use have defined values
     dT_x_eta(1:2,:) = 0.0
@@ -97,31 +234,32 @@ contains
     ! Fill other nonzero elements of dT_x_eta
     do sv_i = 1, n_sv
       dT_x_eta(nz_zxp(:nnz_zxp(sv_i),sv_i),sv_i) = &
-        & dBdt(nz_zxp(:nnz_zxp(sv_i),sv_i)) * eta_zxp(nz_zxp(:nnz_zxp(sv_i),sv_i),sv_i)
+        & 0.5 * dbdx(nz_zxp(:nnz_zxp(sv_i),sv_i)) * &
+        & eta_zxp(nz_zxp(:nnz_zxp(sv_i),sv_i),sv_i)
     end do
 
     do sv_i = 1 , n_sv
-      dt_scr_dt(1,sv_i) = dT_x_eta(1,sv_i) + dT_x_eta(2,sv_i)
-      dt_scr_dt(n_path,sv_i) = -dT_x_eta(n_path-1,sv_i) - dT_x_eta(n_path,sv_i)
+      dt_scr(1,sv_i) = dT_x_eta(1,sv_i) + dT_x_eta(2,sv_i)
+      dt_scr(n_path,sv_i) = -dT_x_eta(n_path-1,sv_i) - dT_x_eta(n_path,sv_i)
 ! This is what would be happening if we didn't pay attention to the nonzeros:
-!     dt_scr_dt(2:n_path-1,sv_i) = dT_x_eta(3:n_path,sv_i) - &
+!     dt_scr(2:n_path-1,sv_i) = dT_x_eta(3:n_path,sv_i) - &
 !         &                        dT_x_eta(1:n_path-2,sv_i)
 ! But we pay attention to the nonzeros to improve performance.
-! If we kept track of the nonzeros in dt_scr_dt, we wouldn't neet the next line.
-      dt_scr_dt(2:n_path-1,sv_i) = 0.0
+! If we kept track of the nonzeros in dt_scr, we wouldn't neet the next line.
+      dt_scr(2:n_path-1,sv_i) = 0.0
       ! Now fill the nonzeros in column sv_i
       do j = 1, nnz_zxp(sv_i)
         p_i = nz_zxp(j,sv_i)
-        if ( p_i > 2 ) dt_scr_dt(p_i-1,sv_i) = dT_x_eta(p_i,sv_i)
+        if ( p_i > 2 ) dt_scr(p_i-1,sv_i) = dT_x_eta(p_i,sv_i)
       end do
       do j = 1, nnz_zxp(sv_i)
         p_i = nz_zxp(j,sv_i)
         if ( p_i >= n_path-1 ) exit
-        dt_scr_dt(p_i+1,sv_i) = dt_scr_dt(p_i+1,sv_i) - dT_x_eta(p_i,sv_i)
+        dt_scr(p_i+1,sv_i) = dt_scr(p_i+1,sv_i) - dT_x_eta(p_i,sv_i)
       end do
     end do
 
-  end subroutine DT_SCRIPT_DT
+  end subroutine DT_SCRIPT
 
   ! ----------------------------------------------  NOT_USED_HERE  -----
 !--------------------------- end bloc --------------------------------------
@@ -136,6 +274,9 @@ contains
 
 end module D_T_SCRIPT_DTNP_M
 ! $Log$
+! Revision 2.10  2010/06/23 02:38:19  vsnyder
+! Improve TeXnicalities
+!
 ! Revision 2.9  2010/06/23 02:28:39  vsnyder
 ! Correct nomenclature: T_Script should be B
 !
