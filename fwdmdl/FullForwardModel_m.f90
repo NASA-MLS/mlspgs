@@ -2839,7 +2839,7 @@ contains
         scat_src%template = temp%template
 
         call load_one_item_grid ( grids_tscat, scat_src, phitan, maf, &
-          & fwdModelConf, .false., .true. )
+          & fwdModelConf, SetDerivFlags=.false., SetTscatFlag=.true. )
 
         call comp_eta_docalc_no_frq ( grids_tscat, z_path(1:npf), &
           &  phi_path(1:npf), eta_tscat_zp(1:npf,:),              &
@@ -4287,6 +4287,10 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.308  2010/08/28 00:03:12  vsnyder
+! Shortened some overly long names.  Corrected allocation for H_Atmos_Frq.
+! Moved some TScat stuff to TScat_Support.  Some cannonball polishing.
+!
 ! Revision 2.307  2010/08/27 06:02:39  yanovsky
 ! Major additions to support for computations of atmospheric second
 ! derivatives (atmospheric Hessians). FullForwardModel subroutine

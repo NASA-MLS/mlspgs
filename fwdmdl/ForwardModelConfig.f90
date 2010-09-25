@@ -148,7 +148,7 @@ module ForwardModelConfig
     integer :: Num_size_bins          ! No of size bins '40'
     integer :: SidebandStart, SidebandStop ! Folded or SSB config?
     integer :: SurfaceTangentIndex    ! Index in Tangentgrid of Earth's surface
-    integer :: TScatMIF               ! Which MIF to use for TEcat LOS VEL and PHITAN
+    integer :: TScatMIF               ! Which MIF to use for TScat LOS VEL and PHITAN
     integer :: xStar                  ! Index of specific vector to use for linearized model
     integer :: yStar                  ! Index of specific vector to use for linearized model
     ! Now the logicals
@@ -1431,6 +1431,10 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.109  2010/08/27 06:13:37  yanovsky
+! Add atmos_second_der, MoleculeSecondDerivatives.
+! Add SecondDerivatives component to Beta_Group_T.
+!
 ! Revision 2.108  2010/06/09 16:33:59  pwagner
 ! Complain if IS, LS array bounds exceeded
 !

@@ -269,10 +269,6 @@ contains ! =====     Public Procedures     =============================
 
     ! --------- Loop over sidebands ------------------------------------------------
     do sideband = sidebandStart, sidebandStop, sidebandStep
-      ! Load this bin if necessary
-      ! But don't load Hessians if we've elected to ignore them
-      call PopulateL2PCBin ( l2pcBins(sideband), fmConf%ignoreHessian )
-
       ! Setup a sideband fraction array
       ! Note, this is *NOT* the same decision process as for the full forward model
       ! and deliberately so.
@@ -290,6 +286,10 @@ contains ! =====     Public Procedures     =============================
       else                  ! Otherwise, want just unfolded signal
         thisFraction = 1.0
       end if
+
+      ! Load this bin if necessary
+      ! But don't load Hessians if we've elected to ignore them
+      call PopulateL2PCBin ( l2pcBins(sideband), fmConf%ignoreHessian )
 
       ! Work out which l2pc bin we want
       l2pc => l2pcDatabase(l2pcBins(sideband))
@@ -781,6 +781,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.81  2010/06/29 19:57:58  vsnyder
+! Add 0.5 factor to Hessian-Vector-Vector multiply
+!
 ! Revision 2.80  2010/06/07 23:25:18  vsnyder
 ! Revise how failure to find desired blocks is handled
 !
