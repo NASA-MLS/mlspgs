@@ -1564,7 +1564,7 @@ contains ! ============= Public Procedures ==========================
     use HDF5, only: H5GCLOSE_F, H5GOPEN_F, H5GGET_OBJ_INFO_IDX_F
     use MLSHDF5, only: GetHDF5Attribute, IsHDF5AttributePresent, &
       & IsHDF5DSPresent, LoadFromHDF5DS
-    use MLSSignals_m, only: Radiometers
+    use MLSSignals_m, only: Radiometers, Signals
     ! Read a vector from an l2pc HDF5 and adds it to internal databases.
     ! Dummy arguments
     type (MLSFile_T) :: MLSFile
@@ -1706,8 +1706,13 @@ contains ! ============= Public Procedures ==========================
         call GetHDF5Attribute ( MLSFile, 'signal', word )
         if ( quantityType == l_radiance ) then
           call Parse_Signal ( word, sigInds, sideband=sideband )
-        else
+        else ! TScat
           call Parse_Signal ( word, sigInds, sideband=sideband, channels=qt%channels )
+          call allocate_test ( qt%chanInds, count(qt%channels), 'qt%chanInds', moduleName )
+          qt%chanInds = pack( (/ ( i, i=lbound(qt%channels,1), ubound(qt%channels,1) ) /), &
+                            & qt%channels ) ! Indices of true channels
+          call allocate_test ( qt%frequencies, size(qt%chanInds), 'qt%frequencies', moduleName )
+          qt%frequencies = signals(sigInds(1))%frequencies(qt%chanInds)
         end if
         signal = sigInds(1)
         verticalCoordinate = l_geodAltitude
@@ -1942,6 +1947,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.105  2010/09/25 01:14:34  vsnyder
+! Add some TScat support, and some cannonball polishing
+!
 ! Revision 2.104  2010/09/17 00:02:57  pwagner
 ! Can constrain which blocks dumped by name
 !
