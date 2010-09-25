@@ -168,7 +168,7 @@ contains
     type(grids_t), intent(in) :: Grids_x     ! All the needed coordinates
     real(r8), intent(in) :: Frq  ! Frequency at which to compute the values
     real(rp), intent(in) :: Eta_zp(:,:)      ! Zeta, Phi interpolating factors
-    logical, intent(out) :: Do_Calc_zp(:,:)  ! Where Eta_zp is nonzero
+    logical, intent(in) :: Do_Calc_zp(:,:)   ! Where Eta_zp is nonzero
     integer, intent(in) :: Sideband          ! -1, 1 or 0.  Zero means
                                              ! Grids_x%frq_basis is absolute,
                                              ! not I.F.
@@ -239,6 +239,9 @@ contains
 end module Comp_Eta_Docalc_No_Frq_m
 
 ! $Log$
+! Revision 2.15  2010/09/25 01:20:35  vsnyder
+! Correct intent for Do_Calc_zp argument of Comp_Eta_fzp
+!
 ! Revision 2.14  2010/09/25 01:09:34  vsnyder
 ! Add Comp_Eta_fzp
 !
