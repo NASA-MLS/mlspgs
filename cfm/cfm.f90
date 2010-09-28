@@ -63,7 +63,7 @@ module cfm          ! callable forward model
    use Intrinsic, only: l_hdf
    use Hdf, only: DFACC_RDONLY
    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-   use MatrixModule_1, only: Matrix_T
+   use MatrixModule_1, only: Matrix_T, Dump
 
    implicit none
    public
@@ -84,6 +84,9 @@ contains
 end module cfm
 
 ! $Log$
+! Revision 1.8  2010/09/21 15:06:49  honghanh
+! Separate the running forward model example and reading observed radiance example
+!
 ! Revision 1.3  2010/06/29 16:40:23  honghanh
 ! Remove all function/subroutine and user type forwarding from
 ! all CFM modules except for from cfm.f90

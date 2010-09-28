@@ -209,17 +209,18 @@ program mockup
 
       ! GPH is filled by the forward model
 
-      call ForwardModel (chunk, forwardModelConfigDatabase, state, &
-                         stateExtra, measurement)
+      !call ForwardModel (chunk, forwardModelConfigDatabase, state, &
+      !                   stateExtra, measurement)
 
       ! Create jacobian
-      !jacobian = CreatePlainMatrix(measurement, state)
+      jacobian = CreatePlainMatrix(measurement, state)
 
       ! Call the forward model
-      !call ForwardModel (chunk, forwardModelConfigDatabase, state, &
-      !                   stateExtra, measurement, jacobian)
+      call ForwardModel (chunk, forwardModelConfigDatabase, state, &
+                         stateExtra, measurement, jacobian)
 
-      call dump(measurement, details=3)
+      !call dump(measurement, details=3)
+      call dump(jacobian, details=3)
 
       ! Re-supply temperature, GPH, H2O, and O3 data
       call ExplicitFillVectorQuantity(temperature_vv, TemperatureInput2)
@@ -234,7 +235,7 @@ program mockup
       ! call the forward model the second time
       call ForwardModel (chunk, forwardModelConfigDatabase, state, &
                          stateExtra, measurement)
-      call dump(measurement, details=3)
+      !call dump(measurement, details=3)
 
       call DestroyVectorInfo (state)
       call DestroyVectorInfo (measurement)
@@ -392,8 +393,8 @@ program mockup
       quantity => GetVectorQtyByTemplateIndex(obsPrecision, band8_index)
       call ApplyBaseline(quantity, band8L1BMAFBaseline, .true., .false.)
 
-      call dump(observed, details=3)
-      call dump(obsPrecision, details=3)
+      !call dump(observed, details=3)
+      !call dump(obsPrecision, details=3)
 
       ! Clean up allocated memory for creating observed radiance vector
       call DestroyVectorInfo(observed)
