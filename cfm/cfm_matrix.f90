@@ -25,6 +25,38 @@ module cfm_matrix_m
 
    contains
 
+   ! Creates an empty matrix using quantities in 'columns' vector as matrix
+   ! columns, and qualities in 'rows' vectors as matrix rows.
+   ! Given input vector 'rows':
+   ! ---------------------------------------------------------------
+   ! |  Band 2           |  Band 7           |  Band 8             |
+   ! ---------------------------------------------------------------
+   ! and input vector 'columns':
+   ! ---------------------------------------------------------------
+   ! |   Temperature     |       H2O         |         O3          |
+   ! ---------------------------------------------------------------
+   ! Here's a visualization of the matrix:
+   ! ---------------------------------------------------------------
+   ! |   |    Temperature    |     H2O       |      O3             |
+   ! ---------------------------------------------------------------
+   ! | B |                   |               |                     |
+   ! | a |                   |               |                     |
+   ! | n |                   |               |                     |
+   ! | d |                   |               |                     |
+   ! | 2 |                   |               |                     |
+   ! ---------------------------------------------------------------
+   ! | B |                   |               |                     |
+   ! | a |                   |               |                     |
+   ! | n |                   |               |                     |
+   ! | d |                   |               |                     |
+   ! | 7 |                   |               |                     |
+   ! ---------------------------------------------------------------
+   ! | B |                   |               |                     |
+   ! | a |                   |               |                     |
+   ! | n |                   |               |                     |
+   ! | d |                   |               |                     |
+   ! | 8 |                   |               |                     |
+   ! ---------------------------------------------------------------
    type(Matrix_T) function CreatePlainMatrix (rows, columns) result(matrix)
       use MatrixModule_1, only: CreateEmptyMatrix, NullifyMatrix
 
@@ -47,3 +79,6 @@ module cfm_matrix_m
 end module
 
 ! $Log$
+! Revision 1.1  2010/08/05 16:23:03  honghanh
+! Added Jacobian to forwardModel subroutine
+!
