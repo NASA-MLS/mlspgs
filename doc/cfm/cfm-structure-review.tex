@@ -413,6 +413,19 @@ Magnetic field & ? \\
 \end{center}
 \end{table}
 
+\subsection{A note on the `mockup'}
+
+The mockup code supplied at the end of this document is simply meant to
+serve as an example of the kind of code that can use the forward model.
+It is \emph{not} intended to be turned into some kind of subroutine to
+be called by external software.  To do so would necessitate rereading
+all the calibration files, recreating the vector templates etc.  This is
+largely unnecessary work (though we note that the vector templates do
+need to be recreated each time a new `scene' is considered).  Once the
+calibration files are read and vectors defined and filled, forward
+models can be called as many times, with as many different
+configurations as are desired.
+
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: "cfm"
