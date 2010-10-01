@@ -797,7 +797,7 @@ heconvert: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/convert.c $(MLSBIN)/HE5_HdfEosDef.h
    
 init_gen: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/init_gen.f90
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
-   -c $(MLSCONFG) -p $@ -M $(MAKE) \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -O LDOPTS=-static \
 	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
 h5subset: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/h5subset.c
@@ -1248,6 +1248,9 @@ tools: chunktimes checkpvmup compare dateconverter heconvert h5subset h5cat hl \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.126  2010/08/27 20:56:38  pwagner
+# Uses optional HDF*INC Makefile variables
+#
 # Revision 1.125  2010/08/20 23:40:52  pwagner
 # Can now build l2pcdump
 #

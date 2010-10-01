@@ -84,7 +84,7 @@ ifeq ($(short_name),l2)
 $(INSTALLDIR)/init_gen: $(UTILDIR)/init_gen.f90
 	$(UTILDIR)/build_f90_in_misc.sh -p init_gen \
 	-d $(INSTALLDIR) -t $(TESTSDIR) -M $(MAKE) \
-	-FC $(FC) -CC $(CC) -C $(MLSCFILE) \
+	-FC $(FC) -CC $(CC) -C $(MLSCFILE) -O LDOPTS=-static \
    $(UTILDIR)/init_gen.f90
 
 $(S)/field_parm.f9h $(S)/field_add.f9h: $(S)/field_names.txt $(INSTALLDIR)/init_gen
@@ -147,7 +147,7 @@ ifeq ($(short_name),lib)
 $(INSTALLDIR)/init_gen: $(UTILDIR)/init_gen.f90
 	$(UTILDIR)/build_f90_in_misc.sh -p init_gen \
 	-d $(INSTALLDIR) -t $(TESTSDIR) -M $(MAKE) \
-	-FC $(FC) -CC $(CC) -C $(MLSCFILE) \
+	-FC $(FC) -CC $(CC) -C $(MLSCFILE) -O LDOPTS=-static \
    $(UTILDIR)/init_gen.f90
 
 $(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
@@ -265,7 +265,7 @@ ifeq ($(short_name),l2)
 $(INSTALLDIR)/init_gen: $(UTILDIR)/init_gen.f90
 	$(UTILDIR)/build_f90_in_misc.sh -p init_gen \
 	-d $(INSTALLDIR) -t $(TESTSDIR) -M $(MAKE) \
-	-FC $(FC) -CC $(CC) -C $(MLSCFILE) \
+	-FC $(FC) -CC $(CC) -C $(MLSCFILE) -O LDOPTS=-static \
    $(UTILDIR)/init_gen.f90
 
 $(S)/field_parm.f9h $(S)/field_add.f9h: $(S)/field_names.txt $(INSTALLDIR)/init_gen
@@ -317,7 +317,7 @@ ifeq ($(short_name),lib)
 $(INSTALLDIR)/init_gen: $(UTILDIR)/init_gen.f90
 	$(UTILDIR)/build_f90_in_misc.sh -p init_gen \
 	-d $(INSTALLDIR) -t $(TESTSDIR) -M $(MAKE) \
-	-FC $(FC) -CC $(CC) -C $(MLSCFILE) \
+	-FC $(FC) -CC $(CC) -C $(MLSCFILE) -O LDOPTS=-static \
    $(UTILDIR)/init_gen.f90
 
 $(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
@@ -368,6 +368,9 @@ MLSStrings.o:
 
 endif
 # $Log$
+# Revision 1.12  2009/10/08 23:06:52  pwagner
+# Added workarounds for buggy Intel v11 handling of strings
+#
 # Revision 1.11  2007/04/13 23:49:22  pwagner
 # restored apparently needed ieee stuff
 #
