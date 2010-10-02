@@ -142,6 +142,9 @@ ifndef INSTALLDIR
 endif
 endif
 
+short_name=cfm
+include ../../customblds/$(MLSF95).$(MLSPLAT)
+
 STATIC_LINK := $(shell echo $(LDOPTS) | grep -e "-static")
 ALLOBJS = $(OBJS)
 
@@ -288,16 +291,6 @@ $(PROG2_NAME): $(prereqs) libcfm_all.a
                       -L./ -lcfm_all \
         $(l_specials) $(LAFTER) \
 
-libcfm.so: $(prereqs) libcfm.a
-		$(FC) $(LDOPTS) -o libcfm.so $(PVM_OBJS)  \
-                      -L./ -lcfm \
-        $(l_specials) $(LAFTER) \
-
-libcfm_all.so: $(prereqs) libcfm_all.a
-		$(FC) $(LDOPTS) -o libcfm_all.so $(PVM_OBJS)  \
-                      -L./ -lcfm_all \
-        $(l_specials) $(LAFTER) \
-
 # ========================================================================
 # Now we must teach make some trickery involving the ar command 
 # to extract objects from a library
@@ -390,6 +383,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.5  2010/08/27 20:57:16  pwagner
+# Uses optional HDF*INC Makefile variables
+#
 # Revision 1.4  2010/07/22 17:44:00  pwagner
 # May make shared object libraries
 #

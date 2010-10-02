@@ -367,7 +367,23 @@ MLSStrings.o:
 	$(FC) -c -O0 $(PRE) $(INC_PATHS) $(S)/MLSStrings.f90 $(FAFTER)
 
 endif
+
+ifeq ($(short_name),cfm)
+libcfm.so: $(prereqs) libcfm.a
+		$(FC) $(LDOPTS) --shared -o libcfm.so $(PVM_OBJS)  \
+                      -L./ -lcfm \
+        $(l_specials) $(LAFTER) \
+
+libcfm_all.so: $(prereqs) libcfm_all.a
+		$(FC) $(LDOPTS) --shared -o libcfm_all.so $(PVM_OBJS)  \
+                      -L./ -lcfm_all \
+        $(l_specials) $(LAFTER) \
+
+endif
 # $Log$
+# Revision 1.13  2010/10/01 20:24:11  pwagner
+# Hasty change to allow building init_gen
+#
 # Revision 1.12  2009/10/08 23:06:52  pwagner
 # Added workarounds for buggy Intel v11 handling of strings
 #
