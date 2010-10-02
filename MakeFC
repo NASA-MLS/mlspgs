@@ -692,8 +692,8 @@ install:
 
 # install the mls programs, libraries, etc. from $(LEVELS) into $(INSTALLDIR)
 install-cfm:
-	@$(MAKE) -f $(MakeFName) cfm
-	cp cfm/$(MLSCONFG)/libcfm.a $(INSTALLDIR); \
+	@$(MAKE) -f $(MakeFName) -C cfm alone
+	cp cfm/$(MLSCONFG)/libcfm.* $(INSTALLDIR); \
    if [ -f cfm/$(MLSCONFG)/cfm.mod ] ; then \
      cp cfm/$(MLSCONFG)/cfm.mod $(INSTALLDIR) ; \
    fi
@@ -701,8 +701,8 @@ install-cfm:
 	echo "install-fullcfm to install stand-alone version"
 
 install-fullcfm:
-	@cd cfm; $(MAKE) -f $(MakeFName) libcfm_all.a
-	cp cfm/$(MLSCONFG)/libcfm_all.a $(INSTALLDIR); \
+	$(MAKE) -f $(MakeFName) -C cfm all
+	cp cfm/$(MLSCONFG)/libcfm_all.* $(INSTALLDIR); \
    if [ -f cfm/$(MLSCONFG)/cfm.mod ] ; then \
      cp cfm/$(MLSCONFG)/cfm.mod $(INSTALLDIR) ; \
    fi
@@ -1248,6 +1248,9 @@ tools: chunktimes checkpvmup compare dateconverter heconvert h5subset h5cat hl \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.127  2010/10/01 20:23:46  pwagner
+# Hasty change to allow building init_gen
+#
 # Revision 1.126  2010/08/27 20:56:38  pwagner
 # Uses optional HDF*INC Makefile variables
 #
