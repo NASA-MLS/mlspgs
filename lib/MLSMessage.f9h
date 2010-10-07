@@ -55,7 +55,7 @@
 ! === (start of api) ===
 ! dumpConfig ( [MLSMessageConfig_T config] )
 ! MLSMessage ( int Severity, char* ModuleNameIn, char* Message, 
-!      [char* Advance], [MLSFile_T MLSFile] )
+!      [char* Advance], [MLSFile_T MLSFile], [status] )
 ! MLSMessageCalls ( char* command, [char* name] )
 ! MLSMessageSetup ( [log SuppressDebugs], [int LogFileUnit], [char* Prefix],
 !      [log useToolkit], [log CrashOnAnyError] )
@@ -106,6 +106,12 @@
      & "Error  ", &
      & "Crash  " &
      /)
+
+  ! Returned status values of how MLSMessage fared or how message was treated
+  integer, public, parameter :: MLSMSGSTATUS_Normal = PGS_S_SUCCESS ! == 0
+  integer, public, parameter :: MLSMSGSTATUS_Suppressed = MLSMSGSTATUS_Normal + 1
+  integer, public, parameter :: MLSMSGSTATUS_Stopped = MLSMSGSTATUS_Suppressed + 1
+  integer, public, parameter :: MLSMSGSTATUS_Dumped = MLSMSGSTATUS_Stopped + 1
 
   ! So that we may limit the number of times warnings printed, messagewise
   character(len=*), parameter :: WARNINGSSUPPRESSED = '(No more warnings of this)'
@@ -259,7 +265,8 @@ contains
 
   ! This first routine is the main `messaging' code.
 
-  subroutine MLSMessage_( severity, ModuleNameIn,  Message, Advance, MLSFile )
+  subroutine MLSMessage_( severity, ModuleNameIn, Message, &
+    & Advance, MLSFile, status )
     ! A wraparound subroutine so we can 
     ! (1) prevent excessively repeated warning messages
     ! (2) intercept calls 
@@ -272,8 +279,10 @@ contains
     !                                 if present and the first character is 'N'
     !                                 or 'n'
     type(MLSFile_T), intent(in), optional :: MLSFile
+    integer, intent(out), optional :: status ! 0 if msg printed, 1 if suppressed
     ! Internal variables
     integer :: msgLength                  ! length to be printed
+    integer :: myStatus
     logical :: nosubsequentwarnings
     logical :: newwarning
     integer :: warning_index
@@ -282,6 +291,7 @@ contains
       & msgPlusNotice                     ! actual message printed
     ! Executable
     msgPlusNotice = message
+    myStatus = MLSMSGSTATUS_Suppressed
 
     ! This is the smaller of the actual length and what we allow to be printed
     msgLength = min( len(message), MAXMESSLENGTH )
@@ -294,6 +304,7 @@ contains
       & MLSMSGWarnings%totalnumwarnings = &
       & min( TOTALNUMWARNINGSMAX, MLSMSGWarnings%totalnumwarnings + 1 )
     if ( MLSMSGWarnings%totalnumwarnings > TOTALNUMWARNINGSMAX - 1 ) then
+      if ( present(status) ) status = myStatus
       return
     elseif ( MLSMSGWarnings%totalnumwarnings > TOTALNUMWARNINGSMAX - 2 ) then
       msgPlusNotice = '(Max Warnings reached)' // message
@@ -318,7 +329,10 @@ contains
         MLSMSGWarnings%timeswarned(MLSMSGWarnings%numwarnings) = &
           & MLSMSGWarnings%timeswarned(MLSMSGWarnings%numwarnings) + 1
         if ( MLSMSGWarnings%timeswarned(MLSMSGWarnings%numwarnings) > &
-          & MLSMessageConfig%limitWarnings ) return
+          & MLSMessageConfig%limitWarnings ) then
+          if ( present(status) ) status = myStatus
+          return
+        endif
         MLSMSGWarnings%timeswarned(MLSMSGWarnings%numwarnings) = &
           & min(MLSMSGWarnings%timeswarned(MLSMSGWarnings%numwarnings) + 1, &
           & MLSMessageConfig%limitWarnings + 1 )
@@ -330,15 +344,20 @@ contains
           if ( MLSMSGWarnings%warningmessages(warning_index) == &
             & message(1:warningLength) ) exit
         end do
-        if ( warning_index > MLSMSGWarnings%numwarnings ) return
+        if ( warning_index > MLSMSGWarnings%numwarnings ) then
+          if ( present(status) ) status = myStatus
+          return
+        endif
         ! Now we assure that the times warned array contains all
         ! the times we were called, not just the times we printed
         MLSMSGWarnings%timeswarned(warning_index) = &
           & min(MLSMSGWarnings%timeswarned(warning_index) + 1, &
           & TOTALNUMWARNINGSMAX )
         if ( MLSMSGWarnings%timeswarned(warning_index) > &
-          & MLSMessageConfig%limitWarnings + 1 ) &
-          & return
+          & MLSMessageConfig%limitWarnings + 1 ) then
+          if ( present(status) ) status = myStatus
+          return
+        endif
         nosubsequentwarnings = &
           & (MLSMSGWarnings%timeswarned(warning_index) > &
           & MLSMessageConfig%limitWarnings)
@@ -354,17 +373,21 @@ contains
       ! Unless special treatment, just pass args to MLSMessageStd
       call MLSMessageStd( severity, ModuleNameIn, msgPlusNotice(1:msgLength), &
         & Advance )
+      if ( present(status) ) status = MLSMSGSTATUS_Normal
       return
     endif
     call MLSMessageCalls( 'push', constantName=ModuleNameIn )
     if ( severity >= MLSMSG_Severity_to_quit ) then
       call StopWithErrorMsg( Message, MLSFile )
+      myStatus = MLSMSGSTATUS_Stopped
     else
       call MLSMessageCalls( 'dump' )
       call MLSMessageStd( severity, ModuleNameIn, msgPlusNotice(1:msgLength), &
         & Advance, MLSFile=MLSFile )
+      myStatus = MLSMSGSTATUS_Dumped
     endif
     call MLSMessageCalls( 'pop' )
+    if ( present(status) ) status = myStatus
   end subroutine MLSMessage_
 
   ! --------------------------------------------  MLSMessageCalls  -----
@@ -916,9 +939,17 @@ contains
     ! Args
     character(len=*), intent(in) :: with
     character(len=len(with))     :: without
+    integer :: secondBuck
       if ( with(1:1) == '$' ) then
-      ! The with is <dollar>RCSFile: <filename>,v <dollar>
-        without = with(11:(LEN_TRIM(with)-8))
+      ! The with is <dollar>RCSFile: <filename>,v <dollar><otherstuff>
+      ! The without is <filename><otherstuff>
+        secondBuck = 1 + index( with(2:),'$')
+        if ( secondBuck-3 > 11 .and. secondBuck < len_trim(with) ) then
+          ! without = with(11:(LEN_TRIM(with)-8))
+          without = with(11:secondBuck-4) // with(secondBuck+1:)
+        else
+          without = with(11:(LEN_TRIM(with)-8))
+        endif
       else
         without = with
       end if
@@ -926,6 +957,9 @@ contains
   
 !
 ! $Log$
+! Revision 2.11  2010/10/07 23:29:26  pwagner
+! MLSMessage optionally returns status
+!
 ! Revision 2.10  2009/06/16 17:10:12  pwagner
 ! Can Capitalize messages in warnings summaries
 !
