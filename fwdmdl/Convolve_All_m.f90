@@ -308,14 +308,21 @@ contains
   subroutine Convolve_Other_Second_Deriv ( Convolve_Support, MAF, Channel, &
              & SbRatio, Update, Radiance, Qtys, Grids_f, &
              & MIF_Times, DeadTime, d2I_df2, Hessian, RowFlags )
-
+    use Allocate_Deallocate, only: Allocate_test, Deallocate_test
+    use Dump_0, only: DUMP
     use ForwardModelConfig, only: QtyStuff_T
     use Fov_Convolve_m, only: Convolve_Support_T, &
       & FOV_Convolve_3d
-    use Load_sps_data_m, only: Grids_T
-    use MatrixModule_1, only: FINDBLOCK
+    use HessianModule_0, only: DUMP
     use HessianModule_1, only: HESSIAN_T
-    use MLSKinds, only: R8, RP, RV
+    use Load_sps_data_m, only: Grids_T, Dump
+    use MLSFillValues, only: isNaN
+    use MLSKinds, only: R8, RM, RP, RV
+    use MatrixModule_1, only: FINDBLOCK
+    use MLSStringLists, only: switchDetail
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+    use output_m, only: outputNamedValue, resumeOutput, suspendOutput
+    use TOGGLES, only: switches
     use VectorsModule, only: VectorValue_T
 
     ! Inputs
@@ -339,6 +346,7 @@ contains
 
     ! Local variables
     integer :: Row, Col1, Col2
+    integer :: err
     integer :: JF_I, JF_J
     integer :: KI, KJ
     integer :: NFZ_I, NFZ_J ! # frequency elements times # z elements in species
@@ -348,12 +356,31 @@ contains
     real(r8) :: d2rad_df2_out( size(convolve_support%del_chi_out), &
                              & size(d2i_df2,dim=2), size(d2i_df2,dim=3))
     real(rv), pointer :: MIF_Times_for_MAF(:)
+    real(rm), pointer :: hvalues(:)
+    
+    ! Debugging variables
+    integer, save :: channelMin = 0
+    integer, save :: channelMax = 0
+    integer, save :: kiMin = 0
+    integer, save :: kiMax = 0
+    integer, save :: kjMin = 0
+    integer, save :: kjMax = 0
+    integer, save :: qMin = 0
+    integer, save :: qMax = 0
+    integer, save :: rMin = 0
+    integer, save :: rMax = 0
 
+    nullify ( hValues )
     nullify ( MIF_Times_for_MAF )
     if ( associated(MIF_Times) ) MIF_Times_for_MAF => MIF_Times(:,maf)
     noChans = Radiance%template%noChans
 
     ! do the convolution
+    if ( any(isNaN(d2i_df2)) ) then
+      call dump( d2i_df2, 'd2i_df2', options='-H' )
+      call MLSMessage( MLSMSG_Warning, ModuleName // 'Convolve_Other_Second_Deriv', &
+        & 'NaNs found in d2i_df2' )
+    endif
 
     call fov_convolve_3d ( convolve_support, d2i_df2, MIF_Times_for_MAF, &
                          & DeadTime, grids_f%deriv_flags, d2rad_df2_out )
@@ -364,6 +391,19 @@ contains
     row = FindBlock( Hessian%row, radiance%index, maf )
     rowFlags(row) = .TRUE.
 
+    if ( switchDetail( switches, 'hnan', options='-fc' ) > -1 ) then
+      call outputNamedValue( 'MAF', MAF )
+      call outputNamedValue( 'Channel', Channel )
+      call outputNamedValue( 'row', row )
+      call outputNamedValue( 'noChans', noChans )
+      call outputNamedValue( 'size(qtys)', size(qtys) )
+      if ( .not. update) then
+        call dump( Grids_f, details=2 )
+      endif
+    endif
+    ! Use temp hValues 
+    call allocate_test( hValues, size(d2rad_df2_out), 'hValues', ModuleName // &
+      & 'Convolve_Other_Second_Deriv' )
     do sps_i = 1, size(qtys)
 
       if ( .not. qtys(sps_i)%foundInFirst ) cycle
@@ -400,12 +440,40 @@ contains
 
                 ! load derivatives for this (zeta & phi) if needed:
 
-                if ( Grids_f%deriv_flags(q) .and. Grids_f%deriv_flags(r) ) &
-                    & call loadMatrixValue ( d2rad_df2_out(:,q,r), &
-                    & hessian%block(row,col1,col2)%values(channel::noChans,ki,kj), &
-                    & sbRatio, update )
+                if ( Grids_f%deriv_flags(q) .and. Grids_f%deriv_flags(r) ) then
+!                  call loadMatrixValue ( d2rad_df2_out(:,q,r), &
+!                  & hessian%block(row,col1,col2)%values(channel::noChans,ki,kj), &
+!                  & sbRatio, update, ERR )
+                    call loadMatrixValue ( d2rad_df2_out(:,q,r), &
+                    & hValues, &
+                    & sbRatio, update, ERR )
 
+                  select case ( err ) 
+                  case (1)
+                    call MLSMessage( MLSMSG_Warning, ModuleName, &
+                      & 'd2rad_df2_out bigger than hessian slice' )
+                  case (2)
+                    call MLSMessage( MLSMSG_Warning, ModuleName, &
+                      & 'd2rad_df2_out smaller than hessian slice' )
+                  case (4)
+                    call MLSMessage( MLSMSG_Warning, ModuleName, &
+                      & 'NaNs found in d2rad_df2_out' )
+                  case (5)
+                    call MLSMessage( MLSMSG_Warning, ModuleName, &
+                      & 'd2rad_df2_out bigger than hessian slice; NaNs, too' )
+                  case (6)
+                    call MLSMessage( MLSMSG_Warning, ModuleName, &
+                      & 'd2rad_df2_out smallerer than hessian slice; NaNs, too' )
+                  case default
+                  end select
+                endif
+                hessian%block(row,col1,col2)%values(channel::noChans,ki,kj) = hValues
               end do
+              if ( switchDetail( switches, 'hnan', options='-fc' ) > -1) then
+                call suspendOutput
+                call dump( hessian%block(row,col1,col2), details=-3 )
+                call resumeOutput
+              endif
    
             end do
         
@@ -416,6 +484,8 @@ contains
       end do
 
     end do
+    call Deallocate_test( hValues, 'hValues', ModuleName // &
+      & 'Convolve_Other_Second_Deriv' )
 
   end subroutine Convolve_Other_Second_Deriv
 
@@ -989,16 +1059,31 @@ contains
   end subroutine GetFullBlock_Hessian
 
 
-  subroutine LoadMatrixValue ( In, Out, SbRatio, Update )
+  subroutine LoadMatrixValue ( In, Out, SbRatio, Update, err )
     ! If Update add SbRatio*In to Out else assign SbRatio*In to Out.
     ! Identical to LoadVectorValue except for kind of Out.
+    use MLSFillValues, only: isNaN
     use MLSKinds, only: R8, RM
     real(r8), intent(in) :: In(:)
     real(rm), intent(inout) :: Out(:)
     real(r8), intent(in) :: SbRatio
     logical, intent(in) :: Update
+    integer, optional, intent(out) :: err
+    integer :: myErr ! poss. values: 0, 1, 2, 4, 5, 6
     integer :: N
     n = size(in)
+    myErr = 0
+    if ( n > size(out) ) then
+      myErr = 1
+    endif
+    if ( n < size(out) ) then
+      myErr = myErr + 2
+    endif
+    if ( any(isNaN(in)) ) then
+      myErr = myErr + 4
+    endif
+    if ( present(err) ) err = myErr
+    if ( any(myErr == (/1, 4, 5, 6/)) ) return
     if ( update ) then
       out(:n) = out(:n) + sbRatio * in
     else
@@ -1036,6 +1121,9 @@ contains
 end module Convolve_All_m
 
 ! $Log$
+! Revision 2.15  2010/10/13 22:18:22  pwagner
+! Intermediate steps in eliminating NaNs from analytic Hessians
+!
 ! Revision 2.14  2010/08/27 05:53:23  yanovsky
 ! Fixed the order of do loops in Convolve_Other_Second_Deriv subroutine.  Added comments.
 !
