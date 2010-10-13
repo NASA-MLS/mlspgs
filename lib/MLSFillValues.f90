@@ -126,9 +126,38 @@ module MLSFillValues              ! Some FillValue-related stuff
 ! log IsMonotonic ( array, [char* direction] )
 ! Monotonize_1dint( values, [Period], [FillValue], [log strict] )
 ! nprec roundUpOrDown( nprec value )
-! WhereAreTheFills ( array, which, [int howMany] )
-! WhereAreTheInfs ( array, which, [int howMany] )
-! WhereAreTheNaNs ( array, which, [int howMany] )
+! WhereAreTheFills ( array, [which(:)], [int howMany], [mode], [inds(:,:)] )
+! WhereAreTheInfs ( array, [which(:)], [int howMany], [mode], [inds(:,:)] )
+! WhereAreTheNaNs ( array, [which(:)], [int howMany], [mode], [inds(:,:)] )
+!
+! These last 3 search for the targeted numerical type (Fill, Inf, or NaN)
+! according to mode:
+!     'any'  Finds which column or plane (corresponding to last index) has any
+!     'all'  Finds which column or plane (corresponding to last index) is all
+!     'ind'  Finds index pair (for rank 2) or triple (for rank 3) of each
+! More Notes:
+! (1) for rank r array, inds should be dimensioned (r,n) where n is the max
+! number of Fills or whatever you expect
+! (2) For mode = 'all' or 'any', inds is ignored, howMany is number of columns
+!     or planes
+! (3) For mode = 'ind', which is ignored, howMany is number of individuals
+! Example: we're searching for NaNs; the array looks like the following
+!
+!  0   0   0 NaN
+! NaN  0   0 NaN
+! NaN NaN  0 NaN
+!  0   0   0 NaN
+!
+!      Then
+! mode      howMany     which        inds
+! 'any'       3        1, 2, 4     (ignored)
+! 'all'       1           4        (ignored)
+! 'ind'       7       (ignored)  (1,4),(2,1),(2,4),(3,1),(3,2),(3,4),(4,4)
+! We show the pairs of indices under inds above, but as returned
+! by the routine the 2x7 array of inds will be laid out as follows
+!  1  2  2  3  3  3  4
+!  4  1  4  1  2  4  4
+!
 ! === (end of api) ===                                                 
   interface BridgeMissingValues
     module procedure BridgeMissingValues_1dr4, BridgeMissingValues_1dr8, BridgeMissingValues_1dint
@@ -1811,58 +1840,64 @@ contains
     call WhereAreThey( Fill_signal, array, which, howMany )
   end subroutine WhereAreTheFills_REAL
 
-  subroutine WhereAreTheFills_DOUBLE_2d ( array, which, howMany, mode )
+  subroutine WhereAreTheFills_DOUBLE_2d ( array, which, howMany, mode, inds )
     ! Args
     double precision, dimension(:,:), intent(in) :: array
     integer, dimension(:), optional, intent(out) :: which
     integer, optional, intent(out)               :: howMany
-    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
-    call WhereAreThey( Fill_signal, array, which, howMany, mode )
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( Fill_signal, array, which, howMany, mode, inds )
   end subroutine WhereAreTheFills_DOUBLE_2d
 
-  subroutine WhereAreTheFills_integer_2d ( array, which, howMany, mode )
+  subroutine WhereAreTheFills_integer_2d ( array, which, howMany, mode, inds )
     ! Args
     integer, dimension(:,:), intent(in)             :: array
     integer, dimension(:), optional, intent(out) :: which
     integer, optional, intent(out)               :: howMany
-    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
-    call WhereAreThey( Fill_signal, array, which, howMany, mode )
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( Fill_signal, array, which, howMany, mode, inds )
   end subroutine WhereAreTheFills_integer_2d
 
-  subroutine WhereAreTheFills_REAL_2d ( array, which, howMany, mode )
+  subroutine WhereAreTheFills_REAL_2d ( array, which, howMany, mode, inds )
     ! Args
     real, dimension(:,:), intent(in)             :: array
     integer, dimension(:), optional, intent(out) :: which
     integer, optional, intent(out)               :: howMany
-    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
-    call WhereAreThey( Fill_signal, array, which, howMany, mode )
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( Fill_signal, array, which, howMany, mode, inds )
   end subroutine WhereAreTheFills_REAL_2d
 
-  subroutine WhereAreTheFills_DOUBLE_3d ( array, which, howMany, mode )
+  subroutine WhereAreTheFills_DOUBLE_3d ( array, which, howMany, mode, inds )
     ! Args
     double precision, dimension(:,:,:), intent(in) :: array
     integer, dimension(:), optional, intent(out) :: which
     integer, optional, intent(out)               :: howMany
-    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
-    call WhereAreThey( Fill_signal, array, which, howMany, mode )
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( Fill_signal, array, which, howMany, mode, inds )
   end subroutine WhereAreTheFills_DOUBLE_3d
 
-  subroutine WhereAreTheFills_integer_3d ( array, which, howMany, mode )
+  subroutine WhereAreTheFills_integer_3d ( array, which, howMany, mode, inds )
     ! Args
     integer, dimension(:,:,:), intent(in)           :: array
     integer, dimension(:), optional, intent(out) :: which
     integer, optional, intent(out)               :: howMany
-    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
-    call WhereAreThey( Fill_signal, array, which, howMany, mode )
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( Fill_signal, array, which, howMany, mode, inds )
   end subroutine WhereAreTheFills_integer_3d
 
-  subroutine WhereAreTheFills_REAL_3d ( array, which, howMany, mode )
+  subroutine WhereAreTheFills_REAL_3d ( array, which, howMany, mode, inds )
     ! Args
     real, dimension(:,:,:), intent(in)           :: array
     integer, dimension(:), optional, intent(out) :: which
     integer, optional, intent(out)               :: howMany
-    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
-    call WhereAreThey( Fill_signal, array, which, howMany, mode )
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( Fill_signal, array, which, howMany, mode, inds )
   end subroutine WhereAreTheFills_REAL_3d
 
   ! ----------------------------------  WhereAreTheInfs  -----
@@ -1891,58 +1926,64 @@ contains
     call WhereAreThey( inf_signal, array, which, howMany )
   end subroutine WhereAreTheInfs_REAL
 
-  subroutine WhereAreTheInfs_DOUBLE_2d ( array, which, howMany, mode )
+  subroutine WhereAreTheInfs_DOUBLE_2d ( array, which, howMany, mode, inds )
     ! Args
     double precision, dimension(:,:), intent(in) :: array
     integer, dimension(:), optional, intent(out) :: which
     integer, optional, intent(out)               :: howMany
-    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
-    call WhereAreThey( inf_signal, array, which, howMany, mode )
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( inf_signal, array, which, howMany, mode, inds )
   end subroutine WhereAreTheInfs_DOUBLE_2d
 
-  subroutine WhereAreTheInfs_integer_2d ( array, which, howMany, mode )
+  subroutine WhereAreTheInfs_integer_2d ( array, which, howMany, mode, inds )
     ! Args
     integer, dimension(:,:), intent(in)             :: array
     integer, dimension(:), optional, intent(out) :: which
     integer, optional, intent(out)               :: howMany
-    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
-    call WhereAreThey( inf_signal, array, which, howMany, mode )
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( inf_signal, array, which, howMany, mode, inds )
   end subroutine WhereAreTheInfs_integer_2d
 
-  subroutine WhereAreTheInfs_REAL_2d ( array, which, howMany, mode )
+  subroutine WhereAreTheInfs_REAL_2d ( array, which, howMany, mode, inds )
     ! Args
     real, dimension(:,:), intent(in)             :: array
     integer, dimension(:), optional, intent(out) :: which
     integer, optional, intent(out)               :: howMany
-    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
-    call WhereAreThey( inf_signal, array, which, howMany, mode )
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( inf_signal, array, which, howMany, mode, inds )
   end subroutine WhereAreTheInfs_REAL_2d
 
-  subroutine WhereAreTheInfs_DOUBLE_3d ( array, which, howMany, mode )
+  subroutine WhereAreTheInfs_DOUBLE_3d ( array, which, howMany, mode, inds )
     ! Args
     double precision, dimension(:,:,:), intent(in) :: array
     integer, dimension(:), optional, intent(out) :: which
     integer, optional, intent(out)               :: howMany
-    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
-    call WhereAreThey( inf_signal, array, which, howMany, mode )
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( inf_signal, array, which, howMany, mode, inds )
   end subroutine WhereAreTheInfs_DOUBLE_3d
 
-  subroutine WhereAreTheInfs_integer_3d ( array, which, howMany, mode )
+  subroutine WhereAreTheInfs_integer_3d ( array, which, howMany, mode, inds )
     ! Args
     integer, dimension(:,:,:), intent(in)           :: array
     integer, dimension(:), optional, intent(out) :: which
     integer, optional, intent(out)               :: howMany
-    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
-    call WhereAreThey( inf_signal, array, which, howMany, mode )
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( inf_signal, array, which, howMany, mode, inds )
   end subroutine WhereAreTheInfs_integer_3d
 
-  subroutine WhereAreTheInfs_REAL_3d ( array, which, howMany, mode )
+  subroutine WhereAreTheInfs_REAL_3d ( array, which, howMany, mode, inds )
     ! Args
     real, dimension(:,:,:), intent(in)           :: array
     integer, dimension(:), optional, intent(out) :: which
     integer, optional, intent(out)               :: howMany
-    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
-    call WhereAreThey( inf_signal, array, which, howMany, mode )
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( inf_signal, array, which, howMany, mode, inds )
   end subroutine WhereAreTheInfs_REAL_3d
 
   ! ----------------------------------  WhereAreTheNaNs  -----
@@ -1971,58 +2012,64 @@ contains
     call WhereAreThey( NaN_signal, array, which, howMany )
   end subroutine WhereAreTheNaNs_REAL
 
-  subroutine WhereAreTheNaNs_DOUBLE_2d ( array, which, howMany, mode )
+  subroutine WhereAreTheNaNs_DOUBLE_2d ( array, which, howMany, mode, inds )
     ! Args
     double precision, dimension(:,:), intent(in)   :: array
     integer, dimension(:), optional, intent(out) :: which
     integer, optional, intent(out)               :: howMany
-    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
-    call WhereAreThey( NaN_signal, array, which, howMany, mode )
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( NaN_signal, array, which, howMany, mode, inds )
   end subroutine WhereAreTheNaNs_DOUBLE_2d
 
-  subroutine WhereAreTheNaNs_integer_2d ( array, which, howMany, mode )
+  subroutine WhereAreTheNaNs_integer_2d ( array, which, howMany, mode, inds )
     ! Args
     integer, dimension(:,:), intent(in)             :: array
     integer, dimension(:), optional, intent(out) :: which
     integer, optional, intent(out)               :: howMany
-    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
-    call WhereAreThey( NaN_signal, array, which, howMany, mode )
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( NaN_signal, array, which, howMany, mode, inds )
   end subroutine WhereAreTheNaNs_integer_2d
 
-  subroutine WhereAreTheNaNs_REAL_2d ( array, which, howMany, mode )
+  subroutine WhereAreTheNaNs_REAL_2d ( array, which, howMany, mode, inds )
     ! Args
     real, dimension(:,:), intent(in)             :: array
     integer, dimension(:), optional, intent(out) :: which
     integer, optional, intent(out)               :: howMany
-    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
-    call WhereAreThey( NaN_signal, array, which, howMany, mode )
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( NaN_signal, array, which, howMany, mode, inds )
   end subroutine WhereAreTheNaNs_REAL_2d
 
-  subroutine WhereAreTheNaNs_DOUBLE_3d ( array, which, howMany, mode )
+  subroutine WhereAreTheNaNs_DOUBLE_3d ( array, which, howMany, mode, inds )
     ! Args
     double precision, dimension(:,:,:), intent(in)   :: array
     integer, dimension(:), optional, intent(out) :: which
     integer, optional, intent(out)               :: howMany
-    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
-    call WhereAreThey( NaN_signal, array, which, howMany, mode )
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( NaN_signal, array, which, howMany, mode, inds )
   end subroutine WhereAreTheNaNs_DOUBLE_3d
 
-  subroutine WhereAreTheNaNs_integer_3d ( array, which, howMany, mode )
+  subroutine WhereAreTheNaNs_integer_3d ( array, which, howMany, mode, inds )
     ! Args
     integer, dimension(:,:,:), intent(in)           :: array
     integer, dimension(:), optional, intent(out) :: which
     integer, optional, intent(out)               :: howMany
-    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
-    call WhereAreThey( NaN_signal, array, which, howMany, mode )
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( NaN_signal, array, which, howMany, mode, inds )
   end subroutine WhereAreTheNaNs_integer_3d
 
-  subroutine WhereAreTheNaNs_REAL_3d ( array, which, howMany, mode )
+  subroutine WhereAreTheNaNs_REAL_3d ( array, which, howMany, mode, inds )
     ! Args
     real, dimension(:,:,:), intent(in)           :: array
     integer, dimension(:), optional, intent(out) :: which
     integer, optional, intent(out)               :: howMany
-    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
-    call WhereAreThey( NaN_signal, array, which, howMany, mode )
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( NaN_signal, array, which, howMany, mode, inds )
   end subroutine WhereAreTheNaNs_REAL_3d
 
   ! ----------------------------------  private procedures  -----
@@ -2276,15 +2323,16 @@ contains
     if ( present(howMany) ) howMany = n
   end subroutine WhereAreThey_REAL
 
-  subroutine WhereAreThey_DOUBLE_2d ( what, array, which, howMany, mode )
+  subroutine WhereAreThey_DOUBLE_2d ( what, array, which, howMany, mode, inds )
     ! Args
     integer, intent(in)                          :: what ! a signal flag
     double precision, dimension(:,:), intent(in) :: array
     integer, dimension(:), optional, intent(out) :: which
     integer, optional, intent(out)               :: howMany
-    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
     ! Internal variables
-    integer :: i
+    integer :: i, j
     character(len=3) :: myMode
     integer :: n
     integer :: nWhich ! size(which);  > 0 only if which is present
@@ -2298,8 +2346,15 @@ contains
     myMode = 'any'
     if ( present(mode) ) myMode = mode
     n = 0
+    yes = .false.
     do i=1, size(array, 2)
       select case( lowercase(myMode(1:3)) )
+      case ( 'ind' )
+        do j=1, size(array, 1)
+          if ( .not. is_what_ieee(what, array(j,i)) ) cycle
+          n = n + 1
+          if ( present(inds) ) inds( 1:2, min(n,size(inds,2)) ) = (/ j, i /)
+        enddo
       case ( 'any' )
         yes = any( is_what_ieee(what, array(:,i)) )
       case ( 'all' )
@@ -2315,15 +2370,16 @@ contains
     if ( present(howMany) ) howMany = n
   end subroutine WhereAreThey_DOUBLE_2d
 
-  subroutine WhereAreThey_integer_2d ( what, array, which, howMany, mode )
+  subroutine WhereAreThey_integer_2d ( what, array, which, howMany, mode, inds )
     ! Args
     integer, intent(in)                          :: what ! a signal flag
     integer, dimension(:,:), intent(in)             :: array
     integer, dimension(:), optional, intent(out) :: which
     integer, optional, intent(out)               :: howMany
-    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
     ! Internal variables
-    integer :: i
+    integer :: i, j
     character(len=3) :: myMode
     integer :: n
     integer :: nWhich ! size(which);  > 0 only if which is present
@@ -2339,6 +2395,12 @@ contains
     n = 0
     do i=1, size(array, 2)
       select case( lowercase(myMode(1:3)) )
+      case ( 'ind' )
+        do j=1, size(array, 1)
+          if ( .not. is_what_ieee(what, array(j,i)) ) cycle
+          n = n + 1
+          if ( present(inds) ) inds( 1:2, min(n,size(inds,2)) ) = (/ j, i /)
+        enddo
       case ( 'any' )
         yes = any( is_what_ieee(what, array(:,i)) )
       case ( 'all' )
@@ -2354,15 +2416,16 @@ contains
     if ( present(howMany) ) howMany = n
   end subroutine WhereAreThey_integer_2d
 
-  subroutine WhereAreThey_REAL_2d ( what, array, which, howMany, mode )
+  subroutine WhereAreThey_REAL_2d ( what, array, which, howMany, mode, inds )
     ! Args
     integer, intent(in)                          :: what ! a signal flag
     real, dimension(:,:), intent(in)             :: array
     integer, dimension(:), optional, intent(out) :: which
     integer, optional, intent(out)               :: howMany
-    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
     ! Internal variables
-    integer :: i
+    integer :: i, j
     character(len=3) :: myMode
     integer :: n
     integer :: nWhich ! size(which);  > 0 only if which is present
@@ -2378,6 +2441,12 @@ contains
     n = 0
     do i=1, size(array, 2)
       select case( lowercase(myMode(1:3)) )
+      case ( 'ind' )
+        do j=1, size(array, 1)
+          if ( .not. is_what_ieee(what, array(j,i)) ) cycle
+          n = n + 1
+          if ( present(inds) ) inds( 1:2, min(n,size(inds,2)) ) = (/ j, i /)
+        enddo
       case ( 'any' )
         yes = any( is_what_ieee(what, array(:,i)) )
       case ( 'all' )
@@ -2393,15 +2462,16 @@ contains
     if ( present(howMany) ) howMany = n
   end subroutine WhereAreThey_REAL_2d
 
-  subroutine WhereAreThey_DOUBLE_3d ( what, array, which, howMany, mode )
+  subroutine WhereAreThey_DOUBLE_3d ( what, array, which, howMany, mode, inds )
     ! Args
     integer, intent(in)                          :: what ! a signal flag
     double precision, dimension(:,:,:), intent(in) :: array
     integer, dimension(:), optional, intent(out) :: which
     integer, optional, intent(out)               :: howMany
-    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
     ! Internal variables
-    integer :: i
+    integer :: i, j, k
     character(len=3) :: myMode
     integer :: n
     integer :: nWhich ! size(which);  > 0 only if which is present
@@ -2417,6 +2487,14 @@ contains
     n = 0
     do i=1, size(array, 3)
       select case( lowercase(myMode(1:3)) )
+      case ( 'ind' )
+        do j=1, size(array, 2)
+          do k=1, size(array, 1)
+            if ( .not. is_what_ieee(what, array(k, j,i)) ) cycle
+            n = n + 1
+          if ( present(inds) ) inds( 1:3, min(n,size(inds,2)) ) = (/ k, j, i /)
+          enddo
+        enddo
       case ( 'any' )
         yes = any( is_what_ieee(what, array(:,:,i)) )
       case ( 'all' )
@@ -2432,15 +2510,16 @@ contains
     if ( present(howMany) ) howMany = n
   end subroutine WhereAreThey_DOUBLE_3d
 
-  subroutine WhereAreThey_integer_3d ( what, array, which, howMany, mode )
+  subroutine WhereAreThey_integer_3d ( what, array, which, howMany, mode, inds )
     ! Args
     integer, intent(in)                          :: what ! a signal flag
     integer, dimension(:,:,:), intent(in)           :: array
     integer, dimension(:), optional, intent(out) :: which
     integer, optional, intent(out)               :: howMany
-    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
     ! Internal variables
-    integer :: i
+    integer :: i, j, k
     character(len=3) :: myMode
     integer :: n
     integer :: nWhich ! size(which);  > 0 only if which is present
@@ -2456,6 +2535,14 @@ contains
     n = 0
     do i=1, size(array, 3)
       select case( lowercase(myMode(1:3)) )
+      case ( 'ind' )
+        do j=1, size(array, 2)
+          do k=1, size(array, 1)
+            if ( .not. is_what_ieee(what, array(k, j,i)) ) cycle
+            n = n + 1
+          if ( present(inds) ) inds( 1:3, min(n,size(inds,2)) ) = (/ k, j, i /)
+          enddo
+        enddo
       case ( 'any' )
         yes = any( is_what_ieee(what, array(:,:,i)) )
       case ( 'all' )
@@ -2471,15 +2558,16 @@ contains
     if ( present(howMany) ) howMany = n
   end subroutine WhereAreThey_integer_3d
 
-  subroutine WhereAreThey_REAL_3d ( what, array, which, howMany, mode )
+  subroutine WhereAreThey_REAL_3d ( what, array, which, howMany, mode, inds )
     ! Args
     integer, intent(in)                          :: what ! a signal flag
     real, dimension(:,:,:), intent(in)           :: array
     integer, dimension(:), optional, intent(out) :: which
     integer, optional, intent(out)               :: howMany
-    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
     ! Internal variables
-    integer :: i
+    integer :: i, j, k
     character(len=3) :: myMode
     integer :: n
     integer :: nWhich ! size(which);  > 0 only if which is present
@@ -2495,6 +2583,14 @@ contains
     n = 0
     do i=1, size(array, 3)
       select case( lowercase(myMode(1:3)) )
+      case ( 'ind' )
+        do j=1, size(array, 2)
+          do k=1, size(array, 1)
+            if ( .not. is_what_ieee(what, array(k, j,i)) ) cycle
+            n = n + 1
+          if ( present(inds) ) inds( 1:3, min(n,size(inds,2)) ) = (/ k, j, i /)
+          enddo
+        enddo
       case ( 'any' )
         yes = any( is_what_ieee(what, array(:,:,i)) )
       case ( 'all' )
@@ -2525,6 +2621,9 @@ end module MLSFillValues
 
 !
 ! $Log$
+! Revision 2.22  2010/10/13 00:41:23  pwagner
+! WhereAreThe.. can now take'ind' mode, returning indexes of each
+!
 ! Revision 2.21  2010/09/24 23:44:48  pwagner
 ! removed all but integervalued isFinite, isNaN in favor of ieee_arithmetic-supplied versions
 !
