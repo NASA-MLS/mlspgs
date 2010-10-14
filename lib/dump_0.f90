@@ -28,9 +28,10 @@ module DUMP_0
     & ALLSTATS, FILLVALUERELATION, HOWFAR, HOWNEAR, &
     & MLSMAX, MLSMEAN, MLSMIN, MLSSTDDEV, RATIOS, RESET
   use MLSStringLists, only: catLists, GetStringElement, NumStringElements
-  use MLSStrings, only: indexes, lowercase, trim_safe
-  use OUTPUT_M, only: outputOptions, stampOptions, &
-    & ALIGNTOFIT, BLANKS, NEWLINE, NUMTOCHARS, OUTPUT, OUTPUTNAMEDVALUE
+  use MLSStrings, only: INDEXES, LOWERCASE, TRIM_SAFE, WRITEINTSTOCHARS
+  use OUTPUT_M, only: OUTPUTOPTIONS, STAMPOPTIONS, &
+    & ALIGNTOFIT, BLANKS, BLANKSTOTAB, DUMPTABS, NEWLINE, NUMTOCHARS, &
+    & OUTPUT, OUTPUTLIST, OUTPUTNAMEDVALUE, RESETTABS, SETTABS
   use Time_M, only: Time_Now
 
   implicit none
@@ -45,6 +46,7 @@ module DUMP_0
 ! DEFAULTDUMPOPTIONS       same as above, but for DUMP
 ! DIFFRMSMEANSRMS          print abs min, max, etc. when DIFF has RMS set TRUE
 ! DONTDUMPIFALLEQUAL       don't dump every element of a constant array
+! DUMPLISTS                dump 2-d array as a set of lists
 ! DUMPTABLESIDE            what side to place headers when dumping tables
 ! FILTERFILLSFROMRMS       exclude fill values when calculating rms, etc.
 !                           (not implemented yet)
@@ -81,6 +83,11 @@ module DUMP_0
 ! dump ( log countEmpty, strlist keys, strlist values, char* name, 
 !       [char* separator], [char* options] )
 ! dumpDumpOptions
+! dumpLists ( array, char* name,
+!      [int width], [char* sep],
+!      [char* delims] ) 
+!       where array can be a 2d array of
+!       chars or ints
 ! dumpNamedValues ( values, strlist names,
 !      [char* format, [int width], [char* options] ) 
 !       where values can be a 1d array of ints or reals, and
@@ -125,7 +132,8 @@ module DUMP_0
 ! in the above, a string list is a string of elements (usu. comma-separated)
 ! === (end of api) ===
 
-  public :: DIFF, DUMP, DUMP_2x2xN, DUMPDUMPOPTIONS, DUMPNAMEDVALUES, &
+  public :: DIFF, &
+    & DUMP, DUMP_2x2xN, DUMPDUMPOPTIONS, DUMPLISTS, DUMPNAMEDVALUES, &
     & DUMPSUMS, DUMPTABLE, SELFDIFF
 
   interface DIFF        ! dump diffs between pair of n-d arrays of numeric type
@@ -133,11 +141,13 @@ module DUMP_0
     module procedure DIFF_2D_DOUBLE, DIFF_2D_REAL
     module procedure DIFF_3D_DOUBLE, DIFF_3D_REAL
   end interface
+
   interface FILTEREDDIFF        ! dump FILTEREDDIFFs between pair of n-d arrays of numeric type
     module procedure FILTEREDDIFF_1D_DOUBLE, FILTEREDDIFF_1D_INTEGER, FILTEREDDIFF_1D_REAL
     module procedure FILTEREDDIFF_2D_DOUBLE, FILTEREDDIFF_2D_REAL
     module procedure FILTEREDDIFF_3D_DOUBLE, FILTEREDDIFF_3D_REAL
   end interface
+
   interface DUMP        ! dump n-d arrays of homogeneous type
     module procedure DUMP_1D_BIT, DUMP_1D_CHAR, DUMP_1D_COMPLEX, DUMP_1D_DCOMPLEX
     module procedure DUMP_1D_DOUBLE, DUMP_1D_INTEGER
@@ -149,36 +159,49 @@ module DUMP_0
     module procedure DUMP_3D_REAL, DUMP_3D_COMPLEX, DUMP_3D_DCOMPLEX
     module procedure DUMP_HASH_LOG, DUMP_HASH_STR, DUMP_STRLIST
   end interface
+
   interface DUMP_2x2xN ! For polarized incremental optical depth
     module procedure DUMP_2x2xN_COMPLEX, DUMP_2x2xN_DCOMPLEX
   end interface
+
+  interface DUMPLISTS
+    module procedure DUMPLISTS_CHARS, DUMPLISTS_INTS
+  end interface
+
   interface DUMPNAMEDVALUES   ! dump name-value pairs, names in string list
     module procedure DUMPNAMEDVALUES_DOUBLE, DUMPNAMEDVALUES_INTEGER
     module procedure DUMPNAMEDVALUES_REAL
   end interface
+
   interface DUMPTABLE   ! dump table of values, headers
     module procedure DUMPTABLE_DOUBLE, DUMPTABLE_INTEGER
     module procedure DUMPTABLE_REAL
   end interface
+
   interface SELFDIFF       ! dump increments between successive array values
     module procedure SELFDIFF_INTEGER
     module procedure SELFDIFF_REAL
     module procedure SELFDIFF_DOUBLE
   end interface
+
   interface DUMPSUMS       ! dump after summing successive array values
     module procedure DUMPSUMS_INTEGER
     module procedure DUMPSUMS_REAL
     module procedure DUMPSUMS_DOUBLE
   end interface
+
   interface printIt
     module procedure printIt_char, printIt_DOUBLE, printIt_INT, printIt_REAL
   end interface
+
   interface printRMSetc
     module procedure printRMSetc_DOUBLE, printRMSetc_INT, printRMSetc_REAL
   end interface
+
   interface say_fill
     module procedure say_fill_char, say_fill_double, say_fill_int, say_fill_real
   end interface
+
   interface UNFILTEREDDIFF        ! dump UNFILTEREDDIFFs between pair of n-d arrays of numeric type
     module procedure UNFILTEREDDIFF_1D_DOUBLE, UNFILTEREDDIFF_1D_INTEGER, UNFILTEREDDIFF_1D_REAL
     module procedure UNFILTEREDDIFF_2D_DOUBLE, UNFILTEREDDIFF_2D_REAL
@@ -218,6 +241,7 @@ module DUMP_0
   ! --------------------------------------------------------------------------
 
   ! These are private variables declared module-wide purely for convenience
+  integer, parameter :: MAXLINELEN = 120
   integer, parameter :: MAXNUMELEMENTS = 2000
   integer, parameter :: TOOMANYELEMENTS = 125*50*3500 ! Don't try to diff l1b DACS
   logical, parameter ::   DEEBUG = .false.
@@ -1570,6 +1594,118 @@ contains
      call blanks(90, fillChar='-', advance='yes')
   end subroutine DumpDumpOptions
 
+  ! -----------------------------------  dumpLists  -----
+  ! Dump a 2d array as a set of lists
+  ! Show names and related (numerical) values
+  subroutine dumpLists_chars ( ARRAY, NAME, WIDTH, SEP, DELIMS )
+    ! Args
+    character(len=*), dimension(:,:), intent(in)   :: array
+    character(len=*), intent(in), optional         :: NAME
+    integer, optional, intent(in)                  :: width
+    character(len=*), optional, intent(in)         :: sep
+    character(len=*), optional, intent(in)         :: delims
+    ! Internal variables
+    character(len=8) :: intChars
+    integer :: leftMargin
+    integer :: line
+    integer :: m
+    integer :: myWidth ! how wide to make each list
+    integer :: n
+    integer :: n1
+    integer :: n2
+    integer :: nElemsPerLine
+    integer :: nlines
+    character(len=32) :: tabRange
+    ! Executable
+    if ( size(array, 2) < 1 ) then
+      call empty(name)
+    endif
+    call name_and_size( name, clean=.false., size=size(array, 2) )
+    m = size(array,1) ! num of elements in each list
+    myWidth = (len(array(1,1))+2) * m + 3
+    if ( present(width) ) myWidth = width
+    leftMargin = max(4,ilog10(size(array,2)+1)) + 2
+    nElemsPerLine = max( 1, (MAXLINELEN-leftMargin-1)/myWidth )
+    nLines = 1 + (size(array,2)-1)/nElemsPerLine
+    call writeIntsToChars( leftMargin, intChars )
+    tabRange = intChars
+    call writeIntsToChars( MAXLINELEN, intChars )
+    tabRange = trim(tabRange) // '-' // intChars
+    call writeIntsToChars( myWidth, intChars )
+    tabRange = trim(tabRange) // '+' // intChars
+    call setTabs( range=tabRange )
+    n2 = 0
+    do line=1, nLines
+      n1 = n2 + 1
+      n2 = min( n2 + nElemsPerLine, size(array,2) )
+      call newLine
+      call output ( n1, places=max(4,ilog10(size(array,2)+1)) )
+      call output ( afterSub )
+      do n=n1, n2
+        call blanksToTab
+        call outputList( array(:,n), sep, delims)
+      enddo
+    enddo
+  end subroutine dumpLists_chars
+
+  subroutine dumpLists_ints ( ARRAY, NAME, WIDTH, SEP, DELIMS )
+    ! Args
+    integer, dimension(:,:), intent(in)            :: array
+    character(len=*), intent(in), optional         :: NAME
+    character(len=*), optional, intent(in)         :: sep
+    integer, optional, intent(in)                  :: width
+    character(len=*), optional, intent(in)         :: delims
+    ! Internal variables
+    integer :: arrayMax
+    character(len=8) :: intChars
+    integer :: leftMargin
+    integer :: line
+    integer :: m
+    integer :: myWidth ! how wide to make each list
+    integer :: n
+    integer :: n1
+    integer :: n2
+    integer :: nElemsPerLine
+    integer :: nlines
+    character(len=32) :: tabRange
+    ! Executable
+    if ( size(array, 2) < 1 ) then
+      call empty(name)
+    endif
+    call name_and_size( name, clean=.false., size=size(array, 2) )
+    m = size(array,1) ! num of elements in each list
+    arrayMax = maxval(abs(array)) + 1
+    myWidth = ( ilog10(arrayMax) + 1 ) * m + 3
+    if ( present(width) ) myWidth = width
+    leftMargin = max(4,ilog10(size(array,2)+1)) + 2
+    nElemsPerLine = max( 1, (MAXLINELEN-leftMargin-1)/myWidth )
+    nLines = 1 + (size(array,2)-1)/nElemsPerLine
+    call writeIntsToChars( max(4,ilog10(size(array,2)+1)) + 4, intChars )
+    tabRange = intChars
+    call writeIntsToChars( MAXLINELEN, intChars )
+    tabRange = trim(tabRange) // '-' // intChars
+    call writeIntsToChars( myWidth, intChars )
+    tabRange = trim(tabRange) // '+' // intChars
+    call setTabs( range=tabRange )
+    ! call dumpTabs
+    n2 = 0
+    do line=1, nLines
+      n1 = n2 + 1
+      n2 = min( n2 + nElemsPerLine, size(array,2) )
+      call newLine
+      call output ( n1, places=max(4,ilog10(size(array,2)+1)) )
+      call output ( afterSub )
+      do n=n1, n2
+        call blanksToTab
+        call outputList( array(:,n), sep, delims)
+      enddo
+    enddo
+    ! Reset tabs
+    call newLine
+    call resetTabs
+    ! call dumpTabs
+  end subroutine dumpLists_ints
+
   ! -----------------------------------  dumpNamedValues  -----
   ! Another hash-like dump:
   ! Show names and related (numerical) values
@@ -2466,6 +2602,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.102  2010/10/14 18:44:01  pwagner
+! Can now dump lists
+!
 ! Revision 2.101  2010/02/04 23:05:39  vsnyder
 ! Remove USE and declaration for unreferenced names.
 ! Declare a kind parameter in unfiltereddiff*
