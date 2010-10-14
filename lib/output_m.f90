@@ -50,13 +50,16 @@ module OUTPUT_M
 ! blanksToTab              print blanks [or fill chars] out to next tab stop
 ! dump                     dump output or stamp options
 ! dumpsize                 print a nicely-formatted memory size 
+! dumptabs                 print the current tab stop positions
 ! getStamp                 get stamp being added to every output
 ! newline                  print a newline
 ! numToChars               return what would be printed by output
 ! output                   print argument
 ! outputCalendar           output nicely-formatted calendar page
 ! output_date_and_time     print nicely formatted date and time
+! outputList               output array as comma-separated list; e.g. '(1,2,..)'
 ! outputNamedValue         print nicely formatted name and value
+! resettabs                restore tab stops to what was in effect at start
 ! revertOutput             revert output to file used before switchOutput
 !                           if you will revert, keepOldUnitOpen when switching
 ! resumeOutput             resume output
@@ -78,6 +81,7 @@ module OUTPUT_M
 ! DumpSize ( n, [char* advance], [units] )
 !       where n can be an int or a real, and 
 !       units is a scalar of the same type, if present
+! DumpTabs ( [int tabs(:)] )
 ! getStamp ( [char* textCode], [log post], [int interval],
 !          [log showTime], [char* dateFormat], [char* timeFormat] )
 ! NewLine
@@ -94,9 +98,11 @@ module OUTPUT_M
 !          [char* msg], [char* dateFormat], [char* timeFormat], [char* advance] )
 ! outputCalendar ( [char* date], [char* datenote], [char* notes(:)], 
 !          [dontwrap] )
+! outputList ( values(:), [char* sep], [char* delims] )
 ! outputNamedValue ( char* name, value, [char* advance],
 !          [char colon], [char fillChar], [char* Before], [char* After], 
 !          [integer tabn], [integer tabc], [integer taba], log dont_stamp] )
+! resetTabs ( [int tabs(:)] )
 ! resumeOutput
 ! revertOutput
 ! setStamp ( [char* textCode], [log post], [int interval],
@@ -132,10 +138,12 @@ module OUTPUT_M
   integer, save, private :: OLDUNIT = -1 ! Previous Unit for output.
   logical, save, private :: OLDUNITSTILLOPEN = .TRUE.
 
-  public :: ALIGNTOFIT, BLANKS, BLANKSTOCOLUMN, BLANKSTOTAB, DUMP, DUMPSIZE, &
+  public :: ALIGNTOFIT, BLANKS, BLANKSTOCOLUMN, BLANKSTOTAB, &
+    & DUMP, DUMPSIZE, DUMPTABS, &
     & GETSTAMP, NEXTCOLUMN, NEXTTAB, NEWLINE, NUMTOCHARS, &
-    & OUTPUT, OUTPUT_DATE_AND_TIME, OUTPUTCALENDAR, OUTPUTNAMEDVALUE, &
-    & RESUMEOUTPUT, REVERTOUTPUT, &
+    & OUTPUT, OUTPUT_DATE_AND_TIME, OUTPUTCALENDAR, OUTPUTLIST, &
+    & OUTPUTNAMEDVALUE, &
+    & RESETTABS, RESUMEOUTPUT, REVERTOUTPUT, &
     & SETSTAMP, SETTABS, SUSPENDOUTPUT, SWITCHOUTPUT, TAB, TIMESTAMP
 
   ! These types made public because the class instances are public
@@ -172,6 +180,10 @@ module OUTPUT_M
   ! Don't filter for <cr>
   interface OUTPUT_
     module procedure OUTPUT_CHAR_NOCR
+  end interface
+
+  interface OUTPUTLIST
+    module procedure OUTPUTLIST_INTS, OUTPUTLIST_CHARS
   end interface
 
   interface outputNamedValue
@@ -271,6 +283,7 @@ module OUTPUT_M
   ! These next tab stops can be reset using the procedure setTabs
   ! the default values correspond to range coded '5-120+5'
   ! (read as from 5 to 120 in intervals of 5)
+  character(len=*), parameter :: INITTABRANGE = '5-120+5'
   integer, dimension(MAXNUMTABSTOPS), save, private :: TABSTOPS = &
     & (/ 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, &
     &   65, 70, 75, 80, 85, 90, 95,100,105,110,115,120 /)
@@ -684,6 +697,24 @@ contains
     ! Make a 'nice' output
     call dumpsize ( dble(n), advance, units, before, after )
   end subroutine DumpSize_real
+
+  ! ----------------------------------------------  dumpTabs  -----
+  ! Show tab stops in effect
+  ! Optionally returning them as an integer array
+  subroutine dumpTabs ( tabs )
+    ! Args
+    integer, dimension(:), optional, intent(out) :: tabs
+    ! Internal variables
+    integer :: n
+    ! Executable
+    call output( 'Current tab stops', advance='yes' )
+    call output( TABSTOPS, advance='yes' )
+    if ( present(tabs) ) then
+      n = min(size(tabs), MAXNUMTABSTOPS)
+      tabs = 0
+      tabs(1:n) = TABSTOPS(1:n)
+    endif
+  end subroutine dumpTabs
 
   ! ----------------------------------------------  getStamp  -----
   subroutine getStamp ( textCode, showTime, dateFormat, timeFormat, &
@@ -1576,6 +1607,57 @@ contains
     end if
   end subroutine OUTPUT_STRING
 
+  ! ----------------------------------------------  OUTPUTLIST  -----
+  ! This family of routines outputs an array as a comma-separated list
+  ! E.g., given the array (/ 1, 2, 3, .. /) outputs
+  ! '(1, 2, 3, .. )'
+  ! optionally using sep instead of ',' and delims instead of '()'
+  subroutine OUTPUTLIST_CHARS ( array, sep, delims )
+    ! Args
+    character(len=*), dimension(:), intent(in)      :: array
+    character(len=*), optional, intent(in) :: sep
+    character(len=*), optional, intent(in) :: delims
+    ! Local variables
+    character(len=1) :: comma
+    integer          :: i
+    character(len=2) :: parens
+    ! Executable
+    if ( size(array) < 1 ) return
+    comma = ','
+    if ( present(sep) ) comma = sep
+    parens = '()'
+    if ( present(delims) ) parens = delims
+    call output( parens(1:1) )
+    do i=1, size(array)
+      call output( trim_safe(array(i)) )
+      if ( i < size(array) ) call output( comma )
+    enddo
+    call output( parens(2:2) )
+  end subroutine OUTPUTLIST_CHARS
+
+  subroutine OUTPUTLIST_INTS ( array, sep, delims )
+    ! Args
+    integer, dimension(:), intent(in)      :: array
+    character(len=*), optional, intent(in) :: sep
+    character(len=*), optional, intent(in) :: delims
+    ! Local variables
+    character(len=1) :: comma
+    integer          :: i
+    character(len=2) :: parens
+    ! Executable
+    if ( size(array) < 1 ) return
+    comma = ','
+    if ( present(sep) ) comma = sep
+    parens = '()'
+    if ( present(delims) ) parens = delims
+    call output( parens(1:1) )
+    do i=1, size(array)
+      call output( array(i) )
+      if ( i < size(array) ) call output( comma )
+    enddo
+    call output( parens(2:2) )
+  end subroutine OUTPUTLIST_INTS
+
   ! ----------------------------------------------  outputNamedValue  -----
   ! This family of routines outputs a paired name and value
   ! (Basically saving you a few lines over the idiom
@@ -1663,6 +1745,23 @@ contains
     real, dimension(:), intent(in)     :: value
     include 'output_name_value_pair.f9h'
   end subroutine output_nvp_sngl_array
+
+  ! ----------------------------------------------  resetTabs  -----
+  ! Restore tab stops to what was in effect at start
+  ! Optionally returning them as an integer array
+  subroutine resetTabs ( tabs )
+    ! Args
+    integer, dimension(:), optional, intent(out) :: tabs
+    ! Internal variables
+    integer :: n
+    ! Executable
+    call setTabs( range=INITTABRANGE )
+    if ( present(tabs) ) then
+      n = min(size(tabs), MAXNUMTABSTOPS)
+      tabs = 0
+      tabs(1:n) = TABSTOPS(1:n)
+    endif
+  end subroutine resetTabs
 
   ! ----------------------------------------------  resumeOutput  -----
   subroutine resumeOutput 
@@ -2153,6 +2252,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.83  2010/10/14 18:43:02  pwagner
+! Can now dump and reset tabs; also can outputlists
+!
 ! Revision 2.82  2010/02/04 23:08:00  vsnyder
 ! Remove USE or declaration for unused names
 !
