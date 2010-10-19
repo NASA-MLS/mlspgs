@@ -442,7 +442,10 @@ contains
 
     if ( DEEBUG ) call output( 'done with statements', advance='yes' )
 
-    if ( restricted ) return
+    if ( restricted ) then
+      call FinishUp
+      return
+    endif
 
     L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
     if ( .not. associated(L1BFile) ) then
@@ -633,21 +636,27 @@ contains
       GlobalAttributes%MiscNotes = catlists( GlobalAttributes%MiscNotes, &
         & trim(APrioriFiles%geos5) )
     endif
-
-    if ( error /= 0 ) &
-      & call MLSMessage(MLSMSG_Error,ModuleName, &
-      & 'Problem with global settings section')
-
-    if ( specialDumpFile /= ' ' ) &
-      & call revertOutput
-    if ( toggle(gen) ) then
-      call trace_end ( 'SET_GLOBAL_SETTINGS' )
-    else
-      call MLSMessageCalls( 'pop' )
-    end if
-    if ( timing ) call sayTime
+    call FinishUp
 
   contains
+
+    ! ---------------------------------------------  FinishUp  -----
+    ! Any last minute housekeeping tasks
+    subroutine FinishUp
+      if ( error /= 0 ) &
+        & call MLSMessage(MLSMSG_Error,ModuleName, &
+        & 'Problem with global settings section')
+
+      if ( specialDumpFile /= ' ' ) &
+        & call revertOutput
+      if ( toggle(gen) ) then
+        call trace_end ( 'SET_GLOBAL_SETTINGS' )
+      else
+        call MLSMessageCalls( 'pop' )
+      end if
+      if ( timing ) call sayTime
+
+    end subroutine FinishUp
 
     ! ---------------------------------------------  Announce_Error  -----
     subroutine Announce_Error ( Lcf_where, Full_message, Use_toolkit, &
@@ -1050,6 +1059,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.137  2010/05/23 03:19:48  honghanh
+! Modify the restriction for the callable forward model
+!
 ! Revision 2.136  2010/02/04 23:12:44  vsnyder
 ! Remove USE or declaration for unreferenced names
 !
