@@ -35,4 +35,6 @@ type(QuantityTemplate_T) function CreateQtyTemplate (quantityType, filedatabase,
    ! a number to indicate that a data point shouldn't be used. Default
    ! is -huge(0.0_r8)
    real(r8), optional :: qBadValue
+   ! name of the quantity as string
+   character(len=*), optional :: qName
 end function
