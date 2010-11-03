@@ -842,7 +842,7 @@ contains
     ! every call.  Instead, when eta_fzp is computed, the nonzeros (encoded
     ! by nz_fzp and nnz_fzp) are first replaced by zeros.
 
-!     eta_fzp = 0.0
+    eta_fzp = 0.0
 !     nnz_fzp = 0
 
     ! Put zeros into eta_zxp_t so that metrics doesn't do it in every call. 
@@ -853,6 +853,11 @@ contains
     eta_zxp_t = 0.0
     nnz_zxp_t = 0
     do_calc_t = .false.
+
+    ! Put zeros into H_Atmos so that the elements that aren't filled will
+    ! be defined.  It has zero size if second derivatives aren't requested.
+
+    h_atmos = 0.0
 
     h2o_ind = s_ind(l_h2o)
 
@@ -1923,6 +1928,7 @@ contains
 
   ! ................................  Frequency_Avg_Second_Derivs  .....
     subroutine Frequency_Avg_Second_Derivs ( Ptg_i, Combine )
+
       integer, intent(in) :: Ptg_i          ! Pointing index
       logical, intent(in) :: Combine        ! "Combine LBL and PFA"
 
@@ -4094,6 +4100,7 @@ contains
             & inc_rad_path(:npc,:), rad_avg_path(:npc,:) )
           ! Multiply by Tau_PFA to combine PFA contribution in One_Frequency.
           call frequency_average_derivatives ( ptg_i, .false. )
+          if ( atmos_second_der ) call frequency_avg_second_derivs ( ptg_i, .false. )
         end if
         do frq_i = 1, size(channelCenters)
           call one_frequency ( ptg_i, frq_i, alpha_path_c(:npc),                &
@@ -4287,6 +4294,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.309  2010/09/25 01:08:39  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.308  2010/08/28 00:03:12  vsnyder
 ! Shortened some overly long names.  Corrected allocation for H_Atmos_Frq.
 ! Moved some TScat stuff to TScat_Support.  Some cannonball polishing.
