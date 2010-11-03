@@ -312,11 +312,13 @@ contains
   end subroutine Diff_Hessians
 
   ! ------------------------------------------------- Dump_Hessian -----
-  subroutine Dump_Hessian ( H, Name, Details, onlyTheseBlocks, Clean )
+  subroutine Dump_Hessian ( H, Name, Details, &
+    & onlyTheseBlocks, MoleculeList, Clean )
     use HessianModule_0, only: Dump
     use Lexer_core, only: Print_Source
     use MatrixModule_1, only: Dump_RC
-    use MLSStringLists, only: switchDetail
+    use MLSStrings, only: lowercase
+    use MLSStringLists, only: optionDetail, switchDetail
     use Output_m, only: Output, NewLine, resumeOutput, suspendOutput
     use String_Table, only: Display_String, GET_STRING
 
@@ -329,11 +331,13 @@ contains
       ! 0 => Dimensions of each block,
       ! 1 => Values in each block
     character(len=*), dimension(3), intent(in), optional :: onlyTheseBlocks
+    character(len=*), intent(in), optional :: moleculeList
     logical, intent(in), optional :: CLEAN   ! print \size
 
     integer :: I, J, K    ! Subscripts, loop inductors
     integer :: My_Details
     character(len=32), dimension(3) :: myBlocks
+    character(len=128) :: molecules
     integer :: TotalSize  ! of all blocks
 
     my_details = 1
@@ -342,6 +346,8 @@ contains
     if ( present(name) ) call output ( name )
     myBlocks = '*'
     if ( present(onlyTheseBlocks) ) myBlocks = onlyTheseBlocks
+    molecules = '*'
+    if ( present(moleculeList) ) molecules = moleculeList
     if ( h%name > 0 ) then
       if ( present(name) ) call output ( ', ' )
       call output ( 'Name = ' )
@@ -434,6 +440,9 @@ contains
       doWe = ( myBlocks(s) /= '*' .and. &
         & SwitchDetail( myBlocks(s), trim(templateNameStr), options='-wcf' ) < 0 &
         & )
+      if ( s > 1 ) &
+        & doWe = ( doWe .and. &
+        & optionDetail( molecules, lowercase(trim(templateNameStr)) ) == 'yes' )
     end function skipThisBlock
 
   end subroutine Dump_Hessian
@@ -653,6 +662,9 @@ contains
 end module HessianModule_1
 
 ! $Log$
+! Revision 2.12  2010/11/03 18:31:41  pwagner
+! Dumps now take moleculelist to choose which blocks to dump
+!
 ! Revision 2.11  2010/09/16 23:54:57  pwagner
 ! dump with details=-3 warns of NaNs
 !
