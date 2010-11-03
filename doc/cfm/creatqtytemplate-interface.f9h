@@ -1,7 +1,7 @@
 ! Creating a quantity based on the optional inputs this subroutine is provided with.
 type(QuantityTemplate_T) function CreateQtyTemplate (quantityType, filedatabase, &
    chunk, avgrid, ahgrid, afgrid, qInstModule, qMolecule, qLogBasis, qMinValue, &
-   qSignal, qRadiometer, qBadValue) result(qty)
+   qSignal, qRadiometer, qBadValue, qName) result(qty)
    ! an integer representing a quantity type, see CFM documentation appendix
    integer, intent(in) :: quantityType
    ! is an array of open files (see CFM_MLSSetup)
