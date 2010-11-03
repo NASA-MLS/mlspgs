@@ -111,34 +111,35 @@ program mockup
       fGridStandard = CreateFGrid(L_IntermediateFrequency, (/0.0_r8/))
 
       temperature = CreateQtyTemplate(l_temperature, filedatabase=filedatabase, &
-                                      chunk=chunk, &
+                                      chunk=chunk, qName='temperature', &
                                       avgrid=vGridStandard, ahgrid=hGridStandard)
       GPH = CreateQtyTemplate(l_gph, filedatabase=filedatabase, chunk=chunk, &
-                              avgrid=vGridStandard, ahgrid=hGridStandard)
+                              avgrid=vGridStandard, ahgrid=hGridStandard, qName='GPH')
       O3 = CreateQtyTemplate(l_vmr, filedatabase=filedatabase, chunk=chunk, &
-                             avgrid=vGridStandard, ahgrid=hGridStandard, qMolecule=l_o3)
+                             avgrid=vGridStandard, ahgrid=hGridStandard, qMolecule=l_o3, &
+                             qName='O3')
       H2O = CreateQtyTemplate(l_vmr, filedatabase=filedatabase, chunk=chunk, &
                               avgrid=vGridStandard, ahgrid=hGridStandard, qMolecule=l_h2o, &
-                              qLogBasis=.true., qMinValue=0.1E-6_r8)
+                              qLogBasis=.true., qMinValue=0.1E-6_r8, qName='H2O')
       ptanGHz = CreateQtyTemplate(l_ptan, filedatabase=filedatabase, &
-                                  chunk=chunk, qInstModule=GHz)
+                                  chunk=chunk, qInstModule=GHz, qName='ptanGHz')
       ! band 2,7,8 is the band whose radiances are to be computed
       ! see CFM document for a list of signals corresponding to bands
       band7 = CreateQtyTemplate(l_radiance, filedatabase=filedatabase, chunk=chunk, &
-                                qSignal="R3:240.B7F:O3")
+                                qSignal="R3:240.B7F:O3", qName='band7')
       band2 = CreateQtyTemplate(l_radiance, filedatabase=filedatabase, chunk=chunk, &
-                                qSignal="R2:190.B2F:H2O")
+                                qSignal="R2:190.B2F:H2O", qName='band2')
       band8 = CreateQtyTemplate(l_radiance, filedatabase=filedatabase, chunk=chunk, &
-                                qSignal="R3:240.B8F:PT")
+                                qSignal="R3:240.B8F:PT", qName='band8')
       geodAltitude = CreateQtyTemplate(l_tngtgeodalt, filedatabase=filedatabase, &
-                                       chunk=chunk, qInstModule=GHz)
+                                       chunk=chunk, qInstModule=GHz, qName='geodAltitude')
       geocAlt = CreateQtyTemplate(l_tngtgeocalt, filedatabase=filedatabase, &
-                                  chunk=chunk, qInstModule=GHz)
+                                  chunk=chunk, qInstModule=GHz, qName='geocAlt')
       orbincl = CreateQtyTemplate(l_orbitInclination, filedatabase=filedatabase, &
-                                  chunk=chunk, qInstModule=sc)
-      refGPH = CreateQtyTemplate(l_refGPH, avgrid=vGridRefGPH, ahgrid=hGridStandard)
+                                  chunk=chunk, qInstModule=sc, qName='orbincl')
+      refGPH = CreateQtyTemplate(l_refGPH, avgrid=vGridRefGPH, ahgrid=hGridStandard, qName='refGPH')
       phitanGHz = CreateQtyTemplate(l_phitan, qInstModule="GHz", filedatabase=filedatabase, &
-                                    chunk=chunk)
+                                    chunk=chunk, qName='phitanGHz')
 
       ! We no longer need vGrid because the quantity templates have copied it
       call DestroyVGridContents(vGridStandard)
@@ -207,6 +208,8 @@ program mockup
       call FillPtanQuantity (ptanG_vv, temperature_vv, refGPH_vv, &
                              h2o_vv, orbincl_vv, phitan_vv, geocAlt_vv)
 
+      !call dump(state, details=3)
+
       ! GPH is filled by the forward model
 
       !call ForwardModel (chunk, forwardModelConfigDatabase, state, &
@@ -220,7 +223,7 @@ program mockup
                          stateExtra, measurement, jacobian)
 
       !call dump(measurement, details=3)
-      call dump(jacobian, details=3)
+      !call dump(jacobian, details=3)
 
       ! Re-supply temperature, GPH, H2O, and O3 data
       call ExplicitFillVectorQuantity(temperature_vv, TemperatureInput2)
@@ -235,7 +238,7 @@ program mockup
       ! call the forward model the second time
       call ForwardModel (chunk, forwardModelConfigDatabase, state, &
                          stateExtra, measurement)
-      !call dump(measurement, details=3)
+      call dump(measurement, details=3)
 
       call DestroyVectorInfo (state)
       call DestroyVectorInfo (measurement)
@@ -414,6 +417,9 @@ program mockup
 end program
 
 ! $Log$
+! Revision 1.42  2010/09/28 14:42:42  honghanh
+! Add call to forwardModel with jacobian
+!
 ! Revision 1.39  2010/08/06 14:15:06  honghanh
 ! Call dump on diff vector instead of measurement vector.
 !

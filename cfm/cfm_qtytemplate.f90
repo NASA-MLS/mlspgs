@@ -53,7 +53,7 @@ module CFM_QuantityTemplate_m
       PHYQ_PRESSURE, PHYQ_TEMPERATURE, PHYQ_TIME, PHYQ_VELOCITY, &
       PHYQ_VMR, PHYQ_ZETA, l_ghz
     use Output_M, only: OUTPUT
-    use String_Table, only: DISPLAY_STRING
+    use String_Table, only: DISPLAY_STRING, CREATE_STRING
     use MLSCommon, only: r8, NameLen, MLSFile_T
     use MLSSignals_m, only: GetModuleIndex
     use Molecules, only: GetMoleculeIndex
@@ -88,7 +88,7 @@ module CFM_QuantityTemplate_m
    ! Creating a quantity based on the optional inputs this subroutine is provided with.
    type(QuantityTemplate_T) function CreateQtyTemplate (quantityType, filedatabase, chunk, &
         avgrid, ahgrid, afgrid, qInstModule, qMolecule, qLogBasis, qMinValue, qSignal, &
-        qRadiometer, qBadValue) result(qty)
+        qRadiometer, qBadValue, qName) result(qty)
       ! an integer representing a quantity type, see CFM documentation appendix
       integer, intent(in) :: quantityType
       ! is an array of open files (see CFM_MLSSetup)
@@ -122,6 +122,8 @@ module CFM_QuantityTemplate_m
       ! a number to indicate that a data point shouldn't be used. Default
       ! is -huge(0.0_r8)
       real(r8), optional :: qBadValue
+      ! name of the quantity as string
+      character(len=*), optional :: qName
 
       logical, dimension(noProperties) :: PROPERTIES ! Properties for this quantity type
       character(len=127) :: signalString
@@ -135,7 +137,6 @@ module CFM_QuantityTemplate_m
       ! Executables
       call NullifyQuantityTemplate(qty)
       instrumentModule = 0
-      qty%name = 0
       qty%fGridIndex = 0 ! we're not getting fgrid from fgridDatabase
       qty%hGridIndex = 0 ! we're not getting hgrid from hgridDatabase
       qty%vGridIndex = 0 ! we're not getting vgrid from vgridDatabase
@@ -333,6 +334,12 @@ module CFM_QuantityTemplate_m
 
      if (present(qMolecule)) then
          qty%molecule = qMolecule
+     end if
+
+     if (present(qName)) then
+         qty%name = create_string(qName)
+     else
+         qty%name = 0
      end if
 
      qty%quantityType = quantityType
@@ -609,6 +616,9 @@ module CFM_QuantityTemplate_m
 end module
 
 ! $Log$
+! Revision 1.17  2010/07/07 21:02:05  honghanh
+! Bug fix in ConstructQuantityTemplate
+!
 ! Revision 1.16  2010/06/30 17:45:12  pwagner
 ! NAG happy only if continued comment begins with ampsnd
 !

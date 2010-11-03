@@ -437,252 +437,314 @@ module cfm_lsf_m ! This module is to help cfm_mlssetup subroutine.
        ! Executables
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R1A:118.B1LF:PT")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R1A:118.B1LF:PT", &
+          qName='limbSidebandFraction1L')
        limbSidebandFraction1L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B2LF:H2O")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B2LF:H2O", &
+          qName='limbSidebandFraction2L')
        limbSidebandFraction2L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B3LF:N2O")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B3LF:N2O", &
+          qName='limbSidebandFraction3L')
        limbSidebandFraction3L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B4LF:HNO3")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B4LF:HNO3", &
+          qName='limbSidebandFraction4L')
        limbSidebandFraction4L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B5LF:ClO")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B5LF:ClO", &
+          qName='limbSidebandFraction5L')
        limbSidebandFraction5L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B6LF:O3")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B6LF:O3", &
+          qName='limbSidebandFraction6L')
        limbSidebandFraction6L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B7LF:O3")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B7LF:O3", &
+          qName='limbSidebandFraction7L')
        limbSidebandFraction7L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B8LF:PT")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B8LF:PT", &
+          qName='limbSidebandFraction8L')
        limbSidebandFraction8L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B9LF:CO")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B9LF:CO", &
+          qName='limbSidebandFraction9L')
        limbSidebandFraction9L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B10LF:ClO")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B10LF:ClO", &
+          qName='limbSidebandFraction10L')
        limbSidebandFraction10L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B11LF:BrO")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B11LF:BrO", &
+          qName='limbSidebandFraction11L')
        limbSidebandFraction11L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B12LF:N2O")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B12LF:N2O", &
+          qName='limbSidebandFraction12L')
        limbSidebandFraction12L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B13LF:HCl")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B13LF:HCl", &
+          qName='limbSidebandFraction13L')
        limbSidebandFraction13L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B14LF:O3")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B14LF:O3", &
+          qName='limbSidebandFraction14L')
        limbSidebandFraction14L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R5H:2T5.B15LF:OH")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5H:2T5.B15LF:OH", &
+          qName='limbSidebandFraction15L')
        limbSidebandFraction15L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R5H:2T5.B16LF:OH")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5H:2T5.B16LF:OH", &
+          qName='limbSidebandFraction16L')
        limbSidebandFraction16L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R5H:2T5.B17LF:PT")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5H:2T5.B17LF:PT", &
+          qName='limbSidebandFraction17L')
        limbSidebandFraction17L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R5V:2T5.B18LF:OH")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5V:2T5.B18LF:OH", &
+          qName='limbSidebandFraction18L')
        limbSidebandFraction18L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R5V:2T5.B19LF:OH")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5V:2T5.B19LF:OH", &
+          qName='limbSidebandFraction19L')
        limbSidebandFraction19L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R5V:2T5.B20LF:PT")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5V:2T5.B20LF:PT", &
+          qName='limbSidebandFraction20L')
        limbSidebandFraction20L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R1B:118.B21LF:PT")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R1B:118.B21LF:PT", &
+          qName='limbSidebandFraction21L')
        limbSidebandFraction21L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R1A:118.B22LD:PT")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R1A:118.B22LD:PT", &
+          qName='limbSidebandFraction22L')
        limbSidebandFraction22L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B23LD:H2O")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B23LD:H2O", &
+          qName='limbSidebandFraction23L')
        limbSidebandFraction23L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B24LD:O3")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B24LD:O3", &
+          qName='limbSidebandFraction24L')
        limbSidebandFraction24L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B25LD:CO")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B25LD:CO", &
+          qName='limbSidebandFraction25L')
        limbSidebandFraction25L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R1B:118.B26LD:PT")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R1B:118.B26LD:PT", &
+          qName='limbSidebandFraction26L')
        limbSidebandFraction26L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B27LM:HCN")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B27LM:HCN", &
+          qName='limbSidebandFraction27L')
        limbSidebandFraction27L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B28LM:HO2")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B28LM:HO2", &
+          qName='limbSidebandFraction28L')
        limbSidebandFraction28L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B29LM:HOCl")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B29LM:HOCl", &
+          qName='limbSidebandFraction29L')
        limbSidebandFraction29L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B30LM:HO2")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B30LM:HO2", &
+          qName='limbSidebandFraction30L')
        limbSidebandFraction30L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B31LM:BrO")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B31LM:BrO", &
+          qName='limbSidebandFraction31L')
        limbSidebandFraction31L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R1A:118.B32LW:PT")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R1A:118.B32LW:PT", &
+          qName='limbSidebandFraction32L')
        limbSidebandFraction32L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B33LW:O3")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B33LW:O3", &
+          qName='limbSidebandFraction33L')
        limbSidebandFraction33L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R1B:118.B34LW:PT")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R1B:118.B34LW:PT", &
+          qName='limbSidebandFraction34L')
        limbSidebandFraction34L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        ! Now the the upper band
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B2UF:H2O")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B2UF:H2O", &
+          qName='limbSidebandFraction2U')
        limbSidebandFraction2U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B3UF:N2O")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B3UF:N2O", &
+          qName='limbSidebandFraction3U')
        limbSidebandFraction3U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B4UF:HNO3")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B4UF:HNO3", &
+          qName='limbSidebandFraction4U')
        limbSidebandFraction4U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B5UF:ClO")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B5UF:ClO", &
+          qName='limbSidebandFraction5U')
        limbSidebandFraction5U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B6UF:O3")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B6UF:O3", &
+          qName='limbSidebandFraction6U')
        limbSidebandFraction6U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B7UF:O3")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B7UF:O3", &
+          qName='limbSidebandFraction7U')
        limbSidebandFraction7U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B8UF:PT")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B8UF:PT", &
+          qName='limbSidebandFraction8U')
        limbSidebandFraction8U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B9UF:CO")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B9UF:CO", &
+          qName='limbSidebandFraction9U')
        limbSidebandFraction9U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B10UF:ClO")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B10UF:ClO", &
+          qName='limbSidebandFraction10U')
        limbSidebandFraction10U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B11UF:BrO")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B11UF:BrO", &
+          qName='limbSidebandFraction11U')
        limbSidebandFraction11U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B12UF:N2O")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B12UF:N2O", &
+          qName='limbSidebandFraction12U')
        limbSidebandFraction12U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B13UF:HCl")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B13UF:HCl", &
+          qName='limbSidebandFraction13U')
        limbSidebandFraction13U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B14UF:O3")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B14UF:O3", &
+          qName='limbSidebandFraction14U')
        limbSidebandFraction14U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R5H:2T5.B15UF:OH")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5H:2T5.B15UF:OH", &
+          qName='limbSidebandFraction15U')
        limbSidebandFraction15U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R5H:2T5.B16UF:OH")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5H:2T5.B16UF:OH", &
+          qName='limbSidebandFraction16U')
        limbSidebandFraction16U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R5H:2T5.B17UF:PT")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5H:2T5.B17UF:PT", &
+          qName='limbSidebandFraction17U')
        limbSidebandFraction17U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R5V:2T5.B18UF:OH")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5V:2T5.B18UF:OH", &
+          qName='limbSidebandFraction18U')
        limbSidebandFraction18U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R5V:2T5.B19UF:OH")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5V:2T5.B19UF:OH", &
+          qName='limbSidebandFraction19U')
        limbSidebandFraction19U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R5V:2T5.B20UF:PT")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5V:2T5.B20UF:PT", &
+          qName='limbSidebandFraction20U')
        limbSidebandFraction20U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B23UD:H2O")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B23UD:H2O", &
+          qName='limbSidebandFraction23U')
        limbSidebandFraction23U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B24UD:O3")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B24UD:O3", &
+          qName='limbSidebandFraction24U')
        limbSidebandFraction24U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B25UD:CO")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B25UD:CO", &
+          qName='limbSidebandFraction25U')
        limbSidebandFraction25U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B27UM:HCN")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B27UM:HCN", &
+          qName='limbSidebandFraction27U')
        limbSidebandFraction27U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B28UM:HO2")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B28UM:HO2", &
+          qName='limbSidebandFraction28U')
        limbSidebandFraction28U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B29UM:HOCl")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B29UM:HOCl", &
+          qName='limbSidebandFraction29U')
        limbSidebandFraction29U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B30UM:HO2")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B30UM:HO2", &
+          qName='limbSidebandFraction30U')
        limbSidebandFraction30U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B31UM:BrO")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B31UM:BrO", &
+          qName='limbSidebandFraction31U')
        limbSidebandFraction31U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
        lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
-          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B33UW:O3")
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B33UW:O3", &
+          qName='limbSidebandFraction33U')
        limbSidebandFraction33U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
 
     end subroutine
@@ -834,6 +896,11 @@ module cfm_lsf_m ! This module is to help cfm_mlssetup subroutine.
 end module
 
 ! $Log$
+! Revision 1.5  2010/06/29 17:02:47  honghanh
+! Change the identifier 'fakeChunk' to 'chunk' because
+! since it is created with ChunkDivide, it's as real as a chunk
+! can get.
+!
 ! Revision 1.4  2010/06/29 16:40:23  honghanh
 ! Remove all function/subroutine and user type forwarding from
 ! all CFM modules except for from cfm.f90
