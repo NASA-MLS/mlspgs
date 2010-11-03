@@ -18,7 +18,8 @@ module MLSStringLists               ! Module to treat string lists
   use MLSCommon, only: BareFNLen
   use MLSSets, only: FindFirst
   use MLSStrings, only: Capitalize, lowerCase, ncopies, &
-    & ReadIntsFromChars, reverse, SplitNest, streq, trim_safe, writeIntsToChars
+    & ReadIntsFromChars, Replace, reverse, &
+    & SplitNest, streq, trim_safe, writeIntsToChars
 
   implicit none
   private
@@ -62,6 +63,7 @@ module MLSStringLists               ! Module to treat string lists
 ! List2Array         Converts a single string list to an array of strings
 ! listMatches        Return list of matches for string in a list
 ! NumStringElements  Returns number of elements in string list
+! OptionDetail       Returns detail level of option in list of option
 ! PutHashElement     puts value into hash list corresponding to key string
 ! ReadIntsFromList   Read an array of ints from a string list
 ! RemoveElemFromList removes occurrence(s) of elem from a string list
@@ -106,6 +108,7 @@ module MLSStringLists               ! Module to treat string lists
 ! char* listMatches (strlist stringList, char* string, [char* options] )
 ! int NumStringElements(strlist inList, log countEmpty, &
 !   & [char inseparator], [int LongestLen])
+! char* optionDetail(strlist inList, char* test_switch)
 ! PutHashElement (hash {keys = values}, char* key, 
 !   char* elem, log countEmpty, [char inseparator], [log part_match])
 ! ReadIntsFromList(strlist inList, int ints(:), &
@@ -185,8 +188,8 @@ module MLSStringLists               ! Module to treat string lists
    & ExpandStringRange, ExtractSubString, &
    & GetHashElement, GetStringElement, &
    & GetUniqueInts, GetUniqueStrings, GetUniqueList, Intersection, IsInList, &
-   & List2Array, listMatches, PutHashElement, NumStringElements, &
-   & ReadIntsFromList, &
+   & List2Array, listMatches, NumStringElements, optionDetail, &
+   & PutHashElement, ReadIntsFromList, &
    & RemoveElemFromList, RemoveListFromList, RemoveNumFromList, &
    & ReplaceSubString, ReverseList, &
    & SortArray, SortList, StringElement, StringElementNum, SwitchDetail, &
@@ -1747,6 +1750,86 @@ contains
 
   end function NumStringElements
 
+  ! ---------------------------------------------  optionDetail  -----
+
+  ! This function takes a string, interprets it
+  ! as a list of individual one-character options, and a test option
+  ! It returns
+  !  'yes' if the option is present
+  !  'no'  if the option is absent
+  !  'arg' if the option is present and followed immediately by '[arg]'
+  
+  ! As an example, say the list of options is
+  ! "ab[arg1]c[arg2]d"
+  ! and the test option is "b"
+  ! The returned value would be 'arg1'
+  ! If the test option were "a" the returned value would be 'yes'
+  ! If the test option were "c" the returned value would be 'arg2'
+  ! If the test option were "g" the returned value would be 'no'
+  ! (because test doesn't outside the '[]' chars)
+  
+  ! The behavior may be modified by options flag
+  ! For which see comment above
+  
+  ! Notes:
+  ! (1) If the string list contains a "*" then
+  ! the test option is automatically present
+  ! (2) Why don't you let the '[]' pair that set off option args be
+  ! overridden, say by spaces?
+  
+  function optionDetail( inList, test_option ) RESULT (detail)
+    ! Method:
+    ! (1) Replace all instances of '[] and ']' with ','
+    ! (2) Interpret result as string list
+    ! (3) Loop over odd-numbered elements of string list
+    !     if test_option found among one of them and
+    !       it is not the last, then option = 'yes'
+    !       it is the last, but so is the element number, then option = 'yes'
+    !       it is the last, then option = the next element
+    ! Dummy arguments
+    CHARACTER (LEN=*), INTENT(IN)             :: inList
+    CHARACTER (LEN=1), INTENT(IN)             :: test_option
+    character (len=len(inList))               :: detail
+
+    ! Local variables
+    logical, parameter :: COUNTEMPTY = .true.
+    integer :: elem, k
+    integer, parameter :: MAXELEMENTLENGTH = 80
+    integer :: nElements
+    character (len=len(inList)+2)           :: element
+    character (len=len(inList)+2)           :: optionsList ! comma-separated
+
+    ! Executable code
+    detail = 'no'
+    if ( adjustl(inList) == '*' ) then
+      detail = 'yes'
+      return
+    endif
+    if ( index( inList, test_option ) < 1 ) return
+    
+    ! OK, test_option is present, but where? Does it have an arg?
+
+    element = Replace( inList, '[', ',' )
+    optionsList = Replace( element, ']', ',' )
+    do elem = 1, NumStringElements( optionsList, countEmpty ), 2
+      element = StringElement(optionsList, elem, countEmpty)
+      k = index( element, test_option )
+      if ( k < 1 ) then
+        cycle
+      elseif ( k < len_trim(element) ) then
+        detail = 'yes'
+        return
+      elseif ( elem == NumStringElements( optionsList, countEmpty ) ) then
+        detail = 'yes'
+        return
+      else
+        detail = StringElement(optionsList, elem+1, countEmpty)
+        return
+      endif
+    enddo
+
+  end function optionDetail
+
   ! ---------------------------------------------  PutHashElement  -----
 
   ! This family of subroutines interprets two arguments as
@@ -2771,7 +2854,6 @@ contains
 
   end function StringElementNum
 
-
   ! ---------------------------------------------  SwitchDetail  -----
 
   ! This function takes a (usually) comma-separated string list, interprets it
@@ -3348,6 +3430,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.41  2010/11/03 18:29:07  pwagner
+! Added optionDetail to tell whether an option is present
+!
 ! Revision 2.40  2010/06/22 16:51:32  pwagner
 ! default options for switchDetail is '-f'
 !
