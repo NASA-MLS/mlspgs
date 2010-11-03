@@ -178,193 +178,6 @@ contains ! ============= Public Procedures ==========================
     AddL2PCToDatabase = newSize
   end function AddL2PCToDatabase
 
-  ! --------------------------------------- DumpL2PCDatabase ---------------
-  subroutine DumpL2PCDatabase ( L2pcDB, details )
-    ! This subroutine dumps an l2pc to stdout
-
-    ! Dummy arguments
-    type (l2pc_t), dimension(:), intent(in), target :: L2pcDB
-    integer, intent(in), optional :: DETAILS ! <=0 => Don't dump multidim arrays
-    !                                        ! -1 Skip even 1-d arrays
-    !                                        ! -2 Skip all but size
-    !                                        ! >0 Dump even multi-dim arrays
-    !                                        ! 1 matrices only
-    !                                        ! 2 hessians only
-    !                                        ! 3 both matrices and hessians
-    !                                        ! Default 0
-    ! Local variables
-    integer :: i
-    ! Executable
-    do i=1, size(L2PCDB)
-      call DumpOneL2PC( L2PCDB(i), details )
-    enddo
-  end subroutine DumpL2PCDatabase
-
-  ! --------------------------------------- DumpL2PCFile ---------------
-  subroutine DumpL2PCFile ( L2PCFile, details )
-    ! This subroutine dumps an l2pc to stdout
-
-    ! Dummy arguments
-    type (MLSFile_T), intent(in) :: L2PCFile
-    integer, intent(in), optional :: DETAILS ! <=0 => Don't dump multidim arrays
-    !                                        ! -1 Skip even 1-d arrays
-    !                                        ! -2 Skip all but size
-    !                                        ! >0 Dump even multi-dim arrays
-    !                                        ! 1 matrices only
-    !                                        ! 2 hessians only
-    !                                        ! 3 both matrices and hessians
-    !                                        ! Default 0
-    ! Local variables
-    integer :: i
-    ! Executable
-    call dumpMLSFile( L2PCFile, details=1 )
-    call dump ( fileIDDataBase, 'file id database', format='(i10)' )
-    do i=1, size(L2PCDataBase)
-      if ( L2PCFile%FileID%f_id /= fileIDDataBase(i) ) cycle
-      call newline
-      call outputNamedValue( 'db index', i )
-      call DumpOneL2PC( L2PCDataBase(i), details )
-    enddo
-  end subroutine DumpL2PCFile
-
-  ! --------------------------------------- DumpOneL2PC ---------------
-  subroutine DumpOneL2PC ( L2pc, details, onlyTheseBlocks )
-    ! This subroutine dumps an l2pc to stdout
-
-    use HessianModule_1, only: Dump
-
-    ! Dummy arguments
-    type (l2pc_t), intent(in), target :: L2pc
-    integer, intent(in), optional :: DETAILS ! passed to Vector and Matrix dumps
-    character(len=*), dimension(3), intent(in), optional :: ONLYTHESEBLOCKS ! passed to Vector and Matrix dumps
-    ! Local variables
-    integer :: myDetails
-
-    ! Executable code
-    myDetails = 0
-    if ( present(details) ) myDetails = details
-    call outputNamedValue( 'myDetails', myDetails )
-    call output( '- Dump of L2PC -', advance='yes' )
-    if ( l2pc%name > 0 ) then
-      call display_string ( l2pc%name, before='name: ' )
-      call output ( l2pc%name, before=' (', after=')', advance='yes' )
-    else
-      call output( '*** Uh-oh, name not found in string table', advance='yes' )
-    endif
-    ! First dump the xStar and yStar
-    if ( myDetails == 1 .or. myDetails > 2 ) then
-      call dump ( l2pc%j%col%vec, details=details, name='xStar' )
-      call dump ( l2pc%j%row%vec, details=details, name='yStar' )
-
-      ! Now dump kStar
-      call dump ( l2pc%j, 'kStar', details )
-    endif
-
-    ! Now dump the Hessian
-    if ( l2pc%goth .and. myDetails > 1 ) &
-      & call dump ( l2pc%h, 'hStar', details, onlyTheseBlocks )
-
-  end subroutine DumpOneL2PC
-
-  ! --------------------------------------- DumpL2PCInfo ---------------
-  subroutine DumpL2PCInfo ( L2PCInfo, details )
-    ! This subroutine dumps an l2pc to stdout
-
-    ! Dummy arguments
-    type (L2PCInfo_T), intent(in) :: L2PCInfo
-    integer, intent(in), optional :: DETAILS ! <=0 => Don't dump multidim arrays
-    !                                        ! -1 Skip even 1-d arrays
-    !                                        ! -2 Skip all but size
-    !                                        ! >0 Dump even multi-dim arrays
-    !                                        ! Default 0
-    ! Local variables
-    integer :: myDetails
-    ! Executable
-    myDetails = 0
-    if ( present(details) ) myDetails = details
-    call outputNamedValue ( 'fileID', L2PCInfo%fileID )
-    call outputNamedValue ( 'binID', L2PCInfo%binID )
-    call outputNamedValue ( 'blocksID', L2PCInfo%blocksID )
-    call outputNamedValue ( 'hblocksID', L2PCInfo%hBlocksID )
-    call outputNamedValue ( 'matrixName', trim(L2PCInfo%matrixName) )
-    if ( myDetails > 0 ) call dump( L2PCInfo%blockID, 'BlockID' )
-  end subroutine DumpL2PCInfo
-
-  ! ---------------------------------- LoadMatrix ----------
-  subroutine LoadMatrix ( matrix, name, message, IgnoreHessian )
-    ! This function copies the matrix from the l2pc database into the
-    ! given matrix (presumably from the main dabase)
-
-    ! Dummy arguments
-    type(Matrix_T), intent(inout) :: MATRIX
-    integer, intent(in) :: NAME
-    character (len=*), intent(out) :: MESSAGE
-    logical, intent(in), optional :: IgnoreHessian
-
-    ! Local variables
-    integer :: I                        ! Index
-    type(Matrix_T), pointer :: SOURCE
-
-    ! Executable code
-    message = ''
-    i = FindFirst ( l2pcDatabase%name, name )
-    if ( i == 0 ) then
-      message = 'No such l2pc matrix'
-      return
-    end if
-    call PopulateL2PCBin ( i, ignoreHessian )
-    source => l2pcDatabase(i)%j
-    if ( .not. DoVectorsMatch ( matrix%row%vec, source%row%vec ) ) then
-      message = 'Rows do not match for loading'
-      return
-    endif
-    if ( .not. DoVectorsMatch ( matrix%col%vec, source%col%vec ) ) then
-      message = 'Columns do not match for loading'
-      return
-    endif
-    call CopyMatrixValue ( matrix, source, allowNameMismatch=.true. )
-  end subroutine LoadMatrix
-
-  ! ---------------------------------- LoadVector ----------
-  subroutine LoadVector ( vector, name, source, message, IgnoreHessian )
-    ! This function copies the matrix from the l2pc database into the
-    ! given matrix (presumably from the main dabase)
-
-    ! Dummy arguments
-    type(Vector_T), intent(inout) :: VECTOR
-    integer, intent(in) :: NAME
-    integer, intent(in) :: SOURCE       ! l_rows or l_columns
-    character (len=*), intent(out) :: MESSAGE
-    logical, intent(in), optional :: IgnoreHessian
-
-    ! Local variables
-    integer :: I                        ! Index
-    type(Matrix_T), pointer :: MATRIX
-    type(Vector_T), pointer :: SOURCEVECTOR
-
-    ! Executable code
-    message = ''
-    i = FindFirst ( l2pcDatabase%name, name )
-    if ( i == 0 ) then
-      message = 'No such l2pc matrix'
-      return
-    end if
-    call PopulateL2PCBin ( i, ignoreHessian )
-    matrix => l2pcDatabase(i)%j
-    select case ( source )
-    case ( l_rows )
-      sourceVector => matrix%row%vec
-    case ( l_columns )
-      sourceVector => matrix%col%vec
-    end select
-    if ( .not. DoVectorsMatch ( vector, sourceVector ) ) then
-      message = 'Vector does not match for loading'
-      return
-    endif
-    ! Use the clone option to avoid fussyness with vector templates
-    call CopyVector ( vector, sourceVector, allowNameMismatch=.true. )
-  end subroutine LoadVector
-
   ! ----------------------------------- AdoptVectorTemplate --
   type (VectorTemplate_T) function AdoptVectorTemplate ( bin, name, quantityTemplates, source, message ) &
     & result ( vectorTemplate )
@@ -543,6 +356,146 @@ contains ! ============= Public Procedures ==========================
     call DestroyL2PCInfoDatabase
   end subroutine DestroyL2PCDatabase
 
+  ! --------------------------------------- DumpL2PCDatabase ---------------
+  subroutine DumpL2PCDatabase ( L2pcDB, details, onlytheseblocks, options )
+    ! This subroutine dumps an l2pc to stdout
+
+    ! Dummy arguments
+    type (l2pc_t), dimension(:), intent(in), target :: L2pcDB
+    integer, intent(in), optional :: DETAILS ! <=0 => Don't dump multidim arrays
+    !                                        ! -1 Skip even 1-d arrays
+    !                                        ! -2 Skip all but size
+    !                                        ! >0 Dump even multi-dim arrays
+    !                                        ! Default 0
+    character(len=*), dimension(3), intent(in), optional :: ONLYTHESEBLOCKS ! passed to Vector and Matrix dumps
+    character(len=*), intent(in), optional :: options ! any of {mh*b[]}
+                                             ! m: dump only matrices
+                                             ! h: dump only hessians
+                                             ! *: dump matrices and hessians
+                                             ! b[HCN]: dump only HCN blocks
+                                             ! default is *
+    ! Local variables
+    integer :: i
+    ! Executable
+    do i=1, size(L2PCDB)
+      call DumpOneL2PC( L2PCDB(i), details, options )
+    enddo
+  end subroutine DumpL2PCDatabase
+
+  ! --------------------------------------- DumpL2PCFile ---------------
+  subroutine DumpL2PCFile ( L2PCFile, details, onlytheseblocks, options )
+    ! This subroutine dumps an l2pc to stdout
+
+    ! Dummy arguments
+    type (MLSFile_T), intent(in) :: L2PCFile
+    integer, intent(in), optional :: DETAILS ! <=0 => Don't dump multidim arrays
+    !                                        ! -1 Skip even 1-d arrays
+    !                                        ! -2 Skip all but size
+    !                                        ! >0 Dump even multi-dim arrays
+    !                                        ! Default 0
+    character(len=*), dimension(3), intent(in), optional :: ONLYTHESEBLOCKS ! passed to Vector and Matrix dumps
+    character(len=*), intent(in), optional :: options ! any of {mh*b[]}
+                                             ! m: dump only matrices
+                                             ! h: dump only hessians
+                                             ! *: dump matrices and hessians
+                                             ! b[HCN]: dump only HCN blocks
+                                             ! default is *
+    ! Local variables
+    integer :: i
+    ! Executable
+    call dumpMLSFile( L2PCFile, details=1 )
+    call dump ( fileIDDataBase, 'file id database', format='(i10)' )
+    do i=1, size(L2PCDataBase)
+      if ( L2PCFile%FileID%f_id /= fileIDDataBase(i) ) cycle
+      call newline
+      call outputNamedValue( 'db index', i )
+      call DumpOneL2PC( L2PCDataBase(i), details )
+    enddo
+  end subroutine DumpL2PCFile
+
+  ! --------------------------------------- DumpOneL2PC ---------------
+  subroutine DumpOneL2PC ( L2pc, details, ONLYTHESEBLOCKS, options )
+    ! This subroutine dumps an l2pc to stdout
+
+    use HessianModule_1, only: Dump
+    use MLSStringLists, only: optionDetail
+    use MLSStrings, only: lowercase
+
+    ! Dummy arguments
+    type (l2pc_t), intent(in), target :: L2pc
+    integer, intent(in), optional :: DETAILS ! passed to Vector and Matrix dumps
+    character(len=*), dimension(3), intent(in), optional :: ONLYTHESEBLOCKS ! passed to Vector and Matrix dumps
+    character(len=*), intent(in), optional :: options ! any of {mh*b[]}
+                                             ! m: dump only matrices
+                                             ! h: dump only hessians
+                                             ! *: dump matrices and hessians
+                                             ! b[HCN]: dump only HCN blocks
+                                             ! default is *
+    ! Local variables
+    logical :: dumpHessians
+    logical :: dumpJacobians
+    integer :: myDetails
+    character(len=128) :: myMolecules
+
+    ! Executable code
+    myDetails = 0
+    if ( present(details) ) myDetails = details
+    dumpHessians = .true.
+    dumpJacobians = .true.
+    mymolecules = '*'
+    if ( present(options) ) then
+      dumpHessians = optionDetail( options, 'h' ) == 'yes'
+      dumpJacobians = optionDetail( options, 'm' ) == 'yes'
+      myMolecules = lowercase( optionDetail( options, 'b' ) )
+      if ( myMolecules == 'no' ) myMolecules = '*'
+    endif
+    call outputNamedValue( 'myDetails', myDetails )
+    call output( '- Dump of L2PC -', advance='yes' )
+    if ( l2pc%name > 0 ) then
+      call display_string ( l2pc%name, before='name: ' )
+      call output ( l2pc%name, before=' (', after=')', advance='yes' )
+    else
+      call output( '*** Uh-oh, name not found in string table', advance='yes' )
+    endif
+    ! First dump the xStar and yStar
+    if ( dumpJacobians ) then
+      call dump ( l2pc%j%col%vec, details=details, name='xStar' )
+      call dump ( l2pc%j%row%vec, details=details, name='yStar' )
+
+      ! Now dump kStar
+      call dump ( l2pc%j, 'kStar', details )
+    endif
+
+    ! Now dump the Hessian
+    if ( l2pc%goth .and. dumpHessians ) &
+      & call dump ( l2pc%h, 'hStar', details, onlyTheseBlocks, myMolecules )
+
+  end subroutine DumpOneL2PC
+
+  ! --------------------------------------- DumpL2PCInfo ---------------
+  subroutine DumpL2PCInfo ( L2PCInfo, details )
+    ! This subroutine dumps an l2pc to stdout
+
+    ! Dummy arguments
+    type (L2PCInfo_T), intent(in) :: L2PCInfo
+    integer, intent(in), optional :: DETAILS ! <=0 => Don't dump multidim arrays
+    !                                        ! -1 Skip even 1-d arrays
+    !                                        ! -2 Skip all but size
+    !                                        ! >0 Dump even multi-dim arrays
+    !                                        ! Default 0
+    ! Local variables
+    integer :: myDetails
+    ! Executable
+    myDetails = 0
+    if ( present(details) ) myDetails = details
+    call outputNamedValue ( 'fileID', L2PCInfo%fileID )
+    call outputNamedValue ( 'binID', L2PCInfo%binID )
+    call outputNamedValue ( 'blocksID', L2PCInfo%blocksID )
+    call outputNamedValue ( 'hblocksID', L2PCInfo%hBlocksID )
+    call outputNamedValue ( 'matrixName', trim(L2PCInfo%matrixName) )
+    if ( myDetails > 0 ) call dump( L2PCInfo%blockID, 'BlockID' )
+  end subroutine DumpL2PCInfo
+
   ! ------------------------------------ FlushL2PCBins -------------
   subroutine FlushL2PCBins
     ! Local variables
@@ -571,6 +524,81 @@ contains ! ============= Public Procedures ==========================
       end if
     end do
   end subroutine FlushL2PCBins
+
+  ! ---------------------------------- LoadMatrix ----------
+  subroutine LoadMatrix ( matrix, name, message, IgnoreHessian )
+    ! This function copies the matrix from the l2pc database into the
+    ! given matrix (presumably from the main dabase)
+
+    ! Dummy arguments
+    type(Matrix_T), intent(inout) :: MATRIX
+    integer, intent(in) :: NAME
+    character (len=*), intent(out) :: MESSAGE
+    logical, intent(in), optional :: IgnoreHessian
+
+    ! Local variables
+    integer :: I                        ! Index
+    type(Matrix_T), pointer :: SOURCE
+
+    ! Executable code
+    message = ''
+    i = FindFirst ( l2pcDatabase%name, name )
+    if ( i == 0 ) then
+      message = 'No such l2pc matrix'
+      return
+    end if
+    call PopulateL2PCBin ( i, ignoreHessian )
+    source => l2pcDatabase(i)%j
+    if ( .not. DoVectorsMatch ( matrix%row%vec, source%row%vec ) ) then
+      message = 'Rows do not match for loading'
+      return
+    endif
+    if ( .not. DoVectorsMatch ( matrix%col%vec, source%col%vec ) ) then
+      message = 'Columns do not match for loading'
+      return
+    endif
+    call CopyMatrixValue ( matrix, source, allowNameMismatch=.true. )
+  end subroutine LoadMatrix
+
+  ! ---------------------------------- LoadVector ----------
+  subroutine LoadVector ( vector, name, source, message, IgnoreHessian )
+    ! This function copies the matrix from the l2pc database into the
+    ! given matrix (presumably from the main dabase)
+
+    ! Dummy arguments
+    type(Vector_T), intent(inout) :: VECTOR
+    integer, intent(in) :: NAME
+    integer, intent(in) :: SOURCE       ! l_rows or l_columns
+    character (len=*), intent(out) :: MESSAGE
+    logical, intent(in), optional :: IgnoreHessian
+
+    ! Local variables
+    integer :: I                        ! Index
+    type(Matrix_T), pointer :: MATRIX
+    type(Vector_T), pointer :: SOURCEVECTOR
+
+    ! Executable code
+    message = ''
+    i = FindFirst ( l2pcDatabase%name, name )
+    if ( i == 0 ) then
+      message = 'No such l2pc matrix'
+      return
+    end if
+    call PopulateL2PCBin ( i, ignoreHessian )
+    matrix => l2pcDatabase(i)%j
+    select case ( source )
+    case ( l_rows )
+      sourceVector => matrix%row%vec
+    case ( l_columns )
+      sourceVector => matrix%col%vec
+    end select
+    if ( .not. DoVectorsMatch ( vector, sourceVector ) ) then
+      message = 'Vector does not match for loading'
+      return
+    endif
+    ! Use the clone option to avoid fussyness with vector templates
+    call CopyVector ( vector, sourceVector, allowNameMismatch=.true. )
+  end subroutine LoadVector
 
   ! --------------------------------------------- OutputHDF5L2PC
   subroutine OutputHDF5L2PC ( filename, matrices, hessians, &
@@ -1947,6 +1975,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.106  2010/11/03 18:30:41  pwagner
+! Dumps now take option to say whether to dump hessians, matrices, and which blocks
+!
 ! Revision 2.105  2010/09/25 01:14:34  vsnyder
 ! Add some TScat support, and some cannonball polishing
 !
