@@ -15,6 +15,7 @@ module CFM_Vector_m
          MLSMSG_Error, MLSMSG_Warning
    use Allocate_Deallocate, only: Allocate_Test
    use MLSCommon, only: r8
+   use String_table, only: create_string
 
    implicit none
 
@@ -30,10 +31,15 @@ module CFM_Vector_m
 
    contains
 
-   type(Vector_T) function CreateVector (vectorTemplate, qtyDatabase) &
+   type(Vector_T) function CreateVector (vectorTemplate, qtyDatabase, name) &
              result (vector)
+      ! template listing the quantities to be stored in this vector
       type (VectorTemplate_T), intent (in), target :: vectorTemplate
+      ! quantity template database to retrieve the template for the quantities
+      ! to be stored in this vector
       type (QuantityTemplate_T), dimension(:), intent(in), target :: qtyDatabase
+      ! name of the vector as string
+      character(len=*), optional :: name
 
       integer :: quantity
       integer :: status
@@ -49,6 +55,12 @@ module CFM_Vector_m
             qtyDatabase(vectorTemplate%quantities(quantity))
       end do
       call CreateValues(vector)
+
+      if (present(name)) then
+         vector%name = create_string(name)
+      else
+         vector%name = 0
+      end if
    end function
 
    ! =====     Private Procedures     =====================================
@@ -81,6 +93,10 @@ module CFM_Vector_m
 end module
 
 ! $Log$
+! Revision 1.6  2010/06/29 16:40:23  honghanh
+! Remove all function/subroutine and user type forwarding from
+! all CFM modules except for from cfm.f90
+!
 ! Revision 1.5  2010/06/29 15:53:45  honghanh
 ! Add copyright comments and support for CVS log in the file
 !

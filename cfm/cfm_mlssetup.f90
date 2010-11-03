@@ -405,7 +405,7 @@ module CFM_MLSSetup_m
 
       call deallocate_Test(selected, "selected", moduleName)
 
-      stateVectorExtra = CreateVector(stateTemplateExtra, qtyTemplates)
+      stateVectorExtra = CreateVector(stateTemplateExtra, qtyTemplates, name='stateExtra')
 
       quantity => GetVectorQtyByTemplateIndex (stateVectorExtra, o2_index)
       call FillVectorQtyFromProfile (quantity, .false., o2_heights, &
@@ -445,6 +445,9 @@ module CFM_MLSSetup_m
 end module
 
 ! $Log$
+! Revision 1.21  2010/09/17 16:47:45  honghanh
+! Fix memory leak bug by calling CFM_ResetEmpiricalGeometry
+!
 ! Revision 1.18  2010/07/08 21:39:16  honghanh
 ! Add ApplyBaseline to cfm_fill_m
 !

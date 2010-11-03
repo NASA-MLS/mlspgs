@@ -170,8 +170,8 @@ program mockup
       measurementSelected = (/band7_index, band2_index, band8_index/)
       measurementTemplate = CreateVectorTemplate(qtyTemplates, measurementSelected)
 
-      state = CreateVector(stateTemplate, qtyTemplates)
-      measurement = CreateVector(measurementTemplate, qtyTemplates)
+      state = CreateVector(stateTemplate, qtyTemplates, name='state')
+      measurement = CreateVector(measurementTemplate, qtyTemplates, name='measurement')
 
       refGPH_vv => GetVectorQtyByTemplateIndex (state, refGPH_index) ! refGPH
       call SpreadFillVectorQuantity (refGPH_vv, refGPHInput) ! unit is meter
@@ -300,8 +300,8 @@ program mockup
       measurementTemplate = CreateVectorTemplate(qtyTemplates, measurementSelected)
 
       ! Create an identical vector as simulated radiance vector for observed radiances
-      observed = CreateVector(measurementTemplate, qtyTemplates)
-      obsPrecision = CreateVector(measurementTemplate, qtyTemplates)
+      observed = CreateVector(measurementTemplate, qtyTemplates, name='observedRadiance')
+      obsPrecision = CreateVector(measurementTemplate, qtyTemplates, name='observedRadiancePrecision')
 
       ! Open l1brad
       error = InitializeMLSFile(l1bfile, content='l1brad', &
@@ -358,8 +358,8 @@ program mockup
 
       baselineSelected = (/baseline2_index, baseline7_index, baseline8_index/)
       correctionTemplate = CreateVectorTemplate(qtyTemplates, baselineSelected)
-      corrections = CreateVector(correctionTemplate, qtyTemplates)
-      correctionNoise = CreateVector(correctionTemplate, qtyTemplates)
+      corrections = CreateVector(correctionTemplate, qtyTemplates, name='corrections')
+      correctionNoise = CreateVector(correctionTemplate, qtyTemplates, name='correctionNoise')
 
       band2L1BMAFBaseline => GetVectorQtyByTemplateIndex(corrections, baseline2_index)
       band7L1BMAFBaseline => GetVectorQtyByTemplateIndex(corrections, baseline7_index)
