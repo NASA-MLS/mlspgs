@@ -378,7 +378,7 @@ contains ! ============= Public Procedures ==========================
     integer :: i
     ! Executable
     do i=1, size(L2PCDB)
-      call DumpOneL2PC( L2PCDB(i), details, options )
+      call DumpOneL2PC( L2PCDB(i), details, ONLYTHESEBLOCKS, options )
     enddo
   end subroutine DumpL2PCDatabase
 
@@ -435,19 +435,19 @@ contains ! ============= Public Procedures ==========================
     logical :: dumpHessians
     logical :: dumpJacobians
     integer :: myDetails
-    character(len=128) :: myMolecules
+    ! character(len=128) :: myMolecules
 
     ! Executable code
     myDetails = 0
     if ( present(details) ) myDetails = details
     dumpHessians = .true.
     dumpJacobians = .true.
-    mymolecules = '*'
+    ! mymolecules = '*'
     if ( present(options) ) then
       dumpHessians = optionDetail( options, 'h' ) == 'yes'
       dumpJacobians = optionDetail( options, 'm' ) == 'yes'
-      myMolecules = lowercase( optionDetail( options, 'b' ) )
-      if ( myMolecules == 'no' ) myMolecules = '*'
+      ! myMolecules = lowercase( optionDetail( options, 'b' ) )
+      ! if ( myMolecules == 'no' ) myMolecules = '*'
     endif
     call outputNamedValue( 'myDetails', myDetails )
     call output( '- Dump of L2PC -', advance='yes' )
@@ -468,7 +468,7 @@ contains ! ============= Public Procedures ==========================
 
     ! Now dump the Hessian
     if ( l2pc%goth .and. dumpHessians ) &
-      & call dump ( l2pc%h, 'hStar', details, onlyTheseBlocks, myMolecules )
+      & call dump ( l2pc%h, 'hStar', details, onlyTheseBlocks, options )
 
   end subroutine DumpOneL2PC
 
@@ -1975,6 +1975,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.107  2010/11/05 00:31:10  pwagner
+! Too few args to DumpOneL2PC
+!
 ! Revision 2.106  2010/11/03 18:30:41  pwagner
 ! Dumps now take option to say whether to dump hessians, matrices, and which blocks
 !
