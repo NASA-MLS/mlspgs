@@ -815,7 +815,7 @@ contains
           case ( f_allHessians )
             if ( details < -1 ) cycle
             if ( haveHessians ) then
-              call dump ( HessianDataBase, details )
+              call dump ( HessianDataBase, details, options=optionsString )
             else
               call announceError ( son, 0, 'Unable to dump HessianDB here; empty or absent' )
             end if
@@ -826,7 +826,7 @@ contains
               call announceError ( son, noHGrid )
             end if
           case ( f_allL2PCs )
-            call dumpL2PC( L2PCDataBase, details )
+            call dumpL2PC( L2PCDataBase, details, options=optionsString )
           case ( f_allLines )
             if ( associated(lines) ) then
               call dump_lines_database
@@ -994,7 +994,8 @@ contains
               call diff ( HessianDatabase(hessianIndex), &
                 &         HessianDatabase(hessianIndex2), details=details )
             else
-              call dump ( HessianDatabase(hessianIndex), details=details )
+              call dump ( HessianDatabase(hessianIndex), details=details, &
+                & options=optionsString )
             endif
           end do
         else
@@ -1045,7 +1046,7 @@ contains
         ! call dumpMLSFile( fileDataBase, details=1 )
         if ( fileIndex < 1 ) cycle
         call output ( ' L2PC short file name: ' // trim(nameString), advance='yes' )
-        call dumpL2PC ( fileDataBase(fileIndex), details )
+        call dumpL2PC ( fileDataBase(fileIndex), details, options=optionsString )
       case ( f_lines )
         do i = 2, nsons(son)
           what = decoration(decoration(subtree(i,son)))
@@ -1379,6 +1380,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.54  2010/11/05 22:37:06  pwagner
+! Pass optionsString to dumps of L2PC, Hessians
+!
 ! Revision 2.53  2010/08/13 22:08:57  pwagner
 ! May diff hessians, matrices
 !
