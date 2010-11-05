@@ -33,8 +33,7 @@ contains
     use Get_Eta_Matrix_m, only: Eta_D_T, Interpolate_Stru
     use MLSKinds, only: RP
     use Read_Mie_m, only: dBeta_dIWC_c_e, dBeta_dIWC_c_s, &
-      & dBeta_dT_c_e, dBeta_dT_c_s, F_s, IWC_s, Log_Beta_c_e, Log_Beta_c_s, &
-      & Log_Mie, T_s
+      & dBeta_dT_c_e, dBeta_dT_c_s, Log_Beta_c_e, Log_Beta_c_s, Log_Mie
 
     integer, intent(in) :: Frq_Ind     ! Frequency index for Mie tables
     type(eta_d_t), intent(in) :: Eta_T_Path(:), Eta_IWC_Path(:) ! Coeffs
@@ -89,6 +88,9 @@ contains
 end module Interpolate_Mie_m
 
 ! $Log$
+! Revision 2.2  2010/11/05 20:28:34  vsnyder
+! Delete unused declarations
+!
 ! Revision 2.1  2010/08/19 19:17:27  vsnyder
 ! Initial commit
 !
