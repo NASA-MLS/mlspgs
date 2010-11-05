@@ -17,7 +17,7 @@ module HessianModule_0          ! Low-level Hessians in the MLS PGS suite
 ! type are used to compose block Hessians.
 
   use DUMP_0, only: DIFF, DUMP
-  use MLSKinds, only: RM
+  use MLSKinds, only: RH=>RM ! Renamed here to make it easier to change later
   use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
 
   implicit NONE
@@ -27,7 +27,7 @@ module HessianModule_0          ! Low-level Hessians in the MLS PGS suite
   public :: HessianElement_T, Tuple_T
   public :: ClearBlock, CreateBlock, Densify, DestroyBlock, Diff, Dump
   public :: InsertHessianPlane, Multiply, OptimizeBlock, Sparsify
-  public :: StreamlineHessian
+  public :: StreamlineHessian, RH
 
   integer, parameter :: H_Absent = 0    ! An absent block -- assumed zero
   integer, parameter :: H_Sparse = 1    ! A 3-way indexed sparse representation
@@ -39,7 +39,7 @@ module HessianModule_0          ! Low-level Hessians in the MLS PGS suite
 
 
   type :: Tuple_T
-    real(rm) :: H      ! The value of a Hessian element
+    real(rh) :: H      ! The value of a Hessian element
     integer :: I, J, K ! Indices of a nonzero element.  I is the "up" index
                        ! and J and K are the "down" indices"
   end type Tuple_T
@@ -67,7 +67,7 @@ module HessianModule_0          ! Low-level Hessians in the MLS PGS suite
     ! the values(1:TuplesFilled) from a saved dataset
     ! Therefore we also set TuplesFilled when we create a Hessian Block
     integer :: TuplesFilled = 0 ! Number of tuples filled
-    real(rm), pointer :: Values(:,:,:) => NULL() ! for full explicit representation
+    real(rh), pointer :: Values(:,:,:) => NULL() ! for full explicit representation
   end type HessianElement_T
 
   interface ClearBlock
@@ -113,7 +113,7 @@ module HessianModule_0          ! Low-level Hessians in the MLS PGS suite
     module procedure StreamlineHessian_0
   end interface
 
-  real(rm), parameter:: AUGMENTFACTOR = 1.0
+  real(rh), parameter:: AUGMENTFACTOR = 1.0
   logical, parameter :: DEEBUG = .false.
   logical, parameter :: DONTOPTIMIZE = .true.
   logical, parameter :: DUMPASUNSPARSIFIED = .true.
@@ -128,12 +128,12 @@ contains
 
   ! ----------------------------------------------- AugmentHessian -----
   subroutine AugmentHessian ( H, N, factor )
-    ! Make space for N extra elements in the Hessian tuple if it's not already there
-    ! If factor is present then don't merely add 'just enough' values, but
-    ! increase the number by this fraction
+    ! Make space for N extra elements in the Hessian tuple if it's not
+    ! already there If factor is present then don't merely add 'just
+    ! enough' values, but increase the number by this fraction
     ! ????????????? Why is that a good idea ?????????????
     ! Among other consequences, h%tuplesFilled will be smaller
-    ! than h%tuples, and sibsequent elemental procedures passed
+    ! than h%tuples, and subsequent elemental procedures passed
     ! h%tuples w/o an array subsection will be operating
     ! with undefined values (paw)
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
@@ -141,16 +141,16 @@ contains
     
     type(HessianElement_T), intent(inout) :: H
     integer, intent(in) :: N
-    real(rm), intent(in), optional :: FACTOR
+    real(rh), intent(in), optional :: FACTOR
 
     ! Local variables
-    real(rm) :: myFactor
+    real(rh) :: myFactor
     type(tuple_t), dimension(:), pointer :: oldTuple  ! Used to expand 'in place'
     integer :: stat                     ! Status from allocates etc
     integer :: space                    ! How many tuples are free
     integer :: extra                    ! How many to add
 
-    myFactor = 1.0_rm
+    myFactor = 1.0_rh
     if ( present(factor) ) myFactor = factor
     if ( h%kind == h_full ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -170,7 +170,7 @@ contains
       oldTuple => h%tuples
 
       ! Work out how much to add
-      if ( myFactor > 1.0_rm ) then
+      if ( myFactor > 1.0_rh ) then
         extra = max ( N, nint ( size ( h%tuples ) * factor ) )
       else
         extra = N
@@ -210,7 +210,8 @@ contains
   end subroutine ClearHessianBlock_0
 
   ! ----------------------------------------- Create_Empty_Hessian -----
-  subroutine CreateHessianBlock_0 ( H, nRows, nCols1, nCols2, kind, initTuples )
+  subroutine CreateHessianBlock_0 ( H, nRows, nCols1, nCols2, H_kind, initTuples, &
+                                  & Fill )
   ! Create an empty HessianElement_T structure
     use Allocate_Deallocate, only: Allocate_test, Test_Allocate
 
@@ -218,8 +219,9 @@ contains
                                         ! its components are nullified by
                                         ! default initialization
     integer, intent(in) :: nRows, nCols1, nCols2
-    integer, intent(in) :: kind
+    integer, intent(in) :: H_kind
     integer, intent(in), optional :: initTuples
+    real(rh), intent(in), optional :: Fill ! Fill value if H_kind==h_full
 
     integer :: STAT                     ! Status from allocate
 
@@ -228,17 +230,17 @@ contains
     h%nRows = nRows
     h%nCols1 = nCols1
     h%nCols2 = nCols2
-    h%kind = kind
+    h%kind = h_kind
     h%tuplesFilled = 0
     if ( DEEBUG ) then
       call output( 'Creating a Hessian Block', advance='yes' )
       call outputNamedValue( 'nRows', nRows )
       call outputNamedValue( 'nCols1', nCols1 )
       call outputNamedValue( 'nCols2', nCols2 )
-      call outputNamedValue( 'kind', kind )
+      call outputNamedValue( 'h_kind', h_kind )
     endif
 
-    if ( kind == h_sparse ) then
+    if ( h_kind == h_sparse ) then
       h%tuplesFilled = 0
       if ( present ( initTuples ) ) then
         if ( DEEBUG ) then
@@ -250,9 +252,9 @@ contains
           & (/1/), (/initTuples/) )
       end if
     end if
-    if ( kind == h_full ) then
+    if ( h_kind == h_full ) then
       call Allocate_test ( h%values, nRows, nCols1, nCols2, 'values in CreateHessianBlock_0', &
-        & moduleName )
+        & moduleName, fill=fill )
     end if
     if ( DEEBUG ) then
       call dump( h%values, 'h%values' )
@@ -263,7 +265,7 @@ contains
   subroutine Densify_Hessian ( H )
   ! Convert a Hessian represented by tuples to an explicit representation
 
-    use Allocate_Deallocate, only: Allocate_Test, Test_Deallocate
+    use Allocate_Deallocate, only: Allocate_Test
 
     type(HessianElement_T), intent(inout) :: H
 
@@ -274,7 +276,7 @@ contains
     case ( h_absent )
     case ( h_sparse )
       call allocate_test ( h%values, h%nRows, h%nCols1, h%nCols2, &
-        & "H%values in Densify_Hessian", moduleName, fill=0.0_rm )
+        & "H%values in Densify_Hessian", moduleName, fill=0.0_rh )
       
       if ( associated(h%tuples) ) then
         do n = 1, size(h%tuples)
@@ -283,6 +285,7 @@ contains
       end if
       
       deallocate ( h%tuples, stat=n )
+      h%kind = h_full
     case ( h_full )
     end select
 
@@ -298,12 +301,11 @@ contains
     integer, intent(in), optional :: Indices(:) ! 3 indices of the block
     logical, intent(in), optional :: CLEAN   ! print \size
 
-    integer :: I
     integer :: My_Details
     logical :: My_Clean
     ! These are in case we need to diff two blocks stored sparsely
-    real(rm), pointer :: h1array(:,:,:) => NULL()
-    real(rm), pointer :: h2array(:,:,:) => NULL()
+    real(rh), pointer :: h1array(:,:,:) => NULL()
+    real(rh), pointer :: h2array(:,:,:) => NULL()
 
     my_Details = 1
     if ( present(details) ) my_Details = details
@@ -339,9 +341,9 @@ contains
         ! temporarily convert sparse representation to full
         call output ( '(Diffing as if full)', advance='yes' )
         call allocate_test( h1array, h1%nRows, h1%nCols1, h1%nCols2, &
-          & "h1array in Diff_Hessian_Blocks", ModuleName, fill=0.0_rm )
+          & "h1array in Diff_Hessian_Blocks", ModuleName, fill=0.0_rh )
         call allocate_test( h2array, h2%nRows, h2%nCols2, h2%nCols2, &
-          & "h2array in Diff_Hessian_Blocks", ModuleName, fill=0.0_rm )
+          & "h2array in Diff_Hessian_Blocks", ModuleName, fill=0.0_rh )
         call Repopulate( h1array, h1%tuples%i, h1%tuples%j, h1%tuples%k, &
           & h1%tuplesFilled, h1%tuples%h )
         call Repopulate( h2array, h2%tuples%i, h2%tuples%j, h2%tuples%k, &
@@ -376,7 +378,7 @@ contains
     integer :: My_Details
     logical :: My_Clean
     ! In case we need to dump as full blocks stored sparsely
-    real(rm), pointer :: harray(:,:,:) => NULL()
+    real(rh), pointer :: harray(:,:,:) => NULL()
 
     my_Details = 1
     if ( present(details) ) my_Details = details
@@ -422,7 +424,7 @@ contains
           ! temporarily convert sparse representation to full
           call output ( '(Dumping as if full)', advance='yes' )
           call allocate_test( harray, h%nRows, h%nCols1, h%nCols2, &
-            & "harray in Dump_Hessian_Blocks", ModuleName, fill=0.0_rm )
+            & "harray in Dump_Hessian_Blocks", ModuleName, fill=0.0_rh )
           call Repopulate( harray, h%tuples%i, h%tuples%j, h%tuples%k, &
             & h%tuplesFilled, h%tuples%h )
           call Dump ( harray, 'Hessian values' )
@@ -514,7 +516,7 @@ contains
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
 
     type(HessianElement_T), intent(inout) :: H
-    real(rm), intent(in) :: PLANE(:,:)
+    real(rh), intent(in) :: PLANE(:,:)
     integer, intent(in) :: K
     logical, intent(in), optional :: MIRRORING
 
@@ -729,7 +731,7 @@ contains
     if ( h%kind == h_Full ) then
       n = count(h%values /= 0.0)
       if ( 2.5 * n > size(h%values) ) return ! sparsifying won't improve things
-        ! Assuming integers take half the space of real(rm), each tuple takes
+        ! Assuming integers take half the space of real(rh), each tuple takes
         ! 2.5 times the space of a single value.
       call Sparsify_Hessian ( H )
       if ( h%kind /= h_Sparse ) return
@@ -946,6 +948,12 @@ o:    do while ( i < n )
 end module HessianModule_0
 
 ! $Log$
+! Revision 2.12  2010/11/05 20:25:10  vsnyder
+! Rename RM as RH to make it easier to change later.  Rename KIND argument
+! of CreateHessianBlock_0 as H_Kind so the KIND intrinsic is available.  Add
+! a Fill optional argument.  Set h%kind = h_full in Densify_Hessian.  Delete
+! unused declarations.
+!
 ! Revision 2.11  2010/09/16 23:54:43  pwagner
 ! dump with details=-3 warns of NaNs
 !
