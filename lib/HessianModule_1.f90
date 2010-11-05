@@ -16,12 +16,10 @@ module HessianModule_1          ! High-level Hessians in the MLS PGS suite
 ! This module provides the elementary Hessian type.  Blocks of this
 ! type are used to compose block Hessians.
 
-  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, Test_Deallocate
+  use Allocate_Deallocate, only: Test_Deallocate
   use HessianModule_0, only: ClearBlock, CreateBlock, &
     & DestroyBlock, HessianElement_T, H_Absent, &
     & H_Sparse, H_Full, OptimizeBlock
-  use LEXER_CORE, only: INIT_LEXER
-  use MLSKinds, only: RM
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
   use MatrixModule_1, only: DefineRCInfo, DestroyRCInfo, NullifyRCInfo, RC_Info
@@ -150,21 +148,25 @@ contains
   end function CreateEmptyHessian
 
   ! ----------------------------------------- CreateHessianBlock_1 -----
-  subroutine CreateHessianBlock_1 ( H, RowNum, ColNum1, ColNum2, Kind, InitTuples )
+  subroutine CreateHessianBlock_1 ( H, RowNum, ColNum1, ColNum2, H_Kind, &
+                                  & InitTuples, Fill )
   ! Create the hessian block H%Block(RowNum,ColNum), which sprang into
   ! existence with kind M_Absent.  Create it with the specified Kind.
   ! See HessianModule_0 for a list of the kinds.  If the Kind is
   ! M_Sparse the initial number of tuples is required
     type (Hessian_T), intent(inout) :: H ! The matrix having the block
     integer, intent(in) :: RowNum, ColNum1, ColNum2 ! Row and column of the block
-    integer, intent(in) :: Kind          ! Kind of block, see HessianModule_0
+    integer, intent(in) :: H_Kind        ! Kind of block, see HessianModule_0
     integer, intent(in), optional :: InitTuples     ! Number of nonzeros
+    real(kind(h%block(rowNum,colNum1,colNum2)%values)), intent(in), optional :: &
+      & Fill ! Fill value if H_Kind == H_Full
     call createBlock ( h%block ( rowNum, colNum1, colNum2 ), &
       & h%row%nelts ( rowNum ), &
       & h%col%nelts ( colNum1 ), &
       & h%col%nelts ( colNum2 ), &
-      & kind, &
-      & initTuples )
+      & h_kind, &
+      & initTuples, &
+      & fill )
   end subroutine CreateHessianBlock_1
 
   ! ----------------------------------------------- DestroyHessian -----
@@ -662,6 +664,11 @@ contains
 end module HessianModule_1
 
 ! $Log$
+! Revision 2.13  2010/11/05 20:27:28  vsnyder
+! Delete unused declarations.  Rename Kind argument of CreateHessianBlock_1
+! as H_Kind to make the KIND intrinsic function available.  Add an optional
+! Fill argument to CreateHessianBlock_1.
+!
 ! Revision 2.12  2010/11/03 18:31:41  pwagner
 ! Dumps now take moleculelist to choose which blocks to dump
 !
