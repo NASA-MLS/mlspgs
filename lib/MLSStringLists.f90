@@ -63,7 +63,7 @@ module MLSStringLists               ! Module to treat string lists
 ! List2Array         Converts a single string list to an array of strings
 ! listMatches        Return list of matches for string in a list
 ! NumStringElements  Returns number of elements in string list
-! OptionDetail       Returns detail level of option in list of option
+! OptionDetail       Returns detail or arg of option in list of options
 ! PutHashElement     puts value into hash list corresponding to key string
 ! ReadIntsFromList   Read an array of ints from a string list
 ! RemoveElemFromList removes occurrence(s) of elem from a string list
@@ -108,7 +108,7 @@ module MLSStringLists               ! Module to treat string lists
 ! char* listMatches (strlist stringList, char* string, [char* options] )
 ! int NumStringElements(strlist inList, log countEmpty, &
 !   & [char inseparator], [int LongestLen])
-! char* optionDetail(strlist inList, char* test_switch)
+! char* optionDetail(strlist inList, char test_switch, int pattern, char* alt_option )
 ! PutHashElement (hash {keys = values}, char* key, 
 !   char* elem, log countEmpty, [char inseparator], [log part_match])
 ! ReadIntsFromList(strlist inList, int ints(:), &
@@ -133,7 +133,7 @@ module MLSStringLists               ! Module to treat string lists
 !   & [char inseparator], [log part_match])
 ! int SwitchDetail(strlist inList, char* test_switch, [char* options])
 !      by default, options is "-f" to ignore leading spaces
-! char* unquote (char* str, [char* quotes], [char* cquotes], [log strict])
+! char* unquote (char* str, [char* quotes], [char* cquotes], [char* options])
 ! wrap ( char* str, char* outstr, int width, [char inseparator], &
 !   & [char break], [char mode], [char* quotes], [int addedLines] )
 
@@ -145,8 +145,16 @@ module MLSStringLists               ! Module to treat string lists
 ! Many of these routines take optional arguments that greatly modify
 ! their default operation
 
+! One area of possible improvement, or change, anyway, is the choice of
+! commas for separators between elements of a string. This is in accord
+! with hdfeos dimension fields, etc. It is not ideal for the most general
+! case where, for example, a string element might itself contain a comma.
+! In the most general case we ought to allow for, and consider moving
+! the default to, a non-ascii character to use for separator, e.g., achar(0)
+! or NULL.
+
 ! One standard is the character flag "options" which affects how loosely
-! string matches may be interpreted and how string elements are
+! string matches may be interpreted, quotes treated, and how string elements are
 ! counted in lists
 ! it may include any of the following (poss. in combination, e.g. "-wc")
 ! w    Wildcard * which allows 'a*' to equal 'abcd'
@@ -155,6 +163,10 @@ module MLSStringLists               ! Module to treat string lists
 ! e    count consecutive separators as enclosing an empty element
 ! n    reverse sense of match (where appropriate)
 ! s{.} use character between braces (here a ".") instead of "," as separator
+! k    strict; i.e. remove quotes only if they match
+! p    stripany; remove any quotes
+! r    remove any quoted sub-strings
+! x    extract any quoted substrings
 
 ! We hope eventually that options will replace the countEmpty, caseSensitive, 
 ! etc. separate optional args to many of the current module procedures
@@ -511,7 +523,7 @@ contains
       keys = ' '
       values = ' '
     endif
-    str = unquote( Constructor, quotes='[]$', stripany=.true. )
+    str = unquote( Constructor, quotes='[]$', options='-p' )
     do i=1, NumStringElements( str, countEmpty, inseparator=trim(sep) )
       call GetStringElement( str, istr, i, countEmpty, inseparator=trim(sep) )
       if ( len_trim(istr) < 1 ) cycle
@@ -864,7 +876,10 @@ contains
     ! Method:
     ! Replace substrings sub1 and sub2 with separator character
     ! and then use GetStringElement to get subelement number 2
+    ! We are careful to choose as separator one that is not already present
+    ! in the string
     !  
+    ! Notes and limitations:
     ! A fundamental issue arises if sub2 occurs before sub1 in the string
     ! Do we want to interpret the request such that we
     ! (1) return a blank
@@ -872,11 +887,13 @@ contains
     ! I think we should aim for 2, as it produces a generalization
     ! of picking elements out of a comma-separated list
     !
-    ! Will this still work if sub1 has leading or trailing blanks? 
-    ! How about sub2?
-    ! Do we need an optional arg, no_trim, say, that will leave them?
-    ! Tried coding it, but can't say for sure it works
-    ! What if sub1 is a substring of sub2, or vice versa?
+    ! Misc questions
+    ! (1) Will this still work if sub1 has leading or trailing blanks? 
+    ! (2) How about sub2?
+    ! (3) Do we need an optional arg, no_trim, say, that will leave them?
+    !     Tried coding it, but can't say for sure it works
+    ! (4) What if sub1 is a substring of sub2, or vice versa?
+    ! (5) Should we switch to non-ascii characters for use as separator?
     !--------Argument--------!
     CHARACTER (LEN=*), INTENT(IN) :: instr
     CHARACTER (LEN=*), INTENT(IN) :: sub1
@@ -1758,76 +1775,188 @@ contains
   !  'yes' if the option is present
   !  'no'  if the option is absent
   !  'arg' if the option is present and followed immediately by '[arg]'
+  ! test_option is a one-character option
+  ! alt_option is a multi-character alternate form
+  ! E.g., test_option might be 'a' while alt_option might be 'answer'
+  ! so the option could be set in either form '-a' or '--answer'
+  ! If patterns is present, it determines whether options must be preceded
+  ! by an '-' and how args are to be denoted
+  ! Recognized values of pattern are
+  ! 0: '-ab[arg] --xyz=arg' means  (default)
+  !    may catenate single-char test_options; any arg is surrounded by "[]"
+  !    multiple-char alt_option preceded by '--'; any arg set off by "="
+  ! 1: '-a -b arg --xyz=arg' means 
+  !    each single-char test_option preceded by '-'; any arg is set off by a space
+  !    multiple-char alt_option preceded by '--'; any arg set off by "="
+  ! 2: '-a -b arg -xyz arg' means 
+  !    each single-char test_option preceded by '-'; any arg is set off by a space
+  !    multiple-char alt_option preceded by '-'; any arg set off by a space
   
   ! As an example, say the list of options is
-  ! "ab[arg1]c[arg2]d"
+  ! "-ab[arg1]c[arg2]d"
   ! and the test option is "b"
   ! The returned value would be 'arg1'
   ! If the test option were "a" the returned value would be 'yes'
   ! If the test option were "c" the returned value would be 'arg2'
   ! If the test option were "g" the returned value would be 'no'
-  ! (because test doesn't outside the '[]' chars)
+  ! (because g doesn't outside the '[]' chars)
   
-  ! The behavior may be modified by options flag
+  ! The behavior may be modified by pattern and alt_option args
   ! For which see comment above
   
   ! Notes:
   ! (1) If the string list contains a "*" then
-  ! the test option is automatically present
-  ! (2) Why don't you let the '[]' pair that set off option args be
-  ! overridden, say by spaces?
+  ! the test option is automatically present (would you like to override that?)
+  ! (2) Why don't you let the '[]' pair that set off args be
+  ! overridden, say by other optional args?
   
-  function optionDetail( inList, test_option ) RESULT (detail)
-    ! Method:
-    ! (1) Replace all instances of '[] and ']' with ','
-    ! (2) Interpret result as string list
-    ! (3) Loop over odd-numbered elements of string list
-    !     if test_option found among one of them and
-    !       it is not the last, then option = 'yes'
-    !       it is the last, but so is the element number, then option = 'yes'
-    !       it is the last, then option = the next element
+  function optionDetail( inList, test_option,&
+    & pattern, alt_option ) RESULT (detail)
     ! Dummy arguments
-    CHARACTER (LEN=*), INTENT(IN)             :: inList
-    CHARACTER (LEN=1), INTENT(IN)             :: test_option
+    character (len=*), intent(in)             :: inlist
+    character (len=1), intent(in)             :: test_option
     character (len=len(inList))               :: detail
+    integer, optional, intent(in)             :: pattern
+    character (len=*), optional, intent(in)   :: alt_option
 
     ! Local variables
+    integer :: bloc
     logical, parameter :: COUNTEMPTY = .true.
     integer :: elem, k
-    integer, parameter :: MAXELEMENTLENGTH = 80
-    integer :: nElements
     character (len=len(inList)+2)           :: element
+    character (len=len(inList))             :: listBloc ! space-separated
+    integer, parameter :: MAXELEMENTLENGTH = 80
+    logical :: multi
+    integer :: myPattern
+    integer :: nElements
     character (len=len(inList)+2)           :: optionsList ! comma-separated
+    logical, parameter :: USEEXTRACT = .true.
 
     ! Executable code
+    myPattern = 0
+    if ( present(pattern) ) myPattern = pattern
     detail = 'no'
     if ( adjustl(inList) == '*' ) then
       detail = 'yes'
       return
     endif
-    if ( index( inList, test_option ) < 1 ) return
-    
-    ! OK, test_option is present, but where? Does it have an arg?
-
-    element = Replace( inList, '[', ',' )
-    optionsList = Replace( element, ']', ',' )
-    do elem = 1, NumStringElements( optionsList, countEmpty ), 2
-      element = StringElement(optionsList, elem, countEmpty)
-      k = index( element, test_option )
-      if ( k < 1 ) then
-        cycle
-      elseif ( k < len_trim(element) ) then
-        detail = 'yes'
-        return
-      elseif ( elem == NumStringElements( optionsList, countEmpty ) ) then
-        detail = 'yes'
-        return
-      else
-        detail = StringElement(optionsList, elem+1, countEmpty)
-        return
+    select case (myPattern)
+    case ( 0 )
+      ! '-ab[arg] --xyz=arg
+      if ( index( inList, test_option ) < 1 ) then
+        if ( .not. present(alt_option) ) return
       endif
-    enddo
 
+      ! OK, test_option or its alt may be present, but where? 
+      ! Does it have an arg?
+
+      do bloc = 1, NumStringElements( inList, countEmpty, inseparator=' ' )
+        listBloc = StringElement( inList, bloc, countEmpty, inseparator=' ' )
+        ! Does this block begin with one "-" or two?
+        multi = ( index( listBloc, "--" ) > 0 )
+        if ( multi ) then
+          if ( .not. present(alt_option) ) cycle
+          k = index(listBloc, '--' // trim(alt_option) // '=' )
+          if ( k > 0 ) then
+            detail = listBloc(k+1:)
+            return
+          elseif ( index(listBloc, '--' // trim(alt_option) // ' ' ) > 0 ) then
+            detail = 'yes'
+            return
+          endif
+        else
+          ! 1st--rid ourselves of everything bracketed by '[]'
+          element = unquote( listBloc, quotes='[', cquotes=']', &
+            & options='-r' )
+          ! print *, 'After unquote: ', trim(element)
+          if ( index(element, test_option) < 1 ) cycle
+          call extractSubstring( listBloc, element, test_option // '[', ']' )
+          ! print *, 'After extracting: ', trim(element)
+          if ( len_trim(element) > 0 ) then
+            detail = element
+          else
+            detail = 'yes'
+          endif
+          return
+        endif
+      enddo
+
+    case ( 1 )
+      ! '-a -b arg --xyz=arg'
+      if ( index( inList, test_option ) < 1 ) then
+        if ( .not. present(alt_option) ) return
+      endif
+
+      ! OK, test_option or its alt may be present, but where? 
+      ! Does it have an arg?
+
+      do bloc = 1, NumStringElements( inList, countEmpty, inseparator=' ' )
+        listBloc = StringElement( inList, bloc, countEmpty, inseparator=' ' )
+        ! Does this block begin with one "-" or two?
+        multi = ( index( listBloc, "--" ) > 0 )
+        if ( multi ) then
+          if ( .not. present(alt_option) ) cycle
+          k = index(listBloc, '--' // trim(alt_option) // '=' )
+          if ( k > 0 ) then
+            detail = listBloc(k+1:)
+            return
+          elseif ( index(listBloc, '--' // trim(alt_option) // ' ' ) > 0 ) then
+            detail = 'yes'
+            return
+          endif
+        else
+          if ( index(listBloc, '-' // test_option) > 0 ) then
+            ! OK, we've got the option all right; but is the next block an arg?
+            detail = 'yes'
+            if ( bloc == NumStringElements( inList, countEmpty, inseparator=' ' ) ) &
+              & return
+            element = StringElement( inList, bloc+1, countEmpty, inseparator=' ' )
+            if ( index(adjustl(element), '-') == 1 ) then
+              return
+            else
+              detail = element
+              return
+            endif
+          endif
+        endif
+      enddo
+
+    case ( 2 )
+      ! '-a -b arg -xyz arg'
+      if ( index( inList, test_option ) < 1 ) then
+        if ( .not. present(alt_option) ) return
+      endif
+
+      ! OK, test_option or its alt may be present, but where? 
+      ! Does it have an arg?
+
+      do bloc = 1, NumStringElements( inList, countEmpty, inseparator=' ' )
+        listBloc = StringElement( inList, bloc, countEmpty, inseparator=' ' )
+        ! Does this block begin with one "-" or not?
+        if ( index(adjustl(listbloc), '-') == 1 ) then
+          if ( adjustl(listBloc) == '-' // test_option ) then
+            detail='yes' ! keep going--next we'll check for an arg
+          elseif( .not. present(alt_option) ) then
+            cycle
+          elseif ( adjustl(listBloc) == '-' // alt_option ) then
+            detail='yes' ! keep going--next we'll check for an arg
+          else
+            cycle
+          endif
+          ! Now check if next bloc is an arg
+          if ( bloc == NumStringElements( inList, countEmpty, inseparator=' ' ) ) &
+            & return
+          element = StringElement( inList, bloc+1, countEmpty, inseparator=' ' )
+          if ( index(adjustl(element), '-') == 1 ) then
+            return
+          else
+            detail = element
+            return
+          endif
+        endif
+      enddo
+    case default
+    end select
   end function optionDetail
 
   ! ---------------------------------------------  PutHashElement  -----
@@ -2936,8 +3065,9 @@ contains
   end function SwitchDetail
 
   ! ------------------------------------------------  unquote  -----
-  function unquote(str, quotes, cquotes, strict, stripany, extract) &
-    & result (outstr)
+  ! function unquote(str, quotes, cquotes, strict, stripany, extract) &
+  function unquote( str, quotes, cquotes, options ) &
+    & result ( outstr )
     ! function that removes a single pair of surrounding quotes from string
 
     ! E.g., given "Let me see." or 'Let me see.' returns
@@ -2949,11 +3079,28 @@ contains
     !  (a) remove it if the resulting string is non-empty; or
     !  (b) return the single unpaired quote if that was the entire str
     
-    ! If given optional arg strict, options (1) and (2) above disregarded
+    ! optional arg options controls the following behaviors
+    ! if options contains          meaning
+    !    -----------               -------
+    !         k                    strict
+    !         p                    stripany
+    !         r                    reverse
+    !         x                    extract
+    ! If strict, exceptions (1) and (2) above disregarded
     ! i.e., surrounding quotes must match, else returns string unchanged
     
-    ! If given optional arg stripany, any quotes, surrounding or internal,
+    ! If stripany, any quotes, surrounding or internal,
     ! will be removed
+    
+    ! If extract, returns first substring surrounded by
+    ! quotes; E.g., given ([a1 a2], [a3 a4]) with quotes='[' cquotes=']' returns
+    !   a1 a2
+    ! (This option supersedes stripany, and is automatically strict)
+    
+    ! If reverse, removes any quoted strings; 
+    ! E.g., given 'b[a1 a2], c[a3 a4]' with quotes='[' cquotes=']' returns
+    !   'b, c'
+    ! (This option supersedes stripany, and is automatically strict)
     
     ! If given optional arg quotes, removes only surrounding pair:
     ! quotes[i:i] for each i=1..len[quotes]
@@ -2965,11 +3112,6 @@ contains
     ! E.g., given [a particle] with quotes='[' cquotes=']' returns
     !    a particle
     ! (For this case, strict matching is always on)
-    
-    ! If given optional arg extract, returns first substring surrounded by
-    ! quotes; E.g., given ([a1 a2], [a3 a4]) with quotes='[' cquotes=']' returns
-    !   a1 a2
-    ! (This option supersedes stripany, and is automatically strict)
     
     ! Useful because the parser will return quote-surrounded strings if that's
     ! how they appear in the lcf
@@ -2994,9 +3136,10 @@ contains
     character(len=len(str)) :: outstr
     character(len=*), intent(in), optional :: quotes
     character(len=*), intent(in), optional :: cquotes
-    logical, intent(in), optional :: strict
-    logical, intent(in), optional :: stripany
-    logical, intent(in), optional :: extract
+    ! logical, intent(in), optional :: strict
+    ! logical, intent(in), optional :: stripany
+    ! logical, intent(in), optional :: extract
+    character(len=*), intent(in), optional :: options
     !----------Local vars----------!
     character(len=len(str)) :: tmpstr
     character(len=1), parameter :: sq=''''
@@ -3007,6 +3150,7 @@ contains
     logical :: mystrict
     logical :: mystripany
     logical :: myextract
+    logical :: myreverse
     !----------Executable part----------!
 
    ult = len_trim(str)    ! Position of last non-blank char
@@ -3019,25 +3163,17 @@ contains
       return
    endif
 
-   if(present(extract)) then
-      myextract=extract
-   else
-      myextract=.false.
+   myextract=.false.
+   mystrict=.false.
+   mystripany=.false.
+   if(present(options)) then
+      myextract = index(options, 'x') > 0
+      mystrict = index(options, 'k') > 0
+      mystripany = index(options, 'p') > 0
+      myreverse = index(options, 'r') > 0
    endif
    
-   if(present(strict)) then
-      mystrict=strict
-   else
-      mystrict=.false.
-   endif
-   
-   if(present(stripany)) then
-      mystripany=stripany
-   else
-      mystripany=.false.
-   endif
-   
-   mystripany = mystripany .and. (.not. myextract)
+   mystripany = mystripany .and. (.not. myextract) .and. (.not. myreverse)
    
    ! These are initialized so that if no matching quotes found
    ! we will return    outstr = adjustl(str)
@@ -3074,6 +3210,11 @@ contains
             cquote=quote
          endif
 
+        if(myreverse) then
+          tmpstr = outstr
+          call RemoveAnyQuotedStrings( tmpstr, outstr, quote, cquote )
+          cycle
+        endif
         if(myextract) then
           if ( index(str, quote) > 0 .and. index(str, cquote) > 0 ) then
             call ExtractSubString (str, outstr, quote, cquote)
@@ -3096,6 +3237,15 @@ contains
         endif
 
       enddo
+      if ( myreverse ) return
+
+   ! Removing substring within quotes
+   elseif(myreverse) then
+     tmpstr = outstr
+     call RemoveAnyQuotedStrings( tmpstr, outstr, sq, sq )
+     tmpstr = outstr
+     call RemoveAnyQuotedStrings( tmpstr, outstr, dq, dq )
+     return
 
    ! Extracting substring within quotes
    elseif(myextract) then
@@ -3107,7 +3257,7 @@ contains
      return
 
    ! insist surrounding marks match?
-   elseif(present(strict)) then
+   elseif(mystrict) then
       if( &
       & str(prim:prim) == str(ult:ult) &
       & .and. &
@@ -3152,6 +3302,35 @@ contains
        outstr=str
    endif
       
+  contains
+    subroutine RemoveAnyQuotedStrings( str, out, q, cq )
+      ! Args
+      character(len=*), intent(in)  :: str
+      character(len=*), intent(out) :: out
+      character(len=1), intent(in)  :: q, cq
+      ! Internal variables
+      integer :: k1, k2
+      character(len=len(str)) :: tmpstr
+      ! Begin
+      out=str
+      do
+        tmpstr = out
+        k1 = index(tmpstr, q)
+        k2 = index(tmpstr, cq)
+        if ( k2 < k1+1 .or. k2 < 1 .or. k1 < 1 ) return
+        if ( k1 == 1 .and. k2 == len_trim(tmpstr) ) then
+          out = ' '
+          return
+        elseif ( k1 == 1 ) then
+          out = tmpstr(k2+1:)
+        elseif ( k2 == len_trim(tmpstr) ) then
+          out = tmpstr(:k1-1)
+        else
+          out = tmpstr(:k1-1) // tmpstr(k2+1:)
+        endif
+        cycle
+      enddo
+    end subroutine RemoveAnyQuotedStrings
   end function unquote
 
   ! ---------------------wrap ---------------
@@ -3430,6 +3609,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.42  2010/11/05 22:23:01  pwagner
+! Fixed bugs in optionDetail
+!
 ! Revision 2.41  2010/11/03 18:29:07  pwagner
 ! Added optionDetail to tell whether an option is present
 !
