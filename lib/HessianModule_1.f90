@@ -315,13 +315,14 @@ contains
 
   ! ------------------------------------------------- Dump_Hessian -----
   subroutine Dump_Hessian ( H, Name, Details, &
-    & onlyTheseBlocks, MoleculeList, Clean )
+    & onlyTheseBlocks, options, Clean )
     use HessianModule_0, only: Dump
     use Lexer_core, only: Print_Source
     use MatrixModule_1, only: Dump_RC
     use MLSStrings, only: lowercase
-    use MLSStringLists, only: optionDetail, switchDetail
-    use Output_m, only: Output, NewLine, resumeOutput, suspendOutput
+    use MLSStringLists, only: isInList, optionDetail, switchDetail
+    use Output_m, only: NewLine, output, outputNamedValue, &
+      & resumeOutput, suspendOutput
     use String_Table, only: Display_String, GET_STRING
 
     type (Hessian_T), intent(in) :: H
@@ -333,15 +334,16 @@ contains
       ! 0 => Dimensions of each block,
       ! 1 => Values in each block
     character(len=*), dimension(3), intent(in), optional :: onlyTheseBlocks
-    character(len=*), intent(in), optional :: moleculeList
+    character(len=*), intent(in), optional :: options
     logical, intent(in), optional :: CLEAN   ! print \size
-
+    ! Internal variables
+    logical, parameter :: DEEBUG = .false.
     integer :: I, J, K    ! Subscripts, loop inductors
+    character(len=128) :: molecules
     integer :: My_Details
     character(len=32), dimension(3) :: myBlocks
-    character(len=128) :: molecules
     integer :: TotalSize  ! of all blocks
-
+    ! Executable
     my_details = 1
     if ( present(details) ) my_details = details
     if ( my_details <= -3 ) call suspendOutput !  return
@@ -349,7 +351,11 @@ contains
     myBlocks = '*'
     if ( present(onlyTheseBlocks) ) myBlocks = onlyTheseBlocks
     molecules = '*'
-    if ( present(moleculeList) ) molecules = moleculeList
+    if ( present(options) ) then
+      Molecules = lowercase( optionDetail( options, 'b' ) )
+      if ( Molecules == 'no' ) Molecules = '*'
+      if ( DEEBUG ) call outputNamedValue('Molecules', Molecules)
+    endif
     if ( h%name > 0 ) then
       if ( present(name) ) call output ( ', ' )
       call output ( 'Name = ' )
@@ -383,15 +389,23 @@ contains
               & totalSize = totalSize + size(h%block(i,j,k)%values)
           end select
           if ( my_details < 0 .and. my_details > -3 ) cycle
-          if ( skipThisBlock ( &
-            & 1, h%row%vec%quantities(h%row%quant(i))%template%name &
-            &  ) ) cycle
-          if ( skipThisBlock ( &
-            & 2, h%col%vec%quantities(h%col%quant(j))%template%name &
-            &  ) ) cycle
-          if ( skipThisBlock ( &
-            & 3, h%col%vec%quantities(h%col%quant(k))%template%name &
-            &  ) ) cycle
+          if ( present(onlyTheseBlocks) ) then
+            if ( skipThisBlock ( &
+              & 1, h%row%vec%quantities(h%row%quant(i))%template%name &
+              &  ) ) cycle
+            if ( skipThisBlock ( &
+              & 2, h%col%vec%quantities(h%col%quant(j))%template%name &
+              &  ) ) cycle
+            if ( skipThisBlock ( &
+              & 3, h%col%vec%quantities(h%col%quant(k))%template%name &
+              &  ) ) cycle
+          elseif( molecules /= '*' ) then
+            if ( skipThisBlock ( &
+              & 2, h%col%vec%quantities(h%col%quant(j))%template%name &
+              &  ) .and. skipThisBlock ( &
+              & 3, h%col%vec%quantities(h%col%quant(k))%template%name &
+              &  ) ) cycle
+          endif
           call output ( i, before='Block at row ' )
           call output ( j, before=' and columns ' )
           call output ( k, before=', ', after=' (' )
@@ -442,23 +456,32 @@ contains
       doWe = ( myBlocks(s) /= '*' .and. &
         & SwitchDetail( myBlocks(s), trim(templateNameStr), options='-wcf' ) < 0 &
         & )
-      if ( s > 1 ) &
-        & doWe = ( doWe .and. &
-        & optionDetail( molecules, lowercase(trim(templateNameStr)) ) == 'yes' )
+      if ( s > 1 .and. molecules /= '*' ) &
+        & doWe = ( doWe .or. &
+        & .not. isInList( molecules, lowercase(trim(templateNameStr)) ) )
+      if ( s>1 .and. DEEBUG ) then
+        call outputNamedValue ( 'templateNameStr', templateNameStr )
+        call outputNamedValue ( 'myBlocks(s)', myBlocks(s) )
+        call outputNamedValue ( 'molecules', molecules )
+        call outputNamedValue ( 'SwitchDetail', SwitchDetail( myBlocks(s), trim(templateNameStr), options='-wcf' ) )
+        call outputNamedValue ( 'isInList', isInList( molecules, lowercase(trim(templateNameStr)) ) )
+        call outputNamedValue ( 'skip', doWe )
+      endif
     end function skipThisBlock
 
   end subroutine Dump_Hessian
 
   ! ---------------------------------------- Dump_Hessian_Database -----
-  subroutine Dump_Hessian_Database ( H, Details, Clean )
+  subroutine Dump_Hessian_Database ( H, Details, Clean, Options )
     type (Hessian_T), intent(in) :: H(:)
     integer, intent(in), optional :: Details ! See Dump_Hessian
     logical, intent(in), optional :: CLEAN   ! print \size
+    character(len=*), intent(in), optional :: options
 
     integer :: I
 
     do i = 1, size(h)
-      call dump ( h(i), details=details, clean=clean )
+      call dump ( h(i), details=details, clean=clean, options=options )
     end do
 
   end subroutine Dump_Hessian_Database
@@ -664,6 +687,9 @@ contains
 end module HessianModule_1
 
 ! $Log$
+! Revision 2.14  2010/11/05 23:02:06  pwagner
+! Dump subroutine takes new options arg
+!
 ! Revision 2.13  2010/11/05 20:27:28  vsnyder
 ! Delete unused declarations.  Rename Kind argument of CreateHessianBlock_1
 ! as H_Kind to make the KIND intrinsic function available.  Add an optional
