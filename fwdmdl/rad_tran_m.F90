@@ -264,7 +264,6 @@ contains
                           & d_delta_df, nz_d_delta_df, nnz_d_delta_df,      &
                           & drad_df )
 
-    use GLNP, only: NG
     use LOAD_SPS_DATA_M, ONLY: GRIDS_T
     use MLSKinds, only: RP
     use SCRT_DN_M, ONLY: DSCRT_DX
@@ -317,7 +316,6 @@ contains
 
 ! Internals
 
-    integer :: AA, GA, I, II, III
     integer :: i_begin, n_inds, no_to_gl, sps_i, sv_i
     integer, target, dimension(1:size(inc_rad_path)) :: all_inds_B
     integer, target, dimension(1:size(inc_rad_path)) :: more_inds_B
@@ -438,7 +436,6 @@ contains
                             & nz_d_delta_df, nnz_d_delta_df,                  &
                             & d2rad_df2 )
 
-    use GLNP, only: NG
     use LOAD_SPS_DATA_M, ONLY: GRIDS_T
     use MLSKinds, only: RP
     use SCRT_DN_M, ONLY: D2SCRT_DX2
@@ -491,7 +488,6 @@ contains
 
 ! Internals
 
-    integer :: AA, GA, I, II, III
     integer :: i_begin
     integer :: n_inds_q, n_inds_r
     integer :: no_to_gl_q, no_to_gl_r
@@ -760,7 +756,7 @@ contains
 
 ! Internals
 
-    integer :: A, AA, B, GA
+    integer :: A, B, GA
     integer :: i, i_begin, n_inds, n_path, no_to_gl, p_i, sv_i
     integer, target, dimension(1:size(inc_rad_path)) :: all_inds_B
     integer, target, dimension(1:size(inc_rad_path)) :: inds_B, more_inds_B
@@ -966,10 +962,8 @@ contains
                          &  dbeta_path_c, dbeta_path_f, do_gl, del_s,     &
                          &  ref_cor, ds_dz_gw, inc_rad_path, tan_pt,      &
                          &  i_stop, drad_dx )
-    use GLNP, only: NG
     use LOAD_SPS_DATA_M, ONLY: GRIDS_T
     use MLSKinds, only: RP
-    use SCRT_DN_M, ONLY: DSCRT_DX
 
 ! Inputs
 
@@ -1007,7 +1001,6 @@ contains
 !                                              state vector element. (K)
 ! Internals
 
-    integer :: AA, GA, I, II, III
     integer :: i_start, n_inds, no_to_gl, sps_i, sps_m, sps_n, sv_i
     integer, target, dimension(1:size(inc_rad_path)) :: all_inds_B
     integer, target, dimension(1:size(inc_rad_path)) :: inds_B, more_inds_B
@@ -1593,6 +1586,9 @@ contains
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.15  2010/11/05 20:28:13  vsnyder
+! Delete unused declarations
+!
 ! Revision 2.14  2010/08/27 23:17:11  vsnyder
 ! Remove '(ip)' from all integer declarations
 !
