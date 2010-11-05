@@ -41,7 +41,7 @@ contains
     use Allocate_Deallocate, only: DEALLOCATE_TEST
     use Compute_Z_PSIG_m, only: Compute_Z_PSIG
     use ForwardModelConfig, only: DeriveFromForwardModelConfig, &
-      & DestroyForwardModelDerived, ForwardModelConfig_t
+      & DestroyForwardModelDerived, Dump, ForwardModelConfig_t
     use ForwardModelIntermediate, only: ForwardModelStatus_t
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use Get_Species_Data_M, only:  Get_Species_Data
@@ -52,6 +52,7 @@ contains
       & Load_One_Item_Grid, Load_Sps_Data
     use MatrixModule_1, only: MATRIX_T
     use MLSKinds, only: RP
+    use MLSStringLists, only: switchDetail
     use Molecules, only: First_Molecule, Last_Molecule, L_CLOUD_A
     use Toggles, only: Switches
     use VectorsModule, only: Vector_T, VectorValue_T
@@ -238,6 +239,9 @@ contains
     s_tg = merge(1,0,FwdModelConf%GenerateTScat)
     s_ts = merge(1,0,FwdModelConf%useTScat)
 
+    if ( switchDetail(switches,'fmconf') > -1 ) then
+      call dump( FwdModelConf, details=1 )
+    endif
     call FullForwardModelAuto ( FwdModelConf, FwdModelIn, FwdModelExtra,       &
                               & FwdModelOut, FmStat, z_psig, tan_press,        &
                               & grids_tmp, grids_f, grids_mag, grids_iwc,      &
@@ -315,9 +319,10 @@ contains
     use MLSNumerics, only: Hunt, InterpolateValues
     use MLSSignals_m, only: AreSignalsSuperset, GetNameOfSignal, MatchSignal, &
       & Radiometers, Signal_t
+    use MLSStringLists, only: switchDetail
     use Molecules, only: First_Molecule, Last_Molecule, &
       & L_CLOUD_A, L_H2O, L_N2O, L_O3
-    use Output_m, only: Output
+    use Output_m, only: OUTPUT, OUTPUTNAMEDVALUE
     use Path_Contrib_M, only: Get_GL_Inds
     use Physics, only: SpeedOfLight
     use PointingGrid_m, only: POINTINGGRIDS, PointingGrid_T
@@ -949,7 +954,11 @@ contains
       if ( toggle(emit) .and. levels(emit) > 2 ) &
         & call Trace_Begin ( 'ForwardModel.PointingLoop' )
 
-      if ( .not. FwdModelConf%generateTScat ) then
+      if ( switchDetail( switches, 'nfmpt', options='-fc' ) > -1 ) then
+       ! no op; maybe print
+       if ( toggle(emit) .and. levels(emit) > 2 ) &
+         & call output( '(Skipping loop of pointings)', advance='yes' )
+      elseif ( .not. FwdModelConf%generateTScat ) then
         do ptg_i = 1, no_tan_hts
 
           Vel_Rel = est_los_vel(ptg_i) / speedOfLight
@@ -1287,8 +1296,12 @@ contains
       use Convolve_All_m, only: Convolve_Radiance, Convolve_Temperature_Deriv, &
         & Convolve_Other_Deriv, Convolve_Other_Second_Deriv, Interpolate_Radiance, &
         & Interpolate_Temperature_Deriv, Interpolate_Other_Deriv
+      use Dump_0, only: DUMP
       use FOV_Convolve_m, only: Convolve_Support_T, FOV_Convolve_Setup, &
         & FOV_Convolve_Teardown, No_FFT
+      use Intrinsic, only: L_ELEVOFFSET, L_LIMBSIDEBANDFRACTION
+      use MLSFillValues, only: isNaN
+      use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
       use MLSNumerics, only: Coefficients => Coefficients_r8, &
         & InterpolateArraySetup, InterpolateArrayTeardown
 
@@ -1424,16 +1437,21 @@ contains
           end if
 
           if ( atmos_der ) then
-              call convolve_other_deriv ( convolve_support, maf, chanInd, &
+            call convolve_other_deriv ( convolve_support, maf, chanInd, &
+            & thisFraction, update, thisRadiance, beta_group%qty, Grids_f, &
+            & L1BMIF_TAI, MIFDeadTime, real(k_atmos(i,:,:),kind=rp), &
+            & Jacobian, fmStat%rows )
+
+            if (atmos_second_der ) then
+              if ( any(isNaN(h_atmos(i,:,:,:)) ) ) then
+                call dump( h_atmos(i,:,:,:), 'h_atmos(i,:,:,:)', options='-H' )
+                call MLSMessage( MLSMSG_Warning, ModuleName // 'Convolution', &
+                  & 'NaNs found in h_atmos (before convolve_other_second_deriv)' )
+              endif
+              call convolve_other_second_deriv ( convolve_support, maf, chanInd, &
               & thisFraction, update, thisRadiance, beta_group%qty, Grids_f, &
-              & L1BMIF_TAI, MIFDeadTime, real(k_atmos(i,:,:),kind=rp), &
-              & Jacobian, fmStat%rows )
-            
-              if (atmos_second_der ) then
-                  call convolve_other_second_deriv ( convolve_support, maf, chanInd, &
-                  & thisFraction, update, thisRadiance, beta_group%qty, Grids_f, &
-                  & L1BMIF_TAI, MIFDeadTime, real(h_atmos(i,:,:,:),kind=rp), &
-                  & Hessian, fmStat%rows )
+              & L1BMIF_TAI, MIFDeadTime, real(h_atmos(i,:,:,:),kind=rp), &
+              & Hessian, fmStat%rows )
             end if
           end if
 
@@ -1843,6 +1861,7 @@ contains
       ! Frequency average or simply copy H_Frq to give H, the final HESSIAN
 
       use Freq_Avg_m, only: Freq_Avg, Freq_Avg_DACS
+      use MLSFillValues, only: isNaN
 
       type(grids_T), intent(in) :: Grids
       real(rp), intent(in) :: H_FRQ(:,:,:)    ! To be averaged  Frq X Grid X Grid
@@ -1854,6 +1873,18 @@ contains
       real(rp) :: H_AVG      ! Frequency-averaged value
       integer :: SV_Q, SV_R  ! State-vector indexes
 
+      integer :: status
+
+      if ( any(isNaN(H_Frq) ) ) then
+        call MLSMessage( MLSMSG_Warning, ModuleName // 'Frequency_Avg_Second_Derivative', &
+          & 'NaNs found in h_frq', status=status )
+        if ( status == 0 ) call dump( H_Frq, 'H_Frq', options='-H' )
+      endif
+      if ( any(isNaN(H) ) ) then
+        call MLSMessage( MLSMSG_Warning, ModuleName // 'Frequency_Avg_Second_Derivative', &
+          & 'NaNs found in h (input)', status=status )
+        if ( status == 0 ) call dump( H_Frq, 'H_Frq', options='-H' )
+      endif
       if ( combine ) then
         ! Simply add newly-computed PFA derivatives in K_frq to
         ! previously-averaged LBL derivatives in K.  Remember that
@@ -1923,17 +1954,28 @@ contains
         end do
       case default             ! Impossible
       end select               ! Frequency averaging or not
+      if ( any(isNaN(H) ) ) then
+        call MLSMessage( MLSMSG_Warning, ModuleName // 'Frequency_Avg_Second_Derivative', &
+          & 'NaNs found in h (output)', status=status )
+        if ( status /= 0 ) return
+        call outputNamedValue( 'noUsedChannels', noUsedChannels )
+        call outputNamedValue( 'noUsedDACS', noUsedDACS )
+        call outputNamedValue( 'frq_avg_sel', frq_avg_sel )
+        call outputNamedValue( 'combine', combine )
+        call dump( H, 'H', options='-H' )
+      endif
     end subroutine Frequency_Avg_Second_Derivative
-
 
   ! ................................  Frequency_Avg_Second_Derivs  .....
     subroutine Frequency_Avg_Second_Derivs ( Ptg_i, Combine )
+      use MLSFillValues, only: isNaN
 
       integer, intent(in) :: Ptg_i          ! Pointing index
       logical, intent(in) :: Combine        ! "Combine LBL and PFA"
 
       integer :: K, KK  ! Loop inductor
       integer :: UB     ! Upper bound for first dimension of h_..._frq
+      integer :: status
 
       ub = noFreqs
       if ( combine ) ub = max(ub,noUsedChannels)
@@ -1957,13 +1999,27 @@ contains
           end do                      ! Loop over major molecules
         end do                        ! Loop over major molecules
 
+        if ( any(isNaN(h_atmos(:,ptg_i,:,:)) ) ) then
+          call MLSMessage( MLSMSG_Warning, ModuleName // 'Frequency_Avg_Second_Derivs', &
+            & 'NaNs found in h_atmos', status=status )
+          if ( status == 0 ) then
+            call outputNamedValue( 'no_mol', no_mol )
+            call outputNamedValue( 'combine', combine )
+            call outputNamedValue( 'ub', ub )
+            call outputNamedValue( 'shape(h_atmos)', shape(h_atmos) )
+            call outputNamedValue( 'shape(h_atmos_frq)', shape(h_atmos_frq) )
+            call outputNamedValue( 'shape(h_atmos_frq(:ub,:,:))', shape(h_atmos_frq(:ub,:,:)) )
+            call outputNamedValue( 'ptg_i', ptg_i )
+            call dump( h_atmos(:,ptg_i,:,:), 'h_atmos(:,ptg_i,:,:)', options='-H' )
+          endif
+        endif
       end if                          ! Want derivatives for atmos
 
     end subroutine Frequency_Avg_Second_Derivs
 
-
   ! ..........................................  Frequency_Setup_1  .....
     subroutine Frequency_Setup_1 ( Tan_Press, Grids )
+      use output_m, only: outputNamedValue
 
       ! Work out which pointing frequency grid we're going to need
 
@@ -2076,6 +2132,8 @@ contains
 
       sv_dim = 0
       if ( atmos_second_der ) sv_dim = size(grids_f%values)
+      call outputNamedValue( 'maxNoPtgFreqs', maxNoPtgFreqs )
+      call outputNamedValue( 'noUsedChannels', noUsedChannels )
       call allocate_test ( h_atmos_frq, max(maxNoPtgFreqs,noUsedChannels), &
                          & sv_dim, sv_dim, 'h_atmos_frq', moduleName )
 
@@ -3405,6 +3463,7 @@ contains
       use Metrics_m, only: Height_Metrics, More_Metrics, More_Points, &
         & Tangent_Metrics
       use Min_Zeta_m, only: Get_Min_Zeta
+      use MLSFillValues, only: isNaN
       use Phi_Refractive_Correction_m, only: Phi_Refractive_Correction
       use Read_Mie_m, only: IWC_s, T_s
       use REFRACTION_M, only: REFRACTIVE_INDEX, COMP_REFCOR
@@ -3442,6 +3501,7 @@ contains
       real(rp) :: Scat_D1, Scat_D2   ! To compute scat_index
       integer :: Scat_Temp           ! To compute scat_index
       real(rp), parameter :: Scat_Tol = 1.0 ! max miss of scattering pt, (km/h)**2
+      integer :: status
       real(rp) :: Tan_Ht ! Geometric tangent height, km, from equivalent Earth center
       real(rp) :: Tan_Ht_S ! Tangent height above 1 bar reference surface, km
 
@@ -4077,6 +4137,16 @@ contains
             & H_Atmos_Frq(frq_i,:,:), K_Atmos_Frq(frq_i,:),                     &
             & K_Spect_dN_Frq(frq_i,:), K_Spect_dV_Frq(frq_i,:),                 &
             & K_Spect_dW_Frq(frq_i,:), K_Temp_Frq(frq_i,:) )
+          if ( any(isNaN(H_Atmos_Frq(frq_i,:,:)) ) ) then
+            call MLSMessage( MLSMSG_Warning, ModuleName // 'One_Pointing', &
+              & 'NaNs found in h_atmos_freq (after one_frequency)', status=status )
+            if ( status == 0 ) then
+              call output('Line-by-line', advance='yes' )
+              call outputNamedValue( 'frq_i', frq_i )
+              call outputNamedValue( 'ptg_i', ptg_i )
+              call dump( H_Atmos_Frq(frq_i,:,:), 'H_Atmos_Frq(frq_i,:,:)', options='-H' )
+            endif
+          endif
         end do
         if ( print_TauL ) then
           call output ( thisSideband, before='Sideband ' )
@@ -4116,6 +4186,16 @@ contains
             & H_Atmos_Frq(frq_i,:,:), K_Atmos_Frq(frq_i,:),                     &
             & K_Spect_dN_Frq(frq_i,:), K_Spect_dV_Frq(frq_i,:),                 &
             & K_Spect_dW_Frq(frq_i,:), K_Temp_Frq(frq_i,:) )
+          if ( any(isNaN(H_Atmos_Frq(frq_i,:,:)) ) ) then
+            call MLSMessage( MLSMSG_Warning, ModuleName // 'One_Pointing', &
+              & 'NaNs found in h_atmos_freq (after one_frequency)', status=status )
+            if ( status == 0 ) then
+              call output('PFA', advance='yes' )
+              call outputNamedValue( 'frq_i', frq_i )
+              call outputNamedValue( 'ptg_i', ptg_i )
+              call dump( H_Atmos_Frq(frq_i,:,:), 'H_Atmos_Frq(frq_i,:,:)', options='-H' )
+            endif
+          endif
         end do
         if ( print_TauP ) then
           call output ( thisSideband, before='Sideband ' )
@@ -4125,8 +4205,24 @@ contains
         end if
 
       end if ! FwdModelConf%anyPFA(sx)
+      if ( any(isNaN(H_Atmos(:,ptg_i,:,:)) ) ) then
+        call MLSMessage( MLSMSG_Warning, ModuleName // 'One_Pointing', &
+          & 'NaNs found in h', status=status )
+        if ( status == 0 ) then
+          call output('right before frequency average (will we zero them out?)', advance='yes' )
+          call dump( H_Atmos(:,ptg_i,:,:), 'H_Atmos(:,ptg_i,:,:)', options='-H' )
+        endif
+      endif
 
       call frequency_average ( ptg_i )! or maybe just store
+      if ( any(isNaN(H_Atmos(:,ptg_i,:,:)) ) ) then
+        call MLSMessage( MLSMSG_Warning, ModuleName // 'One_Pointing', &
+          & 'NaNs found in h_atmos (at end of one_pointing)', status=status )
+        if ( status == 0 ) then
+          call output('right after frequency average (we did notzero them out)', advance='yes' )
+          call dump( H_Atmos(:,ptg_i,:,:), 'H_Atmos(:,ptg_i,:,:)', options='-H' )
+        endif
+      endif
 
       ! If we're doing frequency averaging, there's a different frequency
       ! grid for each pointing, but we don't need to deallocate it here
@@ -4294,6 +4390,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.310  2010/11/03 18:43:51  vsnyder
+! Initialize eta_fzp and H_Atmos.  Frequency average LBL second derivatives.
+!
 ! Revision 2.309  2010/09/25 01:08:39  vsnyder
 ! Cannonball polishing
 !
