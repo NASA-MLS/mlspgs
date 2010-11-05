@@ -661,11 +661,11 @@ program MLSL2
     if ( parallel%slave ) &
       & removeSwitches = catLists( trim(removeSwitches), 'chu,chu1,l2q,mas,slv' )
   ! Remove any quote marks from RemoveSwitches array
-  tempSwitches = unquote(removeSwitches, quotes=quotes, stripany=.true.)
+  tempSwitches = unquote(removeSwitches, quotes=quotes, options='-p')
   call GetUniqueList(tempSwitches, removeSwitches, numSwitches, countEmpty=.true., &
         & ignoreLeadingSpaces=.true.)
   ! Remove any quote marks from switches array
-  tempSwitches = unquote(switches, quotes=quotes, stripany=.true.)
+  tempSwitches = unquote(switches, quotes=quotes, options='-p')
   call GetUniqueList(tempSwitches, Switches, numSwitches, countEmpty=.true., &
         & ignoreLeadingSpaces=.true.)
   ! Remove any switches embedded in the removeSwitches option 'R'
@@ -1147,6 +1147,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.176  2010/11/05 22:36:16  pwagner
+! Consistent with new unquote api
+!
 ! Revision 2.175  2010/09/17 00:11:19  pwagner
 ! Fixed misuse of switchDetail function
 !
