@@ -1126,7 +1126,8 @@ op:     do j = 2, nsons(theTree)
 
     if ( error /= 0 ) then
       call dump ( info, 'ConstructForwardModelConfig' )
-      call MLSMessage ( MLSMSG_Error, ModuleName, 'An error occured' )
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'An error occured; see **** above' )
     end if
 
     if ( toggle(gen) .and. levels(gen) > 0 ) &
@@ -1498,6 +1499,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.153  2010/11/08 19:26:22  pwagner
+! Slight improvement of unhelpful error message
+!
 ! Revision 2.152  2010/08/27 06:20:47  yanovsky
 ! Added atmos_second_der, moleculeSecondDerivatives.
 ! Added error handling: Hess_notJac, SecondDerivTree, FirstSansFirst1,
