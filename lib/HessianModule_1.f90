@@ -18,7 +18,7 @@ module HessianModule_1          ! High-level Hessians in the MLS PGS suite
 
   use Allocate_Deallocate, only: Test_Deallocate
   use HessianModule_0, only: ClearBlock, CreateBlock, &
-    & DestroyBlock, HessianElement_T, H_Absent, &
+    & DestroyBlock, HessianElement_T, H_Absent, RH, &
     & H_Sparse, H_Full, OptimizeBlock
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
@@ -158,7 +158,7 @@ contains
     integer, intent(in) :: RowNum, ColNum1, ColNum2 ! Row and column of the block
     integer, intent(in) :: H_Kind        ! Kind of block, see HessianModule_0
     integer, intent(in), optional :: InitTuples     ! Number of nonzeros
-    real(kind(h%block(rowNum,colNum1,colNum2)%values)), intent(in), optional :: &
+    real(rh), intent(in), optional :: &
       & Fill ! Fill value if H_Kind == H_Full
     call createBlock ( h%block ( rowNum, colNum1, colNum2 ), &
       & h%row%nelts ( rowNum ), &
@@ -687,6 +687,9 @@ contains
 end module HessianModule_1
 
 ! $Log$
+! Revision 2.15  2010/11/08 19:01:58  pwagner
+! Fixed something NAG and Lahey called a bug
+!
 ! Revision 2.14  2010/11/05 23:02:06  pwagner
 ! Dump subroutine takes new options arg
 !
