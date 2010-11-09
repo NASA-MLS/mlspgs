@@ -939,7 +939,7 @@ contains ! =====     Public Procedures     =============================
     ! Local variables
     integer                        :: myhdfVersion
     call output ( 'Level 2 apriori product type : ' )
-    call output ( trim(l2_type), advance='no')
+    call output ( trim(l2_type), advance='no' )
     if ( present(hdfVersion) ) then
       call blanks(4)
       call output ( 'hdf ' )
@@ -948,18 +948,15 @@ contains ! =====     Public Procedures     =============================
       else
         myhdfVersion = hdfVersion
       endif
-      call output ( myhdfVersion, advance='yes')
-    else
-      call output ( ' ', advance='yes')
-    endif
+      call output ( myhdfVersion, advance='no' )
+    end if
+    call output ( '', advance='yes' )
     call blanks(15)
-    call output ( 'name : ' )
-    call blanks(8)
-    call output ( trim(Name), advance='yes')
-
-    call output ( 'quantity', advance='yes')           
-    call blanks(5)                                        
-    call output ( trim(quantityName), advance='yes')      
+    call output ( 'name:     ', advance='no' )
+    call output ( trim(Name), advance='yes' )
+    call blanks(15)
+    call output ( 'quantity: ', advance='no' )           
+    call output ( trim(quantityName), advance='yes' )      
     if ( present(MLSFile) .and. switchdetail(switches, 'apr' ) > -1 ) &
       & call dump(MLSFile)
   end subroutine announce_success
@@ -1043,6 +1040,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.83  2010/11/09 02:37:28  vsnyder
+! Spiff up a dump
+!
 ! Revision 2.82  2010/02/04 23:12:44  vsnyder
 ! Remove USE or declaration for unreferenced names
 !
