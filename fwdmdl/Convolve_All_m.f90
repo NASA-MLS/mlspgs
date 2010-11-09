@@ -313,14 +313,14 @@ contains
     use ForwardModelConfig, only: QtyStuff_T
     use Fov_Convolve_m, only: Convolve_Support_T, &
       & FOV_Convolve_3d
-    use HessianModule_0, only: DUMP
+    use HessianModule_0, only: DUMP, RH
     use HessianModule_1, only: HESSIAN_T
     use Load_sps_data_m, only: Grids_T, Dump
     use MLSFillValues, only: isNaN
-    use MLSKinds, only: R8, RM, RP, RV
+    use MLSKinds, only: R8, RP, RV
     use MatrixModule_1, only: FINDBLOCK
     use MLSStringLists, only: switchDetail
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
     use output_m, only: outputNamedValue, resumeOutput, suspendOutput
     use TOGGLES, only: switches
     use VectorsModule, only: VectorValue_T
@@ -356,21 +356,7 @@ contains
     real(r8) :: d2rad_df2_out( size(convolve_support%del_chi_out), &
                              & size(d2i_df2,dim=2), size(d2i_df2,dim=3))
     real(rv), pointer :: MIF_Times_for_MAF(:)
-    real(rm), pointer :: hvalues(:)
-    
-    ! Debugging variables
-    integer, save :: channelMin = 0
-    integer, save :: channelMax = 0
-    integer, save :: kiMin = 0
-    integer, save :: kiMax = 0
-    integer, save :: kjMin = 0
-    integer, save :: kjMax = 0
-    integer, save :: qMin = 0
-    integer, save :: qMax = 0
-    integer, save :: rMin = 0
-    integer, save :: rMax = 0
 
-    nullify ( hValues )
     nullify ( MIF_Times_for_MAF )
     if ( associated(MIF_Times) ) MIF_Times_for_MAF => MIF_Times(:,maf)
     noChans = Radiance%template%noChans
@@ -401,9 +387,7 @@ contains
         call dump( Grids_f, details=2 )
       endif
     endif
-    ! Use temp hValues 
-    call allocate_test( hValues, size(d2rad_df2_out), 'hValues', ModuleName // &
-      & 'Convolve_Other_Second_Deriv' )
+
     do sps_i = 1, size(qtys)
 
       if ( .not. qtys(sps_i)%foundInFirst ) cycle
@@ -441,12 +425,10 @@ contains
                 ! load derivatives for this (zeta & phi) if needed:
 
                 if ( Grids_f%deriv_flags(q) .and. Grids_f%deriv_flags(r) ) then
-!                  call loadMatrixValue ( d2rad_df2_out(:,q,r), &
-!                  & hessian%block(row,col1,col2)%values(channel::noChans,ki,kj), &
-!                  & sbRatio, update, ERR )
-                    call loadMatrixValue ( d2rad_df2_out(:,q,r), &
-                    & hValues, &
-                    & sbRatio, update, ERR )
+
+                  call loadMatrixValue ( d2rad_df2_out(:,q,r), &
+                  & hessian%block(row,col1,col2)%values(channel::noChans,ki,kj), &
+                  & sbRatio, update, ERR )
 
                   select case ( err ) 
                   case (1)
@@ -463,11 +445,10 @@ contains
                       & 'd2rad_df2_out bigger than hessian slice; NaNs, too' )
                   case (6)
                     call MLSMessage( MLSMSG_Warning, ModuleName, &
-                      & 'd2rad_df2_out smallerer than hessian slice; NaNs, too' )
+                      & 'd2rad_df2_out smaller than hessian slice; NaNs, too' )
                   case default
                   end select
                 endif
-                hessian%block(row,col1,col2)%values(channel::noChans,ki,kj) = hValues
               end do
               if ( switchDetail( switches, 'hnan', options='-fc' ) > -1) then
                 call suspendOutput
@@ -484,8 +465,6 @@ contains
       end do
 
     end do
-    call Deallocate_test( hValues, 'hValues', ModuleName // &
-      & 'Convolve_Other_Second_Deriv' )
 
   end subroutine Convolve_Other_Second_Deriv
 
@@ -979,7 +958,7 @@ contains
   subroutine GetBandedBlock ( Jacobian, Row, Col, NoChans, NoPtan )
     use MatrixModule_0, only: M_ABSENT, M_BANDED, CHECKFORSIMPLEBANDEDLAYOUT
     use MatrixModule_1, only: CREATEBLOCK, MATRIX_T
-    use MLSKinds, only: RM
+     use MLSKinds, only: RM
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use String_Table, only: Get_String
     type (Matrix_t), intent(inout) :: Jacobian
@@ -1015,14 +994,14 @@ contains
     integer, intent(in) :: Row, Col
     character(len=*), intent(in) :: What
     character(len=63) :: ForWhom
-    if ( jacobian%name /= 0 ) then
-      call get_string ( jacobian%name, forWhom )
-      forWhom = trim(forWhom) // " in GetFullBlock"
-    else
-      forWhom = "GetFullBlock"
-    end if
     select case ( Jacobian%block(row,col)%kind )
       case ( m_absent )
+        if ( jacobian%name /= 0 ) then
+          call get_string ( jacobian%name, forWhom )
+          forWhom = trim(forWhom) // " in GetFullBlock"
+        else
+          forWhom = "GetFullBlock"
+        end if
         call CreateBlock ( Jacobian, row, col, m_full, init=0.0_rm, forWhom=forWhom )
       case ( m_full )
       case default
@@ -1033,29 +1012,26 @@ contains
 
 
   subroutine GetFullBlock_Hessian ( Hessian, Row, Col1, Col2, What )
-    use HessianModule_0, only: H_ABSENT, H_FULL
+    use HessianModule_0, only: H_ABSENT, H_FULL, RH
     use HessianModule_1, only: CREATEBLOCK, HESSIAN_T
-    use MLSKinds, only: RM
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use String_Table, only: Get_String
     type (Hessian_t), intent(inout) :: Hessian
     integer, intent(in) :: Row, Col1, Col2
     character(len=*), intent(in) :: What
-    character(len=63) :: ForWhom
-    if ( hessian%name /= 0 ) then
-      call get_string ( hessian%name, forWhom )
-      forWhom = trim(forWhom) // " in GetFullBlock"
-    else
-      forWhom = "GetFullBlock"
-    end if
+
     select case ( Hessian%block(row,col1,col2)%kind )
       case ( h_absent )
-        call CreateBlock ( Hessian, row, col1, col2, h_full, inittuples=0 )
+        ! If profiling shows we're spending too much time filling the block,
+        ! we could send in a signal and only fill for the channels for which
+        ! we are not computing results.
+        call CreateBlock ( Hessian, row, col1, col2, h_full, inittuples=0, fill=0.0_rh )
       case ( h_full )
       case default
         call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Wrong matrix block type for ' // what // ' second derivative matrix' )
     end select
+
   end subroutine GetFullBlock_Hessian
 
 
@@ -1121,6 +1097,11 @@ contains
 end module Convolve_All_m
 
 ! $Log$
+! Revision 2.16  2010/11/09 01:01:25  vsnyder
+! Get RH from HessianModule_0 instead of RM from MLSKinds.  Delete unused
+! declarations.  Remove explicit copy-out for loadMatrixValue (should have
+! been copy-in/copy-out anyway).  Don't get strings that aren't needed.
+!
 ! Revision 2.15  2010/10/13 22:18:22  pwagner
 ! Intermediate steps in eliminating NaNs from analytic Hessians
 !
