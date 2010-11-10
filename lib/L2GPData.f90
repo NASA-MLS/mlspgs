@@ -18,11 +18,12 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   use Hdf, only: DFACC_RDONLY, DFACC_READ, DFACC_CREATE, DFACC_RDWR, &
     & DFNT_FLOAT32, DFNT_INT32, DFNT_FLOAT64
   use Intrinsic ! "units" type literals, beginning with L_
-  use MLSCommon, only: R4, R8, defaultUndefinedValue, MLSFile_T, L2Metadata_T
+  use MLSCommon, only: defaultUndefinedValue, MLSFile_T, L2Metadata_T
   use MLSFiles, only: FILENOTFOUND, &
     & HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, WRONGHDFVERSION, &
     & DUMP, INITIALIZEMLSFILE, MLS_closeFile, MLS_EXISTS, mls_openFile, &
     & MLS_HDF_VERSION, MLS_INQSWATH, open_MLSFile, close_MLSFile
+  use MLSKinds, only: R4, R8
   use MLSFillValues, only: ExtractArray, GatherArray, &
     & IsFillValue, ReplaceFillValues
   use MLSHDFEOS, only: HSIZE
@@ -1014,7 +1015,7 @@ contains ! =====     Public Procedures     =============================
 
     use HGridsDatabase, only: HGrid_T
     use PCFHdr, only: GlobalAttributes_T, GlobalAttributes, &
-      & he5_readglobalattr, he5_writeglobalattr
+      & dumpGlobalAttributes, he5_readglobalattr, he5_writeglobalattr
     ! Arguments
 
     type (L2Metadata_T) :: l2metaData
@@ -1038,6 +1039,7 @@ contains ! =====     Public Procedures     =============================
     ! Local
     logical :: allSwaths
     integer :: DayofYear
+    logical, parameter :: DEEBUG = .TRUE.
     integer :: File1Handle
     integer :: File2Handle
     logical :: file_exists
@@ -1135,14 +1137,22 @@ contains ! =====     Public Procedures     =============================
       call he5_readglobalattr (File1Handle, gAttributes, &
         & ProcessLevel, DayofYear, TAI93At0zOfGranule, status)
       if ( status == 0 ) then
-        if ( DEEBUG ) call output ( '(Global Attributes read) ', advance='yes')
+        if ( DEEBUG ) then
+          call output ( '(Global Attributes read) ', advance='yes')
+          call dumpGlobalAttributes
+        endif
         ! Unfortunately, he5_writeglobalattr writes class-level data
-        ! so must store original version so can copy new data into it 
+        ! so must save original version so can copy new data into it 
         gAttributesOriginal = GlobalAttributes
         GlobalAttributes = gAttributes
-        if ( DEEBUG ) call outputNamedValue('Misc Notes (written) ', trim(GlobalAttributes%MiscNotes) )
+        ! Why must we do this? Why do things not simply work out properly?
+        GlobalAttributes%TAI93At0zOfGranule = TAI93At0zOfGranule
+        if ( DEEBUG ) then
+          call outputNamedValue('Misc Notes (written) ', trim(GlobalAttributes%MiscNotes) )
+          call dumpGlobalAttributes
+        endif
         call he5_writeglobalattr (File2Handle)
-        ! Before leaving must copy original data back
+        ! Before leaving must restore original data back
         GlobalAttributes = gAttributesOriginal
       else
         call output ( '(Global Attributes missing) ' // trim(file1), advance='yes')
@@ -4938,6 +4948,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.176  2010/06/22 16:53:15  pwagner
+! Consistent with new behavior of switchDetail: must include 'f' if override default options
+!
 ! Revision 2.175  2010/06/19 00:11:05  pwagner
 ! Diffs were checking wrong default field names; fixed
 !
