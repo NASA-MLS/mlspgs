@@ -1,0 +1,197 @@
+\documentclass[fleqn,10pt]{article}
+\usepackage[dvips]{graphics,color}
+\usepackage{amscd, amsfonts, amsmath, amssymb}
+\usepackage{amsthm}
+\usepackage{eucal}
+\usepackage{pifont}
+
+\usepackage{epsfig}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{verbatim}
+
+\setlength{\topmargin}{-1.5cm}
+\setlength{\headheight}{0.5cm}
+\setlength{\headsep}{0.7cm}
+\setlength{\topskip}{0.5cm}
+\setlength{\textheight}{23.0cm}
+\setlength{\footskip}{0.5cm}
+\setlength{\oddsidemargin}{0.5cm}
+\setlength{\evensidemargin}{0.5cm}
+\setlength{\textwidth}{14.5cm}
+
+% For pasting into PPT presentation: 
+%\setlength{\textwidth}{10.5cm}
+
+
+
+
+\setcounter{tocdepth}{5}
+
+
+
+%\numberwithin{equation}{section}
+
+%\pagestyle{headings}
+%\markboth{Igor}{Yanovsky}
+
+
+
+\def\pdf{p}
+\def\vx{{\bf x}}
+\def\vy{{\bf y}}
+\def\vg{{\bf g}}
+\def\g{g}
+\def\vh{{\bf h}}
+\def\vf{{\bf f}}
+\def\vF{{\bf F}}
+\def\vu{{\bf u}}
+\def\vv{{\bf v}}
+\def\vn{{\bf n}}
+\def\vmu{\boldsymbol \mu}
+\def\vnabla{{\bf \nabla}}
+\def\vid{{\bf id}}
+\def\va{{\bf a}}
+\def\vr{{\bf r}}
+\def\vb{{\bf b}}
+
+\def\ff{\mbox f}
+
+\def\D{\mathcal{D}}
+\def\E{\mathcal{E}}
+
+\def\trace{\mbox{trace}}
+\def\divergence{\mbox{div}}
+
+\def\I{\mathcal{I}}
+\def\R{\mathcal{R}}
+\def\S{\mathcal{S}}
+\def\T{\mathcal{T}}
+
+
+\def\m{\mbox{m}}
+\def\km{\mbox{km}}
+\def\nm{\mbox{nm}}
+\def\cm{\mbox{cm}}
+\def\s{\mbox{s}}
+\def\kg{\mbox{kg}}
+\def\K{\mbox{K}}
+\def\N{\mbox{N}}
+\def\J{\mbox{J}}
+\def\Pa{\mbox{Pa}}
+\def\hPa{\mbox{hPa}}
+\def\Hz{\mbox{Hz}}
+\def\MHz{\mbox{MHz}}
+\def\AMU{\mbox{AMU}}
+
+\def\NH{\mbox{NH}}
+\def\NP{\mbox{NP}}
+
+\def\insta{\mathfrak{M}}
+\def\instb{\mathfrak{T}}
+
+
+\hyphenation{atmosphere}
+\hyphenation{considered}
+\hyphenation{defined}
+\hyphenation{Jacobian}
+\hyphenation{thermodynamic}
+\hyphenation{vector}
+
+
+\begin{document}
+
+\title{Radiative Transfer: Deriving Integral Equation from Differential Equation}
+\author{Igor Yanovsky \\
+iy-007}
+
+\date{November 9, 2010}
+
+\maketitle
+
+
+The radiative transfer equation for a nonscattering atmosphere in local thermodynamic equilibrium is
+\begin{eqnarray*}
+\frac{\partial I (\nu, \vx(s))}{\partial s} + \alpha (\nu, \vx(s)) I(\nu, \vx(s)) &=& \alpha(\nu,\vx(s)) B(\nu,\vx(s)),
+\end{eqnarray*}
+where $s$ is the distance coordinate along the path, $\vx$ is the state vector, $I(\nu,\vx(s))$ is the radiance at frequency $\nu$ at position $s$, $\alpha(\nu,\vx(s))$ is an absorption coefficient, and $B(\nu,\vx(s))$ is the Planck radiation function. \\ 
+Consider a case with a single frequency: 
+\begin{equation}
+\frac{\partial I (s)}{\partial s} + \alpha (s) I(s) \ = \ \alpha(s) B(s).
+\label{eqn:differential_RT_single_nu}
+\end{equation}
+Given $s = s_0$ and $s = s_\insta$ are path locations at the top of the atmosphere and at the satellite, respectively, the transmission is defined as
+\begin{equation}
+\T(s) \ = \ e^{-\int_{s}^{s_\insta} \alpha(x) dx}.
+\label{eqn:tau}
+\end{equation}
+Note:
+\begin{eqnarray*}
+\T(s_0) &=& e^{-\int_{s_0}^{s_\insta} \alpha(x) dx}, \\
+\T(s_\insta) &=& 1.
+\end{eqnarray*}
+Multiply Equation (\ref{eqn:differential_RT_single_nu}) by $e^{\int_{s_0}^{s} \alpha(x) dx}$:
+\begin{eqnarray}
+e^{\int_{s_0}^{s} \alpha(x) dx} \bigg( \frac{\partial I (s)}{\partial s} + \alpha (s) I(s) \bigg) &=& e^{\int_{s_0}^{s} \alpha(x) dx} \alpha(s) B(s),
+\nonumber \\
+\Big( e^{\int_{s_0}^{s} \alpha(x) dx} I (s) \Big)' &=& e^{\int_{s_0}^{s} \alpha(x) dx} \alpha(s) B(s),
+\nonumber \\
+e^{\int_{s_0}^{s} \alpha(x) dx} I (s) - I(s_0) &=& \int_{s_0}^{s} e^{\int_{s_0}^{s'} \alpha(x) dx} \alpha(s') B(s') ds',
+\nonumber
+\end{eqnarray}
+where $s_0 < s' < s$.  From this, we have
+\begin{eqnarray*}
+I(s) &=& I(s_0) e^{-\int_{s_0}^{s} \alpha(x) dx} + e^{-\int_{s_0}^{s} \alpha(x) dx} \int_{s_0}^{s} e^{\int_{s_0}^{s'} \alpha(x) dx} \alpha(s') B(s') ds',
+\end{eqnarray*}
+or
+\begin{eqnarray*}
+I(s) &=& I(s_0) e^{-\int_{s_0}^{s} \alpha(x) dx} + \int_{s_0}^{s} e^{-\int_{s'}^{s} \alpha(x) dx} \alpha(s') B(s') ds'.
+\end{eqnarray*}
+When $s=s_{\insta}$, we have
+\begin{eqnarray*}
+I(s_{\insta}) &=& I(s_0) e^{-\int_{s_0}^{s_{\insta}} \alpha(x) dx} + \int_{s_0}^{s_{\insta}} e^{-\int_{s'}^{s_{\insta}} \alpha(x) dx} \alpha(s') B(s') ds',
+\end{eqnarray*}
+or
+\begin{equation}
+I(s_{\insta}) = I(s_0) \T(s_0) + \int_{s_0}^{s_{\insta}} \T(s') \alpha(s') B(s') ds'.
+\label{eqn:RT_integral1}
+\end{equation}
+From equation (\ref{eqn:tau}):
+\begin{equation*}
+\frac{d\T}{ds} = \alpha(s)\T(s).
+\end{equation*}
+Thus, we have
+\begin{equation}
+I(s_{\insta}) = I(s_0) \T(s_0) + \int_{\T(s_0)}^{1} B(s) \, d\T(s).
+\label{eqn:RT_integral2}
+\end{equation}
+Integrating by parts, we get
+\begin{equation*}
+I(s_{\insta}) \ = \ I(s_0) \T(s_0) \, + \, \Big[ B(s)\T(s) \Big]_{s=s_0}^{s=s_{\insta}}  \, - \, \int_{B(s_0)}^{B(s_{\insta})} \T(s) \, dB(s),
+\end{equation*}
+or
+\begin{equation}
+I(s_{\insta}) \ = \ \big( I(s_0) - B(s_0) \big) \T(s_0) \, + \, B(s_{\insta}) \, - \, \int_{B(s_0)}^{B(s_{\insta})} \T(s) \, dB(s).
+\label{eqn:RT_integral3}
+\end{equation}
+\ \\
+\ \\
+\ \\
+{\it Remark:}  No emission assumption results in the following differential equation:
+\begin{equation*}
+\frac{\partial I (s)}{\partial s} + \alpha (s) I(s) = 0,
+\end{equation*}
+which has the following solution:
+\begin{equation*}
+I (s_\insta) = I(s_0)\T(s_0).
+\end{equation*}
+
+
+
+%\bibliographystyle{ieee}
+%\bibliography{/Users/yanovsky/Igor/papers/refslib/yanovsky}
+
+
+\end{document}
+
+% $Id$
