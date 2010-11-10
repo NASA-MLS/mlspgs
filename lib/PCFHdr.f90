@@ -21,9 +21,10 @@ MODULE PCFHdr
    use dates_module, only: utc_to_date, utc_to_yyyymmdd, utcForm
    use Hdf, only: DFACC_RDWR, DFACC_WRITE, AN_FILE_DESC
    use INTRINSIC, only: L_GRID, L_HDF, L_SWATH
-   use MLSCommon, only: r8, FileNameLen, MLSFile_T, NameLen
+   use MLSCommon, only: FileNameLen, MLSFile_T, NameLen
    use MLSFiles, only: GetPCFromRef, HDFVERSION_4, HDFVERSION_5, &
      & InitializeMLSFile, open_MLSFile, close_MLSFile
+   use MLSKinds, only: R8
    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
      & MLSMSG_Warning, MLSMSG_DeAllocate, MLSMSG_FILEOPEN
    use MLSStrings, only: lowerCase
@@ -263,6 +264,8 @@ CONTAINS
         end if
       endif
     endif
+    if ( DEBUG ) call outputnamedValue ( 'FillTAI93Attribute', &
+      & GlobalAttributes%TAI93At0zOfGranule )
 
 !------------------------------------
    END SUBROUTINE FillTAI93Attribute
@@ -1509,6 +1512,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.55  2010/11/10 02:01:57  pwagner
+!# Extra output if DEBUG
+!#
 !# Revision 2.54  2010/02/04 23:08:00  vsnyder
 !# Remove USE or declaration for unused names
 !#
