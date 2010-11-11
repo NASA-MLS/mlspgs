@@ -335,15 +335,18 @@ module MLSFillValues              ! Some FillValue-related stuff
 contains
 
   ! ---------------------------------------------  Depopulate  -----
-  ! This family of routines returns just those values of an array[i,j,..]
-  ! depending upon options:
-  ! options             which 
+  ! This family of routines returns only non-zero values of an array[i,j,..]
+  ! or, depending upon options:
+  ! options             which to return
   !   '+'              values  >  testvalue
   !   '/'              values  /= testvalue
-  ! If '||' is among the options, we test according to |array[i]|
+  !   '%'              compare values with testvalue*maxval(values)
+  !  '||'              test according to |array[i]|
+  !  'r '              reverse sense; i.e. return just the "zeros"
   ! If testvalue is not supplied, it defaults to 0
   ! Optionally we return just the indices i for 1-d arrays, (i,j) for 2-d,
   ! (i,j,k) for 3-d, etc.
+  ! This is similar in spirit to "sparifying" a full block Hessian
   ! See also Repopulate
   subroutine Depopulate_1d_int ( iarray, i, n, itestvalue, ivalues, options )
     integer, dimension(:), intent(out) :: i
@@ -2621,6 +2624,9 @@ end module MLSFillValues
 
 !
 ! $Log$
+! Revision 2.23  2010/11/11 19:54:29  pwagner
+! May select values by relative size
+!
 ! Revision 2.22  2010/10/13 00:41:23  pwagner
 ! WhereAreThe.. can now take'ind' mode, returning indexes of each
 !
