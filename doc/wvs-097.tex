@@ -1,0 +1,197 @@
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-097}
+\newcommand{\docdate}{16 August 2010}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\newcommand{\TS}{T_\text{scat}}
+\newcommand{\TSs}[1]{T_{\text{scat}_{#1}}}
+\newcommand{\DB}{\Delta B}
+\newcommand{\MT}{\mathcal{T}}
+\newcommand{\IC}[1]{\,\mathcal{I}_j\!\left(#1\right)} % Interpolation Function
+\newcommand{\IF}[1]{\,\mathcal{A}_n\!\left(#1\right)} % Interpolation Function
+\newcommand{\FA}[1]{\,\mathcal{F}_c\!\left(#1\right)} % Frequency averaging
+\newcommand{\ER}[1]{Equation (\ref{#1})} % Equation reference
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill, Nathaniel, Van\\
+Subject: \>Full forward model changes to combine LBL, PFA and $\TS$\\
+From: \>Van Snyder\\
+Reference: \>\h{wvs-027}, \h{wvs-096}
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+$\TS$ calculations are first combined with LBL calculations.  Those
+results are then combined with PFA calculations, similarly to the method
+described in wvs-027.
+
+The result of combined $\TS$ and LBL calculations is still called
+$\MT^s_{ij}$ here. 
+
+$\MT^s_{ij}$ (``$s$'' for ``strong'') is then combined with $\MT^w_{ic}$
+(``$w$'' for ``weak''), the result of PFA calculations, using Equation (25)
+from wvs-096 and Equation (5) from wvs-027:
+%
+\begin{equation}
+\overline{I^s_{ic}} = \FA{I^s_{ij}}
+\end{equation}
+
+where
+%
+\begin{equation}\label{incrad}
+I^s_{ij} = \DB_{ij} \MT^s_{ij} + \DB^\sigma_{ij} \MT^s_{ij} =
+  ( \DB_{ij} + \DB^\sigma_{ij} ) \MT^s_{ij}\,,
+\end{equation}
+
+$\FA{\cdot}$ denotes frequency averaging, and the channel radiance
+is
+%
+\begin{equation}\label{combine}
+I_c =
+ \left\{ \renewcommand{\arraystretch}{1.25}
+  \begin{array}{l}
+  \sum_{i=1}^{n_p} \overline{I^s_{ic}} \MT^w_{ic} \text{ if PFA
+   calculations are being done, and } \\
+  \FA{\sum_{i=1}^{n_p} I^s_{ij}} \text{ otherwise}.
+  \end{array} \right.
+\end{equation}
+
+The first term in \ER{incrad} is the clear-sky LBL calculation; the second
+is the $\TS$ correction in which
+%
+\begin{equation}\begin{split}\label{Delta_B}
+\DB^\sigma_{ij}
+=\,&
+ \left\{ \renewcommand{\arraystretch}{1.25}
+ \begin{array}{ll}
+  \frac12 ( B^\sigma_{2j} + B^\sigma_{1j} ) & i = 1 \\
+  \frac12 ( B^\sigma_{i+1,j} - B^\sigma_{i-1,j} ) & 1 < i < n_p \\
+  -\frac12 ( B^\sigma_{n_p-1,j} + B^\sigma_{n_p,j} ) & i = n_p
+ \end{array} \right.\,, \\
+B^\sigma_{ij}
+=\,& ( \IC{\{\TSs{ic}\}} - B_{ij} ) \omega_{0_{ij}},\\
+\omega_{0_{ij}} \,= & \frac{\beta_{{c\_s}_i}}{\beta_{e_{ij}}}\,, \\
+\beta_{e_{ij}} \,= & \alpha_{\text{gas}_{ij}} + \beta_{{c\_s}_i} +
+ \beta_{{c\_a}_i} = \alpha_{\text{gas}_{ij}} + \beta_{{c\_e}_i}\,,
+\end{split}\end{equation}
+
+and $\IC{\{\TSs{ic}\}}$ denotes interpolation from frequencies
+$\{\nu_c\}$ to frequencies $\{\nu_j\}$ in the set $\{\TSs{ic}\}$.
+
+Within {\tt one\_frequency}, assuming $\{\nu_j\}$ are sorted, $\TS$
+tables are sorted according to frequency, and {\tt one\_frequency} is run
+for each $\nu\in\{\nu_j\}$ in sorted order:
+
+\begin{enumerate}
+
+\item Evaluate $\alpha_{\text{gas}_{ij}}$, $\MT^s_{ij}$, and $\DB_{ij}$
+  (nothing new here).
+
+\item Let $\{\nu^T\}$ denote frequencies of $\TS$ tables with $n_T :=
+  |\{\nu^T\}|$.  Select $l$ and $u$ such that either
+
+  \begin{itemize}
+
+  \item $\nu^T_l \leq \nu \leq \nu^T_u$, 
+
+  \item $l := u := 1$ if $\nu^T_1 \geq \nu$, or
+
+  \item $l := u := n_T$ if $\nu^T_{n_T} \leq \nu$.
+
+  \end{itemize}
+
+\item Run the linearized forward model to get $\TSs{il}$ and $\TSs{iu}$
+  using the $\TS$ tables for $\nu_l$ and $\nu_u$, if these values have
+  not yet been computed.
+
+\item If $l \neq u$, compute $\TSs{ij} := \IC{\{\TSs{il}, \TSs{iu}\}}$
+  using linear interpolation, else $\TSs{ij} := \TSs{il}$.
+
+\item If the frequency for the $\beta_{c\_s_i}$ and $\beta_{c\_e_i}$
+  tables that is nearest to $\nu$ is different from the one used for the
+  previous $\nu$, evaluate  $\beta_{c\_s_i}$ and $\beta_{c\_e_i}$ on the
+  path using tables for the frequency nearest to $\nu$; otherwise use the
+  previous values.
+
+\item Evaluate $\omega_{0_{ij}}$, $B^\sigma_{ij}$ and $\DB^\sigma_{ij}$
+  using \ER{Delta_B}.
+
+\item Evaluate \ER{incrad} to get $I^s_{ij}$.
+
+\end{enumerate}
+
+\label{lastpage}
+\end{document}
+
+% $Id$
+
+% $Log$
