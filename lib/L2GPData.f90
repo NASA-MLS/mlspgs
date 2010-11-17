@@ -2032,11 +2032,11 @@ contains ! =====     Public Procedures     =============================
     integer :: noSwaths
     integer :: noSwaths2
     integer :: noUnique
-    character (len=MAXSWATHNAMESBUFSIZE) :: rename
     integer :: status
     character (len=L2GPNameLen) :: swath
     character (len=L2GPNameLen) :: swath2
     character (len=MAXSWATHNAMESBUFSIZE) :: swathList1
+    character (len=MAXSWATHNAMESBUFSIZE) :: swathList2
     character (len=MAXSWATHNAMESBUFSIZE) :: swathUnique
     integer :: the_hdfVersion1
     integer :: the_hdfVersion2
@@ -2066,17 +2066,18 @@ contains ! =====     Public Procedures     =============================
     the_hdfVersion2 = mls_hdf_version(File2)
     noSwaths = mls_InqSwath ( file1, swathList1, listSize, &
          & hdfVersion=the_hdfVersion1)
+    noSwaths2 = mls_InqSwath ( file2, swathList2, listSize, &
+         & hdfVersion=the_hdfVersion2)
     if ( present(swaths1) ) then
       if ( swaths1 /= 'all' .and. swaths1 /= '*' ) then
         swathList1 = swaths1
         noSwaths = NumStringElements( swaths1, countEmpty=.true. )
+        swathList2 = swathList1
       endif
     endif
-    noSwaths2 = mls_InqSwath ( file2, rename, listSize, &
-         & hdfVersion=the_hdfVersion2)
     if ( present(swaths2) ) then
       if ( swaths2 /= 'all' .and. swaths2 /= '*' ) then
-        rename = swaths2
+        swathList2 = swaths2
         noSwaths2 = NumStringElements( swaths2, countEmpty=.true. )
       endif
     endif
@@ -2092,7 +2093,7 @@ contains ! =====     Public Procedures     =============================
           call output('All swaths in ' // trim(File1), advance='yes')
         endif
         call GetUniqueList(swList, swathUnique, noUnique, countEmpty, &
-          & str2=trim(rename))
+          & str2=trim(swathList2))
         if ( noUnique > 0 ) then
           call output('swaths missing from ' // trim(File2), advance='yes')
           call output(trim(swathUnique), advance='yes')
@@ -2103,12 +2104,12 @@ contains ! =====     Public Procedures     =============================
         call output('Comparing swaths in ' // trim(File1), advance='no')
         call output(' with ' // trim(File2), advance='yes')
         call GetUniqueList(trim(swathList1), swathUnique, noUnique, countEmpty, &
-          & str2=trim(rename))
+          & str2=trim(swathList2))
         if ( noUnique > 0 ) then
           call output('swaths only in ' // trim(File1), advance='yes')
           call output(trim(swathUnique), advance='yes')
         endif
-        call GetUniqueList(trim(rename), swathUnique, noUnique, countEmpty, &
+        call GetUniqueList(trim(swathList2), swathUnique, noUnique, countEmpty, &
           & str2=trim(swathList1))
         if ( noUnique > 0 ) then
           call output('swaths only in ' // trim(File2), advance='yes')
@@ -2135,15 +2136,19 @@ contains ! =====     Public Procedures     =============================
           &  trim(File1), advance='yes')
         cycle
       endif
-      swath2 = swath
-      status = stringElementNum(rename, trim(swath), countEmpty)
+      if ( swathList2 /= swathList1 ) then
+        call GetStringElement (trim(swathList2), swath2, i, countEmpty )
+      else
+        swath2 = swath
+      endif
+      status = stringElementNum(swathList2, trim(swath2), countEmpty)
       if ( status < 1 ) then
         if ( .not. myForce ) then
           if ( .not. mySilent ) call output('Swath ' // trim(swath) // ' not found in ' // &
             & trim(File2), advance='yes')
           cycle
         elseif ( .not. mySilent) then
-          call GetStringElement (trim(rename), swath2, i, countEmpty )
+          call GetStringElement (trim(swathList2), swath2, i, countEmpty )
           call blanks( 22+len_trim(swath), fillChar='-', advance='yes')
           call output( '---- swath(1) name: ' // trim(swath) // ' ----', advance='yes')
           call blanks( 22+len_trim(swath), fillChar='-', advance='yes')
@@ -4536,6 +4541,8 @@ contains ! =====     Public Procedures     =============================
       units_name = 'm'
     case ('rhi')
       units_name = '%rhi'
+    case ('iwc', 'iwp')
+      units_name = 'g/m^3'
     case default
       units_name = 'vmr'
     end select
@@ -4948,6 +4955,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.177  2010/11/10 02:03:06  pwagner
+! Copies correct TAI93At0zOfGranule global attribute
+!
 ! Revision 2.176  2010/06/22 16:53:15  pwagner
 ! Consistent with new behavior of switchDetail: must include 'f' if override default options
 !
