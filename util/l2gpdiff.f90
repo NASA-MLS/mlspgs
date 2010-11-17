@@ -21,7 +21,7 @@ program l2gpdiff ! show diffs between swaths in two different files
    use MLSMessageModule, only: MLSMessageConfig
    use MLSStringLists, only: catLists, ExpandStringRange
    use MLSStrings, only: WriteIntsToChars
-   use output_m, only: resumeOutput, suspendOutput, output
+   use output_m, only: resumeOutput, suspendOutput, output, outputNamedValue
    use Time_M, only: Time_Now, time_config
    
    implicit none
@@ -46,25 +46,26 @@ program l2gpdiff ! show diffs between swaths in two different files
     character(len=MAXFIELDSLENGTH) :: chunks = '*' ! wild card means 'all'
     character(len=MAXFIELDSLENGTH) :: pressures = '*' ! wild card means 'all'
     character(len=255) ::  geoBoxNames = '' ! which geolocation names to box
-    integer            ::  nGeoBoxDims = 0
-    real, dimension(4) ::  geoBoxLowBound
-    real, dimension(4) ::  geoBoxHiBound
-    integer     :: Details = 1
     character(len=MAXFIELDSLENGTH) :: fields = '*' ! wild card means 'all'
-    logical     :: force = .false.
-    logical     :: ignoreBadChunks = .false.
-    logical     :: matchTimes = .false.
-    logical     :: rms = .false.
-    logical     :: showMissing = .false.
-    logical     :: stats = .false.
-    logical     :: table = .false.
     character(len=8) :: HEADSIDE = 'left' ! on which side stats headers printed
     character(len=MAXSWATHNAMESBUFSIZE) :: swaths1 = '*'
     character(len=MAXSWATHNAMESBUFSIZE) :: swaths2 = '*'
-    logical     :: silent = .false.
-    logical     :: timing = .false.
-    logical     :: verbose = .false.
-    integer     :: numDiffs = 0
+    integer            ::  nGeoBoxDims     = 0
+    real, dimension(4) ::  geoBoxLowBound
+    real, dimension(4) ::  geoBoxHiBound
+    integer     ::         Details         = 1
+    logical     ::         force           = .false.
+    logical     ::         rms             = .false.
+    logical     ::         stats           = .false.
+    logical     ::         table           = .false.
+    logical     ::         silent          = .false.
+    logical     ::         timing          = .false.
+    logical     ::         verbose         = .false.
+    logical     ::         debug           = .false.
+    logical     ::         matchTimes      = .false.
+    logical     ::         showMissing     = .false.
+    logical     ::         ignoreBadChunks = .false.
+    integer     ::         numDiffs = 0
   end type options_T
   
   type ( options_T ) :: options
@@ -109,6 +110,7 @@ program l2gpdiff ! show diffs between swaths in two different files
      filenames(n_filenames) = filename
   enddo
   dumpTableSide = options%headSide ! 'left'
+  if ( options%debug ) call dumpProgramOptions
   if ( n_filenames < 2 ) then
     if ( options%verbose ) print *, 'Sorry -- need at least 2 input files to diff'
     stop
@@ -270,6 +272,9 @@ contains
         read(Chars, *) options%Details
         i = i + 1
         exit
+      else if ( filename(1:4) == '-deb' ) then
+        options%debug = .true.
+        exit
       else if ( filename(1:4) == '-ign' ) then
         options%ignorebadchunks = .true.
         exit
@@ -311,6 +316,32 @@ contains
     i = i + 1
     
   end subroutine get_filename
+!------------------------- dumpProgramOptions ---------------------
+  subroutine dumpProgramOptions
+    ! dump options
+    call outputNamedValue( 'chunks', trim(options%chunks) )
+    call outputNamedValue( 'pressures', trim(options%pressures) )
+    call outputNamedValue( 'geoBoxNames', trim(options%geoBoxNames) )
+    call outputNamedValue( 'fields', trim(options%fields) )
+    call outputNamedValue( 'headSide', trim(options%headSide) )
+    call outputNamedValue( 'swaths1', trim(options%swaths1) )
+    call outputNamedValue( 'swaths2', trim(options%swaths2) )
+    call outputNamedValue( 'nGeoBoxDims    ', options%nGeoBoxDims     )
+    call outputNamedValue( 'geoBoxLowBound ', options%geoBoxLowBound  )
+    call outputNamedValue( 'geoBoxHiBound  ', options%geoBoxHiBound   )
+    call outputNamedValue( 'Details        ', options%Details         )
+    call outputNamedValue( 'force          ', options%force           )
+    call outputNamedValue( 'rms            ', options%rms             )
+    call outputNamedValue( 'stats          ', options%stats           )
+    call outputNamedValue( 'table          ', options%table           )
+    call outputNamedValue( 'silent         ', options%silent          )
+    call outputNamedValue( 'timing         ', options%timing          )
+    call outputNamedValue( 'verbose        ', options%verbose         )
+    call outputNamedValue( 'debug          ', options%debug           )
+    call outputNamedValue( 'matchTimes     ', options%matchTimes      )
+    call outputNamedValue( 'showMissing    ', options%showMissing     )
+    call outputNamedValue( 'ignoreBadChunks', options%ignoreBadChunks )
+  end subroutine dumpProgramOptions
 !------------------------- print_help ---------------------
   subroutine print_help
   ! Print brief but helpful message
@@ -345,6 +376,7 @@ contains
       write (*,*) '          -v          => switch on verbose mode'
       write (*,*) '          -silent         => switch on silent mode'
       write (*,*) '                            (printing only if diffs found)'
+      write (*,*) '          -debug      => dump options, etc.'
       write (*,*) '          -ignore     => ignore bad chunks'
       write (*,*) '          -matchTimes => only matching profile times'
       write (*,*) '          -rms        => just print mean, rms'
@@ -388,6 +420,9 @@ end program l2gpdiff
 !==================
 
 ! $Log$
+! Revision 1.17  2009/09/11 23:24:47  pwagner
+! options now include -t to be consistent with diff apis
+!
 ! Revision 1.16  2009/06/16 22:37:59  pwagner
 ! Changed api for dump, diff routines; now rely on options for most optional behavior
 !
