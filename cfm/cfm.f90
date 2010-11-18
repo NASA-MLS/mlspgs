@@ -62,8 +62,8 @@ module cfm          ! callable forward model
                        AddFileToDatabase
    use Intrinsic, only: l_hdf
    use Hdf, only: DFACC_RDONLY
-   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-   use MatrixModule_1, only: Matrix_T, Dump
+   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+   use MatrixModule_1, only: Matrix_T, Dump, DestroyMatrix
 
    implicit none
    public
@@ -84,6 +84,9 @@ contains
 end module cfm
 
 ! $Log$
+! Revision 1.9  2010/09/28 14:42:42  honghanh
+! Add call to forwardModel with jacobian
+!
 ! Revision 1.8  2010/09/21 15:06:49  honghanh
 ! Separate the running forward model example and reading observed radiance example
 !

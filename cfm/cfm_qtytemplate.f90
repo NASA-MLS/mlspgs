@@ -133,6 +133,7 @@ module CFM_QuantityTemplate_m
       type(Signal_T) :: signalInfo
       integer :: noChans, sideband, signal, radiometer, instrumentModule
       logical :: isMinorFrame
+      character(len=256) :: haha = ' '
 
       ! Executables
       call NullifyQuantityTemplate(qty)
@@ -147,7 +148,6 @@ module CFM_QuantityTemplate_m
       qty%frequencyCoordinate = l_none
       radiometer = 0
       qty%reflector = 0
-      qty%regular = .true.
       sideband = 0
       signal = 0
       qty%vGridIndex = 0
@@ -616,6 +616,10 @@ module CFM_QuantityTemplate_m
 end module
 
 ! $Log$
+! Revision 1.18  2010/11/03 18:34:46  honghanh
+! Add qName as an optional argument to CreateQtyTemplate.
+! This is to help debugging process.
+!
 ! Revision 1.17  2010/07/07 21:02:05  honghanh
 ! Bug fix in ConstructQuantityTemplate
 !
