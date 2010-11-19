@@ -9,7 +9,18 @@
 ! export authority as may be required before exporting such information to
 ! foreign countries or providing access to foreign persons.
 
+! $Id$
 
+! Remarks
+! (1) Uncertain what would happen if n is 0
+!     What would be good would be to set h%kind to H_absent
+! (2) The order in which to store the sparse representation should be the one to
+!     result in the fastest possible execution during
+!     Hessian_Vector_Vector_Multiply_0; by one way of reckoning,
+!     i should then be the slowest-changing index instead of the fastest
+!     However, if you actually examine the code to be invoked, the aim
+!     of minimiizing cache hits by steering toward locality has already
+!     been sacrificed for the sake of sparsity.
     n = count(h_array /= 0)
     h%kind   = H_Sparse
     h%nRows  = size ( h_array, 1 )
@@ -27,17 +38,20 @@
     do k = 1, size(h_array,3)
       do j = 1, size(h_array,2)
         do i = 1, size(h_array,1)
-          if ( h_array(i,j,k) /= 0 ) then
+          if ( h_array(i,j,k) /= 0._rk ) then
             l = l + 1
             h%tuples(l) = tuple_t(h_array(i,j,k),i,j,k)
           end if
         end do
       end do
     end do
+    h%tuplesFilled = l
     call deallocate_test ( h%values, "H%Values in Sparsify_Hessian", moduleName )
 
-! $Id$
 ! $Log$
+! Revision 2.4  2010/11/19 23:51:49  pwagner
+! Set tuplesFilled component
+!
 ! Revision 2.3  2010/03/24 20:18:55  vsnyder
 ! Squash memory leaks
 !
