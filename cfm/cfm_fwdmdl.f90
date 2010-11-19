@@ -29,7 +29,7 @@ module CFM_FWDMDL_M
    ! Compute radiances based on atmospheric state information provided
    ! by fwdModelIn and fwdModelExtra
    subroutine ForwardModel (chunk, Config, FwdModelIn, FwdModelExtra, &
-                            FwdModelOut, Jacobian)
+                            FwdModelOut, Jacobian, RequestedMAF )
       use VectorsModule, only: Vector_T
       use MatrixModule_1, only: MATRIX_T
       use Chunks_m, only: MLSChunk_T
@@ -47,23 +47,31 @@ module CFM_FWDMDL_M
       ! The matrix equivalent of the forward model with the specific
       ! setting in the config object.
       type(matrix_T), intent(inout), optional :: JACOBIAN
+      integer, intent(in), optional :: REQUESTEDMAF
 
       type(forwardModelStatus_t) :: FMSTAT ! Reverse comm. stuff
       integer :: i
+      integer :: FinalMAF
 
       fmStat%newScanHydros = .true.
       if (present(jacobian)) then
          call allocate_test(fmstat%rows, jacobian%row%nb, "fmStat%rows", moduleName)
       end if
-
+      
       do i=1, size(config)
-         fmStat%maf = 0
-         ! Loop over MAFs
-         do while (fmStat%maf < chunk%lastMAFIndex-chunk%firstMAFIndex+1)
-            fmStat%maf = fmStat%maf + 1
-            call ForwardModelOrig (config(i), fwdmodelIn, fwdModelExtra, fwdModelOut, &
-                                   fmStat, Jacobian)
-         end do
+        if ( present ( requstedMAF ) ) then
+          fmStat%maf = requestedMAF
+          finalMAF = requestedMAF
+        else
+          fmStat%maf = 0
+          finalMAF = chunk%lastMAFIndex - chunk%firstMAFIndex
+        end if
+        ! Loop over MAFs
+        do while (fmStat%maf <= finalMAF )
+          fmStat%maf = fmStat%maf + 1
+          call ForwardModelOrig (config(i), fwdmodelIn, fwdModelExtra, fwdModelOut, &
+            fmStat, Jacobian)
+        end do
       end do
 
       if (present(jacobian)) then
@@ -85,6 +93,9 @@ module CFM_FWDMDL_M
 end module
 
 ! $Log$
+! Revision 1.5  2010/08/05 16:23:03  honghanh
+! Added Jacobian to forwardModel subroutine
+!
 ! Revision 1.4  2010/06/29 17:02:47  honghanh
 ! Change the identifier 'fakeChunk' to 'chunk' because
 ! since it is created with ChunkDivide, it's as real as a chunk
