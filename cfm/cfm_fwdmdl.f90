@@ -59,7 +59,7 @@ module CFM_FWDMDL_M
       end if
       
       do i=1, size(config)
-        if ( present ( requstedMAF ) ) then
+        if ( present ( requestedMAF ) ) then
           fmStat%maf = requestedMAF
           finalMAF = requestedMAF
         else
@@ -93,6 +93,9 @@ module CFM_FWDMDL_M
 end module
 
 ! $Log$
+! Revision 1.6  2010/11/19 01:04:51  livesey
+! Added the optional RequestdMAF argument
+!
 ! Revision 1.5  2010/08/05 16:23:03  honghanh
 ! Added Jacobian to forwardModel subroutine
 !

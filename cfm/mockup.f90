@@ -264,7 +264,7 @@ program mockup
       integer :: i
       type(ForwardModelConfig_T), dimension(:), pointer :: forwardModelConfigDatabase
       type(MLSFile_T), dimension(:), pointer :: filedatabase
-      type(MLSChunk_T) :: chunk, cSingle
+      type(MLSChunk_T) :: chunk
       type(VGrid_T) :: vGridStandard, vGridRefGPH
       type(HGrid_T) :: hGridStandard
       type(FGrid_T) :: fGridStandard
@@ -312,17 +312,55 @@ program mockup
          call ReadHDF5L2PC (l2pc(i))
       end do
 
-      cSingle = chunk
-
       vGridStandard = CreateVGrid (l_zeta, phyq_pressure, l_logarithmic, &
                                    start=1000.0d0, formula="37:6")
 
       vGridRefGPH = CreateVGrid (l_zeta, phyq_pressure, l_explicit, &
                                  values=(/100.0_r8/))
 
+      ! Have insetoverlaps, and not single
+      hGridStandard = CreateRegularHGrid(GHz, 0.0_r8, 1.5_r8, .true., &
+                                         filedatabase, chunk)
+
       fGridStandard = CreateFGrid(L_IntermediateFrequency, (/0.0_r8/))
 
-      ! Place dummy quantities in the database
+      temperature = CreateQtyTemplate(l_temperature, filedatabase=filedatabase, &
+                                      chunk=chunk, qName='temperature', &
+                                      avgrid=vGridStandard, ahgrid=hGridStandard)
+      GPH = CreateQtyTemplate(l_gph, filedatabase=filedatabase, chunk=chunk, &
+                              avgrid=vGridStandard, ahgrid=hGridStandard, qName='GPH')
+      O3 = CreateQtyTemplate(l_vmr, filedatabase=filedatabase, chunk=chunk, &
+                             avgrid=vGridStandard, ahgrid=hGridStandard, qMolecule=l_o3, &
+                             qName='O3')
+      H2O = CreateQtyTemplate(l_vmr, filedatabase=filedatabase, chunk=chunk, &
+                              avgrid=vGridStandard, ahgrid=hGridStandard, qMolecule=l_h2o, &
+                              qLogBasis=.true., qMinValue=0.1E-6_r8, qName='H2O')
+      ptanGHz = CreateQtyTemplate(l_ptan, filedatabase=filedatabase, &
+                                  chunk=chunk, qInstModule=GHz, qName='ptanGHz')
+      ! band 2,7,8 is the band whose radiances are to be computed
+      ! see CFM document for a list of signals corresponding to bands
+      band7 = CreateQtyTemplate(l_radiance, filedatabase=filedatabase, chunk=chunk, &
+                                qSignal="R3:240.B7F:O3", qName='band7')
+      band2 = CreateQtyTemplate(l_radiance, filedatabase=filedatabase, chunk=chunk, &
+                                qSignal="R2:190.B2F:H2O", qName='band2')
+      band8 = CreateQtyTemplate(l_radiance, filedatabase=filedatabase, chunk=chunk, &
+                                qSignal="R3:240.B8F:PT", qName='band8')
+      geodAltitude = CreateQtyTemplate(l_tngtgeodalt, filedatabase=filedatabase, &
+                                       chunk=chunk, qInstModule=GHz, qName='geodAltitude')
+      geocAlt = CreateQtyTemplate(l_tngtgeocalt, filedatabase=filedatabase, &
+                                  chunk=chunk, qInstModule=GHz, qName='geocAlt')
+      orbincl = CreateQtyTemplate(l_orbitInclination, filedatabase=filedatabase, &
+                                  chunk=chunk, qInstModule=sc, qName='orbincl')
+      refGPH = CreateQtyTemplate(l_refGPH, avgrid=vGridRefGPH, ahgrid=hGridStandard, qName='refGPH')
+      phitanGHz = CreateQtyTemplate(l_phitan, qInstModule="GHz", filedatabase=filedatabase, &
+                                    chunk=chunk, qName='phitanGHz')
+
+      ! We no longer need vGrid because the quantity templates have copied it
+      call DestroyVGridContents(vGridStandard)
+      ! No long need hGrid, fGrid either
+      call DestroyHGridContents(hGridStandard)
+      call DestroyFGridContents(fGridStandard)
+
       temperature_index = AddQuantityTemplateToDatabase(qtyTemplates, temperature)
       gph_index = AddQuantityTemplateToDatabase(qtyTemplates, GPH)
       o3_index = AddQuantityTemplateToDatabase(qtyTemplates, O3)
@@ -341,127 +379,71 @@ program mockup
       stateSelected = (/temperature_index,o3_index,h2o_index, phitanGHz_index, &
                         ptanGHz_index,geodAlt_index, geocAlt_index, &
                         orbincl_index, gph_index, refGPH_index/)
+      stateTemplate = CreateVectorTemplate(qtyTemplates, stateSelected)
+
       measurementSelected = (/band7_index, band2_index, band8_index/)
+      measurementTemplate = CreateVectorTemplate(qtyTemplates, measurementSelected)
 
+      state = CreateVector(stateTemplate, qtyTemplates, name='state')
+      measurement = CreateVector(measurementTemplate, qtyTemplates, name='measurement')
+
+      refGPH_vv => GetVectorQtyByTemplateIndex (state, refGPH_index) ! refGPH
+      call SpreadFillVectorQuantity (refGPH_vv, refGPHInput) ! unit is meter
+
+      ! supply temperature, GPH, H2O, and O3 data
+      temperature_vv => GetVectorQtyByTemplateIndex(state, temperature_index)
+      call ExplicitFillVectorQuantity(temperature_vv, TemperatureInput)
+
+      h2o_vv => GetVectorQtyByTemplateIndex(state, h2o_index)
+      call ExplicitFillVectorQuantity(h2o_vv, H2OInput)
+
+      quantity => GetVectorQtyByTemplateIndex(state, o3_index)
+      call ExplicitFillVectorQuantity(quantity, O3Input)
+
+      quantity => GetVectorQtyByTemplateIndex(state, geodAlt_index)
+      call FillVectorQuantityFromL1B(quantity, chunk, filedatabase, .false.)
+
+      ! Fill orbit inclination, tangent geocentric altitude with
+      ! data from MLS L1B file, and use them, along with other
+      ! quantities to calculate ptan
+      orbincl_vv => GetVectorQtyByTemplateIndex (state, orbincl_index)
+      call FillVectorQuantityFromL1B(orbincl_vv, chunk, filedatabase, .false.)
+
+      geocAlt_vv => GetVectorQtyByTemplateIndex (state, geocAlt_index)
+      call FillVectorQuantityFromL1B(geocAlt_vv, chunk, filedatabase, .false.)
+
+      ptanG_vv => GetVectorQtyByTemplateIndex (state, ptanGHz_index)
+
+      phitan_vv => GetVectorQtyByTemplateIndex (state, phitanGHz_index)
+      call FillPhitanQuantity(phitan_vv)
+
+      ! calculate ptan
+      !call dump(temperature_vv, details=3)
+      call FillPtanQuantity (ptanG_vv, temperature_vv, refGPH_vv, &
+                             h2o_vv, orbincl_vv, phitan_vv, geocAlt_vv)
+
+      !call dump(state, details=3)
+
+      ! GPH is filled by the forward model
+
+      !call ForwardModel (chunk, forwardModelConfigDatabase, state, &
+      !                   stateExtra, measurement)
+
+      ! Create jacobian
+      jacobian = CreatePlainMatrix(measurement, state)
+
+      ! Call the forward model
       do i = chunk%firstMAFIndex, chunk%lastMAFIndex + 1
-         cSingle%firstMAFIndex = i
-         cSingle%lastMAFIndex = i
-
-         ! Have insetoverlaps, and not single
-         hGridStandard = CreateRegularHGrid(GHz, 0.0_r8, 1.5_r8, .true., &
-                                            filedatabase, cSingle)
-         temperature = CreateQtyTemplate(l_temperature, filedatabase=filedatabase, &
-                                         chunk=cSingle, qName='temperature', &
-                                         avgrid=vGridStandard, ahgrid=hGridStandard)
-         GPH = CreateQtyTemplate(l_gph, filedatabase=filedatabase, chunk=cSingle, &
-                                 avgrid=vGridStandard, ahgrid=hGridStandard, qName='GPH')
-         O3 = CreateQtyTemplate(l_vmr, filedatabase=filedatabase, chunk=cSingle, &
-                                avgrid=vGridStandard, ahgrid=hGridStandard, qMolecule=l_o3, &
-                                qName='O3')
-         H2O = CreateQtyTemplate(l_vmr, filedatabase=filedatabase, chunk=cSingle, &
-                                 avgrid=vGridStandard, ahgrid=hGridStandard, qMolecule=l_h2o, &
-                                 qLogBasis=.true., qMinValue=0.1E-6_r8, qName='H2O')
-         ptanGHz = CreateQtyTemplate(l_ptan, filedatabase=filedatabase, &
-                                     chunk=cSingle, qInstModule=GHz, qName='ptanGHz')
-         ! band 2,7,8 is the band whose radiances are to be computed
-         ! see CFM document for a list of signals corresponding to bands
-         band7 = CreateQtyTemplate(l_radiance, filedatabase=filedatabase, chunk=cSingle, &
-                                   qSignal="R3:240.B7F:O3", qName='band7')
-         band2 = CreateQtyTemplate(l_radiance, filedatabase=filedatabase, chunk=cSingle, &
-                                   qSignal="R2:190.B2F:H2O", qName='band2')
-         band8 = CreateQtyTemplate(l_radiance, filedatabase=filedatabase, chunk=cSingle, &
-                                   qSignal="R3:240.B8F:PT", qName='band8')
-         geodAltitude = CreateQtyTemplate(l_tngtgeodalt, filedatabase=filedatabase, &
-                                          chunk=cSingle, qInstModule=GHz, qName='geodAltitude')
-         geocAlt = CreateQtyTemplate(l_tngtgeocalt, filedatabase=filedatabase, &
-                                     chunk=cSingle, qInstModule=GHz, qName='geocAlt')
-         orbincl = CreateQtyTemplate(l_orbitInclination, filedatabase=filedatabase, &
-                                     chunk=cSingle, qInstModule=sc, qName='orbincl')
-         refGPH = CreateQtyTemplate(l_refGPH, avgrid=vGridRefGPH, ahgrid=hGridStandard, qName='refGPH')
-         phitanGHz = CreateQtyTemplate(l_phitan, qInstModule="GHz", filedatabase=filedatabase, &
-                                       chunk=cSingle, qName='phitanGHz')
-
-         ! No long need hGrid, fGrid either
-         call DestroyHGridContents(hGridStandard)
-
-         ! replace dummy with actual, new quantities
-         qtyTemplates(temperature_index) = temperature
-         qtyTemplates(gph_index) = GPH
-         qtyTemplates(o3_index) = O3
-         qtyTemplates(h2o_index) = H2O
-         qtyTemplates(ptanGHz_index) = ptanGHz
-         qtyTemplates(geodAlt_index) = geodAltitude
-         qtyTemplates(geocAlt_index) = geocAlt
-         qtyTemplates(orbincl_index) = orbIncl
-         qtyTemplates(refGPH_index) = refGPH
-         qtyTemplates(phitanGHz_index) = phitanGHz
-         qtyTemplates(band7_index) = band7
-         qtyTemplates(band2_index) = band2
-         qtyTemplates(band8_index) = band8
-
-         stateTemplate = CreateVectorTemplate(qtyTemplates, stateSelected)
-         measurementTemplate = CreateVectorTemplate(qtyTemplates, measurementSelected)
-         state = CreateVector(stateTemplate, qtyTemplates, name='state')
-         measurement = CreateVector(measurementTemplate, qtyTemplates, name='measurement')
-
-         refGPH_vv => GetVectorQtyByTemplateIndex (state, refGPH_index) ! refGPH
-         call SpreadFillVectorQuantity (refGPH_vv, refGPHInput) ! unit is meter
-
-         ! supply temperature, GPH, H2O, and O3 data
-         temperature_vv => GetVectorQtyByTemplateIndex(state, temperature_index)
-         call ExplicitFillVectorQuantity(temperature_vv, TemperatureInput)
-
-         h2o_vv => GetVectorQtyByTemplateIndex(state, h2o_index)
-         call ExplicitFillVectorQuantity(h2o_vv, H2OInput)
-
-         quantity => GetVectorQtyByTemplateIndex(state, o3_index)
-         call ExplicitFillVectorQuantity(quantity, O3Input)
-
-         quantity => GetVectorQtyByTemplateIndex(state, geodAlt_index)
-         call FillVectorQuantityFromL1B(quantity, cSingle, filedatabase, .false.)
-
-         ! Fill orbit inclination, tangent geocentric altitude with
-         ! data from MLS L1B file, and use them, along with other
-         ! quantities to calculate ptan
-         orbincl_vv => GetVectorQtyByTemplateIndex (state, orbincl_index)
-         call FillVectorQuantityFromL1B(orbincl_vv, cSingle, filedatabase, .false.)
-
-         geocAlt_vv => GetVectorQtyByTemplateIndex (state, geocAlt_index)
-         call FillVectorQuantityFromL1B(geocAlt_vv, cSingle, filedatabase, .false.)
-
-         ptanG_vv => GetVectorQtyByTemplateIndex (state, ptanGHz_index)
-
-         phitan_vv => GetVectorQtyByTemplateIndex (state, phitanGHz_index)
-         call FillPhitanQuantity(phitan_vv)
-
-         ! calculate ptan
-         !call dump(temperature_vv, details=3)
-         call FillPtanQuantity (ptanG_vv, temperature_vv, refGPH_vv, &
-                                h2o_vv, orbincl_vv, phitan_vv, geocAlt_vv)
-
-         !call dump(state, details=3)
-
-         ! GPH is filled by the forward model
-
-         ! Create jacobian
-         jacobian = CreatePlainMatrix(measurement, state)
-
-         ! Call the forward model
          call ForwardModel (chunk, forwardModelConfigDatabase, state, &
-                            stateExtra, measurement, jacobian)
-
-         call dump(measurement, details=3)
-         !call dump(jacobian, details=3)
-
-         call DestroyMatrix(jacobian)
-         call DestroyVectorInfo (state)
-         call DestroyVectorInfo (measurement)
+                            stateExtra, measurement, jacobian, requestedMAF=(i-chunk%firstMAFIndex))
+         call dump(measurement, details=2)
       end do
 
-      ! We no longer need vGrid because the quantity templates have copied it
-      call DestroyVGridContents(vGridStandard)
-      call DestroyFGridContents(fGridStandard)
+      !call dump(jacobian, details=3)
 
+      call DestroyMatrix(jacobian)
+      call DestroyVectorInfo (state)
+      call DestroyVectorInfo (measurement)
       call DestroyVectorTemplateInfo(stateTemplate)
       call DestroyVectorTemplateInfo(measurementTemplate)
       call Destroy_DACS_Filter_Database
