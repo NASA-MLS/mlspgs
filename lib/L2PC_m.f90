@@ -62,10 +62,14 @@ module L2PC_m
     & binSelector_T, BinSelectors, CreateDefaultBinSelectors, &
     & DefaultSelector_FieldAzimuth, DefaultSelector_Latitude, &
     & DestroyL2PC, DestroyL2PCDatabase, DestroyBinSelectorDatabase, &
-    & Dump, FlushL2PCBins, L2PC_T, &
+    & Diff, Dump, FlushL2PCBins, L2PC_T, &
     & LoadMatrix, LoadVector, OutputHDF5L2PC, &
     & PopulateL2PCBin, PopulateL2PCBinByName, &
     & ReadCompleteHDF5L2PCFile
+
+  interface DIFF
+    module procedure DiffL2PCFiles, DiffL2PCs
+  end interface
 
   interface DUMP
     module procedure DUMPONEL2PC, DumpL2PCDatabase, DumpL2PCFile
@@ -89,7 +93,7 @@ module L2PC_m
   integer :: counterStart
   parameter ( counterStart = huge (0) / 4 )
 
-  ! This type holds an l2pc
+  ! This type holds an l2pc sometimes called a "bin"
   type L2PC_T
     integer :: NAME                     ! The name of the L2PC bin
     type(Matrix_T) :: J                 ! The Jacobian
@@ -98,6 +102,9 @@ module L2PC_m
   end type L2PC_T
 
   ! The L2PC database
+  ! We could create much-needed flexibility if we allowed the user to maintain
+  ! a separate database or multiple databases
+  ! The same goes for binSelector and L2PCInfo databases
   type(L2PC_T), dimension(:), pointer, public, save :: L2PCDatabase => NULL()
 
   ! This datatype describes a selection rule for l2pc bins.
@@ -128,6 +135,7 @@ module L2PC_m
   integer, parameter :: DEFAULTSELECTOR_FIELDAZIMUTH = 2
   
   logical, parameter :: DIEIFDESTROYFAILS = .false.
+  integer, parameter :: MAXNBINS          = 200 ! max nBins in a file
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -356,6 +364,113 @@ contains ! ============= Public Procedures ==========================
     call DestroyL2PCInfoDatabase
   end subroutine DestroyL2PCDatabase
 
+  ! --------------------------------------- DiffL2PCFiles ---------------
+  subroutine DiffL2PCFiles ( L2PCFile1, L2PCFile2, details, options )
+    use MLSStringLists, only: optionDetail
+    ! This subroutine Diffs an l2pc to stdout
+    ! assuming it was read already
+
+    ! Dummy arguments
+    type (MLSFile_T), intent(inout) :: L2PCFile1, L2PCFile2
+    integer, intent(in), optional :: DETAILS ! <=0 => Don't Diff multidim arrays
+    !                                        ! -1 Skip even 1-d arrays
+    !                                        ! -2 Skip all but size
+    !                                        ! >0 Diff even multi-dim arrays
+    !                                        ! Default 0
+    character(len=*), intent(in), optional :: options ! any of {mh*b[]}
+                                             ! D: read files before Diffing
+                                             ! m: Diff only matrices
+                                             ! h: Diff only hessians
+                                             ! *: Diff matrices and hessians
+                                             ! b[HCN]: Diff only HCN blocks
+                                             ! default is *
+    ! Local variables
+    integer :: i
+    integer, dimension(MAXNBINS) :: indices1
+    integer, dimension(MAXNBINS) :: indices2
+    logical :: mustRead
+    integer :: nBins1
+    integer :: nBins2
+    ! Executable
+    mustRead = .false.
+    if ( present(options) ) mustRead = (optionDetail(options, 'D' ) == 'yes' )
+    if ( mustRead ) then
+      call ReadCompleteHDF5L2PCFile ( L2PCFile1, 0, shallow=.true. )
+      call ReadCompleteHDF5L2PCFile ( L2PCFile2, 0, shallow=.true. )
+      do i=1, size(L2PCDataBase)
+        if ( any( &
+          & (/ L2PCFile1%FileID%f_id, L2PCFile2%FileID%f_id /) &
+          & == fileIDDataBase(i) ) ) &
+          & call PopulateL2PCBin( i )
+      enddo
+    endif
+    call getNBinsInFile ( L2PCFile1, indices1, nBins1 )
+    call getNBinsInFile ( L2PCFile2, indices2, nBins2 )
+    do i=1, min( nBins1, nBins2 )
+      call newline
+      call outputNamedValue( 'file index', i )
+      call DiffL2PCs( L2PCDataBase(indices1(i)), L2PCDataBase(indices2(i)), &
+        & details, options )
+    enddo
+  end subroutine DiffL2PCFiles
+
+  ! --------------------------------------- DiffL2PCs ---------------
+  subroutine DiffL2PCs ( L2pc1, L2pc2, details, options )
+    ! This subroutine diffs two l2pcs
+
+    use HessianModule_1, only: Diff
+    use MatrixModule_1, only: Diff
+    use MLSStringLists, only: optionDetail
+    use MLSStrings, only: lowercase
+
+    ! Dummy arguments
+    type (l2pc_t), intent(inout) :: L2pc1, l2pc2
+    integer, intent(in), optional :: DETAILS ! passed to Vector and Matrix dumps
+    character(len=*), intent(in), optional :: options ! any of {mh*b[]}
+                                             ! m: dump only matrices
+                                             ! h: dump only hessians
+                                             ! *: dump matrices and hessians
+                                             ! b[HCN]: dump only HCN blocks
+                                             ! default is *
+    ! Local variables
+    logical :: dumpHessians
+    logical :: dumpJacobians
+    integer :: myDetails
+
+    ! Executable code
+    myDetails = 0
+    if ( present(details) ) myDetails = details
+    dumpHessians = .true.
+    dumpJacobians = .true.
+    ! mymolecules = '*'
+    if ( present(options) ) then
+      dumpHessians = optionDetail( options, 'h' ) == 'yes'
+      dumpJacobians = optionDetail( options, 'm' ) == 'yes'
+      ! myMolecules = lowercase( optionDetail( options, 'b' ) )
+      ! if ( myMolecules == 'no' ) myMolecules = '*'
+    endif
+    call outputNamedValue( 'myDetails', myDetails )
+    call output( '- Diffing L2PCs -', advance='yes' )
+    if ( l2pc1%name > 0 ) then
+      call display_string ( l2pc1%name, before='name: ' )
+      call output ( l2pc1%name, before=' (', after=')', advance='yes' )
+    else
+      call output( '*** Uh-oh, name not found in string table', advance='yes' )
+    endif
+    if ( l2pc2%name > 0 ) then
+      call display_string ( l2pc2%name, before='name: ' )
+      call output ( l2pc2%name, before=' (', after=')', advance='yes' )
+    else
+      call output( '*** Uh-oh, name not found in string table', advance='yes' )
+    endif
+    if ( dumpJacobians ) &
+      & call diff ( l2pc1%j, l2pc2%j, details )
+
+    if ( l2pc1%goth .and. dumpHessians ) &
+      & call diff ( l2pc1%h, l2pc2%h, details, options )
+
+  end subroutine DiffL2PCs
+
   ! --------------------------------------- DumpL2PCDatabase ---------------
   subroutine DumpL2PCDatabase ( L2pcDB, details, onlytheseblocks, options )
     ! This subroutine dumps an l2pc to stdout
@@ -384,10 +499,12 @@ contains ! ============= Public Procedures ==========================
 
   ! --------------------------------------- DumpL2PCFile ---------------
   subroutine DumpL2PCFile ( L2PCFile, details, onlytheseblocks, options )
+    use MLSStringLists, only: optionDetail
     ! This subroutine dumps an l2pc to stdout
+    ! assuming it was read already
 
     ! Dummy arguments
-    type (MLSFile_T), intent(in) :: L2PCFile
+    type (MLSFile_T), intent(inout) :: L2PCFile
     integer, intent(in), optional :: DETAILS ! <=0 => Don't dump multidim arrays
     !                                        ! -1 Skip even 1-d arrays
     !                                        ! -2 Skip all but size
@@ -395,6 +512,7 @@ contains ! ============= Public Procedures ==========================
     !                                        ! Default 0
     character(len=*), dimension(3), intent(in), optional :: ONLYTHESEBLOCKS ! passed to Vector and Matrix dumps
     character(len=*), intent(in), optional :: options ! any of {mh*b[]}
+                                             ! r: read file before dumping
                                              ! m: dump only matrices
                                              ! h: dump only hessians
                                              ! *: dump matrices and hessians
@@ -402,14 +520,24 @@ contains ! ============= Public Procedures ==========================
                                              ! default is *
     ! Local variables
     integer :: i
+    logical :: mustRead
     ! Executable
+    mustRead = .false.
+    if ( present(options) ) mustRead = (optionDetail(options, 'r' ) == 'yes' )
+    if ( mustRead ) then
+      call ReadCompleteHDF5L2PCFile ( L2PCFile, 0, shallow=.true. )
+      do i=1, size(L2PCDataBase)
+        if ( L2PCFile%FileID%f_id == fileIDDataBase(i) ) &
+          & call PopulateL2PCBin( i )
+      enddo
+    endif
     call dumpMLSFile( L2PCFile, details=1 )
     call dump ( fileIDDataBase, 'file id database', format='(i10)' )
     do i=1, size(L2PCDataBase)
       if ( L2PCFile%FileID%f_id /= fileIDDataBase(i) ) cycle
       call newline
       call outputNamedValue( 'db index', i )
-      call DumpOneL2PC( L2PCDataBase(i), details )
+      call DumpOneL2PC( L2PCDataBase(i), details, onlytheseblocks, options )
     enddo
   end subroutine DumpL2PCFile
 
@@ -1259,7 +1387,7 @@ contains ! ============= Public Procedures ==========================
     use HDF5, only: H5F_ACC_RDONLY_F, h5fopen_f, H5GN_MEMBERS_F
     use Trace_M, only: Trace_begin, Trace_end
     use Toggles, only: Toggle, gen
-    type (MLSFile_T), pointer   :: MLSFile
+    type (MLSFile_T), intent(inout)   :: MLSFile
     integer, intent(in) :: Where ! In the L2CF tree, for tracing
     logical, optional   :: Shallow
     ! character (len=*), intent(in) :: FILENAME
@@ -1331,7 +1459,7 @@ contains ! ============= Public Procedures ==========================
       & H5GN_MEMBERS_F
     use MLSHDF5, only: GetHDF5Attribute, LoadFromHDF5DS
     type ( L2pc_t ), intent(out), target :: L2PC
-    type (MLSFile_T), pointer   :: MLSFile
+    type (MLSFile_T), intent(inout)   :: MLSFile
     ! integer, intent(in) :: FILEID       ! HDF5 ID of input file
     integer, intent(in) :: L2PCINDEX        ! Index of l2pc entry to read
     logical, optional, intent(in) :: SHALLOW ! Don't read blocks
@@ -1962,6 +2090,26 @@ contains ! ============= Public Procedures ==========================
     if ( column2 > 0 ) name = trim ( name ) // ' ' // trim(adjustl(strs(3)))
   end subroutine CreateBlockName
 
+  ! ----------------- getNBinsInFile
+  ! find indices of the entries in the fileIDDatabase for a given L2PCFile
+  subroutine getNBinsInFile( L2PCFile, indices, nBins )
+    ! Args:
+    type (MLSFile_T), intent(in)       :: L2PCFile
+    integer, dimension(:), intent(out) :: indices
+    integer, intent(out)               :: nBins
+    ! Internal variables
+    integer :: i
+    ! Executable
+    indices = 0
+    nBins = 0
+    if ( .not. associated(L2PCDataBase) ) return
+    do i=1, size(L2PCDataBase)
+      if ( L2PCFile%FileID%f_id /= fileIDDataBase(i) ) cycle
+      nBins = nBins + 1
+      if ( nBins <= size(indices) ) indices(nBins) = i
+    enddo
+  end subroutine getNBinsInFile
+
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -1975,6 +2123,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.108  2010/11/19 23:58:19  pwagner
+! Added Diff
+!
 ! Revision 2.107  2010/11/05 00:31:10  pwagner
 ! Too few args to DumpOneL2PC
 !
