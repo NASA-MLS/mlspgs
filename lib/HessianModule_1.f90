@@ -13,8 +13,8 @@
 module HessianModule_1          ! High-level Hessians in the MLS PGS suite
 !=============================================================================
 
-! This module provides the elementary Hessian type.  Blocks of this
-! type are used to compose block Hessians.
+! This module provides the composite Block Hessian type.  Blocks of this
+! type are used to compose the Hessians inside L2PC.
 
   use Allocate_Deallocate, only: Test_Deallocate
   use HessianModule_0, only: ClearBlock, CreateBlock, &
@@ -218,28 +218,41 @@ contains
 
   ! ------------------------------------------------- Diff_Hessians -----
   ! Diff two Hessians, presumed to match somehow
-  subroutine Diff_Hessians ( H1, H2, Details, Clean )
+  subroutine Diff_Hessians ( H1, H2, Details, options, Clean )
     use HessianModule_0, only: Diff
     use Lexer_core, only: Print_Source
+    use MLSStrings, only: lowercase
+    use MLSStringLists, only: isInList, optionDetail, switchDetail
     use Output_m, only: Output, NewLine
-    use String_Table, only: Display_String
+    use String_Table, only: Display_String, get_string
 
-    type (Hessian_T), intent(in) :: H1, H2
+    type (Hessian_T), intent(inout) :: H1, H2
     integer, intent(in), optional :: Details ! Print details, default 1
       ! <= -3 => no output
       ! -2 => Just name, size, and where created
       ! -1 => Just row and col info for each block
       ! 0 => Dimensions of each block,
       ! 1 => Values in each block
+    character(len=*), intent(in), optional :: options
     logical, intent(in), optional :: CLEAN   ! print \size
-
+    ! Internal variables
     integer :: I, J, K    ! Subscripts, loop inductors
+    character(len=128) :: molecules
     integer :: My_Details
+    logical :: myForce
     integer :: TotalSize  ! of all blocks
 
     my_details = 1
     if ( present(details) ) my_details = details
     if ( my_details <= -3 ) return
+    molecules = '*'
+    myForce = .false.
+    if ( present(options) ) then
+      Molecules = lowercase( optionDetail( options, 'b' ) )
+      if ( Molecules == 'no' ) Molecules = '*'
+      if ( DEEBUG ) call outputNamedValue('Molecules', Molecules)
+      myForce = ( optionDetail( options, 'f' ) == 'yes' )
+    endif
     if ( h1%name > 0 .and. h2%name > 0 ) then
       call output ( 'Diffing ' )
       call display_string ( h1%name )
@@ -267,7 +280,19 @@ contains
     do k = 1, h1%col%nb
       do j = 1, h1%col%nb
         do i = 1, h1%row%nb
-          if ( h1%block(i,j,k)%kind /= h2%block(i,j,k)%kind ) then
+          if( molecules /= '*' ) then
+            if ( skipThisBlock ( &
+              & 2, h1%col%vec%quantities(h1%col%quant(j))%template%name &
+              &  ) .and. skipThisBlock ( &
+              & 2, h2%col%vec%quantities(h2%col%quant(j))%template%name &
+              &  ) .and. skipThisBlock ( &
+              & 3, h1%col%vec%quantities(h1%col%quant(k))%template%name &
+              &  ).and. skipThisBlock ( &
+              & 3, h2%col%vec%quantities(h2%col%quant(k))%template%name &
+              &  ) ) cycle
+          endif
+          if ( h1%block(i,j,k)%kind /= h2%block(i,j,k)%kind .and. &
+            & .not. myForce ) then
             call output ( 'the hessians at (i,j,k) ')
             call output( (/ i,j,k /) )
             call output( 'are of different kinds', advance='yes' )
@@ -306,11 +331,26 @@ contains
           call output ( h1%col%Inst(k) )
           call output ( ' )' )
           call newLine
-          call Diff ( h1%block(i,j,k), h2%block(i,j,k), details=my_details, clean=clean )
+          call Diff ( h1%block(i,j,k), h2%block(i,j,k), &
+            & details=my_details, options=options, clean=clean )
         end do
       end do
     end do
 
+    contains
+    function skipThisBlock ( s, tid ) result( doWe )
+      ! Return TRUE only if we are to skip diffing this block
+      integer, intent(in) :: s ! 1 : i; 2 : j; 3 : k
+      integer, intent(in) :: tid ! qty template id
+      logical :: doWe
+      character(len=32)  ::     templateNameStr
+      ! Executable
+      templateNameStr = '(not found)'
+      doWe = .false.
+      if ( tid > 0 ) call get_string ( tid, templateNameStr )
+      if ( s > 1 .and. molecules /= '*' ) &
+        & doWe = ( .not. isInList( molecules, lowercase(trim(templateNameStr)) ) )
+    end function skipThisBlock
   end subroutine Diff_Hessians
 
   ! ------------------------------------------------- Dump_Hessian -----
@@ -618,18 +658,19 @@ contains
   end subroutine OptimizeHessian_1
 
   ! ------------------------------------------ StreamlineHessian_1 -----
-  subroutine StreamlineHessian_1 ( H, ScaleHeight, GeodAngle, Threshold )
+  ! Given a Hessian, trim off the elements that are further away than indicated in
+  ! scale height (for zeta coordinates) or geodAngle.  In each block, zero out
+  ! any that are smaller in magnitude than the maximum by
+  ! a factor of threshold.
+  subroutine StreamlineHessian_1 ( H, Surface, ScaleHeight, GeodAngle, Threshold )
 
     use HessianModule_0, only: StreamlineHessian
     use Intrinsic, only: L_ZETA
     use MLSKinds, only: R8
     use QuantityTemplates, only: QuantityTemplate_T
-    ! Given a Hessian, trim off the elements that are further away than indicated in
-    ! scale height (for zeta coordinates) or geodAngle.  In each block, replace
-    ! ones that are smaller in magnitude than the maximum in the block by
-    ! a factor of threshold by zero.
     type (Hessian_T), intent(inout) :: H
     type (HessianElement_T), pointer :: HBU, HBL ! In Upper and Lower triangle
+    integer, intent(in) ::  Surface     ! Negative if not specified
     real(r8), intent(in) :: ScaleHeight ! Negative if not specified
     real(r8), intent(in) :: GeodAngle   ! Negative if not specified
     real(r8), intent(in) :: Threshold   ! Negative if not specified
@@ -657,16 +698,9 @@ contains
           if ( dropBlock ) then
             call ClearBlock ( hbu )
             call ClearBlock ( hbl )
-          else
-            ! Now clear elements on vertical grounds, but only for simple quantities
-            if ( q1%coherent .and. q1%verticalCoordinate == l_zeta .and. &
-               & q2%coherent .and. q2%verticalCoordinate == l_zeta .and. &
-               & scaleHeight > 0.0 ) then
-
-              call streamlineHessian ( hbu, q1, q2, scaleHeight, threshold )
-              call streamlineHessian ( hbl, q2, q1, scaleHeight, threshold )
-
-            end if
+          elseif ( q1%coherent .and. q2%coherent ) then
+            call streamlineHessian ( hbu, q1, q2, surface, scaleHeight, threshold )
+            call streamlineHessian ( hbl, q2, q1, surface, scaleHeight, threshold )
           end if
         end do
       end do
@@ -687,6 +721,9 @@ contains
 end module HessianModule_1
 
 ! $Log$
+! Revision 2.16  2010/11/19 23:57:20  pwagner
+! May choose which molecule's blocks to diff; set streamline gap by num of surfaces
+!
 ! Revision 2.15  2010/11/08 19:01:58  pwagner
 ! Fixed something NAG and Lahey called a bug
 !
