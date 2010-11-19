@@ -992,7 +992,8 @@ contains
             endif
             if ( DiffOrDump == s_diff ) then
               call diff ( HessianDatabase(hessianIndex), &
-                &         HessianDatabase(hessianIndex2), details=details )
+                &         HessianDatabase(hessianIndex2), details=details, &
+                & options=optionsString )
             else
               call dump ( HessianDatabase(hessianIndex), details=details, &
                 & options=optionsString )
@@ -1380,6 +1381,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.55  2010/11/19 23:59:23  pwagner
+! Passes options string to Hessians diff
+!
 ! Revision 2.54  2010/11/05 22:37:06  pwagner
 ! Pass optionsString to dumps of L2PC, Hessians
 !
