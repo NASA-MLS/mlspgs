@@ -26,8 +26,8 @@ module HessianModule_0          ! Low-level Hessians in the MLS PGS suite
   public :: H_Absent, H_Sparse, H_Full, H_Unknown
   public :: HessianElement_T, Tuple_T
   public :: ClearBlock, CreateBlock, Densify, DestroyBlock, Diff, Dump
-  public :: InsertHessianPlane, Multiply, OptimizeBlock, Sparsify
-  public :: StreamlineHessian, RH
+  public :: InsertHessianPlane, Multiply, OptimizeBlock, RH
+  public :: Sparsify, StreamlineHessian, Unsparsify
 
   integer, parameter :: H_Absent = 0    ! An absent block -- assumed zero
   integer, parameter :: H_Sparse = 1    ! A 3-way indexed sparse representation
@@ -36,7 +36,7 @@ module HessianModule_0          ! Low-level Hessians in the MLS PGS suite
   ! This is used for reading l2pc files where we don't want to load the block
   ! into memory until we know we need it.  The HessianModule_0 code doesn't
   ! understand such blocks, so use them with care.
-
+  ! Why use them at all? Such trickery leads to fragile results.
 
   type :: Tuple_T
     real(rh) :: H      ! The value of a Hessian element
@@ -115,8 +115,9 @@ module HessianModule_0          ! Low-level Hessians in the MLS PGS suite
 
   real(rh), parameter:: AUGMENTFACTOR = 1.0
   logical, parameter :: DEEBUG = .false.
-  logical, parameter :: DONTOPTIMIZE = .true.
+  logical, parameter :: DONTOPTIMIZE = .false.
   logical, parameter :: DUMPASUNSPARSIFIED = .true.
+  logical, parameter :: OPTIMIZEMEANSSPARISFY = .true.
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -292,17 +293,22 @@ contains
   end subroutine Densify_Hessian
 
   ! ------------------------------------------- Diff_Hessian_Blocks -----
-  subroutine Diff_Hessian_Blocks ( H1, H2, Details, Indices, Clean )
+  subroutine Diff_Hessian_Blocks ( H1, H2, Details, Indices, options, Clean )
     use Allocate_Deallocate, only: Deallocate_Test, Allocate_Test
     use MLSFillValues, only: Repopulate
-    type(HessianElement_T), intent(in) :: H1, H2
+    use MLSStringLists, only: optionDetail, unquote
+    type(HessianElement_T), intent(inout) :: H1, H2
     integer, intent(in), optional :: Details ! Print details, 0 => minimal,
                                              ! 1 => values, default 1
     integer, intent(in), optional :: Indices(:) ! 3 indices of the block
+    character(len=*), intent(in), optional :: options
     logical, intent(in), optional :: CLEAN   ! print \size
-
-    integer :: My_Details
+    ! Internal variables
+    integer :: h1kind
+    integer :: h2kind
     logical :: My_Clean
+    integer :: My_Details
+    logical :: myForce
     ! These are in case we need to diff two blocks stored sparsely
     real(rh), pointer :: h1array(:,:,:) => NULL()
     real(rh), pointer :: h2array(:,:,:) => NULL()
@@ -311,7 +317,10 @@ contains
     if ( present(details) ) my_Details = details
     my_Clean = .false.
     if ( present(clean) ) my_Clean = clean
-
+    myForce = .false.
+    if ( present(options) ) then
+      myForce = ( optionDetail( options, 'f' ) == 'yes' )
+    endif
     if ( present(indices) ) then
       call output ( indices(1), before = ' (', after=', ' )
       call output ( indices(2), after=', ' )
@@ -326,9 +335,59 @@ contains
     call output ( h1%nRows, after=' Rows, ' )
     call output ( h1%nCols1, after = ' First Columns, ' )
     call output ( h1%nCols2, after = ' Second Columns, is ' )
-    if ( h1%kind /= h2%kind ) then
-      call output ( 'the hessian blocks are of different kind', advance='yes' )
-      return
+    h1kind = h1%kind
+    h2kind = h2%kind
+    if ( h1kind /= h2kind ) then
+      if ( .not. myForce .or. my_Details < 1 ) then
+        call output ( 'the hessian blocks are of different kind', advance='yes' )
+        return
+      else
+        ! OK, we will need to make the two arrays alike somehow
+        ! Here's an idea--make both full
+        select case ( h1kind )
+        case ( h_absent )
+          call Unsparsify( h1 )
+        case ( h_sparse )
+          call Unsparsify( h1 )
+        case default
+        end select
+        select case ( h1kind )
+        case ( h_absent )
+          call Unsparsify( h1 )
+        case ( h_sparse )
+          call Unsparsify( h1 )
+        case default
+        end select
+        return
+      endif
+    endif
+    call Diff_like( h1, h2, details, options )
+    ! Now did we have to monkey with h1 and k2 becuase they were unkinds?
+    if ( h1kind == h2kind ) return
+    if ( h1kind /= h_full ) then
+      call deallocate_test ( h1%values, moduleName // 'diff', "h1%values" )
+      h1%kind = h1kind
+    endif
+    if ( h2kind /= h_full ) then
+      call deallocate_test ( h2%values, moduleName // 'diff', "h2%values" )
+      h2%kind = h2kind
+    endif
+  contains
+    subroutine Diff_like( h1, h2, details, options )
+    ! Diff two Hessian blocks, confident that they are alike
+    type(HessianElement_T), intent(in) :: H1, H2
+    integer, intent(in), optional :: Details ! Print details, 0 => minimal,
+                                             ! 1 => values, default 1
+    character(len=*), intent(in), optional :: options
+    ! Internal variables
+    character(len=16) :: myoptions ! Keep only array-diffing ones
+    ! Executable
+    if ( present(options) ) then
+      myOptions = merge('c',' ',my_clean)
+    else
+      myOptions = trim( &
+        & unquote( options, quotes='[', cquotes=']', options='-r' ) &
+        & ) // merge('c',' ',my_clean)
     endif
     select case ( h1%kind )
     case ( h_absent )
@@ -355,11 +414,13 @@ contains
     case ( h_full )
       call output ( 'full', advance='yes' )
       if ( details > 0 ) &
-        & call Diff ( h1%values, 'Hessian 1 values', h2%values, 'Hessian 2 values', options=merge('c',' ',my_clean) )
+        & call Diff ( h1%values, 'Hessian 1 values', h2%values, &
+          & 'Hessian 2 values', options=myoptions )
     case ( h_unknown )
       call output ( 'of unknown form, no method to Diff', advance='yes' )
     end select
 
+    end subroutine Diff_like
   end subroutine Diff_Hessian_Blocks
 
   ! ------------------------------------------- Dump_Hessian_Block -----
@@ -694,6 +755,7 @@ contains
   end subroutine InsertHessianPlane_Matrix
 
   ! ------------------------------------------------ OptimizeBlock -----
+  ! Rewrite this from scratch before use
   subroutine OptimizeBlock ( H )
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, &
       & Test_Allocate, Test_Deallocate
@@ -730,10 +792,16 @@ contains
     if ( h%kind == h_Absent .or. h%kind == h_Unknown ) return
     if ( h%kind == h_Full ) then
       n = count(h%values /= 0.0)
-      if ( 2.5 * n > size(h%values) ) return ! sparsifying won't improve things
-        ! Assuming integers take half the space of real(rh), each tuple takes
-        ! 2.5 times the space of a single value.
-      call Sparsify_Hessian ( H )
+      ! Assuming integers take half the space of real(rh), each tuple takes
+      ! 2.5 times the space of a single value.
+      if ( 2.5 * n > size(h%values) ) then
+        return ! sparsifying won't improve things
+      elseif ( n < 1 ) then
+        ! all values 0; so make it absent
+        call clearBlock ( h )
+      else
+        call Sparsify_Hessian ( H )
+      endif
       if ( h%kind /= h_Sparse ) return
     end if
     ! OK, so now it must be sparse
@@ -756,6 +824,12 @@ contains
       return
     end if
 
+    if ( OPTIMIZEMEANSSPARISFY ) then
+       call MLSMessage ( MLSMSG_Warning, ModuleName, &
+         & "Skipping optimizeBlocks after sparisfying(paw)" )
+       return
+    endif
+    ! The rest of this is probably useless as well as wrong
     call allocate_Test ( rank,  h%tuplesFilled, "Rank in OptimizeBlock", ModuleName )
     call allocate_Test ( order, h%tuplesFilled, "Order in OptimizeBlock", ModuleName )
     rank = h%tuples(1:h%tuplesFilled)%k + &
@@ -882,20 +956,27 @@ o:    do while ( i < n )
   end subroutine Sparsify_Hessian_Array_S
 
   !  ----------------------------------------- StreamlineHessian_0 -----
-  subroutine StreamlineHessian_0 ( H, Q1, Q2, ScaleHeight, Threshold )
-    ! Remove elements that are separated vertically by than ScaleHeight or
-    ! that are smaller in magnitude than the maximum in the block by a factor
+  subroutine StreamlineHessian_0 ( H, Q1, Q2, Surface, ScaleHeight, Threshold )
+    ! Remove elements 
+    ! (1) between levels separated vertically by more than ScaleHeight (units); or
+    ! (2) between levels separated vertically by more than Surface (index); or
+    ! (3) are smaller in magnitude than the maximum in the block by a factor
     ! of threshold
     ! This will make the Hessians, and the containing L2PC files much smaller
     ! However, some of the assumptions are dubious
     ! On balance, StreamlineHessian_0 might not be worth the risk (paw)
+    ! Breaking news: running retrievals with analytical, full hessian blocks
+    ! takes too long; we must try streamlining after all
     use MLSKinds, only: R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
     use QuantityTemplates, only: QuantityTemplate_T
+    ! Args
     type (HessianElement_T), intent(inout) :: H
     type (QuantityTemplate_T), intent(in) :: Q1, Q2 ! For 1st, 2nd cols of H
+    integer, intent(in) ::  Surface
     real(r8), intent(in) :: ScaleHeight
     real(r8), intent(in) :: Threshold
+    ! Internal variables
     real(r8) :: Cutoff ! Threshold * maxval(abs(...)) if threshold > 0.
     integer :: J, K    ! Subscripts
     integer :: S1, S2  ! Surface indices for 1st, 2nd cols of H
@@ -910,16 +991,31 @@ o:    do while ( i < n )
       ! Note that this cutoff won't be right if h%tuples is
       ! longer than h%tuplesFilled (paw)
       cutoff = threshold * maxval(abs(h%tuples%h))
-      where ( abs( h%tuples%h ) < cutoff .or. &
-        &     abs( q1%surfs( (h%tuples%j-1 ) / q1%noChans + 1, 1) -   &
-        &          q2%surfs( (h%tuples%k-1 ) / q2%noChans + 1, 1) ) > &
-        &     scaleHeight  ) h%tuples%h = 0.0
+      if ( surface < 0 .and. scaleHeight < 0._r8 ) then
+        where ( abs( h%tuples%h ) < cutoff ) h%tuples%h = 0.0
+      elseif ( surface > 0 ) then
+        where ( abs( h%tuples%h ) < cutoff .or. &
+          &     abs( (h%tuples%j-1 ) / q1%noChans + 1 -   &
+          &          (h%tuples%k-1 ) / q2%noChans + 1 ) > &
+          &     surface  ) h%tuples%h = 0.0
+      elseif ( scaleheight > 0._r8 ) then
+        where ( abs( h%tuples%h ) < cutoff .or. &
+          &     abs( q1%surfs( (h%tuples%j-1 ) / q1%noChans + 1, 1) -   &
+          &          q2%surfs( (h%tuples%k-1 ) / q2%noChans + 1, 1) ) > &
+          &     scaleHeight  ) h%tuples%h = 0.0
+      endif
     case ( h_full )
       do k = 1, h%nCols2 - 1
         s2 = ( k-1 ) / q2%noChans + 1
         do j = k + 1, h%nCols1
           s1 = ( j-1 ) / q1%noChans + 1
-          if ( abs ( q1%surfs(s1,1) - q2%surfs(s2,1) ) > scaleHeight ) then
+          if ( surface < 0 .and. scaleheight < 0._r8 ) then
+            ! no op; some compilers may complain
+            cutoff = 0._r8
+          elseif ( surface > 0 .and. abs(s1-s2) > surface ) then
+            h%values ( :, j, k ) = 0
+            h%values ( :, k, j ) = 0
+          elseif ( scaleHeight > 0._r8 .and. abs ( q1%surfs(s1,1) - q2%surfs(s2,1) ) > scaleHeight ) then
             h%values ( :, j, k ) = 0
             h%values ( :, k, j ) = 0
           end if
@@ -935,6 +1031,36 @@ o:    do while ( i < n )
 
   end subroutine StreamlineHessian_0
 
+  !  ----------------------------------------- Unsparsify -----
+  ! Fill out h%values based on its sparse nTuples (or else zeros)
+  ! Should you combine this with Repopulate from MLSFillValues module?
+  subroutine Unsparsify ( H )
+    use Allocate_Deallocate, only: Deallocate_Test, allocate_test
+    ! Argument
+    type(HessianElement_T), intent(inout) :: H
+    ! Internal variables
+    integer :: i
+    ! Executable
+    select case (h%kind)
+    case ( h_absent )
+      if ( associated(h%values) ) &
+        & call Deallocate_Test ( h%values, moduleName // 'Unsparsify', &
+        &  'h%values' )
+      call allocate_test( h%values, h%nRows, h%nCols1, h%nCols2, &
+          & "h%values", ModuleName // 'Unsparsify', fill=0.0_rh )
+    case ( h_sparse )
+      if ( associated(h%values) ) &
+        & call Deallocate_Test ( h%values, moduleName // 'Unsparsify', &
+        &  'h%values' )
+      call allocate_test( h%values, h%nRows, h%nCols1, h%nCols2, &
+          & "h%values", ModuleName // 'Unsparsify', fill=0.0_rh )
+      do i=1, h%TuplesFilled
+        h%values(h%tuples(i)%i, h%tuples(i)%j, h%tuples(i)%k) = h%tuples(i)%h
+      enddo
+    case default
+    end select
+  end subroutine Unsparsify
+
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -948,6 +1074,9 @@ o:    do while ( i < n )
 end module HessianModule_0
 
 ! $Log$
+! Revision 2.13  2010/11/19 23:54:19  pwagner
+! Turned optimizeBlock back on, hopefully skipping bauggy parts
+!
 ! Revision 2.12  2010/11/05 20:25:10  vsnyder
 ! Rename RM as RH to make it easier to change later.  Rename KIND argument
 ! of CreateHessianBlock_0 as H_Kind so the KIND intrinsic is available.  Add
