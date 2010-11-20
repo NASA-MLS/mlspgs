@@ -184,3 +184,13 @@
   HNO3, HO2, HOBR, HOCL, HOONO2, N2, N2O, NO, NO2, O, O2, O3, OCLO, OCS, $
   OH, SNGLT_DLTA_O2, SO2 ]})
 
+;; The following are a even further slimmed-down set of molecules
+;; for which we will seek second-order corrections to our l2pc-based
+;; forward models using Hessians
+!define(molFamiliesFor2ndDerR1A,{[ EXTINCTION, EXTINCTIONV2, H2O, O3 ]})
+!define(molFamiliesFor2ndDerR1B,{[ EXTINCTION, EXTINCTIONV2, H2O, O3 ]})
+!define(molFamiliesFor2ndDerR2,{[  EXTINCTION, EXTINCTIONV2, H2O, O3 ]})
+!define(molFamiliesFor2ndDerR3,{[  EXTINCTION, EXTINCTIONV2, H2O, O3 ]})
+!define(molFamiliesFor2ndDerR4,{[  EXTINCTION, EXTINCTIONV2, H2O, O3 ]})
+!define(molFamiliesFor2ndDerR5H,{[ EXTINCTION, EXTINCTIONV2, H2O, O3 ]})
+!define(molFamiliesFor2ndDerR5V,{[ EXTINCTION, EXTINCTIONV2, H2O, O3 ]})
