@@ -1077,13 +1077,15 @@ contains ! =====     Public Procedures     =============================
 
     ! ---------------------------------------------- DoStreamline  -----
     subroutine DoStreamline
-      use INIT_TABLES_MODULE, only: F_GEODANGLE, F_HESSIAN, F_SCALEHEIGHT, &
-        & F_THRESHOLD
+      use INIT_TABLES_MODULE, only: F_GEODANGLE, F_HESSIAN, &
+        & F_SCALEHEIGHT, F_SURFACE, F_THRESHOLD
       real(r8) :: GEODANGLE               ! For StreamlineHessian
       real(r8) :: SCALEHEIGHT             ! Scale height for StreamlineHessian
+      integer :: SURFACE                  ! Number of surfaces for StreamlineHessian
       real(r8) :: THRESHOLD
       geodAngle = -1.0   ! means "not specified"
       scaleHeight = -1.0 ! means "not specified"
+      surface = -1       ! means "not specified"
       threshold = -1.0   ! means "not specified"
       do j = 2, nsons(key)
         gson = subtree(j,key) ! The argument
@@ -1103,6 +1105,12 @@ contains ! =====     Public Procedures     =============================
           if ( unitsError ) call Announce_error ( subtree(j,key), wrongUnits, &
             & extraInfo=(/unitAsArray(1), PHYQ_Dimensionless/) )
           scaleHeight = valueAsArray(1)
+        case ( f_surface )
+          call expr_check ( subtree(2,gson), unitAsArray, valueAsArray, &
+            & (/PHYQ_Dimensionless/), unitsError )
+          if ( unitsError ) call Announce_error ( subtree(j,key), wrongUnits, &
+            & extraInfo=(/unitAsArray(1), PHYQ_Dimensionless/) )
+          surface = valueAsArray(1)
         case ( f_threshold )
           call expr_check ( subtree(2,gson), unitAsArray, valueAsArray, &
             & (/PHYQ_Dimensionless/), unitsError )
@@ -1112,7 +1120,7 @@ contains ! =====     Public Procedures     =============================
         end select
       end do
       call StreamlineHessian ( hessians ( hessianIndex ), &
-        & scaleHeight, geodAngle, threshold )
+        & surface, scaleHeight, geodAngle, threshold )
     end subroutine DoStreamline
 
     ! ------------------------------------------------ fillCommand -----
@@ -2622,6 +2630,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.389  2010/11/20 00:01:14  pwagner
+! May specifiy surfaces gap beyond which to zero out in Streamline
+!
 ! Revision 2.388  2010/08/06 23:08:48  pwagner
 ! Pass Hessians, matrices to DumpCommand
 !
