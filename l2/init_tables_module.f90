@@ -1515,6 +1515,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_geodAngle, t+t_numeric, n+n_field_type, &
              begin, f+f_hessian, s+s_hessian, nr+n_field_spec, &
              begin, f+f_scaleHeight, t+t_numeric, n+n_field_type, &
+             begin, f+f_surface, t+t_numeric, n+n_field_type, &
              begin, f+f_threshold, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def, &
       begin, s+s_snoop, &
@@ -1643,6 +1644,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.513  2010/11/20 00:00:41  pwagner
+! May specifiy surfaces gap beyond which to zero out in Streamline
+!
 ! Revision 2.512  2010/09/17 00:09:55  pwagner
 ! Can constrain writing l2pc blocks by name
 !
