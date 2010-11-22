@@ -433,7 +433,7 @@ program mockup
       jacobian = CreatePlainMatrix(measurement, state)
 
       ! Call the forward model
-      do i = chunk%firstMAFIndex, chunk%lastMAFIndex + 1
+      do i = chunk%firstMAFIndex, chunk%lastMAFIndex
          call ForwardModel (chunk, forwardModelConfigDatabase, state, &
                             stateExtra, measurement, jacobian, requestedMAF=(i-chunk%firstMAFIndex))
          call dump(measurement, details=2)
@@ -622,6 +622,9 @@ program mockup
 end program
 
 ! $Log$
+! Revision 1.46  2010/11/19 17:16:08  honghanh
+! Add example to use the requestedMAF feature in forward model
+!
 ! Revision 1.44  2010/11/03 20:17:01  honghanh
 ! Add name as an optional argument to CreateVector.
 !
