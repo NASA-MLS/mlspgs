@@ -530,11 +530,13 @@ contains ! ======================= Public Procedures =========================
     character(len=*), intent(in), optional :: options
 
     ! Local variables
-    integer :: classID
+    integer :: ch
     character(len=MAXCHFIELDLENGTH), dimension(1) :: chValue
-    character(len=MAXCHFIELDLENGTH), dimension(:), pointer :: ch1dArray
-    character(len=1), dimension(:,:,:), pointer :: chArray
-    character(len=80), dimension(:), pointer :: chLongArray
+    character(len=MAXCHFIELDLENGTH), dimension(:), pointer :: ch1dArray => null()
+    character(len=1), dimension(:,:,:), pointer :: chArray => null()
+    character(len=1), dimension(:), pointer :: charsArray  => null()
+    character(len=80), dimension(:), pointer :: chLongArray => null()
+    integer :: classID
     ! logical, parameter :: DEEBUG = .false.
     integer, dimension(7) :: dims
     logical :: dontPrintName
@@ -544,9 +546,12 @@ contains ! ======================= Public Procedures =========================
     integer :: i
     integer :: ItemID
     integer, dimension(:,:,:), pointer :: iValue => null()
+    integer :: k
+    integer :: m
     character(len=MAXNDSNAMES*32) :: myNames
     character(len=128) :: name
     character(len=128) :: namePrinted
+    integer :: Np1
     integer :: numDS
     character(len=16) :: Qtype
     integer :: rank
@@ -556,6 +561,7 @@ contains ! ======================= Public Procedures =========================
     integer, dimension(size(DONTDUMPTHESEDSNAMES) ) :: theIndexes
     integer :: type_id
     integer(kind=Size_t) :: type_size
+    ! logical, parameter :: DEEBUG = .true.
     ! Executable
     if ( present(options) .and. DEEBUG ) call outputNamedValue( 'options', options )
     call MLSMessageCalls( 'push', constantName='DumpHDF5DS' )
@@ -715,10 +721,29 @@ contains ! ======================= Public Procedures =========================
             call output( trim(chValue(1)), advance='yes' )
           elseif ( dims(1) > 999 ) then
             ! In case we have a very long array, e.g. dates
+            if ( DEEBUG ) call outputNamedValue( 'dims', dims )
+            call allocate_test( charsArray, 80*dims(1), 'charsArray', ModuleName )
             call allocate_test( chLongArray, dims(1), 'chLongArray', ModuleName )
             call LoadFromHDF5DS ( groupID, name, chLongArray )
+            m = 80
+            do k=1, dims(1)
+              do ch=1, m
+                charsArray(ch + m*(k-1)) = chLongArray(k)(ch:ch)
+              enddo
+            enddo
+            Np1 = FindFirst( charsArray, ACHAR(0) )
+            m = Np1 / dims(1)
+            chLongArray = ' '
+            do k=1, dims(1)
+              do ch=1, m
+                chLongArray(k)(ch:ch) = charsArray(ch + m*(k-1))
+              enddo
+            enddo
+            if ( DEEBUG ) call outputNamedValue( 'Np1', Np1 )
+            if ( DEEBUG ) call outputNamedValue( 'm', m )
             call dump ( chLongArray, trim(namePrinted) )
             call deallocate_test( chLongArray, 'chLongArray', ModuleName )
+            call deallocate_test( charsArray, 'charsArray', ModuleName )
           else
             call allocate_test( ch1dArray, dims(1), 'ch1dArray', ModuleName )
             call LoadFromHDF5DS ( groupID, name, ch1dArray )
@@ -5067,6 +5092,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.101  2010/11/23 01:11:07  pwagner
+! Improved dumps of character arrays with many elements
+!
 ! Revision 2.100  2010/08/27 20:59:06  pwagner
 ! Reduced character length array name chLongArray for long arrays so we dont exhaust memory
 !
