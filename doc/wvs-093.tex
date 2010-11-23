@@ -7,7 +7,7 @@
 \topmargin -0.25in
 \textheight 9.0in
 
-\newcommand{\docname}{\bf wvs-093r2}
+\newcommand{\docname}{\bf wvs-093r3}
 \newcommand{\docdate}{23 November 2010}
 
 \ifx\pdfoutput\undefined
@@ -448,6 +448,7 @@ Equation (\ref{dIdT}) becomes
 \begin{equation}
 \frac{\delta I(s_m)}{\delta T(\sigma)} =
   \frac{\delta I}{\delta \alpha(\sigma)}
+  \frac{\partial \alpha(\sigma)}{\partial T(\sigma)}
 - \mathcal{T}(\sigma) \frac{\d \sigma}{\d h}
    \left( \frac{\partial^2 B(\sigma)}{\partial \sigma \partial T(\sigma)}
     \frac{\partial h}{\partial \zeta} +
@@ -467,6 +468,9 @@ Equation (\ref{dIdT}) becomes
 % $Id$
 
 % $Log$
+% Revision 1.3  2010/11/23 21:48:42  vsnyder
+% Incorporate interpolating factors, re-work temperature derivatives
+%
 % Revision 1.2  2010/05/20 23:47:56  vsnyder
 % Add Id line
 %
