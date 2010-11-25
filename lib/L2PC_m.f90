@@ -391,12 +391,23 @@ contains ! ============= Public Procedures ==========================
     logical :: mustRead
     integer :: nBins1
     integer :: nBins2
+    logical :: verbose
     ! Executable
     mustRead = .false.
-    if ( present(options) ) mustRead = (optionDetail(options, 'D' ) == 'yes' )
+    verbose = .false.
+    if ( present(options) ) then
+      mustRead = (optionDetail(options, 'D' ) == 'yes' )
+      verbose = (optionDetail(options, 'v' ) == 'yes' )
+    endif
+    if ( verbose ) call outputNamedValue( 'options', options )
+    if ( verbose ) call outputNamedValue( 'mustRead', mustRead )
     if ( mustRead ) then
       call ReadCompleteHDF5L2PCFile ( L2PCFile1, 0, shallow=.true. )
       call ReadCompleteHDF5L2PCFile ( L2PCFile2, 0, shallow=.true. )
+      if ( .not. associated(L2PCDataBase) ) then
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & 'Sorry-l2pc database still empty' )
+      endif
       do i=1, size(L2PCDataBase)
         if ( any( &
           & (/ L2PCFile1%FileID%f_id, L2PCFile2%FileID%f_id /) &
@@ -406,9 +417,11 @@ contains ! ============= Public Procedures ==========================
     endif
     call getNBinsInFile ( L2PCFile1, indices1, nBins1 )
     call getNBinsInFile ( L2PCFile2, indices2, nBins2 )
+    if ( verbose ) call outputNamedValue( 'nBins1', nBins1 )
+    if ( verbose ) call outputNamedValue( 'nBins2', nBins2 )
     do i=1, min( nBins1, nBins2 )
       call newline
-      call outputNamedValue( 'file index', i )
+      if ( verbose ) call outputNamedValue( 'file index', i )
       call DiffL2PCs( L2PCDataBase(indices1(i)), L2PCDataBase(indices2(i)), &
         & details, options )
     enddo
@@ -436,20 +449,24 @@ contains ! ============= Public Procedures ==========================
     logical :: dumpHessians
     logical :: dumpJacobians
     integer :: myDetails
-
+    logical :: verbose
     ! Executable code
     myDetails = 0
     if ( present(details) ) myDetails = details
     dumpHessians = .true.
     dumpJacobians = .true.
-    ! mymolecules = '*'
+    verbose = .false.
     if ( present(options) ) then
       dumpHessians = optionDetail( options, 'h' ) == 'yes'
       dumpJacobians = optionDetail( options, 'm' ) == 'yes'
-      ! myMolecules = lowercase( optionDetail( options, 'b' ) )
-      ! if ( myMolecules == 'no' ) myMolecules = '*'
+      verbose = (optionDetail(options, 'v' ) == 'yes' )
+      if ( verbose ) then
+        call outputNamedValue( 'options', trim(options) )
+        call outputNamedValue( 'dumpJacobians', dumpJacobians )
+        call outputNamedValue( 'dumpHessians', dumpHessians )
+      endif
     endif
-    call outputNamedValue( 'myDetails', myDetails )
+    if ( verbose ) call outputNamedValue( 'myDetails', myDetails )
     call output( '- Diffing L2PCs -', advance='yes' )
     if ( l2pc1%name > 0 ) then
       call display_string ( l2pc1%name, before='name: ' )
@@ -463,6 +480,9 @@ contains ! ============= Public Procedures ==========================
     else
       call output( '*** Uh-oh, name not found in string table', advance='yes' )
     endif
+    
+    if ( verbose ) call outputNamedValue( 'l2pc1%goth', l2pc1%goth )
+    if ( verbose ) call outputNamedValue( 'l2pc2%goth', l2pc2%goth )
     if ( dumpJacobians ) &
       & call diff ( l2pc1%j, l2pc2%j, details )
 
@@ -1230,8 +1250,15 @@ contains ! ============= Public Procedures ==========================
     integer :: STATUS    ! Flag from HDF5
     integer :: i, nmembers, objtype
     ! Executable code
-
     l2pc => l2pcDatabase ( bin )
+    if ( switchDetail ( switches, 'l2pc' ) > -1 ) then
+      call output( 'Populating l2pc', advance='yes' )
+      call outputNamedValue( 'size(l2pcDatabase)', size(l2pcDatabase) )
+      call outputNamedValue( 'size(l2pcInfo)', size(l2pcInfo) )
+      call outputNamedValue( 'm_unknown', m_unknown )
+      call dump( l2pc%j%block%kind, 'l2pc%j%block%kind' )
+      call outputNamedValue( 'any ( l2pc%j%block%kind == m_unknown )', any ( l2pc%j%block%kind == m_unknown ) )
+    endif
     if ( .not. any ( l2pc%j%block%kind == m_unknown ) ) return
     info => l2pcInfo ( bin )
 
@@ -1329,14 +1356,15 @@ contains ! ============= Public Procedures ==========================
               call outputNamedValue( 'HessianBlocks ID', blocksId )
             endif
             call GetHDF5Attribute ( blockID, 'kind', kind )
-            if ( DEEBUG ) call outputNamedValue( 'kind', kind )
+            if ( DEEBUG .or. switchDetail( switches, 'l2pc' ) > 0 ) &
+              & call outputNamedValue( 'kind', kind )
             select case (kind)
             case (h_absent)
-              call CreateBlock ( l2pc%h, blockRow, blockCol, blockLayer, h0%kind )
+              call CreateBlock ( l2pc%h, blockRow, blockCol, blockLayer, kind )
               h0 => l2pc%h%block ( blockRow, blockCol, blockLayer )
               ! call LoadFromHDF5DS ( blockId, 'i', h0%values )
             case (h_full)
-              call CreateBlock ( l2pc%h, blockRow, blockCol, blockLayer, h0%kind )
+              call CreateBlock ( l2pc%h, blockRow, blockCol, blockLayer, kind )
               h0 => l2pc%h%block ( blockRow, blockCol, blockLayer )
               if ( any(shape(h0%values) == 0) ) then
                 call GetHDF5DSDims ( blockId, 'values', HDIMS )
@@ -1403,6 +1431,8 @@ contains ! ============= Public Procedures ==========================
     integer :: STATUS          ! Flag from HDF5
 
     ! Executable code
+    if ( switchDetail( switches, 'l2pc' ) > -1 ) &
+      & call output ( 'Reading complete l2pc file ', advance='yes' )
     myShallow = .true.
     if ( present ( shallow ) ) myShallow = shallow
 
@@ -1508,7 +1538,6 @@ contains ! ============= Public Procedures ==========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open matrix in input l2pc file' , &
       & MLSFile=MLSFile )
-
     ! Read the row and column vectors
     MLSFile%fileID%grp_id = matrixId
     call ReadOneVectorFromHDF5 ( MLSFile, 'Columns', xStar )
@@ -1674,10 +1703,13 @@ contains ! ============= Public Procedures ==========================
                 call CreateBlock ( l2pc%h, i, j, k, kind )
                 h0 => l2pc%h%block ( i, j, k )                
                 call LoadFromHDF5DS ( MLSFile, 'values', h0%values )
+              case default
+                 call MLSMessage ( MLSMSG_Warning, ModuleName, &
+                & 'Read unexpected Hessian kind '//trim(name) )
               end select
               call h5gClose_f ( blockId, status )
               if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-                & 'Unable to close group for input l2pc matrix block '//trim(name) , &
+                & 'Unable to close group for input l2pc Hessian block '//trim(name) , &
                 & MLSFile=MLSFile )
             end do
           end do
@@ -1822,7 +1854,7 @@ contains ! ============= Public Procedures ==========================
         call output ( trim(quantityNames(quantity)), advance='yes' )
       end if
 
-      ! Point to this quanity
+      ! Point to this quantity
       call h5gOpen_f ( vId, trim(quantityNames(quantity)), qId, status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to open quantity '//trim(quantityNames(quantity))// &
@@ -2103,6 +2135,7 @@ contains ! ============= Public Procedures ==========================
     indices = 0
     nBins = 0
     if ( .not. associated(L2PCDataBase) ) return
+    call outputNamedValue( 'size(L2PCDataBase)', size(L2PCDataBase) )
     do i=1, size(L2PCDataBase)
       if ( L2PCFile%FileID%f_id /= fileIDDataBase(i) ) cycle
       nBins = nBins + 1
@@ -2123,6 +2156,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.109  2010/11/25 01:19:27  pwagner
+! Fixed bugs in PopulateL2PCBin with Hessians
+!
 ! Revision 2.108  2010/11/19 23:58:19  pwagner
 ! Added Diff
 !
