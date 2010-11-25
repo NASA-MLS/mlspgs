@@ -258,12 +258,16 @@ contains
       call display_string ( h1%name )
       call output ( ' and ' )
       call display_string ( h2%name )
+    else
+      call output ( ' (unnamed l2pcs) ' )
     end if
     if ( h1%where > 0 .and. h2%where > 0 ) then
       call output ( ', created at ' )
       call print_source ( h1%where )
       call output ( ' and ' )
       call print_source ( h2%where )
+    else
+      call output ( ' (no loci) ' )
     end if
     call newLine
     if ( .not. associated(h1%block) .or. .not. associated(h2%block) ) then
@@ -721,6 +725,9 @@ contains
 end module HessianModule_1
 
 ! $Log$
+! Revision 2.17  2010/11/25 01:17:11  pwagner
+! Tweaked an output
+!
 ! Revision 2.16  2010/11/19 23:57:20  pwagner
 ! May choose which molecule's blocks to diff; set streamline gap by num of surfaces
 !
