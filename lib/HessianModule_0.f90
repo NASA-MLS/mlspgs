@@ -351,15 +351,21 @@ contains
           call Unsparsify( h1 )
         case default
         end select
-        select case ( h1kind )
+        select case ( h2kind )
         case ( h_absent )
-          call Unsparsify( h1 )
+          call Unsparsify( h2 )
         case ( h_sparse )
-          call Unsparsify( h1 )
+          call Unsparsify( h2 )
         case default
         end select
-        return
+        call output( '(originally unlike)' ) ! return
       endif
+    endif
+    if ( h1kind /= h2kind ) then
+      call outputNamedValue( 'original kind(h1)', h1kind )
+      call outputNamedValue( 'original kind(h2)', h2kind )
+      call outputNamedValue( 'new kind(h1)', h1%kind )
+      call outputNamedValue( 'new kind(h2)', h2%kind )
     endif
     call Diff_like( h1, h2, details, options )
     ! Now did we have to monkey with h1 and k2 becuase they were unkinds?
@@ -382,7 +388,7 @@ contains
     ! Internal variables
     character(len=16) :: myoptions ! Keep only array-diffing ones
     ! Executable
-    if ( present(options) ) then
+    if ( .not. present(options) ) then
       myOptions = merge('c',' ',my_clean)
     else
       myOptions = trim( &
@@ -1074,6 +1080,9 @@ o:    do while ( i < n )
 end module HessianModule_0
 
 ! $Log$
+! Revision 2.14  2010/11/25 01:16:32  pwagner
+! Fixed bug in diffing Hessian blocks with options
+!
 ! Revision 2.13  2010/11/19 23:54:19  pwagner
 ! Turned optimizeBlock back on, hopefully skipping bauggy parts
 !
