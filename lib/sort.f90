@@ -10,7 +10,7 @@
 ! foreign countries or providing access to foreign persons.
 !     .  NASA contract NAS7-918 is acknowledged.
 module Sort_M
-
+  use MLSCommon, only: nan_signal, is_what_ieee
 !     Sort the M:N-vector A into ascending order.
 !
 !     To sort an array A' into descending order, let A = -A'
@@ -26,6 +26,12 @@ module Sort_M
 !>> 1994-10-19 SSORT  Krogh  Changes to use M77CON
 !>> 1988-11-22 SSORT  Snyder Initial code.
 
+  implicit none
+
+  private
+
+  public :: SORT, SORTP, SORTQ
+
   interface SORT
     module procedure ASORT, DSORT, ISORT, SSORT
   end interface
@@ -37,6 +43,8 @@ module Sort_M
   interface SORTQ ! Using a pre-specified permutation vector
     module procedure ASORTQ, DSORTQ, ISORTQ, SSORTQ
   end interface
+  
+  logical, parameter :: DEEBUG = .false.
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -307,6 +315,9 @@ contains
 end module Sort_M
 
 ! $Log$
+! Revision 2.9  2010/11/30 00:34:52  pwagner
+! NaNs now sort to the end
+!
 ! Revision 2.8  2009/06/23 18:25:43  pwagner
 ! Prevent Intel from optimizing ident string away
 !
