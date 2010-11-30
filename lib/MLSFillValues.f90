@@ -240,6 +240,7 @@ module MLSFillValues              ! Some FillValue-related stuff
   
   interface IsNaN
     module procedure IsNaN_INTEGER
+    module procedure IsNaN_CHARACTER
   end interface
   
   interface output
@@ -1014,6 +1015,11 @@ contains
     integer, intent(in) :: A
     NaN = .false.
   end function isNaN_INTEGER
+
+  elemental logical function IsNaN_CHARACTER ( A ) result( NaN )
+    character(len=8), intent(in) :: A
+    NaN = .false.
+  end function IsNaN_CHARACTER
 
 ! -------------------------------------  RemoveFillValues  -----
 
@@ -2624,6 +2630,9 @@ end module MLSFillValues
 
 !
 ! $Log$
+! Revision 2.24  2010/11/30 00:33:52  pwagner
+! Added instance for character arg to isNaN
+!
 ! Revision 2.23  2010/11/11 19:54:29  pwagner
 ! May select values by relative size
 !
