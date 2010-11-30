@@ -99,6 +99,7 @@ module MLSCommon                ! Common definitions for the MLS software
 
   interface is_what_ieee
     module procedure is_what_ieee_r4, is_what_ieee_r8, is_what_ieee_INTEGER
+    module procedure is_what_ieee_character
   end interface
   
   ! Because we'd like not to always drag the SDPToolkit with us
@@ -261,6 +262,26 @@ module MLSCommon                ! Common definitions for the MLS software
     end select
   end function is_what_ieee_integer
 
+  elemental function is_what_ieee_character( what, arg ) result( itIs )
+    ! Args
+    integer, intent(in)                       :: what ! a signal flag
+    character(len=*), intent(in)              :: arg
+    logical                                   :: itIs
+    ! Executable
+    select case (what)
+    case (finite_signal)
+      itIs = .false. ! ieee_is_finite(arg)
+    case (inf_signal)
+      itIs = .false. ! .not. ( ieee_is_finite(arg) .or. ieee_is_nan(arg) )
+    case (nan_signal)
+      itIs = .false. ! ieee_is_nan(arg)
+    case (fill_signal)
+      itIs = .false.
+    case default
+      itIs = .false. ! what signal flag did you mean? not recognized
+    end select
+  end function is_what_ieee_character
+
 !=============================================================================
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -277,6 +298,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.35  2010/11/30 00:33:27  pwagner
+! Added instance for character arg to is_what_ieee
+!
 ! Revision 2.34  2010/01/11 18:32:44  pwagner
 ! Completed toc; generic is_what_ieee_ now use r4, r8
 !
