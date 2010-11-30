@@ -1526,7 +1526,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_skipDirectWrites, t+t_boolean, n+n_field_type, &
              begin, f+f_skipRetrieval, t+t_boolean, n+n_field_type, &
              begin, f+f_stamp, t+t_boolean, n+n_field_type, &
-             ndp+n_spec_def, &
+             ndp+n_spec_def /) )
+    call make_tree ( (/ &
       begin, s+s_dumpblocks, &
              begin, f+f_allHessians, t+t_boolean, n+n_field_type, &
              begin, f+f_allMatrices, t+t_boolean, n+n_field_type, &
@@ -1644,6 +1645,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.514  2010/11/30 22:00:57  pwagner
+! Reduced number of continuation lines
+!
 ! Revision 2.513  2010/11/20 00:00:41  pwagner
 ! May specifiy surfaces gap beyond which to zero out in Streamline
 !
