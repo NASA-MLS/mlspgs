@@ -7,8 +7,8 @@
 \topmargin -0.25in
 \textheight 9.0in
 
-\newcommand{\docname}{\bf wvs-093r3}
-\newcommand{\docdate}{23 November 2010}
+\newcommand{\docname}{\bf wvs-093r5}
+\newcommand{\docdate}{2 December 2010}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -70,6 +70,7 @@
 \pagestyle{twolines}
 
 \renewcommand{\d}{\text{d}}
+\newcommand{\T}{\mathcal{T}}
 
 \vspace{-10pt}
 \begin{tabbing}
@@ -93,45 +94,59 @@ on 29 March -- 1 April by Eugene Ustinov.
 
 \section{Mathematical generalities}
 
-Consider a function $F(x_1, \dots, x_n)$.  From the first term of its Taylor
-series, its variation due to variation $\delta x_j$ of its arguments is $\delta
-F = \sum_j a_j \delta x_j$.  From this it is obvious that the sensitivities of
-$F$ due to variations in its arguments are the partial derivatives
+Consider a function $F(x_1, \dots, x_n)$ with Maclaurin series $c +
+\sum_j a_j x_j + \sum_{jk} b_{jk} x_j x_k \dots$.  Its variation due to
+variation $\delta x_j$ of its arguments is $\delta F = \sum_j a_j \delta
+x_j + O(\delta x_j^2)$.  From this, in the limit $\delta x_j \rightarrow
+0$, it is obvious that the sensitivities of $F$ due to variations in its
+arguments are the partial derivatives
 
 \begin{equation}
 \frac{\partial F}{\partial x_j} = a_j\,.
 \end{equation}
 
 If we carry this over to a functional $F[X(\xi)]$ of a continuum $X(\xi)$
-instead of a function of the finite set $\{x_1,\dots,x_n\}$, \emph{viz.}
+instead of a function of the finite set $\{x_1,\dots,x_n\}$, replacing
+the summations in the Maclaurin series with integrals,
+\emph{viz.}
 
 \begin{equation}
-F[X(\xi)] = \int_{\xi_0}^{\xi_1} a(\xi) X(\xi) \,\d \xi
+F[X(\xi)] = c + \int_{\xi_0}^{\xi_1} a(\xi) X(\xi) \,\d \xi +
+ \int_{\xi_0}^{\xi_1} \int_{\xi_0}^{\xi_1} b(\xi,\xi^\prime) X(\xi)
+ X(\xi^\prime) \d \xi \d \xi^\prime + \dots
 \end{equation}
 
-then its variation due to variation $\delta X(\xi)$ of its argument function
-(also known as ``continuous parameter'') $X(\xi)$ is
+then its variation due to variation $\delta X(\xi)$ of its argument
+function (also known as ``continuous parameter'') $X(\xi)$, for small
+variation $\delta X(\xi)$, is
 
 \begin{equation}\label{VAR}
 \delta F[X(\xi)] = \int_{\xi_0}^{\xi_1} a(\xi) \,\delta X(\xi) \,\d \xi
+  + O(\delta X(\xi)^2)
+ = \lim_{\Delta \xi_i \rightarrow 0}
+  \sum_i a(\xi_i) \delta X(\xi_i) \Delta \xi_i + O(\delta X(\xi)^2)
 \end{equation}
 
-and its sensitivity due to variation $\delta X(\xi)$ of its argument function
-$X(\xi)$ is
+and its sensitivity due to variation $\delta X(\xi)$ of its argument
+function $X(\xi)$ is
 
 \begin{equation}\label{SENS}
-\frac{\delta F[X(\xi)]}{\delta X(\xi)} = a(\xi)
+\frac{\delta F[X(\xi)]}{\delta X(\xi)}
+ \equiv \lim_{\Delta \xi \rightarrow 0 \atop \delta X(\xi) \rightarrow 0}
+  \frac{\partial F[X(\xi)]}{\Delta \xi \partial X(\xi)}
+ = \frac{a(\xi) \delta X(\xi) \Delta \xi}{\delta X(\xi) \Delta \xi}
+ = a(\xi)
 \end{equation}
 
-(replace the integral in Equation (\ref{VAR}) by a quadrature, or see
-pages 27-29 of {\bf Calculus of Variations} by I. M. Gelfand and S. V.
-Fomin).
+(also see pages 27-29 of {\bf Calculus of Variations} by I. M. Gelfand
+and S. V. Fomin).
 
 %=========================================================================
 
 \section{Radiance}
 
-The radiance is the solution of the non-scattering radiative transfer equation
+The radiance is the solution of the non-scattering radiative transfer
+equation
 
 \begin{equation}\label{diff eq}
 \frac{\partial I(s)}{\partial s} + \alpha(s) I(s) = \alpha(s) B(s)\,.
@@ -141,8 +156,8 @@ Using notation similar to iy-007 and following the arguments therein, the
 solution is usually written as
 
 \begin{equation}\label{first}
-I[\alpha(s),s_m] = I(s_0) \mathcal{T}(s_0) +
- \int_{s_0}^{s_m} \mathcal{T}(s) \alpha(s) B(s) \,
+I[\alpha(s),s_m] = I(s_0) \T(s_0,s_m) +
+ \int_{s_0}^{s_m} \T(s,s_m) \alpha(s) B(s) \,
   \d s\,,
 \end{equation}
 
@@ -152,7 +167,7 @@ function $\frac{h \nu}k \left( \exp\left(\frac{h \nu}{k T(s)}\right)
 -1\right)^{-1}$,
 
 \begin{equation}\label{two}
-\mathcal{T}(s) = \exp\left( - \int_s^{s_m} \alpha(\sigma)
+\T(s,s_m) = \exp\left( - \int_s^{s_m} \alpha(\sigma)
  \, \d \sigma \right) \,,
 \end{equation}
 
@@ -164,21 +179,21 @@ of the $k^\text{th}$ species at the $(l,m)$ representation basis point,
 $\mu_{lm}(s) = (\xi_l(s) + \xi_{l-1}(s))(\eta_m(s) + \eta_{m-1}(s))$,
 $\xi_l(s) = (\phi_{l+1}-\phi(s))/(\phi_{l+1}-\phi_l)$ for $\phi_l \leq
 \phi(s) \leq \phi_{l+1}$ and zero otherwise and $\eta_m(s) =
-(\phi_{m+1}-\phi(s))/(\phi_{m+1}-\phi_m)$ for $\phi_m \leq \phi(s) \leq
-\phi_{m+1}$ and zero otherwise are interpolation coefficients from the
-representation basis to the integration path, and $\beta^k(\sigma)$ is
-the absorption cross section for the $k^\text{th}$ species at $\sigma$. 
-From Equation (\ref{two})
+(\zeta_{m+1}-\zeta(s))/(\zeta_{m+1}-\zeta_m)$ for $\zeta_m \leq \zeta(s)
+\leq \zeta_{m+1}$ and zero otherwise are interpolation coefficients from
+the representation basis to the integration path, and $\beta^k(\sigma)$
+is the absorption cross section for the $k^\text{th}$ species at
+$\sigma$.  From Equation (\ref{two})
 
 \begin{equation}
-\frac{\partial \mathcal{T}(s)}{\partial s} = \alpha(s) \mathcal{T}(s).
+\frac{\partial \T(s,s_m)}{\partial s} = \alpha(s) \T(s,s_m).
 \end{equation}
 
 Substituting this into Equation (\ref{first}) gives
 
 \begin{equation}\label{RAD}
-I[\alpha(s),s_m] = \mathcal{T}(s_0) I(s_0) +
- \int_{s_0}^{s_m} B(s) \frac{\partial \mathcal{T}(s)}{\partial s}
+I[\alpha(s),s_m] = \T(s_0,s_m) I(s_0) +
+ \int_{s_0}^{s_m} B(s) \frac{\partial \T(s,s_m)}{\partial s}
   \, \d s \,.
 \end{equation}
 
@@ -186,15 +201,16 @@ In the MLS full forward model, Equation (\ref{RAD}) is
 integrated by parts to give
 
 \begin{equation}\begin{split}\label{I}
-I[\alpha(s),s_m] =\,& \mathcal{T}(s_0) (I(s_0)-B(s_0)) + B(s_m) -
- \int_{s_0}^{s_m} \mathcal{T}(s) \, \frac{\partial B(s)}{\partial s} \,
+I[\alpha(s),s_m] =\,& \T(s_0,s_m) (I(s_0)-B(s_0)) + B(s_m) -
+ \int_{s_0}^{s_m} \T(s,s_m) \, B^\prime(s) \,
   \d s \\
-=\,& \mathcal{T}(s_0) (I(s_0)-B(s_0)) + B(s_m) -
- \int_{B(s_0)}^{B(s_m)} \mathcal{T}(s) \, \d B(s)
+=\,& \T(s_0,s_m) (I(s_0)-B(s_0)) + B(s_m) -
+ \int_{B(s_0)}^{B(s_m)} \T(s,s_m) \, \d B(s)\,,
 \end{split}\end{equation}
 
-(remember $\mathcal{T}(s_m)=1$). Henceforth, $I[\alpha(\sigma),s_m]$ will
-be abbreviated to $I$.
+where $B^\prime(s) = \frac{\partial B(s)}{\partial s}$ (remember
+$\T(s_m,s_m)=1$). Henceforth, $I[\alpha(\sigma),s_m]$ will be abbreviated
+to $I$.
 
 %=========================================================================
 
@@ -205,18 +221,18 @@ $I$ as a result of variation of $\alpha(\sigma)$ is
 
 \begin{equation}\label{I var}
 \delta_\alpha I =
- \left( I(s_0)-B(s_0) \right) \delta_\alpha \mathcal{T}(s_0) -
-  \int_{s_0}^{s_m} \delta_\alpha \mathcal{T}(\sigma) \,
-   \frac{\partial B(\sigma)}{\partial\sigma} \, \d \sigma\,.
+ \left( I(s_0)-B(s_0) \right) \delta_\alpha \T(s_0,s_m) -
+  \int_{s_0}^{s_m} \delta_\alpha \T(\sigma,s_m) \,
+   B^\prime(\sigma) \, \d \sigma\,.
 \end{equation}
 
-To compute $\delta_\alpha \mathcal{T}(\sigma)$, replace $\alpha(\sigma)$
+To compute $\delta_\alpha \T(\sigma,s_m)$, replace $\alpha(\sigma)$
 in Equation (\ref{two}) by $\alpha(\sigma^\prime) +
 \delta\alpha(\sigma^\prime)$ and compute the difference from Equation
 (\ref{two}):
 
 \begin{equation}\begin{split}\label{tau vary}
-\delta_\alpha \mathcal{T}(\sigma)
+\delta_\alpha \T(\sigma,s_m)
 =\,& \exp\left( - \int_\sigma^{s_m} (\alpha(\sigma^\prime) +
                                        \delta\alpha(\sigma^\prime) )
          \, \d \sigma^\prime \right) -
@@ -236,7 +252,8 @@ in Equation (\ref{two}) by $\alpha(\sigma^\prime) +
      \right) \\
 =\,& \exp\left( - \int_\sigma^{s_m} \alpha(\sigma^\prime)
          \, \d \sigma^\prime \right)
-     \left(1 - \int_\sigma^{s_m} \delta\alpha(\sigma^\prime) +
+     \left(1 - \int_\sigma^{s_m} \delta\alpha(\sigma^\prime)
+                \, \d \sigma^\prime +
            O\left( \left( \int_\sigma^{s_m} \delta\alpha(\sigma^\prime)
                            \, \d \sigma^\prime
             \right)^2 \right) - 1 \right)\,.
@@ -246,86 +263,99 @@ Therefore, in the limit for small perturbation $\delta
 \alpha(\sigma^\prime)$
 
 \begin{equation}\label{tau var}
-\delta_\alpha \mathcal{T}(\sigma) =
+\delta_\alpha \T(\sigma,s_m) =
  \exp \left( - \int_\sigma^{s_m} \alpha(\sigma^\prime) \,\d \sigma^\prime \right)
  \cdot
  \left( - \int_\sigma^{s_m} \delta \alpha(\sigma^\prime) \,\d \sigma^\prime \right)
 =
- -\mathcal{T}(\sigma) \int_\sigma^{s_m} \delta \alpha(\sigma^\prime) \,\d \sigma^\prime\,.
+ -\T(\sigma,s_m) \int_\sigma^{s_m} \delta \alpha(\sigma^\prime) \,\d \sigma^\prime\,.
 \end{equation}
 
 Substituting Equation (\ref{tau var}) into the integral in Equation
 (\ref{I var}) gives (exchanging the order of integration in the last step)
 
 \begin{equation}\begin{split}\label{var1}
-- \int_{s_0}^{s_m} \delta_\alpha \mathcal{T}(\sigma) \,
- \frac{\partial B(\sigma)}{\partial\sigma} \, \d \sigma
+- \int_{s_0}^{s_m} \delta_\alpha \T(\sigma,s_m) \,
+ B^\prime(\sigma) \, \d \sigma
 =\,&
- \int_{s_0}^{s_m} \d \sigma \,\mathcal{T}(\sigma)\,
-    \frac{\partial B(\sigma)}{\partial\sigma} 
+ \int_{s_0}^{s_m} \d \sigma \,\T(\sigma,s_m)\,
+    B^\prime(\sigma) 
     \int_\sigma^{s_m} \d \sigma^\prime\, \delta
     \alpha(\sigma^\prime) \\
 =\,&
  \int_{s_0}^{s_m} \d \sigma\, \delta \alpha(\sigma)
-   \int_{s_0}^\sigma \d \sigma^\prime \, \mathcal{T}(\sigma^\prime) \,
-    \frac{\partial B(\sigma^\prime)}{\partial\sigma^\prime}\,.
+   \int_{s_0}^\sigma \d \sigma^\prime \, \T(\sigma^\prime,s_m) \,
+    B^\prime(\sigma^\prime)\,.
 \end{split}\end{equation}
 
 Substituting Equation (\ref{tau var}) into the first term for $\delta_\alpha
 I$ in Equation (\ref{I var}) gives
 
 \begin{equation}\label{var2}
-\left( I(s_0)-B(s_0) \right) \delta_\alpha \mathcal{T}(s_0)
-= -\mathcal{T}(s_0) \left( I(s_0)-B(s_0) \right)
+\left( I(s_0)-B(s_0) \right) \delta_\alpha \T(s_0,s_m)
+= -\T(s_0,s_m) \left( I(s_0)-B(s_0) \right)
    \int_{s_0}^{s_m} \delta \alpha(\sigma)\, \d \sigma\,.
 \end{equation}
 
 Collecting Equations (\ref{var1}) and (\ref{var2}) and factoring, the
 resulting variation in $I$ due to variation in $\alpha(\sigma)$ is
 
-\begin{equation}
-\delta_\alpha I = \int_{s_0}^{s_m} \d \sigma \,\delta \alpha(\sigma)
- \left\{ \int_{s_0}^\sigma \mathcal{T}(\sigma^\prime) \,
-    \frac{\partial B(\sigma^\prime)}{\partial\sigma^\prime} \,
+\begin{equation}\begin{split}
+\delta_\alpha I
+=\,& \int_{s_0}^{s_m} \d \sigma \,\delta \alpha(\sigma)
+ \left\{ \int_{s_0}^\sigma \T(\sigma^\prime,s_m) \,
+    B^\prime(\sigma^\prime) \,
      \d \sigma^\prime
- - \mathcal{T}(s_0) \left( I(s_0)-B(s_0) \right) \right\}\,.
-\end{equation}
+ - \T(s_0,s_m) \left( I(s_0)-B(s_0) \right) \right\} \\
+=\,& \int_{s_0}^{s_m} \d \sigma \,\delta \alpha(\sigma)
+ \left\{ \T(\sigma,s_m) \left[ \int_{s_0}^\sigma \T(\sigma^\prime,\sigma) \,
+    B^\prime(\sigma^\prime) \,
+     \d \sigma^\prime
+ - \T(s_0,\sigma) \left( I(s_0)-B(s_0) \right) \right] \right\}\,.
+\end{split}\end{equation}
 
-According to Equations (\ref{VAR}) and (\ref{SENS}), the sensitivity of $I$ to
-variation $\delta \alpha(\sigma)$ in $\alpha(\sigma)$ is the factor between \{
-and \}, \emph{viz.}
+According to Equations (\ref{VAR}) and (\ref{SENS}), the sensitivity of
+$I$ to variation $\delta \alpha(\sigma)$ in $\alpha(\sigma)$ is the
+factor between \{ and \}, \emph{viz.}
+
 
 \begin{equation}\label{I var alpha}
-\frac{\delta I}{\delta \alpha(\sigma)} =
- \int_{s_0}^\sigma \mathcal{T}(\sigma^\prime) \,
-    \frac{\partial B(\sigma^\prime)}{\partial\sigma^\prime} \,
+\frac{\delta I}{\delta \alpha(\sigma)}
+=
+ \T(\sigma,s_m) \left[ \int_{s_0}^\sigma \T(\sigma^\prime,s_m) \,
+    B^\prime(\sigma^\prime) \,
      \d \sigma^\prime
- - \mathcal{T}(s_0) \left( I(s_0)-B(s_0) \right)\,.
+ - \T(s_0,\sigma) \left( I(s_0)-B(s_0) \right) \right] \,.
 \end{equation}
 
-From this and $\frac{\partial \alpha(\sigma)}{\partial f^k_{lm}}
-= \beta^k(\sigma) \mu_{lm}(\sigma)$, we can compute the sensitivity of
-$I$ to variation of $f^k_{lm}$ as
+Using Equation (\ref{I}) in Equation (\ref{I var alpha}) we have
+
+\begin{equation}\label{var I}\boxed{
+\frac{\delta I}{\delta \alpha(\sigma)} =
+ \T(\sigma,s_m) \left( B(\sigma) - I(\sigma) \right)}\,.
+\end{equation}
+
+From this and $\frac{\partial \alpha(\sigma)}{\partial f^k_{lm}} =
+\beta^k(\sigma) \mu_{lm}(\sigma)$, we can compute the sensitivity of $I$
+to variation of $f^k_{lm}$ as
 
 \begin{equation}
 \frac{\delta I}{\delta f^k_{lm}} =
  \frac{\delta I}{\delta \alpha(\sigma)}
   \frac{\partial \alpha(\sigma)}{\partial f^k_{lm}} =
  \frac{\delta I}{\delta \alpha(\sigma)} \beta^k(\sigma) \mu_{lm}(\sigma) =
- \left( B(\sigma) - I(\sigma) \right) \beta^k(\sigma) \mu_{lm}(\sigma) \,.
+ \T(\sigma,s_m)
+  \left( B(\sigma) - I(\sigma) \right) \beta^k(\sigma) \mu_{lm}(\sigma) \,.
 \end{equation}
-
-The last result follows because the integrands in Equation (\ref{I var
-alpha}) and Equation (\ref{I}) are the same.
 
 If we evaluate the indefinite sum
 
 \begin{equation}\label{sum}
 S_j = \sum_{i=1}^j
- \frac12\left(\mathcal{T}(\sigma_i)+\mathcal{T}(\sigma_{i-1})\right)
+ \frac12\left(\T(\sigma_i,s_m)+\T(\sigma_{i-1},s_m)\right)
   \Delta B(\sigma_i) -
-   \mathcal{T}(s_0)\left(I(s_0)-B(s_0)\right)
-\approx \frac{\delta I}{\delta \alpha(\sigma_j)}
+   \T(s_0,s_m)\left(I(s_0)-B(s_0)\right)
+\approx \frac1{\T(\sigma,s_m)} \frac{\delta I}{\delta \alpha(\sigma_j)}
 \end{equation}
 
 with $\sigma_0 = s_0$ and $s_0 < \sigma_1 < \sigma_2 \dots < \sigma_{N_p}
@@ -333,10 +363,10 @@ with $\sigma_0 = s_0$ and $s_0 < \sigma_1 < \sigma_2 \dots < \sigma_{N_p}
 
 \begin{equation}\begin{split}\label{var sum}
 I(s_m) =\,& 
- B(s_m) - \frac{\delta I}{\delta \alpha(s_m)} 
+ B(s_m) - \frac1{\T(\sigma,s_m)} \frac{\delta I}{\delta \alpha(s_m)} 
  \approx B(s_m) - S_{N_p} \text{ and}\\
 \frac{\delta I(s_m)}{\delta f^k_{lm}}
- \approx\,& \beta^k(\sigma_j) \mu_{lm}(\sigma_j) S_j \\
+ \approx\,& \T(\sigma,s_m) \beta^k(\sigma_j) \mu_{lm}(\sigma_j) S_j \\
 \end{split}\end{equation}
 
 That is, we can evaluate both $I$ and its sensitivity to variation in the
@@ -357,8 +387,8 @@ leave $\frac{\partial\alpha(\sigma)}{\partial f^k(\sigma)} =
 
 \begin{equation}
 \frac{\partial I(s_m)}{\partial f^k(\sigma)} =
- \int_{s_0}^\sigma \frac{\partial \mathcal{T}(s)}{\partial f^k(s)}
-  \frac{\partial B(s)}{\partial s} \, \d s
+ \int_{s_0}^\sigma \frac{\partial \T(s,s_m)}{\partial f^k(s)}
+  B^\prime(s) \, \d s
 \end{equation}
 
 Thus the approach described here should be less time consuming by a
@@ -370,97 +400,227 @@ variational equations.
 
 %=========================================================================
 
-\section{Sensitivity of radiance to variation of temperature}
+\section{Alternative derivation of sensitivity to $\alpha(\sigma)$}
 
-Because both $\mathcal{T}$ and $B$ depend upon temperature
+Instead of computing the variation of Equation (\ref{first}) with respect
+to variation of $\alpha(\sigma)$, we can compute the derivative of
+Equation (\ref{diff eq}) with respect to variation of $\alpha(\sigma)$
+and solve the resulting differential equation:
 
-\begin{equation}\begin{split}\label{T vary}
-\delta_T I =\,& -\delta_T B(s_0)) \mathcal{T}(s_0)
- + (I(s_0) - B(s_0)) \delta_T \mathcal{T}(s_0) + \delta_T B(s_m) \\
-& - \int_{s_0}^{s_m} \delta_T
-  \mathcal{T}(\sigma) B^\prime(\sigma) \, \d \sigma
- - \int_{s_0}^{s_m}
-  \mathcal{T}(\sigma) \delta_T B^\prime(\sigma)
-  \, \d \sigma\,,
+\begin{equation}\label{four}
+\frac{\partial}{\partial \alpha(\sigma)} \frac{\d}{\d s} I(s) +
+ \frac{\partial \alpha(s)}{\partial \alpha(\sigma)} I(s) +
+  \alpha(s) \frac{\partial I(s)}{\partial \alpha(\sigma)}
+= \frac{\partial \alpha(s)}{\partial \alpha(\sigma)} B(s)\,.
+\end{equation}
+
+Replacing $\frac{\partial \alpha(s)}{\partial \alpha(\sigma)}$ by
+the Dirac $\delta$ function $\delta(s-\sigma)$ and exchanging the order of
+differentiation, we have
+
+\begin{equation}\begin{split}\label{five}
+\frac{\d}{\d s} \frac{\partial I(s)}{\partial \alpha(\sigma)} +
+ \delta(s-\sigma) I(s) +
+  \alpha(s) \frac{\partial I(s)}{\partial \alpha(\sigma)}
+=\,& \delta(s-\sigma) B(s) \text{ or}\\
+\frac{\d}{\d s} \frac{\partial I(s)}{\partial \alpha(\sigma)} +
+ \alpha(s) \frac{\partial I(s)}{\partial \alpha(\sigma)}
+=\,&
+ \delta(s-\sigma) (B(s)-I(s))\,.
 \end{split}\end{equation}
 
-where $B^\prime(\sigma) = \frac{\partial B(\sigma)}{\partial \sigma}$.
+Using the initial condition $\frac{\partial I(s_0)}{\partial \alpha(\sigma)}=0$
+the solution for Equation (\ref{five}) can be written
+
+\begin{equation}\begin{split}
+\frac{\partial I(s)}{\partial \alpha(\sigma)}
+=\,& \int_{s_0}^s \delta(s^\prime-\sigma)
+  (B(s^\prime)-I(s^\prime)) \T(s^\prime,s)\, \d s^\prime \\
+  \,&\\
+=\,& (B(\sigma)-I(\sigma)) \T(\sigma,s)\,,
+\end{split}\end{equation}
+
+which is the same result as Equation (\ref{var I}).
+
+%=========================================================================
+
+\section{Sensitivity of radiance to variation of temperature}
+
+Because both $\T$ and $B$ depend upon temperature
+
+\begin{equation}\begin{split}\label{T vary}
+\delta_T I =\,& -\delta_T B(s_0)) \T(s_0,s_m)
+ + (I(s_0) - B(s_0)) \delta_T \T(s_0,s_m) + \delta_T B(s_m) \\
+& - \int_{s_0}^{s_m} \delta_T
+  \T(\sigma,s_m) B^\prime(\sigma) \, \d \sigma
+ - \int_{s_0}^{s_m}
+  \T(\sigma,s_m) \delta_T B^\prime(\sigma)
+  \, \d \sigma\,.
+\end{split}\end{equation}
+
 Following a development similar to Equations (\ref{tau vary}--\ref{tau
 var}),
 
-\begin{equation}
+\begin{equation}\begin{split}
 \int_{s_0}^{s_m} \delta_T
-  \mathcal{T}(\sigma) B^\prime(\sigma) \d \sigma = 
+  \T(\sigma,s_m) B^\prime(\sigma) \d \sigma
+= \,&
   \int_{s_0}^{s_m} \d \sigma\,
    \delta T(\sigma) \frac{\partial \alpha(\sigma)}{\partial T(\sigma)}
    \int_{s_0}^\sigma \d \sigma^\prime\,
-    \mathcal{T}(\sigma^\prime) B^\prime(\sigma^\prime)
-\end{equation}
+    \T(\sigma^\prime,s_m) B^\prime(\sigma^\prime) \\
+=\,& \int_{s_0}^{s_m} \d \sigma\,
+   \delta T(\sigma) \frac{\partial \alpha(\sigma)}{\partial T(\sigma)}
+   \T(\sigma,s_m) \int_{s_0}^\sigma \d \sigma^\prime\,
+    \T(\sigma^\prime,\sigma) B^\prime(\sigma^\prime)
+\end{split}\end{equation}
 
 while
 
 \begin{equation}
-\int_{s_0}^{s_m} \mathcal{T}(\sigma) \delta_T B(\sigma)\, \d \sigma =
- \int_{s_0}^{s_m} \d \sigma\, \delta T(\sigma) \mathcal{T}(\sigma)
+\int_{s_0}^{s_m} \T(\sigma,s_m) \delta_T B^\prime(\sigma)\, \d \sigma =
+ \int_{s_0}^{s_m} \d \sigma\, \delta T(\sigma) \T(\sigma,s_m)
   \frac{\partial B^\prime(\sigma)}{\partial T(\sigma)}\,.
 \end{equation}
 
 Therefore, again using Equations (\ref{VAR}--\ref{SENS}),
 
-\begin{equation}\begin{split}\label{dIdT}
+\begin{equation}\begin{split}\label{dIdT B'}
 \frac{\delta I(s_m)}{\delta T(\sigma)} =\,&
- -\frac{\delta B(s_0)}{\delta T(\sigma)} \mathcal{T}(s_0)
-  + (I(s_0) - B(s_0)) \frac{\delta \mathcal{T}(s_0)}{\delta T(\sigma)}
+ -\frac{\delta B(s_0)}{\delta T(\sigma)} \T(s_0,s_m)
+  + (I(s_0) - B(s_0)) \frac{\delta \T(s_0,s_m)}{\delta T(\sigma)}
   + \frac{\delta B(s_m)}{\delta T(\sigma)}\\
 &
   - \frac{\partial \alpha(\sigma)}{\partial T(\sigma)}
-   \int_{s_0}^\sigma \d \sigma^\prime\,
-    \mathcal{T}(\sigma^\prime) B^\prime(\sigma^\prime)
-  - \mathcal{T}(\sigma) \frac{\partial B^\prime(\sigma)}{\partial T(\sigma)} \\
+    \T(\sigma,s_m)
+    \int_{s_0}^\sigma \d \sigma^\prime\,
+     \T(\sigma^\prime,\sigma) B^\prime(\sigma^\prime)
+  - \T(\sigma,s_m) \frac{\partial B^\prime(\sigma)}{\partial T(\sigma)} \\
 =\,&
- (I(s_0) - B(s_0)) \frac{\delta \mathcal{T}(s_0)}{\delta \alpha(\sigma)}
+ (I(s_0) - B(s_0)) \frac{\delta \T(s_0,s_m)}{\delta \alpha(\sigma)}
   \frac{\partial \alpha(\sigma)}{\partial T(\sigma)}
   - \frac{\partial \alpha(\sigma)}{\partial T(\sigma)}
-   \int_{s_0}^\sigma \d \sigma^\prime\,
-    \mathcal{T}(\sigma^\prime) B^\prime(\sigma^\prime)
-  - \mathcal{T}(\sigma) \frac{\partial B^\prime(\sigma)}{\partial T(\sigma)} \\
+    \T(\sigma,s_m)
+    \int_{s_0}^\sigma \d \sigma^\prime\,
+     \T(\sigma^\prime,\sigma) B^\prime(\sigma^\prime)
+  - \T(\sigma,s_m) \frac{\partial B^\prime(\sigma)}{\partial T(\sigma)} \\
 =\,&
-  -(I(s_0) - B(s_0)) \mathcal{T}(s_0)
+  -(I(s_0) - B(s_0)) \T(s_0,s_m)
   \frac{\partial \alpha(\sigma)}{\partial T(\sigma)}
   - \frac{\partial \alpha(\sigma)}{\partial T(\sigma)}
-   \int_{s_0}^\sigma \d \sigma^\prime\,
-    \mathcal{T}(\sigma^\prime) B^\prime(\sigma^\prime)
-  - \mathcal{T}(\sigma) \frac{\partial B^\prime(\sigma)}{\partial T(\sigma)} \\
+    \T(\sigma,s_m)
+    \int_{s_0}^\sigma \d \sigma^\prime\,
+     \T(\sigma^\prime,\sigma) B^\prime(\sigma^\prime)
+  - \T(\sigma,s_m) \frac{\partial B^\prime(\sigma)}{\partial T(\sigma)} \\
 =\,&
-  \frac{\delta I}{\delta \alpha(\sigma)}
+  \T(\sigma,s_m) \left( B(s_m) - I(\sigma) \right)
   \frac{\partial \alpha(\sigma)}{\partial T(\sigma)}
-  - \mathcal{T}(\sigma) \frac{\partial B^\prime(\sigma)}{\partial T(\sigma)},
+  - \T(\sigma,s_m) \frac{\partial B^\prime(\sigma)}{\partial T(\sigma)}
+ = \frac{\partial \alpha(\sigma)}{\partial T(\sigma)}
+   \frac{\delta I(s_m)}{\delta \alpha(\sigma)}
+   - \T(\sigma,s_m) \frac{\partial B^\prime(\sigma)}{\partial T(\sigma)} \,,
 \end{split}\end{equation}
 
 where Equation (\ref{I var alpha}) has been used in the last step to
-represent the integral in Equation (\ref{dIdT}).
+represent the integral in Equation (\ref{dIdT B'}).
 
-To integrate Equation (\ref{T vary}) in $\zeta$ instead of $\sigma$
-coordinates, replace $B^\prime(\sigma) = \frac{\partial B(\sigma)}{\partial
-\sigma} \frac{\d \sigma}{\d h} \frac{\partial h}{\partial \zeta}$, from which
-Equation (\ref{dIdT}) becomes
+The factor $\frac{\partial B^\prime(\sigma)}{\partial T(\sigma)}$ in the
+final expression is troublesome.  If we start instead with Equation
+(\ref{first}) we arrive at the alternative result
 
-\begin{equation}
+\begin{equation}\label{dIdT}
 \frac{\delta I(s_m)}{\delta T(\sigma)} =
-  \frac{\delta I}{\delta \alpha(\sigma)}
-  \frac{\partial \alpha(\sigma)}{\partial T(\sigma)}
-- \mathcal{T}(\sigma) \frac{\d \sigma}{\d h}
-   \left( \frac{\partial^2 B(\sigma)}{\partial \sigma \partial T(\sigma)}
-    \frac{\partial h}{\partial \zeta} +
-   \frac{\partial B(\sigma)}{\partial \sigma}
-    \frac{\partial^2 h}{\partial \zeta \partial T(\sigma)}
-   \right)
-   \,.
+ \frac{\partial \alpha(\sigma)}{\partial T(\sigma)}
+   \frac{\delta I(s_m)}{\delta \alpha(\sigma)} +
+   \alpha(\sigma) \T(\sigma,s_m)
+    \frac{\partial B(\sigma)}{\partial T(\sigma)}\,.
 \end{equation}
 
-%Thus we can compute both $\frac{\partial I}{\partial f_i^k}$
-%and $\frac{\partial I}{\partial T_i}$ by evaluating Equation (\ref{var
-%sum}) only once, as an indefinite sum for $j = 1, \dots, N_p$.
+$B(\sigma)$ satisfies the differential equation $\frac{\partial
+B(\sigma)}{\partial T(\sigma)} = \frac{B(\sigma)}{T(\sigma)^2} \left(
+\frac{h \nu}k + B(\sigma) \right)$.  Inserting this result into Equation
+(\ref{dIdT}) we have
+
+\begin{equation}\label{var T}\boxed{
+\frac{\delta I(s_m)}{\delta T(\sigma)} =
+ \frac{\partial \alpha(\sigma)}{\partial T(\sigma)}
+   \frac{\delta I(s_m)}{\delta \alpha(\sigma)} +
+   \alpha(\sigma) \T(\sigma,s_m)
+    \frac{B(\sigma)}{T(\sigma)^2} \left( \frac{h \nu}k + B(\sigma) \right)
+}\,.
+\end{equation}
+
+%=========================================================================
+
+\section{Alternative derivation of sensitivity to temperature}
+
+Instead of computing the variation of Equation (\ref{first}) with respect
+to variation of $T(\sigma)$, we can compute the derivative of
+Equation (\ref{diff eq}) with respect to variation of $T(\sigma)$
+and solve the resulting differential equation:
+
+\begin{equation}\begin{split}\label{T four}
+\frac{\partial}{\partial T(\sigma)} \frac{\d}{\d s} I(s) +
+ \frac{\partial \alpha(s)}{\partial T(\sigma)} I(s) +
+  \alpha(s) \frac{\partial I(s)}{\partial T(\sigma)}
+=\,& \frac{\partial \alpha(s)}{\partial T(\sigma)} B(s)
+  +  \alpha(s) \frac{\partial B(s)}{\partial T(\sigma)} \text{ or}\\
+\frac{\partial}{\partial T(\sigma)} \frac{\d}{\d s} I(s) +
+ \frac{\partial \alpha(s)}{\partial \alpha(\sigma)}
+ \frac{\partial \alpha(\sigma)}{\partial T(\sigma)} I(s) +
+  \alpha(s) \frac{\partial I(s)}{\partial T(\sigma)}
+=\,& \frac{\partial \alpha(s)}{\partial \alpha(\sigma)}
+     \frac{\partial \alpha(\sigma)}{\partial T(\sigma)} B(s)
+  +  \alpha(s)
+      \frac{\partial B(s)}{\partial B(\sigma)}
+      \frac{\partial B(\sigma)}{\partial T(\sigma)}\,.
+\end{split}\end{equation}
+
+Replacing $\frac{\partial \alpha(s)}{\partial \alpha(\sigma)}$ and
+$\frac{\partial B(s)}{\partial B(\sigma)}$ by the Dirac $\delta$
+function $\delta(s-\sigma)$ and exchanging the order of differentiation,
+we have
+
+\begin{equation}\begin{split}\label{T five}
+\frac{\d}{\d s} \frac{\partial I(s)}{\partial T(\sigma)} +
+ \delta(s-\sigma) \frac{\partial \alpha(\sigma)}{\partial T(\sigma)} I(s) +
+  \alpha(s) \frac{\partial I(s)}{\partial T(\sigma)}
+=\,& \delta(s-\sigma) \left( \frac{\partial \alpha(\sigma)}{\partial T(\sigma)}
+     B(s) + \alpha(s) \frac{\partial B(\sigma)}{\partial T(\sigma)} \right
+     ) \text{ or}\\
+\frac{\d}{\d s} \frac{\partial I(s)}{\partial \alpha(\sigma)} +
+ \alpha(s) \frac{\partial I(s)}{\partial \alpha(\sigma)}
+=\,&
+ \delta(s-\sigma)
+  \left( \frac{\partial \alpha(\sigma)}{\partial T(\sigma)}
+    \left(B(s)-I(s)\right) +
+    \alpha(s) \frac{\partial B(\sigma)}{\partial T(\sigma)}
+    \right )\,.
+\end{split}\end{equation}
+
+Using the initial condition $\frac{\partial I(s_0)}{\partial \alpha(\sigma)}=0$
+the solution for Equation (\ref{T five}) can be written
+
+\begin{equation}\begin{split}
+\frac{\partial I(s)}{\partial T(\sigma)}
+=\,& \int_{s_0}^s \delta(s^\prime-\sigma)
+  \left ( \frac{\partial \alpha(\sigma)}{\partial T(\sigma)}
+    \left(B(s)-I(s)\right) +
+    \alpha(s) \frac{\partial B(\sigma)}{\partial T(\sigma)}
+    \right ) \T(s^\prime,s) \,\d s^\prime \\
+  \,&\\
+=\,& \left (
+    \frac{\partial \alpha(\sigma)}{\partial T(\sigma)}
+    \left(B(s)-I(s)\right) +
+     \alpha(s) \frac{\partial B(\sigma)}{\partial T(\sigma)}
+     \right ) \T(\sigma,s)
+ = \frac{\partial \alpha(\sigma)}{\partial T(\sigma)}
+   \frac{\delta I(s)}{\delta \alpha(\sigma)} +
+   \alpha(\sigma) \T(\sigma,s)
+    \frac{\partial B(\sigma)}{\partial T(\sigma)} \,,
+\end{split}\end{equation}
+
+which is the same result as Equation (\ref{var T}).
 
 \label{lastpage}
 \end{document}
@@ -468,6 +628,9 @@ Equation (\ref{dIdT}) becomes
 % $Id$
 
 % $Log$
+% Revision 1.4  2010/11/23 22:53:30  vsnyder
+% Repair a typo in the final equation
+%
 % Revision 1.3  2010/11/23 21:48:42  vsnyder
 % Incorporate interpolating factors, re-work temperature derivatives
 %
