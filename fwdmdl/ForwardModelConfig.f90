@@ -1196,7 +1196,7 @@ contains
           end if
         end if
       end do ! s
-      if ( associated ( beta_group(b)%qty%qty ) ) call dump ( beta_group(b)%qty )
+      call Dump_Qty_Stuff ( beta_group(b)%qty )
     end do
   end subroutine Dump_Beta_Group
 
@@ -1406,15 +1406,25 @@ contains
     else
       call output ( ' no tangentGrid', advance='yes' )
     end if
+    if ( associated(config%beta_Group) ) then
+      call dump ( config%beta_Group, details=details, name='Beta group' )
+    else
+      call output ( ' no Beta group (surprised?)', advance='yes' )
+    end if
   end subroutine Dump_ForwardModelConfig
 
   ! ---------------------------------------------  Dump_Qty_Stuff  -----
-  subroutine Dump_Qty_Stuff ( Qty )
-    use Output_m, only: NewLine, Output
+  subroutine Dump_Qty_Stuff ( Qty, details )
+    use Output_m, only: NewLine, Output, OutputNamedValue
     use VectorsModule, only: Dump
     type(qtyStuff_t), intent(in) :: Qty
-    call dump ( qty%qty, details=-2 )
-    if ( qty%foundInFirst ) call output ( ', Found in first' )
+    integer, optional, intent(in) :: details
+    if ( associated(qty%qty) ) then
+      call dump ( qty%qty, details=details )
+    else
+      call output( 'Quantity not assocated for this qtyStuff type (surprised?)', advance='yes' )
+    endif
+    call outputNamedValue ( 'Found in first', qty%foundInFirst )
     call newLine
   end subroutine Dump_Qty_Stuff
 
@@ -1431,6 +1441,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.110  2010/09/25 01:08:39  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.109  2010/08/27 06:13:37  yanovsky
 ! Add atmos_second_der, MoleculeSecondDerivatives.
 ! Add SecondDerivatives component to Beta_Group_T.
