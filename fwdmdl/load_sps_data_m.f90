@@ -32,6 +32,7 @@ module LOAD_SPS_DATA_M
 !                                                  from l2gp
     integer,  pointer :: windowfinish(:) => null()! horizontal ending index
 !                                                  from l2gp
+    integer,  pointer :: qty(:) => null() ! Qty type, l_...
     logical,  pointer :: lin_log(:) => null()   ! type of representation basis
     real(r8), pointer :: min_val(:) => null()   ! Minimum value
     real(r8), pointer :: frq_basis(:) => null() ! frq  grid entries for all
@@ -64,7 +65,7 @@ contains
   ! ----------------------------------------------  Load_SPS_Data  -----
 
   subroutine Load_Sps_Data ( FwdModelConf, Phitan, MAF, &
-    & Grids_x, s_ind, QtyStuffIn )
+    & Grids_x, S_Ind, QtyStuffIn )
 
     use ForwardModelConfig, only: ForwardModelConfig_t, QtyStuff_T
     use Molecules, only: First_Molecule, Last_Molecule
@@ -77,7 +78,7 @@ contains
     type (Grids_T), intent(out) :: Grids_x   ! All the coordinates
 
     ! Indices of species in Grids_x
-    integer, intent(out), optional :: S_ind(First_Molecule:Last_Molecule)
+    integer, intent(out), optional :: S_Ind(First_Molecule:Last_Molecule)
 
     type (qtyStuff_t), intent(in), optional , target :: QtyStuffIn(:)
 
@@ -113,10 +114,9 @@ contains
       end if
 
       ! Remember positions of molecules in grids_x
-      if ( present(s_ind) .and. .not. present(qtyStuffIn) ) &
-        & s_ind(FwdModelConf%molecules(mol)) = mol
-        ! Note the ambiguity here as to whether it's extinction or extinctionv2 with whoever
-        ! is last winning.
+      if ( present(s_ind) ) s_ind(qtyStuff(mol)%qty%template%molecule) = mol
+        ! Note the ambiguity here as to whether it's extinction or extinctionv2:
+        ! the last one wins.
         ! Also note, however, that s_ind(l_extinction) is never actually used
 
       call fill_grids_1 ( grids_x, mol, qtyStuff(mol)%qty, phitan, maf, &
@@ -144,24 +144,36 @@ contains
 
   ! --------------------------------------  Load_Grid_From_Vector  -----
   subroutine Load_Grid_From_Vector ( Grids_X, Vector, Phitan, Maf, &
-    & FwdModelConf, SetDerivFlags )
+    & FwdModelConf, SetDerivFlags, S_Ind )
 
     use ForwardModelConfig, only: ForwardModelConfig_t
+    use Molecules, only: First_Molecule, Last_Molecule
     use VectorsModule, only: Vector_T, VectorValue_T
 
     type(grids_t), intent(out) :: Grids_X
     type(vector_t), intent(in) :: Vector
-    type(vectorValue_t), intent(in) :: Phitan
-    integer, intent(in) :: Maf
-    type(forwardModelConfig_t), intent(in) :: FwdModelConf
-    logical, intent(in) :: SetDerivFlags(:) ! size(vector%quantities)
+    type(vectorValue_t), intent(in), optional :: Phitan
+    integer, intent(in), optional :: Maf
+    type(forwardModelConfig_t), intent(in), optional :: FwdModelConf
+    logical, intent(in), optional :: SetDerivFlags(:) ! size(vector%quantities)
+
+    ! Indices of species in Grids_x
+    integer, intent(out), optional :: S_ind(First_Molecule:Last_Molecule)
 
     integer :: Qty
 
+    if ( present(s_ind) ) s_ind = 0 ! Indicate molecule not present in the vector
+
     call create_grids_1 ( Grids_x, size(vector%quantities) )
     do qty = 1, size(vector%quantities)
-      call fill_grids_1 ( grids_x, qty, vector%quantities(qty), phitan, maf, &
-        &                 fwdModelConf )
+      if ( present(phitan) ) then
+        call fill_grids_1 ( grids_x, qty, vector%quantities(qty), phitan, maf, &
+          &                 fwdModelConf )
+      else
+        ! Use the whole phi space for the window
+        call fill_grids_1 ( grids_x, qty, vector%quantities(qty), &
+          & ws=1, wf=size(vector%quantities(qty)%template%phi,2) )
+      end if
     end do
 
     ! Allocate space for the zeta, phi, freq. basis and value components.
@@ -170,6 +182,12 @@ contains
     do qty = 1, size(vector%quantities)
       ! Fill the zeta, phi, freq. basis and value components.
       call fill_grids_2 ( grids_x, qty, vector%quantities(qty), setDerivFlags(qty) )
+
+      ! Remember positions of molecules in grids_x
+      if ( present(s_ind) ) s_ind(vector%quantities%template%molecule) = qty
+        ! Note the ambiguity here as to whether it's extinction or extinctionv2:
+        ! the last one wins.
+        ! Also note, however, that s_ind(l_extinction) is never actually used
     end do
 
   end subroutine Load_Grid_From_Vector
@@ -184,10 +202,11 @@ contains
     use VectorsModule, only: VectorValue_T
 
     type(grids_t), intent(out) :: Grids_X
-    type(vectorValue_t), intent(in) :: Qty, Phitan
-    integer, intent(in) :: Maf
-    type(forwardModelConfig_t), intent(in) :: FwdModelConf
-    logical, intent(in) :: SetDerivFlags
+    type(vectorValue_t), intent(in) :: Qty
+    type(vectorValue_t), intent(in), optional :: Phitan
+    integer, intent(in), optional :: Maf
+    type(forwardModelConfig_t), intent(in), optional :: FwdModelConf
+    logical, intent(in), optional :: SetDerivFlags
     logical, intent(in), optional :: SetTscatFlag 
 
     type(vectorValue_t) :: QtyStuff
@@ -223,11 +242,18 @@ contains
     else
        
        call create_grids_1 ( grids_x, 1 )
-       call fill_grids_1 ( grids_x, 1, qty, phitan, maf, fwdModelConf )
+
+       if ( present(phitan) ) then
+         call fill_grids_1 ( grids_x, 1, qty, phitan, maf, fwdModelConf )
+       else
+         ! Use the whole phi space for the window
+         call fill_grids_1 ( grids_x, 1, qty, ws=1, wf=size(qty%template%phi,2) )
+       end if
+
        call create_grids_2 ( grids_x )
        call fill_grids_2 ( grids_x, 1, qty, setDerivFlags )
 
-    endif
+    end if
 
   end subroutine Load_One_Item_Grid
 
@@ -356,11 +382,13 @@ contains
     call allocate_test ( Grids_x%l_p, n, 'Grids_x%l_p', ModuleName, lowBound=0 )
     call allocate_test ( Grids_x%l_f, n, 'Grids_x%l_f', ModuleName, lowBound=0 )
     call allocate_test ( Grids_x%l_v, n, 'Grids_x%l_v', ModuleName, lowBound=0 )
-    Grids_x%l_z(0) = 0
-    Grids_x%l_p(0) = 0
-    Grids_x%l_f(0) = 0
-    Grids_x%l_v(0) = 0
+    call allocate_test ( Grids_x%qty, n, 'Grids_x%qty', ModuleName )
+    grids_x%l_z(0) = 0
+    grids_x%l_p(0) = 0
+    grids_x%l_f(0) = 0
+    grids_x%l_v(0) = 0
     grids_x%p_len = 0
+    grids_x%qty = 0
     call allocate_test ( Grids_x%windowstart, n, 'Grids_x%windowstart', &
                        & ModuleName )
     call allocate_test ( Grids_x%windowfinish, n, 'Grids_x%windowfinish',&
@@ -396,7 +424,8 @@ contains
   end subroutine Create_Grids_2
 
   ! -----------------------------------------------  Fill_Grids_1  -----
-  subroutine Fill_Grids_1 ( Grids_x, II, Qty, Phitan, Maf, FwdModelConf )
+  subroutine Fill_Grids_1 ( Grids_x, II, Qty, Phitan, Maf, FwdModelConf, &
+                          & Ws, Wf )
   ! Fill in the size information for the II'th element of Grids_x
 
     use ForwardModelConfig, only: ForwardModelConfig_t
@@ -406,24 +435,29 @@ contains
     type(grids_T), intent(inout) :: Grids_x
     integer, intent(in) :: II
     type (vectorValue_T), intent(in) :: QTY     ! An arbitrary vector quantity
-    type (vectorValue_T), intent(in) :: PHITAN  ! Tangent geodAngle component of
-    integer, intent(in) :: MAF
-    type(forwardModelConfig_T), intent(in) :: FwdModelConf
+    type (vectorValue_T), intent(in), optional :: PHITAN  ! Tangent geodAngle component of
+    integer, intent(in), optional :: MAF
+    type(forwardModelConfig_T), intent(in), optional :: FwdModelConf
+    integer, intent(in), optional :: Ws, Wf ! Explicit window start, finish
 
     integer :: KF, KP, KZ
 
     grids_x%names(ii) = qty%template%name
 
-    call FindInstanceWindow ( qty, phitan, maf, fwdModelConf%phiWindow, &
-      & fwdModelConf%windowUnits, grids_x%windowStart(ii), grids_x%windowFinish(ii) )
+    if ( present(ws) ) then ! assume present(wf) as well
+      grids_x%windowStart(ii) = ws
+      grids_x%windowFinish(ii) = wf
+    else
+      call FindInstanceWindow ( qty, phitan, maf, fwdModelConf%phiWindow, &
+        & fwdModelConf%windowUnits, grids_x%windowStart(ii), grids_x%windowFinish(ii) )
+    end if
+    kp = grids_x%windowFinish(ii) - grids_x%windowStart(ii) + 1
 
     if ( associated(qty%template%frequencies) ) then
       kf = size(qty%template%frequencies)
     else
       kf = qty%template%noChans ! == 1 if qty%template%frequencyCoordinate == l_none
     end if
-
-    kp = grids_x%windowFinish(ii) - grids_x%windowStart(ii) + 1
 
     kz = qty%template%noSurfs
 
@@ -432,11 +466,12 @@ contains
     grids_x%l_v(ii) = grids_x%l_v(ii-1) + kz * kp * kf
     grids_x%l_z(ii) = grids_x%l_z(ii-1) + kz
     grids_x%p_len = grids_x%p_len + kz * kp
+    grids_x%qty(ii) = qty%template%quantityType
 
   end subroutine Fill_Grids_1
 
   ! -----------------------------------------------  Fill_Grids_2  -----
-  subroutine Fill_Grids_2 ( Grids_x, II, Qty, SetDerivFlags )
+  subroutine Fill_Grids_2 ( Grids_x, II, Qty, SetDerivFlags, Phi_Offset )
   ! Fill the zeta, phi, freq. basis and value components for the II'th
   ! "molecule" in Grids_x.
 
@@ -448,7 +483,8 @@ contains
     type(grids_t), intent(inout) :: Grids_x
     integer, intent(in) :: II
     type(vectorValue_T), intent(in) :: QTY     ! An arbitrary vector quantity
-    logical, intent(in) :: SetDerivFlags
+    logical, intent(in), optional :: SetDerivFlags
+    real(rp), intent(in), optional :: Phi_Offset ! Radians
 
     integer :: I, KF, KZ, PF, PP, PV, PZ, QF, QP, QV, QZ, WF, WS
     logical :: PackFrq ! Need to pack the frequency "dimension"
@@ -469,7 +505,11 @@ contains
     wf = Grids_x%windowFinish(ii)
 
     Grids_x%zet_basis(pz+1:qz) = qty%template%surfs(1:kz,1)
-    Grids_x%phi_basis(pp+1:qp) = qty%template%phi(1,ws:wf)*Deg2Rad
+    if ( present(phi_offset) ) then
+      Grids_x%phi_basis(pp+1:qp) = qty%template%phi(1,ws:wf)*Deg2Rad + phi_offset
+    else
+      Grids_x%phi_basis(pp+1:qp) = qty%template%phi(1,ws:wf)*Deg2Rad
+    end if
     if ( associated ( qty%template%frequencies ) ) then
       if ( qty%template%frequencyCoordinate /= l_intermediateFrequency .and. &
          & qty%template%frequencyCoordinate /= l_channel ) &
@@ -506,12 +546,16 @@ contains
 
     ! set 'do derivative' flags
 
-    if ( setDerivFlags ) then
-      if ( associated(qty%mask) ) then
-        Grids_x%deriv_flags(pv+1:qv) = reshape(( iand (M_FullDerivatives, &
-          & ichar(qty%mask)) == 0),(/qv-pv/))
+    if ( present(setDerivFlags) ) then
+      if ( setDerivFlags ) then
+        if ( associated(qty%mask) ) then
+          Grids_x%deriv_flags(pv+1:qv) = reshape(( iand (M_FullDerivatives, &
+            & ichar(qty%mask)) == 0),(/qv-pv/))
+        else
+          Grids_x%deriv_flags(pv+1:qv) = .true.
+        end if
       else
-        Grids_x%deriv_flags(pv+1:qv) = .true.
+        grids_x%deriv_flags(pv+1:qv) = .false.
       end if
     else
       grids_x%deriv_flags(pv+1:qv) = .false.
@@ -532,7 +576,8 @@ contains
     call allocate_test(grids_x%l_z,0,'grids_x%l_z',modulename)
     call allocate_test(grids_x%l_p,0,'grids_x%l_p',modulename)
     call allocate_test(grids_x%l_v,0,'grids_x%l_v',modulename)
-    call allocate_test(grids_x%values,0,'grids_x%values',modulename)
+    call allocate_test(Grids_x%names,0,'grids_x%names',modulename)
+    call allocate_test(grids_x%qty,0,'grids_x%qty',modulename)
     call allocate_test(grids_x%lin_log,0,'grids_x%lin_log',modulename)
     call allocate_test(grids_x%min_val,0,'grids_x%min_val',modulename)
     call allocate_test(grids_x%frq_basis,0,'grids_x%frq_basis',modulename)
@@ -555,6 +600,7 @@ contains
     call deallocate_test(grids_x%l_z,'grids_x%l_z',modulename)
     call deallocate_test(grids_x%l_p,'grids_x%l_p',modulename)
     call deallocate_test(grids_x%l_v,'grids_x%l_v',modulename)
+    call deallocate_test(Grids_x%qty,'grids_x%qty',modulename)
     call deallocate_test(grids_x%values,'grids_x%values',modulename)
     call deallocate_test(grids_x%lin_log,'grids_x%lin_log',modulename)
     call deallocate_test(grids_x%min_val,'grids_x%min_val',modulename)
@@ -573,6 +619,7 @@ contains
 
     use Constants, only: rad2deg
     use Dump_0, only: Dump
+    use Intrinsic, only: lit_indices
     use Output_M, only: NewLine, Output
     use String_Table, only: Display_String, String_Length
 
@@ -610,6 +657,9 @@ contains
       else
         call output ( ' ?' )
       end if
+      if ( the_grid%qty(i) > 0 ) &
+        & call display_string ( lit_indices(the_grid%qty(i)), &
+          & before=' quantity: ' )
     end do
     call newLine
     call dump ( the_grid%l_f(1:), 'The_grid%l_f' )
@@ -645,6 +695,9 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.77  2010/09/25 01:13:35  vsnyder
+! Add Load_Grid_From_Vector, Pack_Frq
+!
 ! Revision 2.76  2010/06/07 23:22:53  vsnyder
 ! Replaced H2O_ind with S_Ind
 !
