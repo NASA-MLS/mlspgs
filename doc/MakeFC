@@ -38,10 +38,13 @@ REECHO=$(UTILDIR)/reecho.sh
 
 # Errors in the .tex sources require us to omit the following
 OMIT_SRCS := wvs-010.tex wvs-074.tex wvs-051-neural_body.tex wvs-083.tex \
-     wvs-089.tex wvs-095.tex
+     wvs-089.tex wvs-095.tex iy-002.tex iy-003.tex
 OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
 OMIT_SRCS_REV := 'wvs-004\*.tex' 'wvs-051\*.tex' 'wvs-063\*.tex'
+OMIT_SRCS_SUB := 'iy-001-\*.tex' \
+   'iy-002-\*.tex' 'iy-003-\*.tex' 'iy-004-\*.tex'
 OMIT_PREFXD_REV := $(shell ${REECHO} -prefix=-d -escape -nlast $(OMIT_SRCS_REV))
+OMIT_PREFXD_SUB := $(shell ${REECHO} -prefix=-d -escape $(OMIT_SRCS_SUB))
 
 # Set paths for finding source files
 
@@ -99,10 +102,10 @@ clean:
 depends:
 	$(MAKE) -f $(MakeFName) internalupdate
 	$(UTILDIR)/makemakedep.sh -s tex -o dvi -p Makefile.dep.1 \
-     $(OMIT_PREFXD) $(OMIT_PREFXD_REV)
+     $(OMIT_PREFXD) $(OMIT_PREFXD_REV) $(OMIT_PREFXD_SUB)
 	sed 's/OBJS =/NEAROBJS =/' Makefile.dep.1 > Makefile.dep.2
 	$(UTILDIR)/makemakedep.sh -s tex -o pdf -p Makefile.dep.1 \
-     $(OMIT_PREFXD) $(OMIT_PREFXD_REV)
+     $(OMIT_PREFXD) $(OMIT_PREFXD_REV) $(OMIT_PREFXD_SUB)
 	cat Makefile.dep.1 Makefile.dep.2 > Makefile.dep
 	if [ ! -d $(TEXDIR) ] ; then \
 	  		mkdir $(TEXDIR) ;\
@@ -147,6 +150,9 @@ update: internalupdate
 
 # ========================================================================
 # $Log$
+# Revision 1.11  2010/07/14 20:54:39  pwagner
+# Simple fix to problem redefining SUBDIRS
+#
 # Revision 1.10  2010/06/29 20:58:27  pwagner
 # Must omit wvs-095.tex
 #
