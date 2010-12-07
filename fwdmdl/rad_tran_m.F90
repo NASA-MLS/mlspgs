@@ -964,6 +964,7 @@ contains
                          &  i_stop, drad_dx )
     use LOAD_SPS_DATA_M, ONLY: GRIDS_T
     use MLSKinds, only: RP
+    use SCRT_DN_M, ONLY: DSCRT_DX
 
 ! Inputs
 
@@ -1064,6 +1065,9 @@ contains
           & dbeta_path_c(:,sps_i), dbeta_path_f(:,sps_i), del_s, del_zeta, &
           & ds_dz_gw, ref_cor, grids_f%values(sv_i), singularity, &
           & d_delta_dx )
+
+        call dscrt_dx ( tan_pt, d_delta_dx, inc_rad_path, &
+                     &  1, i_stop, drad_dx(sv_i))
 
       end do
 
@@ -1586,6 +1590,9 @@ contains
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.16  2010/12/07 01:20:57  vsnyder
+! dRad_tran_dx needs to call dscrt_dx
+!
 ! Revision 2.15  2010/11/05 20:28:13  vsnyder
 ! Delete unused declarations
 !
