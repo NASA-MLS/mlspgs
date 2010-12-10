@@ -50,14 +50,7 @@ module cfm          ! callable forward model
    use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
    use CFM_FWDMDL_M, only: ForwardModel
    use MLSCommon, only: MLSFile_T, r8
-   use Init_tables_module, only: l_logarithmic, l_zeta, l_temperature, &
-                                 L_IntermediateFrequency, l_vmr, l_gph, &
-                                 l_ptan, l_radiance, l_orbitInclination, &
-                                 l_tngtgeodalt, l_tngtgeocalt, l_o3, &
-                                 phyq_pressure, phyq_angle, l_h2o, l_refgph, &
-                                 l_phitan, l_explicit, l_l1bMAFBaseline, &
-                                 l_frequency, l_usbFrequency, l_lsbFrequency, &
-                                 l_ghz
+   use Init_tables_module ! essentially, all the l_..., and some phyq
    use MLSFiles, only: GetMLSFileByType, InitializeMLSFile, mls_openFile, &
                        AddFileToDatabase
    use Intrinsic, only: l_hdf
@@ -84,6 +77,9 @@ contains
 end module cfm
 
 ! $Log$
+! Revision 1.10  2010/11/18 19:04:13  honghanh
+! New example to run forward model with a single maf
+!
 ! Revision 1.9  2010/09/28 14:42:42  honghanh
 ! Add call to forwardModel with jacobian
 !
