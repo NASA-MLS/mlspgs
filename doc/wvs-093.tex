@@ -7,8 +7,8 @@
 \topmargin -0.25in
 \textheight 9.0in
 
-\newcommand{\docname}{\bf wvs-093r5}
-\newcommand{\docdate}{2 December 2010}
+\newcommand{\docname}{\bf wvs-093r6}
+\newcommand{\docdate}{13 December 2010}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -161,7 +161,8 @@ I[\alpha(s),s_m] = I(s_0) \T(s_0,s_m) +
   \d s\,,
 \end{equation}
 
-where $s_m$ is the location of the instrument, $s_0$ is the location of
+(meaning $I$ is explicitly a functional of $\alpha(s)$ and a function of
+$s_m$) where $s_m$ is the location of the instrument, $s_0$ is the location of
 the end of the path away from the instrument, $B(s)$ is the Planck
 function $\frac{h \nu}k \left( \exp\left(\frac{h \nu}{k T(s)}\right)
 -1\right)^{-1}$,
@@ -171,19 +172,21 @@ function $\frac{h \nu}k \left( \exp\left(\frac{h \nu}{k T(s)}\right)
  \, \d \sigma \right) \,,
 \end{equation}
 
-$\alpha(\sigma) = \sum_k \beta^k(s) f^k(s) = \sum_k \beta^k(s) \sum_l
-f^k_{lm} \mu_{lm}(s)$ is the total absorption cross section for all
-mole\-cules, $f^k(\sigma)$ is the volume mixing ratio of the
+$\alpha(\sigma) = \sum_k \beta^k(\sigma) f^k(\sigma) = \sum_k
+\beta^k(\sigma) \sum_l f^k_{lm} \mu^k_{lm}(\sigma)$ is the volume
+absorption coefficient, $f^k(\sigma)$ is the volume mixing ratio of the
 $k^\text{th}$ species at $\sigma$, $f^k_{lm}$ is the volume mixing ratio
 of the $k^\text{th}$ species at the $(l,m)$ representation basis point,
-$\mu_{lm}(s) = (\xi_l(s) + \xi_{l-1}(s))(\eta_m(s) + \eta_{m-1}(s))$,
-$\xi_l(s) = (\phi_{l+1}-\phi(s))/(\phi_{l+1}-\phi_l)$ for $\phi_l \leq
-\phi(s) \leq \phi_{l+1}$ and zero otherwise and $\eta_m(s) =
-(\zeta_{m+1}-\zeta(s))/(\zeta_{m+1}-\zeta_m)$ for $\zeta_m \leq \zeta(s)
-\leq \zeta_{m+1}$ and zero otherwise are interpolation coefficients from
-the representation basis to the integration path, and $\beta^k(\sigma)$
-is the absorption cross section for the $k^\text{th}$ species at
-$\sigma$.  From Equation (\ref{two})
+$\mu^k_{lm}(\sigma) = \xi^k_l(\sigma) \eta^k_m(\sigma)$,
+$\xi^k_l(\sigma) = (\phi^k_{l+1}-\phi(\sigma))/(\phi^k_{l+1}-\phi_l)$ for
+$\phi_l \leq \phi(\sigma) \leq \phi^k_{l+1}$ and zero otherwise and
+$\eta_m(\sigma) = (\zeta^k_{m+1}-\zeta(\sigma))/(\zeta^k_{m+1}-\zeta_m)$
+for $\zeta_m \leq \zeta(\sigma) \leq \zeta^k_{m+1}$ and zero otherwise
+are interpolation coefficients from the representation basis for the
+$k^\text{th}$ species to the integration path, and $\beta^k(\sigma)$ is
+the absorption cross section for the $k^\text{th}$ species at $\sigma$. 
+
+From Equation (\ref{two})
 
 \begin{equation}
 \frac{\partial \T(s,s_m)}{\partial s} = \alpha(s) \T(s,s_m).
@@ -210,19 +213,19 @@ I[\alpha(s),s_m] =\,& \T(s_0,s_m) (I(s_0)-B(s_0)) + B(s_m) -
 
 where $B^\prime(s) = \frac{\partial B(s)}{\partial s}$ (remember
 $\T(s_m,s_m)=1$). Henceforth, $I[\alpha(\sigma),s_m]$ will be abbreviated
-to $I$.
+to $I(s_m)$.
 
 %=========================================================================
 
 \section{Sensitivity of radiance to variation of $\alpha(\sigma)$}
 
-Since $B(\sigma)$ doesn't depend upon $\alpha(\sigma)$, the variation of
-$I$ as a result of variation of $\alpha(\sigma)$ is
+Since $B(\sigma)$ does not depend upon $\alpha(\sigma)$, the variation of
+$I(s_m)$ as a result of variation of $\alpha(\sigma)$ is
 
 \begin{equation}\label{I var}
-\delta_\alpha I =
+\delta_\alpha I(s_m) =
  \left( I(s_0)-B(s_0) \right) \delta_\alpha \T(s_0,s_m) -
-  \int_{s_0}^{s_m} \delta_\alpha \T(\sigma,s_m) \,
+  \int_{s_0}^{s_m} \left(\delta_\alpha \T(\sigma,s_m) \right)\,
    B^\prime(\sigma) \, \d \sigma\,.
 \end{equation}
 
@@ -289,7 +292,7 @@ Substituting Equation (\ref{tau var}) into the integral in Equation
 \end{split}\end{equation}
 
 Substituting Equation (\ref{tau var}) into the first term for $\delta_\alpha
-I$ in Equation (\ref{I var}) gives
+I(s_m)$ in Equation (\ref{I var}) gives
 
 \begin{equation}\label{var2}
 \left( I(s_0)-B(s_0) \right) \delta_\alpha \T(s_0,s_m)
@@ -298,10 +301,10 @@ I$ in Equation (\ref{I var}) gives
 \end{equation}
 
 Collecting Equations (\ref{var1}) and (\ref{var2}) and factoring, the
-resulting variation in $I$ due to variation in $\alpha(\sigma)$ is
+resulting variation in $I(s_m)$ due to variation in $\alpha(\sigma)$ is
 
 \begin{equation}\begin{split}
-\delta_\alpha I
+\delta_\alpha I(s_m)
 =\,& \int_{s_0}^{s_m} \d \sigma \,\delta \alpha(\sigma)
  \left\{ \int_{s_0}^\sigma \T(\sigma^\prime,s_m) \,
     B^\prime(\sigma^\prime) \,
@@ -315,12 +318,12 @@ resulting variation in $I$ due to variation in $\alpha(\sigma)$ is
 \end{split}\end{equation}
 
 According to Equations (\ref{VAR}) and (\ref{SENS}), the sensitivity of
-$I$ to variation $\delta \alpha(\sigma)$ in $\alpha(\sigma)$ is the
+$I(s_m)$ to variation $\delta \alpha(\sigma)$ in $\alpha(\sigma)$ is the
 factor between \{ and \}, \emph{viz.}
 
 
 \begin{equation}\label{I var alpha}
-\frac{\delta I}{\delta \alpha(\sigma)}
+\frac{\delta I(s_m)}{\delta \alpha(\sigma)}
 =
  \T(\sigma,s_m) \left[ \int_{s_0}^\sigma \T(\sigma^\prime,s_m) \,
     B^\prime(\sigma^\prime) \,
@@ -331,72 +334,9 @@ factor between \{ and \}, \emph{viz.}
 Using Equation (\ref{I}) in Equation (\ref{I var alpha}) we have
 
 \begin{equation}\label{var I}\boxed{
-\frac{\delta I}{\delta \alpha(\sigma)} =
+\frac{\delta I(s_m)}{\delta \alpha(\sigma)} =
  \T(\sigma,s_m) \left( B(\sigma) - I(\sigma) \right)}\,.
 \end{equation}
-
-From this and $\frac{\partial \alpha(\sigma)}{\partial f^k_{lm}} =
-\beta^k(\sigma) \mu_{lm}(\sigma)$, we can compute the sensitivity of $I$
-to variation of $f^k_{lm}$ as
-
-\begin{equation}
-\frac{\delta I}{\delta f^k_{lm}} =
- \frac{\delta I}{\delta \alpha(\sigma)}
-  \frac{\partial \alpha(\sigma)}{\partial f^k_{lm}} =
- \frac{\delta I}{\delta \alpha(\sigma)} \beta^k(\sigma) \mu_{lm}(\sigma) =
- \T(\sigma,s_m)
-  \left( B(\sigma) - I(\sigma) \right) \beta^k(\sigma) \mu_{lm}(\sigma) \,.
-\end{equation}
-
-If we evaluate the indefinite sum
-
-\begin{equation}\label{sum}
-S_j = \sum_{i=1}^j
- \frac12\left(\T(\sigma_i,s_m)+\T(\sigma_{i-1},s_m)\right)
-  \Delta B(\sigma_i) -
-   \T(s_0,s_m)\left(I(s_0)-B(s_0)\right)
-\approx \frac1{\T(\sigma,s_m)} \frac{\delta I}{\delta \alpha(\sigma_j)}
-\end{equation}
-
-with $\sigma_0 = s_0$ and $s_0 < \sigma_1 < \sigma_2 \dots < \sigma_{N_p}
-\leq s_m$, then from Equation (\ref{I}) we have
-
-\begin{equation}\begin{split}\label{var sum}
-I(s_m) =\,& 
- B(s_m) - \frac1{\T(\sigma,s_m)} \frac{\delta I}{\delta \alpha(s_m)} 
- \approx B(s_m) - S_{N_p} \text{ and}\\
-\frac{\delta I(s_m)}{\delta f^k_{lm}}
- \approx\,& \T(\sigma,s_m) \beta^k(\sigma_j) \mu_{lm}(\sigma_j) S_j \\
-\end{split}\end{equation}
-
-That is, we can evaluate both $I$ and its sensitivity to variation in the
-discrete parameters $f^k_{lm}$ by evaluating one indefinite sum, and
-multiplying each of the $N_p$ elements by $N_s$ molecular absorption
-cross sections and $N_r$ interpolation coefficients, where $N_r$ is the
-number of points in the representation basis.  The additional cost to
-compute the sensitivities is $N_p \times N_s \times N_r$ additional
-multiplies.
-
-In the present scheme, we compute the sensitivities by evaluating $N_p
-\times N_s \times N_r$ additional quadrature steps, each requiring $2 N_p
-+ 11 G + N_s N_p^2$ FLOPS, where $0 \leq G \leq N_p$ is the number of
-panels requiring Gauss-Legendre quadrature, because we compute the
-derivative of Equation (\ref{first}) with respect to $f^k(\sigma)$, and
-leave $\frac{\partial\alpha(\sigma)}{\partial f^k(\sigma)} =
-\beta^k(\sigma)$ inside the integral:
-
-\begin{equation}
-\frac{\partial I(s_m)}{\partial f^k(\sigma)} =
- \int_{s_0}^\sigma \frac{\partial \T(s,s_m)}{\partial f^k(s)}
-  B^\prime(s) \, \d s
-\end{equation}
-
-Thus the approach described here should be less time consuming by a
-factor of $O(N_s \times N_p^2)$, and require less memory than the current
-method.
-
-Evaluating the Hessian tensor should similarly be possible without integrating
-variational equations.
 
 %=========================================================================
 
@@ -440,7 +380,215 @@ the solution for Equation (\ref{five}) can be written
 =\,& (B(\sigma)-I(\sigma)) \T(\sigma,s)\,,
 \end{split}\end{equation}
 
-which is the same result as Equation (\ref{var I}).
+which is (reassuringly) the same result as Equation (\ref{var I}).
+
+%=========================================================================
+
+\section{Sensitivity to mixing ratio, $f^k_{lm}$, on the grid}
+
+Remember that Equation (\ref{var I}) is the variation of the
+\emph{functional} $I[\alpha(\sigma),s_m]$ with respect to variation of
+the \emph{function} $\alpha(sigma)$.
+
+
+Using bilinear interpolation of mixing ratios from a
+$(\phi^k_l,\phi^k_{l+1}) \times (\zeta^k_m,\zeta^k_{m+1})$ grid cell for
+the $k^\text{th}$ species to path points within the cell,
+%
+\begin{equation}\begin{split}\label{three}
+\alpha(s)
+\,&= \sum_k \beta^k(s) f^k(s)
+ = \sum_k \beta^k(s) \sum_{l,m}
+     \left[ \begin{array}{ll} \xi^k_l(s) &
+                               1-\xi^k_l(s) \end{array} \right]
+      \left[ \begin{array}{ll} f^k_{\ell,m}   & f^k_{\ell,m+1} \\
+                               f^k_{\ell+1,m} & f^k_{\ell+1,m+1}
+             \end{array} \right]
+      \left[ \begin{array}{l} \eta^k_m(s) \\ 1-\eta^k_m(s)
+      \end{array} \right] \\
+=\,& \sum_k \beta^k(s) \sum_{l,m} \mu^k_{lm}(s) f^k_{lm} \\
+\end{split}\end{equation}
+\vspace*{-0.35in}
+\begin{equation}\begin{split}
+\text{ where }
+\xi^k_l(s)
+=\,& \frac{\phi^k_{l+1}-\phi(s)}{\phi^k_{l+1}-\phi^k_l}
+ \text{ for } \phi^k_l \leq \phi(s) \leq \phi^k_{l+1}
+ \text{ and zero elsewhere, and } \\
+\eta^k_m(s)
+=\,& \frac{\zeta^k_{m+1}-\zeta(s)}{\zeta^k_{m+1}-\zeta^k_m}
+ \text{ for } \zeta^k_m \leq \zeta(s) \leq \zeta^k_{m+1}
+ \text{ and zero elsewhere.} \\
+\end{split}\end{equation}
+
+and where by shifting indices in Equation (\ref{three})
+%
+\begin{equation}\begin{split}\label{mu}
+\mu^k_{lm}(s) =
+\left\{
+\begin{array}{lll}
+\xi_{i,\ell}(s) \eta_{i,m}(s)
+  & \phi_l \leq \phi(s) \leq \phi_{l+1}
+  & \zeta_m \leq \zeta(s) \leq \zeta_{m+1} \\
+(1-\xi_{i,\ell-1}(s)) \eta_{i,m}(s)
+  & \phi_{l-1} \leq \phi(s) \leq \phi_l
+  & \zeta_m \leq \zeta(s) \leq \zeta_{m+1} \\
+\xi_{i,\ell}(s) (1-\eta_{i,m-1}(s))
+  & \phi_l \leq \phi(s) \leq \phi_{l+1}
+  & \zeta_{m-1} \leq \zeta(s) \leq \zeta_m \\
+(1-\xi_{i,\ell-1}(s))  (1-\eta_{i,m-1}(s))
+  & \phi_{l-1} \leq \phi(s) \leq \phi_l
+  & \zeta_{m-1} \leq \zeta(s) \leq \zeta_m \\
+\end{array}
+\right.
+\end{split}\end{equation}
+
+Thus the sensitivity of $I(s_m)$ to variation of $f^k_{lm}$, that is, a
+\emph{partial derivative}, is
+%
+\begin{equation}
+\boxed{
+\begin{split}\label{dI_dfklm}
+\frac{\partial I(s_m)}{\partial f^k_{lm}}
+=\,&
+ \int_{s_0}^{s_m}
+ \frac{\delta I(s_m)}{\delta \alpha(\sigma)}
+  \frac{\partial \alpha(\sigma)}{\partial f^k(\sigma)}
+  \frac{\partial f^k(\sigma)}{\partial f^k_{lm}} \,\d \sigma =
+ \int_{s_0}^{s_m}
+ \frac{\delta I(s_m)}{\delta \alpha(\sigma)} \beta^k(\sigma)
+  \mu^k_{lm}(\sigma) \,\d \sigma\\
+=\,&
+ \int_{s_0}^{s_m}
+ \T(\sigma,s_m)
+  \left( B(\sigma) - I(\sigma) \right) \beta^k(\sigma) \mu^k_{lm}(\sigma)
+  \,\d \sigma \,.
+\end{split}}
+\end{equation}
+
+From Equation (\ref{mu}), $\mu^k_{lm}(\sigma)$ is nonzero for only a
+small range of $\sigma$.
+
+Replacing integrals by quadratures, if we evaluate the indefinite product
+and indefinite sum
+%
+\begin{equation}\begin{split}\label{sum}
+P_i
+=\,& \prod_{j=i}^{N_p-1} \exp \left(
+  - \sum_k w_k \alpha(\sigma_{jk}) \Delta \sigma_j
+  \right)
+ = P_{i+1} \exp \left(- \sum_k w_k \alpha(\sigma_{jk}) \Delta \sigma_i
+                 \right)
+ \approx \T(\sigma_i,s_m)
+  \text{ and} \\
+S_j
+=\,& P_0 \left(I(s_0)-B(s_0)\right) + B(s_m)
+ - \sum_{i=1}^j  P_i \Delta B(\sigma_i)
+ = S_{j-1} - P_j \Delta B(\sigma_j)
+ \approx I(\sigma_j)
+\end{split}\end{equation}
+%
+where $s_0 = \sigma_0 < \sigma_1 < \sigma_2 \dots < \sigma_{N_p}
+\leq s_m$, and $w_k$ and $\sigma_j \leq \sigma_{jk} \leq \sigma_{j+1}$
+are quadrature weights and abscissae, then from Equations (\ref{I}) and
+(\ref{var I}) we have
+%
+\begin{equation}\boxed{\boxed{
+\begin{split}\label{var sum}
+I(s_m) \approx\,& S_{N_p} \text{ and}\\
+\frac{\delta I(s_m)}{\delta f^k_{lm}}
+ \approx\,&
+  \sum_j
+  P_j \beta^k(\sigma_j) \mu^k_{lm}(\sigma_j)
+    (S_j - B(\sigma_j) ) \Delta \sigma_j
+ = \sum_j
+  P_j \beta^k(\zeta_j) \mu^k_{lm}(\zeta_j)
+    (S_j - B(\zeta_j) ) \frac{\d \sigma_j}{\d h_j}
+                         \frac{\d h_j}{\d \zeta_j} \Delta \zeta_j\\
+\end{split}}}
+\end{equation}
+
+Since we use linear interpolation, $\mu^k_{lm}(\sigma_j)$ is nonzero only
+for two values of $j$. Therefore, we can evaluate both $I(s_m)$ and its
+sensitivity to variation in the discrete parameters $f^k_{lm}$ by
+evaluating one indefinite sum, and multiplying each of the $N_p$ elements
+by $2 N_s$ molecular absorption cross sections, $2 N_r$ interpolation
+coefficients, and two values of $\Delta \sigma$ , where $N_r$ is the
+number of points in the representation basis.  The additional cost to
+compute the sensitivities is $6 N_p \times N_s \times N_r$ additional
+multiplies and two additional adds.
+
+In the present scheme, we compute the sensitivities by evaluating $N_p
+\times N_s \times N_r$ additional quadrature steps, each requiring $2 N_p
++ 11 G + N_s N_p^2$ FLOPS, where $0 \leq G \leq N_p$ is the number of
+panels requiring Gauss-Legendre quadrature, because we compute the
+derivative of Equation (\ref{first}) with respect to $f^k(\sigma)$, and
+leave $\frac{\partial\alpha(\sigma)}{\partial f^k_{lm}} =
+\beta^k(\sigma)$ inside the integral:
+
+\begin{equation}\begin{split}
+\frac{\partial I(s_m)}{\partial f^k_{lm}}
+=\,&
+ \int_{s_0}^{s_m} \frac{\delta \T(s,s_m)}{\delta \alpha(s)}
+  \frac{\delta \alpha(s)}{\delta f^k(s)}
+  \frac{\partial f^k(s)}{\partial f^k_{lm}}
+  B^\prime(s) \, \d s
+=\,&
+ -\int_{s_0}^{s_m} \T(s,s_m) \mu^k_{lm}(s) \beta^k(s)
+  B^\prime(s) \, \d s
+  \,,
+\end{split}\end{equation}
+
+in which the integral defining $\T(s,s_m)$ is recomputed.  Thus the
+approach described here should be less time consuming by a factor of
+$O(N_s \times N_p^2)$, and require less memory than the current method.
+
+Evaluating the Hessian tensor should similarly be possible at lower cost.
+
+%=========================================================================
+
+\section{Alternative derivation of sensitivity to $f^k_{lm}$}
+
+Start with the clear-sky non-scattering radiative transfer equation:
+
+\begin{equation}\label{D1}
+\frac{\d I(s)}{\d s} + \alpha(s) I(s) = \alpha(s) B(s)\,.
+\end{equation}
+
+Taking derivatives of Equation (\ref{D1}) with respect to mixing ratios
+$f^k_{lm}$ on the grid gives
+
+\begin{equation}
+\frac{\partial}{\partial f^k_{lm}} \frac{\d I(s)}{\d s} +
+ \frac{\partial \alpha(s)}{\partial f^k_{lm}} I(s) +
+ \alpha(s) \frac{\partial I(s)}{\partial f^k_{lm}} =
+ \frac{\partial \alpha(s)}{\partial f^k_{lm}} I(s) \,.
+\end{equation}
+
+Exchanging the order of differentiation, using $\frac{\partial
+\alpha(s)}{\partial f^k_{lm}} = \beta^k(s) \mu^k_{lm}(s)$, and rearranging
+the equation to the usual form gives
+
+\begin{equation}\begin{split}
+\frac{\d}{\d s} \frac{\partial I(s)}{\partial f^k_{lm}} +
+ \alpha(s) \frac{\partial I(s)}{\partial f^k_{lm}}
+=\,&
+ \frac{\partial \alpha(s)}{\partial f^k_{lm}} ( B(s) - I(s) ) \\
+=\,&
+ \beta^k(s) \mu^k_{lm}(s) ( B(s) - I(s) )\,.
+\end{split}\end{equation}
+
+Solve for $\frac{\partial I(s_m)}{\partial f^k_{lm}}$ using
+$\frac{\partial I(s_0)}{\partial f^k_{lm}}=0$ to get
+
+\begin{equation}\boxed{
+\frac{\partial I(s_m)}{\partial f^k_{lm}} =
+ \int_{s_0}^{s_m} \T(s,s_m) \beta^k(s) \mu^k_{lm}(s)
+  ( B(s) - I(s) ) \d s
+}
+\end{equation}
+
+which is (reassuringly) the same as Equation (\ref{dI_dfklm}).
 
 %=========================================================================
 
@@ -449,7 +597,7 @@ which is the same result as Equation (\ref{var I}).
 Because both $\T$ and $B$ depend upon temperature
 
 \begin{equation}\begin{split}\label{T vary}
-\delta_T I =\,& -\delta_T B(s_0)) \T(s_0,s_m)
+\delta_T I(s_m) =\,& -\delta_T B(s_0)) \T(s_0,s_m)
  + (I(s_0) - B(s_0)) \delta_T \T(s_0,s_m) + \delta_T B(s_m) \\
 & - \int_{s_0}^{s_m} \delta_T
   \T(\sigma,s_m) B^\prime(\sigma) \, \d \sigma
@@ -530,8 +678,8 @@ final expression is troublesome.  If we start instead with Equation
 
 \begin{equation}\label{dIdT}
 \frac{\delta I(s_m)}{\delta T(\sigma)} =
- \frac{\partial \alpha(\sigma)}{\partial T(\sigma)}
-   \frac{\delta I(s_m)}{\delta \alpha(\sigma)} +
+ \frac{\delta I(s_m)}{\delta \alpha(\sigma)}
+   \frac{\partial \alpha(\sigma)}{\partial T(\sigma)} +
    \alpha(\sigma) \T(\sigma,s_m)
     \frac{\partial B(\sigma)}{\partial T(\sigma)}\,.
 \end{equation}
@@ -541,13 +689,23 @@ B(\sigma)}{\partial T(\sigma)} = \frac{B(\sigma)}{T(\sigma)^2} \left(
 \frac{h \nu}k + B(\sigma) \right)$.  Inserting this result into Equation
 (\ref{dIdT}) we have
 
-\begin{equation}\label{var T}\boxed{
-\frac{\delta I(s_m)}{\delta T(\sigma)} =
- \frac{\partial \alpha(\sigma)}{\partial T(\sigma)}
-   \frac{\delta I(s_m)}{\delta \alpha(\sigma)} +
+\begin{equation}\label{var T}
+\boxed{\begin{split}
+\frac{\delta I(s_m)}{\delta T(\sigma)}
+=\,&
+ \frac{\delta I(s_m)}{\delta \alpha(\sigma)}
+   \frac{\partial \alpha(\sigma)}{\partial T(\sigma)} +
    \alpha(\sigma) \T(\sigma,s_m)
     \frac{B(\sigma)}{T(\sigma)^2} \left( \frac{h \nu}k + B(\sigma) \right)
-}\,.
+\\
+ =\,&
+  \T(\sigma,s_m)
+   \left[ \left( B(\sigma) - I(\sigma) \right)
+    \frac{\partial \alpha(\sigma)}{\partial T(\sigma)} +
+    \alpha(\sigma)
+    \frac{B(\sigma)}{T(\sigma)^2} \left( \frac{h \nu}k + B(\sigma) \right)
+   \right]
+\end{split}}
 \end{equation}
 
 %=========================================================================
@@ -614,13 +772,13 @@ the solution for Equation (\ref{T five}) can be written
     \left(B(s)-I(s)\right) +
      \alpha(s) \frac{\partial B(\sigma)}{\partial T(\sigma)}
      \right ) \T(\sigma,s)
- = \frac{\partial \alpha(\sigma)}{\partial T(\sigma)}
-   \frac{\delta I(s)}{\delta \alpha(\sigma)} +
+ = \frac{\delta I(s)}{\delta \alpha(\sigma)}
+   \frac{\partial \alpha(\sigma)}{\partial T(\sigma)} +
    \alpha(\sigma) \T(\sigma,s)
     \frac{\partial B(\sigma)}{\partial T(\sigma)} \,,
 \end{split}\end{equation}
 
-which is the same result as Equation (\ref{var T}).
+which is (reassuringly) the same result as Equation (\ref{dIdT}).
 
 \label{lastpage}
 \end{document}
@@ -628,6 +786,9 @@ which is the same result as Equation (\ref{var T}).
 % $Id$
 
 % $Log$
+% Revision 1.5  2010/12/04 02:24:40  vsnyder
+% Correct VMR derivative, add temperature derivative
+%
 % Revision 1.4  2010/11/23 22:53:30  vsnyder
 % Repair a typo in the final equation
 %
