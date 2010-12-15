@@ -120,6 +120,7 @@ program F90TEX
       write (*,*) '                        can appear up to 99 times'
       write (*,*) '          -<anything else> => this output'
       write (*,*) '          -  => no more options'
+      write (*,*) ' 15 December 2010'
       stop
     end if
     i = i + 1
@@ -167,6 +168,7 @@ program F90TEX
     call output ( 'usepackage{lineno}', tex=.true. )
     call output ( 'def\linenumberfont{\normalfont\footnotesize\sffamily}', tex=.true. )
   end if
+  call output ( 'usepackage[strings]{underscore}', tex=.true. )
   call output ( '' )
   call output ( 'begin{document}', tex=.true. )
   if ( sx == 2 .and. number_step /= '0' ) then
@@ -316,3 +318,6 @@ contains
 end program F90TEX
 
 ! $Log$
+! Revision 1.12  2010/08/22 00:45:24  vsnyder
+! Add -u option to include LaTeX packages
+!
