@@ -57,7 +57,7 @@ contains
   subroutine Two_D_T_Script ( t_grid, t_space, nu, t_scr, B )
 
 
-!{ This routine builds the t_script array.
+!{ This routine builds the t\_script array.
 !  In some notes and reports it's called $\Delta B_i =
 !  \frac12 ( B_{i+1} - B_{i-1} )$
 !  for $i = 2 \dots n-1$, $\Delta B_1 = \frac12 ( B_2 + B_1 )$, and
@@ -100,9 +100,12 @@ contains
 !------------------------------------------  Two_D_T_Script_Cloud  -----
   subroutine Two_D_T_Script_Cloud ( t_grid, t_scat, w0, t_space, nu, t_scr, B )
 
-! This routine builds the t_script array.  In some notes it's called Delta B.
-! This one combines B with TScat.  In the case of using tabulated TScat, TScat
-! is a channel quantity so we can't produce both terms at once.
+!{ This routine builds the t_script array.  In some notes it's called Delta B.
+!  This one combines B with TScat.  In the cloud scattering case,
+!  $\Delta B = \frac12 \left[ (1-\omega_{0_{i+1}}) B_{i+1} +
+!                             \omega_{0_{i+1}} T_{\text{scat}_{i+1}} -
+!                             (1-\omega_{0_{i-1}}) B_{i-1} -
+!                             \omega_{0_{i-1}} T_{\text{scat}_{i-1}} \right]$.
 
     use D_STAT_TEMP_M, only: STAT_TEMP
     use MLSKinds, only: R8, RP
@@ -131,7 +134,7 @@ contains
     n_path = size(t_grid)
 
     B = stat_temp(t_grid,nu)                 ! clear-sky Planck  function on path
-    V1 = (1.0_rp-w0) * B + w0 * t_scat       !(1-w0)*B + W0*Tscat
+    V1 = (1.0_rp-w0) * B + w0 * t_scat       !(1-w0)*B + w0*Tscat
 
     t_scr = 0.5_rp * (eoshift(V1,1,2.0_rp * stat_temp(t_space,nu) - B(n_path)) - &
       &               eoshift(V1,-1,-B(1)))
@@ -151,6 +154,9 @@ contains
 end module DO_T_SCRIPT_M
 
 ! $Log$
+! Revision 2.13  2010/08/19 02:04:50  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.12  2009/06/23 18:26:11  pwagner
 ! Prevent Intel from optimizing ident string away
 !
