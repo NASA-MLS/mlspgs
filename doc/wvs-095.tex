@@ -11,8 +11,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-095r13}
-\newcommand{\docdate}{5 August 2010}
+\newcommand{\docname}{wvs-095r14}
+\newcommand{\docdate}{16 December 2010}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -91,6 +91,8 @@ Reference: \>\h{wvs-027}, \h{wvs-066}, \h{wvs-080}, JPL D-18130
 
 \section{Analysis}
 
+\subsection{General}
+
 When $\TS$ is taken into account, the factor $\DB_{ij} =
 \frac12\left(B_{i+1,j} - B_{i-1,j}\right)$ that appears in
 Equation (10.1) in the 19 August 2004 ATBD, JPL D-18130 (ignoring the special
@@ -98,7 +100,8 @@ forms at the ends of the path for now), giving radiance at frequency $\nu_j
 \in \{\nu_j | j = 1, \dots, n_f\}$, \emph{viz.}
 
 \begin{equation}\label{one}
-I_j = \int \frac{\partial B_j(s)}{\partial s} \MT_j(s)\,\text{d}s
+I_j(s_m) = \MT_{0j} ( I(s_0) - B(s_0) ) + B(s_m) -
+ \int_{s_0}^{s_m} \frac{\partial B_j(s)}{\partial s} \MT_j(s)\,\text{d}s
  \approx \sum_{i=1}^{n_p} \DB_{ij} \MT_{ij}
 \end{equation}
 
@@ -170,6 +173,14 @@ the former for IWC$_i$ and T$_i$ using the tables of their dependence
 upon IWC and T for the frequency at which they are tabulated that is
 nearest to $\nu_j$.
 
+\subsection{If $\TS$ were a channel quantity}
+
+The following was developed when I was laboring under the misconception
+that $\TS$ is a frequency-averaged channel quantity.  It's
+actually a single-frequency quantity.  It's retained to show how to
+combine frequency-averaged channel quantities with line-by-line
+quantities.  A similar strategy was used for PFA.
+
 In order to carry out frequency averaging, radiances are needed at
 frequencies $\{\nu_{nc}\}$ for which the filter response function
 $\phi_c(\nu_n) = \phi_{nc}$ is tabulated.  These frequencies are not the
@@ -183,7 +194,7 @@ interpolates from $\{\nu_j\}$ to $\{\nu_{nc}\}$.
 Assuming rectangular quadrature (Simpson's quadrature is actually used),
 when frequency averaging is carried out over the $n_c$ frequencies in
 channel $c$, the radiance in channel $c$ is
-
+%
 \begin{equation}\label{four}
 I_c = \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc} \IF{I_j}
        = \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc}
@@ -191,7 +202,7 @@ I_c = \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc} \IF{I_j}
          \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc}
            \IF{\sum_{i=1}^{n_p} \DB_{ij}^s \MT_{ij}}
 \end{equation}
-
+%
 In the final term, substitute the definition of $\DB_{ij}^s$ from
 Equation (\ref{three}), observe that $\TSs{i\pm1,c}$ is a channel quantity
 and therefore unaffected by $\!\IF{\cdot}$, and exchange the order
@@ -246,7 +257,14 @@ channel.  Therefore, in computing a product $\omega_{0_{ij}}
 \Delta \MT_{ij} \TSs{ic}$, we would not know what $c$ to use for a particular
 $j$.
 
-Derivatives are treated similarly.  From Equation (\ref{seven})
+\subsection{Derivatives}
+
+Derivatives are treated similarly.  As in the previous section, using
+$\MT^s_{ic}$ was done when I thought $\TS$ was a frequency-averaged
+channel quantity.  Below, $\MT^s_{ic}$ ought to be $\MT_{ij}$ and $I^s_c$
+should have the frequency averaging.
+
+From Equation (\ref{seven})
 $\frac{\partial I_c}{\partial x} = \frac{\partial I^g_c}{\partial x} +
 \frac{\partial I^s_c}{\partial x}$ where
 
@@ -259,11 +277,12 @@ $\frac{\partial I_c}{\partial x} = \frac{\partial I^g_c}{\partial x} +
       } \\
 =\,&
  \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc}
-  \IF{ \MT_{ij} \left( \sum_{i=1}^{n_p}
+  \IF{ \sum_{i=1}^{n_p} \MT_{ij} \left(
    \frac{\partial \DB_{ij}^g}{\partial x}
- - \DB_{ij}^g \frac{\partial \delta_{ij}}{\partial x}
+ - \DB_{ij}^g \sum_{l=1}^i \frac{\partial \delta_{lj}}{\partial x}
    \right)   } \text{ and} \\
-\frac{\partial I^s_c}{\partial x} =\,&
+\frac{\partial I^s_c}{\partial x}
+=\,&
   \frac12
   \sum_{i=1}^{n_p} \left( \frac{\partial \hMT_{ic}}{\partial x}
                           \TSs{ic} +
@@ -274,12 +293,36 @@ $\frac{\partial I_c}{\partial x} = \frac{\partial I^g_c}{\partial x} +
 
 where $x$ is either the mixing ratio $f^k_m$ of species $k$  at point $m$
 in the atmosphere, or temperature $T_\mu$ at point $\mu$ in the
-atmosphere, and since $B = \frac{h\nu}k \left( \exp\left(
+atmosphere.
+
+Handling frequency averaging for $\TS$ correctly, the definition of
+$\frac{\partial I^s_c}{\partial x}$ in Equation (\ref{eight}) ought to be
+similar to the definition of $\frac{\partial I^g_c}{\partial x}$ in
+Equation (\ref{eight}), \emph{viz.}
+
+\begin{equation}\begin{split}
+\frac{\partial I^s_c}{\partial x}
+=\,&
+  \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc}
+  \IF{ \sum_{i=1}^{n_p} \MT_{ij} \left(
+   \frac{\partial \DB_{ij}^s}{\partial x}
+ - \DB_{ij}^s \sum_{l=1}^i \frac{\partial \delta_{lj}}{\partial x}
+   \right)   } \text{, and, more simply than before} \\
+\frac{\partial I_c}{\partial x}
+=\,&
+  \sum_{n=1}^{n_c} \phi_{nc} \Delta \nu_{nc}
+  \IF{ \sum_{i=1}^{n_p} \MT_{ij} \left(
+   \frac{\partial \oDB_{ij}}{\partial x}
+ - \oDB_{ij}  \sum_{l=1}^i \frac{\partial \delta_{lj}}{\partial x}
+   \right)   }
+\end{split}\end{equation}
+
+Since $B = \frac{h\nu}k \left( \exp\left(
 \frac{h\nu}{kT}\right)+1\right)^{-1}$, $\frac{\partial B_{ij}}{\partial
 f^k_m} = 0$ and $\frac{\partial B_{ij}}{\partial T_\mu} =
-\frac{B_{ij}}{T_\mu^2} \left( \frac{h\nu}k + B_{ij} \right)$, so
-derivatives of the terms of the form $\left( 1 - \omega_{0_{ij}} \right)
-B_{ij}$ in the definition of $\DB_{ij}^g$ in Equation (\ref{three}) are
+\frac{B_{ij}}{T_\mu^2} \left( \frac{h\nu}k + B_{ij} \right)$, derivatives
+of the terms of the form $\left( 1 - \omega_{0_{ij}} \right) B_{ij}$ in
+the definition of $\DB_{ij}^g$ in Equation (\ref{three}) are
 
 \begin{equation}\begin{split}
 \frac{\partial \left( 1 - \omega_{0_{ij}} \right) B_{ij}}{\partial f^k_m}
@@ -295,9 +338,9 @@ B_{ij}$ in the definition of $\DB_{ij}^g$ in Equation (\ref{three}) are
 =\,&
  \left(
   ( 1-\omega_{0_{ij}} )
-   \frac{B_{ij}}{T_i^2} \left( \frac{h\nu}k + B_{ij} \right) -
-  \frac{\partial \omega_{0_{ij}}}{\partial T_i} B_{ij}
- \right) \eta^T_{\mu i} \,.
+   \frac1{T_i^2} \left( \frac{h\nu}k + B_{ij} \right) -
+  \frac{\partial \omega_{0_{ij}}}{\partial T_i}
+ \right) B_{ij} \eta^T_{\mu i} \,.
 \end{split}\end{equation}
 
 \begin{minipage}{4.75in}
@@ -497,6 +540,9 @@ depends, not just those near the path.
 \newpage
 \section{Implementation alternatives}
 
+This section is also obsolete, applying only to the case of
+frequency-averaged $\TS$.
+
 There are several possibilities to perform the frequency averaging of the
 derivative in Equation (\ref{fifteen}).  One method is to create arrays
 to store $\left[ \frac{\partial \omega_{0_{ij}}}{\partial f^k_l} -
@@ -660,6 +706,9 @@ i$ this could be halved at some expense to clarity of the software.
 \newpage
 \section*{Appendix -- development of $\Delta \hMT_{ic}$}
 
+This is largely irrelevant, given that it was only needed because
+frequency averaging for $\TS$ was handled incorrectly.
+
 Using the definition of $\Delta B^s_{ij}$ from Equation (\ref{three}) and
 expanding $\DB_{ij}^s \MT_{ij}$ in the second term of Equation
 (\ref{four})
@@ -774,6 +823,9 @@ is a linear operator gives Equation (\ref{five}):
 % $Id$
 
 % $Log$
+% Revision 1.11  2010/08/27 23:52:09  vsnyder
+% Use n_p where n had been wrongly used
+%
 % Revision 1.10  2010/08/06 02:01:08  vsnyder
 % Fix some indexing errors, add def of dB/dT
 %
