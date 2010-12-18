@@ -1,0 +1,279 @@
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-100}
+\newcommand{\docdate}{17 December 2010}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\renewcommand{\d}{\text{d}}
+\newcommand{\T}{\mathcal{T}}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Nathaniel, Bill, Paul, Igor\\
+Subject: \>Reducing radiance derivatives from two-dimensional integrals to
+one-dimensional integrals\\
+From: \>Van Snyder\\
+Reference: \>\h{wvs-093}, JPL D-18130 \\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+The radiative transfer equation is
+
+\begin{equation}\label{rad}
+\frac{\d I(s)}{\d s} + \alpha(s) I(s) = \alpha(s) B(s)
+\end{equation}
+
+The solution of Equation (\ref{rad}) can be written
+
+\begin{equation}\label{first}
+I(s_m) = I(s_0) \T(s_0,s_m) +
+ \int_{s_0}^{s_m} \T(s,s_m) \alpha(s) B(s) \,
+  \d s\,,
+\end{equation}
+
+where $s_m$ is the location of the instrument, $s_0$ is the location of the end
+of the path away from the instrument, $B(s)$ is the Planck function $\frac{h
+\nu}k \left( \exp\left(\frac{h \nu}{k T(s)}\right) -1\right)^{-1}$, and
+
+\begin{equation}\label{two}
+\T(s,s_m) = \exp\left( - \int_s^{s_m} \alpha(\sigma)
+ \, \d \sigma \right)
+ \,.
+\end{equation}
+
+The derivative of Equation (\ref{first}) with respect to $f^k_{lm}$ is
+
+\begin{equation}\label{six}
+\frac{\partial I(s_m)}{\partial f^k_{lm}}
+= I(s_0) \frac{\partial \T(s_0,s_m)}{\partial f^k_{lm}} +
+\int_{s_0}^{s_m}
+ \T(s,s_m) \frac{\partial \alpha(s)}{\partial f^k_{lm}} B(s) +
+ \frac{\partial \T(s,s_m)}{\partial f^k_{lm}} \alpha(s) B(s)
+ \, \d s \,.
+\end{equation}
+
+Substituting
+
+\begin{equation}\label{three}
+\alpha(s) = \sum_{k=1}^{N_s} \beta^k(s) \mu^k_{lm}(s) f^k_{lm}
+\end{equation}
+
+($k$ is an index, not an exponent) into Equation (\ref{two}) gives
+
+\begin{equation}\label{tau}
+\T(s,s_m) = \exp\left( - \int_s^{s_m} \sum_{k=1}^{N_s} \beta^k(\sigma) \mu^k_{lm}(\sigma) f^k_{lm}
+ \, \d \sigma \right) \,.
+\end{equation}
+
+From Equations (\ref{two}), (\ref{three}) and (\ref{tau})
+
+\begin{equation}\begin{split}\label{dT}
+\frac{\partial \alpha(s)}{\partial f^k_{lm}}
+=\,& \beta^k(s) \mu^k_{lm}(s)
+\text{ and } \\
+\frac{\partial \T(s,s_m)}{\partial f^k_{lm}}
+=\,& -\T(s,s_m) \frac{\partial}{\partial f^k_{lm}}
+                \int_s^{s_m} \alpha(\sigma) \,\d \sigma
+=    -\T(s,s_m) \int_s^{s_m}
+                \frac{\partial}{\partial f^k_{lm}} \alpha(\sigma) \,\d \sigma \\
+=\,& -\T(s,s_m) \int_s^{s_m} \beta^k(\sigma) \mu^k_{lm}(\sigma) \d \sigma
+\end{split}\end{equation}
+
+Substituting Equation (\ref{dT}) into Equation (\ref{six}) we have
+
+\begin{equation}\boxed{\begin{split}\label{dI_dfklm}
+\frac{\partial I(s_m)}{\partial f^k_{lm}}
+=\,& -I(s_0) \T(s_0,s_m)
+     \int_{s_0}^{s_m} \beta^k(\sigma) \mu^k_{lm}(\sigma)\, \d \sigma \,+ \\
+\,&
+\int_{s_0}^{s_m}
+ \T(s,s_m) B(s) \left( \beta^k(s) \mu^k_{lm}(s) -
+ \alpha(s) \int_s^{s_m} \beta^k(\sigma) \mu^k_{lm}(\sigma)\, \d \sigma \right)
+ \, \d s\,.
+\end{split}}\end{equation}
+
+Even assuming that $\T(s,s_m)$ has been saved during evaluation of
+$I(s_m)$ using Equation (\ref{first}), this is a double integral because
+of the inner integral $\int_s^{s_m} \beta^k(\sigma) \mu^k_{lm}(\sigma)\,
+\d \sigma$, which is different for every different value of $\{k,l,m\}$.
+
+Instead of computing the derivative of Equation (\ref{first}), compute
+the derivative of Equation (\ref{rad}) with respect to mixing ratios
+$f^k_{lm}$ on the grid giving\footnote{This derivation, and another one
+arriving at the same result, also appear in wvs-093.}
+
+\begin{equation}
+\frac{\partial}{\partial f^k_{lm}} \frac{\d I(s)}{\d s} +
+ \frac{\partial \alpha(s)}{\partial f^k_{lm}} I(s) +
+ \alpha(s) \frac{\partial I(s)}{\partial f^k_{lm}} =
+ \frac{\partial \alpha(s)}{\partial f^k_{lm}} B(s) \,.
+\end{equation}
+
+Exchanging the order of differentiation, using $\frac{\partial
+\alpha(s)}{\partial f^k_{lm}} = \beta^k(s) \mu^k_{lm}(s)$, and rearranging
+the equation to the usual form gives
+
+\begin{equation}\begin{split}
+\frac{\d}{\d s} \frac{\partial I(s)}{\partial f^k_{lm}} +
+ \alpha(s) \frac{\partial I(s)}{\partial f^k_{lm}}
+=\,&
+ \frac{\partial \alpha(s)}{\partial f^k_{lm}} ( B(s) - I(s) ) \\
+=\,&
+ \beta^k(s) \mu^k_{lm}(s) ( B(s) - I(s) )\,.
+\end{split}\end{equation}
+
+Solve for $\frac{\partial I(s_m)}{\partial f^k_{lm}}$ using
+$\frac{\partial I(s_0)}{\partial f^k_{lm}}=0$ to get
+
+\newcounter{foo}
+\setcounter{foo}{\value{equation}}
+
+\begin{equation}\label{drad}\boxed{
+\frac{\partial I(s_m)}{\partial f^k_{lm}} =
+ \int_{s_0}^{s_m} \T(s,s_m) \beta^k(s) \mu^k_{lm}(s)
+  ( B(s) - I(s) ) \,\d s
+\,.}
+\end{equation}
+
+This is actually the same as Equation (\ref{dI_dfklm}). To see this,
+substitute Equation (\ref{first}) for $I(s)$ in Equation (\ref{drad}) and
+use $\T(s_0,s) \T(s,s_m) = \T(s_0,s_m)$ and $\T(\sigma,s) \T(s,s_m) =
+\T(\sigma,s_m)$ to get
+
+\begin{equation}\begin{split}
+\frac{\partial I(s_m)}{\partial f^k_{lm}}
+=\,& \dots\,
+-\int_{s_0}^{s_m} \T(s,s_m) \beta^k(s) \mu^k_{lm}(s) I(s) \,\d s \\
+=\,& \dots\,
+-\int_{s_0}^{s_m} \T(s,s_m) \beta^k(s) \mu^k_{lm}(s)
+\left[ I(s_0) \T(s_0,s) +
+ \int_{s_0}^s \T(\sigma,s) \alpha(\sigma) B(\sigma) \,\d\sigma
+\right] \\
+=\,& \dots\,
+-I(s_0) \T(s_0,s_m) \int_{s_0}^{s_m} \beta^k(s) \mu^k_{lm}(s) \,\d s \\
+\,&\phantom{\dots\,}
+- \int_{s_0}^{s_m} \T(s,s_m) \beta^k(s) \mu^k_{lm}(s)
+    \int_{s_0}^s \T(\sigma,s) \alpha(\sigma) B(\sigma) \,\d\sigma
+     \,\d s \\
+=\,& \dots\,
+-I(s_0) \T(s_0,s_m) \int_{s_0}^{s_m} \beta^k(s) \mu^k_{lm}(s) \,\d s \\
+\,&\phantom{\dots\,}
+- \int_{s_0}^{s_m} \beta^k(s) \mu^k_{lm}(s)
+    \int_{s_0}^s \T(\sigma,s_m) \alpha(\sigma) B(\sigma) \,\d\sigma
+     \,\d s
+\,.
+\end{split}\end{equation}
+
+Exchanging the order of integration in the final integral above, Equation
+(\ref{drad}) becomes
+
+\begin{equation}\boxed{\begin{split}\label{dI_dfklm2}
+\frac{\partial I(s_m)}{\partial f^k_{lm}}
+=\,&
+-I(s_0) \T(s_0,s_m) \int_{s_0}^{s_m} \beta^k(s) \mu^k_{lm}(s) \,\d s\, + \\
+\,&
+\int_{s_0}^{s_m} \T(s,s_m) B(s)
+ \left( \beta^k(s) \mu^k_{lm}(s)
+ - \alpha(s)
+   \int_s^{s_m} \beta^k(\sigma) \mu^k_{lm}(\sigma) \,\d \sigma
+ \right) \,\d s
+\end{split}}
+\end{equation}
+
+which is the same as Equation (\ref{dI_dfklm}). An important difference
+between Equations (\ref{drad})
+
+\newcounter{eqsv}
+\setcounter{eqsv}{\value{equation}}
+\setcounter{equation}{\value{foo}}
+\begin{equation}\boxed{
+\frac{\partial I(s_m)}{\partial f^k_{lm}} =
+ \int_{s_0}^{s_m} \T(s,s_m) \beta^k(s) \mu^k_{lm}(s)
+  ( B(s) - I(s) ) \,\d s
+\,.}
+\end{equation}
+\setcounter{equation}{\value{eqsv}}
+
+
+and (\ref{dI_dfklm}) or (\ref{dI_dfklm2}) is that integrals of the form
+
+\begin{equation}
+\int_s^{s_m} \beta^k(\sigma) \mu^k_{lm}(\sigma) \,\d \sigma
+\end{equation}
+
+do not appear in Equation (\ref{drad}).  Again assuming that $\T(s,s_m)$
+has been saved during evaluation of $I(s_m)$ using Equation
+(\ref{first}), Equation (\ref{drad}) is a single integral, not a double
+integral, and is therefore less costly to evaluate than Equation
+(\ref{dI_dfklm}).
+
+\label{lastpage}
+\end{document}
