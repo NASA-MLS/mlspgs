@@ -40,6 +40,10 @@ contains
                      & del_zeta, alpha_path_c, ref_cor, incoptdepth, &
                      & tan_pt, alpha_path_gl, ds_dz_gw, tau )
 
+  !{ Evaluate {\tt Tau(j)} = $\tau(s_j,s_m) = \int_{s_j}^{s_m}
+  !  \alpha(s) \, \text{d} s$, where $s_m$ is the location of the instrument.
+  !  Here, {\tt j = 1} is the instrument location.
+
   ! Update IncOptDepth with its GL corrections.  Multiply it by the
   ! refractive correction Ref_Cor.  Compute Tau = exp(indefinite sum of
   ! IncOptDepth).  The tangent point is a zero-thickness layer that
@@ -128,7 +132,7 @@ contains
 
     tau%tau(1:i_start,frq_i) = 1.0_rp
 
-    !{ Compute $\tau_i$ for $i_start < i \leq t$, where $t$ is given by
+    !{ Compute $\tau_i$ for {\tt i_start} $ < i \leq t$, where $t$ is given by
     !  tan\_pt.
     !  $\tau_i = \exp \left \{ - \sum_{j=2}^i \Delta \delta_{j \rightarrow j-1}
     !  \right \}$.
@@ -222,6 +226,9 @@ contains
 end module Tau_M
 
 ! $Log$
+! Revision 2.13  2010/12/22 21:46:25  vsnyder
+! TeXnicalities
+!
 ! Revision 2.12  2010/02/02 01:36:03  vsnyder
 ! Don't reference incoptdepth and ref_cor before i_start
 !
