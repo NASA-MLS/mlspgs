@@ -11,8 +11,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-100}
-\newcommand{\docdate}{17 December 2010}
+\newcommand{\docname}{wvs-100r1}
+\newcommand{\docdate}{23 December 2010}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -76,19 +76,51 @@
 \begin{tabbing}
 \phantom{References: }\= \\
 To: \>Nathaniel, Bill, Paul, Igor\\
-Subject: \>Reducing radiance derivatives from two-dimensional integrals to
-one-dimensional integrals\\
+Subject: \>Reducing the cost of radiance derivatives\\
 From: \>Van Snyder\\
-Reference: \>\h{wvs-093}, JPL D-18130 \\
+Reference: \>\h{wvs-093}, \h{wvs-101}, JPL D-18130 \\
 \end{tabbing}
 
 \parindent 0pt \parskip 6pt
 \vspace{-10pt}
 
-The radiative transfer equation is
+\section{Summary}
+
+Three representations of derivatives of the clear-sky non-scattering
+radiative transfer equation with respect to volume mixing ratio on a grid
+through which the path of integration passes
+
+\begin{equation*}\boxed{
+\begin{split}
+\frac{\partial I(s_m)}{\partial f^k_{lm}}
+=\,&
+ \int_{s_0}^{s_m} \T(s,s_m) \beta^k(s) \mu^k_{lm}(s)
+  ( B(s) - I(s) ) \,\d s \\
+=\,&
+ -\T(s_0,s_m) \left( I(s_0) - B(s_0) \right)
+   \int_{s_0}^{s_m} \beta^k(\sigma) \mu^k_{lm}(\sigma) \,\d \sigma \,+ \\
+\,&
+ \int_{s_0}^{s_m} \T(s,s_m) \frac{\partial B(s)}{\partial s}
+  \left( \int_s^{s_m} \beta^k(\sigma) \mu^k_{lm}(\sigma) \,\d \sigma
+  \right) \,\d s \\
+=\,& -I(s_0) \T(s_0,s_m)
+     \int_{s_0}^{s_m} \beta^k(\sigma) \mu^k_{lm}(\sigma)\, \d \sigma \,+ \\
+\,&
+\int_{s_0}^{s_m}
+ \T(s,s_m) B(s) \left( \beta^k(s) \mu^k_{lm}(s) -
+ \alpha(s) \int_s^{s_m} \beta^k(\sigma) \mu^k_{lm}(\sigma)\, \d \sigma \right)
+ \, \d s
+\end{split}}
+\end{equation*}
+
+ are developed and compared.
+ 
+\section{Radiative transfer equation}
+
+The clear-sky non-scattering radiative transfer equation is
 
 \begin{equation}\label{rad}
-\frac{\d I(s)}{\d s} + \alpha(s) I(s) = \alpha(s) B(s)
+\frac{\d I(s)}{\d s} + \alpha(s) I(s) = \alpha(s) B(s)\,.
 \end{equation}
 
 The solution of Equation (\ref{rad}) can be written
@@ -101,13 +133,20 @@ I(s_m) = I(s_0) \T(s_0,s_m) +
 
 where $s_m$ is the location of the instrument, $s_0$ is the location of the end
 of the path away from the instrument, $B(s)$ is the Planck function $\frac{h
-\nu}k \left( \exp\left(\frac{h \nu}{k T(s)}\right) -1\right)^{-1}$, and
+\nu}k \left( \exp\left(\frac{h \nu}{k T(s)}\right) -1\right)^{-1}$,
 
 \begin{equation}\label{two}
 \T(s,s_m) = \exp\left( - \int_s^{s_m} \alpha(\sigma)
  \, \d \sigma \right)
- \,.
+ \,,
 \end{equation}
+
+and $\alpha(\sigma)$ is the absorption cross section. The volume mixing
+ratio for the $k^\text{th}$ species at $(\phi^k_l,\zeta^k_m)$ is
+$f^k_{lm}$ where $\phi$ is orbit geodetic angle, $\zeta = -\log_{10}(P)$,
+and $P$ is pressure in hPa.
+
+\section{Derivatives of the solution of the radiative transfer equation}
 
 The derivative of Equation (\ref{first}) with respect to $f^k_{lm}$ is
 
@@ -123,10 +162,13 @@ The derivative of Equation (\ref{first}) with respect to $f^k_{lm}$ is
 Substituting
 
 \begin{equation}\label{three}
-\alpha(s) = \sum_{k=1}^{N_s} \beta^k(s) \mu^k_{lm}(s) f^k_{lm}
+\alpha(s) = \sum_{k=1}^{N_s} \beta^k(s) \mu^k_{lm}(s) f^k_{lm}\,,
 \end{equation}
 
-($k$ is an index, not an exponent) into Equation (\ref{two}) gives
+where $\mu^k_{lm}(s)$ is an interpolating coefficient from
+$(\phi^k_l,\zeta^k_m)$ to $s$ and $\beta^k(s)$ is the absorption
+coefficient for the $k^\text{th}$ species at $s$, into Equation
+(\ref{two}) gives
 
 \begin{equation}\label{tau}
 \T(s,s_m) = \exp\left( - \int_s^{s_m} \sum_{k=1}^{N_s} \beta^k(\sigma) \mu^k_{lm}(\sigma) f^k_{lm}
@@ -165,10 +207,13 @@ $I(s_m)$ using Equation (\ref{first}), this is a double integral because
 of the inner integral $\int_s^{s_m} \beta^k(\sigma) \mu^k_{lm}(\sigma)\,
 \d \sigma$, which is different for every different value of $\{k,l,m\}$.
 
+\section{Solutions of derivatives of the radiative transfer equation}
+
 Instead of computing the derivative of Equation (\ref{first}), compute
 the derivative of Equation (\ref{rad}) with respect to mixing ratios
 $f^k_{lm}$ on the grid giving\footnote{This derivation, and another one
-arriving at the same result, also appear in wvs-093.}
+arriving at the same result starting from Equation (\ref{first}), also
+appear in \h{wvs-093}.}
 
 \begin{equation}
 \frac{\partial}{\partial f^k_{lm}} \frac{\d I(s)}{\d s} +
@@ -248,8 +293,11 @@ Exchanging the order of integration in the final integral above, Equation
 \end{split}}
 \end{equation}
 
-which is the same as Equation (\ref{dI_dfklm}). An important difference
-between Equations (\ref{drad})
+which is the same as Equation (\ref{dI_dfklm}).
+
+\section{Comparison of methods}
+
+An important difference between Equation (\ref{drad})
 
 \newcounter{eqsv}
 \setcounter{eqsv}{\value{equation}}
@@ -265,15 +313,64 @@ between Equations (\ref{drad})
 
 and (\ref{dI_dfklm}) or (\ref{dI_dfklm2}) is that integrals of the form
 
-\begin{equation}
+\begin{equation}\label{fourteen}
 \int_s^{s_m} \beta^k(\sigma) \mu^k_{lm}(\sigma) \,\d \sigma
 \end{equation}
 
-do not appear in Equation (\ref{drad}).  Again assuming that $\T(s,s_m)$
-has been saved during evaluation of $I(s_m)$ using Equation
+do not appear in Equation (\ref{drad}).  Assuming that $\T(s,s_m)$ and
+$I(s)$ have been saved during evaluation of $I(s_m)$ using Equation
 (\ref{first}), Equation (\ref{drad}) is a single integral, not a double
 integral, and is therefore less costly to evaluate than Equation
-(\ref{dI_dfklm}).
+(\ref{dI_dfklm}).  From \h{wvs-101}, $\mu^k_{lm}(\sigma)$ is nonzero for
+$\sigma$ in only four regions adjacent to $(\phi_k,\zeta_m)$, and the
+path passes through only two of those.  When trapezoidal quadrature is
+used, each evaluation of Equation (\ref{fourteen}) requires six
+multiplies and two adds.  When 3-point Gauss-Legendre quadrature is used,
+an additional eight multiplies and four adds are required.
+
+Assuming the values of $\beta^k(s) \mu^k_{lm}(s)$ and Equation
+(\ref{fourteen}) are saved and reused, finishing the evaluation of
+Equation (\ref{dI_dfklm2}) requires an additional twelve multiplies and
+five adds (Gauss-Legendre quadrature is not used for the outer
+integral).  When Gauss-Legendre quadrature is used for the inner
+integrals, the total cost of Equation (\ref{dI_dfklm2}) is 28 multiplies
+and 13 adds, or 41 FLOPS.  The cost to evaluate Equation (\ref{drad}) is
+twelve multiplies and three adds, or 15 FLOPS, a reduction of almost a
+factor of three.  In addition to the reduction in computation cost, the
+complexity of the {\tt rad\_tran\_m} module would be substantially
+reduced.
+
+If $\T(s,s_m) \alpha(s) = \frac{\partial \T(s,s_m)}{\partial s}$ is
+substituted in Equation (\ref{first}), and then the integral is integrated
+by parts, Equation (\ref{first}) becomes
+
+\begin{equation}\label{fifteen}
+I(s_m) = \T(s_0,s_m) \left( I(s_0) - B(s_0) \right) + B(s_m) -
+ \int_{s_0}^{s_m} \T(s,s_m) \frac{\partial B(s)}{\partial s} \,\d s\,.
+\end{equation}
+
+Taking derivatives of this representation and using Equation (\ref{dT}) we
+have
+
+\begin{equation}\begin{split}\label{sixteen}
+\frac{\partial I(s_m)}{\partial f^k_{lm}}
+=\,&
+ -\T(s_0,s_m) \left( I(s_0) - B(s_0) \right)
+   \int_{s_0}^{s_m} \beta^k(\sigma) \mu^k_{lm}(\sigma) \,\d \sigma \,+ \\
+\,&
+ \int_{s_0}^{s_m} \T(s,s_m) \frac{\partial B(s)}{\partial s}
+  \left( \int_s^{s_m} \beta^k(\sigma) \mu^k_{lm}(\sigma) \,\d \sigma
+  \right) \,\d s \,.
+\end{split}\end{equation}
+
+Although somewhat simpler than Equation (\ref{dI_dfklm2}), it still has
+the inner integral.  Its cost is 26 multiplies and ten adds, or 36
+FLOPS.  Equation (\ref{drad}) reduces the cost compared to Equation
+(\ref{sixteen}) by a factor of 2.4, and has the additional advantage that
+$\frac{\partial B(s)}{\partial s}$ is not needed.  When Equation
+(\ref{sixteen}) is evaluated, $\frac{\partial B(s)}{\partial s}$ is
+approximated by a central difference, which can introduce substantial
+error.
 
 \label{lastpage}
 \end{document}
@@ -281,3 +378,6 @@ integral, and is therefore less costly to evaluate than Equation
 % $Id$
 
 % $Log$
+% Revision 1.2  2010/12/18 03:54:28  vsnyder
+% Insert CVS stuff
+%
