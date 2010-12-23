@@ -7,8 +7,8 @@
 \topmargin -0.25in
 \textheight 9.0in
 
-\newcommand{\docname}{\bf wvs-093r6}
-\newcommand{\docdate}{13 December 2010}
+\newcommand{\docname}{\bf wvs-093r7}
+\newcommand{\docdate}{20 December 2010}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -78,7 +78,7 @@
 To: \>Bill, Nathaniel, Igor\\
 Subject: \>Computing derivatives in the MLS Full Forward Model\\
 From: \>Van Snyder\\
-Reference: \> \h{iy-007}\\
+References: \> \h{iy-007}, \h{wvs-100}, \h{wvs-101}\\
 \end{tabbing}
 
 \parindent 0pt \parskip 5pt
@@ -173,18 +173,15 @@ function $\frac{h \nu}k \left( \exp\left(\frac{h \nu}{k T(s)}\right)
 \end{equation}
 
 $\alpha(\sigma) = \sum_k \beta^k(\sigma) f^k(\sigma) = \sum_k
-\beta^k(\sigma) \sum_l f^k_{lm} \mu^k_{lm}(\sigma)$ is the volume
-absorption coefficient, $f^k(\sigma)$ is the volume mixing ratio of the
+\beta^k(\sigma) f^k_{lm} \mu^k_{lm}(\sigma)$ is the volume absorption
+coefficient, $f^k(\sigma)$ is the volume mixing ratio of the
 $k^\text{th}$ species at $\sigma$, $f^k_{lm}$ is the volume mixing ratio
 of the $k^\text{th}$ species at the $(l,m)$ representation basis point,
-$\mu^k_{lm}(\sigma) = \xi^k_l(\sigma) \eta^k_m(\sigma)$,
-$\xi^k_l(\sigma) = (\phi^k_{l+1}-\phi(\sigma))/(\phi^k_{l+1}-\phi_l)$ for
-$\phi_l \leq \phi(\sigma) \leq \phi^k_{l+1}$ and zero otherwise and
-$\eta_m(\sigma) = (\zeta^k_{m+1}-\zeta(\sigma))/(\zeta^k_{m+1}-\zeta_m)$
-for $\zeta_m \leq \zeta(\sigma) \leq \zeta^k_{m+1}$ and zero otherwise
-are interpolation coefficients from the representation basis for the
-$k^\text{th}$ species to the integration path, and $\beta^k(\sigma)$ is
-the absorption cross section for the $k^\text{th}$ species at $\sigma$. 
+$\mu^k_{lm}(\sigma)$ is the interpolation coefficient from the $(l,m)$
+representation basis point for the $k^\text{th}$ species to the point
+$\sigma$ on the integration path (see \h{wvs-101}), and $\beta^k(\sigma)$
+is the absorption cross section for the $k^\text{th}$ species at
+$\sigma$. 
 
 From Equation (\ref{two})
 
@@ -466,8 +463,9 @@ Thus the sensitivity of $I(s_m)$ to variation of $f^k_{lm}$, that is, a
 \end{split}}
 \end{equation}
 
-From Equation (\ref{mu}), $\mu^k_{lm}(\sigma)$ is nonzero for only a
-small range of $\sigma$.
+See \h{wvs-100} for a derivation of the relationship of this result to
+the form used in the full forward model.  From Equation (\ref{mu}),
+$\mu^k_{lm}(\sigma)$ is nonzero for only a small range of $\sigma$.
 
 Replacing integrals by quadratures, if we evaluate the indefinite product
 and indefinite sum
@@ -786,6 +784,9 @@ which is (reassuringly) the same result as Equation (\ref{dIdT}).
 % $Id$
 
 % $Log$
+% Revision 1.7  2010/12/18 03:53:07  vsnyder
+% Correct typo in Equation (30)
+%
 % Revision 1.6  2010/12/14 23:57:07  vsnyder
 % Maybe it's correct now
 %
