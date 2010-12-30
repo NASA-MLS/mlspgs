@@ -7,8 +7,8 @@
 \topmargin -0.25in
 \textheight 9.0in
 
-\newcommand{\docname}{\bf wvs-093r7}
-\newcommand{\docdate}{20 December 2010}
+\newcommand{\docname}{\bf wvs-093r8}
+\newcommand{\docdate}{29 December 2010}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -757,7 +757,7 @@ we have
 Using the initial condition $\frac{\partial I(s_0)}{\partial \alpha(\sigma)}=0$
 the solution for Equation (\ref{T five}) can be written
 
-\begin{equation}\begin{split}
+\begin{equation}\begin{split}\label{T9}
 \frac{\partial I(s)}{\partial T(\sigma)}
 =\,& \int_{s_0}^s \delta(s^\prime-\sigma)
   \left ( \frac{\partial \alpha(\sigma)}{\partial T(\sigma)}
@@ -778,12 +778,109 @@ the solution for Equation (\ref{T five}) can be written
 
 which is (reassuringly) the same result as Equation (\ref{dIdT}).
 
+%=========================================================================
+
+\section{Sensitivity to temperature, $T_{lm}$, on the grid}
+
+Compute the derivative of Equation (\ref{diff eq}) with respect to
+$T_{lm}$ to get
+
+\begin{equation}
+\frac{\partial}{\partial T_{lm}} \frac{\d}{\d s} I(s) +
+ \frac{\partial \alpha(s)}{\partial T_{lm}} I(s) +
+  \alpha(s) \frac{\partial I(s)}{\partial T_{lm}}
+=\frac{\partial \alpha(s)}{\partial T_{lm}} B(s)
+  +  \alpha(s) \frac{\partial B(s)}{\partial T_{lm}} \,.
+\end{equation}
+
+Exchanging the order of integration and collecting terms involving
+$\frac{\partial I(s)}{\partial T_{lm}}$ on the left gives
+
+\begin{equation}
+\frac{\d}{\d s}\frac{\partial I(s)}{\partial T_{lm}} +
+  \alpha(s) \frac{\partial I(s)}{\partial T_{lm}}
+=\frac{\partial \alpha(s)}{\partial T_{lm}} \left( B(s) - I(s) \right)
+  +  \alpha(s) \frac{\partial B(s)}{\partial T_{lm}} \,.
+\end{equation}
+
+Replacing $\frac{\partial \alpha(s)}{\partial T_{lm}} = \frac{\partial
+\alpha(s)}{\partial T(s)} \frac{\partial T(s)}{\partial T_{lm}} =
+\frac{\partial \alpha(s)}{\partial T(s)} \mu^T_{lm}(s)$ and
+$\frac{\partial B(s)}{\partial T_{lm}} = \frac{\partial
+B(s)}{\partial T(s)} \frac{\partial T(s)}{\partial T_{lm}} =
+\frac{\partial B(s)}{\partial T(s)} \mu^T_{lm}(s)$, where $\mu^T_{lm}(s)$
+is the interpolation coefficient from $(\phi_l,\zeta_m)$ to $s$, gives
+
+\begin{equation}
+\frac{\d}{\d s}\frac{\partial I(s)}{\partial T_{lm}} +
+  \alpha(s) \frac{\partial I(s)}{\partial T_{lm}}
+= \mu^T_{lm}(s) \left[
+ \frac{\partial \alpha(s)}{\partial T(s)} \left( B(s) - I(s) \right)
+  +  \alpha(s) \frac{\partial B(s)}{\partial T(s)} \right] \,,
+\end{equation}
+
+for which the solution, using $\frac{\partial I(s_0)}{\partial
+T_{lm}} = 0$, is
+
+\begin{equation}\label{T10}\boxed{
+\frac{\partial I(s)}{\partial T_{lm}} =
+ \int_{s_0}^s \T(s^\prime,s_m)\, \mu^T_{lm}(s^\prime)
+  \left[
+ \frac{\partial \alpha(s^\prime)}{\partial T(s^\prime)} \left( B(s^\prime) - I(s^\prime) \right)
+  +  \alpha(s^\prime) \frac{\partial B(s^\prime)}{\partial T(s^\prime)} \right]
+ \,\d s^\prime \,.
+}\end{equation}
+
+This is the same as the integral in Equation (\ref{T9}), with
+$\delta(s^\prime-\sigma)$ replaced by $\frac{\partial
+T(s^\prime)}{\partial T_{lm}} = \mu^T_{lm}(s^\prime)$.
+
+Taking the derivative of Equation (\ref{I}) with respect to $T_{lm}$ gives
+
+\begin{equation}\begin{split}\label{Teq}
+\frac{\partial I(s)}{\partial T_{lm}}
+=\,&
+ -\T(s_0,s) \left(I(s_0) -B(s_0) \right)
+  \int_{s_0}^s \frac{\partial \alpha(s^\prime)}{\partial T(s^\prime)}
+   \mu^T_{lm}(s^\prime) \,\d s^\prime \\
+ +
+\,&
+ \int_{s_0}^s \mu^T_{lm}(s^\prime) \left[ B^\prime(s^\prime)
+  \int_s^s  \frac{\partial \alpha(\sigma)}{\partial T(\sigma)}
+   \,\d \sigma -
+   \T(s^\prime,s) \frac{\partial B^\prime(s^\prime)}{\partial T(s^\prime)}
+   \right] \,\d s^\prime\,.
+\end{split}\end{equation}
+
+This is equivalent to Equation (\ref{T10}), as can be seen (after some
+work) by substituting Equation (\ref{I}) into Equation (\ref{T10}).
+
+Equations (\ref{T10}) and (\ref{Teq}) are both complicated by the fact
+that the path depends upon temperature everywhere below the path.  When
+integrated in log pressure coordinates, Equation (\ref{T10}) becomes
+
+\begin{equation}
+\frac{\partial I(s)}{\partial T_{lm}} =
+ \int_{s_0}^{s_m} \T(\zeta,s_m)\, \mu^T_{lm}(\zeta)
+  \left[
+ \frac{\partial \alpha(\zeta)}{\partial T(\zeta)} \left( B(\zeta) - I(\zeta) \right)
+  +  \alpha(\zeta) \frac{\partial B(\zeta)}{\partial T(\zeta)} \right]
+ \, \frac{\d s}{\d h} \frac{\d h}{\d \zeta}
+ \,\d \zeta \,,
+\end{equation}
+
+where $\frac{\d h}{\d \zeta}$ depends upon temperature below the path
+through hydrostatic equilibrium.
+
 \label{lastpage}
 \end{document}
 
 % $Id$
 
 % $Log$
+% Revision 1.8  2010/12/23 20:33:48  vsnyder
+% Simplify discussion of interpolation coefficients by reference to wvs-101
+%
 % Revision 1.7  2010/12/18 03:53:07  vsnyder
 % Correct typo in Equation (30)
 %
