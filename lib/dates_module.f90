@@ -75,6 +75,7 @@ module dates_module
 ! eudtf2cal          yyyyddd -> cal date
 ! eudtf2daysince     eudtf -> days since starting date
 ! hoursbetween2utcs  How many hours between 2 date-times
+! hoursinday         How many hours since the start of the day
 ! lastday            How many days in leap month
 ! nextMoon           utc date, time of next (new) moon 
 !                     (or next after input date); less accurate than toolkit AA
@@ -82,6 +83,8 @@ module dates_module
 ! ReformatTime       Turns 'hhmmss.sss' -> 'hh:mm:ss'
 ! secondsbetween2utcs 
 !                    How many seconds between 2 date-times
+! secondsinday 
+!                    How many seconds since the start of the day
 ! splitDateTime      Splits dateTtime
 ! tai2ccsds          tai (days, not s) -> ccsds (in "B" format)
 ! timeForm           Determines what format time is in
@@ -110,10 +113,12 @@ module dates_module
 ! int daysbetween2utcs (char* utc1, char* utc2)
 ! int daysInMonth (int month, int year)
 ! int hoursbetween2utcs (char* utc1, char* utc2)
+! dble hoursinday (char* utc1)
 ! char* nextMoon ([char* date], [phase])
 ! char* ReformatDate (char* date, [char* fromForm], [char* toForm])
 ! char* ReformatTime (char* time, [char* form])
 ! dble secondsbetween2utcs (char* utc1, char* utc2)
+! dble secondsinday (char* utc1)
 ! splitDateTime(char* utc, int ErrTyp, char* date, char* time, [log strict])
 ! char* timeForm( char* time )
 ! char utcForm (char* utc)
@@ -198,9 +203,9 @@ module dates_module
     & cal2eudtf, ccsds2tai, ccsds2eudtf, ccsdsa2b, ccsdsb2a, &
     & dai_to_yyyymmdd, dateForm, dayOfWeek, daysbetween2utcs, daysInMonth, &
     & daysince2eudtf, days_in_year, &
-    & eudtf2cal, eudtf2daysince, hoursbetween2utcs, &
+    & eudtf2cal, eudtf2daysince, hoursbetween2utcs, hoursinday, &
     & lastday, nextMoon, reformatDate, reformatTime, &
-    & secondsbetween2utcs, splitDateTime, tai2ccsds, timeForm, &
+    & secondsbetween2utcs, secondsinday, splitDateTime, tai2ccsds, timeForm, &
     & utcForm, utc_to_date, utc_to_time, utc_to_yyyymmdd, &
     & yyyyDoy_to_mmdd, yyyymmdd_to_dai, yyyymmdd_to_Doy
 
@@ -214,6 +219,10 @@ module dates_module
 
   interface dayOfWeek
     module procedure dayOfWeek_int, dayOfWeek_str
+  end interface
+
+ interface secondsInDay
+    module procedure secondsInDaydble
   end interface
 
   interface switch
@@ -601,6 +610,19 @@ contains
     ! Executable
     hours = secondsbetween2utcs( utc1, utc2 ) / (60*60)
   end function hoursbetween2utcs
+
+  ! ---------------------------------------------  hoursinday  -----
+  function hoursinday( utc1 ) result(hours)
+    ! Given a utc return a date later (or earlier) by days
+    ! Args
+    character(len=*), intent(in) :: utc1
+    double precision             :: hours
+    ! Internal
+    type(MLSDate_time_T)         :: datetime1
+    ! Executable
+    datetime1 = utc2datetime(utc1)
+    hours = datetime1%seconds/3600
+  end function hoursinday
 
   function lastday(imonth) result (day)
     integer,intent(in)::imonth
@@ -1479,6 +1501,19 @@ contains
     seconds = 24.d0*60*60*days + ( datetime2%seconds - datetime1%seconds )
   end function secondsbetween2utcs
 
+  ! ---------------------------------------------  secondsindaydble  -----
+  function secondsindaydble( utc1 ) result(seconds)
+    ! Given a utc return a date later (or earlier) by days
+    ! Args
+    character(len=*), intent(in) :: utc1
+    double precision             :: seconds
+    ! Internal
+    type(MLSDate_time_T)         :: datetime1
+    ! Executable
+    datetime1 = utc2datetime(utc1)
+    seconds = datetime1%seconds
+  end function secondsindaydble
+
   ! ---------------------------------------------  splitDateTime  -----
   subroutine splitDateTime(str, ErrTyp, date, time, strict)
     ! Routine that returns the date, time portions from a string of the form
@@ -2152,8 +2187,8 @@ contains
     x2 = x
   end subroutine switch_ints
 
-  ! ---------------------------------------------  secondsInDay  -----
-  function secondsInDay(time) result(seconds)
+  ! ---------------------------------------------  hhmmss2seconds  -----
+  function hhmmss2seconds(time) result(seconds)
     ! Given a time return the number of seconds after midnight
     ! Args
     character(len=*), intent(in)        :: time ! E.g., "11:20:33.000"
@@ -2170,7 +2205,7 @@ contains
     if ( len_trim(time) > 3 ) read( time(4:5), '(i2)' ) minutes
     if ( len_trim(time) > 6 ) read( time(7:), * ) sdotss
     seconds = sdotss + 60.*( minutes + 60*hours )
-  end function secondsInDay
+  end function hhmmss2seconds
 
   ! ---------------------------------------------  s2hhmmss  -----
   function s2hhmmss(s) result(hhmmss)
@@ -2218,7 +2253,7 @@ contains
     ! print *, 'hhmmss: ', trim(hhmmss)
     ! Now convert to our internal representations
     call yyyymmdd_to_dai_ints( year, month, day, datetime%dai )
-    datetime%seconds = secondsinday(hhmmss)
+    datetime%seconds = hhmmss2seconds(hhmmss)
     ! call dumpDateTime(datetime, 'From utc2datetime')
   end function utc2datetime
 
@@ -2234,6 +2269,9 @@ contains
 
 end module dates_module
 ! $Log$
+! Revision 2.22  2010/06/28 16:59:35  pwagner
+! Added more comments about numerical date types
+!
 ! Revision 2.21  2009/08/26 16:20:13  pwagner
 ! Corrected utcForm function--was reversing 'a' and 'b'
 !
