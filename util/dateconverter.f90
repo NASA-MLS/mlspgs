@@ -14,10 +14,11 @@ program dateconverter
 !=================================
 
    use dates_module, ONLY: adddaystoutc, addhourstoutc, addsecondstoutc, &
-     & dai_to_yyyymmdd, dateForm, dayofweek, reFormatDate, splitDateTime, &
+     & dai_to_yyyymmdd, dateForm, dayofweek, hoursinday, &
+     & reFormatDate, secondsinday, splitDateTime, &
      & yyyymmdd_to_dai
    use MACHINE, only: FILSEP, HP, IO_ERROR, GETARG
-   use MLSStringLists, ONLY: StringElement
+   use MLSStringLists, ONLY: ExpandStringRange, StringElement
    use MLSStrings, ONLY: lowerCase, ncopies, readNumsFromChars
 
    IMPLICIT NONE
@@ -42,10 +43,12 @@ program dateconverter
     integer :: weekdayLength= 0     ! how many chars to output day-of-week
     double precision :: secondsOffset = 0.d0   ! How many seconds to add/subtract
     logical     :: utcFormat = .false.         ! output date+time?
+    logical     :: debug = .false.
     logical     :: verbose = .false.
     character(len=255) :: outputFormat= ' '    ! output format
     character(len=255) :: inputFormat= ' '     ! input format
     character(len=255) :: inputTime= ' '       ! input time
+    character(len=255) :: argRange= ' '        ! which arg numbers to do
   end type options_T
 
   type ( options_T ) :: options
@@ -65,9 +68,11 @@ program dateconverter
    integer                       :: dai
    character (LEN=MAXLISTLENGTH) :: date
    character(len=MAXLISTLENGTH), dimension(MAXDATES) :: dates
+   logical, dimension(MAXDATES)  :: doThisDate
    character(len=*), parameter   :: DOYFORMAT = 'yyyy-doy'
    integer                       :: ErrTyp
    character (LEN=MAXLISTLENGTH) :: fromForm
+   double precision              :: hours
    integer                       :: i
    character (LEN=MAXLISTLENGTH) :: intermediate_date
    character (LEN=*), parameter  :: intermediateForm = 'yyyymmdd'
@@ -75,6 +80,7 @@ program dateconverter
    integer                       :: n_dates = 0
    integer                       :: nDays
    integer                       :: nDaysOffset
+   double precision              :: seconds
    double precision              :: secondsperday = 24*3600.
    double precision              :: tai
    character (LEN=MAXLISTLENGTH) :: time
@@ -94,10 +100,14 @@ program dateconverter
      n_dates = n_dates + 1
      dates(n_dates) = date
   enddo
+  doThisDate = .true.
   time = options%inputTime
   if ( options%inputTime == ' ' ) time = '00:00:00'
   converted_time = time
+  if ( options%argRange /= ' ' ) &
+    & call ExpandStringRange ( options%argRange, doThisDate )
   do i=1, n_dates
+    if ( .not. doThisDate(i)) cycle
     date = dates(i)
     fromForm = options%inputFormat
     if ( len_trim(options%inputFormat) < 1 ) fromForm = dateForm(date)
@@ -141,27 +151,38 @@ program dateconverter
     endif
     
     ! Process date
+    ! First: two special codes
+    if ( index(options%outputFormat, 'sec') > 0 ) then
+      if ( index(date, 'T') < 1 ) date = 'T' // date
+      seconds = secondsinday(date)
+      write(*,'(f9.1, " s")') seconds
+      cycle
+    elseif ( index(options%outputFormat, 'hour') > 0 ) then
+      if ( index(date, 'T') < 1 ) date = 'T' // date
+      hours = hoursinday(date)
+      write(*,'(f9.4, " h")') hours
+      cycle
+    elseif ( options%offset /= 0 ) then
     ! We will always have an intermediate_date in yyyy-mm-dd format
-    if ( options%offset /= 0 ) then
       converted_date = reFormatDate( date, &
         & fromForm=trim(fromForm), toForm='yyyy-mm-dd' )
       intermediate_date = trim(converted_date) // 'T' // &
         & adjustl(Time)
-      ! if ( options%verbose ) print *, 'intermediate_date', intermediate_date
+      if ( options%debug ) print *, 'intermediate_date', intermediate_date
       converted_date = adddaystoutc( intermediate_date, options%offset )
-      ! if ( options%verbose ) print *, 'intermediate_date (advanced)', converted_date
+      if ( options%debug ) print *, 'intermediate_date (advanced)', converted_date
       call splitDateTime( converted_date, ErrTyp, intermediate_date, converted_time )
       converted_date = reFormatDate(intermediate_date, &
         fromForm='yyyy-mm-dd', toForm=trim(toForm))
     elseif ( options%hoursoffset /= 0 ) then
       converted_date = reFormatDate( date, &
         & fromForm=trim(fromForm), toForm='yyyy-mm-dd' )
-      ! if ( options%verbose ) print *, '1st date: ', trim(converted_date)
+      if ( options%debug ) print *, '1st date: ', trim(converted_date)
       ! if ( options%inputTime == ' ' ) options%inputTime = '00:00:00'
       ! Mash date and time together in unholy union
       intermediate_date = trim(converted_date) // 'T' // &
         & adjustl(Time)
-      ! if ( options%verbose ) print *, 'mash date: ', trim(intermediate_date)
+      if ( options%debug ) print *, 'mash date: ', trim(intermediate_date)
       converted_date = addhourstoutc( intermediate_date, options%hoursoffset )
       if ( options%verbose ) print *, 'advanced date: ', trim(converted_date)
       ! Now split them asunder
@@ -171,12 +192,12 @@ program dateconverter
     elseif ( options%secondsoffset /= 0 ) then
       converted_date = reFormatDate( date, &
         & fromForm=trim(fromForm), toForm='yyyy-mm-dd' )
-      ! if ( options%verbose ) print *, '1st date: ', trim(converted_date)
+      if ( options%debug ) print *, '1st date: ', trim(converted_date)
       ! if ( options%inputTime == ' ' ) options%inputTime = '00:00:00'
       ! Mash date and time together in unholy union
       intermediate_date = trim(converted_date) // 'T' // &
         & adjustl(Time)
-      ! if ( options%verbose ) print *, 'mash date: ', trim(intermediate_date)
+      if ( options%debug ) print *, 'mash date: ', trim(intermediate_date)
       converted_date = addsecondstoutc( intermediate_date, options%secondsoffset )
       if ( options%verbose ) print *, 'advanced date: ', trim(converted_date)
       ! Now split them asunder
@@ -186,7 +207,7 @@ program dateconverter
     else
       intermediate_date = reFormatDate( date, &
         & fromForm=trim(fromForm), toForm='yyyy-mm-dd' )
-      ! print *, 'intermediate: ' // trim(intermediate_date)
+      if ( options%debug ) print *, 'intermediate: ' // trim(intermediate_date)
       converted_date = reFormatDate(intermediate_date, &
         & fromForm='yyyy-mm-dd', toForm=trim(toForm))
     endif
@@ -244,6 +265,10 @@ contains
         read(arg, * ) options%secondsOffset
         i = i + 1
         exit
+      elseif ( date(1:4) == '-arg' ) then
+        call getarg ( i+1+hp, options%argRange )
+        i = i + 1
+        exit
       elseif ( date(1:3) == '-i ' ) then
         call getarg ( i+1+hp, options%inputFormat )
         i = i + 1
@@ -255,6 +280,10 @@ contains
       elseif ( date(1:3) == '-o ' ) then
         call getarg ( i+1+hp, options%outputFormat )
         i = i + 1
+        exit
+      elseif ( date(1:3) == '-d ' ) then
+        options%debug = .true.
+        options%verbose = .true.
         exit
       elseif ( date(1:3) == '-v ' ) then
         options%verbose = .true.
@@ -294,29 +323,42 @@ contains
       & ' If no dates supplied, you will be prompted to supply one'
       write (*,*) &
       & ' If no time-of-day supplied, none will be output'
-      write (*,*) ' Options: -o format   => output format to use (e.g. yyyymmdd)'
-      write (*,*) '                        by default output will complement input'
-      write (*,*) '                        e.g., "2004 October 01" <=> 2004-d275'
-      write (*,*) '                        a special code "utc" fuses date and time'
-      write (*,*) '                        e.g., "2007-274T23:59:59.9999Z'
-      write (*,*) '          -i format   => input format'
-      write (*,*) '                        if format is "tai", treat input as '
-      write (*,*) '                        (double-precision) seconds since'
-      write (*,*) '                        1993-01-01T00:00:00'
-      write (*,*) '                        by default attempt to auto-recognize'
-      write (*,*) '          -t time     => optional time-of-day (military-style)'
-      write (*,*) '                        e.g., "06:53:10"'
-      write (*,*) '          -number     => subtract "number" days'
-      write (*,*) '          +number     => add "number" days'
-      write (*,*) '          -H number   => subtract "number" hours'
-      write (*,*) '          +H number   => add "number" hours'
-      write (*,*) '          -S number   => subtract "number" seconds'
-      write (*,*) '          +S number   => add "number" seconds'
-      write (*,*) '          -v          => switch on verbose mode'
-      write (*,*) '          -w          => print day-of-week in 2 characters'
-      write (*,*) '          -WW..       => print day-of-week'
-      write (*,*) '                         in count[W] characters'
-      write (*,*) '          -h          => print brief help'
+      write (*,*) ' Options:'
+      write (*,*) ' -o format   => output format to use (e.g. yyyymmdd)'
+      write (*,*) '               by default output will complement input'
+      write (*,*) '               e.g., "2004 October 01" <=> 2004-d275'
+      write (*,*) '               special codes:'
+      write (*,*) '               utc fuses date and time'
+      write (*,*) '                    e.g., 2007-274T23:59:59.9999Z'
+      write (*,*) '               sec prints seconds-in-day'
+      write (*,*) '                    e.g., 2007-274T00:01:59.99Z'
+      write (*,*) '                    prints 119.99'
+      write (*,*) '               hour prints hours-in-day'
+      write (*,*) '                    e.g., 2007-274T14:40:00Z'
+      write (*,*) '                    prints 14.66667'
+      write (*,*) ' -i format   => input format'
+      write (*,*) '               if format is "tai", treat input as '
+      write (*,*) '               (double-precision) seconds since'
+      write (*,*) '               1993-01-01T00:00:00'
+      write (*,*) '               by default attempt to auto-recognize'
+      write (*,*) ' -t time     => optional time-of-day (military-style)'
+      write (*,*) '               e.g., "06:53:10"'
+      write (*,*) ' -number     => subtract "number" days'
+      write (*,*) ' +number     => add "number" days'
+      write (*,*) ' -H number   => subtract "number" hours'
+      write (*,*) ' +H number   => add "number" hours'
+      write (*,*) ' -S number   => subtract "number" seconds'
+      write (*,*) ' +S number   => add "number" seconds'
+      write (*,*) ' -arg  range =>'
+      write (*,*) '       Run just the args defined by the expression range'
+      write (*,*) '       e.g., 7 means run only the 7th arg, '
+      write (*,*) '           1,3-9+2,12 means run args 1,3,5,7,9,12'
+      write (*,*) ' -d          => switch on debug mode'
+      write (*,*) ' -v          => switch on verbose mode'
+      write (*,*) ' -w          => print day-of-week in 2 characters'
+      write (*,*) ' -WW..       => print day-of-week'
+      write (*,*) '                in count[W] characters'
+      write (*,*) ' -h          => print brief help'
       stop
   end subroutine print_help
 !------------------------- print_string ---------------------
@@ -330,6 +372,9 @@ END PROGRAM dateconverter
 !==================
 
 ! $Log$
+! Revision 1.5  2010/06/28 17:04:13  pwagner
+! Added 'tai' format to convert l2gp%time field
+!
 ! Revision 1.4  2010/06/03 23:36:53  pwagner
 ! Added option to print day-of-week
 !
