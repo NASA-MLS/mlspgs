@@ -224,6 +224,7 @@ module DUMP_0
   ! E.g., '-crt' turns on CLEAN, RMS, and TRIM
   character(len=8), public, save :: DEFAULTDIFFOPTIONS = ' '
   character(len=8), public, save :: DEFAULTDUMPOPTIONS = ' '
+  integer, public, save          :: DEFAULTMAXLON = 128
   character(len=8), public, save :: DUMPTABLESIDE      = 'top'
   logical, public, save ::   DIFFRMSMEANSRMS           = .false.
   logical, public, save ::   DONTDUMPIFALLEQUAL        = .true.
@@ -523,7 +524,11 @@ contains
 
     lon = len(array(1))
     if ( myTrim ) lon = maxval(len_trim(array))
-    if ( present(maxlon) ) lon = min(lon, maxlon)
+    if ( present(maxlon) ) then
+      lon = min(lon, maxlon)
+    elseif ( .not. myTrim ) then
+      lon = min(lon, DEFAULTMAXLON)
+    endif
 
     numZeroRows = 0
     if ( size(array) == 0 ) then
@@ -2602,6 +2607,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.103  2011/01/04 00:48:26  pwagner
+! DEFAULTMAXLON can now set max width of 1d char array dumps
+!
 ! Revision 2.102  2010/10/14 18:44:01  pwagner
 ! Can now dump lists
 !
