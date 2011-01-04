@@ -14,7 +14,7 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
 !=================================
 
    use Allocate_Deallocate, only: allocate_test, deallocate_test
-   use Dump_0, only: DUMP, INTPLACES
+   use Dump_0, only: DEFAULTMAXLON, DUMP, INTPLACES
    use Hdf, only: DFACC_READ
    use HDF5, only: h5fis_hdf5_f, h5gclose_f, h5gopen_f
    use L1BData, only: l1bdata_t, NAME_LEN, PRECISIONSUFFIX, &
@@ -101,6 +101,7 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
   MLSMessageConfig%logFileUnit = -1
   time_config%use_wall_clock = .true.
   INTPLACES = '8'
+  DEFAULTMAXLON = 32
   CALL mls_h5open(error)
   n_filenames = 0
   do      ! Loop over filenames
@@ -589,6 +590,9 @@ end program l2auxdump
 !==================
 
 ! $Log$
+! Revision 1.12  2010/07/23 17:53:27  pwagner
+! Now able to limit dump to a range of mafs
+!
 ! Revision 1.11  2010/03/11 23:35:55  pwagner
 ! verbose output looks better
 !
