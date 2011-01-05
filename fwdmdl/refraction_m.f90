@@ -45,7 +45,7 @@ contains
   subroutine Refractive_index_0 ( p_path, t_path, n_path )
 
   ! This routine computes the refractive index as a function of altitude
-  ! and phi. The returned value has one subtracted from it
+  ! and phi. The returned value has one subtracted from it.
   ! We could easily make this elemental.
 
   ! inputs
@@ -57,13 +57,23 @@ contains
   ! begin code
     n_path = refrAterm * p_path / t_path
 
+  ! dn_path_dT = - n_path / t_path
+
   end subroutine Refractive_index_0
 
 !----------------------------------------  Refractive_index_0_h2o  -----
   subroutine Refractive_index_0_h2o ( p_path, t_path, n_path, h2o_path )
 
-  ! This routine computes the refractive index as a function of altitude
-  ! and phi. The returned value has one subtracted from it
+  !{ This routine computes the refractive index as a function of altitude
+  ! and phi. The returned value has one subtracted from it.
+  ! We could easily make this elemental.
+  !
+  ! Let $n = r_a \frac{P}{T}$ where $r_a =$ {\tt refrAterm} and
+  ! $n_{H_2 O} = n \left( 1 + r_b \frac{f^{H_2 O}}{T} \right)$ where
+  ! $r_b =$ {\tt refrBterm}.  Then
+  ! $\frac{\partial n_{H_2 O}}{\partial T} =
+  !  -\frac{n}{T^2} ( T + 2 r_b f^{H_2 O} ) =
+  !  \frac{n - 2 n_{H_2 O}}{T}$
 
   ! inputs
     real(rp), intent(in) :: p_path ! pressure(hPa)
@@ -73,8 +83,14 @@ contains
   ! Keywords
     real(rp), intent(in) :: h2o_path ! H2O vmr(ppv)
 
+  ! real(rp) :: n(size(n_path))
+
   ! begin code
     n_path = refrAterm * p_path / t_path * ( 1.0_rp + refrBterm*h2o_path/t_path)
+
+  ! n = refrAterm * p_path / t_path
+  ! n_path = n * ( 1.0_rp + refrBterm*h2o_path/t_path)
+  ! dn_path_dT = (n - 2.0 * n_path) / t_path
 
   end subroutine Refractive_index_0_h2o
 
@@ -612,6 +628,9 @@ contains
 end module REFRACTION_M
 
 ! $Log$
+! Revision 2.39  2009/07/09 23:53:53  vsnyder
+! Replace MLSCommon with MLSKinds
+!
 ! Revision 2.38  2009/06/23 18:26:11  pwagner
 ! Prevent Intel from optimizing ident string away
 !
