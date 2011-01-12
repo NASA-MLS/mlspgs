@@ -28,10 +28,13 @@ module MLSHDF5
   use MLSDataInfo, only: MLSDataInfo_T, Query_MLSData
   use MLSFiles, only: HDFVERSION_5, INITIALIZEMLSFILE
   use MLSKinds, only: r8
+  use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, &
+    & MLSMESSAGE, MLSMESSAGECALLS
   use MLSSets, only: FindFirst
   use MLSStringLists, only: catLists, IsInList, &
     & GetStringElement, NumStringElements, StringElement
   use MLSStrings, only: indexes, Replace
+  use output_m, only: newLine, output, outputNamedValue
   ! Lets break down our use, parameters first
   use HDF5, only: H5F_ACC_RDONLY_F, H5F_ACC_RDWR_F, &
     & H5P_DATASET_CREATE_F, &
@@ -58,9 +61,6 @@ module MLSHDF5
     & H5SGET_SIMPLE_EXTENT_DIMS_F, H5SSELECT_HYPERSLAB_F, &
     & H5TCLOSE_F, H5TCOPY_F, H5TEQUAL_F, H5TGET_CLASS_F, H5TGET_SIZE_F, &
     & H5TSET_SIZE_F
-  use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, &
-    & MLSMESSAGE, MLSMESSAGECALLS
-  use output_m, only: output, outputNamedValue
 
   implicit NONE
   private
@@ -167,6 +167,9 @@ module MLSHDF5
 ! a    Search for matches among attributes
 ! d    Search for matches among datasets
 ! g    Search for matches among groups
+! (Don't confuse this use of options with the one below: here options
+! affects how loosely strings may match; the one below affects how much
+! and what details appear in dumps)
 
 ! The meaning of options has replaced the older logical arguments in Dumps
 ! if the options is present and contains the following characters:
@@ -288,14 +291,14 @@ module MLSHDF5
   ! Local parameters
   character, parameter :: Digits(7) = (/ '1', '2', '3', '4', '5', '6', '7' /)
   integer(hsize_t), dimension(7) :: ones = (/1,1,1,1,1,1,1/)
-  logical, parameter    :: countEmpty = .true.
-  logical, parameter    :: DEEBUG = .false.
-  integer, save :: cantGetDataspaceDims = 0
+  logical, parameter :: countEmpty = .true.
+  logical, parameter :: DEEBUG = .false.
+  integer, save      :: cantGetDataspaceDims = 0
   integer, parameter :: DFLTMAXLINELENGTH = 1024
   integer, parameter :: MAXNUMWARNS = 40
   integer, parameter :: MAXNDSNAMES = 1000   ! max number of DS names in a file
-  integer, parameter                      :: MAXATTRIBUTESIZE =   40000
-  integer, parameter                      :: MAXTEXTSIZE      = 2000000
+  integer, parameter :: MAXATTRIBUTESIZE =   40000
+  integer, parameter :: MAXTEXTSIZE      = 2000000
   character(len=*), dimension(2), parameter :: DONTDUMPTHESEDSNAMES = (/ &
     & 'wtfcoremetadata', 'wtfxmlmetadata ' /)
   ! Local variables
@@ -412,7 +415,6 @@ contains ! ======================= Public Procedures =========================
     integer :: status
     integer :: type_id
     integer(kind=Size_t) :: type_size
-    ! logical, parameter :: DEEBUG = .true.
     ! Executable
     call MLSMessageCalls( 'push', constantName='DumpHDF5Attributes' )
     myNames = '*' ! Wildcard means 'all'
@@ -497,7 +499,9 @@ contains ! ======================= Public Procedures =========================
         call dump ( dValue(1:dims(1)), trim(name), options=options )
       case ( 'character' )
         call GetHDF5Attribute ( itemID, name, chValue )
-        call dump ( (/ trim(chValue) /), trim(name) )
+        call output( 'Dump of ' // trim(name), advance='yes' )
+        call output( trim(chValue) )
+        call newLine
       case default
         call output ( trim(name), advance='no' )
         call output ( '  (unrecognized type)', advance='yes' )
@@ -1654,6 +1658,7 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     integer :: ATTRID                   ! ID for attribute
+    ! logical, parameter :: DEEBUG = .true.
     integer :: STATUS                   ! Flag from HDF5
     integer :: STRINGTYPE               ! String type
     integer(kind=Size_t) :: STRINGSIZE               ! String size
@@ -1686,7 +1691,11 @@ contains ! ======================= Public Procedures =========================
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Value too long to fit in space given for attribute ' // trim(name), &
         & MLSFile=MLSFile )
+    elseif( DEEBUG ) then
+      call outputnamedValue( 'stringSize', int(stringSize) )
+      call outputnamedValue( 'len(value)', len(value) )
     endif
+
     ! Now actually read the data!
     value = ''
     call h5aread_f ( attrID, stringType, value(1:stringSize), ones, status )
@@ -5092,6 +5101,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.102  2011/01/12 18:08:33  pwagner
+! Wont truncate dumped long string attributes
+!
 ! Revision 2.101  2010/11/23 01:11:07  pwagner
 ! Improved dumps of character arrays with many elements
 !
