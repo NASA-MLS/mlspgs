@@ -46,8 +46,9 @@ module Molecules
   integer, parameter :: LAST_MOLECULE_TYPE =  t_molecule
 
 ! These particular radiometer-dependent molecules are hand-coded
-! instead of being generated automatically
-  integer, parameter :: FIRST_MOLECULE = last_intrinsic_lit + 1
+! instead of being generated automatically.
+! The Last_Intrinsic_Lit is Temperature, which is also the first "molecule."
+  integer, parameter :: FIRST_MOLECULE = last_intrinsic_lit
   integer, parameter :: L_H2O_R1A = first_molecule
   integer, parameter :: L_H2O_R1B =      l_h2o_r1a + 1
   integer, parameter :: L_H2O_R2 =       l_h2o_r1b + 1
@@ -175,6 +176,9 @@ contains ! =====     Public procedures     =============================
 end module MOLECULES
 
 ! $Log$
+! Revision 2.29  2011/01/13 00:24:25  vsnyder
+! Include 'Temperature' as a molecule
+!
 ! Revision 2.28  2010/03/18 20:42:38  honghanh
 ! Fix a bug in GetMoleculdIndex: adjust string_test length to accomodate all molecules
 !
