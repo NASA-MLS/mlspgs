@@ -202,7 +202,6 @@ swath
 systemTemperature
 sza
 
-temperature
 temperature_prec temperature_precision
 tertiary
 theta
@@ -229,7 +228,15 @@ xyz
 zeta
 zonalavg
 
+# Temperature has to be last so it can also be counted as a molecule
+# in Load_Sps_Data
+
+temperature
+
 # $Log$
+# Revision 2.56  2011/01/13 00:29:42  vsnyder
+# Put temperature last, and a comment that it has to be last
+#
 # Revision 2.55  2010/01/23 01:03:00  vsnyder
 # Remove LogIWC
 #
