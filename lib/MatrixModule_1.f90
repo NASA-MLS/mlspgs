@@ -48,7 +48,8 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   public :: Dump_RC, Dump_Struct, FindBlock, FrobeniusNorm, GetActualMatrixFromDatabase
   public :: GetDiagonal, GetDiagonal_1, GetFromMatrixDatabase, GetKindFromMatrixDatabase
   public :: GetMatrixElement, GetMatrixElement_1, GetVectorFromColumn
-  public :: GetVectorFromColumn_1, InvertCholesky, InvertCholesky_1
+  public :: GetVectorFromColumn_1, GetVectorFromColumn_1_Q_I
+  public :: InvertCholesky, InvertCholesky_1
   public :: K_Cholesky, K_Empty, K_Kronecker, K_Plain, K_SPD
 ! public :: LevenbergUpdateCholesky
   public :: Matrix_T, Matrix_Cholesky_T, Matrix_Database_T, Matrix_Kronecker_T
@@ -138,7 +139,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   end interface
 
   interface GetVectorFromColumn
-    module procedure GetVectorFromColumn_1
+    module procedure GetVectorFromColumn_1, GetVectorFromColumn_1_Q_I
   end interface
 
   interface MaxAbsVal
@@ -1439,27 +1440,37 @@ contains ! =====     Public Procedures     =============================
   end subroutine GetSPDFromDatabase
 
   ! --------------------------------------  GetVectorFromColumn_1  -----
-  subroutine GetVectorFromColumn_1 ( Matrix, Column, Vector )
-  ! Fill the Vector from the Column of the Matrix
+  subroutine GetVectorFromColumn_1 ( Matrix, Column, Vector, RowQty )
+  ! Fill Vector%quantities(...)%values from the Column of the Matrix.
+  ! This routine doesn't copy the geolocation information from the
+  ! Matrix to the Vector.  It's assumed already to be in the Vector.
+  ! If RowQty is present only get that vector quantity.
     type(matrix_T), intent(in) :: Matrix
     integer, intent(in) :: Column
     type(vector_T), intent(inout) :: Vector  ! Must already be "created"
+    integer, intent(in), optional :: RowQty
 
     integer :: Block          ! Which block of columns contains Column?
     integer :: ColInBlock     ! Which column in Block is column
     integer :: Ncols          ! How many columns in blocks < Block?
     integer :: Row            ! Which row is being extracted?
+    integer :: Row1,RowN      ! Range for Row
 
     if ( column < 1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'In "GetVectorFromColumn", "Column" < 1' )
-    if ( matrix%col%vec%template%name /= vector%template%name ) &
+      & 'In "GetVectorFromColumn_1", "Column" < 1' )
+    if ( matrix%row%vec%template%name /= vector%template%name ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & "Vector incompatible with matrix in GetVectorFromColumn" )
+      & "Vector incompatible with matrix in GetVectorFromColumn_1" )
     ncols = 0
+    row1 = 1
+    rowN = matrix%row%nb
+    if ( present(rowQty) ) then
+      row1 = rowQty; rowN = rowQty
+    end if
     do block = 1, matrix%col%nb
       if ( ncols + matrix%col%nelts(block) >= column ) then
         colInBlock = column - ncols
-        do row = 1, matrix%row%nb
+        do row = row1, rowN
           call getVectorFromColumn ( matrix%block(row,block), colInBlock, &
             & vector%quantities(matrix%row%quant(row))% &
             & values(:,matrix%row%inst(row)) )
@@ -1469,9 +1480,44 @@ contains ! =====     Public Procedures     =============================
       ncols = ncols + matrix%col%nelts(block)
     end do ! block = 1, matrix%col%nb
     call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'In "GetVectorFromColumn", "Column" is greater than number&
+      & 'In "GetVectorFromColumn_1", "Column" is greater than number&
       & of columns in "Matrix"')
   end subroutine GetVectorFromColumn_1
+
+  ! ----------------------------------  GetVectorFromColumn_1_Q_I  -----
+  subroutine GetVectorFromColumn_1_Q_I ( Matrix, Qty, Inst, Vector, RowQty )
+  ! Fill Vector%quantities(...)%values from the Inst column of Qty of
+  ! the matrix.  This routine doesn't copy the geolocation information
+  ! from the Matrix to the Vector.  It's assumed already to be in the
+  ! Vector.
+    type(matrix_T), intent(in) :: Matrix
+    integer, intent(in) :: Qty, Inst
+    type(vector_T), intent(inout) :: Vector  ! Must already be "created"
+    integer, intent(in), optional :: RowQty
+
+    integer :: row
+    integer :: Row1,RowN      ! Range for Row
+
+    if ( matrix%row%vec%template%name /= vector%template%name ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "Vector incompatible with matrix in GetVectorFromColumn_1_Q_I" )
+    if ( qty < 1 .or. qty > size(vector%quantities) ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'In "GetVectorFromColumn_1_Q_I", "Qty" is out of range' )
+    if ( inst < 1 .or. inst > size(vector%quantities(qty)%values) ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'In "GetVectorFromColumn_1_Q_I", "Inst" is out of range' )
+    row1 = 1
+    rowN = matrix%row%nb
+    if ( present(rowQty) ) then
+      row1 = rowQty; rowN = rowQty
+    end if
+    do row = row1, rowN
+      call getVectorFromColumn ( matrix%block(row,qty), inst, &
+        & vector%quantities(matrix%row%quant(row))% &
+        & values(:,matrix%row%inst(row)) )
+    end do ! row = 1, matrix%row%nb
+  end subroutine GetVectorFromColumn_1_Q_I
 
   ! ------------------------------------------ Describe Block -----
   subroutine DescribeBlock ( matrix, row, col )
@@ -2751,6 +2797,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.122  2011/01/13 00:23:19  vsnyder
+! Add GetVectorFromColumn_1_Q_I
+!
 ! Revision 2.121  2010/09/25 01:15:23  vsnyder
 ! Add an 'Instance' argument to MultiplyMatrixVectorNoT_1
 !
