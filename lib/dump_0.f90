@@ -16,12 +16,12 @@ module DUMP_0
 ! Behavior depends on optional parameters
 ! Actual output device determined by output_m module
 
-  use BitStuff, only: MAXBITNUMBER, WhichBitsAreSet
-  use ieee_arithmetic, only: ieee_is_finite
-  use MLSFillValues, only : FilterValues, HalfWaves, &
-    & IsFinite, IsInfinite, IsNaN, &
-    & InfFunction, NaNFunction, ReorderFillValues, ReplaceFillValues, &
-    & WhereAreTheInfs, WhereAreTheNaNs
+  use BitStuff, only: MAXBITNUMBER, WHICHBITSARESET
+  use ieee_arithmetic, only: IEEE_IS_FINITE
+  use MLSFillValues, only : COLLAPSE, FILTERVALUES, HALFWAVES, &
+    & ISFINITE, ISINFINITE, ISNAN, &
+    & INFFUNCTION, NANFUNCTION, REORDERFILLVALUES, REPLACEFILLVALUES, &
+    & WHEREARETHEINFS, WHEREARETHENANS
   use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
   use MLSSets, only: FindAll, FindUnique
   use MLSStats1, only: STAT_T, &
@@ -42,6 +42,8 @@ module DUMP_0
 
 !     (parameters)
 ! AFTERSUB                 character printed between row, col id and data
+! COLLAPSEOPTIONS          options determining what and how to dump collapsed
+!                           representations of multidimensional arrays
 ! DEFAULTDIFFOPTIONS       switches to set default DIFF values for CLEAN, TRIM, etc.
 ! DEFAULTDUMPOPTIONS       same as above, but for DUMP
 ! DIFFRMSMEANSRMS          print abs min, max, etc. when DIFF has RMS set TRUE
@@ -116,6 +118,7 @@ module DUMP_0
 !       b              table of % vs. amount of differences (pdf)
 !       c              clean
 !       g              gaps      
+!       l              collapse (last index)
 !       r              rms -- min, max, etc. of differences
 !       s              stats -- number of differences
 !       p              transpose 
@@ -125,9 +128,9 @@ module DUMP_0
 !       1 or 2 or ..   ignored; calling routine is free to interpret
 
 ! An exception is the behavior of wholearray:
-! if both {rms, stats} are FALSE or unset, the whole array is dumped (or diffed)
-! if either or both is TRUE the whole array will be dumped only if
-! wholearray is set to TRUE
+! if all {Hlrs} are FALSE, i.e. unset, the whole array is dumped (or diffed)
+! if any is TRUE the whole array will be dumped only if
+! w or wholearray is set to TRUE
 
 ! in the above, a string list is a string of elements (usu. comma-separated)
 ! === (end of api) ===
@@ -162,6 +165,15 @@ module DUMP_0
 
   interface DUMP_2x2xN ! For polarized incremental optical depth
     module procedure DUMP_2x2xN_COMPLEX, DUMP_2x2xN_DCOMPLEX
+  end interface
+
+  interface DUMPCOLLAPSEDARRAY
+    module procedure DUMPCOLLAPSEDARRAY_1D_DOUBLE, DUMPCOLLAPSEDARRAY_1D_REAL
+    module procedure DUMPCOLLAPSEDARRAY_2D_DOUBLE, DUMPCOLLAPSEDARRAY_2D_REAL
+    module procedure DUMPCOLLAPSEDARRAY_3D_DOUBLE, DUMPCOLLAPSEDARRAY_3D_REAL
+    module procedure DUMPCOLLAPSEDARRAY_1D_INTEGER
+    module procedure DUMPCOLLAPSEDARRAY_2D_INTEGER
+    module procedure DUMPCOLLAPSEDARRAY_3D_INTEGER
   end interface
 
   interface DUMPLISTS
@@ -232,6 +244,9 @@ module DUMP_0
   logical, public, save ::   PRINTNAMEIFDIFF           = .true.
   logical, public, save ::   STATSONONELINE            = .true.
 
+  ! This determines how a higher-rank array is collapsed to a lower-rank one
+  character(len=16), public, save :: COLLAPSEOPTIONS = 'num[+]all[+]'
+
   ! These determine how dumped numerical data (s.p. or d.p.) will be formatted
   character(len=2), public, save  :: INTPLACES = '6' ! how many places
   character(len=16), public, save :: PCTFORMAT = '*' ! * means default format
@@ -247,8 +262,8 @@ module DUMP_0
   integer, parameter :: TOOMANYELEMENTS = 125*50*3500 ! Don't try to diff l1b DACS
   logical, parameter ::   DEEBUG = .false.
   logical, parameter ::   SHORTCUTDIFFS = .false.
-  logical :: myClean, myDirect, myGaps, myStats, myShape, myRMS, myTable, &
-    & myTranspose, myTrim, myUnique, myWholeArray, onlyWholeArray
+  logical :: myClean, myCollapse, myDirect, myGaps, myStats, myShape, myRMS, &
+    & myTable, myTranspose, myTrim, myUnique, myWholeArray, onlyWholeArray
   character(len=16) :: myPCTFormat
   logical, save :: nameHasBeenPrinted = .false.
   integer :: myRank, numNonFill, numFill
@@ -2035,6 +2050,152 @@ contains
   end subroutine SELFDIFF_REAL
 
   ! --- Private procedures ---
+  ! --- DumpCollapsedArray ---
+  ! This family of subroutines dumps a lower-rank representation of
+  ! an array
+  subroutine DUMPCOLLAPSEDARRAY_1D_INTEGER (  array, name, fillValue )
+    INTEGER, intent(in) :: ARRAY(:)
+    character(len=*), intent(in) :: NAME
+    INTEGER, intent(in), optional :: FILLVALUE
+    call output( 'Did not expect to dump collapsed 1d array', advance='yes' )
+  end subroutine DUMPCOLLAPSEDARRAY_1D_INTEGER
+
+  subroutine DUMPCOLLAPSEDARRAY_1D_DOUBLE (  array, name, fillValue )
+    double precision, intent(in) :: ARRAY(:)
+    character(len=*), intent(in) :: NAME
+    double precision, intent(in), optional :: FILLVALUE
+    call output( 'Did not expect to dump collapsed 1d array', advance='yes' )
+  end subroutine DUMPCOLLAPSEDARRAY_1D_DOUBLE
+
+  subroutine DUMPCOLLAPSEDARRAY_1D_REAL (  array, name, fillValue )
+    real, intent(in) :: ARRAY(:)
+    character(len=*), intent(in) :: NAME
+    real, intent(in), optional :: FILLVALUE
+    call output( 'Did not expect to dump collapsed 1d array', advance='yes' )
+  end subroutine DUMPCOLLAPSEDARRAY_1D_REAL
+
+  subroutine DUMPCOLLAPSEDARRAY_2D_DOUBLE (  array, name, fillValue )
+    double precision, intent(in) :: ARRAY(:,:)
+    character(len=*), intent(in) :: NAME
+    double precision, intent(in), optional :: FILLVALUE
+    ! For dumping lower-rank collapsed representations
+    double precision, dimension(size(array, 1)) :: nums
+    logical, dimension(size(array, 1))          :: logs
+
+    ! dump numerical representation
+    ! call outputNamedValue( 'CollapseOptions', COLLAPSEOPTIONS )
+    if ( index(COLLAPSEOPTIONS, 'num') > 0 ) then
+      call collapse( array, nums, options=COLLAPSEOPTIONS )
+      call dump( nums, name, fillvalue )
+    endif
+    if ( index(COLLAPSEOPTIONS, 'any') > 0 .or. &
+      &  index(COLLAPSEOPTIONS, 'all') > 0 ) then
+      call collapse( array, logs=logs, options=COLLAPSEOPTIONS )
+      call dump( logs, name )
+    endif
+  end subroutine DUMPCOLLAPSEDARRAY_2D_DOUBLE
+
+  subroutine DUMPCOLLAPSEDARRAY_2D_REAL (  array, name, fillValue )
+    real, intent(in) :: ARRAY(:,:)
+    character(len=*), intent(in) :: NAME
+    real, intent(in), optional :: FILLVALUE
+    ! For dumping lower-rank collapsed representations
+    real, dimension(size(array, 1)) :: nums
+    logical, dimension(size(array, 1))          :: logs
+
+    ! dump numerical representation
+    if ( index(COLLAPSEOPTIONS, 'num') > 0 ) then
+      call collapse( array, nums, options=COLLAPSEOPTIONS )
+      call dump( nums, name, fillvalue )
+    endif
+    if ( index(COLLAPSEOPTIONS, 'any') > 0 .or. &
+      &  index(COLLAPSEOPTIONS, 'all') > 0 ) then
+      call collapse( array, logs=logs, options=COLLAPSEOPTIONS )
+      call dump( logs, name )
+    endif
+  end subroutine DUMPCOLLAPSEDARRAY_2D_REAL
+
+  subroutine DUMPCOLLAPSEDARRAY_2D_INTEGER (  array, name, fillValue )
+    INTEGER, intent(in) :: ARRAY(:,:)
+    character(len=*), intent(in) :: NAME
+    INTEGER, intent(in), optional :: FILLVALUE
+    ! For dumping lower-rank collapsed representations
+    INTEGER, dimension(size(array, 1)) :: nums
+    logical, dimension(size(array, 1))          :: logs
+
+    ! dump numerical representation
+    if ( index(COLLAPSEOPTIONS, 'num') > 0 ) then
+      call collapse( array, nums, options=COLLAPSEOPTIONS )
+      call dump( nums, name, fillvalue )
+    endif
+    if ( index(COLLAPSEOPTIONS, 'any') > 0 .or. &
+      &  index(COLLAPSEOPTIONS, 'all') > 0 ) then
+      call collapse( array, logs=logs, options=COLLAPSEOPTIONS )
+      call dump( logs, name )
+    endif
+  end subroutine DUMPCOLLAPSEDARRAY_2D_INTEGER
+
+  subroutine DUMPCOLLAPSEDARRAY_3D_DOUBLE (  array, name, fillValue )
+    double precision, intent(in) :: ARRAY(:,:,:)
+    character(len=*), intent(in) :: NAME
+    double precision, intent(in), optional :: FILLVALUE
+    ! For dumping lower-rank collapsed representations
+    double precision, dimension(size(array, 1),size(array, 2)) :: nums
+    logical, dimension(size(array, 1),size(array, 2))          :: logs
+
+    ! dump numerical representation
+    if ( index(COLLAPSEOPTIONS, 'num') > 0 ) then
+      call collapse( array, nums, options=COLLAPSEOPTIONS )
+      call dump( nums, name, fillvalue )
+    endif
+    if ( index(COLLAPSEOPTIONS, 'any') > 0 .or. &
+      &  index(COLLAPSEOPTIONS, 'all') > 0 ) then
+      call collapse( array, logs=logs, options=COLLAPSEOPTIONS )
+      call dump( logs, name )
+    endif
+  end subroutine DUMPCOLLAPSEDARRAY_3D_DOUBLE
+
+  subroutine DUMPCOLLAPSEDARRAY_3D_REAL (  array, name, fillValue )
+    real, intent(in) :: ARRAY(:,:,:)
+    character(len=*), intent(in) :: NAME
+    real, intent(in), optional :: FILLVALUE
+    ! For dumping lower-rank collapsed representations
+    real, dimension(size(array, 1),size(array, 2)) :: nums
+    logical, dimension(size(array, 1),size(array, 2))          :: logs
+
+    ! dump numerical representation
+    if ( index(COLLAPSEOPTIONS, 'num') > 0 ) then
+      call collapse( array, nums, options=COLLAPSEOPTIONS )
+      call dump( nums, name, fillvalue )
+    endif
+    if ( index(COLLAPSEOPTIONS, 'any') > 0 .or. &
+      &  index(COLLAPSEOPTIONS, 'all') > 0 ) then
+      call collapse( array, logs=logs, options=COLLAPSEOPTIONS )
+      call dump( logs, name )
+    endif
+  end subroutine DUMPCOLLAPSEDARRAY_3D_REAL
+
+  subroutine DUMPCOLLAPSEDARRAY_3D_INTEGER (  array, name, fillValue )
+    INTEGER, intent(in) :: ARRAY(:,:,:)
+    character(len=*), intent(in) :: NAME
+    INTEGER, intent(in), optional :: FILLVALUE
+    ! For dumping lower-rank collapsed representations
+    INTEGER, dimension(size(array, 1),size(array, 2)) :: nums
+    logical, dimension(size(array, 1),size(array, 2))          :: logs
+
+    ! dump numerical representation
+    if ( index(COLLAPSEOPTIONS, 'num') > 0 ) then
+      call collapse( array, nums, options=COLLAPSEOPTIONS )
+      call dump( nums, name, fillvalue )
+    endif
+    if ( index(COLLAPSEOPTIONS, 'any') > 0 .or. &
+      &  index(COLLAPSEOPTIONS, 'all') > 0 ) then
+      call collapse( array, logs=logs, options=COLLAPSEOPTIONS )
+      call dump( logs, name )
+    endif
+  end subroutine DUMPCOLLAPSEDARRAY_3D_INTEGER
+
+  !
   subroutine FILTEREDDIFF_1D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
     & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
     double precision, intent(in) :: ARRAY1(:)
@@ -2401,6 +2562,7 @@ contains
     nameHasBeenPrinted = .false.
     stampOptions%neverStamp = .true. ! So we don't interrupt tables of numbers
     myClean      = theDefault('clean') ! .false.
+    myCollapse   = theDefault('collapse') ! .false.
     myGaps       = theDefault('gaps')
     myRMS        = theDefault('rms')   ! .false.
     myShape      = theDefault('shape')  ! .false.
@@ -2413,6 +2575,7 @@ contains
         & .not. (myStats .or. myRMS.or. myTable .or. myShape )
     if ( present(options) ) then
       myClean       = index( options, 'c' ) > 0
+      myCollapse    = index( options, 'l' ) > 0
       myGaps        = index( options, 'g' ) > 0
       myRMS         = index( options, 'r' ) > 0
       myShape       = index( options, 'H' ) > 0
@@ -2422,10 +2585,10 @@ contains
       myTrim        = index( options, 't' ) > 0
       myUnique      = index( options, 'u' ) > 0
       myWholeArray  = ( index( options, 'w' ) > 0 ) .or. &
-        & .not. (myStats .or. myRMS.or. myTable .or. myShape )
+        & .not. (myCollapse .or. myStats .or. myRMS.or. myTable .or. myShape )
     endif
     onlyWholeArray = myWholeArray .and. &
-      & .not. (myRMS .or. myStats .or. myTable .or. myShape)
+      & .not. (myCollapse .or. myRMS .or. myStats .or. myTable .or. myShape)
   end subroutine theDumpBegins
 
   subroutine theDumpEnds
@@ -2607,6 +2770,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.104  2011/01/20 01:16:01  pwagner
+! New '-l' option dumps collapsed representation of higher ranked array
+!
 ! Revision 2.103  2011/01/04 00:48:26  pwagner
 ! DEFAULTMAXLON can now set max width of 1d char array dumps
 !
