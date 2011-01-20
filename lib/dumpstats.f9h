@@ -68,6 +68,10 @@
       ! call output( 'about to dump %', advance='yes' )
       call printPercentages ( equal=numFill, unEqual=numNonFill  )
     end if
+    if ( myCollapse .and. myRank > 1 ) then
+      call dumpCollapsedArray( array, name, fillValue )
+      return
+    endif
     if ( .not. myWholeArray ) return
 
     ! Avoid dumping the entire array if all its elements are equal
@@ -110,6 +114,9 @@
       end if
     end if
 ! $Log$
+! Revision 2.21  2011/01/20 01:16:24  pwagner
+! New '-l' option dumps collapsed representation of higher ranked array
+!
 ! Revision 2.20  2009/11/20 01:16:47  pwagner
 ! Added new option H or 'shape' to just show array rank, shape
 !
