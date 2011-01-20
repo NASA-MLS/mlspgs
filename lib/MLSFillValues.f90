@@ -20,13 +20,15 @@ module MLSFillValues              ! Some FillValue-related stuff
   use MLSKinds ! Everything
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSSets, only: FindAll, findFirst, findLast
+  use MLSStringLists, only: extractSubstring 
   use MLSStrings, only: Lowercase
+  use output_m, only: OUTPUTNAMEDVALUE
 
   implicit none
 
   private
 
-  public :: Depopulate, Repopulate
+  public :: Collapse, Depopulate, Repopulate
   public :: EmbedArray, EssentiallyEqual, ExtractArray
   public :: extremum
   public :: FillFunction, InfFunction, NaNFunction
@@ -57,6 +59,8 @@ module MLSFillValues              ! Some FillValue-related stuff
 !     - - - - - - - -
 
 !         Functions, operations, routines
+! Collapse                     Collapse an array into a lower rank array
+!                               e.g., by summing over elements of dropped index
 ! Depopulate                   Finds locations of non-zero values in presumably
 !                                sparse array
 ! EmbedArray                   Replace a bloc of elements in the larger array
@@ -92,6 +96,7 @@ module MLSFillValues              ! Some FillValue-related stuff
 ! === (end of toc) ===                                                   
 
 ! === (start of api) ===
+! Collapse ( arrayIn, nums, logs, [testvalue], [char* options] )
 ! Depopulate ( array[:], int i[:], int n, &
 !   & [nprec testvalue], [nprec values[:], [char* options] )
 ! Depopulate ( array[:,:], int i[:], int j[:], int n, &
@@ -163,6 +168,11 @@ module MLSFillValues              ! Some FillValue-related stuff
     module procedure BridgeMissingValues_1dr4, BridgeMissingValues_1dr8, BridgeMissingValues_1dint
     module procedure BridgeMissingValues_2dr4, BridgeMissingValues_2dr8, BridgeMissingValues_2dint
     module procedure BridgeMissingValues_3dr4, BridgeMissingValues_3dr8, BridgeMissingValues_3dint
+  end interface
+
+  interface Collapse
+    module procedure Collapse_2d_r4, Collapse_2d_r8, Collapse_2d_int
+    module procedure Collapse_3d_r4, Collapse_3d_r8, Collapse_3d_int
   end interface
 
   interface Depopulate
@@ -334,6 +344,86 @@ module MLSFillValues              ! Some FillValue-related stuff
   logical, parameter ::   DEEBUG = .false.
 
 contains
+
+  ! ---------------------------------------------  Collapse  -----
+  ! This family of routines collapses an array[i1,i2,..in] to lower-rank
+  ! arrays nums or logs[i1,i2,..,i(n-1)] by operating on all the elements of 
+  ! the last index in depending upon options:
+  ! options             nums                      logs
+  ! 'num[op]'         use 'op'
+  ! 'any[op]'                                 use 'any' with 'op'
+  ! 'all[op]'                                 use 'all' with 'op' (default)
+  
+  !   op                          meaning
+  !   '+'               sum                any or all even (default)
+  !   '>'               max                any or all > testvalue
+  !   '<'               min                any or all < testvalue
+  !   '='                                  any or all = testvalue
+  !   '!'                                  reverse sense of test
+  !   ('!' may be added to any of ops above, e.g.: 'all[!+]' would
+  !    return TRUE if all of the elements were odd)
+  ! If testvalue is not supplied, it defaults to 0
+  ! Options may contain separate fields for the nums and logs; e.g.,
+  ! 'num[>]all[!=]' would return 
+  !    nums    max values of elements over last index
+  !    logs    true where all the elements were non-zero over last index
+  ! 
+  subroutine Collapse_2d_r4 ( array, nums, logs, testvalue, options )
+    integer, parameter :: RK = R4
+    include 'Collapse_2d.f9h'
+  end subroutine Collapse_2d_r4
+
+  subroutine Collapse_3d_r4 ( array, nums, logs, testvalue, options )
+    integer, parameter :: RK = R4
+    include 'Collapse_3d.f9h'
+  end subroutine Collapse_3d_r4
+
+  subroutine Collapse_2d_r8 ( array, nums, logs, testvalue, options )
+    integer, parameter :: RK = r8
+    include 'Collapse_2d.f9h'
+  end subroutine Collapse_2d_r8
+
+  subroutine Collapse_3d_r8 ( array, nums, logs, testvalue, options )
+    integer, parameter :: RK = r8
+    include 'Collapse_3d.f9h'
+  end subroutine Collapse_3d_r8
+
+  subroutine Collapse_2d_int ( iarray, inums, logs, itestvalue, options )
+    integer, dimension(:,:), intent(in)           :: iarray ! The larger array
+    integer , dimension(:), optional, intent(out) :: inums
+    logical , dimension(:), optional, intent(out) :: logs
+    integer, intent(in), optional                 :: itestvalue
+    character(len=*), intent(in), optional        :: options
+    ! Local variables
+    real(r4), dimension(size(iarray, 1), size(iarray, 2)) :: array
+    real(r4), dimension(size(iarray, 1))                  :: nums
+    real(r4)                                              :: testvalue
+    ! Executable
+    array = iarray
+    testvalue = 0
+    if ( present(itestvalue) ) testvalue = itestvalue
+    call Collapse( array, nums, logs, testvalue, options )
+    if ( present(inums) ) inums = nums
+  end subroutine Collapse_2d_int
+
+  subroutine Collapse_3d_int ( iarray, inums, logs, itestvalue, options )
+    integer, dimension(:,:,:), intent(in)           :: iarray ! The larger array
+    integer , dimension(:,:), optional, intent(out) :: inums
+    logical , dimension(:,:), optional, intent(out) :: logs
+    integer, intent(in), optional                   :: itestvalue
+    character(len=*), intent(in), optional          :: options
+    ! Local variables
+    real(r4), dimension(size(iarray, 1), size(iarray, 2), size(iarray, 3)) &
+      &                                                   :: array
+    real(r4), dimension(size(iarray, 1), size(iarray, 2)) :: nums
+    real(r4)                                              :: testvalue
+    ! Executable
+    array = iarray
+    testvalue = 0
+    if ( present(itestvalue) ) testvalue = itestvalue
+    call Collapse( array, nums, logs, testvalue, options )
+    if ( present(inums) ) inums = nums
+  end subroutine Collapse_3d_int
 
   ! ---------------------------------------------  Depopulate  -----
   ! This family of routines returns only non-zero values of an array[i,j,..]
@@ -2630,6 +2720,9 @@ end module MLSFillValues
 
 !
 ! $Log$
+! Revision 2.25  2011/01/20 01:14:31  pwagner
+! Added Collapse: Turns array into lower-rank representation, collapsing last index
+!
 ! Revision 2.24  2010/11/30 00:33:52  pwagner
 ! Added instance for character arg to isNaN
 !
