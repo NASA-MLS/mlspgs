@@ -11,8 +11,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-100r1}
-\newcommand{\docdate}{23 December 2010}
+\newcommand{\docname}{wvs-100r2}
+\newcommand{\docdate}{20 January 2011}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -368,9 +368,9 @@ the inner integral.  Its cost is 26 multiplies and ten adds, or 36
 FLOPS.  Equation (\ref{drad}) reduces the cost compared to Equation
 (\ref{sixteen}) by a factor of 2.4, and has the additional advantage that
 $\frac{\partial B(s)}{\partial s}$ is not needed.  When Equation
-(\ref{sixteen}) is evaluated, $\frac{\partial B(s)}{\partial s}$ is
-approximated by a central difference, which can introduce substantial
-error.
+(\ref{sixteen}) is approximated by a quadrature, $\frac{\partial
+B(s)}{\partial s} \d s = \d B(s)$ is approximated by $\Delta B$ using a
+central difference, which can introduce substantial error.
 
 \label{lastpage}
 \end{document}
@@ -378,6 +378,9 @@ error.
 % $Id$
 
 % $Log$
+% Revision 1.3  2010/12/23 20:32:04  vsnyder
+% Add a summary, analysis of FLOPS
+%
 % Revision 1.2  2010/12/18 03:54:28  vsnyder
 % Insert CVS stuff
 %
