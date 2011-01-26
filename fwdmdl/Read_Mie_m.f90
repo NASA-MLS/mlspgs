@@ -28,6 +28,7 @@ module Read_Mie_m
   real(r8), public, pointer :: Beta_c_a(:,:,:) => NULL()      ! T X IWC X F
   real(r8), public, pointer :: Beta_c_e(:,:,:) => NULL()      ! T X IWC X F
   real(r8), public, pointer :: Beta_c_s(:,:,:) => NULL()      ! T X IWC X F
+  real(r8), public, pointer :: Log_Beta_c_a(:,:,:) => NULL()  ! T X IWC X F
   real(r8), public, pointer :: Log_Beta_c_e(:,:,:) => NULL()  ! T X IWC X F
   real(r8), public, pointer :: Log_Beta_c_s(:,:,:) => NULL()  ! T X IWC X F
   ! Beta derivatives
@@ -60,6 +61,11 @@ contains
     integer :: Status
     real :: S
 
+    if ( associated(log_beta_c_a) ) then
+      s = (e_dp * size(log_beta_c_a) ) / MEMORY_UNITS
+      deallocate ( log_beta_c_a, stat=status )
+      call test_deallocate ( status, moduleName, 'log_beta_c_a', s )
+    end if
     if ( associated(log_beta_c_e) ) then
       s = (e_dp * size(log_beta_c_e) ) / MEMORY_UNITS
       deallocate ( log_beta_c_e, stat=status )
@@ -160,6 +166,10 @@ contains
       call dump ( beta_c_a(:,:,i_f) )
       call output ( f_s(i_f), before='Beta_c_e(T X IWC), F = ', advance='yes' )
       call dump ( beta_c_e(:,:,i_f) )
+      if ( associated(log_beta_c_a) ) then
+        call output ( f_s(i_f), before='log_beta_c_a(T X IWC), F = ', advance='yes' )
+        call dump ( log_beta_c_a(:,:,i_f) )
+      end if
       if ( associated(log_beta_c_e) ) then
         call output ( f_s(i_f), before='Log_Beta_c_e(T X IWC), F = ', advance='yes' )
         call dump ( log_beta_c_e(:,:,i_f) )
@@ -202,9 +212,8 @@ contains
 
   ! ----------------------------------------------------  Log_Mie  -----
   subroutine Log_Mie
-  ! If any of Log_Beta_c_a, Log_Beta_c_e, Log_dBeta_dIWC_c_a, Log_dBeta_dT_c_a
-  ! are not associated, allocate them and compute them.  Read_Mie has to
-  ! be called first.
+  ! If any of Log_Beta_c_a, Log_Beta_c_e, Log_Beta_c_s are not associated,
+  ! allocate them and compute them.  Read_Mie has to be called first.
 
     use Allocate_Deallocate, only: Test_Allocate
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
@@ -213,6 +222,14 @@ contains
     if ( .not. associated(beta_c_e) ) call MLSMessage ( MLSMSG_Error, moduleName, &
       & 'Cannot compute log(beta...) before allocating beta.')
 
+    if ( .not. associated(log_beta_c_a) ) then
+      allocate ( &
+        & log_beta_c_a(ubound(beta_c_e,1),ubound(beta_c_e,2),ubound(beta_c_e,3)), &
+        & stat=status )
+      call test_allocate ( status, moduleName, 'log_beta_c_a', (/ 1,1,1 /), &
+          & ubound(beta_c_e) )
+      log_beta_c_a = log(beta_c_e)
+    end if
     if ( .not. associated(log_beta_c_e) ) then
       allocate ( &
         & log_beta_c_e(ubound(beta_c_e,1),ubound(beta_c_e,2),ubound(beta_c_e,3)), &
@@ -397,6 +414,9 @@ contains
 end module Read_Mie_m
 
 ! $Log$
+! Revision 2.10  2011/01/26 02:50:43  vsnyder
+! Add more support for beta_c_a separately from beta_c_e
+!
 ! Revision 2.9  2010/06/07 23:13:02  vsnyder
 ! Added ability to compute and store Log_Beta_c_e and Log_Beta_c_s
 !
