@@ -21,24 +21,24 @@ module DO_T_SCRIPT_M
   private :: not_used_here 
 !---------------------------------------------------------------------------
 contains
-!----------------------------------------------------  DO_T_SCRIPT  -----
 
+!----------------------------------------------------  DO_T_SCRIPT  -----
   subroutine DO_T_SCRIPT ( t_path, sp_tmp, Frq, t_script )
 
 ! This routine builds the t_script array.  In some notes it's called Delta B.
 
     use D_STAT_TEMP_M, only: STAT_TEMP
-    use MLSKinds, only: IP, RP
+    use MLSKinds, only: RP, R8
 
     real(rp), intent(in) :: T_PATH(:)    ! path temperatures            
-    real(rp), intent(in) :: Frq          ! Frequency                    
+    real(r8), intent(in) :: Frq          ! Frequency                    
     real(rp), intent(in) :: sp_tmp       ! farside boundary temperature 
     !                                      usually cosmic space (2.7K). 
 
     real(rp), intent(out) :: t_script(:) ! path differential temperatures
 
-    integer(ip) :: I, N_path
-    real(rp)    :: Tb(Size(t_script))
+    integer  :: I, N_path
+    real(rp) :: Tb(Size(t_script))
 
     n_path = size(t_path)
 
@@ -57,7 +57,7 @@ contains
   subroutine Two_D_T_Script ( t_grid, t_space, nu, t_scr, B )
 
 
-!{ This routine builds the t\_script array.
+!{ This routine builds the {\tt t_script} array.
 !  In some notes and reports it's called $\Delta B_i =
 !  \frac12 ( B_{i+1} - B_{i-1} )$
 !  for $i = 2 \dots n-1$, $\Delta B_1 = \frac12 ( B_2 + B_1 )$, and
@@ -84,15 +84,13 @@ contains
 ! Internal stuff
 
     integer :: n_path
-    real(rp) :: B_space
 
 ! get path information
 
     n_path = size(t_grid)
   
     B = stat_temp(t_grid,nu)
-    B_space = stat_temp(t_space,nu)
-    t_scr = 0.5_rp * (eoshift(B,1,2.0_rp * B_space - B(n_path)) - &
+    t_scr = 0.5_rp * (eoshift(B,1,2.0_rp * stat_temp(t_space,nu) - B(n_path)) - &
       &               eoshift(B,-1,-B(1)))
 
   end subroutine Two_D_T_Script
@@ -100,12 +98,24 @@ contains
 !------------------------------------------  Two_D_T_Script_Cloud  -----
   subroutine Two_D_T_Script_Cloud ( t_grid, t_scat, w0, t_space, nu, t_scr, B )
 
-!{ This routine builds the t_script array.  In some notes it's called Delta B.
-!  This one combines B with TScat.  In the cloud scattering case,
-!  $\Delta B = \frac12 \left[ (1-\omega_{0_{i+1}}) B_{i+1} +
+!{ This routine builds the {\tt t_script} array.  In some notes it's called
+!  Delta B. This one combines B with TScat.  In the cloud scattering case,
+!  $\Delta B_i = \frac12 \left[ (1-\omega_{0_{i+1}}) B_{i+1} +
 !                             \omega_{0_{i+1}} T_{\text{scat}_{i+1}} -
 !                             (1-\omega_{0_{i-1}}) B_{i-1} -
-!                             \omega_{0_{i-1}} T_{\text{scat}_{i-1}} \right]$.
+!                             \omega_{0_{i-1}} T_{\text{scat}_{i-1}} \right]$,
+!  for $i = 2 \dots\ n-1$,
+!  $\Delta B_1 = \frac12 \left[ (1-\omega_{0_1}) B_1 +
+!                             \omega_{0_1} T_{\text{scat}_1} +
+!                             (1-\omega_{0_2}) B_2 +
+!                             \omega_{0_2} T_{\text{scat}_2} \right]$,
+!  and
+!  $\Delta B_n = B(\text{\tt t_space}) -
+!                \frac12 \left[ (1-\omega_{0_n}) B_n +
+!                             \omega_{0_n} T_{\text{scat}_n} +
+!                             (1-\omega_{0_{n-1}}) B_{n-1} +
+!                             \omega_{0_{n-1}} T_{\text{scat}_{n-1}} \right]$,
+
 
     use D_STAT_TEMP_M, only: STAT_TEMP
     use MLSKinds, only: R8, RP
@@ -114,7 +124,7 @@ contains
 
     real(rp), intent(in) :: t_grid(:) ! path temperatures
     real(rp), intent(in) :: t_scat(:) ! path scattering
-    real(r8), intent(in) :: w0(:)     ! single scattering albedo
+    real(rp), intent(in) :: w0(:)     ! single scattering albedo
     real(r8), intent(in) :: nu        ! Frequency
     real(rp), intent(in) :: t_space   ! farside boundary temperature
     !                                   usually cosmic space (2.7K).
@@ -154,6 +164,9 @@ contains
 end module DO_T_SCRIPT_M
 
 ! $Log$
+! Revision 2.14  2010/12/15 21:36:37  vsnyder
+! TeXnicalities
+!
 ! Revision 2.13  2010/08/19 02:04:50  vsnyder
 ! Cannonball polishing
 !
