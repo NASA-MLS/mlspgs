@@ -119,9 +119,10 @@ CONTAINS
        WRITE (L1BFileInfo%EngId, iostat=ios) EngPkt, EngMAF%Eng%value
 
        READ (sciMAF_unit, iostat=ios) SciMAF
-       sciTAI = sciMAF(2)%secTAI
+       sciTAI = sciMAF(1)%secTAI
        IF (ios /= 0) EXIT outer
        sci_MAFno = SciMAF(0)%MAFno
+
        DO n = 0, (MaxMIFs - 1)
           Sci_pos%APE(:,n) = SciMAF(n)%APE_pos
           Sci_pos%ASE(:,n) = SciMAF(n)%ASA_pos
@@ -277,6 +278,9 @@ PRINT *, 'flags: ', WeightsFlags(i)
 END MODULE CalibWeightsFlags
 !=============================================================================
 ! $Log$
+! Revision 2.10  2011/01/27 15:33:53  perun
+! Change TAI time from MIF 2 to MIF 1
+!
 ! Revision 2.9  2007/06/21 20:57:53  perun
 ! Exclude TP_dig greater than 4.0 in calculating TPz
 !
