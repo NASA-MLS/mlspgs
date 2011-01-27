@@ -364,6 +364,7 @@ PRINT *, 'doing baseline...'
     INTEGER :: DACS_window
     INTEGER, POINTER, DIMENSION(:,:) :: windx
     LOGICAL, POINTER, DIMENSION(:) :: rms_mask
+    LOGICAL, POINTER, DIMENSION(:,:) :: avg_mask
     LOGICAL :: read_precs, update_precs
 
     INTEGER, POINTER, DIMENSION(:) :: counterMAF => NULL()
@@ -408,6 +409,7 @@ PRINT *, 'Updating baselines...'
     IF (L1Config%Calib%CalibDACS) THEN
        sd_id = L1BFileInfo%RADDid
        DACS_window = L1Config%Calib%DACSwindow
+       ALLOCATE (avg_mask(DACSchans,2*DACS_window + 1))
 
 ! Allocate baseline arrays for reading to the maximum channel size:
 
@@ -436,7 +438,14 @@ PRINT *, 'Updating baselines...'
              w1 = MAX ((mindx - DACS_window), 1)
              w2 = MIN ((mindx + DACS_window), noMAFs)
              nwin = w2 - w1 + 1
-             baselineDCavg(:,mindx) = SUM (baselineDC(:,w1:w2),2) / nwin
+             avg_mask = .TRUE.      ! everything good
+             WHERE (baselineDC(:,w1:w2) <= -999.0)
+                avg_mask = .FALSE.  ! bad data to skip
+             ENDWHERE
+             ngood = COUNT (avg_mask(1,:))   ! using just one channel!
+             if (ngood < 1) CYCLE
+             baselineDCavg(:,mindx) = &
+                  SUM (baselineDC(:,w1:w2),2,avg_mask(:,1:nwin)) / ngood
              baselineDS%name = BaseNameDC
              CALL Build_MLSAuxData (sd_id, baselineDS, &
                   BaselineDCavg(:,mindx), lastIndex=mindx, &
@@ -745,6 +754,9 @@ PRINT *, 'Updating baselines...'
 END MODULE SpectralBaseline
 !=============================================================================
 ! $Log$
+! Revision 2.12  2011/01/27 15:37:20  perun
+! Mask bad DC baseline for calculating average DC baseline.
+!
 ! Revision 2.11  2010/04/08 20:32:36  perun
 ! Fixed AC/DC baseline array tests.
 !
