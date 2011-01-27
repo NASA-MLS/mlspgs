@@ -99,7 +99,7 @@ CONTAINS
 ! Save data for further processing:
 
        WRITE (L1BFileInfo%EngMAF_unit) EngMAF, EngPkt
-
+ 
 ! Check for data gaps:
 
        MAF_dif = INT ((EngMAF%secTAI - last_TAI) / MAF_dur + 0.1)
@@ -171,7 +171,10 @@ CONTAINS
 
        DO
           CALL NextSciMAF (more_data)
-          IF (.NOT. more_data .OR. SciMAF(0)%secTAI >= TAI_range%startTime) EXIT
+          IF (.NOT. more_data) EXIT
+          IF (ALL(SciMAF%scAngleG < 0.0) .OR. (SciMAF(0)%scAngleG > 0.0)) THEN
+             IF (SciMAF(0)%secTAI >= TAI_range%startTime) EXIT
+          ENDIF
        ENDDO
 
        IF (more_data) more_data = SciMAF(0)%secTAI <= TAI_range%endTime
@@ -564,6 +567,9 @@ END MODULE L1LogUtils
 !=============================================================================
 
 ! $Log$
+! Revision 2.17  2011/01/27 15:35:51  perun
+! Only check TAI time for good scAngleG or for first empty MAF
+!
 ! Revision 2.16  2008/02/25 17:18:40  perun
 ! Clear counts for missing MIF and mark flag as bad.
 !
