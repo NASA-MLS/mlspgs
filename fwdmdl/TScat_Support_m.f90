@@ -14,11 +14,11 @@ module TScat_Support_m
   ! Provide types and procedures for use during calculation and use of TScat
   ! tables by the Full Forward Model.
 
-  use MLSKinds, only: RP, R8
   implicit NONE
   private
-  public :: Get_TScat, Interpolate_P_to_theta_e
-  public :: Get_TScat_Setup, TScat_Gen_Setup
+  public :: Get_dB_df, Get_dB_dT, Get_TScat, Get_TScat_Setup
+  public :: Get_TScat_Teardown, Interpolate_P_to_theta_e, Mie_Freq_Index
+  public :: TScat_Gen_Setup
 
 !------------------------------ RCS Ident Info -------------------------------
   character (len=*), parameter, private :: ModuleName= &
@@ -27,11 +27,171 @@ module TScat_Support_m
 
 contains
 
+  ! --------------------------------------------------  Get_dB_df  -----
+  subroutine Get_dB_df ( Alpha, B, Beta_c_e, dBeta_c_e_dIWC, &
+    &                    dBeta_c_s_dIWC, TScat, dTScat_df, W0, Do_IWC, dB_df )
+
+    use d_t_script_dtnp_m, only: dT_script
+    use MLSKinds, only: Rp
+
+    real(rp), intent(in) :: Alpha(:)     ! on the path
+    real(rp), intent(in) :: B(:)         ! T_Script in some notes
+    real(rp), intent(in) :: Beta_c_e(:)  ! on the path
+    real(rp), intent(in) :: dBeta_c_e_dIWC(:)  ! on the path
+    real(rp), intent(in) :: dBeta_c_s_dIWC(:)  ! on the path
+    real(rp), intent(in) :: TScat(:)     ! on the path
+    real(rp), intent(in) :: dTScat_df(:) ! on the path
+    real(rp), intent(in) :: W0(:)        ! on the path
+    logical, intent(in) :: Do_IWC        ! Molecule == l_cloud_a
+    real(rp), intent(out) :: dB_df(:)    ! on the path, w.r.t. f on the path
+
+!{ \raggedright
+!   {\tt dB_df(i)} =
+!   $\frac{\partial \overline{\Delta B}_i}{\partial f^k_{lm}}$
+!           where  $\overline{B}_i = (1-\omega_{0_i}) B_i +
+!                                    \omega_{0_i} T_{\text{scat}_i} $
+!           and    $\frac{\partial \overline{B_i}}
+!                        {\partial f^k_{lm}(\zeta_i)} =
+!    \frac{\partial \omega_{0_i}}{\partial f^k_{lm}(\zeta_i)}
+!     \left( T_{\text{scat}_i} - B_i \right) +
+!    \omega_{0_i} \frac{\partial T_{\text{scat}_i}}
+!                      {\partial f^k_{lm}(\zeta_i)}
+!   = \left(\frac{\partial \omega_{0_i}}{\partial f^k}
+!     \left( T_{\text{scat}_i} - B_i \right) +
+!     \omega_{0_i} \frac{\partial T_{\text{scat}_i}}{\partial f^k}
+!     \right)
+!     \frac{\partial f^k}{\partial f^k_{lm}(\zeta_i)}
+!   = \left( \frac{\partial \omega_{0_i}}{\partial f^k}
+!      \left( T_{\text{scat}_i} - B_i \right) +
+!     \omega_{0_i} \frac{\partial T_{\text{scat}_i}}{\partial f^k}
+!      \right) \eta^k_{lm}(\zeta_i)$.
+!  \begin{equation*}
+!   \frac{\partial \omega_{0_i}}{\partial f^k_i} =
+!   \left\{ \begin{array}{ll}
+!    \frac1{\beta_{e_i}}
+!     \left( \frac{\partial \beta_{c\_s_i}}{\partial f^k_i}
+!          - \omega_{0_i} \frac{\partial \beta_{c\_e_i}}{\partial f^k_i}
+!     \right) & f = \text{IWC} \\
+!    -\frac{\omega_{0_i}}{\beta_{e_i}} & f \neq \text{IWC} \\
+!    \end{array} \right.
+!  \end{equation*}
+! where $\beta_{e_i} = \alpha_{\text{gas}_i} + \beta_{c\_e_i}$
+! (see {\tt wvs-095}).
+
+    if ( do_IWC ) then
+      dB_df = 1.0 / ( alpha + beta_c_e ) * & ! 1 / beta_e
+              & ( dBeta_c_s_dIWC - w0 * dBeta_c_e_dIWC ) * & ! d w0 / dIWC
+              & ( TScat - B ) + &
+              & W0 * dTScat_df
+    else
+      dB_df = - W0 / ( alpha + beta_c_e ) ! W0 / beta_e
+    end if
+
+  end subroutine Get_dB_df
+
+  ! --------------------------------------------------  Get_dB_dT  -----
+  subroutine Get_dB_dT ( Alpha, B, T, Nu, Beta_c_e, dBeta_c_e_dT, &
+    &                    dBeta_c_s_dT, TScat, dTScat_dT, W0, Eta_zxp, &
+    &                    NZ_ZXP, NNZ_ZXP, d_delta_B_dT )
+
+!{ \raggedright
+!   {\tt dB_dT(i)} =
+!   $\frac{\partial \overline{\Delta B_i}}{\partial T_{lm}}$
+!           where  $\overline{B}_i = (1-\omega_{0_i}) B_i +
+!                                    \omega_{0_i} T_{\text{scat}_i} $
+!           and    $\frac{\partial \overline{B_i}}
+!                        {\partial T_{lm}(\zeta_i)} =
+!    \frac{\partial \omega_{0_i}}{\partial T_{lm}(\zeta_i)}
+!     \left( T_{\text{scat}_i} - B_i \right) +
+!     \left( 1 - \omega_{0_i} \right) \frac{\partial B}
+!                                          {\partial T_{lm}(\zeta_i)} +
+!    \omega_{0_i} \frac{\partial T_{\text{scat}_i}}
+!                      {\partial T_{lm}(\zeta_i)}
+!   = \left( \frac{\partial \omega_{0_i}}{\partial T}
+!     \left( T_{\text{scat}_i} - B_i \right) +
+!     \left( 1 - \omega_{0_i} \right) \frac{\partial B}
+!                                          {\partial T_i}
+!     \right)
+!     \frac{\partial T}{\partial T_{lm}(\zeta_i)} +
+!     \omega_{0_i} \frac{\partial T_{\text{scat}_i}}{\partial T_{lm}(\zeta_i)}
+!   = \left( \frac{\partial \omega_{0_i}}{\partial T}
+!      \left( T_{\text{scat}_i} - B_i \right) +
+!     \left( 1 - \omega_{0_i} \right) \frac{\partial B}
+!                                          {\partial T_i}
+!      \right) \eta^T_{lm}(\zeta_i) +
+!     \omega_{0_i} \frac{\partial T_{\text{scat}_i}}{\partial T_{lm}(\zeta_i)}$.
+!
+! $\frac{\partial \omega_{0_i}}{\partial T_i} =
+!  \frac1{\beta_{e_i}}
+!   \left( \frac{\partial \beta_{c\_s_i}}{\partial T_i}
+!         - \omega_{0_i}
+!            \left( \frac{\partial \beta_{c\_e_i}}{\partial T_i}
+!                 + \frac{\partial \alpha_{\text{gas}_i}}{\partial T_i}
+!            \right)
+!   \right)$
+! where $\beta_{e_i} = \alpha_{\text{gas}_i} + \beta_{c\_e_i}$
+! (see {\tt wvs-095}).
+!
+! $\frac{\partial \omega_{0_i}}{\partial T_{lm}(\zeta_i)} =
+!  \frac{\partial \omega_{0_i}}{\partial T_i}
+!  \frac{\partial T_i}{\partial T_{lm}(\zeta_i)} =
+!  \frac{\partial \omega_{0_i}}{\partial T_i} \eta^T_{lm}(\zeta_i)$.
+!
+!  B satisfies the differential equation
+!  $\frac{\text{d} B}{\text{d} T} =
+!   \frac{B}{T^2} \left( \frac{h\nu}k + B \right)$.
+
+    use d_t_script_dtnp_m, only: dT_script
+    use MLSKinds, only: Rp, R8
+    use Physics, only: H_O_K => h_over_k
+
+    real(rp), intent(in) :: Alpha(:)     ! on the path
+    real(rp), intent(in) :: B(:)         ! T_Script in some notes
+    real(rp), intent(in) :: T(:)         ! Temperature on the path
+    real(r8), intent(in) :: Nu           ! Frequency
+    real(rp), intent(in) :: Beta_c_e(:)  ! on the path
+    real(rp), intent(in) :: dBeta_c_e_dT(:)  ! on the path
+    real(rp), intent(in) :: dBeta_c_s_dT(:)  ! on the path
+    real(rp), intent(in) :: TScat(:)     ! on the path
+    real(rp), intent(in) :: dTScat_dT(:,:) ! dTScat on the path / dT everywhere
+    real(rp), intent(in) :: W0(:)        ! on the path
+    real(rp), intent(in) :: Eta_zxp(:,:) ! from the grid to the path
+    integer, intent(in) :: NZ_ZXP(:,:)   ! path X 1 SV
+    integer, intent(in) :: NNZ_ZXP(:)    ! SV
+    real(rp), intent(out) :: d_delta_B_dT(:,:) ! on the path, w.r.t. T on the grid
+
+    real(rp) :: dB_dT(size(TScat)) ! on the path, w.r.t. T on the path
+    integer :: I, Np
+
+    dB_dT = 1.0 / ( alpha + beta_c_e ) * & ! 1 / beta_e
+          & ( dBeta_c_s_dT - w0 * dBeta_c_e_dT ) * & ! d w0 / dT
+          & ( TScat - B ) + &
+          & ( 1.0 - W0 ) * B * ( h_o_k * nu + B ) / T**2
+
+    call dt_script ( dB_dT, eta_zxp, nz_zxp, nnz_zxp, d_delta_B_dT )
+
+    !{ add $\Delta \omega_{0_i} \frac{\partial T_{\text{scat}_i}}
+    !                                {\partial T_{lm}(\zeta_i)}$
+    np = size(w0)
+    d_delta_B_dT(1,:) = d_delta_B_dT(1,:) + &
+                      & 0.5 * ( W0(1) * dTScat_dT(1,:) + W0(2) * dTScat_dT(2,:) )
+    do i = 2, np-1  ! Assume size(w0) == size(dTScat_dT,1) ==
+                    ! size(d_delta_B_dT,1)
+      d_delta_B_dT(i,:) = d_delta_B_dT(i,:) + &
+                        & 0.5 * ( W0(i+1) * dTScat_dT(i+1,:) - &
+                        &         W0(i-1) * dTScat_dT(i-1,:) )
+    end do
+    d_delta_B_dT(1,:) = d_delta_B_dT(1,:) - &
+                      & 0.5 * ( W0(np-1) * dTScat_dT(np-1,:) + &
+                      &         W0(np) * dTScat_dT(np,:) )
+
+  end subroutine Get_dB_dT
+
   ! --------------------------------------------------  Get_TScat  -----
-  subroutine Get_TScat ( TScat_Conf, State, MAF, Phitan, Frq, Z_path,        &
-    &                    Phi_path, Tan_PT, Grids_tmp, Eta_T, Grids_f, Eta_F, &
-    &                    L2PC, X, dX, TScat, RadInL2PC, Grids_TScat,         &
-    &                    Grids_L2PC_X, XstarPTAN, TScat_Path, dTScat )
+  subroutine Get_TScat ( FwdModelIn, FwdModelExtra, MAF, Phitan, Frq,  &
+    &                    Z_path, Phi_path, Tan_PT, Grids_f, L2PC, dX,  &
+    &                    TScat, RadInL2PC, Grids_TScat, TScat_Path,    &
+    &                    Atmos_Der, Temp_Der, dTScat_df, dTScat_dT )
 
   ! Get TScat and its derivatives along the integration path using
   ! the TScat tables and the same strategy as the linear forward model.
@@ -39,204 +199,227 @@ contains
     use Comp_Eta_Docalc_No_Frq_m, only: Comp_Eta_Docalc_No_Frq, Comp_Eta_fzp
     use Comp_Sps_Path_Frq_m, only: Comp_One_Path_Frq
     use ForwardModelConfig, only: ForwardModelConfig_t
-    use HGridsDatabase, only: FindClosestMatch
+    use ForwardModelVectorTools, only: GetQuantityForForwardModel
+    use Intrinsic, only: L_Temperature
     use L2PC_m, only: L2PC_t
-    use Load_Sps_Data_m, only: Grids_T, Fill_Grids_2
-    use ManipulateVectorQuantities, only: FindOneClosestInstance
-    use MatrixModule_1, only: MATRIX_T, MULTIPLYMATRIXVECTORNOT, DUMP, &
-      & FINDBLOCK, CREATEBLOCK
+    use Load_Sps_Data_m, only: DestroyGrids_t, Grids_T, Fill_Grids_2, &
+      & Load_One_Item_Grid, Load_Sps_Data
+    use MatrixModule_1, only: GetVectorFromColumn, Matrix_t, &
+      & MultiplyMatrixVectorNoT
+    use MLSKinds, only: RP, R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use Molecules, only: L_CLOUD_A
+    use Molecules, only: First_Molecule, Last_Molecule
     use String_Table, only: Get_String
     use VectorsModule, only: GetVectorQuantityByType, &
       & VectorValue_T, Vector_T
 
-    type(forwardModelConfig_T), intent(in) :: TScat_Conf
-    type(vector_t), intent(in) :: State ! Forward model's state vector.
+    type(vector_t), intent(in) :: FwdModelIn, FwdModelExtra ! Forward model state vectors.
     integer, intent(in) :: MAF          ! Major frame index
     type(vectorValue_T), intent(in) :: Phitan ! Limb tangent geodAngle
     real(r8), intent(in) :: Frq         ! Frequency at which to evaluate TScat
     real(rp), intent(in) :: Z_Path(:)   ! Zeta along the path
     real(rp), intent(in) :: Phi_Path(:) ! Phi along the path
     integer, intent(in) :: Tan_PT       ! Index of tangent point in Z_Path
-    type (Grids_T), intent(in) :: Grids_tmp ! All the coordinates for TEMP
-    real(rp), intent(in) :: Eta_T(:,:)  ! Interpolation factors from temperature grid
-                                        ! to path, path length X SV length
-    type (Grids_T), intent(in) :: Grids_f   ! All the coordinates for VMR
-    real(rp), intent(in) :: Eta_F(:,:)  ! Interpolation factors from VMR grid
-                                        ! to path, path length X SV length
+    type (Grids_T), intent(in) :: Grids_f ! All the coordinates for VMR
     type(L2PC_t), intent(in) :: L2PC    ! The selected L2PC
-    type(vector_T), intent(inout) :: X  ! Quantities from State that correspond
-                                        ! to quantities from L2PC%col%vec. Work
-                                        ! space to avoid cloning; (inout) to
-                                        ! avoid nullifying pointer components.
-    type(vector_T), intent(inout) :: dX ! X - L2PC%col%vec. Work space to avoid
-                                        ! cloning; (inout) to avoid nullifying
-                                        ! pointer components.
+    type(vector_T), intent(inout) :: dX ! Clone of L2PC%col%vec.  Used to
+                                        ! compute value of X - L2PC%col%vec
+                                        ! where X is the forward model's
+                                        ! state.  Work space to avoid cloning;
+                                        ! (inout) to avoid nullifying pointer
+                                        ! components.
     type(vector_T), intent(inout) :: TScat ! Same form as L2PC%row%vec. Work
                                         ! space to avoid cloning; (inout) to
                                         ! avoid nullifying pointer components.
     integer, intent(in) :: RadInL2PC    ! Index of qty in TScat, X, dX, L2PC%J
     type(grids_t), intent(inout) :: Grids_TScat ! All the grids for TScat
-    type(grids_t), intent(inout) :: Grids_L2PC_X ! All the grids for L2PC%j%col%vec
-    type(vectorValue_T), intent(inout) :: XSTARPTAN ! Tangent pressure in l2pc
+    logical, intent(in) :: Atmos_Der, Temp_Der  ! Want these derivatives?
     real(rp), intent(out) :: TScat_Path(:) ! TScat on the path.
-    real(rp), intent(out) :: dTScat(:,:) ! dTScat / etc.
-                                        ! path X size(L2PC%col%vec%quantities)
+    real(rp), intent(out) :: dTScat_df(:,:) ! dTScat on path / df everywhere
+                                        ! Path X forward model SV
+    real(rp), intent(out) :: dTScat_dT(:,:) ! dTScat on path / dT everywhere
+                                        ! Path X forward model temperature SV
 
-    integer :: Center      ! of TQ instances
-    integer :: ClosestInstance ! Instance of SQ nearest to instance of TScat
-    integer :: DeltaInstance   ! Distance from ClosestInstance
     real(r8) :: DeltaPhi
-    logical :: Do_Calc_FZP(size(z_path), max(size(grids_TScat%values), size(grids_L2PC_x%values)))
-    logical :: Do_Calc_ZP(size(z_path), max(grids_TScat%p_len,grids_L2PC_x%p_len))
-    real(rp) :: Eta_FZP(size(z_path), max(size(grids_TScat%values), size(grids_L2PC_x%values)))
-    real(rp) :: Eta_ZP(size(z_path), max(grids_TScat%p_len,grids_L2PC_x%p_len))
+    integer :: DeltaTQ                  ! Distance from TQCenter
+    logical :: Do_Calc_FZP(size(z_path), size(grids_TScat%values) )
+    logical :: Do_Calc_ZP(size(z_path), grids_TScat%p_len)
+    real(rp) :: dTScat_L2PC(size(z_path)) ! dTScat/dX on forward model's path
+    real(rp) :: Eta_FZP(size(z_path), size(grids_TScat%values))
+    real(rp) :: Eta_ZP(size(z_path), grids_TScat%p_len)
     integer :: F_Inda, F_Indb
-    integer :: I           ! Loop index and subscript
-    integer :: Instance    ! For which instance in State do we want TScat?
-    integer :: N           ! path length
-    logical :: Not_Zero_f(grids_L2PC_x%l_f(ubound(grids_L2PC_x%l_f,1)))
-    integer :: Qty         ! Loop index and subscript
-    type(vectorValue_t), pointer :: RQ ! TScat radiance quantity
-    integer :: RQProfile
+    type(grids_t) :: Grids_col ! Grids for one column of L2PC Jacobian
+    integer :: I               ! Loop index and subscript
+    integer :: Instance        ! For which instance in L2PC do we want dTScat?
+    integer :: N               ! path length
+    real(rp) :: Phi_Offset     ! To shift TScat phi to path phi
+    integer :: Qty             ! Loop index and subscript
     type(vectorValue_t), pointer :: SQ ! State vector quantity
-    integer :: SQInstance  ! Instance of SQ
-    integer :: SV_f, SV_zp ! Loop inductor and subscript
+    integer :: SQCenter        ! Center instance of SQ
+    integer :: SQInstance      ! Instance of SQ
+    integer :: SV_f, SV_zp     ! Loop inductor and subscript
     type(vectorValue_t), pointer :: TQ ! L2PC TScat state vector quantity
-    integer :: TQInstance  ! Instance of TQ
-    integer :: TSProfile   ! L2PC TScat profile
+    integer :: TQCenter        ! center instance of TQ instances
+    integer :: TQInstance      ! Instance of TQ
+    integer :: TSProfile       ! L2PC TScat profile
     integer :: V_Ind
     integer :: W_Inda, W_Indb
-    character(len=80) :: Word ! From the string table
+    character(len=80) :: Word  ! From the string table
 
     n = size(TScat_Path)
 
-    rq => TScat%quantities(radInL2PC)
-    do rqProfile = 1, size(rq%template%phi)   ! Profile in TScat rad qty
-      do qty = 1, size(l2pc%j%col%vec%quantities,1) ! TScat state quantities
-        ! Get quantity in State corresponding to quantity in L2PC TScat's
-        ! column vector
-        tq => l2pc%j%col%vec%quantities(qty)
-        sq => getVectorQuantityByType( State, quantityType=tq%template%quantityType )
-        if ( .not. associated(sq) ) then ! Complain
-          call get_string ( tq%template%name, word, strip=.true. )
-          call MLSMessage ( MLSMSG_Error, ModuleName, &
-            &  "No quantity in state vector to match L2PC TScat quantity "//trim(word) )
-        end if
-        ! Compute dX using instances of sq most nearly corresponding to
-        ! instances of tq.
-        closestInstance = findClosestMatch( sq%template%phi(1,:), &
-          & rq%template%phi, rqProfile )
-        center = tq%template%noInstances/2 + 1
-        do tqInstance = 1, tq%template%noInstances
-          deltaInstance = tqInstance - center
-          phiWindowLoop: do
-            deltaPhi = tq%template%phi(1,center+deltaInstance) - &
-              & tq%template%phi(1,center)
-            if ( deltaPhi > TScat_conf%phiWindow ) then
-              deltaInstance = deltaInstance - 1
-            else if ( deltaPhi < -TScat_conf%phiWindow ) then
-              deltaInstance = deltaInstance + 1
-            else
-              exit phiWindowLoop
-            end if
-          end do phiWindowLoop
-          sqInstance = max(1, min( closestInstance + deltaInstance, &
-                                   sq%template%noInstances ) )
-          ! Fill the tqInstance part of dX
-          dX%quantities(qty)%values(:,tqInstance) = sq%values(:,sqInstance) - &
-            &                                       tq%values(:,tqInstance)
-          ! Interpolate Jacobian to phitan here?
-        end do ! tqInstance
-      end do ! qty
-    end do ! rqProfile
+    do qty = 1, size(l2pc%j%col%vec%quantities,1) ! L2PC state quantities
+      ! Get quantity in forward model state corresponding to quantity in
+      ! L2PC TScat's column vector
+      tq => l2pc%j%col%vec%quantities(qty)  ! L2PC state quantity
+      sq => getQuantityForForwardModel( fwdModelIn, fwdModelExtra, &
+        & quantityType=tq%template%quantityType )
+      if ( .not. associated(sq) ) then ! Complain
+        call get_string ( tq%template%name, word, strip=.true. )
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          &  "No quantity in state vector to match L2PC TScat quantity "//trim(word) )
+      end if
+      ! Compute dX using instances of the forward model state vector most nearly
+      ! corresponding to instances of the L2PC TScat state vector.
+      sqCenter = sq%template%noInstances/2 + 1
+      tqCenter = tq%template%noInstances/2 + 1
+      do tqInstance = 1, tq%template%noInstances
+        deltaTQ = tqInstance - tqCenter
+        do ! phiWindowLoop
+          deltaPhi = tq%template%phi(1,tqCenter+deltaTQ) - &
+            & tq%template%phi(1,tqCenter)
+          if ( deltaPhi > sq%template%noInstances - tq%template%noInstances ) then
+            deltaTQ = deltaTQ - 1
+          else if ( deltaPhi < -(sq%template%noInstances - tq%template%noInstances) ) then
+            deltaTQ = deltaTQ + 1
+          else
+            exit ! phiWindowLoop
+          end if
+        end do ! phiWindowLoop
+        sqInstance = max(1, min( sqCenter + deltaTQ, &
+                                 sq%template%noInstances ) )
+        ! Fill the tqInstance part of dX
+        dX%quantities(qty)%values(:,tqInstance) = sq%values(:,sqInstance) - &
+          &                                       tq%values(:,tqInstance)
+      end do ! tqInstance
+    end do ! qty
 
     ! Evaluate TScat%quantities(radInL2PC) using first-order approximation.
     ! TScat(out) = TScat(L2PC) + J * dX
-    TScat%quantities(radInL2PC)%values = l2pc%j%row%vec%quantities(radInL2PC)%values
     call MultiplyMatrixVectorNoT ( l2pc%J, dX, TScat, update = .true., row=radInL2PC )
 
-    ! Put values into Grids_TScat; grids were put there by Get_TScat_Setup.
-    call Fill_Grids_2 ( grids_TScat, i, TScat%quantities(radInL2PC), &
-      & setDerivFlags = .true. )
+    ! Get the TScat quantity for radInL2PC
+    tq => TScat%quantities(radInL2PC)
+    tq%values = l2pc%j%row%vec%quantities(radInL2PC)%values
 
-    ! Get eta_zp
+    ! Offset so phi in grids_TScat will match up with phi_path.
+    phi_offset = sum(phitan%values(:,maf)) / size(phitan%values,1) &
+      &        - 0.5 * ( tq%template%phi(1,grids_TScat%windowStart(1)) &
+      &                + tq%template%phi(1,grids_TScat%windowFinish(1)) )
+
+    ! Put values and coordinates into Grids_TScat, which was created by
+    ! Get_TScat_Setup.
+    call Fill_Grids_2 ( grids_TScat, 1, tq, setDerivFlags = .true., &
+      & phi_offset=phi_offset )
+
+    ! Get eta_zp to put grids_TScat onto TScat_path
     call comp_eta_docalc_no_frq ( grids_TScat, z_path, phi_path, eta_zp, &
       & do_calc_zp, tan_pt = tan_pt )
     ! Get TScat_path.  sideband=0 means absolute frequency, not I.F.
+    ! This also returns eta_fzp for putting TScat from the L2PC coordinates
+    ! onto the forward model's path and frequency.
     call comp_one_path_frq ( grids_TScat, frq, eta_zp, do_calc_zp, &
       & TScat_path, do_calc_fzp, eta_fzp, sideband=0 )
 
     ! We have TScat on the path.  Now get the derivatives.
 
-    call comp_eta_fzp ( grids_L2PC_x, frq, eta_zp, do_calc_zp, 0, &
-                      & eta_fzp, not_zero_f, do_calc_fzp )
+    if ( atmos_der ) dTScat_df = 0.0
+    if ( temp_der ) dTScat_dT = 0.0
 
-    dTScat = 0.0
-    f_inda = 0
-    w_inda = 0
+    if ( atmos_der .or. temp_der ) then
+      do qty = 1, size(l2pc%j%col%vec%quantities)
+        do instance = 1, size(l2pc%j%col%vec%quantities(qty)%values)
+          ! Use TScat vector for a temp, a column of the L2PC Jacobian.
+          ! Here, it's dTScat(radInL2PC)(everywhere) / dSomething(qty,phi,zeta)
+          call getVectorFromColumn ( l2pc%j, qty, instance, TScat, rowQty=radInL2PC )
+          call load_one_item_grid ( grids_col, TScat%quantities(radInL2PC) )
+          f_inda = 0
+          w_inda = 0
+          f_indb = grids_col%l_f(1)
+          v_ind = grids_col%l_v(0)
+          w_indb = w_inda + (grids_col%l_z(1) - grids_col%l_z(1-1)) * &
+                            (grids_col%l_p(1) - grids_col%l_p(1-1))
 
-    do qty = 1, size(l2pc%j%col%vec%quantities)
-      f_indb = grids_L2PC_x%l_f(qty)
-      v_ind = grids_L2PC_x%l_v(qty)
-      w_indb = w_inda + (Grids_L2PC_x%l_z(qty) - Grids_L2PC_x%l_z(qty-1)) * &
-                        (Grids_L2PC_x%l_p(qty) - Grids_L2PC_x%l_p(qty-1))
-
-      do sv_zp = w_inda + 1, w_indb
-        do sv_f = f_inda + 1, f_indb
-          v_ind = v_ind + 1
-          if ( not_zero_f(sv_f) ) then
-            dTscat(:,qty) = dTscat(:,qty) + &
-                          & Grids_L2PC_x%values(v_ind) * eta_fzp(:,v_ind)
-          else
-            dTscat(:,qty) = 0.0
+          ! Interpolate derivatives of TScat w.r.t. one L2PC state vector
+          ! quantity and instance onto the forward model's path and frequency
+          dTScat_L2PC = 0.0
+          do sv_zp = w_inda + 1, w_indb  ! Zeta X Phi
+            do sv_f = f_inda + 1, f_indb ! Frequency
+              v_ind = v_ind + 1
+              dTscat_L2PC = dTscat_L2PC + &
+                          & grids_col%values(v_ind) * eta_fzp(:,v_ind)
+            end do ! Frequency
+          end do ! Zeta X Phi
+          ! We have derivatives of TScat w.r.t. one L2PC state vector
+          ! quantity and instance on the forward model's path and frequency
+          ! but the L2PC state vector.
+          ! Now map them into the forward model's state vector
+          if ( temp_der .and. &
+            &  l2pc%j%col%vec%quantities(qty)%template%quantityType == l_temperature ) then
+            dTScat_dT(:,instance) = dTscat_L2PC
+          else if ( atmos_der ) then
+            do i = 1, size(grids_f%qty)
+              if ( l2pc%j%col%vec%quantities(qty)%template%quantityType == &
+                 & grids_f%qty(i) ) then
+                 dTScat_df(:,grids_f%l_v(i-1)+instance) = dTScat_L2PC
+                 exit
+               end if
+             end do
           end if
-        end do
-      end do
-    end do
+        end do ! Instance
+      end do ! Qty
+    end if ! atmos_der .or. temp_der
+
+    call destroyGrids_t ( grids_col )
 
   end subroutine Get_TScat
 
   ! --------------------------------------------  Get_TScat_Setup  -----
-  subroutine Get_TScat_Setup ( TScat_Conf, FmConf, FwdModelIn, FwdModelExtra, &
-    &                          Radiance, Sideband, MAF, Phitan, &
-    &                          L2PC, X, dX, TScat, RadInL2PC, Grids_TScat, &
-    &                          Grids_L2PC_X, XstarPTAN )
+  subroutine Get_TScat_Setup ( FmConf, FwdModelIn, FwdModelExtra,  &
+    &                          Sideband, MAF, Phitan, L2PC,        &
+    &                          RadInL2PC, dX, TScat, Grids_TScat )
 
-    ! Create an ersatz ForwardModelConfig to drive a linearized
-    ! computation of TScat radiances during clear-sky path
-    ! integration.
-
-    use Allocate_Deallocate, only: Allocate_Test, Test_Allocate
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, &
+      & Test_Allocate, Test_DeAllocate
     use ForwardModelConfig, only: ForwardModelConfig_t
-    use Intrinsic, only: L_PTAN, L_Radiance
+    use Intrinsic, only: L_PTAN, L_Radiance, L_Temperature
     use Load_Sps_Data_m, only: Grids_T, Load_One_Item_Grid, Load_Grid_From_Vector
     use L2PC_m, only: L2PC_t, L2PCDatabase, PopulateL2PCbin
     use L2PCBins_m, only: SelectL2PCBins
+    use Molecules, only: First_Molecule, Last_Molecule
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use VectorsModule, only: CloneVector, GetVectorQuantityByType, &
       & GetVectorQuantityIndexByType, VectorValue_T, Vector_T
-
-    type(forwardModelConfig_T), intent(out) :: TScat_Conf
     type(forwardModelConfig_T), intent(in) :: FMconf
     type(vector_T), intent(in) ::  FWDMODELIN
     type(vector_T), intent(in) ::  FWDMODELEXTRA
-    type (VectorValue_T), intent(in) :: RADIANCE ! The radiance we're after
     integer, intent(in) :: SIDEBAND       ! Which sideband (see below)
     integer, intent(in) :: MAF            ! MAF index
     type(vectorValue_T), intent(in) :: Phitan ! Limb tangent geodAngle
     type(L2PC_t), pointer :: L2PC         ! The selected L2PC
-    type(vector_T), intent(out) :: X      ! Same form as L2PC%col%vec
+    integer, intent(out) :: RadInL2PC     ! Qty in L2PC for TScat_conf%signals(1)
     type(vector_T), intent(out) :: dX     ! Same form as L2PC%col%vec
     type(vector_T), intent(out) :: TScat  ! Same form as L2PC%row%vec
-    integer, intent(out) :: RadInL2PC     ! Qty in L2PC for TScat_conf%signals(1)
     type(grids_t), intent(inout) :: Grids_TScat ! All the grids for TScat
-    type(grids_t), intent(inout) :: Grids_L2PC_X ! All the grids for L2PC%j%col%vec
-    type(vectorValue_T), pointer :: XSTARPTAN ! Tangent pressure in L2PC
 
     integer, dimension(-1:1) :: L2PCBINS ! Result
+    type (VectorValue_T) :: RADIANCE ! The TScat radiance we're after
+
     integer :: Stat
+
+    type(forwardModelConfig_T) :: TScat_Conf
+
+    ! Create an ersatz ForwardModelConfig to select TScat bins
 
     TScat_conf = fmConf
     TScat_conf%lockBins = .false.
@@ -258,8 +441,7 @@ contains
 
     ! Determine the best bin to use
     call selectL2PCBins ( TScat_conf, fwdModelIn, fwdModelExtra, &
-      & radiance, sideband, maf, &
-      & l2pcBins )
+      & radiance, sideband, maf, l2pcBins )
 
     ! Load the bin
     call populateL2PCBin ( l2pcBins(sideband), ignoreHessian=.true. )
@@ -270,59 +452,44 @@ contains
     radInl2pc = GetVectorQuantityIndexByType ( &
       & l2pc%j%row%vec, quantityType=l_radiance, &
       & signal=TScat_conf%signals(1)%index, sideband=sideband )
-    if ( l2pc%j%row%vec%quantities(radInL2PC)%template%noChans /= radiance%template%noChans ) &
+    if ( l2pc%j%row%vec%quantities(radInL2PC)%template%noChans /= &
+       & radiance%template%noChans ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
       & "Channel dimension in l2pc not same as in measurements" )
 
-    xStarPtan => GetVectorQuantityByType ( l2pc%j%col%vec, &
-      & quantityType = l_ptan )
-
-    call cloneVector ( x, l2pc%j%col%vec, vectorNameText='__x' )
-    call cloneVector ( dX, x, vectorNameText='__dX' )
+    call cloneVector ( dX, l2pc%j%col%vec, vectorNameText='__dX' )
     call cloneVector ( TScat, l2pc%j%row%vec, vectorNameText='__TScat' )
 
     ! Create and fill grids for TScat radiance
+    TScat_Conf%phiWindow = size(TScat%quantities(radInl2pc)%template%phi,2)
     call load_one_item_grid ( grids_TScat, TScat%quantities(radInl2pc), &
       & phitan, MAF, TScat_Conf, setDerivFlags = .true. )
-
-    ! Create and fill grids for L2PC state vector.
-    call load_grid_from_vector ( grids_L2PC_x, L2PC%j%col%vec, phitan, MAF, &
-      & TScat_Conf, setDerivFlags=spread(.true.,1,size(L2PC%j%col%vec%quantities)) )
-    ! Save some space
-    call allocate_test ( grids_L2PC_x%values, 0, 'Grids_L2PC_x%values', moduleName )
-
-  end subroutine Get_TScat_Setup
-
-  ! -----------------------------------------  Get_TScat_Teardown  -----
-  subroutine Get_TScat_Teardown ( TScat_Conf, X, dX, TScat, Grids_TScat, &
-                                & Grids_L2PC_X )
-
-    ! Clean up the ersatz ForwardModelConfig created by Get_TScat_Setup
-
-    use Allocate_Deallocate, only: Deallocate_Test, Test_DeAllocate
-    use ForwardModelConfig, only: ForwardModelConfig_t
-    use Load_Sps_Data_m, only: DestroyGrids_t, Grids_T
-    use VectorsModule, only: DestroyVectorInfo, Vector_t
-
-    type(forwardModelConfig_T), intent(out) :: TScat_Conf
-    type(vector_t), intent(inout) :: X      ! Same form as L2PC%col%vec
-    type(vector_t), intent(inout) :: dX     ! Same form as L2PC%col%vec
-    type(vector_t), intent(inout) :: TScat  ! Same form as L2PC%row%vec.
-    type(grids_t), intent(inout) :: Grids_TScat, Grids_L2PC_X
-
-    integer :: Stat
 
     call deallocate_test ( TScat_Conf%signals(1)%channels, &
       & "TScat_Conf%signals%channels", moduleName )
     deallocate ( TScat_Conf%signals, stat=stat )
     call test_deallocate ( stat, moduleName, "TScat_Conf%signals", -1 )
 
-    call destroyVectorInfo ( x )
+  end subroutine Get_TScat_Setup
+
+  ! -----------------------------------------  Get_TScat_Teardown  -----
+  subroutine Get_TScat_Teardown ( dX, TScat, Grids_TScat )
+
+    ! Clean up the ersatz ForwardModelConfig created by Get_TScat_Setup
+
+    use Load_Sps_Data_m, only: DestroyGrids_t, Grids_T
+    use VectorsModule, only: DestroyVectorInfo, Vector_t
+
+    type(vector_t), intent(inout) :: dX     ! Same form as L2PC%col%vec
+    type(vector_t), intent(inout) :: TScat  ! Same form as L2PC%row%vec.
+    type(grids_t), intent(inout) :: Grids_TScat
+
+    integer :: Stat
+
     call destroyVectorInfo ( dX )
     call destroyVectorInfo ( TScat ) 
 
     call destroyGrids_t ( grids_TScat )
-    call destroyGrids_t ( grids_L2PC_X )
 
   end subroutine Get_TScat_Teardown
 
@@ -371,6 +538,28 @@ contains
       & xis, p_on_xi, method='S', extrapolate='P' )
 
   end subroutine Interpolate_P_to_theta_e
+
+  ! ---------------------------------------------  Mie_Freq_Index  -----
+  integer function Mie_Freq_Index ( Frq, Tol )
+    use MLSKinds, only: R8
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use Output_m, only: Output
+    use Read_Mie_m, only: F_s
+    real(r8), intent(in) :: Frq, Tol
+    ! Choose which frequency panel of phase function to use (don't
+    ! bother interpolating because the change as a result of the change
+    ! of frequency within a single radiometer is small).  Make sure it's
+    ! close enough.
+    Mie_freq_index = minloc(abs(Frq-f_s),1)
+    if ( abs(Frq-f_s(Mie_freq_index)) > tol ) then
+      call output ( Mie_freq_index, before="Mie_freq_index = " )
+      call output ( f_s(Mie_freq_index), before=", f_s(Mie_freq_index) = " )
+      call output ( Frq, before=", Frq = " )
+      call output ( tol, before=", tol = ", advance='yes' )
+      call MLSMessage ( MLSMSG_Error, moduleName, &
+        & 'In TScat computation, phase function frequency coordinate too far from desired frequency' )
+    end if
+  end function Mie_Freq_Index
 
   ! --------------------------------------------  TScat_Gen_Setup  -----
   subroutine TScat_Gen_Setup ( FwdModelConf, FwdModelIn, FwdModelExtra,     &
@@ -493,6 +682,9 @@ contains
 end module TScat_Support_m
 
 ! $Log$
+! Revision 2.3  2011/01/28 19:16:28  vsnyder
+! Lots of stuff for derivatives
+!
 ! Revision 2.2  2010/09/25 01:09:01  vsnyder
 ! Inching along
 !
