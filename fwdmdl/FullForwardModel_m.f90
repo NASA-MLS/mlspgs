@@ -46,14 +46,15 @@ contains
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use Get_Species_Data_M, only:  Get_Species_Data
     use HessianModule_1, only: HESSIAN_T
-    use Intrinsic, only: L_CLOUDICE, L_MAGNETICFIELD, &
+    use Intrinsic, only: L_MAGNETICFIELD, &
       & L_PHITAN, L_PTAN, L_TEMPERATURE, L_TSCAT, L_VMR
     use Load_Sps_Data_m, only: DestroyGrids_t, Dump, EmptyGrids_T, Grids_T, &
       & Load_One_Item_Grid, Load_Sps_Data
     use MatrixModule_1, only: MATRIX_T
     use MLSKinds, only: RP
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSStringLists, only: switchDetail
-    use Molecules, only: First_Molecule, Last_Molecule, L_CLOUD_A
+    use Molecules, only: First_Molecule, Last_Molecule, L_CLOUD_A, L_CLOUD_S
     use Toggles, only: Switches
     use VectorsModule, only: Vector_T, VectorValue_T
 
@@ -69,12 +70,14 @@ contains
     real(rp), pointer :: TAN_PRESS(:)    ! Pressures corresponding to Z_PSIG
     type (Grids_T) :: Grids_tmp ! All the coordinates for TEMP
     type (Grids_T) :: Grids_f   ! All the coordinates for VMR
-    type (Grids_T) :: Grids_iwc ! All the coordinates for WC
+    type (Grids_T) :: Grids_IWC_a ! All the coordinates for IWC absorption
+    type (Grids_T) :: Grids_IWC_s ! All the coordinates for IWC scattering
     type (Grids_T) :: Grids_mag ! All the coordinates for Magnetic field
     type (Grids_T) :: Grids_n   ! All the spectroscopy(N) coordinates
     type (Grids_T) :: Grids_v   ! All the spectroscopy(V) coordinates
     type (Grids_T) :: Grids_w   ! All the spectroscopy(W) coordinates
-    type (VectorValue_T), pointer :: CloudIce ! Ice water content
+    type (VectorValue_T), pointer :: CloudIce_a ! Ice water content - absorption
+    type (VectorValue_T), pointer :: CloudIce_s ! Ice water content - scattering
     type (VectorValue_T), pointer :: PHITAN ! Tangent geodAngle component of state vector
     type (VectorValue_T), pointer :: PTAN   ! Tangent pressure component of state vector
     type (VectorValue_T), pointer :: TEMP   ! Temperature component of state vector
@@ -144,7 +147,7 @@ contains
     sv_t_len = grids_tmp%p_len   ! zeta X phi == n_t_zeta * no_sv_p_t
 
     call load_sps_data ( FwdModelConf, phitan, fmStat%maf, grids_f, &
-      & s_ind )
+      & s_ind=s_ind )
 
     temp_der = present ( jacobian ) .and. FwdModelConf%temp_der
     atmos_der = present ( jacobian ) .and. FwdModelConf%atmos_der      
@@ -175,20 +178,24 @@ contains
       call emptyGrids_t ( grids_mag ) ! Allocate components with zero size
     end if
 
-    nullify ( cloudIce )
+    nullify ( cloudIce_a, cloudIce_s )
     if ( FwdModelConf%incl_cld .or. FwdModelConf%useTScat ) then
-      ! Try type l_cloudIce first
-      cloudIce => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra,  &
-        & quantityType=l_cloudIce, config=fwdModelConf, noError=.true. )
-      if ( .not. associated(cloudIce) ) & ! now try type vmr with cloud_a molecule
-        & cloudIce => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra,  &
+      cloudIce_a => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra,  &
         & quantityType=l_vmr, molecule=l_cloud_a, config=fwdModelConf, noError=.true. )
+      cloudIce_s => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra,  &
+        & quantityType=l_vmr, molecule=l_cloud_s, config=fwdModelConf, noError=.true. )
     end if
-    if ( associated(cloudIce) ) then
-      call load_one_item_grid ( grids_iwc, cloudIce, phitan, fmStat%maf, &
+    if ( associated(cloudIce_a) .neqv. associated(cloudIce_s) ) &
+      & call MLSMessage ( MLSMSG_Error, moduleName, &
+        & "Either need both Cloud_a and Cloud_s, or neither of them" )
+    if ( associated(cloudIce_a) ) then
+      call load_one_item_grid ( grids_IWC_a, cloudIce_a, phitan, fmStat%maf, &
+        & fwdModelConf, .false., .false. )
+      call load_one_item_grid ( grids_IWC_s, cloudIce_s, phitan, fmStat%maf, &
         & fwdModelConf, .false., .false. )
     else
-      call emptyGrids_t ( grids_iwc ) ! Allocate components with zero size
+      call emptyGrids_t ( grids_IWC_a ) ! Allocate components with zero size
+      call emptyGrids_t ( grids_IWC_s ) ! Allocate components with zero size
     end if
 
   ! Compute the preselected integration grid (all surfs from temperature,
@@ -241,11 +248,11 @@ contains
 
     if ( switchDetail(switches,'fmconf') > -1 ) then
       call dump( FwdModelConf, details=1 )
-    endif
+    end if
     call FullForwardModelAuto ( FwdModelConf, FwdModelIn, FwdModelExtra,       &
                               & FwdModelOut, FmStat, z_psig, tan_press,        &
-                              & grids_tmp, grids_f, grids_mag, grids_iwc,      &
-                              & grids_n, grids_v, grids_w,                     &
+                              & grids_tmp, grids_f, grids_mag, grids_iwc_a,    &
+                              & grids_iwc_s, grids_n, grids_v, grids_w,        &
                               & ptan, phitan, temp,                            &
                               & no_mol, noUsedChannels, no_sv_p_t, n_t_zeta,   &
                               & sv_t_len, nlvl, no_tan_hts,                    &
@@ -257,7 +264,8 @@ contains
                               & Jacobian, Hessian )
 
     call destroygrids_t ( grids_f )
-    call destroygrids_t ( grids_iwc )
+    call destroygrids_t ( grids_iwc_a )
+    call destroygrids_t ( grids_iwc_s )
     call destroygrids_t ( grids_mag )
     call destroygrids_t ( grids_tmp )
     call destroygrids_t ( grids_n )
@@ -276,10 +284,10 @@ contains
 
   subroutine FullForwardModelAuto ( FwdModelConf, FwdModelIn, FwdModelExtra,   &
                               & FwdModelOut, FmStat, z_psig, tan_press,        &
-                              & grids_tmp,  grids_f, grids_mag, grids_iwc,     &
-                              & grids_n, grids_v, grids_w, ptan, phitan, temp, &
-                              & no_mol, noUsedChannels, no_sv_p_t, n_t_zeta,   &
-                              & sv_t_len, nlvl, no_tan_hts,                    &
+                              & grids_tmp,  grids_f, grids_mag, grids_iwc_a,   &
+                              & grids_iwc_s, grids_n, grids_v, grids_w, ptan,  &
+                              & phitan, temp, no_mol, noUsedChannels,          &
+                              & no_sv_p_t,n_t_zeta, sv_t_len, nlvl, no_tan_hts,&
                               & surfaceTangentIndex,                           &
                               & max_c, maxVert, max_f, S_ind, ptan_der,        &
                               & s_t, s_a, s_h, s_lc, s_lw, s_td, s_p, s_pfa,   &
@@ -313,6 +321,7 @@ contains
     use HessianModule_1, only: HESSIAN_T
     use Intrinsic, only: L_A, L_RADIANCE, L_TScat, L_VMR
     use Load_Sps_Data_m, only: DestroyGrids_t, Dump, Grids_T
+    use L2PC_m, only: L2PC_t
     use MatrixModule_1, only: MATRIX_T
     use MLSKinds, only: R4, R8, RP, RV
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
@@ -331,7 +340,8 @@ contains
     use Tau_M, only: Destroy_Tau, Dump, Tau_T
     use Toggles, only: Emit, Levels, Switches, Toggle
     use Trace_M, only: Trace_begin, Trace_end
-    use TScat_Support_m, only: TScat_Gen_Setup
+    use TScat_Support_m, only: Get_TScat, Get_TScat_Setup, Get_TScat_Teardown, &
+      & TScat_Gen_Setup
     use TWO_D_HYDROSTATIC_M, only: Two_D_Hydrostatic
     use VectorsModule, only: GETVECTORQUANTITYBYTYPE, VECTOR_T, VECTORVALUE_T
 
@@ -349,7 +359,8 @@ contains
     type (Grids_T), intent(inout) :: Grids_f   ! All the coordinates for VMR,
                                             ! inout for cloud model to change
                                             ! supersat
-    type (Grids_T), intent(in) :: Grids_iwc ! All the coordinates for WC
+    type (Grids_T), intent(in) :: Grids_IWC_a ! All the coordinates for IWC absorption
+    type (Grids_T), intent(in) :: Grids_IWC_s ! All the coordinates for IWC scattering
     type (Grids_T), intent(in) :: Grids_mag ! All the coordinates for Magnetic field
     type (Grids_T), intent(in) :: Grids_n   ! All the spectroscopy(N) coordinates
     type (Grids_T), intent(in) :: Grids_v   ! All the spectroscopy(V) coordinates
@@ -474,6 +485,7 @@ contains
                                   ! d_delta_df
     integer :: nnz_d_delta_df(size(grids_f%values)) ! Column lengths in
                                   ! nz_d_delta_df
+    integer :: RadInL2PC          ! Which TScat radiance in L2PC to use
     integer :: Vert_Inds(max_f)   ! Height indices of fine path in H_Glgrid etc.
 
     ! Cloud arrays are on the same grids as temperature
@@ -494,6 +506,7 @@ contains
     real(rp) :: B(max_c)              ! Planck radiation function
     real(rp) :: B_TScat(s_ts*max_c)   ! (TT_PATH_C - B) * W0_PATH_C
     real(rp) :: BETA_PATH_cloud_C(s_i*max_c) ! Beta on path coarse
+    real(rp) :: Beta_c_a_path_c(s_ts*max_c)  ! Beta_c_a on coarse path
     real(rp) :: Beta_c_e_path_c(s_ts*max_c)  ! Beta_c_e on coarse path
     real(rp) :: Beta_c_s_path_c(s_ts*max_c)  ! Beta_c_s on coarse path
     real(r8), target :: ChannelCenters(noUsedChannels) ! for PFA or non-frequency-averaging
@@ -503,8 +516,10 @@ contains
                                       !  (2:npc-1)
     real(rp) :: DEL_ZETA(max_c)       ! Integration lengths in Zeta coords
                                       !  along coarse path, (2:npc-1)
+    real(rp) :: dBeta_c_a_dIWC_path_C(s_ts*max_c)  ! on coarse path
     real(rp) :: dBeta_c_e_dIWC_path_C(s_ts*max_c)  ! on coarse path
     real(rp) :: dBeta_c_s_dIWC_path_C(s_ts*max_c)  ! on coarse path
+    real(rp) :: dBeta_c_a_dT_path_C(s_ts*max_c)    ! on coarse path
     real(rp) :: dBeta_c_e_dT_path_C(s_ts*max_c)    ! on coarse path
     real(rp) :: dBeta_c_s_dT_path_C(s_ts*max_c)    ! on coarse path
     real(rp) :: DHDZ_PATH(max_f)      ! dH/dZ on fine path (1:npf)
@@ -514,6 +529,8 @@ contains
     real(rp) :: DSDZ_GW_PATH(max_f)   ! ds/dH * dH/dZ * GW on path
     real(rp) :: DTanh_DT_C(max_c)     ! 1/tanh1_c d/dT tanh1_c
     real(rp) :: DTanh_DT_F(max_f)     ! 1/tanh1_f d/dT tanh1_f
+    real(rp) :: dTScat_df(s_ts*max_c,size(grids_f%values))
+    real(rp) :: dTScat_dT(s_ts*max_c,size(grids_tmp%values))
     real(rp) :: H_PATH(max_f)         ! Heights on path
     real(rp) :: H_PATH_C(max_c)       ! H_PATH on coarse grid
     real(rp) :: H_PATH_F(max_f)       ! H_PATH on fine grid
@@ -547,6 +564,7 @@ contains
     real(rp) :: D_T_SCR_dT(max_c,s_t*sv_t_len)  ! D Delta_B in some notes
                                       ! path x state-vector-components
     real(rp) :: D2X_DXDT(no_tan_hts,s_t*sv_t_len)  ! (No_tan_hts, nz*np)
+    real(rp) :: DB_DF(s_ts*max(s_a,s_t)*max_c)     ! dB / d one f on the path, for TScat
     real(rp) :: DBETA_DIWC_PATH_C(max_c,s_tg*no_mol)  ! dBeta_dIWC on coarse grid
     real(rp) :: DBETA_DIWC_PATH_F(max_f,s_tg*no_mol)  ! dBeta_dIWC on fine grid
     real(rp) :: DBETA_DN_PATH_C(max_c,s_td*size(fwdModelConf%lineWidth_TDep)) ! dBeta_dn on coarse grid
@@ -563,7 +581,8 @@ contains
     real(rp) :: DHDZ_GLGRID(maxVert,no_sv_p_t) ! dH/dZ on glGrid surfs
     real(rp) :: DX_DT(no_tan_hts,s_t*sv_t_len)     ! (No_tan_hts, nz*np)
     real(rp) :: ETA_FZP(max_f,size(grids_f%values)) ! Eta_z x Eta_p * Eta_f
-    real(rp) :: ETA_IWC_ZP(max_f,s_i*grids_iwc%p_len)
+    real(rp) :: ETA_IWC_a_ZP(max_f,s_i*grids_iwc_a%p_len)
+    real(rp) :: ETA_IWC_s_ZP(max_f,s_i*grids_iwc_s%p_len)
     real(rp) :: ETA_Mag_ZP(max_f,grids_mag%p_len)  ! Eta_z x Eta_p
     real(rp) :: ETA_ZP(max_f,grids_f%p_len)        ! Eta_z x Eta_p
     real(rp) :: ETA_ZXP_N(max_f,size(grids_n%values)) ! Eta_z x Eta_p for N
@@ -572,7 +591,8 @@ contains
     real(rp) :: ETA_ZXP_V(max_f,size(grids_v%values)) ! Eta_z x Eta_p for V
     real(rp) :: ETA_ZXP_W(max_f,size(grids_w%values)) ! Eta_z x Eta_p for W
     real(rp) :: H_GLGRID(maxVert,no_sv_p_t)        ! H on glGrid surfs
-    real(rp) :: IWC_PATH(max_f,max(s_i,s_ts))      ! IWC on path
+    real(rp) :: IWC_PATH_a(max_f,max(s_i,s_ts))    ! IWC on path - absorption
+    real(rp) :: IWC_PATH_s(max_f,max(s_i,s_ts))    ! IWC on path - scattering
     real(rp), target :: MAG_PATH(s_p*max_f,4)      ! Magnetic field on path
     real(rp), target :: RAD_AVG_PATH(max_c,s_pfa*noUsedChannels) ! Freq. Avgd.
                                                    ! LBL radiance along the path
@@ -740,8 +760,9 @@ contains
     type (Beta_Group_T), pointer :: Beta_Group(:) ! from FwdModelConf%Beta_Group
 
     ! Interpolation factors for Temperature and IWC (not geometric interpolation
-    ! factors) to put Mie beta_c_e and beta_c_s into path
-    type (Eta_d_t), dimension(s_ts*max_c) :: Eta_T_path_C, Eta_IWC_path_C
+    ! factors) to put Mie beta_c_a and beta_c_s into path
+    type (Eta_d_t), dimension(s_ts*max_c) :: Eta_T_path_C, &
+    & Eta_IWC_a_path_C, Eta_IWC_s_path_C
 
 ! Channel information from the signals database as specified by fwdModelConf
     type (Channels_T), pointer, dimension(:) :: Channels 
@@ -757,6 +778,9 @@ contains
     type (Slabs_Struct), dimension(:,:), pointer :: GL_SLABS ! Freq. indep. stuff
 
     type (Tau_T) :: Tau_LBL, Tau_PFA
+
+    type (Vector_T) :: dX, TScat  ! Clones of Column, Row vectors from TScat L2PC
+    type(L2PC_t), pointer :: L2PC ! The selected TScat L2PC
 
     type (VectorValue_T), pointer :: BOUNDARYPRESSURE
     type (VectorValue_T), pointer :: EARTHREFL     ! Earth reflectivity
@@ -958,7 +982,11 @@ contains
        ! no op; maybe print
        if ( toggle(emit) .and. levels(emit) > 2 ) &
          & call output( '(Skipping loop of pointings)', advance='yes' )
-      elseif ( .not. FwdModelConf%generateTScat ) then
+      else if ( .not. FwdModelConf%generateTScat ) then
+        if ( fwdModelConf%useTScat ) &
+           & call Get_TScat_Setup ( fwdModelConf, FwdModelIn, FwdModelExtra, &
+           &                        Sideband, MAF, Phitan, L2PC,             &
+           &                        RadInL2PC, dX, TScat, Grids_TScat )
         do ptg_i = 1, no_tan_hts
 
           Vel_Rel = est_los_vel(ptg_i) / speedOfLight
@@ -973,8 +1001,10 @@ contains
           ! Do the ray tracing
           call one_pointing ( ptg_i, vel_rel, tan_phi(ptg_i), &
             &                 tan_press(ptg_i), est_scGeocAlt(ptg_i) )
-
+        if ( fwdModelConf%useTScat ) &
+          & call Get_TScat_Teardown ( dX, TScat, Grids_TScat )
         end do ! ptg_i
+        
       else
         ! Do ray tracing at specified scattering angles
         call generate_TScat
@@ -1299,8 +1329,6 @@ contains
       use Dump_0, only: DUMP
       use FOV_Convolve_m, only: Convolve_Support_T, FOV_Convolve_Setup, &
         & FOV_Convolve_Teardown, No_FFT
-      use Intrinsic, only: L_ELEVOFFSET, L_LIMBSIDEBANDFRACTION
-      use MLSFillValues, only: isNaN
       use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
       use MLSNumerics, only: Coefficients => Coefficients_r8, &
         & InterpolateArraySetup, InterpolateArrayTeardown
@@ -1443,11 +1471,6 @@ contains
             & Jacobian, fmStat%rows )
 
             if (atmos_second_der ) then
-              if ( any(isNaN(h_atmos(i,:,:,:)) ) ) then
-                call dump( h_atmos(i,:,:,:), 'h_atmos(i,:,:,:)', options='-H' )
-                call MLSMessage( MLSMSG_Warning, ModuleName // 'Convolution', &
-                  & 'NaNs found in h_atmos (before convolve_other_second_deriv)' )
-              endif
               call convolve_other_second_deriv ( convolve_support, maf, chanInd, &
               & thisFraction, update, thisRadiance, beta_group%qty, Grids_f, &
               & L1BMIF_TAI, MIFDeadTime, real(h_atmos(i,:,:,:),kind=rp), &
@@ -1861,7 +1884,6 @@ contains
       ! Frequency average or simply copy H_Frq to give H, the final HESSIAN
 
       use Freq_Avg_m, only: Freq_Avg, Freq_Avg_DACS
-      use MLSFillValues, only: isNaN
 
       type(grids_T), intent(in) :: Grids
       real(rp), intent(in) :: H_FRQ(:,:,:)    ! To be averaged  Frq X Grid X Grid
@@ -1875,16 +1897,6 @@ contains
 
       integer :: status
 
-      if ( any(isNaN(H_Frq) ) ) then
-        call MLSMessage( MLSMSG_Warning, ModuleName // 'Frequency_Avg_Second_Derivative', &
-          & 'NaNs found in h_frq', status=status )
-        if ( status == 0 ) call dump( H_Frq, 'H_Frq', options='-H' )
-      endif
-      if ( any(isNaN(H) ) ) then
-        call MLSMessage( MLSMSG_Warning, ModuleName // 'Frequency_Avg_Second_Derivative', &
-          & 'NaNs found in h (input)', status=status )
-        if ( status == 0 ) call dump( H_Frq, 'H_Frq', options='-H' )
-      endif
       if ( combine ) then
         ! Simply add newly-computed PFA derivatives in K_frq to
         ! previously-averaged LBL derivatives in K.  Remember that
@@ -1954,21 +1966,10 @@ contains
         end do
       case default             ! Impossible
       end select               ! Frequency averaging or not
-      if ( any(isNaN(H) ) ) then
-        call MLSMessage( MLSMSG_Warning, ModuleName // 'Frequency_Avg_Second_Derivative', &
-          & 'NaNs found in h (output)', status=status )
-        if ( status /= 0 ) return
-        call outputNamedValue( 'noUsedChannels', noUsedChannels )
-        call outputNamedValue( 'noUsedDACS', noUsedDACS )
-        call outputNamedValue( 'frq_avg_sel', frq_avg_sel )
-        call outputNamedValue( 'combine', combine )
-        call dump( H, 'H', options='-H' )
-      endif
     end subroutine Frequency_Avg_Second_Derivative
 
   ! ................................  Frequency_Avg_Second_Derivs  .....
     subroutine Frequency_Avg_Second_Derivs ( Ptg_i, Combine )
-      use MLSFillValues, only: isNaN
 
       integer, intent(in) :: Ptg_i          ! Pointing index
       logical, intent(in) :: Combine        ! "Combine LBL and PFA"
@@ -1999,20 +2000,6 @@ contains
           end do                      ! Loop over major molecules
         end do                        ! Loop over major molecules
 
-        if ( any(isNaN(h_atmos(:,ptg_i,:,:)) ) ) then
-          call MLSMessage( MLSMSG_Warning, ModuleName // 'Frequency_Avg_Second_Derivs', &
-            & 'NaNs found in h_atmos', status=status )
-          if ( status == 0 ) then
-            call outputNamedValue( 'no_mol', no_mol )
-            call outputNamedValue( 'combine', combine )
-            call outputNamedValue( 'ub', ub )
-            call outputNamedValue( 'shape(h_atmos)', shape(h_atmos) )
-            call outputNamedValue( 'shape(h_atmos_frq)', shape(h_atmos_frq) )
-            call outputNamedValue( 'shape(h_atmos_frq(:ub,:,:))', shape(h_atmos_frq(:ub,:,:)) )
-            call outputNamedValue( 'ptg_i', ptg_i )
-            call dump( h_atmos(:,ptg_i,:,:), 'h_atmos(:,ptg_i,:,:)', options='-H' )
-          endif
-        endif
       end if                          ! Want derivatives for atmos
 
     end subroutine Frequency_Avg_Second_Derivs
@@ -2132,8 +2119,6 @@ contains
 
       sv_dim = 0
       if ( atmos_second_der ) sv_dim = size(grids_f%values)
-      call outputNamedValue( 'maxNoPtgFreqs', maxNoPtgFreqs )
-      call outputNamedValue( 'noUsedChannels', noUsedChannels )
       call allocate_test ( h_atmos_frq, max(maxNoPtgFreqs,noUsedChannels), &
                          & sv_dim, sv_dim, 'h_atmos_frq', moduleName )
 
@@ -2231,7 +2216,7 @@ contains
       real(rp) :: Xis(size(rads,2))
 
       ! Interpolating factors
-      real(rp) :: Eta_IWC(0:1) ! for current IWC
+      real(rp) :: Eta_IWC(0:1) ! for current IWC - for Mie tables
       real(rp) :: Eta_T(0:1)   ! for current temperature
       real(rp) :: Eta_T_IWC(0:1,0:1) ! for both
 
@@ -2294,8 +2279,10 @@ contains
             & channel=channels(f_i)%used, sideband=thisSideband )
           call output ( trim(sig), advance="yes" )
         end if
-        ! Choose which frequency panel of phase function to use
-        ! (don't interpolate).  Make sure it's close enough.
+        ! Choose which frequency panel of phase function to use (don't
+        ! bother interpolating because the change as a result of the change
+        ! of frequency within a single radiometer is small).  Make sure it's
+        ! close enough.
         freq_ix(f_i) = minloc(abs(channelCenters(f_i)-f_s),1)
         if ( abs(channelCenters(f_i)-f_s(freq_ix(f_i))) > fwdModelConf%frqTol ) then
           call output ( f_i, before="f_i = " )
@@ -2305,7 +2292,7 @@ contains
           call output ( fwdModelConf%frqTol, before=", fwdModelConf%frqTol = ", &
             & advance='yes' )
           call MLSMessage ( MLSMSG_Error, moduleName, &
-            & 'In TScat computation, phase function frequency coordinate too far from channel center' )
+            & 'In TScat computation, phase function frequency coordinate too far from desired frequency' )
         end if
       end do
 
@@ -2549,7 +2536,7 @@ contains
           end if
 
           ! Get interpolating factors for scattering-point IWC to phase function
-          ! IWC_s.
+          ! IWC_s for Mie tables.
           ! IWC_s(iwc_ix) <= logIWC < IWC_s(iwc_ix+1_).
           call hunt ( IWC_s, logIWC, iwc_ix )
           if ( logIWC < IWC_s(1) ) then
@@ -2792,6 +2779,7 @@ contains
       use Read_Mie_m, only: F_s
       use ScatSourceFunc, only: T_SCAT, Interp_Tscat, Convert_Grid
       use Tau_M, only: Get_Tau
+      use TScat_Support_m, only: Get_dB_dT, Mie_Freq_Index
 
       integer, intent(in) :: Ptg_i        ! Pointing index
       integer, intent(in) :: Frq_i        ! Frequency loop index
@@ -3003,31 +2991,44 @@ contains
         if ( fwdModelConf%useTScat .and. .not. pfa ) then
           ! Determine the frequency subscript for the Mie tables.
           ! We expect size(F_s) to be small, so MINLOC is fast enough.
-          Mie_frq_index = minloc(abs(f_s-frq),1)
-          if ( abs(f_s(Mie_frq_index)-frq) > fwdModelConf%frqTol ) &
-            & call MLSMessage ( MLSMSG_Error, moduleName, &
-              & "UseTScat requested but no Mie tables near enough to Frq" )
+          Mie_frq_index = Mie_freq_index ( frq, fwdModelConf%frqTol )
           ! Each Mie table applies to many frequencies, so don't interpolate
           ! again if not needed.
           if ( Mie_frq_index /= prev_Mie_frq_ind ) then
-            call interpolate_Mie ( Mie_frq_index, eta_T_path_c, eta_IWC_path_c, &
-              & atmos_der, temp_der, beta_c_e_path_c(:npc), beta_c_s_path_c(:npc), &
-              & dBeta_c_e_dIWC_path_c(:npc), dBeta_c_s_dIWC_path_c(:npc), &
-              & dBeta_c_e_dT_path_c(:npc), dBeta_c_s_dT_path_c(:npc) )
+            call interpolate_Mie ( Mie_frq_index, eta_T_path_c,           &
+              & eta_IWC_a_path_c, eta_IWC_s_path_c, atmos_der, temp_der,  &
+              & beta_c_a_path_c(:npc), beta_c_s_path_c(:npc),             &
+              & dBeta_c_a_dIWC_path_c(:npc), dBeta_c_s_dIWC_path_c(:npc), &
+              & dBeta_c_a_dT_path_c(:npc), dBeta_c_s_dT_path_c(:npc) )
             prev_Mie_frq_ind = Mie_frq_index
           end if
           ! Ignore contribution of PFA alpha to w0.
           w0_path_c = beta_c_s_path_c(:npc) / ( alpha_path_c + beta_c_e_path_c(:npc) )
 
-        end if ! Not TScat model
+          ! Get TScat and derivatives on the path from the L2PC model
+          call Get_TScat ( fwdModelIn, fwdModelExtra, MAF, phitan, frq,   &
+            &              z_coarse, phi_path(c_inds), tan_pt_c, grids_f, &
+            &              L2PC, dX, TScat, radInL2PC, grids_TScat,       &
+            &              tt_path_c, atmos_der, temp_der, dTScat_df, dTScat_dT )
 
-        !{ Compute $\Delta B_{ij}$ for $j$ = Frq_i.  See page 42 in
-        !  19 August 2004 ATBD JPL D-18130.
-        !  T_Script and B needed to compute inc_rad_path by rad_tran_pol
-        call two_d_t_script ( t_path_c(i_start:i_end), &  
-          & spaceRadiance%values(1,1), frq, &
-          & t_script(i_start:i_end), &
-          & B(i_start:i_end) )
+          ! Get combined clear-sky and TScat Delta B (t_script)
+          call two_d_t_script_cloud ( t_path_c(i_start:i_end),    &
+            & tt_path_c(i_start:i_end), w0_path_c(i_start:i_end), &
+            & spaceRadiance%values(1,1), frq, &
+            & t_script(i_start:i_end), &
+            & B(i_start:i_end) )
+
+        else ! Not TScat model
+
+          !{ Compute $\Delta B_{ij}$ for $j$ = Frq_i.  See page 42 in
+          !  19 August 2004 ATBD JPL D-18130.
+          !  T_Script and B needed to compute inc_rad_path by rad_tran_pol
+          call two_d_t_script ( t_path_c(i_start:i_end), &
+            & spaceRadiance%values(1,1), frq, &
+            & t_script(i_start:i_end), &
+            & B(i_start:i_end) )
+
+        end if
 
       end if ! end of check cld
 
@@ -3265,14 +3266,31 @@ contains
 
       if ( atmos_der ) then
 
-        call drad_tran_df ( max_f, c_inds, gl_inds, del_zeta, Grids_f, &
-          &  beta_path_c, eta_fzp, sps_path, do_calc_fzp,              &
-          &  beta_path_f, do_gl, del_s, ref_corr, dsdz_gw_path,        &
-          &  inc_rad_path, dBeta_dIWC_path_c, dBeta_dIWC_path_f,       &
-          &  i_cloud_a, i_start, tan_pt_c, i_stop, size(d_delta_df,1), &
-          &  d_delta_df, nz_d_delta_df, nnz_d_delta_df, k_atmos_frq )
+        if ( fwdModelConf%useTScat ) then
 
-          if ( atmos_second_der ) then
+          call drad_tran_df ( max_f, c_inds, gl_inds, del_zeta, Grids_f,      &
+            &  beta_path_c, eta_fzp, sps_path, do_calc_fzp,                   &
+            &  beta_path_f, do_gl, del_s, ref_corr, dsdz_gw_path,             &
+            &  inc_rad_path, dBeta_dIWC_path_c, dBeta_dIWC_path_f,            &
+            &  i_cloud_a, i_start, tan_pt_c, i_stop, size(d_delta_df,1),      &
+            &  d_delta_df, nz_d_delta_df, nnz_d_delta_df, k_atmos_frq,        &
+            &  dB_df, tau%tau(:,frq_i), nz_zp, nnz_zp, alpha_path_c, B(:npc), &
+            &  beta_c_e_path_c(:npc), dBeta_c_e_dIWC_path_c(:npc),            &
+            &  dBeta_c_s_dIWC_path_c(:npc), tt_path_c(:npc), dTScat_df,       &
+            &  w0_path_c(:npc) )
+
+        else
+
+          call drad_tran_df ( max_f, c_inds, gl_inds, del_zeta, Grids_f, &
+            &  beta_path_c, eta_fzp, sps_path, do_calc_fzp,              &
+            &  beta_path_f, do_gl, del_s, ref_corr, dsdz_gw_path,        &
+            &  inc_rad_path, dBeta_dIWC_path_c, dBeta_dIWC_path_f,       &
+            &  i_cloud_a, i_start, tan_pt_c, i_stop, size(d_delta_df,1), &
+            &  d_delta_df, nz_d_delta_df, nnz_d_delta_df, k_atmos_frq, dB_df )
+
+        end if
+
+        if ( atmos_second_der ) then
           call d2rad_tran_df2 ( max_f, c_inds, gl_inds, del_zeta, Grids_f, &
             &  beta_path_c, eta_fzp, sps_path, do_calc_fzp,                &
             &  beta_path_f, do_gl, del_s, ref_corr, dsdz_gw_path,          &
@@ -3316,8 +3334,21 @@ contains
           & nz_zxp_t_c, nnz_zxp_t_c )
 
         ! get d Delta B / d T * d T / eta
-        call dt_script_dt ( t_path_c, B(:npc), eta_zxp_t_c(1:npc,:), &
-                          & nz_zxp_t_c, nnz_zxp_t_c, frq, d_t_scr_dt(1:npc,:) )
+        if ( fwdModelConf%useTScat ) then
+
+          call get_dB_dT ( alpha_path_c, B(:npc), t_path_c(:npc), frq,       &
+                         & beta_c_e_path_c(:npc), dBeta_c_e_dT_path_c(:npc), &
+                         & dBeta_c_s_dT_path_c(:npc), tt_path_c(:npc),       &
+                         & dTScat_dT(:npc,:), w0_path_c(:npc),               &
+                         & eta_zxp_t_c(1:npc,:), nz_zxp_t_c, nnz_zxp_t_c,    &
+                         & d_t_scr_dt(1:npc,:) )
+
+        else
+
+          call dt_script_dt ( t_path_c, B(:npc), eta_zxp_t_c(1:npc,:), &
+                            & nz_zxp_t_c, nnz_zxp_t_c, frq, d_t_scr_dt(1:npc,:) )
+
+        end if
 
         dh_dt_path_f(:ngl,:) = dh_dt_path(gl_inds,:)
         do_calc_t_f(:ngl,:) = do_calc_t(gl_inds,:)
@@ -3463,7 +3494,6 @@ contains
       use Metrics_m, only: Height_Metrics, More_Metrics, More_Points, &
         & Tangent_Metrics
       use Min_Zeta_m, only: Get_Min_Zeta
-      use MLSFillValues, only: isNaN
       use Phi_Refractive_Correction_m, only: Phi_Refractive_Correction
       use Read_Mie_m, only: IWC_s, T_s
       use REFRACTION_M, only: REFRACTIVE_INDEX, COMP_REFCOR
@@ -3870,15 +3900,19 @@ contains
       ! Special path quantities for cloud model
       if ( fwdModelConf%Incl_Cld .or. fwdModelConf%useTScat ) then ! s_i == 1 or s_ts == 1 here
 
-        call comp_eta_docalc_no_frq ( Grids_Iwc, z_path(1:npf), &
-          &  phi_path(1:npf), eta_iwc_zp(1:npf,:), tan_pt=tan_pt_f )
+        call comp_eta_docalc_no_frq ( Grids_IWC_a, z_path(1:npf), &
+          &  phi_path(1:npf), eta_IWC_a_zp(1:npf,:), tan_pt=tan_pt_f )
+        call comp_eta_docalc_no_frq ( Grids_IWC_s, z_path(1:npf), &
+          &  phi_path(1:npf), eta_IWC_s_zp(1:npf,:), tan_pt=tan_pt_f )
 
         ! Compute IWC_PATH
-        call comp_sps_path_no_frq ( Grids_iwc, eta_iwc_zp(1:npf,:), &
-          & iwc_path(1:npf,:) )
+        call comp_sps_path_no_frq ( Grids_IWC_a, eta_IWC_a_zp(1:npf,:), &
+          & iwc_path_a(1:npf,:) )
+        call comp_sps_path_no_frq ( Grids_IWC_s, eta_IWC_s_zp(1:npf,:), &
+          & iwc_path_s(1:npf,:) )
         if ( fwdModelConf%Incl_Cld ) then
           !set some cloud parameters to zero
-          WC(1,1:npf)=iwc_path(1:npf,1)
+          WC(1,1:npf)=iwc_path_a(1:npf,1)
           WC(2,1:npf)=0.
           IPSD(1:npf)=1000
         end if
@@ -4014,7 +4048,8 @@ contains
         if ( .not. associated(t_s) ) call MLSMessage ( MLSMSG_Error, &
           & moduleName, "UseTScat requested but no Mie tables loaded" )
         call get_eta_stru ( t_s, t_path_c, eta_T_path_c )
-        call get_eta_stru ( iwc_s, iwc_path(c_inds,1), eta_IWC_path_c )
+        call get_eta_stru ( iwc_s, iwc_path_a(c_inds,1), eta_IWC_a_path_c )
+        call get_eta_stru ( iwc_s, iwc_path_s(c_inds,1), eta_IWC_s_path_c )
         ! We don't have Mie tables for this path
         prev_Mie_frq_ind = -1
       end if
@@ -4137,16 +4172,6 @@ contains
             & H_Atmos_Frq(frq_i,:,:), K_Atmos_Frq(frq_i,:),                     &
             & K_Spect_dN_Frq(frq_i,:), K_Spect_dV_Frq(frq_i,:),                 &
             & K_Spect_dW_Frq(frq_i,:), K_Temp_Frq(frq_i,:) )
-          if ( any(isNaN(H_Atmos_Frq(frq_i,:,:)) ) ) then
-            call MLSMessage( MLSMSG_Warning, ModuleName // 'One_Pointing', &
-              & 'NaNs found in h_atmos_freq (after one_frequency)', status=status )
-            if ( status == 0 ) then
-              call output('Line-by-line', advance='yes' )
-              call outputNamedValue( 'frq_i', frq_i )
-              call outputNamedValue( 'ptg_i', ptg_i )
-              call dump( H_Atmos_Frq(frq_i,:,:), 'H_Atmos_Frq(frq_i,:,:)', options='-H' )
-            endif
-          endif
         end do
         if ( print_TauL ) then
           call output ( thisSideband, before='Sideband ' )
@@ -4186,16 +4211,6 @@ contains
             & H_Atmos_Frq(frq_i,:,:), K_Atmos_Frq(frq_i,:),                     &
             & K_Spect_dN_Frq(frq_i,:), K_Spect_dV_Frq(frq_i,:),                 &
             & K_Spect_dW_Frq(frq_i,:), K_Temp_Frq(frq_i,:) )
-          if ( any(isNaN(H_Atmos_Frq(frq_i,:,:)) ) ) then
-            call MLSMessage( MLSMSG_Warning, ModuleName // 'One_Pointing', &
-              & 'NaNs found in h_atmos_freq (after one_frequency)', status=status )
-            if ( status == 0 ) then
-              call output('PFA', advance='yes' )
-              call outputNamedValue( 'frq_i', frq_i )
-              call outputNamedValue( 'ptg_i', ptg_i )
-              call dump( H_Atmos_Frq(frq_i,:,:), 'H_Atmos_Frq(frq_i,:,:)', options='-H' )
-            endif
-          endif
         end do
         if ( print_TauP ) then
           call output ( thisSideband, before='Sideband ' )
@@ -4205,24 +4220,8 @@ contains
         end if
 
       end if ! FwdModelConf%anyPFA(sx)
-      if ( any(isNaN(H_Atmos(:,ptg_i,:,:)) ) ) then
-        call MLSMessage( MLSMSG_Warning, ModuleName // 'One_Pointing', &
-          & 'NaNs found in h', status=status )
-        if ( status == 0 ) then
-          call output('right before frequency average (will we zero them out?)', advance='yes' )
-          call dump( H_Atmos(:,ptg_i,:,:), 'H_Atmos(:,ptg_i,:,:)', options='-H' )
-        endif
-      endif
 
       call frequency_average ( ptg_i )! or maybe just store
-      if ( any(isNaN(H_Atmos(:,ptg_i,:,:)) ) ) then
-        call MLSMessage( MLSMSG_Warning, ModuleName // 'One_Pointing', &
-          & 'NaNs found in h_atmos (at end of one_pointing)', status=status )
-        if ( status == 0 ) then
-          call output('right after frequency average (we did notzero them out)', advance='yes' )
-          call dump( H_Atmos(:,ptg_i,:,:), 'H_Atmos(:,ptg_i,:,:)', options='-H' )
-        endif
-      endif
 
       ! If we're doing frequency averaging, there's a different frequency
       ! grid for each pointing, but we don't need to deallocate it here
@@ -4390,6 +4389,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.311  2010/11/05 23:03:18  pwagner
+! Lots of new NaN checks--should make them optional
+!
 ! Revision 2.310  2010/11/03 18:43:51  vsnyder
 ! Initialize eta_fzp and H_Atmos.  Frequency average LBL second derivatives.
 !
