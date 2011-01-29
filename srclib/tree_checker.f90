@@ -31,7 +31,7 @@ module TREE_CHECKER
     &                           SECTION_FIRST,SECTION_INDICES, SECTION_LAST, &
     &                           SECTION_ORDERING, T_BOOLEAN
   use INTRINSIC, only: ALL_FIELDS, EMPTY_OK, NO_ARRAY, NO_CHECK_EQ, NO_DUP, &
-    &                  NO_POSITIONAL, PHYQ_INVALID, REQ_FLD
+    &                  NO_POSITIONAL, PHYQ_INVALID, REQ_FLD, U
   use LEXER_CORE, only: PRINT_SOURCE
   use MoreTree, only: Scalar, StartErrorMessage
   use OUTPUT_M, only: NEWLINE, OUTPUT
@@ -78,6 +78,7 @@ module TREE_CHECKER
   integer, private, parameter :: SECTION_ORDER = OUT_OF_PLACE + 1
   integer, private, parameter :: WRONG_NUM_ARGS = SECTION_ORDER + 1
   integer, private, parameter :: WRONG_TYPE = WRONG_NUM_ARGS + 1
+  integer, private, parameter :: WRONG_UNITS = WRONG_TYPE + 1
 
   logical, private :: ALL_FIELDS_FLAG   ! All fields are required
   integer, private :: CURRENT_SECTION = section_first - 1
@@ -157,13 +158,15 @@ contains ! ====     Public Procedures     ==============================
 
 ! =====     Private Procedures     =====================================
 ! -----------------------------------------------  ANNOUNCE_ERROR  -----
-  subroutine ANNOUNCE_ERROR ( WHERE, CODE, SONS, FIELDS )
+  subroutine ANNOUNCE_ERROR ( WHERE, CODE, SONS, FIELDS, EXPECT )
+    use Intrinsic, only: PHYQ_Indices
     integer, intent(in) :: WHERE   ! Tree node where error was noticed
     integer, intent(in) :: CODE    ! Code for error message
     integer, intent(in), optional :: SONS(:) ! Tree nodes, maybe sons of
                                    ! "where".  If they're pseudo_terminal,
                                    ! their declarations are dumped.
     integer, intent(in), optional :: FIELDS(:) ! Field indices
+    integer, intent(in), optional :: EXPECT    ! Something expected
     integer :: I                   ! Index for "sons" or "section_ordering"
                                    ! or subtrees of "sons"
 
@@ -257,15 +260,20 @@ contains ! ====     Public Procedures     ==============================
     case ( wrong_num_args )
       call display_string ( fields(1), before='Incorrect number of arguments for ', &
         & advance='yes' )
-    case ( wrong_type )
+    case ( wrong_type, wrong_units )
       call output ( 'the "' )
       if ( present(fields) ) then
         call display_string ( sub_rosa(fields(1)) )
       else
         call display_string ( sub_rosa(where) )
       end if
-      call output ( '" field has the wrong type of associated value.', &
-        & advance='yes'  )
+      call output ( '" field has the wrong ' )
+      if ( code == wrong_type ) then
+        call output ( 'type of associated value.', advance='yes'  )
+      else
+        call display_string ( phyq_indices(expect), before='units, ' )
+        call output ( ' expected.', advance='yes' )
+      end if
       if ( present(sons) ) then
         call output ( '         Expected' )
         if ( nsons(sons(1)) > 2 ) call output ( ' one of' )
@@ -441,8 +449,11 @@ m:            do j = 3, nsons(field)
       case default
         if ( node_id(field) /= n_dot ) then ! Field doesn't need x.y
           call expr ( son, type, units, value )
-          if ( .not. check_field_type(field,type_map(type)) ) then
+          j = check_field_type(field,type_map(type), units)
+          if ( j == 1 ) then
             call announce_error ( son1, wrong_type, fields = (/ son1 /) )
+          else if ( j > 1 ) then
+            call announce_error ( son1, wrong_units, fields = (/ son1 /), expect=j-10 )
           end if
         else
           call announce_error ( son1, wrong_type, fields = (/ son1 /) )
@@ -467,25 +478,39 @@ m:            do j = 3, nsons(field)
     check_field = 0
   end function CHECK_FIELD
 ! ---------------------------------------------  CHECK_FIELD_TYPE  -----
-  logical function CHECK_FIELD_TYPE ( FIELD, TYPE )
-  ! Return " 'type' is allowed for 'field' of 'spec' "
-  ! or " 'type' is allowed for parameter declared at 'field' ".
+  integer function CHECK_FIELD_TYPE ( FIELD, TYPE, UNITS )
+  ! Return zero if 'type' is allowed for 'field' of 'spec' "
+  ! or if 'type' is allowed for parameter declared at 'field' ".
+  ! Return 1 if type is wrong.
+  ! Return 10+required PHYQ_... if type is correct but units are wrong.
     integer, intent(in) :: FIELD   ! Field declaration, from "check_field"
                                    ! or a parameter declaration from
                                    ! "check_section"
     integer, intent(in) :: TYPE    ! A "t_type" name from Init_Tables_Module
+    integer, intent(in), optional :: UNITS ! From EXPR
     type(decls) :: DECL            ! Declaration of "type"
     integer :: I                   ! Index of sons of "spec_def"
+    integer :: REQ_U               ! Required units of a son of FIELD
 
-    check_field_type = type >= lbound(data_type_indices,1) .and. &
-      &                type <= ubound(data_type_indices,1)
-    if ( .not. check_field_type ) return
+    check_field_type = merge( 1, 0, &
+      &  type < lbound(data_type_indices,1) .or. &
+      &  type > ubound(data_type_indices,1) )
+    if ( check_field_type > 0 ) return
     decl = get_decl(data_type_indices(type), type_name)
+    req_u = decoration(field) / u
     do i = 2, nsons(field)
-      check_field_type = decoration(subtree(i,field)) == decl%tree
-      if ( check_field_type ) return
+      check_field_type = merge( 0, 1, decoration(subtree(i,field)) == decl%tree )
+      if ( check_field_type == 0 ) then
+        if ( req_u > 0 .and. present(units) ) then
+          if ( req_u /= units ) then
+            check_field_type = 10 + req_u
+            return
+          end if
+        end if
+        if ( check_field_type == 0 ) return
+      end if
     end do
-    check_field_type = .false.
+    check_field_type = 1
   end function CHECK_FIELD_TYPE
 ! ------------------------------------------------  CHECK_SECTION  -----
   integer function CHECK_SECTION ( SPEC_CHECK, SECTION )
@@ -631,13 +656,14 @@ m:            do j = 3, nsons(field)
   subroutine EQUAL ( ROOT )
   ! Analyze a specification of the form NAME = EXPR, starting at ROOT
     integer, intent(in) :: ROOT
-    integer :: CHECK          ! Subtree where NAME is declared
+    integer :: CHECK          ! At first, subtree where NAME is declared;
+                              ! later, output from Check_Field_Type
     type(decls) :: DECL       ! Declaration of son1
     integer :: SECT           ! The section the parameter appears in
     integer :: SON1, SON2     ! Sons of Root
     integer :: TYPE           ! Output from "expr", not otherwise used
     integer :: TYPE_DECL      ! Tree node of declaration of name of param's type
-    integer :: UNITS          ! Output from "expr", not otherwise used
+    integer :: UNITS          ! Output from "expr"
     double precision :: VALUE ! Output from "expr", not otherwise used
     if ( toggle(con) ) call trace_begin ( 'EQUAL', root )
     sect = decoration(root)
@@ -671,8 +697,11 @@ m:            do j = 3, nsons(field)
           end do
         else
           call expr( son2, type, units, value )
-          if ( .not. check_field_type(check,type_map(type)) ) then
+          check = check_field_type(check,type_map(type),units)
+          if ( check == 1 ) then
             call announce_error ( son2, wrong_type, fields=(/son1/) )
+          else if ( check > 1 ) then
+            call announce_error ( son2, wrong_units, fields=(/son1/), expect=check-10 )
           end if
         end if
       end if
@@ -935,7 +964,7 @@ m:            do j = 3, nsons(field)
       call announce_error ( son, not_field_of, fields=(/ spec_decl /) )
       call dump_1_decl ( sub_rosa(son) )
     else
-      if ( check_field_type(field,t_boolean) ) then
+      if ( check_field_type(field,t_boolean) == 0 ) then
         call decorate ( root, field )
         field_lit = decoration(subtree(1,field))
         call decorate ( son, field_lit )
@@ -1008,7 +1037,8 @@ m:            do j = 3, nsons(field)
           son = subtree(i,spec_decl%tree)
           field_lit = decoration(subtree(1,son))
           if ( .not. got(field_lit) ) then
-            if ( all_fields_flag .or. mod(decoration(son)/req_fld,2) /= 0) &
+            if ( all_fields_flag .or. &
+              & mod(decoration(son)/req_fld,2) /= 0 .and. decoration(son) < u ) &
               & call announce_error ( root, missing_field, &
                 & fields=(/ field_lit /) )
           end if
@@ -1030,6 +1060,10 @@ m:            do j = 3, nsons(field)
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.28  2006/10/10 23:49:40  vsnyder
+! Repair bugs that resulted in not verifying that a field is of the form x.y
+! when it should be, or that it is not of the form x.y when it shouldn't be.
+!
 ! Revision 1.27  2006/03/23 01:50:43  vsnyder
 ! Check for empty fields
 !
