@@ -16,8 +16,9 @@ module Init_MLSSignals_m
     & Spec_First, T, T_Boolean, T_Numeric, T_Numeric_Range, T_Polarization, &
     & T_String, Z
 
-  use INTRINSIC, only: DATA_TYPE_INDICES, FIELD_INDICES, FUNC_INDICES, &
-    & LIT_INDICES, PARM_INDICES, SECTION_INDICES, SPEC_INDICES
+  use INTRINSIC, only: DATA_TYPE_INDICES, DU, FIELD_INDICES, FUNC_INDICES, &
+    & LIT_INDICES, PARM_INDICES, PHYQ_DIMENSIONLESS, PHYQ_FREQUENCY, &
+    & SECTION_INDICES, SPEC_INDICES
 
   use MOLECULES, only: Init_Molecules, Last_Molecule, Last_Molecule_Type
   implicit NONE
@@ -166,35 +167,35 @@ contains
              begin, f+f_spacecraft, t+t_boolean, n+n_field_type, &
              np+n_spec_def, &
       begin, s+s_radiometer, &          ! Must be after module
-             begin, f+f_lo, t+t_numeric, nr+n_field_type, &
+             begin, f+f_lo, t+t_numeric, nr+n_field_type+du*PHYQ_FREQUENCY, &
              begin, f+f_suffix, t+t_string, nr+n_field_type, &
              begin, f+f_module, s+s_module, nr+n_field_spec, &
              begin, f+f_polarization, t+t_polarization, n+n_field_type, &
-             begin, f+f_singleSideband, t+t_numeric, nr+n_field_type, &
+             begin, f+f_singleSideband, t+t_numeric, nr+n_field_type+du*PHYQ_DIMENSIONLESS, &
              ndp+n_spec_def, &
       begin, s+s_spectrometerType, &
-             begin, f+f_channels, t+t_numeric_range, n+n_field_type, &
+             begin, f+f_channels, t+t_numeric_range, n+n_field_type+du*PHYQ_FREQUENCY, &
              begin, f+f_dacs, t+t_boolean, n+n_field_type, &
              begin, f+f_deferred, t+t_boolean, n+n_field_type, &
-             begin, f+f_first, t+t_numeric, n+n_field_type, &
-             begin, f+f_last, t+t_numeric, n+n_field_type, &
-             begin, f+f_start, t+t_numeric, n+n_field_type, &
-             begin, f+f_step, t+t_numeric, n+n_field_type, &
-             begin, f+f_width, t+t_numeric, n+n_field_type, &
+             begin, f+f_first, t+t_numeric, n+n_field_type+du*PHYQ_DIMENSIONLESS, &
+             begin, f+f_last, t+t_numeric, n+n_field_type+du*PHYQ_DIMENSIONLESS, &
+             begin, f+f_start, t+t_numeric, n+n_field_type+du*PHYQ_FREQUENCY, &
+             begin, f+f_step, t+t_numeric, n+n_field_type+du*PHYQ_FREQUENCY, &
+             begin, f+f_width, t+t_numeric, n+n_field_type+du*PHYQ_FREQUENCY, &
              ndp+n_spec_def, &
       begin, s+s_band, &                ! Must be after radiometer and spectrometerType
              begin, f+f_suffix, t+t_string, n+n_field_type, &
              begin, f+f_spectrometerType, s+s_spectrometerType, nr+n_field_spec, &
              begin, f+f_radiometer, s+s_radiometer, n+n_field_spec, &
-             begin, f+f_centerfrequency, t+t_numeric, n+n_field_type, &
+             begin, f+f_centerfrequency, t+t_numeric, n+n_field_type+du*PHYQ_FREQUENCY, &
              ndp+n_spec_def, &
       begin, s+s_signal, &              ! Must be after band
              begin, f+f_band, s+s_band, nr+n_field_spec, &
-             begin, f+f_channels, t+t_numeric_range, n+n_field_type, &
-             begin, f+f_direction, t+t_numeric, nr+n_field_type, &
-             begin, f+f_radiometer, s+s_radiometer, n+n_field_spec, &
-             begin, f+f_spectrometer, t+t_numeric, nr+n_field_type, &
-             begin, f+f_switch, t+t_numeric, nr+n_field_type, &
+             begin, f+f_channels, t+t_numeric_range, n+n_field_type+du*PHYQ_FREQUENCY, &
+             begin, f+f_direction, t+t_numeric, nr+n_field_type+du*PHYQ_DIMENSIONLESS, &
+             begin, f+f_radiometer, s+s_radiometer, n+n_field_spec+du*PHYQ_DIMENSIONLESS, &
+             begin, f+f_spectrometer, t+t_numeric, nr+n_field_type+du*PHYQ_DIMENSIONLESS, &
+             begin, f+f_switch, t+t_numeric, nr+n_field_type+du*PHYQ_DIMENSIONLESS, &
              ndp+n_spec_def /) )
 
   contains
@@ -216,6 +217,9 @@ contains
 end module Init_MLSSignals_m
 
 ! $Log$
+! Revision 2.28  2011/01/29 00:46:42  vsnyder
+! Add units checking
+!
 ! Revision 2.27  2009/06/23 18:25:42  pwagner
 ! Prevent Intel from optimizing ident string away
 !
