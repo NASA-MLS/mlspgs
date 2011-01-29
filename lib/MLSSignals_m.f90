@@ -283,6 +283,7 @@ contains
           got(field) = .true.
           select case ( field )
           case ( f_centerFrequency )
+            ! Front end should be checking units now, but just in case....
             call expr_check ( gson, units, value, field, phyq_frequency )
             band%centerFrequency = value(1)
           case ( f_suffix )
@@ -328,6 +329,7 @@ contains
           gson = subtree(2,son)
           select case ( field )
           case ( f_lo )
+            ! Front end should be checking units now, but just in case....
             call expr_check ( gson, units, value, field, phyq_frequency )
             radiometer%lo = value(1)
           case ( f_module )
@@ -335,6 +337,7 @@ contains
           case ( f_polarization )
             radiometer%polarization = decoration(gson)
           case ( f_singlesideband )
+            ! Front end should be checking units now, but just in case....
             call expr_check ( gson, units, value, field, phyq_dimensionless )
             radiometer%singleSideband = nint ( value(1) )
           case ( f_suffix )
@@ -359,14 +362,17 @@ contains
           case ( f_channels )
             channels = son
           case ( f_direction )
+            ! Front end should be checking units now, but just in case....
             call expr_check ( gson, units, value, field, phyq_dimensionless )
             signal%direction = nint(value(1))
           case ( f_radiometer )
             signal%radiometer = decoration(decoration(gson))
           case ( f_spectrometer )
+            ! Front end should be checking units now, but just in case....
             call expr_check ( gson, units, value, field, phyq_dimensionless )
             signal%spectrometer = value(1)
           case ( f_switch )
+            ! Front end should be checking units now, but just in case....
             call expr_check ( gson, units, value, field, phyq_dimensionless )
             signal%switch = value(1)
           case default
@@ -405,6 +411,7 @@ contains
               signal%widths(k-1) = value(2)
             end do
             if ( any(units /= phyq_frequency) ) &
+              ! Front end should be checking units now, but just in case....
               & call announceError ( wrongUnits, f_channels, &
                 & (/ phyq_frequency /) )
           end if
@@ -441,6 +448,7 @@ contains
           case ( f_dacs )
             dacs = get_boolean(son)
           case ( f_first, f_last )
+            ! Front end should be checking units now, but just in case....
             call expr_check ( gson, units, value, field, phyq_dimensionless )
             select case ( field )
             case ( f_first )
@@ -449,6 +457,7 @@ contains
               last = value(1)
             end select
           case ( f_start, f_step, f_width )
+            ! Front end should be checking units now, but just in case....
             call expr_check ( gson, units, value, field, phyq_frequency )
             select case ( field )
             case ( f_start )
@@ -479,6 +488,7 @@ contains
               spectrometerType%widths(k-2+first) = value(2)
             end do
             if ( any(units /= phyq_frequency) ) &
+              ! Front end should be checking units now, but just in case....
               & call announceError ( wrongUnits, f_channels, &
                 & (/ phyq_frequency /) )
           end if
@@ -1857,6 +1867,9 @@ oc:       do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.91  2011/01/29 00:51:38  vsnyder
+! Add comments about units checking in front end
+!
 ! Revision 2.90  2010/02/04 23:08:00  vsnyder
 ! Remove USE or declaration for unused names
 !
