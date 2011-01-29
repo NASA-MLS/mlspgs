@@ -33,6 +33,7 @@ module INTRINSIC
   integer, parameter :: NO_ARRAY = 1      ! Field must be scalar
   integer, parameter :: REQ_FLD = 2       ! Required field
   integer, parameter :: EMPTY_OK = 4      ! Field can have empty value
+  integer, parameter :: U = 10            ! U*PHYQ_... requires those units
 ! A "section" vertex may be decorated with the following flag:
   integer, parameter :: NO_CHECK_EQ = 1   ! Don't check whether the section's
                                           ! A=B contents are allowed.
@@ -52,7 +53,8 @@ module INTRINSIC
   integer, parameter :: Field_First = 1
 
 ! Abstract physical quantities:
-  integer, parameter :: PHYQ_INVALID =         0 ! Invalid unit given by user
+  integer, parameter :: FIRST_PHYQ = 0
+  integer, parameter :: PHYQ_INVALID =         FIRST_PHYQ ! Invalid unit given by user
   integer, parameter :: PHYQ_DIMENSIONLESS =   phyq_invalid+1     ! Dimensionless quantity
   integer, parameter :: PHYQ_LENGTH =          phyq_dimensionless+1  ! Default meters
   integer, parameter :: PHYQ_TIME =            phyq_length+1         ! Default seconds
@@ -71,7 +73,7 @@ module INTRINSIC
   integer, parameter :: PHYQ_PCTRHI =          phyq_colmabundance+1 ! default %RHI
   integer, parameter :: PHYQ_GAUSS =           phyq_pctrhi + 1
   integer, parameter :: PHYQ_PROFILES =        phyq_gauss + 1
-  integer, parameter :: FIRST_PHYQ = phyq_invalid, LAST_PHYQ = phyq_profiles
+  integer, parameter :: LAST_PHYQ = phyq_profiles
   integer :: PHYQ_INDICES(first_phyq:last_phyq)
 
 ! Enumeration literals:
@@ -86,12 +88,13 @@ module INTRINSIC
   integer, parameter :: Last_Intrinsic_Spec = S_Time
 
   ! The following parameters are for building trees:
-  integer, parameter :: BEGIN = -1       ! Start of a tree
-  integer, parameter :: D = 1000000      ! Decoration
-  integer, parameter :: F = 1000         ! Field index
-  integer, parameter :: G = 2000         ! Function index
-  integer, parameter :: L = 3000         ! Lit index
-  integer, parameter :: N = 0            ! Tree index
+  integer, parameter :: BEGIN = -1  ! Start of a tree
+  integer, parameter :: D = 1000000 ! Decoration
+  integer, parameter :: DU = d*u    ! DU*PHYQ_... on n_field_type requires those units
+  integer, parameter :: F = 1000    ! Field index
+  integer, parameter :: G = 2000    ! Function index
+  integer, parameter :: L = 3000    ! Lit index
+  integer, parameter :: N = 0       ! Tree index
   integer, parameter :: NADP = n+d*(all_fields+no_dup+no_positional)
   integer, parameter :: ND = n+d*no_dup
   integer, parameter :: NDP = n+d*(no_dup+no_positional)
@@ -100,10 +103,10 @@ module INTRINSIC
   integer, parameter :: NR = n+d*req_fld
   integer, parameter :: NRS = n+d*(no_array+req_fld)
   integer, parameter :: NS = n+d*no_array
-  integer, parameter :: P = 4000         ! Parameter index
-  integer, parameter :: S = 5000         ! Spec index
-  integer, parameter :: T = 6000         ! Type index
-  integer, parameter :: Z = 7000         ! Section index
+  integer, parameter :: P = 4000    ! Parameter index
+  integer, parameter :: S = 5000    ! Spec index
+  integer, parameter :: T = 6000    ! Type index
+  integer, parameter :: Z = 7000    ! Section index
 
   ! Tables used for type checking:
   integer, save, pointer, dimension(:) :: DATA_TYPE_INDICES=>NULL()
@@ -261,6 +264,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.65  2011/01/29 00:46:42  vsnyder
+! Add units checking
+!
 ! Revision 2.64  2010/02/04 23:03:25  vsnyder
 ! Remove PHYQ_LOGICEDENSITY
 !
