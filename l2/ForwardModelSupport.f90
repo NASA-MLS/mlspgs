@@ -56,8 +56,7 @@ module ForwardModelSupport
   integer, parameter :: NoBetaGroup            = NoArray + 1
   integer, parameter :: NoMolecule             = NoBetaGroup + 1
   integer, parameter :: NoPolarizedAndPFA      = NoMolecule + 1
-  integer, parameter :: PFANeedsFreqAvg        = NoPolarizedAndPFA + 1
-  integer, parameter :: PFANotMolecule         = PFANeedsFreqAvg + 1
+  integer, parameter :: PFANotMolecule         = NoPolarizedAndPFA + 1
   integer, parameter :: PFATwice               = PFANotMolecule + 1
   integer, parameter :: PolarizedAndAllLines   = PFATwice + 1
   integer, parameter :: SecondSansFirst        = PolarizedAndAllLines + 1
@@ -1032,11 +1031,6 @@ op:     do j = 2, nsons(theTree)
     end if
       
     ! Now some more error checking
-    ! If any PFA and any LBL, need to do frequency averaging too
-    if ( any(info%anyPFA(s1:s2)) .and. any(info%anyLBL(s1:s2)) &
-      & .and. .not. info%do_freq_avg ) &
-      & call AnnounceError ( PFANeedsFreqAvg, root )
-
     ! If any PFA, can't do polarized
     if ( any(info%anyPFA(s1:s2)) .and. info%polarized ) &
       & call announceError ( noPolarizedAndPFA, root )
@@ -1435,10 +1429,6 @@ op:     do j = 2, nsons(theTree)
     case ( NoPolarizedAndPFA )
       call output ( "Sorry, don't yet know how to combine polarized and PFA", &
         & advance='yes' )
-    case ( PFANeedsFreqAvg )
-      call output ( &
-        & 'Frequency averaging must be specified if there are both PFA and LBL molecules', &
-        & advance='yes' )
     case ( PFANotMolecule )
       call output ( 'LBL or PFA requested for ' )
       call display_string ( lit_indices(decoration(where)) )
@@ -1499,6 +1489,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.154  2011/01/29 00:52:51  vsnyder
+! Allow PFA without frequency averaging
+!
 ! Revision 2.153  2010/11/08 19:26:22  pwagner
 ! Slight improvement of unhelpful error message
 !
