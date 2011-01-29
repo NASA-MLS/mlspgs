@@ -959,9 +959,11 @@ contains
       sx = ( thisSideband + 3 ) / 2 ! [-1,+1] => [1,2]
 
       ! Work out Frequency averaging / LBL / PFA / Derivatives steering.
+      ! See the decision table in Frequency_Average for the meaning of
+      ! values of Frq_Avg_Sel.
       frq_avg_sel = 0
-      if ( fwdModelConf%do_freq_avg ) frq_avg_sel = ior(frq_avg_sel, 8)
-      if ( fwdModelConf%anyPFA(sx) .and. .not. &
+      if ( fwdModelConf%do_freq_avg .or. &
+        &  fwdModelConf%anyPFA(sx) .and. .not. &
         &  fwdModelConf%anyLBL(sx) )  frq_avg_sel = ior(frq_avg_sel, 8)
       if ( fwdModelConf%anyPFA(sx) )  frq_avg_sel = ior(frq_avg_sel, 4)
       if ( fwdModelConf%anyLBL(sx) )  frq_avg_sel = ior(frq_avg_sel, 2)
@@ -1646,17 +1648,17 @@ contains
 !          1 Derivatives?          N Y N Y N Y N Y - -
 !            Frq_Avg_Sel value     2 3 A B C D E F
 !
-! =====================================================
+! =======================================================
 !
-! Impossible?                                      x x
-! Radiances = RadV                 x x     x x
-! K = K_frq                          x       x
-! Frq Avg path integrated rad          x x     x
-! Combine total path radiances                 x
-! Frq Avg path integrated LBL deriv      x       x
-! Frq Avg rad Along Path                         x
-! Combine radiances along path                   x
-! Combine LBL and PFA derivs                     x
+! Impossible?                                          x
+! Radiances = RadV                 x x x x     x x       
+! K = K_frq                          x   x       x       
+! Frq Avg path integrated rad              x x     x
+! Combine total path radiances           x         x     
+! Frq Avg path integrated LBL deriv          x       x
+! Frq Avg rad Along Path                             x
+! Combine radiances along path           x           x   
+! Combine LBL and PFA derivs             x           x   
 
       ! Do DACs stuff for all DACs channels first
       select case ( frq_avg_sel )
@@ -1670,7 +1672,7 @@ contains
       end select
 
       select case ( frq_avg_sel )
-      case ( 2, 3, 12, 13 ) ! Just copy radiance. PFA + DACS - LBL impossible
+      case ( 2, 3, 6, 7, 12, 13 ) ! Just copy radiance. PFA + DACS - LBL impossible
         radiances(:,ptg_i) = radV(:noFreqs)
       case ( 10, 11, 14 )   ! Frq Avg path integrated radiance
         ! Now go through channel by channel
@@ -1753,7 +1755,7 @@ contains
         return
       end if
 
-      ! Only possible values for Frq_avg_sel here are 3, 11, 13, 15.
+      ! Only possible values for Frq_avg_sel here are 3, 7, 11, 13, 15.
       ! See Frequency_Average for definition of Frq_avg_sel.
 
       select case ( frq_avg_sel )
@@ -1786,7 +1788,7 @@ contains
             k(c,sv_i) = r
           end do                ! Grid loop
         end do                  ! Channel loop
-      case ( 3, 13 )            ! Not frequency averaging, or PFA alone; copy.
+      case ( 3, 7, 13 )         ! Not frequency averaging, or PFA alone; copy.
         do sv_i = grids%l_v(mol-1)+1, grids%l_v(mol)
           if ( grids%deriv_flags(sv_i) ) then
             k(:,sv_i) = min ( max ( k_frq(:,sv_i), &
@@ -1853,9 +1855,11 @@ contains
 
   ! .....................................  Frequency_Avg_Rad_Path  .....
     subroutine Frequency_Avg_Path ( Frequencies, Path_Freq, Path_Chan )
-      ! For every channel, frequency average Path_Freq at every point
-      ! along the path, giving Path_Chan for every channel and every
-      ! point along the path.
+      ! PFA + LBL + Derivatives, and maybe or maybe not frequency averaging.
+      ! Frq_Avg_Sel = 7 (no frequency averaging) or 15 (frequency averaging).
+      ! For every channel, frequency average or copy Path_Freq at every
+      ! point along the path, giving Path_Chan for every channel and
+      ! every point along the path.
 
       use Freq_Avg_m, only: Freq_Avg
 
@@ -1865,17 +1869,21 @@ contains
 
       integer :: C, P, ShapeInd
 
-      do c = 1, noUsedChannels
-        shapeInd = channels(c)%shapeInds(sx)
-        if ( channels(c)%dacs == 0 ) then
-          do p = 1, size(path_freq,1)
-            call Freq_Avg ( frequencies,            &
-                    & FilterShapes(shapeInd)%FilterGrid,  &
-                    & FilterShapes(shapeInd)%FilterShape, &
-                    & path_freq(p,:), path_chan(p,c) )
-          end do
-        end if
-      end do
+      if ( fwdModelConf%do_freq_avg ) then ! Frequency average
+        do c = 1, noUsedChannels
+          shapeInd = channels(c)%shapeInds(sx)
+          if ( channels(c)%dacs == 0 ) then
+            do p = 1, size(path_freq,1)
+              call Freq_Avg ( frequencies,            &
+                      & FilterShapes(shapeInd)%FilterGrid,  &
+                      & FilterShapes(shapeInd)%FilterShape, &
+                      & path_freq(p,:), path_chan(p,c) )
+            end do
+          end if
+        end do
+      else ! Copy
+        path_chan = path_freq
+      end if
     end subroutine Frequency_Avg_Path
 
   ! ...............................  Frequency_Avg_Second_Derivative  .....
@@ -1889,7 +1897,7 @@ contains
       real(rp), intent(in) :: H_FRQ(:,:,:)    ! To be averaged  Frq X Grid X Grid
       real(r4), intent(inout) :: H(:,:,:)     ! Averaged        Chan X Grid X Grid
       integer, intent(in) :: Mol1, Mol2       ! Which molecules
-      logical, intent(in) :: Combine        ! "Combine LBL and PFA"
+      logical, intent(in) :: Combine          ! "Combine LBL and PFA"
 
       integer :: C, ShapeInd
       real(rp) :: H_AVG      ! Frequency-averaged value
@@ -1913,7 +1921,7 @@ contains
         return
       end if
 
-      ! Only possible values for Frq_avg_sel here are 3, 11, 13, 15.
+      ! Only possible values for Frq_avg_sel here are 3, 7, 11, 13, 15.
       ! See Frequency_Average for definition of Frq_avg_sel.
 
       select case ( frq_avg_sel )
@@ -1952,7 +1960,7 @@ contains
             end do              ! Grid loop 2
           end do                ! Grid loop 1  
         end do                  ! Channel loop
-      case ( 3, 13 )            ! Not frequency averaging, or PFA alone; copy.
+      case ( 3, 7, 13 )         ! Not frequency averaging, or PFA alone; copy.
         do sv_q = grids%l_v(mol1-1)+1, grids%l_v(mol1)
           do sv_r = grids%l_v(mol2-1)+1, grids%l_v(mol2)
             if ( grids%deriv_flags(sv_q) .and. grids%deriv_flags(sv_r) ) then
@@ -2094,8 +2102,8 @@ contains
       call allocate_test ( beta_path_c, max_c, no_mol, maxNoPtgFreqs, &
         & 'Beta_Path_c', moduleName )
 
-      call allocate_test ( inc_rad_path, max_c, maxNoPtgFreqs, 'Inc_Rad_path', &
-        & moduleName )
+      call allocate_test ( inc_rad_path, max_c, &
+        & max(maxNoPtgFreqs,noUsedChannels), 'Inc_Rad_path', moduleName )
 
       call allocate_test ( k_temp_frq, max(maxNoPtgFreqs,noUsedChannels), &
                          & merge(sv_t_len,0,temp_der), 'k_temp_frq', &
@@ -3182,12 +3190,12 @@ contains
           end do ! j
         end if
 
-        if ( pfa .and. frq_avg_sel == 15 ) then ! See Frequency_Average.
-          ! Doing PFA and did LBL and need derivatives and will frequency
-          ! average.  Multiply Inc_Rad_Path by Tau to combine LBL and PFA. 
-          ! Then sum to give RadV.  Inc_Rad_Path is channel-averaged LBL
-          ! radiance. Remember, when doing PFA, Frq_I is a channel number,
-          ! and tau is tau_PFA.  See wvs-026.
+        if ( pfa .and. iand(frq_avg_sel,7) == 7 ) then ! See Frequency_Average.
+          ! Doing PFA and did LBL and need derivatives.  Multiply Inc_Rad_Path
+          ! by Tau to combine LBL and PFA.  Then sum to give RadV. 
+          ! Inc_Rad_Path is channel(-averaged) LBL radiance. Remember, when
+          ! doing PFA, Frq_I is a channel number, and tau is tau_PFA.  See
+          ! wvs-026 and wvs-027.
           radV = 0.0
           do j = i_start, i_stop
             inc_rad_path(j) = inc_rad_path(j) * tau%tau(j,frq_i)
@@ -3371,8 +3379,10 @@ contains
             & do_calc_t_f(:ngl,:), dsdh_path, dhdz_gw_path, dsdz_gw_path,  &
             & d_t_scr_dt(1:npc,:), tau%tau(:npc,frq_i),                    &
             & inc_rad_path, i_start, tan_pt_c, i_stop,                     &
-            & grids_tmp%deriv_flags, pfa .and. frq_avg_sel == 15,          &
+            & grids_tmp%deriv_flags, pfa .and. iand(frq_avg_sel,7) == 7,   &
             & k_temp_frq )
+            ! pfa .and. iand(frq_avg_sel,7) == 7 means doing PFA and did LBL
+            ! and need derivatives.
 
         else ! pol and not pfa
 
@@ -4187,7 +4197,7 @@ contains
 
       ! Handle PFA molecules
       if ( FwdModelConf%anyPFA(sx) ) then
-        if ( frq_avg_sel == 15 ) then ! FRQ_avg + LBL + PFA + Derivs
+        if ( iand(frq_avg_sel,7) == 7 ) then ! LBL + PFA + Derivs
           ! For every channel, frequency average the incremental radiance at
           ! every point along the path, giving Rad_Avg_Path for every channel
           ! and every point along the path.
@@ -4389,6 +4399,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.312  2011/01/28 19:18:44  vsnyder
+! Lots of stuff for TScat
+!
 ! Revision 2.311  2010/11/05 23:03:18  pwagner
 ! Lots of new NaN checks--should make them optional
 !
