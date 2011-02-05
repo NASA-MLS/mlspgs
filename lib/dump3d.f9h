@@ -67,7 +67,7 @@
       call dump ( array(:,:,1), name, fillValue=fillValue, options=options )
     else
       call name_and_size ( name, myClean, size(array) )
-      if ( present(name) ) call output ( '', advance='yes' )
+      if ( present(name) .and. .not. mylaconic ) call newLine
       do i = 1, size(array,1)
         do j = 1, size(array,2)
           do k = 1, size(array,3), 5
@@ -83,7 +83,7 @@
               do l = k, min(k+4, size(array,3))
                 call output ( array(i,j,l), format=myFormat )
               end do
-              call output ( '', advance='yes' )
+              call newLine
             end if
           end do
         end do
@@ -94,6 +94,9 @@
     call theDumpEnds
 ! end subroutine DUMP_3D_DOUBLE
 ! $Log$
+! Revision 2.3  2011/02/05 00:58:16  pwagner
+! L(aconic) option skips printing array name and size
+!
 ! Revision 2.2  2009/11/20 01:11:53  pwagner
 ! Added new options to just show array rank, shape
 !
