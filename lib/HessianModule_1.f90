@@ -382,6 +382,7 @@ contains
     logical, intent(in), optional :: CLEAN   ! print \size
     ! Internal variables
     logical, parameter :: DEEBUG = .false.
+    character(len=16) :: dumpOptions
     integer :: I, J, K    ! Subscripts, loop inductors
     character(len=128) :: molecules
     integer :: My_Details
@@ -394,11 +395,15 @@ contains
     if ( present(name) ) call output ( name )
     myBlocks = '*'
     if ( present(onlyTheseBlocks) ) myBlocks = onlyTheseBlocks
+    dumpOptions = ''
     molecules = '*'
     if ( present(options) ) then
       Molecules = lowercase( optionDetail( options, 'b' ) )
       if ( Molecules == 'no' ) Molecules = '*'
       if ( DEEBUG ) call outputNamedValue('Molecules', Molecules)
+      dumpOptions = lowercase( optionDetail( options, 'd' ) )
+      if ( dumpOptions == 'no' ) dumpOptions = ''
+      if ( DEEBUG ) call outputNamedValue('dumpOptions', dumpOptions)
     endif
     if ( h%name > 0 ) then
       if ( present(name) ) call output ( ', ' )
@@ -481,7 +486,8 @@ contains
           call output ( h%col%Inst(k) )
           call output ( ' )' )
           call newLine
-          call dump ( h%block(i,j,k), details=my_details, clean=clean )
+          call dump ( h%block(i,j,k), &
+            & details=my_details, clean=clean, options=dumpOptions )
         end do
       end do
     end do
@@ -725,6 +731,9 @@ contains
 end module HessianModule_1
 
 ! $Log$
+! Revision 2.18  2011/02/05 01:38:50  pwagner
+! Passes DumpOptions d[..] to dump routines
+!
 ! Revision 2.17  2010/11/25 01:17:11  pwagner
 ! Tweaked an output
 !
