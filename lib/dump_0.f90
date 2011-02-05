@@ -28,7 +28,8 @@ module DUMP_0
     & ALLSTATS, FILLVALUERELATION, HOWFAR, HOWNEAR, &
     & MLSMAX, MLSMEAN, MLSMIN, MLSSTDDEV, RATIOS, RESET
   use MLSStringLists, only: catLists, GetStringElement, NumStringElements
-  use MLSStrings, only: INDEXES, LOWERCASE, TRIM_SAFE, WRITEINTSTOCHARS
+  use MLSStrings, only: DELETE, INDEXES, LOWERCASE, TRIM_SAFE, &
+    & WRITEINTSTOCHARS
   use OUTPUT_M, only: OUTPUTOPTIONS, STAMPOPTIONS, &
     & ALIGNTOFIT, BLANKS, BLANKSTOTAB, DUMPTABS, NEWLINE, NUMTOCHARS, &
     & OUTPUT, OUTPUTLIST, OUTPUTNAMEDVALUE, RESETTABS, SETTABS
@@ -115,12 +116,13 @@ module DUMP_0
 !   character         meaning
 !      ---            -------
 !       H              show rank, shape of array
+!       L              laconic; skip printing name, size of array
 !       b              table of % vs. amount of differences (pdf)
 !       c              clean
 !       g              gaps      
 !       l              collapse (last index)
-!       r              rms -- min, max, etc. of differences
-!       s              stats -- number of differences
+!       r              rms       -- min, max, etc. of differences
+!       s              stats     -- number of differences
 !       p              transpose 
 !       t              trim      
 !       u              unique    
@@ -226,11 +228,23 @@ module DUMP_0
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
-  ! These public parameters can be reconfigured outside the module
+  ! These public parameters can't be reconfigured outside the module
   ! --------------------------------------------------------------------------
   character, public, parameter :: AFTERSUB = '#'
   character(len=*), parameter :: DEFAULTPCTFORMAT = '(0pf6.1)'
-
+  ! These are the possible options to dumps, diffs
+  character, public, parameter :: dopt_clean       = 'c'
+  character, public, parameter :: dopt_collapse    = 'l'
+  character, public, parameter :: dopt_gaps        = 'g'
+  character, public, parameter :: dopt_laconic     = 'L'
+  character, public, parameter :: dopt_rms         = 'r'
+  character, public, parameter :: dopt_shape       = 'H'
+  character, public, parameter :: dopt_stats       = 's'
+  character, public, parameter :: dopt_table       = 'b'
+  character, public, parameter :: dopt_transpose   = 'p'
+  character, public, parameter :: dopt_trim        = 't'
+  character, public, parameter :: dopt_unique      = 'u'
+  character, public, parameter :: dopt_wholearray  = 'w'
   ! The following character strings can include one or more options listed above
   !
   ! E.g., '-crt' turns on CLEAN, RMS, and TRIM
@@ -262,7 +276,8 @@ module DUMP_0
   integer, parameter :: TOOMANYELEMENTS = 125*50*3500 ! Don't try to diff l1b DACS
   logical, parameter ::   DEEBUG = .false.
   logical, parameter ::   SHORTCUTDIFFS = .false.
-  logical :: myClean, myCollapse, myDirect, myGaps, myStats, myShape, myRMS, &
+  logical :: myClean, myCollapse, myDirect, myGaps, myLaconic, &
+    & myRMS, myShape, myStats, &
     & myTable, myTranspose, myTrim, myUnique, myWholeArray, onlyWholeArray
   character(len=16) :: myPCTFormat
   logical, save :: nameHasBeenPrinted = .false.
@@ -553,7 +568,7 @@ contains
       call output ( array(1)(1:lon), advance='yes' )
     else
       call name_and_size ( name, myClean, size(array) )
-      if ( present(name) ) call output ( '', advance='yes' )
+      if ( present(name) .and. .not. mylaconic ) call newLine
       do j = 1, size(array), 10
         if (.not. myClean) then
           if ( any(array(j:min(j+9, size(array))) /= myFillValue) ) then
@@ -566,7 +581,7 @@ contains
           do k = j, min(j+9, size(array))
               call output ( array(k)(1:lon) // ' ' )
           end do
-          call output ( '', advance='yes' )
+          call newLine
         end if
       end do ! j
       call say_fill ( (/ j-10, size(array) /), numZeroRows, myFillValue )
@@ -599,7 +614,7 @@ contains
       call output ( array(1), myFormat, advance='yes' )
     else
       call name_and_size ( name, myClean, size(array) )
-      if ( present(name) ) call output ( '', advance='yes' )
+      if ( present(name) .and. .not. mylaconic ) call newLine
       do j = 1, size(array), myWidth
         if (.not. myClean) then
           call output ( j, max(myWidth-1,ilog10(size(array))+1) )
@@ -608,7 +623,7 @@ contains
         do k = j, min(j+myWidth-1, size(array))
           call output ( array(k), myFormat )
         end do
-        call output ( '', advance='yes' )
+        call newLine
       end do
     end if
     call theDumpEnds
@@ -639,7 +654,7 @@ contains
       call output ( array(1), myFormat, advance='yes' )
     else
       call name_and_size ( name, myClean, size(array) )
-      if ( present(name) ) call output ( '', advance='yes' )
+      if ( present(name) .and. .not. mylaconic ) call newLine
       do j = 1, size(array), myWidth
         if (.not. myClean) then
           call output ( j, max(myWidth-1,ilog10(size(array))+1) )
@@ -648,7 +663,7 @@ contains
         do k = j, min(j+myWidth-1, size(array))
           call output ( array(k), myFormat )
         end do
-        call output ( '', advance='yes' )
+        call newLine
       end do
     end if
     call theDumpEnds
@@ -740,7 +755,7 @@ contains
       call output ( array(1), advance='yes' )
     elseif ( myGaps ) then
       call name_and_size ( name, myClean, size(array) )
-      if ( present(name) ) call output ( '', advance='yes' )
+      if ( present(name) .and. .not. mylaconic ) call newLine
       k = 0
       if ( size(array)/100 > 100 )  call showColumnNums( 100 )
       do j=1, size(array), 100
@@ -760,7 +775,7 @@ contains
       call showColumnNums( 100 )
     else
       call name_and_size ( name, myClean, size(array) )
-      if ( present(name) ) call output ( '', advance='yes' )
+      if ( present(name) .and. .not. mylaconic ) call newLine
       do j = 1, size(array), 34
         if (.not. myClean) then
           call output ( j+base, max(4,ilog10(size(array))+1) )
@@ -769,7 +784,7 @@ contains
         do k = j, min(j+33, size(array))
           call output ( array(k) )
         end do
-        call output ( '', advance='yes' )
+        call newLine
       end do
     end if
     call theDumpEnds
@@ -828,7 +843,7 @@ contains
       call dump ( array(:,1), name, fillValue=fillValue, maxlon=maxlon, options=options )
     else
       call name_and_size ( name, myClean, size(array) )
-      if ( present(name) ) call output ( '', advance='yes' )
+      if ( present(name) .and. .not. mylaconic ) call newLine
       do i = 1, size(array,1)
         do j = 1, size(array,2), 10
           if (.not. myClean) then
@@ -843,7 +858,7 @@ contains
             do k = j, min(j+9, size(array,2))
                 call output ( array(i,k)(1:lon) // ' ' )
             end do
-            call output ( '', advance='yes' )
+            call newLine
           end if
         end do ! j
       end do ! i
@@ -891,7 +906,7 @@ contains
     else 
       call name_and_size ( name, myClean, size(array) )
       if ( .not. myTranspose ) then
-        if ( present(name) ) call output ( '', advance='yes' )
+        if ( present(name) .and. .not. mylaconic ) call newLine
         do i = 1, size(array,1)
           do j = 1, size(array,2), myWidth
             if (.not. myClean) then
@@ -906,7 +921,7 @@ contains
               do k = j, min(j+myWidth-1, size(array,2))
                 call output ( array(i,k), myFormat )
               end do
-              call output ( '', advance='yes' )
+              call newLine
             end if
           end do
         end do
@@ -925,7 +940,7 @@ contains
               do k = i, min(i+myWidth-1, size(array,1))
                 call output ( array(k,j), myFormat )
               end do
-              call output ( '', advance='yes' )
+              call newLine
             end if                                                          
           end do
         end do
@@ -972,7 +987,7 @@ contains
     else 
       call name_and_size ( name, myClean, size(array) )
       if ( .not. myTranspose ) then
-        if ( present(name) ) call output ( '', advance='yes' )
+        if ( present(name) .and. .not. mylaconic ) call newLine
         do i = 1, size(array,1)
           do j = 1, size(array,2), myWidth
             if (.not. myClean) then
@@ -987,7 +1002,7 @@ contains
               do k = j, min(j+myWidth-1, size(array,2))
                 call output ( array(i,k), myFormat )
               end do
-              call output ( '', advance='yes' )
+              call newLine
             end if
           end do
         end do
@@ -1006,7 +1021,7 @@ contains
               do k = i, min(i+myWidth-1, size(array,1))
                 call output ( array(k,j), myFormat )
               end do
-              call output ( '', advance='yes' )
+              call newLine
             end if
           end do
         end do
@@ -1016,7 +1031,7 @@ contains
   end subroutine DUMP_2D_DCOMPLEX
 
   ! ---------------------------------------------  DUMP_2D_DOUBLE  -----
-  subroutine DUMP_2D_DOUBLE ( ARRAY, NAME, &
+ recursive subroutine DUMP_2D_DOUBLE ( ARRAY, NAME, &
     & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
     double precision, intent(in) :: ARRAY(:,:)
     character(len=*), intent(in), optional :: NAME
@@ -1038,7 +1053,7 @@ contains
   end subroutine DUMP_2D_DOUBLE
 
   ! --------------------------------------------  DUMP_2D_INTEGER  -----
-  subroutine DUMP_2D_INTEGER ( ARRAY, NAME, &
+  recursive subroutine DUMP_2D_INTEGER ( ARRAY, NAME, &
     & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
     integer, intent(in) :: ARRAY(:,:)
     character(len=*), intent(in), optional :: NAME
@@ -1080,7 +1095,7 @@ contains
       call dump ( array(:,1), name, options=options )
     else
       call name_and_size ( name, myClean, size(array) )
-      if ( present(name) ) call output ( '', advance='yes' )
+      if ( present(name) .and. .not. mylaconic ) call newLine
       do i = 1, size(array,1)
         do j = 1, size(array,2), myWidth
           if (.not. myClean) then
@@ -1091,7 +1106,7 @@ contains
           do k = j, min(j+myWidth-1, size(array,2))
             call output ( array(i,k) )
           end do
-          call output ( '', advance='yes' )
+          call newLine
         end do ! j
       end do ! i
     end if
@@ -1099,7 +1114,7 @@ contains
   end subroutine DUMP_2D_LOGICAL
 
   ! -----------------------------------------------  DUMP_2D_REAL  -----
-  subroutine DUMP_2D_REAL ( ARRAY, NAME, &
+  recursive subroutine DUMP_2D_REAL ( ARRAY, NAME, &
     & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
     real, intent(in) :: ARRAY(:,:)
     character(len=*), intent(in), optional :: NAME
@@ -1140,7 +1155,7 @@ contains
       call empty ( name )
     else
       call name_and_size ( name, myClean, size(array) )
-      if ( present(name) ) call output ( '', advance='yes' )
+      if ( present(name) .and. .not. mylaconic ) call newLine
       do j = 1, size(array,3)
         if (.not. myClean) then
           call output ( j, max(3,ilog10(size(array))+1) )
@@ -1176,7 +1191,7 @@ contains
       call empty ( name )
     else
       call name_and_size ( name, myClean, size(array) )
-      if ( present(name) ) call output ( '', advance='yes' )
+      if ( present(name) .and. .not. mylaconic ) call newLine
       do j = 1, size(array,3)
         if (.not. myClean) then
           call output ( j, max(3,ilog10(size(array))+1) )
@@ -1231,7 +1246,7 @@ contains
         & name, fillValue=fillValue, options=options )
     else
       call name_and_size ( name, myClean, size(array) )
-      if ( present(name) ) call output ( '', advance='yes' )
+      if ( present(name) .and. .not. mylaconic ) call newLine
       do i = 1, size(array,1)
         do j = 1, size(array,2)
           do k = 1, size(array,3), 10
@@ -1247,7 +1262,7 @@ contains
               do l = k, min(k+9, size(array,3))
                   call output ( array(i,j,l)(1:lon) // ' ' )
               end do
-              call output ( '', advance='yes' )
+              call newLine
             end if
           end do
         end do
@@ -1294,7 +1309,7 @@ contains
       call dump ( array(:,:,1), name, fillValue=fillValue, options=options )
     else
       call name_and_size ( name, myClean, size(array) )
-      if ( present(name) ) call output ( '', advance='yes' )
+      if ( present(name) .and. .not. mylaconic ) call newLine
       do i = 1, size(array,1)
         do j = 1, size(array,2)
           do k = 1, size(array,3), 5
@@ -1310,7 +1325,7 @@ contains
               do l = k, min(k+4, size(array,3))
                 call output ( array(i,j,l), myFormat )
               end do
-              call output ( '', advance='yes' )
+              call newLine
             endif
           end do
         end do
@@ -1358,7 +1373,7 @@ contains
       call dump ( array(:,:,1), name, fillValue=fillValue, options=options )
     else
       call name_and_size ( name, myClean, size(array) )
-      if ( present(name) ) call output ( '', advance='yes' )
+      if ( present(name) .and. .not. mylaconic ) call newLine
       do i = 1, size(array,1)
         do j = 1, size(array,2)
           do k = 1, size(array,3), 5
@@ -1374,7 +1389,7 @@ contains
               do l = k, min(k+4, size(array,3))
                 call output ( array(i,j,l), myFormat )
               end do
-              call output ( '', advance='yes' )
+              call newLine
             endif
           end do
         end do
@@ -1480,7 +1495,7 @@ contains
       call empty ( name )
     else
       call name_and_size ( name, .false., NumElements )
-      if ( present(name) ) call output ( '', advance='yes' )
+      if ( present(name) .and. .not. mylaconic ) call newLine
       call output ( '(key)    =   (value)', advance='yes' )
       do j = 1, NumElements
         call GetStringElement( keys, element, j, countEmpty, separator)
@@ -1519,7 +1534,7 @@ contains
       call empty ( name )
     else
       call name_and_size ( name, .false., NumElements )
-      if ( present(name) ) call output ( '', advance='yes' )
+      if ( present(name) .and. .not. mylaconic ) call newLine
       call output ( '(key)    =   (value)', advance='yes' )
       do j = 1, NumElements
         call GetStringElement( keys, element, j, countEmpty, separator)
@@ -1573,7 +1588,7 @@ contains
       call output ( trim(string), advance='yes' )
     else
       call name_and_size ( name, myClean, NumElements )
-      if ( present(name) ) call output ( '', advance='yes' )
+      if ( present(name) .and. .not. mylaconic ) call newLine
       do j = 1, NumElements
         call GetStringElement(string, myFillValue, j, countEmpty, separator)
         call output ( trim(myFillValue), advance='yes' )
@@ -1637,6 +1652,7 @@ contains
     integer :: nlines
     character(len=32) :: tabRange
     ! Executable
+    call theDumpBegins ( options=' ' )
     if ( size(array, 2) < 1 ) then
       call empty(name)
     endif
@@ -1689,6 +1705,7 @@ contains
     integer :: nlines
     character(len=32) :: tabRange
     ! Executable
+    call theDumpBegins ( options=' ' )
     if ( size(array, 2) < 1 ) then
       call empty(name)
     endif
@@ -2053,52 +2070,56 @@ contains
   ! --- DumpCollapsedArray ---
   ! This family of subroutines dumps a lower-rank representation of
   ! an array
-  subroutine DUMPCOLLAPSEDARRAY_1D_INTEGER (  array, name, fillValue )
+  subroutine DUMPCOLLAPSEDARRAY_1D_INTEGER (  array, name, fillValue, options )
     INTEGER, intent(in) :: ARRAY(:)
     character(len=*), intent(in) :: NAME
     INTEGER, intent(in), optional :: FILLVALUE
+    character(len=*), intent(in), optional :: options
     call output( 'Did not expect to dump collapsed 1d array', advance='yes' )
   end subroutine DUMPCOLLAPSEDARRAY_1D_INTEGER
 
-  subroutine DUMPCOLLAPSEDARRAY_1D_DOUBLE (  array, name, fillValue )
+  subroutine DUMPCOLLAPSEDARRAY_1D_DOUBLE (  array, name, fillValue, options )
     double precision, intent(in) :: ARRAY(:)
     character(len=*), intent(in) :: NAME
     double precision, intent(in), optional :: FILLVALUE
+    character(len=*), intent(in), optional :: options
     call output( 'Did not expect to dump collapsed 1d array', advance='yes' )
   end subroutine DUMPCOLLAPSEDARRAY_1D_DOUBLE
 
-  subroutine DUMPCOLLAPSEDARRAY_1D_REAL (  array, name, fillValue )
+  subroutine DUMPCOLLAPSEDARRAY_1D_REAL (  array, name, fillValue, options )
     real, intent(in) :: ARRAY(:)
     character(len=*), intent(in) :: NAME
     real, intent(in), optional :: FILLVALUE
+    character(len=*), intent(in), optional :: options
     call output( 'Did not expect to dump collapsed 1d array', advance='yes' )
   end subroutine DUMPCOLLAPSEDARRAY_1D_REAL
 
-  subroutine DUMPCOLLAPSEDARRAY_2D_DOUBLE (  array, name, fillValue )
+  subroutine DUMPCOLLAPSEDARRAY_2D_DOUBLE (  array, name, fillValue, options )
     double precision, intent(in) :: ARRAY(:,:)
     character(len=*), intent(in) :: NAME
     double precision, intent(in), optional :: FILLVALUE
+    character(len=*), intent(in), optional :: options
     ! For dumping lower-rank collapsed representations
     double precision, dimension(size(array, 1)) :: nums
     logical, dimension(size(array, 1))          :: logs
 
     ! dump numerical representation
-    ! call outputNamedValue( 'CollapseOptions', COLLAPSEOPTIONS )
     if ( index(COLLAPSEOPTIONS, 'num') > 0 ) then
       call collapse( array, nums, options=COLLAPSEOPTIONS )
-      call dump( nums, name, fillvalue )
+      call dump( nums, name, fillvalue, options=options )
     endif
     if ( index(COLLAPSEOPTIONS, 'any') > 0 .or. &
       &  index(COLLAPSEOPTIONS, 'all') > 0 ) then
       call collapse( array, logs=logs, options=COLLAPSEOPTIONS )
-      call dump( logs, name )
+      call dump( logs, name, options=options )
     endif
   end subroutine DUMPCOLLAPSEDARRAY_2D_DOUBLE
 
-  subroutine DUMPCOLLAPSEDARRAY_2D_REAL (  array, name, fillValue )
+  subroutine DUMPCOLLAPSEDARRAY_2D_REAL (  array, name, fillValue, options )
     real, intent(in) :: ARRAY(:,:)
     character(len=*), intent(in) :: NAME
     real, intent(in), optional :: FILLVALUE
+    character(len=*), intent(in), optional :: options
     ! For dumping lower-rank collapsed representations
     real, dimension(size(array, 1)) :: nums
     logical, dimension(size(array, 1))          :: logs
@@ -2106,19 +2127,20 @@ contains
     ! dump numerical representation
     if ( index(COLLAPSEOPTIONS, 'num') > 0 ) then
       call collapse( array, nums, options=COLLAPSEOPTIONS )
-      call dump( nums, name, fillvalue )
+      call dump( nums, name, fillvalue, options=options )
     endif
     if ( index(COLLAPSEOPTIONS, 'any') > 0 .or. &
       &  index(COLLAPSEOPTIONS, 'all') > 0 ) then
       call collapse( array, logs=logs, options=COLLAPSEOPTIONS )
-      call dump( logs, name )
+      call dump( logs, name, options=options )
     endif
   end subroutine DUMPCOLLAPSEDARRAY_2D_REAL
 
-  subroutine DUMPCOLLAPSEDARRAY_2D_INTEGER (  array, name, fillValue )
+  subroutine DUMPCOLLAPSEDARRAY_2D_INTEGER (  array, name, fillValue, options )
     INTEGER, intent(in) :: ARRAY(:,:)
     character(len=*), intent(in) :: NAME
     INTEGER, intent(in), optional :: FILLVALUE
+    character(len=*), intent(in), optional :: options
     ! For dumping lower-rank collapsed representations
     INTEGER, dimension(size(array, 1)) :: nums
     logical, dimension(size(array, 1))          :: logs
@@ -2126,19 +2148,20 @@ contains
     ! dump numerical representation
     if ( index(COLLAPSEOPTIONS, 'num') > 0 ) then
       call collapse( array, nums, options=COLLAPSEOPTIONS )
-      call dump( nums, name, fillvalue )
+      call dump( nums, name, fillvalue, options=options )
     endif
     if ( index(COLLAPSEOPTIONS, 'any') > 0 .or. &
       &  index(COLLAPSEOPTIONS, 'all') > 0 ) then
       call collapse( array, logs=logs, options=COLLAPSEOPTIONS )
-      call dump( logs, name )
+      call dump( logs, name, options=options )
     endif
   end subroutine DUMPCOLLAPSEDARRAY_2D_INTEGER
 
-  subroutine DUMPCOLLAPSEDARRAY_3D_DOUBLE (  array, name, fillValue )
+  subroutine DUMPCOLLAPSEDARRAY_3D_DOUBLE (  array, name, fillValue, options )
     double precision, intent(in) :: ARRAY(:,:,:)
     character(len=*), intent(in) :: NAME
     double precision, intent(in), optional :: FILLVALUE
+    character(len=*), intent(in), optional :: options
     ! For dumping lower-rank collapsed representations
     double precision, dimension(size(array, 1),size(array, 2)) :: nums
     logical, dimension(size(array, 1),size(array, 2))          :: logs
@@ -2146,19 +2169,20 @@ contains
     ! dump numerical representation
     if ( index(COLLAPSEOPTIONS, 'num') > 0 ) then
       call collapse( array, nums, options=COLLAPSEOPTIONS )
-      call dump( nums, name, fillvalue )
+      call dump( nums, name, fillvalue, options=options )
     endif
     if ( index(COLLAPSEOPTIONS, 'any') > 0 .or. &
       &  index(COLLAPSEOPTIONS, 'all') > 0 ) then
       call collapse( array, logs=logs, options=COLLAPSEOPTIONS )
-      call dump( logs, name )
+      call dump( logs, name, options=options )
     endif
   end subroutine DUMPCOLLAPSEDARRAY_3D_DOUBLE
 
-  subroutine DUMPCOLLAPSEDARRAY_3D_REAL (  array, name, fillValue )
+  subroutine DUMPCOLLAPSEDARRAY_3D_REAL (  array, name, fillValue, options )
     real, intent(in) :: ARRAY(:,:,:)
     character(len=*), intent(in) :: NAME
     real, intent(in), optional :: FILLVALUE
+    character(len=*), intent(in), optional :: options
     ! For dumping lower-rank collapsed representations
     real, dimension(size(array, 1),size(array, 2)) :: nums
     logical, dimension(size(array, 1),size(array, 2))          :: logs
@@ -2166,19 +2190,20 @@ contains
     ! dump numerical representation
     if ( index(COLLAPSEOPTIONS, 'num') > 0 ) then
       call collapse( array, nums, options=COLLAPSEOPTIONS )
-      call dump( nums, name, fillvalue )
+      call dump( nums, name, fillvalue, options=options )
     endif
     if ( index(COLLAPSEOPTIONS, 'any') > 0 .or. &
       &  index(COLLAPSEOPTIONS, 'all') > 0 ) then
       call collapse( array, logs=logs, options=COLLAPSEOPTIONS )
-      call dump( logs, name )
+      call dump( logs, name, options=options )
     endif
   end subroutine DUMPCOLLAPSEDARRAY_3D_REAL
 
-  subroutine DUMPCOLLAPSEDARRAY_3D_INTEGER (  array, name, fillValue )
+  subroutine DUMPCOLLAPSEDARRAY_3D_INTEGER (  array, name, fillValue, options )
     INTEGER, intent(in) :: ARRAY(:,:,:)
     character(len=*), intent(in) :: NAME
     INTEGER, intent(in), optional :: FILLVALUE
+    character(len=*), intent(in), optional :: options
     ! For dumping lower-rank collapsed representations
     INTEGER, dimension(size(array, 1),size(array, 2)) :: nums
     logical, dimension(size(array, 1),size(array, 2))          :: logs
@@ -2186,12 +2211,12 @@ contains
     ! dump numerical representation
     if ( index(COLLAPSEOPTIONS, 'num') > 0 ) then
       call collapse( array, nums, options=COLLAPSEOPTIONS )
-      call dump( nums, name, fillvalue )
+      call dump( nums, name, fillvalue, options=options )
     endif
     if ( index(COLLAPSEOPTIONS, 'any') > 0 .or. &
       &  index(COLLAPSEOPTIONS, 'all') > 0 ) then
       call collapse( array, logs=logs, options=COLLAPSEOPTIONS )
-      call dump( logs, name )
+      call dump( logs, name, options=options )
     endif
   end subroutine DUMPCOLLAPSEDARRAY_3D_INTEGER
 
@@ -2368,7 +2393,7 @@ contains
     logical, intent(in) :: Clean
     integer, intent(in) :: Size
 
-    if ( present(name) ) then
+    if ( present(name) .and. .not. myLaconic ) then
       if ( len_trim(name) < 1 ) return
       call output ( name )
       if ( clean ) then 
@@ -2557,6 +2582,18 @@ contains
     enddo
   end subroutine showColumnNums
   
+  function snipOption( options, particular ) result ( snipped )
+    ! Snip from options a particular option commanding dump or diff
+    ! Args:
+    character(len=*), optional, intent(in) :: options
+    character(len=1), optional, intent(in) :: particular
+    character(len=16)                      :: snipped
+    ! Executable
+    snipped = ' '
+    if ( .not. present(options) .or. .not. present(particular) ) return
+    snipped = delete( options, particular )
+  end function snipOption
+  
   subroutine theDumpBegins(options)
     character(len=*), intent(in), optional :: options
     nameHasBeenPrinted = .false.
@@ -2564,6 +2601,7 @@ contains
     myClean      = theDefault('clean') ! .false.
     myCollapse   = theDefault('collapse') ! .false.
     myGaps       = theDefault('gaps')
+    myLaconic    = theDefault('laconic')
     myRMS        = theDefault('rms')   ! .false.
     myShape      = theDefault('shape')  ! .false.
     myStats      = theDefault('stat')  ! .false.
@@ -2574,21 +2612,23 @@ contains
     myWholeArray = theDefault('wholearray') .or. &
         & .not. (myStats .or. myRMS.or. myTable .or. myShape )
     if ( present(options) ) then
-      myClean       = index( options, 'c' ) > 0
-      myCollapse    = index( options, 'l' ) > 0
-      myGaps        = index( options, 'g' ) > 0
-      myRMS         = index( options, 'r' ) > 0
-      myShape       = index( options, 'H' ) > 0
-      myStats       = index( options, 's' ) > 0
-      myTable       = index( options, 'b' ) > 0
-      myTranspose   = index( options, 'p' ) > 0
-      myTrim        = index( options, 't' ) > 0
-      myUnique      = index( options, 'u' ) > 0
-      myWholeArray  = ( index( options, 'w' ) > 0 ) .or. &
+      myClean       =   index( options, dopt_clean      ) > 0
+      myCollapse    =   index( options, dopt_collapse   ) > 0
+      myGaps        =   index( options, dopt_gaps       ) > 0
+      myLaconic     =   index( options, dopt_laconic    ) > 0
+      myRMS         =   index( options, dopt_rms        ) > 0
+      myShape       =   index( options, dopt_shape      ) > 0
+      myStats       =   index( options, dopt_stats      ) > 0
+      myTable       =   index( options, dopt_table      ) > 0
+      myTranspose   =   index( options, dopt_transpose  ) > 0
+      myTrim        =   index( options, dopt_trim       ) > 0
+      myUnique      =   index( options, dopt_unique     ) > 0
+      myWholeArray  = ( index( options, dopt_wholearray ) > 0 ) .or. &
         & .not. (myCollapse .or. myStats .or. myRMS.or. myTable .or. myShape )
     endif
     onlyWholeArray = myWholeArray .and. &
       & .not. (myCollapse .or. myRMS .or. myStats .or. myTable .or. myShape)
+    nameHasBeenPrinted = nameHasBeenPrinted .or. myLaconic
   end subroutine theDumpBegins
 
   subroutine theDumpEnds
@@ -2610,27 +2650,30 @@ contains
     endif
     select case ( code )
     case ('clean')
-      isit = index( defaultstring, 'c' ) > 0
+      isit = index( defaultstring, dopt_clean      ) > 0
     case ('direct')
-      isit = index( defaultstring, 'd' ) > 0
+      isit = index( defaultstring, dopt_collapse   ) > 0
     case ('gaps')
-      isit = index( defaultstring, 'g' ) > 0
+      isit = index( defaultstring, dopt_gaps       ) > 0
+    case ('laconic')
+      isit = index( defaultstring, dopt_laconic    ) > 0
     case ('rms')
-      isit = index( defaultstring, 'r' ) > 0
+      isit = index( defaultstring, dopt_rms        ) > 0
     case ('shape')
-      isit = index( defaultstring, 'H' ) > 0
+      isit = index( defaultstring, dopt_shape      ) > 0
     case ('stat')
-      isit = index( defaultstring, 's' ) > 0
+      isit = index( defaultstring, dopt_stats      ) > 0
     case ('table')
-      isit = index( defaultstring, 'b' ) > 0
+      isit = index( defaultstring, dopt_table      ) > 0
     case ('transpose')
-      isit = index( defaultstring, 'p' ) > 0
+      isit = index( defaultstring, dopt_transpose  ) > 0
     case ('trim')
-      isit = index( defaultstring, 't' ) > 0
+      isit = index( defaultstring, dopt_trim       ) > 0
     case ('unique')
-      isit = index( defaultstring, 'u' ) > 0
+      isit = index( defaultstring, dopt_unique     ) > 0
     case ('wholearray')
-      isit = index( defaultstring, 'w' ) > 0
+      isit = index( defaultstring, dopt_wholearray ) > 0
+
     case default
       isit = .false.
     end select
@@ -2770,6 +2813,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.105  2011/02/05 01:01:41  pwagner
+! Added new dopt_ dump options; transpose and collapse work better
+!
 ! Revision 2.104  2011/01/20 01:16:01  pwagner
 ! New '-l' option dumps collapsed representation of higher ranked array
 !
