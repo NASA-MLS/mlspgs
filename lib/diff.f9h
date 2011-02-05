@@ -73,26 +73,32 @@
     myPCTFormat  = DEFAULTPCTFORMAT
     if ( PCTFORMAT /= '*' ) myPCTFormat = PCTFORMAT
     myClean      = theDefault('clean') ! .false.
+    myCollapse   = theDefault('collapse') ! .false.
     myGaps       = theDefault('gaps')
+    myLaconic    = theDefault('laconic')
     myRMS        = theDefault('rms')   ! .false.
+    myShape      = theDefault('shape')  ! .false.
     myStats      = theDefault('stat')  ! .false.
     myTable      = theDefault('table')  ! .false.
     myTranspose  = theDefault('transpose')  ! .false.
     myTrim       = theDefault('trim')  ! .false.
     myUnique     = theDefault('unique')
     myWholeArray = theDefault('wholearray') .or. &
-        & .not. (myStats .or. myRMS.or. myTable)
+        & .not. (myStats .or. myRMS.or. myTable .or. myShape )
     if ( present(options) ) then
-      myClean       = index( options, 'c' ) > 0
-      myGaps        = index( options, 'g' ) > 0
-      myRMS         = index( options, 'r' ) > 0
-      myStats       = index( options, 's' ) > 0
-      myTable       = index( options, 'b' ) > 0
-      myTranspose   = index( options, 'p' ) > 0
-      myTrim        = index( options, 't' ) > 0
-      myUnique      = index( options, 'u' ) > 0
-      myWholeArray  = ( index( options, 'w' ) > 0 ) .or. &
-        & .not. (myStats .or. myRMS.or. myTable)
+      myClean       =   index( options, dopt_clean      ) > 0
+      myCollapse    =   index( options, dopt_collapse   ) > 0
+      myGaps        =   index( options, dopt_gaps       ) > 0
+      myLaconic     =   index( options, dopt_laconic    ) > 0
+      myRMS         =   index( options, dopt_rms        ) > 0
+      myShape       =   index( options, dopt_shape      ) > 0
+      myStats       =   index( options, dopt_stats      ) > 0
+      myTable       =   index( options, dopt_table      ) > 0
+      myTranspose   =   index( options, dopt_transpose  ) > 0
+      myTrim        =   index( options, dopt_trim       ) > 0
+      myUnique      =   index( options, dopt_unique     ) > 0
+      myWholeArray  = ( index( options, dopt_wholearray ) > 0 ) .or. &
+        & .not. (myCollapse .or. myStats .or. myRMS.or. myTable .or. myShape )
     endif
     onlyWholeArray = myWholeArray .and. &
       & .not. (myRMS .or. myStats .or. myTable)
@@ -408,6 +414,9 @@
 
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.24  2011/02/05 00:55:35  pwagner
+! Consistent with new dopt_ dump options
+!
 ! Revision 2.23  2009/11/20 01:16:02  pwagner
 ! More protection against running out of memory diffing DACS datasets
 !
