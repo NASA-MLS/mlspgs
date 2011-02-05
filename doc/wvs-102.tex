@@ -1,0 +1,163 @@
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{longtable}
+\usepackage{xr}
+\externaldocument[100-]{wvs-100}
+\externaldocument[095-]{wvs-095}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9in
+
+\newcommand{\docname}{\bf wvs-102}
+\newcommand{\docdate}{1 February 2011}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\ifx\dvidir\undefined
+  \newcommand\hr[1]{\href{#1.dvi}{dvi} \href{#1.pdf}{pdf}}
+\else
+  \newcommand\hr[1]{\href{\dvidir/#1.dvi}{dvi} \href{\pdfdir/#1.pdf}{pdf}}
+\fi
+\newcommand\h[1]{#1 (\hr{#1})}
+\newcommand\hh[2]{#1 \hr{#2}}
+\newcommand\hrpdf[1]{\href{#1.pdf}{pdf}}
+\newcommand\hpdf[1]{#1 \hrpdf{#1}}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\renewcommand{\d}{\text{d}}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Van, Bill\\
+Subject: \>Derivatives of $\alpha$\\
+From: \>Van Snyder\\
+Reference: \>\h{wvs-100}
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+We normally think of $\alpha$ as
+
+\begin{equation}
+\alpha(s) = \sum_k f^k(s)\, \beta^k(s) \text{ where }
+ f^k(s) = \sum_{lm} \eta^k_{lm}(s) f^k_{lm}
+\end{equation}
+
+where $\eta^k_{lm}(s)$ is the interpolation factor from the solution grid
+to the path.
+
+For some species $k$, $\beta^k$ depends upon $f^k$.
+
+For others, we interpolate $f^k$ logarithmically from the grid to the
+path, i.e.,
+
+\begin{equation}
+\alpha(s) = \sum_k \hat{f}^k(s)\, \beta^k(s) \text{ where }
+ \hat{f}^k(s) =
+ \exp\left( \sum_{lm} \eta^k_{lm}(s) \ln f^k_{lm} \right)
+\end{equation}
+
+In Equation (\ref{100-dI_dfklm}) in \h{wvs-100}, the expression for the
+derivative of the solution of the radiative-transfer equation with
+respect to mixing ratio, the integral
+
+\begin{equation}
+\int_s^{s_m} \frac{\partial \alpha(\sigma)}{\partial f^k_{lm}}
+ \d \sigma
+\end{equation}
+
+appears.  To incorporate TScat into the forward model, we will need
+$\frac{\partial \omega_{0_{ij}}}{\partial f^k_{lm}}$ (see Equation
+(\ref{095-twelve}) in \h{wvs-095}).  Since $\omega_{0_{ij}}$ depends upon
+$\alpha(s)$, we need its derivatives for this purpose as well.
+
+The combination of linear or logarithmic interpolation, and $\beta^k$
+depending or not depending upon $f^k$, leads to four possibilities:
+
+\begin{equation}
+ \begin{array}{l|l}
+ \alpha(s) & \frac{\partial \alpha(s)}{\partial f^k_{lm}}
+\\[10pt]
+ \hline
+& \\[-5pt]
+ \sum_k f^k(s)\, \beta^k(s) & 
+ \beta^k(s) \eta^k_{lm}(s)
+\\
+ \sum_k f^k(s)\, \beta^k(s,f^k(s)) &
+  \left( \beta^k(s,f^k(s)) + f^k(s) \frac{\partial \beta^k(s,f^k(s))}
+                                         {\partial f^k(s)}
+  \right) \eta^k_{lm}(s)
+\\
+ \sum_k \hat{f}^k(s)\, \beta^k(s) &
+ \hat{f}^k(s)\, \beta^k(s)
+    \frac{\eta^k_{lm}(s)}{f^k_{lm}}
+\\
+ \sum_k \hat{f}^k(s)\, \beta^k(s,\hat{f}^k(s)) &
+ \hat{f}^k(s) \left( \beta(s,\hat{f}^k(s)) +
+      \hat{f}^k(s)\frac{\partial \beta(s,\hat{f}^k(s))}
+                       {\partial \hat{f}^k(s)} \right)
+     \frac{\eta^k_{lm}(s)}{f^k_{lm}}
+ \end{array}
+\end{equation}
+
+\label{lastpage}
+\end{document}
+
+% $Id$
+
+% $Log$
