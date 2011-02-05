@@ -23,15 +23,16 @@ module LOAD_SPS_DATA_M
 
   type, public :: Grids_T                 ! Fit all Gridding categories
     integer,  pointer :: names(:) => null() ! for each sps, from Qty template
-    integer,  pointer :: l_f(:) => null() ! Last entry in frq. grid per sps
-    integer,  pointer :: l_z(:) => null() ! Last entry in zeta grid per sps
-    integer,  pointer :: l_p(:) => null() ! Last entry in phi  grid per sps
-    integer,  pointer :: l_v(:) => null() ! Last entry in values grid per sps
+    integer,  pointer :: l_f(:) => null() ! Last entry in frq_basis per sps
+    integer,  pointer :: l_z(:) => null() ! Last entry in zet_basis per sps
+    integer,  pointer :: l_p(:) => null() ! Last entry in phi_basis per sps
+    integer,  pointer :: l_v(:) => null() ! Last entry in values per sps
     integer :: P_Len ! \sum_{i=1}^n (l_z(i)-l_z(i-1))*(l_p(i)-l_p(i-1))
     integer,  pointer :: windowstart(:) => null()! horizontal starting index
 !                                                  from l2gp
     integer,  pointer :: windowfinish(:) => null()! horizontal ending index
 !                                                  from l2gp
+    integer,  pointer :: mol(:) => null() ! Qty molecule, l_...
     integer,  pointer :: qty(:) => null() ! Qty type, l_...
     logical,  pointer :: lin_log(:) => null()   ! type of representation basis
     real(r8), pointer :: min_val(:) => null()   ! Minimum value
@@ -382,12 +383,14 @@ contains
     call allocate_test ( Grids_x%l_p, n, 'Grids_x%l_p', ModuleName, lowBound=0 )
     call allocate_test ( Grids_x%l_f, n, 'Grids_x%l_f', ModuleName, lowBound=0 )
     call allocate_test ( Grids_x%l_v, n, 'Grids_x%l_v', ModuleName, lowBound=0 )
+    call allocate_test ( Grids_x%mol, n, 'Grids_x%mol', ModuleName )
     call allocate_test ( Grids_x%qty, n, 'Grids_x%qty', ModuleName )
     grids_x%l_z(0) = 0
     grids_x%l_p(0) = 0
     grids_x%l_f(0) = 0
     grids_x%l_v(0) = 0
     grids_x%p_len = 0
+    grids_x%mol = 0
     grids_x%qty = 0
     call allocate_test ( Grids_x%windowstart, n, 'Grids_x%windowstart', &
                        & ModuleName )
@@ -466,6 +469,7 @@ contains
     grids_x%l_v(ii) = grids_x%l_v(ii-1) + kz * kp * kf
     grids_x%l_z(ii) = grids_x%l_z(ii-1) + kz
     grids_x%p_len = grids_x%p_len + kz * kp
+    grids_x%mol(ii) = qty%template%molecule
     grids_x%qty(ii) = qty%template%quantityType
 
   end subroutine Fill_Grids_1
@@ -577,6 +581,7 @@ contains
     call allocate_test(grids_x%l_p,0,'grids_x%l_p',modulename)
     call allocate_test(grids_x%l_v,0,'grids_x%l_v',modulename)
     call allocate_test(Grids_x%names,0,'grids_x%names',modulename)
+    call allocate_test(grids_x%mol,0,'grids_x%mol',modulename)
     call allocate_test(grids_x%qty,0,'grids_x%qty',modulename)
     call allocate_test(grids_x%lin_log,0,'grids_x%lin_log',modulename)
     call allocate_test(grids_x%min_val,0,'grids_x%min_val',modulename)
@@ -600,6 +605,7 @@ contains
     call deallocate_test(grids_x%l_z,'grids_x%l_z',modulename)
     call deallocate_test(grids_x%l_p,'grids_x%l_p',modulename)
     call deallocate_test(grids_x%l_v,'grids_x%l_v',modulename)
+    call deallocate_test(Grids_x%mol,'grids_x%mol',modulename)
     call deallocate_test(Grids_x%qty,'grids_x%qty',modulename)
     call deallocate_test(grids_x%values,'grids_x%values',modulename)
     call deallocate_test(grids_x%lin_log,'grids_x%lin_log',modulename)
@@ -657,6 +663,9 @@ contains
       else
         call output ( ' ?' )
       end if
+      if ( the_grid%mol(i) > 0 ) &
+        & call display_string ( lit_indices(the_grid%mol(i)), &
+          & before=' molecule: ' )
       if ( the_grid%qty(i) > 0 ) &
         & call display_string ( lit_indices(the_grid%qty(i)), &
           & before=' quantity: ' )
@@ -695,6 +704,10 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.78  2010/12/07 01:06:24  vsnyder
+! Many changes for TScat.  Mostly making irrelevant arguments optional, and
+! providing other stuff explicitly.  Also added the qty component.
+!
 ! Revision 2.77  2010/09/25 01:13:35  vsnyder
 ! Add Load_Grid_From_Vector, Pack_Frq
 !
