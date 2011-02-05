@@ -39,6 +39,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! CatStrings         Concatenate strings with a specified separator
 ! CompressString     Removes all leading and embedded blanks
 ! Count_words        Counts the number of space-separated words in a string
+! Delete             Deletes each instance of a char
 ! Depunctuate        Replaces punctuation with blanks
 ! FlushArrayLeft     Flush character array left over blank elements
 ! Hhmmss_value       Converts 'hh:mm:ss' formatted string to a real r8
@@ -81,6 +82,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! CatStrings ( char* strings(:), char* sep, char* stringsCat, int L )
 ! char* CompressString (char* str)
 ! int count_words (char* str)
+! char* delete (char* str, char ch)
 ! char* depunctuate (char* str)
 ! FlushArrayLeft ( char* a(:), char* b(:), [char* options] )
 ! int(:) indexes (char* string, char* substrings, [char* mode])
@@ -162,7 +164,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! === (end of api) ===
 
   public :: asciify, Capitalize, CatStrings, CompressString, count_words, &
-   & depunctuate, FlushArrayLeft, hhmmss_value, &
+   & delete, depunctuate, FlushArrayLeft, hhmmss_value, &
    & indexes, ints2Strings, isAllAscii, IsAscii, IsRepeat, &
    & LenTrimToAscii, LinearSearchStringArray, LowerCase, NAppearances, NCopies, &
    & ReadCompleteLineWithoutComments, readNumsFromChars, readIntsFromChars, &
@@ -438,6 +440,29 @@ contains
        END IF
     END DO
   END FUNCTION count_words
+
+  ! ------------------------------------------------  Delete  -----
+  Function Delete ( str, ch ) result ( outstr )
+    ! Function that removes every instance of a char
+    !--------Argument--------!
+    character(len=*), intent(in) :: str
+    character(len=1), intent(in) :: ch
+    character(len=len(str)) :: outstr
+    !----------Local vars----------!
+    integer :: i, iout
+    !----------Executable part----------!
+    outstr = str
+    if ( index(str, ch) < 1 ) return
+    outstr = ' '
+    iout = 0
+    do i = 1, len_trim(str)
+      if ( str(i:i) /= ch ) then
+        iout = iout + 1
+        outstr(iout:iout) = str(i:i)
+      end if
+    end do
+
+  end Function Delete
 
   ! ------------------------------------------------  DEPUNCTUATE  -----
   Function Depunctuate ( str ) result ( outstr )
@@ -2288,6 +2313,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.80  2011/02/05 01:34:23  pwagner
+! Added Delete function
+!
 ! Revision 2.79  2010/09/24 23:45:45  pwagner
 ! Removed dependence on MLSCommon by substituting double for r8
 !
