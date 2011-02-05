@@ -7,8 +7,8 @@
 \topmargin -0.25in
 \textheight 9.0in
 
-\newcommand{\docname}{\bf wvs-093r8}
-\newcommand{\docdate}{29 December 2010}
+\newcommand{\docname}{\bf wvs-093r9}
+\newcommand{\docdate}{2 January 2011}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -859,9 +859,9 @@ Equations (\ref{T10}) and (\ref{Teq}) are both complicated by the fact
 that the path depends upon temperature everywhere below the path.  When
 integrated in log pressure coordinates, Equation (\ref{T10}) becomes
 
-\begin{equation}
+\begin{equation}\label{T half}
 \frac{\partial I(s)}{\partial T_{lm}} =
- \int_{s_0}^{s_m} \T(\zeta,s_m)\, \mu^T_{lm}(\zeta)
+ \int_{\zeta_0}^{\zeta_m} \T(\zeta,\zeta_m)\, \mu^T_{lm}(\zeta)
   \left[
  \frac{\partial \alpha(\zeta)}{\partial T(\zeta)} \left( B(\zeta) - I(\zeta) \right)
   +  \alpha(\zeta) \frac{\partial B(\zeta)}{\partial T(\zeta)} \right]
@@ -872,12 +872,73 @@ integrated in log pressure coordinates, Equation (\ref{T10}) becomes
 where $\frac{\d h}{\d \zeta}$ depends upon temperature below the path
 through hydrostatic equilibrium.
 
+Equation (\ref{T half}) is not sufficient to capture all of the dependence
+upon temperature below the path.  If the integral in Equation (\ref{I}) is
+written in $\zeta$ coordinates we have
+
+\begin{equation}
+\int_{\zeta_0}^{\zeta_m} \T(\zeta,\zeta_m) B^\prime(\zeta)
+ \, \frac{\d s}{\d h} \frac{\d h}{\d \zeta}
+ \,\d \zeta \,.
+\end{equation}
+
+Taking the derivative with respect to $T_{lm}$ gives
+
+\begin{equation}
+\int_{\zeta_0}^{\zeta_m}
+ \frac{\partial \T(\zeta,\zeta_m) B^\prime(\zeta)}
+      {\partial T_{lm}}
+ \, \frac{\d s}{\d h} \frac{\d h}{\d \zeta}
+ \,\d \zeta \,+
+\int_{\zeta_0}^{\zeta_m}
+ \T(\zeta,\zeta_m) B^\prime(\zeta) \, \frac{\d s}{\d h}
+ \frac{\partial^2 h}{\partial T_{lm} \partial \zeta} \,\d \zeta \,.
+\end{equation}
+
+The first integral, together with the derivative of the boundary terms in
+Equation (\ref{I}), are equivalent to Equation (\ref{T half}).  The
+complete expression for the derivative is therefore
+
+\begin{equation}\boxed{\begin{split}
+\frac{\partial I(s)}{\partial T_{lm}}
+=\,&
+ \int_{\zeta_0}^{\zeta_m} \T(\zeta,\zeta_m)\, \mu^T_{lm}(\zeta)
+  \left(
+ \frac{\partial \alpha(\zeta)}{\partial T(\zeta)} \left( B(\zeta) - I(\zeta) \right)
+  +  \alpha(\zeta) \frac{\partial B(\zeta)}{\partial T(\zeta)} \right)
+ \, \frac{\d s}{\d h} \frac{\d h}{\d \zeta}
+ \,\d \zeta \\
+\,& + \int_{\zeta_0}^{\zeta_m}
+ \T(\zeta,\zeta_m) B^\prime(\zeta) \, \frac{\d s}{\d h}
+ \frac{\partial^2 h}{\partial T_{lm} \partial \zeta} \,\d \zeta \\
+=\,&
+  \int_{\zeta_0}^{\zeta_m} \T(\zeta,\zeta_m)\, \left[ \mu^T_{lm}(\zeta)
+  \left(
+ \frac{\partial \alpha(\zeta)}{\partial T(\zeta)} \left( B(\zeta) - I(\zeta) \right)
+  +  \alpha(\zeta) \frac{\partial B(\zeta)}{\partial T(\zeta)} \right)
+  -\alpha(\zeta) B(\zeta) \right]
+ \, \frac{\d s}{\d h} \frac{\d h}{\d \zeta}
+ \,\d \zeta \\
+\,& + \int_{\zeta_0}^{\zeta_m}
+ \T(\zeta,\zeta_m) B(\zeta) \, \frac{\d s}{\d h}
+ \frac{\partial^2 h}{\partial T_{lm} \partial \zeta} \,\d \zeta \,.
+\end{split}}
+\end{equation}
+
+The first integral accounts for the dependence of $\alpha(\zeta)$ and
+$B(\zeta)$ on the path upon $T_{lm}$ where $(\phi_l,\zeta_m)$ is adjacent
+to the path.  The second accounts for the dependence of the path upon
+$T_{lm}$ where $(\phi_l,\zeta_m)$ is below the path.
+
 \label{lastpage}
 \end{document}
 
 % $Id$
 
 % $Log$
+% Revision 1.9  2010/12/30 00:51:43  vsnyder
+% Temperature derivative on the grid
+%
 % Revision 1.8  2010/12/23 20:33:48  vsnyder
 % Simplify discussion of interpolation coefficients by reference to wvs-101
 %
