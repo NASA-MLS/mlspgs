@@ -21,7 +21,8 @@ module MLSHDF5
   ! to finish compiling the highest modules.
 
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use DUMP_0, only: DUMP, dumpNamedValues
+  use DUMP_0, only: dopt_laconic, dopt_rms, dopt_stats, &
+    & DUMP, dumpNamedValues
   use hdf, only: DFACC_RDONLY
   use intrinsic, only: l_hdf
   use MLSCommon, only: MLSFile_T
@@ -176,11 +177,12 @@ module MLSHDF5
 !   character         meaning
 !      ---            -------
 !       c              Clean
-!       l              Laconic
+!       L              Laconic
 !       r              RMS       
 !       s              Stats     
 !       u              Unique    
 !       w              WholeArray
+! etc. (see dump_0 module)
 !                      
 ! === (end of api) ===
   interface CpHDF5Attribute
@@ -571,12 +573,12 @@ contains ! ======================= Public Procedures =========================
     call MLSMessageCalls( 'push', constantName='DumpHDF5DS' )
     skipCharValues = .false.
     if ( present(options) ) &
-      & skipCharValues = any( indexes(options, (/'r','s'/)) > 0 )
+      & skipCharValues = any( indexes(options, (/dopt_rms, dopt_stats/)) > 0 )
     myNames = '*' ! Wildcard means 'all'
     if ( present(names) ) myNames = names
     if ( myNames == '*' ) call GetAllHDF5DSNames ( locID, groupName, myNames )
     dontPrintName = .false.
-    if ( present(options) ) dontPrintName = index(options, 'l') > 0
+    if ( present(options) ) dontPrintName = index(options, dopt_laconic) > 0
     numDS = NumStringElements ( myNames, countEmpty )
     call h5gOpen_f ( locid, trim(groupName), groupID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -5101,6 +5103,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.103  2011/02/05 01:35:34  pwagner
+! Consistent with new dopt_ dump options
+!
 ! Revision 2.102  2011/01/12 18:08:33  pwagner
 ! Wont truncate dumped long string attributes
 !
