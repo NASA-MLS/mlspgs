@@ -784,7 +784,7 @@ contains ! ============================ MODULE PROCEDURES ======================
   end subroutine DiffL1BData
 
   !-------------------------------------------------  DumpL1BData  -----
-  subroutine DumpL1BData ( l1bData, details )
+  subroutine DumpL1BData ( l1bData, details, options )
     ! Disclose pertinent, perhaps damning facts about an l1brad quantity
     type( L1BData_T ), intent(inout) :: L1bData
     integer, intent(in), optional :: DETAILS ! <=0 => Don't dump multidim arrays
@@ -792,6 +792,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     !                                        ! -2 Skip all but name
     !                                        ! >0 Dump even multi-dim arrays
     !                                        ! Default 1
+    character(len=*), intent(in), optional :: options ! Passed dumping arrays
 
     ! Local variables
     integer :: MYDETAILS
@@ -834,14 +835,14 @@ contains ! ============================ MODULE PROCEDURES ======================
 
     if ( associated(l1bData%intField) ) then
       call dump ( l1bData%intField, 'l1bData%intField', &
-        & fillValue = int(undefinedValue) )
+        & fillValue = int(undefinedValue), options=options )
     else
       call output('(intField array not associated)', advance='yes')
     end if
 
     if ( associated(l1bData%dpField) ) then
       call dump ( l1bData%dpField, 'l1bData%dpField', &
-        & fillValue=undefinedValue*1.d0 )
+        & fillValue=undefinedValue*1.d0, options=options )
     else
       call output('(dpField array not associated)', advance='yes')
     end if
@@ -3285,6 +3286,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.89  2011/02/05 01:37:05  pwagner
+! Passes options to dump routines
+!
 ! Revision 2.88  2010/03/12 21:12:07  pwagner
 ! Note when diffing if integer arrays are equal
 !
