@@ -11,8 +11,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-095r14}
-\newcommand{\docdate}{16 December 2010}
+\newcommand{\docname}{wvs-095r16}
+\newcommand{\docdate}{31 January 2010}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -100,9 +100,10 @@ forms at the ends of the path for now), giving radiance at frequency $\nu_j
 \in \{\nu_j | j = 1, \dots, n_f\}$, \emph{viz.}
 
 \begin{equation}\label{one}
-I_j(s_m) = \MT_{0j} ( I(s_0) - B(s_0) ) + B(s_m) -
- \int_{s_0}^{s_m} \frac{\partial B_j(s)}{\partial s} \MT_j(s)\,\text{d}s
- \approx \sum_{i=1}^{n_p} \DB_{ij} \MT_{ij}
+I_j(s) = \MT_{0j} ( I(s_0) - B(s_0) ) + B(s) -
+ \int_{s_0}^{s} \frac{\partial B_j(\sigma)}{\partial \sigma}
+  \MT_j(\sigma)\,\text{d}\sigma
+   \approx \sum_{i=1}^{n_p} \DB_{ij} \MT_{ij}
 \end{equation}
 
 is replaced (except at the ends of the path, where special treatment is
@@ -403,22 +404,34 @@ From Equation (\ref{three})
 \,.
 \end{split}\end{equation}
 
-The $k=$ IWC and $k \neq$ IWC cases simplify differently:
+The $k=$ IWC$_a$, $k=$ IWC$_s$, and $k \neq$ IWC cases simplify
+differently:
 
 \begin{equation}\begin{split}\label{twelve}
-\frac{\partial \omega_{0_{ij}}}{\partial f^{\text{IWC}}_m}
+\frac{\partial \omega_{0_{ij}}}{\partial f^{\text{IWC}_s}_m}
 =\,&
-  \frac1{\beta_{e_{ij}}} \left(
-   \frac{\partial \beta_{{c\_s}_i}}{\partial f^{\text{IWC}}_i} -
-    \omega_{0_{ij}}
-     \frac{\partial \beta_{{c\_e}_i}}{\partial f^{\text{IWC}}_i}
-   \right) \eta^{\text{IWC}}_{im} \\
+  \omega_{0_{ij}}
+  \left ( \frac1{\beta_{{c\_s}_i}} - \frac1{\beta_{e_{ij}}} \right )
+   \frac{\partial \beta_{{c\_s}_i}}{\partial f^{\text{IWC}_s}_i}
+   \eta^{\text{IWC}_s}_{im}
+= \frac{1-\omega_{0_{ij}}}{\beta_{e_{ij}}}
+   \frac{\partial \beta_{{c\_s}_i}}{\partial f^{\text{IWC}_s}_i}
+   \eta^{\text{IWC}_s}_{im} \\
+%
+\frac{\partial \omega_{0_{ij}}}{\partial f^{\text{IWC}_a}_m}
+=\,&
+  -\frac{\omega_{0_{ij}}}{\beta_{e_{ij}}}
+    \frac{\partial \beta_{{c\_a}_i}}{\partial f^{\text{IWC}_a}_i}
+     \eta^{\text{IWC}_a}_{im} \\
 %
 \frac{\partial \omega_{0_{ij}}}{\partial f^{k \neq \text{IWC}}_m}
 =\,&
+ - \frac{\omega_{0_{ij}}}{\beta_{e_{ij}}}
+   \frac{\partial \alpha_{\text{gas}_{ij}}}
+        {\partial f^{k \neq \text{IWC}}_i} \eta^k_{im} =
  - \frac{\omega_{0_{ij}}}{\beta_{e_{ij}}} \beta^k_{ij}
    \eta^k_{im}
-    \,.
+    \text{ (see also \h{wvs-102}).}
 \end{split}\end{equation}
 
 \begin{equation}\begin{split}\label{thirteen}
@@ -429,12 +442,22 @@ The $k=$ IWC and $k \neq$ IWC cases simplify differently:
   \eta^T_{\mu l} = \frac{\partial T_i}{\partial T_\mu} \text{ and}\\
 \frac{\partial \omega_{0_{ij}}}{\partial T_i}
 =\,&
- \frac1{\beta_{e_{ij}}} \left( \frac{\partial \beta_{{c\_s}_i}}{\partial T_i} -
-  \omega_{0_{ij}}
-                  \left( \frac{\partial \beta_{{c\_e}_i}}{\partial T_i} +
+  \frac{1 - \omega_{0_{ij}}}{\beta_{e_{ij}}}
+   \frac{\partial \beta_{{c\_s}_i}}{\partial T_i} -
+    \frac{\omega_{0_{ij}}}{\beta_{e_{ij}}}
+                  \left( \frac{\partial \beta_{{c\_a}_i}}{\partial T_i} +
                          \frac{\partial\alpha_{\text{gas}_{ij}}}{\partial T_i}
-                  \right) \right)
- \,.
+                  \right) \text{ or} \\
+\frac{\partial \omega_{0_{ij}}}{\partial T_\mu}
+=\,&
+ \left[
+  \frac{1 - \omega_{0_{ij}}}{\beta_{e_{ij}}}
+   \frac{\partial \beta_{{c\_s}_i}}{\partial T_i} -
+    \frac{\omega_{0_{ij}}}{\beta_{e_{ij}}}
+                  \left( \frac{\partial \beta_{{c\_a}_i}}{\partial T_i} +
+                         \frac{\partial\alpha_{\text{gas}_{ij}}}{\partial T_i}
+                  \right)
+ \right] \eta^T_{\mu l} \\
 \end{split}\end{equation}
 
 From Equation (\ref{ten}),
@@ -823,6 +846,10 @@ is a linear operator gives Equation (\ref{five}):
 % $Id$
 
 % $Log$
+% Revision 1.12  2010/12/18 03:50:07  vsnyder
+% Insert caveats about TScat being a single-frequency quantity, not a
+% channel-averaged quantity
+%
 % Revision 1.11  2010/08/27 23:52:09  vsnyder
 % Use n_p where n had been wrongly used
 %
