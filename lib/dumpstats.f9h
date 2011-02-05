@@ -69,7 +69,8 @@
       call printPercentages ( equal=numFill, unEqual=numNonFill  )
     end if
     if ( myCollapse .and. myRank > 1 ) then
-      call dumpCollapsedArray( array, name, fillValue )
+      call dumpCollapsedArray( array, name, &
+        & fillValue, snipOption(options, dopt_Collapse) )
       return
     endif
     if ( .not. myWholeArray ) return
@@ -114,6 +115,9 @@
       end if
     end if
 ! $Log$
+! Revision 2.22  2011/02/05 00:59:36  pwagner
+! Passes options minus collapse to dumpCollapsedArray
+!
 ! Revision 2.21  2011/01/20 01:16:24  pwagner
 ! New '-l' option dumps collapsed representation of higher ranked array
 !
