@@ -152,6 +152,8 @@ module ChunkDivide_m
   logical, parameter :: CHECKFORMAFSINRANGE = .true.
   logical, parameter :: CHECKFORNONNEGOVLPS = .true.
   logical, parameter :: DONTPAD = .true.
+  integer :: swLevel ! How much extra debugging info to print (-1 means none)
+  integer, parameter :: VERBOSETHRESHOLD = 1 ! was 0; turn on extra debugging
 
 contains ! ===================================== Public Procedures =====
 
@@ -243,6 +245,7 @@ contains ! ===================================== Public Procedures =====
     real :: T1
 
     ! Executable code
+    swlevel = switchDetail(switches, 'chu' )
     nullify(ChunkDivideConfig%criticalSignals)    ! Just for Sun's compiler
 
     if ( toggle(gen) ) call trace_begin ( "ChunkDivide", root )
@@ -260,7 +263,7 @@ contains ! ===================================== Public Procedures =====
     nullify ( obstructions )
     if ( ChunkDivideConfig%method /= l_fixed ) then
       call SurveyL1BData ( processingRange, filedatabase, mafRange )
-      if ( switchDetail(switches, 'chu' ) > -1 ) then
+      if ( swLevel > -1 ) then
         call output ( 'Requested time range ' )
         call output ( processingRange%startTime )
         call output ( ' : ' )
@@ -322,10 +325,10 @@ contains ! ===================================== Public Procedures =====
       & ' you are OK with that' )
 
     ! Tidy up
-    if ( switchDetail(switches, 'chu') > -1 .or. &
+    if ( swLevel > -1 .or. &
       & switchDetail(switches, 'opt') > -1 ) call dump(ChunkDivideConfig)
     if ( associated(obstructions) ) then
-      if ( switchDetail(switches, 'chu' ) > -1 ) call Dump_Obstructions ( obstructions )
+      if ( swLevel > -1 ) call Dump_Obstructions ( obstructions )
       if ( .not. ChunkDivideConfig%saveObstructions ) then
         deallocate ( obstructions, stat=status )
         if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -333,7 +336,7 @@ contains ! ===================================== Public Procedures =====
       end if
     end if
     if ( associated(ChunkDivideConfig%criticalSignals) ) then
-      if ( switchDetail(switches, 'chu' ) > -1 ) &
+      if ( swLevel > -1 ) &
         & call Dump_criticalSignals(ChunkDivideConfig%criticalSignals)
       deallocate ( ChunkDivideConfig%criticalSignals, stat=status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -357,7 +360,7 @@ contains ! ===================================== Public Procedures =====
       chunks(chunk)%chunkNumber = chunk
     end do
 
-    if ( switchDetail(switches, 'chu' ) > -1 ) call dump ( chunks )
+    if ( swLevel > -1 ) call dump ( chunks )
     if ( specialDumpFile /= ' ' ) &
       & call revertOutput
     if ( toggle(gen) ) call trace_end ( "ChunkDivide" )
@@ -415,7 +418,8 @@ contains ! ===================================== Public Procedures =====
       integer :: UPPEROVERLAP             ! nint(config%upperOverlap)
       integer :: NONONOVERLAP             ! maxLength-2*overlap
 
-      ! Exectuable code
+      ! Executable code
+      swlevel = switchDetail(switches, 'chu' )
       allocate ( chunks(ChunkDivideConfig%noChunks), stat=status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Allocate//'chunks' )
@@ -476,6 +480,7 @@ contains ! ===================================== Public Procedures =====
       type (MLSFile_T), pointer             :: L1BFile
 
       ! Executable code
+      swlevel = switchDetail(switches, 'chu' )
 
       ! Read in the data we're going to need
       call get_string ( lit_indices(ChunkDivideConfig%homeModule), modNameStr, &
@@ -620,6 +625,7 @@ contains ! ===================================== Public Procedures =====
       real(rp) :: VALUE(2)                ! Value of expression
 
       ! Executable code
+      swlevel = switchDetail(switches, 'chu' )
       error = 0
 
       ! Eventually the ChunkDivide command will be free floating, in the meantime
@@ -898,6 +904,7 @@ contains ! ===================================== Public Procedures =====
     type(ChunkDivideConfig_T), intent(in) :: Config
 
     ! Executable code
+    swlevel = switchDetail(switches, 'chu' )
     call output ( 'method ' )
     call display_string ( lit_indices(Config%method), &
       &             strip=.true., advance='yes' )
@@ -979,6 +986,7 @@ contains ! ===================================== Public Procedures =====
     ! Local variables
     integer :: i                        ! Loop counter
     ! Executable code
+    swlevel = switchDetail(switches, 'chu' )
     if ( associated ( criticalSignals ) ) then
       if ( size(criticalSignals) == 0 ) then
         call output ( 'criticalSignals is a zero size array.', advance='yes' )
@@ -1006,6 +1014,7 @@ contains ! ===================================== Public Procedures =====
     ! Local variables
     integer :: i                        ! Loop counter
     ! Executable code
+    swlevel = switchDetail(switches, 'chu' )
     if ( associated ( obstructions ) ) then
       if ( size(obstructions) == 0 ) then
         call output ( 'Obstructions is a zero size array.', advance='yes' )
@@ -1072,6 +1081,7 @@ contains ! ===================================== Public Procedures =====
     integer :: the_maf
 
     ! Executable
+    swlevel = switchDetail(switches, 'chu' )
     answer = .false.
     mymaf2 = maf
     if ( present(maf2) ) mymaf2 = maf2
@@ -1157,6 +1167,7 @@ contains ! ===================================== Public Procedures =====
     logical :: myMonotonize
     real(r8):: lastValue
     ! Executable
+    swlevel = switchDetail(switches, 'chu' )
     myMonotonize = .false.
     if ( present(monotonize) ) mymonotonize = monotonize
     if ( present(wasSmoothed) ) wasSmoothed = .false.
@@ -1199,6 +1210,7 @@ contains ! ===================================== Public Procedures =====
       integer :: OBSTRUCTION              ! Loop counter
 
       ! Executable code
+      swlevel = switchDetail(switches, 'chu' )
 
       do obstruction = 1, size ( obstructions )
         ! Find chunk where this obstruction is/starts
@@ -1341,6 +1353,7 @@ contains ! ===================================== Public Procedures =====
       integer, dimension(1) :: TOSWAP     ! Index
 
       ! Executable code
+      swlevel = switchDetail(switches, 'chu' )
       do i = 1, size(obstructions) - 1
         toSwap = minloc ( obstructions(i:)%mafs(1) ) + (/ i-1 /)
         if ( toSwap(1) /= i ) then
@@ -1362,6 +1375,7 @@ contains ! ===================================== Public Procedures =====
       integer :: STATUS                   ! From allocate
 
       ! Executable code
+      swlevel = switchDetail(switches, 'chu' )
       allocate ( temp ( size(obstructions) - 1 ), stat=status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Allocate//'temp' )
@@ -1395,6 +1409,7 @@ contains ! ===================================== Public Procedures =====
       character(len=40) :: signal_full
       integer :: signalIndex
       ! Executable
+      swlevel = switchDetail(switches, 'chu' )
       if ( ChunkDivideConfig%criticalModules == l_none .and. &
         & len_trim(ChunkDivideConfig%criticalBands) < 1 ) return
       critical_module_str = ' '
@@ -1406,12 +1421,12 @@ contains ! ===================================== Public Procedures =====
       endif
       criticalSignalStr = ' '
       numCriticalSignals = 0
-      if ( switchDetail(switches, 'chu') > -1 ) &
+      if ( swLevel > -1 ) &
         & call outputNamedValue( 'critical module', critical_module_str )
-      if ( switchDetail(switches, 'chu') > -1 ) &
+      if ( swLevel > -1 ) &
         & call outputNamedValue( 'critical bands', ChunkDivideConfig%criticalBands )
       do signalIndex=1, size(signals)
-        if ( switchDetail(switches, 'chu') > -1 ) then
+        if ( swLevel > -1 ) then
           call outputNamedValue( 'signal index', signalIndex )
           call GetSignalName( signalIndex, signal_full )
           call outputNamedValue( 'signal', signal_full )
@@ -1439,7 +1454,7 @@ contains ! ===================================== Public Procedures =====
       call allocate_test( criticalSignals, numCriticalSignals, 'criticalSignals', &
         & ModuleName )
       call List2Array (criticalSignalStr, criticalSignals,  countEmpty=.true. )
-      if ( switchDetail(switches, 'chu') > -1 ) &
+      if ( swLevel > -1 ) &
         & call dump( criticalSignals, 'critical Signals chosen', &
         & options=what_options(trim=.true.) )
     end subroutine ChooseCriticalSignals
@@ -1497,10 +1512,8 @@ contains ! ===================================== Public Procedures =====
       character(len=40) :: signal_str
       integer, pointer :: Signal_Indices(:)         ! Indices in the signals
       logical, dimension(:,:), pointer  :: signals_buffer
-      integer :: swLevel ! How much extra debugging info to print (-1 means none)
       logical :: this_maf_valid
       logical, dimension(:), pointer  :: valids_buffer
-      integer, parameter :: VERBOSETHRESHOLD = 1 ! was 0; turn on extra debugging
       ! Won't check if there are no files at all
       if ( .not. associated(filedatabase) ) return
       ! Won't check if there are no radiance files
@@ -1717,7 +1730,7 @@ contains ! ===================================== Public Procedures =====
           newObstruction%mafs(1) = goodness_changes(mafset)
           newObstruction%mafs(2) = 0    ! For overzealous Lahey uninitialized checking
           call AddObstructionToDatabase ( obstructions, newObstruction )
-          if ( switchDetail(switches, 'chu') > -1 ) &
+          if ( swLevel > -1 ) &
             call outputNamedValue( &
             & 'maf where any change made obstruction', goodness_changes(mafset) )
         enddo
@@ -1727,7 +1740,7 @@ contains ! ===================================== Public Procedures =====
           newObstruction%mafs(1) = goods_after_gap(mafset)
           newObstruction%mafs(2) = 0    ! For overzealous Lahey uninitialized checking
           call AddObstructionToDatabase ( obstructions, newObstruction )
-          if ( switchDetail(switches, 'chu') > -1 ) &
+          if ( swLevel > -1 ) &
             call outputNamedValue( &
             & 'maf where num goods after gap made obstruction', goods_after_gap(mafset) )
         enddo
@@ -1756,6 +1769,7 @@ contains ! ===================================== Public Procedures =====
       integer :: OFFSET                 ! MAF index offset
 
       ! Executable code
+      swlevel = switchDetail(switches, 'chu' )
       lastOneValid = .true.
       offset = 0
       if ( present(mafRange) ) offset = mafRange(1)
@@ -1775,7 +1789,7 @@ contains ! ===================================== Public Procedures =====
           else
             newObstruction%mafs(2) = maf - 2 + offset
             call AddObstructionToDatabase ( obstructions, newObstruction )
-            if ( switchDetail(switches, 'chu') > -1 ) &
+            if ( swLevel > -1 ) &
               call outputNamedValue( &
               & trim(obstructionTrigger), maf )
           end if
@@ -1787,7 +1801,7 @@ contains ! ===================================== Public Procedures =====
       if ( .not. lastOneValid ) then
         newObstruction%mafs(2) = size(valid) - 1 + offset
         call AddObstructionToDatabase ( obstructions, newObstruction )
-        if ( switchDetail(switches, 'chu') > -1 ) &
+        if ( swLevel > -1 ) &
           call outputNamedValue( &
           & trim(obstructionTrigger), size(valid)-1 )
       end if
@@ -1830,6 +1844,7 @@ contains ! ===================================== Public Procedures =====
       character(len=NAME_LEN) ::         MAF_start, tp_alt, tp_orbY, tp_angle
       type (MLSFile_T), pointer             :: L1BFile
       ! Executable code
+      swlevel = switchDetail(switches, 'chu' )
 
       L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
       if ( .not. associated(L1BFile) ) &
@@ -1885,6 +1900,7 @@ contains ! ===================================== Public Procedures =====
       noMAFS = mafRange%Expanded(2) - mafRange%Expanded(1) + 1
       ! Now look through the L1B data, first look for scan problems
       if ( ChunkDivideConfig%criticalModules /= l_none ) then
+        call outputNamedValue( 'Looking for scan problems; swLevel ', swlevel )
         nullify ( valid )
         nullify ( anglewasSmoothed )
         nullify ( wasSmoothed )
@@ -1925,6 +1941,10 @@ contains ! ===================================== Public Procedures =====
               & monotonize=.true.)
             call smoothOutDroppedMAFs(tpGeodAlt%dpField, wasSmoothed)
             call smoothOutDroppedMAFs(tpOrbY%dpField)
+            if ( swLevel > -1 ) then
+              call dump( angleWasSmoothed, 'smoothed because of geodetic angle' )
+              call dump( wasSmoothed, 'smoothed because of geodetic altitude' )
+            endif
             wasSmoothed = (wasSmoothed .or. angleWasSmoothed)
             ! Consider the scan range in each MAF in turn
             do maf = 1, noMAFs
@@ -1988,6 +2008,7 @@ contains ! ===================================== Public Procedures =====
       integer :: STATUS                   ! Flag from allocate
 
       ! Executable code
+      swlevel = switchDetail(switches, 'chu' )
       ! If no obstructions make sure allocate to size zero, not just unassociated pointer
       if ( .not. associated(obstructions) ) then
         allocate ( obstructions(0), stat=status )
@@ -2109,7 +2130,8 @@ contains ! ===================================== Public Procedures =====
       type (MLSFile_T), pointer             :: L1BFile
 
       ! Executable code
-      if ( index ( switches, 'chu' ) /= 0 ) then
+      swlevel = switchDetail(switches, 'chu' )
+      if ( swLevel > -1 ) then
         call output('Entering Orbital Chunk Divide', advance='yes')
         call dump( obstructions )
       endif
@@ -2126,18 +2148,18 @@ contains ! ===================================== Public Procedures =====
       tp_angle = AssembleL1BQtyName ( trim(modNameStr)//'.tpGeodAngle', &
         & l1b_hdf_version, &
         & .false. )
-      if ( index ( switches, 'chu' ) /= 0 ) &
+      if ( swLevel > -1 ) &
         & call output('Reading Geod Angle', advance='yes')
       call ReadL1BData ( L1BFile, trim(tp_angle), &
         & tpGeodAngle, noMAFsRead, flag, &
         & dontPad=DONTPAD )
-      if ( index ( switches, 'chu' ) /= 0 ) &
+      if ( swLevel > -1 ) &
         & call output('1st smoothing', advance='yes')
       call smoothOutDroppedMAFs(tpGeodAngle%dpField)
-      if ( index ( switches, 'chu' ) /= 0 ) &
+      if ( swLevel > -1 ) &
         & call output('2nd smoothing', advance='yes')
       call smoothOutDroppedMAFs(tpGeodAngle%dpField, monotonize=.true.)
-      if ( index ( switches, 'chu' ) /= 0 ) &
+      if ( swLevel > -1 ) &
         & call output('Reading tai Time', advance='yes')
       call ReadL1BData ( L1BFile, trim(MAF_start), &
         & taiTime, noMAFsRead, flag, &
@@ -2153,7 +2175,7 @@ contains ! ===================================== Public Procedures =====
       maxAngle = maxval ( tpGeodAngle%dpField(1,1,m1:m2) )
       minTime = minval ( taiTime%dpField(1,1,m1:m2) )
       maxTime = maxval ( taiTime%dpField(1,1,m1:m2) )
-      if ( index ( switches, 'chu' ) /= 0 ) then
+      if ( swLevel > -1 ) then
         call output ( 'Num MAFs in file: ' )
         call output ( noMAFsRead, advance='yes' )
         call output ( 'MAF time range: ' )
@@ -2177,7 +2199,7 @@ contains ! ===================================== Public Procedures =====
         angleIncrement = 360.0
       end if
 
-      if ( switchDetail(switches, 'chu' ) > -1 ) then
+      if ( swLevel > -1 ) then
         call output ( ' orbit  ', advance='no' )
         call output ( orbit , advance='no' )
         call output ( '    testAngle  ', advance='no' )
@@ -2218,7 +2240,7 @@ contains ! ===================================== Public Procedures =====
         ! Otherwise, keep looking
         testAngle = testAngle + angleIncrement
       end do homeHuntLoop
-      if ( switchDetail(switches, 'chu' ) > -1 ) then
+      if ( swLevel > -1 ) then
         call output ( 'Test Angle  ' )
         call output ( testAngle , advance='yes' )
         call output ( 'Angle(home)  ' )
@@ -2326,7 +2348,7 @@ contains ! ===================================== Public Procedures =====
         boundaries = max ( boundaries, minV )
 
         ! Do some dumping
-        if ( switchDetail(switches, 'chu' ) > -1 ) then
+        if ( swLevel > -1 ) then
           call output ( ' minV: ' )
           call output ( minV  )
           call output ( ' maxV: ' )
@@ -2376,7 +2398,7 @@ contains ! ===================================== Public Procedures =====
       end if
 
       ! Do some dumping
-      if ( switchDetail(switches, 'chu' ) > -1 ) then
+      if ( swLevel > -1 ) then
         call dump ( chunks%lastMAFIndex , 'chunks%lastMAFIndex' )
         call dump ( chunks%firstMAFIndex , 'chunks%firstMAFIndex' )
       end if
@@ -2402,7 +2424,7 @@ contains ! ===================================== Public Procedures =====
       chunks%noMAFsUpperOverlap = newLastMAFs - chunks%lastMAFIndex
       chunks%firstMAFIndex = newFirstMAFs
       chunks%lastMAFIndex = newLastMAFs
-      if ( switchDetail(switches, 'chu' ) > -1 ) then
+      if ( swLevel > -1 ) then
         call dump ( newFirstMAFs , 'newFirstMAFs' )
         call dump ( newLastMAFs , 'newLastMAFs' )
         call dump ( chunks%noMAFsLowerOverlap , 'chunks%noMAFsLowerOverlap' )
@@ -2414,7 +2436,7 @@ contains ! ===================================== Public Procedures =====
       ! Delete any zero length or all overlapped chunks
       call PruneChunks ( chunks )
 
-      if ( index ( switches, 'chu' ) /= 0 ) then
+      if ( swLevel > -1 ) then
         call output ( 'Before dealing with obstructions', advance='yes' )
         call Dump ( chunks )
       end if
@@ -2443,7 +2465,7 @@ contains ! ===================================== Public Procedures =====
         chunks(noChunks)%noMAFsUpperOverlap = mexp2 - m2
       endif
 
-      if ( switchDetail(switches, 'chu' ) > -1 ) then
+      if ( swLevel > -1 ) then
         call output ( 'After dealing with obstructions', advance='no' )
         call output ( ', poss. overlaps outside proc. range', advance='yes' )
         call Dump ( chunks )
@@ -2466,6 +2488,7 @@ contains ! ===================================== Public Procedures =====
       integer, dimension(1) :: TOSWAP     ! Index
 
       ! Executable code
+      swlevel = switchDetail(switches, 'chu' )
       do i = 1, size(chunks) - 1
         toSwap = minloc ( chunks(i:)%firstMAFIndex + &
           & chunks(i:)%noMAFsLowerOverlap ) + (/ i-1 /)
@@ -2506,6 +2529,7 @@ contains ! ===================================== Public Procedures =====
        integer :: STATUS                   ! From allocate
 
        ! Executable code
+       swlevel = switchDetail(switches, 'chu' )
        allocate ( temp ( size(chunks) - 1 ), stat=status )
        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & MLSMSG_Allocate//'temp' )
@@ -2611,6 +2635,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.95  2011/02/05 01:41:44  pwagner
+! Define and use consistently swLevel to control dump verboseness
+!
 ! Revision 2.94  2010/04/20 17:32:23  honghanh
 ! Abandon attempt to remove the requirement to have a maxMafLength
 ! in ChunkDivide_Orbital
