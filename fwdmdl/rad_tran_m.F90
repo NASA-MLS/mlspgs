@@ -1271,21 +1271,25 @@ contains
       d_delta_dx(ii) = singularity(ii) * del_s(ii)
     end do ! i
 
-    !{ Apply Gauss-Legendre quadrature to the panels indicated by
-    !  {\tt more\_inds}.  We remove a singularity (which actually only
-    !  occurs at the tangent point) by writing
+    !{ Apply Gauss-Legendre quadrature to compute $\int_{\zeta_i}^{\zeta_{i-1}}
+    !  \frac{\partial \alpha(s)}{\partial f^k_{lm}} \frac{\text{d}
+    !  s}{\text{d} h} \frac{\text{d}h}{\text{d}\zeta} \, \text{d} s$ to the
+    !  panels indicated by {\tt more\_inds}.  Here, $\frac{\partial
+    !  \alpha(s)}{\partial f^k_{lm}} = \beta^k(s) \eta^k_{lm}(s)$.  We
+    !  remove the singularity introduced at the tangent point by
+    !  $\frac{\text{d} s}{\text{d} h}$ by writing
     !  $\int_{\zeta_i}^{\zeta_{i-1}} G(\zeta) \frac{\text{d}s}{\text{d}h}
-    !   \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta =
-    !  G(\zeta_i) \int_{\zeta_i}^{\zeta_{i-1}} \frac{\text{d}s}{\text{d}h}
-    !   \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta +
+    !  \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta = G(\zeta_i)
+    !  \int_{\zeta_i}^{\zeta_{i-1}} \frac{\text{d}s}{\text{d}h}
+    !  \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta +
     !  \int_{\zeta_i}^{\zeta_{i-1}} \left[ G(\zeta) - G(\zeta_i) \right]
-    !   \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
-    !   \text{d}\zeta$.  The first integral is easy -- it's just
-    !  $G(\zeta_i) (\zeta_{i-1}-\zeta_i)$.  Here, it is {\tt d\_delta\_df}.
-    !  In the second integral, $G(\zeta)$ is {\tt dAlpha_dx_path\_f
-    !  * eta\_zxp\_f * sps\_path} -- which have already been evaluated at
-    !  the appropriate abscissae~-- and $G(\zeta_i)$ is {\tt singularity}.
-    !  The weights  are {\tt gw}.
+    !  \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
+    !  \text{d}\zeta$.  The first integral is easy -- it's just $G(\zeta_i)
+    !  (\zeta_{i-1}-\zeta_i)$.  Here, it is {\tt d\_delta\_df}. In the
+    !  second integral, $G(\zeta)$ is {\tt dAlpha_dx_path\_f * eta\_zxp\_f
+    !  * sps\_path} -- which have already been evaluated at the appropriate
+    !  abscissae~-- and $G(\zeta_i)$ is {\tt singularity}. The weights  are
+    !  {\tt gw}.
 
     do i = 1, size(all_inds)
       aa = all_inds(i)
@@ -1352,22 +1356,26 @@ contains
                 &     sps_path(iii) * dBeta_df_c(ii) )
       d_delta_df(ii) = singularity(ii) * del_s(ii)
     end do ! i
-
-    !{ Apply Gauss-Legendre quadrature to the panels indicated by
-    !  {\tt more\_inds}.  We remove a singularity (which actually only
-    !  occurs at the tangent point) by writing
+    !{ Apply Gauss-Legendre quadrature to compute $\int_{\zeta_i}^{\zeta_{i-1}}
+    !  \frac{\partial \alpha(s)}{\partial f^k_{lm}} \frac{\text{d}
+    !  s}{\text{d} h} \frac{\text{d}h}{\text{d}\zeta} \, \text{d} s$ to the
+    !  panels indicated by {\tt more\_inds}.  Here, $\frac{\partial
+    !  \alpha(s)}{\partial f^k_{lm}} = \left( \beta^k(s) + f^k(s)
+    !  \frac{\partial \beta(s)}{\partial f^k(s)} \right) \eta^k_{lm}(s)$.  We
+    !  remove the singularity introduced at the tangent point by
+    !  $\frac{\text{d} s}{\text{d} h}$ by writing
     !  $\int_{\zeta_i}^{\zeta_{i-1}} G(\zeta) \frac{\text{d}s}{\text{d}h}
-    !   \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta =
-    !  G(\zeta_i) \int_{\zeta_i}^{\zeta_{i-1}} \frac{\text{d}s}{\text{d}h}
-    !   \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta +
+    !  \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta = G(\zeta_i)
+    !  \int_{\zeta_i}^{\zeta_{i-1}} \frac{\text{d}s}{\text{d}h}
+    !  \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta +
     !  \int_{\zeta_i}^{\zeta_{i-1}} \left[ G(\zeta) - G(\zeta_i) \right]
-    !   \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
-    !   \text{d}\zeta$.  The first integral is easy -- it's just
-    !  $G(\zeta_i) (\zeta_{i-1}-\zeta_i)$.  Here, it is {\tt d\_delta\_df}.
-    !  In the second integral, $G(\zeta)$ is {\tt beta\_path\_f * eta\_zxp\_f *
-    !  sps\_path} -- which have already been evaluated at the appropriate
-    !  abscissae~-- and $G(\zeta_i)$ is {\tt singularity}.  The weights
-    !  are {\tt gw}.
+    !  \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
+    !  \text{d}\zeta$.  The first integral is easy -- it's just $G(\zeta_i)
+    !  (\zeta_{i-1}-\zeta_i)$.  Here, it is {\tt d\_delta\_df}. In the second
+    !  integral, $G(\zeta)$ is {\tt eta\_zxp\_f * ( beta\_path\_f + sps\_path
+    !  * dBeta\_df )} -- which have already been evaluated at the appropriate
+    !  abscissae~-- and $G(\zeta_i)$ is {\tt singularity}.  The weights are
+    !  {\tt gw}.
 
     do i = 1, size(all_inds)
       aa = all_inds(i)
@@ -1377,7 +1385,7 @@ contains
         & del_zeta(ii) * &
         & sum( (eta_zxp(ga:ga+ng-1) &
              &  * ( beta_path_f(aa:aa+ng-1) &
-             &      + dBeta_df_f(aa:aa+ng-1) ) &
+             &      + sps_path(aa:aa+ng-1) * dBeta_df_f(aa:aa+ng-1) ) &
              &  - singularity(ii)) &
              & * ds_dz_gw(ga:ga+ng-1) )
     end do
@@ -1436,9 +1444,15 @@ contains
       d_delta_df(ii) = singularity(ii) * del_s(ii)
     end do ! i
 
-    !{ Apply Gauss-Legendre quadrature to the panels indicated by
-    !  {\tt more\_inds}.  We remove a singularity (which actually only
-    !  occurs at the tangent point) by writing
+    !{ Apply Gauss-Legendre quadrature to compute $\int_{\zeta_i}^{\zeta_{i-1}}
+    !  \frac{\partial \alpha(s)}{\partial f^k_{lm}} \frac{\text{d} s}{\text{d}
+    !  h} \frac{\text{d}h}{\text{d}\zeta} \, \text{d} s$ to the panels
+    !  indicated by {\tt more\_inds}.  Here, $\frac{\partial
+    !  \alpha(s)}{\partial f^k_{lm}} = \hat{f}^k(s) \beta^k(s)
+    !  \frac{\eta^k_{lm}(s)}{f^k_{lm}}$, where $\hat{f}^k(s) = \exp\left(
+    !  \sum_{lm} \eta^k_{lm}(s) \ln f^k_{lm} \right)$.  We remove the
+    !  singularity introduced at the tangent point by $\frac{\text{d}
+    !  s}{\text{d} h}$ by writing
     !  $\int_{\zeta_i}^{\zeta_{i-1}} G(\zeta) \frac{\text{d}s}{\text{d}h}
     !   \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta =
     !  G(\zeta_i) \int_{\zeta_i}^{\zeta_{i-1}} \frac{\text{d}s}{\text{d}h}
@@ -1450,7 +1464,8 @@ contains
     !  In the second integral, $G(\zeta)$ is {\tt beta\_path\_f * eta\_zxp\_f *
     !  sps\_path} -- which have already been evaluated at the appropriate
     !  abscissae~-- and $G(\zeta_i)$ is {\tt singularity}.  The weights
-    !  are {\tt gw}.
+    !  are {\tt gw}.  {\tt sps\_path} is $\hat{f}^k(s)$, and {\tt grids_v}
+    !  is $\ln f^k_{lm}$.
 
     do i = 1, size(all_inds)
       aa = all_inds(i)
@@ -1515,13 +1530,20 @@ contains
       ii = inds(i)
       iii = indices_c(ii)
       singularity(ii) = eta_zxp(iii) * sps_path(iii) * &
-                & ( beta_path_c(ii) + dBeta_df_c(ii) )
+                & ( beta_path_c(ii) + sps_path(iii) * dBeta_df_c(ii) )
       d_delta_df(ii) = singularity(ii) * del_s(ii)
     end do ! i
 
-    !{ Apply Gauss-Legendre quadrature to the panels indicated by
-    !  {\tt more\_inds}.  We remove a singularity (which actually only
-    !  occurs at the tangent point) by writing
+    !{ Apply Gauss-Legendre quadrature to compute $\int_{\zeta_i}^{\zeta_{i-1}}
+    !  \frac{\partial \alpha(s)}{\partial f^k_{lm}} \frac{\text{d} s}{\text{d}
+    !  h} \frac{\text{d}h}{\text{d}\zeta} \, \text{d} s$ to the panels
+    !  indicated by {\tt more\_inds}.  Here, $\frac{\partial
+    !  \alpha(s)}{\partial f^k_{lm}} = \left( \beta^k(s) + \hat{f}^k(s)
+    !  \frac{\partial \beta(s)}{\partial \hat{f}^k(s)} \right) \hat{f}^k(s)
+    !  \frac{\eta^k_{lm}(s)}{f^k_{lm}}$, where $\hat{f}^k(s) = \exp\left(
+    !  \sum_{lm} \eta^k_{lm}(s) \ln f^k_{lm} \right)$.  We remove the
+    !  singularity introduced at the tangent point by $\frac{\text{d}
+    !  s}{\text{d} h}$ by writing
     !  $\int_{\zeta_i}^{\zeta_{i-1}} G(\zeta) \frac{\text{d}s}{\text{d}h}
     !   \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta =
     !  G(\zeta_i) \int_{\zeta_i}^{\zeta_{i-1}} \frac{\text{d}s}{\text{d}h}
@@ -1530,10 +1552,10 @@ contains
     !   \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
     !   \text{d}\zeta$.  The first integral is easy -- it's just
     !  $G(\zeta_i) (\zeta_{i-1}-\zeta_i)$.  Here, it is {\tt d\_delta\_df}.
-    !  In the second integral, $G(\zeta)$ is {\tt beta\_path\_f * eta\_zxp\_f *
-    !  sps\_path} -- which have already been evaluated at the appropriate
-    !  abscissae~-- and $G(\zeta_i)$ is {\tt singularity}.  The weights
-    !  are {\tt gw}.
+    !  In the second integral, $G(\zeta)$ is {\tt eta\_zxp\_f * sps\_path
+    !  ( beta\_path\_f + dBeta_df )} -- which have already been evaluated at
+    !  the appropriate abscissae~-- and $G(\zeta_i)$ is {\tt singularity}. 
+    !  The weights are {\tt gw}.
 
     do i = 1, size(all_inds)
       aa = all_inds(i)
@@ -1542,7 +1564,8 @@ contains
       d_delta_df(ii) = d_delta_df(ii) + &
         & del_zeta(ii) * &
         & sum( (eta_zxp(ga:ga+ng-1) * sps_path(ga:ga+ng-1) &
-             &  * ( beta_path_f(aa:aa+ng-1) + dBeta_df_f(aa:aa+ng-1) ) &
+             &  * ( beta_path_f(aa:aa+ng-1) + &
+             &      sps_path(ga:ga+ng-1) * dBeta_df_f(aa:aa+ng-1) ) &
              &  - singularity(ii)) * ds_dz_gw(ga:ga+ng-1) )
     end do
 
@@ -1704,6 +1727,9 @@ contains
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.18  2011/02/05 01:18:06  vsnyder
+! Correct bugs where dBeta_df is used
+!
 ! Revision 2.17  2011/01/28 19:17:11  vsnyder
 ! Lots of stuff for TScat derivatives
 !
