@@ -430,7 +430,7 @@ contains
   end subroutine Diff_Hessian_Blocks
 
   ! ------------------------------------------- Dump_Hessian_Block -----
-  subroutine Dump_Hessian_Block ( H, Name, Details, Indices, Clean )
+  subroutine Dump_Hessian_Block ( H, Name, Details, Indices, Clean, Options )
     use Allocate_Deallocate, only: Deallocate_Test, Allocate_Test
     use MLSFillValues, only: isNaN, Repopulate
     use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
@@ -440,10 +440,12 @@ contains
                                              !  0 => minimal, 1 => values, default 1
     integer, intent(in), optional :: Indices(:) ! 3 indices of the block
     logical, intent(in), optional :: CLEAN   ! print \size
+    character(len=*), intent(in), optional :: options ! Passed dumping arrays
 
     integer :: I
     integer :: My_Details
     logical :: My_Clean
+    character(len=16) :: myOptions
     ! In case we need to dump as full blocks stored sparsely
     real(rh), pointer :: harray(:,:,:) => NULL()
 
@@ -451,6 +453,8 @@ contains
     if ( present(details) ) my_Details = details
     my_Clean = .false.
     if ( present(clean) ) my_Clean = clean
+    myOptions = ''
+    if ( present(options) ) myOptions = options
 
     if ( present(name) ) call output ( name, advance='yes' )
     if ( present(indices) ) then
@@ -494,7 +498,7 @@ contains
             & "harray in Dump_Hessian_Blocks", ModuleName, fill=0.0_rh )
           call Repopulate( harray, h%tuples%i, h%tuples%j, h%tuples%k, &
             & h%tuplesFilled, h%tuples%h )
-          call Dump ( harray, 'Hessian values' )
+          call Dump ( harray, 'Hessian values', options=options )
           call deallocate_test ( harray, moduleName, "harray in Dump_Hessian_Blocks" )
         else
           do i = 1, size(h%tuples)
@@ -514,7 +518,8 @@ contains
           & call MLSMessage( MLSMSG_Warning, ModuleName, &
           & 'NaNs found in full Hessian block' )
       elseif ( details > 0 ) then
-        call dump ( h%values, options=merge('c',' ',my_clean) )
+        call dump ( h%values, &
+          & options=trim(myOptions) // merge('c',' ',my_clean) )
       endif
     case ( h_unknown )
       call output ( 'of unknown form, nothing to dump', advance='yes' )
@@ -1080,6 +1085,9 @@ o:    do while ( i < n )
 end module HessianModule_0
 
 ! $Log$
+! Revision 2.15  2011/02/05 01:37:31  pwagner
+! Passes options to dump routines
+!
 ! Revision 2.14  2010/11/25 01:16:32  pwagner
 ! Fixed bug in diffing Hessian blocks with options
 !
