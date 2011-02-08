@@ -1,0 +1,117 @@
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-103}
+\newcommand{\docdate}{7 February 2011}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\renewcommand{\d}{\text{d}}
+\newcommand{\T}{\mathcal{T}}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Nathaniel, Bill\\
+Subject: \>Error in temperature derivative of oxygen continuum\\
+From: \>Van Snyder\\
+Reference: \>\h{wvs-093}, \h{wvs-101}, JPL D-18130 \\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+In the {\tt Abs_CS_O2_Cont_dT} subroutine in the {\tt get_beta_path_m}
+module in the forward model, we compute the oxygen continuum cross section
+
+\begin{equation}
+\beta = c_1 p^2 \nu^2 \exp(c_2 \theta) D
+\end{equation}
+
+where $D = 1 / (\nu^2 + f)$ and $f = \left( c_3 p \exp(c_4 \theta)
+\right)^2$.
+
+Observing that $\frac{\d\theta}{\d T} = -\frac{\theta}T$ the code computes
+
+\begin{equation}
+\frac{\beta}T ( c_4 f D - c_2 )
+\end{equation}
+
+and calls it $\frac{\partial \beta}{\partial T}$.
+
+I believe the correct expression is
+
+\begin{equation}
+\frac{\partial \beta}{\partial T} = \frac{\beta \theta}T ( 2 c_4 f D - c_2 )
+\end{equation}
+
+\label{lastpage}
+\end{document}
+
+% $Id$
+
+% $Log$
