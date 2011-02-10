@@ -12,8 +12,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-103}
-\newcommand{\docdate}{7 February 2011}
+\newcommand{\docname}{wvs-103r1}
+\newcommand{\docdate}{9 February 2011}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -85,17 +85,26 @@ Reference: \>\h{wvs-093}, \h{wvs-101}, JPL D-18130 \\
 \parindent 0pt \parskip 6pt
 \vspace{-10pt}
 
+Let
+
+\begin{equation}
+\theta = \log\left(\frac{300}T\right)
+\text{, }
+f = \left( c_3 p \exp(c_4 \theta) \right)^2
+  = \left( c_3 p \left(\frac{300}T\right)^{c_4} \right)^2
+\text{ and }
+D = \frac1{\nu^2 + f}\,.
+\end{equation}
+
 In the {\tt Abs_CS_O2_Cont_dT} subroutine in the {\tt get_beta_path_m}
 module in the forward model, we compute the oxygen continuum cross section
 
 \begin{equation}
 \beta = c_1 p^2 \nu^2 \exp(c_2 \theta) D
+      = c_1 p^2 \nu^2 \left( \frac{300}T \right)^{c_2} D\,.
 \end{equation}
 
-where $D = 1 / (\nu^2 + f)$ and $f = \left( c_3 p \exp(c_4 \theta)
-\right)^2$.
-
-Observing that $\frac{\d\theta}{\d T} = -\frac{\theta}T$ the code computes
+Observing that $\frac{\d\theta}{\d T} = -\frac1T$ the code computes
 
 \begin{equation}
 \frac{\beta}T ( c_4 f D - c_2 )
@@ -106,8 +115,24 @@ and calls it $\frac{\partial \beta}{\partial T}$.
 I believe the correct expression is
 
 \begin{equation}
-\frac{\partial \beta}{\partial T} = \frac{\beta \theta}T ( 2 c_4 f D - c_2 )
+\frac{\partial \beta}{\partial T} = \frac{\beta}T ( 2 c_4 f D - c_2 )
+\,.
 \end{equation}
+
+The values of $c_1 \dots c_4$ are $6.87\times10^{-9}$, 2.8, 0.56 and 0.8.
+
+When $\nu = 229968.33$ MHz, $T = 205$ K, and $p = 10^{-2}$ hPa, $f =
+5.767 \times 10^{-5}$, $D = 1.891 \times 10^{-11}$ and $2 c_4 f D = 1.736
+\times 10^{-19}$.  This is insignificant compared to $c_2 = 2.80$. 
+Therefore, the missing factor of 2 is irrelevant at low pressures and
+high temperatures.  Even at $T = 50$ K and $p = 300$ hPa, $2 c_4 f D =
+1.5 \times 10^{-5}$, while at $T=300$ K and $p = 1000$ hPa, $2 c_4 f D =
+9.49 \times 10^{-6}$, so the missing factor of 2 has very little effect
+in these regimes as well.
+
+$f D = O(\nu^{-2})$, so the effect is only about four times larger at 118
+GHz.  It would only have a tiny effect on the convergence rate for
+temperature retrievals.
 
 \label{lastpage}
 \end{document}
@@ -115,3 +140,6 @@ I believe the correct expression is
 % $Id$
 
 % $Log$
+% Revision 1.1  2011/02/08 02:24:52  vsnyder
+% Initial commit
+%
