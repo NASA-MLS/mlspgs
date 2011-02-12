@@ -413,7 +413,6 @@ contains
     integer :: IER                ! Status flag from allocates
     integer :: I                  ! Loop index and other uses.
     integer :: INST               ! Instance of temperature nearest to MAF
-    integer :: I_Cloud_A          ! Which beta group, if any, is Cloud_A
     integer :: IWC_Ind            ! S_Ind(L_IWC) = index of IWC in Grids_f
     integer :: J                  ! Loop index and other uses.
     integer :: K                  ! Loop index and other uses.
@@ -565,6 +564,10 @@ contains
                                       ! path x state-vector-components
     real(rp) :: D2X_DXDT(no_tan_hts,s_t*sv_t_len)  ! (No_tan_hts, nz*np)
     real(rp) :: DB_DF(s_ts*max(s_a,s_t)*max_c)     ! dB / d one f on the path, for TScat
+    real(rp) :: DBETA_DF_PATH_C(merge(max_c,0,any(grids_f%where_dBeta_df /= 0)),&
+                                count(grids_f%where_dBeta_df /= 0))
+    real(rp) :: DBETA_DF_PATH_F(merge(max_f,0,any(grids_f%where_dBeta_df /= 0)),&
+                                count(grids_f%where_dBeta_df /= 0))
     real(rp) :: DBETA_DIWC_PATH_C(max_c,s_tg*no_mol)  ! dBeta_dIWC on coarse grid
     real(rp) :: DBETA_DIWC_PATH_F(max_f,s_tg*no_mol)  ! dBeta_dIWC on fine grid
     real(rp) :: DBETA_DN_PATH_C(max_c,s_td*size(fwdModelConf%lineWidth_TDep)) ! dBeta_dn on coarse grid
@@ -899,20 +902,6 @@ contains
     else
       if ( FwdModelConf%incl_cld ) call cloud_setup
       call convolution_setup
-    end if
-
-    ! Find which, if any, of the beta groups is Cloud_A.  This is needed
-    ! because beta(Cloud_A) depends upon mixing ratio, which means the
-    ! derivative of alpha isn't just beta, it's beta + (mixing ratio) *
-    ! dBeta_d(mixing ratio).
-    i_cloud_a = 0
-    if ( size(dBeta_dIWC_path_c) /= 0 ) then
-      do i = 1, size(beta_group)
-        if ( beta_group(i)%molecule == l_cloud_a ) then
-          i_cloud_a = i
-          exit
-        end if
-      end do
     end if
 
     ! Compute hydrostatic grid -----------------------------------------------
@@ -2872,7 +2861,8 @@ contains
           &  tanh1_c, beta_group, sx, fwdModelConf%polarized, gl_slabs,  &
           &  c_inds, beta_path_c, t_der_path_flags, dTanh_dT_c, vel_rel, &
           &  dbeta_dT_path_c, dbeta_dw_path_c, dbeta_dn_path_c,          &
-          &  dbeta_dv_path_c, sps_path )
+          &  dbeta_dv_path_c, dBeta_df_path_c, grids_f%where_dBeta_df,   &
+          &  sps_path )
       end if
 
       if ( FwdModelConf%incl_cld .and. .not. pfa ) then
@@ -3146,11 +3136,12 @@ contains
         ! This avoids having four paths through the code, each with a
         ! different set of optional arguments.
 
-        call get_beta_path ( Frq, firstSignal%lo, p_path, t_path_f(:ngl),    &
-          & tanh1_f(1:ngl), beta_group, sx, fwdModelConf%polarized, gl_slabs,&
-          & gl_inds, beta_path_f(:ngl,:), t_der_path_flags, dTanh_dT_f,      &
-          & vel_rel, dbeta_dT_path_f, dbeta_dw_path_f, dbeta_dn_path_f,      &
-          & dbeta_dv_path_f, sps_path )
+        call get_beta_path ( Frq, firstSignal%lo, p_path, t_path_f(:ngl),     &
+          & tanh1_f(1:ngl), beta_group, sx, fwdModelConf%polarized, gl_slabs, &
+          & gl_inds, beta_path_f(:ngl,:), t_der_path_flags, dTanh_dT_f,       &
+          & vel_rel, dbeta_dT_path_f, dbeta_dw_path_f, dbeta_dn_path_f,       &
+          & dbeta_dv_path_f, dbeta_df_path_f, grids_f%where_dBeta_df,         &
+          &  sps_path )
 
       end if ! .not. pfa
 
@@ -3279,31 +3270,31 @@ contains
           call drad_tran_df ( max_f, c_inds, gl_inds, del_zeta, Grids_f,      &
             &  beta_path_c, eta_fzp, sps_path, do_calc_fzp,                   &
             &  beta_path_f, do_gl, del_s, ref_corr, dsdz_gw_path,             &
-            &  inc_rad_path, dBeta_dIWC_path_c, dBeta_dIWC_path_f,            &
-            &  i_cloud_a, i_start, tan_pt_c, i_stop, size(d_delta_df,1),      &
-            &  d_delta_df, nz_d_delta_df, nnz_d_delta_df, k_atmos_frq,        &
-            &  dB_df, tau%tau(:,frq_i), nz_zp, nnz_zp, alpha_path_c, B(:npc), &
+            &  inc_rad_path, dBeta_df_path_c, dBeta_df_path_f,                &
+            &  i_start, tan_pt_c, i_stop, size(d_delta_df,1),                 &
+            &  d_delta_df, nz_d_delta_df, nnz_d_delta_df, k_atmos_frq, dB_df, &
+            &  tau%tau(:,frq_i), nz_zp, nnz_zp,  alpha_path_c, B(:npc),       &
             &  beta_c_e_path_c(:npc), dBeta_c_e_dIWC_path_c(:npc),            &
             &  dBeta_c_s_dIWC_path_c(:npc), tt_path_c(:npc), dTScat_df,       &
             &  w0_path_c(:npc) )
 
         else
 
-          call drad_tran_df ( max_f, c_inds, gl_inds, del_zeta, Grids_f, &
-            &  beta_path_c, eta_fzp, sps_path, do_calc_fzp,              &
-            &  beta_path_f, do_gl, del_s, ref_corr, dsdz_gw_path,        &
-            &  inc_rad_path, dBeta_dIWC_path_c, dBeta_dIWC_path_f,       &
-            &  i_cloud_a, i_start, tan_pt_c, i_stop, size(d_delta_df,1), &
+          call drad_tran_df ( max_f, c_inds, gl_inds, del_zeta, Grids_f,      &
+            &  beta_path_c, eta_fzp, sps_path, do_calc_fzp,                   &
+            &  beta_path_f, do_gl, del_s, ref_corr, dsdz_gw_path,             &
+            &  inc_rad_path, dBeta_df_path_c, dBeta_df_path_f,                &
+            &  i_start, tan_pt_c, i_stop,  size(d_delta_df,1),                &
             &  d_delta_df, nz_d_delta_df, nnz_d_delta_df, k_atmos_frq, dB_df )
 
         end if
 
         if ( atmos_second_der ) then
-          call d2rad_tran_df2 ( max_f, c_inds, gl_inds, del_zeta, Grids_f, &
-            &  beta_path_c, eta_fzp, sps_path, do_calc_fzp,                &
-            &  beta_path_f, do_gl, del_s, ref_corr, dsdz_gw_path,          &
-            &  inc_rad_path, dBeta_dIWC_path_c, dBeta_dIWC_path_f,         &
-            &  i_cloud_a, i_start, tan_pt_c, i_stop, size(d_delta_df,1),   &
+          call d2rad_tran_df2 ( max_f, c_inds, gl_inds, del_zeta, Grids_f,    &
+            &  beta_path_c, eta_fzp, sps_path, do_calc_fzp,                   &
+            &  beta_path_f, do_gl, del_s, ref_corr, dsdz_gw_path,             &
+            &  inc_rad_path, dBeta_dIWC_path_c, dBeta_dIWC_path_f,            &
+            &  i_start, tan_pt_c, i_stop,  size(d_delta_df,1),                &
             &  d_delta_df, nz_d_delta_df, nnz_d_delta_df, h_atmos_frq )
         end if ! atmos_second_der
 
@@ -4399,6 +4390,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.313  2011/01/29 00:52:32  vsnyder
+! Allow PFA without frequency averaging
+!
 ! Revision 2.312  2011/01/28 19:18:44  vsnyder
 ! Lots of stuff for TScat
 !
