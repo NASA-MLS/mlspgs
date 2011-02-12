@@ -260,7 +260,7 @@ contains
                           & beta_path_c, eta_zxp, sps_path, do_calc_f,      & 
                           & beta_path_f, do_gl, del_s, ref_cor,             & 
                           & ds_dz_gw, inc_rad_path, dBeta_df_c, dBeta_df_f, & 
-                          & i_dBeta_df, i_start, tan_pt, i_stop, LD,        & 
+                          & i_start, tan_pt, i_stop, LD,                    & 
                           & d_delta_df, nz_d_delta_df, nnz_d_delta_df,      & 
                           & drad_df, dB_df, Tau, nz_zxp, nnz_zxp,           & 
                           & alpha_path_c, B, Beta_c_e, dBeta_c_e_dIWC,      &
@@ -300,9 +300,8 @@ contains
       !              gw on the entire grid.  Only the gl_inds part is used.
     real(rp), intent(in) :: inc_rad_path(:)  ! incremental radiance along the
                                              ! path.  t_script * tau.
-    real(rp), intent(in) :: dBeta_df_c(*)    ! In case beta depends on mixing ratio
-    real(rp), intent(in) :: dBeta_df_f(*)    ! In case beta depends on mixing ratio
-    integer, intent(in) :: I_dBeta_df        ! If nonzero, which beta depends on mixing ratio
+    real(rp), intent(in) :: dBeta_df_c(:,:)  ! In case beta depends on mixing ratio
+    real(rp), intent(in) :: dBeta_df_f(:,:)  ! In case beta depends on mixing ratio
     integer, intent(in) :: I_start           ! path_start_index + 1
     integer, intent(in) :: tan_pt            ! Tangent point index in Del_Zeta
     integer, intent(in) :: I_stop            ! path stop index
@@ -337,6 +336,7 @@ contains
 ! Internals
 
     integer :: i_begin, n_inds, no_to_gl, sps_i, sv_i
+    integer :: I_dBeta_df            ! Which column of dBeta_df_* to use if /= 0
     integer, target, dimension(1:size(inc_rad_path)) :: all_inds_B
     integer, target, dimension(1:size(inc_rad_path)) :: more_inds_B
     integer, pointer :: all_inds(:)  ! all_inds => part of all_inds_B;
@@ -372,8 +372,9 @@ contains
 
     do sps_i = 1, ubound(Grids_f%l_z,1)
 
+      i_dBeta_df = grids_f%where_dBeta_df(sps_i)
       what =     merge(1,0,grids_f%lin_log(sps_i)) + &
-           & 2 * merge(1,0,sps_i == i_dBeta_df)
+           & 2 * merge(1,0,i_dBeta_df/=0)
 
       do sv_i = Grids_f%l_v(sps_i-1)+1, Grids_f%l_v(sps_i)
 
@@ -425,14 +426,14 @@ contains
           call Get_d_delta_df_f ( Inds, Indices_c, GL_Inds, &
             & All_inds, More_inds, eta_zxp(:,sv_i), Sps_path(:,sps_i), &
             & Beta_path_c(:,sps_i), Beta_path_f(:,sps_i), &
-            & dBeta_df_c, dBeta_df_f, &
+            & dBeta_df_c(:,i_dBeta_df), dBeta_df_f(:,i_dBeta_df), &
             & Del_s, del_zeta, ds_dz_gw, ref_cor, Singularity, &
             & d_delta_df(:,sv_i) )
         case ( 3 ) ! log linear beta, mixing ratio dependence
           call Get_d_delta_df_linlog_f ( Inds, Indices_c, GL_Inds, &
             & All_inds, More_inds, eta_zxp(:,sv_i), Sps_path(:,sps_i), &
             & Beta_path_c(:,sps_i), Beta_path_f(:,sps_i), &
-            & dBeta_df_c, dBeta_df_f, &
+            & dBeta_df_c(:,i_dBeta_df), dBeta_df_f(:,i_dBeta_df), &
             & Del_s, del_zeta, ds_dz_gw, ref_cor, grids_f%values(sv_i), &
             & Singularity, d_delta_df(:,sv_i) )
         end select
@@ -532,7 +533,7 @@ contains
                             & beta_path_c, eta_zxp, sps_path, do_calc_f,      &
                             & beta_path_f, do_gl, del_s, ref_cor,             &
                             & ds_dz_gw, inc_rad_path, dBeta_df_c, dBeta_df_f, &
-                            & i_dBeta_df, i_start, tan_pt, i_stop, LD,        &
+                            & i_start, tan_pt, i_stop, LD,                    &
                             & d_delta_df,                                     &
                             & nz_d_delta_df, nnz_d_delta_df,                  &
                             & d2rad_df2 )
@@ -568,9 +569,8 @@ contains
       !              gw on the entire grid.  Only the gl_inds part is used.
     real(rp), intent(in) :: inc_rad_path(:)  ! incremental radiance along the
                                              ! path.  t_script * tau.
-    real(rp), intent(in) :: dBeta_df_c(*)    ! In case beta depends on mixing ratio
-    real(rp), intent(in) :: dBeta_df_f(*)    ! In case beta depends on mixing ratio
-    integer, intent(in) :: I_dBeta_df        ! If nonzero, which beta depends on mixing ratio
+    real(rp), intent(in) :: dBeta_df_c(:,:)  ! In case beta depends on mixing ratio
+    real(rp), intent(in) :: dBeta_df_f(:,:)  ! In case beta depends on mixing ratio
     integer, intent(in) :: I_start           ! path_start_index + 1
     integer, intent(in) :: tan_pt            ! Tangent point index in Del_Zeta
     integer, intent(in) :: I_stop            ! path stop index
@@ -590,6 +590,7 @@ contains
 ! Internals
 
     integer :: i_begin
+    integer :: I_dBeta_df_i, I_dBeta_df_j ! Which column of dBeta_df_* to use if /= 0
     integer :: n_inds_q, n_inds_r
     integer :: no_to_gl_q, no_to_gl_r
     integer :: sps_i, sps_j          ! species indices
@@ -632,13 +633,15 @@ contains
 
     do sps_i = 1, sps_n
 
+      i_dBeta_df_i = grids_f%where_dBeta_df(sps_i)
       what_i =     merge(1,0,grids_f%lin_log(sps_i)) + &
-             & 2 * merge(1,0,sps_i == i_dBeta_df)
+             & 2 * merge(1,0,i_dBeta_df_i /= 0)
 
       do sps_j = 1, sps_n
 
+        i_dBeta_df_j = grids_f%where_dBeta_df(sps_j)
         what_j =     merge(1,0,grids_f%lin_log(sps_j)) + &
-               & 2 * merge(1,0,sps_j == i_dBeta_df)
+               & 2 * merge(1,0,i_dBeta_df_j /= 0)
 
         do q = Grids_f%l_v(sps_i-1)+1, Grids_f%l_v(sps_i)
 
@@ -697,14 +700,14 @@ contains
               call get_d_delta_df_f ( inds_q, indices_c, gl_inds, &
                 & all_inds_q, more_inds_q, eta_zxp(:,q), sps_path(:,sps_i), &
                 & beta_path_c(:,sps_i), beta_path_f(:,sps_i), &
-                & dbeta_df_c, dbeta_df_f, &
+                & dbeta_df_c(:,i_dBeta_df_i), dbeta_df_f(:,i_dBeta_df_i), &
                 & del_s, del_zeta, ds_dz_gw, ref_cor, singularity, &
                 & d_delta_df(:,q) )
             case ( 3 ) ! log linear beta, mixing ratio dependence
               call get_d_delta_df_linlog_f ( inds_q, indices_c, gl_inds, &
                 & all_inds_q, more_inds_q, eta_zxp(:,q), sps_path(:,sps_i), &
                 & beta_path_c(:,sps_i), beta_path_f(:,sps_i), &
-                & dbeta_df_c, dbeta_df_f, &
+                & dbeta_df_c(:,i_dBeta_df_i), dbeta_df_f(:,i_dBeta_df_i), &
                 & del_s, del_zeta, ds_dz_gw, ref_cor, grids_f%values(q), &
                 & singularity, d_delta_df(:,q) )
             end select
@@ -748,14 +751,14 @@ contains
               call Get_d_delta_df_f ( inds_r, Indices_c, gl_inds, &
                 & All_inds_r, More_inds_r, eta_zxp(:,r), Sps_path(:,sps_j), &
                 & Beta_path_c(:,sps_j), Beta_path_f(:,sps_j), &
-                & dBeta_df_c, dBeta_df_f, &
+                & dBeta_df_c(:,i_dBeta_df_j), dBeta_df_f(:,i_dBeta_df_j), &
                 & Del_s, del_zeta, ds_dz_gw, ref_cor, Singularity, &
                 & d_delta_df(:,r) )
             case ( 3 ) ! log linear beta, mixing ratio dependence
               call Get_d_delta_df_linlog_f ( inds_r, Indices_c, gl_inds, &
                 & All_inds_r, More_inds_r, eta_zxp(:,r), Sps_path(:,sps_j), &
                 & Beta_path_c(:,sps_j), Beta_path_f(:,sps_j), &
-                & dBeta_df_c, dBeta_df_f, &
+                & dBeta_df_c(:,i_dBeta_df_j), dBeta_df_f(:,i_dBeta_df_j), &
                 & Del_s, del_zeta, ds_dz_gw, ref_cor, grids_f%values(r), &
                 & Singularity, d_delta_df(:,r) )
             end select
@@ -1727,6 +1730,9 @@ contains
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.19  2011/02/12 03:57:40  vsnyder
+! Add mixing-ratio dependence for H2O derivatives
+!
 ! Revision 2.18  2011/02/05 01:18:06  vsnyder
 ! Correct bugs where dBeta_df is used
 !
