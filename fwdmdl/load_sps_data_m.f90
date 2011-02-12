@@ -33,6 +33,11 @@ module LOAD_SPS_DATA_M
     integer,  pointer :: windowfinish(:) => null()! horizontal ending index
 !                                                  from l2gp
     integer,  pointer :: mol(:) => null() ! Qty molecule, l_...
+    ! Which column of dBeta_path_df to use for each molecule.
+    ! Molecule beta is not dependent upon mixing ratio if zero.
+    ! Only set where derivatives for molecules with mixing-ratio-dependent
+    ! beta are selected.
+    integer,  pointer :: where_dBeta_df(:) => null()
     integer,  pointer :: qty(:) => null() ! Qty type, l_...
     logical,  pointer :: lin_log(:) => null()   ! type of representation basis
     real(r8), pointer :: min_val(:) => null()   ! Minimum value
@@ -385,6 +390,7 @@ contains
     call allocate_test ( Grids_x%l_v, n, 'Grids_x%l_v', ModuleName, lowBound=0 )
     call allocate_test ( Grids_x%mol, n, 'Grids_x%mol', ModuleName )
     call allocate_test ( Grids_x%qty, n, 'Grids_x%qty', ModuleName )
+    call allocate_test ( Grids_x%where_dBeta_df, n, 'Grids_x%where_dBeta_df', ModuleName )
     grids_x%l_z(0) = 0
     grids_x%l_p(0) = 0
     grids_x%l_f(0) = 0
@@ -392,6 +398,7 @@ contains
     grids_x%p_len = 0
     grids_x%mol = 0
     grids_x%qty = 0
+    grids_x%where_dBeta_df = 0
     call allocate_test ( Grids_x%windowstart, n, 'Grids_x%windowstart', &
                        & ModuleName )
     call allocate_test ( Grids_x%windowfinish, n, 'Grids_x%windowfinish',&
@@ -481,8 +488,12 @@ contains
 
     use Intrinsic, only: L_Channel, L_IntermediateFrequency
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use Molecules, only: L_Cloud_a, L_Cloud_s, L_H2O
     use Constants, only: Deg2Rad
     use VectorsModule, only: VectorValue_T, M_FullDerivatives
+
+    ! For which molecules do we compute dBeta_df?
+    integer, parameter :: Which_dBeta_df(3) = (/ L_Cloud_a, L_Cloud_s, L_H2O /)
 
     type(grids_t), intent(inout) :: Grids_x
     integer, intent(in) :: II
@@ -552,6 +563,10 @@ contains
 
     if ( present(setDerivFlags) ) then
       if ( setDerivFlags ) then
+        ! We set grids_x%where_dBeta_df here instead of in Fill_Grids_1
+        ! because we have setDerivFlags here, but not there.
+        if ( any(qty%template%molecule == Which_dBeta_df) ) &
+          grids_x%where_dBeta_df(ii) = count(grids_x%where_dBeta_df /= 0) + 1
         if ( associated(qty%mask) ) then
           Grids_x%deriv_flags(pv+1:qv) = reshape(( iand (M_FullDerivatives, &
             & ichar(qty%mask)) == 0),(/qv-pv/))
@@ -583,6 +598,7 @@ contains
     call allocate_test(Grids_x%names,0,'grids_x%names',modulename)
     call allocate_test(grids_x%mol,0,'grids_x%mol',modulename)
     call allocate_test(grids_x%qty,0,'grids_x%qty',modulename)
+    call allocate_test(grids_x%where_dBeta_df,0,'grids_x%where_dBeta_df',modulename)
     call allocate_test(grids_x%lin_log,0,'grids_x%lin_log',modulename)
     call allocate_test(grids_x%min_val,0,'grids_x%min_val',modulename)
     call allocate_test(grids_x%frq_basis,0,'grids_x%frq_basis',modulename)
@@ -607,6 +623,7 @@ contains
     call deallocate_test(grids_x%l_v,'grids_x%l_v',modulename)
     call deallocate_test(Grids_x%mol,'grids_x%mol',modulename)
     call deallocate_test(Grids_x%qty,'grids_x%qty',modulename)
+    call deallocate_test(Grids_x%where_dBeta_df,'grids_x%where_dBeta_df',modulename)
     call deallocate_test(grids_x%values,'grids_x%values',modulename)
     call deallocate_test(grids_x%lin_log,'grids_x%lin_log',modulename)
     call deallocate_test(grids_x%min_val,'grids_x%min_val',modulename)
@@ -663,12 +680,20 @@ contains
       else
         call output ( ' ?' )
       end if
-      if ( the_grid%mol(i) > 0 ) &
-        & call display_string ( lit_indices(the_grid%mol(i)), &
+      if ( the_grid%mol(i) > 0 ) then
+        call display_string ( lit_indices(the_grid%mol(i)), &
           & before=' molecule: ' )
-      if ( the_grid%qty(i) > 0 ) &
-        & call display_string ( lit_indices(the_grid%qty(i)), &
+        w = w + string_length(lit_indices(the_grid%mol(i))) + len(' molecule: ')
+      end if
+      if ( the_grid%qty(i) > 0 ) then
+        call display_string ( lit_indices(the_grid%qty(i)), &
           & before=' quantity: ' )
+        w = w + string_length(lit_indices(the_grid%qty(i))) + len(' quantity: ')
+      end if
+      if ( the_grid%where_dBeta_df(i) > 0 ) then
+        call output ( the_grid%where_dBeta_df(i), before=' dBeta_df at ' )
+        w = w + 2 + len(' dBeta_df at ')
+      end if
     end do
     call newLine
     call dump ( the_grid%l_f(1:), 'The_grid%l_f' )
@@ -704,6 +729,9 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.79  2011/02/05 01:17:17  vsnyder
+! Add mol component, some cannonball polishing
+!
 ! Revision 2.78  2010/12/07 01:06:24  vsnyder
 ! Many changes for TScat.  Mostly making irrelevant arguments optional, and
 ! providing other stuff explicitly.  Also added the qty component.
