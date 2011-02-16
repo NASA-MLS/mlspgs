@@ -314,13 +314,15 @@ MODULE SciUtils ! L0 science utilities
 
     USE MLSL1Config, ONLY: L1Config
     USE MLSL1Common, ONLY : L1ProgType, LogType, MAFinfo
+    USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Info
+    USE SDPToolkit, ONLY: PGS_TD_TAItoUTC
 
     !! Get the next MAF's science data
 
     LOGICAL, INTENT (OUT) :: more_data
 
     INTEGER, PARAMETER :: no_data = -1   ! no data is available
-    INTEGER, SAVE :: prev_MAF = no_data
+    INTEGER, SAVE :: prev_MAF = no_data, prev_last_MIF = no_data
     INTEGER :: i, last_MIF, MIFno, m
     REAL :: pos1, pos2, dif
     REAL :: APE_pos(0:(MaxMIFs-1),2), ASA_pos(0:(MaxMIFs-1),2)
@@ -328,6 +330,11 @@ MODULE SciUtils ! L0 science utilities
     REAL :: APE_theta(0:(MaxMIFs-1)), GSM_theta(0:(MaxMIFs-1)), &
          TSSM_theta(0:(MaxMIFs-1))
     REAL :: APE_pos_P(0:(MaxMIFs-1),2), TSSM_pos_P(0:(MaxMIFs-1),2)
+
+    REAL, PARAMETER :: pos_offset = 4.44e-03   ! Offset between MIF 0, Pos 2
+                                               ! and MIF 1, Pos 1
+    CHARACTER (LEN=80) :: msg
+    CHARACTER(len=27) :: asciiUTC
 
     more_data = .TRUE.
 
@@ -340,6 +347,7 @@ MODULE SciUtils ! L0 science utilities
     last_MIF = L1Config%Calib%MIFsPerMAF - 1
     DO i = 0, (MaxMIFs - 1); DACS_MAF(i)%D = 0; ENDDO
     APE_pos = QNan(); ASA_pos = QNan(); GSM_pos = QNan(); TSSM_pos = QNan()
+    SciMAF%secTAI = QNan()
 
     !! Initialize CRC flags to good
 
@@ -393,6 +401,7 @@ MODULE SciUtils ! L0 science utilities
           TSSM_pos(MIFno,:) = SciMAF(MIFno)%TSSM_pos
 
           prev_MAF = Sci_pkt%MAFno
+          prev_last_MIF = MIFno
 
        ELSE
 
@@ -402,6 +411,11 @@ MODULE SciUtils ! L0 science utilities
 
        ENDIF
 
+    ENDDO
+
+    DO m = 0, 2    ! Make sure time is available in first 3 MIFs!
+       IF (.NOT. Finite (SciMAF(m)%secTAI)) SciMAF(m)%secTAI = &
+            SciMAF(m+1)%secTAI - L1Config%Calib%MIF_duration
     ENDDO
 
 ! Determine pointing mechanisms angles:
@@ -419,6 +433,19 @@ MODULE SciUtils ! L0 science utilities
           pos2 = APE_pos(m+1,2)
           IF (.NOT. Finite (pos1)) THEN
              APE_theta(m) = pos2
+             IF (m == 0 .AND. (.NOT. Finite (pos2))) THEN  ! No good pos data!
+                APE_theta(m) = APE_pos(0,2)        ! Use good MIF 0, pos 2
+                IF (prev_last_MIF /= 148) THEN     ! Nominal previous MAF number
+                   APE_theta(m) = APE_theta(m) + pos_offset
+                ENDIF
+                IF (Finite (APE_theta(m))) THEN
+                   i = PGS_TD_TAItoUTC (SciMAF(0)%secTAI, asciiUTC)
+                   WRITE (msg, &
+                    '("Adjusting MIF 0 pointing using offset at UTC: ", A27)') &
+                    asciiUTC
+                   CALL MLSMessage (MLSMSG_Info, ModuleName, msg)
+                ENDIF
+             ENDIF
           ELSE IF (.NOT. Finite (pos2)) THEN
              APE_theta(m) = pos1
           ELSE
@@ -883,6 +910,9 @@ MODULE SciUtils ! L0 science utilities
 END MODULE SciUtils
 
 ! $Log$
+! Revision 2.18  2011/02/16 17:07:40  perun
+! Estimate MIF 0 pointing when MIF 1, Position 2 is missing.
+!
 ! Revision 2.17  2008/01/15 19:56:31  perun
 ! Allow unrecognized format type to pass through with a warning.
 !
@@ -929,6 +959,9 @@ END MODULE SciUtils
 ! moved parameter statement to data statement for LF/NAG compatitibility
 !
 ! $Log$
+! Revision 2.18  2011/02/16 17:07:40  perun
+! Estimate MIF 0 pointing when MIF 1, Position 2 is missing.
+!
 ! Revision 2.17  2008/01/15 19:56:31  perun
 ! Allow unrecognized format type to pass through with a warning.
 !
