@@ -92,6 +92,8 @@ module L2PC_m
 
   integer :: counterStart
   parameter ( counterStart = huge (0) / 4 )
+  logical :: verbose
+  logical :: verboser
 
   ! This type holds an l2pc sometimes called a "bin"
   type L2PC_T
@@ -305,19 +307,32 @@ contains ! ============= Public Procedures ==========================
     integer :: JH                       ! Loop index
 
     type (Vector_T), pointer :: V       ! Temporary pointer
+    integer, parameter :: jacobians = 1
+    integer, parameter :: hessians = jacobians + 1
+    integer, parameter :: rows = 1
+    integer, parameter :: cols = rows + 1
 
-    ! Exectuable code
-    do jh = 1, 2
-      if ( jh == 2 .and. .not. l2pc%gotH ) cycle
-      do vector = 1, 2
-        if ( vector == 1 ) then
-          if ( jh == 1 ) then
+    ! Executable code
+    verbose = switchDetail( switches, 'l2pc') > -1
+    do jh = jacobians, hessians
+      if ( jh == hessians .and. .not. l2pc%gotH ) cycle
+      if ( verbose ) &
+        & call outputNamedValue( ' About to destroy 1 (j) or 2 (h)', jh )
+      if ( jh == hessians ) then
+        call output( 'Unable to destroy hessian quantity templates yet', advance='yes' )
+        cycle
+      endif
+      do vector = rows, cols
+        if ( verbose ) &
+          & call outputNamedValue( ' About to destroy 1 (rows) or 2 (cols)', vector )
+        if ( vector == cols ) then
+          if ( jh == jacobians ) then
             v => l2pc%j%col%vec
           else
             v => l2pc%h%col%vec
           end if
         else
-          if ( jh == 1 ) then
+          if ( jh == jacobians ) then
             v => l2pc%j%row%vec
           else
             v => l2pc%h%row%vec
@@ -325,9 +340,10 @@ contains ! ============= Public Procedures ==========================
         end if
         if ( .not. associated(v) ) cycle
         if ( .not. associated(v%quantities) ) cycle
-        if ( switchDetail( switches, 'l2pc') > -1 ) &
-          & call output( ' About to destroy vectors', advance='yes' )
-
+        if ( verbose ) then
+          call output( ' About to destroy vectors', advance='yes' )
+          call outputNamedValue( ' Num quantities', size(v%quantities) )
+        endif
         do quantity = 1, size(v%quantities)
           call DestroyQuantityTemplateContents (v%quantities(quantity)%template )
         end do
@@ -335,11 +351,11 @@ contains ! ============= Public Procedures ==========================
       end do
     end do
 
-    ! Destory kStar
-    if ( switchDetail( switches, 'l2pc') > -1 ) &
+    ! Destroy kStar
+    if ( verbose ) &
       & call output( ' About to destroy matrix', advance='yes' )
     call DestroyMatrix ( l2pc%j )
-    if ( switchDetail( switches, 'l2pc') > -1 ) &
+    if ( verbose ) &
       & call output( ' About to destroy hessian', advance='yes' )
     if ( l2pc%goth ) call DestroyHessian ( l2pc%h )
 
@@ -573,11 +589,12 @@ contains ! ============= Public Procedures ==========================
     type (l2pc_t), intent(in), target :: L2pc
     integer, intent(in), optional :: DETAILS ! passed to Vector and Matrix dumps
     character(len=*), dimension(3), intent(in), optional :: ONLYTHESEBLOCKS ! passed to Vector and Matrix dumps
-    character(len=*), intent(in), optional :: options ! any of {mh*b[]}
+    character(len=*), intent(in), optional :: options ! any of {mh*b[]d[]}
                                              ! m: dump only matrices
                                              ! h: dump only hessians
                                              ! *: dump matrices and hessians
                                              ! b[HCN]: dump only HCN blocks
+                                             ! d[dopts]: pass dopts when dumping arrays
                                              ! default is *
     ! Local variables
     logical :: dumpHessians
@@ -1073,11 +1090,11 @@ contains ! ============= Public Procedures ==========================
     integer :: STATUS           ! Flag from HDF
 
     ! Executable code
-
+    verbose = switchDetail( switches, 'l2pc') > -1
     if ( .not. associated(l2pcInfo) ) return
     call h5eSet_auto_f ( 0, status )
     do i = 1, size ( l2pcInfo )
-      if ( switchDetail ( switches, 'l2pc' ) > -1 ) &
+      if ( verbose ) &
         & call outputNamedValue( 'Destroying l2pc db entry number ', i )
       call h5gClose_f ( l2pcInfo(i)%blocksID, status )
       if ( status /= 0 .and. DIEIFDESTROYFAILS ) then
@@ -1097,7 +1114,7 @@ contains ! ============= Public Procedures ==========================
       if ( count ( l2pcInfo%fileID == l2pcInfo(i)%fileID ) == 1 .and. &
         & all(l2pcInfo%fileID > 0 ) ) then
         ! We're the only one (left?) with this file, close it.
-        if ( switchDetail( switches, 'l2pc' ) > -1 ) &
+        if ( verbose ) &
           & call outputNamedValue('Closing hdf5 fileID', l2pcInfo(i)%fileID )
         call h5fClose_f ( l2pcInfo(i)%fileID, status )
         if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1250,8 +1267,10 @@ contains ! ============= Public Procedures ==========================
     integer :: STATUS    ! Flag from HDF5
     integer :: i, nmembers, objtype
     ! Executable code
+    verbose = switchDetail( switches, 'l2pc') > -1
+    verboser = switchDetail( switches, 'l2pc' ) > 0
     l2pc => l2pcDatabase ( bin )
-    if ( switchDetail ( switches, 'l2pc' ) > -1 ) then
+    if ( verbose ) then
       call output( 'Populating l2pc', advance='yes' )
       call outputNamedValue( 'size(l2pcDatabase)', size(l2pcDatabase) )
       call outputNamedValue( 'size(l2pcInfo)', size(l2pcInfo) )
@@ -1263,7 +1282,7 @@ contains ! ============= Public Procedures ==========================
     info => l2pcInfo ( bin )
 
     call h5gn_members_f( info%binID, 'Blocks', nmembers, status )
-    if ( switchDetail ( switches, 'l2pc' ) > -1 ) then
+    if ( verbose ) then
       call outputNamedValue ( 'nmembers under ' // 'Blocks', nmembers )
       do i=0, nmembers-1
         call h5gget_obj_info_idx_f( info%binID, 'Blocks', i, &
@@ -1296,7 +1315,7 @@ contains ! ============= Public Procedures ==========================
           call outputNamedValue( 'Blocks ID', info%blocksId )
           call MLSMessage ( MLSMSG_Error, ModuleName, &
             & 'Unable to open group for l2pc matrix block '//trim(name) )
-        elseif ( switchDetail( switches, 'l2pc' ) > 0 ) then
+        elseif ( verboser ) then
           call outputNamedValue( 'Block name', trim(name) )
           call outputNamedValue( 'Blocks ID', info%blocksId )
           call outputNamedValue( 'Block ID', blockId )
@@ -1350,13 +1369,13 @@ contains ! ============= Public Procedures ==========================
               call outputNamedValue( 'Blocks ID', blocksId )
               call MLSMessage ( MLSMSG_Error, ModuleName, &
                 & 'Unable to open group for l2pc Hessian block '//trim(name) )
-            elseif ( switchDetail( switches, 'l2pc' ) > 0 ) then
+            elseif ( verboser ) then
               call outputNamedValue( 'Block name', trim(name) )
               call outputNamedValue( 'Block ID', blockId )
               call outputNamedValue( 'HessianBlocks ID', blocksId )
             endif
             call GetHDF5Attribute ( blockID, 'kind', kind )
-            if ( DEEBUG .or. switchDetail( switches, 'l2pc' ) > 0 ) &
+            if ( DEEBUG .or. verboser ) &
               & call outputNamedValue( 'kind', kind )
             select case (kind)
             case (h_absent)
@@ -1431,7 +1450,8 @@ contains ! ============= Public Procedures ==========================
     integer :: STATUS          ! Flag from HDF5
 
     ! Executable code
-    if ( switchDetail( switches, 'l2pc' ) > -1 ) &
+    verbose = switchDetail( switches, 'l2pc') > -1
+    if ( verbose ) &
       & call output ( 'Reading complete l2pc file ', advance='yes' )
     myShallow = .true.
     if ( present ( shallow ) ) myShallow = shallow
@@ -1449,7 +1469,7 @@ contains ! ============= Public Procedures ==========================
       & 'Unable to get number of bins from input l2pc file:'//trim(MLSFile%name), &
       & MLSFile=MLSFile )
 
-    if ( switchDetail ( switches, 'l2pc' ) > -1 ) then
+    if ( verbose ) then
       call output ( 'Reading l2pc ' )
       call output ( trim(MLSFile%name), advance='yes' )
       call output ( 'Number of bins: ' )
@@ -1521,10 +1541,12 @@ contains ! ============= Public Procedures ==========================
 
 
     ! Executable code
+    verbose = switchDetail( switches, 'l2pc') > -1
+    verboser = switchDetail( switches, 'l2pc' ) > 0
     myShallow = .false.
     if ( present ( shallow ) ) myShallow = shallow
 
-    if ( switchDetail ( switches, 'l2pc' ) > -1 ) &
+    if ( verbose ) &
       & call output ( 'Reading bin from l2pc file', advance='yes' )
 
     call h5gGet_obj_info_idx_f ( MLSFile%fileID%f_id, '/', l2pcIndex, matrixName, &
@@ -1532,7 +1554,7 @@ contains ! ============= Public Procedures ==========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to get information on matrix in input l2pc file', &
       & MLSFile=MLSFile )
-    if ( switchDetail ( switches, 'l2pc' ) > -1 ) &
+    if ( verbose ) &
       & call outputNamedValue ( 'Reading matrix', matrixName )
     call h5gOpen_f ( MLSFile%fileID%f_id, trim(matrixName), matrixId, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1571,7 +1593,7 @@ contains ! ============= Public Procedures ==========================
       info%matrixName = matrixName
     end if
 
-    if ( switchDetail( switches, 'l2pc' ) > 0 ) then
+    if ( verboser ) then
       do i = 1, l2pc%j%row%NB
         do j = 1, l2pc%j%col%NB
           call CreateBlockName ( i, j, 0, name )
@@ -1582,7 +1604,7 @@ contains ! ============= Public Procedures ==========================
             call MLSMessage ( MLSMSG_Error, ModuleName, &
               & 'Unable to open group for l2pc matrix block '//trim(name) , &
               & MLSFile=MLSFile )
-          elseif ( switchDetail( switches, 'l2pc' ) > 0 ) then
+          elseif ( verboser ) then
             call outputNamedValue( 'Block name', trim(name) )
             call outputNamedValue( 'Blocks ID', blocksId )
             call outputNamedValue( 'Block ID', blockId )
@@ -1604,7 +1626,7 @@ contains ! ============= Public Procedures ==========================
             call MLSMessage ( MLSMSG_Error, ModuleName, &
               & 'Unable to open group for l2pc matrix block '//trim(name) , &
               & MLSFile=MLSFile )
-          elseif ( switchDetail( switches, 'l2pc' ) > 0 ) then
+          elseif ( verboser ) then
             call outputNamedValue( 'Block name', trim(name) )
             call outputNamedValue( 'Blocks ID', blocksId )
             call outputNamedValue( 'Block ID', blockId )
@@ -1643,7 +1665,7 @@ contains ! ============= Public Procedures ==========================
     ! Look for any Hessian blocks
     ! We begin by assuming there are none
     call h5gn_members_f( MLSFile%fileID%f_id, trim(matrixName), nmembers, status )
-    if ( switchDetail ( switches, 'l2pc' ) > -1 ) then
+    if ( verbose ) then
       call outputNamedValue ( 'nmembers under ' // trim(matrixName), nmembers )
       do i=0, nmembers-1
         call h5gget_obj_info_idx_f( MLSFile%fileID%f_id, trim(matrixName), i, &
@@ -1801,9 +1823,10 @@ contains ! ============= Public Procedures ==========================
     type ( Vector_T ) :: V              ! The vector
 
     ! Executable code
+    verbose = switchDetail( switches, 'l2pc') > -1
     nullify ( sigInds, qtInds )
 
-    if ( switchDetail ( switches, 'l2pc' ) > -1 ) then
+    if ( verbose ) then
       call output ( 'Reading ' )
       call output ( trim(name) )
       call output ( ' vector from l2pc', advance='yes' )
@@ -1822,7 +1845,7 @@ contains ! ============= Public Procedures ==========================
     nullify ( quantityNames )
     call Allocate_test ( quantityNames, noQuantities, 'quantityNames', ModuleName )
     do quantity = 1, noQuantities
-      if ( switchDetail (switches, 'l2pc' ) > -1) &
+      if ( verbose) &
         & call output ( quantity, before='Identifying quantity ', advance='yes' )
       call h5gget_obj_info_idx_f ( MLSFile%fileID%grp_id, name, quantity-1, thisName, &
         & objType, status )
@@ -1848,7 +1871,7 @@ contains ! ============= Public Procedures ==========================
     ! Now go through quantities in order
     do quantity = 1, noQuantities
       qt => l2pcQTs ( qtIndexOffset + quantity - 1 )
-      if ( switchDetail (switches, 'l2pc' ) > -1 ) then
+      if ( verbose ) then
         call output ( quantity, before='Reading quantity ' )
         call output ( ': ' )
         call output ( trim(quantityNames(quantity)), advance='yes' )
@@ -1986,16 +2009,16 @@ contains ! ============= Public Procedures ==========================
     call deallocate_test ( qtInds, 'qtInds', ModuleName )
 
     ! Now create a vector for this vector template
-    if ( switchDetail (switches, 'l2pc' ) > -1 ) &
+    if ( verbose ) &
       & call output ( 'Creating vector', advance='yes' )
     v = CreateVector ( 0, l2pcVTs(vtIndex), l2pcQTs, vectorNameText='_v_'//name )
-    if ( switchDetail (switches, 'l2pc' ) > -1 ) &
+    if ( verbose ) &
       & call output ( 'Adding vector to database', advance='yes' )
     vector = AddVectorToDatabase ( l2pcVs, v )
 
     ! Now go through the quantities again and read the values
     do quantity = 1, noQuantities
-      if ( switchDetail (switches, 'l2pc' ) > -1 ) then
+      if ( verbose ) then
         call output ( 'Reading values for ' )
         call output ( trim(quantityNames(quantity)), advance='yes' )
       end if
@@ -2156,6 +2179,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.110  2011/02/18 17:56:16  pwagner
+! Prevented crashes when run w/o l2cf
+!
 ! Revision 2.109  2010/11/25 01:19:27  pwagner
 ! Fixed bugs in PopulateL2PCBin with Hessians
 !
