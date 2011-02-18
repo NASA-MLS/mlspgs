@@ -445,7 +445,7 @@ contains
     integer :: I
     integer :: My_Details
     logical :: My_Clean
-    character(len=16) :: myOptions
+    character(len=32) :: myOptions
     ! In case we need to dump as full blocks stored sparsely
     real(rh), pointer :: harray(:,:,:) => NULL()
 
@@ -457,6 +457,7 @@ contains
     if ( present(options) ) myOptions = options
 
     if ( present(name) ) call output ( name, advance='yes' )
+    call outputNamedValue( 'myOptions', myOptions )
     if ( present(indices) ) then
       call output ( indices(1), before = ' (', after=', ' )
       call output ( indices(2), after=', ' )
@@ -1085,6 +1086,9 @@ o:    do while ( i < n )
 end module HessianModule_0
 
 ! $Log$
+! Revision 2.16  2011/02/18 17:52:18  pwagner
+! myOptions needed to be longer; long enough?
+!
 ! Revision 2.15  2011/02/05 01:37:31  pwagner
 ! Passes options to dump routines
 !
