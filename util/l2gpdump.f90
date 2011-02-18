@@ -65,6 +65,7 @@ PROGRAM L2GPDump ! dumps L2GPData files
      integer ::             width = 5
      logical ::             columnsOnly = .false.
      logical ::             attributesToo = .false.
+     character(len=16)  ::  dumpOptions = ''
      character(len=255) ::  dsInquiry = ''
      character(len=255) ::  attrInquiry = ''
      character(len=255) ::  fields = ''
@@ -178,6 +179,9 @@ contains
         call getarg ( i+1+hp, argstr )
         read( argstr, * ) options%convergenceCutOff
         i = i + 1
+      else if ( filename(1:3) == '-d ' ) then
+        call getarg ( i+1+hp, options%dumpOptions )
+        i = i + 1
       else if ( filename(1:4) == '-geo' ) then
         call getarg ( i+1+hp, filename )
         options%geoBoxNames = catLists( options%geoBoxNames, filename )
@@ -263,6 +267,8 @@ contains
       write (*,*) '                      where geo in {latitude, longitude, time, pressure}'
       write (*,*) '                      (may be repeated)'
       write (*,*) '                      if hi < lo then dump is outside geobox'
+      write (*,*) '          -d opts     => pass opts to dump routines'
+      write (*,*) '                          e.g., "-rs" to dump only rms, stats'
       write (*,*) '          -[n]inqattr attr'
       write (*,*) '                      => print only if attribute attr [not] present'
       write (*,*) '          -[n]inqds ds'
@@ -534,15 +540,17 @@ contains
        call dumpRange( l2gp, &
          & options%geoBoxNames, options%geoBoxLowBound, options%geoBoxHiBound, &
          & columnsOnly=options%columnsOnly, details=options%details, &
-         & fields=options%fields )
+         & fields=options%fields, options=options%dumpOptions )
      elseif ( options%chunks == '*' ) then
-       call dump(l2gp, options%columnsOnly, options%details, options%fields, width=options%width)
+       call dump(l2gp, options%columnsOnly, options%details, options%fields, &
+         & width=options%width, options=options%dumpOptions)
        call showSummary
      else
        call ExpandStringRange(options%chunks, chunks, nchunks)
        if ( nchunks < 1 ) return
        call dump(l2gp, chunks(1:nChunks), &
-         & options%columnsOnly, options%details, options%fields, width=options%width)
+         & options%columnsOnly, options%details, options%fields, &
+         &width=options%width, options=options%dumpOptions)
        call showSummary
      endif
    end subroutine myDump
@@ -625,6 +633,9 @@ end program L2GPDump
 !==================
 
 ! $Log$
+! Revision 1.9  2010/03/31 18:15:30  pwagner
+! Removed commented-out, outdated stuff
+!
 ! Revision 1.8  2009/05/14 22:04:27  pwagner
 ! New commandline arg -w width
 !

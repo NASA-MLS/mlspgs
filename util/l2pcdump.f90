@@ -63,6 +63,7 @@ program l2pcdump ! dumps datasets, attributes from l2pc files
 
   type options_T
     integer             :: details            = 3       ! Print matrices and hessians
+    character(len=32)  ::  dumpOptions        = ''
     logical             :: laconic            = .false. ! Print contents only
     logical             :: verbose            = .false. ! Print (lots) extra
     logical             :: la                 = .false.
@@ -76,7 +77,7 @@ program l2pcdump ! dumps datasets, attributes from l2pc files
   type ( options_T ) :: options
   integer, parameter ::          MAXFILES = 100
   integer, parameter ::          hdfVersion = HDFVERSION_5
-  character(len=8)   ::          dumpOptions
+  ! character(len=8)   ::          dumpOptions
   character(len=255) ::          filename          ! input filename
   character(len=255), dimension(MAXFILES) :: filenames
   integer     ::                 i, status, error ! Counting indices & Error flags
@@ -99,7 +100,7 @@ program l2pcdump ! dumps datasets, attributes from l2pc files
   call allocate_decl ( ndecls=8000 )
   call allocate_tree ( n_tree=2000000 )
   call init_tables
-  switches = 'l2pc,hess'
+  switches = 'hess,nl2cf'
   n_filenames = 0
   do      ! Loop over filenames
      call get_filename(filename, n_filenames, options)
@@ -118,8 +119,8 @@ program l2pcdump ! dumps datasets, attributes from l2pc files
     stop
   endif
   if ( options%verbose ) call dumpSettings ( options, n_filenames, filenames ) 
-  dumpOptions = '-'
-  if ( options%laconic ) dumpOptions = trim(dumpOptions) // 'l'
+  ! dumpOptions = '-'
+  ! if ( options%laconic ) dumpOptions = trim(dumpOptions) // 'l'
   call time_now ( t1 )
   j2 = 0
   do i=1, n_filenames
@@ -142,7 +143,8 @@ program l2pcdump ! dumps datasets, attributes from l2pc files
       L2PCDataBase(j)%h%name = 0
       print *, 'About to dump'
       call Dump( L2PCDataBase(j), &
-        & details=options%details, onlyTheseBlocks=options%blockNames )
+        & details=options%details, onlyTheseBlocks=options%blockNames, &
+        & options=options%dumpOptions )
       print *, 'About to destroy'
       call DestroyL2PC( L2PCDataBase(j) )
     enddo
@@ -167,6 +169,7 @@ contains
      print *, 'blockNames          ', trim(options%blockNames(1))
      print *, '                    ', trim(options%blockNames(2))
      print *, '                    ', trim(options%blockNames(3))
+     print *, 'dumpOptions         ', options%dumpOptions
      print *, 'laconic?            ', options%laconic
      print *, 'verbose?            ', options%verbose
      print *, 'list attributes  ?  ', options%la   
@@ -204,6 +207,9 @@ contains
         read( number, * ) options%details
         i = i + 1
         exit
+      else if ( filename(1:3) == '-d ' ) then
+        call getarg ( i+1+hp, options%dumpOptions )
+        i = i + 1
       elseif ( filename(1:4) == '-lac' ) then
         options%laconic = .true.
         exit
@@ -263,6 +269,7 @@ contains
       write (*,*) '                            2 dump hessians only'
       write (*,*) '                            3 dump both matrices and hessians'
       write (*,*) '                            (defaults to 3)'
+      write (*,*) '          -d options      => pass options to dump routines'
       write (*,*) '          -lac            => switch on laconic mode'
       write (*,*) '          -v              => switch on verbose mode'
       write (*,*) '          -la             => just list attribute names in files'
@@ -273,6 +280,14 @@ contains
       write (*,*) '          -nD             => do not dump datasets'
       write (*,*) '          -bl[ocks] b1,b2,.. => dump just blocks named b1,b2,..'
       write (*,*) '          -h              => print brief help'
+      write (*,*) 'Note about -d options:'
+      write (*,*) '  any of {mh*b[]d[]} where the "[]" mean themselves here'
+      write (*,*) '  m: dump only matrices                   '
+      write (*,*) '  h: dump only hessians                   '
+      write (*,*) '  *: dump matrices and hessians           '
+      write (*,*) '  b[HCN]: dump only HCN blocks            '
+      write (*,*) '  d[dopts]: pass dopts when dumping arrays'
+      write (*,*) '  default is *                            '
       stop
   end subroutine print_help
 
@@ -296,6 +311,9 @@ end program l2pcdump
 !==================
 
 ! $Log$
+! Revision 1.2  2010/09/03 22:13:18  pwagner
+! May dump blocks by name
+!
 ! Revision 1.1  2010/08/14 00:11:59  pwagner
 ! First commit
 !
