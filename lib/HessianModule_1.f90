@@ -382,7 +382,7 @@ contains
     logical, intent(in), optional :: CLEAN   ! print \size
     ! Internal variables
     logical, parameter :: DEEBUG = .false.
-    character(len=16) :: dumpOptions
+    character(len=32) :: dumpOptions
     integer :: I, J, K    ! Subscripts, loop inductors
     character(len=128) :: molecules
     integer :: My_Details
@@ -398,12 +398,13 @@ contains
     dumpOptions = ''
     molecules = '*'
     if ( present(options) ) then
+      call outputNamedValue( 'options', options )
       Molecules = lowercase( optionDetail( options, 'b' ) )
       if ( Molecules == 'no' ) Molecules = '*'
-      if ( DEEBUG ) call outputNamedValue('Molecules', Molecules)
+      if ( DEEBUG .or. .true. ) call outputNamedValue('Molecules', Molecules)
       dumpOptions = lowercase( optionDetail( options, 'd' ) )
       if ( dumpOptions == 'no' ) dumpOptions = ''
-      if ( DEEBUG ) call outputNamedValue('dumpOptions', dumpOptions)
+      if ( DEEBUG .or. .true. ) call outputNamedValue('dumpOptions', dumpOptions)
     endif
     if ( h%name > 0 ) then
       if ( present(name) ) call output ( ', ' )
@@ -424,6 +425,15 @@ contains
       if ( my_details <= -3 ) call resumeOutput
       return
     end if
+    ! Print list of molecules in this block
+    call output( 'Molecule derivatives in this hessian block', advance='yes' )
+    do j = 1, h%col%nb
+      i = h%col%vec%quantities(h%col%quant(j))%template%name
+      if ( i > 0 ) then
+        call display_string( i )
+        call newLine
+      endif
+    enddo
     totalSize = 0
     do k = 1, h%col%nb
       do j = 1, h%col%nb
@@ -731,6 +741,9 @@ contains
 end module HessianModule_1
 
 ! $Log$
+! Revision 2.19  2011/02/18 17:53:29  pwagner
+! dumpOptions needed to be longer; long enough?; print list of molecule derivatives
+!
 ! Revision 2.18  2011/02/05 01:38:50  pwagner
 ! Passes DumpOptions d[..] to dump routines
 !
