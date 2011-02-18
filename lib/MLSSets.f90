@@ -19,15 +19,25 @@ module MLSSets
 
 ! We represent sets with arrays
 ! We usually do not check whether the elements are in fact unique
-! (you can use FindUnique to insure this) so some
-! operations may not work properly if you supply arrays with
+! (you can use IsProperSet to check or FindUnique to ensure this) 
+! so some operations may not work properly if you supply arrays with
 ! duplicate elements
+
+! A point about null sets:
+! Not all operations have been checked thoroughly for correctness
+! when one or more arguments are null sets, i.e. 0-sized
+! IsProperSet, IsProperSubset, and IsSubset do give correct results:
+! The null set is 
+!  (1) a proper set, 
+!  (2) a proper subset of any set except itself
+!  (3) a subset of itself, but not a proper subset of itself
 
   implicit none
   private
   public :: FindAll, FindFirst, FindIntersection, FindLast, FindLongestRange, &
-    & FindNext, FindUnique,&
-    & Intersect, Intersection, RelativeComplement, &
+    & FindNext, FindUnique, &
+    & Intersect, Intersection, IsProperSet, IsProperSubset, IsSubset, &
+    & RelativeComplement, &
     & Union, UnionSize
 
   interface FindFirst
@@ -68,9 +78,25 @@ module MLSSets
     module procedure FindUniqueReal, FindUniqueDouble
   end interface
 
+  interface Intersect
+    module procedure IntersectInteger, IntersectCharacter
+  end interface
+
   interface Intersection
     module procedure IntersectionInteger, IntersectionCharacter
     module procedure IntersectionReal, IntersectionDouble
+  end interface
+
+  interface IsProperSet
+    module procedure IsProperSetInteger, IsProperSetCharacter
+  end interface
+
+  interface IsProperSubset
+    module procedure IsProperSubsetInteger, IsProperSubsetCharacter
+  end interface
+
+  interface IsSubSet
+    module procedure IsSubSetInteger, IsSubSetCharacter
   end interface
 
   interface RelativeComplement
@@ -102,6 +128,10 @@ module MLSSets
 ! Intersect     Return true if two sets represented by arrays of integers have
 !               a common element
 ! Intersection  Compute intersection of two sets
+! IsProperSet   Check that each element is unique
+! IsProperSubSet 
+!               Check that each element in A is within larger B
+! IsSubSet      Check that each element in A is within B
 ! RelativeComplement
 !               Compute complement of set a relative to set b
 !               i.e., all elements in b except those in a
@@ -144,6 +174,8 @@ module MLSSets
 ! as an array of integers or an array of characters
 ! logical Intersect ( set a(:), set b(:) )
 ! set *Intersection ( set a(:), set b(:) )
+! logical IsProperSet ( set a(:) )
+! logical Is[Proper]SubSet ( set a(:), set b(:) )
 ! set *RelativeComplement ( set a(:), set b(:) )
 ! set *Union ( set a(:), set b(:) )
 ! set UnionSize ( set a(:), set b(:) )
@@ -1105,7 +1137,9 @@ contains ! =====     Public Procedures     =============================
   end subroutine FindUniqueCharacterSubString
 
   ! --------------------------------------------------  Intersect  -----
-  logical function Intersect ( A, B )
+  ! This family of functions returns TRUE if the two sets intersect,
+  ! i.e. have at least one element in common
+  logical function IntersectInteger ( A, B )
   ! Return true if the integer arrays A and B have a common element
 
     integer, intent(in) :: A(:), B(:)
@@ -1117,7 +1151,7 @@ contains ! =====     Public Procedures     =============================
       do i = 1, size(a)
         do j = 1, size(b)
           if ( a(i) == b(j) ) then
-            intersect = .true.
+            IntersectInteger = .true.
             return
           end if
         end do
@@ -1126,15 +1160,46 @@ contains ! =====     Public Procedures     =============================
       do i = 1, size(b)
         do j = 1, size(a)
           if ( a(j) == b(i) ) then
-            intersect = .true.
+            IntersectInteger = .true.
             return
           end if
         end do
       end do
     end if
-    intersect = .false.
+    IntersectInteger = .false.
 
-  end function Intersect
+  end function IntersectInteger
+
+  logical function IntersectCharacter ( A, B )
+  ! Return true if the character arrays A and B have a common element
+
+    character(len=*), intent(in) :: A(:), B(:)
+
+    integer :: I, J
+
+    ! Put the longer loop as the inner one
+    if ( size(a) < size(b) ) then
+      do i = 1, size(a)
+        do j = 1, size(b)
+          if ( a(i) == b(j) ) then
+            IntersectCharacter = .true.
+            return
+          end if
+        end do
+      end do
+    else
+      do i = 1, size(b)
+        do j = 1, size(a)
+          if ( a(j) == b(i) ) then
+            IntersectCharacter = .true.
+            return
+          end if
+        end do
+      end do
+    end if
+    IntersectCharacter = .false.
+
+  end function IntersectCharacter
 
   ! -----------------------------------------------  Intersection  -----
   ! Compute the intersection C of the sets A and B, each represented by
@@ -1246,6 +1311,94 @@ contains ! =====     Public Procedures     =============================
     include 'Intersection.f9h'
   end function IntersectionReal
 
+  ! --------------------------------------------------  IsProperSet  -----
+  ! This family of functions returns TRUE if A is a proper set; i.e.
+  ! each element of A is unique
+  logical function IsProperSetInteger ( A )
+
+    integer, intent(in) :: A(:)
+
+    integer :: nUnique
+    integer, dimension(size(A)) :: B
+
+    call FindUnique( A, B, NUnique )
+    IsProperSetInteger = (NUnique == size(A))
+
+  end function IsProperSetInteger
+
+  logical function IsProperSetCharacter ( A )
+  ! Return true if the character arrays A and B have a common element
+
+    character(len=*), intent(in) :: A(:)
+
+    integer :: nUnique
+    character(len=len(A(1))), dimension(size(A)) :: B
+
+    call FindUnique( A, B, NUnique )
+    IsProperSetCharacter = (NUnique == size(A))
+
+  end function IsProperSetCharacter
+
+  ! --------------------------------------------------  IsProperSubset  -----
+  ! This family of functions returns TRUE if the A is a proper subset of B
+  ! element of A is in B, but there is at least one element of B not in A
+  logical function IsProperSubsetInteger ( A, B )
+
+    integer, intent(in) :: A(:), B(:)
+
+    integer :: I, J
+
+    ! Is B the longer array? If not, we're already done
+    IsProperSubsetInteger = .false.
+    if ( size(a) < size(b) ) IsProperSubsetInteger = IsSubsetInteger ( A, B )
+
+  end function IsProperSubsetInteger
+
+  logical function IsProperSubsetCharacter ( A, B )
+  ! Return true if the character arrays A and B have a common element
+
+    character(len=*), intent(in) :: A(:), B(:)
+
+    integer :: I, J
+
+    ! Is B the longer array? If not, we're already done
+    IsProperSubsetCharacter = .false.
+    if ( size(a) < size(b) ) IsProperSubsetCharacter = IsSubsetCharacter ( A, B )
+  end function IsProperSubsetCharacter
+
+  ! --------------------------------------------------  IsSubset  -----
+  ! This family of functions returns TRUE if the A is a subset of B
+  ! i.e., each element of A is in B
+  logical function IsSubsetInteger ( A, B )
+
+    integer, intent(in) :: A(:), B(:)
+
+    integer :: I, J
+
+    IsSubsetInteger = .false.
+    do i = 1, size(a)
+      j = FindFirst (b, a(i))
+      if ( j < 1 ) return
+    end do
+    IsSubsetInteger = .true.
+
+  end function IsSubsetInteger
+
+  logical function IsSubsetCharacter ( A, B )
+  ! Return true if the character arrays A and B have a common element
+
+    character(len=*), intent(in) :: A(:), B(:)
+
+    integer :: I, J
+
+    IsSubsetCharacter = .false.
+    do i = 1, size(a)
+      j = FindFirst (b, a(i))
+      if ( j < 1 ) return
+    end do
+    IsSubsetCharacter = .true.
+  end function IsSubsetCharacter
+
   ! -----------------------------------------------  RelativeComplement  -----
   ! Compute the RelativeComplement C of the sets A and B, each represented by
   ! arrays of integers or characters
@@ -1264,29 +1417,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: A(:), B(:)
     integer, pointer :: C(:) ! Intent(out) -- nullified and then allocated here
 
-    ! integer :: i, size_c, status
-    ! integer :: J, K, Stat, TA(size(a)), TB(size(b)), TC(size(a)+size(b))
-
     C => Intersection ( B, A, reverse = .true. )
-
-   !      tb = b
-   !      call sort ( tb, 1, size(tb) )
-   !  
-   !      j=1; k=0
-   !      do while ( j <= size(tb) )
-   !        if ( .not. any( a == tb(j) ) ) then
-   !          tc(k+1) = tb(j)
-   !          k = k + 1
-   !        endif
-   !        j = j + 1
-   !      end do
-   !  
-   !      nullify ( c )
-   !      allocate ( c(k), stat=stat )
-   !      if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-   !        MLSMSG_Allocate // 'C in RelativeComplementInteger' )
-   !      c = tc(:k)
-
   end function RelativeComplementInteger
 
   function RelativeComplementCharacter ( A, B ) result ( C )
@@ -1297,33 +1428,8 @@ contains ! =====     Public Procedures     =============================
 
     character(len=*), dimension(:), intent(in) :: A(:), B(:)
     character(len=len(a)), dimension(:), pointer :: C(:) ! Intent(out) -- nullified and then allocated here
-    ! Local variables
-    ! integer :: i, j, size_c, status
-    ! character(len=len(a)), dimension(size(a)+size(b)) :: TC
-    
-    ! Executable
+
     C => Intersection( B, A, reverse=.true. )
-  !   size_c = 0
-  !   do i=1, size(b)
-  !     ! Don't redo a repeated element
-  !     if ( i > 1 ) then
-  !       j = findFirst( b(:i-1), b(i) )
-  !       if ( j > 0 ) cycle
-  !     endif
-  !     j = findFirst( a, b(i) )
-  !     if ( j < 1 ) then
-  !       size_c = size_c + 1
-  !       TC(size_c) = b(i)
-  !     endif
-  !   enddo
-  !   ! print *, 'size(c): ', size_c    
-  !   ! print *, 'tc: ', tc(1:size_c)
-  !   nullify(c)
-  !   if ( size_c < 1 ) return
-  !   allocate ( c(size_c), stat=status )
-  !   if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-  !     MLSMSG_Allocate // 'C in RelativeComplementCharacter' )
-  !   c = tc(:size_c)
   end function RelativeComplementCharacter
 
   function RelativeComplementDouble ( A, B ) result ( C )
@@ -1520,6 +1626,9 @@ contains ! =====     Public Procedures     =============================
 end module MLSSets
 
 ! $Log$
+! Revision 2.22  2011/02/18 18:03:14  pwagner
+! Added functions to check set A is proper or that A is a [proper] subset of B
+!
 ! Revision 2.21  2009/06/23 18:25:42  pwagner
 ! Prevent Intel from optimizing ident string away
 !
