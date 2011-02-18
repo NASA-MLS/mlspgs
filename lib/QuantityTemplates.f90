@@ -23,8 +23,9 @@ module QuantityTemplates         ! Quantities within vectors
     & MLSMSG_Error, MLSMSG_Warning
   use Intrinsic, only: L_None, LIT_INDICES, PHYQ_INDICES
   use MLSStringLists, only: SWITCHDETAIL
-  use Output_m, only: NEWLINE, Output, outputNamedValue
-  use String_Table, only: DISPLAY_STRING, Get_String
+  use MLSStrings, only: WRITEINTSTOCHARS
+  use Output_m, only: NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
+  use String_Table, only: DISPLAY_STRING, GET_STRING
   use TOGGLES, only: SWITCHES
 
   implicit none
@@ -233,7 +234,7 @@ contains ! =====     Public Procedures     =============================
     end if
 
     if ( qty%name > 0 ) then
-      call get_string ( qty%name, name, strip=.true. )
+      call myGetString ( qty%name, name, strip=.true. )
     else
       name = '<no name>'
     end if
@@ -507,7 +508,7 @@ contains ! =====     Public Procedures     =============================
     if ( qty%name == 0 ) then
       what = "qty"
     elseif ( verbose ) then
-      call get_string ( qty%name, what )
+      call myGetString ( qty%name, what )
     end if
 
     if ( .not. qty%sharedVGrid ) then
@@ -594,7 +595,7 @@ contains ! =====     Public Procedures     =============================
     logical :: myNoL2CF
     myDetails = 1
     if ( present(details) ) myDetails = details
-    myNoL2CF = .false.
+    myNoL2CF = switchDetail(switches, 'nl2cf') > -1 ! .false.
     if ( present(NoL2CF) ) myNoL2CF = NoL2CF
     call output ( ' Name = ' )
     call myDisplayString ( quantity_template%name )
@@ -647,7 +648,7 @@ contains ! =====     Public Procedures     =============================
       call output ( ' vGridIndex = ' )
       call output ( quantity_template%vGridIndex )
     end if
-    call display_string ( lit_indices(quantity_template%verticalCoordinate), &
+    if ( .not. myNoL2CF ) call display_string ( lit_indices(quantity_template%verticalCoordinate), &
       & before=' vertical coordinate = ', advance='yes' )
     call output ( '      sharedFGrid = ' )
     call output ( quantity_template%sharedFGrid, advance='no' )
@@ -710,13 +711,13 @@ contains ! =====     Public Procedures     =============================
         if ( associated(quantity_template%losAngle) ) &
           & call dump ( quantity_template%losAngle,    '      LosAngle = ' )
       end if
-      if ( associated(quantity_template%frequencies) ) then
+      if ( associated(quantity_template%frequencies)  .and. .not. myNoL2CF ) then
         call display_string ( lit_indices(quantity_template%frequencyCoordinate), &
           & before='      FrequencyCoordinate = ', advance='yes' )
         call dump ( quantity_template%frequencies, ' Frequencies = ' )
       end if
     else
-      if ( associated(quantity_template%frequencies) ) &
+      if ( associated(quantity_template%frequencies)  .and. .not. myNoL2CF ) &
         & call display_string ( lit_indices(quantity_template%frequencyCoordinate), &
           & before='      FrequencyCoordinate = ', advance='yes' )
     end if
@@ -776,6 +777,25 @@ contains ! =====     Public Procedures     =============================
     end if
   end subroutine myDisplayString
 
+  ! ---------------------------------------- myGetString -----
+  subroutine myGetString ( index, what, strip )
+    ! Given a string index, Get the string or an error message
+    use String_Table, only: How_Many_Strings
+    integer, intent(in)           :: index
+    character(len=*), intent(out) :: what
+    logical, intent(in), optional :: strip
+
+    ! Executable code
+    if ( index < 1 ) then
+      what = '(string index < 1)'
+    else if ( index > how_many_strings() ) then
+      call writeIntsToChars( how_many_strings(), what )
+      what = '(string index >' // trim(what) // ')'
+    else
+      call get_string ( index, what, strip )
+    end if
+  end subroutine myGetString
+
   ! ----------------------------------------NullifyQuantityTemplate -----
   subroutine NullifyQuantityTemplate ( IntentionallyNotUsed )
     ! Given a quantity template, nullify all the pointers within it
@@ -826,7 +846,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Executable code
     if ( qty%name > 0 ) then
-      call get_string ( qty%name, what )
+      call mygetString ( qty%name, what )
     else
       what = "qty"
     end if
@@ -974,6 +994,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.58  2010/09/25 01:16:35  vsnyder
+! Add ChanInds component, some cannonball polishing
+!
 ! Revision 2.57  2010/09/17 00:04:54  pwagner
 ! Workaround for obscure crashes when called from outside mlsl2
 !
