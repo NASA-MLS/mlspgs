@@ -37,6 +37,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 !                      (no binary)
 ! Capitalize         tr[a-z] -> [A-Z]
 ! CatStrings         Concatenate strings with a specified separator
+! ShiftLRC           Shift string to left, center, or right
 ! CompressString     Removes all leading and embedded blanks
 ! Count_words        Counts the number of space-separated words in a string
 ! Delete             Deletes each instance of a char
@@ -82,14 +83,14 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! CatStrings ( char* strings(:), char* sep, char* stringsCat, int L )
 ! char* CompressString (char* str)
 ! int count_words (char* str)
-! char* delete (char* str, char ch)
+! char* delete (char* str, char ch, [int max])
 ! char* depunctuate (char* str)
 ! FlushArrayLeft ( char* a(:), char* b(:), [char* options] )
 ! int(:) indexes (char* string, char* substrings, [char* mode])
 ! ints2Strings (int ints(:,:), char* strs(:))
 ! log(:) isAllAscii( char* arg(:) )
 ! log(:) isAscii( char arg(:) )
-! log IsRepeat ( char* str, [char* ssubtring] )
+! log IsRepeat ( char* str, [char* subtring] )
 ! int lenTrimToAscii (char* str)
 ! int LinearSearchStringArray (char* list(:), char* string, 
 !   [log caseInsensitive, [log testSubstring], [log listInString])
@@ -100,11 +101,12 @@ MODULE MLSStrings               ! Some low level string handling stuff
 !       & [char commentChar], [char continuationChar])
 ! readIntsFromChars (char* strs[(:)], int ints[(:)], char* forbiddens)
 ! readNumsFromChars (char* strs[(:)], num num[(:)], char* forbiddens)
-! char* Replace (char* str, char oldChar, char newChar)
+! char* Replace (char* str, char oldChar, char newChar, [int max])
 ! char* ReplaceNonAscii (char* str, char newChar)
 ! char* Reverse (char* str)
 ! char* Reverse_trim (char* str)
 ! char* Rot13 ( char* str, [int nn], [char* otp], [log inverse] )
+! char* shiftLRC (char* str, [char* position], [char fillChar])
 ! int size_trim ( char* str(:) )
 ! SplitNest ( char *str, char* part1, char* part2, char* part3, [char* parens] )
 ! SplitWords (char *line, char* first, char* rest, [char* last], &
@@ -169,7 +171,8 @@ MODULE MLSStrings               ! Some low level string handling stuff
    & LenTrimToAscii, LinearSearchStringArray, LowerCase, NAppearances, NCopies, &
    & ReadCompleteLineWithoutComments, readNumsFromChars, readIntsFromChars, &
    & Replace, ReplaceNonAscii, Reverse, Reverse_trim, Rot13, &
-   & size_trim, SplitNest, SplitWords, squeeze, streq, stretch, strings2Ints, &
+   & shiftLRC, size_trim, SplitNest, SplitWords, squeeze, streq, &
+   & stretch, strings2Ints, &
    & trim_safe, &
    & writeIntsToChars
 
@@ -259,7 +262,7 @@ contains
   !  'octal'       return <nnn> where nnn is the octal value (e.g. 000)
   !  'mnemonic'    return <ID> where ID is the mnemonic code (e.g. NUL)
   !  '*'           replace with whatever character how was (e.g., '*')
-  ! Note that these last 3 options may output a longer string than the input
+  ! Note that some of these options may output a longer string than the input
 
   ! (see also ReplaceNonAscii)
   function ASCIIFY_scalar (STR, HOW) result (OUTSTR)
@@ -442,24 +445,32 @@ contains
   END FUNCTION count_words
 
   ! ------------------------------------------------  Delete  -----
-  Function Delete ( str, ch ) result ( outstr )
+  Function Delete ( str, ch, max ) result ( outstr )
     ! Function that removes every instance of a char
     !--------Argument--------!
     character(len=*), intent(in) :: str
     character(len=1), intent(in) :: ch
+    integer, optional, intent(in) :: max ! up to how many such deletions?
     character(len=len(str)) :: outstr
     !----------Local vars----------!
     integer :: i, iout
+    integer :: myMax
+    integer :: dels
     !----------Executable part----------!
     outstr = str
     if ( index(str, ch) < 1 ) return
+    myMax = Huge(0) / 2
+    if ( present(max) ) myMax = max
+    dels = 0
     outstr = ' '
     iout = 0
     do i = 1, len_trim(str)
-      if ( str(i:i) /= ch ) then
-        iout = iout + 1
-        outstr(iout:iout) = str(i:i)
-      end if
+      if ( str(i:i) == ch ) then
+        dels = dels + 1
+        if ( dels <= myMax ) cycle
+      endif
+      iout = iout + 1
+      outstr(iout:iout) = str(i:i)
     end do
 
   end Function Delete
@@ -1246,23 +1257,33 @@ contains
   END SUBROUTINE ReadDoubleArrayFromChars
 
    ! --------------------------------------------------  Replace  -----
-  function Replace (str, oldChar, newchar) RESULT (outstr)
+  function Replace (str, oldChar, newchar, max) RESULT (outstr)
     ! takes a string and returns one with oldChar replaced by newChar
     ! E.g., to replace every char(0), which is the NUL character, with a blank
     ! arg = Replace( arg, char(0), char(32) )
-    character(len=*), intent(in) :: str
-    character(len=1), intent(in) :: oldChar
-    character(len=1), intent(in) :: newChar
-    character(len=len(str))      :: outstr
+    character(len=*), intent(in)  :: str
+    character(len=1), intent(in)  :: oldChar
+    character(len=1), intent(in)  :: newChar
+    integer, optional, intent(in) :: max ! up to how many such replacements?
+    character(len=len(str))       :: outstr
     ! Internal variables
     integer :: i, n
+    integer :: myMax
+    integer :: reps
     ! Executable
     outstr = str
     if ( len(str) < 1 ) return
     if ( index(str, oldChar) < 1 ) return
+    myMax = Huge(0) / 2
+    if ( present(max) ) myMax = max
     n = len(str)
+    reps = 0
     do i=1, n
-      if ( str(i:i) == oldChar ) outstr(i:i) = newChar
+      if ( str(i:i) == oldChar ) then
+        reps = reps + 1
+        if ( reps > myMax ) exit
+        outstr(i:i) = newChar
+      endif
     enddo
   end function Replace
 
@@ -1332,12 +1353,12 @@ contains
     ! E.g., given 'A string    ' reverse_trim returns 'gnirst A   ' while
     ! a simple Reverse returns '   gnirst A'
     !--------Argument--------!
-    CHARACTER (LEN=*), INTENT(IN) :: str
-    CHARACTER (LEN=max(LEN_TRIM(str), 1)) :: outstr
+    character (len=*), intent(in) :: str
+    character (len=max(len_trim(str), 1)) :: outstr
 
     !----------Local vars----------!
-    INTEGER :: i, istr, irev
-    CHARACTER (LEN=1) :: strChar
+    integer :: i, istr, irev
+    character (len=1) :: strchar
     !----------Executable part----------!
     outstr=str
     IF(LEN_TRIM(str) <= 1) RETURN
@@ -1429,6 +1450,64 @@ contains
     end do
 
   end function Rot13
+
+   ! --------------------------------------------------  shiftLRC  -----
+  elemental function shiftLRC (str, position, fillChar) result (outstr)
+    ! shifts the characters in a string with leading or trailing blanks to:
+    ! position
+    !  'l[eft]'    all the way to the left
+    !  'c[enter]'  so that they are centered within the string
+    !  'r[ight]'   all the way to the right (default)
+    ! optionally, replaces the surrounding blanks with fillChar
+    !--------Argument--------!
+    character (len=*), intent(in)           :: str
+    character (len=*), optional, intent(in) :: position
+    character (len=1), optional, intent(in) :: fillChar
+    character (len=len(str))                :: outstr
+
+    !----------Local vars----------!
+    integer :: i_average
+    integer :: i_leading
+    integer :: i_trailing
+    character(len=1) :: myPosition
+    !----------Executable part----------!
+    outstr=str
+    if( len_trim(str) < 2 .or. len(str) == len_trim(str) ) return
+    myPosition = 'r'
+    if ( present(position) ) myPosition = lowerCase(position(1:1))
+    select case (myPosition)
+    case ('l')
+      outstr = adjustl(str)
+      if ( present(fillChar) ) then
+        i_trailing = len(outstr) - len_trim(outstr)
+        outstr = trim(outstr) // repeat(fillChar, i_trailing)
+      endif
+    case ('r')
+      outstr = adjustr(str)
+      if ( present(fillChar) ) then
+        i_leading = len_trim(outstr) - len_trim(adjustl(outstr))
+        outstr = repeat(fillChar, i_leading) // adjustl(outstr)
+      endif
+    case ('c')
+      ! Method: average the number of leading and trailing blanks
+      i_leading = len_trim(str) - len_trim(adjustl(str))
+      i_trailing = len(str) - len_trim(str)
+      i_average = (i_leading+i_trailing)/2
+      if ( .not. present(fillChar) ) then
+        outstr = ' '
+        outstr(i_average+1:) = adjustl(str)
+      else
+        outstr = repeat(fillChar, i_average) // trim(adjustl(outstr)) // &
+          &         repeat(fillChar, i_average)
+      endif
+    case default
+      outstr = adjustr(str)
+      if ( present(fillChar) ) then
+        i_leading = len_trim(outstr) - len_trim(adjustl(outstr))
+        outstr = repeat(fillChar, i_leading) // adjustl(outstr)
+      endif
+    end select
+  end function shiftLRC
 
   ! ------------------------------------------------  size_trim  -----
   function size_trim ( strs, safe ) result (length)
@@ -2313,6 +2392,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.81  2011/02/18 17:58:10  pwagner
+! Replace, Delete no take an optional arg; added shiftLRC
+!
 ! Revision 2.80  2011/02/05 01:34:23  pwagner
 ! Added Delete function
 !
