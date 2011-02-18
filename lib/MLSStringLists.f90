@@ -64,6 +64,7 @@ module MLSStringLists               ! Module to treat string lists
 ! listMatches        Return list of matches for string in a list
 ! NumStringElements  Returns number of elements in string list
 ! OptionDetail       Returns detail or arg of option in list of options
+! ParseOptions       Parse options from commandline
 ! PutHashElement     puts value into hash list corresponding to key string
 ! ReadIntsFromList   Read an array of ints from a string list
 ! RemoveElemFromList removes occurrence(s) of elem from a string list
@@ -108,7 +109,12 @@ module MLSStringLists               ! Module to treat string lists
 ! char* listMatches (strlist stringList, char* string, [char* options] )
 ! int NumStringElements(strlist inList, log countEmpty, &
 !   & [char inseparator], [int LongestLen])
-! char* optionDetail(strlist inList, char test_switch, int pattern, char* alt_option )
+! char* optionDetail(strlist inList, &
+!     [char single_option], [char* multi_option], [int pattern], &
+!     [char delims(2)] )
+! ParseOptions(strlist cmdline, char* opts_out(:), &
+!     char single_options(:), int pattern, char* multi_options(:), &
+!     [char delims(2)], [char* cmdargs(:)] )
 ! PutHashElement (hash {keys = values}, char* key, 
 !   char* elem, log countEmpty, [char inseparator], [log part_match])
 ! ReadIntsFromList(strlist inList, int ints(:), &
@@ -201,7 +207,7 @@ module MLSStringLists               ! Module to treat string lists
    & GetHashElement, GetStringElement, &
    & GetUniqueInts, GetUniqueStrings, GetUniqueList, Intersection, IsInList, &
    & List2Array, listMatches, NumStringElements, optionDetail, &
-   & PutHashElement, ReadIntsFromList, &
+   & ParseOptions, PutHashElement, ReadIntsFromList, &
    & RemoveElemFromList, RemoveListFromList, RemoveNumFromList, &
    & ReplaceSubString, ReverseList, &
    & SortArray, SortList, StringElement, StringElementNum, SwitchDetail, &
@@ -1774,23 +1780,31 @@ contains
   ! It returns
   !  'yes' if the option is present
   !  'no'  if the option is absent
-  !  'arg' if the option is present and followed immediately by '[arg]'
-  ! test_option is a one-character option
-  ! alt_option is a multi-character alternate form
-  ! E.g., test_option might be 'a' while alt_option might be 'answer'
+  !  'arg' if the option is present and completed by (takes as argument) 'arg'
+  !    
+  ! single_option is a one-character option
+  ! multi_option is a multi-character alternate form
+  ! E.g., single_option might be 'a' while multi_option might be 'answer'
   ! so the option could be set in either form '-a' or '--answer'
   ! If patterns is present, it determines whether options must be preceded
   ! by an '-' and how args are to be denoted
   ! Recognized values of pattern are
   ! 0: '-ab[arg] --xyz=arg' means  (default)
-  !    may catenate single-char test_options; any arg is surrounded by "[]"
-  !    multiple-char alt_option preceded by '--'; any arg set off by "="
+  !    may catenate single-char single_options; any arg is surrounded by "[]"
+  !    multiple-char multi_option preceded by '--'; any arg set off by "="
   ! 1: '-a -b arg --xyz=arg' means 
-  !    each single-char test_option preceded by '-'; any arg is set off by a space
-  !    multiple-char alt_option preceded by '--'; any arg set off by "="
+  !    each single_option preceded by '-'; any arg is set off by a space
+  !    multiple-char multi_option preceded by '--'; any arg set off by "="
   ! 2: '-a -b arg -xyz arg' means 
-  !    each single-char test_option preceded by '-'; any arg is set off by a space
-  !    multiple-char alt_option preceded by '-'; any arg set off by a space
+  !    each single_option preceded by '-'; any arg is set off by a space
+  !    multiple-char multi_option preceded by '-'; any arg set off by a space
+  ! 3: '-a -b arg --xyz arg' means 
+  !    each single_option preceded by '-'; any arg is set off by a space
+  !    multiple-char multi_option preceded by '--'; any arg set off by a space
+  
+  ! 4: '-a -barg --xyz arg' means 
+  !    each single_option preceded by '-'; followed immediately by any arg
+  !    multiple-char multi_option preceded by '--'; any arg set off by a space
   
   ! As an example, say the list of options is
   ! "-ab[arg1]c[arg2]d"
@@ -1799,29 +1813,31 @@ contains
   ! If the test option were "a" the returned value would be 'yes'
   ! If the test option were "c" the returned value would be 'arg2'
   ! If the test option were "g" the returned value would be 'no'
-  ! (because g doesn't outside the '[]' chars)
+  ! (because g doesn't count except outside the '[]' chars)
   
-  ! The behavior may be modified by pattern and alt_option args
+  ! The behavior may be modified by pattern and delims args
   ! For which see comment above
   
   ! Notes:
-  ! (1) If the string list contains a "*" then
+  ! (1) If the string list is "*" then
   ! the test option is automatically present (would you like to override that?)
   ! (2) Why don't you let the '[]' pair that set off args be
   ! overridden, say by other optional args?
   
-  function optionDetail( inList, test_option,&
-    & pattern, alt_option ) RESULT (detail)
+  function optionDetail( inList, single_option, multi_option, &
+    & pattern, delims ) RESULT (detail)
     ! Dummy arguments
     character (len=*), intent(in)             :: inlist
-    character (len=1), intent(in)             :: test_option
-    character (len=len(inList))               :: detail
+    character (len=1), optional, intent(in)   :: single_option
+    character (len=*), optional, intent(in)   :: multi_option
     integer, optional, intent(in)             :: pattern
-    character (len=*), optional, intent(in)   :: alt_option
-
+    character (len=1), dimension(2), optional, &
+     & intent(in)                             :: delims
+    character (len=len(inList))               :: detail
     ! Local variables
     integer :: bloc
     logical, parameter :: COUNTEMPTY = .true.
+    character :: cquotes, quotes
     integer :: elem, k
     character (len=len(inList)+2)           :: element
     character (len=len(inList))             :: listBloc ! space-separated
@@ -1830,21 +1846,40 @@ contains
     integer :: myPattern
     integer :: nElements
     character (len=len(inList)+2)           :: optionsList ! comma-separated
+    character(len=16) :: test_multi
+    character :: test_option
     logical, parameter :: USEEXTRACT = .true.
+    character(len=*), dimension(0:4), parameter :: multi_prefix = &
+      & (/ '--', '--', '- ', '--' , '--' /)
 
     ! Executable code
+    test_option = char(0) ! NULL
+    test_multi = char(0) ! NULL
+    if ( present(single_option) ) test_option = single_option
+    if ( test_option == ' ' ) test_option = char(0) ! NULL
+    if ( present(multi_option) ) test_multi = multi_option
+    if ( test_multi == ' ' ) test_multi = char(0) ! NULL
     myPattern = 0
-    if ( present(pattern) ) myPattern = pattern
+    if ( present(pattern) .and. &
+      & any(myPattern == (/0, 1, 2, 3, 4 /)) &  ! accept legal values only
+      & ) myPattern = pattern
     detail = 'no'
     if ( adjustl(inList) == '*' ) then
       detail = 'yes'
       return
     endif
+    quotes = '['
+    cquotes = ']'
+    if ( present(delims) ) then
+      quotes = delims(1)
+      cquotes = delims(2)
+    endif
+    if ( .not. present(single_option) .and. .not. present(multi_option) ) return
     select case (myPattern)
     case ( 0 )
       ! '-ab[arg] --xyz=arg
       if ( index( inList, test_option ) < 1 ) then
-        if ( .not. present(alt_option) ) return
+        if ( .not. present(multi_option) ) return
       endif
 
       ! OK, test_option or its alt may be present, but where? 
@@ -1853,24 +1888,29 @@ contains
       do bloc = 1, NumStringElements( inList, countEmpty, inseparator=' ' )
         listBloc = StringElement( inList, bloc, countEmpty, inseparator=' ' )
         ! Does this block begin with one "-" or two?
-        multi = ( index( listBloc, "--" ) > 0 )
+        multi = ( index( listBloc, trim(multi_prefix(myPattern)) ) > 0 )
         if ( multi ) then
-          if ( .not. present(alt_option) ) cycle
-          k = index(listBloc, '--' // trim(alt_option) // '=' )
+          if ( .not. present(multi_option) ) cycle
+          k = index(listBloc, trim(multi_prefix(myPattern)) // &
+            & trim(test_multi) // '=' )
           if ( k > 0 ) then
+            k = index(listBloc, '=' )
             detail = listBloc(k+1:)
             return
-          elseif ( index(listBloc, '--' // trim(alt_option) // ' ' ) > 0 ) then
+          elseif ( index(listBloc, trim(multi_prefix(myPattern)) // &
+            & trim(test_multi) // ' ' ) > 0 ) then
             detail = 'yes'
             return
           endif
         else
           ! 1st--rid ourselves of everything bracketed by '[]'
-          element = unquote( listBloc, quotes='[', cquotes=']', &
+          ! element = unquote( listBloc, quotes='[', cquotes=']', &
+          element = unquote( listBloc, quotes=quotes, cquotes=cquotes, &
             & options='-r' )
           ! print *, 'After unquote: ', trim(element)
           if ( index(element, test_option) < 1 ) cycle
-          call extractSubstring( listBloc, element, test_option // '[', ']' )
+          call extractSubstring( listBloc, element, &
+            & test_option // quotes, cquotes )
           ! print *, 'After extracting: ', trim(element)
           if ( len_trim(element) > 0 ) then
             detail = element
@@ -1884,7 +1924,7 @@ contains
     case ( 1 )
       ! '-a -b arg --xyz=arg'
       if ( index( inList, test_option ) < 1 ) then
-        if ( .not. present(alt_option) ) return
+        if ( .not. present(multi_option) ) return
       endif
 
       ! OK, test_option or its alt may be present, but where? 
@@ -1893,14 +1933,17 @@ contains
       do bloc = 1, NumStringElements( inList, countEmpty, inseparator=' ' )
         listBloc = StringElement( inList, bloc, countEmpty, inseparator=' ' )
         ! Does this block begin with one "-" or two?
-        multi = ( index( listBloc, "--" ) > 0 )
+        multi = ( index( listBloc, trim(multi_prefix(myPattern)) ) > 0 )
         if ( multi ) then
-          if ( .not. present(alt_option) ) cycle
-          k = index(listBloc, '--' // trim(alt_option) // '=' )
+          if ( .not. present(multi_option) ) cycle
+          k = index(listBloc, trim(multi_prefix(myPattern)) // &
+            & trim(test_multi) // '=' )
           if ( k > 0 ) then
+            k = index(listBloc, '=' )
             detail = listBloc(k+1:)
             return
-          elseif ( index(listBloc, '--' // trim(alt_option) // ' ' ) > 0 ) then
+          elseif ( index(listBloc, trim(multi_prefix(myPattern)) // &
+            & trim(test_multi) // ' ' ) > 0 ) then
             detail = 'yes'
             return
           endif
@@ -1921,10 +1964,11 @@ contains
         endif
       enddo
 
-    case ( 2 )
-      ! '-a -b arg -xyz arg'
+    case ( 2, 3 )
+      ! '-a -b arg -xyz arg' or
+      ! '-a -b arg --xyz arg'
       if ( index( inList, test_option ) < 1 ) then
-        if ( .not. present(alt_option) ) return
+        if ( .not. present(multi_option) ) return
       endif
 
       ! OK, test_option or its alt may be present, but where? 
@@ -1936,9 +1980,10 @@ contains
         if ( index(adjustl(listbloc), '-') == 1 ) then
           if ( adjustl(listBloc) == '-' // test_option ) then
             detail='yes' ! keep going--next we'll check for an arg
-          elseif( .not. present(alt_option) ) then
+          elseif( .not. present(multi_option) ) then
             cycle
-          elseif ( adjustl(listBloc) == '-' // alt_option ) then
+          elseif ( adjustl(listBloc) == trim(multi_prefix(myPattern)) // &
+            & test_multi ) then
             detail='yes' ! keep going--next we'll check for an arg
           else
             cycle
@@ -1955,9 +2000,125 @@ contains
           endif
         endif
       enddo
+    case ( 4 )
+      ! '-a -barg --xyz arg'
+      if ( index( inList, '-' // test_option ) < 1 ) then
+        if ( .not. present(multi_option) ) return
+      endif
+
+      ! OK, test_option or its alt may be present, but where? 
+      ! Does it have an arg?
+
+      do bloc = 1, NumStringElements( inList, countEmpty, inseparator=' ' )
+        listBloc = StringElement( inList, bloc, countEmpty, inseparator=' ' )
+        ! Does this block begin with one "-" or two?
+        multi = ( index( listBloc, trim(multi_prefix(myPattern)) ) > 0 )
+        if ( multi ) then
+          if ( .not. present(multi_option) ) cycle
+          if ( index( listBloc, trim(multi_prefix(myPattern)) // &
+            & trim(multi_option) ) < 1 ) cycle
+          detail = StringElement( inList, bloc+1, countEmpty, inseparator=' ' )
+          if ( detail == ' ' .or. detail(1:1) == '-' ) detail = 'yes'
+        else
+          if ( index(listBloc, '-' // test_option) > 0 ) then
+            ! OK, we've got the option all right; but is it followed by an arg?
+            detail = 'yes'
+            if ( listBloc(3:3) == ' ' ) cycle
+            detail = listBloc(3:)
+          endif
+        endif
+      enddo
     case default
     end select
   end function optionDetail
+
+  ! ---------------------------------------------  parseOptions  -----
+
+  ! Parse a commandline, checking for the presence of single-character
+  ! options or multi-character options, returning in opts_out for each
+  !  'yes' if the option is present
+  !  'no'  if the option is absent
+  !  'arg' if the option is present and completed by its needed 'arg'
+  !  ' '   if the option is present but missing its needed 'arg'
+  !    
+  ! single_options are all the one-character options
+  ! multi_options are multi-character alternate forms
+  ! whether it needs an arg is determined by needs_arg
+  
+  ! cmdargs, if present, will return any remaining commandline args
+
+  ! The behavior may be modified by pattern and delims args
+  ! For which see comment above
+  
+  ! Notes:
+  ! (1) See also optionDetail, switchDetail
+  
+  subroutine parseOptions( cmdline, opts_out, pattern, single_options, &
+    & multi_options, needs_arg, delims, cmdargs )
+    ! Dummy arguments
+    character (len=*), intent(in)                  :: cmdline
+    character (len=*), dimension(:), intent(out)   :: opts_out
+    character (len=1), dimension(:), intent(in)    :: single_options
+    integer, intent(in)                            :: pattern
+    character (len=*),  dimension(:), intent(in)   :: multi_options
+    logical,  dimension(:), intent(in)             :: needs_arg
+    character (len=1), dimension(2), optional, &
+      & intent(in)                                 :: delims
+    character (len=*), dimension(:), optional, intent(out)&
+      &                                            :: cmdargs
+
+    ! Local variables
+    logical, parameter :: COUNTEMPTY = .true.
+    integer :: i, j, k
+    character(len=16)  :: lastOption
+    logical            :: lastOptionNeededArg
+    integer :: nopts
+    ! Begin executable
+    if ( size(opts_out) > 0 ) opts_out = 'no'
+    if ( present(cmdargs) ) cmdargs = ' '
+    if ( size(opts_out) < 1 ) return
+    if ( len_trim(cmdline) < 1 ) return
+    nopts = min( size(single_options), size(multi_options) )
+    nopts = min( nopts, size(opts_out) )
+    do i = 1, nopts
+      opts_out(i) = optionDetail( cmdline, single_options(i), &
+        & multi_options(i), pattern, delims )
+      ! Now check for needed args
+      if ( needs_arg(i) ) then
+        if ( opts_out(i) == 'yes' ) opts_out(i) = ' '
+      else
+        if ( .not. IsInList('yes,no', trim(opts_out(i))) ) opts_out(i) = 'yes'
+      endif
+    enddo
+    if ( .not. present(cmdargs) ) return
+    ! Must find last option
+    k = index( cmdline, '-', back=.true. )
+    if ( k < 1 ) then
+      ! No options on cmdline--everything is a cmdarg
+      do i = 1, NumStringElements( cmdline, countEmpty, inseparator=' ' )
+        cmdargs(i) = StringElement( cmdline, i, countEmpty, inseparator=' ' )
+      enddo
+      return
+    endif
+    ! Now must find which option that was
+    lastOption = StringElement( cmdline(k+1:), 1, countEmpty, inseparator=' ' )
+    i = FindFirst( single_options, trim(lastOption) )
+    if ( i < 1 ) i = FindFirst( multi_options, trim(lastOption) )
+    if ( i < 1 ) then
+      ! Whoa, option not recognized, but we'll just carry on nonetheless
+      lastOptionNeededArg = .false.
+    else
+      lastOptionNeededArg = needs_arg(i)
+    endif
+    i = 0
+    do j=1, NumStringElements( cmdline(k+1:), countEmpty, inseparator=' ' )
+      if ( j == 1 ) cycle ! skip last option
+      if ( j == 2 .and. lastOptionNeededArg ) cycle ! skip last option's arg
+      if ( i >= size(cmdargs) ) cycle
+      i = i + 1
+      cmdargs(i) = StringElement( cmdline(k+1:), j, countEmpty, inseparator=' ' )
+    enddo
+  end subroutine parseOptions
 
   ! ---------------------------------------------  PutHashElement  -----
 
@@ -3609,6 +3770,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.43  2011/02/18 18:00:10  pwagner
+! Improved optionDetail; added parseOptions to fully parse commandline
+!
 ! Revision 2.42  2010/11/05 22:23:01  pwagner
 ! Fixed bugs in optionDetail
 !
