@@ -45,11 +45,11 @@ main ( int argc, char* argv[] )
                  "[0-9]+-W", blue, {},       /* lf95 warnings */
                  "[0-9]+-I", magenta, {},    /* lf95 informative */
                  /* NAG f95 patterns: */
-                 "Deleted", red, {},       "Error", red, {},
-                 "Fatal", red, {},         "Panic", red, {},
-                 "Warning", blue, {},      "Extension", blue, {},
-                 "Obsolescent", blue, {},  "Info", magenta, {},
-                 "undefined", red, {} };     /* during linking */
+                 "[Dd]eleted", red, {},      "[Ee]rror", red, {},
+                 "[Ff]atal", red, {},        "[Pp]anic", red, {},
+                 "[Ww]arning", blue, {},     "[Ee]xtension", blue, {},
+                 "[Oo]bsolescent", blue, {}, "[Ii]nfo", magenta, {},
+                 "[Uu]ndefined", red, {} };     /* during linking */
 
 #define NPAT ( sizeof pats / sizeof pats[0] )
 
@@ -101,6 +101,10 @@ main ( int argc, char* argv[] )
 
 /*
 $Log$
+Revision 1.8  2005/06/04 02:51:46  vsnyder
+Colorize as many patterns per line as necessary.  Send lines with "red"
+patterns to stderr.  Return 1 if any red patterns, else zero.
+
 Revision 1.7  2005/03/04 18:46:26  pwagner
 Changed to compile under gcc 3.4.3
 
