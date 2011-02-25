@@ -15,6 +15,11 @@ module DUMP_0
 ! Should handle most combinations of rank and type
 ! Behavior depends on optional parameters
 ! Actual output device determined by output_m module
+!
+! In general, dumping a whole array of values will be presented as a matrix
+! up to 10 values across
+! Instead of a whole array, or in addition, one may dump a condensed summary
+! showing min, max, percentages of non-zero values, etc.
 
   use BitStuff, only: MAXBITNUMBER, WHICHBITSARESET
   use ieee_arithmetic, only: IEEE_IS_FINITE
@@ -53,6 +58,7 @@ module DUMP_0
 ! DUMPTABLESIDE            what side to place headers when dumping tables
 ! FILTERFILLSFROMRMS       exclude fill values when calculating rms, etc.
 !                           (not implemented yet)
+! INTPLACES                How many places to print when dumping integer values
 ! PCTFORMAT                use this format to print % with '-s' diff option
 ! RMSFORMAT                use this format to print min, max, rms, etc.
 ! SDFORMATDEFAULT          use this format to print s.p., d.p. by default
@@ -536,21 +542,25 @@ contains
   end subroutine DUMP_1D_BIT
 
   ! -----------------------------------------------  DUMP_1D_CHAR  -----
-  subroutine DUMP_1D_CHAR ( ARRAY, NAME, FILLVALUE, OPTIONS, MAXLON )
+  subroutine DUMP_1D_CHAR ( ARRAY, NAME, FILLVALUE, WIDTH, OPTIONS, MAXLON )
     character(len=*), intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
     character(len=*), intent(in), optional :: FILLVALUE
     character(len=*), optional, intent(in) :: options
     integer, intent(in), optional :: MAXLON
+    integer, intent(in), optional :: WIDTH
 
     integer :: J, K
     integer :: LON
     integer :: NumZeroRows
     character(len=len(array)) :: myFillValue
+    integer :: MyWidth
 
     call theDumpBegins ( options )
     myFillValue = ' '
     if ( present(FillValue) ) myFillValue = FillValue
+    MyWidth = 10
+    if ( present(width) ) MyWidth = width
 
     lon = len(array(1))
     if ( myTrim ) lon = maxval(len_trim(array))
@@ -569,22 +579,22 @@ contains
     else
       call name_and_size ( name, myClean, size(array) )
       if ( present(name) .and. .not. mylaconic ) call newLine
-      do j = 1, size(array), 10
+      do j = 1, size(array), MyWidth
         if (.not. myClean) then
-          if ( any(array(j:min(j+9, size(array))) /= myFillValue) ) then
+          if ( any(array(j:min(j+MyWidth-1, size(array))) /= myFillValue) ) then
             call say_fill ( (/ j-1, size(array) /), numZeroRows, myFillValue, inc=1 )
           else
             numZeroRows = numZeroRows + 1
           end if
         end if
-        if ( myClean .or. any(array(j:min(j+9, size(array))) /= myFillValue) ) then
-          do k = j, min(j+9, size(array))
+        if ( myClean .or. any(array(j:min(j+MyWidth-1, size(array))) /= myFillValue) ) then
+          do k = j, min(j+MyWidth-1, size(array))
               call output ( array(k)(1:lon) // ' ' )
           end do
           call newLine
         end if
       end do ! j
-      call say_fill ( (/ j-10, size(array) /), numZeroRows, myFillValue )
+      call say_fill ( (/ j-MyWidth, size(array) /), numZeroRows, myFillValue )
     end if
     call theDumpEnds
   end subroutine DUMP_1D_CHAR
@@ -813,22 +823,25 @@ contains
   end subroutine DUMP_1D_REAL
 
   ! -----------------------------------------------  DUMP_2D_CHAR  -----
-  subroutine DUMP_2D_CHAR ( ARRAY, NAME, FILLVALUE, MAXLON, OPTIONS )
+  subroutine DUMP_2D_CHAR ( ARRAY, NAME, FILLVALUE, WIDTH, MAXLON, OPTIONS )
     character(len=*), intent(in) :: ARRAY(:,:)
     character(len=*), intent(in), optional :: NAME
     character(len=*), intent(in), optional :: FILLVALUE
     integer, intent(in), optional :: MAXLON
     character(len=*), optional, intent(in) :: options
+    integer, intent(in), optional :: WIDTH
 
     integer :: I, J, K
     integer :: LON
     integer :: NumZeroRows
     character(len=len(array)) :: myFillValue
+    integer :: MyWidth
 
     call theDumpBegins ( options )
     myFillValue = ' '
     if ( present(FillValue) ) myFillValue = FillValue
-
+    MyWidth = 10
+    if ( present(width) ) MyWidth = width
     lon = len(array(1,1))
     if ( myTrim ) lon = maxval(len_trim(array))
     if ( present(maxlon) ) lon = min(lon, maxlon)
@@ -845,24 +858,24 @@ contains
       call name_and_size ( name, myClean, size(array) )
       if ( present(name) .and. .not. mylaconic ) call newLine
       do i = 1, size(array,1)
-        do j = 1, size(array,2), 10
+        do j = 1, size(array,2), MyWidth
           if (.not. myClean) then
-            if ( any(array(i,j:min(j+9, size(array,2))) /= myFillValue) ) then
+            if ( any(array(i,j:min(j+MyWidth-1, size(array,2))) /= myFillValue) ) then
               call say_fill ( (/ i-1, size(array,1), j, size(array,2) /), &
                 & numZeroRows, myFillValue, inc=1 )
             else
               numZeroRows = numZeroRows + 1
             end if
           end if
-          if ( myClean .or. any(array(i,j:min(j+9, size(array,2))) /= myFillValue) ) then
-            do k = j, min(j+9, size(array,2))
+          if ( myClean .or. any(array(i,j:min(j+MyWidth-1, size(array,2))) /= myFillValue) ) then
+            do k = j, min(myWidth-1, size(array,2))
                 call output ( array(i,k)(1:lon) // ' ' )
             end do
             call newLine
           end if
         end do ! j
       end do ! i
-      call say_fill ( (/ i-1, size(array,1), j-10, size(array,2) /), &
+      call say_fill ( (/ i-1, size(array,1), j-MyWidth, size(array,2) /), &
         & numZeroRows, myFillValue )
     end if
     call theDumpEnds
@@ -1208,12 +1221,13 @@ contains
   end subroutine DUMP_2x2xN_DCOMPLEX
 
   ! -----------------------------------------------  DUMP_3D_CHAR  -----
-  subroutine DUMP_3D_CHAR ( ARRAY, NAME, FILLVALUE, MAXLON, OPTIONS )
+  subroutine DUMP_3D_CHAR ( ARRAY, NAME, FILLVALUE, WIDTH, MAXLON, OPTIONS )
     character(len=*), intent(in) :: ARRAY(:,:,:)
     character(len=*), intent(in), optional :: NAME
     character(len=*), intent(in), optional :: FILLVALUE
     integer, intent(in), optional :: MAXLON
     character(len=*), intent(in), optional :: options
+    integer, intent(in), optional :: WIDTH
 
     integer :: LON
     integer :: I, J, K, L
@@ -1221,6 +1235,7 @@ contains
     integer, dimension(3) :: which, re_mainder
     integer :: how_many
     character(len=len(array)) :: myFillValue
+    integer :: MyWidth
 
     call theDumpBegins ( options )
     myFillValue = ' '
@@ -1229,6 +1244,8 @@ contains
     lon = len(array(1,1,1))
     if ( myTrim ) lon = maxval(len_trim(array))
     if ( present(maxlon) ) lon = min(lon, maxlon)
+    MyWidth = 10
+    if ( present(width) ) MyWidth = width
     call FindAll( (/ size(array, 1), size(array, 2), size(array, 3)/), &
       & 1, which, how_many, re_mainder=re_mainder)
 
@@ -1240,26 +1257,26 @@ contains
       call output ( array(1,1,1)(1:lon), advance='yes' )
     else if ( how_many == 2 ) then
       call dump ( reshape(array, (/ re_mainder(1) /)), name, fillValue=fillValue, &
-        & maxlon=maxlon, options=options )
+        & maxlon=maxlon, options=options, width=width )
     else if ( how_many == 1 ) then
       call dump ( reshape(array, (/ re_mainder(1), re_mainder(2) /)), &
-        & name, fillValue=fillValue, options=options )
+        & name, fillValue=fillValue, options=options, width=width )
     else
       call name_and_size ( name, myClean, size(array) )
       if ( present(name) .and. .not. mylaconic ) call newLine
       do i = 1, size(array,1)
         do j = 1, size(array,2)
-          do k = 1, size(array,3), 10
+          do k = 1, size(array,3), MyWidth
             if (.not. myClean) then
-              if ( any(array(i,j,k:min(k+9, size(array,3))) /= myFillValue) ) then
+              if ( any(array(i,j,k:min(k+MyWidth-1, size(array,3))) /= myFillValue) ) then
                 call say_fill ( (/ i, size(array,1), j-1, size(array,2), &
                   & k, size(array,3) /), numZeroRows, myFillValue, inc=3 )
               else
                 numZeroRows = numZeroRows + 1
               end if
             end if
-            if ( myClean .or. any(array(i,j,k:min(k+9, size(array,3))) /= myFillValue) ) then
-              do l = k, min(k+9, size(array,3))
+            if ( myClean .or. any(array(i,j,k:min(k+MyWidth-1, size(array,3))) /= myFillValue) ) then
+              do l = k, min(k+MyWidth-1, size(array,3))
                   call output ( array(i,j,l)(1:lon) // ' ' )
               end do
               call newLine
@@ -1268,7 +1285,7 @@ contains
         end do
       end do
       call say_fill ( (/ i-1, size(array,1), j-1, size(array,2), &
-        & k-10, size(array,3) /), numZeroRows, myFillValue )
+        & k-MyWidth, size(array,3) /), numZeroRows, myFillValue )
     end if
     call theDumpEnds
   end subroutine DUMP_3D_CHAR
@@ -1565,10 +1582,10 @@ contains
     logical, parameter :: COUNTEMPTY = .true.
     ! Executable
     if( index(string, CR) > 0 ) then
-      call dump( (/ trim(string) /), name, fillvalue, options )
+      call dump( (/ trim(string) /), name, fillvalue, options=options )
       return
     elseif( index(string, LF) > 0 ) then
-      call dump( (/ trim(string) /), name, fillvalue, options )
+      call dump( (/ trim(string) /), name, fillvalue, options=options )
       return
     endif
 
@@ -2813,6 +2830,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.106  2011/02/25 18:50:26  pwagner
+! Added optional width arg to char array dumps
+!
 ! Revision 2.105  2011/02/05 01:01:41  pwagner
 ! Added new dopt_ dump options; transpose and collapse work better
 !
