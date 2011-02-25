@@ -360,6 +360,7 @@ contains
   ! ------------------------------------------------- Dump_Hessian -----
   subroutine Dump_Hessian ( H, Name, Details, &
     & onlyTheseBlocks, options, Clean )
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use HessianModule_0, only: Dump
     use Lexer_core, only: Print_Source
     use MatrixModule_1, only: Dump_RC
@@ -384,6 +385,7 @@ contains
     logical, parameter :: DEEBUG = .false.
     character(len=32) :: dumpOptions
     integer :: I, J, K    ! Subscripts, loop inductors
+    character(len=1), dimension(:,:,:), pointer :: layout => null() ! ., s, or f
     character(len=128) :: molecules
     integer :: My_Details
     character(len=32), dimension(3) :: myBlocks
@@ -434,6 +436,8 @@ contains
         call newLine
       endif
     enddo
+    call allocate_Test( layout, h%row%nb, h%col%nb, h%col%nb, &
+      & 'Layout of blocks in Hessian', moduleName // '%Dump_Hessian', Fill='.' )
     totalSize = 0
     do k = 1, h%col%nb
       do j = 1, h%col%nb
@@ -441,9 +445,11 @@ contains
           if ( HIDEBSENTBLOCKS .and. h%block(i,j,k)%kind == h_absent ) cycle
           select case ( h%block(i,j,k)%kind )
           case ( h_sparse )
+            layout(i, j, k) = 'S'
             if ( associated(h%block(i,j,k)%tuples) ) &
               & totalSize = totalSize + h%block(i,j,k)%TuplesFilled
           case ( h_full )
+            layout(i, j, k) = 'F'
             if ( associated(h%block(i,j,k)%values) ) &
               & totalSize = totalSize + size(h%block(i,j,k)%values)
           end select
@@ -501,6 +507,9 @@ contains
         end do
       end do
     end do
+    call dump( layout, 'Layout of blocks in hessian', width=h%col%nb )
+    call deallocate_test ( layout, moduleName // '%Dump_Hessian', &
+      & "layout of Hessian Blocks" )
     if ( my_details <= -3 ) call resumeOutput
     contains
     function skipThisBlock ( s, tid ) result( doWe )
@@ -741,6 +750,9 @@ contains
 end module HessianModule_1
 
 ! $Log$
+! Revision 2.20  2011/02/25 22:01:39  pwagner
+! Dump Hessian blocks as layout of S[parse], F[ull], .[bsent] chars
+!
 ! Revision 2.19  2011/02/18 17:53:29  pwagner
 ! dumpOptions needed to be longer; long enough?; print list of molecule derivatives
 !
