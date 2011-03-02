@@ -22,6 +22,7 @@ module FOV_Convolve_m
   public :: FOV_Convolve_Setup, FOV_Convolve_1D, FOV_Convolve_2d, FOV_Convolve_3d
   public :: FOV_Convolve_Temp_Derivs, FOV_Convolve_Teardown
   public :: Dump, Dump_Convolve_Support
+  public :: AntennaPattern_T, Coefficients ! for full f95 compatibility
 
   interface Dump
     module procedure Dump_Convolve_Support
@@ -587,6 +588,9 @@ contains
 end module FOV_Convolve_m
 
 ! $Log$
+! Revision 2.12  2011/03/02 02:05:59  vsnyder
+! Make AntennaPattern_T, Coefficients public, for F95 compatibility
+!
 ! Revision 2.11  2010/07/19 18:21:09  yanovsky
 ! Add FOV_Convolve_3d subroutine
 !
