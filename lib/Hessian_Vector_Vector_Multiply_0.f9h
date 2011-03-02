@@ -15,6 +15,10 @@
 !   real(rk), intent(in) :: Scalar
 !   real(rk), intent(inout) :: P(:)
 !   logical, intent(in), optional :: Update
+
+    integer :: K, J, N
+    logical :: MyUpdate
+
     myUpdate = .false.
     if ( present(update) ) myUpdate = update
     if ( .not. myUpdate ) p = 0
@@ -25,16 +29,16 @@
         call outputNamedValue( 'size(v1)', size(v1) )
         call outputNamedValue( 'size(v2)', size(v2) )
         call outputNamedValue( 'size(h%tuples)', size(h%tuples) )
+        call outputNamedValue( 'maxval(h%tuples%k)', maxval(h%tuples%k) )
         call outputNamedValue( 'maxval(h%tuples%i)', maxval(h%tuples%i) )
         call outputNamedValue( 'maxval(h%tuples%j)', maxval(h%tuples%j) )
-        call outputNamedValue( 'maxval(h%tuples%k)', maxval(h%tuples%k) )
+        call outputNamedValue( 'minval(h%tuples%k)', minval(h%tuples%k) )
         call outputNamedValue( 'minval(h%tuples%i)', minval(h%tuples%i) )
         call outputNamedValue( 'minval(h%tuples%j)', minval(h%tuples%j) )
-        call outputNamedValue( 'minval(h%tuples%k)', minval(h%tuples%k) )
       endif
       do n = 1, size(h%tuples)
-        i = h%tuples(n)%i
-        p(i) = p(i) + scalar * h%tuples(n)%h * v1(h%tuples(n)%j) * v2(h%tuples(n)%k)
+        k = h%tuples(n)%k
+        p(k) = p(k) + scalar * h%tuples(n)%h * v1(h%tuples(n)%i) * v2(h%tuples(n)%j)
       end do
     else if ( associated(h%values) ) then ! Then try the dense represenation
       if ( size(h%values,1) /= size(p) .or. &
@@ -42,16 +46,19 @@
         &  size(h%values,3) /= size(v2) ) &
         call MLSMessage ( MLSMSG_Error, moduleName, &
           & "Dimensions of Hessian and vectors incompatible in multiply" )
-      do i = 1, size(h%values,1)
-        do k = 1, size(h%values,3)
-          ! Summation on j is done by dot_product
-          p(i) = p(i) + scalar * dot_product(h%values(i,:,k), v1(:)) * v2(k)
+      do k = 1, size(h%values,1)
+        do j = 1, size(h%values,3)
+          ! Summation on i is done by dot_product
+          p(k) = p(k) + scalar * dot_product(h%values(k,:,j), v1(:)) * v2(j)
         end do
       end do
     end if
 
 ! $Id$
 ! $Log$
+! Revision 2.6  2011/03/02 02:01:06  vsnyder
+! Declare local variables here, make subscript usage consistent with HessianModule_1
+!
 ! Revision 2.5  2010/06/29 19:56:40  vsnyder
 ! Add SCALAR argument instead of buried 0.5 factor
 !
@@ -60,7 +67,7 @@
 !
 ! Revision 2.3  2010/06/22 22:44:53  vsnyder
 ! Remove extraneous CVS Id line.  Add comments for the subroutine header
-! and for the summation on j.  Correct bugs in the dense case.
+! and for the summation on i.  Correct bugs in the dense case.
 !
 ! Revision 2.2  2010/02/25 18:16:46  pwagner
 ! Conforms with changed Hessian structure
