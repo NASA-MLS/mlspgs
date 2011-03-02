@@ -185,20 +185,25 @@ contains
   ! and > 0.  
     integer, intent(in) :: Status
     character(len=*), intent(in) :: ModuleNameIn, ItsName
-    integer, intent(in) :: Lbounds(:), Ubounds(:)
+    integer, intent(in), optional :: Lbounds(:), Ubounds(:)
     integer, intent(in), optional :: ElementSize ! Bytes, <= 0 for no tracking
     real :: Amount
     character(127) :: Bounds
     integer :: I, L
 
-    if ( status /= 0 .or. present(elementSize) .and. trackAllocates >= 2 ) then
+    if ( status /= 0 .or. present(lbounds) .and. present(ubounds) .and. &
+      & present(elementSize) .and. trackAllocates >= 2 ) then
       ! print *, 'status ', status
-      write ( bounds, '("(",i0,":",i0, 6(:",",i0,":",i0))' ) &
-        & ( lBounds(i), uBounds(i), i = 1, size(lBounds) )
-      l = len_trim(bounds)+1
-      bounds(l:l)= ')'
-      write ( bounds(l+1:), '(", status = ", i0)' ) status
-      l = len_trim(bounds)
+      if ( present(lbounds) .and. present(ubounds) ) then
+        write ( bounds, '("(",i0,":",i0, 6(:",",i0,":",i0))' ) &
+          & ( lBounds(i), uBounds(i), i = 1, size(lBounds) )
+        l = len_trim(bounds)+1
+        bounds(l:l)= ')'
+        write ( bounds(l+1:), '(", status = ", i0)' ) status
+        l = len_trim(bounds)
+      else
+        l = 0
+      end if
       if ( status /= 0 ) &
         & call MLSMessage ( MLSMSG_Error, moduleNameIn, &
           & MLSMSG_Allocate // ItsName  // bounds(:l) )
@@ -206,7 +211,7 @@ contains
 
     if ( .not. present(elementSize) ) return
 
-    if ( present(elementSize) ) then
+    if ( present(lbounds) .and. present(ubounds) .and. present(elementSize) ) then
       if ( elementSize > 0 ) then
         amount = memproduct(elementSize, ubounds-lbounds+1)
         if ( trackAllocates >= 2 ) then
@@ -954,6 +959,9 @@ contains
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.37  2011/03/02 01:59:07  vsnyder
+! Make lbounds and ubounds arguments of Test_Allocate optional
+!
 ! Revision 2.36  2009/06/23 18:25:42  pwagner
 ! Prevent Intel from optimizing ident string away
 !
