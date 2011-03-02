@@ -135,6 +135,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   public :: GetVectorQuantityIndexByType, InflateVectorDatabase
   public :: InflateVectorTemplateDatabase, IsVectorQtyMasked, MultiplyVectors
   public :: NullifyVectorTemplate, NullifyVectorValue, NullifyVector, PowVector
+  public :: QuantityTemplate_T ! for full F95 compatibility
   public :: ReciprocateVector, RmVectorFromDatabase, ScaleVector, SetMask, SubtractFromVector
   public :: SubtractVectors, ValidateVectorQuantity, MaskVectorQty
   ! Types
@@ -2658,6 +2659,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.150  2010/05/24 14:48:04  honghanh
+! Add comment to GetVectorQtyByTemplateIndex
+!
 ! Revision 2.149  2010/04/28 00:12:20  pwagner
 ! Correct maskBitNames used in dumping mask
 !
