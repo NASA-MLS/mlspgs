@@ -558,9 +558,10 @@ contains
   ! ------------------------------- Hessian_Vector_Vector_Multiply -----
   subroutine Hessian_Vector_Vector_Multiply ( H, V, P, Scalar, Update )
   !{ Multiply Hessian {\tt H} by vector {\tt V} twice, with a factor of
-  !  $\frac12$, giving {\tt P}: $P^k = P^k + \frac12 H^k_{ij} V^i V^j$.
-  !  This is the  second-order term of a Taylor series.  {\tt P} is
-  !  initially set to zero unless {\tt Update} is present and true.
+  !  {\tt scalar}, giving {\tt P}: $P^k := P^k + \text{\tt scalar}\times
+  !  H^k_{ij} V^i V^j$. This is the  second-order term of a Taylor
+  !  series when {\tt scalar} = $\frac12$.  {\tt P} is initially set to
+  !  zero unless {\tt Update} is present and true.
 
     use HessianModule_0, only: Multiply
     use MLSKinds, only: RV
@@ -620,7 +621,7 @@ contains
   end subroutine Hessian_Vector_Vector_Multiply
 
   ! ----------------------------------------- InsertHessianPlane_1 -----
-  subroutine InsertHessianPlane_1 ( H, M, B, EL, MIRROR )
+  subroutine InsertHessianPlane_1 ( H, M, B, EL, MOLECULES, MIRROR )
     ! Insert matrix M as a plane (block B, element EL) of the Hessian H
     ! If Mirror is set, populate the transpose set also
     use HessianModule_0, only: InsertHessianPlane
@@ -630,14 +631,21 @@ contains
     type(Matrix_T), intent(in) :: M
     integer, intent(in) :: B            ! One of the column blocks
     integer, intent(in) :: EL           ! The element of that block
+    integer, intent(in), optional, target :: MOLECULES(:) ! don't save things not
+                                        ! in this list, unless it's empty
     logical, intent(in), optional :: MIRROR
     ! Local variables
     integer :: CB                       ! Column block
     integer :: RB                       ! Row block
     logical :: MYMIRROR                 ! Copy of mirror
+    integer, pointer :: MyMolecules(:)
 
     myMirror = .false.
     if ( present ( mirror ) ) myMirror = mirror
+    nullify ( myMolecules )
+    if ( present(molecules) ) then
+      if ( size(molecules) > 0 ) myMolecules => molecules
+    end if
 
     ! Check that the Jacobian and Hessian match
     if ( h%col%vec%template%name /= m%col%vec%template%name &
@@ -650,6 +658,11 @@ contains
     ! Loop over the rows
     do rb = 1, H%row%nb
       do cb = 1, H%col%nb
+        if ( associated(myMolecules) ) then
+          if ( .not. any( &
+            & m%col%vec%quantities(m%col%quant(cb))%template%molecule == &
+            & myMolecules) ) cycle 
+        end if
         call InsertHessianPlane ( H%block(rb,cb,b), M%block(rb,cb), el )
         if ( myMirror ) then
           call InsertHessianPlane ( H%block(rb,b,cb), M%block(rb,cb), el, &
@@ -750,6 +763,9 @@ contains
 end module HessianModule_1
 
 ! $Log$
+! Revision 2.21  2011/03/02 02:04:29  vsnyder
+! TeXnicalities, add Molecules argument to InsertHessianPlane_1
+!
 ! Revision 2.20  2011/02/25 22:01:39  pwagner
 ! Dump Hessian blocks as layout of S[parse], F[ull], .[bsent] chars
 !
