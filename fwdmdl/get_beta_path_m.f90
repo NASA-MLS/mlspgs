@@ -144,7 +144,7 @@ contains
 
       if ( size(dBeta_df_path) > 0 ) then
         if ( where_dBeta_df(i) > 0 ) then
-          dBdf => dBeta_dt_path(:np,where_dBeta_df(i))
+          dBdf => dBeta_df_path(:np,where_dBeta_df(i))
           dBdf = 0.0
         end if
       end if
@@ -1367,8 +1367,6 @@ contains
     real(rp), intent(in), optional :: SPS ! Mixing ratio
     real(rp), intent(out) :: Beta
     real(rp), intent(out) :: dBeta_df
-    real(rp) :: Abs_CS_H2O_Cont_r
-    real(rp) :: dBdf
     real(rp) :: Psq_Fsq                 ! pressure**2 * frequency**2
     real(rp) :: Temp_Ratio              ! log(300/T)
 
@@ -1588,6 +1586,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.103  2011/03/02 02:06:59  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.102  2011/02/12 03:57:40  vsnyder
 ! Add mixing-ratio dependence for H2O derivatives
 !
