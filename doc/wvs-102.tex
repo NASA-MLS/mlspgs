@@ -12,7 +12,7 @@
 \topmargin -0.25in
 \textheight 9in
 
-\newcommand{\docname}{\bf wvs-102r2}
+\newcommand{\docname}{\bf wvs-102r3}
 \newcommand{\docdate}{3 March 2011}
 
 \ifx\pdfoutput\undefined
@@ -93,7 +93,7 @@ Reference: \>\h{wvs-100}
 
 \section{$\alpha(s)$}
 
-We normally think of $\alpha$ as
+For most species $k$ we think of $\alpha$ as
 
 \begin{equation}
 \alpha(s) = \sum_k f^k(s)\, \beta^k(s) \text{ where }
@@ -101,12 +101,12 @@ We normally think of $\alpha$ as
 \end{equation}
 
 where $\eta^k_{lm}(s)$ is the interpolation factor from the solution grid
-to the path.
+$(\phi^k_l,\zeta^k_m)$ to the path.
 
-For some species $k$, $\beta^k$ depends upon $f^k$.
+For some species, $k$, $\beta^k$ depends upon $f^k$.
 
-For others, we interpolate $f^k$ logarithmically from the grid to the
-path, i.e.,
+For some species, we interpolate $f^k$ logarithmically from the grid to
+the path, i.e.,
 
 \begin{equation}
 \alpha(s) = \sum_k \hat{f}^k(s)\, \beta^k(s) \text{ where }
@@ -258,6 +258,9 @@ Suppressing the integral limits for clarity,
 % $Id$
 
 % $Log$
+% Revision 1.3  2011/03/04 04:04:22  vsnyder
+% Undo oversimplification, some cannonball polishing
+%
 % Revision 1.2  2011/03/04 03:17:42  vsnyder
 % Second derivatives
 %
