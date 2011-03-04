@@ -324,14 +324,14 @@ contains
     use L2PC_m, only: L2PC_t
     use MatrixModule_1, only: MATRIX_T
     use MLSKinds, only: R4, R8, RP, RV
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSNumerics, only: Hunt, InterpolateValues
     use MLSSignals_m, only: AreSignalsSuperset, GetNameOfSignal, MatchSignal, &
       & Radiometers, Signal_t
     use MLSStringLists, only: switchDetail
     use Molecules, only: First_Molecule, Last_Molecule, &
-      & L_CLOUD_A, L_H2O, L_N2O, L_O3
-    use Output_m, only: OUTPUT, OUTPUTNAMEDVALUE
+      & L_H2O, L_N2O, L_O3
+    use Output_m, only: OUTPUT
     use Path_Contrib_M, only: Get_GL_Inds
     use Physics, only: SpeedOfLight
     use PointingGrid_m, only: POINTINGGRIDS, PointingGrid_T
@@ -413,7 +413,6 @@ contains
     integer :: IER                ! Status flag from allocates
     integer :: I                  ! Loop index and other uses.
     integer :: INST               ! Instance of temperature nearest to MAF
-    integer :: IWC_Ind            ! S_Ind(L_IWC) = index of IWC in Grids_f
     integer :: J                  ! Loop index and other uses.
     integer :: K                  ! Loop index and other uses.
     integer :: MAF                ! MAF under consideration
@@ -1320,7 +1319,7 @@ contains
       use Dump_0, only: DUMP
       use FOV_Convolve_m, only: Convolve_Support_T, FOV_Convolve_Setup, &
         & FOV_Convolve_Teardown, No_FFT
-      use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+      use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
       use MLSNumerics, only: Coefficients => Coefficients_r8, &
         & InterpolateArraySetup, InterpolateArrayTeardown
 
@@ -1892,8 +1891,6 @@ contains
       real(rp) :: H_AVG      ! Frequency-averaged value
       integer :: SV_Q, SV_R  ! State-vector indexes
 
-      integer :: status
-
       if ( combine ) then
         ! Simply add newly-computed PFA derivatives in K_frq to
         ! previously-averaged LBL derivatives in K.  Remember that
@@ -1973,7 +1970,6 @@ contains
 
       integer :: K, KK  ! Loop inductor
       integer :: UB     ! Upper bound for first dimension of h_..._frq
-      integer :: status
 
       ub = noFreqs
       if ( combine ) ub = max(ub,noUsedChannels)
@@ -2003,7 +1999,6 @@ contains
 
   ! ..........................................  Frequency_Setup_1  .....
     subroutine Frequency_Setup_1 ( Tan_Press, Grids )
-      use output_m, only: outputNamedValue
 
       ! Work out which pointing frequency grid we're going to need
 
@@ -2764,7 +2759,7 @@ contains
       use Get_Beta_Path_m, only: Get_Beta_Path, Get_Beta_Path_Cloud, &
         & Get_Beta_Path_PFA, Get_Beta_Path_Polarized
       use Get_d_Deltau_pol_m, only: Get_d_Deltau_pol_df, Get_d_Deltau_pol_dT
-      use Get_Eta_Matrix_m, only: Interpolate_Stru, Select_NZ_List
+      use Get_Eta_Matrix_m, only: Select_NZ_List
       use Interpolate_Mie_m, only: Interpolate_Mie
       use Load_Sps_Data_m, only:  Load_One_Item_Grid
       use Mcrt_m, only: Mcrt_der
@@ -2773,7 +2768,6 @@ contains
       use Physics, only: H_OVER_K
       use RAD_TRAN_M, only: RAD_TRAN_POL, DRAD_TRAN_DF, &
         & D2RAD_TRAN_DF2, DRAD_TRAN_DT, DRAD_TRAN_DX
-      use Read_Mie_m, only: F_s
       use ScatSourceFunc, only: T_SCAT, Interp_Tscat, Convert_Grid
       use Tau_M, only: Get_Tau
       use TScat_Support_m, only: Get_dB_dT, Mie_Freq_Index
@@ -3152,9 +3146,9 @@ contains
       end do
 
       if ( print_incopt ) then
-        call dump ( beta_path_c(i_start+1:i_end-1,:), name="Beta_Path" )
-        call dump ( sps_path(c_inds(i_start+1:i_end-1),:), name="SPS_Path" )
-        call dump ( alpha_path_c(i_start+1:i_end-1), name="Alpha_Path_C" )
+        call dump ( beta_path_c(i_start:i_end,:), name="Beta_Path_C" )
+        call dump ( sps_path(c_inds(i_start:i_end),:), name="SPS_Path" )
+        call dump ( alpha_path_c(i_start:i_end), name="Alpha_Path_C" )
         call dump ( incoptdepth(i_start+1:i_end-1), name="Incoptdepth" )
         call dump ( del_s(i_start+1:i_end-1), name="Del_s" )
       end if
@@ -3525,14 +3519,12 @@ contains
 
       integer :: I_start, I_end ! Boundaries of coarse path to use
       character(100) :: Line    ! Of output
-      integer :: Mol            ! Loop index for frequency averaging
       logical :: MyRev          ! "Reverse the integration path"
       real(rp) :: R_EQ          ! Equivalent Earth Radius at true surface
       real(rp) :: REQ_S  ! Equivalent Earth Radius at height reference surface
       real(rp) :: Scat_D1, Scat_D2   ! To compute scat_index
       integer :: Scat_Temp           ! To compute scat_index
       real(rp), parameter :: Scat_Tol = 1.0 ! max miss of scattering pt, (km/h)**2
-      integer :: status
       real(rp) :: Tan_Ht ! Geometric tangent height, km, from equivalent Earth center
       real(rp) :: Tan_Ht_S ! Tangent height above 1 bar reference surface, km
 
@@ -4390,6 +4382,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.314  2011/02/12 03:57:40  vsnyder
+! Add mixing-ratio dependence for H2O derivatives
+!
 ! Revision 2.313  2011/01/29 00:52:32  vsnyder
 ! Allow PFA without frequency averaging
 !
