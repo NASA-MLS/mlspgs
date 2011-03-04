@@ -1119,7 +1119,7 @@ contains
 !                                              state vector element. (K)
 ! Internals
 
-    integer :: i_start, n_inds, no_to_gl, sps_i, sps_m, sps_n, sv_i
+    integer :: n_inds, no_to_gl, sps_i, sps_m, sps_n, sv_i
     integer, target, dimension(1:size(inc_rad_path)) :: all_inds_B
     integer, target, dimension(1:size(inc_rad_path)) :: inds_B, more_inds_B
     integer, pointer :: all_inds(:)  ! all_inds => part of all_inds_B;
@@ -1730,6 +1730,9 @@ contains
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.20  2011/03/04 03:41:25  vsnyder
+! Remove declaration for unused variable
+!
 ! Revision 2.19  2011/02/12 03:57:40  vsnyder
 ! Add mixing-ratio dependence for H2O derivatives
 !
