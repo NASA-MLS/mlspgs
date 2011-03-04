@@ -12,7 +12,7 @@
 \topmargin -0.25in
 \textheight 9in
 
-\newcommand{\docname}{\bf wvs-102r1}
+\newcommand{\docname}{\bf wvs-102r2}
 \newcommand{\docdate}{3 March 2011}
 
 \ifx\pdfoutput\undefined
@@ -186,7 +186,7 @@ Suppressing the superscript $k$ and arguments of $\beta$ for clarity,
   \right) \eta_{lm}(s) \eta_{\tilde l \tilde m}(s)
 \\
  \sum_k \hat{f}(s)\, \beta(s) &
- \beta \hat{f}
+ \beta \hat{f}(s)
   \frac{\eta_{lm}(s)}{f_{lm}}
   \frac{\eta_{\tilde l \tilde m}(s)}{f_{\tilde l \tilde m}} =
  \frac{\partial \alpha(s)}{\partial f_{lm}}
@@ -201,17 +201,21 @@ Suppressing the superscript $k$ and arguments of $\beta$ for clarity,
      \frac{\eta_{lm}(s)}{f_{lm}}
      \frac{\eta_{\tilde l \tilde m}(s)}{f_{\tilde l \tilde m}} =
 \\[7pt] &
-  \frac{\partial\alpha(s)}{\partial f_{lm}}
-  \frac{\eta_{\tilde l \tilde m}(s)}{f_{\tilde l \tilde m}} +
+ \left[
+  \frac{\partial\alpha(s)}{\partial f_{lm}} +
   \hat{f}(s)^2 \left(
        2 \frac{\partial \beta}
              {\partial \hat{f}(s)} +
        \hat{f}(s) \frac{\partial^2 \beta}
                        {\partial \hat{f}(s)^2} \right)
      \frac{\eta_{lm}(s)}{f_{lm}}
+ \right]
      \frac{\eta_{\tilde l \tilde m}(s)}{f_{\tilde l \tilde m}}
  \end{array}
 \end{equation}
+
+So far, we don't have any species for which
+$\frac{\partial^2 \beta}{\partial \hat{f}(s)^2} \neq 0$.
 
 \newcommand{\T}{\mathcal{T}}
 \renewcommand{\d}{\,\text{d}}
@@ -254,6 +258,9 @@ Suppressing the integral limits for clarity,
 % $Id$
 
 % $Log$
+% Revision 1.2  2011/03/04 03:17:42  vsnyder
+% Second derivatives
+%
 % Revision 1.1  2011/02/05 01:32:32  vsnyder
 % Initial commit
 %
