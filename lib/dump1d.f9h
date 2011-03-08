@@ -66,18 +66,21 @@
       call name_and_size ( name, myClean, size(array) )
       if ( present(name) .and. .not. mylaconic ) call newLine
       do j = 1, size(array), myWidth
+        DumpTheseZeros = myClean .or. &
+          & any(array(j:min(j+2*myWidth-1, size(array))) /= myFillValue)
         if (.not. myClean) then
-          if ( any(array(j:min(j+myWidth-1, size(array))) /= myFillValue) ) then
+          if ( DumpTheseZeros ) then
             call say_fill ( (/ j-1+base, size(array) /), numZeroRows, myFillValue, inc=1 )
           else
             numZeroRows = numZeroRows + 1
           end if
         end if
-        if ( myClean .or. any(array(j:min(j+myWidth-1, size(array))) /= myFillValue) ) then
+        if ( DumpTheseZeros ) then
           do k = j, min(j+myWidth-1, size(array))
             call output ( array(k), format=myformat )
           end do
           call newLine
+          numZeroRows = 0
         end if
       end do ! j
       call say_fill ( (/ j-myWidth, size(array) /), numZeroRows, myFillValue )
@@ -85,6 +88,9 @@
     call theDumpEnds
 !   end subroutine DUMP_1D_INTEGER
 ! $Log$
+! Revision 2.4  2011/03/08 00:03:34  pwagner
+! Skip printing row of zeros only if multiple
+!
 ! Revision 2.3  2011/02/05 00:56:34  pwagner
 ! L(aconic) option skips printing array name and size
 !

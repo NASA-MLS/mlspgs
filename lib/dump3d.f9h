@@ -32,6 +32,8 @@
     myRank = 3
     myFillValue = 0.d0
     if ( present(FillValue) ) myFillValue=FillValue
+    MyWidth = 5
+    if ( present(width) ) MyWidth = width
     if ( myUnique ) then
       call FindUnique( reshape( array, (/ product(shape(array)) /) ), &
         & elements, nUnique, counts )
@@ -70,20 +72,28 @@
       if ( present(name) .and. .not. mylaconic ) call newLine
       do i = 1, size(array,1)
         do j = 1, size(array,2)
-          do k = 1, size(array,3), 5
+          do k = 1, size(array,3), MyWidth
+            DumpTheseZeros = myClean .or. &
+              & any(array(i,j,k:min(k+2*MyWidth-1, size(array,3))) /= myFillValue) &
+              & .or. &
+              & ( k+MyWidth >= size(array,3) .and. &
+              & any(array(i,min(j+1, size(array,2)),1:min(1+MyWidth-1, size(array,3))) &
+              & /= myFillValue) &
+              & )
             if (.not. myClean) then
-              if ( any(array(i,j,k:min(k+4, size(array,3))) /= myFillValue) ) then
+              if ( DumpTheseZeros ) then
                 call say_fill ( (/ i, size(array,1), j-1, size(array,2), &
                   & k, size(array,3) /), numZeroRows, myFillValue, inc=3 )
               else
                 numZeroRows = numZeroRows + 1
               end if
             end if
-            if ( myClean .or. any(array(i,j,k:min(k+4, size(array,3))) /= myFillValue) ) then
-              do l = k, min(k+4, size(array,3))
+            if ( DumpTheseZeros ) then
+              do l = k, min(k+myWidth-1, size(array,3))
                 call output ( array(i,j,l), format=myFormat )
               end do
               call newLine
+              numZeroRows = 0
             end if
           end do
         end do
@@ -94,6 +104,9 @@
     call theDumpEnds
 ! end subroutine DUMP_3D_DOUBLE
 ! $Log$
+! Revision 2.4  2011/03/08 00:04:00  pwagner
+! Skip printing row of zeros only if multiple
+!
 ! Revision 2.3  2011/02/05 00:58:16  pwagner
 ! L(aconic) option skips printing array name and size
 !

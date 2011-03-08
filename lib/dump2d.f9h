@@ -38,20 +38,22 @@
     myRank = 2
     myFillValue = 0
     if ( present(FillValue) ) myFillValue = FillValue
+    MyWidth = 5
+    if ( present(width) ) MyWidth = width
     if ( myUnique ) then
       call FindUnique( reshape( array, (/ product(shape(array)) /) ), &
         & elements, nUnique, counts )
       if ( nUnique < 2 ) then
-        call output( 'Every value is ', advance='no' )
-        call output( elements(1), advance='yes' )
+        ! call output( 'Every value is ', advance='no' )
+        ! call output( elements(1), advance='yes' )
       else
-        call output( '    value             counts', advance='yes' )
+        ! call output( '    value             counts', advance='yes' )
         do j=1, nUnique
-          call output( j )
+          ! call output( j )
           call blanks( 3 )
-          call output( elements(j) )
+          ! call output( elements(j) )
           call blanks( 3 )
-          call output( counts(j), advance='yes' )
+          ! call output( counts(j), advance='yes' )
         enddo
       endif
       if ( uniqueonly ( options ) ) return
@@ -65,31 +67,45 @@
       call empty ( name )
     else if ( size(array) == 1 ) then
       call name_and_size ( name, myClean, 1 )
-      call output ( array(1,1), format=myFormat, advance='yes' )
+      ! call output ( array(1,1), format=myFormat, advance='yes' )
     else if ( size(array,2) == 1 ) then
       call dump ( array(:,1), name, options=options )
     else
       call name_and_size ( name, myClean, size(array) )
       if ( present(name) .and. .not. myLaconic ) call newLine
       do i = 1, size(array,1)
-        do j = 1, size(array,2), 5
+        do j = 1, size(array,2), MyWidth
+          DumpTheseZeros = myClean .or. &
+            & any(array(i,j:min(j+2*MyWidth-1, size(array,2))) /= myFillValue) &
+            & .or. &
+            & ( j+MyWidth >= size(array,2) .and. &
+            & any(array(min(i+1, size(array,1)),1:min(1+MyWidth-1, size(array,2))) &
+            & /= myFillValue) &
+            & )
+          ! call output( shape(array(i,j:min(j+2*MyWidth-1, size(array,2))) ), advance='yes' )
+          ! call outputNamedValue( 'min?', minval(array(i,j:min(j+2*MyWidth-1, size(array,2))) ))
+          ! call outputNamedValue( 'max?', maxval(array(i,j:min(j+2*MyWidth-1, size(array,2))) ))
+          ! call outputNamedValue( 'fill?', myFillValue )
+          ! call outputNamedValue( 'dump?', DumpTheseZeros )
           if (.not. myClean) then
-            if ( any(array(i,j:min(j+4, size(array,2))) /= myFillValue) ) then
+            if ( DumpTheseZeros ) then
               call say_fill ( (/ i, size(array,1), j-1, size(array,2) /), &
                 & numZeroRows, myFillValue, inc=3 )
             else
               numZeroRows = numZeroRows + 1
             end if
           end if
-          if ( myClean .or. any(array(i,j:min(j+4, size(array,2))) /= myFillValue) ) then
-            do k = j, min(j+4, size(array,2))
+          if ( DumpTheseZeros ) then
+            do k = j, min(j+MyWidth-1, size(array,2))
               call output ( array(i,k), format=myFormat )
             end do
             call newLine
+            numZeroRows = 0
           end if
+          ! call outputNamedValue( 'numZeroRows', numZeroRows )
         end do
       end do
-      call say_fill ( (/ i-1, size(array,1), j-5, size(array,2) /), &
+      call say_fill ( (/ i-1, size(array,1), j-MyWidth, size(array,2) /), &
         & numZeroRows, myFillValue )
     end if
     call say_fill ( (/ i-5, size(array,1), j-1, size(array,2) /), &
@@ -97,6 +113,9 @@
     call theDumpEnds
 !   end subroutine DUMP_2D_INTEGER
 ! $Log$
+! Revision 2.4  2011/03/08 00:03:46  pwagner
+! Skip printing row of zeros only if multiple
+!
 ! Revision 2.3  2011/02/05 00:58:04  pwagner
 ! L(aconic) option skips printing array name and size; transpose handled in module body
 !
