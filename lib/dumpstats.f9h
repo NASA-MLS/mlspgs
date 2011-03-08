@@ -15,6 +15,7 @@
 ! $Id$
 ! $RCSfile$
 
+    ! call output('Entering dumpstats', advance='no')
     if ( present(name) .and. .not. nameHasBeenPrinted .and. &
       & .not. onlyWholeArray ) then
       call output ( trim(name) //'   ' )
@@ -70,15 +71,21 @@
     end if
     if ( myCollapse .and. myRank > 1 ) then
       call dumpCollapsedArray( array, name, &
-        & fillValue, snipOption(options, dopt_Collapse) )
+        & fillValue, trim(snipOption(options, dopt_Collapse)) // 'L' )
+      ! call output('Leaving dumpstats', advance='no')
       return
     endif
-    if ( .not. myWholeArray ) return
+    if ( .not. myWholeArray ) then
+      ! call output('Leaving dumpstats', advance='no')
+      return
+    endif
 
     ! Avoid dumping the entire array if all its elements are equal
     if ( DONTDUMPIFALLEQUAL .and. size(array) > 5 ) then
       if ( all(isInfinite(array)) ) then
-        if ( present(name) ) then
+        if ( myLaconic .or. nameHasBeenPrinted ) then
+          call blanks(3)
+        elseif ( present(name) ) then
           call output( trim(name), advance='no' )
         else
           call output( 'array', advance='no' )
@@ -87,9 +94,12 @@
         call output( trim(arrayShapeToString(shape(array))), advance='no' )
         call output( ' values are ', advance='no' )
         call output( InfFunction(1.), FORMAT=SDFORMATDEFAULT, advance='yes' )
+        ! call output('Leaving dumpstats', advance='no')
         return
       elseif ( all(isNaN(array)) ) then
-        if ( present(name) ) then
+        if ( myLaconic .or. nameHasBeenPrinted ) then
+          call blanks(3)
+        elseif ( present(name) ) then
           call output( trim(name), advance='no' )
         else
           call output( 'array', advance='no' )
@@ -98,11 +108,14 @@
         call output( trim(arrayShapeToString(shape(array))), advance='no' )
         call output( ' values are ', advance='no' )
         call output( NaNFunction(1.), FORMAT=SDFORMATDEFAULT, advance='yes' )
+        ! call output('Leaving dumpstats', advance='no')
         return
       elseif ( .not. all(isFinite(array)) ) then
         ! we'll need to dump to see where the NaNs and Infs are
       elseif ( minval(array) == maxval(array) ) then
-        if ( present(name) ) then
+        if ( myLaconic .or. nameHasBeenPrinted ) then
+          call blanks(3)
+        elseif ( present(name) ) then
           call output( trim(name), advance='no' )
         else
           call output( 'array', advance='no' )
@@ -111,10 +124,15 @@
         call output( trim(arrayShapeToString(shape(array))), advance='no' )
         call output( ' values are ', advance='no' )
         call output( minval(array), advance='yes' )
+        ! call output('Leaving dumpstats', advance='no')
         return
       end if
     end if
+    ! call output('Leaving dumpstats', advance='no')
 ! $Log$
+! Revision 2.23  2011/03/08 00:02:19  pwagner
+! Stop double-printing name
+!
 ! Revision 2.22  2011/02/05 00:59:36  pwagner
 ! Passes options minus collapse to dumpCollapsedArray
 !
