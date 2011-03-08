@@ -282,6 +282,8 @@ module DUMP_0
   integer, parameter :: TOOMANYELEMENTS = 125*50*3500 ! Don't try to diff l1b DACS
   logical, parameter ::   DEEBUG = .false.
   logical, parameter ::   SHORTCUTDIFFS = .false.
+  ! character(len=MAXLINELEN) :: LINEOFZEROS
+  logical :: DUMPTHESEZEROS
   logical :: myClean, myCollapse, myDirect, myGaps, myLaconic, &
     & myRMS, myShape, myStats, &
     & myTable, myTranspose, myTrim, myUnique, myWholeArray, onlyWholeArray
@@ -580,18 +582,21 @@ contains
       call name_and_size ( name, myClean, size(array) )
       if ( present(name) .and. .not. mylaconic ) call newLine
       do j = 1, size(array), MyWidth
+        DumpTheseZeros = myClean .or. &
+          & any(array(j:min(j+2*myWidth-1, size(array))) /= myFillValue)
         if (.not. myClean) then
-          if ( any(array(j:min(j+MyWidth-1, size(array))) /= myFillValue) ) then
+          if ( DumpTheseZeros ) then
             call say_fill ( (/ j-1, size(array) /), numZeroRows, myFillValue, inc=1 )
           else
             numZeroRows = numZeroRows + 1
           end if
         end if
-        if ( myClean .or. any(array(j:min(j+MyWidth-1, size(array))) /= myFillValue) ) then
+        if ( DumpTheseZeros ) then
           do k = j, min(j+MyWidth-1, size(array))
               call output ( array(k)(1:lon) // ' ' )
           end do
           call newLine
+          numZeroRows = 0
         end if
       end do ! j
       call say_fill ( (/ j-MyWidth, size(array) /), numZeroRows, myFillValue )
@@ -823,7 +828,8 @@ contains
   end subroutine DUMP_1D_REAL
 
   ! -----------------------------------------------  DUMP_2D_CHAR  -----
-  subroutine DUMP_2D_CHAR ( ARRAY, NAME, FILLVALUE, WIDTH, MAXLON, OPTIONS )
+  recursive subroutine DUMP_2D_CHAR ( ARRAY, NAME, FILLVALUE, WIDTH, MAXLON, &
+    & OPTIONS )
     character(len=*), intent(in) :: ARRAY(:,:)
     character(len=*), intent(in), optional :: NAME
     character(len=*), intent(in), optional :: FILLVALUE
@@ -838,6 +844,12 @@ contains
     integer :: MyWidth
 
     call theDumpBegins ( options )
+    if ( myTranspose ) then
+      call dump ( transpose(array), name, &
+        & fillvalue, width, &
+        & options=snipoption(options, dopt_transpose) )
+      return
+    endif
     myFillValue = ' '
     if ( present(FillValue) ) myFillValue = FillValue
     MyWidth = 10
@@ -859,19 +871,27 @@ contains
       if ( present(name) .and. .not. mylaconic ) call newLine
       do i = 1, size(array,1)
         do j = 1, size(array,2), MyWidth
+          DumpTheseZeros = myClean .or. &
+            & any(array(i,j:min(j+2*MyWidth-1, size(array,2))) /= myFillValue) &
+            & .or. &
+            & ( j+MyWidth >= size(array,2) .and. &
+            & any(array(min(i+1, size(array,1)),1:min(1+MyWidth-1, size(array,2))) &
+            & /= myFillValue) &
+            & )
           if (.not. myClean) then
-            if ( any(array(i,j:min(j+MyWidth-1, size(array,2))) /= myFillValue) ) then
+            if ( DumpTheseZeros ) then
               call say_fill ( (/ i-1, size(array,1), j, size(array,2) /), &
                 & numZeroRows, myFillValue, inc=1 )
             else
               numZeroRows = numZeroRows + 1
             end if
           end if
-          if ( myClean .or. any(array(i,j:min(j+MyWidth-1, size(array,2))) /= myFillValue) ) then
+          if ( DumpTheseZeros ) then
             do k = j, min(myWidth-1, size(array,2))
                 call output ( array(i,k)(1:lon) // ' ' )
             end do
             call newLine
+            numZeroRows = 0
           end if
         end do ! j
       end do ! i
@@ -882,7 +902,8 @@ contains
   end subroutine DUMP_2D_CHAR
 
   ! --------------------------------------------  DUMP_2D_COMPLEX  -----
-  subroutine DUMP_2D_COMPLEX ( ARRAY, NAME, WIDTH, FORMAT, FILLVALUE, OPTIONS )
+  recursive subroutine DUMP_2D_COMPLEX ( ARRAY, NAME, WIDTH, FORMAT, &
+    & FILLVALUE, OPTIONS )
     integer, parameter :: RK = kind(0.0e0)
     complex(rk), intent(in) :: ARRAY(:,:)
     character(len=*), intent(in), optional :: NAME
@@ -898,6 +919,12 @@ contains
     character(len=64) :: MyFormat
 
     call theDumpBegins ( options )
+    if ( myTranspose ) then
+      call dump ( transpose(array), name, &
+        & width, format, fillvalue, &
+        & options=snipoption(options, dopt_transpose) )
+      return
+    endif
 
     myWidth = 3
     if ( present(width) ) myWidth = width
@@ -917,53 +944,40 @@ contains
     else if ( size(array,2) == 1 ) then
       call dump ( array(:,1), name, format=myFormat, options=options )
     else 
-      call name_and_size ( name, myClean, size(array) )
-      if ( .not. myTranspose ) then
-        if ( present(name) .and. .not. mylaconic ) call newLine
-        do i = 1, size(array,1)
-          do j = 1, size(array,2), myWidth
-            if (.not. myClean) then
-              if ( any(array(i,j:min(j+myWidth-1, size(array,2))) /= myFillValue) ) then
-                call say_fill ( (/ i, size(array,1), j-1, size(array,2) /), &
-                  & numZeroRows, myFillValue, inc=3 )
-              else
-                numZeroRows = numZeroRows + 1
-              end if
-            end if
-            if ( myClean .or. any(array(i,j:min(j+myWidth-1, size(array,2))) /= myFillValue) ) then
-              do k = j, min(j+myWidth-1, size(array,2))
-                call output ( array(i,k), myFormat )
-              end do
-              call newLine
-            end if
-          end do
-        end do
-      else ! Dump the transpose
-        if ( present(name) ) call output ( ' ' )
-        call output ( '(transposed)', advance='yes' )
-        do j = 1, size(array,2)
-          do i = 1, size(array,1), myWidth
-            if ( any(array(i:min(i+myWidth-1, size(array,1)),j) /= myFillValue) ) then  
+    call name_and_size ( name, myClean, size(array) )
+      if ( present(name) .and. .not. mylaconic ) call newLine
+      do i = 1, size(array,1)
+        do j = 1, size(array,2), myWidth
+          DumpTheseZeros = myClean .or. &
+            & any(array(i,j:min(j+2*MyWidth-1, size(array,2))) /= myFillValue) &
+            & .or. &
+            & ( j+MyWidth >= size(array,2) .and. &
+            & any(array(min(i+1, size(array,1)),1:min(1+MyWidth-1, size(array,2))) &
+            & /= myFillValue) &
+            & )
+          if (.not. myClean) then
+            if ( DumpTheseZeros ) then
               call say_fill ( (/ i, size(array,1), j-1, size(array,2) /), &
                 & numZeroRows, myFillValue, inc=3 )
-            else                                                            
-              numZeroRows = numZeroRows + 1                                 
-            end if                                                          
-            if ( myClean .or. any(array(i:min(i+myWidth-1, size(array,1)),j) /= myFillValue) ) then
-              do k = i, min(i+myWidth-1, size(array,1))
-                call output ( array(k,j), myFormat )
-              end do
-              call newLine
-            end if                                                          
-          end do
+            else
+              numZeroRows = numZeroRows + 1
+            end if
+          end if
+          if ( DumpTheseZeros ) then
+            do k = j, min(j+myWidth-1, size(array,2))
+              call output ( array(i,k), myFormat )
+            end do
+            call newLine
+            numZeroRows = 0
+          end if
         end do
-      end if
+      end do
     end if
     call theDumpEnds
   end subroutine DUMP_2D_COMPLEX
 
-  ! --------------------------------------------  DUMP_2D_COMPLEX  -----
-  subroutine DUMP_2D_DCOMPLEX ( ARRAY, NAME, WIDTH, FORMAT, FILLVALUE, OPTIONS )
+  ! --------------------------------------------  DUMP_2D_DCOMPLEX  -----
+  recursive subroutine DUMP_2D_DCOMPLEX ( ARRAY, NAME, WIDTH, FORMAT, FILLVALUE, OPTIONS )
     integer, parameter :: RK = kind(0.0d0)
     complex(rk), intent(in) :: ARRAY(:,:)
     character(len=*), intent(in), optional :: NAME
@@ -979,6 +993,12 @@ contains
     character(len=64) :: MyFormat
 
     call theDumpBegins ( options )
+    if ( myTranspose ) then
+      call dump ( transpose(array), name, &
+        & width, format, fillvalue, &
+        & options=snipoption(options, dopt_transpose) )
+      return
+    endif
 
     myWidth = 3
     if ( present(width) ) myWidth = width
@@ -999,46 +1019,33 @@ contains
       call dump ( array(:,1), name, format=myFormat, options=options )
     else 
       call name_and_size ( name, myClean, size(array) )
-      if ( .not. myTranspose ) then
-        if ( present(name) .and. .not. mylaconic ) call newLine
-        do i = 1, size(array,1)
-          do j = 1, size(array,2), myWidth
-            if (.not. myClean) then
-              if ( any(array(i,j:min(j+myWidth-1, size(array,2))) /= myFillValue) ) then
-                call say_fill ( (/ i, size(array,1), j-1, size(array,2) /), &
-                  & numZeroRows, myFillValue, inc=3 )
-              else
-                numZeroRows = numZeroRows + 1
-              end if
-            end if
-            if ( myClean .or. any(array(i,j:min(j+myWidth-1, size(array,2))) /= myFillValue) ) then
-              do k = j, min(j+myWidth-1, size(array,2))
-                call output ( array(i,k), myFormat )
-              end do
-              call newLine
-            end if
-          end do
-        end do
-      else ! Dump the transpose
-        if ( present(name) ) call output ( ' ' )
-        call output ( '(transposed)', advance='yes' )
-        do j = 1, size(array,2)
-          do i = 1, size(array,1), myWidth
-            if ( any(array(i:min(i+myWidth-1, size(array,1)),j) /= myFillValue) ) then  
+      if ( present(name) .and. .not. mylaconic ) call newLine
+      do i = 1, size(array,1)
+        do j = 1, size(array,2), myWidth
+          DumpTheseZeros = myClean .or. &
+            & any(array(i,j:min(j+2*MyWidth-1, size(array,2))) /= myFillValue) &
+            & .or. &
+            & ( j+MyWidth >= size(array,2) .and. &
+            & any(array(min(i+1, size(array,1)),1:min(1+MyWidth-1, size(array,2))) &
+            & /= myFillValue) &
+            & )
+          if (.not. myClean) then
+            if ( DumpTheseZeros ) then
               call say_fill ( (/ i, size(array,1), j-1, size(array,2) /), &
                 & numZeroRows, myFillValue, inc=3 )
-            else                                                            
-              numZeroRows = numZeroRows + 1                                 
-            end if                                                          
-            if ( myClean .or. any(array(i:min(i+myWidth-1, size(array,1)),j) /= myFillValue) ) then
-              do k = i, min(i+myWidth-1, size(array,1))
-                call output ( array(k,j), myFormat )
-              end do
-              call newLine
+            else
+              numZeroRows = numZeroRows + 1
             end if
-          end do
+          end if
+          if ( DumpTheseZeros ) then
+            do k = j, min(j+myWidth-1, size(array,2))
+              call output ( array(i,k), myFormat )
+            end do
+            call newLine
+            numZeroRows = 0
+          end if
         end do
-      end if
+      end do
     end if
     call theDumpEnds
   end subroutine DUMP_2D_DCOMPLEX
@@ -1059,6 +1066,7 @@ contains
     double precision :: myFillValue
     character(len=64) :: MyFormat
     integer :: nUnique
+    integer :: MyWidth
     integer, dimension(MAXNUMELEMENTS) :: counts
     double precision, dimension(MAXNUMELEMENTS) :: elements
     myFormat = sdFormatDefault
@@ -1089,7 +1097,7 @@ contains
   end subroutine DUMP_2D_INTEGER
 
   ! --------------------------------------------  DUMP_2D_LOGICAL  -----
-  subroutine DUMP_2D_LOGICAL ( ARRAY, NAME, OPTIONS )
+  recursive subroutine DUMP_2D_LOGICAL ( ARRAY, NAME, OPTIONS )
     logical, intent(in) :: ARRAY(:,:)
     character(len=*), intent(in), optional :: NAME
     character(len=*), intent(in), optional :: options
@@ -1098,6 +1106,11 @@ contains
     integer, parameter :: MyWidth = 34
 
     call theDumpBegins ( options )
+    if ( myTranspose ) then
+      call dump ( transpose(array), name, &
+        & options=snipoption(options, dopt_transpose) )
+      return
+    endif
 
     if ( size(array) == 0 ) then
       call empty ( name )
@@ -1142,6 +1155,7 @@ contains
     real :: myFillValue
     character(len=64) :: MyFormat
     integer :: nUnique
+    integer :: MyWidth
     integer, dimension(MAXNUMELEMENTS) :: counts
     real, dimension(MAXNUMELEMENTS) :: elements
     myFormat = sdFormatDefault
@@ -1267,19 +1281,27 @@ contains
       do i = 1, size(array,1)
         do j = 1, size(array,2)
           do k = 1, size(array,3), MyWidth
+            DumpTheseZeros = myClean .or. &
+              & any(array(i,j,k:min(k+2*MyWidth-1, size(array,3))) /= myFillValue) &
+              & .or. &
+              & ( k+MyWidth >= size(array,3) .and. &
+              & any(array(i,min(j+1, size(array,2)),1:min(1+MyWidth-1, size(array,3))) &
+              & /= myFillValue) &
+              & )
             if (.not. myClean) then
-              if ( any(array(i,j,k:min(k+MyWidth-1, size(array,3))) /= myFillValue) ) then
+              if ( DumpTheseZeros ) then
                 call say_fill ( (/ i, size(array,1), j-1, size(array,2), &
                   & k, size(array,3) /), numZeroRows, myFillValue, inc=3 )
               else
                 numZeroRows = numZeroRows + 1
               end if
             end if
-            if ( myClean .or. any(array(i,j,k:min(k+MyWidth-1, size(array,3))) /= myFillValue) ) then
+          if ( DumpTheseZeros ) then
               do l = k, min(k+MyWidth-1, size(array,3))
                   call output ( array(i,j,l)(1:lon) // ' ' )
               end do
               call newLine
+              numZeroRows = 0
             end if
           end do
         end do
@@ -1305,6 +1327,7 @@ contains
     integer :: NumZeroRows
     real    :: myFillValue
     character(len=64) :: MyFormat
+    integer :: MyWidth
 
     ! Executable
     call theDumpBegins ( options )
@@ -1313,6 +1336,9 @@ contains
 
     myFormat = sdFormatDefaultCmplx
     if ( present(format) ) myFormat = format
+    
+    MyWidth = 5
+    if ( present(width) ) MyWidth = width
 
     numZeroRows = 0
     if ( size(array) == 0 ) then
@@ -1329,20 +1355,28 @@ contains
       if ( present(name) .and. .not. mylaconic ) call newLine
       do i = 1, size(array,1)
         do j = 1, size(array,2)
-          do k = 1, size(array,3), 5
+          do k = 1, size(array,3), myWidth
+            DumpTheseZeros = myClean .or. &
+              & any(array(i,j,k:min(k+2*MyWidth-1, size(array,3))) /= myFillValue) &
+              & .or. &
+              & ( k+MyWidth >= size(array,3) .and. &
+              & any(array(i,min(j+1, size(array,2)),1:min(1+MyWidth-1, size(array,3))) &
+              & /= myFillValue) &
+              & )
             if (.not. myClean) then
-              if ( any(array(i,j,k:min(k+4, size(array,3))) /= myFillValue) ) then
+              if ( DumpTheseZeros ) then
                 call say_fill ( (/ i, size(array,1), j-1, size(array,2), &
                   & k, size(array,3) /), numZeroRows, myFillValue, inc=3 )
               else
                 numZeroRows = numZeroRows + 1
               end if
             end if
-            if ( myClean .or. any(array(i,j,k:min(k+4, size(array,3))) /= myFillValue) ) then
-              do l = k, min(k+4, size(array,3))
+            if ( DumpTheseZeros ) then
+              do l = k, min(k+myWidth-1, size(array,3))
                 call output ( array(i,j,l), myFormat )
               end do
               call newLine
+              numZeroRows = 0
             endif
           end do
         end do
@@ -1369,6 +1403,7 @@ contains
     integer :: NumZeroRows
     real(rk)    :: myFillValue
     character(len=64) :: MyFormat
+    integer :: myWidth
 
     ! Executable
     call theDumpBegins ( options )
@@ -1377,6 +1412,8 @@ contains
 
     myFormat = sdFormatDefaultCmplx
     if ( present(format) ) myFormat = format
+    MyWidth = 5
+    if ( present(width) ) MyWidth = width
 
     numZeroRows = 0
     if ( size(array) == 0 ) then
@@ -1393,20 +1430,28 @@ contains
       if ( present(name) .and. .not. mylaconic ) call newLine
       do i = 1, size(array,1)
         do j = 1, size(array,2)
-          do k = 1, size(array,3), 5
+          do k = 1, size(array,3), myWidth
+            DumpTheseZeros = myClean .or. &
+              & any(array(i,j,k:min(k+2*MyWidth-1, size(array,3))) /= myFillValue) &
+              & .or. &
+              & ( k+MyWidth >= size(array,3) .and. &
+              & any(array(i,min(j+1, size(array,2)),1:min(1+MyWidth-1, size(array,3))) &
+              & /= myFillValue) &
+              & )
             if (.not. myClean) then
-              if ( any(array(i,j,k:min(k+4, size(array,3))) /= myFillValue) ) then
+              if ( DumpTheseZeros ) then
                 call say_fill ( (/ i, size(array,1), j-1, size(array,2), &
                   & k, size(array,3) /), numZeroRows, myFillValue, inc=3 )
               else
                 numZeroRows = numZeroRows + 1
               end if
             end if
-            if ( myClean .or. any(array(i,j,k:min(k+4, size(array,3))) /= myFillValue) ) then
-              do l = k, min(k+4, size(array,3))
+            if ( DumpTheseZeros ) then
+              do l = k, min(k+myWidth-1, size(array,3))
                 call output ( array(i,j,l), myFormat )
               end do
               call newLine
+              numZeroRows = 0
             endif
           end do
         end do
@@ -1433,6 +1478,7 @@ contains
     double precision :: myFillValue
     character(len=64) :: myFormat
     integer :: nUnique
+    integer :: MyWidth
     integer, dimension(MAXNUMELEMENTS) :: counts
     double precision, dimension(MAXNUMELEMENTS) :: elements
     myFormat = sdFormatDefault
@@ -1458,6 +1504,7 @@ contains
     character(len=64) :: MyFormat
     integer :: myFillValue
     integer :: nUnique
+    integer :: MyWidth
     integer, dimension(MAXNUMELEMENTS) :: counts
     integer, dimension(MAXNUMELEMENTS) :: elements
     myFormat = 'places=' // INTPLACES ! To sneak places arg into call to output
@@ -1480,6 +1527,7 @@ contains
     real    :: myFillValue
     character(len=64) :: MyFormat
     integer :: nUnique
+    integer :: MyWidth
     integer, dimension(MAXNUMELEMENTS) :: counts
     real, dimension(MAXNUMELEMENTS) :: elements
     myFormat = sdFormatDefault
@@ -2412,7 +2460,7 @@ contains
 
     if ( present(name) .and. .not. myLaconic ) then
       if ( len_trim(name) < 1 ) return
-      call output ( name )
+      if ( .not. nameHasBeenPrinted ) call output ( name )
       if ( clean ) then 
         call output ( trim(" \ ") ) ! This goofiness is to outwit an incorrect
                                     ! Intel compiler.
@@ -2830,6 +2878,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.107  2011/03/08 00:04:40  pwagner
+! Skip printing row of zeros only if multiple
+!
 ! Revision 2.106  2011/02/25 18:50:26  pwagner
 ! Added optional width arg to char array dumps
 !
