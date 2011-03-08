@@ -3514,6 +3514,7 @@ contains ! =====     Public Procedures     =============================
       type (VectorValue_T), pointer :: AORB
       real(rv) :: cc
       integer :: I, INSTANCE, ISURF
+      logical :: MAPFUNCTION
       logical :: NEEDSB
       integer :: NoChans
       integer :: NoInstances
@@ -3538,6 +3539,7 @@ contains ! =====     Public Procedures     =============================
       TwoWay = any ( mstr == valid2WayManipulations )
       usesC = present(c)
       StatisticalFunction = ( FindFirst( valid1WayManipulations, mstr ) > 7 )
+      MapFunction = ( index(mstr, 'map') > 0 )
       if ( .not. ( OneWay .or. TwoWay .or. usesc ) ) then
         if ( autoRecognizeGeneralExp ) then
           usesC = .true.
@@ -3573,6 +3575,7 @@ contains ! =====     Public Procedures     =============================
         call outputNamedValue( 'mstr', mstr )
         call outputNamedValue( 'numWays', numWays )
         call outputNamedValue( 'StatisticalFunction', StatisticalFunction )
+        call outputNamedValue( 'MapFunction', MapFunction )
         call outputNamedValue( 'usesc', usesc )
       endif
       okSoFar = .true.
@@ -3587,6 +3590,8 @@ contains ! =====     Public Procedures     =============================
 
         ! For minor frame quantities, check that we're on the same page
         if ( StatisticalFunction ) then
+          ! We don't check for anything
+        elseif ( MapFunction ) then
           ! We don't check for anything
         elseif ( .not. force ) then
           if ( quantity%template%minorFrame ) then
@@ -3911,6 +3916,7 @@ contains ! =====     Public Procedures     =============================
         integer, parameter :: MAXNESTINGS=64 ! Max number of '(..)' pairs
         character(len=MAXSTRLISTLENGTH) :: collapsedstr
         integer :: level
+        logical :: MAPFUNCTION
         integer :: np ! number of primitives
         character(len=MAXSTRLISTLENGTH) :: part1
         character(len=MAXSTRLISTLENGTH) :: part2
@@ -3919,6 +3925,7 @@ contains ! =====     Public Procedures     =============================
         logical, parameter :: DEEBUG = .false.
         ! Executable
         if ( DeeBUG ) print *, 'mstr: ', trim(mstr)
+        MapFunction = ( index(mstr, 'map' ) > 0 )
         nullify(primitives)
         np = 0
         
@@ -4033,11 +4040,17 @@ contains ! =====     Public Procedures     =============================
           return
         endif
         if ( spreadFlag ) then
+          ! Ignores mask, shape, etc. if we set the "spread" field
           do level=1, min( size(quantity%values, 1), size(a%values, 1) )
             quantity%values(level, :) = primitives(np)%values(level, 1)
           enddo
           if ( level <=  size(quantity%values, 1) ) &
             quantity%values(level:, :) = primitives(np)%values(level-1, 1)
+        elseif ( MapFunction ) then
+          ! Ignores mask, shape, etc. if we used the "map" function
+            quantity%values = reshape( &
+              & primitives(np)%values, shape(quantity%values) &
+              & )
         elseif ( .not. associated ( quantity%mask ) ) then
           quantity%values = primitives(np)%values
         else
@@ -4208,6 +4221,7 @@ contains ! =====     Public Procedures     =============================
         character(len=8)                :: fun ! {'exp', 'log', etc.}
         integer                         :: elem
         logical                         :: hit
+        integer                         :: iChannel
         integer                         :: ind
         integer                         :: instance
         integer                         :: isurf
@@ -4371,9 +4385,77 @@ contains ! =====     Public Procedures     =============================
                   newone%values = 0.
                 end where
             ! map is a no-op currently
+            ! You can use this to map quantities with equal total
+            ! size, but distributed differently among channels, sirfs, instances
             case ('map')
                 newone%values = part%values
                 ! call output( 'Calling function map', advance='yes' )
+            case ('channel', 'surface', 'instance')
+              ! These might be useful for filling arrays with indexes
+              NoChans     = a%template%NoChans
+              NoInstances = a%template%NoInstances
+              NoSurfs     = a%template%NoSurfs
+              newone%values = 1
+              if ( NoChans*NoSurfs*NoInstances < 2 ) cycle
+              do instance=1, NoInstances
+                do iSurf=1, NoSurfs
+                  do iChannel=1, NoChans
+                    select case(op)
+                    case ('channel')
+                      newone%values(iChannel + (isurf-1)*NoChans, instance) = &
+                        & iChannel
+                    case ('surface')
+                      newone%values(iChannel + (isurf-1)*NoChans, instance) = &
+                        & iSurf
+                    case ('instance')
+                      newone%values(iChannel + (isurf-1)*NoChans, instance) = &
+                        & instance
+                    end select                
+                  enddo
+                enddo
+              enddo
+            case ('shift', 'slip')
+              ! These are useful for recurrence relations, frequency shifts,
+              ! and applying any filter that spans multiple heights or
+              ! multiple instances
+              ! At present, they apply only to the fastest changing index
+              ! in this order: channel, surface, instance
+              ! shift(a[n]) = a[n+1]
+              ! slip(a[n])  = a[n-1]
+              NoChans     = a%template%NoChans
+              NoInstances = a%template%NoInstances
+              NoSurfs     = a%template%NoSurfs
+              if ( NoChans*NoSurfs*NoInstances < 2 ) cycle
+              select case(op)
+              case ('shift')
+                if ( NoChans > 1 ) then
+                  do iSurf = 1, NoSurfs
+                    newone%values(1 + (isurf-1)*NoChans:isurf*NoChans-1, :) = &
+                      & part%values(2 + (isurf-1)*NoChans:isurf*NoChans, :)
+                  enddo
+                elseif ( NoSurfs > 1 ) then
+                  newone%values(1 :NoSurfs-1, :) = &
+                    & part%values(2 :NoSurfs, :)
+                else
+                  newone%values(:, 1:NoInstances-1) = &
+                    & part%values(: , 2:NoInstances)
+                endif
+                ! call output( 'Calling function shift', advance='yes' )
+              case ('slip')
+                if ( NoChans > 1 ) then
+                  do iSurf = 1, NoSurfs
+                    newone%values(2 + (isurf-1)*NoChans:isurf*NoChans, :) = &
+                      & part%values(1 + (isurf-1)*NoChans:isurf*NoChans-1, :)
+                  enddo
+                elseif ( NoSurfs > 1 ) then
+                  newone%values(2 :NoSurfs, :) = &
+                    & part%values(1 :NoSurfs-1, :)
+                else
+                  newone%values(:, 2:NoInstances) = &
+                    & part%values(: , 1:NoInstances-1)
+                endif
+                ! call output( 'Calling function slip', advance='yes' )
+              end select                
             ! statistical function cases
             case ( 'min', 'max', 'mean', 'median', 'rms', 'stddev' )
               ! These are harder--we must interpret how to gather
@@ -6904,6 +6986,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.41  2011/03/08 18:29:22  pwagner
+! Added shift,slip,chaannel,surface,instance functions to manipulate fills
+!
 ! Revision 2.40  2010/07/06 16:05:37  pwagner
 ! Better error checking in MaanipulateVectors
 !
