@@ -610,7 +610,7 @@ contains
     use AntennaPatterns_m, only: Dump_Antenna_Patterns_Database
     use Calendar, only: Duration_Formatted, Time_T, TK
     use Declaration_table, only: Num_Value
-    use Dump_0, only: Dump, rmsFormat
+    use Dump_0, only: Diff, Dump, rmsFormat
     use Expr_m, only: Expr
     use FilterShapes_m, only: Dump_Filter_Shapes_Database, &
       & Dump_DACS_Filter_Database
@@ -659,7 +659,7 @@ contains
     use Trace_m, only: Trace_begin, Trace_end
     use Tree, only: Decoration, Node_Id, Nsons, Source_Ref, Sub_rosa, Subtree
     use Tree_Types, only: N_Spec_Args
-    use VectorsModule, only: Vector_T, VectorTemplate_T, &
+    use VectorsModule, only: Vector_T, VectorTemplate_T, VectorValue_T, &
       & Diff, Dump, DumpQuantityMask, DumpVectorMask, & ! for vectors, vector quantities and templates
       & GetVectorQtyByTemplateIndex
     use VGridsDatabase, only: Dump, VGrids
@@ -703,6 +703,7 @@ contains
     character(len=80) :: OPTIONSSTRING  ! E.g., '-rbs' (see dump_0.f90)
     integer :: QuantityIndex
     integer :: QuantityIndex2
+    type (VectorValue_T), pointer :: QTY1, QTY2
     integer :: Son
     integer :: Source ! column*256 + line
     character :: TempText*20, Text*255
@@ -1063,28 +1064,41 @@ contains
           if ( gotFirst ) then
             vectorIndex2 = decoration(decoration(subtree(1,gson)))
             quantityIndex2 = decoration(decoration(decoration(subtree(2,gson))))
+            qty2 => GetVectorQtyByTemplateIndex( &
+                  & vectors(vectorIndex2), quantityIndex2 )
           else
             vectorIndex = decoration(decoration(subtree(1,gson)))
             quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+            qty1 => GetVectorQtyByTemplateIndex( &
+                  & vectors(vectorIndex), quantityIndex )
           endif
           if ( DiffOrDump == s_diff ) then
             rmsFormat = '(1pe8.1)'
-            if ( gotFirst ) &
-              & call diff ( &
-              & GetVectorQtyByTemplateIndex( &
-              & vectors(vectorIndex), quantityIndex), &
-              & GetVectorQtyByTemplateIndex( &
-              & vectors(vectorIndex2), quantityIndex2), &
-              & options=optionsString )
+            if ( gotFirst ) then
+              if ( index(optionsString, '1') > 0 ) then
+                call diff ( qty1%values, 'qty1 values', &
+                  & qty2%values, 'qty2 values', &
+                  & options=optionsString )
+              else
+                call diff ( &
+                  & qty1, &
+                  & qty2, &
+                  & options=optionsString )
+              endif
+            endif
             rmsFormat = '*'
           elseif ( fieldIndex == f_mask ) then
             call dumpQuantityMask ( GetVectorQtyByTemplateIndex( &
               & vectors(vectorIndex), quantityIndex), details=details )
           else
             if ( clean ) optionsString = trim(optionsString) // 'c'
-            call dump ( GetVectorQtyByTemplateIndex( &
-              & vectors(vectorIndex), quantityIndex), details=details, &
-              & vector=vectors(vectorIndex), options=optionsString )
+            if ( index(optionsString, '1') > 0 ) then
+              call dump ( qty1%values, 'quantity values', &
+                & options=optionsString )
+            else
+              call dump ( qty1, details=details, &
+                & vector=vectors(vectorIndex), options=optionsString )
+            end if
           end if
         end do
         GotFirst = .true.
@@ -1381,6 +1395,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.56  2011/03/08 18:28:06  pwagner
+! May optionally diff, dump just values of vectorqtys
+!
 ! Revision 2.55  2010/11/19 23:59:23  pwagner
 ! Passes options string to Hessians diff
 !
