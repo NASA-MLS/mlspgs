@@ -435,6 +435,7 @@ test
 text # literal text to dump in Dump command
 tGrid
 threshold # for removing snall Hessian values
+time
 tngtECI
 tolerance
 toleranceA Atolerance
@@ -482,6 +483,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.204  2011/03/10 21:38:34  pwagner
+# May now specify time in explicit hGrids
+#
 # Revision 2.203  2010/08/17 16:37:33  yanovsky
 # Add atmos_second_der, moleculeSecondDerivatives
 #
