@@ -601,6 +601,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_single, t+t_boolean, n+n_field_type, &
              begin, f+f_solarTime, t+t_numeric, n+n_field_type, &
              begin, f+f_solarZenith, t+t_numeric, n+n_field_type, &
+             begin, f+f_Time, t+t_numeric, n+n_field_type, &
              begin, f+f_date, t+t_string, n+n_field_type, &
              begin, f+f_spacing, t+t_numeric, n+n_field_type, &
              begin, f+f_origin, t+t_numeric, n+n_field_type, &
@@ -1645,6 +1646,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.515  2011/03/10 21:39:33  pwagner
+! May now specify time in explicit hGrids
+!
 ! Revision 2.514  2010/11/30 22:00:57  pwagner
 ! Reduced number of continuation lines
 !
