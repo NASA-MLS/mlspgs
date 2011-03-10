@@ -56,11 +56,15 @@ contains ! =====     Public Procedures     =============================
     use Chunks_m, only: MLSChunk_T
     use EXPR_M, only: EXPR
     use HGridsDatabase, only: HGRID_T, CREATEEMPTYHGRID, NULLIFYHGRID
-    use INIT_TABLES_MODULE, only: F_DATE, F_FORBIDOVERSPILL, F_FRACTION, F_GEODANGLE, &
-      & F_HEIGHT, FIELD_FIRST, FIELD_LAST, F_INCLINATION, F_INSETOVERLAPS, &
-      & F_INTERPOLATIONFACTOR, F_MAXLOWEROVERLAP, F_MAXUPPEROVERLAP, F_MIF, &
-      & F_MODULE, F_ORIGIN, F_SINGLE, F_SOLARTIME, F_SOLARZENITH, F_SOURCEL2GP, &
-      & F_SPACING, F_TYPE, L_EXPLICIT, L_FIXED, L_FRACTIONAL, L_HEIGHT, &
+    use INIT_TABLES_MODULE, only: F_DATE, &
+      & F_FORBIDOVERSPILL, F_FRACTION, F_GEODANGLE, &
+      & F_HEIGHT, F_INCLINATION, F_INSETOVERLAPS, F_INTERPOLATIONFACTOR, &
+      & F_MAXLOWEROVERLAP, F_MAXUPPEROVERLAP, F_MIF, &
+      & F_MODULE, F_ORIGIN, &
+      & F_SINGLE, F_SOLARTIME, F_SOLARZENITH, F_SOURCEL2GP, F_SPACING, &
+      & F_TIME, F_TYPE, &
+      & FIELD_FIRST, FIELD_LAST, &
+      & L_EXPLICIT, L_FIXED, L_FRACTIONAL, L_HEIGHT, &
       & L_L2GP, L_REGULAR, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_LENGTH
     use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData, &
       & AssembleL1BQtyName
@@ -112,6 +116,7 @@ contains ! =====     Public Procedures     =============================
 
     integer :: FIELD                    ! Subtree index of "field" node
     integer :: FIELD_INDEX              ! F_..., see Init_Tables_Module
+    logical :: FORBIDOVERSPILL          ! If set don't allow overlaps beyond L1B
     integer :: GEODANGLENODE            ! Tree node
     logical :: GOT_FIELD(field_first:field_last)
     logical :: INSETOVERLAPS            ! Flag
@@ -124,7 +129,7 @@ contains ! =====     Public Procedures     =============================
     integer :: SON                      ! Son of Root
     integer :: SOLARTIMENODE            ! Tree node
     integer :: SOLARZENITHNODE          ! Tree node
-    logical :: FORBIDOVERSPILL          ! If set don't allow overlaps beyond L1B
+    integer :: TIMENODE                 ! Tree node
 
     character (len=NameLen) :: InstrumentModuleName
 
@@ -158,6 +163,7 @@ contains ! =====     Public Procedures     =============================
     solarTimeNode = 0
     date = 0
     solarZenithNode = 0
+    timeNode = 0
     geodAngleNode = 0
 
     do keyNo = 2, nsons(root)
@@ -230,6 +236,8 @@ contains ! =====     Public Procedures     =============================
         solarTimeNode = son
       case ( f_solarZenith )
         solarZenithNode = son
+      case ( f_time )
+        timeNode = son
       case ( f_date )
         date = sub_rosa(subtree(2,son))
       case ( f_sourceL2gp )
@@ -254,7 +262,7 @@ contains ! =====     Public Procedures     =============================
 
     case ( l_explicit ) ! ----------------- Explicit ------------------
       call CreateExplicitHGrid ( son, date, geodAngleNode, solarTimeNode, &
-        & solarZenithNode, processingRange%startTime, hGrid )
+        & solarZenithNode, processingRange%startTime, timeNode, hGrid )
 
     case ( l_regular ) ! ----------------------- Regular --------------
       if (.not. got_field(f_module) ) then
@@ -311,7 +319,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ----------------------------------------  CreateExplicitHGrid  -----
   subroutine CreateExplicitHGrid ( key, date, geodAngleNode, solarTimeNode, &
-    & solarZenithNode, time, hGrid )
+    & solarZenithNode, time, timeNode, hGrid )
 
     use SDPToolkit, only: MLS_UTCTOTAI
     use EXPR_M, only: EXPR
@@ -329,6 +337,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: GEODANGLENODE ! Geod angle if any
     integer, intent(in) :: SOLARTIMENODE ! Solar time if any
     integer, intent(in) :: SOLARZENITHNODE ! Solar zenith angle if any
+    integer, intent(in) :: TIMENODE ! Explicit d.p. numeric time field if any
     real(rk), intent(in) :: TIME        ! Time for HGrid
     type (HGrid_T), intent(inout) :: HGRID
     ! Local variables
@@ -390,7 +399,8 @@ contains ! =====     Public Procedures     =============================
     hGrid%solarZenith = 0.0_rk
 
     ! Loop over the parameters we might have
-    do param = 1, 3
+    ! which may override any set above
+    do param = 1, 4
       select case ( param )
       case ( 1 )
         values => hGrid%phi
@@ -404,6 +414,10 @@ contains ! =====     Public Procedures     =============================
         values => hGrid%solarZenith
         node = solarZenithNode
         units = phyq_angle
+      case ( 4 )
+        values => hGrid%Time
+        node = TimeNode
+        units = phyq_time
       end select
       if ( node /= 0 ) then
         do prof = 1, hGrid%noProfs
@@ -2345,6 +2359,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.98  2011/03/10 21:39:11  pwagner
+! May now specify time in explicit hGrids
+!
 ! Revision 2.97  2010/03/23 23:26:03  honghanh
 ! Add a case where single option is not set, but hgrid%noProfs is 1
 ! then set overlap fields to 0.
