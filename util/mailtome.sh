@@ -11,6 +11,7 @@
 # -r dir      keep record of mailing in directory dir
 # -s "subject line"  use "subject line"
 # -R "recipients list"  use "recipients list"
+# -Rf file    change RECIPIENTS to list of addresses found in file
 #
 # Note:
 # (1) you must be allowed to mail from this machine
@@ -25,6 +26,29 @@
 
 # "$Id$"
 
+#---------------------------- read_file_into_array
+#
+# read each line of stdin
+# catenating them into an array which we will return
+# Ignore any entries beginning with '#' character
+# In fact, only first entry in each line is kept
+# Possible improvements:
+#   Other comment signifiers
+#   Choose field number other than 1
+
+read_file_into_array()
+{
+  array_result=''
+  while read line; do
+    element=`echo $line | awk '$1 !~ /^#/ {print $1}'`
+    if [ "$element" != "" ]
+    then
+      array_result="$array_result $element"
+    fi
+  done
+  echo $array_result
+}
+      
 #
 #---------------------------- get_unique_name
 #
@@ -128,6 +152,11 @@ while [ "$more_opts" = "yes" ] ; do
        RECIPIENTS="$1"
        shift
        ;;
+    -Rf )
+	    shift
+       RECIPIENTS=`cat $1 | uniq | read_file_into_array`
+       shift
+       ;;
     -s )
 	    shift
        subject="$1"
@@ -222,6 +251,9 @@ fi
 rm -f "$TEMPLATE"
 exit
 # $Log$
+# Revision 1.2  2005/10/29 00:22:17  pwagner
+# May set Return-path to pwagner@mail.jpl.nasa.gov
+#
 # Revision 1.1  2005/10/01 00:36:28  pwagner
 # First commit
 #
