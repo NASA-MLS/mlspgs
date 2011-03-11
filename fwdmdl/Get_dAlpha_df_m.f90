@@ -64,7 +64,7 @@ contains
     !    \sum_k f^k(s) \beta^k(s) & \beta^k(s) & \eta^k_{lm}(s) &
     !      \frac{\partial\alpha(s)}{\partial f^k(s)} \\
     !    \sum_k f^k(s) \beta^k(s,f^k(s)) &
-    !      \beta^k(s,f^k(s) + f^k(s)
+    !      \beta^k(s,f^k(s)) + f^k(s)
     !       \frac{\partial\beta^k(s,f^k(s))}{\partial f^k(s)} &
     !      \eta^k_{lm}(s) &
     !      \frac{\partial\alpha(s)}{\partial f^k(s)} \\
@@ -72,7 +72,7 @@ contains
     !      \hat{f}^k(s) \frac{\eta^k_{lm}(s)}{f^k_{lm}} &
     !      \hat{f}^k(s) \frac{\partial\alpha(s)}{\partial \hat{f}^k(s)} \\
     !    \sum_k \hat{f}^k(s) \beta^k(s,\hat{f}^k(s)) &
-    !      \beta^k(s,\hat{f}^k(s) + \hat{f}^k(s)
+    !      \beta^k(s,\hat{f}^k(s)) + \hat{f}^k(s)
     !       \frac{\partial\beta^k(s,\hat{f}^k(s))}{\partial \hat{f}^k(s)} &
     !      \hat{f}^k(s) \frac{\eta^k_{lm}(s)}{f^k_{lm}} &
     !      \hat{f}^k(s) \frac{\partial\alpha(s)}{\partial \hat{f}^k(s)} \\
@@ -108,6 +108,7 @@ contains
       end if
       if ( grids_f%lin_log(sps_i) ) &
         & dAlpha_df(:,sps_i) = sps_path(:,sps_i) * dAlpha_df(:,sps_i)
+
     end do ! sps_i
 
   end subroutine Get_dAlpha_df
@@ -126,6 +127,9 @@ contains
 end module Get_dAlpha_df_m
 
 ! $Log$
+! Revision 2.3  2011/03/11 03:08:37  vsnyder
+! Correct TeXnicalities
+!
 ! Revision 2.2  2011/02/12 02:59:06  vsnyder
 ! Get column of dBeta_df from Grids_f, TeXnicalities
 !
