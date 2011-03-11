@@ -26,7 +26,7 @@ contains
   subroutine Get_D_Deltau_Pol_DF ( CT, STCP, STSP, indices_c, Grids_f,  &
                &  beta_path_pol, tanh1_c, eta_zxp, do_calc_f, sps_path, &
                &  Del_S, incoptdepth, ref_cor, &
-               &  d_delta_df, D_Deltau_Pol_DF  )
+               &  d_delta_df, nz_d_delta_df, nnz_d_delta_df, D_Deltau_Pol_DF  )
 
     use DExdT_m, only: dExdT
     use LOAD_SPS_DATA_M, ONLY: GRIDS_T
@@ -42,29 +42,31 @@ contains
       ! between the plane defined by the line of sight and the magnetic
       ! field vector, and the "instrument field of view plane polarized"
       ! (IFOVPP) X axis.
-    real(rp), intent(in) :: STSP(:)         ! Sin(Theta) Sin(Phi)
-    integer(ip), intent(in) :: indices_c(:) ! coarse grid indicies
-    type (Grids_T), intent(in) :: Grids_f    ! All the coordinates
+    real(rp), intent(in) :: STSP(:)           ! Sin(Theta) Sin(Phi)
+    integer(ip), intent(in) :: indices_c(:)   ! coarse grid indicies
+    type (Grids_T), intent(in) :: Grids_f     ! All the coordinates
     complex(rp), intent(in) :: beta_path_pol(:,:,:) ! -1:1 x path x species.
-!                                              cross section for each species
-!                                              on coarse grid.
-    real(rp), intent(in) :: Tanh1_c(:)       ! tanh(h nu / k T) on coarse path
-    real(rp), intent(in) :: eta_zxp(:,:)     ! composite path x sve
-!                                              representation basis function.
-    logical, intent(in) :: do_calc_f(:,:)    ! A logical indicating where
-!                                              eta_zxp is not zero.
-    real(rp), intent(in) :: sps_path(:,:)    ! fine path x species.
-!                                              Path species function.
-    real(rp), intent(in) :: Del_S(:)        ! unrefracted path length.  This
-      !                                       is for the whole coarse path, not
-      !                                       just the part up to the black-out
+!                                               cross section for each species
+!                                               on coarse grid.
+    real(rp), intent(in) :: Tanh1_c(:)        ! tanh(h nu / k T) on coarse path
+    real(rp), intent(in) :: eta_zxp(:,:)      ! composite path x sve
+!                                               representation basis function.
+    logical, intent(in) :: do_calc_f(:,:)     ! A logical indicating where
+!                                               eta_zxp is not zero.
+    real(rp), intent(in) :: sps_path(:,:)     ! fine path x species.
+!                                               Path species function.
+    real(rp), intent(in) :: Del_S(:)          ! unrefracted path length.  This
+      !                                         is for the whole coarse path, not
+      !                                         just the part up to the black-out
     complex(rp), intent(in) :: Incoptdepth(:,:,:) ! negative of incremental
       !                                       optical depth.  2 x 2 x path
-    real(rp), intent(in) :: Ref_cor(:)      ! refracted to unrefracted path
-    !                                         length ratios.
-    real(rp), intent(in) :: d_delta_df(:,:)  ! derivative of delta wrt
-!                                              mixing ratio state vector
-!                                              element.
+    real(rp), intent(in) :: Ref_cor(:)        ! refracted to unrefracted path
+    !                                           length ratios.
+    real(rp), intent(in) :: d_delta_df(:,:)   ! derivative of delta wrt
+!                                               mixing ratio state vector
+!                                               element.
+    integer, intent(in) :: nz_d_delta_df(:,:) ! Nonzeros in d_delta_df
+    integer, intent(in) :: nnz_d_delta_df(:)  ! Column lengths in nz_delta_df
 
 ! Outputs
 
@@ -132,8 +134,9 @@ contains
         end do ! p_i
 
         ! Now add in contribution from scalar model, 0.25 for +/- sigma,
-        ! 0.5 for pi.
-        do p_i = 1, i_stop
+        ! 0.5 for pi.  We only need the nonzeros from d_delta_df.
+        do ii = 1, nnz_d_delta_df(sv_i)
+          p_i = nz_d_delta_df(ii,sv_i)
           d_delta_df_pol(:,p_i) = d_delta_df_pol(:,p_i) + &
             & 0.25_rp * d_delta_df(p_i,sv_i)
           d_delta_df_pol(0,p_i) = d_delta_df_pol(0,p_i) + &
@@ -520,6 +523,9 @@ contains
 end module Get_D_Deltau_Pol_M
 
 ! $Log$
+! Revision 2.41  2011/03/11 03:08:00  vsnyder
+! Only use the nonzeros in d_delta_df
+!
 ! Revision 2.40  2010/08/19 02:11:16  vsnyder
 ! Change some variable names, organize some stuff more like dRad_tran_df
 !
