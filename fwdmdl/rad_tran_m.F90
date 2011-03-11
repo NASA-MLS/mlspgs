@@ -16,10 +16,11 @@ module RAD_TRAN_M
   public :: RAD_TRAN, RAD_TRAN_POL
   public :: DRAD_TRAN_DF, DRAD_TRAN_DT, DRAD_TRAN_DX
   public :: D2RAD_TRAN_DF2
+  public :: Get_all_d_delta_df
   public :: Get_d_delta_df_f, Get_d_delta_df_linlog
   public :: Get_d_delta_df_linlog_f, Get_d_delta_dx
   public :: Get_Do_Calc
-  private ::  Get_Do_Calc_Indexed, Get_Inds
+  private :: Get_Do_Calc_Indexed, Get_Inds
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -33,9 +34,9 @@ contains
 ! This is the radiative transfer model, radiances only !
 
   subroutine Rad_tran ( tan_pt, gl_inds, more_inds, e_rflty, del_zeta, &
-                     &  alpha_path_c, ref_cor, incoptdepth, &
-                     &  alpha_path_gl, ds_dz_gw, t_script, &
-                     &  tau, inc_rad_path, rad, i_stop )
+                      & alpha_path_c, ref_cor, incoptdepth,            &
+                      & alpha_path_gl, ds_dz_gw, t_script,             &
+                      & tau, inc_rad_path, rad, i_stop )
 
     use GLNP, only: NG
     use MLSKinds, only: RP
@@ -256,15 +257,14 @@ contains
 !--------------------------------------------------  DRad_tran_df  -----
 ! This is the radiative transfer derivative wrt mixing ratio model
 
-  subroutine DRad_tran_df ( max_f, indices_c, gl_inds, del_zeta, Grids_f,   & 
-                          & beta_path_c, eta_zxp, sps_path, do_calc_f,      & 
-                          & beta_path_f, do_gl, del_s, ref_cor,             & 
-                          & ds_dz_gw, inc_rad_path, dBeta_df_c, dBeta_df_f, & 
-                          & i_start, tan_pt, i_stop, LD,                    & 
-                          & d_delta_df, nz_d_delta_df, nnz_d_delta_df,      & 
-                          & drad_df, dB_df, Tau, nz_zxp, nnz_zxp,           & 
-                          & alpha_path_c, B, Beta_c_e, dBeta_c_e_dIWC,      &
-                          & dBeta_c_s_dIWC, TScat, dTScat_df, W0 )
+  subroutine DRad_tran_df ( max_f, indices_c, gl_inds, del_zeta, Grids_f,     & 
+                          & eta_zxp, do_calc_f, do_gl, del_s, ref_cor,        & 
+                          & ds_dz_gw, inc_rad_path, dAlpha_df_c, dAlpha_df_f, & 
+                          & i_start, tan_pt, i_stop,                          &
+                          & LD, d_delta_df, nz_d_delta_df, nnz_d_delta_df,    &
+                          & drad_df, dB_df, Tau, nz_zxp, nnz_zxp,             & 
+                          & alpha_path_c, B, Beta_c_e,                        &
+                          & dBeta_c_e_dIWC, dBeta_c_s_dIWC, TScat, dTScat_df, W0 )
 
     use d_t_script_dtnp_m, only: dT_script
     use LOAD_SPS_DATA_M, ONLY: GRIDS_T
@@ -275,22 +275,17 @@ contains
 
 ! Inputs
 
-    integer, intent(in) :: Max_f            ! Leading dimension of Beta_Path_f
+    integer, intent(in) :: Max_f            ! Leading dimension of dAlpha_df_f
     integer, intent(in) :: indices_c(:)     ! coarse grid indicies
     integer, intent(in) :: gl_inds(:)       ! Gauss-Legendre grid indices
     real(rp), intent(in) :: del_zeta(:)     ! path -log(P) differences on the
       !              main grid.  This is for the whole coarse path, not just
       !              the part up to the black-out
     type (Grids_T), intent(in) :: Grids_f    ! All the coordinates
-    real(rp), intent(in) :: beta_path_c(:,:) ! cross section for each species
-      !                                        on coarse grid.
     real(rp), intent(in) :: eta_zxp(max_f,*) ! representation basis function.
-    real(rp), intent(in) :: sps_path(:,:)    ! Path species function.
     logical, intent(in) :: do_calc_f(:,:)    ! A logical indicating where the
       !                                        representation basis function is
       !                                        not zero.
-    real(rp), intent(in) :: beta_path_f(max_f,*) ! cross section for each species
-      !                                        on gl grid.
     logical, intent(in) :: do_gl(:)          ! A logical indicating where to
       !                                        do gl integrations
     real(rp), intent(in) :: ref_cor(:)       ! refracted to unrefracted path
@@ -300,8 +295,8 @@ contains
       !              gw on the entire grid.  Only the gl_inds part is used.
     real(rp), intent(in) :: inc_rad_path(:)  ! incremental radiance along the
                                              ! path.  t_script * tau.
-    real(rp), intent(in) :: dBeta_df_c(:,:)  ! In case beta depends on mixing ratio
-    real(rp), intent(in) :: dBeta_df_f(:,:)  ! In case beta depends on mixing ratio
+    real(rp), intent(in) :: dAlpha_df_c(:,:) ! On the coarse path
+    real(rp), intent(in) :: dAlpha_df_f(max_f,*) ! On the GL path
     integer, intent(in) :: I_start           ! path_start_index + 1
     integer, intent(in) :: tan_pt            ! Tangent point index in Del_Zeta
     integer, intent(in) :: I_stop            ! path stop index
@@ -335,194 +330,111 @@ contains
 
 ! Internals
 
-    integer :: i_begin, n_inds, no_to_gl, sps_i, sv_i
-    integer :: I_dBeta_df            ! Which column of dBeta_df_* to use if /= 0
-    integer, target, dimension(1:size(inc_rad_path)) :: all_inds_B
-    integer, target, dimension(1:size(inc_rad_path)) :: more_inds_B
-    integer, pointer :: all_inds(:)  ! all_inds => part of all_inds_B;
-                                     ! Indices on GL grid for stuff
-                                     ! used to make GL corrections
+    integer :: i_begin, sv_i
     real(rp) :: d_delta_B_df(size(dB_df),1)
+    logical Nothing(Grids_f%l_v(ubound(Grids_f%l_z,1))) ! "Nothing to do here"
     logical :: Do_TScat              ! Include dependence upon dB_df
-    integer, pointer :: inds(:)      ! inds => part_of_nz_d_delta_df;
-                                     ! Indices on coarse path where do_calc.
-    integer, pointer :: more_inds(:) ! more_inds => part of more_inds_B;
-                                     ! Indices on the coarse path where GL
-                                     ! corrections get applied.
-
-    integer :: What ! 0 = linear beta, no mixing ratio dependence
-                    ! 1 = log linear beta, no mixing ratio dependence
-                    ! 2 = linear beta, mixing ratio dependence
-                    ! 3 = log linear beta, mixing ratio dependence
-
-    real(rp) :: singularity(1:size(inc_rad_path)) ! integrand on left edge of coarse
-                                         ! grid panel -- singular at tangent pt.
-    logical :: do_calc(1:size(inc_rad_path)) ! Flags on coarse path where do_calc_c
-                                         ! or (do_gl and any corresponding
-                                         ! do_calc_f).
 
 ! Begin code
 
-    ! d_delta_df is set to zero by the caller outside of all its loops.
-    ! We keep track of where we create nonzeros, and replace them by zeros
-    ! on the next call.  This is done because the vast majority of
-    ! d_delta_df elements are zero.
+    call get_all_d_delta_df ( max_f, indices_c, gl_inds, del_zeta, Grids_f,  & 
+                            & eta_zxp, do_calc_f, do_gl, del_s, ref_cor,     & 
+                            & ds_dz_gw, dAlpha_df_c, dAlpha_df_f,            & 
+                            & LD, d_delta_df, nz_d_delta_df, nnz_d_delta_df, &
+                            & nothing )
 
     Do_TScat = size(dB_df) > 0
 
-    do sps_i = 1, ubound(Grids_f%l_z,1)
+    do sv_i = 1, Grids_f%l_v(ubound(Grids_f%l_z,1))
 
-      i_dBeta_df = grids_f%where_dBeta_df(sps_i)
-      what =     merge(1,0,grids_f%lin_log(sps_i)) + &
-           & 2 * merge(1,0,i_dBeta_df/=0)
+      if ( nothing(sv_i) ) then
+        drad_df(sv_i) = 0.0
+        cycle
+      end if
 
-      do sv_i = Grids_f%l_v(sps_i-1)+1, Grids_f%l_v(sps_i)
+      i_begin = max(i_start,min(nz_d_delta_df(1,sv_i),i_stop))
 
-        d_delta_df(nz_d_delta_df(:nnz_d_delta_df(sv_i),sv_i),sv_i) = 0.0
-        nnz_d_delta_df(sv_i) = 0
-
-! Skip the masked derivatives, according to the l2cf inputs
-
-        if ( .not. Grids_f%deriv_flags(sv_i) ) then
-          drad_df(sv_i) = 0.0
-          cycle
-        end if
-
-        ! find where the non zeros are along the path
-
-        call get_do_calc_indexed ( size(do_gl), do_calc_f(:,sv_i), indices_c, &
-          & gl_inds, do_gl, do_calc, n_inds, nz_d_delta_df(:,sv_i) )
-
-        nnz_d_delta_df(sv_i) = n_inds
-        if ( n_inds == 0 ) then
-          drad_df(sv_i) = 0.0
-          cycle
-        end if
-
-        inds => nz_d_delta_df(1:n_inds,sv_i)
-
-        no_to_gl = count(do_gl(inds))
-
-        all_inds => all_inds_B(1:no_to_gl)
-        more_inds => more_inds_B(1:no_to_gl)
-
-        ! see if anything needs to be gl-d
-        if ( no_to_gl > 0 ) &
-          & call get_inds ( do_gl, do_calc, more_inds, all_inds )
-
-        select case ( what )
-        case ( 0 ) ! linear beta, no mixing ratio dependence
-          call get_d_delta_dx ( inds, indices_c, gl_inds, &
-            & all_inds, more_inds, eta_zxp(:,sv_i), &
-            & beta_path_c(:,sps_i), beta_path_f(:,sps_i), del_s, del_zeta, &
-            & ds_dz_gw, singularity, d_delta_df(:,sv_i), ref_cor )
-        case ( 1 ) ! log linear beta, no mixing ratio dependence
-          call get_d_delta_df_linlog ( inds, indices_c, gl_inds, &
-            & all_inds, more_inds, eta_zxp(:,sv_i), sps_path(:,sps_i), &
-            & beta_path_c(:,sps_i), beta_path_f(:,sps_i), del_s, del_zeta, &
-            & ds_dz_gw, ref_cor, grids_f%values(sv_i), singularity, &
-            & d_delta_df(:,sv_i) )
-        case ( 2 ) ! linear beta, mixing ratio dependence
-          call Get_d_delta_df_f ( Inds, Indices_c, GL_Inds, &
-            & All_inds, More_inds, eta_zxp(:,sv_i), Sps_path(:,sps_i), &
-            & Beta_path_c(:,sps_i), Beta_path_f(:,sps_i), &
-            & dBeta_df_c(:,i_dBeta_df), dBeta_df_f(:,i_dBeta_df), &
-            & Del_s, del_zeta, ds_dz_gw, ref_cor, Singularity, &
-            & d_delta_df(:,sv_i) )
-        case ( 3 ) ! log linear beta, mixing ratio dependence
-          call Get_d_delta_df_linlog_f ( Inds, Indices_c, GL_Inds, &
-            & All_inds, More_inds, eta_zxp(:,sv_i), Sps_path(:,sps_i), &
-            & Beta_path_c(:,sps_i), Beta_path_f(:,sps_i), &
-            & dBeta_df_c(:,i_dBeta_df), dBeta_df_f(:,i_dBeta_df), &
-            & Del_s, del_zeta, ds_dz_gw, ref_cor, grids_f%values(sv_i), &
-            & Singularity, d_delta_df(:,sv_i) )
-        end select
-
-        i_begin = max(i_start,min(inds(1),i_stop))
-
-        !{ $I(s_m) = \mathcal{T}(s_0,s_m) \left( I(s_0)-B(s_0) \right) +
-        !  B(s_m) - \int_{B(s_0)}^{B(s_m)} \mathcal{T}(s,s_m)
-        !            \frac{\partial B(s)}{\partial s} \,\text{d} s$ with
-        !  $\mathcal{T}(s,s_m) =
-        !    \exp\left( -\int_s^{s_m} \alpha(\sigma) \,\text{d} \sigma \right)$,
-        !  $\alpha(\sigma) = \sum_k \beta^k(\sigma) f^k_{lm} \eta^k_{lm}(\sigma)$,
-        !  $s_0$ is the end of the path away from the instrument,
-        !  $s_m$ is the location of the instrument, $\beta^k(\sigma)$ is the
-        !  absorption coefficient for the $k^\text{th}$ species, and
-        !  $\eta^k_{lm}(\sigma)$ is an interpolation coefficient from
-        !  $(\phi^k_l,\zeta^k_m)$ to $\sigma$. $(\phi^k_l,\zeta^k_m)$ is
-        !  specified by {\tt sv_i}.
-        !  
-        !  The integral is approximated by
-        !  $\sum_{i=1}^{N_p} \mathcal{T}_i \Delta B_i$ where $\Delta B_i =
-        !  \frac12 \left( B_{i+1} - B_{i-1} \right)$.  The end-point terms
-        !  are incorporated into special values of $\Delta B_0$ and $\Delta B_{s_m}$.
+      !{ $I(s_m) = \mathcal{T}(s_0,s_m) \left( I(s_0)-B(s_0) \right) +
+      !  B(s_m) - \int_{B(s_0)}^{B(s_m)} \mathcal{T}(s,s_m)
+      !            \frac{\partial B(s)}{\partial s} \,\text{d} s$ with
+      !  $\mathcal{T}(s,s_m) =
+      !    \exp\left( -\int_s^{s_m} \alpha(\sigma) \,\text{d} \sigma \right)$,
+      !  $\alpha(\sigma) = \sum_k \beta^k(\sigma) f^k_{lm} \eta^k_{lm}(\sigma)$,
+      !  $s_0$ is the end of the path away from the instrument,
+      !  $s_m$ is the location of the instrument, $\beta^k(\sigma)$ is the
+      !  absorption coefficient for the $k^\text{th}$ species, and
+      !  $\eta^k_{lm}(\sigma)$ is an interpolation coefficient from
+      !  $(\phi^k_l,\zeta^k_m)$ to $\sigma$. $(\phi^k_l,\zeta^k_m)$ is
+      !  specified by {\tt sv_i}.
+      !  
+      !  The integral is approximated by
+      !  $\sum_{i=1}^{N_p} \mathcal{T}_i \Delta B_i$ where $\Delta B_i =
+      !  \frac12 \left( B_{i+1} - B_{i-1} \right)$.  The end-point terms
+      !  are incorporated into special values of $\Delta B_0$ and $\Delta B_{s_m}$.
+      !
+      !  {\tt inc_rad_path(i)} = $\mathcal{T}_i \Delta B_i$.
+      !  $\frac{\partial \mathcal{T}}{\partial f^k_{lm}} =
+      !  -\mathcal{T} \int_s^{s_m} \frac{\partial \alpha(s)}{\partial f^k_{lm}}.$
+      !  {\tt d_delta_df} =
+      !  $ \int_s^{s_m} \frac{\partial \alpha(s)}{\partial f^k_{lm}}
+      !   \,\text{d} s =
+      !   \int_s^{s_m} \beta^k(s) \eta^k_{lm}(s) \,\text{d} s \approx
+      !   \sum_{j=i}^{s_m} \beta^k(s_j) \eta^k_{lm}(s_j) \Delta s_j$
+      if ( Do_TScat ) then
+        !{ $\frac{\partial I}{\partial f^\text{iwc}_{lm}} =
+        !   \sum_{i=1}^{N_p}
+        !   \frac{\partial \overline{\Delta B_i}}{\partial f^\text{iwc}_{lm}}
+        !   \mathcal{T}_i + \overline{\Delta B_i}
+        !   \frac{\partial \mathcal{T}_i}{\partial f^\text{iwc}_{lm}}$
+        !   where $\overline{\Delta B} = \Delta B^g + \Delta B^s$,
+        !   $\Delta B^g = \Delta \left[ ( 1-\omega_0 ) B \right]$,
+        !   $\Delta B^s = \Delta \left[ \omega_0 T_\text{scat} \right]$
+        ! and
+        !   $\frac{\partial \mathcal{T}_i}{\partial f^k_{lm}} =
+        !    -\mathcal{T}_i \int_{s_0}^{s_m}
+        !      \frac{\partial \alpha(\sigma)}{\partial f^k_{lm}}
+        !       \, \text{d} \sigma \approx
+        !    -\mathcal{T}_i \sum_{j=i}^{N_p}
+        !      \frac{\partial \delta^k_j}{\partial f^k_{lm}}
+        !   = -\mathcal{T}_i \sum_{j=i}^{N_p} \beta^k_j
+        !       \eta^k_{lm}(s_i) \Delta s_j$.
         !
-        !  {\tt inc_rad_path(i)} = $\mathcal{T}_i \Delta B_i$.
-        !  $\frac{\partial \mathcal{T}}{\partial f^k_{lm}} =
-        !  -\mathcal{T} \int_s^{s_m} \frac{\partial \alpha(s)}{\partial f^k_{lm}}.$
-        !  {\tt d_delta_df} =
-        !  $ \int_s^{s_m} \frac{\partial \alpha(s)}{\partial f^k_{lm}}
-        !   \,\text{d} s =
-        !   \int_s^{s_m} \beta^k(s) \eta^k_{lm}(s) \,\text{d} s \approx
-        !   \sum_{j=i}^{s_m} \beta^k(s_j) \eta^k_{lm}(s_j) \Delta s_j$
-        if ( Do_TScat ) then
-          !{ $\frac{\partial I}{\partial f^\text{iwc}_{lm}} =
-          !   \sum_{i=1}^{N_p}
-          !   \frac{\partial \overline{\Delta B_i}}{\partial f^\text{iwc}_{lm}}
-          !   \mathcal{T}_i + \overline{\Delta B_i}
-          !   \frac{\partial \mathcal{T}_i}{\partial f^\text{iwc}_{lm}}$
-          !   where $\overline{\Delta B} = \Delta B^g + \Delta B^s$,
-          !   $\Delta B^g = \Delta \left[ ( 1-\omega_0 ) B \right]$,
-          !   $\Delta B^s = \Delta \left[ \omega_0 T_\text{scat} \right]$
-          ! and
-          !   $\frac{\partial \mathcal{T}_i}{\partial f^k_{lm}} =
-          !    -\mathcal{T}_i \int_{s_0}^{s_m}
-          !      \frac{\partial \alpha(\sigma)}{\partial f^k_{lm}}
-          !       \, \text{d} \sigma \approx
-          !    -\mathcal{T}_i \sum_{j=i}^{N_p}
-          !      \frac{\partial \delta^k_j}{\partial f^k_{lm}}
-          !   = -\mathcal{T}_i \sum_{j=i}^{N_p} \beta^k_j
-          !       \eta^k_{lm}(s_i) \Delta s_j$.
-          !
-    !   {\tt dB_df(i)} =
-    !   $\frac{\partial \overline{\Delta B_i}}{\partial f^k_{lm}}
-    !    \text{ where } \frac{\partial \overline{B_i}}
-    !                        {\partial f^k_{lm}(\zeta_i)} =
-    !    \frac{\partial \omega_{0_i}}{\partial f^k_{lm}(\zeta_i)}
-    !     \left( T_{\text{scat}_i} - B_i \right) +
-    !    \omega_{0_i} \frac{\partial T_{\text{scat}_i}}
-    !                      {\partial f^k_{lm}(\zeta_i)}
-    !   = \left(\frac{\partial \omega_{0_i}}{\partial f^k}
-    !     \left( T_{\text{scat}_i} - B_i \right) +
-    !     \omega_{0_i} \frac{\partial T_{\text{scat}_i}}{\partial f^k}
-    !     \right)
-    !     \frac{\partial f^k}{\partial f^k_{lm}(\zeta_i)}
-    !   = \left( \frac{\partial \omega_{0_i}}{\partial f^k}
-    !      \left( T_{\text{scat}_i} - B_i \right) +
-    !     \omega_{0_i} \frac{\partial T_{\text{scat}_i}}{\partial f^k}
-    !      \right) \eta^k_{lm}(\zeta_i)$ (see {\tt Get_dB_df} in the
-    !     {\tt TScat_Support_m} module).
-          !
-          ! {\tt inc_rad_path(i)} = $\mathcal{T}_i \overline{\Delta B}_i$
+  !   {\tt dB_df(i)} =
+  !   $\frac{\partial \overline{\Delta B_i}}{\partial f^k_{lm}}
+  !    \text{ where } \frac{\partial \overline{B_i}}
+  !                        {\partial f^k_{lm}(\zeta_i)} =
+  !    \frac{\partial \omega_{0_i}}{\partial f^k_{lm}(\zeta_i)}
+  !     \left( T_{\text{scat}_i} - B_i \right) +
+  !    \omega_{0_i} \frac{\partial T_{\text{scat}_i}}
+  !                      {\partial f^k_{lm}(\zeta_i)}
+  !   = \left(\frac{\partial \omega_{0_i}}{\partial f^k}
+  !     \left( T_{\text{scat}_i} - B_i \right) +
+  !     \omega_{0_i} \frac{\partial T_{\text{scat}_i}}{\partial f^k}
+  !     \right)
+  !     \frac{\partial f^k}{\partial f^k_{lm}(\zeta_i)}
+  !   = \left( \frac{\partial \omega_{0_i}}{\partial f^k}
+  !      \left( T_{\text{scat}_i} - B_i \right) +
+  !     \omega_{0_i} \frac{\partial T_{\text{scat}_i}}{\partial f^k}
+  !      \right) \eta^k_{lm}(\zeta_i)$ (see {\tt Get_dB_df} in the
+  !     {\tt TScat_Support_m} module).
+        !
+        ! {\tt inc_rad_path(i)} = $\mathcal{T}_i \overline{\Delta B}_i$
 
-          call Get_dB_df ( alpha_path_c, B, beta_c_e, dBeta_c_e_dIWC, &
-                         & dBeta_c_s_dIWC, TScat, dTScat_df(:,sv_i), w0, &
-                         & grids_f%qty(sv_i) == l_cloud_a, dB_df )
+        call Get_dB_df ( alpha_path_c, B, beta_c_e, dBeta_c_e_dIWC, &
+                       & dBeta_c_s_dIWC, TScat, dTScat_df(:,sv_i), w0, &
+                       & grids_f%qty(sv_i) == l_cloud_a, dB_df )
 
-          call dt_script ( dB_df, eta_zxp(:,sv_i:sv_i), nz_zxp(:,sv_i:sv_i), &
-            & nnz_zxp(sv_i:sv_i), d_delta_B_df )
+        call dt_script ( dB_df, eta_zxp(:,sv_i:sv_i), nz_zxp(:,sv_i:sv_i), &
+          & nnz_zxp(sv_i:sv_i), d_delta_B_df )
 
-          call dscrt_dt ( tan_pt, d_delta_df(:,sv_i), tau, inc_rad_path,&
-                        & d_delta_B_df(:,1), i_begin, i_stop, drad_df(sv_i) )
-        else
-          call dscrt_dx ( tan_pt, d_delta_df(:,sv_i), inc_rad_path, &
-                       &  i_begin, i_stop, drad_df(sv_i))
-        end if
+        call dscrt_dt ( tan_pt, d_delta_df(:,sv_i), tau, inc_rad_path,&
+                      & d_delta_B_df(:,1), i_begin, i_stop, drad_df(sv_i) )
+      else
+        call dscrt_dx ( tan_pt, d_delta_df(:,sv_i), inc_rad_path, &
+                     &  i_begin, i_stop, drad_df(sv_i))
+      end if
 
-      end do ! sv_i
-
-    end do ! sps_i
+    end do ! sv_i
 
   end subroutine drad_tran_df
 
@@ -1192,6 +1104,139 @@ contains
 
   end subroutine DRad_tran_dx
 
+!--------------------------------------------  Get_all_d_delta_df  -----
+! This is the radiative transfer derivative wrt mixing ratio model
+
+  subroutine Get_all_d_delta_df ( max_f, indices_c, gl_inds, del_zeta, Grids_f,  & 
+                                & eta_zxp, do_calc_f, do_gl, del_s, ref_cor,     & 
+                                & ds_dz_gw, dAlpha_df_c, dAlpha_df_f,            & 
+                                & LD, d_delta_df, nz_d_delta_df, nnz_d_delta_df, &
+                                & nothing )
+
+    !{ Compute
+    !  \begin{equation}
+    !  \frac{\partial \delta_{i \rightarrow i-1}}{\partial f^k_{lm}} =
+    !  \int_{\zeta_i}^{\zeta_i-1} \frac{\partial \alpha(s)}{\partial f^k(s)}
+    !  \eta^k_{lm}(s) \,\text{d}s
+    !  \end{equation}
+    !  where $k$ is a species index, and $lm$ index $(\phi^k_l,\zeta^k_m)$.
+    !  The second dimensions of {\tt dAlpha_df_c, dAlpha_df_f, d_delta_df}, and
+    !  {\tt nz_d_delta_df} flatten out $(k,l,m)$ to a single index.  The complication
+    !  here arises because $\eta^k_{lm}(s)$ is very sparse.
+
+    use LOAD_SPS_DATA_M, ONLY: GRIDS_T
+    use MLSKinds, only: RP
+
+! Inputs
+
+    integer, intent(in) :: Max_f            ! Leading dimension of dAlpha_df_f
+    integer, intent(in) :: indices_c(:)     ! coarse grid indicies
+    integer, intent(in) :: gl_inds(:)       ! Gauss-Legendre grid indices
+    real(rp), intent(in) :: del_zeta(:)     ! path -log(P) differences on the
+      !              main grid.  This is for the whole coarse path, not just
+      !              the part up to the black-out
+    type (Grids_T), intent(in) :: Grids_f    ! All the coordinates
+    real(rp), intent(in) :: eta_zxp(max_f,*) ! representation basis function.
+    logical, intent(in) :: do_calc_f(:,:)    ! A logical indicating where the
+      !                                        representation basis function is
+      !                                        not zero.
+    logical, intent(in) :: do_gl(:)          ! A logical indicating where to
+      !                                        do gl integrations
+    real(rp), intent(in) :: ref_cor(:)       ! refracted to unrefracted path
+      !                                        length ratios.
+    real(rp), intent(in) :: del_s(:)         ! unrefracted path length.
+    real(rp), intent(in) :: ds_dz_gw(:)      ! path length wrt zeta derivative *
+      !              gw on the entire grid.  Only the gl_inds part is used.
+    real(rp), intent(in) :: dAlpha_df_c(:,:) ! On the coarse path
+    real(rp), intent(in) :: dAlpha_df_f(max_f,*) ! On the GL path
+
+    integer, intent(in) :: LD                ! Leading dimension of D_Delta_dF
+
+! Outputs
+
+    real(rp), intent(inout) :: d_delta_df(ld,*) ! path x sve.  derivative of
+      !              delta wrt mixing ratio state vector element. (K)
+      !              Initially set to zero by caller.
+    integer, intent(inout), target :: nz_d_delta_df(:,:) ! Nonzeros in d_delta_df
+    integer, intent(inout) :: nnz_d_delta_df(:) ! Column lengths in nz_delta_df
+    logical, intent(out) :: nothing(:)      ! "Nothing to do for this s.v. element
+
+! Internals
+
+    integer :: n_inds, no_to_gl, sps_i, sv_i
+    integer, target, dimension(1:size(indices_c)) :: all_inds_B
+    integer, target, dimension(1:size(indices_c)) :: more_inds_B
+    integer, pointer :: all_inds(:)  ! all_inds => part of all_inds_B;
+                                     ! Indices on GL grid for stuff
+                                     ! used to make GL corrections
+    integer, pointer :: inds(:)      ! inds => part_of_nz_d_delta_df;
+                                     ! Indices on coarse path where do_calc.
+    integer, pointer :: more_inds(:) ! more_inds => part of more_inds_B;
+                                     ! Indices on the coarse path where GL
+                                     ! corrections get applied.
+
+    real(rp) :: singularity(1:size(indices_c)) ! integrand on left edge of coarse
+                                         ! grid panel -- singular at tangent pt.
+    logical :: do_calc(1:size(indices_c)) ! Flags on coarse path where do_calc_c
+                                         ! or (do_gl and any corresponding
+                                         ! do_calc_f).
+
+! Begin code
+
+    ! d_delta_df is set to zero by the caller outside of all its loops.
+    ! We keep track of where we create nonzeros, and replace them by zeros
+    ! on the next call.  This is done because the vast majority of
+    ! d_delta_df elements are zero.
+
+    do sps_i = 1, ubound(Grids_f%l_z,1)
+
+      do sv_i = Grids_f%l_v(sps_i-1)+1, Grids_f%l_v(sps_i)
+
+        ! Everything in d_delta_df not indexed by nz_d_delta_df is already zero
+        d_delta_df(nz_d_delta_df(:nnz_d_delta_df(sv_i),sv_i),sv_i) = 0.0
+        nnz_d_delta_df(sv_i) = 0
+
+        ! Skip the masked derivatives, according to the l2cf inputs
+
+        nothing(sv_i) = .not. Grids_f%deriv_flags(sv_i)
+        if ( nothing(sv_i) ) cycle
+
+        ! find where the non zeros are along the path
+
+        call get_do_calc_indexed ( size(do_gl), do_calc_f(:,sv_i), indices_c, &
+          & gl_inds, do_gl, do_calc, n_inds, nz_d_delta_df(:,sv_i) )
+
+        nnz_d_delta_df(sv_i) = n_inds
+        nothing(sv_i) = n_inds == 0
+        if ( nothing(sv_i) ) cycle
+
+        inds => nz_d_delta_df(1:n_inds,sv_i)
+
+        no_to_gl = count(do_gl(inds))
+
+        all_inds => all_inds_B(1:no_to_gl)
+        more_inds => more_inds_B(1:no_to_gl)
+
+        ! see if anything needs to be gl-d
+        if ( no_to_gl > 0 ) &
+          & call get_inds ( do_gl, do_calc, more_inds, all_inds )
+
+        !{ Get d_delta_df for one state-vector element.  This is
+        !  $\frac{\partial \delta_i}{\partial f^k_{lm}}$ where $i$ is the
+        !  index of a path point, $k$ is the species index, and $lm$ are indices
+        !  for $(\phi_l,\zeta_m)$.  {\tt sv_i} flattens $(k,l,m)$ to one index.
+        call get_d_delta_df ( inds, indices_c, gl_inds, &
+          & all_inds, more_inds, eta_zxp(:,sv_i), &
+          & dAlpha_df_c(:,sps_i), dAlpha_df_f(:,sps_i), del_s, del_zeta, &
+          & ds_dz_gw, grids_f%lin_log(sps_i), grids_f%values(sv_i), &
+          & singularity, d_delta_df(:,sv_i), ref_cor )
+
+      end do ! sv_i
+
+    end do ! sps_i
+
+  end subroutine Get_all_d_delta_df
+
   ! ------------------------------------------------  Get_Do_Calc  -----
   subroutine Get_Do_Calc ( Do_Calc_c, Do_Calc_f, Do_GL, Do_Calc, N_Inds, Inds )
 
@@ -1308,6 +1353,91 @@ contains
     if ( present(ref_cor) ) d_delta_dx(inds) = ref_cor(inds) * d_delta_dx(inds)
 
   end subroutine Get_d_delta_dx
+
+  ! .............................................  Get_d_delta_dx  .....
+  subroutine Get_d_delta_df ( Inds, Indices_c, GL_Inds, &
+    & All_inds, More_inds, eta_zxp, &
+    & dAlpha_df_path_c, dAlpha_df_path_f, Del_s, Del_Zeta, ds_dz_gw, lin_log, grids_v, &
+    & Singularity, d_delta_dx, Ref_cor )
+
+    ! Get d_delta_dx.  For species for which beta does not depend upon
+    ! mixing ratio this gets d_delta_df if dAlpha_dx_path_* is beta_path_*.
+
+    use GLNP, only: NG
+    use MLSKinds, only: RP
+
+    integer, intent(in) :: Inds(:)       ! Indices on coarse path needing calc
+    integer, intent(in) :: Indices_c(:)  ! Subset from gl to coarse
+    integer, intent(in) :: GL_Inds(:)    ! Gauss-Legendre grid indices
+    integer, intent(in) :: All_inds(:)   ! Indices on GL grid for stuff
+                                         ! used to make GL corrections
+    integer, intent(in) :: More_inds(:)  ! Indices on the coarse path where
+                                         ! GL corrections get applied.
+    real(rp), intent(in) :: eta_zxp(*)   ! representation basis function.
+    real(rp), intent(in) :: dAlpha_df_path_c(*) ! cross section on coarse grid.
+    real(rp), intent(in) :: dAlpha_df_path_f(*) ! cross section on GL grid.
+    real(rp), intent(in) :: Del_s(:)     ! unrefracted path length.
+    real(rp), intent(in) :: Del_zeta(:)  ! path -log(P) differences on the
+      !              main grid.  This is for the whole coarse path, not just
+      !              the part up to the black-out
+    real(rp), intent(in) :: ds_dz_gw(:)  ! ds/dh * dh/dz * GL weights
+    logical, intent(in) :: lin_log       ! logarithmic interpolation was used
+    real(rp), intent(in) :: grids_v      ! Grids_f%values(sv_i)
+    real(rp), intent(out) :: singularity(:) ! integrand on left edge of coarse
+                               ! grid panel -- singular at tangent pt.
+                               ! Actually just work space we don't want
+                               ! to allocate on every invocation.
+    real(rp), intent(inout) :: d_delta_dx(:) ! Derivative of delta.
+                               ! intent(inout) so the unreferenced
+                               ! elements do not become undefined.
+    real(rp), intent(in), optional :: Ref_cor(:) ! refracted to unrefracted
+                                           !  path length ratios.
+
+    integer :: AA, GA, I, II
+
+    do i = 1, size(inds)
+      ii = inds(i)
+      singularity(ii) = dAlpha_df_path_c(ii) * eta_zxp(indices_c(ii))
+      d_delta_dx(ii) = singularity(ii) * del_s(ii)
+    end do ! i
+
+    !{ Apply Gauss-Legendre quadrature to compute $\int_{\zeta_i}^{\zeta_{i-1}}
+    !  \frac{\partial \alpha(s)}{\partial f^k_{lm}} \frac{\text{d}
+    !  s}{\text{d} h} \frac{\text{d}h}{\text{d}\zeta} \, \text{d} s$ to the
+    !  panels indicated by {\tt more\_inds}.  Here, $\frac{\partial
+    !  \alpha(s)}{\partial f^k_{lm}} = \beta^k(s) \eta^k_{lm}(s)$.  We
+    !  remove the singularity introduced at the tangent point by
+    !  $\frac{\text{d} s}{\text{d} h}$ by writing
+    !  $\int_{\zeta_i}^{\zeta_{i-1}} G(\zeta) \frac{\text{d}s}{\text{d}h}
+    !  \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta = G(\zeta_i)
+    !  \int_{\zeta_i}^{\zeta_{i-1}} \frac{\text{d}s}{\text{d}h}
+    !  \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta +
+    !  \int_{\zeta_i}^{\zeta_{i-1}} \left[ G(\zeta) - G(\zeta_i) \right]
+    !  \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
+    !  \text{d}\zeta$.  The first integral is easy -- it's just $G(\zeta_i)
+    !  (\zeta_{i-1}-\zeta_i)$.  Here, it is {\tt d\_delta\_df}. In the
+    !  second integral, $G(\zeta)$ is {\tt dAlpha_dx_path\_f * eta\_zxp\_f
+    !  * sps\_path} -- which have already been evaluated at the appropriate
+    !  abscissae~-- and $G(\zeta_i)$ is {\tt singularity}. The weights  are
+    !  {\tt gw}.
+
+    do i = 1, size(all_inds)
+      aa = all_inds(i)
+      ga = gl_inds(aa)
+      ii = more_inds(i)
+      d_delta_dx(ii) = d_delta_dx(ii) + &
+        & del_zeta(ii) * &
+        & sum( (eta_zxp(ga:ga+ng-1) * dAlpha_df_path_f(aa:aa+ng-1) - &
+             &  singularity(ii)) * ds_dz_gw(ga:ga+ng-1) )
+    end do
+
+    ! Refraction correction
+    if ( present(ref_cor) ) d_delta_dx(inds) = ref_cor(inds) * d_delta_dx(inds)
+
+    ! Logarithmic interpolation correction
+    if ( lin_log ) d_delta_dx(inds) = d_delta_dx(inds) * exp(-grids_v)
+
+  end subroutine Get_d_delta_df
 
   ! ...........................................  Get_d_delta_df_f  .....
   subroutine Get_d_delta_df_f ( Inds, Indices_c, GL_Inds, &
@@ -1730,6 +1860,9 @@ contains
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.21  2011/03/11 03:09:08  vsnyder
+! Use Get_dAlpha_df
+!
 ! Revision 2.20  2011/03/04 03:41:25  vsnyder
 ! Remove declaration for unused variable
 !
