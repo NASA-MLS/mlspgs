@@ -424,7 +424,7 @@ contains
   ! (or optionally that many copies of fillChar)
     integer, intent(in) :: N_BLANKS
     character(len=*), intent(in), optional :: ADVANCE
-    character(len=1), intent(in), optional :: FILLCHAR  ! default is ' '
+    character(len=*), intent(in), optional :: FILLCHAR  ! default is ' '
     logical, intent(in), optional          :: DONT_STAMP ! Prevent double-stamping
     character(len=*), parameter :: BLANKSPACE = &
     '                                                                    '
@@ -489,7 +489,7 @@ contains
   ! (or optionally that many copies of fillChar)
     integer, intent(in) :: COLUMN
     character(len=*), intent(in), optional :: ADVANCE
-    character(len=1), intent(in), optional :: FILLCHAR  ! default is ' '
+    character(len=*), intent(in), optional :: FILLCHAR  ! default is ' '
     logical, intent(in), optional          :: DONT_STAMP ! Prevent double-stamping
     character(len=*), parameter :: BLANKSPACE = &
     '                                                                    '
@@ -504,7 +504,7 @@ contains
   subroutine blanksToTab ( tabn, fillChar )
     ! Args
     integer, optional, intent(in) :: TABN
-    character(len=1), intent(in), optional :: FILLCHAR  ! default is ' '
+    character(len=*), intent(in), optional :: FILLCHAR  ! default is ' '
     ! Internal variables
     integer :: nTab
     ! Executable
@@ -2146,7 +2146,7 @@ contains
   ! (or optionally that many copies of fillChar)
     integer, intent(in) :: N_BLANKS
     character(len=*), intent(in), optional :: ADVANCE
-    character(len=1), intent(in), optional :: FILLCHAR  ! default is ' '
+    character(len=*), intent(in), optional :: FILLCHAR  ! default is ' '
     logical, intent(in), optional          :: DONT_STAMP ! Prevent double-stamping
     character(len=3) :: ADV
     character(len=*), parameter :: BLANKSPACE = &
@@ -2252,6 +2252,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.84  2011/03/12 00:39:31  vsnyder
+! Change len=1 to len=* to avoid Intel checking problem
+!
 ! Revision 2.83  2010/10/14 18:43:02  pwagner
 ! Can now dump and reset tabs; also can outputlists
 !
