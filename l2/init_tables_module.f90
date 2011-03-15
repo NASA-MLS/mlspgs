@@ -456,8 +456,8 @@ contains ! =====     Public procedures     =============================
              l+l_boxcar, l+l_combineChannels, l+l_gridded, l+l_estimatedNoise, l+l_explicit, &
              l+l_extractChannel, l+l_gphPrecision, l+l_hydrostatic, l+l_addnoise, l+l_refract, &
              l+l_isotope, l+l_iwcfromextinction, l+l_l1b, l+l_l2aux, l+l_l2gp, &
-             l+l_lsGlobal, l+l_lsLocal, l+l_lsWeighted, &
-             l+l_losVel, l+l_manipulate, l+l_magneticModel, l+l_magAzEl, &
+             l+l_losVel, l+l_lsGlobal, l+l_lsLocal, l+l_lsWeighted, &
+             l+l_manipulate, l+l_magneticModel, l+l_magAzEl, l+l_modifyTemplate, &
              l+l_negativePrecision, l+l_noRadsPerMIF, l+l_offsetRadiance, l+l_profile, &
              l+l_phaseTiming, l+l_sectionTiming, l+l_fwdModelTiming, &
              l+l_fwdModelMean, l+l_fwdModelStdDev, l+l_quality, &
@@ -1192,6 +1192,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_opticalDepth, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
              begin, f+f_opticalDepthCutoff, t+t_numeric, n+n_field_type, &
+             begin, f+f_reverse, t+t_boolean, n+n_field_type, &
              begin, f+f_reset, t+t_boolean, n+n_field_type, ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_restrictRange, &
@@ -1646,6 +1647,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.516  2011/03/15 22:52:29  pwagner
+! May now modify quantity template fields with fill method
+!
 ! Revision 2.515  2011/03/10 21:39:33  pwagner
 ! May now specify time in explicit hGrids
 !
