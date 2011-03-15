@@ -1,0 +1,304 @@
+module IDLCFM_m
+  ! This module provides functionality for sending and receiving vectors
+  ! through a pvm connection.
+
+  use PVM, only: PVMDATADEFAULT, PVMFINITSEND, PVMFSEND, &
+    & PVMFRECV
+  use PVMIDL, only: PVMIDLPACK, PVMIDLUNPACK
+  use MorePVM, only: PVMPackLitIndex, PVMPackStringIndex, &
+    & PVMUnpackLitIndex, PVMUnpackStringIndex
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, PVMERRORMESSAGE
+
+  implicit none
+  private
+  public :: ICFMReceiveQuantity, ICFMReceiveVector, ICFMForwardModel
+!---------------------------- RCS Ident Info -------------------------------
+   character(len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+   private :: not_used_here
+!---------------------------------------------------------------------------
+
+    ! Local parameters
+  integer, parameter :: QTYMSGTAG = 200
+
+  contains
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+    character (len=*), parameter :: ModuleName= &
+         "$RCSfile$"
+    character (len=*), parameter :: IdParm = &
+         "$Id$"
+    character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+  subroutine ICFMReceiveQuantity ( QT, values, mask, tid, callrecv)
+    use Allocate_Deallocate, only: ALLOCATE_TEST
+    use MLSCommon, only: R8
+    use QuantityTemplates, only: QUANTITYTEMPLATE_T, SETUPNEWQUANTITYTEMPLATE, l_none
+    use VectorsModule, only: CREATEMASKARRAY
+    use ConstructQuantityTemplates, only: noProperties, propertyTable, p_majorFrame, p_minorFrame
+
+    type (QuantityTemplate_T), intent(out) :: QT ! Template for quantity
+    ! It's not inout, because then setupNewQuantityTemplate would deallocate
+    ! the pointer components.  But the actual argument is put into a database
+    ! using a shallow copy, so cleaning it up would clobber a database item.
+    real (r8), dimension(:,:), pointer :: VALUES ! Values for quantity
+    character, dimension(:,:), pointer :: MASK ! Mask
+    integer, intent(in), optional :: TID ! Task to get it from
+    logical, optional, intent(in) :: callrecv !true if this subroutine should call PVMFRecv, default is false
+
+    ! Local variables
+    integer :: BUFFERID                 ! From pvm
+    integer :: INFO                     ! Flag
+    integer :: I4(4)                    ! Unpacked stuff
+    logical :: L4(4)                    ! Unpacked stuff
+    logical :: FLAG                     ! To unpack
+    character(len=132) :: WORD          ! Result of PVMIDLUnpack etc.
+    logical :: NOVALUES                 ! No values sent
+    logical :: NOMASK                   ! No mask sent
+    integer :: i
+    logical, dimension(noProperties) :: PROPERTIES ! Properties for this quantity type
+
+    ! Executable code
+
+    ! Get buffer, we'll wait for it, assume the calling code knows it's coming.
+    if (present(callrecv) .and. callrecv) call PVMFrecv ( tid, QtyMsgTag, bufferID )
+
+    ! Now we unpack the information
+
+    ! Get dimensions
+    call PVMIDLUnpack( i4, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, &
+      & "unpacking quantity dimensions." )
+    print *, "i4 ", i4
+
+    call PVMIDLUnPack ( l4, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, &
+      & "unpacking quantity flags" )
+    print *, "l4 ", l4
+
+    call PVMUnpackStringIndex ( qt%name, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking name" )
+    print *, "name " , qt%name
+
+    call PVMUnpackLitIndex ( qt%quantityType, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking quantityType" )
+    print *, "quantityType ", qt%quantityType
+    properties = propertyTable(:, qt%quantityType)
+
+    call SetupNewQuantityTemplate ( qt, &
+      & noInstances  = i4(1), &
+      & noSurfs      = i4(2), &
+      & noChans      = i4(3), &
+      & coherent     = l4(1), &
+      & stacked      = l4(2), &
+      & regular      = l4(3), &
+      & majorFrame   = properties(p_majorFrame), &
+      & minorFrame   = properties(p_minorFrame))
+    qt%logBasis = l4(4)
+
+    ! Now unpack literals etc.
+
+    call PVMUnpackLitIndex ( qt%verticalCoordinate, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking verticalCoordinate" )
+    print *, "verticalCoordinate ", qt%verticalCoordinate
+
+    qt%frequencyCoordinate = l_none
+
+    call PVMUnpackLitIndex ( qt%unit, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking unit" )
+    print *, "unit ", qt%unit
+
+    ! Now unpack the arrays
+    call PVMIDLUnpack ( qt%surfs(:,1), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking surfs" )
+    if (qt%logbasis) qt%minValue = qt%surfs(1,1)
+    print *, "surfs ", qt%surfs
+
+    call PVMIDLUnpack(flag, info)
+    if (info /= 0) call PVMErrorMessage (info, "unpacking flag")
+    if (flag) then
+      call PVMUnpackLitIndex ( qt%instrumentModule, info )
+      if (info /= 0) call PVMErrorMessage (info, "unpacking instrumentModule")
+      print *, "module ", qt%instrumentModule
+    endif
+
+    call PVMIDLUnpack ( qt%phi(1, :), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking phi" )
+    print *, "phi ", qt%phi
+
+    call PVMIDLUnpack ( qt%geodLat(1, :), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking geodLat" )
+    print *, "geodLat ", qt%geodLat
+
+    call PVMIDLUnpack ( qt%lon(1, :), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking lon" )
+    print *, "lon ", qt%lon
+
+    call PVMIDLUnpack ( qt%time(1, :), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking time" )
+    print *, "time ", qt%time
+
+    call PVMIDLUnpack ( qt%solarTime(1, :), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking solarTime" )
+    print *, "solarTime ", qt%solarTime
+
+    call PVMIDLUnpack ( qt%solarZenith(1, :), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking solarZenith" )
+    print *, "time ", qt%solarZenith
+
+    call PVMIDLUnpack ( qt%losAngle(1, :), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking losAngle" )
+    print *, "los Angles ", qt%losAngle
+
+    call PVMIDLUnpack ( qt%badvalue, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking badvalue" )
+    print *, "badvalue ", qt%badvalue
+
+    ! no frequencies
+    call Allocate_Test ( values, qt%instanceLen, qt%noInstances, &
+      & 'values', ModuleName )
+    call PVMIDLUnpack ( values, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking values" )
+    print *, "values ", values
+
+  end subroutine ICFMReceiveQuantity
+
+  subroutine ICFMReceiveVector ( vec, tid, callrecv)
+    use VectorsModule, only: Vector_T, VectorValue_T, VectorTemplate_T, Dump
+
+    type(Vector_T), intent(out) :: vec
+    integer, intent(in), optional :: TID ! Task to get it from
+    logical, optional, intent(in) :: callrecv !true if this subroutine should call PVMFRecv, default is false
+
+    integer :: info
+    integer :: BUFFERID
+    integer :: numQty
+    integer :: i
+
+    ! Get buffer, we'll wait for it, assume the calling code knows it's coming.
+    if (present(callrecv) .and. callrecv) call PVMFrecv ( tid, QtyMsgTag, bufferID )
+
+    ! Now we unpack the information
+
+    !Name
+    call PVMUnpackStringIndex ( vec%name, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking name" )
+    print *, "name ", vec%name
+
+    call PVMIDLUnpack(numQty, info)
+    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking number of quantities" )
+    print *, "numQty ", numQty
+
+    if (numQty == 0) return
+
+    allocate(vec%quantities(numQty), stat=info)
+    if (info /= 0) call MLSMessage(MLSMSG_Error, ModuleName, "Cannot allocate vector quantities")
+
+    do i=1, numQty
+      call ICFMReceiveQuantity(vec%quantities(i)%template, vec%quantities(i)%values, vec%quantities(i)%mask)
+    end do
+    call dump(vec, details=3)
+
+  end subroutine ICFMReceiveVector
+
+  subroutine ICFMForwardModel (tid)
+    use VectorsModule, only: Vector_T
+
+    integer, intent(in) :: TID ! Task to get it from
+
+    integer :: info
+    integer :: BUFFERID
+    integer :: mafNo
+    integer :: num
+    integer :: i
+    character(len=256) :: signalFile
+    character(len=256) :: configFile
+    character(len=256) :: spectroscopy
+    character(len=256) :: antennaPatterns
+    character(len=256) :: filterShapes
+    character(len=256) :: DACSFilterShapes
+    character(len=256) :: pointingGrids
+    character(len=256), dimension(:), pointer :: pfa
+    character(len=256), dimension(:), pointer :: l2pc
+    type(Vector_T) :: state, stateExtra, measurement
+
+    call PVMFrecv ( tid, QtyMsgTag, bufferID )
+
+    call PVMIDLUnpack(signalFile, info)
+    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking signal file" )
+    print *, "signalFile ", trim(signalFile)
+
+    call PVMIDLUnpack(configFile, info)
+    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking config file" )
+    print *, "configFile ", trim(configFile)
+
+    call PVMIDLUnpack(mafNo, info)
+    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking mafNo" )
+    print *, "mafNo ", mafNo
+
+    call PVMIDLUnpack(spectroscopy, info)
+    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking spectroscopy file" )
+    print *, "spectroscopy ", trim(spectroscopy)
+
+    call PVMIDLUnpack(antennaPatterns, info)
+    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking antennaPatterns file" )
+    print *, "antennaPatterns ", trim(antennaPatterns)
+
+    call PVMIDLUnpack(filterShapes, info)
+    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking filterShapes file" )
+    print *, "filterShapes ", trim(filterShapes)
+
+    call PVMIDLUnpack(DACSFilterShapes, info)
+    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking DACSFilterShapes file" )
+    print *, "DACSFilterShapes ", trim(DACSFilterShapes)
+
+    call PVMIDLUnpack(pointingGrids, info)
+    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking pointingGrids file" )
+    print *, "pointingGrids ", trim(pointingGrids)
+
+    call PVMIDLUnpack(num, info)
+    if (info /= 0) call PVMErrorMessage ( info, "unpacking number of PFA file" )
+    print *, "num ", num
+
+    if (num < 1) then
+        print *, "num is less than 1: ", num
+        return
+    end if
+
+    allocate(pfa(num), stat=info)
+    if (info /= 0) call MLSMessage(MLSMSG_Error, ModuleName, "Cannot allocate memory for PFA.")
+    do i = 1, num
+        call PVMIDLUnpack(pfa(i), info)
+        if (info /= 0) call PVMErrorMessage ( info, "unpacking PFA file" )
+    enddo
+    print *, "pfa ", pfa
+
+    call PVMIDLUnpack(num, info)
+    if (info /= 0) call PVMErrorMessage ( info, "unpacking number of L2PC file" )
+    print *, "num ", num
+
+    if (num < 1) then
+        print *, "num is less than 1: ", num
+        return
+    end if
+
+    allocate(l2pc(num), stat=info)
+    if (info /= 0) call MLSMessage(MLSMSG_Error, ModuleName, "Cannot allocate memory for L2PC.")
+    do i = 1, num
+        call PVMIDLUnpack(l2pc(i), info)
+        if (info /= 0) call PVMErrorMessage ( info, "unpacking L2PC file" )
+    enddo
+    print *, "l2pc ", l2pc
+
+    call ICFMReceiveVector (state, callrecv=.false.)
+    call ICFMReceiveVector (stateExtra, callrecv=.false.)
+    call ICFMReceiveVector (measurement, callrecv=.false.)
+  end subroutine ICFMForwardModel
+
+end module IDLCFM_m
+
+! $Log$
