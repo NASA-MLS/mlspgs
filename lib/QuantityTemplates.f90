@@ -18,18 +18,19 @@ module QuantityTemplates         ! Quantities within vectors
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use DUMP_0, only: DUMP
-  use MLSCommon, only: NameLen, R8
+  use MLSCommon, only: NameLen
+  use MLSKinds, only: R8, RV
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, MLSMSG_Warning
   use Intrinsic, only: L_None, LIT_INDICES, PHYQ_INDICES
   use MLSStringLists, only: SWITCHDETAIL
-  use MLSStrings, only: WRITEINTSTOCHARS
+  use MLSStrings, only: LOWERCASE, WRITEINTSTOCHARS
   use Output_m, only: NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
   use String_Table, only: DISPLAY_STRING, GET_STRING
   use TOGGLES, only: SWITCHES
 
   implicit none
-  public
+  private
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -173,14 +174,25 @@ module QuantityTemplates         ! Quantities within vectors
     module procedure Dump_Quantity_Template, Dump_Quantity_Templates
   end interface
 
+  interface MODIFYQUANTITYTEMPLATE
+    module procedure ModifyQuantityTemplate_array, ModifyQuantityTemplate_sca
+  end interface
+
   ! Local procedures
-  interface CheckIntegrity
+  interface CHECKINTEGRITY
     module procedure CheckIntegrity_QuantityTemplate
   end interface
 
-  private :: CheckIntegrity_QuantityTemplate
+  public :: EPOCH, QuantityTemplate_T
+  public :: CHECKINTEGRITY, DUMP
+  public :: AddQuantityTemplateToDatabase, InflateQuantityTemplateDatabase
+  public :: CopyQuantityTemplate, &
+    & DestroyQuantityTemplateContents, DestroyQuantityTemplateDatabase, &
+    & ModifyQuantityTemplate, &
+    & NullifyQuantityTemplate, SetupNewQuantityTemplate
 
-contains ! =====     Public Procedures     =============================
+contains
+ ! =====     Public Procedures     =============================
 
   ! Subroutines to deal with these quantitites
 
@@ -201,239 +213,6 @@ contains ! =====     Public Procedures     =============================
 
     AddQuantityTemplateToDatabase = newSize
   end function AddQuantityTemplateToDatabase
-
-  ! ---------------------------- CheckIntegrity_QuantityTemplate -------
-  logical function CheckIntegrity_QuantityTemplate ( qty, noError )
-    type (QuantityTemplate_T), intent(in) :: QTY
-    logical, intent(in), optional :: NOERROR
-
-    ! Local variables
-    integer :: NOINSTANCESOR1           ! Test value
-    integer :: NOSURFSOR1               ! Test value
-
-    integer :: MESSAGETYPE
-    character ( len=132 ) :: NAME
-
-    ! Executable code
-    messageType = MLSMSG_Error
-    if ( present ( noError ) ) then
-      if ( noError ) messageType = MLSMSG_Warning
-    end if
-
-    ! Now check the integrity of the template
-    if ( qty%coherent ) then
-      noInstancesOr1 = 1
-    else
-      noInstancesOr1 = qty%noInstances
-    end if
-
-    if ( qty%stacked ) then
-      noSurfsOr1 = 1
-    else
-      noSurfsOr1 = qty%noSurfs
-    end if
-
-    if ( qty%name > 0 ) then
-      call myGetString ( qty%name, name, strip=.true. )
-    else
-      name = '<no name>'
-    end if
-
-    CheckIntegrity_QuantityTemplate = .true.
-
-    ! Check the instances / overlap stuff
-    if ( qty%noInstances < 0 ) then
-      call MLSMessage ( messageType, ModuleName, &
-        & 'Bad noInstances for quantity template '//trim(name) )
-      CheckIntegrity_QuantityTemplate = .false.
-    end if
-
-    if ( ( qty%noInstancesLowerOverlap < 0 ) .or. &
-      &  ( qty%noInstancesLowerOverlap > qty%noInstances ) ) then
-      call MLSMessage ( messageType, ModuleName, &
-        & 'Inappropriate noInstancesLowerOverlap for quantity template '//trim(name) )
-      CheckIntegrity_QuantityTemplate = .false.
-    end if
-
-    if ( ( qty%noInstancesUpperOverlap < 0 ) .or. &
-      &  ( qty%noInstancesUpperOverlap > qty%noInstances ) ) then
-      call MLSMessage ( messageType, ModuleName, &
-        & 'Inappropriate noInstancesUpperOverlap for quantity template '//trim(name) )
-      CheckIntegrity_QuantityTemplate = .false.
-    end if
-
-    if ( qty%noInstancesLowerOverlap + qty%noInstancesUpperOverlap > &
-      & qty%noInstances ) then
-      call MLSMessage ( messageType, ModuleName, &
-        & 'Too much overlap for quantity template '//trim(name) )
-      CheckIntegrity_QuantityTemplate = .false.
-    end if
-
-    ! Check the surfaces stuff
-    if ( qty%noSurfs < 0 ) then
-      call MLSMessage ( messageType, ModuleName, &
-        & 'Bad noSurfs for quantity template '//trim(name) )
-      CheckIntegrity_QuantityTemplate = .false.
-    end if
-
-    ! Check the channels stuff
-    if ( qty%noChans < 0 ) then
-      call MLSMessage ( messageType, ModuleName, &
-        & 'Bad noChans for quantity template '//trim(name) )
-      CheckIntegrity_QuantityTemplate = .false.
-    end if
-
-    ! Check the instanceLen
-    if ( qty%regular .and. &
-      & qty%InstanceLen /= qty%noSurfs * qty%noChans ) then
-      call MLSMessage ( messageType, ModuleName, &
-        & 'The quantity template '//trim(name)//' does not have the right instanceLen' )
-      CheckIntegrity_QuantityTemplate = .false.
-    end if
-
-    ! Check the arrays are associated.  Note these have to be errors, as later
-    ! tests will fail otherwise.
-    if ( .not. associated ( qty%surfs ) ) then
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'The quantity template '//trim(name)// ' does not have surfs associated' )
-      CheckIntegrity_QuantityTemplate = .false.
-    end if
-
-    if ( .not. associated ( qty%phi ) ) then
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'The quantity template '//trim(name)// ' does not have phi associated' )
-      CheckIntegrity_QuantityTemplate = .false.
-    end if
-
-    if ( .not. associated ( qty%geodLat ) ) then
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'The quantity template '//trim(name)// ' does not have geodLat associated' )
-      CheckIntegrity_QuantityTemplate = .false.
-    end if
-    if ( .not. associated ( qty%lon ) ) then
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'The quantity template '//trim(name)// ' does not have lon associated' )
-      CheckIntegrity_QuantityTemplate = .false.
-    end if
-    if ( .not. associated ( qty%time ) ) then
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'The quantity template '//trim(name)// ' does not have time associated' )
-      CheckIntegrity_QuantityTemplate = .false.
-    end if
-    if ( .not. associated ( qty%solarTime ) ) then
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'The quantity template '//trim(name)// ' does not have solarTime associated' )
-      CheckIntegrity_QuantityTemplate = .false.
-    end if
-    if ( .not. associated ( qty%solarZenith ) ) then
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'The quantity template '//trim(name)// ' does not have solarZenith associated' )
-      CheckIntegrity_QuantityTemplate = .false.
-    end if
-    if ( .not. associated ( qty%losAngle ) ) then
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'The quantity template '//trim(name)// ' does not have losAngle associated' )
-      CheckIntegrity_QuantityTemplate = .false.
-    end if
-
-    ! Check the array lower bounds
-    if ( any ( lbound ( qty%surfs ) /= 1 ) ) then
-      call MLSMessage ( messageType, ModuleName, &
-        & 'Bad lbound for surfs array in quantity template '//trim(name) )
-      CheckIntegrity_QuantityTemplate = .false.
-    end if
-
-    if ( any ( lbound ( qty%phi ) /= 1 ) ) then
-      call MLSMessage ( messageType, ModuleName, &
-        & 'Bad lbound for phi array in quantity template '//trim(name) )
-      CheckIntegrity_QuantityTemplate = .false.
-    end if
-
-    if ( any ( lbound ( qty%geodLat ) /= 1 ) ) then
-      call MLSMessage ( messageType, ModuleName, &
-        & 'Bad lbound for geodLat array in quantity template '//trim(name) )
-      CheckIntegrity_QuantityTemplate = .false.
-    end if
-    if ( any ( lbound ( qty%lon ) /= (/1,1/) ) ) then
-      call MLSMessage ( messageType, ModuleName, &
-        & 'Bad lbound for lon array in quantity template '//trim(name) )
-      CheckIntegrity_QuantityTemplate = .false.
-    end if
-    if ( any ( lbound ( qty%time ) /= 1 ) ) then
-      call MLSMessage ( messageType, ModuleName, &
-        & 'Bad lbound for time array in quantity template '//trim(name) )
-      CheckIntegrity_QuantityTemplate = .false.
-    end if
-    if ( any ( lbound ( qty%solarTime ) /= 1 ) ) then
-      call MLSMessage ( messageType, ModuleName, &
-        & 'Bad lbound for solarTime array in quantity template '//trim(name) )
-      CheckIntegrity_QuantityTemplate = .false.
-    end if
-    if ( any ( lbound ( qty%solarZenith ) /= 1 ) ) then
-      call MLSMessage ( messageType, ModuleName, &
-        & 'Bad lbound for solarZenith array in quantity template '//trim(name) )
-      CheckIntegrity_QuantityTemplate = .false.
-    end if
-    if ( any ( lbound ( qty%losAngle ) /= 1 ) ) then
-      call MLSMessage ( messageType, ModuleName, &
-        & 'Bad lbound for losAngle array in quantity template '//trim(name) )
-      CheckIntegrity_QuantityTemplate = .false.
-    end if
-
-    ! Check the array upper bounds
-    if ( any ( ubound ( qty%surfs ) /= (/qty%noSurfs, noInstancesOr1/) ) ) then
-      call MLSMessage ( messageType, ModuleName, &
-        & 'Bad ubound for surfs array in quantity template '//trim(name) )
-      CheckIntegrity_QuantityTemplate = .false.
-    end if
-
-    if ( any ( ubound ( qty%phi ) /= (/noSurfsOr1, qty%noInstances/) ) ) then
-      call MLSMessage ( messageType, ModuleName, &
-        & 'Bad ubound for phi array in quantity template '//trim(name) )
-      CheckIntegrity_QuantityTemplate = .false.
-    end if
-
-    if ( any ( ubound ( qty%geodLat ) /= (/noSurfsOr1, qty%noInstances/) ) ) then
-      call MLSMessage ( messageType, ModuleName, &
-        & 'Bad ubound for geodLat array in quantity template '//trim(name) )
-      CheckIntegrity_QuantityTemplate = .false.
-    end if
-    if ( any ( ubound ( qty%lon ) /= (/noSurfsOr1, qty%noInstances/) ) ) then
-      call MLSMessage ( messageType, ModuleName, &
-        & 'Bad ubound for lon array in quantity template '//trim(name) )
-      CheckIntegrity_QuantityTemplate = .false.
-    end if
-    if ( any ( ubound ( qty%time ) /= (/noSurfsOr1, qty%noInstances/) ) ) then
-      call MLSMessage ( messageType, ModuleName, &
-        & 'Bad ubound for time array in quantity template '//trim(name) )
-      CheckIntegrity_QuantityTemplate = .false.
-    end if
-    if ( any ( ubound ( qty%solarTime ) /= (/noSurfsOr1, qty%noInstances/) ) ) then
-      call MLSMessage ( messageType, ModuleName, &
-        & 'Bad ubound for solarTime array in quantity template '//trim(name) )
-      CheckIntegrity_QuantityTemplate = .false.
-    end if
-    if ( any ( ubound ( qty%solarZenith ) /= (/noSurfsOr1, qty%noInstances/) ) ) then
-      call MLSMessage ( messageType, ModuleName, &
-        & 'Bad ubound for solarZenith array in quantity template '//trim(name) )
-      CheckIntegrity_QuantityTemplate = .false.
-    end if
-    if ( any ( ubound ( qty%losAngle ) /= (/noSurfsOr1, qty%noInstances/) ) ) then
-      call MLSMessage ( messageType, ModuleName, &
-        & 'Bad ubound for losAngle array in quantity template '//trim(name) )
-      CheckIntegrity_QuantityTemplate = .false.
-    end if
-
-    ! Check irregular stuff
-    if ( .not. qty%regular ) then
-      call MLSMessage ( messageType, ModuleName, &
-        & 'The quantity '//trim(name)//' appears to be irregular' )
-      CheckIntegrity_QuantityTemplate = .false.
-    end if
-
-    ! Could check channels stuff here, but not sure what to do.
-
-  end function CheckIntegrity_QuantityTemplate
 
   ! ----------------------------  CopyQuantityTemplate  -----
   subroutine CopyQuantityTemplate ( Z, A )
@@ -760,41 +539,125 @@ contains ! =====     Public Procedures     =============================
     InflateQuantityTemplateDatabase = firstNewItem
   end function InflateQuantityTemplateDatabase
 
-  ! ---------------------------------------- myDisplayString -----
-  subroutine myDisplayString ( index, advance )
-    ! Given a string index, display the string or an error message
-    use String_Table, only: How_Many_Strings
-    integer, intent(in) :: index
-    character(len=*), intent(in), optional :: advance
-
-    ! Executable code
-    if ( index < 1 ) then
-      call output ( '(string index < 1)' )
-    else if ( index > how_many_strings() ) then ! How can an integer be a NaN ?????
-      call output ( how_many_strings(), before='(string index > ', after=')' )
+  ! ----------------------------  ModifyQuantityTemplate_array   -----
+  subroutine ModifyQuantityTemplate_array  ( Z, FIELD, array, spread )
+    ! This routine modifies any field whose name matches the field
+    ! so that it takes the new values supplied by the source array
+    
+    ! Note that we assume the destination field is large enough
+    ! to accomodate the source array
+    
+    ! How would you go about changing integer or l_ -valued fields?
+    type (QuantityTemplate_T), intent(inout) :: Z
+    character(len=*), intent(in)             :: field
+    real(rv), dimension(:,:), intent(in)     :: array
+    logical, intent(in)                      :: spread
+    ! Local variables
+    integer :: n1
+    integer :: n2
+    integer, dimension(2) :: shp(2)
+    ! Executable
+    shp = shape(array)
+    if ( spread .and. shp(1) == 1 ) then
+      select case(lowercase(field))
+      case ( 'surfs' )
+        z%surfs(:,1:shp(2)) = array
+      case ( 'phi' )
+        z%phi(:,1:shp(2)) = array
+      case ( 'geodLat' )
+        z%geodLat(:,1:shp(2)) = array
+      case ( 'lon' )
+        z%lon(:,1:shp(2)) = array
+      case ( 'time' )
+        z%time(:,1:shp(2)) = array
+      case ( 'solartime' )
+        z%solartime(:,1:shp(2)) = array
+      case ( 'solarzenith' )
+        z%solarzenith(:,1:shp(2)) = array
+      case ( 'losangle' )
+        z%losangle(:,1:shp(2)) = array
+      case ( 'frequencies' )
+        z%frequencies(:) = array(1,1)
+      case default
+      end select
+    elseif ( spread .and. shp(2) == 1 ) then
+      select case(lowercase(field))
+      case ( 'surfs' )
+        z%surfs(1:shp(1),:) = array
+      case ( 'phi' )
+        z%phi(1:shp(1),:) = array
+      case ( 'geodLat' )
+        z%geodLat(1:shp(1),:) = array
+      case ( 'lon' )
+        z%lon(1:shp(1),:) = array
+      case ( 'time' )
+        z%time(1:shp(1),:) = array
+      case ( 'solartime' )
+        z%solartime(1:shp(1),:) = array
+      case ( 'solarzenith' )
+        z%solarzenith(1:shp(1),:) = array
+      case ( 'losangle' )
+        z%losangle(1:shp(1),:) = array
+      case ( 'frequencies' )
+        z%frequencies(:) = array(1,1)
+      case default
+      end select
     else
-      call display_string ( index, advance )
-    end if
-  end subroutine myDisplayString
+      select case(lowercase(field))
+      case ( 'surfs' )
+        z%surfs(1:shp(1),1:shp(2)) = array
+      case ( 'phi' )
+        z%phi(1:shp(1),1:shp(2)) = array
+      case ( 'geodLat' )
+        z%geodLat(1:shp(1),1:shp(2)) = array
+      case ( 'lon' )
+        z%lon(1:shp(1),1:shp(2)) = array
+      case ( 'time' )
+        z%time(1:shp(1),1:shp(2)) = array
+      case ( 'solartime' )
+        z%solartime(1:shp(1),1:shp(2)) = array
+      case ( 'solarzenith' )
+        z%solarzenith(1:shp(1),1:shp(2)) = array
+      case ( 'losangle' )
+        z%losangle(1:shp(1),1:shp(2)) = array
+      case ( 'frequencies' )
+        z%frequencies(1:shp(1)) = array(:,1)
+      case default
+      end select
+    endif
+  end subroutine ModifyQuantityTemplate_array
 
-  ! ---------------------------------------- myGetString -----
-  subroutine myGetString ( index, what, strip )
-    ! Given a string index, Get the string or an error message
-    use String_Table, only: How_Many_Strings
-    integer, intent(in)           :: index
-    character(len=*), intent(out) :: what
-    logical, intent(in), optional :: strip
-
-    ! Executable code
-    if ( index < 1 ) then
-      what = '(string index < 1)'
-    else if ( index > how_many_strings() ) then
-      call writeIntsToChars( how_many_strings(), what )
-      what = '(string index >' // trim(what) // ')'
-    else
-      call get_string ( index, what, strip )
-    end if
-  end subroutine myGetString
+  ! ----------------------------  ModifyQuantityTemplate_sca   -----
+  subroutine ModifyQuantityTemplate_sca  ( Z, FIELD, NEWVALUE )
+    ! This routine modifies any field whose name matches the field
+    ! so that it takes the new value
+    
+    ! How would you go about changing integer or l_ -valued fields?
+    type (QuantityTemplate_T), intent(inout) :: Z
+    character(len=*), intent(in)             :: field
+    real(rv), intent(in)                     :: newvalue
+    select case(lowercase(field))
+    case ( 'surfs' )
+      z%surfs = newvalue
+    case ( 'phi' )
+      z%phi = newvalue
+    case ( 'geodLat' )
+      z%geodLat = newvalue
+    case ( 'lon' )
+      z%lon = newvalue
+    case ( 'time' )
+      z%time = newvalue
+    case ( 'solartime' )
+      z%solartime = newvalue
+    case ( 'solarzenith' )
+      z%solarzenith = newvalue
+    case ( 'losangle' )
+      z%losangle = newvalue
+    case ( 'frequencies' )
+      z%frequencies = newvalue
+    case default
+    end select
+  end subroutine ModifyQuantityTemplate_sca
 
   ! ----------------------------------------NullifyQuantityTemplate -----
   subroutine NullifyQuantityTemplate ( IntentionallyNotUsed )
@@ -978,6 +841,276 @@ contains ! =====     Public Procedures     =============================
     ! if ( index(switches, 'qtmp') > 0 ) call dump(qty, details=0, noL2CF=.true.)
   end subroutine SetupNewQuantityTemplate
 
+  ! --------- Private procedures ---
+  ! ---------------------------- CheckIntegrity_QuantityTemplate -------
+  logical function CheckIntegrity_QuantityTemplate ( qty, noError )
+    type (QuantityTemplate_T), intent(in) :: QTY
+    logical, intent(in), optional :: NOERROR
+
+    ! Local variables
+    integer :: NOINSTANCESOR1           ! Test value
+    integer :: NOSURFSOR1               ! Test value
+
+    integer :: MESSAGETYPE
+    character ( len=132 ) :: NAME
+
+    ! Executable code
+    messageType = MLSMSG_Error
+    if ( present ( noError ) ) then
+      if ( noError ) messageType = MLSMSG_Warning
+    end if
+
+    ! Now check the integrity of the template
+    if ( qty%coherent ) then
+      noInstancesOr1 = 1
+    else
+      noInstancesOr1 = qty%noInstances
+    end if
+
+    if ( qty%stacked ) then
+      noSurfsOr1 = 1
+    else
+      noSurfsOr1 = qty%noSurfs
+    end if
+
+    if ( qty%name > 0 ) then
+      call myGetString ( qty%name, name, strip=.true. )
+    else
+      name = '<no name>'
+    end if
+
+    CheckIntegrity_QuantityTemplate = .true.
+
+    ! Check the instances / overlap stuff
+    if ( qty%noInstances < 0 ) then
+      call MLSMessage ( messageType, ModuleName, &
+        & 'Bad noInstances for quantity template '//trim(name) )
+      CheckIntegrity_QuantityTemplate = .false.
+    end if
+
+    if ( ( qty%noInstancesLowerOverlap < 0 ) .or. &
+      &  ( qty%noInstancesLowerOverlap > qty%noInstances ) ) then
+      call MLSMessage ( messageType, ModuleName, &
+        & 'Inappropriate noInstancesLowerOverlap for quantity template '//trim(name) )
+      CheckIntegrity_QuantityTemplate = .false.
+    end if
+
+    if ( ( qty%noInstancesUpperOverlap < 0 ) .or. &
+      &  ( qty%noInstancesUpperOverlap > qty%noInstances ) ) then
+      call MLSMessage ( messageType, ModuleName, &
+        & 'Inappropriate noInstancesUpperOverlap for quantity template '//trim(name) )
+      CheckIntegrity_QuantityTemplate = .false.
+    end if
+
+    if ( qty%noInstancesLowerOverlap + qty%noInstancesUpperOverlap > &
+      & qty%noInstances ) then
+      call MLSMessage ( messageType, ModuleName, &
+        & 'Too much overlap for quantity template '//trim(name) )
+      CheckIntegrity_QuantityTemplate = .false.
+    end if
+
+    ! Check the surfaces stuff
+    if ( qty%noSurfs < 0 ) then
+      call MLSMessage ( messageType, ModuleName, &
+        & 'Bad noSurfs for quantity template '//trim(name) )
+      CheckIntegrity_QuantityTemplate = .false.
+    end if
+
+    ! Check the channels stuff
+    if ( qty%noChans < 0 ) then
+      call MLSMessage ( messageType, ModuleName, &
+        & 'Bad noChans for quantity template '//trim(name) )
+      CheckIntegrity_QuantityTemplate = .false.
+    end if
+
+    ! Check the instanceLen
+    if ( qty%regular .and. &
+      & qty%InstanceLen /= qty%noSurfs * qty%noChans ) then
+      call MLSMessage ( messageType, ModuleName, &
+        & 'The quantity template '//trim(name)//' does not have the right instanceLen' )
+      CheckIntegrity_QuantityTemplate = .false.
+    end if
+
+    ! Check the arrays are associated.  Note these have to be errors, as later
+    ! tests will fail otherwise.
+    if ( .not. associated ( qty%surfs ) ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'The quantity template '//trim(name)// ' does not have surfs associated' )
+      CheckIntegrity_QuantityTemplate = .false.
+    end if
+
+    if ( .not. associated ( qty%phi ) ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'The quantity template '//trim(name)// ' does not have phi associated' )
+      CheckIntegrity_QuantityTemplate = .false.
+    end if
+
+    if ( .not. associated ( qty%geodLat ) ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'The quantity template '//trim(name)// ' does not have geodLat associated' )
+      CheckIntegrity_QuantityTemplate = .false.
+    end if
+    if ( .not. associated ( qty%lon ) ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'The quantity template '//trim(name)// ' does not have lon associated' )
+      CheckIntegrity_QuantityTemplate = .false.
+    end if
+    if ( .not. associated ( qty%time ) ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'The quantity template '//trim(name)// ' does not have time associated' )
+      CheckIntegrity_QuantityTemplate = .false.
+    end if
+    if ( .not. associated ( qty%solarTime ) ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'The quantity template '//trim(name)// ' does not have solarTime associated' )
+      CheckIntegrity_QuantityTemplate = .false.
+    end if
+    if ( .not. associated ( qty%solarZenith ) ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'The quantity template '//trim(name)// ' does not have solarZenith associated' )
+      CheckIntegrity_QuantityTemplate = .false.
+    end if
+    if ( .not. associated ( qty%losAngle ) ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'The quantity template '//trim(name)// ' does not have losAngle associated' )
+      CheckIntegrity_QuantityTemplate = .false.
+    end if
+
+    ! Check the array lower bounds
+    if ( any ( lbound ( qty%surfs ) /= 1 ) ) then
+      call MLSMessage ( messageType, ModuleName, &
+        & 'Bad lbound for surfs array in quantity template '//trim(name) )
+      CheckIntegrity_QuantityTemplate = .false.
+    end if
+
+    if ( any ( lbound ( qty%phi ) /= 1 ) ) then
+      call MLSMessage ( messageType, ModuleName, &
+        & 'Bad lbound for phi array in quantity template '//trim(name) )
+      CheckIntegrity_QuantityTemplate = .false.
+    end if
+
+    if ( any ( lbound ( qty%geodLat ) /= 1 ) ) then
+      call MLSMessage ( messageType, ModuleName, &
+        & 'Bad lbound for geodLat array in quantity template '//trim(name) )
+      CheckIntegrity_QuantityTemplate = .false.
+    end if
+    if ( any ( lbound ( qty%lon ) /= (/1,1/) ) ) then
+      call MLSMessage ( messageType, ModuleName, &
+        & 'Bad lbound for lon array in quantity template '//trim(name) )
+      CheckIntegrity_QuantityTemplate = .false.
+    end if
+    if ( any ( lbound ( qty%time ) /= 1 ) ) then
+      call MLSMessage ( messageType, ModuleName, &
+        & 'Bad lbound for time array in quantity template '//trim(name) )
+      CheckIntegrity_QuantityTemplate = .false.
+    end if
+    if ( any ( lbound ( qty%solarTime ) /= 1 ) ) then
+      call MLSMessage ( messageType, ModuleName, &
+        & 'Bad lbound for solarTime array in quantity template '//trim(name) )
+      CheckIntegrity_QuantityTemplate = .false.
+    end if
+    if ( any ( lbound ( qty%solarZenith ) /= 1 ) ) then
+      call MLSMessage ( messageType, ModuleName, &
+        & 'Bad lbound for solarZenith array in quantity template '//trim(name) )
+      CheckIntegrity_QuantityTemplate = .false.
+    end if
+    if ( any ( lbound ( qty%losAngle ) /= 1 ) ) then
+      call MLSMessage ( messageType, ModuleName, &
+        & 'Bad lbound for losAngle array in quantity template '//trim(name) )
+      CheckIntegrity_QuantityTemplate = .false.
+    end if
+
+    ! Check the array upper bounds
+    if ( any ( ubound ( qty%surfs ) /= (/qty%noSurfs, noInstancesOr1/) ) ) then
+      call MLSMessage ( messageType, ModuleName, &
+        & 'Bad ubound for surfs array in quantity template '//trim(name) )
+      CheckIntegrity_QuantityTemplate = .false.
+    end if
+
+    if ( any ( ubound ( qty%phi ) /= (/noSurfsOr1, qty%noInstances/) ) ) then
+      call MLSMessage ( messageType, ModuleName, &
+        & 'Bad ubound for phi array in quantity template '//trim(name) )
+      CheckIntegrity_QuantityTemplate = .false.
+    end if
+
+    if ( any ( ubound ( qty%geodLat ) /= (/noSurfsOr1, qty%noInstances/) ) ) then
+      call MLSMessage ( messageType, ModuleName, &
+        & 'Bad ubound for geodLat array in quantity template '//trim(name) )
+      CheckIntegrity_QuantityTemplate = .false.
+    end if
+    if ( any ( ubound ( qty%lon ) /= (/noSurfsOr1, qty%noInstances/) ) ) then
+      call MLSMessage ( messageType, ModuleName, &
+        & 'Bad ubound for lon array in quantity template '//trim(name) )
+      CheckIntegrity_QuantityTemplate = .false.
+    end if
+    if ( any ( ubound ( qty%time ) /= (/noSurfsOr1, qty%noInstances/) ) ) then
+      call MLSMessage ( messageType, ModuleName, &
+        & 'Bad ubound for time array in quantity template '//trim(name) )
+      CheckIntegrity_QuantityTemplate = .false.
+    end if
+    if ( any ( ubound ( qty%solarTime ) /= (/noSurfsOr1, qty%noInstances/) ) ) then
+      call MLSMessage ( messageType, ModuleName, &
+        & 'Bad ubound for solarTime array in quantity template '//trim(name) )
+      CheckIntegrity_QuantityTemplate = .false.
+    end if
+    if ( any ( ubound ( qty%solarZenith ) /= (/noSurfsOr1, qty%noInstances/) ) ) then
+      call MLSMessage ( messageType, ModuleName, &
+        & 'Bad ubound for solarZenith array in quantity template '//trim(name) )
+      CheckIntegrity_QuantityTemplate = .false.
+    end if
+    if ( any ( ubound ( qty%losAngle ) /= (/noSurfsOr1, qty%noInstances/) ) ) then
+      call MLSMessage ( messageType, ModuleName, &
+        & 'Bad ubound for losAngle array in quantity template '//trim(name) )
+      CheckIntegrity_QuantityTemplate = .false.
+    end if
+
+    ! Check irregular stuff
+    if ( .not. qty%regular ) then
+      call MLSMessage ( messageType, ModuleName, &
+        & 'The quantity '//trim(name)//' appears to be irregular' )
+      CheckIntegrity_QuantityTemplate = .false.
+    end if
+
+    ! Could check channels stuff here, but not sure what to do.
+
+  end function CheckIntegrity_QuantityTemplate
+
+  ! ---------------------------------------- myDisplayString -----
+  subroutine myDisplayString ( index, advance )
+    ! Given a string index, display the string or an error message
+    use String_Table, only: How_Many_Strings
+    integer, intent(in) :: index
+    character(len=*), intent(in), optional :: advance
+
+    ! Executable code
+    if ( index < 1 ) then
+      call output ( '(string index < 1)' )
+    else if ( index > how_many_strings() ) then ! How can an integer be a NaN ?????
+      call output ( how_many_strings(), before='(string index > ', after=')' )
+    else
+      call display_string ( index, advance )
+    end if
+  end subroutine myDisplayString
+
+  ! ---------------------------------------- myGetString -----
+  subroutine myGetString ( index, what, strip )
+    ! Given a string index, Get the string or an error message
+    use String_Table, only: How_Many_Strings
+    integer, intent(in)           :: index
+    character(len=*), intent(out) :: what
+    logical, intent(in), optional :: strip
+
+    ! Executable code
+    if ( index < 1 ) then
+      what = '(string index < 1)'
+    else if ( index > how_many_strings() ) then
+      call writeIntsToChars( how_many_strings(), what )
+      what = '(string index >' // trim(what) // ')'
+    else
+      call get_string ( index, what, strip )
+    end if
+  end subroutine myGetString
+
 !=============================================================================
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -994,6 +1127,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.59  2011/02/18 17:54:49  pwagner
+! Prevented crashes when run w/o l2cf
+!
 ! Revision 2.58  2010/09/25 01:16:35  vsnyder
 ! Add ChanInds component, some cannonball polishing
 !
