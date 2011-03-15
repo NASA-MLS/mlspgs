@@ -267,13 +267,14 @@ contains ! ========= Public Procedures ============================
     use Init_Tables_Module, only: F_ADDITIONAL, F_CHANNELS, F_HEIGHT, &
       & F_IGNORE, F_INSTANCES, &
       & F_MASK, F_MAXVALUE, F_MINVALUE, F_OPTICALDEPTH, F_OPTICALDEPTHCUTOFF, &
-      & F_PTANQUANTITY,  F_QUANTITY, F_RESET, F_SURFACE
+      & F_PTANQUANTITY,  F_QUANTITY, F_RESET, F_REVERSE, F_SURFACE
     use Init_Tables_Module, only: L_OPTICALDEPTH, L_NONE, &
       & L_PRESSURE, L_RADIANCE, L_ZETA
     use Tree_Types, only: N_COLON_LESS, N_LESS_COLON, &
       & N_LESS_COLON_LESS
-    use VectorsModule, only: GETVECTORQTYBYTEMPLATEINDEX, SETMASK, VECTORVALUE_T, &
-      & VECTOR_T, CLEARMASK, CREATEMASK, M_LINALG, DUMPMASK
+    use VectorsModule, only: M_LINALG, VECTOR_T, VECTORVALUE_T, &
+      & CLEARMASK, CREATEMASK, DUMPMASK, &
+      & GETVECTORQTYBYTEMPLATEINDEX, REVERSEMASK, SETMASK
     use Tree, only: NSONS, SUBTREE, DECORATION, NODE_ID
     use MLSStringLists, only: CATLISTS, EXPANDSTRINGRANGE, SWITCHDETAIL
     use MoreTree, only: GET_FIELD_ID, GET_BOOLEAN
@@ -333,6 +334,7 @@ contains ! ========= Public Procedures ============================
     logical :: ADDITIONAL             ! Flag
     logical :: DOTHISCHANNEL          ! Flag
     logical :: DOTHISHEIGHT           ! Flag
+    logical :: REVERSE                ! Flag
     character(len=1), dimension(:), pointer :: ORIGINALMASK
 
     ! Executable code
@@ -341,6 +343,7 @@ contains ! ========= Public Procedures ============================
     ignore = .false.
     reset = .false.
     additional = .false.
+    reverse = .false.
     maskBit = m_linalg
     minUnit = 0
     maxUnit = 0
@@ -393,6 +396,8 @@ contains ! ========= Public Procedures ============================
         surfNode = son
       case ( f_additional )
         additional = Get_Boolean ( son )
+      case ( f_reverse )
+        reverse = Get_Boolean ( son )
       case default
         ! Shouldn't get here if the type checker worked
       end select
@@ -749,6 +754,10 @@ contains ! ========= Public Procedures ============================
           end do                      ! Channel loop
         end do                        ! Height entries in l2cf
       end if                          ! Got a height entry
+
+      ! If the reverse flag is set, reverse the mask
+      if ( reverse ) &
+        & call ReverseMask( qty%mask(:,instance), what=maskBit )
 
       ! If this is supposed to be an 'additional' mask, merge in the
       ! original value
@@ -1233,6 +1242,9 @@ contains ! ========= Public Procedures ============================
 end module SubsetModule
  
 ! $Log$
+! Revision 2.21  2011/03/15 22:54:18  pwagner
+! /reverse flag reverses which elements are masked by Subset command
+!
 ! Revision 2.20  2010/04/28 16:24:43  pwagner
 ! May specify instances range in Subset
 !
