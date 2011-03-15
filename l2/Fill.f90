@@ -139,7 +139,7 @@ contains ! =====     Public Procedures     =============================
       & L_L1B, L_L2GP, L_L2AUX, &
       & L_LOSVEL, L_LSGLOBAL, L_LSLOCAL, L_LSWEIGHTED, &
       & L_MAGAZEL, L_MAGNETICMODEL, &
-      & L_MANIPULATE, L_MEAN, L_MOLCM2, &
+      & L_MANIPULATE, L_MEAN, L_MODIFYTEMPLATE, L_MOLCM2, &
       & L_NEGATIVEPRECISION, L_NONE, &
       & L_NORADSPERMIF, L_OFFSETRADIANCE, &
       & L_PHASETIMING, L_PHITAN, &
@@ -192,7 +192,7 @@ contains ! =====     Public Procedures     =============================
     use OUTPUT_M, only: BLANKS, OUTPUT, &
       & revertoutput, switchOutput
     use PFAData_m, only: Flush_PFAData
-    use QuantityTemplates, only: QuantityTemplate_T
+    use QuantityTemplates, only: QuantityTemplate_T, ModifyQuantityTemplate
     use readAPriori, only: APrioriFiles
     use SnoopMLSL2, only: SNOOP
     use String_Table, only: get_string
@@ -2157,6 +2157,23 @@ contains ! =====     Public Procedures     =============================
           call UsingMagneticModel ( quantity, gphQuantity, key )
         end if
 
+      case ( l_modifyTemplate )
+        ! override qty template fileds: time, phi, longitude, etc.
+        if ( .not. got ( f_manipulation ) ) &
+          & call Announce_error ( key, no_Error_Code,'manipulation not supplied' )
+        if ( .not. got ( f_c ) .and. .not. got( f_sourceQuantity ) ) &
+          & call Announce_error ( key, no_Error_Code, &
+          & 'Neither sourceQuantity nor c for new value(s) supplied' )
+        call get_string ( manipulation, GLStr, strip=.true. )
+        if ( got( f_sourceQuantity ) ) then
+          sourceQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(sourceVectorIndex), sourceQuantityIndex )
+          call ModifyQuantityTemplate  ( quantity%template, GLStr, &
+            & sourceQuantity%values, spreadFlag )
+        else
+          call ModifyQuantityTemplate  ( quantity%template, GLStr, c )
+        endif
+
       case ( l_negativePrecision ) ! ------------ Set output SD -ve wrt apriori
         if ( .not. got ( f_aprioriPrecision ) ) &
           & call Announce_Error ( key, No_Error_code, &
@@ -2630,6 +2647,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.390  2011/03/15 22:51:58  pwagner
+! May now modify quantity template fields with fill method
+!
 ! Revision 2.389  2010/11/20 00:01:14  pwagner
 ! May specifiy surfaces gap beyond which to zero out in Streamline
 !
