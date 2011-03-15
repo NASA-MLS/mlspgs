@@ -349,6 +349,7 @@ resolution
 retrievalExtra
 retrievalForwardModel
 retrievalIn
+reverse
 rhiPrecisionQuantity
 rhiQuantity
 rhsOut
@@ -483,6 +484,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.205  2011/03/15 22:54:18  pwagner
+# /reverse flag reverses which elements are masked by Subset command
+#
 # Revision 2.204  2011/03/10 21:38:34  pwagner
 # May now specify time in explicit hGrids
 #
