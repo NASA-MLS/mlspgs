@@ -44,16 +44,16 @@
       call FindUnique( reshape( array, (/ product(shape(array)) /) ), &
         & elements, nUnique, counts )
       if ( nUnique < 2 ) then
-        ! call output( 'Every value is ', advance='no' )
-        ! call output( elements(1), advance='yes' )
+        call output( 'Every value is ', advance='no' )
+        call output( elements(1), advance='yes' )
       else
-        ! call output( '    value             counts', advance='yes' )
+        call output( '    value             counts', advance='yes' )
         do j=1, nUnique
-          ! call output( j )
+          call output( j )
           call blanks( 3 )
-          ! call output( elements(j) )
+          call output( elements(j) )
           call blanks( 3 )
-          ! call output( counts(j), advance='yes' )
+          call output( counts(j), advance='yes' )
         enddo
       endif
       if ( uniqueonly ( options ) ) return
@@ -108,11 +108,12 @@
       call say_fill ( (/ i-1, size(array,1), j-MyWidth, size(array,2) /), &
         & numZeroRows, myFillValue )
     end if
-    call say_fill ( (/ i-5, size(array,1), j-1, size(array,2) /), &
-      & numZeroRows, myFillValue )
     call theDumpEnds
 !   end subroutine DUMP_2D_INTEGER
 ! $Log$
+! Revision 2.5  2011/03/15 23:58:26  pwagner
+! Fixed bugs added with last change; also bug inherited from dump_0 parents
+!
 ! Revision 2.4  2011/03/08 00:03:46  pwagner
 ! Skip printing row of zeros only if multiple
 !
