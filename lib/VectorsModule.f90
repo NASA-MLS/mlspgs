@@ -82,6 +82,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 ! NullifyVector
 ! PowVector                    X = X ** Power element-by-element
 ! ReciprocateVector            Y = A / X if Y is present, else X = A / X -- scalar A
+! ReverseMask                  Reverse bits of MASK according to TO_CLEAR
 ! RmVectorFromDatabase         Removes a vector from a database of such vectors
 ! ScaleVector                  Y = A*X if Y is present, else X = A*X.
 ! SetMask                      Set bits of MASK indexed by elements of TO_SET
@@ -101,7 +102,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   use MLSSets, only: FINDFIRST, FINDUNIQUE
   use MLSSignals_m, only: MODULES, SIGNALS, GETSIGNALNAME
   use Molecules, only: L_EXTINCTION
-  use OUTPUT_M, only: NEWLINE, OUTPUT, outputNamedValue
+  use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
   use QuantityTemplates, only: QuantityTemplate_T, CheckIntegrity, Dump, &
     & NullifyQuantityTemplate
   use STRING_TABLE, only: DISPLAY_STRING, GET_STRING, STRING_LENGTH
@@ -133,11 +134,13 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   public :: GetVectorQuantity, GetVectorQuantityByType
   public :: GetVectorQtyByTemplateIndex, GetVectorQuantityIndexByName
   public :: GetVectorQuantityIndexByType, InflateVectorDatabase
-  public :: InflateVectorTemplateDatabase, IsVectorQtyMasked, MultiplyVectors
+  public :: InflateVectorTemplateDatabase, IsVectorQtyMasked
+  public :: MaskVectorQty, MultiplyVectors
   public :: NullifyVectorTemplate, NullifyVectorValue, NullifyVector, PowVector
   public :: QuantityTemplate_T ! for full F95 compatibility
-  public :: ReciprocateVector, RmVectorFromDatabase, ScaleVector, SetMask, SubtractFromVector
-  public :: SubtractVectors, ValidateVectorQuantity, MaskVectorQty
+  public :: ReciprocateVector, ReverseMask, RmVectorFromDatabase
+  public :: ScaleVector, SetMask, SubtractFromVector
+  public :: SubtractVectors, ValidateVectorQuantity
   ! Types
   public :: VectorTemplate_T, VectorValue_T, Vector_T
   ! Parameters
@@ -1387,7 +1390,9 @@ contains ! =====     Public Procedures     =============================
     integer :: j                        ! Element index
     integer :: myDetails
     integer :: n
+    integer :: nUnique
     integer :: s                        ! Surface index
+    integer, dimension(1000) :: uniqueVals
     integer :: w                        ! Line width used so far
     ! Executable
     myDetails = 0
@@ -1405,6 +1410,16 @@ contains ! =====     Public Procedures     =============================
     elseif( myDetails < 0 ) then
       n = count( isBitSet( ichar(vectorQuantity%mask), bitNum ) )
       call outputNamedValue( 'Num mask bits set: ', n )
+    elseif( myDetails == 0 ) then
+      call dump ( ichar(vectorQuantity%mask), name='  Mask =', &
+        & format='(z3.2)', width = 20 )
+      call FindUnique( &
+      & reshape( ichar(vectorQuantity%mask), (/ size(vectorQuantity%mask,1)*size(vectorQuantity%mask,2) /) ), &
+      & uniqueVals, nUnique )
+      call outputNamedValue(' Number unique values', nUnique )
+      do i=1, nUnique
+        call DumpBitNames( uniqueVals(i), MaskBitNames )
+      enddo
     else
       call newLine
       do i = 1, vectorQuantity%template%noInstances
@@ -2262,6 +2277,42 @@ contains ! =====     Public Procedures     =============================
     end do
   end subroutine ReciprocateVector
 
+  ! --------------------------------------------------  ReverseMask  -----
+  subroutine ReverseMask ( MASK, TO_Reverse, WHAT )
+  ! Reverse bits of MASK indexed by elements of TO_Reverse.  Numbering of mask
+  ! elements starts at one, not zero!  If TO_Reverse is absent, Reverse all of
+  ! the bits of MASK.  If WHAT is absent, Reverse all bits.  If WHAT is
+  ! present, Reverse only bits of MASK that correspond to "one" bits of WHAT.
+  !
+  ! In case it is not obvious, reverse turns "1" to "0", and "0" to "1"
+  ! Effect: say the linAlg bits were set for elements {1,3,8,9} of a 10-element
+  ! MASK. When we reverseMask the linAlg bits will be set for {2,4,5,6,7,10}
+  ! All other bits and all other elements will be left unset
+    character, intent(inout), dimension(:) :: MASK
+    integer, intent(in), dimension(:), optional :: TO_Reverse
+    integer, intent(in), optional :: WHAT
+    integer :: MyWhat
+    integer :: test
+    logical, parameter :: DeeBug = .false.
+    MyWhat = M_linAlg
+    if ( present(what) ) myWhat = what
+    if ( DeeBug ) then
+      call output( 'Illustration: ' )
+      test = 0
+      call output (' effect on 0 is ')
+      call output( ieor(test, myWhat ) )
+      call blanks( 3 )
+      test = 1
+      call output (' effect on 1 is ')
+      call output( ieor(test, myWhat ) )
+    endif
+    if ( present(to_Reverse) ) then
+      mask(to_Reverse) = char(ieor(ichar(mask(to_Reverse)), myWhat))
+    else
+      mask = char(ieor(ichar(mask), myWhat))
+    end if
+  end subroutine ReverseMask
+
   ! ----------------------------------------  RmVectorFromDatabase  -----
   integer function RmVectorFromDatabase ( DATABASE, ITEM )
 
@@ -2659,6 +2710,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.151  2011/03/02 02:15:25  vsnyder
+! Make QuantityTemplate_t public, for F95 compatibility
+!
 ! Revision 2.150  2010/05/24 14:48:04  honghanh
 ! Add comment to GetVectorQtyByTemplateIndex
 !
