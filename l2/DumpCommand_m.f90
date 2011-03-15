@@ -641,10 +641,10 @@ contains
     use MLSFiles, only: DumpMLSFile => Dump, GetMLSFileByName
     use MLSL2Options, only: NORMAL_EXIT_STATUS, RUNTIMEVALUES
     use MLSMessageModule, only: MLSMessage, MLSMessageCalls, MLSMessageExit, &
-      & MLSMSG_CRASH, MLSMSG_ERROR
+      & MLSMSG_CRASH, MLSMSG_ERROR, MLSMSG_WARNING
     use MLSSets, only: FindFirst
     use MLSSignals_m, only: Dump, Signals
-    use MLSStrings, only: lowerCase
+    use MLSStrings, only: INDEXES, LOWERCASE
     use MLSStringLists, only: BooleanValue, SWITCHDETAIL
     use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
     use output_m, only: output, outputNamedValue
@@ -1091,13 +1091,23 @@ contains
             call dumpQuantityMask ( GetVectorQtyByTemplateIndex( &
               & vectors(vectorIndex), quantityIndex), details=details )
           else
+            ! Special options handling
+            ! 'c' means clean
+            ! '0' menas dump template
+            ! '1' means dump values
+            ! '2' means dump mask
+            
             if ( clean ) optionsString = trim(optionsString) // 'c'
-            if ( index(optionsString, '1') > 0 ) then
-              call dump ( qty1%values, 'quantity values', &
-                & options=optionsString )
-            else
+            if ( .not. any(indexes(optionsString, (/'0','1','2'/)) > 0 ) ) then
               call dump ( qty1, details=details, &
                 & vector=vectors(vectorIndex), options=optionsString )
+            elseif ( index(optionsString, '1') > 0 ) then
+              call dump ( qty1%values, 'quantity values', &
+                & options=optionsString )
+            elseif ( index(optionsString, '2') > 0 ) then
+              call dump ( qty1%template, details=details )
+            else
+              call dumpQuantityMask( qty1, details=0 )
             end if
           end if
         end do
@@ -1395,6 +1405,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.57  2011/03/15 23:02:45  pwagner
+! Dump qty with options 0, 1, or 2 to choose template, values, or mask
+!
 ! Revision 2.56  2011/03/08 18:28:06  pwagner
 ! May optionally diff, dump just values of vectorqtys
 !
