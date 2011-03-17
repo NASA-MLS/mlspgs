@@ -1,0 +1,197 @@
+\section{Mixing Ratio First Derivatives}
+\label{sec:Mixing_Ratio_Derivatives}
+
+For $k$ and $\tilde{k}$ state vector components (mixing ratio species), $x = f_q^k$ and $y = f_{\tilde{q}}^{\tilde{k}}$ above.  Here, $q$ and $\tilde{q}$ are breakpoints where $f^k$ and $f^{\tilde{k}}$ are known.  Note that since $\displaystyle \frac{\partial \triangle B_i}{\partial f_q^k} = 0$ for all $k$ and $q$, we have
+\begin{eqnarray}
+\frac{\partial I(\vx)}{\partial f_q^k} &=& - \sum_{i=1}^{2N} \triangle B_i \mathcal{W}_{i, q}^k \mathcal{T}_i,
+\label{eqn:Mixing_Ratio_First_Derivative}
+\end{eqnarray}
+where
+\begin{eqnarray*}
+\mathcal{W}_{1, q}^k &=& 0, \\
+\mathcal{W}_{i, q}^k &=& \mathcal{W}_{i-1, q}^k + \frac{\partial \triangle \delta_{i \rightarrow i-1}}{\partial f_q^k}.
+\end{eqnarray*}
+
+\subsubsection*{Opacity Derivatives}
+
+The species incremental opacity integral is
+\begin{eqnarray*}
+\triangle \delta_{i \rightarrow i-1}^k = \int_{\zeta_i}^{\zeta_{i-1}} F^{k}(\zeta) \, \beta^k \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \, d\zeta.
+\end{eqnarray*}
+{\bf Linear basis:} Mixing ratios are given by
+\begin{eqnarray*}
+F^{k}(\zeta) &=& \sum_{q=1}^Q f_q^{k} \eta_q^k(\zeta),
+\end{eqnarray*}
+and
+\begin{eqnarray*}
+\frac{\partial F^{k}}{\partial f_q^{k}} &=& \eta_q^k(\zeta).
+\end{eqnarray*}
+The opacity derivative with respect to mixing ratio using the {\it linear} basis is
+\begin{eqnarray*}
+\frac{\partial \triangle \delta_{i \rightarrow i-1}^k}{\partial f_{q}^k} = \int_{\zeta_i}^{\zeta_{i-1}} \eta_q^k(\zeta) \, \beta^k \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \, d\zeta.
+\end{eqnarray*}
+\ \\
+{\bf Logarithmic basis:} Mixing ratios are given by
+\begin{eqnarray*}
+F^{k}(\zeta) &=& \exp \bigg[ \sum_{q=1}^Q \log f_q^{k} \eta_q^k(\zeta) \bigg],
+\end{eqnarray*}
+and
+\begin{eqnarray*}
+\frac{\partial F^{k}}{\partial f_q^{k}} &=& F^{k}(\zeta) \frac{\eta_q^k(\zeta)}{f_q^{k}}.
+\end{eqnarray*}
+The opacity derivative with respect to mixing ratio using the {\it logarithmic} basis is
+\begin{eqnarray*}
+\frac{\partial \triangle \delta_{i \rightarrow i-1}^k}{\partial f_{q}^k} = \int_{\zeta_i}^{\zeta_{i-1}} F^k(\zeta) \frac{\eta_q^k(\zeta)}{f_{q}^k} \, \beta^k \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \, d\zeta.
+\end{eqnarray*}
+{\bf Remark:} For both linear and logarithmic basis, we have
+\begin{eqnarray*}
+\frac{\partial F^{k}}{\partial f_q^{\tilde{k}}} &=& 0, \ \ \mbox{for } k \not= \tilde{k},
+\end{eqnarray*}
+and
+\begin{eqnarray*}
+\frac{\partial \triangle \delta_{i \rightarrow i-1}^k}{\partial f_{q}^{\tilde{k}}} = 0, \ \ \mbox{for } k \not= \tilde{k},
+\end{eqnarray*}
+where $k$ and $\tilde{k}$ are molecules.  \\
+Note that $\displaystyle \frac{\partial \triangle \delta_{i \rightarrow i-1}}{\partial f_{q}^k} = \frac{\partial}{\partial f_{q}^k} \Big( \sum_{k} \triangle \delta_{i \rightarrow i-1}^k \Big) = \frac{\partial \triangle \delta_{i \rightarrow i-1}^k}{\partial f_{q}^k}$.
+
+
+\section{Mixing Ratio Second Derivatives}
+\label{sec:Mixing_Ratio_Second_Derivatives}
+
+Note that since $\displaystyle \frac{\partial \triangle B_i}{\partial f_q^k} = 0$ and $\displaystyle \frac{\partial^2 \triangle B_i}{\partial f_q^{k} \partial f_{\tilde{q}}^{\tilde{k}}} = 0$, we have
+\begin{eqnarray}
+\frac{\partial^2 I(\vx)}{\partial f_q^{k} \partial f_{\tilde{q}}^{\tilde{k}}} &=& \sum_{i=1}^{2N} \triangle B_i \bigg(  \mathcal{W}_{i, q}^{k} \, \mathcal{W}_{i, \tilde{q}}^{\tilde{k}} - \partial \mathcal{W}_{i, q,\tilde{q}}^{k,{\tilde{k}}} \bigg) \, \mathcal{T}_i,
+\label{eqn:MR_SecondDeriv}
+\end{eqnarray}
+where
+\begin{eqnarray*}
+\mathcal{W}_{1, q}^k &=& 0, \ \ \ \partial \mathcal{W}_{1, q, \tilde{q}}^k \ = \ 0, \\
+\mathcal{W}_{i, q}^k &=& \mathcal{W}_{i-1, q}^k + \frac{\partial \triangle \delta_{i \rightarrow i-1}}{\partial f_q^k}, \\
+\partial \mathcal{W}_{i, q,\tilde{q}}^{k,{\tilde{k}}} &=& \partial \mathcal{W}_{i-1, q,\tilde{q}}^{k,{\tilde{k}}} + \frac{\partial^2 \triangle \delta_{i \rightarrow i-1}}{\partial f_q^{k} \partial f_{\tilde{q}}^{\tilde{k}}}.
+\end{eqnarray*}
+
+
+\subsubsection*{Opacity Second Derivatives}
+
+
+{\bf Linear basis:} The opacity second derivative with respect to mixing ratios using the {\it linear} basis, for molecules $k$ and ${\tilde{k}}$, is identically $0$:
+\begin{eqnarray*}
+\frac{\partial^2 \triangle \delta_{i \rightarrow i-1}^k}{\partial f_{q}^{k} \partial f_{\tilde{q}}^{\tilde{k}}} &=& \int_{\zeta_i}^{\zeta_{i-1}} \frac{\partial \eta_q^k(\zeta)}{\partial f_{\tilde{q}}^{\tilde{k}}} \, \beta^k \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \, d\zeta \\
+&=& 0,
+\end{eqnarray*}
+for all $k, \, \tilde{k}$ and $q, \, \tilde{q}$.
+Thus,
+\begin{eqnarray*}
+\partial \mathcal{W}_{i, q, \tilde{q}}^{k, \tilde{k}} &=& 0,
+\end{eqnarray*}
+and 
+\begin{eqnarray}
+\frac{\partial^2 I(\vx)}{\partial f_q^{k} \partial f_{\tilde{q}}^{k}} &=& \sum_{i=1}^{2N} \triangle B_i \mathcal{W}_{i, q}^{k} \mathcal{W}_{i, \tilde{q}}^{\tilde{k}} \, \mathcal{T}_i.
+\label{eqn:Mixing_Ratio_Second_Derivative}
+\end{eqnarray}
+\ \\
+{\bf Logarithmic basis:} The opacity second derivative with respect to mixing ratios using the {\it logarithmic} basis, for molecules $k$ and ${\tilde{k}}$, is:
+\begin{eqnarray*}
+\frac{\partial^2 \triangle \delta_{i \rightarrow i-1}^k}{\partial f_{q}^{k} \partial f_{q}^{k}} &=& \int_{\zeta_i}^{\zeta_{i-1}} F^k(\zeta) \, \beta^k \, \frac{\eta_q^k(\zeta)}{(f_{q}^{k})^2} \Big[ \eta_q^k(\zeta) - 1  \Big] \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \, d\zeta, \\
+\frac{\partial^2 \triangle \delta_{i \rightarrow i-1}^k}{\partial f_{q}^{k} \partial f_{\tilde{q}}^{k}} &=& \int_{\zeta_i}^{\zeta_{i-1}} F^k(\zeta) \, \beta^k \, \frac{\eta_q^k(\zeta) \eta_{\tilde{q}}^k(\zeta)}{f_{q}^{k} f_{\tilde{q}}^{k}} \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \, d\zeta, \ \ \ \ \ q \not= \tilde{q},
+\end{eqnarray*}
+which can also be written as
+\begin{eqnarray*}
+\frac{\partial^2 \triangle \delta_{i \rightarrow i-1}^k}{\partial f_{q}^{k} \partial f_{\tilde{q}}^{k}} &=& \int_{\zeta_i}^{\zeta_{i-1}} F^k(\zeta) \, \beta^k \, \frac{\eta_q^k(\zeta)}{f_{q}^{k} f_{\tilde{q}}^{k}} \Big[ \eta_{\tilde{q}}^k(\zeta) - d_{q \tilde{q}}  \Big] \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \, d\zeta,
+\end{eqnarray*}
+\begin{eqnarray*}
+\mbox{where } \ \ \ d_{q \tilde{q}} \ = \ 
+\begin{cases}  
+1, \ \ \ q = \tilde{q}, \\ 
+0, \ \ \ q \not= \tilde{q} \end{cases} \ \ \ \ \ \mbox{is the Dirac delta function.}
+\end{eqnarray*}
+Note that \ $\displaystyle \frac{\partial^2 \triangle \delta_{i \rightarrow i-1}^k}{\partial f_{q}^{k} \partial f_{\tilde{q}}^{\tilde{k}}} = 0$ \ for \ $k \not= \tilde{k}$. \\
+The mixing ratio second derivatives using the logarithmic basis are evaluated as in (\ref{eqn:MR_SecondDeriv}):
+\begin{eqnarray*}
+\frac{\partial^2 I(\vx)}{\partial f_q^{k} \partial f_{\tilde{q}}^{\tilde{k}}} &=& \sum_{i=1}^{2N} \triangle B_i \bigg(  \mathcal{W}_{i, q}^{k} \, \mathcal{W}_{i, \tilde{q}}^{\tilde{k}} - \partial \mathcal{W}_{i, q,\tilde{q}}^{k,{\tilde{k}}} \bigg) \, \mathcal{T}_i.
+\end{eqnarray*}
+
+
+\ \\
+\ \\
+\ \\
+\ \\
+\ \\
+{\bfseries Remark:} Assuming linear basis, since
+\begin{eqnarray*}
+\frac{\partial I}{\partial f_q^k} \; = \; \sum_{i=1}^{2N} \triangle B_i \frac{\partial \mathcal{T}_i}{\partial f_q^k} \ \ \ \ \ \mbox{and} \ \ \ \ \ \frac{\partial^2 I}{\partial f_q^{k} \partial f_{\tilde{q}}^{\tilde{k}} } \; = \; \sum_{i=1}^{2N} \triangle B_i \frac{\partial^2 \mathcal{T}_i}{\partial f_q^{k} \partial f_{\tilde{q}}^{\tilde{k}} },
+\end{eqnarray*}
+radiative transfer mixing ratio first and second derivatives can be computed after evaluating derivatives of $\mathcal{T}_i$:
+\begin{eqnarray*}
+\frac{\partial \mathcal{T}_i}{\partial f_q^k} &=& \frac{\partial}{\partial f_q^k} \bigg[ \exp \Big( -\sum_{j=2}^{i} \triangle \delta_{j \rightarrow j-1} \Big) \bigg] \\
+&=& \frac{\partial}{\partial f_q^k} \bigg[ \exp \Big( -\sum_{j=2}^{i} \sum_k \int_{\zeta_i}^{\zeta_{i-1}} F^{k}(\zeta) \, \beta^k \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \, d\zeta \Big) \bigg] \\
+&=& - \mathcal{T}_i \; \sum_{j=2}^i \int_{\zeta_i}^{\zeta_{i-1}} \eta_q^k \beta^k \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \, d\zeta, \\
+\frac{\partial^2 \mathcal{T}_i}{\partial f_q^{k} \partial f_{\tilde{q}}^{\tilde{k}} } &=& \mathcal{T}_i \; \bigg( \sum_{j=2}^i \int_{\zeta_i}^{\zeta_{i-1}} \eta_q^k \beta^k \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \, d\zeta \bigg) \bigg( \sum_{j=2}^i \int_{\zeta_i}^{\zeta_{i-1}} \eta_{\tilde{q}}^{\tilde{k}} \beta^{\tilde{k}} \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \, d\zeta \bigg),
+\end{eqnarray*}
+which are consistent with results obtained in (\ref{eqn:Mixing_Ratio_First_Derivative}) and (\ref{eqn:Mixing_Ratio_Second_Derivative}).
+
+
+\subsubsection*{Examples}
+
+
+\subsubsection*{$O_3$ molecules}
+
+
+The opacity derivative with respect to $O_3$ mixing ratio using the linear basis is
+\begin{eqnarray*}
+\frac{\partial \triangle \delta_{i \rightarrow i-1}^{O_3}}{\partial f_{q}^{O_3}} = \int_{\zeta_i}^{\zeta_{i-1}} \eta_q^{O_3}(\zeta) \, \beta^{O_3} \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \, d\zeta.
+\end{eqnarray*}
+The {\bf derivative of the radiative transfer} is
+\begin{eqnarray*}
+\frac{\partial I(\vx)}{\partial f_q^{O_3}} &=& - \sum_{i=1}^{2N} \triangle B_i \mathcal{W}_{i, q}^{O_3} \mathcal{T}_i,
+\end{eqnarray*}
+where
+\begin{eqnarray*}
+\mathcal{W}_{1, q}^{O_3} &=& 0, \\
+\mathcal{W}_{i, q}^{O_3} &=& \mathcal{W}_{i-1, q}^{O_3} + \frac{\partial \triangle \delta_{i \rightarrow i-1}}{\partial f_q^{O_3}}.
+\end{eqnarray*}
+
+\ \\
+For all $i$ and $q$, calculate
+\begin{eqnarray*}
+\frac{\partial \triangle \delta_{i \rightarrow i-1}^{O_3}}{\partial f_{q}^{O_3}} = \int_{\zeta_i}^{\zeta_{i-1}} \eta_q^{O_3}(\zeta) \, \beta^{O_3} \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \, d\zeta.
+\end{eqnarray*}
+Given $W_{i,q}^{O_3}$, compute
+\begin{eqnarray*}
+\frac{\partial I_l}{\partial f_q^{O_3}} &=& - \sum_{i=1}^{2N} \triangle B_i \mathcal{W}_{i, q}^{O_3} \mathcal{T}_i,
+\end{eqnarray*}
+where $l$ is the level number (path) above the Earth surface.  For a higher level $l$, there are more $i$'s with $\mathcal{T}_i = 0$.
+
+
+\subsubsection*{$O_3$ and $N_2$ molecules}
+
+The opacity derivatives with respect to $O_3$ and $N_2$ mixing ratios using the linear basis are
+\begin{eqnarray*}
+\frac{\partial \triangle \delta_{i \rightarrow i-1}^{O_3}}{\partial f_{q}^{O_3}} &=& \int_{\zeta_i}^{\zeta_{i-1}} \eta_q^{O_3}(\zeta) \, \beta^{O_3} \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \, d\zeta, \\
+\frac{\partial \triangle \delta_{i \rightarrow i-1}^{N_2}}{\partial f_{q}^{N_2}} &=& \int_{\zeta_i}^{\zeta_{i-1}} \eta_q^{N_2}(\zeta) \, \beta^{N_2} \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \, d\zeta.
+\end{eqnarray*}
+Since {\bf incremental opacity} is given by
+\begin{eqnarray*}
+\triangle \delta_{i \rightarrow i-1} = \triangle \delta_{i \rightarrow i-1}^{O_3} + \triangle \delta_{i \rightarrow i-1}^{N_2},
+\end{eqnarray*}
+we have
+\begin{eqnarray*}
+\frac{\partial \triangle \delta_{i \rightarrow i-1}}{\partial f_{q}^{O_3}} &=& \int_{\zeta_i}^{\zeta_{i-1}} \eta_q^{O_3}(\zeta) \beta^{O_3} \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \, d\zeta, \\
+\frac{\partial \triangle \delta_{i \rightarrow i-1}}{\partial f_{q}^{N_2}} &=& \int_{\zeta_i}^{\zeta_{i-1}} \eta_q^{N_2}(\zeta) \beta^{N_2} \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \, d\zeta.
+\end{eqnarray*}
+The derivative of the radiative transfer is
+\begin{eqnarray*}
+\frac{\partial I(\vx)}{\partial f_q^{k}} &=& - \sum_{i=1}^{2N} \triangle B_i \mathcal{W}_{i, q}^k \mathcal{T}_i,
+\end{eqnarray*}
+where
+\begin{eqnarray*}
+\mathcal{W}_{1, q}^k &=& 0, \\
+\mathcal{W}_{i, q}^k &=& \mathcal{W}_{i-1, q}^k + \frac{\partial \triangle \delta_{i \rightarrow i-1}}{\partial f_q^{k}},
+\end{eqnarray*}
+where $k$ is either $O_3$ or $N_2$.
+
+
+
+
+
+% $Id$
