@@ -147,6 +147,9 @@ contains
     !  $\frac{\partial^2 \alpha(s)}{\partial \hat{f}^k(s)^2}
     !  \frac{\partial \hat{f}^k(s)}{\partial f^k_{lm}}
     !  \frac{\partial f^k(s)}{\partial f^k_{\tilde l \tilde m}}$.
+    !  $\frac{\partial^2 \alpha(s)}
+    !        {\partial f^k_{lm}\partial f^{\tilde k}_{\tilde l \tilde m}} =0$
+    !  for $k \neq \tilde k$.
     !  There are four cases, depending upon whether linear interpolation is
     !  used from the solution grid to the path,
     !  $f^k(s) = \sum_{lm} \eta^k_{lm}(s) f^k_{lm}$, or logarithmic
@@ -158,7 +161,11 @@ contains
     !  is nonzero.
     !  \begin{equation*}
     !  \begin{array}{l|l|l}
-    !  \alpha(s) & \text{What's computed here} & \text{Multiply by}
+    !  \alpha(s)
+    ! & \text{What's computed here}
+    ! & \text{Multiply by this to get}
+    !   \frac{\partial^2 \alpha(s)}
+    !        {\partial f^k_{lm}\partial f^k_{\tilde l \tilde m}}
     ! \\[10pt]
     !  \hline
     ! &
@@ -202,16 +209,14 @@ contains
 
     integer :: I_dBeta_df ! Second subscript of dBeta_df
     integer :: Sps_I      ! Subscript for molecules
-    integer :: What       ! what to do
 
     i_dBeta_df = 0
 
     do sps_i = 1, ubound(Grids_f%mol,1)
 
       i_dBeta_df = grids_f%where_dBeta_df(sps_i) ! Which column of dBeta_df?
-      what = merge(1,0,i_dBeta_df /= 0) + &
-           & merge(2,0,grids_f%lin_log(sps_i))
-      select case ( what )
+      select case ( merge(1,0,i_dBeta_df /= 0) + &
+                  & merge(2,0,grids_f%lin_log(sps_i)) )
       case ( 0 ) ! f linear, beta doesn't depend upon f
         d2Alpha_df2(:,sps_i) = 0.0
       case ( 1 ) ! f linear, beta depends upon f
@@ -241,6 +246,9 @@ contains
 end module Get_dAlpha_df_m
 
 ! $Log$
+! Revision 2.5  2011/03/17 00:00:25  vsnyder
+! Simplify Get_d2Alpha_df2, more fiddling TeXnicalities
+!
 ! Revision 2.4  2011/03/16 00:39:00  vsnyder
 ! Repair TeXnicalities, add second derivative
 !
