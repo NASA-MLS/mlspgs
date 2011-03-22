@@ -18,16 +18,21 @@ module QuantityTemplates         ! Quantities within vectors
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use DUMP_0, only: DUMP
+  use Expr_M, only: EXPR_CHECK
+  use Intrinsic, only: PHYQ_Dimensionless
   use MLSCommon, only: NameLen
+  use MLSFILLVALUES, only: RERANK
   use MLSKinds, only: R8, RV
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, MLSMSG_Warning
   use Intrinsic, only: L_None, LIT_INDICES, PHYQ_INDICES
+  use MLSSETS, only: FINDFIRST
   use MLSStringLists, only: SWITCHDETAIL
   use MLSStrings, only: LOWERCASE, WRITEINTSTOCHARS
   use Output_m, only: NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
   use String_Table, only: DISPLAY_STRING, GET_STRING
   use TOGGLES, only: SWITCHES
+  use TREE, only: NSONS,SUBTREE
 
   implicit none
   private
@@ -175,12 +180,19 @@ module QuantityTemplates         ! Quantities within vectors
   end interface
 
   interface MODIFYQUANTITYTEMPLATE
+    module procedure ModifyQuantityTemplate_allocate
     module procedure ModifyQuantityTemplate_array, ModifyQuantityTemplate_sca
   end interface
 
   ! Local procedures
   interface CHECKINTEGRITY
     module procedure CheckIntegrity_QuantityTemplate
+  end interface
+
+  interface myValuesToField
+    module procedure myValuesToField_2d_real
+    module procedure myValuesToField_1d_dble
+    module procedure myValuesToField_2d_dble
   end interface
 
   public :: EPOCH, QuantityTemplate_T
@@ -190,7 +202,18 @@ module QuantityTemplates         ! Quantities within vectors
     & DestroyQuantityTemplateContents, DestroyQuantityTemplateDatabase, &
     & ModifyQuantityTemplate, &
     & NullifyQuantityTemplate, SetupNewQuantityTemplate
-
+  integer, parameter :: NUMMODS = 9
+  character(*), dimension(NUMMODS), parameter :: MODIFIABLEFIELDS = (/&
+    & 'surfs      ', &
+    & 'phi        ', &
+    & 'geodLat    ', &
+    & 'lon        ', &
+    & 'time       ', &
+    & 'solartime  ', &
+    & 'solarzenith', &
+    & 'losangle   ', &
+    & 'frequencies' &
+    & /)
 contains
  ! =====     Public Procedures     =============================
 
@@ -539,7 +562,106 @@ contains
     InflateQuantityTemplateDatabase = firstNewItem
   end function InflateQuantityTemplateDatabase
 
-  ! ----------------------------  ModifyQuantityTemplate_array   -----
+  ! ----------------------------  ModifyQuantityTemplate   -----
+  ! This family modifies a quantity template's fields according to
+  ! specified input
+  ! This is something of a hack: normally we create a quantity template
+  ! and its fields are filled according to its type and any vgrids,
+  ! hgrids, and fgrids specified at that time
+  ! However, in order to reverse-engineer an l2cf we may wish to
+  ! go back later and override these fields by a Fill command
+
+  subroutine ModifyQuantityTemplate_allocate  ( Z, FIELD, SHP, VALUESNODE, &
+    & spread )
+    ! This routine modifies any field whose name matches the field
+    ! so that it takes the new values supplied by the source array
+    
+    ! Note that we assume the destination field is large enough
+    ! to accomodate the source array
+    
+    ! How would you go about changing integer or l_ -valued fields?
+    type (QuantityTemplate_T), intent(inout) :: Z
+    character(len=*), intent(in)             :: field
+    integer, dimension(:), intent(in)        :: SHP
+    integer, intent(in)                      :: VALUESNODE   ! Tree node for values
+    logical, intent(in)                      :: spread
+    ! Local variables
+    integer :: n1
+    integer :: n2
+    ! Executable
+    if ( findFirst(MODIFIABLEFIELDS, lowercase(field)) < 1 ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName // &
+        & 'ModifyQuantityTemplate_allocate', &
+        & trim(field) // " not a modifiable filed" )
+    endif
+    select case(lowercase(field))
+    case ( 'surfs' )
+      call deallocate_test( z%surfs, 'template surfs', &
+        & ModuleName // 'ModifyQuantityTemplate_allocate' )
+      call allocate_test ( z%surfs, shp(1), shp(2), &
+        & "template surfs", &
+        & ModuleName // 'ModifyQuantityTemplate_allocate' )
+      call myValuesToField( z%surfs, SHP, VALUESNODE, spread )
+    case ( 'phi' )
+      call deallocate_test( z%phi, 'template phi', &
+        & ModuleName // 'ModifyQuantityTemplate_allocate' )
+      call allocate_test ( z%phi, shp(1), shp(2), &
+        & "template phi", &
+        & ModuleName // 'ModifyQuantityTemplate_allocate' )
+      call myValuesToField( z%phi, SHP, VALUESNODE, spread )
+    case ( 'geodlat' )
+      call deallocate_test( z%geodLat, 'template geodLat', &
+        & ModuleName // 'ModifyQuantityTemplate_allocate' )
+      call allocate_test ( z%geodLat, shp(1), shp(2), &
+        & "template geodLat", &
+        & ModuleName // 'ModifyQuantityTemplate_allocate' )
+      call myValuesToField( z%geodLat, SHP, VALUESNODE, spread )
+    case ( 'lon' )
+      call deallocate_test( z%lon, 'template lon', &
+        & ModuleName // 'ModifyQuantityTemplate_allocate' )
+      call allocate_test ( z%lon, shp(1), shp(2), &
+        & "template lon", &
+        & ModuleName // 'ModifyQuantityTemplate_allocate' )
+      call myValuesToField( z%lon, SHP, VALUESNODE, spread )
+    case ( 'time' )
+      call deallocate_test( z%time, 'template time', &
+        & ModuleName // 'ModifyQuantityTemplate_allocate' )
+      call allocate_test ( z%time, shp(1), shp(2), &
+        & "template time", &
+        & ModuleName // 'ModifyQuantityTemplate_allocate' )
+      call myValuesToField( z%time, SHP, VALUESNODE, spread )
+    case ( 'solartime' )
+      call deallocate_test( z%solartime, 'template solartime', &
+        & ModuleName // 'ModifyQuantityTemplate_allocate' )
+      call allocate_test ( z%solartime, shp(1), shp(2), &
+        & "template solartime", &
+        & ModuleName // 'ModifyQuantityTemplate_allocate' )
+      call myValuesToField( z%solartime, SHP, VALUESNODE, spread )
+    case ( 'solarzenith' )
+      call deallocate_test( z%solarzenith, 'template solarzenith', &
+        & ModuleName // 'ModifyQuantityTemplate_allocate' )
+      call allocate_test ( z%solarzenith, shp(1), shp(2), &
+        & "template solarzenith", &
+        & ModuleName // 'ModifyQuantityTemplate_allocate' )
+      call myValuesToField( z%solarzenith, SHP, VALUESNODE, spread )
+    case ( 'losangle' )
+      call deallocate_test( z%losangle, 'template losangle', &
+        & ModuleName // 'ModifyQuantityTemplate_allocate' )
+      call allocate_test ( z%losangle, shp(1), shp(2), &
+        & "template losangle", &
+        & ModuleName // 'ModifyQuantityTemplate_allocate' )
+      call myValuesToField( z%losangle, SHP, VALUESNODE, spread )
+    case ( 'frequencies' )
+      call deallocate_test( z%frequencies, 'template frequencies', &
+        & ModuleName // 'ModifyQuantityTemplate_allocate' )
+      call allocate_test ( z%frequencies, shp(1), &
+        & "template frequencies", &
+        & ModuleName // 'ModifyQuantityTemplate_allocate' )
+      call myValuesToField( z%frequencies, VALUESNODE, spread )
+    case default
+    end select
+  end subroutine ModifyQuantityTemplate_allocate
+
   subroutine ModifyQuantityTemplate_array  ( Z, FIELD, array, spread )
     ! This routine modifies any field whose name matches the field
     ! so that it takes the new values supplied by the source array
@@ -553,10 +675,13 @@ contains
     real(rv), dimension(:,:), intent(in)     :: array
     logical, intent(in)                      :: spread
     ! Local variables
-    integer :: n1
-    integer :: n2
     integer, dimension(2) :: shp(2)
     ! Executable
+    if ( findFirst(MODIFIABLEFIELDS, lowercase(field)) < 1 ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName // &
+        & 'ModifyQuantityTemplate_allocate', &
+        & trim(field) // " not a modifiable field" )
+    endif
     shp = shape(array)
     if ( spread .and. shp(1) == 1 ) then
       select case(lowercase(field))
@@ -564,7 +689,7 @@ contains
         z%surfs(:,1:shp(2)) = array
       case ( 'phi' )
         z%phi(:,1:shp(2)) = array
-      case ( 'geodLat' )
+      case ( 'geodlat' )
         z%geodLat(:,1:shp(2)) = array
       case ( 'lon' )
         z%lon(:,1:shp(2)) = array
@@ -586,7 +711,7 @@ contains
         z%surfs(1:shp(1),:) = array
       case ( 'phi' )
         z%phi(1:shp(1),:) = array
-      case ( 'geodLat' )
+      case ( 'geodlat' )
         z%geodLat(1:shp(1),:) = array
       case ( 'lon' )
         z%lon(1:shp(1),:) = array
@@ -608,7 +733,7 @@ contains
         z%surfs(1:shp(1),1:shp(2)) = array
       case ( 'phi' )
         z%phi(1:shp(1),1:shp(2)) = array
-      case ( 'geodLat' )
+      case ( 'geodlat' )
         z%geodLat(1:shp(1),1:shp(2)) = array
       case ( 'lon' )
         z%lon(1:shp(1),1:shp(2)) = array
@@ -627,7 +752,6 @@ contains
     endif
   end subroutine ModifyQuantityTemplate_array
 
-  ! ----------------------------  ModifyQuantityTemplate_sca   -----
   subroutine ModifyQuantityTemplate_sca  ( Z, FIELD, NEWVALUE )
     ! This routine modifies any field whose name matches the field
     ! so that it takes the new value
@@ -636,12 +760,17 @@ contains
     type (QuantityTemplate_T), intent(inout) :: Z
     character(len=*), intent(in)             :: field
     real(rv), intent(in)                     :: newvalue
+    if ( findFirst(MODIFIABLEFIELDS, lowercase(field)) < 1 ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName // &
+        & 'ModifyQuantityTemplate_allocate', &
+        & trim(field) // " not a modifiable field" )
+    endif
     select case(lowercase(field))
     case ( 'surfs' )
       z%surfs = newvalue
     case ( 'phi' )
       z%phi = newvalue
-    case ( 'geodLat' )
+    case ( 'geodlat' )
       z%geodLat = newvalue
     case ( 'lon' )
       z%lon = newvalue
@@ -1111,6 +1240,138 @@ contains
     end if
   end subroutine myGetString
 
+  ! ---------------------------------------- myValuesToField -----
+  ! This family of subroutines assigns from the values field
+  ! explicitly to the template's own field
+  ! Unless spread is TRUE, we assume there are exactly enough values
+  subroutine myValuesToField_1d_dble ( tField, valuesNode, spread )
+    double precision, dimension(:), intent(out)        :: tField ! Template's own field
+    integer, intent(in)                      :: VALUESNODE   ! Tree node for values
+    logical, intent(in)                      :: spread
+    ! Internal variables
+    integer, dimension(2) :: indices
+    integer :: k
+    integer :: noValues
+    integer :: TestUnit                 ! Unit to use
+    integer, dimension(2) :: unitAsArray ! Unit for value given
+    logical :: UNITSERROR               ! From expr
+    real (r8), dimension(2) :: valueAsArray ! Value given
+
+    ! Executable code
+    if ( valuesNode < 1 ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'illegal valuesNode in template field modify' )
+    endif
+    noValues = nsons(valuesNode) - 1
+    if ( noValues < 1 ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Too few values in template field modify' )
+    endif
+    do k = 1, noValues
+      call expr_check ( subtree(k+1,valuesNode) , unitAsArray, valueAsArray, &
+        & (/testUnit, PHYQ_Dimensionless/), unitsError )
+      if ( unitsError ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'No units allowed for values in template field modify' )
+      if ( spread ) then
+        tField = valueAsArray(1)
+        return
+      else
+        if ( k < size(tField) ) &
+          & tField( k ) = valueAsArray(1)
+      endif
+    enddo
+  end subroutine myValuesToField_1d_dble
+
+  subroutine myValuesToField_2d_real ( tField, shp, valuesNode, spread )
+    real, dimension(:,:), intent(out)        :: tField ! Template's own field
+    integer, dimension(:), intent(in)        :: SHP
+    integer, intent(in)                      :: VALUESNODE   ! Tree node for values
+    logical, intent(in)                      :: spread
+    ! Internal variables
+    integer, dimension(2) :: indices
+    integer :: k
+    integer :: noValues
+    integer :: TestUnit                 ! Unit to use
+    integer, dimension(2) :: unitAsArray ! Unit for value given
+    logical :: UNITSERROR               ! From expr
+    real (r8), dimension(2) :: valueAsArray ! Value given
+
+    ! Executable code
+    if ( valuesNode < 1 ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'illegal valuesNode in template field modify' )
+    endif
+    noValues = nsons(valuesNode) - 1
+    if ( noValues < 1 ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Too few values in template field modify' )
+    endif
+    ! call outputNamedValue( 'Number of values', NoValues )
+    do k = 1, noValues
+      call expr_check ( subtree(k+1,valuesNode) , unitAsArray, valueAsArray, &
+        & (/testUnit, PHYQ_Dimensionless/), unitsError )
+      if ( unitsError ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'No units allowed for values in template field modify' )
+      ! call outputNamedValue( 'value', valueAsArray(1) )
+      if ( spread ) then
+        tField = valueAsArray(1)
+        return
+      else
+        call rerank( k, shp, indices )
+        ! call outputNamedValue( 'indices', indices )
+        if ( any( indices < 1 ) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Unable to rerank values in template field modify' )
+        if ( all(indices < shp) ) &
+          & tField( indices(1), indices(2) ) = valueAsArray(1)
+      endif
+    enddo
+  end subroutine myValuesToField_2d_real
+
+  subroutine myValuesToField_2d_dble ( tField, shp, valuesNode, spread )
+    double precision, dimension(:,:), intent(out)        :: tField ! Template's own field
+    integer, dimension(:), intent(in)        :: SHP
+    integer, intent(in)                      :: VALUESNODE   ! Tree node for values
+    logical, intent(in)                      :: spread
+    ! Internal variables
+    integer, dimension(2) :: indices
+    integer :: k
+    integer :: noValues
+    integer :: TestUnit                 ! Unit to use
+    integer, dimension(2) :: unitAsArray ! Unit for value given
+    logical :: UNITSERROR               ! From expr
+    real (r8), dimension(2) :: valueAsArray ! Value given
+
+    ! Executable code
+    if ( valuesNode < 1 ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'illegal valuesNode in template field modify' )
+    endif
+    noValues = nsons(valuesNode) - 1
+    if ( noValues < 1 ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Too few values in template field modify' )
+    endif
+    ! call outputNamedValue( 'Number of values', NoValues )
+    do k = 1, noValues
+      call expr_check ( subtree(k+1,valuesNode) , unitAsArray, valueAsArray, &
+        & (/testUnit, PHYQ_Dimensionless/), unitsError )
+      if ( unitsError ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'No units allowed for values in template field modify' )
+      ! call outputNamedValue( 'value', valueAsArray(1) )
+      if ( spread ) then
+        tField = valueAsArray(1)
+        return
+      else
+        call rerank( k, shp, indices )
+        ! call outputNamedValue( 'indices', indices )
+        if ( any( indices < 1 ) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Unable to rerank values in template field modify' )
+        if ( all(indices <= shp) ) &
+          & tField( indices(1), indices(2) ) = valueAsArray(1)
+      endif
+    enddo
+  end subroutine myValuesToField_2d_dble
+
 !=============================================================================
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -1127,6 +1388,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.60  2011/03/15 22:43:52  pwagner
+! Added ModifyQuantityTemplate; defaults to private
+!
 ! Revision 2.59  2011/02/18 17:54:49  pwagner
 ! Prevented crashes when run w/o l2cf
 !
