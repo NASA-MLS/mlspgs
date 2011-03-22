@@ -97,7 +97,7 @@ contains ! =====     Public Procedures     =============================
       & F_DESTINATION, F_DIAGONAL, &
       & F_DONTMASK, F_DONTSUMHEIGHTS, F_DONTSUMINSTANCES, &
       & F_ECRTOFOV, F_EARTHRADIUS, F_EXACT, F_EXCLUDEBELOWBOTTOM, F_EXPLICITVALUES, &
-      & F_EXTINCTION, F_FIELDECR, F_FILE, F_FLAGS, F_FORCE, &
+      & F_EXTINCTION, F_FIELDECR, F_FILE, F_FLAGS, F_FORCE, f_shape, &
       & F_FRACTION, F_FROMPRECISION, &
       & F_GEOCALTITUDEQUANTITY, F_GPHQUANTITY, F_HEIGHT, F_HEIGHTRANGE, &
       & F_HIGHBOUND, F_H2OQUANTITY, F_H2OPRECISIONQUANTITY, &
@@ -378,6 +378,7 @@ contains ! =====     Public Procedures     =============================
     integer :: FLAGQTYINDEX
     integer :: FLAGVECTORINDEX
     logical :: FORCE                    ! Bypass checks on some operations
+    integer :: shapeNode              ! For the parser
     integer :: FRACTION                 ! Index of fraction vector in database
     logical :: FROMPRECISION            ! Fill from l2gpPrecision not l2gpValue
     integer :: GEOCALTITUDEQUANTITYINDEX    ! In the source vector
@@ -494,6 +495,7 @@ contains ! =====     Public Procedures     =============================
     integer :: SCVELVECTORINDEX         ! In the vector database
     integer, dimension(2) :: SEED       ! integers used by random_numbers
     integer :: SEEDNODE                 ! For the parser
+    integer, dimension(2) :: SHP
     logical :: SKIPMASK                 ! Flag for transfer
     integer :: SON                      ! Of root, an n_spec_args or a n_named
     integer :: SOURCE                   ! l_rows or l_colums for adoption
@@ -522,6 +524,7 @@ contains ! =====     Public Procedures     =============================
     integer :: TOTALPOWERQUANTITYINDEX    ! In the quantities database
     integer :: TOTALPOWERVECTORINDEX      ! In the vector database
     integer, dimension(2) :: UNITASARRAY ! From expr
+    integer, dimension(2) :: UNITS
     logical :: UNITSERROR               ! From expr
     integer :: USBVECTORINDEX           ! Inddex in vector database
     integer :: USBQUANTITYINDEX         ! Inddex in vector database
@@ -579,6 +582,7 @@ contains ! =====     Public Procedures     =============================
       extinction = .false.
       force = .false.
       fromPrecision = .false.
+      GLStr = ' '
       got= .false.
       heightNode = 0
       ignoreZero = .false.
@@ -1202,6 +1206,8 @@ contains ! =====     Public Procedures     =============================
           flagQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
         case ( f_force )
           force = get_boolean ( gson )
+        case ( f_shape )
+          shapeNode = subtree(j,key)
         case ( f_fromPrecision )
           fromPrecision = get_boolean ( gson )
         case ( f_geocAltitudeQuantity ) ! For hydrostatic
@@ -2158,18 +2164,30 @@ contains ! =====     Public Procedures     =============================
         end if
 
       case ( l_modifyTemplate )
+        shp = 0
         ! override qty template fileds: time, phi, longitude, etc.
         if ( .not. got ( f_manipulation ) ) &
           & call Announce_error ( key, no_Error_Code,'manipulation not supplied' )
-        if ( .not. got ( f_c ) .and. .not. got( f_sourceQuantity ) ) &
-          & call Announce_error ( key, no_Error_Code, &
-          & 'Neither sourceQuantity nor c for new value(s) supplied' )
         call get_string ( manipulation, GLStr, strip=.true. )
+        if ( got( f_shape ) ) then
+          do j = 2, nsons(shapeNode)
+            call expr ( subtree ( j, shapeNode ), unitAsArray, valueAsArray )
+            shp(j-1) = valueAsArray(1)
+          enddo
+        endif
         if ( got( f_sourceQuantity ) ) then
           sourceQuantity => GetVectorQtyByTemplateIndex( &
             & vectors(sourceVectorIndex), sourceQuantityIndex )
           call ModifyQuantityTemplate  ( quantity%template, GLStr, &
             & sourceQuantity%values, spreadFlag )
+        elseif ( got( f_explicitValues ) ) then
+          if ( .not. got ( f_shape ) ) &
+            & call Announce_error ( key, no_Error_Code,'shape not supplied' )
+          call ModifyQuantityTemplate  ( quantity%template, GLStr, &
+            & shp, valuesNode, spreadFlag )
+        elseif ( .not. got( f_c ) ) then
+          call Announce_error ( key, no_Error_Code, &
+          & 'Must supply c for new value(s)' )
         else
           call ModifyQuantityTemplate  ( quantity%template, GLStr, c )
         endif
@@ -2647,6 +2665,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.391  2011/03/22 23:47:54  pwagner
+! May now reshape qty template field while filling explicitly
+!
 ! Revision 2.390  2011/03/15 22:51:58  pwagner
 ! May now modify quantity template fields with fill method
 !
