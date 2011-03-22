@@ -17,7 +17,7 @@ module MLSNumerics              ! Some low level numerical stuff
   use DUMP_0, only : DUMP, SELFDIFF
   use MatrixModule_0, only: CreateBlock, M_Absent, MatrixElement_T, Sparsify
   use MLSCommon, only : UndefinedValue
-  use MLSFillValues, only: IsFillValue, ReplaceFillValues
+  use MLSFillValues, only: IsFillValue, ReplaceFillValues, Rerank
   use MLSKinds, only: R4, R8, Rm
   use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
     & MLSMessage
@@ -2146,64 +2146,6 @@ contains
     end select
   end subroutine reposit_r8
 
-  subroutine rerank( address, shp, indices )
-    ! Find multidimensional set of indices in an array
-    ! with shape shp corresponding to 1-d address
-    !
-    ! We shall assume that the first index is the fastest, then the 2nd, ..
-    ! Our method is the following:
-    ! Let the size of the kth index be s[k]
-    ! Then we seek the array i[k] such that
-    ! address = i[1] + s[1] ( i[2] + s[2] ( i[3] + .. + i[N] ) .. )
-    ! (Where we assume 0-based indexing, like c, 
-    !   rather than 1-based, as Fortran uses)
-    ! We can build this by parts as follows
-    ! a[N]   = i[N]
-    ! a[N-1] = i[N-1] + s[N-1] i[N]
-    ! a[N-2] = i[N-2] + s[N-2] ( i[N-1] + s[N-1] i[N] )
-    ! .   .   .
-    ! a[1] = address
-    ! Where N is the rank of the array
-    ! Note then that the recurrences hold
-    ! a[N-1] - a[N] s[N-1]   = i[N-1]
-    ! a[N-2] - a[N-1] s[N-2] = i[N-2]
-    ! .   .   .
-    ! a[1] - a[2] s[1]       = i[1]
-    !
-    ! From this last we realize that
-    ! i[1] = a[1] mod(s[1])
-    ! Solve it for i[1], then a[2] = ( a[1] - i[1] ) / s[1]
-    ! Then for succeeding values of k
-    ! i[k] = a[k] mod(s[k])
-    
-    ! Remember to modify each of these if we wish to use
-    ! Fortran-style indexes which start at 1, not 0, as follows
-    !
-    ! i'[k] = i[k] + 1, k > 1
-    ! i'[1] = i[1]
-    ! address = i'[1] + s[1] ( i'[2] - 1 + s[2] ( i[3] - 1 + .. + i[N] ) .. )
-    integer, intent(in)                :: address
-    integer, dimension(:), intent(in)  :: shp
-    integer, dimension(:), intent(out) :: indices
-    ! Local variables
-    integer :: aofk
-    integer :: k
-    integer :: N
-    integer, parameter :: OFFSET = 1 ! at what index do arrays start?
-    !
-    N = size(shp)
-    if ( N < 2 ) then
-      indices(1) = address
-      return
-    end if
-    aofk = address - OFFSET
-    do k=1, N
-      indices(k) = MOD(aofk, shp(k))
-      aofk = ( aofk - indices(k) ) / shp(k)
-    enddo
-    indices = indices + OFFSET ! Converting to Fortran-style, beginning with 1
-  end subroutine rerank
-  
   ! This family of functions performs simpson's rule integrations
   ! for either even or odd n
   function simpsons_r4( n, h, y ) result (sum)
@@ -2287,6 +2229,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.66  2011/03/22 23:37:56  pwagner
+! Rerank now taken from MLSFillValues module
+!
 ! Revision 2.65  2010/06/07 23:31:49  vsnyder
 ! Add BivariateLinearInterpolation
 !
