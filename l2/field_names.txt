@@ -376,6 +376,7 @@ sdname
 seed
 serial
 sgrid
+shape
 signal
 signals
 silent
@@ -484,6 +485,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.206  2011/03/22 23:47:21  pwagner
+# May now reshape qty template field while filling explicitly
+#
 # Revision 2.205  2011/03/15 22:54:18  pwagner
 # /reverse flag reverses which elements are masked by Subset command
 #
