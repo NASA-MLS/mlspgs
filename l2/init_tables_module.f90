@@ -958,6 +958,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_scVelECR, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
              begin, f+f_scECI, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
              begin, f+f_seed, t+t_numeric, n+n_field_type, &
+             begin, f+f_shape,  t+t_numeric, n+n_field_type, &
              begin, f+f_sourceQuantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
              begin, f+f_sourceL2GP, s+s_l2gp, n+n_field_spec, &
@@ -1647,6 +1648,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.517  2011/03/22 23:47:21  pwagner
+! May now reshape qty template field while filling explicitly
+!
 ! Revision 2.516  2011/03/15 22:52:29  pwagner
 ! May now modify quantity template fields with fill method
 !
