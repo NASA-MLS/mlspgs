@@ -38,7 +38,7 @@ module MLSFillValues              ! Some FillValue-related stuff
   public :: IsFillValue
   public :: IsFinite, IsInfinite, IsNaN
   public :: IsMonotonic, Monotonize
-  public :: RemoveFillValues, ReorderFillValues, ReplaceFillValues
+  public :: RemoveFillValues, ReorderFillValues, ReplaceFillValues, ReRank
   public :: roundUpOrDown
   public :: WhereAreTheFills, WhereAreTheNaNs, WhereAreTheInfs
 
@@ -2720,6 +2720,9 @@ end module MLSFillValues
 
 !
 ! $Log$
+! Revision 2.26  2011/03/22 23:38:30  pwagner
+! Rerank now public
+!
 ! Revision 2.25  2011/01/20 01:14:31  pwagner
 ! Added Collapse: Turns array into lower-rank representation, collapsing last index
 !
