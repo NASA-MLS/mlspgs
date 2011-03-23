@@ -264,7 +264,7 @@ contains
                           & LD, d_delta_df, nz_d_delta_df, nnz_d_delta_df,    &
                           & drad_df, dB_df, Tau, nz_zxp, nnz_zxp,             & 
                           & alpha_path_c, B, Beta_c_e,                        &
-                          & dBeta_c_e_dIWC, dBeta_c_s_dIWC, TScat, dTScat_df, W0 )
+                          & dBeta_c_a_dIWC, dBeta_c_s_dIWC, TScat, dTScat_df, W0 )
 
     use d_t_script_dtnp_m, only: dT_script
     use LOAD_SPS_DATA_M, ONLY: GRIDS_T
@@ -312,10 +312,11 @@ contains
     real(rp), intent(in), optional :: Alpha_path_c(:)
     real(rp), intent(in), optional :: B(:)
     real(rp), intent(in), optional :: Beta_c_e(:)
-    real(rp), intent(in), optional :: dBeta_c_e_dIWC(:)
-    real(rp), intent(in), optional :: dBeta_c_s_dIWC(:)
+    real(rp), intent(in), optional :: dBeta_c_a_dIWC(:)  ! on the path, w.r.t. IWC on the path
+    real(rp), intent(in), optional :: dBeta_c_s_dIWC(:)  ! on the path, w.r.t. IWC on the path
     real(rp), intent(in), optional :: TScat(:)
-    real(rp), intent(in), optional :: dTScat_df(:,:) ! path X sv
+    real(rp), intent(in), optional :: dTScat_df(:,:) ! Path X SV.  On the path, w.r.t.
+                                                 ! f == Molecules on the grid
     real(rp), intent(in), optional :: W0(:)
 
 ! Outputs
@@ -330,7 +331,7 @@ contains
 
 ! Internals
 
-    integer :: i_begin, sv_i
+    integer :: i_begin, sps_i, sv_i
     real(rp) :: d_delta_B_df(size(dB_df),1)
     logical Nothing(Grids_f%l_v(ubound(Grids_f%l_z,1))) ! "Nothing to do here"
     logical :: Do_TScat              ! Include dependence upon dB_df
@@ -345,41 +346,8 @@ contains
 
     Do_TScat = size(dB_df) > 0
 
-    do sv_i = 1, Grids_f%l_v(ubound(Grids_f%l_z,1))
+    do sps_i = 1, ubound(Grids_f%l_z,1)
 
-      if ( nothing(sv_i) ) then
-        drad_df(sv_i) = 0.0
-        cycle
-      end if
-
-      i_begin = max(i_start,min(nz_d_delta_df(1,sv_i),i_stop))
-
-      !{ $I(s_m) = \mathcal{T}(s_0,s_m) \left( I(s_0)-B(s_0) \right) +
-      !  B(s_m) - \int_{B(s_0)}^{B(s_m)} \mathcal{T}(s,s_m)
-      !            \frac{\partial B(s)}{\partial s} \,\text{d} s$ with
-      !  $\mathcal{T}(s,s_m) =
-      !    \exp\left( -\int_s^{s_m} \alpha(\sigma) \,\text{d} \sigma \right)$,
-      !  $\alpha(\sigma) = \sum_k \beta^k(\sigma) f^k_{lm} \eta^k_{lm}(\sigma)$,
-      !  $s_0$ is the end of the path away from the instrument,
-      !  $s_m$ is the location of the instrument, $\beta^k(\sigma)$ is the
-      !  absorption coefficient for the $k^\text{th}$ species, and
-      !  $\eta^k_{lm}(\sigma)$ is an interpolation coefficient from
-      !  $(\phi^k_l,\zeta^k_m)$ to $\sigma$. $(\phi^k_l,\zeta^k_m)$ is
-      !  specified by {\tt sv_i}.
-      !  
-      !  The integral is approximated by
-      !  $\sum_{i=1}^{N_p} \mathcal{T}_i \Delta B_i$ where $\Delta B_i =
-      !  \frac12 \left( B_{i+1} - B_{i-1} \right)$.  The end-point terms
-      !  are incorporated into special values of $\Delta B_0$ and $\Delta B_{s_m}$.
-      !
-      !  {\tt inc_rad_path(i)} = $\mathcal{T}_i \Delta B_i$.
-      !  $\frac{\partial \mathcal{T}}{\partial f^k_{lm}} =
-      !  -\mathcal{T} \int_s^{s_m} \frac{\partial \alpha(s)}{\partial f^k_{lm}}.$
-      !  {\tt d_delta_df} =
-      !  $ \int_s^{s_m} \frac{\partial \alpha(s)}{\partial f^k_{lm}}
-      !   \,\text{d} s =
-      !   \int_s^{s_m} \beta^k(s) \eta^k_{lm}(s) \,\text{d} s \approx
-      !   \sum_{j=i}^{s_m} \beta^k(s_j) \eta^k_{lm}(s_j) \Delta s_j$
       if ( Do_TScat ) then
         !{ $\frac{\partial I}{\partial f^\text{iwc}_{lm}} =
         !   \sum_{i=1}^{N_p}
@@ -399,42 +367,94 @@ contains
         !   = -\mathcal{T}_i \sum_{j=i}^{N_p} \beta^k_j
         !       \eta^k_{lm}(s_i) \Delta s_j$.
         !
-  !   {\tt dB_df(i)} =
-  !   $\frac{\partial \overline{\Delta B_i}}{\partial f^k_{lm}}
-  !    \text{ where } \frac{\partial \overline{B_i}}
-  !                        {\partial f^k_{lm}(\zeta_i)} =
-  !    \frac{\partial \omega_{0_i}}{\partial f^k_{lm}(\zeta_i)}
-  !     \left( T_{\text{scat}_i} - B_i \right) +
-  !    \omega_{0_i} \frac{\partial T_{\text{scat}_i}}
-  !                      {\partial f^k_{lm}(\zeta_i)}
-  !   = \left(\frac{\partial \omega_{0_i}}{\partial f^k}
-  !     \left( T_{\text{scat}_i} - B_i \right) +
-  !     \omega_{0_i} \frac{\partial T_{\text{scat}_i}}{\partial f^k}
-  !     \right)
-  !     \frac{\partial f^k}{\partial f^k_{lm}(\zeta_i)}
-  !   = \left( \frac{\partial \omega_{0_i}}{\partial f^k}
-  !      \left( T_{\text{scat}_i} - B_i \right) +
-  !     \omega_{0_i} \frac{\partial T_{\text{scat}_i}}{\partial f^k}
-  !      \right) \eta^k_{lm}(\zeta_i)$ (see {\tt Get_dB_df} in the
-  !     {\tt TScat_Support_m} module).
+        !   {\tt dB_df(i)} =
+        !   $\frac{\partial \overline{\Delta B_i}}{\partial f^k_{lm}}
+        !    \text{ where } \frac{\partial \overline{B_i}}
+        !                        {\partial f^k_{lm}(\zeta_i)} =
+        !    \frac{\partial \omega_{0_i}}{\partial f^k_{lm}(\zeta_i)}
+        !     \left( T_{\text{scat}_i} - B_i \right) +
+        !    \omega_{0_i} \frac{\partial T_{\text{scat}_i}}
+        !                      {\partial f^k_{lm}(\zeta_i)}
+        !   = \left(\frac{\partial \omega_{0_i}}{\partial f^k}
+        !     \left( T_{\text{scat}_i} - B_i \right) +
+        !     \omega_{0_i} \frac{\partial T_{\text{scat}_i}}{\partial f^k}
+        !     \right)
+        !     \frac{\partial f^k}{\partial f^k_{lm}(\zeta_i)}
+        !   = \left( \frac{\partial \omega_{0_i}}{\partial f^k}
+        !      \left( T_{\text{scat}_i} - B_i \right) +
+        !     \omega_{0_i} \frac{\partial T_{\text{scat}_i}}{\partial f^k}
+        !      \right) \eta^k_{lm}(\zeta_i)$ (see wvs-095 and {\tt Get_dB_df}.
         !
         ! {\tt inc_rad_path(i)} = $\mathcal{T}_i \overline{\Delta B}_i$
 
-        call Get_dB_df ( alpha_path_c, B, beta_c_e, dBeta_c_e_dIWC, &
-                       & dBeta_c_s_dIWC, TScat, dTScat_df(:,sv_i), w0, &
-                       & grids_f%qty(sv_i) == l_cloud_a, dB_df )
+        call get_dB_df ( alpha_path_c, B, beta_c_e, dBeta_c_a_dIWC, &
+                       & dBeta_c_s_dIWC, dAlpha_df_c(:,sps_i), TScat, w0, &
+                       & grids_f%mol(sps_i), dB_df )
 
-        call dt_script ( dB_df, eta_zxp(:,sv_i:sv_i), nz_zxp(:,sv_i:sv_i), &
-          & nnz_zxp(sv_i:sv_i), d_delta_B_df )
-
-        call dscrt_dt ( tan_pt, d_delta_df(:,sv_i), tau, inc_rad_path,&
-                      & d_delta_B_df(:,1), i_begin, i_stop, drad_df(sv_i) )
-      else
-        call dscrt_dx ( tan_pt, d_delta_df(:,sv_i), inc_rad_path, &
-                     &  i_begin, i_stop, drad_df(sv_i))
       end if
 
-    end do ! sv_i
+      do sv_i = Grids_f%l_v(sps_i-1)+1, Grids_f%l_v(sps_i)
+
+        if ( nothing(sv_i) ) then
+          drad_df(sv_i) = 0.0
+          cycle
+        end if
+
+        i_begin = max(i_start,min(nz_d_delta_df(1,sv_i),i_stop))
+
+        !{ $I(s_m) = \mathcal{T}(s_0,s_m) \left( I(s_0)-B(s_0) \right) +
+        !  B(s_m) - \int_{B(s_0)}^{B(s_m)} \mathcal{T}(s,s_m)
+        !            \frac{\partial B(s)}{\partial s} \,\text{d} s$ with
+        !  $\mathcal{T}(s,s_m) =
+        !    \exp\left( -\int_s^{s_m} \alpha(\sigma) \,\text{d} \sigma \right)$,
+        !  $s_0$ is the end of the path away from the instrument,
+        !  $s_m$ is the location of the instrument, $\beta^k(\sigma)$ is the
+        !  absorption coefficient for the $k^\text{th}$ species, and
+        !  $\eta^k_{lm}(\sigma)$ is an interpolation coefficient from
+        !  $(\phi^k_l,\zeta^k_m)$ to $\sigma$. $(\phi^k_l,\zeta^k_m)$ is
+        !  specified by {\tt sv_i}.
+        !  
+        !  The integral is approximated by
+        !  $\sum_{i=1}^{N_p} \mathcal{T}_i \Delta B_i$ where $\Delta B_i =
+        !  \frac12 \left( B_{i+1} - B_{i-1} \right)$.  The end-point terms
+        !  are incorporated into special values of $\Delta B_0$ and $\Delta B_{s_m}$.
+        !
+        !  {\tt inc_rad_path(i)} = $\mathcal{T}_i \Delta B_i$.
+        !  $\frac{\partial \mathcal{T}}{\partial f^k_{lm}} =
+        !  -\mathcal{T} \int_s^{s_m} \frac{\partial \alpha(s)}{\partial f^k_{lm}}.$
+        !  {\tt d_delta_df} =
+        !  $ \int_s^{s_m} \frac{\partial \alpha(s)}{\partial f^k_{lm}}
+        !   \,\text{d} s$
+
+        if ( Do_TScat ) then
+
+          !{ We got $\frac{\partial \omega_{0_i}}{\partial f^k_i}
+          !     \left( T_{\text{scat}_i} - B_i \right)$ from {\tt Get_dB_df}.
+          !  Now to finish we need to multiply by
+          !  $\frac{\partial f^k_i}{\partial f^k_{lm}} = \eta^k_{lm}(\zeta_i)$
+          !  and add $\omega_{0_i}
+          !  \frac{\partial T_{\text{scat}_i}}{\partial f^k_{lm}}$ to finish
+          !  computing $\frac{\partial \overline{B}_i}{\partial f^k_{lm}}$, and
+          !  then compute $\Delta \frac{\partial \overline{B}_i}{\partial f^k_{lm}}$
+          !  from that.
+
+          call dt_script ( dB_df, eta_zxp(:,sv_i:sv_i), nz_zxp(:,sv_i:sv_i), &
+            & nnz_zxp(sv_i:sv_i), d_delta_B_df, w0, dTScat_df(:,sv_i:sv_i) )
+
+          !{ Now do the path integration
+          !  $\sum \frac{\partial}{\partial f^k_{lm}}
+          !     \mathcal{T}_i \overline{\Delta B_i}$
+
+          call dscrt_dt ( tan_pt, d_delta_df(:,sv_i), tau, inc_rad_path,&
+                        & d_delta_B_df(:,1), i_begin, i_stop, drad_df(sv_i) )
+        else
+          call dscrt_dx ( tan_pt, d_delta_df(:,sv_i), inc_rad_path, &
+                       &  i_begin, i_stop, drad_df(sv_i))
+        end if
+
+      end do ! sv_i
+
+    end do ! sps_i
 
   end subroutine drad_tran_df
 
@@ -961,7 +981,7 @@ contains
 
 !       else if ( do_TScat ) then
 
-!         call Get_dB_dT ( alpha_path_c, B, beta_c_e, dBeta_c_e_dIWC, &
+!         call Get_dB_dT ( alpha_path_c, B, beta_c_e, dBeta_c_a_dIWC, &
 !                        & dBeta_c_s_dIWC, TScat, dTScat_df(:,sv_i), w0, &
 !                        & grids_f%qty(sv_i) == l_cloud_a, dB_df )
 ! 
@@ -1354,7 +1374,7 @@ contains
 
   end subroutine Get_d_delta_dx
 
-  ! .............................................  Get_d_delta_dx  .....
+  ! .............................................  Get_d_delta_df  .....
   subroutine Get_d_delta_df ( Inds, Indices_c, GL_Inds, &
     & All_inds, More_inds, eta_zxp, &
     & dAlpha_df_path_c, dAlpha_df_path_f, Del_s, Del_Zeta, ds_dz_gw, lin_log, grids_v, &
@@ -1860,6 +1880,9 @@ contains
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.22  2011/03/23 23:45:32  vsnyder
+! FOV_Convolve_m.f90
+!
 ! Revision 2.21  2011/03/11 03:09:08  vsnyder
 ! Use Get_dAlpha_df
 !
