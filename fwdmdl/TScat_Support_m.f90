@@ -28,81 +28,114 @@ module TScat_Support_m
 contains
 
   ! --------------------------------------------------  Get_dB_df  -----
-  subroutine Get_dB_df ( Alpha, B, Beta_c_e, dBeta_c_e_dIWC, &
-    &                    dBeta_c_s_dIWC, TScat, dTScat_df, W0, Do_IWC, dB_df )
+  subroutine Get_dB_df ( Alpha, B, Beta_c_e, dBeta_c_a_dIWC, &
+                       & dBeta_c_s_dIWC, dAlpha_df, TScat, W0, Molecule, dB_df, &
+                       & dTScat_df )
 
     use d_t_script_dtnp_m, only: dT_script
     use MLSKinds, only: Rp
+    use Molecules, only: L_Cloud_a, L_Cloud_s
 
     real(rp), intent(in) :: Alpha(:)     ! on the path
-    real(rp), intent(in) :: B(:)         ! T_Script in some notes
+    real(rp), intent(in) :: B(:)         ! on the path
     real(rp), intent(in) :: Beta_c_e(:)  ! on the path
-    real(rp), intent(in) :: dBeta_c_e_dIWC(:)  ! on the path
-    real(rp), intent(in) :: dBeta_c_s_dIWC(:)  ! on the path
+    real(rp), intent(in) :: dBeta_c_a_dIWC(:)  ! on the path, w.r.t. IWC on the path
+    real(rp), intent(in) :: dBeta_c_s_dIWC(:)  ! on the path, w.r.t. IWC on the path
+    real(rp), intent(in) :: dAlpha_df(:) ! on the path, w.r.t.
+                                         ! f == Molecule on the path
     real(rp), intent(in) :: TScat(:)     ! on the path
-    real(rp), intent(in) :: dTScat_df(:) ! on the path
     real(rp), intent(in) :: W0(:)        ! on the path
-    logical, intent(in) :: Do_IWC        ! Molecule == l_cloud_a
+    integer, intent(in) :: Molecule      ! Molecule
     real(rp), intent(out) :: dB_df(:)    ! on the path, w.r.t. f on the path
+    real(rp), intent(in), optional :: dTScat_df(:) ! on the path, w.r.t.
+                                         ! f == Molecule on the path
 
 !{ \raggedright
-!   {\tt dB_df(i)} =
-!   $\frac{\partial \overline{\Delta B}_i}{\partial f^k_{lm}}$
+!   Compute some or all of {\tt dB_df(i)} =
+!   $\frac{\partial \overline{B}_i}{\partial f^k_i}$ on the path,
 !           where  $\overline{B}_i = (1-\omega_{0_i}) B_i +
-!                                    \omega_{0_i} T_{\text{scat}_i} $
+!                                    \omega_{0_i} T_{\text{scat}_i}$
 !           and    $\frac{\partial \overline{B_i}}
-!                        {\partial f^k_{lm}(\zeta_i)} =
-!    \frac{\partial \omega_{0_i}}{\partial f^k_{lm}(\zeta_i)}
+!                        {\partial f^k_i} =
+!    \frac{\partial \omega_{0_i}}{\partial f^k_i}
 !     \left( T_{\text{scat}_i} - B_i \right) +
 !    \omega_{0_i} \frac{\partial T_{\text{scat}_i}}
-!                      {\partial f^k_{lm}(\zeta_i)}
-!   = \left(\frac{\partial \omega_{0_i}}{\partial f^k}
-!     \left( T_{\text{scat}_i} - B_i \right) +
-!     \omega_{0_i} \frac{\partial T_{\text{scat}_i}}{\partial f^k}
-!     \right)
-!     \frac{\partial f^k}{\partial f^k_{lm}(\zeta_i)}
-!   = \left( \frac{\partial \omega_{0_i}}{\partial f^k}
-!      \left( T_{\text{scat}_i} - B_i \right) +
-!     \omega_{0_i} \frac{\partial T_{\text{scat}_i}}{\partial f^k}
-!      \right) \eta^k_{lm}(\zeta_i)$.
-!  \begin{equation*}
-!   \frac{\partial \omega_{0_i}}{\partial f^k_i} =
-!   \left\{ \begin{array}{ll}
-!    \frac1{\beta_{e_i}}
-!     \left( \frac{\partial \beta_{c\_s_i}}{\partial f^k_i}
-!          - \omega_{0_i} \frac{\partial \beta_{c\_e_i}}{\partial f^k_i}
-!     \right) & f = \text{IWC} \\
-!    -\frac{\omega_{0_i}}{\beta_{e_i}} & f \neq \text{IWC} \\
-!    \end{array} \right.
-!  \end{equation*}
-! where $\beta_{e_i} = \alpha_{\text{gas}_i} + \beta_{c\_e_i}$
-! (see {\tt wvs-095}).
+!                      {\partial f^k_i}$.
+!   The last term is optional, in case it is available.
+!   The caller then computes
+!   $\frac{\partial \overline{B}_i}{\partial f^k_{lm}}
+!   = \frac{\partial \overline{B}_i}{\partial f^k_i}
+!     \frac{\partial f^k_i}{\partial f^k_{lm}}
+!   = \frac{\partial \overline{B}_i}{\partial f^k_i}
+!     \eta^k_{lm}(\zeta_i)$ or
+!   $\frac{\partial \overline{B}_i}{\partial f^k_{lm}}
+!   = $ {\tt dB_df(i)}$\frac{\partial f^k_i}{\partial f^k_{lm}} +
+!   \frac{\partial T_{\text{scat}_i}}{\partial f^k_{lm}} =$
+!   {\tt dB_df(i)}$\eta^k_{lm}(\zeta_i) +
+!   \frac{\partial T_{\text{scat}_i}}{\partial f^k_{lm}}$.
+!   The $k=$ IWC$_a$, $k=$ IWC$_s$, and $k \neq$ IWC cases for
+!   $\frac{\partial \omega_{0_i}}{\partial f^k_i}$ simplify
+!   differently:
+! 
+!   \begin{equation}\begin{split}\label{twelve}
+!   \frac{\partial \omega_{0_i}}{\partial f^{\text{IWC}_s}_i}
+!   =\,&
+!     \omega_{0_i}
+!     \left ( \frac1{\beta_{{c\_s}_i}} - \frac1{\beta_{e_i}} \right )
+!      \frac{\partial \beta_{{c\_s}_i}}{\partial f^{\text{IWC}_s}_i}
+!   = \frac{1-\omega_{0_i}}{\beta_{e_i}}
+!      \frac{\partial \beta_{{c\_s}_i}}{\partial f^{\text{IWC}_s}_i}
+!   \\
+!   %
+!   \frac{\partial \omega_{0_i}}{\partial f^{\text{IWC}_a}_i}
+!   =\,&
+!     -\frac{\omega_{0_i}}{\beta_{e_i}}
+!       \frac{\partial \beta_{{c\_a}_i}}{\partial f^{\text{IWC}_a}_i}
+!   \\
+!   %
+!   \frac{\partial \omega_{0_i}}{\partial f^{k \neq \text{IWC}}_i}
+!   =\,&
+!    - \frac{\omega_{0_i}}{\beta_{e_i}}
+!      \frac{\partial \alpha_{\text{gas}_i}}
+!           {\partial f^{k \neq \text{IWC}}_i}\,,
+!   \end{split}\end{equation}
+!   where $\beta_{e_i} = \alpha_{\text{gas}_i} + \beta_{c\_e_i}$
+!   (see {\tt wvs-095}).
+!
+!   From $\frac{\partial \overline{B}_i}{\partial f^k_{lm}}$ the caller can
+!   compute $\frac{\partial\overline{\Delta B}_i}{\partial f^k_{lm}} =
+!   \Delta \frac{\partial\overline{B}_i}{\partial f^k_{lm}}$. This is
+!   different from {\tt Get_dB_dT}, which computes
+!   $\frac{\partial\overline{\Delta B}_i}{\partial T_{lm}}$, because there
+!   is only one $T$.
 
-    if ( do_IWC ) then
-      dB_df = 1.0 / ( alpha + beta_c_e ) * & ! 1 / beta_e
-              & ( dBeta_c_s_dIWC - w0 * dBeta_c_e_dIWC ) * & ! d w0 / dIWC
-              & ( TScat - B ) + &
-              & W0 * dTScat_df
-    else
-      dB_df = - W0 / ( alpha + beta_c_e ) ! W0 / beta_e
-    end if
+    select case ( molecule )
+    case ( l_cloud_a )
+      dB_df = -w0 / (alpha + beta_c_e) * dBeta_c_a_dIWC
+    case ( l_cloud_s )
+      dB_df = (1.0-w0) / (alpha + beta_c_e) * dBeta_c_s_dIWC
+    case default
+      dB_df = -w0 / (alpha + beta_c_e) * dAlpha_df
+    end select
+
+    if ( present(dTScat_df) ) dB_df = dB_df + w0 * dTScat_df
 
   end subroutine Get_dB_df
 
   ! --------------------------------------------------  Get_dB_dT  -----
-  subroutine Get_dB_dT ( Alpha, B, T, Nu, Beta_c_e, dBeta_c_e_dT, &
-    &                    dBeta_c_s_dT, TScat, dTScat_dT, W0, Eta_zxp, &
-    &                    NZ_ZXP, NNZ_ZXP, d_delta_B_dT )
+  subroutine Get_dB_dT ( Alpha, B, T, Nu, Beta_c_e, dAlpha_dT, &
+    &                    dBeta_c_a_dT, dBeta_c_s_dT, TScat, dTScat_dT, W0, &
+    &                    Eta_zxp, NZ_ZXP, NNZ_ZXP, d_delta_B_dT )
 
 !{ \raggedright
-!   {\tt dB_dT(i)} =
+!   {\tt d_delta_B_dT(i)} =
 !   $\frac{\partial \overline{\Delta B_i}}{\partial T_{lm}}$
 !           where  $\overline{B}_i = (1-\omega_{0_i}) B_i +
 !                                    \omega_{0_i} T_{\text{scat}_i} $
 !           and    $\frac{\partial \overline{B_i}}
 !                        {\partial T_{lm}(\zeta_i)} =
 !    \frac{\partial \omega_{0_i}}{\partial T_{lm}(\zeta_i)}
-!     \left( T_{\text{scat}_i} - B_i \right) +
+!     \left( T_{\text{scat}(\zeta_i)} - B_i \right) +
 !     \left( 1 - \omega_{0_i} \right) \frac{\partial B}
 !                                          {\partial T_{lm}(\zeta_i)} +
 !    \omega_{0_i} \frac{\partial T_{\text{scat}_i}}
@@ -122,14 +155,19 @@ contains
 !     \omega_{0_i} \frac{\partial T_{\text{scat}_i}}{\partial T_{lm}(\zeta_i)}$.
 !
 ! $\frac{\partial \omega_{0_i}}{\partial T_i} =
-!  \frac1{\beta_{e_i}}
-!   \left( \frac{\partial \beta_{c\_s_i}}{\partial T_i}
-!         - \omega_{0_i}
-!            \left( \frac{\partial \beta_{c\_e_i}}{\partial T_i}
-!                 + \frac{\partial \alpha_{\text{gas}_i}}{\partial T_i}
-!            \right)
-!   \right)$
-! where $\beta_{e_i} = \alpha_{\text{gas}_i} + \beta_{c\_e_i}$
+!   \frac{1 - \omega_{0_i}}{\beta_{e_i}}
+!    \frac{\partial \beta_{{c\_s}_i}}{\partial T_i} -
+!     \frac{\omega_{0_i}}{\beta_{e_i}}
+!                   \left( \frac{\partial \beta_{{c\_a}_i}}{\partial T_i} +
+!                          \frac{\partial\alpha_{\text{gas}_i}}{\partial T_i}
+!                   \right) =
+!   \frac1{\beta_{e_i}} \left[
+!   \frac{\partial \beta_{{c\_s}_i}}{\partial T_i} -
+!     \omega_{0_i} \left( \frac{\partial \beta_{{c\_a}_i}}{\partial T_i} +
+!                         \frac{\partial\alpha_{\text{gas}_i}}{\partial T_i} +
+!                         \frac{\partial \beta_{{c\_s}_i}}{\partial T_i}
+!                   \right) \right]$
+! where $\beta_{e_i} = \alpha_{\text{gas}_i} + \beta_{c\_e(\zeta_i)}$
 ! (see {\tt wvs-095}).
 !
 ! $\frac{\partial \omega_{0_i}}{\partial T_{lm}(\zeta_i)} =
@@ -150,7 +188,8 @@ contains
     real(rp), intent(in) :: T(:)         ! Temperature on the path
     real(r8), intent(in) :: Nu           ! Frequency
     real(rp), intent(in) :: Beta_c_e(:)  ! on the path
-    real(rp), intent(in) :: dBeta_c_e_dT(:)  ! on the path
+    real(rp), intent(in) :: dAlpha_dT(:) ! on the path
+    real(rp), intent(in) :: dBeta_c_a_dT(:)  ! on the path
     real(rp), intent(in) :: dBeta_c_s_dT(:)  ! on the path
     real(rp), intent(in) :: TScat(:)     ! on the path
     real(rp), intent(in) :: dTScat_dT(:,:) ! dTScat on the path / dT everywhere
@@ -164,7 +203,8 @@ contains
     integer :: I, Np
 
     dB_dT = 1.0 / ( alpha + beta_c_e ) * & ! 1 / beta_e
-          & ( dBeta_c_s_dT - w0 * dBeta_c_e_dT ) * & ! d w0 / dT
+          & ( dBeta_c_s_dT - & 
+          &   w0 * ( dAlpha_dT + dBeta_c_a_dT + dBeta_c_s_dT ) ) * & ! d w0 / dT
           & ( TScat - B ) + &
           & ( 1.0 - W0 ) * B * ( h_o_k * nu + B ) / T**2
 
@@ -682,6 +722,9 @@ contains
 end module TScat_Support_m
 
 ! $Log$
+! Revision 2.4  2011/03/23 23:45:32  vsnyder
+! FOV_Convolve_m.f90
+!
 ! Revision 2.3  2011/01/28 19:16:28  vsnyder
 ! Lots of stuff for derivatives
 !
