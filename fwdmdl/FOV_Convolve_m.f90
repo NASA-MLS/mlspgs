@@ -175,30 +175,30 @@ contains
     real(r8), optional, intent(out), target :: Rad_FFT_out(:) ! Temp derivs need it
 
     integer :: I, J
-    real(r8), dimension(no_fft), target :: My_rad_FFT
+    real(r8), dimension(ffth+1), target :: My_rad_FFT
     real(r8), dimension(no_fft) :: rad_fft1
     real(r8), dimension(:), pointer :: rad_fft
 
-    rad_fft => my_rad_fft
-    if ( present(rad_fft_out) ) rad_fft => rad_fft_out
+    rad_fft => my_rad_fft(1:ffth+1)
+    if ( present(rad_fft_out) ) rad_fft => rad_fft_out(1:ffth+1)
 
     ! interpolate from input grid to FFT angles
 
     call interpolateValues ( convolve_support%coeffs_1, &
       & convolve_support%del_chi_in, rad_in, &
-      & convolve_support%angles(ffth:no_fft), rad_fft(1:ffth+1), &
+      & convolve_support%angles(ffth:no_fft), rad_fft, &
       & METHOD='S', EXTRAPOLATE='C' )
 
     ! might need this if the signs coming out wrong is a problem
 
-    rad_fft(1:ffth+1) = rad_fft(ffth+1:1:-1)
+    rad_fft = rad_fft(ffth+1:1:-1)
 
     ! take cosine transform of interpolated input array
     ! For DTCST the coefficients come out in order, and they're
     ! twice the coefficients from DRFT1
 
-    call dtcst_t ( rad_fft(1:ffth+1), 'a' )
-    rad_fft(1:ffth+1) = 0.5 * rad_fft(1:ffth+1)
+    call dtcst_t ( rad_fft, 'a' )
+    rad_fft = 0.5 * rad_fft
 
     ! apply convolution theorem
 
@@ -588,6 +588,9 @@ contains
 end module FOV_Convolve_m
 
 ! $Log$
+! Revision 2.13  2011/03/23 23:45:32  vsnyder
+! FOV_Convolve_m.f90
+!
 ! Revision 2.12  2011/03/02 02:05:59  vsnyder
 ! Make AntennaPattern_T, Coefficients public, for F95 compatibility
 !
