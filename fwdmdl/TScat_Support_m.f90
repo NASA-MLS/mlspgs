@@ -722,7 +722,11 @@ contains
 end module TScat_Support_m
 
 ! $Log$
+! Revision 2.5  2011/03/23 23:51:38  vsnyder
+! Completely revised Get_dB_df, revised some TeXnicalities in Get_dB_dT
+!
 ! Revision 2.4  2011/03/23 23:45:32  vsnyder
+! This log entry is bogus.  Check in again to get the right one.
 ! FOV_Convolve_m.f90
 !
 ! Revision 2.3  2011/01/28 19:16:28  vsnyder
