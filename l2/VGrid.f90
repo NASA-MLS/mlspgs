@@ -77,7 +77,7 @@ contains ! =====     Public Procedures     =============================
     ! Dummy arguments
     integer, intent(in) :: NAME    ! String index of name
     integer, intent(in) :: ROOT    ! Root of vGrid subtree in abstract syntax
-    type (L2GPData_T), pointer, dimension(:) :: L2GPDATABASE
+    type (L2GPData_T), pointer, dimension(:), optional :: L2GPDATABASE
     integer, intent(out) :: Status ! 0 => OK, nonzero => trouble
 
     ! Local variables
@@ -295,7 +295,9 @@ contains ! =====     Public Procedures     =============================
           vGrid%surfs = 10.0**( nint ( log10(vGrid%surfs) * values(1) ) / values(1) )
         end if
       case ( l_l2gp )
-        if ( .not. associated(l2gpDatabase) ) then
+        if (.not. present(l2gpdatabase)) then
+          call announce_error(l2gpWhere, noL2GP)
+        else if ( .not. associated(l2gpDatabase) ) then
           call announce_error ( l2gpWhere, noL2GP )
         else if (got_field(f_coordinate)) then
           call announce_error ( coordIndex, redundantCoordinates )
@@ -517,6 +519,9 @@ end module vGrid
 
 !
 ! $Log$
+! Revision 2.28  2011/03/23 19:56:11  honghanh
+! Make l2gpdatabase an optional argument
+!
 ! Revision 2.27  2009/06/23 18:46:19  pwagner
 ! Prevent Intel from optimizing ident string away
 !
