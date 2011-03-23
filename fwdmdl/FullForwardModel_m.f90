@@ -527,8 +527,8 @@ contains
     real(rp) :: DSDZ_GW_PATH(max_f)   ! ds/dH * dH/dZ * GW on path
     real(rp) :: DTanh_DT_C(max_c)     ! 1/tanh1_c d/dT tanh1_c
     real(rp) :: DTanh_DT_F(max_f)     ! 1/tanh1_f d/dT tanh1_f
-    real(rp) :: dTScat_df(s_ts*max_c,size(grids_f%values))
-    real(rp) :: dTScat_dT(s_ts*max_c,size(grids_tmp%values))
+    real(rp) :: dTScat_df(s_ts*max_c,size(grids_f%values))   ! on path w.r.t. SVE
+    real(rp) :: dTScat_dT(s_ts*max_c,size(grids_tmp%values)) ! on path w.r.t. SVE
     real(rp) :: H_PATH(max_f)         ! Heights on path
     real(rp) :: H_PATH_C(max_c)       ! H_PATH on coarse grid
     real(rp) :: H_PATH_F(max_f)       ! H_PATH on fine grid
@@ -3275,21 +3275,25 @@ contains
         if ( fwdModelConf%useTScat ) then
 
           ! It is important NOT to put :nfp and :ngl bounds on the first
-          ! dimensions of eta_fzp and dAlpha_df_path_f because these correspond
-          ! to explicit-shape dummy arguments.  Doing so would cause the
-          ! compiler to take a copy!
+          ! dimensions of eta_fzp and dAlpha_df_path_f because these
+          ! correspond to explicit-shape dummy arguments.  Doing so would
+          ! cause the compiler to take a copy!
           call drad_tran_df ( max_f, c_inds, gl_inds, del_zeta, Grids_f,      &
             &  eta_fzp, do_calc_fzp, do_gl, del_s, ref_corr, dsdz_gw_path,    &
             &  inc_rad_path, dAlpha_df_path_c(:npc,:), dAlpha_df_path_f,      &
             &  i_start, tan_pt_c, i_stop,                                     &
             &  size(d_delta_df,1), d_delta_df, nz_d_delta_df, nnz_d_delta_df, &
             &  k_atmos_frq, dB_df, tau%tau(:,frq_i), nz_zp, nnz_zp,           &
-            &  alpha_path_c, B(:npc), beta_c_e_path_c(:npc),                  &
+            &  alpha_path_c, B(:npc), beta_c_a_path_c(:npc),                  &
             &  dBeta_c_e_dIWC_path_c(:npc), dBeta_c_s_dIWC_path_c(:npc),      &
             &  tt_path_c(:npc), dTScat_df, w0_path_c(:npc) )
 
         else
 
+          ! It is important NOT to put :nfp and :ngl bounds on the first
+          ! dimensions of eta_fzp and dAlpha_df_path_f because these
+          ! correspond to explicit-shape dummy arguments.  Doing so would
+          ! cause the compiler to take a copy!
           call drad_tran_df ( max_f, c_inds, gl_inds, del_zeta, Grids_f,      &
             &  eta_fzp, do_calc_fzp, do_gl, del_s, ref_corr, dsdz_gw_path,    &
             &  inc_rad_path, dAlpha_df_path_c(:npc,:), dAlpha_df_path_f,      &
@@ -3347,7 +3351,8 @@ contains
         if ( fwdModelConf%useTScat ) then
 
           call get_dB_dT ( alpha_path_c, B(:npc), t_path_c(:npc), frq,       &
-                         & beta_c_e_path_c(:npc), dBeta_c_e_dT_path_c(:npc), &
+                         & beta_c_e_path_c(:npc), dAlpha_dT_Path_c(:npc),    &
+                         & dBeta_c_a_dT_path_c(:npc), &
                          & dBeta_c_s_dT_path_c(:npc), tt_path_c(:npc),       &
                          & dTScat_dT(:npc,:), w0_path_c(:npc),               &
                          & eta_zxp_t_c(1:npc,:), nz_zxp_t_c, nnz_zxp_t_c,    &
@@ -3418,7 +3423,7 @@ contains
             & alpha_path_polarized_f(:,1:ngl),                            &
             & dAlpha_dT_path_c(:npc), dAlpha_dT_path_f(:ngl),             &
             & dAlpha_dT_polarized_path_c, dAlpha_dT_polarized_path_f,     &
-            & eta_zxp_t_c(1:p_stop,:), eta_zxp_t(:ngl,:), del_s,          &
+            & eta_zxp_t_c(1:p_stop,:), eta_zxp_t(:npf,:), del_s,          &
             & gl_inds, del_zeta, do_calc_t_c(1:p_stop,:),                 &
             & do_calc_t_f(:ngl,:), do_gl(1:p_stop), dsdh_path,            &
             & dhdz_gw_path, dsdz_gw_path, incoptdepth_pol(:,:,1:p_stop),  &
@@ -4399,6 +4404,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.316  2011/03/11 03:09:08  vsnyder
+! Use Get_dAlpha_df
+!
 ! Revision 2.315  2011/03/04 03:44:40  vsnyder
 ! Remove declarations for unused stuff
 !
