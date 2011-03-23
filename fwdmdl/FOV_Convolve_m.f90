@@ -588,7 +588,12 @@ contains
 end module FOV_Convolve_m
 
 ! $Log$
+! Revision 2.14  2011/03/23 23:49:20  vsnyder
+! Make some array bounds explicit, to avoid a bounds violation if the
+! actual argument is bigger than needed for the FFT.
+!
 ! Revision 2.13  2011/03/23 23:45:32  vsnyder
+! This log entry is bogus.  Check in again to get the right one.
 ! FOV_Convolve_m.f90
 !
 ! Revision 2.12  2011/03/02 02:05:59  vsnyder
