@@ -592,74 +592,105 @@ contains
     if ( findFirst(MODIFIABLEFIELDS, lowercase(field)) < 1 ) then
       call MLSMessage ( MLSMSG_Error, ModuleName // &
         & 'ModifyQuantityTemplate_allocate', &
-        & trim(field) // " not a modifiable filed" )
+        & trim(field) // " not a modifiable field" )
     endif
     select case(lowercase(field))
     case ( 'surfs' )
-      call deallocate_test( z%surfs, 'template surfs', &
-        & ModuleName // 'ModifyQuantityTemplate_allocate' )
-      call allocate_test ( z%surfs, shp(1), shp(2), &
-        & "template surfs", &
-        & ModuleName // 'ModifyQuantityTemplate_allocate' )
+      if ( any(shape(z%surfs) /= shp) ) then
+        call deallocate_test( z%surfs, 'template surfs', &
+          & ModuleName // 'ModifyQuantityTemplate_allocate' )
+        call allocate_test ( z%surfs, shp(1), shp(2), &
+          & "template surfs", &
+          & ModuleName // 'ModifyQuantityTemplate_allocate' )
+      endif
       call myValuesToField( z%surfs, SHP, VALUESNODE, spread )
     case ( 'phi' )
-      call deallocate_test( z%phi, 'template phi', &
-        & ModuleName // 'ModifyQuantityTemplate_allocate' )
-      call allocate_test ( z%phi, shp(1), shp(2), &
-        & "template phi", &
-        & ModuleName // 'ModifyQuantityTemplate_allocate' )
+      if ( any(shape(z%phi) /= shp) ) then
+        call deallocate_test( z%phi, 'template phi', &
+          & ModuleName // 'ModifyQuantityTemplate_allocate' )
+        call allocate_test ( z%phi, shp(1), shp(2), &
+          & "template phi", &
+          & ModuleName // 'ModifyQuantityTemplate_allocate' )
+      endif
       call myValuesToField( z%phi, SHP, VALUESNODE, spread )
     case ( 'geodlat' )
-      call deallocate_test( z%geodLat, 'template geodLat', &
-        & ModuleName // 'ModifyQuantityTemplate_allocate' )
-      call allocate_test ( z%geodLat, shp(1), shp(2), &
-        & "template geodLat", &
-        & ModuleName // 'ModifyQuantityTemplate_allocate' )
+      if ( any(shape(z%geodlat) /= shp) ) then
+        call deallocate_test( z%geodLat, 'template geodLat', &
+          & ModuleName // 'ModifyQuantityTemplate_allocate' )
+        call allocate_test ( z%geodLat, shp(1), shp(2), &
+          & "template geodLat", &
+          & ModuleName // 'ModifyQuantityTemplate_allocate' )
+      endif
       call myValuesToField( z%geodLat, SHP, VALUESNODE, spread )
     case ( 'lon' )
-      call deallocate_test( z%lon, 'template lon', &
-        & ModuleName // 'ModifyQuantityTemplate_allocate' )
-      call allocate_test ( z%lon, shp(1), shp(2), &
-        & "template lon", &
-        & ModuleName // 'ModifyQuantityTemplate_allocate' )
+      if ( any(shape(z%lon) /= shp) ) then
+        call deallocate_test( z%lon, 'template lon', &
+          & ModuleName // 'ModifyQuantityTemplate_allocate' )
+        call allocate_test ( z%lon, shp(1), shp(2), &
+          & "template lon", &
+          & ModuleName // 'ModifyQuantityTemplate_allocate' )
+      endif
       call myValuesToField( z%lon, SHP, VALUESNODE, spread )
     case ( 'time' )
-      call deallocate_test( z%time, 'template time', &
-        & ModuleName // 'ModifyQuantityTemplate_allocate' )
-      call allocate_test ( z%time, shp(1), shp(2), &
-        & "template time", &
-        & ModuleName // 'ModifyQuantityTemplate_allocate' )
+      if ( any(shape(z%time) /= shp) ) then
+        call deallocate_test( z%time, 'template time', &
+          & ModuleName // 'ModifyQuantityTemplate_allocate' )
+        call allocate_test ( z%time, shp(1), shp(2), &
+          & "template time", &
+          & ModuleName // 'ModifyQuantityTemplate_allocate' )
+      endif
       call myValuesToField( z%time, SHP, VALUESNODE, spread )
     case ( 'solartime' )
-      call deallocate_test( z%solartime, 'template solartime', &
-        & ModuleName // 'ModifyQuantityTemplate_allocate' )
-      call allocate_test ( z%solartime, shp(1), shp(2), &
-        & "template solartime", &
-        & ModuleName // 'ModifyQuantityTemplate_allocate' )
+      if ( any(shape(z%solartime) /= shp) ) then
+        call deallocate_test( z%solartime, 'template solartime', &
+          & ModuleName // 'ModifyQuantityTemplate_allocate' )
+        call allocate_test ( z%solartime, shp(1), shp(2), &
+          & "template solartime", &
+          & ModuleName // 'ModifyQuantityTemplate_allocate' )
+      endif
       call myValuesToField( z%solartime, SHP, VALUESNODE, spread )
     case ( 'solarzenith' )
-      call deallocate_test( z%solarzenith, 'template solarzenith', &
-        & ModuleName // 'ModifyQuantityTemplate_allocate' )
-      call allocate_test ( z%solarzenith, shp(1), shp(2), &
-        & "template solarzenith", &
-        & ModuleName // 'ModifyQuantityTemplate_allocate' )
+      if ( any(shape(z%solarzenith) /= shp) ) then
+        call deallocate_test( z%solarzenith, 'template solarzenith', &
+          & ModuleName // 'ModifyQuantityTemplate_allocate' )
+        call allocate_test ( z%solarzenith, shp(1), shp(2), &
+          & "template solarzenith", &
+          & ModuleName // 'ModifyQuantityTemplate_allocate' )
+      endif
       call myValuesToField( z%solarzenith, SHP, VALUESNODE, spread )
     case ( 'losangle' )
-      call deallocate_test( z%losangle, 'template losangle', &
-        & ModuleName // 'ModifyQuantityTemplate_allocate' )
-      call allocate_test ( z%losangle, shp(1), shp(2), &
-        & "template losangle", &
-        & ModuleName // 'ModifyQuantityTemplate_allocate' )
+      if ( any(shape(z%losangle) /= shp) ) then
+        call deallocate_test( z%losangle, 'template losangle', &
+          & ModuleName // 'ModifyQuantityTemplate_allocate' )
+        call allocate_test ( z%losangle, shp(1), shp(2), &
+          & "template losangle", &
+          & ModuleName // 'ModifyQuantityTemplate_allocate' )
+      endif
       call myValuesToField( z%losangle, SHP, VALUESNODE, spread )
     case ( 'frequencies' )
-      call deallocate_test( z%frequencies, 'template frequencies', &
-        & ModuleName // 'ModifyQuantityTemplate_allocate' )
-      call allocate_test ( z%frequencies, shp(1), &
-        & "template frequencies", &
-        & ModuleName // 'ModifyQuantityTemplate_allocate' )
+      if ( .not. associated(z%frequencies) ) then
+        call allocate_test ( z%frequencies, shp(1), &
+          & "template frequencies", &
+          & ModuleName // 'ModifyQuantityTemplate_allocate' )
+      elseif ( size(z%frequencies) /= shp(1) ) then
+        call deallocate_test( z%frequencies, 'template frequencies', &
+          & ModuleName // 'ModifyQuantityTemplate_allocate' )
+        call allocate_test ( z%frequencies, shp(1), &
+          & "template frequencies", &
+          & ModuleName // 'ModifyQuantityTemplate_allocate' )
+      endif
       call myValuesToField( z%frequencies, VALUESNODE, spread )
     case default
     end select
+    if ( lowercase(field) == 'surfs' ) then
+      z%NoSurfs = shp(1)
+      if ( .not. z%coherent ) z%noInstances = shp(2)
+    elseif ( lowercase(field) == 'frequencies' ) then
+      z%NoChans = shp(1)
+    else
+      z%noInstances = shp(2)
+      if ( .not. z%stacked ) z%NoSurfs = shp(1)
+    endif
   end subroutine ModifyQuantityTemplate_allocate
 
   subroutine ModifyQuantityTemplate_array  ( Z, FIELD, array, spread )
@@ -1388,6 +1419,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.61  2011/03/22 23:39:50  pwagner
+! May now change both shape and values of qtytemplate field
+!
 ! Revision 2.60  2011/03/15 22:43:52  pwagner
 ! Added ModifyQuantityTemplate; defaults to private
 !
