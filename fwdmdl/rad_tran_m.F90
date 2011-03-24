@@ -979,18 +979,6 @@ contains
         call dscrt_dx ( tan_pt, d_delta_dt(:,sv_i), inc_rad_path, i_begin, i_stop, &
                      &  drad_dt(sv_i) )
 
-!       else if ( do_TScat ) then
-
-!         call Get_dB_dT ( alpha_path_c, B, beta_c_e, dBeta_c_a_dIWC, &
-!                        & dBeta_c_s_dIWC, TScat, dTScat_df(:,sv_i), w0, &
-!                        & grids_f%qty(sv_i) == l_cloud_a, dB_df )
-! 
-!         call dt_script ( dB_df, eta_zxp(:,sv_i:sv_i), nz_zxp(:,sv_i:sv_i), &
-!           & nnz_zxp(sv_i:sv_i), d_delta_B_df )
-! 
-!         call dscrt_dt ( tan_pt, d_delta_df(:,sv_i), tau, inc_rad_path,&
-!                       & d_delta_B_df(:,1), i_begin, i_stop, drad_df(sv_i) )
-
       else
 
         call dscrt_dt ( tan_pt, d_delta_dt(:,sv_i), tau, inc_rad_path,&
@@ -1880,7 +1868,11 @@ contains
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.23  2011/03/24 00:17:34  vsnyder
+! Add TScat derivatives to dRad_tran_df
+!
 ! Revision 2.22  2011/03/23 23:45:32  vsnyder
+! This log entry is bogus.  Check in again to get the right one.
 ! FOV_Convolve_m.f90
 !
 ! Revision 2.21  2011/03/11 03:09:08  vsnyder
