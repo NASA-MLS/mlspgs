@@ -20,6 +20,7 @@ module CFM_Vector_m
    implicit none
 
    public :: CreateVector
+   public :: CreateValue4AgileVector, CreateAgileVector, AddValue2Vector
 
 !---------------------------- RCS Ident Info -------------------------------
    character(len=*), private, parameter :: ModuleName= &
@@ -27,58 +28,154 @@ module CFM_Vector_m
    private :: not_used_here
 !---------------------------------------------------------------------------
 
-   private
+    private
 
-   contains
+    contains
 
-   type(Vector_T) function CreateVector (vectorTemplate, qtyDatabase, name) &
+    type(Vector_T) function CreateVector (vectorTemplate, qtyDatabase, name) &
              result (vector)
-      ! template listing the quantities to be stored in this vector
-      type (VectorTemplate_T), intent (in), target :: vectorTemplate
-      ! quantity template database to retrieve the template for the quantities
-      ! to be stored in this vector
-      type (QuantityTemplate_T), dimension(:), intent(in), target :: qtyDatabase
-      ! name of the vector as string
-      character(len=*), optional :: name
+        ! template listing the quantities to be stored in this vector
+        type (VectorTemplate_T), intent (in), target :: vectorTemplate
+        ! quantity template database to retrieve the template for the quantities
+        ! to be stored in this vector
+        type (QuantityTemplate_T), dimension(:), intent(in), target :: qtyDatabase
+        ! name of the vector as string
+        character(len=*), optional :: name
 
-      integer :: quantity
-      integer :: status
+        integer :: quantity
+        integer :: status
 
-      vector%template = vectorTemplate
-      allocate (vector%quantities(vectorTemplate%noQuantities), stat=status)
-      if (status /= 0) call MLSMessage (MLSMSG_Error, moduleName, &
-          MLSMSG_Allocate // "Vector quantities")
+        vector%template = vectorTemplate
+        allocate (vector%quantities(vectorTemplate%noQuantities), stat=status)
+        if (status /= 0) call MLSMessage (MLSMSG_Error, moduleName, &
+             MLSMSG_Allocate // "Vector quantities")
 
-      do quantity = 1, vectorTemplate%noQuantities
-         vector%quantities(quantity)%index = quantity
-         vector%quantities(quantity)%template = &
-            qtyDatabase(vectorTemplate%quantities(quantity))
-      end do
-      call CreateValues(vector)
+        do quantity = 1, vectorTemplate%noQuantities
+            vector%quantities(quantity)%index = quantity
+            vector%quantities(quantity)%template = &
+                qtyDatabase(vectorTemplate%quantities(quantity))
+        end do
+        call CreateValues(vector)
 
-      if (present(name)) then
-         vector%name = create_string(name)
-      else
-         vector%name = 0
-      end if
-   end function
+        if (present(name)) then
+            vector%name = create_string(name)
+        else
+            vector%name = 0
+        end if
+    end function
 
-   ! =====     Private Procedures     =====================================
-   subroutine CreateValues ( Vector)
-      ! Allocate space for the values of a vector.
-      type(Vector_T), intent(inout) :: Vector
-      integer :: QTY
-      real(r8), parameter :: MYHUGE = 1.0e15
+    type(Vector_T) function CreateAgileVector (name) result (vector)
+        character(len=*), optional :: name
 
-      do qty = 1, size(vector%quantities)
-         call allocate_test ( vector%quantities(qty)%values, &
-           & vector%quantities(qty)%template%noChans * &
-           & vector%quantities(qty)%template%noSurfs, &
-           & vector%quantities(qty)%template%noInstances, &
-           & "vector%quantities(qty)%%values", ModuleName )
-         vector%quantities(qty)%values = 0.0_r8
-    end do
-  end subroutine
+        ! this vector's template has no quantities array
+        vector%template%name = 0
+        vector%template%noQuantities = 0
+        vector%template%totalInstances = 0
+        vector%template%totalElements = 0
+        nullify(vector%template%quantities)
+        nullify(vector%quantities)
+
+        if (present(name)) then
+            vector%name = create_string(name)
+        else
+            vector%name = 0
+        end if
+    end function
+
+    ! vectorvalue doesn't have to be unique
+    ! value will be added to the end of vector
+    subroutine AddValue2Vector (vector, vectorvalue)
+        type(Vector_T), intent(inout) :: vector
+        type(VectorValue_T), intent(in) :: vectorvalue
+
+        type(VectorValue_T), dimension(:), pointer :: temp
+        integer :: status
+
+        vector%template%noQuantities = vector%template%noquantities + 1
+        temp => vector%quantities
+
+        allocate(vector%quantities(vector%template%noquantities), stat=status)
+        if (status /= 0) call MLSMessage (MLSMSG_Error, moduleName, &
+            MLSMSG_Allocate // "AddValue2Vector")
+        if (associated(temp)) vector%quantities(1:(vector%template%noquantities-1)) = temp
+
+        vector%quantities(vector%template%noquantities) = vectorvalue
+        vector%quantities(vector%template%noquantities)%index = vector%template%noquantities
+
+        vector%template%totalInstances = vector%template%totalinstances + vectorvalue%template%noinstances
+        vector%template%totalElements = vector%template%totalelements + &
+                                        vectorvalue%template%noinstances * &
+                                        vectorvalue%template%instanceLen
+    end subroutine
+
+    type(VectorValue_T) function CreateValue4AgileVector (template, value, spreadvalue, mask) &
+    result(vectorvalue)
+        use MLSStrings, only: writeIntsToChars
+
+        type(QuantityTemplate_T), intent(in) :: template
+        real(r8), dimension(:), optional :: value
+        real(r8), optional :: spreadvalue
+        character, dimension(:), optional :: mask
+
+        integer :: row, col
+        character(len=10) :: int1 = "          ", int2 = "          "
+
+        row = template%nochans * template%nosurfs
+        col = template%noinstances
+
+        vectorvalue%template = template
+
+        if (.not. present(value) .and. .not. present(spreadvalue)) then
+            call allocate_test(vectorvalue%values, row, col, "vectorvalue%values", modulename)
+            vectorvalue%values = 0.0_r8
+            return
+        end if
+
+        if (present(value) .and. present(spreadvalue)) &
+        call MLSMessage(MLSMSG_Error, modulename, "Cannot specify both value and spreadvalue.")
+
+        ! Fortran do not have lazy evaluation of conditional clause
+        if (present(value)) then
+            if (row * col /= size(value)) then
+                call writeintstochars(row * col, int1)
+                call writeintstochars(size(value), int2)
+
+                call MLSMessage (MLSMSG_Error, moduleName, &
+                "Incorrect size, expect " // int1 // " elements, got " // int2)
+            end if
+        end if
+
+        call allocate_test(vectorvalue%values, row, col, "vectorvalue%values", modulename)
+        if (present(spreadvalue)) then
+            vectorvalue%values = spreadvalue
+        else
+            vectorvalue%values = reshape(value, shape(vectorvalue%values))
+        end if
+
+        if (present(mask)) then
+            if (size(vectorvalue%values) /= size(mask)) &
+            call MLSMessage (MLSMSG_Error, modulename, "Size of mask differs from shape of value.")
+            call allocate_test(vectorvalue%mask, row, col, "vectorvalue%mask", modulename)
+            vectorvalue%mask = reshape(mask, shape(vectorvalue%mask))
+        end if
+    end function
+
+    ! =====     Private Procedures     =====================================
+    subroutine CreateValues ( Vector)
+        ! Allocate space for the values of a vector.
+        type(Vector_T), intent(inout) :: Vector
+        integer :: QTY
+        real(r8), parameter :: MYHUGE = 1.0e15
+
+        do qty = 1, size(vector%quantities)
+            call allocate_test ( vector%quantities(qty)%values, &
+                & vector%quantities(qty)%template%noChans * &
+                & vector%quantities(qty)%template%noSurfs, &
+                & vector%quantities(qty)%template%noInstances, &
+                & "vector%quantities(qty)%%values", ModuleName )
+            vector%quantities(qty)%values = 0.0_r8
+        end do
+    end subroutine
 
 !--------------------------- end bloc --------------------------------------
    logical function not_used_here()
@@ -93,6 +190,9 @@ module CFM_Vector_m
 end module
 
 ! $Log$
+! Revision 1.7  2010/11/03 20:17:01  honghanh
+! Add name as an optional argument to CreateVector.
+!
 ! Revision 1.6  2010/06/29 16:40:23  honghanh
 ! Remove all function/subroutine and user type forwarding from
 ! all CFM modules except for from cfm.f90

@@ -42,7 +42,8 @@ module cfm          ! callable forward model
                             VectorTemplate_T, DestroyVectorTemplateInfo, &
                             DestroyVectorInfo, GetVectorQtyByTemplateIndex, &
                             operator(+), operator(-)
-   use CFM_Vector_m, only: CreateVector
+   use CFM_Vector_m, only: CreateVector, CreateValue4AgileVector, &
+                           CreateAgileVector, AddValue2Vector
    use CFM_Fill_m, only: ExplicitFillVectorQuantity, ApplyBaseline, &
                          FillVectorQuantityFromL1B, FillPhitanQuantity, &
                          SpreadFillVectorQuantity, FillPtanQuantity
@@ -78,6 +79,9 @@ contains
 end module cfm
 
 ! $Log$
+! Revision 1.13  2011/03/10 18:18:02  pwagner
+! Everything from init_tables_module back
+!
 ! Revision 1.12  2011/01/31 17:45:43  honghanh
 ! Make not_used_here a private function
 !

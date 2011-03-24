@@ -278,9 +278,9 @@ program mockup
       character(len=3) :: GHz = "GHz"
       character(len=2) :: sc = "sc"
       integer :: stateSelected(10), measurementSelected(3)
-      type(VectorValue_T), pointer :: quantity, h2o_vv, orbincl_vv, geocAlt_vv, &
-                                      ptanG_vv, temperature_vv, refGPH_vv, &
-                                      phitan_vv
+      type(VectorValue_T) :: quantity, h2o_vv, orbincl_vv, geocAlt_vv, &
+                             ptanG_vv, temperature_vv, refGPH_vv, &
+                             phitan_vv
       integer :: temperature_index, h2o_index, band2_index
       integer :: o3_index, ptanGHz_index, band7_index, phitanGHz_index
       integer :: geodAlt_index, orbincl_index, gph_index
@@ -361,61 +361,69 @@ program mockup
       call DestroyHGridContents(hGridStandard)
       call DestroyFGridContents(fGridStandard)
 
-      temperature_index = AddQuantityTemplateToDatabase(qtyTemplates, temperature)
-      gph_index = AddQuantityTemplateToDatabase(qtyTemplates, GPH)
-      o3_index = AddQuantityTemplateToDatabase(qtyTemplates, O3)
-      h2o_index = AddQuantityTemplateToDatabase(qtyTemplates, H2O)
-      ptanGHz_index = AddQuantityTemplateToDatabase(qtyTemplates, ptanGHz)
-      geodAlt_index = AddQuantityTemplateToDatabase(qtyTemplates, geodAltitude)
-      geocAlt_index = AddQuantityTemplatetoDatabase(qtyTemplates, geocAlt)
-      orbincl_index = AddQuantityTemplateToDatabase(qtyTemplates, orbIncl)
-      refGPH_index = AddQuantityTemplateToDatabase(qtyTemplates, refGPH)
-      phitanGHz_index = AddQuantityTemplateToDatabase(qtyTemplates, phitanGHz)
+!      temperature_index = AddQuantityTemplateToDatabase(qtyTemplates, temperature)
+!      gph_index = AddQuantityTemplateToDatabase(qtyTemplates, GPH)
+!      o3_index = AddQuantityTemplateToDatabase(qtyTemplates, O3)
+!      h2o_index = AddQuantityTemplateToDatabase(qtyTemplates, H2O)
+!      ptanGHz_index = AddQuantityTemplateToDatabase(qtyTemplates, ptanGHz)
+!      geodAlt_index = AddQuantityTemplateToDatabase(qtyTemplates, geodAltitude)
+!      geocAlt_index = AddQuantityTemplatetoDatabase(qtyTemplates, geocAlt)
+!      orbincl_index = AddQuantityTemplateToDatabase(qtyTemplates, orbIncl)
+!      refGPH_index = AddQuantityTemplateToDatabase(qtyTemplates, refGPH)
+!      phitanGHz_index = AddQuantityTemplateToDatabase(qtyTemplates, phitanGHz)
       band7_index = AddQuantityTemplateToDatabase(qtyTemplates, band7)
       band2_index = AddQuantityTemplateToDatabase(qtyTemplates, band2)
       band8_index = AddQuantityTemplateToDatabase(qtyTemplates, band8)
 
       ! The numbers are the order that quantities template were added
-      stateSelected = (/temperature_index,o3_index,h2o_index, phitanGHz_index, &
-                        ptanGHz_index,geodAlt_index, geocAlt_index, &
-                        orbincl_index, gph_index, refGPH_index/)
-      stateTemplate = CreateVectorTemplate(qtyTemplates, stateSelected)
-
+!      stateSelected = (/temperature_index,o3_index,h2o_index, phitanGHz_index, &
+!                        ptanGHz_index,geodAlt_index, geocAlt_index, &
+!                        orbincl_index, gph_index, refGPH_index/)
+!      stateTemplate = CreateVectorTemplate(qtyTemplates, stateSelected)
+!
       measurementSelected = (/band7_index, band2_index, band8_index/)
       measurementTemplate = CreateVectorTemplate(qtyTemplates, measurementSelected)
 
-      state = CreateVector(stateTemplate, qtyTemplates, name='state')
+      state = CreateAgileVector(name='state')
       measurement = CreateVector(measurementTemplate, qtyTemplates, name='measurement')
 
-      refGPH_vv => GetVectorQtyByTemplateIndex (state, refGPH_index) ! refGPH
-      call SpreadFillVectorQuantity (refGPH_vv, refGPHInput) ! unit is meter
+      refGPH_vv = CreateValue4AgileVector (refGPH, spreadvalue=refGPHInput) ! unit is meter
+      call AddValue2Vector(state, refgph_vv)
+
+      quantity = CreateValue4AgileVector (gph)
+      call AddValue2Vector(state, quantity)
 
       ! supply temperature, GPH, H2O, and O3 data
-      temperature_vv => GetVectorQtyByTemplateIndex(state, temperature_index)
-      call ExplicitFillVectorQuantity(temperature_vv, TemperatureInput)
+      temperature_vv = CreateValue4AgileVector(temperature, value=TemperatureInput)
+      call AddValue2Vector(state, temperature_vv)
 
-      h2o_vv => GetVectorQtyByTemplateIndex(state, h2o_index)
-      call ExplicitFillVectorQuantity(h2o_vv, H2OInput)
+      h2o_vv = CreateValue4AgileVector(h2o, value=H2OInput)
+      call AddValue2Vector(state, h2o_vv)
 
-      quantity => GetVectorQtyByTemplateIndex(state, o3_index)
-      call ExplicitFillVectorQuantity(quantity, O3Input)
+      quantity = CreateValue4AgileVector(o3, value=O3Input)
+      call AddValue2Vector(state, quantity)
 
-      quantity => GetVectorQtyByTemplateIndex(state, geodAlt_index)
+      quantity = CreateValue4AgileVector(geodAltitude)
       call FillVectorQuantityFromL1B(quantity, chunk, filedatabase, .false.)
+      call AddValue2Vector(state, quantity)
 
       ! Fill orbit inclination, tangent geocentric altitude with
       ! data from MLS L1B file, and use them, along with other
       ! quantities to calculate ptan
-      orbincl_vv => GetVectorQtyByTemplateIndex (state, orbincl_index)
+      orbincl_vv = CreateValue4AgileVector (orbincl)
       call FillVectorQuantityFromL1B(orbincl_vv, chunk, filedatabase, .false.)
+      call AddValue2Vector(state, orbincl_vv)
 
-      geocAlt_vv => GetVectorQtyByTemplateIndex (state, geocAlt_index)
+      geocAlt_vv = CreateValue4AgileVector (geocAlt)
       call FillVectorQuantityFromL1B(geocAlt_vv, chunk, filedatabase, .false.)
+      call AddValue2Vector(state, geocAlt_vv)
 
-      ptanG_vv => GetVectorQtyByTemplateIndex (state, ptanGHz_index)
+      ptanG_vv = CreateValue4AgileVector (ptanGHz)
+      call AddValue2Vector(state, ptanG_vv)
 
-      phitan_vv => GetVectorQtyByTemplateIndex (state, phitanGHz_index)
+      phitan_vv = CreateValue4AgileVector (phitanGHz)
       call FillPhitanQuantity(phitan_vv)
+      call AddValue2Vector(state, phitan_vv)
 
       ! calculate ptan
       !call dump(temperature_vv, details=3)
@@ -622,9 +630,6 @@ program mockup
 end program
 
 ! $Log$
-! Revision 1.46  2010/11/19 17:16:08  honghanh
-! Add example to use the requestedMAF feature in forward model
-!
 ! Revision 1.44  2010/11/03 20:17:01  honghanh
 ! Add name as an optional argument to CreateVector.
 !
