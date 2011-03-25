@@ -29,7 +29,7 @@ contains
   subroutine SIDS ( Root, VectorDatabase, MatrixDatabase, HessianDatabase, &
     & configDatabase, chunk)
 
-    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST, TEST_ALLOCATE
     use Chunks_m, only: MLSChunk_T
     use Expr_M, only: EXPR
     use ForwardModelConfig, only: ForwardModelConfig_T
@@ -43,7 +43,7 @@ contains
     use Intrinsic, only: PHYQ_DIMENSIONLESS
     use Lexer_Core, only: Print_Source
     use MLSCommon, only: R8
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MatrixModule_0, only: M_Absent, M_Full, M_Banded, M_Column_Sparse, &
       & MatrixElement_T
     use MatrixModule_1, only: AddToMatrix, CopyMatrix, CreateBlock, &
@@ -127,7 +127,7 @@ contains
     if ( toggle(gen) ) call trace_begin ( "SIDS", root )
     call time_now ( t1 )
 
-    nullify ( configs, perturbation )
+    nullify ( configs, perturbation, Hessian )
     ! Process the fields of the "sids" specification
     doTScat = .false.
     error = 0
@@ -270,7 +270,7 @@ contains
         
         if ( showptb ) then
           call dump( perturbation%quantities(quantity), details=-1 )
-        endif
+        end if
 
         ! Loop over forward model configs
         do config = 1, size(configs)
@@ -317,8 +317,7 @@ contains
             call DestroyBlock ( Jacobian )
             allocate ( Jacobian%block ( jacobian%row%nb, jacobian%col%nb ), &
               & STAT=status )
-            if ( status /= 0 ) call MLSMessage (MLSMSG_Error, ModuleName, &
-              & MLSMSG_Allocate//'jacobian%block' )
+            call test_allocate ( status, moduleName, 'jacobian%block' )
           end if
         end do                          ! Forward model config loop
 
@@ -366,15 +365,19 @@ contains
               call ScaleMatrix ( jacobian, 1.0/thisPtb )
               ! Insert this difference
               if ( switchDetail( switches, 'hess' ) > 0 ) then
-                call output ( 'Inserting Jacobian num. deriv.  into hessian', advance='yes' )
+                call output ( 'Inserting Jacobian numerical deriv. into Hessian', advance='yes' )
                 call dump( jacobian, details=1 )
-              endif
-              call InsertHessianPlane ( hessian, jacobian, col, element, mirror=mirrorHessian )
+              end if
+              call InsertHessianPlane ( hessian, jacobian, col, element, &
+                ! List of cross derivatives to save:
+                & pack(configDatabase(configs(config))%molecules, &
+                &      configDatabase(configs(config))%moleculeSecondDerivatives), &
+                & mirror=mirrorHessian )
             end if
           end if                         ! Not very first run
         end if                           ! Doing perturbation.
 
-      end if                            ! Do this element
+      end if                             ! Do this element
 
       ! Work out which element is next if we're perturbing
       if ( associated ( perturbation ) ) then
@@ -455,6 +458,10 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.61  2011/03/25 20:44:45  vsnyder
+! Initially nullify Hessian.  Use Test_Allocate.  Delete cross derivatives
+! that are not requested, when storing a Hessian plane.
+!
 ! Revision 2.60  2010/09/17 00:08:18  pwagner
 ! Should not crash if 'ptb' switch set but no perturbation asoociated
 !
