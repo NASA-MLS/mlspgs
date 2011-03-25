@@ -28,22 +28,19 @@ module TScat_Support_m
 contains
 
   ! --------------------------------------------------  Get_dB_df  -----
-  subroutine Get_dB_df ( Alpha, B, Beta_c_e, dBeta_c_a_dIWC, &
-                       & dBeta_c_s_dIWC, dAlpha_df, TScat, W0, Molecule, dB_df, &
+  subroutine Get_dB_df ( Alpha, Beta_c_e, dBeta_c_a_dIWC, &
+                       & dBeta_c_s_dIWC, dAlpha_df, W0, Molecule, dB_df, &
                        & dTScat_df )
 
-    use d_t_script_dtnp_m, only: dT_script
     use MLSKinds, only: Rp
     use Molecules, only: L_Cloud_a, L_Cloud_s
 
     real(rp), intent(in) :: Alpha(:)     ! on the path
-    real(rp), intent(in) :: B(:)         ! on the path
     real(rp), intent(in) :: Beta_c_e(:)  ! on the path
     real(rp), intent(in) :: dBeta_c_a_dIWC(:)  ! on the path, w.r.t. IWC on the path
     real(rp), intent(in) :: dBeta_c_s_dIWC(:)  ! on the path, w.r.t. IWC on the path
     real(rp), intent(in) :: dAlpha_df(:) ! on the path, w.r.t.
                                          ! f == Molecule on the path
-    real(rp), intent(in) :: TScat(:)     ! on the path
     real(rp), intent(in) :: W0(:)        ! on the path
     integer, intent(in) :: Molecule      ! Molecule
     real(rp), intent(out) :: dB_df(:)    ! on the path, w.r.t. f on the path
@@ -236,22 +233,19 @@ contains
   ! Get TScat and its derivatives along the integration path using
   ! the TScat tables and the same strategy as the linear forward model.
 
-    use Comp_Eta_Docalc_No_Frq_m, only: Comp_Eta_Docalc_No_Frq, Comp_Eta_fzp
+    use Comp_Eta_Docalc_No_Frq_m, only: Comp_Eta_Docalc_No_Frq
     use Comp_Sps_Path_Frq_m, only: Comp_One_Path_Frq
-    use ForwardModelConfig, only: ForwardModelConfig_t
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use Intrinsic, only: L_Temperature
     use L2PC_m, only: L2PC_t
     use Load_Sps_Data_m, only: DestroyGrids_t, Grids_T, Fill_Grids_2, &
-      & Load_One_Item_Grid, Load_Sps_Data
-    use MatrixModule_1, only: GetVectorFromColumn, Matrix_t, &
+      & Load_One_Item_Grid
+    use MatrixModule_1, only: GetVectorFromColumn, &
       & MultiplyMatrixVectorNoT
     use MLSKinds, only: RP, R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use Molecules, only: First_Molecule, Last_Molecule
     use String_Table, only: Get_String
-    use VectorsModule, only: GetVectorQuantityByType, &
-      & VectorValue_T, Vector_T
+    use VectorsModule, only: VectorValue_T, Vector_T
 
     type(vector_t), intent(in) :: FwdModelIn, FwdModelExtra ! Forward model state vectors.
     integer, intent(in) :: MAF          ! Major frame index
@@ -301,7 +295,6 @@ contains
     type(vectorValue_t), pointer :: TQ ! L2PC TScat state vector quantity
     integer :: TQCenter        ! center instance of TQ instances
     integer :: TQInstance      ! Instance of TQ
-    integer :: TSProfile       ! L2PC TScat profile
     integer :: V_Ind
     integer :: W_Inda, W_Indb
     character(len=80) :: Word  ! From the string table
@@ -432,14 +425,13 @@ contains
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, &
       & Test_Allocate, Test_DeAllocate
     use ForwardModelConfig, only: ForwardModelConfig_t
-    use Intrinsic, only: L_PTAN, L_Radiance, L_Temperature
-    use Load_Sps_Data_m, only: Grids_T, Load_One_Item_Grid, Load_Grid_From_Vector
+    use Intrinsic, only: L_Radiance
+    use Load_Sps_Data_m, only: Grids_T, Load_One_Item_Grid
     use L2PC_m, only: L2PC_t, L2PCDatabase, PopulateL2PCbin
     use L2PCBins_m, only: SelectL2PCBins
-    use Molecules, only: First_Molecule, Last_Molecule
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use VectorsModule, only: CloneVector, GetVectorQuantityByType, &
-      & GetVectorQuantityIndexByType, VectorValue_T, Vector_T
+    use VectorsModule, only: CloneVector, GetVectorQuantityIndexByType, &
+      & VectorValue_T, Vector_T
     type(forwardModelConfig_T), intent(in) :: FMconf
     type(vector_T), intent(in) ::  FWDMODELIN
     type(vector_T), intent(in) ::  FWDMODELEXTRA
@@ -523,8 +515,6 @@ contains
     type(vector_t), intent(inout) :: dX     ! Same form as L2PC%col%vec
     type(vector_t), intent(inout) :: TScat  ! Same form as L2PC%row%vec.
     type(grids_t), intent(inout) :: Grids_TScat
-
-    integer :: Stat
 
     call destroyVectorInfo ( dX )
     call destroyVectorInfo ( TScat ) 
@@ -722,6 +712,9 @@ contains
 end module TScat_Support_m
 
 ! $Log$
+! Revision 2.6  2011/03/25 20:46:59  vsnyder
+! Delete declarations of unused objects
+!
 ! Revision 2.5  2011/03/23 23:51:38  vsnyder
 ! Completely revised Get_dB_df, revised some TeXnicalities in Get_dB_dT
 !
