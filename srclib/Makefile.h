@@ -141,14 +141,14 @@ SHELL = /bin/sh
 # Files to get by preprocessing
 export PREPRO=$(patsubst %.F90,%.f90,$(wildcard *.F90))
 
-cfm_f90 := $(shell ${REECHO} $(cfm_sources)/*.f $(cfm_sources)/*.f9* $(cfm_sources)/*.c)
-l1_f90 := $(shell ${REECHO} $(l1_sources)/*.f $(l1_sources)/*.f9* $(l1_sources)/*.c)
-l2_f90 := $(shell ${REECHO} $(l2_sources)/*.f $(l2_sources)/*.f9* $(l2_sources)/*.c)
+cfm_f90 := $(shell ${REECHO} $(cfm_sources)/*.f $(cfm_sources)/*.[Ff]9? $(cfm_sources)/*.c)
+l1_f90 := $(shell ${REECHO} $(l1_sources)/*.f $(l1_sources)/*.[Ff]9? $(l1_sources)/*.c)
+l2_f90 := $(shell ${REECHO} $(l2_sources)/*.f $(l2_sources)/*.[Ff]9? $(l2_sources)/*.c)
 libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.[Ff]9? \
   $(srclib)/*.f9h $(libmls_sources)/*.c \
   $(libmls_sources)/lit_names.txt)
-blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.f9*)
-libfwdmdl_f90 := $(shell ${REECHO} $(libfwdmdl_sources)/*.c $(libfwdmdl_sources)/*.f $(libfwdmdl_sources)/*.f9*)
+blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.[Ff]9?)
+libfwdmdl_f90 := $(shell ${REECHO} $(libfwdmdl_sources)/*.c $(libfwdmdl_sources)/*.f $(libfwdmdl_sources)/*.[Ff]9?)
 libcloud_f90 := $(shell ${REECHO} $(libcloud_sources)/*.f90 $(libcloud_sources)/*.f $(libcloud_sources)/*.c)
 
 ifdef DONTBUILDPREQS
@@ -187,12 +187,15 @@ $(libblas_objs)/libmlspack.a: $(BLAS_PREQS)
 	$(MAKE) -f $(MakeFName) libmlspack.a -C $(blaslib) $(UPTODATEMARKS)
 
 $(libmls_objs)/libmls.a: $(LIB_prereqs)
+	echo Makefile.h $(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources) $(UPTODATEMARKS)
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources) $(UPTODATEMARKS)
 
 $(libfwdmdl_objs)/libfwdmdl.a: $(FM_LIB_prereqs)
+	echo Makefile.h $(MAKE) -f $(MakeFName) libfwdmdl.a -C $(libfwdmdl_sources) $(UPTODATEMARKS)
 	$(MAKE) -f $(MakeFName) libfwdmdl.a -C $(libfwdmdl_sources) $(UPTODATEMARKS)
 
 $(libcloud_objs)/libcloud.a: $(CLD_LIB_prereqs)
+	echo Makefile.h $(MAKE) -f $(MakeFName) libcloud.a -C $(libcloud_sources) $(UPTODATEMARKS)
 	$(MAKE) -f $(MakeFName) libcloud.a -C $(libcloud_sources) $(UPTODATEMARKS)
 
 $(l1_objs)/mlsl1: $(l1_LIB_prereqs)
@@ -202,9 +205,13 @@ $(l2_objs)/mlsl2: $(L2_LIB_prereqs)
 	$(MAKE) -f $(MakeFName) mlsl2 -C $(l2_sources) $(UPTODATEMARKS)
 
 $(cfm_objs)/libcfm_all.a: $(CFM_LIB_prereqs)
+	echo Makefile.h $(MAKE) -f $(MakeFName) libcfm_all.a -C $(cfm_sources) $(UPTODATEMARKS)
 	$(MAKE) -f $(MakeFName) libcfm_all.a -C $(cfm_sources) $(UPTODATEMARKS)
 
 $(INSTALLDIR)/libutctotai.a:
 	$(MAKE) -f $(MakeFName) utctotai -C $(CONFDIR) $(UPTODATEMARKS)
 
 # $Log$
+# Revision 1.1  2010/10/12 22:20:26  pwagner
+# First commit
+#
