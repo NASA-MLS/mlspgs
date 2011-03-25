@@ -263,13 +263,12 @@ contains
                           & i_start, tan_pt, i_stop,                          &
                           & LD, d_delta_df, nz_d_delta_df, nnz_d_delta_df,    &
                           & drad_df, dB_df, Tau, nz_zxp, nnz_zxp,             & 
-                          & alpha_path_c, B, Beta_c_e,                        &
-                          & dBeta_c_a_dIWC, dBeta_c_s_dIWC, TScat, dTScat_df, W0 )
+                          & alpha_path_c, Beta_c_e,                           &
+                          & dBeta_c_a_dIWC, dBeta_c_s_dIWC, dTScat_df, W0 )
 
     use d_t_script_dtnp_m, only: dT_script
     use LOAD_SPS_DATA_M, ONLY: GRIDS_T
     use MLSKinds, only: RP
-    use Molecules, only: L_Cloud_a
     use SCRT_DN_M, ONLY: DSCRT_DT, DSCRT_DX
     use TScat_Support_m, only: Get_dB_df
 
@@ -310,11 +309,9 @@ contains
     integer, intent(in), optional :: NZ_ZXP(:,:) ! for eta_zxp: path X 1 SV
     integer, intent(in), optional :: NNZ_ZXP(:)  ! for eta_zxp: SV
     real(rp), intent(in), optional :: Alpha_path_c(:)
-    real(rp), intent(in), optional :: B(:)
     real(rp), intent(in), optional :: Beta_c_e(:)
     real(rp), intent(in), optional :: dBeta_c_a_dIWC(:)  ! on the path, w.r.t. IWC on the path
     real(rp), intent(in), optional :: dBeta_c_s_dIWC(:)  ! on the path, w.r.t. IWC on the path
-    real(rp), intent(in), optional :: TScat(:)
     real(rp), intent(in), optional :: dTScat_df(:,:) ! Path X SV.  On the path, w.r.t.
                                                  ! f == Molecules on the grid
     real(rp), intent(in), optional :: W0(:)
@@ -387,8 +384,8 @@ contains
         !
         ! {\tt inc_rad_path(i)} = $\mathcal{T}_i \overline{\Delta B}_i$
 
-        call get_dB_df ( alpha_path_c, B, beta_c_e, dBeta_c_a_dIWC, &
-                       & dBeta_c_s_dIWC, dAlpha_df_c(:,sps_i), TScat, w0, &
+        call get_dB_df ( alpha_path_c, beta_c_e, dBeta_c_a_dIWC, &
+                       & dBeta_c_s_dIWC, dAlpha_df_c(:,sps_i), w0, &
                        & grids_f%mol(sps_i), dB_df )
 
       end if
@@ -1113,7 +1110,6 @@ contains
   end subroutine DRad_tran_dx
 
 !--------------------------------------------  Get_all_d_delta_df  -----
-! This is the radiative transfer derivative wrt mixing ratio model
 
   subroutine Get_all_d_delta_df ( max_f, indices_c, gl_inds, del_zeta, Grids_f,  & 
                                 & eta_zxp, do_calc_f, do_gl, del_s, ref_cor,     & 
@@ -1868,6 +1864,9 @@ contains
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.24  2011/03/25 20:46:59  vsnyder
+! Delete declarations of unused objects
+!
 ! Revision 2.23  2011/03/24 00:17:34  vsnyder
 ! Add TScat derivatives to dRad_tran_df
 !
