@@ -502,7 +502,6 @@ contains
     real(rp) :: ALPHA_PATH_C(max_c)   ! coarse grid absorption coefficient
     real(rp) :: ALPHA_PATH_F(max_f)   ! fine grid absorption coefficient
     real(rp) :: B(max_c)              ! Planck radiation function
-    real(rp) :: B_TScat(s_ts*max_c)   ! (TT_PATH_C - B) * W0_PATH_C
     real(rp) :: BETA_PATH_cloud_C(s_i*max_c) ! Beta on path coarse
     real(rp) :: Beta_c_a_path_c(s_ts*max_c)  ! Beta_c_a on coarse path
     real(rp) :: Beta_c_e_path_c(s_ts*max_c)  ! Beta_c_e on coarse path
@@ -515,10 +514,8 @@ contains
     real(rp) :: DEL_ZETA(max_c)       ! Integration lengths in Zeta coords
                                       !  along coarse path, (2:npc-1)
     real(rp) :: dBeta_c_a_dIWC_path_C(s_ts*max_c)  ! on coarse path
-    real(rp) :: dBeta_c_e_dIWC_path_C(s_ts*max_c)  ! on coarse path
     real(rp) :: dBeta_c_s_dIWC_path_C(s_ts*max_c)  ! on coarse path
     real(rp) :: dBeta_c_a_dT_path_C(s_ts*max_c)    ! on coarse path
-    real(rp) :: dBeta_c_e_dT_path_C(s_ts*max_c)    ! on coarse path
     real(rp) :: dBeta_c_s_dT_path_C(s_ts*max_c)    ! on coarse path
     real(rp) :: DHDZ_PATH(max_f)      ! dH/dZ on fine path (1:npf)
     real(rp) :: DHDZ_GW_PATH(max_f)   ! dH/dZ * GW on fine path (1:npf)
@@ -3284,9 +3281,9 @@ contains
             &  i_start, tan_pt_c, i_stop,                                     &
             &  size(d_delta_df,1), d_delta_df, nz_d_delta_df, nnz_d_delta_df, &
             &  k_atmos_frq, dB_df, tau%tau(:,frq_i), nz_zp, nnz_zp,           &
-            &  alpha_path_c, B(:npc), beta_c_a_path_c(:npc),                  &
-            &  dBeta_c_e_dIWC_path_c(:npc), dBeta_c_s_dIWC_path_c(:npc),      &
-            &  tt_path_c(:npc), dTScat_df, w0_path_c(:npc) )
+            &  alpha_path_c, beta_c_a_path_c(:npc),                           &
+            &  dBeta_c_a_dIWC_path_c(:npc), dBeta_c_s_dIWC_path_c(:npc),      &
+            &  dTScat_df, w0_path_c(:npc) )
 
         else
 
@@ -4404,6 +4401,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.318  2011/03/23 23:50:42  vsnyder
+! Finishing -- hopefully -- TScat derivatives
+!
 ! Revision 2.317  2011/03/23 23:45:32  vsnyder
 ! This log entry is bogus.  Check in again to get the right one.
 ! FOV_Convolve_m.f90
