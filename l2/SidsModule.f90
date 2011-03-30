@@ -296,7 +296,7 @@ contains
             fmStat%maf = maf
               call add_to_retrieval_timing( 'sids', t1 )
             if ( getAnaJac ) then
-              if ( associated ( Hessian ) ) then
+              if ( associated ( Hessian ) .and. .not. associated(perturbation) ) then
                 call forwardModel ( configDatabase(configs(config)), &
                   & FwdModelIn, FwdModelExtra, &
                   & FwdModelOut, fmStat, Jacobian, Hessian, vectorDatabase )
@@ -458,6 +458,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.62  2011/03/30 00:41:07  vsnyder
+! Don't ask for analytic Hessian if using perturbation
+!
 ! Revision 2.61  2011/03/25 20:44:45  vsnyder
 ! Initially nullify Hessian.  Use Test_Allocate.  Delete cross derivatives
 ! that are not requested, when storing a Hessian plane.
