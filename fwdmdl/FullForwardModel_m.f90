@@ -324,7 +324,7 @@ contains
     use L2PC_m, only: L2PC_t
     use MatrixModule_1, only: MATRIX_T
     use MLSKinds, only: R4, R8, RP, RV
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MLSNumerics, only: Hunt, InterpolateValues
     use MLSSignals_m, only: AreSignalsSuperset, GetNameOfSignal, MatchSignal, &
       & Radiometers, Signal_t
@@ -3677,8 +3677,9 @@ contains
             call dump ( z_coarse(:size(c_inds)), name="Z_Coarse" )
             call dump ( rad2deg*phi_path(c_inds), name="Phi_Path", format="(f14.8)" )
             call dump ( h_path(c_inds), name="H_Path", format="(f14.6)" )
-            call MLSMessage ( MLSMSG_Error, moduleName, &
-              & 'Scattering point appears not to be in path' )
+            call MLSMessage ( merge(MLSMSG_Warning,MLSMSG_Error,index(switches,'igsc')>0), &
+              & moduleName, 'Scattering point appears not to be in path' )
+            scat_index = -1
           else
             call output ( trim(line) // " <", advance="yes" ) ! Close enough
           end if
@@ -4401,6 +4402,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.319  2011/03/25 20:46:59  vsnyder
+! Delete declarations of unused objects
+!
 ! Revision 2.318  2011/03/23 23:50:42  vsnyder
 ! Finishing -- hopefully -- TScat derivatives
 !
