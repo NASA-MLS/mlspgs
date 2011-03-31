@@ -114,7 +114,7 @@ contains ! ====     Public Procedures     ==============================
         else
           call dumpSize ( delta, before=', Memory changed by ' )
         end if
-        call dumpSize ( memory_units * nobytesallocated, before = 'to ' )
+        call dumpSize ( memory_units * nobytesallocated, before = ' to ' )
         memory(depth) = nobytesallocated
       end if
     end if
@@ -135,6 +135,9 @@ contains ! ====     Public Procedures     ==============================
 end module TRACE_M
 
 ! $Log$
+! Revision 2.18  2011/03/31 19:55:22  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.17  2009/06/23 18:25:44  pwagner
 ! Prevent Intel from optimizing ident string away
 !
