@@ -206,7 +206,7 @@ module QuantityTemplates         ! Quantities within vectors
   character(*), dimension(NUMMODS), parameter :: MODIFIABLEFIELDS = (/&
     & 'surfs      ', &
     & 'phi        ', &
-    & 'geodLat    ', &
+    & 'geodlat    ', &
     & 'lon        ', &
     & 'time       ', &
     & 'solartime  ', &
@@ -1419,6 +1419,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.62  2011/03/23 00:42:08  pwagner
+! Tried to fix some of the more obvious bugs in ModifyQuantityTemplate_allocate
+!
 ! Revision 2.61  2011/03/22 23:39:50  pwagner
 ! May now change both shape and values of qtytemplate field
 !
