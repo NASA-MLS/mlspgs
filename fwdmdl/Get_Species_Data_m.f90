@@ -48,17 +48,20 @@ contains
     integer :: L         ! Index in spectral parameter data structure
     integer :: M         ! Index for molecules in beta groups, or size thereof
     integer :: S         ! Sideband index, 1 = LSB, 2 = USB
+    integer :: S1, S2    ! Bounds for sideband index S
 
     if ( dumpFWM < 0 ) then ! done only once
       if ( index(switches,'fwmg') > 0 ) dumpFWM = 1 ! Dump but don't stop
       if ( index(switches,'fwmG') > 0 ) dumpFWM = 2 ! Dump and stop
     end if
 
+    s1 = (fwdModelConf%sidebandStart+3)/2; s2 = (fwdModelConf%sidebandStop+3)/2
+
     ! Get isotope ratios for molecules in a beta group, else 1.0 if not a group
     do b = 1, size(fwdModelConf%beta_group)
       if ( fwdModelConf%beta_group(b)%group ) then ! A molecule group
         ! First LBL molecules' ratios
-        do s = 1, 2
+        do s = s1, s2
           do m = 1, size(fwdModelConf%beta_group(b)%lbl(s)%molecules)
             f => getQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
               & quantityType=l_isotopeRatio,                             &
@@ -160,6 +163,9 @@ contains
 end module Get_Species_Data_m
 
 ! $Log$
+! Revision 2.32  2009/06/23 18:26:10  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.31  2008/10/01 21:01:54  vsnyder
 ! Require state vector to include all molecules; 2.30 was a bad idea
 !
