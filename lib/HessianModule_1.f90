@@ -222,7 +222,7 @@ contains
     use HessianModule_0, only: Diff
     use Lexer_core, only: Print_Source
     use MLSStrings, only: lowercase
-    use MLSStringLists, only: isInList, optionDetail, switchDetail
+    use MLSStringLists, only: isInList, optionDetail
     use Output_m, only: Output, NewLine
     use String_Table, only: Display_String, get_string
 
@@ -707,7 +707,6 @@ contains
   subroutine StreamlineHessian_1 ( H, Surface, ScaleHeight, GeodAngle, Threshold )
 
     use HessianModule_0, only: StreamlineHessian
-    use Intrinsic, only: L_ZETA
     use MLSKinds, only: R8
     use QuantityTemplates, only: QuantityTemplate_T
     type (Hessian_T), intent(inout) :: H
@@ -763,6 +762,9 @@ contains
 end module HessianModule_1
 
 ! $Log$
+! Revision 2.22  2011/03/31 19:54:41  vsnyder
+! Delete declarations for unused entities
+!
 ! Revision 2.21  2011/03/02 02:04:29  vsnyder
 ! TeXnicalities, add Molecules argument to InsertHessianPlane_1
 !
