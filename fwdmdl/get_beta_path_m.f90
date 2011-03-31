@@ -318,11 +318,11 @@ contains
 
       select case ( beta_group(i)%molecule )
       case ( l_cloud_a )
-        call create_beta_path_Mie ( frq, t_path, sps_path(:np,i), path_inds, &
+        call create_beta_path_Mie ( frq, t_path, sps_path(:,i), path_inds, &
           & beta_c_a, dBeta_dIWC_c_a, dBeta_dT_c_a, beta_path(:,i), &
           & dBdT, dBdIWC )
       case ( l_cloud_s )
-        call create_beta_path_Mie ( frq, t_path, sps_path(:np,i), path_inds, &
+        call create_beta_path_Mie ( frq, t_path, sps_path(:,i), path_inds, &
           & beta_c_s, dBeta_dIWC_c_s, dBeta_dT_c_s, beta_path(:,i), &
           & dBdT, dBdIWC )
       case default
@@ -1586,6 +1586,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.104  2011/03/04 03:42:48  vsnyder
+! Associate dBdf with dBeta_df_path, not dBeta_dT_path!
+!
 ! Revision 2.103  2011/03/02 02:06:59  vsnyder
 ! Cannonball polishing
 !
