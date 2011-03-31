@@ -680,6 +680,8 @@ contains ! =====     Public Procedures     =============================
           call deallocate_test ( channels, 'channels', ModuleName )
           call deallocate_test ( signalInds, 'signalInds', ModuleName )
         end do                          ! End loop over listed signals
+        ! Make sure signal specifications make sense; get sideband Start/Stop
+        call validateSignals
       case ( f_skipOverlaps )
         info%skipOverlaps = get_boolean(son)
       case ( f_specificQuantities )
@@ -1062,9 +1064,6 @@ op:     do j = 2, nsons(theTree)
         end do
       end if
 
-      ! Make sure signal specifications make sense; get sideband Start/Stop
-      call validateSignals
-
       if ( info%sidebandStart == 1 .and. info%anyPFA(1) .or. &
          & info%sidebandStop == -1 .and. info%anyPFA(2) ) &
          & call MLSMessage ( MLSMSG_Warning, ModuleName, &
@@ -1111,11 +1110,11 @@ op:     do j = 2, nsons(theTree)
     end if
 
     do i = 1, size(info%beta_group)
-      if ( any(info%beta_group(i)%lbl(1)%molecules == l_cloud_a) .or. &
-         & any(info%beta_group(i)%lbl(1)%molecules == l_cloud_s) .or. &
-         & any(info%beta_group(i)%lbl(2)%molecules == l_cloud_a) .or. &
-         & any(info%beta_group(i)%lbl(2)%molecules == l_cloud_s) ) &
-           & call announceError ( CloudLBL, root )
+      do s = s1, s2 ! Sideband
+        if ( any(info%beta_group(i)%lbl(s)%molecules == l_cloud_a) .or. &
+           & any(info%beta_group(i)%lbl(s)%molecules == l_cloud_s) ) &
+             & call announceError ( CloudLBL, root )
+      end do
     end do
 
     if ( error /= 0 ) then
@@ -1489,6 +1488,11 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.155  2011/03/31 19:47:54  vsnyder
+! Validate signals when the signals field is processed, so that sidebands
+! are set.  Only check that cloud_a and cloud_s are PFA for the desired
+! sidebands.
+!
 ! Revision 2.154  2011/01/29 00:52:51  vsnyder
 ! Allow PFA without frequency averaging
 !
