@@ -239,14 +239,14 @@ contains
       call outputNamedValue( 'nCols1', nCols1 )
       call outputNamedValue( 'nCols2', nCols2 )
       call outputNamedValue( 'h_kind', h_kind )
-    endif
+    end if
 
     if ( h_kind == h_sparse ) then
       h%tuplesFilled = 0
       if ( present ( initTuples ) ) then
         if ( DEEBUG ) then
           call outputNamedValue( 'initTuples', initTuples )
-        endif
+        end if
         allocate ( h%tuples ( initTuples ), stat=stat )
         h%tuplesFilled = initTuples
         call test_allocate ( stat, moduleName, "H%Tuples", &
@@ -259,7 +259,7 @@ contains
     end if
     if ( DEEBUG ) then
       call dump( h%values, 'h%values' )
-    endif
+    end if
   end subroutine CreateHessianBlock_0
 
   ! ---------------------------------------------- Densify_Hessian -----
@@ -320,7 +320,7 @@ contains
     myForce = .false.
     if ( present(options) ) then
       myForce = ( optionDetail( options, 'f' ) == 'yes' )
-    endif
+    end if
     if ( present(indices) ) then
       call output ( indices(1), before = ' (', after=', ' )
       call output ( indices(2), after=', ' )
@@ -330,7 +330,7 @@ contains
       & h1%nCols2 /= h2%nCols2 ) then
       call output ( 'the hessian blocks have different shapes', advance='yes' )
       return
-    endif
+    end if
     call output ( ' has ' )
     call output ( h1%nRows, after=' Rows, ' )
     call output ( h1%nCols1, after = ' First Columns, ' )
@@ -359,25 +359,25 @@ contains
         case default
         end select
         call output( '(originally unlike)' ) ! return
-      endif
-    endif
+      end if
+    end if
     if ( h1kind /= h2kind ) then
       call outputNamedValue( 'original kind(h1)', h1kind )
       call outputNamedValue( 'original kind(h2)', h2kind )
       call outputNamedValue( 'new kind(h1)', h1%kind )
       call outputNamedValue( 'new kind(h2)', h2%kind )
-    endif
+    end if
     call Diff_like( h1, h2, details, options )
     ! Now did we have to monkey with h1 and k2 becuase they were unkinds?
     if ( h1kind == h2kind ) return
     if ( h1kind /= h_full ) then
       call deallocate_test ( h1%values, moduleName // 'diff', "h1%values" )
       h1%kind = h1kind
-    endif
+    end if
     if ( h2kind /= h_full ) then
       call deallocate_test ( h2%values, moduleName // 'diff', "h2%values" )
       h2%kind = h2kind
-    endif
+    end if
   contains
     subroutine Diff_like( h1, h2, details, options )
     ! Diff two Hessian blocks, confident that they are alike
@@ -394,7 +394,7 @@ contains
       myOptions = trim( &
         & unquote( options, quotes='[', cquotes=']', options='-r' ) &
         & ) // merge('c',' ',my_clean)
-    endif
+    end if
     select case ( h1%kind )
     case ( h_absent )
       call output ( 'both absent, therefore identical', advance='yes' )
@@ -474,10 +474,10 @@ contains
       if ( h%TuplesFilled < 1 ) then
         call output( '(0 tuplesFilled)', advance='yes' )
         return
-      elseif ( .not. associated (h%tuples) ) then
+      else if ( .not. associated (h%tuples) ) then
         call output( '(tuplesFilled > 0 yet h%tuples not associated; how?)', advance='yes' )
         return
-      endif
+      end if
       call output ( size(h%tuples), before='sparse with ', &
         & after=' nonzero elements', advance='yes' )
       call outputNamedValue( 'Min, max row numbers', &
@@ -491,7 +491,7 @@ contains
         if ( any(isNaN(h%tuples%h)) ) &
           & call MLSMessage( MLSMSG_Warning, ModuleName, &
           & 'NaNs found in sparse Hessian block' )
-      elseif ( my_details > 0 ) then
+      else if ( my_details > 0 ) then
         if ( DUMPASUNSPARSIFIED ) then
           ! temporarily convert sparse representation to full
           call output ( '(Dumping as if full)', advance='yes' )
@@ -518,10 +518,10 @@ contains
         if ( any(isNaN(h%values)) ) &
           & call MLSMessage( MLSMSG_Warning, ModuleName, &
           & 'NaNs found in full Hessian block' )
-      elseif ( details > 0 ) then
+      else if ( details > 0 ) then
         call dump ( h%values, &
           & options=trim(myOptions) // merge('c',' ',my_clean) )
-      endif
+      end if
     case ( h_unknown )
       call output ( 'of unknown form, nothing to dump', advance='yes' )
       call outputNamedValue ( 'h_unknown', h_unknown )
@@ -690,7 +690,7 @@ contains
       if ( switchDetail( switches, 'hess' ) > 0 ) then
         call output( 'Full plane of hessian values inserted at ')
         call output( k, advance='yes' )
-      endif
+      end if
     else
       ! Otherwise make space for the new entries
       if ( h%kind == H_Sparse .or. h%kind == H_Absent ) &
@@ -729,7 +729,7 @@ contains
         if ( switchDetail( switches, 'hess' ) > 0 ) then
           call output( 'Banded plane of hessian values inserted at ')
           call output( oneTuple%k, advance='yes' )
-        endif
+        end if
       case ( M_Column_Sparse )
         do j = 1, plane%nCols
           if ( myMirroring ) then
@@ -751,7 +751,7 @@ contains
         if ( switchDetail( switches, 'hess' ) > 0 ) then
           call output( 'column sparse plane of hessian values inserted at ')
           call output( oneTuple%k, advance='yes' )
-        endif
+        end if
       end select
       if ( h%kind == H_Sparse ) h%tuplesFilled = n
     end if
@@ -786,15 +786,17 @@ contains
        call MLSMessage ( MLSMSG_Warning, ModuleName, &
          & "Skipping buggy optimizeBlocks (paw)" )
        return
-    elseif ( DEEBUG .and. any( h%kind == (/ h_full, h_sparse /) ) .and. &
+    else if ( DEEBUG .and. any( h%kind == (/ h_full, h_sparse /) ) .and. &
       & h%tuplesFilled > 0 ) then
-      call output( 'Before optimizing Hessian block', advance='yes' )
-      call outputnamedValue( 'h%tuplesFilled', h%tuplesFilled )
-      call outputnamedValue( 'count(h%values /= 0.0)', count(h%values /= 0.0) )
-      n = count ( h%tuples ( 1:h%tuplesFilled ) % h /= 0 )
-      call outputnamedValue( 'count(h%tuplevalues /= 0.0)', n )
-      call dump( h, details=0 )
-    endif
+      call dump( h, details=0, name='Before optimizing Hessian block' )
+      if ( h%kind == h_full ) then
+        call outputnamedValue( 'count(h%values /= 0.0)', count(h%values /= 0.0) )
+      else
+        call outputnamedValue( 'h%tuplesFilled', h%tuplesFilled )
+        n = count ( h%tuples ( 1:h%tuplesFilled ) % h /= 0 )
+        call outputnamedValue( 'count(h%tuplevalues /= 0.0)', n )
+      end if
+    end if
     if ( h%kind == h_Absent .or. h%kind == h_Unknown ) return
     if ( h%kind == h_Full ) then
       n = count(h%values /= 0.0)
@@ -802,12 +804,12 @@ contains
       ! 2.5 times the space of a single value.
       if ( 2.5 * n > size(h%values) ) then
         return ! sparsifying won't improve things
-      elseif ( n < 1 ) then
+      else if ( n < 1 ) then
         ! all values 0; so make it absent
         call clearBlock ( h )
       else
         call Sparsify_Hessian ( H )
-      endif
+      end if
       if ( h%kind /= h_Sparse ) return
     end if
     ! OK, so now it must be sparse
@@ -834,7 +836,7 @@ contains
        call MLSMessage ( MLSMSG_Warning, ModuleName, &
          & "Skipping optimizeBlocks after sparisfying(paw)" )
        return
-    endif
+    end if
     ! The rest of this is probably useless as well as wrong
     call allocate_Test ( rank,  h%tuplesFilled, "Rank in OptimizeBlock", ModuleName )
     call allocate_Test ( order, h%tuplesFilled, "Order in OptimizeBlock", ModuleName )
@@ -910,12 +912,12 @@ o:    do while ( i < n )
       if ( associated(h%tuples) ) then
         n = count ( h%tuples ( 1:h%tuplesFilled ) % h /= 0 )
         call outputnamedValue( 'count(h%tuplevalues /= 0.0)', n )
-      elseif ( h%tuplesFilled > 0 ) then
+      else if ( h%tuplesFilled > 0 ) then
         call MLSMessage ( MLSMSG_Warning, ModuleName // "optimizeBlocks", &
          & "How is it that h%tuplesFilled > 0 but h%tuples is not associated" )
-      endif
+      end if
       call dump( h, details=0 )
-    endif
+    end if
   end subroutine OptimizeBlock
 
   ! --------------------------------------------- Sparsify_Hessian -----
@@ -999,17 +1001,17 @@ o:    do while ( i < n )
       cutoff = threshold * maxval(abs(h%tuples%h))
       if ( surface < 0 .and. scaleHeight < 0._r8 ) then
         where ( abs( h%tuples%h ) < cutoff ) h%tuples%h = 0.0
-      elseif ( surface > 0 ) then
+      else if ( surface > 0 ) then
         where ( abs( h%tuples%h ) < cutoff .or. &
           &     abs( (h%tuples%j-1 ) / q1%noChans + 1 -   &
           &          (h%tuples%k-1 ) / q2%noChans + 1 ) > &
           &     surface  ) h%tuples%h = 0.0
-      elseif ( scaleheight > 0._r8 ) then
+      else if ( scaleheight > 0._r8 ) then
         where ( abs( h%tuples%h ) < cutoff .or. &
           &     abs( q1%surfs( (h%tuples%j-1 ) / q1%noChans + 1, 1) -   &
           &          q2%surfs( (h%tuples%k-1 ) / q2%noChans + 1, 1) ) > &
           &     scaleHeight  ) h%tuples%h = 0.0
-      endif
+      end if
     case ( h_full )
       do k = 1, h%nCols2 - 1
         s2 = ( k-1 ) / q2%noChans + 1
@@ -1018,10 +1020,10 @@ o:    do while ( i < n )
           if ( surface < 0 .and. scaleheight < 0._r8 ) then
             ! no op; some compilers may complain
             cutoff = 0._r8
-          elseif ( surface > 0 .and. abs(s1-s2) > surface ) then
+          else if ( surface > 0 .and. abs(s1-s2) > surface ) then
             h%values ( :, j, k ) = 0
             h%values ( :, k, j ) = 0
-          elseif ( scaleHeight > 0._r8 .and. abs ( q1%surfs(s1,1) - q2%surfs(s2,1) ) > scaleHeight ) then
+          else if ( scaleHeight > 0._r8 .and. abs ( q1%surfs(s1,1) - q2%surfs(s2,1) ) > scaleHeight ) then
             h%values ( :, j, k ) = 0
             h%values ( :, k, j ) = 0
           end if
@@ -1080,6 +1082,9 @@ o:    do while ( i < n )
 end module HessianModule_0
 
 ! $Log$
+! Revision 2.18  2011/04/01 22:06:34  vsnyder
+! Don't look at h%values for sparse Hessians, or h%tuplesFilled for full ones
+!
 ! Revision 2.17  2011/03/02 02:01:35  vsnyder
 ! Declare local variables of Hessian_Vec_Vec_Multiply_* in the include file
 !
