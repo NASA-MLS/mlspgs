@@ -906,17 +906,17 @@ o:    do while ( i < n )
 
     if ( DEEBUG .and. any( h%kind == (/ h_full, h_sparse /) ) .and. &
       & h%tuplesFilled > 0 ) then
-      call output( 'After optimizing Hessian block', advance='yes' )
+      call dump( h, details=0, name='After optimizing Hessian block' )
+      if ( h%kind == h_full ) &
+        & call outputnamedValue( 'count(h%values /= 0.0)', count(h%values /= 0.0) )
       call outputnamedValue( 'h%tuplesFilled', h%tuplesFilled )
-      call outputnamedValue( 'count(h%values /= 0.0)', count(h%values /= 0.0) )
       if ( associated(h%tuples) ) then
         n = count ( h%tuples ( 1:h%tuplesFilled ) % h /= 0 )
         call outputnamedValue( 'count(h%tuplevalues /= 0.0)', n )
       else if ( h%tuplesFilled > 0 ) then
         call MLSMessage ( MLSMSG_Warning, ModuleName // "optimizeBlocks", &
-         & "How is it that h%tuplesFilled > 0 but h%tuples is not associated" )
+          & "How is it that h%tuplesFilled > 0 but h%tuples is not associated" )
       end if
-      call dump( h, details=0 )
     end if
   end subroutine OptimizeBlock
 
@@ -1064,7 +1064,7 @@ o:    do while ( i < n )
           & "h%values", ModuleName // 'Unsparsify', fill=0.0_rh )
       do i=1, h%TuplesFilled
         h%values(h%tuples(i)%i, h%tuples(i)%j, h%tuples(i)%k) = h%tuples(i)%h
-      enddo
+      end do
     case default
     end select
   end subroutine Unsparsify
@@ -1082,6 +1082,9 @@ o:    do while ( i < n )
 end module HessianModule_0
 
 ! $Log$
+! Revision 2.19  2011/04/02 01:20:57  vsnyder
+! Don't look at h%values for sparse Hessians
+!
 ! Revision 2.18  2011/04/01 22:06:34  vsnyder
 ! Don't look at h%values for sparse Hessians, or h%tuplesFilled for full ones
 !
