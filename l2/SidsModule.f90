@@ -104,6 +104,13 @@ contains
     integer :: SINGLEMAF                ! From l2cf
     integer :: Son                      ! Of ROOT
     integer :: STATUS                   ! Flag
+    integer, allocatable :: ToKeep(:)   ! Molecule cross derivatives to keep
+                                        ! after computing Hessian by
+                                        ! perturbation. Union of molecule second
+                                        ! derivatives from all configs.  Keep
+                                        ! them all if this ends up empty as a
+                                        ! result of no config specifying
+                                        ! moleculeSecondDerivatives.
     logical :: DESTROYJACOBIAN          ! Flag
     logical :: DOTHISONE                ! Flag
     logical :: DOTSCAT                  ! Flag
@@ -223,7 +230,7 @@ contains
       if ( showptb ) then
         call outputnamedValue( 'loopEnd', loopEnd )
         call outputnamedValue( 'size(configs)', size(configs) )
-      endif
+      end if
     else
       ! Alternatively do simple one shot run.
       loopEnd = 1
@@ -234,6 +241,8 @@ contains
       & 'Errors prevent SIDS run.' )
 
     configDatabase(configs)%generateTScat = doTScat
+
+    if ( ixHessian > 0 ) call get_toKeep ! Cross derivatives to keep in Hessian
 
     ! Now have a possible loop over state vector elements, applying corrections.
     do i = 1, loopEnd
@@ -369,10 +378,7 @@ contains
                 call dump( jacobian, details=1 )
               end if
               call InsertHessianPlane ( hessian, jacobian, col, element, &
-                ! List of cross derivatives to save:
-                & pack(configDatabase(configs(config))%molecules, &
-                &      configDatabase(configs(config))%moleculeSecondDerivatives), &
-                & mirror=mirrorHessian )
+                & toKeep, mirror=mirrorHessian )
             end if
           end if                         ! Not very first run
         end if                           ! Doing perturbation.
@@ -443,6 +449,26 @@ contains
       end select
     end subroutine AnnounceError
 
+    ! -----------------------------------------------  Get_ToKeep  -----
+    subroutine Get_ToKeep
+      integer :: ToKeepGuess(sum( (/ ( count(configDatabase(configs(config))%moleculeSecondDerivatives), &
+                                     & config = 1, size(configs) ) /) ) )
+      i = 0
+      do config = 1, size(configs)
+        toKeepGuess(i+1:i+count(configDatabase(configs(config))%moleculeSecondDerivatives)) = &
+          & pack(configDatabase(configs(config))%molecules, &
+          &      configDatabase(configs(config))%moleculeSecondDerivatives)
+        i = i + count(configDatabase(configs(config))%moleculeSecondDerivatives)
+      end do
+      ! Delete duplicates
+      do i = 2, size(toKeepGuess)
+        if ( any( toKeepGuess(1:i-1) == toKeepGuess(i) ) ) toKeepGuess(i) = 0
+      end do
+      allocate ( toKeep(count(toKeepGuess>0)), stat=status )
+      call test_allocate ( status, moduleName, 'ToKeep' )
+      toKeep = pack(toKeepGuess,toKeepGuess>0)
+    end subroutine Get_ToKeep
+
   end subroutine SIDS
 
 !--------------------------- end bloc --------------------------------------
@@ -458,6 +484,10 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.63  2011/04/02 01:23:22  vsnyder
+! Make a list of the molecule cross derivatives to keep from the union of
+! all molecules specified in moleculeSecondDerivatives fields of all configs.
+!
 ! Revision 2.62  2011/03/30 00:41:07  vsnyder
 ! Don't ask for analytic Hessian if using perturbation
 !
