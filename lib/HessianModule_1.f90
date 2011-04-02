@@ -252,7 +252,7 @@ contains
       if ( Molecules == 'no' ) Molecules = '*'
       if ( DEEBUG ) call outputNamedValue('Molecules', Molecules)
       myForce = ( optionDetail( options, 'f' ) == 'yes' )
-    endif
+    end if
     if ( h1%name > 0 .and. h2%name > 0 ) then
       call output ( 'Diffing ' )
       call display_string ( h1%name )
@@ -278,7 +278,7 @@ contains
     if ( h1%col%nb /= h1%col%nb .or. h1%row%nb /= h2%row%nb ) then
       call output ( 'the hessians have different shapes', advance='yes' )
       return
-    endif
+    end if
     if ( my_Details < -1 ) return
     totalSize = 0
     do k = 1, h1%col%nb
@@ -294,14 +294,14 @@ contains
               &  ).and. skipThisBlock ( &
               & 3, h2%col%vec%quantities(h2%col%quant(k))%template%name &
               &  ) ) cycle
-          endif
+          end if
           if ( h1%block(i,j,k)%kind /= h2%block(i,j,k)%kind .and. &
             & .not. myForce ) then
             call output ( 'the hessians at (i,j,k) ')
             call output( (/ i,j,k /) )
             call output( 'are of different kinds', advance='yes' )
             cycle
-          endif
+          end if
           if ( my_details < 0 .or. &
             & ( HIDEBSENTBLOCKS .and. h1%block(i,j,k)%kind == h_absent ) ) cycle
           call output ( i, before='Block at row ' )
@@ -407,7 +407,7 @@ contains
       dumpOptions = lowercase( optionDetail( options, 'd' ) )
       if ( dumpOptions == 'no' ) dumpOptions = ''
       if ( DEEBUG .or. .true. ) call outputNamedValue('dumpOptions', dumpOptions)
-    endif
+    end if
     if ( h%name > 0 ) then
       if ( present(name) ) call output ( ', ' )
       call output ( 'Name = ' )
@@ -434,8 +434,8 @@ contains
       if ( i > 0 ) then
         call display_string( i )
         call newLine
-      endif
-    enddo
+      end if
+    end do
     call allocate_Test( layout, h%row%nb, h%col%nb, h%col%nb, &
       & 'Layout of blocks in Hessian', moduleName // '%Dump_Hessian', Fill='.' )
     totalSize = 0
@@ -464,13 +464,13 @@ contains
             if ( skipThisBlock ( &
               & 3, h%col%vec%quantities(h%col%quant(k))%template%name &
               &  ) ) cycle
-          elseif( molecules /= '*' ) then
+          else if( molecules /= '*' ) then
             if ( skipThisBlock ( &
               & 2, h%col%vec%quantities(h%col%quant(j))%template%name &
               &  ) .and. skipThisBlock ( &
               & 3, h%col%vec%quantities(h%col%quant(k))%template%name &
               &  ) ) cycle
-          endif
+          end if
           call output ( i, before='Block at row ' )
           call output ( j, before=' and columns ' )
           call output ( k, before=', ', after=' (' )
@@ -535,7 +535,7 @@ contains
         call outputNamedValue ( 'SwitchDetail', SwitchDetail( myBlocks(s), trim(templateNameStr), options='-wcf' ) )
         call outputNamedValue ( 'isInList', isInList( molecules, lowercase(trim(templateNameStr)) ) )
         call outputNamedValue ( 'skip', doWe )
-      endif
+      end if
     end function skipThisBlock
 
   end subroutine Dump_Hessian
@@ -595,7 +595,7 @@ contains
       call outputNamedValue( "max(h%block%1st index)", h%row%nb )
       call outputNamedValue( "max(h%block%2nd index)", h%col%nb )
       call outputNamedValue( "max(h%block%3rd index)", h%col%nb )
-    endif
+    end if
     do i = 1, h%col%nb
       iq = h%col%quant ( i )
       ii = h%col%inst ( i )
@@ -625,6 +625,7 @@ contains
     ! Insert matrix M as a plane (block B, element EL) of the Hessian H
     ! If Mirror is set, populate the transpose set also
     use HessianModule_0, only: InsertHessianPlane
+    use Intrinsic, only: L_Temperature
     use MatrixModule_1, only: Matrix_T
     ! Dummy arguments
     type(Hessian_T), intent(inout) :: H
@@ -644,7 +645,14 @@ contains
     if ( present ( mirror ) ) myMirror = mirror
     nullify ( myMolecules )
     if ( present(molecules) ) then
-      if ( size(molecules) > 0 ) myMolecules => molecules
+      if ( size(molecules) > 0 ) then
+        myMolecules => molecules
+        ! Is B for a block we want to keep?
+        if ( m%col%vec%quantities(m%col%quant(b))%template%quantityType /= l_temperature &
+           & .and. .not. &
+           & any( m%col%vec%quantities(m%col%quant(b))%template%molecule == &
+           &      myMolecules) ) return
+      end if
     end if
 
     ! Check that the Jacobian and Hessian match
@@ -659,9 +667,11 @@ contains
     do rb = 1, H%row%nb
       do cb = 1, H%col%nb
         if ( associated(myMolecules) ) then
-          if ( .not. any( &
-            & m%col%vec%quantities(m%col%quant(cb))%template%molecule == &
-            & myMolecules) ) cycle 
+          ! Is CB for a block we want to keep?
+          if ( m%col%vec%quantities(m%col%quant(cb))%template%quantityType /= l_temperature &
+            & .and. .not. &
+            & any( m%col%vec%quantities(m%col%quant(cb))%template%molecule == &
+            &      myMolecules) ) cycle 
         end if
         call InsertHessianPlane ( H%block(rb,cb,b), M%block(rb,cb), el )
         if ( myMirror ) then
@@ -739,7 +749,7 @@ contains
           if ( dropBlock ) then
             call ClearBlock ( hbu )
             call ClearBlock ( hbl )
-          elseif ( q1%coherent .and. q2%coherent ) then
+          else if ( q1%coherent .and. q2%coherent ) then
             call streamlineHessian ( hbu, q1, q2, surface, scaleHeight, threshold )
             call streamlineHessian ( hbl, q2, q1, surface, scaleHeight, threshold )
           end if
@@ -762,6 +772,9 @@ contains
 end module HessianModule_1
 
 ! $Log$
+! Revision 2.23  2011/04/02 01:21:55  vsnyder
+! Don't check molecules in InsertHessianPlane_1 if block is for temperature
+!
 ! Revision 2.22  2011/03/31 19:54:41  vsnyder
 ! Delete declarations for unused entities
 !
