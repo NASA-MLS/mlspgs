@@ -149,13 +149,13 @@ module DUMP_0
 
   interface DIFF        ! dump diffs between pair of n-d arrays of numeric type
     module procedure DIFF_1D_DOUBLE, DIFF_1D_INTEGER, DIFF_1D_REAL
-    module procedure DIFF_2D_DOUBLE, DIFF_2D_REAL
+    module procedure DIFF_2D_DOUBLE, DIFF_2D_INTEGER, DIFF_2D_REAL
     module procedure DIFF_3D_DOUBLE, DIFF_3D_REAL
   end interface
 
   interface FILTEREDDIFF        ! dump FILTEREDDIFFs between pair of n-d arrays of numeric type
     module procedure FILTEREDDIFF_1D_DOUBLE, FILTEREDDIFF_1D_INTEGER, FILTEREDDIFF_1D_REAL
-    module procedure FILTEREDDIFF_2D_DOUBLE, FILTEREDDIFF_2D_REAL
+    module procedure FILTEREDDIFF_2D_DOUBLE, FILTEREDDIFF_2D_INTEGER, FILTEREDDIFF_2D_REAL
     module procedure FILTEREDDIFF_3D_DOUBLE, FILTEREDDIFF_3D_REAL
   end interface
 
@@ -224,7 +224,7 @@ module DUMP_0
 
   interface UNFILTEREDDIFF        ! dump UNFILTEREDDIFFs between pair of n-d arrays of numeric type
     module procedure UNFILTEREDDIFF_1D_DOUBLE, UNFILTEREDDIFF_1D_INTEGER, UNFILTEREDDIFF_1D_REAL
-    module procedure UNFILTEREDDIFF_2D_DOUBLE, UNFILTEREDDIFF_2D_REAL
+    module procedure UNFILTEREDDIFF_2D_DOUBLE, UNFILTEREDDIFF_2D_INTEGER, UNFILTEREDDIFF_2D_REAL
     module procedure UNFILTEREDDIFF_3D_DOUBLE, UNFILTEREDDIFF_3D_REAL
   end interface
 
@@ -385,6 +385,32 @@ contains
         & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
     endif
   end subroutine DIFF_1D_REAL
+
+  subroutine DIFF_2D_INTEGER ( ARRAY1, NAME1, ARRAY2, NAME2, &
+    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
+    integer, intent(in) :: ARRAY1(:,:)
+    character(len=*), intent(in) :: NAME1
+    integer, intent(in) :: ARRAY2(:,:)
+    character(len=*), intent(in) :: NAME2
+    integer, intent(in), optional :: FILLVALUE
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    integer, intent(in), optional :: LBOUND ! Low bound for Array
+    character(len=*), intent(in), optional :: options
+
+    if ( .not. present(FillValue) ) then
+      call UnfilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
+        & WIDTH, FORMAT, LBOUND, OPTIONS )
+    elseif ( product(shape(array1)) > TOOMANYELEMENTS ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'array size of ' // trim(name1) // ' too large to filter Fill values' )
+      call UnfilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
+        & WIDTH, FORMAT, LBOUND, OPTIONS )
+    else
+      call FilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
+        & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
+    endif
+  end subroutine DIFF_2D_INTEGER
 
   subroutine DIFF_2D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
     & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
@@ -2363,6 +2389,29 @@ contains
     include "diff.f9h"
   end subroutine FILTEREDDIFF_2D_DOUBLE
 
+  subroutine FILTEREDDIFF_2D_INTEGER ( IARRAY1, NAME1, IARRAY2, NAME2, &
+    & IFILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
+    integer, intent(in) :: IARRAY1(:,:)
+    character(len=*), intent(in) :: NAME1
+    integer, intent(in) :: IARRAY2(:,:)
+    character(len=*), intent(in) :: NAME2
+    integer, intent(in), optional :: IFILLVALUE
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    integer, intent(in), optional :: LBOUND ! Low bound for Array
+    character(len=*), intent(in), optional :: options
+
+    real, dimension(size(iarray1,1), size(iarray1,2)) :: array1
+    real, dimension(size(iarray1,1), size(iarray1,2)) :: array2
+    real :: fillValue
+    ! So we don't have to write an integer-version of allstats
+    array1 = iarray1
+    array2 = iarray2
+    fillValue = iFillValue
+    call DIFF ( ARRAY1, NAME1, ARRAY2, NAME2, &
+    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
+  end subroutine FILTEREDDIFF_2D_INTEGER
+
   subroutine FILTEREDDIFF_2D_REAL ( ARRAY1, NAME1, ARRAY2, NAME2, &
     & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
     real, intent(in) :: ARRAY1(:,:)
@@ -2810,6 +2859,27 @@ contains
     include "unfiltereddiff.f9h"
   end subroutine UNFILTEREDDIFF_2D_DOUBLE
 
+  subroutine UNFILTEREDDIFF_2D_INTEGER ( IARRAY1, NAME1, IARRAY2, NAME2, &
+    & WIDTH, FORMAT, LBOUND, OPTIONS )
+    integer, intent(in) :: IARRAY1(:,:)
+    character(len=*), intent(in) :: NAME1
+    integer, intent(in) :: IARRAY2(:,:)
+    character(len=*), intent(in) :: NAME2
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    integer, intent(in), optional :: LBOUND ! Low bound for Array
+    character(len=*), intent(in), optional :: options
+
+    real, dimension(size(iarray1,1), size(iarray1,2)) :: array1
+    real, dimension(size(iarray1,1), size(iarray1,2)) :: array2
+    ! So we don't have to write an integer-version of allstats
+    array1 = iarray1
+    array2 = iarray2
+    call DIFF ( ARRAY1, NAME1, ARRAY2, NAME2, &
+      & WIDTH=WIDTH, FORMAT=FORMAT, &
+      & LBOUND=LBOUND, OPTIONS=OPTIONS )
+  end subroutine UNFILTEREDDIFF_2D_INTEGER
+
   subroutine UNFILTEREDDIFF_2D_REAL ( ARRAY1, NAME1, ARRAY2, NAME2, &
     & WIDTH, FORMAT, LBOUND, OPTIONS )
     integer, parameter :: RK = kind(1.0e0)
@@ -2878,6 +2948,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.108  2011/04/04 23:08:27  pwagner
+! May diff 2d integer arrays
+!
 ! Revision 2.107  2011/03/08 00:04:40  pwagner
 ! Skip printing row of zeros only if multiple
 !
