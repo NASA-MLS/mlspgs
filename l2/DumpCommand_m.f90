@@ -1079,6 +1079,10 @@ contains
                 call diff ( qty1%values, 'qty1 values', &
                   & qty2%values, 'qty2 values', &
                   & options=optionsString )
+              elseif ( index(optionsString, '2') > 0 ) then
+                call diff ( ichar(qty1%mask), 'qty1 mask', &
+                  & ichar(qty2%mask), 'qty2 mask', &
+                  & options=optionsString )
               else
                 call diff ( &
                   & qty1, &
@@ -1093,7 +1097,7 @@ contains
           else
             ! Special options handling
             ! 'c' means clean
-            ! '0' menas dump template
+            ! '0' means dump template
             ! '1' means dump values
             ! '2' means dump mask
             
@@ -1405,6 +1409,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.58  2011/04/04 23:07:21  pwagner
+! May diff just quantity mask
+!
 ! Revision 2.57  2011/03/15 23:02:45  pwagner
 ! Dump qty with options 0, 1, or 2 to choose template, values, or mask
 !
