@@ -22,6 +22,7 @@
 ! MLSMSG_WARNING           not fatal, but deserving of attention
 ! MLSMSG_ERROR             quits after printing
 ! MLSMSG_CRASH             should give traceback before quitting
+! MLSMSG_Severity_so_far   worst severity level noted so far in this run
 ! MLSMSG_Severity_to_quit  severity level needed to quit
 ! MLSMSG_Severity_to_walkback
 !                          severity level needed to print callstack
@@ -93,7 +94,8 @@
 
   ! MLSMSG_Severity_to_* can be reset in a main program to cause us
   ! to become more lenient (set it higher) or strict (set it lower )
-  integer, public, save      :: MLSMSG_Severity_to_quit = MLSMSG_Error
+  integer, public, save      :: MLSMSG_Severity_so_far      = PGS_S_SUCCESS
+  integer, public, save      :: MLSMSG_Severity_to_quit     = MLSMSG_Error
   integer, public, save      :: MLSMSG_Severity_to_walkback = MLSMSG_Error
 
   private :: SeverityNames
@@ -165,22 +167,26 @@
     ! -2: none added
     ! -1: to stdout
     !  n: to ftn unit n
-    integer :: logFileUnit                     = -2
+    integer :: logFileUnit             = -2
     ! In the following, values would have the effect on identical warnings of:
     ! -1: Print every one without suppression
     !  0: Suppress every one
     !  1: Print every one only once
-    integer :: limitWarnings                   = 1000 ! Max number each warning
-    integer :: masterTID                       = -1 ! Where to send error msg
-    character (len=MLSMSG_PrefixLen) :: prefix = ''   ! Prefix to every msg
+    integer :: limitWarnings           = 1000 ! Max number each warning
+    integer :: masterTID               = -1 ! Where to send error msg
+    character (len=MLSMSG_PrefixLen) :: prefix &
+      &                                = ''   ! Prefix to every msg
     ! Instead of simply calling them Info, you could use something more
     ! informative, like Phase names
-    character (len=MLSMSG_PrefixLen) :: Info   = 'Info' ! What to call Info
-    logical :: suppressDebugs                  = .false.
-    logical :: useToolkit                      = .true.
-    logical :: CrashOnAnyError                 = .false. ! See crash warning
-    logical :: SendErrMsgToMaster              = .false. ! Whether to send last
-    logical :: StackTrace            = .false. ! Trace calls to MLSMessageCalls
+    character (len=MLSMSG_PrefixLen) :: Info   &
+      &                                = ''      ! What (else) to call Info
+    logical :: suppressDebugs          = .false.
+    logical :: useToolkit              = .true.
+    logical :: AbbreviateModSevNames   = .false. ! Abbreviate module and severity names
+    logical :: CrashOnAnyError         = .false. ! See crash warning
+    logical :: SendErrMsgToMaster      = .false. ! send last gasp to master?
+    logical :: ShowCumulativeSeverity  = .false. ! print severity_so_far?
+    logical :: StackTrace              = .false. ! Trace via MLSMessageCalls?
     ! Track the last file we were reading/writing if an error occurs and
     ! that file isn't passed in the call statement
     type(MLSFile_T) :: MLSFile ! which file were we reading/writing last?
@@ -200,8 +206,9 @@
   ! appropriate commands sent with subroutine MLSMessageCalls
   
   ! Note the following limitations:
-  ! Each name must be shorter than 65 chars.
+  ! Each name must be shorter than (MAXSTACKNAMELEN+1) chars.
   ! Strung together, all the names must not exceed 2048 characters in length
+  integer, parameter    ::    MAXSTACKNAMELEN = 64
   type, public :: MLSCallStack_t
     character(len=2048) :: Txt ! All the names, strung together
     integer :: Ind(0:100) = 0  ! Ind(i) is end of ith name
@@ -240,25 +247,29 @@ contains
     endif
     call dump ( 'dumping ', charValue='MLS Message Config' )
     call dump ( ': ', charValue=':::::::::::::::::::::::::' )
-    call dump ( 'logFileUnit        ', intValue= myConfig%logFileUnit       )
-    call dump ( 'limitWarnings      ', intValue= myConfig%limitWarnings     )
-    call dump ( 'masterTID          ', intValue= myConfig%masterTID         )
-    call dump ( 'prefix             ', charValue=myConfig%prefix            )
-    call dump ( 'Info               ', charValue=myConfig%Info              )
-    call dump ( 'useToolkit         ', logValue= myConfig%useToolkit        )
-    call dump ( 'CrashOnAnyError    ', logValue= myConfig%CrashOnAnyError   )
-    call dump ( 'SendErrMsgToMaster ', logValue= myConfig%SendErrMsgToMaster)
-    call dump ( 'Trace calls        ', logValue= myConfig%StackTrace        )
+    call dump ( 'logFileUnit             ', intValue= myConfig%logFileUnit       )
+    call dump ( 'limitWarnings           ', intValue= myConfig%limitWarnings          )
+    call dump ( 'masterTID               ', intValue= myConfig%masterTID              )
+    call dump ( 'extra prefix            ', charValue=myConfig%prefix                 )
+    call dump ( 'extra Info              ', charValue=myConfig%Info                   )
+    call dump ( 'useToolkit              ', logValue= myConfig%useToolkit             )
+    call dump ( 'AbbreviateModSevNames   ', logValue= myConfig%AbbreviateModSevNames  )
+    call dump ( 'CrashOnAnyError         ', logValue= myConfig%CrashOnAnyError        )
+    call dump ( 'SendErrMsgToMaster      ', logValue= myConfig%SendErrMsgToMaster     )
+    call dump ( 'ShowCumulativeSeverity  ', logValue= myConfig%ShowCumulativeSeverity )
+    call dump ( 'SendErrMsgToMaster      ', logValue= myConfig%SendErrMsgToMaster     )
+    call dump ( 'Trace calls             ', logValue= myConfig%StackTrace             )
     
-    call dump ( 'Status values      ', charValue=' '                        )
-    call dump ( '  Success          ', intValue=MLSMSG_Success              )
-    call dump ( '  Debug            ', intValue=MLSMSG_Debug                )
-    call dump ( '  Info             ', intValue=MLSMSG_Info                 )
-    call dump ( '  Warning          ', intValue=MLSMSG_Warning              )
-    call dump ( '  Error            ', intValue=MLSMSG_Error                )
-    call dump ( '  Crash            ', intValue=MLSMSG_Crash                )
-    call dump ( 'Severity to quit   ', intValue=MLSMSG_Severity_to_quit     )
-    call dump ( 'Severity to crash  ', intValue=MLSMSG_Severity_to_walkback )
+    call dump ( 'Status values           ', charValue=' '                             )
+    call dump ( '  Success               ', intValue=MLSMSG_Success                   )
+    call dump ( '  Debug                 ', intValue=MLSMSG_Debug                     )
+    call dump ( '  Info                  ', intValue=MLSMSG_Info                      )
+    call dump ( '  Warning               ', intValue=MLSMSG_Warning                   )
+    call dump ( '  Error                 ', intValue=MLSMSG_Error                     )
+    call dump ( '  Crash                 ', intValue=MLSMSG_Crash                     )
+    call dump ( 'Severity to quit        ', intValue=MLSMSG_Severity_to_quit          )
+    call dump ( 'Severity to crash       ', intValue=MLSMSG_Severity_to_walkback      )
+    call dump ( 'Severity so far         ', intValue=MLSMSG_Severity_so_far           )
   end subroutine dumpConfig
 
   ! ------------------------------------------------  MLSMessage_  -----
@@ -423,7 +434,7 @@ contains
     ! Internal variables
     character(len=1), parameter :: comma = achar(0) ! '?' ! ','
     integer :: m
-    character(len=64) :: myName
+    character(len=MAXSTACKNAMELEN) :: myName
     logical, parameter  :: nosubsequentwarnings = .false.
     ! Executable
     if ( MLSMessageConfig%stackTrace ) then
@@ -802,14 +813,15 @@ contains
     ! Assemble a full message line
 
     if ( line_len == 0 ) then
-      if ( severity == MLSMSG_Info ) then
-        line = MLSMessageConfig%Info
-      elseif ( severity > MLSMSG_Success-1 .and. severity < MLSMSG_Crash+1 ) then
-        line = SeverityNames(severity)
-        if ( MLSMessageConfig%Info /= SeverityNames(MLSMSG_Info) ) then
-          line = SeverityNames(severity) // ' ' // &
-            & MLSMessageConfig%Info
+      if ( severity > MLSMSG_Success-1 .and. severity < MLSMSG_Crash+1 ) then
+        line = trim(SeverityNamesFun(severity))
+        if ( MLSMessageConfig%ShowCumulativeSeverity ) then
+          line = trim(line) // ':' // &
+            & trim(SeverityNamesFun(MLSMSG_Severity_so_far))
         endif
+        if ( severity == MLSMSG_Info .and. &
+          & len_trim(MLSMessageConfig%Info) > 0 ) &
+          & line = trim(line) // ' ' // MLSMessageConfig%Info
       else
         line = 'Unknown'
       end if
@@ -890,6 +902,7 @@ contains
     logical :: My_adv
 
     ! Executable code
+    MLSMSG_Severity_so_far = max( MLSMSG_Severity_so_far, severity )
     my_adv = .true.
     if ( present(advance) ) &
       & my_adv = advance(1:1) /= 'n' .and. advance(1:1) /= 'N'
@@ -933,6 +946,30 @@ contains
     end if
   end subroutine MLSMessageStd
 
+  function ModuleNameFun ( moduleName ) result (name)
+    ! Return name of module unless asked to abbreviate
+    character(len=*), intent(in)    :: moduleName
+    character(len=len(ModuleName))  :: name
+    name = moduleName
+    if ( len_trim(moduleName) < 1 ) name = 'Unknown'
+    if ( MLSMessageConfig%AbbreviateModSevNames ) name = name(1:2) // ' '
+  end function ModuleNameFun
+
+  function SeverityNamesFun ( severity ) result (name)
+    ! Return name of level corresponding to severity, if recognized
+    ! If not recignized, return  'Unknown'
+    ! Full name unless asked to abbreviate
+    integer, intent(in)                   :: severity
+    character(len=len(SeverityNames(1)))  :: name
+    if ( severity < MLSMSG_Success .or. severity > MLSMSG_Crash ) then
+      name = 'Unknown'
+      if ( MLSMessageConfig%AbbreviateModSevNames ) name = name(1:1) // ' '
+    else
+      name = SeverityNames( severity )
+      if ( MLSMessageConfig%AbbreviateModSevNames ) name = name(1:1) // ' '
+    endif
+  end function SeverityNamesFun
+
   function snipRCSFrom ( with ) result ( without )
     ! Trim nonsense involving RCS system from input "with"
     ! (if present)
@@ -953,10 +990,14 @@ contains
       else
         without = with
       end if
+      without = ModuleNameFun( without )
   end function snipRCSFrom
   
 !
 ! $Log$
+! Revision 2.12  2011/04/05 00:03:14  pwagner
+! MLSMSG_Severity_so_far now available as a return status if mlspgs treated as a function
+!
 ! Revision 2.11  2010/10/07 23:29:26  pwagner
 ! MLSMessage optionally returns status
 !
