@@ -60,11 +60,10 @@
     numZeroRows = 0
     if ( size(array) == 0 ) then
       call empty ( name )
-    else if ( size(array) == 1 ) then
-      call name_and_size ( name, myClean, 1 )
-      call output ( array(1,1,1), format=myFormat, advance='yes' )
-    else if ( size(array,2) == 1 .and. size(array,3) == 1 ) then
-      call dump ( array(:,1,1), name, options=options )
+    else if ( size(array,1) == 1 ) then
+      call dump ( array(1,:,:), name, fillValue=fillValue, options=options )
+    else if ( size(array,2) == 1 ) then
+      call dump ( array(:,1,:), name, fillValue=fillValue, options=options )
     else if ( size(array,3) == 1 ) then
       call dump ( array(:,:,1), name, fillValue=fillValue, options=options )
     else
@@ -104,6 +103,9 @@
     call theDumpEnds
 ! end subroutine DUMP_3D_DOUBLE
 ! $Log$
+! Revision 2.5  2011/04/07 23:32:07  pwagner
+! More sensible if .. elseif .. structure for rank reduction
+!
 ! Revision 2.4  2011/03/08 00:04:00  pwagner
 ! Skip printing row of zeros only if multiple
 !
