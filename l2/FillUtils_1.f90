@@ -3922,7 +3922,7 @@ contains ! =====     Public Procedures     =============================
         character(len=MAXSTRLISTLENGTH) :: part2
         character(len=MAXSTRLISTLENGTH) :: part3
         character(len=4) :: vchar
-        logical, parameter :: DEEBUG = .false.
+        ! logical, parameter :: DEEBUG = .false.
         ! Executable
         if ( DeeBUG ) print *, 'mstr: ', trim(mstr)
         MapFunction = ( index(mstr, 'map' ) > 0 )
@@ -4108,10 +4108,10 @@ contains ! =====     Public Procedures     =============================
         do i=1, n
           call GetStringElement ( temp, element, i, countEmpty, inseparator='+' )
           ! Surround term with parentheses if it's a product or quotient
-          ! but not if it's not simple
+          ! but not if it's (already) parenthetical
           if ( ( index(element, '*') > 0 .or. index(element, '/') > 0 .or. &
             & index(element, '^') > 0 ) .and. &
-            & index(element, ')')  < 1 ) then
+            & .not. isParenthetical(element) ) then
             element = '(' // trim(element) // ')'
           endif
           collapsedstr = catLists( collapsedstr, element, inseparator='+' )
@@ -4215,7 +4215,7 @@ contains ! =====     Public Procedures     =============================
         type (VectorValue_T), pointer   :: B
         real(rv) :: C                     ! constant "c" in manipulation
         ! Internal variables
-        logical, parameter              :: DEEBUG = .false.
+        ! logical, parameter              :: DEEBUG = .false.
         logical                         :: done
         ! fun is blank unless a prior one left us "hungry" for an arg
         character(len=8)                :: fun ! {'exp', 'log', etc.}
@@ -4260,7 +4260,9 @@ contains ! =====     Public Procedures     =============================
         if ( DeeBUG ) then
           print *, n, ' str: ', trim(str)
         endif
+        partID = -1
         fun = ' '
+        hit = .false.
         do
           ! go through the elements, re-evaluating every time we "hit" a primitive
           ! Otherwise revising our lastOp or negating status
@@ -4312,10 +4314,12 @@ contains ! =====     Public Procedures     =============================
             hit = .false.
           case default
             ind = index(variable, ':')
+            if ( deeBug ) print *, 'ind of ":" ', ind
             if ( ind > 1 ) then
               fun = variable(1:ind-1)
               hit = .false.
             else
+              if ( deeBug ) print *, 'Trying to read partID from ' // variable
               read( variable, * ) partID
               if ( partID < 1 ) then
                 print *, 'partID: ', partID
@@ -4596,6 +4600,14 @@ contains ! =====     Public Procedures     =============================
           str = trim(part1) // ' ' // adjustl(part2)
         endif
       end function catTwoOperands
+      
+      function isParenthetical ( str ) result ( itIs )
+        ! TRUE if 1st non-blank is '(' and last non-blank is ')'
+        character(len=*), intent(in) :: str
+        logical                      :: itIs
+        itIs = index( adjustl(str), '(' ) == 1 .and. &
+          &    index( trim(str), ')'    ) == len_trim(str)
+      end function isParenthetical
     end subroutine ByManipulation
 
     ! ----------------------------------------- FromL1B ----
@@ -5278,7 +5290,7 @@ contains ! =====     Public Procedures     =============================
       real :: trp
       real, dimension(:), pointer :: xyTemp, xyPress
       logical :: alreadyDumped
-      logical, parameter :: DEEBUG = .false.
+      ! logical, parameter :: DEEBUG = .false.
       ! Executable
       nullify( xyTemp, xyPress )
       nlev = size(temperature%values, 1)
@@ -6986,6 +6998,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.42  2011/04/07 23:35:31  pwagner
+! Fixed bug in handling manipulation='(c - c*a)*b'
+!
 ! Revision 2.41  2011/03/08 18:29:22  pwagner
 ! Added shift,slip,chaannel,surface,instance functions to manipulate fills
 !
