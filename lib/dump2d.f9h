@@ -65,9 +65,11 @@
     numZeroRows = 0
     if ( size(array) == 0 ) then
       call empty ( name )
-    else if ( size(array) == 1 ) then
+    else if ( product(shape(array)) == 1 ) then
       call name_and_size ( name, myClean, 1 )
-      ! call output ( array(1,1), format=myFormat, advance='yes' )
+      call output ( array(1,1), format=myFormat, advance='yes' )
+    else if ( size(array, 1) == 1 ) then
+      call dump ( array(1,:), name, options=options )
     else if ( size(array,2) == 1 ) then
       call dump ( array(:,1), name, options=options )
     else
@@ -82,11 +84,6 @@
             & any(array(min(i+1, size(array,1)),1:min(1+MyWidth-1, size(array,2))) &
             & /= myFillValue) &
             & )
-          ! call output( shape(array(i,j:min(j+2*MyWidth-1, size(array,2))) ), advance='yes' )
-          ! call outputNamedValue( 'min?', minval(array(i,j:min(j+2*MyWidth-1, size(array,2))) ))
-          ! call outputNamedValue( 'max?', maxval(array(i,j:min(j+2*MyWidth-1, size(array,2))) ))
-          ! call outputNamedValue( 'fill?', myFillValue )
-          ! call outputNamedValue( 'dump?', DumpTheseZeros )
           if (.not. myClean) then
             if ( DumpTheseZeros ) then
               call say_fill ( (/ i, size(array,1), j-1, size(array,2) /), &
@@ -102,7 +99,6 @@
             call newLine
             numZeroRows = 0
           end if
-          ! call outputNamedValue( 'numZeroRows', numZeroRows )
         end do
       end do
       call say_fill ( (/ i-1, size(array,1), j-MyWidth, size(array,2) /), &
@@ -111,6 +107,9 @@
     call theDumpEnds
 !   end subroutine DUMP_2D_INTEGER
 ! $Log$
+! Revision 2.6  2011/04/07 20:05:34  pwagner
+! Fixed bug introduced with last changes
+!
 ! Revision 2.5  2011/03/15 23:58:26  pwagner
 ! Fixed bugs added with last change; also bug inherited from dump_0 parents
 !
