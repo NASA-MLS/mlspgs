@@ -1108,7 +1108,7 @@ contains
             elseif ( index(optionsString, '1') > 0 ) then
               call dump ( qty1%values, 'quantity values', &
                 & options=optionsString )
-            elseif ( index(optionsString, '2') > 0 ) then
+            elseif ( index(optionsString, '0') > 0 ) then
               call dump ( qty1%template, details=details )
             else
               call dumpQuantityMask( qty1, details=0 )
@@ -1409,6 +1409,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.59  2011/04/13 00:26:17  pwagner
+! options='' works how comments and wiki says it does for vect.qty
+!
 ! Revision 2.58  2011/04/04 23:07:21  pwagner
 ! May diff just quantity mask
 !
