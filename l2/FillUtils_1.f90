@@ -3484,31 +3484,6 @@ contains ! =====     Public Procedures     =============================
       ! 'a^c' and 'c^a' (also called 'a**c' and 'c**a')
       logical, parameter :: autoRecognizeGeneralExp = .true.
       integer, parameter :: MAXSTRLISTLENGTH = 128
-      integer, parameter :: NO2WAYMANIPULATIONS = 8
-      character(len=*), parameter :: VALID2WAYMANIPULATIONS ( NO2WAYMANIPULATIONS ) = (/ &
-        & 'a+b     ', &
-        & '(a+b)/2 ', &
-        & 'a-b     ', &
-        & 'a*b     ', &
-        & 'a>b     ', &
-        & 'a<b     ', &
-        & 'a|b     ', &
-        & 'a/b     ' /)
-      integer, parameter :: NO1WAYMANIPULATIONS = 13
-      character(len=*), parameter :: VALID1WAYMANIPULATIONS ( NO1WAYMANIPULATIONS ) = (/ &
-        & '-a         ', &
-        & '1/a        ', &
-        & 'abs(a)     ', &
-        & 'sign(a)    ', &
-        & 'exp(a)     ', &
-        & 'log(a)     ', &
-        & 'log10(a)   ', &
-        & 'min(a)     ', &
-        & 'max(a)     ', &
-        & 'mean(a)    ', &
-        & 'median(a)  ', &
-        & 'rms(a)     ', &
-        & 'stddev(a)  ' /)
       ! Local variables
       character (len=1) :: ABNAME
       type (VectorValue_T), pointer :: AORB
@@ -3522,9 +3497,7 @@ contains ! =====     Public Procedures     =============================
       integer :: NUMWAYS ! 1 or 2
       character (len=128) :: MSTR
       logical :: OKSOFAR
-      logical :: OneWay
       real(rv) :: qvalue
-      logical :: TwoWay
       logical :: StatisticalFunction
       logical :: USESC
       ! Executable code
@@ -3535,55 +3508,25 @@ contains ! =====     Public Procedures     =============================
       call get_string ( manipulation, mstr, strip=.true. )
       mstr = lowercase(mstr)
       
-      OneWay = any ( mstr == valid1WayManipulations )
-      TwoWay = any ( mstr == valid2WayManipulations )
       usesC = present(c)
-      StatisticalFunction = ( FindFirst( valid1WayManipulations, mstr ) > 7 )
+      ! StatisticalFunction = ( FindFirst( valid1WayManipulations, mstr ) > 7 )
+      StatisticalFunction = any( &
+        & index( &
+        &   mstr, &
+        &   (/ 'min', 'max', 'mean', 'median', 'rms', 'stddev' /) &
+        &   ) &
+        &  > 1 )
       MapFunction = ( index(mstr, 'map') > 0 )
-      if ( .not. ( OneWay .or. TwoWay .or. usesc ) ) then
-        if ( autoRecognizeGeneralExp ) then
-          usesC = .true.
-          call MLSMessage ( MLSMSG_Warning, moduleName, &
-            & 'Automatically recognizing general manipulation: ' // trim(mstr) )
-        else
-          call Announce_Error ( key, no_error_code, 'Invalid manipulation:' &
-            & // trim(mstr) )
-          return
-        end if
-      end if
       
-      needsB = TwoWay .or. (usesC .and. (index(mstr, 'b') > 0) )
-
-      ! Now check the sanity of the request.
-      if ( OneWay .or. usesc ) then
-        numWays = 1
-        if ( .not. associated ( a ) ) then
-          call Announce_Error ( key, no_error_code, &
-            & 'You must supply the a quantity' )
-          return
-        end if
-      elseif ( TwoWay ) then
-        numWays = 2
-        if ( .not. associated ( a ) .or. .not. associated ( b ) ) then
-          call Announce_Error ( key, no_error_code, &
-            & 'You must supply both a and b quantities' )
-          return
-        end if
-      end if
-
-      if ( DEEBUG ) then
-        call outputNamedValue( 'mstr', mstr )
-        call outputNamedValue( 'numWays', numWays )
-        call outputNamedValue( 'StatisticalFunction', StatisticalFunction )
-        call outputNamedValue( 'MapFunction', MapFunction )
-        call outputNamedValue( 'usesc', usesc )
-      endif
+      numWays = 2 
       okSoFar = .true.
       do i = 1, numWays ! 2
         if ( i == 1 ) then
+          if ( .not. associated(a) ) cycle
           aorb => a
           abName = 'a'
         else
+          if ( .not. associated(b) ) cycle
           aorb => b
           abName = 'b'
         end if
@@ -3599,12 +3542,6 @@ contains ! =====     Public Procedures     =============================
               & quantity%template%signal == aorb%template%signal .and. &
               & quantity%template%sideband == aorb%template%sideband .and. &
               & quantity%template%frequencyCoordinate == aorb%template%frequencyCoordinate
-          else if ( mstr == 'a*b' ) then
-            ! In this case, just check that the coordinate systems for these quantities match
-            okSoFar = okSoFar .and. &
-              & DoHGridsMatch ( quantity, aorb ) .and. &
-              & DoVGridsMatch ( quantity, aorb ) .and. &
-              & DoFGridsMatch ( quantity, aorb, sizeOnly=.true. )
           else
             ! For a+/-b these quantities must share a template
             okSoFar = okSoFar .and. quantity%template%name == aorb%template%name
@@ -3626,230 +3563,14 @@ contains ! =====     Public Procedures     =============================
         end if
       end do
 
-      ! OK do the simple work for now
-      ! Below we'll do fancy stuff to parse the more general manipulations
-      if ( StatisticalFunction ) then
-        NoChans     = a%template%NoChans
-        NoInstances = a%template%NoInstances
-        NoSurfs     = a%template%NoSurfs
-        if ( dontSumHeights .and. dontSumInstances ) then
-          do instance = 1, NoInstances
-            do iSurf = 1, NoSurfs
-              call doStatFun( quantity%values(iSurf, instance), mstr, &
-                & a%values(1+(iSurf-1)*NoChans:iSurf*NoChans, instance) )
-            enddo
-          enddo
-        elseif ( dontSumInstances ) then
-          do instance = 1, NoInstances
-            call doStatFun( qvalue, mstr, &
-              & a%values(:, instance) )
-            if ( spreadFlag ) then
-              quantity%values(:, instance) = qvalue
-            else
-              quantity%values(1, instance) = qvalue
-            endif
-          enddo
-        elseif ( dontSumHeights ) then
-          do iSurf = 1, NoSurfs
-            call doStatFun( qvalue, mstr, &
-              & a%values(iSurf, :) )
-            if ( spreadFlag ) then
-              quantity%values(iSurf, :) = qvalue
-            else
-              quantity%values(iSurf, 1) = qvalue
-            endif
-          enddo
-        else
-          ! Sum over both heights and instances
-          select case ( mstr )
-          case ( 'min(a)' )
-            qvalue = mlsmin( a%values )
-          case ( 'max(a)' )
-            qvalue = mlsmax( a%values )
-          case ( 'mean(a)' )
-            qvalue = mlsmean( a%values )
-          case ( 'median(a)' )
-            qvalue = mlsmedian( a%values )
-          case ( 'rms(a)' )
-            qvalue = mlsrms( a%values )
-          case ( 'stddev(a)' )
-            qvalue = mlsstddev( a%values )
-          case default
-            ! Should not have come here
-          end select
-          if ( spreadFlag ) then
-            if ( .not. associated ( quantity%mask ) ) then
-              quantity%values = qvalue
-            else
-              where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 )
-                quantity%values = qvalue
-              end where
-            end if
-          else
-            quantity%values(1, 1) = qvalue
-          endif
-        endif
-        call MLSMessageCalls( 'pop' )
-        if ( SwitchDetail(switches, 'stat') > -1 ) &
-          & call dump( quantity%values, mstr )
-        return
-      endif
       select case ( mstr )
-      ! The binary manipulations
-      case ( 'a+b' )
-        if ( .not. associated ( quantity%mask ) ) then
-          quantity%values = a%values + b%values
-        else
-          where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 )
-            quantity%values = a%values + b%values
-          end where
-        end if
-      case ( '(a+b)/2' )
-        if ( .not. associated ( quantity%mask ) ) then
-          quantity%values = 0.5 * ( a%values + b%values )
-        else
-          where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 )
-            quantity%values = 0.5 * ( a%values + b%values )
-          end where
-        end if
-      case ( 'a-b' )
-        if ( .not. associated ( quantity%mask ) ) then
-          quantity%values = a%values - b%values
-        else
-          where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 )
-            quantity%values = a%values - b%values
-          end where
-        end if
-      case ( 'a*b' )
-        if ( .not. associated ( quantity%mask ) ) then
-          quantity%values = a%values * b%values
-        else
-          where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 )
-            quantity%values = a%values * b%values
-          end where
-        end if
-      case ( 'a>b' )
-        if ( .not. associated ( quantity%mask ) ) then
-          quantity%values = max ( a%values, b%values )
-        else
-          where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 )
-            quantity%values = max ( a%values, b%values )
-          end where
-        end if
-      case ( 'a<b' )
-        if ( .not. associated ( quantity%mask ) ) then
-          quantity%values = min ( a%values, b%values )
-        else
-          where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 )
-            quantity%values = min ( a%values, b%values )
-          end where
-        end if
       case ( 'a|b' )
+        ! At some point we must treat this '|' operator more generally, like '+', ..
         if ( .not. associated ( quantity%mask ) ) then
           quantity%values = ior ( nint(a%values), nint(b%values) )
         else
           where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 )
             quantity%values = ior ( nint(a%values), nint(b%values) )
-          end where
-        end if
-      case ( 'a/b' )
-        if ( .not. associated ( quantity%mask ) ) then
-          where ( b%values /= 0._rv )
-            quantity%values = a%values / b%values
-          end where
-        else
-          where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 .and. &
-            & ( b%values /= 0._rv ) )
-            quantity%values = a%values / b%values
-          end where
-        end if
-      ! The unary manipulations
-      case ( '-a'  )
-        if ( .not. associated ( quantity%mask ) ) then
-            quantity%values = -a%values
-        else
-          where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0  )
-            quantity%values = -a%values
-          end where
-        end if
-      case ( '1/a'  )
-        if ( .not. associated ( quantity%mask ) ) then
-          where ( a%values /= 0._rv )
-            quantity%values = 1./a%values
-          end where
-        else
-          where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 .and. &
-            & ( a%values /= 0._rv ) )
-            quantity%values = 1./a%values
-          end where
-        end if
-      case ( 'abs(a)'  )
-        if ( .not. associated ( quantity%mask ) ) then
-            quantity%values = abs(a%values)
-        else
-          where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0  )
-            quantity%values = abs(a%values)
-          end where
-        end if
-      case ( 'sign(a)' )
-        if ( .not. associated ( quantity%mask ) ) then
-          where ( a%values /= 0._rv )
-            quantity%values = sign(1._rv, a%values)
-          end where
-        else
-          where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 .and. &
-            & ( a%values /= 0._rv ) )
-            quantity%values = sign(1._rv, a%values)
-          end where
-        end if
-      case ( 'exp(a)'  )
-        if ( .not. associated ( quantity%mask ) ) then
-            quantity%values = exp(a%values)
-        else
-          where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0  )
-            quantity%values = exp(a%values)
-          end where
-        end if
-      case ( 'log(a)' )
-        if ( .not. associated ( quantity%mask ) ) then
-          where ( a%values > 0._rv )
-            quantity%values = log(a%values)
-          end where
-        else
-          where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 .and. &
-            & ( a%values > 0._rv ) )
-            quantity%values = log(a%values)
-          end where
-        end if
-      case ( 'log10(a)' )
-        if ( .not. associated ( quantity%mask ) ) then
-          where ( a%values > 0._rv )
-            quantity%values = log10(a%values)
-          end where
-        else
-          where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 .and. &
-            & ( a%values > 0._rv ) )
-            quantity%values = log10(a%values)
-          end where
-        end if
-      ! Special manipulation with c as exponent or base
-      case ( 'a^c', 'a**c'  )
-        if ( .not. associated ( quantity%mask ) ) then
-          where ( a%values > 0._rv )
-            quantity%values = a%values**c
-          end where
-        else
-          where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 .and. &
-            & ( a%values > 0._rv ) )
-            quantity%values = a%values**c
-          end where
-        end if
-      case ( 'c^a', 'c**a'  )
-        if ( .not. associated ( quantity%mask ) ) then
-          quantity%values = c**a%values
-        else
-          where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 )
-            quantity%values = c**a%values
           end where
         end if
       case default
@@ -3913,6 +3634,10 @@ contains ! =====     Public Procedures     =============================
         !
         ! Limitations:
         ! Does not check for unmatched parens or other illegal syntax
+        
+        ! Improvements to be made:
+        ! (1) Check for illegal syntax 
+        ! (2) Make ops into array, and loop over them where convenient
         integer, parameter :: MAXNESTINGS=64 ! Max number of '(..)' pairs
         character(len=MAXSTRLISTLENGTH) :: collapsedstr
         integer :: level
@@ -3922,13 +3647,25 @@ contains ! =====     Public Procedures     =============================
         character(len=MAXSTRLISTLENGTH) :: part2
         character(len=MAXSTRLISTLENGTH) :: part3
         character(len=4) :: vchar
-        ! logical, parameter :: DEEBUG = .false.
+        ! logical, parameter :: DEEBUG = .true.
         ! Executable
         if ( DeeBUG ) print *, 'mstr: ', trim(mstr)
         MapFunction = ( index(mstr, 'map' ) > 0 )
         nullify(primitives)
         np = 0
         
+        
+        ! Find any terms composed of digits (i.e., literal numbers) ddd and
+        ! mark each as val(ddd)
+        call markDigits( lowerCase(mstr), collapsedstr )
+        if ( DEEBUG ) call outputNamedValue( 'collapsedstr', collapsedstr )
+
+        mstr = collapsedstr
+        ! Replace 'e-' with 'e_' to avoid splitting fortran numeric notation
+        call ReplaceSubString( mstr, collapsedstr, 'e-', 'e_', &
+          & which='all', no_trim=.true. )
+        mstr = collapsedstr
+
         ! We're unable to ensure operator precedence
         ! so we'll attempt to identify multiplications and divisions
         ! and surround such subexpressions with extra parentheses
@@ -3979,6 +3716,12 @@ contains ! =====     Public Procedures     =============================
 
         collapsedstr = lowerCase(mstr)
         if ( DEEBUG ) call outputNamedValue( 'collapsedstr', collapsedstr )
+
+        ! Restore 'e-'
+        mstr = collapsedstr
+        call ReplaceSubString( mstr, collapsedstr, 'e_', 'e-', &
+          & which='all', no_trim=.true. )
+
         ! Collapse every sub-formula nested within parentheses
         do level =1, MAXNESTINGS ! To prevent endlessly looping if ill-formed
           if ( index( collapsedstr, '(' ) < 1 ) exit
@@ -4061,6 +3804,66 @@ contains ! =====     Public Procedures     =============================
         if ( DeeBUG ) call dumpPrimitives(primitives)
         call destroyPrimitives(primitives)
       end subroutine SimpleExprWithC
+      
+      subroutine markDigits( instr, outstr )
+        ! Find each instance of a number, composed of consecultive digits
+        ! and mark it
+        ! E.g., if
+        ! instr =  '0.5 * height(a)'
+        ! outstr = ' val($0.5) * height(a)'
+        ! Args
+        character(len=*), intent(in)  :: instr
+        character(len=*), intent(out) :: outstr
+        ! Internal variables
+        ! logical, parameter            :: DEEBUG = .true.
+        character(len=1)              :: c
+        integer                       :: i          ! char num of instr
+        integer                       :: e          ! char num of outstr
+        logical                       :: gotDigit
+        character(len=*), parameter :: dlist='1234567890.' ! These are digits
+        character(len=*), parameter :: flist='-+e'         ! Fortran adds these
+        ! Executable
+        if ( DEEBug ) print *, 'instr ', instr
+        outstr = instr
+        e = 0
+        gotDigit = .false.
+        do i = 1, len_trim(instr)
+          c = instr(i:i)
+          if ( index(dlist, c ) > 0 ) then
+            ! This was a digit: was it the first?
+            if ( gotDigit ) then
+              ! Nope, we are just lengthening our number
+              e = e + 1
+              outstr(e:e) = c
+            else
+              ! This is the first digit of a number
+              ! Distinguish it from index into primitives db
+              ! by use of 'val' function and '$' marker
+              outstr(e+1:e+5) = 'val($'
+              e = e + 6
+              outstr(e:e) = c
+            endif
+            gotDigit = .true.
+          elseif ( gotDigit ) then
+            ! Check that we're not using fortran's '4.9e-6' notation
+            if ( index(flist, c ) > 0 ) then
+              ! With Fortran notation, we are just lengthening our number
+              e = e + 1
+              outstr(e:e) = c
+            else
+              ! We have come to the end of our digits
+              outstr(e+1:e+1) = ')'
+              e = e + 2
+              outstr(e:e) = c
+              gotDigit = .false.
+            endif
+          else
+            e = e + 1
+            outstr(e:e) = c
+          endif
+        enddo
+        if ( DeeBug ) print *, 'outstr ', outstr
+      end subroutine markDigits
 
       subroutine reorderPrecedence(mstr, collapsedstr)
         ! Identify all the terms where each term are separated by
@@ -4215,7 +4018,7 @@ contains ! =====     Public Procedures     =============================
         type (VectorValue_T), pointer   :: B
         real(rv) :: C                     ! constant "c" in manipulation
         ! Internal variables
-        ! logical, parameter              :: DEEBUG = .false.
+        ! logical, parameter              :: DEEBUG = .true.
         logical                         :: done
         ! fun is blank unless a prior one left us "hungry" for an arg
         character(len=8)                :: fun ! {'exp', 'log', etc.}
@@ -4237,6 +4040,7 @@ contains ! =====     Public Procedures     =============================
         integer                         :: partID
         real(rv)                        :: qvalue
         integer, dimension(2)           :: shp
+        integer                         :: surf
         character(len=32)               :: variable
         ! Executable
         shp = shape(a%values)
@@ -4316,9 +4120,22 @@ contains ! =====     Public Procedures     =============================
             ind = index(variable, ':')
             if ( deeBug ) print *, 'ind of ":" ', ind
             if ( ind > 1 ) then
+              ! A function name
               fun = variable(1:ind-1)
               hit = .false.
+            elseif ( index(variable, '$') > 0 ) then
+              ! A literal number
+              if ( deeBug ) print *, 'Trying to read number from ' // variable
+              variable = adjustl(variable)
+              read( variable(2:), * ) qvalue
+              part%values = qvalue
+              hit = .true.
+              if ( deeBug ) then
+                print *, 'part"s values after ' // trim(lastOp) // trim(variable)
+                call dumpAPrimitive(part)
+              endif
             else
+              ! An index into the primitives db
               if ( deeBug ) print *, 'Trying to read partID from ' // variable
               read( variable, * ) partID
               if ( partID < 1 ) then
@@ -4368,11 +4185,21 @@ contains ! =====     Public Procedures     =============================
             case ('>')
                 newone%values = max( newone%values, part%values )
             ! Now the functions
+            case ('val')
+                newone%values = part%values
             case ('abs')
                 newone%values = abs( part%values )
             case ('sign')
                 where ( part%values /= 0._rv )
                   newone%values = sign(1._rv, part%values)
+                end where
+            case ('ifpos')
+                where ( part%values > 0._rv )
+                  newone%values = 1._rv
+                end where
+            case ('ifneg')
+                where ( part%values < 0._rv )
+                  newone%values = 1._rv
                 end where
             case ('exp')
                 newone%values = exp( part%values )
@@ -4394,7 +4221,7 @@ contains ! =====     Public Procedures     =============================
             case ('map')
                 newone%values = part%values
                 ! call output( 'Calling function map', advance='yes' )
-            case ('channel', 'surface', 'instance')
+            case ('channel', 'surface', 'instance', 'height', 'lon', 'lat', 'sza')
               ! These might be useful for filling arrays with indexes
               NoChans     = a%template%NoChans
               NoInstances = a%template%NoInstances
@@ -4403,6 +4230,8 @@ contains ! =====     Public Procedures     =============================
               if ( NoChans*NoSurfs*NoInstances < 2 ) cycle
               do instance=1, NoInstances
                 do iSurf=1, NoSurfs
+                  surf = 1
+                  if ( .not. a%template%stacked ) surf = iSurf
                   do iChannel=1, NoChans
                     select case(op)
                     case ('channel')
@@ -4411,9 +4240,26 @@ contains ! =====     Public Procedures     =============================
                     case ('surface')
                       newone%values(iChannel + (isurf-1)*NoChans, instance) = &
                         & iSurf
+                    case ('height')
+                      if ( a%template%coherent ) then
+                        newone%values(iChannel + (isurf-1)*NoChans, instance) = &
+                          & a%template%surfs(iSurf, 1)
+                      else
+                        newone%values(iChannel + (isurf-1)*NoChans, instance) = &
+                          & a%template%surfs(iSurf, instance)
+                      endif
                     case ('instance')
                       newone%values(iChannel + (isurf-1)*NoChans, instance) = &
                         & instance
+                    case ('lat')
+                      newone%values(iChannel + (isurf-1)*NoChans, instance) = &
+                        & a%template%GeodLat(surf, instance)
+                    case ('lon')
+                      newone%values(iChannel + (isurf-1)*NoChans, instance) = &
+                        & a%template%lon(surf, instance)
+                    case ('sza')
+                      newone%values(iChannel + (isurf-1)*NoChans, instance) = &
+                        & a%template%solarZenith(surf, instance)
                     end select                
                   enddo
                 enddo
@@ -4585,7 +4431,7 @@ contains ! =====     Public Procedures     =============================
         part1Tail = part1(n:n)
         part2Head = adjustl(part2)
         if ( all( indexes(part1Tail // part2Head, ops) == 0 ) ) then
-          ! Mark this as a function "hungry" for an arg
+          ! Mark function name "hungry" for an arg by adding a ':' to
           ! str = trim(part1) // ': ' // adjustl(part2)
           ! Must also check if part 1 contains an embedded operator
           inds = indexes( part1, (/ '+', '-', '*', '/' /), mode='last' )
@@ -6998,6 +6844,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.43  2011/04/13 00:28:15  pwagner
+! manipulation can now accept digits
+!
 ! Revision 2.42  2011/04/07 23:35:31  pwagner
 ! Fixed bug in handling manipulation='(c - c*a)*b'
 !
