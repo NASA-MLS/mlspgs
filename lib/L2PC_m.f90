@@ -784,6 +784,7 @@ contains ! ============= Public Procedures ==========================
     integer :: FIELD                    ! Node index
     integer :: FILEID                   ! ID of file
     logical :: GOTH                     ! True if there is a Hessian
+    logical :: GOTM                     ! True if there is a Jacobian
     integer :: J
     integer :: NXT_INDEX                ! Index of next matrix (Hessian?)
     integer :: STATUS                   ! From HDF
@@ -808,11 +809,15 @@ contains ! ============= Public Procedures ==========================
       end do
       onlyTheseBlocks(3) = onlyTheseBlocks(2)
     endif
+    nullify ( tmpMatrix, tmpHessian )
     field = 2
     do
       if ( field > nsons(quantitiesNode) ) exit
       db_index = decoration(decoration(subtree(field, quantitiesNode )))
-      call GetActualMatrixFromDatabase ( matrices(db_index), tmpMatrix )
+      if ( associated(matrices) ) then
+        call GetActualMatrixFromDatabase ( matrices(db_index), tmpMatrix )
+        gotm = .true.
+      endif
       goth = .false.
       if ( field < nsons(quantitiesNode) ) then
         nxt_index = decoration(decoration(subtree(field+1, quantitiesNode )))
@@ -825,8 +830,11 @@ contains ! ============= Public Procedures ==========================
       if ( goth ) then
         call writeOneHDF5L2PC ( tmpMatrix, fileID, packed, dontPack, &
           & hessian=tmpHessian, onlyTheseBlocks=onlyTheseBlocks )
-      else
+      elseif ( gotm ) then
         call writeOneHDF5L2PC ( tmpMatrix, fileID, packed, dontPack )
+      else
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & 'Unable to write any Jacobians or Hessians to this l2pc file.' )
       end if
       field = field + 1
     end do ! Loop over fields
@@ -2179,6 +2187,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.111  2011/04/15 00:20:32  pwagner
+! Protect against unlikely case where there is no Jacobian to output to file
+!
 ! Revision 2.110  2011/02/18 17:56:16  pwagner
 ! Prevented crashes when run w/o l2cf
 !
