@@ -121,7 +121,8 @@ module IDLCFM2_m
     subroutine ICFMReceiveQuantity ( QT, values, mask, tid, callrecv)
         use Allocate_Deallocate, only: ALLOCATE_TEST
         use MLSCommon, only: R8
-        use QuantityTemplates, only: QUANTITYTEMPLATE_T, SETUPNEWQUANTITYTEMPLATE, l_none
+        use QuantityTemplates, only: QUANTITYTEMPLATE_T, SETUPNEWQUANTITYTEMPLATE
+        use Intrinsic, only: l_none
         use VectorsModule, only: CREATEMASKARRAY
         use ConstructQuantityTemplates, only: noProperties, propertyTable, p_majorFrame, &
                                               p_minorFrame, unitstable
@@ -650,3 +651,6 @@ module IDLCFM2_m
 end module
 
 ! $Log$
+! Revision 1.1  2011/03/15 15:23:51  honghanh
+! Initial imports
+!

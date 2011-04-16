@@ -325,8 +325,8 @@ program server
         call ICFMReceiveVector (state, qtydb)
         call ICFMReceiveVector (stateExtra, qtydb)
         call ICFMReceiveVector (measurement, qtydb)
-        call dump (state, details=3)
-        call dump(stateextra, details=3)
+        !call dump (state, details=3)
+        !call dump(stateextra, details=3)
         call PVMIDLUnpack(mafNo, info)
         if (info /= 0) then
             call PVMErrorMessage ( info, "unpacking mafNo." )
@@ -480,3 +480,6 @@ program server
 end program
 
 ! $Log$
+! Revision 1.1  2011/03/15 15:23:51  honghanh
+! Initial imports
+!
