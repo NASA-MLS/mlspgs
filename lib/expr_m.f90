@@ -29,9 +29,9 @@ contains ! ====     Public Procedures     ==============================
   ! Analyze an expression, return its type, units and value.
 
     use DECLARATION_TABLE, only: DECLARED, DECLS, EMPTY, ENUM_VALUE, &
-                                 EXPRN, FUNCTION, GET_DECL, NAMED_VALUE, &
-                                 NUM_VALUE, RANGE, STR_RANGE, STR_VALUE, &
-                                 UNDECLARED, UNITS_NAME
+                                 EXPRN, FUNCTION, GET_DECL, LOG_VALUE, &
+                                 NAMED_VALUE, NUM_VALUE, RANGE, STR_RANGE, &
+                                 STR_VALUE, UNDECLARED, UNITS_NAME
     use Functions, only: F_Exp, F_Log, F_Sqrt
     use INTRINSIC, only: PHYQ_DIMENSIONLESS, PHYQ_INVALID
     use STRING_TABLE, only: FLOAT_VALUE
@@ -44,7 +44,8 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(out) :: UNITS(2)    ! Units of expression value -- UNITS(2)
                                         ! is PHYQ_INVALID if ROOT is not a
                                         ! range (:) operator.
-    double precision, intent(out) :: VALUE(2) ! Expression value, if any
+    double precision, intent(out) :: VALUE(2) ! Expression value, if any.  If
+                                        ! TYPE == Log_Value, zero means false.
     integer, intent(out), optional :: TYPE    ! Expression type
     double precision, optional, intent(out) :: SCALE(2) ! Scale for units
 
@@ -53,7 +54,7 @@ contains ! ====     Public Procedures     ==============================
     integer :: ME                  ! node_id(root)
     integer :: Son1                ! First son of "root"
     integer :: STRING              ! Sub_rosa(root)
-    integer :: TYPE2               ! Type of son of "root"
+    integer :: TYPE1, TYPE2        ! Type of son of "root"
     integer :: UNITS2(2)           ! Units of an expression
     double precision :: VALUE2(2)  ! Value of an expression
     double precision :: SCALE2(2)  ! Units scale
@@ -149,7 +150,8 @@ contains ! ====     Public Procedures     ==============================
         end if
       end do
     case default
-      call expr ( subtree(1,root), units, value, type, scale )
+      call expr ( subtree(1,root), units, value, type1, scale )
+      if ( present(type) ) type = type1
       if ( me == n_unit ) then
         decl = get_decl(sub_rosa(subtree(2,root)), units_name)
         units = decl%units
@@ -161,7 +163,7 @@ contains ! ====     Public Procedures     ==============================
         if ( present(scale) ) scale(1) = decl%value
       else
         if ( nsons(root) > 1 ) &
-          call expr ( subtree(2,root), units2, value2, type, scale2 )
+          & call expr ( subtree(2,root), units2, value2, type2, scale2 )
         select case ( me )
         case ( n_colon, n_colon_less, n_less_colon, n_less_colon_less )
           units(2) = units2(1); value(2) = value2(1)
@@ -188,6 +190,26 @@ contains ! ====     Public Procedures     ==============================
         case ( n_into )
           value = value2 / value
           units = units2
+        case ( n_less, n_less_eq, n_greater, n_greater_eq )
+          if ( present(type) ) type = log_value
+          if ( type1 /= num_value ) then
+            call announceError ( subtree(1,root), nonNumeric )
+            if ( type2 /= num_value ) &
+              call announceError ( subtree(2,root), nonNumeric )
+          else if ( type2 /= num_value ) then
+            call announceError ( subtree(2,root), nonNumeric )
+          else
+            select case ( me )
+            case ( n_less )
+              value = merge(1.0,0.0,value < value2 )
+            case ( n_less_eq )
+              value = merge(1.0,0.0,value <= value2 )
+            case ( n_greater )
+              value = merge(1.0,0.0,value > value2 )
+            case ( n_greater_eq )
+              value = merge(1.0,0.0,value >= value2 )
+            end select
+          end if
         case default
           call announceError ( root, badNode )
         end select
@@ -351,6 +373,9 @@ contains ! ====     Public Procedures     ==============================
 end module EXPR_M
 
 ! $Log$
+! Revision 2.15  2011/04/18 19:33:26  vsnyder
+! Add support for relational operators and boolean-valued expressions
+!
 ! Revision 2.14  2009/06/23 18:25:43  pwagner
 ! Prevent Intel from optimizing ident string away
 !
