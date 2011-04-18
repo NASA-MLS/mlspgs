@@ -29,7 +29,8 @@ module Functions
   integer, parameter :: F_GetDiagonal     = F_Exp + 1
   integer, parameter :: F_Invert          = F_GetDiagonal + 1
   integer, parameter :: F_Log             = F_Invert + 1
-  integer, parameter :: F_SQRT            = F_Log + 1
+  integer, parameter :: F_Mod             = F_Invert + 1
+  integer, parameter :: F_SQRT            = F_Mod + 1
   integer, parameter :: F_Transpose       = F_SQRT + 1
   integer, parameter :: F_XTX             = F_Transpose + 1
   integer, parameter :: Function_Last     = F_XTX
@@ -71,6 +72,7 @@ contains
     func_indices(f_getDiagonal) =     add_ident ( 'getDiagonal' )
     func_indices(f_invert) =          add_ident ( 'invert' )
     func_indices(f_log) =             add_ident ( 'log' )
+    func_indices(f_mod) =             add_ident ( 'mod' )
     func_indices(f_sqrt) =            add_ident ( 'sqrt' )
     func_indices(f_transpose) =       add_ident ( 'transpose' )
     func_indices(f_xtx) =             add_ident ( 'xtx' )
@@ -91,8 +93,10 @@ contains
       begin, g+f_invert, n+n_func_def, &
       begin, g+f_log, &
              begin, t+t_numeric, n+n_arg_def, n+n_func_def, &
+      begin, g+f_mod, &
+             begin, t+t_numeric, t+t_numeric, n+n_arg_def, n+n_func_def, &
       !??? Automatic type checking for f_sqrt may be difficult, given that
-      !??? we want to allow numbers of matrices.  It may be necessary either
+      !??? we want to allow numbers or matrices.  It may be necessary either
       !??? to give up on that, or to do init_functions after init_tables.
       begin, g+f_sqrt, &
              begin, t+t_numeric, n+n_arg_def, n+n_func_def, &
@@ -119,6 +123,9 @@ contains
 end module Functions
 
 ! $Log$
+! Revision 2.9  2011/04/18 19:27:22  vsnyder
+! Add MOD
+!
 ! Revision 2.8  2009/06/23 18:25:42  pwagner
 ! Prevent Intel from optimizing ident string away
 !
