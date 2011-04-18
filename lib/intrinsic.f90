@@ -96,6 +96,7 @@ module INTRINSIC
   integer, parameter :: L = 3000    ! Lit index
   integer, parameter :: N = 0       ! Tree index
   integer, parameter :: NADP = n+d*(all_fields+no_dup+no_positional)
+  integer, parameter :: NC = n+d*no_check_eq
   integer, parameter :: ND = n+d*no_dup
   integer, parameter :: NDP = n+d*(no_dup+no_positional)
   integer, parameter :: NDR = n+d*(no_dup+req_fld)
@@ -264,6 +265,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.66  2011/04/18 19:28:05  vsnyder
+! Add NC for unchecked parameters in sections
+!
 ! Revision 2.65  2011/01/29 00:46:42  vsnyder
 ! Add units checking
 !
