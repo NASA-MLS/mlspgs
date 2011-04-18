@@ -64,7 +64,7 @@ module LEXER_M
 ! 0       1       2       3       4       5       6       7
   digit,  digit,  digit,  digit,  digit,  digit,  digit,  digit,  & ! 060
 ! 8       9       :       ;       <       =       >       ?
-  digit,  digit,  op_char,cmt,    op_char,op_char,more,   more,   & ! 070
+  digit,  digit,  op_char,cmt,    op_char,op_char,op_char,more,   & ! 070
 ! @       A       B       C       D       E       F       G
   tog_ch, letter, letter, letter, letter, letter, letter, letter, & ! 100
 ! H       I       J       K       L       M       N       O
@@ -624,6 +624,9 @@ contains
 end module LEXER_M
 
 ! $Log$
+! Revision 2.23  2011/04/18 19:33:26  vsnyder
+! Add support for relational operators and boolean-valued expressions
+!
 ! Revision 2.22  2009/06/23 18:25:43  pwagner
 ! Prevent Intel from optimizing ident string away
 !
