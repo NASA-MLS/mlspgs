@@ -38,10 +38,14 @@ module TREE_TYPES
   integer, parameter :: N_FIELD_TYPE = n_field_spec + 1
   integer, parameter :: N_FUNC_DEF =   n_field_type + 1
   integer, parameter :: N_FUNC_REF =   n_func_def + 1
-  integer, parameter :: N_INTO =       n_func_ref + 1  ! A divided into B: A\B
-  integer, parameter :: N_LESS_COLON = n_into + 1      ! Range open on left
+  integer, parameter :: N_GREATER =    n_func_ref + 1
+  integer, parameter :: N_GREATER_EQ = n_greater + 1
+  integer, parameter :: N_INTO =       n_greater_eq + 1 ! A divided into B: A\B
+  integer, parameter :: N_LESS =       n_into + 1
+  integer, parameter :: N_LESS_COLON = n_less + 1      ! Range open on left
   integer, parameter :: N_LESS_COLON_LESS = n_less_colon + 1 ! Open range
-  integer, parameter :: N_MINUS =      n_less_colon_less + 1
+  integer, parameter :: N_LESS_EQ =    n_less_colon_less + 1
+  integer, parameter :: N_MINUS =      n_less_eq + 1
   integer, parameter :: N_MULT =       n_minus + 1
   integer, parameter :: N_NAME_DEF =   n_mult + 1      ! Names OK in section
   integer, parameter :: N_NAMED =      n_name_def + 1  ! labelled spec
@@ -52,7 +56,8 @@ module TREE_TYPES
   integer, parameter :: N_SET_ONE =    n_section + 1   ! /foo
   integer, parameter :: N_SPEC_ARGS =  n_set_one + 1   ! x,y=z,...
   integer, parameter :: N_SPEC_DEF =   n_spec_args + 1 ! what fields in spec?
-  integer, parameter :: N_UNIT =       n_spec_def + 1  ! number // units
+  integer, parameter :: N_UNCHECKED =  n_spec_def + 1  ! field type not checked
+  integer, parameter :: N_UNIT =       n_unchecked + 1 ! number // units
 
   integer, parameter :: LAST_TREE_NODE = N_UNIT
 
@@ -95,9 +100,13 @@ contains
     case ( n_Field_Type ); call add_char ( 'field_type' )
     case ( n_Func_Def );   call add_char ( 'func_def' )
     case ( n_Func_Ref );   call add_char ( 'func_ref' )
+    case ( n_greater );    call add_char ( 'greater' )
+    case ( n_greater_eq ); call add_char ( 'greater_eq' )
     case ( n_Into );       call add_char ( 'into' )
+    case ( n_Less );       call add_char ( 'less' )
     case ( n_Less_colon ); call add_char ( 'less_colon' )
     case ( n_Less_colon_less ); call add_char ( 'less_colon_less' )
+    case ( n_Less_eq );    call add_char ( 'less_eq' )
     case ( n_Minus );      call add_char ( 'minus' )
     case ( n_Mult );       call add_char ( 'mult' )
     case ( n_Name_def );   call add_char ( 'name_def' )
@@ -109,6 +118,7 @@ contains
     case ( n_Set_one );    call add_char ( 'set_one' )
     case ( n_Spec_args );  call add_char ( 'spec_args' )
     case ( n_Spec_def );   call add_char ( 'spec_def' )
+    case ( n_Unchecked );  call add_char ( 'unchecked' )
     case ( n_Unit );       call add_char ( 'unit' )
     case default
       write ( *,* )'TREE_TYPES%TREE_INIT-E- No initializer for &
@@ -129,6 +139,9 @@ contains
 end module TREE_TYPES
 
 ! $Log$
+! Revision 2.11  2011/04/18 19:33:26  vsnyder
+! Add support for relational operators and boolean-valued expressions
+!
 ! Revision 2.10  2009/06/23 18:25:44  pwagner
 ! Prevent Intel from optimizing ident string away
 !
