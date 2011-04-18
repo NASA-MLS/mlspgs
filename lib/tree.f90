@@ -25,7 +25,8 @@ module TREE
 
   public :: ADD_SONS_FROM_STACK, ALLOCATE_TREE, BUILD_TREE, COPY_TO_STACK
   public :: DEALLOCATE_TREE, DECORATE, DECORATION, DELETE_TREE
-  public :: DELETE_TREE_STACK, DUMP_TREE_NODE, INIT_TREE, INSERT_NODE
+  public :: DELETE_TREE_STACK, DUMP_TREE_NODE, DUMP_TREE_NODE_NAME
+  public :: INIT_TREE, INSERT_NODE
   public :: NODE_ID, NODE_KIND, NSONS, POP, PRINT_SUBTREE
   public :: PUSH_PSEUDO_TERMINAL, REPLACE_SONS, SOURCE_REF, STACK_SUBTREE
   public :: SUB_ROSA, SUBTREE, TREE_TEXT
@@ -259,11 +260,11 @@ contains
       call output ( the_tree(where) % link )
     case ( pseudo, internal )
       if ( the_tree(where) % kind == pseudo ) then
-        call display_string ( tree_texts(the_tree(where) % node) )
+        call dump_tree_node_name ( where )
         call output ( ' ' )
         call display_string ( sub_rosa(where) )
       else
-        call display_string ( tree_texts(the_tree(where) % node) )
+        call dump_tree_node_name ( where )
       end if
       if ( the_tree(where)%decor /= null_tree ) then
         call output ( ' decor=' )
@@ -277,6 +278,11 @@ contains
     call output ( '', advance=advance )
     return
   end subroutine DUMP_TREE_NODE
+
+  subroutine DUMP_TREE_NODE_NAME ( WHERE )
+    integer, intent(in) :: WHERE
+    call display_string ( tree_texts(the_tree(where) % node) )
+  end subroutine DUMP_TREE_NODE_NAME
 
   subroutine INIT_TREE
     logical :: FOUND     ! Did lookup_and_insert find it?
@@ -635,6 +641,9 @@ contains
 end module TREE
 
 ! $Log$
+! Revision 2.15  2011/04/18 19:26:11  vsnyder
+! Add Dump_Tree_Node_Name
+!
 ! Revision 2.14  2010/04/28 00:13:47  pwagner
 ! Replaced bare stop with StopWithErrorMsg
 !
