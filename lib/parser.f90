@@ -114,6 +114,26 @@ contains ! ====     Public Procedures     ==============================
     end do
   end subroutine ARRAY
 
+! --------------------------------------------------------  BTERM  -----
+  recursive subroutine BTERM ! BTERM -> term ( +|- term ) *
+    if ( toggle(par) ) call where ( 'Enter BTERM', advance='yes' )
+    call term
+    do
+      if ( next%class == t_plus ) then
+        call get_token
+        call term
+        call build_tree ( n_plus, 2 )
+      else if ( next%class == t_minus ) then
+        call get_token
+        call term
+        call build_tree ( n_minus, 2 )
+      else
+    exit
+      end if
+    end do
+    if ( toggle(par) ) call output ( 'Exit  BTERM', advance='yes' )
+  end subroutine BTERM
+
 ! ---------------------------------------------------  BUILD_TREE  -----
   subroutine BUILD_TREE ( NEW_NODE, NSONS, DECORATION )
     integer, intent(in) :: NEW_NODE
@@ -240,21 +260,30 @@ contains ! ====     Public Procedures     ==============================
       push_pseudo_terminal ( next%string_index, next%source )
   end subroutine GET_TOKEN
 ! ------------------------------------------------------  LFACTOR  -----
-  recursive subroutine LFACTOR ! lfactor -> term ( +|- term ) *
+  recursive subroutine LFACTOR ! lfactor -> bterm ( <|<=|>|>= bterm ) *
     if ( toggle(par) ) call where ( 'Enter LFACTOR', advance='yes' )
-    call term
+    call bterm
     do
-      if ( next%class == t_plus ) then
+      select case ( next%class )
+      case ( t_less )
         call get_token
-        call term
-        call build_tree ( n_plus, 2 )
-      else if ( next%class == t_minus ) then
+        call bterm
+        call build_tree ( n_less, 2 )
+      case ( t_less_eq )
         call get_token
-        call term
-        call build_tree ( n_minus, 2 )
-      else
+        call bterm
+        call build_tree ( n_less_eq, 2 )
+      case ( t_greater )
+        call get_token
+        call bterm
+        call build_tree ( n_greater, 2 )
+      case ( t_greater_eq )
+        call get_token
+        call bterm
+        call build_tree ( n_greater_eq, 2 )
+      case default
     exit
-      end if
+      end select
     end do
     if ( toggle(par) ) call output ( 'Exit  LFACTOR', advance='yes' )
   end subroutine LFACTOR
@@ -507,6 +536,9 @@ o:  do
 end module PARSER
 
 ! $Log$
+! Revision 2.20  2011/04/18 19:33:26  vsnyder
+! Add support for relational operators and boolean-valued expressions
+!
 ! Revision 2.19  2009/06/23 18:25:43  pwagner
 ! Prevent Intel from optimizing ident string away
 !
