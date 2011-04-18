@@ -2490,6 +2490,7 @@ contains
     if ( present(name) ) then
       call output ( name )
       call output ( ' is ' )
+      nameHasBeenPrinted = .true.
     end if
     call output ( 'empty', advance='yes' )
 
@@ -2516,6 +2517,7 @@ contains
         call output ( size )
       end if
       if ( size == 1 ) call output ( ' ' )
+      nameHasBeenPrinted = .true.
     end if
 
   end subroutine Name_And_Size
@@ -2948,6 +2950,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.109  2011/04/18 19:12:54  vsnyder
+! Turn on nameHasBeenPrinted in more places
+!
 ! Revision 2.108  2011/04/04 23:08:27  pwagner
 ! May diff 2d integer arrays
 !
