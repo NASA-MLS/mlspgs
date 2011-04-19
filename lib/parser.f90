@@ -260,7 +260,7 @@ contains ! ====     Public Procedures     ==============================
       push_pseudo_terminal ( next%string_index, next%source )
   end subroutine GET_TOKEN
 ! ------------------------------------------------------  LFACTOR  -----
-  recursive subroutine LFACTOR ! lfactor -> bterm ( <|<=|>|>= bterm ) *
+  recursive subroutine LFACTOR ! lfactor -> bterm ( <|<=|>|>=|==|/= bterm ) *
     if ( toggle(par) ) call where ( 'Enter LFACTOR', advance='yes' )
     call bterm
     do
@@ -281,6 +281,14 @@ contains ! ====     Public Procedures     ==============================
         call get_token
         call bterm
         call build_tree ( n_greater_eq, 2 )
+      case ( t_equal_equal )
+        call get_token
+        call bterm
+        call build_tree ( n_equal_equal, 2 )
+      case ( t_not_equal )
+        call get_token
+        call bterm
+        call build_tree ( n_not_equal, 2 )
       case default
     exit
       end select
@@ -536,6 +544,9 @@ o:  do
 end module PARSER
 
 ! $Log$
+! Revision 2.21  2011/04/19 01:59:43  vsnyder
+! Support == and /= relational operators too
+!
 ! Revision 2.20  2011/04/18 19:33:26  vsnyder
 ! Add support for relational operators and boolean-valued expressions
 !
