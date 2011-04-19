@@ -34,7 +34,8 @@ module TREE_TYPES
   integer, parameter :: N_DOT =        n_div + 1
   integer, parameter :: N_DT_DEF =     n_dot + 1       ! Data type definition
   integer, parameter :: N_EQUAL =      n_dt_def + 1    ! = in X = Y spec
-  integer, parameter :: N_FIELD_SPEC = n_equal + 1
+  integer, parameter :: N_EQUAL_EQUAL = n_equal + 1
+  integer, parameter :: N_FIELD_SPEC = n_equal_equal + 1
   integer, parameter :: N_FIELD_TYPE = n_field_spec + 1
   integer, parameter :: N_FUNC_DEF =   n_field_type + 1
   integer, parameter :: N_FUNC_REF =   n_func_def + 1
@@ -49,7 +50,8 @@ module TREE_TYPES
   integer, parameter :: N_MULT =       n_minus + 1
   integer, parameter :: N_NAME_DEF =   n_mult + 1      ! Names OK in section
   integer, parameter :: N_NAMED =      n_name_def + 1  ! labelled spec
-  integer, parameter :: N_OR =         n_named + 1
+  integer, parameter :: N_NOT_EQUAL =  n_named + 1
+  integer, parameter :: N_OR =         n_not_equal + 1
   integer, parameter :: N_POW =        n_or + 1
   integer, parameter :: N_PLUS =       n_pow + 1
   integer, parameter :: N_SECTION =    n_plus + 1      ! what specs in section?
@@ -96,6 +98,7 @@ contains
     case ( n_Dot );        call add_char ( 'dot' )
     case ( n_DT_Def );     call add_char ( 'dt_def' )
     case ( n_Equal );      call add_char ( 'equal' )
+    case ( n_Equal_Equal ); call add_char ( 'equal_equal' )
     case ( n_Field_Spec ); call add_char ( 'field_spec' )
     case ( n_Field_Type ); call add_char ( 'field_type' )
     case ( n_Func_Def );   call add_char ( 'func_def' )
@@ -111,6 +114,7 @@ contains
     case ( n_Mult );       call add_char ( 'mult' )
     case ( n_Name_def );   call add_char ( 'name_def' )
     case ( n_Named );      call add_char ( 'named' )
+    case ( n_Not_Equal );  call add_char ( 'not_equal' )
     case ( n_Or );         call add_char ( 'or' )
     case ( n_Plus );       call add_char ( 'plus' )
     case ( n_Pow );        call add_char ( 'power' )
@@ -139,6 +143,9 @@ contains
 end module TREE_TYPES
 
 ! $Log$
+! Revision 2.12  2011/04/19 01:59:43  vsnyder
+! Support == and /= relational operators too
+!
 ! Revision 2.11  2011/04/18 19:33:26  vsnyder
 ! Add support for relational operators and boolean-valued expressions
 !

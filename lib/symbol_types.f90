@@ -38,7 +38,9 @@ module SYMBOL_TYPES
   integer, parameter :: T_LESS_COLON =       T_COLON_LESS + 1
   integer, parameter :: T_LESS_COLON_LESS =  T_LESS_COLON + 1
   integer, parameter :: T_EQUAL =            T_LESS_COLON_LESS + 1
-  integer, parameter :: T_LESS =             T_EQUAL + 1
+  integer, parameter :: T_EQUAL_EQUAL =      T_EQUAL + 1
+  integer, parameter :: T_NOT_EQUAL =        T_EQUAL_EQUAL + 1
+  integer, parameter :: T_LESS =             T_NOT_EQUAL + 1
   integer, parameter :: T_LESS_EQ =          T_LESS + 1
   integer, parameter :: T_GREATER =          T_LESS_EQ + 1
   integer, parameter :: T_GREATER_EQ =       T_GREATER + 1
@@ -104,14 +106,14 @@ module SYMBOL_TYPES
   (/ object,   def_pun,  def_pun,  def_pun,  def_pun,  def_op,   def_op,   &
   !  *         /         \         .         :         <:        :<      
      def_op,   def_op,   def_op,   def_op,   def_op,   def_op,   def_op,   &
-  !  <:<       =         <         <=        >         >=        ,
-     def_op,   def_op,   def_op,   def_op,   def_op,   def_op,   def_pun,  &
-  !  ^         begin     end       and       or        <eof>     <eos>
-     def_op,   res_word, res_word, res_word, res_word, object,   object,   &
-  !  <ident>   <numcon>  <string>  unk_op    unk_pun     unk_ch    inc_num
-     ident,    numcon,   string,   unk_op,   unk_pun,    unk_ch,   inc_num,&
-  !  inc_str   junk
-     inc_str,  aft_cont /)
+  !  <:<       =         ==        /=        <         <=        >
+     def_op,   def_op,   def_op,   def_op,   def_op,   def_op,   def_op,   &
+  !  >=        ,         ^         begin     end       and       or
+     def_op,   def_pun,  def_op,   res_word, res_word, res_word, res_word, &
+  !  <eof>     <eos>     <ident>   <numcon>  <string>  unk_op    unk_pun
+     object,   object,   ident,    numcon,   string,   unk_op,   unk_pun,  &
+  !  unk_ch    inc_num   inc_str   junk
+     unk_ch,   inc_num,  inc_str,  aft_cont /)
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -144,6 +146,8 @@ contains
     case ( t_colon_less );        call add_char ( ':<' )
     case ( t_less_colon_less );   call add_char ( '<:<' )
     case ( t_equal );             call add_char ( '=' )
+    case ( t_equal_equal );       call add_char ( '==' )
+    case ( t_not_equal );         call add_char ( '/=' )
     case ( t_less );              call add_char ( '<' )
     case ( t_less_eq );           call add_char ( '<=' )
     case ( t_greater );           call add_char ( '>' )
@@ -212,6 +216,9 @@ contains
 end module SYMBOL_TYPES
 
 ! $Log$
+! Revision 2.12  2011/04/19 01:59:43  vsnyder
+! Support == and /= relational operators too
+!
 ! Revision 2.11  2011/04/18 19:33:26  vsnyder
 ! Add support for relational operators and boolean-valued expressions
 !
