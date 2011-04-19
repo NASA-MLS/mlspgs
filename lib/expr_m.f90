@@ -190,7 +190,7 @@ contains ! ====     Public Procedures     ==============================
         case ( n_into )
           value = value2 / value
           units = units2
-        case ( n_less, n_less_eq, n_greater, n_greater_eq )
+        case ( n_less, n_less_eq, n_greater, n_greater_eq, n_equal_equal, n_not_equal )
           if ( present(type) ) type = log_value
           if ( type1 /= num_value ) then
             call announceError ( subtree(1,root), nonNumeric )
@@ -201,13 +201,17 @@ contains ! ====     Public Procedures     ==============================
           else
             select case ( me )
             case ( n_less )
-              value = merge(1.0,0.0,value < value2 )
+              value(1) = merge(1.0,0.0,value(1) < value2(1) )
             case ( n_less_eq )
-              value = merge(1.0,0.0,value <= value2 )
+              value(1) = merge(1.0,0.0,value(1) <= value2(1) )
             case ( n_greater )
-              value = merge(1.0,0.0,value > value2 )
+              value(1) = merge(1.0,0.0,value(1) > value2(1) )
             case ( n_greater_eq )
-              value = merge(1.0,0.0,value >= value2 )
+              value(1) = merge(1.0,0.0,value(1) >= value2(1) )
+            case ( n_equal_equal )
+              value(1) = merge(1.0,0.0,value(1) == value2(1) )
+            case ( n_not_equal )
+              value(1) = merge(1.0,0.0,value(1) /= value2(1) )
             end select
           end if
         case default
@@ -373,6 +377,9 @@ contains ! ====     Public Procedures     ==============================
 end module EXPR_M
 
 ! $Log$
+! Revision 2.16  2011/04/19 01:59:43  vsnyder
+! Support == and /= relational operators too
+!
 ! Revision 2.15  2011/04/18 19:33:26  vsnyder
 ! Add support for relational operators and boolean-valued expressions
 !
