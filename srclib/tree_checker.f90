@@ -68,7 +68,8 @@ module TREE_CHECKER
   integer, private, parameter :: NOT_LIT_OF_TYPE = NOT_FUNC + 1
   integer, private, parameter :: NOT_NAME = NOT_LIT_OF_TYPE + 1
   integer, private, parameter :: NOT_NAME_OR_STRING = NOT_NAME + 1
-  integer, private, parameter :: NOT_SECTION = NOT_NAME_OR_STRING + 1
+  integer, private, parameter :: NOT_NUMERIC = NOT_NAME_OR_STRING + 1
+  integer, private, parameter :: NOT_SECTION = NOT_NUMERIC + 1
   integer, private, parameter :: NOT_SPEC = NOT_SECTION + 1
   integer, private, parameter :: NOT_STRING = NOT_SPEC + 1
   integer, private, parameter :: NOT_UNITLESS = NOT_STRING + 1
@@ -221,6 +222,8 @@ contains ! ====     Public Procedures     ==============================
       call output ( 'is not a name.', advance = 'yes' )
     case ( not_name_or_string )
       call output ( 'is not a name or a string.', advance = 'yes' )
+    case ( not_numeric )
+       call output ( 'is not numeric.', advance = 'yes' )
     case ( not_section )
       call display_string ( sub_rosa(where) )
       call output ( ' is not a section name.', advance = 'yes' )
@@ -854,7 +857,7 @@ m:      do j = start+1, nsons(field)
     value = 0.0d0                  ! default
     me = node_id(root)
     select case ( me )
-    case ( n_identifier, n_number, n_string )
+    case ( n_identifier, n_number, n_string ) ! ----------------------------
       string = sub_rosa(root)
       if ( .not. declared(string) ) then
         select case ( me )
@@ -871,7 +874,7 @@ m:      do j = start+1, nsons(field)
       type = decl%type
       units = decl%units
       value = decl%value
-    case ( n_unit )
+    case ( n_unit ) ! ------------------------------------------------------
       son1 = subtree(1,root)
       stat = expr (son1, type, units, value, field, start, field_look, field_test)
       if ( stat /= 0 ) &
@@ -891,7 +894,7 @@ m:      do j = start+1, nsons(field)
           value = value - decl%value
         end if
       end if
-    case ( n_colon, n_colon_less, n_less_colon, n_less_colon_less )
+    case ( n_colon, n_colon_less, n_less_colon, n_less_colon_less ) ! ------
       son1 = subtree(1,root); son2 = subtree(2,root)
       stat = expr ( son1, type, units, value, field, start, field_look, field_test )
       if ( stat /= 0 ) &
@@ -908,7 +911,21 @@ m:      do j = start+1, nsons(field)
 !       call local_error ( root, inconsistent_units, (/ son1, son2 /) )
 !     end if
       if ( type == num_value ) type = range
-    case ( n_and, n_or )
+    case ( n_less, n_less_eq, n_greater, n_greater_eq, n_equal_equal, n_not_equal )
+      son1 = subtree(1,root); son2 = subtree(2,root)
+      stat = expr ( son1, type, units, value, field, start, field_look, field_test )
+      if ( stat /= 0 ) &
+  return
+      stat = expr ( son2, type2, units2, value2, field, start, field_look, field_test )
+      if ( stat /= 0 ) &
+  return
+!     if ( units /= phyq_dimensionless .and. &
+!          units2 /= phyq_dimensionless .and. &
+!          units /= units2 ) then
+!       call local_error ( root, inconsistent_units, (/ son1, son2 /) )
+!     end if
+      type = log_value
+    case ( n_and, n_or ) ! -------------------------------------------------
       son1 = subtree(1,root); son2 = subtree(2,root)
       stat = expr ( son1, type, units, value, field, start, field_look, field_test )
       if ( stat /= 0 ) &
@@ -928,7 +945,7 @@ m:      do j = start+1, nsons(field)
         end if
       end if
       type = log_value
-    case ( n_plus, n_minus )
+    case ( n_plus, n_minus ) ! ---------------------------------------------
       son1 = subtree(1,root)
       stat = expr ( son1, type, units, value, field, start, field_look, field_test )
       if ( stat /= 0 ) &
@@ -950,7 +967,7 @@ m:      do j = start+1, nsons(field)
       else if ( me == n_minus ) then
         value = - value
       end if
-    case ( n_mult )
+    case ( n_mult ) ! ------------------------------------------------------
       son1 = subtree(1,root) ; son2 = subtree(2,root)
       stat = expr ( son1, type, units, value, field, start, field_look, field_test )
       if ( stat /= 0 ) &
@@ -958,7 +975,8 @@ m:      do j = start+1, nsons(field)
       stat = expr ( son2, type, units2, value2, field, start, field_look, field_test )
       if ( stat /= 0 ) &
   return
-      if ( units /= phyq_dimensionless .and. &
+      if ( type == num_value .and. type2 == num_value .and. &
+           units /= phyq_dimensionless .and. &
            units2 /= phyq_dimensionless .and. &
            units /= units2 ) then
         call local_error ( root, inconsistent_units, (/ son1, son2 /) )
@@ -966,7 +984,7 @@ m:      do j = start+1, nsons(field)
         value = value * value2
         if ( units == phyq_dimensionless ) units = units2
       end if
-    case ( n_div, n_into )
+    case ( n_div, n_into ) ! -----------------------------------------------
       son1 = subtree(1,root) ; son2 = subtree(2,root)
       stat = expr ( son1, type, units, value, field, start, field_look, field_test )
       if ( stat /= 0 ) &
@@ -974,7 +992,8 @@ m:      do j = start+1, nsons(field)
       stat = expr ( son2, type2, units2, value2, field, start, field_look, field_test )
       if ( stat /= 0 ) &
   return
-      if ( units /= phyq_dimensionless .and. &
+      if ( type == num_value .and. type2 == num_value .and. &
+           units /= phyq_dimensionless .and. &
            units2 /= phyq_dimensionless .and. &
            units /= units2 ) then
         call local_error ( root, inconsistent_units, (/ son1, son2 /) )
@@ -984,18 +1003,22 @@ m:      do j = start+1, nsons(field)
         value = value2 / value
         units = units2
       end if
-    case ( n_pow )
+    case ( n_pow ) ! -------------------------------------------------------
       value = 1.0
       do i = nsons(root), 1, -1 ! POW is right associative
         son1 = subtree(i,root)
         stat = expr ( son1, type, units, value2, field_look, field_test )
         if ( stat /= 0 ) &
   return
-        if ( units /= phyq_dimensionless ) &
-          & call local_error ( son1, not_unitless )
-        value = value2 ** value
+        if ( units /= phyq_dimensionless ) then
+          call local_error ( son1, not_unitless )
+        else if ( type /= num_value ) then
+          call local_error ( root, not_numeric, (/ son1 /) )
+        else
+          value = value2 ** value
+        end if
       end do
-    case ( n_func_ref )
+    case ( n_func_ref ) ! --------------------------------------------------
       son1 = subtree(1,root)
       ! Look up the function name
       string = sub_rosa(son1)
@@ -1028,9 +1051,9 @@ m:      do j = start+1, nsons(field)
         decl = prior_decl(decl,function)
       end do
       call local_error ( son1, not_func, fields=(/string/) )
-    case ( n_dot )
+    case ( n_dot ) ! -------------------------------------------------------
       stat = check_dot ( root, field, start, field_look, field_test )
-    case default
+    case default ! ---------------------------------------------------------
       call local_error ( root, no_code_for )
     end select
     if ( toggle(con) ) call trace_end ( 'EXPR' )
@@ -1224,6 +1247,9 @@ m:      do j = start+1, nsons(field)
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.30  2011/04/19 00:58:16  vsnyder
+! Allow several types for a field
+!
 ! Revision 1.29  2011/01/29 00:46:15  vsnyder
 ! Add units checking
 !
