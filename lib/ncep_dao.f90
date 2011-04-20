@@ -12,6 +12,7 @@
 module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
 
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use dump_0, only : dump
   use GriddedData, only: GriddedData_T, rgr, v_is_altitude, v_is_gph, &
     & v_is_pressure, v_is_theta, &
     & AddGriddedDataToDatabase, Dump, SetupNewGriddedData, NullifyGriddedData
@@ -63,6 +64,7 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   public:: WriteGriddedData
 
   integer :: ERROR
+  character(len=8) :: LIT_DESCRIPTION
 
   ! First we'll define some global parameters and data types.
   logical, parameter :: COUNTEMPTY=.true.
@@ -84,6 +86,8 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   character (len=*), parameter :: lit_geos5 = 'geos5'
   integer, parameter :: MAXLISTLENGTH=Linelen ! Max length list of grid names
   integer, parameter :: NENTRIESMAX=200 ! Max num of entries
+  integer, parameter ::          MAXDS = 1024 ! 500
+  integer, parameter ::          MAXSDNAMESBUFSIZE = MAXDS*NAMELEN
 
 contains
 
@@ -95,7 +99,7 @@ contains
     use MLSStats1, only: MLSMIN, MLSMAX, MLSMEAN
     ! This routine reads a Gridded Data file, returning a filled data
     ! structure and the  appropriate for the description
-    ! which may be one of 'geos5', 'gmao', 'dao', 'merra', 'ncep', 'strat'
+    ! which may be one of 'geos5_7', 'geos5', 'gmao', 'dao', 'merra', 'ncep', 'strat'
 
     ! FileName and the_g_data are required args
     ! GeoDimList should be the Dimensions' short names
@@ -124,14 +128,13 @@ contains
 
     ! Local Variables
     character ( len=len(fieldNames)) :: fieldName   ! In case we supply two
-    character ( len=NameLen) :: my_description   ! In case mixed case
     logical, parameter :: DEEBUG = .false.
     ! Executable code
     
-    my_description = lowercase(description)
-    if ( my_description == 'geos5' ) &
-      & my_description = GEOS5orMERRA( GriddedFile )
-    if ( DEEBUG ) print *, 'Reading ' // trim(my_description) // ' data'
+    LIT_DESCRIPTION = lowercase(description)
+    if ( LIT_DESCRIPTION == 'geos5' ) &
+      & LIT_DESCRIPTION = GEOS5orMERRA( GriddedFile )
+    if ( DEEBUG ) print *, 'Reading ' // trim(LIT_DESCRIPTION) // ' data'
 
     call nullifyGriddedData ( the_g_data ) ! for Sun's still useless compiler
     returnStatus = mls_hdf_version(GriddedFile%Name)
@@ -143,9 +146,24 @@ contains
     endif
     call getStringElement(fieldNames, fieldName, 1, COUNTEMPTY)
     ! According to the kinds of gridded data files we can read
-    select case ( trim(my_description) )
+    select case ( trim(LIT_DESCRIPTION) )
+    case ('geos5_7')
+      call Read_geos5_7( GriddedFile, lcf_where, v_type, &
+        & the_g_data, GeoDimList, fieldName, date, sumDelp )
+      if ( DEEBUG ) then
+        print *, '(Returned from read_geos5)'
+        print *, 'Quantity Name   ' // trim(the_g_data%QuantityName)
+        print *, 'Description     ' // trim(the_g_data%description)
+        print *, 'Units           ' // trim(the_g_data%units)
+        print *, 'Vertical Coord  ', the_g_data%verticalCoordinate, v_type, v_is_pressure
+        print *, 'max val  ', mlsmax( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue )
+        print *, 'min val  ', mlsmin( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue )
+        print *, 'meanval  ', mlsmean( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue )
+        call outputNamedValue('associated(the_g_data%field)', associated(the_g_data%field))
+        call outputNamedValue('NumStringElements', NumStringElements(fieldNames, COUNTEMPTY))
+      endif
     case ('geos5')
-      call Read_geos5( GriddedFile, lcf_where, v_type, &
+      call Read_geos5_or_merra( GriddedFile, lcf_where, v_type, &
         & the_g_data, GeoDimList, fieldName, date )
       if ( DEEBUG ) then
         print *, '(Returned from read_geos5)'
@@ -174,7 +192,7 @@ contains
       ! are MERRA and not GEOS5
       if ( NumStringElements(fieldNames, COUNTEMPTY) > 1 ) &
         & call getStringElement(fieldNames, fieldName, 2, COUNTEMPTY)
-      call Read_merra( GriddedFile, lcf_where, v_type, &
+      call Read_geos5_or_merra( GriddedFile, lcf_where, v_type, &
         & the_g_data, GeoDimList, fieldName, date, sumDelp )
     case ('ncep')
       ! These are ncep global assimilation model data
@@ -200,33 +218,19 @@ contains
       endif
     case default
       call announce_error(lcf_where, 'READGriddedData called with unknown' &
-        & // ' description: ' // trim(my_description))
+        & // ' description: ' // trim(LIT_DESCRIPTION))
     end select
 
   end subroutine ReadGriddedData
 
-  ! ----------------------------------------------- Read_geos5
-  subroutine Read_geos5( GEOS5File, lcf_where, v_type, &
-    & the_g_data, GeoDimList, fieldName, date )
-    use Dump_0, only: Dump
+  ! ----------------------------------------------- Read_geos5_7
+  subroutine Read_geos5_7( GEOS5File, lcf_where, v_type, &
+    & the_g_data, GeoDimList, fieldName, date, sumDelp )
+    use MLSHDF5, only: DumpHDF5Attributes, DumpHDF5DS, &
+      & GetAllHDF5AttrNames, GetAllHDF5DSNames
 
-    ! This routine reads a gmao geos5 file, named something like
-    ! DAS.ops.asm.tavg3d_prs_v.GEOS500.20060320_0000.V01 (pressure with
-    ! fieldname='PL') or 
-    ! DAS.ops.asm.tavg3d_dyn_v.GEOS500.20060320_0000.V01 (temperature
-    ! with fieldname='T') 
-    ! returning a filled data
-    ! structure appropriate for newer style gmao geos5
-    ! (And just how does it differ from the older style? 
-    !  For one thing it holds 4-d, not 3-d fields)
-
-    ! FileName and the_g_data are required args
-    ! GeoDimList, if present, should be the Dimensions' short names
-    ! as a comma-delimited character string in the order:
-    ! longitude, latitude, vertical level, time
-
-    ! fieldName, if present, should be the rank 4
-    ! like temperature
+    ! This routine reads a gmao geos5_7 file, named something like
+    ! DAS.ops.asm.avg3_3d_Nv.GEOS571.20110930_0300.V01.nc4 (pressure with
 
     ! This file is formatted in the following way:
     ! At each gridded quantity, e.g. EOSGRID,
@@ -242,313 +246,36 @@ contains
     character (LEN=*), optional, intent(IN) :: GeoDimList ! Comma-delimited dim names
     character (LEN=*), optional, intent(IN) :: fieldName ! Name of gridded field
     character (LEN=*), optional, intent(IN) :: date ! date (offset)
-
-    ! Local Variables
-    integer :: file_id, gd_id
-    integer :: inq_success
-    integer :: nentries, ngrids, ndims, nfields
-    integer :: strbufsize
-    logical,  parameter       :: CASESENSITIVE = .false.
-    integer, parameter :: GRIDORDER=1   ! What order grid written to file
-    character (len=MAXLISTLENGTH) :: gridlist
-    character (len=MAXLISTLENGTH) :: dimlist, actual_dim_list
-    character (len=MAXLISTLENGTH), dimension(1) :: dimlists
-    character (len=16), dimension(NENTRIESMAX) :: dimNames
-    character (len=MAXLISTLENGTH) :: fieldlist
-    integer, parameter :: MAXNAMELENGTH=NameLen         ! Max length of grid name
-    character (len=MAXNAMELENGTH) :: gridname, actual_field_name
-    integer, dimension(NENTRIESMAX) :: dims, rank, numberTypes
-    integer                        :: our_rank, numberType
-
-    integer :: start(4), stride(4), edge(4)
-    integer :: status
-    character(len=16) :: the_units
-    !                                  These start out initialized to one
-    integer                        :: nlon=1, nlat=1, nlev=1, ntime=1
-    integer, parameter             :: i_longitude=1
-    integer, parameter             :: i_latitude=i_longitude+1
-    integer, parameter             :: i_vertical=i_latitude+1
-    integer, parameter             :: i_time=i_vertical+1
-    integer, external :: GDRDFLD
-    real(r4), parameter :: FILLVALUE = 1.e15
-    real(r4), dimension(:,:,:,:), pointer :: all_the_fields
-    real(r8), dimension(:), pointer :: dim_field
-    real(r8) :: dateValue
-    logical, parameter :: DEEBUG = .false.
-    ! Executable code
-    dateValue = 0.
-    if ( present(date) ) dateValue = HHMMSS_value( date, status )
-    ! Find list of grid names on this file (This has been core dumping on me)
-    if(DEEBUG) print *, 'About to find grid list of file ', trim(GEOS5File%Name)
-    gridlist = ''
-    inq_success = gdinqgrid(GEOS5File%Name, gridlist, strbufsize)
-    if (inq_success < 0) then
-      call announce_error(lcf_where, "Could not inquire gridlist "// &
-        & trim(GEOS5File%Name))
-    elseif ( strbufsize > MAXLISTLENGTH ) then
-       CALL MLSMessage ( MLSMSG_Error, moduleName,  &
-          & 'list size too big in Read_geos5 ' // trim(GEOS5File%Name), MLSFile=GEOS5File )
-    elseif ( strbufsize < MAXLISTLENGTH .and. strbufsize > 0 ) then
-      gridlist = gridlist(1:strbufsize) // ' '
-    endif
-    if(DEEBUG) print *, 'grid list ', trim(gridlist)
-
-    error = 0
-    file_id = gdopen(GEOS5File%Name, DFACC_RDONLY)
-
-    if (file_id < 0) then
-      call announce_error(lcf_where, "Could not open "// GEOS5File%Name)
-    end if
-
-    ! Find grid name corresponding to the GRIDORDER'th one
-    ngrids = NumStringElements(gridlist, COUNTEMPTY)
-
-    if(ngrids <= 0) then
-      call announce_error(lcf_where, "NumStringElements of gridlist <= 0")
-    elseif(ngrids /= inq_success) then
-      call announce_error(lcf_where, "NumStringElements of gridlist /= inq_success")
-    elseif(ngrids < GRIDORDER) then
-      call announce_error(lcf_where, "NumStringElements of gridlist < GRIDORDER")
-    endif
-
-    call GetStringElement(gridlist, gridname, GRIDORDER, COUNTEMPTY)
-
-    gd_id = gdattach(file_id, gridname)
-    if (gd_id < 0) then
-      call announce_error(lcf_where, "Could not attach "//trim(gridname))
-    end if
-
-    ! Now find dimsize(), dimname(), etc.
-    nentries = gdnentries(gd_id, HDFE_NENTDIM, strbufsize)
-
-    if(nentries <= 0) then
-      call announce_error(lcf_where, "nentries of gd_id <= 0")
-    elseif(nentries > NENTRIESMAX) then
-      call announce_error(lcf_where, "nentries of gd_id > NENTRIESMAX")
-    endif
-
-    dimlist = ''
-    ndims = gdinqdims(gd_id, dimlist, dims)
-
-    if(ndims <= 0) then
-      call announce_error(lcf_where, "ndims of gd_id <= 0")
-    elseif(ndims > NENTRIESMAX) then
-      call announce_error(lcf_where, "ndims of gd_id > NENTRIESMAX")
-    endif
-
-    fieldlist = ''
-    nfields = gdinqflds(gd_id, fieldlist, rank, numberTypes)
-
-    if(nfields <= 0) then
-      call announce_error(lcf_where, "nfields of gd_id <= 0")
-    elseif(nfields > NENTRIESMAX) then
-      call announce_error(lcf_where, "nfields of gd_id > NENTRIESMAX")
-    endif
-
-    if(.not. CASESENSITIVE) then
-      fieldlist = Capitalize(fieldlist)
-    endif
-
+    logical, optional, intent(IN)           :: sumDelp ! sum the DELP to make PL
+    ! Local variables
+    character (len=NAMELEN) :: actual_field_name
+    logical :: DEEBUG
+    character (len=MAXSDNAMESBUFSIZE) :: mySdList
+    ! Executable
     if(present(fieldName)) then
       actual_field_name=fieldName
     else
       actual_field_name=DEFAULTGEOS5FIELDNAME
     endif
-
-    if(DEEBUG) print *, 'nentries ', nentries
-    if(DEEBUG) print *, 'ndims ', ndims
-    if(DEEBUG) print *, 'dimlist ', dimlist
-    if(DEEBUG) print *, 'nfields ', nfields
-    if(DEEBUG) print *, 'fieldlist ', fieldlist
-    if(DEEBUG) print *, 'actual_field_name ', actual_field_name
-
-    actual_dim_list = ' '
-    if(present(GeoDimList)) then
-      actual_dim_list=GeoDimList
-    endif
-    if ( actual_dim_list == ' ' ) then
-      actual_dim_list = DEFAULTDAODIMLIST
-    endif
-    call List2Array (actual_dim_list, dimNames, countEmpty)
     
-    ! Check that our requested field is present
-    if ( StringElementNum( fieldlist, trim(actual_field_name), COUNTEMPTY ) < 1 ) then
-      call output( trim(actual_field_name) // ' not found in geos5 file', advance='yes' )
-      status = gddetach(gd_id)
-      if(status /= 0) &
-        & call announce_error(lcf_where, "failed to detach from grid " &
-        & //trim(gridname))
-      status = gdclose(file_id)
-      if(status /= 0) &
-        & call announce_error(lcf_where, "failed to close file " //trim(GEOS5File%Name))
-        return
-    endif
-    ! Now find the rank of our field
-    inq_success = gdfldinfo(gd_id, trim(actual_field_name), our_rank, dims, &
-      & numbertype, dimlists(1))
+    DEEBUG = ( index(lowercase(actual_field_name), 'inq') > 0 )
+    call GetAllHDF5DSNames ( GEOS5File%Name, '/', mysdList )
+    if ( DEEBUG ) call dump(mysdList, 'DS names')
+  end subroutine Read_geos5_7
 
-    dimlist = trim(dimlists(1))
-    if(DEEBUG) print *, 'our_rank ', our_rank
-    if(DEEBUG) print *, 'dims ', dims(1:our_rank)
-    if(DEEBUG) print *, 'dimlist ', dimlist
-
-    nlon = dims(1)
-    nlat = dims(2)
-    nlev = dims(3)
-    ntime = dims(4)
-
-    the_g_data%quantityName = actual_field_name
-    the_g_data%description = lit_geos5
-    the_g_data%verticalCoordinate = v_type
-
-    the_g_data%noLons = nlon
-    the_g_data%noLats = nlat
-    the_g_data%noHeights = nlev
-    ! the_g_data%noLsts = ntime
-    the_g_data%noDates = ntime
-    ! The following is an awful hack
-    ! to prevent me from the having to read the units attribute
-    select case ( lowercase(actual_field_name) )
-    case ( 'pl' )
-      the_units = 'Pa'
-    case ( 't' )
-      the_units = 'K'
-    case default
-      the_units = 'Pa'
-    end select
-    if(DEEBUG) print *, 'our quantity name ', the_g_data%quantityName
-    if(DEEBUG) print *, 'our description ', the_g_data%description
-    if(DEEBUG) print *, 'our units ', the_units
-    if(DEEBUG) print *, 'our vertical coord ', the_g_data%verticalCoordinate
-    if(DEEBUG) print *, 'v_type ', v_type
-
-    ! Setup the grid
-    call SetupNewGriddedData ( the_g_data, noHeights=nlev, noLats=nlat, &
-      & noLons=nlon, noLsts=1, noSzas=1, noDates=ntime, &
-      & missingValue=FILLVALUE, units=the_units, verticalCoordinate=v_type, &
-      & heightsunits='hPa' )
-      ! & noLons=nlon, noLsts=ntime, noSzas=1, noDates=1, missingValue=FILLVALUE )
-    if(DEEBUG) print *, '(Again) our quantity name ', the_g_data%quantityName
-    if(DEEBUG) print *, 'our description ', the_g_data%description
-    if(DEEBUG) print *, 'our units ', the_g_data%units
-    if(DEEBUG) print *, 'our vertical coord ', the_g_data%verticalCoordinate
-    if(DEEBUG) print *, 'v_type ', v_type
-    allocate(all_the_fields(dims(1), dims(2), dims(3), dims(4)), stat=status)
-    all_the_fields = the_g_data%missingValue
-    if ( status /= 0 ) &
-        & call announce_error(lcf_where, "failed to allocate field_data")
-    start = 0                                                             
-    stride = 1                                                               
-    edge = dims(1:4)                                                        
-    if(DEEBUG) print *, 'About to read ' // trim(actual_field_name)
-    if(DEEBUG) print *, 'Start ', Start
-    if(DEEBUG) print *, 'Stride ', Stride
-    if(DEEBUG) print *, 'Edge ', Edge
-    status = gdrdfld(gd_id, trim(actual_field_name), start, stride, edge, &  
-      & all_the_fields)                                                          
-    if(status /= 0) &
-      & call announce_error(lcf_where, "failed to read field " &
-      & //trim(actual_field_name))
-    ! The actual dimlist is this                    XDim,YDim,Height,TIME
-    ! Need to reshape it so that the order becomes: Height,YDim,XDim,TIME
-    if ( DEEBUG) then
-      print *, 'dao Before reshaping'
-      call dump(all_the_fields(:,1,1,1), 'x-slice')
-      call dump(all_the_fields(1,:,1,1), 'y-slice')
-      call dump(all_the_fields(1,1,:,1), 'p-slice')
-      call dump(all_the_fields(1,1,1,:), 't-slice')
-    endif
-    ! the_g_data%field(:,:,:,:,1,1) = reshape( all_the_fields, &
-    the_g_data%field(:,:,:,1,1,:) = reshape( all_the_fields, &
-      & shape=(/nLev, nlat, nlon, ntime/), order=(/3,2,1,4/) &
-      & )
-    if ( DEEBUG ) then
-      print *, 'dao After reshaping'
-      call dump(the_g_data%field(1,1,:,1,1,1), 'x-slice')
-      call dump(the_g_data%field(1,:,1,1,1,1), 'y-slice')
-      call dump(the_g_data%field(:,1,1,1,1,1), 'p-slice')
-      call dump(the_g_data%field(1,1,1,:,1,1), 't-slice')
-    endif
-    deallocate(all_the_fields)
-    ! Now read the dims
-    nullify(dim_field)
-    ! call read_the_dim(gd_id, 'XDim', dims(1), dim_field)
-    call read_the_dim(gd_id, trim(dimNames(1)), dims(1), dim_field)
-    the_g_data%lons = dim_field
-    ! call read_the_dim(gd_id, 'YDim', dims(2), dim_field)
-    call read_the_dim(gd_id, trim(dimNames(2)), dims(2), dim_field)
-    the_g_data%lats = dim_field
-    ! call read_the_dim(gd_id, 'Height', dims(3), dim_field)
-    call read_the_dim(gd_id, trim(dimNames(3)), dims(3), dim_field)
-    the_g_data%Heights = dim_field
-    ! call read_the_dim(gd_id, 'Time', dims(4), dim_field)
-    call read_the_dim(gd_id, trim(dimNames(4)), dims(4), dim_field)
-    ! the_g_data%lsts = dim_field
-    ! Because GMAO background files have no date field
-    if ( all(dim_field == 0._r8) ) then
-      the_g_data%dateStarts = dateValue
-      the_g_data%dateEnds = dateValue
-    else
-      the_g_data%dateStarts = dim_field
-      the_g_data%dateEnds = dim_field
-    endif
-    deallocate(dim_field)        ! Before leaving, some light housekeeping
-    ! Have not yet figured out how to assign these
-    ! Probably will have to read metadata
-    the_g_data%Szas = the_g_data%missingValue
-    ! the_g_data%DateStarts = the_g_data%missingValue
-    ! the_g_data%DateEnds = the_g_data%missingValue
-    the_g_data%lsts = the_g_data%missingValue
-    ! Close grid
-    status = gddetach(gd_id)
-    if(status /= 0) &
-      & call announce_error(lcf_where, "failed to detach from grid " &
-      & //trim(gridname))
-    status = gdclose(file_id)
-    if(status /= 0) &
-      & call announce_error(lcf_where, "failed to close file " //trim(GEOS5File%Name))
-    contains 
-       subroutine read_the_dim(gd_id, field_name, field_size, values)
-         ! Arguments
-         integer, intent(in) :: gd_id
-         character(len=*), intent(in) :: field_name
-         integer, intent(in) :: field_size
-         real(r8), dimension(:), pointer :: values
-         ! Local variables
-         integer :: status
-         integer, dimension(1) :: start, stride, edge
-         ! Executable
-         if ( associated(values) ) then
-           deallocate(values, stat=status)
-           if ( status /= 0 ) &
-             & call announce_error(lcf_where, "failed to deallocate dim field")
-         endif
-         allocate(values(field_size), stat=status)
-         if ( status /= 0 ) &
-           & call announce_error(lcf_where, "failed to allocate dim field")
-         start = 0                                                             
-         stride = 1                                                             
-         edge = field_size                                                       
-         values = the_g_data%missingValue
-         status = gdrdfld(gd_id, trim(field_name), start, stride, edge, &
-           & values)                                                     
-         if ( status /= 0 ) &
-           & call announce_error(lcf_where, "failed to read dim field " &
-           & // trim(field_name))
-       end subroutine read_the_dim
-  end subroutine Read_geos5
-
-  ! ----------------------------------------------- Read_merra
-  subroutine Read_merra( GEOS5File, lcf_where, v_type, &
+  ! ----------------------------------------------- Read_geos5_or_merra
+  subroutine Read_geos5_or_merra( GEOS5File, lcf_where, v_type, &
     & the_g_data, GeoDimList, fieldName, date, sumDelp )
-    use Dump_0, only: Dump
 
-    ! This routine reads a gmao MERRA file, named something like
+    ! This routine reads a gmao GEOS5 or MERRA file, named something like
+    ! DAS.ops.asm.tavg3d_prs_v.GEOS500.20060320_0000.V01 (pressure with
+    ! fieldname='PL') or 
+    ! DAS.ops.asm.tavg3d_dyn_v.GEOS500.20060320_0000.V01 (temperature
+    ! with fieldname='T') or
     ! MERRA300.prod.assim.inst6_3d_ana_Nv.20050131.hdf (pressure with
     ! fieldname='DELP' or 'T')
     ! returning a filled data
-    ! structure appropriate for newer style gmao merra
-    ! (For one thing it holds 4-d, not 3-d fields)
+    ! structure appropriate for older geos5 or newer style gmao merra
 
     ! FileName and the_g_data are required args
     ! GeoDimList, if present, should be the Dimensions' short names
@@ -564,10 +291,6 @@ contains
     ! 'Time, Height, YDim, XDim'
     ! We'll simply copy it into a single gridded data type
     
-    ! This is so similar to read_geos5 that we ought to combine the two into
-    ! a single routine, except the extra timeIndex business would need
-    ! careful handling
-
     ! Arguments
     type(MLSFile_T)                :: GEOS5file
     integer, intent(IN) :: lcf_where    ! node of the lcf that provoked me
@@ -612,10 +335,19 @@ contains
     real(r4), dimension(:,:,:,:), pointer :: all_the_fields => null()
     real(r8), dimension(:), pointer :: dim_field, pb
     real(r8) :: dateValue
-    logical, parameter :: DEEBUG = .false.
+    logical :: DEEBUG
     ! Executable code
     dateValue = 0.
     if ( present(date) ) dateValue = HHMMSS_value( date, status )
+    if(present(fieldName)) then
+      actual_field_name=fieldName
+    else
+      actual_field_name=DEFAULTGEOS5FIELDNAME
+    endif
+    
+    DEEBUG = ( index(lowercase(actual_field_name), 'inq') > 0 )
+    
+    ! We need the timeIndex as an offset for merra files
     timeIndex = int(1.5 + (dateValue - 1.)/(6*60*60)) ! How many quarter-days?
     if ( DEEBUG ) then
       print *, 'date (s) ', dateValue
@@ -632,7 +364,7 @@ contains
         & trim(GEOS5File%Name))
     elseif ( strbufsize > MAXLISTLENGTH ) then
        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
-          & 'list size too big in Read_merra ' // trim(GEOS5File%Name), MLSFile=GEOS5File )
+          & 'list size too big in Read_geos5_or_merra ' // trim(GEOS5File%Name), MLSFile=GEOS5File )
     elseif ( strbufsize < MAXLISTLENGTH .and. strbufsize > 0 ) then
       gridlist = gridlist(1:strbufsize) // ' '
     endif
@@ -694,12 +426,6 @@ contains
       fieldlist = Capitalize(fieldlist)
     endif
 
-    if(present(fieldName)) then
-      actual_field_name=fieldName
-    else
-      actual_field_name=DEFAULTGEOS5FIELDNAME
-    endif
-
     if(DEEBUG) print *, 'nentries ', nentries
     if(DEEBUG) print *, 'ndims ', ndims
     if(DEEBUG) print *, 'dimlist ', dimlist
@@ -716,10 +442,28 @@ contains
     endif
     call List2Array (actual_dim_list, dimNames, countEmpty)
 
+    ! Check that our requested field is present
+    ! We might, after all, have been doing an 'inq'
+    if ( StringElementNum( fieldlist, trim(actual_field_name), COUNTEMPTY ) < 1 ) then
+      call output( trim(actual_field_name) // ' not found in geos5 file', advance='yes' )
+      status = gddetach(gd_id)
+      if(status /= 0) &
+        & call announce_error(lcf_where, "failed to detach from grid " &
+        & //trim(gridname))
+      status = gdclose(file_id)
+      if(status /= 0) &
+        & call announce_error(lcf_where, "failed to close file " //trim(GEOS5File%Name))
+        return
+    endif
     ! Now find the rank of our field
     inq_success = gdfldinfo(gd_id, trim(actual_field_name), our_rank, dims, &
       & numbertype, dimlists(1))
 
+    if ( inq_success /= PGS_S_SUCCESS ) then
+      CALL MLSMessage ( MLSMSG_Warning, moduleName,  &
+        & trim(actual_field_name) // ' not found in ' // trim(GEOS5File%Name) )
+      return
+    endif
     dimlist = trim(dimlists(1))
     if(DEEBUG) print *, 'our_rank ', our_rank
     if(DEEBUG) print *, 'dims ', dims(1:our_rank)
@@ -738,7 +482,11 @@ contains
     the_g_data%noLats = nlat
     the_g_data%noHeights = nlev
     ! the_g_data%noLsts = ntime
-    the_g_data%noDates = 1 ! ntime
+    if ( LIT_DESCRIPTION == lit_geos5 ) then
+      the_g_data%noDates = ntime
+    else
+      the_g_data%noDates = 1
+    endif
     ! The following is an awful hack
     ! to prevent me from the having to read the units attribute
     select case ( lowercase(actual_field_name) )
@@ -757,21 +505,17 @@ contains
 
     ! Setup the grid
     call SetupNewGriddedData ( the_g_data, noHeights=nlev, noLats=nlat, &
-      & noLons=nlon, noLsts=1, noSzas=1, noDates=1, & ! noDates=ntime, &
+      & noLons=nlon, noLsts=1, noSzas=1, noDates=the_g_data%noDates, &
       & missingValue=FILLVALUE, units=the_units, verticalCoordinate=v_type, &
       & heightsunits='hPa' )
-      ! & noLons=nlon, noLsts=ntime, noSzas=1, noDates=1, missingValue=FILLVALUE )
     if(DEEBUG) print *, '(Again) our quantity name ', the_g_data%quantityName
     if(DEEBUG) print *, 'our description ', the_g_data%description
     if(DEEBUG) print *, 'our units ', the_g_data%units
     if(DEEBUG) print *, 'our vertical coord ', the_g_data%verticalCoordinate
     if(DEEBUG) print *, 'v_type ', v_type
     if(DEEBUG) print *, 'About to allocate ', dims(1:4)
-    ! allocate(all_the_fields(dims(1), dims(2), dims(3), dims(4)), stat=status)
-    ! if ( status /= 0 ) &
-    !    & call announce_error(lcf_where, "failed to allocate field_data")
     call allocate_test( all_the_fields, dims(1), dims(2), dims(3), dims(4), &
-        & 'all_the_fields', ModuleName // 'Read_merra' )
+        & 'all_the_fields', ModuleName // 'Read_geos5_or_merra' )
     all_the_fields = the_g_data%missingValue
     start = 0                                                             
     stride = 1                                                               
@@ -790,7 +534,7 @@ contains
       ! Sum up all the delps, starting from the top of the atmosphere
       nullify(pb)
       call allocate_test( pb, nlev+1, 'pb', &
-        & ModuleName // 'Read_merra' )
+        & ModuleName // 'Read_geos5_or_merra' )
       do itime=1, ntime
         do ilat=1, nlat
           do ilon=1, nlon
@@ -810,33 +554,35 @@ contains
         enddo
       enddo
       call deallocate_test( pb, 'pb', &
-        & ModuleName // 'Read_merra' )
+        & ModuleName // 'Read_geos5_or_merra' )
     endif
     ! The actual dimlist is this                    XDim,YDim,Height,TIME
     ! Need to reshape it so that the order becomes: Height,YDim,XDim,TIME
     if ( DEEBUG) then
-      print *, 'merra Before reshaping'
+      print *, LIT_DESCRIPTION // ' Before reshaping'
       call dump(all_the_fields(:,1,1,1), 'x-slice')
       call dump(all_the_fields(1,:,1,1), 'y-slice')
       call dump(all_the_fields(1,1,:,1), 'p-slice')
       call dump(all_the_fields(1,1,1,:), 't-slice')
     endif
-    ! the_g_data%field(:,:,:,:,1,1) = reshape( all_the_fields, &
-    the_g_data%field(:,:,:,1,1,1) = reshape( all_the_fields(:,:,:,timeIndex), &
-      & shape=(/nLev, nlat, nlon/), order=(/3,2,1/) &
-      & )
-      ! & shape=(/nLev, nlat, nlon, ntime/), order=(/3,2,1,4/) &
-      ! & )
+    if ( LIT_DESCRIPTION == lit_geos5 ) then
+      the_g_data%field(:,:,:,1,1,:) = reshape( all_the_fields, &
+        & shape=(/nLev, nlat, nlon, ntime/), order=(/3,2,1,4/) &
+        & )
+    else
+      the_g_data%field(:,:,:,1,1,1) = reshape( all_the_fields(:,:,:,timeIndex), &
+        & shape=(/nLev, nlat, nlon/), order=(/3,2,1/) &
+        & )
+    endif
     if ( DEEBUG ) then
-      print *, 'dao After reshaping'
+      print *, LIT_DESCRIPTION // ' After reshaping'
       call dump(the_g_data%field(1,1,:,1,1,1), 'x-slice')
       call dump(the_g_data%field(1,:,1,1,1,1), 'y-slice')
       call dump(the_g_data%field(:,1,1,1,1,1), 'p-slice')
       call dump(the_g_data%field(1,1,1,:,1,1), 't-slice')
     endif
-    ! deallocate(all_the_fields)
     call deallocate_test( all_the_fields, 'all_the_fields', &
-        & ModuleName // 'Read_merra' )
+        & ModuleName // 'Read_geos5_or_merra' )
     ! Now read the dims
     nullify(dim_field)
     ! call read_the_dim(gd_id, 'XDim', dims(1), dim_field)
@@ -855,6 +601,9 @@ contains
     if ( all(dim_field == 0._r8) ) then
       the_g_data%dateStarts = dateValue
       the_g_data%dateEnds = dateValue
+    elseif (LIT_DESCRIPTION == lit_geos5 ) then
+      the_g_data%dateStarts = dim_field
+      the_g_data%dateEnds = dim_field
     else
       the_g_data%dateStarts = dim_field(timeIndex)
       the_g_data%dateEnds = dim_field(timeIndex)
@@ -907,12 +656,11 @@ contains
            & call announce_error(lcf_where, "failed to read dim field " &
            & // trim(field_name))
        end subroutine read_the_dim
-  end subroutine Read_merra
+  end subroutine Read_geos5_or_merra
 
   ! ----------------------------------------------- Read_dao
   subroutine Read_dao(DAOFile, lcf_where, v_type, &
     & the_g_data, GeoDimList, fieldName)
-    use Dump_0, only: Dump
 
     ! What was once called 'dao' now better known as 'gmao'
     ! This routine reads a gmao file, named something like
@@ -1204,7 +952,6 @@ contains
   ! ----------------------------------------------- Read_ncep_gdas
   subroutine Read_ncep_gdas(NCEPFile, lcf_where, v_type, &
     & the_g_data, GeoDimList, gridName, missingValue)
-    use Dump_0, only: Dump
 
     ! This routine reads a ncep global assimilation model product
     ! (GDAS) file, named something like
@@ -1531,7 +1278,6 @@ contains
   ! ----------------------------------------------- Read_ncep_strat
   subroutine Read_ncep_strat(NCEPFile, lcf_where, v_type, &
     & the_g_data, GeoDimList, fieldName)
-    use Dump_0, only: Dump
     use HDFEOS5, only: HE5_HDFE_NENTDIM, HE5F_ACC_RDONLY, &
       & HE5_GDOPEN, HE5_GDATTACH, HE5_GDDETACH, HE5_GDCLOSE, &
       & HE5_GDNENTRIES, HE5_GDINQGRID, HE5_GDINQDIMS, HE5_GDINQFLDS, &
@@ -2252,7 +1998,6 @@ contains
   ! ----------------------------------------------- Write_merra
   subroutine Write_merra( createGrid, GEOS5File, lcf_where, v_type, &
     & the_g_data, GeoDimList, fieldName )
-    use Dump_0, only: Dump
 
     ! This routine Writes a gmao MERRA file, named something like
     ! MERRA300.prod.assim.inst6_3d_ana_Nv.20050131.hdf (pressure with
@@ -2558,6 +2303,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.57  2011/04/20 16:56:16  pwagner
+! First steps toward being able to read next GMAO format
+!
 ! Revision 2.56  2010/03/31 18:12:10  pwagner
 ! Added WriteGriddedData
 !
