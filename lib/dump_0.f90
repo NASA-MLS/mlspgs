@@ -28,7 +28,7 @@ module DUMP_0
     & INFFUNCTION, NANFUNCTION, REORDERFILLVALUES, REPLACEFILLVALUES, &
     & WHEREARETHEINFS, WHEREARETHENANS
   use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
-  use MLSSets, only: FindAll, FindUnique
+  use MLSSets, only: FindUnique
   use MLSStats1, only: STAT_T, &
     & ALLSTATS, FILLVALUERELATION, HOWFAR, HOWNEAR, &
     & MLSMAX, MLSMEAN, MLSMIN, MLSSTDDEV, RATIOS, RESET
@@ -539,7 +539,7 @@ contains
     if ( NumBitNames < 1 ) NumBitNames = MAXBITNUMBER+1
     NumBitNames = min( numBitNames, MAXBITNUMBER+1 )
     numZeroRows = 0
-    if ( size(array) == 0 ) then
+    if ( any(shape(array) == 0) ) then
       call empty ( name )
     else
       call name_and_size ( name, myClean, size(array) )
@@ -599,7 +599,7 @@ contains
     endif
 
     numZeroRows = 0
-    if ( size(array) == 0 ) then
+    if ( any(shape(array) == 0) ) then
       call empty ( name )
     else if ( size(array) == 1 ) then
       call name_and_size ( name, myClean, 1 )
@@ -631,12 +631,14 @@ contains
   end subroutine DUMP_1D_CHAR
 
   ! --------------------------------------------  DUMP_1D_COMPLEX  -----
-  subroutine DUMP_1D_COMPLEX ( ARRAY, NAME, WIDTH, FORMAT, OPTIONS )
+  subroutine DUMP_1D_COMPLEX ( ARRAY, NAME, WIDTH, FORMAT, &
+    & FILLVALUE, OPTIONS )
     integer, parameter :: RK = kind(0.0e0)
     complex(rk), intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
     integer, intent(in), optional :: WIDTH
     character(len=*), intent(in), optional :: FORMAT
+    real(rk), intent(in), optional :: FillValue
     character(len=*), optional, intent(in) :: options
 
     integer :: J, K, MyWidth
@@ -648,7 +650,7 @@ contains
     myFormat = sdFormatDefaultCmplx
     if ( present(format) ) myFormat = format
 
-    if ( size(array) == 0 ) then
+    if ( any(shape(array) == 0) ) then
       call empty ( name )
     else if ( size(array) == 1 ) then
       call name_and_size ( name, myClean, 1 )
@@ -671,12 +673,14 @@ contains
   end subroutine DUMP_1D_COMPLEX
 
   ! -------------------------------------------  DUMP_1D_DCOMPLEX  -----
-  subroutine DUMP_1D_DCOMPLEX ( ARRAY, NAME, WIDTH, FORMAT, OPTIONS )
+  subroutine DUMP_1D_DCOMPLEX ( ARRAY, NAME, WIDTH, FORMAT, &
+    & FILLVALUE, OPTIONS )
     integer, parameter :: RK = kind(0.0d0)
     complex(rk), intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
     integer, intent(in), optional :: WIDTH
     character(len=*), intent(in), optional :: FORMAT
+    real(rk), intent(in), optional :: FillValue
     character(len=*), optional, intent(in) :: options
 
     integer :: J, K, MyWidth
@@ -688,7 +692,7 @@ contains
     myFormat = sdFormatDefaultCmplx
     if ( present(format) ) myFormat = format
 
-    if ( size(array) == 0 ) then
+    if ( any(shape(array) == 0) ) then
       call empty ( name )
     else if ( size(array) == 1 ) then
       call name_and_size ( name, myClean, 1 )
@@ -789,7 +793,7 @@ contains
     base = 0
     if ( present(lbound) ) base = lbound - 1
 
-    if ( size(array) == 0 ) then
+    if ( any(shape(array) == 0) ) then
       call empty ( name )
     else if ( size(array) == 1 .and. base == 0 ) then
       call name_and_size ( name, myClean, 1 )
@@ -885,11 +889,11 @@ contains
     if ( present(maxlon) ) lon = min(lon, maxlon)
 
     numZeroRows = 0
-    if ( size(array) == 0 ) then
+    if ( any(shape(array) == 0) ) then
       call empty ( name )
-    else if ( size(array) == 1 ) then
+    else if ( size(array,1) == 1 ) then
       call name_and_size ( name, myClean, 1 )
-      call output ( array(1,1)(1:lon), advance='yes' )
+      call output ( array(1,:), advance='yes' )
     else if ( size(array,2) == 1 ) then
       call dump ( array(:,1), name, fillValue=fillValue, maxlon=maxlon, options=options )
     else
@@ -906,14 +910,14 @@ contains
             & )
           if (.not. myClean) then
             if ( DumpTheseZeros ) then
-              call say_fill ( (/ i-1, size(array,1), j, size(array,2) /), &
-                & numZeroRows, myFillValue, inc=1 )
+              call say_fill ( (/ i, size(array,1), j-1, size(array,2) /), &
+                & numZeroRows, myFillValue, inc=3 )
             else
               numZeroRows = numZeroRows + 1
             end if
           end if
           if ( DumpTheseZeros ) then
-            do k = j, min(myWidth-1, size(array,2))
+            do k = j, min(j+myWidth-1, size(array,2))
                 call output ( array(i,k)(1:lon) // ' ' )
             end do
             call newLine
@@ -962,15 +966,19 @@ contains
     if ( present(fillValue) ) myFillValue = fillValue
 
     numZeroRows = 0
-    if ( size(array) == 0 ) then
+    if ( any(shape(array) == 0) ) then
       call empty ( name )
-    else if ( size(array) == 1 ) then
+    else if ( product(shape(array)) == 1 ) then
       call name_and_size ( name, myClean, 1 )
       call output ( array(1,1), format=myFormat, advance='yes' )
+    else if ( size(array, 1) == 1 ) then
+      call dump ( array(1,:), name, &
+        & fillValue=fillValue, format=format, options=options )
     else if ( size(array,2) == 1 ) then
-      call dump ( array(:,1), name, format=myFormat, options=options )
+      call dump ( array(:,1), name, &
+        & fillValue=fillValue, format=format, options=options )
     else 
-    call name_and_size ( name, myClean, size(array) )
+      call name_and_size ( name, myClean, size(array) )
       if ( present(name) .and. .not. mylaconic ) call newLine
       do i = 1, size(array,1)
         do j = 1, size(array,2), myWidth
@@ -1036,13 +1044,17 @@ contains
     if ( present(fillValue) ) myFillValue = fillValue
 
     numZeroRows = 0
-    if ( size(array) == 0 ) then
+    if ( any(shape(array) == 0) ) then
       call empty ( name )
-    else if ( size(array) == 1 ) then
+    else if ( product(shape(array)) == 1 ) then
       call name_and_size ( name, myClean, 1 )
       call output ( array(1,1), format=myFormat, advance='yes' )
+    else if ( size(array, 1) == 1 ) then
+      call dump ( array(1,:), name, &
+        & fillValue=fillValue, format=format, options=options )
     else if ( size(array,2) == 1 ) then
-      call dump ( array(:,1), name, format=myFormat, options=options )
+      call dump ( array(:,1), name, &
+        & fillValue=fillValue, format=format, options=options )
     else 
       call name_and_size ( name, myClean, size(array) )
       if ( present(name) .and. .not. mylaconic ) call newLine
@@ -1138,7 +1150,7 @@ contains
       return
     endif
 
-    if ( size(array) == 0 ) then
+    if ( any(shape(array) == 0) ) then
       call empty ( name )
     else if ( size(array) == 1 ) then
       call name_and_size ( name, myClean, 1 )
@@ -1204,7 +1216,7 @@ contains
     myFormat = sdFormatDefaultCmplx
     if ( present(format) ) myFormat = format
 
-    if ( size(array) == 0 ) then
+    if ( any(shape(array) == 0) ) then
       call empty ( name )
     else
       call name_and_size ( name, myClean, size(array) )
@@ -1240,7 +1252,7 @@ contains
     myFormat = sdFormatDefaultCmplx
     if ( present(format) ) myFormat = format
 
-    if ( size(array) == 0 ) then
+    if ( any(shape(array) == 0) ) then
       call empty ( name )
     else
       call name_and_size ( name, myClean, size(array) )
@@ -1272,8 +1284,6 @@ contains
     integer :: LON
     integer :: I, J, K, L
     integer :: NumZeroRows
-    integer, dimension(3) :: which, re_mainder
-    integer :: how_many
     character(len=len(array)) :: myFillValue
     integer :: MyWidth
 
@@ -1286,21 +1296,19 @@ contains
     if ( present(maxlon) ) lon = min(lon, maxlon)
     MyWidth = 10
     if ( present(width) ) MyWidth = width
-    call FindAll( (/ size(array, 1), size(array, 2), size(array, 3)/), &
-      & 1, which, how_many, re_mainder=re_mainder)
 
     numZeroRows = 0
-    if ( size(array) == 0 ) then
+    if ( any(shape(array) == 0) ) then
       call empty ( name )
-    else if ( size(array) == 1 ) then
-      call name_and_size ( name, myClean, 1 )
-      call output ( array(1,1,1)(1:lon), advance='yes' )
-    else if ( how_many == 2 ) then
-      call dump ( reshape(array, (/ re_mainder(1) /)), name, fillValue=fillValue, &
+    else if ( size(array,1) == 1 ) then
+      call dump ( array(1,:,:), name, fillValue=fillValue, &
         & maxlon=maxlon, options=options, width=width )
-    else if ( how_many == 1 ) then
-      call dump ( reshape(array, (/ re_mainder(1), re_mainder(2) /)), &
-        & name, fillValue=fillValue, options=options, width=width )
+    else if ( size(array,2) == 1 ) then
+      call dump ( array(:,1,:), name, fillValue=fillValue, &
+        & maxlon=maxlon, options=options, width=width )
+    else if ( size(array,3) == 1 ) then
+      call dump ( array(:,:,1), name, fillValue=fillValue, &
+        & maxlon=maxlon, options=options, width=width )
     else
       call name_and_size ( name, myClean, size(array) )
       if ( present(name) .and. .not. mylaconic ) call newLine
@@ -1367,15 +1375,17 @@ contains
     if ( present(width) ) MyWidth = width
 
     numZeroRows = 0
-    if ( size(array) == 0 ) then
+    if ( any(shape(array) == 0) ) then
       call empty ( name )
-    else if ( size(array) == 1 ) then
-      call name_and_size ( name, myClean, 1 )
-      call output ( array(1,1,1), myFormat, advance='yes' )
-    else if ( size(array,2) == 1 .and. size(array,3) == 1 ) then
-      call dump ( array(:,1,1), name, options=options )
+    else if ( size(array,1) == 1 ) then
+      call dump ( array(1,:,:), name, &
+        & fillValue=fillValue, format=format, options=options )
+    else if ( size(array,2) == 1 ) then
+      call dump ( array(:,1,:), name, &
+        & fillValue=fillValue, format=format, options=options )
     else if ( size(array,3) == 1 ) then
-      call dump ( array(:,:,1), name, fillValue=fillValue, options=options )
+      call dump ( array(:,:,1), name, &
+        & fillValue=fillValue, format=format, options=options )
     else
       call name_and_size ( name, myClean, size(array) )
       if ( present(name) .and. .not. mylaconic ) call newLine
@@ -1408,7 +1418,7 @@ contains
         end do
       end do
       call say_fill ( (/ i-1, size(array,1), j-1, size(array,2), &
-        & k-5, size(array,3) /), numZeroRows, myFillValue )
+        & k-myWidth, size(array,3) /), numZeroRows, myFillValue )
    end if
     call theDumpEnds
   end subroutine DUMP_3D_COMPLEX
@@ -1442,15 +1452,17 @@ contains
     if ( present(width) ) MyWidth = width
 
     numZeroRows = 0
-    if ( size(array) == 0 ) then
+    if ( any(shape(array) == 0) ) then
       call empty ( name )
-    else if ( size(array) == 1 ) then
-      call name_and_size ( name, myClean, 1 )
-      call output ( array(1,1,1), myFormat, advance='yes' )
-    else if ( size(array,2) == 1 .and. size(array,3) == 1 ) then
-      call dump ( array(:,1,1), name, options=options )
+    else if ( size(array,1) == 1 ) then
+      call dump ( array(1,:,:), name, &
+        & fillValue=fillValue, format=format, options=options )
+    else if ( size(array,2) == 1 ) then
+      call dump ( array(:,1,:), name, &
+        & fillValue=fillValue, format=format, options=options )
     else if ( size(array,3) == 1 ) then
-      call dump ( array(:,:,1), name, fillValue=fillValue, options=options )
+      call dump ( array(:,:,1), name, &
+        & fillValue=fillValue, format=format, options=options )
     else
       call name_and_size ( name, myClean, size(array) )
       if ( present(name) .and. .not. mylaconic ) call newLine
@@ -1483,7 +1495,7 @@ contains
         end do
       end do
       call say_fill ( (/ i-1, size(array,1), j-1, size(array,2), &
-        & k-5, size(array,3) /), numZeroRows, myFillValue )
+        & k-myWidth, size(array,3) /), numZeroRows, myFillValue )
    end if
     call theDumpEnds
   end subroutine DUMP_3D_DCOMPLEX
@@ -2950,6 +2962,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.110  2011/04/20 22:27:09  pwagner
+! Fixed long-standing bug in dumping 2d char array
+!
 ! Revision 2.109  2011/04/18 19:12:54  vsnyder
 ! Turn on nameHasBeenPrinted in more places
 !
