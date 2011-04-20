@@ -15,12 +15,15 @@ module ReadAPriori
   use Expr_M, only: Expr
   use Hdf, only: DFACC_RDONLY
   use INIT_TABLES_MODULE, only: F_AURAINSTRUMENT, F_DATE, F_DIMLIST, &
-    & F_FIELD, F_FILE, F_HDFVERSION, F_missingValue, &
+    & F_FIELD, F_FILE, F_HDFVERSION, F_MISSINGVALUE, &
     & F_ORIGIN, F_QUANTITYTYPE, F_SDNAME, F_SUM, F_SWATH, &
-    & FIELD_FIRST, FIELD_LAST, L_CLIMATOLOGY, L_DAO, L_GEOS5, L_GLORIA, &
-    & L_MERRA, L_NCEP, L_STRAT, L_SURFACEHEIGHT, &
+    & FIELD_FIRST, FIELD_LAST, &
+    & L_CLIMATOLOGY, L_DAO, L_GEOS5, L_GEOS5_7, L_GLORIA, &
+    & L_MERRA, L_NCEP, L_NONE, L_STRAT, L_SURFACEHEIGHT, &
     & S_DIFF, S_DUMP, S_GRIDDED, S_L2AUX, S_L2GP
-  use Intrinsic, only: l_ascii, L_Binary, l_grid, l_hdf, l_swath, PHYQ_Dimensionless
+  use Intrinsic, only: L_ASCII, L_BINARY, L_GRID, L_HDF, L_SWATH, &
+    & PHYQ_DIMENSIONLESS
+  use L2GPData, only: MAXSWATHNAMESBUFSIZE
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: FileNameLen, MLSFile_T
   use MLSFiles, only: FILENOTFOUND, &
@@ -45,7 +48,7 @@ module ReadAPriori
   use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE, &
     & revertoutput, switchOutput
   use SDPToolkit, only: PGS_S_SUCCESS
-  use String_Table, only: GET_STRING
+  use String_Table, only: DISPLAY_STRING, GET_STRING
   use Time_M, only: Time_Now
   use TOGGLES, only: GEN, SWITCHES, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -56,10 +59,11 @@ module ReadAPriori
   implicit none
   private
   public ::  APrioriFiles, APrioriFiles_T, &
-    & read_apriori, readAPrioriAttributes, writeAPrioriAttributes
+    & processOneAprioriFile, read_apriori, readAPrioriAttributes, &
+    & writeAPrioriAttributes
   private ::  announce_error
   integer, private :: ERROR
-  integer, private, parameter :: MAXNUMFILES = 10
+  integer, private, parameter :: MAXNUMFILES = 20
 
    ! What a priori files did we read? 
    ! (This is very wasteful of memory--let's change it
@@ -99,92 +103,30 @@ contains ! =====     Public Procedures     =============================
   ! NCEP, DAO etc.
 
   subroutine Read_apriori ( Root, L2GPDatabase, L2auxDatabase, GriddedDatabase, &
-    & fileDataBase)
-
-    use ChunkDivide_m, only: ChunkDivideConfig
-    use DumpCommand_m, only: DumpCommand
-    use GriddedData, only: rgr, GriddedData_T, V_is_eta, v_is_pressure, &
-      & AddGriddedDataToDatabase, Dump, SetupNewGriddedData
-    use L2AUXData, only: L2AUXData_T, AddL2AUXToDatabase, &
-      &                  ReadL2AUXData, Dump
-    use L2GPData, only: L2GPData_T, MAXSWATHNAMESBUFSIZE, &
-      & AddL2GPToDatabase, ReadL2GPData, Dump
-    use ncep_dao, only: READ_CLIMATOLOGY, ReadGriddedData, ReadGloriaFile
-    use SurfaceHeight_m, only: Open_Surface_Height_File, &
-      & Read_Surface_Height_File, Close_Surface_Height_File
-
+    & fileDataBase )
+    use GriddedData, only: GriddedData_T, Dump
+    use L2AUXData, only: L2AUXData_T, Dump
+    use L2GPData, only: L2GPData_T, Dump
+    use TREE, only: NSONS, SUBTREE
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Of the Read a priori section in the AST
     type (l2gpdata_t), dimension(:), pointer :: L2GPDatabase
     type (L2AUXData_T), dimension(:), pointer :: L2auxDatabase
     type (GriddedData_T), dimension(:), pointer :: GriddedDatabase 
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-
-    ! Local Variables
-    integer :: AURAINST             ! index of 'MLS' in AuraInstrument='MLS'
-    integer :: COMMAPOS                 ! For parsing string
-    logical, parameter :: DEBUG = .FALSE.
-    integer :: DATE             ! in case using GMAO backgr
-    character(len=FileNameLen) :: DATESTRING ! 'X,Y,..'
+    ! Local variables
     integer :: Details             ! How much info about the files to dump
-    integer :: DIMLIST             ! index of 'X,Y,..' in dimList='X,Y,..'
-    character(len=FileNameLen) :: DIMLISTSTRING ! 'X,Y,..'
-    integer :: EXPR_UNITS(2)            ! Output from Expr subroutine
-    double precision :: EXPR_VALUE(2)   ! Output from Expr subroutine
-    integer :: FIELD               ! Son of KEY, must be n_assign
-    integer :: FIELDINDEX          ! Literal
-    integer :: FieldName        ! sub-rosa index of name in field='name'
-    character(len=FileNameLen) :: FIELDNAMESTRING ! actual literal clim. field
-    integer :: FileName            ! Sub-rosa index of name in file='name'
-    character(len=FileNameLen) :: FileNameString   ! actual literal file name
-    integer :: FileType            ! either s_l2gp or s_l2aux
-    logical, dimension(field_first:field_last) :: GOT
-    type (griddedData_T) :: GriddedData1
-    type (MLSFile_T) :: GriddedFile
-    integer :: GriddedOrigin            ! From tree
-    integer :: GridIndex           ! In the griddeddata database
-    logical :: GotAlready               ! Do we need to reread this file?
-    integer :: hdfVersion               ! 4 or 5 (corresp. to hdf4 or hdf5)
-    character :: HMOT              ! 'H', 'M', 'O', or 'T'
-    integer :: I, J                ! Loop indices for section, spec
-    integer :: KEY                 ! Index of n_spec_args in the AST
-    integer :: L2apriori_version
-    type (L2AUXData_T) :: L2AUX
-    type (MLSFile_T) :: L2AUXFile
-    type (MLSFile_T), pointer :: pL2AUXFile
-    type (L2GPData_T) :: L2GP
-    type (MLSFile_T) :: L2GPFile
-    integer :: L2Index             ! In the l2gp or l2aux database
-    integer :: L2Name              ! Sub-rosa index of L2[aux/gp] label
+    integer :: I
     integer :: LastAprioriPCF      ! l2gp or l2aux  apriori
     integer :: LastClimPCF         ! l3ascii or gloria format
     integer :: LastDAOPCF
     integer :: LastGEOS5PCF
     integer :: LastHeightPCF
     integer :: LastNCEPPCF
-    integer :: LISTSIZE                 ! Size of string from SWInqSwath
-    real(rgr) ::    missingValue = 0.
-    integer :: NOSWATHS                 ! In an input file
-    character(len=FileNameLen) :: path   ! path of actual literal file name
-    integer :: QUANTITYTYPE             ! Lit index of quantity type
-    integer :: ReturnStatus
-    character(len=FileNameLen) :: ShortFileName
     integer :: SON              ! Of root, an n_spec_args or a n_named
-    integer :: SdName        ! sub-rosa index of name in sdName='name'
-    character(len=FileNameLen) :: SDNAMESTRING ! actual literal sdName
-    character(len=FileNameLen) :: subString   ! file name w/o path
-    logical :: sumDelp          ! sum up the DELP field values to get PL?
-    integer :: SwathName        ! sub-rosa index of name in swath='name'
-    character(len=FileNameLen) :: SWATHNAMESTRING ! actual literal swath name
     real :: T1, T2                      ! for timing
     logical :: TIMING
-    integer :: Type                     ! Type of value returned by EXPR
-    integer :: Units(2)                 ! Units of value returned by EXPR
-    double precision :: Value(2)        ! Value returned by EXPR
-    integer :: v_type                   ! E.g., v_is_eta
 
-    character(len=MAXSWATHNAMESBUFSIZE) :: ALLSWATHNAMES ! Buffer to get info back.
-    character(len=8) :: description
 
     if ( toggle(gen) ) then
       call trace_begin ( "read_apriori", root )
@@ -200,7 +142,6 @@ contains ! =====     Public Procedures     =============================
     Details = switchDetail(switches, 'apr') - 2
     if( Details > -3 ) &     
     & call output ( '============ Read APriori ============', advance='yes' )    
-    allswathnames = ' '
     LastAprioriPCF = mlspcf_l2apriori_start - 1
     lastClimPCF = mlspcf_l2clim_start - 1
     lastDAOPCF = mlspcf_l2dao_start - 1
@@ -211,501 +152,17 @@ contains ! =====     Public Procedures     =============================
     ! call outputNamedValue ( 'lastGEOS5PCF', lastGEOS5PCF )
 
     do i = 2, nsons(root)-1 ! Skip the section name at begin and end
-      hdfVersion = DEFAULT_HDFVERSION_READ
-      HMOT = ' '
-      L2apriori_version = 1
-      got = .false.
       son = subtree(i,root)
-      if ( node_id(son) == n_named ) then ! Is spec labeled?
-        key = subtree(2,son)
-        l2Name = sub_rosa(subtree(1,son))
-      else
-        key = son
-        l2Name = 0
-      end if
+      call processOneAprioriFile ( son, L2GPDatabase, L2auxDatabase, &
+        & GriddedDatabase, fileDataBase, &
+        & LastAprioriPCF , &
+        & LastClimPCF    , &
+        & LastDAOPCF     , &
+        & LastGEOS5PCF   , &
+        & LastHeightPCF  , &
+        & LastNCEPPCF     &
+          )
 
-      ! Node_id(key) is now n_spec_args.
-
-      FileType = get_spec_id(key)
-
-      if ( any( fileType == (/s_diff, s_dump/) ) ) then
-        if ( .not. CHECKPATHS ) call dumpCommand ( key, griddedDataBase=griddedDataBase )
-        cycle
-      end if
-
-      ! Now parse file and field names
-      sumDelp = .false.
-      fileName = 0
-      swathName = 0
-      do j = 2, nsons(key)
-        field = subtree(j,key)
-        fieldIndex = decoration(subtree(1,field))
-        got(fieldIndex) = .true.
-        select case ( fieldIndex )
-        case ( f_AuraInstrument )
-          AuraInst = sub_rosa(subtree(2,field))
-        case ( f_date )
-          date = sub_rosa(subtree(2,field))
-        case ( f_dimList )
-          dimList = sub_rosa(subtree(2,field))
-        case ( f_field )
-          fieldName = sub_rosa(subtree(2,field))
-        case ( f_file )
-          fileName = sub_rosa(subtree(2,field))
-        case ( f_missingValue )
-          call expr ( subtree(2,field), expr_units, expr_value )
-          missingValue = expr_value(1)
-        case ( f_hdfVersion )           
-          call expr ( subtree(2,field), units, value, type )             
-          if ( units(1) /= phyq_dimensionless ) &                        
-            & call Announce_error ( field, &                               
-              & 'No units allowed for hdfVersion: just integer 4 or 5')  
-          hdfVersion = value(1)                                          
-        case ( f_origin )
-          griddedOrigin = decoration(subtree(2,subtree(j,key)))
-        case ( f_quantityType )
-          quantityType = decoration(subtree(2,subtree(j,key)))
-        case ( f_sum )
-          sumDelp = get_boolean(field)
-        case ( f_swath )
-          swathName = sub_rosa(subtree(2,field))
-        case ( f_sdname )
-          sdname = sub_rosa(subtree(2,field))
-        end select
-      end do
-
-      if ( got(f_dimList) ) then
-        call get_string ( dimList, dimListString, strip=.true. )
-      else
-        dimListString = ''
-      end if
-        
-      if ( got(f_date) ) then
-        call get_string ( date, dateString, strip=.true. )
-      else
-        dateString = ''
-      end if
-        
-      if ( got(f_AuraInstrument) ) then
-        call get_string ( AuraInst, HMOT, strip=.true. )
-      endif
-
-      if ( got(f_file) ) then
-        call get_string ( FileName, fileNameString, strip=.true. )
-      else
-        fileNameString = ''
-      end if
-      shortFileName = fileNameString
-        
-      select case ( FileType )
-      case ( s_l2gp )
-        if ( .not. got(f_file) ) &
-          & call announce_error ( son, &
-            & 'Filename name must be specified in read a priori' )
-        swathNameString=''
-        if ( got(f_swath) ) &
-          & call get_string ( swathName, swathNameString, strip=.true. )
-
-        ! If we were given only a strand of the filename, expand it
-        if ( TOOLKIT ) then
-          call split_path_name(FileNameString, path, SubString)
-          LastAprioriPCF = GetPCFromRef(SubString, mlspcf_l2apriori_start, &
-          & mlspcf_l2apriori_end, &                                     
-          & TOOLKIT, returnStatus, l2apriori_Version, DEBUG, &  
-          & exactName=FileNameString)                             
-        endif
-        hdfVersion = mls_hdf_version(FilenameString)
-
-        gridIndex = InitializeMLSFile(L2GPFile, content = 'l2gp', &
-          & name=FilenameString, shortName=shortFileName, &
-          & type=l_swath, access=DFACC_RDONLY, hdfVersion=hdfVersion, &
-          & PCBottom=mlspcf_l2apriori_start, PCTop=mlspcf_l2apriori_end)
-        L2GPFile%PCFId = LastAprioriPCF
-        gridIndex = AddFileToDataBase(filedatabase, L2GPFile)
-        ! If we didn't get a name get the first swath name in the file
-        if ( len_trim(swathNameString) == 0 ) then
-          allSwathNames = ''
-          noSwaths = mls_InqSwath ( fileNameString, allSwathNames, listSize, &
-           & hdfVersion=hdfVersion)
-          if ( listSize == FILENOTFOUND ) then
-            call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & 'File not found; make sure the name and path are correct' &
-              & // trim(fileNameString), MLSFile=L2GPFile )
-          elseif ( listSize < 1 ) then
-            call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & 'Failed to determine swath names, perhaps none in file ' &
-              & // trim(fileNameString), MLSFile=L2GPFile )
-          elseif ( listSize < len(allSwathNames) ) then
-            commaPos = index ( allSwathNames, ',' )
-            if ( commaPos == 0 ) then
-              commaPos = len_trim(allSwathNames)
-            elseif ( commaPos == 1 ) then
-              call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & 'Failed to determine swath name, allswathnames begin with , ' &
-              & // trim(fileNameString), MLSFile=L2GPFile )
-            else
-              commaPos = commaPos - 1
-            endif
-            swathNameString = allSwathNames ( 1:commaPos )
-          else
-            call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & 'Failed to determine swath names, string too long.' &
-              & // trim(fileNameString), MLSFile=L2GPFile )
-          end if
-        endif
-        if ( swathNameString == ' ' ) then
-          call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & 'Failed to determine swath name, obscure error on ' &
-            & // trim(fileNameString), MLSFile=L2GPFile )
-        endif
-
-        ! Read the swath
-        if ( HMOT /= ' ' ) then
-          call ReadL2GPData ( L2GPFile, swathNameString, l2gp, HMOT=HMOT )
-        else
-          call ReadL2GPData ( L2GPFile, swathNameString, l2gp )
-        endif
-
-        if( Details > -3 ) then
-          if ( specialDumpFile /= ' ' ) &
-            & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
-          call dump( l2gp, details=details )
-          if ( specialDumpFile /= ' ' ) &
-            & call revertOutput
-        endif
-
-        if( switchDetail(switches, 'pro') > -1 ) then                            
-           call announce_success(FilenameString, 'l2gp', &                    
-           & swathNameString, MLSFile=L2GPFile)    
-        end if
-        apriorifiles%l2gp = catlists(apriorifiles%l2gp, trim(FilenameString))
-
-        ! Add this l2gp to the database, decorate this key with index
-        call decorate ( key, AddL2GPToDatabase( L2GPDatabase, l2gp ) )
-        ! Don't call destroy contents as the AddL2GPToDatabase has done a shallow
-        ! copy.
-        ! l2gp files in our database means               
-        ! change default behavior so that we won't allow 
-        ! overlaps outside the processing range)         
-        call output( '(Resetting defaults to exclude overlaps outside '&
-          & // 'processingRange', advance='yes' )
-        ChunkDivideConfig%allowPriorOverlaps = .false.
-        ChunkDivideConfig%allowPostOverlaps = .false.
-
-      case ( s_l2aux )
-
-        if ( TOOLKIT ) then
-          call split_path_name(FileNameString, path, SubString)
-          LastAprioriPCF = GetPCFromRef(SubString, mlspcf_l2apriori_start, &
-          & mlspcf_l2apriori_end, &                                     
-          & TOOLKIT, returnStatus, l2apriori_Version, DEBUG, &  
-          & exactName=FileNameString)                             
-        endif
-        if ( .not. all(got((/f_sdName, f_file, f_quantityType /)))) &
-          & call announce_error ( son, &
-            & 'file/sd name must both be specified in read a priori' )
-        
-        call get_string ( sdName, sdNameString )
-        sdNameString = sdNameString(2:LEN_TRIM(sdNameString)-1)
-
-        hdfVersion = mls_hdf_version(FilenameString)
-        gridIndex = InitializeMLSFile(L2AUXFile, content = 'l2aux', &
-          & name=FilenameString, shortName=shortFileName, &
-          & type=l_hdf, access=DFACC_RDONLY, hdfVersion=hdfVersion, &
-          & PCBottom=mlspcf_l2apriori_start, PCTop=mlspcf_l2apriori_end)
-        ! call mls_openFile(L2AUXFile, returnStatus)
-        L2AUXFile%PCFId = LastAprioriPCF
-
-        gridIndex = AddFileToDataBase(filedatabase, L2AUXFile)
-        l2aux%name = l2Name
-
-        l2Index = AddL2AUXToDatabase( L2AUXDatabase, l2aux )
-        call decorate ( key, l2Index )
-        pL2AUXFile => filedatabase(gridIndex)
-        call ReadL2AUXData ( pL2AUXFile, sdNameString, quantityType, &
-          & L2AUXDatabase(l2Index), &
-          & checkDimNames=.false. )
-
-        ! if( index(switches, 'apr') /= 0 ) then
-        if( Details > -3 ) then
-          if ( specialDumpFile /= ' ' ) &
-            & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
-          call dump( L2AUXDatabase(l2Index), details )
-          if ( specialDumpFile /= ' ' ) &
-            & call revertOutput
-        endif
-
-        if( switchDetail(switches, 'pro') > -1 ) then                            
-           call announce_success(FilenameString, 'l2aux', &                    
-           & sdNameString, MLSFile=L2AUXFile)    
-        end if
-        apriorifiles%l2aux = catlists(apriorifiles%l2aux, trim(FilenameString))
-
-      case ( s_gridded )
-
-        if ( .not. all(got((/f_origin, f_field/))) ) &
-          & call announce_error ( son, 'Incomplete gridded data information' )
-
-        call get_string ( fieldName, fieldNameString, strip=.true. )
-        
-        select case ( griddedOrigin )
-        case ( l_ncep, l_strat ) ! --------------------------- NCEP Data
-          if (griddedOrigin == l_ncep) then
-             description = 'ncep'
-          else
-             description = 'strat'
-          end if
-          call get_pcf_id ( fileNameString, path, subString, l2apriori_version, &
-            & mlspcf_l2ncep_start, mlspcf_l2ncep_end, description, got(f_file), &
-            & LastNCEPPCF, returnStatus )
-          gridIndex = InitializeMLSFile(GriddedFile, content = 'gridded', &
-            & name=FilenameString, shortName=shortFileName, &
-            & type=l_grid, access=DFACC_RDONLY, hdfVersion=HDFVERSION_4, &
-            & PCBottom=mlspcf_l2ncep_start, PCTop=mlspcf_l2ncep_end)
-          GriddedFile%PCFId = LastNCEPPCF
-          gridIndex = AddFileToDataBase(filedatabase, GriddedFile)
-          ! The gridded data needs to part of the database, even if the file
-          ! won't be found and the gridded data empty,
-          ! so it can be merged w/o segment faulting
-          gridIndex = AddGriddedDataToDatabase( GriddedDatabase, GriddedData1 )
-          call decorate ( key, gridIndex )
-          if ( returnStatus == PGS_S_SUCCESS) then
-            call readGriddedData ( GriddedFile, son, description, &
-              & v_is_pressure, GriddedDatabase(gridIndex), returnStatus, &
-              & dimListString, TRIM(fieldNameString), missingValue )
-          else
-            call SetupNewGriddedData ( GriddedDatabase(gridIndex), empty=.true. )
-          endif
-          if ( returnStatus == 0 ) then
-            if( switchDetail(switches, 'pro') > -1 ) &                            
-              & call announce_success(FilenameString, 'ncep', &                    
-               & fieldNameString, MLSFile=GriddedFile)
-            apriorifiles%ncep = catlists(apriorifiles%ncep, trim(FilenameString))
-          else
-            call announce_success(FilenameString, 'ncep not found--carry on', &                    
-               & fieldNameString, MLSFile=GriddedFile)
-          endif
-        case ( l_dao ) ! ---------------------------- GMAO Data (GEOS4)
-          call get_pcf_id ( fileNameString, path, subString, l2apriori_version, &
-            & mlspcf_l2dao_start, mlspcf_l2dao_end, 'dao', got(f_file), &
-            & LastDAOPCF, returnStatus )
-          gridIndex = InitializeMLSFile(GriddedFile, content = 'gridded', &
-            & name=FilenameString, shortName=shortFileName, &
-            & type=l_grid, access=DFACC_RDONLY, hdfVersion=HDFVERSION_4, &
-            & PCBottom=mlspcf_l2dao_start, PCTop=mlspcf_l2dao_end)
-          GriddedFile%PCFId = LastDAOPCF
-          gridIndex = AddFileToDataBase(filedatabase, GriddedFile)
-          ! The gridded data needs to part of the database, even if the file
-          ! won't be found and the gridded data empty,
-          ! so it can be merged w/o segment faulting
-          gridIndex = AddGriddedDataToDatabase( GriddedDatabase, GriddedData1 )
-          call decorate ( key, gridIndex )
-
-          ! We will decide whether it's geos4 or geos5 based on the field name
-          select case ( lowercase(fieldNameString) )
-          case ( 'tmpu' )
-            description = 'dao'
-            v_type = v_is_pressure
-          case ( 'pl', 't' )
-            description = 'geos5'
-            v_type = V_is_eta
-          case default
-            description = 'geos5'
-            v_type = V_is_eta
-          end select
-          if ( returnStatus == PGS_S_SUCCESS) then
-            call ReadGriddedData ( GriddedFile, son, description, v_type, &
-              & GriddedDatabase(gridIndex), returnStatus, &
-              & dimListString, TRIM(fieldNameString), &
-              & missingValue )
-          else
-            call SetupNewGriddedData ( GriddedDatabase(gridIndex), empty=.true. )
-          endif
-          if ( returnStatus == 0 ) then
-            if( switchDetail(switches, 'pro') > -1 ) &                            
-              & call announce_success(FilenameString, 'dao', &                    
-               & fieldNameString, MLSFile=GriddedFile)    
-          else
-            call announce_success(FilenameString, 'dao not found--carry on', &                    
-               & fieldNameString, MLSFile=GriddedFile)
-          endif
-          if ( description == 'dao' ) then
-            apriorifiles%dao = catlists(apriorifiles%dao, trim(FilenameString))
-          else
-            apriorifiles%geos5 = catlists(apriorifiles%geos5, trim(FilenameString))
-          endif
-        case ( l_geos5, l_merra ) ! ---------------------------- GMAO Data (GEOS5)
-          ! call outputNamedValue ( 'fileNameString', trim(fileNameString) )
-          ! call outputNamedValue ( 'LastGEOS5PCF', LastGEOS5PCF )
-          call get_pcf_id ( fileNameString, path, subString, l2apriori_version, &
-            & mlspcf_l2geos5_start, mlspcf_l2geos5_end, 'geos5', got(f_file), &
-            & LastGEOS5PCF, returnStatus )
-          gridIndex = InitializeMLSFile(GriddedFile, content = 'gridded', &
-            & name=FilenameString, shortName=shortFileName, &
-            & type=l_grid, access=DFACC_RDONLY, hdfVersion=HDFVERSION_4, &
-            & PCBottom=mlspcf_l2geos5_start, PCTop=mlspcf_l2geos5_end)
-          GriddedFile%PCFId = LastGEOS5PCF
-          gridIndex = AddFileToDataBase(filedatabase, GriddedFile)
-          ! The gridded data needs to part of the database, even if the file
-          ! won't be found and the gridded data empty,
-          ! so it can be merged w/o segment faulting
-          gridIndex = AddGriddedDataToDatabase( GriddedDatabase, GriddedData1 )
-          call decorate ( key, gridIndex )
-
-          ! We will decide whether it's geos4 or geos5 based on the field name
-          select case ( lowercase(fieldNameString) )
-          case ( 'tmpu' )
-            description = 'dao'
-            v_type = v_is_pressure
-          case ( 'pl', 't', 'delp' )
-            description = 'geos5'
-            v_type = V_is_eta
-          case default
-            ! We may use this case if we allow for either merra or geos5
-            ! in the same l2cf declarartion; e.g.
-            ! geos5SumInput: gridded, origin=geos5, field='PL,DELP',  ..
-            ! which means:
-            ! 1st, try to read the field 'PL'
-            ! if that fails, try to read the field 'DELP'
-            ! (optionally summing over it to create a 'PL' field)
-            description = 'geos5'
-            v_type = V_is_eta
-          end select
-          if ( griddedOrigin == l_merra ) description = 'merra'
-          if ( DEBUG ) then
-            call outputNamedValue( 'fileName', fileNameString )
-            call outputNamedValue( 'fieldName', fieldNameString )
-            call outputNamedValue( 'description', description )
-          endif
-          if ( returnStatus == PGS_S_SUCCESS) then
-            call ReadGriddedData ( GriddedFile, son, description, v_type, &
-              & GriddedDatabase(gridIndex), returnStatus, &
-              & dimListString, TRIM(fieldNameString), &
-              & missingValue, dateString, sumDelp )
-          else
-            call SetupNewGriddedData ( GriddedDatabase(gridIndex), empty=.true. )
-          endif
-          if ( returnStatus == 0 ) then
-            if( switchDetail(switches, 'pro') > -1 ) &                            
-              & call announce_success(FilenameString, 'geos5', &                    
-               & fieldNameString, MLSFile=GriddedFile)    
-          else
-            call announce_success(FilenameString, 'geos5 not found--carry on', &                    
-               & fieldNameString, MLSFile=GriddedFile)
-          endif
-          apriorifiles%geos5 = catlists(apriorifiles%geos5, trim(FilenameString))
-          ! error = 1
-        case ( l_gloria ) ! ------------------------- Data in Gloria's UARS format
-          call get_pcf_id ( fileNameString, path, subString, l2apriori_version, &
-            & mlspcf_l2clim_start, mlspcf_l2clim_end, 'gloria', got(f_file), &
-            & LastClimPCF, returnStatus )
-          if ( TOOLKIT .and. returnStatus /= PGS_S_SUCCESS ) then
-            call announce_error ( son, &
-              & 'PCF number not found to supply' // &
-              & ' missing Climatology file name' )
-          end if
-          gridIndex = InitializeMLSFile(GriddedFile, content = 'gridded', &
-            & name=FilenameString, shortName=shortFileName, &
-            & type=l_ascii, access=DFACC_RDONLY, &
-            & PCBottom=mlspcf_l2clim_start, PCTop=mlspcf_l2clim_end)
-          GriddedFile%PCFId = LastCLIMPCF
-          gridIndex = AddFileToDataBase(filedatabase, GriddedFile)
-          call decorate ( key, &
-            & AddGriddedDataToDatabase ( griddedDatabase, &
-            & ReadGloriaFile ( GriddedFile ) ) )
-          if( switchDetail(switches, 'pro') > -1 ) then                            
-            call announce_success(FilenameString, 'Gloria', &                    
-             & '', MLSFile=GriddedFile)    
-          endif
-        case ( l_climatology ) ! -------------------- Climatology data
-          ! Identify file (maybe from PCF if no name given)
-          call get_pcf_id ( fileNameString, path, subString, l2apriori_version, &
-            & mlspcf_l2clim_start, mlspcf_l2clim_end, 'climatology', got(f_file), &
-            & LastClimPCF, returnStatus )
-          if ( TOOLKIT .and. returnStatus /= PGS_S_SUCCESS ) then
-            call announce_error ( son, &
-              & 'PCF number not found to supply' // &
-              & ' missing Climatology file name' )
-          end if
-          
-          ! Have we read this already?
-          gotAlready = associated(GriddedDatabase)
-          if ( gotAlready ) then
-            gotAlready = any(GriddedDatabase%sourceFilename==filenameString)
-          end if
-          if ( .not. gotAlready ) then
-            gridIndex = InitializeMLSFile(GriddedFile, content = 'clim', &
-              & name=FilenameString, shortName=shortFileName, &
-              & type=l_ascii, access=DFACC_RDONLY, &
-              & PCBottom=mlspcf_l2clim_start, PCTop=mlspcf_l2clim_end)
-            GriddedFile%PCFId = LastCLIMPCF
-            gridIndex = AddFileToDataBase(filedatabase, GriddedFile)
-            ! No, well read it then, add its entire contents to the database
-            call read_climatology ( GriddedFile, son, &
-              & GriddedDatabase, returnStatus, &
-              & mlspcf_l2apriori_start, mlspcf_l2apriori_end, &
-              & missingValue )
-            if ( returnStatus /= 0 ) &
-              & call Announce_error ( field, &                               
-              & 'read_climatology unsuccessful--check file name and path')  
-          end if
-          if ( .not. associated(GriddedDatabase) ) cycle  ! Last chance
-       
-          ! Locate requested grid by name, store index in gridIndex
-          ! Check that field name is among those added by the source field
-          do gridIndex = 1, size(griddedDatabase)
-            if ( trim(fieldNameString) == &
-              & trim(GriddedDatabase(gridIndex)%quantityName) ) exit
-          end do
-
-          if ( gridIndex <= size(griddedDatabase) ) then
-            call decorate ( key, gridIndex )
-            if( switchDetail(switches, 'pro') > -1 ) then                            
-              call announce_success(FilenameString, 'climatology', &                  
-               & fieldNameString, MLSFile=GriddedFile)
-            end if
-          else
-            call announce_error ( son, 'Field ' // trim(fieldNameString) // &
-              & ' not found in clim. file ' // trim(fileNameString) )
-          end if
-        case ( l_surfaceHeight ) ! See Read_surface_height_file
-          call get_pcf_id ( fileNameString, path, subString, l2apriori_version, &
-            & mlspcf_surfaceHeight_start, mlspcf_surfaceHeight_end, &
-            & 'surfaceHeight', got(f_file), &
-            & lastHeightPCF, returnStatus )
-          if ( TOOLKIT .and. returnStatus /= PGS_S_SUCCESS ) then
-            call announce_error ( son, &
-              & 'PCF number not found to supply' // &
-              & ' missing Surface Height file name' )
-          end if
-          gridIndex = InitializeMLSFile(GriddedFile, content = 'gridded', &
-            & name=FilenameString, shortName=shortFileName, &
-            & type=l_binary, access=DFACC_RDONLY, &
-            & PCBottom=mlspcf_surfaceHeight_start, PCTop=mlspcf_surfaceHeight_end)
-          GriddedFile%PCFId = LastCLIMPCF
-          gridIndex = AddFileToDataBase(filedatabase, GriddedFile)
-          call open_surface_height_file ( griddedFile )
-          call decorate ( key, &
-            & AddGriddedDataToDatabase ( griddedDatabase, &
-            & read_surface_height_file ( GriddedFile ) ) )
-          call close_surface_height_file ( GriddedFile )
-          if( switchDetail(switches, 'pro') > -1 ) then                            
-            call announce_success(FilenameString, 'SurfaceHeight', &                    
-             & '', MLSFile=GriddedFile)    
-          end if
-        case default ! Can't get here if tree_checker worked correctly
-        end select   ! origins of gridded data
-
-        if( Details > -3 ) then
-          if ( specialDumpFile /= ' ' ) &
-            & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
-          call dump( GriddedDatabase(gridIndex), details )
-          if ( specialDumpFile /= ' ' ) &
-            & call revertOutput
-        endif
-
-      case default
-      end select     ! types of apriori data
     end do                              ! Lines in l2cf loop
     
     call output( '------------------- apriori datatypes --------------', advance='yes' )
@@ -735,6 +192,625 @@ contains ! =====     Public Procedures     =============================
 
   contains
 
+    subroutine SayTime
+      call time_now ( t2 )
+      if ( total_times ) then
+        call output ( "Total time = " )
+        call output ( dble(t2), advance = 'no' )
+        call blanks ( 4, advance = 'no' )
+      end if
+      call output ( "Timing for read_apriori = " )
+      call output ( dble(t2 - t1), advance = 'yes' )
+      timing = .false.
+    end subroutine SayTime
+
+  end subroutine read_apriori
+  
+  subroutine processOneAprioriFile ( Root, L2GPDatabase, L2auxDatabase, &
+    & GriddedDatabase, fileDataBase, &
+    & LastAprioriPCF , &
+    & LastClimPCF    , &
+    & LastDAOPCF     , &
+    & LastGEOS5PCF   , &
+    & LastHeightPCF  , &
+    & LastNCEPPCF     &
+      )
+    use ChunkDivide_m, only: ChunkDivideConfig
+    use DumpCommand_m, only: DumpCommand
+    use GriddedData, only: rgr, GriddedData_T, V_is_eta, v_is_pressure, &
+      & AddGriddedDataToDatabase, Dump, SetupNewGriddedData
+    use L2AUXData, only: L2AUXData_T, AddL2AUXToDatabase, &
+      &                  ReadL2AUXData, Dump
+    use L2GPData, only: L2GPData_T, &
+      & AddL2GPToDatabase, ReadL2GPData, Dump
+    use ncep_dao, only: READ_CLIMATOLOGY, ReadGriddedData, ReadGloriaFile
+    use SurfaceHeight_m, only: Open_Surface_Height_File, &
+      & Read_Surface_Height_File, Close_Surface_Height_File
+
+    ! Dummy arguments
+    integer, intent(in) :: ROOT    ! Of the Read a priori section in the AST
+    type (l2gpdata_t), dimension(:), pointer :: L2GPDatabase
+    type (L2AUXData_T), dimension(:), pointer :: L2auxDatabase
+    type (GriddedData_T), dimension(:), pointer :: GriddedDatabase 
+    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+    integer :: LastAprioriPCF      ! l2gp or l2aux  apriori
+    integer :: LastClimPCF         ! l3ascii or gloria format
+    integer :: LastDAOPCF
+    integer :: LastGEOS5PCF
+    integer :: LastHeightPCF
+    integer :: LastNCEPPCF
+    ! Local Variables
+    character(len=MAXSWATHNAMESBUFSIZE) :: ALLSWATHNAMES ! Buffer to get info back.
+    integer :: AURAINST             ! index of 'MLS' in AuraInstrument='MLS'
+    integer :: COMMAPOS                 ! For parsing string
+    logical, parameter :: DEBUG = .FALSE.
+    integer :: DATE             ! in case using GMAO backgr
+    character(len=FileNameLen) :: DATESTRING ! 'X,Y,..'
+    integer :: Details             ! How much info about the files to dump
+    integer :: DIMLIST             ! index of 'X,Y,..' in dimList='X,Y,..'
+    character(len=FileNameLen) :: DIMLISTSTRING ! 'X,Y,..'
+    integer :: EXPR_UNITS(2)            ! Output from Expr subroutine
+    double precision :: EXPR_VALUE(2)   ! Output from Expr subroutine
+    integer :: FIELD               ! Son of KEY, must be n_assign
+    integer :: FIELDINDEX          ! Literal
+    integer :: FieldName        ! sub-rosa index of name in field='name'
+    character(len=FileNameLen) :: FIELDNAMESTRING ! actual literal clim. field
+    integer :: FileName            ! Sub-rosa index of name in file='name'
+    character(len=FileNameLen) :: FileNameString   ! actual literal file name
+    integer :: FileType            ! s_gridded, s_l2gp, s_l2aux, ..
+    type (griddedData_T) :: GriddedData1
+    type (MLSFile_T) :: GriddedFile
+    integer :: GriddedOrigin            ! From tree
+    integer :: GridIndex           ! In the griddeddata database
+    logical :: GotAlready               ! Do we need to reread this file?
+    logical, dimension(field_first:field_last) :: GOT
+    integer :: hdfVersion               ! 4 or 5 (corresp. to hdf4 or hdf5)
+    character :: HMOT              ! 'H', 'M', 'O', or 'T'
+    integer :: L2apriori_version
+    integer :: J                ! Loop indices for section, spec
+    integer :: KEY                 ! Index of n_spec_args in the AST
+    type (L2AUXData_T) :: L2AUX
+    type (MLSFile_T) :: L2AUXFile
+    type (MLSFile_T), pointer :: pL2AUXFile
+    type (L2GPData_T) :: L2GP
+    type (MLSFile_T) :: L2GPFile
+    integer :: L2Index             ! In the l2gp or l2aux database
+    integer :: L2Name              ! Sub-rosa index of L2[aux/gp] label
+    integer :: LISTSIZE                 ! Size of string from SWInqSwath
+    real(rgr) ::    missingValue = 0.
+    integer :: NOSWATHS                 ! In an input file
+    character(len=FileNameLen) :: path   ! path of actual literal file name
+    integer :: QUANTITYTYPE             ! Lit index of quantity type
+    integer :: ReturnStatus
+    character(len=FileNameLen) :: ShortFileName
+    integer :: SON              ! Of root, an n_spec_args or a n_named
+    integer :: SdName        ! sub-rosa index of name in sdName='name'
+    character(len=FileNameLen) :: SDNAMESTRING ! actual literal sdName
+    character(len=FileNameLen) :: subString   ! file name w/o path
+    logical :: sumDelp          ! sum up the DELP field values to get PL?
+    integer :: SwathName        ! sub-rosa index of name in swath='name'
+    character(len=FileNameLen) :: SWATHNAMESTRING ! actual literal swath name
+    logical :: TIMING
+    integer :: Type                     ! Type of value returned by EXPR
+    integer :: Units(2)                 ! Units of value returned by EXPR
+    double precision :: Value(2)        ! Value returned by EXPR
+    integer :: v_type                   ! E.g., v_is_eta
+
+    character(len=8) :: description
+    ! Executable
+    allswathnames = ' '
+    hdfVersion = DEFAULT_HDFVERSION_READ
+    HMOT = ' '
+    L2apriori_version = 1
+    got = .false.
+    if ( node_id(root) == n_named ) then ! Is spec labeled?
+      key = subtree(2,root)
+      l2Name = sub_rosa(subtree(1,root))
+    else
+      key = root
+      l2Name = 0
+    end if
+
+    ! Node_id(key) is now n_spec_args.
+
+    FileType = get_spec_id(key)
+
+    if ( any( fileType == (/s_diff, s_dump/) ) ) then
+      if ( .not. CHECKPATHS ) call dumpCommand ( key, griddedDataBase=griddedDataBase )
+      return
+    end if
+
+    ! Now parse file and field names
+    Details = switchDetail(switches, 'apr') - 2
+    timing = section_times
+    sumDelp = .false.
+    fileName = 0
+    son = root
+    swathName = 0
+    do j = 2, nsons(key)
+      field = subtree(j,key)
+      fieldIndex = decoration(subtree(1,field))
+      got(fieldIndex) = .true.
+      select case ( fieldIndex )
+      case ( f_AuraInstrument )
+        AuraInst = sub_rosa(subtree(2,field))
+      case ( f_date )
+        date = sub_rosa(subtree(2,field))
+      case ( f_dimList )
+        dimList = sub_rosa(subtree(2,field))
+      case ( f_field )
+        fieldName = sub_rosa(subtree(2,field))
+      case ( f_file )
+        fileName = sub_rosa(subtree(2,field))
+      case ( f_missingValue )
+        call expr ( subtree(2,field), expr_units, expr_value )
+        missingValue = expr_value(1)
+      case ( f_hdfVersion )           
+        call expr ( subtree(2,field), units, value, type )             
+        if ( units(1) /= phyq_dimensionless ) &                        
+          & call Announce_error ( field, &                               
+            & 'No units allowed for hdfVersion: just integer 4 or 5')  
+        hdfVersion = value(1)                                          
+      case ( f_origin )
+        griddedOrigin = decoration(subtree(2,subtree(j,key)))
+      case ( f_quantityType )
+        quantityType = decoration(subtree(2,subtree(j,key)))
+      case ( f_sum )
+        sumDelp = get_boolean(field)
+      case ( f_swath )
+        swathName = sub_rosa(subtree(2,field))
+      case ( f_sdname )
+        sdname = sub_rosa(subtree(2,field))
+      end select
+    end do
+
+    if ( got(f_dimList) ) then
+      call get_string ( dimList, dimListString, strip=.true. )
+    else
+      dimListString = ''
+    end if
+
+    if ( got(f_date) ) then
+      call get_string ( date, dateString, strip=.true. )
+    else
+      dateString = ''
+    end if
+
+    if ( got(f_AuraInstrument) ) then
+      call get_string ( AuraInst, HMOT, strip=.true. )
+    endif
+
+    if ( got(f_file) ) then
+      call get_string ( FileName, fileNameString, strip=.true. )
+    else
+      fileNameString = ''
+    end if
+    shortFileName = fileNameString
+
+    select case ( FileType )
+    case ( s_l2gp )
+      if ( .not. got(f_file) ) &
+        & call announce_error ( son, &
+          & 'Filename name must be specified in read a priori' )
+      swathNameString=''
+      if ( got(f_swath) ) &
+        & call get_string ( swathName, swathNameString, strip=.true. )
+
+      ! If we were given only a strand of the filename, expand it
+      if ( TOOLKIT ) then
+        call split_path_name(FileNameString, path, SubString)
+        LastAprioriPCF = GetPCFromRef(SubString, mlspcf_l2apriori_start, &
+        & mlspcf_l2apriori_end, &                                     
+        & TOOLKIT, returnStatus, l2apriori_Version, DEBUG, &  
+        & exactName=FileNameString)                             
+      endif
+      hdfVersion = mls_hdf_version(FilenameString)
+
+      gridIndex = InitializeMLSFile(L2GPFile, content = 'l2gp', &
+        & name=FilenameString, shortName=shortFileName, &
+        & type=l_swath, access=DFACC_RDONLY, hdfVersion=hdfVersion, &
+        & PCBottom=mlspcf_l2apriori_start, PCTop=mlspcf_l2apriori_end)
+      L2GPFile%PCFId = LastAprioriPCF
+      gridIndex = AddFileToDataBase(filedatabase, L2GPFile)
+      ! If we didn't get a name get the first swath name in the file
+      if ( len_trim(swathNameString) == 0 ) then
+        allSwathNames = ''
+        noSwaths = mls_InqSwath ( fileNameString, allSwathNames, listSize, &
+         & hdfVersion=hdfVersion)
+        if ( listSize == FILENOTFOUND ) then
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'File not found; make sure the name and path are correct' &
+            & // trim(fileNameString), MLSFile=L2GPFile )
+        elseif ( listSize < 1 ) then
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Failed to determine swath names, perhaps none in file ' &
+            & // trim(fileNameString), MLSFile=L2GPFile )
+        elseif ( listSize < len(allSwathNames) ) then
+          commaPos = index ( allSwathNames, ',' )
+          if ( commaPos == 0 ) then
+            commaPos = len_trim(allSwathNames)
+          elseif ( commaPos == 1 ) then
+            call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Failed to determine swath name, allswathnames begin with , ' &
+            & // trim(fileNameString), MLSFile=L2GPFile )
+          else
+            commaPos = commaPos - 1
+          endif
+          swathNameString = allSwathNames ( 1:commaPos )
+        else
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Failed to determine swath names, string too long.' &
+            & // trim(fileNameString), MLSFile=L2GPFile )
+        end if
+      endif
+      if ( swathNameString == ' ' ) then
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Failed to determine swath name, obscure error on ' &
+          & // trim(fileNameString), MLSFile=L2GPFile )
+      endif
+
+      ! Read the swath
+      if ( HMOT /= ' ' ) then
+        call ReadL2GPData ( L2GPFile, swathNameString, l2gp, HMOT=HMOT )
+      else
+        call ReadL2GPData ( L2GPFile, swathNameString, l2gp )
+      endif
+
+      if( Details > -3 ) then
+        if ( specialDumpFile /= ' ' ) &
+          & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
+        call dump( l2gp, details=details )
+        if ( specialDumpFile /= ' ' ) &
+          & call revertOutput
+      endif
+
+      if( switchDetail(switches, 'pro') > -1 ) then                            
+         call announce_success(FilenameString, 'l2gp', &                    
+         & swathNameString, MLSFile=L2GPFile)    
+      end if
+      apriorifiles%l2gp = catlists(apriorifiles%l2gp, trim(FilenameString))
+
+      ! Add this l2gp to the database, decorate this key with index
+      call decorate ( key, AddL2GPToDatabase( L2GPDatabase, l2gp ) )
+      ! Don't call destroy contents as the AddL2GPToDatabase has done a shallow
+      ! copy.
+      ! l2gp files in our database means               
+      ! change default behavior so that we won't allow 
+      ! overlaps outside the processing range)         
+      call output( '(Resetting defaults to exclude overlaps outside '&
+        & // 'processingRange', advance='yes' )
+      ChunkDivideConfig%allowPriorOverlaps = .false.
+      ChunkDivideConfig%allowPostOverlaps = .false.
+
+    case ( s_l2aux )
+
+      if ( TOOLKIT ) then
+        call split_path_name(FileNameString, path, SubString)
+        LastAprioriPCF = GetPCFromRef(SubString, mlspcf_l2apriori_start, &
+        & mlspcf_l2apriori_end, &                                     
+        & TOOLKIT, returnStatus, l2apriori_Version, DEBUG, &  
+        & exactName=FileNameString)                             
+      endif
+      if ( .not. all(got((/f_sdName, f_file, f_quantityType /)))) &
+        & call announce_error ( son, &
+          & 'file/sd name must both be specified in read a priori' )
+
+      call get_string ( sdName, sdNameString )
+      sdNameString = sdNameString(2:LEN_TRIM(sdNameString)-1)
+
+      hdfVersion = mls_hdf_version(FilenameString)
+      gridIndex = InitializeMLSFile(L2AUXFile, content = 'l2aux', &
+        & name=FilenameString, shortName=shortFileName, &
+        & type=l_hdf, access=DFACC_RDONLY, hdfVersion=hdfVersion, &
+        & PCBottom=mlspcf_l2apriori_start, PCTop=mlspcf_l2apriori_end)
+      ! call mls_openFile(L2AUXFile, returnStatus)
+      L2AUXFile%PCFId = LastAprioriPCF
+
+      gridIndex = AddFileToDataBase(filedatabase, L2AUXFile)
+      l2aux%name = l2Name
+
+      l2Index = AddL2AUXToDatabase( L2AUXDatabase, l2aux )
+      call decorate ( key, l2Index )
+      pL2AUXFile => filedatabase(gridIndex)
+      call ReadL2AUXData ( pL2AUXFile, sdNameString, quantityType, &
+        & L2AUXDatabase(l2Index), &
+        & checkDimNames=.false. )
+
+      ! if( index(switches, 'apr') /= 0 ) then
+      if( Details > -3 ) then
+        if ( specialDumpFile /= ' ' ) &
+          & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
+        call dump( L2AUXDatabase(l2Index), details )
+        if ( specialDumpFile /= ' ' ) &
+          & call revertOutput
+      endif
+
+      if( switchDetail(switches, 'pro') > -1 ) then                            
+         call announce_success(FilenameString, 'l2aux', &                    
+         & sdNameString, MLSFile=L2AUXFile)    
+      end if
+      apriorifiles%l2aux = catlists(apriorifiles%l2aux, trim(FilenameString))
+
+    case ( s_gridded )
+
+      ! So we can declare a gridded data name to be used later
+      if ( griddedOrigin == l_none ) then
+        fieldNameString = 'none'
+      elseif ( .not. all(got((/f_origin, f_field/))) ) then
+        call announce_error ( son, 'Incomplete gridded data information' )
+      else
+        call get_string ( fieldName, fieldNameString, strip=.true. )
+      endif
+
+      select case ( griddedOrigin )
+      case ( l_none ) ! ----------- Just a declaration to use later
+        description = 'none'
+        ! The gridded data needs to part of the database, even if the file
+        ! won't be found and the gridded data empty,
+        ! so it can be operated on w/o segment faulting
+        gridIndex = AddGriddedDataToDatabase( GriddedDatabase, GriddedData1 )
+        call decorate ( key, gridIndex )
+        call SetupNewGriddedData ( GriddedDatabase(gridIndex), empty=.true. )
+      case ( l_ncep, l_strat ) ! --------------------------- NCEP Data
+        if (griddedOrigin == l_ncep) then
+           description = 'ncep'
+        else
+           description = 'strat'
+        end if
+        call get_pcf_id ( fileNameString, path, subString, l2apriori_version, &
+          & mlspcf_l2ncep_start, mlspcf_l2ncep_end, description, got(f_file), &
+          & LastNCEPPCF, returnStatus )
+        gridIndex = InitializeMLSFile(GriddedFile, content = 'gridded', &
+          & name=FilenameString, shortName=shortFileName, &
+          & type=l_grid, access=DFACC_RDONLY, hdfVersion=HDFVERSION_4, &
+          & PCBottom=mlspcf_l2ncep_start, PCTop=mlspcf_l2ncep_end)
+        GriddedFile%PCFId = LastNCEPPCF
+        gridIndex = AddFileToDataBase(filedatabase, GriddedFile)
+        ! The gridded data needs to part of the database, even if the file
+        ! won't be found and the gridded data empty,
+        ! so it can be merged w/o segment faulting
+        gridIndex = AddGriddedDataToDatabase( GriddedDatabase, GriddedData1 )
+        call decorate ( key, gridIndex )
+        if ( returnStatus == PGS_S_SUCCESS) then
+          call readGriddedData ( GriddedFile, son, description, &
+            & v_is_pressure, GriddedDatabase(gridIndex), returnStatus, &
+            & dimListString, TRIM(fieldNameString), missingValue )
+        else
+          call SetupNewGriddedData ( GriddedDatabase(gridIndex), empty=.true. )
+        endif
+        if ( returnStatus == 0 ) then
+          if( switchDetail(switches, 'pro') > -1 ) &                            
+            & call announce_success(FilenameString, 'ncep', &                    
+             & fieldNameString, MLSFile=GriddedFile)
+          apriorifiles%ncep = catlists(apriorifiles%ncep, trim(FilenameString))
+        else
+          call announce_success(FilenameString, 'ncep not found--carry on', &                    
+             & fieldNameString, MLSFile=GriddedFile)
+        endif
+      case ( l_dao ) ! ---------------------------- GMAO Data (GEOS4)
+        call get_pcf_id ( fileNameString, path, subString, l2apriori_version, &
+          & mlspcf_l2dao_start, mlspcf_l2dao_end, 'dao', got(f_file), &
+          & LastDAOPCF, returnStatus )
+        gridIndex = InitializeMLSFile(GriddedFile, content = 'gridded', &
+          & name=FilenameString, shortName=shortFileName, &
+          & type=l_grid, access=DFACC_RDONLY, hdfVersion=HDFVERSION_4, &
+          & PCBottom=mlspcf_l2dao_start, PCTop=mlspcf_l2dao_end)
+        GriddedFile%PCFId = LastDAOPCF
+        gridIndex = AddFileToDataBase(filedatabase, GriddedFile)
+        ! The gridded data needs to part of the database, even if the file
+        ! won't be found and the gridded data empty,
+        ! so it can be merged w/o segment faulting
+        gridIndex = AddGriddedDataToDatabase( GriddedDatabase, GriddedData1 )
+        call decorate ( key, gridIndex )
+
+        ! We will decide whether it's geos4 or geos5 based on the field name
+        select case ( lowercase(fieldNameString) )
+        case ( 'tmpu' )
+          description = 'dao'
+          v_type = v_is_pressure
+        case ( 'pl', 't' )
+          description = 'geos5'
+          v_type = V_is_eta
+        case default
+          description = 'geos5'
+          v_type = V_is_eta
+        end select
+        if ( returnStatus == PGS_S_SUCCESS) then
+          call ReadGriddedData ( GriddedFile, son, description, v_type, &
+            & GriddedDatabase(gridIndex), returnStatus, &
+            & dimListString, TRIM(fieldNameString), &
+            & missingValue )
+        else
+          call SetupNewGriddedData ( GriddedDatabase(gridIndex), empty=.true. )
+        endif
+        if ( returnStatus == 0 ) then
+          if( switchDetail(switches, 'pro') > -1 ) &                            
+            & call announce_success(FilenameString, 'dao', & 
+             & fieldNameString, MLSFile=GriddedFile)    
+        else
+          call announce_success(FilenameString, 'dao not found--carry on', &
+             & fieldNameString, MLSFile=GriddedFile)
+        endif
+        if ( description == 'dao' ) then
+          apriorifiles%dao = catlists(apriorifiles%dao, trim(FilenameString))
+        else
+          apriorifiles%geos5 = &
+            & catlists(apriorifiles%geos5, trim(FilenameString))
+        endif
+      case ( l_geos5, l_geos5_7, l_merra ) ! ------------ GMAO Data (GEOS5*)
+        ! call outputNamedValue ( 'fileNameString', trim(fileNameString) )
+        ! call outputNamedValue ( 'LastGEOS5PCF', LastGEOS5PCF )
+        call get_pcf_id ( fileNameString, path, subString, l2apriori_version, &
+          & mlspcf_l2geos5_start, mlspcf_l2geos5_end, 'geos5', got(f_file), &
+          & LastGEOS5PCF, returnStatus )
+        gridIndex = InitializeMLSFile(GriddedFile, content = 'gridded', &
+          & name=FilenameString, shortName=shortFileName, &
+          & type=l_grid, access=DFACC_RDONLY, hdfVersion=HDFVERSION_4, &
+          & PCBottom=mlspcf_l2geos5_start, PCTop=mlspcf_l2geos5_end)
+        GriddedFile%PCFId = LastGEOS5PCF
+        gridIndex = AddFileToDataBase(filedatabase, GriddedFile)
+        ! The gridded data needs to part of the database, even if the file
+        ! won't be found and the gridded data empty,
+        ! so it can be merged w/o segment faulting
+        gridIndex = AddGriddedDataToDatabase( GriddedDatabase, GriddedData1 )
+        call decorate ( key, gridIndex )
+
+        ! We will decide whether it's geos4 or geos5 based on the field name
+        select case ( lowercase(fieldNameString) )
+        case ( 'tmpu' )
+          description = 'dao'
+          v_type = v_is_pressure
+        case ( 'pl', 't', 'delp' )
+          description = 'geos5'
+          v_type = V_is_eta
+        case default
+          ! We may use this case if we allow for either merra or geos5
+          ! in the same l2cf declarartion; e.g.
+          ! geos5SumInput: gridded, origin=geos5, field='PL,DELP',  ..
+          ! which means:
+          ! 1st, try to read the field 'PL'
+          ! if that fails, try to read the field 'DELP'
+          ! (optionally summing over it to create a 'PL' field)
+          description = 'geos5'
+          v_type = V_is_eta
+        end select
+        if ( griddedOrigin == l_merra ) description = 'merra'
+        if ( griddedOrigin == l_geos5_7 ) description = 'geos5_7'
+        if ( DEBUG ) then
+          call outputNamedValue( 'fileName', fileNameString )
+          call outputNamedValue( 'fieldName', fieldNameString )
+          call outputNamedValue( 'description', description )
+        endif
+        if ( returnStatus == PGS_S_SUCCESS) then
+          call ReadGriddedData ( GriddedFile, son, description, v_type, &
+            & GriddedDatabase(gridIndex), returnStatus, &
+            & dimListString, TRIM(fieldNameString), &
+            & missingValue, dateString, sumDelp )
+        else
+          call SetupNewGriddedData ( GriddedDatabase(gridIndex), empty=.true. )
+        endif
+        if ( returnStatus == 0 ) then
+          if( switchDetail(switches, 'pro') > -1 ) &                            
+            & call announce_success(FilenameString, 'geos5', &                    
+             & fieldNameString, MLSFile=GriddedFile)    
+        else
+          call announce_success(FilenameString, 'geos5 not found--carry on', &                    
+             & fieldNameString, MLSFile=GriddedFile)
+        endif
+        apriorifiles%geos5 = catlists(apriorifiles%geos5, trim(FilenameString))
+        ! error = 1
+      case ( l_gloria ) ! ------------------------- Data in Gloria's UARS format
+        call get_pcf_id ( fileNameString, path, subString, l2apriori_version, &
+          & mlspcf_l2clim_start, mlspcf_l2clim_end, 'gloria', got(f_file), &
+          & LastClimPCF, returnStatus )
+        if ( TOOLKIT .and. returnStatus /= PGS_S_SUCCESS ) then
+          call announce_error ( son, &
+            & 'PCF number not found to supply' // &
+            & ' missing Climatology file name' )
+        end if
+        gridIndex = InitializeMLSFile(GriddedFile, content = 'gridded', &
+          & name=FilenameString, shortName=shortFileName, &
+          & type=l_ascii, access=DFACC_RDONLY, &
+          & PCBottom=mlspcf_l2clim_start, PCTop=mlspcf_l2clim_end)
+        GriddedFile%PCFId = LastCLIMPCF
+        gridIndex = AddFileToDataBase(filedatabase, GriddedFile)
+        call decorate ( key, &
+          & AddGriddedDataToDatabase ( griddedDatabase, &
+          & ReadGloriaFile ( GriddedFile ) ) )
+        if( switchDetail(switches, 'pro') > -1 ) then                            
+          call announce_success(FilenameString, 'Gloria', &                    
+           & '', MLSFile=GriddedFile)    
+        endif
+      case ( l_climatology ) ! -------------------- Climatology data
+        ! Identify file (maybe from PCF if no name given)
+        call get_pcf_id ( fileNameString, path, subString, l2apriori_version, &
+          & mlspcf_l2clim_start, mlspcf_l2clim_end, 'climatology', got(f_file), &
+          & LastClimPCF, returnStatus )
+        if ( TOOLKIT .and. returnStatus /= PGS_S_SUCCESS ) then
+          call announce_error ( son, &
+            & 'PCF number not found to supply' // &
+            & ' missing Climatology file name' )
+        end if
+
+        ! Have we read this already?
+        gotAlready = associated(GriddedDatabase)
+        if ( gotAlready ) then
+          gotAlready = any(GriddedDatabase%sourceFilename==filenameString)
+        end if
+        if ( .not. gotAlready ) then
+          gridIndex = InitializeMLSFile(GriddedFile, content = 'clim', &
+            & name=FilenameString, shortName=shortFileName, &
+            & type=l_ascii, access=DFACC_RDONLY, &
+            & PCBottom=mlspcf_l2clim_start, PCTop=mlspcf_l2clim_end)
+          GriddedFile%PCFId = LastCLIMPCF
+          gridIndex = AddFileToDataBase(filedatabase, GriddedFile)
+          ! No, well read it then, add its entire contents to the database
+          call read_climatology ( GriddedFile, son, &
+            & GriddedDatabase, returnStatus, &
+            & mlspcf_l2apriori_start, mlspcf_l2apriori_end, &
+            & missingValue )
+          if ( returnStatus /= 0 ) &
+            & call Announce_error ( field, &                               
+            & 'read_climatology unsuccessful--check file name and path')  
+        end if
+        if ( .not. associated(GriddedDatabase) ) return  ! Last chance
+
+        ! Locate requested grid by name, store index in gridIndex
+        ! Check that field name is among those added by the source field
+        do gridIndex = 1, size(griddedDatabase)
+          if ( trim(fieldNameString) == &
+            & trim(GriddedDatabase(gridIndex)%quantityName) ) exit
+        end do
+
+        if ( gridIndex <= size(griddedDatabase) ) then
+          call decorate ( key, gridIndex )
+          if( switchDetail(switches, 'pro') > -1 ) then                            
+            call announce_success(FilenameString, 'climatology', &                  
+             & fieldNameString, MLSFile=GriddedFile)
+          end if
+        else
+          call announce_error ( son, 'Field ' // trim(fieldNameString) // &
+            & ' not found in clim. file ' // trim(fileNameString) )
+        end if
+      case ( l_surfaceHeight ) ! See Read_surface_height_file
+        call get_pcf_id ( fileNameString, path, subString, l2apriori_version, &
+          & mlspcf_surfaceHeight_start, mlspcf_surfaceHeight_end, &
+          & 'surfaceHeight', got(f_file), &
+          & lastHeightPCF, returnStatus )
+        if ( TOOLKIT .and. returnStatus /= PGS_S_SUCCESS ) then
+          call announce_error ( son, &
+            & 'PCF number not found to supply' // &
+            & ' missing Surface Height file name' )
+        end if
+        gridIndex = InitializeMLSFile(GriddedFile, content = 'gridded', &
+          & name=FilenameString, shortName=shortFileName, &
+          & type=l_binary, access=DFACC_RDONLY, &
+          & PCBottom=mlspcf_surfaceHeight_start, PCTop=mlspcf_surfaceHeight_end)
+        GriddedFile%PCFId = LastCLIMPCF
+        gridIndex = AddFileToDataBase(filedatabase, GriddedFile)
+        call open_surface_height_file ( griddedFile )
+        call decorate ( key, &
+          & AddGriddedDataToDatabase ( griddedDatabase, &
+          & read_surface_height_file ( GriddedFile ) ) )
+        call close_surface_height_file ( GriddedFile )
+        if( switchDetail(switches, 'pro') > -1 ) then                            
+          call announce_success(FilenameString, 'SurfaceHeight', &                    
+           & '', MLSFile=GriddedFile)    
+        end if
+      case default ! Can't get here if tree_checker worked correctly
+      end select   ! origins of gridded data
+
+      if( Details > -3 ) then
+        if ( specialDumpFile /= ' ' ) &
+          & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
+        call dump( GriddedDatabase(gridIndex), details )
+        if ( specialDumpFile /= ' ' ) &
+          & call revertOutput
+      endif
+
+    case default
+    end select     ! types of apriori data
+  contains
     subroutine Get_PCF_Id ( FileNameString, Path, SubString, L2Apriori_Version, &
       & FirstPCF, LastPCF, Description, GotFile, PCF_Id, ReturnStatus )
       use MLSFiles, only: GetPCFromRef, SPLIT_PATH_NAME
@@ -782,19 +858,9 @@ contains ! =====     Public Procedures     =============================
       end if
     end subroutine Get_PCF_Id
 
-    subroutine SayTime
-      call time_now ( t2 )
-      if ( total_times ) then
-        call output ( "Total time = " )
-        call output ( dble(t2), advance = 'no' )
-        call blanks ( 4, advance = 'no' )
-      end if
-      call output ( "Timing for read_apriori = " )
-      call output ( dble(t2 - t1), advance = 'yes' )
-      timing = .false.
-    end subroutine SayTime
+  end subroutine processOneAprioriFile
 
-  end subroutine read_apriori
+  ! =========== Private ============
 
   ! ------------------------------------------  readAPrioriAttributes_MF  -----
   subroutine readAPrioriAttributes_MF ( MLSFile )
@@ -1040,6 +1106,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.84  2011/04/20 16:54:28  pwagner
+! Added new flexibility to l2cf control flow by run-time booleans affecting gridded data
+!
 ! Revision 2.83  2010/11/09 02:37:28  vsnyder
 ! Spiff up a dump
 !
