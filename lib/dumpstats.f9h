@@ -26,6 +26,7 @@
       call output( '   shape  ', advance='no' )
       call output( shape(array), advance='yes' )
     endif
+    if ( any(shape(array) == 0) ) return
     if ( myRMS ) then
       if ( .not. any(isfinite(array)) ) then
         call output ('(no finite values found in array--skipped) ', advance='yes')
@@ -130,6 +131,9 @@
     end if
     ! call output('Leaving dumpstats', advance='no')
 ! $Log$
+! Revision 2.24  2011/04/20 22:23:17  pwagner
+! Guards against empty array (Was it necessary?)
+!
 ! Revision 2.23  2011/03/08 00:02:19  pwagner
 ! Stop double-printing name
 !
