@@ -524,7 +524,6 @@ contains ! =====     Public Procedures     =============================
     integer :: TOTALPOWERQUANTITYINDEX    ! In the quantities database
     integer :: TOTALPOWERVECTORINDEX      ! In the vector database
     integer, dimension(2) :: UNITASARRAY ! From expr
-    integer, dimension(2) :: UNITS
     logical :: UNITSERROR               ! From expr
     integer :: USBVECTORINDEX           ! Inddex in vector database
     integer :: USBQUANTITYINDEX         ! Inddex in vector database
@@ -2665,6 +2664,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.392  2011/04/20 16:46:37  pwagner
+! Removed unused declaration
+!
 ! Revision 2.391  2011/03/22 23:47:54  pwagner
 ! May now reshape qty template field while filling explicitly
 !
