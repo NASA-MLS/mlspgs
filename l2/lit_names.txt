@@ -82,6 +82,7 @@ fractional
 full_derivatives
 
 geos5
+geos5_7
 geoLocation
 gloria
 gridded
@@ -175,6 +176,9 @@ weighted
 wmoTropopause
 
 # $Log$
+# Revision 2.71  2011/04/20 16:45:06  pwagner
+# Added new GriddedData origin
+#
 # Revision 2.70  2011/03/15 22:51:58  pwagner
 # May now modify quantity template fields with fill method
 #
