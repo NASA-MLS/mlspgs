@@ -403,9 +403,9 @@ contains ! ====     Public Procedures     ==============================
             case ( 1 )
               call announce_error ( son, wrong_type, fields=(/son1/), expect=field )
             case ( 2 )
-              call announce_error ( gson, no_such_field, (/ field_look /) )
+              call announce_error ( subtree(2,son), no_such_field, (/ field_look /) )
             case ( 3 )
-              call announce_error ( gson, no_such_reference, &
+              call announce_error ( subtree(2,son), no_such_reference, &
                 & (/ subtree(1,field_test) /) )
             case default
               call announce_error ( son1, wrong_units, fields = (/ son1 /), &
@@ -905,11 +905,13 @@ m:      do j = start+1, nsons(field)
       if ( type /= type2 ) then
         call local_error ( root, inconsistent_types, (/ son1, son2 /) )
       end if
-!     if ( units /= phyq_dimensionless .and. &
-!          units2 /= phyq_dimensionless .and. &
-!          units /= units2 ) then
-!       call local_error ( root, inconsistent_units, (/ son1, son2 /) )
-!     end if
+! Don't test units here.  The field might use : for something other than range.
+!       if ( type == num_value .and. type2 == num_value .and. &
+!            units /= phyq_dimensionless .and. &
+!            units2 /= phyq_dimensionless .and. &
+!            units /= units2 ) then
+!         call local_error ( root, inconsistent_units, (/ son1, son2 /) )
+!       end if
       if ( type == num_value ) type = range
     case ( n_less, n_less_eq, n_greater, n_greater_eq, n_equal_equal, n_not_equal )
       son1 = subtree(1,root); son2 = subtree(2,root)
@@ -919,11 +921,12 @@ m:      do j = start+1, nsons(field)
       stat = expr ( son2, type2, units2, value2, field, start, field_look, field_test )
       if ( stat /= 0 ) &
   return
-!     if ( units /= phyq_dimensionless .and. &
-!          units2 /= phyq_dimensionless .and. &
-!          units /= units2 ) then
-!       call local_error ( root, inconsistent_units, (/ son1, son2 /) )
-!     end if
+      if ( type == num_value .and. type2 == num_value .and. &
+           units /= phyq_dimensionless .and. &
+           units2 /= phyq_dimensionless .and. &
+           units /= units2 ) then
+        call local_error ( root, inconsistent_units, (/ son1, son2 /) )
+      end if
       type = log_value
     case ( n_and, n_or ) ! -------------------------------------------------
       son1 = subtree(1,root); son2 = subtree(2,root)
@@ -955,8 +958,11 @@ m:      do j = start+1, nsons(field)
         stat = expr ( son2, type2, units2, value2, field, start, field_look, field_test )
         if ( stat /= 0 ) &
   return
-        if ( units /= units2 ) then
-          call local_error ( root, inconsistent_units, (/ son1, son2 /) )
+        if ( type == num_value .and. type2 == num_value .and. &
+           units /= phyq_dimensionless .and. &
+           units2 /= phyq_dimensionless .and. &
+           units /= units2 ) then
+        call local_error ( root, inconsistent_units, (/ son1, son2 /) )
         else
           if ( me == n_plus ) then
             value = value + value2
@@ -1019,6 +1025,7 @@ m:      do j = start+1, nsons(field)
         end if
       end do
     case ( n_func_ref ) ! --------------------------------------------------
+      type = num_value ! Default, otherwise same as last arg if arg types checked
       son1 = subtree(1,root)
       ! Look up the function name
       string = sub_rosa(son1)
@@ -1247,6 +1254,9 @@ m:      do j = start+1, nsons(field)
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.31  2011/04/19 02:00:31  vsnyder
+! Support == and /= relational operators too
+!
 ! Revision 1.30  2011/04/19 00:58:16  vsnyder
 ! Allow several types for a field
 !
