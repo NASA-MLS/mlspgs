@@ -72,6 +72,7 @@ module MLSStringLists               ! Module to treat string lists
 ! RemoveNumFromList  removes a numbered elem from a string list
 ! ReplaceSubString   replaces occurrence(s) of sub1 with sub2 in a string
 ! ReverseList        Turns 'abc,def,ghi' -> 'ghi,def,abc'
+! SnipList           Like RemoveElemFromList, but a function
 ! SortArray          Turns (/'def','ghi','abc'/) -> (/'abc','def','ghi'/)
 ! SortList           Turns 'def,ghi,abc' -> 'abc,def,ghi'
 ! StringElement      Returns string element in string list at index number
@@ -128,6 +129,7 @@ module MLSStringLists               ! Module to treat string lists
 ! ReplaceSubString (char* str, char* outstr, char* sub1, char* sub2, &
 !       & [char* which], [log no_trim])
 ! strlist ReverseList (strlist str, [char inseparator])
+! strlist SnupList (strlist str, char* elem, [char inseparator])
 ! SortArray (char* inStrArray(:), int outIntArray(:), log CaseSensitive, &
 !   & [char* sortedArray(:)], [log shorterFirst], [char leftRight])
 ! SortList (strlist inStrArray, int outIntArray(:), log CaseSensitive, &
@@ -209,7 +211,7 @@ module MLSStringLists               ! Module to treat string lists
    & List2Array, listMatches, NumStringElements, optionDetail, &
    & ParseOptions, PutHashElement, ReadIntsFromList, &
    & RemoveElemFromList, RemoveListFromList, RemoveNumFromList, &
-   & ReplaceSubString, ReverseList, &
+   & ReplaceSubString, ReverseList, SnipList, &
    & SortArray, SortList, StringElement, StringElementNum, SwitchDetail, &
    & unquote, wrap
 
@@ -2668,6 +2670,34 @@ contains
 
   end function ReverseList
 
+  ! --------------------------------------------------  SnipList  -----
+  function SnipList (str, elem, inseparator) RESULT (outstr)
+    ! takes a string list, usually comma-separated,
+    ! and returns one with elem removed
+
+    ! E.g., given 
+    ! str = "alpha, beta, gamma" and elem = 'gamma' => "alpha, beta"
+
+    ! Limitation:
+    ! No element may be longer than MAXWORDLENGTH
+    !--------Argument--------!
+    CHARACTER (LEN=*), INTENT(IN) :: str
+    CHARACTER (LEN=*), INTENT(IN) :: elem
+    CHARACTER (LEN=LEN(str)) :: outstr
+    character (len=*), optional, intent(in)       :: inseparator
+
+    !----------Local vars----------!
+    !----------Executable part----------!
+!  Special case--elem not in str
+    outstr = str
+    if ( len_trim(elem) < 1 ) return
+    if ( index(str, trim(elem) ) < 1 )  return
+ 
+! General case
+    call RemoveElemFromList( str, outstr, elem, inseparator )
+
+  end function SnipList
+
   ! ---------------------------------------------  SortArray  -----
 
   ! This subroutine takes an array of strings
@@ -3770,6 +3800,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.44  2011/04/20 16:35:15  pwagner
+! Added SnipList
+!
 ! Revision 2.43  2011/02/18 18:00:10  pwagner
 ! Improved optionDetail; added parseOptions to fully parse commandline
 !
