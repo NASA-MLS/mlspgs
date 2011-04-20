@@ -63,15 +63,17 @@
     if ( present(format) ) myFormat = format
 
     numZeroRows = 0
-    if ( size(array) == 0 ) then
+    if ( any(shape(array) == 0) ) then
       call empty ( name )
     else if ( product(shape(array)) == 1 ) then
       call name_and_size ( name, myClean, 1 )
       call output ( array(1,1), format=myFormat, advance='yes' )
     else if ( size(array, 1) == 1 ) then
-      call dump ( array(1,:), name, options=options )
+      call dump ( array(1,:), name, &
+        & fillValue=fillValue, format=format, options=options )
     else if ( size(array,2) == 1 ) then
-      call dump ( array(:,1), name, options=options )
+      call dump ( array(:,1), name, &
+        & fillValue=fillValue, format=format, options=options )
     else
       call name_and_size ( name, myClean, size(array) )
       if ( present(name) .and. .not. myLaconic ) call newLine
@@ -107,6 +109,9 @@
     call theDumpEnds
 !   end subroutine DUMP_2D_INTEGER
 ! $Log$
+! Revision 2.7  2011/04/20 22:25:07  pwagner
+! Made all dumpnd.f9h files consistent
+!
 ! Revision 2.6  2011/04/07 20:05:34  pwagner
 ! Fixed bug introduced with last changes
 !
