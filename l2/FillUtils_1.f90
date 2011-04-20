@@ -3488,16 +3488,11 @@ contains ! =====     Public Procedures     =============================
       character (len=1) :: ABNAME
       type (VectorValue_T), pointer :: AORB
       real(rv) :: cc
-      integer :: I, INSTANCE, ISURF
+      integer :: I
       logical :: MAPFUNCTION
-      logical :: NEEDSB
-      integer :: NoChans
-      integer :: NoInstances
-      integer :: NoSurfs
       integer :: NUMWAYS ! 1 or 2
       character (len=128) :: MSTR
       logical :: OKSOFAR
-      real(rv) :: qvalue
       logical :: StatisticalFunction
       logical :: USESC
       ! Executable code
@@ -3511,9 +3506,9 @@ contains ! =====     Public Procedures     =============================
       usesC = present(c)
       ! StatisticalFunction = ( FindFirst( valid1WayManipulations, mstr ) > 7 )
       StatisticalFunction = any( &
-        & index( &
+        & indexes( &
         &   mstr, &
-        &   (/ 'min', 'max', 'mean', 'median', 'rms', 'stddev' /) &
+        &   (/ 'min   ', 'max   ', 'mean  ', 'median', 'rms   ', 'stddev' /) &
         &   ) &
         &  > 1 )
       MapFunction = ( index(mstr, 'map') > 0 )
@@ -6844,6 +6839,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.44  2011/04/20 16:46:00  pwagner
+! Fixed solecism that NAG complained about
+!
 ! Revision 2.43  2011/04/13 00:28:15  pwagner
 ! manipulation can now accept digits
 !
