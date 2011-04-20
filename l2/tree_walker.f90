@@ -251,7 +251,8 @@ contains ! ====     Public Procedures     ==============================
       case ( z_mergeGrids )
         if ( .not. &
           & ( stopBeforeChunkLoop .or. checkPaths .or. parallel%master ) &
-          & ) call mergeGrids ( son, griddedDataBase )
+          & ) call mergeGrids ( son, l2gpDatabase, l2auxDatabase, &
+          & griddedDataBase, fileDataBase )
 
         ! ------------------------------------------------------- Chunk divide
         ! Chunk divide can be a special one, in slave mode, we just listen out
@@ -631,6 +632,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.173  2011/04/08 00:10:00  pwagner
+! Raise error if every chunk was skipped
+!
 ! Revision 2.172  2010/04/13 01:43:09  vsnyder
 ! Move FlushLockedBins from LinearizedForwardModel_m to L2PCBins_m
 !
