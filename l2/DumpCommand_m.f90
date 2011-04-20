@@ -13,7 +13,7 @@ module DumpCommand_M
 
 ! Process a "dump" command. Or say whether to "skip" remainder of section.
 ! Or functions to set a run-time Boolean flag.
-! (Should these latter functions be moved into a special module?)
+! (Should these latter functions be moved into a special Boolean module?)
 
   implicit none
   private
@@ -22,6 +22,7 @@ module DumpCommand_M
   public :: BooleanFromAnyGoodValues
   public :: BooleanFromCatchWarning
   public :: BooleanFromComparingQtys
+  public :: BooleanFromEmptyGrid
   public :: BooleanFromFormula
   public :: DumpCommand, Skip
 
@@ -526,6 +527,63 @@ contains
     end function statFun
   end function BooleanFromComparingQtys
 
+  ! ------------------------------------- BooleanFromEmptyGrid --
+  function BooleanFromEmptyGrid ( root, grids ) result(thesize)
+    use Dump_0, only: Dump
+    use INIT_TABLES_MODULE, only: F_BOOLEAN, F_GRID
+    use GriddedData, only: GRIDDEDDATA_T
+    use MLSL2Options, only: runTimeValues
+    use MLSStringLists, only: NumStringElements, PutHashElement, &
+      & SwitchDetail
+    use MLSStrings, only: lowerCase
+    use String_Table, only: get_string
+    use TOGGLES, only: SWITCHES
+    use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
+    ! Dummy args
+    ! integer, intent(in) :: name
+    integer, intent(in) :: root
+    type (GRIDDEDDATA_T), dimension(:), pointer :: Grids
+    integer             :: thesize
+    ! Internal variables
+    logical, parameter :: countEmpty = .true.
+    integer :: field
+    integer :: field_index
+    integer :: fieldValue
+    type (GRIDDEDDATA_T), pointer :: grid
+    integer :: keyNo
+    character(len=32) :: nameString
+    integer :: son
+    logical :: tvalue
+    integer :: value
+    ! Executable
+    do keyNo = 2, nsons(root)
+      son = subtree(keyNo,root)
+      field = subtree(1,son)
+      value = subtree(2,son)
+      if ( nsons(son) > 1 ) then
+        fieldValue = decoration(subtree(2,son)) ! The field's value
+      else
+        fieldValue = son
+      end if
+      field_index = decoration(field)
+
+      select case ( field_index )
+      case ( f_Boolean )
+        call get_string( sub_rosa(subtree(2,son)), nameString )
+      case ( f_grid ) 
+        grid => grids ( decoration ( decoration ( value ) ) )
+      end select
+    end do
+    tvalue = .true.
+    if ( associated(grid) ) tvalue = grid%empty
+    call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
+      & lowercase(trim(nameString)), tvalue, countEmpty=countEmpty )
+    thesize = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty )
+    if ( switchDetail(switches, 'bool') > 0 ) &
+      & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
+      & 'Run-time Boolean flags' )
+  end function BooleanFromEmptyGrid
+
   ! ------------------------------------- BooleanFromFormula --
   function BooleanFromFormula ( name, root ) result(size)
     ! Called either when a Boolean is first declared
@@ -624,11 +682,11 @@ contains
       & F_AllPFA, F_AllQuantityTemplates, F_AllSignals, F_AllSpectra, &
       & F_AllVectors, F_AllVectorTemplates, F_AllVGrids, F_AntennaPatterns, &
       & F_Boolean, F_Clean, F_CrashBurn, F_Details, F_DACSFilterShapes, &
-      & F_File, F_FilterShapes, F_ForwardModel, F_GRID, F_HESSIAN, &
+      & F_File, F_FilterShapes, F_ForwardModel, F_GRID, F_HEIGHT, F_HESSIAN, &
       & F_HGrid, F_L2PC, F_Lines, F_Mark, F_Mask, F_MATRIX, F_MieTables, &
       & F_OPTIONS, F_PfaData, F_PfaFiles, F_PFANum, F_PFAStru, F_PointingGrids, &
       & F_Quantity, F_Signals,  F_Spectroscopy, F_Stop, F_StopWithError, &
-      & F_Template, F_Text, F_TGrid, &
+      & F_SURFACE, F_Template, F_Text, F_TGrid, &
       & F_Vector, F_VectorMask, F_VGrid, &
       & S_DIFF, S_DUMP, S_QUANTITY, S_VECTORTEMPLATE
     use L2ParInfo, only: PARALLEL, CLOSEPARALLEL
@@ -639,6 +697,7 @@ contains
       & Diff, Dump, GetFromMatrixDatabase
     use MLSCommon, only: MLSFile_T
     use MLSFiles, only: DumpMLSFile => Dump, GetMLSFileByName
+    use MLSKINDS, only: RV
     use MLSL2Options, only: NORMAL_EXIT_STATUS, RUNTIMEVALUES
     use MLSMessageModule, only: MLSMessage, MLSMessageCalls, MLSMessageExit, &
       & MLSMSG_CRASH, MLSMSG_ERROR, MLSMSG_WARNING
@@ -692,6 +751,7 @@ contains
     logical :: HaveQuantityTemplatesDB, HaveVectorTemplates, HaveVectors, &
              & HaveForwardModelConfigs, HaveGriddedData, HaveHGrids, &
              & HaveMatrices, HaveHessians
+    real(rv) :: height  ! We will use this to dump just one surface
     integer :: hessianIndex
     integer :: hessianIndex2
     type (Matrix_T), pointer :: matrix
@@ -706,6 +766,7 @@ contains
     type (VectorValue_T), pointer :: QTY1, QTY2
     integer :: Son
     integer :: Source ! column*256 + line
+    integer :: surface  ! We will use this to dump just one surface
     character :: TempText*20, Text*255
     type(time_t) :: Time
     character(10) :: TimeOfDay
@@ -809,7 +870,7 @@ contains
           case ( f_allGriddedData )
             if ( details < -1 ) cycle
             if ( haveGriddedData ) then
-              call dump ( griddedDataBase, details )
+              call dump ( griddedDataBase, details , options=optionsString )
             else
               call announceError ( son, noGriddedData )
             end if
@@ -969,15 +1030,23 @@ contains
                 & options=optionsString )
               rmsFormat = '*'
             else
+              call outputNamedValue ( ' Decoration ', vectorIndex )
               call output ( ' GriddedData: ' )
               call dump ( &
-                & griddedDataBase(vectorIndex), details )
+                & griddedDataBase(vectorIndex), details , options=optionsString )
             endif
           end do
         else
           call announceError ( gson, noGriddedData )
         end if
         GotFirst = .true.
+      case ( f_height, f_surface )
+        do i = 2, nsons(son)
+          call expr ( subtree(i,son), units, values, type )
+          if ( units(1) /= phyq_dimensionless ) call AnnounceError ( subtree(i,son), dimless )
+          if ( type /= num_value ) call announceError ( subtree(i,son), numeric )
+          height = values(1)
+        end do
       case ( f_hessian ) ! Diff or Dump hessians
         if ( details < -1 ) cycle
         if ( haveHessians ) then
@@ -1002,31 +1071,6 @@ contains
           end do
         else
           call announceError ( gson, 0, 'Unable to dump Hessian here; db empty or absent' )
-        end if
-      case ( f_matrix ) ! Diff or Dump matrices
-        if ( details < -1 ) cycle
-        if ( haveMatrices ) then
-          do i = 2, nsons(son)
-            gson = subtree(i,son)
-            if ( gotFirst ) then
-              matrixIndex2 = decoration(decoration(gson))
-            else
-              matrixIndex = decoration(decoration(gson))
-            endif
-            if ( DiffOrDump == s_diff ) then
-              call getFromMatrixDatabase ( &
-                & matrixDatabase(matrixIndex), matrix )
-              call getFromMatrixDatabase ( &
-                & matrixDatabase(matrixIndex2), matrix2 )
-              call diff ( Matrix, Matrix2, details=details )
-            else
-              call getFromMatrixDatabase ( &
-                & matrixDatabase(matrixIndex), matrix )
-              call dump ( Matrix, details=details )
-            endif
-          end do
-        else
-          call announceError ( gson, 0, 'Unable to dump matrix here; db empty or absent' )
         end if
       case ( f_hGrid )    ! Dump HGrids
         if ( details < -1 ) cycle
@@ -1116,6 +1160,31 @@ contains
           end if
         end do
         GotFirst = .true.
+      case ( f_matrix ) ! Diff or Dump matrices
+        if ( details < -1 ) cycle
+        if ( haveMatrices ) then
+          do i = 2, nsons(son)
+            gson = subtree(i,son)
+            if ( gotFirst ) then
+              matrixIndex2 = decoration(decoration(gson))
+            else
+              matrixIndex = decoration(decoration(gson))
+            endif
+            if ( DiffOrDump == s_diff ) then
+              call getFromMatrixDatabase ( &
+                & matrixDatabase(matrixIndex), matrix )
+              call getFromMatrixDatabase ( &
+                & matrixDatabase(matrixIndex2), matrix2 )
+              call diff ( Matrix, Matrix2, details=details )
+            else
+              call getFromMatrixDatabase ( &
+                & matrixDatabase(matrixIndex), matrix )
+              call dump ( Matrix, details=details )
+            endif
+          end do
+        else
+          call announceError ( gson, 0, 'Unable to dump matrix here; db empty or absent' )
+        end if
       case ( f_options )
         call get_string ( sub_rosa(gson), optionsString, strip=.true. )
         optionsString = lowerCase(optionsString)
@@ -1409,6 +1478,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.60  2011/04/20 16:47:54  pwagner
+! Added BooleanFromEmptyGrid
+!
 ! Revision 2.59  2011/04/13 00:26:17  pwagner
 ! options='' works how comments and wiki says it does for vect.qty
 !
