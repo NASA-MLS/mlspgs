@@ -31,28 +31,50 @@ contains ! =================================== Public procedures
 
   ! ----------------------------------------- MergeGrid
 
-  subroutine MergeGrids ( root, griddedDataBase )
+  subroutine MergeGrids ( ROOT, L2GPDATABASE, L2AUXDATABASE, &
+    & GRIDDEDDATABASE, FILEDATABASE )
 
-    use DumpCommand_m, only: DumpCommand
+    use DumpCommand_m, only: BOOLEANFROMEMPTYGRID, BOOLEANFROMFORMULA, &
+      & DUMPCOMMAND, SKIP
     use GriddedData, only: GRIDDEDDATA_T, &
-      & ADDGRIDDEDDATATODATABASE
-    use Init_tables_module, only: S_CONCATENATE, S_CONVERTETATOP, &
-      & S_DELETE, S_DIFF, S_DUMP, S_MERGE, S_WMOTROP
+      & ADDGRIDDEDDATATODATABASE, DESTROYGRIDDEDDATA
+    use Init_tables_module, only: F_GRID, &
+      & S_BOOLEAN, S_CONCATENATE, S_CONVERTETATOP, &
+      & S_DELETE, S_DIFF, S_DUMP, S_GRIDDED, S_ISGRIDEMPTY, &
+      & S_MERGE, S_MERGEGRIDS, S_REEVALUATE, S_SKIP, S_WMOTROP
+    use L2AUXData, only: L2AUXData_T
+    use L2GPData, only: L2GPData_T
+    use MLSCommon, only: MLSFile_T
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMESSAGECALLS
     use MoreTree, only: GET_SPEC_ID
+    use output_m, only: OUTPUT, OUTPUTNAMEDVALUE
+    use ReadAPriori, only: PROCESSONEAPRIORIFILE
     use Trace_M, only: TRACE_BEGIN, TRACE_END
-    use Tree, only: NSONS, SUBTREE, DECORATE, NODE_ID, SUB_ROSA
+    use Tree, only: NSONS, SUBTREE, DECORATE, DECORATION, NODE_ID, SUB_ROSA
     use Tree_Types, only: N_NAMED
     use Toggles, only: GEN, TOGGLE
 
     integer, intent(in) :: ROOT         ! Tree root
-    type (griddedData_T), dimension(:), pointer :: griddedDataBase ! Database
+    type (l2gpdata_t), dimension(:), pointer :: L2GPDatabase
+    type (L2AUXData_T), dimension(:), pointer :: L2auxDatabase
+    type (GriddedData_T), dimension(:), pointer :: GriddedDatabase 
+    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
 
     ! Local variables
+    type (GriddedData_T), pointer :: Grid
+    integer :: GSON
     integer :: I                        ! Loop counter
-    integer :: SON                      ! Tree node
+    integer :: J                        ! Loop counter
     integer :: KEY                      ! Another node
+    integer :: LastAprioriPCF = 1
+    integer :: LastClimPCF    = 1
+    integer :: LastDAOPCF     = 1
+    integer :: LastGEOS5PCF   = 1
+    integer :: LastHeightPCF  = 1
+    integer :: LastNCEPPCF    = 1
     integer :: NAME                     ! Index into string table
+    integer :: SON                      ! Tree node
+    integer :: VALUE
 
     ! excutable code
     if ( toggle(gen) ) then
@@ -71,9 +93,8 @@ contains ! =================================== Public procedures
       end if
 
       select case ( get_spec_id(key) )
-      case ( s_merge )
-        call decorate ( key, AddgriddedDataToDatabase ( griddedDataBase, &
-          & MergeOneGrid ( key, griddedDataBase ) ) )
+      case ( s_Boolean )
+        call decorate ( key,  BooleanFromFormula ( name, key ) )
       case ( s_concatenate )
         call decorate ( key, AddgriddedDataToDatabase ( griddedDataBase, &
           & Concatenate ( key, griddedDataBase ) ) )
@@ -82,13 +103,51 @@ contains ! =================================== Public procedures
           & ConvertEtaToP ( key, griddedDataBase ) ) )
       case ( s_delete )
         call DeleteGriddedData ( key, griddedDatabase )
+      case ( s_diff, s_dump )
+        call dumpCommand ( key, griddedDataBase=griddedDataBase )
+      case ( s_Gridded )
+        call processOneAprioriFile ( key, L2GPDatabase, L2auxDatabase, &
+          & GriddedDatabase, fileDataBase, &
+          & LastAprioriPCF , &
+          & LastClimPCF    , &
+          & LastDAOPCF     , &
+          & LastGEOS5PCF   , &
+          & LastHeightPCF  , &
+          & LastNCEPPCF     &
+            )
+      case ( s_isGridEmpty )
+        call decorate ( key, &
+          & BooleanFromEmptyGrid ( key, griddedDataBase ) )
+      case ( s_merge )
+        call decorate ( key, AddgriddedDataToDatabase ( griddedDataBase, &
+          & MergeOneGrid ( key, griddedDataBase ) ) )
+      case ( s_mergeGrids )
+        ! We must get "grid" field from command
+        do j = 2, nsons(key)
+          gson = subtree(j, key)
+          select case ( decoration(subtree(1, gson) ) )
+          case ( f_grid )
+            value = decoration ( decoration ( subtree(2, gson) ) )
+          case default
+          end select
+        enddo
+        grid => griddedDataBase(value)
+        call DestroyGriddedData( grid )
+        grid = MergeOneGrid ( key, griddedDataBase )
+        call output( 'The GriddedDatabase, ' )
+        call outputNamedValue( 'size(db)', size(griddedDataBase) )
+        call outputNamedValue( 'our index', value )
+        call outputNamedValue( 'is it empty?', grid%empty )
+      case ( s_reevaluate )
+        call decorate ( key,  BooleanFromFormula ( 0, key ) )
+      case ( s_skip ) ! ============================== Skip ==========
+        ! We'll skip the rest of the section if the Boolean cond'n is TRUE
+        if ( Skip(key) ) exit
       case ( s_wmoTrop )
         call decorate ( key, AddgriddedDataToDatabase ( griddedDataBase, &
           & wmoTropFromGrid ( key, griddedDataBase ) ) )
-      case ( s_diff, s_dump )
-        call dumpCommand ( key, griddedDataBase=griddedDataBase )
       case default
-        ! Shouldn't get here is parser worked?
+        ! Shouldn't get here if parser worked?
         call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'Unrecognized command in MergeGrids section' )
       end select
@@ -108,7 +167,7 @@ contains ! =================================== Public procedures
     use GriddedData, only: GRIDDEDDATA_T, DUMP, NULLIFYGRIDDEDDATA, &
       & CONVERTFROMETALEVELGRIDS
     use Init_tables_module, only: F_A, F_B, F_GRID
-    use output_m, only: output, outputNamedValue
+    use output_m, only: OUTPUT, OUTPUTNAMEDVALUE
     use Toggles, only: GEN, TOGGLE
     use Trace_M, only: TRACE_BEGIN, TRACE_END
     use Tree, only: NSONS, SUBTREE, DECORATION
@@ -201,6 +260,7 @@ contains ! =================================== Public procedures
     use GriddedData, only: GRIDDEDDATA_T, DUMP, &
       & CONCATENATEGRIDDEDDATA, COPYGRID, DestroyGriddedData, NULLIFYGRIDDEDDATA
     use Init_tables_module, only: F_A, F_B, F_GRID
+    use MoreTree, only: GET_BOOLEAN
     use Toggles, only: GEN, TOGGLE
     use Trace_M, only: TRACE_BEGIN, TRACE_END
     use Tree, only: NSONS, SUBTREE, DECORATION
@@ -213,6 +273,7 @@ contains ! =================================== Public procedures
 
     ! Local variables
     type (griddedData_T), pointer :: A
+    logical :: ATLEASTONEGRID
     type (griddedData_T), pointer :: B
     integer :: db_index
     logical, parameter            :: DEEBUG = .false.
@@ -220,15 +281,17 @@ contains ! =================================== Public procedures
     integer :: FIELD_INDEX            ! Type of tree node
     integer :: GRIDS_NODE
     integer :: I                      ! Loop counter
-    integer :: SON                    ! Tree node
+    logical, parameter :: IgnoreEmptyGrids = .false.
     type (griddedData_T), target :: Intermediate
+    integer :: SON                    ! Tree node
     integer :: VALUE                  ! Tree node
+    logical :: WEARETHEFIRST
     ! Executable code
     call nullifyGriddedData ( newGrid ) ! for Sun's still useless compiler
     call nullifyGriddedData ( Intermediate ) ! for Sun's still useless compiler
     if ( toggle(gen) ) call trace_begin ( "Concatenate", root )
 
-    ! Get the information from the l2cf    
+    ! Get the information from the l2cf
     grids_node = 0
     do i = 2, nsons(root)
       son = subtree(i,root)
@@ -245,33 +308,43 @@ contains ! =================================== Public procedures
       end select
     end do
 
-    ! Do the concatenation unless one or other is empty
+    ! Do the concatenation unless:
+    ! ignoreEmptyGrids is FALSE
+    !    one or other is empty
+    ! ignoreEmptyGrids is TRUE
+    !    all are empty
     if ( grids_node > 0 ) then
       ! Method:
       ! At any step let the result of all prior steps be held in "Intermediate"
       ! Then at each step concatenate the next gridded data with Intermediate
       ! When done, copy Intermediate into result
-      ! 1st--check if any are empty; bail out if they are
+      ! 1st--check if any are empty; bail out if any or all are
       newGrid%empty = .true.
+      atleastonegrid = .false.
       do i=2, nsons(grids_node)
         db_index = decoration(decoration(subtree(i, grids_node )))
         b => griddedDataBase ( db_index )
-        if ( b%empty ) then
+        if ( b%empty .and. .not. IgnoreEmptyGrids ) then
           if ( toggle(gen) ) call trace_end ( "Concatenate" )
           return
         endif
+        atleastonegrid = .true.
       enddo
+      if ( .not. atleastonegrid ) return
       newGrid%empty = .false.
+      wearethefirst = .true.
       do i=2, nsons(grids_node)
         db_index = decoration(decoration(subtree(i, grids_node )))
         b => griddedDataBase ( db_index )
+        if ( b%empty ) cycle
         if ( DEEBUG ) then
           print *, ' '
           print *, 'db_index: ', db_index
           call dump( b, details=-1 )
         endif
-        if ( i == 2 ) then
+        if ( wearethefirst ) then
           call CopyGrid ( Intermediate, b )
+          wearethefirst = .false.
         else
           call ConcatenateGriddedData ( A, B, Intermediate )
           if ( DEEBUG ) then
@@ -348,11 +421,12 @@ contains ! =================================== Public procedures
     use GriddedData, only: GRIDDEDDATA_T, RGR, V_IS_PRESSURE, &
       & COPYGRID, NULLIFYGRIDDEDDATA, &
       & SETUPNEWGRIDDEDDATA, SLICEGRIDDEDDATA, WRAPGRIDDEDDATA
-    use Init_tables_module, only: F_CLIMATOLOGY, F_HEIGHT, F_OPERATIONAL, &
-      & F_SCALE
+    use Init_tables_module, only: F_CLIMATOLOGY, F_HEIGHT, &
+      & F_OPERATIONAL, F_SCALE
     use Intrinsic, only: PHYQ_Length, PHYQ_Pressure
     use MLSCommon, only: R8
-    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE
+    use MLSMessageModule, only: MLSMSG_ALLOCATE, MLSMSG_ERROR, MLSMSG_WARNING, &
+      & MLSMESSAGE
     use MLSFillValues, only: ESSENTIALLYEQUAL
     use output_m, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE
     use Toggles, only: GEN, TOGGLE
@@ -379,7 +453,7 @@ contains ! =================================== Public procedures
 
     ! Local variables
     integer :: DAY                      ! Loop counter
-    logical, parameter :: DEEBUG = .false.
+    logical, parameter :: DEEBUG = .true.
     integer :: FIELD                    ! Another tree node
     integer :: FIELD_INDEX              ! Type of tree node
     integer :: I                        ! Loop inductor
@@ -409,8 +483,8 @@ contains ! =================================== Public procedures
     real (rgr), pointer, dimension(:,:,:,:,:,:) :: OPERMAPPED
     real (r8), dimension(:), pointer :: MEANDATES ! Mean dates for new grid
 
-    type (griddedData_T), pointer :: OPERATIONAL
-    type (griddedData_T), pointer :: CLIMATOLOGY
+    type (griddedData_T), pointer :: CLIMATOLOGY => null()
+    type (griddedData_T), pointer :: OPERATIONAL => null()
     integer :: numMissingClimatology
     integer :: numMissingOperational
 
@@ -450,30 +524,16 @@ contains ! =================================== Public procedures
     ! Think about cases where one or other grid is empty
     if ( climatology%empty ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'The climatology grid for the merge is empty' )
+
     if ( operational%empty ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      & 'The meteorology grid for the merge is empty' )
       ! If no operational data, then just use climatology
       call CopyGrid ( newGrid, climatology )
-      if ( toggle(gen) ) call trace_end ( "MergeOneGrid" )
+      call finishUp ( done = .true. )
       return
     end if
-    if ( DEEBUG ) then
-    call output( 'height: ', advance='no' )
-    call output( height, advance='yes' )
-    call output( 'scale: ', advance='no' )
-    call output( scale, advance='yes' )
-    call output( 'operational%verticalCoordinate: ', advance='no' )
-    call output( operational%verticalCoordinate, advance='yes' )
-    call dump( operational%field( :, 1, 1, 1, 1, 1 ), 'op T' )
-    call dump( operational%heights, 'op h' )
-    call blanks(3)
-    call output( v_is_pressure, advance='yes' )
-    call output( 'climatology%verticalCoordinate: ', advance='no' )
-    call output( climatology%verticalCoordinate, advance='yes' )
-    call dump( climatology%field( :, 1, 1, 1, 1, 1 ), 'cl T' )
-    call dump( climatology%heights, 'cl h' )
-    call blanks(3)
-    call output( v_is_pressure, advance='yes' )
-    endif
+    call finishUp ( done = .false. )
     ! Do some final sanity checks
     if ( operational%verticalCoordinate /= v_is_pressure ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -623,8 +683,33 @@ contains ! =================================== Public procedures
     deallocate ( cliMapped, operMapped, stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate//'operMapped or cliMapped' )
-
-    if ( toggle(gen) ) call trace_end ( "MergeOneGrid" )
+    call finishUp ( done = .true. )
+  contains
+    subroutine FinishUp ( done )
+      logical, optional, intent(in) :: done
+      logical :: myDone
+      myDone = .false.
+      if ( present(done) ) myDone = done
+      if ( DEEBUG ) then
+        call output( 'height: ', advance='no' )
+        call output( height, advance='yes' )
+        call output( 'scale: ', advance='no' )
+        call output( scale, advance='yes' )
+        call output( 'operational%verticalCoordinate: ', advance='no' )
+        call output( operational%verticalCoordinate, advance='yes' )
+        call dump( operational%field( :, 1, 1, 1, 1, 1 ), 'op T' )
+        call dump( operational%heights, 'op h' )
+        call blanks(3)
+        call output( v_is_pressure, advance='yes' )
+        call output( 'climatology%verticalCoordinate: ', advance='no' )
+        call output( climatology%verticalCoordinate, advance='yes' )
+        call dump( climatology%field( :, 1, 1, 1, 1, 1 ), 'cl T' )
+        call dump( climatology%heights, 'cl h' )
+        call blanks(3)
+        call output( v_is_pressure, advance='yes' )
+      endif
+      if ( myDone .and. toggle(gen) ) call trace_end ( "MergeOneGrid" )
+    end subroutine FinishUp
   end function MergeOneGrid
 
   ! ----------------------------------------- wmoTropFromGrid
@@ -968,6 +1053,9 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.42  2011/04/20 16:51:55  pwagner
+! Added new flexibility to l2cf control flow by run-time booleans
+!
 ! Revision 2.41  2009/12/14 18:37:50  pwagner
 ! Dont crash in wmoTropFromGrid if one of the grids is empty
 !
