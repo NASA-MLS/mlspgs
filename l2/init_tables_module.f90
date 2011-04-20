@@ -153,7 +153,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_GRIDDED            = s_frequencyGrid + 1
   integer, parameter :: S_HESSIAN            = s_gridded + 1
   integer, parameter :: S_HGRID              = s_hessian + 1
-  integer, parameter :: S_L1BRAD             = s_hgrid + 1
+  integer, parameter :: S_ISGRIDEMPTY        = s_hgrid + 1
+  integer, parameter :: S_L1BRAD             = s_isGridEmpty + 1
   integer, parameter :: S_L1BOA              = s_l1brad + 1
   integer, parameter :: S_L2AUX              = s_l1boa + 1
   integer, parameter :: S_L2GP               = s_l2aux + 1
@@ -164,7 +165,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_MAKEPFA            = s_load + 1
   integer, parameter :: S_MATRIX             = s_makepfa + 1
   integer, parameter :: S_MERGE              = s_matrix + 1
-  integer, parameter :: S_NEGATIVEPRECISION  = s_merge + 1
+  integer, parameter :: S_MERGEGRIDS         = s_merge + 1
+  integer, parameter :: S_NEGATIVEPRECISION  = s_mergeGrids + 1
   integer, parameter :: S_NORMALEQUATIONS    = s_negativePrecision + 1
   integer, parameter :: S_OUTPUT             = s_normalEquations + 1
   integer, parameter :: S_PFADATA            = s_output + 1
@@ -374,6 +376,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_gridded) =              add_ident ( 'gridded' )
     spec_indices(s_hessian) =              add_ident ( 'hessian' )
     spec_indices(s_hgrid) =                add_ident ( 'hgrid' )
+    spec_indices(s_isGridEmpty) =          add_ident ( 'isGridEmpty' )
     spec_indices(s_l1brad) =               add_ident ( 'l1brad' )
     spec_indices(s_l1boa) =                add_ident ( 'l1boa' )
     spec_indices(s_l2aux) =                add_ident ( 'l2aux' )
@@ -385,6 +388,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_makepfa) =              add_ident ( 'makePFA' )
     spec_indices(s_matrix) =               add_ident ( 'matrix' )
     spec_indices(s_merge) =                add_ident ( 'merge' )
+    spec_indices(s_mergeGrids) =           add_ident ( 'mergeGrids' )
     spec_indices(s_negativePrecision ) =   add_ident ( 'negativePrecision' )
     spec_indices(s_normalEquations ) =     add_ident ( 'normalEquations' )
     spec_indices(s_output) =               add_ident ( 'output' )
@@ -475,8 +479,9 @@ contains ! =====     Public procedures     =============================
              l+l_clear_110rh_below_tropopause, l+l_cloudy_110rh_below_top, &
              l+l_cloudy_110rh_in_cloud, l+l_cloudy_nearside_only, n+n_dt_def /) )
     call make_tree ( (/ &
-      begin, t+t_griddedOrigin, l+l_climatology, l+l_dao, l+l_geos5, l+l_merra, &
-             l+l_gloria, l+l_ncep, l+l_strat, l+l_surfaceHeight, n+n_dt_def, &
+      begin, t+t_griddedOrigin, l+l_climatology, l+l_dao, l+l_geos5, &
+             l+l_geos5_7, l+l_gloria, l+l_merra, l+l_ncep, l+l_none, l+l_strat, &
+             l+l_surfaceHeight, n+n_dt_def, &
       begin, t+t_hGridType, l+l_explicit, l+l_fixed, l+l_fractional, &
              l+l_height, l+l_regular, l+l_l2gp, n+n_dt_def, &
       begin, t+t_masks, l+l_cloud, l+l_fill, l+l_full_derivatives, l+l_ignore, &
@@ -710,7 +715,17 @@ contains ! =====     Public procedures     =============================
     call make_tree ( (/ &
       begin, s+s_merge, &  ! Must be AFTER S_Gridded and S_VGrid
              begin, f+f_operational, s+s_gridded, s+s_concatenate, &
-             s+s_convertetatop, s+s_vgrid, n+n_field_spec, &
+             s+s_convertetatop, n+n_field_spec, &
+             begin, f+f_climatology, s+s_gridded, s+s_concatenate, n+n_field_spec, &
+             begin, f+f_height, t+t_numeric, n+n_field_type, &
+             begin, f+f_scale, t+t_numeric, n+n_field_type, &
+             nadp+n_spec_def /) )
+    call make_tree ( (/ &
+      begin, s+s_mergeGrids, &  ! Must be AFTER S_Gridded and S_VGrid
+             begin, f+f_grid, s+s_gridded, s+s_concatenate, &
+             s+s_convertetatop, n+n_field_spec, &
+             begin, f+f_operational, s+s_gridded, s+s_concatenate, &
+             s+s_convertetatop, n+n_field_spec, &
              begin, f+f_climatology, s+s_gridded, s+s_concatenate, n+n_field_spec, &
              begin, f+f_height, t+t_numeric, n+n_field_type, &
              begin, f+f_scale, t+t_numeric, n+n_field_type, &
@@ -1053,6 +1068,12 @@ contains ! =====     Public procedures     =============================
                     n+n_dot, &
              begin, f+f_status, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
+             begin, f+f_Boolean, s+s_Boolean, nr+n_field_spec, &
+             np+n_spec_def /) )
+
+    call make_tree( (/ &
+      begin, s+s_isGridEmpty, &
+             begin, f+f_grid, s+s_Gridded, s+s_concatenate, nr+n_field_spec, &
              begin, f+f_Boolean, s+s_Boolean, nr+n_field_spec, &
              np+n_spec_def /) )
 
@@ -1563,9 +1584,9 @@ contains ! =====     Public procedures     =============================
     !  < n_section section_name s_spec ... s_spec >
     call make_tree ( (/ &
       begin, z+z_mlsSignals, s+s_module, s+s_band, s+s_radiometer, &
-                             s+s_signal, s+s_spectrometerType, s+s_time, n+n_section, &
+             s+s_signal, s+s_spectrometerType, s+s_time, n+n_section, &
       begin, z+z_spectroscopy, s+s_line, s+s_readSpectroscopy, s+s_spectra, &
-                             s+s_time, s+s_writeSpectroscopy, n+n_section, &
+             s+s_time, s+s_writeSpectroscopy, n+n_section, &
       begin, z+z_globalsettings, &
              begin, p+p_output_version_string, t+t_string, n+n_name_def, &
              begin, p+p_instrument, t+t_instrument, n+n_name_def,&
@@ -1582,8 +1603,10 @@ contains ! =====     Public procedures     =============================
              s+s_tGrid, s+s_time, s+s_vGrid, s+s_writePFA, n+n_section, &
       begin, z+z_readapriori, s+s_time, s+s_diff, s+s_dump, s+s_gridded, s+s_l2gp, &
              s+s_l2aux, s+s_snoop, n+n_section, &
-      begin, z+z_mergegrids, s+s_time, s+s_merge, s+s_concatenate, &
-             s+s_ConvertEtaToP, s+s_delete, s+s_diff, s+s_dump, s+s_vgrid, s+s_wmoTrop, &
+      begin, z+z_mergegrids, s+s_Boolean, s+s_concatenate, s+s_ConvertEtaToP, &
+             s+s_delete, s+s_diff, s+s_dump, s+s_isGridEmpty, s+s_Gridded, &
+             s+s_merge, s+s_mergeGrids, s+s_reevaluate, s+s_skip, s+s_time, &
+             s+s_vgrid, s+s_wmoTrop, &
              n+n_section /) )
     call make_tree ( (/ &
       begin, z+z_chunkdivide, &
@@ -1648,6 +1671,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.518  2011/04/20 16:53:11  pwagner
+! Added new flexibility to l2cf control flow by run-time booleans affecting gridded data
+!
 ! Revision 2.517  2011/03/22 23:47:21  pwagner
 ! May now reshape qty template field while filling explicitly
 !
