@@ -57,7 +57,7 @@
     if ( present(lbound) ) base = lbound - 1
 
     numZeroRows = 0
-    if ( size(array) == 0 ) then
+    if ( any(shape(array) == 0) ) then
       call empty ( name )
     else if ( size(array) == 1 .and. base == 0 ) then
       call name_and_size ( name, myClean, 1 )
@@ -88,6 +88,9 @@
     call theDumpEnds
 !   end subroutine DUMP_1D_INTEGER
 ! $Log$
+! Revision 2.5  2011/04/20 22:25:07  pwagner
+! Made all dumpnd.f9h files consistent
+!
 ! Revision 2.4  2011/03/08 00:03:34  pwagner
 ! Skip printing row of zeros only if multiple
 !
