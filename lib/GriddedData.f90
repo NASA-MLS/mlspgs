@@ -21,6 +21,7 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
   ! (except for dao dimensions)
   use MLSMessageModule, only: MLSMSG_Allocate, MLSMSG_DeAllocate, MLSMSG_Error, &
     & MLSMSG_Warning, MLSMessage, MLSMessageCalls
+  use MLSStringLists, only: SNIPLIST
   use MLSStrings, only: LOWERCASE, READINTSFROMCHARS
   use Output_m, only: OUTPUTOPTIONS, BLANKS, OUTPUT, OUTPUTNAMEDVALUE, NEWLINE
 
@@ -136,9 +137,9 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
     real (rgr), pointer, dimension(:) :: Szas => NULL() ! Zenith angles [noSzas]
     integer :: noDates                     ! Number of dates in data
     real (r8), pointer, dimension(:) :: DateStarts => NULL()
-    ! Starting dates in SDP toolkit format
+    ! Starting dates in SDP toolkit format tai
     real (r8), pointer, dimension(:) :: DateEnds => NULL()
-    ! Ending dates in SDP toolkit format
+    ! Ending dates in SDP toolkit format tai
 
     ! The data itself.  This is stored as
     !  [noHeights, noLats, noLons, noLsts, noSzas, noDates]
@@ -615,14 +616,15 @@ contains
   end function DoGriddeddataMatch
 
   ! ----------------------------------------  DumpGriddedDatabase  -----
-  subroutine DumpGriddedDatabase ( GriddedData, Details )
+  subroutine DumpGriddedDatabase ( GriddedData, Details, options )
 
     ! Imitating what dump_pointing_grid_database does, but for gridded data
     ! which may come from climatology, ncep, dao
 
     type (GriddedData_T), dimension(:), pointer :: GriddedData 
 
-    integer, intent(in), optional :: DETAILS
+    integer, intent(in), optional               :: DETAILS
+    character(len=*), intent(in), optional      :: OPTIONS
     
     ! Local Variables
     integer            :: i
@@ -640,12 +642,12 @@ contains
       call output ( 'item number ' )
       call output ( i, advance='yes' )
 
-      call DumpGriddedData(GriddedData(i), Details)
+      call DumpGriddedData( GriddedData(i), Details, Options )
     end do ! i
   end subroutine DumpGriddedDatabase
 
   ! --------------------------------------------  DumpGriddedData  -----
-  subroutine DumpGriddedData ( GriddedData, Details )
+  subroutine DumpGriddedData ( GriddedData, Details, options )
     use Dump_0, only: Dump
     use ieee_arithmetic, only: ieee_is_finite, ieee_is_nan
     use Intrinsic, only: Lit_Indices
@@ -660,8 +662,13 @@ contains
     !                                        ! >0 Dump even multi-dim arrays
     !                                        ! Default 0
     !                                        ! > 2 Climatology text file format
-
+    character(len=*), intent(in), optional      :: OPTIONS
+    ! Options, if present, says which of the 6 possible dimensions
+    ! to include in the multi-dim dump of the gridded field
+    ! E.g., if options = 'lat, height, time' then just dump the 3-d array
+    !   field (:,:,1,1,1,:)
     ! Local Variables
+    integer :: caseID
     character(len=8) :: ccsds
     integer :: date
     character(len=4) :: dateChar
@@ -669,6 +676,7 @@ contains
     integer :: i
     logical :: lookLikeClimatologyTxtfile
     integer :: MYDETAILS
+    character(len=16) :: myOptions
     integer :: numElmnts
 
     ! Executable code
@@ -679,7 +687,9 @@ contains
       myDetails = max( myDetails, 1 )
       fieldvaluesdetails = max(fieldvaluesdetails, AUTOMATICDETAILS)
     endif
-    lookLikeClimatologyTxtfile = ( myDetails > 2 )
+    lookLikeClimatologyTxtfile = ( myDetails > 2 ) .and. .not. present(options)
+    myOptions = ' '
+    if ( present(options) ) myOptions = lowerCase(options)
     if ( GriddedData%empty ) then
       call output('This Gridded quantity was empty (perhaps the file name' &
         & // ' was wrong)', advance='yes')
@@ -812,7 +822,54 @@ contains
       call output ( ' Gridded Data field values empty', advance='yes' )
       return
     endif
-    if ( MAYDUMPFIELDVALUES .and. fieldvaluesdetails > 0 ) then
+    if ( len_trim(myOptions) > 0 ) then
+      if ( GriddedData%noLons < 2 .and. index( myOptions, 'lon') > 0 ) &
+        & myOptions = SnipList( myOptions, 'lon' )
+      if ( GriddedData%noheights < 2 .and. index( myOptions, 'height') > 0 ) &
+        & myOptions = SnipList( myOptions, 'height' )
+      if ( GriddedData%nolats < 2 .and. index( myOptions, 'lat') > 0 ) &
+        & myOptions = SnipList( myOptions, 'lat' )
+      if ( GriddedData%noDates < 2 .and. index( myOptions, 'date') > 0 ) &
+        & myOptions = SnipList( myOptions, 'date' )
+      if ( GriddedData%nolsts < 2 .and. index( myOptions, 'lst') > 0 ) &
+        & myOptions = SnipList( myOptions, 'lst' )
+      if ( GriddedData%noszas < 2 .and. index( myOptions, 'sza') > 0 ) &
+        & myOptions = SnipList( myOptions, 'sza' )
+      caseID = 0
+      if ( index(myOptions, 'height') > 0 ) caseID = caseID + 1
+      if ( index(myOptions, 'lat') > 0 ) caseID = caseID + 2
+      if ( index(myOptions, 'lon') > 0 ) caseID = caseID + 4
+      if ( index(myOptions, 'lst') > 0 ) caseID = caseID + 8
+      if ( index(myOptions, 'sza') > 0 ) caseID = caseID + 16
+      if ( index(myOptions, 'date') > 0 ) caseID = caseID + 32
+      call outputNamedValue( 'values dump options', trim(myOptions) )
+      call outputNamedValue( 'caseID', caseID )
+      select case (caseID)
+      case ( 1 )
+        call dump ( GriddedData%field(:,1,1,1,1,1), &
+          & '    gridded field values', FillValue=GriddedData%MissingValue )
+      case ( 2 )
+        call dump ( GriddedData%field(1,:,1,1,1,1), &
+          & '    gridded field values', FillValue=GriddedData%MissingValue )
+      case ( 3 )
+        call dump ( GriddedData%field(:,:,1,1,1,1), &
+          & '    gridded field values', FillValue=GriddedData%MissingValue )
+      case ( 4 )
+        call dump ( GriddedData%field(1,1,:,1,1,1), &
+          & '    gridded field values', FillValue=GriddedData%MissingValue )
+      case ( 7 )
+        call dump ( GriddedData%field(:,:,:,1,1,1), &
+          & '    gridded field values', FillValue=GriddedData%MissingValue )
+      case ( 35 )
+        ! call dump ( shape(GriddedData%field), 'shape(values)' )
+        ! call dump ( shape(GriddedData%field(:,:,1,1,1,:)), 'shape(dumped values)' )
+        call dump ( GriddedData%field(:,:,1,1,1,:), &
+          & '    gridded field values', FillValue=GriddedData%MissingValue )
+      case default
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'This case not coded' )
+      end select
+    elseif ( MAYDUMPFIELDVALUES .and. fieldvaluesdetails > 0 ) then
       call output ( ' ************ tabulated field values ********** ' ,advance='yes')
       if ( fieldvaluesdetails < 2 ) then
       ! Do 1d slices through data
@@ -1539,6 +1596,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.61  2011/04/20 00:25:18  pwagner
+! Dump now responds to options arg
+!
 ! Revision 2.60  2010/02/09 16:24:12  pwagner
 ! Hide large array section assignments in subroutine to prevent NAG from creating temps
 !
