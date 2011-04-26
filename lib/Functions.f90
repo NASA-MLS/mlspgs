@@ -29,7 +29,7 @@ module Functions
   integer, parameter :: F_GetDiagonal     = F_Exp + 1
   integer, parameter :: F_Invert          = F_GetDiagonal + 1
   integer, parameter :: F_Log             = F_Invert + 1
-  integer, parameter :: F_Mod             = F_Invert + 1
+  integer, parameter :: F_Mod             = F_Log + 1
   integer, parameter :: F_SQRT            = F_Mod + 1
   integer, parameter :: F_Transpose       = F_SQRT + 1
   integer, parameter :: F_XTX             = F_Transpose + 1
@@ -123,6 +123,9 @@ contains
 end module Functions
 
 ! $Log$
+! Revision 2.10  2011/04/26 20:32:53  vsnyder
+! Repair definition of 'mod'
+!
 ! Revision 2.9  2011/04/18 19:27:22  vsnyder
 ! Add MOD
 !
