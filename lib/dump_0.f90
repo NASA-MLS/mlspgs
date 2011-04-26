@@ -22,6 +22,8 @@ module DUMP_0
 ! showing min, max, percentages of non-zero values, etc.
 
   use BitStuff, only: MAXBITNUMBER, WHICHBITSARESET
+  use dates_module, only: MAXUTCSTRLENGTH, &
+    & REFORMATDATE, REFORMATTIME, SPLITDATETIME, TAI93S2UTC
   use ieee_arithmetic, only: IEEE_IS_FINITE
   use MLSFillValues, only : COLLAPSE, FILTERVALUES, HALFWAVES, &
     & ISFINITE, ISINFINITE, ISNAN, &
@@ -54,6 +56,7 @@ module DUMP_0
 ! DEFAULTDUMPOPTIONS       same as above, but for DUMP
 ! DIFFRMSMEANSRMS          print abs min, max, etc. when DIFF has RMS set TRUE
 ! DONTDUMPIFALLEQUAL       don't dump every element of a constant array
+! DUMPDATES                dump 1-d array of tai93 (s. after 1 jan 1993)
 ! DUMPLISTS                dump 2-d array as a set of lists
 ! DUMPTABLESIDE            what side to place headers when dumping tables
 ! FILTERFILLSFROMRMS       exclude fill values when calculating rms, etc.
@@ -91,6 +94,7 @@ module DUMP_0
 ! dump ( strlist string, char* name, [char* fillvalue], [char* options] )
 ! dump ( log countEmpty, strlist keys, strlist values, char* name, 
 !       [char* separator], [char* options] )
+! dumpDates ( dble dates(:), [int width], [char* dateFormat], [char* timeFormat] )
 ! dumpDumpOptions
 ! dumpLists ( array, char* name,
 !      [int width], [char* sep],
@@ -144,7 +148,7 @@ module DUMP_0
 ! === (end of api) ===
 
   public :: DIFF, &
-    & DUMP, DUMP_2x2xN, DUMPDUMPOPTIONS, DUMPLISTS, DUMPNAMEDVALUES, &
+    & DUMP, DUMP_2x2xN, DUMPDATES, DUMPDUMPOPTIONS, DUMPLISTS, DUMPNAMEDVALUES, &
     & DUMPSUMS, DUMPTABLE, SELFDIFF
 
   interface DIFF        ! dump diffs between pair of n-d arrays of numeric type
@@ -182,6 +186,10 @@ module DUMP_0
     module procedure DUMPCOLLAPSEDARRAY_1D_INTEGER
     module procedure DUMPCOLLAPSEDARRAY_2D_INTEGER
     module procedure DUMPCOLLAPSEDARRAY_3D_INTEGER
+  end interface
+
+  interface dumpDates
+    module procedure dump_tai
   end interface
 
   interface DUMPLISTS
@@ -1700,6 +1708,57 @@ contains
     call theDumpEnds
   end subroutine DUMP_STRLIST
 
+  ! ---------------------------------------------- DumpDates -----
+  ! This family dumps dates (re)formatted according to dates_module
+  subroutine dump_tai( taiDates, name, width, dateFormat, timeFormat )
+    ! Dump an array of tai dates in whatever formats the user specifies
+    ! Warning: does not bother with leap seconds
+    ! By default we dump both date and time fields
+    ! If dateFormat is present and blank or 'none', don't print date
+    ! If timeFormat is present and blank or 'none', don't print time
+    ! Args
+    double precision, dimension(:)       :: taiDates ! tai93 (s)
+    character(len=*), optional           :: name
+    integer, intent(in), optional        :: WIDTH
+    character(len=*), optional           :: dateFormat
+    character(len=*), optional           :: timeFormat
+    ! Internal variables
+    character(len=16)                            :: date, time
+    character(len=MAXUTCSTRLENGTH), dimension(size(taiDates)) &
+      &                                          :: dates
+    integer                                      :: error
+    integer                                      :: i
+    ! Executable
+    if ( size(taidates) < 1 ) then
+      call dump ( taiDates, name )
+      return
+    endif
+    do i = 1, size(taiDates)
+      dates(i) = tai93s2utc( taiDates(i) )
+    enddo
+    if ( present(dateFormat) .or. present(timeFormat) ) then
+      do i = 1, size(taiDates)
+        call splitDateTime( dates(i), error, date, time )
+        if ( present(dateFormat) ) then
+          if ( len_trim(dateFormat) < 1 .or. lowercase(dateFormat) == 'none' ) then
+            date = ' '
+          else
+            date = ReformatDate( date, toForm=dateFormat )
+          endif
+        endif
+        if ( present(timeFormat) ) then
+          if ( len_trim(timeFormat) < 1 .or. lowercase(timeFormat) == 'none' ) then
+            time = ' '
+          else
+            time = ReformatTime( time, Form=timeFormat )
+          endif
+        endif
+        dates(i) = trim(date) // time
+      enddo
+    endif
+    call dump( dates, name, width=width )
+  end subroutine dump_tai
+  
   ! ---------------------------------------------- DumpDumpOptions -----
   subroutine DumpDumpOptions
     ! Show dump, diff options
@@ -2962,6 +3021,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.111  2011/04/26 20:54:12  pwagner
+! Can now dump dates
+!
 ! Revision 2.110  2011/04/20 22:27:09  pwagner
 ! Fixed long-standing bug in dumping 2d char array
 !
