@@ -58,8 +58,34 @@ module ReadAPriori
 
   implicit none
   private
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+! === (start of toc) ===
+!     c o n t e n t s
+!     - - - - - - - -
+
+!     (data types)
+! APrioriFiles_T              data type storing names of apriori files used
+! APrioriFiles                actual names of apriori files used
+
+!     (subroutines and functions)
+! dumpAPrioriAttributes       dump types and names of apriori files used
+! processOneAprioriFile       read one apriori file into a gridded data type
+! read_apriori                entry point for apriori section; process l2cf
+! readAPrioriAttributes       read attributes from a file to which they were written
+! writeAPrioriAttributes      write as attributes info about apriori files used
+! === (end of toc) ===
+
+
+
   public ::  APrioriFiles, APrioriFiles_T, &
-    & processOneAprioriFile, read_apriori, readAPrioriAttributes, &
+    & dumpAPrioriAttributes, processOneAprioriFile, &
+    & read_apriori, readAPrioriAttributes, &
     & writeAPrioriAttributes
   private ::  announce_error
   integer, private :: ERROR
@@ -69,11 +95,12 @@ module ReadAPriori
    ! (This is very wasteful of memory--let's change it
    ! so that it one field is needed)
   type APrioriFiles_T
-    character (len=MAXNUMFILES*FileNameLen) :: l2gp = ''
+    character (len=MAXNUMFILES*FileNameLen) :: l2gp =  ''
     character (len=MAXNUMFILES*FileNameLen) :: l2aux = ''
-    character (len=MAXNUMFILES*FileNameLen) :: ncep = ''
-    character (len=MAXNUMFILES*FileNameLen) :: dao = ''
+    character (len=MAXNUMFILES*FileNameLen) :: ncep =  ''
+    character (len=MAXNUMFILES*FileNameLen) :: dao =   ''
     character (len=MAXNUMFILES*FileNameLen) :: geos5 = ''
+    character (len=MAXNUMFILES*16) :: geos5description =  ''
   end type APrioriFiles_T
 
   type (APrioriFiles_T), save :: APrioriFiles
@@ -90,13 +117,26 @@ module ReadAPriori
   
   ! -----     Private declarations     ---------------------------------
 
-!---------------------------- RCS Module Info ------------------------------
-  character (len=*), private, parameter :: ModuleName= &
-       "$RCSfile$"
-  private :: not_used_here 
-!---------------------------------------------------------------------------
-
 contains ! =====     Public Procedures     =============================
+
+  ! ------------------------------------------  dumpAPrioriAttributes  -----
+  subroutine dumpAPrioriAttributes
+    ! dump info about what apriori files were used
+    ! Storing them as hdfeos5 attributes
+    use dump_0, only: dump
+    ! Executable
+    call output( 'Actual apriori files and file types used', advance='yes' )
+    if ( len_trim(APrioriFiles%l2gp) > 0 )&
+      & call dump( APrioriFiles%l2gp, 'l2gp' )
+    if ( len_trim(APrioriFiles%l2aux) > 0 )&
+      & call dump( APrioriFiles%l2aux, 'l2aux' )
+    if ( len_trim(APrioriFiles%ncep) > 0 )&
+      & call dump( APrioriFiles%ncep, 'ncep' )
+    if ( len_trim(APrioriFiles%dao) > 0 )&
+      & call dump( APrioriFiles%dao, 'dao' )
+    if ( len_trim(APrioriFiles%geos5) > 0 )&
+      & call dump( APrioriFiles%geos5, 'geos5' )
+  end subroutine dumpAPrioriAttributes
 
   ! --------------------------------------------------  read_apriori  -----
   ! Read a priori data from data files, be they l2gp, l2aux, climatology,
@@ -277,6 +317,7 @@ contains ! =====     Public Procedures     =============================
     integer :: L2Index             ! In the l2gp or l2aux database
     integer :: L2Name              ! Sub-rosa index of L2[aux/gp] label
     integer :: LISTSIZE                 ! Size of string from SWInqSwath
+    character(len=16) :: litDescription
     real(rgr) ::    missingValue = 0.
     integer :: NOSWATHS                 ! In an input file
     character(len=FileNameLen) :: path   ! path of actual literal file name
@@ -619,7 +660,18 @@ contains ! =====     Public Procedures     =============================
           call ReadGriddedData ( GriddedFile, son, description, v_type, &
             & GriddedDatabase(gridIndex), returnStatus, &
             & dimListString, TRIM(fieldNameString), &
-            & missingValue )
+            & missingValue, litDescription=litDescription )
+          if ( Griddeddatabase(gridIndex)%empty ) then
+            call output( 'File was probably not ' // &
+              & trim(litDescription), advance='yes' )
+          elseif ( description == 'dao' ) then
+            apriorifiles%dao = catlists(apriorifiles%dao, trim(FilenameString))
+          else
+            apriorifiles%geos5 = &
+              & catlists(apriorifiles%geos5, trim(FilenameString))
+            apriorifiles%geos5Description = &
+              & catlists(apriorifiles%geos5Description, trim(litDescription))
+          endif
         else
           call SetupNewGriddedData ( GriddedDatabase(gridIndex), empty=.true. )
         endif
@@ -630,12 +682,6 @@ contains ! =====     Public Procedures     =============================
         else
           call announce_success(FilenameString, 'dao not found--carry on', &
              & fieldNameString, MLSFile=GriddedFile)
-        endif
-        if ( description == 'dao' ) then
-          apriorifiles%dao = catlists(apriorifiles%dao, trim(FilenameString))
-        else
-          apriorifiles%geos5 = &
-            & catlists(apriorifiles%geos5, trim(FilenameString))
         endif
       case ( l_geos5, l_geos5_7, l_merra ) ! ------------ GMAO Data (GEOS5*)
         ! call outputNamedValue ( 'fileNameString', trim(fileNameString) )
@@ -685,7 +731,16 @@ contains ! =====     Public Procedures     =============================
           call ReadGriddedData ( GriddedFile, son, description, v_type, &
             & GriddedDatabase(gridIndex), returnStatus, &
             & dimListString, TRIM(fieldNameString), &
-            & missingValue, dateString, sumDelp )
+            & missingValue, dateString, sumDelp, litDescription=litDescription )
+          if ( Griddeddatabase(gridIndex)%empty ) then
+            call output( 'File was probably not ' // &
+              & trim(litDescription), advance='yes' )
+          else
+            apriorifiles%geos5 = &
+              & catlists(apriorifiles%geos5, trim(FilenameString))
+            apriorifiles%geos5Description = &
+              & catlists(apriorifiles%geos5Description, trim(litDescription))
+          endif
         else
           call SetupNewGriddedData ( GriddedDatabase(gridIndex), empty=.true. )
         endif
@@ -697,8 +752,6 @@ contains ! =====     Public Procedures     =============================
           call announce_success(FilenameString, 'geos5 not found--carry on', &                    
              & fieldNameString, MLSFile=GriddedFile)
         endif
-        apriorifiles%geos5 = catlists(apriorifiles%geos5, trim(FilenameString))
-        ! error = 1
       case ( l_gloria ) ! ------------------------- Data in Gloria's UARS format
         call get_pcf_id ( fileNameString, path, subString, l2apriori_version, &
           & mlspcf_l2clim_start, mlspcf_l2clim_end, 'gloria', got(f_file), &
@@ -988,7 +1041,7 @@ contains ! =====     Public Procedures     =============================
      &  trim(APrioriFiles%geos5))
     if ( status /= 0 ) &
       &  call MLSMessage ( MLSMSG_Warning, ModuleName, &
-      & 'Problem writing APrioriFiles%geos5' // trim(APrioriFiles%dao) )
+      & 'Problem writing APrioriFiles%geos5' // trim(APrioriFiles%geos5) )
   end subroutine writeAPrioriAttributes_ID
 
 ! =====     Private Procedures     =====================================
@@ -1106,6 +1159,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.85  2011/04/27 17:39:56  pwagner
+! Consistent with new ncep_dao api
+!
 ! Revision 2.84  2011/04/20 16:54:28  pwagner
 ! Added new flexibility to l2cf control flow by run-time booleans affecting gridded data
 !
