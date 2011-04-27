@@ -193,7 +193,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_VECTORTEMPLATE     = s_vector + 1
   integer, parameter :: S_VGRID              = s_vectortemplate + 1
   integer, parameter :: S_WMOTROP            = s_vGrid + 1
-  integer, parameter :: S_WRITEPFA           = S_wmoTrop + 1
+  integer, parameter :: S_WMOTROPFROMGRIDS   = s_wmoTrop + 1
+  integer, parameter :: S_WRITEPFA           = S_wmoTropFromGrids + 1
   integer, parameter :: SPEC_LAST = s_writePFA 
 
 ! Parameter names:
@@ -416,6 +417,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_vectortemplate) =       add_ident ( 'vectorTemplate' )
     spec_indices(s_vgrid) =                add_ident ( 'vGrid' )
     spec_indices(s_wmoTrop) =              add_ident ( 'wmoTrop' )
+    spec_indices(s_wmoTropfromGrids) =     add_ident ( 'wmoTropFromGrids' )
     spec_indices(s_writePFA) =             add_ident ( 'writePFA' )
 
   ! Now initialize the units tables.  Init_Units depends on the lit tables
@@ -639,6 +641,11 @@ contains ! =====     Public procedures     =============================
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_wmoTrop, &  ! Must be AFTER S_Gridded
+             begin, f+f_a, s+s_gridded, s+s_concatenate, n+n_field_spec, &
+             begin, f+f_b, s+s_gridded, s+s_concatenate, n+n_field_spec, &
+             ndp+n_spec_def /) )
+    call make_tree ( (/ &
+      begin, s+s_wmoTropFromGrids, &  ! Must be AFTER S_Gridded
              begin, f+f_grid, s+s_gridded, s+s_concatenate, n+n_field_spec, &
              begin, f+f_a, s+s_gridded, s+s_concatenate, n+n_field_spec, &
              begin, f+f_b, s+s_gridded, s+s_concatenate, n+n_field_spec, &
@@ -1606,7 +1613,7 @@ contains ! =====     Public procedures     =============================
       begin, z+z_mergegrids, s+s_Boolean, s+s_concatenate, s+s_ConvertEtaToP, &
              s+s_delete, s+s_diff, s+s_dump, s+s_isGridEmpty, s+s_Gridded, &
              s+s_merge, s+s_mergeGrids, s+s_reevaluate, s+s_skip, s+s_time, &
-             s+s_vgrid, s+s_wmoTrop, &
+             s+s_vgrid, s+s_wmoTrop, s+s_wmoTropFromGrids, &
              n+n_section /) )
     call make_tree ( (/ &
       begin, z+z_chunkdivide, &
@@ -1671,6 +1678,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.519  2011/04/27 17:38:11  pwagner
+! Added new command (not a named spec) wmoTropFromGrids
+!
 ! Revision 2.518  2011/04/20 16:53:11  pwagner
 ! Added new flexibility to l2cf control flow by run-time booleans affecting gridded data
 !
