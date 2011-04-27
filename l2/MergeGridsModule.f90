@@ -41,7 +41,8 @@ contains ! =================================== Public procedures
     use Init_tables_module, only: F_GRID, &
       & S_BOOLEAN, S_CONCATENATE, S_CONVERTETATOP, &
       & S_DELETE, S_DIFF, S_DUMP, S_GRIDDED, S_ISGRIDEMPTY, &
-      & S_MERGE, S_MERGEGRIDS, S_REEVALUATE, S_SKIP, S_WMOTROP
+      & S_MERGE, S_MERGEGRIDS, S_REEVALUATE, S_SKIP, &
+      & S_WMOTROP, S_WMOTROPFROMGRIDS
     use L2AUXData, only: L2AUXData_T
     use L2GPData, only: L2GPData_T
     use MLSCommon, only: MLSFile_T
@@ -146,6 +147,19 @@ contains ! =================================== Public procedures
       case ( s_wmoTrop )
         call decorate ( key, AddgriddedDataToDatabase ( griddedDataBase, &
           & wmoTropFromGrid ( key, griddedDataBase ) ) )
+      case ( s_wmoTropFromGrids )
+        ! We must get "grid" field from command
+        do j = 2, nsons(key)
+          gson = subtree(j, key)
+          select case ( decoration(subtree(1, gson) ) )
+          case ( f_grid )
+            value = decoration ( decoration ( subtree(2, gson) ) )
+          case default
+          end select
+        enddo
+        grid => griddedDataBase(value)
+        call DestroyGriddedData( grid )
+        grid = wmoTropFromGrid ( key, griddedDataBase )
       case default
         ! Shouldn't get here if parser worked?
         call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -453,7 +467,7 @@ contains ! =================================== Public procedures
 
     ! Local variables
     integer :: DAY                      ! Loop counter
-    logical, parameter :: DEEBUG = .true.
+    logical, parameter :: DEEBUG = .false.
     integer :: FIELD                    ! Another tree node
     integer :: FIELD_INDEX              ! Type of tree node
     integer :: I                        ! Loop inductor
@@ -1053,6 +1067,9 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.43  2011/04/27 17:40:22  pwagner
+! Added new command (not a named spec) wmoTropFromGrids
+!
 ! Revision 2.42  2011/04/20 16:51:55  pwagner
 ! Added new flexibility to l2cf control flow by run-time booleans
 !
