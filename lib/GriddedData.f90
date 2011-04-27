@@ -13,7 +13,7 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
 
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST, E_Def, E_Dp
   use dates_module, only: tai2ccsds
-  use Dump_0, only: dump
+  use Dump_0, only: DUMP, DUMPDATES
   use intrinsic, only: L_GEODALTITUDE, L_GPH, L_ETA, L_PRESSURE, &
     & L_THETA
   use MLSCommon, only: RGR=>R4, R8, LINELEN, NAMELEN, undefinedValue
@@ -690,6 +690,7 @@ contains
     lookLikeClimatologyTxtfile = ( myDetails > 2 ) .and. .not. present(options)
     myOptions = ' '
     if ( present(options) ) myOptions = lowerCase(options)
+    if ( myOptions == '-' ) myOptions = ' '
     if ( GriddedData%empty ) then
       call output('This Gridded quantity was empty (perhaps the file name' &
         & // ' was wrong)', advance='yes')
@@ -807,12 +808,9 @@ contains
 
     call output ( ' No. of dates = ' )
     call output ( GriddedData%noDates, advance='yes' )
-    if ( myDetails >= 0 .or. GriddedData%noDates < 6 )&
-      &  call dump ( GriddedData%dateStarts, &
-      & '    starting dates =', format='(1pg17.9)' )
-    if ( myDetails >= 0 .or. GriddedData%noDates < 6 ) &
-      & call dump ( GriddedData%dateEnds, &
-      & '    ending dates =', format='(1pg17.9)' )
+
+    call dumpDates( GriddedData%dateStarts, 'starting dates' )
+    call dumpDates( GriddedData%dateEnds, 'ending dates' )
 
     if ( .not. all(ieee_is_finite(GriddedData%field)) ) &
       & call output ( '*** Gridded Data contains non-finite values', advance='yes' )
@@ -845,6 +843,9 @@ contains
       call outputNamedValue( 'values dump options', trim(myOptions) )
       call outputNamedValue( 'caseID', caseID )
       select case (caseID)
+      case ( 0 )
+        call output( 'Default options for dumping values', advance='yes' )
+        call outputNamedValue( 'values(1,1,..,1)', GriddedData%field(1,1,1,1,1,1) )
       case ( 1 )
         call dump ( GriddedData%field(:,1,1,1,1,1), &
           & '    gridded field values', FillValue=GriddedData%MissingValue )
@@ -1596,6 +1597,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.62  2011/04/27 17:34:25  pwagner
+! dateStarts and -Ends now dumped as dates, not doubles
+!
 ! Revision 2.61  2011/04/20 00:25:18  pwagner
 ! Dump now responds to options arg
 !
