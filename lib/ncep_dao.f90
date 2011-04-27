@@ -94,7 +94,8 @@ contains
   ! ----------------------------------------------- ReadGriddedData
   subroutine ReadGriddedData( GriddedFile, lcf_where, description, v_type, &
     & the_g_data, returnStatus, &
-    & GeoDimList, fieldNames, missingValue, date, sumDelp )
+    & GeoDimList, fieldNames, missingValue, &
+    & date, sumDelp, litDescription )
 
     use MLSStats1, only: MLSMIN, MLSMAX, MLSMEAN
     ! This routine reads a Gridded Data file, returning a filled data
@@ -125,6 +126,7 @@ contains
     real(rgr), optional, intent(IN)         :: missingValue
     character (LEN=*), optional, intent(IN) :: date ! offset
     logical, optional, intent(IN)           :: sumDelp ! sum the DELP to make PL
+    character(len=*), optional, intent(out) :: litDescription
 
     ! Local Variables
     character ( len=len(fieldNames)) :: fieldName   ! In case we supply two
@@ -137,6 +139,7 @@ contains
     if ( DEEBUG ) print *, 'Reading ' // trim(LIT_DESCRIPTION) // ' data'
 
     call nullifyGriddedData ( the_g_data ) ! for Sun's still useless compiler
+    the_g_data%empty = .true.
     returnStatus = mls_hdf_version(GriddedFile%Name)
     if ( returnStatus == FILENOTFOUND ) then
       call SetupNewGriddedData ( the_g_data, empty=.true. )
@@ -220,6 +223,7 @@ contains
       call announce_error(lcf_where, 'READGriddedData called with unknown' &
         & // ' description: ' // trim(LIT_DESCRIPTION))
     end select
+    if ( present(litDescription) ) litDescription = LIT_DESCRIPTION
 
   end subroutine ReadGriddedData
 
@@ -444,8 +448,13 @@ contains
 
     ! Check that our requested field is present
     ! We might, after all, have been doing an 'inq'
-    if ( StringElementNum( fieldlist, trim(actual_field_name), COUNTEMPTY ) < 1 ) then
-      call output( trim(actual_field_name) // ' not found in geos5 file', advance='yes' )
+    if ( &
+      & StringElementNum( fieldlist, trim(actual_field_name), COUNTEMPTY )&
+      &  < 1 ) then
+      the_g_data%empty = .true.
+      call output( trim(actual_field_name) // ' not found in ' // &
+        & trim(GEOS5File%Name), advance='yes' )
+      call outputNamedValue( 'fieldList', trim(fieldlist) )
       status = gddetach(gd_id)
       if(status /= 0) &
         & call announce_error(lcf_where, "failed to detach from grid " &
@@ -460,8 +469,9 @@ contains
       & numbertype, dimlists(1))
 
     if ( inq_success /= PGS_S_SUCCESS ) then
+      the_g_data%empty = .true.
       CALL MLSMessage ( MLSMSG_Warning, moduleName,  &
-        & trim(actual_field_name) // ' not found in ' // trim(GEOS5File%Name) )
+        & trim(actual_field_name) // ' was inq_fail ' // trim(GEOS5File%Name) )
       return
     endif
     dimlist = trim(dimlists(1))
@@ -566,10 +576,23 @@ contains
       call dump(all_the_fields(1,1,1,:), 't-slice')
     endif
     if ( LIT_DESCRIPTION == lit_geos5 ) then
+      ! GEOS5 format
       the_g_data%field(:,:,:,1,1,:) = reshape( all_the_fields, &
         & shape=(/nLev, nlat, nlon, ntime/), order=(/3,2,1,4/) &
         & )
+    elseif ( size(all_the_fields, 4) < 2 ) then
+      ! Claimed to be MERRA (but array size says otherwise)
+      the_g_data%empty = .true.
+      call output( trim(actual_field_name) // ' had the wrong size (field, 4) ' // &
+        & trim(GEOS5File%Name), advance='yes' )
+      call deallocate_test( all_the_fields, 'all_the_fields', &
+        & ModuleName // 'Read_geos5_or_merra' )
+      deallocate(the_g_data%field, STAT=status)
+      if ( status /= 0 ) &
+        & call announce_error( lcf_where, "failed to deallocate field" )
+      return
     else
+      ! MERRA format
       the_g_data%field(:,:,:,1,1,1) = reshape( all_the_fields(:,:,:,timeIndex), &
         & shape=(/nLev, nlat, nlon/), order=(/3,2,1/) &
         & )
@@ -2303,6 +2326,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.58  2011/04/27 17:36:12  pwagner
+! Consistently sets grid%empty when not found or wrong description
+!
 ! Revision 2.57  2011/04/20 16:56:16  pwagner
 ! First steps toward being able to read next GMAO format
 !
