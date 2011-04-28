@@ -27,7 +27,7 @@ module LOAD_SPS_DATA_M
     integer,  pointer :: l_z(:) => null() ! Last entry in zet_basis per sps
     integer,  pointer :: l_p(:) => null() ! Last entry in phi_basis per sps
     integer,  pointer :: l_v(:) => null() ! Last entry in values per sps
-    integer :: P_Len ! \sum_{i=1}^n (l_z(i)-l_z(i-1))*(l_p(i)-l_p(i-1))
+    integer :: P_Len = 0 ! \sum_{i=1}^n (l_z(i)-l_z(i-1))*(l_p(i)-l_p(i-1))
     integer,  pointer :: windowstart(:) => null()! horizontal starting index
 !                                                  from l2gp
     integer,  pointer :: windowfinish(:) => null()! horizontal ending index
@@ -729,6 +729,9 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.80  2011/02/12 03:02:04  vsnyder
+! Calculate which column of dBeta_df to use
+!
 ! Revision 2.79  2011/02/05 01:17:17  vsnyder
 ! Add mol component, some cannonball polishing
 !
