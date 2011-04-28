@@ -413,29 +413,33 @@ contains ! =====     Public Procedures     =============================
       ! integer multiple of the period
       do theFirst = 1, size(set)
         if ( mod( set(theFirst) - probe, period ) == 0 ) return
-      enddo
+      end do
       theFirst = 0
       return
-    endif
+    end if
+
     do theFirst = 1, size(set)
       if ( set(theFirst) == probe ) return
     end do
+
     theFirst = 0
   end function FindFirstInteger
 
   function FindFirstReal ( Set, Probe, Tol, Period ) Result( theFirst )
     ! Find the first element in the array Set that is equal to Probe
     ! Or whose difference < Tol
-    real, dimension(:), intent(in) :: Set
-    real, intent(in) :: Probe
-    real, intent(in), optional :: Tol
-    real, intent(in), optional :: Period
-    integer             :: theFirst
-    real                :: myTol
-    real                :: q
+    integer, parameter :: RK = kind(1.0e0)
+    real(rk), dimension(:), intent(in) :: Set
+    real(rk), intent(in)           :: Probe
+    real(rk), intent(in), optional :: Tol
+    real(rk), intent(in), optional :: Period
+
+    integer                        :: theFirst
+    real(rk)                       :: myTol
+    real(rk)                       :: q
 
     ! Executable code
-    myTol = 0.
+    myTol = 0.0
     if ( present(tol) ) myTol = abs(tol)
     if ( present(Period) ) then
       ! If we're checking for coincidences allowing for a periodic function
@@ -444,29 +448,33 @@ contains ! =====     Public Procedures     =============================
       do theFirst = 1, size(set)
         q = abs( set(theFirst) - probe ) / Period
         if ( q - int(q) <= myTol/Period ) return
-      enddo
+      end do
       theFirst = 0
       return
-    endif
+    end if
+
     do theFirst = 1, size(set)
       if ( abs( set(theFirst) - probe) <= myTol ) return
     end do
+
     theFirst = 0
   end function FindFirstReal
 
   function FindFirstDouble ( Set, Probe, Tol, Period ) Result( theFirst )
     ! Find the first element in the array Set that is equal to Probe
     ! Or whose difference < Tol
-    double precision, dimension(:), intent(in) :: Set
-    double precision, intent(in) :: Probe
-    double precision, intent(in), optional :: Tol
-    double precision, intent(in), optional :: Period
-    integer             :: theFirst
-    double precision                :: myTol
-    double precision                :: q
+    integer, parameter :: RK = kind(1.0d0)
+    real(rk), dimension(:), intent(in) :: Set
+    real(rk), intent(in)           :: Probe
+    real(rk), intent(in), optional :: Tol
+    real(rk), intent(in), optional :: Period
+
+    integer                        :: theFirst
+    real(rk)                       :: myTol
+    real(rk)                       :: q
 
     ! Executable code
-    myTol = 0.d0
+    myTol = 0.0
     if ( present(tol) ) myTol = abs(tol)
     if ( present(Period) ) then
       ! If we're checking for coincidences allowing for a periodic function
@@ -475,13 +483,15 @@ contains ! =====     Public Procedures     =============================
       do theFirst = 1, size(set)
         q = abs( set(theFirst) - probe ) / Period
         if ( q - int(q) <= myTol/Period ) return
-      enddo
+      end do
       theFirst = 0
       return
-    endif
+    end if
+
     do theFirst = 1, size(set)
       if ( abs( set(theFirst) - probe) <= myTol ) return
     end do
+
     theFirst = 0
   end function FindFirstDouble
 
@@ -516,7 +526,7 @@ contains ! =====     Public Procedures     =============================
     if ( present(options) ) then
       if ( index(options, 'n') > 0 ) myOptions = '-n'
       if ( index(options, 't') > 0 ) myOptions = myOptions(:2) // 't'
-    endif
+    end if
     select case(myOptions)
     case ( '-l' )
       do FindFirstLogical2D = 1, size(condition, 1)
@@ -561,7 +571,7 @@ contains ! =====     Public Procedures     =============================
         if ( set(FindFirstSubString:FindFirstSubString) /= probe ) return
       else
         if ( set(FindFirstSubString:FindFirstSubString) == probe ) return
-      endif
+      end if
     end do
     FindFirstSubString = 0
   end function FindFirstSubString
@@ -708,7 +718,7 @@ contains ! =====     Public Procedures     =============================
     if ( present(options) ) then
       if ( index(options, 'n') > 0 ) myOptions = '-n'
       if ( index(options, 't') > 0 ) myOptions = myOptions(:2) // 't'
-    endif
+    end if
     select case(myOptions)
     case ( '-l' )
       do FindLastLogical2D = size(condition, 1), 1 -1
@@ -749,7 +759,7 @@ contains ! =====     Public Procedures     =============================
         if ( set(FindLastSubString:FindLastSubString) /= probe ) return
       else
         if ( set(FindLastSubString:FindLastSubString) == probe ) return
-      endif
+      end if
     end do
     FindLastSubString = 0
   end function FindLastSubString
@@ -808,7 +818,7 @@ contains ! =====     Public Procedures     =============================
       call FindLongestStretch( which, how_many, range )
     else
       call FindLongestStretch( which_not, how_many, range )
-    endif
+    end if
   end subroutine FindLongestLogical
 
   subroutine FindLongestSubString ( Set, Probe, Range, reverse )
@@ -833,7 +843,7 @@ contains ! =====     Public Procedures     =============================
     if ( myReverse ) then
       how_many = len(set) - how_many
       which = which_not
-    endif
+    end if
     call FindLongestStretch( which, how_many, range )
   end subroutine FindLongestSubString
 
@@ -1115,7 +1125,7 @@ contains ! =====     Public Procedures     =============================
       if ( present(nUnique) ) nUnique = 1
       if ( present(counts) ) counts = 1
       return
-    endif
+    end if
     num = 1
     myUnique(1:1) = Set(1:1)
     myCounts(1) = 1
@@ -1127,8 +1137,8 @@ contains ! =====     Public Procedures     =============================
         num = num + 1
         myUnique(num:num) = Set(i:i)
         myCounts(num) = 1
-      endif
-    enddo
+      end if
+    end do
     if ( present(nUnique) ) nUnique = num
     num = min( num, len(Unique) )
     Unique = ' '
@@ -1257,7 +1267,7 @@ contains ! =====     Public Procedures     =============================
       if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
         MLSMSG_Allocate // 'C in IntersectionInteger' )
       c = tc(:k)
-    endif
+    end if
   end function IntersectionInteger
 
   function IntersectionCharacter ( A, B, reverse ) result ( C )
@@ -1504,10 +1514,10 @@ contains ! =====     Public Procedures     =============================
       if ( i > 1 ) then
         j = findFirst( a(:i-1), a(i) )
         if ( j > 0 ) cycle
-      endif
+      end if
       size_c = size_c + 1
       TC(size_c) = a(i)
-    enddo
+    end do
 
     ! print *, 'size(b): ', size(b)    
     ! print *, 'b: ', b(1:size(b))
@@ -1516,10 +1526,10 @@ contains ! =====     Public Procedures     =============================
       if ( size_c > 0 ) then
         j = findFirst( tc(:size_c), b(i) )
         if ( j > 0 ) cycle
-      endif
+      end if
       size_c = size_c + 1
       TC(size_c) = b(i)
-    enddo
+    end do
     ! print *, 'size(c): ', size_c    
     ! print *, 'tc: ', tc(1:size_c)
     nullify(c)
@@ -1595,22 +1605,22 @@ contains ! =====     Public Procedures     =============================
           stretch = lastWhich - firstWhich + 1
         ! else
           ! Not longer, so we forget about it
-        endif
+        end if
         firstWhich = which(i)
       else
         ! Yes, we have extended our sequence
         lastWhich = which(i)
         inSequence = .true.
-      endif
-    enddo
+      end if
+    end do
     ! Did we end the loop still in sequence?
     if ( inSequence ) then
       if ( lastWhich - firstWhich + 1 > stretch ) then
         ! It is longer so it becomes our new winner
         range(1) = firstWhich
         range(2) = lastWhich
-      endif
-    endif
+      end if
+    end if
   end subroutine FindLongestStretch
 
 !--------------------------- end bloc --------------------------------------
@@ -1626,6 +1636,9 @@ contains ! =====     Public Procedures     =============================
 end module MLSSets
 
 ! $Log$
+! Revision 2.23  2011/04/28 22:43:29  vsnyder
+! Regularize declarations in FindFirst... routines
+!
 ! Revision 2.22  2011/02/18 18:03:14  pwagner
 ! Added functions to check set A is proper or that A is a [proper] subset of B
 !
