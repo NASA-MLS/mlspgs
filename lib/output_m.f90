@@ -862,6 +862,7 @@ contains
     if ( present(date) ) then
       dateString = date
     else
+      dateString = '' ! Intel 12 and earlier doesn't fill with blanks
       call date_and_time ( date=dateString )
     endif
     col1 = index(lowercase(dateString), 't')
@@ -1269,6 +1270,8 @@ contains
       my_adv = 'yes'
       if ( present(advance) ) my_adv = advance
     end if
+    dateString = '' ! Intel 12 and earlier doesn't fill with blanks
+    timeString = '' ! Intel 12 and earlier doesn't fill with blanks
     call date_and_time ( date=dateString, time=timeString )
     dateString = reFormatDate(trim(dateString), toForm=dateFormat)
     timeString = reFormatTime(trim(timeString), timeFormat)
@@ -2211,6 +2214,8 @@ contains
     ! Executable
     stamp = chars
     if ( stampOptions%showTime ) then
+      dateString = '' ! Intel 12 and earlier doesn't fill with blanks
+      timeString = '' ! Intel 12 and earlier doesn't fill with blanks
       call date_and_time ( date=dateString, time=timeString )
       dateString = reFormatDate(trim(dateString), toForm=stampOptions%dateFormat)
       timeString = reFormatTime(trim(timeString), stampOptions%timeFormat)
@@ -2252,6 +2257,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.85  2011/04/29 02:16:32  vsnyder
+! Prefill dateString and timeString with blanks to compensate for Intel bug
+!
 ! Revision 2.84  2011/03/12 00:39:31  vsnyder
 ! Change len=1 to len=* to avoid Intel checking problem
 !
