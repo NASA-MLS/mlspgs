@@ -40,7 +40,7 @@ module L2PC_m
   use MLSSignals_m, only: GETSIGNALNAME
   use MLSStringLists, only: SWITCHDETAIL
   use MLSStrings, only: writeIntsToChars
-  use Molecules, only: L_EXTINCTION
+  use Molecules, only: L_EXTINCTION, L_EXTINCTIONV2
   use MoreTree, only: GetStringIndexFromString, GetLitIndexFromString
   use Output_m, only: newLine, output, outputNamedValue
   use Parse_Signal_m, only: Parse_Signal
@@ -72,11 +72,11 @@ module L2PC_m
   end interface
 
   interface DUMP
-    module procedure DUMPONEL2PC, DumpL2PCDatabase, DumpL2PCFile
+    module procedure DUMPONEL2PC, DUMPL2PCDATABASE, DUMPL2PCFILE
   end interface
 
   interface DUMP_PRIVATE
-    module procedure DUMPONEL2PC, DumpL2PCDatabase, DumpL2PCFile, DumpL2PCInfo
+    module procedure DUMPONEL2PC, DUMPL2PCDATABASE, DUMPL2PCFILE, DUMPL2PCINFO
   end interface
   ! This is an update to the L2PCs where we can store both Jacobians and Hessians
   ! Previously the L2PC's were just Matrix_Ts, now they're more diversified
@@ -522,7 +522,8 @@ contains ! ============= Public Procedures ==========================
     character(len=*), intent(in), optional :: options ! any of {mh*b[]}
                                              ! m: dump only matrices
                                              ! h: dump only hessians
-                                             ! *: dump matrices and hessians
+                                             ! v: dump only x*, y* vectors
+                                             ! *: dump everything
                                              ! b[HCN]: dump only HCN blocks
                                              ! default is *
     ! Local variables
@@ -551,7 +552,8 @@ contains ! ============= Public Procedures ==========================
                                              ! r: read file before dumping
                                              ! m: dump only matrices
                                              ! h: dump only hessians
-                                             ! *: dump matrices and hessians
+                                             ! v: dump only x*, y* vectors
+                                             ! *: dump everything
                                              ! b[HCN]: dump only HCN blocks
                                              ! default is *
     ! Local variables
@@ -592,13 +594,15 @@ contains ! ============= Public Procedures ==========================
     character(len=*), intent(in), optional :: options ! any of {mh*b[]d[]}
                                              ! m: dump only matrices
                                              ! h: dump only hessians
-                                             ! *: dump matrices and hessians
+                                             ! v: dump only x*, y* vectors
+                                             ! *: dump everything
                                              ! b[HCN]: dump only HCN blocks
                                              ! d[dopts]: pass dopts when dumping arrays
                                              ! default is *
     ! Local variables
     logical :: dumpHessians
     logical :: dumpJacobians
+    logical :: dumpVectors
     integer :: myDetails
     ! character(len=128) :: myMolecules
 
@@ -607,12 +611,11 @@ contains ! ============= Public Procedures ==========================
     if ( present(details) ) myDetails = details
     dumpHessians = .true.
     dumpJacobians = .true.
-    ! mymolecules = '*'
+    dumpVectors = .true.
     if ( present(options) ) then
       dumpHessians = optionDetail( options, 'h' ) == 'yes'
       dumpJacobians = optionDetail( options, 'm' ) == 'yes'
-      ! myMolecules = lowercase( optionDetail( options, 'b' ) )
-      ! if ( myMolecules == 'no' ) myMolecules = '*'
+      dumpVectors = optionDetail( options, 'v' ) == 'yes'
     endif
     call outputNamedValue( 'myDetails', myDetails )
     call output( '- Dump of L2PC -', advance='yes' )
@@ -623,10 +626,12 @@ contains ! ============= Public Procedures ==========================
       call output( '*** Uh-oh, name not found in string table', advance='yes' )
     endif
     ! First dump the xStar and yStar
-    if ( dumpJacobians ) then
+    if ( dumpVectors ) then
       call dump ( l2pc%j%col%vec, details=details, name='xStar' )
       call dump ( l2pc%j%row%vec, details=details, name='yStar' )
+    endif
 
+    if ( dumpJacobians ) then
       ! Now dump kStar
       call dump ( l2pc%j, 'kStar', details )
     endif
@@ -1912,10 +1917,14 @@ contains ! ============= Public Procedures ==========================
       case ( l_vmr )
         call GetHDF5Attribute ( MLSFile, 'molecule', word )
         molecule = GetLitIndexFromString ( word )
-        if ( molecule == l_extinction ) then
-          call GetHDF5Attribute ( MLSFile, 'radiometer', word )
-          stringIndex = GetStringIndexFromString ( word )
-          radiometer = FindFirst ( Radiometers%prefix, stringIndex )
+        if ( any(molecule == (/l_extinction, l_extinctionv2/) ) ) then
+          if ( IsHDF5AttributePresent ( MLSFile, 'radiometer' ) ) then
+            call GetHDF5Attribute ( MLSFile, 'radiometer', word )
+            stringIndex = GetStringIndexFromString ( word )
+            radiometer = FindFirst ( Radiometers%prefix, stringIndex )
+          else
+            radiometer = 0
+          endif
           frequencyCoordinate = l_intermediateFrequency
         else
           frequencyCoordinate = l_none
@@ -2094,7 +2103,7 @@ contains ! ============= Public Procedures ==========================
         case (l_vmr)
           call get_string ( lit_indices(qt%molecule), line )
           call MakeHDF5Attribute ( qID, 'molecule', trim(line) )
-          if ( qt%molecule == l_extinction ) then
+          if ( any(qt%molecule == (/l_extinction, l_extinctionv2/) ) ) then
             call get_string ( radiometers(qt%radiometer)%prefix, line )
             call MakeHDF5Attribute ( qID, 'radiometer', trim(line) )
           end if
@@ -2187,6 +2196,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.112  2011/05/05 15:20:04  pwagner
+! Fixed bugs in writing, reading radiometer attribute for extinctionv2
+!
 ! Revision 2.111  2011/04/15 00:20:32  pwagner
 ! Protect against unlikely case where there is no Jacobian to output to file
 !
