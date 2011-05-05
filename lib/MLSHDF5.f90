@@ -227,6 +227,7 @@ module MLSHDF5
 
   interface IsHDF5AttributePresent
     module procedure IsHDF5AttributePresent_in_fID, &
+      & IsHDF5AttributePresent_in_MLSFile, &
       & IsHDF5AttributePresent_in_DSID, IsHDF5AttributePresent_in_grp
   end interface
 
@@ -2740,6 +2741,34 @@ contains ! ======================= Public Procedures =========================
     call MLSMessageCalls( 'pop' )
   end function IsHDF5AttributePresent_in_grp
 
+  ! ------------------------------  IsHDF5AttributePresent_in_MLSFile  -----
+  logical function IsHDF5AttributePresent_in_MLSFile ( MLSFile, name )
+    ! This routine returns true if the given HDF5 attribute is present
+    ! somewhere under the MLSFile tree
+    type (MLSFile_T)   :: MLSFile
+    character (len=*), intent(in) :: NAME ! Name for the attribute
+    integer :: ATTRID                   ! ID for attribute
+    integer :: STATUS                   ! Flag
+
+    ! Executable code
+    call MLSMessageCalls( 'push', constantName='IsHDF5AttributePresent_in_MLSFile' )
+    call h5eSet_auto_f ( 0, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to turn error messages off before looking for attribute ' // trim(name) )
+    if ( MLSFile%fileID%sd_ID > 0 ) then
+      call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
+    elseif ( MLSFile%fileID%grp_ID > 0 ) then
+      call h5aOpen_name_f ( MLSFile%fileID%grp_ID, name, attrID, status )
+    else
+      status = -1
+    endif
+    IsHDF5AttributePresent_in_MLSFile = ( status == 1 )
+    call h5eSet_auto_f ( 1, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to turn error messages back on after looking for attribute ' // trim(name) )
+    call MLSMessageCalls( 'pop' )
+  end function IsHDF5AttributePresent_in_MLSFile
+
   ! --------------------------------------------  IsHDF5DSPresent  -----
   logical function IsHDF5DSPresent ( locID, name, options )
     ! This routine returns true if the given HDF5 DS is present
@@ -5103,6 +5132,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.105  2011/05/05 15:14:45  pwagner
+! Added MLSFile api to IsHDF5AttributePresent
+!
 ! Revision 2.104  2011/03/16 18:19:47  pwagner
 ! Workaround for bug in Intel v12.0.0-2011.1.107
 !
