@@ -112,6 +112,7 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
     character (LEN=LineLen), pointer, dimension(:) :: fileComments => NULL()
 
     ! Now the name, description and units information
+    integer                 :: fileType = 0 ! From spec_indices, e.g. s_gridded
     character (LEN=LineLen) :: sourceFileName ! Input file name
     character (LEN=NameLen) :: quantityName ! From input file
     character (LEN=LineLen) :: description ! Quantity description
@@ -648,10 +649,10 @@ contains
 
   ! --------------------------------------------  DumpGriddedData  -----
   subroutine DumpGriddedData ( GriddedData, Details, options )
-    use Dump_0, only: Dump
-    use ieee_arithmetic, only: ieee_is_finite, ieee_is_nan
-    use Intrinsic, only: Lit_Indices
-    use String_Table, only: Display_String
+    use Dump_0, only: DUMP
+    use ieee_arithmetic, only: IEEE_IS_FINITE, IEEE_IS_NAN
+    use Intrinsic, only: LIT_INDICES, SPEC_INDICES
+    use String_Table, only: DISPLAY_STRING
 
     ! Imitating what dump_pointing_grid_database does, but for gridded data
     ! which may come from climatology, ncep, dao
@@ -764,7 +765,13 @@ contains
       return
     endif
     call output('Gridded quantity name ' // GriddedData%quantityName, advance='yes')
-      if ( myDetails < -1 ) return
+    if ( myDetails < -1 ) return
+    call output( 'fileType: ')
+    if ( GriddedData%fileType < 1 ) then
+      call output( '(unknown)', advance='yes' )
+    else
+      call display_string( spec_indices(GriddedData%fileType), advance='yes' )
+    endif
     call output(' description ' // GriddedData%description, advance='yes')
     call output(' units ' // trim(GriddedData%units), advance='yes')
     call output(' missing value ', advance='no')
@@ -820,6 +827,9 @@ contains
       call output ( ' Gridded Data field values empty', advance='yes' )
       return
     endif
+    call outputNamedValue( 'max(values)', maxval(GriddedData%field) )
+    call outputNamedValue( 'min(values)', minval(GriddedData%field) )
+    call outputNamedValue( 'shape(values)', shape(GriddedData%field) )
     if ( len_trim(myOptions) > 0 ) then
       if ( GriddedData%noLons < 2 .and. index( myOptions, 'lon') > 0 ) &
         & myOptions = SnipList( myOptions, 'lon' )
@@ -1597,6 +1607,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.63  2011/05/05 15:21:34  pwagner
+! Added fileType field to datatype
+!
 ! Revision 2.62  2011/04/27 17:34:25  pwagner
 ! dateStarts and -Ends now dumped as dates, not doubles
 !
