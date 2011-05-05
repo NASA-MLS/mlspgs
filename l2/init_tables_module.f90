@@ -173,7 +173,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_PHASE              = s_pfadata + 1
   integer, parameter :: S_POPULATEL2PCBIN    = s_phase + 1
   integer, parameter :: S_QUANTITY           = s_populateL2pcBin + 1
-  integer, parameter :: S_READPFA            = s_quantity + 1
+  integer, parameter :: S_READGRIDDEDDATA    = s_quantity + 1
+  integer, parameter :: S_READPFA            = s_readGriddeddata + 1
   integer, parameter :: S_REEVALUATE         = s_readPFA + 1
   integer, parameter :: S_REFLECT            = s_reevaluate + 1
   integer, parameter :: S_REGULARIZATION     = s_reflect + 1
@@ -398,6 +399,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_populateL2PCBin) =      add_ident ( 'populateL2PCBin' )
     spec_indices(s_quantity) =             add_ident ( 'quantity' )
     spec_indices(s_readpfa) =              add_ident ( 'readPFA' )
+    spec_indices(s_readGriddedData) =      add_ident ( 'readGriddeddata' )
     spec_indices(s_reevaluate) =           add_ident ( 'reevaluate' )
     spec_indices(s_reflect) =              add_ident ( 'reflect' )
     spec_indices(s_regularization) =       add_ident ( 'regularization' )
@@ -614,6 +616,17 @@ contains ! =====     Public procedures     =============================
              begin, f+f_origin, t+t_numeric, n+n_field_type, &
              begin, f+f_sourceL2GP, s+s_l2gp, n+n_field_spec, &
              ndp+n_spec_def /) )
+    call make_tree ( (/ &
+      begin, s+s_readgriddedData, &
+             begin, f+f_date, t+t_string, n+n_field_type, &
+             begin, f+f_dimList, t+t_string, n+n_field_type, &
+             begin, f+f_file, t+t_string, n+n_field_type, &
+             begin, f+f_grid, s+s_gridded, n+n_field_spec, &
+             begin, f+f_missingValue, t+t_numeric, n+n_field_type, &
+             begin, f+f_field, t+t_string, n+n_field_type, &
+             begin, f+f_origin, t+t_griddedOrigin, n+n_field_type, &
+             begin, f+f_sum, t+t_boolean, n+n_field_type, &
+             np+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_binSelector, &
              begin, f+f_type, t+t_binSelectorType, nr+n_field_type, &
@@ -1155,21 +1168,22 @@ contains ! =====     Public procedures     =============================
              nadp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_directWrite, &
-             begin, f+f_source, s+s_vector, f+f_template, f+f_quantities, &
-                    nr+n_dot, &
+             begin, f+f_convergence, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
+             begin, f+f_file, t+t_string, nd+n_field_type, &
+             begin, f+f_hdfVersion, t+t_numeric, ndr+n_field_type, &
+             begin, f+f_lowerOverlap, t+t_boolean, n+n_field_type, &
              begin, f+f_precision, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
              begin, f+f_quality, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
+             begin, f+f_source, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
              begin, f+f_status, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
-             begin, f+f_convergence, s+s_vector, f+f_template, f+f_quantities, &
-                    n+n_dot, &
-             begin, f+f_file, t+t_string, nd+n_field_type, &
              begin, f+f_type, t+t_outputType, ndr+n_field_type, &
-             begin, f+f_hdfVersion, t+t_numeric, ndr+n_field_type, &
-             begin, f+f_lowerOverlap, t+t_boolean, n+n_field_type, &
              begin, f+f_upperOverlap, t+t_boolean, n+n_field_type, &
+             begin, f+f_vector, s+s_vector, n+n_field_spec, &
              np+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_copy, &  ! Must be AFTER s_hGrid if repairGeoLocations
@@ -1608,8 +1622,8 @@ contains ! =====     Public procedures     =============================
              s+s_forwardModelGlobal, s+s_l1brad, s+s_l1boa, &
              s+s_l2parsf, s+s_makePFA, s+s_pfaData, s+s_readPFA, &
              s+s_tGrid, s+s_time, s+s_vGrid, s+s_writePFA, n+n_section, &
-      begin, z+z_readapriori, s+s_time, s+s_diff, s+s_dump, s+s_gridded, s+s_l2gp, &
-             s+s_l2aux, s+s_snoop, n+n_section, &
+      begin, z+z_readapriori, s+s_time, s+s_diff, s+s_dump, s+s_gridded, &
+             s+s_l2aux, s+s_l2gp, s+s_readGriddedData, s+s_snoop, n+n_section, &
       begin, z+z_mergegrids, s+s_Boolean, s+s_concatenate, s+s_ConvertEtaToP, &
              s+s_delete, s+s_diff, s+s_dump, s+s_isGridEmpty, s+s_Gridded, &
              s+s_merge, s+s_mergeGrids, s+s_reevaluate, s+s_skip, s+s_time, &
@@ -1678,6 +1692,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.520  2011/05/05 15:23:52  pwagner
+! Added readGriddedData command to readApriori section
+!
 ! Revision 2.519  2011/04/27 17:38:11  pwagner
 ! Added new command (not a named spec) wmoTropFromGrids
 !
