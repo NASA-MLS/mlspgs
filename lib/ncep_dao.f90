@@ -95,7 +95,7 @@ contains
   subroutine ReadGriddedData( GriddedFile, lcf_where, description, v_type, &
     & the_g_data, returnStatus, &
     & GeoDimList, fieldNames, missingValue, &
-    & date, sumDelp, litDescription )
+    & date, sumDelp, litDescription, verbose )
 
     use MLSStats1, only: MLSMIN, MLSMAX, MLSMEAN
     ! This routine reads a Gridded Data file, returning a filled data
@@ -127,16 +127,20 @@ contains
     character (LEN=*), optional, intent(IN) :: date ! offset
     logical, optional, intent(IN)           :: sumDelp ! sum the DELP to make PL
     character(len=*), optional, intent(out) :: litDescription
+    logical, optional, intent(IN)           :: verbose
 
     ! Local Variables
     character ( len=len(fieldNames)) :: fieldName   ! In case we supply two
     logical, parameter :: DEEBUG = .false.
+    logical            :: myVerbose
     ! Executable code
+    myVerbose = .false.
+    if ( present(verbose) ) myVerbose = .true.
     
     LIT_DESCRIPTION = lowercase(description)
     if ( LIT_DESCRIPTION == 'geos5' ) &
       & LIT_DESCRIPTION = GEOS5orMERRA( GriddedFile )
-    if ( DEEBUG ) print *, 'Reading ' // trim(LIT_DESCRIPTION) // ' data'
+    if ( myVerbose ) print *, 'Reading ' // trim(LIT_DESCRIPTION) // ' data'
 
     call nullifyGriddedData ( the_g_data ) ! for Sun's still useless compiler
     the_g_data%empty = .true.
@@ -2326,6 +2330,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.59  2011/05/05 23:09:22  pwagner
+! verbose when requested via optional arg
+!
 ! Revision 2.58  2011/04/27 17:36:12  pwagner
 ! Consistently sets grid%empty when not found or wrong description
 !
