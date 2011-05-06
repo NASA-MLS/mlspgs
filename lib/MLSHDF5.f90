@@ -20,24 +20,24 @@ module MLSHDF5
   ! procedures that need them. Otherwise, Lahey will take nearly forever
   ! to finish compiling the highest modules.
 
-  use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use DUMP_0, only: dopt_laconic, dopt_rms, dopt_stats, &
-    & DUMP, dumpNamedValues
-  use hdf, only: DFACC_RDONLY
-  use intrinsic, only: l_hdf
-  use MLSCommon, only: MLSFile_T
-  use MLSDataInfo, only: MLSDataInfo_T, Query_MLSData
-  use MLSFiles, only: HDFVERSION_5, INITIALIZEMLSFILE
-  use MLSKinds, only: r8
+  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use DUMP_0, only: DOPT_LACONIC, DOPT_RMS, DOPT_STATS, &
+    & DUMP, DUMPNAMEDVALUES
+  use HDF, only: DFACC_RDonly
+  use INTRINSIC, only: L_HDF
+  use MLSCOMMON, only: MLSFILE_T
+  use MLSDATAINFO, only: MLSDATAINFO_T, QUERY_MLSDATA
+  use MLSFILES, only: HDFVERSION_5, INITIALIZEMLSFILE
+  use MLSKINDS, only: R8
   use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, &
     & MLSMESSAGE, MLSMESSAGECALLS
-  use MLSSets, only: FindFirst
-  use MLSStringLists, only: catLists, IsInList, &
-    & GetStringElement, NumStringElements, StringElement
-  use MLSStrings, only: indexes, Replace
-  use output_m, only: newLine, output, outputNamedValue
-  ! Lets break down our use, parameters first
-  use HDF5, only: H5F_ACC_RDONLY_F, H5F_ACC_RDWR_F, &
+  use MLSSETS, only: FINDFIRST
+  use MLSSTRINGLISTS, only: CATLISTS, ISINLIST, &
+    & GETSTRINGELEMENT, NUMSTRINGELEMENTS, STRINGELEMENT
+  use MLSSTRINGS, only: INDEXES, REPLACE
+  use OUTPUT_M, only: NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
+  ! LETS BREAK DOWN OUR use, PARAMETERS FIRST
+  use HDF5, only: H5F_ACC_RDonly_F, H5F_ACC_RDWR_F, &
     & H5P_DATASET_CREATE_F, &
     & H5SIS_SIMPLE_F, & ! H5SOFFSET_SIMPLE_F, &
     & H5S_SCALAR_F, H5S_SELECT_SET_F, H5S_UNLIMITED_F, &
@@ -45,7 +45,7 @@ module MLSHDF5
     & H5T_NATIVE_DOUBLE, H5T_NATIVE_REAL, H5T_STD_I32LE, &
     & H5T_NATIVE_CHARACTER, H5T_NATIVE_INTEGER, H5T_STRING, H5T_STRING_F, &
     & HID_T, HSIZE_T, SIZE_T
-  ! Now routines
+  ! NOW ROUTINES
   use HDF5, only: H5ACLOSE_F, H5ACREATE_F, &
     & H5AGET_NAME_F, H5AGET_NUM_ATTRS_F, &
     & H5AGET_SPACE_F, H5AGET_TYPE_F, H5AOPEN_IDX_F, H5AOPEN_NAME_F, &
@@ -313,7 +313,7 @@ contains ! ======================= Public Procedures =========================
   subroutine MLS_h5close ( error )
     ! Arguments
   ! To switch to/from hdfeos5.1.6(+) uncomment next line
-    use H5LIB, ONLY: h5close_f
+    use H5LIB, only: H5CLOSE_F
     integer, intent(out) :: error          ! Trouble if /= 0
     error = 0
     call h5close_f ( error )
@@ -323,7 +323,7 @@ contains ! ======================= Public Procedures =========================
   subroutine MLS_h5open ( error )
     ! Arguments
   ! To switch to/from hdfeos5.1.6(+) uncomment next line
-    use H5LIB, ONLY: h5open_f
+    use H5LIB, only: H5OPEN_F
     integer, intent(out) :: error          ! Trouble if /= 0
     error = 0
     call h5open_f ( error )
@@ -2762,7 +2762,7 @@ contains ! ======================= Public Procedures =========================
     else
       status = -1
     endif
-    IsHDF5AttributePresent_in_MLSFile = ( status == 1 )
+    IsHDF5AttributePresent_in_MLSFile = ( status == 0 )
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for attribute ' // trim(name) )
@@ -5132,6 +5132,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.106  2011/05/06 00:35:33  pwagner
+! Fixed bug in IsHDF5AttributePresent
+!
 ! Revision 2.105  2011/05/05 15:14:45  pwagner
 ! Added MLSFile api to IsHDF5AttributePresent
 !
