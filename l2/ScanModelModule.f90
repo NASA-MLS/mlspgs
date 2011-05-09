@@ -23,32 +23,33 @@ module ScanModelModule          ! Scan model and associated calculations
   ! vector.  This was never used in UMLS V5, and so it is not clear that it
   ! will ever be required.
 
-  use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use Constants, ONLY: Deg2Rad, LN10, PI
-  use ForwardModelConfig, only: ForwardModelConfig_T
-  use ForwardModelIntermediate, only:  ForwardModelStatus_T
-  use ForwardModelVectorTools, only: GETQUANTITYFORFORWARDMODEL
-  use Geometry, only: EARTHRADA, EARTHRADB, EARTHSURFACEGPH, GEODTOGEOCLAT, &
+  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use CONSTANTS, only: DEG2RAD, LN10, PI
+  use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
+  use FORWARDMODELINTERMEDIATE, only:  FORWARDMODELSTATUS_T
+  use FORWARDMODELVECTORTOOLS, only: GETQUANTITYFORFORWARDMODEL
+  use GEOMETRY, only: EARTHRADA, EARTHRADB, EARTHSURFACEGPH, GEODTOGEOCLAT, &
     & G0, GM, J2, J4, OMEGA => W, MAXREFRACTION
-  use Init_Tables_Module, only: L_REFGPH, L_ZETA
-  use intrinsic, only: L_HEIGHTOFFSET, L_NONE, L_PTAN, L_SCANRESIDUAL, &
+  use INIT_TABLES_MODULE, only: L_REFGPH, L_ZETA
+  use INTRINSIC, only: L_HEIGHTOFFSET, L_NONE, L_PTAN, L_SCANRESIDUAL, &
     & L_TEMPERATURE, L_TNGTGEOCALT, L_VMR, L_PHITAN, L_ORBITINCLINATION, &
-    & PHYQ_Length
-  use ManipulateVectorQuantities, ONLY: FINDCLOSESTINSTANCES, &
-    & FindInstanceWindow
-  use MatrixModule_0, only: DESTROYBLOCK, MATRIXELEMENT_T, M_ABSENT, &
-    & M_FULL, UpdateDiagonal
-  use MatrixModule_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T, &
+    & PHYQ_LENGTH
+  use MANIPULATEVECTORQUANTITIES, only: FINDCLOSESTINSTANCES, &
+    & FINDINSTANCEWINDOW
+  use MATRIXMODULE_0, only: DESTROYBLOCK, MATRIXELEMENT_T, M_ABSENT, &
+    & M_FULL, UPDATEDIAGONAL
+  use MATRIXMODULE_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T, &
     & CREATEEMPTYMATRIX, DESTROYMATRIX, CLEARMATRIX
-  use MLSKinds, ONLY: R8, RP, RV
-  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING, &
-    & MLSMessageCalls
-  use MLSNumerics, only : HUNT, INTERPOLATEVALUES
-  use Molecules, only: L_H2O
-  use Refraction_m, only: Refractive_index, RefrAterm, RefrBterm
-  use Toggles, only: EMIT, TOGGLE, SWITCHES
-  use Trace_M, only: TRACE_BEGIN, TRACE_END
-  use VectorsModule, ONLY : VALIDATEVECTORQUANTITY, &
+  use MLSKINDS, only: R8, RP, RV
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING, &
+    & MLSMESSAGECALLS
+  use MLSNUMERICS, only : HUNT, INTERPOLATEVALUES
+  use MLSSTRINGLISTS, only: SWITCHDETAIL
+  use MOLECULES, only: L_H2O
+  use REFRACTION_M, only: REFRACTIVE_INDEX, REFRATERM, REFRBTERM
+  use TOGGLES, only: EMIT, TOGGLE, SWITCHES
+  use TRACE_M, only: TRACE_BEGIN, TRACE_END
+  use VECTORSMODULE, only : VALIDATEVECTORQUANTITY, &
     & VECTOR_T, VECTORTEMPLATE_T, VECTORVALUE_T, CREATEVECTOR, &
     & CONSTRUCTVECTORTEMPLATE, DESTROYVECTORINFO
 
@@ -485,7 +486,7 @@ contains ! =============== Subroutines and functions ==========================
     earthRadius = earthRadA*earthRadB/sqrt( &
       & (earthRadA**2-earthRadB**2)*sin(geocLat)**2 + earthRadB**2)
     ptan%values = -3.0+(geocAlt%values - earthRadius)/16e3
-    if ( index ( switches, 'pguess' ) /= 0 ) &
+    if ( switchDetail ( switches, 'pguess' ) > -1 ) &
       & call dump ( ptan%values, 'Initial ptan guess' )
     call Deallocate_test ( earthRadius, 'geocLat', ModuleName )
     call Deallocate_test ( geocLat, 'geocLat', ModuleName )
@@ -545,7 +546,7 @@ contains ! =============== Subroutines and functions ==========================
          &   jacobian%block(maf,maf)%values(:,1)
         call ClearMatrix ( jacobian )
       end do
-      if ( index ( switches, 'pguess' ) /= 0 ) then
+      if ( switchDetail ( switches, 'pguess' ) > -1 ) then
         call output ( 'Pressure guesser iteration ' )
         call output ( i )
         call output ( ' mean, min abs, max abs residual:', advance='yes' )
@@ -563,7 +564,7 @@ contains ! =============== Subroutines and functions ==========================
     ! Put the result back in state
     ptan%values = state%quantities(1)%values
 
-    if ( index (switches, 'pguess' ) /= 0 ) &
+    if ( switchDetail (switches, 'pguess' ) > -1 ) &
       & call dump ( ptan%values, 'Final ptan guess' )
 
     ! Destroy our vectors
@@ -1566,11 +1567,11 @@ contains ! =============== Subroutines and functions ==========================
   subroutine TwoDScanForwardModel ( fmConf, state, extra, fwmOut, &
   & fmStat, jacobian, chunkNo )
 
-    use Get_eta_matrix_m, only: Get_eta_sparse
+    use GET_ETA_MATRIX_M, only: GET_ETA_SPARSE
     use OUTPUT_M, only: BLANKS, OUTPUT
-    use Piq_int_m, only: Piq_int
-    use Time_M, only: Time_Now
-    use Physics, only: Boltz
+    use PIQ_INT_M, only: PIQ_INT
+    use TIME_M, only: TIME_NOW
+    use PHYSICS, only: BOLTZ
 
 ! This is a two D version of ScanForwardModel
 ! inputs
@@ -2186,6 +2187,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.73  2011/05/09 18:25:12  pwagner
+! Converted to using switchDetail
+!
 ! Revision 2.72  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
 !
