@@ -31,27 +31,28 @@ contains ! ============= Public Procedures ==========================
   subroutine ForwardModel ( Config, FwdModelIn, FwdModelExtra, &
     FwdModelOut, fmStat, Jacobian, Hessian, vectors )
 
-    use BaselineForwardModel_m, only: BASELINEFORWARDMODEL
-    use ForwardModelConfig, only: ForwardModelConfig_T
-    use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
-    use FullCloudForwardModel, only: FULLCLOUDFORWARDMODELWRAPPER
-    use FullForwardModel_m, only: FULLFORWARDMODEL
-    use HessianModule_1, only: HESSIAN_T
-    use HybridForwardModel_m, only: HYBRIDFORWARDMODEL
-    use Init_tables_module, only: L_LINEAR, L_SCAN, L_SCAN2D, L_FULL, L_CLOUDFULL, &
+    use BASELINEFORWARDMODEL_M, only: BASELINEFORWARDMODEL
+    use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
+    use FORWARDMODELINTERMEDIATE, only: FORWARDMODELSTATUS_T
+    use FULLCLOUDFORWARDMODEL, only: FULLCLOUDFORWARDMODELWRAPPER
+    use FULLFORWARDMODEL_M, only: FULLFORWARDMODEL
+    use HESSIANMODULE_1, only: HESSIAN_T
+    use HYBRIDFORWARDMODEL_M, only: HYBRIDFORWARDMODEL
+    use INIT_TABLES_MODULE, only: L_LINEAR, L_SCAN, L_SCAN2D, L_FULL, L_CLOUDFULL, &
       & L_SWITCHINGMIRROR, L_HYBRID, L_POLARLINEAR, L_BASELINE
-    use LinearizedForwardModel_m, only: LINEARIZEDFORWARDMODEL
-    use MatrixModule_1, only: MATRIX_T, CHECKINTEGRITY
-    use MLSL2Timings, only: Add_to_retrieval_timing
-    use MLSMessageModule, only: MLSMessage, MLSMessageCalls, MLSMSG_Error, MLSMSG_Warning
-    use PolarLinearModel_m, only: POLARLINEARMODEL
-    use ScanModelModule, only: SCANFORWARDMODEL, TWODSCANFORWARDMODEL
-    use String_table, only: Display_String, GET_STRING
-    use SwitchingMirrorModel_m, only: SWITCHINGMIRRORMODEL
-    use Time_M, only: Time_Now
-    use Toggles, only: Emit, Switches, Toggle
-    use Trace_M, only: TRACE_BEGIN, TRACE_END
-    use VectorsModule, only: CheckNaN, Dump, VECTOR_T
+    use LINEARIZEDFORWARDMODEL_M, only: LINEARIZEDFORWARDMODEL
+    use MATRIXMODULE_1, only: MATRIX_T, CHECKINTEGRITY
+    use MLSL2TIMINGS, only: ADD_TO_RETRIEVAL_TIMING
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMSG_ERROR, MLSMSG_WARNING
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use POLARLINEARMODEL_M, only: POLARLINEARMODEL
+    use SCANMODELMODULE, only: SCANFORWARDMODEL, TWODSCANFORWARDMODEL
+    use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
+    use SWITCHINGMIRRORMODEL_M, only: SWITCHINGMIRRORMODEL
+    use TIME_M, only: TIME_NOW
+    use TOGGLES, only: EMIT, SWITCHES, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use VECTORSMODULE, only: CHECKNAN, DUMP, VECTOR_T
 
     ! Dummy arguments
     type(ForwardModelConfig_T), intent(inout) :: CONFIG
@@ -151,11 +152,11 @@ contains ! ============= Public Procedures ==========================
     end if
 
     k = 0
-    if ( index(switches,'FMNAN') > 0 ) then
+    if ( switchDetail(switches,'FMNAN') > -1 ) then
       k = 3 ! Check, print and stop if any
-    else if ( index(switches,'fmNaN') > 0 ) then
+    else if ( switchDetail(switches,'fmNaN') > -1 ) then
       k = 2 ! Check, print if any
-    else if ( index(switches,'fmnan') > 0 ) then
+    else if ( switchDetail(switches,'fmnan') > -1 ) then
       k = 1 ! Check, print name if any
     end if
     if ( k > 0 ) then
@@ -234,6 +235,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.34  2011/05/09 18:10:02  pwagner
+! Converted to using switchDetail
+!
 ! Revision 2.33  2010/08/27 06:25:38  yanovsky
 ! ForwardModel subroutine has Hessian as dummy argument.
 ! Actual argument Hessian is passed in a call to FullForwardModel subroutine.
