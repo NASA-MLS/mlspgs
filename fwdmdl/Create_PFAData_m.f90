@@ -33,27 +33,28 @@ contains ! =====     Public Procedures     =============================
     ! tables to PFADataBase%PFAData.  Return the index of the last created PFA
     ! datum.
 
-    use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use DSIMPSON_MODULE, only: SIMPS
-    use Dump_0, only: Dump
-    use FilterShapes_m, only: DACSFilterShapes, FilterShapes, FilterShape_T
-    use Intrinsic, only: LIT_INDICES, L_NONE
-    use MLSCommon, only: RP, R8
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use MLSSignals_m, only: GetNameOfSignal, MatchSignal, MaxSigLen, Signal_T
-    use MoreTree, only: GetStringIndexFromString
-    use Output_m, only: Output
-    use PFADataBase_m, only: AddPFADatumToDatabase, HookTableToFindPFA, &
-      & PFAData, PFAData_T
-    use Physics, only: h_over_K, SpeedOfLight ! m/s
-    use Slabs_SW_m, only: AllocateOneSlabs, DeAllocateOneSlabs, &
-      & Slabs_Struct, Slabs_Prep_Struct
-    use SpectroscopyCatalog_m, only: Catalog, Catalog_t, Line_t, Lines, &
-      & MostLines, SpectroscopyFile
-    use String_Table, only: Display_String
-    use Toggles, only: Emit, Switches, Toggle
-    use Trace_M, only: Trace_begin, Trace_end
-    use VGridsDatabase, only: VGrid_t
+    use DUMP_0, only: DUMP
+    use FILTERSHAPES_M, only: DACSFILTERSHAPES, FILTERSHAPES, FILTERSHAPE_T
+    use INTRINSIC, only: LIT_INDICES, L_NONE
+    use MLSKINDS, only: RP, R8
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+    use MLSSIGNALS_M, only: GETNAMEOFSIGNAL, MATCHSIGNAL, MAXSIGLEN, SIGNAL_T
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use MORETREE, only: GETSTRINGINDEXFROMSTRING
+    use OUTPUT_M, only: OUTPUT
+    use PFADATABASE_M, only: ADDPFADATUMTODATABASE, HOOKTABLETOFINDPFA, &
+      & PFADATA, PFADATA_T
+    use PHYSICS, only: H_OVER_K, SPEEDOFLIGHT ! M/S
+    use SLABS_SW_M, only: ALLOCATEONESLABS, DEALLOCATEONESLABS, &
+      & SLABS_STRUCT, SLABS_PREP_STRUCT
+    use SPECTROSCOPYCATALOG_M, only: CATALOG, CATALOG_T, LINE_T, LINES, &
+      & MOSTLINES, SPECTROSCOPYFILE
+    use STRING_TABLE, only: DISPLAY_STRING
+    use TOGGLES, only: EMIT, SWITCHES, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use VGRIDSDATABASE, only: VGRID_T
 
     type(filterShape_t), pointer :: Filters(:)
     integer, intent(in) :: Molecules(:)
@@ -111,10 +112,10 @@ contains ! =====     Public Procedures     =============================
 
     if ( toggle(emit) ) & ! set by -f command-line switch
       & call trace_begin ( 'Create_PFAData' )
-    progress = index(switches,'pfag') /= 0
+    progress = switchDetail(switches,'pfag') > -1
     dumpIt = 0
-    if ( index(switches,'pfab') /= 0 ) dumpIt = 1
-    if ( index(switches,'pfaB') /= 0 ) dumpIt = 2
+    if ( switchDetail(switches,'pfab') > -1 ) dumpIt = 1
+    if ( switchDetail(switches,'pfaB') > -1 ) dumpIt = 2
 
     error = .false.
 
@@ -437,6 +438,9 @@ contains ! =====     Public Procedures     =============================
 end module Create_PFAData_m
 
 ! $Log$
+! Revision 2.25  2011/05/09 17:44:26  pwagner
+! Converted to using switchDetail
+!
 ! Revision 2.24  2009/06/23 18:26:10  pwagner
 ! Prevent Intel from optimizing ident string away
 !
