@@ -14,25 +14,26 @@ module MLSSignals_M
   ! Process the MLSSignals section of the L2 configuration file and deal with
   ! parsing signal request strings.
 
-  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use DUMP_0, only: DUMP
-  use Expr_M, only: Expr
-  use Init_MLSSignals_m ! Everything
-  use Intrinsic, only: Field_First, Field_indices, Lit_Indices, &
-    & PHYQ_Dimensionless, PHYQ_Frequency, PHYQ_Indices, S_Time, L_A, l_emls
-  use MLSCommon, only: R8
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
-    & MLSMSG_Error, PVMErrorMessage
-  use MLSStrings, only: LowerCase, Capitalize
-  use MoreTree, only: Get_Boolean, StartErrorMessage
-  use Output_M, only: Output
-  use String_Table, only: Display_String, Get_String
-  use Time_M, only: Time_Now
-  use Toggles, only: Gen, Switches, Toggle
-  use Trace_M, only: Trace_begin, Trace_end
-  use Tree, only: Decorate, Decoration, Node_ID, Nsons, &
-    & Sub_Rosa, Subtree
-  use Tree_Types, only: N_named
+  use EXPR_M, only: EXPR
+  use INIT_MLSSIGNALS_M ! EVERYTHING
+  use INTRINSIC, only: FIELD_FIRST, FIELD_INDICES, LIT_INDICES, &
+    & PHYQ_DIMENSIONLESS, PHYQ_FREQUENCY, PHYQ_INDICES, S_TIME, L_A, L_EMLS
+  use MLSCOMMON, only: R8
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
+    & MLSMSG_ERROR, PVMERRORMESSAGE
+  use MLSSTRINGLISTS, only: SWITCHDETAIL
+  use MLSSTRINGS, only: LOWERCASE, CAPITALIZE
+  use MORETREE, only: GET_BOOLEAN, STARTERRORMESSAGE
+  use OUTPUT_M, only: OUTPUT
+  use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
+  use TIME_M, only: TIME_NOW
+  use TOGGLES, only: GEN, SWITCHES, TOGGLE
+  use TRACE_M, only: TRACE_BEGIN, TRACE_END
+  use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, &
+    & SUB_ROSA, SUBTREE
+  use TREE_TYPES, only: N_NAMED
 
   implicit none
 
@@ -546,7 +547,7 @@ contains
     if ( error > 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
       & "Unable to create MLSSignals database" )
 
-    if ( index(switches, 'sig') /= 0 ) then
+    if ( switchDetail(switches, 'sig') > -1 ) then
       call dump ( radiometers )
       call dump ( spectrometerTypes )
       call dump ( bands )
@@ -1867,6 +1868,9 @@ oc:       do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.92  2011/05/09 17:24:55  pwagner
+! Converted to using switchDetail
+!
 ! Revision 2.91  2011/01/29 00:51:38  vsnyder
 ! Add comments about units checking in front end
 !
