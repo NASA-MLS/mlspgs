@@ -47,17 +47,18 @@ contains
   
   ! --------------------------------------------  LaunchFwmSlaves  -----
   subroutine LaunchFWMSlaves ( Chunk )
-    use Allocate_Deallocate, only: Allocate_Test, Deallocate_test
-    use Chunks_m, only: MLSChunk_T
-    use L2ParInfo, only: PARALLEL, GETMACHINENAMES, MACHINENAMELEN, &
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use CHUNKS_M, only: MLSCHUNK_T
+    use L2PARINFO, only: PARALLEL, GETMACHINENAMES, MACHINENAMELEN, &
       & SIG_REGISTER, NOTIFYTAG, GETNICETIDSTRING
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, PVMERRORMESSAGE
-    use MLSSets, only: FINDFIRST
-    use Output_m, only: Output
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, PVMERRORMESSAGE
+    use MLSSETS, only: FINDFIRST
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use OUTPUT_M, only: OUTPUT
     use PVM, only: INFOTAG, MYPVMSPAWN, PVMFCATCHOUT, &
       & PVMFBUFINFO, PVMF90UNPACK, &
       & PVMTASKHOST, PVMTASKEXIT
-    use Toggles, only: SWITCHES
+    use TOGGLES, only: SWITCHES
     ! Dummy arguments
     type (MLSChunk_T), intent(in) :: CHUNK ! The chunk we're processing
 
@@ -98,11 +99,11 @@ contains
     call Allocate_test ( slaveTids, noMAFs, 'slaveTids', ModuleName )
     call Allocate_test ( heardFromSlave, noTasks, 'heardFromSlave', ModuleName )
     
-    if ( index ( switches, 'mas' ) /= 0 ) &
+    if ( switchDetail ( switches, 'mas' ) > -1 ) &
       & call output ( 'Launching forward model slaves', advance='yes' )
     ! Now we're going to launch the slaves
     commandLine = trim ( parallel%executable )
-    if ( index(switches,'slv') /= 0 ) then
+    if ( switchDetail(switches,'slv') > -1 ) then
       call PVMFCatchOut ( 1, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "calling catchout" )
     end if
@@ -123,7 +124,7 @@ contains
     ! Now wait for them to get in touch, we behave differntly in the different
     ! modes (using submit or not)
     heardFromSlave = .false.
-    if ( index ( switches, 'mas' ) /= 0 ) &
+    if ( switchDetail ( switches, 'mas' ) > -1 ) &
       & call output ( 'Waiting to hear from slaves', advance='yes' )
     contactLoop: do
       call IntelligentPVMFRecv ( -1, InfoTag, bufferID )
@@ -141,7 +142,7 @@ contains
       if ( machineInd == 0 ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, 'Heard from an unknown forward model slave' )
       heardFromSlave ( machineInd ) = .true.
-      if ( index ( switches, 'mas' ) /= 0 ) then
+      if ( switchDetail ( switches, 'mas' ) > -1 ) then
         call output ( 'Heard from ' )
         call output ( trim ( GetNiceTidString ( slaveTid ) ) )
         call output ( ', now heard from ' )
@@ -153,7 +154,7 @@ contains
       if ( all ( heardFromSlave ) ) exit contactLoop
     end do contactLoop
 
-    if ( index ( switches, 'mas' ) /= 0 ) &
+    if ( switchDetail ( switches, 'mas' ) > -1 ) &
       & call output ( 'All slaves started', advance='yes' )
 
     call Deallocate_test ( machineNames, 'MachineNames', ModuleName )
@@ -164,30 +165,30 @@ contains
   ! ------------------------------------------------ L2FWMSlaveTask -----
   subroutine L2FWMSlaveTask ( mifGeolocation )
     ! This is the core routine for the 'slave mode' of the L2Fwm parallel stuff
-    use Allocate_Deallocate, only: ALLOCATE_TEST
-    use QuantityTemplates, only: QUANTITYTEMPLATE_T, DESTROYQUANTITYTEMPLATEDATABASE, &
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST
+    use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T, DESTROYQUANTITYTEMPLATEDATABASE, &
       & INFLATEQUANTITYTEMPLATEDATABASE
-    use VectorsModule, only: VECTORTEMPLATE_T, VECTOR_T, DESTROYVECTORDATABASE, &
+    use VECTORSMODULE, only: VECTORTEMPLATE_T, VECTOR_T, DESTROYVECTORDATABASE, &
       & DESTROYVECTORTEMPLATEDATABASE, CREATEVECTOR, CREATEMASK, &
       & CONSTRUCTVECTORTEMPLATE
-    use ForwardModelConfig, only: FORWARDMODELCONFIG_T, DESTROYFWMCONFIGDATABASE, &
+    use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T, DESTROYFWMCONFIGDATABASE, &
       & PVMUNPACKFWMCONFIG
-    use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
-    use L2ParInfo, only: PARALLEL, SIG_FINISHED, SIG_NEWSETUP, SIG_RUNMAF, &
+    use FORWARDMODELINTERMEDIATE, only: FORWARDMODELSTATUS_T
+    use L2PARINFO, only: PARALLEL, SIG_FINISHED, SIG_NEWSETUP, SIG_RUNMAF, &
       & SIG_SENDRESULTS
-    use MorePVM, only: PVMUNPACKSTRINGINDEX
+    use MOREPVM, only: PVMUNPACKSTRINGINDEX
     use PVM, only: INFOTAG, PVMFINITSEND, &
       & PVMF90UNPACK, PVMRAW, PVMFFREEBUF
     use PVMIDL, only: PVMIDLUNPACK, PVMIDLPACK
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate, &
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE, &
       & PVMERRORMESSAGE
-    use MatrixModule_0, only: M_Absent, M_Banded, M_Column_Sparse, MatrixElement_T
-    use MatrixModule_1, only: Matrix_T, CREATEEMPTYMATRIX, CLEARMATRIX, &
+    use MATRIXMODULE_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, MATRIXELEMENT_T
+    use MATRIXMODULE_1, only: MATRIX_T, CREATEEMPTYMATRIX, CLEARMATRIX, &
       & DESTROYMATRIX
-    use QuantityPVM, only: PVMRECEIVEQUANTITY
-    use ForwardModelWrappers, only: FORWARDMODEL
-    use ScanModelModule, only: DestroyForwardModelIntermediate
-    use Output_M, only: OUTPUT
+    use QUANTITYPVM, only: PVMRECEIVEQUANTITY
+    use FORWARDMODELWRAPPERS, only: FORWARDMODEL
+    use SCANMODELMODULE, only: DESTROYFORWARDMODELINTERMEDIATE
+    use OUTPUT_M, only: OUTPUT
 
     ! Dummy argument
     type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
@@ -433,17 +434,18 @@ contains
   subroutine ReceiveSlavesOutput ( outVector, fmStat, jacobian )
     ! The master uses this routine to get the output from each forward model
     ! slave.
-    use VectorsModule, only: VECTOR_T
-    use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
-    use MatrixModule_1, only: MATRIX_T
-    use MLSMessageModule, only: PVMERRORMESSAGE
+    use VECTORSMODULE, only: VECTOR_T
+    use FORWARDMODELINTERMEDIATE, only: FORWARDMODELSTATUS_T
+    use MATRIXMODULE_1, only: MATRIX_T
+    use MLSMESSAGEMODULE, only: PVMERRORMESSAGE
     use PVM, only: INFOTAG, PVMFFREEBUF
     use PVMIDL, only: PVMIDLUNPACK
-    use L2ParInfo, only: GETNICETIDSTRING
-    use MatrixModule_1, only: CREATEBLOCK
-    use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, MATRIXELEMENT_T
-    use Toggles, only: SWITCHES
-    use Output_m, only: OUTPUT
+    use L2PARINFO, only: GETNICETIDSTRING
+    use MATRIXMODULE_1, only: CREATEBLOCK
+    use MATRIXMODULE_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, MATRIXELEMENT_T
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use TOGGLES, only: SWITCHES
+    use OUTPUT_M, only: OUTPUT
     type (Vector_T), intent(inout) :: OUTVECTOR
     type (ForwardModelStatus_T), intent(inout) :: FMSTAT
     type (Matrix_T), intent(inout) :: JACOBIAN
@@ -456,7 +458,7 @@ contains
     type ( MatrixElement_T), pointer :: B ! A block from the jacobian
 
     ! Executable code
-    if ( index ( switches, 'mas' ) /= 0 ) then
+    if ( switchDetail ( switches, 'mas' ) > -1 ) then
       call output ( 'Recieving results packet from ' )
       call output ( trim ( GetNiceTidString ( slaveTids(fmStat%maf) ) ) )
       call output ( ' MAF ' )
@@ -466,7 +468,7 @@ contains
     call IntelligentPVMFrecv ( slaveTids ( fmStat%maf ), infoTag, bufferID )
     if ( bufferID <= 0 ) &
       & call PVMErrorMessage ( bufferID, 'Receiveing results from slave' )
-    if ( index ( switches, 'mas' ) /= 0 ) &
+    if ( switchDetail ( switches, 'mas' ) > -1 ) &
       & call output ( ' Done', advance='yes' )
     call PVMIDLUnpack ( fmStat%rows, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, 'Unpacking fmStat%rows' )
@@ -510,18 +512,19 @@ contains
   ! ----------------------------------------------- RequestSlavesOutput ---
   subroutine RequestSlavesOutput ( maf )
     ! The master uses this routine to ask a slave to pack its output up
-    use MLSMessageModule, only: PVMERRORMESSAGE
+    use MLSMESSAGEMODULE, only: PVMERRORMESSAGE
     use PVM, only: INFOTAG, PVMFINITSEND, PVMF90PACK, PVMFSEND, &
       & PVMRAW
-    use L2ParInfo, only: SIG_SENDRESULTS, GETNICETIDSTRING
-    use Toggles, only: SWITCHES
-    use Output_m, only: OUTPUT
+    use L2PARINFO, only: SIG_SENDRESULTS, GETNICETIDSTRING
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use TOGGLES, only: SWITCHES
+    use OUTPUT_M, only: OUTPUT
     integer, intent(in) :: MAF
     ! Local variables
     integer :: INFO
     integer :: BUFFERID
     ! Executable code
-    if ( index ( switches, 'mas' ) /= 0 ) then 
+    if ( switchDetail ( switches, 'mas' ) > -1 ) then 
       call output ( 'Requesting output from ' )
       call output ( trim(GetNiceTidString ( slaveTids(maf) ) ) )
       call output ( ' MAF ' )
@@ -539,19 +542,20 @@ contains
   subroutine SetupFWMSlaves ( configs, inVector, extraVector, outVector, jacobian )
     ! The master uses this routine to send the core information on the
     ! state vector layout etc. to each forward model slave.
-    use Allocate_Deallocate, only: ALLOCATE_TEST
-    use ForwardModelConfig, only: FORWARDMODELCONFIG_T, PVMPACKFWMCONFIG
-    use VectorsModule, only: VECTOR_T
-    use MLSMessageModule, only: PVMERRORMESSAGE
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST
+    use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T, PVMPACKFWMCONFIG
+    use VECTORSMODULE, only: VECTOR_T
+    use MLSMESSAGEMODULE, only: PVMERRORMESSAGE
     use PVM, only: INFOTAG, PVMFINITSEND, PVMF90PACK, &
       & PVMFBCAST, PVMRAW, PVMFFREEBUF
     use PVMIDL, only: PVMIDLPACK
-    use L2ParInfo, only: SIG_NEWSETUP, FWMSLAVEGROUP
-    use QuantityPVM, only: PVMSENDQUANTITY
-    use MorePVM, only: PVMPACKSTRINGINDEX
-    use Toggles, only: SWITCHES
-    use Output_m, only: OUTPUT
-    use MatrixModule_1, only: MATRIX_T
+    use L2PARINFO, only: SIG_NEWSETUP, FWMSLAVEGROUP
+    use QUANTITYPVM, only: PVMSENDQUANTITY
+    use MOREPVM, only: PVMPACKSTRINGINDEX
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use TOGGLES, only: SWITCHES
+    use OUTPUT_M, only: OUTPUT
+    use MATRIXMODULE_1, only: MATRIX_T
     type (ForwardModelConfig_T), dimension(:), intent(in) :: CONFIGS
     type (Vector_T), target, intent(in) :: INVECTOR
     type (Vector_T), target, intent(in) :: EXTRAVECTOR
@@ -568,7 +572,7 @@ contains
     type (Vector_T), pointer :: V
 
     ! Executable code
-    if ( index ( switches, 'mas' ) /= 0 ) &
+    if ( switchDetail ( switches, 'mas' ) > -1 ) &
       & call output ( 'Setting up forward model slaves', advance='yes' )
     call PVMFInitSend ( PVMRaw, bufferID )
     if ( bufferID <= 0 ) &
@@ -685,13 +689,14 @@ contains
   ! ------------------------------------------------ TriggerSlaveRun ---
   subroutine TriggerSlaveRun ( state, maf )
     ! This routine is used by the master to launch one run
-    use VectorsModule, only: VECTOR_T
-    use MLSMessageModule, only: PVMERRORMESSAGE
+    use VECTORSMODULE, only: VECTOR_T
+    use MLSMESSAGEMODULE, only: PVMERRORMESSAGE
     use PVM, only: INFOTAG, PVMFINITSEND, PVMFSEND, PVMRAW, PVMF90PACK
     use PVMIDL, only: PVMIDLPACK
-    use L2ParInfo, only: SIG_RUNMAF, GETNICETIDSTRING
-    use Toggles, only: SWITCHES
-    use Output_m, only: OUTPUT
+    use L2PARINFO, only: SIG_RUNMAF, GETNICETIDSTRING
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use TOGGLES, only: SWITCHES
+    use OUTPUT_M, only: OUTPUT
     type (Vector_T), intent(in) :: STATE
     integer, intent(in) :: MAF
     ! Local variables
@@ -725,7 +730,7 @@ contains
     if ( info /= 0 ) call PVMErrorMessage ( info, 'packing maf' )
     ! OK, send this off
     task = mod ( maf-1, size(slaveTids) ) + 1
-    if ( index ( switches, 'mas' ) /= 0 ) then
+    if ( switchDetail ( switches, 'mas' ) > -1 ) then
       call output ( 'Triggering ' // trim ( GetNiceTidString(slaveTids(task)) ) )
       call output ( ' to do MAF ' )
       call output ( task, advance='yes' )
@@ -773,6 +778,9 @@ contains
 end module L2FWMParallel
 
 ! $Log$
+! Revision 2.26  2011/05/09 18:20:21  pwagner
+! Converted to using switchDetail
+!
 ! Revision 2.25  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
 !
