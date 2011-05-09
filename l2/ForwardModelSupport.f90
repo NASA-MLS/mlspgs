@@ -78,30 +78,31 @@ contains ! =====     Public Procedures     =============================
   subroutine ForwardModelGlobalSetup ( Root, any_errors, fileDataBase )
     ! Process the forwardModel specification to produce ForwardModelInfo.
 
-    use AntennaPatterns_m, only: OPEN_ANTENNA_PATTERNS_FILE, &
+    use ANTENNAPATTERNS_M, only: OPEN_ANTENNA_PATTERNS_FILE, &
       & READ_ANTENNA_PATTERNS_FILE, CLOSE_ANTENNA_PATTERNS_FILE
-    use FilterShapes_m, only: OPEN_FILTER_SHAPES_FILE, &
+    use FILTERSHAPES_M, only: OPEN_FILTER_SHAPES_FILE, &
       & READ_FILTER_SHAPES_FILE, READ_DACS_FILTER_SHAPES_FILE, &
       & CLOSE_FILTER_SHAPES_FILE
-    use Init_Tables_Module, only: F_ANTENNAPATTERNS, F_DACSFILTERSHAPES, &
-      & F_FILTERSHAPES, F_L2PC, F_MieTables, F_PFAFILES, F_POINTINGGRIDS
-    use intrinsic, only: l_ascii, l_hdf
-    use L2ParInfo, only: PARALLEL
-    use L2PC_m, only: READCOMPLETEHDF5L2PCFILE
-    use MLSCommon, only: MLSFile_T
-    use MLSPCF2, only: MLSPCF_antpats_start, MLSPCF_filtshps_start, &
-      &          mlspcf_dacsfltsh_start, MLSPCF_ptggrids_start, &
-      &          mlspcf_l2pc_start, mlspcf_l2pc_end, &
-      &          mlspcf_MieTables_start, &
-      &          mlspcf_pfa_start, mlspcf_pfa_end
-    use MoreTree, only: Get_Field_ID
-    use PFADataBase_m, only: Process_PFA_File
-    use PointingGrid_m, only: Close_Pointing_Grid_File, &
-      & Open_Pointing_Grid_File, Read_Pointing_Grid_File
-    use Read_Mie_m, only: Read_Mie
-    use Toggles, only: Gen, Levels, Toggle
-    use Trace_M, only: Trace_begin, Trace_end
-    use Tree, only: Nsons, Sub_Rosa, Subtree
+    use INIT_TABLES_MODULE, only: F_ANTENNAPATTERNS, F_DACSFILTERSHAPES, &
+      & F_FILTERSHAPES, F_L2PC, F_MIETABLES, F_PFAFILES, F_POINTINGGRIDS
+    use INTRINSIC, only: L_ASCII, L_HDF
+    use L2PARINFO, only: PARALLEL
+    use L2PC_M, only: READCOMPLETEHDF5L2PCFILE
+    use MLSCOMMON, only: MLSFILE_T
+    use MLSPCF2, only: MLSPCF_ANTPATS_START, MLSPCF_FILTSHPS_START, &
+      &          MLSPCF_DACSFLTSH_START, MLSPCF_PTGGRIDS_START, &
+      &          MLSPCF_L2PC_START, MLSPCF_L2PC_END, &
+      &          MLSPCF_MIETABLES_START, &
+      &          MLSPCF_PFA_START, MLSPCF_PFA_END
+    use MORETREE, only: GET_FIELD_ID
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use PFADATABASE_M, only: PROCESS_PFA_FILE
+    use POINTINGGRID_M, only: CLOSE_POINTING_GRID_FILE, &
+      & OPEN_POINTING_GRID_FILE, READ_POINTING_GRID_FILE
+    use READ_MIE_M, only: READ_MIE
+    use TOGGLES, only: GEN, LEVELS, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use TREE, only: NSONS, SUB_ROSA, SUBTREE
 
     integer, intent(in) :: Root         ! of the forwardModel specification.
     !                                     Indexes a "spec_args" vertex.
@@ -214,14 +215,14 @@ contains ! =====     Public Procedures     =============================
     ! ............................................  Get_File_Name  .....
     subroutine Get_File_Name ( pcfCode, &
       & fileType, fileDataBase, MLSFile, MSG, pcfEndCode )
-      use hdf, only: dfacc_rdonly
-      use init_tables_module, only: field_indices
-      use MLSCommon, only: MLSFile_T
-      use MLSFiles, only: HDFVERSION_5, &
-        & AddInitializeMLSFile, GetPCFromRef, split_path_name
-      use MLSL2Options, only: TOOLKIT
-      use SDPToolkit, only: Pgs_pc_getReference
-      use String_Table, only: Get_String
+      use HDF, only: DFACC_RDonly
+      use INIT_TABLES_MODULE, only: FIELD_INDICES
+      use MLSCOMMON, only: MLSFILE_T
+      use MLSFILES, only: HDFVERSION_5, &
+        & ADDINITIALIZEMLSFILE, GETPCFROMREF, SPLIT_PATH_NAME
+      use MLSL2OPTIONS, only: TOOLKIT
+      use SDPTOOLKIT, only: PGS_PC_GETREFERENCE
+      use STRING_TABLE, only: GET_STRING
       ! Dummy args
       integer, intent(in) :: pcfCode
       integer, intent(in) :: fileType ! f_l2pc, f_antennaPatterns, etc.
@@ -280,18 +281,18 @@ contains ! =====     Public Procedures     =============================
   type (BinSelector_T) function CreateBinSelectorFromMLSCFINFO ( root ) &
     & result ( binSelector )
 
-    use Expr_M, only: EXPR
-    use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST
-    use Init_Tables_Module, only: L_NAMEFRAGMENT, L_VMR, L_TEMPERATURE, &
+    use EXPR_M, only: EXPR
+    use INIT_TABLES_MODULE, only: FIELD_FIRST, FIELD_LAST
+    use INIT_TABLES_MODULE, only: L_NAMEFRAGMENT, L_VMR, L_TEMPERATURE, &
       & L_LATITUDE, L_SZA
-    use Init_Tables_Module, only: F_COST, F_HEIGHT, F_MOLECULE, F_TYPE, &
+    use INIT_TABLES_MODULE, only: F_COST, F_HEIGHT, F_MOLECULE, F_TYPE, &
       & F_NAMEFRAGMENT, F_EXACT
-    use Intrinsic, only: T_NUMERIC_RANGE, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, &
+    use INTRINSIC, only: T_NUMERIC_RANGE, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, &
       & PHYQ_INVALID, PHYQ_PRESSURE, PHYQ_TEMPERATURE, PHYQ_VMR
-    use L2PC_m, only: BINSELECTOR_T, BINSELECTORS, CREATEDEFAULTBINSELECTORS
-    use MLSCommon, only: R8
-    use MoreTree, only: Get_Field_ID, GET_BOOLEAN
-    use Tree, only: Decoration, Nsons, Sub_Rosa, Subtree
+    use L2PC_M, only: BINSELECTOR_T, BINSELECTORS, CREATEDEFAULTBINSELECTORS
+    use MLSKINDS, only: R8
+    use MORETREE, only: GET_FIELD_ID, GET_BOOLEAN
+    use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
 
     integer, intent(in) :: ROOT         ! Tree node
     ! Local variables
@@ -381,17 +382,17 @@ contains ! =====     Public Procedures     =============================
     ! Process the forwardModel specification to produce ForwardModelConfig to
     ! add to the database
 
-    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-    use Expr_M, only: EXPR
-    use ForwardModelConfig, only: Dump, ForwardModelConfig_T, &
-      & LineCenter, LineWidth, LineWidth_TDep, &
-      & NullifyForwardModelConfig, SpectroParam_T
-    use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST
-    use Init_Tables_Module, only: L_FULL, L_SCAN, L_LINEAR, L_CLOUDFULL, L_HYBRID, &
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use EXPR_M, only: EXPR
+    use FORWARDMODELCONFIG, only: DUMP, FORWARDMODELCONFIG_T, &
+      & LINECENTER, LINEWIDTH, LINEWIDTH_TDEP, &
+      & NULLIFYFORWARDMODELCONFIG, SPECTROPARAM_T
+    use INIT_TABLES_MODULE, only: FIELD_FIRST, FIELD_LAST
+    use INIT_TABLES_MODULE, only: L_FULL, L_SCAN, L_LINEAR, L_CLOUDFULL, L_HYBRID, &
       & L_POLARLINEAR
-    use Init_Tables_Module, only: F_ALLLINESFORRADIOMETER, F_ALLLINESINCATALOG, &
+    use INIT_TABLES_MODULE, only: F_ALLLINESFORRADIOMETER, F_ALLLINESINCATALOG, &
       & F_ATMOS_DER, F_ATMOS_SECOND_DER, F_BINSELECTORS, F_CHANNELS, F_CLOUD_DER, &
-      & F_DEFAULT_spectroscopy, F_DIFFERENTIALSCAN, F_DO_BASELINE, F_DO_CONV, &
+      & F_DEFAULT_SPECTROSCOPY, F_DIFFERENTIALSCAN, F_DO_BASELINE, F_DO_CONV, &
       & F_DO_FREQ_AVG, F_DO_1D, F_FORCESIDEBANDFRACTION, F_FREQUENCY, F_FRQTOL, &
       & F_I_SATURATION, F_INCL_CLD, F_IGNOREHESSIAN, F_INTEGRATIONGRID, &
       & F_LINEARSIDEBAND, F_LINECENTER, F_LINEWIDTH, F_LINEWIDTH_TDEP, &
@@ -402,25 +403,26 @@ contains ! =====     Public Procedures     =============================
       & F_NSIZEBINS, F_PATHNORM, F_PHIWINDOW, F_POLARIZED, &
       & F_REFRACT, F_SCANAVERAGE, F_SIGNALS, F_SKIPOVERLAPS, &
       & F_SPECIFICQUANTITIES, F_SPECT_DER, F_SWITCHINGMIRROR, F_TANGENTGRID, &
-      & F_TEMP_DER, F_TOLERANCE, F_TScatMIF, F_TScatMoleculeDerivatives, &
-      & F_TScatMolecules, F_TYPE, &
-      & F_USBLBLMOLECULES, F_USBPFAMOLECULES, F_UseTScat, F_XSTAR, F_YSTAR
-    use Intrinsic, only: L_NONE, L_CLEAR, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, &
+      & F_TEMP_DER, F_TOLERANCE, F_TSCATMIF, F_TSCATMOLECULEDERIVATIVES, &
+      & F_TSCATMOLECULES, F_TYPE, &
+      & F_USBLBLMOLECULES, F_USBPFAMOLECULES, F_useTSCAT, F_XSTAR, F_YSTAR
+    use INTRINSIC, only: L_NONE, L_CLEAR, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, &
       & PHYQ_FREQUENCY, PHYQ_PROFILES, PHYQ_TEMPERATURE
-    use L2PC_m, only: BINSELECTORS, DEFAULTSELECTOR_LATITUDE, CREATEDEFAULTBINSELECTORS
-    use MLSCommon, only: R8
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
-    use MLSNumerics, only: HUNT
-    use MLSSignals_M, only: Signals
-    use Molecules, only: L_Cloud_A, L_Cloud_S
-    use MoreTree, only: Get_Boolean, Get_Field_ID
-    use Parse_Signal_m, only: PARSE_SIGNAL
-    use String_Table, only: Get_String
-    use Toggles, only: Gen, Levels, Switches, Toggle
-    use Trace_M, only: Trace_begin, Trace_end
-    use Tree, only: Decoration, Node_ID, Nsons, Null_Tree, Sub_Rosa, Subtree
-    use Tree_Types, only: N_Array
-    use VGridsDatabase, only: VGrids
+    use L2PC_M, only: BINSELECTORS, DEFAULTSELECTOR_LATITUDE, CREATEDEFAULTBINSELECTORS
+    use MLSKINDS, only: R8
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
+    use MLSNUMERICS, only: HUNT
+    use MLSSIGNALS_M, only: SIGNALS
+    use MOLECULES, only: L_CLOUD_A, L_CLOUD_S
+    use MORETREE, only: GET_BOOLEAN, GET_FIELD_ID
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use PARSE_SIGNAL_M, only: PARSE_SIGNAL
+    use STRING_TABLE, only: GET_STRING
+    use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use TREE, only: DECORATION, NODE_ID, NSONS, NULL_TREE, SUB_ROSA, SUBTREE
+    use TREE_TYPES, only: N_ARRAY
+    use VGRIDSDATABASE, only: VGRIDS
 
     integer, intent(in) :: NAME         ! The name of the config
     integer, intent(in) :: ROOT         ! of the forwardModel specification.
@@ -510,7 +512,7 @@ contains ! =====     Public Procedures     =============================
     info%num_size_bins = 40
     info%phiwindow = 5
     info%polarized = .false.
-    info%refract = index(switches,'norf') == 0 ! Default .true.
+    info%refract = switchDetail(switches,'norf') == 0 ! Default .true.
     info%scanAverage = .false.
     info%sideBandStart = -1
     info%sideBandStop = 1
@@ -1488,6 +1490,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.156  2011/05/09 18:09:30  pwagner
+! Converted to using switchDetail
+!
 ! Revision 2.155  2011/03/31 19:47:54  vsnyder
 ! Validate signals when the signals field is processed, so that sidebands
 ! are set.  Only check that cloud_a and cloud_s are PFA for the desired
