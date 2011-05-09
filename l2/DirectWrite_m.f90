@@ -24,22 +24,25 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
     ! or simply take too much time doing i/o
     ! so instead write them out chunk-by-chunk
 
-  use Allocate_Deallocate, only: Allocate_test
+  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST
   use INIT_TABLES_MODULE, only: L_PRESSURE, L_ZETA, &
     & L_L2GP, L_L2AUX, L_L2DGG, L_L2FWM
-  use MLSCommon, only: RV, DEFAULTUNDEFINEDVALUE, MLSFile_T
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
-    & MLSMSG_Error, MLSMSG_Warning
-  use MLSSets, only: FindFirst
-  use OUTPUT_M, only: blanks, OUTPUT
+  use MLSCOMMON, only: DEFAULTUNDEFINEDVALUE, MLSFILE_T
+  use MLSKINDS, only: RV
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
+    & MLSMSG_ERROR, MLSMSG_WARNING
+  use MLSSETS, only: FINDFIRST
+  use MLSSTRINGLISTS, only: SWITCHDETAIL
+  use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE
+  use STRING_TABLE, only: GET_STRING
   use TOGGLES, only: SWITCHES
-  use VectorsModule, only: VectorValue_T
+  use VECTORSMODULE, only: VECTOR_T, VECTORVALUE_T, DUMP
 
   implicit none
   private
   public :: DirectData_T, &
     & AddDirectToDatabase, &
-    & DestroyDirectDatabase, DirectWrite_L2Aux, DirectWrite_L2GP, Dump, &
+    & DestroyDirectDatabase, DirectWrite, Dump, &
     & ExpandDirectDB, ExpandSDNames, FileNameToID, &
     & SetupNewDirect
 
@@ -49,12 +52,11 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
-  interface DirectWrite_L2Aux
+  interface DirectWrite
     module procedure DirectWrite_L2Aux_MF
-  end interface
-
-  interface DirectWrite_L2GP
     module procedure DirectWrite_L2GP_MF
+    module procedure DirectWriteVector_L2Aux_MF
+    module procedure DirectWriteVector_L2GP_MF
   end interface
 
   interface DUMP
@@ -127,6 +129,43 @@ contains ! ======================= Public Procedures =========================
     end if
   end subroutine DestroyDirectDatabase
 
+  ! ------------------------------------------ DirectWriteVector_L2GP_MF --------
+  subroutine DirectWriteVector_L2GP_MF ( L2gpFile, &
+    & vector, &
+    & chunkNo, HGrids, createSwath, lowerOverlap, upperOverlap )
+
+    ! Purpose:
+    ! Write standard hdfeos-formatted files ala l2gp for datasets that
+    ! are too big to keep all chunks stored in memory
+    ! so instead write them out profile-by-profile
+    use HGridsDatabase, only: HGrid_T
+    ! Args:
+    type(MLSFile_T)               :: L2GPFile
+    type (Vector_T), intent(in)   :: VECTOR
+    integer, intent(in)              :: chunkNo
+    type (HGrid_T), dimension(:), pointer ::     HGrids
+    logical, intent(in), optional :: createSwath
+    logical, intent(in), optional :: lowerOverlap
+    logical, intent(in), optional :: upperOverlap
+    ! Local variables
+    integer                       :: j
+    type (VectorValue_T), pointer :: QUANTITY
+    type (VectorValue_T), pointer :: precision
+    type (VectorValue_T), pointer :: quality
+    type (VectorValue_T), pointer :: status
+    type (VectorValue_T), pointer :: Convergence
+    character(len=32)             :: SDNAME       ! Name of sd in output file
+    ! Executable
+    nullify(precision, quality, status, convergence)
+    do j = 1, size(vector%quantities)
+      quantity => vector%quantities(j)
+      call get_string( quantity%template%name, sdname )
+      call DirectWrite_L2GP_MF ( L2gpFile, &
+        & quantity, precision, quality, status, Convergence, &
+        & sdName, chunkNo, HGrids, createSwath, lowerOverlap, upperOverlap )
+    enddo
+  end subroutine DirectWriteVector_L2GP_MF
+
   ! ------------------------------------------ DirectWrite_L2GP_MF --------
   subroutine DirectWrite_L2GP_MF ( L2gpFile, &
     & quantity, precision, quality, status, Convergence, &
@@ -164,9 +203,9 @@ contains ! ======================= Public Procedures =========================
     integer :: NOTOWRITE
     integer :: TOTALPROFS
 
-    ! Executable code
-    ! DeeBug = index(l2gp%name, 'lower') > 0 .or. &
-    !   & index(l2gp%name, 'upper') > 0
+    logical :: verbose
+    ! Executable
+    verbose = ( switchDetail(switches, 'direct') > -1 )
     ! Size the problem
     overlaps = 'none'
     if ( present(lowerOverlap) ) then
@@ -231,14 +270,61 @@ contains ! ======================= Public Procedures =========================
       endif
       call dump(l2gp, Details=-1)
     endif
+    if ( verbose ) call outputNamedValue( 'DW L2GP qty name', trim(sdName) )
     call AppendL2GPData( l2gp, l2gpFile, &
       & sdName, offset, lastprofile=lastInstance, &
       & TotNumProfs=TotalProfs, createSwath=createSwath )
     if ( l2gpFile%access == DFACC_CREATE ) call writeAPrioriAttributes(l2gpFile)
-    if ( index(switches, 'l2gp') /= 0 ) call dump(l2gp)
+    if ( switchDetail(switches, 'l2gp') > -1 ) call dump(l2gp)
     ! Clear up our temporary l2gp
     call DestroyL2GPContents(l2gp)
   end subroutine DirectWrite_L2GP_MF
+
+  ! ------------------------------------------- DirectWriteVector_L2Aux_MF --------
+  subroutine DirectWriteVector_L2Aux_MF ( L2AUXFile, Vector, &
+    & chunkNo, chunks, FWModelConfig, lowerOverlap, upperOverlap )
+
+    ! Purpose:
+    ! Write plain hdf-formatted files ala l2aux for datasets that
+    ! are too big to keep all chunks stored in memory
+    ! so instead write them out chunk-by-chunk
+    
+    ! Despite the name the routine takes vector quantities, not l2aux ones
+    use Chunks_m, only: MLSChunk_T
+    use ForwardModelConfig, only: ForwardModelConfig_T
+    ! Args:
+    type(ForwardModelConfig_T), dimension(:), pointer :: FWModelConfig
+    type (Vector_T), intent(in)   :: VECTOR
+    type(MLSFile_T)               :: L2AUXFile
+    integer, intent(in)           :: CHUNKNO      ! Index into chunks
+    type (MLSChunk_T), dimension(:), intent(in) :: CHUNKS
+    logical, intent(in), optional :: lowerOverlap
+    logical, intent(in), optional :: upperOverlap
+    ! Local parameters
+    integer                       :: j
+    type (VectorValue_T), pointer :: QUANTITY
+    type (VectorValue_T), pointer :: PRECISION
+    character(len=32)             :: SDNAME       ! Name of sd in output file
+    logical :: verbose
+    ! Executable
+    verbose = ( switchDetail(switches, 'direct') > -1 )
+    nullify(precision)
+    if ( verbose ) then
+      if ( vector%name > 0 ) then
+        call get_string( vector%name, sdName )
+      else
+        sdname = '(unknown)'
+      endif
+      call outputNamedValue( 'DW L2AUX vector name', trim(sdName) )
+    endif
+    do j = 1, size(vector%quantities)
+      quantity => vector%quantities(j)
+      call get_string( quantity%template%name, sdname )
+      call DirectWrite_L2Aux_MF ( L2AUXFile, quantity, precision, sdName, &
+        & chunkNo, chunks, FWModelConfig, lowerOverlap, upperOverlap )
+    enddo
+  end subroutine DirectWriteVector_L2Aux_MF
+
 
   ! ------------------------------------------- DirectWrite_L2Aux_MF --------
   subroutine DirectWrite_L2Aux_MF ( L2AUXFile, quantity, precision, sdName, &
@@ -256,7 +342,6 @@ contains ! ======================= Public Procedures =========================
     use Hdf, only: DFACC_RDONLY
     use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, &
       & mls_closeFile, mls_openFile
-    use VectorsModule, only: VectorValue_T, Dump
 
     type(ForwardModelConfig_T), dimension(:), pointer :: FWModelConfig
     type (VectorValue_T), intent(in) :: QUANTITY
@@ -275,7 +360,9 @@ contains ! ======================= Public Procedures =========================
     integer, parameter :: MAXFILES = 100             ! Set for an internal array
     integer :: returnStatus
     character(len=*), parameter :: sdDebug = "R1A:118.B1F:PT.S0.FB25-1 Core"
-    ! executable code
+    logical :: verbose
+    ! Executable
+    verbose = ( switchDetail(switches, 'direct') > -1 )
 
     alreadyOpen = L2AUXFile%stillOpen
     deebughere = ( deebug .or. sdname == sdDebug ) .and. .false.
@@ -361,10 +448,11 @@ contains ! ======================= Public Procedures =========================
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unsupported hdfVersion for DirectWrite_L2Aux (currently only 4 or 5)' )
     end select
+    if ( verbose ) call outputNamedValue( 'DW L2AUX qty name', trim(sdName) )
     if ( .not. alreadyOpen )  call mls_closeFile(L2AUXFile, returnStatus)
     L2AUXFile%errorCode = returnStatus
     L2AUXFile%lastOperation = 'write'
-    if ( index(switches, 'l2aux') == 0 ) return
+    if ( switchDetail(switches, 'l2aux') < 0 ) return
     call dump(quantity)
     if ( associated(precision) ) call dump(precision)
   end subroutine DirectWrite_L2Aux_MF
@@ -379,7 +467,6 @@ contains ! ======================= Public Procedures =========================
     use Intrinsic, only: L_None
     use MLSCommon, only: R4, R8
     use MLSFiles, only: HDFVERSION_4
-    use VectorsModule, only: VectorValue_T
 
     type (VectorValue_T), intent(in) :: QUANTITY
     ! integer, intent(in) :: SDNAME       ! Name of sd in output file
@@ -498,7 +585,6 @@ contains ! ======================= Public Procedures =========================
       & MakeHDF5Attribute, SaveAsHDF5DS
     use MLSL2Timings, only: showTimingNames
     use PCFHdr, only: H5_WRITEMLSFILEATTR, H5_WRITEGLOBALATTR
-    use VectorsModule, only: VectorValue_T
 
     type (VectorValue_T), intent(in) :: QUANTITY
     character(len=*), intent(in) :: SDNAME       ! Name of sd in output file
@@ -1093,6 +1179,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.48  2011/05/09 18:06:59  pwagner
+! May directwrite an entire vector
+!
 ! Revision 2.47  2010/02/04 23:12:44  vsnyder
 ! Remove USE or declaration for unreferenced names
 !
