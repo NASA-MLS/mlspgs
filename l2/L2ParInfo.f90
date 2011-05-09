@@ -13,24 +13,24 @@ module L2ParInfo
   ! This module provides definitions needed by L2Parallel and other modules to
   ! manage the parallel aspects of the L2 code.
 
-  use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use dump_0, only: DUMP
-  use IO_Stuff, only: Get_Lun
-  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_Allocate, &
-    & MLSMSG_Deallocate, PVMERRORMESSAGE
-  use MLSSets, only: FINDFIRST
-  use MLSStats1, only: ALLSTATS
-  use MLSStrings, only: LowerCase
-  use MLSStringLists, only: GetUniqueInts, GetUniqueStrings
-  use MorePVM, only: PVMPACKSTRINGINDEX, PVMUNPACKSTRINGINDEX
-  use Output_M, only: Output
-  use PVM, only: INFOTag, &
+  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use DUMP_0, only: DUMP
+  use IO_STUFF, only: GET_LUN
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE, &
+    & MLSMSG_DEALLOCATE, PVMERRORMESSAGE
+  use MLSSETS, only: FINDFIRST
+  use MLSSTATS1, only: ALLSTATS
+  use MLSSTRINGS, only: LOWERCASE
+  use MLSSTRINGLISTS, only: GETUNIQUEINTS, GETUNIQUESTRINGS, SWITCHDETAIL
+  use MOREPVM, only: PVMPACKSTRINGINDEX, PVMUNPACKSTRINGINDEX
+  use OUTPUT_M, only: OUTPUT
+  use PVM, only: INFOTAG, &
     & PVMFMYTID, PVMFINITSEND, PVMF90PACK, PVMFSEND, &
     & PVMDATADEFAULT, PVMF90UNPACK, NEXTPVMARG, PVMTASKEXIT, SIG_ABOUTTODIE
   use PVMIDL, only: PVMIDLPACK
-  use QuantityPVM, only: PVMSENDQUANTITY
-  use Toggles, only: SWITCHES
-  use VectorsModule, only: VECTORVALUE_T
+  use QUANTITYPVM, only: PVMSENDQUANTITY
+  use TOGGLES, only: SWITCHES
+  use VECTORSMODULE, only: VECTORVALUE_T
 
   implicit none
   private
@@ -608,7 +608,7 @@ contains ! ==================================================================
 
       close ( unit=lun )
     end if
-    if ( index(switches,'mach') /=0 ) &
+    if ( switchDetail(switches,'mach') /=0 ) &
       & call dump ( machineNames, options=what_options(trim=.true.) )
   end subroutine GetMachineNames
 
@@ -832,6 +832,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.55  2011/05/09 18:20:55  pwagner
+! Converted to using switchDetail
+!
 ! Revision 2.54  2010/08/06 23:08:48  pwagner
 ! Pass Hessians, matrices to DumpCommand
 !
