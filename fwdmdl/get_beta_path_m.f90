@@ -39,15 +39,16 @@ contains
         & dBeta_dt_path, dBeta_dw_path, dBeta_dn_path, dBeta_dv_path, &
         & dBeta_df_path, Where_dBeta_df, Sps_Path )
 
-    use Dump_0, only: Dump
-    use ForwardModelConfig, only: Beta_Group_T, LineCenter, LineWidth, LineWidth_TDep
-    use Intrinsic, only: L_RHi, Lit_Indices
-    use MLSKinds, only: R8, RP, IP
-    use Output_m, only: Output
-    use Slabs_SW_m, only: SLABS_STRUCT
-    use String_Table, only: Display_String
-    use Toggles, only: Emit, Levels, Switches, Toggle
-    use Trace_M, only: Trace_begin, Trace_end
+    use DUMP_0, only: DUMP
+    use FORWARDMODELCONFIG, only: BETA_GROUP_T, LINECENTER, LINEWIDTH, LINEWIDTH_TDEP
+    use INTRINSIC, only: L_RHI, LIT_INDICES
+    use MLSKINDS, only: R8, RP, IP
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use OUTPUT_M, only: OUTPUT
+    use SLABS_SW_M, only: SLABS_STRUCT
+    use STRING_TABLE, only: DISPLAY_STRING
+    use TOGGLES, only: EMIT, LEVELS, SWITCHES, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
 
 ! Inputs:
 
@@ -106,13 +107,13 @@ contains
 
     if ( first ) then
       first = .false.
-      dumpStop = index(switches,'LBLB') > 0
-      dumpAll = dumpStop .or. index(switches,'lblB') > 0
-      dumpBeta = dumpAll .or. ( index(switches,'lblb') > 0 )
-      dumpZeta = index(switches,'dbz') > 0
-      ! clean = index(switches,'clean') > 0
+      dumpStop = switchDetail(switches,'LBLB') > -1
+      dumpAll = dumpStop .or. switchDetail(switches,'lblB') > -1
+      dumpBeta = dumpAll .or. ( switchDetail(switches,'lblb') > -1 )
+      dumpZeta = switchDetail(switches,'dbz') > -1
+      ! clean = switchDetail(switches,'clean') > -1
       clean = ' '
-      if ( index(switches,'clean') > 0 ) clean = 'c'
+      if ( switchDetail(switches,'clean') > -1 ) clean = 'c'
     end if
 
     if ( toggle(emit) .and. levels(emit) > 6 ) &
@@ -231,17 +232,18 @@ contains
     & dBeta_dT_Path, dBeta_dw_Path, dBeta_dn_Path, dBeta_dv_Path, &
     & dBeta_dIWC_Path )
 
-    use Dump_0, only: Dump
-    use ForwardModelConfig, only: Beta_Group_T
-    use Intrinsic, only: L_RHi, Lit_Indices
-    use MLSKinds, only: RP, R8
-    use Molecules, only: L_Cloud_A, L_Cloud_S
-    use Output_m, only: Output
-    use PFADataBase_m, only: PFAData
-    use Read_Mie_m, only: Beta_c_a, dBeta_dIWC_c_a, dBeta_dT_c_a, &
-                        & Beta_c_s, dBeta_dIWC_c_s, dBeta_dT_c_s
-    use String_Table, only: Display_String
-    use Toggles, only: Switches
+    use DUMP_0, only: DUMP
+    use FORWARDMODELCONFIG, only: BETA_GROUP_T
+    use INTRINSIC, only: L_RHI, LIT_INDICES
+    use MLSKINDS, only: RP, R8
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use MOLECULES, only: L_CLOUD_A, L_CLOUD_S
+    use OUTPUT_M, only: OUTPUT
+    use PFADATABASE_M, only: PFADATA
+    use READ_MIE_M, only: BETA_C_A, DBETA_DIWC_C_A, DBETA_DT_C_A, &
+                        & BETA_C_S, DBETA_DIWC_C_S, DBETA_DT_C_S
+    use STRING_TABLE, only: DISPLAY_STRING
+    use TOGGLES, only: SWITCHES
 
 ! Inputs
     real(r8), intent(in) :: Frq         ! Channel center frequency in MHz
@@ -280,12 +282,12 @@ contains
 
     if ( first ) then
       first = .false.
-      dumpStop = index(switches,'PFAB') > 0
-      dumpAll = dumpStop .or. index(switches,'pfaB') > 0
-      dumpBeta = dumpAll .or. ( index(switches,'pfab') > 0 )
-      ! clean = index(switches,'clean') > 0
+      dumpStop = switchDetail(switches,'PFAB') > -1
+      dumpAll = dumpStop .or. switchDetail(switches,'pfaB') > -1
+      dumpBeta = dumpAll .or. ( switchDetail(switches,'pfab') > -1 )
+      ! clean = switchDetail(switches,'clean') > -1
       clean = ' '
-      if ( index(switches,'clean') > 0 ) clean = 'c'
+      if ( switchDetail(switches,'clean') > -1 ) clean = 'c'
     end if
 
     nullify ( dBdIWC, dBdT, dBdn, dBdv, dBdw )
@@ -381,15 +383,16 @@ contains
   subroutine Get_Beta_Path_Polarized ( Frq, H, Beta_group, GL_slabs, &
                                      & Path_inds, Beta_path, dBeta_path_dT )
 
-    use Dump_0, only: Dump
-    use ForwardModelConfig, only: LBL_T
-    use Intrinsic, only: Lit_Indices
-    use MLSKinds, only: R8, RP, IP
-    use O2_Abs_CS_m, only: O2_Abs_CS, D_O2_Abs_CS_dT
-    use Output_m, only: Output
-    use Slabs_SW_m, only: SLABS_STRUCT
-    use String_Table, only: Display_String
-    use Toggles, only: Switches
+    use DUMP_0, only: DUMP
+    use FORWARDMODELCONFIG, only: LBL_T
+    use INTRINSIC, only: LIT_INDICES
+    use MLSKINDS, only: R8, RP, IP
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use O2_ABS_CS_M, only: O2_ABS_CS, D_O2_ABS_CS_DT
+    use OUTPUT_M, only: OUTPUT
+    use SLABS_SW_M, only: SLABS_STRUCT
+    use STRING_TABLE, only: DISPLAY_STRING
+    use TOGGLES, only: SWITCHES
 
 ! Inputs:
 
@@ -425,11 +428,11 @@ contains
 
     if ( first ) then
       first = .false.
-      dumpStop = index(switches,'POLB') > 0
-      dumpBeta = dumpStop .or. ( index(switches,'polb') > 0 )
-      ! clean = index(switches,'clean') > 0
+      dumpStop = switchDetail(switches,'POLB') > -1
+      dumpBeta = dumpStop .or. ( switchDetail(switches,'polb') > -1 )
+      ! clean = switchDetail(switches,'clean') > -1
       clean = ' '
-      if ( index(switches,'clean') > 0 ) clean = 'c'
+      if ( switchDetail(switches,'clean') > -1 ) clean = 'c'
     end if
 
 ! begin the code
@@ -482,9 +485,9 @@ contains
   ! ----------------------------------------  Get_Beta_Path_Cloud  -----
   subroutine Get_Beta_Path_Cloud ( Frq, t_path, tt_path, path_inds, &
         & beta_path_cloud, w0_path, tt_path_c, IPSD, WC, fwdModelConf  )
-    use ForwardModelConfig, only: FORWARDMODELCONFIG_T
-    use Cloud_extinction, only: get_beta_cloud
-    use MLSKinds, only: R8, RP, IP
+    use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
+    use CLOUD_EXTINCTION, only: GET_BETA_CLOUD
+    use MLSKINDS, only: R8, RP, IP
 
 ! Inputs:
 
@@ -563,13 +566,13 @@ contains
 !  running time was achieved.  Create_Beta is in the inner loop of the
 !  forward model.
 
-    use MLSKinds, only: RP, R8, IP
-    use Molecules, only: L_N2, L_Extinction, L_ExtinctionV2, L_H2O, L_O2
+    use MLSKINDS, only: RP, R8, IP
+    use MOLECULES, only: L_N2, L_EXTINCTION, L_EXTINCTIONV2, L_H2O, L_O2
     use SLABS_SW_M, only: DVOIGT_SPECTRAL, VOIGT_LORENTZ, &
       & SLABS_LINES, SLABS_LINES_DT, &
       & SLABSWINT_LINES, SLABSWINT_LINES_DT
-    use SpectroscopyCatalog_m, only: Catalog_T, Lines
-    use Slabs_SW_m, only: SLABS_STRUCT
+    use SPECTROSCOPYCATALOG_M, only: CATALOG_T, LINES
+    use SLABS_SW_M, only: SLABS_STRUCT
 
 ! Inputs:
     real(rp), intent(in) :: pressure   ! pressure in hPa
@@ -760,12 +763,12 @@ contains
 !  should be called for primary and image separately. Compute dBeta_dT if it's
 !  associated.  Compute dBeta_dw, dBeta_dn, dBeta_dv if they're associated. 
 
-    use MLSKinds, only: RP, R8
-    use Molecules, only: L_N2, L_Extinction, L_ExtinctionV2, L_H2O, L_O2
-    use Slabs_SW_m, only: SLABS_STRUCT, &
-      & SLABS_LINES, SLABS_LINES_DAll, SLABS_LINES_DSpectral, SLABS_LINES_DT, &
+    use MLSKINDS, only: RP, R8
+    use MOLECULES, only: L_N2, L_EXTINCTION, L_EXTINCTIONV2, L_H2O, L_O2
+    use SLABS_SW_M, only: SLABS_STRUCT, &
+      & SLABS_LINES, SLABS_LINES_DALL, SLABS_LINES_DSPECTRAL, SLABS_LINES_DT, &
       & SLABSWINT_LINES, &
-      & SLABSWINT_LINES_DAll, SLABSWINT_LINES_DSpectral, SLABSWINT_LINES_DT
+      & SLABSWINT_LINES_DALL, SLABSWINT_LINES_DSPECTRAL, SLABSWINT_LINES_DT
 
 ! Inputs:
     integer, intent(in) :: Path_inds(:)! Which Pressures to use
@@ -1031,9 +1034,9 @@ contains
   !%
   ! which can be expressed in matrix-vector form as $\xi^T Z \eta$.
 
-    use D_Hunt_m, only: Hunt
-    use MLSKinds, only: RP, R8
-    use Read_Mie_m, only: F_s, IWC_s, T_s
+    use D_HUNT_M, only: HUNT
+    use MLSKINDS, only: RP, R8
+    use READ_MIE_M, only: F_S, IWC_S, T_S
 
 ! Inputs:
     real(r8), intent(in) :: Frq         ! Channel center frequency in MHz
@@ -1104,9 +1107,9 @@ contains
   subroutine Create_Beta_Path_PFA ( Frq, P_Path, Path_Inds, T_Path, Vel_Rel, &
     & PFAD, Ratio, Beta_Path, T_Der_Path, dBdT, dBdw, dBdn, dBdv )
 
-    use D_Hunt_m, only: Hunt
-    use MLSKinds, only: RP, R8
-    use PFADataBase_m, only: PFAData_t
+    use D_HUNT_M, only: HUNT
+    use MLSKINDS, only: RP, R8
+    use PFADATABASE_M, only: PFADATA_T
 
 ! Inputs:
     real(r8), intent(in) :: Frq         ! Channel center frequency in MHz
@@ -1275,7 +1278,7 @@ contains
   function Abs_CS_Cont ( Cont, Temperature, Pressure, Frequency ) &
     & result(Abs_CS_Cont_r)
   ! real(rp) function Abs_CS_Cont ( Cont, Temperature, Pressure, Frequency )
-    use MLSKinds, only: RP
+    use MLSKINDS, only: RP
 
     real(rp), intent(in) :: CONT(:)     ! continuum parameters
     real(rp), intent(in) :: TEMPERATURE ! in Kelvin
@@ -1294,7 +1297,7 @@ contains
   pure &
   subroutine Abs_CS_Cont_dT ( Cont, Temperature, Pressure, Frequency, &
     & Beta, dBeta_dT )
-    use MLSKinds, only: RP
+    use MLSKINDS, only: RP
 
     real(rp), intent(in) :: CONT(:)     ! continuum parameters
     real(rp), intent(in) :: TEMPERATURE ! in Kelvin
@@ -1323,7 +1326,7 @@ contains
   pure &
   function Abs_CS_H2O_Cont ( Cont, Temperature, Pressure, Frequency, Sps ) &
     & result(Beta)
-    use MLSKinds, only: RP
+    use MLSKINDS, only: RP
 
     real(rp), intent(in) :: CONT(:)     ! continuum parameters
     real(rp), intent(in) :: TEMPERATURE ! in Kelvin
@@ -1358,7 +1361,7 @@ contains
   pure &
   subroutine Abs_CS_H2O_Cont_df ( Cont, Temperature, Pressure, Frequency, &
     & Sps, Beta, dBeta_df )
-    use MLSKinds, only: RP
+    use MLSKINDS, only: RP
 
     real(rp), intent(in) :: CONT(:)     ! continuum parameters
     real(rp), intent(in) :: TEMPERATURE ! in Kelvin
@@ -1389,7 +1392,7 @@ contains
   pure &
   subroutine Abs_CS_H2O_Cont_dT ( Cont, Temperature, Pressure, Frequency, &
     & SPS, Beta, dBeta_dT, dBeta_df )
-    use MLSKinds, only: RP
+    use MLSKINDS, only: RP
 
     real(rp), intent(in) :: CONT(:)     ! continuum parameters
     real(rp), intent(in) :: TEMPERATURE ! in Kelvin
@@ -1442,7 +1445,7 @@ contains
   function Abs_CS_N2_Cont ( Cont, Temperature, Pressure, Frequency ) &
     & result(Abs_CS_N2_Cont_r)
   ! real(rp) Function Abs_CS_N2_cont ( Cont, Temperature, Pressure, Frequency )
-    use MLSKinds, only: RP
+    use MLSKINDS, only: RP
 
     real(rp), intent(in) :: CONT(:)     ! continuum parameters
     real(rp), intent(in) :: TEMPERATURE ! in Kelvin
@@ -1474,7 +1477,7 @@ contains
   subroutine Abs_CS_N2_Cont_dT ( Cont, Temperature, Pressure, Frequency, &
     & Beta, dBeta_dT )
 
-    use MLSKinds, only: RP
+    use MLSKINDS, only: RP
 
     real(rp), intent(in) :: CONT(:)     ! continuum parameters
     real(rp), intent(in) :: TEMPERATURE ! in Kelvin
@@ -1514,7 +1517,7 @@ contains
   function Abs_CS_O2_Cont ( Cont, Temperature, Pressure, Frequency ) &
     & result(Abs_CS_O2_Cont_r)
   ! real(rp) Function ABS_CS_O2_CONT ( Cont, Temperature, Pressure, Frequency )
-    use MLSKinds, only: RP
+    use MLSKINDS, only: RP
 
 !{ Let $\theta = \frac{300}T$, $f = (c_3 p \exp({c_4} \theta))^2$ and
 !  $D = \frac1{\nu^2 + f}$.
@@ -1543,7 +1546,7 @@ contains
   subroutine Abs_CS_O2_Cont_dT ( Cont, Temperature, Pressure, Frequency, &
       & Beta, dBeta_dT )
 
-    use MLSKinds, only: RP
+    use MLSKINDS, only: RP
 
     real(rp), intent(in) :: CONT(:)     ! continuum parameters
     real(rp), intent(in) :: TEMPERATURE ! in Kelvin
@@ -1586,6 +1589,10 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.105  2011/03/31 19:53:55  vsnyder
+! Don't use :np for the first bound in sps_path.  sps_path is fine-path X
+! sps.  np is the coarse path length.
+!
 ! Revision 2.104  2011/03/04 03:42:48  vsnyder
 ! Associate dBdf with dBeta_df_path, not dBeta_dT_path!
 !

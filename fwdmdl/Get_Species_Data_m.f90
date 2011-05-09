@@ -31,13 +31,14 @@ contains
     ! Fill in the Beta_Groups' isotope ratios in FwdModelConf.
     ! Get vector quantities.
 
-    use ForwardModelConfig, only: Dump, ForwardModelConfig_t
-    use ForwardModelVectorTools, only: GetQuantityForForwardModel
-    use Intrinsic, only: L_ISOTOPERATIO, L_LINECENTER, L_LINEWIDTH, &
+    use FORWARDMODELCONFIG, only: DUMP, FORWARDMODELCONFIG_T
+    use FORWARDMODELVECTORTOOLS, only: GETQUANTITYFORFORWARDMODEL
+    use INTRINSIC, only: L_ISOTOPERATIO, L_LINECENTER, L_LINEWIDTH, &
       & L_LINEWIDTH_TDEP, L_VMR
-    use SpectroscopyCatalog_m, only: Dump
-    use Toggles, only: Switches
-    use VectorsModule, only: GetVectorQuantityByType, Vector_T, VectorValue_T
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use SPECTROSCOPYCATALOG_M, only: DUMP
+    use TOGGLES, only: SWITCHES
+    use VECTORSMODULE, only: GETVECTORQUANTITYBYTYPE, VECTOR_T, VECTORVALUE_T
 
     type(forwardModelConfig_t), intent(inout) :: FwdModelConf ! Fills Beta_Group
     type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
@@ -51,8 +52,8 @@ contains
     integer :: S1, S2    ! Bounds for sideband index S
 
     if ( dumpFWM < 0 ) then ! done only once
-      if ( index(switches,'fwmg') > 0 ) dumpFWM = 1 ! Dump but don't stop
-      if ( index(switches,'fwmG') > 0 ) dumpFWM = 2 ! Dump and stop
+      if ( switchDetail(switches,'fwmg') > -1 ) dumpFWM = 1 ! Dump but don't stop
+      if ( switchDetail(switches,'fwmG') > -1 ) dumpFWM = 2 ! Dump and stop
     end if
 
     s1 = (fwdModelConf%sidebandStart+3)/2; s2 = (fwdModelConf%sidebandStop+3)/2
@@ -163,6 +164,9 @@ contains
 end module Get_Species_Data_m
 
 ! $Log$
+! Revision 2.33  2011/03/31 19:52:49  vsnyder
+! Only get isotope ratios in the specified sidebands
+!
 ! Revision 2.32  2009/06/23 18:26:10  pwagner
 ! Prevent Intel from optimizing ident string away
 !

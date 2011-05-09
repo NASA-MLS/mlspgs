@@ -13,7 +13,7 @@ module FullForwardModel_m
 
   ! This module contains the `full' forward model.
 
-  use GLnp, only: NGP1
+  use GLNP, only: NGP1
   implicit NONE
   private
   public :: FullForwardModel
@@ -38,25 +38,25 @@ contains
   ! This gets a little bit of data and then computes the sizes for quantities
   ! in the full forward model proper, FullForwardModelAuto.
 
-    use Allocate_Deallocate, only: DEALLOCATE_TEST
-    use Compute_Z_PSIG_m, only: Compute_Z_PSIG
-    use ForwardModelConfig, only: DeriveFromForwardModelConfig, &
-      & DestroyForwardModelDerived, Dump, ForwardModelConfig_t
-    use ForwardModelIntermediate, only: ForwardModelStatus_t
-    use ForwardModelVectorTools, only: GetQuantityForForwardModel
-    use Get_Species_Data_M, only:  Get_Species_Data
-    use HessianModule_1, only: HESSIAN_T
-    use Intrinsic, only: L_MAGNETICFIELD, &
+    use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST
+    use COMPUTE_Z_PSIG_M, only: COMPUTE_Z_PSIG
+    use FORWARDMODELCONFIG, only: DERIVEFROMFORWARDMODELCONFIG, &
+      & DESTROYFORWARDMODELDERIVED, DUMP, FORWARDMODELCONFIG_T
+    use FORWARDMODELINTERMEDIATE, only: FORWARDMODELSTATUS_T
+    use FORWARDMODELVECTORTOOLS, only: GETQUANTITYFORFORWARDMODEL
+    use GET_SPECIES_DATA_M, only:  GET_SPECIES_DATA
+    use HESSIANMODULE_1, only: HESSIAN_T
+    use INTRINSIC, only: L_MAGNETICFIELD, &
       & L_PHITAN, L_PTAN, L_TEMPERATURE, L_TSCAT, L_VMR
-    use Load_Sps_Data_m, only: DestroyGrids_t, Dump, EmptyGrids_T, Grids_T, &
-      & Load_One_Item_Grid, Load_Sps_Data
-    use MatrixModule_1, only: MATRIX_T
-    use MLSKinds, only: RP
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use MLSStringLists, only: switchDetail
-    use Molecules, only: First_Molecule, Last_Molecule, L_CLOUD_A, L_CLOUD_S
-    use Toggles, only: Switches
-    use VectorsModule, only: Vector_T, VectorValue_T
+    use LOAD_SPS_DATA_M, only: DESTROYGRIDS_T, DUMP, EMPTYGRIDS_T, GRIDS_T, &
+      & LOAD_ONE_ITEM_GRID, LOAD_SPS_DATA
+    use MATRIXMODULE_1, only: MATRIX_T
+    use MLSKINDS, only: RP
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use MOLECULES, only: FIRST_MOLECULE, LAST_MOLECULE, L_CLOUD_A, L_CLOUD_S
+    use TOGGLES, only: SWITCHES
+    use VECTORSMODULE, only: VECTOR_T, VECTORVALUE_T
 
     type(forwardModelConfig_T), intent(inout) :: FwdModelConf
     type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
@@ -226,7 +226,7 @@ contains
     call load_sps_data ( FwdModelConf, phitan, fmStat%maf, grids_n, &
       & qtyStuffIn=fwdModelConf%lineWidth_TDep%qty )
 
-    if ( index(switches,'grids') /= 0 ) then ! dump the grids
+    if ( switchDetail(switches,'grids') > -1 ) then ! dump the grids
       call dump ( grids_f, "Grids_f", details=9 )
       call dump ( grids_tmp, "Grids_tmp", details=9 )
       if ( size(fwdModelConf%lineCenter) > 0 ) call dump ( grids_v )
@@ -300,50 +300,50 @@ contains
   ! work arrays are automatic arrays, instead of being explicitly allocated
   ! and deallocated.
 
-    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-    use Comp_Eta_Docalc_No_Frq_m, only: Comp_Eta_Docalc_No_Frq
-    use Comp_Sps_Path_Frq_m, only: Comp_Sps_Path, Comp_Sps_Path_Frq, &
-    ! & Comp_Sps_Path_Frq_nz, &
-      & Comp_Sps_Path_No_Frq, Comp_1_Sps_Path_No_Frq
-    use Compute_GL_Grid_m, only: Compute_GL_Grid
-    use Constants, only: Deg2Rad, Rad2Deg
-    use D_Hunt_m, only: Hunt
-    use Dump_0, only: Dump
-    use FilterShapes_m, only: DACSFilterShapes, FilterShapes
-    use ForwardModelConfig, only: Beta_Group_T, Channels_T, &
-      & ForwardModelConfig_t, LineCenter, LineWidth, LineWidth_TDep
-    use ForwardModelIntermediate, only: ForwardModelStatus_t, &
-                                    &   B_Ptg_Angles, B_Refraction
-    use ForwardModelVectorTools, only: GetQuantityForForwardModel
-    use Geometry, only: Get_R_Eq
-    use Get_Eta_Matrix_m, only: Eta_D_T ! Type for eta struct
-    use GLnp, only: GX
-    use HessianModule_1, only: HESSIAN_T
-    use Intrinsic, only: L_A, L_RADIANCE, L_TScat, L_VMR
-    use Load_Sps_Data_m, only: DestroyGrids_t, Dump, Grids_T
-    use L2PC_m, only: L2PC_t
-    use MatrixModule_1, only: MATRIX_T
-    use MLSKinds, only: R4, R8, RP, RV
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
-    use MLSNumerics, only: Hunt, InterpolateValues
-    use MLSSignals_m, only: AreSignalsSuperset, GetNameOfSignal, MatchSignal, &
-      & Radiometers, Signal_t
-    use MLSStringLists, only: switchDetail
-    use Molecules, only: First_Molecule, Last_Molecule, &
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use COMP_ETA_DOCALC_NO_FRQ_M, only: COMP_ETA_DOCALC_NO_FRQ
+    use COMP_SPS_PATH_FRQ_M, only: COMP_SPS_PATH, COMP_SPS_PATH_FRQ, &
+    ! & COMP_SPS_PATH_FRQ_NZ, &
+      & COMP_SPS_PATH_NO_FRQ, COMP_1_SPS_PATH_NO_FRQ
+    use COMPUTE_GL_GRID_M, only: COMPUTE_GL_GRID
+    use CONSTANTS, only: DEG2RAD, RAD2DEG
+    use D_HUNT_M, only: HUNT
+    use DUMP_0, only: DUMP
+    use FILTERSHAPES_M, only: DACSFILTERSHAPES, FILTERSHAPES
+    use FORWARDMODELCONFIG, only: BETA_GROUP_T, CHANNELS_T, &
+      & FORWARDMODELCONFIG_T, LINECENTER, LINEWIDTH, LINEWIDTH_TDEP
+    use FORWARDMODELINTERMEDIATE, only: FORWARDMODELSTATUS_T, &
+                                    &   B_PTG_ANGLES, B_REFRACTION
+    use FORWARDMODELVECTORTOOLS, only: GETQUANTITYFORFORWARDMODEL
+    use GEOMETRY, only: GET_R_EQ
+    use GET_ETA_MATRIX_M, only: ETA_D_T ! TYPE FOR ETA STRUCT
+    use GLNP, only: GX
+    use HESSIANMODULE_1, only: HESSIAN_T
+    use INTRINSIC, only: L_A, L_RADIANCE, L_TSCAT, L_VMR
+    use LOAD_SPS_DATA_M, only: DESTROYGRIDS_T, DUMP, GRIDS_T
+    use L2PC_M, only: L2PC_T
+    use MATRIXMODULE_1, only: MATRIX_T
+    use MLSKINDS, only: R4, R8, RP, RV
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
+    use MLSNUMERICS, only: HUNT, INTERPOLATEVALUES
+    use MLSSIGNALS_M, only: ARESIGNALSSUPERSET, GETNAMEOFSIGNAL, MATCHSIGNAL, &
+      & RADIOMETERS, SIGNAL_T
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use MOLECULES, only: FIRST_MOLECULE, LAST_MOLECULE, &
       & L_H2O, L_N2O, L_O3
-    use Output_m, only: OUTPUT
-    use Path_Contrib_M, only: Get_GL_Inds
-    use Physics, only: SpeedOfLight
-    use PointingGrid_m, only: POINTINGGRIDS, PointingGrid_T
+    use OUTPUT_M, only: OUTPUT
+    use PATH_CONTRIB_M, only: GET_GL_INDS
+    use PHYSICS, only: SPEEDOFLIGHT
+    use POINTINGGRID_M, only: POINTINGGRIDS, POINTINGGRID_T
     use SLABS_SW_M, only: ALLOCATESLABS, DESTROYCOMPLETESLABS, SLABS_STRUCT
-! use testfield_m
-    use Tau_M, only: Destroy_Tau, Dump, Tau_T
-    use Toggles, only: Emit, Levels, Switches, Toggle
-    use Trace_M, only: Trace_begin, Trace_end
-    use TScat_Support_m, only: Get_TScat, Get_TScat_Setup, Get_TScat_Teardown, &
-      & TScat_Gen_Setup
-    use TWO_D_HYDROSTATIC_M, only: Two_D_Hydrostatic
-    use VectorsModule, only: GETVECTORQUANTITYBYTYPE, VECTOR_T, VECTORVALUE_T
+! use TESTFIELD_M
+    use TAU_M, only: DESTROY_TAU, DUMP, TAU_T
+    use TOGGLES, only: EMIT, LEVELS, SWITCHES, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use TSCAT_SUPPORT_M, only: GET_TSCAT, GET_TSCAT_SETUP, GET_TSCAT_TEARDOWN, &
+      & TSCAT_GEN_SETUP
+    use TWO_D_HYDROSTATIC_M, only: TWO_D_HYDROSTATIC
+    use VECTORSMODULE, only: GETVECTORQUANTITYBYTYPE, VECTOR_T, VECTORVALUE_T
 
     type(forwardModelConfig_T), intent(inout) :: FwdModelConf
     type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
@@ -819,28 +819,28 @@ contains
 
     ! Set flags from command-line switches
     clean = ' '
-    if ( index(switches, 'clean') /= 0 ) clean = 'c'
-    do_zmin = index(switches, 'dozm') /= 0 ! Do minimum zeta only if requested
+    if ( switchDetail(switches, 'clean') > -1 ) clean = 'c'
+    do_zmin = switchDetail(switches, 'dozm') > -1 ! Do minimum zeta only if requested
     dump_rad_pol = 0 ! Dump rad_tran_pol intermediates
-    if ( index(switches, 'dpri') /= 0 ) dump_rad_pol = 1 ! Dump if overflow
-    if ( index(switches, 'Dpri') /= 0 ) dump_rad_pol = 2 ! Dump all
-    if ( index(switches, 'DPRI') /= 0 ) dump_rad_pol = 3 ! Dump first and stop
-    dump_rad_pol = index(switches, 'dpri')
-    dump_TScat = index(switches, 'dsct' ) /= 0
-    print_Incopt = index(switches, 'incp' ) /= 0
-    print_Mag = index(switches, 'mag') /= 0
-    print_Ptg = index(switches, 'ptg') /= 0
-    print_path = index(switches, 'path') /= 0
-    print_Rad = index(switches, 'rad') /= 0
-    print_Seez = index(switches, 'seez') /= 0
-    print_TauL = index(switches, 'taul') /= 0
-    print_TauP = index(switches, 'taup') /= 0
-    print_TScat = index(switches, 'TScat' ) /= 0
+    if ( switchDetail(switches, 'dpri') > -1 ) dump_rad_pol = 1 ! Dump if overflow
+    if ( switchDetail(switches, 'Dpri') > -1 ) dump_rad_pol = 2 ! Dump all
+    if ( switchDetail(switches, 'DPRI') > -1 ) dump_rad_pol = 3 ! Dump first and stop
+    dump_rad_pol = switchDetail(switches, 'dpri') + 1
+    dump_TScat = switchDetail(switches, 'dsct' ) > -1
+    print_Incopt = switchDetail(switches, 'incp' ) > -1
+    print_Mag = switchDetail(switches, 'mag') > -1
+    print_Ptg = switchDetail(switches, 'ptg') > -1
+    print_path = switchDetail(switches, 'path') > -1
+    print_Rad = switchDetail(switches, 'rad') > -1
+    print_Seez = switchDetail(switches, 'seez') > -1
+    print_TauL = switchDetail(switches, 'taul') > -1
+    print_TauP = switchDetail(switches, 'taup') > -1
+    print_TScat = switchDetail(switches, 'TScat' ) > -1
     print_TScat_detail = 0
-    if ( index(switches, 'psct' ) /= 0 ) print_TScat_detail = 1
-    if ( index(switches, 'Psct' ) /= 0 ) print_TScat_detail = 2
-    print_more_points = index(switches, 'ZMOR' ) /= 0
-    do_more_points = index(switches, 'zmor') /= 0
+    if ( switchDetail(switches, 'psct' ) > -1 ) print_TScat_detail = 1
+    if ( switchDetail(switches, 'Psct' ) > -1 ) print_TScat_detail = 2
+    print_more_points = switchDetail(switches, 'ZMOR' ) > -1
+    do_more_points = switchDetail(switches, 'zmor') > -1
 
     ! Nullify all our pointers that are allocated because the first thing
     ! Allocate_Test does is ask if they're associated.  If we don't nullify
@@ -1312,17 +1312,17 @@ contains
 
       ! Convolution if needed, or interpolation to ptan ----------------
 
-      use AntennaPatterns_m, only: ANTENNAPATTERNS
-      use Intrinsic, only: L_ELEVOFFSET, L_LIMBSIDEBANDFRACTION
-      use Convolve_All_m, only: Convolve_Radiance, Convolve_Temperature_Deriv, &
-        & Convolve_Other_Deriv, Convolve_Other_Second_Deriv, Interpolate_Radiance, &
-        & Interpolate_Temperature_Deriv, Interpolate_Other_Deriv
-      use Dump_0, only: DUMP
-      use FOV_Convolve_m, only: Convolve_Support_T, FOV_Convolve_Setup, &
-        & FOV_Convolve_Teardown, No_FFT
-      use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
-      use MLSNumerics, only: Coefficients => Coefficients_r8, &
-        & InterpolateArraySetup, InterpolateArrayTeardown
+      use ANTENNAPATTERNS_M, only: ANTENNAPATTERNS
+      use INTRINSIC, only: L_ELEVOFFSET, L_LIMBSIDEBANDFRACTION
+      use CONVOLVE_ALL_M, only: CONVOLVE_RADIANCE, CONVOLVE_TEMPERATURE_DERIV, &
+        & CONVOLVE_OTHER_DERIV, CONVOLVE_OTHER_SECOND_DERIV, INTERPOLATE_RADIANCE, &
+        & INTERPOLATE_TEMPERATURE_DERIV, INTERPOLATE_OTHER_DERIV
+      use DUMP_0, only: DUMP
+      use FOV_CONVOLVE_M, only: CONVOLVE_SUPPORT_T, FOV_CONVOLVE_SETUP, &
+        & FOV_CONVOLVE_TEARDOWN, NO_FFT
+      use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_WARNING
+      use MLSNUMERICS, only: COEFFICIENTS => COEFFICIENTS_R8, &
+        & INTERPOLATEARRAYSETUP, INTERPOLATEARRAYTEARDOWN
 
       integer ChanInd, Channel, I, J, SigInd, Ptg_I
       real(rp) :: DELTAPTG         ! Used for patching the pointings
@@ -2160,19 +2160,19 @@ contains
       ! Generate tables of TScat and its derivatives w.r.t. temperature
       ! and IWC.  The geometric calculations are described in wvs_074.
 
-      use Constants, only: Pi
-      use Convolve_All_m, only: Store_Other_Deriv, Store_Temperature_Deriv
-      use ForwardModelConfig, only: QtyStuff_T
-      use Get_Eta_Matrix_m, only: Get_Eta_Sparse
-      use MatrixModule_1, only: FindBlock
-      use MLSNumerics, only: Coefficients_r8, InterpolateArraySetup, &
-        & InterpolateArrayTeardown
-      use MLSSignals_m, only: GetNameOfSignal
-      use Output_m, only: NewLine
-      use Read_Mie_m, only: dP_dIWC, dP_dT, F_s, IWC_s, P, T_s, Theta_s
-      use Sort_m, only: Sortp
-      use TScat_Support_m, only: Interpolate_P_to_Theta_e
-      use VectorsModule, only: Dump
+      use CONSTANTS, only: PI
+      use CONVOLVE_ALL_M, only: STORE_OTHER_DERIV, STORE_TEMPERATURE_DERIV
+      use FORWARDMODELCONFIG, only: QTYSTUFF_T
+      use GET_ETA_MATRIX_M, only: GET_ETA_SPARSE
+      use MATRIXMODULE_1, only: FINDBLOCK
+      use MLSNUMERICS, only: COEFFICIENTS_R8, INTERPOLATEARRAYSETUP, &
+        & INTERPOLATEARRAYTEARDOWN
+      use MLSSIGNALS_M, only: GETNAMEOFSIGNAL
+      use OUTPUT_M, only: NEWLINE
+      use READ_MIE_M, only: DP_DIWC, DP_DT, F_S, IWC_S, P, T_S, THETA_S
+      use SORT_M, only: SORTP
+      use TSCAT_SUPPORT_M, only: INTERPOLATE_P_TO_THETA_E
+      use VECTORSMODULE, only: DUMP
 
       real(rp) :: DPhi         ! Scat_Phi - Phi_Ref
       real(rp) :: DPhi_Xi      ! dPhi - xi = psi in wvs-074
@@ -2249,7 +2249,7 @@ contains
       real(rp), parameter :: PID2 = 0.5 * pi
 
       if ( toggle(emit) ) call Trace_Begin ( 'Generate_TScat' )
-      switch42 = index(switches,"42") /= 0
+      switch42 = switchDetail(switches,"42") > -1
 
       ! Work out by-channel stuff
 
@@ -2753,26 +2753,26 @@ contains
       ! purposes:  The array sizes are implicit, so we don't need explicitly
       ! to mention them, and the pointer attribute gets stripped during the
       ! trip through the CALL statement -- hopefully thereby helping optimizers.
-      use CS_Expmat_m, only: CS_Expmat
+      use CS_EXPMAT_M, only: CS_EXPMAT
       use DO_T_SCRIPT_M, only: TWO_D_T_SCRIPT, TWO_D_T_SCRIPT_CLOUD
       use D_T_SCRIPT_DTNP_M, only: DT_SCRIPT_DT
-      use Dump_Path_m, only: Dump_Path
-      use Get_Beta_Path_m, only: Get_Beta_Path, Get_Beta_Path_Cloud, &
-        & Get_Beta_Path_PFA, Get_Beta_Path_Polarized
-      use Get_dAlpha_df_m, only: Get_dAlpha_df
-      use Get_d_Deltau_pol_m, only: Get_d_Deltau_pol_df, Get_d_Deltau_pol_dT
-      use Get_Eta_Matrix_m, only: Select_NZ_List
-      use Interpolate_Mie_m, only: Interpolate_Mie
-      use Load_Sps_Data_m, only:  Load_One_Item_Grid
-      use Mcrt_m, only: Mcrt_der
-      use Opacity_m, only: Opacity
-      use Path_Contrib_M, only: Path_Contrib
-      use Physics, only: H_OVER_K
+      use DUMP_PATH_M, only: DUMP_PATH
+      use GET_BETA_PATH_M, only: GET_BETA_PATH, GET_BETA_PATH_CLOUD, &
+        & GET_BETA_PATH_PFA, GET_BETA_PATH_POLARIZED
+      use GET_DALPHA_DF_M, only: GET_DALPHA_DF
+      use GET_D_DELTAU_POL_M, only: GET_D_DELTAU_POL_DF, GET_D_DELTAU_POL_DT
+      use GET_ETA_MATRIX_M, only: SELECT_NZ_LIST
+      use INTERPOLATE_MIE_M, only: INTERPOLATE_MIE
+      use LOAD_SPS_DATA_M, only:  LOAD_ONE_ITEM_GRID
+      use MCRT_M, only: MCRT_DER
+      use OPACITY_M, only: OPACITY
+      use PATH_CONTRIB_M, only: PATH_CONTRIB
+      use PHYSICS, only: H_OVER_K
       use RAD_TRAN_M, only: RAD_TRAN_POL, DRAD_TRAN_DF, &
         & D2RAD_TRAN_DF2, DRAD_TRAN_DT, DRAD_TRAN_DX
-      use ScatSourceFunc, only: T_SCAT, Interp_Tscat, Convert_Grid
-      use Tau_M, only: Get_Tau
-      use TScat_Support_m, only: Get_dB_dT, Mie_Freq_Index
+      use SCATSOURCEFUNC, only: T_SCAT, INTERP_TSCAT, CONVERT_GRID
+      use TAU_M, only: GET_TAU
+      use TSCAT_SUPPORT_M, only: GET_DB_DT, MIE_FREQ_INDEX
 
       integer, intent(in) :: Ptg_i        ! Pointing index
       integer, intent(in) :: Frq_i        ! Frequency loop index
@@ -3499,17 +3499,17 @@ contains
       & Use_R_Eq, Scat_Zeta, Scat_Phi, Scat_Ht, Xi, Scat_Index, Scat_Tan_Ht,     &
       & Forward, Rev )
 
-      use Add_Points_m, only: Add_Points
-      use Constants, only: Pi
-      use Geometry, only: MaxRefraction
-      use Get_Chi_Angles_m, only: Get_Chi_Angles
-      use Get_Eta_Matrix_m, only: Get_Eta_Stru
-      use GLnp, only: GW, NG
-      use Metrics_m, only: Height_Metrics, More_Metrics, More_Points, &
-        & Tangent_Metrics
-      use Min_Zeta_m, only: Get_Min_Zeta
-      use Phi_Refractive_Correction_m, only: Phi_Refractive_Correction
-      use Read_Mie_m, only: IWC_s, T_s
+      use ADD_POINTS_M, only: ADD_POINTS
+      use CONSTANTS, only: PI
+      use GEOMETRY, only: MAXREFRACTION
+      use GET_CHI_ANGLES_M, only: GET_CHI_ANGLES
+      use GET_ETA_MATRIX_M, only: GET_ETA_STRU
+      use GLNP, only: GW, NG
+      use METRICS_M, only: HEIGHT_METRICS, MORE_METRICS, MORE_POINTS, &
+        & TANGENT_METRICS
+      use MIN_ZETA_M, only: GET_MIN_ZETA
+      use PHI_REFRACTIVE_CORRECTION_M, only: PHI_REFRACTIVE_CORRECTION
+      use READ_MIE_M, only: IWC_S, T_S
       use REFRACTION_M, only: REFRACTIVE_INDEX, COMP_REFCOR
       use SLABS_SW_M, only: GET_GL_SLABS_ARRAYS
 
@@ -3677,7 +3677,7 @@ contains
             call dump ( z_coarse(:size(c_inds)), name="Z_Coarse" )
             call dump ( rad2deg*phi_path(c_inds), name="Phi_Path", format="(f14.8)" )
             call dump ( h_path(c_inds), name="H_Path", format="(f14.6)" )
-            call MLSMessage ( merge(MLSMSG_Warning,MLSMSG_Error,index(switches,'igsc')>0), &
+            call MLSMessage ( merge(MLSMSG_Warning,MLSMSG_Error,switchDetail(switches,'igsc')>0), &
               & moduleName, 'Scattering point appears not to be in path' )
             scat_index = -1
           else
@@ -3743,7 +3743,7 @@ contains
             more_phi_path(n_more) = min_phi
             more_h_path(n_more) = tan_ht/cos(min_phi)
           else
-            if ( index(switches,'zdet') /= 0 ) then
+            if ( switchDetail(switches,'zdet') > -1 ) then
               call output ( min_index, before='Want to add minimum zeta at ' )
               call output ( tan_ind_f, before=' (tan_ind_f = ' )
               call output ( min_phi, before=') where phi = ' )
@@ -4304,10 +4304,10 @@ contains
 
   ! Estimate Tan_Phi, SC_geoc_alt and LOS Velocity.
 
-    use MLSKinds, only: RK => RP
-    use MLSNumerics, ONLY: InterpolateValues
-    use Constants, only: Deg2Rad
-    use VectorsModule, only: VectorValue_T
+    use MLSKINDS, only: RK => RP
+    use MLSNUMERICS, only: INTERPOLATEVALUES
+    use CONSTANTS, only: DEG2RAD
+    use VECTORSMODULE, only: VECTORVALUE_T
 
     implicit NONE
 
@@ -4402,6 +4402,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.320  2011/03/31 19:51:03  vsnyder
+! Allow 'scattering point not in path' to be a warning
+!
 ! Revision 2.319  2011/03/25 20:46:59  vsnyder
 ! Delete declarations of unused objects
 !

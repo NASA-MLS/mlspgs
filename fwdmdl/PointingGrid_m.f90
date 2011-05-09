@@ -14,11 +14,11 @@ module PointingGrid_m
   ! Read the pointing grid file.  Make a database of pointing grids.
   ! Link them to and from the Signals database in MLSSignals_m
 
-  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-  use MLSCommon, only: R8
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
-    & MLSMSG_Error
-  use MLSSignals_m, only: DisplaySignalName, MaxSigLen, Signals, Signal_T
+  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use MLSKINDS, only: R8
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
+    & MLSMSG_ERROR
+  use MLSSIGNALS_M, only: DISPLAYSIGNALNAME, MAXSIGLEN, SIGNALS, SIGNAL_T
 
   ! More USEs below in each procedure, if they're only used therein.
 
@@ -75,10 +75,11 @@ contains
 
   ! ------------------------------------  Read_Pointing_Grid_File  -----
   subroutine Read_Pointing_Grid_File ( Lun, Where )
-    use Machine, only: IO_Error
-    use Parse_Signal_m, only: Parse_Signal
-    use Toggles, only: Gen, Levels, Switches, Toggle
-    use Trace_M, only: Trace_begin, Trace_end
+    use MACHINE, only: IO_ERROR
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use PARSE_SIGNAL_M, only: PARSE_SIGNAL
+    use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
 
     integer, intent(in) :: Lun               ! Logical unit number to read it
     integer, intent(in) :: Where             ! In the L2CF tree, for tracing
@@ -222,7 +223,7 @@ outer2: do
     call deallocate_test ( howManySignals, 'HowManySignals', moduleName )
     call deallocate_test ( howManyGrids, 'HowManyGrids', moduleName )
 
-    if ( index(switches,'point') /= 0 ) call dump_pointing_grid_database
+    if ( switchDetail(switches,'point') > -1 ) call dump_pointing_grid_database
     if ( toggle(gen) .and. levels(gen) > 0 ) &
       & call trace_end ( "Read_Pointing_Grid_File" )
 
@@ -266,9 +267,9 @@ outer2: do
 
   ! --------------------------------  Dump_Pointing_Grid_Database  -----
   subroutine Dump_Pointing_Grid_Database ( where )
-    use Dump_0, only: Dump
-    use MoreTree, only: StartErrorMessage
-    use Output_m, only: Blanks, Output
+    use DUMP_0, only: DUMP
+    use MORETREE, only: STARTERRORMESSAGE
+    use OUTPUT_M, only: BLANKS, OUTPUT
 
     integer, intent(in), optional :: Where   ! Tree node index
 
@@ -312,6 +313,9 @@ outer2: do
 end module PointingGrid_m
 
 ! $Log$
+! Revision 2.11  2009/06/23 18:26:10  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.10  2007/10/03 23:58:26  vsnyder
 ! Add 'where' for tracing
 !

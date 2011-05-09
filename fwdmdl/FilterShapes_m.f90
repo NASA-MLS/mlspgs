@@ -13,7 +13,7 @@ module FilterShapes_m
 
   ! Read the filter shapes file.
 
-  use MLSCommon, only: R8
+  use MLSKinds, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error
   use MLSSignals_m, only: GetNameOfSignal, MaxSigLen, Signals, Signal_T
@@ -97,11 +97,12 @@ contains
 
   ! ------------------------------------  Read_Filter_Shapes_File  -----
   subroutine Read_Filter_Shapes_File ( Lun, FileIndex, Where )
-    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-    use Machine, only: IO_Error
-    use Parse_Signal_m, only: Parse_Signal
-    use Toggles, only: Gen, Switches, Toggle
-    use Trace_M, only: Trace_begin, Trace_end
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use MACHINE, only: IO_ERROR
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use PARSE_SIGNAL_M, only: PARSE_SIGNAL
+    use TOGGLES, only: GEN, SWITCHES, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
 
     integer, intent(in) :: Lun          ! Logical unit number to read it
     integer, intent(in) :: FileIndex    ! In the string table
@@ -198,7 +199,7 @@ contains
 
     end do ! Loop over filter shapes
 
-    if ( index(switches,'filt') /= 0 ) call dump_filter_shapes_database
+    if ( switchDetail(switches,'filt') > -1 ) call dump_filter_shapes_database
     if ( toggle(gen) ) then
       call trace_end ( "Read_Filter_Shapes_File" )
     end if
@@ -212,11 +213,12 @@ contains
 
   ! -------------------------------  Read_DACS_Filter_Shapes_File  -----
   subroutine Read_DACS_Filter_Shapes_File ( Lun, FileIndex, Where )
-    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-    use Machine, only: IO_Error
-    use Parse_Signal_m, only: Parse_Signal
-    use Toggles, only: Gen, Switches, Toggle
-    use Trace_M, only: Trace_begin, Trace_end
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use MACHINE, only: IO_ERROR
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use PARSE_SIGNAL_M, only: PARSE_SIGNAL
+    use TOGGLES, only: GEN, SWITCHES, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
 
     integer, intent(in) :: Lun          ! Logical unit number to read it
     integer, intent(in) :: FileIndex    ! In the string table
@@ -352,7 +354,7 @@ contains
 
     end do ! Loop over filter shapes
 
-    if ( index(switches,'dacsfil') /= 0 ) call dump_DACS_filter_database
+    if ( switchDetail(switches,'dacsfil') > -1 ) call dump_DACS_filter_database
     if ( toggle(gen) ) then
       call trace_end ( "Read_DACS_Filter_Shapes_File" )
     end if
@@ -553,6 +555,9 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 2.25  2009/06/23 18:26:10  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.24  2007/10/11 20:05:03  vsnyder
 ! Use correct loop bounds when destroying DACSfilterShapes
 !

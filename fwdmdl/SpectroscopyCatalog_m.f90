@@ -13,9 +13,10 @@ module SpectroscopyCatalog_m
 
 ! Process the Spectroscopy section.  Read the "old format" spectroscopy catalog
 
-  use Intrinsic, only: L_none
-  use MLSCommon, only: R8, MLSFile_T
-  use Molecules, only: First_Molecule, Last_Molecule
+  use INTRINSIC, only: L_NONE
+  use MLSKINDS, only: R8
+  use MLSCOMMON, only: MLSFILE_T
+  use MOLECULES, only: FIRST_MOLECULE, LAST_MOLECULE
 
   ! More USEs below in each procedure.
 
@@ -104,27 +105,28 @@ contains ! =====  Public Procedures  ===================================
     ! We need a lot of names from Init_Spectroscopy_Module.  First, the spec
     ! ID's:
 
-    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-    use Init_Spectroscopy_M, only: S_Line, S_Spectra, S_ReadSpectroscopy, &
-      & S_WriteSpectroscopy
-    ! Now the Fields:
-    use Init_Spectroscopy_M, only: F_Continuum, F_Delta, F_DefaultIsotopeRatio, &
-      & F_El, F_EMLSSIGNALS, F_EMLSSIGNALSPOL, F_Gamma, F_Lines, F_Mass, &
-      & F_Molecule, F_XPTL1SIGNALS, F_N, F_N1, F_N2, F_Ns, F_Ps, F_Qlog, F_QN, &
-      & F_Str, F_UMLSSIGNALS, F_V0, F_W
-    use Intrinsic, only: L_EMLS, L_UMLS, L_XPTL1, &
-      & Phyq_Dimless => Phyq_Dimensionless, Phyq_Frequency, S_Time
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
-      & MLSMSG_DeAllocate, MLSMSG_Error
-    use MoreTree, only: Get_Field_Id, Get_Spec_Id
-    use Parse_Signal_m, only: PARSE_SIGNAL
-    use String_Table, only: Get_string
-    use Time_M, only: Time_Now
-    use Toggles, only: Gen, Switches, Toggle
-    use Trace_M, only: Trace_begin, Trace_end
-    use Tree, only: Decorate, Decoration, Node_ID, NSons, Sub_Rosa, Subtree
-    use Tree_Types, only: N_Named, N_String
-    use MLSSignals_m, only: Instrument
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use INIT_SPECTROSCOPY_M, only: S_LINE, S_SPECTRA, S_READSPECTROSCOPY, &
+      & S_WRITESPECTROSCOPY
+    ! NOW THE FIELDS:
+    use INIT_SPECTROSCOPY_M, only: F_CONTINUUM, F_DELTA, F_DEFAULTISOTOPERATIO, &
+      & F_EL, F_EMLSSIGNALS, F_EMLSSIGNALSPOL, F_GAMMA, F_LINES, F_MASS, &
+      & F_MOLECULE, F_XPTL1SIGNALS, F_N, F_N1, F_N2, F_NS, F_PS, F_QLOG, F_QN, &
+      & F_STR, F_UMLSSIGNALS, F_V0, F_W
+    use INTRINSIC, only: L_EMLS, L_UMLS, L_XPTL1, &
+      & PHYQ_DIMLESS => PHYQ_DIMENSIONLESS, PHYQ_FREQUENCY, S_TIME
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, &
+      & MLSMSG_DEALLOCATE, MLSMSG_ERROR
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use MORETREE, only: GET_FIELD_ID, GET_SPEC_ID
+    use PARSE_SIGNAL_M, only: PARSE_SIGNAL
+    use STRING_TABLE, only: GET_STRING
+    use TIME_M, only: TIME_NOW
+    use TOGGLES, only: GEN, SWITCHES, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE
+    use TREE_TYPES, only: N_NAMED, N_STRING
+    use MLSSIGNALS_M, only: INSTRUMENT
 
     ! Dummy argument
     integer, intent(in) :: Root         ! Of the AST for the section
@@ -417,11 +419,11 @@ contains ! =====  Public Procedures  ===================================
     end do ! i
 
 
-    if ( index(switches,'speC') /= 0 ) then
+    if ( switchDetail(switches,'speC') > -1 ) then
       call dump_SpectCat_database ( catalog )
       stop
     end if
-    if ( index(switches,'spec') /= 0 ) call dump_SpectCat_database ( catalog )
+    if ( switchDetail(switches,'spec') > -1 ) call dump_SpectCat_database ( catalog )
     if ( toggle(gen) ) then
       call trace_end ( "Spectroscopy" )
     end if
@@ -432,10 +434,10 @@ contains ! =====  Public Procedures  ===================================
   contains
     ! ...........................................  Announce_Error  .....
     subroutine Announce_Error ( Where, Code, More, MSG )
-      use Intrinsic, only: Field_Indices, Lit_Indices, Phyq_Indices
-      use MoreTree, only: StartErrorMessage
-      use Output_m, only: Output
-      use String_Table, only: Display_String
+      use INTRINSIC, only: FIELD_INDICES, LIT_INDICES, PHYQ_INDICES
+      use MORETREE, only: STARTERRORMESSAGE
+      use OUTPUT_M, only: OUTPUT
+      use STRING_TABLE, only: DISPLAY_STRING
       integer, intent(in) :: Where      ! In the tree
       integer, intent(in) :: Code       ! The error code
       integer, intent(in), optional :: More  ! In case some error messages need
@@ -807,20 +809,20 @@ contains ! =====  Public Procedures  ===================================
   ! Module-wise global variable LINES need to be associated before
   ! calling this subroutine
   subroutine Read_Spectroscopy ( Where, FileName, FileType )
-    use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
-!   use Declaration_Table, only: Declare, Decls, Get_Decl, Label
-!   use Intrinsic, only: Phyq_Invalid
-    use IO_Stuff, only: Get_Lun
-    use Machine, only: IO_Error
-    use MLSHDF5, only: GetHDF5DSDims, IsHDF5DSPresent, LoadFromHDF5DS, LoadPtrFromHDF5DS
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
-      & MLSMSG_Error
-    use MLSSignals_m, only: MaxSigLen
-    use MLSStrings, only: Capitalize
-    use MoreTree, only: GetLitIndexFromString, GetStringIndexFromString
-    use Parse_Signal_m, only: Parse_Signal
-    use Tree, only: Null_Tree
-    use HDF5, only: H5F_ACC_RDONLY_F, H5FOpen_F, H5FClose_F, HSize_T
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+!   use DECLARATION_TABLE, only: DECLARE, DECLS, GET_DECL, LABEL
+!   use INTRINSIC, only: PHYQ_INVALID
+    use IO_STUFF, only: GET_LUN
+    use MACHINE, only: IO_ERROR
+    use MLSHDF5, only: GETHDF5DSDIMS, ISHDF5DSPRESENT, LOADFROMHDF5DS, LOADPTRFROMHDF5DS
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
+      & MLSMSG_ERROR
+    use MLSSIGNALS_M, only: MAXSIGLEN
+    use MLSSTRINGS, only: CAPITALIZE
+    use MORETREE, only: GETLITINDEXFROMSTRING, GETSTRINGINDEXFROMSTRING
+    use PARSE_SIGNAL_M, only: PARSE_SIGNAL
+    use TREE, only: NULL_TREE
+    use HDF5, only: H5F_ACC_RDonly_F, H5FOPEN_F, H5FCLOSE_F, HSIZE_T
 
     integer, intent(in) :: Where ! in the parse tree
     character(len=*), intent(in) :: FileName, FileType
@@ -1171,18 +1173,18 @@ contains ! =====  Public Procedures  ===================================
 
 ! -------------------------------------------  Write_Spectroscopy  -----
   subroutine Write_Spectroscopy ( Where, FileName, FileType )
-    use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
-    use Intrinsic, only: Lit_Indices
-    use IO_Stuff, only: Get_Lun
-    use Machine, only: IO_Error
-    use MLSHDF5, only: SaveAsHDF5DS
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use MLSSignals_m, only: GetSignalName, MaxSigLen, Signals
-    use MLSStrings, only: Capitalize
-    use MoreTree, only: StartErrorMessage
-    use Output_m, only: Output
-    use String_Table, only: Get_String, String_Length
-    use HDF5, only: H5FCREATE_F, H5FClose_F, H5F_ACC_TRUNC_F
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use INTRINSIC, only: LIT_INDICES
+    use IO_STUFF, only: GET_LUN
+    use MACHINE, only: IO_ERROR
+    use MLSHDF5, only: SAVEASHDF5DS
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+    use MLSSIGNALS_M, only: GETSIGNALNAME, MAXSIGLEN, SIGNALS
+    use MLSSTRINGS, only: CAPITALIZE
+    use MORETREE, only: STARTERRORMESSAGE
+    use OUTPUT_M, only: OUTPUT
+    use STRING_TABLE, only: GET_STRING, STRING_LENGTH
+    use HDF5, only: H5FCREATE_F, H5FCLOSE_F, H5F_ACC_TRUNC_F
 
     integer, intent(in) :: Where ! in the parse tree
     character(len=*), intent(in) :: FileName, FileType
@@ -1469,6 +1471,11 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.49  2010/04/29 22:51:36  honghanh
+! Check for if lines is associated in Read_Spectroscopy, and remove
+! checks for lines associated-ness because it must be associated in order
+! for the subroutine to work.
+!
 ! Revision 2.48  2009/08/20 19:46:40  vsnyder
 ! Cosmetic stuff
 !

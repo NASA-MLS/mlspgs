@@ -16,11 +16,11 @@ module ForwardModelConfig
 ! Set up the forward model configuration, except for actually processing
 ! the command.
 
-  use MLSCommon, only: R8, RP
-  use MLSSignals_M, only: Signal_t
-  use SpectroscopyCatalog_m, only: Catalog_t
-  use VectorsModule, only: VectorValue_T
-  use VGridsDatabase, only: VGrid_T, DestroyVGridContents, dump
+  use MLSKINDS, only: R8, RP
+  use MLSSIGNALS_M, only: SIGNAL_T
+  use SPECTROSCOPYCATALOG_M, only: CATALOG_T
+  use VECTORSMODULE, only: VECTORVALUE_T
+  use VGRIDSDATABASE, only: VGRID_T, DESTROYVGRIDCONTENTS, DUMP
 
   implicit NONE
   private
@@ -255,16 +255,16 @@ contains
   ! -------------------------------  DeriveFromForwardModelConfig  -----
   subroutine DeriveFromForwardModelConfig ( FwdModelConf )
 
-    use Allocate_Deallocate, only: Allocate_Test
-    use MLSMessageModule, only: MLSMessage,  MLSMSG_Allocate, MLSMSG_Error, &
-      & MLSMSG_Warning
-    use MLSSets, only: FindFirst
-!   use Output_m, only: Output
-    use PFADataBase_m, only: Dump
-    use Read_Mie_m, only: F_s
-    use Output_m, only: Output
-    use SpectroscopyCatalog_m, only: Dump
-    use Toggles, only: Switches
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST
+    use MLSMESSAGEMODULE, only: MLSMESSAGE,  MLSMSG_ALLOCATE, MLSMSG_ERROR, &
+      & MLSMSG_WARNING
+    use MLSSETS, only: FINDFIRST
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use PFADATABASE_M, only: DUMP
+    use READ_MIE_M, only: F_S
+    use OUTPUT_M, only: OUTPUT
+    use SPECTROSCOPYCATALOG_M, only: DUMP
+    use TOGGLES, only: SWITCHES
 
     type (ForwardModelConfig_T), intent(inout) :: FwdModelConf
     integer :: DumpFwm = -1                ! -1 = not called yet, 0 = no dumps,
@@ -274,8 +274,8 @@ contains
 
     if ( dumpFwm < 0 ) then ! done only once
       dumpFwm = 0
-      if ( index(switches,'fwmd') /= 0 )  dumpFwm = 1
-      if ( index(switches,'fwmD') /= 0 )  dumpFwm = 2
+      if ( switchDetail(switches,'fwmd') > -1 )  dumpFwm = 1
+      if ( switchDetail(switches,'fwmD') > -1 )  dumpFwm = 2
     end if
     error = .false.
 
@@ -425,16 +425,16 @@ contains
     ! ................................................  PFA_Stuff  .....
     subroutine PFA_Stuff
 
-      use Allocate_deallocate, only: Allocate_Test
-      use Intrinsic, only: Lit_Indices
-      use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-      use MLSSignals_m, only: DisplaySignalName
-      use Molecules, only: L_Cloud_A, L_Cloud_S
-      use MoreTree, only: StartErrorMessage
-      use PFADatabase_m, only: Test_And_Fetch_PFA
-      use Read_Mie_m, only: Beta_c_a, Beta_c_s
-      use String_Table, only: Display_String
-      use Tree, only: Source_Ref
+      use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST
+      use INTRINSIC, only: LIT_INDICES
+      use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+      use MLSSIGNALS_M, only: DISPLAYSIGNALNAME
+      use MOLECULES, only: L_CLOUD_A, L_CLOUD_S
+      use MORETREE, only: STARTERRORMESSAGE
+      use PFADATABASE_M, only: TEST_AND_FETCH_PFA
+      use READ_MIE_M, only: BETA_C_A, BETA_C_S
+      use STRING_TABLE, only: DISPLAY_STRING
+      use TREE, only: SOURCE_REF
 
       integer :: B                    ! Index for beta groups
       integer :: Channel              ! Index in fwdModelConf%channels
@@ -491,15 +491,16 @@ contains
 
     ! ...............................  SpectroscopyCatalogExtract  .....
     subroutine SpectroscopyCatalogExtract
-      use Allocate_Deallocate, only: Allocate_Test, Test_Allocate
-      use Intrinsic, only: LIT_INDICES, L_NONE
-      use MLSSignals_m, only: GetRadiometerFromSignal
-      use MoreTree, only: StartErrorMessage
-      use SpectroscopyCatalog_m, only: Catalog, Empty_Cat, Line_t, &
-        & Lines, MostLines
-      use String_table, only: Display_String ! , Get_String
-      use Toggles, only: Switches
-      use Tree, only: Source_Ref
+      use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, TEST_ALLOCATE
+      use INTRINSIC, only: LIT_INDICES, L_NONE
+      use MLSSIGNALS_M, only: GETRADIOMETERFROMSIGNAL
+      use MLSSTRINGLISTS, only: SWITCHDETAIL
+      use MORETREE, only: STARTERRORMESSAGE
+      use SPECTROSCOPYCATALOG_M, only: CATALOG, EMPTY_CAT, LINE_T, &
+        & LINES, MOSTLINES
+      use STRING_TABLE, only: DISPLAY_STRING ! , GET_STRING
+      use TOGGLES, only: SWITCHES
+      use TREE, only: SOURCE_REF
 
       integer :: B         ! Beta_group index
       integer :: C         ! Spectroscopy catalog extract size/index
@@ -520,7 +521,7 @@ contains
       type (line_T), pointer :: ThisLine
       integer :: Z         ! Index for fwdModelConf%Signals
 
-      if ( noLinesMsg < 0 ) noLinesMsg = index(switches, '0sl') ! Done once
+      if ( noLinesMsg < 0 ) noLinesMsg = switchDetail(switches, '0sl') ! Done once
       sawNoLines = .false.
 
       ! Allocate the spectroscopy catalog extract
@@ -1442,6 +1443,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.112  2011/03/31 19:50:29  vsnyder
+! Don't dump beta group twice
+!
 ! Revision 2.111  2010/12/06 19:15:42  pwagner
 ! More detailed dump of config to aid debugging
 !

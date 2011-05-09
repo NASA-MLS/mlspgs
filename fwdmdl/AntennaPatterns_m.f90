@@ -13,10 +13,10 @@ module AntennaPatterns_m
 
   ! Read the antenna patterns file.
 
-  use MLSCommon, only: R8
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
-    & MLSMSG_Error
-  use MLSSignals_m, only: MaxSigLen, Signals, Signal_T, DisplaySignalName
+  use MLSKINDS, only: R8
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
+    & MLSMSG_ERROR
+  use MLSSIGNALS_M, only: MAXSIGLEN, SIGNALS, SIGNAL_T, DISPLAYSIGNALNAME
 
   implicit NONE
 
@@ -79,12 +79,13 @@ contains
 
   ! ------------------------------------  Read_Antenna_Patterns_File  -----
   subroutine Read_Antenna_Patterns_File ( Lun, Where )
-    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-    use Machine, only: IO_Error
-    use Parse_Signal_m, only: Parse_Signal
-    use Toggles, only: Gen, Switches, Toggle
-    use Trace_M, only: Trace_begin, Trace_end
-    use Constants, only: Pi
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use MACHINE, only: IO_ERROR
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use PARSE_SIGNAL_M, only: PARSE_SIGNAL
+    use TOGGLES, only: GEN, SWITCHES, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use CONSTANTS, only: PI
 
     integer, intent(in) :: Lun               ! Logical unit number to read it
     integer, intent(in) :: Where             ! In the L2CF tree, for tracing
@@ -259,7 +260,7 @@ outer1: do
       end do ! j
     end do ! i
 
-    if ( index(switches,'ant') /= 0 ) call dump_Antenna_Patterns_database
+    if ( switchDetail(switches,'ant') > -1 ) call dump_Antenna_Patterns_database
     if ( toggle(gen) ) then
       call trace_end ( "Read_Antenna_Patterns_File" )
     end if
@@ -371,6 +372,9 @@ outer1: do
 end module AntennaPatterns_m
 
 ! $Log$
+! Revision 2.14  2009/06/23 18:26:10  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.13  2009/05/13 20:03:01  vsnyder
 ! Get constants from Constants, kinds from MLSKinds
 !

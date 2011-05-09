@@ -31,14 +31,14 @@ contains ! =====     Public Procedures     =============================
   subroutine LinearizedForwardModel ( fmConf, FwdModelIn, FwdModelExtra,&
     & FwdModelOut, fmStat, Jacobian, vectors )
 
-    use ForwardModelConfig, only: FORWARDMODELCONFIG_T
-    use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
-    use Intrinsic, only: L_RADIANCE, L_OPTICALDEPTH
-    use MatrixModule_1, only: MATRIX_T
-    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
-    use MLSSignals_m, only: Signal_T
-    use VectorsModule, only: VECTOR_T, VECTORVALUE_T
-    use ForwardModelVectorTools, only: GetQuantityForForwardModel
+    use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
+    use FORWARDMODELINTERMEDIATE, only: FORWARDMODELSTATUS_T
+    use INTRINSIC, only: L_RADIANCE, L_OPTICALDEPTH
+    use MATRIXMODULE_1, only: MATRIX_T
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+    use MLSSIGNALS_M, only: SIGNAL_T
+    use VECTORSMODULE, only: VECTOR_T, VECTORVALUE_T
+    use FORWARDMODELVECTORTOOLS, only: GETQUANTITYFORFORWARDMODEL
 
     ! Dummy arguments
     type(forwardModelConfig_T), intent(in) :: FMCONF
@@ -105,36 +105,37 @@ contains ! =====     Public Procedures     =============================
   subroutine LinearizedForwardModelAuto ( fmConf, FwdModelIn, FwdModelExtra,&
     & fmStat, radiance, noChans, noMifs, noMifsJ, Jacobian, Vectors )
 
-    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-    use Dump_0, only: DUMP
-    use ForwardModelConfig, only: FORWARDMODELCONFIG_T
-    use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
-    use ForwardModelVectorTools, only: GetQuantityForForwardModel
-    use HessianModule_1, only: Multiply
-    use Intrinsic, only: L_RADIANCE, L_TEMPERATURE, L_PTAN, L_VMR, &
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use DUMP_0, only: DUMP
+    use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
+    use FORWARDMODELINTERMEDIATE, only: FORWARDMODELSTATUS_T
+    use FORWARDMODELVECTORTOOLS, only: GETQUANTITYFORFORWARDMODEL
+    use HESSIANMODULE_1, only: MULTIPLY
+    use INTRINSIC, only: L_RADIANCE, L_TEMPERATURE, L_PTAN, L_VMR, &
       & L_LIMBSIDEBANDFRACTION, L_OPTICALDEPTH
-    use L2PC_m, only: L2PC_T, L2PCDATABASE, POPULATEL2PCBIN
-    use L2PCBins_m, only: FindMatchForL2PCQ, SelectL2PCBins
-    use ManipulateVectorQuantities, only: FINDONECLOSESTINSTANCE
-    use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
+    use L2PC_M, only: L2PC_T, L2PCDATABASE, POPULATEL2PCBIN
+    use L2PCBINS_M, only: FINDMATCHFORL2PCQ, SELECTL2PCBINS
+    use MANIPULATEVECTORQUANTITIES, only: FINDONECLOSESTINSTANCE
+    use MATRIXMODULE_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
       & MATRIXELEMENT_T, CREATEBLOCK, DENSIFY, CHECKFORSIMPLEBANDEDLAYOUT
-    use MatrixModule_1, only: MATRIX_T, MULTIPLYMATRIXVECTORNOT, DUMP, &
+    use MATRIXMODULE_1, only: MATRIX_T, MULTIPLYMATRIXVECTORNOT, DUMP, &
       & FINDBLOCK, CREATEBLOCK
-    use MLSKinds, only: R8, RM, RV
-    use MLSSignals_m, only: Signal_T
-    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
-    use MLSNumerics, only: Coefficients_R8, HUNT, InterpolateArraySetup, &
-      & InterpolateArrayTeardown, INTERPOLATEVALUES
-    use Molecules, only: L_EXTINCTION, L_EXTINCTIONV2
-    use Output_m, only: Output, OUTPUTNAMEDVALUE
-    use String_Table, only: Display_String, Get_String
-    use Toggles, only: Emit, Levels, Switches, Toggle
-    use Trace_m, only: Trace_begin, Trace_end
-    use VectorsModule, only: assignment(=), OPERATOR(-), OPERATOR(+), &
+    use MLSKINDS, only: R8, RM, RV
+    use MLSSIGNALS_M, only: SIGNAL_T
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+    use MLSNUMERICS, only: COEFFICIENTS_R8, HUNT, INTERPOLATEARRAYSETUP, &
+      & INTERPOLATEARRAYTEARDOWN, INTERPOLATEVALUES
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use MOLECULES, only: L_EXTINCTION, L_EXTINCTIONV2
+    use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
+    use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
+    use TOGGLES, only: EMIT, LEVELS, SWITCHES, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use VECTORSMODULE, only: ASSIGNMENT(=), OPERATOR(-), OPERATOR(+), &
       & CLONEVECTOR,  DESTROYVECTORINFO, DUMP, GETVECTORQUANTITYINDEXBYNAME, &
       & GETVECTORQUANTITYBYTYPE, M_LINALG, &
       & VECTOR_T, VECTORVALUE_T
-    use Sort_m, only: SORTP
+    use SORT_M, only: SORTP
 
     ! Dummy arguments
     type(forwardModelConfig_T), intent(in) :: FMCONF
@@ -682,9 +683,9 @@ contains ! =====     Public Procedures     =============================
     ! in the xStar/yStar supplied case too
     if ( fmConf%yStar /= 0 ) call Add_y_Star
 
-    if ( index(switches,'rad') + index(switches,'RAD') > 0 ) then
+    if ( switchDetail(switches,'rad') + switchDetail(switches,'RAD') > -2 ) then
       call dump ( radiance, name='Linearized radiances', details=1, options="c" )
-      if ( index(switches,'RAD') > 0 ) stop
+      if ( switchDetail(switches,'RAD') > -1 ) stop
     end if
 
     if ( toggle(emit) ) call trace_end ( 'LinearizedForwardModel' )
@@ -791,6 +792,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.83  2011/03/28 17:52:08  pwagner
+! Fixed bug in calculating top before call to InterpolateValues
+!
 ! Revision 2.82  2010/09/25 01:08:39  vsnyder
 ! Cannonball polishing
 !
