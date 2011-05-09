@@ -998,7 +998,7 @@ contains
       nullify ( qty%surfIndex, qty%chanIndex )
     end if
 
-    ! if ( index(switches, 'qtmp') > 0 ) call dump(qty, details=0, noL2CF=.true.)
+    ! if ( switchDetail(switches, 'qtmp') > -1 ) call dump(qty, details=0, noL2CF=.true.)
   end subroutine SetupNewQuantityTemplate
 
   ! --------- Private procedures ---
@@ -1419,6 +1419,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.63  2011/03/31 18:30:02  pwagner
+! Corrected spelling in MODIFIABLEFIELDS
+!
 ! Revision 2.62  2011/03/23 00:42:08  pwagner
 ! Tried to fix some of the more obvious bugs in ModifyQuantityTemplate_allocate
 !
