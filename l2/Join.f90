@@ -46,31 +46,31 @@ contains ! =====     Public Procedures     =============================
   subroutine MLSL2Join ( root, vectors, l2gpDatabase, l2auxDatabase, &
     & DirectDataBase, chunkNo, chunks, FWModelConfig, filedatabase, HGrids )
     ! Imports
-    use Allocate_Deallocate, only: Test_Allocate
-    use Chunks_m, only: MLSChunk_T
-    use DirectWrite_m, only: DirectData_T
-    use DumpCommand_m, only: DumpCommand, Skip
-    use HGridsDatabase, only: HGrid_T
-    use Init_Tables_Module, only: S_L2GP, S_L2AUX, S_TIME, S_DIRECTWRITE, &
+    use ALLOCATE_DEALLOCATE, only: TEST_ALLOCATE
+    use CHUNKS_M, only: MLSCHUNK_T
+    use DIRECTWRITE_M, only: DIRECTDATA_T
+    use DUMPCOMMAND_M, only: DUMPCOMMAND, SKIP
+    use HGRIDSDATABASE, only: HGRID_T
+    use INIT_TABLES_MODULE, only: S_L2GP, S_L2AUX, S_TIME, S_DIRECTWRITE, &
       & S_DIFF, S_DUMP, S_LABEL, S_SKIP
-    use ForwardModelConfig, only: ForwardModelConfig_T
-    use L2GPData, only: L2GPDATA_T
-    use L2AUXData, only: L2AUXDATA_T
-    use L2ParInfo, only: PARALLEL, WAITFORDIRECTWRITEPERMISSION
+    use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
+    use L2GPDATA, only: L2GPDATA_T
+    use L2AUXDATA, only: L2AUXDATA_T
+    use L2PARINFO, only: PARALLEL, WAITFORDIRECTWRITEPERMISSION
     use LEXER_CORE, only: PRINT_SOURCE
-    use MLSCommon, only: MLSFile_T
-    use MLSL2Options, only: CHECKPATHS, SKIPDIRECTWRITES, SPECIALDUMPFILE
-    use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, &
-      & add_to_directwrite_timing, add_to_section_timing
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use MoreTree, only: GET_SPEC_ID
-    use Output_m, only: OUTPUT, revertoutput, switchOutput
+    use MLSCOMMON, only: MLSFILE_T
+    use MLSL2OPTIONS, only: CHECKPATHS, SKIPDIRECTWRITES, SPECIALDUMPFILE
+    use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES, &
+      & ADD_TO_DIRECTWRITE_TIMING, ADD_TO_SECTION_TIMING
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+    use MORETREE, only: GET_SPEC_ID
+    use OUTPUT_M, only: OUTPUT, REVERTOUTPUT, SWITCHOUTPUT
     use TOGGLES, only: GEN, TOGGLE, SWITCHES
-    use Tree, only: SUBTREE, NSONS, NODE_ID, SOURCE_REF
+    use TREE, only: SUBTREE, NSONS, NODE_ID, SOURCE_REF
     use TREE_TYPES, only: N_NAMED
-    use Time_M, only: Time_Now
+    use TIME_M, only: TIME_NOW
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use VectorsModule, only: VECTOR_T
+    use VECTORSMODULE, only: VECTOR_T
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Of the JOIN section in the AST
     type (Vector_T), dimension(:), pointer :: vectors
@@ -355,46 +355,47 @@ contains ! =====     Public Procedures     =============================
     & chunkNo, chunks, FWModelConfig, HGrids, makeRequest, create, theFile, &
     & noExtraWrites, namedFile )
     ! Imports
-    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-    use Chunks_m, only: MLSChunk_T
-    use DirectWrite_m, only: DirectData_T, &
-      & DirectWrite_l2GP, DirectWrite_l2aux, Dump, &
-      & ExpandDirectDB, ExpandSDNames, FileNameToID
-    use dump_0, only: dump
-    use Expr_m, only: EXPR
-    use ForwardModelConfig, only: ForwardModelConfig_T
-    use Hdf, only: DFACC_CREATE, DFACC_RDWR
-    use HGridsDatabase, only: HGrid_T
-    use Init_tables_module, only: F_CONVERGENCE, F_FILE, F_HDFVERSION, &
-      & F_LOWEROVERLAP, F_PRECISION, f_QUALITY, F_SOURCE, F_STATUS, F_TYPE, &
-      & F_UPPEROVERLAP
-    use Init_tables_module, only: L_L2GP, L_L2AUX, L_L2DGG, L_L2FWM, &
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use CHUNKS_M, only: MLSCHUNK_T
+    use DIRECTWRITE_M, only: DIRECTDATA_T, &
+      & DIRECTWRITE, DUMP, &
+      & EXPANDDIRECTDB, EXPANDSDNAMES, FILENAMETOID
+    use DUMP_0, only: DUMP
+    use EXPR_M, only: EXPR
+    use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
+    use HDF, only: DFACC_CREATE, DFACC_RDWR
+    use HGRIDSDATABASE, only: HGRID_T
+    use INIT_TABLES_MODULE, only: F_CONVERGENCE, F_FILE, F_HDFVERSION, &
+      & F_LOWEROVERLAP, F_PRECISION, F_QUALITY, F_SOURCE, F_STATUS, F_TYPE, &
+      & F_UPPEROVERLAP, F_VECTOR
+    use INIT_TABLES_MODULE, only: L_L2GP, L_L2AUX, L_L2DGG, L_L2FWM, &
       & L_PRESSURE, L_ZETA
-    use intrinsic, only: L_NONE, L_HDF, L_SWATH, Lit_indices, PHYQ_DIMENSIONLESS
-    use L2ParInfo, only: PARALLEL, LOGDIRECTWRITEREQUEST, FINISHEDDIRECTWRITE
-    use ManipulateVectorQuantities, only: DOHGRIDSMATCH
-    use MLSCommon, only: R8, FileNameLen, MLSFile_T, L2Metadata_T
-    use MLSFiles, only: HDFVERSION_5, &
-      & AddInitializeMLSFile, dump, GetMLSFileByName, GetPCFromRef, &
-      & mls_closeFile, mls_openFile, Split_path_name
-    use MLSHDFEOS, only: mls_swath_in_file
-    use MLSL2Options, only: CATENATESPLITS, CHECKPATHS, &
+    use INTRINSIC, only: L_NONE, L_HDF, L_SWATH, LIT_INDICES, PHYQ_DIMENSIONLESS
+    use L2PARINFO, only: PARALLEL, LOGDIRECTWRITEREQUEST, FINISHEDDIRECTWRITE
+    use MANIPULATEVECTORQUANTITIES, only: DOHGRIDSMATCH
+    use MLSCOMMON, only: FILENAMELEN, MLSFILE_T, L2METADATA_T
+    use MLSFILES, only: HDFVERSION_5, &
+      & ADDINITIALIZEMLSFILE, DUMP, GETMLSFILEBYNAME, GETPCFROMREF, &
+      & MLS_CLOSEFILE, MLS_OPENFILE, SPLIT_PATH_NAME
+    use MLSHDFEOS, only: MLS_SWATH_IN_FILE
+    use MLSKINDS, only: R8
+    use MLSL2OPTIONS, only: CATENATESPLITS, CHECKPATHS, &
       & DEFAULT_HDFVERSION_WRITE, PATCH, SKIPDIRECTWRITES, TOOLKIT
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
-    use MLSPCF2, only: mlspcf_l2gp_start, mlspcf_l2gp_end, &
-      & mlspcf_l2dgm_start, mlspcf_l2dgm_end, mlspcf_l2fwm_full_start, &
-      & mlspcf_l2fwm_full_end, &
-      & mlspcf_l2dgg_start, mlspcf_l2dgg_end
-    use MLSSets, only: FindFirst, FindNext
-    use MoreTree, only: GET_FIELD_ID, GET_BOOLEAN
-    use Output_m, only: Blanks, OUTPUT, outputNamedValue
-    use OutputAndClose, only: add_metadata
-    use String_Table, only: DISPLAY_STRING, GET_STRING
-    use Time_M, only: Time_Now
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
+    use MLSPCF2, only: MLSPCF_L2GP_START, MLSPCF_L2GP_END, &
+      & MLSPCF_L2DGM_START, MLSPCF_L2DGM_END, MLSPCF_L2FWM_FULL_START, &
+      & MLSPCF_L2FWM_FULL_END, &
+      & MLSPCF_L2DGG_START, MLSPCF_L2DGG_END
+    use MLSSETS, only: FINDFIRST, FINDNEXT
+    use MORETREE, only: GET_FIELD_ID, GET_BOOLEAN
+    use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE
+    use OUTPUTANDCLOSE, only: ADD_METADATA
+    use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
+    use TIME_M, only: TIME_NOW
     use TOGGLES, only: GEN, TOGGLE, SWITCHES
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
-    use VectorsModule, only: VECTOR_T, VECTORVALUE_T, VALIDATEVECTORQUANTITY, &
+    use VECTORSMODULE, only: VECTOR_T, VECTORVALUE_T, VALIDATEVECTORQUANTITY, &
       & GETVECTORQTYBYTEMPLATEINDEX
     ! Dummy arguments
     integer, intent(in) :: NODE         ! Of the JOIN section in the AST
@@ -487,7 +488,8 @@ contains ! =====     Public Procedures     =============================
     type(VectorValue_T), pointer :: PRECQTY ! The quantities precision
     type(VectorValue_T), pointer :: QUALITYQTY ! The quantities quality
     type(VectorValue_T), pointer :: STATUSQTY ! The quantities status
-    type(DirectData_T), pointer :: thisDirect ! => null()
+    type(DirectData_T), pointer  :: thisDirect ! => null()
+    type(Vector_T), pointer      :: Vector ! => null()
     real :: TimeIn, TimeSetUp, TimeWriting, timeToClose, TimeOut
     type(L2Metadata_T) :: l2metaData
 
@@ -526,7 +528,7 @@ contains ! =====     Public Procedures     =============================
       if ( keyNo > 2 ) lastFieldIndex = fieldIndex
       fieldIndex = get_field_id ( son )
       select case ( fieldIndex )
-      case ( f_source )
+      case ( f_source, f_vector )
         noSources = noSources + 1
         gotsource = .true.
       case ( f_precision )
@@ -574,28 +576,29 @@ contains ! =====     Public Procedures     =============================
       & statusVectors, statusQuantities, &
       & precisionVectors, precisionQuantities, directFiles )
     call Allocate_test ( sourceVectors, noSources, 'sourceVectors', ModuleName )
-    call Allocate_test ( sourceQuantities, noSources, 'sourceQuantities', ModuleName )
-    call Allocate_test ( precisionVectors, noSources, 'precisionVectors', ModuleName )
-    call Allocate_test ( precisionQuantities, noSources, 'precisionQuantities', ModuleName )
-    call Allocate_test ( qualityVectors, noSources, 'qualityVectors', ModuleName )
-    call Allocate_test ( qualityQuantities, noSources, 'qualityQuantities', ModuleName )
-    call Allocate_test ( statusVectors, noSources, 'statusVectors', ModuleName )
-    call Allocate_test ( statusQuantities, noSources, 'statusQuantities', ModuleName )
-    call Allocate_test ( convergVectors, noSources, 'convergVectors', ModuleName )
-    call Allocate_test ( convergQuantities, noSources, 'convergQuantities', ModuleName )
-    call Allocate_test ( directFiles, noSources, 'directFiles', ModuleName )
+    call Allocate_test ( sourceQuantities, noSources, 'sourceQuantities', &
+      &  ModuleName, Fill=-1 )
+    call Allocate_test ( precisionVectors, noSources, 'precisionVectors', &
+      &  ModuleName, Fill=0 )
+    call Allocate_test ( precisionQuantities, noSources, 'precisionQuantities', &
+      &  ModuleName, Fill=0 )
+    call Allocate_test ( qualityVectors, noSources, 'qualityVectors', &
+      &  ModuleName, Fill=0 )
+    call Allocate_test ( qualityQuantities, noSources, 'qualityQuantities', &
+      &  ModuleName, Fill=0 )
+    call Allocate_test ( statusVectors, noSources, 'statusVectors', &
+      &  ModuleName, Fill=0 )
+    call Allocate_test ( statusQuantities, noSources, 'statusQuantities', &
+      &  ModuleName, Fill=0 )
+    call Allocate_test ( convergVectors, noSources, 'convergVectors', &
+      &  ModuleName, Fill=0 )
+    call Allocate_test ( convergQuantities, noSources, 'convergQuantities', &
+      &  ModuleName, Fill=0 )
+    call Allocate_test ( directFiles, noSources, 'directFiles', &
+      &  ModuleName, Fill=0 )
     ! Go round again and identify each quantity, work out what kind of file
     ! we're talking about
-    precisionVectors = 0
-    precisionQuantities = 0
-    qualityVectors = 0
-    qualityQuantities = 0
-    statusVectors = 0
-    statusQuantities = 0
-    convergVectors = 0
-    convergQuantities = 0
     source = 0
-    directFiles = 0
     do keyNo = 2, nsons(node)
       l2gp_Version = 1
       son = subtree ( keyNo, node )
@@ -634,6 +637,9 @@ contains ! =====     Public Procedures     =============================
         gson = subtree(2,son)
         statusVectors(source) = decoration(decoration(subtree(1,gson)))
         statusQuantities(source) = decoration(decoration(decoration(subtree(2,gson))))
+      case ( f_vector )
+        source = source + 1
+        sourceVectors(source) = decoration(decoration(subtree(2,son)))
       case default
       end select
     end do
@@ -642,6 +648,7 @@ contains ! =====     Public Procedures     =============================
     if ( .not. checkpaths ) then
     ! Now go through and do some sanity checking
     do source = 1, noSources
+      if ( sourceQuantities(source) < 1 ) cycle
       qty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(source)), &
       & sourceQuantities(source) )
       if ( qty%label == 0 ) call Announce_Error ( son, no_error_code, &
@@ -979,8 +986,13 @@ contains ! =====     Public Procedures     =============================
         if ( .not. createFileFlag ) then
           do source = 1, noSources
             if(DEEBUG)print*,'Source:', source
-            qty => GetVectorQtyByTemplateIndex ( &
-              & vectors(sourceVectors(source)), sourceQuantities(source) )
+            if ( sourceQuantities(source) > 0 ) then
+              qty => GetVectorQtyByTemplateIndex ( &
+                & vectors(sourceVectors(source)), sourceQuantities(source) )
+            else
+              qty => GetVectorQtyByTemplateIndex ( &
+                & vectors(sourceVectors(source)), 1 )
+            endif
             hdfNameIndex = qty%label
             if(DEEBUG) &
               & call display_string ( hdfNameIndex, strip=.true., advance='yes' )
@@ -1039,6 +1051,23 @@ contains ! =====     Public Procedures     =============================
             & ) cycle
         end if
         NumPermitted = NumPermitted + 1
+        if ( sourceQuantities(source) < 1 ) then
+          vector => vectors(sourceVectors(source))
+          select case ( outputType )
+          case ( l_l2gp, l_l2dgg )
+            call DirectWrite ( directFile, &
+              & vector, &
+              & chunkNo, HGrids, &
+              & createSwath=.true., &
+              & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap )
+          case ( l_l2aux, l_l2fwm )
+            call DirectWrite ( directFile, vector, &
+              & chunkNo, chunks, FWModelConfig, &
+              & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap )
+          case default
+          end select
+          cycle
+        endif
         qty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(source)), &
           & sourceQuantities(source) )
         hdfNameIndex = qty%label
@@ -1130,7 +1159,7 @@ contains ! =====     Public Procedures     =============================
           ! mls_swath_in_file can't find it
           if ( createthisswath ) then
             do while ( createthisswath )
-              call DirectWrite_l2GP ( directFile, &
+              call DirectWrite ( directFile, &
                 & qty, precQty, qualityQty, statusQty, convergQty, &
                 & hdfName, chunkNo, HGrids, &
                 & createSwath=.true., &
@@ -1146,7 +1175,7 @@ contains ! =====     Public Procedures     =============================
                   & trim(directFile%name) )
             enddo
           else
-            call DirectWrite_l2GP ( directFile, &
+            call DirectWrite ( directFile, &
               & qty, precQty, qualityQty, statusQty, convergQty, &
               & hdfName, chunkNo, HGrids, &
               & createSwath=.false., &
@@ -1166,7 +1195,7 @@ contains ! =====     Public Procedures     =============================
           ! Note sure about the +1 in this case, probably depends whether it's a
           ! minor frame quantity or not.  This mixed zero/one indexing is beomming
           ! a real pain.  I wish I never want down that road!
-          call DirectWrite_L2Aux ( directFile, qty, precQty, hdfName, &
+          call DirectWrite ( directFile, qty, precQty, hdfName, &
             & chunkNo, chunks, FWModelConfig, &
             & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap )
           NumOutput = NumOutput + 1
@@ -1371,17 +1400,16 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------------ LabelVectorQuantity -----
   subroutine LabelVectorQuantity ( node, vectors )
-    use VectorsModule, only: VECTOR_T, VECTORVALUE_T, &
-      & GETVECTORQUANTITY, GETVECTORQTYBYTEMPLATEINDEX
-    use MoreTree, only: GET_FIELD_ID, GET_BOOLEAN
-    use Init_tables_module, only: F_LABEL, F_PREFIXSIGNAL, &
+    use INIT_TABLES_MODULE, only: F_LABEL, F_PREFIXSIGNAL, &
       & F_QUANTITY, F_SUFFIXLABEL, F_VECTOR
-    ! use Output_m, only: outputNamedValue
-    use Symbol_Table, only: ENTER_TERMINAL
-    use Symbol_Types, only: T_STRING
-    use String_Table, only: GET_STRING
-    use MLSSignals_m, only: GETSIGNALNAME
-    use Tree, only: NSONS, SUBTREE, SUB_ROSA, DECORATION
+    use MLSSIGNALS_M, only: GETSIGNALNAME
+    use MORETREE, only: GET_FIELD_ID, GET_BOOLEAN
+    use SYMBOL_TABLE, only: ENTER_TERMINAL
+    use SYMBOL_TYPES, only: T_STRING
+    use STRING_TABLE, only: GET_STRING
+    use TREE, only: NSONS, SUBTREE, SUB_ROSA, DECORATION
+    use VECTORSMODULE, only: VECTOR_T, VECTORVALUE_T, &
+      & GETVECTORQUANTITY, GETVECTORQTYBYTEMPLATEINDEX
     ! Dummy arguments
     integer, intent(in) :: NODE          ! Tree node for l2cf line
     type (Vector_T), dimension(:), pointer :: VECTORS ! Vectors database
@@ -1475,27 +1503,27 @@ contains ! =====     Public Procedures     =============================
   subroutine JoinQuantities ( node, vectors, l2gpDatabase, l2auxDatabase, &
     & chunkNo, chunks )
 
-    use Chunks_m, only: MLSChunk_T
-    use Expr_m, only: EXPR
+    use CHUNKS_M, only: MLSCHUNK_T
+    use EXPR_M, only: EXPR
     use INIT_TABLES_MODULE, only: &
       & F_COMPAREOVERLAPS, F_FILE, F_HDFVERSION, F_OUTPUTOVERLAPS, &
       & F_PRECISION, F_PREFIXSIGNAL, F_SOURCE, F_SDNAME, F_SWATH, FIELD_FIRST, &
       & FIELD_LAST
     use INIT_TABLES_MODULE, only: L_PRESSURE, L_ZETA, S_L2AUX, S_L2GP
-    use intrinsic, only: L_NONE, PHYQ_DIMENSIONLESS
-    use L2AUXData, only: L2AUXData_T
-    use L2GPData, only: L2GPData_T
-    use L2ParInfo, only: PARALLEL, SLAVEJOIN
-    use MLSCommon, only: R8
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use MLSSignals_M, only: GetSignalName
-    use MoreTree, only: GET_BOOLEAN, GET_FIELD_ID, GET_SPEC_ID
-    use String_Table, only: GET_STRING
-    use Symbol_Table, only: ENTER_TERMINAL
-    use Symbol_Types, only: T_STRING
+    use INTRINSIC, only: L_NONE, PHYQ_DIMENSIONLESS
+    use L2AUXDATA, only: L2AUXDATA_T
+    use L2GPDATA, only: L2GPDATA_T
+    use L2PARINFO, only: PARALLEL, SLAVEJOIN
+    use MLSKINDS, only: R8
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+    use MLSSIGNALS_M, only: GETSIGNALNAME
+    use MORETREE, only: GET_BOOLEAN, GET_FIELD_ID, GET_SPEC_ID
+    use STRING_TABLE, only: GET_STRING
+    use SYMBOL_TABLE, only: ENTER_TERMINAL
+    use SYMBOL_TYPES, only: T_STRING
     use TREE, only: DECORATION, NSONS, NULL_TREE, SUB_ROSA, SUBTREE
-    use VectorsModule, only: GetVectorQtyByTemplateIndex, &
-      & ValidateVectorQuantity, Vector_T, VectorValue_T
+    use VECTORSMODULE, only: GETVECTORQTYBYTEMPLATEINDEX, &
+      & VALIDATEVECTORQUANTITY, VECTOR_T, VECTORVALUE_T
 
     ! Dummy arguments
     integer, intent(in) :: NODE         ! The start of the l2cf line
@@ -1663,15 +1691,15 @@ contains ! =====     Public Procedures     =============================
     & firstInstance, lastInstance, nameString )
 
     use INIT_TABLES_MODULE, only: L_PRESSURE, L_ZETA
-    use intrinsic, only: L_NONE
-    use L2GPData, only: AddL2GPToDatabase, ExpandL2GPDataInPlace, &
-      & L2GPData_T, SetupNewL2GPRecord, RGP
-    use MLSCommon, only: RV
-    use String_Table, only: GET_STRING
+    use INTRINSIC, only: L_NONE
+    use L2GPDATA, only: ADDL2GPTODATABASE, EXPANDL2GPDATAINPLACE, &
+      & L2GPDATA_T, SETUPNEWL2GPRECORD, RGP
+    use MLSKINDS, only: RV
+    use STRING_TABLE, only: GET_STRING
     use TOGGLES, only: GEN, TOGGLE, LEVELS
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATE, DECORATION
-    use VectorsModule, only: VectorValue_T
+    use VECTORSMODULE, only: VECTORVALUE_T
 
     ! Dummy arguments
     integer, intent(in) :: KEY          ! spec_args to Decorate with the L2GP index
@@ -1832,18 +1860,18 @@ contains ! =====     Public Procedures     =============================
   subroutine JoinL2AUXQuantities ( key, name, quantity, l2auxDatabase, &
    & chunks, firstInstance, lastInstance )
 
-    use Chunks_m, only: MLSChunk_T
-    use intrinsic, only: L_GEODANGLE, L_MAF
-    use L2AUXData, only: AddL2AUXToDatabase, ExpandL2AUXDataInPlace, &
-      & L2AUXData_T, L2AUXRank, SetupNewL2AUXRecord
-    use MLSCommon, only: R4, R8
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use CHUNKS_M, only: MLSCHUNK_T
+    use INTRINSIC, only: L_GEODANGLE, L_MAF
+    use L2AUXDATA, only: ADDL2AUXTODATABASE, EXPANDL2AUXDATAINPLACE, &
+      & L2AUXDATA_T, L2AUXRANK, SETUPNEWL2AUXRECORD
+    use MLSKINDS, only: R4, R8
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
     use OUTPUT_M, only: OUTPUT
-    use String_Table, only: DISPLAY_STRING
+    use STRING_TABLE, only: DISPLAY_STRING
     use TOGGLES, only: GEN, TOGGLE, LEVELS, SWITCHES
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATE, DECORATION
-    use VectorsModule, only: VectorValue_T
+    use VECTORSMODULE, only: VECTORVALUE_T
 
     ! Dummy arguments
     integer, intent(in) :: KEY     ! spec_args to decorate with the L2AUX index
@@ -2071,8 +2099,8 @@ contains ! =====     Public Procedures     =============================
   function explicitFile ( node ) result ( gotTheFile )
     ! Loop overs fields in DirectWrite command to discover whether
     ! the file is explicitly named
-    use Init_tables_module, only: F_FILE
-    use MoreTree, only: GET_FIELD_ID
+    use INIT_TABLES_MODULE, only: F_FILE
+    use MORETREE, only: GET_FIELD_ID
     use TREE, only: NSONS, SUBTREE
     ! Args
     integer, intent(in) :: node
@@ -2096,10 +2124,10 @@ contains ! =====     Public Procedures     =============================
   ! ---------------------------------------------  Announce_Error  -----
   subroutine ANNOUNCE_ERROR ( where, CODE, ExtraMessage, FIELDINDEX, Penalty )
 
-    use intrinsic, only: FIELD_INDICES
+    use INTRINSIC, only: FIELD_INDICES
     use LEXER_CORE, only: PRINT_SOURCE
     use OUTPUT_M, only: OUTPUT
-    use String_Table, only: DISPLAY_STRING
+    use STRING_TABLE, only: DISPLAY_STRING
     use TREE, only: SOURCE_REF
 
     integer, intent(in) :: where   ! Tree node where error was noticed
@@ -2148,6 +2176,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.142  2011/05/09 18:18:45  pwagner
+! Consistent with new api for DirectWrite
+!
 ! Revision 2.141  2009/10/26 17:11:53  pwagner
 ! Added Diff command to be used like Dump in l2cf
 !
