@@ -18,16 +18,16 @@ module L2Parallel
   ! does the chunk divide and then launches slave tasks for each chunk, and
   ! awaits their results in the Join section.
 
-  use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use BitStuff, only: BitsToBooleans, BooleansToBits
-  use Chunks_m, only: DUMP, MLSChunk_T
-  use ChunkDivide_m, only: ChunkDivideConfig
-  use Dump_0, only: DUMP
-  use Init_Tables_Module, only: S_L2GP, S_L2AUX
-  use Join, only: JOINL2GPQUANTITIES, JOINL2AUXQUANTITIES
-  use L2AUXData, only: L2AUXDATA_T
-  use L2GPData, only: L2GPDATA_T
-  use L2ParInfo, only: MACHINE_T, PARALLEL, &
+  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use BITSTUFF, only: BITSTOBOOLEANS, BOOLEANSTOBITS
+  use CHUNKS_M, only: DUMP, MLSCHUNK_T
+  use CHUNKDIVIDE_M, only: CHUNKDIVIDECONFIG
+  use DUMP_0, only: DUMP
+  use INIT_TABLES_MODULE, only: S_L2GP, S_L2AUX
+  use JOIN, only: JOINL2GPQUANTITIES, JOINL2AUXQUANTITIES
+  use L2AUXDATA, only: L2AUXDATA_T
+  use L2GPDATA, only: L2GPDATA_T
+  use L2PARINFO, only: MACHINE_T, PARALLEL, &
     & CHUNKTAG, GIVEUPTAG, GRANTEDTAG, PETITIONTAG, &
     & SIG_TOJOIN, SIG_FINISHED, SIG_ACKFINISH, SIG_REGISTER, NOTIFYTAG, &
     & SIG_REQUESTDIRECTWRITE, SIG_SWEARALLEGIANCE, SIG_SWITCHALLEGIANCE, &
@@ -38,39 +38,39 @@ module L2Parallel
     & DW_PENDING, DW_INPROGRESS, DW_COMPLETED, &
     & INFLATEDIRECTWRITEREQUESTDB, COMPACTDIRECTWRITEREQUESTDB, DUMP, &
     & ADDMACHINETODATABASE
-  use Machine, only: SHELL_COMMAND
-  use MLSCommon, only: R8
-  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE, &
-    & MLSMSG_Deallocate, MLSMSG_WARNING, PVMERRORMESSAGE
-  use MLSSets, only: FINDFIRST
-  use MLSStringLists, only: catLists, ExpandStringRange, RemoveNumFromList, &
-    & ReplaceSubString, switchDetail
-  use MLSStrings, only: lowerCase
-  use MorePVM, only: PVMUNPACKSTRINGINDEX, PVMPACKSTRINGINDEX
-  use MLSStrings, only: NAppearances
-  use MoreTree, only: Get_Spec_ID
-  use Output_m, only: BLANKS, Output, TimeStamp
+  use MACHINE, only: SHELL_COMMAND
+  use MLSKINDS, only: R8
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE, &
+    & MLSMSG_DEALLOCATE, MLSMSG_WARNING, PVMERRORMESSAGE
+  use MLSSETS, only: FINDFIRST
+  use MLSSTRINGLISTS, only: CATLISTS, EXPANDSTRINGRANGE, REMOVENUMFROMLIST, &
+    & REPLACESUBSTRING, SWITCHDETAIL
+  use MLSSTRINGS, only: LOWERCASE
+  use MOREPVM, only: PVMUNPACKSTRINGINDEX, PVMPACKSTRINGINDEX
+  use MLSSTRINGS, only: NAPPEARANCES
+  use MORETREE, only: GET_SPEC_ID
+  use OUTPUT_M, only: BLANKS, OUTPUT, TIMESTAMP
   use PVM, only: INFOTAG, &
     & PVMDATADEFAULT, PVMFINITSEND, PVMF90PACK, PVMFKILL, &
     & PVMF90UNPACK, PVMTASKHOST, &
     & MYPVMSPAWN, PVMFCATCHOUT, PVMFSEND, PVMFNOTIFY, PVMTASKEXIT, &
-    & GETMACHINENAMEFROMTID, PVMFFREEBUF, SIG_AboutToDie
+    & GETMACHINENAMEFROMTID, PVMFFREEBUF, SIG_ABOUTTODIE
   use PVMIDL, only: PVMIDLUNPACK
-  use QuantityPVM, only: PVMRECEIVEQUANTITY
-  use QuantityTemplates, only: QUANTITYTEMPLATE_T, &
+  use QUANTITYPVM, only: PVMRECEIVEQUANTITY
+  use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T, &
     & DESTROYQUANTITYTEMPLATECONTENTS, INFLATEQUANTITYTEMPLATEDATABASE, &
     & NULLIFYQUANTITYTEMPLATE, DESTROYQUANTITYTEMPLATEDATABASE
-  use String_table, only: Display_String
-  use Symbol_Table, only: ENTER_TERMINAL
-  use Symbol_Types, only: T_STRING
-  use Time_M, only: Time_Now
-  use Toggles, only: Gen, Switches, Toggle
+  use STRING_TABLE, only: DISPLAY_STRING
+  use SYMBOL_TABLE, only: ENTER_TERMINAL
+  use SYMBOL_TYPES, only: T_STRING
+  use TIME_M, only: TIME_NOW
+  use TOGGLES, only: GEN, SWITCHES, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
-  use VectorsModule, only: VECTOR_T, VECTORVALUE_T, VECTORTEMPLATE_T, &
+  use VECTORSMODULE, only: VECTOR_T, VECTORVALUE_T, VECTORTEMPLATE_T, &
     & CONSTRUCTVECTORTEMPLATE, &
     & CREATEVECTOR, DESTROYVECTORINFO, DESTROYVECTORTEMPLATEINFO, &
     & INFLATEVECTORTEMPLATEDATABASE, INFLATEVECTORDATABASE
-  use WriteMetadata, only: L2PCF
+  use WRITEMETADATA, only: L2PCF
 
   implicit none
   private
@@ -1319,7 +1319,7 @@ contains
           ! Sorry--no machine ready yet; but our request is/remains queued
           chunkAndMachineReady = .false.
           machineRequestQueued = .true.
-          ! if ( index(switches,'l2q') /=0 ) call output('Sorry, l2q scorns us', advance='yes')
+          ! if ( switchDetail(switches,'l2q') /=0 ) call output('Sorry, l2q scorns us', advance='yes')
         else
           ! Good news--a machine was/has become ready
           chunkAndMachineReady = .true.
@@ -1335,7 +1335,7 @@ contains
               & call output('Added machine to db', advance='yes')
             ! machine = AddMachineNameToDataBase(machines%Name, machineName)
           endif
-          ! if ( index(switches,'l2q') /=0 ) call output('Good news, l2q likes us', advance='yes')
+          ! if ( switchDetail(switches,'l2q') /=0 ) call output('Good news, l2q likes us', advance='yes')
         endif
       else
       ! Case (3): Using submit
@@ -1725,7 +1725,7 @@ contains
   subroutine StoreSlaveQuantity ( joinedQuantities, joinedVectorTemplates, &
     & joinedVectors, storedResults, chunk, noChunks, noQuantitiesAccumulated,&
     & stageFileID )
-    use VectorHDF5, only: WRITEVECTORASHDF5
+    use VECTORHDF5, only: WRITEVECTORASHDF5
     ! This routine reads a vector from a slave and stores it in
     ! an appropriate place.
 
@@ -2008,6 +2008,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.97  2011/05/09 18:21:38  pwagner
+! Converted to using switchDetail
+!
 ! Revision 2.96  2010/05/13 23:47:19  pwagner
 ! Dropped superseded options run[first][last]
 !
