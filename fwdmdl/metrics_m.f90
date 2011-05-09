@@ -11,8 +11,8 @@
 
 module Metrics_m
 
-  use Constants, only: Rad2Deg
-  use MLSKinds, only: RP
+  use CONSTANTS, only: RAD2DEG
+  use MLSKINDS, only: RP
 
   implicit NONE
   private
@@ -63,10 +63,11 @@ contains
 
   ! Compute the surface height and the tangent height at Phi_T.
 
-    use Get_Eta_Matrix_m, only: Get_Eta_Sparse
-    use MLSKinds, only: RP
-    use Output_m, only: OUTPUT
-    use Toggles, only: Switches
+    use GET_ETA_MATRIX_M, only: GET_ETA_SPARSE
+    use MLSKINDS, only: RP
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use OUTPUT_M, only: OUTPUT
+    use TOGGLES, only: SWITCHES
 
     ! inputs:
 
@@ -127,7 +128,7 @@ contains
       h_tan = dot_product(h_ref(tan_ind_f,first:last),eta_t(first:last)) - h_surf
     end if
 
-    if ( max(index(switches,'metD'),index(switches,'metd')) > 0 ) then
+    if ( max(switchDetail(switches,'metD'),switchDetail(switches,'metd')) > -1 ) then
       call output ( h_tan, before='H_Tan = ' )
       call output ( h_surf, before=', H_Surf = ', advance='yes' )
     end if
@@ -153,14 +154,15 @@ contains
     ! If the ray is an Earth-intersecting ray it is assumed to reflect from
     ! the pressure reference surface, not the geometric Earth surface.
 
-    use Constants, only: Pi, Rad2Deg
-    use Dump_0, only: Dump
-    use Get_Eta_Matrix_m, only: Get_Eta_Sparse
-    use IEEE_Arithmetic, only: IEEE_Is_NaN
-    use MLSKinds, only: RP
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
-    use Output_m, only: OUTPUT
-    use Toggles, only: Switches
+    use CONSTANTS, only: PI, RAD2DEG
+    use DUMP_0, only: DUMP
+    use GET_ETA_MATRIX_M, only: GET_ETA_SPARSE
+    use IEEE_ARITHMETIC, only: IEEE_IS_NAN
+    use MLSKINDS, only: RP
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use OUTPUT_M, only: OUTPUT
+    use TOGGLES, only: SWITCHES
 
     ! inputs:
 
@@ -242,9 +244,11 @@ contains
 !   It would be nice to do this the first time only, but the
 !   retrieve command in the L2CF can now change switches
 !   if ( do_dumps < 0 ) then ! First time only
-      do_dumps = max(index(switches,'metD'),index(switches,'metd'))
-      h_phi_stop = index(switches,'hphI')
-      h_phi_dump = max(h_phi_stop,index(switches,'hphi'))
+      do_dumps = max( &
+        & switchDetail(switches,'metD'),switchDetail(switches,'metd') &
+        & ) + 1
+      h_phi_stop = switchDetail(switches,'hphI')
+      h_phi_dump = max(h_phi_stop,switchDetail(switches,'hphi')) + 1
 !   end if
 
     n_path = size(vert_inds)
@@ -433,7 +437,7 @@ path: do i = i1, i2
     if ( no_bad_fits > 0 ) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & "Height_Metrics failed to find H/Phi solution for some path segment" )
-      if ( index(switches,'MHPX') /= 0 .or. index(switches,'mhpx') /= 0 ) then
+      if ( switchDetail(switches,'MHPX') > -1 .or. switchDetail(switches,'mhpx') > -1 ) then
         call dumpInput ( 1 )
         if ( .not. debug ) then
           do i = 1, size(stat), 10
@@ -505,10 +509,10 @@ path: do i = i1, i2
           p_grid(j) = acos(tan_ht/h_grid(j)) * phi_sign(j) + phi_offset(j)
         end do
       end if
-      if ( index(switches,'MHPX') /= 0 .or. index(switches,'mhpx') /= 0 ) then
+      if ( switchDetail(switches,'MHPX') > -1 .or. switchDetail(switches,'mhpx') > -1 ) then
         call dump ( h_grid, name='H_Grid after 1d fixup' )
         call dump ( rad2deg*p_grid, name='P_Grid (degrees) after 1d fixup' )
-        if ( index(switches,'MHPX') /= 0 ) &
+        if ( switchDetail(switches,'MHPX') > -1 ) &
         call MLSMessage ( MLSMSG_Error, moduleName, 'Halt requested by MHPX' )
       end if
     end if
@@ -798,11 +802,12 @@ path: do i = i1, i2
     ! P_Grid are computed by Height_Metrics, and then perhaps augmented
     ! with, for example, the minimum Zeta point.
 
-    use Dump_0, only: Dump
-    use Dump_NZ_m, only: Dump_NZ
-    use Get_Eta_Matrix_m, only: Get_Eta_Sparse, Multiply_Eta_Column_Sparse
-    use MLSKinds, only: RP
-    use Toggles, only: Switches
+    use DUMP_0, only: DUMP
+    use DUMP_NZ_M, only: DUMP_NZ
+    use GET_ETA_MATRIX_M, only: GET_ETA_SPARSE, MULTIPLY_ETA_COLUMN_SPARSE
+    use MLSKINDS, only: RP
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use TOGGLES, only: SWITCHES
     ! inputs:
 
     integer, intent(in) :: tan_ind     ! tangent height index, 1 = center of
@@ -880,8 +885,8 @@ path: do i = i1, i2
 !   It would be nice to do this the first time only, but the
 !   retrieve command in the L2CF can now change switches
 !   if ( do_dumps < 0 ) then ! First time only
-      dump_stop = index(switches,'metD')
-      do_dumps = max(dump_stop,index(switches,'metd'))
+      dump_stop = switchDetail(switches,'metD') + 1
+      do_dumps = max( dump_stop, switchDetail(switches,'metd') + 1 )
 !   end if
 
     n_vert = size(t_ref,1)
@@ -1006,7 +1011,7 @@ path: do i = i1, i2
     ! Check for path crossings in h_ref from tan_ind down, which Height_Metrics
     ! doesn't do.
 
-    use MLSKinds, only: RP
+    use MLSKINDS, only: RP
     ! inputs:
 
     real(rp), intent(in) :: phi_t      ! Orbit projected tangent geodetic angle
@@ -1120,6 +1125,9 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.67  2010/02/04 23:10:20  vsnyder
+! Remove USE for unreferenced names
+!
 ! Revision 2.66  2010/02/02 01:34:55  vsnyder
 ! Make do_calc_t intent(inout)
 !

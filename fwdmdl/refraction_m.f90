@@ -11,7 +11,7 @@
 
 module REFRACTION_M
 
-  use MLSKinds, only: RP
+  use MLSKINDS, only: RP
     
   implicit none
 
@@ -302,12 +302,13 @@ contains
   ! For derivation of the code below, please see: "FWD Model" paper,
   ! Page 16, Eqn. 26 & 27
 
-    use Dump_0, only: Dump
-    use GLNP, only: NG, GX=>gx_all, GW=>gw_all
-    use MLSKinds, only: RP, IP
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
-    use Output_m, only: Output
-    use Toggles, only: Switches
+    use DUMP_0, only: DUMP
+    use GLNP, only: NG, GX=>GX_ALL, GW=>GW_ALL
+    use MLSKINDS, only: RP, IP
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use OUTPUT_M, only: OUTPUT
+    use TOGGLES, only: SWITCHES
 
     integer, intent(in) :: Tan_pt  ! Tangent point index in H_Path etc.
     real(rp), intent(in) :: H_PATH(:)
@@ -340,12 +341,12 @@ contains
 
     status = 0
     hndp = 0
-    if ( index(switches,'hndp') /= 0 ) hndp = hndp + 1 ! Dump the arrays if trouble
-    if ( index(switches,'Hndp') /= 0 ) hndp = hndp + 2 ! Dump the arrays and stop
-    if ( index(switches,'HNDP') /= 0 ) hndp = hndp + 4 ! Dump the iterates
+    if ( switchDetail(switches,'hndp') > -1 ) hndp = hndp + 1 ! Dump the arrays if trouble
+    if ( switchDetail(switches,'Hndp') > -1 ) hndp = hndp + 2 ! Dump the arrays and stop
+    if ( switchDetail(switches,'HNDP') > -1 ) hndp = hndp + 4 ! Dump the iterates
     rcfx = 0
-    if ( index(switches,'rcfx') /= 0 ) rcfx = 1
-    if ( index(switches,'RCFX') /= 0 ) rcfx = 2
+    if ( switchDetail(switches,'rcfx') > -1 ) rcfx = 1
+    if ( switchDetail(switches,'RCFX') > -1 ) rcfx = 2
 
     no_ele = size(n_path)
 
@@ -590,7 +591,9 @@ contains
 
       real(rp), intent(in), optional :: NH, F1, F2
 
-      if ( max(index(switches,'drfc'),index(switches,'DRFC')) == 0 ) return
+      if ( max( &
+        & switchDetail(switches,'drfc'),switchDetail(switches,'DRFC')&
+        & ) < 0 ) return
       call output ( tan_pt, before='Tan_PT = ' )
       call output ( ht, before=', Ht = ' )
       if ( present(NH) ) then
@@ -607,7 +610,7 @@ contains
         call dump ( h_path, name='H_Path' )
         call dump ( n_path-1.0, name='N_Path' )
       end if
-      if ( index(switches,'DRFC') > 0 ) stop
+      if ( switchDetail(switches,'DRFC') > -1 ) stop
 
     end subroutine DumpDiags
 
@@ -628,6 +631,9 @@ contains
 end module REFRACTION_M
 
 ! $Log$
+! Revision 2.40  2011/01/05 00:22:08  vsnyder
+! TeXnicalities
+!
 ! Revision 2.39  2009/07/09 23:53:53  vsnyder
 ! Replace MLSCommon with MLSKinds
 !
