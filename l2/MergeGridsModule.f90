@@ -260,7 +260,7 @@ contains ! =================================== Public procedures
     if ( DEEBUG ) call output( 'done converting from eta level grids', advance='yes' )
     newGrid%sourceFileName      = a%sourceFileName
     newGrid%quantityName        = a%quantityName
-    newGrid%description         = a%description
+    newGrid%description         = 'Converted Grids'
     newGrid%units               = a%units
     newGrid%verticalCoordinate  = v%verticalCoordinate
     newGrid%missingValue        = a%missingValue
@@ -274,7 +274,6 @@ contains ! =================================== Public procedures
     use GriddedData, only: GRIDDEDDATA_T, DUMP, &
       & CONCATENATEGRIDDEDDATA, COPYGRID, DestroyGriddedData, NULLIFYGRIDDEDDATA
     use Init_tables_module, only: F_A, F_B, F_GRID
-    use MoreTree, only: GET_BOOLEAN
     use Toggles, only: GEN, TOGGLE
     use Trace_M, only: TRACE_BEGIN, TRACE_END
     use Tree, only: NSONS, SUBTREE, DECORATION
@@ -385,7 +384,7 @@ contains ! =================================== Public procedures
     end if
     newGrid%sourceFileName      = a%sourceFileName
     newGrid%quantityName        = a%quantityName
-    newGrid%description         = a%description
+    newGrid%description         = 'Concatenated grids'
     newGrid%units               = a%units
     newGrid%verticalCoordinate  = a%verticalCoordinate
     newGrid%missingValue        = a%missingValue
@@ -1067,6 +1066,9 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.44  2011/05/09 18:23:23  pwagner
+! description field now marks result of convert, concatenate
+!
 ! Revision 2.43  2011/04/27 17:40:22  pwagner
 ! Added new command (not a named spec) wmoTropFromGrids
 !
