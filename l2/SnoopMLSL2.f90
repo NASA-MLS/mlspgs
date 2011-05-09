@@ -25,25 +25,26 @@ module SnoopMLSL2               ! Interface between MLSL2 and IDL snooper via pv
   ! Also note that multiple IDL snoopers can talk to one or many f90 procedures,
   ! the little extra book keeping this involves is worth it.
 
-  use init_tables_module, only: F_Comment, F_PhaseName
-  use MatrixModule_0, ONLY: MatrixElement_T
-  use MatrixModule_1, ONLY: Matrix_T, RC_Info
-  use MLSCommon, only: R8, RM
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, &
-    & MLSMSG_Allocate, MLSMSG_DeAllocate, PVMErrorMessage
-  use MLSSets, only: FINDFIRST
-  use MoreTree, only: Get_Field_Id
-  use PVM, only: PVMDataDefault, PVMFinitsend, PVMFmyTid, &
-    & PVMF90Unpack, PVMTaskExit, PVMFNotify, PVMFSend
-  use PVMIDL, only:  PVMIDLPack, PVMIDLSend, PVMIDLUnpack
-  use QuantityPVM, only: PVMSENDQUANTITY
+  use INIT_TABLES_MODULE, only: F_COMMENT, F_PHASENAME
+  use MATRIXMODULE_0, only: MATRIXELEMENT_T
+  use MATRIXMODULE_1, only: MATRIX_T, RC_INFO
+  use MLSKINDS, only: R8, RM
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING, &
+    & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, PVMERRORMESSAGE
+  use MLSSETS, only: FINDFIRST
+  use MORETREE, only: GET_FIELD_ID
+  use MLSSTRINGLISTS, only: SWITCHDETAIL
+  use PVM, only: PVMDATADEFAULT, PVMFINITSEND, PVMFMYTID, &
+    & PVMF90UNPACK, PVMTASKEXIT, PVMFNOTIFY, PVMFSEND
+  use PVMIDL, only:  PVMIDLPACK, PVMIDLSEND, PVMIDLUNPACK
+  use QUANTITYPVM, only: PVMSENDQUANTITY
   use OUTPUT_M, only: OUTPUT
   use STRING_TABLE, only: GET_STRING, DISPLAY_STRING
-  use Symbol_Table, only: ENTER_TERMINAL
-  use Symbol_Types, only: T_IDENTIFIER
+  use SYMBOL_TABLE, only: ENTER_TERMINAL
+  use SYMBOL_TYPES, only: T_IDENTIFIER
   use TREE, only:  NSONS, SOURCE_REF, SUB_ROSA, SUBTREE
-  use Toggles, only: SWITCHES
-  use VectorsModule, only: Vector_T, VectorValue_T
+  use TOGGLES, only: SWITCHES
+  use VECTORSMODULE, only: VECTOR_T, VECTORVALUE_T
 
   implicit none
   private
@@ -122,7 +123,7 @@ contains ! ========  Public Procedures =========================================
     character(len=132) :: LINE          ! A line of text
     
     if ( present ( MatrixDatabase ) ) then
-      if ( index ( switches, 'snoop' ) /= 0 ) &
+      if ( switchDetail ( switches, 'snoop' ) > -1 ) &
         & call output ( 'Sending matrix list', advance='yes' )
 
       call PVMFInitSend ( PvmDataDefault, bufferID )
@@ -150,7 +151,7 @@ contains ! ========  Public Procedures =========================================
       if (info /= 0) call PVMErrorMessage ( info, "sending matrix information" )
       
     else
-      if ( index ( switches, 'snoop' ) /= 0 ) &
+      if ( switchDetail ( switches, 'snoop' ) > -1 ) &
         & call output ( 'Sending "No Matrices"', advance='yes' )
 
       call PVMIDLSend ( "No Matrices", snooper%tid, info, msgTag=SnoopTag )
@@ -189,7 +190,7 @@ contains ! ========  Public Procedures =========================================
       & present(r2a), present(r2b), present(r2c), present(r2d), &
       & present(r3a), present(r3b), present(r3c), present(r3d) /) )
     if ( noArrays > 0 ) then
-      if ( index ( switches, 'snoop' ) /= 0 ) &
+      if ( switchDetail ( switches, 'snoop' ) > -1 ) &
         & call output ( 'Sending arrays list', advance='yes' )
 
       call PVMFInitSend ( PvmDataDefault, bufferID )
@@ -230,7 +231,7 @@ contains ! ========  Public Procedures =========================================
       if (info /= 0) call PVMErrorMessage ( info, "sending vector information" )
       
     else
-      if ( index ( switches, 'snoop' ) /= 0 ) &
+      if ( switchDetail ( switches, 'snoop' ) > -1 ) &
         & call output ( 'Sending "No Arrays"', advance='yes' )
 
       call PVMIDLSend ( "No Arrays", snooper%tid, info, msgTag=SnoopTag )
@@ -264,7 +265,7 @@ contains ! ========  Public Procedures =========================================
     if ( anyMoreVectors ) totalVectors = totalVectors + count(anotherVectorDatabase%name>0)
 
     if ( totalVectors > 0 ) then
-      if ( index ( switches, 'snoop' ) /= 0 ) &
+      if ( switchDetail ( switches, 'snoop' ) > -1 ) &
         & call output ( 'Sending vectors list', advance='yes' )
 
       call PVMFInitSend ( PvmDataDefault, bufferID )
@@ -283,7 +284,7 @@ contains ! ========  Public Procedures =========================================
       if (info /= 0) call PVMErrorMessage ( info, "sending vector information" )
 
     else                                ! No vectors to send
-      if ( index ( switches, 'snoop' ) /= 0 ) &
+      if ( switchDetail ( switches, 'snoop' ) > -1 ) &
         & call output ( 'Sending "No Vectors"', advance='yes' )
 
       call PVMIDLSend ( "No Vectors", snooper%tid, info, msgTag=SnoopTag )
@@ -341,7 +342,7 @@ contains ! ========  Public Procedures =========================================
     ! Executable code
 
     ! Setup the new snooper information
-    if ( index ( switches, 'snoop' ) /= 0 ) &
+    if ( switchDetail ( switches, 'snoop' ) > -1 ) &
       & call output ( 'Registering new snooper', advance='yes' )
 
     newSnooper%tid = snooperTid
@@ -374,7 +375,7 @@ contains ! ========  Public Procedures =========================================
     integer :: STATUS
 
     ! Executable code
-    if ( index ( switches, 'snoop' ) /= 0 ) &
+    if ( switchDetail ( switches, 'snoop' ) > -1 ) &
       & call output ( 'Forgetting snooper', advance='yes' )
 
     nullify ( newSnoopers )
@@ -409,7 +410,7 @@ contains ! ========  Public Procedures =========================================
     integer :: INFO                     ! Flag from PVM
 
     ! Executable code
-    if ( index ( switches, 'snoop' ) /= 0 ) &
+    if ( switchDetail ( switches, 'snoop' ) > -1 ) &
       & call output ( 'Sending status to snooper', advance='yes' )
 
     call PVMFInitSend ( PvmDataDefault, bufferID )
@@ -566,7 +567,7 @@ contains ! ========  Public Procedures =========================================
         snooper = FindFirst ( snoopers%tid == snooperTid )
         call PVMIDLUnpack ( line, info )
 
-        if ( index ( switches, 'snoop' ) /= 0 ) then
+        if ( switchDetail ( switches, 'snoop' ) > -1 ) then
           call output ( 'Got snooper message: ' )
           call output ( trim(line), advance='yes' )
         end if
@@ -817,7 +818,7 @@ contains ! ========  Public Procedures =========================================
     if ( info /= 0 ) call PVMErrorMessage ( info, 'packing "'&
       & // trim(line) // '"' )
 
-    if ( index ( switches, 'snoop' ) /= 0 ) then
+    if ( switchDetail ( switches, 'snoop' ) > -1 ) then
       call output ( 'Sending snooper matrix map for ' )
       call output ( trim(line), advance='yes' )
     end if
@@ -887,7 +888,7 @@ contains ! ========  Public Procedures =========================================
     if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking row/col index' )
     
     ! Now send the block
-    if ( index ( switches, 'snoop' ) /= 0 ) then
+    if ( switchDetail ( switches, 'snoop' ) > -1 ) then
       call output ( 'Sending snooper matrix block ( ' )
       call output ( rc(1) )
       call output ( ', ' )
@@ -974,7 +975,7 @@ contains ! ========  Public Procedures =========================================
 
     q => vectorDatabase(vector)%quantities(quantity)
 
-    if ( index ( switches, 'snoop' ) /= 0 ) then 
+    if ( switchDetail ( switches, 'snoop' ) > -1 ) then 
       call output ( 'Sending snooper ' )
       call display_string ( vectorDatabase(vector)%name, strip=.true. )
       call output ( '.' )
@@ -1005,6 +1006,9 @@ contains ! ========  Public Procedures =========================================
 end module SnoopMLSL2
 
 ! $Log$
+! Revision 2.43  2011/05/09 18:25:47  pwagner
+! Converted to using switchDetail
+!
 ! Revision 2.42  2010/02/04 23:12:44  vsnyder
 ! Remove USE or declaration for unreferenced names
 !
