@@ -13,7 +13,7 @@ module ConstructQuantityTemplates
 
   ! This module is responsible for constructing templates for quantities.
   ! This version is a rewrite, aimed at tidying up a lot of the codebase
-  use Init_tables_module, only: FIRST_LIT, LAST_LIT
+  use INIT_TABLES_MODULE, only: FIRST_LIT, LAST_LIT
 
   implicit none
 
@@ -69,29 +69,30 @@ contains ! ============= Public procedures ===================================
   type (QuantityTemplate_T) function CreateQtyTemplateFromMLSCFInfo ( &
     & Name, Root, FGrids, HGrids, filedatabase, Chunk, MifGeolocation ) &
     & result ( QTY )
-    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-    use Chunks_m, only: MLSChunk_T
-!   use ChunkDivide_m, only: ChunkDivideConfig
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use CHUNKS_M, only: MLSCHUNK_T
+!   use CHUNKDIVIDE_M, only: CHUNKDIVIDECONFIG
     use EXPR_M, only: EXPR
-    use FGrid, only: fGrid_T
-    use HGridsDatabase, only: hGrid_T
+    use FGRID, only: FGRID_T
+    use HGRIDSDATABASE, only: HGRID_T
     use INIT_TABLES_MODULE, only:  F_BADVALUE, F_FGRID, F_HGRID, F_IRREGULAR, &
       & F_KEEPCHANNELS, F_LOGBASIS, F_MINVALUE, F_MODULE, F_MOLECULE, &
       & F_RADIOMETER, F_SGRID, F_SIGNAL, F_TYPE, F_VGRID, F_REFLECTOR, &
       & FIELD_FIRST, FIELD_LAST, L_TRUE, L_ZETA, L_XYZ, L_MATRIX3X3, &
       & L_CHANNEL, L_LOSTRANSFUNC, L_NONE
-    use MLSCommon, only: MLSFile_T, RK => R8
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
-    use MLSSignals_m, only:GetModuleFromRadiometer, GetModuleFromSignal, &
-      & GetRadiometerFromSignal, GetSignal, Signal_T, IsModuleSpacecraft
-    use Parse_Signal_m, only: PARSE_SIGNAL
-    use QuantityTemplates, only: QuantityTemplate_T, &
-      & SetupNewQuantityTemplate, &
-      & NullifyQuantityTemplate
+    use MLSCOMMON, only: MLSFILE_T
+    use MLSKINDS, only: RK => R8
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
+    use MLSSIGNALS_M, only:GETMODULEFROMRADIOMETER, GETMODULEFROMSIGNAL, &
+      & GETRADIOMETERFROMSIGNAL, GETSIGNAL, SIGNAL_T, ISMODULESPACECRAFT
+    use PARSE_SIGNAL_M, only: PARSE_SIGNAL
+    use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T, &
+      & SETUPNEWQUANTITYTEMPLATE, &
+      & NULLIFYQUANTITYTEMPLATE
     use STRING_TABLE, only: GET_STRING
     use TREE, only: DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE
     use TREE_TYPES, only: N_SET_ONE
-    use VGridsDatabase, only: VGrids
+    use VGRIDSDATABASE, only: VGRIDS
 
     ! Dummy arguments
     integer, intent(in) :: NAME              ! Sub-rosa index of name
@@ -464,16 +465,18 @@ contains ! ============= Public procedures ===================================
     & qty, noChans, regular, instanceLen, &
     filedatabase, chunk, mifGeolocation )
 
-    use Chunks_m, only: MLSChunk_T
+    use CHUNKS_M, only: MLSCHUNK_T
     use INIT_TABLES_MODULE, only: L_GEODALTITUDE, L_NONE
-    use L1BData, only: L1BData_T, READL1BDATA, DEALLOCATEL1BDATA, &
-      & AssembleL1BQtyName
-    use MLSCommon, only: MLSFile_T, NameLen, RK => R8
-    use MLSFiles, only: GetMLSFileByType
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_L1BRead
-    use MLSSignals_m, only:  IsModuleSpacecraft, GetModuleName
-    use Output_m, only: OUTPUT
-    use QuantityTemplates, only: QuantityTemplate_T, SetupNewQuantityTemplate
+    use L1BDATA, only: L1BDATA_T, READL1BDATA, DEALLOCATEL1BDATA, &
+      & ASSEMBLEL1BQTYNAME
+    use MLSCOMMON, only: MLSFILE_T, NAMELEN
+    use MLSKINDS, only: RK => R8
+    use MLSFILES, only: GETMLSFILEBYTYPE
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_L1BREAD
+    use MLSSIGNALS_M, only:  ISMODULESPACECRAFT, GETMODULENAME
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use OUTPUT_M, only: OUTPUT
+    use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T, SETUPNEWQUANTITYTEMPLATE
     use TOGGLES, only: SWITCHES
 
     ! This routine constructs a minor frame based quantity.
@@ -568,7 +571,7 @@ contains ! ============= Public procedures ===================================
       ! Now we're going to fill in the hGrid information
       qty%instanceOffset = chunk%firstMAFIndex + chunk%noMAFsLowerOverlap
       qty%grandTotalInstances = 0
-      if ( index(switches,'qtmp') /= 0 ) then
+      if ( switchDetail(switches,'qtmp') > -1 ) then
         call output ( "Instance offset for minor frame quantity is:" )
         call output ( qty%instanceOffset, advance='yes' )
       end if
@@ -672,17 +675,17 @@ contains ! ============= Public procedures ===================================
     ! and we want to invent a set of minor frame quantities with no
     ! reference to the l1 files
 
-    use Chunks_m, only: MLSChunk_T
+    use CHUNKS_M, only: MLSCHUNK_T
     use EXPR_M, only: EXPR
     use INIT_TABLES_MODULE, only: F_GEODANGLE, F_MODULE, F_NOMIFS, &
       & F_SOLARTIME, F_SOLARZENITH, F_GEODALT
     use INIT_TABLES_MODULE, only: L_GEODALTITUDE, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, &
       & PHYQ_TIME
-    use MLSCommon, only: RK => R8
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use QuantityTemplates, only: QuantityTemplate_T, SetupNewQuantityTemplate
+    use MLSKINDS, only: RK => R8
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+    use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T, SETUPNEWQUANTITYTEMPLATE
     use TREE, only: DECORATION, NSONS, SUBTREE
-    use VgridsDatabase, only: VGrid_t, VGRIDS
+    use VGRIDSDATABASE, only: VGRID_T, VGRIDS
 
     ! Dummy arguments
     integer, intent(in) :: ROOT         ! Tree vertex
@@ -830,8 +833,8 @@ contains ! ============= Public procedures ===================================
     use OUTPUT_M, only: BLANKS, OUTPUT
     use TREE, only: SOURCE_REF
     use Intrinsic, only: LIT_INDICES
-    use String_Table, only: DISPLAY_STRING
-    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
+    use STRING_TABLE, only: DISPLAY_STRING
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
 
     integer, intent(in) :: WHERE   ! Tree node where error was noticed
     character (LEN=*), intent(in) :: MESSAGE
@@ -872,14 +875,14 @@ contains ! ============= Public procedures ===================================
   ! otherwise return true
   ! Arguments
 
-    use Chunks_m, only: MLSChunk_T
-    use Allocate_Deallocate, only: Deallocate_Test
-    use L1BData, only: L1BData_T, READL1BDATA, GetL1BFile, &
-      & AssembleL1BQtyName, PRECISIONSUFFIX
-!   use L1BData, only: FindL1BData
-    use MLSCommon, only: MLSFile_T, RK => R8
-    use MLSFiles, only: GetMLSFileByType
-    use MLSSignals_m, only: GetSignalName
+    use CHUNKS_M, only: MLSCHUNK_T
+    use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST
+    use L1BDATA, only: L1BDATA_T, READL1BDATA, GETL1BFILE, &
+      & ASSEMBLEL1BQTYNAME, PRECISIONSUFFIX
+    use MLSCOMMON, only: MLSFILE_T
+    use MLSKINDS, only: RK => R8
+    use MLSFILES, only: GETMLSFILEBYTYPE
+    use MLSSIGNALS_M, only: GETSIGNALNAME
 
     integer, intent(in) :: signal
     integer, intent(in) :: sideband
@@ -924,11 +927,10 @@ contains ! ============= Public procedures ===================================
 
   ! This routine copies HGrid information into an already defined quantity
 
-    use Chunks_m, only: MLSChunk_T
-!   use ChunkDivide_m, only: ChunkDivideConfig
-    use HGridsDatabase, only: hGrid_T
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use QuantityTemplates, only: QuantityTemplate_T
+    use CHUNKS_M, only: MLSCHUNK_T
+    use HGRIDSDATABASE, only: HGRID_T
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+    use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T
 
     ! Dummy arguments
     type (hGrid_T), intent(in) :: HGRID
@@ -959,8 +961,8 @@ contains ! ============= Public procedures ===================================
   subroutine ConstructMajorFrameQuantity( chunk, instrumentModule, qty, noChans, &
     & mifGeolocation )
     ! Dummy arguments
-    use Chunks_m, only: MLSChunk_T
-    use QuantityTemplates, only: QuantityTemplate_T, SetupNewQuantityTemplate
+    use CHUNKS_M, only: MLSCHUNK_T
+    use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T, SETUPNEWQUANTITYTEMPLATE
 
     type (MLSChunk_T), intent(in) :: CHUNK
     integer, intent(in) :: INSTRUMENTMODULE
@@ -1318,6 +1320,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.163  2011/05/09 18:05:32  pwagner
+! Converted to using switchDetail
+!
 ! Revision 2.162  2010/04/05 17:40:55  honghanh
 ! Fixed bug introduced by making filedatabase optional
 !
