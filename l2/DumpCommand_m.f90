@@ -37,21 +37,21 @@ contains
   ! ------------------------------------- BooleanFromAnyGoodRadiances --
   function BooleanFromAnyGoodRadiances ( root, chunk, filedatabase ) &
     & result(hashsize)
-    use Allocate_Deallocate, only: DEALLOCATE_TEST
-    use ConstructQuantityTemplates, only: AnyGoodSignalData
-    use Chunks_m, only: MLSCHUNK_T
-    use Dump_0, only: Dump
-    use INIT_TABLES_MODULE, only: F_SIGNAL, F_Boolean
-    use MLSCommon, only: MLSFile_T
-    use MLSL2Options, only: runTimeValues
-    use MLSSignals_m, only: GetSignalName, &
+    use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST
+    use CONSTRUCTQUANTITYTEMPLATES, only: ANYGOODSIGNALDATA
+    use CHUNKS_M, only: MLSCHUNK_T
+    use DUMP_0, only: DUMP
+    use INIT_TABLES_MODULE, only: F_SIGNAL, F_BOOLEAN
+    use MLSCOMMON, only: MLSFILE_T
+    use MLSL2OPTIONS, only: RUNTIMEVALUES
+    use MLSSIGNALS_M, only: GETSIGNALNAME, &
       & SIGNALS
-    use MLSStringLists, only: NumStringElements, PutHashElement, &
-      & SwitchDetail
-    use MLSStrings, only: lowerCase
-    use output_m, only: output
-    use Parse_signal_m, only: Parse_signal
-    use String_Table, only: get_string
+    use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, PUTHASHELEMENT, &
+      & SWITCHDETAIL
+    use MLSSTRINGS, only: LOWERCASE
+    use OUTPUT_M, only: OUTPUT
+    use PARSE_SIGNAL_M, only: PARSE_SIGNAL
+    use STRING_TABLE, only: GET_STRING
     use TOGGLES, only: SWITCHES
     use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
     ! Dummy args
@@ -74,7 +74,9 @@ contains
     integer :: son
     character(len=32) :: subSignalString
     logical :: tvalue
+    logical :: verbose
     ! Executable
+    verbose = ( switchDetail(switches, 'bool') > -1 )
     nullify(Signal_Indices)
     ! call get_string(name, nameString)
     ! nameString = lowerCase(nameString)
@@ -99,14 +101,14 @@ contains
     end do
 
     if ( signalString /= ' ' ) then
-      if ( switchDetail(switches, 'bool') > 0 ) &
+      if ( verbose ) &
         & call output( 'signal: ' // trim(signalString), advance='yes' )
       call Parse_signal(signalString, signal_indices)
       tvalue = .false.
       ! Loop over signals, or-ing them until we get TRUE
       do s=1, size(signal_indices)
         signalIndex = signal_indices(s)
-        if ( switchDetail(switches, 'bool') > 0 ) then
+        if ( verbose ) then
           call GetSignalName ( signalIndex, subSignalString, &                   
             & sideband=signals(signalIndex)%sideband, noChannels=.TRUE. )
           call output( 'sub-signal: ' // trim(subSignalString), advance='yes' )
@@ -115,7 +117,7 @@ contains
           & AnyGoodSignalData ( signalIndex, signals(signalIndex)%sideband, &
           & filedatabase, chunk )
         if ( tvalue ) then
-          if ( switchDetail(switches, 'bool') > 0 ) then
+          if ( verbose ) then
             call output( 'good signal data found: ' &
               & // trim(subSignalString), advance='yes' )
           end if
@@ -137,20 +139,20 @@ contains
 
   ! ------------------------------------- BooleanFromAnyGoodValues --
   function BooleanFromAnyGoodValues ( root, vectors ) result(thesize)
-    use Dump_0, only: Dump
+    use DUMP_0, only: DUMP
     use INIT_TABLES_MODULE, only: F_PRECISION, F_QUALITY, &
-      & F_QUANTITY, F_Boolean, F_STATUS
-    use ManipulateVectorQuantities, only: AnyGoodDataInQty
-    use MLSCommon, only: rv
-    use MLSL2Options, only: runTimeValues
-    use MLSStringLists, only: NumStringElements, PutHashElement, &
-      & SwitchDetail
-    use MLSStrings, only: lowerCase
-    use String_Table, only: get_string
+      & F_QUANTITY, F_BOOLEAN, F_STATUS
+    use MANIPULATEVECTORQUANTITIES, only: ANYGOODDATAINQTY
+    use MLSCOMMON, only: RV
+    use MLSL2OPTIONS, only: RUNTIMEVALUES
+    use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, PUTHASHELEMENT, &
+      & SWITCHDETAIL
+    use MLSSTRINGS, only: LOWERCASE
+    use STRING_TABLE, only: GET_STRING
     use TOGGLES, only: SWITCHES
     use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
-    use VectorsModule, only: Vector_T, VectorValue_T, &
-      & GetVectorQtyByTemplateIndex
+    use VECTORSMODULE, only: VECTOR_T, VECTORVALUE_T, &
+      & GETVECTORQTYBYTEMPLATEINDEX
     ! Dummy args
     ! integer, intent(in) :: name
     integer, intent(in) :: root
@@ -173,7 +175,9 @@ contains
     type (vectorValue_T), pointer :: STATUSQUANTITY
     logical :: tvalue
     integer :: VECTORINDEX
+    logical :: verbose
     ! Executable
+    verbose = ( switchDetail(switches, 'bool') > -1 )
     nullify( precisionquantity, qualityquantity, Quantity, statusquantity )
     ! call get_string(name, nameString)
     ! nameString = lowerCase(nameString)
@@ -220,7 +224,7 @@ contains
     call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
       & lowercase(trim(nameString)), tvalue, countEmpty=countEmpty )
     thesize = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty )
-    if ( switchDetail(switches, 'bool') > 0 ) &
+    if ( verbose ) &
       & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
       & 'Run-time Boolean flags' )
   end function BooleanFromAnyGoodValues
@@ -232,15 +236,15 @@ contains
     ! and optionally if the warning matches a supplied message string
     ! syntax: 
     ! CatchWarning, [message='string'], Boolean="name"
-    use Dump_0, only: Dump
+    use DUMP_0, only: DUMP
     use INIT_TABLES_MODULE, only: F_BOOLEAN, F_MESSAGE
-    use MLSL2Options, only: runTimeValues
-    use MLSMessageModule, only: MLSMessageInquire
-    use MLSStringLists, only: NumStringElements, PutHashElement, &
-      & SwitchDetail
-    use MLSStrings, only: lowerCase
-    use OUTPUT_M, only: outputNamedValue
-    use String_Table, only: get_string
+    use MLSL2OPTIONS, only: RUNTIMEVALUES
+    use MLSMESSAGEMODULE, only: MLSMESSAGEINQUIRE
+    use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, PUTHASHELEMENT, &
+      & SWITCHDETAIL
+    use MLSSTRINGS, only: LOWERCASE
+    use OUTPUT_M, only: OUTPUTNAMEDVALUE
+    use STRING_TABLE, only: GET_STRING
     use TOGGLES, only: SWITCHES
     use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
     ! Dummy args
@@ -302,21 +306,21 @@ contains
 
   ! ------------------------------------- BooleanFromComparingQtys --
   function BooleanFromComparingQtys ( root, vectors ) result(thesize)
-    use Dump_0, only: Dump
-    use Expr_M, only: EXPR
-    use INIT_TABLES_MODULE, only: F_A, F_B, F_C, F_Boolean, F_FORMULA
-    use MLSCommon, only: r8, rv, DEFAULTUNDEFINEDVALUE
-    use MLSL2Options, only: runTimeValues
-    use MLSMessageModule, only: MLSMessage, MLSMessageCalls, MLSMSG_error
-    use MLSStats1, only: mlsmax, mlsmin, mlsmean, mlsmedian
-    use MLSStringLists, only: GetStringElement, NumStringElements, PutHashElement, &
-      & ReplaceSubString, SwitchDetail
-    use MLSStrings, only: lowerCase
-    use String_Table, only: get_string
+    use DUMP_0, only: DUMP
+    use EXPR_M, only: EXPR
+    use INIT_TABLES_MODULE, only: F_A, F_B, F_C, F_BOOLEAN, F_FORMULA
+    use MLSCOMMON, only: R8, RV, DEFAULTUNDEFINEDVALUE
+    use MLSL2OPTIONS, only: RUNTIMEVALUES
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMSG_ERROR
+    use MLSSTATS1, only: MLSMAX, MLSMIN, MLSMEAN, MLSMEDIAN
+    use MLSSTRINGLISTS, only: GETSTRINGELEMENT, NUMSTRINGELEMENTS, PUTHASHELEMENT, &
+      & REPLACESUBSTRING, SWITCHDETAIL
+    use MLSSTRINGS, only: LOWERCASE
+    use STRING_TABLE, only: GET_STRING
     use TOGGLES, only: SWITCHES
     use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
-    use VectorsModule, only: Vector_T, VectorValue_T, M_Fill, &
-      & GetVectorQtyByTemplateIndex
+    use VECTORSMODULE, only: VECTOR_T, VECTORVALUE_T, M_FILL, &
+      & GETVECTORQTYBYTEMPLATEINDEX
     ! Dummy args
     ! Called to endow Boolean with result from comparing
     ! (1) Two quantities (a and b), or
@@ -355,7 +359,9 @@ contains
     integer, dimension(2) :: UNITASARRAY ! From expr
     real(r8), dimension(2) :: VALUEASARRAY ! From expr
     integer :: VECTORINDEX
+    logical :: verbose
     ! Executable
+    verbose = ( switchDetail(switches, 'bool') > -1 )
     call MLSMessageCalls( 'push', constantName=ModuleName//'%BooleanFromComparingQtys' )
     nullify( aQuantity, bQuantity )
     do keyNo = 2, nsons(root)
@@ -466,7 +472,7 @@ contains
     call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
       & lowercase(trim(nameString)), tvalue, countEmpty=countEmpty )
     thesize = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty )
-    if ( switchDetail(switches, 'bool') > 0 ) &
+    if ( verbose ) &
       & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
       & 'Run-time Boolean flags' )
     call MLSMessageCalls( 'pop' )
@@ -529,14 +535,14 @@ contains
 
   ! ------------------------------------- BooleanFromEmptyGrid --
   function BooleanFromEmptyGrid ( root, grids ) result(thesize)
-    use Dump_0, only: Dump
+    use DUMP_0, only: DUMP
     use INIT_TABLES_MODULE, only: F_BOOLEAN, F_GRID
-    use GriddedData, only: GRIDDEDDATA_T
-    use MLSL2Options, only: runTimeValues
-    use MLSStringLists, only: NumStringElements, PutHashElement, &
-      & SwitchDetail
-    use MLSStrings, only: lowerCase
-    use String_Table, only: get_string
+    use GRIDDEDDATA, only: GRIDDEDDATA_T
+    use MLSL2OPTIONS, only: RUNTIMEVALUES
+    use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, PUTHASHELEMENT, &
+      & SWITCHDETAIL
+    use MLSSTRINGS, only: LOWERCASE
+    use STRING_TABLE, only: GET_STRING
     use TOGGLES, only: SWITCHES
     use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
     ! Dummy args
@@ -555,7 +561,9 @@ contains
     integer :: son
     logical :: tvalue
     integer :: value
+    logical :: verbose
     ! Executable
+    verbose = ( switchDetail(switches, 'bool') > -1 )
     do keyNo = 2, nsons(root)
       son = subtree(keyNo,root)
       field = subtree(1,son)
@@ -579,7 +587,7 @@ contains
     call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
       & lowercase(trim(nameString)), tvalue, countEmpty=countEmpty )
     thesize = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty )
-    if ( switchDetail(switches, 'bool') > 0 ) &
+    if ( verbose ) &
       & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
       & 'Run-time Boolean flags' )
   end function BooleanFromEmptyGrid
@@ -593,15 +601,15 @@ contains
     ! or when it is reevaluated
     ! syntax: 
     ! Reevaluate, formula="formula", Boolean="name"
-    use Dump_0, only: Dump
-    use Expr_M, only: EXPR
+    use DUMP_0, only: DUMP
+    use EXPR_M, only: EXPR
     use INIT_TABLES_MODULE, only: F_BOOLEAN, F_FORMULA, F_VALUES
-    use MLSCommon, only: r8
-    use MLSL2Options, only: runTimeValues
-    use MLSStringLists, only: BooleanValue, NumStringElements, PutHashElement, &
-      & SwitchDetail
-    use MLSStrings, only: lowerCase
-    use String_Table, only: get_string
+    use MLSCOMMON, only: R8
+    use MLSL2OPTIONS, only: RUNTIMEVALUES
+    use MLSSTRINGLISTS, only: BOOLEANVALUE, NUMSTRINGELEMENTS, PUTHASHELEMENT, &
+      & SWITCHDETAIL
+    use MLSSTRINGS, only: LOWERCASE
+    use STRING_TABLE, only: GET_STRING
     use TOGGLES, only: SWITCHES
     use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
     ! Dummy args
@@ -620,7 +628,9 @@ contains
     logical :: tvalue
     integer, dimension(2) :: UNITASARRAY ! From expr
     real(r8), dimension(2) :: VALUEASARRAY ! From expr
+    logical :: verbose
     ! Executable
+    verbose = ( switchDetail(switches, 'bool') > -1 )
     tvalue= .false.
     if ( name > 0 ) then
       call get_string(name, nameString)
@@ -653,7 +663,7 @@ contains
     call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
       & lowercase(trim(nameString)), tvalue, countEmpty=countEmpty )
     size = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty )
-    if ( switchDetail(switches, 'bool') > 0 ) &
+    if ( verbose ) &
       & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
       & 'Run-time Boolean flags' )
   end function BooleanFromFormula
@@ -665,63 +675,63 @@ contains
 
   ! Process a "dump" command
 
-    use AntennaPatterns_m, only: Dump_Antenna_Patterns_Database
-    use Calendar, only: Duration_Formatted, Time_T, TK
-    use Declaration_table, only: Num_Value
-    use Dump_0, only: Diff, Dump, rmsFormat
-    use Expr_m, only: Expr
-    use FilterShapes_m, only: Dump_Filter_Shapes_Database, &
-      & Dump_DACS_Filter_Database
-    use ForwardModelConfig, only: Dump, ForwardModelConfig_T
-    use GriddedData, only: Diff, Dump, GriddedData_T
-    use HessianModule_1, only: Hessian_T, Diff, Dump
-    use HGridsDatabase, only: Dump, HGRID_T
-    use Init_Tables_Module, only: F_AllBooleans, F_AllFiles, F_AllForwardModels, &
-      & F_AllGriddedData, F_AllHessians, F_AllHGrids, &
-      & F_AllL2PCs, F_AllLines, F_AllMatrices, &
-      & F_AllPFA, F_AllQuantityTemplates, F_AllSignals, F_AllSpectra, &
-      & F_AllVectors, F_AllVectorTemplates, F_AllVGrids, F_AntennaPatterns, &
-      & F_Boolean, F_Clean, F_CrashBurn, F_Details, F_DACSFilterShapes, &
-      & F_File, F_FilterShapes, F_ForwardModel, F_GRID, F_HEIGHT, F_HESSIAN, &
-      & F_HGrid, F_L2PC, F_Lines, F_Mark, F_Mask, F_MATRIX, F_MieTables, &
-      & F_OPTIONS, F_PfaData, F_PfaFiles, F_PFANum, F_PFAStru, F_PointingGrids, &
-      & F_Quantity, F_Signals,  F_Spectroscopy, F_Stop, F_StopWithError, &
-      & F_SURFACE, F_Template, F_Text, F_TGrid, &
-      & F_Vector, F_VectorMask, F_VGrid, &
+    use ANTENNAPATTERNS_M, only: DUMP_ANTENNA_PATTERNS_DATABASE
+    use CALENDAR, only: DURATION_FORMATTED, TIME_T, TK
+    use DECLARATION_TABLE, only: NUM_VALUE
+    use DUMP_0, only: DIFF, DUMP, RMSFORMAT
+    use EXPR_M, only: EXPR
+    use FILTERSHAPES_M, only: DUMP_FILTER_SHAPES_DATABASE, &
+      & DUMP_DACS_FILTER_DATABASE
+    use FORWARDMODELCONFIG, only: DUMP, FORWARDMODELCONFIG_T
+    use GRIDDEDDATA, only: DIFF, DUMP, GRIDDEDDATA_T
+    use HESSIANMODULE_1, only: HESSIAN_T, DIFF, DUMP
+    use HGRIDSDATABASE, only: DUMP, HGRID_T
+    use INIT_TABLES_MODULE, only: F_ALLBOOLEANS, F_ALLFILES, F_ALLFORWARDMODELS, &
+      & F_ALLGRIDDEDDATA, F_ALLHESSIANS, F_ALLHGRIDS, &
+      & F_ALLL2PCS, F_ALLLINES, F_ALLMATRICES, &
+      & F_ALLPFA, F_ALLQUANTITYTEMPLATES, F_ALLSIGNALS, F_ALLSPECTRA, &
+      & F_ALLVECTORS, F_ALLVECTORTEMPLATES, F_ALLVGRIDS, F_ANTENNAPATTERNS, &
+      & F_BOOLEAN, F_CLEAN, F_CRASHBURN, F_DETAILS, F_DACSFILTERSHAPES, &
+      & F_FILE, F_FILTERSHAPES, F_FORWARDMODEL, F_GRID, F_HEIGHT, F_HESSIAN, &
+      & F_HGRID, F_L2PC, F_LINES, F_MARK, F_MASK, F_MATRIX, F_MIETABLES, &
+      & F_OPTIONS, F_PFADATA, F_PFAFILES, F_PFANUM, F_PFASTRU, F_POINTINGGRIDS, &
+      & F_QUANTITY, F_SIGNALS,  F_SPECTROSCOPY, F_STOP, F_STOPWITHERROR, &
+      & F_SURFACE, F_TEMPLATE, F_TEXT, F_TGRID, &
+      & F_VECTOR, F_VECTORMASK, F_VGRID, &
       & S_DIFF, S_DUMP, S_QUANTITY, S_VECTORTEMPLATE
-    use L2ParInfo, only: PARALLEL, CLOSEPARALLEL
-    use L2PC_m, only: L2PCDatabase, dumpL2PC => Dump
-    use Intrinsic, only: PHYQ_Dimensionless
+    use L2PARINFO, only: PARALLEL, CLOSEPARALLEL
+    use L2PC_M, only: L2PCDATABASE, DUMPL2PC => DUMP
+    use INTRINSIC, only: PHYQ_DIMENSIONLESS
     use MACHINE, only: NEVERCRASH
-    use MatrixModule_1, only: Matrix_T, Matrix_Database_T, &
-      & Diff, Dump, GetFromMatrixDatabase
-    use MLSCommon, only: MLSFile_T
-    use MLSFiles, only: DumpMLSFile => Dump, GetMLSFileByName
+    use MATRIXMODULE_1, only: MATRIX_T, MATRIX_DATABASE_T, &
+      & DIFF, DUMP, GETFROMMATRIXDATABASE
+    use MLSCOMMON, only: MLSFILE_T
+    use MLSFILES, only: DUMPMLSFILE => DUMP, GETMLSFILEBYNAME
     use MLSKINDS, only: RV
-    use MLSL2Options, only: NORMAL_EXIT_STATUS, RUNTIMEVALUES
-    use MLSMessageModule, only: MLSMessage, MLSMessageCalls, MLSMessageExit, &
-      & MLSMSG_CRASH, MLSMSG_ERROR, MLSMSG_WARNING
-    use MLSSets, only: FindFirst
-    use MLSSignals_m, only: Dump, Signals
-    use MLSStrings, only: INDEXES, LOWERCASE
-    use MLSStringLists, only: BooleanValue, SWITCHDETAIL
-    use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
-    use output_m, only: output, outputNamedValue
-    use PFADataBase_m, only: Dump, Dump_PFADataBase, Dump_PFAFileDataBase, &
-      & Dump_PFAStructure, PFAData
-    use PointingGrid_m, only: Dump_Pointing_Grid_Database
-    use QuantityTemplates, only: Dump, QuantityTemplate_T
-    use Read_Mie_m, only: Dump_Mie
-    use SpectroscopyCatalog_m, only: Catalog, Dump, Dump_Lines_Database, Lines
-    use String_Table, only: Get_String
-    use Toggles, only: Gen, Switches, Toggle
-    use Trace_m, only: Trace_begin, Trace_end
-    use Tree, only: Decoration, Node_Id, Nsons, Source_Ref, Sub_rosa, Subtree
-    use Tree_Types, only: N_Spec_Args
-    use VectorsModule, only: Vector_T, VectorTemplate_T, VectorValue_T, &
-      & Diff, Dump, DumpQuantityMask, DumpVectorMask, & ! for vectors, vector quantities and templates
-      & GetVectorQtyByTemplateIndex
-    use VGridsDatabase, only: Dump, VGrids
+    use MLSL2OPTIONS, only: NORMAL_EXIT_STATUS, RUNTIMEVALUES
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMESSAGEEXIT, &
+      & MLSMSG_CRASH, MLSMSG_ERROR
+    use MLSSETS, only: FINDFIRST
+    use MLSSIGNALS_M, only: DUMP, SIGNALS
+    use MLSSTRINGS, only: INDEXES, LOWERCASE
+    use MLSSTRINGLISTS, only: BOOLEANVALUE, SWITCHDETAIL
+    use MORETREE, only: GET_BOOLEAN, GET_FIELD_ID, GET_SPEC_ID
+    use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
+    use PFADATABASE_M, only: DUMP, DUMP_PFADATABASE, DUMP_PFAFILEDATABASE, &
+      & DUMP_PFASTRUCTURE, PFADATA
+    use POINTINGGRID_M, only: DUMP_POINTING_GRID_DATABASE
+    use QUANTITYTEMPLATES, only: DUMP, QUANTITYTEMPLATE_T
+    use READ_MIE_M, only: DUMP_MIE
+    use SPECTROSCOPYCATALOG_M, only: CATALOG, DUMP, DUMP_LINES_DATABASE, LINES
+    use STRING_TABLE, only: GET_STRING
+    use TOGGLES, only: GEN, SWITCHES, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use TREE, only: DECORATION, NODE_ID, NSONS, SOURCE_REF, SUB_ROSA, SUBTREE
+    use TREE_TYPES, only: N_SPEC_ARGS
+    use VECTORSMODULE, only: VECTOR_T, VECTORTEMPLATE_T, VECTORVALUE_T, &
+      & DIFF, DUMP, DUMPQUANTITYMASK, DUMPVECTORMASK, & ! FOR VECTORS, VECTOR QUANTITIES AND TEMPLATES
+      & GETVECTORQTYBYTEMPLATEINDEX
+    use VGRIDSDATABASE, only: DUMP, VGRIDS
 
     integer, intent(in) :: Root ! Root of the parse tree for the dump command
     ! Databases:
@@ -766,7 +776,6 @@ contains
     type (VectorValue_T), pointer :: QTY1, QTY2
     integer :: Son
     integer :: Source ! column*256 + line
-    integer :: surface  ! We will use this to dump just one surface
     character :: TempText*20, Text*255
     type(time_t) :: Time
     character(10) :: TimeOfDay
@@ -1412,31 +1421,38 @@ contains
   end subroutine DumpCommand
   
   logical function Skip ( Root )
-    ! Returns value of Boolean field;
+    ! Returns value of Boolean field (if present);
     ! If TRUE should skip rest of section in which SKIP command appears
-    use Init_Tables_Module, only: F_Boolean
-    use MLSL2Options, only: runTimeValues
-    use MLSMessageModule, only: MLSMessageCalls
-    use MLSStringLists, only: BooleanValue
-    use MLSStrings, only: lowerCase
-    use MoreTree, only: Get_Field_ID
-    use Output_M, only: Output
-    use String_Table, only: Get_String
-    use Toggles, only: Gen, Toggle
-    use Trace_m, only: Trace_begin, Trace_end
-    use Tree, only: Nsons, Sub_rosa, Subtree
+    ! If Boolean field absent, returns TRUE 
+    ! (otherwise it would do nothing--
+    ! this way it forces us to skip unconditionally)
+    use INIT_TABLES_MODULE, only: F_BOOLEAN
+    use MLSL2OPTIONS, only: RUNTIMEVALUES
+    use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
+    use MLSSTRINGLISTS, only: BOOLEANVALUE, SWITCHDETAIL
+    use MLSSTRINGS, only: LOWERCASE
+    use MORETREE, only: GET_FIELD_ID
+    use OUTPUT_M, only: OUTPUT
+    use STRING_TABLE, only: GET_STRING
+    use TOGGLES, only: GEN, SWITCHES, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use TREE, only: NSONS, SUB_ROSA, SUBTREE
+    ! Args
     integer, intent(in) :: Root ! Root of the parse tree for the dump command
     ! Internal variables
     character(len=80) :: BOOLEANSTRING  ! E.g., 'BAND13_OK'
     integer :: GSON, J
     integer :: FieldIndex
     integer :: Son
+    logical :: verbose
     ! Executable
+    verbose = ( switchDetail(switches, 'bool') > -1 )
     if ( toggle(gen) ) then
       call trace_begin ( 'DumpCommand', root )
     else
       call MLSMessageCalls( 'push', constantName=ModuleName )
     end if
+    skip = .true. ! Defaults to skipping rest of section
     do j = 2, nsons(root)
       son = subtree(j,root) ! The argument
       fieldIndex = get_field_id(son)
@@ -1446,15 +1462,17 @@ contains
       case (f_Boolean)
         call get_string ( sub_rosa(gson), booleanString, strip=.true. )
         booleanString = lowerCase(booleanString)
-        call output( trim(booleanString) // ' = ', advance='no' )
         skip = BooleanValue ( booleanString, &
           & runTimeValues%lkeys, runTimeValues%lvalues)
-        call output( skip, advance='yes' )
-        if ( skip ) &
-          & call output( '(Skipping rest of this section)', advance='yes' )
+        if ( verbose ) then
+          call output( trim(booleanString) // ' = ', advance='no' )
+          call output( skip, advance='yes' )
+        endif
       case default
         ! Should not have got here if parser worked correctly
       end select
+      if ( skip ) &
+        & call output( '(Skipping rest of this section)', advance='yes' )
       if ( toggle(gen) ) then
         call trace_end ( 'DumpCommand' )
       else
@@ -1478,6 +1496,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.61  2011/05/09 18:08:57  pwagner
+! Print notice of changed runtime booleans only when "bool" switch is set
+!
 ! Revision 2.60  2011/04/20 16:47:54  pwagner
 ! Added BooleanFromEmptyGrid
 !
