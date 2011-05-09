@@ -13,23 +13,24 @@
 module WriteMetadata ! Populate metadata and write it out
 ! -------------------------------------------------------
 
-  use Hdf, only: DFACC_RDWR
-  use INIT_TABLES_MODULE, only: l_l2dgg, l_l2gp, l_hdf, L_SWATH
+  use HDF, only: DFACC_RDWR
+  use INIT_TABLES_MODULE, only: L_L2DGG, L_L2GP, L_HDF, L_SWATH
   use LEXER_CORE, only: PRINT_SOURCE
-  use MLSCommon, only: FileNameLen, NameLen, R8, L2Metadata_T
-  use MLSFiles, only: GetPCFromRef, mls_sfstart, mls_sfend, Split_path_name
-  use MLSL2Options, only: PENALTY_FOR_NO_METADATA, TOOLKIT, SHAREDPCF
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
-  use MLSPCF2, only: Mlspcf_mcf_l2gp_end, Mlspcf_mcf_l2gp_start, &
-    & Mlspcf_mcf_l2log_start
-  use MLSStrings, only: LowerCase
-  use MLSStringLists, only: GetHashElement, ExtractSubString
-  use Output_m, only: Output, blanks
-  use PCFHdr, only: WriteInputPointer, WritePCF2Hdr, GlobalAttributes
-  use SDPToolkit, only: PGSd_MET_GROUP_NAME_L, &
-    & PGSd_MET_NUM_OF_GROUPS, PGSd_PC_FILE_PATH_MAX, PGS_PC_GetReference, &
+  use MLSCOMMON, only: FILENAMELEN, NAMELEN, L2METADATA_T
+  use MLSKINDS, only: R8
+  use MLSFILES, only: GETPCFROMREF, MLS_SFSTART, MLS_SFEND, SPLIT_PATH_NAME
+  use MLSL2OPTIONS, only: PENALTY_FOR_NO_METADATA, TOOLKIT, SHAREDPCF
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_WARNING
+  use MLSPCF2, only: MLSPCF_MCF_L2GP_END, MLSPCF_MCF_L2GP_START, &
+    & MLSPCF_MCF_L2LOG_START
+  use MLSSTRINGS, only: LOWERCASE
+  use MLSSTRINGLISTS, only: GETHASHELEMENT, EXTRACTSUBSTRING, SWITCHDETAIL
+  use OUTPUT_M, only: OUTPUT, BLANKS
+  use PCFHDR, only: WRITEINPUTPOINTER, WRITEPCF2HDR, GLOBALATTRIBUTES
+  use SDPTOOLKIT, only: PGSD_MET_GROUP_NAME_L, &
+    & PGSD_MET_NUM_OF_GROUPS, PGSD_PC_FILE_PATH_MAX, PGS_PC_GETREFERENCE, &
     & PGSPC_W_NO_REFERENCE_FOUND, PGS_S_SUCCESS, PGSMET_W_METADATA_NOT_SET
-  use TOGGLES, only: switches
+  use TOGGLES, only: SWITCHES
   use TREE, only: SOURCE_REF
 
   implicit none
@@ -799,7 +800,7 @@ contains
 
     if ( present(metadata_error)) metadata_error=module_error
 
-   if(index(switches, 'pro') /= 0) then
+   if(switchDetail(switches, 'pro') > -1) then
        call announce_success(physical_filename, mcf_filename, 'standard')
    end if
 
@@ -923,7 +924,7 @@ contains
 
     if ( present(metadata_error)) metadata_error=module_error
 
-   if(index(switches, 'pro') /= 0) then
+   if(switchDetail(switches, 'pro') > -1) then
        call announce_success(physical_filename, mcf_filename, 'others')
    end if
 
@@ -1244,7 +1245,7 @@ contains
 
     if ( present(metadata_error)) metadata_error=module_error
 
-   if(index(switches, 'pro') /= 0) then
+   if(switchDetail(switches, 'pro') > -1) then
        call announce_success(physical_filename, mcf_filename, 'Log')
    end if
 
@@ -1374,6 +1375,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.68  2011/05/09 18:28:30  pwagner
+! Converted to using switchDetail
+!
 ! Revision 2.67  2009/06/23 18:46:19  pwagner
 ! Prevent Intel from optimizing ident string away
 !
