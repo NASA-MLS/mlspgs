@@ -32,76 +32,76 @@ contains ! ====     Public Procedures     ==============================
   subroutine WALK_TREE_TO_DO_MLS_L2 ( ROOT, ERROR_FLAG, FIRST_SECTION, &
     & COUNTCHUNKS, FILEDATABASE, SECTIONSTOSKIP )
 
-    use Algebra_M, only: Algebra
-    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-    use AntennaPatterns_m, only: Destroy_Ant_Patterns_Database
-    use ChunkDivide_m, only: ChunkDivide, DestroyChunkDatabase
-    use Chunks_m, only: Dump, MLSChunk_T
-    use Construct, only: MLSL2Construct, MLSL2DeConstruct, &
-      & ConstructMIFGeolocation
-    use DirectWrite_m, only: DirectData_T, DestroyDirectDatabase
-    use dump_0, only: dump
-    use EmpiricalGeometry, only: ForgetOptimumLon0
-    use FGrid, only: FGrid_T, DestroyFGridDatabase, DUMP
-    use Fill, only: MLSL2Fill
-    use ForwardModelConfig, only: ForwardModelConfig_T, &
-      & DestroyFWMConfigDatabase, &
-      & StripForwardModelConfigDatabase
-    use ForwardModelSupport, only: printForwardModelTiming
-    use Global_Settings, only: Set_Global_Settings
-    use GriddedData, only: GriddedData_T, DestroyGriddedDataDatabase, Dump
-    use HessianModule_1, only: DestroyHessianDatabase, Hessian_T
-    use HGridsDatabase, only: HGrid_T
-    use HGrid, only: COMPUTEALLHGRIDOFFSETS
-    use Init_Tables_Module, only: L_CHISQCHAN, L_CHISQMMAF, L_CHISQMMIF,  &
+    use ALGEBRA_M, only: ALGEBRA
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use ANTENNAPATTERNS_M, only: DESTROY_ANT_PATTERNS_DATABASE
+    use CHUNKDIVIDE_M, only: CHUNKDIVIDE, DESTROYCHUNKDATABASE
+    use CHUNKS_M, only: DUMP, MLSCHUNK_T
+    use CONSTRUCT, only: MLSL2CONSTRUCT, MLSL2DECONSTRUCT, &
+      & CONSTRUCTMIFGEOLOCATION
+    use DIRECTWRITE_M, only: DIRECTDATA_T, DESTROYDIRECTDATABASE
+    use DUMP_0, only: DUMP
+    use EMPIRICALGEOMETRY, only: FORGETOPTIMUMLON0
+    use FGRID, only: FGRID_T, DESTROYFGRIDDATABASE, DUMP
+    use FILL, only: MLSL2FILL
+    use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T, &
+      & DESTROYFWMCONFIGDATABASE, &
+      & STRIPFORWARDMODELCONFIGDATABASE
+    use FORWARDMODELSUPPORT, only: PRINTFORWARDMODELTIMING
+    use GLOBAL_SETTINGS, only: SET_GLOBAL_SETTINGS
+    use GRIDDEDDATA, only: GRIDDEDDATA_T, DESTROYGRIDDEDDATADATABASE, DUMP
+    use HESSIANMODULE_1, only: DESTROYHESSIANDATABASE, HESSIAN_T
+    use HGRIDSDATABASE, only: HGRID_T
+    use HGRID, only: COMPUTEALLHGRIDOFFSETS
+    use INIT_TABLES_MODULE, only: L_CHISQCHAN, L_CHISQMMAF, L_CHISQMMIF,  &
       & SECTION_FIRST, SECTION_LAST, &
       & Z_ALGEBRA, Z_CHUNKDIVIDE,  Z_CONSTRUCT, Z_FILL, Z_GLOBALSETTINGS, &
       & Z_JOIN, Z_MERGEGRIDS, Z_MLSSIGNALS, Z_OUTPUT, Z_READAPRIORI,      &
       & Z_RETRIEVE, Z_SPECTROSCOPY
-    use intrinsic, only: section_indices
-    use JOIN, only: MLSL2Join
-    use L2AUXData, only: DestroyL2AUXDatabase, L2AUXData_T, Dump
-    use L2FWMParallel, only: L2FWMSlaveTask, LaunchFWMSlaves
-    use L2GPData, only: DestroyL2GPDatabase, L2GPData_T, Dump
-    use L2Parallel, only: GETCHUNKINFOFROMMASTER, L2MASTERTASK
-    use L2ParInfo, only: PARALLEL, CLOSEPARALLEL
-    use L2PC_m, only: DestroyL2PCDatabase, DestroyBinSelectorDatabase
-    use L2PCBins_m, only: FLUSHLOCKEDBINS
-    use MatrixModule_1, only: DestroyMatrixDatabase, Matrix_Database_T
-    use MergeGridsModule, only: MergeGrids
-    use MLSCommon, only: TAI93_RANGE_T, MLSFile_T
-    use MLSL2Options, only: CHECKPATHS, &
+    use INTRINSIC, only: SECTION_INDICES
+    use JOIN, only: MLSL2JOIN
+    use L2AUXDATA, only: DESTROYL2AUXDATABASE, L2AUXDATA_T, DUMP
+    use L2FWMPARALLEL, only: L2FWMSLAVETASK, LAUNCHFWMSLAVES
+    use L2GPDATA, only: DESTROYL2GPDATABASE, L2GPDATA_T, DUMP
+    use L2PARALLEL, only: GETCHUNKINFOFROMMASTER, L2MASTERTASK
+    use L2PARINFO, only: PARALLEL, CLOSEPARALLEL
+    use L2PC_M, only: DESTROYL2PCDATABASE, DESTROYBINSELECTORDATABASE
+    use L2PCBINS_M, only: FLUSHLOCKEDBINS
+    use MATRIXMODULE_1, only: DESTROYMATRIXDATABASE, MATRIX_DATABASE_T
+    use MERGEGRIDSMODULE, only: MERGEGRIDS
+    use MLSCOMMON, only: TAI93_RANGE_T, MLSFILE_T
+    use MLSL2OPTIONS, only: CHECKPATHS, &
       & SKIPRETRIEVAL, SLAVESDOOWNCLEANUP, SPECIALDUMPFILE, STOPAFTERSECTION
-    use MLSMessageModule, only: MLSMSG_Allocate, MLSMessage, MLSMSG_Info, &
-      & MLSMSG_Error, SummarizeWarnings
-    use MLSPCF2, only: mlspcf_spectroscopy_end
-    use MLSSets, only: FindFirst
-    use MLSSignals_M, only: Bands, DestroyBandDatabase, DestroyModuleDatabase, &
-      & DestroyRadiometerDatabase, DestroySignalDatabase, &
-      & DestroySpectrometerTypeDatabase, MLSSignals, Modules, Radiometers, &
-      & Signals, SpectrometerTypes
-    use MLSStringLists, only: ExpandStringRange, isInList, SwitchDetail
-    use MLSStrings, only: lowerCase
-    use MLSL2Options, only: SKIPDIRECTWRITES, SKIPDIRECTWRITESORIGINAL, TOOLKIT
-    use MLSL2Timings, only: add_to_section_timing, TOTAL_TIMES
-    use Open_Init, only: OpenAndInitialize
-    use OutputAndClose, only: Output_Close
-    use Output_m, only: BLANKS, getStamp, Output, &
-      & RESUMEOUTPUT, revertoutput, setStamp, switchOutput
-    use PointingGrid_m, only: Destroy_Pointing_Grid_Database
-    use QuantityTemplates, only: QuantityTemplate_T
-    use ReadAPriori, only: read_apriori
-    use RetrievalModule, only: Retrieve
-    use SpectroscopyCatalog_m, only: Destroy_Line_Database, &
-      & Destroy_SpectCat_Database, Spectroscopy
+    use MLSMESSAGEMODULE, only: MLSMSG_ALLOCATE, MLSMESSAGE, MLSMSG_INFO, &
+      & MLSMSG_ERROR, SUMMARIZEWARNINGS
+    use MLSPCF2, only: MLSPCF_SPECTROSCOPY_END
+    use MLSSETS, only: FINDFIRST
+    use MLSSIGNALS_M, only: BANDS, DESTROYBANDDATABASE, DESTROYMODULEDATABASE, &
+      & DESTROYRADIOMETERDATABASE, DESTROYSIGNALDATABASE, &
+      & DESTROYSPECTROMETERTYPEDATABASE, MLSSIGNALS, MODULES, RADIOMETERS, &
+      & SIGNALS, SPECTROMETERTYPES
+    use MLSSTRINGLISTS, only: EXPANDSTRINGRANGE, ISINLIST, SWITCHDETAIL
+    use MLSSTRINGS, only: LOWERCASE
+    use MLSL2OPTIONS, only: SKIPDIRECTWRITES, SKIPDIRECTWRITESORIGINAL, TOOLKIT
+    use MLSL2TIMINGS, only: ADD_TO_SECTION_TIMING, TOTAL_TIMES
+    use OPEN_INIT, only: OPENANDINITIALIZE
+    use OUTPUTANDCLOSE, only: OUTPUT_CLOSE
+    use OUTPUT_M, only: BLANKS, GETSTAMP, OUTPUT, &
+      & RESUMEOUTPUT, REVERTOUTPUT, SETSTAMP, SWITCHOUTPUT
+    use POINTINGGRID_M, only: DESTROY_POINTING_GRID_DATABASE
+    use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T
+    use READAPRIORI, only: READ_APRIORI
+    use RETRIEVALMODULE, only: RETRIEVE
+    use SPECTROSCOPYCATALOG_M, only: DESTROY_LINE_DATABASE, &
+      & DESTROY_SPECTCAT_DATABASE, SPECTROSCOPY
     use STRING_TABLE, only: GET_STRING
-    use Time_M, only: Time_Now
-    use Toggles, only: GEN, LEVELS, SWITCHES, TOGGLE
-    use Trace_m, only: DEPTH, TRACE_BEGIN, TRACE_END
-    use Tree, only: DECORATION, NSONS, SUBTREE
-    use VectorsModule, only: DestroyVectorDatabase, DUMP_VECTORS, &
-      & Vector_T, VectorTemplate_T
-    use VGridsDatabase, only: DestroyVGridDatabase, VGrids
+    use TIME_M, only: TIME_NOW
+    use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
+    use TRACE_M, only: DEPTH, TRACE_BEGIN, TRACE_END
+    use TREE, only: DECORATION, NSONS, SUBTREE
+    use VECTORSMODULE, only: DESTROYVECTORDATABASE, DUMP_VECTORS, &
+      & VECTOR_T, VECTORTEMPLATE_T
+    use VGRIDSDATABASE, only: DESTROYVGRIDDATABASE, VGRIDS
 
     integer, intent(in) ::     ROOT        ! Root of the abstract syntax tree
     integer, intent(out) ::    ERROR_FLAG  ! Nonzero means failure
@@ -580,7 +580,7 @@ subtrees:   do while ( j <= howmany )
         call destroy_Filter_Shapes_Database
         call destroyBinSelectorDatabase
         call destroyL2PCDatabase
-        if ( index ( switches, 'l2pc' ) > 0 ) &
+        if ( switchDetail ( switches, 'l2pc' ) > -1 ) &
           & call output('Destroyed l2pc db', advance='yes')
         call destroyFWMConfigDatabase ( forwardModelConfigDatabase )
         call destroy_line_database
@@ -632,6 +632,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.174  2011/04/20 16:53:43  pwagner
+! Added new flexibility to l2cf control flow by run-time booleans affecting gridded data
+!
 ! Revision 2.173  2011/04/08 00:10:00  pwagner
 ! Raise error if every chunk was skipped
 !
