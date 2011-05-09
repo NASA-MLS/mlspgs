@@ -11,7 +11,7 @@
 
 module ALGEBRA_M
 
-  use MatrixModule_1, only: K_Cholesky, K_Empty, K_Kronecker, K_Plain, K_SPD
+  use MATRIXMODULE_1, only: K_CHOLESKY, K_EMPTY, K_KRONECKER, K_PLAIN, K_SPD
 
 ! Process the ALGEBRA section
 
@@ -51,31 +51,32 @@ contains
     ! table, it has to be the right kind of thing-o:  We won't assign
     ! a vector to a matrix, etc.
 
-    use Chunks_m, only: MLSChunk_T
+    use CHUNKS_M, only: MLSCHUNK_T
     use DECLARATION_TABLE, only: DECLARE, DECLS, EMPTY, EXPRN, EXPRN_M, &
       & EXPRN_V, GET_DECL, LABEL, NUM_VALUE, REDECLARE
-    use ForwardModelConfig, only: FORWARDMODELCONFIG_T
-    use Init_Tables_Module, only: S_Matrix, S_Quantity, S_Vector
-    use MatrixModule_1, only: AddToMatrix, AddToMatrixDatabase, AssignMatrix, &
-      & CholeskyFactor, CreateEmptyMatrix, CopyMatrix, &
-      & CopyMatrixValue, DestroyMatrix, Dump, GetActualMatrixFromDatabase, &
-      & GetDiagonal, GetFromMatrixDatabase, GetKindFromMatrixDatabase, &
-      & InvertCholesky, K_Cholesky, K_Empty, K_Kronecker, K_Plain, K_SPD, Matrix_Cholesky_T, &
-      & Matrix_Database_T, Matrix_Kronecker_T, Matrix_SPD_T, Matrix_T, &
-      & MultiplyMatrixVectorNoT, multiplyMatrixVectorSPD_1, &
-      & MultiplyMatrix_XY, ReflectMatrix, ScaleMatrix, Dump_Struct, TransposeMatrix, ClearLower
-    use MatrixTools, only: COMBINECHANNELSINMATRIX
-    use MLSCommon, only: R8, RV
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use Output_M, only: Output
-    use String_Table, only: Display_String
-    use Toggles, only: Gen, Switches, Toggle
-    use Trace_m, only: Trace_Begin, Trace_End
+    use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
+    use INIT_TABLES_MODULE, only: S_MATRIX, S_QUANTITY, S_VECTOR
+    use MATRIXMODULE_1, only: ADDTOMATRIX, ADDTOMATRIXDATABASE, ASSIGNMATRIX, &
+      & CHOLESKYFACTOR, CREATEEMPTYMATRIX, COPYMATRIX, &
+      & COPYMATRIXVALUE, DESTROYMATRIX, DUMP, GETACTUALMATRIXFROMDATABASE, &
+      & GETDIAGONAL, GETFROMMATRIXDATABASE, GETKINDFROMMATRIXDATABASE, &
+      & INVERTCHOLESKY, K_CHOLESKY, K_EMPTY, K_KRONECKER, K_PLAIN, K_SPD, MATRIX_CHOLESKY_T, &
+      & MATRIX_DATABASE_T, MATRIX_KRONECKER_T, MATRIX_SPD_T, MATRIX_T, &
+      & MULTIPLYMATRIXVECTORNOT, MULTIPLYMATRIXVECTORSPD_1, &
+      & MULTIPLYMATRIX_XY, REFLECTMATRIX, SCALEMATRIX, DUMP_STRUCT, TRANSPOSEMATRIX, CLEARLOWER
+    use MATRIXTOOLS, only: COMBINECHANNELSINMATRIX
+    use MLSKINDS, only: R8, RV
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use OUTPUT_M, only: OUTPUT
+    use STRING_TABLE, only: DISPLAY_STRING
+    use TOGGLES, only: GEN, SWITCHES, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE, PRINT_SUBTREE
-    use TREE_TYPES ! Everything, except tree_init; remainder begin with N_
-    use VectorsModule, only:  AddToVector, AddVectorToDatabase,  CopyVector, &
-      & CloneVector, DestroyVectorInfo, Dump, ScaleVector, Vector_T, PowVector, &
-      & ReciprocateVector, MultiplyVectors
+    use TREE_TYPES ! EVERYTHING, EXCEPT TREE_INIT; REMAINDER BEGIN WITH N_
+    use VECTORSMODULE, only:  ADDTOVECTOR, ADDVECTORTODATABASE,  COPYVECTOR, &
+      & CLONEVECTOR, DESTROYVECTORINFO, DUMP, SCALEVECTOR, VECTOR_T, POWVECTOR, &
+      & RECIPROCATEVECTOR, MULTIPLYVECTORS
 
     integer, intent(in) :: ROOT
     type(vector_T), dimension(:), pointer :: VectorDatabase
@@ -133,7 +134,7 @@ contains
         call expr ( rhs, what, dValue, vector, matrix, matrix_c, matrix_k, matrix_s )
 
         ! Possibly do some dumping
-        if ( index(switches,'spa') /= 0 ) then
+        if ( switchDetail(switches,'spa') > -1 ) then
           select case ( what )
           case ( w_matrix )
             call dump_struct ( matrix, 'Result of expression' )
@@ -263,7 +264,7 @@ contains
           value = decoration ( decl%tree ) ! in case switches contains 'alg'
 100       call destroyStuff ( what, vector, matrix, matrix_c, matrix_k, matrix_s )
         end if
-        if ( index(switches,'alg') /= 0 ) then
+        if ( switchDetail(switches,'alg') > -1 ) then
           select case ( what )
           case ( w_number )
             call display_string ( sub_rosa(lhs) )
@@ -288,19 +289,19 @@ contains
     ! ...........................................  AlgebraCommands .....
     subroutine AlgebraCommands ( root, VectorDatabase, MatrixDatabase, &
       & chunk, forwardModelConfigDatabase )
-      use MatrixModule_1, only: COLUMNSCALE, CYCLICJACOBI, REFLECTMATRIX, ROWSCALE
-      use Regularization, only: REGULARIZE
-      use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST, F_MATRIX, F_EIGENVECTORS, F_SCALE, &
+      use MATRIXMODULE_1, only: COLUMNSCALE, CYCLICJACOBI, REFLECTMATRIX, ROWSCALE
+      use REGULARIZATION, only: REGULARIZE
+      use INIT_TABLES_MODULE, only: FIELD_FIRST, FIELD_LAST, F_MATRIX, F_EIGENVECTORS, F_SCALE, &
         & F_RHSOUT, F_FORWARDMODEL, F_FWDMODELIN, F_FWDMODELOUT, F_FWDMODELEXTRA, &
         & F_MEASUREMENTS, F_MEASUREMENTSD, F_REGORDERS, F_REGQUANTS, F_REGWEIGHTS, F_REGWEIGHTVEC, &
         & F_HORIZONTAL, F_RESIDUALSUPPLIED, F_RETRIEVALEXTRA, &
         & F_RETRIEVALFORWARDMODEL, F_RETRIEVALIN, &
         & F_SOURCEMATRIX, F_TRUTHEXTRA, F_TRUTHFORWARDMODEL, F_TRUTHIN
-      use Init_Tables_Module, only: L_TRUE
-      use Init_Tables_Module, only: S_COLUMNSCALE, S_COMBINECHANNELS, S_CYCLICJACOBI, &
+      use INIT_TABLES_MODULE, only: L_TRUE
+      use INIT_TABLES_MODULE, only: S_COLUMNSCALE, S_COMBINECHANNELS, S_CYCLICJACOBI, &
         & S_DISJOINTEQUATIONS, S_REFLECT, S_ROWSCALE, S_NORMALEQUATIONS, S_REGULARIZATION
-      use MoreTree, only: GET_SPEC_ID, GET_BOOLEAN
-      use MatrixTools, only: COMBINECHANNELSINMATRIX
+      use MORETREE, only: GET_SPEC_ID, GET_BOOLEAN
+      use MATRIXTOOLS, only: COMBINECHANNELSINMATRIX
         
       ! Dummy arguments
       integer, intent(in) :: ROOT
@@ -558,11 +559,11 @@ contains
 
       use DECLARATION_TABLE, only: DECLS, EMPTY, FUNCTION, GET_DECL
       use FUNCTIONS, only: F_CHOLESKY, F_CLEARLOWER, F_INVERT, F_TRANSPOSE, F_GETDIAGONAL, F_SQRT, F_XTX
-      use MatrixModule_1, only: NORMALEQUATIONS
+      use MATRIXMODULE_1, only: NORMALEQUATIONS
       use STRING_TABLE, only: FLOAT_VALUE
       use TREE, only: NODE_ID, NSONS, SUB_ROSA, SUBTREE
       use TREE_TYPES ! Everything, especially everything beginning with N_
-      use VectorsModule, only: GetVectorQuantityIndexByName
+      use VECTORSMODULE, only: GETVECTORQUANTITYINDEXBYNAME
 
       integer, intent(in) :: Root  ! Index in tree of root of expression subtree
       integer, intent(out) :: What  ! What is result (see its parameters above)
@@ -1279,12 +1280,12 @@ contains
       ! reflect something closer to the truth
 
       ! Imports
-      use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-      use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
-      use ForwardModelWrappers, only: FORWARDMODEL
-      use MatrixModule_1, only: MULTIPLYMATRIX_XTY, CLEARMATRIX, DUMP_STRUCT, ROWSCALE
-      use ScanModelModule, only: DestroyForwardModelIntermediate
-      use VectorsModule, only: COPYVECTOR, SUBTRACTFROMVECTOR, CLONEVECTOR, MULTIPLY
+      use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+      use FORWARDMODELINTERMEDIATE, only: FORWARDMODELSTATUS_T
+      use FORWARDMODELWRAPPERS, only: FORWARDMODEL
+      use MATRIXMODULE_1, only: MULTIPLYMATRIX_XTY, CLEARMATRIX, DUMP_STRUCT, ROWSCALE
+      use SCANMODELMODULE, only: DESTROYFORWARDMODELINTERMEDIATE
+      use VECTORSMODULE, only: COPYVECTOR, SUBTRACTFROMVECTOR, CLONEVECTOR, MULTIPLY
       ! Dummy arguments
       type (Matrix_T), intent(inout) :: MATRIX ! Normal equation matrix
       type (Vector_T), intent(in), target :: TRUTHIN ! Truth forward model state vector
@@ -1390,12 +1391,12 @@ contains
       & fwdModelIn, fwdModelExtra, fwdModelOut, &
       & measurements, measurementSD, chunk, configDatabase, residualSupplied )
       ! Imports
-      use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-      use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
-      use ForwardModelWrappers, only: FORWARDMODEL
-      use MatrixModule_1, only: NORMALEQUATIONS, CLEARMATRIX, DUMP_STRUCT, ROWSCALE
-      use ScanModelModule, only: DestroyForwardModelIntermediate
-      use VectorsModule, only: COPYVECTOR, SUBTRACTFROMVECTOR, CLONEVECTOR, MULTIPLY
+      use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+      use FORWARDMODELINTERMEDIATE, only: FORWARDMODELSTATUS_T
+      use FORWARDMODELWRAPPERS, only: FORWARDMODEL
+      use MATRIXMODULE_1, only: NORMALEQUATIONS, CLEARMATRIX, DUMP_STRUCT, ROWSCALE
+      use SCANMODELMODULE, only: DESTROYFORWARDMODELINTERMEDIATE
+      use VECTORSMODULE, only: COPYVECTOR, SUBTRACTFROMVECTOR, CLONEVECTOR, MULTIPLY
       ! Dummy arguments
       type (Matrix_SPD_T), intent(inout) :: MATRIX ! Normal equation matrix
       type (Vector_T), intent(inout) :: RHSOUT ! Right hand side in state space
@@ -1518,6 +1519,9 @@ contains
 end module ALGEBRA_M
 
 ! $Log$
+! Revision 2.26  2011/05/09 18:04:51  pwagner
+! Converted to using switchDetail
+!
 ! Revision 2.25  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
 !
