@@ -32,14 +32,14 @@ contains ! =====     Public Procedures     =============================
   subroutine FindMatchForL2PCQ ( l2pcQ, fmConf, FwdModelIn, FwdModelExtra, &
     & stateQ, foundInFirst )
 
-    use ForwardModelConfig, only: FORWARDMODELCONFIG_T
-    use ForwardModelVectorTools, only: GetQuantityForForwardModel
-    use Intrinsic, only: L_FIELDAZIMUTH, L_FIELDELEVATION, L_FIELDSTRENGTH, &
+    use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
+    use FORWARDMODELVECTORTOOLS, only: GETQUANTITYFORFORWARDMODEL
+    use INTRINSIC, only: L_FIELDAZIMUTH, L_FIELDELEVATION, L_FIELDSTRENGTH, &
       & L_TEMPERATURE, L_TSCAT, L_VMR
-    use ManipulateVectorQuantities, only: DOFGRIDSMATCH, DOHGRIDSMATCH, &
+    use MANIPULATEVECTORQUANTITIES, only: DOFGRIDSMATCH, DOHGRIDSMATCH, &
       & DOVGRIDSMATCH
-    use Molecules, only: L_EXTINCTION, L_EXTINCTIONV2
-    use VectorsModule, only: VectorValue_T, Vector_T
+    use MOLECULES, only: L_EXTINCTION, L_EXTINCTIONV2
+    use VECTORSMODULE, only: VECTORVALUE_T, VECTOR_T
 
     type (VectorValue_T), intent(in) :: L2PCQ ! Quantity to search for
     type (ForwardModelConfig_T), intent(in) :: fmConf ! Forward model config
@@ -137,22 +137,23 @@ contains ! =====     Public Procedures     =============================
     ! 4.  From the eligible ones, pick the minimum cost, which depends
     !     upon selectorType
 
-    use Allocate_Deallocate, only: ALLOCATE_TEST
-    use ForwardModelConfig, only: FORWARDMODELCONFIG_T
-    use Intrinsic, only: L_FIELDAZIMUTH, L_FIELDELEVATION, L_FIELDSTRENGTH, &
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST
+    use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
+    use INTRINSIC, only: L_FIELDAZIMUTH, L_FIELDELEVATION, L_FIELDSTRENGTH, &
       & L_LATITUDE, L_NAMEFRAGMENT, L_SZA, L_TEMPERATURE, L_TSCAT, L_VMR, L_ZETA
     use L2PC_M, only: BINSELECTORS, BINSELECTOR_T, L2PCDATABASE
-    use ManipulateVectorQuantities, only: FINDONECLOSESTINSTANCE
-    use MLSFillValues, only: ESSENTIALLYEQUAL
-    use MLSKinds, only: R8
-    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
-    use MLSSignals_m, only: GetSidebandLoop, GetSignalName, signals
-    use Output_m, only: Output
-    use QuantityTemplates, only: QuantityTemplate_T
-    use String_Table, only: Display_String, Index, Len
-    use Toggles, only: SWITCHES
-    use VectorsModule, only: GETVECTORQUANTITYBYTYPE, VALIDATEVECTORQUANTITY, &
-      & VectorValue_T, Vector_T
+    use MANIPULATEVECTORQUANTITIES, only: FINDONECLOSESTINSTANCE
+    use MLSFILLVALUES, only: ESSENTIALLYEQUAL
+    use MLSKINDS, only: R8
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+    use MLSSIGNALS_M, only: GETSIDEBANDLOOP, GETSIGNALNAME, SIGNALS
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use OUTPUT_M, only: OUTPUT
+    use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T
+    use STRING_TABLE, only: DISPLAY_STRING, INDEX, LEN
+    use TOGGLES, only: SWITCHES
+    use VECTORSMODULE, only: GETVECTORQUANTITYBYTYPE, VALIDATEVECTORQUANTITY, &
+      & VECTORVALUE_T, VECTOR_T
 
     type(forwardModelConfig_T), intent(in) :: FMCONF
     type(vector_T), intent(in) ::  FWDMODELIN
@@ -348,7 +349,7 @@ contains ! =====     Public Procedures     =============================
       end do                        ! Loop over selectors
     end do                          ! Loop over bins
 
-    if ( index ( switches, 'binsel' ) /= 0 ) then
+    if ( switchDetail ( switches, 'binsel' ) > -1 ) then
       call output ( 'Choosing bin for ' )
       call GetSignalName ( signal, signalName, sideband=sideband )
       call output ( trim(signalName), advance='yes' )
@@ -452,6 +453,9 @@ contains ! =====     Public Procedures     =============================
 end module L2PCBins_m
 
 ! $Log$
+! Revision 2.7  2011/05/09 17:48:37  pwagner
+! Converted to using switchDetail
+!
 ! Revision 2.6  2010/08/27 23:42:10  vsnyder
 ! Make SidebandStart etc. optional
 !
