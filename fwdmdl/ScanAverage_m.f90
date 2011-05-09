@@ -10,7 +10,7 @@
 ! foreign countries or providing access to foreign persons.
 
 module ScanAverage_m
-  use MLSCommon, only: RP
+  use MLSKinds, only: RP, RV
 
   implicit NONE
   private
@@ -47,8 +47,9 @@ contains
     ! Average over each MIF.  Assume linear motion during the MIF.
     ! Assume the MIFs begin at MIF_Times + deadTime.
 
-    use MLSCommon, only: RP, RV
-    use MLSNumerics, only: InterpolateValues
+    use MLSFILLVALUES, only: ISNAN
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_WARNING
+    use MLSNUMERICS, only: INTERPOLATEVALUES
 
     real(rv), intent(in) :: MIF_Times(:)   ! MIF starts here + deadTime
     real(rv), intent(in) :: DeadTime ! How much of each MIF is not collecting data
@@ -71,6 +72,9 @@ contains
       ! Interpolate from (Chi_In,Y_in) to (x,y) and to (x,dy)
       call interpolateValues ( chi_in, y_in, x, y, &
                              & METHOD='S', extrapolate='C', dYbYdX=dY )
+      if ( any(isNaN(y)) ) &
+        & call MLSMessage( MLSMSG_Warning, ModuleName // 'ScanAverage_1D', &
+        & 'NaNs returned by 1st interpolation' )
       ! Integrate panels of y and dy
       do i = 1, size(y_out)
         y_out(i) = dot_product(y(1+(i-1)*ng:i*ng),gw)
@@ -80,6 +84,9 @@ contains
       ! Interpolate from (Chi_In,Y_in) to (x,y)
       call interpolateValues ( chi_in, y_in, x, y, &
                              & METHOD='S', extrapolate='C' )
+      if ( any(isNaN(y)) ) &
+        & call MLSMessage( MLSMSG_Warning, ModuleName // 'ScanAverage_1D', &
+        & 'NaNs returned by 2nd interpolation' )
       ! Integrate panels of y
       do i = 1, size(y_out)
         y_out(i) = dot_product(y(1+(i-1)*ng:i*ng),gw)
@@ -95,9 +102,8 @@ contains
     ! Assume MIF_Times are midway between T1 and T2-deadTime, where T1 and
     ! T2 are the beginning and ending times for MIF integration.
 
-    use MLSCommon, only: RP, RV
-    use MLSNumerics, only: Coefficients => Coefficients_r8, InterpolateArraySetup, &
-      & InterpolateArrayTeardown, InterpolateValues
+    use MLSNUMERICS, only: COEFFICIENTS => COEFFICIENTS_R8, INTERPOLATEARRAYSETUP, &
+      & INTERPOLATEARRAYTEARDOWN, INTERPOLATEVALUES
 
     real(rv), intent(in) :: MIF_Times(:) ! MIF starts here + deadTime
     real(rv), intent(in) :: DeadTime ! How much of each MIF is not collecting data
@@ -152,10 +158,9 @@ contains
     ! Assume MIF_Times are midway between T1 and T2-deadTime, where T1 and
     ! T2 are the beginning and ending times for MIF integration.
 
-    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-    use MLSCommon, only: RP, RV
-    use MLSNumerics, only: InterpolateValues
-    use Sort_m, only: Sortp
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use MLSNUMERICS, only: INTERPOLATEVALUES
+    use SORT_M, only: SORTP
 
     real(rv), intent(in) :: MIF_Times(:) ! MIF starts here + deadTime
     real(rv), intent(in) :: DeadTime ! How much of each MIF is not collecting data
@@ -225,6 +230,9 @@ contains
 end module ScanAverage_m
 
 ! $Log$
+! Revision 2.7  2011/05/09 17:54:29  pwagner
+! Warns of NaNs retruned by interpolations
+!
 ! Revision 2.6  2009/06/23 18:26:10  pwagner
 ! Prevent Intel from optimizing ident string away
 !
