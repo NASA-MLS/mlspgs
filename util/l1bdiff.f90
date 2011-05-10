@@ -552,8 +552,11 @@ contains
         if ( options%maf1 > 0 ) maf1 = options%maf1
         maf2 = NoMAFs
         if ( options%maf2 > 0 ) maf2 = options%maf2
-        ! if ( options%verbose ) print *, 'About to diff'
-        if ( .not. options%silent ) print *, 'About to diff ', trim(sdName)
+        if ( options%verbose ) then
+          print *, 'About to diff'
+        elseif ( .not. options%silent ) then
+          print *, trim(sdName)
+        endif
         mustDiff = .true.
         if ( associated(L1bData%dpField) .and. associated(L1bData2%dpField) ) then
           if ( all(L1bData%dpField == L1bData2%dpField) ) mustDiff = .false.
@@ -568,7 +571,7 @@ contains
         elseif ( options%oneD .and. associated(L1bData%dpField) ) then
           ! We will store L1BData%dpField in a values array
           nsize = product(shape(L1bData%dpField))
-          if ( .not. options%silent ) print *, 'About to do it 1-d ' // dumpOptions, nsize
+          if ( options%verbose ) print *, 'About to do it 1-d ' // dumpOptions, nsize
           call dump( L1bData%dpField-L1bData2%dpField, 'L1bData%dpField diff', &
             & options=dumpOptions )
           ! stop
@@ -580,13 +583,13 @@ contains
           call deallocate_test( L1bData2%dpField, 'l1bData%Values2', ModuleName )
           if ( options%timing ) call SayTime( 'Copying values to 1-d arrays', stime )
           stime = t2
-          print *, 'About to do it 1-d ' // dumpOptions, nsize
+          if ( options%verbose ) print *, 'About to do it 1-d ' // dumpOptions, nsize
           call diff(L1bData, L1bData2, numDiffs=numDiffs, options=dumpOptions, &
             & l1bValues1=l1bValues1, l1bValues2=l1bValues2 )
           call deallocate_test( L1bValues1, 'l1bValues1', ModuleName )
           call deallocate_test( L1bValues2, 'l1bValues2', ModuleName )
         elseif ( options%direct .or. .not. associated(L1bData%dpField) ) then
-          if ( .not. options%silent ) print *, 'About to do it direct ' // dumpOptions
+          if ( options%verbose ) print *, 'About to do it direct ' // dumpOptions
           call diff(L1bData, L1bData2, numDiffs=numDiffs, options=dumpOptions )
         else
           ! print *, 'details=0'
@@ -807,6 +810,9 @@ end program l1bdiff
 !==================
 
 ! $Log$
+! Revision 1.19  2010/07/23 17:51:26  pwagner
+! Now able to diff hdf4-formatted files
+!
 ! Revision 1.18  2009/11/20 23:00:50  pwagner
 ! Should not segfault when diffing DACS datasets
 !
