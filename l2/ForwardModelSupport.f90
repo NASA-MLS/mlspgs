@@ -512,7 +512,7 @@ contains ! =====     Public Procedures     =============================
     info%num_size_bins = 40
     info%phiwindow = 5
     info%polarized = .false.
-    info%refract = switchDetail(switches,'norf') == 0 ! Default .true.
+    info%refract = switchDetail(switches,'norf') < 0 ! Default .true.
     info%scanAverage = .false.
     info%sideBandStart = -1
     info%sideBandStop = 1
@@ -1490,6 +1490,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.157  2011/05/10 17:11:28  pwagner
+! Corrected goof that changed info%refract default
+!
 ! Revision 2.156  2011/05/09 18:09:30  pwagner
 ! Converted to using switchDetail
 !
