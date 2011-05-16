@@ -210,6 +210,7 @@ libhdf_objs_2 := $(shell ${REECHO} -dir ${HDF} -path hdf -libart df)
 libhdf_objs_3 := $(shell ${REECHO} -dir ${HDF} -path hdf -libart jpeg)
 libhdf5_objs_1 := $(shell ${REECHO} -dir ${HDF5} -path hdf5 -libart hdf5_fortran)
 libhdf5_objs_2 := $(shell ${REECHO} -dir ${HDF5} -path hdf5 -libart hdf5)
+libhdf5_objs_3 := $(shell ${REECHO} -dir ${HDF5} -path hdf5 -libart hdf5_hl)
 libhdfeos_objs := $(shell ${REECHO} -dir ${HDFEOS} -path hdfeos -libart hdfeos)
 libhdfeos5_objs := $(shell ${REECHO} -dir ${HDFEOS5} -path hdfeos5 -libart he5_hdfeos)
 libpgstk_objs := $(shell ${REECHO} -dir ${PGSTK} -path pgstk -libart PGSTK)
@@ -230,7 +231,7 @@ libcfm_all.a: $(libl2_objs) $(ALLOBJS) \
   $(libcloud_objs) $(libfwdmdl_objs) $(libmls_objs) \
   $(libmlspack_objs) $(libutctotai_objs) \
   $(libhdf_objs_1) $(libhdf_objs_2) $(libhdf_objs_3) \
-  $(libhdf5_objs_1) $(libhdf5_objs_2) \
+  $(libhdf5_objs_1) $(libhdf5_objs_2) $(libhdf5_objs_3) \
   $(libhdfeos_objs) $(libhdfeos5_objs) $(libgctp_objs) \
   $(libpgstk_objs) $(libpvm_objs_1) $(libpvm_objs_2) $(libpvm_objs_3) \
   $(libsz_objs) $(libz_objs)
@@ -340,6 +341,10 @@ $(libhdf5_objs_2): ${HDF5}/libhdf5.a
 	if [ ! -d "$(libhdf5_dir)" ]; then mkdir "$(libhdf5_dir)"; fi
 	cd "$(libhdf5_dir)"; ar x $?
 
+$(libhdf5_objs_3): ${HDF5}/libhdf5_hl.a
+	if [ ! -d "$(libhdf5_dir)" ]; then mkdir "$(libhdf5_dir)"; fi
+	cd "$(libhdf5_dir)"; ar x $?
+
 $(libhdfeos_objs): ${HDFEOS}/libhdfeos.a
 	if [ ! -d "$(libhdfeos_dir)" ]; then mkdir "$(libhdfeos_dir)"; fi
 	cd "$(libhdfeos_dir)"; ar x $?
@@ -383,6 +388,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.6  2010/10/02 00:46:38  pwagner
+# Should be able to build shared objects no matter what
+#
 # Revision 1.5  2010/08/27 20:57:16  pwagner
 # Uses optional HDF*INC Makefile variables
 #
