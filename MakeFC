@@ -199,6 +199,7 @@ SHELL = /bin/sh
 #                    also create shell scripts in INSTALLDIR for each program
 # install-all    -- build and install mlsl*, tools, libraries
 # install-cfm    -- build callable forward model library, move it to INSTALLDIR
+# install-idlcfm -- build cfm server, client, move it to INSTALLDIR
 # install-fullcfm -- same as above for full, standalone version
 # install-ln     -- mv program mlsln from sub-subs to INSTALLDIR
 #                    also create shell script in INSTALLDIR for the program
@@ -222,6 +223,7 @@ SHELL = /bin/sh
 # end_stmts      
 # f90tex         
 # h5cat          
+# Goldbrick_More
 # h5subset       
 # heconvert      
 # hl             
@@ -235,6 +237,7 @@ SHELL = /bin/sh
 # l2gpcat        
 # l2gpdiff       
 # l2gpdump       
+# l2pcdiff
 # l2pcdump       
 # l2q            
 # machineok      
@@ -348,7 +351,7 @@ EXCL_MLSCONFG = $(shell ${REECHO} -d -dirn lib/machines -prefix='--exclude' -suf
 
 # OTHER_SUBDIRS are *not* built automatically:
 # you must either name them individually, or use the "all" target
-OTHER_SUBDIRS = fwdmdl cloudfwdm cfm
+OTHER_SUBDIRS = fwdmdl cloudfwdm cfm idlcfm
 #         All the subdirectories
 
 #You may build all the subdirectories via the "all" target; i.e.,
@@ -365,8 +368,8 @@ SUBDIRS := $(shell ${REECHO} -d blas lib $(LEVELS) $(OTHER_SUBDIRS))
 # because they are outside mlspgs
 EVERYTHING = $(SUBDIRS)  srclib \
    util sids tables notes tests scripts \
-   cfm doc \
-   $(MakeFName) README.$(MakeFName) BEFORE.mls
+   cfm doc idlcfm \
+   $(MakeFName) README.$(MakeFName) BEFORE.mls license.txt
      
 # This is in case tar doesn't summon GNU tar, you may still use it via
 # something like
@@ -691,7 +694,7 @@ install:
 	@cp $(MLSBIN)/mlsnrt.sh $(INSTALLDIR)
 
 # install the mls programs, libraries, etc. from $(LEVELS) into $(INSTALLDIR)
-install-cfm:
+install-cfm: cfm
 	@$(MAKE) -f $(MakeFName) -C cfm alone
 	cp cfm/$(MLSCONFG)/libcfm.* $(INSTALLDIR); \
    if [ -f cfm/$(MLSCONFG)/cfm.mod ] ; then \
@@ -700,26 +703,29 @@ install-cfm:
 	@echo "This cfm library needs other toolkit libraries to link properly"; \
 	echo "install-fullcfm to install stand-alone version"
 
-install-fullcfm:
+install-fullcfm: cfm
 	$(MAKE) -f $(MakeFName) -C cfm all
 	cp cfm/$(MLSCONFG)/libcfm_all.* $(INSTALLDIR); \
    if [ -f cfm/$(MLSCONFG)/cfm.mod ] ; then \
      cp cfm/$(MLSCONFG)/cfm.mod $(INSTALLDIR) ; \
    fi
 
-install-l1:
+install-idlcfm: idlcfm
+	@$(MAKE) -f $(MakeFName) -C idlcfm install
+
+install-l1: l1
 	@$(MAKE) -f $(MakeFName) install LEVELS=l1
 
-install-l2:
+install-l2: l2
 	@$(MAKE) -f $(MakeFName) install LEVELS=l2
 
-install-l3:
+install-l3: l3
 	@$(MAKE) -f $(MakeFName) install LEVELS="l3 l3m"
 
-install-l3d:
+install-l3d: l3 l3m
 	@$(MAKE) -f $(MakeFName) install LEVELS=l3
 
-install-l3m:
+install-l3m: l3m
 	@$(MAKE) -f $(MakeFName) install LEVELS=l3m
 
 install-nrt: install-l1 install-l2
@@ -781,6 +787,11 @@ end_stmts: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/end_stmts.f90
 	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
 f90tex: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/f90tex.f90
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+Goldbrick_More: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/Goldbrick_More.f90
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ -M $(MAKE) \
 	-C $(MLSCFILE) $(MLSBIN)/$@.f90
@@ -869,6 +880,11 @@ l2gpdiff: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l2gpdiff.f90 l1--itm
 l2gpdump: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l2gpdump.f90 l1--itm
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+l2pcdiff: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l2pcdiff.f90 l2
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m l2 \
 	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
 l2pcdump: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l2pcdump.f90 l2
@@ -1200,31 +1216,34 @@ show_copy:
 
 #----------------------- Bare target dependencies
 
-$(LEVELS): lib
+#$(LEVELS): lib
 
-$(OTHER_SUBDIRS): lib
+#$(OTHER_SUBDIRS): lib
 
-lib: blas
+#lib: blas
 
 all: $(SUBDIRS)
 
 subdirs: $(SUBDIRS)
 
-l2: fwdmdl cloudfwdm
+#l2: fwdmdl cloudfwdm
 
-l3m: l3
+#l3m: l3
 
-install: $(LEVELS)
+# install: $(LEVELS)
 
-install-all: install tools install-cfm install-fullcfm
+install-all: install tools install-cfm install-fullcfm install-idlcfm
 
 update:
 
 # Make most the source-file tools in the util directory
-tools: chunktimes checkpvmup compare dateconverter heconvert h5subset h5cat hl \
+tools: chunktimes checkpvmup compare dateconverter \
+  heconvert h5subset h5cat hl Goldbrick_More \
   killmaster \
-  l1bdiff l1h5subset l2auxcat l2auxchi l2auxdump l2gpcat l2gpdiff l2gpdump \
-  l2pcdump l2q machineok Spartacus tellMasterToQuit WordSplit wrapLines
+  l1bdiff l1h5subset \
+  l2auxcat l2auxchi l2auxdump l2gpcat l2gpdiff l2gpdump \
+  l2pcdiff l2pcdump l2q \
+  machineok Spartacus tellMasterToQuit WordSplit wrapLines
 
 .PHONY: all configure clean clean_config\
   configure_pvm configure_fopts configure_full configure_help configure_subdirs\
@@ -1239,15 +1258,20 @@ tools: chunktimes checkpvmup compare dateconverter heconvert h5subset h5cat hl \
   internaladd_copy internalreset_copy show_copy internalupdate levels l2q \
   makefile mostlyclean Spartacus $(SUBDIRS) subdirs\
   substar tarz substarz targ substarg substars tar update\
-  checkpvmup chunktimes CondenseLeakLog end_stmts f90tex heconvert init_gen \
-  h5subset h5cat hl killmaster tellMasterToQuit \
+  checkpvmup chunktimes CondenseLeakLog end_stmts f90tex Goldbrick_More \
+  heconvert init_gen \
+  h5subset h5cat hl killmaster \
   l1bdiff l1h5subset l2auxcat l2auxchi l2auxdump l2gpcat l2gpdiff l2gpdump \
-  l2pcdump Mie_Tables Mie_Tables_nohdf machineok MLS_h5ls utctotai \
+  l2pcdump \
+  machineok Mie_Tables Mie_Tables_nohdf MLS_h5ls utctotai tellMasterToQuit \
   WordSplit wrapLines tools
   
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.128  2010/10/02 00:09:17  pwagner
+# Tries to automatically created shared libraries, too
+#
 # Revision 1.127  2010/10/01 20:23:46  pwagner
 # Hasty change to allow building init_gen
 #
