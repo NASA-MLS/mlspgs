@@ -36,10 +36,12 @@ module IDLCFM_m
 
   subroutine ICFMReceiveQuantity ( QT, values, mask, tid, callrecv)
     use Allocate_Deallocate, only: ALLOCATE_TEST
-    use MLSCommon, only: R8
-    use QuantityTemplates, only: QUANTITYTEMPLATE_T, SETUPNEWQUANTITYTEMPLATE, l_none
+    use ConstructQuantityTemplates, only: noProperties, propertyTable, &
+      & p_majorFrame, p_minorFrame
+    use INTRINSIC, only: L_NONE
+    use MLSKinds, only: R8
+    use QuantityTemplates, only: QUANTITYTEMPLATE_T, SETUPNEWQUANTITYTEMPLATE
     use VectorsModule, only: CREATEMASKARRAY
-    use ConstructQuantityTemplates, only: noProperties, propertyTable, p_majorFrame, p_minorFrame
 
     type (QuantityTemplate_T), intent(out) :: QT ! Template for quantity
     ! It's not inout, because then setupNewQuantityTemplate would deallocate
@@ -302,3 +304,6 @@ module IDLCFM_m
 end module IDLCFM_m
 
 ! $Log$
+! Revision 1.1  2011/03/15 15:23:51  honghanh
+! Initial imports
+!
