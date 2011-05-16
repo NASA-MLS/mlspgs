@@ -529,25 +529,48 @@ contains
     call PVMIDLStat ( stat, info, msg )
   end subroutine PVMIDLunpackChararr1
 
-  subroutine PVMIDLunpackChararr2(values,info,msg)
+  subroutine PVMIDLunpackChararr2(values,info,msg, doreshape)
     character(len=1), intent(out), dimension(:,:) :: values
     integer, intent(out), optional :: info
     character (LEN=*), intent(in), optional :: msg
+    ! reshape a one-dimensional array to 2-dimensional array if needed
+    ! this is to support communication with IDL because IDL tends to collapse
+    ! array dimensions if it can
+    logical, intent(in), optional :: doreshape
 
     integer :: details(2), sentShape(3), stat
+    character(len=1), dimension(size(values)) :: temparr
+    logical :: myreshape = .false.
 
+    if (present(doreshape) .and. doreshape) myreshape = .true.
     ! First unpack noDims and a 3 to indicate integer (LONG in IDL of course)
     call pvmf90unpack( details, stat)
 
     if (stat==0) then 
-       if (any(details/= (/2,1/)) ) stat= -200 ! rank two byte array
+       if (any(details/= (/2,1/)) .and. .not. (all(details == (/1,1/)) .and. myreshape)) then
+           stat= -200
+       endif
 
        ! Now output the dimensions themselves
-       if (stat==0) call pvmf90unpack( sentShape,stat)
-       if (any(sentShape(1:2)/=shape(values))) stat= -201
-       
-       ! Now unpack the data itself
-       if (stat==0) call pvmf90unpack(values,stat)
+       if (stat==0) then
+           if (all(details == (/1,1/))) then
+               call pvmf90unpack(sentshape(1:2), stat)
+               if (sentshape(1) /= size(values)) stat = -201
+           else
+               call pvmf90unpack( sentShape,stat)
+               if (any(sentShape(1:2)/=shape(values))) stat= -201
+           endif
+
+           ! Now unpack the data itself
+           if (stat==0) then
+               if (all(details == (/1,1/))) then
+                   call pvmf90unpack(temparr, stat)
+                   if (stat == 0) values = reshape(temparr, shape(values))
+               else
+                   call pvmf90unpack(values,stat)
+               endif
+           endif
+       endif
     end if
     call PVMIDLStat ( stat, info, msg )
   end subroutine PVMIDLunpackChararr2
@@ -644,25 +667,48 @@ contains
     call PVMIDLStat ( stat, info, msg )
   end subroutine PVMIDLunpackRealarr1
 
-  subroutine PVMIDLunpackRealarr2(values,info,msg)
+  subroutine PVMIDLunpackRealarr2(values,info,msg, doreshape)
     real (r8), intent(out), dimension(:,:) :: values
     integer, intent(out), optional :: info
     character (LEN=*), intent(in), optional :: msg
+    ! reshape a one-dimensional array to 2-dimensional array if needed
+    ! this is to support communication with IDL because IDL tends to collapse
+    ! array dimensions if it can
+    logical, optional :: doreshape
 
     integer :: details(2), sentShape(3), stat
+    real(r8), dimension(size(values)) :: temparr
+    logical :: myreshape = .false.
 
+    if (present(doreshape) .and. doreshape) myreshape = .true.
     ! First unpack noDims and a 5 to indicate double
     call pvmf90unpack( details, stat)
 
     if (stat==0) then 
-       if (any(details/= (/2,5/)) ) stat= -200
+       if (any(details/= (/2,5/)) .and. .not. (all(details == (/1,5/)) .and. myreshape)) then
+           stat= -200
+       endif
 
        ! Now output the dimensions themselves
-       if (stat==0) call pvmf90unpack( sentShape,stat)
-       if (any(sentShape(1:2)/=shape(values))) stat= -201
+       if (stat==0) then
+           if (all(details == (/1,5/))) then
+               call pvmf90unpack(sentshape(1:2), stat)
+               if (sentshape(1) /= size(values)) stat = -201
+           else
+               call pvmf90unpack( sentShape,stat)
+               if (any(sentShape(1:2)/=shape(values))) stat= -201
+           endif
        
-       ! Now unpack the data itself
-       if (stat==0) call pvmf90unpack(values,stat)
+           ! Now unpack the data itself
+           if (stat==0) then
+               if (all(details == (/1,5/))) then
+                   call pvmf90unpack(temparr, stat)
+                   if (stat == 0) values = reshape(temparr, shape(values))
+               else
+                   call pvmf90unpack(values,stat)
+               endif
+           endif
+       endif
     end if
     call PVMIDLStat ( stat, info, msg )
   end subroutine PVMIDLunpackRealarr2
@@ -1280,6 +1326,9 @@ contains
 end module PVMIDL
 
 ! $Log$
+! Revision 2.15  2011/05/16 22:31:42  pwagner
+! Supports communication with collapse-prone idl
+!
 ! Revision 2.14  2009/06/23 18:25:42  pwagner
 ! Prevent Intel from optimizing ident string away
 !
