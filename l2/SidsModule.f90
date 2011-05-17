@@ -254,23 +254,14 @@ contains
           call CopyVector ( saveState, fwdModelIn, clone=.true. )
           doThisOne=.true.
         else
-          thisPtb = perturbation%quantities(quantity)%values(element,instance)
+          thisPtb =perturbation%quantities(quantity)%values(element,instance)
           doThisOne = thisPtb /= 0.0
-          if ( perturbation%quantities(quantity)%template%logBasis ) &
-            & thisPtb = exp(thisPtb)
           if ( doThisOne ) then
             call CopyVector ( fwdModelIn, saveState ) ! Get saved state
             ! Perturb it
-            if ( perturbation%quantities(quantity)%template%logBasis ) then
-              fwdModelIn%quantities(quantity)%values(element,instance) = &
-                & fwdModelIn%quantities(quantity)%values(element,instance) + &
-                & thisPtb
-            else
-              fwdModelIn%quantities(quantity)%values(element,instance) = &
-                & log(exp( &
-                  & fwdModelIn%quantities(quantity)%values(element,instance) ) + &
-                  & thisPtb)
-            end if
+            fwdModelIn%quantities(quantity)%values(element,instance) = &
+              & fwdModelIn%quantities(quantity)%values(element,instance) + &
+              & thisPtb
           end if
         end if
       end if
@@ -493,6 +484,11 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.65  2011/05/17 00:44:14  vsnyder
+! Remove ill-advised handling of perturbation for logBasis molecules.  The
+! logBasis flag only affects copying to the forward model's grid structures,
+! not how mixing ratios are stored in vector quantities.
+!
 ! Revision 2.64  2011/05/17 00:26:25  vsnyder
 ! Handle log-basis perturbation correctly
 !
