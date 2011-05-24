@@ -1,0 +1,107 @@
+\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9in
+
+\newcommand{\docname}{\bf wvs-084r1}
+\newcommand{\docdate}{24 May 2011}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill, Dong, Van\\
+Subject: \>Total IWC\\
+From: \>Van Snyder\\
+Reference: \>wvs-066
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+\section{Ice particle size distribution}
+
+Quoting from wvs-066:
+
+\newcommand{\I}{\text{IWC}}
+
+Let $D = 2r$ and $n(D) = n_1(D) + n_2(D)$ where
+\begin{equation*}\begin{array}{cc}
+ n_1(D) = N_1 D \exp(-\alpha D) &
+ n_2(D) = \frac{N_2}D \exp \left( -\frac12 \gamma^2\right) \\
+ N_1 = \frac{\I_{<100}\, \alpha^5}{4 \pi \rho_{\text{ice}}}
+ &
+ N_2 = \frac6{\sqrt{2 \pi^3}}
+       \frac{\I_{>100}}
+            {D_0^3 \rho_{\text{ice}} \sigma \exp( 3 \mu + 4.5 \sigma^2)}\,, \\
+ \gamma = \frac{\log(D/D_0) - \mu}\sigma & \\
+\end{array}\end{equation*}
+%
+$D_0 = 1 \mu$m, $\rho_{\text{ice}} = 0.91$ g/cm$^3$.
+
+\begin{equation*}\begin{split}
+ & \I_{<100} = \min[\I,0.252(\I/\I_0)^{0.837}] \\
+ & \I_{>100} = \I - \I_{<100} \\
+ & \alpha = -4.99\times 10^{-3} - 0.0494
+              \log_{10} (\I_{<100}/\I_0) \\
+ & \mu = (5.2 + 0.0013 T) + (0.026 - 1.2 \times 10^{-3}T)
+          \log_{10} (\I_{>100}/\I_0) \\
+ & \sigma = (0.47 + 2.1 \times 10^{-3}T) + (0.018 - 2.1 \times 10^{-4} T)
+             \log_{10} (\I_{<100}/\I_0)
+\end{split}\end{equation*}
+%
+where IWC$_0$ = 1 g/m$^3$ and $T$ is the atmospheric temperature in Celsius.
+
+\section{Total IWC}
+
+The total ice-water content is defined as
+
+\begin{equation*}
+\I_\text{total} = \int_0^\infty r^3 n(D)\, \text{d}r =
+\int_0^\infty r^3 n_1(D)\, \text{d} r + \int_0^\infty r^3 n_2(D)\, \text{d} r\,.
+\end{equation*}
+
+According to Maple, these integrals can be expressed explicitly as
+
+\begin{equation*}
+\int_0^\infty r^3 n_1(D)\, \text{d} r = \frac32\, \frac{N_1}{\alpha^5}\,
+ \text{ and }
+\int_0^\infty r^3 n_2(D)\, \text{d} r =
+ \sqrt{2 \pi}\, \frac{\sigma}{16}\, D_0^3 N_2
+  \exp\left( \frac92 \sigma^2 + 3 \mu \right)\,.
+\end{equation*}
+
+After substituting $N_1$ and $N_2$ this simplifies to
+
+\begin{equation*}
+\I_\text{total} = \frac3{8\pi\rho_\text{ice}} \left( \I_{<100} + \I_{>100}
+\right) = \frac3{8\pi\rho_\text{ice}}\, \I
+\end{equation*}
+
+\label{lastpage}
+\end{document}
+% $Id$
+
+% $Log$
