@@ -24,7 +24,7 @@ MakeFName = MakeFC
 # then (re)name the Makefiles in /l2 /lib etc. also MakeFC
 
 # where to store .configure; 
-CONFDIR=${HOME}/mlspgs
+CONFDIR=..
 
 UTILDIR=$(CONFDIR)/util
 
@@ -38,11 +38,13 @@ REECHO=$(UTILDIR)/reecho.sh
 
 # Errors in the .tex sources require us to omit the following
 OMIT_SRCS := wvs-010.tex wvs-074.tex wvs-051-neural_body.tex wvs-083.tex \
-     wvs-089.tex wvs-095.tex iy-002.tex iy-003.tex
+     wvs-089.tex wvs-095.tex iy-002.tex iy-003.tex iy-008.tex iy-009.tex \
+     iy-010.tex texmacros.tex
 OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
 OMIT_SRCS_REV := 'wvs-004\*.tex' 'wvs-051\*.tex' 'wvs-063\*.tex'
 OMIT_SRCS_SUB := 'iy-001-\*.tex' \
-   'iy-002-\*.tex' 'iy-003-\*.tex' 'iy-004-\*.tex'
+   'iy-002-\*.tex' 'iy-003-\*.tex' 'iy-004-\*.tex' 'iy-008-\*.tex' \
+   'iy-009-\*.tex' 'iy-010-\*.tex'
 OMIT_PREFXD_REV := $(shell ${REECHO} -prefix=-d -escape -nlast $(OMIT_SRCS_REV))
 OMIT_PREFXD_SUB := $(shell ${REECHO} -prefix=-d -escape $(OMIT_SRCS_SUB))
 
@@ -150,6 +152,9 @@ update: internalupdate
 
 # ========================================================================
 # $Log$
+# Revision 1.12  2010/12/07 00:22:21  pwagner
+# Works correctly with current directory contents
+#
 # Revision 1.11  2010/07/14 20:54:39  pwagner
 # Simple fix to problem redefining SUBDIRS
 #
