@@ -19,7 +19,7 @@ MakeFName = MakeFC
 #     make -f $(MakeFName)
 
 # where to store .configure; 
-CONFDIR=${HOME}/mlspgs
+CONFDIR=../..
 
 UTILDIR=$(CONFDIR)/util
 
@@ -129,6 +129,9 @@ update: internalupdate
 
 # ========================================================================
 # $Log$
+# Revision 1.3  2010/06/30 22:07:46  pwagner
+# make update removes sometimes troublesome .toc file
+#
 # Revision 1.2  2010/01/06 17:35:48  pwagner
 # Does a better job of building only when it must
 #
