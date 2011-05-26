@@ -1136,7 +1136,7 @@ contains
       call TimeStamp ( '   Finished', advance='yes' )
       call dump( chunkNiceTids, 'chunkNiceTids', options='t' )
       call dump( chunkTids, 'chunkTids' )
-      call dump( machines%tid, 'machines%Tid', format='(i8)' )
+      call dump( machines%tid, 'machines%Tid', format='(i10)' )
     endif
     ! First kill any children still running (only if we got a give up message).
     call KillSlaves(.false., '')  ! use any string here because isKillMaster = false
@@ -2008,6 +2008,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.98  2011/05/26 20:39:34  pwagner
+! Widened fields for dumping machinesTid
+!
 ! Revision 2.97  2011/05/09 18:21:38  pwagner
 ! Converted to using switchDetail
 !
