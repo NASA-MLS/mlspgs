@@ -30,6 +30,7 @@ SRCLIB=../srclib
 depends_where:=$(libmls_sources) $(srclib) \
    $(libfwdmdl_sources) $(libcloud_sources)
 PROG_prereqs := $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
+	  $(libblas_objs)/libmlspack.a \
 	  $(libmls_objs)/libmls.a \
 	  $(libfwdmdl_objs)/libfwdmdl.a \
 	  $(libcloud_objs)/libcloud.a $(REECHO) \
@@ -50,13 +51,13 @@ CUSTOM_PREFXD := $(shell ${REECHO} -prefix=-db $(CUSTOM_BUILDS))
 
 $(PROG): $(PROG_prereqs)
 		@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
-        UNPREFXDPTHS="$(ADD2PATHS)" ;\
+        UNPREFXDPTHS="$(ADD2PATHS)" MARK_ALL_AS_UPTODATE=no;\
         return_status=`expr $$?` ; \
         if [ $$return_status != "0" ]; then \
 		     exit 2 ; \
         elif [ "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
 		     $(MAKE) mark_all_as_uptodate \
-           UNPREFXDPTHS="$(ADD2PATHS)" MARK_ALL_AS_UPTODATE= ;\
+           UNPREFXDPTHS="$(ADD2PATHS)" MARK_ALL_AS_UPTODATE=yes ;\
          fi
 
 .DELETE_ON_ERROR:
@@ -145,6 +146,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.73  2011/05/26 20:40:48  pwagner
+# Small tweaks; do they fix anything?
+#
 # Revision 2.72  2010/10/12 22:24:29  pwagner
 # Uses Makefile.h from srclib
 #
