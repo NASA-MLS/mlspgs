@@ -60,6 +60,8 @@ INC_PATHS := $(EXTRA_PATHS) \
 .c.o:
 	$(CC) -c $(COPTS) ${INC_PATHS} -DNAGf90Fortran $<
 
+libmlspack.a: sdot.o
+
 # This is the default name of the configure file
 # It may be overridden for multiple platforms, special options, etc.
 ifdef HOSTMLSCFILE
@@ -180,6 +182,9 @@ sddot.o: ../sddot.f
 	$(FC) -c $(DUSTY_NO_OPT) -O $(INC_PATHS) ../sddot.f $(FAFTER)
 
 # $Log$
+# Revision 1.7  2009/07/17 20:27:32  pwagner
+# Added COPTS as cc options
+#
 # Revision 1.6  2007/05/29 17:42:18  pwagner
 # compiler-specific settings now in srclib, not platforms
 #
