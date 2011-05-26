@@ -574,7 +574,7 @@ contains ! =====     Public Procedures     =============================
         & L2AUXDatabase(l2Index), &
         & checkDimNames=.false. )
 
-      ! if( index(switches, 'apr') /= 0 ) then
+      ! if( switchDetail(switches, 'apr') > -1 ) then
       if( Details > -3 ) then
         if ( specialDumpFile /= ' ' ) &
           & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
@@ -889,9 +889,14 @@ contains ! =====     Public Procedures     =============================
 
         if ( gridIndex <= size(griddedDatabase) ) then
           call decorate ( key, gridIndex )
-          if( switchDetail(switches, 'pro') > -1 ) then                            
-            call announce_success(FilenameString, 'climatology', &                  
-             & fieldNameString, MLSFile=GriddedFile)
+          if( switchDetail(switches, 'pro') > -1 ) then
+            if ( .not. gotAlready ) then
+              call announce_success(FilenameString, 'climatology', &                  
+               & fieldNameString, MLSFile=GriddedFile)
+            else
+              call announce_success(FilenameString, 'climatology', &                  
+               & fieldNameString)
+            end if
           end if
         else
           call announce_error ( son, 'Field ' // trim(fieldNameString) // &
@@ -925,7 +930,7 @@ contains ! =====     Public Procedures     =============================
       case default ! Can't get here if tree_checker worked correctly
       end select   ! origins of gridded data
 
-      if( Details > -3 ) then
+      if( Details > -3 .and. gridIndex <= size(griddedDatabase) ) then
         if ( specialDumpFile /= ' ' ) &
           & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
         call dump( GriddedDatabase(gridIndex), details )
@@ -1231,6 +1236,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.87  2011/05/26 20:45:15  pwagner
+! Should not bomb with 'pro' set in switches
+!
 ! Revision 2.86  2011/05/05 17:02:34  pwagner
 ! Added readGriddedData command to readApriori section
 !
