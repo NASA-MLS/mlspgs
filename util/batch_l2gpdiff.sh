@@ -14,6 +14,7 @@
 # BrO CH3CN ClO CO GPH H2O HCl HCN HNO3 HO2 HOCl IWC N2O O3 OH RHI Temperature
 #
 #     O p t i o n s
+#    -Ef file             set environment according to definitions found in file
 #    -append              Append the results to an existing file
 #                          (Otherwise replace any existing file)
 #    -dryrun              Merely echo the commands that would be executed
@@ -156,6 +157,7 @@ fi
 reecho="`echo $0 | sed 's/'$I'/reecho/'`"
 # $the_splitter is split_path with me's path prepended
 the_splitter="`echo $0 | sed 's/'$I'/split_path/'`"
+envfile="default-env.txt"
 l2gpdiff_opts=""
 list=""
 append="no"
@@ -198,6 +200,11 @@ while [ "$more_strs" = "yes" ] ; do
     -dryrun )
 	    dryrun="yes"
 	    shift
+       ;;
+    -Ef )
+            shift
+            envfile="$1"
+            shift
        ;;
     -prof* )
 	    profile1="$2"
@@ -259,6 +266,10 @@ then
   sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
       | sed -n 's/^.//p' | sed '1 d; $ d'
   exit
+fi
+if [ -f "$envfile" ]
+then
+  . $envfile
 fi
 dir1="$1"
 dir2="$2"
@@ -397,6 +408,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.12  2009/12/10 18:52:58  pwagner
+# Attempts to find command first in PATH, then inder MLSTOOLS
+#
 # Revision 1.11  2009/10/27 21:14:00  pwagner
 # Corrected bug in options; l2gpdiff now assumed to be in PATH
 #
