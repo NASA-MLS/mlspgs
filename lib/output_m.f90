@@ -14,16 +14,16 @@ module OUTPUT_M
   ! Very high level printing and formatting
   ! see also dump_0 and MLSMessageModule
   
-  use dates_module, only:  buildCalendar, daysInMonth, &
-    & reformatDate, reformatTime, utc_to_yyyymmdd
-  use MLSCommon, only: FileNameLen, finite_signal, is_what_ieee
-  use MLSMessageModule, only: MLSMessage, MLSMessageInternalFile, &
-    & MLSMSG_Info, MLSMSG_Error
-  use MLSSets, only: FindFirst
-  use MLSStringLists, only: ExpandStringRange, getStringElement, &
-    & NumStringElements, wrap
-  use MLSStrings, only: lowerCase, nCopies, &
-    & readIntsFromChars, trim_safe, writeIntsToChars
+  use DATES_MODULE, only:  BUILDCALENDAR, DAYSINMONTH, &
+    & REFORMATDATE, REFORMATTIME, UTC_TO_YYYYMMDD
+  use MLSCOMMON, only: FILENAMELEN, FINITE_SIGNAL, IS_WHAT_IEEE
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGEINTERNALFILE, &
+    & MLSMSG_INFO, MLSMSG_ERROR
+  use MLSSETS, only: FINDFIRST
+  use MLSSTRINGLISTS, only: EXPANDSTRINGRANGE, GETSTRINGELEMENT, &
+    & NUMSTRINGELEMENTS, WRAP
+  use MLSSTRINGS, only: REPLACENONASCII, LOWERCASE, NCOPIES, &
+    & READINTSFROMCHARS, TRIM_SAFE, WRITEINTSTOCHARS
   implicit none
   private
 
@@ -212,7 +212,7 @@ module OUTPUT_M
                                          ! < -2, both printer and MLSMSG
                                          ! > 0, actual unit number
     integer :: MLSMSG_Level        = MLSMSG_Info ! What level if logging
-    integer :: newLineVal          = 13 ! 13 means <cr> becomes new line; -999 means ignore
+    integer :: newLineVal          = 10 ! 13 means <cr> becomes new line; -999 means ignore
     integer :: nArrayElmntsPerLine = 7
     integer :: nBlanksBtwnElmnts   = 3
     logical :: BUFFERED            = .true.
@@ -986,7 +986,7 @@ contains
   ! Output CHARS to PRUNIT.
   subroutine OUTPUT_CHAR ( CHARS, &
     & ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS, INSTEADOFBLANK, DONT_STAMP, &
-    & NEWLINEVAL )
+    & NEWLINEVAL, DONT_ASCIIFY )
     ! We will 1st check to see whether any internal characters are
     ! codes for newlines
     ! If any are, we will call newLine in place of printing
@@ -1001,23 +1001,39 @@ contains
     character(len=*), intent(in), optional :: INSTEADOFBLANK ! What to output
     logical, intent(in), optional          :: DONT_STAMP ! Prevent double-stamping
     integer, intent(in), optional :: NEWLINEVAL ! What char val to treat as <cr>
+    logical, intent(in), optional          :: DONT_ASCIIFY ! output binary
     ! Internal variables
     integer :: I ! loop inductor
     integer :: myNewLineVal
+    logical :: myAsciify
     ! Executable
     myNewLineVal = outputOptions%newlineVal
     if ( present(newLineVal) ) myNewLineVal = newLineVal
+    myAsciify = .true.
+    if ( present(dont_asciify) ) myAsciify = .not. dont_asciify
     i = index( chars, achar(myNewLineVal) )
     if ( i < 1 ) then
-      call OUTPUT_CHAR_NOCR ( CHARS, &
-        & ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS, INSTEADOFBLANK, DONT_STAMP )
+      if ( myAsciify) then
+        call OUTPUT_CHAR_NOCR ( ReplaceNonAscii(CHARS, '@'), &
+          & ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS, INSTEADOFBLANK, DONT_STAMP )
+      else
+        call OUTPUT_CHAR_NOCR ( CHARS, &
+          & ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS, INSTEADOFBLANK, DONT_STAMP )
+      endif
     else
       do i=1, len(chars)
         if ( chars(i:i) /= achar(myNewLineVal) ) then
-          call OUTPUT_CHAR_NOCR ( CHARS(i:i), &
-        & ADVANCE='no', FROM_WHERE=FROM_WHERE, DONT_LOG=DONT_LOG, &
-        & LOG_CHARS=LOG_CHARS, INSTEADOFBLANK=INSTEADOFBLANK, &
-        & DONT_STAMP=DONT_STAMP )
+          if ( myAsciify ) then
+            call OUTPUT_CHAR_NOCR ( ReplaceNonAscii(CHARS(i:i), '@'), &
+              & ADVANCE='no', FROM_WHERE=FROM_WHERE, DONT_LOG=DONT_LOG, &
+              & LOG_CHARS=LOG_CHARS, INSTEADOFBLANK=INSTEADOFBLANK, &
+              & DONT_STAMP=DONT_STAMP )
+          else
+            call OUTPUT_CHAR_NOCR ( CHARS(i:i), &
+              & ADVANCE='no', FROM_WHERE=FROM_WHERE, DONT_LOG=DONT_LOG, &
+              & LOG_CHARS=LOG_CHARS, INSTEADOFBLANK=INSTEADOFBLANK, &
+              & DONT_STAMP=DONT_STAMP )
+          endif
         else
           call newLine
         endif
@@ -2257,6 +2273,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.86  2011/05/26 20:38:32  pwagner
+! By default, outputting chars substitutes for non-ascii, except for newlines
+!
 ! Revision 2.85  2011/04/29 02:16:32  vsnyder
 ! Prefill dateString and timeString with blanks to compensate for Intel bug
 !
