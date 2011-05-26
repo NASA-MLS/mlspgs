@@ -131,10 +131,10 @@ PROGRAM L2GPDump ! dumps L2GPData files
     if ( options%ConvergenceCutOff > -1. ) &
       & call showPercentages( numTest(1), numGood, 'convergence', &
       & options%ConvergenceCutOff, 'above' )
-    if ( options%PrecisionCutOff > -1. ) &
+    if ( options%QualityCutOff > -1. ) &
       & call showPercentages( numTest(2), numGood, 'Quality', &
       & options%QualityCutOff, 'below' )
-    if ( options%QualityCutOff > -1. ) &
+    if ( options%PrecisionCutOff > -1. ) &
       & call showPercentages( numTest(3), numGoodPrec, 'precision', &
       & options%PrecisionCutOff, 'above' )
     if ( options%statusBits ) call showStatusPct
@@ -465,7 +465,7 @@ contains
      enddo
      numGood = numGood + count( .not. ( negativePrec .or. &
        & (mod(l2gp%status, 2) > 0) ) )
-     if ( options%ConvergenceCutOff > 0. ) then
+     if ( options%ConvergenceCutOff > -1. ) then
        alreadyDumped = .true.
        numTest(1) = numTest(1) + count( .not. ( negativePrec .or. &
          & (mod(l2gp%status, 2) > 0) .or. &
@@ -474,7 +474,7 @@ contains
          & call showPercentages( numTest(1), numGood, 'convergence', &
          & options%ConvergenceCutOff, 'above' )
      endif
-     if ( options%QualityCutOff > 0. ) then
+     if ( options%QualityCutOff > -1. ) then
        alreadyDumped = .true.
        numTest(2) = numtest(2) + count( .not. ( negativePrec .or. &
          & (mod(l2gp%status, 2) > 0) .or. &
@@ -483,7 +483,7 @@ contains
          & call showPercentages( numTest(2), numGood, 'Quality', &
          & options%QualityCutOff, 'below' )
      endif
-     if ( options%PrecisionCutOff > 0. ) then
+     if ( options%PrecisionCutOff > -1. ) then
        alreadyDumped = .true.
        ! numGood = 0
        ! numTest = 0
@@ -633,6 +633,9 @@ end program L2GPDump
 !==================
 
 ! $Log$
+! Revision 1.10  2011/02/18 23:10:27  pwagner
+! Passes -d opts to dump routines
+!
 ! Revision 1.9  2010/03/31 18:15:30  pwagner
 ! Removed commented-out, outdated stuff
 !
