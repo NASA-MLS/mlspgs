@@ -522,6 +522,9 @@ module IDLCFM2_m
                 return
             endif
 !            print *, "instancelen ", qt%instancelen
+            if (qt%instancelen == 0) then
+                call MLSMessage (MLSMSG_Warning, ModuleName, "Quantity template has instanceLen 0")
+            endif 
         endif
 
         if (l28(P_VALUE)) then
@@ -672,6 +675,9 @@ module IDLCFM2_m
 end module
 
 ! $Log$
+! Revision 1.3  2011/05/27 06:08:41  honghanh
+! Add VectorHandler and type code of ICFMReceiveVector to receive vector independently of the call to ForwardModel
+!
 ! Revision 1.2  2011/04/16 22:03:45  honghanh
 ! *** empty log message ***
 !
