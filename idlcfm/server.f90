@@ -21,9 +21,6 @@ program server
        "$Id$"
     character (len=len(idParm)) :: Id = idParm
 !---------------------------------------------------------------------------
-    integer, parameter :: SIG_SETUP = 0
-    integer, parameter :: SIG_CLEANUP = 1
-    integer, parameter :: SIG_FWDMDL = 2
 
     integer :: tid, info, bufid, bytes, msgtag, cid
     integer :: reqcode
@@ -62,6 +59,8 @@ program server
             call ICFM_Cleanup
         case (SIG_FWDMDL)
             call ICFM_ForwardModel (cid, info)
+        case (SIG_VECTOR)
+            call VectorHandler (info)
         end select
     enddo
 
@@ -325,8 +324,7 @@ program server
         call ICFMReceiveVector (state, qtydb)
         call ICFMReceiveVector (stateExtra, qtydb)
         call ICFMReceiveVector (measurement, qtydb)
-        !call dump (state, details=3)
-        !call dump(stateextra, details=3)
+!        call dump(stateextra, details=3)
         call PVMIDLUnpack(mafNo, info)
         if (info /= 0) then
             call PVMErrorMessage ( info, "unpacking mafNo." )
@@ -343,8 +341,6 @@ program server
                 measurement, fmStat)
             enddo
 
-            call dump(measurement)
-
             call ICFMSendVector(measurement, tid, info)
             if (info /= 0) then
                 call PVMErrorMessage ( info, "send measurement" )
@@ -359,6 +355,29 @@ program server
         call DestroyVectorInfo(measurement)
         call DestroyQuantityTemplateDatabase (qtydb)
 
+    end subroutine
+
+    subroutine VectorHandler (info)
+        integer, intent(out) :: info
+        type(Vector_T) :: vec
+        type(QuantityTemplate_T), dimension(:), pointer :: qtydb
+
+        print *, "call VectorHandler"
+
+        if (.not. locked) then
+            call MLSMessage (MLSMSG_Warning, moduleName, "must run set up first")
+            info = 1
+            return
+        endif
+
+        call ICFMReceiveVector (vec, qtydb)
+        call dump(vec, details=3)
+
+        call DestroyVectorTemplateInfo(vec%template)
+        call DestroyVectorInfo(vec)
+        call DestroyQuantityTemplateDatabase(qtydb)
+
+        info = 0
     end subroutine
 
     subroutine senddummyvector (tid)
@@ -480,6 +499,3 @@ program server
 end program
 
 ! $Log$
-! Revision 1.1  2011/03/15 15:23:51  honghanh
-! Initial imports
-!

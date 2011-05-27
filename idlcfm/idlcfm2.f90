@@ -8,7 +8,7 @@ module IDLCFM2_m
 
     implicit none
     private
-    public :: ICFMReceiveQuantity, ICFMReceiveVector, QTYMSGTAG, ICFMSendVector
+    public :: ICFMReceiveQuantity, ICFMReceiveVector, ICFMSendVector
 !---------------------------- RCS Ident Info -------------------------------
     character(len=*), private, parameter :: ModuleName= &
         "$RCSfile$"
@@ -16,7 +16,14 @@ module IDLCFM2_m
 !---------------------------------------------------------------------------
 
     ! Local parameters
-    integer, parameter :: QTYMSGTAG = 200
+    integer, parameter, public :: QTYMSGTAG = 200
+
+    integer, parameter, public :: SIG_SETUP = 0
+    integer, parameter, public :: SIG_CLEANUP = 1
+    integer, parameter, public :: SIG_FWDMDL = 2
+
+    ! These methods are to help with debugging effort
+    integer, parameter, public :: SIG_VECTOR = 3
 
     contains
 !--------------------------- end bloc --------------------------------------
@@ -176,6 +183,7 @@ module IDLCFM2_m
         logical, dimension(noProperties) :: PROPERTIES ! Properties for this quantity type
         character(len=32) :: signalString
         integer, dimension(:), pointer :: SignalInds ! From parse signal
+        logical, pointer :: channels(:)     ! From Parse_Signal
         integer :: sideband
         character(len=16) :: radiometerString
         integer, dimension(2) :: hshape ! shape of hgrid-related fields
@@ -289,8 +297,8 @@ module IDLCFM2_m
                 return
             endif
 !            print *, "signalString ", signalString
-            nullify(signalInds)
-            call parse_Signal ( signalString, signalInds, sideband=sideband)
+            nullify(signalInds, channels)
+            call parse_Signal ( signalString, signalInds, sideband=sideband, channels=channels)
             qt%signal = signalInds(1)
             qt%sideband = sideband
             call deallocate_test ( signalInds, 'signalInds', ModuleName )
@@ -610,9 +618,22 @@ module IDLCFM2_m
         integer :: numQty
         integer :: i, j
         integer, dimension(:), pointer :: template
+        integer :: type
 
         ! Get buffer, we'll wait for it, assume the calling code knows it's coming.
-        if (present(callrecv) .and. callrecv) call PVMFrecv ( tid, QtyMsgTag, bufferID )
+        if (present(callrecv) .and. callrecv) then
+            call PVMFrecv ( tid, QtyMsgTag, bufferID )
+            call PVMIDLUnpack(type, info)
+            if (info /= 0) then
+                call PVMErrorMessage(info, "unpacking type")
+                return
+            endif
+
+            if (type /= SIG_VECTOR) then
+                call MLSMessage(MLSMSG_Warning, ModuleName, "ICFMReceiveVector: the received is not vector")
+                return
+            endif
+        endif
 
         ! Now we unpack the information
         call PVMUnpackStringIndex ( vec%name, info )
@@ -651,6 +672,9 @@ module IDLCFM2_m
 end module
 
 ! $Log$
+! Revision 1.2  2011/04/16 22:03:45  honghanh
+! *** empty log message ***
+!
 ! Revision 1.1  2011/03/15 15:23:51  honghanh
 ! Initial imports
 !
