@@ -87,13 +87,13 @@ vpath %.pdf $(PDFDIR)
 	mv `${REECHO} $*.log $*.aux $*.out` $(LOGDIR)
 	rm -f $*.dvi $*.temp
 
-doc:
+all doc:
 
 -include Makefile.dep
 
-all: doc
+all: doc cfm icfm
 
-doc: ${NEAROBJS} ${OBJS}
+doc: ${NEAROBJS} ${OBJS} MakeFC
 	date > doc; echo $(OBJS) >> doc
 
 # ========================================================================
@@ -121,22 +121,25 @@ depends:
 	if [ ! -d $(LOGDIR) ] ; then \
 	  		mkdir $(LOGDIR) ;\
 			fi
-	 for dir in $(shell ${REECHO} -d cfm); do \
+	 for dir in $(shell ${REECHO} -d cfm icfm); do \
 	  $(MAKE) -f $(MakeFName) -C $$dir DOCDIR=$(DOCDIR)/$$dir depends; \
 	done
 
 internalupdate:
-	@echo "Copying or linking MakeFC to Makefile in $(shell ${REECHO} -d cfm)" ; \
+	@echo "Copying or linking MakeFC to Makefile in $(shell ${REECHO} -d cfm icfm)" ; \
 	cp MakeFC Makefile
-	 for dir in $(shell ${REECHO} -d cfm); do \
+	 for dir in $(shell ${REECHO} -d cfm icfm); do \
 	  if [ ! -f $$dir/MakeFC ]; then \
 	  cp MakeFC $$dir; \
 	  cp MakeFC $$dir/Makefile; \
 	  fi; \
 	done
 
-cfm:
+cfm: $(DOCDIR)/cfm $(DOCDIR)/cfm/MakeFC
 	$(MAKE) -f $(MakeFName) -C $@ DOCDIR=$(DOCDIR)/cfm
+
+icfm: $(DOCDIR)/icfm $(DOCDIR)/icfm/MakeFC
+	$(MAKE) -f $(MakeFName) -C $@ DOCDIR=$(DOCDIR)/icfm
 
 l2:
 	$(MAKE) -f $(MakeFName) -C $@  DOCDIR=$(DOCDIR)/l2
@@ -152,6 +155,9 @@ update: internalupdate
 
 # ========================================================================
 # $Log$
+# Revision 1.13  2011/05/25 20:34:11  pwagner
+# CONFDIR reverted to point to parent directory
+#
 # Revision 1.12  2010/12/07 00:22:21  pwagner
 # Works correctly with current directory contents
 #
