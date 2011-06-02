@@ -554,8 +554,11 @@ contains
 !   real(rp) :: BETA_PATH_C(max_c,no_mol)          ! on path coarse
     real(rp) :: BETA_PATH_F(max_f,no_mol)          ! on path fine
     real(rp) :: D_DELTA_DF(s_a*max_c,size(grids_f%values)) ! Incremental 
-                                      ! opacity derivative schlep from drad_tran_dt
-                                      ! to get_d_deltau_pol_df.  Path x SVE.
+                                      ! opacity derivative; computed in drad_tran_df
+                                      ! and is used to get_d_deltau_pol_df.  Path x SVE.
+    real(rp) :: D2_DELTA_DF2(s_a*max_c,size(grids_f%values),size(grids_f%values))
+                                      ! Incremental opacity second derivative.
+                                      ! Path x SVE x SVE.
     real(rp) :: D_T_SCR_dT(max_c,s_t*sv_t_len)     ! D Delta_B in some notes
                                       ! path x state-vector-components
     real(rp) :: D2X_DXDT(no_tan_hts,s_t*sv_t_len)  ! (No_tan_hts, nz*np)
@@ -859,8 +862,13 @@ contains
     ! drad_tran_df starts, it replaces only the nonzeros (encoded by
     ! nz_d_delta_df and nnz_d_delta_df) by zeros. 
 
+    ! Don't need to initialize nz_d_delta_df because only the parts of it
+    ! indexed by nnz_d_delta_df are referenced.
+
     d_delta_df = 0.0
     nnz_d_delta_df = 0
+    d2_delta_df2 = 0.0
+
 
     ! Put zeros into eta_zp so that comp_eta_docalc_no_frq doesn't do it in
     ! every call.  Most of its time is spent doing this.  Instead, when
@@ -3306,7 +3314,8 @@ contains
             &  beta_path_f, do_gl, del_s, ref_corr, dsdz_gw_path,             &
             &  inc_rad_path, dBeta_dIWC_path_c, dBeta_dIWC_path_f,            &
             &  i_start, tan_pt_c, i_stop,  size(d_delta_df,1),                &
-            &  d_delta_df, nz_d_delta_df, nnz_d_delta_df, h_atmos_frq )
+            &  d_delta_df, nz_d_delta_df, nnz_d_delta_df,                     &
+            &  d2_delta_df2, h_atmos_frq )
         end if ! atmos_second_der
 
         if ( .not. pfa_or_not_pol ) then ! polarized and not PFA
@@ -4402,6 +4411,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.321  2011/05/09 17:46:38  pwagner
+! Converted to using switchDetail
+!
 ! Revision 2.320  2011/03/31 19:51:03  vsnyder
 ! Allow 'scattering point not in path' to be a warning
 !
