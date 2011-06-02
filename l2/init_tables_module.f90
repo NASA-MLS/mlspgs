@@ -1380,6 +1380,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_allMatrices, t+t_boolean, n+n_field_type, &
              begin, f+f_allPFA, t+t_boolean, n+n_field_type, &
              begin, f+f_allQuantityTemplates, t+t_boolean, n+n_field_type, &
+             begin, f+f_allRadiometers, t+t_boolean, n+n_field_type, &
              begin, f+f_allSignals, t+t_boolean, n+n_field_type, &
              begin, f+f_allSpectra, t+t_boolean, n+n_field_type, &
              begin, f+f_allVectors, t+t_boolean, n+n_field_type, &
@@ -1692,6 +1693,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.521  2011/06/02 19:24:34  pwagner
+! May dump allRadiometers
+!
 ! Revision 2.520  2011/05/05 15:23:52  pwagner
 ! Added readGriddedData command to readApriori section
 !
