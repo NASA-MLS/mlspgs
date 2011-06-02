@@ -19,6 +19,7 @@ module RAD_TRAN_M
   public :: Get_all_d_delta_df
   public :: Get_d_delta_df_f, Get_d_delta_df_linlog
   public :: Get_d_delta_df_linlog_f, Get_d_delta_dx
+  public :: Get_d2_delta_df2_linlog
   public :: Get_Do_Calc
   private :: Get_Do_Calc_Indexed, Get_Inds
 
@@ -465,6 +466,7 @@ contains
                             & i_start, tan_pt, i_stop, LD,                    &
                             & d_delta_df,                                     &
                             & nz_d_delta_df, nnz_d_delta_df,                  &
+                            & d2_delta_df2,                                   &
                             & d2rad_df2 )
 
     use LOAD_SPS_DATA_M, ONLY: GRIDS_T
@@ -513,6 +515,10 @@ contains
       !              Initially set to zero by caller.
     integer, intent(inout), target :: nz_d_delta_df(:,:)  ! Nonzeros in d_delta_df
     integer, intent(inout) :: nnz_d_delta_df(:)           ! Column lengths in nz_delta_df
+    real(rp), intent(inout) :: d2_delta_df2(:,:,:) ! path x sve x sve.  Second Derivative
+      !              of delta wrt mixing ratio state vector elements. (K)
+      !              Initially set to zero by caller.
+
     real(rp), intent(out) :: d2rad_df2(:,:)    ! second derivative of radiances wrt
                                                ! mixing ratio state vector element. (K)
 
@@ -525,6 +531,7 @@ contains
     integer :: sps_i, sps_j          ! species indices
     integer :: sps_n
     integer :: q, r                  ! state vector indices: sv_i, sv_j
+    integer :: diracDelta            !   =1 if q=r;  =0 otherwise
     integer, target, dimension(1:size(inc_rad_path)) ::  all_inds_B_q,  all_inds_B_r
     integer, target, dimension(1:size(inc_rad_path)) :: more_inds_B_q, more_inds_B_r
     integer, pointer :: all_inds_q(:), all_inds_r(:)  ! all_inds => part of all_inds_B;
@@ -692,12 +699,44 @@ contains
                 & Singularity, d_delta_df(:,r) )
             end select
 
+            ! For molecules in logarithmic basis (what = 1 or 3), calculate d2_delta_df2:
+
+            if ( (what_i == 1 .or. what_i == 3) .and. (what_j == 1 .or. what_j == 3) ) then
+
+              if( sps_i == sps_j )	then    ! otherwise, d2_delta_df2 = 0
+
+                ! For same specie, the following quantities should be the same for different sve:
+                !   inds, all_inds, more_inds, sps.   Thus, only q quantities are passed.
+
+                if ( q == r )   then
+                  diracDelta = 1.0
+                else
+                  diracDelta = 0.0
+                end if
+
+                call get_d2_delta_df2_linlog ( diracDelta, inds_q, indices_c, gl_inds, &
+                  & all_inds_q, more_inds_q, eta_zxp(:,q), eta_zxp(:,r), sps_path(:,sps_i), &
+                  & beta_path_c(:,sps_i), beta_path_f(:,sps_i), del_s, del_zeta, &
+                  & ds_dz_gw, ref_cor, grids_f%values(q), grids_f%values(r), singularity, &
+                  & d2_delta_df2(:,q,r) )
+
+              end if
+
+            end if
+
             ! i_begin = max(i_start,min(inds(1),i_stop))
 
             i_begin = max(i_start,min(max(inds_q(1),inds_r(1)),i_stop))
 
-            call d2scrt_dx2 ( tan_pt, d_delta_df(:,q), d_delta_df(:,r), inc_rad_path, &
+            call d2scrt_dx2 ( tan_pt, d_delta_df(:,q), d_delta_df(:,r), &
+                            &  d2_delta_df2(:,q,r), inc_rad_path, &
                             &  i_begin, i_stop, d2rad_df2(q,r) )
+
+            ! Since d2_delta_df2 is not computed when either one of eta(q) or eta(r) is zero.
+             !  d_delta_df(nz_d_delta_df(:nnz_d_delta_df(r),r), r)   <- compare with this
+            ! d2_delta_df2(nz_d_delta_df(:nnz_d_delta_df(r),r), q, r) = 0.0
+            ! d2_delta_df2(nz_d_delta_df(:nnz_d_delta_df(q),q), q, r) = 0.0
+            d2_delta_df2(:,q,r) = 0.0
 
           end do ! sv_j = r
 
@@ -1711,6 +1750,81 @@ contains
 
   end subroutine Get_d_delta_df_linlog_f
 
+! ......................................  Get_d2_delta_df2_linlog  .....
+  subroutine Get_d2_delta_df2_linlog ( diracDelta, Inds, Indices_c, GL_Inds, &
+    & All_inds, More_inds, Eta_zxp_q, Eta_zxp_r, Sps_path, &
+    & Beta_path_c, Beta_path_f, Del_s, Del_Zeta, ds_dz_gw, Ref_cor, &
+    & Grids_v_q, Grids_v_r, Singularity, d2_delta_df2 )
+
+    ! Get d2_delta_df2 for the case of lin_log species for which beta
+    ! does not depend upon mixing ratio.
+
+    use GLNP, only: NG
+    use MLSKinds, only: RP
+
+    integer, intent(in) :: diracDelta   !   =1 if q=r;  =0 otherwise
+    integer, intent(in) :: Inds(:)   ! Indices on coarse path needing calc
+    integer, intent(in) :: Indices_c(:) ! Subset from gl to coarse
+    integer, intent(in) :: GL_Inds(:)   ! Gauss-Legendre grid indices
+    integer, intent(in) :: All_inds(:)  ! Indices on GL grid for stuff
+                                        ! used to make GL corrections
+    integer, intent(in) :: More_inds(:) ! Indices on the coarse path where
+                                        ! GL corrections get applied.
+    real(rp), intent(in) :: Eta_zxp_q(*), Eta_zxp_r(*)  ! representation basis function.
+    real(rp), intent(in) :: Sps_path(:) ! exp(Path mixing ratios)
+    real(rp), intent(in) :: Beta_path_c(*)  ! cross section on coarse grid.
+    real(rp), intent(in) :: Beta_path_f(*)  ! cross section on GL grid.
+    real(rp), intent(in) :: Del_s(:)    ! unrefracted path length.
+    real(rp), intent(in) :: Del_zeta(:) ! path -log(P) differences on the
+      !              main grid.  This is for the whole coarse path, not just
+      !              the part up to the black-out
+    real(rp), intent(in) :: ds_dz_gw(:) ! ds/dh * dh/dz * GL weights
+    real(rp), intent(in) :: ref_cor(:)  ! refracted to unrefracted path
+                                        !  length ratios.
+    real(rp), intent(in) :: Grids_v_q, Grids_v_r     ! Grids_f%values(sv_i)
+    real(rp), intent(out) :: singularity(:) ! integrand on left edge of coarse
+                               ! grid panel -- singular at tangent pt.
+                               ! Actually just work space we don't want
+                               ! to allocate on every invocation.
+    real(rp), intent(inout) :: d2_delta_df2(:) ! Second Derivative of delta w.r.t.
+                               ! Sps_Path.  intent(inout) so the unreferenced
+                               ! elements do not become undefined.
+
+    integer :: AA, GA, I, II, III
+
+    do i = 1, size(inds)
+
+      ii = inds(i)
+      iii = indices_c(ii)
+
+      singularity(ii) = eta_zxp_q(iii) * (eta_zxp_r(iii) - diracDelta) * &
+                      & sps_path(iii) * beta_path_c(ii)
+      d2_delta_df2(ii) = singularity(ii) * del_s(ii)
+
+    end do ! i
+
+
+    do i = 1, size(all_inds)
+
+      aa = all_inds(i)
+      ga = gl_inds(aa)
+      ii = more_inds(i)
+
+      d2_delta_df2(ii) = d2_delta_df2(ii) + &
+        & del_zeta(ii) * &
+        & sum( (eta_zxp_q(ga:ga+ng-1) * (eta_zxp_r(ga:ga+ng-1) - diracDelta) * &
+             & sps_path(ga:ga+ng-1) * beta_path_f(aa:aa+ng-1) - singularity(ii)) &
+             & * ds_dz_gw(ga:ga+ng-1) )
+
+    end do
+
+    ! Refraction correction
+    d2_delta_df2(inds) = ref_cor(inds) * d2_delta_df2(inds) * exp(-grids_v_q) * exp(-grids_v_r)
+
+  end subroutine Get_d2_delta_df2_linlog
+
+
+
 ! =====     Private Procedures     =====================================
 
   ! ----------------------------------------  Get_Do_Calc_Indexed  -----
@@ -1719,6 +1833,11 @@ contains
 
   ! Set Do_Calc if Do_Calc_All(c_inds) or Do_GL and any of the corresponding
   ! Do_Calc_All(f_inds) flags are set.
+  ! Get_Do_Calc_Indexed determines that get_d_delta_df needs to integrate a
+  ! panel if do_calc_all(c_inds) is true, which means the interpolating
+  ! coefficient is nonzero, or if do_gl is true and do_calc_all(f_inds) is
+  ! true, which means that GL was needed, even if an interpolating
+  ! coefficient is nonzero.
 
     use GLNP, ONLY: Ng
 
@@ -1802,6 +1921,9 @@ contains
     ! More_Inds are the places in the coarse path where both Do_Calc and Do_GL.
     ! All_Inds are the corresponding places in the GL-extracted fine path.
 
+    ! Get_Inds is similar to Get_Do_Calc_Indexed, but computes indices 
+    ! for the coarse path, or the coarse path points in the composite path.
+
     use GLNP, ONLY: Ng
 
     implicit NONE
@@ -1864,6 +1986,9 @@ contains
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.25  2011/06/02 22:43:12  yanovsky
+! In d2Rad_tran_df2 subroutine, add computations of analytical mixing ratio Hessians in logarithmic basis
+!
 ! Revision 2.24  2011/03/25 20:46:59  vsnyder
 ! Delete declarations of unused objects
 !
