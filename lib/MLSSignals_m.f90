@@ -121,7 +121,8 @@ module MLSSignals_M
   ! =====     Defined Operators and Generic Identifiers     ==============
   
   interface Dump
-    module procedure Dump_Bands, Dump_Radiometers, Dump_Signal, Dump_Signals, &
+    module procedure Dump_Bands, Dump_OneRadiometer, Dump_Radiometers, &
+      & Dump_Signal, Dump_Signals, &
       & Dump_SpectrometerType, Dump_SpectrometerTypes
   end interface
 
@@ -205,6 +206,7 @@ module MLSSignals_M
   ! for subsets of channels etc.
   type(signal_T), public, save, pointer, dimension(:) :: Signals => NULL()
   integer, public, save :: Instrument = l_emls
+  integer, parameter :: MAXRADIOMETERNAMELEN = 16
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -924,6 +926,24 @@ oc:       do
     end do
   end subroutine DUMP_BANDS
 
+  ! -------------------------------------------  Dump_OneRadiometer  -----
+  subroutine Dump_OneRadiometer ( RADIOMETER )
+    type (Radiometer_T), intent(in) :: RADIOMETER
+    call display_string (radiometer%prefix)
+    call output ( ':' )
+    call display_string (radiometer%suffix, advance='yes', strip=.true. )
+    call output ( '   Polarization: ' )
+    call display_string (lit_indices(radiometer%polarization))
+    call output ( '   Module: ')
+    call output ( radiometer%instrumentModule )
+    call output ( ' - ' )
+    call display_string ( modules(radiometer%instrumentModule)%name, advance='yes' ) 
+    call output ( '   LO: ')
+    call output ( radiometer%lo )
+    call output ( '   Single sideband: ' )
+    call output ( radiometer%singleSideband, advance='yes' )
+  end subroutine Dump_OneRadiometer
+
   ! -------------------------------------------  Dump_Radiometers  -----
   subroutine DUMP_RADIOMETERS ( RADIOMETERS )
     type (Radiometer_T), intent(in) :: RADIOMETERS(:)
@@ -933,19 +953,7 @@ oc:       do
     do i = 1, size(radiometers)
       call output ( i,1 )
       call output ( ': ')
-      call display_string (radiometers(i)%prefix)
-      call output ( ':' )
-      call display_string (radiometers(i)%suffix, advance='yes', strip=.true. )
-      call output ( '   Polarization: ' )
-      call display_string (lit_indices(radiometers(i)%polarization))
-      call output ( '   Module: ')
-      call output ( radiometers(i)%instrumentModule )
-      call output ( ' - ' )
-      call display_string ( modules(radiometers(i)%instrumentModule)%name, advance='yes' ) 
-      call output ( '   LO: ')
-      call output ( radiometers(i)%lo )
-      call output ( '   Single sideband: ' )
-      call output ( radiometers(i)%singleSideband, advance='yes' )
+      call dump_OneRadiometer( radiometers(i) )
     end do
   end subroutine DUMP_RADIOMETERS
 
@@ -1364,29 +1372,44 @@ oc:       do
 
   ! ----------------------------------------------  GetRadiometerIndex  -----
   subroutine GetRadiometerIndex(string_text, radiometer)
-    ! Returns the index in the radiometer database, given radiometer name in mixed case
+    ! Returns the index in the radiometer database, 
+    ! given radiometer name in mixed case
     ! Returns 0 if radiometer name not found
+    ! Examples of string_text:
+    ! 'R1A:118', 'R3:240', 'R3',  (yes, we may omit suffix or prefix)
+    ! Note: beware of an ambiguous string_tetxt;
+    ! e.g., if you just use a suffix, e.g., '118', you will end up with
+    ! the first match, 'R1A:118' and not 'R1B:118'
     ! (inverse function: GetradiometerName)
     integer, intent(out) :: radiometer
-    character (len=*), intent(in) :: string_text
+    character (len=*), intent(in)        :: string_text
     ! Local variables
-    character (len=len(string_text))             :: string_test
+    character (len=MAXRADIOMETERNAMELEN) :: prefix
+    character (len=MAXRADIOMETERNAMELEN) :: suffix
+    ! Executable
+    radiometer = 0 ! If no matching radiometer found
     if ( size(radiometers) < 1 ) then
-      radiometer = 0
       return
     end if
     do radiometer=1, size(radiometers)
+      ! Return first match
       if ( radiometers(radiometer)%prefix > 0 ) then
-        call Get_String ( radiometers(radiometer)%prefix, string_test )
-        if ( LowerCase(trim(string_text)) == LowerCase(trim(string_test))) &
+        call Get_String ( radiometers(radiometer)%prefix, prefix )
+        ! Did we just try the prefix?
+        if ( LowerCase(trim(string_text)) == LowerCase(trim(prefix))) &
           & return
         call get_string ( radiometers(radiometer)%suffix, &
-          & string_test(LEN_TRIM(string_test)+1:), cap=.true., strip=.true. )
-        if ( LowerCase(trim(string_text)) == LowerCase(trim(string_test))) &
+          & suffix, cap=.true., strip=.true. )
+        ! Did we just try the suffix?
+        if ( LowerCase(trim(string_text)) == LowerCase(trim(suffix))) &
+          & return
+        ! Did we go for prefix:suffix?
+        if ( LowerCase( trim(string_text) ) == &
+          & LowerCase( trim(prefix) // ':' // trim(suffix) ) ) &
           & return
       end if
     end do
-    radiometer = 0
+    ! Oops, sorry no match found
   end subroutine GetRadiometerIndex
 
   ! ------------------------------------------  GetRadiometerName  -----
@@ -1868,6 +1891,9 @@ oc:       do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.93  2011/06/02 19:22:35  pwagner
+! Fixed bug in getRadiometerIndex
+!
 ! Revision 2.92  2011/05/09 17:24:55  pwagner
 ! Converted to using switchDetail
 !
