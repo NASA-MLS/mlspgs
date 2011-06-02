@@ -688,8 +688,8 @@ contains
     use HGRIDSDATABASE, only: DUMP, HGRID_T
     use INIT_TABLES_MODULE, only: F_ALLBOOLEANS, F_ALLFILES, F_ALLFORWARDMODELS, &
       & F_ALLGRIDDEDDATA, F_ALLHESSIANS, F_ALLHGRIDS, &
-      & F_ALLL2PCS, F_ALLLINES, F_ALLMATRICES, &
-      & F_ALLPFA, F_ALLQUANTITYTEMPLATES, F_ALLSIGNALS, F_ALLSPECTRA, &
+      & F_ALLL2PCS, F_ALLLINES, F_ALLMATRICES, F_ALLPFA, &
+      & F_ALLQUANTITYTEMPLATES, F_ALLRADIOMETERS, F_ALLSIGNALS, F_ALLSPECTRA, &
       & F_ALLVECTORS, F_ALLVECTORTEMPLATES, F_ALLVGRIDS, F_ANTENNAPATTERNS, &
       & F_BOOLEAN, F_CLEAN, F_CRASHBURN, F_DETAILS, F_DACSFILTERSHAPES, &
       & F_FILE, F_FILTERSHAPES, F_FORWARDMODEL, F_GRID, F_HEIGHT, F_HESSIAN, &
@@ -712,7 +712,7 @@ contains
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMESSAGEEXIT, &
       & MLSMSG_CRASH, MLSMSG_ERROR
     use MLSSETS, only: FINDFIRST
-    use MLSSIGNALS_M, only: DUMP, SIGNALS
+    use MLSSIGNALS_M, only: DUMP, GETRADIOMETERINDEX, RADIOMETERS, SIGNALS
     use MLSSTRINGS, only: INDEXES, LOWERCASE
     use MLSSTRINGLISTS, only: BOOLEANVALUE, SWITCHDETAIL
     use MORETREE, only: GET_BOOLEAN, GET_FIELD_ID, GET_SPEC_ID
@@ -796,7 +796,8 @@ contains
     integer, parameter :: NoHGrid = noGriddedData + 1
     integer, parameter :: NoLines = noHGrid + 1
     integer, parameter :: NoQT = noLines + 1
-    integer, parameter :: NoSignals = noQT + 1
+    integer, parameter :: Noradiometers = noQT + 1
+    integer, parameter :: NoSignals = noradiometers + 1
     integer, parameter :: NoTG = noSignals + 1
     integer, parameter :: NoVectors = noTG + 1
     integer, parameter :: NoVT = noVectors + 1
@@ -855,7 +856,8 @@ contains
       select case ( fieldIndex )
       case ( f_allBooleans, f_allFiles, f_allForwardModels, f_allGriddedData, &
         & f_allHessians, f_allHGrids, f_allL2PCs, f_allLines, f_allMatrices, &
-        & f_allPFA, f_allQuantityTemplates, f_allSignals, f_allSpectra, &
+        & f_allPFA, f_allQuantityTemplates, &
+        & f_allRadiometers, f_allSignals, f_allSpectra, &
         & f_allVectors, f_allVectorTemplates, f_allVGrids, f_antennaPatterns, &
         & f_crashBurn, f_DACSfilterShapes, f_filterShapes, f_MieTables, &
         & f_pfaFiles, f_pfaStru, f_pointingGrids, f_stop, f_stopWithError )
@@ -919,6 +921,30 @@ contains
               call dump ( quantityTemplatesDB )
             else
               call announceError ( son, noQT )
+            end if
+          case ( f_allRadiometers )
+            if ( details < -1 ) cycle
+            if ( associated(Radiometers) ) then
+              call dump ( Radiometers )
+              if ( details > 1 ) then
+                call output('Checking getRadiometerIndex for R1A:118', advance='yes' )
+                call getRadiometerIndex('R1A:118', i )
+                if ( i > 0 ) call dump( radiometers(i) )
+                call output('Checking getRadiometerIndex for R1B:118', advance='yes' )
+                call getRadiometerIndex('R1B:118', i )
+                if ( i > 0 ) call dump( radiometers(i) )
+                call output('Checking getRadiometerIndex for R2:190', advance='yes' )
+                call getRadiometerIndex('R2:190', i )
+                if ( i > 0 ) call dump( radiometers(i) )
+                call output('Checking getRadiometerIndex for R3:240', advance='yes' )
+                call getRadiometerIndex('R3:240', i )
+                if ( i > 0 ) call dump( radiometers(i) )
+                call output('Checking getRadiometerIndex for R3', advance='yes' )
+                call getRadiometerIndex('R3', i )
+                if ( i > 0 ) call dump( radiometers(i) )
+              endif
+            else
+              call announceError ( son, noRadiometers )
             end if
           case ( f_allSignals )
             if ( details < -1 ) cycle
@@ -1397,6 +1423,8 @@ contains
         call output ( "Can't dump Lines here." )
       case ( noQT )
         call output ( "Can't dump Quantity Templates here." )
+      case ( noradiometers )
+        call output ( "Can't dump Radiometers here." )
       case ( noSignals )
         call output ( "Can't dump Signals here." )
       case ( noTG )
@@ -1496,6 +1524,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.62  2011/06/02 19:25:01  pwagner
+! May dump allRadiometers
+!
 ! Revision 2.61  2011/05/09 18:08:57  pwagner
 ! Print notice of changed runtime booleans only when "bool" switch is set
 !
