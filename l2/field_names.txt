@@ -42,6 +42,7 @@ allLinesInCatalog
 allMatrices
 allPFA
 allQuantityTemplates
+allRadiometers
 allSignals
 allSpectra
 allVectors
@@ -127,7 +128,6 @@ do_1d
 dontPack
 dontSumHeights
 dontSumInstances
-incl_cld
 dontMask
 
 earthRadius
@@ -194,6 +194,7 @@ ignoreGeolocation
 ignoreHessian # in quasi-linear forward model
 ignoreNegative
 ignoreZero
+incl_cld
 inclination
 inputFile
 inputType
@@ -485,6 +486,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.207  2011/06/02 19:24:34  pwagner
+# May dump allRadiometers
+#
 # Revision 2.206  2011/03/22 23:47:21  pwagner
 # May now reshape qty template field while filling explicitly
 #
