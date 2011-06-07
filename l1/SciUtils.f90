@@ -426,6 +426,9 @@ MODULE SciUtils ! L0 science utilities
     APE_pos_P = QNan()
     TSSM_pos_P = QNan()
 
+    !do m = 3, (MaxMIFS - 1), 3
+       !APE_pos(m,:) = QNan()    ! for testing!!!!
+    !enddo
     DO m = 0, (MaxMIFs - 2)
 
        IF (m < (MaxMIFs - 3)) THEN   ! APE pos
@@ -526,8 +529,8 @@ MODULE SciUtils ! L0 science utilities
   FUNCTION SwMirPos (sw_module, angle) RESULT (sw_pos)
 !=============================================================================
 
-    USE MLSL1Common, ONLY: GHz_SwMir_Range_A, GHz_SwMir_Range_B, &
-       THz_SwMir_Range,  Discard_SwMir_Range, SwMir_Range_T
+    USE MLSL1Common, ONLY: GHz_SwMir_Range_A, GHz_SwMir_Range_B, r8, &
+     GHz_SwMir_Range_B_2, THz_SwMir_Range,  Discard_SwMir_Range, SwMir_Range_T
     USE EngTbls, ONLY: EngMAF
 
     CHARACTER(len=1), INTENT(IN) :: sw_module
@@ -537,6 +540,9 @@ MODULE SciUtils ! L0 science utilities
     INTEGER :: n
     TYPE (SwMir_Range_T), DIMENSION(:), POINTER :: SwMir_Range
 
+    ! 2011 DOY 153 19:10:00 adjust time
+    REAL(r8), PARAMETER :: B_TAI = 5.8112628e+08+69000d00
+
     sw_pos = "D"                 ! Initialize to "Discard"
 
     IF (.NOT. Finite (angle)) RETURN
@@ -545,7 +551,11 @@ MODULE SciUtils ! L0 science utilities
        IF (EngMAF%GSM_Side == "A") THEN
           SwMir_Range => GHz_SwMir_Range_A
        ELSE IF (EngMAF%GSM_Side == "B") THEN
-          SwMir_Range => GHz_SwMir_Range_B
+          IF (SciMAF(0)%secTAI > B_TAI) THEN   ! use MIF 0 TAI time
+             SwMir_Range => GHz_SwMir_Range_B_2
+          ELSE
+             SwMir_Range => GHz_SwMir_Range_B
+          ENDIF
        ELSE
           SwMir_Range => Discard_SwMir_Range
        ENDIF
@@ -910,6 +920,9 @@ MODULE SciUtils ! L0 science utilities
 END MODULE SciUtils
 
 ! $Log$
+! Revision 2.19  2011/06/07 18:56:03  perun
+! Select Side B switching mirror table based on data time starting at 2011 DOY 153 19:10:00.
+!
 ! Revision 2.18  2011/02/16 17:07:40  perun
 ! Estimate MIF 0 pointing when MIF 1, Position 2 is missing.
 !
@@ -959,6 +972,9 @@ END MODULE SciUtils
 ! moved parameter statement to data statement for LF/NAG compatitibility
 !
 ! $Log$
+! Revision 2.19  2011/06/07 18:56:03  perun
+! Select Side B switching mirror table based on data time starting at 2011 DOY 153 19:10:00.
+!
 ! Revision 2.18  2011/02/16 17:07:40  perun
 ! Estimate MIF 0 pointing when MIF 1, Position 2 is missing.
 !
