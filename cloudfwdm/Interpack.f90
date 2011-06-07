@@ -9,41 +9,51 @@
 ! export authority as may be required before exporting such information to
 ! foreign countries or providing access to foreign persons.
 
-module ZERO_M
+module Interpack
 
-  ! Univariate zero finder from Math 77.
-
-  implicit NONE
-
-  private
-
-  public DZERO, SZERO, ZERO
-
-  interface ZERO
-    module procedure DZERO, SZERO
-  end interface
+      use MLSCommon, only: r8
+      IMPLICIT NONE
+      Private
+      Public :: LOCATE
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
   private :: not_used_here 
 !---------------------------------------------------------------------------
-
+      
 contains
 
-  subroutine DZERO ( X1, F1, X2, F2, MODE, TOL )
-    use Mess_M, only: Mess
-    integer, parameter :: RK = kind(0.0d0)
-    include 'zero.f9h'
-  end subroutine DZERO
+!--------------------------------------------------------------------
+!
+      SUBROUTINE LOCATE(XX,N,NP,X,J)
+      integer :: jl,ju,n,np,jm,j
+      real(r8) :: XX(NP),x
 
-  subroutine SZERO ( X1, F1, X2, F2, MODE, TOL )
-    use Mess_M, only: Mess
-    integer, parameter :: RK = kind(0.0e0)
-    include 'zero.f9h'
-  end subroutine SZERO
+	if(x .le. xx(1)) then
+	j = 1
+	return
+	endif
 
-!------------------------------------------------------------------
+	if(x .ge. xx(n) ) then
+	j = n-1
+	return
+	endif
+
+      JL=0
+      JU=N+1
+10    IF(JU-JL.GT.1)THEN
+        JM=(JU+JL)/2
+        IF((XX(N).GT.XX(1)).EQV.(X.GT.XX(JM)))THEN
+          JL=JM
+        ELSE
+          JU=JM
+        ENDIF
+      GO TO 10
+      ENDIF
+      J=JL
+
+      END SUBROUTINE LOCATE
 
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
@@ -54,9 +64,12 @@ contains
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
 
-end module ZERO_M
+end module Interpack
 
 ! $Log$
-! Revision 2.1  2007/09/07 01:35:04  vsnyder
-! Initial commit
+! Revision 1.3  2002/10/08 17:08:07  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 1.2  2001/09/21 15:51:37  jonathan
+! modified F95 version
 !
