@@ -220,6 +220,11 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
        SwMir_Range_T ("S", 149.599-GHzTol, 149.599+GHzTol), &
        SwMir_Range_T ("T", 59.599-GHzTol, 59.599+GHzTol), &   ! Primary target
        SwMir_Range_T ("t", 239.599-GHzTol, 239.599+GHzTol) /) ! Secondary target
+  TYPE (SwMir_Range_T), TARGET :: GHz_SwMir_Range_B_2(4) = (/ & ! "B" side 
+       SwMir_Range_T ("L", 329.404-GHzTol, 329.404+GHzTol), & ! minus 0.195
+       SwMir_Range_T ("S", 149.404-GHzTol, 149.404+GHzTol), &
+       SwMir_Range_T ("T", 59.404-GHzTol, 59.404+GHzTol), &   ! Primary target
+       SwMir_Range_T ("t", 239.404-GHzTol, 239.404+GHzTol) /) ! Secondary target
   TYPE (SwMir_Range_T), TARGET :: THz_SwMir_Range(3) = (/ &
        SwMir_Range_T ("L", 357.0, 360.0), &
        SwMir_Range_T ("T", 178.75-THzTol, 178.75+THzTol), &
@@ -292,6 +297,9 @@ END MODULE MLSL1Common
 !=============================================================================
 
 ! $Log$
+! Revision 2.18  2006/03/24 15:11:50  perun
+! Add ChanLogical_T, ChanInt_T, MaxAlts, SC_YPR and THz_GeodAlt
+!
 ! Revision 2.17  2005/12/14 17:00:14  perun
 ! Reset GHz switching mirror tolerance to original value
 !
