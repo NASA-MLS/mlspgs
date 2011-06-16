@@ -148,8 +148,8 @@ keep=0
 me="$0"
 my_name=batch_l2gpdiff.sh
 I=batch_l2gpdiff
-L2GPDIFF=`which l2gpdiff`
-if [ ! -x $L2GPDIFF ]
+L2GPDIFF=`which l2gpdiff 2> /dev/null`
+if [ ! -x "$L2GPDIFF" ]
 then
   L2GPDIFF=$MLSTOOLS/l2gpdiff
 fi
@@ -408,6 +408,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.13  2011/05/26 20:46:31  pwagner
+# May use file of environment settings
+#
 # Revision 1.12  2009/12/10 18:52:58  pwagner
 # Attempts to find command first in PATH, then inder MLSTOOLS
 #
