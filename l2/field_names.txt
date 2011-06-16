@@ -129,6 +129,7 @@ dontPack
 dontSumHeights
 dontSumInstances
 dontMask
+downsample
 
 earthRadius
 ECRtoFOV
@@ -487,6 +488,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.210  2011/06/16 23:15:25  pwagner
+# Added /downsample to reduce resolution of gridded data when read
+#
 # Revision 2.209  2011/06/16 20:50:49  vsnyder
 # Uncomment expr
 #
