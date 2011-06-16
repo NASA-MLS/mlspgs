@@ -140,7 +140,7 @@ excludePostOverlaps
 excludePriorOverlaps
 extendedAverage
 explicitValues
-# expr # for Fill, maybe later
+expr
 extinction
 
 fgrid
@@ -487,6 +487,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.209  2011/06/16 20:50:49  vsnyder
+# Uncomment expr
+#
 # Revision 2.208  2011/06/16 20:22:16  vsnyder
 # Add 'expr' as a comment for later use in Fill
 #
