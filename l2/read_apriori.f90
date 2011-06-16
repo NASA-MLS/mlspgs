@@ -12,28 +12,29 @@
 !=============================================================================
 module ReadAPriori
 
-  use Expr_M, only: EXPR
-  use Hdf, only: DFACC_RDONLY
-  use INIT_TABLES_MODULE, only: F_AURAINSTRUMENT, F_DATE, F_DIMLIST, &
+  use EXPR_M, only: EXPR
+  use HDF, only: DFACC_RDonly
+  use INIT_TABLES_MODULE, only: F_AURAINSTRUMENT, &
+    & F_DATE, F_DIMLIST, F_DOWNSAMPLE, &
     & F_FIELD, F_FILE, F_GRID, F_HDFVERSION, F_MISSINGVALUE, &
     & F_ORIGIN, F_QUANTITYTYPE, F_SDNAME, F_SUM, F_SWATH, &
     & FIELD_FIRST, FIELD_LAST, &
     & L_CLIMATOLOGY, L_DAO, L_GEOS5, L_GEOS5_7, L_GLORIA, &
     & L_MERRA, L_NCEP, L_NONE, L_STRAT, L_SURFACEHEIGHT, &
     & S_DIFF, S_DUMP, S_GRIDDED, S_L2AUX, S_L2GP, S_READGRIDDEDDATA
-  use Intrinsic, only: L_ASCII, L_BINARY, L_GRID, L_HDF, L_SWATH, &
+  use INTRINSIC, only: L_ASCII, L_BINARY, L_GRID, L_HDF, L_SWATH, &
     & PHYQ_DIMENSIONLESS
-  use L2GPData, only: MAXSWATHNAMESBUFSIZE
+  use L2GPDATA, only: MAXSWATHNAMESBUFSIZE
   use LEXER_CORE, only: PRINT_SOURCE
-  use MLSCommon, only: FILENAMELEN, MLSFILE_T
-  use MLSFiles, only: FILENOTFOUND, &
+  use MLSCOMMON, only: FILENAMELEN, MLSFILE_T
+  use MLSFILES, only: FILENOTFOUND, &
     & HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, &
     & ADDFILETODATABASE, CLOSE_MLSFILE, DUMP, GETPCFROMREF, INITIALIZEMLSFILE, &
     & MLS_HDF_VERSION, MLS_INQSWATH, OPEN_MLSFILE, SPLIT_PATH_NAME
-  use MLSL2Options, only: CHECKPATHS, DEFAULT_HDFVERSION_READ, SPECIALDUMPFILE, &
+  use MLSL2OPTIONS, only: CHECKPATHS, DEFAULT_HDFVERSION_READ, SPECIALDUMPFILE, &
     & TOOLKIT
-  use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
-  use MLSMessageModule, only: MLSMESSAGE, MLSMESSAGECALLS, &
+  use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, &
     & MLSMSG_ERROR, MLSMSG_WARNING
   use MLSPCF2, only: &
     & MLSPCF_L2APRIORI_START, MLSPCF_L2APRIORI_END, &
@@ -42,14 +43,14 @@ module ReadAPriori
     & MLSPCF_L2GEOS5_START, MLSPCF_L2GEOS5_END, &
     & MLSPCF_L2NCEP_START, MLSPCF_L2NCEP_END, &
     & MLSPCF_SURFACEHEIGHT_START, MLSPCF_SURFACEHEIGHT_END
-  use MLSStringLists, only: CATLISTS, SWITCHDETAIL
-  use MLSStrings, only: LOWERCASE
-  use MoreTree, only: GET_BOOLEAN, GET_SPEC_ID
+  use MLSSTRINGLISTS, only: CATLISTS, SWITCHDETAIL
+  use MLSSTRINGS, only: LOWERCASE
+  use MORETREE, only: GET_BOOLEAN, GET_SPEC_ID
   use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE, &
     & REVERTOUTPUT, SWITCHOUTPUT
-  use SDPToolkit, only: PGS_S_SUCCESS
-  use String_Table, only: GET_STRING
-  use Time_M, only: TIME_NOW
+  use SDPTOOLKIT, only: PGS_S_SUCCESS
+  use STRING_TABLE, only: GET_STRING
+  use TIME_M, only: TIME_NOW
   use TOGGLES, only: GEN, SWITCHES, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, &
@@ -144,9 +145,9 @@ contains ! =====     Public Procedures     =============================
 
   subroutine Read_apriori ( Root, L2GPDatabase, L2auxDatabase, GriddedDatabase, &
     & fileDataBase )
-    use GriddedData, only: GRIDDEDDATA_T, DUMP
-    use L2AUXData, only: L2AUXDATA_T, DUMP
-    use L2GPData, only: L2GPDATA_T, DUMP
+    use GRIDDEDDATA, only: GRIDDEDDATA_T, DUMP
+    use L2AUXDATA, only: L2AUXDATA_T, DUMP
+    use L2GPDATA, only: L2GPDATA_T, DUMP
     use TREE, only: NSONS, SUBTREE
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Of the Read a priori section in the AST
@@ -255,17 +256,18 @@ contains ! =====     Public Procedures     =============================
     & LastHeightPCF  , &
     & LastNCEPPCF     &
       )
-    use ChunkDivide_m, only: CHUNKDIVIDECONFIG
-    use DumpCommand_m, only: DUMPCOMMAND
-    use GriddedData, only: RGR, GRIDDEDDATA_T, V_IS_ETA, V_IS_PRESSURE, &
-      & ADDGRIDDEDDATATODATABASE, COPYGRID, DESTROYGRIDDEDDATA, DUMP, &
+    use CHUNKDIVIDE_M, only: CHUNKDIVIDECONFIG
+    use DUMPCOMMAND_M, only: DUMPCOMMAND
+    use GRIDDEDDATA, only: RGR, GRIDDEDDATA_T, V_IS_ETA, V_IS_PRESSURE, &
+      & ADDGRIDDEDDATATODATABASE, COPYGRID, &
+      & DESTROYGRIDDEDDATA, DOWNSAMPLEGRIDDEDDATA, DUMP, &
       & SETUPNEWGRIDDEDDATA
-    use L2AUXData, only: L2AUXDATA_T, ADDL2AUXTODATABASE, &
+    use L2AUXDATA, only: L2AUXDATA_T, ADDL2AUXTODATABASE, &
       &                  READL2AUXDATA, DUMP
-    use L2GPData, only: L2GPDATA_T, &
+    use L2GPDATA, only: L2GPDATA_T, &
       & ADDL2GPTODATABASE, READL2GPDATA, DUMP
-    use ncep_dao, only: READ_CLIMATOLOGY, READGRIDDEDDATA, READGLORIAFILE
-    use SurfaceHeight_m, only: OPEN_SURFACE_HEIGHT_FILE, &
+    use NCEP_DAO, only: READ_CLIMATOLOGY, READGRIDDEDDATA, READGLORIAFILE
+    use SURFACEHEIGHT_M, only: OPEN_SURFACE_HEIGHT_FILE, &
       & READ_SURFACE_HEIGHT_FILE, CLOSE_SURFACE_HEIGHT_FILE
 
     ! Dummy arguments
@@ -291,6 +293,7 @@ contains ! =====     Public Procedures     =============================
     integer :: Details             ! How much info about the files to dump
     integer :: DIMLIST             ! index of 'X,Y,..' in dimList='X,Y,..'
     character(len=FileNameLen) :: DIMLISTSTRING ! 'X,Y,..'
+    logical :: DOWNSAMPLE          ! Downsample gridded data to coarser mesh
     integer :: EXPR_UNITS(2)            ! Output from Expr subroutine
     double precision :: EXPR_VALUE(2)   ! Output from Expr subroutine
     integer :: FIELD               ! Son of KEY, must be n_assign
@@ -368,6 +371,7 @@ contains ! =====     Public Procedures     =============================
     ! Now parse file and field names
     Details = switchDetail(switches, 'apr') - 2
     timing = section_times
+    downsample = .false.
     sumDelp = .false.
     fileName = 0
     gridIndex = 0
@@ -384,6 +388,8 @@ contains ! =====     Public Procedures     =============================
         date = sub_rosa(subtree(2,field))
       case ( f_dimList )
         dimList = sub_rosa(subtree(2,field))
+      case ( f_downsample )
+        downsample = get_boolean(field)
       case ( f_field )
         fieldName = sub_rosa(subtree(2,field))
       case ( f_file )
@@ -824,6 +830,25 @@ contains ! =====     Public Procedures     =============================
           call announce_success(FilenameString, 'geos5 not found--carry on', &                    
              & fieldNameString, MLSFile=GriddedFile)
         endif
+        ! If we were asked to downsample gridded data to a coarser mesh, do so
+        if ( downsample .and. .not. Griddeddatabase(gridIndex)%empty ) then
+          call output( 'Downsampling Gridded data', advance='yes' )
+          call DestroyGriddedData( tempgrid )
+          grid => Griddeddatabase(gridIndex)
+          call DownSampleGriddedData ( grid, tempgrid, &
+            & heightsStep=1, latsStep=2, lonsStep=2, &
+            & lstsStep=1, szasStep=1, datesStep=1, &
+            & firstheights=1, firstlats=1, firstlons=1, &
+            & firstlsts=1, firstszas=1, firstdates=1 )
+          if( details > -3 ) then                            
+            call output( 'Original Gridded data', advance='yes' )
+            call dump( grid, details )
+            call output( 'Downsampled Gridded data', advance='yes' )
+            call dump( tempgrid, details )
+          endif
+          call DestroyGriddedData( grid )
+          call copyGrid( grid, tempGrid )
+        endif
       case ( l_gloria ) ! ------------------------- Data in Gloria's UARS format
         call get_pcf_id ( fileNameString, path, subString, l2apriori_version, &
           & mlspcf_l2clim_start, mlspcf_l2clim_end, 'gloria', got(f_file), &
@@ -1236,6 +1261,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.88  2011/06/16 23:16:27  pwagner
+! Added /downsample to reduce resolution of gridded data when read
+!
 ! Revision 2.87  2011/05/26 20:45:15  pwagner
 ! Should not bomb with 'pro' set in switches
 !
