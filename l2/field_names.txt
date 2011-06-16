@@ -140,6 +140,7 @@ excludePostOverlaps
 excludePriorOverlaps
 extendedAverage
 explicitValues
+# expr # for Fill, maybe later
 extinction
 
 fgrid
@@ -486,6 +487,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.208  2011/06/16 20:22:16  vsnyder
+# Add 'expr' as a comment for later use in Fill
+#
 # Revision 2.207  2011/06/02 19:24:34  pwagner
 # May dump allRadiometers
 #
