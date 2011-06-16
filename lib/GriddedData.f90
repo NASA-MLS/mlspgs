@@ -11,21 +11,22 @@
 
 module GriddedData ! Contains the derived TYPE GriddedData_T
 
-  use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST, E_Def, E_Dp
-  use dates_module, only: tai2ccsds
-  use Dump_0, only: DUMP, DUMPDATES
-  use intrinsic, only: L_GEODALTITUDE, L_GPH, L_ETA, L_PRESSURE, &
+  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST, E_DEF, E_DP
+  use DATES_MODULE, only: TAI2CCSDS
+  use DUMP_0, only: DUMP, DUMPDATES
+  use INTRINSIC, only: L_GEODALTITUDE, L_GPH, L_ETA, L_PRESSURE, &
     & L_THETA
-  use MLSCommon, only: RGR=>R4, R8, LINELEN, NAMELEN, undefinedValue
-  ! r4 corresponds to sing. prec. :: same as stored in files
-  ! (except for dao dimensions)
-  use MLSMessageModule, only: MLSMSG_Allocate, MLSMSG_DeAllocate, MLSMSG_Error, &
-    & MLSMSG_Warning, MLSMessage, MLSMessageCalls
-  use MLSStringLists, only: SNIPLIST
-  use MLSStrings, only: LOWERCASE, READINTSFROMCHARS
-  use Output_m, only: OUTPUTOPTIONS, BLANKS, OUTPUT, OUTPUTNAMEDVALUE, NEWLINE
+  use MLSCOMMON, only: LINELEN, NAMELEN, UNDEFINEDVALUE
+  ! R4 CORRESPONDS TO SING. PREC. :: SAME AS STORED IN FILES
+  ! (EXCEPT FOR DAO DIMENSIONS)
+  use MLSKINDS, only: RGR=>R4, R8
+  use MLSMESSAGEMODULE, only: MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, MLSMSG_ERROR, &
+    & MLSMSG_WARNING, MLSMESSAGE, MLSMESSAGECALLS
+  use MLSSTRINGLISTS, only: SNIPLIST
+  use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS
+  use OUTPUT_M, only: OUTPUTOPTIONS, BLANKS, OUTPUT, OUTPUTNAMEDVALUE, NEWLINE
 
-  implicit NONE
+  implicit none
   private
 
 !---------------------------- RCS Module Info ------------------------------
@@ -53,6 +54,7 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
 !                    Destroy all the elements of the database
 ! Diff               Print differences between two grids
 ! DoGriddeddataMatch Same shapes, are on same geolocations, etc.?
+! DownsampleGriddeddata Resample grid onto coarser grid derived by step sizes
 ! Dump               Print details, values of a grid
 ! NullifyGriddedData Nullify all its pointer components
 ! SetupNewGriddedData
@@ -67,7 +69,7 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
   public :: GriddedData_T, AddGriddedDataToDatabase, &
     & ConcatenateGriddedData, ConvertFromEtaLevelGrids, CopyGrid, &
     & DestroyGriddedData, DestroyGriddedDataDatabase, &
-    & Diff, DoGriddeddataMatch, Dump, &
+    & Diff, DoGriddeddataMatch, DownSampleGriddedData, Dump, &
     & NullifyGriddedData, RGR, SetupNewGriddedData, SliceGriddedData, &
     & WrapGriddedData
 
@@ -175,7 +177,7 @@ contains
   subroutine ConcatenateGriddedData_2 ( A, B, X )
     ! This routine takes two grids A and B, B dated after A and tries
     ! to produce a third grid which is a combination of A and B
-    use MLSFillValues, only: ESSENTIALLYEQUAL
+    use MLSFILLVALUES, only: ESSENTIALLYEQUAL
     type ( GriddedData_T ), intent(in) :: A
     type ( GriddedData_T ), intent(in) :: B
     type ( GriddedData_T ), intent(inout) :: X ! inout to let us deallocate it
@@ -250,7 +252,7 @@ contains
     ! This routine takes an array of grids and a set of index values
     ! to produce a third grid which is a combination database elements
     ! at the index values
-    use MLSFillValues, only: ESSENTIALLYEQUAL
+    use MLSFILLVALUES, only: ESSENTIALLYEQUAL
     type ( GriddedData_T ), dimension(:), intent(in) :: database
     integer, dimension(:), intent(in) :: indices ! index values
     type ( GriddedData_T ), intent(inout) :: X ! inout to let us deallocate it
@@ -338,8 +340,8 @@ contains
   subroutine ConvertFromEtaLevelGrids ( TGrid, PGrid, NGrid, OutGrid )
     ! Converts two eta-level grids, one of them pressures, 
     ! to a pressure-level Grid
-    use MLSNumerics, only: InterpolateValues, UseLookUpTable
-    use dump_0, only: dump
+    use MLSNUMERICS, only: INTERPOLATEVALUES, USELOOKUPTABLE
+    use dump_0, only: DUMP
     type ( GriddedData_T ), intent(in)  :: TGrid  ! E.g., T on eta surfaces
     type ( GriddedData_T ), intent(in)  :: PGrid  ! Pressures on eta surfaces
     type ( GriddedData_T ), intent(in)  :: NGrid  ! What surfaces to use
@@ -509,7 +511,7 @@ contains
 
   ! --------------------------------------------  DiffGriddedData  -----
   subroutine DiffGriddedData ( GriddedData1, GriddedData2, options )
-    use Dump_0, only: Diff
+    use Dump_0, only: DIFF
 
     ! Imitating what dump_pointing_grid_database does, but for gridded data
     ! which may come from climatology, ncep, dao
@@ -615,6 +617,85 @@ contains
     if ( any( a%DateEnds /= b%DateEnds ) ) return
     match = .true.
   end function DoGriddeddataMatch
+
+  ! ---------------------------------------- DownSampleGriddedData ------
+  ! Given a gridded data type on a (too-)fine resolution, create a new
+  ! one on a coarser mesh defined by steps through the finer mesh
+  ! E.g., a latsStep of 2 means choosing every 2nd latitude
+  
+  ! See also SliceGriddeddata
+  ! Why did we choose 2, 4, 6, .. instead of 1, 3, 5 ?
+  ! Also what if number of steps does not divide mesh points
+  ! into whole number?
+  subroutine DownSampleGriddedData ( grid, newgrid, &
+    & heightsStep, latsStep, lonsStep, lstsStep, szasStep, datesStep, &
+    & firstheights, firstlats, firstlons, firstlsts, firstszas, firstdates )
+
+    type ( GriddedData_T ), intent(inout) :: GRID ! Input grid
+    type ( GriddedData_T ), intent(out)   :: NEWGRID ! Result
+    integer, intent(in)                   :: heightsStep
+    integer, intent(in)                   :: latsStep
+    integer, intent(in)                   :: lonsStep
+    integer, intent(in)                   :: lstsStep
+    integer, intent(in)                   :: szasStep
+    integer, intent(in)                   :: datesStep
+    integer, intent(in)                   :: firstheights
+    integer, intent(in)                   :: firstlats
+    integer, intent(in)                   :: firstlons
+    integer, intent(in)                   :: firstlsts
+    integer, intent(in)                   :: firstszas
+    integer, intent(in)                   :: firstdates
+    ! Internal variables
+    integer                   :: iheights
+    integer                   :: ilats
+    integer                   :: ilons
+    integer                   :: ilsts
+    integer                   :: iszas
+    integer                   :: idates
+    integer                   :: noheights
+    integer                   :: nolats
+    integer                   :: nolons
+    integer                   :: nolsts
+    integer                   :: noszas
+    integer                   :: nodates
+    ! Executable
+    noheights = grid%noheights/heightsStep
+    nolats    = grid%nolats   /latsStep
+    nolons    = grid%nolons   /lonsStep
+    nolsts    = grid%nolsts   /lstsStep
+    noszas    = grid%noszas   /szasStep
+    nodates   = grid%nodates  /datesStep
+    ! call outputNamedValue( 'grid%noheights ', grid%noheights )
+    ! call outputNamedValue( 'heightsStep ', heightsStep )
+    ! call outputNamedValue( 'noheights ', noheights )
+    ! call outputNamedValue( 'nolats    ', nolats    )
+    ! call outputNamedValue( 'nolons    ', nolons    )
+    ! call outputNamedValue( 'nolsts    ', nolsts    )
+    ! call outputNamedValue( 'noszas    ', noszas    )
+    ! call outputNamedValue( 'nodates   ', nodates   )
+    ! call dump( grid, details=1 )
+    ! Set up newgrid
+    call SetupNewGriddedData ( newgrid, grid, NoHeights, NoLats, &
+      & NoLons, NoLsts, NoSzas, NoDates )
+    ! Now fill its geo-fields
+    newgrid%heights = grid%heights( heightsStep::heightsStep )
+    newgrid%lats = grid%lats( firstlats::latsStep )
+    newgrid%lons = grid%lons( firstlons::lonsStep )
+    newgrid%lsts = grid%lsts( firstlsts::lstsStep )
+    newgrid%szas = grid%szas( firstszas::szasStep )
+    newgrid%dateStarts = grid%dateStarts( datesStep::datesStep )
+    newgrid%dateEnds = grid%dateEnds( datesStep::datesStep )
+    ! Now the multidimension gridded field values
+    newgrid%field = grid%field( &
+      & firstheights::heightsStep, &
+      & firstlats   ::latsStep, &
+      & firstlons   ::lonsStep, &
+      & firstlsts   ::lstsStep, &
+      & firstszas   ::szasStep, &
+      & firstdates  ::datesStep &
+      & )
+    ! call dump( newgrid, details=1 )
+  end subroutine DownSampleGriddedData
 
   ! ----------------------------------------  DumpGriddedDatabase  -----
   subroutine DumpGriddedDatabase ( GriddedData, Details, options )
@@ -954,7 +1035,7 @@ contains
   ! This first routine sets up a new grid according to the user
   ! input.  This may be based partly on an already-defined source
   ! or created from scratch.
-    use Allocate_Deallocate, only: Test_Allocate
+    use Allocate_Deallocate, only: TEST_ALLOCATE
     ! Dummy arguments
     type (GriddedData_T) :: QTY ! Result
     type (GriddedData_T), optional, intent(in) :: SOURCE ! Template
@@ -1072,6 +1153,31 @@ contains
   end subroutine NullifyGriddedData
 
   ! ---------------------------------------- SliceGriddedData ------
+  ! Here would be a good place to describe the purpose and method of this
+  ! procedure (hint, hint)
+  ! I (paw) did not write this but I can take a stab at it
+  ! return an array with values of the griddeddata's field at mesh
+  ! points defined by the supplied heights, lats, etc.
+  ! Where and if the new mesh points do not exactly line up with the old
+  ! produce a weighted average from the corners (vertices) of the smallest
+  ! 6-dimensional hypercube of old mesh points surrounding each new mesh point
+  ! Confusing? Maybe a picture would help ..
+  ! If we had not 6 dimensions but only 2, let lowercase letters be the old mesh
+  ! points and upper case letters be the new mesh points. Then we would look
+  ! for points a, b, c, and d such that for point P
+  !
+  !   a            b
+  !
+  !       P
+  !
+  !   c            d
+  ! and determine the value at P by weighting the values at a, b, c, and d
+  ! according to a mysterious formula I have not taken the trouble to
+  ! understand, but which, among other wrinkles, treats heights logarithmically
+  ! and makes an effort to avoid allowing undefined values to exert a
+  ! corrupting and baleful influence if they should be found at a, b, c, or d
+  
+  ! See also DownSampleGriddeddata
   subroutine SliceGriddedData ( grid, slice, &
     & heights, lats, lons, lsts, szas, dates, missingValue )
 
@@ -1449,7 +1555,7 @@ contains
     ! Given a grid, possibly add extra points in longitude beyond +/-180
     ! and in solar time beyond 0..24 to aid in interpolations.
     ! Dummy arguments
-    use Allocate_Deallocate, only: Memory_Units, Test_Allocate, Test_DeAllocate
+    use Allocate_Deallocate, only: MEMORY_UNITS, TEST_ALLOCATE, TEST_DEALLOCATE
     type ( GriddedData_T ), intent(inout) :: GRID
     ! Local variables
     real (rgr), dimension(:), pointer :: NEWLONS
@@ -1607,6 +1713,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.64  2011/06/16 23:00:09  pwagner
+! Added DownSampleGriddedData
+!
 ! Revision 2.63  2011/05/05 15:21:34  pwagner
 ! Added fileType field to datatype
 !
