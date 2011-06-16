@@ -180,7 +180,7 @@ contains
   ! --------------------------------------- FindInstanceWindow ---------
   subroutine FindInstanceWindow ( quantity, phiTan, maf, phiWindow, &
     & windowUnits, windowStart, windowFinish )
-    ! This returns the start end end of a window into a quantity such as
+    ! This returns the start and end of a window into a quantity such as
     ! temperature for a given instance of a minor frame quantity
     type (VectorValue_T), intent(in) :: QUANTITY ! Quantity e.g. temperature
     type (VectorValue_T), intent(in) :: PHITAN ! Phitan information
@@ -509,6 +509,9 @@ contains
 end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.36  2011/06/16 20:16:54  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.35  2010/02/04 23:08:00  vsnyder
 ! Remove USE or declaration for unused names
 !
