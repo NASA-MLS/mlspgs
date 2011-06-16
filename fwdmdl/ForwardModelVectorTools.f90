@@ -31,7 +31,7 @@ contains
   ! ---------------------------------  GetQuantityForForwardModel  -----
   function GetQuantityForForwardModel ( vector, otherVector, quantityType, &
     & molecule, instrumentModule, radiometer, reflector, signal, sideband, &
-    & molIndex, config, foundInFirst, wasSpecific, noError, matchQty )
+    & molIndex, config, foundInFirst, wasSpecific, noError, matchQty, Frq )
 
     ! This function is in many senses like GetVectorQuantityByType, (to
     ! which it can revert), except that given a forwardModelConfig_T in
@@ -43,9 +43,10 @@ contains
     use Intrinsic, only: Lit_Indices
     use Intrinsic, only: L_VMR
     use ManipulateVectorQuantities, only: DOHGRIDSMATCH, DOVGRIDSMATCH
+    use MLSKinds, only: R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSSets, only: FindFirst
-    use MLSSignals_m, only: GetRadiometerName, GetSignalName
+    use MLSSignals_m, only: GetRadiometerName, GetSignalName, Signals
     use Molecules, only: L_EXTINCTION, L_EXTINCTIONV2
     use QuantityTemplates, only: QuantityTemplate_T
     use String_table, only: Get_String
@@ -58,33 +59,50 @@ contains
     integer, intent(in),  optional :: MOLECULE     ! Molecule index (l_...)
     integer, intent(in),  optional :: INSTRUMENTMODULE ! Instrument module index
     integer, intent(in),  optional :: RADIOMETER   ! Radiometer index
-    integer, intent(in),  optional :: REFLECTOR   ! Reflector literal
+    integer, intent(in),  optional :: REFLECTOR    ! Reflector literal
     integer, intent(in),  optional :: SIGNAL       ! Signal index
-    integer, intent(in),  optional :: SIDEBAND ! -1, 0, +1
+    integer, intent(in),  optional :: SIDEBAND     ! -1, 0, +1
     type (ForwardModelConfig_T), intent(in), optional :: CONFIG ! fwmConfig
     integer, intent(in),  optional :: MOLINDEX     ! Index into the molecules array
     logical, intent(out), optional :: FOUNDINFIRST ! Set if found in first vector
-    logical, intent(out), optional :: WASSPECIFIC ! Set if listed as specific quantity
-    logical, intent(in),  optional :: NOERROR ! Don't give error if not found
+    logical, intent(out), optional :: WASSPECIFIC  ! Set if listed as specific quantity
+    logical, intent(in),  optional :: NOERROR      ! Don't give error if not found
     type (VectorValue_T), intent(in), optional :: MATCHQTY ! Result must match this
+    real(r8), intent(in), optional :: Frq          ! Frequency
     ! Result
     type (VectorValue_T), pointer :: GetQuantityForForwardModel
 
+    ! Local type
+    type Stuff_t ! a vector_t pointer and a real(r8) pointer
+      type(vector_t), pointer :: V => null() ! Vector(1) or OtherVector(2)
+      integer, pointer :: Match(:) => null() ! Flags for V
+    end type
+
     ! Local variables
-    logical :: UseGetQuantityByType
     logical :: MyNoError                ! Copy of no error
-    logical, dimension(:), pointer :: MATCHV ! Flags for vector 
-    logical, dimension(:), pointer :: MATCHOV ! Flags for otherVector
-    logical, dimension(:), pointer :: MATCH ! One of the match...s
+    real(r8) :: FrqDiff
+
+    ! -1 for no match.  Channel number of best match if Frq is present, else zero.
+    integer, dimension(:), pointer :: MATCH   ! One of stuff(:)%match
+
+    real(r8) :: MyFrq                   ! Copy of Frq, or a fiction if not present
+
+    integer :: BestMatch                ! Channel index of best match
+    integer :: ClosestFrq               ! Qty index of closest frequency match
+                                        ! >0 for vector 1, < 0 for vector 2
     integer :: MolEntry                 ! How many similar molecules in list?
     integer :: NoFound                  ! Number of matches found so far.
-    integer :: VectorIndex              ! Loop counter
     integer :: NoVectors                ! Number of vectors we've been given
-    integer :: ThisMolecule             ! A molecule
     integer :: Quantity                 ! Loop counter
+    integer :: ThisMolecule             ! A molecule
+    integer :: VectorIndex              ! Loop counter
     type (Vector_T), pointer :: V       ! A vector
     type (QuantityTemplate_T), pointer :: QT ! A quantity template
     character(len=127) :: MSG
+    logical :: UseGetQuantityByType
+
+    ! pointers to vectors and Match arrays
+    type(stuff_t) :: stuff(2)
 
     ! Executable code
 
@@ -96,7 +114,11 @@ contains
     if ( present ( noError ) ) myNoError = noError
     if ( present ( wasSpecific ) ) wasSpecific = .false.
     if ( present ( foundInFirst ) ) foundInFirst = .false.
+    myFrq = huge(0.0_r8)
+
+    if ( present(frq) ) myFrq = frq
     nullify ( GetQuantityForForwardModel )
+    closestFrq = 0
 
     ! First see if we can simply revert to the simpler GetVectorQuantityByType
     useGetQuantityByType = .true.
@@ -114,34 +136,24 @@ contains
     end if
 
     ! OK, looks like we have to do it the more complicated way.
+    stuff(1)%v => vector
+    if ( present(otherVector) ) stuff(2)%v => otherVector
+    noVectors = merge(2,1,present(otherVector))
 
-    ! Setup a set of logicals to identify the matching quantities
-    nullify ( matchV, matchOV )
-    call Allocate_test ( matchV, size ( vector%quantities ), &
-      & 'matchV', ModuleName )
-    if ( present ( otherVector ) ) &
-      & call Allocate_test ( matchOV, size ( otherVector%quantities ), &
-      &   'matchOV', ModuleName )
+    do vectorIndex = 1, noVectors
+      call allocate_test ( stuff(vectorIndex)%match, &
+        & stuff(vectorIndex)%v%template%noQuantities, &
+        & 'stuff%match(vectorIndex)', ModuleName, fill=-1 )
+    end do
 
     ! Now loop over the one or two vectors and work out which quantities might match.
-    if ( present ( otherVector ) ) then
-      noVectors = 2
-    else
-      noVectors = 1
-    end if
     do vectorIndex = 1, noVectors
-      if ( vectorIndex == 1 ) then
-        v => vector
-        match => matchV
-      else
-        v => otherVector
-        match => matchOV
-      end if
-      do quantity = 1, size ( v%quantities )
+      v => stuff(vectorIndex)%v
+      match => stuff(vectorIndex)%match
+      do quantity = 1, v%template%noQuantities
         thisMolecule = 0
         qt => v%quantities(quantity)%template
         ! Now go through the quantities and see if they match
-        match ( quantity ) = .false.
         if ( quantityType /= qt%quantityType ) cycle
         if ( present(molecule) ) then
           if ( molecule /= qt%molecule ) cycle
@@ -176,10 +188,23 @@ contains
           if ( .not. DoVGridsMatch ( v%quantities(quantity), matchQty ) ) cycle
           if ( .not. DoHGridsMatch ( v%quantities(quantity), matchQty, &
             & spacingOnly=.true. ) ) cycle
-        endif
-        match ( quantity ) = .true.
-      end do                            ! End loop over the quantities
-    end do                              ! End loop over the one or two vectors
+        end if
+        if ( qt%signal <= 0 .or. .not. present(frq) ) then
+          match ( quantity ) = 0
+        else
+          frqDiff = huge(0.0_r8)
+          do bestMatch = 1, size(signals(qt%signal)%frequencies)
+            if ( signals(qt%signal)%channels(bestMatch) ) then
+              if ( abs(signals(qt%signal)%frequencies(bestMatch)-myFrq) < frqDiff ) then
+                frqDiff = abs(signals(qt%signal)%frequencies(bestMatch)-myFrq)
+                if ( frqDiff <= signals(qt%signal)%widths(match(quantity)) ) &
+                  & match ( quantity ) = bestMatch
+              end if
+            end if
+          end do
+        end if
+      end do ! Quantity                 ! End loop over the quantities
+    end do   ! VectorIndex              ! End loop over the one or two vectors
 
     ! Now decide exactly which ones we want
     if ( present ( molIndex ) ) then
@@ -191,20 +216,21 @@ contains
       molEntry = 0
     end if
 
+    noFound = 0
+
+    ! If Frq is present, find the quantity for a signal whose center frequency
+    ! is nearest to the desired one, and verify that the desired frequency is
+    ! within the same channel.
+    if ( present(frq) ) then
+
     ! First to see if any of the matches are on our 'specificQuantity'
     ! list, if so match them.  Though pay special attention in the molIndex case.
-    noFound = 0
-    if ( associated ( config%specificQuantities ) ) then
+    else if ( associated ( config%specificQuantities ) ) then
       specificVectorLoop: do vectorIndex = 1, noVectors
-        if ( vectorIndex == 1 ) then
-          v => vector
-          match => matchV
-        else
-          v => otherVector
-          match => matchOV
-        end if
-        do quantity = 1, size ( v%quantities )
-          if ( match ( quantity ) .and. &
+        v => stuff(vectorIndex)%v
+        match => stuff(vectorIndex)%match
+        do quantity = 1, v%template%noQuantities
+          if ( match ( quantity ) >= 0 .and. &
             & any ( v%template%quantities(quantity) == config%specificQuantities ) ) then
             noFound = noFound + 1
             if ( molEntry == 0 .or. molEntry == noFound ) then
@@ -225,14 +251,9 @@ contains
     ! Otherwise just get it from one or other vector
     if ( noFound == 0 ) then
       nonSpecificVectorLoop: do vectorIndex = 1, noVectors
-        if ( vectorIndex == 1 ) then
-          v => vector
-          match => matchV
-        else
-          v => otherVector
-          match => matchOV
-        end if
-        quantity = FindFirst ( match )
+        v => stuff(vectorIndex)%v
+        match => stuff(vectorIndex)%match
+        quantity = FindFirst ( match >= 0 )
         if ( quantity /= 0 ) then
           GetQuantityForForwardModel => v%quantities(quantity)
           noFound = 1
@@ -285,8 +306,8 @@ contains
       call MLSMessage ( MLSMSG_Error, ModuleName, msg(:len_trim(msg)) )
     end if
 
-    call Deallocate_test ( matchV, 'matchV', ModuleName )
-    call Deallocate_test ( matchOV, 'matchOV', ModuleName )
+    call Deallocate_test ( stuff(1)%match, 'matchV', ModuleName )
+    call Deallocate_test ( stuff(2)%match, 'matchOV', ModuleName )
 
   end function GetQuantityForForwardModel
 
@@ -303,6 +324,9 @@ contains
 end module ForwardModelVectorTools
 
 ! $Log$
+! Revision 2.21  2011/06/16 20:19:47  vsnyder
+! Add Frq argument to GetQuantityForForwardModel
+!
 ! Revision 2.20  2009/06/23 18:26:10  pwagner
 ! Prevent Intel from optimizing ident string away
 !
