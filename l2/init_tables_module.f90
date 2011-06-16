@@ -893,11 +893,11 @@ contains ! =====     Public procedures     =============================
              begin, f+f_exact, t+t_boolean, n+n_field_type, &
              begin, f+f_excludeBelowBottom, t+t_boolean, n+n_field_type, &
              begin, f+f_explicitValues, t+t_numeric, n+n_field_type, &
-!              begin, f+f_expr, &
-!                     begin, t+t_numeric, n+n_field_type, &
-!                     begin, t+t_boolean, n+n_field_type, &
-!                     begin, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
-!                     n+n_or, &
+             begin, f+f_expr, &
+                    begin, t+t_numeric, n+n_field_type, &
+                    begin, t+t_boolean, n+n_field_type, &
+                    begin, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
+                    n+n_or, &
              begin, f+f_extinction, t+t_boolean, n+n_field_type, &
              begin, f+f_fieldECR, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
              begin, f+f_file, t+t_string, n+n_field_type, &
@@ -1698,6 +1698,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.523  2011/06/16 20:51:03  vsnyder
+! Uncomment expr field in Fill
+!
 ! Revision 2.522  2011/06/16 20:23:10  vsnyder
 ! Add expr field in Fill, as comments
 !
