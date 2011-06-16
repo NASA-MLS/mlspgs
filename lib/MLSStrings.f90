@@ -69,11 +69,13 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! SplitNest          Splits 'part 1 (part 2) part 3' -> 'part 1', 'part 2', 'part 3'
 ! SplitWords         Splits 'first, the, rest, last' -> 'first', 'the, rest', 'last'
 ! squeeze            Snip excess spaces from between words; optionally snip all
+! StartCase          Capitalize first letter of each (space-separated) word
 ! streq              Generalized strings "==" (optionally ignoring case,
 !                      leading blanks, and allowing wildcard matches)
 ! stretch            Insert spaces between words; optionally between letters
 ! Strings2Ints       Converts an array of strings to ints using "ichar" ftn
 ! trim_safe          trims string down, but never to length 0
+! unWrapLines       undo the splitting of commands across multiple lines
 ! WriteIntsToChars   Converts an array of ints to strings using Fortran write
 ! === (end of toc) ===
 
@@ -112,12 +114,15 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! SplitWords (char *line, char* first, char* rest, [char* last], &
 !       & [log threeWay], [char* delimiter])
 ! char* squeeze (char* str, [char* options])
+! char* StartCase (char* str, [char separator])
 ! log streq (char* str1, char* str2, [char* options])
 ! log streq (char* str1(:), char* str2, [char* options])
 ! log streq (char* str1, char* str2(:), [char* options])
 ! char* stretch (char* str, [char* options])
 ! strings2Ints (char* strs(:), int ints(:,:))
 ! char* trim_safe (char* str)
+! unWrapLines (char* inLines(:), char* outLines(:), &
+!              [int nout], [char escape], [char comment])
 ! writeIntsToChars (int ints(:), char* strs(:))
 ! Many of these routines take optional arguments that greatly modify
 ! their default operation
@@ -165,16 +170,18 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! streq                     
 ! === (end of api) ===
 
-  public :: asciify, Capitalize, CatStrings, CompressString, count_words, &
-   & delete, depunctuate, FlushArrayLeft, hhmmss_value, &
-   & indexes, ints2Strings, isAllAscii, IsAscii, IsRepeat, &
-   & LenTrimToAscii, LinearSearchStringArray, LowerCase, NAppearances, NCopies, &
-   & ReadCompleteLineWithoutComments, readNumsFromChars, readIntsFromChars, &
-   & Replace, ReplaceNonAscii, Reverse, Reverse_trim, Rot13, &
-   & shiftLRC, size_trim, SplitNest, SplitWords, squeeze, streq, &
-   & stretch, strings2Ints, &
-   & trim_safe, &
-   & writeIntsToChars
+  public :: asciify, &
+    & Capitalize, CatStrings, CompressString, count_words, &
+    & delete, depunctuate, FlushArrayLeft, hhmmss_value, &
+    & indexes, ints2Strings, isAllAscii, IsAscii, IsRepeat, &
+    & LenTrimToAscii, LinearSearchStringArray, LowerCase, &
+    & NAppearances, NCopies, &
+    & ReadCompleteLineWithoutComments, readNumsFromChars, readIntsFromChars, &
+    & Replace, ReplaceNonAscii, Reverse, Reverse_trim, Rot13, &
+    & shiftLRC, size_trim, SplitNest, SplitWords, squeeze, StartCase, streq, &
+    & stretch, strings2Ints, &
+    & trim_safe, unWrapLines, &
+    & writeIntsToChars
 
   interface asciify
     module procedure asciify_scalar, asciify_1d, asciify_2d, asciify_3d
@@ -1740,6 +1747,30 @@ contains
     endif
   end function squeeze
        
+  ! -------------------------------------------------  StartCase  -----
+  elemental function StartCase ( STR, SEPARATOR ) result (OUTSTR)
+    ! Capitalize first letter of each (space-separated) word
+    !--------Argument--------!
+    character (len=*), intent(in)           :: STR
+    character (len=1), optional, intent(in) :: SEPARATOR
+    character (len=len(str))                :: OUTSTR
+    ! Internal variables
+    character(len=1) :: space
+    integer :: i
+    ! Executable
+    outstr = lowercase(adjustl(str))
+    if ( len_trim(str) < 1 ) return
+    space = ' '
+    if ( present(separator) ) space=separator
+    outstr(1:1) = Capitalize(outstr(1:1))
+    if ( index(trim(outstr), space) < 1 .or. len_trim(outstr) < 3 ) return
+    do i = 3, len_trim(outstr)
+       if( outstr(i:i) /= space .and. outstr(i-1:i-1) == space ) then
+          outstr(i:i) = Capitalize(outstr(i:i))
+       end if
+    enddo
+  end function StartCase
+
   ! -------------------------------------------------  streq_array1  -----
   function streq_array1 (STR1, STR2, OPTIONS) result (relation)
     ! Array version of streq
@@ -2082,6 +2113,68 @@ contains
 
   end function trim_safe
 
+  ! --------------------------------------------------  unWrapLines  -----
+  ! undo the splitting of commands across multiple lines by escaping line feeds
+  ! ie.e, a special escape character at line's end to denote a continuation
+  ! tio the following line
+  ! optionally remove comment lines, i.e. lines beginning with comment character
+  SUBROUTINE unWrapLines ( inLines, outLines, nOut, escape, comment )
+    !
+    character (LEN=*), dimension(:), intent(in)            ::   inLines
+    character (LEN=*), dimension(:), intent(out)           ::   outLines
+    integer, optional, intent(out)                         ::   nOut
+    character (LEN=*), optional, intent(in)                ::   escape
+    character (LEN=*), optional, intent(in)                ::   comment
+
+    !----------Local vars----------!
+    integer                      :: i, j, k, line
+    character(len=len(outLines)) :: inLine
+    character(len=1)             :: myComment
+    character(len=1)             :: myEscape
+    character(len=len(outLines)) :: outLine
+    !----------Executable part----------!
+    myEscape = '\'
+    if ( present(escape) ) myEscape = escape
+    myComment = achar(0)
+    if ( present(comment) ) myComment = comment
+    outlines = ' '
+    line = 0
+    k = 0
+    do i=1, size(inLines)
+      if ( line > size(outLines) - 1 ) exit
+      inLine = adjustl(inLines(i))
+      j = len_trim(inLine)
+      if ( j < 1 ) then
+        if ( k < 1 ) cycle
+        ! We are done with the line
+        line = line + 1
+        outLines(line) = outLine
+        k = 0
+      else
+        if ( inLine(1:1) == myComment ) cycle
+        if ( inLine(j:j) == myEscape ) then
+          if ( j < 2 ) then
+            cycle
+          elseif ( k < 1 ) then
+            outline = inLine(:j-1)
+            k = j-1
+          else
+            outLine = outLine(:k) // inLine(:j-1)
+            k = k + j - 1
+          endif
+        elseif ( k < 1 ) then
+          line = line + 1
+          outLines(line) = inLine
+        else
+          line = line + 1
+          outLines(line) = outLine(:k) // inLine
+          k = 0
+        endif
+      endif
+    enddo
+    if ( present(nOut) ) nOut = line
+  END SUBROUTINE unWrapLines
+
   ! --------------------------------------------------  writeAnIntToChars  -----
   ! takes an integer and returns a string
   ! using Fortran "write"
@@ -2091,7 +2184,6 @@ contains
   ! We'll just assume both special arrays are of same size
   ! and, in case of array versions of 
   SUBROUTINE writeAnIntToChars (int, str, fmt, specialInts, specialChars)
-    ! Not useful yet
     !
     integer, intent(in)                                    ::   int
     character (LEN=*), intent(out)                         ::   str
@@ -2392,6 +2484,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.82  2011/06/16 00:14:51  pwagner
+! Added new procedures to unwrap commands and Start Case strings
+!
 ! Revision 2.81  2011/02/18 17:58:10  pwagner
 ! Replace, Delete no take an optional arg; added shiftLRC
 !
