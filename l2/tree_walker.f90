@@ -513,21 +513,24 @@ subtrees:   do while ( j <= howmany )
           & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
         ! Now tidy up any remaining `pointer' data.
         ! processingRange needs no deallocation
-        if ( switchDetail(switches,'gridd') > -1 .and. .not. parallel%slave &
+        details = SwitchDetail(switches, 'gridd')
+        if ( details > -1 .and. .not. parallel%slave &
          & .and. associated(griddedDataBase) ) then
-          call Dump(griddedDataBase)
+          call Dump( griddedDataBase, details )
         end if
         if ( warnOnDestroy ) call output('About to destroy gridded db', advance='yes' )
         call DestroyGriddedDataDatabase ( griddedDataBase )
-        if ( switchDetail(switches,'l2gp') > -1 .and. .not. parallel%slave) then
-          call Dump(l2gpDatabase)
+        details = SwitchDetail(switches, 'l2gp')
+        if ( details > -1 .and. .not. parallel%slave) then
+          call Dump( l2gpDatabase, details=details )
         else if ( switchDetail(switches,'cab') > -1 .and. .not. parallel%slave) then
-          call Dump(l2gpDatabase, ColumnsOnly=.true.)
+          call Dump( l2gpDatabase, ColumnsOnly=.true. )
         end if
         if ( warnOnDestroy ) call output('About to destroy l2gp db', advance='yes' )
         call DestroyL2GPDatabase ( l2gpDatabase )
-        if ( switchDetail(switches,'l2aux') > -1 .and. .not. parallel%slave) then
-          call Dump(l2auxDatabase)
+        details = SwitchDetail(switches, 'l2aux')
+        if ( details > -1 .and. .not. parallel%slave) then
+          call Dump( l2auxDatabase, details=details )
         end if
         if ( warnOnDestroy ) call output('About to destroy l2aux db', advance='yes' )
         call DestroyL2AUXDatabase ( l2auxDatabase )
@@ -536,10 +539,10 @@ subtrees:   do while ( j <= howmany )
         ! vectors, vectorTemplates and qtyTemplates destroyed at the
         ! end of each chunk
         ! fileDataBase is deallocated in MLSL2
-        if ( switchDetail(switches,'pro') > -1 &
+        details = SwitchDetail(switches, 'pro') - 2 ! 'pro' prints only size(DB)
+        if ( details > -3 &
           & .and. associated(fileDataBase) ) then
-          details = SwitchDetail(switches, 'pro') - 2 ! 'pro' prints only size(DB)
-          call Dump(fileDataBase, details=details)
+          call Dump( fileDataBase, details=details )
         end if
         if ( specialDumpFile /= ' ' ) &
           & call revertOutput
@@ -561,8 +564,8 @@ subtrees:   do while ( j <= howmany )
   contains
 
     subroutine FinishUp ( Early )
-      use FilterShapes_m, only: Destroy_Filter_Shapes_Database, &
-        & destroy_DACS_Filter_Database
+      use FILTERSHAPES_M, only: DESTROY_FILTER_SHAPES_DATABASE, &
+        & DESTROY_DACS_FILTER_DATABASE
       logical, intent(in), optional :: Early
       logical :: myEarly
       integer :: numChunks
@@ -632,6 +635,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.175  2011/05/09 18:27:56  pwagner
+! Converted to using switchDetail
+!
 ! Revision 2.174  2011/04/20 16:53:43  pwagner
 ! Added new flexibility to l2cf control flow by run-time booleans affecting gridded data
 !
