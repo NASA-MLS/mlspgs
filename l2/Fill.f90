@@ -81,7 +81,17 @@ contains ! =====     Public Procedures     =============================
       & StatusQuantity, QualityFromChisq, ConvergenceFromChisq, &
       & UsingLeastSquares, OffsetRadianceQuantity, ResetUnusedRadiances, &
       & ScaleOverlaps, SpreadChannelFill, TransferVectors, UncompressRadiance, &
-      & ANNOUNCE_ERROR
+      & ANNOUNCE_ERROR, &
+      ! Codes for ANNOUNCE_ERROR:
+      & badEstNoiseFill, badGeocAltitudeQuantity, badIsotopeFill, &
+      & badlosGridFill, badlosVelFill, badRefGPHQuantity, &
+      & badRefractFill, badTemperatureQuantity, bothFractionAndLength, &
+      & missingField, &
+      & needGeocAltitude, needH2O, needOrbitInclination, &
+      & needTempREFGPH, noCodeFor, no_Error_Code, noExplicitValuesGiven, &
+      & noSourceGridGiven, noSourceL2AUXGiven, noSourceL2GPGiven, &
+      & notImplemented, notPlain, notSPD, &
+      & wrongUnits
     use ForwardModelConfig, only: ForwardModelConfig_T
     use ForwardModelSupport, only: FillFwdModelTimings
     use GLOBAL_SETTINGS, only: BrightObjects
@@ -97,7 +107,7 @@ contains ! =====     Public Procedures     =============================
       & F_DESTINATION, F_DIAGONAL, &
       & F_DONTMASK, F_DONTSUMHEIGHTS, F_DONTSUMINSTANCES, &
       & F_ECRTOFOV, F_EARTHRADIUS, F_EXACT, F_EXCLUDEBELOWBOTTOM, F_EXPLICITVALUES, &
-      & F_EXTINCTION, F_FIELDECR, F_FILE, F_FLAGS, F_FORCE, f_shape, &
+      & F_EXPR, F_EXTINCTION, F_FIELDECR, F_FILE, F_FLAGS, F_FORCE, f_shape, &
       & F_FRACTION, F_FROMPRECISION, &
       & F_GEOCALTITUDEQUANTITY, F_GPHQUANTITY, F_HEIGHT, F_HEIGHTRANGE, &
       & F_HIGHBOUND, F_H2OQUANTITY, F_H2OPRECISIONQUANTITY, &
@@ -228,51 +238,6 @@ contains ! =====     Public Procedures     =============================
     ! -----     Declarations for Fill and internal subroutines     -------
 
     logical, parameter :: DEEBUG = .FALSE.                 ! Usually FALSE
-
-    ! Error codes for "announce_error"
-    integer, parameter :: No_Error_code = 0
-    integer, parameter :: CantFromL2AUX = No_Error_code + 1
-    integer, parameter :: CantFromL1B = cantFromL2AUX + 1
-
-    ! Error codes for "Matrix" specification
-    integer, parameter :: MissingField = cantFromL1B + 1
-
-    ! More Error codes relating to Vector
-    integer, parameter :: NumChansisZero = missingField + 1
-    integer, parameter :: NoSourceGridGiven= numChansisZero + 1
-    integer, parameter :: NoSourceL2GPGiven= noSourceGridGiven + 1
-    integer, parameter :: NoSourceL2AUXGiven= noSourceL2GPGiven + 1
-    integer, parameter :: NoExplicitValuesGiven= noSourceL2AUXGiven + 1
-    integer, parameter :: InvalidExplicitFill = noExplicitValuesGiven + 1
-    integer, parameter :: BadIsotopeFill = invalidExplicitFill + 1
-    integer, parameter :: BadlosGridFill = badIsotopeFill + 1
-    integer, parameter :: CantInterpolate3d = badlosGridFill + 1
-    integer, parameter :: WrongUnits = CantInterpolate3d + 1
-
-    ! Error codes resulting from FillCovariance
-    integer, parameter :: NotSPD = WrongUnits + 1
-    integer, parameter :: NotPlain = NotSPD + 1
-    integer, parameter :: NotImplemented = notPlain + 1
-    integer, parameter :: BothFractionAndLength = NotImplemented + 1
-
-    ! Miscellaneous
-    integer, parameter :: Miscellaneous_err = BothFractionAndLength + 1
-    integer, parameter :: ErrorReadingL1B = miscellaneous_err + 1
-    integer, parameter :: NeedTempREFGPH = errorReadingL1B + 1
-    integer, parameter :: NeedH2O = needTempRefGPH + 1
-    integer, parameter :: NeedOrbitInclination = needH2O + 1
-    integer, parameter :: NeedGeocAltitude = needOrbitInclination + 1
-    integer, parameter :: BadGeocAltitudeQuantity = needGeocAltitude + 1
-    integer, parameter :: BadTemperatureQuantity = badGeocAltitudeQuantity + 1
-    integer, parameter :: BadREFGPHQuantity = badTemperatureQuantity + 1
-    integer, parameter :: NonConformingHydrostatic = badREFGPHQuantity + 1
-    integer, parameter :: NoSpecialFill = nonConformingHydrostatic + 1
-    integer, parameter :: BadlosVelFill = noSpecialFill + 1
-    integer, parameter :: NotZetaForGrid = BadLosVelFill + 1
-    integer, parameter :: BadEstNoiseFill = NotZetaForGrid + 1
-    integer, parameter :: BadRefractFill = BadEstNoiseFill + 1
-    integer, parameter :: MissingDataInGrid = BadRefractFill + 1
-    integer, parameter :: EmptyGridForFill = MissingDataInGrid + 1
 
     ! -999.99 ! Same as %template%badvalue
     real, parameter ::    UNDEFINED_VALUE = DEFAULTUNDEFINEDVALUE
@@ -1193,6 +1158,8 @@ contains ! =====     Public Procedures     =============================
           exact = get_boolean ( gson )
         case ( f_explicitValues ) ! For explicit fill
           valuesNode = subtree(j,key)
+        case ( f_expr )
+          call Announce_Error ( key, noCodeFor )
         case ( f_extinction ) ! For cloud extinction fill
           extinction = get_boolean ( gson )
         case ( f_fieldECR ) ! For hydrostatic
@@ -1237,7 +1204,8 @@ contains ! =====     Public Procedures     =============================
           ! 'b[elow]' meaning fill heights below supplied value
           call get_string ( manipulation, options, strip=.true. )
           if ( index(' ab', options(1:1)) < 1 ) &
-            & call Announce_Error ( key, 0, 'invalid heightRange: ' // trim(options) )
+            & call Announce_Error ( key, no_Error_Code, &
+              & 'invalid heightRange: ' // trim(options) )
         case ( f_ignoreZero )
           ignoreZero = get_boolean ( gson )
         case ( f_ignoreGeolocation ) ! For l2gp etc. fill
@@ -2434,8 +2402,8 @@ contains ! =====     Public Procedures     =============================
 
       case ( l_spreadChannel )
         if ( .not. got ( f_channel ) .and. .not. got( f_sourceQuantity ) ) &
-          & call Announce_Error ( key, &
-          & no_error_code, 'Must supply channel or sourcequantity for spreadChannel fill' )
+          & call Announce_Error ( key, no_error_code, &
+          & 'Must supply channel or sourcequantity for spreadChannel fill' )
         if ( got(f_sourceQuantity) ) then
         sourceQuantity => GetVectorQtyByTemplateIndex( &
           & vectors(sourceVectorIndex), sourceQuantityIndex )
@@ -2481,8 +2449,8 @@ contains ! =====     Public Procedures     =============================
 
       case ( l_swapvalues )
         if ( .not. got( f_sourceQuantity ) ) &
-          & call Announce_Error ( key, &
-          & no_error_code, 'Must supply sourcequantity for swapValues fill' )
+          & call Announce_Error ( key, no_error_code, &
+          & 'Must supply sourcequantity for swapValues fill' )
         sourceQuantity => GetVectorQtyByTemplateIndex( &
           & vectors(sourceVectorIndex), sourceQuantityIndex )
         ! nullify( tempswapquantity )
@@ -2664,6 +2632,10 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.393  2011/06/16 20:52:22  vsnyder
+! Get codes for Announce_Error from FillUtils.  Add f_expr, but with a
+! noCodeFor error message -- to be implemented later.
+!
 ! Revision 2.392  2011/04/20 16:46:37  pwagner
 ! Removed unused declaration
 !
