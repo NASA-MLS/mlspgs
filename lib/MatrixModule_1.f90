@@ -2557,12 +2557,13 @@ contains ! =====     Public Procedures     =============================
   end subroutine Dump_Linf
 
   ! ------------------------------------------------  Dump_Matrix  -----
-  subroutine Dump_Matrix ( Matrix, Name, Details, clean )
+  subroutine Dump_Matrix ( Matrix, Name, Details, Clean, Row, Column )
     use Lexer_core, only: Print_Source
     use Output_m, only: newLine
     type(Matrix_T), intent(in) :: Matrix
     character(len=*), intent(in), optional :: Name
     integer, intent(in), optional :: Details   ! Print details, default 1
+    integer, intent(in), optional :: Row, Column ! Only do these
     !  <= -3 => no details,
     !  -2..0 => Just the name, size and where created
     !  == -1 => Structure of blocks but not their values
@@ -2570,8 +2571,10 @@ contains ! =====     Public Procedures     =============================
     !  >One => Details of the blocks, too.
     logical, intent(in), optional :: Clean     ! Print zeroes, count
 
+    integer :: Col1, ColN
     integer :: I, J                ! Subscripts, loop inductors
     integer :: MY_DETAILS          ! True if DETAILS is absent, else DETAILS
+    integer :: Row1, RowN
     integer :: TotalSize           ! of all blocks
 
     my_details = 1
@@ -2598,8 +2601,18 @@ contains ! =====     Public Procedures     =============================
       return
     end if
     if ( my_details == -1 ) call dump_struct ( matrix )
-    do j = 1, matrix%col%nb
-      do i = 1, matrix%row%nb
+    if ( present(row) ) then
+      row1 = row; rowN = row
+    else
+      row1 = 1; rowN = matrix%row%nb
+    end if
+    if ( present(column) ) then
+      col1 = column; colN = column
+    else
+      col1 = 1; colN = matrix%col%nb
+    end if
+    do j = col1, colN
+      do i = row1, rowN
         if ( associated(matrix%block(i,j)%values) ) &
           totalSize = totalSize + size(matrix%block(i,j)%values)
         if ( my_details < 1 ) cycle
@@ -2797,6 +2810,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.123  2011/06/16 20:17:32  vsnyder
+! Add row, column arguments to dump
+!
 ! Revision 2.122  2011/01/13 00:23:19  vsnyder
 ! Add GetVectorFromColumn_1_Q_I
 !
