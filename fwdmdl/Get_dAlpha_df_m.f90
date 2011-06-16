@@ -180,17 +180,23 @@ contains
     !\\
     !  \sum_k \hat{f}(s)\, \beta(s)
     ! &\beta \hat{f}(s)
-    ! & \frac{\eta^k_{lm}(s)}{f^k_{lm}}
-    !   \frac{\eta^k_{\tilde l \tilde m}(s)}{f^k_{\tilde l \tilde m}}
+    ! & \frac{\eta^k_{lm}(s)}{f^k_{lm} f^k_{\tilde l \tilde m}}
+    !   (\eta^k_{\tilde l \tilde m}(s) - d_{lm, \tilde{l} \tilde{m}})
     !\\
     !  \sum_k \hat{f}(s)\, \beta(s,\hat{f}(s))
     ! &\hat{f}(s) \left( \beta +
     !       3 \hat{f}(s)\frac{\partial \beta}
     !                        {\partial \hat{f}(s)} \right)
-    ! & \frac{\eta^k_{lm}(s)}{f^k_{lm}}
-    !   \frac{\eta^k_{\tilde l \tilde m}(s)}{f^k_{\tilde l \tilde m}}
+    ! & \frac{\eta^k_{lm}(s)}{f^k_{lm} f^k_{\tilde l \tilde m}}
+    !   (\eta^k_{\tilde l \tilde m}(s) - d_{lm, \tilde{l} \tilde{m}})
     !  \end{array}
     ! \end{equation*}
+    ! \begin{eqnarray*}
+    ! \mbox{where } \ \ d_{lm, \tilde{l} \tilde{m}} \ = \ 
+    ! \begin{cases}  
+    ! 1, \ \ \ l = \tilde{l} \ \mbox{and} \ m = \tilde{m} \\ 
+    ! 0, \ \ \ \mbox{otherwise,} \end{cases} \ \ \ \ \mbox{is the Dirac delta function.}
+    ! \end{eqnarray*}
     !  All that's left to be done to what's computed here when we want
     !  $\frac{\partial^2 \alpha(s)}
     !        {\partial f^k_{lm}\partial f^k_{\tilde l \tilde m}}$ or
@@ -246,6 +252,9 @@ contains
 end module Get_dAlpha_df_m
 
 ! $Log$
+! Revision 2.6  2011/06/16 17:06:40  yanovsky
+! Tex updates for second derivatives of alpha in Get_d2Alpha_df2 subroutine
+!
 ! Revision 2.5  2011/03/17 00:00:25  vsnyder
 ! Simplify Get_d2Alpha_df2, more fiddling TeXnicalities
 !
