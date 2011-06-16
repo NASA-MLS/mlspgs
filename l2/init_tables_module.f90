@@ -255,7 +255,7 @@ contains ! =====     Public procedures     =============================
     ! (because of the "include"):
     use TREE, only:
     use TREE_TYPES, only: N_DOT, N_DT_DEF, N_FIELD_SPEC, N_FIELD_TYPE, &
-                          N_NAME_DEF, N_SECTION, N_SPEC_DEF
+                          N_NAME_DEF, N_OR, N_SECTION, N_SPEC_DEF, N_UNCHECKED
 
     integer, parameter :: E = d*empty_OK ! Decoration for empty_ok field specs
 
@@ -893,6 +893,11 @@ contains ! =====     Public procedures     =============================
              begin, f+f_exact, t+t_boolean, n+n_field_type, &
              begin, f+f_excludeBelowBottom, t+t_boolean, n+n_field_type, &
              begin, f+f_explicitValues, t+t_numeric, n+n_field_type, &
+!              begin, f+f_expr, &
+!                     begin, t+t_numeric, n+n_field_type, &
+!                     begin, t+t_boolean, n+n_field_type, &
+!                     begin, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
+!                     n+n_or, &
              begin, f+f_extinction, t+t_boolean, n+n_field_type, &
              begin, f+f_fieldECR, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
              begin, f+f_file, t+t_string, n+n_field_type, &
@@ -1669,7 +1674,7 @@ contains ! =====     Public procedures     =============================
              s+s_directWrite, s+s_diff, s+s_dump, s+s_skip, n+n_section, &
       begin, z+z_algebra, s+s_columnScale, s+s_combineChannels, s+s_cyclicJacobi, &
              s+s_disjointEquations, s+s_normalEquations, s+s_reflect, &
-             s+s_regularization, s+s_rowScale, n+n_section+d*no_check_eq, &
+             s+s_regularization, s+s_rowScale, nc+n_section, &
       begin, z+z_output, s+s_copy, s+s_destroy, s+s_dumpblocks, s+s_hgrid, &
              s+s_output, s+s_time, n+n_section /) )
 
@@ -1693,6 +1698,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.522  2011/06/16 20:23:10  vsnyder
+! Add expr field in Fill, as comments
+!
 ! Revision 2.521  2011/06/02 19:24:34  pwagner
 ! May dump allRadiometers
 !
