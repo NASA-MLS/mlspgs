@@ -612,7 +612,7 @@ install:
 	if [ ! -d $(INSTALLDIR) ] ; then \
 	   $(MLSBIN)/mkpath.sh $(INSTALLDIR) ; \
 	fi ; \
-	if [ license.txt ] ; then \
+	if [ -f license.txt ] ; then \
 	   cp license.txt $(INSTALLDIR) ; \
 	fi ; \
 	for dir in $(LEVELS); do \
@@ -1269,6 +1269,9 @@ tools: chunktimes checkpvmup compare dateconverter \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.129  2011/05/16 22:35:13  pwagner
+# Added idlcfm
+#
 # Revision 1.128  2010/10/02 00:09:17  pwagner
 # Tries to automatically created shared libraries, too
 #
