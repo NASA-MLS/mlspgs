@@ -587,6 +587,7 @@ contains ! =====     Public procedures     =============================
       begin, s+s_gridded, &
              begin, f+f_date, t+t_string, n+n_field_type, &
              begin, f+f_dimList, t+t_string, n+n_field_type, &
+             begin, f+f_downsample, t+t_boolean, n+n_field_type, &
              begin, f+f_file, t+t_string, n+n_field_type, &
              begin, f+f_missingValue, t+t_numeric, n+n_field_type, &
              begin, f+f_field, t+t_string, n+n_field_type, &
@@ -620,6 +621,7 @@ contains ! =====     Public procedures     =============================
       begin, s+s_readgriddedData, &
              begin, f+f_date, t+t_string, n+n_field_type, &
              begin, f+f_dimList, t+t_string, n+n_field_type, &
+             begin, f+f_downsample, t+t_boolean, n+n_field_type, &
              begin, f+f_file, t+t_string, n+n_field_type, &
              begin, f+f_grid, s+s_gridded, n+n_field_spec, &
              begin, f+f_missingValue, t+t_numeric, n+n_field_type, &
@@ -1698,6 +1700,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.524  2011/06/16 23:15:39  pwagner
+! Added /downsample to reduce resolution of gridded data when read
+!
 ! Revision 2.523  2011/06/16 20:51:03  vsnyder
 ! Uncomment expr field in Fill
 !
