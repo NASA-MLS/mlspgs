@@ -203,6 +203,10 @@ contains ! =====     Public Procedures     =============================
     signal = radiance%template%signal
     noBins = size ( l2pcDatabase )
 
+    if ( signal == 0 ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & "No signal available when selecting L2PC bin" )
+
     ! Now special code for dealing with the locked bins case
     if ( fmConf%lockBins ) then
       if ( .not. associated ( lockedBins ) ) &
@@ -453,6 +457,9 @@ contains ! =====     Public Procedures     =============================
 end module L2PCBins_m
 
 ! $Log$
+! Revision 2.8  2011/06/16 20:21:00  vsnyder
+! Require a signal in the Radiance argument to SelectL2PCBins
+!
 ! Revision 2.7  2011/05/09 17:48:37  pwagner
 ! Converted to using switchDetail
 !
