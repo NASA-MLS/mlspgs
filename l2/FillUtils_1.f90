@@ -120,54 +120,56 @@ module FillUtils_1                     ! Procedures used by Fill
   real, parameter ::    UNDEFINED_VALUE = DEFAULTUNDEFINEDVALUE
 
   ! Error codes for "announce_error"
-  integer, parameter :: No_Error_code = 0
-  integer, parameter :: CantFromL2AUX = No_Error_code + 1
-  integer, parameter :: CantFromL1B = cantFromL2AUX + 1
+  integer, parameter, public :: No_Error_code = 0
+  integer, parameter, public :: CantFromL2AUX = No_Error_code + 1
+  integer, parameter, public :: CantFromL1B = cantFromL2AUX + 1
 
   ! Error codes for "Matrix" specification
-  integer, parameter :: MissingField = cantFromL1B + 1
+  integer, parameter, public :: MissingField = cantFromL1B + 1
 
   ! More Error codes relating to Vector
-  integer, parameter :: NumChansisZero = missingField + 1
-  integer, parameter :: NoSourceGridGiven= numChansisZero + 1
-  integer, parameter :: NoSourceL2GPGiven= noSourceGridGiven + 1
-  integer, parameter :: NoSourceL2AUXGiven= noSourceL2GPGiven + 1
-  integer, parameter :: NoExplicitValuesGiven= noSourceL2AUXGiven + 1
-  integer, parameter :: InvalidExplicitFill = noExplicitValuesGiven + 1
-  integer, parameter :: BadIsotopeFill = invalidExplicitFill + 1
-  integer, parameter :: BadlosGridFill = badIsotopeFill + 1
-  integer, parameter :: CantInterpolate3d = badlosGridFill + 1
-  integer, parameter :: WrongUnits = CantInterpolate3d + 1
+  integer, parameter, public :: NumChansisZero = missingField + 1
+  integer, parameter, public :: NoSourceGridGiven= numChansisZero + 1
+  integer, parameter, public :: NoSourceL2GPGiven= noSourceGridGiven + 1
+  integer, parameter, public :: NoSourceL2AUXGiven= noSourceL2GPGiven + 1
+  integer, parameter, public :: NoExplicitValuesGiven= noSourceL2AUXGiven + 1
+  integer, parameter, public :: InvalidExplicitFill = noExplicitValuesGiven + 1
+  integer, parameter, public :: BadIsotopeFill = invalidExplicitFill + 1
+  integer, parameter, public :: BadlosGridFill = badIsotopeFill + 1
+  integer, parameter, public :: CantInterpolate3d = badlosGridFill + 1
+  integer, parameter, public :: WrongUnits = CantInterpolate3d + 1
 
   ! Error codes resulting from Covariance
-  integer, parameter :: NotSPD = WrongUnits + 1
-  integer, parameter :: NotPlain = NotSPD + 1
-  integer, parameter :: NotImplemented = notPlain + 1
-  integer, parameter :: BothFractionAndLength = NotImplemented + 1
+  integer, parameter, public :: NotSPD = WrongUnits + 1
+  integer, parameter, public :: NotPlain = NotSPD + 1
+  integer, parameter, public :: NotImplemented = notPlain + 1
+  integer, parameter, public :: BothFractionAndLength = NotImplemented + 1
 
   ! Miscellaneous
-  integer, parameter :: Miscellaneous_err = BothFractionAndLength + 1
-  integer, parameter :: ErrorReadingL1B = miscellaneous_err + 1
-  integer, parameter :: NeedTempREFGPH = errorReadingL1B + 1
-  integer, parameter :: NeedH2O = needTempRefGPH + 1
-  integer, parameter :: NeedOrbitInclination = needH2O + 1
-  integer, parameter :: NeedGeocAltitude = needOrbitInclination + 1
-  integer, parameter :: BadGeocAltitudeQuantity = needGeocAltitude + 1
-  integer, parameter :: BadTemperatureQuantity = badGeocAltitudeQuantity + 1
-  integer, parameter :: BadREFGPHQuantity = badTemperatureQuantity + 1
-  integer, parameter :: NonConformingHydrostatic = badREFGPHQuantity + 1
-  integer, parameter :: NoSpecialFill = nonConformingHydrostatic + 1
-  integer, parameter :: NoTotalPower = noSpecialFill + 1
-  integer, parameter :: BadlosVelFill = noTotalPower + 1
-  integer, parameter :: NotZetaForGrid = BadLosVelFill + 1
-  integer, parameter :: BadEstNoiseFill = NotZetaForGrid + 1
-  integer, parameter :: BadRefractFill = BadEstNoiseFill + 1
-  integer, parameter :: MissingDataInGrid = BadRefractFill + 1
-  integer, parameter :: EmptyGridForFill = MissingDataInGrid + 1
+  integer, parameter, public :: BadGeocAltitudeQuantity = bothFractionAndLength + 1
+  integer, parameter, public :: BadTemperatureQuantity = badGeocAltitudeQuantity + 1
+  integer, parameter, public :: BadREFGPHQuantity = badTemperatureQuantity + 1
+  integer, parameter, public :: Miscellaneous_err = badREFGPHQuantity + 1
+  integer, parameter, public :: ErrorReadingL1B = miscellaneous_err + 1
+  integer, parameter, public :: NeedTempREFGPH = errorReadingL1B + 1
+  integer, parameter, public :: NeedH2O = needTempRefGPH + 1
+  integer, parameter, public :: NeedOrbitInclination = needH2O + 1
+  integer, parameter, public :: NeedGeocAltitude = needOrbitInclination + 1
+  integer, parameter, public :: NoCodeFor = needGeocAltitude + 1
+  integer, parameter, public :: NonConformingHydrostatic = noCodeFor + 1
+  integer, parameter, public :: NoSpecialFill = nonConformingHydrostatic + 1
+  integer, parameter, public :: NoTotalPower = noSpecialFill + 1
+  integer, parameter, public :: BadlosVelFill = noTotalPower + 1
+  integer, parameter, public :: NotZetaForGrid = BadLosVelFill + 1
+  integer, parameter, public :: BadEstNoiseFill = NotZetaForGrid + 1
+  integer, parameter, public :: BadRefractFill = BadEstNoiseFill + 1
+  integer, parameter, public :: MissingDataInGrid = BadRefractFill + 1
+  integer, parameter, public :: EmptyGridForFill = MissingDataInGrid + 1
 
   logical :: UNITSERROR               ! From expr
 
-  public :: addGaussianNoise, ApplyBaseline, ComputeTotalPower, DeallocateStuff, &
+  public :: addGaussianNoise, ApplyBaseline, &
+      & ComputeTotalPower, DeallocateStuff, &
       & ExtractSingleChannel, FillCovariance, FromGrid, &
       & FromL2GP, FromProfile, LOSVelocity, &
       & ChiSqChan, ChiSqMMaf, ChiSqMMif, ChiSqRatio, &
@@ -186,6 +188,7 @@ module FillUtils_1                     ! Procedures used by Fill
       & UsingLeastSquares, OffsetRadianceQuantity, ResetUnusedRadiances, &
       & ScaleOverlaps, SpreadChannelFill, TransferVectors, UncompressRadiance, &
       & ANNOUNCE_ERROR
+
 contains ! =====     Public Procedures     =============================
 
     ! ------------------------------------------- addGaussianNoise ---
@@ -318,6 +321,9 @@ contains ! =====     Public Procedures     =============================
         call output ( " are required.", advance='yes' )
       case ( needGeocAltitude )
         call output ( " fill needs geocAltitudeQuantity.", advance='yes' )
+      case ( noCodeFor )
+        call output ( " no code for " )
+        call display_string ( field_indices(extraInfo(i)), advance='yes' )
       case ( needH2O )
         call output ( " fill needs H2OQuantity.", advance='yes' )
       case ( needOrbitInclination )
@@ -6839,6 +6845,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.45  2011/06/16 20:51:24  vsnyder
+! Make Announce_Error codes public
+!
 ! Revision 2.44  2011/04/20 16:46:00  pwagner
 ! Fixed solecism that NAG complained about
 !
