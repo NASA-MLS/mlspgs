@@ -10,36 +10,36 @@
 ! foreign countries or providing access to foreign persons.
 
 program Spartacus
-  use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use dates_module, only: DATEFORM, REFORMATDATE
-  use io_stuff, only: read_textfile
+  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use DATES_MODULE, only: DATEFORM, REFORMATDATE
+  use IO_STUFF, only: READ_TEXTFILE
   use L2PARINFO, only: PARALLEL, INITPARALLEL
-  use L2ParInfo, only: MACHINE_T, PARALLEL, &
+  use L2PARINFO, only: MACHINE_T, PARALLEL, &
     & PETITIONTAG, GIVEUPTAG, GRANTEDTAG, NOTIFYTAG, &
     & SIG_FINISHED, SIG_REGISTER, SIG_SWEARALLEGIANCE, SIG_SWITCHALLEGIANCE, &
     & SIG_HOSTDIED, SIG_RELEASEHOST, SIG_REQUESTHOST, SIG_THANKSHOST, &
     & MACHINENAMELEN, GETMACHINES, GETNICETIDSTRING, GETMACHINENAMES, &
     & DUMP, ADDMACHINETODATABASE
   use MLSCOMMON, only: FILENAMELEN
-  use MLSL2Options, only: CURRENT_VERSION_ID
-  use MLSMessageModule, only: MLSMessage, MLSMessageConfig, MLSMessageExit, &
-    & MLSMSG_Allocate, MLSMSG_DeAllocate, MLSMSG_Debug, MLSMSG_Error, &
-    & MLSMSG_Info, MLSMSG_Success, MLSMSG_Warning, PVMERRORMESSAGE
+  use MLSL2OPTIONS, only: CURRENT_VERSION_ID
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECONFIG, MLSMESSAGEEXIT, &
+    & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, MLSMSG_DEBUG, MLSMSG_ERROR, &
+    & MLSMSG_INFO, MLSMSG_SUCCESS, MLSMSG_WARNING, PVMERRORMESSAGE
   use MLSSETS, only: FINDFIRST
   use MLSSTRINGLISTS, only: CATLISTS, GETSTRINGELEMENT, NUMSTRINGELEMENTS, &
     & STRINGELEMENTNUM
-  use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS, STREQ
+  use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS, STREQ, UNWRAPLINES
   use OUTPUT_M, only: BLANKS, NEWLINE, &
-    & OUTPUT, OUTPUT_DATE_AND_TIME, outputNamedValue, OutputOptions, &
+    & OUTPUT, OUTPUT_DATE_AND_TIME, OUTPUTNAMEDVALUE, OUTPUTOPTIONS, &
     & TIMESTAMP
   use PVM, only: PVMOK, &
-    & ClearPVMArgs, GETMACHINENAMEFROMTID, MYPVMSPAWN, NEXTPVMARG,  &
+    & CLEARPVMARGS, GETMACHINENAMEFROMTID, MYPVMSPAWN, NEXTPVMARG,  &
     & PVMDATADEFAULT, PVMFINITSEND, PVMF90PACK, PVMFKILL, PVMFMYTID, &
     & PVMF90UNPACK, PVMFPSTAT, &
     & PVMFSEND, PVMFNOTIFY, PVMTASKEXIT, PVMTASKHOST, &
     & PVMFFREEBUF
-  use Sort_M, only: SORT
-  use Time_M, only: Time_Now, time_config
+  use SORT_M, only: SORT
+  use TIME_M, only: TIME_NOW, TIME_CONFIG
   use TOGGLES, only: GEN, LEVELS, &
     & TOGGLE
 
@@ -152,6 +152,10 @@ program Spartacus
       &                :: dump_file = '<STDIN>'   ! name of dump file
     character(len=FILENAMELEN) &
       &                :: rslts_file = ''  ! name of results file
+    character(len=FILENAMELEN) &
+      &                :: prefix     = ''  ! to put in front of every cmd
+    character(len=FILENAMELEN) &
+      &                :: suffix     = ''  ! to put at end of every cmd
     logical :: bufferedDumpFile = .true.          ! lack of buffering slows sips
     logical :: Rescue = .false.                   ! -R option is set
     logical :: Timing = .false.                   ! -T option is set
@@ -165,8 +169,10 @@ program Spartacus
   end type options_T
   
   integer, parameter :: FIXDELAYFORSLAVETOFINISH   = 1500000 ! 15000000 ! 15 sec
-  integer, parameter :: MAXCMDLEN  = 512
-  integer, parameter :: MAXNUMCMDS = 2000
+  integer, parameter :: MAXCMDLEN                  = 4096 ! was 512
+  integer, parameter :: MAXLINELEN                 = 512
+  integer, parameter :: MAXNUMCMDS                 = 600
+  integer, parameter :: MAXNUMLINES                = 2000
   integer :: BUFFERIDRCV              ! From PVM
   integer, dimension(:), pointer :: CmdMACHINES ! Machine indices for Cmds
   integer, dimension(:), pointer :: CmdTIDS ! Tids for Cmds
@@ -179,6 +185,7 @@ program Spartacus
   logical, dimension(:), pointer :: CmdSABANDONED ! Cmds kept failing
   type(Machine_T), dimension(:), pointer :: hosts => null()
   integer :: L2QTid
+  character(len=MAXLINELEN), dimension(MAXNUMLINES) :: lines
   integer :: machine
   logical :: machineRequestQueued
   type (Machine_T),dimension(:), pointer :: Machines
@@ -243,18 +250,20 @@ program Spartacus
 
   !---------------- Task (3) ------------------
   ! Open the List of commands
+  ! Store them temporarily as Lines
+  ! In case any span multiple lines
   status = 0
   options%cmds_file = '<STDIN>'
-  Cmds = '(no more)'
+  Lines = '(no more)'
   inunit = 0
   line = adjustl(line)
   if ( line /= ' ' ) then
     options%cmds_file = line
     call output( 'commands file name: ' )
     call output( trim(line), advance='yes' )
-    call read_textfile_arr( trim(options%cmds_file), Cmds )
-    call output( trim(Cmds(1)), advance='yes' )
-    noCmds = FindFirst( Cmds == '(no more)' )
+    call read_textfile_arr( trim(options%cmds_file), Lines )
+    call output( trim(Lines(1)), advance='yes' )
+    noCmds = FindFirst( Lines == '(no more)' )
     noCmds = noCmds - 1
   else
     ! Loop over commands
@@ -267,16 +276,29 @@ program Spartacus
       noCmds = noCmds + 1
       cmd = adjustl(cmd)
       if ( cmd == ' ' .or. cmd(1:1) == '#' ) cycle
-      cmds(noCmds) = cmd
+      Lines(noCmds) = cmd
     enddo
   endif
   call dump_settings
   do CmdID=1, noCmds
     call output( trim(Cmds(CmdID)), advance='yes' )
   enddo
+  ! Now unsplit any commands that span multiple lines
+  call unWrapLines ( Lines(1:noCmds), Cmds, noCmds, escape="\", comment="#" )
   if ( noCmds < 1 ) then
     call output( 'Sorry-no commands found', advance='yes' )
     stop
+  endif
+  ! Any prefix or suffix required?
+  if ( len_trim(options%prefix) > 0 ) then
+    do CmdID=1, noCmds
+       Cmds(CmdID) = trim(options%prefix) // " " // trim(Cmds(CmdID))
+    enddo
+  endif
+  if ( len_trim(options%suffix) > 0 ) then
+    do CmdID=1, noCmds
+       Cmds(CmdID) = trim(Cmds(CmdID)) // " " // trim(options%suffix)
+    enddo
   endif
   ! A corresponding results file? 
   ! Unless cmd crashed, a result should be created
@@ -589,6 +611,12 @@ contains
     call output(' results file:', advance='no')  
     call blanks(4, advance='no')                                     
     call output(trim(options%rslts_file), advance='yes')                            
+    call output(' prefix:', advance='no')  
+    call blanks(4, advance='no')                                     
+    call output(trim(options%prefix), advance='yes')                            
+    call output(' suffix:', advance='no')  
+    call blanks(4, advance='no')                                     
+    call output(trim(options%suffix), advance='yes')                            
     call output(' -------------- Summary of run time options'      , advance='no')
     call output(' -------------- ', advance='yes')
     call output(' Debug               :                           ', advance='no')
@@ -648,6 +676,12 @@ contains
             print*, current_version_id(j)
           enddo
           stop
+        else if ( line(3+n:5+n) == 'pre' ) then
+          i = i + 1
+          call getarg ( i, options%prefix )
+        else if ( line(3+n:5+n) == 'suf' ) then
+          i = i + 1
+          call getarg ( i, options%suffix )
         else if ( line(3+n:7+n) == 'wall ' ) then
           time_config%use_wall_clock = switch
         else if ( line(3:) == ' ' ) then  ! "--" means "no more options"
@@ -720,6 +754,8 @@ contains
     call getarg ( 0+hp, line )
     print *, 'Usage: ', trim(line), ' [options] [--] [cmds-file]'
     print *, ' Options:'
+    print *, ' --pre "string":    prefix each cmd with string'
+    print *, ' --suf "string":    suffix each cmd with string'
     print *, ' --help:          show help; stop'
     print *, ' --version:       print version string; stop'
     print *, ' --wall:          show times according to wall clock (if T[0] set)'
@@ -1094,7 +1130,7 @@ contains
   function spawnRebellion( act, PvmTaskHost, machineName, ntask, tids ) &
     & result(info)
     ! Prepare for myPVMSpawn by separating command from args
-    use MLSStringLists, only: NumStringElements, StringElement
+    use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, STRINGELEMENT
     ! Args
     character(len=*), intent(in)               :: act
     integer, intent(in)                        :: PvmTaskHost
@@ -1192,6 +1228,9 @@ contains
 end program Spartacus
 
 ! $Log$
+! Revision 1.4  2009/06/23 19:43:54  pwagner
+! Changed api for dump, diff routines; now rely on options for most optional behavior
+!
 ! Revision 1.3  2008/10/24 23:16:04  pwagner
 ! May check each cmd against corresponding line in rslts file for crash
 !
