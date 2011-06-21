@@ -49,7 +49,7 @@ module cfm          ! callable forward model
                          SpreadFillVectorQuantity, FillPtanQuantity
    use ForwardModelConfig, only: ForwardModelConfig_T, Dump
    use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
-   use CFM_FWDMDL_M, only: ForwardModel
+   use CFM_FWDMDL_M, only: ForwardModel, ForwardModel2
    use MLSCommon, only: MLSFile_T, r8
    use Init_tables_module ! essentially, all the l_..., and some phyq
    use MLSFiles, only: GetMLSFileByType, InitializeMLSFile, mls_openFile, &
@@ -79,6 +79,9 @@ contains
 end module cfm
 
 ! $Log$
+! Revision 1.14  2011/03/24 15:16:46  honghanh
+! Add new interfaces for creating vector and vector values without going through quantity template databases
+!
 ! Revision 1.13  2011/03/10 18:18:02  pwagner
 ! Everything from init_tables_module back
 !
