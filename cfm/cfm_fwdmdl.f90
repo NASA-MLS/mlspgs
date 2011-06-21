@@ -9,27 +9,37 @@
 ! export authority as may be required before exporting such information to
 ! foreign countries or providing access to foreign persons.
 module CFM_FWDMDL_M
-   use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
-   use ForwardModelConfig, only: ForwardModelConfig_T
+    use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
+    use ForwardModelConfig, only: ForwardModelConfig_T
 
-   implicit none
+    implicit none
 
-   public :: ForwardModel
+    public :: ForwardModel, ForwardModel2
+
+    interface ForwardModel
+        module procedure ForwardModelObsolete
+    end interface
+
+    interface ForwardModel2
+        module procedure ForwardModelWChunk, ForwardModelWMaf
+    end interface
 
 !---------------------------- RCS Ident Info -------------------------------
-   character(len=*), private, parameter :: ModuleName= &
-       "$RCSfile$"
-   private :: not_used_here
+    character(len=*), private, parameter :: ModuleName= &
+        "$RCSfile$"
+    private :: not_used_here
 !---------------------------------------------------------------------------
 
-   private
+    private
 
-   contains
+    contains
 
    ! Compute radiances based on atmospheric state information provided
    ! by fwdModelIn and fwdModelExtra
-   subroutine ForwardModel (chunk, Config, FwdModelIn, FwdModelExtra, &
-                            FwdModelOut, Jacobian, RequestedMAF )
+   ! This subroutine should be obsolete. Please use ForwardModelWChunk,
+   ! and ForwardModelWMaf.
+   subroutine ForwardModelObsolete (chunk, Config, FwdModelIn, FwdModelExtra, &
+                                    FwdModelOut, Jacobian, RequestedMAF )
       use VectorsModule, only: Vector_T
       use MatrixModule_1, only: MATRIX_T
       use Chunks_m, only: MLSChunk_T
@@ -80,6 +90,103 @@ module CFM_FWDMDL_M
 
    end subroutine
 
+    ! Compute radiances based on atmospheric state information provided
+    ! by fwdModelIn and fwdModelExtra.
+    subroutine ForwardModelWChunk (chunk, Config, FwdModelIn, FwdModelExtra, &
+                                    FwdModelOut, Jacobian )
+        use VectorsModule, only: Vector_T
+        use MatrixModule_1, only: MATRIX_T
+        use Chunks_m, only: MLSChunk_T
+        use ForwardModelWrappers, only: ForwardModelOrig => ForwardModel
+        use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+
+        ! the chunk carries the MAF to compute over
+        type(MLSChunk_T), intent(in) :: chunk
+        ! Configuration information for the forward model
+        type(ForwardModelConfig_T), dimension(:), intent(inout) :: CONFIG
+        ! Atmospheric input
+        type(vector_T), intent(in) ::  FWDMODELIN, FwdModelExtra
+        ! This is the output vector where radiances are stored
+        type(vector_T), intent(inout) :: FWDMODELOUT  ! Radiances, etc.
+        ! The matrix equivalent of the forward model with the specific
+        ! setting in the config object.
+        type(matrix_T), intent(inout), optional :: JACOBIAN
+
+        type(forwardModelStatus_t) :: FMSTAT ! Reverse comm. stuff
+        integer :: i
+        integer :: FinalMAF
+
+        fmStat%newScanHydros = .true.
+        if (present(jacobian)) then
+            call allocate_test(fmstat%rows, jacobian%row%nb, "fmStat%rows", moduleName)
+        end if
+
+        do i=1, size(config)
+            fmStat%maf = 0
+            finalMAF = chunk%lastMAFIndex - chunk%firstMAFIndex
+
+            ! Loop over MAFs
+            do while (fmStat%maf <= finalMAF )
+                fmStat%maf = fmStat%maf + 1
+                call ForwardModelOrig (config(i), fwdmodelIn, fwdModelExtra, fwdModelOut, &
+                fmStat, Jacobian)
+            end do
+        end do
+
+        if (present(jacobian)) then
+            call deallocate_test(fmStat%rows, "fmStat%rows", moduleName)
+        end if
+
+    end subroutine
+
+    ! Compute radiances based on atmospheric state information provided
+    ! by fwdModelIn and fwdModelExtra.
+    subroutine ForwardModelWMaf (RequestedMAF, Config, FwdModelIn, FwdModelExtra, &
+                                    FwdModelOut, Jacobian )
+        use VectorsModule, only: Vector_T
+        use MatrixModule_1, only: MATRIX_T
+        use Chunks_m, only: MLSChunk_T
+        use ForwardModelWrappers, only: ForwardModelOrig => ForwardModel
+        use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+
+        integer, intent(in) :: RequestedMAF
+        ! Configuration information for the forward model
+        type(ForwardModelConfig_T), dimension(:), intent(inout) :: CONFIG
+        ! Atmospheric input
+        type(vector_T), intent(in) ::  FWDMODELIN, FwdModelExtra
+        ! This is the output vector where radiances are stored
+        type(vector_T), intent(inout) :: FWDMODELOUT  ! Radiances, etc.
+        ! The matrix equivalent of the forward model with the specific
+        ! setting in the config object.
+        type(matrix_T), intent(inout), optional :: JACOBIAN
+
+        type(forwardModelStatus_t) :: FMSTAT ! Reverse comm. stuff
+        integer :: i
+        integer :: FinalMAF
+
+        fmStat%newScanHydros = .true.
+        if (present(jacobian)) then
+            call allocate_test(fmstat%rows, jacobian%row%nb, "fmStat%rows", moduleName)
+        end if
+
+        do i=1, size(config)
+            fmStat%maf = requestedMAF
+            finalMAF = requestedMAF
+
+            ! Loop over MAFs
+            do while (fmStat%maf <= finalMAF )
+                fmStat%maf = fmStat%maf + 1
+                call ForwardModelOrig (config(i), fwdmodelIn, fwdModelExtra, fwdModelOut, &
+                fmStat, Jacobian)
+            end do
+        end do
+
+        if (present(jacobian)) then
+            call deallocate_test(fmStat%rows, "fmStat%rows", moduleName)
+        end if
+
+    end subroutine
+
 !--------------------------- end bloc --------------------------------------
    logical function not_used_here()
    character (len=*), parameter :: IdParm = &
@@ -93,6 +200,9 @@ module CFM_FWDMDL_M
 end module
 
 ! $Log$
+! Revision 1.7  2010/11/19 17:16:08  honghanh
+! Add example to use the requestedMAF feature in forward model
+!
 ! Revision 1.6  2010/11/19 01:04:51  livesey
 ! Added the optional RequestdMAF argument
 !
