@@ -60,6 +60,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 !                    Knits continuations, snips comments
 ! ReadIntsFromChars  Converts an [array of] strings to int[s] using Fortran read
 ! ReadNumsFromChars  Converts an [array of] strings to num[s] using Fortran read
+! ReadRomanNumerals  Converts a Roman numeral (e.g. 'ix') to its integer value
 ! Replace            Replaces every instance of oldChar with newChar
 ! ReplaceNonAscii    Replaces every non-ascii char with newChar
 ! Reverse            Turns 'a string' -> 'gnirts a'
@@ -75,8 +76,9 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! stretch            Insert spaces between words; optionally between letters
 ! Strings2Ints       Converts an array of strings to ints using "ichar" ftn
 ! trim_safe          trims string down, but never to length 0
-! unWrapLines       undo the splitting of commands across multiple lines
+! unWrapLines        undo the splitting of commands across multiple lines
 ! WriteIntsToChars   Converts an array of ints to strings using Fortran write
+! WriteRomanNumerals Converts an integer to Roman numeral (e.g. 9 to 'ix')
 ! === (end of toc) ===
 
 ! === (start of api) ===
@@ -103,6 +105,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 !       & [char commentChar], [char continuationChar])
 ! readIntsFromChars (char* strs[(:)], int ints[(:)], char* forbiddens)
 ! readNumsFromChars (char* strs[(:)], num num[(:)], char* forbiddens)
+! readRomanNumerals (char* strs, int int)
 ! char* Replace (char* str, char oldChar, char newChar, [int max])
 ! char* ReplaceNonAscii (char* str, char newChar)
 ! char* Reverse (char* str)
@@ -124,6 +127,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! unWrapLines (char* inLines(:), char* outLines(:), &
 !              [int nout], [char escape], [char comment])
 ! writeIntsToChars (int ints(:), char* strs(:))
+! writeRomanNumerals (int int, char* strs)
 ! Many of these routines take optional arguments that greatly modify
 ! their default operation
 
@@ -177,11 +181,12 @@ MODULE MLSStrings               ! Some low level string handling stuff
     & LenTrimToAscii, LinearSearchStringArray, LowerCase, &
     & NAppearances, NCopies, &
     & ReadCompleteLineWithoutComments, readNumsFromChars, readIntsFromChars, &
-    & Replace, ReplaceNonAscii, Reverse, Reverse_trim, Rot13, &
+    & ReadRomanNumerals, Replace, ReplaceNonAscii, Reverse, Reverse_trim, &
+    & Rot13, &
     & shiftLRC, size_trim, SplitNest, SplitWords, squeeze, StartCase, streq, &
     & stretch, strings2Ints, &
     & trim_safe, unWrapLines, &
-    & writeIntsToChars
+    & writeIntsToChars, writeRomanNumerals
 
   interface asciify
     module procedure asciify_scalar, asciify_1d, asciify_2d, asciify_3d
@@ -1263,6 +1268,57 @@ contains
 
   END SUBROUTINE ReadDoubleArrayFromChars
 
+  ! ----------------  readRomanNumerals  -----
+  ! Read a string composed of roman numerals into an int
+  
+  ! Use:
+  ! Given e.g. str='MCMLXXXIX ' return in num the value 1989
+  subroutine readRomanNumerals ( str, num )
+    ! takes a string and returns an integer
+    ! using poorly-tested but hopefully non-critical code
+
+    ! Method:
+    ! Process string left to right looking first for highest-valued char
+    ! then working down to lowest valued
+    ! When ever a lower-valued char is found to left of a higher valued
+    ! one, it and all chars up to higher value are azxsigned negative value
+    ! e.g., 'cm' is -100 + 'm', or 'xm' i -10 + 'm'
+    ! The second example is non-standard roman numerals; we can read them
+    ! anyway
+
+    ! Limitation: we treat upper case and lowercase equivalently
+    ! we ignore non-roman strings
+    !
+    !--------Argument--------!
+    character (len=*), intent(in) ::   str
+    integer, intent(out)          ::   num
+    ! Internal variables
+    character(len=1), dimension(7), parameter :: romans = &
+      & (/  'm', 'd', 'c', 'l', 'x', 'v', 'i' /)
+    integer, dimension(7), parameter :: values = &
+      & (/ 1000, 500, 100, 50,  10,   5,   1 /)
+    integer :: strpos  ! What str character we're on
+    integer :: r_index ! What romans index we're searching for
+    ! Executable
+    num = 0
+    if ( len_trim(str) < 1 ) return
+    ! Outer loop: string character number
+    do strpos=1, len_trim(str)
+      ! Inner loop: romans index
+      do r_index=1, 7
+        if ( lowercase(str(strpos:strpos)) /= romans(r_index) ) cycle
+        ! OK, we've found it--but is there a higher-valued one to the right?
+        if ( r_index == 1 .or. strpos == len_trim(str) ) then
+          num = num + values(r_index)
+        elseif ( any(indexes( lowercase(str(strpos+1:)), romans(1:r_index-1)) > 0 ) ) then
+          num = num - values(r_index)
+        else
+          num = num + values(r_index)
+        endif
+      enddo
+    enddo
+  end subroutine readRomanNumerals
+
    ! --------------------------------------------------  Replace  -----
   function Replace (str, oldChar, newchar, max) RESULT (outstr)
     ! takes a string and returns one with oldChar replaced by newChar
@@ -2264,6 +2320,68 @@ contains
 
   END SUBROUTINE writeIntsToChars_2d
 
+  ! ----------------  writeRomanNumerals  -----
+  ! write an integer as a string composed of roman numerals
+  
+  ! Use:
+  ! Given e.g. the number 1989 return str='MCMLXXXIX '
+  subroutine writeRomanNumerals ( num, str, options )
+    ! takes an integer and returns a string
+    ! using poorly-tested but hopefully non-critical code
+
+    ! Method:
+    ! Peel off values from num, working from highest to lowest,
+    ! each time appending the corresponding romans to the end of str
+    
+    ! The optional string options may control the following
+    ! if options contains  meaning
+    ! 4     use 'iiii' for 4 instead of 'iv'; seen in some clock faces
+    ! n     non-standard
+
+    ! If non_standard is chosen, check for exceptional abbreviations
+    ! like 'im' for 999, or 'cic' for 199
+    !
+    !--------Argument--------!
+    integer, intent(in)                     ::   num
+    character (len=*), intent(out)          ::   str
+    character(len=*), optional, intent(in)  ::   options
+    ! Internal variables
+    character(len=2), dimension(13), parameter :: romans = &
+      & (/  'm ','cm','d ','cd', 'c ','xc','l ','xl','x ','ix','v ','iv','i ' /)
+    integer, dimension(13), parameter :: values = &
+      & (/ 1000, 900,  500, 400,  100, 90, 50,  40,  10,   9,   5,   4,   1 /)
+    integer :: remainder
+    integer :: r_index ! What romans index we're searching for
+    logical :: non_standard
+    ! Executable
+    str = ' '
+    if ( len(str) < 1 .or. num < 1 ) return
+    non_standard = .false.
+    if ( present(options) ) non_standard = index(lowercase(options), 'n') > 0
+    remainder = num
+    ! Outer loop: romans index
+    do r_index=1, 13
+      ! Will adding an 'i' or 'x' boost the remainder above values(r_index)?
+      if ( non_standard .and. remainder < values(r_index) ) then
+        select case (r_index)
+        case (1,3,5,7) ! m, d, c, l
+          if ( remainder + values(13) >= values(r_index) ) then
+            str = trim(str) // romans(13)
+            remainder = remainder + values(13)
+          elseif( remainder + values(9) >= values(r_index) ) then
+            str = trim(str) // romans(9)
+            remainder = remainder + values(9)
+          endif
+        end select
+      endif
+      do while ( remainder >= values(r_index) )
+        str = trim(str) // romans(r_index)
+        remainder = remainder - values(r_index)
+      enddo
+    enddo
+    ! print *, 'Remainder: ', remainder
+  end subroutine writeRomanNumerals
+
   ! Private procedures and functions
 !============================ Private ==============================
   subroutine prepOptions( options )
@@ -2484,6 +2602,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.83  2011/06/23 17:25:50  pwagner
+! Added ability to read, write Roman numerals
+!
 ! Revision 2.82  2011/06/16 00:14:51  pwagner
 ! Added new procedures to unwrap commands and Start Case strings
 !
