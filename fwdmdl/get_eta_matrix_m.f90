@@ -24,6 +24,7 @@ module Get_Eta_Matrix_m
   public :: Get_Eta_Sparse_2d, Get_Eta_Sparse_2d_fl, Get_Eta_Sparse_2d_fl_nz
   public :: Get_Eta_Sparse_2d_nz
   public :: Get_Eta_Stru, Get_Eta_Stru_D_D, Get_Eta_Stru_D_S, Get_Eta_Stru_S_S
+  public :: Get_Eta_1d_Hunt
   public :: Interpolate_Stru
   public :: Interpolate_Stru_1D_D, Interpolate_Stru_1D_S
   public :: Interpolate_Stru_2D_D, Interpolate_Stru_2D_S
@@ -153,6 +154,48 @@ contains
     if ( grid_pt > basis(n_coeffs) ) eta(n_coeffs) = 1.0_rp
 
   end function Eta_Func_1d
+
+!-----------------------------------------------  Get_Eta_1d_Hunt  -----
+  subroutine Get_Eta_1d_Hunt ( Basis, Grid_Pt, Eta, IX )
+  ! Find Grid_Pt in Basis, then compute Eta(1:2).  Use constant
+  ! interpolation of Grid_Pt is below or above Basis.
+    use MLSNumerics, only: Hunt
+
+  ! Inputs
+
+    real(rp), intent(in) :: Basis(:) ! basis break points
+    real(rp), intent(in) :: Grid_pt  ! grid point
+
+  ! Outputs
+
+    real(rp), intent(out) :: Eta(2)
+    integer, intent(out) :: IX ! if 1 <= IX < size(basis),
+                               ! Basis(ix) <= Grid_Pt < Basis(ix+1)
+
+  ! Internals
+
+    integer(ip) :: N_coeffs
+
+    if ( grid_pt < basis(1) ) then
+      ix = 0
+      eta = (/ 1.0, 0.0 /) ! constant extrapolation below range
+      return
+    end if
+
+    n_coeffs = size(basis)
+    if ( grid_pt >= basis(n_coeffs) ) then
+      ix = n_coeffs
+      eta = (/ 0.0, 1.0 /) ! constant extrapolation above range
+      return
+    end if
+
+    ! basis(ix) <= grid_pt < basis(ix+1)
+    call hunt ( basis, grid_pt, ix )
+    eta(1) = ( grid_pt - basis(ix) ) / &
+           & ( basis(ix+1) - basis(ix) )
+    eta(2) = 1.0 - eta(1)
+
+  end subroutine Get_Eta_1d_Hunt
 
 !---------------------------------------------------  Eta_Func_2d  -----
   function Eta_Func_2d ( Basis, Grid, Sorted ) result ( Eta )
@@ -1391,6 +1434,9 @@ contains
 end module Get_Eta_Matrix_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.23  2010/06/07 23:17:20  vsnyder
+! Add another representation for and interpolation using etas
+!
 ! Revision 2.22  2009/06/23 18:26:11  pwagner
 ! Prevent Intel from optimizing ident string away
 !
