@@ -68,6 +68,7 @@ module DUMP_0
 ! STATSONONELINE           stats, rms each printed on a single line
 
 !     (subroutines and functions)
+! DIFF_FUN                 returns differences between scalars, arrays, etc.
 ! DIFF                     dump diffs between pair of arrays of numeric type
 ! DUMP                     dump an array to output
 ! DUMPDUMPOPTIONS          dump module settings for dump, diff, etc.
@@ -79,6 +80,7 @@ module DUMP_0
 ! === (end of toc) ===
 
 ! === (start of api) ===
+! num diff_fun ( num value1, num value2, num auxvalue, char* options )
 ! diff ( array1, char* name1, array2, char* name2,
 !      [fillvalue], [int width], [char* format],
 !      [int lbound], [char* options] ) 
@@ -147,7 +149,7 @@ module DUMP_0
 ! in the above, a string list is a string of elements (usu. comma-separated)
 ! === (end of api) ===
 
-  public :: DIFF, &
+  public :: DIFF, DIFF_FUN, &
     & DUMP, DUMP_2x2xN, DUMPDATES, DUMPDUMPOPTIONS, DUMPLISTS, DUMPNAMEDVALUES, &
     & DUMPSUMS, DUMPTABLE, SELFDIFF
 
@@ -155,6 +157,10 @@ module DUMP_0
     module procedure DIFF_1D_DOUBLE, DIFF_1D_INTEGER, DIFF_1D_REAL
     module procedure DIFF_2D_DOUBLE, DIFF_2D_INTEGER, DIFF_2D_REAL
     module procedure DIFF_3D_DOUBLE, DIFF_3D_REAL
+  end interface
+
+  interface DIFF_FUN    ! return diffs between args or arrays of numeric type
+    module procedure DIFF_SCALAR_DOUBLE, DIFF_SCALAR_REAL
   end interface
 
   interface FILTEREDDIFF        ! dump FILTEREDDIFFs between pair of n-d arrays of numeric type
@@ -249,6 +255,7 @@ module DUMP_0
   ! These are the possible options to dumps, diffs
   character, public, parameter :: dopt_clean       = 'c'
   character, public, parameter :: dopt_collapse    = 'l'
+  character, public, parameter :: dopt_cyclic      = 'y'
   character, public, parameter :: dopt_gaps        = 'g'
   character, public, parameter :: dopt_laconic     = 'L'
   character, public, parameter :: dopt_rms         = 'r'
@@ -292,7 +299,7 @@ module DUMP_0
   logical, parameter ::   SHORTCUTDIFFS = .false.
   ! character(len=MAXLINELEN) :: LINEOFZEROS
   logical :: DUMPTHESEZEROS
-  logical :: myClean, myCollapse, myDirect, myGaps, myLaconic, &
+  logical :: myClean, myCollapse, myCyclic, myDirect, myGaps, myLaconic, &
     & myRMS, myShape, myStats, &
     & myTable, myTranspose, myTrim, myUnique, myWholeArray, onlyWholeArray
   character(len=16) :: myPCTFormat
@@ -523,6 +530,46 @@ contains
         & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
     endif
   end subroutine DIFF_3D_REAL
+
+  ! -----------------------------------------------  DIFF_SCALAR  -----
+  ! This family of functions differences two values and returns
+  ! according to options:
+  ! if options contains
+  ! character        meaning
+  ! ---------        -------
+  !     a            diff the absolute values
+  !     r            divide the difference by the max abs of the 2 values
+  !     f            treat auxvalue as a fillvalue: return fillvalue if either
+  !                    value is fillvalue
+  !     p            treat auxvalue as a period: return 
+  !                    min(value1 - value2 + n*period)
+  elemental function DIFF_SCALAR_DOUBLE ( VALUE1, VALUE2, AUXVALUE, OPTIONS ) &
+    & result(d)
+    ! Args
+    double precision, intent(in)           :: value1
+    double precision, intent(in)           :: value2
+    double precision, optional, intent(in) :: auxvalue
+    character(len=*), optional, intent(in) :: options
+    double precision                       :: d
+    ! Internal variables
+    integer, parameter :: RK = kind(0.0d0)
+    ! Executable
+    include 'diff_scalar.f9h'
+  end function DIFF_SCALAR_DOUBLE
+
+  elemental function DIFF_SCALAR_REAL ( VALUE1, VALUE2, AUXVALUE, OPTIONS ) &
+    & result(d)
+    ! Args
+    real, intent(in)                       :: value1
+    real, intent(in)                       :: value2
+    real, optional, intent(in)             :: auxvalue
+    character(len=*), optional, intent(in) :: options
+    real                                   :: d
+    ! Internal variables
+    integer, parameter :: RK = kind(0.0e0)
+    ! Executable
+    include 'diff_scalar.f9h'
+  end function DIFF_SCALAR_REAL
 
   ! -----------------------------------------------  DUMP_1D_BIT  -----
   subroutine DUMP_1D_BIT ( ARRAY, NAME, BITNAMES, FILLVALUE, OPTIONS )
@@ -2787,6 +2834,7 @@ contains
     stampOptions%neverStamp = .true. ! So we don't interrupt tables of numbers
     myClean      = theDefault('clean') ! .false.
     myCollapse   = theDefault('collapse') ! .false.
+    myCyclic     = theDefault('cyclic') ! .false.
     myGaps       = theDefault('gaps')
     myLaconic    = theDefault('laconic')
     myRMS        = theDefault('rms')   ! .false.
@@ -2801,6 +2849,7 @@ contains
     if ( present(options) ) then
       myClean       =   index( options, dopt_clean      ) > 0
       myCollapse    =   index( options, dopt_collapse   ) > 0
+      myCyclic      =   index( options, dopt_cyclic     ) > 0
       myGaps        =   index( options, dopt_gaps       ) > 0
       myLaconic     =   index( options, dopt_laconic    ) > 0
       myRMS         =   index( options, dopt_rms        ) > 0
@@ -2838,6 +2887,8 @@ contains
     select case ( code )
     case ('clean')
       isit = index( defaultstring, dopt_clean      ) > 0
+    case ('cyclic')
+      isit = index( defaultstring, dopt_cyclic     ) > 0
     case ('direct')
       isit = index( defaultstring, dopt_collapse   ) > 0
     case ('gaps')
@@ -3021,6 +3072,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.112  2011/06/23 17:27:41  pwagner
+! Added function to difference args with option to supply fillvalue or period
+!
 ! Revision 2.111  2011/04/26 20:54:12  pwagner
 ! Can now dump dates
 !
