@@ -144,6 +144,7 @@ program Spartacus
     logical            :: verbose = .false.
     character(len=16)  :: command = 'run'         ! {run, kill, dumphdb, dumpmdb
     logical            :: debug = DEEBUG          !   dump, checkh, clean}
+    logical            :: dryrun = .false.
     integer            :: errorLevel = MLSMSG_Warning
     logical            :: exitOnError = .false.   ! quit if an error occurs
     character(len=FILENAMELEN) &
@@ -280,8 +281,9 @@ program Spartacus
     enddo
   endif
   call dump_settings
+  call output( ' Before unwrapping lines', advance='yes' )
   do CmdID=1, noCmds
-    call output( trim(Cmds(CmdID)), advance='yes' )
+     call output( trim(lines(CmdID)), advance='yes' )
   enddo
   ! Now unsplit any commands that span multiple lines
   call unWrapLines ( Lines(1:noCmds), Cmds, noCmds, escape="\", comment="#" )
@@ -300,6 +302,10 @@ program Spartacus
        Cmds(CmdID) = trim(Cmds(CmdID)) // " " // trim(options%suffix)
     enddo
   endif
+  call output( ' After unwrapping lines, adding pre- and suffixes', advance='yes' )
+  do CmdID=1, noCmds
+    call output( trim(Cmds(CmdID)), advance='yes' )
+  enddo
   ! A corresponding results file? 
   ! Unless cmd crashed, a result should be created
   Rslts = ' '
@@ -330,7 +336,7 @@ program Spartacus
   & 'No machines OK for master to assign to slave tasks' )
   if ( options%verbose ) call dump ( machines )
   ! Loop until all Cmds are done
-  CmdsCompleted = .false.
+  CmdsCompleted = options%dryrun   ! .false.
   CmdsStarted = .false.
   CmdsAbandoned = .false.
   CmdTids = 0
@@ -536,8 +542,8 @@ program Spartacus
 
   if ( options%verbose ) then
     call TimeStamp ( '   Finished', advance='yes' )
-    call dump( CmdNiceTids, 'CmdNiceTids', options='t' )
-    call dump( CmdTids, 'CmdTids' )
+    call dump( CmdNiceTids(1:noCmds), 'CmdNiceTids', options='t' )
+    call dump( CmdTids(1:noCmds), 'CmdTids' )
     call dump( machines%tid, 'machines%Tid', format='(i8)' )
   endif
   ! First kill any children still running (only if we got a give up message).
@@ -622,6 +628,9 @@ contains
     call output(' Debug               :                           ', advance='no')
     call blanks(4, advance='no')
     call output(options%debug, advance='yes')
+    call output(' dryrun               :                          ', advance='no')
+    call blanks(4, advance='no')
+    call output(options%dryrun, advance='yes')
     call output(' Verbose             :                           ', advance='no')
     call blanks(4, advance='no')
     call output(options%verbose, advance='yes')
@@ -671,6 +680,8 @@ contains
         end if
         if ( lowerCase(line(3+n:10+n)) == 'help' ) then
           call option_usage
+        elseif ( lowerCase(line(3+n:10+n)) == 'dryrun' ) then
+          options%dryrun = .true.
         else if ( line(3+n:10+n) == 'version ' ) then
           do j=1, size(current_version_id)
             print*, current_version_id(j)
@@ -754,8 +765,9 @@ contains
     call getarg ( 0+hp, line )
     print *, 'Usage: ', trim(line), ' [options] [--] [cmds-file]'
     print *, ' Options:'
-    print *, ' --pre "string":    prefix each cmd with string'
-    print *, ' --suf "string":    suffix each cmd with string'
+    print *, ' --dryrun:        show commands that would be executed'
+    print *, ' --pre "string":  prefix each cmd with string'
+    print *, ' --suf "string":  suffix each cmd with string'
     print *, ' --help:          show help; stop'
     print *, ' --version:       print version string; stop'
     print *, ' --wall:          show times according to wall clock (if T[0] set)'
@@ -1228,6 +1240,9 @@ contains
 end program Spartacus
 
 ! $Log$
+! Revision 1.5  2011/06/18 00:35:34  pwagner
+! Added new --pre and --suf options
+!
 ! Revision 1.4  2009/06/23 19:43:54  pwagner
 ! Changed api for dump, diff routines; now rely on options for most optional behavior
 !
