@@ -556,7 +556,7 @@ contains
     real(rp) :: D_DELTA_DF(s_a*max_c,size(grids_f%values)) ! Incremental 
                                       ! opacity derivative; computed in drad_tran_df
                                       ! and is used to get_d_deltau_pol_df.  Path x SVE.
-    real(rp) :: D2_DELTA_DF2(s_a*max_c,size(grids_f%values),size(grids_f%values))
+    real(rp) :: D2_DELTA_DF2(s_h*max_c,size(grids_f%values),size(grids_f%values))
                                       ! Incremental opacity second derivative.
                                       ! Path x SVE x SVE.
     real(rp) :: D_T_SCR_dT(max_c,s_t*sv_t_len)     ! D Delta_B in some notes
@@ -4411,6 +4411,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.322  2011/06/02 22:31:48  yanovsky
+! Add D2_DELTA_DF2 for computations of analytical Hessians in logarithmic basis
+!
 ! Revision 2.321  2011/05/09 17:46:38  pwagner
 ! Converted to using switchDetail
 !
