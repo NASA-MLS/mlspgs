@@ -192,7 +192,9 @@ module IDLCFM2_m
         hshape = 0
 
         ! Get buffer, we'll wait for it, assume the calling code knows it's coming.
-        if (present(callrecv) .and. callrecv) call PVMFrecv ( tid, QtyMsgTag, bufferID )
+        if (present(callrecv)) then
+            if(callrecv) call PVMFrecv ( tid, QtyMsgTag, bufferID )
+        endif
 
         call PVMIDLUnpack(l28, info)
         if ( info /= 0 ) then
@@ -624,17 +626,19 @@ module IDLCFM2_m
         integer :: type
 
         ! Get buffer, we'll wait for it, assume the calling code knows it's coming.
-        if (present(callrecv) .and. callrecv) then
-            call PVMFrecv ( tid, QtyMsgTag, bufferID )
-            call PVMIDLUnpack(type, info)
-            if (info /= 0) then
-                call PVMErrorMessage(info, "unpacking type")
-                return
-            endif
+        if (present(callrecv)) then
+            if (callrecv) then
+                call PVMFrecv ( tid, QtyMsgTag, bufferID )
+                call PVMIDLUnpack(type, info)
+                if (info /= 0) then
+                    call PVMErrorMessage(info, "unpacking type")
+                    return
+                endif
 
-            if (type /= SIG_VECTOR) then
-                call MLSMessage(MLSMSG_Warning, ModuleName, "ICFMReceiveVector: the received is not vector")
-                return
+                if (type /= SIG_VECTOR) then
+                    call MLSMessage(MLSMSG_Warning, ModuleName, "ICFMReceiveVector: the received is not vector")
+                    return
+                endif
             endif
         endif
 
@@ -675,6 +679,9 @@ module IDLCFM2_m
 end module
 
 ! $Log$
+! Revision 1.4  2011/05/27 06:12:48  honghanh
+! Add warning message upon unpacking instanceLen 0
+!
 ! Revision 1.3  2011/05/27 06:08:41  honghanh
 ! Add VectorHandler and type code of ICFMReceiveVector to receive vector independently of the call to ForwardModel
 !
