@@ -41,7 +41,8 @@ module HGrid                    ! Horizontal grid information
   integer, private, parameter :: NoFraction = LengthUnitMessage + 1
   integer, private, parameter :: NoHeight = NoFraction + 1
   integer, private, parameter :: UnitlessMessage = NoHeight + 1
-  integer, private, parameter :: NoModule = UnitlessMessage + 1
+  integer, private, parameter :: NoL1Bfiles = UnitlessMessage + 1
+  integer, private, parameter :: NoModule = NoL1Bfiles + 1
   integer, private, parameter :: NoMIF = NoModule + 1
   integer, private, parameter :: NoSpacingOrigin = NoMIF + 1
   integer, private, parameter :: BadTime = NoSpacingOrigin + 1
@@ -71,6 +72,7 @@ contains ! =====     Public Procedures     =============================
     use L2GPData, only: L2GPDATA_T
     use MLSCommon, only: MLSFile_T, NameLen, RK => R8, TAI93_RANGE_T
     use MLSFiles, only: GetMLSFileByType
+    use MLSL2Options, only: NEED_L1BFILES
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_L1BRead
     use MLSNumerics, only: HUNT
     use MLSStringLists, only: SwitchDetail
@@ -143,7 +145,9 @@ contains ! =====     Public Procedures     =============================
       & mySuppressGeometryDump = onlyComputingOffsets
 
     L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
-    if ( .not. associated(L1BFile) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+    if ( .not. associated(L1BFile) .and. NEED_L1BFILES ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName // '/' &
+      & // 'CreateHGridFromMLSCFInfo', &
       & "Didn't I warn you about not having an L1BOA file?" )
     hdfversion = L1BFile%HDFVersion
 
@@ -254,6 +258,8 @@ contains ! =====     Public Procedures     =============================
     case ( l_height, l_fractional, l_fixed ) ! ----- Fractional or Height ------
       if (.not. got_field(f_module) ) then
         call announce_error ( root, NoModule )
+      elseif (.not. NEED_L1BFILES ) then
+        call announce_error ( root, NoL1BFILES )
       else
         call CreateMIFBasedHGrids ( filedatabase, hGridType, chunk, &
           & got_field, root, height, fraction, interpolationFactor, &
@@ -269,6 +275,8 @@ contains ! =====     Public Procedures     =============================
         call announce_error ( root, NoModule )
       else if ( .not. all(got_field((/f_spacing, f_origin/)))) then
         call announce_error ( root, NoSpacingOrigin )
+      elseif (.not. NEED_L1BFILES ) then
+        call announce_error ( root, NoL1BFILES )
       else
         call CreateRegularHGrid ( filedatabase, processingRange, chunk, &
           & spacing, origin, trim(instrumentModuleName), forbidOverspill, &
@@ -312,6 +320,10 @@ contains ! =====     Public Procedures     =============================
       & call DumpChunkHGridGeometry ( hGrid, chunk, &
       & trim(instrumentModuleName), filedatabase )
 
+    if ( error /= 0 ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName // '/' &
+      & // 'CreateHGridFromMLSCFInfo', &
+      & "See ***** above for error message" )
     if ( toggle(gen) .and. levels(gen) > 1 ) &
       & call trace_end ( "CreateHGridFromMLSCFInfo" )
 
@@ -2284,6 +2296,8 @@ contains ! =====     Public Procedures     =============================
         & advance='yes' )
     case ( noHeight )
       call output ( "TYPE = HEIGHT but no height is specified", advance='yes' )
+    case ( noL1Bfiles )
+      call output ( "This type of hgrid needs an l1boa file", advance='yes' )
     case ( noMIF )
       call output ( "TYPE = FIXED but no MIF is specified", advance='yes' )
     case ( noModule )
@@ -2359,6 +2373,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.99  2011/06/29 21:54:26  pwagner
+! Some cases may safely omit l1b files
+!
 ! Revision 2.98  2011/03/10 21:39:11  pwagner
 ! May now specify time in explicit hGrids
 !
