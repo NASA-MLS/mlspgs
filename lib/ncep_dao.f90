@@ -140,7 +140,8 @@ contains
     LIT_DESCRIPTION = lowercase(description)
     if ( LIT_DESCRIPTION == 'geos5' ) &
       & LIT_DESCRIPTION = GEOS5orMERRA( GriddedFile )
-    if ( myVerbose ) print *, 'Reading ' // trim(LIT_DESCRIPTION) // ' data'
+    if ( myVerbose ) &
+      & call output( 'Reading ' // trim(LIT_DESCRIPTION) // ' data', advance='yes' )
 
     call nullifyGriddedData ( the_g_data ) ! for Sun's still useless compiler
     the_g_data%empty = .true.
@@ -2330,6 +2331,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.60  2011/06/29 21:38:23  pwagner
+! Uses output api
+!
 ! Revision 2.59  2011/05/05 23:09:22  pwagner
 ! verbose when requested via optional arg
 !
