@@ -14,23 +14,10 @@ module ChunkDivide_m
   ! This module replaces the old ScanDivide, and is a new approach to dividing
   ! the data into chunks.
 
-  use Intrinsic, only: L_NONE, PHYQ_INVALID
-  use MLSCommon, only: R8, RP
-  use MLSSets, only: FINDFIRST
-  use MLSCommon, only: MLSFile_T, TAI93_Range_T
-  use Chunks_m, only: MLSCHUNK_T, Dump
-  use L1BData, only: L1BData_T, READL1BDATA, GetL1bFile, NAME_LEN, &
-      & AssembleL1BQtyName, PRECISIONSUFFIX, DEALLOCATEL1BDATA
-  use Intrinsic, only: L_NONE, FIELD_INDICES, LIT_INDICES, PHYQ_ANGLE, &
-      & PHYQ_DIMENSIONLESS, PHYQ_LENGTH, PHYQ_MAFS, PHYQ_TIME
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Deallocate, MLSMSG_Warning, &
-                              MLSMSG_Error, MLSMSG_Allocate
-  use MLSFiles, only: dump, GetMLSFileByType, mls_OpenFile
-  use TOGGLES, only: GEN, TOGGLE, SWITCHES
-  use Output_M, only: BLANKS, OUTPUT, outputNamedValue, &
-      & revertoutput, switchOutput
-  use Dump_0, only: DUMP
-  use Init_Tables_Module, only: F_CRITICALBANDS, F_CRITICALMODULES, &
+  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use CHUNKS_M, only: MLSCHUNK_T, DUMP
+  use DUMP_0, only: DUMP
+  use INIT_TABLES_MODULE, only: F_CRITICALBANDS, F_CRITICALMODULES, &
       & F_CRITICALSIGNALS, &
       & F_EXCLUDEPOSTOVERLAPS, F_EXCLUDEPRIOROVERLAPS, &
       & F_HOMEMODULE, F_HOMEGEODANGLE, &
@@ -40,11 +27,23 @@ module ChunkDivide_m
       & F_SKIPL1BCHECK, F_UPPEROVERLAP, &
       & FIELD_FIRST, FIELD_LAST, L_EVEN, &
       & L_FIXED, F_MAXGAP, L_ORBITAL, L_PE, S_CHUNKDIVIDE, L_BOTH, L_EITHER
-  use String_table, only: GET_STRING
-  use MLSStringLists, only: SWITCHDETAIL
-  use MLSNumerics, only: Hunt
-  use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use MLSSignals_m, only: MODULES
+  use INTRINSIC, only: L_NONE, FIELD_INDICES, LIT_INDICES, PHYQ_ANGLE, &
+      & PHYQ_DIMENSIONLESS, PHYQ_INVALID, PHYQ_LENGTH, PHYQ_MAFS, PHYQ_TIME
+  use L1BDATA, only: L1BDATA_T, READL1BDATA, GETL1BFILE, NAME_LEN, &
+      & ASSEMBLEL1BQTYNAME, PRECISIONSUFFIX, DEALLOCATEL1BDATA
+  use MLSCOMMON, only: MLSFILE_T, TAI93_RANGE_T
+  use MLSFILES, only: DUMP, GETMLSFILEBYTYPE, MLS_OPENFILE
+  use MLSKINDS, only: R8, RP
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_DEALLOCATE, MLSMSG_WARNING, &
+                              MLSMSG_ERROR, MLSMSG_ALLOCATE
+  use MLSNUMERICS, only: HUNT
+  use MLSSETS, only: FINDFIRST
+  use MLSSIGNALS_M, only: MODULES
+  use MLSSTRINGLISTS, only: SWITCHDETAIL
+  use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE, &
+      & REVERTOUTPUT, SWITCHOUTPUT
+  use STRING_TABLE, only: GET_STRING, DISPLAY_STRING
+  use TOGGLES, only: GEN, TOGGLE, SWITCHES
 
   implicit none
   private
@@ -159,7 +158,7 @@ contains ! ===================================== Public Procedures =====
 
   !----------------------------------------  DestroyChunkDatabase  -----
   subroutine DestroyChunkDatabase ( chunks )
-    use Allocate_Deallocate, only: DEALLOCATE_TEST
+    use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST
 
     type( MLSChunk_T ), dimension(:), pointer  :: CHUNKS
     integer :: STATUS                   ! From deallocate
@@ -204,23 +203,17 @@ contains ! ===================================== Public Procedures =====
   subroutine ChunkDivide ( root, processingRange, filedatabase, chunks )
 
     use EXPR_M, only: EXPR
-    use L1BData, only: DEALLOCATEL1BDATA, L1BDATA_T, READL1BDATA, &
-      & AssembleL1BQtyName, GetL1BFile
-    use Lexer_core, only: PRINT_SOURCE
-    use MLSCommon, only: R8, RP, MLSFile_T, TAI93_Range_T
-    use MLSHDF5, only: GetHDF5Attribute
-    use MLSL2Options, only: SPECIALDUMPFILE
-    use MLSSets, only: FINDFIRST
-    use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
-    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, &
-      & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, MLSMSG_WARNING
-    use MoreTree, only: GET_BOOLEAN, GET_FIELD_ID, GET_SPEC_ID
-    use String_table, only: GET_STRING, DISPLAY_STRING
-    use Time_M, only: Time_Now
+    use LEXER_CORE, only: PRINT_SOURCE
+    use MLSCOMMON, only: TAI93_RANGE_T
+    use MLSHDF5, only: GETHDF5ATTRIBUTE
+    use MLSL2OPTIONS, only: NEED_L1BFILES, SPECIALDUMPFILE
+    use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES
+    use MORETREE, only: GET_BOOLEAN, GET_FIELD_ID, GET_SPEC_ID
+    use TIME_M, only: TIME_NOW
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use Tree, only: DECORATION, NODE_ID, NSONS, SOURCE_REF, SUBTREE, SUB_ROSA
-    use Tree_types, only: N_NAMED
-    use HDF5, only: h5gclose_f, h5gopen_f
+    use TREE, only: DECORATION, NODE_ID, NSONS, SOURCE_REF, SUBTREE, SUB_ROSA
+    use TREE_TYPES, only: N_NAMED
+    use HDF5, only: H5GCLOSE_F, H5GOPEN_F
 
     integer, intent(in) :: ROOT    ! Root of the L2CF tree for ChunkDivide
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
@@ -239,6 +232,7 @@ contains ! ===================================== Public Procedures =====
     integer, parameter :: BadUnits = 1
     integer, parameter :: NotSpecified = BadUnits + 1
     integer, parameter :: Unnecessary = NotSpecified + 1
+    integer, parameter :: invalid = Unnecessary + 1
 
     ! For timing
     logical :: Timing
@@ -261,7 +255,9 @@ contains ! ===================================== Public Procedures =====
     ! For methods other than fixed, we want to survey the L1 data and note the
     ! location of obstructions
     nullify ( obstructions )
-    if ( ChunkDivideConfig%method /= l_fixed ) then
+    if ( .not. NEED_L1BFILES ) then
+      call output( 'Entered ChunkDivide w/o an l1boa file--hope thats OK', advance='yes' )
+    elseif ( ChunkDivideConfig%method /= l_fixed ) then
       call SurveyL1BData ( processingRange, filedatabase, mafRange )
       if ( swLevel > -1 ) then
         call output ( 'Requested time range ' )
@@ -291,11 +287,23 @@ contains ! ===================================== Public Procedures =====
     case ( l_fixed )
       call ChunkDivide_Fixed ( chunks )
     case ( l_PE )
-      call ChunkDivide_PE ( mafRange%Expanded, filedatabase, chunks )
+      if ( .not. NEED_L1BFILES ) then
+        call AnnounceError ( root, invalid, ChunkDivideConfig%method )
+      else
+        call ChunkDivide_PE ( mafRange%Expanded, filedatabase, chunks )
+      endif
     case ( l_orbital )
-      call ChunkDivide_Orbital ( mafRange, filedatabase, chunks )
+      if ( .not. NEED_L1BFILES ) then
+        call AnnounceError ( root, invalid, ChunkDivideConfig%method )
+      else
+        call ChunkDivide_Orbital ( mafRange, filedatabase, chunks )
+      endif
     case ( l_even )
-      call ChunkDivide_Even ( mafRange%Expanded, filedatabase, chunks )
+      if ( .not. NEED_L1BFILES ) then
+        call AnnounceError ( root, invalid, ChunkDivideConfig%method )
+      else
+        call ChunkDivide_Even ( mafRange%Expanded, filedatabase, chunks )
+      endif
     case default
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unexpected problem with ChunkDivide' )
@@ -304,8 +312,11 @@ contains ! ===================================== Public Procedures =====
     ! Check that level 1 has done the DACS deconvolution (so we don't have to)
     ! Note that this would be an attribute, a global one, of the DACS
     ! radiance file attached to the group object '/'
-    DACSFile => GetL1BFile ( filedatabase, 'DACsDeconvolved', '-/a' )
-    if ( associated(DACSFile) ) then
+    if ( NEED_L1BFILES ) &
+      & DACSFile => GetL1BFile ( filedatabase, 'DACsDeconvolved', '-/a' )
+    if ( .not. NEED_L1BFILES ) then
+      ChunkDivideConfig%DACSDeconvolved = .false.
+    elseif ( associated(DACSFile) ) then
       if ( .not. DACSFile%stillOpen ) call mls_OpenFile(DACSFile)
       DACSFile%fileID%sd_id = 0 ! So we don't look here for the attribute
       ! We still need to open the root group '/'
@@ -389,6 +400,10 @@ contains ! ===================================== Public Procedures =====
         call output ( ' The parameter ' )
         call display_string ( field_indices(field) )
         call output ( ' is specified but not appropriate.', advance='yes' )
+      case ( invalid )
+        call output ( ' The method ' )
+        call display_string ( lit_indices(field) )
+        call output ( ' is invalid w/o an l1boa file.', advance='yes' )
       end select
     end subroutine AnnounceError
 
@@ -896,9 +911,7 @@ contains ! ===================================== Public Procedures =====
   ! -------------------------------------------- Dump_config -----
   subroutine Dump_config(config)
 
-    use Intrinsic, only: LIT_INDICES, phyq_indices
-    use Output_M, only: OUTPUT
-    use String_table, only: DISPLAY_STRING
+    use Intrinsic, only: PHYQ_INDICES
 
     ! Args
     type(ChunkDivideConfig_T), intent(in) :: Config
@@ -1057,10 +1070,8 @@ contains ! ===================================== Public Procedures =====
   ! for each of the_mafs between maf and maf2
   ! Arguments
 
-    use MLSCommon, only: MLSFile_T, RK => R8
-    use MLSFiles, only: GetMLSFileByType
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use MLSSignals_m, only: GetSignalName
+    use MLSKINDS, only: RK => R8
+    use MLSSIGNALS_M, only: GETSIGNALNAME
 
     integer, intent(in)                            :: signal
     integer, intent(in)                            :: sideband
@@ -1136,8 +1147,8 @@ contains ! ===================================== Public Procedures =====
   end function ANY_GOOD_SIGNALDATA
 
   logical function isNotACriticalBand( band )
-    use MLSStringLists, only: NumStringElements, StringElement
-    use MLSStrings, only: readIntsFromChars
+    use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, STRINGELEMENT
+    use MLSSTRINGS, only: READINTSFROMCHARS
     ! Args
     integer, intent(in) :: band
     ! Internal variables
@@ -1394,9 +1405,9 @@ contains ! ===================================== Public Procedures =====
 
     ! ----------------------------------------- ChooseCriticalSignals -----------
     subroutine ChooseCriticalSignals ( criticalSignals )
-      use MLSSignals_m, only: GetSignalName, SIGNALS
-      use MLSStringLists, only: catLists, List2Array
-      use MLSStrings, only: lowercase
+      use MLSSIGNALS_M, only: GETSIGNALNAME, SIGNALS
+      use MLSSTRINGLISTS, only: CATLISTS, LIST2ARRAY
+      use MLSSTRINGS, only: LOWERCASE
 
       ! Args
       character(len=160), dimension(:), pointer :: criticalSignals
@@ -1461,12 +1472,11 @@ contains ! ===================================== Public Procedures =====
 
     ! ----------------------------------------- NoteL1BRADChanges -----
     subroutine NoteL1BRADChanges ( obstructions, mafRange, filedatabase )
-      use MLSSignals_m, only: Dump, GetSignalName, &
+      use MLSSIGNALS_M, only: DUMP, GETSIGNALNAME, &
         & SIGNALS
-      use MLSStringLists, only: NumStringElements, GetStringElement
-      use MLSStrings, only: lowercase
-      use Parse_signal_m, only: Parse_signal
-      use String_table, only: GET_STRING
+      use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, GETSTRINGELEMENT
+      use MLSSTRINGS, only: LOWERCASE
+      use PARSE_SIGNAL_M, only: PARSE_SIGNAL
       ! This routine notes any lack of good data for one of the
       ! signals, and, depending on sensitivity,
       ! augments the database of obstructions
@@ -1811,8 +1821,7 @@ contains ! ===================================== Public Procedures =====
     subroutine SurveyL1BData ( processingRange, filedatabase, mafRange )
       ! This goes through the L1B data files and tries to spot possible
       ! obstructions.
-      use MLSL2Options, only: SharedPCF
-      use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+      use MLSL2OPTIONS, only: SHAREDPCF
       type (TAI93_Range_T), intent(in) :: PROCESSINGRANGE
       type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
       type (MAFRange_T), intent(out) :: MAFRange
@@ -2605,7 +2614,7 @@ contains ! ===================================== Public Procedures =====
      end function
 
   function what_options( clean, transpose, trim ) result( options )
-    use MLSStrings, only: trim_safe
+    use MLSStrings, only: TRIM_SAFE
     logical, optional, intent(in) :: clean
     logical, optional, intent(in) :: transpose
     logical, optional, intent(in) :: trim
@@ -2635,6 +2644,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.96  2011/06/29 21:50:20  pwagner
+! Some cases may safely omit l1b files
+!
 ! Revision 2.95  2011/02/05 01:41:44  pwagner
 ! Define and use consistently swLevel to control dump verboseness
 !
