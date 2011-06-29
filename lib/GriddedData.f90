@@ -659,12 +659,12 @@ contains
     integer                   :: noszas
     integer                   :: nodates
     ! Executable
-    noheights = grid%noheights/heightsStep
-    nolats    = grid%nolats   /latsStep
-    nolons    = grid%nolons   /lonsStep
-    nolsts    = grid%nolsts   /lstsStep
-    noszas    = grid%noszas   /szasStep
-    nodates   = grid%nodates  /datesStep
+    noheights = (grid%noheights - 1)/heightsStep + 1
+    nolats    = (grid%nolats - 1   )/latsStep    + 1
+    nolons    = (grid%nolons - 1   )/lonsStep    + 1
+    nolsts    = (grid%nolsts - 1   )/lstsStep    + 1
+    noszas    = (grid%noszas - 1   )/szasStep    + 1
+    nodates   = (grid%nodates - 1  )/datesStep   + 1
     ! call outputNamedValue( 'grid%noheights ', grid%noheights )
     ! call outputNamedValue( 'heightsStep ', heightsStep )
     ! call outputNamedValue( 'noheights ', noheights )
@@ -1713,6 +1713,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.65  2011/06/29 21:37:17  pwagner
+! Corrected bug in recalculating downsized dim sizes
+!
 ! Revision 2.64  2011/06/16 23:00:09  pwagner
 ! Added DownSampleGriddedData
 !
