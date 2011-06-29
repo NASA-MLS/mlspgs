@@ -49,23 +49,19 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
 
   ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-  ! Update these lines before delivery to sips     
+  ! Update these lines before delivery to sips
   ! id to print out in response to "--version" command-line option       
-  character(LEN=*), dimension(2), parameter :: CURRENT_VERSION_ID = (/ &    
-    & 'v3.30 swdev team               ' , &       
+  character(LEN=*), dimension(2), parameter :: CURRENT_VERSION_ID = (/ &
+    & 'v4.00 swdev team               ' , & 
     & 'See license terms for copyright'/)
      
-  ! Set the following to 1 before delivering to sips;                       
-  ! when set to 0, it allows program to run w/o creating metadata           
-  integer            :: PENALTY_FOR_NO_METADATA      = 0
-
-  ! Set the following to -2 before delivering to sips;                      
-  ! (its possible values and their effects on normal output:                
-  ! -1          sent to stdout (via print *, '...')                         
-  ! -2          sent to Log file (via MLSMessage)                           
-  ! < -2        both stdout and Log file                                    
-  ! > -1        Fortran 'unit=OUTPUT_PRINT_UNIT')                           
-  integer            :: OUTPUT_PRINT_UNIT             = -2                              
+  ! Set the following to -2 before delivering to sips;
+  ! (its possible values and their effects on normal output:
+  ! -1          sent to stdout (via print *, '...')
+  ! -2          sent to Log file (via MLSMessage)
+  ! < -2        both stdout and Log file
+  ! > -1        Fortran 'unit=OUTPUT_PRINT_UNIT')
+  integer            :: OUTPUT_PRINT_UNIT             = -2
 
   ! Set the following to MLSMSG_Error before delivering to sips;
   ! when set higher, it allows program keep going despite errors
@@ -75,37 +71,42 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! Set the following to 2 before delivering to sips;
   ! If 0, you won't be able to distinguish normal termination
   ! from some abnormal ones (e.g. in parser) (a bad thing)
-  ! if 2, status will be 2 only if run complete                             
+  ! if 2, status will be 2 only if run complete         
   ! and without error (a good thing)
-  integer, parameter :: NORMAL_EXIT_STATUS            = 2          
+  integer, parameter :: NORMAL_EXIT_STATUS            = 2
 
   ! ---------------------------------------------------------------
   ! None of the following need to be changed before delivery to sips
   
-  ! Assume hdf files w/o explicit hdfVersion field are this                 
-  ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc.                   
+  ! Assume hdf files w/o explicit hdfVersion field are this 
+  ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc.        
   integer            :: DEFAULT_HDFVERSION_WRITE      = HDFVERSION_5
-  ! Set to WILDCARDHDFVERSION if you wish to autodetect such files          
-  ! on input                                                                
+  ! Set to WILDCARDHDFVERSION if you wish to autodetect such files  
+  ! on input
   integer            :: DEFAULT_HDFVERSION_READ       = WILDCARDHDFVERSION  
   integer            :: LEVEL1_HDFVERSION             = WILDCARDHDFVERSION  
 
-  ! What units to use in summarizing timings at end of run
-  integer            :: SECTIONTIMINGUNITS            = L_SECONDS
-  logical            :: PATCH                         = .false. ! Set if run must not create file,
+  ! The following is FALSE only for runs that don't need orbit/attitude info
+  logical            :: NEED_L1BFILES                 = .true.
+  ! Set if run must not create file, instead just append to it
+  logical            :: PATCH                         = .false. 
   ! Whether to restart printing identical warnings at each new phase
   logical            :: RESTARTWARNINGS               = .true.
+  ! What units to use in summarizing timings at end of run
+  integer            :: SECTIONTIMINGUNITS            = L_SECONDS
   ! Whether to skip doing the direct writes--quicker when snooping
   logical            :: SKIPDIRECTWRITES              = .false.    
   logical            :: SKIPDIRECTWRITESORIGINAL      = .false.    
   ! Whether to skip doing the retrieval--a pre-flight checkout of paths, etc.
-  logical            :: SKIPRETRIEVAL                 = .false.                           
-  logical            :: SKIPRETRIEVALORIGINAL         = .false. ! May skip for some phases
+  logical            :: SKIPRETRIEVAL                 = .false.        
+  ! A holding place for the above, allowing us to skip for some phases only
+  logical            :: SKIPRETRIEVALORIGINAL         = .false. 
   ! Whether each slave deallocates all its arrays, pointers, etc.
   ! Sometimes slaves die or take too long to finish cleaning up
   ! But if system fails to reclaim memory properly, subsequent slaves
   ! may not find enough available and therefore crash
-  logical            :: SLAVESDOOWNCLEANUP            = .false. ! Let system do it
+  ! FALSE means let operating system do it automatically
+  logical            :: SLAVESDOOWNCLEANUP            = .false.
   ! In case special dumps are to go to a special dumpfile
   character(len=255) :: SPECIALDUMPFILE               = ' '
   ! What to fill state, outputSD with if skipping retrieval
@@ -118,7 +119,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! Whether to do only a pre-flight checkout of paths
   logical            :: CHECKPATHS                    = .false.         
   ! Whether to catenate split autoDirectWrites
-  logical            :: CATENATESPLITS                = .true.       
+  logical            :: CATENATESPLITS                = .true.
 
   logical            :: TOOLKIT                       =  SIPS_VERSION
   ! --------------------------------------------------------------------------
@@ -155,6 +156,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.49  2011/06/29 21:43:23  pwagner
+! Some cases may safely omit l1b files
+!
 ! Revision 2.48  2010/04/12 22:20:23  pwagner
 ! Changed vers. id to conform with v3.30 sips id
 !
