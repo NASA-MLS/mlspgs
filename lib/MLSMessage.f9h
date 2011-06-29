@@ -176,11 +176,21 @@
     integer :: masterTID               = -1 ! Where to send error msg
     character (len=MLSMSG_PrefixLen) :: prefix &
       &                                = ''   ! Prefix to every msg
+    ! Instead of showing both module names and severity for every message
+    ! you can control thresholds
+    ! (1) the severity below which to skip showing module names
+    integer :: skipModuleNamesThr       = MLSMSG_Success ! Always show module
+    ! (2) the severity below which to skip showing severity
+    integer :: skipSeverityThr          = MLSMSG_Success ! Always show severity
+    ! (3) the severity below which to skip messages entirely
+    integer :: skipMessageThr          = MLSMSG_Success ! Always show messages
+    ! (4) simply skip every debug
+    logical :: suppressDebugs          = .false.
+
     ! Instead of simply calling them Info, you could use something more
     ! informative, like Phase names
     character (len=MLSMSG_PrefixLen) :: Info   &
       &                                = ''      ! What (else) to call Info
-    logical :: suppressDebugs          = .false.
     logical :: useToolkit              = .true.
     logical :: AbbreviateModSevNames   = .false. ! Abbreviate module and severity names
     logical :: CrashOnAnyError         = .false. ! See crash warning
@@ -246,7 +256,7 @@ contains
       myConfig = MLSMessageConfig
     endif
     call dump ( 'dumping ', charValue='MLS Message Config' )
-    call dump ( ': ', charValue=':::::::::::::::::::::::::' )
+    call dump ( ':', charValue=': : : : : : : : : : : : :' )
     call dump ( 'logFileUnit             ', intValue= myConfig%logFileUnit       )
     call dump ( 'limitWarnings           ', intValue= myConfig%limitWarnings          )
     call dump ( 'masterTID               ', intValue= myConfig%masterTID              )
@@ -270,6 +280,11 @@ contains
     call dump ( 'Severity to quit        ', intValue=MLSMSG_Severity_to_quit          )
     call dump ( 'Severity to crash       ', intValue=MLSMSG_Severity_to_walkback      )
     call dump ( 'Severity so far         ', intValue=MLSMSG_Severity_so_far           )
+    
+    call dump ( 'Skip ModNames thr       ', intValue=myConfig%skipModuleNamesThr           )
+    call dump ( 'Skip Severity thr       ', intValue=myConfig%skipSeverityThr           )
+    call dump ( 'Skip Messages thr       ', intValue=myConfig%skipMessageThr           )
+    call dump ( 'Suppress Debugs         ', logValue=myConfig%suppressDebugs           )
   end subroutine dumpConfig
 
   ! ------------------------------------------------  MLSMessage_  -----
@@ -812,8 +827,12 @@ contains
     integer                       :: line_len
     ! Assemble a full message line
 
-    if ( line_len == 0 ) then
-      if ( severity > MLSMSG_Success-1 .and. severity < MLSMSG_Crash+1 ) then
+    if ( severity < MLSMessageConfig%skipMessageThr ) then
+      return
+    elseif ( line_len == 0 ) then
+      if ( severity < MLSMessageConfig%skipSeverityThr ) then
+        line = ' '
+      elseif ( severity > MLSMSG_Success-1 .and. severity < MLSMSG_Crash+1 ) then
         line = trim(SeverityNamesFun(severity))
         if ( MLSMessageConfig%ShowCumulativeSeverity ) then
           line = trim(line) // ':' // &
@@ -826,27 +845,34 @@ contains
         line = 'Unknown'
       end if
       line_len = len_trim(line)
-      line(line_len+1:line_len+2) = ' ('
-      line(line_len+3:) = snipRCSFrom ( moduleNameIn )
-      line_len = len_trim(line) + 3
-      line(line_len-2:line_len-1) = '):'
+      if ( severity >= MLSMessageConfig%skipModuleNamesThr ) then
+        line(line_len+1:line_len+2) = ' ('
+        line(line_len+3:) = snipRCSFrom ( moduleNameIn )
+        line_len = len_trim(line) + 3
+        line(line_len-2:line_len-1) = '):'
+      end if
     end if
     line(line_len+1:) = message
-    line_len = line_len + len(message) ! Not len-trim, so we can get
+    line_len = line_len + len(message) ! Not len_trim, so we can get
     ! trailing blanks into a part of a message.  If there are trailing
     ! blanks remaining when my_adv is true, they'll be trimmed off.
   end subroutine assembleFullLine
 
   ! --------------------------------------------  dump  -----
-  subroutine dump ( name, intValue, charValue, logValue  )
+  subroutine dump ( name, intValue, charValue, logValue, trimName  )
     ! In any way we're asked
     character(len=*), intent(in) :: name
     integer, intent(in), optional :: intValue
     character(len=*), intent(in), optional :: charValue
     logical, intent(in), optional :: logValue
+    logical, intent(in), optional :: trimName
     !
     character(len=132) :: line
-    character(len=32) :: value
+    character(len=32)  :: value
+    logical            :: myTrim
+    ! Executable
+    myTrim = .false.
+    if ( present(trimName) ) myTrim = trimName
     value = ''
     if ( present(intValue) ) then
       write(value, '(i10)') intValue
@@ -854,9 +880,11 @@ contains
       write(value, '(l10)') logValue
     endif
     if ( present(charValue) ) then
-      line = trim(name) // ' : ' // trim(charvalue)
+      line = name // ' : ' // trim(charvalue)
+      if ( myTrim ) line = trim(name) // ' : ' // trim(charvalue)
     else
-      line = trim(name) // ' : ' // trim(value)
+      line = name // ' : ' // trim(value)
+      if ( myTrim ) line = trim(name) // ' : ' // trim(value)
     endif
     call printitout(trim(line), MLSMSG_Error)
   end subroutine dump
@@ -907,6 +935,7 @@ contains
     if ( present(advance) ) &
       & my_adv = advance(1:1) /= 'n' .and. advance(1:1) /= 'N'
 
+    my_adv = my_adv .and. ( severity >= MLSMessageConfig%skipMessageThr )
     if ( (.not. MLSMessageConfig%suppressDebugs).OR. &
          & (severity /= MLSMSG_Debug) ) then
       call assembleFullLine( Severity, ModuleNameIn, Message, line, line_len )
@@ -995,6 +1024,9 @@ contains
   
 !
 ! $Log$
+! Revision 2.13  2011/06/29 21:40:11  pwagner
+! Added ability to omit message prefixes, or entire messages according to sedverity
+!
 ! Revision 2.12  2011/04/05 00:03:14  pwagner
 ! MLSMSG_Severity_so_far now available as a return status if mlspgs treated as a function
 !
