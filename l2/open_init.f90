@@ -15,18 +15,19 @@ module Open_Init
   ! Opens and closes several files
   ! Creates and destroys the L1BInfo database
 
-  use dates_module, only: utc_to_yyyymmdd
-  use Hdf, only: DFACC_RDONLY
-  use intrinsic, only: l_hdf
-  use MLSCommon, only: FileNameLen, MLSFile_T, TAI93_Range_T, R8
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-  use MLSStringLists, only: catLists, GetStringElement, NumStringElements, &
-    & switchDetail
-  use Output_m, only: Blanks, Output
-  use PCFHdr, only: GlobalAttributes, CreatePCFAnnotation, FillTAI93Attribute
-  use SDPToolkit, only: max_orbits
-  use Toggles, only: Gen, Levels, Switches, Toggle
-  use Trace_M, only: Trace_begin, Trace_end
+  use DATES_MODULE, only: UTC_TO_YYYYMMDD
+  use HDF, only: DFACC_RDonly
+  use INTRINSIC, only: L_HDF
+  use MLSCOMMON, only: FILENAMELEN, MLSFILE_T, TAI93_RANGE_T
+  use MLSKinds, only: R8
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+  use MLSSTRINGLISTS, only: CATLISTS, GETSTRINGELEMENT, NUMSTRINGELEMENTS, &
+    & SWITCHDETAIL
+  use OUTPUT_M, only: BLANKS, OUTPUT
+  use PCFHDR, only: GLOBALATTRIBUTES, CREATEPCFANNOTATION, FILLTAI93ATTRIBUTE
+  use SDPTOOLKIT, only: MAX_ORBITS
+  use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
+  use TRACE_M, only: TRACE_BEGIN, TRACE_END
 
   implicit none
 
@@ -68,31 +69,31 @@ contains ! =====     Public Procedures     =============================
     ! the necessary inputs via the l2cf and
     ! processing user inputs during global settings section
 
-    use L1BData, only: FindMaxMAF, ReadL1BAttribute
-    use L2GPData, only: col_species_keys, col_species_hash
-    use L2ParInfo, only: parallel
-    use MLSFiles, only: WILDCARDHDFVERSION, &
-      & addFileToDatabase, InitializeMLSFile, mls_openFile
-    use MLSL2Options, only: TOOLKIT, PENALTY_FOR_NO_METADATA
-    use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
+    use L1BDATA, only: FINDMAXMAF, READL1BATTRIBUTE
+    use L2GPDATA, only: COL_SPECIES_KEYS, COL_SPECIES_HASH
+    use L2PARINFO, only: PARALLEL
+    use MLSFILES, only: WILDCARDHDFVERSION, &
+      & ADDFILETODATABASE, INITIALIZEMLSFILE, MLS_OPENFILE
+    use MLSL2OPTIONS, only: TOOLKIT
+    use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES
     use MLSPCF2, only: MLSPCF_L1B_OA_START, MLSPCF_L1B_RAD_END, &
       &                MLSPCF_L1B_RAD_START, &
-      &                MLSPCF_L2_param_PGEVersion, &
-      &                MLSPCF_L2_param_Cycle, &
-      &                MLSPCF_L2_param_CCSDSStartId, &
-      &                MLSPCF_L2_param_CCSDSEndId, &
-      &                MLSPCF_L2_param_col_spec_keys, &
-      &                MLSPCF_L2_param_col_spec_hash, &
-      &                MLSPCF_L2_param_spec_keys, &
-      &                MLSPCF_L2_param_spec_hash, &
-      &                MLSPCF_L2_param_switches, &
-      &                MLSPCF_PCF_start, mlspcf_l2parsf_start
-    use MLSStrings, only: LowerCase
-    use SDPToolkit, only: Pgs_pc_getFileSize, pgs_td_utctotai,&
-      &    pgs_pc_getconfigdata, Pgs_pc_getReference, PGS_S_SUCCESS, &
+      &                MLSPCF_L2_PARAM_PGEVERSION, &
+      &                MLSPCF_L2_PARAM_CYCLE, &
+      &                MLSPCF_L2_PARAM_CCSDSSTARTID, &
+      &                MLSPCF_L2_PARAM_CCSDSENDID, &
+      &                MLSPCF_L2_PARAM_COL_SPEC_KEYS, &
+      &                MLSPCF_L2_PARAM_COL_SPEC_HASH, &
+      &                MLSPCF_L2_PARAM_SPEC_KEYS, &
+      &                MLSPCF_L2_PARAM_SPEC_HASH, &
+      &                MLSPCF_L2_PARAM_SWITCHES, &
+      &                MLSPCF_PCF_START, MLSPCF_L2PARSF_START
+    use MLSSTRINGS, only: LOWERCASE
+    use SDPTOOLKIT, only: PGS_PC_GETFILESIZE, PGS_TD_UTCTOTAI,&
+      &    PGS_PC_GETCONFIGDATA, PGS_PC_GETREFERENCE, PGS_S_SUCCESS, &
       &    PGSTD_E_NO_LEAP_SECS
-    use Time_M, only: Time_Now
-    use WriteMetadata, only: L2PCF, MCFCASESENSITIVE
+    use TIME_M, only: TIME_NOW
+    use WRITEMETADATA, only: L2PCF, MCFCASESENSITIVE
 
     ! Arguments
 
@@ -149,11 +150,13 @@ contains ! =====     Public Procedures     =============================
     if ( Status == PGS_S_SUCCESS ) then
       call createPCFAnnotation(mlspcf_pcf_start, l2pcf%anText)
     else
-      if ( TOOLKIT ) call announce_error ( 0, DEFAULTANTEXT )
+      if ( TOOLKIT ) then
+        call announce_error ( 0, DEFAULTANTEXT )
+        error = 1
+      endif
       size = LEN(DEFAULTANTEXT) + 1
       allocate ( l2pcf%anText(size), STAT=Status )
       l2pcf%anText(1:size-1) = DEFAULTANTEXT(1:size-1)
-      error = PENALTY_FOR_NO_METADATA
     end if
 
    ! Initialize run parameters: unless reset, either by pcf or l2cf,
@@ -430,15 +433,15 @@ contains ! =====     Public Procedures     =============================
     ! cycle number
     ! logfile name
   
-    use L1BData, only: L1BData_T, NAME_LEN, &
-      & AssembleL1BQtyName, DeallocateL1BData, Dump, ReadL1BData
-    use L2AUXData, only: MAXSDNAMESBUFSIZE
-    use L2GPData, only: col_species_keys, col_species_hash
-    use MLSL2Options, only: SPECIALDUMPFILE
-    use MLSFiles, only: HDFVERSION_4       
-    use MLSHDF5, only: GetAllHDF5DSNames
-    use output_m, only: revertoutput, switchOutput
-    use WriteMetadata, only: L2PCF
+    use L1BDATA, only: L1BDATA_T, NAME_LEN, &
+      & ASSEMBLEL1BQTYNAME, DEALLOCATEL1BDATA, DUMP, READL1BDATA
+    use L2AUXDATA, only: MAXSDNAMESBUFSIZE
+    use L2GPDATA, only: COL_SPECIES_KEYS, COL_SPECIES_HASH
+    use MLSL2OPTIONS, only: SPECIALDUMPFILE
+    use MLSFILES, only: HDFVERSION_4       
+    use MLSHDF5, only: GETALLHDF5DSNAMES
+    use OUTPUT_M, only: REVERTOUTPUT, SWITCHOUTPUT
+    use WRITEMETADATA, only: L2PCF
 
     ! Arguments
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
@@ -659,6 +662,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.98  2011/06/29 21:49:43  pwagner
+! Some cases may safely omit l1b files
+!
 ! Revision 2.97  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
 !
