@@ -19,7 +19,7 @@ module WriteMetadata ! Populate metadata and write it out
   use MLSCOMMON, only: FILENAMELEN, NAMELEN, L2METADATA_T
   use MLSKINDS, only: R8
   use MLSFILES, only: GETPCFROMREF, MLS_SFSTART, MLS_SFEND, SPLIT_PATH_NAME
-  use MLSL2OPTIONS, only: PENALTY_FOR_NO_METADATA, TOOLKIT, SHAREDPCF
+  use MLSL2OPTIONS, only: TOOLKIT, SHAREDPCF
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_WARNING
   use MLSPCF2, only: MLSPCF_MCF_L2GP_END, MLSPCF_MCF_L2GP_START, &
     & MLSPCF_MCF_L2LOG_START
@@ -1328,7 +1328,7 @@ contains
     if ( present(use_toolkit) ) just_print_it = .not. use_toolkit
 
     if ( .not. just_print_it ) then
-      module_error = max(module_error,PENALTY_FOR_NO_METADATA)
+      if ( TOOLKIT ) module_error = 1
       call output ( '***** At ' )
 
       if ( lcf_where > 0 ) then
@@ -1375,6 +1375,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.69  2011/06/29 21:52:53  pwagner
+! no metadata is always an error now
+!
 ! Revision 2.68  2011/05/09 18:28:30  pwagner
 ! Converted to using switchDetail
 !
