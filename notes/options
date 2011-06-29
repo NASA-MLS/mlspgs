@@ -67,6 +67,7 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
   --l1b=n:   Assume hdfn when reading l1b files
   --l2gpr=n: Assume hdfeosn when reading l2gp files
   --l2gpw=n: Assume hdfeosn when writing l2gp files
+  --lac[onic] n: Reduce output by degree n; higher n means less output
   --leak:    Check parse tree for potential leaks
   --master <filename>[:a:b]: This is the master task in a PVM setup
     filename contains simply ascii list of slave host names
@@ -80,11 +81,12 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
   --[n]memTrack[[ ]level]: Track memory usage (simple arrays only)
       [n] or level <= 0 => no tracking, level == 1 (default) => leak checking,
       level >= 2 => 1 + transaction reporting
+  --[n]oa: Do [not] require l1boa file (defaults to requiring)
   --[n]overlap: Do [not] allow overlaps outside of processing range
   --[n]patch: Don't [do] let run create file, swath on first directWrite
     by default, the 1st directwrite obliterates an existing file
     turning this option on will let you merely patch it instead
-  --pge <commandname>: What to put on commandline instead of mlsl2
+  --pge <commandname>: What to put on slaves' commandline instead of mlsl2
     when giving slaves their tasks (useful when using toolkit)
   --recl[ ]<number>: set the max record length size for l2cf to <number>
       (In case the default value, 20000, is too small for some l2cfs).
@@ -137,11 +139,14 @@ or separate sections for mlsl1 or mlsl3)
 (The equal signs in the section dividers above are to help
 sed dynamically update mlsl2 to show changes in the option
 usage automatically. Thus you only need to edit this file,
-not MLSL2.f90. Add your changes to the space book-ended
+not MLSL2.f90. Add your changes inside the space book-ended
 by the equal-signs -- stuff outside that space, like these
-comments, will not be printed in response to mlsl2 -?)
+comments, will be ignored when responding to mlsl2 -?)
 
  $Log$
+ Revision 1.49  2008/01/08 00:25:57  pwagner
+ Levels 1 and 2 can use same shared PCF now if --shared option set
+
  Revision 1.48  2007/08/17 00:31:14  pwagner
  Eliminated now redundant [n]everCrash
 

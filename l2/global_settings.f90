@@ -13,7 +13,7 @@ module GLOBAL_SETTINGS
 
   use MLSCommon, only: FILENAMELEN
 
-  implicit NONE
+  implicit none
 
   private
 
@@ -54,28 +54,28 @@ module GLOBAL_SETTINGS
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
-  integer, private :: ERROR
+  integer, private :: ERROR, WARNING
 
 contains
 
   subroutine SET_GLOBAL_SETTINGS ( ROOT, ForwardModelConfigDatabase, &
     & filedatabase, FGrids, l2gpDatabase, DirectDatabase, processingRange )
 
-    use BitStuff, only: isBitSet
-    use dates_module, only: utc_to_yyyymmdd
-    use DirectWrite_m, only: DirectData_T, &
-      & AddDirectToDatabase, Dump, SetupNewDirect
-    use DumpCommand_m, only: DumpCommand
-    use EmpiricalGeometry, only: INITEMPIRICALGEOMETRY
-    use FGrid, only: AddFGridToDatabase, CreateFGridFromMLSCFInfo, DUMP, FGrid_T
-    use ForwardModelConfig, only: AddForwardModelConfigToDatabase, Dump, &
-      & ForwardModelConfig_T
-    use ForwardModelSupport, only: ConstructForwardModelConfig, &
-      & ForwardModelGlobalSetup, CreateBinSelectorFromMLSCFInfo
-    use Hdf, only: DFACC_CREATE
+    use BITSTUFF, only: ISBITSET
+    use DATES_MODULE, only: UTC_TO_YYYYMMDD
+    use DIRECTWRITE_M, only: DIRECTDATA_T, &
+      & ADDDIRECTTODATABASE, DUMP, SETUPNEWDIRECT
+    use DUMPCOMMAND_M, only: DUMPCOMMAND
+    use EMPIRICALGEOMETRY, only: INITEMPIRICALGEOMETRY
+    use FGRID, only: ADDFGRIDTODATABASE, CREATEFGRIDFROMMLSCFINFO, DUMP, FGRID_T
+    use FORWARDMODELCONFIG, only: ADDFORWARDMODELCONFIGTODATABASE, DUMP, &
+      & FORWARDMODELCONFIG_T
+    use FORWARDMODELSUPPORT, only: CONSTRUCTFORWARDMODELCONFIG, &
+      & FORWARDMODELGLOBALSETUP, CREATEBINSELECTORFROMMLSCFINFO
+    use HDF, only: DFACC_CREATE
     use INIT_TABLES_MODULE, only: F_FILE, F_TYPE, &
       & L_L2GP, L_L2DGG, L_L2FWM, &
-      & parm_indices, &
+      & PARM_INDICES, &
       & P_BRIGHTOBJECTS, &
       & P_CYCLE, P_ENDTIME, P_INSTRUMENT, &
       & P_LEAPSECFILE, P_OUTPUT_VERSION_STRING, P_PFAFILE, P_STARTTIME, &
@@ -83,50 +83,51 @@ contains
       & S_FGRID, S_FLUSHPFA, S_FORWARDMODEL, S_FORWARDMODELGLOBAL, &
       & S_L1BOA, S_L1BRAD, S_L2PARSF, S_MAKEPFA, S_PFADATA, S_READPFA, &
       & S_TGRID, S_TIME, S_VGRID, S_WRITEPFA
-    use intrinsic, only: l_hdf, l_swath, Spec_indices
-    use L1BData, only: L1BData_T, NAME_LEN, PRECISIONSUFFIX, &
-      & AssembleL1BQtyName, DeallocateL1BData, Dump, FindMaxMAF, &
-      & l1bradSetup, l1boaSetup, ReadL1BAttribute, ReadL1BData 
-    use L2GPData, only: L2GPDATA_T
-    use L2ParInfo, only: parallel
-    use L2PC_M, only: AddBinSelectorToDatabase, BinSelectors
-    use MLSCommon, only: R8, FileNameLen, MLSFile_T, NameLen, &
-      & TAI93_Range_T
-    use MLSFiles, only: FILENOTFOUND, HDFVERSION_5, &
-      & AddFileToDataBase, GetPCFromRef, GetMLSFileByName, GetMLSFileByType, &
-      & InitializeMLSFile, mls_CloseFile, mls_OpenFile, split_path_name
-    use MLSL2Options, only: CHECKPATHS, LEVEL1_HDFVERSION, SPECIALDUMPFILE, &
-      & STOPAFTERSECTION, Toolkit
-    use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
-    use MLSMessageModule, only: MLSMessage, MLSMessageCalls, &
-      & MLSMSG_Error, MLSMSG_Warning
-    use MLSPCF2, only: mlspcf_l2gp_start, mlspcf_l2gp_end, &
-      & mlspcf_l2dgm_start, mlspcf_l2dgm_end, mlspcf_l2fwm_full_start, &
-      & mlspcf_l2fwm_full_end, &
-      & mlspcf_l2dgg_start, mlspcf_l2dgg_end
-    use MLSStrings, only: hhmmss_value, lowerCase, trim_safe
-    use MLSStringLists, only: Array2List, catLists, SWITCHDETAIL, &
-      & NumStringElements, StringElement
-    use MLSSignals_m, only: INSTRUMENT
-    use MoreTree, only: GET_FIELD_ID, GET_SPEC_ID, StartErrorMessage
-    use OUTPUT_M, only: BLANKS, OUTPUT, outputCalendar, &
-      & revertoutput, switchOutput
-    use PFAData_m, only: Get_PFAdata_from_l2cf, Flush_PFAData, Make_PFAData, &
-      & Read_PFAData, Write_PFAData
-    use PFADataBase_m, only: Process_PFA_File
-    use PCFHdr, only: GlobalAttributes, FillTAI93Attribute
-    use readAPriori, only: APrioriFiles
-    use SDPToolkit, only: max_orbits, mls_utctotai
-    use String_Table, only: display_string, Get_String
-    use Time_M, only: Time_Now
+    use INTRINSIC, only: L_HDF, L_SWATH, SPEC_INDICES
+    use L1BDATA, only: L1BDATA_T, NAME_LEN, PRECISIONSUFFIX, &
+      & ASSEMBLEL1BQTYNAME, DEALLOCATEL1BDATA, DUMP, FINDMAXMAF, &
+      & L1BRADSETUP, L1BOASETUP, READL1BATTRIBUTE, READL1BDATA 
+    use L2GPDATA, only: L2GPDATA_T
+    use L2PARINFO, only: PARALLEL
+    use L2PC_M, only: ADDBINSELECTORTODATABASE, BINSELECTORS
+    use MLSCOMMON, only: MLSFILE_T, NAMELEN, &
+      & TAI93_RANGE_T
+    use MLSFILES, only: FILENOTFOUND, HDFVERSION_5, &
+      & ADDFILETODATABASE, GETPCFROMREF, GETMLSFILEBYNAME, GETMLSFILEBYTYPE, &
+      & INITIALIZEMLSFILE, MLS_CLOSEFILE, MLS_OPENFILE, SPLIT_PATH_NAME
+    use MLSKINDS, only: R8
+    use MLSL2OPTIONS, only: CHECKPATHS, LEVEL1_HDFVERSION, NEED_L1BFILES, &
+      & SPECIALDUMPFILE, STOPAFTERSECTION, TOOLKIT
+    use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, &
+      & MLSMSG_ERROR, MLSMSG_WARNING
+    use MLSPCF2, only: MLSPCF_L2GP_START, MLSPCF_L2GP_END, &
+      & MLSPCF_L2DGM_START, MLSPCF_L2DGM_END, MLSPCF_L2FWM_FULL_START, &
+      & MLSPCF_L2FWM_FULL_END, &
+      & MLSPCF_L2DGG_START, MLSPCF_L2DGG_END
+    use MLSSTRINGS, only: HHMMSS_VALUE, LOWERCASE, TRIM_SAFE
+    use MLSSTRINGLISTS, only: ARRAY2LIST, CATLISTS, SWITCHDETAIL, &
+      & NUMSTRINGELEMENTS, STRINGELEMENT
+    use MLSSIGNALS_M, only: INSTRUMENT
+    use MORETREE, only: GET_FIELD_ID, GET_SPEC_ID, STARTERRORMESSAGE
+    use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUTCALENDAR, &
+      & REVERTOUTPUT, SWITCHOUTPUT
+    use PFADATA_M, only: GET_PFADATA_FROM_L2CF, FLUSH_PFADATA, MAKE_PFADATA, &
+      & READ_PFADATA, WRITE_PFADATA
+    use PFADATABASE_M, only: PROCESS_PFA_FILE
+    use PCFHDR, only: GLOBALATTRIBUTES, FILLTAI93ATTRIBUTE
+    use READAPRIORI, only: APRIORIFILES
+    use SDPTOOLKIT, only: MAX_ORBITS, MLS_UTCTOTAI
+    use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
+    use TIME_M, only: TIME_NOW
     use TOGGLES, only: GEN, SWITCHES, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE, &
     & DUMP_TREE_NODE, SOURCE_REF
     use TREE_TYPES, only: N_EQUAL, N_NAMED
-    use VGrid, only: CreateVGridFromMLSCFInfo
-    use VGridsDatabase, only: AddVGridToDatabase, VGrids
-    use WriteMetadata, only: L2PCF
+    use VGRID, only: CREATEVGRIDFROMMLSCFINFO
+    use VGRIDSDATABASE, only: ADDVGRIDTODATABASE, VGRIDS
+    use WRITEMETADATA, only: L2PCF
 
     ! placed non-alphabetically due to Lahey internal compiler error
     ! (How much longer must we endure these onerous work-arounds?)
@@ -196,6 +197,7 @@ contains
       & lowercase( trim(stopAfterSection) ) ) > 0 )
     stopEarly = ( stopearly .and. stopAfterSection /= ' ' )
     error = 0
+    warning = 0
     got = .false.
     startTimeIsAbsolute = .false.
     stopTimeIsAbsolute = .false.
@@ -355,6 +357,11 @@ contains
           end if
         case ( s_l1boa )
           if ( restricted ) call notAllowed ( son, spec_restricted )
+          if ( .not. NEED_L1BFILES ) then
+            call MLSMessage ( MLSMSG_Warning, ModuleName, &                      
+            & 'l1boa File not needed -- and so ignored' )
+            cycle
+          endif
           the_hdf_version = LEVEL1_HDFVERSION
           call l1boaSetup ( son, filedatabase, F_FILE, hdfVersion=the_hdf_version )
           if( switchDetail(switches, 'pro') > -1 ) then                            
@@ -388,6 +395,11 @@ contains
           end if
         case ( s_l1brad )
           if ( restricted ) call notAllowed ( son, spec_restricted )
+          if ( .not. NEED_L1BFILES ) then
+            call MLSMessage ( MLSMSG_Warning, ModuleName, &                      
+            & 'l1brad File not needed -- and so ignored' )
+            cycle
+          endif
           the_hdf_version = LEVEL1_HDFVERSION
           call l1bradSetup ( son, filedatabase, F_FILE, &
             & hdfVersion=the_hdf_version )
@@ -443,6 +455,22 @@ contains
     if ( DEEBUG ) call output( 'done with statements', advance='yes' )
 
     if ( restricted ) then
+      call FinishUp
+      return
+    elseif( .not. NEED_L1BFILES ) then
+      ! w/o an l1boa file we'll trust the user to have supplied start, end times
+      if ( LeapSecFileName /= '' ) then
+        if ( DEEBUG ) call output( 'About to read leapsec file' // &
+          & trim(LeapSecFileName), advance='yes' )
+        returnStatus = mls_utctotai(trim(LeapSecFileName), start_time_string, &
+        & processingrange%starttime)
+        if ( DEEBUG ) call output( 'Read leapsec file', advance='yes' )
+        if ( returnStatus /= 0 ) then
+          call announce_error(0, &
+          & 'Error converting start time in mls_utctotai; code number: ')
+          call output(returnStatus, advance='yes')
+        end if
+      endif
       call FinishUp
       return
     endif
@@ -646,6 +674,9 @@ contains
       if ( error /= 0 ) &
         & call MLSMessage(MLSMSG_Error,ModuleName, &
         & 'Problem with global settings section')
+      if ( warning /= 0 ) &
+        & call MLSMessage(MLSMSG_Warning,ModuleName, &
+        & 'Possible problem with global settings section')
 
       if ( specialDumpFile /= ' ' ) &
         & call revertOutput
@@ -681,6 +712,7 @@ contains
       else
         my_warning = .false.
       end if
+      if ( my_warning ) warning = max(warning,1)
 
       if ( .not. just_print_it ) then
         if ( .not. my_warning ) then
@@ -1059,6 +1091,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.138  2010/10/19 00:04:36  pwagner
+! Tried to fix callstack overflow when restricted
+!
 ! Revision 2.137  2010/05/23 03:19:48  honghanh
 ! Modify the restriction for the callable forward model
 !

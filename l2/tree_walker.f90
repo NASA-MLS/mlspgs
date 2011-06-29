@@ -70,7 +70,7 @@ contains ! ====     Public Procedures     ==============================
     use MATRIXMODULE_1, only: DESTROYMATRIXDATABASE, MATRIX_DATABASE_T
     use MERGEGRIDSMODULE, only: MERGEGRIDS
     use MLSCOMMON, only: TAI93_RANGE_T, MLSFILE_T
-    use MLSL2OPTIONS, only: CHECKPATHS, &
+    use MLSL2OPTIONS, only: CHECKPATHS, NEED_L1BFILES, &
       & SKIPRETRIEVAL, SLAVESDOOWNCLEANUP, SPECIALDUMPFILE, STOPAFTERSECTION
     use MLSMESSAGEMODULE, only: MLSMSG_ALLOCATE, MLSMESSAGE, MLSMSG_INFO, &
       & MLSMSG_ERROR, SUMMARIZEWARNINGS
@@ -269,7 +269,8 @@ contains ! ====     Public Procedures     ==============================
           lastChunk = chunkNo
           parallel%ChunkNo = chunkNo
         else
-          if ( .not. checkPaths .or. parallel%chunkRange /= '' ) then
+          if ( (.not. checkPaths .or. parallel%chunkRange /= '') .and. &
+            & NEED_L1BFILES ) then
             call ChunkDivide ( son, processingRange, filedatabase, chunks )
             call ComputeAllHGridOffsets ( root, i+1, chunks, filedatabase, &
             & l2gpDatabase, processingRange )
@@ -277,6 +278,11 @@ contains ! ====     Public Procedures     ==============================
             allocate ( chunks(1), stat=error_flag )
             if ( error_flag /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
               & MLSMSG_Allocate // 'chunks' )
+            if ( .not. NEED_L1BFILES ) then
+              call output( 'Creating artificial chunk', advance='yes' )
+              if ( switchDetail(switches, 'chu' ) > -1 ) &
+                & call dump( chunks(1) )
+            end if
           end if
           firstChunk = 1
           lastChunk = size(chunks)
@@ -635,6 +641,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.176  2011/06/16 23:18:01  pwagner
+! Pass details from switches when dumping dbs
+!
 ! Revision 2.175  2011/05/09 18:27:56  pwagner
 ! Converted to using switchDetail
 !
