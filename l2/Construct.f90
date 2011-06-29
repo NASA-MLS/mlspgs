@@ -102,7 +102,7 @@ contains ! =====     Public Procedures     =============================
       & S_PHASE, S_QUANTITY, S_REEVALUATE, S_TIME, S_VECTORTEMPLATE
     use L2GPData, only: L2GPDATA_T
     use MLSCommon, only: MLSFile_T, TAI93_Range_T
-    use MLSL2Options, only: SPECIALDUMPFILE
+    use MLSL2Options, only: NEED_L1BFILES, SPECIALDUMPFILE
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, addPhaseToPhaseNames
     use MLSMessageModule, only: MLSMessageReset
     use MoreTree, only: Get_Spec_ID
@@ -151,7 +151,8 @@ contains ! =====     Public Procedures     =============================
       & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
 
     ! First we're going to setup our mifGeolocation quantityTemplates.
-    call ConstructMIFGeolocation ( mifGeolocation, filedatabase, chunk )
+    if ( NEED_L1BFILES ) &
+      & call ConstructMIFGeolocation ( mifGeolocation, filedatabase, chunk )
 
     ! The rest is fairly simple really.  We just loop over the mlscf 
     ! instructions and hand them off to people
@@ -289,6 +290,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.65  2011/06/29 21:54:51  pwagner
+! Some cases may safely omit l1b files
+!
 ! Revision 2.64  2010/04/05 17:32:04  honghanh
 ! Make filedatabase and chunk in ConstructMinorFrameQuantity optional
 !
