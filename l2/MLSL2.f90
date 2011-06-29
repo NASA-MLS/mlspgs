@@ -10,61 +10,61 @@
 ! foreign countries or providing access to foreign persons.
 
 program MLSL2
-  use Allocate_Deallocate, only: SET_GARBAGE_COLLECTION, TRACKALLOCATES, &
+  use ALLOCATE_DEALLOCATE, only: SET_GARBAGE_COLLECTION, TRACKALLOCATES, &
     & CLEARONALLOCATE
-  use ChunkDivide_m, only: ChunkDivideConfig
+  use CHUNKDIVIDE_M, only: CHUNKDIVIDECONFIG
   use DECLARATION_TABLE, only: ALLOCATE_DECL, DEALLOCATE_DECL, DUMP_DECL
-  use Hdf, only: DFACC_RDONLY
+  use HDF, only: DFACC_RDonly
   use INIT_TABLES_MODULE, only: INIT_TABLES
-  use INTRINSIC, only: L_ASCII, L_HOURS, L_MINUTES, L_SECONDS, l_TKGEN, &
+  use INTRINSIC, only: L_ASCII, L_HOURS, L_MINUTES, L_SECONDS, L_TKGEN, &
     & LIT_INDICES
-  use IO_Stuff, only: Get_Lun
-  use L2GPData, only: avoidUnlimitedDims
+  use IO_STUFF, only: GET_LUN
+  use L2GPDATA, only: AVOIDUNLIMITEDDIMS
   use L2PARINFO, only: PARALLEL, INITPARALLEL, ACCUMULATESLAVEARGUMENTS
-  use LeakCheck_m, only: LeakCheck
+  use LEAKCHECK_M, only: LEAKCHECK
   use LEXER_CORE, only: INIT_LEXER
-  use LEXER_M, only: CapIdentifiers
+  use LEXER_M, only: CAPIDENTIFIERS
   use MACHINE, only: GETARG, HP, IO_ERROR
-  use MLSCOMMON, only: MLSFile_T
-  use MLSFiles, only: FILESTRINGTABLE, &
+  use MLSCOMMON, only: MLSFILE_T
+  use MLSFILES, only: FILESTRINGTABLE, &
     & HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, &
     & ADDFILETODATABASE, DEALLOCATE_FILEDATABASE, DUMP, &
-    & InitializeMLSFile, mls_openFile, mls_closeFile
-  use MLSHDF5, only: mls_h5open, mls_h5close
-  use MLSL2Options, only: CATENATESPLITS, CHECKPATHS, CURRENT_VERSION_ID, &
+    & INITIALIZEMLSFILE, MLS_OPENFILE, MLS_CLOSEFILE
+  use MLSHDF5, only: MLS_H5OPEN, MLS_H5CLOSE
+  use MLSL2OPTIONS, only: CATENATESPLITS, CHECKPATHS, CURRENT_VERSION_ID, &
     & DEFAULT_HDFVERSION_READ, DEFAULT_HDFVERSION_WRITE, &
-    & LEVEL1_HDFVERSION, NORMAL_EXIT_STATUS, OUTPUT_PRINT_UNIT, &
-    & PATCH, PENALTY_FOR_NO_METADATA, QUIT_ERROR_THRESHOLD, RESTARTWARNINGS, &
+    & LEVEL1_HDFVERSION, NEED_L1BFILES, NORMAL_EXIT_STATUS, OUTPUT_PRINT_UNIT, &
+    & PATCH, QUIT_ERROR_THRESHOLD, RESTARTWARNINGS, &
     & SECTIONTIMINGUNITS, SHAREDPCF, SIPS_VERSION, &
     & SKIPDIRECTWRITES, SKIPDIRECTWRITESORIGINAL, SLAVESDOOWNCLEANUP, &
     & SKIPRETRIEVAL, SKIPRETRIEVALORIGINAL, &
     & SPECIALDUMPFILE, STATEFILLEDBYSKIPPEDRETRIEVALS, &
     & STOPAFTERSECTION, STOPWITHERROR, &
     & TOOLKIT
-  use MLSL2Timings, only: RUN_START_TIME, SECTION_TIMES, TOTAL_TIMES, &
+  use MLSL2TIMINGS, only: RUN_START_TIME, SECTION_TIMES, TOTAL_TIMES, &
     & ADD_TO_SECTION_TIMING, DUMP_SECTION_TIMINGS
-  use MLSMessageModule, only: MLSMessage, MLSMessageConfig, MLSMSG_Debug, &
-    & MLSMSG_Error, MLSMSG_Severity_to_quit, MLSMSG_Severity_to_walkback, &
-    & MLSMSG_Warning, MLSMessageExit
-  use MLSPCF2 ! Everything
-  use MLSStrings, only: lowerCase, readIntsFromChars, trim_safe
-  use MLSStringLists, only: catLists, ExpandStringRange, &
-    & GetStringElement, GetUniqueList, &
-    & NumStringElements, RemoveElemFromList, SwitchDetail, unquote
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECONFIG, MLSMSG_DEBUG, &
+    & MLSMSG_ERROR, MLSMSG_SEVERITY_TO_QUIT, MLSMSG_SEVERITY_TO_WALKBACK, &
+    & MLSMSG_WARNING, DUMPCONFIG, MLSMESSAGEEXIT
+  use MLSPCF2 ! EVERYTHING
+  use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS, TRIM_SAFE
+  use MLSSTRINGLISTS, only: CATLISTS, EXPANDSTRINGRANGE, &
+    & GETSTRINGELEMENT, GETUNIQUELIST, &
+    & NUMSTRINGELEMENTS, REMOVEELEMFROMLIST, SWITCHDETAIL, UNQUOTE
   use OUTPUT_M, only: BLANKS, DUMP, OUTPUT, OUTPUT_DATE_AND_TIME, &
-    & outputNamedValue, OUTPUTOPTIONS, STAMPOPTIONS
+    & OUTPUTNAMEDVALUE, OUTPUTOPTIONS, STAMPOPTIONS
   use PARSER, only: CONFIGURATION
-  use PCFHdr, only: GlobalAttributes
-  use PVM, only: ClearPVMArgs, FreePVMArgs
-  use SDPToolkit, only: UseSDPToolkit
-  use SnoopMLSL2, only: SNOOPINGACTIVE, SNOOPNAME
+  use PCFHDR, only: GLOBALATTRIBUTES
+  use PVM, only: CLEARPVMARGS, FREEPVMARGS
+  use SDPTOOLKIT, only: useSDPTOOLKIT
+  use SNOOPMLSL2, only: SNOOPINGACTIVE, SNOOPNAME
   use STRING_TABLE, only: DESTROY_CHAR_TABLE, DESTROY_HASH_TABLE, &
     & DESTROY_STRING_TABLE, DO_LISTING, GET_STRING, ADDINUNIT
   use SYMBOL_TABLE, only: DESTROY_SYMBOL_TABLE
-  use Time_M, only: Time_Now, time_config
+  use TIME_M, only: TIME_NOW, TIME_CONFIG
   use TOGGLES, only: CON, EMIT, GEN, LEVELS, LEX, PAR, SYN, SWITCHES, TAB, &
     & TOGGLE
-  use Track_m, only: ReportLeaks
+  use TRACK_M, only: REPORTLEAKS
   use TREE, only: ALLOCATE_TREE, DEALLOCATE_TREE, PRINT_SUBTREE
   use TREE_CHECKER, only: CHECK_TREE
   use TREE_WALKER, only: WALK_TREE_TO_DO_MLS_L2
@@ -161,6 +161,7 @@ program MLSL2
   integer :: I                     ! counter for command line arguments
   integer, dimension(1) :: ICHUNKS
   integer :: J                     ! index within option
+  integer :: DEGREE                ! index affecting degree of option
   ! integer :: LastCHUNK = 0         ! Just run range [SINGLECHUNK-LastCHUNK]
   character(len=2048) :: LINE      ! Into which is read the command args
   integer :: N                     ! Offset for start of --'s text
@@ -249,6 +250,7 @@ program MLSL2
   do ! Process the command line options to set toggles
     copyArg = .true.
     call getarg ( i, line )
+    ! print *, trim(line)
     command_line = trim(command_line) // ' ' // trim(line)
     if ( line(1:2) == '--' ) then       ! "word" options
       n = 0
@@ -272,6 +274,8 @@ program MLSL2
         call getarg ( i, line )
         parallel%chunkRange = line
         command_line = trim(command_line) // ' ' // trim(parallel%chunkRange)
+      else if ( lowercase(line(3+n:18+n)) == 'clearonallocate ' ) then
+        clearonallocate = switch
       else if ( lowercase(line(3+n:7+n)) == 'ckbk ' ) then
         checkBlocks = switch
       else if ( lowercase(line(3+n:14+n)) == 'countchunks ' ) then
@@ -346,6 +350,32 @@ program MLSL2
         case default
           DEFAULT_HDFVERSION_WRITE = HDFVERSION_5
         end select
+      else if ( line(3+n:5+n) == 'lac' ) then
+        ! print *, 'Got the laconic option'
+        ! The laconic command-line option trims logged output
+        ! resulting from calls to MLSMessageModule which normally prefix
+        ! each line with severity and module name; e.g.,
+        ! Info (output_m):         ..Exit ReadCompleteHDF5L2PC at 11:37:19.932 
+        ! Usage: laconic n where if n is
+        ! 0  abbreviate module names 
+        ! 1  omit module names and severity unless Warning or worse
+        ! 2  omit module names and severity unless Error
+        ! 11 skip printing anything unless Warning or worse
+        ! 12 skip printing anything unless Error
+        call AccumulateSlaveArguments ( line )
+        i = i + 1
+        call getarg ( i, line )
+        command_line = trim(command_line) // ' ' // trim(line)
+        read ( line, *, iostat=status ) degree
+        if ( status /= 0 ) then
+          call io_error ( "After --lac[onic] option", status, line )
+          stop
+        end if
+        MLSMessageConfig%suppressDebugs = (degree > 0)
+        MLSMessageConfig%AbbreviateModSevNames = (degree == 0)
+        MLSMessageConfig%skipModuleNamesThr = mod(degree, 10) + 2
+        MLSMessageConfig%skipSeverityThr = mod(degree, 10) + 2
+        MLSMessageConfig%skipMessageThr = degree - 10 + 2
       else if ( line(3+n:7+n) == 'leak' ) then
         checkLeak = .true.
       else if ( line(3+n:9+n) == 'master ' ) then
@@ -389,8 +419,6 @@ program MLSL2
           call io_error ( "After --maxFailuresPerMachine option", status, line )
           stop
         end if
-      else if ( lowercase(line(3+n:18+n)) == 'clearonallocate ' ) then
-        clearonallocate = switch
       else if ( lowercase(line(3+n:10+n)) == 'memtrack' ) then
         v = 1
         if ( line(11+n:) /= ' ' ) then
@@ -414,6 +442,8 @@ program MLSL2
         else
           trackAllocates = 0
         end if
+      else if ( line(3+n:4+n) == 'oa' ) then
+        NEED_L1BFILES = switch
       else if ( line(3+n:7+n) == 'overl' ) then
         ChunkDivideConfig%allowPriorOverlaps = switch
         ChunkDivideConfig%allowPostOverlaps = switch
@@ -650,6 +680,7 @@ program MLSL2
     if ( copyArg ) call AccumulateSlaveArguments(line)
   end do
 
+  ! stop
   if( switchDetail(switches, '?') > -1 .or. &
     & switchDetail(switches, 'help') > -1 ) then
    call switch_usage
@@ -698,10 +729,6 @@ program MLSL2
   end if
 
   UseSDPToolkit = toolkit    ! Redundant, but may be needed in lib
-
-  if ( .not. toolkit ) then
-     penalty_for_no_metadata = 0
-  end if
 
   if ( time_config%use_wall_clock ) call time_now(run_start_time)
   ! If checking paths, run as a single-chunk case in serial mode
@@ -1067,6 +1094,8 @@ contains
       end if
       call outputNamedValue ( 'Preflight check paths?', checkPaths, advance='yes', &
         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+      call outputNamedValue ( 'Need L1B files?', checkPaths, advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
       call outputNamedValue ( 'Skip all direct writes?', SKIPDIRECTWRITES, advance='yes', &
         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
       call outputNamedValue ( 'Skip all retrievals?', SKIPRETRIEVAL, advance='yes', &
@@ -1107,6 +1136,8 @@ contains
       call blanks(70, fillChar='-', advance='yes')
       call dump(outputOptions)
       call dump(stampOptions)
+      call dumpConfig
+      call blanks(70, fillChar='-', advance='yes')
     end if
   end subroutine Dump_settings
 
@@ -1147,6 +1178,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.177  2011/06/29 21:43:59  pwagner
+! Some cases may safely omit l1b files
+!
 ! Revision 2.176  2010/11/05 22:36:16  pwagner
 ! Consistent with new unquote api
 !
