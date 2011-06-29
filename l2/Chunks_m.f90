@@ -15,7 +15,7 @@ module Chunks_m
 
   implicit NONE
   private
-  public :: Dump, MLSChunk_T
+  public :: Dump, Initialize, MLSChunk_T
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -31,7 +31,7 @@ module Chunks_m
     integer :: lastMAFIndex = -1   ! Index of last MAF in the chunk
     integer :: noMAFsLowerOverlap = 0 ! Number of MAFs in the lower overlap region
     integer :: noMAFsUpperOverlap = 0 ! Number of MAFs in the upper overlap region
-    integer :: chunkNumber = -1             ! Index of this chunk
+    integer :: chunkNumber        = -1             ! Index of this chunk
     integer, dimension(:), pointer :: HGridOffsets => NULL()
     ! This for each chunk is the index of the first non-overlapped profile in 
     ! each hGrid into the relevant output (l2gp?) file.
@@ -49,7 +49,7 @@ contains ! =====     Private Procedures     ============================
   ! ------------------------------------------------  DUMP_CHUNKS  -----
   subroutine DUMP_CHUNKS ( CHUNKS )
 
-    use Output_M, only: Output
+    use OUTPUT_M, only: OUTPUT
 
     type(MLSChunk_t), intent(in) :: CHUNKS(:)
     integer :: I
@@ -64,23 +64,43 @@ contains ! =====     Private Procedures     ============================
   ! ------------------------------------------------  DUMP_ONE_CHUNK  -----
   subroutine DUMP_ONE_CHUNK ( CHUNK )
 
-    use Output_M, only: Output
+    use DUMP_0, only: DUMP
+    use OUTPUT_M, only: OUTPUT
 
     type(MLSChunk_t), intent(in) :: CHUNK
-      call output ( chunk%firstMAFIndex, before='  firstMAFIndex: ' )
-      call output ( chunk%lastMAFIndex, before='  lastMAFIndex: ', advance='yes' )
-      call output ( chunk%noMAFsLowerOverlap, before='  noMAFsLowerOverlap: ' )
-      call output ( chunk%noMAFsUpperOverlap, before='  noMAFsUpperOverlap: ', advance='yes' )
-      call output ( chunk%firstMAFIndex + chunk%noMAFsLowerOverlap, &
-        & before='  1st non-overlapped MAF: ' )
-      call output ( chunk%lastMAFIndex - chunk%noMAFsUpperOverlap, &
-        & before='  last non-overlapped MAF: ', advance='yes' )
-      call output ( chunk%lastMAFIndex - chunk%firstMAFIndex + 1, &
-        & before='  chunk size: ' )
-      call output ( chunk%lastMAFIndex - chunk%firstMAFIndex &
-        & - chunk%noMAFsUpperOverlap - chunk%noMAFsLowerOverlap + 1, &
-        & before='  non-overlapped chunk size: ', advance='yes' )
+    call output ( chunk%chunkNumber, before='  chunkNumber: ' )
+    call output ( chunk%firstMAFIndex, before='  firstMAFIndex: ' )
+    call output ( chunk%lastMAFIndex, before='  lastMAFIndex: ', advance='yes' )
+    call output ( chunk%noMAFsLowerOverlap, before='  noMAFsLowerOverlap: ' )
+    call output ( chunk%noMAFsUpperOverlap, before='  noMAFsUpperOverlap: ', advance='yes' )
+    call output ( chunk%firstMAFIndex + chunk%noMAFsLowerOverlap, &
+      & before='  1st non-overlapped MAF: ' )
+    call output ( chunk%lastMAFIndex - chunk%noMAFsUpperOverlap, &
+      & before='  last non-overlapped MAF: ', advance='yes' )
+    call output ( chunk%lastMAFIndex - chunk%firstMAFIndex + 1, &
+      & before='  chunk size: ' )
+    call output ( chunk%lastMAFIndex - chunk%firstMAFIndex &
+      & - chunk%noMAFsUpperOverlap - chunk%noMAFsLowerOverlap + 1, &
+      & before='  non-overlapped chunk size: ', advance='yes' )
+    if ( associated(chunk%HGridOffsets) ) &
+      & call dump( chunk%HGridOffsets, 'HGrid offsets' )
+    if ( associated(chunk%HGridTotals) ) &
+      & call dump( chunk%HGridTotals, 'HGrid Totals' )
   end subroutine DUMP_ONE_CHUNK
+
+  ! ------------------------------------------------  INITIALIZE  -----
+  ! Override each chunk component's default values if given a precursor
+  subroutine INITIALIZE ( CHUNK, PRECURSOR )
+    type(MLSChunk_T)                       :: CHUNK
+    type(MLSChunk_T), optional, intent(in) :: PRECURSOR
+    if ( .not. present(precursor) ) return
+    chunk%abandoned            = precursor%abandoned
+    chunk%firstMAFIndex        = precursor%lastMAFIndex + 1
+    chunk%lastMAFIndex         = chunk%firstMAFIndex + precursor%lastMAFIndex - precursor%firstMAFIndex
+    chunk%noMAFsLowerOverlap   = precursor%noMAFsLowerOverlap
+    chunk%noMAFsUpperOverlap   = precursor%noMAFsUpperOverlap
+    chunk%chunkNumber          = precursor%chunkNumber       
+  end subroutine INITIALIZE
 
 !=======================================================================
 !--------------------------- end bloc --------------------------------------
@@ -96,6 +116,9 @@ contains ! =====     Private Procedures     ============================
 end module Chunks_m
 
 ! $Log$
+! Revision 2.7  2011/06/29 21:53:55  pwagner
+! Added initialize, improved dump
+!
 ! Revision 2.6  2010/05/23 03:34:29  honghanh
 ! Initialize firstMafIndex, lastMAfIndex and a couple of other variables
 !
