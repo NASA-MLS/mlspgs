@@ -11,10 +11,10 @@
 
 module L2AUXData                 ! Data types for storing L2AUX data internally
 
-  use Allocate_Deallocate, only: Allocate_test, Deallocate_test
-  use Dump_0, only: DUMP
-  use Hdf, only: &
-    & DFACC_CREATE, DFACC_RDONLY, DFACC_RDWR, DFNT_FLOAT32, DFNT_INT32, &
+  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use DUMP_0, only: DUMP
+  use HDF, only: &
+    & DFACC_CREATE, DFACC_RDonly, DFACC_RDWR, DFNT_FLOAT32, DFNT_INT32, &
     & SFCREATE, SFDIMID, SFSDSCALE, &
     & SFENDACC, SFRDATA_F90, SFN2INDEX, SFSELECT, SFGINFO, &
     & SFGDINFO, SFSDMNAME, SFWDATA_F90
@@ -42,20 +42,21 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
     L_SPACERADIANCE, L_STRAYRADIANCE, L_SURFACETYPE, L_SYSTEMTEMPERATURE, &
     L_TNGTECI, L_TNGTGEOCALT, L_TNGTGEODALT, &
     L_TOTALEXTINCTION, L_USBFREQUENCY, L_VMR, L_XYZ
-  use intrinsic, only: l_hdf, LIT_INDICES
+  use INTRINSIC, only: L_HDF, LIT_INDICES
   use LEXER_CORE, only: PRINT_SOURCE
-  use MLSCommon, only: R8, R4, DEFAULTUNDEFINEDVALUE, MLSFile_T
-  use MLSL2Options, only: DEFAULT_HDFVERSION_READ, DEFAULT_HDFVERSION_WRITE
-  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
-    & MLSMSG_ERROR, MLSMSG_WARNING, MLSMessageCalls
-  use MLSSignals_m, only: GETMODULENAME, MODULES
-  use MLSStrings, only: LowerCase
-  use MLSStringLists, only: Array2List, GetStringElement, List2Array, &
-    & NumStringElements, StringElement
-  use Output_M, only: OUTPUT
-  use QuantityTemplates, only: QuantityTemplate_T
+  use MLSCOMMON, only: DEFAULTUNDEFINEDVALUE, MLSFILE_T
+  use MLSKINDS, only: R8, R4
+  use MLSL2OPTIONS, only: DEFAULT_HDFVERSION_READ, DEFAULT_HDFVERSION_WRITE
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
+    & MLSMSG_ERROR, MLSMSG_WARNING, MLSMESSAGECALLS
+  use MLSSIGNALS_M, only: GETMODULENAME, MODULES
+  use MLSSTRINGS, only: LOWERCASE
+  use MLSSTRINGLISTS, only: ARRAY2LIST, GETSTRINGELEMENT, LIST2ARRAY, &
+    & NUMSTRINGELEMENTS, STRINGELEMENT
+  use OUTPUT_M, only: OUTPUT
+  use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T
   use STRING_TABLE, only: GET_STRING, DISPLAY_STRING
-  use Tree, only: SOURCE_REF
+  use TREE, only: SOURCE_REF
 
   implicit none
 
@@ -96,12 +97,12 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
 ! ExpandL2AUXDataInPlace ( L2AUXData_T l2aux, int newSize )
 ! int AddL2AUXToDatabase ( *L2AUXData_T DATABASE(:), L2AUXData_T ITEM )
 ! DestroyL2AUXDatabase ( *L2AUXData_T DATABASE(:) )
-! Dump ( l2auxData_T L2aux(:), [char* Name], [int Details] )
-!    or Dump ( l2auxData_T L2aux, [int Details] )
-! ReadL2AUXData (int sd_id, char* quantityname, l2auxData_T l2aux, 
-!    [int firstProf], [int lastProf])
-! WriteL2AUXData(l2auxData_T l2aux, int l2FileHandle, int returnStatus, 
-!    [char* sdName], [int NoMAFS], [log WriteCounterMAF], [char* DimNames])
+! Dump ( l2auxData_T L2aux(:), [char* Name], [int Details], [char* options] )
+!    or Dump ( l2auxData_T L2aux, [int Details], [char* options] )
+! ReadL2AUXData ( int sd_id, char* quantityname, l2auxData_T l2aux, 
+!    [int firstProf], [int lastProf] )
+! WriteL2AUXData ( l2auxData_T l2aux, int l2FileHandle, int returnStatus, 
+!    [char* sdName], [int NoMAFS], [log WriteCounterMAF], [char* DimNames] )
 ! === (end of api) ===
 
   private
@@ -194,9 +195,8 @@ contains ! =====     Public Procedures     =============================
 
   subroutine cpL2AUXData_MLSFile(L2AUXFile1, L2AUXFile2, &
     & create2, sdList, rename, options)
-    use Hdf, only: DFACC_CREATE
-    use MLSFILES, only: AreTheSameFile
-    use MLSHDF5, only: GetAllHDF5DSNames
+    use MLSFILES, only: ARETHESAMEFILE
+    use MLSHDF5, only: GETALLHDF5DSNAMES
     !-------------------------------------------------------------------
 
     ! Given file names file1 and file2,
@@ -293,12 +293,12 @@ contains ! =====     Public Procedures     =============================
 
   subroutine cpL2AUXData_Name(file1, file2, create2, hdfVersion, sdList, rename, &
     & options)
-    use Hdf, only: DFACC_READ, DFACC_CREATE, DFACC_RDWR
+    use Hdf, only: DFACC_READ, DFACC_RDWR
     use HDF5, only: H5GCLOSE_F, H5GOPEN_F, H5DOPEN_F, H5DCLOSE_F
     use MLSFILES, only: FILENOTFOUND, WILDCARDHDFVERSION, &
-      & mls_exists, mls_hdf_version, mls_sfstart, mls_sfend
-    use MLSHDF5, only: GetAllHDF5DSNames, GetHDF5Attribute, &
-      & IsHDF5AttributePresent
+      & MLS_EXISTS, MLS_HDF_VERSION, MLS_SFSTART, MLS_SFEND
+    use MLSHDF5, only: GETALLHDF5DSNAMES, GETHDF5ATTRIBUTE, &
+      & ISHDF5ATTRIBUTEPRESENT
     !-------------------------------------------------------------------
 
     ! Given file names file1 and file2,
@@ -703,12 +703,13 @@ contains ! =====     Public Procedures     =============================
 
   ! ----------------------------------------  Dump_L2AUX_DataBase  -----
 
-  subroutine Dump_L2AUX_DataBase ( L2aux, Name, Details )
+  subroutine Dump_L2AUX_DataBase ( L2aux, Name, Details, Options )
 
     ! Dummy arguments
     type (l2auxData_T), intent(in) ::          L2AUX(:)
     character(len=*), intent(in), optional :: Name
     integer, intent(in), optional :: DETAILS
+    character(len=*), intent(in), optional :: options
 
     ! Local variables
     integer :: i
@@ -724,14 +725,14 @@ contains ! =====     Public Procedures     =============================
       return
     end if
     do i = 1, size(l2aux)
-      call dump(l2aux(i), Details)
+      call dump( l2aux(i), Details, options )
     end do
       
   end subroutine Dump_L2AUX_DATABASE
 
   ! -------------------------------------------------  Dump_L2AUX  -----
 
-  subroutine Dump_L2AUX ( L2aux, Details )
+  subroutine Dump_L2AUX ( L2aux, Details, Options )
 
     ! Dummy arguments
     type (l2auxData_T), intent(in) ::          L2AUX
@@ -740,6 +741,7 @@ contains ! =====     Public Procedures     =============================
     !                                        ! -2 Skip all but name
     !                                        ! >0 Dump even multi-dim arrays
     !                                        ! Default 1
+    character(len=*), intent(in), optional :: options
 
     ! Local variables
     integer :: dim, ierr
@@ -779,19 +781,20 @@ contains ! =====     Public Procedures     =============================
           call output ( '           ')
           call output ( '  dimension family: ')
           call output ( l2aux%dimensions(dim)%dimensionfamily, 3, advance='yes')
-          call dump ( l2aux%dimensions(dim)%values, 'dim values:' )
+          call dump ( l2aux%dimensions(dim)%values, &
+            & 'dim values:', options=options )
          else
           call output ( ' is not associated', advance='yes')
          end if
       end do
       if ( myDetails < 1 ) return
-      call dump ( l2aux%values, 'values:' )
+      call dump ( l2aux%values, 'values:', options=options )
  
   end subroutine Dump_L2AUX
     
   !-----------------------------------------------  ReadL2AUXData_FileHandle  -----
-  subroutine ReadL2AUXData_FileHandle(sd_id, quantityname, quantityType, l2aux, firstProf, lastProf, &
-    & checkDimNames, hdfVersion)
+  subroutine ReadL2AUXData_FileHandle(sd_id, quantityname, quantityType, l2aux, &
+    & firstProf, lastProf, checkDimNames, hdfVersion)
 
   use MLSFiles, only: INITIALIZEMLSFILE
 
@@ -830,7 +833,7 @@ contains ! =====     Public Procedures     =============================
     & firstProf, lastProf, checkDimNames)
 
   use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, &
-    & mls_closeFile, mls_openFile
+    & MLS_CLOSEFILE, MLS_OPENFILE
 
     ! This routine reads an l2aux file, returning a filled data structure
     ! and the number of profiles read.
@@ -877,15 +880,16 @@ contains ! =====     Public Procedures     =============================
   end subroutine ReadL2AUXData_MLSFile
 
   ! -----------------------------------------  ReadL2AUXData_MF_hdf4  -----
-  subroutine ReadL2AUXData_MF_hdf4(L2AUXFile, quantityname, quantityType, l2aux, firstProf, lastProf, &
-    & checkDimNames )
+  subroutine ReadL2AUXData_MF_hdf4(L2AUXFile, quantityname, quantityType, l2aux, &
+    & firstProf, lastProf, checkDimNames )
 
     ! This routine reads an l2aux file, returning a filled data structure and the !
     ! number of profiles read.
 
     ! Arguments
 
-    character (LEN=*), intent(IN) :: quantityname ! Name of L2AUX quantity = sdname in writing routine
+    ! Name of L2AUX quantity = sdname in writing routine
+    character (LEN=*), intent(IN) :: quantityname 
     type(MLSFile_T), pointer      :: L2AUXFile
     integer, intent(in) :: QuantityType
     integer, intent(IN), optional :: firstProf, lastProf ! Defaults to first and last
@@ -1032,8 +1036,8 @@ contains ! =====     Public Procedures     =============================
 
 
   ! -----------------------------------------  ReadL2AUXData_MF_hdf5  -----
-  subroutine ReadL2AUXData_MF_hdf5(L2AUXFile, quantityname, quantityType, l2aux, firstProf, lastProf, &
-    & checkDimNames)
+  subroutine ReadL2AUXData_MF_hdf5(L2AUXFile, quantityname, quantityType, l2aux, &
+    & firstProf, lastProf, checkDimNames)
     use L1BData, only: L1BDATA_T, READL1BDATA
 
     ! This routine reads an l2aux file, returning a filled data structure and the !
@@ -1046,7 +1050,8 @@ contains ! =====     Public Procedures     =============================
 
     ! Arguments
 
-    character (LEN=*), intent(IN) :: quantityname ! Name of L2AUX quantity = sdname in writing routine
+    ! Name of L2AUX quantity = sdname in writing routine
+    character (LEN=*), intent(IN) :: quantityname 
     type(MLSFile_T), pointer      :: L2AUXFile
     integer, intent(in) :: QUANTITYTYPE ! Lit index
     integer, intent(IN), optional :: firstProf, lastProf ! Defaults to first and last
@@ -1075,7 +1080,8 @@ contains ! =====     Public Procedures     =============================
     dim_families(3) = l_maf                          
 !   call SetupNewl2auxRecord ( dim_families, data_dim_sizes, (/1,1,1/), l2aux )
     call SetupNewl2auxRecord ( l2aux, inputDimFamilies=dim_families, &
-     & inputDimSizes=data_dim_sizes, inputDimStarts=(/1,1,1/), inputQuantityType=quantityType )
+     & inputDimSizes=data_dim_sizes, inputDimStarts=(/1,1,1/), &
+     & inputQuantityType=quantityType )
     l2aux%values = L1BDATA1%DpField
     deallocate(L1BDATA1%DpField, stat=status)
     if ( status /= 0 ) &
@@ -1127,7 +1133,7 @@ contains ! =====     Public Procedures     =============================
     & NoMAFS, WriteCounterMAF, DimNames, Reuse_dimNames)
 
   use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, &
-    & mls_closeFile, mls_openFile
+    & MLS_CLOSEFILE, MLS_OPENFILE
 
   ! Write l2aux to the file with l2FileHandle
   ! Optionally, write a bogus CounterMAF sd so the
@@ -1184,12 +1190,12 @@ contains ! =====     Public Procedures     =============================
   ! resulting file can masquerade as an l1BRad
   ! (Note that this bogus sd should only be written once for each file;
   !  also note the attempt to convert l2aux%values to KIND of l1b radiances)
-  use HDF5, only: h5gclose_f, h5gopen_f
-  use MLS_DataProducts, only: DATAPRODUCTS_T
-  use MLSAuxData, only: BUILD_MLSAUXDATA
-  use MLSHDF5, only: IsHDF5AttributePresent, MakeHDF5Attribute, SaveAsHDF5DS
-  use MLSL2Timings, only: showTimingNames
-  use PCFHdr, only: h5_writeglobalattr
+  use HDF5, only: H5GCLOSE_F, H5GOPEN_F
+  use MLS_DATAPRODUCTS, only: DATAPRODUCTS_T
+  use MLSAUXDATA, only: BUILD_MLSAUXDATA
+  use MLSHDF5, only: ISHDF5ATTRIBUTEPRESENT, MAKEHDF5ATTRIBUTE, SAVEASHDF5DS
+  use MLSL2TIMINGS, only: SHOWTIMINGNAMES
+  use PCFHDR, only: H5_WRITEGLOBALATTR
 
     type (L2AUXData_T), intent(inout) :: L2AUX
     type(MLSFile_T)                :: L2AUXFile
@@ -1470,7 +1476,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------------  WriteL2AUXAttributes  -----
   subroutine WriteL2AUXAttributes ( L2FileHandle, l2aux, name)
-  use MLSHDF5, only: MakeHDF5Attribute
+  use MLSHDF5, only: MAKEHDF5ATTRIBUTE
   ! Writes the pertinent attributes for an l2aux
   ! Arguments
   integer, intent(in) :: L2FileHandle
@@ -1955,7 +1961,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------------------  ANNOUNCE_ERROR  -----
   subroutine ANNOUNCE_ERROR ( WHERE, full_message, CODE, L2AUXFile )
-  use MLSFiles, only: dump
+  use MLSFiles, only: DUMP
     integer, intent(in) :: WHERE   ! Tree node where error was noticed
     character(LEN=*), intent(in)    :: full_message
     integer, intent(in), optional :: CODE    ! Code for error message
@@ -1999,6 +2005,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.85  2011/07/07 00:39:15  pwagner
+! Accepts options as arg for dumps
+!
 ! Revision 2.84  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
 !
