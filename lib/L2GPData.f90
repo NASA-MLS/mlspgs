@@ -12,33 +12,33 @@
 !=============================================================================
 module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 !=============================================================================
-  use Allocate_Deallocate, only: Allocate_test, Deallocate_test
-  use BitStuff, only: dumpBitNames
-  use DUMP_0, only: DIFF, DUMP
-  use Hdf, only: DFACC_RDONLY, DFACC_READ, DFACC_CREATE, DFACC_RDWR, &
+  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use BITSTUFF, only: DUMPBITNAMES
+  use DUMP_0, only: DIFF, DIFF_FUN, DUMP
+  use HDF, only: DFACC_RDONLY, DFACC_READ, DFACC_CREATE, DFACC_RDWR, &
     & DFNT_FLOAT32, DFNT_INT32, DFNT_FLOAT64
-  use Intrinsic ! "units" type literals, beginning with L_
-  use MLSCommon, only: defaultUndefinedValue, MLSFile_T, L2Metadata_T
-  use MLSFiles, only: FILENOTFOUND, &
+  use INTRINSIC ! "UNITS" TYPE LITERALS, BEGINNING WITH L_
+  use MLSCOMMON, only: DEFAULTUNDEFINEDVALUE, MLSFILE_T, L2METADATA_T
+  use MLSFILES, only: FILENOTFOUND, &
     & HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, WRONGHDFVERSION, &
-    & DUMP, INITIALIZEMLSFILE, MLS_closeFile, MLS_EXISTS, mls_openFile, &
-    & MLS_HDF_VERSION, MLS_INQSWATH, open_MLSFile, close_MLSFile
-  use MLSKinds, only: R4, R8
-  use MLSFillValues, only: ExtractArray, GatherArray, &
-    & IsFillValue, ReplaceFillValues
+    & DUMP, INITIALIZEMLSFILE, MLS_CLOSEFILE, MLS_EXISTS, MLS_OPENFILE, &
+    & MLS_HDF_VERSION, MLS_INQSWATH, OPEN_MLSFILE, CLOSE_MLSFILE
+  use MLSKINDS, only: R4, R8
+  use MLSFILLVALUES, only: EXTRACTARRAY, GATHERARRAY, &
+    & ISFILLVALUE, REPLACEFILLVALUES
   use MLSHDFEOS, only: HSIZE
-  use MLSMessageModule, only: MLSMSG_Allocate, MLSMSG_DeAllocate, MLSMSG_Error, &
-    & MLSMSG_Warning, MLSMessage, MLSMessageCalls
-  use MLSNumerics, only: FindInRange
-  use MLSSets, only: FindFirst, FindIntersection, FindLast, FindUnique, &
-    & Intersection
-  use MLSStrings, only: Capitalize, lowercase
-  use MLSStringLists, only: ExtractSubString, &
-    & GetHashElement, GetStringElement, GetUniqueList, &
-    & list2array, NumStringElements, RemoveListFromList, ReplaceSubString, &
-    & StringElementNum, SwitchDetail
-  use Output_M, only: blanks, Output, outputNamedValue, &
-    & resumeOutput, suspendOutput
+  use MLSMESSAGEMODULE, only: MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, MLSMSG_ERROR, &
+    & MLSMSG_WARNING, MLSMESSAGE, MLSMESSAGECALLS
+  use MLSNUMERICS, only: FINDINRANGE
+  use MLSSETS, only: FINDFIRST, FINDINTERSECTION, FINDLAST, FINDUNIQUE, &
+    & INTERSECTION
+  use MLSSTRINGS, only: CAPITALIZE, LOWERCASE
+  use MLSSTRINGLISTS, only: EXTRACTSUBSTRING, &
+    & GETHASHELEMENT, GETSTRINGELEMENT, GETUNIQUELIST, &
+    & LIST2ARRAY, NUMSTRINGELEMENTS, REMOVELISTFROMLIST, REPLACESUBSTRING, &
+    & STRINGELEMENTNUM, SWITCHDETAIL
+  use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE, &
+    & RESUMEOUTPUT, SUSPENDOUTPUT
   use STRING_TABLE, only: DISPLAY_STRING
 
   implicit none
@@ -466,7 +466,7 @@ contains ! =====     Public Procedures     =============================
     ! This call has been altered recently, so that it can be used to create
     ! a swath as well as adding to one. 
 
-  use MLSHDFEOS, only: mls_swattach, mls_swdetach
+  use MLSHDFEOS, only: MLS_SWATTACH, MLS_SWDETACH
     ! Arguments
 
     type(MLSFile_T)                :: L2GPFile
@@ -876,7 +876,7 @@ contains ! =====     Public Procedures     =============================
     ! This routine copies swathList from 1 to 2
     ! and, depending on options, makes some repairs
 
-    use HGridsDatabase, only: HGrid_T
+    use HGridsDatabase, only: HGRID_T
     ! Arguments
 
     type (L2Metadata_T) :: l2metaData
@@ -1013,9 +1013,9 @@ contains ! =====     Public Procedures     =============================
     ! If file2 doesn't exist yet, or if create2 is TRUE, it'll create it
     ! Optionally repairs l2gpdata
 
-    use HGridsDatabase, only: HGrid_T
-    use PCFHdr, only: GlobalAttributes_T, GlobalAttributes, &
-      & dumpGlobalAttributes, he5_readglobalattr, he5_writeglobalattr
+    use HGRIDSDATABASE, only: HGRID_T
+    use PCFHDR, only: GLOBALATTRIBUTES_T, GLOBALATTRIBUTES, &
+      & DUMPGLOBALATTRIBUTES, HE5_READGLOBALATTR, HE5_WRITEGLOBALATTR
     ! Arguments
 
     type (L2Metadata_T) :: l2metaData
@@ -1200,7 +1200,7 @@ contains ! =====     Public Procedures     =============================
     ! (see cpL2GPData_fileID)
     ! If L2GPfile2 doesn't exist yet, or if create2 is TRUE, it'll create it
     ! Optionally repairs l2gpdata
-    use HGridsDatabase, only: HGrid_T
+    use HGridsDatabase, only: HGRID_T
     ! Arguments
 
     type (L2Metadata_T) :: l2metaData
@@ -1528,18 +1528,18 @@ contains ! =====     Public Procedures     =============================
       call SetupNewL2GPRecord ( tl2gp1, proto=l2gp1, which=which1(1:how_many) )
       call SetupNewL2GPRecord ( tl2gp2, proto=l2gp2, which=which2(1:how_many) )
       print *, 'About to enter ..atLast having matched times'
-      call DiffL2GPData_atlast ( tL2gp1, tL2gp2, &
+      call DiffThis ( tL2gp1, tL2gp2, &
       & Details, options, fields, numDiffs )
       call DestroyL2GPContents( tL2gp1 )
       call DestroyL2GPContents( tL2gp2 )
     else
-      call DiffL2GPData_atlast ( L2gp1, L2gp2, &
+      call DiffThis ( L2gp1, L2gp2, &
       & Details, options, fields, numDiffs )
     endif
   end subroutine DiffL2GPData
 
-  ! ---------------------- DiffL2GPData_atlast  ---------------------------
-  subroutine DiffL2GPData_atlast ( L2gp1, L2gp2, &
+  ! ---------------------- DiffThis  ---------------------------
+  subroutine DiffThis ( L2gp1, L2gp2, &
     & Details, options, fields, numDiffs )
     ! Show diff between l2gp1 and l2gp2 down to level of Details
     
@@ -1806,15 +1806,21 @@ contains ! =====     Public Procedures     =============================
       endif
       if ( any(l2gp1%longitude /= l2gp2%longitude) .and. &
         & SwitchDetail(lowercase(myFields), 'lon', '-fc') > -1 ) then
-          call diff ( l2gp1%longitude, 'l2gp%longitude', &
-            &         l2gp2%longitude, ' ', &
+          call dump ( &
+            & diff_fun( l2gp1%longitude, l2gp2%longitude, &
+            &         auxvalue=360._rgp, &
+            &         options=AddOntoOptions('p',options) ), &
+            & 'l2gp%longitude', &
             & options=options )
         myNumDiffs = myNumDiffs + count( l2gp1%longitude /= l2gp2%longitude )
       endif
       if ( any(l2gp1%solarTime /= l2gp2%solarTime) .and. &
         & SwitchDetail(lowercase(myFields), 'solartime', '-fc') > -1 ) then
-          call diff ( l2gp1%solarTime, 'l2gp%solarTime', &
-            &         l2gp2%solarTime, ' ', &
+          call dump ( &
+            & diff_fun( l2gp1%solarTime, l2gp2%solarTime, &
+            &         auxvalue=24._rgp, &
+            &         options=AddOntoOptions('p',options) ), &
+            & 'l2gp%solarTime', &
             & options=options )
         myNumDiffs = myNumDiffs + count( l2gp1%solarTime /= l2gp2%solarTime )
       endif
@@ -1879,7 +1885,17 @@ contains ! =====     Public Procedures     =============================
       if ( present(numDiffs) ) numDiffs = myNumDiffs
       ! print *, 'myNumDiffs: ', myNumDiffs
     end subroutine doneHere
-  end subroutine DiffL2GPData_atlast
+    
+    function AddOntoOptions( addOn, options) result(newOptions)
+      character(len=*), intent(in)           :: AddOn
+      character(len=*), optional, intent(in) :: options
+      character(len=16)                      :: newOptions
+      newOptions = AddOn
+      if ( .not. present(options) ) return
+      if ( len_trim(options) < 1 ) return
+      newOptions = trim(options) // addOn
+    end function AddOntoOptions
+  end subroutine DiffThis
     
   ! ------------------------------------------ DiffL2GPFiles_MLSFile ------------
   subroutine DiffL2GPFiles_MLSFile ( L2GPFile1, L2GPFile2, &
@@ -2557,7 +2573,9 @@ contains ! =====     Public Procedures     =============================
       if ( len_trim(fields) < 1 ) then
         showMe = detailsOK
       else
-        showMe = ( index(LowerCase(fields), LowerCase(trim(field))) > 0 )
+        showMe = ( &
+          & switchDetail(LowerCase(fields), LowerCase(trim(field)), '-fc' ) &
+          & > -1 )
       endif
     end function showMe
   end subroutine Dump_L2GP
@@ -2566,9 +2584,9 @@ contains ! =====     Public Procedures     =============================
   subroutine DumpL2GP_attributes_hdf5(l2FileHandle, l2gp, swathName)
 
   use HDFEOS5, only: HE5T_NATIVE_REAL, HE5T_NATIVE_DOUBLE
-  use he5_swapi, only: he5_swrdattr, he5_swrdlattr
-  use MLSHDFEOS, only: mls_swattach, mls_swdetach
-  use PCFHdr, only:  GlobalAttributes_T, he5_readglobalattr
+  use HE5_SWAPI, only: HE5_SWRDATTR, HE5_SWRDLATTR
+  use MLSHDFEOS, only: MLS_SWATTACH, MLS_SWDETACH
+  use PCFHDR, only:  GLOBALATTRIBUTES_T, HE5_READGLOBALATTR
     ! Brief description of subroutine
     ! This subroutine dumps the attributes for an l2gp
     ! These include
@@ -3060,6 +3078,9 @@ contains ! =====     Public Procedures     =============================
       l2gp%convergence  = l2gp%MissingValue
     elseif ( present(proto) ) then
       nn                = proto%nTimes
+      l2gp%name         = proto%name
+      l2gp%nameIndex    = proto%nameIndex
+      l2gp%QUANTITYTYPE = proto%QUANTITYTYPE
       l2gp%MissingStatus= proto%MissingStatus
       l2gp%MissingValue = proto%MissingValue
       l2gp%pressures    = proto%pressures    
@@ -3481,10 +3502,10 @@ contains ! =====     Public Procedures     =============================
   subroutine ReadL2GPData_MF_hdf(L2GPFile, swathname, l2gp, HMOT, &
     & numProfs, firstProf, lastProf, ReadData)
   use HDFEOS, only: SWINQDIMS
-  use HDFEOS5, only: HE5_SWINQDIMS, HE5_SWINQDFLDS, HE5_swfldinfo
-  use MLSHDFEOS, only: mls_swattach, mls_swdetach, mls_swdiminfo, mls_swrdfld
-  use MLSStringLists, only: isInList
-  use HDF5, only: size_t
+  use HDFEOS5, only: HE5_SWINQDIMS, HE5_SWINQDFLDS, HE5_SWFLDINFO
+  use MLSHDFEOS, only: MLS_SWATTACH, MLS_SWDETACH, MLS_SWDIMINFO, MLS_SWRDFLD
+  use MLSSTRINGLISTS, only: ISINLIST
+  use HDF5, only: SIZE_T
     !------------------------------------------------------------------------
 
     ! This routine reads an L2GP file, returning a filled data structure and the !
@@ -3895,8 +3916,8 @@ contains ! =====     Public Procedures     =============================
     & swathName, nLevels, notUnlimited, compressTimes)
 
   use HDFEOS5, only: HE5S_UNLIMITED_F
-  use MLSHDFEOS, only: mls_swdetach, &
-    & mls_swcreate, mls_dfldsetup, mls_gfldsetup, mls_swdefdim
+  use MLSHDFEOS, only: MLS_SWDETACH, &
+    & MLS_SWCREATE, MLS_DFLDSETUP, MLS_GFLDSETUP, MLS_SWDEFDIM
     ! Brief description of subroutine
     ! This subroutine sets up the structural definitions in an empty L2GP file.
 
@@ -4164,7 +4185,7 @@ contains ! =====     Public Procedures     =============================
   subroutine OutputL2GP_writeGeo_MF (l2gp, L2GPFile, &
     & swathName,offset)
 
-  use MLSHDFEOS, only: mls_swattach, mls_swdetach, mls_swwrfld
+  use MLSHDFEOS, only: MLS_SWATTACH, MLS_SWDETACH, MLS_SWWRFLD
     ! Brief description of subroutine
     ! This subroutine writes the geolocation fields to an L2GP output file.
 
@@ -4269,7 +4290,7 @@ contains ! =====     Public Procedures     =============================
   subroutine OutputL2GP_writeData_MF(l2gp, L2GPFile, &
     & swathName,offset)
 
-  use MLSHDFEOS, only: mls_swattach, mls_swdetach, mls_swwrfld
+  use MLSHDFEOS, only: MLS_SWATTACH, MLS_SWDETACH, MLS_SWWRFLD
     ! Brief description of subroutine
     ! This subroutine writes the data fields to an L2GP output file.
     ! For now, you have to write all of l2gp, but you can choose to write
@@ -4380,10 +4401,10 @@ contains ! =====     Public Procedures     =============================
   subroutine OutputL2GP_attributes_MF(l2gp, L2GPFile, swathName)
 
   use HDFEOS5, only: HE5T_NATIVE_INT, HE5T_NATIVE_REAL, HE5T_NATIVE_DOUBLE, &
-    & MLS_charType
-  use he5_swapi, only: he5_swwrattr, he5_swwrlattr
-  use MLSHDFEOS, only: mls_swattach, mls_swdetach, mls_swwrattr, mls_swwrlattr
-  use PCFHdr, only:  he5_writeglobalattr
+    & MLS_CHARTYPE
+  use HE5_SWAPI, only: HE5_SWWRATTR, HE5_SWWRLATTR
+  use MLSHDFEOS, only: MLS_SWATTACH, MLS_SWDETACH, MLS_SWWRATTR, MLS_SWWRLATTR
+  use PCFHDR, only:  HE5_WRITEGLOBALATTR
     ! Brief description of subroutine
     ! This subroutine writes the attributes for an l2gp
     ! These include
@@ -4748,7 +4769,7 @@ contains ! =====     Public Procedures     =============================
 
   !-----------------------------------------  RepairL2GP_HGrid  -----
   subroutine RepairL2GP_HGrid ( L2GP, HGrid, fields, offset, options )
-    use HGridsDatabase, only: HGrid_T
+    use HGridsDatabase, only: HGRID_T
     ! This routine repairs l2gp1 using values from HGrid
     ! wherever the first has fillvalues
     
@@ -4872,7 +4893,7 @@ contains ! =====     Public Procedures     =============================
   subroutine SetL2GP_aliases_MF(l2gp, L2GPFile, swathName)
 
   use HDFEOS5, only: HE5_SWSETALIAS
-  use MLSHDFEOS, only: mls_swattach, mls_swdetach
+  use MLSHDFEOS, only: MLS_SWATTACH, MLS_SWDETACH
   use SDPToolkit, only: PGS_S_SUCCESS
     ! Arguments
     type(MLSFile_T)                :: L2GPFile
@@ -4986,6 +5007,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.179  2011/02/05 01:33:44  pwagner
+! Automatically sheds rank when nFreqs=1; passes options to dump routines
+!
 ! Revision 2.178  2010/11/17 01:19:13  pwagner
 ! Fixed bug when diffing files with different swathnames; units_name for iwc now 'g/m^3'
 !
