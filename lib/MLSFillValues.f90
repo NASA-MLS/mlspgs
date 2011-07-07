@@ -13,16 +13,16 @@
 module MLSFillValues              ! Some FillValue-related stuff
 !=============================================================================
 
-  use ieee_arithmetic, only: isFinite => ieee_is_finite, isNaN => ieee_is_nan, &
-    & ieee_is_finite, ieee_is_nan
-  use MLSCommon, only: fill_signal, inf_signal, nan_signal, undefinedvalue, &
-    & is_what_ieee
-  use MLSKinds ! Everything
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-  use MLSSets, only: FindAll, findFirst, findLast
-  use MLSStringLists, only: extractSubstring 
-  use MLSStrings, only: Lowercase
-  use output_m, only: OUTPUTNAMEDVALUE
+  use IEEE_ARITHMETIC, only: ISFINITE => IEEE_IS_FINITE, ISNAN => IEEE_IS_NAN, &
+    & IEEE_IS_FINITE, IEEE_IS_NAN
+  use MLSCOMMON, only: FILL_SIGNAL, INF_SIGNAL, NAN_SIGNAL, UNDEFINEDVALUE, &
+    & IS_WHAT_IEEE
+  use MLSKINDS ! EVERYTHING
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+  use MLSSETS, only: FINDALL, FINDFIRST, FINDLAST
+  use MLSSTRINGLISTS, only: EXTRACTSUBSTRING 
+  use MLSSTRINGS, only: LOWERCASE
+  use OUTPUT_M, only: OUTPUTNAMEDVALUE
 
   implicit none
 
@@ -766,7 +766,7 @@ contains
 
 ! -------------------------------------------------  Extremum  -----
 ! Returns the arg with the large absolute value
-  function Extremum_DOUBLE(arg1, arg2) result(value)
+  elemental function Extremum_DOUBLE(arg1, arg2) result(value)
     double precision, intent(in) :: arg1, arg2
     double precision             :: value
     if ( abs(arg2) > abs(arg1) ) then
@@ -776,7 +776,7 @@ contains
     endif
   end function Extremum_DOUBLE
 
-  function Extremum_REAL(arg1, arg2) result(value)
+  elemental function Extremum_REAL(arg1, arg2) result(value)
     real, intent(in)        :: arg1, arg2
     real                    :: value
     if ( abs(arg2) > abs(arg1) ) then
@@ -786,7 +786,7 @@ contains
     endif
   end function Extremum_REAL
 
-  function Extremum_int(arg1, arg2) result(value)
+  elemental function Extremum_int(arg1, arg2) result(value)
     integer, intent(in)        :: arg1, arg2
     integer                    :: value
     if ( abs(arg2) > abs(arg1) ) then
@@ -2720,6 +2720,9 @@ end module MLSFillValues
 
 !
 ! $Log$
+! Revision 2.27  2011/07/07 00:28:27  pwagner
+! Made extremum elemental
+!
 ! Revision 2.26  2011/03/22 23:38:30  pwagner
 ! Rerank now public
 !
