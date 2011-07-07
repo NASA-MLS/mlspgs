@@ -13,28 +13,29 @@ module L1BData
 
   ! Reading and interacting with Level 1B data (HDF4 or HDF5)
 
-  use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use Dump_0, only: DIFF, DUMP
-  use Hdf, only: DFACC_RDONLY, SFGINFO, SFN2INDEX, SFSELECT, &
-    & SFRDATA_f90, &
+  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use DUMP_0, only: DIFF, DIFF_FUN, DUMP
+  use HDF, only: DFACC_RDonly, SFGINFO, SFN2INDEX, SFSELECT, &
+    & SFRDATA_F90, &
     & SFRCDATA, SFENDACC, DFNT_CHAR8, DFNT_INT32, DFNT_FLOAT64, &
     & DFNT_FLOAT32
-  use ieee_arithmetic, only: ieee_is_finite
-  use intrinsic, only: l_hdf
-  use Lexer_Core, only: PRINT_SOURCE
-  use MLSCommon, only: MLSFile_T, &
-    & R4, R8, undefinedValue, FILENAMELEN
-  use MLSFiles, only: FILENOTFOUND, HDFVERSION_4, HDFVERSION_5, &
-    & addFileToDatabase, InitializeMLSFile, &
-    & mls_openFile, mls_closeFile
-  use MLSMessageModule, only: MLSMSG_Allocate, MLSMSG_Error, &
-    & MLSMSG_L1BREAD, MLSMSG_Warning, &
-    & MLSMessage, MLSMessageCalls
-  use MLSStrings, only: indexes, streq
-  use MLSStringLists, only: NumStringElements
-  use MoreTree, only: Get_Field_ID
-  use Output_M, only: Output, outputnamedValue, resumeOutput, suspendOutput
-  use String_Table, only: Get_String
+  use IEEE_ARITHMETIC, only: IEEE_IS_FINITE
+  use INTRINSIC, only: L_HDF
+  use LEXER_CORE, only: PRINT_SOURCE
+  use MLSCOMMON, only: MLSFILE_T, &
+    & UNDEFINEDVALUE, FILENAMELEN
+  use MLSFILES, only: FILENOTFOUND, HDFVERSION_4, HDFVERSION_5, &
+    & ADDFILETODATABASE, INITIALIZEMLSFILE, &
+    & MLS_OPENFILE, MLS_CLOSEFILE
+  use MLSKINDS, only: R4, R8
+  use MLSMESSAGEMODULE, only: MLSMSG_ALLOCATE, MLSMSG_ERROR, &
+    & MLSMSG_L1BREAD, MLSMSG_WARNING, &
+    & MLSMESSAGE, MLSMESSAGECALLS
+  use MLSSTRINGS, only: INDEXES, STREQ
+  use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS
+  use MORETREE, only: GET_FIELD_ID
+  use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE, RESUMEOUTPUT, SUSPENDOUTPUT
+  use STRING_TABLE, only: GET_STRING
   use TREE, only: NSONS, SUB_ROSA, SUBTREE, DUMP_TREE_NODE, SOURCE_REF
 
   implicit NONE
@@ -296,7 +297,7 @@ contains ! ============================ MODULE PROCEDURES ======================
   function AssembleL1BQtyName ( name, hdfVersion, isTngtQty, &
     & InstrumentName, dont_compress_name) &
     & result(QtyName)
-    use MLSStrings, only: CompressString
+    use MLSStrings, only: COMPRESSSTRING
     ! Returns a QtyName to be found in the L1b file
     ! If given InstrumentName, name should be a fragment:
     ! e.g., name='VelECI' and InstrumentName='sc'
@@ -512,9 +513,10 @@ contains ! ============================ MODULE PROCEDURES ======================
 
   !-------------------------------------------------  DiffL1BData  -----
   subroutine DiffL1BData ( l1bData1, l1bData2, &
-    & details, options, numDiffs, mafStart, mafEnd, l1bValues1, l1bValues2 )
+    & details, options, numDiffs, mafStart, mafEnd, l1bValues1, l1bValues2, &
+    & Period )
   use MLSFillValues, only: ESSENTIALLYEQUAL
-  use MLSStrings, only: asciify, isAllAscii
+  use MLSStrings, only: ASCIIFY, ISALLASCII
     ! Diff two l1brad quantities
     type( L1BData_T ), intent(inout) :: L1bData1
     type( L1BData_T ), intent(inout) :: L1bData2
@@ -529,6 +531,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     integer, intent(in), optional :: mafStart, mafEnd
     real(r8), dimension(:), optional :: l1bValues1
     real(r8), dimension(:), optional :: l1bValues2
+    real(r8), optional, intent(in)   :: Period
     ! If options contains 'r' or 's', print much less
     ! if options contains 'd' don't bother with essentially equal and so on
     ! Local variables
@@ -538,8 +541,10 @@ contains ! ============================ MODULE PROCEDURES ======================
     logical :: l1b2NotFinite
     integer :: MYDETAILS
     logical :: myDirect
+    logical :: myPeriodic
     integer :: mafStart1, mafStart2, mafEnd1, mafEnd2
     integer :: myNumDiffs
+    real(r8) :: myPeriod
     logical :: mySilent
     logical :: prntAssocStatus  ! Whether to remark on association status
                                 !  of multidimensional arrays
@@ -571,6 +576,10 @@ contains ! ============================ MODULE PROCEDURES ======================
     if ( present(options) ) mySilent = ( index( options, 'h' ) > 0 )
     myDirect = .false.
     if ( present(options) ) myDirect = ( index( options, 'd' ) > 0 )
+    myPeriod = 360._r8
+    if ( present(Period) ) myPeriod = Period
+    myPeriodic = .false.
+    if ( present(options) ) myPeriodic = ( index( options, 'p' ) > 0 )
     if ( DEBUG ) then
       call outputNamedValue( 'myDetails', myDetails )
       call outputNamedValue( 'mySilent', mysilent )
@@ -727,10 +736,17 @@ contains ! ============================ MODULE PROCEDURES ======================
       else
         if ( DEBUG ) call output( 'Calling direct diff with l1bvalues1 and 2', advance='yes' )
         myNumDiffs = myNumDiffs + count(l1bValues1 /= l1bValues2)
-        call DIFF ( &
-          & l1bValues1, '(1)', &
-          & l1bValues2, '(2)', &
-          & options=options )
+        if ( .not. myPeriodic ) then
+          call DIFF ( &
+            & l1bValues1, '(1)', &
+            & l1bValues2, '(2)', &
+            & options=options )
+        else
+          call dump ( &
+            & diff_fun( l1bValues1, l1bValues1, &
+            & auxvalue=myPeriod , options=options), &
+            & options=options )
+        endif
       endif
     endif
 
@@ -749,6 +765,12 @@ contains ! ============================ MODULE PROCEDURES ======================
         call output('l1bData1%dpField array all NaNs', advance='yes')
       elseif ( l1b2NotFinite ) then
         call output('l1bData2%dpField array all NaNs', advance='yes')
+      elseif ( myPeriodic ) then
+        myNumDiffs = myNumDiffs + count(l1bData1%dpField /= l1bData2%dpField)
+        call dump ( &
+          & diff_fun( l1bData1%dpField, l1bData2%dpField, &
+          & auxvalue=myPeriod , options=options), &
+          & options=options )
       elseif ( myDirect ) then
         if ( DEBUG ) call output( 'Calling direct diff', advance='yes' )
         myNumDiffs = myNumDiffs + count(l1bData1%dpField /= l1bData2%dpField)
@@ -870,9 +892,9 @@ contains ! ============================ MODULE PROCEDURES ======================
   ! This means, e.g. if the attribute is attached to a ds, opening
   ! that ds.
   ! Afterwards we atempt to cleanup, closing the ds.
-    use MLSHDF5, only: IsHDF5ItemPresent
-    use MLSFiles, only: dump
-    use HDF5, only: h5dopen_f, h5gclose_f, h5gopen_f
+    use MLSHDF5, only: ISHDF5ITEMPRESENT
+    use MLSFILES, only: DUMP
+    use HDF5, only: H5DOPEN_F, H5GCLOSE_F, H5GOPEN_F
 
     type (MLSFile_T), dimension(:), pointer :: FILEDATABASE
     character (len=*), intent(in)           :: fieldName ! Name of field
@@ -1004,7 +1026,7 @@ contains ! ============================ MODULE PROCEDURES ======================
   ! ------------------------------------------------  FindL1BData  -----
   integer function FindL1BData ( filedatabase, fieldName, hdfVersion )
 
-  use MLSHDF5, only: IsHDF5DSPresent
+  use MLSHDF5, only: ISHDF5DSPRESENT
 
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
     ! integer, dimension(:), intent(in) :: files ! File handles
@@ -1054,7 +1076,7 @@ contains ! ============================ MODULE PROCEDURES ======================
   integer function FindMaxMAF ( files, minMAF )
   ! Find maximum MAF among files (using counterMAF arrays)
 
-  use MLSHDF5, only: IsHDF5DSPresent
+  use MLSHDF5, only: ISHDF5DSPRESENT
 
     type(MLSFile_T), dimension(:), intent(in), target :: files ! File handles
     integer, optional, intent(out) :: minMAF
@@ -1124,7 +1146,7 @@ contains ! ============================ MODULE PROCEDURES ======================
   !--------------------------------------------------  IsL1BGappy  -----
   logical function IsL1BGappy ( l1bData, ignoreGlobalAttrs )
     ! Look for gaps in l1bData, returning true if any found
-  use PCFHdr, only: GlobalAttributes
+  use PCFHdr, only: GLOBALATTRIBUTES
 
     ! Dummy arguments
     type (L1BData_T), intent(in) :: l1bData
@@ -1243,10 +1265,9 @@ contains ! ============================ MODULE PROCEDURES ======================
   end subroutine L1bradSetup
 
   !-------------------------------------ReadL1BAttribute_intarr1l---------
-  ! subroutine ReadL1BAttribute_intarr1 ( L1FileHandle, value, AttrName, Flag, &
   subroutine ReadL1BAttribute_intarr1 ( L1BFile, value, AttrName, Flag )
     
-    use MLSHDF5, only: IsHDF5AttributePresent, GetHDF5Attribute
+    use MLSHDF5, only: ISHDF5ATTRIBUTEPRESENT, GETHDF5ATTRIBUTE
     use HDF5, only: H5GCLOSE_F, H5GOPEN_F
 
     ! Dummy arguments
@@ -1298,10 +1319,9 @@ contains ! ============================ MODULE PROCEDURES ======================
   end subroutine ReadL1BAttribute_intarr1
 
   !-------------------------------------ReadL1BAttribute_dblarr1---------
-  ! subroutine ReadL1BAttribute_dblarr1 ( L1FileHandle, value, AttrName, Flag, &
   subroutine ReadL1BAttribute_dblarr1 ( L1BFile, value, AttrName, Flag )
     
-    use MLSHDF5, only: IsHDF5AttributePresent, GetHDF5Attribute
+    use MLSHDF5, only: ISHDF5ATTRIBUTEPRESENT, GETHDF5ATTRIBUTE
     use HDF5, only: H5GCLOSE_F, H5GOPEN_F
 
     ! Dummy arguments
@@ -1535,7 +1555,7 @@ contains ! ============================ MODULE PROCEDURES ======================
   subroutine ReadL1BData_fileHandle ( L1FileHandle, QuantityName, L1bData, NoMAFs, Flag, &
     & FirstMAF, LastMAF, NEVERFAIL, hdfVersion, dontPad, L2AUX )
     
-  use PCFHdr, only: GlobalAttributes
+  use PCFHdr, only: GLOBALATTRIBUTES
     ! Dummy arguments
     character(len=*), intent(in)   :: QUANTITYNAME ! Name of SD to read
     integer, intent(in)            :: L1FILEHANDLE ! From HDF
@@ -1909,8 +1929,8 @@ contains ! ============================ MODULE PROCEDURES ======================
   subroutine ReadL1BData_FH_hdf5 ( L1FileHandle, QuantityName, L1bData, NoMAFs, &
     & Flag, FirstMAF, LastMAF, NEVERFAIL, L2AUX )
     use HDF5, only: HSIZE_T
-    use MLSHDF5, only: IsHDF5DSPresent, LoadFromHDF5DS, &
-      & GetHDF5DSRank, GetHDF5DSDims, GetHDF5DSQType
+    use MLSHDF5, only: ISHDF5DSPRESENT, LOADFROMHDF5DS, &
+      & GETHDF5DSRANK, GETHDF5DSDIMS, GETHDF5DSQTYPE
 ! use MLSAuxData, only: MLSAuxData_T, Read_MLSAuxData, Deallocate_MLSAuxData
     
     ! Dummy arguments
@@ -2253,7 +2273,7 @@ contains ! ============================ MODULE PROCEDURES ======================
   subroutine ReadL1BData_MLSFile ( L1BFile, QuantityName, L1bData, NoMAFs, Flag, &
     & FirstMAF, LastMAF, NEVERFAIL, dontPad, L2AUX )
     
-  use PCFHdr, only: GlobalAttributes
+  use PCFHdr, only: GLOBALATTRIBUTES
     ! Dummy arguments
     character(len=*), intent(in)   :: QUANTITYNAME ! Name of SD to read
     type(MLSFile_T), pointer       :: L1BFile
@@ -2637,8 +2657,8 @@ contains ! ============================ MODULE PROCEDURES ======================
   subroutine ReadL1BData_MF_hdf5 ( L1BFile, QuantityName, L1bData, NoMAFs, &
     & Flag, FirstMAF, LastMAF, NEVERFAIL, L2AUX )
     use HDF5, only: HSIZE_T
-    use MLSHDF5, only: IsHDF5DSPresent, LoadFromHDF5DS, &
-      & GetHDF5DSRank, GetHDF5DSDims, GetHDF5DSQType
+    use MLSHDF5, only: ISHDF5DSPRESENT, LOADFROMHDF5DS, &
+      & GETHDF5DSRANK, GETHDF5DSDIMS, GETHDF5DSQTYPE
 ! use MLSAuxData, only: MLSAuxData_T, Read_MLSAuxData, Deallocate_MLSAuxData
     
     ! Dummy arguments
@@ -3286,6 +3306,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.90  2011/07/07 00:30:03  pwagner
+! Treats diffs of l1bdata types with periods
+!
 ! Revision 2.89  2011/02/05 01:37:05  pwagner
 ! Passes options to dump routines
 !
