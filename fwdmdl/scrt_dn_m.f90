@@ -350,6 +350,10 @@ contains
 
 end module SCRT_DN_M
 ! $Log$
+! Revision 2.18  2011/06/02 22:38:01  yanovsky
+! Add opacity second derivatives D2_DELTA_DX2_qr to subroutine D2SCRT_DX2
+! to allow for computations of analytical Hessians in logarithmic basis
+!
 ! Revision 2.17  2010/08/19 02:00:02  vsnyder
 ! Polish up TeXnicalities
 !
