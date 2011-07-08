@@ -493,7 +493,9 @@ contains
     use VectorsModule, only: VectorValue_T, M_FullDerivatives
 
     ! For which molecules do we compute dBeta_df?
-    integer, parameter :: Which_dBeta_df(3) = (/ L_Cloud_a, L_Cloud_s, L_H2O /)
+    !integer, parameter :: Which_dBeta_df(3) = (/ L_Cloud_a, L_Cloud_s, L_H2O /)
+    integer, parameter :: Which_dBeta_df(2) = (/ L_Cloud_a, L_Cloud_s /)
+
 
     type(grids_t), intent(inout) :: Grids_x
     integer, intent(in) :: II
@@ -729,6 +731,9 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.81  2011/04/28 00:14:24  vsnyder
+! Give default value to P_Len component
+!
 ! Revision 2.80  2011/02/12 03:02:04  vsnyder
 ! Calculate which column of dBeta_df to use
 !
