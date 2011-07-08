@@ -564,6 +564,8 @@ contains
     real(rp) :: D2X_DXDT(no_tan_hts,s_t*sv_t_len)  ! (No_tan_hts, nz*np)
     real(rp) :: DALPHA_DF_PATH_C(max_c,no_mol)     ! on coarse path
     real(rp) :: DALPHA_DF_PATH_F(max_f,no_mol)     ! on GL path
+    real(rp) :: D2ALPHA_DF2_PATH_C(max_c,no_mol)     ! on coarse path
+    real(rp) :: D2ALPHA_DF2_PATH_F(max_f,no_mol)     ! on GL path
     real(rp) :: DB_DF(s_ts*max(s_a,s_t)*max_c)     ! dB / d one f on the path, for TScat
     real(rp) :: DBETA_DF_PATH_C(merge(max_c,0,any(grids_f%where_dBeta_df /= 0)),&
                                 count(grids_f%where_dBeta_df /= 0))
@@ -2767,7 +2769,7 @@ contains
       use DUMP_PATH_M, only: DUMP_PATH
       use GET_BETA_PATH_M, only: GET_BETA_PATH, GET_BETA_PATH_CLOUD, &
         & GET_BETA_PATH_PFA, GET_BETA_PATH_POLARIZED
-      use GET_DALPHA_DF_M, only: GET_DALPHA_DF
+      use GET_DALPHA_DF_M, only: GET_DALPHA_DF, GET_D2ALPHA_DF2
       use GET_D_DELTAU_POL_M, only: GET_D_DELTAU_POL_DF, GET_D_DELTAU_POL_DT
       use GET_ETA_MATRIX_M, only: SELECT_NZ_LIST
       use INTERPOLATE_MIE_M, only: INTERPOLATE_MIE
@@ -3309,13 +3311,23 @@ contains
         end if
 
         if ( atmos_second_der ) then
+
+          call get_d2Alpha_df2 ( sps_path_c(:npc,:), beta_path_c(:npc,:), &
+            &                  dBeta_df_path_c(:npc,:), Grids_f,      &
+            &                  d2Alpha_df2_path_c(:npc,:) )
+
+          call get_d2Alpha_df2 ( sps_path_f(:ngl,:), beta_path_f(:ngl,:), &
+            &                  dBeta_df_path_f(:ngl,:), Grids_f,      &
+            &                  d2Alpha_df2_path_f(:ngl,:) )
+
+
           call d2rad_tran_df2 ( max_f, c_inds, gl_inds, del_zeta, Grids_f,    &
-            &  beta_path_c, eta_fzp, sps_path, do_calc_fzp,                   &
-            &  beta_path_f, do_gl, del_s, ref_corr, dsdz_gw_path,             &
-            &  inc_rad_path, dBeta_dIWC_path_c, dBeta_dIWC_path_f,            &
+            &  eta_fzp, do_calc_fzp, do_gl, del_s, ref_corr, dsdz_gw_path,    &
+            &  inc_rad_path, d2Alpha_df2_path_c(:npc,:), d2Alpha_df2_path_f,  &
             &  i_start, tan_pt_c, i_stop,  size(d_delta_df,1),                &
             &  d_delta_df, nz_d_delta_df, nnz_d_delta_df,                     &
             &  d2_delta_df2, h_atmos_frq )
+
         end if ! atmos_second_der
 
         if ( .not. pfa_or_not_pol ) then ! polarized and not PFA
@@ -4411,6 +4423,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.323  2011/06/24 23:15:53  pwagner
+! Fixed erroneous declaration for D2_DELTA_DF2 that gave non-Hessian runs excess memory footprint
+!
 ! Revision 2.322  2011/06/02 22:31:48  yanovsky
 ! Add D2_DELTA_DF2 for computations of analytical Hessians in logarithmic basis
 !
