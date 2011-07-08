@@ -459,14 +459,13 @@ contains
 !------------------------------------------------  D2Rad_tran_df2  -----
 ! This is the radiative transfer second derivative wrt mixing ratio model
 
-  subroutine d2Rad_tran_df2 ( max_f, indices_c, gl_inds, del_zeta, Grids_f,   &
-                            & beta_path_c, eta_zxp, sps_path, do_calc_f,      &
-                            & beta_path_f, do_gl, del_s, ref_cor,             &
-                            & ds_dz_gw, inc_rad_path, dBeta_df_c, dBeta_df_f, &
-                            & i_start, tan_pt, i_stop, LD,                    &
-                            & d_delta_df,                                     &
-                            & nz_d_delta_df, nnz_d_delta_df,                  &
-                            & d2_delta_df2,                                   &
+  subroutine D2Rad_tran_df2 ( max_f, indices_c, gl_inds, del_zeta, Grids_f,     &
+                            & eta_zxp, do_calc_f, do_gl, del_s, ref_cor,        &
+                            & ds_dz_gw, inc_rad_path,                           &
+                            & d2Alpha_df2_c, d2Alpha_df2_f,                     &
+                            & i_start, tan_pt, i_stop, LD, d_delta_df,          &
+                            & nz_d_delta_df, nnz_d_delta_df,                    &
+                            & d2_delta_df2,                                     &
                             & d2rad_df2 )
 
     use LOAD_SPS_DATA_M, ONLY: GRIDS_T
@@ -475,22 +474,123 @@ contains
 
 ! Inputs
 
-    integer, intent(in) :: Max_f             ! Leading dimension of Beta_Path_f
+    integer, intent(in) :: Max_f             ! Leading dimension of d2Alpha_df2_f
+    integer, intent(in) :: indices_c(:)      ! coarse grid indicies
+    integer, intent(in) :: gl_inds(:)        ! Gauss-Legendre grid indices
+    real(rp), intent(in) :: del_zeta(:)      ! path -log(P) differences on the
+      !              main grid. This is for the whole coarse path, not just
+      !              the part up to the black-out
+    type (Grids_T), intent(in) :: Grids_f    ! All the coordinates
+    real(rp), intent(in) :: eta_zxp(max_f,*)   ! representation basis function.
+    logical, intent(in) :: do_calc_f(:,:)    ! A logical indicating where the
+      !                                        representation basis function is
+      !                                        not zero.
+    logical, intent(in) :: do_gl(:)          ! A logical indicating where to
+      !                                        do gl integrations
+    real(rp), intent(in) :: del_s(:)        ! unrefracted path length.
+    real(rp), intent(in) :: ref_cor(:)      ! refracted to unrefracted path
+      !                                       length ratios.
+    real(rp), intent(in) :: ds_dz_gw(:)     ! path length wrt zeta derivative *
+      !              gw on the entire grid. Only the gl_inds part is used.
+    real(rp), intent(in) :: inc_rad_path(:)  ! incremental radiance along the
+                                             ! path.  t_script * tau.
+    real(rp), intent(in) :: d2Alpha_df2_c(:,:) ! On the coarse path
+    real(rp), intent(in) :: d2Alpha_df2_f(max_f,*) ! On the GL path
+    integer, intent(in) :: I_start           ! path_start_index + 1
+    integer, intent(in) :: tan_pt            ! Tangent point index
+    integer, intent(in) :: I_stop            ! path stop index
+    integer, intent(in) :: LD                ! Leading dimension of D_Delta_dF
+    ! integer, intent(in) :: min_nz_d_delta_df(:) ! First Nonzeros in d_delta_df
+
+    real(rp), intent(inout) :: d_delta_df(ld,*) ! path x sve. derivative of
+      !              delta wrt mixing ratio state vector element. (K)
+      !              Initially set to zero by caller.
+
+
+
+
+! Outputs
+
+    integer, intent(inout), target :: nz_d_delta_df(:,:) ! Nonzeros in d_delta_df
+    integer, intent(inout) :: nnz_d_delta_df(:) ! Column lengths in nz_delta_df
+    real(rp), intent(inout) :: d2_delta_df2(:,:,:) ! path x sve x sve.  Second 
+      !               derivative of delta wrt mixing ratio state vector element.
+    real(rp), intent(out) :: d2rad_df2(:,:)    ! second derivative of radiances wrt
+                                               ! mixing ratio state vector element. (K)
+
+! Internals
+
+    logical :: Nothing(Grids_f%l_v(ubound(Grids_f%l_z,1))) ! "Nothing to do here"
+    integer :: i_begin
+    integer :: sps_i, sps_j          ! species indices
+    integer :: q, r                  ! state vector indices
+
+! Begin code
+
+    call get_all_d2_delta_df2( max_f, indices_c, gl_inds, del_zeta, Grids_f,     &
+                              & eta_zxp, do_calc_f, do_gl, del_s, ref_cor,       &
+                              & ds_dz_gw, d2Alpha_df2_c, d2Alpha_df2_f,          &
+                              & LD, nz_d_delta_df, nnz_d_delta_df, d2_delta_df2, &
+                              & nothing )
+
+    do sps_i = 1, ubound(Grids_f%l_z,1)
+
+      do sps_j = 1, ubound(Grids_f%l_z,1)
+    
+        ! do q = 1,  Grids_f%l_v(sps_i)
+        do q = Grids_f%l_v(sps_i-1)+1, Grids_f%l_v(sps_i)
+
+          if ( nothing(q) ) then
+            d2rad_df2(q,:) = 0.0
+            d2rad_df2(:,q) = 0.0
+            cycle
+          end if
+
+          ! do r = 1,  Grids_f%l_v(sps_j)
+          do r = Grids_f%l_v(sps_j-1)+1, Grids_f%l_v(sps_j)
+
+            i_begin = max(i_start,min(max(nz_d_delta_df(1,q),nz_d_delta_df(1,r)),i_stop))            
+            !i_begin = max(i_start,min(max(min_nz_d_delta_df(r),min_nz_d_delta_df(q)),i_stop))
+            ! i_begin = max(i_start,min(max(inds_q(1),inds_r(1)),i_stop))
+            
+            
+            call d2scrt_dx2 ( tan_pt, d_delta_df(:,q), d_delta_df(:,r), d2_delta_df2(:,q,r), &
+                            & inc_rad_path, i_begin, i_stop, d2rad_df2(q,r) )
+
+          end do ! r
+
+        end do ! q
+      
+      end do ! sps_j
+
+    end do ! sps_i
+
+  end subroutine d2rad_tran_df2
+
+!-------------------------------------------- Get_all_d2_delta_df2 -----
+
+subroutine Get_all_d2_delta_df2 ( max_f, indices_c, gl_inds, del_zeta, Grids_f,  &
+                              & eta_zxp, do_calc_f, do_gl, del_s, ref_cor,     &
+                              & ds_dz_gw, d2Alpha_df2_c, d2Alpha_df2_f,            &
+                              & LD, nz_d_delta_df, nnz_d_delta_df, d2_delta_df2, &
+                              & nothing )
+
+use LOAD_SPS_DATA_M, ONLY: GRIDS_T
+use MLSKinds, only: RP
+
+! Inputs
+
+    integer, intent(in) :: Max_f             ! Leading dimension of d2Alpha_df2_f
     integer, intent(in) :: indices_c(:)      ! coarse grid indicies
     integer, intent(in) :: gl_inds(:)        ! Gauss-Legendre grid indices
     real(rp), intent(in) :: del_zeta(:)      ! path -log(P) differences on the
       !              main grid.  This is for the whole coarse path, not just
       !              the part up to the black-out
     type (Grids_T), intent(in) :: Grids_f    ! All the coordinates
-    real(rp), intent(in) :: beta_path_c(:,:) ! cross section for each species
-      !                                        on coarse grid.
-    real(rp), intent(in) :: eta_zxp(max_f,*)   ! representation basis function.
-    real(rp), intent(in) :: sps_path(:,:)    ! Path species function.
+    real(rp), intent(in) :: eta_zxp(max_f,*) ! representation basis function.
     logical, intent(in) :: do_calc_f(:,:)    ! A logical indicating where the
       !                                        representation basis function is
       !                                        not zero.
-    real(rp), intent(in) :: beta_path_f(max_f,*) ! cross section for each species
-      !                                        on gl grid.
     logical, intent(in) :: do_gl(:)          ! A logical indicating where to
       !                                        do gl integrations
     real(rp), intent(in) :: ref_cor(:)       ! refracted to unrefracted path
@@ -498,29 +598,21 @@ contains
     real(rp), intent(in) :: del_s(:)         ! unrefracted path length.
     real(rp), intent(in) :: ds_dz_gw(:)      ! path length wrt zeta derivative *
       !              gw on the entire grid.  Only the gl_inds part is used.
-    real(rp), intent(in) :: inc_rad_path(:)  ! incremental radiance along the
-                                             ! path.  t_script * tau.
-    real(rp), intent(in) :: dBeta_df_c(:,:)  ! In case beta depends on mixing ratio
-    real(rp), intent(in) :: dBeta_df_f(:,:)  ! In case beta depends on mixing ratio
-    integer, intent(in) :: I_start           ! path_start_index + 1
-    integer, intent(in) :: tan_pt            ! Tangent point index in Del_Zeta
-    integer, intent(in) :: I_stop            ! path stop index
+    real(rp), intent(in) :: d2Alpha_df2_c(:,:)  ! On the coarse path
+    real(rp), intent(in) :: d2Alpha_df2_f(max_f,*)  ! On the GL path
 
     integer, intent(in) :: LD                ! Leading dimension of D_Delta_dF
 
 ! Outputs
 
-    real(rp), intent(inout) :: d_delta_df(ld,*) ! path x sve.  derivative of
-      !              delta wrt mixing ratio state vector element. (K)
-      !              Initially set to zero by caller.
     integer, intent(inout), target :: nz_d_delta_df(:,:)  ! Nonzeros in d_delta_df
     integer, intent(inout) :: nnz_d_delta_df(:)           ! Column lengths in nz_delta_df
+
+    ! IGOR: Compare it with declaration  d_delta_df(ld,*)  in Get_all_d_delta_df .
     real(rp), intent(inout) :: d2_delta_df2(:,:,:) ! path x sve x sve.  Second Derivative
       !              of delta wrt mixing ratio state vector elements. (K)
       !              Initially set to zero by caller.
-
-    real(rp), intent(out) :: d2rad_df2(:,:)    ! second derivative of radiances wrt
-                                               ! mixing ratio state vector element. (K)
+    logical, intent(out) :: nothing(:) ! "Nothing to do for this s.v. element
 
 ! Internals
 
@@ -532,8 +624,8 @@ contains
     integer :: sps_n
     integer :: q, r                  ! state vector indices: sv_i, sv_j
     integer :: diracDelta            !   =1 if q=r;  =0 otherwise
-    integer, target, dimension(1:size(inc_rad_path)) ::  all_inds_B_q,  all_inds_B_r
-    integer, target, dimension(1:size(inc_rad_path)) :: more_inds_B_q, more_inds_B_r
+    integer, target, dimension(1:size(indices_c)) ::  all_inds_B_q,  all_inds_B_r
+    integer, target, dimension(1:size(indices_c)) :: more_inds_B_q, more_inds_B_r
     integer, pointer :: all_inds_q(:), all_inds_r(:)  ! all_inds => part of all_inds_B;
                                      ! Indices on GL grid for stuff
                                      ! used to make GL corrections
@@ -543,70 +635,49 @@ contains
                                      ! Indices on the coarse path where GL
                                      ! corrections get applied.
 
-    real(rp) :: singularity(1:size(inc_rad_path)) ! integrand on left edge of coarse
+    real(rp) :: singularity(1:size(indices_c)) ! integrand on left edge of coarse
                                      ! grid panel -- singular at tangent pt.
-    logical :: do_calc_q(1:size(inc_rad_path)) ! Flags on coarse path where do_calc_c
+    logical :: do_calc_q(1:size(indices_c)) ! Flags on coarse path where do_calc_c
                                      ! or (do_gl and any corresponding
                                      ! do_calc_f).
-    logical :: do_calc_r(1:size(inc_rad_path)) ! Flags on coarse path where do_calc_c
+    logical :: do_calc_r(1:size(indices_c)) ! Flags on coarse path where do_calc_c
                                      ! or (do_gl and any corresponding
                                      ! do_calc_f).
-
-    integer :: What_i, What_j
-               ! 0 = linear beta, no mixing ratio dependence
-               ! 1 = log linear beta, no mixing ratio dependence
-               ! 2 = linear beta, mixing ratio dependence
-               ! 3 = log linear beta, mixing ratio dependence
 
 ! Begin code
 
-    ! d_delta_df is set to zero by the caller outside of all its loops.
-    ! We keep track of where we create nonzeros, and replace them by zeros
-    ! on the next call.  This is done because the vast majority of
-    ! d_delta_df elements are zero.
+    ! d2_delta_df2 is set to zero by the caller outside of all its loops.
 
     sps_n = ubound(Grids_f%l_z,1)
 
     do sps_i = 1, sps_n
 
-      i_dBeta_df_i = grids_f%where_dBeta_df(sps_i)
-      what_i =     merge(1,0,grids_f%lin_log(sps_i)) + &
-             & 2 * merge(1,0,i_dBeta_df_i /= 0)
-
       do sps_j = 1, sps_n
-
-        i_dBeta_df_j = grids_f%where_dBeta_df(sps_j)
-        what_j =     merge(1,0,grids_f%lin_log(sps_j)) + &
-               & 2 * merge(1,0,i_dBeta_df_j /= 0)
 
         do q = Grids_f%l_v(sps_i-1)+1, Grids_f%l_v(sps_i)
 
-          d_delta_df(nz_d_delta_df(:nnz_d_delta_df(q),q),q) = 0.0
+          !d_delta_df(nz_d_delta_df(:nnz_d_delta_df(q),q),q) = 0.0
           nnz_d_delta_df(q) = 0
 
           do r = Grids_f%l_v(sps_j-1)+1, Grids_f%l_v(sps_j)
 
-            d_delta_df(nz_d_delta_df(:nnz_d_delta_df(r),r),r) = 0.0
+            !d_delta_df(nz_d_delta_df(:nnz_d_delta_df(r),r),r) = 0.0
             nnz_d_delta_df(r) = 0
 
             ! Skip the masked derivatives, according to the l2cf inputs
- 
-            if ( ( .not. Grids_f%deriv_flags(q) ) .or. &
-               & ( .not. Grids_f%deriv_flags(r) ) ) then
-              d2rad_df2(q,r) = 0.0
-              cycle
-            end if
-
+      
+            nothing(q) = .not. Grids_f%deriv_flags(q)
+            nothing(r) = .not. Grids_f%deriv_flags(r)
+            if ( nothing(q) .or. nothing(r) )   cycle
+        
             ! find where the non zeros are along the path (for q)
 
             call get_do_calc_indexed ( size(do_gl), do_calc_f(:,q), indices_c, &
               & gl_inds, do_gl, do_calc_q, n_inds_q, nz_d_delta_df(:,q) )
             
             nnz_d_delta_df(q) = n_inds_q
-            if ( n_inds_q == 0 ) then
-              d2rad_df2(q,r) = 0.0
-              cycle
-            end if
+            nothing(q) = n_inds_q == 0
+            if ( nothing(q) ) cycle
 
             inds_q => nz_d_delta_df(1:n_inds_q,q)
 
@@ -619,35 +690,6 @@ contains
             if ( no_to_gl_q > 0 ) &
               & call get_inds ( do_gl, do_calc_q, more_inds_q, all_inds_q )
 
-
-            select case ( what_i )
-            case ( 0 ) ! linear beta, no mixing ratio dependence
-              call get_d_delta_dx ( inds_q, indices_c, gl_inds, &
-                & all_inds_q, more_inds_q, eta_zxp(:,q), &
-                & beta_path_c(:,sps_i), beta_path_f(:,sps_i), del_s, del_zeta, &
-                & ds_dz_gw, singularity, d_delta_df(:,q), ref_cor )
-            case ( 1 ) ! log linear beta, no mixing ratio dependence
-              call get_d_delta_df_linlog ( inds_q, indices_c, gl_inds, &
-                & all_inds_q, more_inds_q, eta_zxp(:,q), sps_path(:,sps_i), &
-                & beta_path_c(:,sps_i), beta_path_f(:,sps_i), del_s, del_zeta, &
-                & ds_dz_gw, ref_cor, grids_f%values(q), singularity, &
-                & d_delta_df(:,q) )
-            case ( 2 ) ! linear beta, mixing ratio dependence
-              call get_d_delta_df_f ( inds_q, indices_c, gl_inds, &
-                & all_inds_q, more_inds_q, eta_zxp(:,q), sps_path(:,sps_i), &
-                & beta_path_c(:,sps_i), beta_path_f(:,sps_i), &
-                & dbeta_df_c(:,i_dBeta_df_i), dbeta_df_f(:,i_dBeta_df_i), &
-                & del_s, del_zeta, ds_dz_gw, ref_cor, singularity, &
-                & d_delta_df(:,q) )
-            case ( 3 ) ! log linear beta, mixing ratio dependence
-              call get_d_delta_df_linlog_f ( inds_q, indices_c, gl_inds, &
-                & all_inds_q, more_inds_q, eta_zxp(:,q), sps_path(:,sps_i), &
-                & beta_path_c(:,sps_i), beta_path_f(:,sps_i), &
-                & dbeta_df_c(:,i_dBeta_df_i), dbeta_df_f(:,i_dBeta_df_i), &
-                & del_s, del_zeta, ds_dz_gw, ref_cor, grids_f%values(q), &
-                & singularity, d_delta_df(:,q) )
-            end select
-
             !
             ! find where the non zeros are along the path (for r)
             !
@@ -655,10 +697,8 @@ contains
               & gl_inds, do_gl, do_calc_r, n_inds_r, nz_d_delta_df(:,r) )
 
             nnz_d_delta_df(r) = n_inds_r
-            if ( n_inds_r == 0 ) then
-              d2rad_df2(q,r) = 0.0
-              cycle
-            end if
+            nothing(r) = n_inds_r == 0
+            if ( nothing(r) ) cycle
 
             inds_r => nz_d_delta_df(1:n_inds_r,r)
 
@@ -671,41 +711,16 @@ contains
             ! see if anything needs to be gl-d (for r)
               & call get_inds ( do_gl, do_calc_r, more_inds_r, all_inds_r )
 
-            select case ( what_j )
-            case ( 0 ) ! linear beta, no mixing ratio dependence
-              call get_d_delta_dx ( inds_r, indices_c, gl_inds, &
-                & all_inds_r, more_inds_r, eta_zxp(:,r), &
-                & beta_path_c(:,sps_j), beta_path_f(:,sps_j), del_s, del_zeta, &
-                & ds_dz_gw, singularity, d_delta_df(:,r), ref_cor )
-            case ( 1 ) ! log linear beta, no mixing ratio dependence
-              call get_d_delta_df_linlog ( inds_r, indices_c, gl_inds, &
-                & all_inds_r, more_inds_r, eta_zxp(:,r), sps_path(:,sps_j), &
-                & beta_path_c(:,sps_j), beta_path_f(:,sps_j), del_s, del_zeta, &
-                & ds_dz_gw, ref_cor, grids_f%values(r), singularity, &
-                & d_delta_df(:,r) )
-            case ( 2 ) ! linear beta, mixing ratio dependence
-              call Get_d_delta_df_f ( inds_r, Indices_c, gl_inds, &
-                & All_inds_r, More_inds_r, eta_zxp(:,r), Sps_path(:,sps_j), &
-                & Beta_path_c(:,sps_j), Beta_path_f(:,sps_j), &
-                & dBeta_df_c(:,i_dBeta_df_j), dBeta_df_f(:,i_dBeta_df_j), &
-                & Del_s, del_zeta, ds_dz_gw, ref_cor, Singularity, &
-                & d_delta_df(:,r) )
-            case ( 3 ) ! log linear beta, mixing ratio dependence
-              call Get_d_delta_df_linlog_f ( inds_r, Indices_c, gl_inds, &
-                & All_inds_r, More_inds_r, eta_zxp(:,r), Sps_path(:,sps_j), &
-                & Beta_path_c(:,sps_j), Beta_path_f(:,sps_j), &
-                & dBeta_df_c(:,i_dBeta_df_j), dBeta_df_f(:,i_dBeta_df_j), &
-                & Del_s, del_zeta, ds_dz_gw, ref_cor, grids_f%values(r), &
-                & Singularity, d_delta_df(:,r) )
-            end select
+     ! IGOR - May not need to enter this subroutine for NON log basis sps, 
+     ! since d2_delta_df2 for linear basis is zero.
 
-            ! For molecules in logarithmic basis (what = 1 or 3), calculate d2_delta_df2:
+            ! For molecules in logarithmic basis, calculate d2_delta_df2:
 
-            if ( (what_i == 1 .or. what_i == 3) .and. (what_j == 1 .or. what_j == 3) ) then
+            if ( grids_f%lin_log(sps_i) ) then
 
               if( sps_i == sps_j )	then    ! otherwise, d2_delta_df2 = 0
 
-                ! For same specie, the following quantities should be the same for different sve:
+                ! For same specie, the following quantities should be the same for different q:
                 !   inds, all_inds, more_inds, sps.   Thus, only q quantities are passed.
 
                 if ( q == r )   then
@@ -714,39 +729,26 @@ contains
                   diracDelta = 0.0
                 end if
 
-                call get_d2_delta_df2_linlog ( diracDelta, inds_q, indices_c, gl_inds, &
-                  & all_inds_q, more_inds_q, eta_zxp(:,q), eta_zxp(:,r), sps_path(:,sps_i), &
-                  & beta_path_c(:,sps_i), beta_path_f(:,sps_i), del_s, del_zeta, &
-                  & ds_dz_gw, ref_cor, grids_f%values(q), grids_f%values(r), singularity, &
-                  & d2_delta_df2(:,q,r) )
+                call get_d2_delta_df2( diracDelta, inds_q, indices_c, gl_inds, &
+                  & all_inds_q, more_inds_q, eta_zxp(:,q), eta_zxp(:,r), &
+                  & d2Alpha_df2_c(:,sps_i), d2Alpha_df2_f(:,sps_i), &
+                  & del_s, del_zeta, &
+                  & ds_dz_gw, grids_f%values(q), grids_f%values(r), &
+                  & singularity, d2_delta_df2(:,q,r), ref_cor )
 
-              end if
+              end if   ! sps_i == sps_j
 
-            end if
+            end if   ! lin_log
 
-            ! i_begin = max(i_start,min(inds(1),i_stop))
+          end do   ! r
 
-            i_begin = max(i_start,min(max(inds_q(1),inds_r(1)),i_stop))
+        end do   ! q
 
-            call d2scrt_dx2 ( tan_pt, d_delta_df(:,q), d_delta_df(:,r), &
-                            &  d2_delta_df2(:,q,r), inc_rad_path, &
-                            &  i_begin, i_stop, d2rad_df2(q,r) )
+      end do   ! sps_j
 
-            ! Since d2_delta_df2 is not computed when either one of eta(q) or eta(r) is zero.
-             !  d_delta_df(nz_d_delta_df(:nnz_d_delta_df(r),r), r)   <- compare with this
-            ! d2_delta_df2(nz_d_delta_df(:nnz_d_delta_df(r),r), q, r) = 0.0
-            ! d2_delta_df2(nz_d_delta_df(:nnz_d_delta_df(q),q), q, r) = 0.0
-            d2_delta_df2(:,q,r) = 0.0
+    end do   ! sps_i
 
-          end do ! sv_j = r
-
-        end do ! sv_i = q
-
-      end do ! sps_j
-
-    end do ! sps_i
-
-  end subroutine d2rad_tran_df2
+end subroutine Get_all_d2_delta_df2
 
 !--------------------------------------------------  drad_tran_dt  -----
 ! This is the radiative transfer derivative wrt temperature model
@@ -1417,8 +1419,8 @@ contains
     integer, intent(in) :: More_inds(:)  ! Indices on the coarse path where
                                          ! GL corrections get applied.
     real(rp), intent(in) :: eta_zxp(*)   ! representation basis function.
-    real(rp), intent(in) :: dAlpha_df_path_c(*) ! cross section on coarse grid.
-    real(rp), intent(in) :: dAlpha_df_path_f(*) ! cross section on GL grid.
+    real(rp), intent(in) :: dAlpha_df_path_c(*) ! dAlpha_df on coarse grid.
+    real(rp), intent(in) :: dAlpha_df_path_f(*) ! dAlpha_df on GL grid.
     real(rp), intent(in) :: Del_s(:)     ! unrefracted path length.
     real(rp), intent(in) :: Del_zeta(:)  ! path -log(P) differences on the
       !              main grid.  This is for the whole coarse path, not just
@@ -1750,6 +1752,83 @@ contains
 
   end subroutine Get_d_delta_df_linlog_f
 
+
+! ......................................  Get_d2_delta_df2_linlog  .....
+  subroutine Get_d2_delta_df2 ( diracDelta, Inds, Indices_c, GL_Inds, &
+    & All_inds, More_inds, Eta_zxp_q, Eta_zxp_r, &
+    & d2Alpha_df2_path_c, d2Alpha_df2_path_f, &
+    & Del_s, Del_Zeta, ds_dz_gw, &
+    & Grids_v_q, Grids_v_r, Singularity, d2_delta_df2, Ref_cor )
+
+    ! Get d2_delta_df2 for the case of lin_log species for which beta
+    ! does not depend upon mixing ratio.
+
+    use GLNP, only: NG
+    use MLSKinds, only: RP
+
+    integer, intent(in) :: diracDelta   !   =1 if q=r;  =0 otherwise
+    integer, intent(in) :: Inds(:)   ! Indices on coarse path needing calc
+    integer, intent(in) :: Indices_c(:) ! Subset from gl to coarse
+    integer, intent(in) :: GL_Inds(:)   ! Gauss-Legendre grid indices
+    integer, intent(in) :: All_inds(:)  ! Indices on GL grid for stuff
+                                        ! used to make GL corrections
+    integer, intent(in) :: More_inds(:) ! Indices on the coarse path where
+                                        ! GL corrections get applied.
+    real(rp), intent(in) :: Eta_zxp_q(*), Eta_zxp_r(*)  ! representation basis function.
+    real(rp), intent(in) :: d2Alpha_df2_path_c(*)  ! d2Alpha_df2 on coarse grid.
+    real(rp), intent(in) :: d2Alpha_df2_path_f(*)  ! d2Alpha_df2 on GL grid.
+    real(rp), intent(in) :: Del_s(:)    ! unrefracted path length.
+    real(rp), intent(in) :: Del_zeta(:) ! path -log(P) differences on the
+                       !  main grid.  This is for the whole coarse path, not just
+                       !  the part up to the black-out
+    real(rp), intent(in) :: ds_dz_gw(:) ! ds/dh * dh/dz * GL weights
+    real(rp), intent(in) :: Grids_v_q, Grids_v_r     ! Grids_f%values(sv_i),  
+                                                     ! Grids_f%values(sv_j)
+    real(rp), intent(out) :: singularity(:) ! integrand on left edge of coarse
+                               ! grid panel -- singular at tangent pt.
+                               ! Actually just work space we don't want
+                               ! to allocate on every invocation.
+    real(rp), intent(inout) :: d2_delta_df2(:) ! Second Derivative of delta w.r.t.
+                               ! Sps_Path.  intent(inout) so the unreferenced
+                               ! elements do not become undefined.
+    real(rp), intent(in), optional :: ref_cor(:)  ! refracted to unrefracted path
+                                                  !  length ratios.
+
+    integer :: AA, GA, I, II, III
+
+    do i = 1, size(inds)
+
+      ii = inds(i)
+      iii = indices_c(ii)
+
+      singularity(ii) = d2Alpha_df2_path_c(ii) * eta_zxp_q(iii) * (eta_zxp_r(iii) - diracDelta)
+      d2_delta_df2(ii) = singularity(ii) * del_s(ii)
+
+    end do ! i
+
+
+    do i = 1, size(all_inds)
+
+      aa = all_inds(i)
+      ga = gl_inds(aa)
+      ii = more_inds(i)
+
+      d2_delta_df2(ii) = d2_delta_df2(ii) + &
+        & del_zeta(ii) * &
+        & sum( (eta_zxp_q(ga:ga+ng-1) * (eta_zxp_r(ga:ga+ng-1) - diracDelta) * &
+             & d2Alpha_df2_path_f(aa:aa+ng-1) - singularity(ii)) &
+             & * ds_dz_gw(ga:ga+ng-1) )
+
+    end do
+
+    ! Refraction correction
+    if( present(ref_cor) ) d2_delta_df2(inds) = ref_cor(inds) * d2_delta_df2(inds)
+
+    d2_delta_df2(inds) = d2_delta_df2(inds) * exp(-grids_v_q) * exp(-grids_v_r)
+
+  end subroutine Get_d2_delta_df2
+
+
 ! ......................................  Get_d2_delta_df2_linlog  .....
   subroutine Get_d2_delta_df2_linlog ( diracDelta, Inds, Indices_c, GL_Inds, &
     & All_inds, More_inds, Eta_zxp_q, Eta_zxp_r, Sps_path, &
@@ -1986,8 +2065,12 @@ contains
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.26  2011/07/08 21:25:58  yanovsky
+! Use d2Alpha_df2
+!
 ! Revision 2.25  2011/06/02 22:43:12  yanovsky
-! In d2Rad_tran_df2 subroutine, add computations of analytical mixing ratio Hessians in logarithmic basis
+! In d2Rad_tran_df2 subroutine, add computations of analytical 
+! mixing ratio Hessians in logarithmic basis
 !
 ! Revision 2.24  2011/03/25 20:46:59  vsnyder
 ! Delete declarations of unused objects
