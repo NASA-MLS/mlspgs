@@ -13,7 +13,7 @@ module Get_dAlpha_df_m
   
   implicit NONE
   private
-  public :: Get_dAlpha_df
+  public :: Get_dAlpha_df, Get_d2Alpha_df2
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -252,6 +252,9 @@ contains
 end module Get_dAlpha_df_m
 
 ! $Log$
+! Revision 2.7  2011/07/08 21:09:40  yanovsky
+! Include subroutine Get_d2Alpha_df2 in a list of public subroutines
+!
 ! Revision 2.6  2011/06/16 17:06:40  yanovsky
 ! Tex updates for second derivatives of alpha in Get_d2Alpha_df2 subroutine
 !
