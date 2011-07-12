@@ -53,41 +53,18 @@
     myWidth = 10
     if ( present(width) ) myWidth = width
     if ( present(format) ) myFormat = format
+    if ( index(myFormat, '*') > 0 ) then
+      myFormat = numNeedsFormat( maxval(abs(array)), format )
+    endif
     base = 0
     if ( present(lbound) ) base = lbound - 1
 
-    numZeroRows = 0
-    if ( any(shape(array) == 0) ) then
-      call empty ( name )
-    else if ( size(array) == 1 .and. base == 0 ) then
-      call name_and_size ( name, myClean, 1 )
-      call output ( array(1), advance='yes' )
-    else
-      call name_and_size ( name, myClean, size(array) )
-      if ( present(name) .and. .not. mylaconic ) call newLine
-      do j = 1, size(array), myWidth
-        DumpTheseZeros = myClean .or. &
-          & any(array(j:min(j+2*myWidth-1, size(array))) /= myFillValue)
-        if (.not. myClean) then
-          if ( DumpTheseZeros ) then
-            call say_fill ( (/ j-1+base, size(array) /), numZeroRows, myFillValue, inc=1 )
-          else
-            numZeroRows = numZeroRows + 1
-          end if
-        end if
-        if ( DumpTheseZeros ) then
-          do k = j, min(j+myWidth-1, size(array))
-            call output ( array(k), format=myformat )
-          end do
-          call newLine
-          numZeroRows = 0
-        end if
-      end do ! j
-      call say_fill ( (/ j-myWidth, size(array) /), numZeroRows, myFillValue )
-    end if
-    call theDumpEnds
+!    include 'dump1db.f9h'
 !   end subroutine DUMP_1D_INTEGER
 ! $Log$
+! Revision 2.6  2011/07/12 00:11:29  pwagner
+! whoarray dump moved to dump[123]db.f9h
+!
 ! Revision 2.5  2011/04/20 22:25:07  pwagner
 ! Made all dumpnd.f9h files consistent
 !
