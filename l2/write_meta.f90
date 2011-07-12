@@ -1264,7 +1264,7 @@ contains
   ! ---------------------------------------- PCF2Hdr -----
   ! Make sure file type will be recognized
   ! before calling writePCF2Hdr
-  ! (which only knows l_hdf, l_grid, l_swath)
+  ! (which only knows l_hdf, l_hdfeos, l_swath)
   subroutine PCF2Hdr( filename, hdfVersion, filetype )
     ! Args
     character(len=*), intent(in)  :: filename
@@ -1375,6 +1375,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.70  2011/07/12 22:35:03  honghanh
+! Change l_grid to l_hdfeos
+!
 ! Revision 2.69  2011/06/29 21:52:53  pwagner
 ! no metadata is always an error now
 !
