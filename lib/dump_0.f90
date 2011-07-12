@@ -21,26 +21,27 @@ module DUMP_0
 ! Instead of a whole array, or in addition, one may dump a condensed summary
 ! showing min, max, percentages of non-zero values, etc.
 
-  use BitStuff, only: MAXBITNUMBER, WHICHBITSARESET
-  use dates_module, only: MAXUTCSTRLENGTH, &
+  use BITSTUFF, only: MAXBITNUMBER, WHICHBITSARESET
+  use DATES_MODULE, only: MAXUTCSTRLENGTH, &
     & REFORMATDATE, REFORMATTIME, SPLITDATETIME, TAI93S2UTC
-  use ieee_arithmetic, only: IEEE_IS_FINITE
-  use MLSFillValues, only : COLLAPSE, FILTERVALUES, HALFWAVES, &
+  use IEEE_ARITHMETIC, only: IEEE_IS_FINITE
+  use MLSFILLVALUES, only : COLLAPSE, FILTERVALUES, HALFWAVES, &
     & ISFINITE, ISINFINITE, ISNAN, &
     & INFFUNCTION, NANFUNCTION, REORDERFILLVALUES, REPLACEFILLVALUES, &
     & WHEREARETHEINFS, WHEREARETHENANS
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
-  use MLSSets, only: FindUnique
-  use MLSStats1, only: STAT_T, &
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_WARNING
+  use MLSSETS, only: FINDUNIQUE
+  use MLSSTATS1, only: STAT_T, &
     & ALLSTATS, FILLVALUERELATION, HOWFAR, HOWNEAR, &
     & MLSMAX, MLSMEAN, MLSMIN, MLSSTDDEV, RATIOS, RESET
-  use MLSStringLists, only: catLists, GetStringElement, NumStringElements
-  use MLSStrings, only: DELETE, INDEXES, LOWERCASE, TRIM_SAFE, &
+  use MLSSTRINGLISTS, only: CATLISTS, GETSTRINGELEMENT, NUMSTRINGELEMENTS
+  use MLSSTRINGS, only: DELETE, INDEXES, LOWERCASE, TRIM_SAFE, &
     & WRITEINTSTOCHARS
   use OUTPUT_M, only: OUTPUTOPTIONS, STAMPOPTIONS, &
-    & ALIGNTOFIT, BLANKS, BLANKSTOTAB, DUMPTABS, NEWLINE, NUMTOCHARS, &
+    & ALIGNTOFIT, BLANKS, BLANKSTOTAB, DUMPTABS, &
+    & NEWLINE, NUMNEEDSFORMAT, NUMTOCHARS, &
     & OUTPUT, OUTPUTLIST, OUTPUTNAMEDVALUE, RESETTABS, SETTABS
-  use Time_M, only: Time_Now
+  use TIME_M, only: TIME_NOW
 
   implicit none
   private
@@ -123,8 +124,34 @@ module DUMP_0
 ! Note that most of the optional parameters have default values
 ! logically set to FALSE or 0, ' ',  or '*' where appropriate
 
+!  optional args
+!  (dumps and diffs if the same)
+!      arg            meaning                                     default
+!      ---            -------                                     -------
+!    fillvalue        skip dumping lines containg only fillValues    0
+!    width            how many values printed per line            depends
+!    format           fortran format used to print                depends
+!    lbound           lower bound of 1st index                       1
+!    options          (see below)                                    ''
+
+!  (diffs)
+!      arg            meaning                                     default
+!      ---            -------                                     -------
+!    fillvalue        don't diff where array elements are this    -999.99
+
+! The format optional arg defaults to SDFORMATDEFAULT for floating pt. arrys
+! For integer arrays it defaults to i6 or i_INTPLACES_
+! For complex arrays it defaults to SDFORMATDEFAULTCMPLX
+! If set to '(*)', for floating point and complex arrays it
+! will be the least number of spaces wide enough to contain the
+! largest array element printed according to the default format
+! If set to '(*.m)', for floating point and complex arrays it
+! will be the least number of spaces wide enough to contain the
+! largest array element with m spaces after the decimal point
+
 ! The meaning of options has replaced the older logical arguments
 ! if the options is present and contains the following characters:
+! (for dump or diff)
 !   character         meaning
 !      ---            -------
 !       H              show rank, shape of array
@@ -145,6 +172,16 @@ module DUMP_0
 ! if all {Hlrs} are FALSE, i.e. unset, the whole array is dumped (or diffed)
 ! if any is TRUE the whole array will be dumped only if
 ! w or wholearray is set to TRUE
+
+! (for diff_fun)
+!   character      meaning
+!    ---           -------
+!     a            diff the absolute values
+!     r            divide the difference by the max abs of the 2 values
+!     f            treat auxvalue as a fillvalue: return fillvalue if either
+!                    value is fillvalue
+!     p            treat auxvalue as a period: return 
+!                       min(value1 - value2 + n*period)
 
 ! in the above, a string list is a string of elements (usu. comma-separated)
 ! === (end of api) ===
@@ -226,6 +263,7 @@ module DUMP_0
 
   interface printIt
     module procedure printIt_char, printIt_DOUBLE, printIt_INT, printIt_REAL
+    module procedure printIt_complex, printIt_dcomplex
   end interface
 
   interface printRMSetc
@@ -233,7 +271,8 @@ module DUMP_0
   end interface
 
   interface say_fill
-    module procedure say_fill_char, say_fill_double, say_fill_int, say_fill_real
+    module procedure say_fill_char, say_fill_double, say_fill_int
+    module procedure say_fill_real, say_fill_complex, say_fill_dcomplex
   end interface
 
   interface UNFILTEREDDIFF        ! dump UNFILTEREDDIFFs between pair of n-d arrays of numeric type
@@ -308,6 +347,7 @@ module DUMP_0
   logical, save :: thisIsADiff = .false.
   integer :: how_many
   integer, dimension(1024) :: which
+  complex, parameter :: one_c4 = CMPLX(1., 0.)
 
 contains
 
@@ -667,7 +707,8 @@ contains
           & any(array(j:min(j+2*myWidth-1, size(array))) /= myFillValue)
         if (.not. myClean) then
           if ( DumpTheseZeros ) then
-            call say_fill ( (/ j-1, size(array) /), numZeroRows, myFillValue, inc=1 )
+            call say_fill ( (/ j-1, size(array) /), numZeroRows, &
+              & myFillValue, inc=1 )
           else
             numZeroRows = numZeroRows + 1
           end if
@@ -680,93 +721,74 @@ contains
           numZeroRows = 0
         end if
       end do ! j
-      call say_fill ( (/ j-MyWidth, size(array) /), numZeroRows, myFillValue )
+      call say_fill ( (/ j-MyWidth, size(array) /), numZeroRows, &
+        & myFillValue )
     end if
     call theDumpEnds
   end subroutine DUMP_1D_CHAR
 
   ! --------------------------------------------  DUMP_1D_COMPLEX  -----
   subroutine DUMP_1D_COMPLEX ( ARRAY, NAME, WIDTH, FORMAT, &
-    & FILLVALUE, OPTIONS )
+    & FILLVALUE, LBOUND, OPTIONS )
     integer, parameter :: RK = kind(0.0e0)
     complex(rk), intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
     integer, intent(in), optional :: WIDTH
     character(len=*), intent(in), optional :: FORMAT
     real(rk), intent(in), optional :: FillValue
+    integer, intent(in), optional :: LBOUND ! Low bound for Array             
     character(len=*), optional, intent(in) :: options
 
     integer :: J, K, MyWidth
     character(len=64) :: MyFormat
-
+    complex(rk) :: myFillValue
+    integer :: BASE
+    integer :: NumZeroRows
+    ! Executable
+    myFormat = sdFormatDefaultCmplx
     call theDumpBegins ( options )
+    myFillValue = 0.
     myWidth = 3
     if ( present(width) ) myWidth = width
-    myFormat = sdFormatDefaultCmplx
     if ( present(format) ) myFormat = format
+    if ( index(myFormat, '*') > 0 ) &
+      & myFormat = numNeedsFormat( one_c4*maxval(abs(array)), format )
+    base = 0
+    if ( present(lbound) ) base = lbound - 1
 
-    if ( any(shape(array) == 0) ) then
-      call empty ( name )
-    else if ( size(array) == 1 ) then
-      call name_and_size ( name, myClean, 1 )
-      call output ( array(1), myFormat, advance='yes' )
-    else
-      call name_and_size ( name, myClean, size(array) )
-      if ( present(name) .and. .not. mylaconic ) call newLine
-      do j = 1, size(array), myWidth
-        if (.not. myClean) then
-          call output ( j, max(myWidth-1,ilog10(size(array))+1) )
-          call output ( afterSub )
-        end if
-        do k = j, min(j+myWidth-1, size(array))
-          call output ( array(k), myFormat )
-        end do
-        call newLine
-      end do
-    end if
-    call theDumpEnds
+    include 'dump1db.f9h'
   end subroutine DUMP_1D_COMPLEX
 
-  ! -------------------------------------------  DUMP_1D_DCOMPLEX  -----
+  ! --------------------------------------------  DUMP_1D_DCOMPLEX  -----
   subroutine DUMP_1D_DCOMPLEX ( ARRAY, NAME, WIDTH, FORMAT, &
-    & FILLVALUE, OPTIONS )
+    & FILLVALUE, LBOUND, OPTIONS )
     integer, parameter :: RK = kind(0.0d0)
     complex(rk), intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
     integer, intent(in), optional :: WIDTH
     character(len=*), intent(in), optional :: FORMAT
     real(rk), intent(in), optional :: FillValue
+    integer, intent(in), optional :: LBOUND ! Low bound for Array             
     character(len=*), optional, intent(in) :: options
 
     integer :: J, K, MyWidth
     character(len=64) :: MyFormat
-
+    complex(rk) :: myFillValue
+    integer :: BASE
+    integer :: NumZeroRows
+    ! Executable
+    myFormat = sdFormatDefaultCmplx
     call theDumpBegins ( options )
+    myFillValue = 0.
     myWidth = 3
     if ( present(width) ) myWidth = width
-    myFormat = sdFormatDefaultCmplx
     if ( present(format) ) myFormat = format
+    if ( index(myFormat, '*') > 0 ) &
+      & myFormat = numNeedsFormat( one_c4*maxval(abs(array)), format )
+    base = 0
+    if ( present(lbound) ) base = lbound - 1
 
-    if ( any(shape(array) == 0) ) then
-      call empty ( name )
-    else if ( size(array) == 1 ) then
-      call name_and_size ( name, myClean, 1 )
-      call output ( array(1), myFormat, advance='yes' )
-    else
-      call name_and_size ( name, myClean, size(array) )
-      if ( present(name) .and. .not. mylaconic ) call newLine
-      do j = 1, size(array), myWidth
-        if (.not. myClean) then
-          call output ( j, max(myWidth-1,ilog10(size(array))+1) )
-          call output ( afterSub )
-        end if
-        do k = j, min(j+myWidth-1, size(array))
-          call output ( array(k), myFormat )
-        end do
-        call newLine
-      end do
-    end if
-    call theDumpEnds
+    include 'dump1db.f9h'
   end subroutine DUMP_1D_DCOMPLEX
 
  ! ---------------------------------------------  DUMP_1D_DOUBLE  -----
@@ -789,6 +811,7 @@ contains
     integer :: nUnique
     myFormat = sdFormatDefault
     include 'dump1d.f9h'
+    include 'dump1db.f9h'
   end subroutine DUMP_1D_DOUBLE
 
   ! --------------------------------------------  DUMP_BOGUS  -----
@@ -832,6 +855,7 @@ contains
     integer :: nUnique
     myFormat = 'places=' // INTPLACES ! To sneak places arg into call to output
     include 'dump1d.f9h'
+    include 'dump1db.f9h'
   end subroutine DUMP_1D_INTEGER
 
   ! ----------------------------------------------  DUMP_1D_LOGICAL ----
@@ -910,6 +934,7 @@ contains
     integer :: nUnique
     myFormat = sdFormatDefault
     include 'dump1d.f9h'
+    include 'dump1db.f9h'
   end subroutine DUMP_1D_REAL
 
   ! -----------------------------------------------  DUMP_2D_CHAR  -----
@@ -1000,9 +1025,11 @@ contains
     integer :: I, J, K
     integer :: myWidth
     integer :: NumZeroRows
-    real :: MyFillValue
+    complex(rk) :: myFillValue
     character(len=64) :: MyFormat
+    ! Executable
 
+    myFormat = sdFormatDefaultCmplx
     call theDumpBegins ( options )
     if ( myTranspose ) then
       call dump ( transpose(array), name, &
@@ -1014,55 +1041,14 @@ contains
     myWidth = 3
     if ( present(width) ) myWidth = width
 
-    myFormat = sdFormatDefaultCmplx
     if ( present(format) ) myFormat = format
+    if ( index(myFormat, '*') > 0 ) &
+      & myFormat = numNeedsFormat( one_c4*maxval(abs(array)), format )
 
     myFillValue = 0.0_rk
     if ( present(fillValue) ) myFillValue = fillValue
 
-    numZeroRows = 0
-    if ( any(shape(array) == 0) ) then
-      call empty ( name )
-    else if ( product(shape(array)) == 1 ) then
-      call name_and_size ( name, myClean, 1 )
-      call output ( array(1,1), format=myFormat, advance='yes' )
-    else if ( size(array, 1) == 1 ) then
-      call dump ( array(1,:), name, &
-        & fillValue=fillValue, format=format, options=options )
-    else if ( size(array,2) == 1 ) then
-      call dump ( array(:,1), name, &
-        & fillValue=fillValue, format=format, options=options )
-    else 
-      call name_and_size ( name, myClean, size(array) )
-      if ( present(name) .and. .not. mylaconic ) call newLine
-      do i = 1, size(array,1)
-        do j = 1, size(array,2), myWidth
-          DumpTheseZeros = myClean .or. &
-            & any(array(i,j:min(j+2*MyWidth-1, size(array,2))) /= myFillValue) &
-            & .or. &
-            & ( j+MyWidth >= size(array,2) .and. &
-            & any(array(min(i+1, size(array,1)),1:min(1+MyWidth-1, size(array,2))) &
-            & /= myFillValue) &
-            & )
-          if (.not. myClean) then
-            if ( DumpTheseZeros ) then
-              call say_fill ( (/ i, size(array,1), j-1, size(array,2) /), &
-                & numZeroRows, myFillValue, inc=3 )
-            else
-              numZeroRows = numZeroRows + 1
-            end if
-          end if
-          if ( DumpTheseZeros ) then
-            do k = j, min(j+myWidth-1, size(array,2))
-              call output ( array(i,k), myFormat )
-            end do
-            call newLine
-            numZeroRows = 0
-          end if
-        end do
-      end do
-    end if
-    call theDumpEnds
+    include 'dump2db.f9h'
   end subroutine DUMP_2D_COMPLEX
 
   ! --------------------------------------------  DUMP_2D_DCOMPLEX  -----
@@ -1078,9 +1064,12 @@ contains
     integer :: I, J, K
     integer :: myWidth
     integer :: NumZeroRows
-    real(rk) :: MyFillValue
+    complex(rk) :: myFillValue
     character(len=64) :: MyFormat
 
+    ! Executable
+
+    myFormat = sdFormatDefaultCmplx
     call theDumpBegins ( options )
     if ( myTranspose ) then
       call dump ( transpose(array), name, &
@@ -1092,55 +1081,14 @@ contains
     myWidth = 3
     if ( present(width) ) myWidth = width
 
-    myFormat = sdFormatDefaultCmplx
     if ( present(format) ) myFormat = format
+    if ( index(myFormat, '*') > 0 ) &
+      & myFormat = numNeedsFormat( one_c4*maxval(abs(array)), format )
 
     myFillValue = 0.0_rk
     if ( present(fillValue) ) myFillValue = fillValue
 
-    numZeroRows = 0
-    if ( any(shape(array) == 0) ) then
-      call empty ( name )
-    else if ( product(shape(array)) == 1 ) then
-      call name_and_size ( name, myClean, 1 )
-      call output ( array(1,1), format=myFormat, advance='yes' )
-    else if ( size(array, 1) == 1 ) then
-      call dump ( array(1,:), name, &
-        & fillValue=fillValue, format=format, options=options )
-    else if ( size(array,2) == 1 ) then
-      call dump ( array(:,1), name, &
-        & fillValue=fillValue, format=format, options=options )
-    else 
-      call name_and_size ( name, myClean, size(array) )
-      if ( present(name) .and. .not. mylaconic ) call newLine
-      do i = 1, size(array,1)
-        do j = 1, size(array,2), myWidth
-          DumpTheseZeros = myClean .or. &
-            & any(array(i,j:min(j+2*MyWidth-1, size(array,2))) /= myFillValue) &
-            & .or. &
-            & ( j+MyWidth >= size(array,2) .and. &
-            & any(array(min(i+1, size(array,1)),1:min(1+MyWidth-1, size(array,2))) &
-            & /= myFillValue) &
-            & )
-          if (.not. myClean) then
-            if ( DumpTheseZeros ) then
-              call say_fill ( (/ i, size(array,1), j-1, size(array,2) /), &
-                & numZeroRows, myFillValue, inc=3 )
-            else
-              numZeroRows = numZeroRows + 1
-            end if
-          end if
-          if ( DumpTheseZeros ) then
-            do k = j, min(j+myWidth-1, size(array,2))
-              call output ( array(i,k), myFormat )
-            end do
-            call newLine
-            numZeroRows = 0
-          end if
-        end do
-      end do
-    end if
-    call theDumpEnds
+    include 'dump2db.f9h'
   end subroutine DUMP_2D_DCOMPLEX
 
   ! ---------------------------------------------  DUMP_2D_DOUBLE  -----
@@ -1164,6 +1112,7 @@ contains
     double precision, dimension(MAXNUMELEMENTS) :: elements
     myFormat = sdFormatDefault
     include 'dump2d.f9h'
+    include 'dump2db.f9h'
   end subroutine DUMP_2D_DOUBLE
 
   ! --------------------------------------------  DUMP_2D_INTEGER  -----
@@ -1187,6 +1136,7 @@ contains
     integer, dimension(MAXNUMELEMENTS) :: elements
     myFormat = 'places=' // INTPLACES ! To sneak places arg into call to output
     include 'dump2d.f9h'
+    include 'dump2db.f9h'
   end subroutine DUMP_2D_INTEGER
 
   ! --------------------------------------------  DUMP_2D_LOGICAL  -----
@@ -1253,6 +1203,7 @@ contains
     real, dimension(MAXNUMELEMENTS) :: elements
     myFormat = sdFormatDefault
     include 'dump2d.f9h'
+    include 'dump2db.f9h'
   end subroutine DUMP_2D_REAL
 
   ! -----------------------------------------  DUMP_2x2xN_COMPLEX  -----
@@ -1270,6 +1221,8 @@ contains
     call theDumpBegins ( options )
     myFormat = sdFormatDefaultCmplx
     if ( present(format) ) myFormat = format
+    if ( index(myFormat, '*') > 0 ) &
+      & myFormat = numNeedsFormat( one_c4*maxval(abs(array)), format )
 
     if ( any(shape(array) == 0) ) then
       call empty ( name )
@@ -1306,6 +1259,8 @@ contains
     call theDumpBegins ( options )
     myFormat = sdFormatDefaultCmplx
     if ( present(format) ) myFormat = format
+    if ( index(myFormat, '*') > 0 ) &
+      & myFormat = numNeedsFormat( one_c4*maxval(abs(array)), format )
 
     if ( any(shape(array) == 0) ) then
       call empty ( name )
@@ -1404,7 +1359,8 @@ contains
   ! --------------------------------------------  DUMP_3D_COMPLEX  -----
   subroutine DUMP_3D_COMPLEX ( ARRAY, NAME, &
     & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-    complex, intent(in) :: ARRAY(:,:,:)
+    integer, parameter :: RK = kind(0.0e0)
+    complex(rk), intent(in) :: ARRAY(:,:,:)
     character(len=*), intent(in), optional :: NAME
     real, intent(in), optional :: FILLVALUE
     integer, intent(in), optional :: WIDTH
@@ -1414,68 +1370,24 @@ contains
 
     integer :: I, J, K, L
     integer :: NumZeroRows
-    real    :: myFillValue
+    complex(rk) :: myFillValue
     character(len=64) :: MyFormat
     integer :: MyWidth
 
     ! Executable
+    myFormat = sdFormatDefaultCmplx
     call theDumpBegins ( options )
     myFillValue = 0.
     if ( present(FillValue) ) myFillValue=FillValue
 
-    myFormat = sdFormatDefaultCmplx
     if ( present(format) ) myFormat = format
+    if ( index(myFormat, '*') > 0 ) &
+      & myFormat = numNeedsFormat( one_c4*maxval(abs(array)), format )
     
-    MyWidth = 5
+    MyWidth = 3
     if ( present(width) ) MyWidth = width
 
-    numZeroRows = 0
-    if ( any(shape(array) == 0) ) then
-      call empty ( name )
-    else if ( size(array,1) == 1 ) then
-      call dump ( array(1,:,:), name, &
-        & fillValue=fillValue, format=format, options=options )
-    else if ( size(array,2) == 1 ) then
-      call dump ( array(:,1,:), name, &
-        & fillValue=fillValue, format=format, options=options )
-    else if ( size(array,3) == 1 ) then
-      call dump ( array(:,:,1), name, &
-        & fillValue=fillValue, format=format, options=options )
-    else
-      call name_and_size ( name, myClean, size(array) )
-      if ( present(name) .and. .not. mylaconic ) call newLine
-      do i = 1, size(array,1)
-        do j = 1, size(array,2)
-          do k = 1, size(array,3), myWidth
-            DumpTheseZeros = myClean .or. &
-              & any(array(i,j,k:min(k+2*MyWidth-1, size(array,3))) /= myFillValue) &
-              & .or. &
-              & ( k+MyWidth >= size(array,3) .and. &
-              & any(array(i,min(j+1, size(array,2)),1:min(1+MyWidth-1, size(array,3))) &
-              & /= myFillValue) &
-              & )
-            if (.not. myClean) then
-              if ( DumpTheseZeros ) then
-                call say_fill ( (/ i, size(array,1), j-1, size(array,2), &
-                  & k, size(array,3) /), numZeroRows, myFillValue, inc=3 )
-              else
-                numZeroRows = numZeroRows + 1
-              end if
-            end if
-            if ( DumpTheseZeros ) then
-              do l = k, min(k+myWidth-1, size(array,3))
-                call output ( array(i,j,l), myFormat )
-              end do
-              call newLine
-              numZeroRows = 0
-            endif
-          end do
-        end do
-      end do
-      call say_fill ( (/ i-1, size(array,1), j-1, size(array,2), &
-        & k-myWidth, size(array,3) /), numZeroRows, myFillValue )
-   end if
-    call theDumpEnds
+    include 'dump3db.f9h'
   end subroutine DUMP_3D_COMPLEX
 
   ! -------------------------------------------  DUMP_3D_DCOMPLEX  -----
@@ -1492,67 +1404,24 @@ contains
 
     integer :: I, J, K, L
     integer :: NumZeroRows
-    real(rk)    :: myFillValue
+    complex(rk) :: myFillValue
     character(len=64) :: MyFormat
     integer :: myWidth
 
     ! Executable
+    myFormat = sdFormatDefaultCmplx
     call theDumpBegins ( options )
     myFillValue = 0.
     if ( present(FillValue) ) myFillValue=FillValue
 
-    myFormat = sdFormatDefaultCmplx
     if ( present(format) ) myFormat = format
-    MyWidth = 5
+    if ( index(myFormat, '*') > 0 ) &
+      & myFormat = numNeedsFormat( one_c4*maxval(abs(array)), format )
+    
+    MyWidth = 3
     if ( present(width) ) MyWidth = width
 
-    numZeroRows = 0
-    if ( any(shape(array) == 0) ) then
-      call empty ( name )
-    else if ( size(array,1) == 1 ) then
-      call dump ( array(1,:,:), name, &
-        & fillValue=fillValue, format=format, options=options )
-    else if ( size(array,2) == 1 ) then
-      call dump ( array(:,1,:), name, &
-        & fillValue=fillValue, format=format, options=options )
-    else if ( size(array,3) == 1 ) then
-      call dump ( array(:,:,1), name, &
-        & fillValue=fillValue, format=format, options=options )
-    else
-      call name_and_size ( name, myClean, size(array) )
-      if ( present(name) .and. .not. mylaconic ) call newLine
-      do i = 1, size(array,1)
-        do j = 1, size(array,2)
-          do k = 1, size(array,3), myWidth
-            DumpTheseZeros = myClean .or. &
-              & any(array(i,j,k:min(k+2*MyWidth-1, size(array,3))) /= myFillValue) &
-              & .or. &
-              & ( k+MyWidth >= size(array,3) .and. &
-              & any(array(i,min(j+1, size(array,2)),1:min(1+MyWidth-1, size(array,3))) &
-              & /= myFillValue) &
-              & )
-            if (.not. myClean) then
-              if ( DumpTheseZeros ) then
-                call say_fill ( (/ i, size(array,1), j-1, size(array,2), &
-                  & k, size(array,3) /), numZeroRows, myFillValue, inc=3 )
-              else
-                numZeroRows = numZeroRows + 1
-              end if
-            end if
-            if ( DumpTheseZeros ) then
-              do l = k, min(k+myWidth-1, size(array,3))
-                call output ( array(i,j,l), myFormat )
-              end do
-              call newLine
-              numZeroRows = 0
-            endif
-          end do
-        end do
-      end do
-      call say_fill ( (/ i-1, size(array,1), j-1, size(array,2), &
-        & k-myWidth, size(array,3) /), numZeroRows, myFillValue )
-   end if
-    call theDumpEnds
+    include 'dump3db.f9h'
   end subroutine DUMP_3D_DCOMPLEX
 
   ! ---------------------------------------------  DUMP_3D_DOUBLE  -----
@@ -1576,6 +1445,7 @@ contains
     double precision, dimension(MAXNUMELEMENTS) :: elements
     myFormat = sdFormatDefault
     include 'dump3d.f9h'
+    include 'dump3db.f9h'
   end subroutine DUMP_3D_DOUBLE
 
   ! --------------------------------------------  DUMP_3D_INTEGER  -----
@@ -1602,6 +1472,7 @@ contains
     integer, dimension(MAXNUMELEMENTS) :: elements
     myFormat = 'places=' // INTPLACES ! To sneak places arg into call to output
     include 'dump3d.f9h'
+    include 'dump3db.f9h'
   end subroutine DUMP_3D_INTEGER
 
   ! ---------------------------------------------  DUMP_3D_REAL  -----
@@ -1625,6 +1496,7 @@ contains
     real, dimension(MAXNUMELEMENTS) :: elements
     myFormat = sdFormatDefault
     include 'dump3d.f9h'
+    include 'dump3db.f9h'
   end subroutine DUMP_3D_REAL
 
   ! -----------------------------------------------  DUMP_HASH_STR  -----
@@ -2644,25 +2516,43 @@ contains
   ! This family of subroutines exists only so that we can generically call
   ! output with either a numeric arg or a character string, 
   ! trimming if the latter
-  subroutine PrintIt_char (it)
+  subroutine PrintIt_char ( it, format )
     character(len=*) :: it
+    character(len=*), intent(in), optional :: FORMAT
     call output ( trim(it), advance='no' )
   end subroutine PrintIt_char
 
-  subroutine PrintIt_int (it)
+  subroutine PrintIt_int ( it, format )
     integer :: it
-    call output ( it, advance='no' )
+    character(len=*), intent(in), optional :: FORMAT
+    call output ( it, format=format, advance='no' )
   end subroutine PrintIt_int
 
-  subroutine PrintIt_real (it)
+  subroutine PrintIt_real ( it, format )
     real :: it
-    call output ( it, advance='no' )
+    character(len=*), intent(in), optional :: FORMAT
+    call output ( it, format=format, advance='no' )
   end subroutine PrintIt_real
 
-  subroutine PrintIt_double (it)
+  subroutine PrintIt_double ( it, format )
     double precision :: it
-    call output ( it, advance='no' )
+    character(len=*), intent(in), optional :: FORMAT
+    call output ( it, format=format, advance='no' )
   end subroutine PrintIt_double
+
+  subroutine PrintIt_complex ( it, format )
+    integer, parameter :: RK = kind(0.0e0)
+    complex(rk) :: it
+    character(len=*), intent(in), optional :: FORMAT
+    call output ( it, format=format, advance='no' )
+  end subroutine PrintIt_complex
+
+  subroutine PrintIt_dcomplex ( it, format )
+    integer, parameter :: RK = kind(0.0d0)
+    complex(rk) :: it
+    character(len=*), intent(in), optional :: FORMAT
+    call output ( it, format=format, advance='no' )
+  end subroutine PrintIt_dcomplex
 
   ! ----------------------------------------------  printPercentages  -----
   ! Prints a nicely-formatted summary of equal, unequal, etc.
@@ -2739,25 +2629,39 @@ contains
   ! of each dumped row, sometimes noting that repeated lines
   ! that have been omitted for brevity
   ! ----------------------------------------------  Say_Fill_Char  -----
-  subroutine Say_Fill_Char ( Subs, NumZeroRows, Fill, Inc  )
+  subroutine Say_Fill_Char ( Subs, NumZeroRows, Fill, Inc, Format  )
     character(len=*), intent(in) :: Fill
     include 'Say_Fill.f9h'
   end subroutine Say_Fill_Char
 
+  ! --------------------------------------------  Say_Fill_Complex  -----
+  subroutine Say_Fill_Complex ( Subs, NumZeroRows, Fill, Inc, Format )
+    integer, parameter :: RK = kind(0.0e0)
+    complex(rk), intent(in) :: Fill
+    include 'Say_Fill.f9h'
+  end subroutine Say_Fill_Complex
+
+  ! --------------------------------------------  Say_Fill_Dcomplex  -----
+  subroutine Say_Fill_Dcomplex ( Subs, NumZeroRows, Fill, Inc, Format )
+    integer, parameter :: RK = kind(0.0d0)
+    complex(rk), intent(in) :: Fill
+    include 'Say_Fill.f9h'
+  end subroutine Say_Fill_Dcomplex
+
   ! --------------------------------------------  Say_Fill_Double  -----
-  subroutine Say_Fill_Double ( Subs, NumZeroRows, Fill, Inc )
+  subroutine Say_Fill_Double ( Subs, NumZeroRows, Fill, Inc, Format )
     double precision, intent(in) :: Fill
     include 'Say_Fill.f9h'
   end subroutine Say_Fill_Double
 
   ! -----------------------------------------------  Say_Fill_Int  -----
-  subroutine Say_Fill_Int ( Subs, NumZeroRows, Fill, Inc )
+  subroutine Say_Fill_Int ( Subs, NumZeroRows, Fill, Inc, Format )
     integer, intent(in) :: Fill
     include 'Say_Fill.f9h'
   end subroutine Say_Fill_Int
 
   ! ----------------------------------------------  Say_Fill_Real  -----
-  subroutine Say_Fill_Real ( Subs, NumZeroRows, Fill, Inc )
+  subroutine Say_Fill_Real ( Subs, NumZeroRows, Fill, Inc, Format )
     real, intent(in) :: Fill
     include 'Say_Fill.f9h'
   end subroutine Say_Fill_Real
@@ -3072,6 +2976,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.113  2011/07/12 00:15:01  pwagner
+! Improved dumps; format option now more flexible; complex arrays parallel real ones
+!
 ! Revision 2.112  2011/06/23 17:27:41  pwagner
 ! Added function to difference args with option to supply fillvalue or period
 !
