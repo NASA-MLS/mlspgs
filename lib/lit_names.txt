@@ -85,7 +85,6 @@ GHz
 gm3              # gm / meter^3
 gph
 gph_precision
-grid
 
 hdf
 hdfeos
@@ -234,6 +233,9 @@ zonalavg
 temperature
 
 # $Log$
+# Revision 2.57  2011/07/12 22:35:44  honghanh
+# Change l_grid to l_hdfeos
+#
 # Revision 2.56  2011/01/13 00:29:42  vsnyder
 # Put temperature last, and a comment that it has to be last
 #
