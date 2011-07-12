@@ -22,7 +22,7 @@ module ReadAPriori
     & L_CLIMATOLOGY, L_DAO, L_GEOS5, L_GEOS5_7, L_GLORIA, &
     & L_MERRA, L_NCEP, L_NONE, L_STRAT, L_SURFACEHEIGHT, &
     & S_DIFF, S_DUMP, S_GRIDDED, S_L2AUX, S_L2GP, S_READGRIDDEDDATA
-  use INTRINSIC, only: L_ASCII, L_BINARY, L_GRID, L_HDF, L_SWATH, &
+  use Intrinsic, only: L_ASCII, L_BINARY, L_HDFEOS, L_HDF, L_SWATH, &
     & PHYQ_DIMENSIONLESS
   use L2GPDATA, only: MAXSWATHNAMESBUFSIZE
   use LEXER_CORE, only: PRINT_SOURCE
@@ -630,7 +630,7 @@ contains ! =====     Public Procedures     =============================
           & LastNCEPPCF, returnStatus )
         FileIndex = InitializeMLSFile(GriddedFile, content = 'gridded', &
           & name=FilenameString, shortName=shortFileName, &
-          & type=l_grid, access=DFACC_RDONLY, hdfVersion=HDFVERSION_4, &
+          & type=l_hdfeos, access=DFACC_RDONLY, hdfVersion=HDFVERSION_4, &
           & PCBottom=mlspcf_l2ncep_start, PCTop=mlspcf_l2ncep_end)
         GriddedFile%PCFId = LastNCEPPCF
         FileIndex = AddFileToDataBase(filedatabase, GriddedFile)
@@ -676,7 +676,7 @@ contains ! =====     Public Procedures     =============================
           & LastDAOPCF, returnStatus )
         FileIndex = InitializeMLSFile(GriddedFile, content = 'gridded', &
           & name=FilenameString, shortName=shortFileName, &
-          & type=l_grid, access=DFACC_RDONLY, hdfVersion=HDFVERSION_4, &
+          & type=l_hdfeos, access=DFACC_RDONLY, hdfVersion=HDFVERSION_4, &
           & PCBottom=mlspcf_l2dao_start, PCTop=mlspcf_l2dao_end)
         GriddedFile%PCFId = LastDAOPCF
         FileIndex = AddFileToDataBase(filedatabase, GriddedFile)
@@ -750,7 +750,7 @@ contains ! =====     Public Procedures     =============================
           & LastGEOS5PCF, returnStatus )
         FileIndex = InitializeMLSFile(GriddedFile, content = 'gridded', &
           & name=FilenameString, shortName=shortFileName, &
-          & type=l_grid, access=DFACC_RDONLY, hdfVersion=HDFVERSION_4, &
+          & type=l_hdfeos, access=DFACC_RDONLY, hdfVersion=HDFVERSION_4, &
           & PCBottom=mlspcf_l2geos5_start, PCTop=mlspcf_l2geos5_end)
         GriddedFile%PCFId = LastGEOS5PCF
         FileIndex = AddFileToDataBase(filedatabase, GriddedFile)
@@ -1261,6 +1261,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.89  2011/07/12 22:35:03  honghanh
+! Change l_grid to l_hdfeos
+!
 ! Revision 2.88  2011/06/16 23:16:27  pwagner
 ! Added /downsample to reduce resolution of gridded data when read
 !

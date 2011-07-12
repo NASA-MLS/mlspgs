@@ -18,7 +18,7 @@ module MLSFiles               ! Utility file routines
   use HDFEOS5, only: he5_swclose, he5_swopen, he5_swinqswath, &
     & he5_gdopen, he5_gdclose, &
     & HE5F_ACC_TRUNC, HE5F_ACC_RDONLY, HE5F_ACC_RDWR
-  use intrinsic, only: l_ascii, l_binary, l_grid, l_hdf, l_open, &
+  use intrinsic, only: l_ascii, l_binary, l_hdfeos, l_hdf, l_open, &
     & l_swath, l_tkgen, l_zonalavg, lit_indices
   use IO_STUFF, only: get_lun
   use machine, only: io_error
@@ -814,7 +814,7 @@ contains
         ErrType = NOSUCHHDFVERSION
       endif
 
-    case(l_grid)
+    case(l_hdfeos)
       if(MLSFile%HDFVersion == HDFVERSION_5) then
         MLSFile%FileId%f_id = he5_gdopen(trim(MLSFile%Name), &
           & he2he5_fileaccess(MLSFile%access))
@@ -958,7 +958,7 @@ contains
       endif
 
     ! case('grid')
-    case(l_grid)
+    case(l_hdfeos)
       if(MLSFile%HDFVersion == HDFVERSION_5) then
         ErrType = he5_gdclose(MLSFile%FileId%f_id)
       elseif(MLSFile%HDFVersion == HDFVERSION_4) then
@@ -1146,7 +1146,7 @@ contains
         & advance='yes')                                  
     endif
     ! if ( any(MLSFile%type == (/'hdf  ', 'swath' /) ) ) then
-    if ( any(MLSFile%type == (/l_hdf, l_swath, l_grid, l_zonalavg /) ) ) then
+    if ( any(MLSFile%type == (/l_hdf, l_swath, l_hdfeos, l_zonalavg /) ) ) then
       call output ( '    hdf version  : ')                              
       call output ( MLSFile%HDFVersion, advance='yes')
     endif
@@ -1762,7 +1762,7 @@ contains
     endif
     ! Do we need to find the hdfVersion?
    if ( &
-     & any(MLSFile%type == (/l_hdf, l_swath, l_grid, l_zonalavg /) ) .and. &
+     & any(MLSFile%type == (/l_hdf, l_swath, l_hdfeos, l_zonalavg /) ) .and. &
      & (MLSFile%HDFVersion == 0 .or. MLSFile%HDFVersion == WILDCARDHDFVERSION) &
      & .and. (MLSFile%name /= ' ') ) then
      ! print *, 'MLSFile%type ' , MLSFile%type
@@ -2200,7 +2200,7 @@ contains
       endif
 
     ! case('gd')
-    case(l_grid)
+    case(l_hdfeos)
       if(myhdfVersion == HDFVERSION_5) then
         ErrType = he5_gdclose(theFileHandle)
       elseif(myhdfVersion == HDFVERSION_4) then
@@ -2496,7 +2496,7 @@ contains
       endif                                                                
 
     ! case('gd')
-    case(l_grid)
+    case(l_hdfeos)
       if(returnStatus /= 0) then
         ErrType = returnStatus
         return
@@ -2715,6 +2715,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.89  2011/07/12 22:35:44  honghanh
+! Change l_grid to l_hdfeos
+!
 ! Revision 2.88  2009/09/29 23:32:40  pwagner
 ! Changes needed by 64-bit build
 !
