@@ -61,54 +61,14 @@
     include 'dumpstats.f9h'
 
     if ( present(format) ) myFormat = format
+    if ( index(myFormat, '*') > 0 ) myFormat = numNeedsFormat( maxval(abs(array)), format )
 
-    numZeroRows = 0
-    if ( any(shape(array) == 0) ) then
-      call empty ( name )
-    else if ( product(shape(array)) == 1 ) then
-      call name_and_size ( name, myClean, 1 )
-      call output ( array(1,1), format=myFormat, advance='yes' )
-    else if ( size(array, 1) == 1 ) then
-      call dump ( array(1,:), name, &
-        & fillValue=fillValue, format=format, options=options )
-    else if ( size(array,2) == 1 ) then
-      call dump ( array(:,1), name, &
-        & fillValue=fillValue, format=format, options=options )
-    else
-      call name_and_size ( name, myClean, size(array) )
-      if ( present(name) .and. .not. myLaconic ) call newLine
-      do i = 1, size(array,1)
-        do j = 1, size(array,2), MyWidth
-          DumpTheseZeros = myClean .or. &
-            & any(array(i,j:min(j+2*MyWidth-1, size(array,2))) /= myFillValue) &
-            & .or. &
-            & ( j+MyWidth >= size(array,2) .and. &
-            & any(array(min(i+1, size(array,1)),1:min(1+MyWidth-1, size(array,2))) &
-            & /= myFillValue) &
-            & )
-          if (.not. myClean) then
-            if ( DumpTheseZeros ) then
-              call say_fill ( (/ i, size(array,1), j-1, size(array,2) /), &
-                & numZeroRows, myFillValue, inc=3 )
-            else
-              numZeroRows = numZeroRows + 1
-            end if
-          end if
-          if ( DumpTheseZeros ) then
-            do k = j, min(j+MyWidth-1, size(array,2))
-              call output ( array(i,k), format=myFormat )
-            end do
-            call newLine
-            numZeroRows = 0
-          end if
-        end do
-      end do
-      call say_fill ( (/ i-1, size(array,1), j-MyWidth, size(array,2) /), &
-        & numZeroRows, myFillValue )
-    end if
-    call theDumpEnds
+!    include 'dump2db.f9h'
 !   end subroutine DUMP_2D_INTEGER
 ! $Log$
+! Revision 2.8  2011/07/12 00:11:29  pwagner
+! whoarray dump moved to dump[123]db.f9h
+!
 ! Revision 2.7  2011/04/20 22:25:07  pwagner
 ! Made all dumpnd.f9h files consistent
 !
