@@ -20,7 +20,7 @@ MODULE PCFHdr
 
    use dates_module, only: utc_to_date, utc_to_yyyymmdd, utcForm
    use Hdf, only: DFACC_RDWR, DFACC_WRITE, AN_FILE_DESC
-   use INTRINSIC, only: L_GRID, L_HDF, L_SWATH
+   use INTRINSIC, only: L_HDFEOS, L_HDF, L_SWATH
    use MLSCommon, only: FileNameLen, MLSFile_T, NameLen
    use MLSFiles, only: GetPCFromRef, HDFVERSION_4, HDFVERSION_5, &
      & InitializeMLSFile, open_MLSFile, close_MLSFile
@@ -1095,7 +1095,7 @@ CONTAINS
           ! if ( status /= PGS_S_SUCCESS) &
           !  & CALL MLSMessage(MLSMSG_Error, ModuleName, &
           !  & 'Error closing hdfeos5 swath file for annotating with PCF' )
-        elseif ( the_type == l_grid ) then
+        elseif ( the_type == l_hdfeos ) then
           ! fileID = mls_io_gen_openF(l_grid, .TRUE., status, &
           !  & record_length, DFACC_RDWR, FileName=trim(file), &
           !  & hdfVersion=hdfVersion, debugOption=.false. )
@@ -1512,6 +1512,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.56  2011/07/12 22:35:44  honghanh
+!# Change l_grid to l_hdfeos
+!#
 !# Revision 2.55  2010/11/10 02:01:57  pwagner
 !# Extra output if DEBUG
 !#
