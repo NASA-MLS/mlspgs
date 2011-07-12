@@ -15,7 +15,7 @@ MODULE L3MMData
 
    USE HDF, ONLY: DFACC_RDWR, DFACC_WRITE, DFNT_FLOAT64, DFNT_FLOAT32, &
         & DFNT_INT32, DFNT_CHAR8
-   USE Intrinsic, ONLY: l_hdfeos, l_grid
+   USE Intrinsic, ONLY: l_hdfeos
    USE L3DMData, ONLY: ConvertDeg2DMS
    USE MLSCommon, ONLY: r8
    USE MLSFiles, ONLY: MLS_SFEND, MLS_SFSTART, HDFVERSION_4, HDFVERSION_5
@@ -855,7 +855,7 @@ CONTAINS
       !call output(daysNum, advance='yes')
 
 ! Initialize the fileType
-      fileType = l_grid
+      fileType = l_hdfeos
 
 ! Check to see whether this is a Diagnostic product
 
@@ -1410,6 +1410,9 @@ END MODULE L3MMData
 !==================
 
 !# $Log$
+!# Revision 1.26  2006/09/26 15:03:02  cvuu
+!# Rename the dataset to SolarZenithAngle, add dashes in title, and remove spaces in soft link
+!#
 !# Revision 1.25  2006/05/19 15:20:11  cvuu
 !# Use reshape to reordering the array
 !#

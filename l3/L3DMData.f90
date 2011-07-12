@@ -1211,7 +1211,7 @@ CONTAINS
   USE HDF, ONLY: DFACC_RDWR, DFNT_FLOAT64, DFNT_FLOAT32, DFNT_INT32, & 
        & DFACC_WRITE
   USE HDFEOS5, ONLY: HE5F_ACC_RDWR, HE5_GDCLOSE, HE5_GDOPEN
-  USE Intrinsic, ONLY: l_grid, l_hdfeos
+  USE Intrinsic, ONLY: l_hdfeos
   USE MLSFiles, ONLY: HDFVERSION_5, HDFVERSION_4, mls_sfstart, mls_sfend
   USE OpenInit, ONLY: PCFData_T
   USE PCFHdr, ONLY: WritePCF2Hdr, WriteInputPointer, he5_writeglobalattr, &
@@ -1281,7 +1281,7 @@ CONTAINS
       
       ! set the file type
 
-      fileType = l_grid
+      fileType = l_hdfeos
 
       ! For each l3dm file successfully created,
      
@@ -1981,6 +1981,9 @@ CONTAINS
 !==================
 
 !# $Log$
+!# Revision 1.46  2006/09/26 15:04:44  cvuu
+!# Remove spaces in soft link, add dashes in title
+!#
 !# Revision 1.45  2006/05/19 15:19:55  cvuu
 !# Use reshape to reordering the array
 !#
