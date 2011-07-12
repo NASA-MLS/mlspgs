@@ -53,6 +53,7 @@ module OUTPUT_M
 ! dumptabs                 print the current tab stop positions
 ! getStamp                 get stamp being added to every output
 ! newline                  print a newline
+! numNeedsFormat           return what format is need to output num
 ! numToChars               return what would be printed by output
 ! output                   print argument
 ! outputCalendar           output nicely-formatted calendar page
@@ -85,6 +86,7 @@ module OUTPUT_M
 ! getStamp ( [char* textCode], [log post], [int interval],
 !          [log showTime], [char* dateFormat], [char* timeFormat] )
 ! NewLine
+! char* numNeedsFormat ( value )
 ! char* numToChars ( value, [char* format] )
 ! output ( char* chars, [char* advance], [char* from_where], 
 !          [log dont_log], [char* log_chars], [char* insteadOfBlank],
@@ -140,7 +142,7 @@ module OUTPUT_M
 
   public :: ALIGNTOFIT, BLANKS, BLANKSTOCOLUMN, BLANKSTOTAB, &
     & DUMP, DUMPSIZE, DUMPTABS, &
-    & GETSTAMP, NEXTCOLUMN, NEXTTAB, NEWLINE, NUMTOCHARS, &
+    & GETSTAMP, NEXTCOLUMN, NEXTTAB, NEWLINE, NUMNEEDSFORMAT, NUMTOCHARS, &
     & OUTPUT, OUTPUT_DATE_AND_TIME, OUTPUTCALENDAR, OUTPUTLIST, &
     & OUTPUTNAMEDVALUE, &
     & RESETTABS, RESUMEOUTPUT, REVERTOUTPUT, &
@@ -162,6 +164,11 @@ module OUTPUT_M
 
   interface DUMPSIZE
     module procedure DUMPSIZE_DOUBLE, DUMPSIZE_INTEGER, DUMPSIZE_REAL
+  end interface
+
+  interface NUMNEEDSFORMAT
+    module procedure numNeedsFormat_double, numNeedsFormat_integer, numNeedsFormat_single
+    module procedure numNeedsFormat_complex, numNeedsFormat_dcomplx
   end interface
 
   interface NUMTOCHARS
@@ -294,6 +301,8 @@ module OUTPUT_M
   real, parameter, dimension(3) :: RPREFERDEFAULTFORMAT = &
     & (/ -1., 0., 1. /)  ! For which values to use default format '*'
   character(len=16), private, save :: NONFINITEFORMAT = '(1pg14.6)' ! 'NaN, Inf'
+  character(len=12), private :: sdNeedsFormat = '(1pg14.6)'
+  character(len=12), private :: sdNeedsFragment = '(1pg14'
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -757,6 +766,101 @@ contains
     nTab = findFirst( tabStops > atColumnNumber )
     if ( nTab > 0 ) Column = max( tabStops(nTab), atColumnNumber )
   end function NextTab
+
+  ! ----------------------------------------------------  numNeedsFormat  -----
+  ! This family of functions return what format is needed to be printed by output
+  function numNeedsFormat_double( value, inFormat ) result ( format )
+    ! Args
+    double precision, intent(in) :: VALUE
+    character(len=*), optional, intent(in)  :: inFormat
+    character(len=30) :: format
+    ! Internal variables
+    character(len=30) :: charValue
+    character(len=2)  :: dotm
+    character(len=30) :: ndotm
+    integer :: I
+    ! Executable
+    call whatSDNeedsFormat( ndotm, dotm, inFormat )
+    charValue = adjustl(numToChars ( value, format=ndotm ))
+    ! call outputNamedValue( 'ndotm', ndotm )
+    ! call outputNamedValue( 'charValue', charValue )
+    i = len_trim(charValue)
+    write(charValue, *) i+5
+    format = '(1pg' // trim(adjustl(charValue)) // dotm // ')'
+  end function numNeedsFormat_double
+
+  function numNeedsFormat_integer( value, inFormat ) result ( format )
+    ! Args
+    integer, intent(in) :: VALUE
+    character(len=*), optional, intent(in)  :: inFormat
+    character(len=30) :: format
+    ! Internal variables
+    character(len=30) :: charValue
+    integer :: I
+    ! Executable
+    charValue = numToChars(value)
+    i = len_trim(charValue)
+    write(charValue, *) i+5
+    format = '(i' // trim(adjustl(charValue)) // ')'
+  end function numNeedsFormat_integer
+
+  function numNeedsFormat_single( value, inFormat ) result ( format )
+    ! Args
+    real, intent(in) :: VALUE
+    character(len=*), optional, intent(in)  :: inFormat
+    character(len=30) :: format
+    ! Internal variables
+    character(len=30) :: charValue
+    character(len=2)  :: dotm
+    character(len=30) :: ndotm
+    integer :: I
+    ! Executable
+    call whatSDNeedsFormat( ndotm, dotm, inFormat )
+    charValue = adjustl(numToChars ( value, format=ndotm ))
+    i = len_trim(charValue)
+    write(charValue, *) i+5
+    format = '(1pg' // trim(adjustl(charValue)) // dotm // ')'
+  end function numNeedsFormat_single
+
+  function numNeedsFormat_complex( value, inFormat ) result ( format )
+    ! Args
+    integer, parameter :: RK = kind(0.0e0)
+    complex(rk), intent(in) :: VALUE
+    character(len=*), optional, intent(in)  :: inFormat
+    character(len=45) :: format
+    ! Internal variables
+    character(len=30) :: charValue
+    character(len=2)  :: dotm
+    character(len=30) :: ndotm
+    integer :: I
+    ! Executable
+    call whatSDNeedsFormat( ndotm, dotm, inFormat )
+    charValue = adjustl(numToChars ( abs(value), format=ndotm ))
+    i = len_trim(charValue)
+    write(charValue, *) i+5
+    format = '(1x,"(",1pg' // trim(adjustl(charValue)) // dotm // ',",",1pg' &
+      & // trim(adjustl(charValue)) // dotm // ',")")'
+  end function numNeedsFormat_complex
+
+  function numNeedsFormat_dcomplx( value, inFormat ) result ( format )
+    ! Args
+    integer, parameter :: RK = kind(0.0d0)
+    complex(rk), intent(in) :: VALUE
+    character(len=*), optional, intent(in)  :: inFormat
+    character(len=45) :: format
+    ! Internal variables
+    character(len=30) :: charValue
+    character(len=2)  :: dotm
+    character(len=30) :: ndotm
+    integer :: I
+    ! Executable
+    call whatSDNeedsFormat( ndotm, dotm, inFormat )
+    charValue = adjustl(numToChars ( abs(value), format=ndotm ))
+    i = len_trim(charValue)
+    write(charValue, *) i+5
+    format = '(1x,"(",1pg' // trim(adjustl(charValue)) // dotm // ',",",1pg' &
+      & // trim(adjustl(charValue)) // dotm // ',")")'
+  end function numNeedsFormat_dcomplx
 
   ! ----------------------------------------------------  numToChars  -----
   ! This family of functions return what would otherwise be printed by output
@@ -2103,6 +2207,29 @@ contains
     nplusm = n + m                                                        
   end function nCharsinFormat
 
+  ! ........................................  whatSDNeedsFormat
+  ! parse inFormat which might be
+  ! (1) absent, in which case format=sdNeedsFormat and dotm='.6'
+  ! (2) '(*)', in which case format=sdNeedsFormat and dotm='.6'
+  ! (3) '(*.m)', in which case format=(sdNeedsFragment //'.m') and dotm='.m'
+  subroutine whatSDNeedsFormat ( format, dotm, inFormat )
+    character(len=*), optional, intent(in)  :: inFormat
+    character(len=*), intent(out)           :: format
+    character(len=*), intent(out)           :: dotm
+    integer :: dot
+    if ( .not. present(inFormat) ) then
+      format = sdNeedsFormat
+      dotm = '.6'
+    elseif ( index(inFormat, '.') < 1 ) then
+      format = sdNeedsFormat
+      dotm = '.6'
+    else
+      ! Must find integer after '.'
+      dot = index( inFormat, '.' )
+      dotm = inFormat(dot:dot+1)
+      format = trim(sdNeedsFragment) // trim(dotm) // ')'
+    endif
+  end subroutine whatSDNeedsFormat
   ! ........................................  ourExtractSubString  .....
   subroutine ourExtractSubString ( instr, outstr, sub1, sub2 )
     ! Extract portion of instr between sub1 and sub2 and return as outstr
@@ -2273,6 +2400,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.87  2011/07/12 00:12:25  pwagner
+! Added numNeedsFormat
+!
 ! Revision 2.86  2011/05/26 20:38:32  pwagner
 ! By default, outputting chars substitutes for non-ascii, except for newlines
 !
