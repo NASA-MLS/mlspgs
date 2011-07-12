@@ -56,56 +56,14 @@
 
     myFormat = sdFormatDefault
     if ( present(format) ) myFormat = format
+    if ( index(myFormat, '*') > 0 ) myFormat = numNeedsFormat( maxval(abs(array)), format )
 
-    numZeroRows = 0
-    if ( any(shape(array) == 0) ) then
-      call empty ( name )
-    else if ( size(array,1) == 1 ) then
-      call dump ( array(1,:,:), name, &
-        & fillValue=fillValue, format=format, options=options )
-    else if ( size(array,2) == 1 ) then
-      call dump ( array(:,1,:), name, &
-        & fillValue=fillValue, format=format, options=options )
-    else if ( size(array,3) == 1 ) then
-      call dump ( array(:,:,1), name, &
-        & fillValue=fillValue, format=format, options=options )
-    else
-      call name_and_size ( name, myClean, size(array) )
-      if ( present(name) .and. .not. mylaconic ) call newLine
-      do i = 1, size(array,1)
-        do j = 1, size(array,2)
-          do k = 1, size(array,3), MyWidth
-            DumpTheseZeros = myClean .or. &
-              & any(array(i,j,k:min(k+2*MyWidth-1, size(array,3))) /= myFillValue) &
-              & .or. &
-              & ( k+MyWidth >= size(array,3) .and. &
-              & any(array(i,min(j+1, size(array,2)),1:min(1+MyWidth-1, size(array,3))) &
-              & /= myFillValue) &
-              & )
-            if (.not. myClean) then
-              if ( DumpTheseZeros ) then
-                call say_fill ( (/ i, size(array,1), j-1, size(array,2), &
-                  & k, size(array,3) /), numZeroRows, myFillValue, inc=3 )
-              else
-                numZeroRows = numZeroRows + 1
-              end if
-            end if
-            if ( DumpTheseZeros ) then
-              do l = k, min(k+myWidth-1, size(array,3))
-                call output ( array(i,j,l), format=myFormat )
-              end do
-              call newLine
-              numZeroRows = 0
-            end if
-          end do
-        end do
-      end do
-      call say_fill ( (/ i-1, size(array,1), j-1, size(array,2), &
-        & k-MyWidth, size(array,3) /), numZeroRows, myFillValue )
-    end if
-    call theDumpEnds
+!    include 'dump3db.f9h'
 ! end subroutine DUMP_3D_DOUBLE
 ! $Log$
+! Revision 2.7  2011/07/12 00:11:29  pwagner
+! whoarray dump moved to dump[123]db.f9h
+!
 ! Revision 2.6  2011/04/20 22:25:07  pwagner
 ! Made all dumpnd.f9h files consistent
 !
