@@ -748,10 +748,17 @@ contains ! =====     Public Procedures     =============================
         call get_pcf_id ( fileNameString, path, subString, l2apriori_version, &
           & mlspcf_l2geos5_start, mlspcf_l2geos5_end, 'geos5', got(f_file), &
           & LastGEOS5PCF, returnStatus )
-        FileIndex = InitializeMLSFile(GriddedFile, content = 'gridded', &
-          & name=FilenameString, shortName=shortFileName, &
-          & type=l_hdfeos, access=DFACC_RDONLY, hdfVersion=HDFVERSION_4, &
-          & PCBottom=mlspcf_l2geos5_start, PCTop=mlspcf_l2geos5_end)
+        if (griddedOrigin == l_geos5_7) then ! since geos5_7 is HDF5
+            FileIndex = InitializeMLSFile(GriddedFile, content='gridded', &
+            name=FilenameString, shortName=shortFileName, &
+            type=l_hdf, access=DFACC_RDONLY, hdfVersion=HDFVERSION_5, &
+            PCBottom=mlspcf_l2geos5_start, PCTop=mlspcf_l2geos5_end)
+        else ! and the rest is HDF-EOS
+            FileIndex = InitializeMLSFile(GriddedFile, content = 'gridded', &
+              & name=FilenameString, shortName=shortFileName, &
+              & type=l_hdfeos, access=DFACC_RDONLY, hdfVersion=HDFVERSION_4, &
+              & PCBottom=mlspcf_l2geos5_start, PCTop=mlspcf_l2geos5_end)
+        endif
         GriddedFile%PCFId = LastGEOS5PCF
         FileIndex = AddFileToDataBase(filedatabase, GriddedFile)
 
@@ -1261,6 +1268,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.90  2011/07/13 14:24:46  honghanh
+! Initialize GEOS5.7 file type with l_hdf instead of l_hdfeos
+!
 ! Revision 2.89  2011/07/12 22:35:03  honghanh
 ! Change l_grid to l_hdfeos
 !
