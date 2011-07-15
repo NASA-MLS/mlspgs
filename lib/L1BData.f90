@@ -1552,10 +1552,9 @@ contains ! ============================ MODULE PROCEDURES ======================
   end subroutine BadPadL1BData
 
   !-------------------------------------------------  ReadL1BData_fileHandle  -----
+  ! In time we will do away with most file-handle based interfaces
   subroutine ReadL1BData_fileHandle ( L1FileHandle, QuantityName, L1bData, NoMAFs, Flag, &
     & FirstMAF, LastMAF, NEVERFAIL, hdfVersion, dontPad, L2AUX )
-    
-  use PCFHdr, only: GLOBALATTRIBUTES
     ! Dummy arguments
     character(len=*), intent(in)   :: QUANTITYNAME ! Name of SD to read
     integer, intent(in)            :: L1FILEHANDLE ! From HDF
@@ -1570,11 +1569,11 @@ contains ! ============================ MODULE PROCEDURES ======================
     logical, intent(in), optional  :: DONTPAD ! Don't try to pad even if gappy
 
     ! Local variables
+    type(MLSFile_T), target :: f
+    type(MLSFile_T), pointer :: fp
     integer :: myhdfVersion
-    logical :: myDontPad
-    type(l1bdata_t) :: L1BDATATMP
-    logical :: isScalar
-    logical, parameter :: DEEBug = .false.
+    ! logical, parameter :: DEEBug = .false.
+    integer :: status
 
     ! Executable code
     if ( present(hdfVersion) ) then
@@ -1582,692 +1581,18 @@ contains ! ============================ MODULE PROCEDURES ======================
     else
       myhdfVersion = L1BDEFAULT_HDFVERSION
     end if
-    ! print * 'hdfVersion: ', hdfVersion
-    myDontPad = .false.
-    if ( present(firstMAF) ) myDontPad = .true.
-    if ( present(dontPad) ) myDontPad = dontPad
-
-    if ( myhdfVersion == HDFVERSION_4 ) then
-      call ReadL1BData_FH_hdf4 ( L1FileHandle, trim(QuantityName), L1bData, &
-      & NoMAFs, Flag, FirstMAF, LastMAF, NEVERFAIL, L2AUX )
-      if ( flag /= 0 ) NOMAFS = -1
-    else
-      call ReadL1BData_FH_hdf5 ( L1FileHandle, trim(QuantityName), L1bData, &
-      & NoMAFs, Flag, FirstMAF, LastMAF, NEVERFAIL, L2AUX )
-      !Unfortunately, hdf5-formatted l1b data have different shapes from hdf4
-      ! E.g., for MAFStartTimeTAI we obtain the following
-      !  hdfVERSION      shape
-      !     4           1   1   5
-      !     5           5   1   1
-      if ( Flag == 0 ) then
-        call Reshape_for_hdf4(L1bData)
-      else
-        call MLSMessage ( MLSMSG_Warning, ModuleName // '/ReadL1BData_fileHandle', &
-        & 'Failed to find '//trim(QuantityName)//' in l1b files')
-        NOMAFS = -1
-        ! call outputNamedValue( 'noMAFs', noMAFs )
-        ! call outputNamedValue( 'Flag', Flag )
-        ! call output( 'returning now', advance='yes' )
-        return
-      end if
-    end if
-    isScalar = ( l1bData%noMAFs < 2 ) ! There may be a better way to decide
-    if ( myDontPad .or. flag /= 0 .or. isScalar .or. &
-      & (GlobalAttributes%FirstMAFCtr > GlobalAttributes%LastMAFCtr) ) return
-    if ( .not. IsL1BGappy(l1bData) ) return
-    ! Must pad l1bdata; so first copy to temp l1bData
-    if ( associated(l1bdata%dpField) .and. DEEBug ) then
-      ! print *, 'max(l1bdata) ', maxval(l1bdata%dpField(1,1,:))
-      ! print *, 'min(l1bdata) ', minval(l1bdata%dpField(1,1,:))
-    endif
-    call cpL1bData(l1bdata, l1bdataTmp)
-    if ( associated(l1bdatatmp%dpField) .and. DEEBug ) then
-      ! print *, 'max(l1bdatatmp) ', maxval(l1bdatatmp%dpField(1,1,:))
-      ! print *, 'min(l1bdatatmp) ', minval(l1bdatatmp%dpField(1,1,:))
-    endif
-    call deallocatel1bData(l1bdata)
-    if ( GlobalAttributes%LastMAFCtr > 0 ) &
-      & NoMAFs = GlobalAttributes%LastMAFCtr - GlobalAttributes%FirstMAFCtr + 1
-    if ( DEEBug ) print *, 'preparing to pad'
-    if ( DEEBug ) print *, 'GlobalAttributes%FirstMAFCtr ', GlobalAttributes%FirstMAFCtr
-    if ( DEEBug ) print *, 'GlobalAttributes%LastMAFCtr ', GlobalAttributes%LastMAFCtr
-    if ( DEEBug ) print *, 'NoMAFs ', NoMAFs
-    if ( present(firstMAF) .and. present(lastMAF)) then
-      call PadL1BData(l1bdataTmp, l1bData, FirstMAF, LastMAF, NoMAFs)
-      call deallocatel1bData(l1bdataTmp)
-      return
-    endif
-    call BadPadL1BData(l1bdataTmp, l1bData, GlobalAttributes%FirstMAFCtr, NoMAFs)
-    call deallocatel1bData(l1bdataTmp)
-    if ( .not. present(firstMAF) .and. .not. present(lastMAF) ) return
-    ! Need to contract padded l1bdata to just those MAFs requested
-    call cpL1bData(l1bdata, l1bdataTmp)
-    call deallocatel1bData(l1bdata)
-    if ( DEEBug ) print *, 'preparing to contract'
-    call ContractL1BData(l1bdataTmp, l1bData, noMAFs, firstMAF, lastMAF)
-    call deallocatel1bData(l1bdataTmp)
+    
+    ! Set up an MLSFile instance
+    status = InitializeMLSFile( f, content='l1b', &
+      & shortname='l1b', type=l_hdf, access=DFACC_RDONLY )
+    f%fileID%f_id = L1FileHandle
+    f%stillOpen = .true.
+    f%hdfVersion = myhdfVersion
+    fp => f
+    call ReadL1BData_MLSFile ( fp, QuantityName, L1bData, NoMAFs, Flag, &
+      & FirstMAF, LastMAF, NEVERFAIL, dontPad, L2AUX )
+    return
   end subroutine ReadL1BData_fileHandle
-
-  !--------------------------------------------  ReadL1BData_FH_hdf4  -----
-  subroutine ReadL1BData_FH_hdf4 ( L1FileHandle, QuantityName, L1bData, &
-    & NoMAFs, Flag, FirstMAF, LastMAF, NEVERFAIL, L2AUX )
-    
-    ! Dummy arguments
-    character(len=*), intent(in)   :: QUANTITYNAME ! Name of SD to read
-    integer, intent(in)            :: L1FILEHANDLE ! From HDF
-    integer, intent(in), optional  :: FIRSTMAF ! First to read (default 0)
-    integer, intent(in), optional  :: LASTMAF ! Last to read (default last in file)
-    logical, intent(in), optional  :: NEVERFAIL ! Don't quit if TRUE
-    logical, intent(in), optional  :: L2AUX     ! Don't even warn if TRUE
-    type(l1bdata_t), intent(inout) :: L1BDATA ! Result
-    integer, intent(out) :: FLAG        ! Error flag
-    integer, intent(out) :: NOMAFS      ! Number actually read
-
-    ! Local Parameters
-    character (len=*), parameter :: INPUT_ERR = 'Error in input argument '
-    integer, parameter :: MAX_VAR_DIMS = 32
-    integer, parameter :: SD_NO_COUNTERMAF = -2
-
-    ! Local Variables
-
-    character (len=128) :: DUMMY        ! Dummy quantity name
-
-    integer :: ALLOC_ERR
-    integer :: DATA_TYPE
-    integer :: DIM_SIZES(MAX_VAR_DIMS)
-    integer :: I
-    logical :: MyNeverFail
-    integer :: N_ATTRS
-    integer :: NUMMAFS
-    integer :: RANK
-    integer :: SDS1_ID
-    integer :: SDS2_ID
-    integer :: SDS_INDEX
-    integer :: STATUS
-
-    integer, dimension(:), pointer :: EDGE
-    integer, dimension(:), pointer :: START
-    integer, dimension(:), pointer :: STRIDE
-
-    real(r4), pointer, dimension(:,:,:) :: tmpR4Field
-    logical :: isL2AUX
-
-    ! Executable code
-    call deallocateL1BData ( l1bData ) ! Avoid memory leaks
-
-    nullify ( edge, start, stride, tmpR4Field )
-    flag = 0
-    MyNeverFail = .false.
-    if ( present(NeverFail) ) MyNeverFail = NeverFail
-    isL2AUX = .false.
-    if ( present(l2AUX) ) isL2AUX = L2AUX
-
-    ! Find data sets for counterMAF & quantity by name
-
-    sds_index = sfn2index(L1FileHandle, 'counterMAF')
-    if ( sds_index == -1 ) then
-      if ( .not. JUSTLIKEL2AUX ) then
-        flag = NOCOUNTERMAFINDX
-        if ( MyNeverFail ) return
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Failed to find index of counterMAF data set.')
-      else
-        sds1_id = SD_NO_COUNTERMAF
-      end if
-    else
-
-      sds1_id = sfselect(L1FileHandle, sds_index)
-      if ( sds1_id == -1 ) then
-        flag = NOCOUNTERMAFID
-        if ( MyNeverFail ) return
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Failed to find identifier of counterMAF data set.')
-      end if
-    end if
-
-    sds_index = sfn2index(L1FileHandle, quantityName)
-    if ( sds_index == -1 ) then
-      flag = NOQUANTITYINDEX
-      if ( MyNeverFail ) return
-      dummy = 'Failed to find index of quantity "' // trim(quantityName) // &
-        & '" data set.'
-      call MLSMessage ( MLSMSG_Error, ModuleName, dummy )
-    end if
-
-    sds2_id = sfselect(L1FileHandle, sds_index)
-    if ( sds2_id == -1 ) then
-      flag = NODATASETID
-      if ( MyNeverFail ) return
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Failed to find identifier of data set matching the index.')
-    end if
-
-    ! Find rank (# of dimensions), dimension sizes of quantity data set
-    status = sfginfo ( sds2_id, dummy, rank, dim_sizes, data_type, &
-      n_attrs )
-
-    if ( status == -1 ) then
-      flag = NODATASETRANK
-      if ( MyNeverFail ) return
-      call MLSMessage ( MLSMSG_Error, ModuleName,&
-      & 'Failed to find rank of data set.')
-    end if
-
-    ! allocate, based on above SD, dim info
-    call allocate_test ( edge,   rank, 'edge',   ModuleName )
-    call allocate_test ( start,  rank, 'start',  ModuleName )
-    call allocate_test ( stride, rank, 'stride', ModuleName )
-
-    ! Set "slab" dimensions
-    edge = dim_sizes(1:rank)
-    start = 0
-    stride = 1
-
-    ! Fill in "indexing" values of l1b object
-
-    l1bData%L1BName = quantityName
-    l1bData%TrueRank = rank
-
-    l1bData%noAuxInds = product(dim_sizes(1:rank-2))
-    l1bData%maxMIFs = 1
-    if ( rank > 1 ) l1bData%maxMIFs = dim_sizes(rank-1)
-
-    ! Check input arguments, set noMAFs
-
-    numMAFs = dim_sizes(rank)
-
-    if ( present ( firstMAF ) ) then
-      if ( (firstMAF >= numMAFs) .or. (firstMAF < 0) ) then
-        flag = FIRSTMAFNOTFOUND
-        if ( MyNeverFail ) return
-        call MLSMEssage ( MLSMSG_Error, ModuleName, &
-        & input_err // 'firstMAF (bad chunkNo?)' )
-      end if
-      l1bData%firstMAF = firstMAF
-    else
-      l1bData%firstMAF = 0
-    end if
-
-    if ( present (lastMAF) ) then
-      if ( lastMAF < l1bData%firstMAF ) then
-        flag = LASTMAFNOTFOUND
-        if ( MyNeverFail ) return
-        call MLSMEssage ( MLSMSG_Error, ModuleName, &
-        & input_err // 'last' )
-      end if
-      if ( lastMAF >= numMAFs ) then
-        l1bData%noMAFs = numMAFs - l1bData%firstMAF
-      else
-        l1bData%noMAFs = lastMAF - l1bData%firstMAF + 1
-      end if
-    else
-      l1bData%noMAFs = numMAFs - l1bData%firstMAF
-    end if
-
-    noMAFs = l1bData%noMAFs
-    edge(rank) = l1bData%noMAFs
-    start(rank) = l1bData%firstMAF
-
-    ! allocate, read counterMAF
-    call Allocate_test ( l1bData%counterMaf, l1bData%noMAFs, &
-      & 'counterMAF', ModuleName )
-    if ( sds1_id /= SD_NO_COUNTERMAF ) then
-      status = sfrdata_f90(sds1_id,  (/ l1bData%firstMAF /) , (/1/), &
-        & (/l1bData%noMAFs/), l1bData%counterMAF )
-      if ( status == -1 ) then
-        flag = CANTREADCOUNTERMAF
-        if ( MyNeverFail ) return
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_L1BRead // 'counterMAF.' )
-      end if
-    else
-      ! Since we aren't reading these, just make them internally consistent
-      do i = 1, l1bData%noMAFs
-        l1bData%counterMAF(i) = l1bData%firstMAF + i - 1
-      end do
-    end if
-
-    l1bData%FirstMAFCtr = myminval(l1bData%counterMAF)
-    l1bData%LastMAFCtr = maxval(l1bData%counterMAF)
-    ! allocate, read according to field type; nullify unused pointers
-    select case ( data_type )
-
-    case ( DFNT_CHAR8 ) ! ----------------------- character
-      allocate ( l1bData%charField(l1bData%noAuxInds,l1bData%maxMIFs, &
-        & l1bData%noMAFs), STAT=alloc_err )
-      if ( alloc_err /= 0 ) then
-        flag = CANTALLOCATECHARS
-        if ( MyNeverFail ) return
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_allocate // ' charField pointer.' )
-      end if
-      nullify (l1bData%intField, l1bData%dpField)
-      l1bdata%data_type = 'character'
-      status = sfrcdata ( sds2_id, start, stride, edge, &
-        & l1bData%charField )
-
-    case ( DFNT_INT32 ) ! ------------------------------ integer
-      call allocate_test ( l1bData%intField, &
-        & l1bData%noAuxInds, l1bData%maxMIFs, l1bData%noMAFs, &
-        & 'l1bData%intField', ModuleName )
-      nullify ( l1bData%charField, l1bData%dpField )
-      l1bdata%data_type = 'integer'
-      status = sfrdata_f90 ( sds2_id, start, stride, edge, &
-          l1bData%intField )
-
-    case ( DFNT_FLOAT64 ) ! ------------------------------ real (r8)
-      call allocate_test ( l1bData%dpField, &
-        & l1bData%noAuxInds, l1bData%maxMIFs, l1bData%noMAFs, &
-        & 'l1bData%dpField', ModuleName )
-      nullify ( l1bData%charField, l1bData%intField )
-      l1bdata%data_type = 'double'
-      status = sfrdata_f90 ( sds2_id, start, stride, edge, &
-          l1bData%dpField )
-
-    case ( DFNT_FLOAT32 ) ! ------------------------------ real (r4)
-      call allocate_test ( l1bData%dpField, &
-        & l1bData%noAuxInds, l1bData%maxMIFs, l1bData%noMAFs, &
-        & 'l1bData%dpField', ModuleName )
-      nullify ( l1bData%charField, l1bData%intField )
-      l1bdata%data_type = 'double'
-
-      call allocate_test ( tmpr4Field, &
-        & l1bData%noAuxInds, l1bData%maxMIFs, l1bData%noMAFs, &
-        & 'tmpR4Field', ModuleName )
-      status = sfrdata_f90 ( sds2_id, start, stride, edge, &
-          tmpR4Field )
-      l1bData%dpField = tmpR4Field
-      
-      call deallocate_test ( tmpr4Field, 'tmpr4Field', ModuleName )
-
-    case default
-      status = -2
-    end select ! ----------------------------------------------------
-
-    if ( status == -1 ) then
-      flag = CANTREAD3DFIELD
-      if ( MyNeverFail ) return
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_L1BRead // quantityName )
-    else if ( status == -2 ) then
-      flag = UNKNOWNDATATYPE
-      if ( MyNeverFail ) return
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unknown data type in readl1bData'   )
-    end if
-
-    ! Terminate access to the data sets
-    
-    if ( sds1_id /= SD_NO_COUNTERMAF ) then
-      status = sfendacc(sds1_id)
-      if ( status == -1 ) then
-        flag = CANTENDCOUNTERMAF
-        if ( MyNeverFail ) return
-        call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          & 'Failed to terminate access to data sets.' )
-        flag = -1
-      end if
-    end if
-
-    status = sfendacc(sds2_id)
-    if ( status == -1 ) then
-      flag = CANTENDQUANTITY
-      if ( MyNeverFail ) return
-      call MLSMessage ( MLSMSG_Warning, ModuleName, &
-        & 'Failed to terminate access to data sets.' )
-      flag = -1
-    end if
-
-    ! deallocate local variables
-    call Deallocate_test ( edge,   'edge',   ModuleName )
-    call Deallocate_test ( start,  'start',  ModuleName )
-    call Deallocate_test ( stride, 'stride', ModuleName )
-
-  end subroutine ReadL1BData_FH_hdf4
-
-  !--------------------------------------------  ReadL1BData_FH_hdf5  -----
-  subroutine ReadL1BData_FH_hdf5 ( L1FileHandle, QuantityName, L1bData, NoMAFs, &
-    & Flag, FirstMAF, LastMAF, NEVERFAIL, L2AUX )
-    use HDF5, only: HSIZE_T
-    use MLSHDF5, only: ISHDF5DSPRESENT, LOADFROMHDF5DS, &
-      & GETHDF5DSRANK, GETHDF5DSDIMS, GETHDF5DSQTYPE
-! use MLSAuxData, only: MLSAuxData_T, Read_MLSAuxData, Deallocate_MLSAuxData
-    
-    ! Dummy arguments
-    character(len=*), intent(in)   :: QUANTITYNAME ! Name of SD to read
-    integer, intent(in)            :: L1FILEHANDLE ! From HDF
-    integer, intent(in), optional  :: FIRSTMAF ! First to read (default 0)
-    integer, intent(in), optional  :: LASTMAF ! Last to read (default last/file)
-    logical, intent(in), optional  :: NEVERFAIL ! Don't quit if TRUE
-    logical, intent(in), optional  :: L2AUX     ! Don't even warn if TRUE
-    type(l1bdata_t), intent(inout) :: L1BDATA ! Result
-    integer, intent(out) :: FLAG        ! Error flag
-    integer, intent(out) :: NOMAFS      ! Number actually read
-
-    ! Local Parameters
-    character (len=*), parameter :: INPUT_ERR = 'Error in input argument '
-    ! integer, parameter :: MAX_NOMAFS = 7000     ! Expect ~3500 in one day
-    integer, parameter :: SD_NO_COUNTERMAF = -2
-    ! integer, dimension(:), pointer :: cm_array
-
-    ! Local Variables
-
-    character (len=128) :: DUMMY        ! Dummy quantity name
-
-    character(len=1) :: Char_rank
-    integer :: I
-    integer :: MAFoffset
-    logical :: MyNeverFail
-    integer :: NUMMAFS
-    integer :: RANK
-    integer :: CMRANK
-    character(len=16) :: QTYPE
-    integer :: SDS1_ID
-    integer :: STATUS
-
-    integer(kind=hSize_t), dimension(:), pointer :: DIMS
-    integer(kind=hSize_t), dimension(:), pointer :: MAXDIMS
-    integer(kind=hSize_t), dimension(:), pointer :: CMDIMS
-    integer(kind=hSize_t), dimension(:), pointer :: CMMAXDIMS
-
-    logical, parameter           :: DEEBUG = .false.
-    logical :: isL2AUX
-
-    ! Executable code
-    call MLSMessageCalls( 'push', constantName='ReadL1BData_FH_hdf5' )
-    if ( present(FirstMAF) ) then
-      MAFoffset = max(0, FirstMAF)   ! Never let this be < 0
-    endif
-    call deallocateL1BData ( l1bData ) ! Avoid memory leaks
-    sds1_id = 0
-
-    flag = 0
-    MyNeverFail = .false.
-    if ( present(NeverFail) ) MyNeverFail = NeverFail
-    isL2AUX = .false.
-    if ( present(l2AUX) ) isL2AUX = L2AUX
-
-    if ( .not. IsHDF5DSPresent(L1FileHandle, QuantityName) ) then
-      flag = NOQUANTITYINDEX
-      ! print *, 'Oops--' // trim(QuantityName) // ' not here'
-      if ( MyNeverFail ) return
-      dummy = 'Failed to find index of quantity "' // trim(quantityName) // &
-        & '" data set.'
-      call MLSMessage ( MLSMSG_Error, ModuleName, dummy )
-    end if
-    
-    ! Find Qtype, rank and dimensions of QuantityName
-    ! print*, ' Find Qtype, rank and dimensions of QuantityName ', trim(QuantityName)
-    call GetHDF5DSRank(L1FileHandle, QuantityName, rank)
-    ! Note yet able to read scalar datasets (a bug or a feature?)
-    if ( rank < 1 ) then
-      flag = CANTREADSCALARDS
-      if ( MyNeverFail ) return
-      dummy = 'Not yet able to read apparently scalar quantity "' // trim(quantityName) // &
-        & '" data set.'
-      call MLSMessage ( MLSMSG_Error, ModuleName, dummy )
-    endif
-    l1bData%TrueRank = rank
-    allocate ( dims(rank), maxDims(rank) )
-    call GetHDF5DSDims(L1FileHandle, QuantityName, dims, maxDims)
-    call GetHDF5DSQType ( L1FileHandle, QuantityName, Qtype )
-    if ( DEEBug ) print *, 'L1FileHandle ', L1FileHandle
-    if ( DEEBug ) print *, 'QuantityName ', trim(QuantityName)
-    if ( DEEBug ) print *, 'rank ', rank
-    if ( DEEBug ) print *, 'maxDims ', maxDims
-    if ( DEEBug ) print *, 'dims ', dims
-    if ( DEEBug ) print *, 'Qtype ', Qtype
-    if ( present(firstMAF) .and. DEEBug ) print *, 'firstMAF ', firstMAF
-    if ( present(LastMAF) .and. DEEBug ) print *, 'LastMAF ', LastMAF
-
-    l1bData%noAuxInds = product(dims(1:rank-2))
-    l1bData%maxMIFs = 1
-    if ( rank > 1 ) l1bData%maxMIFs = dims(rank-1)
-
-    ! Check input arguments, set noMAFs
-
-    numMAFs = dims(rank)
-
-    if ( present ( firstMAF ) ) then
-      if ( (firstMAF >= numMAFs) .or. (firstMAF < 0) ) then
-        flag = FIRSTMAFNOTFOUND
-        if ( MyNeverFail ) return
-        call MLSMEssage ( MLSMSG_Error, ModuleName, &
-        & input_err // 'firstMAF (bad chunkNo?)' )
-      end if
-      l1bData%firstMAF = firstMAF
-    else
-      l1bData%firstMAF = 0
-    end if
-
-    if ( present (lastMAF) ) then
-      if ( lastMAF < l1bData%firstMAF ) then
-        flag = LASTMAFNOTFOUND
-        if ( MyNeverFail ) return
-        call dump( (/lastMAF, l1bData%firstMAF/), 'lastMAF, l1bData%firstMAF')
-        call MLSMEssage ( MLSMSG_Error, ModuleName, &
-        & input_err // 'last' )
-      end if
-      if ( lastMAF >= numMAFs ) then
-        l1bData%noMAFs = numMAFs - l1bData%firstMAF
-      else
-        l1bData%noMAFs = lastMAF - l1bData%firstMAF + 1
-      end if
-    else
-      l1bData%noMAFs = numMAFs - l1bData%firstMAF
-    end if
-
-    if ( DEEBug ) print *, 'l1bData%noMAFs ', l1bData%noMAFs
-    l1bData%L1BName = quantityName
-
-    noMAFs = l1bData%noMAFs
-    if ( DEEBug ) print *, 'noMAFs ', noMAFs
-
-    call Allocate_test ( l1bData%counterMaf, l1bData%noMAFs, &
-      & 'counterMAF', ModuleName )
-    ! Find data sets for counterMAF & quantity by name
-
-    if ( .not. IsHDF5DSPresent(L1FileHandle, '/counterMAF') ) then
-      if ( DEEBUG) print *, 'no counterMAF array in file'
-      if ( .not. JUSTLIKEL2AUX ) then
-        flag = NOCOUNTERMAFINDX
-        if ( MyNeverFail ) return
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Failed to find index of counterMAF data set.')
-      else
-        if ( .not. isL2AUX ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
-        & 'Failed to find index of counterMAF data set.')
-        sds1_id = SD_NO_COUNTERMAF
-        ! Since we aren't reading these, just make them internally consistent
-        do i = 1, l1bData%noMAFs
-          l1bData%counterMAF(i) = l1bData%firstMAF + i - 1
-        end do
-      end if
-    else
-      if ( DEEBUG) print *, 'Getting counterMAF rank'
-      call GetHDF5DSRank(L1FileHandle, '/counterMAF', cmrank)
-      if ( DEEBUG) print *, cmrank
-      allocate ( cmdims(cmrank), cmmaxDims(cmrank) )
-      if ( DEEBUG) print *, 'getting counterMAF dims'
-      call GetHDF5DSDims(L1FileHandle, '/counterMAF', cmdims, cmmaxDims)
-      if ( DEEBUG) print *, cmdims, cmmaxDims
-      ! allocate(countermaf_ptr(MAX_NOMAFS))
-      ! countermaf_ptr = 0
-      if ( present(FirstMAF) ) then
-        if ( DEEBUG) print *, 'reading counterMAF ', MAFoffset, l1bData%noMAFs
-        call LoadFromHDF5DS(L1FileHandle, '/counterMAF', l1bData%counterMaf, &
-          & (/MAFoffset/), (/l1bData%noMAFs/) )
-      elseif ( cmdims(1) /= l1bData%noMAFs ) then
-        flag = CANTREADCOUNTERMAF
-        if ( MyNeverFail ) then
-          deallocate(dims, maxDims, cmdims, cmmaxdims)
-          return
-        endif
-        call output('Quantity name: ', advance = 'no')
-        call output(Quantityname, advance = 'yes')
-        call output('Quantity rank: ', advance = 'no')
-        call output(rank, advance = 'yes')
-        call output('Quantity dims: ', advance = 'no')
-        call output(int(dims), advance = 'yes')
-        call output('Quantity noMAFs: ', advance = 'no')
-        call output(l1bData%noMAFs, advance = 'yes')
-        call output('counterMAF dims: ', advance = 'no')
-        call output(int(cmdims), advance = 'yes')
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Sorry--ReadL1BData_hdf5 says counterMaf sized differently from ' &
-          & // trim(QuantityName) )
-      else
-        if ( DEEBUG) print *, 'reading counterMAF '
-        ! This intermediate cm_array shouldn't be necessary 
-        ! unfortunately, w/o it sometimes hdf5 bombs
-        ! allocate(cm_array(cmdims(1)), stat=status)
-        ! allocate(cm_array(MAX_NOMAFS), stat=status)
-        ! call LoadFromHDF5DS(L1FileHandle, '/counterMAF', cm_array)
-        ! l1bData%counterMaf = cm_array(1:cmdims(1))
-        ! deallocate(cm_array)
-        call LoadFromHDF5DS(L1FileHandle, '/counterMAF', l1bData%counterMaf)
-      end if
-      if ( DEEBUG) print *, 'deallocating counterMAF dims'
-      deallocate(cmdims, cmmaxdims)
-    end if
-
-    if ( DEEBUG) print *, 'computing FirstMAFCtr'
-    l1bData%FirstMAFCtr = myminval(l1bData%counterMAF)
-    if ( DEEBUG) print *, 'computing LastMAFCtr'
-    l1bData%LastMAFCtr = maxval(l1bData%counterMAF)
-    if ( DEEBUG) print *, 'l1bData%FirstMAFCtr ', l1bData%FirstMAFCtr
-    if ( DEEBUG) print *, 'l1bData%LastMAFCtr ', l1bData%LastMAFCtr
-    if ( DEEBUG) print *, 'About to use LoadFromHDF5DS to read ', trim(QuantityName)
-    if ( DEEBUG) print *, 'dims ', dims
-    if ( DEEBUG) print *, 'noMAFs ', l1bData%noMAFs
-    write(Char_rank, '(i1)') rank
-    if ( DEEBUG) print *, trim(Qtype) // Char_rank
-    if ( DEEBUG .and. present(FirstMAF) ) then
-      print *, 'FirstMAF-1 ', FirstMAF-1
-      print *, 'MAFoffset ', MAFoffset
-      print *, 'l1bData%noMAFs ', l1bData%noMAFs
-    endif
-    
-    ! The following is a crude and despicable hack
-    ! Please repair GetHDF5DSQType and delete these lines
-    if ( Qtype == 'unknown' ) Qtype = 'character'
-
-    select case (trim(Qtype) // Char_rank)
-    case ('real1')
-      allocate( l1bData%DpField(l1bData%noMAFs, 1, 1),stat=status)
-      if ( present(FirstMAF) ) then                                          
-        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField(:,1,1), &
-          & (/MAFoffset/), (/l1bData%noMAFs/) )                                      
-      else                                                                   
-        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField(:,1,1))  
-      end if                                                                  
-      l1bdata%data_type = 'double'
-    case ('real2')
-      allocate( l1bData%DpField(dims(1),l1bData%noMAFs, 1),stat=status)
-      if ( present(FirstMAF) ) then                                          
-        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField(:,:,1), &
-          & (/0,MAFoffset/), (/int(dims(1)),l1bData%noMAFs/) )                                      
-      else                                                                   
-        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField(:,:,1))  
-      end if                                                                  
-      l1bdata%data_type = 'double'
-    case ('real3')
-      allocate( l1bData%DpField(dims(1),dims(2),l1bData%noMAFs),stat=status)
-      if ( present(FirstMAF) ) then                                          
-        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField, &
-          & (/0,0,MAFoffset/), (/int(dims(1)),int(dims(2)),l1bData%noMAFs/) )                                      
-      else                                                                   
-        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField)  
-      endif                                                                  
-      l1bdata%data_type = 'double'
-    case ('double1')
-      allocate( l1bData%DpField(l1bData%noMAFs, 1, 1),stat=status)
-      if ( present(FirstMAF) ) then                                          
-        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField(:,1,1), &
-          & (/MAFoffset/), (/l1bData%noMAFs/) )                                      
-      else                                                                   
-        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField(:,1,1))  
-      end if                                                                  
-      l1bdata%data_type = 'double'
-    case ('double2')
-      allocate( l1bData%DpField(dims(1),l1bData%noMAFs, 1),stat=status)
-      if ( present(FirstMAF) ) then                                          
-        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField(:,:,1), &
-          & (/0,MAFoffset/), (/int(dims(1)),l1bData%noMAFs/) )                                      
-      else                                                                   
-        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField(:,:,1))  
-      end if                                                                  
-      l1bdata%data_type = 'double'
-    case ('double3')    
-      allocate( l1bData%DpField(dims(1),dims(2),l1bData%noMAFs),stat=status)
-      if ( present(FirstMAF) ) then                                          
-        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField, &
-          & (/0,0,MAFoffset/), (/int(dims(1)),int(dims(2)),l1bData%noMAFs/) )                                      
-      else                                                                   
-        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField)  
-      endif                                                                  
-      l1bdata%data_type = 'double'
-    case ('integer1')  
-      allocate( l1bData%intField(l1bData%noMAFs, 1, 1),stat=status)
-      if ( present(FirstMAF) ) then                                          
-        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%intField(:,1,1), &
-          & (/MAFoffset/), (/l1bData%noMAFs/) )                                      
-      else                                                                   
-        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%intField(:,1,1))  
-      end if                                                                  
-      ! call MLSMessage ( MLSMSG_Error, ModuleName, &
-      ! & 'Sorry--LoadFromHDF5DS not yet written for type integer(:).')
-      l1bdata%data_type = 'integer'
-    case ('integer2')
-      allocate( l1bData%IntField(dims(1),l1bData%noMAFs, 1),stat=status)
-      if ( present(FirstMAF) ) then                                          
-        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%IntField(:,:,1), &
-          & (/0,MAFoffset/), (/int(dims(1)),l1bData%noMAFs/) )                                      
-      else                                                                   
-        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%IntField(:,:,1))  
-      end if                                                                  
-      l1bdata%data_type = 'integer'
-    case ('integer3')  
-      allocate( l1bData%IntField(dims(1),dims(2),l1bData%noMAFs),stat=status)
-      if ( present(FirstMAF) ) then                                          
-        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%IntField, &
-          & (/0,0,MAFoffset/), (/int(dims(1)),int(dims(2)),l1bData%noMAFs/) )                                      
-      else                                                                   
-        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%IntField)  
-      endif                                                                  
-!     call MLSMessage ( MLSMSG_Error, ModuleName, &
-!     & 'Sorry--LoadFromHDF5DS not yet written for type integer(:,:,:).')
-      l1bdata%data_type = 'integer'
-    case ('character1')  
-      allocate( l1bData%charField(l1bData%noMAFs, 1, 1),stat=status)
-      if ( present(FirstMAF) ) then                                          
-        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%charField(:,1,1), &
-          & (/MAFoffset/), (/l1bData%noMAFs/) )                                      
-      else                                                                   
-        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%charField(:,1,1))  
-      end if                                                                  
-      ! call MLSMessage ( MLSMSG_Error, ModuleName, &
-      ! & 'Sorry--LoadFromHDF5DS not yet written for type character(:).')
-      l1bdata%data_type = 'character'
-    case ('character3') 
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Sorry--LoadFromHDF5DS not yet rewritten for type char(:,:,:).')
-      l1bdata%data_type = 'integer'
-    case default 
-      l1bdata%data_type = 'unknown'
-      flag = UNKNOWNDATATYPE
-      deallocate(dims, maxDims)
-      if ( MyNeverFail ) return
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Sorry--ReadL1BData_hdf5 has encountered an unknown data type: ' &
-        & // trim(Qtype) // Char_rank)
-    end select
-    if ( DEEBUG ) call dump(l1bData, 0)
-    
-    ! Avoid memory leaks
-    deallocate(dims, maxDims)
-    call MLSMessageCalls( 'pop' )
-  end subroutine ReadL1BData_FH_hdf5
 
   !-------------------------------------------------  ReadL1BData_MLSFile  -----
   subroutine ReadL1BData_MLSFile ( L1BFile, QuantityName, L1bData, NoMAFs, Flag, &
@@ -2683,6 +2008,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     character (len=128) :: DUMMY        ! Dummy quantity name
 
     character(len=1) :: Char_rank
+    real(r8), dimension(:,:,:,:), pointer :: DP4Buf => null()
     integer :: I
     integer :: L1FileHandle
     integer :: MAFoffset
@@ -2901,6 +2227,25 @@ contains ! ============================ MODULE PROCEDURES ======================
         call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField)  
       endif                                                                  
       l1bdata%data_type = 'double'
+    case ('real4')    
+      allocate( &
+        & l1bData%DpField(dims(1)*dims(2),dims(3),l1bData%noMAFs),stat=status &
+        & )
+      call allocate_test( DP4Buf, &
+        & int(dims(1)), int(dims(2)), int(dims(3)), int(dims(4)), &
+        & 'DP4Buf', ModuleName )
+      if ( present(FirstMAF) ) then                                          
+        call LoadFromHDF5DS( L1FileHandle, QuantityName, DP4Buf, &
+          & (/0,0,0,MAFoffset/), &
+          & (/int(dims(1)),int(dims(2)),int(dims(3)),l1bData%noMAFs/) )                                      
+      else                                                                   
+        call LoadFromHDF5DS( L1FileHandle, QuantityName, DP4Buf)   
+      endif
+      l1bData%DpField = reshape( DP4Buf, &
+        & (/ int(dims(1)*dims(2)), int(dims(3)), l1bData%noMAFs /) )
+      call deallocate_test( DP4Buf, &
+        & 'DP4Buf', ModuleName )
+      l1bdata%data_type = 'double'
     case ('double1')
       allocate( l1bData%DpField(l1bData%noMAFs, 1, 1),stat=status)
       if ( present(FirstMAF) ) then                                          
@@ -2927,6 +2272,25 @@ contains ! ============================ MODULE PROCEDURES ======================
       else                                                                   
         call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField)  
       endif                                                                  
+      l1bdata%data_type = 'double'
+    case ('double4')    
+      allocate( &
+        & l1bData%DpField(dims(1)*dims(2),dims(3),l1bData%noMAFs),stat=status &
+        & )
+      call allocate_test( DP4Buf, &
+        & int(dims(1)), int(dims(2)), int(dims(3)), int(dims(4)), &
+        & 'DP4Buf', ModuleName )
+      if ( present(FirstMAF) ) then                                          
+        call LoadFromHDF5DS( L1FileHandle, QuantityName, DP4Buf, &
+          & (/0,0,0,MAFoffset/), &
+          & (/int(dims(1)),int(dims(2)),int(dims(3)),l1bData%noMAFs/) )                                      
+      else                                                                   
+        call LoadFromHDF5DS( L1FileHandle, QuantityName, DP4Buf)   
+      endif
+      l1bData%DpField = reshape( DP4Buf, &
+        & (/ int(dims(1)*dims(2)), int(dims(3)), l1bData%noMAFs /) )
+      call deallocate_test( DP4Buf, &
+        & 'DP4Buf', ModuleName )
       l1bdata%data_type = 'double'
     case ('integer1')  
       allocate( l1bData%intField(l1bData%noMAFs, 1, 1),stat=status)
@@ -3306,6 +2670,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.91  2011/07/15 23:31:06  pwagner
+! Can now read 4d l1b data types; removed redundant code
+!
 ! Revision 2.90  2011/07/07 00:30:03  pwagner
 ! Treats diffs of l1bdata types with periods
 !
