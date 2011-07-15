@@ -216,6 +216,7 @@ module DUMP_0
     module procedure DUMP_3D_CHAR, DUMP_3D_DOUBLE, DUMP_3D_INTEGER
     module procedure DUMP_3D_REAL, DUMP_3D_COMPLEX, DUMP_3D_DCOMPLEX
     module procedure DUMP_HASH_LOG, DUMP_HASH_STR, DUMP_STRLIST
+    module procedure DUMP_4D_DOUBLE, DUMP_4D_REAL
   end interface
 
   interface DUMP_2x2xN ! For polarized incremental optical depth
@@ -1498,6 +1499,54 @@ contains
     include 'dump3d.f9h'
     include 'dump3db.f9h'
   end subroutine DUMP_3D_REAL
+
+  ! ---------------------------------------------  DUMP_4D_DOUBLE  -----
+  subroutine DUMP_4D_DOUBLE ( ARRAY, NAME, &
+    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
+    double precision, intent(in) :: ARRAY(:,:,:,:)
+    character(len=*), intent(in), optional :: NAME
+    double precision, intent(in), optional :: FILLVALUE
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    integer, intent(in), optional :: LBOUND
+    character(len=*), intent(in), optional :: options
+
+    integer :: I, J, K, L
+    integer :: NumZeroRows
+    double precision :: myFillValue
+    character(len=64) :: myFormat
+    integer :: nUnique
+    integer :: MyWidth
+    integer, dimension(MAXNUMELEMENTS) :: counts
+    double precision, dimension(MAXNUMELEMENTS) :: elements
+    myFormat = sdFormatDefault
+    include 'dump4d.f9h'
+    include 'dump4db.f9h'
+  end subroutine DUMP_4D_DOUBLE
+
+  ! ---------------------------------------------  DUMP_4D_REAL  -----
+  subroutine DUMP_4D_REAL ( ARRAY, NAME, &
+    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
+    real, intent(in) :: ARRAY(:,:,:,:)
+    character(len=*), intent(in), optional :: NAME
+    real, intent(in), optional :: FILLVALUE
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    integer, intent(in), optional :: LBOUND
+    character(len=*), intent(in), optional :: options
+
+    integer :: I, J, K, L
+    integer :: NumZeroRows
+    real :: myFillValue
+    character(len=64) :: myFormat
+    integer :: nUnique
+    integer :: MyWidth
+    integer, dimension(MAXNUMELEMENTS) :: counts
+    real, dimension(MAXNUMELEMENTS) :: elements
+    myFormat = sdFormatDefault
+    include 'dump4d.f9h'
+    include 'dump4db.f9h'
+  end subroutine DUMP_4D_real
 
   ! -----------------------------------------------  DUMP_HASH_STR  -----
   subroutine DUMP_HASH_STR ( COUNTEMPTY, KEYS, VALUES, NAME, SEPARATOR, OPTIONS )
@@ -2976,6 +3025,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.114  2011/07/15 23:23:43  pwagner
+! Can now dump 4d arrays, with certain restrictions
+!
 ! Revision 2.113  2011/07/12 00:15:01  pwagner
 ! Improved dumps; format option now more flexible; complex arrays parallel real ones
 !
