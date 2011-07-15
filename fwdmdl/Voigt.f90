@@ -171,7 +171,7 @@ contains
       ! u = rhui6(xa,y)
 
       !   Fill the r, q coefficients with the recursion
-      !   r(0)=1.0, r(1) = y q(0) = 0.0, q(1) = -x
+      !   r(0)=1.0, r(1) = y, q(0) = 0.0, q(1) = -x
 
       r(1) = (y - xa) * (y + xa)
       q(1) = -2.0_rp*xa*y
@@ -379,8 +379,8 @@ contains
 !       x2 = 1.0 + 0.5 * ( r - s ) * ( r + s )  ! 1 + Re(1/(2 z^2))
 !       y2 = r * s                              ! Im(1/(2 z^2))
 
-!       u = - oneOvSpi * ( r * y2 + s * x2 ) ! Re(w)
-!       v = oneOvSpi * ( r * x2 - s * y2 )   ! Im(w)
+!       u = - oneOvSpi * ( r * y2 + s * x2 )                   ! Re(w)
+!       if ( present(v) ) v = oneOvSpi * ( r * x2 - s * y2 )   ! Im(w)
 
       end if
 
@@ -1403,6 +1403,9 @@ contains
 end module Voigt_M
 
 ! $Log$
+! Revision 2.14  2011/07/15 00:24:12  vsnyder
+! Spiff some comments
+!
 ! Revision 2.13  2010/02/04 23:09:28  vsnyder
 ! Use kind= in CMPLX
 !
