@@ -1,4 +1,4 @@
-! Copyright 2005, by the California Institute of Technology. ALL
+! Copyright 2011, by the California Institute of Technology. ALL
 ! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 ! commercial use must be negotiated with the Office of Technology Transfer
 ! at the California Institute of Technology.
@@ -30,13 +30,12 @@
     numZeroRows = 0
     if ( any(shape(array) == 0) ) then
       call empty ( name )
-    else if ( product(shape(array)) == 1 ) then
-      call name_and_size ( name, myClean, 1 )
-      call output ( array(1,1), format=myFormat, advance='yes' )
     else if ( size(array, 1) == 1 ) then
+      call output( '1st size is 1: reducing rank to 1', advance='yes' )
       call dump ( array(1,:), name, &
         & fillValue=fillValue, format=format, options=options )
     else if ( size(array,2) == 1 ) then
+      call output( '2nd size is 1: reducing rank to 1', advance='yes' )
       call dump ( array(:,1), name, &
         & fillValue=fillValue, format=format, options=options )
     else 
@@ -74,6 +73,9 @@
     call theDumpEnds
 !   end subroutine DUMP_2D_INTEGER
 ! $Log$
+! Revision 2.2  2011/07/15 23:19:34  pwagner
+! prints notice one of array sizes is 1
+!
 ! Revision 2.1  2011/07/12 00:09:03  pwagner
 ! First commit
 !
