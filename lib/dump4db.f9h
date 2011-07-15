@@ -1,0 +1,57 @@
+! Copyright 2011, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id$
+
+! subroutine DUMP_4D_COMPLEX ( ARRAY, NAME, &                 
+!   & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )            
+!   double precision, intent(in) :: ARRAY(:,:,:,:)             
+!   character(len=*), intent(in), optional :: NAME           
+!   double precision, intent(in), optional :: FILLVALUE      
+!   integer, intent(in), optional :: WIDTH                   
+!   character(len=*), intent(in), optional :: FORMAT         
+!   integer, intent(in), optional :: LBOUND                  
+!   character(len=*), intent(in), optional :: options        
+!   integer :: I, J, K, L                                    
+!   integer :: NumZeroRows                                   
+!   double precision :: myFillValue                          
+!   character(len=64) :: myFormat                            
+!   integer :: nUnique                                       
+!   integer, dimension(MAXNUMELEMENTS) :: counts             
+!   double precision, dimension(MAXNUMELEMENTS) :: elements  
+    numZeroRows = 0
+    if ( any(shape(array) == 0) ) then
+      call empty ( name )
+    else if ( size(array,1) == 1 ) then
+      call output( '1st size is 1: reducing rank to 3', advance='yes' )
+      call dump ( array(1,:,:,:), name, &
+        & fillValue=fillValue, format=format, options=options )
+    else if ( size(array,2) == 1 ) then
+      call output( '2nd size is 1: reducing rank to 3', advance='yes' )
+      call dump ( array(:,1,:,:), name, &
+        & fillValue=fillValue, format=format, options=options )
+    else if ( size(array,3) == 1 ) then
+      call output( '13rd size is 1: reducing rank to 3', advance='yes' )
+      call dump ( array(:,:,1,:), name, &
+        & fillValue=fillValue, format=format, options=options )
+    else if ( size(array,4) == 1 ) then
+      call output( '4th size is 1: reducing rank to 3', advance='yes' )
+      call dump ( array(:,:,:,1), name, &
+        & fillValue=fillValue, format=format, options=options )
+    else
+      call output( '(Sorry--unable to dump full 4-d arrays yet)', advance='yes' )
+   end if
+   call theDumpEnds
+! end subroutine DUMP_4D_DOUBLE
+! $Log$
+! Revision 2.1  2011/07/15 23:16:38  pwagner
+! First commit
+!
