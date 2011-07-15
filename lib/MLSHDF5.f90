@@ -547,6 +547,7 @@ contains ! ======================= Public Procedures =========================
     ! logical, parameter :: DEEBUG = .false.
     integer, dimension(7) :: dims
     logical :: dontPrintName
+    double precision, dimension(:,:,:,:), pointer :: d4Value => null()
     double precision, dimension(:,:,:), pointer :: dValue => null()
     integer :: groupID
     integer(kind=hSize_t), dimension(7) :: hdims
@@ -660,6 +661,24 @@ contains ! ======================= Public Procedures =========================
          end select
       case ( 'double', 'real' )
         select case ( rank )
+        case ( 4 )
+          call outputNamedValue( 'dims', dims )
+          call output( '(Presently we only dump a 3-d slice of 4-d arrays)', &
+            & advance='yes' )
+          call allocate_test( d4Value, dims(1), dims(2), dims(3), dims(4), &
+            & 'd4Value', ModuleName )
+          call LoadFromHDF5DS ( groupID, name, d4Value )
+          if ( present(fillvalue) ) then
+            if ( present(options) .and. DEEBUG ) &
+              & call outputNamedValue( 'options', options )
+            call dump ( d4Value(:,:,:,:), trim(namePrinted), fillValue=real(fillvalue, r8), &
+              & options=options )
+          else
+            if ( present(options) .and. DEEBUG ) &
+              & call outputNamedValue( 'options', options )
+            call dump ( d4Value(:,:,:,:), trim(namePrinted), options=options )
+          endif
+          call deallocate_test( d4Value, 'd4Value', ModuleName )
         case ( 3 )
           call allocate_test( dValue, dims(1), dims(2), dims(3), 'dValue', ModuleName )
           call LoadFromHDF5DS ( groupID, name, dValue )
@@ -2509,11 +2528,17 @@ contains ! ======================= Public Procedures =========================
     Qtype = 'unknown'                   ! means trouble
     call h5eSet_auto_f ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to turn error messages off before getting rank ' // trim(name) )
+      & 'Unable to turn error messages off before getting datatype of ' // trim(name) )
     call h5dOpen_f ( FileID, trim(name), setID, status )
-    call h5dget_type_f(setID,type_id,status)
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open before getting datatype of ' // trim(name) )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to get datatype ' // trim(name) )
+    call h5dget_type_f( setID, type_id, status )
     Qtype = WhatTypeAmI ( type_id )
     call h5dClose_f ( setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close after datatype ' // trim(name) )
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after getting rank ' // trim(name))
@@ -5132,6 +5157,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.107  2011/07/15 23:33:11  pwagner
+! Can now dump rank 4 datasets
+!
 ! Revision 2.106  2011/05/06 00:35:33  pwagner
 ! Fixed bug in IsHDF5AttributePresent
 !
