@@ -685,7 +685,7 @@ contains ! =====     Public Procedures     =============================
 
       if ( TOOLKIT ) then
         call writeMetaLog ( metadata_error )
-        error = max(error, metadata_error)
+        ! error = max(error, metadata_error)
       end if
     end if
 
@@ -1517,7 +1517,7 @@ contains ! =====     Public Procedures     =============================
       if ( TOOLKIT .and. madeFile ) then
         call add_metadata ( 0, trim(l2gpPhysicalFilename), l2metaData, &
           & HDFVERSION_5, l_l2dgg, returnStatus, 1, (/'dgg'/) )
-        if ( returnStatus /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        if ( returnStatus /= 0 ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & 'unable to addmetadata to ' // trim(l2gpPhysicalFilename) )
       end if
       if ( madeFile ) then
@@ -1631,7 +1631,7 @@ contains ! =====     Public Procedures     =============================
       if ( TOOLKIT .and. madeFile ) then
         call add_metadata ( 0, trim(l2auxPhysicalFilename), l2metaData, &
           & HDFVERSION_5, l_hdf, returnStatus, 1, (/'dgm'/) )
-        if ( returnStatus /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        if ( returnStatus /= 0 ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & 'unable to addmetadata to ' // trim(l2auxPhysicalFilename) )
       end if
       
@@ -1698,6 +1698,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.155  2011/07/15 00:14:28  pwagner
+! Wont crash on metadata errors now; was crashing goldbrick
+!
 ! Revision 2.154  2011/06/29 21:51:51  pwagner
 ! Some cases may safely omit l1b files
 !
