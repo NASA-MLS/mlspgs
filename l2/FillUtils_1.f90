@@ -13,12 +13,12 @@
 module FillUtils_1                     ! Procedures used by Fill
   !=============================================================================
 
-  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-  use Chunks_m, only: MLSChunk_T
-  use Constants, only: Deg2Rad, Rad2Deg
-  use Expr_M, only: EXPR, EXPR_CHECK, GetIndexFlagsFromList
-  use GriddedData, only: GriddedData_T, WrapGriddedData
-  ! Now the literals:
+  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use CHUNKS_M, only: MLSCHUNK_T
+  use CONSTANTS, only: DEG2RAD, RAD2DEG
+  use EXPR_M, only: EXPR, EXPR_CHECK, GETINDEXFLAGSFROMLIST
+  use GRIDDEDDATA, only: GRIDDEDDATA_T, WRAPGRIDDEDDATA
+  ! NOW THE LITERALS:
   use INIT_TABLES_MODULE, only: &
     & L_BASELINE, L_BINMAX, L_BINMEAN, L_BINMIN, L_BINTOTAL, &
     & L_BOUNDARYPRESSURE, L_CHISQBINNED, L_CHISQCHAN, &
@@ -46,54 +46,54 @@ module FillUtils_1                     ! Procedures used by Fill
     & L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, &
     & L_TNGTGEOCALT, L_TOTALPOWERWEIGHT, L_VMR, &
     & L_XYZ, L_ZETA
-  use Intrinsic, only: &
-    & PHYQ_Dimensionless, PHYQ_Invalid, PHYQ_Temperature, &
-    & PHYQ_Length, PHYQ_Pressure, PHYQ_Zeta, PHYQ_Angle
-  use L1BData, only: DeallocateL1BData, Dump, GetL1BFile, L1BData_T, &
-    & PRECISIONSUFFIX, ReadL1BData, AssembleL1BQtyName
-  use L2GPData, only: L2GPData_T
-  use L2AUXData, only: L2AUXData_T
+  use INTRINSIC, only: &
+    & PHYQ_DIMENSIONLESS, PHYQ_INVALID, PHYQ_TEMPERATURE, &
+    & PHYQ_LENGTH, PHYQ_PRESSURE, PHYQ_ZETA, PHYQ_ANGLE
+  use L1BDATA, only: DEALLOCATEL1BDATA, DUMP, GETL1BFILE, L1BDATA_T, &
+    & PRECISIONSUFFIX, READL1BDATA, ASSEMBLEL1BQTYNAME
+  use L2GPDATA, only: L2GPDATA_T
+  use L2AUXDATA, only: L2AUXDATA_T
   use L3ASCII, only: L3ASCII_INTERP_FIELD
-  use ManipulateVectorQuantities, only: DOFGRIDSMATCH, DOHGRIDSMATCH, &
+  use MANIPULATEVECTORQUANTITIES, only: DOFGRIDSMATCH, DOHGRIDSMATCH, &
     & DOVGRIDSMATCH, DOQTYSDESCRIBESAMETHING
-  use MatrixModule_0, only: Sparsify, MatrixInversion
-  use MatrixModule_1, only: Dump, FindBlock, Matrix_SPD_T, UpdateDiagonal
-  ! NOTE: If you ever want to include defined assignment for matrices, please
-  ! carefully check out the code around the call to snoop.
-  use MLSCommon, only: MLSFile_T, DEFAULTUNDEFINEDVALUE
-  use MLSFiles, only: GetMLSFileByType
-  use MLSKinds, only: R4, R8, RM, RV
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, &
-    & MLSMSG_Allocate, MLSMSG_Deallocate, MLSMessageCalls
-  use MLSNumerics, only: InterpolateValues, Hunt
-  use MLSSets, only: FindFirst, FindLast
-  use MLSSignals_m, only: GetFirstChannel, GetSignalName, GetModuleName, IsModuleSpacecraft, &
-    & GetSignal, Signal_T
-  use MLSStats1, only: MLSMIN, MLSMAX, MLSMEAN, MLSMEDIAN, MLSRMS, MLSSTDDEV
-  use MLSStringLists, only: CATLISTS, EXPANDSTRINGRANGE, GETSTRINGELEMENT, &
+  use MATRIXMODULE_0, only: SPARSIFY, MATRIXINVERSION
+  use MATRIXMODULE_1, only: DUMP, FINDBLOCK, MATRIX_SPD_T, UPDATEDIAGONAL
+  ! NOTE: IF YOU EVER WANT TO INCLUDE DEFINED ASSIGNMENT FOR MATRICES, PLEASE
+  ! CAREFULLY CHECK OUT THE CODE AROUND THE CALL TO SNOOP.
+  use MLSCOMMON, only: MLSFILE_T, DEFAULTUNDEFINEDVALUE
+  use MLSFILES, only: GETMLSFILEBYTYPE
+  use MLSKINDS, only: R4, R8, RM, RV
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING, &
+    & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, MLSMESSAGECALLS
+  use MLSNUMERICS, only: INTERPOLATEVALUES, HUNT
+  use MLSSETS, only: FINDFIRST, FINDLAST
+  use MLSSIGNALS_M, only: GETFIRSTCHANNEL, GETSIGNALNAME, GETMODULENAME, ISMODULESPACECRAFT, &
+    & GETSIGNAL, SIGNAL_T
+  use MLSSTATS1, only: MLSMIN, MLSMAX, MLSMEAN, MLSMEDIAN, MLSRMS, MLSSTDDEV
+  use MLSSTRINGLISTS, only: CATLISTS, EXPANDSTRINGRANGE, GETSTRINGELEMENT, &
     & NUMSTRINGELEMENTS, &
     & REPLACESUBSTRING, SWITCHDETAIL
-  use MLSStrings, only: INDEXES, LOWERCASE, SPLITNEST
-  use Molecules, only: L_H2O
+  use MLSSTRINGS, only: INDEXES, LOWERCASE, SPLITNEST
+  use MOLECULES, only: L_H2O
   use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
-  use QuantityTemplates, only: Epoch, QuantityTemplate_T
-  use RHIFromH2O, only: H2OPrecFromRHI, RHIFromH2O_Factor, RHIPrecFromH2O
-  use ScanModelModule, only: GetBasisGPH, Get2DHydrostaticTangentPressure, GetGPHPrecision
-  use String_Table, only: Display_String, get_string
+  use QUANTITYTEMPLATES, only: EPOCH, QUANTITYTEMPLATE_T
+  use RHIFROMH2O, only: H2OPRECFROMRHI, RHIFROMH2O_FACTOR, RHIPRECFROMH2O
+  use SCANMODELMODULE, only: GETBASISGPH, GET2DHYDROSTATICTANGENTPRESSURE, GETGPHPRECISION
+  use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
   use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: NODE_ID, NSONS, &
     & SOURCE_REF, SUBTREE
-  use Tree_Types, only: N_COLON_LESS, N_LESS_COLON, &
+  use TREE_TYPES, only: N_COLON_LESS, N_LESS_COLON, &
     & N_LESS_COLON_LESS
-  use VectorsModule, only: &
-    & ClearUnderMask, CopyVector, CreateMask, &
-    & DestroyVectorInfo, Dump, &
-    & GetVectorQtyByTemplateIndex, GetVectorQuantityByType, &
-    & isVectorQtyMasked, MaskVectorQty, &
-    & ValidateVectorQuantity, Vector_T, &
-    & VectorValue_T, M_Cloud, M_Fill, M_Ignore, M_LinAlg
-  use VGridsDatabase, only: GETUNITFORVERTICALCOORDINATE
+  use VECTORSMODULE, only: &
+    & CLEARUNDERMASK, COPYVECTOR, CREATEMASK, &
+    & DESTROYVECTORINFO, DUMP, &
+    & GETVECTORQTYBYTEMPLATEINDEX, GETVECTORQUANTITYBYTYPE, &
+    & ISVECTORQTYMASKED, MASKVECTORQTY, &
+    & VALIDATEVECTORQUANTITY, VECTOR_T, &
+    & VECTORVALUE_T, M_CLOUD, M_FILL, M_IGNORE, M_LINALG
+  use VGRIDSDATABASE, only: GETUNITFORVERTICALCOORDINATE
 
   implicit none
   private
@@ -194,7 +194,7 @@ contains ! =====     Public Procedures     =============================
     ! ------------------------------------------- addGaussianNoise ---
     subroutine addGaussianNoise ( key, quantity, sourceQuantity, &
               & noiseQty, multiplier )
-      use MLSRandomNumber, only: drang
+      use MLSRandomNumber, only: DRANG
       ! A special fill: quantity = sourceQuantity + g() noiseQty
       ! where g() is a random number generator with mean 0 and std. dev. 1
       ! Generalized into ( a sourceQuantity + b g() noiseQty )
@@ -250,9 +250,9 @@ contains ! =====     Public Procedures     =============================
     ! ---------------------------------------------  ANNOUNCE_ERROR  -----
     subroutine ANNOUNCE_ERROR ( where, CODE, ExtraMessage, ExtraInfo )
 
-      use Dump_0, only: Dump
-      use Intrinsic, only: Field_indices, PHYQ_Indices
-      use MoreTree, only: Get_Field_Id, StartErrorMessage
+      use DUMP_0, only: DUMP
+      use INTRINSIC, only: FIELD_INDICES, PHYQ_INDICES
+      use MORETREE, only: GET_FIELD_ID, STARTERRORMESSAGE
 
       integer, intent(in) :: where   ! Tree node where error was noticed
       integer, intent(in) :: CODE    ! Code for error message
@@ -756,7 +756,7 @@ contains ! =====     Public Procedures     =============================
 
     ! ------------------------------------------- ComputeTotalPower
     subroutine ComputeTotalPower ( key, vectors )
-      use MoreTree, only: Get_Field_Id
+      use MoreTree, only: GET_FIELD_ID
       use Init_tables_module, only: F_MEASUREMENTS, F_TOTALPOWERVECTOR, F_WEIGHTSVECTOR
       use Tree, only: DECORATION, SUBTREE
 
@@ -2289,7 +2289,7 @@ contains ! =====     Public Procedures     =============================
 
     ! ------------------------------------- NoRadsPerMIF -----
     subroutine NoRadsPerMif ( key, quantity, measQty, asPercentage )
-      use BitStuff, only: biteq
+      use BitStuff, only: BITEQ
       ! Count number of valid (i.e., not masked) radiances
       ! optionally compute it as a percentage of largest number possible
       ! The largest number possible takes into account
@@ -2346,10 +2346,10 @@ contains ! =====     Public Procedures     =============================
       & h2o, orbIncline, ptan, refGPH, temperature )
 
       use Constants, only: DEG2RAD, RAD2DEG
-      use Geometry, only: EarthRadA, EarthRadB, GEODTOGEOCLAT
+      use Geometry, only: EARTHRADA, EARTHRADB, GEODTOGEOCLAT
       use Hydrostatic_M, only: HYDROSTATIC
       use MLSKinds, only: RP
-      use Phi_Refractive_Correction_m, only: Phi_Refractive_Correction_Up
+      use Phi_Refractive_Correction_m, only: PHI_REFRACTIVE_CORRECTION_UP
       use Refraction_m, only: REFRACTIVE_INDEX
 
       integer, intent(in) :: KEY          ! Tree node, for error messages
@@ -2382,7 +2382,7 @@ contains ! =====     Public Procedures     =============================
       if ( .not. ValidateVectorQuantity ( h2o, &
         & quantityType=(/l_vmr/), molecule=(/l_h2o/), coherent=.true., stacked=.true., &
         & frequencyCoordinate=(/l_none/), verticalCoordinate=(/l_zeta/) ) ) &
-        & call Announce_error ( key, no_error_code, 'Problem with temperature quantity for phiTan fill' )
+        & call Announce_error ( key, no_error_code, 'Problem with h2o quantity for phiTan fill' )
       if ( .not. ValidateVectorQuantity ( refGPH, &
         & quantityType = (/l_refGPH/), coherent=.true., stacked=.true., &
         & verticalCoordinate=(/l_zeta/), frequencyCoordinate=(/l_none/), noSurfs=(/1/) ) ) &
@@ -3106,9 +3106,9 @@ contains ! =====     Public Procedures     =============================
 !MJF
     ! ----------------------------------- FromASCIIFile --------
     subroutine FromAsciiFile ( key, quantity, filename, badRange )
-      use IO_stuff, only: GET_LUN
-      use Machine, only: IO_Error
-      use MoreMessage, only: MLSMessage
+      use IO_STUFF, only: GET_LUN
+      use MACHINE, only: IO_ERROR
+      use MOREMESSAGE, only: MLSMESSAGE
       integer, intent(in) :: KEY        ! Tree node
       type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
       integer, intent(in) :: FILENAME   ! ASCII filename to read from
@@ -3543,7 +3543,7 @@ contains ! =====     Public Procedures     =============================
               & quantity%template%signal == aorb%template%signal .and. &
               & quantity%template%sideband == aorb%template%sideband .and. &
               & quantity%template%frequencyCoordinate == aorb%template%frequencyCoordinate
-          else
+          elseif ( mstr == 'a+b' .or. mstr == 'a-b' ) then
             ! For a+/-b these quantities must share a template
             okSoFar = okSoFar .and. quantity%template%name == aorb%template%name
           end if
@@ -4473,7 +4473,7 @@ contains ! =====     Public Procedures     =============================
     ! radiances are named the same independent of hdf version
     subroutine FromL1B ( root, quantity, chunk, filedatabase, &
       & isPrecision, suffix, PrecisionQuantity, BOMask )
-      use BitStuff, only: NegativeIfBitPatternSet
+      use BitStuff, only: NEGATIVEIFBITPATTERNSET
       use MLSFiles, only: HDFVERSION_5
       integer, intent(in) :: root
       type (VectorValue_T), INTENT(INOUT) ::        QUANTITY
@@ -4751,8 +4751,8 @@ contains ! =====     Public Procedures     =============================
 
     ! --------------------------------------- UsingMagneticModel --
     subroutine UsingMagneticModel ( qty, gphQty, key )
-      use Geometry, only: SecPerYear
-      use IGRF_INT, only: FELDC, FELDCOF, To_Cart
+      use Geometry, only: SECPERYEAR
+      use IGRF_INT, only: FELDC, FELDCOF, TO_CART
       type (VectorValue_T), intent(inout) :: QTY
       type (VectorValue_T), intent(inout) :: GPHQTY
       integer, intent(in) :: KEY
@@ -4995,7 +4995,7 @@ contains ! =====     Public Procedures     =============================
     subroutine WithEstNoise ( quantity, radiance, &
       & sysTemp, nbw, integrationTime )
 
-      use MLSSignals_m, only: signals
+      use MLSSignals_m, only: SIGNALS
 
       ! Dummy arguments
       type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
@@ -5111,9 +5111,9 @@ contains ! =====     Public Procedures     =============================
 
     ! ----------------------------------------- WithReichlerWMOTP -------------
     subroutine WithReichlerWMOTP ( tpPres, temperature )
-      use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-      use dump_0, only: dump
-      use MLSFillValues, only: IsFillValue, RemoveFillValues
+      use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+      use DUMP_0, only: DUMP
+      use MLSFILLVALUES, only: ISFILLVALUE, REMOVEFILLVALUES
       
       use wmoTropopause, only: ExtraTropics, twmo
       ! Implements the algorithm published in GRL
@@ -5488,7 +5488,7 @@ contains ! =====     Public Procedures     =============================
       ! SourceQuantity using a least-squares approximation to a first-order
       ! Taylor series.
 
-      use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+      use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
       use HFTI_M, only: HFTI
 
       integer, intent(in) :: KEY        ! Tree node
@@ -5662,8 +5662,8 @@ contains ! =====     Public Procedures     =============================
 
     !=============================== FromGrid ============
     subroutine FromGrid(quantity, grid, allowMissing, errorCode)
-      use dump_0, only: dump
-      use Griddeddata, only: dump
+      use DUMP_0, only: DUMP
+      use GRIDDEDDATA, only: DUMP
       ! Dummy arguments
       type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
       type (GriddedData_T), intent(inout) :: GRID ! Grid to fill it from
@@ -6845,6 +6845,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.46  2011/07/20 00:53:40  pwagner
+! Fixed bug added in rev2.43
+!
 ! Revision 2.45  2011/06/16 20:51:24  vsnyder
 ! Make Announce_Error codes public
 !
