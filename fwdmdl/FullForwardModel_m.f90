@@ -567,10 +567,8 @@ contains
     real(rp) :: D2ALPHA_DF2_PATH_C(max_c,no_mol)     ! on coarse path
     real(rp) :: D2ALPHA_DF2_PATH_F(max_f,no_mol)     ! on GL path
     real(rp) :: DB_DF(s_ts*max(s_a,s_t)*max_c)     ! dB / d one f on the path, for TScat
-    real(rp) :: DBETA_DF_PATH_C(merge(max_c,0,any(grids_f%where_dBeta_df /= 0)),&
-                                count(grids_f%where_dBeta_df /= 0))
-    real(rp) :: DBETA_DF_PATH_F(merge(max_f,0,any(grids_f%where_dBeta_df /= 0)),&
-                                count(grids_f%where_dBeta_df /= 0))
+    real(rp) :: DBETA_DF_PATH_C(max_c,count(grids_f%where_dBeta_df /= 0))
+    real(rp) :: DBETA_DF_PATH_F(max_f,count(grids_f%where_dBeta_df /= 0))
     real(rp) :: DBETA_DIWC_PATH_C(max_c,s_tg*no_mol)  ! dBeta_dIWC on coarse grid
     real(rp) :: DBETA_DIWC_PATH_F(max_f,s_tg*no_mol)  ! dBeta_dIWC on fine grid
     real(rp) :: DBETA_DN_PATH_C(max_c,s_td*size(fwdModelConf%lineWidth_TDep)) ! dBeta_dn on coarse grid
@@ -1099,7 +1097,6 @@ contains
         print "( 4(2x, 1pg15.8) )", &
           & thisRadiance%values(channel:channel+j*(k-1):j, maf)
       end do
-      print *
 
     end if
 
@@ -1232,10 +1229,11 @@ contains
       call compute_GL_grid ( z_psig, z_glgrid )
 
       ! interpolate tan_phi, scgeocalt and losvel from MIFs to pointings
-      if ( .not. FwdModelConf%generateTScat ) &
-        & call estimate_tan_phi ( nlvl, maf, phitan, ptan, &
+      if ( .not. FwdModelConf%generateTScat ) then
+         call estimate_tan_phi ( nlvl, maf, phitan, ptan, &
                                 & scgeocalt, losvel, tan_press, &
                                 & tan_phi, est_scgeocalt, est_los_vel )
+      end if
 
       ! Now, allocate other variables we're going to need later --------
 
@@ -4423,6 +4421,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.324  2011/07/08 18:19:35  yanovsky
+! Use get_d2Alpha_df2
+!
 ! Revision 2.323  2011/06/24 23:15:53  pwagner
 ! Fixed erroneous declaration for D2_DELTA_DF2 that gave non-Hessian runs excess memory footprint
 !
