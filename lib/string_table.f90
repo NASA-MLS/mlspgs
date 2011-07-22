@@ -479,8 +479,10 @@ contains
       if ( present(ierr) ) my_ierr = ierr
     end if
 
-    if ( my_ierr /= 0 ) then
-      string_text=''     ! Don't leave string_text undefined
+    if ( my_ierr /= 0 ) then ! Don't leave string_text undefined
+      write ( string_text, '("String index ",i0, " not in 1:")' ) string
+      i = len_trim(string_text)
+      write ( string_text(i+1:), '(i0)' ) nstring
       return
     end if
 
@@ -1015,6 +1017,11 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.31  2011/07/22 18:29:22  vsnyder
+! Produce a message in "string_text" instead of an empty string if the
+! "string" argument to get_string is out of bounds and noError is present
+! and true.
+!
 ! Revision 2.30  2010/08/05 17:45:34  honghanh
 ! Adding subroutine init_string_table in string_table module
 !
