@@ -81,7 +81,7 @@ contains
     ! "%s" or "%S".  Then call MLSMessage.
     use MLSMessageModule, only: MLSMessage
     use MLSSignals_m, only: GetSignalName
-    use String_Table, only: Get_String, String_Length
+    use String_Table, only: Get_String, How_Many_Strings, String_Length
     integer, intent(in) :: Severity ! e.g. MLSMSG_Error
     character (len=*), intent(in) :: ModuleNameIn ! Name of module
     character (len=*), intent(in) :: Message ! Line of text
@@ -91,6 +91,7 @@ contains
     !                                 or 'n'
     character(512) :: Line ! Should be long enough
     integer :: I, L        ! Next positions in input, Line
+    integer :: IERR        ! Status from Get_String
     integer :: N           ! Len_Trim(Message)
     logical :: OK          ! OK to insert
 
@@ -120,8 +121,12 @@ contains
         ok = .false.
       else if ( (message(i:i+1) == '%s' .or. message(i:i+1) == '%S') .and. ok ) then
         i = i + 2
-        call get_string ( datum, line(l:), strip=.false. )
-        l = l + string_length ( datum )
+        call get_string ( datum, line(l:), strip=.false., noerror=.true., ierr=ierr )
+        if ( ierr == 0 ) then
+          l = l + string_length ( datum )
+        else
+          l = len_trim(line)
+        end if
         ok = .false.
       else
         i = i + 1
@@ -150,6 +155,7 @@ contains
     !                                 or 'n'
     character(512) :: Line ! Should be long enough
     integer :: I, L        ! Next positions in input, Line
+    integer :: IERR        ! Status from Get_String
     integer :: N           ! Len_Trim(Message)
     integer :: ND          ! Next element of Datum
 
@@ -183,8 +189,12 @@ contains
       else if ( (message(i:i+1) == '%s' .or. message(i:i+1) == '%S') .and. &
         & nd <= size(datum) ) then
         i = i + 2
-        call get_string ( datum(nd), line(l:), strip=.false. )
-        l = l + string_length ( datum(nd) )
+        call get_string ( datum(nd), line(l:), strip=.false., noerror=.true., ierr=ierr )
+        if ( ierr == 0 ) then
+          l = l + string_length ( datum(nd) )
+        else
+          l = len_trim(line)
+        end if
         nd = nd + 1
       else
         i = i + 1
@@ -242,6 +252,9 @@ contains
 end module MoreMessage
 
 ! $Log$
+! Revision 2.5  2011/07/22 18:29:51  vsnyder
+! Make more robust to string errors
+!
 ! Revision 2.4  2009/06/23 18:25:42  pwagner
 ! Prevent Intel from optimizing ident string away
 !
