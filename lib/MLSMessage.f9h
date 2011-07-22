@@ -404,7 +404,7 @@ contains
     endif
     call MLSMessageCalls( 'push', constantName=ModuleNameIn )
     if ( severity >= MLSMSG_Severity_to_quit ) then
-      call StopWithErrorMsg( Message, MLSFile )
+      call StopWithErrorMsg( Message, MLSFile, advance=advance )
       myStatus = MLSMSGSTATUS_Stopped
     else
       call MLSMessageCalls( 'dump' )
@@ -748,17 +748,19 @@ contains
   end subroutine PVMErrorMessage
 
   ! ------------ StopWithErrorMsg ------------
-  subroutine StopWithErrorMsg ( Message, MLSFile )
+  subroutine StopWithErrorMsg ( Message, MLSFile, Advance )
     ! Print Message, dump calling stack (if any) and stop
     character (len=*), intent(in) :: Message ! Line of text
     type(MLSFile_T), intent(in), optional :: MLSFile
+    character(len=*), intent(in), optional :: Advance
     ! Internal variables
     character(len=32) :: name
     ! Executable
     name = ' '
     call MLSMessageCalls( 'dump', name )
     if ( len_trim(name) < 1 ) name = ModuleName
-    call MLSMessageStd( MLSMSG_Error, name, Message, MLSFile=MLSFile )
+    call MLSMessageStd( MLSMSG_Error, name, Message, MLSFile=MLSFile, &
+      & advance=advance )
   end subroutine StopWithErrorMsg
 
   ! ------------ SummarizeWarnings ------------
@@ -914,6 +916,9 @@ contains
   subroutine MLSMessageStd ( Severity, ModuleNameIn, Message, &
     & Advance, MLSFile )
 
+    ! Print a message (unless printing is suppressed).  If it has %[Nn]
+    ! in it, replace that with newline.
+
     ! Dummy arguments
     integer, intent(in) :: Severity ! e.g. MLSMSG_Error
     character (len=*), intent(in) :: ModuleNameIn ! Name of module (see below)
@@ -925,6 +930,8 @@ contains
 
     ! Local variables
     !                                     If nonzero, do not insert prefix.
+    logical :: AllOfIt                  ! Print all of it (no %n or %N remains)
+    integer :: L1, L2                   ! How far in the line have we printed?
     character (len=512), save :: Line   ! Line to output, should be long enough
     integer, save :: Line_len=0         ! Number of saved characters in line.
     logical :: My_adv
@@ -938,18 +945,29 @@ contains
     my_adv = my_adv .and. ( severity >= MLSMessageConfig%skipMessageThr )
     if ( (.not. MLSMessageConfig%suppressDebugs).OR. &
          & (severity /= MLSMSG_Debug) ) then
-      call assembleFullLine( Severity, ModuleNameIn, Message, line, line_len )
-       ! Log the message using the toolkit routine
-       ! (or its substitute )
-       ! if either using toolkit or severity is sufficient to
-       ! quit (which means we might have been called directly
-       ! rather than from output module )
+      l1 = 0
+      do
+        l2 = index(Message(l1+1:),'%n' )
+        if ( l2 == 0 ) l2 = index(Message(l1+1:),'%N')
+        allOfIt = l2 == 0
+        l2 = l2 + l1 - 1 ! Last character before %n or %N, if any
+        if ( allOfIt ) l2 = len(Message) ! no %n or %N
+        call assembleFullLine( Severity, ModuleNameIn, Message(l1+1:l2), &
+          & line, line_len )
+        l1 = l2 + 2 ! "n" or "N" of %n or %N
+         ! Log the message using the toolkit routine
+         ! (or its substitute )
+         ! if either using toolkit or severity is sufficient to
+         ! quit (which means we might have been called directly
+         ! rather than from output module )
 
-       if ( my_adv ) then
-         call printitout( line, severity, line_len )
-         line_len = 0
-         line = ' '
-       end if
+        if ( my_adv .or. .not. allOfIt ) then
+          call printitout( line, severity, line_len )
+          line_len = 0
+          line = ' '
+        end if
+        if ( allOfIt ) exit
+      end do
 
     end if
 
@@ -1024,6 +1042,10 @@ contains
   
 !
 ! $Log$
+! Revision 2.14  2011/07/22 19:47:00  vsnyder
+! Add Advance argument to StopWithErrorMsg, pass it through to MLSMessageStd.
+! Add %n and %N as newline characters in MLSMessageStd.
+!
 ! Revision 2.13  2011/06/29 21:40:11  pwagner
 ! Added ability to omit message prefixes, or entire messages according to sedverity
 !
