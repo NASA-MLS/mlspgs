@@ -348,7 +348,7 @@ module DUMP_0
   logical, save :: thisIsADiff = .false.
   integer :: how_many
   integer, dimension(1024) :: which
-  complex, parameter :: one_c4 = CMPLX(1., 0.)
+  complex, parameter :: one_c4 = (1., 0.)
 
 contains
 
@@ -3025,6 +3025,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.115  2011/07/23 00:16:25  vsnyder
+! Use (1.,0.) instead of CMPLX(1.,0.) to avoid Intel gripe
+!
 ! Revision 2.114  2011/07/15 23:23:43  pwagner
 ! Can now dump 4d arrays, with certain restrictions
 !
