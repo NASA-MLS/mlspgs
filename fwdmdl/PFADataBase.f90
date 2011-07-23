@@ -141,7 +141,7 @@ contains ! =====     Public Procedures     =============================
   subroutine Destroy_All_PFAData_Arrays
     integer :: I ! Loop inductor, subscript
     if ( .not. associated(PFAData) ) return
-    do i = 1, size(PFAData)
+    do i = 1, ubound(PFAData,1)
       call Destroy_PFADatum_Arrays ( PFAData(i) )
     end do
   end subroutine
@@ -152,7 +152,7 @@ contains ! =====     Public Procedures     =============================
     use MLSMessageModule, only: MLSMessage, MLSMSG_Deallocate, MLSMSG_Error
     integer :: I, M, S, SB
     if ( .not. associated(pfaData) ) return
-    do i = 1, size(pfaData)
+    do i = 1, ubound(PFAData,1)
       call destroy_PFADatum ( pfaData(i) )
     end do
     call destroy_PFAFiles
@@ -200,7 +200,7 @@ contains ! =====     Public Procedures     =============================
     type(PFAFile_t), intent(inout) :: PFAFile
     integer :: I
     if ( associated(PFAFile%ix) ) then
-      do i = 1, size(PFAFile%ix)
+      do i = 1, ubound(PFAFile%ix,1)
         call destroy_PFADatum ( PFAData(PFAFile%ix(i)) )
       end do
       call deallocate_test ( PFAFile%ix, 'PFAFile%ix', moduleName )
@@ -213,7 +213,7 @@ contains ! =====     Public Procedures     =============================
     use MLSMessageModule, only: MLSMessage, MLSMSG_Deallocate, MLSMSG_Error
     integer :: I
     if ( associated(PFAFiles) ) then
-      do i = 1, size(PFAFiles)
+      do i = 1, ubound(PFAFiles,1)
         call destroy_PFAFile ( PFAFiles(i) )
       end do
       deallocate ( PFAFiles, stat=i )
@@ -231,7 +231,7 @@ contains ! =====     Public Procedures     =============================
       call output ( 'No PFA Database to dump', advance='yes' )
       return
     end if
-    do i = 1, size(pfaData)
+    do i = 1, ubound(PFAData,1)
       call dump_PFADatum ( pfaData(i), details, i )
     end do
   end subroutine Dump_PFADataBase
@@ -356,7 +356,7 @@ contains ! =====     Public Procedures     =============================
       return
     end if
 
-    do i = 1, size(PFAFiles)
+    do i = 1, ubound(PFAFiles,1)
       call dump ( PFAFiles(i), details )
     end do
   end subroutine Dump_PFAFileDataBase
@@ -387,7 +387,7 @@ contains ! =====     Public Procedures     =============================
     if ( myDetails > -4 ) then
       call output ( ' has groups:', advance='yes' )
       if ( associated(PFAFileDatum%ix) ) then
-        do g = 1, size(PFAFileDatum%ix)
+        do g = 1, ubound(PFAFileDatum%ix,1)
           if ( myDetails <= -3 ) then
             call blanks ( 1 )
             call getGroupName ( PFAData(PFAFileDatum%ix(g)), groupName )
@@ -456,8 +456,8 @@ contains ! =====     Public Procedures     =============================
     ! For now, flush for all signals
     if ( associated(molecules) ) then
       ! Flush listed molecules for all signals
-      do i = 1, size(PFAData)
-        do j = 1, size(molecules)
+      do i = 1, ubound(PFAData,1)
+        do j = 1, ubound(molecules,1)
           if ( PFAData(i)%molecule == molecules(j) ) then
             call destroy_PFADatum_Arrays ( PFAData(i) )
             exit
@@ -465,7 +465,7 @@ contains ! =====     Public Procedures     =============================
         end do ! j
       end do ! i
     else ! Flush for all molecules and signals
-      do i = 1, size(PFAData)
+      do i = 1, ubound(PFAData,1)
         call destroy_PFADatum_Arrays ( PFAData(i) )
       end do
     end if
@@ -503,7 +503,7 @@ contains ! =====     Public Procedures     =============================
   ! quickly given its molecule index, signal index, sideband and channel.
   ! Return index of one found one in the table already (if replace is present
   ! and true).  See Test_And_Fetch_PFA.
-    use Allocate_Deallocate, only: Allocate_Test
+    use Allocate_Deallocate, only: Allocate_Test, Test_Allocate
     use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
       & MLSMSG_Warning
     use MLSSignals_m, only: Signals
@@ -532,10 +532,14 @@ contains ! =====     Public Procedures     =============================
     sb = (PFADatum%theSignal%sideband + 3 ) / 2
     c = PFADatum%channel
 
+    if ( m == 0 .or. s == 0 ) then
+      hookTableToFindPFA = 0
+      return
+    end if
+
     if ( .not. associated(findPFA(m)%s) ) then
       allocate ( findPFA(m)%s(1:size(signals)), stat=stat )
-      if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_Allocate // 'FindPFA(m)%s).' )
+      call test_allocate ( stat, moduleName, 'FindPFA(m)%s).' )
     end if
     if ( .not. associated(findPFA(m)%s(s)%sb(sb)%c) ) &
       & call allocate_test ( findPFA(m)%s(s)%sb(sb)%c, &
@@ -575,7 +579,7 @@ contains ! =====     Public Procedures     =============================
       end if
       if ( myG < 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
         & 'PFA File or Group data structure not allocated' )
-      do myG = size(PFAFiles(f)%ix), 1, -1
+      do myG = ubound(PFAFiles(f)%ix,1), 1, -1
         if ( PFAData(PFAFiles(f)%ix(myG))%molecule == PFADatum%molecule .and. &
           &  PFAData(PFAFiles(f)%ix(myG))%signalIndex == PFADatum%signalIndex ) exit
       end do
@@ -619,7 +623,7 @@ contains ! =====     Public Procedures     =============================
     use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST
     use MLSHDF5, only: LOADPTRFROMHDF5DS
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR, &
-      & MLSMSG_SEVERITY_TO_QUIT
+      & MLSMSG_SEVERITY_TO_QUIT, MLSMSG_WARNING
     use MLSSIGNALS_M, only: SIGNALS
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use MOREMESSAGE, only: MLSMESSAGE
@@ -644,6 +648,7 @@ contains ! =====     Public Procedures     =============================
     integer :: SB                      ! Sideband, from the signal
     integer, pointer :: SignalIndices(:)
     integer :: STAT                    ! From HDF5 open or read, or allocate
+    logical :: Trouble                 ! If molecule or signal doesn't work
 
 
     if ( toggle(gen) ) call trace_begin ( "Process_PFA_File_datum", where )
@@ -675,20 +680,53 @@ contains ! =====     Public Procedures     =============================
     ! PFAData(PFAFileDatum%ix(g))%open is default initialized to be .false.
     nullify ( channels, signalIndices )
     do g = 1, size(myMolecules)
+      trouble = .false.
       iPFA = iPFA + 1
       PFAData(iPFA)%molecule = getLitIndexFromString ( trim(myMolecules(g)) )
+      trouble = PFAData(iPFA)%molecule < 1
+      if ( trouble ) then
+        if ( PFAFileDatum%fileName /= 0 ) then
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & "The string " // trim(myMolecules(g)) // &
+            & " in %s at %l is not a molecule.%n" // &
+            & "Molecule list probably changed after PFA tables generated.", &
+            & (/PFAFileDatum%fileName,source_ref(where)/) )
+        else
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & "The string " // trim(myMolecules(g)) // &
+            & " in " // trim(PFAFileDatum%namestring) // &
+            & " at %l is not a molecule.%n" // &
+            & "Molecule list probably changed after PFA tables generated.", &
+            & source_ref(where) )
+        end if
+      end if
       PFAData(iPFA)%signal = &
         & getStringIndexFromString ( trim(mySignalStrings(g)) )
-      call parse_signal ( trim(mySignalStrings(g)), signalIndices, &
+      trouble = trouble .or. PFAData(iPFA)%signal < 1
+      if ( .not. trouble) &
+        & call parse_signal ( trim(mySignalStrings(g)), signalIndices, &
         & channels=channels, sideband=sb )
-      if ( .not. associated(signalIndices) ) call MLSMessage ( MLSMSG_Error, &
+      if ( .not. associated(signalIndices) ) then
+        call MLSMessage ( MLSMSG_Warning, &
         & moduleName, 'Unable to parse signal ' // trim(mySignalStrings(g)) )
-      PFAData(iPFA)%channel = lbound(channels,1)
-      PFAData(iPFA)%signalIndex = signalIndices(1)
-      PFAData(iPFA)%theSignal = signals(signalIndices(1))
-      PFAData(iPFA)%theSignal%channels => channels
-      PFAData(iPFA)%theSignal%sideband = sb
-      PFAFileDatum%ix(g) = iPFA
+        trouble = .true.
+      end if
+      if ( .not. trouble ) then
+        PFAData(iPFA)%channel = lbound(channels,1)
+        PFAData(iPFA)%signalIndex = signalIndices(1)
+        PFAData(iPFA)%theSignal = signals(signalIndices(1))
+        PFAData(iPFA)%theSignal%channels => channels
+        PFAData(iPFA)%theSignal%sideband = sb
+        PFAFileDatum%ix(g) = iPFA
+      else
+        PFAData(iPFA)%molecule = 0
+        PFAData(iPFA)%signal = 0
+        PFAData(iPFA)%channel = 0
+        PFAData(iPFA)%signalIndex = 0
+        nullify ( PFAData(iPFA)%theSignal%channels )
+        PFAData(iPFA)%theSignal%sideband = 0
+        PFAFileDatum%ix(g) = 0
+      end if
       nullify ( channels ) ! so as not to clobber the one we just stored
     end do
 
@@ -705,7 +743,7 @@ contains ! =====     Public Procedures     =============================
     ! Report all errors instead of quitting on the first one
     error = .false.
     MLSMSG_Severity_to_quit = MLSMSG_Error + 1
-    do g = 1, size(PFAFileDatum%ix)
+    do g = 1, ubound(PFAFileDatum%ix,1)
       error = error .or. &
         & hookTableToFindPFA ( f, g, PFAData(PFAFileDatum%ix(g)), PFAFileDatum%ix(g) ) /= 0
     end do
@@ -773,7 +811,7 @@ contains ! =====     Public Procedures     =============================
 
     f = 0
     if ( associated(PFAFiles) ) then
-      do f = size(PFAFiles), 1, -1
+      do f = ubound(PFAFiles,1), 1, -1
         if ( PFAFiles(f)%fileName == fileNameIndex ) exit
       end do
     end if
@@ -790,7 +828,7 @@ contains ! =====     Public Procedures     =============================
     end do
 
 !   if ( fileType == 'HDF5' ) then
-      nGroups = size(PFAFiles(f)%ix)
+      nGroups = ubound(PFAFiles(f)%ix,1)
       nullify ( groups )
       call allocate_test ( groups, nGroups, 'Groups', moduleName )
 
@@ -958,8 +996,8 @@ contains ! =====     Public Procedures     =============================
 
     integer :: FileID, GroupID
     integer :: I, IOSTAT
-    character(len=molNameLen) :: Molecules(size(pfaData))
-    character(len=maxSigLen) :: SignalText(size(pfaData))
+    character(len=molNameLen) :: Molecules(ubound(pfaData,1))
+    character(len=maxSigLen) :: SignalText(ubound(pfaData,1))
 
     if ( .not. associated(pfaData) ) call MLSMessage ( MLSMSG_Error, moduleName, &
       & 'No PFA Data to write' )
@@ -971,7 +1009,7 @@ contains ! =====     Public Procedures     =============================
       call h5gCreate_f ( fileID, 'Index', groupID, iostat )
       if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
         & 'Unable to create hdf5 Index group in ' // trim(fileName) // '.' )
-      do i = 1, size(pfaData)
+      do i = 1, ubound(pfaData,1)
         call get_string ( lit_indices(pfaData(i)%molecule), molecules(i) )
         call get_string ( pfaData(i)%signal, signalText(i) )
       end do
@@ -981,7 +1019,7 @@ contains ! =====     Public Procedures     =============================
       if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
         & 'Unable to close hdf5 Index group in ' // trim(fileName) // '.' )
       ! Write the PFA Data tables, one per group
-      do i = 1, size(pfaData)
+      do i = 1, ubound(pfaData,1)
         if ( associated(pfaData(i)%absorption) ) &
           & call write_PFADatum ( pfaData(i), FileName, FileType, lun=fileID )
       end do
@@ -1098,6 +1136,7 @@ contains ! =====     Public Procedures     =============================
 
   ! -------------------------------  Create_or_Expand_PFADatabase  -----
   subroutine Create_or_Expand_PFADatabase ( ToAdd, PrevSize )
+    use Allocate_Deallocate, only: Test_Allocate
     use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate, &
       & MLSMSG_Error
     integer, intent(in) :: ToAdd
@@ -1106,10 +1145,9 @@ contains ! =====     Public Procedures     =============================
     type(PFAData_t), pointer :: TempPFAData(:) => NULL()
     if ( associated(PFAData) .and. toAdd > 0 ) then
       tempPFAData => PFAData
-      prevSize = size(tempPFAData)
-      allocate ( PFAData(prevSize+toAdd), stat=stat )
-      if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-        & MLSMSG_Allocate // 'PFAData' )
+      prevSize = ubound(tempPFAData,1)
+      allocate ( PFAData(0:prevSize+toAdd), stat=stat )
+      call test_allocate ( stat, moduleName, 'PFAData' )
       pfaData(:prevSize) = tempPFAData
       deallocate ( tempPFAData, stat=stat )
       if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
@@ -1117,9 +1155,8 @@ contains ! =====     Public Procedures     =============================
     else
       prevSize = 0
       if ( toAdd > 0 ) then
-        allocate ( PFAData(toAdd), stat=stat )
-        if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-          & MLSMSG_Allocate // 'PFAData' )
+        allocate ( PFAData(0:toAdd), stat=stat )
+        call test_allocate ( stat, moduleName, 'PFAData' )
       end if
     end if
   end subroutine Create_or_Expand_PFADatabase
@@ -1319,6 +1356,11 @@ contains ! =====     Public Procedures     =============================
 end module PFADataBase_m
 
 ! $Log$
+! Revision 2.42  2011/07/23 00:17:32  vsnyder
+! More robust response to not finding a molecule string or signal string,
+! which might happen if the molecules list or signals database is changed
+! after the PFA tables are made.
+!
 ! Revision 2.41  2011/05/09 17:51:35  pwagner
 ! Converted to using switchDetail
 !
