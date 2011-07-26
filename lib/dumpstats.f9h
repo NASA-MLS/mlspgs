@@ -44,14 +44,18 @@
           if ( how_many < 50 ) call outputNamedValue( 'which', which(1:how_many) )
         endif
       else if ( present(fillValue) ) then
+        ! call output( 'dumpstats with FillValue ' // trim(name) )
         call printRMSetc ( Name, mlsmin(array, fillValue), &
           & mlsmax(array, fillValue), &
           & mlsstddev(array, fillValue), &
           & mlsmean(array, fillValue)  )
+        ! call output( 'done with PrintRMSetc.', advance='yes')
       else
+        ! call output( 'dumpstats w/o FillValue ' // trim(name) )
         call printRMSetc ( Name, minval(array), maxval(array), &
           & sqrt(sum(array*array)/(size(array)+0.)), &
           & mean=sum(array)/(size(array)+0.)  )
+        ! call output( 'done with PrintRMSetc.', advance='yes')
       end if
     end if
     if ( myStats .and. .not. thisIsADiff ) then
@@ -68,7 +72,12 @@
       end select
       numFill = size(array) - numNonFill
       ! call output( 'about to dump %', advance='yes' )
-      call printPercentages ( equal=numFill, unEqual=numNonFill  )
+      if ( (PRINTFILLVALUE .or. present(FillValue)) .and. &
+        & numFill+numNonFill > 0 ) then
+        call output( 'Compared with ', advance='no' )
+        call output( myFillValue, advance='no' )
+      end if
+      call printPercentages ( equal=numFill, unEqual=numNonFill )
     end if
     if ( myCollapse .and. myRank > 1 ) then
       call dumpCollapsedArray( array, name, &
@@ -131,6 +140,9 @@
     end if
     ! call output('Leaving dumpstats', advance='no')
 ! $Log$
+! Revision 2.25  2011/07/26 20:42:49  pwagner
+! Clearer, less redundant
+!
 ! Revision 2.24  2011/04/20 22:23:17  pwagner
 ! Guards against empty array (Was it necessary?)
 !

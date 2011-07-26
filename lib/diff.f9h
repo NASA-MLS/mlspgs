@@ -17,7 +17,7 @@
 !     character(len=*), intent(in), optional :: NAME1
 !     double precision, intent(in) :: ARRAY2(:)
 !     character(len=*), intent(in), optional :: NAME2
-!     double precision, intent(in), optional :: FILLVALUE
+!     double precision, intent(in)           :: FILLVALUE
 !     integer, intent(in), optional :: WIDTH
 !     character(len=*), intent(in), optional :: FORMAT
 !     integer, intent(in), optional :: LBOUND ! Low bound for Array
@@ -54,6 +54,7 @@
     real(kind(array1)), dimension(MAXPCTS) :: pctMeanRatios
     logical, parameter                     :: PRINTREFERENCEVALUES = .false.
     logical, parameter                     :: PRINTMINMAXWITHRMS = .true.
+    logical, parameter                     :: PRINTEXTRADUMP = .true.
     real(kind(array1))                     :: rmsratio
     real(kind(array1))                     :: stddev
     real(kind(array1))                     :: stddevratio
@@ -74,6 +75,7 @@
     if ( PCTFORMAT /= '*' ) myPCTFormat = PCTFORMAT
     myClean      = theDefault('clean') ! .false.
     myCollapse   = theDefault('collapse') ! .false.
+    myCyclic     = theDefault('cyclic') ! .false.
     myGaps       = theDefault('gaps')
     myLaconic    = theDefault('laconic')
     myRMS        = theDefault('rms')   ! .false.
@@ -88,6 +90,7 @@
     if ( present(options) ) then
       myClean       =   index( options, dopt_clean      ) > 0
       myCollapse    =   index( options, dopt_collapse   ) > 0
+      myCyclic      =   index( options, dopt_cyclic   ) > 0
       myGaps        =   index( options, dopt_gaps       ) > 0
       myLaconic     =   index( options, dopt_laconic    ) > 0
       myRMS         =   index( options, dopt_rms        ) > 0
@@ -231,11 +234,12 @@
       ! call dump ( filtered1, 'filtered1-filtered2', fillvalue=real(0.,kind(array1)) )
       ! call outputNamedValue( 'num /= fill value', numNonFill )
       alreadySbtrcted = .true.
+      if ( myStats ) call outputNamedValue( 'numNonFill', numNonFill )
       if ( myWholeArray ) then
         call dump( filtered1, trim(DiffName), &
           & real(0.,kind(array1)), WIDTH, FORMAT, &
           & LBOUND, options )
-      else
+      elseif ( .not. PRINTEXTRADUMP ) then
         call dump( filtered1(1:numNonFill), trim(DiffName), &
           & real(0.,kind(array1)), WIDTH, FORMAT, &
           & LBOUND, options )
@@ -257,7 +261,7 @@
         filtered2(i) = tmax
       enddo
     endif
-    call dump(filtered1, trim(DiffName), &
+    if ( PRINTEXTRADUMP ) call dump(filtered1, trim(DiffName), &
       & real(0.,kind(array1)), WIDTH, FORMAT, &
       & LBOUND, options )
     call doneWithDiff
@@ -414,6 +418,9 @@
 
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.25  2011/07/26 20:42:04  pwagner
+! Clearer, less redundant
+!
 ! Revision 2.24  2011/02/05 00:55:35  pwagner
 ! Consistent with new dopt_ dump options
 !
