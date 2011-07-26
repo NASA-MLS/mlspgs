@@ -52,7 +52,8 @@
       endif
       if ( uniqueonly ( options ) ) return
     endif
-    call output( '(Most optional features unavailable for 4d arrays', &
+    if ( all(shape(array) > 1 ) ) &
+      & call output( '(Most optional features unavailable for 4d arrays)', &
       & advance='yes' )
     ! include 'dumpstats.f9h'
 
@@ -63,6 +64,9 @@
 !    include 'dump4Db.f9h'
 ! end subroutine DUMP_4D_DOUBLE
 ! $Log$
+! Revision 2.2  2011/07/26 20:54:05  pwagner
+! Print warning about unavailable features only if dumping wholearray
+!
 ! Revision 2.1  2011/07/15 23:16:38  pwagner
 ! First commit
 !
