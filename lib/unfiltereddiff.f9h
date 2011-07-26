@@ -62,8 +62,7 @@
     real(rk), dimension(MAXPCTS,7) :: table
     logical, parameter                       :: PRINTREFERENCEVALUES = .false.
     logical, parameter                       :: PRINTMINMAXWITHRMS = .true.
-    logical, parameter                       :: USEDUMPTABLE = .true.
-    ! character(len=*), parameter      :: HEADSIDE = 'top'
+    logical, parameter                       :: PRINTEXTRADUMP = .false.
     logical, parameter               :: DEBUG = .false.
     real(rk), dimension(MAXPCTS), parameter :: PCTAGES = &
       & (/ 99.9, 99.8, 99.7, 99.5, 99., 98., 97., 95., 90., 80. /)
@@ -211,7 +210,7 @@
     call usePcts
     if ( DEBUG ) call SayTime( 'ratios', stime )
     stime = t2
-    call dump(array1-array2, trim(DiffName), &
+    if ( PRINTEXTRADUMP ) call dump(array1-array2, trim(DiffName), &
       & real(0.,rk), WIDTH, FORMAT, &
       & LBOUND, OPTIONS )
     if ( DEBUG ) call SayTime( 'dump', stime )
@@ -384,6 +383,9 @@
 
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.11  2011/07/26 20:52:19  pwagner
+! Clearer, less redundant
+!
 ! Revision 2.10  2011/02/05 01:00:01  pwagner
 ! Consistent with new dopt_ dump options
 !
