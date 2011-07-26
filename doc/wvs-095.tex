@@ -11,8 +11,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-095r16}
-\newcommand{\docdate}{31 January 2010}
+\newcommand{\docname}{wvs-095r17}
+\newcommand{\docdate}{27 July 2011}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -404,25 +404,28 @@ From Equation (\ref{three})
 \,.
 \end{split}\end{equation}
 
-The $k=$ IWC$_a$, $k=$ IWC$_s$, and $k \neq$ IWC cases simplify
+The $k=$ IWC and $k \neq$ IWC cases simplify
 differently:
 
 \begin{equation}\begin{split}\label{twelve}
-\frac{\partial \omega_{0_{ij}}}{\partial f^{\text{IWC}_s}_m}
+\frac{\partial \omega_{0_{ij}}}{\partial f^{\text{IWC}}_m}
 =\,&
+  \left[
   \omega_{0_{ij}}
   \left ( \frac1{\beta_{{c\_s}_i}} - \frac1{\beta_{e_{ij}}} \right )
-   \frac{\partial \beta_{{c\_s}_i}}{\partial f^{\text{IWC}_s}_i}
-   \eta^{\text{IWC}_s}_{im}
-= \frac{1-\omega_{0_{ij}}}{\beta_{e_{ij}}}
-   \frac{\partial \beta_{{c\_s}_i}}{\partial f^{\text{IWC}_s}_i}
-   \eta^{\text{IWC}_s}_{im} \\
-%
-\frac{\partial \omega_{0_{ij}}}{\partial f^{\text{IWC}_a}_m}
-=\,&
+   \frac{\partial \beta_{{c\_s}_i}}{\partial f^{\text{IWC}}_i}
   -\frac{\omega_{0_{ij}}}{\beta_{e_{ij}}}
-    \frac{\partial \beta_{{c\_a}_i}}{\partial f^{\text{IWC}_a}_i}
-     \eta^{\text{IWC}_a}_{im} \\
+    \frac{\partial \beta_{{c\_a}_i}}{\partial f^{\text{IWC}}_i}
+  \right]
+  \eta^{\text{IWC}}_{im} \\
+=\,&
+  \left[
+  (1-\omega_{0_{ij}})
+   \frac{\partial \beta_{{c\_s}_i}}{\partial f^{\text{IWC}}_i}
+  -\omega_{0_{ij}}
+    \frac{\partial \beta_{{c\_a}_i}}{\partial f^{\text{IWC}}_i}
+  \right]
+  \frac{\eta^{\text{IWC}}_{im}}{\beta_{e_{ij}}} \\
 %
 \frac{\partial \omega_{0_{ij}}}{\partial f^{k \neq \text{IWC}}_m}
 =\,&
@@ -846,6 +849,9 @@ is a linear operator gives Equation (\ref{five}):
 % $Id$
 
 % $Log$
+% Revision 1.13  2011/02/05 01:31:04  vsnyder
+% Correct omega_0 derivatives
+%
 % Revision 1.12  2010/12/18 03:50:07  vsnyder
 % Insert caveats about TScat being a single-frequency quantity, not a
 % channel-averaged quantity
