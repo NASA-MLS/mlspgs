@@ -311,6 +311,7 @@ module MLSFillValues              ! Some FillValue-related stuff
     module procedure WhereAreTheInfs_REAL, WhereAreTheInfs_DOUBLE
     module procedure WhereAreTheInfs_REAL_2d, WhereAreTheInfs_DOUBLE_2d
     module procedure WhereAreTheInfs_REAL_3d, WhereAreTheInfs_DOUBLE_3d
+    module procedure WhereAreTheInfs_REAL_4d, WhereAreTheInfs_DOUBLE_4d
     module procedure WhereAreTheInfs_INTEGER
     module procedure WhereAreTheInfs_INTEGER_2d, WhereAreTheInfs_INTEGER_3d
   end interface
@@ -319,6 +320,7 @@ module MLSFillValues              ! Some FillValue-related stuff
     module procedure WhereAreTheNaNs_REAL, WhereAreTheNaNs_DOUBLE
     module procedure WhereAreTheNaNs_REAL_2d, WhereAreTheNaNs_DOUBLE_2d
     module procedure WhereAreTheNaNs_REAL_3d, WhereAreTheNaNs_DOUBLE_3d
+    module procedure WhereAreTheNaNs_REAL_4d, WhereAreTheNaNs_DOUBLE_4d
     module procedure WhereAreTheNaNs_INTEGER
     module procedure WhereAreTheNaNs_INTEGER_2d, WhereAreTheNaNs_INTEGER_3d
   end interface
@@ -327,6 +329,7 @@ module MLSFillValues              ! Some FillValue-related stuff
     module procedure WhereAreThey_REAL, WhereAreThey_DOUBLE
     module procedure WhereAreThey_REAL_2d, WhereAreThey_DOUBLE_2d
     module procedure WhereAreThey_REAL_3d, WhereAreThey_DOUBLE_3d
+    module procedure WhereAreThey_REAL_4d, WhereAreThey_DOUBLE_4d
     module procedure WhereAreThey_INTEGER
     module procedure WhereAreThey_INTEGER_2d, WhereAreThey_INTEGER_3d
   end interface
@@ -2065,6 +2068,16 @@ contains
     call WhereAreThey( inf_signal, array, which, howMany, mode, inds )
   end subroutine WhereAreTheInfs_DOUBLE_3d
 
+  subroutine WhereAreTheInfs_DOUBLE_4d ( array, which, howMany, mode, inds )
+    ! Args
+    double precision, dimension(:,:,:,:), intent(in) :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( inf_signal, array, which, howMany, mode, inds )
+  end subroutine WhereAreTheInfs_DOUBLE_4d
+
   subroutine WhereAreTheInfs_integer_3d ( array, which, howMany, mode, inds )
     ! Args
     integer, dimension(:,:,:), intent(in)           :: array
@@ -2084,6 +2097,16 @@ contains
     integer, dimension(:,:), optional, intent(out) :: inds
     call WhereAreThey( inf_signal, array, which, howMany, mode, inds )
   end subroutine WhereAreTheInfs_REAL_3d
+
+  subroutine WhereAreTheInfs_REAL_4d ( array, which, howMany, mode, inds )
+    ! Args
+    real, dimension(:,:,:,:), intent(in)           :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( inf_signal, array, which, howMany, mode, inds )
+  end subroutine WhereAreTheInfs_REAL_4d
 
   ! ----------------------------------  WhereAreTheNaNs  -----
   ! This family of procedures finds which array elements are NaNs
@@ -2151,6 +2174,16 @@ contains
     call WhereAreThey( NaN_signal, array, which, howMany, mode, inds )
   end subroutine WhereAreTheNaNs_DOUBLE_3d
 
+  subroutine WhereAreTheNaNs_DOUBLE_4d ( array, which, howMany, mode, inds )
+    ! Args
+    double precision, dimension(:,:,:,:), intent(in)   :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( NaN_signal, array, which, howMany, mode, inds )
+  end subroutine WhereAreTheNaNs_DOUBLE_4d
+
   subroutine WhereAreTheNaNs_integer_3d ( array, which, howMany, mode, inds )
     ! Args
     integer, dimension(:,:,:), intent(in)           :: array
@@ -2170,6 +2203,16 @@ contains
     integer, dimension(:,:), optional, intent(out) :: inds
     call WhereAreThey( NaN_signal, array, which, howMany, mode, inds )
   end subroutine WhereAreTheNaNs_REAL_3d
+
+  subroutine WhereAreTheNaNs_REAL_4d ( array, which, howMany, mode, inds )
+    ! Args
+    real, dimension(:,:,:,:), intent(in)           :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( NaN_signal, array, which, howMany, mode, inds )
+  end subroutine WhereAreTheNaNs_REAL_4d
 
   ! ----------------------------------  private procedures  -----
   subroutine announce_error(message, int1, int2, dontstop)
@@ -2609,6 +2652,56 @@ contains
     if ( present(howMany) ) howMany = n
   end subroutine WhereAreThey_DOUBLE_3d
 
+  subroutine WhereAreThey_DOUBLE_4d ( what, array, which, howMany, mode, inds )
+    ! Args
+    integer, intent(in)                          :: what ! a signal flag
+    double precision, dimension(:,:,:,:), intent(in) :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    ! Internal variables
+    integer :: i, j, k, l
+    character(len=3) :: myMode
+    integer :: n
+    integer :: nWhich ! size(which);  > 0 only if which is present
+    logical :: yes
+    ! Executable
+    nWhich = 0
+    if ( present(which) ) nWhich = size(which)
+    if ( nWhich > 0 ) which = 0
+    if ( present(howMany) ) howMany = 0
+    if ( size(array,4) < 1 ) return
+    myMode = 'any'
+    if ( present(mode) ) myMode = mode
+    n = 0
+    do i=1, size(array, 4)
+      select case( lowercase(myMode(1:3)) )
+      case ( 'ind' )
+        do j=1, size(array, 3)
+          do k=1, size(array, 2)
+            do l=1, size(array, 1)
+              if ( .not. is_what_ieee(what, array(l, k, j, i)) ) cycle
+              n = n + 1
+            if ( present(inds) ) inds( 1:4, min(n,size(inds,2)) ) = (/ l, k, j, i /)
+            enddo
+          enddo
+        enddo
+      case ( 'any' )
+        yes = any( is_what_ieee(what, array(:,:,:,i)) )
+      case ( 'all' )
+        yes = all( is_what_ieee(what, array(:,:,:,i)) )
+      case default ! unrecognized mode; sorry
+        yes = .false.
+      end select
+      if ( yes ) then
+        n = n + 1
+        if ( n <= nWhich ) which(n) = i
+      endif
+    enddo
+    if ( present(howMany) ) howMany = n
+  end subroutine WhereAreThey_DOUBLE_4d
+
   subroutine WhereAreThey_integer_3d ( what, array, which, howMany, mode, inds )
     ! Args
     integer, intent(in)                          :: what ! a signal flag
@@ -2705,6 +2798,57 @@ contains
     if ( present(howMany) ) howMany = n
   end subroutine WhereAreThey_REAL_3d
 
+
+  subroutine WhereAreThey_real_4d ( what, array, which, howMany, mode, inds )
+    ! Args
+    integer, intent(in)                          :: what ! a signal flag
+    real, dimension(:,:,:,:), intent(in) :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    ! Internal variables
+    integer :: i, j, k, l
+    character(len=3) :: myMode
+    integer :: n
+    integer :: nWhich ! size(which);  > 0 only if which is present
+    logical :: yes
+    ! Executable
+    nWhich = 0
+    if ( present(which) ) nWhich = size(which)
+    if ( nWhich > 0 ) which = 0
+    if ( present(howMany) ) howMany = 0
+    if ( size(array,4) < 1 ) return
+    myMode = 'any'
+    if ( present(mode) ) myMode = mode
+    n = 0
+    do i=1, size(array, 4)
+      select case( lowercase(myMode(1:3)) )
+      case ( 'ind' )
+        do j=1, size(array, 3)
+          do k=1, size(array, 2)
+            do l=1, size(array, 1)
+              if ( .not. is_what_ieee(what, array(l, k, j, i)) ) cycle
+              n = n + 1
+            if ( present(inds) ) inds( 1:4, min(n,size(inds,2)) ) = (/ l, k, j, i /)
+            enddo
+          enddo
+        enddo
+      case ( 'any' )
+        yes = any( is_what_ieee(what, array(:,:,:,i)) )
+      case ( 'all' )
+        yes = all( is_what_ieee(what, array(:,:,:,i)) )
+      case default ! unrecognized mode; sorry
+        yes = .false.
+      end select
+      if ( yes ) then
+        n = n + 1
+        if ( n <= nWhich ) which(n) = i
+      endif
+    enddo
+    if ( present(howMany) ) howMany = n
+  end subroutine WhereAreThey_real_4d
+
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -2720,6 +2864,9 @@ end module MLSFillValues
 
 !
 ! $Log$
+! Revision 2.28  2011/07/26 20:44:21  pwagner
+! Added some 4d interfaces
+!
 ! Revision 2.27  2011/07/07 00:28:27  pwagner
 ! Made extremum elemental
 !
