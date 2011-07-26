@@ -31,15 +31,15 @@
     if ( any(shape(array) == 0) ) then
       call empty ( name )
     else if ( size(array,1) == 1 ) then
-      call output( '1st size is 1: reducing rank to 2', advance='yes' )
+      if ( myWholeArray ) call output( '1st size is 1: reducing rank to 2', advance='yes' )
       call dump ( array(1,:,:), name, &
         & fillValue=fillValue, format=format, options=options )
     else if ( size(array,2) == 1 ) then
-      call output( '2nd size is 1: reducing rank to 2', advance='yes' )
+      if ( myWholeArray ) call output( '2nd size is 1: reducing rank to 2', advance='yes' )
       call dump ( array(:,1,:), name, &
         & fillValue=fillValue, format=format, options=options )
     else if ( size(array,3) == 1 ) then
-      call output( '3rd size is 1: reducing rank to 2', advance='yes' )
+      if ( myWholeArray ) call output( '3rd size is 1: reducing rank to 2', advance='yes' )
       call dump ( array(:,:,1), name, &
         & fillValue=fillValue, format=format, options=options )
     else
@@ -80,6 +80,9 @@
    call theDumpEnds
 ! end subroutine DUMP_3D_DOUBLE
 ! $Log$
+! Revision 2.3  2011/07/26 20:45:21  pwagner
+! Clearer, less redundant
+!
 ! Revision 2.2  2011/07/15 23:22:16  pwagner
 ! prints notice one of array sizes is 1
 !
