@@ -10,16 +10,16 @@
 ! foreign countries or providing access to foreign persons.
 
 !=============================================================================
-module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
+module MLSStats1                 ! Calculate statistics of rank n arrays
 !=============================================================================
-  use Allocate_Deallocate, only: allocate_Test, Deallocate_Test
-  use MLSCommon, only: r4, r8
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-  use MLSSets, only: findAll, findFirst, findLast
-  use MLSStringLists, only: catLists
-  use MLSStrings, only: lowerCase
+  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use MLSKINDS, only: R4, R8
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+  use MLSSETS, only: FINDALL, FINDFIRST, FINDLAST
+  use MLSSTRINGLISTS, only: CATLISTS
+  use MLSSTRINGS, only: LOWERCASE
   use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
-  use SORT_M, only: sort, sortp
+  use SORT_M, only: SORT, SORTP
 
   implicit none
 ! === (start of toc) ===
@@ -75,7 +75,7 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
 !      & [int count], [int fillcount], &
 !      & [min], [max], [mean], [stddev], [rms], [median], [int indexing(3)], &
 !      & [int bincount], [log doDump] )
-!      
+!      values may go up to rank 4, typed either r4 or r8
 ! dump( stat_t statistic, [char which] )
 ! type(values) mls$fun( values, [fillvalue] )
 ! howfar( array1, array2, pct(:), stat_t gaps, char * mode )
@@ -184,12 +184,9 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
   logical, public, save          :: showIndexing = .false. ! show where max, min
   logical, public, save          :: statsOnOneLine = .false.
 
-  ! Which of two medianmethods to utilize
-  integer, private, save         :: medianMethod = 2 ! 1 is too slow
-
   interface ALLSTATS
-    module procedure allstats_d1r4, allstats_d2r4, allstats_d3r4
-    module procedure allstats_d1r8, allstats_d2r8, allstats_d3r8
+    module procedure allstats_d1r4, allstats_d2r4, allstats_d3r4, allstats_d4r4
+    module procedure allstats_d1r8, allstats_d2r8, allstats_d3r8, allstats_d4r8
   end interface
   
   interface dump
@@ -206,20 +203,20 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
   
   interface howfar
     module procedure howfar_d1int, howfar_d2int, howfar_d3int
-    module procedure howfar_d1r4, howfar_d2r4, howfar_d3r4
-    module procedure howfar_d1r8, howfar_d2r8, howfar_d3r8
+    module procedure howfar_d1r4, howfar_d2r4, howfar_d3r4, howfar_d4r4
+    module procedure howfar_d1r8, howfar_d2r8, howfar_d3r8, howfar_d4r8
   end interface
   
   interface hownear
     module procedure hownear_d1int, hownear_d2int, hownear_d3int
-    module procedure hownear_d1r4, hownear_d2r4, hownear_d3r4
-    module procedure hownear_d1r8, hownear_d2r8, hownear_d3r8
+    module procedure hownear_d1r4, hownear_d2r4, hownear_d3r4, hownear_d4r4
+    module procedure hownear_d1r8, hownear_d2r8, hownear_d3r8, hownear_d4r8
   end interface
   
   interface ratios
     module procedure ratios_d1int, ratios_d2int, ratios_d3int
-    module procedure ratios_d1r4, ratios_d2r4, ratios_d3r4
-    module procedure ratios_d1r8, ratios_d2r8, ratios_d3r8
+    module procedure ratios_d1r4, ratios_d2r4, ratios_d3r4, ratios_d4r4
+    module procedure ratios_d1r8, ratios_d2r8, ratios_d3r8, ratios_d4r8
   end interface
   
   interface filterValues
@@ -253,8 +250,8 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
   
   interface mlsstddev
     module procedure mlsstddev_d1int, mlsstddev_d2int, mlsstddev_d3int
-    module procedure mlsstddev_d1r4, mlsstddev_d2r4, mlsstddev_d3r4
-    module procedure mlsstddev_d1r8, mlsstddev_d2r8, mlsstddev_d3r8
+    module procedure mlsstddev_d1r4, mlsstddev_d2r4, mlsstddev_d3r4, mlsstddev_d4r4
+    module procedure mlsstddev_d1r8, mlsstddev_d2r8, mlsstddev_d3r8, mlsstddev_d4r8
   end interface
   
   interface mlsrms
@@ -285,14 +282,14 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
   logical, parameter :: DEEBUG = .false.
   ! Function names
   ! Stored using sequence of integers
-  integer, parameter              :: FN_MIN       = 1
+  integer, parameter              :: FN_COUNT     = 1
+  integer, parameter              :: FN_MIN       = FN_COUNT + 1
   integer, parameter              :: FN_MAX       = FN_MIN + 1
   integer, parameter              :: FN_MEAN      = FN_MAX + 1
   integer, parameter              :: FN_STDDEV    = FN_MEAN + 1
   integer, parameter              :: FN_RMS       = FN_STDDEV + 1
   integer, parameter              :: FN_MEDIAN    = FN_RMS + 1
-  integer, parameter              :: FN_COUNT     = FN_MEDIAN + 1
-  integer, parameter              :: FN_FILLCOUNT = FN_COUNT + 1
+  integer, parameter              :: FN_FILLCOUNT = FN_MEDIAN + 1
   integer, parameter              :: FN_COUNT_TOT = FN_FILLCOUNT + 1
 
 contains
@@ -485,6 +482,92 @@ contains
             & indexing=indexing, doDump=doDump)
         endif
       end subroutine allstats_d3r8
+
+      ! ------------------- allstats_d4r4 -----------------------
+      subroutine allstats_d4r4( values, &
+        & nbins, bounds, addedData, fillValue, precision, &
+        & count, fillcount, min, max, mean, stddev, rms, median, &
+        & bincount, indexing, doDump )
+        ! Args
+        real(r4), dimension(:,:,:,:), intent(in)       :: values
+        integer, optional, intent(in)                  :: nbins
+        real(r4), dimension(2), optional, intent(in)   :: bounds
+        logical, optional, intent(in)                  :: addeddata
+        real(r4), optional, intent(in)                 :: fillValue
+        real(r4), dimension(:,:,:,:), optional, intent(in)   :: precision
+        integer, optional, intent(inout)               :: count
+        integer, optional, intent(inout)               :: fillcount
+        real(r4), optional, intent(out)                :: min
+        real(r4), optional, intent(out)                :: max
+        real(r4), optional, intent(out)                :: mean
+        real(r4), optional, intent(out)                :: stddev
+        real(r4), optional, intent(out)                :: rms
+        real(r4), optional, intent(out)                :: median
+        integer, dimension(:), optional, intent(out)   :: bincount
+        integer, dimension(3), optional, intent(out)   :: indexing
+        logical , optional, intent(in)                 :: doDump
+        ! Internal variables
+        integer, dimension(4)                          :: shp
+        ! Executable
+        shp =shape(values)
+        if ( .not. present(precision) ) then
+          call allstats_d1r4(reshape(values, (/shp(1)*shp(2)*shp(3)*shp(4)/)), &
+            & nbins, bounds, addedData, fillValue, &
+            & count=count, fillcount=fillcount, min=min, max=max, mean=mean, &
+            & stddev=stddev, rms=rms, median=median, bincount=bincount, &
+            & indexing=indexing, doDump=doDump)
+        else
+          call allstats_d1r4(reshape(values, (/shp(1)*shp(2)*shp(3)*shp(4)/)), &
+            & nbins, bounds, addedData, fillValue, &
+            & reshape(precision, (/shp(1)*shp(2)/)),&
+            & count=count, fillcount=fillcount, min=min, max=max, mean=mean, &
+            & stddev=stddev, rms=rms, median=median, bincount=bincount, &
+            & indexing=indexing, doDump=doDump)
+        endif
+      end subroutine allstats_d4r4
+
+      ! ------------------- allstats_d4r8 -----------------------
+      subroutine allstats_d4r8( values, &
+        & nbins, bounds, addedData, fillValue, precision, &
+        & count, fillcount, min, max, mean, stddev, rms, median, &
+        & bincount, indexing, doDump )
+        ! Args
+        real(r8), dimension(:,:,:,:), intent(in)       :: values
+        integer, optional, intent(in)                  :: nbins
+        real(r8), dimension(2), optional, intent(in)   :: bounds
+        logical, optional, intent(in)                  :: addeddata
+        real(r8), optional, intent(in)                 :: fillValue
+        real(r8), dimension(:,:,:,:), optional, intent(in)   :: precision
+        integer, optional, intent(inout)               :: count
+        integer, optional, intent(inout)               :: fillcount
+        real(r8), optional, intent(out)                :: min
+        real(r8), optional, intent(out)                :: max
+        real(r8), optional, intent(out)                :: mean
+        real(r8), optional, intent(out)                :: stddev
+        real(r8), optional, intent(out)                :: rms
+        real(r8), optional, intent(out)                :: median
+        integer, dimension(:), optional, intent(out)   :: bincount
+        integer, dimension(3), optional, intent(out)   :: indexing
+        logical , optional, intent(in)                 :: doDump
+        ! Internal variables
+        integer, dimension(4)                          :: shp
+        ! Executable
+        shp =shape(values)
+        if ( .not. present(precision) ) then
+          call allstats_d1r8(reshape(values, (/shp(1)*shp(2)*shp(3)*shp(4)/)), &
+            & nbins, bounds, addedData, fillValue, &
+            & count=count, fillcount=fillcount, min=min, max=max, mean=mean, &
+            & stddev=stddev, rms=rms, median=median, bincount=bincount, &
+            & indexing=indexing, doDump=doDump)
+        else
+          call allstats_d1r8(reshape(values, (/shp(1)*shp(2)*shp(3)*shp(4)/)), &
+            & nbins, bounds, addedData, fillValue, &
+            & reshape(precision, (/shp(1)*shp(2)/)),&
+            & count=count, fillcount=fillcount, min=min, max=max, mean=mean, &
+            & stddev=stddev, rms=rms, median=median, bincount=bincount, &
+            & indexing=indexing, doDump=doDump)
+        endif
+      end subroutine allstats_d4r8
 
       ! ------------------- mlscount -----------------------
       ! This family of functions returns the count of values that are
@@ -1098,6 +1181,24 @@ contains
         include 'stats0.f9h'
       end function mlsstddev_d3r8
 
+      ! ------------------- mlsstddev_d4r4 -----------------------
+      function mlsstddev_d4r4(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_stddev
+        ! Args
+        real(KINDVALUE), dimension(:,:,:,:), intent(in)  :: values
+        include 'stats0.f9h'
+      end function mlsstddev_d4r4
+
+      ! ------------------- mlsstddev_d4r8 -----------------------
+      function mlsstddev_d4r8(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r8
+        integer, parameter                             :: FN = FN_stddev
+        ! Args
+        real(KINDVALUE), dimension(:,:,:,:), intent(in)  :: values
+        include 'stats0.f9h'
+      end function mlsstddev_d4r8
+
       ! ------------------- mlsrms_d1r4 -----------------------
       function mlsrms_d1r4(values, fillValue) result(rValue)
         integer, parameter                             :: KINDVALUE = r4
@@ -1250,6 +1351,20 @@ contains
           & pct, gaps, mode, array1AtN, array2AtN )
       end subroutine howfar_d3r4
 
+      subroutine howfar_d4r4( array1, array2, pct, gaps, mode, array1AtN, array2AtN )
+        integer, parameter                             :: KINDVALUE = r4
+        real(KINDVALUE), dimension(:,:,:,:), intent(in)       :: array1, array2
+        real(KINDVALUE), dimension(:), intent(in)           :: pct
+        type(Stat_T), dimension(:), intent(inout)           :: gaps
+        character(len=*), intent(in)              :: mode ! 'rel' or 'abs'          
+        real(KINDVALUE), dimension(:, :), &
+          & optional, intent(out)                 :: array1AtN, array2AtN
+        ! Executable
+        call howfar( reshape(array1, (/product(shape(array1))/)), &
+          & reshape(array2, (/product(shape(array1))/)), &
+          & pct, gaps, mode, array1AtN, array2AtN )
+      end subroutine howfar_d4r4
+
       subroutine howfar_d1r8( array1, array2, pct, gaps, mode, array1AtN, array2AtN )
         integer, parameter                             :: KINDVALUE = r8
         include 'howfar.f9h'
@@ -1286,6 +1401,20 @@ contains
           & reshape(array2, (/shp(1)*shp(2)*shp(3)/)), &
           & pct, gaps, mode, array1AtN, array2AtN )
       end subroutine howfar_d3r8
+
+      subroutine howfar_d4r8( array1, array2, pct, gaps, mode, array1AtN, array2AtN )
+        integer, parameter                             :: KINDVALUE = r8
+        real(KINDVALUE), dimension(:,:,:,:), intent(in)       :: array1, array2
+        real(KINDVALUE), dimension(:), intent(in)           :: pct
+        type(Stat_T), dimension(:), intent(inout)           :: gaps
+        character(len=*), intent(in)              :: mode ! 'rel' or 'abs'          
+        real(KINDVALUE), dimension(:, :), &
+          & optional, intent(out)                 :: array1AtN, array2AtN
+        ! Executable
+        call howfar( reshape(array1, (/product(shape(array1))/)), &
+          & reshape(array2, (/product(shape(array2))/)), &
+          & pct, gaps, mode, array1AtN, array2AtN )
+      end subroutine howfar_d4r8
 
       ! ------------------- hownear -----------------------
       ! This family of routines finds the percentages of points
@@ -1360,6 +1489,18 @@ contains
           & pct, gaps, gapratios )
       end subroutine hownear_d3r4
 
+      subroutine hownear_d4r4( array1, array2, pct, gaps, gapratios )
+        integer, parameter                             :: KINDVALUE = r4
+        real(KINDVALUE), dimension(:,:,:,:), intent(in)       :: array1, array2
+        real(KINDVALUE), dimension(:), intent(out)          :: pct
+        real(KINDVALUE), dimension(:), optional, intent(in) :: gaps
+        real(KINDVALUE), dimension(:), optional, intent(in) :: gapratios
+        ! Executable
+        call hownear( reshape(array1, (/product(shape(array1))/)), &
+          & reshape(array2, (/product(shape(array2))/)), &
+          & pct, gaps, gapratios )
+      end subroutine hownear_d4r4
+
       subroutine hownear_d1r8( array1, array2, pct, gaps, gapratios )
         integer, parameter                             :: KINDVALUE = r8
         include 'hownear.f9h'
@@ -1392,6 +1533,18 @@ contains
           & reshape(array2, (/shp(1)*shp(2)*shp(3)/)), &
           & pct, gaps, gapratios )
       end subroutine hownear_d3r8
+
+      subroutine hownear_d4r8( array1, array2, pct, gaps, gapratios )
+        integer, parameter                             :: KINDVALUE = r8
+        real(KINDVALUE), dimension(:,:,:,:), intent(in)       :: array1, array2
+        real(KINDVALUE), dimension(:), intent(out)          :: pct
+        real(KINDVALUE), dimension(:), optional, intent(in) :: gaps
+        real(KINDVALUE), dimension(:), optional, intent(in) :: gapratios
+        ! Executable
+        call hownear( reshape(array1, (/product(shape(array1))/)), &
+          & reshape(array2, (/product(shape(array2))/)), &
+          & pct, gaps, gapratios )
+      end subroutine hownear_d4r8
 
       ! ------------------- pdf -----------------------
       ! This family of functions finds the probability density function
@@ -1750,6 +1903,30 @@ contains
           & fillValue, op )
       end subroutine ratios_d3r4
 
+      subroutine ratios_d4r4( array1, array2, exvalues, exratios, &
+        & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
+        & fillValue, op )
+        integer, parameter                             :: KINDVALUE = r4
+        ! Args
+        real(KINDVALUE), dimension(:,:,:,:), intent(in)  :: array1, array2
+        real(KINDVALUE), dimension(2), intent(out)     :: exvalues
+        real(KINDVALUE), dimension(2), intent(out)     :: exratios
+        real(KINDVALUE), optional, intent(out)         :: minratio
+        real(KINDVALUE), optional, intent(out)         :: maxratio
+        real(KINDVALUE), optional, intent(out)         :: meanratio
+        real(KINDVALUE), optional, intent(out)         :: stddevratio
+        real(KINDVALUE), optional, intent(out)         :: rmsratio
+        real(KINDVALUE), optional, intent(out)         :: medianratio
+        real(KINDVALUE), optional                      :: FillValue
+        character, optional, intent(in)        :: op
+        ! Executable
+        call ratios( reshape(array1, (/product(shape(array1))/)), &
+          & reshape(array2, (/product(shape(array2))/)), &
+          & exvalues, exratios, &
+          & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
+          & fillValue, op )
+      end subroutine ratios_d4r4
+
       subroutine ratios_d3r8( array1, array2, exvalues, exratios, &
         & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
         & fillValue, op )
@@ -1776,6 +1953,30 @@ contains
           & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
           & fillValue, op )
       end subroutine ratios_d3r8
+      
+      subroutine ratios_d4r8( array1, array2, exvalues, exratios, &
+        & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
+        & fillValue, op )
+        integer, parameter                             :: KINDVALUE = r8
+        ! Args
+        real(KINDVALUE), dimension(:,:,:,:), intent(in)  :: array1, array2
+        real(KINDVALUE), dimension(2), intent(out)     :: exvalues
+        real(KINDVALUE), dimension(2), intent(out)     :: exratios
+        real(KINDVALUE), optional, intent(out)         :: minratio
+        real(KINDVALUE), optional, intent(out)         :: maxratio
+        real(KINDVALUE), optional, intent(out)         :: meanratio
+        real(KINDVALUE), optional, intent(out)         :: stddevratio
+        real(KINDVALUE), optional, intent(out)         :: rmsratio
+        real(KINDVALUE), optional, intent(out)         :: medianratio
+        real(KINDVALUE), optional                      :: FillValue
+        character, optional, intent(in)        :: op
+        ! Executable
+        call ratios( reshape(array1, (/product(shape(array1))/)), &
+          & reshape(array2, (/product(shape(array2))/)), &
+          & exvalues, exratios, &
+          & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
+          & fillValue, op )
+      end subroutine ratios_d4r8
       
       ! ------------------ reset -------------------------
       ! resets a stat_t by setting counters to zero and deallocating a pointer
@@ -2218,6 +2419,9 @@ end module MLSStats1
 
 !
 ! $Log$
+! Revision 2.23  2011/07/26 20:43:51  pwagner
+! Added some 4d interfaces
+!
 ! Revision 2.22  2009/06/23 18:25:42  pwagner
 ! Prevent Intel from optimizing ident string away
 !
