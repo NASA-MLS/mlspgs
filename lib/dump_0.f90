@@ -194,6 +194,7 @@ module DUMP_0
     module procedure DIFF_1D_DOUBLE, DIFF_1D_INTEGER, DIFF_1D_REAL
     module procedure DIFF_2D_DOUBLE, DIFF_2D_INTEGER, DIFF_2D_REAL
     module procedure DIFF_3D_DOUBLE, DIFF_3D_REAL
+    module procedure DIFF_4D_DOUBLE, DIFF_4D_REAL
   end interface
 
   interface DIFF_FUN    ! return diffs between args or arrays of numeric type
@@ -204,6 +205,7 @@ module DUMP_0
     module procedure FILTEREDDIFF_1D_DOUBLE, FILTEREDDIFF_1D_INTEGER, FILTEREDDIFF_1D_REAL
     module procedure FILTEREDDIFF_2D_DOUBLE, FILTEREDDIFF_2D_INTEGER, FILTEREDDIFF_2D_REAL
     module procedure FILTEREDDIFF_3D_DOUBLE, FILTEREDDIFF_3D_REAL
+    module procedure FILTEREDDIFF_4D_DOUBLE, FILTEREDDIFF_4D_REAL
   end interface
 
   interface DUMP        ! dump n-d arrays of homogeneous type
@@ -280,6 +282,7 @@ module DUMP_0
     module procedure UNFILTEREDDIFF_1D_DOUBLE, UNFILTEREDDIFF_1D_INTEGER, UNFILTEREDDIFF_1D_REAL
     module procedure UNFILTEREDDIFF_2D_DOUBLE, UNFILTEREDDIFF_2D_INTEGER, UNFILTEREDDIFF_2D_REAL
     module procedure UNFILTEREDDIFF_3D_DOUBLE, UNFILTEREDDIFF_3D_REAL
+    module procedure UNFILTEREDDIFF_4D_DOUBLE, UNFILTEREDDIFF_4D_REAL
   end interface
 
 !---------------------------- RCS Module Info ------------------------------
@@ -316,6 +319,7 @@ module DUMP_0
   logical, public, save ::   DIFFRMSMEANSRMS           = .false.
   logical, public, save ::   DONTDUMPIFALLEQUAL        = .true.
   logical, public, save ::   FILTERFILLSFROMRMS        = .false.
+  logical, public, save ::   PRINTFILLVALUE            = .true.
   logical, public, save ::   PRINTNAMEIFDIFF           = .true.
   logical, public, save ::   STATSONONELINE            = .true.
 
@@ -571,6 +575,96 @@ contains
         & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
     endif
   end subroutine DIFF_3D_REAL
+
+  subroutine DIFF_4D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
+    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
+    double precision, intent(in) :: ARRAY1(:,:,:,:)
+    character(len=*), intent(in) :: NAME1
+    double precision, intent(in) :: ARRAY2(:,:,:,:)
+    character(len=*), intent(in) :: NAME2
+    double precision, intent(in), optional :: FILLVALUE
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    integer, intent(in), optional :: LBOUND ! Low bound for Array
+    character(len=*), intent(in), optional :: options
+
+    call theDumpBegins ( options )
+    if ( any(shape(array1) == 0) ) then
+      call output( 'array sizes are 0', advance='yes' )
+    else if ( size(array1,1) == 1 ) then
+      if ( myWholeArray ) call output( '1st size is 1: reducing rank to 3', advance='yes' )
+      call diff ( array1(1,:,:,:), name1, array2(1,:,:,:), name2, &
+        & fillvalue, width, format, lbound, options )
+    else if ( size(array1,2) == 1 ) then
+      if ( myWholeArray ) call output( '2nd size is 1: reducing rank to 3', advance='yes' )
+      call diff ( array1(:,1,:,:), name1, array2(:,1,:,:), name2, &
+        & fillvalue, width, format, lbound, options )
+    else if ( size(array1,3) == 1 ) then
+      if ( myWholeArray ) call output( '3rd size is 1: reducing rank to 3', advance='yes' )
+      call diff ( array1(:,:,1,:), name1, array2(:,:,1,:), name2, &
+        & fillvalue, width, format, lbound, options )
+    else if ( size(array1,4) == 1 ) then
+      if ( myWholeArray ) call output( '4th size is 1: reducing rank to 3', advance='yes' )
+      call diff ( array1(:,:,:,1), name1, array2(:,:,:,1), name2, &
+        & fillvalue, width, format, lbound, options )
+    elseif ( .not. present(FillValue) ) then
+      if ( myWholeArray ) call UnfilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
+        & WIDTH, FORMAT, LBOUND, OPTIONS )
+    elseif ( product(shape(array1)) > TOOMANYELEMENTS ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'array size of ' // trim(name1) // ' too large to filter Fill values' )
+      call UnfilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
+        & WIDTH, FORMAT, LBOUND, OPTIONS )
+    else
+      call FilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
+        & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
+    endif
+  end subroutine DIFF_4D_DOUBLE
+
+  subroutine DIFF_4D_REAL ( ARRAY1, NAME1, ARRAY2, NAME2, &
+    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
+    real, intent(in) :: ARRAY1(:,:,:,:)
+    character(len=*), intent(in) :: NAME1
+    real, intent(in) :: ARRAY2(:,:,:,:)
+    character(len=*), intent(in) :: NAME2
+    real, intent(in), optional :: FILLVALUE
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    integer, intent(in), optional :: LBOUND ! Low bound for Array
+    character(len=*), intent(in), optional :: options
+
+    call theDumpBegins ( options )
+    if ( any(shape(array1) == 0) ) then
+      call output( 'array sizes are 0', advance='yes' )
+    else if ( size(array1,1) == 1 ) then
+      if ( myWholeArray ) call output( '1st size is 1: reducing rank to 3', advance='yes' )
+      call diff ( array1(1,:,:,:), name1, array2(1,:,:,:), name2, &
+        & fillvalue, width, format, lbound, options )
+    else if ( size(array1,2) == 1 ) then
+      if ( myWholeArray ) call output( '2nd size is 1: reducing rank to 3', advance='yes' )
+      call diff ( array1(:,1,:,:), name1, array2(:,1,:,:), name2, &
+        & fillvalue, width, format, lbound, options )
+    else if ( size(array1,3) == 1 ) then
+      if ( myWholeArray ) call output( '3rd size is 1: reducing rank to 3', advance='yes' )
+      call diff ( array1(:,:,1,:), name1, array2(:,:,1,:), name2, &
+        & fillvalue, width, format, lbound, options )
+    else if ( size(array1,4) == 1 ) then
+      if ( myWholeArray ) call output( '4th size is 1: reducing rank to 3', advance='yes' )
+      call diff ( array1(:,:,:,1), name1, array2(:,:,:,1), name2, &
+        & fillvalue, width, format, lbound, options )
+    elseif ( .not. present(FillValue) ) then
+      call UnfilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
+        & WIDTH, FORMAT, LBOUND, OPTIONS )
+    elseif ( product(shape(array1)) > TOOMANYELEMENTS ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'array size of ' // trim(name1) // ' too large to filter Fill values' )
+      call UnfilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
+        & WIDTH, FORMAT, LBOUND, OPTIONS )
+    else
+      call FilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
+        & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
+    endif
+  end subroutine DIFF_4D_REAL
 
   ! -----------------------------------------------  DIFF_SCALAR  -----
   ! This family of functions differences two values and returns
@@ -1728,35 +1822,53 @@ contains
   end subroutine dump_tai
   
   ! ---------------------------------------------- DumpDumpOptions -----
-  subroutine DumpDumpOptions
+  subroutine DumpDumpOptions( options )
     ! Show dump, diff options
+    character(len=*), optional, intent(in) :: options
     character(len=1), parameter :: fillChar = '1' ! fill blanks with '. .'
-     call blanks(90, fillChar='-', advance='yes')
-     call output(' ------------------------ Summary of automatic Dump, Diff options'      , advance='no')
-     call output(' ------------------------ ', advance='yes')
-     call outputNamedValue ( 'character printed between row, col id and data', aftersub, advance='yes', &
-       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
-     call outputNamedValue ( 'default DIFF switches for CLEAN, TRIM, etc.', trim_safe(DEFAULTDIFFOPTIONS), advance='yes', &
-       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
-     call outputNamedValue ( 'default DUMP switches for CLEAN, TRIM, etc.', trim_safe(DEFAULTDUMPOPTIONS), advance='yes', &
-       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
-     call outputNamedValue ( 'print abs min, max, etc. when DIFF has RMS set TRUE?', DIFFRMSMEANSRMS, advance='yes', &
-       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
-     call outputNamedValue ( 'skip dumping every element of a constant array?', DIFFRMSMEANSRMS, advance='yes', &
-       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
-     call outputNamedValue ( 'what side to place headers when dumping tables', trim(DUMPTABLESIDE), advance='yes', &
-       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
-     call outputNamedValue ( 'print stats all on one line?', STATSONONELINE, advance='yes', &
-       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
-     call outputNamedValue ( 'pct output format', trim_safe(PCTFORMAT), advance='yes', &
-       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
-     call outputNamedValue ( 'rms output format', trim_safe(RMSFORMAT), advance='yes', &
-       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
-     call outputNamedValue ( 'numeric output format', trim_safe(SDFORMATDEFAULT), advance='yes', &
-       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
-     call outputNamedValue ( 'complex output format', trim_safe(sdFormatDefaultCmplx), advance='yes', &
-       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
-     call blanks(90, fillChar='-', advance='yes')
+     if ( .not. present(options) ) then
+       call blanks(90, fillChar='-', advance='yes')
+       call output(' ------------------------ Summary of automatic Dump, Diff options'      , advance='no')
+       call output(' ------------------------ ', advance='yes')
+       call outputNamedValue ( 'character printed between row, col id and data', aftersub, advance='yes', &
+         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
+       call outputNamedValue ( 'default DIFF switches for CLEAN, TRIM, etc.', trim_safe(DEFAULTDIFFOPTIONS), advance='yes', &
+         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
+       call outputNamedValue ( 'default DUMP switches for CLEAN, TRIM, etc.', trim_safe(DEFAULTDUMPOPTIONS), advance='yes', &
+         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
+       call outputNamedValue ( 'print abs min, max, etc. when DIFF has RMS set TRUE?', DIFFRMSMEANSRMS, advance='yes', &
+         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
+       call outputNamedValue ( 'skip dumping every element of a constant array?', DIFFRMSMEANSRMS, advance='yes', &
+         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
+       call outputNamedValue ( 'what side to place headers when dumping tables', trim(DUMPTABLESIDE), advance='yes', &
+         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
+       call outputNamedValue ( 'print stats all on one line?', STATSONONELINE, advance='yes', &
+         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
+       call outputNamedValue ( 'pct output format', trim_safe(PCTFORMAT), advance='yes', &
+         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
+       call outputNamedValue ( 'rms output format', trim_safe(RMSFORMAT), advance='yes', &
+         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
+       call outputNamedValue ( 'numeric output format', trim_safe(SDFORMATDEFAULT), advance='yes', &
+         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
+       call outputNamedValue ( 'complex output format', trim_safe(sdFormatDefaultCmplx), advance='yes', &
+         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
+       call blanks(90, fillChar='-', advance='yes')
+     else
+       call outputNamedValue ( 'options', trim_safe(options), advance='yes', &
+         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
+       call outputNamedValue ( 'thisIsADiff?', thisIsADiff, advance='yes', &
+         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
+       call outputNamedValue ( 'myClean?', myClean, advance='yes', &
+         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
+       call outputNamedValue ( 'myCollapse?', myCollapse, advance='yes', &
+         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
+       call outputNamedValue ( 'myCyclic?', myCyclic, advance='yes', &
+         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
+       call outputNamedValue ( 'myRMS?', myRMS, advance='yes', &
+         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
+       call outputNamedValue ( 'myWholeArray?', myWholeArray, advance='yes', &
+         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
+     endif
   end subroutine DumpDumpOptions
 
   ! -----------------------------------  dumpLists  -----
@@ -2505,6 +2617,42 @@ contains
     include "diff.f9h"
   end subroutine FILTEREDDIFF_3D_REAL
 
+  subroutine FILTEREDDIFF_4D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
+    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
+    double precision, intent(in) :: ARRAY1(:,:,:,:)
+    character(len=*), intent(in) :: NAME1
+    double precision, intent(in) :: ARRAY2(:,:,:,:)
+    character(len=*), intent(in) :: NAME2
+    double precision, intent(in):: FILLVALUE
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    integer, intent(in), optional :: LBOUND
+    character(len=*), intent(in), optional :: options
+
+    double precision, dimension(product(shape(array1))) :: filtered1
+    double precision, dimension(product(shape(array2))) :: filtered2
+    double precision :: refmin, refmax, refrms
+    include "diff.f9h"
+  end subroutine FILTEREDDIFF_4D_DOUBLE
+
+  subroutine FILTEREDDIFF_4D_REAL ( ARRAY1, NAME1, ARRAY2, NAME2, &
+    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
+    real, intent(in) :: ARRAY1(:,:,:,:)
+    character(len=*), intent(in) :: NAME1
+    real, intent(in) :: ARRAY2(:,:,:,:)
+    character(len=*), intent(in) :: NAME2
+    real, intent(in):: FILLVALUE
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    integer, intent(in), optional :: LBOUND
+    character(len=*), intent(in), optional :: options
+
+    real, dimension(product(shape(array1))) :: filtered1
+    real, dimension(product(shape(array2))) :: filtered2
+    real :: refmin, refmax, refrms
+    include "diff.f9h"
+  end subroutine FILTEREDDIFF_4D_REAL
+
   
   ! ------------------------------------------------------  Empty  -----
   function arrayShapeToString ( arrayShape ) result ( string )
@@ -2606,7 +2754,7 @@ contains
   ! ----------------------------------------------  printPercentages  -----
   ! Prints a nicely-formatted summary of equal, unequal, etc.
   ! using output
-  subroutine printPercentages ( name, equal, unequal  )
+  subroutine printPercentages ( name, equal, unequal )
     character(len=*), intent(in), optional :: Name
     integer, intent(in) :: equal
     integer, intent(in) :: unequal
@@ -3002,6 +3150,36 @@ contains
     include "unfiltereddiff.f9h"
   end subroutine UNFILTEREDDIFF_3D_REAL
 
+  subroutine UNFILTEREDDIFF_4D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
+    & WIDTH, FORMAT, LBOUND, OPTIONS )
+    integer, parameter :: RK = kind(1.0d0)
+    real(rk), intent(in) :: ARRAY1(:,:,:,:)
+    character(len=*), intent(in) :: NAME1
+    real(rk), intent(in) :: ARRAY2(:,:,:,:)
+    character(len=*), intent(in) :: NAME2
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    integer, intent(in), optional :: LBOUND
+    character(len=*), intent(in), optional :: options
+
+    include "unfiltereddiff.f9h"
+  end subroutine UNFILTEREDDIFF_4D_DOUBLE
+
+  subroutine UNFILTEREDDIFF_4D_REAL ( ARRAY1, NAME1, ARRAY2, NAME2, &
+    & WIDTH, FORMAT, LBOUND, OPTIONS )
+    integer, parameter :: RK = kind(1.0e0)
+    real(rk), intent(in) :: ARRAY1(:,:,:,:)
+    character(len=*), intent(in) :: NAME1
+    real(rk), intent(in) :: ARRAY2(:,:,:,:)
+    character(len=*), intent(in) :: NAME2
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    integer, intent(in), optional :: LBOUND
+    character(len=*), intent(in), optional :: options
+
+    include "unfiltereddiff.f9h"
+  end subroutine UNFILTEREDDIFF_4D_REAL
+
   logical function uniqueonly ( options )
     character(len=*), intent(in), optional :: options
     ! Executable
@@ -3025,6 +3203,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.116  2011/07/26 20:40:24  pwagner
+! Added 4d diffs, too
+!
 ! Revision 2.115  2011/07/23 00:16:25  vsnyder
 ! Use (1.,0.) instead of CMPLX(1.,0.) to avoid Intel gripe
 !
