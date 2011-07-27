@@ -40,7 +40,7 @@
         integer                                        :: ncells
         integer                                        :: n
         integer                                        :: nx
-        real(rk), dimension(5)                         :: stats
+        real(rk), dimension(FN_STDDEV)                 :: stats
         real(rk)                                       :: x1, x2
         real(rk), dimension(:), pointer                :: xtab => null()
         real(rk), dimension(:), pointer                :: xmed1 => null()
@@ -61,11 +61,11 @@
         myAddedData = .false.
         if ( present(addedData) ) myAddedData = addedData
         if ( myAddedData ) then
-          stats(1) = MLSStat%count
-          stats(2) = MLSStat%min
-          stats(3) = MLSStat%max
-          stats(4) = MLSStat%mean
-          stats(5) = MLSStat%stddev
+          stats(FN_COUNT ) = MLSStat%count
+          stats(FN_MIN   ) = MLSStat%min
+          stats(FN_MAX   ) = MLSStat%max
+          stats(FN_MEAN  ) = MLSStat%mean
+          stats(FN_STDDEV) = MLSStat%stddev
           if ( DEEBUG ) then
           call output('Merging with existing stats count min max mean stddev ', advance='yes')
           call output(stats, advance='yes')
@@ -124,11 +124,11 @@
           call output( 'stats: ', advance='no' )
           call output( stats, advance='yes' )
         endif
-        MLSStat%count  = stats(1)
-        MLSStat%min    = stats(2)
-        MLSStat%max    = stats(3)
-        MLSStat%mean   = stats(4)
-        MLSStat%stddev = stats(5)
+        MLSStat%count  = stats(FN_COUNT )
+        MLSStat%min    = stats(FN_MIN   )
+        MLSStat%max    = stats(FN_MAX   )
+        MLSStat%mean   = stats(FN_MEAN  )
+        MLSStat%stddev = stats(FN_STDDEV)
         MLSStat%rms    = myRMS
         if ( .not. myAddedData ) then
           if ( DEEBUG ) then
@@ -145,12 +145,12 @@
             call output( MLSStat%indexing, advance='yes' )
           endif
         endif
-        if ( present(count ) ) count  = stats(1)
         if ( present(fillcount) ) fillcount = MLSStat%fillcount
-        if ( present(min   ) ) min    = stats(2)
-        if ( present(max   ) ) max    = stats(3)
-        if ( present(mean  ) ) mean   = stats(4)
-        if ( present(stddev) ) stddev = stats(5)
+        if ( present(count ) ) count  = stats(FN_COUNT )
+        if ( present(min   ) ) min    = stats(FN_MIN   )
+        if ( present(max   ) ) max    = stats(FN_MAX   )
+        if ( present(mean  ) ) mean   = stats(FN_MEAN  )
+        if ( present(stddev) ) stddev = stats(FN_STDDEV)
         if ( present(rms   ) ) rms    = myRMS
         if ( present(median) ) median = MLSStat%median
         if ( present(indexing) ) indexing = MLSStat%indexing
@@ -182,65 +182,7 @@
         call dump( MLSStat, fields )
 contains
   subroutine FindMedian( array, N, median )
-    ! Find the median of the values contained in array
-    ! By either of two methods:
-    ! (1) deleting both max and mins on successive paths; or
-    ! (2) sorting the array
-    ! Dummy args
-    real(rk), dimension(:), intent(in) :: array
-    integer, intent(in)                :: N
-    real(r8), intent(out)              :: median
-    ! Executable
-    if ( medianmethod == 1 ) then
-      call FindMedian_1( array, N, median )
-    else
-      call FindMedian_2( array, N, median )
-    endif
-  end subroutine FindMedian
-
-  subroutine FindMedian_1( array, N, median )
-    ! Find the median of the values contained in array
-    ! Method:
-    ! At each step, delete the high and low values of the array
-    ! Until left with an array of length either 2 or 1
-    ! (depending on whether the starting length was even or odd)
-    ! The 1st element of this shrunken array is our median
-    
-    ! (If even, would you prefer to split: median = (x1 +x2)/2?)
-    ! No, because then the median value wouldn't actually be in the array
-    
-    ! This method is so slow it's been superseded by method 2
-
-    ! Dummy args
-    real(rk), dimension(:), intent(in) :: array
-    integer, intent(in)                :: N
-    real(r8), intent(out)              :: median
-    ! Local variables
-    logical :: done
-    integer, dimension(1) :: low, high
-    integer :: newsize
-    ! Executable
-    nullify(xmed1, xmed2)
-    call allocate_test( xmed1, N, 'xmed1', trim(Modulename) // '/FindMedian' )
-    call allocate_test( xmed2, N, 'xmed2', trim(Modulename) // '/FindMedian' )
-    xmed1(1:N) = array(1:N)
-    newsize = N
-    done = (N < 3)
-    do
-      if ( done ) exit
-      low = minloc( xmed1(1:newsize) )
-      high = maxloc( xmed1(1:newsize) )
-      newsize = shrinkArray( xmed1(1:newsize), (/ low(1), high(1) /), xmed2 )
-      xmed1 = xmed2
-      done = (newsize < 3)
-    enddo
-    median = xmed1(1)
-    call deallocate_test(xmed1, 'xmed1', trim(Modulename) // '/FindMedian' )
-    call deallocate_test(xmed2, 'xmed2', trim(Modulename) // '/FindMedian' )
-  end subroutine FindMedian_1
-
-  subroutine FindMedian_2( array, N, median )
-    ! Find the median of the values contained in array
+    ! Find the median of the values contained in array(1:N)
     ! Method:
     ! sort he array, then choose its middle element
     
@@ -253,7 +195,7 @@ contains
     ! Executable
     if ( size(array) < 1 ) then
       return
-    elseif ( size(array) < 3 ) then
+    elseif ( size(array) < 3 .or. N < 3 ) then
       median = array(1)
       return
     endif
@@ -264,10 +206,13 @@ contains
     ! E.g., the median of [1,2,..,99] is 50
     ! ans so is the median of [1,2,..,100] (and not 50.5 or 51 or ..]
     median = sorted( (n+1)/2  )
-  end subroutine FindMedian_2
+  end subroutine FindMedian
 ! end subroutine sllstats*
 
 ! $Log$
+! Revision 1.10  2007/10/24 23:56:11  pwagner
+! Changed name of component to 'indexing'
+!
 ! Revision 1.9  2007/10/24 00:19:06  pwagner
 ! Added mindexes component to MLSStat to hold index of max, min, median
 !
