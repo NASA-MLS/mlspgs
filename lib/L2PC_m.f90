@@ -17,43 +17,47 @@ module L2PC_m
   ! files.  The first version dealt with ascii files, but later versions
   ! must be HDF5.
 
-  use Allocate_Deallocate, only: Allocate_test, Deallocate_test
-  use dump_0, only: dump
-  use HessianModule_0, only: CreateBlock, HessianElement_T, &
-    & H_Absent, H_Sparse, H_Full, H_Unknown, DestroyBlock
-  use HessianModule_1, only: Hessian_T, CreateBlock, DestroyHessian, CreateEmptyHessian
-  use Intrinsic, only: L_CHANNEL, L_GEODALTITUDE, L_NONE, L_VMR, &
+  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use DUMP_0, only: DUMP
+  use HESSIANMODULE_0, only: HESSIANELEMENT_T, &
+    & H_ABSENT, H_SPARSE, H_FULL, H_UNKNOWN, &
+    & CREATEBLOCK, DESTROYBLOCK
+  use HESSIANMODULE_1, only: HESSIAN_T, &
+    & CREATEBLOCK, CREATEEMPTYHESSIAN, DESTROYHESSIAN
+  use INTRINSIC, only: L_CHANNEL, L_GEODALTITUDE, L_NONE, L_VMR, &
     & L_RADIANCE, L_NONE, L_INTERMEDIATEFREQUENCY, L_LATITUDE, L_FIELDAZIMUTH, &
-    & L_ROWS, L_COLUMNS, L_ADOPTED, L_TEMPERATURE, L_TSCAT, Lit_Indices, &
+    & L_ROWS, L_COLUMNS, L_ADOPTED, L_TEMPERATURE, L_TSCAT, LIT_INDICES, &
     & PHYQ_DIMENSIONLESS, PHYQ_TEMPERATURE, PHYQ_VMR
-  use ManipulateVectorQuantities, only: DOVECTORSMATCH
-  use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
+  use MANIPULATEVECTORQUANTITIES, only: DOVECTORSMATCH
+  use MATRIXMODULE_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
     & MATRIXELEMENT_T, M_UNKNOWN, DESTROYBLOCK
-  use MatrixModule_1, only: COPYMATRIXVALUE, CREATEBLOCK, CREATEEMPTYMATRIX, &
-    & DESTROYMATRIX, DUMP, DUMP_STRUCT, FINDBLOCK, GETACTUALMATRIXFROMDATABASE, &
-    & MATRIX_T, MATRIX_DATABASE_T
-  use MLSCommon, only: R8, R4, MLSFile_T
-  use MLSFiles, only: DumpMLSFile => Dump
-  use MLSMessageModule, only: MLSMESSAGE, &
+  use MATRIXMODULE_1, only: MATRIX_T, MATRIX_DATABASE_T, &
+    & COPYMATRIXVALUE, CREATEBLOCK, CREATEEMPTYMATRIX, &
+    & DESTROYMATRIX, DUMP, DUMP_STRUCT, FINDBLOCK, GETACTUALMATRIXFROMDATABASE
+  use MLSCOMMON, only: MLSFILE_T
+  use MLSFILES, only: DUMPMLSFILE => DUMP
+  use MLSKINDS, only: R8, R4
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, &
     & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, MLSMSG_ERROR, MLSMSG_WARNING
-  use MLSSets, only: FindFirst
-  use MLSSignals_m, only: GETSIGNALNAME
-  use MLSStringLists, only: SWITCHDETAIL
-  use MLSStrings, only: writeIntsToChars
-  use Molecules, only: L_EXTINCTION, L_EXTINCTIONV2
-  use MoreTree, only: GetStringIndexFromString, GetLitIndexFromString
-  use Output_m, only: newLine, output, outputNamedValue
-  use Parse_Signal_m, only: Parse_Signal
-  use QuantityTemplates, only: ADDQUANTITYTEMPLATETODATABASE, QUANTITYTEMPLATE_T, &
-    & SETUPNEWQUANTITYTEMPLATE, INFLATEQUANTITYTEMPLATEDATABASE, &
-    & DESTROYQUANTITYTEMPLATECONTENTS, COPYQUANTITYTEMPLATE, NULLIFYQUANTITYTEMPLATE, &
-    & COPYQUANTITYTEMPLATE
-  use String_Table, only: DISPLAY_STRING, GET_STRING
+  use MLSSETS, only: FINDFIRST
+  use MLSSIGNALS_M, only: GETSIGNALNAME
+  use MLSSTRINGLISTS, only: OPTIONDETAIL, SWITCHDETAIL
+  use MLSSTRINGS, only: LOWERCASE, WRITEINTSTOCHARS
+  use MOLECULES, only: L_EXTINCTION, L_EXTINCTIONV2
+  use MORETREE, only: GETLITINDEXFROMSTRING, GETSTRINGINDEXFROMSTRING
+  use OUTPUT_M, only: NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
+  use PARSE_SIGNAL_M, only: PARSE_SIGNAL
+  use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T, &
+    & ADDQUANTITYTEMPLATETODATABASE, COPYQUANTITYTEMPLATE, &
+    & DESTROYQUANTITYTEMPLATECONTENTS, INFLATEQUANTITYTEMPLATEDATABASE, &
+    & NULLIFYQUANTITYTEMPLATE, SETUPNEWQUANTITYTEMPLATE
+  use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
   use TOGGLES, only: SWITCHES
-  use Tree, only: DECORATION, NSONS, SUBTREE
-  use VectorsModule, only: assignment(=), ADDVECTORTEMPLATETODATABASE, &
+  use TREE, only: DECORATION, NSONS, SUBTREE
+  use VECTORSMODULE, only: VECTORTEMPLATE_T, VECTOR_T, &
+    & ASSIGNMENT(=), ADDVECTORTEMPLATETODATABASE, &
     & ADDVECTORTODATABASE, CONSTRUCTVECTORTEMPLATE, COPYVECTOR, CREATEVECTOR, &
-    & DESTROYVECTORINFO, DUMP, NULLIFYVECTORTEMPLATE, VECTORTEMPLATE_T, VECTOR_T
+    & DESTROYVECTORINFO, DUMP, NULLIFYVECTORTEMPLATE
 
   implicit none
   private
@@ -382,7 +386,6 @@ contains ! ============= Public Procedures ==========================
 
   ! --------------------------------------- DiffL2PCFiles ---------------
   subroutine DiffL2PCFiles ( L2PCFile1, L2PCFile2, details, options )
-    use MLSStringLists, only: optionDetail
     ! This subroutine Diffs an l2pc to stdout
     ! assuming it was read already
 
@@ -447,10 +450,8 @@ contains ! ============= Public Procedures ==========================
   subroutine DiffL2PCs ( L2pc1, L2pc2, details, options )
     ! This subroutine diffs two l2pcs
 
-    use HessianModule_1, only: Diff
-    use MatrixModule_1, only: Diff
-    use MLSStringLists, only: optionDetail
-    use MLSStrings, only: lowercase
+    use HESSIANMODULE_1, only: DIFF
+    use MATRIXMODULE_1, only: DIFF
 
     ! Dummy arguments
     type (l2pc_t), intent(inout) :: L2pc1, l2pc2
@@ -536,7 +537,6 @@ contains ! ============= Public Procedures ==========================
 
   ! --------------------------------------- DumpL2PCFile ---------------
   subroutine DumpL2PCFile ( L2PCFile, details, onlytheseblocks, options )
-    use MLSStringLists, only: optionDetail
     ! This subroutine dumps an l2pc to stdout
     ! assuming it was read already
 
@@ -583,9 +583,7 @@ contains ! ============= Public Procedures ==========================
   subroutine DumpOneL2PC ( L2pc, details, ONLYTHESEBLOCKS, options )
     ! This subroutine dumps an l2pc to stdout
 
-    use HessianModule_1, only: Dump
-    use MLSStringLists, only: optionDetail
-    use MLSStrings, only: lowercase
+    use HESSIANMODULE_1, only: DUMP
 
     ! Dummy arguments
     type (l2pc_t), intent(in), target :: L2pc
@@ -669,29 +667,26 @@ contains ! ============= Public Procedures ==========================
   ! ------------------------------------ FlushL2PCBins -------------
   subroutine FlushL2PCBins
     ! Local variables
-    integer :: BIN                      ! Loop counter
-    integer :: I,J,K                    ! Loop counters
+    integer :: BIN              ! Loop counter
+    integer :: BLOCKROW         ! Loop counter
+    integer :: BLOCKCOL         ! Loop counter
 
-    type ( L2pc_t ), pointer :: L2PC
+    type ( L2PC_T ), pointer :: L2PC
+    type ( MatrixElement_T), pointer :: M0
 
     ! Executable code
     if ( .not. associated ( l2pcDatabase ) ) return
     do bin = 1, size ( l2pcDatabase )
       l2pc => l2pcDatabase ( bin )
-      do i = 1, l2pc%j%row%NB
-        do j = 1, l2pc%j%col%NB
-          call DestroyBlock ( l2pc%j%block(i,j) )
+      do blockRow = 1, l2pc%j%row%NB
+        do blockCol = 1, l2pc%j%col%NB
+          m0 => l2pc%j%block ( blockRow, blockCol )
+          if ( m0%kind /= m_absent ) then
+            call DestroyBlock ( m0 )
+            m0%kind = M_Unknown
+          end if
         end do
       end do
-      if ( l2pc%goth ) then
-        do i = 1, l2pc%h%row%NB
-          do j = 1, l2pc%h%col%NB
-            do k = 1, l2pc%h%col%NB
-              call DestroyBlock ( l2pc%h%block(i,j,k) )
-            end do
-          end do
-        end do
-      end if
     end do
   end subroutine FlushL2PCBins
 
@@ -773,9 +768,9 @@ contains ! ============= Public Procedures ==========================
   ! --------------------------------------------- OutputHDF5L2PC
   subroutine OutputHDF5L2PC ( filename, matrices, hessians, &
     & quantitiesNode, secondDerivNode, packed, dontPack )
-  use HDF5, only: H5FCREATE_F, H5FClose_F, H5F_ACC_TRUNC_F
-  use MLSStringLists, only: catLists
-  use tree, only: sub_rosa
+  use HDF5, only: H5FCREATE_F, H5FCLOSE_F, H5F_ACC_TRUNC_F
+  use MLSSTRINGLISTS, only: CATLISTS
+  use TREE, only: SUB_ROSA
     character (len=*), intent(in) :: FILENAME
     type (Matrix_Database_T), dimension(:), pointer :: MATRICES
     type (Hessian_T), dimension(:), pointer :: HESSIANS
@@ -852,10 +847,10 @@ contains ! ============= Public Procedures ==========================
   ! --------------------------------------- WriteOneHDF5L2PC -----------
   subroutine WriteOneHDF5L2PC ( JACOBIAN, fileID, packed, dontPack, &
     & hessian, onlyTheseBlocks )
-    use HessianModule_0, only: OptimizeBlock
+    use HESSIANMODULE_0, only: OPTIMIZEBLOCK
     use HDF5, only: H5GCLOSE_F, H5GCREATE_F
-    use MLSCOMMON, only: RM
-    use MLSHDF5, only: MakeHDF5Attribute, SaveAsHDF5DS
+    use MLSKINDS, only: RM
+    use MLSHDF5, only: MAKEHDF5ATTRIBUTE, SAVEASHDF5DS
     ! This subroutine writes an l2pc to a file in hdf5 format
 
     ! Dummy arguments
@@ -1056,7 +1051,7 @@ contains ! ============= Public Procedures ==========================
                 call SaveAsHDF5DS ( blockGID, 'j', h0%tuples(1:h0%tuplesFilled)%j )
                 call SaveAsHDF5DS ( blockGID, 'k', h0%tuples(1:h0%tuplesFilled)%k )
                 call SaveAsHDF5DS ( blockGID, 'h', h0%tuples(1:h0%tuplesFilled)%h )
-                if ( switchDetail( switches, 'hess' ) > -1 ) then
+                if ( switchDetail( switches, 'hess' ) > 0 ) then
                   call outputNamedValue( 'noValues', h0%tuplesFilled )
                   call dump( h0%tuples(1:h0%tuplesFilled)%h, 'h)%tuple values' )
                 end if
@@ -1097,7 +1092,7 @@ contains ! ============= Public Procedures ==========================
 
   ! ------------------------------------ DestroyL2PCInfoDatabase ----
   subroutine DestroyL2PCInfoDatabase
-  use HDF5, only: H5FClose_F, H5GCLOSE_F, H5ESET_AUTO_F
+  use HDF5, only: H5FCLOSE_F, H5GCLOSE_F, H5ESET_AUTO_F
     ! Local variables
     integer :: I                ! Loop counter
     integer :: STATUS           ! Flag from HDF
@@ -1256,7 +1251,7 @@ contains ! ============= Public Procedures ==========================
   subroutine PopulateL2PCBin ( bin, IgnoreHessian )
     use HDF5, only: HSIZE_T, H5GCLOSE_F, H5GOPEN_F, H5GGET_OBJ_INFO_IDX_F, &
         & H5GN_MEMBERS_F
-    use MLSHDF5, only: GetHDF5Attribute, GetHDF5DSDims, LoadFromHDF5DS
+    use MLSHDF5, only: GETHDF5ATTRIBUTE, GETHDF5DSDIMS, LOADFROMHDF5DS
 
     integer, intent(in) :: BIN ! The bin index to populate
     logical, intent(in), optional :: IgnoreHessian
@@ -1444,9 +1439,9 @@ contains ! ============= Public Procedures ==========================
 
   ! --------------------------------------- ReadCompleteHDF5L2PCFile -------
   subroutine ReadCompleteHDF5L2PCFile ( MLSFile, Where, Shallow )
-    use HDF5, only: H5F_ACC_RDONLY_F, h5fopen_f, H5GN_MEMBERS_F
-    use Trace_M, only: Trace_begin, Trace_end
-    use Toggles, only: Toggle, gen
+    use HDF5, only: H5F_ACC_RDONLY_F, H5FOPEN_F, H5GN_MEMBERS_F
+    use Trace_M, only: TRACE_BEGIN, TRACE_END
+    use Toggles, only: TOGGLE, GEN
     type (MLSFile_T), intent(inout)   :: MLSFile
     integer, intent(in) :: Where ! In the L2CF tree, for tracing
     logical, optional   :: Shallow
@@ -1520,7 +1515,7 @@ contains ! ============= Public Procedures ==========================
   subroutine ReadOneHDF5L2PCRecord ( l2pc, MLSFile, l2pcIndex, shallow, info )
     use HDF5, only: H5GCLOSE_F, H5GOPEN_F, H5GGET_OBJ_INFO_IDX_F, &
       & H5GN_MEMBERS_F
-    use MLSHDF5, only: GetHDF5Attribute, LoadFromHDF5DS
+    use MLSHDF5, only: GETHDF5ATTRIBUTE, LOADFROMHDF5DS
     type ( L2pc_t ), intent(out), target :: L2PC
     type (MLSFile_T), intent(inout)   :: MLSFile
     ! integer, intent(in) :: FILEID       ! HDF5 ID of input file
@@ -1785,9 +1780,9 @@ contains ! ============= Public Procedures ==========================
   ! --------------------------------------- ReadOneVectorFromHDF5 ------
   subroutine ReadOneVectorFromHDF5 ( MLSFile, name, vector )
     use HDF5, only: H5GCLOSE_F, H5GOPEN_F, H5GGET_OBJ_INFO_IDX_F
-    use MLSHDF5, only: GetHDF5Attribute, IsHDF5AttributePresent, &
-      & IsHDF5DSPresent, LoadFromHDF5DS
-    use MLSSignals_m, only: Radiometers, Signals
+    use MLSHDF5, only: GETHDF5ATTRIBUTE, ISHDF5ATTRIBUTEPRESENT, &
+      & ISHDF5DSPRESENT, LOADFROMHDF5DS
+    use MLSSIGNALS_M, only: RADIOMETERS, SIGNALS
     ! Read a vector from an l2pc HDF5 and adds it to internal databases.
     ! Dummy arguments
     type (MLSFile_T) :: MLSFile
@@ -2059,9 +2054,9 @@ contains ! ============= Public Procedures ==========================
 
   ! --------------------------------------- WriteVectorAsHDF5L2PC ----------
   subroutine WriteVectorAsHDF5L2PC ( location, vector, name, packInfo )
-  use HDF5, only: H5GCLOSE_F, H5GCREATE_F
-  use MLSHDF5, only: MakeHDF5Attribute, SaveAsHDF5DS
-    use MLSSignals_m, only: Radiometers
+    use HDF5, only: H5GCLOSE_F, H5GCREATE_F
+    use MLSHDF5, only: MAKEHDF5ATTRIBUTE, SAVEASHDF5DS
+    use MLSSIGNALS_M, only: RADIOMETERS
     integer, intent(in) :: LOCATION     ! The HDF5 location for the vector
     type (Vector_T), intent(in), target :: VECTOR ! The vector to write
     character(len=*), intent(in) :: NAME ! Name for vector
@@ -2196,6 +2191,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.113  2011/07/28 18:03:37  pwagner
+! Fixed bug in FlushL2PCBins added in rev. 2.88
+!
 ! Revision 2.112  2011/05/05 15:20:04  pwagner
 ! Fixed bugs in writing, reading radiometer attribute for extinctionv2
 !
