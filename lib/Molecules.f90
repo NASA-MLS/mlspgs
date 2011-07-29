@@ -126,7 +126,7 @@ contains ! =====     Public procedures     =============================
     ! Intrinsic).
     call make_tree ( (/ &
       begin, t+t_molecule, &
-        & l+(/ (i,i=first_molecule, last_molecule), l_cloudIce, l_rhi /), &
+        & l+(/ (i,i=first_molecule, last_molecule), l_rhi /), &
         & n+n_dt_def /) )
 
   contains
@@ -176,6 +176,9 @@ contains ! =====     Public procedures     =============================
 end module MOLECULES
 
 ! $Log$
+! Revision 2.30  2011/07/29 01:46:54  vsnyder
+! Make CloudIce a molecule
+!
 ! Revision 2.29  2011/01/13 00:24:25  vsnyder
 ! Include 'Temperature' as a molecule
 !
