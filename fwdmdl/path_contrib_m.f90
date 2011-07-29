@@ -191,7 +191,7 @@ contains
   end subroutine Path_Contrib_Polarized
 
   ! ------------------------------------------------  Get_GL_inds  -----
-  subroutine Get_GL_inds ( Do_GL, Tan_pt, GL_Inds, CG_Inds, NGL, NCG )
+  subroutine Get_GL_inds ( Do_GL, Tan_pt, GL_Inds, NGL, CG_Inds, NCG )
   ! Fill the arrays that control application of GL
 
     use GLnp, only: NG, NGP1
@@ -202,10 +202,10 @@ contains
                                                ! last are set false here.
     integer, intent(in) :: Tan_Pt              ! Index of tangent point in Do_GL
     integer(ip), intent(out) :: GL_INDS(:)     ! Indices of where to do GL
-    integer(ip), intent(out) :: CG_INDS(:)     ! Indices on coarse path of
-                                               ! where to do GL
     integer(ip), intent(out) :: NGL            ! How much of GL_INDS to use
-    integer(ip), intent(out) :: NCG            ! How much of CG_INDS to use
+    integer(ip), intent(out), optional :: CG_INDS(:) ! Indices on coarse path of
+                                               ! where to do GL
+    integer(ip), intent(out), optional :: NCG  ! How much of CG_INDS to use
 
     integer :: I, N_PATH
 
@@ -219,7 +219,7 @@ contains
     do_gl((/1,n_path/)) = .FALSE.
 
     ngl = 0
-    ncg = 0
+    if ( present(ncg) ) ncg = 0
     do i = 2, n_path-1 ! first and last elements of do_gl are false
       if ( do_gl(i) ) then
         ngl = ngl + ng
@@ -228,8 +228,10 @@ contains
         else
           gl_inds(ngl-ng+1:ngl) = Ngp1 * (i - 1) + glil
         end if
-        ncg = ncg + 1
-        cg_inds(ncg) = i
+        if ( present(ncg) ) then
+          ncg = ncg + 1
+          cg_inds(ncg) = i
+        end if
       end if
     end do
 
@@ -249,6 +251,9 @@ contains
 end module Path_Contrib_M
 
 ! $Log$
+! Revision 2.24  2010/02/02 01:29:20  vsnyder
+! Don't reference undefined parts of dtaudn
+!
 ! Revision 2.23  2009/06/23 18:26:11  pwagner
 ! Prevent Intel from optimizing ident string away
 !
