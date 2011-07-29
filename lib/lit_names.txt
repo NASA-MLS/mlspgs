@@ -38,7 +38,6 @@ clear_110RH_below_tropopause
 clear_0RH
 clear_lowest_0_110RH
 cloudExtinction
-cloudIce
 cloudInducedRadiance
 cloudMinMax
 cloudRadSensitivity
@@ -233,6 +232,9 @@ zonalavg
 temperature
 
 # $Log$
+# Revision 2.58  2011/07/29 01:46:54  vsnyder
+# Make CloudIce a molecule
+#
 # Revision 2.57  2011/07/12 22:35:44  honghanh
 # Change l_grid to l_hdfeos
 #
