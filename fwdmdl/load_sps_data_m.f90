@@ -19,6 +19,7 @@ module LOAD_SPS_DATA_M
   public :: Load_Sps_Data, Load_One_Item_Grid, Load_Grid_From_Vector
   public :: Modify_Values_For_Supersat
   public :: Create_Grids_1, Create_Grids_2, Fill_Grids_1, Fill_Grids_2
+  public :: FindInGrid
   public :: EmptyGrids_t, Destroygrids_t, Dump, Dump_Grids
 
   type, public :: Grids_T                 ! Fit all Gridding categories
@@ -35,11 +36,13 @@ module LOAD_SPS_DATA_M
     integer,  pointer :: mol(:) => null() ! Qty molecule, l_...
     ! Which column of dBeta_path_df to use for each molecule.
     ! Molecule beta is not dependent upon mixing ratio if zero.
-    ! Only set where derivatives for molecules with mixing-ratio-dependent
+    ! Only nonzero where derivatives for molecules with mixing-ratio-dependent
     ! beta are selected.
     integer,  pointer :: where_dBeta_df(:) => null()
     integer,  pointer :: qty(:) => null() ! Qty type, l_...
-    logical,  pointer :: lin_log(:) => null()   ! type of representation basis
+    integer,  pointer :: s_ind(:) => null()     ! Indexed by mol, gives index
+    ! in l_f etc if qty=l_vmr, else not associated.
+    logical,  pointer :: lin_log(:) => null()   ! true for log representation basis
     real(r8), pointer :: min_val(:) => null()   ! Minimum value
     real(r8), pointer :: frq_basis(:) => null() ! frq  grid entries for all
 !                                                 molecules
@@ -51,7 +54,7 @@ module LOAD_SPS_DATA_M
 !     This is really a three-dimensional quantity dimensioned frequency
 !     (or 1) X zeta (or 1) X phi (or 1), taken in Fortran's column-major
 !     array-element order.
-    logical,  pointer :: deriv_flags(:) => null() ! do derivatives flags
+    logical,  pointer :: deriv_flags(:) => null() ! flags to do derivatives,
 !     corresponding to the values component.
 
   end type Grids_T
@@ -73,7 +76,9 @@ contains
   subroutine Load_Sps_Data ( FwdModelConf, Phitan, MAF, &
     & Grids_x, S_Ind, QtyStuffIn )
 
+    use Allocate_Deallocate, only: Allocate_test
     use ForwardModelConfig, only: ForwardModelConfig_t, QtyStuff_T
+    use Intrinsic, only: l_Vmr
     use Molecules, only: First_Molecule, Last_Molecule
     use VectorsModule, only: VectorValue_T
 
@@ -120,7 +125,8 @@ contains
       end if
 
       ! Remember positions of molecules in grids_x
-      if ( present(s_ind) ) s_ind(qtyStuff(mol)%qty%template%molecule) = mol
+      if ( qtyStuff(mol)%qty%template%quantityType == l_vmr ) &
+        & grids_x%s_ind(qtyStuff(mol)%qty%template%molecule) = mol
         ! Note the ambiguity here as to whether it's extinction or extinctionv2:
         ! the last one wins.
         ! Also note, however, that s_ind(l_extinction) is never actually used
@@ -152,7 +158,9 @@ contains
   subroutine Load_Grid_From_Vector ( Grids_X, Vector, Phitan, Maf, &
     & FwdModelConf, SetDerivFlags, S_Ind )
 
+    use Allocate_Deallocate, only: Allocate_test
     use ForwardModelConfig, only: ForwardModelConfig_t
+    use Intrinsic, only: l_Vmr
     use Molecules, only: First_Molecule, Last_Molecule
     use VectorsModule, only: Vector_T, VectorValue_T
 
@@ -166,7 +174,7 @@ contains
     ! Indices of species in Grids_x
     integer, intent(out), optional :: S_ind(First_Molecule:Last_Molecule)
 
-    integer :: Qty
+    integer :: Lbnd, Qty, Ubnd
 
     if ( present(s_ind) ) s_ind = 0 ! Indicate molecule not present in the vector
 
@@ -190,7 +198,8 @@ contains
       call fill_grids_2 ( grids_x, qty, vector%quantities(qty), setDerivFlags(qty) )
 
       ! Remember positions of molecules in grids_x
-      if ( present(s_ind) ) s_ind(vector%quantities%template%molecule) = qty
+      if ( vector%quantities(qty)%template%quantityType == l_vmr ) &
+        & grids_x%s_ind(vector%quantities%template%molecule) = qty
         ! Note the ambiguity here as to whether it's extinction or extinctionv2:
         ! the last one wins.
         ! Also note, however, that s_ind(l_extinction) is never actually used
@@ -379,6 +388,7 @@ contains
   ! number of values or lengths of bases
 
     use Allocate_Deallocate, only: Allocate_test
+    use Molecules, only: First_Molecule, Last_Molecule
 
     type (Grids_T), intent(inout) :: Grids_X
     integer, intent(in) :: N
@@ -391,6 +401,8 @@ contains
     call allocate_test ( Grids_x%mol, n, 'Grids_x%mol', ModuleName )
     call allocate_test ( Grids_x%qty, n, 'Grids_x%qty', ModuleName )
     call allocate_test ( Grids_x%where_dBeta_df, n, 'Grids_x%where_dBeta_df', ModuleName )
+    call allocate_test ( Grids_x%s_ind, last_molecule, 'Grids_x%S_ind', &
+      & moduleName, lowBound=first_molecule, fill=0 )
     grids_x%l_z(0) = 0
     grids_x%l_p(0) = 0
     grids_x%l_f(0) = 0
@@ -488,14 +500,13 @@ contains
 
     use Intrinsic, only: L_Channel, L_IntermediateFrequency
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use Molecules, only: L_Cloud_a, L_Cloud_s, L_H2O
+    use Molecules, only: L_CloudIce, L_H2O
     use Constants, only: Deg2Rad
     use VectorsModule, only: VectorValue_T, M_FullDerivatives
 
     ! For which molecules do we compute dBeta_df?
-    !integer, parameter :: Which_dBeta_df(3) = (/ L_Cloud_a, L_Cloud_s, L_H2O /)
-    integer, parameter :: Which_dBeta_df(2) = (/ L_Cloud_a, L_Cloud_s /)
-
+    !integer, parameter :: Which_dBeta_df(2) = (/ L_CloudIce, L_H2O /)
+    integer, parameter :: Which_dBeta_df(1) = (/ L_CloudIce /)
 
     type(grids_t), intent(inout) :: Grids_x
     integer, intent(in) :: II
@@ -584,6 +595,60 @@ contains
 
   end subroutine Fill_Grids_2
 
+  ! -------------------------------------------------  FindInGrid  -----
+  integer function FindInGrid ( Grids_x, Phi, Zeta, Sps )
+    ! Find the index in l_v for Sps, Phi, Zeta if Sps is present.
+    ! Find the index in l_v for Phi, Zeta otherwise, assuming Grids_x is temperature.
+    ! Assume no frequency dependence.
+    ! Return zero if no data for Sps.
+
+    use Constants, only: Pi
+    use MLSKinds, only: RP
+    use MLSNumerics, only: HUNT
+
+    type (Grids_T), intent(in) :: Grids_x
+    real(rp), intent(in) :: Phi             ! Radians
+    real(rp), intent(in) :: Zeta
+    integer, intent(in), optional :: Sps    ! A molecule index
+
+    real(rp), parameter :: Pi2 = 2.0*Pi
+    integer :: I_Phi, I_Zeta, P0, P1, V0, V1, Z0, Z1
+
+    ! Get bounds in phi, zeta, values, for sps
+    if ( present(sps) ) then
+      findInGrid = grids_x%s_ind(sps) ! findInGrid is convenient temp here
+      if ( findInGrid == 0 ) return
+    else
+      findInGrid = 1
+    end if
+    z0 = grids_x%l_z(findInGrid-1)    ! First zeta - 1 for Sps
+    z1 = grids_x%l_z(findInGrid)      ! Last zeta for Sps
+    p0 = grids_x%l_p(findInGrid-1)    ! First phi - 1 for Sps
+    p1 = grids_x%l_p(findInGrid)      ! Last phi for Sps
+    v0 = grids_x%l_v(findInGrid-1)    ! First value - 1 for Sps
+    v1 = grids_x%l_v(findInGrid)      ! Last value for Sps
+
+    ! Compute location of (phi,zeta) in values
+    i_zeta = minloc(abs(grids_x%zet_basis(z0+1:z1)-zeta),1)
+    i_phi = minloc(abs(mod(grids_x%phi_basis(p0+1:p1),pi2)-phi),1)
+    findInGrid = v0 + i_zeta + (z1-z0) * (i_phi-1)
+    if ( findInGrid > v1 ) then
+      findInGrid = 0
+    else if ( abs(grids_x%zet_basis(i_zeta+z0)-zeta) > 0.25 * &
+       & max(abs(grids_x%zet_basis(min(i_zeta+z0+1,z1)) - &
+              &  grids_x%zet_basis(i_zeta+z0)), &
+         &   abs(grids_x%zet_basis(i_zeta+z0) - &
+              &  grids_x%zet_basis(max(i_zeta+z0-1,z0+1)))) ) then
+      findInGrid = 0 ! Zeta too far from grid point
+    else if ( abs(mod(grids_x%phi_basis(i_phi+p0),pi2)-phi) > 0.25 * &
+       & max(abs(grids_x%phi_basis(min(i_phi+p0+1,p1)) - &
+              &  grids_x%phi_basis(i_phi+p0)), &
+         &   abs(grids_x%phi_basis(i_phi+p0) - &
+              &  grids_x%phi_basis(max(i_phi+p0-1,p0+1)))) ) then
+      findInGrid = 0 ! Phi too far from grid point
+    end if
+  end function FindInGrid
+
   ! -----------------------------------------------  EmptyGrids_t  -----
   subroutine EmptyGrids_t ( grids_x )
     ! Create a grids structure with all empty grids
@@ -597,18 +662,19 @@ contains
     call allocate_test(grids_x%l_z,0,'grids_x%l_z',modulename)
     call allocate_test(grids_x%l_p,0,'grids_x%l_p',modulename)
     call allocate_test(grids_x%l_v,0,'grids_x%l_v',modulename)
-    call allocate_test(Grids_x%names,0,'grids_x%names',modulename)
+    call allocate_test(grids_x%windowstart,0,'grids_x%windowstart',modulename)
+    call allocate_test(grids_x%windowfinish,0,'grids_x%windowfinish',modulename)
     call allocate_test(grids_x%mol,0,'grids_x%mol',modulename)
-    call allocate_test(grids_x%qty,0,'grids_x%qty',modulename)
     call allocate_test(grids_x%where_dBeta_df,0,'grids_x%where_dBeta_df',modulename)
+    call allocate_test(grids_x%qty,0,'grids_x%qty',modulename)
+    call allocate_test(grids_x%s_ind,0,'grids_x%s_ind',modulename)
     call allocate_test(grids_x%lin_log,0,'grids_x%lin_log',modulename)
     call allocate_test(grids_x%min_val,0,'grids_x%min_val',modulename)
     call allocate_test(grids_x%frq_basis,0,'grids_x%frq_basis',modulename)
     call allocate_test(grids_x%zet_basis,0,'grids_x%zet_basis',modulename)
     call allocate_test(grids_x%phi_basis,0,'grids_x%phi_basis',modulename)
+    call allocate_test(grids_x%values,0,'grids_x%values',modulename)
     call allocate_test(grids_x%deriv_flags,0,'grids_x%deriv_flags',modulename)
-    call allocate_test(grids_x%windowstart,0,'grids_x%windowstart',modulename)
-    call allocate_test(grids_x%windowfinish,0,'grids_x%windowfinish',modulename)
 
   end subroutine EmptyGrids_t
 
@@ -618,23 +684,25 @@ contains
 
     type (Grids_T), intent(inout) :: Grids_x
 
+    grids_x%p_len = 0
     call deallocate_test(Grids_x%names,'grids_x%names',modulename)
     call deallocate_test(grids_x%l_f,'grids_x%l_f',modulename)
     call deallocate_test(grids_x%l_z,'grids_x%l_z',modulename)
     call deallocate_test(grids_x%l_p,'grids_x%l_p',modulename)
     call deallocate_test(grids_x%l_v,'grids_x%l_v',modulename)
+    call deallocate_test(grids_x%windowstart,'grids_x%windowstart',modulename)
+    call deallocate_test(grids_x%windowfinish,'grids_x%windowfinish',modulename)
     call deallocate_test(Grids_x%mol,'grids_x%mol',modulename)
-    call deallocate_test(Grids_x%qty,'grids_x%qty',modulename)
     call deallocate_test(Grids_x%where_dBeta_df,'grids_x%where_dBeta_df',modulename)
-    call deallocate_test(grids_x%values,'grids_x%values',modulename)
+    call deallocate_test(Grids_x%qty,'grids_x%qty',modulename)
+    call deallocate_test(Grids_x%s_ind,'grids_x%s_ind',modulename)
     call deallocate_test(grids_x%lin_log,'grids_x%lin_log',modulename)
     call deallocate_test(grids_x%min_val,'grids_x%min_val',modulename)
     call deallocate_test(grids_x%frq_basis,'grids_x%frq_basis',modulename)
     call deallocate_test(grids_x%zet_basis,'grids_x%zet_basis',modulename)
     call deallocate_test(grids_x%phi_basis,'grids_x%phi_basis',modulename)
+    call deallocate_test(grids_x%values,'grids_x%values',modulename)
     call deallocate_test(grids_x%deriv_flags,'grids_x%deriv_flags',modulename)
-    call deallocate_test(grids_x%windowstart,'grids_x%windowstart',modulename)
-    call deallocate_test(grids_x%windowfinish,'grids_x%windowfinish',modulename)
 
   end subroutine DestroyGrids_t
 
@@ -731,6 +799,9 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.82  2011/07/08 20:58:18  yanovsky
+! Remove L_H2O from Which_dBeta_df
+!
 ! Revision 2.81  2011/04/28 00:14:24  vsnyder
 ! Give default value to P_Len component
 !
