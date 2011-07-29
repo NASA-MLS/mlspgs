@@ -74,7 +74,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
     use Intrinsic, only: &
                        & L_CLOUDEXTINCTION,                                    &
-                       & L_CLOUDICE,                                           &
                        & L_CLOUDINDUCEDRADIANCE,                               &
                        & L_CLOUDRADSENSITIVITY,                                &
                        & L_CLOUDWATER,                                         &
@@ -100,6 +99,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
                        & L_VMR,                                                &
                        & LIT_INDICES
 
+    use Molecules, only: L_CLOUDICE
 
     ! Dummy arguments
     type(forwardModelConfig_T),       intent(inout) :: FORWARDMODELCONFIG
@@ -1124,6 +1124,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.141  2009/06/23 18:26:19  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 1.140  2009/05/13 20:10:20  vsnyder
 ! Move USE from module scope, get constants from Constants, kinds from MLSKINDS
 !

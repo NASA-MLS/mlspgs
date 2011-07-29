@@ -52,8 +52,9 @@ CH$_{3}$CH$_{2}$CH$_{3}$                CH3CH2CH3                CH3CH2CH3   0
              ClONO$_{2}$                   CLONO2                   ClONO2   2
       $^{35}$ClONO$_{2}$               CL_35_ONO2               Cl-35-ONO2   0
       $^{37}$ClONO$_{2}$               CL_37_ONO2               Cl-37-ONO2   0
-                CLOUD\_A                  CLOUD_A                  CLOUD-A   0
-                CLOUD\_S                  CLOUD_S                  CLOUD-S   0
+                 CLOUD_A                  CLOUD_A                  CLOUD_A   0
+                 CLOUD_S                  CLOUD_S                  CLOUD_S   0
+                CLOUDICE                 CLOUDICE                 CLOUDICE   0
               EXTINCTION               EXTINCTION               EXTINCTION   0
             EXTINCTIONV2             EXTINCTIONV2             EXTINCTIONV2   0
                      HBr                      HBR                      HBr   2
