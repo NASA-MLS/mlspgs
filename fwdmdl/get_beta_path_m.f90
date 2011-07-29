@@ -188,8 +188,9 @@ contains
           call display_string ( lit_indices(beta_group(i)%lbl(sx)%molecules(1:n)), &
             & before='LBL Betas for' )
           call output ( frq, before=', FRQ = ', advance='yes' )
-          call dump ( beta_path(:,i), options=clean )
+          call dump ( beta_path(:,i), name='beta', options=clean )
           if ( associated(dBdT) ) call dump ( dBdT, name='dBdT', options=clean )
+          if ( associated(dBdf) ) call dump ( dBdf, name='dBdf', options=clean )
         end if
       end do
 
@@ -237,7 +238,7 @@ contains
     use INTRINSIC, only: L_RHI, LIT_INDICES
     use MLSKINDS, only: RP, R8
     use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use MOLECULES, only: L_CLOUD_A, L_CLOUD_S
+    use MOLECULES, only: L_CLOUDICE
     use OUTPUT_M, only: OUTPUT
     use PFADATABASE_M, only: PFADATA
     use READ_MIE_M, only: BETA_C_A, DBETA_DIWC_C_A, DBETA_DT_C_A, &
@@ -319,11 +320,10 @@ contains
       beta_path(:,i) = 0.0_rp
 
       select case ( beta_group(i)%molecule )
-      case ( l_cloud_a )
+      case ( l_cloudIce )
         call create_beta_path_Mie ( frq, t_path, sps_path(:,i), path_inds, &
           & beta_c_a, dBeta_dIWC_c_a, dBeta_dT_c_a, beta_path(:,i), &
           & dBdT, dBdIWC )
-      case ( l_cloud_s )
         call create_beta_path_Mie ( frq, t_path, sps_path(:,i), path_inds, &
           & beta_c_s, dBeta_dIWC_c_s, dBeta_dT_c_s, beta_path(:,i), &
           & dBdT, dBdIWC )
@@ -1367,7 +1367,7 @@ contains
     real(rp), intent(in) :: TEMPERATURE ! in Kelvin
     real(rp), intent(in) :: PRESSURE    ! in mbar
     real(rp), intent(in) :: FREQUENCY   ! in MegaHertz
-    real(rp), intent(in), optional :: SPS ! Mixing ratio
+    real(rp), intent(in) :: SPS         ! Mixing ratio
     real(rp), intent(out) :: Beta
     real(rp), intent(out) :: dBeta_df
     real(rp) :: Psq_Fsq                 ! pressure**2 * frequency**2
@@ -1589,6 +1589,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.106  2011/05/09 17:56:27  pwagner
+! Converted to using switchDetail
+!
 ! Revision 2.105  2011/03/31 19:53:55  vsnyder
 ! Don't use :np for the first bound in sps_path.  sps_path is fine-path X
 ! sps.  np is the coarse path length.
