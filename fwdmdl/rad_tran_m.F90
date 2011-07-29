@@ -718,12 +718,14 @@ use MLSKinds, only: RP
 
             if ( grids_f%lin_log(sps_i) ) then
 
-              if( sps_i == sps_j )	then    ! otherwise, d2_delta_df2 = 0
+              if( sps_i == sps_j ) then    ! otherwise, d2_delta_df2 = 0
 
-                ! For same specie, the following quantities should be the same for different q:
-                !   inds, all_inds, more_inds, sps.   Thus, only q quantities are passed.
+                ! For same species, the following quantities should be the same
+                ! for different sve:
+                !   inds, all_inds, more_inds, sps.  Thus, only q quantities
+                ! are passed.
 
-                if ( q == r )   then
+                if ( q == r ) then
                   diracDelta = 1.0
                 else
                   diracDelta = 0.0
@@ -987,15 +989,15 @@ end subroutine Get_all_d2_delta_df2
             ga = gl_inds(a)
             ! Don't test do_calc: There may be GL corrections even if
             ! dh_dt_path_c (from whence came do_calc) is zero.
-            d_delta_dt(p_i,sv_i) = d_delta_dt(p_i,sv_i) + &
-              & del_zeta(p_i) * &
-              & sum( ( alpha_path_f(a:b-1) - alpha_path_c(p_i) ) *   &
-              & (((2.0_rp*h_path_f(a:b-1)**2 - 3.0_rp*h_tan**2)      &     
-              &   * dh_dt_path_f(a:b-1,sv_i) +                       &     
-              &   h_path_f(a:b-1) * h_tan * dh_dt_tan(sv_i)) /       &     
-              &  (sqrt(h_path_f(a:b-1)**2 - h_tan**2))**3            &     
-              &  + eta_zxp(ga:ga+ng-1,sv_i) * ds_dh(ga:ga+ng-1) /   &     
-              &  t_path_f(a:b-1)) * dh_dz_gw(ga:ga+ng-1) )
+            d_delta_dt(p_i,sv_i) = d_delta_dt(p_i,sv_i) +            &
+              & del_zeta(p_i) *                                      &
+              &  sum( ( alpha_path_f(a:b-1) - alpha_path_c(p_i) ) *  &
+              &  (((2.0_rp*h_path_f(a:b-1)**2 - 3.0_rp*h_tan**2)     &     
+              &    * dh_dt_path_f(a:b-1,sv_i) +                      &     
+              &    h_path_f(a:b-1) * h_tan * dh_dt_tan(sv_i)) /      &     
+              &   (sqrt(h_path_f(a:b-1)**2 - h_tan**2))**3           &     
+              &   + eta_zxp(ga:ga+ng-1,sv_i) * ds_dh(ga:ga+ng-1) /   &     
+              &   t_path_f(a:b-1)) * dh_dz_gw(ga:ga+ng-1) )
             a = b
           end if
         end do ! p_i
@@ -2065,6 +2067,9 @@ end subroutine Get_all_d2_delta_df2
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.27  2011/07/29 01:59:24  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.26  2011/07/08 21:25:58  yanovsky
 ! Use d2Alpha_df2
 !
