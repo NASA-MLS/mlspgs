@@ -403,8 +403,7 @@ contains ! =====     Public Procedures     =============================
       & F_NSIZEBINS, F_PATHNORM, F_PHIWINDOW, F_POLARIZED, &
       & F_REFRACT, F_SCANAVERAGE, F_SIGNALS, F_SKIPOVERLAPS, &
       & F_SPECIFICQUANTITIES, F_SPECT_DER, F_SWITCHINGMIRROR, F_TANGENTGRID, &
-      & F_TEMP_DER, F_TOLERANCE, F_TSCATMIF, F_TSCATMOLECULEDERIVATIVES, &
-      & F_TSCATMOLECULES, F_TYPE, &
+      & F_TEMP_DER, F_TOLERANCE, F_TSCATMIF, F_TYPE, &
       & F_USBLBLMOLECULES, F_USBPFAMOLECULES, F_useTSCAT, F_XSTAR, F_YSTAR
     use INTRINSIC, only: L_NONE, L_CLEAR, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, &
       & PHYQ_FREQUENCY, PHYQ_PROFILES, PHYQ_TEMPERATURE
@@ -413,7 +412,7 @@ contains ! =====     Public Procedures     =============================
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
     use MLSNUMERICS, only: HUNT
     use MLSSIGNALS_M, only: SIGNALS
-    use MOLECULES, only: L_CLOUD_A, L_CLOUD_S
+    use MOLECULES, only: L_CLOUDICE
     use MORETREE, only: GET_BOOLEAN, GET_FIELD_ID
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use PARSE_SIGNAL_M, only: PARSE_SIGNAL
@@ -461,8 +460,6 @@ contains ! =====     Public Procedures     =============================
     integer, pointer :: TempLBL(:), TempPFA(:) ! Used to separate LBL and PFA
     integer :: TheTree                  ! Either pfaTrees(s) or lblTrees(s)
     integer :: THISMOLECULE             ! Tree index.
-    integer :: TScatDerivTree           ! Tree index of f_TScatMoleculeDerivatives
-    integer :: TScatMoleculeTree        ! Tree index of f_TScatMolecules
     integer :: type                     ! Type of value returned by EXPR
     real (r8) :: Value(2)               ! Value returned by EXPR
     integer :: WANTED                   ! Which signal do we want?
@@ -710,10 +707,6 @@ contains ! =====     Public Procedures     =============================
         info%TScatMIF = nint(value(1))
         if ( expr_units(1) /= phyq_dimensionless ) &
           & call AnnounceError ( TScatMIF, root )
-      case ( f_TScatMoleculeDerivatives )
-        TScatDerivTree = son
-      case ( f_TScatMolecules )
-        TScatMoleculeTree = son
       case ( f_type )
         info%fwmType = decoration(subtree(2,son))
       case ( f_usbLBLMolecules )
@@ -1011,29 +1004,6 @@ op:     do j = 2, nsons(theTree)
       info%moleculeSecondDerivatives = info%moleculeDerivatives
     end if
 
-    ! Get info%TScatMolecules and info%TScatMoleculeDerivatives
-    if ( got(f_TScatMolecules) ) then
-      call allocate_test ( info%TScatMolecules, nsons(TScatMoleculeTree)-1, &
-        & 'TScatMolecules', moduleName )
-      do j = 2, nsons(TScatMoleculeTree)
-        info%TScatMolecules(j-1) = decoration( subtree( j, TScatMoleculeTree ) )
-      end do
-    end if
-    if ( got(f_TScatMoleculeDerivatives) ) then
-      call allocate_test ( info%TScatMoleculeDerivatives, &
-        & nsons(TScatDerivTree)-1, 'TScatMoleculeDerivatives', moduleName, &
-        & fill=.false. )
-      if ( .not. associated(info%TScatMolecules) ) &
-        & call announceError ( derivSansMolecules, derivTree )
-      do j = 2, nsons(TScatDerivTree)
-        thisMolecule = decoration( subtree( j, TScatDerivTree ) )
-        if ( .not. any(info%TScatMolecules == thisMolecule) ) &
-          & call announceError ( derivSansMolecules, subtree(j,TScatDerivTree) )
-        if ( got(f_TScatMolecules) ) where ( info%TScatMolecules == thisMolecule ) &
-            & info%TScatMoleculeDerivatives = .true.
-      end do                          ! End loop over listed species
-    end if
-      
     ! Now some more error checking
     ! If any PFA, can't do polarized
     if ( any(info%anyPFA(s1:s2)) .and. info%polarized ) &
@@ -1113,8 +1083,7 @@ op:     do j = 2, nsons(theTree)
 
     do i = 1, size(info%beta_group)
       do s = s1, s2 ! Sideband
-        if ( any(info%beta_group(i)%lbl(s)%molecules == l_cloud_a) .or. &
-           & any(info%beta_group(i)%lbl(s)%molecules == l_cloud_s) ) &
+        if ( any(info%beta_group(i)%lbl(s)%molecules == l_cloudIce) ) &
              & call announceError ( CloudLBL, root )
       end do
     end do
@@ -1490,6 +1459,10 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.158  2011/07/29 02:00:44  vsnyder
+! Remove TScatMolecules and TScatMoleculeDerivatives.  Make CloudIce a
+! molecule.  Remove Cloud_A and Cloud_S.
+!
 ! Revision 2.157  2011/05/10 17:11:28  pwagner
 ! Corrected goof that changed info%refract default
 !
