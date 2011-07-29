@@ -323,7 +323,7 @@ contains
 ! Tangent point or bounce off the earth's surface
 
     if ( i_start <= tan_pt ) d2rad_dx2 = d2rad_dx2 + inc_rad_path(tan_pt+1) * (wq * wr - dwqr)
-    		! IGOR: Why wq,wr,dwqr are not recalculated here???
+    ! IGOR: Why wq,wr,dwqr are not recalculated here???
 
 ! Same as above, but don't add in the zero-emission layer at the 
 ! tangent point or earth's surface
@@ -350,6 +350,9 @@ contains
 
 end module SCRT_DN_M
 ! $Log$
+! Revision 2.19  2011/07/08 20:51:22  yanovsky
+! Minor comments changes
+!
 ! Revision 2.18  2011/06/02 22:38:01  yanovsky
 ! Add opacity second derivatives D2_DELTA_DX2_qr to subroutine D2SCRT_DX2
 ! to allow for computations of analytical Hessians in logarithmic basis
