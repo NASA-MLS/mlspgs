@@ -15,7 +15,7 @@ module Mie_Efficiencies_m
 ! \begin{equation*}
 ! \xi_s = \frac2{\chi^2} \sum_{n=1}^{n_\text{cut}}
 !       (2 n + 1 ) ( |a_n|^2 + |b_n|^2 ) \text{ and }
-! \xi_s = \frac2{\chi^2} \sum_{n=1}^{n_\text{cut}}
+! \xi_e = \frac2{\chi^2} \sum_{n=1}^{n_\text{cut}}
 !       (2 n + 1 ) \Re( a_n + b_n )
 ! \end{equation*}
 !%
@@ -227,3 +227,6 @@ contains
 end module Mie_Efficiencies_m
 
 ! $Log$
+! Revision 1.1  2008/04/19 01:15:27  vsnyder
+! Initial commit
+!
