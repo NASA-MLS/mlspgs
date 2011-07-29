@@ -195,8 +195,6 @@ module ForwardModelConfig
     logical, dimension(:), pointer :: MoleculeDerivatives=>NULL() ! Want Jacobians
     logical, dimension(:), pointer :: MoleculeSecondDerivatives=>NULL() ! Want Hessians
     integer, dimension(:), pointer :: SpecificQuantities=>NULL() ! Specific quantities to use
-    integer, dimension(:), pointer :: TScatMolecules=>NULL() ! Which molecules to consider
-    logical, dimension(:), pointer :: TScatMoleculeDerivatives=>NULL() ! Want Jacobians
     ! Now the derived types
     type (beta_group_t), dimension(:), pointer :: Beta_Group => NULL() ! q.v. above
     type (spectroParam_t), dimension(:), pointer :: LineCenter => NULL()
@@ -429,7 +427,7 @@ contains
       use INTRINSIC, only: LIT_INDICES
       use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
       use MLSSIGNALS_M, only: DISPLAYSIGNALNAME
-      use MOLECULES, only: L_CLOUD_A, L_CLOUD_S
+      use MOLECULES, only: L_CLOUDICE
       use MORETREE, only: STARTERRORMESSAGE
       use PFADATABASE_M, only: TEST_AND_FETCH_PFA
       use READ_MIE_M, only: BETA_C_A, BETA_C_S
@@ -452,13 +450,11 @@ contains
             & size(fwdModelConf%beta_group(b)%pfa(sx)%molecules), &
             & 'Beta_group(b)%PFA(sx)%data', moduleName, fill=0 )
           do p = 1, size(fwdModelConf%beta_group(b)%pfa(sx)%molecules)
-            if ( fwdModelConf%beta_group(b)%pfa(sx)%molecules(p) == l_cloud_a ) then
+            if ( fwdModelConf%beta_group(b)%pfa(sx)%molecules(p) == l_cloudIce ) then
               if ( .not. associated(beta_c_a) ) &
                 call MLSMessage ( MLSMSG_Error, moduleName, &
                   'No Mie tables for Cloud_A beta' )
               cycle
-            end if
-            if ( fwdModelConf%beta_group(b)%pfa(sx)%molecules(p) == l_cloud_s ) then
               if ( .not. associated(beta_c_s) )  &
                 call MLSMessage ( MLSMSG_Error, moduleName, &
                   'No Mie tables for Cloud_S beta' )
@@ -1443,6 +1439,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.113  2011/05/09 17:45:38  pwagner
+! Converted to using switchDetail
+!
 ! Revision 2.112  2011/03/31 19:50:29  vsnyder
 ! Don't dump beta group twice
 !
