@@ -27,7 +27,7 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
     & undefinedValue, MLSFile_T
   use MLSFiles, only: FILENOTFOUND, &
     & Dump, GetPCFromRef, MLS_HDF_VERSION, open_MLSFile, close_MLSFile, &
-    & split_path_name
+    & split_path_name, mls_openFile, mls_closeFile
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use MLSStrings, only: Capitalize, HHMMSS_value, LowerCase
   use MLSStringLists, only: GetStringElement, NumStringElements, &
@@ -236,7 +236,11 @@ contains
   subroutine Read_geos5_7( GEOS5File, lcf_where, v_type, &
     & the_g_data, GeoDimList, fieldName, date, sumDelp )
     use MLSHDF5, only: DumpHDF5Attributes, DumpHDF5DS, &
-      & GetAllHDF5AttrNames, GetAllHDF5DSNames
+      & GetAllHDF5AttrNames, GetAllHDF5DSNames, &
+      & GetHDF5DSRank, GetHDF5DSDims, LoadFromHDF5DS, &
+      & ReadHDF5Attribute
+    use HDF5, only: hSize_t
+    use dates_module, only: utc2tai93s
 
     ! This routine reads a gmao geos5_7 file, named something like
     ! DAS.ops.asm.avg3_3d_Nv.GEOS571.20110930_0300.V01.nc4 (pressure with
@@ -260,6 +264,16 @@ contains
     character (len=NAMELEN) :: actual_field_name
     logical :: DEEBUG
     character (len=MAXSDNAMESBUFSIZE) :: mySdList
+    integer :: error, rank
+    integer(kind=hsize_t) :: dim1(1), dim4(4)
+    real(r8), dimension(:), pointer :: temp1d
+    real(r8), dimension(:,:,:,:), pointer :: temp4d
+    character(len=16) :: the_units
+    real(r4), parameter :: FILLVALUE = 1.e15 !this value maybe wrong 
+    integer :: mydate, mytime, timeinc, year, month, day, hour, minute, second
+    character(len=256) :: errormsg
+    character(len=19) :: datestring ! will be in the form of yyyy-MM-ddTHH:MM:ss
+
     ! Executable
     if(present(fieldName)) then
       actual_field_name=fieldName
@@ -268,8 +282,188 @@ contains
     endif
     
     DEEBUG = ( index(lowercase(actual_field_name), 'inq') > 0 )
+
     call GetAllHDF5DSNames ( GEOS5File%Name, '/', mysdList )
     if ( DEEBUG ) call dump(mysdList, 'DS names')
+
+    ! Fill in value
+    the_g_data%quantityName = actual_field_name
+    the_g_data%description = lit_geos5
+    the_g_data%verticalCoordinate = v_type
+    the_g_data%nodates = 1
+    the_g_data%empty = .true.
+    the_g_data%missingvalue = FILLVALUE ! this value maybe wrong
+    the_g_data%lsts = the_g_data%missingvalue
+    the_g_data%nolsts = 1
+    allocate(the_g_data%lsts(1), stat=error)
+    if (error /= 0) call announce_error(lcf_where, "Out of memory")
+    the_g_data%noszas = 1
+    allocate(the_g_data%szas(1), stat=error)
+    if (error /= 0) call announce_error(lcf_where, "Out of memory")
+    the_g_data%szas = the_g_data%missingvalue
+
+    call mls_openfile(geos5File, error)
+    if (error .gt. 0) call announce_error(lcf_where, "Could not open "// GEOS5File%Name)
+
+    ! Get lons
+    call GetHDF5DSRank (geos5file%fileid%f_id, 'lon', rank)
+    if (rank /= 1) call announce_error(lcf_where, "lon must be a 1-dim array: "// GEOS5File%Name)
+
+    call GetHDF5DSDims(geos5file%fileid%f_id, 'lon', dim1)
+    the_g_data%noLons = dim1(1)
+
+    allocate(temp1d(the_g_data%noLons), stat=error)
+    if (error /= 0) call announce_error(lcf_where, "Out of memory")
+
+    call LoadFromHDF5DS (geos5file%fileid%f_id, 'lon', temp1d)
+    allocate(the_g_data%lons(the_g_data%nolons), stat=error)
+    if (error /= 0) call announce_error(lcf_where, "Out of memory")
+    the_g_data%lons = temp1d
+    deallocate(temp1d)
+
+    ! Fill dateStart and dateEnd
+    if (.not. ReadHDF5Attribute(geos5file%fileid%f_id, 'time', &
+        & 'begin_time', mytime, error=errormsg)) then
+        call announce_error (lcf_where, errormsg // ' in file ' &
+        & // geos5file%name)
+    endif
+
+    if (mytime < 0) then
+        call announce_error (lcf_where, "Invalid 'begin_time' value in " // geos5file%name)
+    endif
+
+    if (.not. ReadHDF5Attribute(geos5file%fileid%f_id, 'time', &
+        & 'time_increment', timeinc, error=errormsg)) then
+        call announce_error (lcf_where, errormsg // ' in file ' &
+        & // geos5file%name)
+    endif
+
+    if (timeinc <= 0) then
+        call announce_error (lcf_where, "Invalid 'time_increment' value in " // geos5file%name)
+    endif
+
+    if (.not. ReadHDF5Attribute(geos5file%fileid%f_id, 'time', &
+        & 'begin_date', mydate, error=errormsg)) then
+        call announce_error (lcf_where, errormsg // ' in file ' &
+        & // geos5file%name)
+    endif
+
+    if (mydate < 0) then
+        call announce_error (lcf_where, "Invalid 'begin_date' value in " // geos5file%name)
+    endif
+
+    year = mydate / 10000
+    month = mod(mydate, 10000) / 100
+    day = mod(mydate, 100)
+    if (year > 9999 .or. month > 12 .or. month < 1 .or. day > 31 .or. day < 1) then
+        call announce_error (lcf_where, "Invalid 'begin_date' value in " // geos5file%name)
+    endif    
+    
+    hour = mytime / 10000
+    minute = mod (mytime, 10000) / 100
+    second = mod(mytime, 100)
+    if (hour > 24 .or. minute > 60 .or. second > 60) then
+        call announce_error (lcf_where, "Invalid 'begin_time' value in " // geos5file%name)
+    endif
+
+    write(datestring, '(I4.4, A1, I2.2, A1, I2.2, A1, I2.2, A1, I2.2, A1, I2.2)'), &
+                    & year, '-',  month, '-', day, 'T', hour, ':', minute, ':', second
+
+    allocate(the_g_data%datestarts(the_g_data%nodates), stat=error)
+    if (error /= 0) call announce_error (lcf_where, "Out of memory")
+    allocate(the_g_data%dateends(the_g_data%nodates), stat=error)
+    if (error /= 0) call announce_error (lcf_where, "Out of memory")
+
+    the_g_data%datestarts(1) = utc2tai93s(datestring)
+
+    hour = timeinc / 10000
+    minute = mod(timeinc, 10000) / 100
+    second = mod(timeinc, 100)
+    if (hour > 24 .or. minute > 60 .or. second > 60) then
+        call announce_error (lcf_where, "Invalid 'time_increment' value in " // geos5file%name)
+    endif
+
+    the_g_data%dateends(1) = the_g_data%datestarts(1) + hour * 3600 + minute * 60 + second
+
+    ! Get lats
+    call GetHDF5DSRank (geos5file%fileid%f_id, 'lat', rank)
+    if (rank /= 1) call announce_error(lcf_where, "lat must be a 1-dim array: " // geos5file%name)
+
+    call GetHDF5DSDims(geos5file%fileid%f_id, 'lat', dim1)
+    the_g_data%noLats = dim1(1)
+
+    allocate(temp1d(the_g_data%nolats), stat=error)
+    if (error /= 0) call announce_error(lcf_where, "Out of memory")
+    
+    call LoadFromHDF5DS (geos5file%fileid%f_id, 'lat', temp1d)
+    allocate(the_g_data%lats(the_g_data%nolats), stat=error)
+    if (error /= 0) call announce_error(lcf_where, "Out of memory")
+    the_g_data%lats = temp1d
+    deallocate(temp1d)
+
+    ! Get heights
+    call GetHDF5DSRank (geos5file%fileid%f_id, 'lev', rank)
+    if (rank /= 1) call announce_error(lcf_where, "lev must be a 1-dim array: " // geos5file%name)
+    
+    call GetHDF5DSDims (geos5file%fileid%f_id, 'lev', dim1)
+    the_g_data%noheights = dim1(1)
+
+    allocate(temp1d(the_g_data%noheights), stat=error)
+    if (error /= 0) call announce_error(lcf_where, "Out of memory")
+    
+    call LoadFromHDF5DS (geos5file%fileid%f_id, 'lev', temp1d)
+    allocate(the_g_data%heights(the_g_data%noheights), stat=error)
+    if (error /= 0) call announce_error(lcf_where, "Out of memory")
+    
+    ! We cannot load directly into the the_g_data's array because
+    ! this is an array of 32-bit float, while the data from file is
+    ! 64-bit float
+    the_g_data%heights = temp1d
+    deallocate(temp1d)
+
+    ! The following is according to GEOS-5.7.2 file specification
+    select case ( lowercase(actual_field_name) )
+    case ( 'pl' )
+        the_units = 'Pa'
+    case ( 't' )
+        the_units = 'K'
+    case default
+        call announce_error(lcf_where, "Unexpected data: " // actual_field_name)
+    end select
+    
+    ! this maybe wrong
+    the_g_data%heightsunits = 'hPa'
+
+    the_g_data%units = the_units
+
+    ! read the field, field should be either PL or T
+    call GetHDF5DSRank (geos5file%fileid%f_id, capitalize(actual_field_name), rank)
+    if (rank /= 4) then
+        call announce_error (lcf_where, &
+        capitalize(actual_field_name) // " must be a 3-dim array: " // geos5file%name)
+    endif
+
+    call GetHDF5DSDims (geos5file%fileid%f_id, capitalize(actual_field_name), dim4)
+    if (dim4(4) /= 1) then
+        call announce_error(geos5file%fileid%f_id, &
+        "The fourth dimension of " // actual_field_name // " is not 1 in: " // geos5file%name)
+    endif
+
+    allocate(temp4d(dim4(1), dim4(2), dim4(3), dim4(4)), stat=error)
+    if (error /= 0) call announce_error(lcf_where, "Out of memory")
+
+    call LoadFromHDF5DS (geos5file%fileid%f_id, capitalize(actual_field_name), temp4d)
+
+    allocate(the_g_data%field(dim4(3), dim4(2), dim4(1), 1,1,1), stat=error)
+    if (error /= 0) call announce_error (lcf_where, "Out of memory")
+    the_g_data%field(:,:,:,1,1,1) = reshape(temp4d(:,:,:,1), order=(/3,2,1/), &
+    shape=(/the_g_data%noheights, the_g_data%nolats, the_g_data%nolons/))
+    deallocate(temp4d)
+    
+    ! Read file successful
+    the_g_data%empty = .false.
+    call mls_closefile(geos5File, error)
+    if (error .gt. 0) call announce_error(lcf_where, "Could not close "// GEOS5File%Name)
   end subroutine Read_geos5_7
 
   ! ----------------------------------------------- Read_geos5_or_merra
@@ -2331,6 +2525,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.61  2011/08/02 16:48:51  honghanh
+! Implement readgeos5_7
+!
 ! Revision 2.60  2011/06/29 21:38:23  pwagner
 ! Uses output api
 !
