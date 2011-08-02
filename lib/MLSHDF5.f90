@@ -74,7 +74,7 @@ module MLSHDF5
     & IsHDF5AttributeInFile, IsHDF5AttributePresent, IsHDF5DSInFile, &
     & IsHDF5DSPresent, IsHDF5GroupPresent, IsHDF5ItemPresent, &
     & LoadFromHDF5DS, LoadPtrFromHDF5DS, MakeHDF5Attribute, &
-    & MLS_H5Open, MLS_H5Close, &
+    & MLS_H5Open, MLS_H5Close, ReadHDF5Attribute, &
     & ReadLitIndexFromHDF5Attr, ReadStringIndexFromHDF5Attr, SaveAsHDF5DS, &
     & WriteLitIndexAsHDF5Attribute, WriteStringIndexAsHDF5Attribute
 
@@ -214,16 +214,19 @@ module MLSHDF5
       & GetHDF5Attr_ID_dblarr1, GetHDF5Attr_ID_stringarr1
   end interface
 
-  interface GetHDF5AttributePtr
-    module procedure GetHDF5AttributePtr_snglarr1, GetHDF5AttributePtr_intarr1, &
-      & GetHDF5AttributePtr_dblarr1, GetHDF5AttributePtr_stringarr1, &
-      & GetHDF5AttributePtr_logicalarr1
-  end interface
+    interface GetHDF5AttributePtr
+        module procedure GetHDF5AttributePtr_snglarr1, GetHDF5AttributePtr_intarr1, &
+            & GetHDF5AttributePtr_dblarr1, GetHDF5AttributePtr_stringarr1, &
+            & GetHDF5AttributePtr_logicalarr1
+    end interface
 
-  interface IsHDF5AttributeInFile
-    module procedure IsHDF5AttributeInFile_DS, &
-      & IsHDF5AttributeInFile_Grp
-  end interface
+    interface ReadHDF5Attribute
+        module procedure ReadHDF5Attr_FID_int, ReadHDF5Attr_FID_string
+    end interface
+
+    interface IsHDF5AttributeInFile
+        module procedure IsHDF5AttributeInFile_DS, IsHDF5AttributeInFile_Grp
+    end interface
 
   interface IsHDF5AttributePresent
     module procedure IsHDF5AttributePresent_in_fID, &
@@ -2383,6 +2386,180 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to close dblarr1 attribute  ' // trim(name) )
     call MLSMessageCalls( 'pop' )
   end subroutine GetHDF5AttributePtr_dblarr1
+
+    !---------------------- ReadHDF5Attr_FID_int ---------------------
+    function ReadHDF5Attr_FID_int (fileid, dsName, attrName, value, error) result(success)
+        integer, intent(in) :: fileid
+        character(len=*), intent(in) :: dsName
+        character(len=*), intent(in) :: attrName
+        integer, intent(out) :: value
+        character(len=*), optional, intent(out) :: error
+        logical :: success
+
+        integer :: setid, attrid, stat, minlen
+        character(len=256) :: myerror ! our error message should not exceed 256 characters
+
+        myerror = ' '
+        minlen = min(len(error), len(myerror))
+        call h5dopen_f (fileid, dsName, setid, stat)
+        if (stat /= 0) then
+            success = .false.
+            if  (present(error)) then
+                myerror = 'Cannot open dataset ' // dsName
+                error = myerror(1:minlen)
+                return
+            endif
+        endif
+
+        call h5aopen_name_f(setid, attrName, attrid, stat)
+        if (stat /= 0) then
+            success = .false.
+            if (present(error)) then
+                myerror = 'Cannot open attribute ' // attrName // ' of dataset ' // dsName
+                error = myerror(1:minlen)
+                return
+            endif
+        endif
+
+        call h5aread_f (attrid, H5T_NATIVE_INTEGER, value, ones, stat)
+        if (stat /= 0) then
+            success = .false.
+            if (present(error)) then
+                myerror = 'Cannot read attribute ' // attrName // ' of dataset ' // dsName
+                error = myerror(1:minlen)
+                return
+            endif
+        endif
+
+        call h5aClose_f ( attrID, stat )
+        if (stat /= 0) then
+            success = .false.
+            if (present(error)) then
+                myerror = 'Cannot close attribute ' // attrName // ' of dataset ' // dsName
+                error = myerror(1:minlen)
+                return
+            endif
+        endif
+
+        call h5dclose_f (setid, stat)
+        if (stat /= 0) then
+            success = .false.
+            if (present(error)) then
+                myerror = 'Cannot close dataset ' // dsName
+                error = myerror(1:minlen)
+                return
+            endif
+        endif
+        success = .true.
+    end function
+
+    !--------------------- ReadHDF5Attr_FID_string --------------------
+    function ReadHDF5Attr_FID_string (fileid, dsName, attrName, value, error) result(success)
+        integer, intent(in) :: fileid
+        character(len=*), intent(in) :: dsName
+        character(len=*), intent(in) :: attrName
+        character(len=*), intent(out) :: value
+        character(len=*), optional, intent(out) :: error
+        logical :: success
+
+        integer :: setid, attrid, stat, stringtype, minlen
+        integer(kind=hsize_t) :: stringsize
+        character(len=256) :: myerror ! error message shouldn't exceed 256 characters
+
+        myerror = ' '
+        minlen = min(len(error), len(myerror))
+        call h5dopen_f (fileid, dsName, setid, stat)
+        if (stat /= 0) then
+            success = .false.
+            if (present(error)) then
+                myerror = 'Cannot open dataset ' // dsName
+                error = myerror (1:minlen)
+                return
+            endif
+        endif
+
+        call h5aopen_name_f(setid, attrName, attrid, stat)
+        if (stat /= 0) then
+            success = .false.
+            if (present(error)) then
+                myerror = 'Cannot open attribute ' // attrName // ' of dataset ' // dsName
+                error = myerror(1:minlen)
+                return
+            endif
+        endif
+
+        call h5aGet_type_f ( attrID, stringType, stat )
+        if (stat /= 0) then
+            success = .false.
+            if (present(error)) then
+                myerror = 'Unable to find type info for ' // attrName // ' of dataset ' // dsname
+                error = myerror(1:minlen)
+                return
+            endif
+        endif
+
+        call h5tGet_size_f ( stringType, stringSize, stat )
+        if (stat /= 0) then
+            success = .false.
+            if (present(error)) then
+                myerror = 'Unable to find size info for ' // attrName // ' of dataset ' // dsname
+                error = myerror(1:minlen)
+                return
+            endif
+        endif
+
+        if (stringsize > len(value)) then
+            success = .false.
+            if (present(error)) then
+                myerror = 'String is not long enough to store attribute ' // attrName // ' of dataset ' // dsname
+                error = myerror(1:minlen)
+                return
+            endif
+        endif
+
+        call h5aread_f ( attrID, stringType, value(1:stringSize), ones, stat)
+        print *, "value ", value(1:stringsize)
+        if (stat /= 0) then
+            success = .false.
+            if (present(error)) then
+                myerror = 'Cannot read attribute ' // attrName // ' of dataset ' // dsname
+                error = myerror(1:minlen)
+                return
+            endif
+        endif
+
+        call h5tClose_f(stringtype, stat)
+        if (stat /= 0) then
+            success = .false.
+            if (present(error)) then
+                myerror = 'Cannot close type for attribute ' // attrName // ' of dataset ' // dsname
+                error = myerror(1:minlen)
+                return
+            endif
+        endif
+
+        call h5aClose_f ( attrID, stat )
+        if (stat /= 0) then
+            success = .false.
+            if (present(error)) then
+                myerror = 'Cannot close attribute ' // attrName // ' of dataset ' // dsName
+                error = myerror(1:minlen)
+                return
+            endif
+        endif
+
+        call h5dclose_f (setid, stat)
+        if (stat /= 0) then
+            success = .false.
+            if (present(error)) then
+                myerror = 'Cannot close dataset ' // dsName
+                error = myerror(1:minlen)
+                return
+            endif
+        endif
+
+        success = .true.
+    end function
 
   ! --------------------------------------------  GetHDF5AttrDims  -----
   subroutine GetHDF5AttrDims ( ItemID, name, DIMS, maxDims )
@@ -5157,6 +5334,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.108  2011/08/02 16:53:00  honghanh
+! Add ReadHDF5Attr_FID_string and ReadHDF5Attr_FID_int functions
+!
 ! Revision 2.107  2011/07/15 23:33:11  pwagner
 ! Can now dump rank 4 datasets
 !
