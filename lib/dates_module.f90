@@ -96,6 +96,7 @@ module dates_module
 !                     (a) yyyy-mm-ddThh:mm:ss.sss
 !                     (b) yyyy-dddThh:mm:ss.sss
 !                     (n) yyyydddThh:mm:ss.sss (no-dash)
+! utc2tai93s         yyyy-mm-ddThh:mm:ss.sss (i.e. "B" format) -> tai (s, not days)
 ! yyyyDoy_to_mmdd    Converts yyyy and day-of-year to month and day
 ! yyyymmdd_to_dai    Converts yyyymmdd to days after Jan 1, 2001
 ! yyyymmdd_to_Doy    Converts yyyy, mont, and day to day-of-year
@@ -127,6 +128,7 @@ module dates_module
 ! char utcForm (char* utc)
 ! utc_to_date(char* utc, int ErrTyp, char* date, [log strict], [char* utcAt0z])
 ! utc_to_time(char* utc, int ErrTyp, char* time, [log strict])
+! dble utc2tai93s( char*  utc )
 ! yyyyDoy_to_mmdd (int yyyy, int mm, int dd, int Doy)
 ! yyyymmdd_to_dai (int yyyy, int mm, int dd, int dai, [char* startingDate])
 ! yyyymmdd_to_dai (char* str, int dai, [char* startingDate])
@@ -205,6 +207,10 @@ module dates_module
   ! Also we allow several ways of encoding dates as strings
   ! which is perhaps the reason this module has grown so large
   
+  ! There are two internal date formats:
+  ! eudtf          -  yyyddd expressed as an integer, e.g. 1993001 is '1993-001'
+  ! MLSDATE_TIME_T - a user-defined type containing 2 fields: dai and seconds
+  
   ! Further notes and Limitations:
   ! It would be useful for this module to supply functions converting among
   ! our 3 numerical date types
@@ -233,7 +239,7 @@ module dates_module
     & lastday, nextMoon, reformatDate, reformatTime, &
     & secondsbetween2utcs, secondsinday, splitDateTime, &
     & tai2ccsds, tai93s2utc, timeForm, &
-    & utcForm, utc_to_date, utc_to_time, utc_to_yyyymmdd, &
+    & utcForm, utc_to_date, utc_to_time, utc_to_yyyymmdd, utc2tai93s, &
     & yyyyDoy_to_mmdd, yyyymmdd_to_dai, yyyymmdd_to_Doy
 
  interface buildCalendar
@@ -246,6 +252,10 @@ module dates_module
 
   interface dayOfWeek
     module procedure dayOfWeek_int, dayOfWeek_str
+  end interface
+
+  interface dump
+    module procedure dumpDateTime
   end interface
 
  interface secondsInDay
@@ -325,15 +335,6 @@ module dates_module
   end type MLSDATE_TIME_T
   
 contains
-!   ! --------------------------------------------- dumpDateTime ---------
-!   subroutine dumpDateTime(dateTime)
-!     ! Args
-!     type(MLSDATE_TIME_T), intent(in) :: dateTime
-!     ! Executable
-!     print*,  ' Date and Time fields'
-!     print *, 'days after Jan 01 2001', dateTime%dai
-!     print *, 'seconds in day', dateTime%seconds
-!   end subroutine dumpDateTime
   ! ---------------------------------------------  adddaystoutc  -----
   function adddaystoutc( utc, days ) result(after)
     ! Given a utc return a date later (or earlier) by days
@@ -472,13 +473,21 @@ contains
     character(len=MAXUTCSTRLENGTH)    :: utc
     ! Internal
     type(MLSDATE_TIME_T)         :: datetimeRdcd ! So we don't clobber datetime
+    integer                      :: dai93
     character(len=16)            :: hhmmss
+    character(len=16)            :: otherStartingDate = '19930101'
     character(len=16)            :: yyyymmdd
     ! Executable
     datetimeRdcd = datetime
     call reducedatetime(datetimeRdcd)
+    ! call dump ( datetimeRdcd )
     ! Now convert to our internal representations
-    call dai_to_yyyymmdd( datetimeRdcd%dai, yyyymmdd )
+    if ( datetimeRdcd%dai < 0 ) then
+      dai93 = datetimeRdcd%dai + daysbetween2utcs( otherStartingDate, '20010101' )
+      call dai_to_yyyymmdd( dai93, yyyymmdd, startingDate=otherStartingDate )
+    else
+      call dai_to_yyyymmdd( datetimeRdcd%dai, yyyymmdd )
+    endif
     hhmmss = '00:00:00'
     utc = yyyymmdd(1:4) // '-' // yyyymmdd(5:6) // '-' // yyyymmdd(7:8)
     if ( datetimeRdcd%seconds /= 0. ) then
@@ -1044,7 +1053,7 @@ contains
       mystartingDate='20010101'
    endif
    call utc_to_yyyymmdd_ints(mystartingDate, ErrTyp, yyyy, mm, dd, nodash=.true.)
-   if ( dai < 1 ) return
+   if ( dai < 0 ) return
    call yyyymmdd_to_doy_str(mystartingDate, doy1)
    ! Here's what we do:
    ! Given doy1 (the day-of-year of the starting date)
@@ -1885,6 +1894,21 @@ contains
    endif
   end subroutine utc_to_yyyymmdd_ints
 
+  ! ------------ utc2tai93s ------
+  ! Function returns time since midnight Jan 1 1993 in s
+  function utc2tai93s ( utc ) result ( tai93s )
+    character(len=*), intent(in) :: utc
+    double precision             :: tai93s
+    type(MLSDATE_TIME_T)         :: datetime
+    integer :: eudtf
+    datetime = utc2datetime( utc )
+    ! call dump( datetime )
+    ! However, our internal datetime object stores days since 2001,
+    ! so we need to offset it
+    eudtf = daysince2eudtf( datetime%dai, 2001001 )
+    tai93s = datetime%seconds + 24*3600*eudtf2daysince( eudtf, 1993001 )
+  end function utc2tai93s
+  
   ! ---------------------------------------------  utc_to_yyyymmdd_strs  -----
   subroutine utc_to_yyyymmdd_strs(str, ErrTyp, year, month, day, &
     & strict)
@@ -2358,6 +2382,9 @@ contains
 
 end module dates_module
 ! $Log$
+! Revision 2.24  2011/04/26 20:56:16  pwagner
+! Can convert tai93s to other date formats
+!
 ! Revision 2.23  2011/01/04 00:46:49  pwagner
 ! hoursinday and secondsInDay now public functions
 !
