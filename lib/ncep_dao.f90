@@ -332,15 +332,15 @@ contains
         call announce_error (lcf_where, "Invalid 'begin_time' value in " // geos5file%name)
     endif
 
-    if (.not. ReadHDF5Attribute(geos5file%fileid%f_id, 'time', &
-        & 'time_increment', timeinc, error=errormsg)) then
-        call announce_error (lcf_where, errormsg // ' in file ' &
-        & // geos5file%name)
-    endif
+    !if (.not. ReadHDF5Attribute(geos5file%fileid%f_id, 'time', &
+    !    & 'time_increment', timeinc, error=errormsg)) then
+    !    call announce_error (lcf_where, errormsg // ' in file ' &
+    !    & // geos5file%name)
+    !endif
 
-    if (timeinc <= 0) then
-        call announce_error (lcf_where, "Invalid 'time_increment' value in " // geos5file%name)
-    endif
+    !if (timeinc <= 0) then
+    !    call announce_error (lcf_where, "Invalid 'time_increment' value in " // geos5file%name)
+    !endif
 
     if (.not. ReadHDF5Attribute(geos5file%fileid%f_id, 'time', &
         & 'begin_date', mydate, error=errormsg)) then
@@ -376,12 +376,12 @@ contains
 
     the_g_data%datestarts(1) = utc2tai93s(datestring)
 
-    hour = timeinc / 10000
-    minute = mod(timeinc, 10000) / 100
-    second = mod(timeinc, 100)
-    if (hour > 24 .or. minute > 60 .or. second > 60) then
-        call announce_error (lcf_where, "Invalid 'time_increment' value in " // geos5file%name)
-    endif
+    !hour = timeinc / 10000
+    !minute = mod(timeinc, 10000) / 100
+    !second = mod(timeinc, 100)
+    !if (hour > 24 .or. minute > 60 .or. second > 60) then
+    !    call announce_error (lcf_where, "Invalid 'time_increment' value in " // geos5file%name)
+    !endif
 
     !the_g_data%dateends(1) = the_g_data%datestarts(1) + hour * 3600 + minute * 60 + second
     the_g_data%dateends(1) = the_g_data%datestarts(1) ! start and end are the same
@@ -2526,6 +2526,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.63  2011/08/02 17:26:37  honghanh
+! Remove code that read time_increment attribute
+!
 ! Revision 2.62  2011/08/02 17:23:59  honghanh
 ! Make datestarts and dateends the same.
 !
