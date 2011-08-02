@@ -34,7 +34,7 @@ module dates_module
 !---------------------------------------------------------------------------
 
   ! Cal is calendar date as in "25 Jan 1998" or "25 1 1998"
-  ! Separators can be any non-alphanumerc character. Leading 0s no problem
+  ! Separators can be any non-alphanumeric character. Leading 0s no problem
   ! If you want the three items in an order that is not day/month/year then
   ! you can supply the optional second argument perm. This must be a 3-element
   ! integer array with elements 1,2,3 in any order
@@ -75,6 +75,7 @@ module dates_module
 ! eudtf2cal          yyyyddd -> cal date
 ! eudtf2daysince     eudtf -> days since starting date
 ! hoursbetween2utcs  How many hours between 2 date-times
+! hoursinday         How many hours since the start of the day
 ! lastday            How many days in leap month
 ! nextMoon           utc date, time of next (new) moon 
 !                     (or next after input date); less accurate than toolkit AA
@@ -82,8 +83,11 @@ module dates_module
 ! ReformatTime       Turns 'hhmmss.sss' -> 'hh:mm:ss'
 ! secondsbetween2utcs 
 !                    How many seconds between 2 date-times
+! secondsinday 
+!                    How many seconds since the start of the day
 ! splitDateTime      Splits dateTtime
 ! tai2ccsds          tai (days, not s) -> ccsds (in "B" format)
+! tai93s2utc         tai (s, not days) -> yyyy-mm-ddThh:mm:ss.sss (i.e. "B" format)
 ! timeForm           Determines what format time is in
 ! utc_to_date        Returns date portion from dateTtime; e.g. yyyy-dddThh:mm:ss
 ! utc_to_time        Returns time portion from dateTtime; e.g. yyyy-dddThh:mm:ss
@@ -92,6 +96,7 @@ module dates_module
 !                     (a) yyyy-mm-ddThh:mm:ss.sss
 !                     (b) yyyy-dddThh:mm:ss.sss
 !                     (n) yyyydddThh:mm:ss.sss (no-dash)
+! utc2tai93s         yyyy-mm-ddThh:mm:ss.sss (i.e. "B" format) -> tai (s, not days)
 ! yyyyDoy_to_mmdd    Converts yyyy and day-of-year to month and day
 ! yyyymmdd_to_dai    Converts yyyymmdd to days after Jan 1, 2001
 ! yyyymmdd_to_Doy    Converts yyyy, mont, and day to day-of-year
@@ -101,7 +106,7 @@ module dates_module
 ! === (start of api) ===
 ! char* adddaystoutc (char* utc, int days)
 ! char* addhourstoutc (char* utc, int hours)
-! char* addsecondstoutc (char* utc, dble hours)
+! char* addsecondstoutc (char* utc, dble seconds)
 ! buildCalendar ( int year, int month, int days(6, 7), [int daysOfYear(6,7)] )
 ! dai_to_yyyymmdd (int dai, int yyyy, int mm, int dd, [char* startingDate])
 ! dai_to_yyyymmdd (int dai, char* str, [char* startingDate])
@@ -110,15 +115,20 @@ module dates_module
 ! int daysbetween2utcs (char* utc1, char* utc2)
 ! int daysInMonth (int month, int year)
 ! int hoursbetween2utcs (char* utc1, char* utc2)
+! dble hoursinday (char* utc1)
 ! char* nextMoon ([char* date], [phase])
 ! char* ReformatDate (char* date, [char* fromForm], [char* toForm])
 ! char* ReformatTime (char* time, [char* form])
 ! dble secondsbetween2utcs (char* utc1, char* utc2)
+! dble secondsinday (char* utc1)
 ! splitDateTime(char* utc, int ErrTyp, char* date, char* time, [log strict])
+! char* tai2ccsds( int tai )
+! char* tai93s2utc( dble tai )
 ! char* timeForm( char* time )
 ! char utcForm (char* utc)
 ! utc_to_date(char* utc, int ErrTyp, char* date, [log strict], [char* utcAt0z])
 ! utc_to_time(char* utc, int ErrTyp, char* time, [log strict])
+! dble utc2tai93s( char*  utc )
 ! yyyyDoy_to_mmdd (int yyyy, int mm, int dd, int Doy)
 ! yyyymmdd_to_dai (int yyyy, int mm, int dd, int dai, [char* startingDate])
 ! yyyymmdd_to_dai (char* str, int dai, [char* startingDate])
@@ -127,6 +137,7 @@ module dates_module
 ! Note: in fromForm and in toForm the following rules are in effect
 ! non-alphabetic symbols like '-', '/', and ' ' take their own values
 ! otherwise
+!                  date formats
 !    key       is replaced by                        example
 !    ---       --------------                       ---------
 !    dd        2-digits day of month                07     
@@ -139,6 +150,19 @@ module dates_module
 ! Putting these together we would have for the same date
 !   "M dd yyyy" => "September 07 2005"
 !   "yyyy-doy " => "2005-d250"
+
+!                  time formats
+!    key       is replaced by                        example
+!    ---       --------------                       ---------
+!    hh        2-digits hours in day (of 24)           17     
+!    HH        2-digits hours in day (of 12)           05 (adds 'am' or 'pm'     
+!    mm        2-digits minutes in hour (of 60)        30     
+!    ss        seconds in minute (of 60)               30.000000     
+!    SS        2-digits seconds in minute (of 60)      30
+
+! Putting these together we would have for the same time
+!   "hh:mm:ss" => "17:30:30.0000000"
+!   "HH:mm   " => "5:30 pm"
 
 ! Special values of fromForm (either ' ' or '*') turn on an
 ! "auto-recognize" features which automatically recognizes
@@ -166,30 +190,56 @@ module dates_module
   ! midnight. This can be used to get UARS day or TAI93 time to an accuracy
   ! of 1 Day. 
 
-  ! Be warned that the format we call TAI here is in DAYS
+  ! Be warned that the format we call TAI here is in DAYS 
+  ! (unless specified otherwise)
   ! while genuine TAI93 is in SECONDS. 
   
-  ! PAW chose a different starting date for dai (better called dai01)
+  ! The toolkit's TAI93 accounts for leap seconds
+  
+  ! PAW chose a different starting date for dai (might be better called dai01)
   ! which is January 1 2001
-  ! so try to keep distinct
+  ! so try to keep distinct the 3 numerical date types
   ! name             meaning                             numerical type
-  ! tai93 (toolkit) seconds since midnight 1993 Jan 1        d.p.
-  ! tai93 (here) days since midnight 1993 Jan 1              int
-  ! dai01 (here) days since midnight 2001 Jan 1              int
+  ! tai93s (toolkit) seconds since midnight 1993 Jan 1        d.p.
+  ! tai93  (here) days since midnight 1993 Jan 1              int
+  ! dai01  (here) days since midnight 2001 Jan 1              int
   !
   ! Also we allow several ways of encoding dates as strings
   ! which is perhaps the reason this module has grown so large
+  
+  ! There are two internal date formats:
+  ! eudtf          -  yyyddd expressed as an integer, e.g. 1993001 is '1993-001'
+  ! MLSDATE_TIME_T - a user-defined type containing 2 fields: dai and seconds
+  
+  ! Further notes and Limitations:
+  ! It would be useful for this module to supply functions converting among
+  ! our 3 numerical date types
+  ! E.g.,
+  !    tai93 (in days) = dai01 + nDaysOffset
+  ! where we can 
+  !   nDaysOffset = daysbetween2utcs( '1993-01-01', '2001-01-01' )
+  ! and, ignoring the effect of leap seconds, 
+  !   tai93s (toolkit) = SECONDSINADAY*tai93 (in days)
+  !
+  ! It would not be that difficult to enable us to take advantage
+  ! of a leapsec file, or, after having read it, a leapsec database
 ! === (end of api) ===
+
+! Further note:
+! We maintain a private datatype, MLSDATE_TIME_T
+! it is an intermediary in various operations and conversions
+! Would it be useful to uncloak it so callers might access it directly?
 
   !Here are the provided functions 
   public :: adddaystoutc, addhourstoutc, addsecondstoutc, buildCalendar, &
     & cal2eudtf, ccsds2tai, ccsds2eudtf, ccsdsa2b, ccsdsb2a, &
     & dai_to_yyyymmdd, dateForm, dayOfWeek, daysbetween2utcs, daysInMonth, &
     & daysince2eudtf, days_in_year, &
-    & eudtf2cal, eudtf2daysince, hoursbetween2utcs, &
+    & eudtf2cal, eudtf2daysince, hoursbetween2utcs, hoursinday, &
     & lastday, nextMoon, reformatDate, reformatTime, &
-    & secondsbetween2utcs, splitDateTime, tai2ccsds, timeForm, &
-    & utcForm, utc_to_date, utc_to_time, utc_to_yyyymmdd, &
+    & secondsbetween2utcs, secondsinday, splitDateTime, &
+    & tai2ccsds, tai93s2utc, timeForm, &
+    & utcForm, utc_to_date, utc_to_time, utc_to_yyyymmdd, utc2tai93s, &
     & yyyyDoy_to_mmdd, yyyymmdd_to_dai, yyyymmdd_to_Doy
 
  interface buildCalendar
@@ -202,6 +252,14 @@ module dates_module
 
   interface dayOfWeek
     module procedure dayOfWeek_int, dayOfWeek_str
+  end interface
+
+  interface dump
+    module procedure dumpDateTime
+  end interface
+
+ interface secondsInDay
+    module procedure secondsInDaydble
   end interface
 
   interface switch
@@ -226,9 +284,9 @@ module dates_module
 
   ! utc_to_yyyymmdd
   integer, public, parameter :: INVALIDUTCSTRING = 1
+  integer, public, parameter :: MAXUTCSTRLENGTH = 32
 
   integer, private, parameter :: SECONDSINADAY = 24*60*60
-  integer, private, parameter :: MAXUTCSTRLENGTH = 32
 
   ! These somewhat similar parameters are used in the separately-coded
   ! but redundant functions and procedures moved here from their
@@ -269,21 +327,14 @@ module dates_module
   ! This is a private type to be used internally
   ! Note we don't bother with leap seconds
   ! which rather limits its accuracy and usefulness
+  ! One easy improvement would be to incopoporate the starting
+  ! date--that would allow us to unify the different numerical date types
   type MLSDATE_TIME_T
     integer :: dai = 0                  ! days after 1 Jan 2001
     double precision :: seconds = 0.00  ! seconds after midnight
   end type MLSDATE_TIME_T
   
 contains
-!   ! --------------------------------------------- dumpDateTime ---------
-!   subroutine dumpDateTime(dateTime)
-!     ! Args
-!     type(MLSDATE_TIME_T), intent(in) :: dateTime
-!     ! Executable
-!     print*,  ' Date and Time fields'
-!     print *, 'days after Jan 01 2001', dateTime%dai
-!     print *, 'seconds in day', dateTime%seconds
-!   end subroutine dumpDateTime
   ! ---------------------------------------------  adddaystoutc  -----
   function adddaystoutc( utc, days ) result(after)
     ! Given a utc return a date later (or earlier) by days
@@ -385,7 +436,7 @@ contains
     year = eudtf / 1000
     day = eudtf - 1000*year
     write(unit=ccsds(1:4),fmt="(i4)")year
-    write(unit=ccsds(6:8),fmt="(i3)")day
+    write(unit=ccsds(6:8),fmt="(i3.3)")day
     ccsds(5:5) = '-'
   end function eudtf2ccsds
 
@@ -401,6 +452,19 @@ contains
     ccsds = eudtf2ccsds(eudtf)
   end function tai2ccsds
 
+  ! Converts TAI in seconds to utc Date.
+  ! We ignore leap seconds 
+  function tai93s2utc(tai93s) result (utc)
+    double precision, intent(in)   :: tai93s
+    !---function--result---!
+    character(len=MAXUTCSTRLENGTH) :: utc
+    !----local -----!
+    type(MLSDATE_TIME_T)           :: datetime
+    ! Executable
+    dateTime = tai93s2datetime( tai93s )
+    utc = datetime2utc( datetime )
+  end function tai93s2utc
+
   ! ---------------------------------------------  datetime2utc  -----
   function datetime2utc(datetime) result(utc)
     ! Given an mlsDate_Time_T return a utc
@@ -408,21 +472,45 @@ contains
     type(MLSDATE_TIME_T), intent(in)  :: datetime
     character(len=MAXUTCSTRLENGTH)    :: utc
     ! Internal
+    type(MLSDATE_TIME_T)         :: datetimeRdcd ! So we don't clobber datetime
+    integer                      :: dai93
     character(len=16)            :: hhmmss
+    character(len=16)            :: otherStartingDate = '19930101'
     character(len=16)            :: yyyymmdd
     ! Executable
-    call reducedatetime(datetime)
+    datetimeRdcd = datetime
+    call reducedatetime(datetimeRdcd)
+    ! call dump ( datetimeRdcd )
     ! Now convert to our internal representations
-    call dai_to_yyyymmdd( datetime%dai, yyyymmdd )
+    if ( datetimeRdcd%dai < 0 ) then
+      dai93 = datetimeRdcd%dai + daysbetween2utcs( otherStartingDate, '20010101' )
+      call dai_to_yyyymmdd( dai93, yyyymmdd, startingDate=otherStartingDate )
+    else
+      call dai_to_yyyymmdd( datetimeRdcd%dai, yyyymmdd )
+    endif
     hhmmss = '00:00:00'
     utc = yyyymmdd(1:4) // '-' // yyyymmdd(5:6) // '-' // yyyymmdd(7:8)
-    if ( datetime%seconds /= 0. ) then
-      hhmmss = s2hhmmss(datetime%seconds)
+    if ( datetimeRdcd%seconds /= 0. ) then
+      hhmmss = s2hhmmss(datetimeRdcd%seconds)
       ! print *, 'hhmmss: ', hhmmss
       ! print *, 'utc: ', utc
     endif
     utc = trim(utc) // 'T' // adjustl(hhmmss)
   end function datetime2utc
+
+  ! Converts TAI93 in seconds to an MLS DateTime datatype
+  function tai93s2datetime(tai93s) result (datetime)
+    double precision, intent(in)   :: tai93s
+    !---function--result---!
+    type(MLSDATE_TIME_T)           :: datetime
+    !----local -----!
+    integer          :: dai93         ! Number of days after 1 Jan 1993
+    ! Executable
+    dai93 = int(tai93s / 86400 + 0.5)
+    datetime%seconds = tai93s - 86400*dai93
+    ! Now apply offset convert it to dai (2001)
+    datetime%dai = dai93 - daysbetween2utcs( '1993-01-01', '2001-01-01' )
+  end function tai93s2datetime
 
   ! --------------------------------------------- buildCalendar ---
   ! Build a calendar page (a 6x7 array)
@@ -531,7 +619,7 @@ contains
 
   ! ---------------------------------------------  daysbetween2utcs  -----
   function daysbetween2utcs( utc1, utc2 ) result(days)
-    ! Given a utc return a date later (or earlier) by days
+    ! Given two utcs return the number days between them
     ! Args
     character(len=*), intent(in) :: utc1, utc2
     integer                      :: days
@@ -587,6 +675,19 @@ contains
     ! Executable
     hours = secondsbetween2utcs( utc1, utc2 ) / (60*60)
   end function hoursbetween2utcs
+
+  ! ---------------------------------------------  hoursinday  -----
+  function hoursinday( utc1 ) result(hours)
+    ! Given a utc return a date later (or earlier) by days
+    ! Args
+    character(len=*), intent(in) :: utc1
+    double precision             :: hours
+    ! Internal
+    type(MLSDate_time_T)         :: datetime1
+    ! Executable
+    datetime1 = utc2datetime(utc1)
+    hours = datetime1%seconds/3600
+  end function hoursinday
 
   function lastday(imonth) result (day)
     integer,intent(in)::imonth
@@ -952,7 +1053,7 @@ contains
       mystartingDate='20010101'
    endif
    call utc_to_yyyymmdd_ints(mystartingDate, ErrTyp, yyyy, mm, dd, nodash=.true.)
-   if ( dai < 1 ) return
+   if ( dai < 0 ) return
    call yyyymmdd_to_doy_str(mystartingDate, doy1)
    ! Here's what we do:
    ! Given doy1 (the day-of-year of the starting date)
@@ -1110,7 +1211,7 @@ contains
     ! Internal variables
     character(len=*), parameter :: dateFormat = 'yyyy-doy'
     character(len=*), parameter :: timeFormat = 'hh:mm:ss'
-    character(len=32) :: myDate
+    character(len=MAXUTCSTRLENGTH) :: myDate
     character(len=8)  :: myPhase
     character(len=16) :: dateString
     type(MLSDATE_TIME_T)  :: datetime
@@ -1278,7 +1379,7 @@ contains
         endif
       endif
     endif
-    ! print *, tempFormat
+    ! print *, 'tempFormat: ', tempFormat
     reFormat = tempFormat(1:4) // ymSpacer // tempFormat(5:6) // mdSpacer // tempFormat(7:8)
     if ( .not. present(toform) ) return
     if ( len_trim(toform) < 1 ) return
@@ -1329,12 +1430,15 @@ contains
   end function reFormatDate
 
   ! --------------------------------------------------  reFormatTime  -----
-  function reFormatTime(time, form) result(reFormat)
+  function reFormatTime( time, form ) result( reFormat )
     ! Reformat hhmmss.sss as hh:mm:ss
     ! (Note it truncates instead of rounding)
     ! "form" is an optional string arg defining
     ! the output format; E.g. 'hh:mm' for '13:23' (note 24-hour time)
     ! or 'HH:mm' for '01:23 PM' (note AM/PM marking)
+    ! 's' fills the remaining chars with the seconds plus any decimal portion
+    ! 'S' fills just one character at a time, so 'hh:mm:SS' would be '12:30:00'
+    ! while 'hh:mm:ss' could be '12:30:00.0000000'
     ! Args
     character(len=*), intent(in)            :: time
     character(len=len(time)+24)             :: reFormat
@@ -1343,25 +1447,36 @@ contains
     character(len=1), parameter             :: hmSpacer = ':'
     character(len=1), parameter             :: msSpacer = ':'
     integer                                 :: hours
-    integer                                 :: i
+    integer                                 :: i, j
     character(len=2)                        :: ampm
     character(len=2)                        :: hh
+    character(len=2)                        :: hc, mc
+    character(len=len(time))                :: sc
     ! Executable
-    reFormat = time(1:2) // hmSpacer // time(3:4) // msSpacer // time(5:6)
+    ! In case we came here with ':' separators
+    if ( index(time(1:4), ':') > 0 ) then
+       reFormat = time
+    else
+      reFormat = time(1:2) // hmSpacer // time(3:4) // msSpacer // time(5:)
+    endif
     if ( .not. present(form) ) return
     if ( len_trim(form) < 1 ) return
+    hc = reFormat(1:2)
+    mc = reFormat(4:5)
+    sc = adjustl(reFormat(7:))
     ampm = ' '
     reFormat = ' '
     i = 0
+    j = 0
     do
       if ( i >= len_trim(form) ) exit
       i = i + 1
       select case (form(i:i))
       case ('h')
-        reFormat = trim(reFormat) // time(1:2)
+        reFormat = trim(reFormat) // hc
         i = i + 1
       case ('H')
-        read(time(1:2), *) hours
+        read(hc, *) hours
         ampm = 'AM'
         if ( hours > 12 ) then
           hours = hours - 12
@@ -1371,10 +1486,13 @@ contains
         reFormat = trim(reFormat) // hh
         i = i + 1
       case ('m')
-        reFormat = trim(reFormat) // time(3:4)
+        reFormat = trim(reFormat) // mc
         i = i + 1
+      case ('S')
+        j = j + 1
+        reFormat = trim(reFormat) // sc(j:j)
       case ('s')
-        reFormat = trim(reFormat) // time(5:6)
+        reFormat = trim(reFormat) // sc
         i = i + 1
       case default
         reFormat = trim(reFormat) // form(i:i)
@@ -1464,6 +1582,19 @@ contains
     days = datetime2%dai - datetime1%dai
     seconds = 24.d0*60*60*days + ( datetime2%seconds - datetime1%seconds )
   end function secondsbetween2utcs
+
+  ! ---------------------------------------------  secondsindaydble  -----
+  function secondsindaydble( utc1 ) result(seconds)
+    ! Given a utc return a date later (or earlier) by days
+    ! Args
+    character(len=*), intent(in) :: utc1
+    double precision             :: seconds
+    ! Internal
+    type(MLSDate_time_T)         :: datetime1
+    ! Executable
+    datetime1 = utc2datetime(utc1)
+    seconds = datetime1%seconds
+  end function secondsindaydble
 
   ! ---------------------------------------------  splitDateTime  -----
   subroutine splitDateTime(str, ErrTyp, date, time, strict)
@@ -1763,6 +1894,21 @@ contains
    endif
   end subroutine utc_to_yyyymmdd_ints
 
+  ! ------------ utc2tai93s ------
+  ! Function returns time since midnight Jan 1 1993 in s
+  function utc2tai93s ( utc ) result ( tai93s )
+    character(len=*), intent(in) :: utc
+    double precision             :: tai93s
+    type(MLSDATE_TIME_T)         :: datetime
+    integer :: eudtf
+    datetime = utc2datetime( utc )
+    ! call dump( datetime )
+    ! However, our internal datetime object stores days since 2001,
+    ! so we need to offset it
+    eudtf = daysince2eudtf( datetime%dai, 2001001 )
+    tai93s = datetime%seconds + 24*3600*eudtf2daysince( eudtf, 1993001 )
+  end function utc2tai93s
+  
   ! ---------------------------------------------  utc_to_yyyymmdd_strs  -----
   subroutine utc_to_yyyymmdd_strs(str, ErrTyp, year, month, day, &
     & strict)
@@ -1990,14 +2136,26 @@ contains
     integer,intent(out) :: doy
     !----------Local vars----------!
     integer :: year, month, day
+    character(len=2) :: dayCh, monCh
+    character(len=4) :: yearCh
     !----------Executable part----------!
      ! call utc_to_yyyymmdd_ints(str, ErrTyp, year, month, day, nodash=.true.)
      doy = -1
      if ( len_trim(str) < 8 ) return
      ! print *, 'str: ', str
-     read(str(1:4), *) year
-     read(str(5:6), *) month
-     read(str(7:8), *) day
+     ! In case we came here with '-' separators between the fields
+     if ( index(str(1:8), '-') > 0 ) then
+       call GetStringElement( str, yearCh, 1, .true., '-' )
+       call GetStringElement( str, monCh, 2, .true., '-' )
+       call GetStringElement( str, dayCh, 3, .true., '-' )
+       read(yearCh, *) year
+       read(monCh, *) month
+       read(dayCh, *) day
+     else
+       read(str(1:4), *) year
+       read(str(5:6), *) month
+       read(str(7:8), *) day
+     endif
      call yyyymmdd_to_doy_ints(year, month, day, doy)
   end subroutine yyyymmdd_to_doy_str
 
@@ -2138,8 +2296,8 @@ contains
     x2 = x
   end subroutine switch_ints
 
-  ! ---------------------------------------------  secondsInDay  -----
-  function secondsInDay(time) result(seconds)
+  ! ---------------------------------------------  hhmmss2seconds  -----
+  function hhmmss2seconds(time) result(seconds)
     ! Given a time return the number of seconds after midnight
     ! Args
     character(len=*), intent(in)        :: time ! E.g., "11:20:33.000"
@@ -2156,7 +2314,7 @@ contains
     if ( len_trim(time) > 3 ) read( time(4:5), '(i2)' ) minutes
     if ( len_trim(time) > 6 ) read( time(7:), * ) sdotss
     seconds = sdotss + 60.*( minutes + 60*hours )
-  end function secondsInDay
+  end function hhmmss2seconds
 
   ! ---------------------------------------------  s2hhmmss  -----
   function s2hhmmss(s) result(hhmmss)
@@ -2181,7 +2339,11 @@ contains
     write(hh, '(i2.2)') hours
     write(mm, '(i2.2)') minutes
     write(ss, '(f12.9)') seconds
-    hhmmss = hh // ':' // mm // ':' // adjustl(ss)
+    if ( seconds < 10.) then
+      hhmmss = hh // ':' // mm // ':0' // adjustl(ss)
+    else
+      hhmmss = hh // ':' // mm // ':' // adjustl(ss)
+    endif
   end function s2hhmmss
 
   ! ---------------------------------------------  utc2datetime  -----
@@ -2204,7 +2366,7 @@ contains
     ! print *, 'hhmmss: ', trim(hhmmss)
     ! Now convert to our internal representations
     call yyyymmdd_to_dai_ints( year, month, day, datetime%dai )
-    datetime%seconds = secondsinday(hhmmss)
+    datetime%seconds = hhmmss2seconds(hhmmss)
     ! call dumpDateTime(datetime, 'From utc2datetime')
   end function utc2datetime
 
@@ -2220,6 +2382,18 @@ contains
 
 end module dates_module
 ! $Log$
+! Revision 2.24  2011/04/26 20:56:16  pwagner
+! Can convert tai93s to other date formats
+!
+! Revision 2.23  2011/01/04 00:46:49  pwagner
+! hoursinday and secondsInDay now public functions
+!
+! Revision 2.22  2010/06/28 16:59:35  pwagner
+! Added more comments about numerical date types
+!
+! Revision 2.21  2009/08/26 16:20:13  pwagner
+! Corrected utcForm function--was reversing 'a' and 'b'
+!
 ! Revision 2.20  2009/06/23 18:25:43  pwagner
 ! Prevent Intel from optimizing ident string away
 !

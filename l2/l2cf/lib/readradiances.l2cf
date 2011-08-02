@@ -85,14 +85,23 @@ end Fill
 
 ;; Band13OK and Band13OFF will be used to decide which of two
 ;; versions of Core+R4a phase to go through
+;; Band15OK and Band15OFF will be used to decide whther the THz module is off
+;; and therefore how hard to work in Core+R5
+;; (Shouldn't we check the other R5 Bands, too?)
 begin Construct
   Band13OK: Boolean, formula="true"
   anyGoodValues, quantity=measurement.band13, precision=measurementNoise.band13, Boolean=Band13OK
   Band13OFF: Boolean, formula="not Band13OK"
+  Band15OK: Boolean, formula="true"
+  anyGoodValues, quantity=measurement.band15, precision=measurementNoise.band15, Boolean=Band15OK
+  Band15OFF: Boolean, formula="not Band15OK"
 end Construct
 
 
 ; $Log$
+; Revision 1.13  2008/06/27 16:53:50  pwagner
+; Discounts Band 25 radiances, too, when polluted by Galactic Core
+;
 ; Revision 1.12  2006/06/15 00:03:29  pwagner
 ; Band 9 affected by the Galactic core
 ;
