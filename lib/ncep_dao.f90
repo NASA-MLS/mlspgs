@@ -383,7 +383,8 @@ contains
         call announce_error (lcf_where, "Invalid 'time_increment' value in " // geos5file%name)
     endif
 
-    the_g_data%dateends(1) = the_g_data%datestarts(1) + hour * 3600 + minute * 60 + second
+    !the_g_data%dateends(1) = the_g_data%datestarts(1) + hour * 3600 + minute * 60 + second
+    the_g_data%dateends(1) = the_g_data%datestarts(1) ! start and end are the same
 
     ! Get lats
     call GetHDF5DSRank (geos5file%fileid%f_id, 'lat', rank)
@@ -2525,6 +2526,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.62  2011/08/02 17:23:59  honghanh
+! Make datestarts and dateends the same.
+!
 ! Revision 2.61  2011/08/02 16:48:51  honghanh
 ! Implement readgeos5_7
 !
