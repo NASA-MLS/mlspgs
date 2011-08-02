@@ -2041,8 +2041,8 @@ contains ! =====     Public Procedures     =============================
           if ( qt%sideband /= sideband ) cycle
         end if
         GetVectorQuantityIndexByType = search
-    return
-      end if
+        return
+       end if
     end do
 
     ! Not found, perhaps generate an error
@@ -2710,6 +2710,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.152  2011/03/15 22:49:35  pwagner
+! Added reverseMask; changed default dumpMask behavior to use DUMP_2D_INTEGER
+!
 ! Revision 2.151  2011/03/02 02:15:25  vsnyder
 ! Make QuantityTemplate_t public, for F95 compatibility
 !
