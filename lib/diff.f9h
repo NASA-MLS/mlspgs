@@ -58,8 +58,6 @@
     real(kind(array1))                     :: rmsratio
     real(kind(array1))                     :: stddev
     real(kind(array1))                     :: stddevratio
-    logical, parameter                     :: USEDUMPTABLE = .true.
-    ! character(len=*), parameter      :: HEADSIDE = 'top'
     logical, parameter               :: DEBUG = .false.
     real(kind(array1)), dimension(MAXPCTS), parameter :: PCTAGES = &
       & (/ 99.9, 99.8, 99.7, 99.5, 99., 98., 97., 95., 90., 80. /)
@@ -418,6 +416,9 @@
 
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.26  2011/08/03 22:03:12  pwagner
+! Snipped two unneeded lines
+!
 ! Revision 2.25  2011/07/26 20:42:04  pwagner
 ! Clearer, less redundant
 !
