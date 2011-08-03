@@ -286,7 +286,8 @@ contains ! =====     Public Procedures     =============================
     character(len=MAXSWATHNAMESBUFSIZE) :: ALLSWATHNAMES ! Buffer to get info back.
     integer :: AURAINST             ! index of 'MLS' in AuraInstrument='MLS'
     integer :: COMMAPOS                 ! For parsing string
-    logical, parameter :: DEBUG = .TRUE.
+    !logical, parameter :: DEBUG = .FALSE.
+    logical :: DEBUG
     integer :: DATE             ! in case using GMAO backgr
     character(len=FileNameLen) :: DATESTRING ! 'X,Y,..'
     character(len=8) :: description
@@ -370,6 +371,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Now parse file and field names
     Details = switchDetail(switches, 'apr') - 2
+    Debug = ( Details > -3 )
     timing = section_times
     downsample = .false.
     sumDelp = .false.
@@ -1268,6 +1270,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.91  2011/08/03 21:59:39  pwagner
+! Reduced default verbosity by making debug switchable
+!
 ! Revision 2.90  2011/07/13 14:24:46  honghanh
 ! Initialize GEOS5.7 file type with l_hdf instead of l_hdfeos
 !
