@@ -468,7 +468,7 @@ contains
             chunkNiceTids(nextChunk) = GetNiceTidString(chunkTids(nextChunk))
             chunksStarted(nextChunk) = .true.
             if ( switchDetail(switches,'mas') > -1 ) then
-              if ( switchDetail(switches,'l2q') > -1 ) then
+              if ( switchDetail(switches,'l2q') > 0 ) then
                 call output ( tidArr(1) )
                 call output ( ' ' )
               endif
@@ -478,7 +478,8 @@ contains
                 & ' ' // trim(chunkNiceTids(nextChunk)), &
                 & advance='yes' )
             end if
-            call output(chunkTids(nextChunk), advance='yes')
+            if ( switchDetail(switches,'l2q') > 0 ) &
+              & call output ( chunkTids(nextChunk), advance='yes' )
             call WelcomeSlave ( nextChunk, chunkTids(nextChunk) )
             if ( usingL2Q ) call ThankL2Q(machines(machine), L2Qtid)
             skipDeathWatch = .true.
@@ -553,10 +554,10 @@ contains
             & advance='yes' )
           call MLSMessage ( MLSMSG_Warning, ModuleName, &
             & "Got a message from an unknown slave")
-          call dump(chunkNiceTids, 'chunkNiceTids', options='t')
-          call TimeStamp(slaveTid, advance='yes')
-          call dump(chunkTids, 'chunkTids')
-          call dump(machines%tid, 'machines%Tid')
+          call dump ( chunkNiceTids, 'chunkNiceTids', options='t' )
+          call TimeStamp ( slaveTid, advance='yes' )
+          call dump ( chunkTids, 'chunkTids', format='places=10' )
+          call dump ( machines%tid, 'machines%Tid', format='places=10' )
           cycle masterLoop
         else
           ! Unpack the first integer in the buffer
@@ -1988,7 +1989,7 @@ contains
     if ( info /= 0 ) &
       & call PVMErrorMessage ( info, 'sending finish packet' )
     if ( switchDetail(switches, 'l2q') > -1 ) then
-      call output('Thanking l2q for host', advance='no')
+      call output('Thanking l2q for host ', advance='no')
       call TimeStamp(machine%tid, advance='yes')
     endif
   end subroutine ThankL2Q
@@ -2008,6 +2009,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.99  2011/08/03 21:57:23  pwagner
+! Improved routine printing and dumps by master task
+!
 ! Revision 2.98  2011/05/26 20:39:34  pwagner
 ! Widened fields for dumping machinesTid
 !
