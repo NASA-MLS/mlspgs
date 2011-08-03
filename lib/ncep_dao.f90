@@ -11,32 +11,32 @@
 
 module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
 
-  use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use dump_0, only : dump
-  use GriddedData, only: GriddedData_T, rgr, v_is_altitude, v_is_gph, &
-    & v_is_pressure, v_is_theta, &
-    & AddGriddedDataToDatabase, Dump, SetupNewGriddedData, NullifyGriddedData
+  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use DUMP_0, only : DUMP
+  use GRIDDEDDATA, only: GRIDDEDDATA_T, RGR, V_IS_ALTITUDE, V_IS_GPH, &
+    & V_IS_PRESSURE, V_IS_THETA, &
+    & ADDGRIDDEDDATATODATABASE, DUMP, SETUPNEWGRIDDEDDATA, NULLIFYGRIDDEDDATA
   use HDFEOS, only: HDFE_NENTDIM, &
-    & gdopen, gdattach, gddetach, gdclose, gdfldinfo, &
-    & gdinqgrid, gdnentries, gdinqdims, gdinqflds
-  use Hdf, only: DFACC_CREATE, DFACC_RDONLY, DFACC_RDWR, &
+    & GDOPEN, GDATTACH, GDDETACH, GDCLOSE, GDFLDINFO, &
+    & GDINQGRID, GDNENTRIES, GDINQDIMS, GDINQFLDS
+  use HDF, only: DFACC_CREATE, DFACC_RDonly, DFACC_RDWR, &
     & DFNT_FLOAT32, DFNT_FLOAT64
-  use l3ascii, only: l3ascii_read_field
+  use L3ASCII, only: L3ASCII_READ_FIELD
   use LEXER_CORE, only: PRINT_SOURCE
-  use MLSCommon, only: LineLen, NameLen, FileNameLen, R8, R4, &
-    & undefinedValue, MLSFile_T
-  use MLSFiles, only: FILENOTFOUND, &
-    & Dump, GetPCFromRef, MLS_HDF_VERSION, open_MLSFile, close_MLSFile, &
-    & split_path_name, mls_openFile, mls_closeFile
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
-  use MLSStrings, only: Capitalize, HHMMSS_value, LowerCase
-  use MLSStringLists, only: GetStringElement, NumStringElements, &
-    & List2Array, ReplaceSubString, StringElementNum
+  use MLSCOMMON, only: LINELEN, NAMELEN, FILENAMELEN, R8, R4, &
+    & UNDEFINEDVALUE, MLSFILE_T
+  use MLSFILES, only: FILENOTFOUND, &
+    & DUMP, GETPCFROMREF, MLS_HDF_VERSION, OPEN_MLSFILE, CLOSE_MLSFILE, &
+    & SPLIT_PATH_NAME, MLS_OPENFILE, MLS_CLOSEFILE
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
+  use MLSSTRINGS, only: CAPITALIZE, HHMMSS_VALUE, LOWERCASE
+  use MLSSTRINGLISTS, only: GETSTRINGELEMENT, NUMSTRINGELEMENTS, &
+    & LIST2ARRAY, REPLACESUBSTRING, STRINGELEMENTNUM
   use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
-  use SDPToolkit, only: PGS_S_SUCCESS, &
+  use SDPTOOLKIT, only: PGS_S_SUCCESS, &
     & PGS_IO_GEN_CLOSEF, PGS_IO_GEN_OPENF, PGSD_IO_GEN_RSEQFRM, &
-    & PGSd_GCT_INVERSE, &
-    & UseSDPToolkit
+    & PGSD_GCT_INVERSE, &
+    & useSDPTOOLKIT
   use TREE, only: DUMP_TREE_NODE, SOURCE_REF
 
   implicit none
@@ -53,10 +53,18 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
 !     - - - - - - - -
 
 !     (subroutines and functions)
-! read_climatology            read l3ascii-formatted climatology file
-! ReadGriddedData             read hdfeos-formatted meteorology file
-! WriteGriddedData            write hdfeos-formatted meteorology file
-! ReadGloriaFile              read binary-formatted file designed by G. Manney
+! read_climatology     read l3ascii-formatted climatology file
+! ReadGriddedData      read meteorology file in one of supported desciptions
+! WriteGriddedData     write meteorology file in one of supported desciptions
+! ReadGloriaFile       read binary-formatted file designed by G. Manney
+!
+! The supported descriptions are
+! geos5_7         Geos5.7.2  gmao files in netcdf4/hdf5 format
+! geos5           Geos5x.x   gmao files in hdfeos2/hdf4 format
+! dao or gmao     Geos4x.x   gmao files in hdfeos2/hdf4 format
+! merra           Geos5x.x   gmao reanalysis files in hdfeos2/hdf4 format
+! ncep            GDAS       ncep files in hdfeos2/hdf4 format
+! strat           STRAT      ncep combined in hdfeos5/hdf5 format
 ! === (end of toc) ===
 
   public:: READ_CLIMATOLOGY
@@ -235,12 +243,12 @@ contains
   ! ----------------------------------------------- Read_geos5_7
   subroutine Read_geos5_7( GEOS5File, lcf_where, v_type, &
     & the_g_data, GeoDimList, fieldName, date, sumDelp )
-    use MLSHDF5, only: DumpHDF5Attributes, DumpHDF5DS, &
-      & GetAllHDF5AttrNames, GetAllHDF5DSNames, &
-      & GetHDF5DSRank, GetHDF5DSDims, LoadFromHDF5DS, &
-      & ReadHDF5Attribute
-    use HDF5, only: hSize_t
-    use dates_module, only: utc2tai93s
+    use MLSHDF5, only: DUMPHDF5ATTRIBUTES, DUMPHDF5DS, &
+      & GETALLHDF5ATTRNAMES, GETALLHDF5DSNAMES, &
+      & GETHDF5DSRANK, GETHDF5DSDIMS, LOADFROMHDF5DS, &
+      & READHDF5ATTRIBUTE
+    use HDF5, only: HSIZE_T
+    use DATES_MODULE, only: UTC2TAI93S
 
     ! This routine reads a gmao geos5_7 file, named something like
     ! DAS.ops.asm.avg3_3d_Nv.GEOS571.20110930_0300.V01.nc4 (pressure with
@@ -366,8 +374,9 @@ contains
         call announce_error (lcf_where, "Invalid 'begin_time' value in " // geos5file%name)
     endif
 
-    write(datestring, '(I4.4, A1, I2.2, A1, I2.2, A1, I2.2, A1, I2.2, A1, I2.2)'), &
-                    & year, '-',  month, '-', day, 'T', hour, ':', minute, ':', second
+    write(datestring, &
+      & '(I4.4, A1,   I2.2,  A1, I2.2,  A1, I2.2, A1,  I2.2,    A1, I2.2)') &
+      &   year, '-',  month, '-', day, 'T', hour, ':', minute, ':', second
 
     allocate(the_g_data%datestarts(the_g_data%nodates), stat=error)
     if (error /= 0) call announce_error (lcf_where, "Out of memory")
@@ -1504,8 +1513,8 @@ contains
       & HE5_GDOPEN, HE5_GDATTACH, HE5_GDDETACH, HE5_GDCLOSE, &
       & HE5_GDNENTRIES, HE5_GDINQGRID, HE5_GDINQDIMS, HE5_GDINQFLDS, &
       & HE5_GDFLDINFO, HE5_GDGRIDINFO
-    use MLSHDFEOS, only: hsizes
-    use hdf5, only: size_t
+    use MLSHDFEOS, only: HSIZES
+    use hdf5, only: SIZE_T
 
     ! This routine reads a ncep stratospheric combined product file,
     ! named something like nmct_030126.he5
@@ -2149,10 +2158,10 @@ contains
     & the_g_data, returnStatus, &
     & GeoDimList, fieldNames, missingValue, date, sumDelp )
 
-    use MLSStats1, only: MLSMIN, MLSMAX, MLSMEAN
     ! This routine Writes a Gridded Data file, based on an array of filled data
     ! structures and the  appropriate for the description
     ! which may be one of 'geos5', 'gmao', 'dao', 'merra', 'ncep', 'strat'
+    ! (But see shortc. and lim. below)
 
     ! FileName and the_g_data are required args
     ! GeoDimList should be the Dimensions' short names
@@ -2165,6 +2174,13 @@ contains
 
     ! fieldName should name the rank 3 or higher object
     ! like temperature
+    
+    ! ---- Shortcomings and limitations: ----
+    ! We have only coded it for description='merra' so far
+    ! Any other file description will generate an error
+    ! Obviously we should only code what we plan to use
+    ! Would it be useful to be able to write a geos5_7 file, perhaps
+    ! degrading its resolution thereby?
     
     ! Arguments
     type(MLSFile_T)                         :: GriddedFile
@@ -2202,7 +2218,7 @@ contains
         call announce_error(lcf_where, 'WriteGriddedData called with illegal' &
           & // ' description: ' // trim(my_description))
       case ('merra')
-        call Write_merra( (fieldIndex==1), GriddedFile, lcf_where, v_type, &
+        call Write_merra( (fieldIndex==1), GriddedFile, lcf_where, &
           & the_g_data(fieldIndex), GeoDimList, fieldName )
       case ('ncep')
         call announce_error(lcf_where, 'WriteGriddedData called with illegal' &
@@ -2218,7 +2234,7 @@ contains
   end subroutine WriteGriddedData
 
   ! ----------------------------------------------- Write_merra
-  subroutine Write_merra( createGrid, GEOS5File, lcf_where, v_type, &
+  subroutine Write_merra( createGrid, GEOS5File, lcf_where, &
     & the_g_data, GeoDimList, fieldName )
 
     ! This routine Writes a gmao MERRA file, named something like
@@ -2250,46 +2266,26 @@ contains
     logical, intent(in)                     :: createGrid
     type(MLSFile_T)                         :: GEOS5file
     integer, intent(IN)                     :: lcf_where    ! node of the lcf that provoked me
-    integer, intent(IN)                     :: v_type       ! vertical coordinate; an 'enumerated' type
     type( GriddedData_T )                   :: the_g_data ! Result
     character (LEN=*), optional, intent(IN) :: GeoDimList ! Comma-delimited dim names
     character (LEN=*), optional, intent(IN) :: fieldName ! Name of gridded field
 
     ! Local Variables
-    integer :: itime, ilat, ilon, ilev
     integer :: file_id, gd_id
-    integer :: inq_success
-    integer :: nentries, ngrids, ndims, nfields
-    integer :: strbufsize
     logical,  parameter       :: CASESENSITIVE = .false.
     integer, parameter :: GRIDORDER=1   ! What order grid written to file
-    character (len=MAXLISTLENGTH) :: gridlist
-    character (len=MAXLISTLENGTH) :: dimlist, actual_dim_list
-    character (len=MAXLISTLENGTH), dimension(1) :: dimlists
-    character (len=16), dimension(NENTRIESMAX) :: dimNames
-    character (len=MAXLISTLENGTH) :: fieldlist
     integer, parameter :: MAXNAMELENGTH=NameLen         ! Max length of grid name
-    integer, dimension(NENTRIESMAX) :: dims, rank, numberTypes
-    integer                        :: our_rank, numberType
-    logical                        :: mySum
+    integer, dimension(NENTRIESMAX) :: dims
 
     integer :: start(4), stride(4), edge(4)
     integer :: status
-    character(len=16) :: the_units
-    integer                        :: timeIndex
-    !                                  These start out initialized to one
-    integer                        :: nlon=1, nlat=1, nlev=1, ntime=1
     integer, parameter             :: i_longitude=1
     integer, parameter             :: i_latitude=i_longitude+1
     integer, parameter             :: i_vertical=i_latitude+1
     integer, parameter             :: i_time=i_vertical+1
-    integer, external :: GDRDFLD
     character(len=*), parameter    :: GridName = "EOSGRID"
     integer, parameter :: gctp_geo = 0
     real(r4), parameter :: FILLVALUE = 1.e15
-    real(r4), dimension(:,:,:,:), pointer :: all_the_fields => null()
-    real(r8), dimension(:), pointer :: dim_field, pb
-    real(r8) :: dateValue
     real(r8) :: uplft(2), lowrgt(2)
     real(r8) :: projparm(13)
     logical, parameter :: DEEBUG = .false.
@@ -2525,6 +2521,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.65  2011/08/03 22:50:03  pwagner
+! Repaired syntax of write; removed unused variables; updated toc
+!
 ! Revision 2.64  2011/08/03 15:36:23  honghanh
 ! Move one line of code around for better readability
 !
