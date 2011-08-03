@@ -422,6 +422,8 @@ contains
     the_g_data%heights = temp1d
     deallocate(temp1d)
 
+    the_g_data%heightsunits = 'hPa' ! the units is according the file_specification
+
     ! The following is according to GEOS-5.7.2 file specification
     select case ( lowercase(actual_field_name) )
     case ( 'pl' )
@@ -432,9 +434,6 @@ contains
         call announce_error(lcf_where, "Unexpected data: " // actual_field_name)
     end select
     
-    ! this maybe wrong
-    the_g_data%heightsunits = 'hPa'
-
     the_g_data%units = the_units
 
     ! read the field, field should be either PL or T
@@ -2526,6 +2525,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.64  2011/08/03 15:36:23  honghanh
+! Move one line of code around for better readability
+!
 ! Revision 2.63  2011/08/02 17:26:37  honghanh
 ! Remove code that read time_increment attribute
 !
