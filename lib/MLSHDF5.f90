@@ -2463,7 +2463,7 @@ contains ! ======================= Public Procedures =========================
         logical :: success
 
         integer :: setid, attrid, stat, stringtype, minlen
-        integer(kind=hsize_t) :: stringsize
+        integer :: stringsize
         character(len=256) :: myerror ! error message shouldn't exceed 256 characters
 
         myerror = ' '
@@ -2518,7 +2518,6 @@ contains ! ======================= Public Procedures =========================
         endif
 
         call h5aread_f ( attrID, stringType, value(1:stringSize), ones, stat)
-        print *, "value ", value(1:stringsize)
         if (stat /= 0) then
             success = .false.
             if (present(error)) then
@@ -5334,6 +5333,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.109  2011/08/04 16:45:06  honghanh
+! Fix a bug in the new read attribute function
+!
 ! Revision 2.108  2011/08/02 16:53:00  honghanh
 ! Add ReadHDF5Attr_FID_string and ReadHDF5Attr_FID_int functions
 !
