@@ -2463,7 +2463,7 @@ contains ! ======================= Public Procedures =========================
         logical :: success
 
         integer :: setid, attrid, stat, stringtype, minlen
-        integer :: stringsize
+        integer(kind=hsize_t) :: stringsize
         character(len=256) :: myerror ! error message shouldn't exceed 256 characters
 
         myerror = ' '
@@ -5333,6 +5333,10 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.110  2011/08/04 16:57:35  honghanh
+! Revert the previous bug fix
+! because the issue is with toolkit
+!
 ! Revision 2.109  2011/08/04 16:45:06  honghanh
 ! Fix a bug in the new read attribute function
 !
