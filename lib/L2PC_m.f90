@@ -670,9 +670,11 @@ contains ! ============= Public Procedures ==========================
     integer :: BIN              ! Loop counter
     integer :: BLOCKROW         ! Loop counter
     integer :: BLOCKCOL         ! Loop counter
+    integer :: I, J, K
 
-    type ( L2PC_T ), pointer :: L2PC
-    type ( MatrixElement_T), pointer :: M0
+    type ( L2PC_T ), pointer          :: L2PC
+    type ( MatrixElement_T), pointer  :: M0
+    type ( HessianElement_T), pointer :: H0
 
     ! Executable code
     if ( .not. associated ( l2pcDatabase ) ) return
@@ -688,6 +690,19 @@ contains ! ============= Public Procedures ==========================
         end do
       end do
     end do
+    if ( l2pc%goth ) then
+      do i = 1, l2pc%h%row%NB
+ 	do j = 1, l2pc%h%col%NB
+ 	  do k = 1, l2pc%h%col%NB
+            h0 => l2pc%h%block(i,j,k)
+            if ( h0%kind /= h_absent ) then
+              call DestroyBlock ( h0 )
+              h0%kind = h_unknown
+            endif
+          end do
+        end do
+      end do
+    endif
   end subroutine FlushL2PCBins
 
   ! ---------------------------------- LoadMatrix ----------
@@ -2191,6 +2206,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.114  2011/08/09 23:17:43  pwagner
+! Tries to flush hessian bins, too
+!
 ! Revision 2.113  2011/07/28 18:03:37  pwagner
 ! Fixed bug in FlushL2PCBins added in rev. 2.88
 !
