@@ -78,7 +78,9 @@ contains
     & Advance )
     ! Insert "Datum" into "Message" in place of "%d" or "%D".
     ! Insert the string indexed by "Datum" into "Message" in place of
-    ! "%s" or "%S".  Then call MLSMessage.
+    ! "%s" or "%S".  Insert the line and column number represented by "Datum"
+    ! in place of "%l" or "%L".  Insert the signal indexed by "Datum"
+    ! in place of "%g" or "%G".  Then call MLSMessage.
     use MLSMessageModule, only: MLSMessage
     use MLSSignals_m, only: GetSignalName
     use String_Table, only: Get_String, How_Many_Strings, String_Length
@@ -141,8 +143,9 @@ contains
     & Advance )
     ! Insert "Datum" into "Message" in place of "%d" or "%D".
     ! Insert the string indexed by "Datum" into "Message" in place of
-    ! "%s" or "%S".  Insert the line and cokumn number represented by "Datum"
-    ! in place of "%l" or "%L".  Then call MLSMessage.
+    ! "%s" or "%S".  Insert the line and column number represented by "Datum"
+    ! in place of "%l" or "%L".  Insert the signal indexed by "Datum"
+    ! in place of "%g" or "%G".  Then call MLSMessage.
     use MLSMessageModule, only: MLSMessage
     use MLSSignals_m, only: GetSignalName
     use String_Table, only: Get_String, String_Length
@@ -252,6 +255,9 @@ contains
 end module MoreMessage
 
 ! $Log$
+! Revision 2.6  2011/08/10 01:47:17  vsnyder
+! Correct some comments
+!
 ! Revision 2.5  2011/07/22 18:29:51  vsnyder
 ! Make more robust to string errors
 !
