@@ -21,7 +21,7 @@ module OUTPUT_M
     & MLSMSG_INFO, MLSMSG_ERROR
   use MLSSETS, only: FINDFIRST
   use MLSSTRINGLISTS, only: EXPANDSTRINGRANGE, GETSTRINGELEMENT, &
-    & NUMSTRINGELEMENTS, WRAP
+    & LIST2ARRAY, NUMSTRINGELEMENTS, WRAP
   use MLSSTRINGS, only: REPLACENONASCII, LOWERCASE, NCOPIES, &
     & READINTSFROMCHARS, TRIM_SAFE, WRITEINTSTOCHARS
   implicit none
@@ -45,6 +45,7 @@ module OUTPUT_M
 
 !     (subroutines and functions)
 ! alignToFit               align printed argument to fit column range
+! banner                   surround message with stars and stripes
 ! blanks                   print specified number of blanks [or fill chars]
 ! blanksToColumn           print blanks [or fill chars] out to specified column
 ! blanksToTab              print blanks [or fill chars] out to next tab stop
@@ -75,6 +76,7 @@ module OUTPUT_M
 
 ! === (start of api) ===
 ! alignToFit ( char* chars, int columnRange(2), char alignment, [int skips] )
+! banner ( char* chars, [int columnRange(2)], [char alignment], [int skips] )
 ! blanks ( int n_blanks, [char fillChar], [char* advance] )
 ! blanksToColumn ( int column, [char fillChar], [char* advance] )
 ! blanksToTab ( [int tabn], [char* fillChar] )
@@ -140,7 +142,7 @@ module OUTPUT_M
   integer, save, private :: OLDUNIT = -1 ! Previous Unit for output.
   logical, save, private :: OLDUNITSTILLOPEN = .TRUE.
 
-  public :: ALIGNTOFIT, BLANKS, BLANKSTOCOLUMN, BLANKSTOTAB, &
+  public :: ALIGNTOFIT, BANNER, BLANKS, BLANKSTOCOLUMN, BLANKSTOTAB, &
     & DUMP, DUMPSIZE, DUMPTABS, &
     & GETSTAMP, NEXTCOLUMN, NEXTTAB, NEWLINE, NUMNEEDSFORMAT, NUMTOCHARS, &
     & OUTPUT, OUTPUT_DATE_AND_TIME, OUTPUTCALENDAR, OUTPUTLIST, &
@@ -156,6 +158,11 @@ module OUTPUT_M
   interface aligntofit
     module procedure aligntofit_chars, aligntofit_double, aligntofit_single
     module procedure aligntofit_integer
+  end interface
+
+  interface banner
+    module procedure banner_chars
+    module procedure banner_chararray
   end interface
 
   interface DUMP
@@ -426,6 +433,132 @@ contains
     line = numToChars( value, format )
     call alignToFit( trim(line), columnRange, alignment )
   end subroutine ALIGNTOFIT_SINGLE
+
+  ! -----------------------------------------------------  BANNER  -----
+  ! Surround your message with stars and stripes; e.g.,
+  ! *-----------------------------------------------*
+  ! *            Your message here                  *
+  ! *-----------------------------------------------*
+  ! For multiline messages, you may divide them into elements of
+  ! a character array, or else a longer character scalar and
+  ! supply LineLength for the routine to wrap at word boundaries
+  subroutine BANNER_CHARS ( CHARS, COLUMNRANGE, ALIGNMENT, SKIPS, LINELENGTH )
+    character(len=*), intent(in)                :: CHARS
+    ! If columnRange(1) < 1, just use starting columns; otherwise move to
+    integer, dimension(2), optional, intent(in) :: COLUMNRANGE
+    character(len=1), intent(in), optional      :: ALIGNMENT ! L, R, C, or J
+    integer, optional, intent(in)               :: SKIPS ! How many spaces between chars
+    integer, optional, intent(in)               :: LINELENGTH
+    !
+    ! Internal variables
+    integer :: addedLines
+    character(len=1)      :: myAlignment
+    integer, dimension(2) :: myColumnRange
+    integer :: lineLen, mySkips,  padding
+    character(len=2*len(chars))      :: wrappedChars
+    character(len=160), dimension(:), pointer :: lines
+    logical, parameter :: DEBUG = .false.
+    ! Executable
+    myAlignment = 'C'
+    if ( present(alignment) ) myAlignment = alignment
+    mySkips = 0
+    if ( present(skips) ) mySkips = skips
+    if ( present(LineLength) ) then
+      ! We will wrap the input to fit within LineLength, but remembering
+      ! the stars and padding
+      call wrap( chars, wrappedChars, width=LineLength-4, &
+        & inseparator=achar(0), addedLines=addedLines )
+      addedLines = addedLines + 1
+      allocate(lines(addedLines))
+      lines = ' '
+      call List2Array( wrappedChars, lines, &
+        & countEmpty=.true., inseparator=achar(0) )
+      call banner( lines, alignment=alignment )
+      deallocate(lines)
+      return
+    elseif ( present(columnRange) ) then
+      myColumnRange = columnRange
+    else
+      lineLen = max( 80, 4 + len_trim(chars)*(1+mySkips) )
+      padding = ( lineLen - len_trim(chars)*(1+mySkips) ) / 2
+      myColumnRange(1) = 1 + padding
+      myColumnRange(2) = lineLen - padding
+    endif
+    
+    ! define padding as the larger of columnrange(1) and 1
+    padding = max( 1, myColumnRange(1) )
+    LineLen = padding + myColumnRange(2) - 1
+    if ( DEBUG ) then
+      call outputnamedValue( 'padding', padding )
+      call outputnamedValue( 'LineLen', LineLen )
+      call outputnamedValue( 'myColumnRange', myColumnRange )
+    endif
+    ! Top border
+    call output( '*' )
+    call blanks ( lineLen-2, FillChar='-' )
+    call output( '*', advance = 'yes' )
+    ! Left star, then message, then right star
+    call output( '*' )
+    call alignToFit( chars, myColumnRange, myAlignment, skips )
+    call blanksToColumn( lineLen )
+    call output( '*', advance = 'yes' )
+    ! Bottom border
+    call output( '*' )
+    call blanks ( lineLen-2, FillChar='-' )
+    call output( '*', advance = 'yes' )
+  end subroutine BANNER_CHARS
+
+  subroutine BANNER_CHARARRAY ( CHARARRAY, COLUMNRANGE, ALIGNMENT, SKIPS )
+    character(len=*), dimension(:), intent(in)  :: CHARARRAY
+    ! If columnRange(1) < 1, just use starting columns; otherwise move to
+    integer, dimension(2), optional, intent(in) :: COLUMNRANGE
+    character(len=1), intent(in), optional      :: ALIGNMENT ! L, R, C, or J
+    integer, optional, intent(in)               :: SKIPS ! How many spaces between chars
+    !
+    ! Internal variables
+    integer :: i
+    ! Internal variables
+    character(len=1)      :: myAlignment
+    integer, dimension(2) :: myColumnRange
+    integer :: lineLen, mySkips,  padding
+    ! Executable
+    myAlignment = 'C'
+    if ( present(alignment) ) myAlignment = alignment
+    mySkips = 0
+    if ( present(skips) ) mySkips = skips
+    if ( present(columnRange) ) then
+      myColumnRange = columnRange
+    else
+      lineLen = 80
+      padding = LineLen
+      do i = 1, size(chararray)
+        lineLen = max( lineLen, 4 + len_trim(chararray(i))*(1+mySkips) )
+        padding = min( padding, &
+          & ( lineLen - len_trim(chararray(i))*(1+mySkips) ) / 2 )
+      enddo
+      myColumnRange(1) = 1 + padding
+      myColumnRange(2) = lineLen - padding
+    endif
+    
+    ! define padding as the larger of columnrange(1) and 1
+    padding = max( 1, myColumnRange(1) )
+    LineLen = padding + myColumnRange(2) - 1
+    ! Top border
+    call output( '*' )
+    call blanks ( lineLen-2, FillChar='-' )
+    call output( '*', advance = 'yes' )
+    do i = 1, size(chararray)
+      ! Left star, then message, then right star
+      call output( '*' )
+      call alignToFit( chararray(i), myColumnRange, myAlignment, skips )
+      call blanksToColumn( lineLen )
+      call output( '*', advance = 'yes' )
+    enddo
+    ! Bottom border
+    call output( '*' )
+    call blanks ( lineLen-2, FillChar='-' )
+    call output( '*', advance = 'yes' )
+  end subroutine BANNER_CHARARRAY
 
   ! -----------------------------------------------------  BLANKS  -----
   subroutine BLANKS ( N_BLANKS, FILLCHAR, ADVANCE, DONT_STAMP )
@@ -2400,6 +2533,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.88  2011/08/11 22:24:59  pwagner
+! Added banner to set off message with stars and stripes
+!
 ! Revision 2.87  2011/07/12 00:12:25  pwagner
 ! Added numNeedsFormat
 !
