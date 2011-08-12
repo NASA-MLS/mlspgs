@@ -46,15 +46,16 @@ contains
     use FORWARDMODELVECTORTOOLS, only: GETQUANTITYFORFORWARDMODEL
     use GET_SPECIES_DATA_M, only:  GET_SPECIES_DATA
     use HESSIANMODULE_1, only: HESSIAN_T
-    use INTRINSIC, only: L_MAGNETICFIELD, &
+    use INTRINSIC, only: LIT_INDICES, L_MAGNETICFIELD, &
       & L_PHITAN, L_PTAN, L_TEMPERATURE, L_TSCAT, L_VMR
     use LOAD_SPS_DATA_M, only: DESTROYGRIDS_T, DUMP, EMPTYGRIDS_T, GRIDS_T, &
       & LOAD_ONE_ITEM_GRID, LOAD_SPS_DATA
     use MATRIXMODULE_1, only: MATRIX_T
     use MLSKINDS, only: RP
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+    use MLSMESSAGEMODULE, only: MLSMSG_ERROR
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use MOLECULES, only: FIRST_MOLECULE, LAST_MOLECULE, L_CLOUDICE
+    use MOREMESSAGE, ONLY: MLSMESSAGE
     use TOGGLES, only: Emit, Switches, Toggle
     use Trace_M, only: Trace_begin, Trace_end
     use VECTORSMODULE, only: VECTOR_T, VECTORVALUE_T
@@ -79,8 +80,10 @@ contains
     type (VectorValue_T), pointer :: CloudIce ! Ice water content
     type (VectorValue_T), pointer :: PHITAN ! Tangent geodAngle component of state vector
     type (VectorValue_T), pointer :: PTAN   ! Tangent pressure component of state vector
+    type (VectorValue_T), pointer :: SPS    ! A species component of state vector
     type (VectorValue_T), pointer :: TEMP   ! Temperature component of state vector
     integer :: K                ! Loop inductor and subscript
+    integer :: Mol              ! A molecule's lit index
     integer :: No_Mol           ! Number of molecules
     integer :: NoUsedChannels   ! Number of channels used
     integer :: No_sv_p_T        ! number of phi basis for temperature
@@ -111,8 +114,9 @@ contains
     integer :: S_TS ! Multiplier for using TScat tables, 0 or 1
 
     ! Flags for various derivatives
-    logical :: atmos_der, atmos_second_der, ptan_der, spect_der, temp_der
+    logical :: atmos_der, atmos_second_der, ptan_der, spect_der
     logical :: Spect_Der_Center, Spect_Der_Width, Spect_Der_Width_TDep
+    logical :: sps_in_first, temp_der, temp_in_first
 
     if ( toggle(emit) ) & ! set by -f command-line switch
       & call trace_begin ( 'FullForwardModel, MAF=', index=fmstat%maf )
@@ -141,7 +145,8 @@ contains
       & instrumentModule=fwdModelConf%signals(1)%instrumentModule, &
       & foundInFirst=ptan_der, config=fwdModelConf )
     temp => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-      & quantityType=l_temperature, config=fwdModelConf )
+      & quantityType=l_temperature, &
+      & foundInFirst=temp_in_first, config=fwdModelConf )
     call load_one_item_grid ( grids_tmp, temp, phitan, fmStat%maf, fwdModelConf, .true. )
     no_sv_p_t = grids_tmp%l_p(1) ! phi == windowFinish - windowStart + 1
     n_t_zeta = grids_tmp%l_z(1)  ! zeta
@@ -149,9 +154,14 @@ contains
 
     call load_sps_data ( FwdModelConf, phitan, fmStat%maf, grids_f )
 
-    temp_der = present ( jacobian ) .and. FwdModelConf%temp_der
     atmos_der = present ( jacobian ) .and. FwdModelConf%atmos_der      
     atmos_second_der = present (hessian ) .and. FwdModelConf%atmos_second_der
+
+    temp_der = present ( jacobian ) .and. FwdModelConf%temp_der
+    if ( temp_der .and. .not. temp_in_first) &
+      & call MLSMessage ( MLSMSG_Error, moduleName, &
+        & 'With config(%S): Temperature derivative requested but temperature is not in "first" state vector', &
+        & datum=fwdModelConf%name )
 
     ptan_der = ptan_der .and. present ( jacobian )
 
@@ -161,11 +171,23 @@ contains
     spect_der_width_TDep = spect_der .and. size(fwdModelConf%lineWidth_TDep) > 0
 
     if ( atmos_der ) then
-      ! Turn off deriv_flags where we don't want molecule derivatives, so we
-      ! don't have to look at fwdModelConf%moleculeDerivatives
       do k = 1, no_mol
-        if ( .not. fwdModelConf%moleculeDerivatives(k) ) &
-          & grids_f%deriv_flags(grids_f%l_v(k-1)+1:grids_f%l_v(k)) = .false.
+        if ( fwdModelConf%moleculeDerivatives(k) ) then
+          ! Check that there is a vector quantity for the desired molecule
+          ! in the "first" state vector.  Otherwise, there's no place to
+          ! store the derivative in the Jacobian.
+          mol = fwdModelConf%beta_group(k)%molecule
+          sps => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+            & quantityType=l_vmr, molecule=mol, &
+            & foundInFirst=sps_in_first, config=fwdModelConf )
+          if ( .not. sps_in_first ) call MLSMessage ( MLSMSG_Error, moduleName, &
+            & 'With config(%S): %S derivative requested but %S is not in "first" state vector', &
+            & datum=(/ fwdModelConf%name, lit_indices(mol), lit_indices(mol) /) )
+        else
+          ! Turn off deriv_flags where we don't want molecule derivatives,
+          ! so we don't have to look at fwdModelConf%moleculeDerivatives
+          grids_f%deriv_flags(grids_f%l_v(k-1)+1:grids_f%l_v(k)) = .false.
+        end if
       end do                        ! Loop over major molecules
     end if                          ! Want derivatives for atmos
 
@@ -1089,19 +1111,11 @@ contains
     subroutine Announce_Error ( Message )
     ! Announce Message using MLSMessage.  Include the configuration name
     ! in the message
-      use String_Table, only: Get_String, String_Length
+      use MLSMessageModule, only: MLSMSG_Error
+      use MoreMessage, only: MLSMessage
       character(len=*), intent(in) :: Message
-      integer, parameter :: C = len('With config(')
-      integer :: L
-      character(511) :: Work ! Should be plenty of room
-      l = string_length(fwdModelConf%name)
-      work(:c) = 'With config('
-      call get_string ( fwdModelConf%name, work(c+1:) )
-      l = c + l + 1
-      work(l:l+3) = '): '
-      l = l + 3
-      work(l+1:l+len_trim(message)) = message
-      call MLSMessage ( MLSMSG_Error, moduleName, work(:l+len_trim(message)) )
+      call MLSMessage ( MLSMSG_Error, moduleName, &
+        & "With config(%S): " // message, datum=fwdModelConf%name )
     end subroutine Announce_Error
 
   ! .......................................  Both_Sidebands_Setup  .....
@@ -2325,7 +2339,7 @@ contains
           reject = .false.
 
           if ( iwc%values(zeta_i,phi_i) <= 0.0 ) then ! no IWC, no scattering
-            call output ( TScat%template%phi(1,phi_i), &
+            call output ( mod(real(TScat%template%phi(1,phi_i)),360.0), &
               & before='Scattering point at (' )
             call output ( z_glgrid(zeta_f), before=',', &
               & after=') rejected because there is no IWC there.', advance='yes' )
@@ -2349,7 +2363,7 @@ contains
                & t_ix < 1 .or. t_ix >= size(T_s) ) then
               call output ( phi_i, before='Scattering point at (' )
               call output ( zeta_f, before=',' )
-              call output ( TScat%template%phi(1,phi_i), before=') = (' )
+              call output ( mod(real(TScat%template%phi(1,phi_i)),360.0), before=') = (' )
               call output ( z_glgrid(zeta_f), format='(f5.2)', before=',', &
                 & after=') rejected because T or IWC is outside Mie table range.' )
               call output ( temp%values(zeta_i,phi_i), format='(f6.2)', before='  T = ' )
@@ -2376,7 +2390,7 @@ contains
 
             ! Subsurface scattering points handled by explicit angles
             if ( scat_ht < r_eq ) then
-              call output ( TScat%template%phi(1,phi_i), &
+              call output ( mod(real(TScat%template%phi(1,phi_i)),360.0), &
                 & before='Scattering point at (' )
               call output ( z_glgrid(zeta_f), before=',' )
               call output ( scat_ht, format='(f8.3)', &
@@ -3733,17 +3747,17 @@ contains
             call output ( trim(line) ) ! Too far away from scattering point
             if ( scat_ht > tan_ht .and. which < 0 ) then
               call output ( " abandoned", advance="yes" )
-              return
-            end if
-            call newLine
-            call output ( req_s, before="Req_s = " )
-            call output ( mod(phitan%values(FwdModelConf%TScatMIF,MAF),360.0_r8), &
-              & before=", Phi_ref = ", advance="yes" )
-            call dump ( z_coarse(:size(c_inds)), name="Z_Coarse" )
-            call dump ( rad2deg*phi_path(c_inds), name="Phi_Path", format="(f14.8)" )
-            call dump ( h_path(c_inds), name="H_Path", format="(f14.6)" )
-            call MLSMessage ( merge(MLSMSG_Warning,MLSMSG_Error,switchDetail(switches,'igsc')>0), &
-              & moduleName, 'Scattering point appears not to be in path' )
+            else
+              call newLine
+              call output ( req_s, before="Req_s = " )
+              call output ( mod(phitan%values(FwdModelConf%TScatMIF,MAF),360.0_r8), &
+                & before=", Phi_ref = ", advance="yes" )
+              call dump ( z_coarse(:size(c_inds)), name="Z_Coarse" )
+              call dump ( rad2deg*phi_path(c_inds), name="Phi_Path", format="(f14.8)" )
+              call dump ( h_path(c_inds), name="H_Path", format="(f14.6)" )
+              call MLSMessage ( merge(MLSMSG_Warning,MLSMSG_Error,switchDetail(switches,'igsc')>0), &
+                & moduleName, 'Scattering point appears not to be in path' )
+              end if
             scat_index = -1
           else
             call output ( trim(line) // " <", advance="yes" ) ! Close enough
@@ -3928,7 +3942,8 @@ contains
       ! to compute sps_path for all those with no frequency component
       call comp_sps_path_frq ( Grids_f,           &
         & frq_0, eta_zp(1:npf,:),                 &
-        & do_calc_zp(1:npf,:), sps_path(1:npf,:), eta_fzp(1:npf,:) )
+        & do_calc_zp(1:npf,:), sps_path(1:npf,:), &
+        & eta_fzp(1:npf,:), do_calc_fzp(:npf,:) )
 !       ! Send all of eta_zp so comp_sps_path_frq_nz doesn't get an array
 !       ! bounds error when it's clearing parts indexed by nz_zp.
 ! I don't know why this doesn't work
@@ -4463,6 +4478,10 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.326  2011/07/29 01:55:18  vsnyder
+! Use CloudIce instead of Cloud_A and Cloud_S.  Only one IWC, not IWC_A and
+! IWC_S.  More dumps.
+!
 ! Revision 2.325  2011/07/21 20:48:38  honghanh
 ! Fix an array-index-out-of-bound bug by fixing the declaration fo DBETA_DF_PATH_C
 ! and DBETA_DF_PATH_F
