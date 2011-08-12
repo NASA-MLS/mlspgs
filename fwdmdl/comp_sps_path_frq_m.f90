@@ -48,12 +48,15 @@ contains
 
 ! Output:
 
+!   These are intent(inout), not intent(out), so they won't be clobbered
+!   in the cases when frq > 1.0 and n_f == 1.  Hopefully, the desired values
+!   will have been filled by a call (outside the frequency loop) with frq <= 1.
     real(rp), intent(inout) :: Sps_Path(:,:) ! Path X Species.  vmr values
 !             along the path by species number
 
     real(rp), intent(inout) :: Eta_Fzp(:,:)  ! Path X (Eta_f x Eta_z x Eta_phi)
 !             First dimension is same as sps_values.
-    logical, intent(inout), optional :: Do_Calc_Fzp(:,:) ! indicates whether
+    logical, intent(inout) :: Do_Calc_Fzp(:,:) ! indicates whether
 !             there is a contribution for this state vector element. Same
 !             shape as Eta_Fzp.
 
@@ -82,7 +85,7 @@ contains
     no_mol = ubound(grids_x%l_z,1)
 
     if ( frq <= 1.0_r8 ) then
-      if ( present(do_calc_fzp) ) do_calc_fzp = .FALSE.
+      do_calc_fzp = .FALSE.
       eta_fzp = 0.0_rp
     end if
 
@@ -97,7 +100,8 @@ contains
       w_indb = w_inda + (Grids_x%l_z(sps_i) - Grids_x%l_z(sps_i-1)) * &
                         (Grids_x%l_p(sps_i) - Grids_x%l_p(sps_i-1))
 
-      if ( frq <= 1.0 .or. n_f == 1 ) then
+!       if ( frq <= 1.0 .or. n_f == 1 ) then
+      if ( frq <= 1.0 ) then
         ! frq < 1.0 means we don't want to get interpolation coefficients
         ! for frequency, i.e., eta_fzp = eta_zp.
         ! n_f == 1 either means qty%template%frequencyCoordinate == l_none,
@@ -108,32 +112,21 @@ contains
         sps_path(:,sps_i) = 0.0_rp
         v_inda = grids_x%l_v(sps_i-1)
         ! Grids_X%Values are really 3-d: Frequencies X Zeta X Phi
-        if ( present(do_calc_fzp) ) then
-          do sv_zp = w_inda + 1, w_indb
-            do sv_f = 1, n_f
-              v_inda = v_inda + 1
-!             where ( do_calc_zp(:,sv_zp) ) ! multiply/add is cheaper than branch
-              eta_fzp(:,v_inda) = eta_zp(:,sv_zp)
-              sps_path(:,sps_i) = sps_path(:,sps_i) +  &
-                               &  grids_x%values(v_inda) * eta_fzp(:,v_inda)
-!               do_calc_fzp(:,v_inda) = Grids_x%deriv_flags(v_inda)
-              do_calc_fzp(:,v_inda) = do_calc_zp(:,sv_zp) .and. Grids_x%deriv_flags(v_inda)
-!             elsewhere
-!               eta_fzp ( :, v_inda ) = 0.0_r8
-!               do_calc_fzp ( :, v_inda ) = .false.
-!             end where
-            end do ! sv_f
-          end do ! sv_zp
-        else
-          do sv_zp = w_inda + 1, w_indb
-            do sv_f = 1, n_f
-              v_inda = v_inda + 1
-              eta_fzp(:,v_inda) = eta_zp(:,sv_zp)
-              sps_path(:,sps_i) = sps_path(:,sps_i) +  &
-                               &  grids_x%values(v_inda) * eta_fzp(:,v_inda)
-            end do ! sv_f
-          end do ! sv_zp
-        end if
+        do sv_zp = w_inda + 1, w_indb
+          do sv_f = 1, n_f
+            v_inda = v_inda + 1
+!           where ( do_calc_zp(:,sv_zp) ) ! multiply/add is cheaper than branch
+            eta_fzp(:,v_inda) = eta_zp(:,sv_zp)
+            sps_path(:,sps_i) = sps_path(:,sps_i) +  &
+                             &  grids_x%values(v_inda) * eta_fzp(:,v_inda)
+!             do_calc_fzp(:,v_inda) = Grids_x%deriv_flags(v_inda)
+            do_calc_fzp(:,v_inda) = do_calc_zp(:,sv_zp) .and. Grids_x%deriv_flags(v_inda)
+!           elsewhere
+!             eta_fzp ( :, v_inda ) = 0.0_r8
+!             do_calc_fzp ( :, v_inda ) = .false.
+!           end where
+          end do ! sv_f
+        end do ! sv_zp
 
         if ( grids_x%lin_log(sps_i)) then
           if ( any(sps_path(:,sps_i) == 0.0) ) call MLSMessage ( MLSMSG_Warning, &
@@ -141,13 +134,15 @@ contains
           sps_path(:,sps_i) = EXP(sps_path(:,sps_i))
         end if
 
-      else
+!       else
+      else if ( n_f /= 1 ) then
 
 ! Compute eta_f:
         if ( sideband == -1 ) then
           call get_eta_sparse ( lo-Grids_x%frq_basis(f_indb:f_inda+1:-1), &
             & Frq, eta_f(n_f:1:-1), not_zero_f(n_f:1:-1) )
         else if ( sideband == +1 ) then
+!         else
           call get_eta_sparse ( lo+Grids_x%frq_basis(f_inda+1:f_indb), &
             & Frq, eta_f(1:n_f), not_zero_f(1:n_f) )
         else ! sideband == 0 means Grids_x%frq_basis is absolute, not in I.F.
@@ -160,42 +155,34 @@ contains
         sps_path(:,sps_i) = 0.0_rp
         v_inda = grids_x%l_v(sps_i-1)
         ! Grids_X%Values are really 3-d: Frequencies X Zeta X Phi
-        if ( present(do_calc_fzp) ) then
-          do sv_zp = w_inda + 1, w_indb
-            do sv_f = 1, n_f
-              v_inda = v_inda + 1
-              if ( not_zero_f(sv_f) ) then
-!               where ( do_calc_zp(:,sv_zp) )
-                eta_fzp(:,v_inda) = eta_f(sv_f) * eta_zp(:,sv_zp)
-                sps_path(:,sps_i) = sps_path(:,sps_i) +  &
-                                 &  grids_x%values(v_inda) * eta_fzp(:,v_inda)
-!                 do_calc_fzp(:,v_inda) = Grids_x%deriv_flags(v_inda)
-                do_calc_fzp(:,v_inda) = do_calc_zp(:,sv_zp) .and. Grids_x%deriv_flags(v_inda)
-!               elsewhere
-!                 eta_fzp ( :, v_inda ) = 0.0_r8
-!                 do_calc_fzp ( :, v_inda ) = .false.
-!               end where
-              else
-                eta_fzp ( :, v_inda ) = 0.0_r8
-                do_calc_fzp ( :, v_inda ) = .false.
-              end if
-            end do ! sv_f
-          end do ! sv_zp
-        else
-          do sv_zp = w_inda + 1, w_indb
-            do sv_f = 1, n_f
-              v_inda = v_inda + 1
-              if ( not_zero_f(sv_f) ) then
-                eta_fzp(:,v_inda) = eta_f(sv_f) * eta_zp(:,sv_zp)
-                sps_path(:,sps_i) = sps_path(:,sps_i) +  &
-                                 &  grids_x%values(v_inda) * eta_fzp(:,v_inda)
-              end if
-            end do ! sv_f
-          end do ! sv_zp
-        end if
+        do sv_zp = w_inda + 1, w_indb
+          do sv_f = 1, n_f
+            v_inda = v_inda + 1
+            if ( not_zero_f(sv_f) ) then
+!             where ( do_calc_zp(:,sv_zp) )
+              eta_fzp(:,v_inda) = eta_f(sv_f) * eta_zp(:,sv_zp)
+              sps_path(:,sps_i) = sps_path(:,sps_i) +  &
+                               &  grids_x%values(v_inda) * eta_fzp(:,v_inda)
+!               do_calc_fzp(:,v_inda) = Grids_x%deriv_flags(v_inda)
+              do_calc_fzp(:,v_inda) = do_calc_zp(:,sv_zp) .and. Grids_x%deriv_flags(v_inda)
+!             elsewhere
+!               eta_fzp ( :, v_inda ) = 0.0_r8
+!               do_calc_fzp ( :, v_inda ) = .false.
+!             end where
+            else
+              eta_fzp ( :, v_inda ) = 0.0_r8
+              do_calc_fzp ( :, v_inda ) = .false.
+            end if
+          end do ! sv_f
+        end do ! sv_zp
 
         if ( grids_x%lin_log(sps_i)) sps_path(:,sps_i) = EXP(sps_path(:,sps_i))
 
+      else ! n_f == 1 here
+        continue
+        ! Hopefully, Comp_Sps_Path_Frq has already been called with frq
+        ! <= 1.0, and Sps_Path, Eta_Fzp and Do_Calc_Fzp have not been
+        ! clobbered since then.
       end if
 
       f_inda = f_indb
@@ -680,6 +667,14 @@ contains
 end module Comp_Sps_Path_Frq_m
 !
 ! $Log$
+! Revision 2.31  2011/08/12 18:57:06  vsnyder
+! Change Do_Calc_Fzp back to non-optional.  The only place where it wasn't
+! used, it was actually needed.  Undo ill-advised change to evaluate the
+! outputs when frq>1 and n_f==1.  The outputs were evaluated when frq<=1,
+! when Comp_Sps_Path was called from outside the frequency loop.  Doing it
+! again increases run time substantially, for no benefit.  Comments have
+! been added to this effect.
+!
 ! Revision 2.30  2011/07/29 01:56:15  vsnyder
 ! Make do_calc_fzp optional
 !
