@@ -74,6 +74,7 @@ module MLSNumerics              ! Some low level numerical stuff
 ! InterpolateValues        Interpolate for new y value(s):
 !                            given old (x,y), new (x), method
 ! Setup                    Fill y values in UniDiscFunction
+! Simpsons                 Apply Simpson's rule to calculate -- ooh, donuts
 ! UseLookUpTable           Use LookUpTable to approximate function
 !                            (or its derivatives or integral)
 ! === (end of toc) ===
@@ -117,6 +118,7 @@ module MLSNumerics              ! Some low level numerical stuff
 ! InterpolateArrayTeardown ( Coefficients_nprec Coeffs )
 ! Setup ( UnifDiscreteFn_nprec UDF, int N, nprec x1, nprec x2, [ nprec y(:)], &
 !    [char* BC], [nprec yLeft], [nprec yRight], [extern nprec fun] )
+! nprec Simpsons ( int n, nprec h, nprec y(:) )
 ! nprec UseLookUpTable ( nprec x, nprec table(:), [nprec x1], [nprec x2], &
 !    [nprec xtable(:), [nprec missingValue], [char* options], &
 !    [nprec xS], [nprec xE] )
@@ -131,7 +133,7 @@ module MLSNumerics              ! Some low level numerical stuff
   public :: FApproximate, FillLookUpTable, FindInRange, FInvApproximate
   public :: Hunt, HuntRange, IFApproximate
   public :: InterpolateArraySetup, InterpolateArrayTeardown, InterpolateValues
-  public :: SetUp
+  public :: SetUp, Simpsons
   public :: UseLookUpTable
 
   type, public :: Coefficients_R4
@@ -2161,7 +2163,7 @@ contains
     ! Executable
     sum = 0.
     if ( n < 2 .or. size(y) < 2 ) return ! Sorry, too few points
-    if ( n == 3 ) then
+    if ( n == 2 ) then
       ! Still too few for anything better than trapezoid
       sum = (h/2)*( y(1) + y(2) )
       return
@@ -2194,7 +2196,7 @@ contains
     ! Executable
     sum = 0.
     if ( n < 2 .or. size(y) < 2 ) return ! Sorry, too few points
-    if ( n == 3 ) then
+    if ( n == 2 ) then
       ! Still too few for anything better than trapezoid
       sum = (h/2)*( y(1) + y(2) )
       return
@@ -2229,6 +2231,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.67  2011/08/17 00:48:57  pwagner
+! Fixed bug in Simpsons; made it public
+!
 ! Revision 2.66  2011/03/22 23:37:56  pwagner
 ! Rerank now taken from MLSFillValues module
 !
