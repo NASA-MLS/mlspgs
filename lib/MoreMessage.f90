@@ -101,9 +101,8 @@ contains
     ok = .true.
     i = 1
     l = 1
-    do
+    do while ( i <= n )
       line(l:l) = message(i:i)
-      if ( i >= n ) exit
       if ( (message(i:i+1) == '%d' .or. message(i:i+1) == '%D') .and. ok ) then
         i = i + 2
         write ( line(l:), * ) datum
@@ -255,6 +254,9 @@ contains
 end module MoreMessage
 
 ! $Log$
+! Revision 2.7  2011/08/20 02:32:10  vsnyder
+! Don't go off the end of Message string
+!
 ! Revision 2.6  2011/08/10 01:47:17  vsnyder
 ! Correct some comments
 !
