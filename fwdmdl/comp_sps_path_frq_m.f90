@@ -383,8 +383,8 @@ contains
 
 ! Internal declarations
 
-    integer(ip) :: n_f, no_mol
-    integer(ip) :: sps_i, sv_zp, sv_f
+    integer(ip) :: n_f
+    integer(ip) :: sv_zp, sv_f
     integer(ip) :: v_inda, w_indb
 
     real(rp) :: eta_f(1:grids_x%l_f(1))
@@ -667,6 +667,9 @@ contains
 end module Comp_Sps_Path_Frq_m
 !
 ! $Log$
+! Revision 2.32  2011/08/20 00:44:58  vsnyder
+! Remove declarations for unused variables
+!
 ! Revision 2.31  2011/08/12 18:57:06  vsnyder
 ! Change Do_Calc_Fzp back to non-optional.  The only place where it wasn't
 ! used, it was actually needed.  Undo ill-advised change to evaluate the
