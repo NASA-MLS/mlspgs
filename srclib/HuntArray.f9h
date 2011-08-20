@@ -177,14 +177,18 @@
           ! The list is really screwey
           call dump(values, 'values')
           call dump(list, 'list')
-          if ( present(fail) ) then
-            call MLSMessage ( MLSMSG_Warning, ModuleName, &
-              & 'List out of order in Hunt (case 1)' )
-            fail = .true.
+
+          if ( any(ieee_is_NaN(values)) .or. any(ieee_is_NaN(list)) ) then
+            call MLSMessage ( merge(MLSMSG_Warning, MLSMSG_Error, present(fail)), &
+              & moduleName, "Can't interpolate with NaNs" )
+            if ( present(fail) ) fail = .true.
+            return
+          else
+            call MLSMessage ( merge(MLSMSG_Warning, MLSMSG_Error, present(fail)), &
+              & ModuleName, 'List out of order in Hunt (case 1)' )
+            if ( present(fail) ) fail = .true.
             return
           end if
-          call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & 'List out of order in Hunt (case 1)' )
         end if
         
         ! Now the very first change of direction is the end of the
@@ -208,29 +212,25 @@
         wentDown = ( list(index) - list(oldIndex) ) * listDirection < 0.0
         if ( ( searchDirection == 1  .and. wentDown ) .or. &
           &  ( searchDirection == -1 .and. wentUp ) ) then
-           call dump(values, 'values')
-           call selfDiff(values, 'values increment')
-           call dump(list, 'list')
-           call selfDiff(list, 'list increment')
-           ! print*, 'valueIndex ', valueIndex
-           ! print*, 'thisValue ', thisValue
-           ! print*, 'lowerBelow ', lowerBelow
-           ! print*, 'upperAbove ', upperAbove
-           ! print*, 'searchDirection ', searchDirection
-           ! print*, 'listDirection ', listDirection
-           ! print*, 'oldindex ', oldindex
-           ! print*, 'list(oldindex) ', list(oldindex)
-           ! print*, 'index ', index
-           ! print*, 'list(index) ', list(index)
-           if ( present(fail) ) then
-             call MLSMessage ( MLSMSG_Warning, ModuleName, &
-               & 'List out of order in Hunt (case 2)' )
-             fail = .true.
-             return
-           end if
-           call MLSMessage ( MLSMSG_Error, ModuleName, &
-             & 'List out of order in Hunt (case 2)' )
-        endif
+          call dump(values, 'values')
+          call selfDiff(values, 'values increment')
+          call dump(list, 'list')
+          call selfDiff(list, 'list increment')
+          ! print*, 'valueIndex ', valueIndex
+          ! print*, 'thisValue ', thisValue
+          ! print*, 'lowerBelow ', lowerBelow
+          ! print*, 'upperAbove ', upperAbove
+          ! print*, 'searchDirection ', searchDirection
+          ! print*, 'listDirection ', listDirection
+          ! print*, 'oldindex ', oldindex
+          ! print*, 'list(oldindex) ', list(oldindex)
+          ! print*, 'index ', index
+          ! print*, 'list(index) ', list(index)
+          call MLSMessage ( merge(MLSMSG_Warning, MLSMSG_Error, present(fail)), &
+            & ModuleName, 'List out of order in Hunt (case 1)' )
+          if ( present(fail) ) fail = .true.
+          return
+        end if
       end do HuntLoop
 
       ! If user asked for nearest then check to see if one above is closer
@@ -287,6 +287,9 @@
 ! end subroutine HuntArray_r*
 
 ! $Log$
+! Revision 1.12  2006/08/03 18:48:46  pwagner
+! Fixed thing Lahey hated but NAG tolerated
+!
 ! Revision 1.11  2006/08/03 01:56:54  vsnyder
 ! Return a status flag if it's present
 !
