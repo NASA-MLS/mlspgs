@@ -1313,6 +1313,7 @@ contains
 
   subroutine HuntArray_r4 ( list, values, indices, start, allowTopValue, &
     & allowBelowValue, nearest, logSpace, fail )
+    use ieee_arithmetic, only: IEEE_Is_NaN
     integer, parameter :: RK = R4
 
     ! Dummy arguments
@@ -1334,6 +1335,7 @@ contains
 
   subroutine HuntArray_r8 ( list, values, indices, start, allowTopValue, &
     & allowBelowValue, nearest, logSpace, fail )
+    use ieee_arithmetic, only: IEEE_Is_NaN
     integer, parameter :: RK = R8
 
     ! Dummy arguments
@@ -1371,10 +1373,10 @@ contains
 
     ! Local variables
 
-    integer, dimension(1) :: indices ! To pass to HuntScalar
+    integer, dimension(1) :: indices ! To pass to HuntArray
 
     call Hunt ( list, (/ value /), indices, start, &
-      & allowTopValue, allowBelowValue, nearest )
+      & allowTopValue, allowBelowValue, nearest, logSpace )
     index = indices(1)
   end subroutine HuntScalar_r4
 
@@ -1396,10 +1398,10 @@ contains
 
     ! Local variables
 
-    integer, dimension(1) :: indices ! To pass to HuntScalar
+    integer, dimension(1) :: indices ! To pass to HuntArray
 
     call Hunt ( list, (/ value /), indices, start, &
-      & allowTopValue, allowBelowValue, nearest )
+      & allowTopValue, allowBelowValue, nearest, logSpace )
     index = indices(1)
   end subroutine HuntScalar_r8
 
@@ -2231,6 +2233,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.68  2011/08/20 00:47:14  vsnyder
+! use IEEE_Arithmetic to get IEEE_Is_NaN
+!
 ! Revision 2.67  2011/08/17 00:48:57  pwagner
 ! Fixed bug in Simpsons; made it public
 !
