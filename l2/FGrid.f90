@@ -159,7 +159,7 @@ contains ! ===================================== Public procedures =====
     ! Executable code
     call output('FGrid name: ', advance='no')
     if ( fgrid%name > 0 ) then
-        call display_string ( fgrid%name, advance='yes' )
+        call display_string ( fgrid%name, advance='yes', ierr=ierr )
         if ( ierr /= 0 ) call output ( '(not found in string table)')
     else
         call output('(unknown)', advance='yes')
@@ -219,6 +219,9 @@ contains ! ===================================== Public procedures =====
 end module FGrid
 
 ! $Log$
+! Revision 2.13  2011/08/20 01:04:33  vsnyder
+! IERR needs a value before it can be referenced
+!
 ! Revision 2.12  2010/02/17 20:27:26  honghanh
 ! Fix Dump subroutine to print FGrid when it has no name
 !
