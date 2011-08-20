@@ -38,7 +38,7 @@ module TREE_CHECKER
   use STRING_TABLE, only: DISPLAY_STRING, FLOAT_VALUE
   use TOGGLES, only: CON, TOGGLE
   use TRACE_M, only: DEPTH, TRACE_BEGIN, TRACE_END
-  use TREE, only: DECORATE, DECORATION, DUMP_TREE_NODE, DUMP_TREE_NODE_NAME, &
+  use TREE, only: DECORATE, DECORATION, DUMP_TREE_NODE, &
                   NODE_ID, NODE_KIND, NSONS, NULL_TREE, PSEUDO, SOURCE_REF,  &
                   SUB_ROSA, SUBTREE
   use TREE_TYPES ! Everything, especially everything beginning with N_
@@ -168,7 +168,7 @@ contains ! ====     Public Procedures     ==============================
                                    ! their declarations are dumped.
     integer, intent(in), optional :: FIELDS(:) ! Field indices
     integer, intent(in), optional :: EXPECT    ! Something expected
-    integer :: I, J                ! Index for "sons" or "section_ordering"
+    integer :: I                   ! Index for "sons" or "section_ordering"
                                    ! or subtrees of "sons" or subtree of "expect"
 
     error = max(error,1)
@@ -340,12 +340,11 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(out) :: TYPE, UNITS    ! Output from "expr"
     double precision, intent(out) :: VALUE ! Output from "expr"
 
-    integer :: F, GF     ! Index of son, grandson of Field
+    integer :: F         ! Index of son, grandson of Field
     integer :: FIELD     ! Tree node of field's declaration
     integer :: FIELD_LIT ! f_... for a field
     integer :: FIELD_LOOK ! A field being sought during n_dot checking in AssignBody
     integer :: FIELD_TEST ! A son of Field_Ref in AssignBody
-    integer :: GSON      ! Son of Son in AssignBody
     integer :: I         ! Index of son of "root"
     integer :: LOOK_FOR  ! Look for an enum_value or a spec?
     logical :: NO_ARRAY_ALLOWED ! Field is n_field_type and is required to be scalar
@@ -1254,6 +1253,9 @@ m:      do j = start+1, nsons(field)
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.32  2011/04/20 17:32:28  vsnyder
+! Undo ill-advised units check, correct some error messages
+!
 ! Revision 1.31  2011/04/19 02:00:31  vsnyder
 ! Support == and /= relational operators too
 !

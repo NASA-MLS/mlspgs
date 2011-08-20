@@ -71,7 +71,7 @@ contains ! =====  Public procedures  ===================================
     use Toggles, only: Switches
     use Tree, only: DECORATION, NSONS, SOURCE_REF, SUBTREE
     use VectorsModule, only: GetVectorQtyByTemplateIndex, &
-      & GetVectorQuantityIndexByType, VECTORVALUE_T
+      & VECTORVALUE_T
 
     ! Dummy arguments
     integer, intent(in) :: KEY          ! L2CF node
@@ -119,7 +119,6 @@ contains ! =====  Public procedures  ===================================
     integer, dimension(:), pointer :: ColInds  ! Which column instances?
     integer, dimension(:), pointer :: ColInds2 ! Which column instances for Hessians?
     integer, dimension(:), pointer :: ColQIs   ! Which column quantities?
-    integer, dimension(:), pointer :: ColQIs2  ! Which column quantities for Hessians??
     integer, dimension(:), pointer :: RowInds  ! Which row instances?
     integer, dimension(:), pointer :: RowQIs   ! Which row quantities?
 
@@ -129,7 +128,6 @@ contains ! =====  Public procedures  ===================================
     logical :: Stru          ! Dump sparsity structure instead of values
 
     type (VectorValue_T), pointer :: COLQ   ! Col quantity
-    type (VectorValue_T), pointer :: COLQ2  ! 2nd Col quantity for a Hessian
     type (VectorValue_T), pointer :: ROWQ   ! Row quantity
     type (Hessian_T), pointer :: Hessian    ! The Hessian to dump
     type (Matrix_T), pointer :: MATRIX      ! The matrix to dump
@@ -185,7 +183,7 @@ contains ! =====  Public procedures  ===================================
     rowSurfacesNode = 0
     stru = .false.
 
-    nullify ( colInds, colInds2, colQIs, colQIs2, rowInds, rowQIs )
+    nullify ( colInds, colInds2, colQIs, rowInds, rowQIs )
 
     ! First go through the parsed information.
     do node = 2, nsons(key)                ! Skip the DumpBlocks son
@@ -385,7 +383,6 @@ contains ! =====  Public procedures  ===================================
             & colInds )
           do colQuantityIx2 = 1, nColQ
             colQI2 = colQIs(colQuantityIx2)
-            colQ2 => hessians(hessianIndex)%col%vec%quantities(colQI2)
 
             ! Fill some flags arrays
             call FillIndicesArray ( colInstancesNode, colQ%template%noInstances, &
@@ -954,6 +951,9 @@ contains ! =====  Public procedures  ===================================
 end module MatrixTools
 
 ! $Log$
+! Revision 1.33  2010/08/06 23:02:36  pwagner
+! Moved to using only switchdetail; negative index deplored
+!
 ! Revision 1.32  2010/03/24 20:51:43  vsnyder
 ! Add code to dump Hessians.  Spiff up some error messages.
 !
