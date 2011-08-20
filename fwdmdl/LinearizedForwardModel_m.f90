@@ -127,8 +127,9 @@ contains ! =====     Public Procedures     =============================
       & INTERPOLATEARRAYTEARDOWN, INTERPOLATEVALUES
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use MOLECULES, only: L_EXTINCTION, L_EXTINCTIONV2
+    use MOREMESSAGE, only: MLSMESSAGE
     use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
-    use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
+    use STRING_TABLE, only: DISPLAY_STRING
     use TOGGLES, only: EMIT, LEVELS, SWITCHES, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use VECTORSMODULE, only: ASSIGNMENT(=), OPERATOR(-), OPERATOR(+), &
@@ -364,9 +365,9 @@ contains ! =====     Public Procedures     =============================
           do xStarInstance = 1, l2pcQ%template%noInstances
             colLBlock = FindBlock ( l2pc%j%col, l2pcQ%index, xStarInstance )
             if ( l2pc%j%block(rowLBlock,colLBlock)%kind /= M_Absent ) then
-              call get_string ( l2pcQ%template%name, word, strip=.true. )
               call MLSMessage ( MLSMSG_Error, ModuleName, &
-                &  "No quantity in state vectors found to match "//trim(word) )
+                & "No quantity in state vectors found to match %s", &
+                & datum=l2pcQ%template%name )
             end if
           end do
           cycle quantityLoop            ! Go to next l2pc quantity
@@ -792,6 +793,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.84  2011/05/09 17:50:34  pwagner
+! Converted to using switchDetail
+!
 ! Revision 2.83  2011/03/28 17:52:08  pwagner
 ! Fixed bug in calculating top before call to InterpolateValues
 !
