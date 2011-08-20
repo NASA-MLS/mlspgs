@@ -616,8 +616,6 @@ use MLSKinds, only: RP
 
 ! Internals
 
-    integer :: i_begin
-    integer :: I_dBeta_df_i, I_dBeta_df_j ! Which column of dBeta_df_* to use if /= 0
     integer :: n_inds_q, n_inds_r
     integer :: no_to_gl_q, no_to_gl_r
     integer :: sps_i, sps_j          ! species indices
@@ -2067,6 +2065,9 @@ end subroutine Get_all_d2_delta_df2
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.28  2011/08/20 00:44:02  vsnyder
+! Get rid of DOS line ends
+!
 ! Revision 2.27  2011/07/29 01:59:24  vsnyder
 ! Cannonball polishing
 !
