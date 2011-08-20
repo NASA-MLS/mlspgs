@@ -188,8 +188,6 @@ contains ! =====     Public Procedures     =============================
 
     real (r8) :: DELTAPHI               ! Difference in geod Angle in l2pc
 
-    character (len=80) :: WORD          ! A word to output
-
     ! The `prime' quantities are important.
     ! - yPrime (yP) contains one maf of the relevant radiances, but on the
     !   l2pc's vertical coordinates
@@ -793,6 +791,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.85  2011/08/20 02:10:06  vsnyder
+! Simplify emitting an error message
+!
 ! Revision 2.84  2011/05/09 17:50:34  pwagner
 ! Converted to using switchDetail
 !
