@@ -1000,7 +1000,7 @@ contains ! ============= Public procedures ===================================
   subroutine GetQtyTypeIndex(string_text, QtyType)
     use Intrinsic, only: LIT_INDICES
     use MLSStrings, only: LowerCase
-    use STRING_TABLE, only: GET_STRING, DISPLAY_STRING
+    use STRING_TABLE, only: GET_STRING
     ! Returns the lit index,  given QtyType name in mixed case
     ! Returns 0 if QtyType name not found
     ! (inverse function: GetQtyTypeName)
@@ -1320,6 +1320,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.164  2011/08/20 00:49:05  vsnyder
+! Remove unused use names
+!
 ! Revision 2.163  2011/05/09 18:05:32  pwagner
 ! Converted to using switchDetail
 !
