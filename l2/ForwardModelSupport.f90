@@ -95,7 +95,6 @@ contains ! =====     Public Procedures     =============================
       &          MLSPCF_MIETABLES_START, &
       &          MLSPCF_PFA_START, MLSPCF_PFA_END
     use MORETREE, only: GET_FIELD_ID
-    use MLSSTRINGLISTS, only: SWITCHDETAIL
     use PFADATABASE_M, only: PROCESS_PFA_FILE
     use POINTINGGRID_M, only: CLOSE_POINTING_GRID_FILE, &
       & OPEN_POINTING_GRID_FILE, READ_POINTING_GRID_FILE
@@ -1459,6 +1458,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.159  2011/08/20 02:03:34  vsnyder
+! Remove unused use name
+!
 ! Revision 2.158  2011/07/29 02:00:44  vsnyder
 ! Remove TScatMolecules and TScatMoleculeDerivatives.  Make CloudIce a
 ! molecule.  Remove Cloud_A and Cloud_S.
