@@ -386,7 +386,7 @@ contains
   ! number of values or lengths of bases
 
     use Allocate_Deallocate, only: Allocate_test
-    use Molecules, only: First_Molecule, Last_Molecule
+    use Molecules, only: First_Molecule, Last_Molecule, L_RHi
 
     type (Grids_T), intent(inout) :: Grids_X
     integer, intent(in) :: N
@@ -400,7 +400,7 @@ contains
     call allocate_test ( Grids_x%qty, n, 'Grids_x%qty', ModuleName )
     call allocate_test ( Grids_x%where_dBeta_df, n, 'Grids_x%where_dBeta_df', ModuleName )
     call allocate_test ( Grids_x%s_ind, last_molecule, 'Grids_x%S_ind', &
-      & moduleName, lowBound=first_molecule, fill=0 )
+      & moduleName, lowBound=min(first_molecule,l_rhi), fill=0 )
     grids_x%l_z(0) = 0
     grids_x%l_p(0) = 0
     grids_x%l_f(0) = 0
@@ -796,6 +796,9 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.84  2011/08/20 00:45:33  vsnyder
+! Remove unused USE statements and declarations for unused variables
+!
 ! Revision 2.83  2011/07/29 01:50:20  vsnyder
 ! Add the s_ind field.  Make CloudIce a molecule.  Add the FindInGrid function.
 !
