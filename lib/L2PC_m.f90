@@ -42,7 +42,7 @@ module L2PC_m
   use MLSSETS, only: FINDFIRST
   use MLSSIGNALS_M, only: GETSIGNALNAME
   use MLSSTRINGLISTS, only: OPTIONDETAIL, SWITCHDETAIL
-  use MLSSTRINGS, only: LOWERCASE, WRITEINTSTOCHARS
+  use MLSSTRINGS, only: WRITEINTSTOCHARS
   use MOLECULES, only: L_EXTINCTION, L_EXTINCTIONV2
   use MORETREE, only: GETLITINDEXFROMSTRING, GETSTRINGINDEXFROMSTRING
   use OUTPUT_M, only: NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
@@ -692,13 +692,13 @@ contains ! ============= Public Procedures ==========================
     end do
     if ( l2pc%goth ) then
       do i = 1, l2pc%h%row%NB
- 	do j = 1, l2pc%h%col%NB
- 	  do k = 1, l2pc%h%col%NB
+        do j = 1, l2pc%h%col%NB
+          do k = 1, l2pc%h%col%NB
             h0 => l2pc%h%block(i,j,k)
             if ( h0%kind /= h_absent ) then
               call DestroyBlock ( h0 )
               h0%kind = h_unknown
-            endif
+            end if
           end do
         end do
       end do
@@ -2206,6 +2206,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.115  2011/08/20 02:04:03  vsnyder
+! Remove unused use name
+!
 ! Revision 2.114  2011/08/09 23:17:43  pwagner
 ! Tries to flush hessian bins, too
 !
