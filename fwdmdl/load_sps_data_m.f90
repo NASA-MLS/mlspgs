@@ -76,7 +76,6 @@ contains
   subroutine Load_Sps_Data ( FwdModelConf, Phitan, MAF, &
     & Grids_x, S_Ind, QtyStuffIn )
 
-    use Allocate_Deallocate, only: Allocate_test
     use ForwardModelConfig, only: ForwardModelConfig_t, QtyStuff_T
     use Intrinsic, only: l_Vmr
     use Molecules, only: First_Molecule, Last_Molecule
@@ -158,7 +157,6 @@ contains
   subroutine Load_Grid_From_Vector ( Grids_X, Vector, Phitan, Maf, &
     & FwdModelConf, SetDerivFlags, S_Ind )
 
-    use Allocate_Deallocate, only: Allocate_test
     use ForwardModelConfig, only: ForwardModelConfig_t
     use Intrinsic, only: l_Vmr
     use Molecules, only: First_Molecule, Last_Molecule
@@ -174,7 +172,7 @@ contains
     ! Indices of species in Grids_x
     integer, intent(out), optional :: S_ind(First_Molecule:Last_Molecule)
 
-    integer :: Lbnd, Qty, Ubnd
+    integer :: Qty
 
     if ( present(s_ind) ) s_ind = 0 ! Indicate molecule not present in the vector
 
@@ -604,7 +602,6 @@ contains
 
     use Constants, only: Pi
     use MLSKinds, only: RP
-    use MLSNumerics, only: HUNT
 
     type (Grids_T), intent(in) :: Grids_x
     real(rp), intent(in) :: Phi             ! Radians
@@ -799,6 +796,9 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.83  2011/07/29 01:50:20  vsnyder
+! Add the s_ind field.  Make CloudIce a molecule.  Add the FindInGrid function.
+!
 ! Revision 2.82  2011/07/08 20:58:18  yanovsky
 ! Remove L_H2O from Which_dBeta_df
 !
