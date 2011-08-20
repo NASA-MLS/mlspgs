@@ -308,12 +308,11 @@ contains
   subroutine Convolve_Other_Second_Deriv ( Convolve_Support, MAF, Channel, &
              & SbRatio, Update, Radiance, Qtys, Grids_f, &
              & MIF_Times, DeadTime, d2I_df2, Hessian, RowFlags )
-    use Allocate_Deallocate, only: Allocate_test, Deallocate_test
     use Dump_0, only: DUMP
     use ForwardModelConfig, only: QtyStuff_T
     use Fov_Convolve_m, only: Convolve_Support_T, &
       & FOV_Convolve_3d
-    use HessianModule_0, only: DUMP, RH
+    use HessianModule_0, only: DUMP
     use HessianModule_1, only: HESSIAN_T
     use Load_sps_data_m, only: Grids_T, Dump
     use MLSFillValues, only: isNaN
@@ -1015,7 +1014,6 @@ contains
     use HessianModule_0, only: H_ABSENT, H_FULL, RH
     use HessianModule_1, only: CREATEBLOCK, HESSIAN_T
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use String_Table, only: Get_String
     type (Hessian_t), intent(inout) :: Hessian
     integer, intent(in) :: Row, Col1, Col2
     character(len=*), intent(in) :: What
@@ -1097,6 +1095,9 @@ contains
 end module Convolve_All_m
 
 ! $Log$
+! Revision 2.17  2011/08/20 00:44:32  vsnyder
+! Remove unused USE statements
+!
 ! Revision 2.16  2010/11/09 01:01:25  vsnyder
 ! Get RH from HessianModule_0 instead of RM from MLSKinds.  Delete unused
 ! declarations.  Remove explicit copy-out for loadMatrixValue (should have
