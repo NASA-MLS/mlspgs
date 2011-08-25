@@ -41,7 +41,7 @@ module LOAD_SPS_DATA_M
     integer,  pointer :: where_dBeta_df(:) => null()
     integer,  pointer :: qty(:) => null() ! Qty type, l_...
     integer,  pointer :: s_ind(:) => null()     ! Indexed by mol, gives index
-    ! in l_f etc if qty=l_vmr, else not associated.
+    ! in l_f etc if qty=l_vmr.
     logical,  pointer :: lin_log(:) => null()   ! true for log representation basis
     real(r8), pointer :: min_val(:) => null()   ! Minimum value
     real(r8), pointer :: frq_basis(:) => null() ! frq  grid entries for all
@@ -74,11 +74,9 @@ contains
   ! ----------------------------------------------  Load_SPS_Data  -----
 
   subroutine Load_Sps_Data ( FwdModelConf, Phitan, MAF, &
-    & Grids_x, S_Ind, QtyStuffIn )
+    & Grids_x, QtyStuffIn )
 
     use ForwardModelConfig, only: ForwardModelConfig_t, QtyStuff_T
-    use Intrinsic, only: l_Vmr
-    use Molecules, only: First_Molecule, Last_Molecule
     use VectorsModule, only: VectorValue_T
 
     type (forwardModelConfig_T), intent(in) :: fwdModelConf
@@ -86,9 +84,6 @@ contains
     integer, intent(in) :: MAF
 
     type (Grids_T), intent(out) :: Grids_x   ! All the coordinates
-
-    ! Indices of species in Grids_x
-    integer, intent(out), optional :: S_Ind(First_Molecule:Last_Molecule)
 
     type (qtyStuff_t), intent(in), optional , target :: QtyStuffIn(:)
 
@@ -102,8 +97,6 @@ contains
 
     qtyStuff => fwdModelConf%beta_group%qty
     if ( present(qtyStuffIn) ) qtyStuff => qtyStuffIn
-
-    if ( present(s_ind) ) s_ind = 0 ! zero means molecule not in grids_x
 
     no_mol = size( qtyStuff )
 
@@ -120,15 +113,9 @@ contains
         grids_x%l_p(mol) = grids_x%l_p(mol-1)
         grids_x%l_v(mol) = grids_x%l_v(mol-1)
         grids_x%l_z(mol) = grids_x%l_z(mol-1)
+        grids_x%s_ind(mol) = 0
         cycle
       end if
-
-      ! Remember positions of molecules in grids_x
-      if ( qtyStuff(mol)%qty%template%quantityType == l_vmr ) &
-        & grids_x%s_ind(qtyStuff(mol)%qty%template%molecule) = mol
-        ! Note the ambiguity here as to whether it's extinction or extinctionv2:
-        ! the last one wins.
-        ! Also note, however, that s_ind(l_extinction) is never actually used
 
       call fill_grids_1 ( grids_x, mol, qtyStuff(mol)%qty, phitan, maf, &
         &                 fwdModelConf )
@@ -155,11 +142,9 @@ contains
 
   ! --------------------------------------  Load_Grid_From_Vector  -----
   subroutine Load_Grid_From_Vector ( Grids_X, Vector, Phitan, Maf, &
-    & FwdModelConf, SetDerivFlags, S_Ind )
+    & FwdModelConf, SetDerivFlags )
 
     use ForwardModelConfig, only: ForwardModelConfig_t
-    use Intrinsic, only: l_Vmr
-    use Molecules, only: First_Molecule, Last_Molecule
     use VectorsModule, only: Vector_T, VectorValue_T
 
     type(grids_t), intent(out) :: Grids_X
@@ -169,12 +154,7 @@ contains
     type(forwardModelConfig_t), intent(in), optional :: FwdModelConf
     logical, intent(in), optional :: SetDerivFlags(:) ! size(vector%quantities)
 
-    ! Indices of species in Grids_x
-    integer, intent(out), optional :: S_ind(First_Molecule:Last_Molecule)
-
     integer :: Qty
-
-    if ( present(s_ind) ) s_ind = 0 ! Indicate molecule not present in the vector
 
     call create_grids_1 ( Grids_x, size(vector%quantities) )
     do qty = 1, size(vector%quantities)
@@ -194,13 +174,6 @@ contains
     do qty = 1, size(vector%quantities)
       ! Fill the zeta, phi, freq. basis and value components.
       call fill_grids_2 ( grids_x, qty, vector%quantities(qty), setDerivFlags(qty) )
-
-      ! Remember positions of molecules in grids_x
-      if ( vector%quantities(qty)%template%quantityType == l_vmr ) &
-        & grids_x%s_ind(vector%quantities%template%molecule) = qty
-        ! Note the ambiguity here as to whether it's extinction or extinctionv2:
-        ! the last one wins.
-        ! Also note, however, that s_ind(l_extinction) is never actually used
     end do
 
   end subroutine Load_Grid_From_Vector
@@ -386,7 +359,7 @@ contains
   ! number of values or lengths of bases
 
     use Allocate_Deallocate, only: Allocate_test
-    use Molecules, only: First_Molecule, Last_Molecule, L_RHi
+    use Molecules, only: First_Molecule, Last_Molecule
 
     type (Grids_T), intent(inout) :: Grids_X
     integer, intent(in) :: N
@@ -399,8 +372,8 @@ contains
     call allocate_test ( Grids_x%mol, n, 'Grids_x%mol', ModuleName )
     call allocate_test ( Grids_x%qty, n, 'Grids_x%qty', ModuleName )
     call allocate_test ( Grids_x%where_dBeta_df, n, 'Grids_x%where_dBeta_df', ModuleName )
-    call allocate_test ( Grids_x%s_ind, last_molecule, 'Grids_x%S_ind', &
-      & moduleName, lowBound=min(first_molecule,l_rhi), fill=0 )
+    call allocate_test ( Grids_x%s_ind, last_molecule, &
+      & 'Grids_x%S_ind', moduleName, lowBound=first_molecule, fill=0 )
     grids_x%l_z(0) = 0
     grids_x%l_p(0) = 0
     grids_x%l_f(0) = 0
@@ -449,6 +422,7 @@ contains
   ! Fill in the size information for the II'th element of Grids_x
 
     use ForwardModelConfig, only: ForwardModelConfig_t
+    use Intrinsic, only: l_Vmr
     use ManipulateVectorQuantities, only: FindInstanceWindow
     use VectorsModule, only: VectorValue_T
 
@@ -488,6 +462,13 @@ contains
     grids_x%p_len = grids_x%p_len + kz * kp
     grids_x%mol(ii) = qty%template%molecule
     grids_x%qty(ii) = qty%template%quantityType
+
+    ! Remember positions of molecules in grids_x
+    if ( qty%template%quantityType == l_vmr ) &
+      & grids_x%s_ind(qty%template%molecule) = ii
+      ! Note the ambiguity here as to whether it's extinction or extinctionv2:
+      ! the last one wins.
+      ! Also note, however, that s_ind(l_extinction) is never actually used
 
   end subroutine Fill_Grids_1
 
@@ -796,6 +777,9 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.85  2011/08/20 02:07:34  vsnyder
+! Allocate %s_ind with bounds wide enough to accomodate l_RHi, which is not a molecule
+!
 ! Revision 2.84  2011/08/20 00:45:33  vsnyder
 ! Remove unused USE statements and declarations for unused variables
 !
