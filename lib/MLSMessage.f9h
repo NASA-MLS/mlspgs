@@ -744,7 +744,7 @@ contains
 
     write (line, * ) info
     call printitout(  MLSMSG_PVM // &
-    & ' Info='//trim(adjustl(line)), MLSMSG_Error )
+    & ' Info='//trim(adjustl(line)) // ' ' // place, MLSMSG_Error )
   end subroutine PVMErrorMessage
 
   ! ------------ StopWithErrorMsg ------------
@@ -1042,6 +1042,9 @@ contains
   
 !
 ! $Log$
+! Revision 2.15  2011/08/25 18:22:33  honghanh
+! Add fix to PVMErrorMessage to print custom error message.
+!
 ! Revision 2.14  2011/07/22 19:47:00  vsnyder
 ! Add Advance argument to StopWithErrorMsg, pass it through to MLSMessageStd.
 ! Add %n and %N as newline characters in MLSMessageStd.
