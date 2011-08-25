@@ -56,7 +56,9 @@ module cfm          ! callable forward model
                        AddFileToDatabase
    use Intrinsic, only: l_hdf
    use Hdf, only: DFACC_RDONLY
-   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, &
+                               MLSMSG_Debug, MLSMSG_Info, MLSMSG_Crash, &
+                               MLSMSG_Success
    use MatrixModule_1, only: Matrix_T, Dump, DestroyMatrix
 
    implicit none
@@ -79,6 +81,9 @@ contains
 end module cfm
 
 ! $Log$
+! Revision 1.15  2011/06/21 19:04:48  honghanh
+! Adding ForwardModel2
+!
 ! Revision 1.14  2011/03/24 15:16:46  honghanh
 ! Add new interfaces for creating vector and vector values without going through quantity template databases
 !
