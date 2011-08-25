@@ -176,7 +176,7 @@ refltemp
 refltrans
 reflrefl
 reflspill
-rhi
+# rhi Moved to tables/sps_cross_ref_table.txt
 rows
 
 s
@@ -232,6 +232,9 @@ zonalavg
 temperature
 
 # $Log$
+# Revision 2.59  2011/08/25 22:41:27  vsnyder
+# Move RHi to tables/sps_cross_ref_table.txt
+#
 # Revision 2.58  2011/07/29 01:46:54  vsnyder
 # Make CloudIce a molecule
 #
