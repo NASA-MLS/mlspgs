@@ -41,9 +41,10 @@ contains
 
     use DUMP_0, only: DUMP
     use FORWARDMODELCONFIG, only: BETA_GROUP_T, LINECENTER, LINEWIDTH, LINEWIDTH_TDEP
-    use INTRINSIC, only: L_RHI, LIT_INDICES
+    use INTRINSIC, only: LIT_INDICES
     use MLSKINDS, only: R8, RP, IP
     use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use MOLECULES, only: L_RHI
     use OUTPUT_M, only: OUTPUT
     use SLABS_SW_M, only: SLABS_STRUCT
     use STRING_TABLE, only: DISPLAY_STRING
@@ -235,10 +236,10 @@ contains
 
     use DUMP_0, only: DUMP
     use FORWARDMODELCONFIG, only: BETA_GROUP_T
-    use INTRINSIC, only: L_RHI, LIT_INDICES
+    use INTRINSIC, only: LIT_INDICES
     use MLSKINDS, only: RP, R8
     use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use MOLECULES, only: L_CLOUDICE
+    use MOLECULES, only: L_CLOUDICE, L_RHI
     use OUTPUT_M, only: OUTPUT
     use PFADATABASE_M, only: PFADATA
     use READ_MIE_M, only: BETA_C_A, DBETA_DIWC_C_A, DBETA_DT_C_A, &
@@ -1589,6 +1590,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.107  2011/07/29 01:57:47  vsnyder
+! Only IWC instead of IWC_A and IWC_S
+!
 ! Revision 2.106  2011/05/09 17:56:27  pwagner
 ! Converted to using switchDetail
 !
