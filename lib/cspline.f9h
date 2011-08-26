@@ -54,7 +54,7 @@
     do i = 1, nout
 
       x = xout(i)
-      call hunt ( x_in, x, jin, klo )
+      call hunt ( x_in, x, klo )
       khi = min( klo+1, jin )
       ! call hunt ( x, x_in, jin, klo, khi )
       if ( klo /= kpl ) then
@@ -83,6 +83,9 @@
 ! end subroutine ?_CSPLINE
 
 ! $Log$
+! Revision 2.2  2011/08/26 01:20:31  pwagner
+! Fixed obvious bug
+!
 ! Revision 2.1  2011/08/26 00:22:39  pwagner
 ! Moved here from fwdmdl
 !
