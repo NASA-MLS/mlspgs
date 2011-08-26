@@ -26,7 +26,7 @@ contains
   ! ---------------------------------------------------  Freq_Avg  -----
   subroutine Freq_Avg ( F_grid, F_grid_fltr, Fltr_func, Rad, Avg )
 
-    use MLSCommon, only: R8, RP
+    use MLSKINDS, only: R8, RP
 
     real(r8), intent(in) :: F_grid(:), F_grid_fltr(:), Fltr_func(:)
     real(rp), intent(in) :: Rad(:)
@@ -45,8 +45,8 @@ contains
   subroutine Freq_Avg_Avg ( F_grid, F_grid_fltr, Fltr_func, Rad, Klo, Khi, dF, &
                           & Avg )
 
-    use D_CSPLINE_M, only: CSPLINE
-    use DSIMPSON_MODULE, only: SIMPS
+    ! use D_CSPLINE_M, only: CSPLINE
+    use MLSNumerics, only: INTERPOLATEVALUES, SIMPS => SIMPSONSSUB
     use MLSCommon, only: R8, RP
 
     real(r8), intent(in) :: F_grid(:), F_grid_fltr(:), Fltr_func(:)
@@ -65,7 +65,11 @@ contains
     rmin = minval(Rad(klo:khi))
     rmax = maxval(Rad(klo:khi))
 
-    call Cspline ( F_grid, F_grid_fltr, Rad, tmpary, n, nfp, Rmin, Rmax )
+    ! call Cspline ( F_grid, F_grid_fltr, Rad, tmpary, n, nfp, Rmin, Rmax )
+    ! InterpolateValues args are:
+    ! oldX, oldY, newX, newY, method
+    call InterpolateValues ( F_grid, Rad, F_grid_fltr, tmpary, method='C', &
+      & YMIN=Rmin, YMAX=Rmax )
 
     ! Since the filter function and its derivatives are zero at the ends
     ! of the interval, or at least outside of it, use the Euler-Maclaurin
@@ -81,13 +85,14 @@ contains
   ! ----------------------------------------------  Freq_Avg_DACS  -----
   subroutine Freq_Avg_DACS ( F_grid, DACSFilter, Rad, Avg )
 
-    use D_CSPLINE_M, only: CSPLINE
-    use D_HUNT_M, only: HUNT
+    ! use D_CSPLINE_M, only: CSPLINE
+    ! use D_HUNT_M, only: HUNT
     use DFFT_M, only: DTCST
-    use FilterShapes_m, only: DACSFilterShape_T
-    use MLSCommon, only: I4, R8, RP
-    use SineTables_m, only: CreateSineTable, n_sine => LogSize_SineTable_R8, &
-      & sines => SineTable_R8
+    use FilterShapes_m, only: DACSFILTERSHAPE_T
+    use MLSKINDS, only: I4, R8, RP
+    use MLSNumerics, only: HUNT, INTERPOLATEVALUES
+    use SineTables_m, only: CREATESINETABLE, N_SINE => LOGSIZE_SINETABLE_R8, &
+      & SINES => SINETABLE_R8
 
     real(r8), intent(in) :: F_grid(:) ! Frequency grid
     type(DACSFilterShape_T), intent(in) :: DACSFilter
@@ -123,15 +128,21 @@ contains
 
     n = size(f_grid)
     klo = -1
-    call Hunt ( Fmin, F_grid, n, klo, i )
-    call Hunt ( Fmax, F_grid, n, i, khi )
+    ! call Hunt ( Fmin, F_grid, n, klo, i )
+    ! call Hunt ( Fmax, F_grid, n, i, khi )
+    call Hunt ( F_grid, Fmin, n, klo )
+    i = min(klo+1, n)
+    call Hunt ( F_grid, Fmax, n, i )
+    khi = min(i+1, n)
 
     rmin = minval(Rad(klo:khi))
     rmax = maxval(Rad(klo:khi))
 
     ! Interpolate from (x=F_grid, y=Rad) to (x=DACSFilter%filter%filterGrid, y=tmpary)
-    call Cspline ( F_grid, DACSFilter%filter%filterGrid, Rad, tmpary, n, &
-      & nFilter, Rmin, Rmax )
+    ! call Cspline ( F_grid, DACSFilter%filter%filterGrid, Rad, tmpary, n, &
+    !   & nFilter, Rmin, Rmax )
+    call InterpolateValues ( F_grid, Rad, DACSFilter%filter%filterGrid, tmpary, method='C', &
+      & YMIN=Rmin, YMAX=Rmax )
 
     if ( l_apod == l_filter ) then
       call dtcst ( tmpary, 'C', 'A', (/ l_filter /), 1, n_sine, sines )
@@ -157,8 +168,8 @@ contains
 
     ! Determine which frequencies from F_Grid to use to span F_Grid_Fltr
 
-    use D_HUNT_M, only: HUNT
-    use MLSCommon, only: R8
+    use MLSNumerics, only: HUNT
+    use MLSKINDS, only: R8
 
     real(r8), intent(in) :: F_grid(:), F_grid_fltr(:)
 
@@ -182,8 +193,12 @@ contains
     end if
 
     klo = -1
-    call Hunt ( Fmin, F_grid, n, klo, i )
-    call Hunt ( Fmax, F_grid, n, i, khi )
+    ! call Hunt ( Fmin, F_grid, n, klo, i )
+    ! call Hunt ( Fmax, F_grid, n, i, khi )
+    call Hunt ( F_grid, Fmin, n, klo )
+    i = min(klo+1, n)
+    call Hunt ( F_grid, Fmax, n, i )
+    khi = min(i+1, n)
 
   end subroutine Freq_Avg_Setup
 
@@ -200,6 +215,9 @@ contains
 end module Freq_Avg_m
 
 ! $Log$
+! Revision 2.15  2009/06/23 18:26:11  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.14  2006/04/25 23:25:37  vsnyder
 ! Revise DACS filter shape data structure
 !
