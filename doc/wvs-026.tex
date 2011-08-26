@@ -6,8 +6,8 @@
 \topmargin -0.5in
 \textheight 9.00in
 
-\newcommand{\docname}{\bf wvs-026r3}
-\newcommand{\docdate}{10 August 2010}
+\newcommand{\docname}{\bf wvs-026r4}
+\newcommand{\docdate}{26 August 2011}
 
 \begin{document}
 
@@ -49,7 +49,8 @@ for a particular channel $c$
 
 \begin{equation}\label{combined}
 I_c = \int \text{d}\nu\, \phi_c(\nu)
-      \int \text{d} z\, \Delta B(z,\nu) \tau(z,\nu)
+      \int \text{d} \zeta \frac{\partial B(\nu,T(\zeta))}{\partial \zeta}
+      \tau(\zeta,\nu)
  \approx \sum_{n=1}^{N_f} \phi_{nc} \Delta \nu_{nc}
                \sum_{i=1}^{N_p} \Delta B_{ic} \tau^s_{in} \tau^w_{ic}
 \end{equation}
@@ -79,6 +80,14 @@ pointing frequency grid
 \begin{equation}\begin{split}\label{raw}
 R_n =\,& \sum_{i=1}^{N_p} \Delta B_{in} \tau^s_{in} \tau^w_{ic} \\
 \frac{\partial R_n}{\partial x_k} =\,&
+\sum_{i=1}^{N_p}
+ \left(
+  \frac{\partial \Delta B_{in}}{\partial x_k} +
+  \Delta B_{ic} \left( \frac{\partial \tau^s_{in}}{\partial x_k} \tau^w_{ic} +
+                       \tau^s_{in} \frac{\partial \tau^w_{in}}{\partial x_k}
+                \right)
+ \right) \\
+=\,&
 \sum_{i=1}^{N_p}
  \left(
   \frac{\partial \Delta B_{in}}{\partial x_k} -
