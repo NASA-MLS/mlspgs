@@ -73,6 +73,7 @@ module MLSNumerics              ! Some low level numerical stuff
 ! InterpolateArrayTeardown Deallocate tables created by InterpolateArraySetup
 ! InterpolateValues        Interpolate for new y value(s):
 !                            given old (x,y), new (x), method
+! PureHunt                 Like Hunt, but may be quicker due to optimization
 ! Setup                    Fill y values in UniDiscFunction
 ! Simpsons                 Apply Simpson's rule to integrate--function form
 ! SimpsonsSub              Apply Simpson's rule to integrate--a subroutine
@@ -117,6 +118,7 @@ module MLSNumerics              ! Some low level numerical stuff
 !   coefficients_nprec Coeffs, &[log Extrapolate], [int Width], [log DyByDx], 
 !   [matrixElement_T dNewByDOld], [log IntYdX] )
 ! InterpolateArrayTeardown ( Coefficients_nprec Coeffs )
+! PureHunt ( nprec element, nprec array, int n, int jlo, int jhi )
 ! Setup ( UnifDiscreteFn_nprec UDF, int N, nprec x1, nprec x2, [ nprec y(:)], &
 !    [char* BC], [nprec yLeft], [nprec yRight], [extern nprec fun] )
 ! nprec Simpsons ( int n, nprec h, nprec y(:) )
@@ -135,6 +137,7 @@ module MLSNumerics              ! Some low level numerical stuff
   public :: FApproximate, FillLookUpTable, FindInRange, FInvApproximate
   public :: Hunt, HuntRange, IFApproximate
   public :: InterpolateArraySetup, InterpolateArrayTeardown, InterpolateValues
+  public :: PureHunt
   public :: SetUp, Simpsons, SimpsonsSub
   public :: UseLookUpTable
 
@@ -405,6 +408,10 @@ module MLSNumerics              ! Some low level numerical stuff
 
   interface psimpsons
     module procedure psimpsons_r4, psimpsons_r8
+  end interface
+
+  interface purehunt
+    module procedure purehunt_r4, purehunt_r8
   end interface
 
   interface reposit
@@ -1872,6 +1879,19 @@ contains
 
   end subroutine Interp_Bilinear_2d_1d_r8
 
+! -------------------------------------------------  PureHunt  -----
+! A binary search routine with a hunt procedure, to start from last known
+! location (if 0 < JLO < N) or from the begining otherwise.
+  pure subroutine purehunt_r4 ( ELEMENT, ARRAY, N, JLO, JHI )
+    integer, parameter :: RK = kind(0.0e0)
+    include 'hunt.f9h'
+  end subroutine purehunt_r4
+
+  pure subroutine purehunt_r8 ( ELEMENT, ARRAY, N, JLO, JHI )
+    integer, parameter :: RK = kind(0.0d0)
+    include 'hunt.f9h'
+  end subroutine purehunt_r8
+
 ! -------------------------------------------------  SetUp  -----
 
   ! This family of routines sets up a uniDiscFunction of the appropriate type
@@ -2314,6 +2334,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.70  2011/08/26 17:52:49  pwagner
+! purehunt recovers optimized functionality of fwdmdls own hunt
+!
 ! Revision 2.69  2011/08/26 00:23:56  pwagner
 ! Moved Simpson and CSpline functionality here from fwdmdl
 !
