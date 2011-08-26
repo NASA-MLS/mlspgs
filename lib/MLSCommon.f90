@@ -13,8 +13,8 @@
 module MLSCommon                ! Common definitions for the MLS software
 !=============================================================================
 
-  use ieee_arithmetic, only: ieee_is_finite, ieee_is_nan
-  use MLSKinds ! Everything
+  use IEEE_ARITHMETIC, only: IEEE_IS_FINITE, IEEE_IS_NAN
+  use MLSKINDS ! EVERYTHING
 
   implicit none
   private
@@ -30,6 +30,7 @@ module MLSCommon                ! Common definitions for the MLS software
 ! ip, rp        integer, floating point types used in forward model
 ! rv            floating point type used in vector quantity values
 ! rm            floating point type used in matrix values
+! rt            floating point type used in topo-set values
 ! NameLen       character-length of quantity names
 ! LineLen       character-length of most input
 ! FileNameLen   character-length of path/filenames
@@ -48,14 +49,16 @@ module MLSCommon                ! Common definitions for the MLS software
 ! L2Metadata_T  Coords of (lon,lat) box to write as metadata
 ! MLSFile_T     File name, type, id, etc.
 ! Range_T       Bottom, Top of PCFID range
+! Interval_T    Bottom, Top of a real interval (open)
 ! TAI93_Range_T start, end times in TAI93 formatted r8
 
 !     (subroutines and functions)
-! inRange       does an argument lie with a specified range
+! inRange       does an argument lie with a specified range or interval
 ! is_what_ieee  is an argument a specified ieee type
 ! === (end of toc) ===                                                   
 ! === (start of api) ===
 ! log inRange( int arg, Range_T range )
+! log inRange( real arg, Interval_T range )
 ! log is_what_ieee( int what, num arg )
 ! === (end of api) ===
 
@@ -77,6 +80,7 @@ module MLSCommon                ! Common definitions for the MLS software
   public :: Range_T
   public :: TAI93_Range_T
   public :: L2Metadata_T
+  public :: Interval_T
 
   ! Make parameters gotten from MLSKinds public
 
@@ -88,6 +92,7 @@ module MLSCommon                ! Common definitions for the MLS software
   public :: rm
   public :: rp
   public :: ip
+  public :: rt
   public :: rv
   
   ! The following are integer flags 'signalling' what kind of ieee number
@@ -97,8 +102,12 @@ module MLSCommon                ! Common definitions for the MLS software
   integer, public, parameter :: NAN_SIGNAL    = INF_SIGNAL + 1
   integer, public, parameter :: FILL_SIGNAL   = NAN_SIGNAL + 1
 
+  interface inRange
+    module procedure inRange_r4, inRange_r8, inRange_int
+  end interface
+
   interface is_what_ieee
-    module procedure is_what_ieee_r4, is_what_ieee_r8, is_what_ieee_INTEGER
+    module procedure is_what_ieee_r4, is_what_ieee_r8, is_what_ieee_integer
     module procedure is_what_ieee_character
   end interface
   
@@ -129,14 +138,19 @@ module MLSCommon                ! Common definitions for the MLS software
     integer :: grp_id   = 0 ! group id
     integer :: sd_id    = 0 ! sd or swath id
   end type Fileids_T
-  ! --------------------------------------------------------------------------
 
   ! A PCFid range
-
   type Range_T
     integer :: Bottom   = 0
     integer :: Top      = 0
   end type Range_T
+
+  ! An open real interval
+  type Interval_T
+    real(rt) :: Bottom   = 0._rt
+    real(rt) :: Top      = 0._rt
+  end type Interval_T
+
   ! --------------------------------------------------------------------------
 
   ! Moved here from MLSFiles module
@@ -174,7 +188,7 @@ module MLSCommon                ! Common definitions for the MLS software
   ! --------------------------------------------------------------------------
 
   ! The TAI93 time range
-
+  ! Must be r8 because otherwise seconds since 1993 will be truncated
   type TAI93_Range_T
     real(r8) :: startTime ! TAI93 format
     real(r8) :: endTime   ! TAI93 format
@@ -192,13 +206,29 @@ module MLSCommon                ! Common definitions for the MLS software
 
   contains
 
-  elemental function inRange(arg, range) result(relation)
+  elemental function inRange_int(arg, range) result(relation)
     ! Is arg in range?
     integer, intent(in)       :: arg
     type(Range_T), intent(in) :: range
     logical                   :: relation
     relation = (arg < (range%top + 1)) .and. (arg > (range%bottom - 1))
-  end function inRange
+  end function inRange_int
+
+  elemental function inRange_r4(arg, range) result(relation)
+    ! Is arg in range?
+    real(r4), intent(in)       :: arg
+    type(Interval_T), intent(in) :: range
+    logical                   :: relation
+    relation = (arg < range%top) .and. (arg > range%bottom)
+  end function inRange_r4
+
+  elemental function inRange_r8(arg, range) result(relation)
+    ! Is arg in range?
+    real(r8), intent(in)       :: arg
+    type(Interval_T), intent(in) :: range
+    logical                   :: relation
+    relation = (arg < range%top) .and. (arg > range%bottom)
+  end function inRange_r8
 
   elemental function is_what_ieee_r8( what, arg ) result( itIs )
     ! Args
@@ -281,7 +311,7 @@ module MLSCommon                ! Common definitions for the MLS software
       itIs = .false. ! what signal flag did you mean? not recognized
     end select
   end function is_what_ieee_character
-
+  
 !=============================================================================
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -298,6 +328,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.36  2011/08/26 00:27:48  pwagner
+! Added Interval_T
+!
 ! Revision 2.35  2010/11/30 00:33:27  pwagner
 ! Added instance for character arg to is_what_ieee
 !
