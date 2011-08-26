@@ -1035,7 +1035,7 @@ contains
   !%
   ! which can be expressed in matrix-vector form as $\xi^T Z \eta$.
 
-    use D_HUNT_M, only: HUNT
+    use MLSNUMERICS, only: PUREHUNT
     use MLSKINDS, only: RP, R8
     use READ_MIE_M, only: F_S, IWC_S, T_S
 
@@ -1073,7 +1073,7 @@ contains
     i_i = 0
     t_i = 0
 
-    call hunt ( frq, f_s, size(f_s), f_i(1), f_i(2) )
+    call purehunt ( frq, f_s, size(f_s), f_i(1), f_i(2) )
     n_f = merge(f_i(1), f_i(2), frq-f_s(f_i(1)) < frq-f_s(f_i(2)))
 
     !ocl independent
@@ -1085,8 +1085,8 @@ contains
         if ( associated(dBdT) ) dBdT(j) = 0.0
       else
         log10_IWC = log10(iwc_path(path_inds(j)))
-        call hunt ( log10_IWC, iwc_s, size(iwc_s), i_i(1), i_i(2) )
-        call hunt ( t_path(j), t_s, size(t_s), t_i(1), t_i(2) )
+        call purehunt ( log10_IWC, iwc_s, size(iwc_s), i_i(1), i_i(2) )
+        call purehunt ( t_path(j), t_s, size(t_s), t_i(1), t_i(2) )
         i_fac = (log10_IWC - iwc_s(i_i(1))) / (iwc_s(i_i(2)) - iwc_s(i_i(1)))
         t_fac = (t_path(j) - t_s(t_i(1))) / (t_s(t_i(2)) - t_s(t_i(1)))
         eta = reshape( (/ (1.0 - t_fac) * (1.0 - i_fac), &
@@ -1108,7 +1108,7 @@ contains
   subroutine Create_Beta_Path_PFA ( Frq, P_Path, Path_Inds, T_Path, Vel_Rel, &
     & PFAD, Ratio, Beta_Path, T_Der_Path, dBdT, dBdw, dBdn, dBdv )
 
-    use D_HUNT_M, only: HUNT
+    use MLSNUMERICS, only: PUREHUNT
     use MLSKINDS, only: RP, R8
     use PFADATABASE_M, only: PFADATA_T
 
@@ -1167,11 +1167,11 @@ contains
 
       ! Get interpolating factors
       logT = log(t_path(j))
-      call hunt ( logT, PFAD%tGrid%surfs(:,1), PFAD%tGrid%noSurfs, &
+      call purehunt ( logT, PFAD%tGrid%surfs(:,1), PFAD%tGrid%noSurfs, &
         & t_i1, t_i2 )
       del_t = PFAD%tGrid%surfs(t_i2,1) - PFAD%tGrid%surfs(t_i1,1)
       t_fac = (logT - PFAD%tGrid%surfs(t_i1,1)) / del_t
-      call hunt ( p_path(k), PFAD%vGrid%surfs(:,1), PFAD%vGrid%noSurfs, &
+      call purehunt ( p_path(k), PFAD%vGrid%surfs(:,1), PFAD%vGrid%noSurfs, &
         & p_i1, p_i2 )
       p_fac = (p_path(k) - PFAD%vGrid%surfs(p_i1,1)) / &
         & (PFAD%vGrid%surfs(p_i2,1) - PFAD%vGrid%surfs(p_i1,1))
@@ -1590,6 +1590,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.108  2011/08/25 18:17:46  vsnyder
+! Remove unused use names
+!
 ! Revision 2.107  2011/07/29 01:57:47  vsnyder
 ! Only IWC instead of IWC_A and IWC_S
 !

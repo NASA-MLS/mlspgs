@@ -322,7 +322,7 @@ contains
       & COMP_SPS_PATH_NO_FRQ, COMP_1_SPS_PATH_NO_FRQ
     use COMPUTE_GL_GRID_M, only: COMPUTE_GL_GRID
     use CONSTANTS, only: DEG2RAD, RAD2DEG
-    use D_HUNT_M, only: HUNT
+    ! use D_HUNT_M, only: HUNT
     use DUMP_0, only: DUMP
     use FILTERSHAPES_M, only: DACSFILTERSHAPES, FILTERSHAPES
     use FORWARDMODELCONFIG, only: BETA_GROUP_T, CHANNELS_T, &
@@ -340,7 +340,7 @@ contains
     use MATRIXMODULE_1, only: MATRIX_T
     use MLSKINDS, only: R4, R8, RP, RV
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
-    use MLSNUMERICS, only: HUNT, INTERPOLATEVALUES
+    use MLSNUMERICS, only: HUNT, INTERPOLATEVALUES, PUREHUNT
     use MLSSIGNALS_M, only: ARESIGNALSSUPERSET, GETNAMEOFSIGNAL, MATCHSIGNAL, &
       & RADIOMETERS, SIGNAL_T
     use MLSSTRINGLISTS, only: SWITCHDETAIL
@@ -2136,8 +2136,8 @@ contains
 
       j = -1
       k = SIZE(GridFrequencies)
-      call Hunt ( min_ch_freq_grid, GridFrequencies, k, j, l )
-      call Hunt ( max_ch_freq_grid, GridFrequencies, k, l, m )
+      call purehunt ( min_ch_freq_grid, GridFrequencies, k, j, l )
+      call purehunt ( max_ch_freq_grid, GridFrequencies, k, l, m )
       noFreqs = m - j + 1
       call allocate_test ( frequencies, noFreqs, "frequencies", moduleName )
 
@@ -4478,6 +4478,12 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.327  2011/08/12 18:59:57  vsnyder
+! Add Do_Calc_Fzp into one call to Comp_Sps_Path_Frq, because it is no longer
+! optional, and it is actually needed where it wasn't specified.  Add checks
+! that temperature and mixing ratio quantities for which derivatives are
+! requested appear in the first state vector.
+!
 ! Revision 2.326  2011/07/29 01:55:18  vsnyder
 ! Use CloudIce instead of Cloud_A and Cloud_S.  Only one IWC, not IWC_A and
 ! IWC_S.  More dumps.

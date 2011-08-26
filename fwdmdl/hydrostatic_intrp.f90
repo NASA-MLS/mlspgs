@@ -10,8 +10,8 @@
 ! foreign countries or providing access to foreign persons.
 
 module HYDROSTATIC_INTRP
-  use MLSCommon, only: I4, R8
-  use D_HUNT_M, only: HUNT
+  use MLSKINDS, only: I4, R8
+  use MLSNUMERICS, only: PUREHUNT
   implicit NONE
   private
   public :: GET_HEIGHTS, GET_PRESSURES
@@ -75,7 +75,7 @@ contains
     klo = -1
     do i = 1, n_o
       rr = p_out(i)
-      Call hunt ( rr, z_grid, n_i, klo, khi )
+      call purehunt ( rr, z_grid, n_i, klo, khi )
       p = z_grid(klo)
       v = v_grid(klo)
       if (abs(rr-p) < eps) then
@@ -171,7 +171,7 @@ contains
     klo = -1
     do i = 1, n_o
       rr = v_out(i)
-      Call hunt ( rr, v_grid, n_i, klo, khi )
+      call purehunt ( rr, v_grid, n_i, klo, khi )
       v = v_grid(klo)
       p = z_grid(klo)
       if (abs(rr-v) < eps) then
@@ -236,6 +236,9 @@ contains
 
 end module HYDROSTATIC_INTRP
 ! $Log$
+! Revision 2.6  2009/06/23 18:26:11  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.5  2006/11/30 23:20:57  vsnyder
 ! Move a USE from module scope to subprogram scope
 !

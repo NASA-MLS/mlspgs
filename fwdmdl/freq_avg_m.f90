@@ -46,8 +46,8 @@ contains
                           & Avg )
 
     ! use D_CSPLINE_M, only: CSPLINE
-    use MLSNumerics, only: INTERPOLATEVALUES, SIMPS => SIMPSONSSUB
-    use MLSCommon, only: R8, RP
+    use MLSNUMERICS, only: INTERPOLATEVALUES, SIMPS => SIMPSONSSUB
+    use MLSKINDS, only: R8, RP
 
     real(r8), intent(in) :: F_grid(:), F_grid_fltr(:), Fltr_func(:)
     real(rp), intent(in) :: Rad(:)
@@ -90,7 +90,7 @@ contains
     use DFFT_M, only: DTCST
     use FilterShapes_m, only: DACSFILTERSHAPE_T
     use MLSKINDS, only: I4, R8, RP
-    use MLSNumerics, only: HUNT, INTERPOLATEVALUES
+    use MLSNumerics, only: HUNT, INTERPOLATEVALUES, PUREHUNT
     use SineTables_m, only: CREATESINETABLE, N_SINE => LOGSIZE_SINETABLE_R8, &
       & SINES => SINETABLE_R8
 
@@ -128,12 +128,8 @@ contains
 
     n = size(f_grid)
     klo = -1
-    ! call Hunt ( Fmin, F_grid, n, klo, i )
-    ! call Hunt ( Fmax, F_grid, n, i, khi )
-    call Hunt ( F_grid, Fmin, klo )
-    i = min(klo+1, n)
-    call Hunt ( F_grid, Fmax, i )
-    khi = min(i+1, n)
+    call purehunt ( Fmin, F_grid, n, klo, i )
+    call purehunt ( Fmax, F_grid, n, i, khi )
 
     rmin = minval(Rad(klo:khi))
     rmax = maxval(Rad(klo:khi))
@@ -168,7 +164,7 @@ contains
 
     ! Determine which frequencies from F_Grid to use to span F_Grid_Fltr
 
-    use MLSNumerics, only: HUNT
+    use MLSNumerics, only: HUNT, PUREHUNT
     use MLSKINDS, only: R8
 
     real(r8), intent(in) :: F_grid(:), F_grid_fltr(:)
@@ -193,12 +189,8 @@ contains
     end if
 
     klo = -1
-    ! call Hunt ( Fmin, F_grid, n, klo, i )
-    ! call Hunt ( Fmax, F_grid, n, i, khi )
-    call Hunt ( F_grid, Fmin, klo )
-    i = min(klo+1, n)
-    call Hunt ( F_grid, Fmax, i )
-    khi = min(i+1, n)
+    call purehunt ( Fmin, F_grid, n, klo, i )
+    call purehunt ( Fmax, F_grid, n, i, khi )
 
   end subroutine Freq_Avg_Setup
 
@@ -215,6 +207,9 @@ contains
 end module Freq_Avg_m
 
 ! $Log$
+! Revision 2.17  2011/08/26 01:21:16  pwagner
+! Fixed obvious bugs in call to Hunt
+!
 ! Revision 2.16  2011/08/26 00:31:09  pwagner
 ! CSpline and Hunt now USE MLSNumerics
 !
