@@ -716,8 +716,8 @@ install-idlcfm: idlcfm
 install-l1: l1
 	@$(MAKE) -f $(MakeFName) install LEVELS=l1
 
-install-l2: l2
-	@$(MAKE) -f $(MakeFName) install LEVELS=l2
+install-l2: l2-delayed
+	$(MAKE) -f $(MakeFName) install LEVELS=l2
 
 install-l3: l3
 	@$(MAKE) -f $(MakeFName) install LEVELS="l3 l3m"
@@ -730,6 +730,14 @@ install-l3m: l3m
 
 install-nrt: install-l1 install-l2
 	@cp $(MLSBIN)/mlsnrt.sh $(INSTALLDIR)
+
+# For reasons not yet understood, executables built
+# directly by "make install-LEVEL" did not always
+# run properly, sometimes generating errors during tree_checker
+l2-delayed: l2
+	/bin/rm -f l2/$(MLSCONFG)/mlsl2
+	$(MAKE) levels LEVELS=l2
+
 
 # Build executables out of sources from mlspgs/util directory
 # Let the build script know if the compiler requires
@@ -1269,6 +1277,9 @@ tools: chunktimes checkpvmup compare dateconverter \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.130  2011/06/16 00:12:49  pwagner
+# Corrected syntax error in test for license.txt
+#
 # Revision 1.129  2011/05/16 22:35:13  pwagner
 # Added idlcfm
 #
