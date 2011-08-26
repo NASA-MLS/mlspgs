@@ -130,9 +130,9 @@ contains
     klo = -1
     ! call Hunt ( Fmin, F_grid, n, klo, i )
     ! call Hunt ( Fmax, F_grid, n, i, khi )
-    call Hunt ( F_grid, Fmin, n, klo )
+    call Hunt ( F_grid, Fmin, klo )
     i = min(klo+1, n)
-    call Hunt ( F_grid, Fmax, n, i )
+    call Hunt ( F_grid, Fmax, i )
     khi = min(i+1, n)
 
     rmin = minval(Rad(klo:khi))
@@ -195,9 +195,9 @@ contains
     klo = -1
     ! call Hunt ( Fmin, F_grid, n, klo, i )
     ! call Hunt ( Fmax, F_grid, n, i, khi )
-    call Hunt ( F_grid, Fmin, n, klo )
+    call Hunt ( F_grid, Fmin, klo )
     i = min(klo+1, n)
-    call Hunt ( F_grid, Fmax, n, i )
+    call Hunt ( F_grid, Fmax, i )
     khi = min(i+1, n)
 
   end subroutine Freq_Avg_Setup
@@ -215,6 +215,9 @@ contains
 end module Freq_Avg_m
 
 ! $Log$
+! Revision 2.16  2011/08/26 00:31:09  pwagner
+! CSpline and Hunt now USE MLSNumerics
+!
 ! Revision 2.15  2009/06/23 18:26:11  pwagner
 ! Prevent Intel from optimizing ident string away
 !
