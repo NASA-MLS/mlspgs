@@ -34,7 +34,7 @@ contains ! =====     Public Procedures     =============================
     ! datum.
 
     use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
-    use DSIMPSON_MODULE, only: SIMPS
+    use MLSNUMERICS, only: SIMPS => SIMPSONSSUB
     use DUMP_0, only: DUMP
     use FILTERSHAPES_M, only: DACSFILTERSHAPES, FILTERSHAPES, FILTERSHAPE_T
     use INTRINSIC, only: LIT_INDICES, L_NONE
@@ -293,9 +293,9 @@ contains ! =====     Public Procedures     =============================
 
     ! ...........................................  Announce_Error  .....
     subroutine Announce_Error ( Where, What, String, More )
-      use MoreTree, only: StartErrorMessage
-      use Output_m, only: Output
-      use String_Table, only: Display_String
+      use MORETREE, only: STARTERRORMESSAGE
+      use OUTPUT_M, only: OUTPUT
+      use STRING_TABLE, only: DISPLAY_STRING
       integer, intent(in) :: Where             ! Tree node index
       integer, intent(in) :: What              ! Error index
       character(len=*), intent(in), optional :: String
@@ -373,7 +373,7 @@ contains ! =====     Public Procedures     =============================
 
     ! ....................................  Work_Out_Spectroscopy  .....
     subroutine Work_Out_Spectroscopy
-      use MLSSignals_m, only: GetRadiometerFromSignal
+      use MLSSignals_m, only: GETRADIOMETERFROMSIGNAL
       skipIt = .false. ! Assume there will be lines and/or continuum
       ! Don't deallocate lines by mistake -- myCatalog is a shallow copy
       nullify ( myCatalog%lines )
@@ -438,6 +438,9 @@ contains ! =====     Public Procedures     =============================
 end module Create_PFAData_m
 
 ! $Log$
+! Revision 2.26  2011/08/26 00:31:39  pwagner
+! CSpline and Hunt now USE MLSNumerics
+!
 ! Revision 2.25  2011/05/09 17:44:26  pwagner
 ! Converted to using switchDetail
 !
