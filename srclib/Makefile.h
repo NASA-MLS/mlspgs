@@ -72,6 +72,11 @@ libcloud_sources=../cloudfwdm
 # where cloud forward model objects and libfwdmdl.a are stored
 libcloud_objs=$(libcloud_sources)/$(MLSCONFG)
 
+# where certain databses are stored relating to species, molecules, etc.
+# currently used only by make to build mol_parm.f9h and mol_add.f9h
+# for which see special rules in customblds
+TABLES_DIR=../tables
+
 # where the platforms directory is
 PLATFORMS = .
 
@@ -163,7 +168,8 @@ else
   BLAS_PREQS := $(blaslib_f) $(libblas_objs)/Makefile
   LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
      $(machine_f) \
-     $(libblas_objs)/libmlspack.a $(REECHO) $(libmls_objs)/Makefile
+     $(libblas_objs)/libmlspack.a $(REECHO) $(libmls_objs)/Makefile \
+     $(TABLES_DIR)/sps_cross_ref_table.txt
   FM_LIB_prereqs=$(libfwdmdl_f90) $(libmls_objs)/libmls.a \
      $(libfwdmdl_objs)/Makefile
   CLD_LIB_prereqs=$(libcloud_f90) $(libmls_objs)/libmls.a \
@@ -212,6 +218,9 @@ $(INSTALLDIR)/libutctotai.a:
 	$(MAKE) -f $(MakeFName) utctotai -C $(CONFDIR) $(UPTODATEMARKS)
 
 # $Log$
+# Revision 1.2  2011/03/25 00:58:18  pwagner
+# Fixed bug preventing proper rebuilding of .F90 sources
+#
 # Revision 1.1  2010/10/12 22:20:26  pwagner
 # First commit
 #
