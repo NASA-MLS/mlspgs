@@ -13,18 +13,18 @@
 module MLSNumerics              ! Some low level numerical stuff
 !=============================================================================
 
-  use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use DUMP_0, only : DUMP, SELFDIFF
-  use MatrixModule_0, only: CreateBlock, M_Absent, MatrixElement_T, Sparsify
-  use MLSCommon, only : UndefinedValue
-  use MLSFillValues, only: IsFillValue, ReplaceFillValues, Rerank
-  use MLSKinds, only: R4, R8, Rm
-  use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
-    & MLSMessage
-  use MLSSets, only: FindFirst, FindLast
-  use MLSStrings, only: Capitalize, Trim_safe
-  use Output_m, only: Blanks, Output, OutputNamedValue
-  use Symm_Tri, only: Factor_Symm_Tri, Solve_Factored_Symm_Tri
+  use MATRIXMODULE_0, only: CREATEBLOCK, M_ABSENT, MATRIXELEMENT_T, SPARSIFY
+  use MLSCOMMON, only : UNDEFINEDVALUE
+  use MLSFILLVALUES, only: ISFILLVALUE, REPLACEFILLVALUES, RERANK
+  use MLSKINDS, only: I4, R4, R8, RM
+  use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, &
+    & MLSMESSAGE
+  use MLSSETS, only: FINDFIRST, FINDLAST
+  use MLSSTRINGS, only: CAPITALIZE, TRIM_SAFE
+  use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE
+  use SYMM_TRI, only: FACTOR_SYMM_TRI, SOLVE_FACTORED_SYMM_TRI
 
   implicit none
 
@@ -74,7 +74,8 @@ module MLSNumerics              ! Some low level numerical stuff
 ! InterpolateValues        Interpolate for new y value(s):
 !                            given old (x,y), new (x), method
 ! Setup                    Fill y values in UniDiscFunction
-! Simpsons                 Apply Simpson's rule to calculate -- ooh, donuts
+! Simpsons                 Apply Simpson's rule to integrate--function form
+! SimpsonsSub              Apply Simpson's rule to integrate--a subroutine
 ! UseLookUpTable           Use LookUpTable to approximate function
 !                            (or its derivatives or integral)
 ! === (end of toc) ===
@@ -119,6 +120,7 @@ module MLSNumerics              ! Some low level numerical stuff
 ! Setup ( UnifDiscreteFn_nprec UDF, int N, nprec x1, nprec x2, [ nprec y(:)], &
 !    [char* BC], [nprec yLeft], [nprec yRight], [extern nprec fun] )
 ! nprec Simpsons ( int n, nprec h, nprec y(:) )
+! SimpsonsSub ( nprec y(:), nprec h, int n, nprec r )
 ! nprec UseLookUpTable ( nprec x, nprec table(:), [nprec x1], [nprec x2], &
 !    [nprec xtable(:), [nprec missingValue], [char* options], &
 !    [nprec xS], [nprec xE] )
@@ -133,7 +135,7 @@ module MLSNumerics              ! Some low level numerical stuff
   public :: FApproximate, FillLookUpTable, FindInRange, FInvApproximate
   public :: Hunt, HuntRange, IFApproximate
   public :: InterpolateArraySetup, InterpolateArrayTeardown, InterpolateValues
-  public :: SetUp, Simpsons
+  public :: SetUp, Simpsons, SimpsonsSub
   public :: UseLookUpTable
 
   type, public :: Coefficients_R4
@@ -331,6 +333,10 @@ module MLSNumerics              ! Some low level numerical stuff
     module procedure CreateXArray_r4, CreateXArray_r8
   end interface
 
+  interface CSPLINE
+    module procedure D_CSPLINE, S_CSPLINE
+  end interface
+
   interface Destroy
     module procedure destroyUnifDiscreteFn_r4, destroyUnifDiscreteFn_r8
   end interface
@@ -393,6 +399,10 @@ module MLSNumerics              ! Some low level numerical stuff
     module procedure Interp_Bilinear_2d_1d_r4, Interp_Bilinear_2d_1d_r8
   end interface
 
+  interface pcspl
+    module procedure D_PCSPL, S_PCSPL
+  end interface
+
   interface psimpsons
     module procedure psimpsons_r4, psimpsons_r8
   end interface
@@ -408,6 +418,10 @@ module MLSNumerics              ! Some low level numerical stuff
 
   interface simpsons
     module procedure simpsons_r4, simpsons_r8
+  end interface
+
+  interface SimpsonsSub
+    module procedure simps_r4, simps_r8
   end interface
 
   interface UseLookUpTable
@@ -1520,9 +1534,15 @@ contains
   ! This next subroutine is a workhorse interpolation routine, loosely based on
   ! my (Nathaniel) IDL routine of the same name.
 
-  ! Method is one of 'L'inear, or 'S'pline
+  ! Method is one of 'L'inear, 'C'spline, or 'S'pline
   !                                (Numerical Recipes, more later no doubt)
   ! Extrapolate is one of 'A'llow, 'C'onstant, 'B'ad or 'P'eriodic (Spline only)
+
+  ! The 'C' spline was simply moved here from the fwdmdl directory
+  ! it appears similar to the 'S'pline except constraining the newY values
+  ! that exceed either
+  ! (a) 125% of the value that would result from linear interpolation; or
+  ! (b) the hard bounds set by the optional parameters [yMin, ymax]
 
   ! Notes:
   !   oldX must be monotonically increasing or decreasing
@@ -1659,7 +1679,7 @@ contains
 ! This subroutine is a scalar wrapper for the array one.
 
   subroutine InterpolateScalar_r4 ( oldX, oldY, newX, newY, method, extrapolate, &
-    & badValue, missingRegions, dyByDx, RangeOfPeriod, skipNewY, IntYdX )
+    & badValue, missingRegions, dyByDx, RangeOfPeriod, skipNewY, IntYdX, YMIN, YMAX )
     integer, parameter :: RK = R4
 
     ! Dummy arguments
@@ -1677,6 +1697,7 @@ contains
     logical, optional, intent(in) :: SKIPNEWY ! Don't compute newY
     real(rk), dimension(:), optional, intent(out) :: IntYdX ! Antiderivative
                                               ! of Y at X
+    real(rk), optional, intent(in) :: YMIN, YMAX
 
     include "InterpolateScalar.f9h"
   end subroutine InterpolateScalar_r4
@@ -1684,7 +1705,7 @@ contains
 ! -----------------------------------------  InterpolateScalar_r8  -----
 
   subroutine InterpolateScalar_r8 ( oldX, oldY, newX, newY, method, extrapolate, &
-    & badValue, missingRegions, dyByDx, RangeOfPeriod, skipNewY, IntYdX )
+    & badValue, missingRegions, dyByDx, RangeOfPeriod, skipNewY, IntYdX, YMIN, YMAX )
     integer, parameter :: RK = R8
 
     ! Dummy arguments
@@ -1702,6 +1723,7 @@ contains
     logical, optional, intent(in) :: SKIPNEWY ! Don't compute newY
     real(rk), dimension(:), optional, intent(out) :: IntYdX ! Antiderivative
                                               ! of Y at X
+    real(rk), optional, intent(in) :: YMIN, YMAX
 
     include "InterpolateScalar.f9h"
   end subroutine InterpolateScalar_r8
@@ -1916,6 +1938,20 @@ contains
       UDF%y(i) = fun( x1 + (i-1)*(x2-x1)/(N-1) )
     enddo
   end subroutine setUpUnifDiscreteFn_r8
+
+! -------------------------------------------------  SimSubroutine  -----
+  ! This family provides subroutine apis to integration by Simpson's rule
+  subroutine Simps_r4 ( F, DX, N, R )
+!  Simpson's Integration of discrete equal spacing
+    integer, parameter :: RK = r4
+    include 'simpson.f9h'
+  end subroutine Simps_r4
+
+  subroutine Simps_r8 ( F, DX, N, R )
+!  Simpson's Integration of discrete equal spacing
+    integer, parameter :: RK = r8
+    include 'simpson.f9h'
+  end subroutine Simps_r8
 
 ! -------------------------------------------------  UseLookUpTable  -----
 
@@ -2159,6 +2195,26 @@ contains
     real(rk), intent(in)               :: h
     real(rk), dimension(:), intent(in) :: y
     real(rk)                           :: sum
+    call SimpsonsSub( y, h, n, sum )
+  end function simpsons_r4
+
+  function simpsons_r8( n, h, y ) result (sum)
+    integer, parameter :: RK = R8
+    ! Args
+    integer, intent(in)                :: n
+    real(rk), intent(in)               :: h
+    real(rk), dimension(:), intent(in) :: y
+    real(rk)                           :: sum
+    call SimpsonsSub( y, h, n, sum )
+  end function simpsons_r8
+
+  function simpsons_r4_old( n, h, y ) result (sum)
+    integer, parameter :: RK = R4
+    ! Args
+    integer, intent(in)                :: n
+    real(rk), intent(in)               :: h
+    real(rk), dimension(:), intent(in) :: y
+    real(rk)                           :: sum
     ! Internal variables
     integer :: i
     integer :: n1
@@ -2183,9 +2239,9 @@ contains
     do i=n1, n-2, 2
       sum = sum + (h/3)*( y(i) + 4*y(i+1) + y(i+2) )
     enddo
-  end function simpsons_r4
+  end function simpsons_r4_old
 
-  function simpsons_r8( n, h, y ) result (sum)
+  function simpsons_r8_old( n, h, y ) result (sum)
     integer, parameter :: RK = R8
     ! Args
     integer, intent(in)                :: n
@@ -2216,7 +2272,32 @@ contains
     do i=n1, n-2, 2
       sum = sum + (h/3)*( y(i) + 4*y(i+1) + y(i+2) )
     enddo
-  end function simpsons_r8
+  end function simpsons_r8_old
+
+  ! This family was moved here from fwdmdl
+  subroutine D_CSPLINE (XIN, XOUT, YIN, YOUT, NIN, NOUT, YMIN, YMAX)
+    ! use D_HUNT_M, only: HUNT
+    ! use D_PCSPL_M, only: PCSPL
+    integer, parameter :: RK = kind(0.0d0)
+    include 'cspline.f9h'
+  end subroutine D_CSPLINE
+
+  subroutine S_CSPLINE (XIN, XOUT, YIN, YOUT, NIN, NOUT, YMIN, YMAX)
+    ! use S_HUNT_M, only: HUNT
+    ! use S_PCSPL_M, only: PCSPL
+    integer, parameter :: RK = kind(0.0e0)
+    include 'cspline.f9h'
+  end subroutine S_CSPLINE
+
+  subroutine D_PCSPL ( TAU, C, N, IBCBEG, IBCEND )
+    integer, parameter :: RK = kind(0.0d0)
+    include 'pcspl.f9h'
+  end subroutine D_PCSPL
+
+  subroutine S_PCSPL ( TAU, C, N, IBCBEG, IBCEND )
+    integer, parameter :: RK = kind(0.0e0)
+    include 'pcspl.f9h'
+  end subroutine S_PCSPL
 
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
@@ -2233,6 +2314,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.69  2011/08/26 00:23:56  pwagner
+! Moved Simpson and CSpline functionality here from fwdmdl
+!
 ! Revision 2.68  2011/08/20 00:47:14  vsnyder
 ! use IEEE_Arithmetic to get IEEE_Is_NaN
 !
