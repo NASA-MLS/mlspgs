@@ -11,16 +11,21 @@
 
 ! $Id$
 !  subroutine InterpolateScalar_r* ( oldX, oldY, newX, newY, method, extrapolate, &
-!    & badValue, missingRegions, dyByDx, RangeOfPeriod, skipNewY, IntYdX )
+!    & badValue, missingRegions, dyByDx, RangeOfPeriod, skipNewY, IntYdX, YMIN, YMAX )
 
   ! local working space
-    real(rk), dimension(:,:), pointer :: tempDerivative, tempIntegral
+    real(rk), dimension(:,:), pointer  :: tempDerivative, tempIntegral
     real(rk), dimension(size(newX), 1) :: tempResult
-    real(rk), dimension(size(oldY)) :: tempY
-    real(rk) period
-    integer jump, j
+    real(rk), dimension(size(oldY))    :: tempY
+    real(rk)                           :: period
+    integer                            :: jump, j
 
     ! Executable code
+
+    if ( Capitalize(method(1:1)) == 'C' ) then
+      call cspline( oldX, newX, oldY, newY, size(oldX), size(newX), yMin, yMax )
+      return
+    endif
 
     tempY = oldY
 
@@ -100,6 +105,9 @@
 !  end subroutine InterpolateScalar_r*
 
 ! $Log$
+! Revision 1.5  2007/06/25 20:29:24  vsnyder
+! Replace tabs by spaces, since tabs are nonstandard
+!
 ! Revision 1.4  2005/08/03 17:53:54  vsnyder
 ! Add antiderivatives
 !
