@@ -1001,6 +1001,9 @@ contains
     cur_end = 0
     cur_pos = 1
     inunit_counter = 0
+    ! inunit_list may not be null here if AddInUnit 
+    ! has been used before this call
+    if (associated(inunit_list)) deallocate(inunit_list)
     inunit_list => NULL()
   end subroutine
 
@@ -1017,6 +1020,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.32  2011/08/27 13:25:13  honghanh
+! Fix a memory leak bug in string_table regarding inunit_list
+!
 ! Revision 2.31  2011/07/22 18:29:22  vsnyder
 ! Produce a message in "string_text" instead of an empty string if the
 ! "string" argument to get_string is out of bounds and noError is present
