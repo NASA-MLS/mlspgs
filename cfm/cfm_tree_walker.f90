@@ -76,8 +76,9 @@ contains ! ====     Public Procedures     ==============================
             end if
          case ( z_MLSSignals )
             call MLSSignals ( son )
-         case ( z_Spectroscopy )
-            call spectroscopy ( son, TOOLKIT, mlspcf_spectroscopy_end, File_Data_Base )
+         ! Spectroscopy is read in a separate file
+!         case ( z_Spectroscopy )
+!            call spectroscopy ( son, TOOLKIT, mlspcf_spectroscopy_end, File_Data_Base )
          case default
             call print_unsupported_section_error (son, section_index)
          end select
@@ -123,6 +124,9 @@ contains ! ====     Public Procedures     ==============================
 end module
 
 ! $Log$
+! Revision 1.2  2010/05/23 02:12:38  honghanh
+! Add print_unsupported_section_error
+!
 ! Revision 1.1  2010/02/17 16:41:33  honghanh
 ! An example of using CFM_MLSSetup and creating a VGrid
 !
