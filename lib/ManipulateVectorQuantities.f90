@@ -413,12 +413,15 @@ contains
   end function DoVectorsMatch
 
   ! ------------------------------------------  DoVGridsMatch_Vec  -----
-  logical function DoVGridsMatch_Vec ( A, B )
+  logical function DoVGridsMatch_Vec ( A, B, RelativeError, Precision )
     ! Returns true if quantities have same vGrid information
     use MLSFillValues, only: ESSENTIALLYEQUAL
     type (vectorValue_T), intent(in) :: A ! First quantity
     type (vectorValue_T), intent(in) :: B ! Second quantity
-
+    real(rv), optional, intent(in)   :: RelativeError ! May differ by this rel amount
+    real(rv), optional, intent(in)   :: Precision ! May differ by this abs amount
+    real, parameter                  :: defaultRelativeError = 1.e-9
+    logical                          :: TestForSurfs
     ! Executable code
     doVGridsMatch_Vec = .false.
     if ( a%template%noSurfs /= b%template%noSurfs ) return
@@ -428,8 +431,26 @@ contains
     if ( a%template%regular .neqv. b%template%regular ) return
     if ( ( .not. a%template%coherent) .and. &
       &  ( a%template%noInstances /= b%template%noInstances ) ) return
-    if ( any ( .not. essentiallyEqual ( a%template%surfs, &
-                                        b%template%surfs ) ) ) return
+    ! Do we allow the corresponding surfaces any leeway? Relative or absolute?
+    if ( present(RelativeError) ) then
+      TestForSurfs = all ( abs(a%template%surfs - b%template%surfs) < &
+        & RelativeError*max(&
+        & maxval( abs(a%template%surfs) ), maxval( abs(b%template%surfs ) ) &
+        & ) &
+        & )
+    elseif ( present(Precision) ) then
+      TestForSurfs = all ( abs(a%template%surfs - b%template%surfs) < Precision )
+    elseif ( defaultRelativeError > 0. ) then
+      TestForSurfs = all ( abs(a%template%surfs - b%template%surfs) < &
+        & defaultRelativeError*max(&
+        & maxval( abs(a%template%surfs) ), maxval( abs(b%template%surfs ) ) &
+        & ) &
+        & )
+    else
+      TestForSurfs = all (  essentiallyEqual ( a%template%surfs, &
+                                      b%template%surfs ) )
+    endif
+    if ( .not. TestForSurfs ) return
     if (.not. a%template%regular ) then
       if ( any(a%template%surfIndex /= b%template%surfIndex) .or. &
         &  any(a%template%chanIndex /= b%template%chanIndex) ) return
@@ -509,6 +530,9 @@ contains
 end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.37  2011/08/29 21:29:41  pwagner
+! Granted some leeway in matching vgrids
+!
 ! Revision 2.36  2011/06/16 20:16:54  vsnyder
 ! Cannonball polishing
 !
