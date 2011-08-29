@@ -834,7 +834,9 @@ contains
     haveMatrices = present(MatrixDatabase)
     if ( haveMatrices ) haveMatrices = size(MatrixDatabase) > 0
     HaveHessians = present(HessianDatabase)
-    if ( HaveHessians ) HaveHessians = size(HessianDatabase) > 0
+    if ( HaveHessians ) then
+      if ( associated(HessianDatabase) ) HaveHessians = size(HessianDatabase) > 0
+    endif
     
     DetailReduction = switchDetail(switches, 'red')
     if ( DetailReduction < 0 ) then ! The 'red' switch is absent
@@ -1398,8 +1400,8 @@ contains
   contains
 
     subroutine AnnounceError ( where, what, string )
-      use MoreTree, only: StartErrorMessage
-      use Output_m, only: NewLine
+      use MoreTree, only: STARTERRORMESSAGE
+      use Output_m, only: NEWLINE
 
       integer, intent(in) :: What, Where
       character(len=*), intent(in), optional :: String
@@ -1524,6 +1526,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.63  2011/08/29 22:12:13  pwagner
+! Should not attempt to take size of disassociated pointer HessianDataBase
+!
 ! Revision 2.62  2011/06/02 19:25:01  pwagner
 ! May dump allRadiometers
 !
