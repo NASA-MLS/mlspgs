@@ -45,7 +45,7 @@ contains
       & BOOLEANFROMANYGOODVALUES, &
       & BOOLEANFROMCATCHWARNING, BOOLEANFROMCOMPARINGQTYS, BOOLEANFROMFORMULA, &
       & DUMPCOMMAND, SKIP
-    use HESSIANMODULE_1, only: HESSIAN_T
+    use HESSIANMODULE_1, only: HESSIAN_T, CREATEEMPTYHESSIAN
     use IEEE_ARITHMETIC, only: IEEE_IS_NAN
     use EXPR_M, only: EXPR
     use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
@@ -53,7 +53,7 @@ contains
       & F_AVERAGE, F_COLUMNSCALE, F_COMMENT, F_COVARIANCE, F_COVSANSREG, &
       & F_DIAGNOSTICS, F_DIAGONAL, F_EXTENDEDAVERAGE, &
       & F_FORWARDMODEL, F_FUZZ, F_FWDMODELEXTRA, F_FWDMODELOUT, &
-      & F_HIGHBOUND, F_HREGORDERS, F_HREGQUANTS, F_HREGWEIGHTS, &
+      & F_HESSIAN, F_HIGHBOUND, F_HREGORDERS, F_HREGQUANTS, F_HREGWEIGHTS, &
       & F_HREGWEIGHTVEC, F_JACOBIAN, F_LAMBDA, F_LEVEL, F_LOWBOUND, &
       & F_MAXJ, F_MEASUREMENTS, F_MEASUREMENTSD, F_METHOD, F_MUMIN, &
       & F_NEGATESD, &
@@ -183,6 +183,7 @@ contains
                                         ! only l_Newtonian.
     type(matrix_T), target :: MyAverage ! for OutputAverage to point to
     type(matrix_SPD_T), target :: MyCovariance    ! for OutputCovariance to point at
+    type(hessian_T), target :: MyHessian          ! for Jacobian to point at
     type(matrix_T), target :: MyJacobian          ! for Jacobian to point at
     real(rv) :: MuMin                   ! Smallest shrinking of dx before change direction
     logical :: NegateSD                 ! Flip output error negative for poor information
@@ -604,6 +605,15 @@ contains
         if ( error == 0 ) then
 
           if ( switchDetail ( switches, 'rtv' ) > -1 ) call DumpRetrievalConfig
+
+          ! Create the Hessian object
+          if ( got(f_hessian) ) then
+            call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'Not ready to handle a Hessian field in Retrieve command yet' )
+          else
+            hessian => myHessian
+            hessian = createEmptyHessian ( 0, measurements, state )
+          end if
 
           ! Create the Jacobian matrix
           if ( got(f_jacobian) ) then
@@ -2815,6 +2825,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.314  2011/08/29 22:13:42  pwagner
+! Predefine Hessian object in parallel with Jacobian matrix
+!
 ! Revision 2.313  2011/05/09 18:24:31  pwagner
 ! Converted to using switchDetail
 !
