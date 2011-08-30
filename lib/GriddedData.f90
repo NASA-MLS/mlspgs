@@ -478,6 +478,7 @@ contains
       if (status /= 0) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_DeAllocate//"qty%field")
     end if
+    qty%empty = .true.
 
   end subroutine DestroyGriddedData
 
@@ -1713,6 +1714,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.66  2011/08/30 22:22:29  pwagner
+! Destroying a Griddeddata now sets empty to TRUE so we can dump it later w/o error
+!
 ! Revision 2.65  2011/06/29 21:37:17  pwagner
 ! Corrected bug in recalculating downsized dim sizes
 !

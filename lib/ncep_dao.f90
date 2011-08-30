@@ -25,7 +25,7 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCOMMON, only: LINELEN, NAMELEN, FILENAMELEN, R8, R4, &
     & UNDEFINEDVALUE, MLSFILE_T
-  use MLSFILES, only: FILENOTFOUND, &
+  use MLSFILES, only: FILENOTFOUND, HDFVERSION_5, &
     & DUMP, GETPCFROMREF, MLS_HDF_VERSION, OPEN_MLSFILE, CLOSE_MLSFILE, &
     & SPLIT_PATH_NAME, MLS_OPENFILE, MLS_CLOSEFILE
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
@@ -164,6 +164,14 @@ contains
     ! According to the kinds of gridded data files we can read
     select case ( trim(LIT_DESCRIPTION) )
     case ('geos5_7')
+      ! Check that hdf version is OK
+      if ( mls_hdf_version( GriddedFile%Name ) /= HDFVERSION_5 ) then
+        the_g_data%empty = .true.
+        returnStatus = FILENOTFOUND
+        call MLSMessage( MLSMSG_Warning, ModuleName, &
+          & 'Not an hdf5 file so could not be geos 5.7.x' )
+        return
+      endif
       call Read_geos5_7( GriddedFile, lcf_where, v_type, &
         & the_g_data, GeoDimList, fieldName, date, sumDelp )
       if ( DEEBUG ) then
@@ -2521,6 +2529,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.66  2011/08/30 22:23:46  pwagner
+! Should not try to read as geos5_7 if not hdf5
+!
 ! Revision 2.65  2011/08/03 22:50:03  pwagner
 ! Repaired syntax of write; removed unused variables; updated toc
 !
