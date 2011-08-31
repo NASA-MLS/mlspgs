@@ -161,7 +161,7 @@ SHELL = /bin/sh
 # l1, l2, ..     -- pges named mlsl1, mlsl2, ..
 
 #                           (functional)
-# clean          -- deletes only *.o, *.mod from sub-subs
+# clean          -- deletes all targets built inside sub-subs and INSTALLDIR
 # configure      -- runs mlsconfigure to (re)set compiler, platform, paths
 #                   (invoked automatically if .configure not found)
 # configure_fopts  
@@ -208,6 +208,7 @@ SHELL = /bin/sh
 # makefile       -- allows you to summon this custom Makefile with shorter
 #                    "make" rather than laborious "make -f $(MakeFName)"
 # mostlyclean    -- deletes uniquely-named sub-sub-directories
+# partialclean   -- deletes only *.o, *.mod from sub-subs
 # tools          -- build and install programs in the list below
 # update         -- replaces customized Makefiles with latest versions
 #                    also recalculates dependenencies, removes orphaned .o, .mod
@@ -486,9 +487,9 @@ mostlyclean:
 	@$(MAKE) -f $(MakeFName) internalcleanup
 
 clean:
-	@echo "Cleaning objects from $(SUBDIRS)"; \
-	 for dir in $(SUBDIRS); do \
-	  $(MAKE) -f $(MakeFName) -C $$dir clean; \
+	@echo "Cleaning objects from $(SUBDIRS) bin"; \
+	 for dir in $(SUBDIRS) bin; do \
+	  rm -f -r $$dir/$(MLSCONFG); \
 	done
 	@$(MAKE) -f $(MakeFName) internalcleanup ; \
 
@@ -738,6 +739,12 @@ l2-delayed: l2
 	/bin/rm -f l2/$(MLSCONFG)/mlsl2
 	$(MAKE) levels LEVELS=l2
 
+partialclean:
+	@echo "Cleaning objects from $(SUBDIRS)"; \
+	 for dir in $(SUBDIRS); do \
+	  $(MAKE) -f $(MakeFName) -C $$dir clean; \
+	done
+	@$(MAKE) -f $(MakeFName) internalcleanup ; \
 
 # Build executables out of sources from mlspgs/util directory
 # Let the build script know if the compiler requires
@@ -1264,7 +1271,7 @@ tools: chunktimes checkpvmup compare dateconverter \
   install-l1 install-l2 install-l3 install-l3d install-l3m install-nrt \
   internalcleanup internaldepends internalmftests internalsaymake \
   internaladd_copy internalreset_copy show_copy internalupdate levels l2q \
-  makefile mostlyclean Spartacus $(SUBDIRS) subdirs\
+  makefile mostlyclean partialclean Spartacus $(SUBDIRS) subdirs\
   substar tarz substarz targ substarg substars tar update\
   checkpvmup chunktimes CondenseLeakLog end_stmts f90tex Goldbrick_More \
   heconvert init_gen \
@@ -1277,6 +1284,9 @@ tools: chunktimes checkpvmup compare dateconverter \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.131  2011/08/26 00:40:14  pwagner
+# Attempt to workaround tree_checker error in mlsl2
+#
 # Revision 1.130  2011/06/16 00:12:49  pwagner
 # Corrected syntax error in test for license.txt
 #
