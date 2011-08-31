@@ -178,8 +178,14 @@ contains
     n_path = size(inc_rad_path)
 
 !{ $-W_i = -\sum_{j=2}^i \frac{\partial \Delta \delta_{j \rightarrow j - 1}}
-!                           {\partial x_k}$,
+!                           {\partial x}$,
 !  where the derivative is given by {\tt D_DELTA_DT}.
+!
+! $\frac{\text{d}I(\mathbf{x})}{\text{d}x} :=
+!  \frac{\text{d}I(\mathbf{x})}{\text{d}x}
+!  + \frac{\partial \Delta B_i}{\partial x} \mathcal{T}_i +
+!  \Delta B_i \mathcal{T}_i W_i$, where $\Delta B_i \mathcal{T}_i$ is given
+!  by {\tt INC_RAD_PATH(i)}. See {\tt wvs-024}.
 
     do i = max(2,i_start), min(i_end,tan_pt)
       w = w - d_delta_dt(i)
@@ -350,6 +356,9 @@ contains
 
 end module SCRT_DN_M
 ! $Log$
+! Revision 2.20  2011/07/29 01:48:13  vsnyder
+! Remove tabs (Intel compiler complains)
+!
 ! Revision 2.19  2011/07/08 20:51:22  yanovsky
 ! Minor comments changes
 !
