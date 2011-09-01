@@ -25,7 +25,7 @@ module MatrixTools                      ! Various tools for matrices
   implicit none
   private
 
-  public :: DumpBlocks, CombineChannelsInMatrix
+  public :: DumpBlocks, CombineChannelsInMatrix, PVMSendMatrix
 
   ! Local paramters
   integer, parameter :: MTXMSGTAG = 202
@@ -865,7 +865,7 @@ contains ! =====  Public procedures  ===================================
 
     ! Executable code
     ! Pack the number of blocks
-    call PVMIDLPack ( (/ rc%nelts /), info )
+    call PVMIDLPack ( rc%nb, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, 'Packing NB' )
 
     ! Pack the indices
@@ -903,7 +903,9 @@ contains ! =====  Public procedures  ===================================
     myJustPack = .false.
     if (present(justPack)) myJustPack = justPack
 
-    if (.not. myJustPack) call PVMFInitSend ( PvmDataDefault, bufferID )
+    if (.not. myJustPack) then
+        call PVMFInitSend ( PvmDataDefault, bufferID )
+    endif
     call PVMPackRC ( matrix%col )
     call PVMPackRC ( matrix%row )
 
@@ -951,6 +953,9 @@ contains ! =====  Public procedures  ===================================
 end module MatrixTools
 
 ! $Log$
+! Revision 1.34  2011/08/20 00:49:37  vsnyder
+! Remove unused use names and variable declarations
+!
 ! Revision 1.33  2010/08/06 23:02:36  pwagner
 ! Moved to using only switchdetail; negative index deplored
 !
