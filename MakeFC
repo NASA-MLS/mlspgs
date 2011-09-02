@@ -717,7 +717,8 @@ install-idlcfm: idlcfm
 install-l1: l1
 	@$(MAKE) -f $(MakeFName) install LEVELS=l1
 
-install-l2: l2-delayed
+#install-l2: l2-delayed
+install-l2: l2
 	$(MAKE) -f $(MakeFName) install LEVELS=l2
 
 install-l3: l3
@@ -735,9 +736,11 @@ install-nrt: install-l1 install-l2
 # For reasons not yet understood, executables built
 # directly by "make install-LEVEL" did not always
 # run properly, sometimes generating errors during tree_checker
-l2-delayed: l2
-	/bin/rm -f l2/$(MLSCONFG)/mlsl2
-	$(MAKE) levels LEVELS=l2
+# This double-make has been moved down to the l2 directory
+# so we no longer to do it here
+# l2-delayed: l2
+# 	/bin/rm -f l2/$(MLSCONFG)/mlsl2
+# 	$(MAKE) levels LEVELS=l2
 
 partialclean:
 	@echo "Cleaning objects from $(SUBDIRS)"; \
@@ -1284,6 +1287,9 @@ tools: chunktimes checkpvmup compare dateconverter \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.132  2011/08/31 19:04:29  pwagner
+# clean now does a more thorough job
+#
 # Revision 1.131  2011/08/26 00:40:14  pwagner
 # Attempt to workaround tree_checker error in mlsl2
 #
