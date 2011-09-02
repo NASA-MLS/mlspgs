@@ -7,6 +7,7 @@
 
  * Compile it like this:
    cc -g -o h5subset h5subset.c -lhdf5 
+   (You may need  -DH5_USE_16_API with HDF5-1.8, depends how the lib was built)
  * and run it like this:
    ./h5subset infile outfile varfoo,varbar,varbaz........
 
@@ -16,6 +17,7 @@
  * varfoo,varbar etc can be groups as well as datasets. 
  
  *  Copyright (c) © H. C. Pumphrey 2001 */
+
 
 
 #include <stdio.h>
