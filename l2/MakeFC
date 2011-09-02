@@ -49,8 +49,18 @@ CUSTOM_PREFXD := $(shell ${REECHO} -prefix=-db $(CUSTOM_BUILDS))
 
 #----------------------- Build instructions
 
-$(PROG): $(PROG_prereqs)
-		@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
+$(PROG): $(PROG_prereqs) mlsl2-delayed
+	$(MAKE) the_program
+
+# For reasons not yet understood, executables built
+# directly by make did not always
+# run properly, sometimes generating errors during tree_checker
+mlsl2-delayed: $(PROG_prereqs)
+	$(MAKE) the_program
+	/bin/rm -f $(PLATFORMS)/$(MLSCONFG)/mlsl2
+
+the_program: $(PROG_prereqs)
+	@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
         UNPREFXDPTHS="$(ADD2PATHS)" MARK_ALL_AS_UPTODATE=no;\
         return_status=`expr $$?` ; \
         if [ $$return_status != "0" ]; then \
@@ -146,6 +156,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.74  2011/09/02 18:35:36  pwagner
+# Double-make workaround for tree_checker issue moved here
+#
 # Revision 2.73  2011/05/26 20:40:48  pwagner
 # Small tweaks; do they fix anything?
 #
