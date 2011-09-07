@@ -1,5 +1,5 @@
 ; noChans is only needed when frequencies is not specified 
-pro CreateQuantity, quantity, name, type, instanceOffset, value=value, logbasis=logbasis, startValue=startValue, badValue=badValue, molecule=molecule, module=instrumentModule, signal=signal, radiometer=radiometer, frequencies=frequencies, frequencyCoordinate=frequencyCoordinate, noChans=noChans, surfs=surfaces, nosurfs=noSurfs, verticalCoordinate=verticalCoordinate, noprofs=noprofs, phi=phi, geodlat=geodlat, longitude=lon, losAngle=losAngle, solarZenith=solarZenith, solarTime=solarTime, time=time, mask=mask, coherence=coherence
+pro CreateQuantity, quantity, name, type, instanceOffset, value=value, logbasis=logbasis, startValue=startValue, badValue=badValue, molecule=molecule, module=instrumentModule, signal=signal, radiometer=radiometer, frequencies=frequencies, frequencyCoordinate=frequencyCoordinate, noChans=noChans, surfs=surfaces, nosurfs=noSurfs, verticalCoordinate=verticalCoordinate, noprofs=noprofs, phi=phi, geodlat=geodlat, longitude=lon, losAngle=losAngle, solarZenith=solarZenith, solarTime=solarTime, time=time, mask=mask
 
     ; Sanitize data type
     if size(type, /type) ne 7 then MyMessage, /error, "type must be string."
@@ -27,11 +27,6 @@ pro CreateQuantity, quantity, name, type, instanceOffset, value=value, logbasis=
     if n_elements(solarTime) gt 0 and size(solarTime, /type) ne 5 then MyMessage, /error, "solarTime must be double."
     if n_elements(time) gt 0 and size(time, /type) ne 5 then MyMessage, /error, "time must be double."
     if n_elements(noprofs) gt 0 and size(noprofs, /type) ne 3 then MyMessage, /error, "noprofs must be long."
-;    if n_elements(phi) ne n_elements(geodlat) or n_elements(lon) ne n_elements(losAngle) $
-;    or n_elements(solarZenith) ne n_elements(solarTime)  $
-;    or n_elements(geodlat) ne n_elements(losAngle) $
-;    or n_elements(solarTime) ne n_elements(time) or n_elements(geodlat) ne n_elements(time) $
-;    then MyMessage, /error, "phi, geodlat, lon, losAngle, solarZenith, solarTime, time must all be absent or present with the same number of elements"
     if n_elements(mask) gt 0 then begin
         sz1 = size(value)
         sz2 = size(mask)
@@ -86,16 +81,19 @@ pro CreateQuantity, quantity, name, type, instanceOffset, value=value, logbasis=
     if n_elements(surfaces) ne 0 then begin
         quantity = create_struct(['surfaces'], surfaces, quantity)
     endif
+
+    ; setting noSurfs to a default value of 1 is to imitate what's done
+    ; in the Fortran version of the library in cfm/cfm_qtytemplate.f90
     if n_elements(noSurfs) eq 0 then noSurfs = 1L
     quantity = create_struct(['noSurfs'], noSurfs, quantity)
     if n_elements(verticalCoordinate) ne 0 then begin
         quantity = create_struct(['verticalCoordinate'], verticalCoordinate, quantity)
     endif
-    if n_elements(noprofs) ne 0 then begin
-        quantity = create_struct(['noInstances'], noProfs, quantity)
-    endif else begin
-        quantity = create_struct(['noInstances'], 1L, quantity)
-    endelse
+
+    ; setting noProfs to a default value of 1 is also to imitate what's done
+    ; in the Fortran version of the library
+    if n_elements(noprofs) eq 0 then noprofs = 1L
+    quantity = create_struct(['noInstances'], noProfs, quantity)
     if n_elements(phi) ne 0 then begin
         quantity = create_struct(['phi'], phi, quantity)
     endif
@@ -121,10 +119,39 @@ pro CreateQuantity, quantity, name, type, instanceOffset, value=value, logbasis=
     if (n_elements(mask) ne 0) then begin
         quantity = create_struct(['mask'], mask, quantity)
     endif
-    if (n_elements(coherence) ne 0) then begin
-        if coherence then coherence = 1L else coherence = 0L
-        quantity = create_struct(['coherence'], coherence, quantity)
+
+    ; Set coherence based on the dimension of surfs
+    ; Coherence only matters if surfaces is present
+    ; if surfaces is not present, it can be set to any value,
+    ; but it must be set nonetheless.
+    ; if surfaces[nosurfs, noprofs] or surfaces[noprofs, nosurfs], 
+    ; then the quantity is not coherent. Else, it's coherent.
+    ; Here, noSurfs is guaranteed to be defined, and to be at least 1L
+    if n_elements(surfaces) eq noSurfs then coherence = 1L else coherence = 0L
+    quantity = create_struct(['coherent'], coherence, quantity)
+
+    ; Set stack based on the dimension of one of the hgrid related fields.
+    
+    ; the size of any 'solartime', 'losangle', 'lon', 'time', 'geodlat',
+    ; 'phi', 'solarzenith' if present, should be the same
+    n_solartime = n_elements(solartime)
+    n_losangle = n_elements(losangle)
+    n_lon = n_elements(lon)
+    n_time = n_elements(time)
+    n_phi = n_elements(phi)
+    n_geodlat = n_elements(geodlat)
+    n_solarzenith = n_elements(solarzenith)
+    n = [n_solartime, n_losangle, n_lon, n_time, n_phi, n_geodlat, n_solarzenith]
+    max_n = max(n)
+    if any(n ne max_n and n ne 0) then begin
+        MyMessage, /error, "The fields 'phi', 'solartime', 'geodlat', 'losangle', 'solarzenith', 'time', 'lon' if present, must have the same number of elements."
     endif
+
+    ; If n_elements of 'solartime', 'losangle', 'lon', 'time', 'geodlat',
+    ; 'phi', 'solarzenith' equal to noprofs, then the quatity is stacked.
+    if max_n eq noprofs then stack = 1L else stack = 0L
+    quantity = create_struct(['stacked'], stack, quantity)
+
     quantity.instanceLen = quantity.noSurfs * quantity.noChans
 
     if n_elements(value) gt 0 then begin

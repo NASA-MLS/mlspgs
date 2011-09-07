@@ -1,5 +1,7 @@
 ; This subroutine utilize some subroutines in AtGod
-pro ForwardModel, tid, info, mafNo, state, stateExtra, measurement, output
+pro ForwardModel, tid, info, mafNo, state, stateExtra, outputTemplate, output, jacobian=jacobian, doDerivative=doDerivative
+    if keyword_set(doDerivative) then doDerivative = 1L else doDerivative = 0L
+
     bufid = pvm_initsend()
 
     pvm_pack_idltypeinfo, 2L
@@ -7,7 +9,10 @@ pro ForwardModel, tid, info, mafNo, state, stateExtra, measurement, output
 
     icfm_sendvector, state, /packonly
     icfm_sendvector, stateExtra, /packonly
-    icfm_sendvector, measurement, /packonly
+    icfm_sendvector, outputTemplate, /packonly
+
+    pvm_pack_idltypeinfo, doDerivative
+    pvm_pack_idlvariable, doDerivative
 
     mafNo = long(mafNo)
     pvm_pack_idltypeinfo, mafNo
@@ -18,9 +23,13 @@ pro ForwardModel, tid, info, mafNo, state, stateExtra, measurement, output
     if n_elements(tid) eq 1 then info = pvm_send(tid=tid(0), msgtag=msgtag) $
     else info = pvm_mcast(tids=tid, msgtag=msgtag)
 
-    icfm_receivequantities, output, tid, msgtag
+    ; using AtMatrix requires using AtGod
+    icfm_receivequantities, output, tid=tid, msgtag=msgtag
     ;createvector, output, measurement.name
     ;for i=0, n_tags(quantities)-1 do begin
     ;    addquantity2vector, output, quantities.(i), /overwrite
     ;endfor
+
+    msgtag = 202L ; different for receiving matrix
+    if doDerivative then icfm_receivematrix, jacobian, tid, msgtag
 end

@@ -26,6 +26,8 @@ pro core2qty, core, qty, name, type, signal=signal, molecule=molecule, module=mo
              end
     endcase
 
+    help, core
+
     tags = tag_names(core)
     nosurfs = long(core.nosurfs)
     noprofs = long(core.noprofs)
@@ -114,7 +116,7 @@ pro core2qty, core, qty, name, type, signal=signal, molecule=molecule, module=mo
     createquantity, qty, name, type, 0L, value=value, logbasis=logbasis, $
     startval=startval, noChans=noAux, surfs=surfs, verticalCoordinate=vcoord, $
     phi=phi, losangle=losangle, longitude=lon, geodlat=lat, time=time, $
-    noProfs=noProfs, noSurfs=noSurfs, coherence=core.coherence, signal=signal, $
+    noProfs=noProfs, noSurfs=noSurfs, signal=signal, $
     solarzenith=solarzenith, solartime=solartime, module=module, $
     frequencies=frequencies, frequencyCoordinate=fcoord, $
     badval=double(core.baddata), molecule=molecule, radiometer=radiometer

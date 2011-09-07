@@ -29,9 +29,11 @@ pro ICFM_SendQuantity, qty, tid=tid, info=info, msgtag=msgtag, packonly=packonly
     has_instancelen = where(tags eq 'INSTANCELEN') gt -1
     has_value = where(tags eq 'VALUE') gt -1
     has_mask = where(tags eq 'MASK') gt -1
-    has_coherence = where (tags eq 'COHERENCE') gt -1
+    has_coherent = where (tags eq 'COHERENT') gt -1
+    has_stacked = where (tags eq 'STACKED') gt -1
 
-    l28 = [has_name, has_type, has_offset, has_coherence, $
+    l29 = [has_name, has_type, has_offset, has_coherent, $
+           has_stacked, $
            has_logbasis, has_startval, has_badval, $
            has_molecule, has_module, has_signal, $
            has_radiometer, has_frequencies, has_fCoord, $
@@ -39,9 +41,9 @@ pro ICFM_SendQuantity, qty, tid=tid, info=info, msgtag=msgtag, packonly=packonly
            has_phi, has_geodlat, has_lon, has_losAngle, $
            has_solarzenith, has_solartime, has_time, $
            has_noprofs, has_instancelen, has_value, has_mask]
-    l28 = long(temporary(l28)) and 'ffff'xL
-    pvm_pack_idltypeinfo, l28
-    pvm_pack_idlvariable, l28
+    l29 = long(temporary(l29)) and 'ffff'xL
+    pvm_pack_idltypeinfo, l29
+    pvm_pack_idlvariable, l29
 
     if has_name then begin
         pvm_pack_idltypeinfo, qty.name
@@ -58,10 +60,15 @@ pro ICFM_SendQuantity, qty, tid=tid, info=info, msgtag=msgtag, packonly=packonly
         pvm_pack_idlvariable, qty.instanceOffset
     endif else MyMessage, /error, "qty doesn't have 'instanceOffset' attribute"
 
-    if has_coherence then begin
-        pvm_pack_idltypeinfo, qty.coherence
-        pvm_pack_idlvariable, qty.coherence
-    endif else MyMessage, /error, "qty doesn't have 'coherence' attribute"
+    if has_coherent then begin
+        pvm_pack_idltypeinfo, qty.coherent
+        pvm_pack_idlvariable, qty.coherent
+    endif else MyMessage, /error, "qty doesn't have 'coherent' attribute"
+
+    if has_stacked then begin
+        pvm_pack_idltypeinfo, qty.stacked
+        pvm_pack_idlvariable, qty.stacked
+    endif else MyMesssage, /error, "qty doesn't have 'stack' attribute"
 
     if has_logbasis then begin
         pvm_pack_idltypeinfo, qty.logbasis
