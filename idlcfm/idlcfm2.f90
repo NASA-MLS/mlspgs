@@ -46,13 +46,13 @@ module IDLCFM2_m
 
         logical :: mycallsend = .true.
         integer :: bufid
-        logical :: l28(28)
+        logical :: l29(28)
         type(QuantityTemplate_T) :: template
 
         integer, parameter :: P_NAME = 1
         integer, parameter :: P_TYPE = 2
         integer, parameter :: P_OFFSET = 3
-        integer, parameter :: P_COHERENCE = 4
+        integer, parameter :: P_COHERENT = 4
         integer, parameter :: P_LOGBASIS = 5
         integer, parameter :: P_MINVALUE = 6
         integer, parameter :: P_BADVALUE = 7
@@ -80,44 +80,47 @@ module IDLCFM2_m
 
         if (present(callsend) .and. .not. callsend) mycallsend = .false.
 
-        if (mycallsend .and. .not. present(tid)) call MLSMessage (MLSMSG_Error, moduleName, "Missing 'tid'")
+        if (mycallsend .and. .not. present(tid)) then
+            call output (MLSMSG_Error, "Missing 'tid'")
+            return
+        endif
 
         if (mycallsend) call PVMFInitSend(PVMDataDefault, bufid)
 
         template = qty%template
 
-        l28(P_NAME) = template%name == 0
-        l28(P_TYPE) = template%quantityType == 0
-        l28(P_OFFSET) = .true.
-        l28(P_COHERENCE) = .true.
-        l28(P_LOGBASIS) = .true.
-        l28(P_MINVALUE) = template%logBasis !because if logBasis is false, no use for minValue
-        l28(P_BADVALUE) = .true.
-        l28(P_MOLECULE) = template%molecule == 0
-        l28(P_MODULE) = template%instrumentModule == 0
-        l28(P_SIGNAL) = template%signal == 0
-        l28(P_RADIOMETER) = template%radiometer == 0
-        l28(P_FREQUENCIES) = associated(template%frequencies) .and. size(template%frequencies) .gt. 0
-        l28(P_FCOORD) = l28(P_FREQUENCIES)
-        l28(P_NOCHANS) = template%noChans == 0
-        l28(P_NOSURFS) = template%noSurfs == 0
-        l28(P_SURFS) = associated(template%surfs) .and. size(template%surfs) .gt. 0
-        l28(P_VCOORD) = l28(P_SURFS)
-        l28(P_PHI) = associated(template%phi) .and. size(template%phi) .gt. 0
-        l28(P_GEODLAT) = associated(template%geodlat) .and. size(template%geodlat) .gt. 0
-        l28(P_LONGITUDE) = associated(template%lon) .and. size(template%lon) .gt. 0
-        l28(P_LOSANGLE) = associated(template%losAngle) .and. size(template%losangle) .gt. 0
-        l28(P_SOLARZENITH) = associated(template%solarZenith) .and. size(template%solarzenith) .gt. 0
-        l28(P_SOLARTIME) = associated(template%solarTime) .and. size(template%solartime) .gt. 0
-        l28(P_TIME) = associated(template%time) .and. size(template%time) .gt. 0
+        l29(P_NAME) = template%name == 0
+        l29(P_TYPE) = template%quantityType == 0
+        l29(P_OFFSET) = .true.
+        l29(P_COHERENT) = .true.
+        l29(P_LOGBASIS) = .true.
+        l29(P_MINVALUE) = template%logBasis !because if logBasis is false, no use for minValue
+        l29(P_BADVALUE) = .true.
+        l29(P_MOLECULE) = template%molecule == 0
+        l29(P_MODULE) = template%instrumentModule == 0
+        l29(P_SIGNAL) = template%signal == 0
+        l29(P_RADIOMETER) = template%radiometer == 0
+        l29(P_FREQUENCIES) = associated(template%frequencies) .and. size(template%frequencies) .gt. 0
+        l29(P_FCOORD) = l29(P_FREQUENCIES)
+        l29(P_NOCHANS) = template%noChans == 0
+        l29(P_NOSURFS) = template%noSurfs == 0
+        l29(P_SURFS) = associated(template%surfs) .and. size(template%surfs) .gt. 0
+        l29(P_VCOORD) = l29(P_SURFS)
+        l29(P_PHI) = associated(template%phi) .and. size(template%phi) .gt. 0
+        l29(P_GEODLAT) = associated(template%geodlat) .and. size(template%geodlat) .gt. 0
+        l29(P_LONGITUDE) = associated(template%lon) .and. size(template%lon) .gt. 0
+        l29(P_LOSANGLE) = associated(template%losAngle) .and. size(template%losangle) .gt. 0
+        l29(P_SOLARZENITH) = associated(template%solarZenith) .and. size(template%solarzenith) .gt. 0
+        l29(P_SOLARTIME) = associated(template%solarTime) .and. size(template%solartime) .gt. 0
+        l29(P_TIME) = associated(template%time) .and. size(template%time) .gt. 0
         ! this variable reflect the size of multiple arrays, so just send it for simplicity
-        l28(P_NOPROFS) = .true.
-        l28(P_INSTANCELEN) = .true.
-        l28(P_VALUE) = associated(qty%values) .and. size(qty%values) .gt. 0
-        l28(P_MASK) = associated(qty%mask) .and. size(qty%mask) .gt. 0
+        l29(P_NOPROFS) = .true.
+        l29(P_INSTANCELEN) = .true.
+        l29(P_VALUE) = associated(qty%values) .and. size(qty%values) .gt. 0
+        l29(P_MASK) = associated(qty%mask) .and. size(qty%mask) .gt. 0
 
-        call PVMIDLPack(l28, info)
-        print *, "packing l28 ", l28
+        call PVMIDLPack(l29, info)
+        print *, "packing l29 ", l29
 
         if (mycallsend) then
             call PVMFSend ( tid, QtyMsgTag, info )
@@ -148,38 +151,40 @@ module IDLCFM2_m
         logical, optional, intent(in) :: callrecv !true if this subroutine should call PVMFRecv, default is false
 
         integer, parameter :: P_NAME = 1
-        integer, parameter :: P_TYPE = 2
-        integer, parameter :: P_OFFSET = 3
-        integer, parameter :: P_COHERENCE = 4
-        integer, parameter :: P_LOGBASIS = 5
-        integer, parameter :: P_MINVALUE = 6
-        integer, parameter :: P_BADVALUE = 7
-        integer, parameter :: P_MOLECULE = 8
-        integer, parameter :: P_MODULE = 9
-        integer, parameter :: P_SIGNAL = 10
-        integer, parameter :: P_RADIOMETER = 11
-        integer, parameter :: P_FREQUENCIES = 12
-        integer, parameter :: P_FCOORD = 13
-        integer, parameter :: P_NOCHANS = 14
-        integer, parameter :: P_SURFS = 15
-        integer, parameter :: P_VCOORD = 16
-        integer, parameter :: P_NOSURFS = 17
-        integer, parameter :: P_PHI = 18
-        integer, parameter :: P_GEODLAT = 19
-        integer, parameter :: P_LONGITUDE = 20
-        integer, parameter :: P_LOSANGLE = 21
-        integer, parameter :: P_SOLARZENITH = 22
-        integer, parameter :: P_SOLARTIME = 23
-        integer, parameter :: P_TIME = 24
-        integer, parameter :: P_NOPROFS = 25
-        integer, parameter :: P_INSTANCELEN = 26
-        integer, parameter :: P_VALUE = 27
-        integer, parameter :: P_MASK = 28
+        integer, parameter :: P_TYPE = P_NAME + 1
+        integer, parameter :: P_OFFSET = P_TYPE + 1
+        integer, parameter :: P_COHERENT = P_OFFSET + 1
+        integer, parameter :: P_STACKED = P_COHERENT + 1
+        integer, parameter :: P_LOGBASIS = P_STACKED + 1
+        integer, parameter :: P_MINVALUE = P_LOGBASIS + 1
+        integer, parameter :: P_BADVALUE = P_MINVALUE + 1
+        integer, parameter :: P_MOLECULE = P_BADVALUE + 1
+        integer, parameter :: P_MODULE = P_MOLECULE + 1
+        integer, parameter :: P_SIGNAL = P_MODULE + 1
+        integer, parameter :: P_RADIOMETER = P_SIGNAL + 1
+        integer, parameter :: P_FREQUENCIES = P_RADIOMETER + 1
+        integer, parameter :: P_FCOORD = P_FREQUENCIES + 1
+        integer, parameter :: P_NOCHANS = P_FCOORD + 1
+        integer, parameter :: P_SURFS = P_NOCHANS + 1
+        integer, parameter :: P_VCOORD = P_SURFS + 1
+        integer, parameter :: P_NOSURFS = P_VCOORD + 1
+        integer, parameter :: P_PHI = P_NOSURFS + 1
+        integer, parameter :: P_GEODLAT = P_PHI + 1
+        integer, parameter :: P_LONGITUDE = P_GEODLAT + 1
+        integer, parameter :: P_LOSANGLE = P_LONGITUDE + 1
+        integer, parameter :: P_SOLARZENITH = P_LOSANGLE + 1
+        integer, parameter :: P_SOLARTIME = P_SOLARZENITH + 1
+        integer, parameter :: P_TIME = P_SOLARTIME + 1
+        integer, parameter :: P_NOPROFS = P_TIME + 1
+        integer, parameter :: P_INSTANCELEN = P_NOPROFS + 1
+        integer, parameter :: P_VALUE = P_INSTANCELEN + 1
+        integer, parameter :: P_MASK = P_VALUE + 1
+        integer, parameter :: P_LAST = P_MASK + 1
 
         ! Local variables
         integer :: BUFFERID                 ! From pvm
         integer :: INFO                     ! Flag
-        logical :: l28(28)
+        logical :: l29(P_LAST - 1)
         logical, dimension(noProperties) :: PROPERTIES ! Properties for this quantity type
         character(len=32) :: signalString
         integer, dimension(:), pointer :: SignalInds ! From parse signal
@@ -189,36 +194,53 @@ module IDLCFM2_m
         integer, dimension(2) :: hshape ! shape of hgrid-related fields
 
         ! Executable code
+        ! First, sanitize our input
+        if (associated(values) .or. associated(mask)) then
+            call output(MLSMSG_Error, &
+            "'values' and 'mask' parameters must be nullified before receiving quantity")
+            return
+        endif
+
         hshape = 0
+        call InitializeQuantityTemplate(qt)
+        nullify(channels, signalinds)
 
         ! Get buffer, we'll wait for it, assume the calling code knows it's coming.
         if (present(callrecv)) then
             if(callrecv) call PVMFrecv ( tid, QtyMsgTag, bufferID )
         endif
 
-        call PVMIDLUnpack(l28, info)
+        call PVMIDLUnpack(l29, info)
         if ( info /= 0 ) then
-            call PVMErrorMessage ( info, "unpacking l28." )
+            call PVMErrorMessage ( info, "unpacking l29." )
+            call clearout
             return
         endif
-!        print *, "l28 ", l28
+!        print *, "l29 ", l29
 
-        if (l28(P_NAME)) then
+        if (l29(P_NAME)) then
             call PVMUnpackStringIndex ( qt%name, info)
             if ( info /= 0 ) then
                 call PVMErrorMessage ( info, "unpacking name" )
+                call clearout
                 return
             endif
 !            print *, "name " , qt%name
         endif
 
-        if (l28(P_TYPE)) then
+        if (l29(P_TYPE)) then
             call PVMUnpackLitIndex ( qt%quantityType, info )
             if ( info /= 0 ) then
                 call PVMErrorMessage ( info, "unpacking quantityType" )
+                call clearout
                 return
             endif
 !            print *, "type " , qt%quantityType
+            if (qt%quantityType < 0) then
+                call output(MLSMSG_Error, "invalid quantity type")
+                call clearout
+                return
+            endif
             qt%unit = unitsTable(qt%quantityType)
 !            print *, "unit ", qt%unit
             properties = propertyTable(:, qt%quantityType)
@@ -228,78 +250,95 @@ module IDLCFM2_m
 !            print *, "minorFrame ", qt%minorFrame
         endif
 
-        if (l28(P_OFFSET)) then
+        if (l29(P_OFFSET)) then
             call PVMIDLUnpack(qt%instanceOffset, info)
             if (info /=0 ) then
                 call PVMErrorMessage ( info, "unpacking instanceOffset" )
+                call clearout
                 return
             endif
 !            print *, "instanceOffset ", qt%instanceOffset
         endif
 
-        if (l28(P_COHERENCE)) then
+        if (l29(P_COHERENT)) then
             call PVMIDLUnpack(qt%coherent, info)
             if (info /= 0) then
-                call PVMErrorMessage(info, "unpacking coherence")
+                call PVMErrorMessage(info, "unpacking coherent")
+                call clearout
                 return
             endif
 !            print *, "coherence ", qt%coherent
         endif
 
-        if (l28(P_LOGBASIS)) then
+        if (l29(P_STACKED)) then
+            call PVMIDLUnpack(qt%stacked, info)
+            if (info /= 0) then
+                call PVMErrorMessage(info, "unpacking stacked")
+                call clearout
+                return
+            endif
+!            print *, "stack ", qt%stack
+        endif
+
+        if (l29(P_LOGBASIS)) then
             call PVMIDLUnpack(qt%logbasis, info)
             if (info /=0 ) then
                 call PVMErrorMessage ( info, "unpacking logbasis" )
+                call clearout
                 return
             endif
 !            print *, "logbasis ", qt%logbasis
         endif
 
-        if (l28(P_MINVALUE)) then
+        if (l29(P_MINVALUE)) then
             call PVMIDLUnpack(qt%minvalue, info)
             if (info /=0 ) then
                 call PVMErrorMessage ( info, "unpacking minvalue" )
+                call clearout
                 return
             endif
 !            print *, "minvalue ", qt%minvalue
         endif
 
-        if (l28(P_BADVALUE)) then
+        if (l29(P_BADVALUE)) then
             call PVMIDLUnpack(qt%badvalue, info)
             if (info /=0 ) then
                 call PVMErrorMessage ( info, "unpacking badvalue" )
+                call clearout
                 return
             endif
 !            print *, "badvalue ", qt%badvalue
         endif
 
-        if (l28(P_MOLECULE)) then
+        if (l29(P_MOLECULE)) then
             call PVMUnpackLitIndex(qt%molecule, info)
             if (info /=0 ) then
                 call PVMErrorMessage ( info, "unpacking molecule" )
+                call clearout
                 return
             endif
 !            print *, "molecule ", qt%molecule
         endif
 
-        if (l28(P_MODULE)) then
+        if (l29(P_MODULE)) then
             call PVMIDLUnpack(signalString, info)
             if (info /=0 ) then
                 call PVMErrorMessage ( info, "unpacking instrumentModule" )
+                call clearout
                 return
             endif
             call GetModuleIndex(signalString, qt%instrumentModule)
 !            print *, "instrumentModule ", qt%instrumentModule
         endif
 
-        if (l28(P_SIGNAL)) then
+        if (l29(P_SIGNAL)) then
             call PVMIDLUnpack(signalString, info)
             if (info /=0 ) then
                 call PVMErrorMessage ( info, "unpacking signalString" )
+                call clearout
                 return
             endif
 !            print *, "signalString ", signalString
-            nullify(signalInds, channels)
             call parse_Signal ( signalString, signalInds, sideband=sideband, channels=channels)
             qt%signal = signalInds(1)
             qt%sideband = sideband
@@ -309,10 +348,11 @@ module IDLCFM2_m
             qt%instrumentModule = GetModuleFromSignal(qt%signal)
         endif
 
-        if (l28(P_RADIOMETER)) then
+        if (l29(P_RADIOMETER)) then
             call PVMIDLUnpack(radiometerString, info)
             if (info /=0 ) then
                 call PVMErrorMessage ( info, "unpacking radiometerString" )
+                call clearout
                 return
             endif
 !            print *, "radiometerString ", radiometerString
@@ -325,227 +365,298 @@ module IDLCFM2_m
 !            print *, "module ", qt%instrumentModule
         endif
 
-        if (l28(P_NOCHANS)) then
+        if (l29(P_NOCHANS)) then
             call PVMIDLUnpack(qt%noChans, info)
             if (info /=0 ) then
                 call PVMErrorMessage ( info, "unpacking noChans" )
+                call clearout
                 return
             endif
 !            print *, "noChans ", qt%noChans
         endif
 
-        if (l28(P_FCOORD)) then
+        if (l29(P_FCOORD)) then
             call PVMUnpackLitIndex(qt%frequencyCoordinate, info)
             if (info /=0 ) then
                 call PVMErrorMessage ( info, "unpacking frequencyCoordinate" )
+                call clearout
                 return
             endif
 !            print *, "frequencyCoordinate ", qt%frequencyCoordinate
         endif
 
-        if (l28(P_FREQUENCIES)) then
-            call allocate_test(qt%frequencies, qt%noChans, "qt%frequencies", moduleName)
+        if (l29(P_FREQUENCIES)) then
+            allocate(qt%frequencies(qt%noChans), stat=info)
+            if (info /= 0) then
+                call output(MLSMSG_Error, "Out of memory")
+                call clearout
+            endif
             call PVMIDLUnpack(qt%frequencies, info)
             if (info /=0 ) then
                 call PVMErrorMessage ( info, "unpacking frequencies" )
+                call clearout
                 return
             endif
 !            print *, "frequencies ", qt%frequencies
         endif
 
-        if (l28(P_NOSURFS)) then
+        if (l29(P_NOSURFS)) then
             call PVMIDLUnpack(qt%noSurfs, info)
             if (info /=0 ) then
                 call PVMErrorMessage ( info, "unpacking noSurfs" )
+                call clearout
                 return
             endif
 !            print *, "noSurfs ", qt%noSurfs
         endif
 
-        if (l28(P_NOPROFS)) then
+        if (l29(P_NOPROFS)) then
             call PVMIDLUnpack(qt%noInstances, info)
             if (info /=0 ) then
                 call PVMErrorMessage ( info, "unpacking noInstances" )
+                call clearout
                 return
             endif
 !            print *, "noProfs ", qt%noInstances
         endif
 
-        if (l28(P_PHI)) then
-            if (qt%coherent) then
-                call allocate_test(qt%phi, 1, qt%noInstances, "qt%phi", moduleName)
+        if (l29(P_PHI)) then
+            if (qt%stacked) then
+                allocate(qt%phi(1, qt%noInstances), stat=info)
             else
-                call allocate_test(qt%phi, qt%nosurfs, qt%noInstances, "qt%phi", moduleName)
+                allocate(qt%phi(qt%nosurfs, qt%noInstances), stat=info)
+            endif
+            if (info /= 0) then
+                call output (MLSMSG_Error, "Out of memory")
+                call clearout
+                return
             endif
             call PVMIDLUnpack(qt%phi, info, doreshape=.true.)
             if (info /=0 ) then
                 call PVMErrorMessage ( info, "unpacking phi" )
+                call clearout
                 return
             endif
 !            print *, "phi ", qt%phi
             hshape = shape(qt%phi)
         endif
 
-        if (l28(P_GEODLAT)) then
-            if (qt%coherent) then
-                call allocate_test(qt%geodlat, 1, qt%noInstances, "qt%geodlat", moduleName)
+        if (l29(P_GEODLAT)) then
+            if (qt%stacked) then
+                allocate(qt%geodlat(1, qt%noInstances), stat=info)
             else
-                call allocate_test(qt%geodlat, qt%nosurfs, qt%noInstances, "qt%geodlat", moduleName)
+                allocate(qt%geodlat(qt%nosurfs, qt%noInstances), stat=info)
+            endif
+            if (info /= 0) then
+                call output (MLSMSG_Error, "Out of memory")
+                call clearout
+                return
             endif
             call PVMIDLUnpack(qt%geodlat, info, doreshape=.true.)
             if (info /=0 ) then
                 call PVMErrorMessage ( info, "unpacking geodlat" )
+                call clearout
                 return
             endif
 !            print *, "geodlat ", qt%geodlat
             if (all(hshape /= (/0,0/)) .and. all(hshape /= shape(qt%geodlat))) then
-                call MLSMessage(MLSMSG_Warning, moduleName, "geodlat's shape is not the same as others' shape")
+                call output(MLSMSG_Warning, "geodlat's shape is not the same as others' shape")
             endif
             hshape = shape(qt%geodlat)
         endif
 
-        if (l28(P_LONGITUDE)) then
-            if (qt%coherent) then
-                call allocate_test(qt%lon, 1, qt%noInstances, "qt%lon", moduleName)
+        if (l29(P_LONGITUDE)) then
+            if (qt%stacked) then
+                allocate(qt%lon(1, qt%noInstances), stat=info)
             else
-                call allocate_test(qt%lon, qt%nosurfs, qt%noInstances, "qt%lon", moduleName)
+                allocate(qt%lon(qt%nosurfs, qt%noInstances), stat=info)
+            endif
+            if (info /= 0) then
+                call output(MLSMSG_Error, "Out of memory")
+                call clearout
+                return
             endif
             call PVMIDLUnpack(qt%lon, info, doreshape=.true.)
             if (info /=0 ) then
                 call PVMErrorMessage ( info, "unpacking lon" )
+                call clearout
                 return
             endif
 !            print *, "lon ", qt%lon
             if (all(hshape /= (/0,0/)) .and. all(hshape /= shape(qt%lon))) then
-                call MLSMessage(MLSMSG_Warning, moduleName, "lon's shape is not the same as others' shape")
+                call output(MLSMSG_Warning, "lon's shape is not the same as others' shape")
             endif
             hshape = shape(qt%lon)
         endif
 
-        if (l28(P_LOSANGLE)) then
-            if (qt%coherent) then
-                call allocate_test(qt%losAngle, 1, qt%noInstances, "qt%losAngle", moduleName)
+        if (l29(P_LOSANGLE)) then
+            if (qt%stacked) then
+                allocate(qt%losAngle(1, qt%noInstances), stat=info)
             else
-                call allocate_test(qt%losAngle, qt%nosurfs, qt%noInstances, "qt%losAngle", moduleName)
+                allocate(qt%losAngle(qt%nosurfs, qt%noInstances), stat=info)
+            endif
+            if (info /= 0) then
+                call output (MLSMSG_Error, "Out of memory")
+                call clearout
+                return
             endif
             call PVMIDLUnpack(qt%losAngle, info, doreshape=.true.)
             if (info /=0 ) then
                 call PVMErrorMessage ( info, "unpacking losAngle" )
+                call clearout
                 return
             endif
 !            print *, "losAngle ", qt%losAngle
             if (all(hshape /= (/0,0/)) .and. all(hshape /= shape(qt%losAngle))) then
-                call MLSMessage(MLSMSG_Warning, moduleName, "losAngle's shape is not the same as others' shape")
+                call output(MLSMSG_Warning, "losAngle's shape is not the same as others' shape")
             endif
             hshape = shape(qt%losAngle)
         endif
 
-        if (l28(P_SOLARZENITH)) then
-            if (qt%coherent) then
-                call allocate_test(qt%solarZenith, 1, qt%noInstances, "qt%solarZenith", moduleName)
+        if (l29(P_SOLARZENITH)) then
+            if (qt%stacked) then
+                allocate(qt%solarZenith(1, qt%noInstances), stat=info)
             else
-                call allocate_test(qt%solarZenith, qt%nosurfs, qt%noInstances, "qt%solarZenith", moduleName)
+                allocate(qt%solarZenith(qt%nosurfs, qt%noInstances), stat=info)
+            endif
+            if (info /= 0) then
+                call output(MLSMSG_Error, "Out of memory")
+                call clearout
+                return
             endif
             call PVMIDLUnpack(qt%solarZenith, info, doreshape=.true.)
             if (info /=0 ) then
                 call PVMErrorMessage ( info, "unpacking solarZenith" )
+                call clearout
                 return
             endif
 !            print *, "solarZenith ", qt%solarZenith
             if (all(hshape /= (/0,0/)) .and. all(hshape /= shape(qt%solarZenith))) then
-                call MLSMessage(MLSMSG_Warning, moduleName, "solarZenith's shape is not the same as others' shape")
+                call output(MLSMSG_Warning, "solarZenith's shape is not the same as others' shape")
             endif
             hshape = shape(qt%solarZenith)
         endif
 
-        if (l28(P_SOLARTIME)) then
-            if (qt%coherent) then
-                call allocate_test(qt%solartime, 1, qt%noInstances, "qt%solartime", moduleName)
+        if (l29(P_SOLARTIME)) then
+            if (qt%stacked) then
+                allocate(qt%solartime(1, qt%noInstances), stat=info)
             else
-                call allocate_test(qt%solartime, qt%nosurfs, qt%noInstances, "qt%solartime", moduleName)
+                allocate(qt%solartime(qt%nosurfs, qt%noInstances), stat=info)
+            endif
+            if (info /= 0) then
+                call output(MLSMSG_Error, "Out of memory")
+                call clearout
+                return
             endif
             call PVMIDLUnpack(qt%solartime, info, doreshape=.true.)
             if (info /=0 ) then
                 call PVMErrorMessage ( info, "unpacking solartime" )
+                call clearout
                 return
             endif
 !            print *, "solartime ", qt%solartime
             if (all(hshape /= (/0,0/)) .and. all(hshape /= shape(qt%solartime))) then
-                call MLSMessage(MLSMSG_Warning, moduleName, "solarTime's shape is not the same as others' shape")
+                call output(MLSMSG_Warning, "solarTime's shape is not the same as others' shape")
             endif
             hshape = shape(qt%solartime)
         endif
 
-        if (l28(P_TIME)) then
-            if (qt%coherent) then
-                call allocate_test(qt%time, 1, qt%noInstances, "qt%time", moduleName)
+        if (l29(P_TIME)) then
+            if (qt%stacked) then
+                allocate(qt%time(1, qt%noInstances), stat=info)
             else
-                call allocate_test(qt%time, qt%nosurfs, qt%noInstances, "qt%time", moduleName)
+                allocate(qt%time(qt%nosurfs, qt%noInstances), stat=info)
+            endif
+            if (info /= 0) then
+                call output(MLSMSG_Error, "Out of memory")
+                call clearout
+                return
             endif
             call PVMIDLUnpack(qt%time, info, doreshape=.true.)
             if (info /=0 ) then
                 call PVMErrorMessage ( info, "unpacking time" )
+                call clearout
                 return
             endif
 !            print *, "time ", qt%time
             if (all(hshape /= (/0,0/)) .and. all(hshape /= shape(qt%time))) then
-                call MLSMessage(MLSMSG_Warning, moduleName, "time's shape is not the same as others' shape")
+                call output(MLSMSG_Warning, "time's shape is not the same as others' shape")
             endif
             hshape = shape(qt%time)
         endif
 
-        if (l28(P_VCOORD)) then
+        if (l29(P_VCOORD)) then
             call PVMUnpackLitIndex(qt%verticalCoordinate, info)
             if (info /=0 ) then
                 call PVMErrorMessage ( info, "unpacking verticalCoordinate" )
+                call clearout
                 return
             endif
 !            print *, "verticalCoordinate ", qt%verticalCoordinate
         endif
 
-        if (l28(P_SURFS)) then
+        if (l29(P_SURFS)) then
             if (qt%coherent) then
-                call allocate_test(qt%surfs, qt%nosurfs, 1, "qt%surfs", moduleName)
+                allocate(qt%surfs(qt%nosurfs, 1), stat=info)
             else
-                call allocate_test(qt%surfs, qt%nosurfs, qt%noInstances, "qt%surfs", moduleName)
+                allocate(qt%surfs(qt%nosurfs, qt%noInstances), stat=info)
+            endif
+            if (info /= 0) then
+                call output(MLSMSG_Error, "Out of memory")
+                call clearout
+                return
             endif
             call PVMIDLUnpack(qt%surfs, info, doreshape=.true.)
             if (info /=0 ) then
                 call PVMErrorMessage ( info, "unpacking surfs" )
+                call clearout
                 return
             endif
 !            print *, "surfs ", qt%surfs
         endif
 
-        if (l28(P_INSTANCELEN)) then
+        if (l29(P_INSTANCELEN)) then
             call PVMIDLUnpack(qt%instancelen, info)
             if (info /=0 ) then
                 call PVMErrorMessage ( info, "unpacking instancelen" )
+                call clearout
                 return
             endif
 !            print *, "instancelen ", qt%instancelen
             if (qt%instancelen == 0) then
-                call MLSMessage (MLSMSG_Warning, ModuleName, "Quantity template has instanceLen 0")
+                call output (MLSMSG_Warning, "Quantity template has instanceLen 0")
             endif 
         endif
 
-        if (l28(P_VALUE)) then
-            call Allocate_Test ( values, qt%instanceLen, qt%noInstances, &
-            & 'values', ModuleName )
+        if (l29(P_VALUE)) then
+            allocate( values(qt%instanceLen, qt%noInstances), stat=info)
+            if (info /= 0) then
+                call output(MLSMSG_Error, "Out of machine")
+                call clearout
+                return
+            endif
             call PVMIDLUnpack ( values, info, doreshape=.true. )
             if ( info /= 0 ) then
                 call PVMErrorMessage ( info, "unpacking values" )
+                call clearout
                 return
             endif
 !            print *, "values ", values
         endif
 
         ! need to fix this later to match the call to values
-        if (l28(P_MASK)) then
-            call CreateMaskArray ( mask, values )
+        if (l29(P_MASK)) then
+            allocate(mask(size(values,1), size(values,2)), stat=info)
+            if (info /= 0) then
+                call output(MLSMSG_Error, "Out of memory")
+                call clearout
+                return
+            endif
+            mask = char(0) ! All vector elements are interesting
             call PVMIDLUnpack(mask, info, doreshape=.true.)
             if ( info /= 0 ) then
                 call PVMErrorMessage ( info, "unpacking mask" )
+                call clearout
                 return
             endif
 !            print *, "mask ", mask
@@ -553,35 +664,173 @@ module IDLCFM2_m
 
         ! make sure all hgrid-related fields are of the same shape, or at least allocated
         if (all(hshape /= (/0,0/))) then
-            if (.not. l28(P_PHI)) then
-                call Allocate_test( qt%phi, hshape(1), hshape(2), 'qt%phi', moduleName)
+            if (.not. l29(P_PHI)) then
+                allocate( qt%phi(hshape(1), hshape(2)), stat=info)
+                if (info /= 0) then
+                    call output(MLSMSG_Error, "Out of memory")
+                    call clearout
+                    return
+                endif
                 qt%phi = 0.0_r8
             endif
-            if (.not. l28(P_GEODLAT)) then
-                call Allocate_test( qt%geodlat, hshape(1), hshape(2), 'qt%geodlat', moduleName)
+            if (.not. l29(P_GEODLAT)) then
+                allocate( qt%geodlat(hshape(1), hshape(2)), stat=info)
+                if (info /= 0) then
+                    call output(MLSMSG_Error, "Out of memory")
+                    call clearout
+                    return
+                endif
                 qt%geodlat = 0.0_r8
             endif
-            if (.not. l28(P_LOSANGLE)) then
-                call Allocate_test( qt%losangle, hshape(1), hshape(2), 'qt%losangle', moduleName)
+            if (.not. l29(P_LOSANGLE)) then
+                allocate( qt%losangle(hshape(1), hshape(2)), stat=info)
+                if (info /= 0) then
+                    call output(MLSMSG_Error, "Out of memory")
+                    call clearout
+                    return
+                endif
                 qt%losangle = 0.0_r8
             endif
-            if (.not. l28(P_SOLARZENITH)) then
-                call Allocate_test( qt%solarzenith, hshape(1), hshape(2), 'qt%solarzenith', moduleName)
+            if (.not. l29(P_SOLARZENITH)) then
+                allocate( qt%solarzenith(hshape(1), hshape(2)), stat=info)
+                if (info /= 0) then
+                    call output(MLSMSG_Error, "Out of memory")
+                    call clearout
+                    return
+                endif
                 qt%solarzenith = 0.0_r8
             endif
-            if (.not. l28(P_SOLARTIME)) then
-                call Allocate_test( qt%solartime, hshape(1), hshape(2), 'qt%solartime', moduleName)
+            if (.not. l29(P_SOLARTIME)) then
+                allocate( qt%solartime(hshape(1), hshape(2)), stat=info)
+                if (info /= 0) then
+                    call output(MLSMSG_Error, "Out of memory")
+                    call clearout
+                    return
+                endif
                 qt%solartime = 0.0_r8
             endif
-            if (.not. l28(P_TIME)) then
-                call Allocate_test( qt%time, hshape(1), hshape(2), 'qt%time', moduleName)
+            if (.not. l29(P_TIME)) then
+                allocate( qt%time(hshape(1), hshape(2)), stat=info)
+                if (info /= 0) then
+                    call output(MLSMSG_Error, "Out of memory")
+                    call clearout
+                    return
+                endif
                 qt%time = 0.0_r8
             endif
-            if (.not. l28(P_LONGITUDE)) then
-                call Allocate_test( qt%lon, hshape(1), hshape(2), 'qt%lon', moduleName)
+            if (.not. l29(P_LONGITUDE)) then
+                allocate( qt%lon(hshape(1), hshape(2)), stat=info)
+                if (info /= 0) then
+                    call output(MLSMSG_Error, "Out of memory")
+                    call clearout
+                    return
+                endif
                 qt%lon = 0.0_r8
             endif
         endif
+
+        contains
+        
+        subroutine clearout
+            if(associated(channels)) deallocate(channels) 
+
+            if(associated(qt%frequencies)) then
+                deallocate(qt%frequencies)
+                nullify(qt%frequencies)
+            endif
+
+            if (associated(qt%phi)) then
+                deallocate(qt%phi)
+                nullify(qt%phi)
+            endif
+
+            if (associated(qt%geodlat)) then
+                deallocate(qt%geodlat)
+                nullify(qt%geodlat)
+            endif
+
+            if (associated(qt%lon)) then
+                deallocate(qt%lon)
+                nullify(qt%lon)
+            endif
+
+            if (associated(qt%losangle)) then
+                deallocate(qt%losangle)
+                nullify(qt%losangle)
+            endif
+
+            if (associated(qt%solarZenith)) then
+                deallocate(qt%solarzenith)
+                nullify(qt%solarzenith)
+            endif
+
+            if (associated(qt%solartime)) then
+                deallocate(qt%solartime)
+                nullify(qt%solartime)
+            endif
+
+            if (associated(qt%time)) then
+                deallocate(qt%time)
+                nullify(qt%time)
+            endif
+
+            if (associated(qt%surfs)) then
+                deallocate(qt%surfs)
+                nullify(qt%surfs)
+            endif
+
+            if (associated(values)) then
+                deallocate(values)
+                nullify(values)
+            endif
+
+            if (associated(mask)) then
+                deallocate(mask)
+                nullify(mask)
+            endif
+        end subroutine
+    end subroutine
+
+    subroutine InitializeQuantityTemplate (template)
+        ! This function is to initialize a template
+        ! to what IDLCFM library need
+        type(QuantityTemplate_T), intent(out) :: template
+
+        template%name = 0
+        template%quantityType = 0
+        template%noInstances = 1
+        template%noSurfs = 1
+        template%noChans = 1
+        template%coherent = .true.
+        template%stacked = .true.
+        template%regular = .true. ! we don't have irregular quantities
+        template%minorFrame = .false.
+        template%majorFrame = .false.
+        template%logBasis = .false.
+        template%minValue = -huge(0.0_r8)
+        template%noInstancesLowerOverlap = 0
+        template%noInstancesUpperOverlap = 0
+        template%badValue = huge(0.0_r8)
+        template%unit = 0
+        template%instanceLen = 0
+        template%verticalCoordinate = l_none
+        template%sharedVGrid = .false.
+        template%vGridIndex = 0
+        nullify(template%surfs, template%phi, template%geodlat)
+        nullify(template%lon, template%time, template%solartime)
+        nullify(template%solarzenith, template%losangle)
+        nullify(template%chaninds, template%channels, template%frequencies)
+        template%fgridindex = 0
+        template%frequencyCoordinate = l_none
+        template%lo = 0.0_r8
+        template%sharedfgrid = .false.
+        template%sideband = 0
+        template%signal = 0
+        template%instrumentModule = 0
+        template%radiometer = 0
+        template%reflector = 0
+        template%molecule = 0
+        nullify(template%surfindex, template%chanIndex)
     end subroutine
 
     subroutine ICFMSendVector (vec, tid, info)
@@ -636,7 +885,7 @@ module IDLCFM2_m
                 endif
 
                 if (type /= SIG_VECTOR) then
-                    call MLSMessage(MLSMSG_Warning, ModuleName, "ICFMReceiveVector: the received is not vector")
+                    call output(MLSMSG_Error, "ICFMReceiveVector: the received is not vector")
                     return
                 endif
             endif
@@ -660,13 +909,21 @@ module IDLCFM2_m
         if (numQty == 0) return
 
         allocate(template(numQty), stat=info)
-        if (info /= 0) call MLSMessage(MLSMSG_Error, ModuleName, "Cannot allocate template")
+        if (info /= 0) then
+            call output (MLSMSG_Error, "Cannot allocate template")
+            return
+        endif
 
         allocate(vec%quantities(numQty), stat=info)
-        if (info /= 0) call MLSMessage(MLSMSG_Error, ModuleName, "Cannot allocate vector quantities")
+        if (info /= 0) then
+            call output(MLSMSG_Error, "Cannot allocate vector quantities")
+            deallocate(template)
+            return
+        endif
 
         do i=1, numQty
             call ICFMReceiveQuantity(vec%quantities(i)%template, vec%quantities(i)%values, vec%quantities(i)%mask)
+            vec%quantities(i)%index = i
             j = AddQuantityTemplateToDatabase(qtydb, vec%quantities(i)%template)
             template(i) = j
         end do
@@ -676,9 +933,35 @@ module IDLCFM2_m
 
     end subroutine ICFMReceiveVector
 
+    subroutine output (level, msg)
+        integer, intent(in) :: level
+        character(len=*), intent(in) :: msg
+
+        select case (level)
+        case (MLSMSG_Success)
+            print *, "succeed: ", msg
+        case (MLSMSG_Info)
+            print *, "info: ", msg
+        case (MLSMSG_Debug)
+            print *, "debug: ", msg
+        case (MLSMSG_Warning) 
+            print *, "warning: ", msg
+        case (MLSMSG_Error) 
+            print *, "error: ", msg
+        case (MLSMSG_Crash)
+            print *, "crash: ", msg
+        case default
+            print *, "unknown: ", msg
+        end select
+    end subroutine
+
 end module
 
 ! $Log$
+! Revision 1.5  2011/06/27 21:28:52  honghanh
+! Fixed bug in a few if statement since Fortran does not have
+! lazy evaluation of boolean expressions
+!
 ! Revision 1.4  2011/05/27 06:12:48  honghanh
 ! Add warning message upon unpacking instanceLen 0
 !

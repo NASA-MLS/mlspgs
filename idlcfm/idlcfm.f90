@@ -75,20 +75,20 @@ module IDLCFM_m
     call PVMIDLUnpack( i4, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, &
       & "unpacking quantity dimensions." )
-    print *, "i4 ", i4
+!    print *, "i4 ", i4
 
     call PVMIDLUnPack ( l4, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, &
       & "unpacking quantity flags" )
-    print *, "l4 ", l4
+!    print *, "l4 ", l4
 
     call PVMUnpackStringIndex ( qt%name, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking name" )
-    print *, "name " , qt%name
+!    print *, "name ", qt%name
 
     call PVMUnpackLitIndex ( qt%quantityType, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking quantityType" )
-    print *, "quantityType ", qt%quantityType
+!    print *, "quantityType ", qt%quantityType
     properties = propertyTable(:, qt%quantityType)
 
     call SetupNewQuantityTemplate ( qt, &
@@ -106,66 +106,66 @@ module IDLCFM_m
 
     call PVMUnpackLitIndex ( qt%verticalCoordinate, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking verticalCoordinate" )
-    print *, "verticalCoordinate ", qt%verticalCoordinate
+!    print *, "verticalCoordinate ", qt%verticalCoordinate
 
     qt%frequencyCoordinate = l_none
 
     call PVMUnpackLitIndex ( qt%unit, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking unit" )
-    print *, "unit ", qt%unit
+!    print *, "unit ", qt%unit
 
     ! Now unpack the arrays
     call PVMIDLUnpack ( qt%surfs(:,1), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking surfs" )
     if (qt%logbasis) qt%minValue = qt%surfs(1,1)
-    print *, "surfs ", qt%surfs
+!    print *, "surfs ", qt%surfs
 
     call PVMIDLUnpack(flag, info)
     if (info /= 0) call PVMErrorMessage (info, "unpacking flag")
     if (flag) then
       call PVMUnpackLitIndex ( qt%instrumentModule, info )
       if (info /= 0) call PVMErrorMessage (info, "unpacking instrumentModule")
-      print *, "module ", qt%instrumentModule
+!      print *, "module ", qt%instrumentModule
     endif
 
     call PVMIDLUnpack ( qt%phi(1, :), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking phi" )
-    print *, "phi ", qt%phi
+!    print *, "phi ", qt%phi
 
     call PVMIDLUnpack ( qt%geodLat(1, :), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking geodLat" )
-    print *, "geodLat ", qt%geodLat
+!    print *, "geodLat ", qt%geodLat
 
     call PVMIDLUnpack ( qt%lon(1, :), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking lon" )
-    print *, "lon ", qt%lon
+!    print *, "lon ", qt%lon
 
     call PVMIDLUnpack ( qt%time(1, :), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking time" )
-    print *, "time ", qt%time
+!    print *, "time ", qt%time
 
     call PVMIDLUnpack ( qt%solarTime(1, :), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking solarTime" )
-    print *, "solarTime ", qt%solarTime
+!    print *, "solarTime ", qt%solarTime
 
     call PVMIDLUnpack ( qt%solarZenith(1, :), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking solarZenith" )
-    print *, "time ", qt%solarZenith
+!    print *, "time ", qt%solarZenith
 
     call PVMIDLUnpack ( qt%losAngle(1, :), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking losAngle" )
-    print *, "los Angles ", qt%losAngle
+!    print *, "los Angles ", qt%losAngle
 
     call PVMIDLUnpack ( qt%badvalue, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking badvalue" )
-    print *, "badvalue ", qt%badvalue
+!    print *, "badvalue ", qt%badvalue
 
     ! no frequencies
     call Allocate_Test ( values, qt%instanceLen, qt%noInstances, &
       & 'values', ModuleName )
     call PVMIDLUnpack ( values, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking values" )
-    print *, "values ", values
+!    print *, "values ", values
 
   end subroutine ICFMReceiveQuantity
 
@@ -304,6 +304,9 @@ module IDLCFM_m
 end module IDLCFM_m
 
 ! $Log$
+! Revision 1.2  2011/05/16 22:28:34  pwagner
+! Now gets L_NONE, R8 from originating modules
+!
 ! Revision 1.1  2011/03/15 15:23:51  honghanh
 ! Initial imports
 !
