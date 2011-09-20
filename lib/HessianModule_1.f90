@@ -16,15 +16,17 @@ module HessianModule_1          ! High-level Hessians in the MLS PGS suite
 ! This module provides the composite Block Hessian type.  Blocks of this
 ! type are used to compose the Hessians inside L2PC.
 
-  use Allocate_Deallocate, only: Test_Deallocate
-  use HessianModule_0, only: ClearBlock, CreateBlock, &
-    & DestroyBlock, HessianElement_T, H_Absent, RH, &
-    & H_Sparse, H_Full, OptimizeBlock
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
-    & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
-  use MatrixModule_1, only: DefineRCInfo, DestroyRCInfo, NullifyRCInfo, RC_Info
-  use Output_M, only: Output, outputNamedValue
-  use VectorsModule, only: Vector_T
+  use ALLOCATE_DEALLOCATE, only: TEST_DEALLOCATE
+  use HESSIANMODULE_0, only: CLEARBLOCK, CREATEBLOCK, &
+    & DESTROYBLOCK, HESSIANELEMENT_T, H_ABSENT, RH, &
+    & H_SPARSE, H_FULL, OPTIMIZEBLOCK
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, &
+    & MLSMSG_DEALLOCATE, MLSMSG_ERROR, MLSMSG_WARNING
+  use MATRIXMODULE_1, only: DEFINERCINFO, DESTROYRCINFO, NULLIFYRCINFO, RC_INFO
+  use MLSSTRINGLISTS, only: SWITCHDETAIL
+  use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
+  use TOGGLES, only: SWITCHES
+  use VECTORSMODULE, only: VECTOR_T
 
   implicit NONE
   private
@@ -106,8 +108,8 @@ contains
 
   type (Hessian_T) function CreateEmptyHessian ( Name, Row, Col, &
     & Row_Quan_First, Col_Quan_First, Text, where ) result ( H )
-    use Symbol_Types, only: T_identifier
-    use Symbol_Table, only: Enter_Terminal
+    use Symbol_Types, only: T_IDENTIFIER
+    use Symbol_Table, only: ENTER_TERMINAL
 
     integer, intent(in) :: Name         ! Sub-rosa index of its name, or zero
     type (Vector_T), intent(in) :: Row   ! Vector used to define the row
@@ -219,12 +221,12 @@ contains
   ! ------------------------------------------------- Diff_Hessians -----
   ! Diff two Hessians, presumed to match somehow
   subroutine Diff_Hessians ( H1, H2, Details, options, Clean )
-    use HessianModule_0, only: Diff
-    use Lexer_core, only: Print_Source
-    use MLSStrings, only: lowercase
-    use MLSStringLists, only: isInList, optionDetail
-    use Output_m, only: Output, NewLine
-    use String_Table, only: Display_String, get_string
+    use HESSIANMODULE_0, only: DIFF
+    use LEXER_CORE, only: PRINT_SOURCE
+    use MLSSTRINGS, only: LOWERCASE
+    use MLSSTRINGLISTS, only: ISINLIST, OPTIONDETAIL
+    use OUTPUT_M, only: OUTPUT, NEWLINE
+    use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
 
     type (Hessian_T), intent(inout) :: H1, H2
     integer, intent(in), optional :: Details ! Print details, default 1
@@ -360,15 +362,15 @@ contains
   ! ------------------------------------------------- Dump_Hessian -----
   subroutine Dump_Hessian ( H, Name, Details, &
     & onlyTheseBlocks, options, Clean )
-    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-    use HessianModule_0, only: Dump
-    use Lexer_core, only: Print_Source
-    use MatrixModule_1, only: Dump_RC
-    use MLSStrings, only: lowercase
-    use MLSStringLists, only: isInList, optionDetail, switchDetail
-    use Output_m, only: NewLine, output, outputNamedValue, &
-      & resumeOutput, suspendOutput
-    use String_Table, only: Display_String, GET_STRING
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use HESSIANMODULE_0, only: DUMP
+    use LEXER_CORE, only: PRINT_SOURCE
+    use MATRIXMODULE_1, only: DUMP_RC
+    use MLSSTRINGS, only: LOWERCASE
+    use MLSSTRINGLISTS, only: ISINLIST, OPTIONDETAIL, SWITCHDETAIL
+    use OUTPUT_M, only: NEWLINE, OUTPUT, OUTPUTNAMEDVALUE, &
+      & RESUMEOUTPUT, SUSPENDOUTPUT
+    use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
 
     type (Hessian_T), intent(in) :: H
     character(len=*), intent(in), optional :: NAME
@@ -563,9 +565,9 @@ contains
   !  series when {\tt scalar} = $\frac12$.  {\tt P} is initially set to
   !  zero unless {\tt Update} is present and true.
 
-    use HessianModule_0, only: Multiply
-    use MLSKinds, only: RV
-    use VectorsModule, only: Vector_T
+    use HESSIANMODULE_0, only: MULTIPLY
+    use MLSKINDS, only: RV
+    use VECTORSMODULE, only: VECTOR_T
 
     type(Hessian_T), intent(in) :: H
     type(Vector_T), intent(in) :: V
@@ -624,9 +626,9 @@ contains
   subroutine InsertHessianPlane_1 ( H, M, B, EL, MOLECULES, MIRROR )
     ! Insert matrix M as a plane (block B, element EL) of the Hessian H
     ! If Mirror is set, populate the transpose set also
-    use HessianModule_0, only: InsertHessianPlane
-    use Intrinsic, only: L_Temperature
-    use MatrixModule_1, only: Matrix_T
+    use HESSIANMODULE_0, only: INSERTHESSIANPLANE
+    use INTRINSIC, only: L_TEMPERATURE
+    use MATRIXMODULE_1, only: MATRIX_T
     ! Dummy arguments
     type(Hessian_T), intent(inout) :: H
     type(Matrix_T), intent(in) :: M
@@ -714,11 +716,15 @@ contains
   ! scale height (for zeta coordinates) or geodAngle.  In each block, zero out
   ! any that are smaller in magnitude than the maximum by
   ! a factor of threshold.
+  
+  ! Among the many mistakes we have corrected is the undeclared decision not
+  ! to streamline "diagonal blocks", i.e. those blocks for the column
+  ! numbers j and k are equal
   subroutine StreamlineHessian_1 ( H, Surface, ScaleHeight, GeodAngle, Threshold )
 
-    use HessianModule_0, only: StreamlineHessian
-    use MLSKinds, only: R8
-    use QuantityTemplates, only: QuantityTemplate_T
+    use HESSIANMODULE_0, only: STREAMLINEHESSIAN
+    use MLSKINDS, only: R8
+    use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T
     type (Hessian_T), intent(inout) :: H
     type (HessianElement_T), pointer :: HBU, HBL ! In Upper and Lower triangle
     integer, intent(in) ::  Surface     ! Negative if not specified
@@ -730,7 +736,9 @@ contains
     integer :: P1, P2   ! Profile indices for 1st, 2nd cols of H
     integer :: I, J, K  ! Loop counters
     logical :: DROPBLOCK
+    logical :: VERBOSE
 
+    verbose = ( switchDetail(switches, 'hgrid') > -1 )
     do i = 1, h%row%nb
       do j = 1, h%col%nb - 1
         p1 = h%col%inst(j)
@@ -747,13 +755,30 @@ contains
           if ( q1%stacked .and. q2%stacked .and. ( geodAngle > 0.0 ) ) &
             & dropBlock = abs ( q1%phi(1,p1) - q2%phi(1,p2) ) > geodAngle
           if ( dropBlock ) then
+            if ( verbose ) &
+              & call output( 'Dropping these blocks horizontally', advance='yes' )
             call ClearBlock ( hbu )
             call ClearBlock ( hbl )
           else if ( q1%coherent .and. q2%coherent ) then
+            if ( verbose ) &
+              & call output( 'Steamlining these blocks', advance='yes' )
             call streamlineHessian ( hbu, q1, q2, surface, scaleHeight, threshold )
             call streamlineHessian ( hbl, q2, q1, surface, scaleHeight, threshold )
           end if
         end do
+      end do
+      ! Now we must go back and do the diagonal blocks, too
+      do k = 1, h%col%nb
+        p2 = h%col%inst(k)
+        q2 => h%col%vec%quantities ( h%col%quant(k) ) % template
+
+        hbu => h%block ( i, k, k )
+
+        if ( q2%coherent ) then
+          if ( verbose ) &
+            & call output( 'Steamlining this diagonal block', advance='yes' )
+          call streamlineHessian ( hbu, q2, q2, surface, scaleHeight, threshold )
+        end if
       end do
     end do
 
@@ -772,6 +797,9 @@ contains
 end module HessianModule_1
 
 ! $Log$
+! Revision 2.24  2011/09/20 22:35:45  pwagner
+! Repaired most obvious bugs in Streamline
+!
 ! Revision 2.23  2011/04/02 01:21:55  vsnyder
 ! Don't check molecules in InsertHessianPlane_1 if block is for temperature
 !
