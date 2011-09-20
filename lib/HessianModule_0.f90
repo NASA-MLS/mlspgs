@@ -137,8 +137,8 @@ contains
     ! than h%tuples, and subsequent elemental procedures passed
     ! h%tuples w/o an array subsection will be operating
     ! with undefined values (paw)
-    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use ALLOCATE_DEALLOCATE, only: TEST_ALLOCATE, TEST_DEALLOCATE
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
     
     type(HessianElement_T), intent(inout) :: H
     integer, intent(in) :: N
@@ -194,7 +194,7 @@ contains
   ! ------------------------------------------ ClearHessianBlock_0 -----
   subroutine ClearHessianBlock_0 ( H )
     ! Clear a HessianElement_T structure
-    use Allocate_Deallocate, only: Deallocate_Test, Test_Deallocate
+    use Allocate_Deallocate, only: DEALLOCATE_TEST, TEST_DEALLOCATE
     type(HessianElement_T), intent(inout) :: H
     integer :: Stat
 
@@ -214,7 +214,7 @@ contains
   subroutine CreateHessianBlock_0 ( H, nRows, nCols1, nCols2, H_kind, initTuples, &
                                   & Fill )
   ! Create an empty HessianElement_T structure
-    use Allocate_Deallocate, only: Allocate_test, Test_Allocate
+    use Allocate_Deallocate, only: ALLOCATE_TEST, TEST_ALLOCATE
 
     type(HessianElement_T), intent(inout) :: H ! inout so we can destroy it before
                                         ! its components are nullified by
@@ -266,7 +266,7 @@ contains
   subroutine Densify_Hessian ( H )
   ! Convert a Hessian represented by tuples to an explicit representation
 
-    use Allocate_Deallocate, only: Allocate_Test
+    use Allocate_Deallocate, only: ALLOCATE_TEST
 
     type(HessianElement_T), intent(inout) :: H
 
@@ -294,9 +294,9 @@ contains
 
   ! ------------------------------------------- Diff_Hessian_Blocks -----
   subroutine Diff_Hessian_Blocks ( H1, H2, Details, Indices, options, Clean )
-    use Allocate_Deallocate, only: Deallocate_Test, Allocate_Test
-    use MLSFillValues, only: Repopulate
-    use MLSStringLists, only: optionDetail, unquote
+    use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST, ALLOCATE_TEST
+    use MLSFILLVALUES, only: REPOPULATE
+    use MLSSTRINGLISTS, only: OPTIONDETAIL, UNQUOTE
     type(HessianElement_T), intent(inout) :: H1, H2
     integer, intent(in), optional :: Details ! Print details, 0 => minimal,
                                              ! 1 => values, default 1
@@ -431,9 +431,9 @@ contains
 
   ! ------------------------------------------- Dump_Hessian_Block -----
   subroutine Dump_Hessian_Block ( H, Name, Details, Indices, Clean, Options )
-    use Allocate_Deallocate, only: Deallocate_Test, Allocate_Test
-    use MLSFillValues, only: isNaN, Repopulate
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
+    use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST, ALLOCATE_TEST
+    use MLSFILLVALUES, only: ISNAN, REPOPULATE
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_WARNING
     type(HessianElement_T), intent(in) :: H
     character(len=*), intent(in), optional :: NAME
     integer, intent(in), optional :: Details ! Print details, -3, just check for NaNs,
@@ -541,7 +541,7 @@ contains
     !  depending upon {\tt Update}.  {\tt P} is initially set to zero
     !  unless {\tt Update} is present and true.
 
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
     integer, parameter :: RK = kind(0.0d0)
     type(HessianElement_T), intent(in) :: H
     real(rk), intent(in) :: V1(:), V2(:)
@@ -563,7 +563,7 @@ contains
     !  depending upon {\tt Update}.  {\tt P} is initially set to zero
     !  unless {\tt Update} is present and true.
 
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
     integer, parameter :: RK = kind(0.0e0)
     type(HessianElement_T), intent(in) :: H
     real(rk), intent(in) :: V1(:), V2(:)
@@ -580,7 +580,7 @@ contains
   subroutine InsertHessianPlane_Array ( H, plane, k, mirroring )
     ! Insert the supplied array in (:,:,k) of the HessianElement_T
     ! or the (:,k,:) plane if mirroring is present and true
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
 
     type(HessianElement_T), intent(inout) :: H
     real(rh), intent(in) :: PLANE(:,:)
@@ -650,10 +650,10 @@ contains
   subroutine InsertHessianPlane_Matrix ( H, plane, k, mirroring )
     ! Insert the supplied matrix_0 element in (:,:,k) of the HessianElement_T
     ! or the (:,k,:) plane if mirroring is present and true
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use MatrixModule_0, only: MatrixElement_T, M_Full, M_Absent, M_Column_Sparse, M_Banded 
-    use MLSStringLists, only: switchDetail
-    use Toggles, only: Switches
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+    use MATRIXMODULE_0, only: MATRIXELEMENT_T, M_FULL, M_ABSENT, M_COLUMN_SPARSE, M_BANDED 
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use TOGGLES, only: SWITCHES
 
     type(HessianElement_T), intent(inout) :: H
     type(MatrixElement_T), intent(in) :: PLANE
@@ -763,10 +763,10 @@ contains
   ! ------------------------------------------------ OptimizeBlock -----
   ! Rewrite this from scratch before use
   subroutine OptimizeBlock ( H )
-    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, &
-      & Test_Allocate, Test_Deallocate
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
-    use Sort_M, only: SORTP
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST, &
+      & TEST_ALLOCATE, TEST_DEALLOCATE
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_WARNING
+    use SORT_M, only: SORTP
     ! Delete any 'zero' elements and reorder with i as the slowest changing index
     ! (While this is unconventional, it optimizes for invocations of the 2nd order
     ! Taylor series)
@@ -811,6 +811,9 @@ contains
         call Sparsify_Hessian ( H )
       end if
       if ( h%kind /= h_Sparse ) return
+    elseif ( h%kind == h_Sparse ) then
+      ! Now we re-sparsify the block
+      call Sparsify( H )
     end if
     ! OK, so now it must be sparse
 
@@ -833,9 +836,9 @@ contains
     end if
 
     if ( OPTIMIZEMEANSSPARISFY ) then
-       call MLSMessage ( MLSMSG_Warning, ModuleName, &
-         & "Skipping optimizeBlocks after sparisfying(paw)" )
-       return
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & "Skipping remainder of optimizeBlocks after sparisfying(paw)" )
+      return
     end if
     ! The rest of this is probably useless as well as wrong
     call allocate_Test ( rank,  h%tuplesFilled, "Rank in OptimizeBlock", ModuleName )
@@ -922,22 +925,51 @@ o:    do while ( i < n )
 
   ! --------------------------------------------- Sparsify_Hessian -----
   subroutine Sparsify_Hessian ( H )
-    ! Sparsify the representation of H
+    ! (Re-)Sparsify the representation of H
+    ! depending on whether its representation is currently Full
+    ! or already Sparse
 
-    use Allocate_Deallocate, only: Deallocate_Test
+    use Allocate_Deallocate, only: DEALLOCATE_TEST
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
 
     type (HessianElement_T), intent(inout) :: H
+    integer :: i
+    integer :: newSize
+    integer :: status
+    type(tuple_t), pointer :: Tuples(:) => NULL()
 
-    if ( associated(h%values) ) call sparsify ( h%values, h )
-    call deallocate_test ( h%values, "H%Values in Sparsify_Hessian", moduleName )
-
+    select case (h%kind)
+    case (h_Full)
+      if ( associated(h%values) ) call sparsify ( h%values, h )
+      call deallocate_test ( h%values, "H%Values in Sparsify_Hessian", moduleName )
+    case (h_Sparse)
+      if ( h%tuplesFilled < 1 ) return
+      newSize = count ( h%tuples ( 1:h%tuplesFilled ) % h /= 0 )
+      if ( newSize > 0 ) then
+        allocate(tuples(newSize), stat=status)
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+           & "Unable to allocate replacement tuples in Sparsify" )
+        newSize = 0
+        do i = 1, h%tuplesFilled
+          if ( h%tuples(i)%h == 0.0 ) cycle
+          newSize = newSize + 1
+          tuples(newSize) = h%tuples(i)
+        enddo
+      endif
+      deallocate(h%tuples)
+      h%tuplesFilled = newSize
+      h%tuples => tuples
+    case default
+      ! We don't need to anything for these cases, do we?
+    end select
   end subroutine Sparsify_Hessian
 
   ! ------------------------------------- Sparsify_Hessian_Array_D -----
   subroutine Sparsify_Hessian_Array_D ( H_Array, H )
   ! Create a sparse representation of H_Array in H.
 
-    use Allocate_Deallocate, only: Deallocate_Test, Test_Allocate, Test_Deallocate
+    use Allocate_Deallocate, only: DEALLOCATE_TEST, &
+      & TEST_ALLOCATE, TEST_DEALLOCATE
     integer, parameter :: RK = kind(0.0d0)
     real(rk), intent(in) :: H_Array(:,:,:) ! H(i,j,k)
     type(HessianElement_T), intent(inout) :: H    ! inout so we can deallocate tuple
@@ -952,7 +984,7 @@ o:    do while ( i < n )
   subroutine Sparsify_Hessian_Array_S ( H_Array, H )
   ! Create a sparse representation of H_Array in H.
 
-    use Allocate_Deallocate, only: Deallocate_Test, Test_Allocate, Test_Deallocate
+    use Allocate_Deallocate, only: DEALLOCATE_TEST, TEST_ALLOCATE, TEST_DEALLOCATE
     integer, parameter :: RK = kind(0.0e0)
     real(rk), intent(in) :: H_Array(:,:,:) ! H(i,j,k)
     type(HessianElement_T), intent(inout) :: H    ! inout so we can deallocate tuple
@@ -976,8 +1008,8 @@ o:    do while ( i < n )
     ! Breaking news: running retrievals with analytical, full hessian blocks
     ! takes too long; we must try streamlining after all
     use MLSKinds, only: R8
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
-    use QuantityTemplates, only: QuantityTemplate_T
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_WARNING
+    use QuantityTemplates, only: QUANTITYTEMPLATE_T
     ! Args
     type (HessianElement_T), intent(inout) :: H
     type (QuantityTemplate_T), intent(in) :: Q1, Q2 ! For 1st, 2nd cols of H
@@ -987,10 +1019,11 @@ o:    do while ( i < n )
     ! Internal variables
     real(r8) :: Cutoff ! Threshold * maxval(abs(...)) if threshold > 0.
     integer :: J, K    ! Subscripts
+    integer :: nt      ! Num of nTuples
     integer :: S1, S2  ! Surface indices for 1st, 2nd cols of H
 
     call MLSMessage ( MLSMSG_Warning, ModuleName, &
-      & "Streamlining Hessians is probably buggy--use with caution (paw)" )
+      & "Streamlining Hessians is probably still buggy--use with caution (paw)" )
 
     select case ( h%kind )
     case ( h_absent )
@@ -998,7 +1031,9 @@ o:    do while ( i < n )
     case ( h_sparse )
       ! Note that this cutoff won't be right if h%tuples is
       ! longer than h%tuplesFilled (paw)
-      cutoff = threshold * maxval(abs(h%tuples%h))
+      nt = h%tuplesFilled
+      if ( nt < 2 ) return
+      cutoff = threshold * maxval(abs(h%tuples(1:nt)%h))
       if ( surface < 0 .and. scaleHeight < 0._r8 ) then
         where ( abs( h%tuples%h ) < cutoff ) h%tuples%h = 0.0
       else if ( surface > 0 ) then
@@ -1043,7 +1078,7 @@ o:    do while ( i < n )
   ! Fill out h%values based on its sparse nTuples (or else zeros)
   ! Should you combine this with Repopulate from MLSFillValues module?
   subroutine Unsparsify ( H )
-    use Allocate_Deallocate, only: Deallocate_Test, allocate_test
+    use Allocate_Deallocate, only: DEALLOCATE_TEST, ALLOCATE_TEST
     ! Argument
     type(HessianElement_T), intent(inout) :: H
     ! Internal variables
@@ -1082,6 +1117,9 @@ o:    do while ( i < n )
 end module HessianModule_0
 
 ! $Log$
+! Revision 2.20  2011/09/20 22:34:06  pwagner
+! Repaired most obvious bugs in Sparsify, Streamline
+!
 ! Revision 2.19  2011/04/02 01:20:57  vsnyder
 ! Don't look at h%values for sparse Hessians
 !
