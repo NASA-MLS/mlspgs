@@ -125,7 +125,7 @@ contains
 
     incoptdepth(i_start:) = ref_cor(i_start:) * incoptdepth(i_start:)
 
-  ! Compute Tau = exp(indefinite sum of IncOptDepth)
+  ! Compute Tau = exp(-indefinite sum of IncOptDepth)
 
     n_path = size(incoptdepth)
     total_opacity = 0.0_rp
@@ -226,6 +226,9 @@ contains
 end module Tau_M
 
 ! $Log$
+! Revision 2.14  2011/09/30 01:53:43  vsnyder
+! Correct a comment
+!
 ! Revision 2.13  2010/12/22 21:46:25  vsnyder
 ! TeXnicalities
 !
