@@ -14,8 +14,11 @@ pro icfm_unpack_matrixblock, block
     if kind ne m_absent and kind ne m_full then begin
         MyMessage, /error, "Matrix block is neither absent nor full."
     endif
-    if kind eq m_absent then kind = 'A'
-    if kind eq m_full then kind = 'F'
+    if kind eq m_absent then begin
+        kind = 'A'
+    endif else if kind eq m_full then begin
+        kind = 'F'
+    endif
 
     values = pvm_unpack_quantity()
 
