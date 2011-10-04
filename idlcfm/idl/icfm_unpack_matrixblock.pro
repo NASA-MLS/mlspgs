@@ -20,7 +20,8 @@ pro icfm_unpack_matrixblock, block
         kind = 'F'
     endif
 
-    values = pvm_unpack_quantity()
-
-    block = {kind: kind, values: values}
+    if kind eq 'F' then begin
+        values = pvm_unpack_quantity()
+        block = {kind: kind, values: values}
+    endif else block = {kind: kind}
 end

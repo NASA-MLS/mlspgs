@@ -17,10 +17,15 @@ pro icfm_receivematrix, matrix, tid, msgtag
         for j=0, numRow-1 do begin
             icfm_unpack_matrixblock, block
             a = createblock(matrix, j, i, type=block.kind)
-            a.values = block.values
+            if block.kind ne 'A' then a.values = block.values
             matrix.blocks(j,i) = ptr_new(a)
         endfor
     endfor
 end
 
 ; $Log$
+; Revision 1.1  2011/09/07 06:33:35  honghanh
+; Add 3 more procedures to receive matrix
+; Add 'stacked' concept to createquantity, and icfm_sendquantity
+; and related procedures.
+;
