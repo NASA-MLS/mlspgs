@@ -827,7 +827,6 @@ contains ! =====  Public procedures  ===================================
     integer :: n_rows, n_cols
 
     ! Executable code
-
     call PVMIDLPack ( (/ block%kind, block%nRows, block%nCols /), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing block info" )
 
@@ -867,6 +866,10 @@ contains ! =====  Public procedures  ===================================
     ! Pack the number of blocks
     call PVMIDLPack ( rc%nb, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, 'Packing NB' )
+
+    ! Pack instFirst
+    call PVMIDLPack(rc%instFirst, info)
+    if (info /= 0) call PVMErrorMessage (info, 'Packing instFirst')
 
     ! Pack the indices
     call PVMIDLPack ( rc%nelts, info )
@@ -953,6 +956,9 @@ contains ! =====  Public procedures  ===================================
 end module MatrixTools
 
 ! $Log$
+! Revision 1.35  2011/09/01 20:37:08  honghanh
+! Fix the bug in PVMSendMatrix for sending NB
+!
 ! Revision 1.34  2011/08/20 00:49:37  vsnyder
 ! Remove unused use names and variable declarations
 !
