@@ -27,9 +27,11 @@ module GLOBAL_SETTINGS
 
 !     (subroutines and functions)
 ! SET_GLOBAL_SETTINGS             Get global settings from l2cf
+! L1MAFToL2Profile                Find profile number closest to a MAF
+! L2ProfileToL1MAF                Find MAF closest to a profile number
 ! === (end of toc) ===
 
-  public :: SET_GLOBAL_SETTINGS
+  public :: L1MAFToL2Profile, L2ProfileToL1MAF, SET_GLOBAL_SETTINGS
 
   character(LEN=FileNameLen), public :: LEAPSECFILENAME = ''
 
@@ -57,6 +59,122 @@ module GLOBAL_SETTINGS
   integer, private :: ERROR, WARNING
 
 contains
+
+  ! Given a MAF, returns the closest profile
+  function L1MAFToL2Profile ( MAF, fileDatabase ) result( profile )
+    use L1BDATA, only: L1BDATA_T, NAME_LEN, PRECISIONSUFFIX, &
+      & ASSEMBLEL1BQTYNAME, DEALLOCATEL1BDATA, DUMP, FINDMAXMAF, &
+      & L1BRADSETUP, L1BOASETUP, READL1BATTRIBUTE, READL1BDATA 
+    use L2GPData, only: L2GPDATA_T, L2GPNAMELEN, MAXSWATHNAMESBUFSIZE, RGP, &
+      & DUMP, DUMPRANGE, READL2GPDATA, DESTROYL2GPCONTENTS
+    use MLSCOMMON, only: MLSFILE_T, NAMELEN, &
+      & TAI93_RANGE_T
+    use MLSFILES, only: FILENOTFOUND, HDFVERSION_5, &
+      & MLS_INQSWATH, GETMLSFILEBYTYPE, &
+      & INITIALIZEMLSFILE, MLS_CLOSEFILE, MLS_OPENFILE, SPLIT_PATH_NAME
+    use MLSKINDS, only: R8
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, &
+      & MLSMSG_ERROR, MLSMSG_WARNING
+    use MLSNumerics, only: CLOSESTELEMENT
+    use MLSStringLists, only: GETSTRINGELEMENT
+    ! Args
+    integer, intent(in) :: MAF
+    type (MLSFile_T), pointer :: FILEDATABASE(:)
+    integer :: profile
+    ! Internal variables
+    logical, parameter            :: countEmpty = .true.
+    integer, dimension(1) :: indices
+    integer :: L1BFLAG
+    character(len=Name_Len) :: l1bItemName
+    type (L1BData_T) :: l1bField   ! L1B data
+    type(MLSFile_T), pointer :: L1BFile, L2GPFile
+    type (L2GPData_T) :: l2gp
+    integer :: LISTSIZE, NOMAFS, NOSWATHS
+    character (len=name_len) :: QUANTITY
+    character (len=L2GPNameLen) :: swath
+    character (len=MAXSWATHNAMESBUFSIZE) :: SwathList
+    ! Executable
+    ! 1st--read the MAF times
+    L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
+    if ( .not. associated(L1BFile) ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName // 'L1MAFToL2Profile', &                      
+      & 'l1boa File not found--hope you dont need one' )
+      return
+    endif
+    quantity = 'MAFStartTimeTAI'
+    l1bItemName = AssembleL1BQtyName ( quantity, HDFVERSION_5, .false. )
+    call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
+      & l1bFlag, dontPad=.true.)
+    ! 2nd--read the profile
+    L2GPFile => GetMLSFileByType(filedatabase, content='l2gp')
+    noSwaths = mls_InqSwath ( L2GPFile%name, SwathList, listSize, &
+           & hdfVersion=HDFVERSION_5 )
+    call GetStringElement (trim(swathList), swath, 1, countEmpty )
+    call ReadL2GPData ( L2GPFile, trim(swath), l2gp )
+    ! call Hunt( l2gp%time, l1bField%dpField(1,1,MAF)*1._r8, profile )
+    call ClosestElement( l1bField%dpField(1,1,MAF)*1._r8, l2gp%time, indices )
+    profile = indices(1)
+    call deallocatel1bdata( l1bfield )
+    call destroyl2gpcontents( l2gp )
+  end function L1MAFToL2Profile
+
+  ! Given a profile, returns the closest MAF
+  function L2ProfileToL1MAF ( profile, fileDatabase ) result( MAF )
+    use L1BDATA, only: L1BDATA_T, NAME_LEN, PRECISIONSUFFIX, &
+      & ASSEMBLEL1BQTYNAME, DEALLOCATEL1BDATA, DUMP, FINDMAXMAF, &
+      & L1BRADSETUP, L1BOASETUP, READL1BATTRIBUTE, READL1BDATA 
+    use L2GPData, only: L2GPDATA_T, L2GPNAMELEN, MAXSWATHNAMESBUFSIZE, RGP, &
+      & DUMP, DUMPRANGE, READL2GPDATA, DESTROYL2GPCONTENTS
+    use MLSCOMMON, only: MLSFILE_T, NAMELEN, &
+      & TAI93_RANGE_T
+    use MLSFILES, only: FILENOTFOUND, HDFVERSION_5, &
+      & MLS_INQSWATH, GETMLSFILEBYTYPE, &
+      & INITIALIZEMLSFILE, MLS_CLOSEFILE, MLS_OPENFILE, SPLIT_PATH_NAME
+    use MLSKINDS, only: R8
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, &
+      & MLSMSG_ERROR, MLSMSG_WARNING
+    use MLSNumerics, only: CLOSESTELEMENT
+    use MLSStringLists, only: GETSTRINGELEMENT
+    ! Args
+    integer, intent(in) :: profile
+    type (MLSFile_T), pointer :: FILEDATABASE(:)
+    integer :: MAF
+    ! Internal variables
+    logical, parameter            :: countEmpty = .true.
+    integer, dimension(1) :: indices
+    integer :: L1BFLAG
+    character(len=Name_Len) :: l1bItemName
+    type (L1BData_T) :: l1bField   ! L1B data
+    type(MLSFile_T), pointer :: L1BFile, L2GPFile
+    type (L2GPData_T) :: l2gp
+    integer :: LISTSIZE, NOMAFS, NOSWATHS
+    character (len=name_len) :: QUANTITY
+    character (len=L2GPNameLen) :: swath
+    character (len=MAXSWATHNAMESBUFSIZE) :: SwathList
+    ! Executable
+    ! 1st--read the MAF times
+    L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
+    if ( .not. associated(L1BFile) ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName // 'L2ProfileToL1MAF', &                      
+      & 'l1boa File not found--hope you dont need one' )
+      return
+    endif
+    quantity = 'MAFStartTimeTAI'
+    l1bItemName = AssembleL1BQtyName ( quantity, HDFVERSION_5, .false. )
+    call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
+      & l1bFlag, dontPad=.true.)
+    ! 2nd--read the profile
+    L2GPFile => GetMLSFileByType(filedatabase, content='l2gp')
+    noSwaths = mls_InqSwath ( L2GPFile%name, SwathList, listSize, &
+           & hdfVersion=HDFVERSION_5 )
+    call GetStringElement (trim(swathList), swath, 1, countEmpty )
+    call ReadL2GPData ( L2GPFile, trim(swath), l2gp )
+    ! call Hunt( l1bField%dpField(1,1,:)*1._r8, l2gp%time(profile), MAF )
+    call ClosestElement( l2gp%time(profile), l1bField%dpField(1,1,:)*1._r8, indices )
+    MAF = indices(1)
+    call deallocatel1bdata( l1bfield )
+    call destroyl2gpcontents( l2gp )
+  end function L2ProfileToL1MAF
 
   subroutine SET_GLOBAL_SETTINGS ( ROOT, ForwardModelConfigDatabase, &
     & filedatabase, FGrids, l2gpDatabase, DirectDatabase, processingRange )
@@ -1091,6 +1209,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.139  2011/06/29 21:50:48  pwagner
+! Some cases may safely omit l1b files
+!
 ! Revision 2.138  2010/10/19 00:04:36  pwagner
 ! Tried to fix callstack overflow when restricted
 !
