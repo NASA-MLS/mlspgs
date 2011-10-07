@@ -20,7 +20,7 @@ module HessianModule_0          ! Low-level Hessians in the MLS PGS suite
   use MLSKinds, only: RH=>RM ! Renamed here to make it easier to change later
   use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
 
-  implicit NONE
+  implicit none
   private
 
   public :: H_Absent, H_Sparse, H_Full, H_Unknown
@@ -68,6 +68,7 @@ module HessianModule_0          ! Low-level Hessians in the MLS PGS suite
     ! Therefore we also set TuplesFilled when we create a Hessian Block
     integer :: TuplesFilled = 0 ! Number of tuples filled
     real(rh), pointer :: Values(:,:,:) => NULL() ! for full explicit representation
+    logical :: optimizedAlready = .false. ! Have we been through OptimizeBlock?
   end type HessianElement_T
 
   interface ClearBlock
@@ -529,6 +530,7 @@ contains
       call outputNamedValue ( 'h_sparse', h_sparse )
       call outputNamedValue ( 'h_full', h_full )
     end select
+    call outputNamedValue ( 'already optimized?', h%optimizedAlready )
 
   end subroutine Dump_Hessian_Block
 
@@ -766,6 +768,8 @@ contains
     use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST, &
       & TEST_ALLOCATE, TEST_DEALLOCATE
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_WARNING
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use TOGGLES, only: SWITCHES
     use SORT_M, only: SORTP
     ! Delete any 'zero' elements and reorder with i as the slowest changing index
     ! (While this is unconventional, it optimizes for invocations of the 2nd order
@@ -781,7 +785,11 @@ contains
     integer :: MaxRank  ! Used to place a tuple out of the running
     integer :: STATUS   ! Flag from allocate
     logical, parameter :: DEEBUG = .true.
+    logical :: verbose
 
+    verbose = ( switchDetail(switches, 'hess') > -1 )
+    if ( h%optimizedAlready ) return
+    h%optimizedAlready = .true.
     if ( DONTOPTIMIZE ) then
        call MLSMessage ( MLSMSG_Warning, ModuleName, &
          & "Skipping buggy optimizeBlocks (paw)" )
@@ -793,8 +801,9 @@ contains
         call outputnamedValue( 'count(h%values /= 0.0)', count(h%values /= 0.0) )
       else
         call outputnamedValue( 'h%tuplesFilled', h%tuplesFilled )
-        n = count ( h%tuples ( 1:h%tuplesFilled ) % h /= 0 )
-        call outputnamedValue( 'count(h%tuplevalues /= 0.0)', n )
+        n = count ( h%tuples ( 1:h%tuplesFilled ) % h /= 0._rh )
+        call outputnamedValue( 'count(h%tuplevalues /= 0.0_rh)', n )
+        call outputnamedValue( 'is h sparse?', (h%kind == h_Sparse) )
       end if
     end if
     if ( h%kind == h_Absent .or. h%kind == h_Unknown ) return
@@ -803,22 +812,29 @@ contains
       ! Assuming integers take half the space of real(rh), each tuple takes
       ! 2.5 times the space of a single value.
       if ( 2.5 * n > size(h%values) ) then
+        h%optimizedAlready = .true.
         return ! sparsifying won't improve things
       else if ( n < 1 ) then
         ! all values 0; so make it absent
         call clearBlock ( h )
       else
+        if ( verbose ) call outputNamedValue( 'Sparsifying full Hessian;' // &
+          & 'Number of nozero elements', n )
         call Sparsify_Hessian ( H )
       end if
       if ( h%kind /= h_Sparse ) return
     elseif ( h%kind == h_Sparse ) then
       ! Now we re-sparsify the block
+        if ( verbose ) call outputNamedValue( 'Sparsifying sparse Hessian;' // &
+          & 'Number of nozero elements', n )
       call Sparsify( H )
     end if
+    ! h%optimizedAlready = .true.
     ! OK, so now it must be sparse
 
     if ( h%tuplesFilled == 0 ) then
       call clearBlock ( h )
+      if ( verbose ) call output( 'We optimized the block away', advance='yes' )
       return
     end if
 
@@ -829,17 +845,34 @@ contains
     end if
 
     ! How many will I end up with at most
-    n = count ( h%tuples ( 1:h%tuplesFilled ) % h /= 0 )
+    n = count ( h%tuples ( 1:h%tuplesFilled ) % h /= 0._rh )
     if ( n == 0 ) then
       call clearBlock ( h )
+      if ( verbose ) call output( 'We optimized the block away', advance='yes' )
       return
+    end if
+
+    if ( DEEBUG .and. any( h%kind == (/ h_full, h_sparse /) ) .and. &
+      & h%tuplesFilled > 0 ) then
+      call dump( h, details=0, name='After optimizing Hessian block' )
+      if ( h%kind == h_full ) &
+        & call outputnamedValue( 'count(h%values /= 0.0)', count(h%values /= 0.0) )
+      call outputnamedValue( 'h%tuplesFilled', h%tuplesFilled )
+      if ( associated(h%tuples) ) then
+        n = count ( h%tuples ( 1:h%tuplesFilled ) % h /= 0 )
+        call outputnamedValue( 'count(h%tuplevalues /= 0.0)', n )
+      else if ( h%tuplesFilled > 0 ) then
+        call MLSMessage ( MLSMSG_Warning, ModuleName // "optimizeBlocks", &
+          & "How is it that h%tuplesFilled > 0 but h%tuples is not associated" )
+      end if
     end if
 
     if ( OPTIMIZEMEANSSPARISFY ) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
-        & "Skipping remainder of optimizeBlocks after sparisfying(paw)" )
+        & "Skipping remainder of optimizeBlocks after sparsifying(paw)" )
       return
     end if
+    ! -------------------------------------------------------------
     ! The rest of this is probably useless as well as wrong
     call allocate_Test ( rank,  h%tuplesFilled, "Rank in OptimizeBlock", ModuleName )
     call allocate_Test ( order, h%tuplesFilled, "Order in OptimizeBlock", ModuleName )
@@ -921,6 +954,7 @@ o:    do while ( i < n )
           & "How is it that h%tuplesFilled > 0 but h%tuples is not associated" )
       end if
     end if
+    ! -------------------------------------------------------------
   end subroutine OptimizeBlock
 
   ! --------------------------------------------- Sparsify_Hessian -----
@@ -931,21 +965,31 @@ o:    do while ( i < n )
 
     use Allocate_Deallocate, only: DEALLOCATE_TEST
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use TOGGLES, only: SWITCHES
 
     type (HessianElement_T), intent(inout) :: H
     integer :: i
     integer :: newSize
     integer :: status
     type(tuple_t), pointer :: Tuples(:) => NULL()
-
+    logical :: verbose
+    ! Executable
+    ! h%optimizedAlready = .false.
+    nullify( tuples )
+    verbose = ( switchDetail(switches, 'hess') > -1 ) .or. .true.
     select case (h%kind)
     case (h_Full)
+      if ( verbose ) call output( 'Sparsifying full hessian', advance='yes' )
       if ( associated(h%values) ) call sparsify ( h%values, h )
       call deallocate_test ( h%values, "H%Values in Sparsify_Hessian", moduleName )
     case (h_Sparse)
       if ( h%tuplesFilled < 1 ) return
-      newSize = count ( h%tuples ( 1:h%tuplesFilled ) % h /= 0 )
-      if ( newSize > 0 ) then
+      newSize = count ( h%tuples ( 1:h%tuplesFilled ) % h /= 0._rh )
+      if ( verbose ) call outputNamedValue( 'Sparsifying sparse hessian', newsize )
+      if ( newSize ==  h%tuplesFilled ) then
+        return
+      elseif ( newSize > 0 ) then
         allocate(tuples(newSize), stat=status)
         if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
            & "Unable to allocate replacement tuples in Sparsify" )
@@ -956,10 +1000,13 @@ o:    do while ( i < n )
           tuples(newSize) = h%tuples(i)
         enddo
       endif
-      deallocate(h%tuples)
+      deallocate(h%tuples, stat=status)
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+         & "Unable to deallocate original tuples in Sparsify" )
       h%tuplesFilled = newSize
       h%tuples => tuples
     case default
+      if ( verbose ) call output( 'Sparsifying ??? hessian', advance='yes' )
       ! We don't need to anything for these cases, do we?
     end select
   end subroutine Sparsify_Hessian
@@ -1018,13 +1065,14 @@ o:    do while ( i < n )
     real(r8), intent(in) :: Threshold
     ! Internal variables
     real(r8) :: Cutoff ! Threshold * maxval(abs(...)) if threshold > 0.
-    integer :: J, K    ! Subscripts
+    integer :: I, J, K    ! Subscripts
     integer :: nt      ! Num of nTuples
     integer :: S1, S2  ! Surface indices for 1st, 2nd cols of H
 
     call MLSMessage ( MLSMSG_Warning, ModuleName, &
       & "Streamlining Hessians is probably still buggy--use with caution (paw)" )
 
+    h%optimizedAlready = .false.
     select case ( h%kind )
     case ( h_absent )
       return
@@ -1035,17 +1083,32 @@ o:    do while ( i < n )
       if ( nt < 2 ) return
       cutoff = threshold * maxval(abs(h%tuples(1:nt)%h))
       if ( surface < 0 .and. scaleHeight < 0._r8 ) then
-        where ( abs( h%tuples%h ) < cutoff ) h%tuples%h = 0.0
+        ! where ( abs( h%tuples%h ) < cutoff ) h%tuples%h = 0.0
+        do i=1, nt
+          if ( abs( h%tuples(i)%h ) < cutoff ) h%tuples(i)%h = 0.
+        enddo
       else if ( surface > 0 ) then
-        where ( abs( h%tuples%h ) < cutoff .or. &
-          &     abs( (h%tuples%j-1 ) / q1%noChans + 1 -   &
-          &          (h%tuples%k-1 ) / q2%noChans + 1 ) > &
-          &     surface  ) h%tuples%h = 0.0
+        ! where ( abs( h%tuples%h ) < cutoff .or. &
+         ! &     abs( (h%tuples%j-1 ) / q1%noChans + 1 -   &
+         ! &          (h%tuples%k-1 ) / q2%noChans + 1 ) > &
+         ! &     surface  ) h%tuples%h = 0.0
+        do i=1, nt
+          if ( abs( h%tuples(i)%h ) < cutoff .or. &
+            &     abs( (h%tuples(i)%j-1 ) / q1%noChans + 1 -   &
+            &          (h%tuples(i)%k-1 ) / q2%noChans + 1 ) > &
+            &     surface ) h%tuples(i)%h = 0.
+        enddo
       else if ( scaleheight > 0._r8 ) then
-        where ( abs( h%tuples%h ) < cutoff .or. &
-          &     abs( q1%surfs( (h%tuples%j-1 ) / q1%noChans + 1, 1) -   &
-          &          q2%surfs( (h%tuples%k-1 ) / q2%noChans + 1, 1) ) > &
-          &     scaleHeight  ) h%tuples%h = 0.0
+        ! where ( abs( h%tuples%h ) < cutoff .or. &
+         ! &     abs( q1%surfs( (h%tuples%j-1 ) / q1%noChans + 1, 1) -   &
+         ! &          q2%surfs( (h%tuples%k-1 ) / q2%noChans + 1, 1) ) > &
+         ! &     scaleHeight  ) h%tuples%h = 0.0
+        do i=1, nt
+          if ( abs( h%tuples(i)%h ) < cutoff .or. &
+            &     abs( (h%tuples(i)%j-1 ) / q1%noChans + 1 -   &
+            &          (h%tuples(i)%k-1 ) / q2%noChans + 1 ) > &
+            &     scaleHeight ) h%tuples(i)%h = 0.
+        enddo
       end if
     case ( h_full )
       do k = 1, h%nCols2 - 1
@@ -1066,7 +1129,10 @@ o:    do while ( i < n )
       end do
       if ( threshold > 0 ) then
         cutoff = threshold * maxval(abs(h%values))
-        where ( abs(h%values) < cutoff ) h%values = 0.0
+        ! where ( abs(h%values) < cutoff ) h%values = 0.0
+        do i=1, nt
+          if ( abs( h%tuples(i)%h ) < cutoff ) h%tuples(i)%h = 0.
+        enddo
       end if
     end select
 
@@ -1117,6 +1183,9 @@ o:    do while ( i < n )
 end module HessianModule_0
 
 ! $Log$
+! Revision 2.21  2011/10/07 00:01:55  pwagner
+! Some improvements to speed; still hangs though in Streamline
+!
 ! Revision 2.20  2011/09/20 22:34:06  pwagner
 ! Repaired most obvious bugs in Sparsify, Streamline
 !
