@@ -54,51 +54,51 @@ contains ! =====     Public Procedures     =============================
     ! This is the main routine for the module.  It parses the relevant lines
     ! of the l2cf and works out what to do.
 
-    use Allocate_Deallocate, only: test_allocate, Deallocate_Test
-    use Chunks_m, only: MLSChunk_T
-    use DestroyCommand_m, only: DestroyCommand
-    use DumpCommand_m, only: BooleanFromAnyGoodRadiances, &
-      & BooleanFromAnyGoodValues, &
-      & BooleanFromCatchWarning, BooleanFromComparingQtys, BooleanFromFormula, &
-      & DumpCommand, Skip
-    use Expr_M, only: EXPR, EXPR_CHECK
-    use FillUtils_1, only: fillError, &
-      & addGaussianNoise, ApplyBaseline, ComputeTotalPower, &
-      & ExtractSingleChannel, FillCovariance, FromGrid, &
-      & FromL2GP, FromProfile, LOSVelocity, &
-      & ChiSqChan, ChiSqMMaf, ChiSqMMif, ChiSqRatio, &
-      & ColAbundance, FoldedRadiance, PhiTanWithRefraction, &
-      & IWCFromExtinction, RHIFromOrToH2O, NoRadsPerMIF, &
-      & RHIPrecisionFromOrToH2O, WithEstNoise, &
-      & Hydrostatically, FromSplitSideband, GPHPrecision, &
-      & FromIsotope, FromAsciiFile, RotateMagneticField, &
-      & Explicit, FromL1B, &
-      & FromL2AUX, UsingMagneticModel, &
-      & FromInterpolatedQty, FromLosGrid, &
-      & ByManipulation, ManipulateVectors, WithReflectorTemperature, &
-      & WithReichlerWMOTP, &
-      & WithWMOTropopause, WithBinResults, WithBoxcarFunction, &
-      & StatusQuantity, QualityFromChisq, ConvergenceFromChisq, &
-      & UsingLeastSquares, OffsetRadianceQuantity, ResetUnusedRadiances, &
-      & ScaleOverlaps, SpreadChannelFill, TransferVectors, UncompressRadiance, &
+    use ALLOCATE_DEALLOCATE, only: TEST_ALLOCATE, DEALLOCATE_TEST
+    use CHUNKS_M, only: MLSCHUNK_T
+    use DESTROYCOMMAND_M, only: DESTROYCOMMAND
+    use DUMPCOMMAND_M, only: BOOLEANFROMANYGOODRADIANCES, &
+      & BOOLEANFROMANYGOODVALUES, &
+      & BOOLEANFROMCATCHWARNING, BOOLEANFROMCOMPARINGQTYS, BOOLEANFROMFORMULA, &
+      & DUMPCOMMAND, SKIP
+    use EXPR_M, only: EXPR, EXPR_CHECK
+    use FILLUTILS_1, only: FILLERROR, &
+      & ADDGAUSSIANNOISE, APPLYBASELINE, COMPUTETOTALPOWER, &
+      & EXTRACTSINGLECHANNEL, FILLCOVARIANCE, FROMGRID, &
+      & FROML2GP, FROMPROFILE, LOSVELOCITY, &
+      & CHISQCHAN, CHISQMMAF, CHISQMMIF, CHISQRATIO, &
+      & COLABUNDANCE, FOLDEDRADIANCE, PHITANWITHREFRACTION, &
+      & IWCFROMEXTINCTION, RHIFROMORTOH2O, NORADSPERMIF, &
+      & RHIPRECISIONFROMORTOH2O, WITHESTNOISE, &
+      & HYDROSTATICALLY, FROMSPLITSIDEBAND, GPHPRECISION, &
+      & FROMISOTOPE, FROMASCIIFILE, ROTATEMAGNETICFIELD, &
+      & EXPLICIT, FROML1B, &
+      & FROML2AUX, USINGMAGNETICMODEL, &
+      & FROMINTERPOLATEDQTY, FROMLOSGRID, &
+      & BYMANIPULATION, MANIPULATEVECTORS, WITHREFLECTORTEMPERATURE, &
+      & WITHREICHLERWMOTP, &
+      & WITHWMOTROPOPAuse, WITHBINRESULTS, WITHBOXCARFUNCTION, &
+      & STATUSQUANTITY, QUALITYFROMCHISQ, CONVERGENCEFROMCHISQ, &
+      & USINGLEASTSQUARES, OFFSETRADIANCEQUANTITY, RESETUNuseDRADIANCES, &
+      & SCALEOVERLAPS, SPREADCHANNELFILL, TRANSFERVECTORS, UNCOMPRESSRADIANCE, &
       & ANNOUNCE_ERROR, &
-      ! Codes for ANNOUNCE_ERROR:
-      & badEstNoiseFill, badGeocAltitudeQuantity, badIsotopeFill, &
-      & badlosGridFill, badlosVelFill, badRefGPHQuantity, &
-      & badRefractFill, badTemperatureQuantity, bothFractionAndLength, &
-      & missingField, &
-      & needGeocAltitude, needH2O, needOrbitInclination, &
-      & needTempREFGPH, noCodeFor, no_Error_Code, noExplicitValuesGiven, &
-      & noSourceGridGiven, noSourceL2AUXGiven, noSourceL2GPGiven, &
-      & notImplemented, notPlain, notSPD, &
-      & wrongUnits
-    use ForwardModelConfig, only: ForwardModelConfig_T
-    use ForwardModelSupport, only: FillFwdModelTimings
-    use GLOBAL_SETTINGS, only: BrightObjects
-    use GriddedData, only: GriddedData_T
-    use HessianModule_1, only: AddHessianToDatabase, CreateEmptyHessian, Hessian_T, &
-      & StreamlineHessian
-    ! We need many things from Init_Tables_Module.  First the fields:
+      ! CODES FOR ANNOUNCE_ERROR:
+      & BADESTNOISEFILL, BADGEOCALTITUDEQUANTITY, BADISOTOPEFILL, &
+      & BADLOSGRIDFILL, BADLOSVELFILL, BADREFGPHQUANTITY, &
+      & BADREFRACTFILL, BADTEMPERATUREQUANTITY, BOTHFRACTIONANDLENGTH, &
+      & MISSINGFIELD, &
+      & NEEDGEOCALTITUDE, NEEDH2O, NEEDORBITINCLINATION, &
+      & NEEDTEMPREFGPH, NOCODEFOR, NO_ERROR_CODE, NOEXPLICITVALUESGIVEN, &
+      & NOSOURCEGRIDGIVEN, NOSOURCEL2AUXGIVEN, NOSOURCEL2GPGIVEN, &
+      & NOTIMPLEMENTED, NOTPLAIN, NOTSPD, &
+      & WRONGUNITS
+    use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
+    use FORWARDMODELSUPPORT, only: FILLFWDMODELTIMINGS
+    use GLOBAL_SETTINGS, only: BRIGHTOBJECTS
+    use GRIDDEDDATA, only: GRIDDEDDATA_T
+    use HESSIANMODULE_1, only: ADDHESSIANTODATABASE, CREATEEMPTYHESSIAN, HESSIAN_T, &
+      & STREAMLINEHESSIAN
+    ! WE NEED MANY THINGS FROM INIT_TABLES_MODULE.  FIRST THE FIELDS:
     use INIT_TABLES_MODULE, only: F_A, F_ADDITIONAL, F_ALLOWMISSING, &
       & F_APRIORIPRECISION, F_ASPERCENTAGE, F_AVOIDBRIGHTOBJECTS, &
       & F_B, F_BADRANGE, F_BASELINEQUANTITY, F_BIN, F_BOUNDARYPRESSURE, &
@@ -107,7 +107,7 @@ contains ! =====     Public Procedures     =============================
       & F_DESTINATION, F_DIAGONAL, &
       & F_DONTMASK, F_DONTSUMHEIGHTS, F_DONTSUMINSTANCES, &
       & F_ECRTOFOV, F_EARTHRADIUS, F_EXACT, F_EXCLUDEBELOWBOTTOM, F_EXPLICITVALUES, &
-      & F_EXPR, F_EXTINCTION, F_FIELDECR, F_FILE, F_FLAGS, F_FORCE, f_shape, &
+      & F_EXPR, F_EXTINCTION, F_FIELDECR, F_FILE, F_FLAGS, F_FORCE, F_SHAPE, &
       & F_FRACTION, F_FROMPRECISION, &
       & F_GEOCALTITUDEQUANTITY, F_GPHQUANTITY, F_HEIGHT, F_HEIGHTRANGE, &
       & F_HIGHBOUND, F_H2OQUANTITY, F_H2OPRECISIONQUANTITY, &
@@ -133,12 +133,12 @@ contains ! =====     Public Procedures     =============================
       & F_TYPE, F_UNIT, F_USB, F_USBFRACTION, F_VECTOR, F_VMRQUANTITY, &
       & F_WHEREFILL, F_WHERENOTFILL, F_WIDTH, &
       & FIELD_FIRST, FIELD_LAST
-    ! Now the literals:
+    ! NOW THE LITERALS:
     use INIT_TABLES_MODULE, only: L_ADDNOISE, L_APPLYBASELINE, L_ASCIIFILE, &
       & L_BINMAX, L_BINMEAN, L_BINMIN, L_BINTOTAL, &
       & L_BOUNDARYPRESSURE, L_BOXCAR, L_CHISQCHAN, &
       & L_CHISQMMAF, L_CHISQMMIF, L_CHISQRATIO, L_CHOLESKY, &
-      & L_cloudice, L_cloudextinction, &
+      & L_CLOUDICE, L_CLOUDEXTINCTION, &
       & L_COMBINECHANNELS, L_COLUMNABUNDANCE, L_CONVERGENCERATIO, &
       & L_DOBSONUNITS, L_DU, &
       & L_ESTIMATEDNOISE, L_EXPLICIT, L_EXTRACTCHANNEL, L_FOLD, &
@@ -155,14 +155,14 @@ contains ! =====     Public Procedures     =============================
       & L_PHASETIMING, L_PHITAN, &
       & L_PLAIN, L_PROFILE, L_PTAN,  L_QUALITY, &
       & L_RECTANGLEFROMLOS, L_REFGPH, L_REFRACT, &
-      & L_REFLECTORTEMPMODEL, L_RESETUNUSEDRADIANCES, L_RHI, &
+      & L_REFLECTORTEMPMODEL, L_RESETUNuseDRADIANCES, L_RHI, &
       & L_RHIFROMH2O, L_RHIPRECISIONFROMH2O, L_ROTATEFIELD, L_SCALEOVERLAPS, &
       & L_SECTIONTIMING, L_SPD, L_SPREADCHANNEL, &
       & L_SPLITSIDEBAND, L_STATUS, L_SWAPVALUES, &
       & L_TEMPERATURE, L_TNGTGEODALT, &
-      & L_TNGTGEOCALT, L_UNCOMPRESSRADIANCE, L_VECTOR, L_VGRID, L_VMR, L_WMOTROPOPAUSE, &
+      & L_TNGTGEOCALT, L_UNCOMPRESSRADIANCE, L_VECTOR, L_VGRID, L_VMR, L_WMOTROPOPAuse, &
       & L_ZETA
-    ! Now the specifications:
+    ! NOW THE SPECIFICATIONS:
     use INIT_TABLES_MODULE, only: S_ANYGOODVALUES, S_ANYGOODRADIANCES, &
       & S_CATCHWARNING, S_COMPARE, S_COMPUTETOTALPOWER, S_DESTROY, &
       & S_DIFF, S_DUMP, S_FILL, S_FILLCOVARIANCE, &
@@ -170,55 +170,55 @@ contains ! =====     Public Procedures     =============================
       & S_HESSIAN, S_LOAD, S_MATRIX,  S_NEGATIVEPRECISION, S_PHASE, S_POPULATEL2PCBIN, &
       & S_REEVALUATE, S_RESTRICTRANGE, S_SKIP, S_SNOOP, S_STREAMLINEHESSIAN, &
       & S_SUBSET, S_TIME, S_TRANSFER, S_UPDATEMASK, S_VECTOR
-    ! Now some arrays
-    use Intrinsic, only: lit_indices, &
-      & PHYQ_Dimensionless, PHYQ_Invalid, PHYQ_Temperature, &
-      & PHYQ_Time, PHYQ_Length, PHYQ_Angle, PHYQ_Profiles
-    use L2GPData, only: L2GPData_T, COL_SPECIES_HASH, COL_SPECIES_KEYS
-    use L2AUXData, only: L2AUXData_T
-    use L2PC_m, only: POPULATEL2PCBINBYNAME, LOADMATRIX, LOADVECTOR
-    use L2PCBins_m, only: FLUSHLOCKEDBINS
-    use ManipulateVectorQuantities, only: DOHGRIDSMATCH, &
+    ! NOW SOME ARRAYS
+    use INTRINSIC, only: LIT_INDICES, &
+      & PHYQ_DIMENSIONLESS, PHYQ_INVALID, PHYQ_TEMPERATURE, &
+      & PHYQ_TIME, PHYQ_LENGTH, PHYQ_ANGLE, PHYQ_PROFILES
+    use L2GPDATA, only: L2GPDATA_T, COL_SPECIES_HASH, COL_SPECIES_KEYS
+    use L2AUXDATA, only: L2AUXDATA_T
+    use L2PC_M, only: POPULATEL2PCBINBYNAME, LOADMATRIX, LOADVECTOR
+    use L2PCBINS_M, only: FLUSHLOCKEDBINS
+    use MANIPULATEVECTORQUANTITIES, only: DOHGRIDSMATCH, &
       & FILLWITHCOMBINEDCHANNELS
-    use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
-      & GetActualMatrixFromDatabase, GetDiagonal, &
-      & GetKindFromMatrixDatabase, GetFromMatrixDatabase, K_Plain, K_SPD, &
-      & Matrix_Cholesky_T, Matrix_Database_T, Matrix_Kronecker_T, Matrix_SPD_T, &
-      & Matrix_T, NullifyMatrix
-    ! NOTE: If you ever want to include defined assignment for matrices, please
-    ! carefully check out the code around the call to snoop.
-    use MLSL2Options, only: SKIPRETRIEVAL, SPECIALDUMPFILE
-    use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, &
-      & addPhaseToPhaseNames, fillTimings, finishTimings
-    use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
-      & MLSMSG_Allocate, MLSMSG_Deallocate, MLSMessage, MLSMessageReset
-    use MLSRandomNumber, only: mls_random_seed, MATH77_RAN_PACK
-    use MLSStringLists, only: catLists, GetHashElement, &
-      & NumStringElements, PutHashElement, &
-      & StringElement, StringElementNum
-    use MLSStrings, only: lowerCase
-    use Molecules, only: L_H2O
-    use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
+    use MATRIXMODULE_1, only: ADDTOMATRIXDATABASE, CREATEEMPTYMATRIX, &
+      & GETACTUALMATRIXFROMDATABASE, GETDIAGONAL, &
+      & GETKINDFROMMATRIXDATABASE, GETFROMMATRIXDATABASE, K_PLAIN, K_SPD, &
+      & MATRIX_CHOLESKY_T, MATRIX_DATABASE_T, MATRIX_KRONECKER_T, MATRIX_SPD_T, &
+      & MATRIX_T, NULLIFYMATRIX
+    ! NOTE: IF YOU EVER WANT TO INCLUDE DEFINED ASSIGNMENT FOR MATRICES, PLEASE
+    ! CAREFULLY CHECK OUT THE CODE AROUND THE CALL TO SNOOP.
+    use MLSL2OPTIONS, only: SKIPRETRIEVAL, SPECIALDUMPFILE
+    use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES, &
+      & ADDPHASETOPHASENAMES, FILLTIMINGS, FINISHTIMINGS
+    use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, &
+      & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, MLSMESSAGE, MLSMESSAGERESET
+    use MLSRANDOMNUMBER, only: MLS_RANDOM_SEED, MATH77_RAN_PACK
+    use MLSSTRINGLISTS, only: CATLISTS, GETHASHELEMENT, &
+      & NUMSTRINGELEMENTS, PUTHASHELEMENT, &
+      & STRINGELEMENT, STRINGELEMENTNUM
+    use MLSSTRINGS, only: LOWERCASE
+    use MOLECULES, only: L_H2O
+    use MORETREE, only: GET_BOOLEAN, GET_FIELD_ID, GET_SPEC_ID
     use OUTPUT_M, only: BLANKS, OUTPUT, &
-      & revertoutput, switchOutput
-    use PFAData_m, only: Flush_PFAData
-    use QuantityTemplates, only: QuantityTemplate_T, ModifyQuantityTemplate
-    use readAPriori, only: APrioriFiles
-    use SnoopMLSL2, only: SNOOP
-    use String_Table, only: get_string
-    use SubsetModule, only: SETUPSUBSET, SETUPFLAGCLOUD, RESTRICTRANGE, UPDATEMASK
-    use Time_M, only: Time_Now
+      & REVERTOUTPUT, SWITCHOUTPUT
+    use PFADATA_M, only: FLUSH_PFADATA
+    use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T, MODIFYQUANTITYTEMPLATE
+    use READAPRIORI, only: APRIORIFILES
+    use SNOOPMLSL2, only: SNOOP
+    use STRING_TABLE, only: GET_STRING
+    use SUBSETMODULE, only: SETUPSUBSET, SETUPFLAGCLOUD, RESTRICTRANGE, UPDATEMASK
+    use TIME_M, only: TIME_NOW
     use TOGGLES, only: GEN, LEVELS, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, &
       & SOURCE_REF, SUB_ROSA, SUBTREE
     use TREE_TYPES, only: N_NAMED
-    use VectorsModule, only: AddVectorToDatabase, &
-      & CloneVectorQuantity, CreateVector, &
-      & GetVectorQtyByTemplateIndex, &
-      & ValidateVectorQuantity, Vector_T, &
-      & VectorTemplate_T, VectorValue_T, M_Fill
-    use VGridsDatabase, only: VGRIDS
+    use VECTORSMODULE, only: ADDVECTORTODATABASE, &
+      & CLONEVECTORQUANTITY, CREATEVECTOR, &
+      & GETVECTORQTYBYTEMPLATEINDEX, &
+      & VALIDATEVECTORQUANTITY, VECTOR_T, &
+      & VECTORTEMPLATE_T, VECTORVALUE_T, M_FILL
+    use VGRIDSDATABASE, only: VGRIDS
 
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Of the FILL section in the AST
@@ -654,7 +654,8 @@ contains ! =====     Public Procedures     =============================
         if ( .not. associated(vectors) ) allocate ( vectors(0), stat=status )
         call test_allocate ( status, moduleName, 'Vectors', (/0/), (/0/) )
         call dumpCommand ( key, qtyTemplates, vectorTemplates, vectors, &
-          & GriddedDataBase=GriddedDataBase, FileDataBase=FileDataBase )
+          & GriddedDataBase=GriddedDataBase, FileDataBase=FileDataBase, &
+          & MatrixDatabase=Matrices, HessianDatabase=Hessians )
 
       case ( s_hessian ) ! ===============================  Hessian  =====
         got = .false.
@@ -2632,6 +2633,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.394  2011/10/07 00:06:02  pwagner
+! May dump Matrices, Hessians from Fill, Join
+!
 ! Revision 2.393  2011/06/16 20:52:22  vsnyder
 ! Get codes for Announce_Error from FillUtils.  Add f_expr, but with a
 ! noCodeFor error message -- to be implemented later.
