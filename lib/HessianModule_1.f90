@@ -36,6 +36,7 @@ module HessianModule_1          ! High-level Hessians in the MLS PGS suite
     integer :: Where = 0 ! Source_ref for creation if by L2CF
     type(RC_Info) :: Col, Row  ! Column and row info
     type(HessianElement_T), dimension(:,:,:), pointer :: BLOCK => NULL()
+    logical :: optimizedAlready = .false. ! Have we been through OptimizeHessian?
   end type Hessian_T
  
   public :: AddHessianToDatabase, CreateBlock, CreateEmptyHessian
@@ -509,9 +510,11 @@ contains
         end do
       end do
     end do
+    call outputNamedValue( 'Total size', TotalSize )
     call dump( layout, 'Layout of blocks in hessian', width=h%col%nb )
     call deallocate_test ( layout, moduleName // '%Dump_Hessian', &
       & "layout of Hessian Blocks" )
+    call outputNamedValue( 'optimized already?', h%optimizedAlready )
     if ( my_details <= -3 ) call resumeOutput
     contains
     function skipThisBlock ( s, tid ) result( doWe )
@@ -702,6 +705,7 @@ contains
   ! Get rid of duplicates and zeroes
     type (Hessian_T), intent(inout) :: H
     integer :: I, J, K
+    if ( h%optimizedAlready ) return
     do k = lbound(h%block,3), ubound(h%block,3)
       do j = lbound(h%block,2), ubound(h%block,2)
         do i = lbound(h%block,1), ubound(h%block,1)
@@ -709,6 +713,7 @@ contains
         end do
       end do
     end do
+    h%optimizedAlready = .true.
   end subroutine OptimizeHessian_1
 
   ! ------------------------------------------ StreamlineHessian_1 -----
@@ -738,7 +743,14 @@ contains
     logical :: DROPBLOCK
     logical :: VERBOSE
 
-    verbose = ( switchDetail(switches, 'hgrid') > -1 )
+    verbose = ( switchDetail(switches, 'hess') > -1 )
+    h%optimizedAlready = .false.
+    if ( verbose ) then
+      call outputNamedValue( 'Streamlining Hessian sized', (/h%row%nb, h%col%nb/) )
+      call outputNamedValue( 'ScaleHeight', ScaleHeight )
+      call outputNamedValue( 'Surface   ', surface )
+      call outputNamedValue( 'Threshold ', threshold )
+    endif
     do i = 1, h%row%nb
       do j = 1, h%col%nb - 1
         p1 = h%col%inst(j)
@@ -749,6 +761,8 @@ contains
 
           hbu => h%block ( i, j, k )
           hbl => h%block ( i, k, j )
+          if ( .not. any( hbu%kind == (/h_full, h_sparse/) ) .and. &
+            &  .not. any( hbl%kind == (/h_full, h_sparse/) ) ) cycle
           
           ! Decide whether to drop these on horizontal grounds
           dropBlock = .false.
@@ -761,7 +775,7 @@ contains
             call ClearBlock ( hbl )
           else if ( q1%coherent .and. q2%coherent ) then
             if ( verbose ) &
-              & call output( 'Steamlining these blocks', advance='yes' )
+              & call outputNamedValue( 'Streamlining these blocks', (/i,j,k/) )
             call streamlineHessian ( hbu, q1, q2, surface, scaleHeight, threshold )
             call streamlineHessian ( hbl, q2, q1, surface, scaleHeight, threshold )
           end if
@@ -773,15 +787,16 @@ contains
         q2 => h%col%vec%quantities ( h%col%quant(k) ) % template
 
         hbu => h%block ( i, k, k )
+        if ( .not. any( hbu%kind == (/h_full, h_sparse/) ) ) cycle
 
         if ( q2%coherent ) then
           if ( verbose ) &
-            & call output( 'Steamlining this diagonal block', advance='yes' )
+            & call outputNamedValue( 'Streamlining this diagonal block', (/i,k/) )
           call streamlineHessian ( hbu, q2, q2, surface, scaleHeight, threshold )
         end if
       end do
     end do
-
+    H%optimizedAlready = .true.
   end subroutine StreamlineHessian_1
 
 !--------------------------- end bloc --------------------------------------
@@ -797,6 +812,9 @@ contains
 end module HessianModule_1
 
 ! $Log$
+! Revision 2.25  2011/10/07 00:03:32  pwagner
+! Some improvements to speed; still hangs though in Streamline
+!
 ! Revision 2.24  2011/09/20 22:35:45  pwagner
 ! Repaired most obvious bugs in Streamline
 !
