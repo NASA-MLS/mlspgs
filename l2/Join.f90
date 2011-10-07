@@ -44,7 +44,8 @@ contains ! =====     Public Procedures     =============================
   ! through the tree and dispatches work to other routines.
 
   subroutine MLSL2Join ( root, vectors, l2gpDatabase, l2auxDatabase, &
-    & DirectDataBase, chunkNo, chunks, FWModelConfig, filedatabase, HGrids )
+    & DirectDataBase, chunkNo, chunks, FWModelConfig, filedatabase, HGrids, &
+    & Matrices, Hessians )
     ! Imports
     use ALLOCATE_DEALLOCATE, only: TEST_ALLOCATE
     use CHUNKS_M, only: MLSCHUNK_T
@@ -54,10 +55,12 @@ contains ! =====     Public Procedures     =============================
     use INIT_TABLES_MODULE, only: S_L2GP, S_L2AUX, S_TIME, S_DIRECTWRITE, &
       & S_DIFF, S_DUMP, S_LABEL, S_SKIP
     use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
+    use HESSIANMODULE_1, only: HESSIAN_T
     use L2GPDATA, only: L2GPDATA_T
     use L2AUXDATA, only: L2AUXDATA_T
     use L2PARINFO, only: PARALLEL, WAITFORDIRECTWRITEPERMISSION
     use LEXER_CORE, only: PRINT_SOURCE
+    use MatrixModule_1, only: MATRIX_DATABASE_T
     use MLSCOMMON, only: MLSFILE_T
     use MLSL2OPTIONS, only: CHECKPATHS, SKIPDIRECTWRITES, SPECIALDUMPFILE
     use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES, &
@@ -82,6 +85,8 @@ contains ! =====     Public Procedures     =============================
     type(ForwardModelConfig_T), dimension(:), pointer :: FWModelConfig
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
     type (HGrid_T), dimension(:), pointer ::     HGrids
+    type (matrix_database_T), dimension(:), pointer :: Matrices
+    type (Hessian_T), dimension(:), pointer :: Hessians
 
     ! Local parameters
     integer, parameter :: DELAY = 500000  ! For Usleep, no. microsecs
@@ -181,7 +186,8 @@ contains ! =====     Public Procedures     =============================
           if ( .not. associated(vectors) ) allocate ( vectors(0), stat=status )
           call test_allocate ( status, moduleName, 'Vectors', (/0/), (/0/) )
           call dumpCommand ( key, vectors=vectors, HGrids=HGrids, &
-            & ForwardModelConfigs=FWModelConfig, FileDataBase=FileDataBase )
+            & ForwardModelConfigs=FWModelConfig, FileDataBase=FileDataBase, &
+            & MatrixDatabase=matrices, HessianDatabase=Hessians )
         case ( s_skip ) ! ============================== Skip ==========
           ! We'll skip the rest of the section if the Boolean cond'n is TRUE
           if ( Skip(key) ) exit
@@ -2176,6 +2182,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.143  2011/10/07 00:06:02  pwagner
+! May dump Matrices, Hessians from Fill, Join
+!
 ! Revision 2.142  2011/05/09 18:18:45  pwagner
 ! Consistent with new api for DirectWrite
 !
