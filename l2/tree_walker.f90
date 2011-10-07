@@ -409,7 +409,8 @@ subtrees:   do while ( j <= howmany )
               case ( z_join )
                 call MLSL2Join ( son, vectors, l2gpDatabase, &
                   & l2auxDatabase, DirectDatabase, chunkNo, chunks, &
-                  & forwardModelConfigDatabase, fileDatabase, HGrids )
+                  & forwardModelConfigDatabase, fileDatabase, HGrids, &
+                  & matrices, Hessians )
                 call add_to_section_timing ( 'join', t1, now_stop )
               case ( z_retrieve )
                 if ( .not. checkPaths) &
@@ -641,6 +642,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.177  2011/06/29 21:51:17  pwagner
+! Some cases may safely omit l1b files
+!
 ! Revision 2.176  2011/06/16 23:18:01  pwagner
 ! Pass details from switches when dumping dbs
 !
