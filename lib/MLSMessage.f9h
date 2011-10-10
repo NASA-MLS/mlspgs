@@ -192,6 +192,7 @@
     character (len=MLSMSG_PrefixLen) :: Info   &
       &                                = ''      ! What (else) to call Info
     logical :: useToolkit              = .true.
+    logical :: AsciifyMessages         = .true.
     logical :: AbbreviateModSevNames   = .false. ! Abbreviate module and severity names
     logical :: CrashOnAnyError         = .false. ! See crash warning
     logical :: SendErrMsgToMaster      = .false. ! send last gasp to master?
@@ -452,6 +453,7 @@ contains
     character(len=MAXSTACKNAMELEN) :: myName
     logical, parameter  :: nosubsequentwarnings = .false.
     ! Executable
+    myName = ' '
     if ( MLSMessageConfig%stackTrace ) then
       if ( present(name) ) myName = name
       if ( present(constantName) ) myName = constantName
@@ -819,6 +821,29 @@ contains
     call dump ( '    error code   : ', MLSFile%errorCode)
   end subroutine dumpFile
 
+  ! -------------------------------------------------  ASCIIFY  -----
+  ! takes input string and replaces any non-printing characters
+  ! with corresponding ones in range [32,126]
+  function ASCIIFY (STR) result (OUTSTR)
+    !--------Argument--------!
+    character (len=*), intent(in)           :: STR
+    character (len=5*len(str))              :: OUTSTR
+
+    !----------Local vars----------!
+    integer :: I, K
+    character(len=5) :: insert
+    character(len=1), dimension(len(str)) :: mold
+    !----------Executable part----------!
+    outstr=str
+    mold = transfer(str,mold,size=len(str))
+    if ( all(isAscii(mold)) ) return
+    outstr = ' '
+    do i=1, len(str)
+      if ( isAscii(str(i:i)) ) cycle
+      outstr(i:i) = '@'
+    end do
+  end function ASCIIFY
+
   !-----------------------------------------  assembleFullLine  -----
   subroutine assembleFullLine( Severity, ModuleNameIn, Message, &
     & line, line_len )
@@ -890,6 +915,21 @@ contains
     endif
     call printitout(trim(line), MLSMSG_Error)
   end subroutine dump
+
+  ! ---------------------------------------------------  isAscii  -----
+  elemental function isAscii(arg) result(itIs)
+    ! Returns TRUE if arg is in range of printing chars [32,126]
+    ! Args
+    character(len=1), intent(in) :: arg
+    logical                      :: itIs
+    ! Internal variables
+    integer, parameter :: pcMin = iachar(' ')
+    integer, parameter :: pcMax = iachar('~')
+    integer :: icode
+    ! Executable
+    icode = iachar(arg)
+    itis = .not. ( icode < pcMin .or. icode > pcMax )
+  end function isAscii
 
   function LowerCase (str) result (outstr)
     ! takes A-Z  and replaces with a-z
@@ -1042,6 +1082,9 @@ contains
   
 !
 ! $Log$
+! Revision 2.16  2011/10/10 23:56:02  pwagner
+! Prevent writing non-ascii chars to stdout
+!
 ! Revision 2.15  2011/08/25 18:22:33  honghanh
 ! Add fix to PVMErrorMessage to print custom error message.
 !
