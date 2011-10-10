@@ -20,7 +20,7 @@ module HessianModule_1          ! High-level Hessians in the MLS PGS suite
   use HESSIANMODULE_0, only: CLEARBLOCK, CREATEBLOCK, &
     & DESTROYBLOCK, HESSIANELEMENT_T, H_ABSENT, RH, &
     & H_SPARSE, H_FULL, OPTIMIZEBLOCK
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, &
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMSG_ALLOCATE, &
     & MLSMSG_DEALLOCATE, MLSMSG_ERROR, MLSMSG_WARNING
   use MATRIXMODULE_1, only: DEFINERCINFO, DESTROYRCINFO, NULLIFYRCINFO, RC_INFO
   use MLSSTRINGLISTS, only: SWITCHDETAIL
@@ -646,6 +646,7 @@ contains
     logical :: MYMIRROR                 ! Copy of mirror
     integer, pointer :: MyMolecules(:)
 
+    call MLSMessageCalls( 'push', constantName=ModuleName // '%InsertHessianPlane_1' )
     myMirror = .false.
     if ( present ( mirror ) ) myMirror = mirror
     nullify ( myMolecules )
@@ -656,7 +657,10 @@ contains
         if ( m%col%vec%quantities(m%col%quant(b))%template%quantityType /= l_temperature &
            & .and. .not. &
            & any( m%col%vec%quantities(m%col%quant(b))%template%molecule == &
-           &      myMolecules) ) return
+           &      myMolecules) ) then
+          call MLSMessageCalls( 'pop' )
+          return
+        endif
       end if
     end if
 
@@ -686,6 +690,7 @@ contains
       end do
     end do
     
+    call MLSMessageCalls( 'pop' )
   end subroutine InsertHessianPlane_1
 
   ! ----------------------------------------------- NullifyHessian -----
@@ -812,6 +817,9 @@ contains
 end module HessianModule_1
 
 ! $Log$
+! Revision 2.26  2011/10/10 23:59:00  pwagner
+! Added InsertHessianPlane to MLSCallStack
+!
 ! Revision 2.25  2011/10/07 00:03:32  pwagner
 ! Some improvements to speed; still hangs though in Streamline
 !
