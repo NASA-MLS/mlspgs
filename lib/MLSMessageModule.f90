@@ -167,21 +167,27 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
   end function level2severity
 
   ! --------------------------------------------  PRINTITOUT  -----
-  subroutine PRINTITOUT ( LINE, SEVERITY, LINE_LEN, NOPREFIX  )
+  subroutine PRINTITOUT ( INLINE, SEVERITY, LINE_LEN, NOPREFIX  )
     ! In any way we're asked
     ! Args
-    character(len=*), intent(in) :: LINE
+    character(len=*), intent(in) :: INLINE
     integer, intent(in) :: SEVERITY
     integer, optional, intent(in) :: LINE_LEN
     logical, optional, intent(in) :: NOPREFIX
     ! Local variables
+    character(len=len(inline)) :: Line
     logical :: log_it
     integer :: loggedLength
-    character(len=len(line)+len(MLSMessageConfig%prefix)) :: loggedLine
+    character(len=len(inline)+len(MLSMessageConfig%prefix)) :: loggedLine
     integer :: ioerror
     integer :: maxLineLength
     logical :: myNoPrefix
     ! Executable
+    if ( MLSMessageConfig%AsciifyMessages ) then
+      line = asciify(inLine)
+    else
+      line = inLine
+    endif
     loggedLength = len_trim(line)
     if ( present(line_len) ) loggedLength = line_len
     myNoPrefix = .false.
@@ -232,6 +238,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.41  2011/10/10 23:56:02  pwagner
+! Prevent writing non-ascii chars to stdout
+!
 ! Revision 2.40  2010/05/23 03:11:06  honghanh
 ! Fix a bug on line 200, to check if useToolkit is true before we log
 !
