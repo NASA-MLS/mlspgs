@@ -472,6 +472,7 @@ contains
 
     if ( my_noerror ) then
       call test_string ( string, 'GET_STRING', my_ierr )
+      if (present(ierr)) ierr = my_ierr
     else
       ! Won't return if there's an error and IERR is not present
       call test_string ( string, 'GET_STRING', ierr )
@@ -1020,6 +1021,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.33  2011/10/11 16:57:51  honghanh
+! Fix a bug in get_string to return an error code when no_error is .true.
+!
 ! Revision 2.32  2011/08/27 13:25:13  honghanh
 ! Fix a memory leak bug in string_table regarding inunit_list
 !
