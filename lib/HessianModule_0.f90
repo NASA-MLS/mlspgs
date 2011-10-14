@@ -117,6 +117,8 @@ module HessianModule_0          ! Low-level Hessians in the MLS PGS suite
   real(rh), parameter:: AUGMENTFACTOR = 1.0
   logical, parameter :: DEEBUG = .false.
   logical, parameter :: DONTOPTIMIZE = .false.
+  logical, parameter :: DONTOPTIMIZEFULLS = .false.
+  logical, parameter :: DONTSTREAMLINEFULLS = .false.
   logical, parameter :: DUMPASUNSPARSIFIED = .true.
   logical, parameter :: OPTIMIZEMEANSSPARISFY = .true.
 
@@ -139,7 +141,7 @@ contains
     ! h%tuples w/o an array subsection will be operating
     ! with undefined values (paw)
     use ALLOCATE_DEALLOCATE, only: TEST_ALLOCATE, TEST_DEALLOCATE
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMSG_ERROR
     
     type(HessianElement_T), intent(inout) :: H
     integer, intent(in) :: N
@@ -152,6 +154,7 @@ contains
     integer :: space                    ! How many tuples are free
     integer :: extra                    ! How many to add
 
+    call MLSMessageCalls( 'push', constantName=ModuleName // '%AugmentHessian' )
     myFactor = 1.0_rh
     if ( present(factor) ) myFactor = factor
     if ( h%kind == h_full ) &
@@ -190,6 +193,7 @@ contains
       deallocate ( oldTuple, stat=stat )
       call test_deallocate ( stat, moduleName, "oldTuple" )
     end if
+    call MLSMessageCalls( 'pop' )
   end subroutine AugmentHessian
 
   ! ------------------------------------------ ClearHessianBlock_0 -----
@@ -216,6 +220,7 @@ contains
                                   & Fill )
   ! Create an empty HessianElement_T structure
     use Allocate_Deallocate, only: ALLOCATE_TEST, TEST_ALLOCATE
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMSG_ERROR
 
     type(HessianElement_T), intent(inout) :: H ! inout so we can destroy it before
                                         ! its components are nullified by
@@ -227,6 +232,7 @@ contains
 
     integer :: STAT                     ! Status from allocate
 
+    call MLSMessageCalls( 'push', constantName=ModuleName // '%CreateHessianBlock_0' )
     call clearBlock ( H )
 
     h%nRows = nRows
@@ -261,6 +267,7 @@ contains
     if ( DEEBUG ) then
       call dump( h%values, 'h%values' )
     end if
+    call MLSMessageCalls( 'pop' )
   end subroutine CreateHessianBlock_0
 
   ! ---------------------------------------------- Densify_Hessian -----
@@ -652,7 +659,7 @@ contains
   subroutine InsertHessianPlane_Matrix ( H, plane, k, mirroring )
     ! Insert the supplied matrix_0 element in (:,:,k) of the HessianElement_T
     ! or the (:,k,:) plane if mirroring is present and true
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMSG_ERROR
     use MATRIXMODULE_0, only: MATRIXELEMENT_T, M_FULL, M_ABSENT, M_COLUMN_SPARSE, M_BANDED 
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use TOGGLES, only: SWITCHES
@@ -666,6 +673,7 @@ contains
     logical :: MYMIRRORING
     type ( tuple_t ) :: oneTuple
 
+    call MLSMessageCalls( 'push', constantName=ModuleName // '%InsertHessianPlane_Matrix' )
     myMirroring = .false.
     if ( present ( mirroring ) ) myMirroring = mirroring
 
@@ -684,7 +692,10 @@ contains
     end if
 
     ! Nothing to do if matrix is empty
-    if ( plane%kind == M_Absent ) return
+    if ( plane%kind == M_Absent ) then
+      call MLSMessageCalls( 'pop' )
+      return
+    endif
 
     ! If the Hessian is dense and the matrix is full then get the other routine to do this
     if ( plane%kind == M_Full ) then
@@ -760,6 +771,7 @@ contains
 
     call optimizeBlock ( h )
 
+    call MLSMessageCalls( 'pop' )
   end subroutine InsertHessianPlane_Matrix
 
   ! ------------------------------------------------ OptimizeBlock -----
@@ -767,7 +779,7 @@ contains
   subroutine OptimizeBlock ( H )
     use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST, &
       & TEST_ALLOCATE, TEST_DEALLOCATE
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_WARNING
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMSG_WARNING
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use TOGGLES, only: SWITCHES
     use SORT_M, only: SORTP
@@ -790,9 +802,11 @@ contains
     verbose = ( switchDetail(switches, 'hess') > -1 )
     if ( h%optimizedAlready ) return
     h%optimizedAlready = .true.
+    call MLSMessageCalls( 'push', constantName=ModuleName // '%OptimizeBlock' )
     if ( DONTOPTIMIZE ) then
        call MLSMessage ( MLSMSG_Warning, ModuleName, &
          & "Skipping buggy optimizeBlocks (paw)" )
+       call MLSMessageCalls( 'pop' )
        return
     else if ( DEEBUG .and. any( h%kind == (/ h_full, h_sparse /) ) .and. &
       & h%tuplesFilled > 0 ) then
@@ -806,13 +820,17 @@ contains
         call outputnamedValue( 'is h sparse?', (h%kind == h_Sparse) )
       end if
     end if
-    if ( h%kind == h_Absent .or. h%kind == h_Unknown ) return
+    if ( h%kind == h_Absent .or. h%kind == h_Unknown ) then
+      call MLSMessageCalls( 'pop' )
+      return
+    endif
     if ( h%kind == h_Full ) then
       n = count(h%values /= 0.0)
       ! Assuming integers take half the space of real(rh), each tuple takes
       ! 2.5 times the space of a single value.
-      if ( 2.5 * n > size(h%values) ) then
+      if ( 2.5 * n > size(h%values) .or. DONTOPTIMIZEFULLS ) then
         h%optimizedAlready = .true.
+        call MLSMessageCalls( 'pop' )
         return ! sparsifying won't improve things
       else if ( n < 1 ) then
         ! all values 0; so make it absent
@@ -822,7 +840,10 @@ contains
           & 'Number of nozero elements', n )
         call Sparsify_Hessian ( H )
       end if
-      if ( h%kind /= h_Sparse ) return
+      if ( h%kind /= h_Sparse ) then
+        call MLSMessageCalls( 'pop' )
+        return
+      endif
     elseif ( h%kind == h_Sparse ) then
       ! Now we re-sparsify the block
         if ( verbose ) call outputNamedValue( 'Sparsifying sparse Hessian;' // &
@@ -835,6 +856,7 @@ contains
     if ( h%tuplesFilled == 0 ) then
       call clearBlock ( h )
       if ( verbose ) call output( 'We optimized the block away', advance='yes' )
+      call MLSMessageCalls( 'pop' )
       return
     end if
 
@@ -849,6 +871,7 @@ contains
     if ( n == 0 ) then
       call clearBlock ( h )
       if ( verbose ) call output( 'We optimized the block away', advance='yes' )
+      call MLSMessageCalls( 'pop' )
       return
     end if
 
@@ -870,6 +893,7 @@ contains
     if ( OPTIMIZEMEANSSPARISFY ) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & "Skipping remainder of optimizeBlocks after sparsifying(paw)" )
+      call MLSMessageCalls( 'pop' )
       return
     end if
     ! -------------------------------------------------------------
@@ -955,7 +979,55 @@ o:    do while ( i < n )
       end if
     end if
     ! -------------------------------------------------------------
+    call MLSMessageCalls( 'pop' )
   end subroutine OptimizeBlock
+
+  ! --------------------------------------------- Sparsify_Full_Hessian -----
+  subroutine Sparsify_Full_Hessian ( H )
+    ! Sparsify the representation of a full H
+
+    use Allocate_Deallocate, only: DEALLOCATE_TEST, &
+      & TEST_ALLOCATE, TEST_DEALLOCATE
+    use MLSMessageModule, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMSG_ERROR
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use TOGGLES, only: SWITCHES
+
+    type (HessianElement_T), intent(inout) :: H
+    integer :: i, j, k, l, n
+    integer :: status
+    logical :: verbose
+    ! Executable
+    if ( h%kind /= h_full .or. .not. associated(h%values) ) return
+    verbose = ( switchDetail(switches, 'hess') > -1 ) .or. .true.
+    call MLSMessageCalls( 'push', constantName=ModuleName // '%SparsifyFullHessian' )
+    n = count(h%values /= 0)
+    h%kind   = H_Sparse
+    h%nRows  = size ( h%values, 1 )
+    h%nCols1 = size ( h%values, 2 )
+    h%nCols2 = size ( h%values, 3 )
+
+    if ( associated(h%tuples) ) then
+      deallocate ( h%tuples, stat=status )
+      call test_deallocate ( status, ModuleName // '%SparsifyFullHessian', "H%Tuples" )
+    end if
+    allocate ( h%tuples(n), stat=status )
+    call test_allocate ( status, ModuleName // '%SparsifyFullHessian', "H%Tuple", (/ 1 /), (/ n /), -1 )
+
+    l = 0
+    do k = 1, h%nCols2
+      do j = 1, h%nCols1
+        do i = 1, h%nRows
+          if ( h%values(i,j,k) /= 0._rh ) then
+            l = l + 1
+            h%tuples(l) = tuple_t(h%values(i,j,k),i,j,k)
+          end if
+        end do
+      end do
+    end do
+    h%tuplesFilled = l
+    call deallocate_test ( h%values, "H%Values in Sparsify_Hessian", moduleName )
+    call MLSMessageCalls( 'pop' )
+  end subroutine Sparsify_Full_Hessian
 
   ! --------------------------------------------- Sparsify_Hessian -----
   subroutine Sparsify_Hessian ( H )
@@ -964,7 +1036,7 @@ o:    do while ( i < n )
     ! or already Sparse
 
     use Allocate_Deallocate, only: DEALLOCATE_TEST
-    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
+    use MLSMessageModule, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMSG_ERROR
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use TOGGLES, only: SWITCHES
 
@@ -978,16 +1050,22 @@ o:    do while ( i < n )
     ! h%optimizedAlready = .false.
     nullify( tuples )
     verbose = ( switchDetail(switches, 'hess') > -1 ) .or. .true.
+    call MLSMessageCalls( 'push', constantName=ModuleName // '%SparsifyHessian' )
     select case (h%kind)
     case (h_Full)
       if ( verbose ) call output( 'Sparsifying full hessian', advance='yes' )
-      if ( associated(h%values) ) call sparsify ( h%values, h )
-      call deallocate_test ( h%values, "H%Values in Sparsify_Hessian", moduleName )
+      ! if ( associated(h%values) ) call sparsify ( h%values, h )
+      ! call deallocate_test ( h%values, "H%Values in Sparsify_Hessian", moduleName )
+      if ( associated(h%values) ) call sparsify_full_Hessian( h )
     case (h_Sparse)
-      if ( h%tuplesFilled < 1 ) return
+      if ( h%tuplesFilled < 1 ) then
+        call MLSMessageCalls( 'pop' )
+        return
+      endif
       newSize = count ( h%tuples ( 1:h%tuplesFilled ) % h /= 0._rh )
       if ( verbose ) call outputNamedValue( 'Sparsifying sparse hessian', newsize )
       if ( newSize ==  h%tuplesFilled ) then
+        call MLSMessageCalls( 'pop' )
         return
       elseif ( newSize > 0 ) then
         allocate(tuples(newSize), stat=status)
@@ -1009,6 +1087,7 @@ o:    do while ( i < n )
       if ( verbose ) call output( 'Sparsifying ??? hessian', advance='yes' )
       ! We don't need to anything for these cases, do we?
     end select
+    call MLSMessageCalls( 'pop' )
   end subroutine Sparsify_Hessian
 
   ! ------------------------------------- Sparsify_Hessian_Array_D -----
@@ -1031,7 +1110,8 @@ o:    do while ( i < n )
   subroutine Sparsify_Hessian_Array_S ( H_Array, H )
   ! Create a sparse representation of H_Array in H.
 
-    use Allocate_Deallocate, only: DEALLOCATE_TEST, TEST_ALLOCATE, TEST_DEALLOCATE
+    use Allocate_Deallocate, only: DEALLOCATE_TEST, &
+      & TEST_ALLOCATE, TEST_DEALLOCATE
     integer, parameter :: RK = kind(0.0e0)
     real(rk), intent(in) :: H_Array(:,:,:) ! H(i,j,k)
     type(HessianElement_T), intent(inout) :: H    ! inout so we can deallocate tuple
@@ -1056,7 +1136,9 @@ o:    do while ( i < n )
     ! takes too long; we must try streamlining after all
     use MLSKinds, only: R8
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_WARNING
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
     use QuantityTemplates, only: QUANTITYTEMPLATE_T
+    use TOGGLES, only: SWITCHES
     ! Args
     type (HessianElement_T), intent(inout) :: H
     type (QuantityTemplate_T), intent(in) :: Q1, Q2 ! For 1st, 2nd cols of H
@@ -1067,12 +1149,16 @@ o:    do while ( i < n )
     real(r8) :: Cutoff ! Threshold * maxval(abs(...)) if threshold > 0.
     integer :: I, J, K    ! Subscripts
     integer :: nt      ! Num of nTuples
+    integer :: nnz     ! Num of non-zero values
     integer :: S1, S2  ! Surface indices for 1st, 2nd cols of H
+    logical :: verbose
 
     call MLSMessage ( MLSMSG_Warning, ModuleName, &
       & "Streamlining Hessians is probably still buggy--use with caution (paw)" )
 
+    verbose = ( switchDetail(switches, 'hess') > -1 )
     h%optimizedAlready = .false.
+    if ( verbose ) call outputNamedValue( 'h%kind', h%kind )
     select case ( h%kind )
     case ( h_absent )
       return
@@ -1080,7 +1166,16 @@ o:    do while ( i < n )
       ! Note that this cutoff won't be right if h%tuples is
       ! longer than h%tuplesFilled (paw)
       nt = h%tuplesFilled
+      if ( nt < 1 .or. .not. associated(h%tuples) ) then
+        h%kind = h_absent
+        if ( verbose ) &
+          & call output( 'h_sparse, but number of tuplees 0' // &
+          & 'changing to h_absent', advance='yes' )
+        return
+      endif
       if ( nt < 2 ) return
+      if ( verbose ) call outputNamedValue( 'Before streamlining sparse Hessian;' // &
+        & 'Number of nozero elements', count(h%tuples%h /= 0.) )
       cutoff = threshold * maxval(abs(h%tuples(1:nt)%h))
       if ( surface < 0 .and. scaleHeight < 0._r8 ) then
         ! where ( abs( h%tuples%h ) < cutoff ) h%tuples%h = 0.0
@@ -1110,7 +1205,28 @@ o:    do while ( i < n )
             &     scaleHeight ) h%tuples(i)%h = 0.
         enddo
       end if
+      if ( verbose ) call outputNamedValue( 'After streamlining sparse Hessian;' // &
+        & 'Number of nozero elements', count(h%tuples%h /= 0.) )
     case ( h_full )
+      if ( DONTSTREAMLINEFULLS ) return
+      if ( .not. associated(h%values) ) then
+        h%kind = h_absent
+        if ( verbose ) &
+          & call output( 'h_full, but values not associated' // &
+          & 'changing to h_absent', advance='yes' )
+        return
+      endif
+      nnz = count(h%values /= 0.)
+      if ( nnz < 1 ) then
+        h%kind = h_absent
+        if ( verbose ) &
+          & call output( 'h_full, but all values 0' // &
+          & 'changing to h_absent', advance='yes' )
+        return
+      endif
+      if ( verbose .and. nnz > 0) &
+        & call outputNamedValue( 'Before streamlining full Hessian;' // &
+        & 'Number of nozero elements', nnz )
       do k = 1, h%nCols2 - 1
         s2 = ( k-1 ) / q2%noChans + 1
         do j = k + 1, h%nCols1
@@ -1121,7 +1237,8 @@ o:    do while ( i < n )
           else if ( surface > 0 .and. abs(s1-s2) > surface ) then
             h%values ( :, j, k ) = 0
             h%values ( :, k, j ) = 0
-          else if ( scaleHeight > 0._r8 .and. abs ( q1%surfs(s1,1) - q2%surfs(s2,1) ) > scaleHeight ) then
+          else if ( scaleHeight > 0._r8 .and. &
+            & abs ( q1%surfs(s1,1) - q2%surfs(s2,1) ) > scaleHeight ) then
             h%values ( :, j, k ) = 0
             h%values ( :, k, j ) = 0
           end if
@@ -1130,10 +1247,17 @@ o:    do while ( i < n )
       if ( threshold > 0 ) then
         cutoff = threshold * maxval(abs(h%values))
         ! where ( abs(h%values) < cutoff ) h%values = 0.0
-        do i=1, nt
-          if ( abs( h%tuples(i)%h ) < cutoff ) h%tuples(i)%h = 0.
+        do k = 1, h%nCols2
+          do j = 1, h%nCols1
+            do i = 1, h%nRows
+              if ( abs( h%values(i,j,k) ) < cutoff ) h%values(i,j,k) = 0.
+            enddo
+          enddo
         enddo
       end if
+      if ( verbose .and. nnz > 0 ) &
+        & call outputNamedValue( 'After streamlining full Hessian;' // &
+        & 'Number of nozero elements', count(h%values /= 0.) )
     end select
 
     call optimizeBlock ( h )
@@ -1183,6 +1307,9 @@ o:    do while ( i < n )
 end module HessianModule_0
 
 ! $Log$
+! Revision 2.22  2011/10/14 00:35:06  pwagner
+! Further attempts to stop hanging during Streamline
+!
 ! Revision 2.21  2011/10/07 00:01:55  pwagner
 ! Some improvements to speed; still hangs though in Streamline
 !
