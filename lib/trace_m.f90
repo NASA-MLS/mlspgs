@@ -18,6 +18,8 @@ module TRACE_M
   integer, parameter :: ClockStackMax = 100
   real :: ClockStack(0:clockStackMax) = 0.0
   double precision :: Memory(0:clockStackMax) = 0.0d0
+  character (len=8), save :: PreviousDate = ' '
+  logical, parameter      :: DEEBUG = .false.
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -31,9 +33,9 @@ contains ! ====     Public Procedures     ==============================
   ! Print "ENTER NAME with ROOT = <node_id(root)>" with DEPTH dots in
   ! front.  Increment DEPTH.
 
-    use Allocate_Deallocate, only: Memory_Units, NoBytesAllocated
-    use MLSMessageModule, only: MLSMessageCalls
-    use OUTPUT_M, only: DumpSize, OUTPUT
+    use ALLOCATE_DEALLOCATE, only: MEMORY_UNITS, NOBYTESALLOCATED
+    use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
+    use OUTPUT_M, only: DUMPSIZE, OUTPUT
     use TIME_M, only: TIME_NOW
     use TREE, only: DUMP_TREE_NODE
 
@@ -42,6 +44,8 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(in), optional :: INDEX
     integer :: I              ! Loop inductor
     character(len=10) :: Now  ! For Date_and_time
+    ! Executable
+    call Checkdate
     if ( depth < 0 ) call output ( depth, before='***** Why is depth = ', &
       & after=' negative?', advance='yes' )
     if ( present(root) ) then
@@ -76,9 +80,9 @@ contains ! ====     Public Procedures     ==============================
   subroutine TRACE_END ( NAME, INDEX )
   ! Decrement DEPTH.  Print "EXIT NAME" with DEPTH dots in front.
 
-    use Allocate_Deallocate, only: Memory_Units, NoBytesAllocated
-    use MLSMessageModule, only: MLSMessageCalls
-    use OUTPUT_M, only: DumpSize, NewLine, OUTPUT
+    use ALLOCATE_DEALLOCATE, only: MEMORY_UNITS, NOBYTESALLOCATED
+    use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
+    use OUTPUT_M, only: DUMPSIZE, NEWLINE, OUTPUT
     use TIME_M, only: TIME_NOW
 
     character(len=*), intent(in) :: NAME
@@ -89,6 +93,8 @@ contains ! ====     Public Procedures     ==============================
     integer :: Values(8)      ! For Date_and_time
     real :: T                 ! For timing
     character(12) :: Used     ! For timing
+    ! Executable
+    call Checkdate
     depth = depth - 1
     if ( depth < 0 ) call output ( depth, before='***** Why is depth = ', &
       & after=' negative?', advance='yes' )
@@ -122,6 +128,36 @@ contains ! ====     Public Procedures     ==============================
     call MLSMessageCalls( 'pop' )
   end subroutine TRACE_END
 
+!------------------------ private procedures ---------------------
+  ! -- CheckDate
+  ! Checks for a jump in the date --
+  ! So that we don't accidentally drop (multiples of) 24 hours in 
+  ! marking times entering and exiting q Naamed process
+  subroutine CheckDate
+    character (len=8) :: CurrentDate
+    ! Executable
+    call date_and_time( date=CurrentDate )
+    if ( len_trim(PreviousDate) > 0 ) then
+      if ( PreviousDate /= CurrentDate .or. DEEBUG ) &
+        & call DateLine ( PreviousDate, CurrentDate )
+    endif
+    PreviousDate = CurrentDate
+  end subroutine CheckDate
+  
+  subroutine DateLine( olddate, newdate )
+    use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT
+    character(len=*), intent(in) :: olddate, newdate
+    ! Executable
+    call blanks( 15, fillChar='-' )
+    call output( ' Crossed date boundary from ' )
+    call output( olddate )
+    call output( ' to ' )
+    call output( newdate )
+    call blanks( 1 )
+    call blanks( 15, fillChar='-' )
+    call newline
+  end subroutine DateLine
+  
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -135,6 +171,9 @@ contains ! ====     Public Procedures     ==============================
 end module TRACE_M
 
 ! $Log$
+! Revision 2.19  2011/10/14 00:33:17  pwagner
+! Prints notice if date boundary crossed
+!
 ! Revision 2.18  2011/03/31 19:55:22  vsnyder
 ! Cannonball polishing
 !
