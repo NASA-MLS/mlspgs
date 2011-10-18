@@ -21,13 +21,22 @@ module CFM_MLSSetup_m
     use SYMBOL_TABLE, only: DESTROY_SYMBOL_TABLE
     use MLSCommon, only: MLSFile_T, TAI93_Range_T, r8
     use Intrinsic, only: l_hdf
+    use INIT_TABLES_MODULE, only: phyq_pressure, l_logarithmic, l_zeta, &
+                                  phyq_vmr, l_vmr, l_earthRefl, l_losVel, &
+                                  l_scgeocalt, l_spaceradiance, l_o2
+    use ConstructQuantityTemplates, only: InitQuantityTemplates
     use ChunkDivide_m, only: ChunkDivideConfig_T, &
                              GetChunkFromTimeRange => CFM_ChunkDivide
     use Chunks_m, only: MLSChunk_T ! To also be referenced outside
     use VGridsDatabase, only: VGrid_T
     use HGridsDatabase, only: HGrid_T
-    use VectorsModule, only: GetVectorQtyByTemplateIndex ! being used in many functions
+    use VectorsModule, only: GetVectorQtyByTemplateIndex, & ! being used in many functions
+                             VectorTemplate_T, Dump, Vector_T, VectorValue_T
+    use CFM_Vector_m, only: CreateValue4AgileVector
     use CFM_Constants_m
+    use CFM_QuantityTemplate_m, only: CreateQtyTemplate
+    use CFM_Fill_M, only: FillVectorQtyFromProfile, ExplicitFillVectorQuantity, &
+        FillVectorQuantityFromL1B
 
     implicit none
 
@@ -82,7 +91,7 @@ module CFM_MLSSetup_m
         ! Set up empirical geometry before reading the L2CFs, which include
         ! global_setting, where vGrids can be defined.
         call CFM_InitEmpiricalGeometry (empiricalGeometry_noIterations, &
-                                        empircalGeometry_terms)
+                                        empiricalGeometry_terms)
 
         call get_lun(signalIn)
         open (unit=signalIn, file=trim(signalFileName), status='OLD', &
@@ -134,6 +143,9 @@ module CFM_MLSSetup_m
         call h5open_f(error)
         if (error /= 0) &
             call MLSMessage (MLSMSG_Error, moduleName, "Error in initialize hdf5 library")
+
+        ! Have to initialize before we start creating quantity templates
+        call InitQuantityTemplates
     end subroutine
 
     ! Read the signal file and populate the signal database
@@ -213,7 +225,7 @@ module CFM_MLSSetup_m
         ! Set up empirical geometry before reading the L2CFs, which include
         ! global_setting, where vGrids can be defined.
         call CFM_InitEmpiricalGeometry (empiricalGeometry_noIterations, &
-                                        empircalGeometry_terms)
+                                        empiricalGeometry_terms)
 
         call get_lun(signalIn)
         open (unit=signalIn, file=trim(signalFileName), status='OLD', &
@@ -312,6 +324,9 @@ module CFM_MLSSetup_m
         chunkDivideConfig%noChunks = 1
         ! Create a fake chunk out of the start time, end time, and L1BOA
         chunk = GetChunkFromTimeRange(processingRange, filedatabase, chunkDivideConfig)
+
+        ! Have to initialize before we start creating quantity templates
+        call InitQuantityTemplates
 
         call CreateStateVectorExtra(filedatabase, chunk, qtyTemplates, stateVectorExtra)
 
@@ -429,6 +444,52 @@ module CFM_MLSSetup_m
 
     end subroutine CFM_MLSCleanup_Obsolete
 
+    type(VectorValue_T) function CreateMLSValue_O2 (avgrid, ahgrid) result(o2)
+        type(VGrid_T), intent(in) :: avgrid
+        type(HGrid_T), intent(in) :: ahgrid
+
+        type(QuantityTemplate_T) :: o2template
+
+        o2template = CreateQtyTemplate(l_vmr, avgrid=avgrid, ahgrid=ahgrid, qMolecule=l_o2)
+
+        o2 = CreateValue4AgileVector(o2template)
+        call FillVectorQtyFromProfile (o2, .false., o2_heights, o2_values, phyq_vmr)
+    end function
+
+    type(VectorValue_T) function CreateMLSValue_EarthReflectiviy () result(earthRefl)
+        type(QuantityTemplate_T) :: ertemplate
+
+        ertemplate = CreateQtyTemplate(l_earthRefl)
+        earthRefl = CreateValue4AgileVector(ertemplate, value=earthRefl_values)
+    end function
+
+    type(VectorValue_T) function CreateMLSValue_SpaceRadiance () result(spaceRad)
+        type(QuantityTemplate_T) :: srtemplate
+
+        srtemplate = CreateQtyTemplate(l_spaceradiance)
+        spaceRad = CreateValue4AgileVector(srtemplate, value=spaceRad_values)
+    end function
+
+    type(VectorValue_T) function CreateMLSValue_FromL1B (qType, instrumentModule, filedatabase, &
+    firstL1Maf, lastL1Maf) result (vv)
+        integer, intent(in) :: qType
+        character(len=*), intent(in) :: instrumentModule
+        type (MLSFile_T), dimension(:), pointer :: filedatabase
+        integer, intent(in) :: firstL1Maf
+        integer, intent(in) :: lastL1Maf
+
+        type(MLSChunk_T) :: chunk
+        type(QuantityTemplate_T) :: template
+
+        chunk%firstMafIndex = firstL1Maf
+        chunk%lastMafIndex = lastL1Maf
+
+        template = CreateQtyTemplate(qType, filedatabase=filedatabase, chunk=chunk, &
+                                     qInstModule=instrumentModule)
+        vv = CreateValue4AgileVector(template)
+        call FillVectorQuantityFromL1B (vv, chunk, filedatabase, .false.)
+    end function
+
     ! Create stateVectorExtra with the given filedatabase, chunk, and quantity database.
     ! StateVectorExtra will include the following quantities: O2, earth reflectivity,
     ! LOS velocity of GHz module, spacecraft geocentric altitude, space radiance,
@@ -439,17 +500,9 @@ module CFM_MLSSetup_m
         use VGridsDatabase, only: DestroyVGridContents
         use CFM_HGrid_m, only: CreateRegularHGrid
         use HGridsDatabase, only: DestroyHGridContents
-        use CFM_QuantityTemplate_m, only: CreateQtyTemplate
-        use ConstructQuantityTemplates, only: InitQuantityTemplates
         use QuantityTemplates, only: AddQuantityTemplateToDatabase
         use CFM_VectorTemplate_m, only: CreateVectorTemplate
-        use VectorsModule, only: VectorTemplate_T, Dump, Vector_T, VectorValue_T
         use CFM_Vector_m, only: CreateVector
-        use INIT_TABLES_MODULE, only: phyq_pressure, l_logarithmic, l_zeta, &
-                                      phyq_vmr, l_vmr, l_earthRefl, l_losVel, &
-                                      l_scgeocalt, l_spaceradiance, l_o2
-        use CFM_Fill_M, only: FillVectorQtyFromProfile, ExplicitFillVectorQuantity, &
-        FillVectorQuantityFromL1B
         use Allocate_Deallocate, only: allocate_test, deallocate_test
         use CFM_LSF_M, only: CreateLimbSidebandFractions, FillLimbSidebandFractions
         use CFM_EO_M, only: CreateElevationOffsets, FillElevationOffsets
@@ -480,18 +533,16 @@ module CFM_MLSSetup_m
         ! Have insetoverlaps, and not single
         hGridStandard = CreateRegularHGrid("GHz", 0.0_r8, 1.5_r8, .true., &
                                            filedatabase, chunk)
-        ! Have to initialize before we start creating quantity templates
-        call InitQuantityTemplates
+
         O2 = CreateQtyTemplate(l_vmr, filedatabase=filedatabase, chunk=chunk, &
                                avgrid=vGridStandard, ahgrid=hGridStandard, &
                                qMolecule=l_o2)
-        earthRefl = CreateQtyTemplate(l_earthRefl, filedatabase=filedatabase, chunk=chunk)
+        earthRefl = CreateQtyTemplate(l_earthRefl)
         losVelGHz = CreateQtyTemplate(l_losVel, filedatabase=filedatabase, chunk=chunk, &
                                       qInstModule="GHz")
         scGeocAlt = CreateQtyTemplate(l_scgeocalt, filedatabase=filedatabase, chunk=chunk, &
                                       qInstModule="sc")
-        spaceRadiance = CreateQtyTemplate(l_spaceradiance, filedatabase=filedatabase, &
-                                          chunk=chunk)
+        spaceRadiance = CreateQtyTemplate(l_spaceradiance)
 
         o2_index = AddQuantityTemplateToDatabase(qtyTemplates, o2)
         earthRefl_index = AddQuantityTemplateToDatabase(qtyTemplates, earthRefl)
@@ -557,6 +608,11 @@ module CFM_MLSSetup_m
 end module
 
 ! $Log$
+! Revision 1.24  2011/10/17 20:41:02  honghanh
+! Add a more concise CFM_MLSSetup/CFM_MLSCleanup subroutines
+! and extract literal constants from CFM_MLSSetup_m to put in
+! CFM_Constants_m
+!
 ! Revision 1.23  2011/03/23 20:09:46  honghanh
 ! nullify selected array before calling allocate_test
 !
