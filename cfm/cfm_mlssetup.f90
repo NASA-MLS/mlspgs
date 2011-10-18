@@ -576,11 +576,11 @@ module CFM_MLSSetup_m
         !print *, "O2 value"
         !call dump(quantity, details=3)
         quantity => GetVectorQtyByTemplateIndex (stateVectorExtra, earthRefl_index)
-        call ExplicitFillVectorQuantity (quantity, (/0.05_r8/))
+        call ExplicitFillVectorQuantity (quantity, earthRefl_values)
         !print *, "Earth Reflectivity value"
         !call dump(quantity, details=3)
         quantity => GetVectorQtyByTemplateIndex (stateVectorExtra, spaceRadiance_index)
-        call ExplicitFillVectorQuantity (quantity, (/2.735_r8/))
+        call ExplicitFillVectorQuantity (quantity, spaceRad_values)
         !print *, "Space radiance"
         !call dump(quantity, details=3)
         quantity => GetVectorQtyByTemplateIndex (stateVectorExtra, losVelGHz_index)
@@ -608,6 +608,10 @@ module CFM_MLSSetup_m
 end module
 
 ! $Log$
+! Revision 1.25  2011/10/18 17:04:01  honghanh
+! Move InitQuantityTemplates to setup subroutines.
+! (Previously in create statevectorExtra).
+!
 ! Revision 1.24  2011/10/17 20:41:02  honghanh
 ! Add a more concise CFM_MLSSetup/CFM_MLSCleanup subroutines
 ! and extract literal constants from CFM_MLSSetup_m to put in
