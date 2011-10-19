@@ -53,7 +53,7 @@ module cfm          ! callable forward model
    use MLSCommon, only: MLSFile_T, r8
    use Init_tables_module ! essentially, all the l_..., and some phyq
    use MLSFiles, only: GetMLSFileByType, InitializeMLSFile, mls_openFile, &
-                       AddFileToDatabase
+                       AddFileToDatabase, mls_closeFile
    use Intrinsic, only: l_hdf
    use Hdf, only: DFACC_RDONLY
    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, &
@@ -81,6 +81,9 @@ contains
 end module cfm
 
 ! $Log$
+! Revision 1.16  2011/08/25 20:10:32  honghanh
+! Add other log levels other than Error and Warning from MLSMessageModule
+!
 ! Revision 1.15  2011/06/21 19:04:48  honghanh
 ! Adding ForwardModel2
 !
