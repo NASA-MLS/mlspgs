@@ -13,7 +13,10 @@ module cfm          ! callable forward model
   ! This module merely unifies all the .mod files that
   ! will be USEd by any fortran90 program that is compiled
   ! and with the callable forward model and links against libcfm.a or libcfm_all.a
-   use CFM_MLSSetup_m, only: CFM_MLSCleanup, CFM_MLSSetup
+   use CFM_MLSSetup_m, only: CFM_MLSCleanup, CFM_MLSSetup, CreateMLSValue_O2, &
+                             CreateMLSValue_EarthReflectiviy, &
+                             CreateMLSValue_LSF, CreateMLSValue_FromL1B, &
+                             CreateMLSValue_SpaceRadiance, GetConstantQuantities
    use Chunks_m, only: MLSChunk_T
    use CFM_IO_M, only: Read_Spectroscopy, ReadDACSFilterShapes, &
                      ReadAntennaPatterns, ReadFilterShapes, &
