@@ -196,6 +196,7 @@ module CFM_Constants_m
 !---------------------------------------------------------------------------
 
 !------------------- Limb sideband fraction constants ----------------------
+    real(r8), parameter :: vlimbSidebandFraction1L = 0.97333_r8
     real(r8), dimension(25), parameter :: vlimbSidebandFraction2L = &
     (/0.54213_r8, 0.53927_r8, 0.53572_r8, 0.53244_r8, 0.52971_r8, 0.52693_r8, 0.52451_r8, &
       0.52279_r8, 0.52160_r8, 0.52076_r8, 0.52018_r8, 0.51977_r8, 0.51948_r8, 0.51919_r8, &
@@ -206,6 +207,21 @@ module CFM_Constants_m
       0.50526_r8, 0.50455_r8, 0.50405_r8, 0.50372_r8, 0.50348_r8, 0.50332_r8, 0.50316_r8, &
       0.50293_r8, 0.50263_r8, 0.50220_r8, 0.50163_r8, 0.50088_r8, 0.49992_r8, 0.49898_r8, &
       0.49819_r8, 0.49741_r8, 0.49676_r8, 0.49637_r8/)
+    real(r8), dimension(25), parameter :: vlimbSidebandFraction4L = &
+    (/0.50272_r8, 0.50216_r8, 0.50153_r8, 0.50096_r8, 0.50049_r8, 0.50002_r8, 0.49958_r8, &
+      0.49929_r8, 0.49908_r8, 0.49893_r8, 0.49882_r8, 0.49875_r8, 0.49870_r8, 0.49864_r8, &
+      0.49858_r8, 0.49848_r8, 0.49833_r8, 0.49814_r8, 0.49787_r8, 0.49752_r8, 0.49715_r8, &
+      0.49683_r8, 0.49652_r8, 0.49629_r8, 0.49626_r8/)
+    real(r8), dimension(25), parameter :: vlimbSidebandFraction5L = &
+    (/0.49469_r8, 0.49534_r8, 0.49601_r8, 0.49659_r8, 0.49706_r8, 0.49753_r8, 0.49794_r8, &
+      0.49824_r8, 0.49845_r8, 0.49860_r8, 0.49870_r8, 0.49877_r8, 0.49883_r8, 0.49888_r8, &
+      0.49895_r8, 0.49906_r8, 0.49920_r8, 0.49941_r8, 0.49970_r8, 0.50010_r8, 0.50054_r8, &
+      0.50099_r8, 0.50149_r8, 0.50207_r8, 0.50259_r8/)
+    real(r8), dimension(25), parameter :: vlimbSidebandFraction6L = &
+    (/0.49089_r8, 0.49044_r8, 0.49002_r8, 0.48970_r8, 0.48946_r8, 0.48925_r8, 0.48909_r8, &
+      0.48898_r8, 0.48892_r8, 0.48889_r8, 0.48887_r8, 0.48885_r8, 0.48884_r8, 0.48883_r8, &
+      0.48881_r8, 0.48879_r8, 0.48877_r8, 0.48875_r8, 0.48874_r8, 0.48877_r8, 0.48888_r8, &
+      0.48907_r8, 0.48946_r8, 0.49023_r8, 0.49136_r8/)
     real(r8), dimension(25), parameter :: vlimbSidebandFraction7L = &
     (/0.48358_r8, 0.48470_r8, 0.48580_r8, 0.48669_r8, 0.48739_r8, 0.48807_r8, 0.48865_r8, &
       0.48905_r8, 0.48932_r8, 0.48950_r8, 0.48964_r8, 0.48973_r8, 0.48979_r8, 0.48985_r8, &
@@ -225,6 +241,11 @@ module CFM_Constants_m
       0.47352_r8, 0.47344_r8, 0.47333_r8, 0.47319_r8, 0.47299_r8, &
       0.47274_r8, 0.47248_r8, 0.47224_r8, 0.47195_r8, 0.47165_r8, &
       0.47136_r8/)
+    real(r8), parameter :: vlimbSidebandFraction10L = 0.50882_r8
+    real(r8), parameter :: vlimbSidebandFraction11L = 0.50882_r8
+    real(r8), parameter :: vlimbSidebandFraction12L = 0.50690_r8
+    real(r8), parameter :: vlimbSidebandFraction13L = 0.51563_r8
+    real(r8), parameter :: vlimbSidebandFraction14L = 0.51563_r8
     real(r8), dimension(25), parameter :: vlimbSidebandFraction15L = &
     (/0.95750_r8, 0.95800_r8, 0.95850_r8, 0.95890_r8, &
       0.95920_r8, 0.95960_r8, 0.95990_r8, 0.96010_r8, 0.96020_r8, &
@@ -267,6 +288,8 @@ module CFM_Constants_m
       0.38200_r8, 0.38120_r8, 0.37990_r8, 0.37810_r8, 0.37570_r8, &
       0.37200_r8, 0.36850_r8, 0.36450_r8, 0.35930_r8, 0.35380_r8, &
       0.34760_r8/)
+    real(r8), parameter :: vlimbSidebandFraction21L = 0.94708_r8
+    real(r8), parameter :: vlimbSidebandFraction22L = 0.97333_r8
     real(r8), dimension(129), parameter :: vlimbSidebandFraction23L = &
     (/0.51922_r8, 0.51923_r8, 0.51923_r8, 0.51923_r8, &
       0.51924_r8, 0.51924_r8, 0.51924_r8, 0.51925_r8, 0.51925_r8, &
@@ -341,9 +364,14 @@ module CFM_Constants_m
       0.47363_r8, 0.47363_r8, 0.47363_r8, 0.47363_r8, 0.47364_r8, 0.47364_r8, 0.47364_r8, &
       0.47364_r8, 0.47364_r8, 0.47364_r8, 0.47364_r8, 0.47364_r8, 0.47364_r8, 0.47364_r8, &
       0.47364_r8, 0.47364_r8, 0.47364_r8/)
+    real(r8), parameter :: vlimbSidebandFraction26L = 0.94708_r8
     real(r8), dimension(11), parameter :: vlimbSidebandFraction27L = &
     (/0.48916_r8, 0.48929_r8, 0.48940_r8, 0.48948_r8, 0.48955_r8, 0.48959_r8, 0.48963_r8, &
       0.48971_r8, 0.48981_r8, 0.48998_r8, 0.49023_r8/)
+    real(r8), parameter :: vlimbSidebandFraction28L = 0.50882_r8
+    real(r8), parameter :: vlimbSidebandFraction29L = 0.50882_r8
+    real(r8), parameter :: vlimbSidebandFraction30L = 0.51563_r8
+    real(r8), parameter :: vlimbSidebandFraction31L = 0.51563_r8
     real(r8), dimension(4), parameter :: vlimbSidebandFraction32L = &
     (/0.97293_r8, 0.97144_r8, 0.97015_r8, 0.96945_r8/)
     real(r8), dimension(4), parameter :: vlimbSidebandFraction33L = &
@@ -395,6 +423,11 @@ module CFM_Constants_m
       0.49651_r8, 0.49658_r8, 0.49669_r8, 0.49684_r8, 0.49703_r8, &
       0.49728_r8, 0.49754_r8, 0.49779_r8, 0.49807_r8, 0.49837_r8, &
       0.49866_r8/)
+    real(r8), parameter :: vlimbSidebandFraction10U = 0.46045_r8
+    real(r8), parameter :: vlimbSidebandFraction11U = 0.46045_r8
+    real(r8), parameter :: vlimbSidebandFraction12U = 0.46232_r8
+    real(r8), parameter :: vlimbSidebandFraction13U = 0.45360_r8
+    real(r8), parameter :: vlimbSidebandFraction14U = 0.45360_r8
     real(r8), dimension(25), parameter :: vlimbSidebandFraction15U = &
     (/0.04250_r8, 0.04200_r8, 0.04150_r8, 0.04110_r8, &
       0.04080_r8, 0.04040_r8, 0.04010_r8, 0.03990_r8, 0.03980_r8, &
@@ -522,6 +555,10 @@ module CFM_Constants_m
     (/0.49004_r8, 0.48991_r8, 0.48981_r8, 0.48973_r8, &
       0.48966_r8, 0.48962_r8, 0.48957_r8, 0.48949_r8, 0.48939_r8, &
       0.48923_r8, 0.48897_r8/)
+    real(r8), parameter :: vlimbSidebandFraction28U = 0.46045_r8
+    real(r8), parameter :: vlimbSidebandFraction29U = 0.46045_r8
+    real(r8), parameter :: vlimbSidebandFraction30U = 0.45360_r8
+    real(r8), parameter :: vlimbSidebandFraction31U = 0.45360_r8
     real(r8), dimension(4), parameter :: vlimbSidebandFraction33U = &
     (/0.48061_r8, 0.48947_r8, 0.50383_r8, 0.50247_r8/)
 !---------------------------------------------------------------------------
@@ -538,3 +575,6 @@ module CFM_Constants_m
 end module CFM_Constants_m
 
 ! $Log$
+! Revision 1.3  2011/10/18 16:56:47  honghanh
+! Refractoring limb sideband constants to CFM_Constants_m.
+!
