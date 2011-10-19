@@ -46,7 +46,8 @@ module cfm          ! callable forward model
                             DestroyVectorInfo, GetVectorQtyByTemplateIndex, &
                             operator(+), operator(-)
    use CFM_Vector_m, only: CreateVector, CreateValue4AgileVector, &
-                           CreateAgileVector, AddValue2Vector
+                           CreateAgileVector, AddValue2Vector, &
+                           DestroyAgileVectorContent
    use CFM_Fill_m, only: ExplicitFillVectorQuantity, ApplyBaseline, &
                          FillVectorQuantityFromL1B, FillPhitanQuantity, &
                          SpreadFillVectorQuantity, FillPtanQuantity

@@ -9,7 +9,8 @@
 ! export authority as may be required before exporting such information to
 ! foreign countries or providing access to foreign persons.
 module CFM_Vector_m
-   use VectorsModule, only: Vector_T, VectorTemplate_T, VectorValue_T
+   use VectorsModule, only: Vector_T, VectorTemplate_T, VectorValue_T, &
+                            DestroyVectorTemplateInfo, DestroyVectorInfo
    use QuantityTemplates, only: QuantityTemplate_T
    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
          MLSMSG_Error, MLSMSG_Warning
@@ -19,7 +20,7 @@ module CFM_Vector_m
 
    implicit none
 
-   public :: CreateVector
+   public :: CreateVector, DestroyAgileVectorContent
    public :: CreateValue4AgileVector, CreateAgileVector, AddValue2Vector
 
 !---------------------------- RCS Ident Info -------------------------------
@@ -81,6 +82,13 @@ module CFM_Vector_m
             vector%name = 0
         end if
     end function
+
+    subroutine DestroyAgileVectorContent (v)
+        type(Vector_T), intent(inout) :: v
+
+        call DestroyVectorInfo(v)
+        call DestroyVectorTemplateInfo(v%template)
+    end subroutine
 
     ! vectorvalue doesn't have to be unique
     ! value will be added to the end of vector
@@ -190,6 +198,9 @@ module CFM_Vector_m
 end module
 
 ! $Log$
+! Revision 1.8  2011/03/24 15:16:46  honghanh
+! Add new interfaces for creating vector and vector values without going through quantity template databases
+!
 ! Revision 1.7  2010/11/03 20:17:01  honghanh
 ! Add name as an optional argument to CreateVector.
 !
