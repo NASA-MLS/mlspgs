@@ -26,6 +26,10 @@ module CFM_HGrid_m
 
    public :: CreateRegularHGrid
 
+   interface CreateRegularHGrid
+       module procedure CreateRegularHGrid_maf, CreateRegularHGrid_chunk
+   end interface
+
 !---------------------------- RCS Ident Info -------------------------------
    character(len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
@@ -37,7 +41,34 @@ module CFM_HGrid_m
    contains
 
    ! Use the input given, and the L1BOA file to create a regular hGrid.
-   type(HGrid_T) function CreateRegularHGrid (instrumentModuleName, origin, &
+   type(HGrid_T) function CreateRegularHGrid_maf (instrumentModuleName, origin, &
+                  spacing, insetOverLaps, filedatabase, &
+                  firstL1Maf, lastL1Maf) result(hgrid)
+
+       ! The (x,y) origin of coordinate
+      real(r8), intent(in) :: origin
+      real(r8), intent(in) :: spacing
+      ! the filedatabase must contains L1BOA file (see CFM_MLSSetup)
+      type(MLSFile_T), dimension(:), pointer :: filedatabase
+      ! Either "GHz" or "THz" but the string is case-insensitive.
+      character(len=*), intent(in) :: instrumentModuleName
+      logical, intent(in) :: insetOverlaps
+      integer, intent(in) :: firstL1Maf
+      integer, intent(in) :: lastL1Maf
+
+      ! Contains the time range of the data to be gotten out of L1BOA
+      ! (see CFM_MLSSetup)
+      type(MLSChunk_T) :: chunk
+
+      chunk%firstMafIndex = firstL1Maf
+      chunk%lastMafIndex = lastL1Maf
+
+      hgrid = CreateRegularHGrid_chunk(instrumentModuleName, origin, &
+              spacing, insetOverlaps, filedatabase, chunk)
+   end function
+
+   ! Use the input given, and the L1BOA file to create a regular hGrid.
+   type(HGrid_T) function CreateRegularHGrid_chunk (instrumentModuleName, origin, &
                   spacing, insetOverLaps, filedatabase, &
                   chunk) result(hgrid)
       ! The (x,y) origin of coordinate
@@ -198,6 +229,11 @@ module CFM_HGrid_m
 end module
 
 ! $Log$
+! Revision 1.9  2010/06/29 17:02:47  honghanh
+! Change the identifier 'fakeChunk' to 'chunk' because
+! since it is created with ChunkDivide, it's as real as a chunk
+! can get.
+!
 ! Revision 1.8  2010/06/29 16:40:23  honghanh
 ! Remove all function/subroutine and user type forwarding from
 ! all CFM modules except for from cfm.f90
