@@ -923,7 +923,11 @@ End Join
   Label, quantity=tempVectorState.iwp, label='IWP-StdProd'
   DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.iwc, precision=tempVectorPrecision.iwc, $
-    source=tempVectorState.iwp, precision=tempVectorPrecision.iwp
+    status=tempVectorDiagnostics.statusiwc, quality=tempVectorDiagnostics.qualityiwc, $
+    convergence=tempVectorDiagnostics.convergenceiwc, $
+    source=tempVectorState.iwp, precision=tempVectorPrecision.iwp, $
+    status=tempVectorDiagnostics.statusiwp, quality=tempVectorDiagnostics.qualityiwp, $
+    convergence=tempVectorDiagnostics.convergenceiwp
 End Join
 ;; Store chunk overlaps as diagnostics if flags are set
 !ifdef(flagDWLowerOverlap, {!dnl
@@ -932,7 +936,11 @@ Begin Join
   Label, quantity=tempVectorState.iwp, label='lowerOverlap-IWP-StdProd'
   DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.iwc, precision=tempVectorPrecision.iwc, $
-    source=tempVectorState.iwp, precision=tempVectorPrecision.iwp, /lowerOverlap
+    status=tempVectorDiagnostics.statusiwc, quality=tempVectorDiagnostics.qualityiwc, $
+    convergence=tempVectorDiagnostics.convergenceiwc, $
+    source=tempVectorState.iwp, precision=tempVectorPrecision.iwp, $
+    status=tempVectorDiagnostics.statusiwp, quality=tempVectorDiagnostics.qualityiwp, $
+    convergence=tempVectorDiagnostics.convergenceiwp, /lowerOverlap
 End Join
 })
 !ifdef(flagDWUpperOverlap, {!dnl
@@ -942,7 +950,11 @@ Begin Join
   Label, quantity=tempVectorState.iwp, label='upperOverlap-IWP-StdProd'
   DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.iwc, precision=tempVectorPrecision.iwc, $
-    source=tempVectorState.iwp, precision=tempVectorPrecision.iwp, /upperOverlap
+    status=tempVectorDiagnostics.statusiwc, quality=tempVectorDiagnostics.qualityiwc, $
+    convergence=tempVectorDiagnostics.convergenceiwc, $
+    source=tempVectorState.iwp, precision=tempVectorPrecision.iwp, $
+    status=tempVectorDiagnostics.statusiwp, quality=tempVectorDiagnostics.qualityiwp, $
+    convergence=tempVectorDiagnostics.convergenceiwp, /upperOverlap
 End Join
 })
 },{
@@ -1151,6 +1163,9 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
 })})
 
 ; $Log$
+; Revision 1.144  2010/07/22 18:54:46  pwagner
+; Replaced method=special fills with unique names
+;
 ; Revision 1.143  2010/04/28 18:23:37  pwagner
 ; May set too few radiances status by percentage
 ;
