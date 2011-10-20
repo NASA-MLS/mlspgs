@@ -497,12 +497,12 @@ begin Construct
   !define(constructStatus,{status$1: Quantity, type=status, hGrid=hGridStandard!nl})
   !define(constructQuality,{quality$1: Quantity, type=quality, hGrid=hGridStandard!nl})
   !define(constructConvergence,{Convergence$1: Quantity, type=quality, hGrid=hGridStandard!nl})
-  !forall(constructStatus,!allStandardProducts,!allHiResProducts)
-  !forall(constructQuality,!allStandardProducts,!allHiResProducts)
-  !forall(constructConvergence,!allStandardProducts,!allHiResProducts)
-  !define(allStatuses,{!makelist({status},{},!allStandardProducts,!allHiResProducts)})
-  !define(allQualities,{!makelist({quality},{},!allStandardProducts,!allHiResProducts)})
-  !define(allConvergences,{!makelist({convergence},{},!allStandardProducts,!allHiResProducts)})
+  !forall(constructStatus,!allStandardProducts,!allHiResProducts,{IWC,IWP})
+  !forall(constructQuality,!allStandardProducts,!allHiResProducts,{IWC,IWP})
+  !forall(constructConvergence,!allStandardProducts,!allHiResProducts,{IWC,IWP})
+  !define(allStatuses,{!makelist({status},{},!allStandardProducts,!allHiResProducts,{IWC,IWP})})
+  !define(allQualities,{!makelist({quality},{},!allStandardProducts,!allHiResProducts,{IWC,IWP})})
+  !define(allConvergences,{!makelist({convergence},{},!allStandardProducts,!allHiResProducts,{IWC,IWP})})
 
   ;; ----------------------------------------- Scan residuals
 
