@@ -1,6 +1,15 @@
 ;; $Id$
 
 ;; This l2cf fragment is used to output the summarized cloud flags
+;; and also to flag the iwc standard product if Band33 is off
+
+begin Fill
+  Skip, Boolean=Band33OK  ;; Fill unless Band33 is OK
+  Fill, quantity=standardDiagnostics.statusiwc, method=explicit, $
+    explicitValues=!statusDoNotUse, /spread
+  Fill, quantity=standardDiagnostics.statusiwp, method=explicit, $
+    explicitValues=!statusDoNotUse, /spread
+end Fill
 
 begin Fill
   ;; First subset the cloudrads
