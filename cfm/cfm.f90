@@ -16,7 +16,8 @@ module cfm          ! callable forward model
    use CFM_MLSSetup_m, only: CFM_MLSCleanup, CFM_MLSSetup, CreateMLSValue_O2, &
                              CreateMLSValue_EarthReflectiviy, &
                              CreateMLSValue_LSF, CreateMLSValue_FromL1B, &
-                             CreateMLSValue_SpaceRadiance, GetConstantQuantities
+                             CreateMLSValue_SpaceRadiance, GetConstantQuantities, &
+                             CreateMLSValue_ElevationOffset
    use Chunks_m, only: MLSChunk_T
    use CFM_IO_M, only: Read_Spectroscopy, ReadDACSFilterShapes, &
                      ReadAntennaPatterns, ReadFilterShapes, &
@@ -85,6 +86,9 @@ contains
 end module cfm
 
 ! $Log$
+! Revision 1.19  2011/10/19 19:33:10  honghanh
+! Adding DestroyAgileVectorContent to CFM_Vector_m
+!
 ! Revision 1.16  2011/08/25 20:10:32  honghanh
 ! Add other log levels other than Error and Warning from MLSMessageModule
 !

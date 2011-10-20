@@ -45,7 +45,7 @@ module CFM_MLSSetup_m
     public :: CFM_MLSSetup, CFM_MLSCleanup, CreateMLSValue_O2
     public :: CreateMLSValue_EarthReflectiviy, CreateMLSValue_LSF
     public :: CreateMLSValue_FromL1B, CreateMLSValue_SpaceRadiance
-    public :: GetConstantQuantities
+    public :: GetConstantQuantities, CreateMLSValue_ElevationOffset
 
     interface CFM_MLSSetup
         module procedure CFM_MLSSetup_Obsolete, CFM_MLSSetup_Compact
@@ -1396,6 +1396,9 @@ module CFM_MLSSetup_m
 end module
 
 ! $Log$
+! Revision 1.27  2011/10/19 11:35:28  honghanh
+! Add extra APIs for creating MLS vector values.
+!
 ! Revision 1.26  2011/10/18 17:13:35  honghanh
 ! Use earth reflectivity and space radiance values from CFM_Constants_m.
 !
