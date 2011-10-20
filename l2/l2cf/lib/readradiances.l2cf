@@ -88,6 +88,7 @@ end Fill
 ;; Band15OK and Band15OFF will be used to decide whther the THz module is off
 ;; and therefore how hard to work in Core+R5
 ;; (Shouldn't we check the other R5 Bands, too?)
+;; Band33OFF will cause us to flag iwc "do not use"
 begin Construct
   Band13OK: Boolean, formula="true"
   anyGoodValues, quantity=measurement.band13, precision=measurementNoise.band13, Boolean=Band13OK
@@ -95,10 +96,16 @@ begin Construct
   Band15OK: Boolean, formula="true"
   anyGoodValues, quantity=measurement.band15, precision=measurementNoise.band15, Boolean=Band15OK
   Band15OFF: Boolean, formula="not Band15OK"
+  Band33OK: Boolean, formula="true"
+  anyGoodValues, quantity=measurement.band33, precision=measurementNoise.band33, Boolean=Band33OK
+  Band33OFF: Boolean, formula="not Band33OK"
 end Construct
 
 
 ; $Log$
+; Revision 1.14  2010/03/31 18:20:44  pwagner
+; Boolean Band15OFF shows if THz module is off
+;
 ; Revision 1.13  2008/06/27 16:53:50  pwagner
 ; Discounts Band 25 radiances, too, when polluted by Galactic Core
 ;
