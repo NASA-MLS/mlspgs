@@ -16,21 +16,21 @@ module QuantityTemplates         ! Quantities within vectors
   ! This module defines the `quantities' that make up vectors and their
   ! template information.
 
-  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use DUMP_0, only: DUMP
-  use Expr_M, only: EXPR_CHECK
-  use Intrinsic, only: PHYQ_Dimensionless
-  use MLSCommon, only: NameLen
+  use EXPR_M, only: EXPR_CHECK
+  use INTRINSIC, only: PHYQ_DIMENSIONLESS
+  use MLSCOMMON, only: NAMELEN
   use MLSFILLVALUES, only: RERANK
-  use MLSKinds, only: R8, RV
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
-    & MLSMSG_Error, MLSMSG_Warning
-  use Intrinsic, only: L_None, LIT_INDICES, PHYQ_INDICES
+  use MLSKINDS, only: R8, RV
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
+    & MLSMSG_ERROR, MLSMSG_WARNING
+  use INTRINSIC, only: L_NONE, LIT_INDICES, PHYQ_INDICES
   use MLSSETS, only: FINDFIRST
-  use MLSStringLists, only: SWITCHDETAIL
-  use MLSStrings, only: LOWERCASE, WRITEINTSTOCHARS
-  use Output_m, only: NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
-  use String_Table, only: DISPLAY_STRING, GET_STRING
+  use MLSSTRINGLISTS, only: SWITCHDETAIL
+  use MLSSTRINGS, only: LOWERCASE, WRITEINTSTOCHARS
+  use OUTPUT_M, only: NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
+  use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
   use TOGGLES, only: SWITCHES
   use TREE, only: NSONS,SUBTREE
 
@@ -184,6 +184,10 @@ module QuantityTemplates         ! Quantities within vectors
     module procedure ModifyQuantityTemplate_array, ModifyQuantityTemplate_sca
   end interface
 
+  interface WriteAttributes
+    module procedure WriteAttributes_QuantityTemplate
+  end interface
+
   ! Local procedures
   interface CHECKINTEGRITY
     module procedure CheckIntegrity_QuantityTemplate
@@ -201,7 +205,7 @@ module QuantityTemplates         ! Quantities within vectors
   public :: CopyQuantityTemplate, &
     & DestroyQuantityTemplateContents, DestroyQuantityTemplateDatabase, &
     & ModifyQuantityTemplate, &
-    & NullifyQuantityTemplate, SetupNewQuantityTemplate
+    & NullifyQuantityTemplate, SetupNewQuantityTemplate, WriteAttributes
   integer, parameter :: NUMMODS = 9
   character(*), dimension(NUMMODS), parameter :: MODIFIABLEFIELDS = (/&
     & 'surfs      ', &
@@ -378,11 +382,11 @@ contains
   ! -------------------------------------  DUMP_QUANTITY_TEMPLATE  -----
   subroutine DUMP_QUANTITY_TEMPLATE ( QUANTITY_TEMPLATE, DETAILS, NOL2CF )
 
-    use Intrinsic, only: lit_indices
-    use MLSSignals_m, only: Signals, DUMP, GetRadiometerName, GetModuleName
-    use Output_m, only: NewLine
-    use String_Table, only: Display_String
-    use VGridsDatabase, only: Dump
+    use INTRINSIC, only: LIT_INDICES
+    use MLSSIGNALS_M, only: SIGNALS, DUMP, GETRADIOMETERNAME, GETMODULENAME
+    use OUTPUT_M, only: NEWLINE
+    use STRING_TABLE, only: DISPLAY_STRING
+    use VGRIDSDATABASE, only: DUMP
 
     type(QuantityTemplate_T), intent(in) :: QUANTITY_TEMPLATE
     integer, intent(in), optional :: DETAILS ! <= 0 => Don't dump arrays
@@ -1001,6 +1005,70 @@ contains
     ! if ( switchDetail(switches, 'qtmp') > -1 ) call dump(qty, details=0, noL2CF=.true.)
   end subroutine SetupNewQuantityTemplate
 
+  ! -------------------------------------  WriteAttributes_QuantityTemplate  -----
+  subroutine WriteAttributes_QuantityTemplate ( L2FileHandle, NAME, QuantityTemplate, NOL2CF )
+
+    use INTRINSIC, only: LIT_INDICES
+    use MLSHDF5, only: MAKEHDF5ATTRIBUTE
+    use MLSSIGNALS_M, only: SIGNALS, DUMP, GETRADIOMETERNAME, GETMODULENAME, &
+      & GETSIGNALNAME
+
+    ! Arguments
+    integer, intent(in) :: L2FileHandle
+    character(len=*), intent(in) :: name
+    type(QuantityTemplate_T), intent(in) :: QuantityTemplate
+    logical, intent(in), optional :: NOL2CF  ! if TRUE => Don't WriteAttributes L2-specific
+                                             !  stuff
+    character (len=80) :: Str
+    logical :: myNoL2CF
+    ! Executable
+    myNoL2CF = switchDetail(switches, 'nl2cf') > -1 ! .false.
+    if ( present(NoL2CF) ) myNoL2CF = NoL2CF
+    call myGetString ( QuantityTemplate%name, str, strip=.true. )
+    call MakeHDF5Attribute ( L2FileHandle, name, 'TemplateName', str )
+    if ( .not. myNoL2CF ) then
+      call myGetString ( lit_indices(QuantityTemplate%quantityType), str, strip=.true. )
+      call MakeHDF5Attribute ( L2FileHandle, name, 'tempQtyType', str )
+    end if
+    call MakeHDF5Attribute ( L2FileHandle, name, 'noInstances', QuantityTemplate%noInstances )
+    call MakeHDF5Attribute ( L2FileHandle, name, 'noChans    ', QuantityTemplate%noChans     )
+    call MakeHDF5Attribute ( L2FileHandle, name, 'noSurfs    ', QuantityTemplate%noSurfs     )
+    call MakeHDF5Attribute ( L2FileHandle, name, 'coherent   ', QuantityTemplate%coherent     )
+    call MakeHDF5Attribute ( L2FileHandle, name, 'stacked    ', QuantityTemplate%stacked     )
+    call MakeHDF5Attribute ( L2FileHandle, name, 'regular    ', QuantityTemplate%regular     )
+    call MakeHDF5Attribute ( L2FileHandle, name, 'logBasis    ', QuantityTemplate%logBasis     )
+    call MakeHDF5Attribute ( L2FileHandle, name, 'minorFrame    ', QuantityTemplate%minorFrame     )
+    call MakeHDF5Attribute ( L2FileHandle, name, 'badValue    ', QuantityTemplate%badValue     )
+    if ( .not. myNoL2CF ) then
+      call myGetString ( phyq_indices(QuantityTemplate%unit), str, strip=.true. )
+      call MakeHDF5Attribute ( L2FileHandle, name, 'tempQtyUnit', str )
+    end if
+    call MakeHDF5Attribute ( L2FileHandle, name, 'instanceLen    ', QuantityTemplate%instanceLen     )
+    if ( .not. myNoL2CF ) then
+      call myGetString ( lit_indices(QuantityTemplate%verticalCoordinate), str, strip=.true. )
+      call MakeHDF5Attribute ( L2FileHandle, name, 'verticalCoordinate', str )
+    end if
+    if ( QuantityTemplate%radiometer /= 0 .and. .not. myNoL2CF ) then
+      call GetRadiometerName ( QuantityTemplate%radiometer, str )
+      call MakeHDF5Attribute ( L2FileHandle, name, 'radiometer', str )
+    end if
+    if ( QuantityTemplate%molecule + &
+      &  QuantityTemplate%instrumentModule /= 0 .and. .not. myNoL2CF ) then
+      if ( QuantityTemplate%molecule /= 0 ) then
+        call myGetString ( lit_indices(QuantityTemplate%molecule), str, strip=.true. )
+        call MakeHDF5Attribute ( L2FileHandle, name, 'molecule', str )
+      end if
+      if ( QuantityTemplate%instrumentModule /= 0 ) then
+        call GetModuleName ( QuantityTemplate%instrumentModule, str )
+        call MakeHDF5Attribute ( L2FileHandle, name, 'tempQtyInstrumentModule', str )
+      end if
+    end if
+    if ( QuantityTemplate%signal /= 0 ) then
+      call GetSignalName ( QuantityTemplate%signal, str )
+      call MakeHDF5Attribute ( L2FileHandle, name, 'signal', str )
+    end if
+  end subroutine WriteAttributes_QuantityTemplate
+
   ! --------- Private procedures ---
   ! ---------------------------- CheckIntegrity_QuantityTemplate -------
   logical function CheckIntegrity_QuantityTemplate ( qty, noError )
@@ -1238,7 +1306,7 @@ contains
   ! ---------------------------------------- myDisplayString -----
   subroutine myDisplayString ( index, advance )
     ! Given a string index, display the string or an error message
-    use String_Table, only: How_Many_Strings
+    use String_Table, only: HOW_MANY_STRINGS
     integer, intent(in) :: index
     character(len=*), intent(in), optional :: advance
 
@@ -1255,7 +1323,7 @@ contains
   ! ---------------------------------------- myGetString -----
   subroutine myGetString ( index, what, strip )
     ! Given a string index, Get the string or an error message
-    use String_Table, only: How_Many_Strings
+    use String_Table, only: HOW_MANY_STRINGS
     integer, intent(in)           :: index
     character(len=*), intent(out) :: what
     logical, intent(in), optional :: strip
@@ -1419,6 +1487,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.64  2011/05/09 17:26:03  pwagner
+! Converted to using switchDetail
+!
 ! Revision 2.63  2011/03/31 18:30:02  pwagner
 ! Corrected spelling in MODIFIABLEFIELDS
 !
