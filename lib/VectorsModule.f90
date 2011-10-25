@@ -92,19 +92,19 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 
   ! --------------------------------------------------------------------------
 
-  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, Test_Deallocate
-  use BitStuff, only: dumpBitNames, IsBitSet
+  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST, TEST_DEALLOCATE
+  use BITSTUFF, only: DUMPBITNAMES, ISBITSET
   use DUMP_0, only: DIFF, DUMP
-  use Intrinsic, only: LIT_INDICES, PHYQ_INVALID, L_VMR
-  use MLSCommon, only: R8, RV
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
-    & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
-  use MLSSets, only: FINDFIRST, FINDUNIQUE
-  use MLSSignals_m, only: MODULES, SIGNALS, GETSIGNALNAME
-  use Molecules, only: L_EXTINCTION
+  use INTRINSIC, only: LIT_INDICES, PHYQ_INVALID, L_VMR
+  use MLSKINDS, only: R8, RV
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, &
+    & MLSMSG_DEALLOCATE, MLSMSG_ERROR, MLSMSG_WARNING
+  use MLSSETS, only: FINDFIRST, FINDUNIQUE
+  use MLSSIGNALS_M, only: MODULES, SIGNALS, GETSIGNALNAME
+  use MOLECULES, only: L_EXTINCTION
   use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
-  use QuantityTemplates, only: QuantityTemplate_T, CheckIntegrity, Dump, &
-    & NullifyQuantityTemplate
+  use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T, CHECKINTEGRITY, DUMP, &
+    & NULLIFYQUANTITYTEMPLATE
   use STRING_TABLE, only: DISPLAY_STRING, GET_STRING, STRING_LENGTH
   use SYMBOL_TABLE, only: ENTER_TERMINAL
   use SYMBOL_TYPES, only: T_IDENTIFIER
@@ -222,7 +222,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   end type VectorTemplate_T
 
   ! This type describes the subset of the values of a vector that
-  ! correspond to a single quantity.
+  ! correspond to a single quantity. Should have called this QuantityValue_T.
 
   type VectorValue_T
     type (QuantityTemplate_T) :: TEMPLATE ! Template for this quantity.
@@ -604,7 +604,7 @@ contains ! =====     Public Procedures     =============================
   ! Check whether a vector quantity has any NaNs in any of its VALUES, returning
   ! TRUE if so.
   ! This doesn't check the quantity templates.
-    use IEEE_Arithmetic, only: IEEE_Is_NaN
+    use IEEE_ARITHMETIC, only: IEEE_IS_NAN
     type (VectorValue_t), intent(in) :: VectorQuantity
     integer, intent(in) :: Print ! <= 0 => No printing
                                  !  > 0 => Call dump with details = print - 1
@@ -1471,7 +1471,7 @@ contains ! =====     Public Procedures     =============================
     & COHERENT, STACKED, REGULAR, MINORFRAME, MAJORFRAME, &
     & THENDITCHAFTERDUMP, CLEAN )
 
-    use Lexer_Core, only: Print_Source
+    use Lexer_Core, only: PRINT_SOURCE
 
     ! dump quantities in vector according to whether they match
     ! all of the optional args: name, ..,majorframe
@@ -1783,7 +1783,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------------  Dump_Vector_Template  -----
   subroutine Dump_Vector_Template ( VECTOR_TEMPLATE, DETAILS, QUANTITIES )
-    use QuantityTemplates, only: Dump
+    use QuantityTemplates, only: DUMP
     type(VectorTemplate_T), intent(in) :: VECTOR_TEMPLATE
     integer, intent(in), optional :: DETAILS ! <= 0 => Don't dump arrays
                                              ! > 0  => Do dump arrays
@@ -1985,7 +1985,7 @@ contains ! =====     Public Procedures     =============================
   ! specified type, as well as the specified molecule and/or radiometer
   ! index, is returned.
 
-    use MLSSignals_m, only: GetRadiometerName
+    use MLSSignals_m, only: GETRADIOMETERNAME
 
     ! Dummy arguments
     type (Vector_T), intent(in) :: VECTOR
@@ -2710,6 +2710,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.153  2011/08/02 16:51:40  honghanh
+! Re-indent 2 lines of code to make indentation correct.
+!
 ! Revision 2.152  2011/03/15 22:49:35  pwagner
 ! Added reverseMask; changed default dumpMask behavior to use DUMP_2D_INTEGER
 !
