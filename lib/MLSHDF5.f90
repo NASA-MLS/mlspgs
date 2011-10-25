@@ -275,6 +275,7 @@ module MLSHDF5
       & MakeHDF5Attribute_intarr1, MakeHDF5AttributeDSN_int, &
       & MakeHDF5AttributeDSN_string, MakeHDF5AttributeDSN_snglarr1, &
       & MakeHDF5AttributeDSN_st_arr1, MakeHDF5AttributeDSN_dblarr1, &
+      & MakeHDF5AttributeDSN_single, MakeHDF5AttributeDSN_double, &
       & MakeHDF5Attribute_textFile
   end interface
 
@@ -1536,6 +1537,36 @@ contains ! ======================= Public Procedures =========================
   9 call MLSMessageCalls( 'pop' )
   end subroutine MakeHDF5AttributeDSN_st_arr1
 
+  ! ------------------------------  MakeHDF5AttributeDSN_single  -----
+  subroutine MakeHDF5AttributeDSN_single ( fileID, dataName, attrName, value, &
+   & skip_if_already_there )
+    integer, intent(in) :: FILEID       ! FIle where to find them
+    character (len=*), intent(in) :: DATANAME ! Name of data set
+    character (len=*), intent(in) :: ATTRNAME ! Name of attribute
+    real, intent(in) :: VALUE        ! The attribute value itself
+    logical, intent(in), optional :: skip_if_already_there
+
+    ! Local variables
+    integer :: dataID                   ! ID for data
+    integer :: STATUS                   ! Flag from HDF5
+    logical :: my_skip
+
+    ! Executable code
+    call MLSMessageCalls( 'push', constantName='MakeHDF5AttributeDSN_single' )
+    my_skip = .false.
+    if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
+    if ( my_skip ) then
+      if ( IsHDF5AttributePresent_in_fID( fileID, dataName, attrName ) ) go to 9
+    end if
+    dataID = name_to_dataID( fileID, dataName)
+    call MakeHDF5Attribute ( dataID, attrName, value )
+    call h5dclose_f ( dataID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close data ' // trim(dataName) )
+ 9  call MLSMessageCalls( 'pop' )
+
+  end subroutine MakeHDF5AttributeDSN_single
+
   ! ------------------------------  MakeHDF5AttributeDSN_snglarr1  -----
   subroutine MakeHDF5AttributeDSN_snglarr1 ( fileID, dataName, attrName, value, &
    & skip_if_already_there )
@@ -1565,6 +1596,36 @@ contains ! ======================= Public Procedures =========================
  9  call MLSMessageCalls( 'pop' )
 
   end subroutine MakeHDF5AttributeDSN_snglarr1
+
+  ! -------------------------------  MakeHDF5AttributeDSN_double  -----
+  subroutine MakeHDF5AttributeDSN_double ( fileID, dataName, attrName, value, &
+   & skip_if_already_there )
+    integer, intent(in) :: FILEID       ! FIle where to find them
+    character (len=*), intent(in) :: DATANAME ! Name of data set
+    character (len=*), intent(in) :: ATTRNAME ! Name of attribute
+    double precision, intent(in) :: VALUE  ! The attribute value itself
+    logical, intent(in), optional :: skip_if_already_there
+
+    ! Local variables
+    integer :: dataID                   ! ID for data
+    integer :: STATUS                   ! Flag from HDF5
+    logical :: my_skip
+
+    ! Executable code
+    call MLSMessageCalls( 'push', constantName='MakeHDF5AttributeDSN_double' )
+    my_skip = .false.
+    if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
+    if ( my_skip ) then
+      if ( IsHDF5AttributePresent_in_fID( fileID, dataName, attrName ) ) go to 9
+    end if
+    dataID = name_to_dataID( fileID, dataName)
+    call MakeHDF5Attribute ( dataID, attrName, value )
+    call h5dclose_f ( dataID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close data ' // trim(dataName) )
+  9 call MLSMessageCalls( 'pop' )
+
+  end subroutine MakeHDF5AttributeDSN_double
 
   ! -------------------------------  MakeHDF5AttributeDSN_dblarr1  -----
   subroutine MakeHDF5AttributeDSN_dblarr1 ( fileID, dataName, attrName, value, &
@@ -5333,6 +5394,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.112  2011/10/25 17:56:09  pwagner
+! May make scalar real and d.p.-valued attributes
+!
 ! Revision 2.111  2011/08/04 17:38:18  pwagner
 ! Corrected choice of kind for stringsize
 !
