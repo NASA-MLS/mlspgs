@@ -186,8 +186,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_SNOOP              = s_skip + 1
   integer, parameter :: S_STREAMLINEHESSIAN  = s_snoop + 1
   integer, parameter :: S_SUBSET             = s_streamlineHessian + 1
-  integer, parameter :: S_TEMPLATE           = s_subset + 1
-  integer, parameter :: S_TGRID              = s_template + 1
+  integer, parameter :: S_TGRID              = s_subset + 1
   integer, parameter :: S_TRANSFER           = s_tgrid + 1
   integer, parameter :: S_UPDATEMASK         = s_transfer + 1
   integer, parameter :: S_VECTOR             = s_updateMask + 1
@@ -411,7 +410,6 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_snoop) =                add_ident ( 'snoop' )
     spec_indices(s_streamlineHessian) =    add_ident ( 'streamlineHessian' )
     spec_indices(s_subset) =               add_ident ( 'subset' )
-    spec_indices(s_template) =             add_ident ( 'template' )
     spec_indices(s_tgrid ) =               add_ident ( 'tGrid' )
     spec_indices(s_transfer) =             add_ident ( 'transfer' )
     spec_indices(s_updateMask) =           add_ident ( 'updateMask' )
@@ -500,8 +498,8 @@ contains ! =====     Public procedures     =============================
       begin, t+t_rowsOrColumns, l+l_rows, l+l_columns, n+n_dt_def, &
       begin, t+t_reflector, l+l_primary, l+l_secondary, l+l_tertiary, &
              l+l_complete, n+n_dt_def, &
-      begin, t+t_outputType, l+l_ascii, l+l_l2aux, l+l_l2cf, l+l_l2dgg, l+l_l2fwm, &
-             l+l_l2gp, l+l_l2pc, n+n_dt_def /) )
+      begin, t+t_outputType, l+l_ascii, l+l_hdf, l+l_l2aux, l+l_l2cf, &
+             l+l_l2dgg, l+l_l2fwm, l+l_l2gp, l+l_l2pc, n+n_dt_def /) )
     call make_tree ( (/ &
       begin, t+t_quantityType, l+l_adopted, l+l_baseline, l+l_boundarypressure, &
              l+l_calSidebandFraction, l+l_chisqbinned, l+l_chisqchan, l+l_chisqmmaf, l+l_chisqmmif, &
@@ -694,11 +692,6 @@ contains ! =====     Public procedures     =============================
              begin, f+f_skipL1BCheck, t+t_boolean, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
-      begin, s+s_template, &
-             begin, f+f_copy, n+n_field_type, &
-             begin, f+f_apriori, n+n_field_type, &
-             begin, f+f_autofill, n+n_field_type, &
-             np+n_spec_def, &
       begin, s+s_Boolean, &
              begin, f+f_formula, t+t_string, n+n_field_type, &
              begin, f+f_values, t+t_boolean, n+n_field_type, &
@@ -825,6 +818,7 @@ contains ! =====     Public procedures     =============================
              ndp+n_spec_def, &
       begin, s+s_vector, & ! Must be AFTER s_vectorTemplate
              begin, f+f_template, s+s_vectorTemplate, nr+n_field_spec, &
+             begin, f+f_autoFill, t+t_boolean, n+n_field_type, &
              begin, f+f_highBound, t+t_boolean, n+n_field_type, &
              begin, f+f_lowBound, t+t_boolean, n+n_field_type, &
              begin, f+f_lengthScale, t+t_boolean, n+n_field_type, &
@@ -1180,6 +1174,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_file, t+t_string, nd+n_field_type, &
              begin, f+f_hdfVersion, t+t_numeric, ndr+n_field_type, &
              begin, f+f_lowerOverlap, t+t_boolean, n+n_field_type, &
+             begin, f+f_options, t+t_string, n+n_field_type, &
              begin, f+f_precision, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
              begin, f+f_quality, s+s_vector, f+f_template, f+f_quantities, &
@@ -1615,7 +1610,7 @@ contains ! =====     Public procedures     =============================
       begin, z+z_mlsSignals, s+s_module, s+s_band, s+s_radiometer, &
              s+s_signal, s+s_spectrometerType, s+s_time, n+n_section, &
       begin, z+z_spectroscopy, s+s_line, s+s_readSpectroscopy, s+s_spectra, &
-             s+s_time, s+s_writeSpectroscopy, n+n_section, &
+             s+s_readIsotopeRatios, s+s_time, s+s_writeSpectroscopy, n+n_section, &
       begin, z+z_globalsettings, &
              begin, p+p_output_version_string, t+t_string, n+n_name_def, &
              begin, p+p_instrument, t+t_instrument, n+n_name_def,&
@@ -1700,6 +1695,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.525  2011/10/25 22:12:19  pwagner
+! Removed unused Template spec; added readIsotopeRatios
+!
 ! Revision 2.524  2011/06/16 23:15:39  pwagner
 ! Added /downsample to reduce resolution of gridded data when read
 !
