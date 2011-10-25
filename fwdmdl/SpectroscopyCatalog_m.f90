@@ -16,7 +16,7 @@ module SpectroscopyCatalog_m
   use INTRINSIC, only: L_NONE
   use MLSKINDS, only: R8
   use MLSCOMMON, only: MLSFILE_T
-  use MOLECULES, only: FIRST_MOLECULE, LAST_MOLECULE
+  use MOLECULES, only: FIRST_MOLECULE, LAST_MOLECULE, L_EXTINCTION, L_EXTINCTIONV2
 
   ! More USEs below in each procedure.
 
@@ -27,7 +27,7 @@ module SpectroscopyCatalog_m
   public :: Spectroscopy, SearchByQn
   public :: Destroy_Line_Database, Destroy_SpectCat_Database
   public :: Dump_Lines_Database, Dump_SpectCat_Database, Dump_SpectCat_Item, Dump
-  public :: Read_Spectroscopy, Write_Spectroscopy
+  public :: ReadIsotopeRatios, Read_Spectroscopy, Write_Spectroscopy
 
   interface DUMP
     module procedure Dump_Line, Dump_SpectCat_Database, Dump_SpectCat_Database_2d
@@ -107,7 +107,7 @@ contains ! =====  Public Procedures  ===================================
 
     use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use INIT_SPECTROSCOPY_M, only: S_LINE, S_SPECTRA, S_READSPECTROSCOPY, &
-      & S_WRITESPECTROSCOPY
+      & S_READISOTOPERATIOS, S_WRITESPECTROSCOPY
     ! NOW THE FIELDS:
     use INIT_SPECTROSCOPY_M, only: F_CONTINUUM, F_DELTA, F_DEFAULTISOTOPERATIO, &
       & F_EL, F_EMLSSIGNALS, F_EMLSSIGNALSPOL, F_GAMMA, F_LINES, F_MASS, &
@@ -140,6 +140,7 @@ contains ! =====  Public Procedures  ===================================
     character(len=31) :: FileType
     logical :: GotLines, GotMass        ! Got a "lines" or "mass" field
     integer :: I, J, K, L               ! Loop inductors, Subscripts
+    integer :: IsotopeRatiosFile = 0
     integer :: Key                      ! Index of spec_arg
     type (MLSFile_T), pointer   :: MLSFile
     integer :: Molecule                 ! Molecule for which the catalog applies
@@ -342,6 +343,20 @@ contains ! =====  Public Procedures  ===================================
           & spectroscopyFile, filedatabase, MLSFile, toolkit, &
           & 'Spectroscopy File not found in PCF' )
         call Read_Spectroscopy ( j, MLSFile%Name, fileType )
+      case ( s_readIsotopeRatios ) ! ..........  ReadIsotopeRatios  .....
+        ! Only one field -- f_file -- allowed
+        j = subtree(2,subtree(2,key))
+        fileType = 'HDF5'
+        if ( node_id(j) /= n_string ) then ! must be n_*colon
+          call get_string ( sub_rosa(subtree(2,j)), fileType, strip=.true. )
+          j = subtree(1,j)
+        end if
+        IsotopeRatiosFile = sub_rosa(j)
+        ! call get_string ( IsotopeRatiosFile, fileName, strip=.true. )
+        call get_file_name ( pcfID, &
+          & IsotopeRatiosFile, filedatabase, MLSFile, toolkit, &
+          & 'IsotopeRatios File not found in PCF' )
+        call ReadIsotopeRatios ( j, MLSFile%Name, fileType )
       case ( s_spectra ) ! .............................  SPECTRA  .....
         ! Get the molecule
         do j = 2, nsons(key)
@@ -648,10 +663,10 @@ contains ! =====  Public Procedures  ===================================
 
   ! -----------------------------------------  Dump_SpectCat_Item  -----
   subroutine Dump_SpectCat_Item ( Catalog, Details )
-    use Dump_0, only: Dump
-    use Intrinsic, only: Lit_indices
-    use Output_m, only: Blanks, NewLine, Output
-    use String_Table, only: Display_String, String_Length
+    use DUMP_0, only: DUMP
+    use INTRINSIC, only: LIT_INDICES
+    use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT
+    use STRING_TABLE, only: DISPLAY_STRING, STRING_LENGTH
 
     type(catalog_T), intent(in) :: Catalog
     integer, optional, intent(in) :: Details ! <= 0 => Don't dump lines,
@@ -747,14 +762,14 @@ contains ! =====  Public Procedures  ===================================
   ! ............................................  Get_File_Name  .....
   subroutine Get_File_Name ( pcfCode, &
     & spectroscopyFile, fileDataBase, MLSFile, toolkit, MSG, pcfEndCode )
-    use hdf, only: dfacc_rdonly
-    use intrinsic, only: l_hdf
-    use MLSCommon, only: MLSFile_T
-    use MLSFiles, only: HDFVERSION_5, &
-      & AddInitializeMLSFile, GetPCFromRef, split_path_name
-    use output_m, only: output
-    use SDPToolkit, only: Pgs_pc_getReference
-    use String_Table, only: Get_String
+    use HDF, only: DFACC_RDonly
+    use INTRINSIC, only: L_HDF
+    use MLSCOMMON, only: MLSFILE_T
+    use MLSFILES, only: HDFVERSION_5, &
+      & ADDINITIALIZEMLSFILE, GETPCFROMREF, SPLIT_PATH_NAME
+    use OUTPUT_M, only: OUTPUT
+    use SDPTOOLKIT, only: PGS_PC_GETREFERENCE
+    use STRING_TABLE, only: GET_STRING
     ! Dummy args
     integer, intent(in) :: pcfCode
     integer, intent(in) :: spectroscopyFile ! parser id
@@ -805,6 +820,89 @@ contains ! =====  Public Procedures  ===================================
     MLSFile%PCFId = lun
   end subroutine Get_File_Name
 
+! --------------------------------------------  ReadIsotopeRatios  -----
+  ! Module-wise global variable LINES need to be associated before
+  ! calling this subroutine
+  subroutine ReadIsotopeRatios ( Where, FileName, FileType )
+    use INTRINSIC, only: LIT_INDICES
+    use MACHINE, only: IO_ERROR
+    use MLSHDF5, only: GETHDF5DSDIMS, ISHDF5DSPRESENT, LOADFROMHDF5DS, LOADPTRFROMHDF5DS
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
+      & MLSMSG_ERROR
+    use MLSSIGNALS_M, only: MAXSIGLEN
+    use MLSSTRINGS, only: CAPITALIZE
+    use MORETREE, only: GETLITINDEXFROMSTRING, GETSTRINGINDEXFROMSTRING
+    use PARSE_SIGNAL_M, only: PARSE_SIGNAL
+    use STRING_TABLE, only: GET_STRING, STRING_LENGTH
+    use HDF5, only: H5F_ACC_RDONLY_F, H5FOPEN_F, H5FCLOSE_F, HSIZE_T
+
+    integer, intent(in) :: Where ! in the parse tree
+    character(len=*), intent(in) :: FileName, FileType
+
+    type(catalog_t) :: CatalogItem
+    character(len=maxSigLen), pointer :: CatNames(:)
+    real(r8), pointer :: Continuum(:,:)
+!   type(decls) :: Decl
+    logical :: Error
+    integer :: FileID            ! HDF5
+    integer :: I, IOSTAT, J, L, Line1, LineN, LUN, L2
+    type(line_t) :: Line
+    integer, pointer :: LineIndices(:)
+    integer, pointer :: LineList(:)
+    integer :: molecule
+    character(len=63) :: MoleculeName
+    character(len=63), pointer :: MoleculeNames(:)
+    integer :: NCat              ! Number of catalog items
+    integer :: NLines            ! Number of lines for a species
+    integer :: NPol              ! Number of polarized flags for a line
+                                 ! (zero or nSig )
+    integer :: NQN, NSig         ! Numbers of quantum numbers, signals for a line
+    integer, pointer :: PolarizedIndices(:) ! PolarizedIndices(i) is index in
+                                 ! PolarizedList of last Polarized for line I.
+    logical, pointer :: PolarizedList(:) ! Concatenation from all lines
+    real(r8), pointer :: Qlog(:,:)
+    integer, pointer :: QNIndices(:) ! QNIndices(i) is index in
+                                 ! QNList of last QN for line I.
+    integer, pointer :: QNList(:) ! Concatenation from all lines
+    integer(hsize_t) :: Shp(1), Shp2(2) ! To get the shapes of datasets HDF
+    integer, pointer :: SidebandList(:) ! Concatenation from all lines
+    integer, dimension(:), pointer :: SigInds ! From Parse_signal
+    logical :: SignalError
+    integer , pointer:: SignalIndices(:) ! signalIndices(i) is index in
+                                 ! SidebandList and SignalList of last signal
+                                 ! for line I.
+    integer, pointer :: SignalList(:) ! Concatenation from all lines
+    character(len=MaxSigLen) :: SignalName
+    character(len=MaxSigLen), pointer :: SignalNames(:)
+    character(len=63) :: SpeciesName
+    real, dimension(1,1,1) :: values
+    character(len=5) :: What
+
+    if (.not. associated(lines)) &
+       call MLSMessage( MLSMSG_Error, moduleName // '%ReadIsotopeRatios', &
+         & 'lines is still unassociated' )
+
+    error = .false.
+    if ( capitalize(fileType) /= 'HDF5' ) &
+      & call MLSMessage ( MLSMSG_Error, moduleName, &
+        & 'Can read isotopeRatios only from hdf5 files' )
+    call h5fopen_f ( trim(fileName), H5F_ACC_RDONLY_F, fileID, iostat )
+    if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
+      & 'Unable to open HDF5 isotope ratios file ' // trim(fileName) // '.' )
+    do i=first_molecule, last_molecule
+      molecule = catalog(i)%molecule
+      if ( any( molecule == (/ l_none, l_extinction, l_extinctionv2 /) ) ) cycle
+      call get_string( lit_indices(catalog(i)%molecule), moleculeName )
+      call loadFromHDF5DS ( fileID, &
+        & 'ISOTOPERATIO' // Capitalize(trim(moleculeName)), &
+        & values )
+      Catalog(i)%defaultIsotopeRatio = values(1,1,1)
+    enddo
+    call H5FClose_F ( fileID, iostat )
+    if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
+      & 'Unable to close HDF5 isotope ratios file ' // trim(fileName) // '.' )
+  end subroutine ReadIsotopeRatios
+
 ! --------------------------------------------  Read_Spectroscopy  -----
   ! Module-wise global variable LINES need to be associated before
   ! calling this subroutine
@@ -822,7 +920,7 @@ contains ! =====  Public Procedures  ===================================
     use MORETREE, only: GETLITINDEXFROMSTRING, GETSTRINGINDEXFROMSTRING
     use PARSE_SIGNAL_M, only: PARSE_SIGNAL
     use TREE, only: NULL_TREE
-    use HDF5, only: H5F_ACC_RDonly_F, H5FOPEN_F, H5FCLOSE_F, HSIZE_T
+    use HDF5, only: H5F_ACC_RDONLY_F, H5FOPEN_F, H5FCLOSE_F, HSIZE_T
 
     integer, intent(in) :: Where ! in the parse tree
     character(len=*), intent(in) :: FileName, FileType
@@ -1471,6 +1569,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.50  2011/05/09 17:55:12  pwagner
+! Converted to using switchDetail
+!
 ! Revision 2.49  2010/04/29 22:51:36  honghanh
 ! Check for if lines is associated in Read_Spectroscopy, and remove
 ! checks for lines associated-ness because it must be associated in order

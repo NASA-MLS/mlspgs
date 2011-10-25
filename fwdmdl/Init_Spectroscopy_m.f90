@@ -60,7 +60,8 @@ module Init_Spectroscopy_m
   integer, parameter :: S_Line              = last_signal_spec + 1
   integer, parameter :: S_ReadSpectroscopy  = s_line + 1
   integer, parameter :: S_Spectra           = s_readSpectroscopy + 1
-  integer, parameter :: S_WriteSpectroscopy = s_spectra + 1
+  integer, parameter :: S_ReadIsotopeRatios = s_spectra + 1
+  integer, parameter :: S_WriteSpectroscopy = S_ReadIsotopeRatios + 1
   integer, parameter :: Last_Spectroscopy_Spec = s_writeSpectroscopy
 
   ! The Spectroscopy section is NOT defined here, because it appears
@@ -121,6 +122,7 @@ contains
     spec_indices(s_line)    = add_ident ( 'line' )
     spec_indices(s_readSpectroscopy) = add_ident ( 'readSpectroscopy' )
     spec_indices(s_spectra) = add_ident ( 'spectra' )
+    spec_indices(s_readIsotopeRatios) = add_ident ( 'readIsotopeRatios' )
     spec_indices(s_writeSpectroscopy) = add_ident ( 'writeSpectroscopy' )
 
     ! Definitions are represented by trees.  The notation in the comments
@@ -180,6 +182,9 @@ contains
       begin, s+s_readSpectroscopy, &
              begin, f+f_file, t+t_string, nr+n_field_type, &
              ndp+n_spec_def, &
+      begin, s+s_readIsotopeRatios, &
+             begin, f+f_file, t+t_string, nr+n_field_type, &
+             ndp+n_spec_def, &
       begin, s+s_spectra, & ! Must be AFTER S_Line
              begin, f+f_continuum, t+t_numeric, n+n_field_type, &
              begin, f+f_defaultIsotopeRatio, t+t_numeric, n+n_field_type, &
@@ -210,6 +215,9 @@ contains
 end module Init_Spectroscopy_m
 
 ! $Log$
+! Revision 2.18  2009/06/23 18:26:10  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.17  2005/06/22 18:08:19  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
