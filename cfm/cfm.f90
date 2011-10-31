@@ -15,7 +15,7 @@ module cfm          ! callable forward model
   ! and with the callable forward model and links against libcfm.a or libcfm_all.a
    use CFM_MLSSetup_m, only: CFM_MLSCleanup, CFM_MLSSetup, CreateMLSValue_O2, &
                              CreateMLSValue_EarthReflectiviy, &
-                             CreateMLSValue_LSF, CreateMLSValue_FromL1B, &
+                             CreateMLSValue_LSF, CreateMLSValue_FromL1BOA, &
                              CreateMLSValue_SpaceRadiance, GetConstantQuantities, &
                              CreateMLSValue_ElevationOffset
    use Chunks_m, only: MLSChunk_T
@@ -86,6 +86,9 @@ contains
 end module cfm
 
 ! $Log$
+! Revision 1.20  2011/10/20 00:23:07  honghanh
+! Add elevation offset creation subroutine to public API
+!
 ! Revision 1.19  2011/10/19 19:33:10  honghanh
 ! Adding DestroyAgileVectorContent to CFM_Vector_m
 !

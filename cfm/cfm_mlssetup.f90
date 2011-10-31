@@ -44,7 +44,7 @@ module CFM_MLSSetup_m
     private
     public :: CFM_MLSSetup, CFM_MLSCleanup, CreateMLSValue_O2
     public :: CreateMLSValue_EarthReflectiviy, CreateMLSValue_LSF
-    public :: CreateMLSValue_FromL1B, CreateMLSValue_SpaceRadiance
+    public :: CreateMLSValue_FromL1BOA, CreateMLSValue_SpaceRadiance
     public :: GetConstantQuantities, CreateMLSValue_ElevationOffset
 
     interface CFM_MLSSetup
@@ -474,7 +474,7 @@ module CFM_MLSSetup_m
         spaceRad = CreateValue4AgileVector(srtemplate, value=spaceRad_values)
     end function
 
-    type(VectorValue_T) function CreateMLSValue_FromL1B (qType, instrumentModule, filedatabase, &
+    type(VectorValue_T) function CreateMLSValue_FromL1BOA (qType, instrumentModule, filedatabase, &
     firstL1Maf, lastL1Maf) result (vv)
         integer, intent(in) :: qType
         character(len=*), intent(in) :: instrumentModule
@@ -1396,6 +1396,9 @@ module CFM_MLSSetup_m
 end module
 
 ! $Log$
+! Revision 1.28  2011/10/20 00:23:07  honghanh
+! Add elevation offset creation subroutine to public API
+!
 ! Revision 1.27  2011/10/19 11:35:28  honghanh
 ! Add extra APIs for creating MLS vector values.
 !
