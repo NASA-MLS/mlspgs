@@ -121,9 +121,9 @@ module CFM_Vector_m
         use MLSStrings, only: writeIntsToChars
 
         type(QuantityTemplate_T), intent(in) :: template
-        real(r8), dimension(:), optional :: value
-        real(r8), optional :: spreadvalue
-        character, dimension(:), optional :: mask
+        real(r8), dimension(:), intent(in), optional :: value
+        real(r8), intent(in), optional :: spreadvalue
+        character, dimension(:), intent(in), optional :: mask
 
         integer :: row, col
         character(len=10) :: int1 = "          ", int2 = "          "
@@ -198,6 +198,9 @@ module CFM_Vector_m
 end module
 
 ! $Log$
+! Revision 1.9  2011/10/19 19:33:10  honghanh
+! Adding DestroyAgileVectorContent to CFM_Vector_m
+!
 ! Revision 1.8  2011/03/24 15:16:46  honghanh
 ! Add new interfaces for creating vector and vector values without going through quantity template databases
 !
