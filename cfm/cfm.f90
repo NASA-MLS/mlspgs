@@ -40,7 +40,7 @@ module cfm          ! callable forward model
    use CFM_QuantityTemplate_m, only: CreateQtyTemplate
    use QuantityTemplates, only: Dump, AddQuantityTemplateToDatabase, &
                                 DestroyQuantityTemplateDatabase, &
-                                QuantityTemplate_T
+                                QuantityTemplate_T, DestroyQuantityTemplateContents
    use CFM_VectorTemplate_m, only: CreateVectorTemplate
    use VectorsModule, only: Dump, Vector_T, VectorValue_T, &
                             VectorTemplate_T, DestroyVectorTemplateInfo, &
@@ -48,7 +48,7 @@ module cfm          ! callable forward model
                             operator(+), operator(-)
    use CFM_Vector_m, only: CreateVector, CreateValue4AgileVector, &
                            CreateAgileVector, AddValue2Vector, &
-                           DestroyAgileVectorContent
+                           DestroyAgileVectorContent, DestroyVectorValueContent
    use CFM_Fill_m, only: ExplicitFillVectorQuantity, ApplyBaseline, &
                          FillVectorQuantityFromL1B, FillPhitanQuantity, &
                          SpreadFillVectorQuantity, FillPtanQuantity
@@ -86,6 +86,9 @@ contains
 end module cfm
 
 ! $Log$
+! Revision 1.21  2011/10/31 20:04:59  honghanh
+! Change CreateMLSValue_FromL1B to CreateMLSValue_FromL1BOA.
+!
 ! Revision 1.20  2011/10/20 00:23:07  honghanh
 ! Add elevation offset creation subroutine to public API
 !

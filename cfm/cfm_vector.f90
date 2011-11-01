@@ -10,17 +10,17 @@
 ! foreign countries or providing access to foreign persons.
 module CFM_Vector_m
    use VectorsModule, only: Vector_T, VectorTemplate_T, VectorValue_T, &
-                            DestroyVectorTemplateInfo, DestroyVectorInfo
+                            DestroyVectorTemplateInfo
    use QuantityTemplates, only: QuantityTemplate_T
    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
-         MLSMSG_Error, MLSMSG_Warning
-   use Allocate_Deallocate, only: Allocate_Test
+         MLSMSG_Error, MLSMSG_Warning, MLSMSG_Deallocate
+   use Allocate_Deallocate, only: allocate_Test, deallocate_test
    use MLSCommon, only: r8
    use String_table, only: create_string
 
    implicit none
 
-   public :: CreateVector, DestroyAgileVectorContent
+   public :: CreateVector, DestroyAgileVectorContent, DestroyVectorValueContent
    public :: CreateValue4AgileVector, CreateAgileVector, AddValue2Vector
 
 !---------------------------- RCS Ident Info -------------------------------
@@ -85,9 +85,22 @@ module CFM_Vector_m
 
     subroutine DestroyAgileVectorContent (v)
         type(Vector_T), intent(inout) :: v
+        integer :: i
 
-        call DestroyVectorInfo(v)
+        do i = 1, size(v%quantities)
+            call DestroyVectorValueContent(v%quantities(i))
+        end do
         call DestroyVectorTemplateInfo(v%template)
+    end subroutine
+
+    ! Only use this if the vector value does not belong to
+    ! any vector.
+    ! To destroy an entire vector, use the methods dedicated
+    ! to destroy vector for better efficiency.
+    subroutine DestroyVectorValueContent (vv)
+        type(VectorValue_T), intent(inout) :: vv
+
+        call deallocate_test ( vv%mask, "vv%mask", ModuleName )
     end subroutine
 
     ! vectorvalue doesn't have to be unique
@@ -198,6 +211,9 @@ module CFM_Vector_m
 end module
 
 ! $Log$
+! Revision 1.10  2011/10/31 19:12:32  honghanh
+! Add "intent(in)" to input in CreateValue4AgileVector
+!
 ! Revision 1.9  2011/10/19 19:33:10  honghanh
 ! Adding DestroyAgileVectorContent to CFM_Vector_m
 !
