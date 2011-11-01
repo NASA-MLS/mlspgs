@@ -199,6 +199,7 @@ module MLSHDF5
 
   interface GetAllHDF5DSNames
     module procedure GetAllHDF5DSNames_fileID, GetAllHDF5DSNames_filename
+    module procedure GetAllHDF5DSNames_MLSFile
   end interface
 
   interface GetHDF5Attribute
@@ -958,6 +959,35 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to turn error messages back on after getting DSNames ' // trim(filename) )
     call MLSMessageCalls( 'pop' )
   end subroutine GetAllHDF5DSNames_filename
+
+  ! ---------------------------------  GetAllHDF5DSNames_MLSFile  -----
+  subroutine GetAllHDF5DSNames_MLSFile ( MLSFile, DSNames, andSlash )
+    type (MLSFile_T)   :: MLSFile
+    character (len=*), intent(out) :: DSNames ! Names of DS in file (,-separated)
+    logical, optional, intent(in) :: andSlash ! Keep leading '/' if TRUE
+
+    ! Local variables
+    integer :: fileID
+    character, parameter :: gname = '/'
+    integer :: STATUS                   ! Flag
+
+    ! Executable code
+    call MLSMessageCalls( 'push', constantName='GetAllHDF5DSNames_MLSFile' )
+    ! Do we have any FileID fields?
+    If ( .not. MLSFile%stillOpen .or. all( &
+      & (/ MLSFile%FileId%f_id, MLSFile%FileId%grp_id, MLSFile%FileId%sd_id /) &
+      & == 0 ) ) then
+      call GetAllHDF5DSNames( MLSFile%Name, gname, DSNames, andSlash )
+    elseif( MLSFile%FileId%grp_id > 0 ) then
+      call GetAllHDF5DSNames( MLSFile%FileId%grp_id, gname, DSNames, andSlash )
+    elseif( MLSFile%FileId%f_id > 0 ) then
+      call GetAllHDF5DSNames( MLSFile%FileId%f_id, gname, DSNames, andSlash )
+    else
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'all fields of MLSFile%Fileid are 0', MLSFile=MLSFile )
+    endif
+    call MLSMessageCalls( 'pop' )
+  end subroutine GetAllHDF5DSNames_MLSFile
 
   ! --------------------------------------  MakeHDF5Attribute_dbl  -----
   subroutine MakeHDF5Attribute_dbl ( itemID, name, value, &
@@ -5394,6 +5424,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.113  2011/11/01 21:01:34  pwagner
+! GetAllHDF5DSNames now accepts MLSFile as arg
+!
 ! Revision 2.112  2011/10/25 17:56:09  pwagner
 ! May make scalar real and d.p.-valued attributes
 !
