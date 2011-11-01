@@ -133,7 +133,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_DELETE             = s_cyclicJacobi + 1
   integer, parameter :: S_DESTROY            = s_delete + 1
   integer, parameter :: S_DIFF               = s_destroy + 1
-  integer, parameter :: S_DIRECTWRITE        = s_diff + 1
+  integer, parameter :: S_DIRECTREAD         = s_diff + 1
+  integer, parameter :: S_DIRECTWRITE        = s_directRead + 1
   integer, parameter :: S_DIRECTWRITEFILE    = s_directWrite + 1
   integer, parameter :: S_DISJOINTEQUATIONS  = s_directWriteFile + 1
   integer, parameter :: S_DUMP               = s_disjointEquations + 1
@@ -358,6 +359,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_delete) =               add_ident ( 'delete' )
     spec_indices(s_destroy) =              add_ident ( 'destroy' )
     spec_indices(s_diff) =                 add_ident ( 'diff' )
+    spec_indices(s_directRead) =           add_ident ( 'directRead' )
     spec_indices(s_directWrite) =          add_ident ( 'directWrite' )
     spec_indices(s_directWriteFile) =      add_ident ( 'directWriteFile' )
     spec_indices(s_disjointEquations) =    add_ident ( 'disjointEquations' )
@@ -1168,6 +1170,16 @@ contains ! =====     Public procedures     =============================
              begin, f+f_scale, s+s_vector, n+n_field_spec, &
              nadp+n_spec_def /) )
     call make_tree ( (/ &
+      begin, s+s_directRead, &
+             begin, f+f_file, t+t_string, nd+n_field_type, &
+             begin, f+f_hdfVersion, t+t_numeric, ndr+n_field_type, &
+             begin, f+f_options, t+t_string, n+n_field_type, &
+             begin, f+f_quantity, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
+             begin, f+f_type, t+t_outputType, ndr+n_field_type, &
+             begin, f+f_vector, s+s_vector, n+n_field_spec, &
+             np+n_spec_def /) )
+    call make_tree ( (/ &
       begin, s+s_directWrite, &
              begin, f+f_convergence, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
@@ -1655,7 +1667,7 @@ contains ! =====     Public procedures     =============================
       begin, z+z_fill, &
              s+s_anyGoodRadiances, s+s_anyGoodValues, s+s_catchWarning, &
              s+s_compare, s+s_computeTotalPower, s+s_destroy, &
-             s+s_diff, s+s_dump, s+s_fill, s+s_fillCovariance, &
+             s+s_diff, s+s_directRead, s+s_dump, s+s_fill, s+s_fillCovariance, &
              s+s_fillDiagonal, s+s_flagcloud, s+s_flushL2PCBins, s+s_flushPFA, &
              s+s_hessian, s+s_load, s+s_matrix, s+s_negativePrecision, s+s_phase, &
              s+s_populateL2PCBin, s+s_reevaluate, s+s_restrictRange, &
@@ -1695,6 +1707,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.526  2011/11/01 21:04:44  pwagner
+! Added DirectRead as a Fill Section command to read from hdf5 files
+!
 ! Revision 2.525  2011/10/25 22:12:19  pwagner
 ! Removed unused Template spec; added readIsotopeRatios
 !
