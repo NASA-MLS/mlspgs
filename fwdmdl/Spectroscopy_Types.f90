@@ -61,6 +61,7 @@ module Spectroscopy_Types
     integer :: Species_Name = 0    ! Sub_rosa index of s_spectra label
   end type Catalog_T
 
+  ! The lines database:
   type(Line_T), pointer, public, save :: Lines(:) => NULL()
 
 !---------------------------- RCS Module Info ------------------------------
@@ -106,6 +107,9 @@ contains
 end module Spectroscopy_Types
 
 ! $Log$
+! Revision 2.2  2011/11/01 22:15:41  vsnyder
+! Add a comment to describe the Lines pointer
+!
 ! Revision 2.1  2011/11/01 20:50:06  vsnyder
 ! Initial commit
 !

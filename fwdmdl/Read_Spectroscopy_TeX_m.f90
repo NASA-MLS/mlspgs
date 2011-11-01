@@ -35,8 +35,7 @@ contains
     use IO_Stuff, only: Get_LUN
     use, intrinsic :: ISO_Fortran_env, only: IOSTAT_END
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
-    use MOLECULES, only: FIRST_MOLECULE, LAST_MOLECULE, GetMoleculeIndex, &
-      & InitMolecules
+    use MOLECULES, only: FIRST_MOLECULE, LAST_MOLECULE, GetMoleculeIndex
     use Spectroscopy_Types, only: Catalog_t, Line_t
     character(*), intent(in) :: Cross_Reference_File ! For molecule names
     character(*), intent(in) :: Mol_Data_File        ! in LaTeX format
@@ -65,8 +64,6 @@ contains
 
     myWarn = .false.
     if ( present(warn) ) myWarn = warn
-
-    call initMolecules
 
     ! Open the cross-reference file
     call get_lun ( u )
