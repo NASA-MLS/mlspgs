@@ -17,19 +17,21 @@ module PHYSICS
   public
 
   ! NIST as of 2004-04-01: http://physics.nist.gov/cuu/Constants/index.html
-  real(r8), parameter :: Avogadro = 6.0221415e23_r8  ! #/mol ± 10e16 NIST 2004
-  real(r8), parameter :: Bohr = 1.39962458_r8        ! MHz/Gauss, ± 12e-8 NIST 2004
-  real(r8), parameter :: G_E = 2.0023193043718_r8    ! Unitless, ± 75e-13 NIST 2004
+  real(r8), parameter :: Avogadro = 6.02214129e23_r8 ! #/mol ± 27e15 NIST 2010
+  real(r8), parameter :: Bohr = 1.399624555_r8       ! MHz/Gauss, ± 31e-9 NIST 2010
+                                                     ! Bohr magneton
+  real(r8), parameter :: G_E = 2.00231930436153_r8   ! Unitless, ± 53e-14 NIST 2010
+                                                     ! Electron g factor
   real(rp), parameter :: MMM = 0.028964_rp           ! Kg/mol, Mean molecular mass of atmosphere kg/mol
-  real(r8), parameter :: H = 6.62606931e-34_r8       ! J s, ± 11e-41 NIST 2004
-  real(r8), parameter :: K = 1.3806505e-23_r8        ! J/K, ± 24e-20 NIST 2004
+  real(r8), parameter :: H = 6.62606947e-34_r8       ! J s, ± 29e-42 NIST 2010
+  real(r8), parameter :: K = 1.3806488e-23_r8        ! J/K, ± 13e-30 NIST 2010
   real(r8), parameter :: H_OVER_K = H / K * 1.0e6_r8 ! \nu in MHz
-! real(r8), parameter :: H_OVER_K = 4.79923752e-5_r8 ! using H and K above
+! real(r8), parameter :: H_OVER_K = 4.799243276e-5_r8 ! using H and K above
 ! real(r8), parameter :: H_OVER_K = 4.7992157e-5_r8  ! Zvi's original
   real(rp), parameter :: Boltz = Avogadro * k * ln10 / mmm ! m^2/(K s^2),
 ! real(rp), parameter :: Boltz = 660.9853899_rp      ! Using above values
 ! real(rp), parameter :: Boltz = 660.988_rp          ! Zvi's original
-  real(r8), parameter :: SpeedOfLight = 299792458.0_r8 ! M/s, exact NIST 2004
+  real(r8), parameter :: SpeedOfLight = 299792458.0_r8 ! M/s, exact NIST 2010
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -49,6 +51,9 @@ contains
 
 end module PHYSICS
 ! $Log$
+! Revision 2.8  2009/06/23 18:25:43  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.7  2007/12/19 04:01:38  vsnyder
 ! Get R8 and RP from MLSKinds instead of MLSCommon
 !
