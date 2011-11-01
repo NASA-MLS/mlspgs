@@ -138,7 +138,7 @@ contains ! ======================= Public Procedures =========================
     ! Write standard hdfeos-formatted files ala l2gp for datasets that
     ! are too big to keep all chunks stored in memory
     ! so instead write them out profile-by-profile
-    use HGridsDatabase, only: HGrid_T
+    use HGRIDSDATABASE, only: HGRID_T
     ! Args:
     type(MLSFile_T)               :: L2GPFile
     type (Vector_T), intent(in)   :: VECTOR
@@ -175,11 +175,12 @@ contains ! ======================= Public Procedures =========================
     ! Write standard hdfeos-formatted files ala l2gp for datasets that
     ! are too big to keep all chunks stored in memory
     ! so instead write them out profile-by-profile
-    use Hdf, only: DFACC_CREATE, DFACC_RDONLY
-    use HGridsDatabase, only: HGrid_T
-    use L2GPData, only: L2GPData_T, &
-      & AppendL2GPData, DestroyL2GPContents, DUMP
-    use readApriori, only: writeAPrioriAttributes
+    use HDF, only: DFACC_CREATE, DFACC_RDonly
+    use HGRIDSDATABASE, only: HGRID_T
+    use L2GPDATA, only: L2GPDATA_T, &
+      & APPENDL2GPDATA, DESTROYL2GPCONTENTS, DUMP
+    use READAPRIORI, only: WRITEAPRIORIATTRIBUTES
+    ! Args:
     type(MLSFile_T)               :: L2GPFile
     type (VectorValue_T), intent(in) :: QUANTITY
     type (VectorValue_T), pointer :: precision
@@ -282,7 +283,7 @@ contains ! ======================= Public Procedures =========================
 
   ! ------------------------------------------- DirectWriteVector_L2Aux_MF --------
   subroutine DirectWriteVector_L2Aux_MF ( L2AUXFile, Vector, &
-    & chunkNo, chunks, FWModelConfig, lowerOverlap, upperOverlap )
+    & chunkNo, chunks, FWModelConfig, lowerOverlap, upperOverlap, options )
 
     ! Purpose:
     ! Write plain hdf-formatted files ala l2aux for datasets that
@@ -290,8 +291,8 @@ contains ! ======================= Public Procedures =========================
     ! so instead write them out chunk-by-chunk
     
     ! Despite the name the routine takes vector quantities, not l2aux ones
-    use Chunks_m, only: MLSChunk_T
-    use ForwardModelConfig, only: ForwardModelConfig_T
+    use CHUNKS_M, only: MLSCHUNK_T
+    use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
     ! Args:
     type(ForwardModelConfig_T), dimension(:), pointer :: FWModelConfig
     type (Vector_T), intent(in)   :: VECTOR
@@ -300,6 +301,7 @@ contains ! ======================= Public Procedures =========================
     type (MLSChunk_T), dimension(:), intent(in) :: CHUNKS
     logical, intent(in), optional :: lowerOverlap
     logical, intent(in), optional :: upperOverlap
+    character(len=*), intent(in), optional :: options
     ! Local parameters
     integer                       :: j
     type (VectorValue_T), pointer :: QUANTITY
@@ -321,14 +323,14 @@ contains ! ======================= Public Procedures =========================
       quantity => vector%quantities(j)
       call get_string( quantity%template%name, sdname )
       call DirectWrite_L2Aux_MF ( L2AUXFile, quantity, precision, sdName, &
-        & chunkNo, chunks, FWModelConfig, lowerOverlap, upperOverlap )
+        & chunkNo, chunks, FWModelConfig, lowerOverlap, upperOverlap, options )
     enddo
   end subroutine DirectWriteVector_L2Aux_MF
 
 
   ! ------------------------------------------- DirectWrite_L2Aux_MF --------
   subroutine DirectWrite_L2Aux_MF ( L2AUXFile, quantity, precision, sdName, &
-    & chunkNo, chunks, FWModelConfig, lowerOverlap, upperOverlap )
+    & chunkNo, chunks, FWModelConfig, lowerOverlap, upperOverlap, options )
 
     ! Purpose:
     ! Write plain hdf-formatted files ala l2aux for datasets that
@@ -336,13 +338,14 @@ contains ! ======================= Public Procedures =========================
     ! so instead write them out chunk-by-chunk
     
     ! Despite the name the routine takes vector quantities, not l2aux ones
-    use Chunks_m, only: MLSChunk_T
-    use ChunkDivide_m, only: ChunkDivideConfig
-    use ForwardModelConfig, only: ForwardModelConfig_T
-    use Hdf, only: DFACC_RDONLY
-    use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, &
-      & mls_closeFile, mls_openFile
+    use CHUNKS_M, only: MLSCHUNK_T
+    use CHUNKDIVIDE_M, only: CHUNKDIVIDECONFIG
+    use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
+    use HDF, only: DFACC_RDonly
+    use MLSFILES, only: HDFVERSION_4, HDFVERSION_5, &
+      & MLS_CLOSEFILE, MLS_OPENFILE
 
+    ! Args:
     type(ForwardModelConfig_T), dimension(:), pointer :: FWModelConfig
     type (VectorValue_T), intent(in) :: QUANTITY
     type (VectorValue_T), pointer :: PRECISION
@@ -352,6 +355,7 @@ contains ! ======================= Public Procedures =========================
     type (MLSChunk_T), dimension(:), intent(in) :: CHUNKS
     logical, intent(in), optional :: lowerOverlap
     logical, intent(in), optional :: upperOverlap
+    character(len=*), intent(in), optional :: options
     ! Local parameters
     logical :: alreadyOpen
     logical, parameter :: DEEBUG = .false.
@@ -439,11 +443,12 @@ contains ! ======================= Public Procedures =========================
     case (HDFVERSION_5)
       call DirectWrite_L2Aux_MF_hdf5 ( quantity, sdName, L2AUXFile, &
         & chunkNo, chunks, FWModelConfig, &
-        & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap )
+        & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap, options=options )
       if ( associated(precision) ) & 
         & call DirectWrite_L2Aux_MF_hdf5 ( precision, &
         & trim(sdName) // 'precision', L2AUXFile, chunkNo, chunks, &
-        & FWModelConfig, lowerOverlap=lowerOverlap, upperOverlap=upperOverlap )
+        & FWModelConfig, lowerOverlap=lowerOverlap, upperOverlap=upperOverlap, &
+        & options=options )
     case default
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unsupported hdfVersion for DirectWrite_L2Aux (currently only 4 or 5)' )
@@ -461,13 +466,14 @@ contains ! ======================= Public Procedures =========================
   subroutine DirectWrite_L2Aux_MF_hdf4 ( quantity, sdName, L2AUXFile, &
     & chunkNo, chunks, lowerOverlap, upperOverlap )
 
-    use Chunks_m, only: MLSChunk_T
-    use Hdf, only: SFN2INDEX, SFSELECT, SFCREATE, &
+    use CHUNKS_M, only: MLSCHUNK_T
+    use HDF, only: SFN2INDEX, SFSELECT, SFCREATE, &
       & SFENDACC, DFNT_FLOAT32, SFWDATA_F90
-    use Intrinsic, only: L_None
-    use MLSCommon, only: R4, R8
-    use MLSFiles, only: HDFVERSION_4
+    use INTRINSIC, only: L_NONE
+    use MLSKINDS, only: R4, R8
+    use MLSFILES, only: HDFVERSION_4
 
+    ! Args:
     type (VectorValue_T), intent(in) :: QUANTITY
     ! integer, intent(in) :: SDNAME       ! Name of sd in output file
     character(len=*), intent(in) :: SDNAME       ! Name of sd in output file
@@ -569,23 +575,25 @@ contains ! ======================= Public Procedures =========================
 
   ! ------------------------------------------ DirectWrite_L2Aux_MF_hdf5 --------
   subroutine DirectWrite_L2Aux_MF_hdf5 ( quantity, sdName, L2AUXFile, &
-    & chunkNo, chunks, FWModelConfig, lowerOverlap, upperOverlap )
+    & chunkNo, chunks, FWModelConfig, lowerOverlap, upperOverlap, options )
 
-    use Chunks_m, only: MLSChunk_T
-    use ChunkDivide_m, only: ChunkDivideConfig
-    use ForwardModelConfig, only: ForwardModelConfig_T
-    use ForwardModelSupport, only: ShowFwdModelNames
-    use HDF5, only: h5gclose_f, h5gopen_f
-    use Intrinsic, only: L_None
-    use L2AUXData, only:  L2AUXData_T, PHASENAMEATTRIBUTES, &
-      & DestroyL2AUXContents, &
-      & SetupNewL2AUXRecord, WriteL2AUXAttributes
-    use MLSFiles, only: HDFVERSION_5, Dump
-    use MLSHDF5, only: IsHDF5AttributePresent, ISHDF5DSPRESENT, &
-      & MakeHDF5Attribute, SaveAsHDF5DS
-    use MLSL2Timings, only: showTimingNames
-    use PCFHdr, only: H5_WRITEMLSFILEATTR, H5_WRITEGLOBALATTR
+    use CHUNKS_M, only: MLSCHUNK_T
+    use CHUNKDIVIDE_M, only: CHUNKDIVIDECONFIG
+    use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
+    use FORWARDMODELSUPPORT, only: SHOWFWDMODELNAMES
+    use HDF5, only: H5GCLOSE_F, H5GOPEN_F
+    use INTRINSIC, only: L_NONE
+    use L2AUXDATA, only:  L2AUXDATA_T, PHASENAMEATTRIBUTES, &
+      & DESTROYL2AUXCONTENTS, &
+      & SETUPNEWL2AUXRECORD, WRITEL2AUXATTRIBUTES
+    use MLSFILES, only: HDFVERSION_5, DUMP
+    use MLSHDF5, only: ISHDF5ATTRIBUTEPRESENT, ISHDF5DSPRESENT, &
+      & MAKEHDF5ATTRIBUTE, SAVEASHDF5DS
+    use MLSL2TIMINGS, only: SHOWTIMINGNAMES
+    use PCFHDR, only: H5_WRITEMLSFILEATTR, H5_WRITEGLOBALATTR
+    use QUANTITYTEMPLATES, only: WRITEATTRIBUTES
 
+    ! Args:
     type (VectorValue_T), intent(in) :: QUANTITY
     character(len=*), intent(in) :: SDNAME       ! Name of sd in output file
     type(MLSFile_T)                :: L2AUXFile
@@ -594,12 +602,14 @@ contains ! ======================= Public Procedures =========================
     type(ForwardModelConfig_T), dimension(:), pointer :: FWModelConfig
     logical, intent(in), optional :: lowerOverlap
     logical, intent(in), optional :: upperOverlap
+    character(len=*), intent(in), optional :: options
 
     ! Local parameters
     integer, parameter :: MAXFILES = 100             ! Set for an internal array
     integer, parameter :: HDFVERSION = HDFVERSION_5
 
     ! Local variables
+    logical :: addQtyAttributes
     logical :: already_there
     ! logical :: attributes_there
     integer :: first_maf
@@ -620,7 +630,8 @@ contains ! ======================= Public Procedures =========================
 
     ! executable code
     Num_qty_values = size(quantity%values, 1)*size(quantity%values, 2)
-
+    addQtyAttributes = .false.
+    if ( present(options) ) addQtyAttributes = ( index(options, 'A') > 0 )
     if ( quantity%template%frequencyCoordinate == L_None &
       & .and. MAYCOLLAPSEDIMS) then
       noDims = 2
@@ -757,6 +768,8 @@ contains ! ======================= Public Procedures =========================
       call output(trim(sdName), advance='yes')
     endif
     call WriteL2AUXAttributes(L2AUXFile%fileID%f_id, l2aux, trim(sdName))
+    if ( addQtyAttributes ) &
+      & call WriteAttributes ( L2AUXFile%fileID%f_id, trim(sdName), quantity%template )
     ! Deallocate memory used by the l2aux
     call DestroyL2AUXContents ( l2aux )
     ! file-level attributes
@@ -989,10 +1002,11 @@ contains ! ======================= Public Procedures =========================
   subroutine vectorValue_to_l2gp (QUANTITY, &
     & precision, quality, status, convergence,  l2gp, &
     & name, chunkNo, HGrids, offset, firstInstance, lastInstance)
-    use HGridsDatabase, only: HGrid_T
-    use Intrinsic, only: L_None
-    use L2GPData, only: L2GPData_T, RGP, &
-      & SetupNewl2gpRecord
+    use HGRIDSDATABASE, only: HGRID_T
+    use INTRINSIC, only: L_NONE
+    use L2GPDATA, only: L2GPDATA_T, RGP, &
+      & SETUPNEWL2GPRECORD
+    ! Args:
     type (VectorValue_T), intent(in) :: QUANTITY
     type (VectorValue_T), pointer :: precision
     type (VectorValue_T), pointer :: quality
@@ -1140,6 +1154,7 @@ contains ! ======================= Public Procedures =========================
     use LEXER_CORE, only: PRINT_SOURCE
     use TREE, only: SOURCE_REF
 
+    ! Args:
     integer, intent(in) :: Where   ! Tree node where error was noticed
     character(LEN=*), intent(in) :: Full_Message
     integer, intent(in), optional :: Code    ! Code for error message
@@ -1179,6 +1194,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.49  2011/11/01 21:44:31  pwagner
+! May optionally add quantity Attributes via options='A' field
+!
 ! Revision 2.48  2011/05/09 18:06:59  pwagner
 ! May directwrite an entire vector
 !
