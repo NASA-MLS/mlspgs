@@ -1027,9 +1027,7 @@ contains ! =====     Public Procedures     =============================
 
     vector%name = 0
     vector%where = 0
-    ! Let the destruction of the vector template take care of
-    ! vector%template%quantities
-    nullify ( vector%template%quantities )
+
     if ( .not. associated(vector%quantities) ) return
     call destroyVectorValue ( vector )
     call destroyVectorMask ( vector )
@@ -2710,6 +2708,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.154  2011/10/25 18:08:07  pwagner
+! Capitalize USEd items
+!
 ! Revision 2.153  2011/08/02 16:51:40  honghanh
 ! Re-indent 2 lines of code to make indentation correct.
 !
