@@ -100,6 +100,7 @@ module CFM_Vector_m
     subroutine DestroyVectorValueContent (vv)
         type(VectorValue_T), intent(inout) :: vv
 
+        call deallocate_test (vv%values, "vv%values", moduleName)
         call deallocate_test ( vv%mask, "vv%mask", ModuleName )
     end subroutine
 
@@ -211,6 +212,9 @@ module CFM_Vector_m
 end module
 
 ! $Log$
+! Revision 1.11  2011/11/01 22:16:11  honghanh
+! Add API to destroy individual QuantityTemplate_T and VectorValue_T
+!
 ! Revision 1.10  2011/10/31 19:12:32  honghanh
 ! Add "intent(in)" to input in CreateValue4AgileVector
 !
