@@ -313,7 +313,7 @@ program mockup
     ! Call the forward model
     call ForwardModel2 (0, forwardModelConfigDatabase, state, &
                         stateExtra, radiance, jacobian)
-    !call dump(radiance, details=1)
+    call dump(radiance, details=1)
 
     !call dump(jacobian, details=3)
 
@@ -367,87 +367,87 @@ program mockup
     !========================== finish cleaning ===============================
 
     !====================== Read observed radiance ============================
-!    ! Open l1brad
-!    error = InitializeMLSFile(l1bfile, content='l1brad', &
-!    name=trim(l1brad), shortName='L1BRAD', type=l_hdf, access=DFACC_RDONLY)
-!    if (error /= 0) call MLSMessage (MLSMSG_Error, moduleName, &
-!    "Error initializing " // trim(l1brad))
-!
-!    call mls_openFile(l1bfile, error)
-!    if (error /= 0 ) call MLSMessage (MLSMSG_Error, moduleName, &
-!    "Error opening " // trim(l1brad))
-!
-!    ! Add it to the filedatabase
-!    ! AddFileToDatabase doesn't return an error.
-!    ! I don't care about the return value of AddFileToDatabase,
-!    ! but Fortran dictate that the return value has to be captured,
-!    ! so error is being used as a dummy variable.
-!    error = AddFileToDatabase(filedatabase, l1bfile)
-!
-!    observed = CreateAgileVector(name='observedRadiance')
-!    obsPrecision = CreateAgileVector(name='observedRadiancePrecision')
-!
-!    ! need to read precision before reading quantity
-!    call AddValue2Vector(observed, band9)
-!    ! precision of a quantity has the same template as the quantity
-!    precision9 = CreateValue4AgileVector(qband9)
-!    call AddValue2Vector(obsPrecision, precision9)
-!
-!    ! need to fill precision first
-!    call FillVectorQuantityFromL1B(precision9, startL1Maf, endL1Maf, &
-!    filedatabase, .true.)
-!    ! then fill the quantity and setting precision at the same time
-!    call FillVectorQuantityFromL1B(band9, startL1Maf, endL1Maf, &
-!    filedatabase, .false., precisionQuantity=precision9)
-!
-!    ! then we need to get the baseline correction and noise
-!    qbaseline9 = CreateQtyTemplate(l_l1bmafbaseline, startL1Maf, endL1Maf, &
-!    filedatabase, qSignal="R3:240.B9F:CO", qname='baseline 9')
-!
-!    correction9 = CreateValue4AgileVector (qbaseline9)
-!    ! the space in ' Baseline' is very important
-!    call FillVectorQuantityFromL1B(correction9, startL1Maf, endL1Maf, &
-!    filedatabase, .false., suffix=' Baseline')
-!
-!    ! apply correction to the quantity
-!    call ApplyBaseline (band9, correction9, .false., .false.)
-!
-!    ! get the noise
-!    noise9 = CreateValue4AgileVector(qbaseline9) ! same template as baseline
-!    ! again, the string must match exactly
-!    call FillVectorQuantityFromL1B(noise9, startL1Maf, endL1Maf, &
-!    filedatabase, .false., suffix=' Baseline precision')
-!
-!    ! apply the noise to the precision
-!    call ApplyBaseline (precision9, noise9, .true., .false.)
-!    call dump(observed, details=1)
-!
-!    !==================== Finish reading observed radiance ====================
-!
-!    !============= At this point we don't need L1B file anymore ===============
-!    do i = 1, size(filedatabase)
-!        call mls_closefile(filedatabase(i))
-!    end do
-!
-!    deallocate(filedatabase)
-!    nullify(filedatabase)
-!    !================== Done closing and clean up file objects ================
-!
-!    diffVector = observed - radiance
-!    call dump(diffVector, details=1)
-!
-!    !===== Clean up calculated and observed radiance and related vectors ======
-!    call DestroyAgileVectorContent (radiance)
-!    call DestroyAgileVectorContent (observed)
-!    call DestroyAgileVectorContent (diffVector)
-!    call DestroyAgileVectorContent (obsPrecision)
-!
-!    call DestroyVectorValueContent (noise9)
-!    call DestroyVectorValueContent (correction9)
-!
-!    call DestroyQuantityTemplateContents(qband9)
-!    call DestroyQuantityTemplateContents(qbaseline9)
-!    !========================== Done cleaning up ==============================
+    ! Open l1brad
+    error = InitializeMLSFile(l1bfile, content='l1brad', &
+    name=trim(l1brad), shortName='L1BRAD', type=l_hdf, access=DFACC_RDONLY)
+    if (error /= 0) call MLSMessage (MLSMSG_Error, moduleName, &
+    "Error initializing " // trim(l1brad))
+
+    call mls_openFile(l1bfile, error)
+    if (error /= 0 ) call MLSMessage (MLSMSG_Error, moduleName, &
+    "Error opening " // trim(l1brad))
+
+    ! Add it to the filedatabase
+    ! AddFileToDatabase doesn't return an error.
+    ! I don't care about the return value of AddFileToDatabase,
+    ! but Fortran dictate that the return value has to be captured,
+    ! so error is being used as a dummy variable.
+    error = AddFileToDatabase(filedatabase, l1bfile)
+
+    observed = CreateAgileVector(name='observedRadiance')
+    obsPrecision = CreateAgileVector(name='observedRadiancePrecision')
+
+    ! need to read precision before reading quantity
+    call AddValue2Vector(observed, band9)
+    ! precision of a quantity has the same template as the quantity
+    precision9 = CreateValue4AgileVector(qband9)
+    call AddValue2Vector(obsPrecision, precision9)
+
+    ! need to fill precision first
+    call FillVectorQuantityFromL1B(precision9, startL1Maf, endL1Maf, &
+    filedatabase, .true.)
+    ! then fill the quantity and setting precision at the same time
+    call FillVectorQuantityFromL1B(band9, startL1Maf, endL1Maf, &
+    filedatabase, .false., precisionQuantity=precision9)
+
+    ! then we need to get the baseline correction and noise
+    qbaseline9 = CreateQtyTemplate(l_l1bmafbaseline, startL1Maf, endL1Maf, &
+    filedatabase, qSignal="R3:240.B9F:CO", qname='baseline 9')
+
+    correction9 = CreateValue4AgileVector (qbaseline9)
+    ! the space in ' Baseline' is very important
+    call FillVectorQuantityFromL1B(correction9, startL1Maf, endL1Maf, &
+    filedatabase, .false., suffix=' Baseline')
+
+    ! apply correction to the quantity
+    call ApplyBaseline (band9, correction9, .false., .false.)
+
+    ! get the noise
+    noise9 = CreateValue4AgileVector(qbaseline9) ! same template as baseline
+    ! again, the string must match exactly
+    call FillVectorQuantityFromL1B(noise9, startL1Maf, endL1Maf, &
+    filedatabase, .false., suffix=' Baseline precision')
+
+    ! apply the noise to the precision
+    call ApplyBaseline (precision9, noise9, .true., .false.)
+    call dump(observed, details=1)
+
+    !==================== Finish reading observed radiance ====================
+
+    !============= At this point we don't need L1B file anymore ===============
+    do i = 1, size(filedatabase)
+        call mls_closefile(filedatabase(i))
+    end do
+
+    deallocate(filedatabase)
+    nullify(filedatabase)
+    !================== Done closing and clean up file objects ================
+
+    diffVector = observed - radiance
+    call dump(diffVector, details=1)
+
+    !===== Clean up calculated and observed radiance and related vectors ======
+    call DestroyAgileVectorContent (radiance)
+    call DestroyAgileVectorContent (observed)
+    call DestroyAgileVectorContent (diffVector)
+    call DestroyAgileVectorContent (obsPrecision)
+
+    call DestroyVectorValueContent (noise9)
+    call DestroyVectorValueContent (correction9)
+
+    call DestroyQuantityTemplateContents(qband9)
+    call DestroyQuantityTemplateContents(qbaseline9)
+    !========================== Done cleaning up ==============================
 
     call CFM_MLSCleanup(forwardModelConfigDatabase)
 
