@@ -27,7 +27,7 @@ module MLSHDF5
   use INTRINSIC, only: L_HDF
   use MLSCOMMON, only: MLSFILE_T
   use MLSDATAINFO, only: MLSDATAINFO_T, QUERY_MLSDATA
-  use MLSFILES, only: HDFVERSION_5, INITIALIZEMLSFILE
+  use MLSFILES, only: HDFVERSION_5, INITIALIZEMLSFILE, MLS_OPENFILE
   use MLSKINDS, only: R8
   use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, &
     & MLSMESSAGE, MLSMESSAGECALLS
@@ -228,6 +228,10 @@ module MLSHDF5
     interface IsHDF5AttributeInFile
         module procedure IsHDF5AttributeInFile_DS, IsHDF5AttributeInFile_Grp
     end interface
+
+  interface GetHDF5DSDims
+    module procedure GetHDF5DSDims_ID, GetHDF5DSDims_MLSFile
+  end interface
 
   interface IsHDF5AttributePresent
     module procedure IsHDF5AttributePresent_in_fID, &
@@ -2713,7 +2717,7 @@ contains ! ======================= Public Procedures =========================
   end subroutine GetHDF5AttrDims
 
   ! ----------------------------------------------  GetHDF5DSDims  -----
-  subroutine GetHDF5DSDims ( FileID, name, DIMS, maxDims )
+  subroutine GetHDF5DSDims_ID ( FileID, name, DIMS, maxDims )
     integer, intent(in) :: FILEID         ! fileID
     character (len=*), intent(in) :: NAME ! Name of DS
     integer(kind=hSize_t), dimension(:), intent(out) :: DIMS ! Values of dimensions
@@ -2750,7 +2754,36 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after getting dims ' // trim(name) )
     call MLSMessageCalls( 'pop' )
-  end subroutine GetHDF5DSDims
+  end subroutine GetHDF5DSDims_ID
+
+  subroutine GetHDF5DSDims_MLSFile ( MLSFile, name, DIMS, maxDims )
+    type (MLSFile_T)   :: MLSFile
+    character (len=*), intent(in) :: NAME ! Name of DS
+    integer(kind=hSize_t), dimension(:), intent(out) :: DIMS ! Values of dimensions
+    integer(kind=hSize_t), dimension(:), optional, intent(out) :: MAXDIMS ! max Values
+    ! Local variables
+    integer :: STATUS                   ! Flag
+
+    ! Executable code
+    call MLSMessageCalls( 'push', constantName='GetHDF5DSDims_ID' )
+    ! Do we have any FileID fields?
+    If ( .not. MLSFile%stillOpen .or. all( &
+      & (/ MLSFile%FileId%f_id, MLSFile%FileId%grp_id, MLSFile%FileId%sd_id /) &
+      & == 0 ) ) then
+      call h5fopen_f ( trim(MLSFile%name), H5F_ACC_RDONLY_F, MLSFile%fileID%f_id, status )
+      call GetHDF5DSDims( MLSFile%fileID%f_id, name, DIMS, maxDims )
+      call h5fclose_f ( MLSFile%fileID%f_id, status )
+      MLSFile%fileID%f_id = 0
+    elseif( MLSFile%FileId%grp_id > 0 ) then
+      call GetHDF5DSDims( MLSFile%fileID%grp_id, name, DIMS, maxDims )
+    elseif( MLSFile%FileId%f_id > 0 ) then
+      call GetHDF5DSDims( MLSFile%fileID%f_id, name, DIMS, maxDims )
+    else
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'all fields of MLSFile%Fileid are 0', MLSFile=MLSFile )
+    endif
+    call MLSMessageCalls( 'pop' )
+  end subroutine GetHDF5DSDims_MLSFile
 
   ! ----------------------------------------------  GetHDF5DSRank  -----
   subroutine GetHDF5DSRank ( FileID, name, rank )
@@ -5424,6 +5457,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.114  2011/11/03 23:48:10  pwagner
+! Added MLSFile api for GetHDF5DSDims
+!
 ! Revision 2.113  2011/11/01 21:01:34  pwagner
 ! GetAllHDF5DSNames now accepts MLSFile as arg
 !
