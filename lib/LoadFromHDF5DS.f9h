@@ -43,7 +43,13 @@
     rank = size(shp)
     call MLSMessageCalls( 'push', constantName='LoadFromHDF5DS_'//sfx )
     shp = shape ( value )
-    call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
+    if ( .not. MLSFile%stillOpen ) then
+      call mls_openFile(MLSFile, status)
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to open file ' // trim(MLSFile%name), &
+        & MLSFile=MLSFile )
+    endif
+    call h5dOpen_f ( MLSFile%fileID%f_id, name, setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open dataset ' // trim(name), &
       & MLSFile=MLSFile )
@@ -67,6 +73,9 @@
 !   end subroutine LoadFromHDF5DS_*
 
 ! $Log$
+! Revision 2.2  2011/11/03 23:47:07  pwagner
+! Corrected mistaken use sd_id instead of f_id for locID
+!
 ! Revision 2.1  2008/05/09 23:27:18  vsnyder
 ! Initial commit
 !

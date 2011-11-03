@@ -36,7 +36,7 @@
     call MLSMessageCalls( 'push', constantName='LdFromHDF5DS_ID_'//sfx )
     status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
       & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
-    MLSFile%fileID%sd_id = locID
+    MLSFile%fileID%f_id = locID
     MLSFile%stillOpen = .true.
     call LoadFromHDF5DS ( MLSFile, name, value, &
     & start, count, stride, block )
@@ -44,6 +44,9 @@
 !   end subroutine LdFrmHDF5DS_ID_*
 
 ! $Log$
+! Revision 2.2  2011/11/03 23:47:07  pwagner
+! Corrected mistaken use sd_id instead of f_id for locID
+!
 ! Revision 2.1  2008/05/09 23:27:17  vsnyder
 ! Initial commit
 !
