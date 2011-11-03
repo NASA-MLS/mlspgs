@@ -311,9 +311,9 @@ program mockup
     jacobian = CreatePlainMatrix(radiance, state)
 
     ! Call the forward model
-    call ForwardModel2 (0, forwardModelConfigDatabase, state, &
-                        stateExtra, radiance, jacobian)
-    call dump(radiance, details=1)
+!    call ForwardModel2 (0, forwardModelConfigDatabase, state, &
+!                        stateExtra, radiance, jacobian)
+!    call dump(radiance, details=1)
 
     !call dump(jacobian, details=3)
 
@@ -388,6 +388,7 @@ program mockup
     obsPrecision = CreateAgileVector(name='observedRadiancePrecision')
 
     ! need to read precision before reading quantity
+    band9 = CreateValue4AgileVector(qband9)
     call AddValue2Vector(observed, band9)
     ! precision of a quantity has the same template as the quantity
     precision9 = CreateValue4AgileVector(qband9)
@@ -454,6 +455,9 @@ program mockup
 end program
 
 ! $Log$
+! Revision 1.50  2011/11/02 04:20:16  honghanh
+! Mockup for new CFM API.
+!
 ! Revision 1.48  2011/03/24 15:16:46  honghanh
 ! Add new interfaces for creating vector and vector values without going through quantity template databases
 !
