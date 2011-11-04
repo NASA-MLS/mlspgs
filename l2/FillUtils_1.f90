@@ -18,6 +18,7 @@ module FillUtils_1                     ! Procedures used by Fill
   use CONSTANTS, only: DEG2RAD, RAD2DEG
   use EXPR_M, only: EXPR, EXPR_CHECK, GETINDEXFLAGSFROMLIST
   use GRIDDEDDATA, only: GRIDDEDDATA_T, WRAPGRIDDEDDATA
+  use HDF5, only: HSIZE_T
   ! NOW THE LITERALS:
   use INIT_TABLES_MODULE, only: &
     & L_BASELINE, L_BINMAX, L_BINMEAN, L_BINMIN, L_BINTOTAL, &
@@ -46,13 +47,14 @@ module FillUtils_1                     ! Procedures used by Fill
     & L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, &
     & L_TNGTGEOCALT, L_TOTALPOWERWEIGHT, L_VMR, &
     & L_XYZ, L_ZETA
-  use INTRINSIC, only: &
+  use INTRINSIC, only: LIT_INDICES, &
     & PHYQ_DIMENSIONLESS, PHYQ_INVALID, PHYQ_TEMPERATURE, &
     & PHYQ_LENGTH, PHYQ_PRESSURE, PHYQ_ZETA, PHYQ_ANGLE
   use L1BDATA, only: DEALLOCATEL1BDATA, DUMP, GETL1BFILE, L1BDATA_T, &
     & PRECISIONSUFFIX, READL1BDATA, ASSEMBLEL1BQTYNAME
-  use L2GPDATA, only: L2GPDATA_T
-  use L2AUXDATA, only: L2AUXDATA_T
+  use L2GPDATA, only: L2GPDATA_T, READl2GPDATA, DESTROYl2GPCONTENTS
+  use L2AUXDATA, only: L2AUXDATA_T, MAXSDNAMESBUFSIZE, &
+    & READL2AUXDATA, DESTROYL2AUXCONTENTS
   use L3ASCII, only: L3ASCII_INTERP_FIELD
   use MANIPULATEVECTORQUANTITIES, only: DOFGRIDSMATCH, DOHGRIDSMATCH, &
     & DOVGRIDSMATCH, DOQTYSDESCRIBESAMETHING
@@ -67,18 +69,21 @@ module FillUtils_1                     ! Procedures used by Fill
     & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, MLSMESSAGECALLS
   use MLSNUMERICS, only: INTERPOLATEVALUES, HUNT
   use MLSSETS, only: FINDFIRST, FINDLAST
-  use MLSSIGNALS_M, only: GETFIRSTCHANNEL, GETSIGNALNAME, GETMODULENAME, ISMODULESPACECRAFT, &
-    & GETSIGNAL, SIGNAL_T
+  use MLSSIGNALS_M, only: GETFIRSTCHANNEL, GETSIGNALNAME, GETMODULENAME, &
+    & GETSIGNAL, SIGNAL_T, &
+    & ISMODULESPACECRAFT
   use MLSSTATS1, only: MLSMIN, MLSMAX, MLSMEAN, MLSMEDIAN, MLSRMS, MLSSTDDEV
   use MLSSTRINGLISTS, only: CATLISTS, EXPANDSTRINGRANGE, GETSTRINGELEMENT, &
     & NUMSTRINGELEMENTS, &
-    & REPLACESUBSTRING, SWITCHDETAIL
+    & REPLACESUBSTRING, STRINGELEMENT, SWITCHDETAIL
   use MLSSTRINGS, only: INDEXES, LOWERCASE, SPLITNEST
   use MOLECULES, only: L_H2O
   use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
   use QUANTITYTEMPLATES, only: EPOCH, QUANTITYTEMPLATE_T
   use RHIFROMH2O, only: H2OPRECFROMRHI, RHIFROMH2O_FACTOR, RHIPRECFROMH2O
-  use SCANMODELMODULE, only: GETBASISGPH, GET2DHYDROSTATICTANGENTPRESSURE, GETGPHPRECISION
+  use SCANMODELMODULE, only: GETBASISGPH, GET2DHYDROSTATICTANGENTPRESSURE, &
+    & GETGPHPRECISION
+  use SPECTROSCOPYCATALOG_M, only: CATALOG
   use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
   use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -102,6 +107,7 @@ module FillUtils_1                     ! Procedures used by Fill
   private :: not_used_here
 !---------------------------------------------------------------------------
 
+  logical, parameter :: COUNTEMPTY = .true.
   logical, parameter :: DONTPAD = .false.
 
   type arrayTemp_T
@@ -112,6 +118,7 @@ module FillUtils_1                     ! Procedures used by Fill
 
   ! -----     Declarations for Fill and internal subroutines     -------
 
+  logical, parameter :: ADDSLASH = .false.
   logical, parameter :: DEEBUG = .FALSE.                 ! Usually FALSE
   logical, parameter :: UNIFORMCHISQRATIO = .FALSE.
   integer, public :: FILLERROR
@@ -168,7 +175,7 @@ module FillUtils_1                     ! Procedures used by Fill
 
   logical :: UNITSERROR               ! From expr
 
-  public :: addGaussianNoise, ApplyBaseline, &
+  public :: addGaussianNoise, ApplyBaseline, AutoFillVector, &
       & ComputeTotalPower, DeallocateStuff, &
       & ExtractSingleChannel, FillCovariance, FromGrid, &
       & FromL2GP, FromProfile, LOSVelocity, &
@@ -187,7 +194,7 @@ module FillUtils_1                     ! Procedures used by Fill
       & StatusQuantity, QualityFromChisq, ConvergenceFromChisq, &
       & UsingLeastSquares, OffsetRadianceQuantity, ResetUnusedRadiances, &
       & ScaleOverlaps, SpreadChannelFill, TransferVectors, UncompressRadiance, &
-      & ANNOUNCE_ERROR
+      & ANNOUNCE_ERROR, QtyFromFile, VectorFromFile
 
 contains ! =====     Public Procedures     =============================
 
@@ -447,6 +454,36 @@ contains ! =====     Public Procedures     =============================
         end do
       end if
     end subroutine ApplyBaseline
+
+    ! ---------------------------------------------- AutoFillVector -----
+    subroutine AutoFillVector ( vector )
+      ! Automatically Fill items in vector we know how to
+      type (Vector_T), intent(inout) :: Vector
+
+      ! Local variables
+      type (VectorValue_T), pointer :: SQ ! vector quantity
+      integer :: MOL                      ! Molecule index 
+      integer :: SQI                      ! Quantity index 
+      character(len=32) :: str
+
+      ! Executable code
+
+      ! Loop over its qtys
+      do sqi = 1, size ( vector%quantities )
+        sq => vector%quantities(sqi)
+        select case(sq%template%quantityType)
+        case ( l_isotoperatio )
+          mol = sq%template%molecule
+          if ( mol > 0 ) then
+            call Get_String ( lit_indices(mol), str, strip=.true. )
+            sq%values = Catalog(mol)%DefaultIsotopeRatio
+            call outputNamedValue( 'molecule', str )
+            call outputNamedValue( 'isotoperatio', Catalog(mol)%DefaultIsotopeRatio )
+          endif
+        case default
+        end select
+      enddo
+    end subroutine AutoFillVector
 
     ! ------------------------------------- deallocateStuff ---
     subroutine deallocateStuff(Zetab, Zetac, Zetai, Pb, Pc, Pi)
@@ -3164,6 +3201,7 @@ contains ! =====     Public Procedures     =============================
       real (r8), dimension(:), pointer :: oldSurfs, newSurfs
       real (r8), dimension(:,:), pointer :: newValues
       logical :: mySurfs, myNewValues
+      integer :: status
 
       ! Executable code
       call MLSMessageCalls( 'push', constantName='FromInterpolatedQty' )
@@ -3235,6 +3273,14 @@ contains ! =====     Public Procedures     =============================
 
         ! OK, do the work
         if ( qty%template%logBasis ) then
+          if ( any( (/ source%values <= 0. /) ) ) then
+            call MLSMessage( MLSMSG_Warning, ModuleName, &
+              & 'source values <= 0 in FromInterpolateQty', status=status )
+            if ( status == 0 ) then
+              call dump( qty%template )
+              call dump( source%template )
+            endif
+          endif
           call InterpolateValues ( &
             & oldSurfs, log ( max ( source%values, sqrt(tiny(0.0_r8)) ) ), &
             & newSurfs, newValues, &
@@ -3874,7 +3920,6 @@ contains ! =====     Public Procedures     =============================
         character(len=*), intent(in)  :: mstr
         character(len=*), intent(out) :: collapsedstr
         ! Internal variables
-        logical, parameter :: COUNTEMPTY = .true.
         integer :: i
         integer :: n
         character(len=(len(mstr)+3)) :: element
@@ -4060,7 +4105,7 @@ contains ! =====     Public Procedures     =============================
         elem = 0
         lastOp = 'nul' ! 'or'
         newone%values = 0.
-        n = NumStringElements( trim(str), countEmpty=.false., &
+        n = NumStringElements( trim(str), countEmpty, &
           & inseparator=' ' )
         if ( DeeBUG ) then
           print *, n, ' str: ', trim(str)
@@ -4073,7 +4118,7 @@ contains ! =====     Public Procedures     =============================
           ! Otherwise revising our lastOp or negating status
           elem = elem + 1
           call GetStringElement ( trim(str), variable, elem, &
-            & countEmpty=.false., inseparator=' ' )
+            & countEmpty, inseparator=' ' )
           if ( DeeBUG ) then
             print *, elem, ' variable: ', trim(variable)
           endif
@@ -6721,6 +6766,130 @@ contains ! =====     Public Procedures     =============================
 
     end subroutine UncompressRadiance
 
+    ! ------------------------------------------- QtyFromFile ----------
+    subroutine QtyFromFile ( key, quantity, MLSFile, &
+      & filetype, hdfversion, options )
+      use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+      use MLSHDF5, only: GETHDF5DSDIMS, GETALLHDF5DSNAMES, LOADFROMHDF5DS
+      integer, intent(in) :: KEY        ! Tree node
+      type (VectorValue_T), intent(inout) :: QUANTITY ! Radiance quantity to modify
+      type (MLSFile_T), pointer   :: MLSFile
+      character(len=*), intent(in) :: FILETYPE
+      integer, intent(in) :: HDFVERSION
+      character(len=*), intent(in) :: OPTIONS
+      ! Local variables
+      type( L2AUXData_T ) :: l2aux ! Result
+      type( l2GPData_T ) :: l2gp ! Result
+      character(len=80) :: name
+      integer, dimension(3) :: dimInts
+      integer(kind=hSize_t), dimension(3) :: dims
+      integer :: status
+      real, dimension(:,:,:), pointer :: values => null()
+      ! Executable code
+      ! How do we access the dataset to read? By name or by attribute?
+      if ( index(lowercase(options), 'a') < 1 ) then
+        ! By name
+        call get_string( lit_indices(quantity%template%name), Name )
+        if ( addSlash ) Name = '/' // Name
+        call GetHDF5DSDims ( MLSFile, name, DIMS )
+        dimInts = max(dims, int(1,hsize_t))
+        select case (lowercase(fileType))
+        case ('l2aux')
+          call ReadL2AUXData ( MLSFile, name, quantity%template%quantityType, l2aux )
+          call FromL2Aux( quantity, l2aux, status )
+          call DestroyL2AUXContents ( l2aux )
+        case ('swath', 'l2gp')
+          call ReadL2GPData( MLSFile, name, l2gp )
+          call FromL2GP ( quantity, l2gp, .false., -1, status, .true., .false. )
+          call DestroyL2GPContents ( l2gp )
+        case default ! E.g., 'hdf'
+          call Allocate_test ( values, dimInts(1), dimInts(2), dimInts(3), 'values read from file', ModuleName )
+          call loadFromHDF5DS ( MLSFile, &
+            & trim(Name), values ) ! quantity%values )
+          quantity%values = reshape( values, (/ dimInts(1)*dimInts(2), dimInts(3) /) )
+          call DeAllocate_test ( values, 'values read from file', ModuleName )
+        end select
+      else
+        ! By attribute
+        call Announce_Error ( key, no_Error_Code, &
+        &   'Unable to read Quantity from File by attribute yet' )
+      endif
+    end subroutine QtyFromFile
+
+    ! ------------------------------------------- VectorFromFile ----------
+    subroutine VectorFromFile ( key, Vector, MLSFile, &
+      & filetype, hdfversion, options )
+      use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+      use MLSFiles, only: DUMP
+      use MLSHDF5, only: GETHDF5DSDIMS, GETALLHDF5DSNAMES, LOADFROMHDF5DS
+      integer, intent(in) :: KEY        ! Tree node
+      type (Vector_T), intent(inout) :: Vector
+      type (MLSFile_T), pointer   :: MLSFile
+      character(len=*), intent(in) :: FILETYPE
+      integer, intent(in) :: HDFVERSION
+      character(len=*), intent(in) :: OPTIONS
+      ! Local variables
+      integer :: DSI                      ! Dataset index in file
+      character(len=MAXSDNAMESBUFSIZE) :: DSNames
+      character(len=64) :: name
+      type (VectorValue_T), pointer :: quantity 
+      ! Local variables
+      type( L2AUXData_T ) :: l2aux ! Result
+      type( l2GPData_T ) :: l2gp ! Result
+      integer :: SQI                      ! Quantity index in source
+      integer :: status
+      integer, dimension(3) :: dimInts
+      integer(kind=hSize_t), dimension(3) :: dims
+      real, dimension(:,:,:), pointer :: values => null()
+      ! Executable code
+      call output( 'Now in VectorFromFile', advance='yes' )
+      call GetAllHDF5DSNames( MLSFile, DSNames )
+      call dump( DSNames )
+      do dsi=1, NumStringElements( trim(DSNames), countEmpty )
+        do sqi = 1, size ( vector%quantities )
+          quantity => vector%quantities(sqi)
+        ! How do w access the dataset to read? By name or by attribute?
+        if ( index(lowercase(options), 'a') < 1 ) then
+          ! By name
+          if ( quantity%template%name < 1 ) &
+            & call Announce_Error ( key, no_Error_Code, &
+            &   'template name is 0?' )
+          call get_string( quantity%template%name, Name )
+          if ( lowercase(trim(name)) /= &
+            & lowercase(StringElement( DSNames, dsi, countEmpty )) ) &
+            & cycle
+          if ( addSlash ) Name = '/' // Name
+          call outputNamedValue( 'shape(values)' // trim(name), shape(quantity%values) )
+          call dump( MLSFile )
+          call GetHDF5DSDims ( MLSFile, name, DIMS )
+          dimInts = max(dims, int(1,hsize_t))
+          call outputNamedValue ( 'dims', dimInts )
+          select case (lowercase(fileType))
+          case ('l2aux')
+            call ReadL2AUXData ( MLSFile, name, quantity%template%quantityType, l2aux )
+            call FromL2Aux( quantity, l2aux, status )
+            call DestroyL2AUXContents ( l2aux )
+          case ('swath', 'l2gp')
+            call ReadL2GPData( MLSFile, name, l2gp )
+            call FromL2GP ( quantity, l2gp, .false., -1, status, .true., .false. )
+            call DestroyL2GPContents ( l2gp )
+          case default ! E.g., 'hdf'
+            call Allocate_test ( values, dimInts(1), dimInts(2), dimInts(3), 'values read from file', ModuleName )
+            call loadFromHDF5DS ( MLSFile, &
+              & trim(Name), values ) ! quantity%values )
+            quantity%values = reshape( values, (/ dimInts(1)*dimInts(2), dimInts(3) /) )
+            call DeAllocate_test ( values, 'values read from file', ModuleName )
+            call dump( quantity%values, trim(name) // ' values' )
+          end select
+        else
+          ! By attribute
+          call Announce_Error ( key, no_Error_Code, &
+          &   'Unable to read Quantity from File by attribute yet' )
+        endif
+        enddo
+      enddo
+    end subroutine VectorFromFile
+
   ! -- Private procedures ----------
 
     ! ------------------------------------------- FillableChiSq ---
@@ -6845,6 +7014,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.47  2011/11/04 00:24:39  pwagner
+! Added procedures to auto special qties in a vector, fill a qty from a file, and fill a vector from a file
+!
 ! Revision 2.46  2011/07/20 00:53:40  pwagner
 ! Fixed bug added in rev2.43
 !
