@@ -62,19 +62,17 @@ contains
 
   ! Given a MAF, returns the closest profile
   function L1MAFToL2Profile ( MAF, fileDatabase ) result( profile )
-    use L1BDATA, only: L1BDATA_T, NAME_LEN, PRECISIONSUFFIX, &
-      & ASSEMBLEL1BQTYNAME, DEALLOCATEL1BDATA, DUMP, FINDMAXMAF, &
-      & L1BRADSETUP, L1BOASETUP, READL1BATTRIBUTE, READL1BDATA 
-    use L2GPData, only: L2GPDATA_T, L2GPNAMELEN, MAXSWATHNAMESBUFSIZE, RGP, &
-      & DUMP, DUMPRANGE, READL2GPDATA, DESTROYL2GPCONTENTS
-    use MLSCOMMON, only: MLSFILE_T, NAMELEN, &
-      & TAI93_RANGE_T
-    use MLSFILES, only: FILENOTFOUND, HDFVERSION_5, &
-      & MLS_INQSWATH, GETMLSFILEBYTYPE, &
-      & INITIALIZEMLSFILE, MLS_CLOSEFILE, MLS_OPENFILE, SPLIT_PATH_NAME
+    use L1BDATA, only: L1BDATA_T, NAME_LEN, &
+      & ASSEMBLEL1BQTYNAME, DEALLOCATEL1BDATA, &
+      & READL1BDATA 
+    use L2GPData, only: L2GPDATA_T, L2GPNAMELEN, MAXSWATHNAMESBUFSIZE, &
+      & READL2GPDATA, DESTROYL2GPCONTENTS
+    use MLSCOMMON, only: MLSFILE_T
+    use MLSFILES, only: HDFVERSION_5, &
+      & MLS_INQSWATH, GETMLSFILEBYTYPE
     use MLSKINDS, only: R8
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, &
-      & MLSMSG_ERROR, MLSMSG_WARNING
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, &
+      & MLSMSG_WARNING
     use MLSNumerics, only: CLOSESTELEMENT
     use MLSStringLists, only: GETSTRINGELEMENT
     ! Args
@@ -120,19 +118,17 @@ contains
 
   ! Given a profile, returns the closest MAF
   function L2ProfileToL1MAF ( profile, fileDatabase ) result( MAF )
-    use L1BDATA, only: L1BDATA_T, NAME_LEN, PRECISIONSUFFIX, &
-      & ASSEMBLEL1BQTYNAME, DEALLOCATEL1BDATA, DUMP, FINDMAXMAF, &
-      & L1BRADSETUP, L1BOASETUP, READL1BATTRIBUTE, READL1BDATA 
-    use L2GPData, only: L2GPDATA_T, L2GPNAMELEN, MAXSWATHNAMESBUFSIZE, RGP, &
-      & DUMP, DUMPRANGE, READL2GPDATA, DESTROYL2GPCONTENTS
-    use MLSCOMMON, only: MLSFILE_T, NAMELEN, &
-      & TAI93_RANGE_T
-    use MLSFILES, only: FILENOTFOUND, HDFVERSION_5, &
-      & MLS_INQSWATH, GETMLSFILEBYTYPE, &
-      & INITIALIZEMLSFILE, MLS_CLOSEFILE, MLS_OPENFILE, SPLIT_PATH_NAME
+    use L1BDATA, only: L1BDATA_T, NAME_LEN, &
+      & ASSEMBLEL1BQTYNAME, DEALLOCATEL1BDATA, &
+      & READL1BDATA 
+    use L2GPData, only: L2GPDATA_T, L2GPNAMELEN, MAXSWATHNAMESBUFSIZE, &
+      & READL2GPDATA, DESTROYL2GPCONTENTS
+    use MLSCOMMON, only: MLSFILE_T
+    use MLSFILES, only: HDFVERSION_5, &
+      & MLS_INQSWATH, GETMLSFILEBYTYPE
     use MLSKINDS, only: R8
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, &
-      & MLSMSG_ERROR, MLSMSG_WARNING
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, &
+      & MLSMSG_WARNING
     use MLSNumerics, only: CLOSESTELEMENT
     use MLSStringLists, only: GETSTRINGELEMENT
     ! Args
@@ -249,8 +245,8 @@ contains
 
     ! placed non-alphabetically due to Lahey internal compiler error
     ! (How much longer must we endure these onerous work-arounds?)
-    use MLSHDF5, only: GetHDF5Attribute, IsHDF5AttributeInFile
-    use HDF5, only: h5gclose_f, h5gopen_f
+    use MLSHDF5, only: GETHDF5ATTRIBUTE, ISHDF5ATTRIBUTEINFILE
+    use HDF5, only: H5GCLOSE_F, H5GOPEN_F
 
     integer, intent(in) :: ROOT    ! Index of N_CF node in abstract syntax tree
     type(ForwardModelConfig_T), pointer :: ForwardModelConfigDatabase(:)
@@ -1209,6 +1205,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.140  2011/10/05 00:14:45  pwagner
+! Added functions to convert between MAFs, profile numbers
+!
 ! Revision 2.139  2011/06/29 21:50:48  pwagner
 ! Some cases may safely omit l1b files
 !
