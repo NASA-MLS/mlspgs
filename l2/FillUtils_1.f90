@@ -3549,7 +3549,6 @@ contains ! =====     Public Procedures     =============================
       logical :: USESC
       ! Executable code
       call MLSMessageCalls( 'push', constantName='ByManipulation' )
-
       ! Currently we have a rather brain dead approach to this, so
       ! check that what the user has asked for, we can supply.
       call get_string ( manipulation, mstr, strip=.true. )
@@ -4105,7 +4104,7 @@ contains ! =====     Public Procedures     =============================
         elem = 0
         lastOp = 'nul' ! 'or'
         newone%values = 0.
-        n = NumStringElements( trim(str), countEmpty, &
+        n = NumStringElements( trim(str), countEmpty=.false., &
           & inseparator=' ' )
         if ( DeeBUG ) then
           print *, n, ' str: ', trim(str)
@@ -4118,7 +4117,7 @@ contains ! =====     Public Procedures     =============================
           ! Otherwise revising our lastOp or negating status
           elem = elem + 1
           call GetStringElement ( trim(str), variable, elem, &
-            & countEmpty, inseparator=' ' )
+            & countEmpty=.false., inseparator=' ' )
           if ( DeeBUG ) then
             print *, elem, ' variable: ', trim(variable)
           endif
@@ -4162,6 +4161,8 @@ contains ! =====     Public Procedures     =============================
           case ('>')
             lastOp = '>'
             hit = .false.
+          case (' ')
+            call Announce_Error ( key, no_error_code, 'parse error of:' // trim(str) )
           case default
             ind = index(variable, ':')
             if ( deeBug ) print *, 'ind of ":" ', ind
@@ -7014,6 +7015,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.48  2011/11/04 23:46:45  pwagner
+! Fixed bug added with last commit
+!
 ! Revision 2.47  2011/11/04 00:24:39  pwagner
 ! Added procedures to auto special qties in a vector, fill a qty from a file, and fill a vector from a file
 !
