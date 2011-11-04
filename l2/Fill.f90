@@ -13,9 +13,8 @@
 module Fill                     ! Create vectors and fill them.
   !=============================================================================
 
-  use MLSCommon, only: MLSFile_T, R8, RV, &
-    & DEFAULTUNDEFINEDVALUE
-
+  use MLSCommon, only: MLSFile_T, DEFAULTUNDEFINEDVALUE
+  use MLSKINDS, only: R8, RV
   ! This module performs the Fill operation in the Level 2 software.
   ! This takes a vector template, and creates and fills an appropriate vector
 
@@ -62,9 +61,9 @@ contains ! =====     Public Procedures     =============================
       & BOOLEANFROMCATCHWARNING, BOOLEANFROMCOMPARINGQTYS, BOOLEANFROMFORMULA, &
       & DUMPCOMMAND, SKIP
     use EXPR_M, only: EXPR, EXPR_CHECK
-    use FILLUTILS_1, only: FILLERROR, &
-      & ADDGAUSSIANNOISE, APPLYBASELINE, COMPUTETOTALPOWER, &
-      & EXTRACTSINGLECHANNEL, FILLCOVARIANCE, FROMGRID, &
+    use FILLUTILS_1, only: ADDGAUSSIANNOISE, APPLYBASELINE, AUTOFILLVECTOR, &
+      & COMPUTETOTALPOWER, &
+      & EXTRACTSINGLECHANNEL, FILLCOVARIANCE, FILLERROR, FROMGRID, &
       & FROML2GP, FROMPROFILE, LOSVELOCITY, &
       & CHISQCHAN, CHISQMMAF, CHISQMMIF, CHISQRATIO, &
       & COLABUNDANCE, FOLDEDRADIANCE, PHITANWITHREFRACTION, &
@@ -77,11 +76,11 @@ contains ! =====     Public Procedures     =============================
       & FROMINTERPOLATEDQTY, FROMLOSGRID, &
       & BYMANIPULATION, MANIPULATEVECTORS, WITHREFLECTORTEMPERATURE, &
       & WITHREICHLERWMOTP, &
-      & WITHWMOTROPOPAuse, WITHBINRESULTS, WITHBOXCARFUNCTION, &
+      & WITHWMOTROPOPAUSE, WITHBINRESULTS, WITHBOXCARFUNCTION, &
       & STATUSQUANTITY, QUALITYFROMCHISQ, CONVERGENCEFROMCHISQ, &
-      & USINGLEASTSQUARES, OFFSETRADIANCEQUANTITY, RESETUNuseDRADIANCES, &
+      & USINGLEASTSQUARES, OFFSETRADIANCEQUANTITY, RESETUNUSEDRADIANCES, &
       & SCALEOVERLAPS, SPREADCHANNELFILL, TRANSFERVECTORS, UNCOMPRESSRADIANCE, &
-      & ANNOUNCE_ERROR, &
+      & QTYFROMFILE, VECTORFROMFILE, ANNOUNCE_ERROR, &
       ! CODES FOR ANNOUNCE_ERROR:
       & BADESTNOISEFILL, BADGEOCALTITUDEQUANTITY, BADISOTOPEFILL, &
       & BADLOSGRIDFILL, BADLOSVELFILL, BADREFGPHQUANTITY, &
@@ -96,11 +95,11 @@ contains ! =====     Public Procedures     =============================
     use FORWARDMODELSUPPORT, only: FILLFWDMODELTIMINGS
     use GLOBAL_SETTINGS, only: BRIGHTOBJECTS
     use GRIDDEDDATA, only: GRIDDEDDATA_T
-    use HESSIANMODULE_1, only: ADDHESSIANTODATABASE, CREATEEMPTYHESSIAN, HESSIAN_T, &
-      & STREAMLINEHESSIAN
+    use HESSIANMODULE_1, only: ADDHESSIANTODATABASE, CREATEEMPTYHESSIAN, &
+      & STREAMLINEHESSIAN, HESSIAN_T
     ! WE NEED MANY THINGS FROM INIT_TABLES_MODULE.  FIRST THE FIELDS:
     use INIT_TABLES_MODULE, only: F_A, F_ADDITIONAL, F_ALLOWMISSING, &
-      & F_APRIORIPRECISION, F_ASPERCENTAGE, F_AVOIDBRIGHTOBJECTS, &
+      & F_APRIORIPRECISION, F_ASPERCENTAGE, F_AUTOFILL, F_AVOIDBRIGHTOBJECTS, &
       & F_B, F_BADRANGE, F_BASELINEQUANTITY, F_BIN, F_BOUNDARYPRESSURE, &
       & F_BOXCARMETHOD, &
       & F_C, F_CENTERVERTICALLY, F_CHANNEL, F_COLUMNS, &
@@ -109,7 +108,7 @@ contains ! =====     Public Procedures     =============================
       & F_ECRTOFOV, F_EARTHRADIUS, F_EXACT, F_EXCLUDEBELOWBOTTOM, F_EXPLICITVALUES, &
       & F_EXPR, F_EXTINCTION, F_FIELDECR, F_FILE, F_FLAGS, F_FORCE, F_SHAPE, &
       & F_FRACTION, F_FROMPRECISION, &
-      & F_GEOCALTITUDEQUANTITY, F_GPHQUANTITY, F_HEIGHT, F_HEIGHTRANGE, &
+      & F_GEOCALTITUDEQUANTITY, F_GPHQUANTITY, F_HEIGHT, F_HDFVERSION, F_HEIGHTRANGE, &
       & F_HIGHBOUND, F_H2OQUANTITY, F_H2OPRECISIONQUANTITY, &
       & F_IFMISSINGGMAO, F_IGNORENEGATIVE, F_IGNOREGEOLOCATION, F_IGNOREZERO, &
       & F_INSTANCES, F_INTEGRATIONTIME, F_INTERNALVGRID, &
@@ -118,7 +117,7 @@ contains ! =====     Public Procedures     =============================
       & F_MANIPULATION, F_MATRIX, F_MAXITERATIONS, F_MAXVALUE, F_MEASUREMENTS, &
       & F_METHOD, F_MINNORMQTY, F_MINVALUE, F_MODEL, F_MULTIPLIER, &
       & F_NOFINEGRID, F_NOISE, F_NOISEBANDWIDTH, F_NORMQTY, &
-      & F_OFFSETAMOUNT, F_ORBITINCLINATION, F_PHITAN, &
+      & F_OFFSETAMOUNT, F_OPTIONS, F_ORBITINCLINATION, F_PHITAN, &
       & F_PHIWINDOW, F_PHIZERO, F_PRECISION, F_PRECISIONFACTOR, &
       & F_PROFILE, F_PROFILEVALUES, F_PTANQUANTITY, &
       & F_QUADRATURE, F_QUANTITY, F_RADIANCEQUANTITY, F_RATIOQUANTITY, &
@@ -165,7 +164,7 @@ contains ! =====     Public Procedures     =============================
     ! NOW THE SPECIFICATIONS:
     use INIT_TABLES_MODULE, only: S_ANYGOODVALUES, S_ANYGOODRADIANCES, &
       & S_CATCHWARNING, S_COMPARE, S_COMPUTETOTALPOWER, S_DESTROY, &
-      & S_DIFF, S_DUMP, S_FILL, S_FILLCOVARIANCE, &
+      & S_DIFF, S_DIRECTREAD, S_DUMP, S_FILL, S_FILLCOVARIANCE, &
       & S_FILLDIAGONAL, S_FLAGCLOUD, S_FLUSHL2PCBINS, S_FLUSHPFA, &
       & S_HESSIAN, S_LOAD, S_MATRIX,  S_NEGATIVEPRECISION, S_PHASE, S_POPULATEL2PCBIN, &
       & S_REEVALUATE, S_RESTRICTRANGE, S_SKIP, S_SNOOP, S_STREAMLINEHESSIAN, &
@@ -187,11 +186,12 @@ contains ! =====     Public Procedures     =============================
       & MATRIX_T, NULLIFYMATRIX
     ! NOTE: IF YOU EVER WANT TO INCLUDE DEFINED ASSIGNMENT FOR MATRICES, PLEASE
     ! CAREFULLY CHECK OUT THE CODE AROUND THE CALL TO SNOOP.
-    use MLSL2OPTIONS, only: SKIPRETRIEVAL, SPECIALDUMPFILE
+    use MLSL2OPTIONS, only: DEFAULT_HDFVERSION_READ, SKIPRETRIEVAL, SPECIALDUMPFILE
     use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES, &
       & ADDPHASETOPHASENAMES, FILLTIMINGS, FINISHTIMINGS
     use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, &
       & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, MLSMESSAGE, MLSMESSAGERESET
+    use MLSPCF2, only: MLSPCF_L2APRIORI_START, MLSPCF_L2APRIORI_END
     use MLSRANDOMNUMBER, only: MLS_RANDOM_SEED, MATH77_RAN_PACK
     use MLSSTRINGLISTS, only: CATLISTS, GETHASHELEMENT, &
       & NUMSTRINGELEMENTS, PUTHASHELEMENT, &
@@ -199,7 +199,7 @@ contains ! =====     Public Procedures     =============================
     use MLSSTRINGS, only: LOWERCASE
     use MOLECULES, only: L_H2O
     use MORETREE, only: GET_BOOLEAN, GET_FIELD_ID, GET_SPEC_ID
-    use OUTPUT_M, only: BLANKS, OUTPUT, &
+    use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE, &
       & REVERTOUTPUT, SWITCHOUTPUT
     use PFADATA_M, only: FLUSH_PFADATA
     use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T, MODIFYQUANTITYTEMPLATE
@@ -298,6 +298,7 @@ contains ! =====     Public Procedures     =============================
     integer :: APRPRECVCTRINDEX         ! Index of apriori precision vector
     integer :: AQTYINDEX                ! Index of a quantity in vector
     logical :: ASPERCENTAGE             ! Flag for noRadsPerMIF
+    logical :: AUTOFILL                 ! Flag for automatically filling qtys
     integer :: AVECINDEX                ! Index of a vector
     character(len=256) :: AVOIDOBJECTS  ! Which bright objects to avoid
     real(r8) :: BADRANGE(2)             ! Range for 'missing' data value
@@ -408,6 +409,7 @@ contains ! =====     Public Procedures     =============================
     real(r8) :: MINVALUE                 ! Value of f_minValue field
     integer :: MINVALUEUNIT              ! Unit for f_minValue field
     logical :: MISSINGGMAO              ! Only if missing GMAO
+    type (MLSFile_T), pointer   :: MLSFile
     integer :: MULTIPLIERNODE           ! For the parser
     integer :: NBO
     integer :: NBWVECTORINDEX           ! In vector database
@@ -533,6 +535,7 @@ contains ! =====     Public Procedures     =============================
       additional = .false.
       allowMissing = .false.
       asPercentage = .false.
+      autoFill = .false.
       boxCarMethod = l_mean
       c = 0.
       centerVertically = .false.
@@ -608,6 +611,8 @@ contains ! =====     Public Procedures     =============================
           select case ( fieldIndex )
           case ( f_template )
             templateIndex = decoration(decoration(subtree(2,son)))
+          case ( f_autoFill )
+            autoFill = get_boolean ( fieldValue )
           case ( f_lengthScale )
             if ( get_boolean(fieldValue) ) globalUnit = phyq_length
           case ( f_fraction )
@@ -626,8 +631,10 @@ contains ! =====     Public Procedures     =============================
           & CreateVector ( vectorName, vectorTemplates(templateIndex), &
           & qtyTemplates, globalUnit=globalUnit, highBound=highBound, lowBound=lowBound, &
           & where=source_ref(key) ) ) )
-
         ! That's the end of the create operation
+        ! Do we want to autofill any of its qtys?
+        if ( autoFill .and. associated(vectors) ) &
+          & call AutoFillVector ( vectors(size(vectors)) )
 
       case ( s_anygoodvalues )
         call decorate ( key, &
@@ -791,7 +798,8 @@ contains ! =====     Public Procedures     =============================
             & 'Must supply source=rows/columns for vector adoption' )
           call LoadVector ( vectors(vectorIndex), binName, source, message )
         else
-          call Announce_Error ( key, no_Error_Code, 'Must supply either matrix or vector to adopt' )
+          call Announce_Error ( key, no_Error_Code, &
+            & 'Must supply either matrix or vector to adopt' )
         end if
         if ( len_trim(message) /= 0 ) &
           & call Announce_Error ( key, no_Error_Code, trim(message) )
@@ -822,6 +830,8 @@ contains ! =====     Public Procedures     =============================
         if ( toggle(gen) .and. levels(gen) > 0 ) &
           & call trace_end ( "Fill.flagCloud" )
 
+      case ( s_directRead ) ! =============================  direectRead  =====
+        call directReadCommand
       case ( s_fill ) ! ===================================  Fill  =====
         call fillCommand
       case ( s_fillcovariance ) ! ===============  Covariance  =====
@@ -831,8 +841,8 @@ contains ! =====     Public Procedures     =============================
         do j = 2, nsons(key)
           gson = subtree(j,key) ! The argument
           fieldIndex = get_field_id(gson)
-          if ( nsons(gson) > 1) &
-            & gson = decoration(decoration(subtree(2,gson))) ! Now value of said argument
+          if ( nsons(gson) > 1) gson =  &
+            & decoration(decoration(subtree(2,gson))) ! Now value of said argument
           select case ( fieldIndex )
           case ( f_matrix )
             matrixToFill = gson
@@ -858,16 +868,16 @@ contains ! =====     Public Procedures     =============================
           call MLSMessage ( MLSMSG_Warning, ModuleName, &
             & 'Unable to fill covariance when skipping retrievals' )
         else
-          call FillCovariance ( covariance, vectors, diagonal, lengthScale, fraction, &
-            & invert )
+          call FillCovariance ( covariance, &
+            & vectors, diagonal, lengthScale, fraction, invert )
         endif
 
       case ( S_FILLDIAGONAL ) ! ===============  Diagonal  =====
         do j = 2, nsons(key)
           gson = subtree(j,key) ! The argument
           fieldIndex = get_field_id(gson)
-          if ( nsons(gson) > 1) &
-            & gson = decoration(decoration(subtree(2,gson))) ! Now value of said argument
+          if ( nsons(gson) > 1) gson = &
+            & decoration(decoration(subtree(2,gson))) ! Now value of said argument
           select case ( fieldIndex )
           case ( f_matrix )
             matrixToFill = gson
@@ -1091,6 +1101,83 @@ contains ! =====     Public Procedures     =============================
       call StreamlineHessian ( hessians ( hessianIndex ), &
         & surface, scaleHeight, geodAngle, threshold )
     end subroutine DoStreamline
+
+    ! ------------------------------------------------ directReadCommand -----
+    subroutine directReadCommand
+    ! Now we're on actual directRead instructions.
+    logical, parameter :: DEEBUG = .true.
+      integer :: EXPRUNITS(2)             ! From expr
+      real (r8) :: EXPRVALUE(2)           ! From expr
+      integer :: fieldIndex
+      integer :: file                     ! Index into string table
+      integer :: fileType
+      character(len=8) :: fileTypeStr
+      integer :: gson
+      integer :: hdfversion
+      integer :: j
+      type (vector_T), pointer :: Vector
+      ! Loop over the instructions to the directRead command
+      got = .false.
+      hdfVersion = DEFAULT_HDFVERSION_READ
+      file = 0
+      options = ' '
+      if ( DEEBUG ) call output ( 'In DirectReadCommand', advance='yes' )
+      do j = 2, nsons(key)
+        gson = subtree(j,key) ! The argument
+        fieldIndex = get_field_id(gson)
+        if ( nsons(gson) > 1) gson = subtree(2,gson) ! Now value of said argument
+        got(fieldIndex)=.TRUE.
+        select case ( fieldIndex )
+        case ( f_quantity )
+          vectorIndex = decoration(decoration(subtree(1,gson)))
+          quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+        case ( f_vector )
+          vectorIndex = decoration(decoration(gson))
+          if ( DEEBUG ) call output ( 'Processing vector field', advance='yes' )
+        case ( f_hdfVersion )
+          if ( DEEBUG ) call output ( 'Begin Processing hdfversion field', advance='yes' )
+          call expr ( gson, exprUnits, exprValue )
+          if ( DEEBUG ) call output ( 'Processing hdfversion field', advance='yes' )
+          if ( exprUnits(1) /= phyq_dimensionless ) &
+            & call Announce_error ( son, NO_ERROR_CODE, &
+            & 'No units allowed for hdfVersion: just integer 4 or 5')
+          hdfVersion = exprValue(1)
+        case ( f_file )
+          file = sub_rosa(gson)
+          if ( DEEBUG ) call outputNamedValue ( 'Processing file field', file )
+        case ( f_options )
+          if ( DEEBUG ) call output ( 'Begin Processing options field', advance='yes' )
+          call get_string ( sub_rosa(gson), options, strip=.true. )
+          if ( DEEBUG ) call output ( 'Processing options field', advance='yes' )
+        case ( f_type )
+          if ( DEEBUG ) call output ( 'Begin Processing type field', advance='yes' )
+          fileType = decoration(gson)
+          call get_string ( lit_indices(fileType), fileTypeStr, strip=.true. )
+          if ( DEEBUG ) call output ( 'Processing type field', advance='yes' )
+        end select
+      end do
+      if ( DEEBUG ) call output ( 'Done processing fields', advance='yes' )
+      if ( .not. got(f_file) ) call Announce_error ( key, 0, 'No file supplied' )
+      if ( .not. got(f_type) ) call Announce_error ( key, 0, 'No type supplied' )
+      if ( .not. any( (/ &
+        & got(f_quantity), got(f_vector) /) ) )&
+        & call Announce_error ( key, 0, 'Must supply either quantity or vector' )
+      if ( DEEBUG ) call output ( 'About to  get_file_name', advance='yes' )
+      call get_file_name ( file, mlspcf_l2apriori_start, &
+            & fileType, filedatabase, MLSFile, &
+            & 'DirectRead File not found in PCF', mlspcf_l2apriori_end )
+      if ( DEEBUG ) call output ( 'Done with get_file_name', advance='yes' )
+      if ( got(f_quantity) ) then
+        quantity => GetVectorQtyByTemplateIndex( &
+          & vectors(vectorIndex), quantityIndex )
+        call QtyFromFile ( key, quantity, MLSFile, &
+          & filetypestr, hdfversion, options )
+      else
+        vector => vectors(vectorIndex)
+        call VectorFromFile ( key, vector, MLSFile, &
+          & filetypestr, hdfversion, options )
+      endif
+    end subroutine directReadCommand
 
     ! ------------------------------------------------ fillCommand -----
     subroutine fillCommand
@@ -2604,6 +2691,78 @@ contains ! =====     Public Procedures     =============================
       end select      ! s_method
     end subroutine fillCommand
 
+    ! ............................................  Get_File_Name  .....
+    subroutine Get_File_Name ( fileIndex, pcfCode, &
+      & fileType, fileDataBase, MLSFile, MSG, pcfEndCode )
+      use FILLUTILS_1, only: ANNOUNCE_ERROR
+      use HDF, only: DFACC_RDONLY
+      use INTRINSIC, only: L_ASCII, L_HDF
+      use MLSCOMMON, only: MLSFILE_T
+      use MLSFILES, only: HDFVERSION_5, &
+        & ADDINITIALIZEMLSFILE, GETPCFROMREF, SPLIT_PATH_NAME
+      use MLSL2OPTIONS, only: TOOLKIT
+      use SDPTOOLKIT, only: PGS_PC_GETREFERENCE
+      use STRING_TABLE, only: GET_STRING
+      ! Dummy args
+      integer, intent(in) :: fileIndex ! index into string table
+      integer, intent(in) :: pcfCode
+      integer, intent(in) :: fileType ! l_hdf, etc.
+      type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+      type (MLSFile_T), pointer   :: MLSFile
+      character(len=*), intent(in) :: MSG ! in case of error
+      integer, intent(in), optional :: pcfEndCode
+      ! Internal variables
+      character(len=255) :: fileName, fileTypeStr, PCFFileName, path, shortName
+      integer :: lun
+      integer :: mypcfEndCode
+      integer :: returnStatus             ! non-zero means trouble
+      integer :: version
+      ! Executable
+      mypcfEndCode = 0
+      lun = 0
+      version = 1
+      call outputNamedValue( 'About to get_string for file name', fileIndex )
+      call get_string ( fileIndex, shortName, strip=.true. )
+      fileName = shortName
+      call outputNamedValue( 'Result', fileName )
+      call outputNamedValue( 'About to get_string for file type', lit_indices(fileType) )
+      call get_string ( lit_indices(fileType), fileTypeStr, strip=.true. )
+      call outputNamedValue( 'Result', fileTypeStr )
+      if ( TOOLKIT .and. index (fileName, '/') < 1 ) then
+        mypcfEndCode = pcfCode
+        if ( present(pcfEndCode) ) mypcfEndCode = pcfEndCode
+        if ( fileName == ' ' ) then
+          returnStatus = Pgs_pc_getReference(pcfCode, version, &
+            & fileName)
+          lun = pcfCode
+        else
+          PCFFileName = fileName
+          call split_path_name ( PCFFileName, path, fileName )
+          lun = GetPCFromRef(fileName, pcfCode, &
+            & mypcfEndCode, &
+            & TOOLKIT, returnStatus, Version, DEEBUG, &
+            & exactName=PCFFileName)
+          if ( returnStatus /= 0 ) then
+            call Announce_Error ( 0, son, extraMessage=MSG )
+          else
+            fileName = PCFFileName
+          end if
+        end if
+      end if
+      if ( fileType == l_hdf ) then
+        MLSFile => AddInitializeMLSFile(filedatabase, &
+          & content=fileTypeStr, &
+          & name=Filename, shortName=shortName, &
+          & type=l_hdf, access=dfacc_rdonly, HDFVersion=HDFVERSION_5)
+      else
+        MLSFile => AddInitializeMLSFile(filedatabase, &
+          & content=fileTypeStr, &
+          & name=Filename, shortName=shortName, &
+          & type=l_ascii, access=dfacc_rdonly)
+      endif      
+      MLSFile%PCFId = lun
+    end subroutine Get_File_Name
+
     ! --------------------------------------------------  SayTime  -----
     subroutine SayTime
       call time_now ( t2 )
@@ -2633,6 +2792,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.395  2011/11/04 00:28:18  pwagner
+! Added autoFill flag to Vector Spec to start it off with non-zero values in appropriated quantities
+!
 ! Revision 2.394  2011/10/07 00:06:02  pwagner
 ! May dump Matrices, Hessians from Fill, Join
 !
