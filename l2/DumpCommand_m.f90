@@ -832,6 +832,7 @@ contains
     haveGriddedData = present(griddedDataBase)
     if ( haveGriddedData ) haveGriddedData = associated(griddedDataBase)
     haveMatrices = present(MatrixDatabase)
+    if ( haveMatrices ) haveMatrices = associated(MatrixDatabase)
     if ( haveMatrices ) haveMatrices = size(MatrixDatabase) > 0
     HaveHessians = present(HessianDatabase)
     if ( HaveHessians ) then
@@ -1526,6 +1527,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.64  2011/11/04 00:29:28  pwagner
+! :Fixed something only NAg complained about when Matrices not associated yet
+!
 ! Revision 2.63  2011/08/29 22:12:13  pwagner
 ! Should not attempt to take size of disassociated pointer HessianDataBase
 !
