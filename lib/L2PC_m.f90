@@ -892,8 +892,10 @@ contains ! ============= Public Procedures ==========================
 
     type (MatrixElement_T), pointer :: M0 ! A Matrix_0 within kStar
     type (HessianElement_T), pointer :: H0 ! A Hessian_0 within hStar
+    logical :: verbose
 
     ! Executable code
+    verbose = ( switchDetail(switches, 'hess') > -1 ) .or. DEEBUG
     ! If we have a Hessian, make sure it matches the jacobian
     if ( present ( hessian ) ) then
       if ( jacobian%row%vec%name /= hessian%row%vec%name ) call MLSMessage ( &
@@ -904,6 +906,11 @@ contains ! ============= Public Procedures ==========================
         & MLSMSG_Error, ModuleName, 'Row order of Jacobian and Hessian do not match' )
       if ( jacobian%col%instFirst .neqv. hessian%col%instFirst ) call MLSMessage ( &
         & MLSMSG_Error, ModuleName, 'Column order of Jacobian and Hessian do not match' )
+      if ( verbose ) then
+        call get_string ( hessian%name, name, strip=.true., cap=.true. )
+        call output( 'Writing Hessian named: ' // trim(name), advance='yes' )
+        call outputNamedValue( 'Hesssian optimized already', hessian%optimizedAlready )
+      endif
     end if
 
     ! Work out which quantities we can skip
@@ -1008,6 +1015,9 @@ contains ! ============= Public Procedures ==========================
               &  colPack(hessian%col%quant(k)) ) then
               ! Identify the block
               h0 => hessian%block ( i, j, k )
+              if ( verbose ) then
+                call outputNamedValue( 'block optimized already?', h0%optimizedAlready )
+              endif
               call optimizeBlock ( h0 )
               ! Change kind of Hessian to absent if number of nonzero values is 0
               if ( h0%kind == h_sparse .and. &
@@ -1454,7 +1464,10 @@ contains ! ============= Public Procedures ==========================
 
   ! --------------------------------------- ReadCompleteHDF5L2PCFile -------
   subroutine ReadCompleteHDF5L2PCFile ( MLSFile, Where, Shallow )
-    use HDF5, only: H5F_ACC_RDONLY_F, H5FOPEN_F, H5GN_MEMBERS_F
+    use HDF, only: DFACC_RDONLY
+    use HDF5, only: H5GN_MEMBERS_F
+    use INTRINSIC, only: L_HDF
+    use MLSFILES, only: HDFVERSION_5, MLS_OPENFILE
     use Trace_M, only: TRACE_BEGIN, TRACE_END
     use Toggles, only: TOGGLE, GEN
     type (MLSFile_T), intent(inout)   :: MLSFile
@@ -1479,9 +1492,15 @@ contains ! ============= Public Procedures ==========================
     myShallow = .true.
     if ( present ( shallow ) ) myShallow = shallow
 
-    if ( toggle (gen) ) call trace_begin ( "ReadCompleteHDF5L2PC", where )
-    call h5fopen_f ( MLSFile%name, H5F_ACC_RDONLY_F, fileID, status )
-    MLSFile%FileID%f_id = fileID
+    if ( toggle (gen) ) call trace_begin ( "ReadCompleteHDF5L2PCFile", where )
+    MLSFile%content = 'l2pc'
+    MLSFile%access = DFACC_RDONLY
+    MLSFile%HDFVersion = HDFVERSION_5
+    MLSFile%type = l_hdf
+    call mls_openFile( MLSFile, status )
+    fileID = MLSFile%FileID%f_id
+    ! call h5fopen_f ( MLSFile%name, H5F_ACC_RDONLY_F, fileID, status )
+    ! MLSFile%FileID%f_id = fileID
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open hdf5 l2pc file for input:'//trim(MLSFile%name), &
       & MLSFile=MLSFile )
@@ -1523,7 +1542,7 @@ contains ! ============= Public Procedures ==========================
     end do
 
     ! Don't close the file, we're keeping it open to read blocks from it later
-    if ( toggle (gen) ) call trace_end ( "ReadCompleteHDF5L2PC" )
+    if ( toggle (gen) ) call trace_end ( "ReadCompleteHDF5L2PCFile" )
   end subroutine ReadCompleteHDF5L2PCFile
 
   ! --------------------------------------- ReadOneHDF5L2PCRecord ------------
@@ -1593,6 +1612,7 @@ contains ! ============= Public Procedures ==========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to access Blocks group of input l2pc matrix' , &
       & MLSFile=MLSFile )
+    ! This next is inelegant: grp_id should be a linked list
     MLSFile%fileID%sd_id = blocksID
     call GetHDF5Attribute ( MLSFile, 'rowInstanceFirst', rowInstanceFirst )
     call GetHDF5Attribute ( MLSFile, 'colInstanceFirst', colInstanceFirst )
@@ -1655,6 +1675,7 @@ contains ! ============= Public Procedures ==========================
             call outputNamedValue( 'Block ID', blockId )
           endif
           ! Could check it's the block we're expecting but I think I'll be lazy
+          ! This next is inelegant: grp_id should be a linked list
           MLSFile%fileID%sd_id = blockID
           call GetHDF5Attribute ( MLSFile, 'kind', kind )
           if ( kind == m_banded .or. kind == m_column_sparse ) then
@@ -1702,6 +1723,7 @@ contains ! ============= Public Procedures ==========================
     if ( switchDetail( switches, 'hess' ) > -1 ) &
                 & call outputNamedValue( 'got hessian?', l2pc%goth )
     if ( l2pc%goth ) then
+      ! This next is inelegant: grp_id should be a linked list
       MLSFile%fileID%sd_id = hblocksID
 
       l2pc%h = CreateEmptyHessian ( stringIndex, l2pcVs(yStar), l2pcVs(xStar) )
@@ -1727,6 +1749,7 @@ contains ! ============= Public Procedures ==========================
                 & 'Unable to open group for l2pc hessian block '//trim(name) , &
                 & MLSFile=MLSFile )
               ! Could check it's the block we're expecting but I think I'll be lazy
+              ! This next is inelegant: grp_id should be a linked list
               MLSFile%fileID%sd_id = blockID
               call GetHDF5Attribute ( MLSFile, 'kind', kind )
               if ( switchDetail( switches, 'hess' ) > 1 ) &
@@ -2206,6 +2229,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.116  2011/11/04 23:38:47  pwagner
+! Made consistent with MLSFile interface to MLSHDF5
+!
 ! Revision 2.115  2011/08/20 02:04:03  vsnyder
 ! Remove unused use name
 !
