@@ -371,9 +371,9 @@ contains ! =====     Public Procedures     =============================
     use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
     use HDF, only: DFACC_CREATE, DFACC_RDWR
     use HGRIDSDATABASE, only: HGRID_T
-    use INIT_TABLES_MODULE, only: F_CONVERGENCE, F_FILE, F_HDFVERSION, &
-      & F_LOWEROVERLAP, F_PRECISION, F_QUALITY, F_SOURCE, F_STATUS, F_TYPE, &
-      & F_UPPEROVERLAP, F_VECTOR
+    use INIT_TABLES_MODULE, only: F_CONVERGENCE, F_FILE, &
+      & F_HDFVERSION, F_LOWEROVERLAP, F_OPTIONS, F_PRECISION, F_QUALITY, &
+      & F_SOURCE, F_STATUS, F_TYPE, F_UPPEROVERLAP, F_VECTOR
     use INIT_TABLES_MODULE, only: L_L2GP, L_L2AUX, L_L2DGG, L_L2FWM, &
       & L_PRESSURE, L_ZETA
     use INTRINSIC, only: L_NONE, L_HDF, L_SWATH, LIT_INDICES, PHYQ_DIMENSIONLESS
@@ -466,6 +466,7 @@ contains ! =====     Public Procedures     =============================
     integer :: NumPermitted             ! No. things permitted to output
     integer :: NumOutput                ! No. things actually output
     logical, parameter :: OPENHERE = .false.
+    character(len=16) :: OPTIONS
     integer :: OUTPUTTYPE               ! l_l2gp, l_l2aux, l_l2fwm, l_l2dgg
     character(len=8) :: OUTPUTTYPESTR   ! 'l2gp', 'l2aux', etc.
     character(len=1024) :: PATH         ! path/file_base
@@ -524,6 +525,7 @@ contains ! =====     Public Procedures     =============================
     file = 0
     filename = 'undefined'
     lowerOverlap = .false.
+    options = ' '
     outputType=0
     outputtypestr = 'unknown'
     if ( present(namedFile) ) namedFile = .false.
@@ -555,6 +557,8 @@ contains ! =====     Public Procedures     =============================
           & call Announce_error ( son, NO_ERROR_CODE, &
           & 'No units allowed for hdfVersion: just integer 4 or 5')
         hdfVersion = exprValue(1)
+      case ( f_options )
+        call get_string ( sub_rosa(subtree(2,son)), options, strip=.true. )
       case ( f_file )
         file = sub_rosa(subtree(2,son))
         if ( present(namedFile) ) namedFile = .true.
@@ -805,7 +809,7 @@ contains ! =====     Public Procedures     =============================
       if ( toggle(gen) .and. switchDetail(switches, 'dwreq') > -1 ) &
         & call trace_end ( "DirectWriteCommand" )
       return
-    else if ( skipdgm .and. any ( outputType == (/ l_l2fwm, l_l2aux /) ) ) then
+    else if ( skipdgm .and. any ( outputType == (/ l_l2fwm, l_l2aux, l_hdf /) ) ) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
       & 'DirectWriteCommand skipping all dgm/fwm writes ' // trim(filename) )
       call DeallocateStuff
@@ -934,7 +938,8 @@ contains ! =====     Public Procedures     =============================
         print *, 'createFileFlag ', createFileFlag
       end if
       if ( .not. isnewdirect ) then
-        if ( outputType /= thisDirect%type ) then
+        ! if ( outputType /= thisDirect%type ) then
+        if ( .not. doOutputTypesMatch( outputType, thisDirect%type ) ) then
           call MLSMessage ( MLSMSG_Error, ModuleName, &
             & 'DirectWriteCommand mismatched outputTypes for ' // trim(filename) )
         end if
@@ -955,7 +960,7 @@ contains ! =====     Public Procedures     =============================
         PCBottom = mlspcf_l2fwm_full_start
         PCTop    = mlspcf_l2fwm_full_end
         fileType = l_hdf
-      case ( l_l2aux )
+      case ( l_l2aux, l_hdf )
         PCBottom = mlspcf_l2dgm_start
         PCTop    = mlspcf_l2dgm_end
         fileType = l_hdf
@@ -1020,7 +1025,7 @@ contains ! =====     Public Procedures     =============================
         else
           createThisSource = .false.
         end if
-      case ( l_l2aux, l_l2fwm )
+      case ( l_l2aux, l_l2fwm, l_hdf )
         ! Nothing special
         ! (Why don't we need to know which SDs are there and which aren't?)
       case default
@@ -1066,10 +1071,11 @@ contains ! =====     Public Procedures     =============================
               & chunkNo, HGrids, &
               & createSwath=.true., &
               & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap )
-          case ( l_l2aux, l_l2fwm )
+          case ( l_l2aux, l_l2fwm, l_hdf )
             call DirectWrite ( directFile, vector, &
               & chunkNo, chunks, FWModelConfig, &
-              & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap )
+              & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap, &
+              & options=options )
           case default
           end select
           cycle
@@ -1193,7 +1199,7 @@ contains ! =====     Public Procedures     =============================
           else
             filetype=l_swath
           end if
-        case ( l_l2aux, l_l2fwm )
+        case ( l_l2aux, l_l2fwm, l_hdf )
           ! Call the l2aux sd write routine.  This should write the 
           ! non-overlapped portion of qty (with possibly precision in precQty)
           ! into the l2aux sd named 'hdfName' starting at profile 
@@ -1203,7 +1209,8 @@ contains ! =====     Public Procedures     =============================
           ! a real pain.  I wish I never want down that road!
           call DirectWrite ( directFile, qty, precQty, hdfName, &
             & chunkNo, chunks, FWModelConfig, &
-            & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap )
+            & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap, &
+            & options=options )
           NumOutput = NumOutput + 1
           filetype=l_hdf
         case default
@@ -1250,7 +1257,7 @@ contains ! =====     Public Procedures     =============================
 
         ! Don't forget to close file
         select case ( outputType )
-        case ( l_l2gp, l_l2dgg, l_l2aux, l_l2fwm )
+        case ( l_l2gp, l_l2dgg, l_l2aux, l_l2fwm, l_hdf )
           if ( OPENHERE ) call mls_closeFile(directFile, ErrorType)
         case default
           call output('outputType: ', advance='no')
@@ -1298,7 +1305,7 @@ contains ! =====     Public Procedures     =============================
           print *, 'hdfVersion ', hdfVersion
           print *, 'errortype ', errortype
         end if
-      case ( l_l2aux, l_l2fwm )
+      case ( l_l2aux, l_l2fwm, l_hdf )
         ! Call the l2aux close routine
         if ( OPENHERE ) call mls_closeFile(directFile, errorType)
       case default
@@ -1316,7 +1323,7 @@ contains ! =====     Public Procedures     =============================
         & 'DirectWriteCommand unable to close (2)' // trim(filename), &
         & MLSFile=directFile )
       if ( createFileFlag .and. TOOLKIT .and. .not. SKIPMETADATA .and. &
-        & outputType /= l_l2fwm .and. &
+        & .not. any( outputType == (/l_l2fwm, l_hdf /)) .and. &
         & .not. (distributingSources .and. CATENATESPLITS) ) then
         call add_metadata ( node, file_base, l2metaData, &
           & hdfVersion, filetype, errortype, NumPermitted, thisDirect%sdNames )
@@ -1402,6 +1409,21 @@ contains ! =====     Public Procedures     =============================
       call Deallocate_test ( convergQuantities, 'convergQuantities', ModuleName )
       call Deallocate_test ( directFiles, 'directFiles', ModuleName )
     end subroutine DeallocateStuff
+    function doOutputTypesMatch( type1, type2 ) result( match )
+      ! Args
+      integer, intent(in) :: type1, type2
+      logical :: match
+      select case ( type1 )
+      case ( l_l2gp, l_l2dgg )
+        match = any ( type2 == (/ l_l2gp, l_l2dgg /) )
+      case ( l_l2aux, l_hdf )
+        match = any ( type2 == (/ l_l2aux, l_hdf /) )
+      case ( l_l2fwm )
+        match = any ( type2 == (/ l_l2fwm, l_hdf /) )
+      case default
+        match = .false.
+      end select
+    end function doOutputTypesMatch
   end subroutine DirectWriteCommand
 
   ! ------------------------------------------------ LabelVectorQuantity -----
@@ -2182,6 +2204,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.144  2011/11/04 00:09:53  pwagner
+! Fixed bug that prevented writing matched output types
+!
 ! Revision 2.143  2011/10/07 00:06:02  pwagner
 ! May dump Matrices, Hessians from Fill, Join
 !
