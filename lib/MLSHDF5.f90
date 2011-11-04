@@ -971,9 +971,7 @@ contains ! ======================= Public Procedures =========================
     logical, optional, intent(in) :: andSlash ! Keep leading '/' if TRUE
 
     ! Local variables
-    integer :: fileID
     character, parameter :: gname = '/'
-    integer :: STATUS                   ! Flag
 
     ! Executable code
     call MLSMessageCalls( 'push', constantName='GetAllHDF5DSNames_MLSFile' )
@@ -5457,6 +5455,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.115  2011/11/04 23:41:16  pwagner
+! Removed unused items
+!
 ! Revision 2.114  2011/11/03 23:48:10  pwagner
 ! Added MLSFile api for GetHDF5DSDims
 !
