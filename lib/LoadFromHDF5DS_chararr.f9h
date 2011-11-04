@@ -19,18 +19,28 @@
     integer :: SPACEID                  ! ID of dataspace
     integer :: MEMSPACEID               ! ID of dataspace
     integer :: SETID                    ! ID of dataset
+    integer :: LOCID                    ! ID of file or group or subgroup
     integer :: STRINGTYPE               ! String type
-    integer(kind=Size_t) :: STRINGSIZE               ! String size
-
+    integer(kind=Size_t) :: STRINGSIZE  ! String size
     integer :: Rank
-
 ! $Id$
 
     ! Executable code
+    locID = MLSFile%fileID%f_id
+    if ( MLSFile%fileID%grp_id > 0 ) locID = MLSFile%fileID%grp_id
+    ! This next is inelegant: grp_id should be a linked list
+    if ( MLSFile%fileID%sd_id > 0 ) locID = MLSFile%fileID%sd_id
     rank = size(shp)
     call MLSMessageCalls( 'push', constantName='LoadFromHDF5DS_chararr'//digits(rank) )
     shp = shape ( value )
-    call h5dOpen_f ( MLSFile%fileID%f_id, name, setID, status )
+    if ( .not. MLSFile%stillOpen ) then
+      call mls_openFile(MLSFile, status)
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to open file ' // trim(MLSFile%name), &
+        & MLSFile=MLSFile )
+      locID = MLSFile%fileID%f_id
+    endif
+    call h5dOpen_f ( locID, name, setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open dataset ' // trim(name), &
       & MLSFile=MLSFile )
@@ -66,6 +76,9 @@
 !   end subroutine LoadFromHDF5DS_chararr*
 
 ! $Log$
+! Revision 2.4  2011/11/04 23:40:36  pwagner
+! Should handle inelegant (i.e. hackish) may of subgrouping ids
+!
 ! Revision 2.3  2011/11/03 23:47:07  pwagner
 ! Corrected mistaken use sd_id instead of f_id for locID
 !
