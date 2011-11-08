@@ -149,7 +149,7 @@ program mockup
     co = CreateValue4AgileVector(qco, value=COInput)
     call AddValue2Vector(state, co)
 
-    o2 = CreateMLSValue_O2 (vGridStandard37, hGridStandard)
+    o2 = CreateMLSValue_O2 (vGridStandard37, hGridStandard, qname='O2')
     call AddValue2Vector(state, o2)
 
     qSO2 = CreateQtyTemplate(l_vmr, avgrid=vGridStandard37, ahgrid=hGridStandard, &
@@ -435,7 +435,7 @@ program mockup
     !================== Done closing and clean up file objects ================
 
     diffVector = observed - radiance
-    call dump(diffVector, details=1)
+    !call dump(diffVector, details=1)
 
     !===== Clean up calculated and observed radiance and related vectors ======
     call DestroyAgileVectorContent (radiance)
@@ -455,6 +455,9 @@ program mockup
 end program
 
 ! $Log$
+! Revision 1.51  2011/11/03 17:44:32  honghanh
+! Bug fix in mockup
+!
 ! Revision 1.50  2011/11/02 04:20:16  honghanh
 ! Mockup for new CFM API.
 !

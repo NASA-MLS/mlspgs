@@ -448,13 +448,14 @@ module CFM_MLSSetup_m
 
     end subroutine CFM_MLSCleanup_Obsolete
 
-    type(VectorValue_T) function CreateMLSValue_O2 (avgrid, ahgrid) result(o2)
+    type(VectorValue_T) function CreateMLSValue_O2 (avgrid, ahgrid, qname) result(o2)
         type(VGrid_T), intent(in) :: avgrid
         type(HGrid_T), intent(in) :: ahgrid
+        character(len=*), intent(in), optional :: qname
 
         type(QuantityTemplate_T) :: o2template
 
-        o2template = CreateQtyTemplate(l_vmr, avgrid=avgrid, ahgrid=ahgrid, qMolecule=l_o2)
+        o2template = CreateQtyTemplate(l_vmr, avgrid=avgrid, ahgrid=ahgrid, qMolecule=l_o2, qname=qname)
 
         o2 = CreateValue4AgileVector(o2template)
         call FillVectorQtyFromProfile (o2, .false., o2_heights, o2_values, phyq_vmr)
@@ -1396,6 +1397,9 @@ module CFM_MLSSetup_m
 end module
 
 ! $Log$
+! Revision 1.29  2011/10/31 20:04:59  honghanh
+! Change CreateMLSValue_FromL1B to CreateMLSValue_FromL1BOA.
+!
 ! Revision 1.28  2011/10/20 00:23:07  honghanh
 ! Add elevation offset creation subroutine to public API
 !
