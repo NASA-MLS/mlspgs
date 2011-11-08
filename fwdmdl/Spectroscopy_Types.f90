@@ -11,7 +11,7 @@
 
 module Spectroscopy_Types
 
-!   use Intrinsic, only: L_None
+  use Intrinsic, only: L_None
   use MLSKINDS, only: R8
   implicit NONE
   private
@@ -51,8 +51,7 @@ module Spectroscopy_Types
     real :: DefaultIsotopeRatio = 1.0
     integer, pointer :: Lines(:)=>NULL() ! Indices in Lines database
     real(r8) :: Mass               ! Molecular mass in AMU
-!     integer :: Molecule = l_none   ! L_...; l_none => no catalog entry
-    integer :: Molecule = 0   ! L_...; l_none => no catalog entry
+    integer :: Molecule = l_none   ! L_...; l_none => no catalog entry
     logical, pointer :: Polarized(:)=>NULL() ! Used only in catalog extract to
                                    ! indicate that the lines(:) are to be
                                    ! processed with the polarized model
@@ -107,6 +106,9 @@ contains
 end module Spectroscopy_Types
 
 ! $Log$
+! Revision 2.3  2011/11/08 19:49:25  vsnyder
+! Get L_None from Intrinsic module
+!
 ! Revision 2.2  2011/11/01 22:15:41  vsnyder
 ! Add a comment to describe the Lines pointer
 !
