@@ -16,7 +16,9 @@ module SpectroscopyCatalog_m
   use INTRINSIC, only: L_NONE
   use MLSKINDS, only: R8
   use MLSCOMMON, only: MLSFILE_T
-  use MOLECULES, only: FIRST_MOLECULE, LAST_MOLECULE, L_EXTINCTION, L_EXTINCTIONV2
+  use MOLECULES, only: FIRST_MOLECULE, LAST_MOLECULE
+  use Spectroscopy_Types, only: Line_t, Lines, Catalog_t, MaxContinuum , &
+    & AddLineToDatabase
 
   ! More USEs below in each procedure.
 
@@ -29,51 +31,13 @@ module SpectroscopyCatalog_m
   public :: Dump_Lines_Database, Dump_SpectCat_Database, Dump_SpectCat_Item, Dump
   public :: ReadIsotopeRatios, Read_Spectroscopy, Write_Spectroscopy
 
+  ! Public types:
+  public :: Line_T, Catalog_T ! From Spectroscopy_Types
+
   interface DUMP
     module procedure Dump_Line, Dump_SpectCat_Database, Dump_SpectCat_Database_2d
     module procedure Dump_SpectCat_Item
   end interface
-
-  ! Private parameters
-  integer, public, parameter :: MaxContinuum = 6
-
-  ! Public types:
-  type, public :: Line_T           ! One line in the spectrum for a species
-    integer :: Line_Name           ! Sub_rosa index
-    real(r8) :: DELTA              ! Delta interference coefficient at 300K 1/mb
-    real(r8) :: EL                 ! Lower state energy cm-1
-    real(r8) :: GAMMA              ! Gamma interference coefficient at 300K 1/mb
-    real(r8) :: N                  ! Temperature power dependence of w
-    real(r8) :: N1                 ! Temperature dependency of delta
-    real(r8) :: N2                 ! Temperature dependency of gamma
-    real(r8) :: NS                 ! Pressure shift dependency on temperature
-    real(r8) :: PS                 ! Pressure shift parameter in MHz/mbar
-    real(r8) :: STR                ! Integrated spectral intensity
-                                   ! Log(nm**2 MHz) at 300 K
-    real(r8) :: V0                 ! Line center frequency MHz
-    real(r8) :: W                  ! Collision broadening parameter
-                                   ! MHz/mbar at 300 K
-    logical :: UseYi               ! Delta /= 0 .or. Gamma /= 0
-    integer, dimension(:), pointer :: QN=>NULL()      ! Optional quantum numbers
-    integer, dimension(:), pointer :: Signals=>NULL() ! List of signal indices for line
-    integer, dimension(:), pointer :: Sidebands=>NULL() ! Sidebands for above bands (-1,0,1)
-    logical, dimension(:), pointer :: Polarized=>NULL() ! Process this signal and
-                                   ! sideband using the polarized model
-  end type Line_T
-
-  type, public :: Catalog_T        ! Catalog entry for a species
-    real(r8) :: Continuum(MaxContinuum)  ! Continuum coefficients
-    real :: DefaultIsotopeRatio = 1.0
-    integer, pointer :: Lines(:)=>NULL() ! Indices in Lines database
-    real(r8) :: Mass               ! Molecular mass in AMU
-    integer :: Molecule = l_none   ! L_...; l_none => no catalog entry
-    logical, pointer :: Polarized(:)=>NULL() ! Used only in catalog extract to
-                                   ! indicate that the lines(:) are to be
-                                   ! processed with the polarized model
-    real(r8) :: Qlog(3)            ! Logarithm of the partition function
-                                   ! at 300, 225, and 150 K
-    integer :: Species_Name        ! Sub_rosa index of s_spectra label
-  end type Catalog_T
 
   type(catalog_T), public, parameter :: Empty_Cat = catalog_t ( &
     & 0.0_r8, 1.0, NULL(), 0.0_r8, l_none, NULL(), 0.0_r8, -1 )
@@ -82,14 +46,13 @@ module SpectroscopyCatalog_m
   ! The spectroscopy database:
   type(catalog_T), public, save :: Catalog(first_molecule:last_molecule)
 
+  public :: Lines             ! From Spectroscopy_Types
+
   ! String index of file from which spectroscopy database is read, 0 = L2CF
   integer, public, save :: SpectroscopyFile = 0
 
   ! Greatest number of lines in any catalog entry:
   integer, public, save :: MostLines = 0
-
-  ! The lines database:
-  type(line_T), public, pointer, dimension(:), save :: Lines => NULL()
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -102,21 +65,21 @@ contains ! =====  Public Procedures  ===================================
   ! -----------------------------------------------  Spectroscopy  -----
   subroutine Spectroscopy ( Root, TOOLKIT, pcfID, fileDatabase )
   ! Process the spectroscopy section.
+
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST, &
+      & Test_Allocate, Test_DeAllocate
     ! We need a lot of names from Init_Spectroscopy_Module.  First, the spec
     ! ID's:
-
-    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use INIT_SPECTROSCOPY_M, only: S_LINE, S_SPECTRA, S_READSPECTROSCOPY, &
-      & S_READISOTOPERATIOS, S_WRITESPECTROSCOPY
+      & S_READISOTOPERATIOS, S_WRITESPECTROSCOPY, &
     ! NOW THE FIELDS:
-    use INIT_SPECTROSCOPY_M, only: F_CONTINUUM, F_DELTA, F_DEFAULTISOTOPERATIO, &
+      & F_CONTINUUM, F_DELTA, F_DEFAULTISOTOPERATIO, &
       & F_EL, F_EMLSSIGNALS, F_EMLSSIGNALSPOL, F_GAMMA, F_LINES, F_MASS, &
       & F_MOLECULE, F_XPTL1SIGNALS, F_N, F_N1, F_N2, F_NS, F_PS, F_QLOG, F_QN, &
       & F_STR, F_UMLSSIGNALS, F_V0, F_W
     use INTRINSIC, only: L_EMLS, L_UMLS, L_XPTL1, &
       & PHYQ_DIMLESS => PHYQ_DIMENSIONLESS, PHYQ_FREQUENCY, S_TIME
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, &
-      & MLSMSG_DEALLOCATE, MLSMSG_ERROR
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use MORETREE, only: GET_FIELD_ID, GET_SPEC_ID
     use PARSE_SIGNAL_M, only: PARSE_SIGNAL
@@ -197,13 +160,11 @@ contains ! =====  Public Procedures  ===================================
     ! Create or expand the Lines database
     tempLines => Lines
     allocate ( lines(numLines), stat=status )
-    if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // "Lines")
+    call test_allocate ( status, moduleName, "Lines" )
     if ( associated(tempLines) ) then
       lines(:offsetLines) = tempLines
       deallocate ( tempLines, stat=status )
-      if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_DeAllocate // "TempLines")
+      call test_deallocate ( status, moduleName, "TempLines" )
     end if
 
     numLines = offsetLines
@@ -521,32 +482,10 @@ contains ! =====  Public Procedures  ===================================
     end subroutine SayTime
   end subroutine Spectroscopy
 
-  ! ------------------------------------------  AddLineToDatabase  -----
-  integer function AddLineToDatabase ( Database, Item )
-  ! Add a line to the Lines database, creating the database
-  ! if necessary.
-
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
-      & MLSMSG_Error
-
-    ! Dummy arguments
-    type(line_T), pointer, dimension(:) :: Database
-    type(line_T), intent(in) :: Item
-
-
-    ! Local variables
-    type(line_T), dimension(:), pointer :: tempDatabase
-
-    include "addItemToDatabase.f9h"
-
-    AddLineToDatabase = newSize
-  end function AddLineToDatabase
-
   ! --------------------------------------  Destroy_Line_Database  -----
   subroutine Destroy_Line_Database
 
-    use Allocate_Deallocate, only: Deallocate_Test
-    use MLSMessageModule, only: MLSMessage, MLSMSG_DeAllocate, MLSMSG_Error
+    use Allocate_Deallocate, only: Deallocate_Test, Test_Deallocate
 
     integer :: I, Status                   ! From deallocate
     if ( .not. associated(lines) ) return
@@ -557,8 +496,7 @@ contains ! =====  Public Procedures  ===================================
       call deallocate_test ( lines(i)%polarized, "Lines(i)%Polarized", moduleName )
     end do
     deallocate ( lines, stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      & MLSMSG_DeAllocate // "Lines" )
+    call test_deallocate ( status, moduleName, "Lines" )
   end subroutine Destroy_Line_Database
 
   ! ----------------------------------  Destroy_SpectCat_Database  -----
@@ -616,6 +554,10 @@ contains ! =====  Public Procedures  ===================================
     integer :: MyStart, MyEnd
     logical :: MyNumber
 
+    if ( .not. associated(lines) ) then
+      call output ( 'Spectroscopy lines database is not allocated', advance='yes' )
+      return
+    end if
     myStart = 1
     if ( present(start) ) myStart = start
     myEnd = size(lines)
@@ -663,10 +605,10 @@ contains ! =====  Public Procedures  ===================================
 
   ! -----------------------------------------  Dump_SpectCat_Item  -----
   subroutine Dump_SpectCat_Item ( Catalog, Details )
-    use DUMP_0, only: DUMP
-    use INTRINSIC, only: LIT_INDICES
-    use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT
-    use STRING_TABLE, only: DISPLAY_STRING, STRING_LENGTH
+    use Dump_0, only: Dump
+    use Intrinsic, only: Lit_indices
+    use Output_m, only: Blanks, NewLine, Output
+    use String_Table, only: Display_String, String_Length
 
     type(catalog_T), intent(in) :: Catalog
     integer, optional, intent(in) :: Details ! <= 0 => Don't dump lines,
@@ -762,14 +704,14 @@ contains ! =====  Public Procedures  ===================================
   ! ............................................  Get_File_Name  .....
   subroutine Get_File_Name ( pcfCode, &
     & spectroscopyFile, fileDataBase, MLSFile, toolkit, MSG, pcfEndCode )
-    use HDF, only: DFACC_RDonly
-    use INTRINSIC, only: L_HDF
-    use MLSCOMMON, only: MLSFILE_T
-    use MLSFILES, only: HDFVERSION_5, &
-      & ADDINITIALIZEMLSFILE, GETPCFROMREF, SPLIT_PATH_NAME
-    use OUTPUT_M, only: OUTPUT
-    use SDPTOOLKIT, only: PGS_PC_GETREFERENCE
-    use STRING_TABLE, only: GET_STRING
+    use hdf, only: dfacc_rdonly
+    use intrinsic, only: l_hdf
+    use MLSCommon, only: MLSFile_T
+    use MLSFiles, only: HDFVERSION_5, &
+      & AddInitializeMLSFile, GetPCFromRef, split_path_name
+    use output_m, only: output
+    use SDPToolkit, only: Pgs_pc_getReference
+    use String_Table, only: Get_String
     ! Dummy args
     integer, intent(in) :: pcfCode
     integer, intent(in) :: spectroscopyFile ! parser id
@@ -831,6 +773,7 @@ contains ! =====  Public Procedures  ===================================
       & MLSMSG_ERROR
     use MLSSIGNALS_M, only: MAXSIGLEN
     use MLSSTRINGS, only: CAPITALIZE
+    use MOLECULES, only: L_EXTINCTION, L_EXTINCTIONV2
     use MORETREE, only: GETLITINDEXFROMSTRING, GETSTRINGINDEXFROMSTRING
     use PARSE_SIGNAL_M, only: PARSE_SIGNAL
     use STRING_TABLE, only: GET_STRING, STRING_LENGTH
@@ -904,23 +847,24 @@ contains ! =====  Public Procedures  ===================================
   end subroutine ReadIsotopeRatios
 
 ! --------------------------------------------  Read_Spectroscopy  -----
-  ! Module-wise global variable LINES need to be associated before
-  ! calling this subroutine
+  ! Module-wise global variable LINES needs to be associated before
+  ! calling this subroutine.
+  ! Should be OK now.
   subroutine Read_Spectroscopy ( Where, FileName, FileType )
-    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST, &
+      & Test_Allocate, Test_Deallocate
 !   use DECLARATION_TABLE, only: DECLARE, DECLS, GET_DECL, LABEL
 !   use INTRINSIC, only: PHYQ_INVALID
     use IO_STUFF, only: GET_LUN
     use MACHINE, only: IO_ERROR
     use MLSHDF5, only: GETHDF5DSDIMS, ISHDF5DSPRESENT, LOADFROMHDF5DS, LOADPTRFROMHDF5DS
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
-      & MLSMSG_ERROR
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
     use MLSSIGNALS_M, only: MAXSIGLEN
     use MLSSTRINGS, only: CAPITALIZE
     use MORETREE, only: GETLITINDEXFROMSTRING, GETSTRINGINDEXFROMSTRING
     use PARSE_SIGNAL_M, only: PARSE_SIGNAL
     use TREE, only: NULL_TREE
-    use HDF5, only: H5F_ACC_RDONLY_F, H5FOPEN_F, H5FCLOSE_F, HSIZE_T
+    use HDF5, only: H5F_ACC_RDonly_F, H5FOPEN_F, H5FCLOSE_F, HSIZE_T
 
     integer, intent(in) :: Where ! in the parse tree
     character(len=*), intent(in) :: FileName, FileType
@@ -966,8 +910,9 @@ contains ! =====  Public Procedures  ===================================
     character(len=63) :: SpeciesName
     character(len=5) :: What
 
-    if (.not. associated(lines)) &
-       call MLSMessage(MLSMSG_Error, moduleName, "lines is NULL")
+! Should be OK now
+!     if (.not. associated(lines)) &
+!        call MLSMessage(MLSMSG_Error, moduleName, "lines is NULL")
 
     error = .false.
     signalError = .false.
@@ -978,15 +923,16 @@ contains ! =====  Public Procedures  ===================================
       ! Create or expand the Lines database
       call getHDF5DSDims ( fileID, 'Delta', Shp )
       nLines = shp(1)
-      line1 = size(lines)
+      line1 = 0
+      if ( associated(lines) ) line1 = size(lines)
       lineN = line1 + nLines
       allocate ( myLines(lineN), stat=iostat )
-      if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-        & MLSMSG_Allocate // 'MyLines' )
-      myLines(:line1) = lines
-      deallocate ( lines, stat=iostat )
-      if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-        & MLSMSG_DeAllocate // 'Lines' )
+      call test_allocate ( iostat, moduleName, 'Lines' )
+      if ( associated(lines) ) then
+        myLines(:line1) = lines
+        deallocate ( lines, stat=iostat )
+        call test_deallocate ( iostat, moduleName, 'Lines' )
+      end if
       lines => myLines
       ! Fill in the expanded part
       nullify ( lineNames, polarizedIndices, polarizedList, &
@@ -1087,8 +1033,7 @@ contains ! =====  Public Procedures  ===================================
       if ( shp2(2) /= maxContinuum ) call MLSMessage ( MLSMSG_Error, moduleName, &
         & 'Second dimension of continuum field of catalog has changed.' )
       allocate ( myCatalog(shp2(1)), stat=iostat )
-      if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-        & MLSMSG_Allocate // 'MyCatalog' )
+      call test_allocate ( iostat, moduleName, 'MyCatalog' )
       nullify ( catNames, continuum, lineIndices, lineList, moleculeNames, qlog )
       call loadPtrFromHDF5DS ( fileID, 'CatNames', catNames )
       call loadPtrFromHDF5DS ( fileID, 'Continuum', continuum )
@@ -1122,8 +1067,7 @@ contains ! =====  Public Procedures  ===================================
         end if
       end do
       deallocate ( myCatalog, stat=iostat )
-      if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-        & MLSMSG_Deallocate // 'MyCatalog' )
+      call test_deallocate ( iostat, moduleName, 'MyCatalog' )
       call deallocate_test ( catNames,      'CatNames', moduleName )
       call deallocate_test ( continuum,     'Continuum', moduleName )
       call deallocate_test ( lineList,      'LineList', moduleName )
