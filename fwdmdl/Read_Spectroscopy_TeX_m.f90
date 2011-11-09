@@ -156,6 +156,7 @@ contains
       end do
       read ( text(:l), * ) catalog(mol)%defaultIsotopeRatio, catalog(mol)%mass, &
         & catalog(mol)%Qlog, catalog(mol)%continuum
+      catalog(mol)%Qlog = log10(catalog(mol)%Qlog)
     end do
   4 continue
     close ( u )
@@ -299,4 +300,12 @@ contains
 
 end module Read_Spectroscopy_TeX_m
 
-! $log: $
+! $Log$
+! Revision 2.3  2011/11/09 00:14:54  vsnyder
+! Take base-10 logarithm of Qlog because that's what Create_Beta wants
+!
+! Revision 2.2  2011/11/01 22:11:51  vsnyder
+! Remove the call to InitMolecules
+
+! Revision 2.1  2011/11/01 20:50:06  vsnyder
+! Initial commit
