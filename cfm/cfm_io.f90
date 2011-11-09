@@ -41,218 +41,223 @@ module CFM_IO_M
    end subroutine
 
    subroutine Read_HDF5_Spectroscopy (filename)
-      use MLSHDF5, only: LoadFromHDF5DS, LoadPtrFromHDF5DS, GetHDF5DSDims, &
-                         IsHDF5DSPresent
-      use SpectroscopyCatalog_m, only: Line_T, Lines, catalog_T, &
-                                       MaxContinuum, MostLines, Catalog
-      use MLSCommon, only: r8
-      use MLSMessageModule, only: MLSMessage, MLSMSG_Error, &
-                                  MLSMSG_Allocate, MLSMSG_DeAllocate
-      use MoreTree, only: GetLitIndexFromString, GetStringIndexFromString
-      use Tree, only: Null_Tree
-      use Intrinsic, only: L_none
-      use Molecules, only: First_Molecule, Last_Molecule
-      use MLSSignals_m, only: MaxSigLen
-      use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
-      use Parse_Signal_m, only: Parse_Signal
-      use HDF5, only: H5F_ACC_RDONLY_F, H5FOpen_F, H5FClose_F, HSize_T
+       use SpectroscopyCatalog_m, only: read_spectroscopy
 
-      character(len=*) :: filename
-      ! Local variables
-      integer :: iostat, fileID, Line1, nLines, lineN, j, i
-      integer(hsize_t) :: Shp(1), Shp2(2) ! To get the shapes of datasets HD
-      type(line_t), pointer :: MyLines(:)
-      integer, pointer :: LineList(:)
-      integer, pointer :: LineIndices(:)
-      character(len=maxSigLen), pointer :: LineNames(:)
-      integer, pointer :: QNList(:) ! Concatenation from all lines
-      integer, pointer :: QNIndices(:) ! QNIndices(i) is index in
-      integer, pointer :: PolarizedIndices(:) ! PolarizedIndices(i) is index in
-                                   ! PolarizedList of last Polarized for line I.
-      logical, pointer :: PolarizedList(:) ! Concatenation from all lines
-      integer , pointer:: SignalIndices(:) ! signalIndices(i) is index in
-                                 ! SidebandList and SignalList of last signal
-                                 ! for line I.
-      integer, pointer :: SignalList(:) ! Concatenation from all lines
-      character(len=MaxSigLen) :: SignalName
-      character(len=MaxSigLen), pointer :: SignalNames(:)
-      integer, dimension(:), pointer :: SigInds ! From Parse_signal
-      integer, pointer :: SidebandList(:) ! Concatenation from all lines
-      logical :: signalError
-      character(len=63) :: MoleculeName
-      character(len=63), pointer :: MoleculeNames(:)
-      real(r8), pointer :: Qlog(:,:)
-      character(len=maxSigLen), pointer :: CatNames(:)
-      real(r8), pointer :: Continuum(:,:)
-      type(catalog_t), pointer :: MyCatalog(:)
+       character(len=*), intent(in) :: filename
 
-      ! Executables
-      signalError = .false.
-      call h5fopen_f ( trim(fileName), H5F_ACC_RDONLY_F, fileID, iostat )
-      if (iostat /= 0) call MLSMessage (MLSMSG_Error, ModuleName, &
-         & 'Unable to open HDF5 Spectroscopy file ' // trim(fileName) // '.' )
-      call getHDF5DSDims(fileID, 'Delta', shp)
-      nLines = shp(1)
-      line1 = 0
-      if ( associated(lines) ) line1 = size(lines)
-      lineN = line1 + nLines
-      allocate ( myLines(lineN), stat=iostat )
-      if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-        & MLSMSG_Allocate // 'MyLines' )
-      if ( associated(lines) ) then
-        myLines(:line1) = lines
-        deallocate ( lines, stat=iostat )
-        if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-        & MLSMSG_DeAllocate // 'Lines' )
-        lines => myLines
-      else
-        lines => myLines
-      end if
-      ! Fill in the expanded part
-      nullify ( lineNames, polarizedIndices, polarizedList, &
-        & qnIndices, qnList, signalIndices, signalList, &
-        & sidebandList, sigInds, signalNames )
-      call loadPtrFromHDF5DS ( fileID, 'LineNames', lineNames )
-      call loadPtrFromHDF5DS ( fileID, 'SignalNames', signalNames )
-
-      if ( IsHDF5DSPresent ( fileID, 'PolarizedList' ) ) then
-        call loadPtrFromHDF5DS ( fileID, 'PolarizedList', polarizedList )
-      else
-        call Allocate_test ( polarizedList, 0, 'PolarizedList', ModuleName )
-      end if
-
-      call loadPtrFromHDF5DS ( fileID, 'PolarizedIndices', polarizedIndices, &
-            lowBound=line1 )
-      call loadPtrFromHDF5DS ( fileID, 'QNList', qnList )
-      call loadPtrFromHDF5DS ( fileID, 'QNIndices', qnIndices, lowBound=line1 )
-
-      if ( IsHDF5DSPresent ( fileID, 'SidebandList' ) ) then
-        call loadPtrFromHDF5DS ( fileID, 'SidebandList', SidebandList )
-      else
-        call Allocate_test ( SidebandList, 0, 'SidebandList', ModuleName )
-      end if
-
-      if ( IsHDF5DSPresent ( fileID, 'SignalList' ) ) then
-        call loadPtrFromHDF5DS ( fileID, 'SignalList', SignalList )
-      else
-        call Allocate_test ( SignalList, 0, 'SignalList', ModuleName )
-      end if
-
-      call loadPtrFromHDF5DS ( fileID, 'SignalIndices', signalIndices, &
-        & lowBound=line1 )
-      call loadFromHDF5DS ( fileID, 'Delta', lines(line1+1:lineN)%delta )
-      call loadFromHDF5DS ( fileID, 'EL', lines(line1+1:lineN)%el )
-      call loadFromHDF5DS ( fileID, 'Gamma', lines(line1+1:lineN)%gamma )
-      call loadFromHDF5DS ( fileID, 'N', lines(line1+1:lineN)%n )
-      call loadFromHDF5DS ( fileID, 'N1', lines(line1+1:lineN)%n1 )
-      call loadFromHDF5DS ( fileID, 'N2', lines(line1+1:lineN)%n2 )
-      call loadFromHDF5DS ( fileID, 'NS', lines(line1+1:lineN)%ns )
-      call loadFromHDF5DS ( fileID, 'PS', lines(line1+1:lineN)%ps )
-      call loadFromHDF5DS ( fileID, 'Str', lines(line1+1:lineN)%str )
-      call loadFromHDF5DS ( fileID, 'V0', lines(line1+1:lineN)%v0 )
-      call loadFromHDF5DS ( fileID, 'W', lines(line1+1:lineN)%w )
-      call loadFromHDF5DS ( fileID, 'UseYi', lines(line1+1:lineN)%useYi )
-      do i = line1+1, lineN
-        lines(i)%line_name = 0
-        if ( lineNames(i) /= '' ) &
-          & lines(i)%line_name = getStringIndexFromString(trim(lineNames(i)))
-        ! Don't need to nullify QN, Polarized, Sidebands or Signals fields:
-        ! They spring into existence nullified.
-        call allocate_test ( lines(i)%qn, qnIndices(i)-qnIndices(i-1), &
-          & 'Lines(i)%QN', moduleName )
-        lines(i)%qn = qnList(qnIndices(i-1)+1:qnIndices(i))
-        if ( signalIndices(i) /= signalIndices(i-1) ) then
-          call allocate_test ( lines(i)%signals, signalIndices(i)-signalIndices(i-1), &
-            & 'Lines(i)%Signals', moduleName )
-          do j = 1, size(lines(i)%signals)
-            call parse_signal ( trim(signalNames(signalList(signalIndices(i-1)+j))), &
-              & sigInds, null_tree )
-            if ( .not. associated(sigInds) ) then
-              call MLSMessage (MLSMSG_error, ModuleName,  &
-              & 'The string ' // trim(signalNames(signalList(signalIndices(i-1)+j))) // &
-              & ' is not a signal name.' )
-              signalError = .true.
-            else
-              lines(i)%signals(j) = sigInds(1)
-            end if
-            ! We can wait to deallocate sigInds until after the loop because
-            ! parse_signal does allocate_test, which deallocates it first
-            ! if it's allocated.
-          end do ! j = 1, size(lines(i)%signals)
-          call deallocate_test ( sigInds, 'SigInds', moduleName )
-          call allocate_test ( lines(i)%sidebands, signalIndices(i)-signalIndices(i-1), &
-            & 'Lines(i)%Sidebands', moduleName )
-          lines(i)%sidebands = sidebandList(signalIndices(i-1)+1:signalIndices(i))
-          if ( polarizedIndices(i) /= polarizedIndices(i-1) ) then
-            call allocate_test ( lines(i)%polarized, polarizedIndices(i)-polarizedIndices(i-1), &
-              & 'Lines(i)%Polarized', moduleName )
-            lines(i)%polarized = polarizedList(polarizedIndices(i-1)+1:polarizedIndices(i))
-          end if
-        end if
-      end do
-      if (signalError) &
-         call MLSMessage(MLSMSG_Error, moduleName, &
-           'Signals in L2CF are inconsistent with signals used to create spectroscopy file')
-      call deallocate_test ( lineNames, 'LineNames', moduleName )
-      call deallocate_test ( signalNames, 'SignalNames', moduleName )
-      call deallocate_test ( polarizedIndices, 'PolarizedIndices', moduleName )
-      call deallocate_test ( polarizedList, 'PolarizedList', moduleName )
-      call deallocate_test ( qnIndices, 'QNIndices', moduleName )
-      call deallocate_test ( qnList, 'QNList', moduleName )
-      call deallocate_test ( signalIndices, 'SignalIndices', moduleName )
-      call deallocate_test ( signalList, 'SignalList', moduleName )
-      call deallocate_test ( sidebandList, 'SidebandList', moduleName )
-      ! Fill the catalog
-      call getHDF5DSDims ( fileID, 'Continuum', shp2 )
-      if ( shp2(2) /= maxContinuum ) call MLSMessage ( MLSMSG_Error, moduleName, &
-        & 'Second dimension of continuum field of catalog has changed.' )
-      allocate ( myCatalog(shp2(1)), stat=iostat )
-      if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-        & MLSMSG_Allocate // 'MyCatalog' )
-      nullify ( catNames, continuum, lineIndices, lineList, moleculeNames, qlog )
-      call loadPtrFromHDF5DS ( fileID, 'CatNames', catNames )
-      call loadPtrFromHDF5DS ( fileID, 'Continuum', continuum )
-      call loadPtrFromHDF5DS ( fileID, 'LineList', lineList )
-      call loadPtrFromHDF5DS ( fileID, 'LineIndices', lineIndices, lowBound=0 )
-      call loadPtrFromHDF5DS ( fileID, 'MoleculeNames', moleculeNames  )
-      call loadPtrFromHDF5DS ( fileID, 'Qlog', qlog )
-      call loadFromHDF5DS ( fileID, 'Mass', myCatalog%mass )
-      call loadFromHDF5DS ( fileID, 'IsotopeRatio', myCatalog%defaultIsotopeRatio )
-      call loadFromHDF5DS ( fileID, 'Molecule', myCatalog%molecule )
-      do i = 1, size(myCatalog)
-        myCatalog(i)%species_name = 0
-        if ( catNames(i) /= '' ) myCatalog(i)%species_name = &
-          & GetStringIndexFromString(trim(catNames(i)))
-        myCatalog(i)%continuum = continuum(i,:)
-        myCatalog(i)%qlog = qlog(i,:)
-        if ( myCatalog(i)%molecule <= 0 ) then
-          myCatalog(i)%molecule = l_none
-        else
-          j = getLitIndexFromString(trim(moleculeNames(myCatalog(i)%molecule)))
-          if ( j < first_molecule .or. j > last_molecule ) then
-            call MLSMessage ( MLSMSG_Error, moduleName, 'The string ' // &
-            & trim(moleculeNames(myCatalog(i)%molecule)) // ' is not a molecule name.' )
-          end if
-          myCatalog(i)%molecule = j
-          call allocate_test ( myCatalog(i)%lines, lineIndices(i)-lineIndices(i-1), &
-            & 'MyCatalog(i)%lines', moduleName )
-          myCatalog(i)%lines = lineList(lineIndices(i-1)+1:lineIndices(i)) + line1
-          mostLines = max(mostLines, size(myCatalog(i)%lines))
-          catalog(myCatalog(i)%molecule) = myCatalog(i)
-        end if
-      end do
-      deallocate ( myCatalog, stat=iostat )
-      if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-        & MLSMSG_Deallocate // 'MyCatalog' )
-      call deallocate_test ( catNames,      'CatNames', moduleName )
-      call deallocate_test ( continuum,     'Continuum', moduleName )
-      call deallocate_test ( lineList,      'LineList', moduleName )
-      call deallocate_test ( lineIndices,   'LineIndices', moduleName )
-      call deallocate_test ( moleculeNames, 'MoleculeNames', moduleName )
-      call deallocate_test ( qLog,          'QLog', moduleName )
-      call H5FClose_F ( fileID, iostat )
-      if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
-        & 'Unable to close HDF5 Spectroscopy file ' // trim(fileName) // '.' )
+       call read_spectroscopy(0, filename, 'HDF5')
+!      use MLSHDF5, only: LoadFromHDF5DS, LoadPtrFromHDF5DS, GetHDF5DSDims, &
+!                         IsHDF5DSPresent
+!      use SpectroscopyCatalog_m, only: Line_T, Lines, catalog_T, &
+!                                       MaxContinuum, MostLines, Catalog
+!      use MLSCommon, only: r8
+!      use MLSMessageModule, only: MLSMessage, MLSMSG_Error, &
+!                                  MLSMSG_Allocate, MLSMSG_DeAllocate
+!      use MoreTree, only: GetLitIndexFromString, GetStringIndexFromString
+!      use Tree, only: Null_Tree
+!      use Intrinsic, only: L_none
+!      use Molecules, only: First_Molecule, Last_Molecule
+!      use MLSSignals_m, only: MaxSigLen
+!      use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
+!      use Parse_Signal_m, only: Parse_Signal
+!      use HDF5, only: H5F_ACC_RDONLY_F, H5FOpen_F, H5FClose_F, HSize_T
+!
+!      character(len=*) :: filename
+!      ! Local variables
+!      integer :: iostat, fileID, Line1, nLines, lineN, j, i
+!      integer(hsize_t) :: Shp(1), Shp2(2) ! To get the shapes of datasets HD
+!      type(line_t), pointer :: MyLines(:)
+!      integer, pointer :: LineList(:)
+!      integer, pointer :: LineIndices(:)
+!      character(len=maxSigLen), pointer :: LineNames(:)
+!      integer, pointer :: QNList(:) ! Concatenation from all lines
+!      integer, pointer :: QNIndices(:) ! QNIndices(i) is index in
+!      integer, pointer :: PolarizedIndices(:) ! PolarizedIndices(i) is index in
+!                                   ! PolarizedList of last Polarized for line I.
+!      logical, pointer :: PolarizedList(:) ! Concatenation from all lines
+!      integer , pointer:: SignalIndices(:) ! signalIndices(i) is index in
+!                                 ! SidebandList and SignalList of last signal
+!                                 ! for line I.
+!      integer, pointer :: SignalList(:) ! Concatenation from all lines
+!      character(len=MaxSigLen) :: SignalName
+!      character(len=MaxSigLen), pointer :: SignalNames(:)
+!      integer, dimension(:), pointer :: SigInds ! From Parse_signal
+!      integer, pointer :: SidebandList(:) ! Concatenation from all lines
+!      logical :: signalError
+!      character(len=63) :: MoleculeName
+!      character(len=63), pointer :: MoleculeNames(:)
+!      real(r8), pointer :: Qlog(:,:)
+!      character(len=maxSigLen), pointer :: CatNames(:)
+!      real(r8), pointer :: Continuum(:,:)
+!      type(catalog_t), pointer :: MyCatalog(:)
+!
+!      ! Executables
+!      signalError = .false.
+!      call h5fopen_f ( trim(fileName), H5F_ACC_RDONLY_F, fileID, iostat )
+!      if (iostat /= 0) call MLSMessage (MLSMSG_Error, ModuleName, &
+!         & 'Unable to open HDF5 Spectroscopy file ' // trim(fileName) // '.' )
+!      call getHDF5DSDims(fileID, 'Delta', shp)
+!      nLines = shp(1)
+!      line1 = 0
+!      if ( associated(lines) ) line1 = size(lines)
+!      lineN = line1 + nLines
+!      allocate ( myLines(lineN), stat=iostat )
+!      if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+!        & MLSMSG_Allocate // 'MyLines' )
+!      if ( associated(lines) ) then
+!        myLines(:line1) = lines
+!        deallocate ( lines, stat=iostat )
+!        if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+!        & MLSMSG_DeAllocate // 'Lines' )
+!        lines => myLines
+!      else
+!        lines => myLines
+!      end if
+!      ! Fill in the expanded part
+!      nullify ( lineNames, polarizedIndices, polarizedList, &
+!        & qnIndices, qnList, signalIndices, signalList, &
+!        & sidebandList, sigInds, signalNames )
+!      call loadPtrFromHDF5DS ( fileID, 'LineNames', lineNames )
+!      call loadPtrFromHDF5DS ( fileID, 'SignalNames', signalNames )
+!
+!      if ( IsHDF5DSPresent ( fileID, 'PolarizedList' ) ) then
+!        call loadPtrFromHDF5DS ( fileID, 'PolarizedList', polarizedList )
+!      else
+!        call Allocate_test ( polarizedList, 0, 'PolarizedList', ModuleName )
+!      end if
+!
+!      call loadPtrFromHDF5DS ( fileID, 'PolarizedIndices', polarizedIndices, &
+!            lowBound=line1 )
+!      call loadPtrFromHDF5DS ( fileID, 'QNList', qnList )
+!      call loadPtrFromHDF5DS ( fileID, 'QNIndices', qnIndices, lowBound=line1 )
+!
+!      if ( IsHDF5DSPresent ( fileID, 'SidebandList' ) ) then
+!        call loadPtrFromHDF5DS ( fileID, 'SidebandList', SidebandList )
+!      else
+!        call Allocate_test ( SidebandList, 0, 'SidebandList', ModuleName )
+!      end if
+!
+!      if ( IsHDF5DSPresent ( fileID, 'SignalList' ) ) then
+!        call loadPtrFromHDF5DS ( fileID, 'SignalList', SignalList )
+!      else
+!        call Allocate_test ( SignalList, 0, 'SignalList', ModuleName )
+!      end if
+!
+!      call loadPtrFromHDF5DS ( fileID, 'SignalIndices', signalIndices, &
+!        & lowBound=line1 )
+!      call loadFromHDF5DS ( fileID, 'Delta', lines(line1+1:lineN)%delta )
+!      call loadFromHDF5DS ( fileID, 'EL', lines(line1+1:lineN)%el )
+!      call loadFromHDF5DS ( fileID, 'Gamma', lines(line1+1:lineN)%gamma )
+!      call loadFromHDF5DS ( fileID, 'N', lines(line1+1:lineN)%n )
+!      call loadFromHDF5DS ( fileID, 'N1', lines(line1+1:lineN)%n1 )
+!      call loadFromHDF5DS ( fileID, 'N2', lines(line1+1:lineN)%n2 )
+!      call loadFromHDF5DS ( fileID, 'NS', lines(line1+1:lineN)%ns )
+!      call loadFromHDF5DS ( fileID, 'PS', lines(line1+1:lineN)%ps )
+!      call loadFromHDF5DS ( fileID, 'Str', lines(line1+1:lineN)%str )
+!      call loadFromHDF5DS ( fileID, 'V0', lines(line1+1:lineN)%v0 )
+!      call loadFromHDF5DS ( fileID, 'W', lines(line1+1:lineN)%w )
+!      call loadFromHDF5DS ( fileID, 'UseYi', lines(line1+1:lineN)%useYi )
+!      do i = line1+1, lineN
+!        lines(i)%line_name = 0
+!        if ( lineNames(i) /= '' ) &
+!          & lines(i)%line_name = getStringIndexFromString(trim(lineNames(i)))
+!        ! Don't need to nullify QN, Polarized, Sidebands or Signals fields:
+!        ! They spring into existence nullified.
+!        call allocate_test ( lines(i)%qn, qnIndices(i)-qnIndices(i-1), &
+!          & 'Lines(i)%QN', moduleName )
+!        lines(i)%qn = qnList(qnIndices(i-1)+1:qnIndices(i))
+!        if ( signalIndices(i) /= signalIndices(i-1) ) then
+!          call allocate_test ( lines(i)%signals, signalIndices(i)-signalIndices(i-1), &
+!            & 'Lines(i)%Signals', moduleName )
+!          do j = 1, size(lines(i)%signals)
+!            call parse_signal ( trim(signalNames(signalList(signalIndices(i-1)+j))), &
+!              & sigInds, null_tree )
+!            if ( .not. associated(sigInds) ) then
+!              call MLSMessage (MLSMSG_error, ModuleName,  &
+!              & 'The string ' // trim(signalNames(signalList(signalIndices(i-1)+j))) // &
+!              & ' is not a signal name.' )
+!              signalError = .true.
+!            else
+!              lines(i)%signals(j) = sigInds(1)
+!            end if
+!            ! We can wait to deallocate sigInds until after the loop because
+!            ! parse_signal does allocate_test, which deallocates it first
+!            ! if it's allocated.
+!          end do ! j = 1, size(lines(i)%signals)
+!          call deallocate_test ( sigInds, 'SigInds', moduleName )
+!          call allocate_test ( lines(i)%sidebands, signalIndices(i)-signalIndices(i-1), &
+!            & 'Lines(i)%Sidebands', moduleName )
+!          lines(i)%sidebands = sidebandList(signalIndices(i-1)+1:signalIndices(i))
+!          if ( polarizedIndices(i) /= polarizedIndices(i-1) ) then
+!            call allocate_test ( lines(i)%polarized, polarizedIndices(i)-polarizedIndices(i-1), &
+!              & 'Lines(i)%Polarized', moduleName )
+!            lines(i)%polarized = polarizedList(polarizedIndices(i-1)+1:polarizedIndices(i))
+!          end if
+!        end if
+!      end do
+!      if (signalError) &
+!         call MLSMessage(MLSMSG_Error, moduleName, &
+!           'Signals in L2CF are inconsistent with signals used to create spectroscopy file')
+!      call deallocate_test ( lineNames, 'LineNames', moduleName )
+!      call deallocate_test ( signalNames, 'SignalNames', moduleName )
+!      call deallocate_test ( polarizedIndices, 'PolarizedIndices', moduleName )
+!      call deallocate_test ( polarizedList, 'PolarizedList', moduleName )
+!      call deallocate_test ( qnIndices, 'QNIndices', moduleName )
+!      call deallocate_test ( qnList, 'QNList', moduleName )
+!      call deallocate_test ( signalIndices, 'SignalIndices', moduleName )
+!      call deallocate_test ( signalList, 'SignalList', moduleName )
+!      call deallocate_test ( sidebandList, 'SidebandList', moduleName )
+!      ! Fill the catalog
+!      call getHDF5DSDims ( fileID, 'Continuum', shp2 )
+!      if ( shp2(2) /= maxContinuum ) call MLSMessage ( MLSMSG_Error, moduleName, &
+!        & 'Second dimension of continuum field of catalog has changed.' )
+!      allocate ( myCatalog(shp2(1)), stat=iostat )
+!      if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+!        & MLSMSG_Allocate // 'MyCatalog' )
+!      nullify ( catNames, continuum, lineIndices, lineList, moleculeNames, qlog )
+!      call loadPtrFromHDF5DS ( fileID, 'CatNames', catNames )
+!      call loadPtrFromHDF5DS ( fileID, 'Continuum', continuum )
+!      call loadPtrFromHDF5DS ( fileID, 'LineList', lineList )
+!      call loadPtrFromHDF5DS ( fileID, 'LineIndices', lineIndices, lowBound=0 )
+!      call loadPtrFromHDF5DS ( fileID, 'MoleculeNames', moleculeNames  )
+!      call loadPtrFromHDF5DS ( fileID, 'Qlog', qlog )
+!      call loadFromHDF5DS ( fileID, 'Mass', myCatalog%mass )
+!      call loadFromHDF5DS ( fileID, 'IsotopeRatio', myCatalog%defaultIsotopeRatio )
+!      call loadFromHDF5DS ( fileID, 'Molecule', myCatalog%molecule )
+!      do i = 1, size(myCatalog)
+!        myCatalog(i)%species_name = 0
+!        if ( catNames(i) /= '' ) myCatalog(i)%species_name = &
+!          & GetStringIndexFromString(trim(catNames(i)))
+!        myCatalog(i)%continuum = continuum(i,:)
+!        myCatalog(i)%qlog = qlog(i,:)
+!        if ( myCatalog(i)%molecule <= 0 ) then
+!          myCatalog(i)%molecule = l_none
+!        else
+!          j = getLitIndexFromString(trim(moleculeNames(myCatalog(i)%molecule)))
+!          if ( j < first_molecule .or. j > last_molecule ) then
+!            call MLSMessage ( MLSMSG_Error, moduleName, 'The string ' // &
+!            & trim(moleculeNames(myCatalog(i)%molecule)) // ' is not a molecule name.' )
+!          end if
+!          myCatalog(i)%molecule = j
+!          call allocate_test ( myCatalog(i)%lines, lineIndices(i)-lineIndices(i-1), &
+!            & 'MyCatalog(i)%lines', moduleName )
+!          myCatalog(i)%lines = lineList(lineIndices(i-1)+1:lineIndices(i)) + line1
+!          mostLines = max(mostLines, size(myCatalog(i)%lines))
+!          catalog(myCatalog(i)%molecule) = myCatalog(i)
+!        end if
+!      end do
+!      deallocate ( myCatalog, stat=iostat )
+!      if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+!        & MLSMSG_Deallocate // 'MyCatalog' )
+!      call deallocate_test ( catNames,      'CatNames', moduleName )
+!      call deallocate_test ( continuum,     'Continuum', moduleName )
+!      call deallocate_test ( lineList,      'LineList', moduleName )
+!      call deallocate_test ( lineIndices,   'LineIndices', moduleName )
+!      call deallocate_test ( moleculeNames, 'MoleculeNames', moduleName )
+!      call deallocate_test ( qLog,          'QLog', moduleName )
+!      call H5FClose_F ( fileID, iostat )
+!      if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
+!        & 'Unable to close HDF5 Spectroscopy file ' // trim(fileName) // '.' )
 
    end subroutine
 
@@ -379,6 +384,9 @@ module CFM_IO_M
 end module
 
 ! $Log$
+! Revision 1.5  2010/07/08 21:39:16  honghanh
+! Add ApplyBaseline to cfm_fill_m
+!
 ! Revision 1.4  2010/06/29 16:40:23  honghanh
 ! Remove all function/subroutine and user type forwarding from
 ! all CFM modules except for from cfm.f90
