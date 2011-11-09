@@ -569,14 +569,14 @@ contains
 
 !-------------------------------------------- Get_all_d2_delta_df2 -----
 
-subroutine Get_all_d2_delta_df2 ( max_f, indices_c, gl_inds, del_zeta, Grids_f,  &
+  subroutine Get_all_d2_delta_df2 ( max_f, indices_c, gl_inds, del_zeta, Grids_f,  &
                               & eta_zxp, do_calc_f, do_gl, del_s, ref_cor,     &
                               & ds_dz_gw, d2Alpha_df2_c, d2Alpha_df2_f,            &
                               & LD, nz_d_delta_df, nnz_d_delta_df, d2_delta_df2, &
                               & nothing )
 
-use LOAD_SPS_DATA_M, ONLY: GRIDS_T
-use MLSKinds, only: RP
+    use LOAD_SPS_DATA_M, ONLY: GRIDS_T
+    use MLSKinds, only: RP
 
 ! Inputs
 
@@ -748,7 +748,7 @@ use MLSKinds, only: RP
 
     end do   ! sps_i
 
-end subroutine Get_all_d2_delta_df2
+  end subroutine Get_all_d2_delta_df2
 
 !--------------------------------------------------  drad_tran_dt  -----
 ! This is the radiative transfer derivative wrt temperature model
@@ -2065,6 +2065,9 @@ end subroutine Get_all_d2_delta_df2
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.29  2011/11/09 00:17:44  vsnyder
+! Remove non-standard TAB characters
+!
 ! Revision 2.28  2011/08/20 00:44:02  vsnyder
 ! Get rid of DOS line ends
 !
