@@ -570,10 +570,9 @@ contains
     use MLSKINDS, only: RP, R8, IP
     use MOLECULES, only: L_N2, L_EXTINCTION, L_EXTINCTIONV2, L_H2O, L_O2
     use SLABS_SW_M, only: DVOIGT_SPECTRAL, VOIGT_LORENTZ, &
-      & SLABS_LINES, SLABS_LINES_DT, &
+      & SLABS_LINES, SLABS_LINES_DT, SLABS_STRUCT, &
       & SLABSWINT_LINES, SLABSWINT_LINES_DT
     use SPECTROSCOPYCATALOG_M, only: CATALOG_T, LINES
-    use SLABS_SW_M, only: SLABS_STRUCT
 
 ! Inputs:
     real(rp), intent(in) :: pressure   ! pressure in hPa
@@ -1590,6 +1589,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.109  2011/08/26 17:54:15  pwagner
+! purehunt recovers optimized functionality of fwdmdls own hunt
+!
 ! Revision 2.108  2011/08/25 18:17:46  vsnyder
 ! Remove unused use names
 !
