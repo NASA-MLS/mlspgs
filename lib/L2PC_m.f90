@@ -1497,7 +1497,8 @@ contains ! ============= Public Procedures ==========================
     MLSFile%access = DFACC_RDONLY
     MLSFile%HDFVersion = HDFVERSION_5
     MLSFile%type = l_hdf
-    call mls_openFile( MLSFile, status )
+    status = 0
+    if ( .not. MLSFile%stillOpen ) call mls_openFile( MLSFile, status )
     fileID = MLSFile%FileID%f_id
     ! call h5fopen_f ( MLSFile%name, H5F_ACC_RDONLY_F, fileID, status )
     ! MLSFile%FileID%f_id = fileID
@@ -2229,6 +2230,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.117  2011/11/09 17:41:02  pwagner
+! Fixed bug added with last commit
+!
 ! Revision 2.116  2011/11/04 23:38:47  pwagner
 ! Made consistent with MLSFile interface to MLSHDF5
 !
