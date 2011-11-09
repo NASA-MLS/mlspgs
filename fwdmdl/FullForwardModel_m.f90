@@ -54,7 +54,7 @@ contains
     use MLSKINDS, only: RP
     use MLSMESSAGEMODULE, only: MLSMSG_ERROR
     use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use MOLECULES, only: FIRST_MOLECULE, LAST_MOLECULE, L_CLOUDICE
+    use MOLECULES, only: L_CLOUDICE
     use MOREMESSAGE, ONLY: MLSMESSAGE
     use TOGGLES, only: Emit, Switches, Toggle
     use Trace_M, only: Trace_begin, Trace_end
@@ -322,7 +322,6 @@ contains
       & COMP_SPS_PATH_NO_FRQ, COMP_1_SPS_PATH_NO_FRQ
     use COMPUTE_GL_GRID_M, only: COMPUTE_GL_GRID
     use CONSTANTS, only: DEG2RAD, RAD2DEG
-    ! use D_HUNT_M, only: HUNT
     use DUMP_0, only: DUMP
     use FILTERSHAPES_M, only: DACSFILTERSHAPES, FILTERSHAPES
     use FORWARDMODELCONFIG, only: BETA_GROUP_T, CHANNELS_T, &
@@ -336,7 +335,6 @@ contains
     use HESSIANMODULE_1, only: HESSIAN_T
     use INTRINSIC, only: L_A, L_RADIANCE, L_TSCAT, L_VMR
     use LOAD_SPS_DATA_M, only: DESTROYGRIDS_T, DUMP, GRIDS_T
-    use L2PC_M, only: L2PC_T
     use MATRIXMODULE_1, only: MATRIX_T
     use MLSKINDS, only: R4, R8, RP, RV
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
@@ -344,8 +342,7 @@ contains
     use MLSSIGNALS_M, only: ARESIGNALSSUPERSET, GETNAMEOFSIGNAL, MATCHSIGNAL, &
       & RADIOMETERS, SIGNAL_T
     use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use MOLECULES, only: FIRST_MOLECULE, LAST_MOLECULE, &
-      & L_H2O, L_N2O, L_O3
+    use MOLECULES, only: L_H2O, L_N2O, L_O3
     use OUTPUT_M, only: OUTPUT
     use PATH_CONTRIB_M, only: GET_GL_INDS
     use PHYSICS, only: SPEEDOFLIGHT
@@ -433,7 +430,6 @@ contains
                                   ! P_Path(min_index+1), else min zeta is at
                                   ! or too close to the tangent
     integer :: N_More             ! Effective size of More_*_Path
-    integer :: NCG                ! Number of panels needing GL = Size(cg_inds)
     integer :: NGLMAX             ! NGL if all panels need GL
     integer :: NOFREQS            ! Number of frequencies for a pointing
     integer :: NOUSEDDACS         ! Number of different DACS in this run.
@@ -467,16 +463,22 @@ contains
     logical, parameter :: PFAFalse = .false.
     logical, parameter :: PFATrue = .true.
     logical :: Print_Incopt       ! For debugging, from -Sincp
+    logical :: Print_IncRad       ! For debugging, from -Sincr
     logical :: Print_Mag          ! For debugging, from -Smag
     logical :: Print_More_Points  ! Print if Do_More_Points finds more, from -SZMOR
-    logical :: Print_Path         ! Nicer format than Print_Incopt, for few molecules
+    integer :: Print_Path         ! Nicer format than Print_Incopt, for few molecules
     logical :: Print_Ptg          ! For debugging, from -Sptg
     logical :: Print_Rad          ! For debugging, from -Srad
     logical :: Print_Seez         ! For debugging, from -Sseez
     logical :: Print_TauL         ! For debugging, from -Staul
     logical :: Print_TauP         ! For debugging, from -Staup
     logical :: Print_TScat        ! For debugging, from -STScat
+    logical :: Print_TScat_Deriv  ! For debugging, Temp deriv, from -Sdtsct
     integer :: Print_TScat_Detail ! For debugging, from -S[pP]sct
+
+    character(len=*), parameter :: TScat_Detail_Heading = &
+      & "Scat_Phi   Scat_Ht   Scat_Zeta     Xi       D2     Tan_Phi    Tan_Ht  Begin Phi   End Phi Which Rev Fwd"
+
     logical :: temp_der, atmos_der, spect_der ! Flags for various derivatives
     logical :: atmos_second_der   ! Flag for atmos second derivatives
     logical :: Spect_Der_Center, Spect_Der_Width, Spect_Der_Width_TDep
@@ -662,6 +664,8 @@ contains
     real(rp) :: TAN_D2H_DHDT(s_t*sv_t_len)
     real(rp) :: TAN_PHI(no_tan_hts)
     real(rp) :: DDHIDHIDTL0(maxVert,n_t_zeta,s_t*no_sv_p_t)
+    ! Frequency-averaged derivatives
+    ! Channels x pointings x grid values == frequencies x surfaces x instances x molecules:
     real(r4) :: K_ATMOS(noUsedChannels,no_tan_hts,s_a*size(grids_f%values))
     real(r4) :: H_ATMOS(noUsedChannels,no_tan_hts,s_h*size(grids_f%values),s_h*size(grids_f%values))
     ! Channels x pointings x grid values == frequencies x surfaces x instances x molecules:
@@ -829,14 +833,16 @@ contains
     dump_rad_pol = switchDetail(switches, 'dpri') + 1
     dump_TScat = switchDetail(switches, 'dsct' ) > -1
     print_Incopt = switchDetail(switches, 'incp' ) > -1
+    print_IncRad = switchDetail(switches, 'incr' ) > -1
     print_Mag = switchDetail(switches, 'mag') > -1
     print_Ptg = switchDetail(switches, 'ptg') > -1
-    print_path = switchDetail(switches, 'path') > -1
+    print_path = switchDetail(switches, 'path')
     print_Rad = switchDetail(switches, 'rad') > -1
     print_Seez = switchDetail(switches, 'seez') > -1
     print_TauL = switchDetail(switches, 'taul') > -1
     print_TauP = switchDetail(switches, 'taup') > -1
     print_TScat = switchDetail(switches, 'TScat' ) > -1
+    Print_TScat_Deriv = switchDetail(switches, 'dtsct' ) > -1
     print_TScat_detail = 0
     if ( switchDetail(switches, 'psct' ) > -1 ) print_TScat_detail = 1
     if ( switchDetail(switches, 'Psct' ) > -1 ) print_TScat_detail = 2
@@ -1620,25 +1626,26 @@ contains
       integer :: C, ShapeInd
 
       if ( toggle(emit) .and. levels(emit) > 4 ) &
-        & call trace_begin ( 'ForwardModel.FrequencyAvg' )
+        & call trace_begin ( 'ForwardModel.Frequency_Average' )
 
-!          8 Frequency averaging?  N N Y Y - - Y Y - N
-!          4 PFA?                  N N N N Y Y Y Y N Y
-!          2 LBL?                  Y Y Y Y N N Y Y N Y
-!          1 Derivatives?          N Y N Y N Y N Y - -
-!            Frq_Avg_Sel value     2 3 A B C D E F
-!
-! =======================================================
-!
-! Impossible?                                          x
-! Radiances = RadV                 x x x x     x x       
-! K = K_frq                          x   x       x       
-! Frq Avg path integrated rad              x x     x
-! Combine total path radiances           x         x     
-! Frq Avg path integrated LBL deriv          x       x
-! Frq Avg rad Along Path                             x
-! Combine radiances along path           x           x   
-! Combine LBL and PFA derivs             x           x   
+! Conditions:  8 Frequency averaging?   -  N N - - N N Y Y Y Y
+!  - means     4 PFA?                   N  N N Y Y Y Y N N Y Y
+! "macht nix"  2 LBL?                   N  Y Y N N Y Y Y Y Y Y
+!              1 Derivatives?           -  N Y N Y N Y N Y N Y
+!                ---------------------------------------------
+!                Frq_Avg_Sel value     0,1 2 3 4 5 6 7
+!                                      8,9     C D     A B E F
+! ============================================================
+! Actions:
+! Impossible                            x                      
+! Radiances = RadV                         x x x x            
+! K = K_frq                                  x   x            
+! Frq Avg path integrated rad                          x x x  
+! Combine total path radiances                     x x        
+! Frq Avg path integrated LBL deriv                      x    
+! Frq Avg rad Along Path                                     x
+! Combine radiances along path                             x x
+! Combine LBL and PFA derivs                         x       x
 
       ! Do DACs stuff for all DACs channels first
       select case ( frq_avg_sel )
@@ -1652,19 +1659,29 @@ contains
       end select
 
       select case ( frq_avg_sel )
-      case ( 2, 3, 6, 7, 12, 13 ) ! Just copy radiance. PFA + DACS - LBL impossible
+      case ( 0, 1, 8, 9 )  ! Impossible: No LBL or PFA
+      case ( 2, 3, 4, 5, 12, 13 ) ! Just copy radiance. PFA + DACS - LBL impossible
         radiances(:,ptg_i) = radV(:noFreqs)
+      case ( 6, 7 ) ! PFA + monochromatic LBL
+        do c = 1, noUsedChannels
+          if ( channels(c)%dacs == 0 ) then
+            ! Combine LBL and PFA Tau's to get radiances.
+            call SCRT_PFA (c, tau_LBL, tau_PFA, t_script_pfa, radiances(c:c,ptg_i) )
+          else
+            radiances(c,ptg_i) = DACsStaging(channels(c)%used,channels(c)%dacs)
+          end if
+        end do
       case ( 10, 11, 14 )   ! Frq Avg path integrated radiance
         ! Now go through channel by channel
         do c = 1, noUsedChannels
           if ( channels(c)%dacs == 0 ) then
-            shapeInd = channels(c)%shapeInds(sx)
             if ( fwdModelConf%anyPFA(sx) ) then ! frq_avg_sel = 14
             ! Combine LBL and PFA Tau's to get radiances.
             ! It's OK to combine the Tau's before doing the frequency
             ! averaging because the filter function is normalized.
               call SCRT_PFA (c, tau_LBL, tau_PFA, t_script_pfa, radV(:noFreqs) )
             end if
+            shapeInd = channels(c)%shapeInds(sx)
             call freq_Avg ( frequencies, &
               &   filterShapes(shapeInd)%filterGrid,  &
               &   filterShapes(shapeInd)%filterShape, &
@@ -1685,13 +1702,10 @@ contains
             radiances(c,ptg_i) = DACsStaging(channels(c)%used,channels(c)%dacs)
           end if
         end do
-      case default          ! Impossible cases: No LBL or PFA,
-                            ! PFA and no frequency averaging
       end select
 
       if ( any_der ) then
-        call frequency_average_derivatives ( ptg_i, frq_avg_sel == 15 )
-        
+        call frequency_average_derivatives ( ptg_i, combine=iand(frq_avg_sel,15) == 7 )
         if ( atmos_second_der ) then
           call frequency_avg_second_derivs ( ptg_i, frq_avg_sel == 15 )
         end if
@@ -1700,12 +1714,11 @@ contains
 
 
       if ( toggle(emit) .and. levels(emit) > 4 ) &
-        & call trace_end ( 'ForwardModel.FrequencyAvg' )
+        & call trace_end ( 'ForwardModel.Frequency_Average' )
     end subroutine Frequency_Average
 
   ! ...............................  Frequency_Average_Derivative  .....
     subroutine Frequency_Average_Derivative ( Grids, K_Frq, K, Mol, Combine )
-
       ! Frequency average or simply copy K_Frq to give K, the final
       ! Jacobian.
 
@@ -1721,25 +1734,49 @@ contains
       real(rp) :: R    ! Frequency-averaged value
       integer :: SV_I  ! State-vector index
 
+      if ( toggle(emit) .and. levels(emit) > 6 ) &
+        call trace_begin ( 'ForwardModel.Frequency_Average_Derivative ', index=mol )
+
       if ( combine ) then
         ! Simply add newly-computed PFA derivatives in K_frq to
-        ! previously-averaged LBL derivatives in K.  Remember that
-        ! for PFA, the frequency dimension has extent noUsedChannels,
-        ! not maxNoPtgFreqs.  The first dimension of K_frq is at least
-        ! noUsedChannels, so we're guaranteed this will fit.
+        ! previously-averaged or monochromatic LBL derivatives in K. 
+        ! Remember that for PFA, the frequency dimension has extent
+        ! noUsedChannels, not maxNoPtgFreqs.  The first dimension of K_frq is
+        ! at least noUsedChannels, so we're guaranteed this will fit.
         do c = 1, noUsedChannels
           do sv_i = grids%l_v(mol-1)+1, grids%l_v(mol)
             k(c,sv_i) = k(c,sv_i) + k_frq(c,sv_i)
           end do
         end do
+        if ( toggle(emit) .and. levels(emit) > 6 ) &
+          call trace_end ( 'ForwardModel.Frequency_Average_Derivative ', index=mol )
         return
       end if
 
-      ! Only possible values for Frq_avg_sel here are 3, 7, 11, 13, 15.
+      ! Only possible values for Frq_avg_sel here are 3, 5, 11, 13, 15.
       ! See Frequency_Average for definition of Frq_avg_sel.
 
       select case ( frq_avg_sel )
-      case ( 11, 15 ) ! See Frequency_Average.
+      case ( 3, 5, 7, 13 ) ! Not frequency averaging, or PFA alone, or
+                      ! Monochromatic LBL + PFA + Derivatives after
+                      ! first call to One_Frequency; copy.
+                      ! Shouldn't get here after both LBL and PFA passes
+                      ! through One_Frequency -- should be handled by
+                      ! combine == .true.
+        do sv_i = grids%l_v(mol-1)+1, grids%l_v(mol)
+          if ( grids%deriv_flags(sv_i) ) then
+            k(:,sv_i) = min ( max ( k_frq(:,sv_i), &
+                          &   real(-huge(0.0_r4), rp ) ), &
+                          &   real( huge(0.0_r4), rp ) )
+          else
+            k(:,sv_i) = 0.0
+          end if
+        end do
+
+      case ( 11, 15 ) ! See Frequency_Average.  LBL and PFA have already
+                      ! been combined.  It's OK to frequency average the
+                      ! PFA contribution again because the filter function
+                      ! is normalized.
         ! Do DACs stuff for all DACs channels first
         do c = 1, noUsedDACS
           shapeInd = MatchSignal ( dacsFilterShapes%filter%signal, &
@@ -1768,18 +1805,12 @@ contains
             k(c,sv_i) = r
           end do                ! Grid loop
         end do                  ! Channel loop
-      case ( 3, 7, 13 )         ! Not frequency averaging, or PFA alone; copy.
-        do sv_i = grids%l_v(mol-1)+1, grids%l_v(mol)
-          if ( grids%deriv_flags(sv_i) ) then
-            k(:,sv_i) = min ( max ( k_frq(:,sv_i), &
-                          &   real(-huge(0.0_r4), rp ) ), &
-                          &   real( huge(0.0_r4), rp ) )
-          else
-            k(:,sv_i) = 0.0
-          end if
-        end do
-      case default             ! Impossible
-      end select               ! Frequency averaging or not
+      case default              ! Impossible
+      end select                ! Frequency averaging or not
+
+      if ( toggle(emit) .and. levels(emit) > 6 ) &
+        call trace_end ( 'ForwardModel.Frequency_Average_Derivative ', index=mol )
+
     end subroutine Frequency_Average_Derivative
 
   ! ..............................  Frequency_Average_Derivatives  .....
@@ -1793,12 +1824,14 @@ contains
       integer :: K  ! Loop inductor
       integer :: UB ! Upper bound for first dimension of k_..._frq
 
+      if ( toggle(emit) .and. levels(emit) > 5 ) &
+        call trace_begin ( 'ForwardModel.Frequency_Average_Derivatives' )
+
       ub = noFreqs
       if ( combine ) ub = max(ub,noUsedChannels)
 
       if ( temp_der ) call frequency_average_derivative ( grids_tmp, &
         &               k_temp_frq(:ub,:), k_temp(:,ptg_i,:), 1, combine )
-
       ! Frequency Average the atmospheric derivatives with the appropriate
       ! filter shapes
       if ( atmos_der ) then
@@ -1830,6 +1863,9 @@ contains
           & ( grids_n, k_spect_dn_frq(:ub,:), k_spect_dn(:,ptg_i,:), k, &
           & combine )
       end do
+
+      if ( toggle(emit) .and. levels(emit) > 5 ) &
+        call trace_end ( 'ForwardModel.Frequency_Average_Derivatives' )
 
     end subroutine Frequency_Average_Derivatives
 
@@ -2026,7 +2062,7 @@ contains
         ! Now we've identified the pointing grids.  Locate the tangent grid
         ! within it.
         call Hunt ( whichPointingGrid%oneGrid%height, &
-                 &  tan_press, grids, allowTopValue=.TRUE., nearest=.TRUE. )
+                      & tan_press, grids, allowTopValue=.TRUE., nearest=.TRUE. )
         ! Work out the maximum number of frequencies
         maxNoPtgFreqs = 0
         do ptg_i = 1, no_tan_hts
@@ -2156,7 +2192,6 @@ contains
       use FORWARDMODELCONFIG, only: QTYSTUFF_T
       use GET_ETA_MATRIX_M, only: GET_ETA_SPARSE, GET_ETA_1D_HUNT
       USE LOAD_SPS_DATA_M, ONLY: FINDINGRID
-      use MATRIXMODULE_1, only: FINDBLOCK
       use MLSNUMERICS, only: COEFFICIENTS_R8, INTERPOLATEARRAYSETUP, &
         & INTERPOLATEARRAYTEARDOWN
       use MLSSIGNALS_M, only: GETNAMEOFSIGNAL
@@ -2220,7 +2255,6 @@ contains
       integer :: I             ! Loop inductor
       integer :: I_R           ! Index in Rad, Xis, eventually number of them
       integer :: I_Z           ! Index of scattering point zeta in Z_psig
-      integer :: Mol           ! Loop inductor, for molecules
       integer :: N_Theta_e     ! size(theta_e) or size(theta_e)-1, depending
                                ! upon whether theta_e covers 0..360 or lacks one
       integer :: Phi_i         ! Loop inductor and subscript
@@ -2245,6 +2279,8 @@ contains
 
       if ( toggle(emit) ) call Trace_Begin ( 'Generate_TScat' )
       switch42 = switchDetail(switches,"42") > -1
+      if ( switch42 ) write ( 42, '(a)' ) &
+        & 'Phi_Ref  Scat_Phi  Scat_Ht   Scat_Zeta      Xi     Rad    Signal'
 
       ! Work out by-channel stuff
 
@@ -2293,13 +2329,12 @@ contains
       phi_ref = mod(phitan%values(FwdModelConf%TScatMIF,MAF),360.0_r8) * deg2rad
       r_eq = get_R_eq ( phi_ref, earthradc_sq )
 
-      if ( print_TScat_detail > 0 ) then
+      if ( print_TScat_detail > 1 .and. .not. print_TScat_Deriv .and. .not. &
+        & print_incopt .and. .not. print_incrad .and. print_path <= 0 ) then
         call output ( rad2deg*phi_ref, before="Phi_Ref = " )
         call output ( r_eq, before=", R_eq = ", advance="yes" )
         ! Debugging output header
-        call output ( &
-          & "Scat_Phi   Scat_Ht   Scat_Zeta     Xi       D2     Tan_Phi    Tan_Ht  Begin Phi   End Phi Which Rev Fwd", &
-          & advance="yes" )
+        call output ( TScat_Detail_Heading, advance="yes" )
       end if
 
       ! Create an array of theta's extended to negative values, onto which
@@ -2491,18 +2526,25 @@ contains
               &                  r_eq, xi, xis, rads, k_atmos_TScat, &
               &                  k_temp_TScat, i_r, rev=.false. )
 
-            xi = dPhi_xi + dPhi - pi
-            scat_tan_phi = scat_tan_phi + 2.0 * dphi_xi
-            call one_tscat_ray ( ptg_i, 3, vel_rel, scat_tan_phi,    &
-              &                  scat_zeta, scat_phi, scat_ht,       &
-              &                  r_eq, xi, xis, rads, k_atmos_TScat, &
-              &                  k_temp_TScat, i_r, rev=.false. )
+            if ( abs(dPhi_xi) > epsilon(1.0) ) then
+              ! The next two rays are different from the previous two
+              xi = dPhi_xi + dPhi - pi
+              ! Put xi in -180..180:
+              if ( abs(xi) > pi ) xi = xi - sign(pix2,xi)
+              scat_tan_phi = scat_tan_phi + 2.0 * dphi_xi
+              call one_tscat_ray ( ptg_i, 3, vel_rel, scat_tan_phi,    &
+                &                  scat_zeta, scat_phi, scat_ht,       &
+                &                  r_eq, xi, xis, rads, k_atmos_TScat, &
+                &                  k_temp_TScat, i_r, rev=.false. )
 
-            xi = xi + pi
-            call one_tscat_ray ( ptg_i, 4, vel_rel, scat_tan_phi,    &
-              &                  scat_zeta, scat_phi, scat_ht,       & 
-              &                  r_eq, xi, xis, rads, k_atmos_TScat, &
-              &                  k_temp_TScat, i_r, rev=.true. )
+              xi = xi + pi
+              ! Put xi in -180..180:
+              if ( abs(xi) > pi ) xi = xi - sign(pix2,xi)
+              call one_tscat_ray ( ptg_i, 4, vel_rel, scat_tan_phi,    &
+                &                  scat_zeta, scat_phi, scat_ht,       & 
+                &                  r_eq, xi, xis, rads, k_atmos_TScat, &
+                &                  k_temp_TScat, i_r, rev=.true. )
+            end if
 
           end do ! ptg_i
 
@@ -2601,9 +2643,13 @@ contains
           ! Sort the xis in preparation for interpolating.
           call sortp ( xis(:i_r), 1, i_r, sort_xi(:i_r) )
 
-          !{ Interpolate the phase function to IWC and Temperature at the
-          !  scattering point and convolve the interpolated phase function
-          !  with the interpolated radiances.  Let $x$ be temperature, $y$
+          !{ Interpolate the phase function and its IWC and temperature
+          !  derivatives to IWC and Temperature at the scattering point,
+          !  and the $\xi$'s, and convolve the interpolated phase function
+          !  with the interpolated radiances.  The interpolated values are
+          !  in order according to the sorted $\xi$'s.
+          
+          !  Let $x$ be temperature, $y$
           !  be IWC, and $z$ be the phase function.
           !
           ! Let $\xi_1 = \frac{x-x_0}{x_1-x_0}$, $\xi_0 = \frac{x_1-x}{x_1-x_0} =
@@ -2637,20 +2683,23 @@ contains
                    & TScat%template%noChans * (zeta_i-1)
             ! Interpolate P to scattering point IWC and temperature, and
             ! angles Xi at which radiative transfer was done.
-            call interpolate_P_to_theta_e ( p(t_ix+0:t_ix+1,iwc_ix+0:iwc_ix+1,:,freq_ix(f_i)), &
+            call interpolate_P_to_theta_e ( &
+              & p(t_ix+0:t_ix+1,iwc_ix+0:iwc_ix+1,:,freq_ix(f_i)), &
               & Eta_t_iwc, Theta_e(:n_theta_e), Beg_Pos_Theta, &
               & Xis(sort_xi(:i_r)), coeffs_Theta_e_Xi, &
               & P_on_Xi(:i_r) )
             if ( atmos_der ) &
-              & call interpolate_P_to_theta_e ( dP_dIWC(t_ix+0:t_ix+1,iwc_ix+0:iwc_ix+1,:,freq_ix(f_i)), &
-              & Eta_t_iwc, Theta_e(:n_theta_e), Beg_Pos_Theta, &
-              & Xis(sort_xi(:i_r)), coeffs_Theta_e_Xi, &
-              & dP_dIWC_on_Xi(:i_r) )
+              & call interpolate_P_to_theta_e ( &
+               & dP_dIWC(t_ix+0:t_ix+1,iwc_ix+0:iwc_ix+1,:,freq_ix(f_i)), &
+               & Eta_t_iwc, Theta_e(:n_theta_e), Beg_Pos_Theta, &
+               & Xis(sort_xi(:i_r)), coeffs_Theta_e_Xi, &
+               & dP_dIWC_on_Xi(:i_r) )
             if ( temp_der ) &
-              & call interpolate_P_to_theta_e ( dP_dT(t_ix+0:t_ix+1,iwc_ix+0:iwc_ix+1,:,freq_ix(f_i)), &
-              & Eta_t_iwc, Theta_e(:n_theta_e), Beg_Pos_Theta, &
-              & Xis(sort_xi(:i_r)), coeffs_Theta_e_Xi, &
-              & dP_dT_on_Xi(:i_r) )
+              & call interpolate_P_to_theta_e ( &
+               & dP_dT(t_ix+0:t_ix+1,iwc_ix+0:iwc_ix+1,:,freq_ix(f_i)), &
+               & Eta_t_iwc, Theta_e(:n_theta_e), Beg_Pos_Theta, &
+               & Xis(sort_xi(:i_r)), coeffs_Theta_e_Xi, &
+               & dP_dT_on_Xi(:i_r) )
 
             !{ Compute $\int_{-\pi}^\pi \, f(\xi) P(\xi)\, \text{d}\xi$ using
             ! trapezoidal quadrature, without assuming equal abscissa spacing,
@@ -2713,6 +2762,7 @@ contains
                 end if
               end if
             end do ! ptg_i = 2, i_r
+
             !{ It isn't necessary to divide by
             ! $\int \, P(\xi) \sin\xi \, \text{d}\xi$
             ! because that normalization was done when the $P$ tables were
@@ -2785,7 +2835,7 @@ contains
       use CS_EXPMAT_M, only: CS_EXPMAT
       use DO_T_SCRIPT_M, only: TWO_D_T_SCRIPT, TWO_D_T_SCRIPT_CLOUD
       use D_T_SCRIPT_DTNP_M, only: DT_SCRIPT_DT
-      use DUMP_PATH_M, only: DUMP_PATH
+      use DUMP_PATH_M, only: DUMP_PATH, SPS_LIST
       use GET_BETA_PATH_M, only: GET_BETA_PATH, GET_BETA_PATH_CLOUD, &
         & GET_BETA_PATH_PFA, GET_BETA_PATH_POLARIZED
       use GET_DALPHA_DF_M, only: GET_DALPHA_DF, GET_D2ALPHA_DF2
@@ -2850,7 +2900,7 @@ contains
       integer :: I_STOP              ! Stop path integration before I_End
       integer :: J, L                ! Loop inductor and subscript
       integer :: Mie_Frq_Index       ! Index of Frq in F_s in Read_Mie
-      integer :: NCG                ! Number of panels needing GL = Size(cg_inds)
+      integer :: NCG                 ! Number of panels needing GL = Size(cg_inds)
       integer :: NGL                 ! Total # of GL points = Size(gl_inds)
       integer :: P_Stop              ! Where to stop in polarized case
       logical :: PFA_or_not_pol      ! PFA .or. .not. fwdModelConf%polarized
@@ -2867,7 +2917,7 @@ contains
       real(r8), parameter :: TOL = 1.D-190
 
       if ( toggle(emit) .and. levels(emit) > 4 ) &
-        & call Trace_Begin ( 'ForwardModel.One_Frequency', index=frq_i )
+        & call Trace_Begin ( 'ForwardModel.One_Frequency ', index=frq_i )
 
       pfa_or_not_pol = pfa .or. .not. fwdModelConf%polarized
 
@@ -3201,16 +3251,23 @@ contains
       end do
 
       if ( print_incopt ) then
-        call dump ( beta_path_c(i_start:i_end,:), name="Beta_Path_C" )
-        call dump ( sps_path_c(i_start:i_end,:), name="SPS_Path" )
-        call dump ( alpha_path_c(i_start:i_end), name="Alpha_Path_C" )
-        call dump ( incoptdepth(i_start+1:i_end-1), name="Incoptdepth" )
-        call dump ( del_s(i_start+1:i_end-1), name="Del_s" )
+        call sps_list ( fwdModelConf )
+        call dump ( beta_path_c(i_start:i_end,:), name="Beta_Path_C", lbound=i_start )
+        call dump ( sps_path_c(i_start:i_end,:), name="SPS_Path_C", lbound=i_start )
+        call dump ( alpha_path_c(i_start:i_end), name="Alpha_Path_C", lbound=i_start )
+        call dump ( incoptdepth(i_start+1:i_end-1), name="Incoptdepth", lbound=i_start+1 )
+        call dump ( del_s(i_start+1:i_end-1), name="Del_s", lbound=i_start+1 )
+        call dump ( gl_inds, name="GL_Inds" )
+        call dump ( cg_inds, name="CG_Inds" )
       end if
 
       if ( .not. fwdModelConf%polarized ) then
 
       ! Compute SCALAR radiative transfer --------------------------
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!! TScat computation needs incoptdepth(:i_end-1), but this breaks the gold brick
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         call get_tau ( frq_i, gl_inds, cg_inds, i_start, e_rflty,  &
           & del_zeta, alpha_path_c, ref_corr, incoptdepth(:i_end), &
@@ -3246,16 +3303,18 @@ contains
         inc_rad_path(:i_start-1) = 0.0
         inc_rad_path(i_stop+1:) = 0.0
 
-        if ( print_incopt ) then
-          call dump ( tau%tau(i_start:i_stop,frq_i), name="Tau" )
-          call dump ( inc_rad_path(i_start:i_stop), name="Inc_Rad_Path" )
+        if ( print_incRad ) then
+          call dump ( tau%tau(i_start:i_stop,frq_i), name="Tau", lbound=i_start )
+          call dump ( inc_rad_path(i_start:i_stop), name="Inc_Rad_Path", lbound=i_start )
+          call dump ( t_script(i_start:i_stop), name="T_Script", lbound=i_start )
           call output ( frq_i, before="RadV(" )
           call output ( radV, before=") = ", advance="yes" )
         end if
 
-        if ( print_path ) call dump_path ( fwdModelConf, i_start, i_end, &
-          & phi_path(c_inds), z_path(c_inds), sps_path_c(:npc,:), beta_path_c, &
-          & alpha_path_c, incoptdepth, frq_i, tau, inc_rad_path )
+        if ( print_path > -1 ) call dump_path ( print_path, fwdModelConf, &
+          & i_start, i_stop, i_end, phi_path(c_inds), z_path(c_inds), &
+          & sps_path_c(:npc,:), beta_path_c, alpha_path_c, incoptdepth, &
+          & inc_rad_path, t_path_c, frq_i, tau, frq )
 
       else ! Polarized model; can't combine with PFA or TScat
 
@@ -3450,6 +3509,7 @@ contains
             & inc_rad_path, i_start, tan_pt_c, i_stop,                     &
             & grids_tmp%deriv_flags, pfa .and. iand(frq_avg_sel,7) == 7,   &
             & k_temp_frq )
+
             ! pfa .and. iand(frq_avg_sel,7) == 7 means doing PFA and did LBL
             ! and need derivatives.
 
@@ -3555,7 +3615,7 @@ contains
       end if
 
       if ( toggle(emit) .and. levels(emit) > 4 ) &
-        & call Trace_End ( 'ForwardModel.One_Frequency, index=frq_i' )
+        & call Trace_End ( 'ForwardModel.One_Frequency ', index=frq_i )
 
     end subroutine One_Frequency
 
@@ -3605,11 +3665,8 @@ contains
                                                     ! Negative if we're trying to
                                                     ! trace an Earth-intersecting ray.
 
-      character(len=*), parameter :: TScat_Detail_Heading = &
-        & "Scat_Phi   Scat_Ht   Scat_Zeta     Xi       D2     Tan_Phi    Tan_Ht  Begin Phi   End Phi Which Rev Fwd"
-
       integer :: I_start, I_end ! Boundaries of coarse path to use
-      character(max(128,len(TScat_Detail_Heading)+2)) :: Line    ! Of output
+      character(max(128,len(TScat_Detail_Heading)+10)) :: Line    ! Of output
       logical :: MyRev          ! "Reverse the integration path"
       real(rp) :: R_EQ          ! Equivalent Earth Radius at true surface
       real(rp) :: REQ_S  ! Equivalent Earth Radius at height reference surface
@@ -3627,7 +3684,7 @@ contains
       e_rflty = 1.0
 
       if ( toggle(emit) .and. levels(emit) > 4 ) &
-        & call Trace_Begin ( 'ForwardModel.MetricsEtc' )
+        & call Trace_Begin ( 'ForwardModel.Metrics_Etc' )
 
       ! Compute where the tangent is.
       tan_ind_c = max(1,ptg_i-surfaceTangentIndex+1) ! On coarse grid
@@ -3723,58 +3780,61 @@ contains
           tan_pt_c = npc - tan_pt_c ! The first one, not the same one
           tan_pt_f = ngp1 * tan_pt_c - ng
         end if
+        if ( scat_index == tan_pt_c + 1 ) scat_index = tan_pt_c
 
         ! Check that we hit it well enough.
         if ( abs(z_coarse(scat_index)-scat_zeta) > 0.05 .or. &
           &  scat_d2 > scat_tol .or. &
           ! or print details if requested
           &  print_TScat_detail > 0 ) then
-          if ( print_TScat_detail == 0 ) call output ( TScat_Detail_Heading, &
-            & advance="yes" )
+          if ( print_TScat_detail /= 1 .or. print_TScat_Deriv .or. &
+            & print_incopt .or. print_incrad .or. print_path > -1 ) &
+            & call output ( TScat_Detail_Heading, advance="yes" )
           write ( line, "(f7.2,f12.4,f9.3,f11.2,f10.6,f9.2,f11.4,f8.2,i4,f8.2,i4,4x,L1)" ) &
             & rad2deg*scat_phi, scat_ht, scat_zeta, rad2deg*xi, sqrt(scat_d2), & ! km/ht, not (km/ht)**2
             & rad2deg*tan_phi, tan_ht, rad2deg*phi_path(1), c_inds(scat_index), &
-            & rad2deg*phi_path(npf), which, myRev
+            & rad2deg*phi_path(c_inds(scat_index)), which, myRev
           if ( present(forward) ) then; line = trim(line) // merge("   T", "   F", forward)
-          else ; line = trim(line) // " T"
+          else ; line = trim(line) // "   T"
           end if
           if ( abs(z_coarse(scat_index)-scat_zeta) > 0.05 .or. &
             &  scat_d2 > scat_tol ) then
             ! Are we trying to trace an Earth-intersecting ray, for TScat
             ! generation, but the detailed Metrics calculation discovered
             ! it's not one?
-            line(len(TScat_detail_heading)+2:len(TScat_detail_heading)+2) = ">"
-            call output ( trim(line) ) ! Too far away from scattering point
-            if ( scat_ht > tan_ht .and. which < 0 ) then
-              call output ( " abandoned", advance="yes" )
-            else
-              call newLine
+            line(len(TScat_detail_heading)+1:) = "> abandoned"
+            call output ( trim(line), advance="yes" ) ! Too far away from scattering point
+            if ( scat_ht <= tan_ht .or. which > 0 .or. print_TScat_detail > 0 ) then
               call output ( req_s, before="Req_s = " )
               call output ( mod(phitan%values(FwdModelConf%TScatMIF,MAF),360.0_r8), &
                 & before=", Phi_ref = ", advance="yes" )
               call dump ( z_coarse(:size(c_inds)), name="Z_Coarse" )
               call dump ( rad2deg*phi_path(c_inds), name="Phi_Path", format="(f14.8)" )
               call dump ( h_path(c_inds), name="H_Path", format="(f14.6)" )
+            end if
+            if ( scat_ht <= tan_ht .or. which > 0 ) &
               call MLSMessage ( merge(MLSMSG_Warning,MLSMSG_Error,switchDetail(switches,'igsc')>0), &
                 & moduleName, 'Scattering point appears not to be in path' )
-              end if
             scat_index = -1
           else
             call output ( trim(line) // " <", advance="yes" ) ! Close enough
-          end if
-          if ( print_TScat_detail > 1 ) then
-            call output ( tan_pt_c, before='Tan_Pt_C = ', after=', ' )
-            call output ( scat_index, before='Phi_Path_C(', after=':)', advance='yes' )
-            call dump ( rad2deg*phi_path(c_inds(scat_index:)) )
-            call output ( scat_index, before='H_Path_C(', after=':)', advance='yes' )
-            call dump ( h_path(c_inds(scat_index:)) )
-            call output ( scat_index, before='Z_Coarse(', after=':)', advance='yes' )
-            call dump ( z_coarse(scat_index:npc) )
+            if ( print_TScat_detail > 1 ) then
+              call output ( tan_pt_c, before='Tan_Pt_C = ' )
+              call dump ( rad2deg*phi_path(c_inds(:scat_index)), name=', Phi_Path_C' )
+              call dump ( h_path(c_inds(:scat_index)), name='H_Path_C' )
+              call dump ( z_coarse(:scat_index), name='Z_Coarse' )
+            end if
           end if
         end if
-        if ( scat_index < 1 ) return ! No ray to trace
-        i_start = scat_index
-        i_end = npc
+        if ( scat_index < 1 ) then
+          if ( toggle(emit) ) then
+            if ( levels(emit) > 4 ) call trace_end ( 'ForwardModel.Metrics_Etc' )
+            if ( levels(emit) > 3 ) call trace_end ( 'ForwardModel.Pointing ', index=ptg_i )
+          end if
+          return ! No ray to trace
+        end if
+        i_start = 1
+        i_end = scat_index
       else
         i_start = 1
         i_end = npc
@@ -3952,6 +4012,7 @@ contains
 !         & do_calc_zp(1:npf,:), sps_path(1:npf,:),                  &
 !         & do_calc_fzp(1:npf,:), eta_fzp(1:npf,:), nz_fzp, nnz_fzp )
 
+      ! Compute the refractive index - 1
       if ( h2o_ind > 0 ) then
         ! Even if we did the refractive correction we need to do this,
         ! because the refractive correction changes phi_path, which
@@ -4144,7 +4205,7 @@ contains
       end if
 
       if ( toggle(emit) .and. levels(emit) > 4 ) &
-        & call Trace_End ( 'ForwardModel.MetricsEtc' )
+        & call trace_end ( 'ForwardModel.Metrics_Etc' )
 
 !{{\bfseries Notations}
 ! 
@@ -4283,9 +4344,10 @@ contains
           call frequency_avg_path ( frequencies, &
             & inc_rad_path(:npc,:), rad_avg_path(:npc,:) )
           ! Multiply by Tau_PFA to combine PFA contribution in One_Frequency.
-          call frequency_average_derivatives ( ptg_i, .false. )
-          if ( atmos_second_der ) call frequency_avg_second_derivs ( ptg_i, .false. )
+            call frequency_average_derivatives ( ptg_i, combine=.false. )
+            if ( atmos_second_der ) call frequency_avg_second_derivs ( ptg_i, .false. )
         end if
+
         do frq_i = 1, size(channelCenters)
           call one_frequency ( ptg_i, frq_i, alpha_path_c(:npc),                &
             & beta_path_c(:npc,:,frq_i), c_inds(:npc), del_s(:npc),             &
@@ -4310,7 +4372,8 @@ contains
 
       end if ! FwdModelConf%anyPFA(sx)
 
-      call frequency_average ( ptg_i )! or maybe just store
+      ! Frequency average, or store, or combine LBL and PFA
+      call frequency_average ( ptg_i )
 
       ! If we're doing frequency averaging, there's a different frequency
       ! grid for each pointing, but we don't need to deallocate it here
@@ -4360,13 +4423,22 @@ contains
         &                 scat_tan_ht=scat_tan_ht, forward=forward, rev=rev, &
         &                 which=which )
 
-      if ( my_scat_index <= 1 ) return ! No ray to trace
+      if ( my_scat_index <= 0 ) return ! No ray to trace
 
       i_r = i_r + 1
       xis(i_r) = xi
       rads(:,i_r) = radiances(:,ptg_i)
       if ( atmos_der ) k_atmos_TScat(:,i_r,:) = k_atmos(:,ptg_i,:)
-      if ( temp_der ) k_temp_TScat(:,i_r,:) = k_temp(:,ptg_i,:)
+      if ( temp_der ) then
+        k_temp_TScat(:,i_r,:) = k_temp(:,ptg_i,:)
+        if ( print_tscat_deriv ) then
+          call output ( i_r, before='For TScat ray ' )
+          call output ( rad2deg*xi, before=' at angle ', format='(f7.2)' )
+          call output ( i_r, before=' k_temp_TScat(:,', after=',:) ' )
+          call dump ( k_temp_TScat(:,i_r,:) )
+        end if
+      end if
+
     end subroutine One_TScat_Ray
 
   end subroutine FullForwardModelAuto
