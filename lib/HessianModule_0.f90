@@ -220,7 +220,7 @@ contains
                                   & Fill )
   ! Create an empty HessianElement_T structure
     use Allocate_Deallocate, only: ALLOCATE_TEST, TEST_ALLOCATE
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMSG_ERROR
+    use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
 
     type(HessianElement_T), intent(inout) :: H ! inout so we can destroy it before
                                         ! its components are nullified by
@@ -810,6 +810,7 @@ contains
        return
     else if ( DEEBUG .and. any( h%kind == (/ h_full, h_sparse /) ) .and. &
       & h%tuplesFilled > 0 ) then
+      call output( 'About to dump h with details=0', advance='yes' )
       call dump( h, details=0, name='Before optimizing Hessian block' )
       if ( h%kind == h_full ) then
         call outputnamedValue( 'count(h%values /= 0.0)', count(h%values /= 0.0) )
@@ -839,6 +840,7 @@ contains
         if ( verbose ) call outputNamedValue( 'Sparsifying full Hessian;' // &
           & 'Number of nozero elements', n )
         call Sparsify_Hessian ( H )
+        if ( verbose ) call output( 'Returned from Sparsifying full Hesssian', advance='yes' )
       end if
       if ( h%kind /= h_Sparse ) then
         call MLSMessageCalls( 'pop' )
@@ -988,7 +990,7 @@ o:    do while ( i < n )
 
     use Allocate_Deallocate, only: DEALLOCATE_TEST, &
       & TEST_ALLOCATE, TEST_DEALLOCATE
-    use MLSMessageModule, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMSG_ERROR
+    use MLSMessageModule, only: MLSMESSAGECALLS
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use TOGGLES, only: SWITCHES
 
@@ -1001,15 +1003,19 @@ o:    do while ( i < n )
     verbose = ( switchDetail(switches, 'hess') > -1 ) .or. .true.
     call MLSMessageCalls( 'push', constantName=ModuleName // '%SparsifyFullHessian' )
     n = count(h%values /= 0)
+    if ( verbose ) &
+      & call outputNamedValue ( 'About to Sparsify Hessian with non-zeros', n )
     h%kind   = H_Sparse
     h%nRows  = size ( h%values, 1 )
     h%nCols1 = size ( h%values, 2 )
     h%nCols2 = size ( h%values, 3 )
 
     if ( associated(h%tuples) ) then
+      call outputNamedValue ( 'Must deallocate old tuples array', h%tuplesFilled )
       deallocate ( h%tuples, stat=status )
       call test_deallocate ( status, ModuleName // '%SparsifyFullHessian', "H%Tuples" )
     end if
+    call outputNamedValue ( 'About to allocate Hessian tuples', n )
     allocate ( h%tuples(n), stat=status )
     call test_allocate ( status, ModuleName // '%SparsifyFullHessian', "H%Tuple", (/ 1 /), (/ n /), -1 )
 
@@ -1035,7 +1041,6 @@ o:    do while ( i < n )
     ! depending on whether its representation is currently Full
     ! or already Sparse
 
-    use Allocate_Deallocate, only: DEALLOCATE_TEST
     use MLSMessageModule, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMSG_ERROR
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use TOGGLES, only: SWITCHES
@@ -1156,6 +1161,7 @@ o:    do while ( i < n )
     call MLSMessage ( MLSMSG_Warning, ModuleName, &
       & "Streamlining Hessians is probably still buggy--use with caution (paw)" )
 
+    call outputNamedValue ( 'switches', trim(switches) )
     verbose = ( switchDetail(switches, 'hess') > -1 )
     h%optimizedAlready = .false.
     if ( verbose ) call outputNamedValue( 'h%kind', h%kind )
@@ -1227,24 +1233,22 @@ o:    do while ( i < n )
       if ( verbose .and. nnz > 0) &
         & call outputNamedValue( 'Before streamlining full Hessian;' // &
         & 'Number of nozero elements', nnz )
-      do k = 1, h%nCols2 - 1
+      do k = 1, h%nCols2
         s2 = ( k-1 ) / q2%noChans + 1
-        do j = k + 1, h%nCols1
+        do j = 1, h%nCols1
           s1 = ( j-1 ) / q1%noChans + 1
           if ( surface < 0 .and. scaleheight < 0._r8 ) then
             ! no op; some compilers may complain
             cutoff = 0._r8
           else if ( surface > 0 .and. abs(s1-s2) > surface ) then
             h%values ( :, j, k ) = 0
-            h%values ( :, k, j ) = 0
           else if ( scaleHeight > 0._r8 .and. &
             & abs ( q1%surfs(s1,1) - q2%surfs(s2,1) ) > scaleHeight ) then
             h%values ( :, j, k ) = 0
-            h%values ( :, k, j ) = 0
           end if
         end do
       end do
-      if ( threshold > 0 ) then
+      if ( threshold > 0._r8 ) then
         cutoff = threshold * maxval(abs(h%values))
         ! where ( abs(h%values) < cutoff ) h%values = 0.0
         do k = 1, h%nCols2
@@ -1307,6 +1311,9 @@ o:    do while ( i < n )
 end module HessianModule_0
 
 ! $Log$
+! Revision 2.23  2011/11/10 16:20:00  pwagner
+! Fixed bug in streamline
+!
 ! Revision 2.22  2011/10/14 00:35:06  pwagner
 ! Further attempts to stop hanging during Streamline
 !
