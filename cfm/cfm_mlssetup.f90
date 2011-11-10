@@ -476,12 +476,13 @@ module CFM_MLSSetup_m
     end function
 
     type(VectorValue_T) function CreateMLSValue_FromL1BOA (qType, instrumentModule, filedatabase, &
-    firstL1Maf, lastL1Maf) result (vv)
+    firstL1Maf, lastL1Maf, qname) result (vv)
         integer, intent(in) :: qType
         character(len=*), intent(in) :: instrumentModule
         type (MLSFile_T), dimension(:), pointer :: filedatabase
         integer, intent(in) :: firstL1Maf
         integer, intent(in) :: lastL1Maf
+        character(len=*), intent(in), optional :: qname
 
         type(MLSChunk_T) :: chunk
         type(QuantityTemplate_T) :: template
@@ -490,18 +491,18 @@ module CFM_MLSSetup_m
         chunk%lastMafIndex = lastL1Maf
 
         template = CreateQtyTemplate(qType, filedatabase=filedatabase, chunk=chunk, &
-                                     qInstModule=instrumentModule)
+                                     qInstModule=instrumentModule, qname=qname)
         vv = CreateValue4AgileVector(template)
         call FillVectorQuantityFromL1B (vv, chunk, filedatabase, .false.)
     end function
 
-    type(VectorValue_T) function CreateMLSValue_ElevationOffset (band, upper) result (vv)
+    type(VectorValue_T) function CreateMLSValue_ElevationOffset (band, upper, qname) result (vv)
         integer, intent(in) :: band
         logical, intent(in) :: upper ! if upper is false, then it's lower
+        character(len=*), intent(in), optional :: qname
 
         type(QuantityTemplate_T) :: template
         character(len=32) :: signal
-        character(len=7) :: nam = " "
         real(r8) :: spreadvalue
 
         select case(band)
@@ -510,197 +511,158 @@ module CFM_MLSSetup_m
                 call MLSMessage(MLSMSG_Error, moduleName, "Band 1U does not exist.")
             else
                 signal = band1L
-                nam = 'elev1L'
                 spreadvalue = velev1L
             endif
         case (2)
             if (upper) then
                 signal = band2U
-                nam = 'elev2U'
                 spreadvalue = velev2U
             else
                 signal = band2L
-                nam = 'elev2L'
                 spreadvalue = velev2L
             endif
         case (3)
             if (upper) then
                 signal = band3U
-                nam = 'elev3U'
                 spreadvalue = velev3U
             else
                 signal = band3L
-                nam = 'elev3L'
                 spreadvalue = velev3L
             endif
         case (4)
             if (upper) then
                 signal = band4U
-                nam = 'elev4U'
                 spreadvalue = velev4U
             else
                 signal = band4L
-                nam = 'elev4L'
                 spreadvalue = velev4L
             endif
         case (5)
             if (upper) then
                 signal = band5U
-                nam = 'elev5U'
                 spreadvalue = velev5U
             else
                 signal = band5L
-                nam = 'elev5L'
                 spreadvalue = velev5L
             endif
         case (6)
             if (upper) then
                 signal = band6U
-                nam = 'elev6U'
                 spreadvalue = velev6U
             else
                 signal = band6L
-                nam = 'elev6L'
                 spreadvalue = velev6L
             endif
         case (7)
             if (upper) then
                 signal = band7U
-                nam = 'elev7U'
                 spreadvalue = velev7U
             else
                 signal = band7L
-                nam = 'elev7L'
                 spreadvalue = velev7L
             endif
         case (8)
             if (upper) then
                 signal = band8U
-                nam = 'elev8U'
                 spreadvalue = velev8U
             else
                 signal = band8L
-                nam = 'elev8L'
                 spreadvalue = velev8L
             endif
         case (9)
             if (upper) then
                 signal = band9U
-                nam = 'elev9U'
                 spreadvalue = velev9U
             else
                 signal = band9L
-                nam = 'elev9L'
                 spreadvalue = velev9L
             endif
         case (10)
             if (upper) then
                 signal = band10U
-                nam = 'elev10U'
                 spreadvalue = velev10U
             else
                 signal = band10L
-                nam = 'elev10L'
                 spreadvalue = velev10L
             endif
         case (11)
             if (upper) then
                 signal = band11U
-                nam = 'elev11U'
                 spreadvalue = velev11U
             else
                 signal = band11L
-                nam = 'elev11L'
                 spreadvalue = velev11L
             endif
         case (12)
             if (upper) then
                 signal = band12U
-                nam = 'elev12U'
                 spreadvalue = velev12U
             else
                 signal = band12L
-                nam = 'elev12L'
                 spreadvalue = velev12L
             endif
         case (13)
             if (upper) then
                 signal = band13U
-                nam = 'elev13U'
                 spreadvalue = velev13U
             else
                 signal = band13L
-                nam = 'elev13L'
                 spreadvalue = velev13L
             endif
         case (14)
             if (upper) then
                 signal = band14U
-                nam = 'elev14U'
                 spreadvalue = velev14U
             else
                 signal = band14L
-                nam = 'elev14L'
                 spreadvalue = velev14L
             endif
         case (15)
             if (upper) then
                 signal = band15U
-                nam = 'elev15U'
                 spreadvalue = velev15U
             else
                 signal = band15L
-                nam = 'elev15L'
                 spreadvalue = velev15L
             endif
         case (16)
             if (upper) then
                 signal = band16U
-                nam = 'elev16U'
                 spreadvalue = velev16U
             else
                 signal = band16L
-                nam = 'elev16L'
                 spreadvalue = velev16L
             endif
         case (17)
             if (upper) then
                 signal = band17U
-                nam = 'elev17U'
                 spreadvalue = velev17U
             else
                 signal = band17L
-                nam = 'elev17L'
                 spreadvalue = velev17L
             endif
         case (18)
             if (upper) then
                 signal = band18U
-                nam = 'elev18U'
                 spreadvalue = velev18U
             else
                 signal = band18L
-                nam = 'elev18L'
                 spreadvalue = velev18L
             endif
         case (19)
             if (upper) then
                 signal = band19U
-                nam = 'elev19U'
                 spreadvalue = velev19U
             else
                 signal = band19L
-                nam = 'elev19L'
                 spreadvalue = velev19L
             endif
         case (20)
             if (upper) then
                 signal = band20U
-                nam = 'elev20U'
                 spreadvalue = velev20U
             else
                 signal = band20L
-                nam = 'elev20L'
                 spreadvalue = velev20L
             endif
         case (21)
@@ -708,7 +670,6 @@ module CFM_MLSSetup_m
                 call MLSMessage(MLSMSG_Error, moduleName, "Band 21U does not exist.")
             else
                 signal = band21L
-                nam = 'elev21L'
                 spreadvalue = velev21L
             endif
         case (22)
@@ -716,37 +677,30 @@ module CFM_MLSSetup_m
                 call MLSMessage(MLSMSG_Error, moduleName, "Band 22U does not exist.")
             else
                 signal = band22L
-                nam = 'elev22L'
                 spreadvalue = velev22L
             endif
         case (23)
             if (upper) then
                 signal = band23U
-                nam = 'elev23U'
                 spreadvalue = velev23U
             else
                 signal = band23L
-                nam = 'elev23L'
                 spreadvalue = velev23L
             endif
         case (24)
             if (upper) then
                 signal = band24U
-                nam = 'elev24U'
                 spreadvalue = velev24U
             else
                 signal = band24L
-                nam = 'elev24L'
                 spreadvalue = velev24L
             endif
         case (25)
             if (upper) then
                 signal = band25U
-                nam = 'elev25U'
                 spreadvalue = velev25U
             else
                 signal = band25L
-                nam = 'elev25L'
                 spreadvalue = velev25L
             endif
         case (26)
@@ -754,57 +708,46 @@ module CFM_MLSSetup_m
                 call MLSMessage(MLSMSG_Error, moduleName, "Band 26U does not exist.")
             else
                 signal = band26L
-                nam = 'elev26L'
                 spreadvalue = velev26L
             endif
         case (27)
             if (upper) then
                 signal = band27U
-                nam = 'elev27U'
                 spreadvalue = velev27U
             else
                 signal = band27L
-                nam = 'elev27L'
                 spreadvalue = velev27L
             endif
         case (28)
             if (upper) then
                 signal = band28U
-                nam = 'elev28U'
                 spreadvalue = velev28U
             else
                 signal = band28L
-                nam = 'elev28L'
                 spreadvalue = velev28L
             endif
         case (29)
             if (upper) then
                 signal = band29U
-                nam = 'elev29U'
                 spreadvalue = velev29U
             else
                 signal = band29L
-                nam = 'elev29L'
                 spreadvalue = velev29L
             endif
         case (30)
             if (upper) then
                 signal = band30U
-                nam = 'elev30U'
                 spreadvalue = velev30U
             else
                 signal = band30L
-                nam = 'elev30L'
                 spreadvalue = velev30L
             endif
         case (31)
             if (upper) then
                 signal = band31U
-                nam = 'elev31U'
                 spreadvalue = velev31U
             else
                 signal = band31L
-                nam = 'elev31L'
                 spreadvalue = velev31L
             endif
         case (32)
@@ -812,28 +755,24 @@ module CFM_MLSSetup_m
                 call MLSMessage(MLSMSG_Error, moduleName, "Band 32U does not exist.")
             else
                 signal = band32L
-                nam = 'elev32L'
             endif
         case (33)
             if (upper) then
                 signal = band33U
-                nam = 'elev33U'
             else
                 signal = band33L
-                nam = 'elev33L'
             endif
         case (34)
             if (upper) then
                 call MLSMessage(MLSMSG_Error, moduleName, "Band 34U does not exist.")
             else
                 signal = band34L
-                nam = 'elev34L'
             endif
         case default
             call MLSMessage (MLSMSG_Error, moduleName, "Band does not exist.")
         end select
 
-        template = CreateQtyTemplate (l_elevOffset, qSignal=signal, qName=nam)
+        template = CreateQtyTemplate (l_elevOffset, qSignal=signal, qName=qname)
 
         if (upper) then
             if (band == 33) then
@@ -855,13 +794,13 @@ module CFM_MLSSetup_m
         endif
     end function
 
-    type(VectorValue_T) function CreateMLSValue_LSF (band, upper) result (vv)
+    type(VectorValue_T) function CreateMLSValue_LSF (band, upper, qname) result (vv)
         integer, intent(in) :: band
         logical, intent(in) :: upper ! if upper is false, then it's lower
+        character(len=*), intent(in), optional :: qname
 
         type(QuantityTemplate_T) :: template
         character(len=32) :: signal
-        character(len=6) :: nam = " "
         real(r8) :: spreadvalue
 
         select case(band)
@@ -870,177 +809,137 @@ module CFM_MLSSetup_m
                 call MLSMessage(MLSMSG_Error, moduleName, "Band 1U does not exist.")
             else
                 signal = band1L
-                nam = 'lsf1L'
                 spreadvalue = vlimbSidebandFraction1L
             endif
         case (2)
             if (upper) then
                 signal = band2U
-                nam = 'lsf2U'
             else
                 signal = band2L
-                nam = 'lsf2L'
             endif
         case (3)
             if (upper) then
                 signal = band3U
-                nam = 'lsf3U'
             else
                 signal = band3L
-                nam = 'lsf3L'
             endif
         case (4)
             if (upper) then
                 signal = band4U
-                nam = 'lsf4U'
             else
                 signal = band4L
-                nam = 'lsf4L'
             endif
         case (5)
             if (upper) then
                 signal = band5U
-                nam = 'lsf5U'
             else
                 signal = band5L
-                nam = 'lsf5L'
             endif
         case (6)
             if (upper) then
                 signal = band6U
-                nam = 'lsf6U'
             else
                 signal = band6L
-                nam = 'lsf6L'
             endif
         case (7)
             if (upper) then
                 signal = band7U
-                nam = 'lsf7U'
             else
                 signal = band7L
-                nam = 'lsf7L'
             endif
         case (8)
             if (upper) then
                 signal = band8U
-                nam = 'lsf8U'
             else
                 signal = band8L
-                nam = 'lsf8L'
             endif
         case (9)
             if (upper) then
                 signal = band9U
-                nam = 'lsf9U'
             else
                 signal = band9L
-                nam = 'lsf9L'
             endif
         case (10)
             if (upper) then
                 signal = band10U
-                nam = 'lsf10U'
                 spreadvalue = vlimbSidebandFraction10U
             else
                 signal = band10L
-                nam = 'lsf10L'
                 spreadvalue = vlimbSidebandFraction10L
             endif
         case (11)
             if (upper) then
                 signal = band11U
-                nam = 'lsf11U'
                 spreadvalue = vlimbSidebandFraction11U
             else
                 signal = band11L
-                nam = 'lsf11L'
                 spreadvalue = vlimbSidebandFraction11L
             endif
         case (12)
             if (upper) then
                 signal = band12U
-                nam = 'lsf12U'
                 spreadvalue = vlimbSidebandFraction12U
             else
                 signal = band12L
-                nam = 'lsf12L'
                 spreadvalue = vlimbSidebandFraction12L
             endif
         case (13)
             if (upper) then
                 signal = band13U
-                nam = 'lsf13U'
                 spreadvalue = vlimbSidebandFraction13U
             else
                 signal = band13L
-                nam = 'lsf13L'
                 spreadvalue = vlimbSidebandFraction13L
             endif
         case (14)
             if (upper) then
                 signal = band14U
-                nam = 'lsf14U'
                 spreadvalue = vlimbSidebandFraction14U
             else
                 signal = band14L
-                nam = 'lsf14L'
                 spreadvalue = vlimbSidebandFraction14L
             endif
         case (15)
             if (upper) then
                 signal = band15U
-                nam = 'lsf15U'
             else
                 signal = band15L
-                nam = 'lsf15L'
             endif
         case (16)
             if (upper) then
                 signal = band16U
-                nam = 'lsf16U'
             else
                 signal = band16L
-                nam = 'lsf16L'
             endif
         case (17)
             if (upper) then
                 signal = band17U
-                nam = 'lsf17U'
             else
                 signal = band17L
-                nam = 'lsf17L'
             endif
         case (18)
             if (upper) then
                 signal = band18U
-                nam = 'lsf18U'
             else
                 signal = band18L
-                nam = 'lsf18L'
             endif
         case (19)
             if (upper) then
                 signal = band19U
-                nam = 'lsf19U'
             else
                 signal = band19L
-                nam = 'lsf19L'
             endif
         case (20)
             if (upper) then
                 signal = band20U
-                nam = 'lsf20U'
             else
                 signal = band20L
-                nam = 'lsf20L'
             endif
         case (21)
             if (upper) then
                 call MLSMessage(MLSMSG_Error, moduleName, "Band 21U does not exist.")
             else
                 signal = band21L
-                nam = 'lsf21L'
                 spreadvalue = vlimbSidebandFraction21L
             endif
         case (22)
@@ -1048,83 +947,65 @@ module CFM_MLSSetup_m
                 call MLSMessage(MLSMSG_Error, moduleName, "Band 22U does not exist.")
             else
                 signal = band22L
-                nam = 'lsf22L'
                 spreadvalue = vlimbSidebandFraction22L
             endif
         case (23)
             if (upper) then
                 signal = band23U
-                nam = 'lsf23U'
             else
                 signal = band23L
-                nam = 'lsf23L'
             endif
         case (24)
             if (upper) then
                 signal = band24U
-                nam = 'lsf24U'
             else
                 signal = band24L
-                nam = 'lsf24L'
             endif
         case (25)
             if (upper) then
                 signal = band25U
-                nam = 'lsf25U'
             else
                 signal = band25L
-                nam = 'lsf25L'
             endif
         case (26)
             if (upper) then
                 call MLSMessage(MLSMSG_Error, moduleName, "Band 26U does not exist.")
             else
                 signal = band26L
-                nam = 'lsf26L'
                 spreadvalue = vlimbSidebandFraction26L
             endif
         case (27)
             if (upper) then
                 signal = band27U
-                nam = 'lsf27U'
             else
                 signal = band27L
-                nam = 'lsf27L'
             endif
         case (28)
             if (upper) then
                 signal = band28U
-                nam = 'lsf28U'
             else
                 signal = band28L
-                nam = 'lsf28L'
                 spreadvalue = vlimbSidebandFraction28L
             endif
         case (29)
             if (upper) then
                 signal = band29U
-                nam = 'lsf29U'
             else
                 signal = band29L
-                nam = 'lsf29L'
                 spreadvalue = vlimbSidebandFraction29L
             endif
         case (30)
             if (upper) then
                 signal = band30U
-                nam = 'lsf30U'
             else
                 signal = band30L
-                nam = 'lsf30L'
                 spreadvalue = vlimbSidebandFraction30L
             endif
         case (31)
             if (upper) then
                 signal = band31U
-                nam = 'lsf31U'
             else
                 signal = band31L
-                nam = 'lsf31L'
                 spreadvalue = vlimbSidebandFraction31L
             endif
         case (32)
@@ -1132,28 +1013,24 @@ module CFM_MLSSetup_m
                 call MLSMessage(MLSMSG_Error, moduleName, "Band 32U does not exist.")
             else
                 signal = band32L
-                nam = 'lsf32L'
             endif
         case (33)
             if (upper) then
                 signal = band33U
-                nam = 'lsf33U'
             else
                 signal = band33L
-                nam = 'lsf33L'
             endif
         case (34)
             if (upper) then
                 call MLSMessage(MLSMSG_Error, moduleName, "Band 34U does not exist.")
             else
                 signal = band34L
-                nam = 'lsf34L'
             endif
         case default
             call MLSMessage (MLSMSG_Error, moduleName, "Band does not exist.")
         end select
 
-        template = CreateQtyTemplate (l_limbsidebandFraction, qSignal=signal, qName=nam)
+        template = CreateQtyTemplate (l_limbsidebandFraction, qSignal=signal, qName=qname)
 
         if (upper) then
             select case(band)
@@ -1397,6 +1274,9 @@ module CFM_MLSSetup_m
 end module
 
 ! $Log$
+! Revision 1.30  2011/11/08 16:13:57  honghanh
+! Add 'qname' parameter to CreateMLSValue_O2 subroutine.
+!
 ! Revision 1.29  2011/10/31 20:04:59  honghanh
 ! Change CreateMLSValue_FromL1B to CreateMLSValue_FromL1BOA.
 !

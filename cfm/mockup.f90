@@ -251,10 +251,10 @@ program mockup
     ! Fill orbit inclination, tangent geocentric altitude with
     ! data from MLS L1B file, and use them, along with other
     ! quantities to calculate ptan
-    limbSidebandFraction9L = CreateMLSValue_LSF(9, .false.)
+    limbSidebandFraction9L = CreateMLSValue_LSF(9, .false., qname='lsf9L')
     call AddValue2Vector(stateExtra, limbSidebandFraction9L)
 
-    limbSidebandFraction9U = CreateMLSValue_LSF(9, .true.)
+    limbSidebandFraction9U = CreateMLSValue_LSF(9, .true., qname='lsf9U')
     call AddValue2Vector(stateExtra, limbSidebandFraction9U)
 
     elev9L = CreateMLSValue_ElevationOffset(9, .false.)
@@ -455,6 +455,9 @@ program mockup
 end program
 
 ! $Log$
+! Revision 1.52  2011/11/08 16:13:57  honghanh
+! Add 'qname' parameter to CreateMLSValue_O2 subroutine.
+!
 ! Revision 1.51  2011/11/03 17:44:32  honghanh
 ! Bug fix in mockup
 !
