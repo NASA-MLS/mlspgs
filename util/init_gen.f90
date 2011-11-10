@@ -20,7 +20,8 @@ program INIT_GEN
   ! The second name is the entity's text -- e.g. a field name.  If
   ! it's not present, the first name is used for the entity's text.
 
-  ! Blank lines don't count.
+  ! Blank lines don't count.  Lines for which the first nonblank is
+  ! "!", "#" or "%" don't count.
 
   ! The command line controls everything else.  See the PRINT statements
   ! that explain the usage.
@@ -212,7 +213,7 @@ program INIT_GEN
     end if
     if ( line == ' ' ) cycle
     line = adjustl(line)
-    if ( line(1:1) == '#' .or. line(1:1) == '!' ) cycle
+    if ( line(1:1) == '#' .or. line(1:1) == '!' .or. line(1:1) == '%' ) cycle
     numNames = numNames + 1
     if ( numNames > maxNames ) then
       print *, numNames, ' is too many names.  Use the "-n" option.'
@@ -325,6 +326,9 @@ contains
 end program INIT_GEN
 
 ! $Log$
+! Revision 1.11  2005/06/22 19:27:32  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 1.10  2001/10/15 17:20:49  pwagner
 ! Now trims header in out_add, too
 !
