@@ -193,7 +193,7 @@ contains
 
     if ( FwdModelConf%polarized ) then
       call load_one_item_grid ( grids_mag, &
-        & GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+        & GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra,      &
         & quantityType=l_magneticField, config=fwdModelConf ), phitan, &
         & fmStat%maf, fwdModelConf, .false. )
     else
@@ -216,14 +216,14 @@ contains
   ! tangent grid and species).  Tan_Press is thrown in for free.
     if ( fwdModelConf%generateTScat ) then
       ! Make sure the TScat zeta is in the preselected grid.
-      call compute_Z_PSIG ( fwdModelConf, temp, nlvl, no_tan_hts, &
+      call compute_Z_PSIG ( fwdModelConf, temp, nlvl, no_tan_hts,   &
         &                   surfaceTangentIndex, z_psig, tan_press, &
-        &                   GetQuantityForForwardModel ( &
-        &                    fwdModelOut, quantityType=l_TScat, &
+        &                   GetQuantityForForwardModel (            &
+        &                    fwdModelOut, quantityType=l_TScat,     &
         &                    signal=fwdModelConf%signals(1)%index ) )
 
     else
-      call compute_Z_PSIG ( fwdModelConf, temp, nlvl, no_tan_hts, &
+      call compute_Z_PSIG ( fwdModelConf, temp, nlvl, no_tan_hts,   &
         &                   surfaceTangentIndex, z_psig, tan_press )
     end if
 
@@ -626,9 +626,9 @@ contains
     real(rp) :: DACsStaging2(lbound(fwdModelConf%DACsStaging,1): &
       &                      ubound(fwdModelConf%DACsStaging,1), &
       & merge(1,0,fwdModelConf%do_freq_avg .and. &
-      &           any(fwdModelConf%anyLBL((fwdModelConf%sidebandStart+3)/2: &
+      &           any(fwdModelConf%anyLBL((fwdModelConf%sidebandStart+3)/2:    &
       &                                   (fwdModelConf%sidebandStop+3)/2))) * &
-      &   max(s_t,s_a,s_lc,s_lw,s_td) * & ! merge(1,0,any_der)
+      &   max(s_t,s_a,s_lc,s_lw,s_td) *      & ! merge(1,0,any_der)
       &   max(sv_t_len,size(grids_f%values), &
       &       size(grids_w%values), size(grids_n%values), size(grids_v%values)), &
       & size(fwdModelConf%usedDACSSignals) )
@@ -855,7 +855,7 @@ contains
     ! associated.
 
     nullify ( dAlpha_dT_path_c, beta_path_c, frequencies, inc_rad_path, &
-      & k_atmos_frq, k_spect_dn_frq, k_spect_dv_frq, k_spect_dw_frq, &
+      & k_atmos_frq, k_spect_dn_frq, k_spect_dv_frq, k_spect_dw_frq,    &
       & k_temp_frq, h_atmos_frq, RadV, t_script_lbl )
 
     ! Nullify pointers that are used to control whether calculations get done
@@ -1130,7 +1130,7 @@ contains
     ! for convolution and stuff for clouds.
 
       use Geometry, only: Earth_Axis_Ratio_Squared_m1, EarthRadA
-      use Intrinsic, only: L_EARTHREFL, L_ECRtoFOV, L_GPH, L_LOSVEL, &
+      use Intrinsic, only: L_EARTHREFL, L_ECRtoFOV, L_GPH, L_LOSVEL,  &
         & L_SurfaceHeight, L_ORBITINCLINATION, L_REFGPH, L_SCGEOCALT, &
         & L_SPACERADIANCE
       use ManipulateVectorQuantities, only: DoHGridsMatch
@@ -1278,7 +1278,7 @@ contains
           cycle
         end if
 
-        vmr => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,            &
+        vmr => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
           & quantityType=l_vmr, molecule=fwdModelConf%molecules(j) )
 
         call InterpolateValues ( vmr%template%surfs(:,1),    &    ! Old X
@@ -1705,7 +1705,7 @@ contains
       end select
 
       if ( any_der ) then
-        call frequency_average_derivatives ( ptg_i, combine=iand(frq_avg_sel,15) == 7 )
+        call frequency_average_derivatives ( ptg_i, combine=iand(frq_avg_sel,7) == 7 )
         if ( atmos_second_der ) then
           call frequency_avg_second_derivs ( ptg_i, frq_avg_sel == 15 )
         end if
@@ -4550,6 +4550,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.329  2011/11/09 00:29:48  vsnyder
+! Monochromatic PFA, more debugging
+!
 ! Revision 2.327  2011/08/12 18:59:57  vsnyder
 ! Add Do_Calc_Fzp into one call to Comp_Sps_Path_Frq, because it is no longer
 ! optional, and it is actually needed where it wasn't specified.  Add checks
