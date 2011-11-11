@@ -43,7 +43,7 @@ module L2PC_m
   use MLSSIGNALS_M, only: GETSIGNALNAME
   use MLSSTRINGLISTS, only: OPTIONDETAIL, SWITCHDETAIL
   use MLSSTRINGS, only: WRITEINTSTOCHARS
-  use MOLECULES, only: L_EXTINCTION, L_EXTINCTIONV2
+  use MOLECULES, only: IsExtinction
   use MORETREE, only: GETLITINDEXFROMSTRING, GETSTRINGINDEXFROMSTRING
   use OUTPUT_M, only: NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
   use PARSE_SIGNAL_M, only: PARSE_SIGNAL
@@ -1951,7 +1951,7 @@ contains ! ============= Public Procedures ==========================
       case ( l_vmr )
         call GetHDF5Attribute ( MLSFile, 'molecule', word )
         molecule = GetLitIndexFromString ( word )
-        if ( any(molecule == (/l_extinction, l_extinctionv2/) ) ) then
+        if ( isExtinction(molecule) ) then
           if ( IsHDF5AttributePresent ( MLSFile, 'radiometer' ) ) then
             call GetHDF5Attribute ( MLSFile, 'radiometer', word )
             stringIndex = GetStringIndexFromString ( word )
@@ -2137,7 +2137,7 @@ contains ! ============= Public Procedures ==========================
         case (l_vmr)
           call get_string ( lit_indices(qt%molecule), line )
           call MakeHDF5Attribute ( qID, 'molecule', trim(line) )
-          if ( any(qt%molecule == (/l_extinction, l_extinctionv2/) ) ) then
+          if ( isExtinction(qt%molecule) ) then
             call get_string ( radiometers(qt%radiometer)%prefix, line )
             call MakeHDF5Attribute ( qID, 'radiometer', trim(line) )
           end if
@@ -2230,6 +2230,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.118  2011/11/11 00:32:29  vsnyder
+! Use IsExtinction array from Molecules module
+!
 ! Revision 2.117  2011/11/09 17:41:02  pwagner
 ! Fixed bug added with last commit
 !
