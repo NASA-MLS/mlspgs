@@ -468,7 +468,7 @@ contains
       & grids_x%s_ind(qty%template%molecule) = ii
       ! Note the ambiguity here as to whether it's extinction or extinctionv2:
       ! the last one wins.
-      ! Also note, however, that s_ind(l_extinction) is never actually used
+      ! Also note, however, that s_ind(l_*extinction*) are never actually used.
 
   end subroutine Fill_Grids_1
 
@@ -777,6 +777,11 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.86  2011/08/25 22:37:36  vsnyder
+! Delete s_ind dummy argument, since it is never used.  The s_ind component
+! of grids_x is used instead.  Move filling grids_x%s_ind to fill_grids_1,
+! instead of doing it at some of the calls to fill_grids_1.
+!
 ! Revision 2.85  2011/08/20 02:07:34  vsnyder
 ! Allocate %s_ind with bounds wide enough to accomodate l_RHi, which is not a molecule
 !
