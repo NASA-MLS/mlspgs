@@ -31,11 +31,15 @@
     if ( any(shape(array) == 0) ) then
       call empty ( name )
     else if ( size(array) == 1 ) then
-      call output( 'size is 1: reducing array to a scalar', advance='yes' )
-      call name_and_size ( name, myClean, 1 )
+      if ( present(theShape) ) then
+        call name_and_size ( name, myClean, 1, theShape )
+      else
+        call name_and_size ( name, myClean, 1, '(1)' )
+      end if
+      call output ( base+1, before='(', after=') ' )
       call output ( array(1), format=myFormat, advance='yes' )
     else
-      call name_and_size ( name, myClean, size(array) )
+      call name_and_size ( name, myClean, size(array), theShape )
       if ( present(name) .and. .not. mylaconic ) call newLine
       do j = 1, size(array), myWidth
         DumpTheseZeros = myClean .or. &
@@ -62,6 +66,9 @@
     call theDumpEnds
 !   end subroutine DUMP_1D_COMPLEX
 ! $Log$
+! Revision 2.3  2011/11/11 00:30:22  vsnyder
+! Simplify notice of rank reduction
+!
 ! Revision 2.2  2011/07/15 23:18:13  pwagner
 ! prints notice if array size is 1
 !
