@@ -568,7 +568,8 @@ contains
 !  forward model.
 
     use MLSKINDS, only: RP, R8, IP
-    use MOLECULES, only: L_N2, L_EXTINCTION, L_EXTINCTIONV2, L_H2O, L_O2
+    use MOLECULES, only: L_N2, L_EXTINCTION, L_EXTINCTIONV2, L_H2O, &
+      & L_MIFEXTINCTION, L_O2
     use SLABS_SW_M, only: DVOIGT_SPECTRAL, VOIGT_LORENTZ, &
       & SLABS_LINES, SLABS_LINES_DT, SLABS_STRUCT, &
       & SLABSWINT_LINES, SLABSWINT_LINES_DT
@@ -642,13 +643,13 @@ contains
         beta_value = abs_cs_n2_cont(cont,Temp,Pressure,Fgr)
       end if
 
-    case ( l_extinction ) ! ................................  Extinction
+    case ( l_extinction, l_MIFextinction ) ! ...............  Extinction
 
       beta_value = 1.0_rp
       if ( present(dBeta_dT) ) dBeta_dT = 0.0_rp
       return
 
-    case ( l_extinctionv2 ) ! ................................  ExtinctionV2
+    case ( l_extinctionv2 ) ! ............................  ExtinctionV2
 
       beta_value = ( fgr / flo ) ** 2.0_rp
       if ( present(dBeta_dT) ) dBeta_dT = 0.0_rp
@@ -764,7 +765,8 @@ contains
 !  associated.  Compute dBeta_dw, dBeta_dn, dBeta_dv if they're associated. 
 
     use MLSKINDS, only: RP, R8
-    use MOLECULES, only: L_N2, L_EXTINCTION, L_EXTINCTIONV2, L_H2O, L_O2
+    use MOLECULES, only: L_N2, L_EXTINCTION, L_EXTINCTIONV2, L_H2O, &
+      & L_MIFEXTINCTION, L_O2
     use SLABS_SW_M, only: SLABS_STRUCT, &
       & SLABS_LINES, SLABS_LINES_DALL, SLABS_LINES_DSPECTRAL, SLABS_LINES_DT, &
       & SLABSWINT_LINES, &
@@ -842,7 +844,7 @@ contains
       if ( temp_der .and. size(path_flags) > 0 ) temp_der = path_flags(k)
 
       select case ( slabs_0(k)%catalog%molecule )
-      case ( l_n2 ) ! ...........................................  Dry Air
+      case ( l_n2 ) ! .........................................  Dry Air
 
         ! This nominally gets multiplied by "ratio**2" but in practice this
         ! function is for all isotopic forms of N2 hence the ratio is one.
@@ -857,19 +859,19 @@ contains
             & abs_cs_n2_cont(slabs_0(k)%catalog%continuum,Temp(j),Pressure(k),Fgr)
         end if
 
-      case ( l_extinction ) ! ................................  Extinction
+      case ( l_extinction, l_MIFextinction ) ! .............  Extinction
 
         beta_value(j) = beta_value(j) + ratio
 !       if ( temp_der ) dBeta_dT(j) = dBeta_dT(j) + ratio * 0.0
         cycle ! we know there are no spectral lines
 
-      case ( l_extinctionv2 ) ! ................................  Extinction
+      case ( l_extinctionv2 ) ! ............................  Extinction
 
         beta_value(j) = beta_value(j) + ratio * ( fgr / flo ) ** 2
 !       if ( temp_der ) dBeta_dT(j) = dBeta_dT(j) + ratio * 0.0
         cycle ! we know there are no spectral lines
 
-      case ( l_o2 ) ! ................................................  O2
+      case ( l_o2 ) ! ..............................................  O2
 
         if ( temp_der ) then
           call abs_cs_o2_cont_dT ( slabs_0(k)%catalog%continuum, temp(j), &
@@ -881,7 +883,7 @@ contains
             & abs_cs_o2_cont(slabs_0(k)%catalog%continuum,Temp(j),Pressure(k),Fgr)
         end if
 
-      case ( l_h2o ) ! ..............................................  H2O
+      case ( l_h2o ) ! ............................................  H2O
 
         if ( present(sps_path) ) then
           if ( temp_der ) then
@@ -919,7 +921,7 @@ contains
           end if
         end if
 
-      case default ! ..............................................  Other
+      case default ! ............................................  Other
 
         if ( temp_der ) then
           call abs_cs_cont_dT ( slabs_0(k)%catalog%continuum, temp(j), &
@@ -1589,6 +1591,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.110  2011/11/09 00:15:40  vsnyder
+! Consolidate USE statements for slabs_sw_m
+!
 ! Revision 2.109  2011/08/26 17:54:15  pwagner
 ! purehunt recovers optimized functionality of fwdmdls own hunt
 !
