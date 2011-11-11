@@ -101,7 +101,6 @@ module VectorsModule            ! Vectors in the MLS PGS suite
     & MLSMSG_DEALLOCATE, MLSMSG_ERROR, MLSMSG_WARNING
   use MLSSETS, only: FINDFIRST, FINDUNIQUE
   use MLSSIGNALS_M, only: MODULES, SIGNALS, GETSIGNALNAME
-  use MOLECULES, only: L_EXTINCTION
   use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
   use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T, CHECKINTEGRITY, DUMP, &
     & NULLIFYQUANTITYTEMPLATE
@@ -1984,6 +1983,7 @@ contains ! =====     Public Procedures     =============================
   ! index, is returned.
 
     use MLSSignals_m, only: GETRADIOMETERNAME
+    use MOLECULES, only: IsExtinction
 
     ! Dummy arguments
     type (Vector_T), intent(in) :: VECTOR
@@ -2024,7 +2024,7 @@ contains ! =====     Public Procedures     =============================
           if ( quantityType == l_vmr ) then
             if ( .not. present ( molecule ) ) call MLSMessage ( &
               & MLSMSG_Error, ModuleName, "Requests for vmrs must have molecules" )
-            if ( radiometer /= qt%radiometer .and. molecule == l_extinction ) cycle
+            if ( radiometer /= qt%radiometer .and. isExtinction(molecule) ) cycle
           else
             if ( radiometer /= qt%radiometer ) cycle
           end if
@@ -2708,6 +2708,10 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.155  2011/11/01 22:55:48  honghanh
+! Remove the nullify statement of vector%template%quantities
+! from DestroyVectorInfo
+!
 ! Revision 2.154  2011/10/25 18:08:07  pwagner
 ! Capitalize USEd items
 !
