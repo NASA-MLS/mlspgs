@@ -18,7 +18,7 @@
 !   double precision, intent(in), optional :: FILLVALUE
 !   integer, intent(in), optional :: WIDTH
 !   character(len=*), intent(in), optional :: FORMAT
-!   integer, intent(in), optional :: LBOUND
+!   integer, intent(in), optional :: LBOUND ! to print for first dimension
 !   character(len=*), intent(in), optional :: options
 !   integer :: I, J, K
 !   integer :: NumZeroRows
@@ -66,6 +66,9 @@
 !    include 'dump2db.f9h'
 !   end subroutine DUMP_2D_INTEGER
 ! $Log$
+! Revision 2.9  2011/11/11 00:30:22  vsnyder
+! Simplify notice of rank reduction
+!
 ! Revision 2.8  2011/07/12 00:11:29  pwagner
 ! whoarray dump moved to dump[123]db.f9h
 !
