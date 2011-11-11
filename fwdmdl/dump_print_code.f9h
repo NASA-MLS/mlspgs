@@ -16,7 +16,7 @@
 ! ** To create *seez* file for "nasty" purposes, include the following code
 
 !   subroutine Dump_Print_Code
-      use Molecules, only:  L_Extinction
+      use Molecules, only:  IsExtinction
       use String_table, only: DISPLAY_STRING
       real :: Frq, R
       integer :: J, K, L, Specie
@@ -65,7 +65,7 @@
 
       do specie = 1, size(fwdModelConf%molecules)
         l = fwdModelConf%molecules(specie)
-        if ( l /= l_extinction ) then
+        if ( .not. isExtinction(l) ) then
           f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
              & quantityType=l_vmr, molecule=l )
           print *, 'Species'
@@ -118,6 +118,9 @@
 !   end subroutine Dump_Print_Code
 !
 ! $Log$
+! Revision 2.9  2011/11/11 00:42:06  vsnyder
+! Use IsExtinction array from Molecules module
+!
 ! Revision 2.8  2005/06/22 18:14:01  pwagner
 ! Reworded Copyright statement, moved rcs id
 !

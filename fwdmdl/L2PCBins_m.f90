@@ -38,7 +38,7 @@ contains ! =====     Public Procedures     =============================
       & L_TEMPERATURE, L_TSCAT, L_VMR
     use MANIPULATEVECTORQUANTITIES, only: DOFGRIDSMATCH, DOHGRIDSMATCH, &
       & DOVGRIDSMATCH
-    use MOLECULES, only: L_EXTINCTION, L_EXTINCTIONV2
+    use MOLECULES, only: IsExtinction
     use VECTORSMODULE, only: VECTORVALUE_T, VECTOR_T
 
     type (VectorValue_T), intent(in) :: L2PCQ ! Quantity to search for
@@ -69,13 +69,12 @@ contains ! =====     Public Procedures     =============================
         & foundInFirst = foundInFirst, noError=.true. )
     case ( l_vmr )
       ! Here we may need to be a little more intelligent
-      if ( l2pcQ%template%molecule /= l_extinction .and. &
-        &  l2pcQ%template%molecule /= l_extinctionv2 ) then
+      if ( .not. isExtinction(l2pcQ%template%molecule) ) then
         stateQ => GetQuantityForForwardModel ( FwdModelIn, FwdModelExtra,&
           & quantityType = l_vmr, config=fmConf, &
           & molecule = l2pcQ%template%molecule, &
           & foundInFirst = foundInFirst, noError=.true., matchQty=l2pcQ )
-      else ! molecule == l_extinction or molecule == l_extinctionv2
+      else
         searchLoop: do vec = 1, 2
           ! Point to appropriate vector
           if ( vec == 1 ) then
@@ -89,8 +88,7 @@ contains ! =====     Public Procedures     =============================
           do qty = 1, size ( v%quantities )
             stateQ => v%quantities(qty)
             if ( stateQ%template%quantityType == l_vmr .and. &
-              &  ( stateQ%template%molecule == l_extinction .or. &
-              &    stateQ%template%molecule == l_extinctionv2 ) .and. &
+              &  isExtinction(l2pcQ%template%molecule) .and. &
               &  stateQ%template%radiometer == l2pcQ%template%radiometer ) then
               if ( DoFGridsMatch ( l2pcQ, stateQ ) ) exit searchLoop
             end if
@@ -457,6 +455,9 @@ contains ! =====     Public Procedures     =============================
 end module L2PCBins_m
 
 ! $Log$
+! Revision 2.9  2011/11/11 00:42:06  vsnyder
+! Use IsExtinction array from Molecules module
+!
 ! Revision 2.8  2011/06/16 20:21:00  vsnyder
 ! Require a signal in the Radiance argument to SelectL2PCBins
 !
