@@ -18,7 +18,7 @@
 !   double precision, intent(in), optional :: FILLVALUE
 !   integer, intent(in), optional :: WIDTH
 !   character(len=*), intent(in), optional :: FORMAT
-!   integer, intent(in), optional :: LBOUND
+!   integer, intent(in), optional :: LBOUND ! to print for first dimension
 !   character(len=*), intent(in), optional :: options
 !   integer :: I, J, K
 !   integer :: NumZeroRows
@@ -30,14 +30,26 @@
     numZeroRows = 0
     if ( any(shape(array) == 0) ) then
       call empty ( name )
-    else if ( size(array, 1) == 1 ) then
-      if ( myWholeArray ) call output( '1st size is 1: reducing rank to 1', advance='yes' )
+    else if ( size(array) == 1 ) then
       call dump ( array(1,:), name, &
         & fillValue=fillValue, format=format, options=options )
+    else if ( size(array, 1) == 1 ) then
+      if ( myWholeArray ) then
+        call dump ( array(1,:), name, &
+          & fillValue=fillValue, format=format, options=options, theShape='(1,:)' )
+      else
+        call dump ( array(1,:), name, &
+          & fillValue=fillValue, format=format, options=options )
+      end if
     else if ( size(array,2) == 1 ) then
-      if ( myWholeArray ) call output( '2nd size is 1: reducing rank to 1', advance='yes' )
-      call dump ( array(:,1), name, &
-        & fillValue=fillValue, format=format, options=options )
+      if ( myWholeArray ) then
+        call dump ( array(:,1), name, &
+          & fillValue=fillValue, format=format, options=options, lbound=lbound, &
+          & theShape='(:,1)' )
+      else
+        call dump ( array(:,1), name, &
+          & fillValue=fillValue, format=format, options=options, lbound=lbound )
+      end if
     else 
       call name_and_size ( name, myClean, size(array) )
       if ( present(name) .and. .not. mylaconic ) call newLine
@@ -52,7 +64,7 @@
             & )
           if (.not. myClean) then
             if ( DumpTheseZeros ) then
-              call say_fill ( (/ i, size(array,1), j-1, size(array,2) /), &
+              call say_fill ( (/ i-1+base, size(array,1), j-1, size(array,2) /), &
                 & numZeroRows, myFillValue, inc=3, format=myFormat )
             else
               numZeroRows = numZeroRows + 1
@@ -73,6 +85,9 @@
     call theDumpEnds
 !   end subroutine DUMP_2D_INTEGER
 ! $Log$
+! Revision 2.4  2011/11/11 00:30:22  vsnyder
+! Simplify notice of rank reduction
+!
 ! Revision 2.3  2011/07/26 20:45:21  pwagner
 ! Clearer, less redundant
 !
