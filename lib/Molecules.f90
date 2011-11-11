@@ -69,6 +69,13 @@ module Molecules
 ! based on the file sps_cross_ref_table.txt
   include 'mol_parm.f9h'
 
+  integer, private :: I ! Only to give a type to implied-do index below
+  ! IsExtinction(i) is true only for i = l_*extinction*
+  logical, parameter :: IsExtinction(first_molecule:last_molecule) =     &
+    & (/ ( .false., i= first_molecule, l_extinction-1 ), .true., .true., &
+    &    ( .false., i = l_extinctionV2+1, l_MIFextinction-1 ), .true.,   &
+    &    ( .false., i = l_MIFextinction+1, last_molecule ) /)
+
 contains ! =====     Public procedures     =============================
 ! -----------------------------------------------  INIT_MOLECULES  -----
   subroutine Init_Molecules ( N_DATA_TYPE_INDICES, N_FIELD_INDICES, &
@@ -176,6 +183,9 @@ contains ! =====     Public procedures     =============================
 end module MOLECULES
 
 ! $Log$
+! Revision 2.32  2011/11/11 00:29:50  vsnyder
+! Add IsExtinction array
+!
 ! Revision 2.31  2011/08/25 22:40:58  vsnyder
 ! RHi is not a molecule, so it doesn't need special treatment
 !
